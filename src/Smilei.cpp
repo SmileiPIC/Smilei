@@ -212,19 +212,19 @@ int main (int argc, char* argv[])
             ostringstream my_msg;
             my_msg << setw(log10(params.n_time)+1) << itime <<
             "/"     << setw(log10(params.n_time)+1) << params.n_time <<
-            "t = "          << scientific << setprecision(3)   << time_dual <<
-            "  sec "    << scientific << setprecision(1)   << this_print_time <<
-            " ("    << scientific << setprecision(7)   << this_print_time - old_print_time << ")" <<
-            "   Utot = "   << scientific << setprecision(4)<< vecPatches.getScalar("Utot") <<
-            "   Uelm = "   << scientific << setprecision(4)<< vecPatches.getScalar("Uelm") <<
-            "   Ukin = "   << scientific << setprecision(4)<< vecPatches.getScalar("Ukin") <<
-            "   Ubal(%) = "<< scientific << fixed << setprecision(2) << 100.0*vecPatches.getScalar("Ubal_norm");
+            " t="          << scientific << setprecision(3)   << time_dual <<
+            " sec "    << scientific << setprecision(1)   << this_print_time <<
+            " ("    << scientific << setprecision(4)   << this_print_time - old_print_time << ")" <<
+            "  Utot= "   << scientific << setprecision(4)<< vecPatches.getScalar("Utot") <<
+            "  Uelm= "   << scientific << setprecision(4)<< vecPatches.getScalar("Uelm") <<
+            "  Ukin= "   << scientific << setprecision(4)<< vecPatches.getScalar("Ukin") <<
+            "  Ubal(%)= "<< scientific << fixed << setprecision(2) << 100.0*vecPatches.getScalar("Ubal_norm");
             
             if (simWindow) {
                 double Uinj_mvw = vecPatches.getScalar("Uelm_inj_mvw") + vecPatches.getScalar("Ukin_inj_mvw");
                 double Uout_mvw = vecPatches.getScalar("Uelm_out_mvw") + vecPatches.getScalar("Ukin_out_mvw");
-                my_msg << "   Uinj_mvw = " << scientific << setprecision(4) << Uinj_mvw <<
-                "   Uout_mvw = " << scientific << setprecision(4) << Uout_mvw;
+                my_msg << "  Uinj_mvw = " << scientific << setprecision(4) << Uinj_mvw <<
+                "  Uout_mvw = " << scientific << setprecision(4) << Uout_mvw;
 
             }//simWindow
 

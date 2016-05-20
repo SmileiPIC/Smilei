@@ -24,7 +24,8 @@ public:
     ~LaserProfile() {};
     virtual double getAmplitude(std::vector<double> pos, double t, int j) {return 0.;};
     virtual std::string getInfo() { return "?"; };
-    virtual void initFields(Params& params, Patch* patch) {};
+    virtual void createFields(Params& params, Patch* patch) {};
+    virtual void initFields  (Params& params, Patch* patch) {};
 };
 
 
@@ -50,6 +51,11 @@ public:
         return profiles[1]->getAmplitude(pos, t, j);
     }
     
+    void createFields(Params& params, Patch* patch)
+    {
+        profiles[0]->createFields(params, patch);
+        profiles[1]->createFields(params, patch);
+    };
     void initFields(Params& params, Patch* patch)
     {
         profiles[0]->initFields(params, patch);
@@ -81,7 +87,8 @@ public:
     LaserProfileSeparable(double, Profile*, Profile*, Profile*, Profile*, bool);
     LaserProfileSeparable(LaserProfileSeparable*);
     ~LaserProfileSeparable();
-    void initFields(Params& params, Patch* patch);
+    void createFields(Params& params, Patch* patch);
+    void initFields  (Params& params, Patch* patch);
     double getAmplitude(std::vector<double> pos, double t, int j);
 private:
     bool primal;

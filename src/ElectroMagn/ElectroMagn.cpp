@@ -21,13 +21,15 @@ using namespace std;
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn::ElectroMagn(Params &params, vector<Species*>& vecSpecies, Patch* patch) :
-timestep(params.timestep),
-cell_length(params.cell_length),
-n_species(vecSpecies.size()),
-nDim_field(params.nDim_field),
-cell_volume(params.cell_volume),
-n_space(params.n_space),
-oversize(params.oversize)
+timestep       ( params.timestep   ),
+cell_length    ( params.cell_length),
+n_species      ( vecSpecies.size() ),
+nDim_field     ( params.nDim_field ),
+cell_volume    ( params.cell_volume),
+n_space        ( params.n_space    ),
+oversize       ( params.oversize   ),
+nrj_mw_lost    (  0.               ),
+nrj_new_fields (  0.               )
 {
     
     // initialize poynting vector
@@ -291,22 +293,6 @@ void ElectroMagn::restartRhoJs()
     Jy_ ->put_to(0.);
     Jz_ ->put_to(0.);
     rho_->put_to(0.);
-}
-
-void ElectroMagn::movingWindow_x(unsigned int shift)
-{
-    //! \todo{ Why the if test ? Remove it ? (AB for JD)}
-    if (emBoundCond[0]!=NULL)
-        emBoundCond[0]->laserDisabled();
-
-    // For nrj balance
-    //nrj_mw_lost += computeNRJ(); // Integreated in SimWindow::operate
-
-    // For now, fields introduced with moving window set to 0 
-    nrj_new_fields =+ 0.;
-
-    
-    //Here you might want to apply some new boundary conditions on the +x boundary. For the moment, all fields are set to 0.
 }
 
 void ElectroMagn::laserDisabled()

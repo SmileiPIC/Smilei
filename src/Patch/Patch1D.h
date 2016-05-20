@@ -19,28 +19,28 @@ public:
     void initStep2(Params& params) override;
     
     //! Destructor for Patch
-    virtual ~Patch1D() {};
+    ~Patch1D() override {};
 
     // MPI exchange/sum methods for particles/fields
     //   - fields communication specified per geometry (pure virtual)
     // --------------------------------------------------------------
 
     //! init comm / sum densities
-    virtual void initSumField( Field* field, int iDim );
+    void initSumField( Field* field, int iDim ) override;
     //! finalize comm / sum densities
-    virtual void finalizeSumField( Field* field, int iDim );
+    void finalizeSumField( Field* field, int iDim ) override;
 
     //! init comm / exchange fields
-    virtual void initExchange( Field* field );
+    void initExchange( Field* field ) override;
     //! finalize comm / exchange fields
-    virtual void finalizeExchange( Field* field );
+    void finalizeExchange( Field* field ) override;
     //! init comm / exchange fields in direction iDim only
-    virtual void initExchange( Field* field, int iDim );
+    void initExchange( Field* field, int iDim ) override;
     //! finalize comm / exchange fields in direction iDim only
-    virtual void finalizeExchange( Field* field, int iDim );
+    void finalizeExchange( Field* field, int iDim ) override;
 
     // Create MPI_Datatype to exchange fields
-    virtual void createType( Params& params );
+    void createType( Params& params ) override;
 
     //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial]
     MPI_Datatype ntypeSum_[2][2];
@@ -59,7 +59,7 @@ public:
 
     //! Return MPI rank of this->hrank +/- 1
     //! Should be replaced by an analytic formula
-    inline int getMPIRank(int hrank_pm1) {
+    inline int getMPIRank(int hrank_pm1) override {
 	if  (hrank_pm1 == neighbor_[0][0]) return MPI_neighbor_[0][0];
 	else if  (hrank_pm1 == neighbor_[0][1]) return MPI_neighbor_[0][1];
 	//else if  (hrank_pm1 == neighbor_[1][0]) return MPI_neighbor_[1][0];

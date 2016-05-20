@@ -107,9 +107,19 @@ Geometry
 
 .. py:data:: number_of_patches
   
-  A list of integers: the number of patches in each dimension. 
-  :red:`to do`
+  A list of integers: the number of patches in each direction.
+  Each integer must be a power of 2, and the total number of patches must be
+  greater or equal than the number of MPI processes.
+  See :doc:`parallelization`.
 
+
+.. py:data:: balancing_freq
+  
+  :default: 150
+  
+  An integer: the number of timesteps between each load balancing (patches are
+  exchanged between MPI processes to reduce load imbalance).
+  
 
 .. py:data:: clrw
   

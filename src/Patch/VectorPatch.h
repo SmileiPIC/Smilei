@@ -76,7 +76,7 @@ public :
     }
     
     bool printScalars( int timestep ) {
-        return (timestep % static_cast<DiagnosticScalar*>(globalDiags[0])->print_every == 0);
+        return static_cast<DiagnosticScalar*>(globalDiags[0])->printNow(timestep);
     }
 
 

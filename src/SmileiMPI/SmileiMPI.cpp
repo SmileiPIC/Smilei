@@ -67,11 +67,11 @@ void SmileiMPI::bcast( string& val )
     if (isMaster()) charSize = val.size()+1;
     MPI_Bcast(&charSize, 1, MPI_INT, 0, SMILEI_COMM_WORLD);
 
-    char tmp[charSize];
-    if (isMaster()) strcpy(tmp, val.c_str());
-    MPI_Bcast(&tmp, charSize, MPI_CHAR, 0, SMILEI_COMM_WORLD);
+    char *tmp[charSize];
+    if (isMaster()) strcpy(*tmp, val.c_str());
+    MPI_Bcast(*tmp, charSize, MPI_CHAR, 0, SMILEI_COMM_WORLD);
 
-    if (!isMaster()) val=tmp;
+    if (!isMaster()) val=*tmp;
 
 } // END bcast( string )
 
@@ -329,8 +329,9 @@ void SmileiMPI::init_patch_count( Params& params)
 void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, double time_dual )
 {
 
-    unsigned int Npatches, r,Ncur,Pcoordinates[3],ncells_perpatch, Lmin, Lmintemp;
-    double Tload,Tcur, Lcur, above_target, below_target;
+    unsigned int Npatches, r,Ncur,Pcoordinates[3],ncells_perpatch, Lmin, Lmin1, Lmin2, Lmax;
+    double Tload,Tcur, Lcur, above_target, below_target, cells_load;
+    unsigned int npatchmin =1;
     //Load of a cell = coef_cell*load of a particle.
     //Load of a frozen particle = coef_frozen*load of a particle.
     std::vector<double> Lp,Lp_global;
@@ -348,8 +349,9 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         ncells_perpatch *= params.n_space[idim]+2*params.oversize[idim];
  
     unsigned int tot_species_number = PyTools::nComponents("Species");
+    cells_load = ncells_perpatch*params.coef_cell ;
 
-    Lp.resize(patch_count[smilei_rk],0.);
+    Lp.resize(patch_count[smilei_rk], cells_load);
     Lp_global.resize(Npatches,0.);
 
     Tload = 0.;
@@ -358,14 +360,13 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     Lcur = 0.; //Load assigned to current rank r.
 
     //Compute Local Loads of each Patch (Lp)
-    for(unsigned int hindex=0; hindex < patch_count[smilei_rk]; hindex++){
+    for(unsigned int ipatch=0; ipatch < patch_count[smilei_rk]; ipatch++){
         for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++) {
-            Lp[hindex] += vecpatches(hindex)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(params.coef_frozen-1)*(time_dual > vecpatches(hindex)->vecSpecies[ispecies]->time_frozen)) ;
+            Lp[ipatch] += vecpatches(ipatch)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(params.coef_frozen-1)*(time_dual > vecpatches(ipatch)->vecSpecies[ispecies]->time_frozen)) ;
         }
-        Lp[hindex] += ncells_perpatch*params.coef_cell ;
     }
 
-    //Allgatherv loads of all patches
+    //Allgatherv loads of all patches in Lp_global
   
     recv_counts[0] = 0;
     for(unsigned int i=1; i < smilei_sz ; i++) recv_counts[i] = recv_counts[i-1]+patch_count[i-1];
@@ -373,21 +374,21 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     MPI_Allgatherv(&Lp[0],patch_count[smilei_rk],MPI_DOUBLE,&Lp_global[0], &patch_count[0], recv_counts, MPI_DOUBLE,MPI_COMM_WORLD);
 
     //Compute total loads
-    for(unsigned int hindex=0; hindex < Npatches; hindex++) Tload += Lp_global[hindex];
+    for(unsigned int ipatch=0; ipatch < Npatches; ipatch++) Tload += Lp_global[ipatch];
     Tload /= Tcapabilities; //Target load for each mpi process.
     Tcur = Tload * capabilities[0];  //Init.
 
-    //Loop over all patches
-    for(unsigned int hindex=0; hindex < Npatches; hindex++){
+    //Loop over all patches to determine target_patch_count.
+    for(unsigned int ipatch=0; ipatch < Npatches; ipatch++){
 
-        Lcur += Lp_global[hindex]; 
+        Lcur += Lp_global[ipatch]; 
         Ncur++; // Try to assign current patch to rank r.
 
         if (r < smilei_sz-1){
 
-            if ( Lcur > Tcur || smilei_sz-r >= Npatches-hindex){ //Load target is exceeded or we have as many patches as procs left.
+            if ( Lcur > Tcur || smilei_sz-r >= Npatches-ipatch){ //Load target is exceeded or we have as many patches as procs left.
                 above_target = Lcur - Tcur;  //Including current patch, we exceed target by that much.
-                below_target = Tcur - (Lcur-Lp_global[hindex]); // Excluding current patch, we mis the target by that much.
+                below_target = Tcur - (Lcur-Lp_global[ipatch]); // Excluding current patch, we mis the target by that much.
                 if(above_target > below_target) { // If we're closer to target without the current patch...
                     target_patch_count[r] = Ncur-1;      // ... include patches up to current one.
                     Ncur = 1;
@@ -399,7 +400,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
                 Tcur += Tload * capabilities[r];  //Target load for current rank r.
             } 
         }// End if on r.
-        if (hindex == Npatches-1){
+        if (ipatch == Npatches-1){
             target_patch_count[smilei_sz-1] = Ncur; //When we reach the last patch, the last MPI process takes what's left.
         }
     }// End loop on patches.
@@ -407,39 +408,38 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
 
     //Make sure the new patch_count is not too different from the previous one.
     // First patch
-    Lcur = patch_count[0]+ patch_count[1]-1;
     Ncur = 0;
-    Tcur = target_patch_count[0];  
-    Lmintemp = patch_count[0]+1;
-    if (Tcur > Lcur ){
-        patch_count[0] = Lcur - Ncur;
-    } else {
-        patch_count[0] = target_patch_count[0] - Ncur;
-    }
+    Lmin1 = npatchmin;
+    Lmin2 = 1;
+    Lmin = std::max(Lmin1, Lmin2);
+    Lmax = patch_count[0] - npatchmin;
+    Tcur = 0;  
 
     //Loop
-    for(unsigned int i=1; i< smilei_sz-1; i++){
-        Ncur += patch_count[i-1];                  //Ncur = sum n=0..i-1 new patch_count[n]
-        Tcur += target_patch_count[i];            //Tcur = sum n=0..i target_patch_count[n]
-        Lcur += patch_count[i+1];                  //Lcur = sum n=0..i+1 initial patch_count[n] -1
-        Lmin = Lmintemp;
-        Lmintemp += patch_count[i];
+    for(unsigned int i=0; i< smilei_sz-1; i++){
+
+        Lmin2 += patch_count[i];
+        Tcur += target_patch_count[i];
+        Lmax += patch_count[i+1];
  
         if (Tcur < Lmin){                      
             patch_count[i] = Lmin - Ncur;
-        } else if (Tcur > Lcur ){                      
-            patch_count[i] = Lcur - Ncur;
+        } else if (Tcur > Lmax ){                      
+            patch_count[i] = Lmax - Ncur;
         } else {
             patch_count[i] = Tcur-Ncur;
         }
+        Ncur += patch_count[i];
+        Lmin1 = Ncur + npatchmin;
+        Lmin = std::max(Lmin1, Lmin2);
+
     }
 
     //Last patch
-    Ncur += patch_count[smilei_sz-2];                  //Ncur = sum n=0..i-1 new patch_count[n]
     patch_count[smilei_sz-1] = Npatches-Ncur;
 
+    //Write patch_load.txt
     if (smilei_rk==0) {
-        //fout << "\tt = " << scientific << setprecision(3) << time_dual << endl;
         fout << "\tt = " << time_dual << endl;
         for (int irk=0;irk<smilei_sz;irk++)
             fout << " patch_count[" << irk << "] = " << patch_count[irk] << " target patch_count = "<< target_patch_count[irk] << endl;
@@ -627,15 +627,19 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag)
     for (int bcId=0 ; bcId<EM->emBoundCond.size() ; bcId++ ) {
         if(! EM->emBoundCond[bcId]) continue;
         
-        for (int laserId=0 ; laserId<EM->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
+        for (int laserId=0 ; laserId < EM->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
             
-            for ( int profileId=0 ; profileId < EM->emBoundCond[bcId]->vecLaser[laserId]->profiles.size() ; profileId++ ) {
-                if ( EM->emBoundCond[bcId]->vecLaser[laserId]->spacetime[profileId] ) {
-                    LaserProfileSeparable* laser = static_cast<LaserProfileSeparable*> ( EM->emBoundCond[bcId]->vecLaser[laserId]->profiles[profileId] );
-                    isend( laser->space_envelope, to , tag );
-                    isend( laser->phase, to, tag + 1);
-                    tag = tag + 2;
-                }
+            Laser * laser = EM->emBoundCond[bcId]->vecLaser[laserId];
+            if( !(laser->spacetime[0]) && !(laser->spacetime[1]) ){
+                LaserProfileSeparable* profile;
+                profile = static_cast<LaserProfileSeparable*> ( laser->profiles[0] );
+                if( ! profile->space_envelope ) continue;
+                isend( profile->space_envelope, to , tag );
+                isend( profile->phase, to, tag + 1);
+                profile = static_cast<LaserProfileSeparable*> ( laser->profiles[1] );
+                isend( profile->space_envelope, to , tag + 2 );
+                isend( profile->phase, to, tag + 3);
+                tag = tag + 4;
             }
         }
     }
@@ -663,14 +667,17 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
         if(! EM->emBoundCond[bcId]) continue;
         
         for (int laserId=0 ; laserId<EM->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
-            
-            for ( int profileId=0 ; profileId < EM->emBoundCond[bcId]->vecLaser[laserId]->profiles.size() ; profileId++ ) {
-                if ( EM->emBoundCond[bcId]->vecLaser[laserId]->spacetime[profileId] ) {
-                    LaserProfileSeparable* laser = static_cast<LaserProfileSeparable*> ( EM->emBoundCond[bcId]->vecLaser[laserId]->profiles[profileId] );
-                    recv( laser->space_envelope, from , tag );
-                    recv( laser->phase, from, tag + 1);
-                    tag = tag + 2;
-                }
+            Laser * laser = EM->emBoundCond[bcId]->vecLaser[laserId];
+            if( !(laser->spacetime[0]) && !(laser->spacetime[1]) ){
+                LaserProfileSeparable* profile;
+                profile = static_cast<LaserProfileSeparable*> ( laser->profiles[0] );
+                if( ! profile->space_envelope ) continue;
+                recv( profile->space_envelope, from , tag );
+                recv( profile->phase, from, tag + 1);
+                profile = static_cast<LaserProfileSeparable*> ( laser->profiles[1] );
+                recv( profile->space_envelope, from , tag + 2 );
+                recv( profile->phase, from, tag + 3);
+                tag = tag + 4;
             }
         }
     }
@@ -742,6 +749,9 @@ void SmileiMPI::computeGlobalDiags(Diagnostic* diag, int timestep)
 void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
 {
     
+    if ( !(scalars->printNow(timestep))
+      && !(scalars->timeSelection->theTimeIsNow(timestep)) ) return;
+    
     int nscalars(0);
 
     vector<string>::iterator iterKey = scalars->out_key.begin();
@@ -783,16 +793,18 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
 
         // total energy in the simulation
         double Utot = Ukin + Uelm;
-
+        
+        if (timestep==0) {
+            scalars->Energy_time_zero  = Utot;
+            scalars->EnergyUsedForNorm = scalars->Energy_time_zero;
+        }
+        
         // expected total energy
         double Uexp = scalars->Energy_time_zero + Uelm_bnd + Ukin_inj_mvw + Uelm_inj_mvw
             -           ( Ukin_bnd + Ukin_out_mvw + Uelm_out_mvw );
         
         // energy balance
         double Ubal = Utot - Uexp;
-        
-        // energy used for normalization
-        scalars->EnergyUsedForNorm = Utot;
         
         // normalized energy balance
         double Ubal_norm(0.);
@@ -804,10 +816,6 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
         scalars->setScalar("Uexp",Uexp);
         scalars->setScalar("Utot",Utot);
 
-        if (timestep==0) {
-            scalars->Energy_time_zero  = Utot;
-            scalars->EnergyUsedForNorm = scalars->Energy_time_zero;
-        }
     }
 } // END computeGlobalDiags(DiagnosticScalar& scalars ...)
 
@@ -819,5 +827,7 @@ void SmileiMPI::computeGlobalDiags(DiagnosticParticles* diagParticles, int times
 {
     if (timestep - diagParticles->timeSelection->previousTime() == diagParticles->time_average-1) {
         MPI_Reduce(diagParticles->filename.size()?MPI_IN_PLACE:&diagParticles->data_sum[0], &diagParticles->data_sum[0], diagParticles->output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        
+        if( !isMaster() ) diagParticles->clear();
     }
 } // END computeGlobalDiags(DiagnosticParticles* diagParticles ...)

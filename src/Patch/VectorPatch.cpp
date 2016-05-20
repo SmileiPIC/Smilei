@@ -115,8 +115,10 @@ void VectorPatch::sumDensities( int* diag_flag, vector<Timer>& timer )
     
     if(*diag_flag){
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
-            update_field_list(ispec);
-            SyncVectorPatch::sumRhoJs( (*this), ispec ); // MPI
+            if( ! (*this)(0)->vecSpecies[ispec]->particles->isTest ) {
+                update_field_list(ispec);
+                SyncVectorPatch::sumRhoJs( (*this), ispec ); // MPI
+            }
         }
     }
     timer[9].update();
@@ -130,6 +132,7 @@ void VectorPatch::sumDensities( int* diag_flag, vector<Timer>& timer )
 void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual, vector<Timer>& timer)
 {
     timer[2].restart();
+    
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
         // Saving magnetic fields (to compute centered fields used in the particle pusher)
@@ -192,8 +195,11 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
 {
     // Global diags: scalars + particles
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
-        if( smpi->isMaster() )
+        // MPI master creates the file
+        if( smpi->isMaster() ){
             globalDiags[idiag]->openFile( params, smpi, true );
+            globalDiags[idiag]->closeFile();
+        }
     }
     
     // Local diags : probes, track & fields
@@ -203,7 +209,7 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
         // Patch master opens the file
         (*this)(0)->localDiags[idiag]->openFile( params, smpi, true );
         // All patches initialize
-        int fileId = (*this)(0)->localDiags[idiag]->getFileId();
+        hid_t fileId = (*this)(0)->localDiags[idiag]->getFileId();
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
             // The file ID is passed to all patches
             (*this)(ipatch)->localDiags[idiag]->setFileId( fileId );
@@ -242,7 +248,7 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
         // Patch master opens the file
         (*this)(0)->localDiags[idiag]->openFile( params, smpi, false );
         // The file Id is passed to all patches
-        int fileId = (*this)(0)->localDiags[idiag]->getFileId();
+        hid_t fileId = (*this)(0)->localDiags[idiag]->getFileId();
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
             (*this)(ipatch)->localDiags[idiag]->setFileId( fileId );
             
@@ -274,8 +280,12 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
                 globalDiags[idiag]->run( (*this)(ipatch), itime );
             // MPI procs gather the data and compute
             smpi->computeGlobalDiags( globalDiags[idiag], itime);
-            // MPI master writes
-            if( smpi->isMaster() ) globalDiags[idiag]->write( itime );
+            // MPI master opens, writes, and closes
+            if ( smpi->isMaster() ) {
+                globalDiags[idiag]->openFile( params, smpi, false );
+                globalDiags[idiag]->write( itime );
+                globalDiags[idiag]->closeFile();
+            }
         }
     }
     
@@ -292,7 +302,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     }
     
     *diag_flag = 0;
-    timer[3].update();   
+    timer[3].update();
 
 } // END runAllDiags
 
@@ -560,9 +570,10 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
     
     // Backward loop on future patches...
     int existing_patch_id = -1;
-    for ( int ipatch=recv_patch_id_.size()-1 ; ipatch>=0 ; ipatch--) {
       //if      future patch hindex  >= current refHindex             AND    future patch hindex <= current last hindex
+    for ( int ipatch=recv_patch_id_.size()-1 ; ipatch>=0 ; ipatch--) {
         if ( ( recv_patch_id_[ipatch]>=refHindex_ ) && ( recv_patch_id_[ipatch] <= refHindex_ + nPatches_now - 1 ) ) {
+            //Store an existing patch id for cloning.
             existing_patch_id = recv_patch_id_[ipatch];
             //Remove this patch from the receive list because I already own it.
             recv_patch_id_.erase( recv_patch_id_.begin()+ipatch );
@@ -603,7 +614,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     newMPIrank = smpi->getRank() -1;
     oldMPIrank = smpi->getRank() -1;
     int istart( 0 );
-    int nmessage = 2*nSpecies+10;
+    int nmessage = 2*nSpecies+14;
     
     
     for (int irk=0 ; irk<smpi->getRank() ; irk++) istart += smpi->patch_count[irk];

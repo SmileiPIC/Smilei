@@ -197,6 +197,8 @@ LaserProfileSeparable::LaserProfileSeparable(
     phaseProfile ( phaseProfile ),
     primal       ( primal       )
 {
+    space_envelope = NULL;
+    phase = NULL;
 }
 // Cloning constructor
 LaserProfileSeparable::LaserProfileSeparable(LaserProfileSeparable * lp) :
@@ -207,6 +209,8 @@ LaserProfileSeparable::LaserProfileSeparable(LaserProfileSeparable * lp) :
     phaseProfile ( lp->phaseProfile ),
     primal       ( lp->primal       )
 {
+    space_envelope = NULL;
+    phase = NULL;
 }
 //Destructor
 LaserProfileSeparable::~LaserProfileSeparable()
@@ -219,15 +223,33 @@ LaserProfileSeparable::~LaserProfileSeparable()
     delete phase;
 }
 
-void LaserProfileSeparable::initFields(Params& params, Patch* patch)
+
+void LaserProfileSeparable::createFields(Params& params, Patch* patch)
 {
     if( params.geometry=="1d3v" ) {
     
-        // Create 1D fields
         vector<unsigned int> dim(1);
         dim[0] = 1;
         space_envelope = new Field1D(dim);
         phase          = new Field1D(dim);
+        
+    } else if( params.geometry=="2d3v" ) {
+        
+        unsigned int ny_p = params.n_space[1]+1+2*params.oversize[1];
+        unsigned int ny_d = ny_p+1;
+        
+        vector<unsigned int> dim(1);
+        dim[0] = primal ? ny_p : ny_d;
+        space_envelope = new Field1D(dim);
+        phase          = new Field1D(dim);
+        
+    }
+}
+
+void LaserProfileSeparable::initFields(Params& params, Patch* patch)
+{
+    if( params.geometry=="1d3v" ) {
+        
         // Assign profile (only one point in 1D)
         vector<double> yp(1);
         yp[0] = 0.;
@@ -239,12 +261,9 @@ void LaserProfileSeparable::initFields(Params& params, Patch* patch)
         unsigned int ny_p = params.n_space[1]+1+2*params.oversize[1];
         unsigned int ny_d = ny_p+1;
         double dy = params.cell_length[1];
-        
-        // Create 2D fields
         vector<unsigned int> dim(1);
         dim[0] = primal ? ny_p : ny_d;
-        space_envelope = new Field1D(dim);
-        phase          = new Field1D(dim);
+        
         // Assign profile
         vector<double> yp(1);
         yp[0] = patch->getDomainLocalMin(1) - ((primal?0.:0.5) + params.oversize[1])*dy;

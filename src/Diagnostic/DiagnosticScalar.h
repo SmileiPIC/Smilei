@@ -27,17 +27,17 @@ public :
     //! Cloning constructor
     DiagnosticScalar( DiagnosticScalar * scalar );
     //! Default destructor
-    ~DiagnosticScalar();
+    ~DiagnosticScalar() ;
     
-    virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile );
+    void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     
-    virtual void closeFile();
+    void closeFile() override;
     
-    virtual bool prepare( int timestep );
+    bool prepare( int timestep ) override;
     
-    virtual void run( Patch* patch, int timestep );
+    void run( Patch* patch, int timestep ) override;
     
-    virtual void write(int timestep);
+    void write(int timestep) override;
     
     //! get a particular scalar
     double getScalar(std::string name);
@@ -51,8 +51,13 @@ public :
     //! energy used for the normalization of energy balance (former total energy)
     double EnergyUsedForNorm;
     
-    // Specific methods
+    //! Compute the various scalars when requested
     void compute( Patch* patch, int timestep );
+    
+    //! Tell whether a printout is needed now
+    inline bool printNow( int timestep ) {
+        return (timestep % print_every == 0.);
+    }
     
 private :
     

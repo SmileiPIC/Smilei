@@ -136,33 +136,6 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
 } // END DiagnosticParticles::DiagnosticParticles
 
 
-// Cloning constructor // NOT USED
-DiagnosticParticles::DiagnosticParticles( DiagnosticParticles* diag)
-{
-    
-    output        = diag->output;
-    time_average  = diag->time_average;
-    species       = diag->species ;
-    timeSelection = new TimeSelection(diag->timeSelection);
-    
-    for (unsigned int iaxis=0; iaxis<diag->axes.size(); iaxis++ ) {
-        DiagnosticParticlesAxis tmpAxis;
-        tmpAxis.type           = diag->axes[iaxis].type;
-        tmpAxis.min            = diag->axes[iaxis].min;
-        tmpAxis.max            = diag->axes[iaxis].max;
-        tmpAxis.nbins          = diag->axes[iaxis].nbins;
-        tmpAxis.logscale       = diag->axes[iaxis].logscale;
-        tmpAxis.edge_inclusive = diag->axes[iaxis].edge_inclusive;
-        axes.push_back(tmpAxis);
-    }
-    
-    output_size = diag->output_size;
-    
-    type_ = "Particles";
-}
-
-
-
 DiagnosticParticles::~DiagnosticParticles()
 {
     delete timeSelection;
@@ -246,7 +219,7 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
     vector<int> index_array;
     vector<double> *x, *y, *z, *px, *py, *pz, *w, *chi=NULL, axis_array, data_array;
     vector<short> *q;
-    int nbins = vecSpecies[0]->bmin.size(); // number of bins in the particles binning (openMP)
+    int nbins = vecSpecies[0]->bmin.size(); // number of bins in the particles binning
     int bmin, bmax, axissize, ind;
     double axismin, axismax, mass, coeff;
     string axistype;
@@ -276,8 +249,7 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
         
         fill(index_array.begin(), index_array.end(), 0);
         
-        // loop each openMP bin
-        //! \todo Make OpenMP parallelization
+        // loop each bin
         for (int ibin=0 ; ibin<nbins ; ibin++) {
             
             bmin = s->bmin[ibin];
@@ -493,7 +465,7 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
         } // loop bins
         
     } // loop species
-
+    
 } // END run
 
 
@@ -522,6 +494,14 @@ void DiagnosticParticles::write(int timestep)
         WARNING("DIAG PARTICLES COULD NOT WRITE");
     
     // Clear the array
-    data_sum.resize(0); 
-
+    clear();
+    data_sum.resize(0);
+    
 } // END write
+
+
+//! Clear the array
+void DiagnosticParticles::clear() {
+    data_sum.resize(0);
+    vector<double>().swap( data_sum );
+}

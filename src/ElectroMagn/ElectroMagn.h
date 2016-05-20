@@ -227,7 +227,6 @@ public:
     virtual void centerMagneticFields() = 0;
     void boundaryConditions(int itime, double time_dual, Patch* patch, Params &params, SimWindow* simWindow);
 
-    void movingWindow_x(unsigned int shift);
     void laserDisabled();
     
     virtual void incrementAvgFields(unsigned int time_step) = 0;
