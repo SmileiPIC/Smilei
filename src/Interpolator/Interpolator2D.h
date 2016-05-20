@@ -13,8 +13,6 @@ public:
     Interpolator2D(Params& params, Patch *patch);
 
     virtual ~Interpolator2D() {};
-    virtual void mv_win(unsigned int shift) {i_domain_begin += shift;}
-    virtual void setMvWinLimits(unsigned int shift) {i_domain_begin = shift;}
 
     virtual void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc) = 0;
     virtual void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread) = 0;
