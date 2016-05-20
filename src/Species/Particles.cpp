@@ -595,19 +595,19 @@ void Particles::sortById() {
     
 }
 
-bool Particles::test_move( int iPartStart, int iPartEnd, Params& params )
-{
-    for ( int iDim = 0 ; iDim < Position.size() ; iDim++ ) {
-	double dx2 = params.cell_length[iDim]*params.cell_length[iDim];
-	for (int iPart = iPartStart ; iPart < iPartEnd ; iPart++ ) {
-	    if ( dist(iPart,iDim) > dx2 ) {
-		ERROR( "Too large displacment for particle : " << iPart << "\t: " << (*this)(iPart) );
-		return false;
-	    }
-	}
-    }
-
-}
+//bool Particles::test_move( int iPartStart, int iPartEnd, Params& params )
+//{
+//    for ( int iDim = 0 ; iDim < Position.size() ; iDim++ ) {
+//	double dx2 = params.cell_length[iDim]*params.cell_length[iDim];
+//	for (int iPart = iPartStart ; iPart < iPartEnd ; iPart++ ) {
+//	    if ( dist(iPart,iDim) > dx2 ) {
+//		ERROR( "Too large displacment for particle : " << iPart << "\t: " << (*this)(iPart) );
+//		return false;
+//	    }
+//	}
+//    }
+//
+//}
 
 Particle Particles::operator()(int iPart)
 {

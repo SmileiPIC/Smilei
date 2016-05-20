@@ -124,7 +124,6 @@ int main (int argc, char* argv[])
         double restart_time_dual = (checkpoint.this_run_start_step +0.5) * params.timestep;
         time_dual = restart_time_dual;
         if ( simWindow ) {
-            simWindow->setOperators(vecPatches);
             if ( simWindow->isMoving(restart_time_dual) ) {
                 simWindow->operate_arnaud(vecPatches, smpiData, params);
             }

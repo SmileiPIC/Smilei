@@ -44,7 +44,7 @@ public:
     void finishCloning( Patch* patch, Params& params, SmileiMPI* smpi );
 
     //! Destructor for Patch
-    ~Patch();
+    virtual ~Patch();
 
     // Main PIC objects : data & operators
     // -----------------------------------
@@ -131,13 +131,6 @@ public:
     if ( neighbor_[dir][way] == MPI_PROC_NULL )
         return true;
     return false;
-    }
-
-    //! Return MPI rank of this->hrank +/- 1
-    //! Should be replaced by an analytic formula
-    virtual int getMPIRank(int hrank_pm1) {
-        ERROR("Should not happen");
-        return 0;
     }
 
     //! Compute MPI rank of neigbors patch regarding neigbors patch Ids

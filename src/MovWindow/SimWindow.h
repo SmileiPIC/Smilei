@@ -43,9 +43,6 @@ class SimWindow {
     void   setXmoved(double new_val) {x_moved = new_val;}
     //! Set total number of cells the window has moved (restart case)
     void   setNmoved(int new_val) {n_moved = new_val;}
-
-    //! Set the simulation window (particles, fields, MPI environment & operator related to the grid) in restart case
-    void setOperators(VectorPatch& vecPatches);
     
 
  private:

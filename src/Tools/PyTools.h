@@ -423,6 +423,8 @@ public:
                 vec.push_back( v );
             }
         }
+        //This should never happen
+        return false;
     }
     
 };

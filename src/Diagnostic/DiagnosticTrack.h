@@ -16,18 +16,18 @@ public :
     //! Cloning constructor
     DiagnosticTrack(DiagnosticTrack* track, Patch* patch);
     //! Default destructor
-    ~DiagnosticTrack();
+    ~DiagnosticTrack() ;
     
-    virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile );
-    void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches );
+    void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
+    void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches ) override;
     
-    virtual void closeFile();
+    void closeFile() override;
     
-    virtual bool prepare( int timestep );
+    bool prepare( int timestep ) override;
     
-    virtual void run( Patch* patch, int timestep );
+    void run( Patch* patch, int timestep ) override;
     
-    virtual void write(int timestep);
+    void write(int timestep) override;
     
     void setGlobalNbrParticles(int totNbrParts) {
         nbrParticles_ = totNbrParts;
