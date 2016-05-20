@@ -44,7 +44,7 @@ public:
     void finishCloning( Patch* patch, Params& params, SmileiMPI* smpi );
 
     //! Destructor for Patch
-    ~Patch();
+    virtual ~Patch();
 
     // Main PIC objects : data & operators
     // -----------------------------------
