@@ -158,6 +158,8 @@ class Species(SmileiComponent):
     nb_density = None
     mean_velocity = [0.]
     temperature = [1e-10]
+    thermT = None
+    thermVelocity = None
     dynamics_type = "norm"
     time_frozen = 0.0
     radiating = False
