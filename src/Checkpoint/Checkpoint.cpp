@@ -138,14 +138,17 @@ bool Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* s
 void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI* smpi, SimWindow* simWin,  Params &params )
 {
 
-    hid_t fid, sid, aid, tid;
+    hid_t sid, aid, tid;
 		
-    ostringstream nameDump("");
+    /*ostringstream nameDump("");
     nameDump << "dump-" << setfill('0') << setw(4) << dump_times%dump_file_sequence << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
-    fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);*/
+    unsigned int num_dump=dump_times%dump_file_sequence;
+    
+    hid_t fid = H5Fcreate( dumpName(num_dump,smpi).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     dump_times++;
 
-    MESSAGEALL("Step " << itime << " : DUMP fields and particles " << nameDump.str());    
+    MESSAGEALL("Step " << itime << " : DUMP fields and particles " << dumpName(num_dump,smpi));    
 
     H5::attr(fid, "Version", string(__VERSION));
     //H5::attr(fid, "CommitDate", string(__COMMITDATE));
@@ -206,15 +209,15 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
 	string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->species_type;
 	hid_t gid = H5::group(patch_gid, groupName);
 		
-	sid = H5Screate(H5S_SCALAR);
+	/*sid = H5Screate(H5S_SCALAR);
 	aid = H5Acreate(gid, "partCapacity", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
 	unsigned int partCapacity=vecSpecies[ispec]->particles->capacity();
 	H5Awrite(aid, H5T_NATIVE_UINT, &partCapacity);
 	H5Aclose(aid);
-	H5Sclose(sid);
+	H5Sclose(sid);*/
 
-        //H5::attr(gid, "partCapacity", vecSpecies[ispec]->particles->capacity());
-        //H5::attr(gid, "partSize", vecSpecies[ispec]->particles->size());
+        H5::attr(gid, "partCapacity", vecSpecies[ispec]->particles->capacity());
+        H5::attr(gid, "partSize", vecSpecies[ispec]->particles->size());
         
 	if (vecSpecies[ispec]->particles->size()>0) {
 	    hsize_t dimsPart[1] = {vecSpecies[ispec]->getNbrOfParticles()};
@@ -295,6 +298,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, unsigned int &itime,  Smil
 	     H5Aclose(aid);
 	     H5Fclose(fid);
 	     if (itimeTmp>itime) {
+                 this_run_start_step=itimeTmp;
 		 itime=itimeTmp;
 		 nameDump=dump_name.c_str();
 		 dump_times=num_dump;
