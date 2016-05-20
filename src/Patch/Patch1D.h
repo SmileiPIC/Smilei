@@ -19,28 +19,28 @@ public:
     void initStep2(Params& params) override;
     
     //! Destructor for Patch
-    ~Patch1D() override {};
+    ~Patch1D() override final {};
 
     // MPI exchange/sum methods for particles/fields
     //   - fields communication specified per geometry (pure virtual)
     // --------------------------------------------------------------
 
     //! init comm / sum densities
-    void initSumField( Field* field, int iDim ) override;
+    void initSumField( Field* field, int iDim ) override final;
     //! finalize comm / sum densities
-    void finalizeSumField( Field* field, int iDim ) override;
+    void finalizeSumField( Field* field, int iDim ) override final;
 
     //! init comm / exchange fields
-    void initExchange( Field* field ) override;
+    void initExchange( Field* field ) override final;
     //! finalize comm / exchange fields
-    void finalizeExchange( Field* field ) override;
+    void finalizeExchange( Field* field ) override final;
     //! init comm / exchange fields in direction iDim only
-    void initExchange( Field* field, int iDim ) override;
+    void initExchange( Field* field, int iDim ) override final;
     //! finalize comm / exchange fields in direction iDim only
-    void finalizeExchange( Field* field, int iDim ) override;
+    void finalizeExchange( Field* field, int iDim ) override final;
 
     // Create MPI_Datatype to exchange fields
-    void createType( Params& params ) override;
+    void createType( Params& params ) override final;
 
     //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial]
     MPI_Datatype ntypeSum_[2][2];
@@ -49,25 +49,6 @@ public:
     MPI_Datatype ntype_[2][2];
     // Use a buffer per direction to exchange data before summing
     Field1D buf[1][2];
-
-    //! Should be pure virtual, see Patch class
-    inline bool isWestern()  { return locateOnBorders(0, 0); }
-    //! Should be pure virtual, see Patch class
-    inline bool isEastern()  { return locateOnBorders(0, 1); }
-    //inline bool isSouthern() { return locateOnBorders(1, 0); }
-    //inline bool isNorthern() { return locateOnBorders(1, 1); }
-
-    //! Return MPI rank of this->hrank +/- 1
-    //! Should be replaced by an analytic formula
-    inline int getMPIRank(int hrank_pm1) override {
-	if  (hrank_pm1 == neighbor_[0][0]) return MPI_neighbor_[0][0];
-	else if  (hrank_pm1 == neighbor_[0][1]) return MPI_neighbor_[0][1];
-	//else if  (hrank_pm1 == neighbor_[1][0]) return MPI_neighbor_[1][0];
-	//else if  (hrank_pm1 == neighbor_[1][1]) return MPI_neighbor_[1][1];
-	else
-	    return MPI_PROC_NULL;
-    }
-
 
 
 };
