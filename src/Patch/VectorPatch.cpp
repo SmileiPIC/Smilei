@@ -570,9 +570,10 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
     
     // Backward loop on future patches...
     int existing_patch_id = -1;
-    for ( int ipatch=recv_patch_id_.size()-1 ; ipatch>=0 ; ipatch--) {
       //if      future patch hindex  >= current refHindex             AND    future patch hindex <= current last hindex
+    for ( int ipatch=recv_patch_id_.size()-1 ; ipatch>=0 ; ipatch--) {
         if ( ( recv_patch_id_[ipatch]>=refHindex_ ) && ( recv_patch_id_[ipatch] <= refHindex_ + nPatches_now - 1 ) ) {
+            //Store an existing patch id for cloning.
             existing_patch_id = recv_patch_id_[ipatch];
             //Remove this patch from the receive list because I already own it.
             recv_patch_id_.erase( recv_patch_id_.begin()+ipatch );
