@@ -69,7 +69,7 @@ void SmileiMPI::bcast( string& val )
 
     char tmp[charSize];
     if (isMaster()) strcpy(tmp, val.c_str());
-    MPI_Bcast(&tmp, charSize, MPI_CHAR, 0, SMILEI_COMM_WORLD);
+    MPI_Bcast(tmp, charSize, MPI_CHAR, 0, SMILEI_COMM_WORLD);
 
     if (!isMaster()) val=tmp;
 

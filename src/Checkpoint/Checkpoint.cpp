@@ -34,6 +34,8 @@ dump_step(0),
 dump_minutes(0.0),
 exit_after_dump(true),
 dump_file_sequence(2),
+dump_deflate(0),
+restart_dir(""),
 dump_request(smpi->getSize())
 {
     if( PyTools::nComponents("DumpRestart") > 0 ) {
@@ -138,14 +140,17 @@ bool Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* s
 void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI* smpi, SimWindow* simWin,  Params &params )
 {
 
-    hid_t fid, sid, aid, tid;
+    hid_t sid, aid, tid;
 		
-    ostringstream nameDump("");
+    /*ostringstream nameDump("");
     nameDump << "dump-" << setfill('0') << setw(4) << dump_times%dump_file_sequence << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
-    fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);*/
+    unsigned int num_dump=dump_times%dump_file_sequence;
+    
+    hid_t fid = H5Fcreate( dumpName(num_dump,smpi).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     dump_times++;
 
-    MESSAGEALL("Step " << itime << " : DUMP fields and particles " << nameDump.str());    
+    MESSAGEALL("Step " << itime << " : DUMP fields and particles " << dumpName(num_dump,smpi));    
 
     H5::attr(fid, "Version", string(__VERSION));
     //H5::attr(fid, "CommitDate", string(__COMMITDATE));
@@ -206,15 +211,15 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
 	string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->species_type;
 	hid_t gid = H5::group(patch_gid, groupName);
 		
-	sid = H5Screate(H5S_SCALAR);
+	/*sid = H5Screate(H5S_SCALAR);
 	aid = H5Acreate(gid, "partCapacity", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
 	unsigned int partCapacity=vecSpecies[ispec]->particles->capacity();
 	H5Awrite(aid, H5T_NATIVE_UINT, &partCapacity);
 	H5Aclose(aid);
-	H5Sclose(sid);
+	H5Sclose(sid);*/
 
-        //H5::attr(gid, "partCapacity", vecSpecies[ispec]->particles->capacity());
-        //H5::attr(gid, "partSize", vecSpecies[ispec]->particles->size());
+        H5::attr(gid, "partCapacity", vecSpecies[ispec]->particles->capacity());
+        H5::attr(gid, "partSize", vecSpecies[ispec]->particles->size());
         
 	if (vecSpecies[ispec]->particles->size()>0) {
 	    hsize_t dimsPart[1] = {vecSpecies[ispec]->getNbrOfParticles()};
@@ -267,27 +272,38 @@ void Checkpoint::dumpMovingWindow(hid_t fid, SimWindow* simWin)
 
 }
 
+
+string Checkpoint::dumpName(unsigned int num, SmileiMPI *smpi) {
+    ostringstream nameDumpTmp("");
+    nameDumpTmp << "dump-" << setfill('0') << setw(1+log10(dump_file_sequence)) << num << "-" << setfill('0') << setw(1+log10(smpi->getSize())) << smpi->getRank() << ".h5" ;
+    return nameDumpTmp.str();
+}
+
+
 void Checkpoint::restartAll( VectorPatch &vecPatches, unsigned int &itime,  SmileiMPI* smpi, SimWindow* simWin, Params &params )
 { 
 	
      string nameDump("");
 	
      // This will open both dumps and pick the last one
-     for (unsigned int i=0;i<dump_file_sequence; i++) {
-	 ostringstream nameDumpTmp("");
-	 nameDumpTmp << "dump-" << setfill('0') << setw(4) << i << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
-	 ifstream f(nameDumpTmp.str().c_str());
+     for (unsigned int num_dump=0;num_dump<dump_file_sequence; num_dump++) {
+	 //ostringstream nameDumpTmp("");
+	 //nameDumpTmp << "dump-" << setfill('0') << setw(4) << i << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
+	 //ifstream f(nameDumpTmp.str().c_str());
+         string dump_name=restart_dir+dumpName(num_dump,smpi);
+         ifstream f(dump_name.c_str());
 	 if (f.good()) {
-	     hid_t fid = H5Fopen( nameDumpTmp.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT);			
+	     hid_t fid = H5Fopen( dump_name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);			
 	     hid_t aid = H5Aopen(fid, "dump_step", H5T_NATIVE_UINT);
 	     unsigned int itimeTmp=0;
 	     H5Aread(aid, H5T_NATIVE_UINT, &itimeTmp);	
 	     H5Aclose(aid);
 	     H5Fclose(fid);
 	     if (itimeTmp>itime) {
+                 this_run_start_step=itimeTmp;
 		 itime=itimeTmp;
-		 nameDump=nameDumpTmp.str();
-		 dump_times=i;
+		 nameDump=dump_name.c_str();
+		 dump_times=num_dump;
 	     }
 	 }
 	 f.close();

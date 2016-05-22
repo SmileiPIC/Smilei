@@ -21,23 +21,23 @@ public :
     //! Cloning constructor
     DiagnosticProbes(DiagnosticProbes*, Params&, Patch* );
     //! Default destructor
-    ~DiagnosticProbes();
+    ~DiagnosticProbes() ;
     
     void initParticles(Params&, Patch *);
     
-    virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile );
+    void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     
-    virtual void closeFile();
+    void closeFile() override;
     
-    virtual bool prepare( int timestep );
+    bool prepare( int timestep ) override;
     
-    virtual void run( Patch* patch, int timestep );
+    void run( Patch* patch, int timestep ) override;
     
-    virtual void write(int timestep);
+    void write(int timestep) override;
     
-    void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches );
+    void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches ) override;
     
-    void init();
+    void init() override;
     
     void compute(unsigned int timestep, ElectroMagn* EMfields);
     

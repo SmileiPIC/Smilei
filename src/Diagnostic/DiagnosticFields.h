@@ -10,17 +10,17 @@ public :
     
     DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patch, int );
     DiagnosticFields( DiagnosticFields*, Patch* );
-    ~DiagnosticFields();
+    ~DiagnosticFields() ;
     
-    virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile );
+    virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     
-    virtual void closeFile();
+    virtual void closeFile() override;
     
-    virtual bool prepare( int timestep );
+    virtual bool prepare( int timestep ) override;
     
-    virtual void run( Patch* patch, int timestep );
+    virtual void run( Patch* patch, int timestep ) override;
     
-    virtual void write(int timestep);
+    virtual void write(int timestep) override;
     
     virtual void updatePattern(Params& params, Patch* patch ) {};
     

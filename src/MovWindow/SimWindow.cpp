@@ -205,21 +205,3 @@ bool SimWindow::isMoving(double time_dual)
     return ( (nspace_win_x_) && ((time_dual - delay_)*velocity_x_ > x_moved) );
 }
 
-void SimWindow::setOperators(VectorPatch& vecPatches)
-{
-
-    for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {
-
-	vecPatches(ipatch)->updateMvWinLimits( x_moved, n_moved );
-
-	for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
-	    vecPatches(ipatch)->vecSpecies[ispec]->updateMvWinLimits(x_moved);
-	}
-
-	vecPatches(ipatch)->Interp->setMvWinLimits( vecPatches(ipatch)->getCellStartingGlobalIndex(0) );
-	vecPatches(ipatch)->Proj->setMvWinLimits  ( vecPatches(ipatch)->getCellStartingGlobalIndex(0) );
-
-    }
-
-
-}

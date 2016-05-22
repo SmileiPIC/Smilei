@@ -37,19 +37,21 @@ public :
     
     //! Default constructor
     DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+    //! Cloning constructor
+    DiagnosticParticles( DiagnosticParticles* );
     //! Default destructor
-    ~DiagnosticParticles();
+    ~DiagnosticParticles() ;
     
-    virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile );
+    void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     
-    virtual void closeFile();
+    void closeFile() override;
     
-    virtual bool prepare( int timestep );
+    bool prepare( int timestep ) override;
     
-    virtual void run( Patch* patch, int timestep );
+    void run( Patch* patch, int timestep ) override;
     
-    virtual void write(int timestep);
-    
+    void write(int timestep) override;
+
     //! Clear the array
     void clear();
      

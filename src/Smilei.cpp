@@ -125,7 +125,6 @@ int main (int argc, char* argv[])
         time_dual = restart_time_dual;
         // A revoir !
         if ( simWindow ) {
-            simWindow->setOperators(vecPatches);
             if ( simWindow->isMoving(restart_time_dual) ) {
                 simWindow->operate(vecPatches, smpiData, params);
             }

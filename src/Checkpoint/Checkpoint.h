@@ -78,7 +78,9 @@ public:
     unsigned int this_run_start_step;
 
 private:
-    
+    //! get dump name based on number and rank
+    std::string dumpName(unsigned int num, SmileiMPI *smpi);
+  
     //! initialize the time zero of the simulation 
     void initDumpCases();
 	
