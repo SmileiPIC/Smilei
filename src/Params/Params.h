@@ -89,14 +89,6 @@ public:
    
     // 2D Maxwell Solver  
     std::string maxwell_sol; 
- 
-    //! window simulation box size in number of cells
-    int nspace_win_x;
-    //! Time at which the moving window starts.
-    double delay;
-    //! Velocity of the moving window along x in c.
-    double velocity_x;
-    
     
     //! Clusters width
     //unsigned int clrw;
@@ -147,14 +139,16 @@ public:
     //! Number of patches per direction
     std::vector<int> number_of_patches;
     //! Load balancing frequency
-    int balancing_freq;
+    int balancing_every;
     //! Load coefficient applied to a cell (default = 1)
     double coef_cell;
     //! Load coefficient applied to a frozen particle (default = 0.1)
     double coef_frozen;
     //! Return if number of patch = number of MPI process, to tune IO //ism
     bool one_patch_per_MPI;
-
+    
+    //! Tells whether there is a moving window
+    bool hasWindow;
 
     //! Log2 of the number of patch in the whole simulation box in every direction.
     //! The number of patch in a given direction MUST be a power of 2 and is 2^(mi[i]).

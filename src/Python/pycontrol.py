@@ -72,9 +72,9 @@ def _keep_python_running():
         prof = ant.time_profile
         if callable(prof) and not hasattr(prof,"profileName"): return True
     
-    if not MovingWindow.nspace_x == 0:
+    if len(MovingWindow)>0:
         return True
-
+    
     return False
 
 # Prevent creating new components (by mistake)

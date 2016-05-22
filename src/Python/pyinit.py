@@ -129,9 +129,8 @@ class LoadBalancing(SmileiSingleton):
 class MovingWindow(SmileiSingleton):
     """Moving window parameters"""
     
-    delay = 0.
+    time_start = 0.
     velocity_x = 1.
-    nspace_x = 0
 
 
 class DumpRestart(SmileiSingleton):

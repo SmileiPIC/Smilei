@@ -38,34 +38,35 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     
     // -----------------------------
     // Define limits of local domain
-    if (!params.nspace_win_x) {
-        x_min = max( x_min_global, patch->getDomainLocalMin(0) );
-        x_max = min( x_max_global, patch->getDomainLocalMax(0) );
-    }
-    else {
+    if (params.bc_em_type_x[0]=="periodic" || params.hasWindow) {
         x_min = patch->getDomainLocalMin(0);
         x_max = patch->getDomainLocalMax(0);
     }
-
+    else {
+        x_min = max( x_min_global, patch->getDomainLocalMin(0) );
+        x_max = min( x_max_global, patch->getDomainLocalMax(0) );
+    }
+    
     if ( nDim_particle > 1 ) {
-	if (params.bc_em_type_y[0]=="periodic") {
-	    y_min = patch->getDomainLocalMin(1);
-	    y_max = patch->getDomainLocalMax(1);
-	}
-	else {
-	    y_min = max( y_min_global, patch->getDomainLocalMin(1) );
-	    y_max = min( y_max_global, patch->getDomainLocalMax(1) );
-	}
+        if (params.bc_em_type_y[0]=="periodic") {
+            y_min = patch->getDomainLocalMin(1);
+            y_max = patch->getDomainLocalMax(1);
+        }
+        else {
+            y_min = max( y_min_global, patch->getDomainLocalMin(1) );
+            y_max = min( y_max_global, patch->getDomainLocalMax(1) );
+        }
+        
         if ( nDim_particle > 2 ) {
-	    if (params.bc_em_type_z[0]=="periodic") {
-		z_min = patch->getDomainLocalMin(2);
-		z_max = patch->getDomainLocalMax(2);
-	    }
-	    else {
-		z_min = max( z_min_global, patch->getDomainLocalMin(2) );
-		z_max = min( z_max_global, patch->getDomainLocalMax(2) );
-	    }
-	}
+            if (params.bc_em_type_z[0]=="periodic") {
+                z_min = patch->getDomainLocalMin(2);
+                z_max = patch->getDomainLocalMax(2);
+            }
+            else {
+                z_min = max( z_min_global, patch->getDomainLocalMin(2) );
+                z_max = min( z_max_global, patch->getDomainLocalMax(2) );
+            }
+        }
     }
 
 

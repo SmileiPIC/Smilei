@@ -5,7 +5,6 @@
 import math
 
 L0 = 2.*math.pi
-referenceAngularFrequency_SI = L0 * 3e8 /1.e-6
 
 Main(
     geometry = "1d3v",
@@ -21,9 +20,11 @@ Main(
     cell_length = [0.01 * L0],
     sim_length  = [1. * L0],
     
-    number_of_patches = [ 1 ], # or 4
+    number_of_patches = [ 4 ],
     
     bc_em_type_x  = ["periodic"],
+    
+    referenceAngularFrequency_SI = L0 * 3e8 /1.e-6,
     
     random_seed = 0,
     

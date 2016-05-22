@@ -3,6 +3,11 @@
 # ----------------------------------------------------------------------------------------
 
 import math
+dx = 0.125
+nx = 896
+Lx = nx * dx
+npatch_x = 128
+
 Main(
     geometry = "2d3v",
     
@@ -11,12 +16,12 @@ Main(
     timestep = 0.124,
     sim_time = 150,
     
-    cell_length  = [0.125, 3.] ,
-    sim_length = [ cell_length[0]*896,  120.]  ,
+    cell_length  = [dx, 3.],
+    sim_length = [ Lx,  120.],
     
-    number_of_patches = [128, 8],
+    number_of_patches = [npatch_x, 8],
     
-    clrw = nspace_win_x/number_of_patches[0],
+    clrw = nx/npatch_x,
     
     bc_em_type_x = ["silver-muller","silver-muller"],
     bc_em_type_y = ["silver-muller","silver-muller"],
@@ -27,7 +32,7 @@ Main(
 )
 
 MovingWindow(
-    time_start = sim_length[0],
+    time_start = 0.5*Lx,
     velocity_x = 0.9997
 )
 
@@ -82,7 +87,7 @@ Species(
 LaserGaussian2D(
     boxSide         = "west",
     a0              = 2.,
-    focus           = [0., sim_length[1]/2.],
+    focus           = [0., Lx/2.],
     waist           = 26.16,
     time_envelope   = tgaussian(center=17.84, fwhm=19.80)
 )

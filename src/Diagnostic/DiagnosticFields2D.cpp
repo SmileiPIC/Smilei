@@ -119,11 +119,7 @@ void DiagnosticFields2D::createPattern( Params& params, Patch* patch )
             // in the file.
             //
             hsize_t     dimsf[2];
-            if (!params.nspace_win_x)
-                dimsf[0] = params.n_space_global[0]+1+ix_isPrim;
-            else
-                dimsf[0] = params.nspace_win_x+1+ix_isPrim;
-            
+            dimsf[0] = params.n_space_global[0]+1+ix_isPrim;
             dimsf[1] = params.n_space_global[1]+1+iy_isPrim;
 
             hid_t filespace = H5Screate_simple(params.nDim_field, dimsf, NULL);

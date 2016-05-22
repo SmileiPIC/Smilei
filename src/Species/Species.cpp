@@ -899,7 +899,7 @@ void Species::updateMvWinLimits(double x_moved)
 //Do we have to project this species ?
 bool Species::isProj(double time_dual, SimWindow* simWindow) {
 
-    return time_dual > time_frozen  || (simWindow && simWindow->isMoving(time_dual)) ;
+    return time_dual > time_frozen  || (simWindow->isMoving(time_dual)) ;
   
     //Recompute frozen particles density if
     //moving window is activated, actually moving at this time step, and we are not in a density slope.

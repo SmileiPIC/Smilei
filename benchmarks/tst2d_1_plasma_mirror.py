@@ -18,7 +18,7 @@ Main(
     interpolation_order = 2 ,
     
     cell_length = [l0/resx,l0/resx],
-    sim_length  = Lsim
+    sim_length  = Lsim,
     
     number_of_patches = [ 16, 8 ],
     

@@ -12,28 +12,36 @@
 #include <iostream>
 #include <omp.h>
 #include <fstream>
+#include <limits>
 
 using namespace std;
 
 SimWindow::SimWindow(Params& params)
 {
-    nspace_win_x_ = params.nspace_win_x;
+    // ------------------------
+    // Moving window parameters
+    // ------------------------
+    active = false;
+    time_start = numeric_limits<double>::max();
+    velocity_x = 1.;
+    
+    if( PyTools::nComponents("MovingWindow") ) {
+        active = true;
+        
+        PyTools::extract("time_start",time_start, "MovingWindow");
+        
+        PyTools::extract("velocity_x",velocity_x, "MovingWindow");
+    }
+    
     cell_length_x_   = params.cell_length[0];
     x_moved = 0.;      //The window has not moved at t=0. Warning: not true anymore for restarts.
-    n_moved = 0;      //The window has not moved at t=0. Warning: not true anymore for restarts.
-    velocity_x_ = params.velocity_x; 
-    int nthds(1);
-    #ifdef _OPENMP
-        nthds = omp_get_max_threads();
-    #endif
-    patch_to_be_created.resize(nthds);
-
-    delay_ = params.delay;
-    MESSAGE(1,"Moving window is active:");
-    MESSAGE(2,"nspace_win_x_ : " << nspace_win_x_);
-    MESSAGE(2,"cell_length_x_ : " << cell_length_x_);
-    MESSAGE(2,"velocity_x_ : " << velocity_x_);
-    MESSAGE(2,"delay_ : " << delay_);
+    n_moved = 0 ;      //The window has not moved at t=0. Warning: not true anymore for restarts.
+    
+    if( active ) {
+        MESSAGE(1,"Moving window is active:");
+        MESSAGE(2,"velocity_x : " << velocity_x);
+        MESSAGE(2,"time_start : " << time_start);
+    }
     
 }
 
@@ -45,8 +53,8 @@ SimWindow::~SimWindow()
 void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params)
 {
 
-        x_moved += cell_length_x_*params.n_space[0];
-        n_moved += params.n_space[0];
+    x_moved += cell_length_x_*params.n_space[0];
+    n_moved += params.n_space[0];
 
     // Store current number of patch on current MPI process
     // Don't move during this process
@@ -65,7 +73,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     
     // Shift the patches, new patches will be created directly with their good patchid
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
-	vecPatches(ipatch)->neighbor_[0][1] = vecPatches(ipatch)->hindex;
+        vecPatches(ipatch)->neighbor_[0][1] = vecPatches(ipatch)->hindex;
         vecPatches(ipatch)->hindex = vecPatches(ipatch)->neighbor_[0][0];
     }
     // Init new patches (really new and received)
@@ -83,14 +91,14 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         // Patch à supprimer
         if ( vecPatches(ipatch)->isWestern() ) {
 
-	    // Compute energy lost 
-	    energy_field_lost += vecPatches(ipatch)->EMfields->computeNRJ();
-	    for ( int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size() ; ispec++ )
-		energy_part_lost[ispec] += vecPatches(ipatch)->vecSpecies[ispec]->computeNRJ();
+            // Compute energy lost 
+            energy_field_lost += vecPatches(ipatch)->EMfields->computeNRJ();
+            for ( int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size() ; ispec++ )
+                energy_part_lost[ispec] += vecPatches(ipatch)->vecSpecies[ispec]->computeNRJ();
 
             delete  vecPatches.patches_[ipatch];
             vecPatches.patches_[ipatch] = NULL;
-	    vecPatches.patches_.erase( vecPatches.patches_.begin() + ipatch );
+            vecPatches.patches_.erase( vecPatches.patches_.begin() + ipatch );
 
         }
     }
@@ -98,7 +106,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     // Sync / Patches done for these diags -> Store in patch master 
     vecPatches(0)->EMfields->storeNRJlost( energy_field_lost );
     for ( int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size() ; ispec++ )
-	vecPatches(0)->vecSpecies[ispec]->storeNRJlost( energy_part_lost[ispec] );
+        vecPatches(0)->vecSpecies[ispec]->storeNRJlost( energy_part_lost[ispec] );
 
     nPatches = vecPatches.size();
 
@@ -110,7 +118,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             if ( vecPatches(ipatch)->hindex > vecPatches(jpatch)->hindex ) {
                 Patch* tmp = vecPatches(ipatch);
                 vecPatches.patches_[ipatch] = vecPatches.patches_[jpatch];
-        	vecPatches.patches_[jpatch] = tmp;
+                vecPatches.patches_[jpatch] = tmp;
             }
         }
         jpatch--;
@@ -121,7 +129,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                 //if my MPI left neighbor is not me AND I'm not a newly created patch, send me !
                 if ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][0] && vecPatches(ipatch)->hindex == vecPatches(ipatch)->neighbor_[0][0] ) {
                     smpi->isend( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighbor_[0][0], vecPatches(ipatch)->hindex*nmessage );
-		    //cout << vecPatches(ipatch)->MPI_me_ << " send : " << vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " & " << vecPatches(ipatch)->vecSpecies[1]->getNbrOfParticles() << endl;
+                    //cout << vecPatches(ipatch)->MPI_me_ << " send : " << vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " & " << vecPatches(ipatch)->vecSpecies[1]->getNbrOfParticles() << endl;
                 }
             }
             // Patch à recevoir
@@ -129,7 +137,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                 //if my MPI right neighbor is not me AND my MPI right neighbor exists AND I am a newly created patch, I receive !
                 if ( ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][1] ) && ( vecPatches(ipatch)->MPI_neighbor_[0][1] != MPI_PROC_NULL )  && (vecPatches(ipatch)->neighbor_[0][0] != vecPatches(ipatch)->hindex) ){
                     smpi->recv( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighbor_[0][1], vecPatches(ipatch)->hindex*nmessage, params );
-		    //cout << vecPatches(ipatch)->MPI_me_ << " recv : " << vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " & " << vecPatches(ipatch)->vecSpecies[1]->getNbrOfParticles() << endl;
+                    //cout << vecPatches(ipatch)->MPI_me_ << " recv : " << vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " & " << vecPatches(ipatch)->vecSpecies[1]->getNbrOfParticles() << endl;
                 }
             }
 
@@ -143,7 +151,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 
             delete vecPatches.patches_[ipatch];
             vecPatches.patches_[ipatch] = NULL;
-	    vecPatches.patches_.erase( vecPatches.patches_.begin() + ipatch );
+            vecPatches.patches_.erase( vecPatches.patches_.begin() + ipatch );
 
         }
 
@@ -153,31 +161,31 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 
     // Finish shifting the patches, new patches will be created directly with their good patches
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
-	if (vecPatches(ipatch)->neighbor_[0][0] != vecPatches(ipatch)->hindex) continue;
-	    
-	//For now also need to update neighbor_, corner_neighbor and their MPI counterparts even if these will be obsolete eventually.
-	vecPatches(ipatch)->corner_neighbor_[1][0]= vecPatches(ipatch)->neighbor_[1][0];
-	vecPatches(ipatch)->neighbor_[1][0]=        vecPatches(ipatch)->corner_neighbor_[0][0];
+        if (vecPatches(ipatch)->neighbor_[0][0] != vecPatches(ipatch)->hindex) continue;
+            
+        //For now also need to update neighbor_, corner_neighbor and their MPI counterparts even if these will be obsolete eventually.
+        vecPatches(ipatch)->corner_neighbor_[1][0]= vecPatches(ipatch)->neighbor_[1][0];
+        vecPatches(ipatch)->neighbor_[1][0]=        vecPatches(ipatch)->corner_neighbor_[0][0];
 
 
-	vecPatches(ipatch)->corner_neighbor_[1][1]= vecPatches(ipatch)->neighbor_[1][1];
-	vecPatches(ipatch)->neighbor_[1][1]=        vecPatches(ipatch)->corner_neighbor_[0][1];
+        vecPatches(ipatch)->corner_neighbor_[1][1]= vecPatches(ipatch)->neighbor_[1][1];
+        vecPatches(ipatch)->neighbor_[1][1]=        vecPatches(ipatch)->corner_neighbor_[0][1];
 
 
-	//Compute missing part of the new neighborhood tables.
-	vecPatches(ipatch)->Pcoordinates[0]--;
+        //Compute missing part of the new neighborhood tables.
+        vecPatches(ipatch)->Pcoordinates[0]--;
 
-	int xcall = vecPatches(ipatch)->Pcoordinates[0]-1;
-	int ycall = vecPatches(ipatch)->Pcoordinates[1]-1;
-	if (params.bc_em_type_x[0]=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
-	if (params.bc_em_type_y[0]=="periodic" && ycall <0) ycall += (1<<params.mi[1]);
-	vecPatches(ipatch)->corner_neighbor_[0][0] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
-	ycall = vecPatches(ipatch)->Pcoordinates[1];
-	vecPatches(ipatch)->neighbor_[0][0] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, vecPatches(ipatch)->Pcoordinates[1]);
-	ycall = vecPatches(ipatch)->Pcoordinates[1]+1;
-	if (params.bc_em_type_y[0]=="periodic" && ycall >= 1<<params.mi[1]) ycall -= (1<<params.mi[1]);
-	vecPatches(ipatch)->corner_neighbor_[0][1] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
-	
+        int xcall = vecPatches(ipatch)->Pcoordinates[0]-1;
+        int ycall = vecPatches(ipatch)->Pcoordinates[1]-1;
+        if (params.bc_em_type_x[0]=="periodic" && xcall <0) xcall += (1<<params.mi[0]);
+        if (params.bc_em_type_y[0]=="periodic" && ycall <0) ycall += (1<<params.mi[1]);
+        vecPatches(ipatch)->corner_neighbor_[0][0] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
+        ycall = vecPatches(ipatch)->Pcoordinates[1];
+        vecPatches(ipatch)->neighbor_[0][0] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, vecPatches(ipatch)->Pcoordinates[1]);
+        ycall = vecPatches(ipatch)->Pcoordinates[1]+1;
+        if (params.bc_em_type_y[0]=="periodic" && ycall >= 1<<params.mi[1]) ycall -= (1<<params.mi[1]);
+        vecPatches(ipatch)->corner_neighbor_[0][1] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
+        
     }
 
     for (int ipatch=0 ; ipatch<nPatches ; ipatch++ ) {
@@ -185,7 +193,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     }
 
     for (int ipatch=0 ; ipatch<nPatches ; ipatch++ )
-	vecPatches(ipatch)->EMfields->laserDisabled();
+        vecPatches(ipatch)->EMfields->laserDisabled();
 
 
     // 
@@ -198,10 +206,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 
 }
 
-
-
 bool SimWindow::isMoving(double time_dual)
 {
-    return ( (nspace_win_x_) && ((time_dual - delay_)*velocity_x_ > x_moved) );
+    return ((time_dual - time_start)*velocity_x > x_moved);
 }
 

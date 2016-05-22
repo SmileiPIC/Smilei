@@ -223,25 +223,6 @@ namelist("")
     
     // Maxwell Solver 
     PyTools::extract("maxwell_sol", maxwell_sol, "Main");
-
-
-    // ------------------------
-    // Moving window parameters
-    // ------------------------
-    if( PyTools::nComponents("MovingWindow") ) {
-        if (!PyTools::extract("nspace_x",nspace_win_x, "MovingWindow")) {
-            nspace_win_x = 0;
-        }
-        
-        if (!PyTools::extract("delay",delay, "MovingWindow")) {
-            delay = 0.0;
-        }
-        
-        if (!PyTools::extract("velocity_x",velocity_x, "MovingWindow")) {
-            velocity_x = 1.;
-        }
-    }
-    
     
     
     if (!PyTools::extract("clrw",clrw, "Main")) {
@@ -271,13 +252,13 @@ namelist("")
     }
     
     
-    balancing_freq = 150;
+    balancing_every = 150;
     coef_cell = 1.;
     coef_frozen = 0.1;
     if( PyTools::nComponents("LoadBalancing")>0 ) {
-        PyTools::extract("frequency"  , balancing_freq, "LoadBalancing");
-        PyTools::extract("coef_cell"  , coef_cell     , "LoadBalancing");
-        PyTools::extract("coef_frozen", coef_frozen   , "LoadBalancing");
+        PyTools::extract("every"      , balancing_every, "LoadBalancing");
+        PyTools::extract("coef_cell"  , coef_cell      , "LoadBalancing");
+        PyTools::extract("coef_frozen", coef_frozen    , "LoadBalancing");
     }
     
     //mi.resize(nDim_field, 0);
@@ -328,9 +309,7 @@ void Params::compute()
         // compute number of cells & normalized lengths
         for (unsigned int i=0; i<nDim_field; i++) {
             n_space[i]         = round(sim_length[i]/cell_length[i]);
-
-            if (i==0 && nspace_win_x != 0) n_space[i] = nspace_win_x;
-
+            
             double entered_sim_length = sim_length[i];
             sim_length[i]      = (double)(n_space[i])*cell_length[i]; // ensure that nspace = sim_length/cell_length
             if (sim_length[i]!=entered_sim_length)
@@ -412,7 +391,7 @@ void Params::print()
     }
 
     TITLE("Load Balancing: ");
-    MESSAGE(1,"Load balancing every " << balancing_freq << " iterations.");
+    MESSAGE(1,"Load balancing every " << balancing_every << " iterations.");
     MESSAGE(1,"Cell load coefficient = " << coef_cell );
     MESSAGE(1,"Frozen particle load coefficient = " << coef_frozen );
 }
