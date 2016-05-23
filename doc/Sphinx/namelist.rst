@@ -13,14 +13,18 @@ All namelists have the extension ``.py``.
 General rules
 ^^^^^^^^^^^^^
 
-* A namelist is a list of *python* instructions to define variables known by
-  :program:`Smilei`. For instance::
+* :program:`Smilei` requires a few *blocks* to be defined, such as::
   
-    timestep = 0.01         # defines the timestep value
-    sim_length = [10., 20.] # defines the 2D box dimensions
+    Main(
+        # ...
+        timestep = 0.01,         # defines the timestep value
+        sim_length = [10., 20.], # defines the 2D box dimensions
+        # ...
+    )
     
-* All *python* operations are valid. For instance: ``timestep = 40*0.0001``.
-
+  Outside blocks, you can calculate anything you require.
+  Inside a block, you must only define variables for :program:`Smilei`.
+    
 * The *python* syntax requires special indentation of each line.
   You begin with no indentation, but you have to **add four spaces at the
   beginning of lines inside a group**, and so on.
@@ -70,13 +74,34 @@ for each MPI node). The following steps are executed:
 #. If the :py:data:`output_dir` variable was defined, the current working directory
    changes to that value.
 
-All these instructions are summarized by the MPI master (rank 0) in a file ``smilei.py``,
+All these instructions are summarized in a file ``smilei.py``,
 so that the user can directly run ``python -i smilei.py`` for post-processing purposes.
 
 ----
 
-Geometry
-^^^^^^^^
+Main variables
+^^^^^^^^^^^^^^
+
+The block ``Main`` is **mandatory** and has the following syntax::
+  
+  Main(
+      geometry = "1d3v",
+      interpolation_order = 2,
+      sim_length  = [16. ],
+      cell_length = [0.01],
+      sim_time    = 15.,
+      timestep    = 0.005,
+      number_of_patches = [64],
+      clrw = 5,
+      maxwell_sol = 'Yee',
+      bc_em_type_x = ["silver-muller", "silver-muller"],
+      bc_em_type_y = ["silver-muller", "silver-muller"],
+      time_fields_frozen = 0.,
+      referenceAngularFrequency_SI = 0.,
+      print_every = 100,
+      output_dir = ".",
+      random_seed = 0,
+  )
 
 .. py:data:: geometry
   
@@ -84,6 +109,12 @@ Geometry
   
   ``1d`` or ``2d`` correspond to the number of spatial dimensions.
   ``3v`` indicates the number of dimensions for velocities.
+
+.. py:data:: interpolation_order
+  
+  :default: 2
+  
+  Interpolation order. To this day, only ``2`` is available.
 
 
 .. py:data:: sim_length
@@ -98,11 +129,14 @@ Geometry
   The number of elements of this list must be the same as the dimension of the simulation.
 
 
-.. py:data:: interpolation_order
+.. py:data:: sim_time
   
-  :default: 2
+  Duration of the simulation in units of :math:`T_r`.
+
+
+.. py:data:: timestep
   
-  Interpolation order. To this day, only ``2`` is available.
+  Duration of one timestep in units of :math:`T_r`.
 
 
 .. py:data:: number_of_patches
@@ -113,14 +147,6 @@ Geometry
   See :doc:`parallelization`.
 
 
-.. py:data:: balancing_freq
-  
-  :default: 150
-  
-  An integer: the number of timesteps between each load balancing (patches are
-  exchanged between MPI processes to reduce load imbalance).
-  
-
 .. py:data:: clrw
   
   :default: 0.
@@ -128,14 +154,30 @@ Geometry
   Cluster width.
   :red:`to do`
 
-.. py:data:: timestep
+
+.. py:data:: maxwell_sol
   
-  Duration of one timestep in units of :math:`T_r`.
+  :default: 'Yee'
+  
+  The solver for Maxwell's equations. Only ``"Yee"`` is available at the moment.
 
 
-.. py:data:: sim_time
+.. py:data:: bc_em_type_x
+             bc_em_type_y
   
-  Duration of the simulation in units of :math:`T_r`.
+  :type: lists of two strings: ``[bc_min, bc_max]``
+  :default: ``["periodic", "periodic"]``
+  
+  The boundary conditions for the electromagnetic fields.
+  The strings ``bc_min`` and ``bc_max`` must be one of the following choices:
+  ``"periodic"``, ``"silver-muller"``, or ``"reflective"``.
+
+
+.. py:data:: time_fields_frozen
+  
+  :default: 0.
+  
+  Time, at the beginning of the simulation, during which fields are frozen.
 
 
 .. _referenceAngularFrequency_SI:
@@ -148,22 +190,89 @@ Geometry
   (see :doc:`units`).
 
 
-----
-
-Input / Output
-^^^^^^^^^^^^^^
-
 .. py:data:: print_every
   
   Number of timesteps between each info output on screen. By default, 10 outputs per
   simulation.
 
+
 .. py:data:: output_dir
 
-  Output directory for the simulation.
-  
   :default: current working directory
   
+  Output directory for the simulation.
+
+
+.. py:data:: random_seed
+
+  :default: the machine clock
+
+  The value of the random seed. To create a per-processor random seed, you may use
+  the variable  :py:data:`smilei_mpi_rank`.
+
+----
+
+Load Balancing
+^^^^^^^^^^^^^^
+
+The block ``LoadBalancing`` is optional. If you do not define it, load balancing will
+occur every 150 iterations.
+
+.. code-block:: python
+  
+  LoadBalancing(
+      every = 100,
+      coef_cell = 1.,
+      coef_frozen = 0.1,
+  )
+
+.. py:data:: every
+  
+  :default: 150
+  
+  An integer: the number of timesteps between each load balancing (patches are
+  exchanged between MPI processes to reduce load imbalance).
+  
+.. py:data:: coef_cell
+  
+  :default: 1.
+  
+  :red:`to do`
+  
+.. py:data:: coef_frozen
+  
+  :default: 0.1
+  
+  :red:`to do`
+
+
+----
+
+Moving window
+^^^^^^^^^^^^^
+
+The block ``MovingWindow`` is optional. The window does not move it you do not define it.
+
+.. code-block:: python
+  
+  MovingWindow(
+      time_start = 0.,
+      velocity_x = 1.,
+  )
+
+
+.. py:data:: time_start
+
+  :default: 0.
+  
+  The time at which the window starts moving.
+
+
+.. py:data:: velocity_x
+
+  :default: 0.
+  
+  The velocity of the moving window in the `x` direction.
 
 ----
 
@@ -172,26 +281,39 @@ Input / Output
 Species
 ^^^^^^^
 
-Each species has to be defined in a ``Species`` block, for instance::
+Each species has to be defined in a ``Species`` block::
 
   Species(
-  	species_type = "electron",
-  	initPosition_type = "regular",
-  	initMomentum_type = "maxwell-juettner",
-  	n_part_per_cell = 1000,
-  	mass = 1.,
-  	charge = 1.,
-  	nb_density = 10.,
-  	bc_part_type_west = "none",
-  	bc_part_type_east = "none"
+      species_type      = "electrons1",
+      initPosition_type = "random",
+      initMomentum_type = "maxwell-juettner",
+      n_part_per_cell = 100,
+      mass = 1.,
+      atomic_number = None,
+      nb_density = 10.,
+      # charge_density = None,
+      charge = -1.,
+      mean_velocity = [0.],
+      temperature = [1e-10],
+      bc_part_type_west = "refl",
+      bc_part_type_east = "refl",
+      # bc_part_type_north = None,
+      # bc_part_type_south = None,
+      # thermT = None,
+      # thermVelocity = None,
+      time_frozen = 0.0,
+      # ionization_model = "none",
+      # ionization_electrons = None,
+      # radiating = False,
+      isTest = False,
+      track_every = 100,
+      c_part_max = 1.0,
+      dynamics_type = "norm",
   )
-
-All the possible variables inside this block are explained here:
 
 .. py:data:: species_type
   
   The name you want to give to this species.
-
 
 .. py:data:: initPosition_type
   
@@ -210,6 +332,12 @@ All the possible variables inside this block are explained here:
   * ``"cold"`` for zero temperature
   
   The first 2 distributions depend on the parameter :py:data:`temperature` explained below.
+
+.. py:data:: n_part_per_cell
+  
+  :type: float or *python* function (see section :ref:`profiles`)
+  
+  The number of particles per cell.
 
 
 .. py:data:: mass
@@ -255,13 +383,6 @@ All the possible variables inside this block are explained here:
   The initial temperature of the particles, in units of :math:`m_ec^2`.
 
 
-.. py:data:: n_part_per_cell
-  
-  :type: float or *python* function (see section :ref:`profiles`)
-  
-  The number of particles per cell.
-
-
 .. py:data:: bc_part_type_west
              bc_part_type_east
              bc_part_type_south
@@ -271,6 +392,18 @@ All the possible variables inside this block are explained here:
   
   :red:`to do`
 
+
+.. py:data:: thermT
+  
+  :default: None
+  
+  :red:`to do`
+
+.. py:data:: thermVelocity
+  
+  :default: None
+  
+  :red:`to do`
 
 .. py:data:: time_frozen
   
@@ -324,29 +457,6 @@ All the possible variables inside this block are explained here:
   
   :red:`to do`
 
-
-
-----
-
-Electromagnetic fields
-^^^^^^^^^^^^^^^^^^^^^^
-
-.. py:data:: bc_em_type_x
-             bc_em_type_y
-  
-  :type: lists of two strings: ``[bc_min, bc_max]``
-  :default: ``["periodic", "periodic"]``
-  
-  The boundary conditions for the electromagnetic fields.
-  The strings ``bc_min`` and ``bc_max`` must be one of the following choices:
-  ``"periodic"``, ``"silver-muller"``, or ``"reflective"``.
-
-
-.. py:data:: time_fields_frozen
-  
-  :default: 0.
-  
-  Time, at the beginning of the simulation, during which fields are frozen.
 
 
 ----
@@ -535,15 +645,12 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 External fields
 ^^^^^^^^^^^^^^^
 
-External fields can be applied using a ``ExtField()`` block, for instance::
+An external field can be applied using an ``ExtField`` block::
 
   ExtField(
       field = "Ex",
       profile = constant(0.01, xvacuum=0.1)
   )
-
-All the possible variables inside this block are explained here:
-
 
 .. py:data:: field
   
@@ -565,22 +672,19 @@ Antennas
 ^^^^^^^^
 
 An antenna is an extra current applied during the whole simulation.
-It is applied using an ``Antenna()`` block, for instance::
+It is applied using an ``Antenna`` block::
 
   Antenna(
       field = "Jz",
-      spatial_profile = gaussian(0.01),
+      space_profile = gaussian(0.01),
       time_profile = tcosine(base=0., duration=1., freq=0.1)
   )
-
-All the possible variables inside this block are explained here:
-
 
 .. py:data:: field
   
   The name of the current: ``"Jx"``, ``"Jy"`` or ``"Jz"``.
 
-.. py:data:: spatial_profile
+.. py:data:: space_profile
   
   :type: float or *python* function (see section :ref:`profiles`)
   
@@ -592,7 +696,7 @@ All the possible variables inside this block are explained here:
   
   :type: float or *python* function (see section :ref:`profiles`)
   
-  The temporal profile of the applied antenna. It multiplies ``spatial_profile``.
+  The temporal profile of the applied antenna. It multiplies ``space_profile``.
 
 
 ----
@@ -794,9 +898,9 @@ profiles.
 
 Walls
 ^^^^^
-Walls can be introduced using a ``PartWall()`` block in order to
-reflect, stop, thermalize or kill particles which reach it.
-For instance::
+
+A wall can be introduced using a ``PartWall`` block in order to
+reflect, stop, thermalize or kill particles which reach it::
 
   PartWall(
       kind = "refl",
@@ -821,49 +925,21 @@ All the possible variables inside this block are explained here:
 
 ----
 
-Moving window
-^^^^^^^^^^^^^
-.. py:data:: nspace_win_x
-
-  :default: 0
-  
-  :red:`to do`
-
-
-.. py:data:: t_move_win
-
-  :default: 0.
-  
-  :red:`to do`
-
-
-.. py:data:: vx_win
-
-  :default: 0.
-  
-  :red:`to do`
-
-
-
-----
-
 .. _Collisions:
 
 Collisions
 ^^^^^^^^^^
 
-To have binary collisions in :program:`Smilei`,
-add one or several ``Collisions()`` block in the namelist,
-for instance::
+To have binary collisions in :program:`Smilei`, add one or several ``Collisions`` blocks::
 
   Collisions(
-  	species1 = ["electrons1",  "electrons2"],
-  	species2 = ["ions1"],
-  	coulomb_log = 5.
+      species1 = ["electrons1",  "electrons2"],
+      species2 = ["ions1"],
+      coulomb_log = 5.,
+      debug_every = 1000,
+      ionizing = False,
   )
 
-
-All the possible variables inside this block are explained here:
 
 .. py:data:: species1
              species2
@@ -896,6 +972,13 @@ All the possible variables inside this block are explained here:
   * If :math:`> 0`, the Coulomb logarithm is equal to this value.
 
 
+.. py:data:: debug_every
+  
+  :default: 0
+  
+  | Number of timesteps between each output of information about collisions.
+  | If 0, there will be no outputs.
+
 
 .. _CollisionalIonization:
 
@@ -906,14 +989,6 @@ All the possible variables inside this block are explained here:
   If ``True``, :ref:`collisional ionization <CollIonization>` will occur. One of the 
   species groups must be all electrons (:py:data:`mass` = 1), and the other one all ions of the
   same :py:data:`atomic_number`.
-
-
-.. py:data:: debug_every
-  
-  :default: 0
-  
-  | Number of timesteps between each output of information about collisions.
-  | If 0, there will be no outputs.
 
 
 For more details about the collision scheme in :program:`Smilei`, see :doc:`collisions`
@@ -927,18 +1002,24 @@ For more details about the collision scheme in :program:`Smilei`, see :doc:`coll
 ^^^^^^^^^^^^^^^^^^^^^
 
 :program:`Smilei` can collect various scalar data, such as total particle energy, total field energy, etc.
-This is done by including the block ``DiagScalar()`` in the namelist, for instance::
+This is done by including the block ``DiagScalar``::
 
-  DiagScalar( every = 10 ,
-              vars = ["Utot", "Ukin", "Uelm"]
-            )
-
-All the possible variables inside this block are explained here:
+  DiagScalar(
+      every = 10 ,
+      vars = ["Utot", "Ukin", "Uelm"],
+      precision = 10
+  )
 
 .. py:data:: every
   
   Number of timesteps between each output **or** a :ref:`time selection <TimeSelections>`.
 
+.. py:data:: vars
+  
+  :default: ``[]``
+  
+  | List of scalars that will be actually output. Note that most scalars are computed anyways.
+  | Omit this argument to include all scalars.
 
 .. py:data:: precision
   
@@ -946,13 +1027,6 @@ All the possible variables inside this block are explained here:
   
   Number of digits of the outputs.
 
-
-.. py:data:: vars
-  
-  :default: ``[]``
-  
-  | List of scalars that will be actually output. Note that all scalars are computed anyways.
-  | Omit this argument to include all scalars.
 
 
 The full list of scalars that are saved by this diagnostic:
@@ -1010,15 +1084,13 @@ Checkout the :doc:`post-processing <post-processing>` documentation as well.
 
 :program:`Smilei` can collect various field data (electromagnetic fields, currents and density)
 taken at the location of the PIC grid, both as instantaneous values and averaged values.
-This is done by including the block ``DiagScalar()`` in the namelist, for instance::
+This is done by including the block ``DiagScalar``::
 
   DiagFields(
       every = 10,
       time_average = 2,
       fields = ["Ex", "Ey", "Ez"]
   )
-
-All the possible variables inside this block are explained here:
 
 .. py:data:: every
   
@@ -1082,61 +1154,47 @@ These are called *probes*.
 A probe interpolates the fields at either one point (0-D),
 several points arranged in a line (1-D) or several points arranged in a mesh (2-D).
 
-To add one probe diagnostic, include the block ``DiagProbe()`` in the namelist.
-There are several ways to do it:
-
-**1. For only one point (zero-dimensional probe)**
-  ::
-    
-    DiagProbe(
-        every      = ... , # a number
-        pos        = [x0, y0, z0]
-    )
+To add one probe diagnostic, include the block ``DiagProbe``::
   
-  * ``every`` is the number of timesteps between each output, **or** a :ref:`time selection <TimeSelections>`.
-  * ``x0 [, y0 [, z0]]`` is the position of the point where to interpolate the fields.
+  DiagProbe(
+      every      = 10,
+      pos        = [1., 1.],
+      pos_first  = [1.,10.],
+      pos_second = [10.,1.],
+      number     = [100, 100],
+      fields = ["Ex", "Ey", "Ez"]
+  )
+
+.. py:data:: every
   
-  **Note**: ``y0`` (or ``z0``) should only be used in the case of a 2-D (or 3-D) simulation.
+  Number of timesteps between each output **or** a :ref:`time selection <TimeSelections>`.
 
-
-**2. For a series of points arranged in a line (one-dimensional probe)**
-  ::
-    
-    DiagProbe(
-        every      = ... , # a number
-        pos        = [x0, y0, z0],
-        pos_first  = [x1, y1, z1],
-        number     = [n1]
-    )
+.. py:data:: pos
+             pos_first
+             pos_second
   
-  * ``x0 [, y0 [, z0]]`` is the position of the starting point of the line.
-  * ``x1 [, y1 [, z1]]`` is the position of the ending point of the line.
-  * ``n1`` is the number of points along this line.
-
-**3. For a series of points arranged in a mesh (two-dimensional probe)**
-  ::
-    
-    DiagProbe(
-        every      = ... , # a number
-        pos        = [x0, y0, z0],
-        pos_first  = [x1, y1, z1],
-        pos_second = [x2, y2, z2],
-        number     = [n1, n2]
-    )
+  :type: A list of floats, of length equal to the simulation dimensionality.
   
-  In this case, the three points define three vertices of a paralellogram.
+  | The coordinates of several points.
+  | One point provided = a 0-D probe.
+  | Two points provided = a 1-D probe.
+  | Three points provided = a 2-D probe.
 
+.. py:data:: number
+  
+  :type: A list of integers, one for each dimension of the probe.
+  
+  The number of points in each probe axis. Must not be defined for a 0-D probe.
 
-**Notes**
-
-* There is an extra argument ``fields``, a list of fields among ``"Ex"``, ``"Ey"``, ``"Ez"``,
+.. py:data:: fields
+  
+  :default: ``[]`` (all fields)
+  
+  A list of fields among ``"Ex"``, ``"Ey"``, ``"Ez"``,
   ``"Bx"``, ``"By"``, ``"Bz"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` and ``"Rho"``. Only these
-  fields will be saved. Use, for example, ``fields=["Bz"]`` if you are only interested
-  in :math:`B_z`. Note that it does NOT speed up calculation much, but it saves disk space.
-* The dimension of the probe is decided only by the instruction ``number``:
-  without it, the probe is 0-D, with ``number = [n1]``, the probe is 1-D,
-  and with ``number =  [n1, n2]``, the probe is 2-D.
-* You can have several probes in the input file.
+  fields will be saved. 
+  Note that it does NOT speed up calculation much, but it saves disk space.
+
 
 **Examples of probe diagnostics**
 
@@ -1191,8 +1249,6 @@ A *particle diagnostic* collects data from the macro-particles and processes the
 It does not provide information on individual particles: instead, it produces
 **averaged quantities** like the particle density, currents, etc.
 
-The data may be collected from one or several particle species.
-
 The data is discretized inside a "grid" chosen by the user. This grid may be of any dimension.
 
 Examples:
@@ -1211,14 +1267,14 @@ You can add a particle diagnostic by including a block ``DiagParticles()`` in th
 for instance::
   
   DiagParticles(
-  	output = "density",
-  	every = 5,
-  	time_average = 1,
-  	species = ["electrons1", "electrons2"],
-  	axes = [
-  		["x", 0., 10, 100],
-  		["ekin", 0.1, 100, 1000, "logscale", "edge_inclusive"]
-  	]
+      output = "density",
+      every = 5,
+      time_average = 1,
+      species = ["electrons1", "electrons2"],
+      axes = [
+          ["x", 0., 10, 100],
+          ["ekin", 0.1, 100, 1000, "logscale", "edge_inclusive"]
+      ]
   )
 
 All the possible variables inside this block are explained here:
@@ -1240,6 +1296,8 @@ All the possible variables inside this block are explained here:
 
 
 .. py:data:: time_average
+  
+  :default: 1
   
   The number of time-steps during which the data is averaged before output.
 
@@ -1400,27 +1458,30 @@ For more clarity, this graph illustrates the five syntaxes for time selections:
 
 ----
 
-Stop and restart
+Dump and restart
 ^^^^^^^^^^^^^^^^
 
 To restart the simulation from a previous point, a few instructions are needed to 
 tell :program:`Smilei` where to find the restart information, and how often the checkpoint
-dumps are done.
+dumps are done::
 
-.. py:data:: restart
-
-  :default: ``False``
-
-  If ``True``, :program:`Smilei` finds the last dump file and loads the corresponding simulation.
-  If the dump file is not found, an error is raised.
+  DumpRestart(
+      restart_dir = "dump1",
+      dump_step = 10000,
+      dump_minutes = 240.,
+      dump_deflate = 0,
+      exit_after_dump = True,
+      dump_file_sequence = 2,
+  )
 
 .. py:data:: restart_dir
 
   :default: None
   
   This tells :program:`Smilei` where to find dump files for restart.
+  If not defined, it does not restart from a previous dump.
   
-  **WARNING: this path must either absolute or be relative to** ``output_dir``
+  **WARNING:** this path must either absolute or be relative to** ``output_dir``
 
 .. py:data:: dump_step
 
@@ -1436,6 +1497,10 @@ dumps are done.
   The number of minutes between each dump of the full simulation (combines with ``dump_step``).
   If ``0.``, no dump is done.
 
+.. py:data:: dump_deflate
+  
+  :red:`to do`
+
 .. py:data:: exit_after_dump
 
   :default: ``True``
@@ -1448,19 +1513,6 @@ dumps are done.
   
   This tells :program:`Smilei` to keep the last ``n`` dumps for a later restart.
   The default value, 2, saves one extra dump in case of a crash during the file dump.
-  
-
-----
-
-Miscellaneous
-^^^^^^^^^^^^^
-
-.. py:data:: random_seed
-
-  :default: the machine clock
-
-  The value of the random seed. To create a per-processor random seed, you may use
-  the variable  :py:data:`smilei_mpi_rank`.
   
 
 ----
