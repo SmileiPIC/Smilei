@@ -5,30 +5,32 @@
 import math
 L0 = 2.*math.pi # conversion from normalization length to wavelength
 
-referenceAngularFrequency_SI = L0 * 3e8 /1.e-6
 
 Main(
-    geometry = "1d3v"
+    geometry = "1d3v",
 
-# number_of_patches: list of the number of patches in each dimension
-number_of_patches = [ 4 ]
+    number_of_patches = [ 4 ],
 
-interpolation_order = 2
+    interpolation_order = 2,
 
-timestep = 1 * L0
-sim_time  = 400 * L0
-
-
-time_fields_frozen = 100000000000.
-
-# SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
-cell_length = [20.*L0]
-sim_length  = [160.*L0]
-
-bc_em_type_x  = ["periodic"]
+    timestep = 1 * L0,
+    sim_time = 400 * L0,
 
 
-random_seed = 0
+    time_fields_frozen = 100000000000.,
+
+    cell_length = [5.*L0],
+    sim_length = [160.*L0],
+
+    bc_em_type_x = ["periodic"],
+
+
+    random_seed = 0,
+
+	referenceAngularFrequency_SI = L0 * 3e8 /1.e-6,
+    print_every = 100,
+)
+
 
 
 Z = 30
@@ -53,7 +55,7 @@ for i in range(npoints):
 	temperature.append(T)
 	
 	Zstar = (Z)*(1.-math.exp(-T/(1./511.)))
-	if Zstar<0.01: Zstar=0.01
+	Zstar = round(Zstar, 2)
 	
 	Species(
 		species_type = eon,
@@ -102,25 +104,25 @@ for i in range(npoints):
 		output = "ekin_density",
 		every = 10,
 		species = [eon],
-		axes = [ ["x", 0, sim_length[0], 1] ]
+		axes = [ ["x", 0, Main.sim_length[0], 1] ]
 	)
 	DiagParticles(
 		output = "density",
 		every = 10,
 		species = [eon],
-		axes = [ ["x", 0, sim_length[0], 1] ]
+		axes = [ ["x", 0, Main.sim_length[0], 1] ]
 	)
 	DiagParticles(
 		output = "charge_density",
 		every = 10,
 		species = [ion],
-		axes = [ ["x", 0, sim_length[0], 1] ]
+		axes = [ ["x", 0, Main.sim_length[0], 1] ]
 	)
 	DiagParticles(
 		output = "density",
 		every = 10,
 		species = [ion],
-		axes = [ ["x", 0, sim_length[0], 1] ]
+		axes = [ ["x", 0, Main.sim_length[0], 1] ]
 	)
 	#DiagParticles(
 	#	output = "density",
@@ -130,39 +132,18 @@ for i in range(npoints):
 	#)
 
 
-# print_every (on screen text output) 
-print_every = 100
 
-# DIAGNOSTICS ON FIELDS
+
 DiagFields(
 	every = 1000000
 )
 
 
-# DIAGNOSTICS ON SCALARS
-# every = integer, number of time-steps between each output
 DiagScalar(
 	every = 10000000
 )
 
 
-# DIAGNOSTICS ON PARTICLES - project the particles on a N-D arbitrary grid
-# ------------------------------------------------------------------------
-# output       = string: "density", "charge_density" or "jx_density"
-#                parameter that describes what quantity is obtained 
-# every        = integer > 0: number of time-steps between each output
-# time_average = integer > 0: number of time-steps to average
-# species      = list of strings, one or several species whose data will be used
-# axes         = list of axes
-# Each axis is a list: [_type_,_min_,_max_,_nsteps_,"logscale","edge_inclusive"]
-#   _type_ is a string, one of the following options:
-#      x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge
-#   The data is discretized for _type_ between _min_ and _max_, in _nsteps_ bins
-#   The optional "logscale" sets the scale to logarithmic
-#   The optional "edge_inclusive" forces the particles that are outside (_min_,_max_)
-#     to be counted in the extrema bins
-#   Example : axes = ("x", 0, 1, 30)
-#   Example : axes = ("px", -1, 1, 100, "edge_inclusive")
 
 
 

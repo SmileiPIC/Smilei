@@ -5,29 +5,31 @@
 import math
 L0 = 2.*math.pi # conversion from normalization length to wavelength
 
-referenceAngularFrequency_SI = L0 * 3e8 /1.e-6
 
 Main(
-    geometry = "1d3v"
+    geometry = "1d3v",
 
-# number_of_patches: list of the number of patches in each dimension
-number_of_patches = [ 16 ]
+    number_of_patches = [ 16 ],
 
-interpolation_order = 2
+    interpolation_order = 2,
 
-timestep = 0.002 * L0
-sim_time  = 0.5 * L0
+    timestep = 0.002 * L0,
+    sim_time = 0.5 * L0,
 
-time_fields_frozen = 100000000000.
+    time_fields_frozen = 100000000000.,
 
-# SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
-cell_length = [20.*L0]
-sim_length  = [1600.*L0]
+    cell_length = [20.*L0],
+    sim_length = [1600.*L0],
 
-bc_em_type_x  = ["periodic"]
+    bc_em_type_x = ["periodic"],
 
 
-random_seed = 0
+    random_seed = 0,
+
+	referenceAngularFrequency_SI = L0 * 3e8 /1.e-6,
+    print_every = 10,
+)
+
 
 Species(
 	species_type = "electron1",
@@ -44,11 +46,6 @@ Species(
 	bc_part_type_east = "none"
 )
 
-# COLLISIONS
-# species1    = list of strings, the names of the first species that collide
-# species2    = list of strings, the names of the second species that collide
-#               (can be the same as species1)
-# coulomb_log = float, Coulomb logarithm. If negative or zero, then automatically computed.
 Collisions(
 	species1 = ["electron1"],
 	species2 = ["electron1"],
@@ -57,17 +54,13 @@ Collisions(
 )
 
 
-# print_every (on screen text output) 
-print_every = 10
 
-# DIAGNOSTICS ON FIELDS
+
 DiagFields(
 	every = 1
 )
 
 
-# DIAGNOSTICS ON SCALARS
-# every = integer, number of time-steps between each output
 DiagScalar(
 	every = 1
 )
@@ -95,7 +88,7 @@ DiagParticles(
 	every = 5,
 	species = ["electron1"],
 	axes = [
-		 ["x",    0*L0,    sim_length[0],   10],
+		 ["x",    0*L0,    Main.sim_length[0],   10],
 		 ["vx",  -0.02,  0.02,    1000]
 	]
 )
@@ -104,7 +97,7 @@ DiagParticles(
 	every = 5,
 	species = ["electron1"],
 	axes = [
-		 ["x",    0*L0,    sim_length[0],   10],
+		 ["x",    0*L0,    Main.sim_length[0],   10],
 		 ["vy",  -0.02,  0.02,    1000]
 	]
 )
@@ -113,7 +106,7 @@ DiagParticles(
 	every = 5,
 	species = ["electron1"],
 	axes = [
-		 ["x",    0*L0,    sim_length[0],   10],
+		 ["x",    0*L0,    Main.sim_length[0],   10],
 		 ["vz",  -0.02,  0.02,    1000]
 	]
 )

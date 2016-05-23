@@ -7,6 +7,7 @@ dx = 0.125
 nx = 896
 Lx = nx * dx
 npatch_x = 128
+laser_fwhm = 19.80
 
 Main(
     geometry = "2d3v",
@@ -14,7 +15,7 @@ Main(
     interpolation_order = 2,
     
     timestep = 0.124,
-    sim_time = 150,
+    sim_time = 200,
     
     cell_length  = [dx, 3.],
     sim_length = [ Lx,  120.],
@@ -32,7 +33,7 @@ Main(
 )
 
 MovingWindow(
-    time_start = 0.5*Lx,
+    time_start = Main.sim_length[0],
     velocity_x = 0.9997
 )
 
@@ -87,9 +88,9 @@ Species(
 LaserGaussian2D(
     boxSide         = "west",
     a0              = 2.,
-    focus           = [0., Lx/2.],
+    focus           = [0., Main.sim_length[1]/2.],
     waist           = 26.16,
-    time_envelope   = tgaussian(center=17.84, fwhm=19.80)
+    time_envelope   = tgaussian(center=2*laser_fwhm, fwhm=laser_fwhm)
 )
 
 DumpRestart(

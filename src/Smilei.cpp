@@ -216,7 +216,7 @@ int main (int argc, char* argv[])
             "  Ukin= "   << scientific << setprecision(4)<< vecPatches.getScalar("Ukin") <<
             "  Ubal(%)= "<< scientific << fixed << setprecision(2) << 100.0*vecPatches.getScalar("Ubal_norm");
             
-            if ( simWindow->isMoving(time_dual) ) {
+            if ( simWindow->isActive() ) {
                 double Uinj_mvw = vecPatches.getScalar("Uelm_inj_mvw") + vecPatches.getScalar("Ukin_inj_mvw");
                 double Uout_mvw = vecPatches.getScalar("Uelm_out_mvw") + vecPatches.getScalar("Ukin_out_mvw");
                 my_msg << "  Uinj_mvw = " << scientific << setprecision(4) << Uinj_mvw <<

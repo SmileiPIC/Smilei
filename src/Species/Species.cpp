@@ -206,7 +206,7 @@ void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
     // if charge is not integer, then particles can have two different charges
     } else {
         int tot = 0, Nm, Np;
-        double rr=r/(1-r), diff;
+        double rr=r/(1.-r), diff;
         Np = (int)round(r*(double)nPart);
         Nm = (int)nPart - Np;
         for (unsigned int p = iPart; p<iPart+nPart; p++) {
@@ -219,7 +219,7 @@ void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
             }
             tot += (*particles).charge(p);
         }
-        diff = ((double)nPart)*q - (double)tot; // missing charge
+        diff = q - ((double)tot)/((double)nPart); // missing charge
         if (diff != 0.) {
             WARNING("Could not match exactly charge="<<q<<" for species "<< species_type <<" (difference of "<<diff<<"). Try to add particles.");
         }
@@ -699,11 +699,15 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                 // Obtain the number of particles per cell
                 nppc = ppcProfile->valueAt(x_cell);
                 // If not a round number, then we need to decide how to round
-                remainder = pow(nppc - floor(nppc), inv_nDim_field);
-                n_part_in_cell(i,j,k) = floor(nppc);
-                if( fmod(cell_index[0]+(double)i, remainder) < 1.
-                 && fmod(cell_index[1]+(double)j, remainder) < 1.
-                 && fmod(cell_index[2]+(double)k, remainder) < 1. ) n_part_in_cell(i,j,k)++;
+                if( nppc != round(nppc) ) {
+                    remainder = pow(nppc - floor(nppc), inv_nDim_field);
+                    n_part_in_cell(i,j,k) = floor(nppc);
+                    if( fmod(cell_index[0]+(double)i, remainder) < 1.
+                     && fmod(cell_index[1]+(double)j, remainder) < 1.
+                     && fmod(cell_index[2]+(double)k, remainder) < 1. ) n_part_in_cell(i,j,k)++;
+                } else {
+                    n_part_in_cell(i,j,k) = nppc;
+                }
                 // If zero or less, zero particles
                 if( n_part_in_cell(i,j,k)<=0. ) {
                     n_part_in_cell(i,j,k) = 0.;

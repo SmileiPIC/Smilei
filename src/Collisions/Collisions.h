@@ -11,11 +11,6 @@ first described by Nanbu (http://dx.doi.org/10.1103/PhysRevE.55.4642).
 To include collisions in the simulations, add a block in the input file, 
 similar to the following:
 
-# COLLISIONS
-# species1    = list of strings, the names of the first species that collide
-# species2    = list of strings, the names of the second species that collide
-#               (can be the same as species1)
-# coulomb_log = float, Coulomb logarithm. If negative or zero, then automatically computed.
 Collisions(
 	species1 = ["ion1"],
 	species2 = ["electron1"],

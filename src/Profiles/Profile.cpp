@@ -264,10 +264,10 @@ double Function_Python4D::valueAt(vector<double> x_cell, double time) {
 
 // Constant profiles
 double Function_Constant1D::valueAt(vector<double> x_cell) {
-    return x_cell[0]>xvacuum ? value : 0.;
+    return (x_cell[0]>xvacuum) ? value : 0.;
 }
 double Function_Constant2D::valueAt(vector<double> x_cell) {
-    return (x_cell[0]>xvacuum) && (x_cell[1]>yvacuum) ? value : 0.;
+    return ((x_cell[0]>xvacuum) && (x_cell[1]>yvacuum)) ? value : 0.;
 }
 
 // Trapezoidal profiles
