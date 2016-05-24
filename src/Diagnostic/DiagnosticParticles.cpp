@@ -147,7 +147,9 @@ DiagnosticParticles::~DiagnosticParticles()
 void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
     if (!smpi->isMaster()) return;
-
+    
+    if( fileId_>0 ) return;
+    
     if ( newfile ) {
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         // write all parameters as HDF5 attributes

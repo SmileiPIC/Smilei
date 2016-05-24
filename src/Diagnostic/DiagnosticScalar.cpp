@@ -73,6 +73,8 @@ void DiagnosticScalar::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
     if (!smpi->isMaster()) return;
     
+    if (fout.is_open()) return;
+    
     //open file scalars.txt
     if ( newfile )
         fout.open("scalars.txt");

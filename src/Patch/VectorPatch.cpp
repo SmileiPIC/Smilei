@@ -220,11 +220,9 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
     
     // Special case for fields. Must be merged with others
     for (unsigned int idiag = 0 ; idiag < otherDiags.size() ; idiag++) {
-        // MPI master creates the file
-        if( smpi->isMaster() ){
-            otherDiags[idiag]->openFile( params, smpi, true );
-            otherDiags[idiag]->closeFile();
-        }
+        // All MPI create the file
+        otherDiags[idiag]->openFile( params, smpi, true );
+        otherDiags[idiag]->closeFile();
         // Save the timeSelection
         if( fieldsTimeSelection==NULL )
             fieldsTimeSelection = new TimeSelection(otherDiags[idiag]->timeSelection);
@@ -245,10 +243,8 @@ void VectorPatch::closeAllDiags(SmileiMPI* smpi)
         (*this)(0)->localDiags[idiag]->closeFile();
     
     // Special case for fields. Must be merged with others
-    if ( smpi->isMaster() )
-        for (unsigned int idiag = 0 ; idiag < otherDiags.size() ; idiag++)
-            otherDiags[idiag]->closeFile();
-
+    for (unsigned int idiag = 0 ; idiag < otherDiags.size() ; idiag++)
+        otherDiags[idiag]->closeFile();
 }
 
 
@@ -270,9 +266,8 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
     }
     
     // Special case for fields. Must be merged with others
-    if ( smpi->isMaster() )
-        for (unsigned int idiag = 0 ; idiag < otherDiags.size() ; idiag++)
-            otherDiags[idiag]->openFile( params, smpi, false );
+    for (unsigned int idiag = 0 ; idiag < otherDiags.size() ; idiag++)
+        otherDiags[idiag]->openFile( params, smpi, false );
 }
 
 

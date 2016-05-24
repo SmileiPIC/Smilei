@@ -76,6 +76,16 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patc
     // Copy the total number of patches
     tot_number_of_patches = params.tot_number_of_patches;
     
+    // Calculate the patch size 
+    patch_offset.resize(params.nDim_field);
+    patch_size  .resize(params.nDim_field);
+    total_patch_size = 1;
+    for (unsigned int iDim=0 ; iDim<params.nDim_field ; iDim++) {
+        patch_offset[iDim] = params.oversize[iDim];
+        patch_size  [iDim] = params.n_space[iDim] + 1;
+        total_patch_size *= patch_size[iDim];
+    }
+    
     // Prepare the property list for HDF5 output
     write_plist = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
@@ -86,10 +96,6 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patc
 
 DiagnosticFields::~DiagnosticFields()
 {
-    // Management of global IO file
-    if (fileId_ != 0)
-        H5Fclose(fileId_ );
-
     H5Pclose( write_plist );
     
     delete timeSelection;
@@ -98,6 +104,8 @@ DiagnosticFields::~DiagnosticFields()
 
 void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
+    if( fileId_>0 ) return;
+    
     if ( newfile ) {
         // ----------------------------
         // Management of global IO file
@@ -113,10 +121,12 @@ void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         // Create property list for collective dataset write: for Fields.h5
         vector<double> my_cell_length=params.cell_length;
         my_cell_length.resize(params.nDim_field);
-        H5::attr(fileId_, "res_time", params.res_time);
-        H5::attr(fileId_, "res_space", params.res_space);
-        H5::attr(fileId_, "cell_length", my_cell_length);
-        H5::attr(fileId_, "sim_length", params.sim_length);
+        H5::attr(fileId_, "res_time"    , params.res_time);
+        H5::attr(fileId_, "res_space"   , params.res_space);
+        H5::attr(fileId_, "cell_length" , my_cell_length);
+        H5::attr(fileId_, "sim_length"  , params.sim_length);
+        H5::attr(fileId_, "patch_offset", patch_offset);
+        H5::attr(fileId_, "patch_size"  , patch_size);
         
         H5Pclose(plist_id);
     }
@@ -132,7 +142,10 @@ void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 
 void DiagnosticFields::closeFile()
 {
-    H5Fclose(fileId_);
+    if( fileId_>0 ) {
+        H5Fclose(fileId_);
+        fileId_ = 0;
+    }
 }
 
 
@@ -155,15 +168,6 @@ bool DiagnosticFields::prepare( int timestep )
 
 void DiagnosticFields::setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches )
 {
-    // Calculate the patch size 
-    patch_offset.resize(params.nDim_field);
-    patch_size  .resize(params.nDim_field);
-    total_patch_size = 1;
-    for (unsigned int iDim=0 ; iDim<params.nDim_field ; iDim++) {
-        patch_offset[iDim] = params.oversize[iDim];
-        patch_size  [iDim] = params.n_space[iDim] + 1;
-        total_patch_size *= patch_size[iDim];
-    }
     // Resize the data
     data.resize(total_patch_size * vecPatches.size());
     // Get refHindex
@@ -180,7 +184,7 @@ void DiagnosticFields::setFileSplitting( Params& params, SmileiMPI* smpi, Vector
     // Select portion of the file where this MPI will write to
     H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, NULL, count, block);
     // define space in memory
-    memspace = H5Screate_simple( 0, block, NULL ); 
+    memspace = H5Screate_simple( 1, block, NULL ); 
 }
 
 
@@ -262,7 +266,6 @@ bool DiagnosticFields::write(int timestep)
     H5Sclose(filespace);
     H5Sclose(memspace);
     H5Gclose(timestep_group_id);
-    H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     
     return true;
 }
