@@ -38,6 +38,7 @@ public :
     std::vector<Patch*> patches_;
 
     std::vector<Diagnostic*> globalDiags;
+    std::vector<Diagnostic*> otherDiags;
 
 
     //! Some vector operations extended to VectorPatch

@@ -213,7 +213,7 @@ void DiagnosticTrack::run( Patch* patch, int timestep )
 }
 
 
-void DiagnosticTrack::write(int timestep)
+bool DiagnosticTrack::write(int timestep)
 {
     iter ++;
     
@@ -248,7 +248,8 @@ void DiagnosticTrack::write(int timestep)
     
     //MPI_Barrier(MPI_COMM_WORLD); // synchro to manage differently
     H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
-
+    
+    return true;
 }
 
 template <class T>

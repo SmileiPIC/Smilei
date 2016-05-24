@@ -472,9 +472,9 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
 // Now the data_sum has been filled
 // if needed now, store result to hdf file
 // called by MPI master only, when time-average has finished
-void DiagnosticParticles::write(int timestep)
+bool DiagnosticParticles::write(int timestep)
 {
-    if (timestep - timeSelection->previousTime() != time_average-1) return;
+    if (timestep - timeSelection->previousTime() != time_average-1) return true;
     
     double coeff;
     // if time_average, then we need to divide by the number of timesteps
@@ -497,6 +497,7 @@ void DiagnosticParticles::write(int timestep)
     clear();
     data_sum.resize(0);
     
+    return false;
 } // END write
 
 

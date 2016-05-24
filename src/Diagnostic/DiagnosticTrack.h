@@ -27,7 +27,7 @@ public :
     
     void run( Patch* patch, int timestep ) override;
     
-    void write(int timestep) override;
+    bool write(int timestep) override;
     
     void setGlobalNbrParticles(int totNbrParts) {
         nbrParticles_ = totNbrParts;

@@ -273,7 +273,7 @@ void DiagnosticProbes::run( Patch* patch, int timestep )
 }
 
 
-void DiagnosticProbes::write( int timestep )
+bool DiagnosticProbes::write( int timestep )
 {
     // memspace OK : 1 block
     hsize_t     chunk_parts[2];
@@ -320,7 +320,7 @@ void DiagnosticProbes::write( int timestep )
     H5Sclose(memspace);
     
     //if ( fileId_ ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
-
+    return true;
 }
 
 

@@ -33,7 +33,7 @@ public :
     
     void run( Patch* patch, int timestep ) override;
     
-    void write(int timestep) override;
+    bool write(int timestep) override;
     
     void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches ) override;
     

@@ -9,8 +9,7 @@ class DiagnosticFields  : public Diagnostic {
 public :
     
     DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patch, int );
-    DiagnosticFields( DiagnosticFields*, Patch* );
-    ~DiagnosticFields() ;
+    ~DiagnosticFields();
     
     virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     
@@ -18,23 +17,46 @@ public :
     
     virtual bool prepare( int timestep ) override;
     
+    void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches ) override;
+    
     virtual void run( Patch* patch, int timestep ) override;
     
-    virtual void write(int timestep) override;
-    
-    virtual void updatePattern(Params& params, Patch* patch ) {};
+    virtual bool write(int timestep) override;
     
 protected :
-    std::vector<Field*> fields;
+    //! Indexes of the fields to be dumped
     std::vector<int> fields_indexes;
+    //! Names of the fields to be dumped
+    std::vector<std::string> fields_names;
     
+    //! Number of timesteps for time averaging
     int time_average;
     
     //! Property list for collective dataset write, set for // IO.
     hid_t write_plist;
     
-    //! Basic Write of a field in the specified group of the global file
-    virtual void writeField( Field* field, hid_t group_id ) = 0;
+    //! Number of current field
+    int ifield;
+    //! Number of cells to skip in each direction
+    std::vector<unsigned int> patch_offset;
+    //! Number of cells in each direction
+    std::vector<unsigned int> patch_size;
+    //! Number of cells in a patch
+    unsigned int total_patch_size;
+    //! Buffer for the output of a field
+    std::vector<double> data;
+    
+    //! 1st patch index of vecPatches
+    unsigned int refHindex;
+    
+    hid_t timestep_group_id, filespace, memspace;
+    
+    //! Total number of patches
+    int tot_number_of_patches;
+    
+    //! Copy patch field to current "data" buffer
+    virtual void getField( Patch* patch, int ) = 0;
+
 };
 
 #endif

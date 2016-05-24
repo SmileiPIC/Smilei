@@ -37,7 +37,7 @@ public :
     
     void run( Patch* patch, int timestep ) override;
     
-    void write(int timestep) override;
+    bool write(int timestep) override;
     
     //! get a particular scalar
     double getScalar(std::string name);

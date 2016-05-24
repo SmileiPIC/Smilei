@@ -116,11 +116,11 @@ void DiagnosticScalar::run( Patch* patch, int timestep )
 } // END run
 
 
-void DiagnosticScalar::write(int itime)
+bool DiagnosticScalar::write(int itime)
 {
     unsigned int k, s=out_key.size();
     
-    if ( ! timeSelection->theTimeIsNow(itime) ) return;
+    if ( ! timeSelection->theTimeIsNow(itime) ) return true;
     
     fout << std::scientific << setprecision(precision);
     // At the beginning of the file, we write some headers
@@ -151,7 +151,8 @@ void DiagnosticScalar::write(int itime)
         }
     }
     fout << endl;
-
+    
+    return true;
 } // END write
 
 
