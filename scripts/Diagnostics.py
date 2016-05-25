@@ -1742,30 +1742,31 @@ class Probe(Diagnostic):
 		
 		# Prepare the reordering of the points for patches disorder
 		positions = self._h5probe["positions"].value # actual probe points positions
-		p = self._np.array(p) # matrix of the probe generating vectors
-		# Subtract by p0
-		p0 = self._info["p0"]
-		for i in range(p0.size):
-			positions[:,i] -= p0[i]
-		# If 1D probe, convert positions to distances
-		if self._naxes==1:
-			p  = self._np.sqrt(self._np.sum(p**2))
-			invp = self._np.array(1./p, ndmin=1)
-			positions = self._np.sqrt(self._np.sum(positions**2,1))
-		# If 2D probe, must calculate matrix inverse
-		else:
-			invp = self._np.linalg.inv(p.transpose())
-		self._ordering = self._np.zeros((positions.shape[0],), dtype=int)
-		for n in range(positions.shape[0]):
-			pos = positions[n]
-			ijk = self._np.dot(invp, pos)*(self._ishape-1) # find the indices of the point
-			i = ijk[0]
-			for l in range(1,len(ijk)): i=i*self._ishape[l]+ijk[l] # linearized index
-			try:
-				self._ordering[int(round(i))] = n
-			except:
-				pass
-		self.p = self._ordering
+		self._ordering = None
+		if self._naxes>0:
+			p = self._np.array(p) # matrix of the probe generating vectors
+			# Subtract by p0
+			p0 = self._info["p0"]
+			for i in range(p0.size):
+				positions[:,i] -= p0[i]
+			# If 1D probe, convert positions to distances
+			if self._naxes==1:
+				p  = self._np.sqrt(self._np.sum(p**2))
+				invp = self._np.array(1./p, ndmin=1)
+				positions = self._np.sqrt(self._np.sum(positions**2,1))
+			# If 2D probe, must calculate matrix inverse
+			else:
+				invp = self._np.linalg.inv(p.transpose())
+			self._ordering = self._np.zeros((positions.shape[0],), dtype=int)
+			for n in range(positions.shape[0]):
+				pos = positions[n]
+				ijk = self._np.dot(invp, pos)*(self._ishape-1) # find the indices of the point
+				i = ijk[0]
+				for l in range(1,len(ijk)): i=i*self._ishape[l]+ijk[l] # linearized index
+				try:
+					self._ordering[int(round(i))] = n
+				except:
+					pass
 		
 		# Build units
 		titles = {}
@@ -1855,7 +1856,7 @@ class Probe(Diagnostic):
 		# Calculate the operation
 		exec op in None
 		# Reorder probes for patch disorder
-		A = A[self._ordering]
+		if self._ordering is not None: A = A[self._ordering]
 		# Reshape array because it is flattened in the file
 		A = self._np.reshape(A, self._ishape)
 		# Apply the slicing
