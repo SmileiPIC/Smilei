@@ -1177,14 +1177,17 @@ class Field(Diagnostic):
 			self._f = self._h5py.File(self._file, 'r')
 		except:
 			try:
+				from inspect import getsourcefile
 				self._h5py.File(self._results_path+'/Fields.h5', 'r').close()
 				print "Fields have not been `folded`. Folding is attempted now."
 				print "If it takes too long, try using the utility `scripts/Fields_fold.py`"
 				cwd = self._os.getcwd()
-				scriptsdir = self._os.path.dirname(self._os.path.realpath(__file__))
+				scriptsdir = self._os.path.dirname(getsourcefile(lambda:0))
 				self._os.chdir(self._results_path)
 				namespace = {}
+				print "Unfolding ..."
 				execfile(scriptsdir+"/Fields_fold.py", namespace)
+				print "... done"
 				self._os.chdir(cwd)
 				self._f = self._h5py.File(self._file, 'r')
 				print "Succesfully folded fields"
