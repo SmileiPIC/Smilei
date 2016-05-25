@@ -69,7 +69,6 @@ public:
         std::vector<Diagnostic*> vecDiagnostics;
         
         for (unsigned int n_diag_fields = 0; n_diag_fields < PyTools::nComponents("DiagFields"); n_diag_fields++) {
-        MESSAGE(n_diag_fields);
             vecDiagnostics.push_back( DiagnosticFieldsFactory::create(params, smpi, patch, n_diag_fields) );
         }
         
