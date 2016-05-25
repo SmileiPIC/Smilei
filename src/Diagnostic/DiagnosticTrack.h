@@ -16,7 +16,7 @@ public :
     //! Cloning constructor
     DiagnosticTrack(DiagnosticTrack* track, Patch* patch);
     //! Default destructor
-    ~DiagnosticTrack() ;
+    ~DiagnosticTrack() override;
     
     void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches ) override;

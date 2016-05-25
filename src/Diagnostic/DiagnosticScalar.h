@@ -27,7 +27,7 @@ public :
     //! Cloning constructor
     DiagnosticScalar( DiagnosticScalar * scalar );
     //! Default destructor
-    ~DiagnosticScalar() ;
+    ~DiagnosticScalar() override;
     
     void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     

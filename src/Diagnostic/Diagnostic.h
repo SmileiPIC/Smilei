@@ -11,7 +11,7 @@ class Diagnostic {
 public :
 
     Diagnostic() {};
-    ~Diagnostic() {};
+    virtual ~Diagnostic() {};
     
     //! Opens the file. Only by MPI master for global diags. Only by patch master for local diags.
     virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile ) = 0;

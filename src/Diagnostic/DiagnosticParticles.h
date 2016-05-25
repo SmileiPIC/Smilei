@@ -40,7 +40,7 @@ public :
     //! Cloning constructor
     DiagnosticParticles( DiagnosticParticles* );
     //! Default destructor
-    ~DiagnosticParticles() ;
+    ~DiagnosticParticles() override;
     
     void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     

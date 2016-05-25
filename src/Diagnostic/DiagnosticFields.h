@@ -9,7 +9,7 @@ class DiagnosticFields  : public Diagnostic {
 public :
     
     DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patch, int );
-    ~DiagnosticFields();
+    ~DiagnosticFields() override;
     
     virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     

@@ -21,7 +21,7 @@ public :
     //! Cloning constructor
     DiagnosticProbes(DiagnosticProbes*, Params&, Patch* );
     //! Default destructor
-    ~DiagnosticProbes() ;
+    ~DiagnosticProbes() override;
     
     void initParticles(Params&, Patch *);
     
