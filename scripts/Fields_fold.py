@@ -1,6 +1,7 @@
 import numpy as np
 import h5py
 import sys
+import mpi4py
 
 f_in  = h5py.File("Fields.h5")
 f_out = h5py.File("Fields_folded.h5", "w")
@@ -102,16 +103,21 @@ else         : raise Exception(str(dim)+"D unavailable")
 # Loop timesteps
 for t in f_in.values():
 	t_out = f_out.create_group(t.name)
+        print "t = ", t
 	
 	# Loop fields
 	for field in t.values():
+
+                print "field = ", field
 		
 		# Loop all patches and fill the array
 		hindex = 0
 		data = np.zeros(simulation_shape)
+                rawdata = field.value
 		for istart in range(0, total_size, total_patch_size):
 			# Obtain the field in current patch
-			A = np.reshape( field.value[istart:istart+total_patch_size], patch_size )
+			#A = np.reshape( field.value[istart:istart+total_patch_size], patch_size )
+			A = np.reshape( rawdata[istart:istart+total_patch_size], patch_size )
 			# Put the patch in the data
 			slice_in, slice_out = patchSlices( hindex )
 			data[slice_in] = A[slice_out]
