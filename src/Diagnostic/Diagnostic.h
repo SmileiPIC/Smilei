@@ -11,7 +11,7 @@ class Diagnostic {
 public :
 
     Diagnostic() {};
-    ~Diagnostic() {};
+    virtual ~Diagnostic() {};
     
     //! Opens the file. Only by MPI master for global diags. Only by patch master for local diags.
     virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile ) = 0;
@@ -31,7 +31,7 @@ public :
     virtual void run( Patch* patch, int timestep ) = 0;
     
     //! Writes out the diag. By all patches.
-    virtual void write(int timestep) = 0;
+    virtual bool write(int timestep) = 0;
     
     hid_t getFileId() {
         return fileId_;

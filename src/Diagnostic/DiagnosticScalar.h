@@ -27,7 +27,7 @@ public :
     //! Cloning constructor
     DiagnosticScalar( DiagnosticScalar * scalar );
     //! Default destructor
-    ~DiagnosticScalar() ;
+    ~DiagnosticScalar() override;
     
     void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     
@@ -37,7 +37,7 @@ public :
     
     void run( Patch* patch, int timestep ) override;
     
-    void write(int timestep) override;
+    bool write(int timestep) override;
     
     //! get a particular scalar
     double getScalar(std::string name);

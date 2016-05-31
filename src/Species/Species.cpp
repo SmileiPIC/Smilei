@@ -810,25 +810,30 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                 if (density(i,j,k)>0) {
                     
                     if (initMomentum_type=="maxwell-juettner") {
-                        //! \todo{Pass this parameters in a code constants class (MG)}
-                        nE     = 20000;
-                        muEmax = 20.0;
                         
-                        max_jutt_cumul.resize(nE);
-                        double mu=mass/temperature[0](i,j,k); // For Temperature profile
-                        double Emax=muEmax/mu;
-                        dE=Emax/nE;
-                        
-                        double fl=0;
-                        double fr=0;
-                        max_jutt_cumul[0]=0.0;
-                        for (unsigned int l=1; l<nE; l++ ) {
-                            //! \todo{this is just the isotropic case, generalise to non-isotropic (MG)}
-                            fr=(1.+l*dE)*sqrt(pow(1.0+l*dE,2)-1.0) * exp(-mu*l*dE);
-                            max_jutt_cumul[l]=max_jutt_cumul[l-1] + 0.5*dE*(fr+fl);
-                            fl=fr;
+                        // Computes the cumulative MJ distribution only when needed
+                        // --------------------------------------------------------
+                        if ((max_jutt_cumul.size()==0)||(temperatureProfile[0]->profileName!="constant")) {
+                            //! \todo{Pass this parameters in a code constants class (MG)}
+                            nE     = 20000;
+                            muEmax = 20.0;
+                            
+                            max_jutt_cumul.resize(nE);
+                            double mu=mass/temperature[0](i,j,k); // For Temperature profile
+                            double Emax=muEmax/mu;
+                            dE=Emax/nE;
+                            
+                            double fl=0;
+                            double fr=0;
+                            max_jutt_cumul[0]=0.0;
+                            for (unsigned int l=1; l<nE; l++ ) {
+                                //! \todo{this is just the isotropic case, generalise to non-isotropic (MG)}
+                                fr=(1.+l*dE)*sqrt(pow(1.0+l*dE,2)-1.0) * exp(-mu*l*dE);
+                                max_jutt_cumul[l]=max_jutt_cumul[l-1] + 0.5*dE*(fr+fl);
+                                fl=fr;
+                            }
+                            for (unsigned int l=0; l<nE; l++) max_jutt_cumul[l]/=max_jutt_cumul[nE-1];
                         }
-                        for (unsigned int l=0; l<nE; l++) max_jutt_cumul[l]/=max_jutt_cumul[nE-1];
                     }
                     
                     temp[0] = temperature[0](i,j,k);

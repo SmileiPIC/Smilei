@@ -36,7 +36,7 @@ class Smilei(object):
 		# Import packages
 		import h5py
 		import numpy as np
-		import os.path, glob, re, sys
+		import os, glob, re, sys
 		setMatplotLibBackend(show=show)
 		import matplotlib.pyplot
 		import matplotlib.pylab as pylab
@@ -45,7 +45,7 @@ class Smilei(object):
 		self._results_path = results_path
 		self._h5py = h5py
 		self._np = np
-		self._ospath = os.path
+		self._os = os
 		self._glob = glob.glob
 		self._re = re
 		self._plt = matplotlib.pyplot
@@ -54,7 +54,7 @@ class Smilei(object):
 	def reload(self):
 		self.valid = False
 		# Verify that results_path is valid
-		if not self._ospath.isdir(self._results_path):
+		if not self._os.path.isdir(self._results_path):
 			print "Could not find directory "+self._results_path
 			return
 		if len(self._glob(self._results_path+"/smilei.py"))==0:
@@ -441,7 +441,7 @@ class Diagnostic(object):
 		self._results_path = self.Smilei._results_path
 		self._h5py = self.Smilei._h5py
 		self._np = self.Smilei._np
-		self._ospath = self.Smilei._ospath
+		self._os = self.Smilei._os
 		self._glob = self.Smilei._glob
 		self._re = self.Smilei._re
 		self._plt = self.Smilei._plt
@@ -1040,7 +1040,7 @@ class ParticleDiagnostic(Diagnostic):
 		# path to the file
 		file = self._results_path+'/ParticleDiagnostic'+str(diagNumber)+'.h5'
 		# if no file, return
-		if not self._ospath.isfile(file): return False
+		if not self._os.path.isfile(file): return False
 		# open file
 		f = self._h5py.File(file, 'r')
 		# get attributes from file
@@ -1172,14 +1172,31 @@ class Field(Diagnostic):
 		
 		if not self.Smilei.valid: return None
 		
-		self._file = self._results_path+'/Fields.h5'
+		self._file = self._results_path+'/Fields_folded.h5'
 		try:
 			self._f = self._h5py.File(self._file, 'r')
 		except:
-			print "Cannot open file "+self._file
-			return
+			try:
+				from inspect import getsourcefile
+				self._h5py.File(self._results_path+'/Fields.h5', 'r').close()
+				print "Fields have not been `folded`. Folding is attempted now."
+				print "If it takes too long, try using the utility `scripts/Fields_fold.py`"
+				cwd = self._os.getcwd()
+				scriptsdir = self._os.path.dirname(getsourcefile(lambda:0))
+				self._os.chdir(self._results_path)
+				namespace = {}
+				print "Unfolding ..."
+				execfile(scriptsdir+"/Fields_fold.py", namespace)
+				print "... done"
+				self._os.chdir(cwd)
+				self._f = self._h5py.File(self._file, 'r')
+				print "Succesfully folded fields"
+				print ""
+			except:
+				print "No fields found or could not fold fields"
+				return
 		self._h5items = self._f.values()
-
+		
 		if field is None:
 			fields = self.getFields()
 			if len(fields)>0:
@@ -1725,30 +1742,31 @@ class Probe(Diagnostic):
 		
 		# Prepare the reordering of the points for patches disorder
 		positions = self._h5probe["positions"].value # actual probe points positions
-		p = self._np.array(p) # matrix of the probe generating vectors
-		# Subtract by p0
-		p0 = self._info["p0"]
-		for i in range(p0.size):
-			positions[:,i] -= p0[i]
-		# If 1D probe, convert positions to distances
-		if self._naxes==1:
-			p  = self._np.sqrt(self._np.sum(p**2))
-			invp = self._np.array(1./p, ndmin=1)
-			positions = self._np.sqrt(self._np.sum(positions**2,1))
-		# If 2D probe, must calculate matrix inverse
-		else:
-			invp = self._np.linalg.inv(p.transpose())
-		self._ordering = self._np.zeros((positions.shape[0],), dtype=int)
-		for n in range(positions.shape[0]):
-			pos = positions[n]
-			ijk = self._np.dot(invp, pos)*(self._ishape-1) # find the indices of the point
-			i = ijk[0]
-			for l in range(1,len(ijk)): i=i*self._ishape[l]+ijk[l] # linearized index
-			try:
-				self._ordering[int(round(i))] = n
-			except:
-				pass
-		self.p = self._ordering
+		self._ordering = None
+		if self._naxes>0:
+			p = self._np.array(p) # matrix of the probe generating vectors
+			# Subtract by p0
+			p0 = self._info["p0"]
+			for i in range(p0.size):
+				positions[:,i] -= p0[i]
+			# If 1D probe, convert positions to distances
+			if self._naxes==1:
+				p  = self._np.sqrt(self._np.sum(p**2))
+				invp = self._np.array(1./p, ndmin=1)
+				positions = self._np.sqrt(self._np.sum(positions**2,1))
+			# If 2D probe, must calculate matrix inverse
+			else:
+				invp = self._np.linalg.inv(p.transpose())
+			self._ordering = self._np.zeros((positions.shape[0],), dtype=int)
+			for n in range(positions.shape[0]):
+				pos = positions[n]
+				ijk = self._np.dot(invp, pos)*(self._ishape-1) # find the indices of the point
+				i = ijk[0]
+				for l in range(1,len(ijk)): i=i*self._ishape[l]+ijk[l] # linearized index
+				try:
+					self._ordering[int(round(i))] = n
+				except:
+					pass
 		
 		# Build units
 		titles = {}
@@ -1838,7 +1856,7 @@ class Probe(Diagnostic):
 		# Calculate the operation
 		exec op in None
 		# Reorder probes for patch disorder
-		A = A[self._ordering]
+		if self._ordering is not None: A = A[self._ordering]
 		# Reshape array because it is flattened in the file
 		A = self._np.reshape(A, self._ishape)
 		# Apply the slicing

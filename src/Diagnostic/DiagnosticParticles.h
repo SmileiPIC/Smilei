@@ -40,7 +40,7 @@ public :
     //! Cloning constructor
     DiagnosticParticles( DiagnosticParticles* );
     //! Default destructor
-    ~DiagnosticParticles() ;
+    ~DiagnosticParticles() override;
     
     void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     
@@ -50,7 +50,7 @@ public :
     
     void run( Patch* patch, int timestep ) override;
     
-    void write(int timestep) override;
+    bool write(int timestep) override;
 
     //! Clear the array
     void clear();

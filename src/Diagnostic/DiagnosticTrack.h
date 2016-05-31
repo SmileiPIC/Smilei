@@ -16,7 +16,7 @@ public :
     //! Cloning constructor
     DiagnosticTrack(DiagnosticTrack* track, Patch* patch);
     //! Default destructor
-    ~DiagnosticTrack() ;
+    ~DiagnosticTrack() override;
     
     void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches ) override;
@@ -27,7 +27,7 @@ public :
     
     void run( Patch* patch, int timestep ) override;
     
-    void write(int timestep) override;
+    bool write(int timestep) override;
     
     void setGlobalNbrParticles(int totNbrParts) {
         nbrParticles_ = totNbrParts;

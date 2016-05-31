@@ -50,7 +50,7 @@ void VectorPatch::close(SmileiMPI * smpiData)
 void VectorPatch::createGlobalDiags(Params& params, SmileiMPI* smpi)
 {
     globalDiags = DiagnosticFactory::createGlobalDiagnostics(params, smpi, (*this)(0) );
-
+    otherDiags  = DiagnosticFactory::createOtherDiagnostics (params, smpi, (*this)(0) );
 }
 
 
@@ -202,7 +202,7 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
         }
     }
     
-    // Local diags : probes, track & fields
+    // Local diags : probes, track
     for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
         // Patch master manages splitting between patches
         (*this)(0)->localDiags[idiag]->setFileSplitting( params, smpi, *this );
@@ -216,10 +216,18 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
             // Some more init
             (*this)(ipatch)->localDiags[idiag]->init();
         }
-        // If fields diag, save the timeSelection
-        if( fieldsTimeSelection==NULL && (*this)(0)->localDiags[idiag]->type_=="Fields" )
-            fieldsTimeSelection = new TimeSelection((*this)(0)->localDiags[idiag]->timeSelection);
     }
+    
+    // Special case for fields. Must be merged with others
+    for (unsigned int idiag = 0 ; idiag < otherDiags.size() ; idiag++) {
+        // All MPI create the file
+        otherDiags[idiag]->openFile( params, smpi, true );
+        otherDiags[idiag]->closeFile();
+        // Save the timeSelection
+        if( fieldsTimeSelection==NULL )
+            fieldsTimeSelection = new TimeSelection(otherDiags[idiag]->timeSelection);
+    }
+    
 } // END initAllDiags
 
 
@@ -233,6 +241,10 @@ void VectorPatch::closeAllDiags(SmileiMPI* smpi)
     // Patch master closes local diags
     for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++)
         (*this)(0)->localDiags[idiag]->closeFile();
+    
+    // Special case for fields. Must be merged with others
+    for (unsigned int idiag = 0 ; idiag < otherDiags.size() ; idiag++)
+        otherDiags[idiag]->closeFile();
 }
 
 
@@ -249,15 +261,13 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
         (*this)(0)->localDiags[idiag]->openFile( params, smpi, false );
         // The file Id is passed to all patches
         hid_t fileId = (*this)(0)->localDiags[idiag]->getFileId();
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
             (*this)(ipatch)->localDiags[idiag]->setFileId( fileId );
-            
-            //if( (*this)(ipatch)->localDiags[idiag]->type_=="Fields"){
-            //if( (*this)(ipatch)->Pcoordinates[0]!=params.number_of_patches[0]-1 )
-            //    static_cast<DiagnosticFields*>((*this)(ipatch)->localDiags[idiag])->updatePattern( params, (*this)(ipatch) );
-            //}
-        }
     }
+    
+    // Special case for fields. Must be merged with others
+    for (unsigned int idiag = 0 ; idiag < otherDiags.size() ; idiag++)
+        otherDiags[idiag]->openFile( params, smpi, false );
 }
 
 
@@ -268,8 +278,6 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, int itime, vector<Timer>& timer)
 {
-    //// Dump Fields
-    //// -------------------------------------------
     
     // Global diags: scalars + particles
     timer[3].restart();
@@ -289,7 +297,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
         }
     }
     
-    // Local diags : probes, track & fields
+    // Local diags : probes, track
     for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
         if( (*this)(0)->localDiags[idiag]->prepare( itime ) ) {
             // All patches run
@@ -298,6 +306,33 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
             // All patches write
             for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
                 (*this)(ipatch)->localDiags[idiag]->write( itime );
+        }
+    }
+    
+    // Special case for fields. Needs to be merged with other diags at some point
+    for (unsigned int idiag = 0 ; idiag < otherDiags.size() ; idiag++) {
+        if( otherDiags[idiag]->prepare( itime ) ) {
+            // All MPI open the file
+            otherDiags[idiag]->openFile( params, smpi, false );
+            // All MPI initialize the space they need
+            otherDiags[idiag]->setFileSplitting( params, smpi, *this );
+            // For each field
+            bool finished;
+            int done_something = 0;
+            do {
+                // All patches run
+                for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
+                    otherDiags[idiag]->run( (*this)(ipatch), itime );
+                // All MPI write
+                finished = otherDiags[idiag]->write( itime );
+                done_something ++;
+            } while( ! finished );
+            // All MPI close the file
+            otherDiags[idiag]->closeFile();
+            // Final loop on patches to zero RhoJs
+            if (done_something>1)
+                for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
+                    (*this)(ipatch)->EMfields->restartRhoJs();
         }
     }
     
