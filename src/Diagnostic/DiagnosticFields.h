@@ -17,12 +17,16 @@ public :
     
     virtual bool prepare( int timestep ) override;
     
-    void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches ) override;
+    virtual void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches ) = 0;
     
     virtual void run( Patch* patch, int timestep ) override;
     
     virtual bool write(int timestep) override;
     
+    virtual void writeField(hid_t, int) = 0;
+    
+    
+    void reopenFile();
 protected :
     //! Indexes of the fields to be dumped
     std::vector<int> fields_indexes;
@@ -38,7 +42,7 @@ protected :
     //! Number of current field
     int ifield;
     //! Number of cells to skip in each direction
-    std::vector<unsigned int> patch_offset;
+    std::vector<unsigned int> patch_offset_in_grid;
     //! Number of cells in each direction
     std::vector<unsigned int> patch_size;
     //! Number of cells in a patch
@@ -56,7 +60,9 @@ protected :
     
     //! Copy patch field to current "data" buffer
     virtual void getField( Patch* patch, int ) = 0;
-
+    
+    //! Temporary dataset that is used for folding the 2D hilbert curve
+    hid_t tmp_dset_id;
 };
 
 #endif

@@ -16,8 +16,8 @@
 //  --------------------------------------------------------------------------------------------------------------------
 class DiagnosticFieldsFactory {
 public:
-    static DiagnosticFields* create(Params& params, SmileiMPI* smpi, Patch* patch, unsigned int idiag) {
-        DiagnosticFields* diag = NULL;
+    static Diagnostic* create(Params& params, SmileiMPI* smpi, Patch* patch, unsigned int idiag) {
+        Diagnostic* diag = NULL;
         if ( params.geometry == "1d3v" ) {
             diag = new DiagnosticFields1D(params, smpi, patch, idiag);
         }
