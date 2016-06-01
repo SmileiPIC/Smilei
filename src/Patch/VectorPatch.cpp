@@ -252,10 +252,9 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
             (*this)(ipatch)->localDiags[idiag]->setFileId( fileId );
             
-            //if( (*this)(ipatch)->localDiags[idiag]->type_=="Fields"){
-            //if( (*this)(ipatch)->Pcoordinates[0]!=params.number_of_patches[0]-1 )
-            //    static_cast<DiagnosticFields*>((*this)(ipatch)->localDiags[idiag])->updatePattern( params, (*this)(ipatch) );
-            //}
+            if( (*this)(ipatch)->localDiags[idiag]->type_=="Fields"
+              &&(*this)(ipatch)->Pcoordinates[0]!=params.number_of_patches[0]-1 )
+                static_cast<DiagnosticFields*>((*this)(ipatch)->localDiags[idiag])->updatePattern( params, (*this)(ipatch) );
         }
     }
 }
