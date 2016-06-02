@@ -2,7 +2,7 @@
     Definition of Smilei components
 """
 
-
+import math
 
 class SmileiComponentType(type):
     """Metaclass to all Smilei components"""
@@ -100,6 +100,7 @@ class Main(SmileiSingleton):
     cell_length = []
     sim_length = []
     timestep = None
+    timestep_over_CFL = None
     sim_time = None
     interpolation_order = 2
     number_of_patches = None
@@ -116,6 +117,23 @@ class Main(SmileiSingleton):
     print_every = None
     output_dir = None
     random_seed = None
+
+    @staticmethod
+    def dt():
+        if Main.timestep_over_CFL is None:
+            if Main.timestep is None:
+                raise Exception("dt() timestep_over_CFL and timestep not defined")
+            return Main.timestep
+        else:
+            if Main.maxwell_sol == 'Yee':
+                if Main.geometry == '1d3v':
+                    return Main.timestep_over_CFL*cell_length[0]
+                elif Main.geometry == '2d3v':         
+                    return Main.timestep_over_CFL/math.sqrt(1.0/(Main.cell_length[0]**2)+1.0/(Main.cell_length[1]**2))
+                else: 
+                    raise Exception("dt() not implemented "+Main.geometry)
+            else:
+                raise Exception("dt() not implemented "+Main.maxwell_sol)
 
 
 class LoadBalancing(SmileiSingleton):

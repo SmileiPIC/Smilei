@@ -164,7 +164,8 @@ namelist("")
     // TIME & SPACE RESOLUTION/TIME-STEPS
     
     // reads timestep & cell_length
-    PyTools::extract("timestep", timestep, "Main");
+    timestep=PyTools::runPyFunction<double>("dt","Main");
+
     res_time = 1.0/timestep;
     PyTools::extract("cell_length",cell_length, "Main");
     if (cell_length.size()!=nDim_field) {
