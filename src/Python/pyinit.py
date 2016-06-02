@@ -122,18 +122,20 @@ class Main(SmileiSingleton):
     def dt():
         if Main.timestep_over_CFL is None:
             if Main.timestep is None:
-                raise Exception("dt() timestep_over_CFL and timestep not defined")
+                raise Exception("dt(): timestep_over_CFL and timestep not defined")
             return Main.timestep
         else:
+            if Main.cell_length is None:
+                raise Exception("dt(): need cell_length to calculate dt")
             if Main.maxwell_sol == 'Yee':
                 if Main.geometry == '1d3v':
                     return Main.timestep_over_CFL*cell_length[0]
                 elif Main.geometry == '2d3v':         
                     return Main.timestep_over_CFL/math.sqrt(1.0/(Main.cell_length[0]**2)+1.0/(Main.cell_length[1]**2))
                 else: 
-                    raise Exception("dt() not implemented "+Main.geometry)
+                    raise Exception("dt(): not implemented "+Main.geometry)
             else:
-                raise Exception("dt() not implemented "+Main.maxwell_sol)
+                raise Exception("dt(): not implemented "+Main.maxwell_sol)
 
 
 class LoadBalancing(SmileiSingleton):

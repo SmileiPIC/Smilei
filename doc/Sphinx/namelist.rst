@@ -103,6 +103,13 @@ The block ``Main`` is **mandatory** and has the following syntax::
       random_seed = 0,
   )
 
+The time **dt** between each step can be defined with two variables: ``timestep`` of 
+``timestep_over_CFL``. In the first case it's the actual **dt** =``timestep`` and in the 
+second case **dt** = :math:`CFL` * ``timestep_over_CFL`` (where  :math:`CFL` is calculated 
+using ``cell_length``) . In any case the function ``Main.dt()`` will return the **dt** 
+used in the simulation and can be used in a successive *block*.
+
+
 .. py:data:: geometry
   
   The geometry of the simulation: ``"1d3v"`` or ``"2d3v"``.
@@ -137,6 +144,12 @@ The block ``Main`` is **mandatory** and has the following syntax::
 .. py:data:: timestep
   
   Duration of one timestep in units of :math:`T_r`.
+
+
+.. py:data:: timestep_over_CFL
+  
+  Duration of one timestep in fractions of the CFL limit.
+  Note that this is considered only if :py:data:`timestep` is not defined 
 
 
 .. py:data:: number_of_patches
