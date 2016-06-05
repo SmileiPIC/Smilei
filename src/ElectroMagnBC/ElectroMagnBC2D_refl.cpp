@@ -71,12 +71,12 @@ void ElectroMagnBC2D_refl::apply_xmin(ElectroMagn* EMfields, double time_dual, P
         
         // FORCE CONSTANT MAGNETIC FIELDS
         
-        // for Bx^(p,d)
-        for (unsigned int i=oversize_; i>0; i--) {
-            for (unsigned int j=0 ; j<ny_d ; j++) {
-                (*Bx2D)(i-1,j) = (*Bx2D)(i,j);
-            }//j
-        }//i
+//        // for Bx^(p,d)
+//        for (unsigned int i=oversize_; i>0; i--) {
+//            for (unsigned int j=0 ; j<ny_d ; j++) {
+//                (*Bx2D)(i-1,j) = (*Bx2D)(i,j);
+//            }//j
+//        }//i
         
         // for By^(d,p)
         for (unsigned int i=oversize_; i>0; i--) {
@@ -92,28 +92,28 @@ void ElectroMagnBC2D_refl::apply_xmin(ElectroMagn* EMfields, double time_dual, P
             }
         }
         
-        // FORCE ZERO ELECTRIC FIELDS
-        
-        // for Ex^(d,p)
-        for (unsigned int i=0; i<nx_d; i++) {
-            for (unsigned int j=0 ; j<oversize_ ; j++) {
-                (*Ex2D)(i,j) = 0.0;
-            }//j
-        }//i
-        
-        // for Ey^(p,d)
-        for (unsigned int i=0; i<nx_p; i++) {
-            for (unsigned int j=0 ; j<oversize_+1 ; j++) {
-                (*Ey2D)(i,j) = 0.0;
-            }//j
-        }//i
-        
-        // for Ez^(p,p)
-        for (unsigned int i=0; i<nx_p; i++) {
-            for (unsigned int j=0 ; j<oversize_ ; j++) {
-                (*Ez2D)(i,j) = 0.0;
-            }
-        }
+//        // FORCE ZERO ELECTRIC FIELDS
+//        
+//        // for Ex^(d,p)
+//        for (unsigned int i=0; i<nx_d; i++) {
+//            for (unsigned int j=0 ; j<oversize_ ; j++) {
+//                (*Ex2D)(i,j) = 0.0;
+//            }//j
+//        }//i
+//        
+//        // for Ey^(p,d)
+//        for (unsigned int i=0; i<nx_p; i++) {
+//            for (unsigned int j=0 ; j<oversize_+1 ; j++) {
+//                (*Ey2D)(i,j) = 0.0;
+//            }//j
+//        }//i
+//        
+//        // for Ez^(p,p)
+//        for (unsigned int i=0; i<nx_p; i++) {
+//            for (unsigned int j=0 ; j<oversize_ ; j++) {
+//                (*Ez2D)(i,j) = 0.0;
+//            }
+//        }
         
         /* DEFINITION BY NICO
         // Static cast of the fields
@@ -159,12 +159,12 @@ void ElectroMagnBC2D_refl::apply_xmax(ElectroMagn* EMfields, double time_dual, P
         
         // FORCE CONSTANT MAGNETIC FIELDS
         
-        // for Bx^(p,d)
-        for (unsigned int i=nx_p-oversize_; i<nx_p; i++) {
-            for (unsigned int j=0 ; j<ny_d ; j++) {
-                (*Bx2D)(i,j) = (*Bx2D)(i-1,j);
-            }//j
-        }//i
+//        // for Bx^(p,d)
+//        for (unsigned int i=nx_p-oversize_; i<nx_p; i++) {
+//            for (unsigned int j=0 ; j<ny_d ; j++) {
+//                (*Bx2D)(i,j) = (*Bx2D)(i-1,j);
+//            }//j
+//        }//i
         
         // for By^(d,p)
         for (unsigned int i=nx_d-oversize_; i<nx_d; i++) {
@@ -180,28 +180,28 @@ void ElectroMagnBC2D_refl::apply_xmax(ElectroMagn* EMfields, double time_dual, P
             }
         }
         
-        // FORCE ZERO ELECTRIC FIELDS
-        
-        // for Ex^(d,p)
-        for (unsigned int i=nx_d-oversize_; i<nx_d; i++) {
-            for (unsigned int j=0 ; j<ny_p ; j++) {
-                (*Ex2D)(i,j) = 0.0;
-            }//j
-        }//i
-        
-        // for Ey^(p,d)
-        for (unsigned int i=nx_p-oversize_; i<nx_p; i++) {
-            for (unsigned int j=0 ; j<ny_d ; j++) {
-                (*Ey2D)(i,j) = 0.0;
-            }//j
-        }//i
-        
-        // for Ez^(p,p)
-        for (unsigned int i=nx_p-oversize_; i<nx_p; i++) {
-            for (unsigned int j=0 ; j<ny_p ; j++) {
-                (*Ez2D)(i,j) = 0.0;
-            }
-        }
+//        // FORCE ZERO ELECTRIC FIELDS
+//        
+//        // for Ex^(d,p)
+//        for (unsigned int i=nx_d-oversize_; i<nx_d; i++) {
+//            for (unsigned int j=0 ; j<ny_p ; j++) {
+//                (*Ex2D)(i,j) = 0.0;
+//            }//j
+//        }//i
+//        
+//        // for Ey^(p,d)
+//        for (unsigned int i=nx_p-oversize_; i<nx_p; i++) {
+//            for (unsigned int j=0 ; j<ny_d ; j++) {
+//                (*Ey2D)(i,j) = 0.0;
+//            }//j
+//        }//i
+//        
+//        // for Ez^(p,p)
+//        for (unsigned int i=nx_p-oversize_; i<nx_p; i++) {
+//            for (unsigned int j=0 ; j<ny_p ; j++) {
+//                (*Ez2D)(i,j) = 0.0;
+//            }
+//        }
         
         /* DEFINITION BY NICO
         // Static cast of the fields
@@ -257,12 +257,12 @@ void ElectroMagnBC2D_refl::apply_ymin(ElectroMagn* EMfields, double time_dual, P
             }//j
         }//i
         
-        // for By^(d,p)
-        for (unsigned int i=0; i<nx_d; i++) {
-            for (unsigned int j=oversize_ ; j>0 ; j--) {
-                (*By2D)(i,j-1) = (*By2D)(i,j);
-            }//j
-        }//i
+//        // for By^(d,p)
+//        for (unsigned int i=0; i<nx_d; i++) {
+//            for (unsigned int j=oversize_ ; j>0 ; j--) {
+//                (*By2D)(i,j-1) = (*By2D)(i,j);
+//            }//j
+//        }//i
         
         // for Bz^(d,d)
         for (unsigned int i=0; i<nx_d; i++) {
@@ -271,28 +271,28 @@ void ElectroMagnBC2D_refl::apply_ymin(ElectroMagn* EMfields, double time_dual, P
             }
         }
         
-        // FORCE ZERO ELECTRIC FIELDS
-        
-        // for Ex^(d,p)
-        for (unsigned int i=0; i<nx_d; i++){
-            for (unsigned int j=0 ; j<oversize_ ; j++) {
-                (*Ex2D)(i,j) = 0.0;
-            }//j
-        }//i
-        
-        // for Ey^(p,d)
-        for (unsigned int i=0; i<nx_p; i++) {
-            for (unsigned int j=0 ; j<oversize_ ; j++) {//j<oversize_+1???
-                (*Ey2D)(i,j) = 0.0;
-            }//j
-        }//i
-        
-        // for Ez^(p,p)
-        for (unsigned int i=0; i<nx_p; i++) {
-            for (unsigned int j=0 ; j<oversize_ ; j++) {
-                (*Ez2D)(i,j) = 0.0;
-            }
-        }
+//        // FORCE ZERO ELECTRIC FIELDS
+//        
+//        // for Ex^(d,p)
+//        for (unsigned int i=0; i<nx_d; i++){
+//            for (unsigned int j=0 ; j<oversize_ ; j++) {
+//                (*Ex2D)(i,j) = 0.0;
+//            }//j
+//        }//i
+//        
+//        // for Ey^(p,d)
+//        for (unsigned int i=0; i<nx_p; i++) {
+//            for (unsigned int j=0 ; j<oversize_ ; j++) {//j<oversize_+1???
+//                (*Ey2D)(i,j) = 0.0;
+//            }//j
+//        }//i
+//        
+//        // for Ez^(p,p)
+//        for (unsigned int i=0; i<nx_p; i++) {
+//            for (unsigned int j=0 ; j<oversize_ ; j++) {
+//                (*Ez2D)(i,j) = 0.0;
+//            }
+//        }
         /* NICO BCs
         // Static cast of the fields
         // The other fields are already defined, so no need for boundary conditions.
@@ -343,12 +343,12 @@ void ElectroMagnBC2D_refl::apply_ymax(ElectroMagn* EMfields, double time_dual, P
             }//j
         }//i
         
-        // for By^(d,p)
-        for (unsigned int i=0; i<nx_d; i++) {
-            for (unsigned int j=ny_p-oversize_ ; j<ny_p ; j++) {
-                (*By2D)(i,j) = (*By2D)(i,j-1);
-            }//j
-        }//i
+//        // for By^(d,p)
+//        for (unsigned int i=0; i<nx_d; i++) {
+//            for (unsigned int j=ny_p-oversize_ ; j<ny_p ; j++) {
+//                (*By2D)(i,j) = (*By2D)(i,j-1);
+//            }//j
+//        }//i
         
         // for Bz^(d,d)
         for (unsigned int i=0; i<nx_d; i++) {
@@ -357,28 +357,28 @@ void ElectroMagnBC2D_refl::apply_ymax(ElectroMagn* EMfields, double time_dual, P
             }
         }
         
-        // FORCE ZERO ELECTRIC FIELDS
-        
-        // for Ex^(d,p)
-        for (unsigned int i=0; i<nx_d; i++) {
-            for (unsigned int j=ny_p-oversize_ ; j<ny_p ; j++) {
-                (*Ex2D)(i,j) = 0.0;
-            }//j
-        }//i
-        
-        // for Ey^(p,d)
-        for (unsigned int i=0; i<nx_p; i++) {
-            for (unsigned int j=ny_d-oversize_ ; j<ny_d ; j++) {
-                (*Ey2D)(i,j) = 0.0;
-            }//j
-        }//i
-        
-        // for Ez^(p,p)
-        for (unsigned int i=0; i<nx_p; i++) {
-            for (unsigned int j=ny_p-oversize_ ; j<ny_p ; j++) {
-                (*Ez2D)(i,j) = 0.0;
-            }
-        }
+//        // FORCE ZERO ELECTRIC FIELDS
+//        
+//        // for Ex^(d,p)
+//        for (unsigned int i=0; i<nx_d; i++) {
+//            for (unsigned int j=ny_p-oversize_ ; j<ny_p ; j++) {
+//                (*Ex2D)(i,j) = 0.0;
+//            }//j
+//        }//i
+//        
+//        // for Ey^(p,d)
+//        for (unsigned int i=0; i<nx_p; i++) {
+//            for (unsigned int j=ny_d-oversize_ ; j<ny_d ; j++) {
+//                (*Ey2D)(i,j) = 0.0;
+//            }//j
+//        }//i
+//        
+//        // for Ez^(p,p)
+//        for (unsigned int i=0; i<nx_p; i++) {
+//            for (unsigned int j=ny_p-oversize_ ; j<ny_p ; j++) {
+//                (*Ez2D)(i,j) = 0.0;
+//            }
+//        }
         
 
         /* DEFINITION BY NICO

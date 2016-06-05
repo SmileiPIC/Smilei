@@ -56,19 +56,19 @@ void ElectroMagnBC1D_refl::apply_xmin(ElectroMagn* EMfields, double time_dual, P
         
         // force constant magnetic fields in the ghost cells
         for (unsigned int i=oversize_; i>0; i-- ) {
-            (*Bx1D)(i-1) = (*Bx1D)(i);
+            //(*Bx1D)(i-1) = (*Bx1D)(i);
             (*By1D)(i-1) = (*By1D)(i);
             (*Bz1D)(i-1) = (*Bz1D)(i);
         }
         
-        // force 0 electric fields in the ghost cells
-        for (unsigned int i=0; i<oversize_+1; i++) {
-            (*Ex1D)(i) = 0.0;
-        }
-        for (unsigned int i=0; i<oversize_; i++) {
-            (*Ey1D)(i) = 0.0;
-            (*Ez1D)(i) = 0.0;
-        }
+//        // force 0 electric fields in the ghost cells
+//        for (unsigned int i=0; i<oversize_+1; i++) {
+//            (*Ex1D)(i) = 0.0;
+//        }
+//        for (unsigned int i=0; i<oversize_; i++) {
+//            (*Ey1D)(i) = 0.0;
+//            (*Ez1D)(i) = 0.0;
+//        }
         
         
         /* DEFINITION BY NICO
@@ -105,20 +105,20 @@ void ElectroMagnBC1D_refl::apply_xmax(ElectroMagn* EMfields, double time_dual, P
         Field1D* Bz1D   = static_cast<Field1D*>(EMfields->Bz_);
         
         // force constant magnetic fields in the ghost cells
-        for (unsigned int i=nx_p-oversize_; i<nx_p; i++)
-            (*Bx1D)(i) = (*Bx1D)(i-1);
+//        for (unsigned int i=nx_p-oversize_; i<nx_p; i++)
+//            (*Bx1D)(i) = (*Bx1D)(i-1);
         for (unsigned int i=nx_d-oversize_; i<nx_d; i++) {
             (*By1D)(i) = (*By1D)(i-1);
             (*Bz1D)(i) = (*Bz1D)(i-1);
         }
         
-        // force 0 electric fields in the ghost cells
-        for (unsigned int i=nx_d-oversize_; i<nx_d; i++)
-            (*Ex1D)(i) = 0.0;
-        for (unsigned int i=nx_p-oversize_; i<nx_p; i++) {
-            (*Ey1D)(i) = 0.0;
-            (*Ez1D)(i) = 0.0;
-        }
+//        // force 0 electric fields in the ghost cells
+//        for (unsigned int i=nx_d-oversize_; i<nx_d; i++)
+//            (*Ex1D)(i) = 0.0;
+//        for (unsigned int i=nx_p-oversize_; i<nx_p; i++) {
+//            (*Ey1D)(i) = 0.0;
+//            (*Ez1D)(i) = 0.0;
+//        }
         
         /* DEFINITION BY NICO
         Field1D* By1D   = static_cast<Field1D*>(EMfields->By_);
