@@ -351,7 +351,7 @@ else :
   STAT_SMILEI_R_OLD = ' '
 COMPILE_ERRORS='compilation_errors'
 COMPILE_OUT='compilation_out'
-COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python > /dev/null 2>&1;make  > compilation_out_temp 2>'+COMPILE_ERRORS     
+COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS     
 CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python > /dev/null 2>&1;make clean > /dev/null 2>&1'
 # If the workdir does not contains a smilei bin, or it contains one older than the the smilei bin in directory smilei, force the compilation in order to generate the compilation_output
 #import pdb;pdb.set_trace()
