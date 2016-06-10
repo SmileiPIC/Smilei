@@ -14,7 +14,7 @@ build:
     # Copy the executable in the local directory
     - cp smilei /sps/gitlab-runner/$CI_BUILD_ID
     # Copy the checking script in the local directory
-    - cp check_results.py /sps/gitlab-runner/$CI_BUILD_ID
+    # - cp check_results.py /sps/gitlab-runner/$CI_BUILD_ID
     # Copy the submission script in the local directory
     - cp ~/sub_testci.sh /sps/gitlab-runner/$CI_BUILD_ID
     # Copy the input paramter file of the test case in the local directory
