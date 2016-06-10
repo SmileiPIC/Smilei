@@ -8,7 +8,7 @@ build:
   script:
     # Compilation
     - make clean
-    - make
+    - make -j 6
     # Creation of a local directory to host the job
     - mkdir /sps/gitlab-runner/$CI_BUILD_ID
     # Copy the executable in the local directory
@@ -25,10 +25,10 @@ build:
     # Wait for end of job
     - while qstat $JOBID &> /dev/null; do echo "Waiting for end of Laser Wake run"; sleep 20 ; done
     # Run checking script
-    - mkdir -p /opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck/smilei/validation/workdirs/wd_tst2d_4_laser_wake.py/4_12
-    - cp /sps/gitlab-runner/$CI_BUILD_ID/scalars.txt /opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck/smilei/validation/workdirs/wd_tst2d_4_laser_wake.py/4_12/
-    - cp /sps/gitlab-runner/$CI_BUILD_ID/smilei.py /opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck/smilei/validation/workdirs/wd_tst2d_4_laser_wake.py/4_12/
-    - cd /opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck/smilei/scripts
+    - mkdir -p $CI_PROJECT_DIR/validation/workdirs/wd_tst2d_4_laser_wake.py/4_12
+    - cp /sps/gitlab-runner/$CI_BUILD_ID/scalars.txt $CI_PROJECT_DIR/validation/workdirs/wd_tst2d_4_laser_wake.py/4_12/
+    - cp /sps/gitlab-runner/$CI_BUILD_ID/smilei.py $CI_PROJECT_DIR/validation/workdirs/wd_tst2d_4_laser_wake.py/4_12/
+    - cd $CI_PROJECT_DIR/scripts
     - python validation.py -m 4 -o 12 -b tst2d_4_laser_wake.py -s all -v
 
 #test:
