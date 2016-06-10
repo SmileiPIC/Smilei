@@ -1,0 +1,82 @@
+stages:
+    - makerun
+
+build:
+  stage: makerun
+  only:
+    - CI
+  script:
+    # Compilation
+    - make clean
+    - make
+    # Creation of a local directory to host the job
+    - mkdir /sps/gitlab-runner/$CI_BUILD_ID
+    # Copy the executable in the local directory
+    - cp smilei /sps/gitlab-runner/$CI_BUILD_ID
+    # Copy the checking script in the local directory
+    - cp check_results.py /sps/gitlab-runner/$CI_BUILD_ID
+    # Copy the submission script in the local directory
+    - cp ~/sub_testci.sh /sps/gitlab-runner/$CI_BUILD_ID
+    # Copy the input paramter file of the test case in the local directory
+    - cp benchmarks/tst2d_4_laser_wake.py /sps/gitlab-runner/$CI_BUILD_ID
+    - cd /sps/gitlab-runner/$CI_BUILD_ID
+    # Submit
+    - JOBID=$(PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub sub_testci.sh) 
+    # Wait for end of job
+    - while qstat $JOBID &> /dev/null; do echo "Waiting for end of Laser Wake run"; sleep 20 ; done
+    # Run checking script
+    - mkdir -p /opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck/smilei/validation/workdirs/wd_tst2d_4_laser_wake.py/4_12
+    - cp /sps/gitlab-runner/$CI_BUILD_ID/scalars.txt /opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck/smilei/validation/workdirs/wd_tst2d_4_laser_wake.py/4_12/
+    - cp /sps/gitlab-runner/$CI_BUILD_ID/smilei.py /opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck/smilei/validation/workdirs/wd_tst2d_4_laser_wake.py/4_12/
+    - cd /opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck/smilei/scripts
+    - python validation.py -m 4 -o 12 -b tst2d_4_laser_wake.py -s all -v
+
+#test:
+#  stage: test
+#  only:
+#    - master
+#    - develop
+#  script:
+#    - make clean install unit_test
+#
+#doc_develop:
+#  stage: doc
+#  only:
+#    - develop
+#  script:
+#    - make clean install
+#    - make -C docs
+#
+#doc_master:
+#  stage: doc
+#  only:
+#    - master
+#  script:
+#    - make clean install
+#    - make -C docs
+#    - rsync -rL docs/documentation/html/* pyrame@llr.in2p3.fr:/home/llr/info/www/sites/pyrame/documentation
+#
+#web_master:
+#  stage: web
+#  only:
+#    - master
+#  script:
+#    - rsync -rL exclude_from_packaging/www/* pyrame@llr.in2p3.fr:/home/llr/info/www/sites/pyrame/
+#
+#publish_master:
+#  stage: publish
+#  only:
+#    - tags
+#  script:
+#    - make tarball
+#    - scp pyrame.tgz pyrame@llr.in2p3.fr:/home/llr/info/www/sites/pyrame/pyrame_${CI_BUILD_TAG}.tgz
+#    - rm pyrame.tgz
+#
+#uninstall:
+#  stage: uninstall
+#  only:
+#    - master
+#    - develop
+#  script:
+#    - make uninstall
+#  when: always
