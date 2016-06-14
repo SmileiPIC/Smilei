@@ -340,7 +340,7 @@ def workdir_archiv(BIN_NAME) :
     os.mkdir(WORKDIRS) 
   return 
 if VERBOSE :
-  print "Compiling smilei, please wait ...\n"
+  print "\nRunning make command."
 os.chdir(SMILEI_ROOT)
 WORKDIRS = SMILEI_ROOT+"validation/workdirs"
 SMILEI_W=WORKDIRS+"/smilei"
