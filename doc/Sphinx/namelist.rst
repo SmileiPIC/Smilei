@@ -103,7 +103,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
       random_seed = 0,
   )
 
-.. py:data:: geometry
+.. py:data:: geometry 
   
   The geometry of the simulation: ``"1d3v"`` or ``"2d3v"``.
   
@@ -120,12 +120,23 @@ The block ``Main`` is **mandatory** and has the following syntax::
 .. py:data:: sim_length
   
   A list of floats: size of the simulation box in units of :math:`L_r`.
+  
+  The number of elements of this list must be the same as the dimension of the simulation.
+
+
+.. py:data:: number_of_cells
+  
+  Used in case :py:data:`sim_length` is not defined.
+
+  A list of int: number of cells in each dimension.
+  
   The number of elements of this list must be the same as the dimension of the simulation.
 
 
 .. py:data:: cell_length
   
   A list of floats: size of one cell in units of :math:`L_r`.
+  
   The number of elements of this list must be the same as the dimension of the simulation.
 
 
@@ -134,9 +145,23 @@ The block ``Main`` is **mandatory** and has the following syntax::
   Duration of the simulation in units of :math:`T_r`.
 
 
+.. py:data:: number_of_timesteps
+  
+  Used in case :py:data:`sim_time` is not defined.
+  
+  int: number of timesteps of the simulation
+
+
 .. py:data:: timestep
   
   Duration of one timestep in units of :math:`T_r`.
+
+
+.. py:data:: timestep_over_CFL
+  
+  Used in case :py:data:`timestep` is not defined.
+  
+  float: fraction of the CFL implicit timestep of the simulation
 
 
 .. py:data:: number_of_patches
