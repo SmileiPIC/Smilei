@@ -164,9 +164,9 @@ namelist("")
     // TIME & SPACE RESOLUTION/TIME-STEPS
     
     // reads timestep & cell_length
-    timestep=PyTools::runPyFunction<double>("dt","Main");
-
+    PyTools::extract("timestep", timestep, "Main");
     res_time = 1.0/timestep;
+    
     PyTools::extract("cell_length",cell_length, "Main");
     if (cell_length.size()!=nDim_field) {
         ERROR("Dimension of cell_length ("<< cell_length.size() << ") != " << nDim_field << " for geometry " << geometry);

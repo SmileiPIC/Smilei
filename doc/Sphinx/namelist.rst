@@ -103,13 +103,6 @@ The block ``Main`` is **mandatory** and has the following syntax::
       random_seed = 0,
   )
 
-The time **dt** between each step can be defined with two variables: ``timestep`` of 
-``timestep_over_CFL``. In the first case it's the actual **dt** =``timestep`` and in the 
-second case **dt** = :math:`CFL` * ``timestep_over_CFL`` (where  :math:`CFL` is calculated 
-using ``cell_length``) . In any case the function ``Main.dt()`` will return the **dt** 
-used in the simulation and can be used in a successive *block*.
-
-
 .. py:data:: geometry
   
   The geometry of the simulation: ``"1d3v"`` or ``"2d3v"``.
@@ -127,18 +120,36 @@ used in the simulation and can be used in a successive *block*.
 .. py:data:: sim_length
   
   A list of floats: size of the simulation box in units of :math:`L_r`.
+  
+  The number of elements of this list must be the same as the dimension of the simulation.
+
+
+.. py:data:: number_of_cells
+  
+  Used in case :py:data:`sim_length` is not defined.
+
+  A list of int: number of cells in each dimension.
+  
   The number of elements of this list must be the same as the dimension of the simulation.
 
 
 .. py:data:: cell_length
   
   A list of floats: size of one cell in units of :math:`L_r`.
+  
   The number of elements of this list must be the same as the dimension of the simulation.
 
 
 .. py:data:: sim_time
   
   Duration of the simulation in units of :math:`T_r`.
+
+
+.. py:data:: number_of_timesteps
+  
+  Used in case :py:data:`sim_time` is not defined.
+  
+  int: number of timesteps of the simulation
 
 
 .. py:data:: timestep
@@ -148,8 +159,9 @@ used in the simulation and can be used in a successive *block*.
 
 .. py:data:: timestep_over_CFL
   
-  Duration of one timestep in fractions of the CFL limit.
-  Note that this is considered only if :py:data:`timestep` is not defined 
+  Used in case :py:data:`timestep` is not defined.
+  
+  float: fraction of the CFL implicit timestep of the simulation
 
 
 .. py:data:: number_of_patches
