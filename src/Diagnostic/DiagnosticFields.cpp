@@ -198,7 +198,7 @@ bool DiagnosticFields::write(int timestep)
             timestep_group_id = H5Gcreate(fileId_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             
             ifield = 0;
-            return false;
+            if( ifield < fields_indexes.size() ) return false;
         }
         // Otherwise, leave
         return true;
