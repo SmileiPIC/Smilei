@@ -118,50 +118,32 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 
 .. py:data:: sim_length
+             number_of_cells
   
-  A list of floats: size of the simulation box in units of :math:`L_r`.
-  
-  The number of elements of this list must be the same as the dimension of the simulation.
-
-
-.. py:data:: number_of_cells
-  
-  Used in case :py:data:`sim_length` is not defined.
-
-  A list of int: number of cells in each dimension.
-  
-  The number of elements of this list must be the same as the dimension of the simulation.
+  A list of floats: size of the simulation box for each dimension of the simulation.
+   * Either ``sim_length``, the simulation length in each direction in units of :math:`L_r`,
+   * or ``number_of_cells``, the number of cells in each direction.
 
 
 .. py:data:: cell_length
   
-  A list of floats: size of one cell in units of :math:`L_r`.
-  
-  The number of elements of this list must be the same as the dimension of the simulation.
+  A list of floats: sizes of one cell in each direction in units of :math:`L_r`.
 
 
 .. py:data:: sim_time
-  
-  Duration of the simulation in units of :math:`T_r`.
+             number_of_timesteps
 
-
-.. py:data:: number_of_timesteps
-  
-  Used in case :py:data:`sim_time` is not defined.
-  
-  int: number of timesteps of the simulation
+  Duration of the simulation.
+    * Either ``sim_time``, the simulation duration in units of :math:`T_r`,
+    * or ``number_of_timesteps``, the total number of timesteps.
 
 
 .. py:data:: timestep
-  
-  Duration of one timestep in units of :math:`T_r`.
+             timestep_over_CFL
 
-
-.. py:data:: timestep_over_CFL
-  
-  Used in case :py:data:`timestep` is not defined.
-  
-  float: fraction of the CFL implicit timestep of the simulation
+  Duration of one timestep.
+    * Either ``timestep``, in units of :math:`T_r`,
+    * or ``timestep_over_CFL``, in units of the *Courant–Friedrichs–Lewy* (CFL) time.
 
 
 .. py:data:: number_of_patches
