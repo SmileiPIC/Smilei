@@ -23,36 +23,62 @@ public :
     
     void closeFile() override;
     
+    void init(SmileiMPI* smpi, VectorPatch& vecPatches) override;
+    
     bool prepare( int timestep ) override;
     
     void run( Patch* patch, int timestep ) override;
     
     bool write(int timestep) override;
     
-    void setGlobalNbrParticles(int totNbrParts) {
-        nbrParticles_ = totNbrParts;
-    }
+    virtual void finish(int, VectorPatch& ) override;
+    
     
 private :
-    //! Pointer to the species used
-    Species* species;
+    //! 1st patch index of vecPatches
+    unsigned int refHindex;
+    
+    //! Flag to test whether IDs have been set already
+    bool IDs_done;
+    
+    //! Index of the species used
     int speciesId_;
     
-    //! Size of the diag (number of particles)
+    //! Size of the diag (total number of particles)
     int nbrParticles_;
+    //! Number of particles in this MPI
+    int nParticles;
      
     //! HDF5 file transfer protocol
     hid_t transfer;
     //! HDF5 file space (dimensions of the array in file)
     hsize_t dims[2];
+    //! HDF5 memory space (dimensions of the current particle array in memory)
+    hid_t mem_space;
      
     //! Number of spatial dimensions
     int nDim_particle;
     
-    // iterator for dataset extension
-    int iter;
+    //! Current dataset index
+    int idset;
+    //! list of datasets to be added to the file
+    std::vector<std::string> datasets;
+    //! list of data types for each dataset
+    std::vector<hid_t> datatypes;
     
-    template <class T> void append( hid_t fid, std::string name, T & property,  hid_t  mem_space, int nParticles, hid_t type, std::vector<hsize_t> &locator);
+    //! Current particle partition among the patches own by current MPI
+    std::vector<int> patch_start;
+    
+    //! Array containing the locations of all particles in the final array in file
+    std::vector<hsize_t> locator;
+    
+    //! Buffer for the output of double array
+    std::vector<double> data_double;
+    //! Buffer for the output of short array
+    std::vector<short> data_short;
+    //! Buffer for the output of uint array
+    std::vector<unsigned int> data_uint;
+    
 };
 
 #endif

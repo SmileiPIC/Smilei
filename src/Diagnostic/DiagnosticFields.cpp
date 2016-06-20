@@ -238,3 +238,13 @@ bool DiagnosticFields::write(int timestep)
     return true;
 }
 
+
+
+void DiagnosticFields::finish(int done_something, VectorPatch& vecPatches)
+{
+    // Final loop on patches to zero RhoJs
+    if (done_something>1)
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+            vecPatches(ipatch)->EMfields->restartRhoJs();
+}
+ 

@@ -5,6 +5,7 @@
 #include "DiagnosticProbes.h"
 #include "DiagnosticScalar.h"
 #include "DiagnosticTrack.h"
+#include "DiagnosticTrackOld.h"
 
 #include "DiagnosticFields1D.h"
 #include "DiagnosticFields2D.h"
@@ -54,13 +55,6 @@ public:
             vecDiagnostics.push_back( new DiagnosticProbes(params, smpi, patch, vecDiagnostics.size(), n_diag_probes) );
         }
         
-        // loop species and make a new track diag if particles have to be tracked
-        for(unsigned int trackIdx=0; trackIdx<patch->vecSpecies.size(); trackIdx++) {
-            if ( patch->vecSpecies[trackIdx]->particles->tracked ) {
-              vecDiagnostics.push_back( new DiagnosticTrack(params, smpi, patch, vecDiagnostics.size(), trackIdx ) ); // trackIdx not used, no python parsing to init
-            }
-        }
-        
         return vecDiagnostics;
     } // END createLocalDiagnostics
     
@@ -70,6 +64,12 @@ public:
         
         for (unsigned int n_diag_fields = 0; n_diag_fields < PyTools::nComponents("DiagFields"); n_diag_fields++) {
             vecDiagnostics.push_back( DiagnosticFieldsFactory::create(params, smpi, patch, n_diag_fields) );
+        }
+        
+        for (unsigned int n_diag_track = 0; n_diag_track < patch->vecSpecies.size(); n_diag_track++) {
+            if ( patch->vecSpecies[n_diag_track]->particles->tracked ) {
+                vecDiagnostics.push_back( new DiagnosticTrack(params, smpi, patch, vecDiagnostics.size(), n_diag_track) );
+            }
         }
         
         return vecDiagnostics;
@@ -86,7 +86,7 @@ public:
                 );
             } else if (vecDiagnostics[idiag]->type_ == "Track" ) {
                 newVecDiagnostics.push_back(
-                    new DiagnosticTrack(static_cast<DiagnosticTrack*>(vecDiagnostics[idiag]), patch)
+                    new DiagnosticTrackOld(static_cast<DiagnosticTrackOld*>(vecDiagnostics[idiag]), patch)
                 );
             }
         }

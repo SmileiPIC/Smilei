@@ -214,12 +214,13 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
             // The file ID is passed to all patches
             (*this)(ipatch)->localDiags[idiag]->setFileId( fileId );
             // Some more init
-            (*this)(ipatch)->localDiags[idiag]->init();
+            (*this)(ipatch)->localDiags[idiag]->init(smpi, *this);
         }
     }
     
     // Special case for fields. Must be merged with others
     for (unsigned int idiag = 0 ; idiag < otherDiags.size() ; idiag++) {
+        otherDiags[idiag]->init(smpi, *this);
         // All MPI create the file
         otherDiags[idiag]->openFile( params, smpi, true );
         otherDiags[idiag]->closeFile();
@@ -314,9 +315,9 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
         if( otherDiags[idiag]->prepare( itime ) ) {
             // All MPI open the file
             otherDiags[idiag]->openFile( params, smpi, false );
-            // All MPI initialize the space they need
+            // All MPI organize the data
             otherDiags[idiag]->setFileSplitting( params, smpi, *this );
-            // For each field
+            // For each dataset
             bool finished;
             int done_something = 0;
             do {
@@ -329,10 +330,8 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
             } while( ! finished );
             // All MPI close the file
             otherDiags[idiag]->closeFile();
-            // Final loop on patches to zero RhoJs
-            if (done_something>1)
-                for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
-                    (*this)(ipatch)->EMfields->restartRhoJs();
+            // Some more finishing stuff
+            otherDiags[idiag]->finish(done_something, *this);
         }
     }
     

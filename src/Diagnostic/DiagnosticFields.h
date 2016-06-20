@@ -23,10 +23,10 @@ public :
     
     virtual bool write(int timestep) override;
     
+    virtual void finish(int, VectorPatch& ) override;
+    
     virtual void writeField(hid_t, int) = 0;
     
-    
-    void reopenFile();
 protected :
     //! Indexes of the fields to be dumped
     std::vector<int> fields_indexes;

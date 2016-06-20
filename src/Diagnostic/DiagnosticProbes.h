@@ -37,7 +37,7 @@ public :
     
     void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches ) override;
     
-    void init() override;
+    void init(SmileiMPI* smpi, VectorPatch& vecPatches) override;
     
     void compute(unsigned int timestep, ElectroMagn* EMfields);
     
