@@ -54,7 +54,6 @@ public:
         
         // Extract various parameters from the namelist
         
-        
         PyTools::extract("initPosition_type",thisSpecies->initPosition_type ,"Species",ispec);
         if (thisSpecies->initPosition_type.empty()) {
             ERROR("For species '" << species_type << "' empty initPosition_type");
