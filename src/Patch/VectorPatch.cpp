@@ -225,9 +225,12 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
         otherDiags[idiag]->openFile( params, smpi, true );
         otherDiags[idiag]->closeFile();
         // Save the timeSelection
-        if( fieldsTimeSelection==NULL )
+        if( fieldsTimeSelection==NULL && otherDiags[idiag]->type_=="Fields" )
             fieldsTimeSelection = new TimeSelection(otherDiags[idiag]->timeSelection);
     }
+    
+    // If no time selection has been found for fields, create an empty one
+    if( fieldsTimeSelection==NULL ) fieldsTimeSelection = new TimeSelection();
     
 } // END initAllDiags
 

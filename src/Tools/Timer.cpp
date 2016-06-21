@@ -46,7 +46,8 @@ void Timer::restart()
 void Timer::reboot()
 {
     smpi_->barrier();
-    last_start_ = 0.;
+    last_start_ =  MPI_Wtime();
+    time_acc_ = 0.;
 }
 
 void Timer::print(double tot)

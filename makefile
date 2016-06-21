@@ -128,7 +128,7 @@ $(EXEC): $(OBJS)
 
 # these are kept for backward compatibility and might be removed (see make help)
 obsolete:
-        @ echo "[WARNING] Please consider using make config=\"$(MAKECMDGOALS)\""
+	@ echo "[WARNING] Please consider using make config=\"$(MAKECMDGOALS)\""
 
 debug: obsolete
 	make config=debug
