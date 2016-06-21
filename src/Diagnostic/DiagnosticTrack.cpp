@@ -129,7 +129,10 @@ void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 
 void DiagnosticTrack::closeFile()
 {
-    H5Fclose( fileId_ );
+    if(fileId_>0) {
+        H5Fclose( fileId_ );
+        fileId_=0;
+    }
 }
 
 
@@ -146,24 +149,24 @@ bool DiagnosticTrack::prepare( int timestep )
 void DiagnosticTrack::run( Patch* patch, int timestep )
 {
     
-    // Number of particles in this patch
-    unsigned int patch_nParticles = patch->vecSpecies[speciesId_]->getNbrOfParticles();
     // Particles of this patch
     Particles* particles = patch->vecSpecies[speciesId_]->particles;
+    // Number of particles in this patch
+    unsigned int patch_nParticles = particles->size();
     
     // Fill the buffer for the current patch
     unsigned int i=0, j=patch_start[patch->hindex - refHindex];
-    if( datasets[idset] == "Id" ) {
+    if( idset == 0 ) { // Id
         while( i<patch_nParticles ) {
             data_uint[j] = particles->id(i);
             i++; j++;
         }
-    } else if( datasets[idset] == "Charge" ) {
+    } else if( idset == 1 ) { // Charge
         while( i<patch_nParticles ) {
             data_short[j] = particles->charge(i);
             i++; j++;
         }
-    } else if( datasets[idset] == "Weight" ) {
+    } else if( idset == 2 ) { // Weight
         while( i<patch_nParticles ) {
             data_double[j] = particles->weight(i);
             i++; j++;
@@ -201,12 +204,12 @@ bool DiagnosticTrack::write(int timestep)
         H5Sselect_none(file_space);
     
     // Write
-    if( datasets[idset] == "Id" ) {
-        H5Dwrite( did, datatypes[idset], mem_space , file_space , transfer, &data_uint );
-    } else if( datasets[idset] == "Charge" ) {
-        H5Dwrite( did, datatypes[idset], mem_space , file_space , transfer, &data_short );
+    if( idset == 0 ) {
+        H5Dwrite( did, datatypes[idset], mem_space , file_space , transfer, &data_uint[0] );
+    } else if( idset == 1 ) {
+        H5Dwrite( did, datatypes[idset], mem_space , file_space , transfer, &data_short[0] );
     } else {
-        H5Dwrite( did, datatypes[idset], mem_space , file_space , transfer, &data_double );
+        H5Dwrite( did, datatypes[idset], mem_space , file_space , transfer, &data_double[0] );
     }
     
     H5Sclose(file_space);
@@ -317,8 +320,8 @@ void DiagnosticTrack::setFileSplitting( Params& params, SmileiMPI* smpi, VectorP
     }
     
     // Specify the memory dataspace (the size of the local array)
-    hsize_t count[2] = {1, (hsize_t)nParticles};
-    mem_space = H5Screate_simple(2, count, NULL);
+    hsize_t count[1] = {(hsize_t)nParticles};
+    mem_space = H5Screate_simple(1, count, NULL);
     
     // Resize the buffers
     data_uint  .resize( nParticles );

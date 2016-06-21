@@ -5,7 +5,6 @@
 #include "DiagnosticProbes.h"
 #include "DiagnosticScalar.h"
 #include "DiagnosticTrack.h"
-#include "DiagnosticTrackOld.h"
 
 #include "DiagnosticFields1D.h"
 #include "DiagnosticFields2D.h"
@@ -83,10 +82,6 @@ public:
             if (vecDiagnostics[idiag]->type_ == "Probes" ) {
                 newVecDiagnostics.push_back(
                     new DiagnosticProbes(static_cast<DiagnosticProbes*>(vecDiagnostics[idiag]), params, patch)
-                );
-            } else if (vecDiagnostics[idiag]->type_ == "Track" ) {
-                newVecDiagnostics.push_back(
-                    new DiagnosticTrackOld(static_cast<DiagnosticTrackOld*>(vecDiagnostics[idiag]), patch)
                 );
             }
         }
