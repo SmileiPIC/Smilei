@@ -214,16 +214,13 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
             // The file ID is passed to all patches
             (*this)(ipatch)->localDiags[idiag]->setFileId( fileId );
             // Some more init
-            (*this)(ipatch)->localDiags[idiag]->init(smpi, *this);
+            (*this)(ipatch)->localDiags[idiag]->init(params, smpi, *this);
         }
     }
     
-    // Special case for fields. Must be merged with others
+    // Local diags : ?, track, fields
     for (unsigned int idiag = 0 ; idiag < otherDiags.size() ; idiag++) {
-        otherDiags[idiag]->init(smpi, *this);
-        // All MPI create the file
-        otherDiags[idiag]->openFile( params, smpi, true );
-        otherDiags[idiag]->closeFile();
+        otherDiags[idiag]->init(params, smpi, *this);
         // Save the timeSelection
         if( fieldsTimeSelection==NULL && otherDiags[idiag]->type_=="Fields" )
             fieldsTimeSelection = new TimeSelection(otherDiags[idiag]->timeSelection);

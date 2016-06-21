@@ -136,7 +136,7 @@ void DiagnosticTrack::closeFile()
 }
 
 
-void DiagnosticTrack::init(SmileiMPI* smpi, VectorPatch& vecPatches)
+void DiagnosticTrack::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches)
 {
     // Set the IDs of the particles
     if( ! IDs_done ) {
@@ -178,6 +178,10 @@ void DiagnosticTrack::init(SmileiMPI* smpi, VectorPatch& vecPatches)
     if ( !nbrParticles_ )
         ERROR("DiagTrack empty or number of Particles in diag is null");
     dims[1] = nbrParticles_;
+    
+    // create the file
+    openFile( params, smpi, true );
+    closeFile();
     
 }
 

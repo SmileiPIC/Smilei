@@ -22,7 +22,7 @@ public :
     
     void closeFile() override;
     
-    void init(SmileiMPI* smpi, VectorPatch& vecPatches) override;
+    void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
     
     bool prepare( int timestep ) override;
     

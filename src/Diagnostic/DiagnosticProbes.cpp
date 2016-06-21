@@ -392,7 +392,7 @@ void DiagnosticProbes::setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatche
 }
 
 
-void DiagnosticProbes::init(SmileiMPI* smpi, VectorPatch& vecPatches)
+void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches)
 {
     
     // Write the array of the particle positions

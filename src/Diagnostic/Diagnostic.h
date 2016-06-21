@@ -22,7 +22,7 @@ public :
     virtual void setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches ) {};
     
     //! Misc init.
-    virtual void init(SmileiMPI* smpi, VectorPatch& vecPatches) {};
+    virtual void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) {};
     
     //! Prepares the diag and check whether it is time to run. Only by MPI master for global diags. Only by patch master for local diags.
     virtual bool prepare( int timestep ) = 0;

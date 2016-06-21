@@ -15,6 +15,8 @@ public :
     
     virtual void closeFile() override;
     
+    virtual void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
+    
     virtual bool prepare( int timestep ) override;
     
     virtual void setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches ) = 0;

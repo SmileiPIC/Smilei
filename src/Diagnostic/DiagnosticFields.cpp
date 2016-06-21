@@ -142,6 +142,14 @@ void DiagnosticFields::closeFile()
 }
 
 
+
+void DiagnosticFields::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches)
+{
+    // create the file
+    openFile( params, smpi, true );
+    closeFile();
+}
+
 bool DiagnosticFields::prepare( int timestep )
 {
     
