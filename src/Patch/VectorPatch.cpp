@@ -220,6 +220,10 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
         if( fieldsTimeSelection==NULL && (*this)(0)->localDiags[idiag]->type_=="Fields" )
             fieldsTimeSelection = new TimeSelection((*this)(0)->localDiags[idiag]->timeSelection);
     }
+    
+    // If no time selection has been found for fields, create an empty one
+    if( fieldsTimeSelection==NULL ) fieldsTimeSelection = new TimeSelection();
+    
 } // END initAllDiags
 
 

@@ -110,6 +110,8 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, Patch* patc
     mystream << "Probes" << n_probe << ".h5";
     filename = mystream.str();
     
+    MESSAGE(1, "Diagnostic created: probe #"<<n_probe);
+    
     type_ = "Probes";
 
 } // END DiagnosticProbes::DiagnosticProbes
@@ -151,43 +153,77 @@ void DiagnosticProbes::initParticles(Params& params, Patch * patch)
 {
     // Calculate the total number of points in the grid
     // Each point is actually a "fake" macro-particle
-    unsigned int my_nPart=1;
+    nPart_total = 1;
     for (unsigned int iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) {
-        my_nPart *= vecNumber[iDimProbe];
+        nPart_total *= vecNumber[iDimProbe];
     }
-    nPart_total = my_nPart;
     
-    // Initialize the list of "fake" particles just as actual macro-particles
-    probeParticles.initialize(my_nPart, nDim_particle);
-    
-    // For each grid point, calculate its position and assign that position to the particle
-    // The particle position is a linear combination of the `pos` with `pos_first` or `pos_second`, etc.
-    double partPos, dx;
+    // First loop: calculate the number of points for this patch
+    unsigned int nPart_local=0, i, ipart, iDimProbe, iDim;
+    double dx;
+    vector<double> partPos(nDim_particle);
     vector<unsigned int> ipartND (dimProbe);
-    for(unsigned int ipart=0; ipart<my_nPart; ++ipart) { // for each particle
+    bool is_in_domain;
+    for(ipart=0; ipart<nPart_total; ++ipart) { // for each particle
         // first, convert the index `ipart` into N-D indexes
-        unsigned int i = ipart;
-        for (unsigned int iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) {
+        i = ipart;
+        for (iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) {
             ipartND[iDimProbe] = i%vecNumber[iDimProbe];
             i = i/vecNumber[iDimProbe]; // integer division
         }
-        // Now assign the position of the particle
-        for(unsigned int iDim=0; iDim!=nDim_particle; ++iDim) { // for each dimension of the simulation
-            partPos = allPos[0][iDim]; // position of `pos`
-            for (unsigned int iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) { // for each of `pos`, `pos_first`, etc.
+        is_in_domain = true;
+        // Now calculate the position of the particle
+        for(iDim=0; iDim!=nDim_particle; ++iDim) { // for each dimension of the simulation
+            partPos[iDim] = allPos[0][iDim]; // position of `pos`
+            for (iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) { // for each of `pos`, `pos_first`, etc.
                 dx = (allPos[iDimProbe+1][iDim]-allPos[0][iDim])/(vecNumber[iDimProbe]-1); // distance between 2 gridpoints
-                partPos += ipartND[iDimProbe] * dx;
+                partPos[iDim] += ipartND[iDimProbe] * dx;
             }
-            probeParticles.position(iDim,ipart) = partPos;
+            // Stop if particle not in domain
+            if (partPos[iDim] <  patch->getDomainLocalMin(iDim) 
+             || partPos[iDim] >= patch->getDomainLocalMax(iDim) ) {
+                is_in_domain = false;
+                break;
+            }
         }
+        if(is_in_domain) nPart_local++;
     }
     
-    // Remove particles out of the domain
-    for ( int ipb=my_nPart-1 ; ipb>=0 ; ipb--) {
-        if (!probeParticles.is_part_in_domain(ipb, patch))
-            probeParticles.erase_particle(ipb);
+    // Initialize the list of "fake" particles just as actual macro-particles
+    probeParticles.initialize(nPart_local, nDim_particle);
+    
+    
+    // Second loop: assign the position of each particle
+    // The particle position is a linear combination of the `pos` with `pos_first` or `pos_second`, etc.
+    unsigned int ipart_local = 0;
+    for(ipart=0; ipart<nPart_total; ++ipart) { // for each particle
+        // first, convert the index `ipart` into N-D indexes
+        i = ipart;
+        for (iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) {
+            ipartND[iDimProbe] = i%vecNumber[iDimProbe];
+            i = i/vecNumber[iDimProbe]; // integer division
+        }
+        is_in_domain = true;
+        // Now calculate the position of the particle
+        for(iDim=0; iDim!=nDim_particle; ++iDim) { // for each dimension of the simulation
+            partPos[iDim] = allPos[0][iDim]; // position of `pos`
+            for (iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) { // for each of `pos`, `pos_first`, etc.
+                dx = (allPos[iDimProbe+1][iDim]-allPos[0][iDim])/(vecNumber[iDimProbe]-1); // distance between 2 gridpoints
+                partPos[iDim] += ipartND[iDimProbe] * dx;
+            }
+            // Stop if particle not in domain
+            if (partPos[iDim] <  patch->getDomainLocalMin(iDim) 
+             || partPos[iDim] >= patch->getDomainLocalMax(iDim) ) {
+                is_in_domain = false;
+                break;
+            }
+        }
+        if(is_in_domain) {
+            for(iDim=0; iDim!=nDim_particle; ++iDim)
+                probeParticles.position(iDim,ipart_local) = partPos[iDim];
+            ipart_local++;
+        }
     }
-    unsigned int nPart_local = probeParticles.size(); // number of fake particles for this proc
     
     // Make the array that will contain the data
     // probesArray : 10 x nPart_tot
