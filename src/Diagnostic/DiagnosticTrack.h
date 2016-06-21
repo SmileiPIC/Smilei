@@ -19,7 +19,6 @@ public :
     ~DiagnosticTrack() override;
     
     void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
-    void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches ) override;
     
     void closeFile() override;
     
@@ -27,17 +26,15 @@ public :
     
     bool prepare( int timestep ) override;
     
-    void run( Patch* patch, int timestep ) override;
+    void run( Patch* patch, int timestep ) {};
+    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) override;
     
-    bool write(int timestep) override;
+    bool write(int timestep) {};
     
-    virtual void finish(int, VectorPatch& ) override;
+    virtual void finish(int, VectorPatch& ) {};
     
     
 private :
-    //! 1st patch index of vecPatches
-    unsigned int refHindex;
-    
     //! Flag to test whether IDs have been set already
     bool IDs_done;
     
@@ -46,8 +43,6 @@ private :
     
     //! Size of the diag (total number of particles)
     int nbrParticles_;
-    //! Number of particles in this MPI
-    int nParticles;
      
     //! HDF5 file transfer protocol
     hid_t transfer;
@@ -59,8 +54,6 @@ private :
     //! Number of spatial dimensions
     int nDim_particle;
     
-    //! Current dataset index
-    int idset;
     //! list of datasets to be added to the file
     std::vector<std::string> datasets;
     //! list of data types for each dataset
@@ -68,9 +61,6 @@ private :
     
     //! Current particle partition among the patches own by current MPI
     std::vector<int> patch_start;
-    
-    //! Array containing the locations of all particles in the final array in file
-    std::vector<hsize_t> locator;
     
     //! Buffer for the output of double array
     std::vector<double> data_double;

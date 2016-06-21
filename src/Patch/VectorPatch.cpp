@@ -205,7 +205,7 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
     // Local diags : probes, track
     for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
         // Patch master manages splitting between patches
-        (*this)(0)->localDiags[idiag]->setFileSplitting( params, smpi, *this );
+        (*this)(0)->localDiags[idiag]->setFileSplitting( smpi, *this );
         // Patch master opens the file
         (*this)(0)->localDiags[idiag]->openFile( params, smpi, true );
         // All patches initialize
@@ -318,23 +318,10 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
         if( otherDiags[idiag]->prepare( itime ) ) {
             // All MPI open the file
             otherDiags[idiag]->openFile( params, smpi, false );
-            // All MPI organize the data
-            otherDiags[idiag]->setFileSplitting( params, smpi, *this );
-            // For each dataset
-            bool finished;
-            int done_something = 0;
-            do {
-                // All patches run
-                for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
-                    otherDiags[idiag]->run( (*this)(ipatch), itime );
-                // All MPI write
-                finished = otherDiags[idiag]->write( itime );
-                done_something ++;
-            } while( ! finished );
+            // All MPI run their stuff and write out
+            otherDiags[idiag]->run( smpi, *this, itime );
             // All MPI close the file
             otherDiags[idiag]->closeFile();
-            // Some more finishing stuff
-            otherDiags[idiag]->finish(done_something, *this);
         }
     }
     

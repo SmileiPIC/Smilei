@@ -19,7 +19,7 @@ public :
     virtual void closeFile() = 0;
     
     //! Splits the file for local diags only. Only by patch master.
-    virtual void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches ) {};
+    virtual void setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches ) {};
     
     //! Misc init.
     virtual void init(SmileiMPI* smpi, VectorPatch& vecPatches) {};

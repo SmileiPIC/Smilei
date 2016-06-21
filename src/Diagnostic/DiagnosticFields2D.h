@@ -13,7 +13,7 @@ public:
     DiagnosticFields2D( Params &params, SmileiMPI* smpi, Patch* patch, int );
     ~DiagnosticFields2D();
     
-    void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches ) override;
+    void setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches ) override;
     
     //! Copy patch field to current "data" buffer
     void getField( Patch* patch, int ) override;

@@ -135,13 +135,9 @@ void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 
 void DiagnosticFields::closeFile()
 {
-    if(tmp_dset_id>0) {
-        H5Dclose( tmp_dset_id );
-    }
+    if( tmp_dset_id>0 ) H5Dclose( tmp_dset_id );
     tmp_dset_id=0;
-    if( fileId_>0 ) {
-        H5Fclose(fileId_);
-    }
+    if( fileId_>0 ) H5Fclose( fileId_ );
     fileId_ = 0;
 }
 
@@ -152,68 +148,55 @@ bool DiagnosticFields::prepare( int timestep )
     // Leave if the timestep is not the good one
     if (timestep - timeSelection->previousTime(timestep) >= time_average) return false;
     
-    ifield = -1;
-    
     return true;
 }
 
 
-void DiagnosticFields::run( Patch* patch, int timestep )
+void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep )
 {
-    // If the first pass
-    if( ifield < 0 ) {
-        // If time-averaging, increment the average
-        if( time_average>1 )
-            patch->EMfields->incrementAvgFields(timestep);
+    
+    refHindex = (unsigned int)(vecPatches.refHindex_);
+    
+    setFileSplitting( smpi, vecPatches );
+    
+    // If time-averaging, increment the average
+    if( time_average>1 )
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+            vecPatches(ipatch)->EMfields->incrementAvgFields(timestep);
+    
+    // If is not writing timestep, leave
+    if (timestep - timeSelection->previousTime(timestep) != time_average-1) return;
+    
+    // Create group for this timestep
+    ostringstream name_t;
+    name_t.str("");
+    name_t << "/" << setfill('0') << setw(10) << timestep;
+    
+    htri_t status = H5Lexists(fileId_, name_t.str().c_str(), H5P_DEFAULT);
+    // Do not output diag if this timestep has already been written
+    if( status > 0 ) return;
+    // Warning if file unreachable
+    if( status < 0 ) {
+        WARNING("Fields diagnostics could not write");
+        return;
     }
     
-    // If the subsequent passes
-    else {
-        // Copy the patch field to the buffer
-        getField( patch, fields_indexes[ifield] );
-    }
+    timestep_group_id = H5Gcreate(fileId_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     
-}
-
-
-bool DiagnosticFields::write(int timestep)
-{
-    // If the first pass
-    if( ifield < 0 ) {
-        // If writing timestep, create HDF5 group then go to next passes
-        if (timestep - timeSelection->previousTime(timestep) == time_average-1) {
-            ostringstream name_t;
-            name_t.str("");
-            name_t << "/" << setfill('0') << setw(10) << timestep;
-            
-            htri_t status = H5Lexists(fileId_, name_t.str().c_str(), H5P_DEFAULT);
-            // Do not output diag if this timestep has already been written
-            if( status > 0 ) return true;
-            // Warning if file unreachable
-            if( status < 0 ) {
-                WARNING("Fields diagnostics could not write");
-                return true;
-            }
-            
-            timestep_group_id = H5Gcreate(fileId_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            
-            ifield = 0;
-            if( ifield < fields_indexes.size() ) return false;
-        }
-        // Otherwise, leave
-        return true;
-    }
-    
-    // If the subsequent passes
-    else {
+    // For each field, combine all patches and write out
+    bool finished;
+    int done_something = 0;
+    for( int ifield=0; ifield < fields_indexes.size(); ifield++ ) {
         
-        // Create field dataset in HDF5
+        // Copy the patch field to the buffer
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+            getField( vecPatches(ipatch), fields_indexes[ifield] );
+        
+        // Create or open field dataset in HDF5
         hid_t dset_id;
         htri_t status = H5Lexists( timestep_group_id, fields_names[ifield].c_str(), H5P_DEFAULT );
         if (!status) {
-            // define empty property list
             hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
-            // create dataset for space in file
             dset_id  = H5Dcreate( timestep_group_id, fields_names[ifield].c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
             H5Pclose(plist_id);
         } else {
@@ -225,32 +208,15 @@ bool DiagnosticFields::write(int timestep)
         
         // Close dataset
         H5Dclose( dset_id );
-        
-        // go to next field if needed
-        ifield++;
-        if( ifield < fields_indexes.size() ) return false;
-        
     }
     
-    // When all fields are done, we get here and close everything
     H5Gclose(timestep_group_id);
     
-    return true;
-}
-
-
-
-void DiagnosticFields::finish(int done_something, VectorPatch& vecPatches)
-{
     // Final loop on patches to zero RhoJs
-    if (done_something>1)
+    if (fields_indexes.size()>0)
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
             vecPatches(ipatch)->EMfields->restartRhoJs();
-}
-
-
-void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep )
-{
+    
 }
 
  

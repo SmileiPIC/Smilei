@@ -360,7 +360,7 @@ bool DiagnosticProbes::write( int timestep )
 }
 
 
-void DiagnosticProbes::setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches )
+void DiagnosticProbes::setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches )
 {
     // 1 - Local (MPI) offset
     

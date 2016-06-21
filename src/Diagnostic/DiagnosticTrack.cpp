@@ -136,116 +136,6 @@ void DiagnosticTrack::closeFile()
 }
 
 
-bool DiagnosticTrack::prepare( int timestep )
-{
-    if( ! timeSelection->theTimeIsNow(timestep) ) return false;
-    
-    idset = 0;
-    return true;
-
-}
-
-
-void DiagnosticTrack::run( Patch* patch, int timestep )
-{
-    
-    // Particles of this patch
-    Particles* particles = patch->vecSpecies[speciesId_]->particles;
-    // Number of particles in this patch
-    unsigned int patch_nParticles = particles->size();
-    
-    // Fill the buffer for the current patch
-    unsigned int i=0, j=patch_start[patch->hindex - refHindex];
-    if( idset == 0 ) { // Id
-        while( i<patch_nParticles ) {
-            data_uint[j] = particles->id(i);
-            i++; j++;
-        }
-    } else if( idset == 1 ) { // Charge
-        while( i<patch_nParticles ) {
-            data_short[j] = particles->charge(i);
-            i++; j++;
-        }
-    } else if( idset == 2 ) { // Weight
-        while( i<patch_nParticles ) {
-            data_double[j] = particles->weight(i);
-            i++; j++;
-        }
-    } else if( idset < 6 ) { // Momentum
-        while( i<patch_nParticles ) {
-            data_double[j] = particles->momentum(idset-3, i);
-            i++; j++;
-        }
-    } else { // Position
-        while( i<patch_nParticles ) {
-            data_double[j] = particles->position(idset-6, i);
-            i++; j++;
-        }
-    }
-    
-}
-
-
-bool DiagnosticTrack::write(int timestep)
-{
-    
-    // Open existing dataset
-    hid_t did = H5Dopen( fileId_, datasets[idset].c_str(), H5P_DEFAULT );
-    // Update the size of this dataset for the new timestep
-    H5Dset_extent(did, dims);
-    
-    // Get the extended file space
-    hid_t file_space = H5Dget_space(did);
-    
-    // Select locations that this proc will write
-    if(nParticles>0)
-        H5Sselect_elements( file_space, H5S_SELECT_SET, nParticles, &locator[0] );
-    else
-        H5Sselect_none(file_space);
-    
-    // Write
-    if( idset == 0 ) {
-        H5Dwrite( did, datatypes[idset], mem_space , file_space , transfer, &data_uint[0] );
-    } else if( idset == 1 ) {
-        H5Dwrite( did, datatypes[idset], mem_space , file_space , transfer, &data_short[0] );
-    } else {
-        H5Dwrite( did, datatypes[idset], mem_space , file_space , transfer, &data_double[0] );
-    }
-    
-    H5Sclose(file_space);
-    H5Dclose(did);
-    
-    idset++;
-    
-    // If not finished go to next iteration
-    if( idset < datasets.size() ) return false;
-    
-    // When the loop is done, write the timestep
-    
-    // Update the size of the times dataset for the new timestep
-    hsize_t tdims[1] = { dims[0] };
-    did = H5Dopen( fileId_, "Times", H5P_DEFAULT );
-    H5Dset_extent(did, tdims);
-    // Select only the last element of the array
-    file_space = H5Dget_space(did);
-    hsize_t loc[1] = { dims[0]-1 };
-    H5Sselect_elements( file_space, H5S_SELECT_SET, 1, &loc[0] );
-    // Define the space in memory as a single int
-    hsize_t onetime[1] = { 1 };
-    hid_t memspace = H5Screate_simple(1, onetime, NULL);
-    // Write the current timestep
-    H5Dwrite( did, H5T_NATIVE_INT, memspace , file_space , transfer, &timestep );
-    H5Sclose( memspace );
-    H5Sclose(file_space);
-    H5Dclose(did);
-    
-    H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
-    
-    
-    return true;
-}
-
-
 void DiagnosticTrack::init(SmileiMPI* smpi, VectorPatch& vecPatches)
 {
     // Set the IDs of the particles
@@ -292,23 +182,31 @@ void DiagnosticTrack::init(SmileiMPI* smpi, VectorPatch& vecPatches)
 }
 
 
-void DiagnosticTrack::setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches )
+bool DiagnosticTrack::prepare( int timestep )
 {
-    dims[0]++;
+    if( ! timeSelection->theTimeIsNow(timestep) ) return false;
     
-    // Get refHindex
-    refHindex = (unsigned int)(vecPatches.refHindex_);
+    return true;
+
+}
+
+
+void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep )
+{
+    
+    // Add a new timestep to the dimension of the arrays
+    dims[0]++;
     
     // Obtain the particle partition of all the patches in this MPI
     patch_start.resize( vecPatches.size() );
-    nParticles = 0;
+    int nParticles = 0;
     for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         patch_start[ipatch] = nParticles;
         nParticles += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
     }
     
     // Build the "locator", an array indicating where each particle goes in the final array
-    locator.resize(nParticles*2);
+    vector<hsize_t> locator (nParticles*2);
     for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         Particles* particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
         int np=particles->size(), i=0, j=patch_start[ipatch];
@@ -323,20 +221,126 @@ void DiagnosticTrack::setFileSplitting( Params& params, SmileiMPI* smpi, VectorP
     hsize_t count[1] = {(hsize_t)nParticles};
     mem_space = H5Screate_simple(1, count, NULL);
     
-    // Resize the buffers
-    data_uint  .resize( nParticles );
-    data_short .resize( nParticles );
-    data_double.resize( nParticles );
+    // For each dataset
+    for( int idset=0; idset<datasets.size(); idset++) {
+        
+        // Fill the buffer for the current patch
+        unsigned int patch_nParticles, i, j;
+        Particles* particles;
+        if( idset == 0 ) { // Id
+            data_uint.resize( nParticles );
+            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+                particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
+                patch_nParticles = particles->size();
+                i=0;
+                j=patch_start[ipatch];
+                while( i<patch_nParticles ) {
+                    data_uint[j] = particles->id(i);
+                    i++; j++;
+                }
+            }
+        } else if( idset == 1 ) { // Charge
+            data_short.resize( nParticles );
+            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+                particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
+                patch_nParticles = particles->size();
+                i=0;
+                j=patch_start[ipatch];
+                while( i<patch_nParticles ) {
+                    data_short[j] = particles->charge(i);
+                    i++; j++;
+                }
+            }
+        } else if( idset == 2 ) { // Weight
+            data_double.resize( nParticles );
+            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+                particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
+                patch_nParticles = particles->size();
+                i=0;
+                j=patch_start[ipatch];
+                while( i<patch_nParticles ) {
+                    data_double[j] = particles->weight(i);
+                    i++; j++;
+                }
+            }
+        } else if( idset < 6 ) { // Momentum
+            data_double.resize( nParticles );
+            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+                particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
+                patch_nParticles = particles->size();
+                i=0;
+                j=patch_start[ipatch];
+                while( i<patch_nParticles ) {
+                    data_double[j] = particles->momentum(idset-3, i);
+                    i++; j++;
+                }
+            }
+        } else { // Position
+            data_double.resize( nParticles );
+            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+                particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
+                patch_nParticles = particles->size();
+                i=0;
+                j=patch_start[ipatch];
+                while( i<patch_nParticles ) {
+                    data_double[j] = particles->position(idset-6, i);
+                    i++; j++;
+                }
+            }
+        }
+        
+        // Open existing dataset
+        hid_t did = H5Dopen( fileId_, datasets[idset].c_str(), H5P_DEFAULT );
+        // Update the size of this dataset for the new timestep
+        H5Dset_extent(did, dims);
+        
+        // Get the extended file space
+        hid_t file_space = H5Dget_space(did);
+        
+        // Select locations that this proc will write
+        if(nParticles>0)
+            H5Sselect_elements( file_space, H5S_SELECT_SET, nParticles, &locator[0] );
+        else
+            H5Sselect_none(file_space);
+        
+        // Write
+        if( idset == 0 ) {
+            H5Dwrite( did, datatypes[idset], mem_space , file_space , transfer, &data_uint[0] );
+        } else if( idset == 1 ) {
+            H5Dwrite( did, datatypes[idset], mem_space , file_space , transfer, &data_short[0] );
+        } else {
+            H5Dwrite( did, datatypes[idset], mem_space , file_space , transfer, &data_double[0] );
+        }
+        
+        H5Sclose(file_space);
+        H5Dclose(did);
+        
+    }
+    H5Sclose( mem_space );
     
-}
-
-
-
-void DiagnosticTrack::finish(int dummy, VectorPatch& vecPatches )
-{
+    // Update the size of the times dataset for the new timestep
+    hsize_t tdims[1] = { dims[0] };
+    hid_t did = H5Dopen( fileId_, "Times", H5P_DEFAULT );
+    H5Dset_extent(did, tdims);
+    // Select only the last element of the array
+    hid_t file_space = H5Dget_space(did);
+    hsize_t loc[1] = { dims[0]-1 };
+    H5Sselect_elements( file_space, H5S_SELECT_SET, 1, &loc[0] );
+    // Define the space in memory as a single int
+    hsize_t onetime[1] = { 1 };
+    hid_t memspace = H5Screate_simple(1, onetime, NULL);
+    // Write the current timestep
+    H5Dwrite( did, H5T_NATIVE_INT, memspace , file_space , transfer, &timestep );
+    H5Sclose( memspace );
+    H5Sclose(file_space);
+    H5Dclose(did);
+    
+    H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+    
+    // Clear buffers
     data_uint  .resize(0);
     data_short .resize(0);
     data_double.resize(0);
-    locator    .resize(0);
-    H5Sclose( mem_space );
+
 }
+

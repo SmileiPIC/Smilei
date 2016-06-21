@@ -35,7 +35,7 @@ public :
     
     bool write(int timestep) override;
     
-    void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches ) override;
+    void setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches ) override;
     
     void init(SmileiMPI* smpi, VectorPatch& vecPatches) override;
     

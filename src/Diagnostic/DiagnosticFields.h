@@ -17,14 +17,14 @@ public :
     
     virtual bool prepare( int timestep ) override;
     
-    virtual void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches ) = 0;
+    virtual void setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches ) = 0;
     
-    virtual void run( Patch* patch, int timestep ) override;
+    virtual void run( Patch* patch, int timestep ) {};
     virtual void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) override;
     
-    virtual bool write(int timestep) override;
+    virtual bool write(int timestep) {};
     
-    virtual void finish(int, VectorPatch& ) override;
+    virtual void finish(int, VectorPatch& ) {};
     
     virtual void writeField(hid_t, int) = 0;
     
@@ -40,8 +40,6 @@ protected :
     //! Property list for collective dataset write, set for // IO.
     hid_t write_plist;
     
-    //! Number of current field
-    int ifield;
     //! Number of cells to skip in each direction
     std::vector<unsigned int> patch_offset_in_grid;
     //! Number of cells in each direction

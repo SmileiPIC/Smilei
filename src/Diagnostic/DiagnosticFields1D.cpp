@@ -32,11 +32,8 @@ DiagnosticFields1D::~DiagnosticFields1D()
 {
 }
 
-void DiagnosticFields1D::setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches )
+void DiagnosticFields1D::setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches )
 {
-    // Get refHindex
-    refHindex = (unsigned int)(vecPatches.refHindex_);
-    
     // Calculate the total size of the array in this proc
     unsigned int total_vecPatches_size = total_patch_size * vecPatches.size();
     if( vecPatches(0)->isWestern() ) total_vecPatches_size++; // One more cell on the left
