@@ -247,4 +247,10 @@ void DiagnosticFields::finish(int done_something, VectorPatch& vecPatches)
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
             vecPatches(ipatch)->EMfields->restartRhoJs();
 }
+
+
+void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep )
+{
+}
+
  

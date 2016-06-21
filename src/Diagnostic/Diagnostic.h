@@ -21,17 +21,20 @@ public :
     //! Splits the file for local diags only. Only by patch master.
     virtual void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches ) {};
     
-    //! Misc init. For all patches
+    //! Misc init.
     virtual void init(SmileiMPI* smpi, VectorPatch& vecPatches) {};
     
     //! Prepares the diag and check whether it is time to run. Only by MPI master for global diags. Only by patch master for local diags.
     virtual bool prepare( int timestep ) = 0;
     
-    //! Runs the diag. By all patches.
-    virtual void run( Patch* patch, int timestep ) = 0;
+    //! Runs the diag for a given patch for global diags.
+    virtual void run( Patch* patch, int timestep ) {};
     
-    //! Writes out the diag. By all patches.
-    virtual bool write(int timestep) = 0;
+    //! Runs the diag for all patches for local diags.
+    virtual void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) {};
+    
+    //! Writes out the diag.
+    virtual bool write(int timestep) {};
     
     //! Does some more work after writing
     virtual void finish(int, VectorPatch& ) {};
