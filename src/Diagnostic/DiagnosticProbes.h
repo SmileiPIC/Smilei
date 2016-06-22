@@ -11,19 +11,16 @@
 
 #include "Field2D.h"
 
+
 class DiagnosticProbes : public Diagnostic {
     friend class SmileiMPI;
 
 public :
     
     //! Default constructor
-    DiagnosticProbes( Params &params, SmileiMPI* smpi, Patch* patch, int diagId, int n_probe );
-    //! Cloning constructor
-    DiagnosticProbes(DiagnosticProbes*, Params&, Patch* );
+    DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe );
     //! Default destructor
     ~DiagnosticProbes() override;
-    
-    void initParticles(Params&, Patch *);
     
     void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     
@@ -31,22 +28,14 @@ public :
     
     bool prepare( int timestep ) override;
     
-    void run( Patch* patch, int timestep ) override;
-    
-    bool write(int timestep) override;
-    
-    void setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches ) override;
+    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) override;
     
     void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
     
-    void compute(unsigned int timestep, ElectroMagn* EMfields);
-    
-    int getLastPartId() {
-        return probesStart+probeParticles.size();
-    }
-    
-
 private :
+    
+    //! Index of the probe diagnostic
+    int probe_n;
     
     //! Dimension of the probe grid
     unsigned int dimProbe;
@@ -59,14 +48,6 @@ private :
     
     //! List of the coordinates of the probe vertices
     std::vector< std::vector<double> > allPos;
-    
-    //! fake particles acting as probes
-    Particles probeParticles;
-    
-    //! each probe will write in a buffer
-    Field2D* probesArray;
-    
-    int probesStart;
     
     //! number of fake particles for each probe diagnostic
     unsigned int nPart_total;
@@ -89,9 +70,23 @@ private :
     //! Rho local field for the projector
     double Rloc_fields;
     
-    Interpolator* interp_;
-    
 };
+
+
+
+class ProbeParticles {
+public :
+    ProbeParticles() {};
+    ProbeParticles( ProbeParticles* probe ) { offset_in_file=probe->offset_in_file; }
+    ~ProbeParticles() {};
+    
+    Particles particles;
+    int offset_in_file;
+};
+
+
+
+
 
 #endif
 

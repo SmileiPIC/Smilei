@@ -64,7 +64,9 @@ public:
     //! Projector
     Projector* Proj;
 
-    std::vector<Diagnostic*> localDiags;
+    //! "fake" particles for the probe diagnostics
+    std::vector<ProbeParticles*> probes;
+    
 
     // Geometrical description
     // -----------------------

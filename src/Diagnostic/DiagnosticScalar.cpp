@@ -5,9 +5,8 @@
 
 using namespace std;
 
-DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch = NULL, int diagId = 0 )
+DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch = NULL )
 {
-    // diagId == 0    else error
     // patch  == NULL else error
     
     out_width.resize(0);

@@ -21,12 +21,7 @@ public :
     
     virtual void setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches ) = 0;
     
-    virtual void run( Patch* patch, int timestep ) {};
     virtual void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) override;
-    
-    virtual bool write(int timestep) {};
-    
-    virtual void finish(int, VectorPatch& ) {};
     
     virtual void writeField(hid_t, int) = 0;
     

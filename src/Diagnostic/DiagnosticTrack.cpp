@@ -7,11 +7,10 @@
 
 using namespace std;
 
-DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int diagId, int speciesId ) :
+DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int speciesId ) :
 nDim_particle(params.nDim_particle),
 IDs_done( params.restart )
 {
-    diagId_ = diagId; // Warning, not the index of the DiagTrack, but of all local diags
     speciesId_ = speciesId;
     Species* species = patch->vecSpecies[speciesId_];
     

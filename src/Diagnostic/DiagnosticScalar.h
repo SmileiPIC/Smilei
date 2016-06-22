@@ -23,7 +23,7 @@ class DiagnosticScalar : public Diagnostic {
 
 public :
     //! Default constructor
-    DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+    DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch );
     //! Cloning constructor
     DiagnosticScalar( DiagnosticScalar * scalar );
     //! Default destructor

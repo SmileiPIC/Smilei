@@ -12,7 +12,7 @@ class DiagnosticTrack : public Diagnostic {
 
 public :
     //! Default constructor
-    DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int diagId, int );
+    DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int );
     //! Cloning constructor
     DiagnosticTrack(DiagnosticTrack* track, Patch* patch);
     //! Default destructor
@@ -26,13 +26,7 @@ public :
     
     bool prepare( int timestep ) override;
     
-    void run( Patch* patch, int timestep ) {};
     void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) override;
-    
-    bool write(int timestep) {};
-    
-    virtual void finish(int, VectorPatch& ) {};
-    
     
 private :
     //! Flag to test whether IDs have been set already
