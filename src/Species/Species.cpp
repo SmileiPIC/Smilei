@@ -66,6 +66,8 @@ min_loc(patch->getDomainLocalMin(0))
     dy_inv_ = 1./cell_length[1];
     
     initCluster(params);
+    nDim_field = params.nDim_field;
+    inv_nDim_field = 1./((double)nDim_field);
 
 }//END Species creator
 
@@ -240,7 +242,8 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
             
             // define new position (either regular or random)
             if (initPosition_type == "regular") {
-                (*particles).position(i,p)=indexes[i]+(p-iPart+0.5)*cell_length[i]/nPart;
+                (*particles).position(i,p)=indexes[i]+(p-iPart+0.5)*cell_length[i]/pow(nPart,inv_nDim_field);
+                
             } else if (initPosition_type == "random") {
                 (*particles).position(i,p)=indexes[i]+(((double)rand() / RAND_MAX))*cell_length[i];
             }
@@ -499,9 +502,9 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             double* b_rho;
             for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
 
-                if (params.nDim_field==2)
+                if (nDim_field==2)
                     b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1);    
-                else if (params.nDim_field==1)
+                else if (nDim_field==1)
                     b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw);    
                 for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
                     (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_lastdim);
@@ -653,7 +656,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     // Create particles in a space starting at cell_position
     vector<double> cell_position(3,0);
     vector<double> cell_index(3,0);
-    for (int i=0 ; i<params.nDim_field ; i++) {
+    for (int i=0 ; i<nDim_field ; i++) {
         if (params.cell_length[i]!=0) { // REALLY NECESSARY ????
             cell_position[i] = patch->getDomainLocalMin(i);
             cell_index   [i] = (double) patch->getCellStartingGlobalIndex(i);
@@ -686,7 +689,8 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     }
     
     int npart_effective = 0;
-    double remainder, nppc, inv_nDim_field = -1./params.nDim_field;
+    double remainder, nppc;
+    
     for (unsigned int i=0; i<n_space_to_create[0]; i++) {
         for (unsigned int j=0; j<n_space_to_create[1]; j++) {
             for (unsigned int k=0; k<n_space_to_create[2]; k++) {
@@ -699,20 +703,24 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                 // Obtain the number of particles per cell
                 nppc = ppcProfile->valueAt(x_cell);
                 // If not a round number, then we need to decide how to round
-                if( nppc != round(nppc) ) {
-                    remainder = pow(nppc - floor(nppc), inv_nDim_field);
-                    n_part_in_cell(i,j,k) = floor(nppc);
+                remainder = pow(nppc - floor(nppc), -inv_nDim_field);
+                n_part_in_cell(i,j,k) = floor(nppc);
+                
+                // if nb of particle per cell is not an integer value
+                // (TEMPORARY FIX BY MG: FRED CHECK THIS)
+                double intpart;
+                if ( modf(n_part_in_cell(i,j,k), &intpart) != 0) {
+                    
                     if( fmod(cell_index[0]+(double)i, remainder) < 1.
-                     && fmod(cell_index[1]+(double)j, remainder) < 1.
-                     && fmod(cell_index[2]+(double)k, remainder) < 1. ) n_part_in_cell(i,j,k)++;
-                } else {
-                    n_part_in_cell(i,j,k) = nppc;
-                }
-                // If zero or less, zero particles
-                if( n_part_in_cell(i,j,k)<=0. ) {
-                    n_part_in_cell(i,j,k) = 0.;
-                    density(i,j,k) = 0.;
-                    continue;
+                       && fmod(cell_index[1]+(double)j, remainder) < 1.
+                       && fmod(cell_index[2]+(double)k, remainder) < 1. ) n_part_in_cell(i,j,k)++;
+                    // If zero or less, zero particles
+                    if( n_part_in_cell(i,j,k)<=0. ) {
+                        n_part_in_cell(i,j,k) = 0.;
+                        density(i,j,k) = 0.;
+                        continue;
+                    }
+                    
                 }
                 
                 // assign charge its correct value in the cell

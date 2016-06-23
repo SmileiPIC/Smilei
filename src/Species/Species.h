@@ -267,6 +267,12 @@ private:
     //! Number of spatial dimension for the particles
     unsigned int nDim_particle;
     
+    //! Number of spatial dimension for the fields
+    unsigned int nDim_field;
+    
+    //! Inverse of the number of spatial dimension for the fields
+    double inv_nDim_field;
+    
     //! Local minimum of MPI domain
     double min_loc;
 

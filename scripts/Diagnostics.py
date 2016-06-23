@@ -1874,7 +1874,7 @@ class Probe(Diagnostic):
 class TrackParticles(Diagnostic):
 
 	# This is the constructor, which creates the object
-	def _init(self, species=None, select="", axes=[], timesteps=None, **kwargs):
+	def _init(self, species=None, select="", axes=[], timesteps=None, length=None, **kwargs):
 		
 		if not self.Smilei.valid: return None
 		
@@ -2042,6 +2042,7 @@ class TrackParticles(Diagnostic):
 		else: self._vunits = ""
 		
 		# Finish constructor
+		self.length = length or self.times[-1]
 		self.valid = True
 	
 	# Method to print info on included probe
@@ -2109,8 +2110,9 @@ class TrackParticles(Diagnostic):
 	def _animateOnAxes_0D(self, ax, t):
 		pass
 	def _animateOnAxes_1D(self, ax, t):
-		times = self.times[self.times<=t]
-		A     = self._tmpdata[0][self.times<=t,:]
+		timeSelection = (self.times<=t)*(self.times>=t-self.length)
+		times = self.times[timeSelection]
+		A     = self._tmpdata[0][timeSelection,:]
 		if times.size == 1:
 			times = self._np.double([times, times]).squeeze()
 			A = self._np.double([A, A]).squeeze()
@@ -2122,8 +2124,9 @@ class TrackParticles(Diagnostic):
 		ax.set_title(self._title) # override title
 		return 1
 	def _animateOnAxes_2D(self, ax, t):
-		x = self._tmpdata[0][self.times<=t,:]
-		y = self._tmpdata[1][self.times<=t,:]
+		timeSelection = (self.times<=t)*(self.times>=t-self.length)
+		x = self._tmpdata[0][timeSelection,:]
+		y = self._tmpdata[1][timeSelection,:]
 		ax.plot(self._xfactor*x, self._yfactor*y, **self.options.plot)
 		ax.set_xlabel(self._xlabel)
 		ax.set_ylabel(self._ylabel)

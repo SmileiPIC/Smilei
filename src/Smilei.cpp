@@ -169,6 +169,7 @@ int main (int argc, char* argv[])
         timer[6].reboot();
     
     }
+    timer[0].reboot();
     
     // ------------------------------------------------------------------------
     // Check memory consumption
