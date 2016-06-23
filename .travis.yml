@@ -11,7 +11,7 @@ dist: trusty
 before_install:
   - cat .travis.yml
   - sudo apt-get -qq update
-  - sudo apt-get install -y libopenmpi-dev
+  - sudo apt-get install -y libopenmpi-dev libhdf5-openmpi-10 libhdf5-openmpi-dev
 
 script:
   - git checkout -b travis
