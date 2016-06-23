@@ -237,19 +237,26 @@ void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::initPosition(unsigned int nPart, unsigned int iPart, double *indexes)
 {
-    for (unsigned  p= iPart; p<iPart+nPart; p++) {
-        for (unsigned  i=0; i<nDim_particle ; i++) {
-            
-            // define new position (either regular or random)
-            if (initPosition_type == "regular") {
-                (*particles).position(i,p)=indexes[i]+(p-iPart+0.5)*cell_length[i]/pow(nPart,inv_nDim_field);
-                
-            } else if (initPosition_type == "random") {
+    if (initPosition_type == "regular") {
+    
+        double coeff = 1./pow((double)nPart,inv_nDim_field);
+        if( coeff != round(coeff) )
+            ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `initPosition_type = 'random'`");
+        for (unsigned  p= iPart; p<iPart+nPart; p++) {
+            for (unsigned  i=0; i<nDim_particle ; i++) {
+                (*particles).position(i,p)=indexes[i]+(p-iPart+0.5)*cell_length[i]*coeff;
+            }
+        }
+        
+    } else if (initPosition_type == "random") {
+        
+        for (unsigned  p= iPart; p<iPart+nPart; p++) {
+            for (unsigned  i=0; i<nDim_particle ; i++) {
                 (*particles).position(i,p)=indexes[i]+(((double)rand() / RAND_MAX))*cell_length[i];
             }
-            //(*particles).position_old(i,p) = (*particles).position(i,p);
-        }// i
-    }// p
+        }
+        
+    }
 }
 
 
