@@ -326,8 +326,7 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     hid_t dset_id = H5Dcreate(fileId_, "positions", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
     H5Pclose(plist_id);
     // Write
-    if (nPart_MPI>0)
-        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &(posArray->data_2D[0][0]) );
+    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &(posArray->data_2D[0][0]) );
     H5Dclose(dset_id);
     H5Pclose( transfer );
     H5Sclose(filespace);
@@ -417,8 +416,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     hid_t transfer = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(transfer, H5FD_MPIO_COLLECTIVE);
     // Write
-    if (nPart_MPI>0)
-        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &(probesArray->data_2D[0][0]) );
+    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &(probesArray->data_2D[0][0]) );
     H5Dclose(dset_id);
     H5Pclose( transfer );
     H5Sclose(filespace);
