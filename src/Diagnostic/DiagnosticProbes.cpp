@@ -187,7 +187,6 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     int nPart_MPI = 0;
     
     // 1 - Loop patches to create particles
-    
     for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         
         // First loop on particles: calculate the number of points for this patch
@@ -196,7 +195,7 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
         vector<double> partPos(nDim_particle);
         vector<unsigned int> ipartND (dimProbe);
         bool is_in_domain;
-        for(ipart=0; ipart<nPart_total; ++ipart) { // for each particle
+        for(ipart=0; ipart<nPart_total; ipart++) { // for each particle
             // first, convert the index `ipart` into N-D indexes
             i = ipart;
             for (iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) {
@@ -205,7 +204,7 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
             }
             is_in_domain = true;
             // Now calculate the position of the particle
-            for(iDim=0; iDim!=nDim_particle; ++iDim) { // for each dimension of the simulation
+            for(iDim=0; iDim!=nDim_particle; iDim++) { // for each dimension of the simulation
                 partPos[iDim] = allPos[0][iDim]; // position of `pos`
                 for (iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) { // for each of `pos`, `pos_first`, etc.
                     dx = (allPos[iDimProbe+1][iDim]-allPos[0][iDim])/(vecNumber[iDimProbe]-1); // distance between 2 gridpoints
@@ -231,7 +230,8 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
         // Second loop on particles: assign the position of each particle
         // The particle position is a linear combination of the `pos` with `pos_first` or `pos_second`, etc.
         unsigned int ipart_local = 0;
-        for(ipart=0; ipart<nPart_total; ++ipart) { // for each particle
+        for(ipart=0; ipart<nPart_total; ipart++) { // for each particle
+            if( ipart_local>= nPart_patch ) break;
             // first, convert the index `ipart` into N-D indexes
             i = ipart;
             for (iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) {
@@ -240,7 +240,7 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
             }
             is_in_domain = true;
             // Now calculate the position of the particle
-            for(iDim=0; iDim!=nDim_particle; ++iDim) { // for each dimension of the simulation
+            for(iDim=0; iDim!=nDim_particle; iDim++) { // for each dimension of the simulation
                 partPos[iDim] = allPos[0][iDim]; // position of `pos`
                 for (iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) { // for each of `pos`, `pos_first`, etc.
                     dx = (allPos[iDimProbe+1][iDim]-allPos[0][iDim])/(vecNumber[iDimProbe]-1); // distance between 2 gridpoints
@@ -292,6 +292,7 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     Field2D* posArray = new Field2D(posArraySize);
     int ipart = 0;
     for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        if( ipart>=nPart_MPI ) break;
         Particles * particles = &(vecPatches(ipatch)->probes[probe_n]->particles);
         for ( int ip=0 ; ip<particles->size() ; ip++) {
             for (int idim=0 ; idim<nDim_particle  ; idim++ )
@@ -309,15 +310,19 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     dimsf[0] = nPart_total;
     dimsf[1] = nDim_particle;
     hid_t filespace = H5Screate_simple(2, dimsf, NULL);
-    offset[0] = vecPatches(0)->probes[probe_n]->offset_in_file;
-    offset[1] = 0;
-    stride[0] = 1;
-    stride[1] = 1;
-    count[0] = 1;
-    count[1] = 1;
-    block[0] = nPart_MPI;
-    block[1] = nDim_particle;
-    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
+    if( nPart_MPI>0 ) {
+        offset[0] = vecPatches(0)->probes[probe_n]->offset_in_file;
+        offset[1] = 0;
+        stride[0] = 1;
+        stride[1] = 1;
+        count[0] = 1;
+        count[1] = 1;
+        block[0] = nPart_MPI;
+        block[1] = nDim_particle;
+        H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
+    } else {
+        H5Sselect_none(filespace);
+    }
     // Define collective transfer 
     hid_t transfer = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(transfer, H5FD_MPIO_COLLECTIVE);
@@ -326,8 +331,7 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     hid_t dset_id = H5Dcreate(fileId_, "positions", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
     H5Pclose(plist_id);
     // Write
-    if (nPart_MPI>0)
-        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &(posArray->data_2D[0][0]) );
+    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &(posArray->data_2D[0][0]) );
     H5Dclose(dset_id);
     H5Pclose( transfer );
     H5Sclose(filespace);
@@ -346,7 +350,6 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     ostringstream name_t;
     name_t.str("");
     name_t << "/" << setfill('0') << setw(10) << timestep;
-    smpi->barrier();
     if (H5Lexists( fileId_, name_t.str().c_str(), H5P_DEFAULT )) return;
     smpi->barrier();
     
@@ -399,15 +402,19 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     dimsf[1] = nPart_total;
     dimsf[0] = nFields;
     hid_t filespace = H5Screate_simple(2, dimsf, NULL);
-    offset[1] = vecPatches(0)->probes[probe_n]->offset_in_file;
-    offset[0] = 0;
-    stride[0] = 1;
-    stride[1] = 1;
-    count[0] = 1;
-    count[1] = 1;
-    block[1] = nPart_MPI;
-    block[0] = nFields;
-    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
+    if( nPart_MPI>0 ) {
+        offset[1] = vecPatches(0)->probes[probe_n]->offset_in_file;
+        offset[0] = 0;
+        stride[0] = 1;
+        stride[1] = 1;
+        count[0] = 1;
+        count[1] = 1;
+        block[1] = nPart_MPI;
+        block[0] = nFields;
+        H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
+    } else {
+        H5Sselect_none(filespace);
+    }
     // Create new dataset for this timestep
     hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
     H5Pset_alloc_time(plist_id, H5D_ALLOC_TIME_EARLY );
@@ -417,8 +424,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     hid_t transfer = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(transfer, H5FD_MPIO_COLLECTIVE);
     // Write
-    if (nPart_MPI>0)
-        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &(probesArray->data_2D[0][0]) );
+    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &(probesArray->data_2D[0][0]) );
     H5Dclose(dset_id);
     H5Pclose( transfer );
     H5Sclose(filespace);

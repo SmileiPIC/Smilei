@@ -68,7 +68,7 @@ void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow
                            int* diag_flag, double time_dual, vector<Timer>& timer)
 {
     timer[1].restart();
-    
+    ostringstream t;
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
