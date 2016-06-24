@@ -701,6 +701,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     for (unsigned int i=0; i<n_space_to_create[0]; i++) {
         for (unsigned int j=0; j<n_space_to_create[1]; j++) {
             for (unsigned int k=0; k<n_space_to_create[2]; k++) {
+                n_part_in_cell(i,j,k) = 0.;
                 
                 vector<double> x_cell(3,0);
                 x_cell[0] = cell_position[0] + (i+0.5)*cell_length[0];
@@ -710,18 +711,16 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                 // Obtain the number of particles per cell
                 nppc = ppcProfile->valueAt(x_cell);
                 
+                n_part_in_cell(i,j,k) = floor(nppc);
                 // if nb of particle per cell is not an integer value
                 double intpart;
-                if ( modf(n_part_in_cell(i,j,k), &intpart) != 0) {
+                if ( modf(nppc, &intpart) > 0) {
                     // If not a round number, then we need to decide how to round
                     remainder = pow(nppc - floor(nppc), -inv_nDim_field);
-                    n_part_in_cell(i,j,k) = floor(nppc);
                     
                     if(   fmod(cell_index[0]+(double)i, remainder) < 1.
                        && fmod(cell_index[1]+(double)j, remainder) < 1.
                        && fmod(cell_index[2]+(double)k, remainder) < 1. ) n_part_in_cell(i,j,k)++;
-                } else {
-                    n_part_in_cell(i,j,k) = floor(nppc);
                 }
                 
                 // If zero or less, zero particles
