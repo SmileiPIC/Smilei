@@ -239,7 +239,6 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
 {
     if (initPosition_type == "regular") {
     
-        std::cout << "npart=" << nPart << std::endl;
         double coeff = pow((double)nPart,inv_nDim_field);
         if( coeff != round(coeff) )
             ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `initPosition_type = 'random'`");
