@@ -34,11 +34,11 @@ before_install:
   - wget --no-check-certificate http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.17.tar.gz
   - tar -zxvf hdf5-1.8.17.tar.gz
   - cd hdf5-1.8.17
+  - export LD_LIBRARY_PATH=/usr/local/lib
   - CC=mpicc CXX=mpicxx ./configure --enable-parallel && make && sudo make install
   - cat .travis.yml
   - sudo apt-get -qq update
   - sudo apt-get install -y python-dev
-  - 
 
 script:
   - git checkout -b travis
