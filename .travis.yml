@@ -8,7 +8,29 @@ sudo: required
 
 dist: trusty
 
+addons:
+  apt:
+    sources:
+    # add PPAs with more up-to-date toolchains
+    - ubuntu-toolchain-r-test
+    - llvm-toolchain-precise-3.6
+    packages:
+    # install toolchains
+    - gcc-5
+    - g++-5
+    env:
+    - CC=gcc-5
+    - CXX=g++-5
+
 before_install:
+  - wget https://www.open-mpi.org/software/ompi/v1.10/downloads/openmpi-1.10.3.tar.gz
+  - tar -zxvf openmpi-1.10.3.tar.gz
+  - cd openmpi-1.10.3
+  - ./configure --enable-thread-multiple && make && make install
+  - wget http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.17.tar.gz
+  - tar -zxvf hdf5-1.8.17.tar.gz
+  - cd hdf5-1.8.17
+  - ./configure --enable-parallel && make && make install
   - cat .travis.yml
   - sudo apt-get -qq update
   - sudo apt-get install -y libopenmpi-dev libhdf5-openmpi-10 libhdf5-openmpi-dev
@@ -19,3 +41,8 @@ script:
   - make
 
 install:
+
+
+
+
+
