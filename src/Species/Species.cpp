@@ -242,10 +242,25 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
         double coeff = pow((double)nPart,inv_nDim_field);
         if( coeff != round(coeff) )
             ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `initPosition_type = 'random'`");
-        for (unsigned  p= iPart; p<iPart+nPart; p++) {
-            for (unsigned  i=0; i<nDim_particle ; i++) {
-                (*particles).position(i,p)=indexes[i]+(p-iPart+0.5)*cell_length[i]/coeff;
+
+        double pos0 = indexes[0]+(0.5)*cell_length[0]/coeff;
+        for (int  p= iPart; p<iPart+nPart; p++) {
+            if (p%(int)coeff == 0) pos0 += cell_length[0]/coeff;
+            (*particles).position(0,p) = pos0;
+        }
+
+        if (nDim_particle>1) {
+            double pos1 = indexes[1]+(0.5)*cell_length[1]/coeff;
+            for (int  p= iPart; p<iPart+nPart; p++) {
+                (*particles).position(1,p) = pos1;
+                pos1 += cell_length[1]/coeff;
+                if (p%(int)coeff == 0) pos1 = indexes[1]+(0.5)*cell_length[1]/coeff;
             }
+
+            if (nDim_particle>2) {
+               ERROR( "Implement 3D" );
+            }
+
         }
         
     } else if (initPosition_type == "random") {
