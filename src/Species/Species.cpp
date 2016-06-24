@@ -709,16 +709,15 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                 
                 // Obtain the number of particles per cell
                 nppc = ppcProfile->valueAt(x_cell);
-                // If not a round number, then we need to decide how to round
-                remainder = pow(nppc - floor(nppc), -inv_nDim_field);
-                n_part_in_cell(i,j,k) = floor(nppc);
                 
                 // if nb of particle per cell is not an integer value
-                // (TEMPORARY FIX BY MG: FRED CHECK THIS)
                 double intpart;
                 if ( modf(n_part_in_cell(i,j,k), &intpart) != 0) {
+                    // If not a round number, then we need to decide how to round
+                    remainder = pow(nppc - floor(nppc), -inv_nDim_field);
+                    n_part_in_cell(i,j,k) = floor(nppc);
                     
-                    if( fmod(cell_index[0]+(double)i, remainder) < 1.
+                    if(   fmod(cell_index[0]+(double)i, remainder) < 1.
                        && fmod(cell_index[1]+(double)j, remainder) < 1.
                        && fmod(cell_index[2]+(double)k, remainder) < 1. ) n_part_in_cell(i,j,k)++;
                     // If zero or less, zero particles
@@ -727,7 +726,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                         density(i,j,k) = 0.;
                         continue;
                     }
-                    
                 }
                 
                 // assign charge its correct value in the cell

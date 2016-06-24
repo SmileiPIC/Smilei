@@ -707,8 +707,9 @@ void SmileiMPI::isend( ProbeParticles* probe, int to, int tag, unsigned int nDim
     int nPart = probe->particles.size();
     MPI_Isend( &nPart, 1, MPI_INT, to, tag+1, MPI_COMM_WORLD, &request );
     // send particles
-    for( unsigned int i=0; i<nDim_particles; i++)
-        MPI_Isend( &(probe->particles.Position[i][0]), nPart, MPI_DOUBLE, to, tag+1+i, MPI_COMM_WORLD, &request );
+    if( nPart>0 )
+        for( unsigned int i=0; i<nDim_particles; i++)
+            MPI_Isend( &(probe->particles.Position[i][0]), nPart, MPI_DOUBLE, to, tag+1+i, MPI_COMM_WORLD, &request );
 
 } // End isend ( probes )
 
@@ -724,8 +725,9 @@ void SmileiMPI::recv( ProbeParticles* probe, int from, int tag, unsigned int nDi
     // Resize particles
     probe->particles.initialize(nPart, nDim_particles);
     // receive particles
-    for( unsigned int i=0; i<nDim_particles; i++)
-       MPI_Recv( &(probe->particles.Position[i][0]), nPart, MPI_DOUBLE, from, tag+1+i, MPI_COMM_WORLD, &status );
+    if( nPart>0 )
+        for( unsigned int i=0; i<nDim_particles; i++)
+            MPI_Recv( &(probe->particles.Position[i][0]), nPart, MPI_DOUBLE, from, tag+1+i, MPI_COMM_WORLD, &status );
 
 } // End recv ( probes )
 
