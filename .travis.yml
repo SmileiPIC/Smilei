@@ -37,7 +37,7 @@ before_install:
   - wget --no-check-certificate http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.17.tar.gz
   - tar -zxvf hdf5-1.8.17.tar.gz
   - cd hdf5-1.8.17
-  - CC=mpicc CXX=mpicxx ./configure --enable-parallel --prefix=/usr/local && make && make install
+  - CC=mpicc CXX=mpicxx ./configure --enable-parallel --prefix=/usr/local && make && sudo make install
   - sudo sh -c 'echo "/usr/local/lib" > /etc/ld.so.conf.d/hdf5.conf'
   - sudo ldconfig
   - cd ..
