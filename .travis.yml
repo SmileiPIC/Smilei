@@ -25,6 +25,7 @@ addons:
     - CXX=g++-5
 
 before_install:
+  - sudo 'echo "/usr/local/lib" >> ls.so.conf && ldconfig'
   - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 20
   - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20
   - wget --no-check-certificate https://www.open-mpi.org/software/ompi/v1.10/downloads/openmpi-1.10.3.tar.gz
@@ -34,7 +35,6 @@ before_install:
   - wget --no-check-certificate http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.17.tar.gz
   - tar -zxvf hdf5-1.8.17.tar.gz
   - cd hdf5-1.8.17
-  - export LD_LIBRARY_PATH=/usr/local/lib
   - CC=mpicc CXX=mpicxx ./configure --enable-parallel && make && sudo make install
   - cat .travis.yml
   - sudo apt-get -qq update
