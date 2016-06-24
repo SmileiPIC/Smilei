@@ -26,7 +26,7 @@ before_install:
   - wget --no-check-certificate https://www.open-mpi.org/software/ompi/v1.10/downloads/openmpi-1.10.3.tar.gz
   - tar -zxvf openmpi-1.10.3.tar.gz
   - cd openmpi-1.10.3
-  - ./configure --enable-thread-multiple && make && make install
+  - ./configure --enable-mpi-thread-multiple && make && make install
   - wget --no-check-certificate http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.17.tar.gz
   - tar -zxvf hdf5-1.8.17.tar.gz
   - cd hdf5-1.8.17
