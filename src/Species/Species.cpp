@@ -720,12 +720,13 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                     if(   fmod(cell_index[0]+(double)i, remainder) < 1.
                        && fmod(cell_index[1]+(double)j, remainder) < 1.
                        && fmod(cell_index[2]+(double)k, remainder) < 1. ) n_part_in_cell(i,j,k)++;
-                    // If zero or less, zero particles
-                    if( n_part_in_cell(i,j,k)<=0. ) {
-                        n_part_in_cell(i,j,k) = 0.;
-                        density(i,j,k) = 0.;
-                        continue;
-                    }
+                }
+                
+                // If zero or less, zero particles
+                if( n_part_in_cell(i,j,k)<=0. ) {
+                    n_part_in_cell(i,j,k) = 0.;
+                    density(i,j,k) = 0.;
+                    continue;
                 }
                 
                 // assign charge its correct value in the cell
