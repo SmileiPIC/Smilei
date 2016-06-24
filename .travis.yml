@@ -31,12 +31,16 @@ before_install:
   - tar -zxvf openmpi-1.10.3.tar.gz
   - cd openmpi-1.10.3
   - ./configure --enable-mpi-thread-multiple && make && sudo make install
-  - sudo sh -c 'echo "/usr/local/lib" > /etc/ld.so.conf.d/openmpi.conf'
+  - sudo sh -c 'echo "/usr/local/lib\n/usr/local/lib/openmpi" > /etc/ld.so.conf.d/openmpi.conf'
   - sudo ldconfig
+  - cd ..
   - wget --no-check-certificate http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.17.tar.gz
   - tar -zxvf hdf5-1.8.17.tar.gz
   - cd hdf5-1.8.17
-  - CC=mpicc CXX=mpicxx ./configure --enable-parallel && make && sudo make install
+  - CC=mpicc CXX=mpicxx ./configure --enable-parallel --prefix=/usr/local && make && make install
+  - sudo sh -c 'echo "/usr/local/lib" > /etc/ld.so.conf.d/hdf5.conf'
+  - sudo ldconfig
+  - cd ..
   - cat .travis.yml
   - sudo apt-get -qq update
   - sudo apt-get install -y python-dev
@@ -44,7 +48,7 @@ before_install:
 script:
   - git checkout -b travis
   - git tag -a v1.0 -m "travis 1.0"
-  - HDF5_ROOT_DIR=hdf5-1.8.17/hdf5 make
+  - HDF5_ROOT_DIR=/usr/local make
 
 install:
 
