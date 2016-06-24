@@ -239,12 +239,13 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
 {
     if (initPosition_type == "regular") {
     
-        double coeff = 1./pow((double)nPart,inv_nDim_field);
+        std::cout << "npart=" << nPart << std::endl;
+        double coeff = pow((double)nPart,inv_nDim_field);
         if( coeff != round(coeff) )
             ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `initPosition_type = 'random'`");
         for (unsigned  p= iPart; p<iPart+nPart; p++) {
             for (unsigned  i=0; i<nDim_particle ; i++) {
-                (*particles).position(i,p)=indexes[i]+(p-iPart+0.5)*cell_length[i]*coeff;
+                (*particles).position(i,p)=indexes[i]+(p-iPart+0.5)*cell_length[i]/coeff;
             }
         }
         
@@ -720,6 +721,8 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                     if(   fmod(cell_index[0]+(double)i, remainder) < 1.
                        && fmod(cell_index[1]+(double)j, remainder) < 1.
                        && fmod(cell_index[2]+(double)k, remainder) < 1. ) n_part_in_cell(i,j,k)++;
+                } else {
+                    n_part_in_cell(i,j,k) = floor(nppc);
                 }
                 
                 // If zero or less, zero particles
