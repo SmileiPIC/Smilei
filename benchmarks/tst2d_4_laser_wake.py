@@ -69,7 +69,7 @@ Species(
     initPosition_type = "regular",
     initMomentum_type = "cold",
     ionization_model = "none",
-    n_part_per_cell = 10, 
+    n_part_per_cell = 16, 
     c_part_max = 1.0,
     mass = 1836.0,
     charge = 1.0,
@@ -89,7 +89,7 @@ Species(
     species_type = "electron",
     initPosition_type = "regular",
     initMomentum_type = "cold",
-    n_part_per_cell = 10,
+    n_part_per_cell = 16,
     c_part_max = 1.0,
     mass = 1.0,
     charge = -1.0,
@@ -112,12 +112,13 @@ bc_em_type_x = ["silver-muller","silver-muller"]
 bc_em_type_y = ["silver-muller","silver-muller"]
 
 # Laser properties
+fwhm_field=19.80
 LaserGaussian2D(
     boxSide         = "west",
     a0              = 2.,
     focus           = [0., sim_length[1]/2.],
     waist           = 26.16,
-    time_envelope   = tgaussian(center=17.84, fwhm=19.80)
+    time_envelope   = tgaussian(center=fwhm_field*2**0.5, fwhm=fwhm_field)
 )
 
 
