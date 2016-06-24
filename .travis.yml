@@ -23,22 +23,23 @@ addons:
     - CXX=g++-5
 
 before_install:
-  - wget https://www.open-mpi.org/software/ompi/v1.10/downloads/openmpi-1.10.3.tar.gz
+  - wget --no-check-certificate https://www.open-mpi.org/software/ompi/v1.10/downloads/openmpi-1.10.3.tar.gz
   - tar -zxvf openmpi-1.10.3.tar.gz
   - cd openmpi-1.10.3
   - ./configure --enable-thread-multiple && make && make install
-  - wget http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.17.tar.gz
+  - wget --no-check-certificate http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.17.tar.gz
   - tar -zxvf hdf5-1.8.17.tar.gz
   - cd hdf5-1.8.17
   - ./configure --enable-parallel && make && make install
   - cat .travis.yml
   - sudo apt-get -qq update
-  - sudo apt-get install -y libopenmpi-dev libhdf5-openmpi-10 libhdf5-openmpi-dev
+  - sudo apt-get install -y python-dev
+  - 
 
 script:
   - git checkout -b travis
   - git tag -a v1.0 -m "travis 1.0"
-  - make
+  - HDF5_ROOT_DIR=hdf5-1.8.17/hdf5 make
 
 install:
 
