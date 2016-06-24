@@ -25,8 +25,6 @@ addons:
     - CXX=g++-5
 
 before_install:
-  - sudo update-alternatives --remove-all gcc
-  - sudo update-alternatives --remove-all g++
   - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 20
   - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20
   - wget --no-check-certificate https://www.open-mpi.org/software/ompi/v1.10/downloads/openmpi-1.10.3.tar.gz

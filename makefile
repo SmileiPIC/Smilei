@@ -167,9 +167,9 @@ help:
 	@echo '     make config="debug noopenmp"'
 	@echo ''
 	@echo 'Environment variables :'
-	@echo '     SMILEICXX     : mpi c++ compiler'
-	@echo '     HDF5_ROOT_DIR : HDF5 dir'
-	@echo '     BUILD_DIR         :directory used to store build files (default: "build")'
+	@echo "     SMILEICXX     : mpi c++ compiler [${SMILEICXX}]"
+	@echo "     HDF5_ROOT_DIR : HDF5 dir [${HDF5_ROOT_DIR}]"
+	@echo "     BUILD_DIR     :directory used to store build files [${BUILD_DIR}]"
 	@echo 
 	@echo '      make doc     : builds the documentation'
 	@echo '      make tar     : creates an archive of the sources'
