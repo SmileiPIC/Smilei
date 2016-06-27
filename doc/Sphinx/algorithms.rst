@@ -112,7 +112,7 @@ approach [TafloveHagness]_ as well as refined methods based on this algorithm
 (for a review of these methods see [Nuter2014]_). In these methods, the electromagnetic
 fields are discretized onto a staggered grid, the so-called Yee-grid that allows for
 spatial-centering of the discretized curl operators in Maxwell's equations.
-Figure :numref:`fig_Yee` summarizes at which points of the Yee-grid are defined the
+Figure TODO`fig_Yee` summarizes at which points of the Yee-grid are defined the
 electromagnetic fields as well as charge and density currents. Similarly, the time-centering
 of the time-derivative in Maxwell's equations is ensured by considering the electric fields
 as defined at integer time-steps :math:`(n)` and magnetic fields at half-integer
