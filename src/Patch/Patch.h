@@ -125,6 +125,10 @@ public:
     inline bool isSouthern() { return locateOnBorders(1, 0); }
     //! Should be pure virtual, see child classes
     inline bool isNorthern() { return locateOnBorders(1, 1); }
+    //! Should be pure virtual, see child classes
+    inline bool isBottom() { return locateOnBorders(2, 0); }
+    //! Should be pure virtual, see child classes
+    inline bool isTop() { return locateOnBorders(2, 1); }
 
     //! Test neighbbor's patch Id to apply or not a boundary condition
     inline bool locateOnBorders(int dir, int way) {
