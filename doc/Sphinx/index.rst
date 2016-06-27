@@ -87,7 +87,6 @@ Install, run, analyze
    
    installation
    namelist
-   run
    post-processing
 
 
