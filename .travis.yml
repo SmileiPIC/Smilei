@@ -43,14 +43,21 @@ before_install:
   - cd ..
   - cat .travis.yml
   - sudo apt-get -qq update
-  - sudo apt-get install -y python-dev sphinx-common
+  - sudo apt-get install -y python-dev sphinx-common python-pip
+  - pip install --user alabaster
+  - pip install --user travis-sphinx
+  - export PATH=$HOME/.local/bin:$PATH
 
 script:
   - git checkout -b travis
   - git tag -a v1.0 -m "travis 1.0"
   - HDF5_ROOT_DIR=/usr/local make
   - make sphinx
+  - travis-sphinx --source=doc/Sphinx build
 
+after_success:
+  - travis-sphinx deploy
+    
 install:
 
 
