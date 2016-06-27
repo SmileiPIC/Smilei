@@ -64,6 +64,7 @@ min_loc(patch->getDomainLocalMin(0))
     
     dx_inv_ = 1./cell_length[0];
     dy_inv_ = 1./cell_length[1];
+    dz_inv_ = 1./cell_length[2];
     
     initCluster(params);
 

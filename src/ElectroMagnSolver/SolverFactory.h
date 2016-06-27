@@ -3,6 +3,7 @@
 
 #include "MF_Solver1D_Yee.h"
 #include "MF_Solver2D_Yee.h"
+#include "MF_Solver3D_Yee.h"
 #include "MF_Solver2D_Cowan.h"
 #include "MF_Solver2D_Lehe.h"
 
@@ -29,6 +30,10 @@ public:
                 solver = new MF_Solver2D_Lehe(params);
             }
             
+        } else if ( params.geometry == "3d3v" ) {
+            if (params.maxwell_sol == "Yee") {
+                solver = new MF_Solver3D_Yee(params);
+            }
         }
         
         if (!solver) {
