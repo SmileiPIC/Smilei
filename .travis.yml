@@ -44,8 +44,9 @@ before_install:
   - cat .travis.yml
   - sudo apt-get -qq update
   - sudo apt-get install -y python-dev sphinx-common python-pip
-  - sudo pip install travis-sphinx
-  - sudo pip install alabaster
+  - pip install --user alabaster
+  - pip install --user travis-sphinx
+  - export PATH=$HOME/.local/bin:$PATH
 
 script:
   - git checkout -b travis
