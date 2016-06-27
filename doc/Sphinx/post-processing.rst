@@ -427,7 +427,7 @@ updates the plotting options.
 Tutorial
 ^^^^^^^^
 
-Before you start this tutorial, :ref:`learn how to run Smilei <run>`.
+#Before you start this tutorial, :ref:`learn how to run Smilei <run>`.
 
 .. rubric:: 1. Running the test case
 
