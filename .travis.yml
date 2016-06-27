@@ -52,8 +52,7 @@ script:
   - git checkout -b travis
   - git tag -a v1.0 -m "travis 1.0"
 #  - HDF5_ROOT_DIR=/usr/local make
-  - make sphinx
-  - travis-sphinx --source=doc/Sphinx build
+  - travis-sphinx -n --source=doc/Sphinx build
 
 after_success:
   - travis-sphinx deploy
