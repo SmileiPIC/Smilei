@@ -84,7 +84,7 @@ and :math:`\delta` is the Dirac distribution.
 In PIC codes, Vlasov's equation :eq:`Vlasov` is integrated along the continuous trajectories
 of these quasi-particles, while Maxwell's equations :eq:`Maxwell` are solved on a
 discrete spatial grid, the spaces between consecutive grid points being referred to as
-*cells* (see Fig. :numref:`Fig_PicCell`). Injecting the discrete distribution function of
+*cells* (see Fig. TODO`Fig_PicCell`). Injecting the discrete distribution function of
 Eq. :eq:`fs_discretized` in Vlasov's equation :eq:`Vlasov`, multiplying the result by
 :math:`\mathbf{p}` and integrating over all :math:`\mathbf{p}` and over the volume of
 the quasi-particles, leads to the relativistic equations of motion of individual
