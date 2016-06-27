@@ -11,18 +11,12 @@ dist: trusty
 addons:
   apt:
     sources:
-    # add PPAs with more up-to-date toolchains
     - ubuntu-toolchain-r-test
-#    - llvm-toolchain-precise-3.6
  
     packages:
     # install toolchains
     - gcc-5
     - g++-5
- 
-    env:
-    - CC=gcc-5
-    - CXX=g++-5
 
 before_install:
  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 20
@@ -42,11 +36,11 @@ before_install:
  - sudo ldconfig
  - cd ..
  - cat .travis.yml
-  - sudo apt-get -qq update
-  - sudo apt-get install -y python-dev sphinx-common python-pip
-  - pip install --user alabaster
-  - pip install --user travis-sphinx
-  - export PATH=$HOME/.local/bin:$PATH
+ - sudo apt-get -qq update
+ - sudo apt-get install -y python-dev sphinx-common python-pip
+ - pip install --user alabaster
+ - pip install --user travis-sphinx
+ - export PATH=$HOME/.local/bin:$PATH
 
 script:
   - git checkout -b travis
