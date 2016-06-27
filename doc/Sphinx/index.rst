@@ -101,7 +101,10 @@ More information
 
 ....
 
-.. image:: https://travis-ci.org/SmileiPIC/Smilei.svg?branch=master
-    :target: https://travis-ci.org/SmileiPIC/Smilei
-    
+.. raw:: html
 
+    <p style="height:22px">
+      <a href="https://travis-ci.org/SmileiPIC/Smilei.svg?branch=master" >
+        <img src="https://travis-ci.org/SmileiPIC/Smilei.svg?branch=master"/>
+      </a>
+    </p>
