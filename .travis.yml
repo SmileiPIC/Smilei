@@ -43,12 +43,13 @@ before_install:
   - cd ..
   - cat .travis.yml
   - sudo apt-get -qq update
-  - sudo apt-get install -y python-dev
+  - sudo apt-get install -y python-dev py27-sphinx
 
 script:
   - git checkout -b travis
   - git tag -a v1.0 -m "travis 1.0"
   - HDF5_ROOT_DIR=/usr/local make
+  - make sphinx
 
 install:
 

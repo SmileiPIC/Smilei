@@ -5,7 +5,6 @@
   
   .. image:: ../smileiLogo/smileiLogo-horizontal2.svg
 
-
 :program:`Smilei` stands for **Simulating Matter Irradiated by Light at Extreme
 Intensies**. It is an **open-source** Particle-In-Cell (PIC) code,
 developed at `Paris-Saclay <https://www.universite-paris-saclay.fr/en>`_
@@ -101,4 +100,9 @@ More information
    material
    partners
 
+....
+
+.. image:: https://travis-ci.org/SmileiPIC/Smilei.svg?branch=master
+    :target: https://travis-ci.org/SmileiPIC/Smilei
+    
 

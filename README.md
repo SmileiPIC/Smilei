@@ -7,4 +7,4 @@ the Maison de la Simulation and IDRIS on the numerical side.
 
 For more information, checkout our website:
 
-http://www.maisondelasimulation.fr/projects/Smilei/html/
+http://www.maisondelasimulation.fr/smilei
