@@ -4,6 +4,7 @@
 #include "VectorPatch.h"
 #include "Patch1D.h"
 #include "Patch2D.h"
+#include "Patch3D.h"
 
 #include "Tools.h"
 
@@ -15,8 +16,10 @@ public:
         Patch* patch;
         if (params.geometry == "1d3v")
             patch = new Patch1D(params, smpi, ipatch, n_moved);
-        else 
+        else if (params.geometry == "2d3v") 
             patch = new Patch2D(params, smpi, ipatch, n_moved);
+        else if (params.geometry == "3d3v") 
+            patch = new Patch3D(params, smpi, ipatch, n_moved);
         return patch;
     }
     
@@ -25,8 +28,10 @@ public:
         Patch* newPatch;
         if (params.geometry == "1d3v")
             newPatch = new Patch1D(static_cast<Patch1D*>(patch), params, smpi, ipatch, n_moved);
-        else 
+        else if (params.geometry == "2d3v")
             newPatch = new Patch2D(static_cast<Patch2D*>(patch), params, smpi, ipatch, n_moved);
+        else if (params.geometry == "3d3v")
+            newPatch = new Patch3D(static_cast<Patch3D*>(patch), params, smpi, ipatch, n_moved);
         return newPatch;
     }
     
