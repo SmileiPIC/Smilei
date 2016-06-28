@@ -61,6 +61,9 @@ public:
     //! Get info on the loaded profile, to be printed later
     inline std::string getInfo() { return info; };
     
+    //! Name of the profile, in the case of a built-in profile
+    std::string profileName;
+    
 private:
     //! Object that holds the information on the profile function
     Function * function;
@@ -70,9 +73,6 @@ private:
     
     //! Number of variables for the profile function
     int nvariables;
-    
-    //! Name of the profile, in the case of a built-in profile
-    std::string profileName;
     
 };//END class Profile
 

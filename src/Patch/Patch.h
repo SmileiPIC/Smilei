@@ -64,7 +64,9 @@ public:
     //! Projector
     Projector* Proj;
 
-    std::vector<Diagnostic*> localDiags;
+    //! "fake" particles for the probe diagnostics
+    std::vector<ProbeParticles*> probes;
+    
 
     // Geometrical description
     // -----------------------
@@ -220,6 +222,7 @@ protected:
     std::vector<int> cell_starting_global_index;
 
     std::vector<unsigned int> oversize;
+    
 
 };
 

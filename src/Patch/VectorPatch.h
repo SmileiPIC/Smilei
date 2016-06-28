@@ -38,6 +38,7 @@ public :
     std::vector<Patch*> patches_;
 
     std::vector<Diagnostic*> globalDiags;
+    std::vector<Diagnostic*> localDiags;
 
 
     //! Some vector operations extended to VectorPatch
@@ -60,7 +61,7 @@ public :
     void update_field_list();
     void update_field_list(int ispec);
 
-    void createGlobalDiags(Params& params, SmileiMPI* smpi);
+    void createDiags(Params& params, SmileiMPI* smpi);
 
     //! get a particular scalar
     inline double getScalar(std::string name) {

@@ -58,7 +58,7 @@ public:
         
         vecPatches.update_field_list();
         
-        vecPatches.createGlobalDiags( params, smpi );
+        vecPatches.createDiags( params, smpi );
         
         MESSAGE(1,"Initializing diagnostics");
         vecPatches.initAllDiags( params, smpi );

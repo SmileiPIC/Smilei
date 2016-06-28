@@ -23,11 +23,11 @@ class DiagnosticScalar : public Diagnostic {
 
 public :
     //! Default constructor
-    DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+    DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch );
     //! Cloning constructor
     DiagnosticScalar( DiagnosticScalar * scalar );
     //! Default destructor
-    ~DiagnosticScalar() ;
+    ~DiagnosticScalar() override;
     
     void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     
@@ -37,7 +37,7 @@ public :
     
     void run( Patch* patch, int timestep ) override;
     
-    void write(int timestep) override;
+    bool write(int timestep) override;
     
     //! get a particular scalar
     double getScalar(std::string name);

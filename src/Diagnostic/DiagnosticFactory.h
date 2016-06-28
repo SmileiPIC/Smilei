@@ -16,13 +16,13 @@
 //  --------------------------------------------------------------------------------------------------------------------
 class DiagnosticFieldsFactory {
 public:
-    static DiagnosticFields* create(Params& params, SmileiMPI* smpi, Patch* patch, bool avg) {
-        DiagnosticFields* diag = NULL;
+    static Diagnostic* create(Params& params, SmileiMPI* smpi, Patch* patch, unsigned int idiag) {
+        Diagnostic* diag = NULL;
         if ( params.geometry == "1d3v" ) {
-            diag = new DiagnosticFields1D(params, smpi, patch, avg);
+            diag = new DiagnosticFields1D(params, smpi, patch, idiag);
         }
         else if ( params.geometry == "2d3v" ) {
-            diag = new DiagnosticFields2D(params, smpi, patch, avg);
+            diag = new DiagnosticFields2D(params, smpi, patch, idiag);
         }
         else {
             ERROR( "Geometry " << params.geometry << " not implemented" );
@@ -30,33 +30,14 @@ public:
         
         return diag;
     }
-    
-    static DiagnosticFields* clone(DiagnosticFields* diag, Params& params, Patch* patch) {
-        DiagnosticFields* newdiag = NULL;
-        if ( params.geometry == "1d3v" ) {
-            newdiag = new DiagnosticFields1D(diag, params, patch);
-        }
-        else if ( params.geometry == "2d3v" ) {
-            newdiag = new DiagnosticFields2D(diag, params, patch);
-        }
-        else {
-            ERROR( "Geometry " << params.geometry << " not implemented" );
-        }
-        
-        return newdiag;
-    }
-
 };
 
 class DiagnosticFactory {
 public:
-    /*static Diagnostic* create(Params& params, SmileiMPI* smpi, unsigned int  ipatch) {
-        return 
-    }*/
 
     static std::vector<Diagnostic*> createGlobalDiagnostics(Params& params, SmileiMPI* smpi, Patch* patch) {
         std::vector<Diagnostic*> vecDiagnostics;
-        vecDiagnostics.push_back( new DiagnosticScalar(params, smpi, patch, 0) ); // 0 : 1 scalar only (useless)
+        vecDiagnostics.push_back( new DiagnosticScalar(params, smpi, patch) );
         
         for (unsigned int n_diag_particles = 0; n_diag_particles < PyTools::nComponents("DiagParticles"); n_diag_particles++) {
             vecDiagnostics.push_back( new DiagnosticParticles(params, smpi, patch, n_diag_particles) );
@@ -66,6 +47,8 @@ public:
     } // END createGlobalDiagnostics
     
     
+    
+    
     static std::vector<Diagnostic*> createLocalDiagnostics(Params& params, SmileiMPI* smpi, Patch* patch) {
         std::vector<Diagnostic*> vecDiagnostics;
         
@@ -73,14 +56,13 @@ public:
             vecDiagnostics.push_back( DiagnosticFieldsFactory::create(params, smpi, patch, n_diag_fields) );
         }
         
-        for (unsigned int n_diag_probes = 0; n_diag_probes < PyTools::nComponents("DiagProbe"); n_diag_probes++) {
-            vecDiagnostics.push_back( new DiagnosticProbes(params, smpi, patch, vecDiagnostics.size(), n_diag_probes) );
+        for (unsigned int n_diag_probe = 0; n_diag_probe < PyTools::nComponents("DiagProbe"); n_diag_probe++) {
+            vecDiagnostics.push_back( new DiagnosticProbes(params, smpi, n_diag_probe) );
         }
         
-        // loop species and make a new track diag if particles have to be tracked
-        for(unsigned int trackIdx=0; trackIdx<patch->vecSpecies.size(); trackIdx++) {
-            if ( patch->vecSpecies[trackIdx]->particles->tracked ) {
-              vecDiagnostics.push_back( new DiagnosticTrack(params, smpi, patch, vecDiagnostics.size(), trackIdx ) ); // trackIdx not used, no python parsing to init
+        for (unsigned int n_species = 0; n_species < patch->vecSpecies.size(); n_species++) {
+            if ( patch->vecSpecies[n_species]->particles->tracked ) {
+                vecDiagnostics.push_back( new DiagnosticTrack(params, smpi, patch, n_species) );
             }
         }
         
@@ -88,25 +70,26 @@ public:
     } // END createLocalDiagnostics
     
     
-    // Cloning factory for local diags (global don't need cloning)
-    static std::vector<Diagnostic*> cloneLocalDiagnostics(std::vector<Diagnostic*> vecDiagnostics, Params& params, SmileiMPI* smpi, Patch* patch) {
-        std::vector<Diagnostic*> newVecDiagnostics(0);
-        for (int idiag=0; idiag<vecDiagnostics.size(); idiag++) {
-            if (vecDiagnostics[idiag]->type_ == "Probes" ) {
-                newVecDiagnostics.push_back(
-                    new DiagnosticProbes(static_cast<DiagnosticProbes*>(vecDiagnostics[idiag]), params, patch)
-                );
-            } else if (vecDiagnostics[idiag]->type_ == "Track" ) {
-                newVecDiagnostics.push_back(
-                    new DiagnosticTrack(static_cast<DiagnosticTrack*>(vecDiagnostics[idiag]), patch)
-                );
-            } else if (vecDiagnostics[idiag]->type_ == "Fields" ) {
-                newVecDiagnostics.push_back(
-                    DiagnosticFieldsFactory::clone(static_cast<DiagnosticFields*>(vecDiagnostics[idiag]), params, patch)
-                );
-            }
+    
+    static std::vector<ProbeParticles*> createProbes() {
+        std::vector<ProbeParticles*> probes(0);
+        
+        for (unsigned int n_probe = 0; n_probe < PyTools::nComponents("DiagProbe"); n_probe++) {
+            probes.push_back( new ProbeParticles() );
         }
-        return newVecDiagnostics;
+        
+        return probes;
+    } // END createProbes
+    
+    
+    static std::vector<ProbeParticles*> cloneProbes(std::vector<ProbeParticles*> probes) {
+        std::vector<ProbeParticles*> newProbes( 0 );
+        
+        for (int n_probe=0; n_probe<probes.size(); n_probe++) {
+            newProbes.push_back( new ProbeParticles(probes[n_probe]) );
+        }
+        
+        return newProbes;
     }
     
 

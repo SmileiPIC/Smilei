@@ -518,7 +518,7 @@ MPI_Datatype SmileiMPI::createMPIparticles( Particles* particles )
 // -----------------------------------------       PATCH SEND / RECV METHODS        ------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI::isend(Patch* patch, int to, int tag)
+void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
 {
     //MPI_Request request;
 
@@ -531,11 +531,10 @@ void SmileiMPI::isend(Patch* patch, int to, int tag)
         }
     }
     isend( patch->EMfields, to, tag+2*patch->vecSpecies.size() );
-
-    for ( int idiag = 0 ; idiag < patch->localDiags.size() ; idiag++ ) {
-	// just probes (track data = species, managed above, meta-data : H5S_select)
-	if ( patch->localDiags[idiag]->type_ == "Probes" )
-	    isend( static_cast<DiagnosticProbes*>(patch->localDiags[idiag]), to, tag+2*patch->vecSpecies.size()+9+idiag );
+    
+    // Send probes' particles
+    for ( int iprobe = 0 ; iprobe < patch->probes.size() ; iprobe++ ) {
+        isend( patch->probes[iprobe], to, tag+2*patch->vecSpecies.size()+9+iprobe, params.nDim_particle );
     }
 
 } // END isend( Patch )
@@ -565,10 +564,9 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
    
     recv( patch->EMfields, from, tag+2*patch->vecSpecies.size() );
 
-    for ( int idiag = 0 ; idiag < patch->localDiags.size() ; idiag++ ) {
-	// just probes (track data = species, managed above, meta-data : H5S_select)
-	if ( patch->localDiags[idiag]->type_ == "Probes" )
-	    recv( static_cast<DiagnosticProbes*>(patch->localDiags[idiag]), from, tag+2*patch->vecSpecies.size()+9+idiag );
+    // Receive probes' particles
+    for ( int iprobe = 0 ; iprobe < patch->probes.size() ; iprobe++ ) {
+        recv( patch->probes[iprobe], from, tag+2*patch->vecSpecies.size()+9+iprobe, params.nDim_particle );
     }
 
 } // END recv ( Patch )
@@ -700,21 +698,38 @@ void SmileiMPI::recv(Field* field, int from, int hindex)
 } // End recv ( Field )
 
 
-void SmileiMPI::isend( DiagnosticProbes* diags, int to, int tag )
+void SmileiMPI::isend( ProbeParticles* probe, int to, int tag, unsigned int nDim_particles )
 {
     MPI_Request request; 
-    MPI_Isend( &(diags->probesStart), 1, MPI_INT, to, tag, MPI_COMM_WORLD, &request );
+    // send offset
+    MPI_Isend( &(probe->offset_in_file), 1, MPI_INT, to, tag, MPI_COMM_WORLD, &request );
+    // send number of particles
+    int nPart = probe->particles.size();
+    MPI_Isend( &nPart, 1, MPI_INT, to, tag+1, MPI_COMM_WORLD, &request );
+    // send particles
+    if( nPart>0 )
+        for( unsigned int i=0; i<nDim_particles; i++)
+            MPI_Isend( &(probe->particles.Position[i][0]), nPart, MPI_DOUBLE, to, tag+1+i, MPI_COMM_WORLD, &request );
 
-} // End isend ( Diagnostics )
+} // End isend ( probes )
 
 
-void SmileiMPI::recv( DiagnosticProbes* diags, int from, int tag )
+void SmileiMPI::recv( ProbeParticles* probe, int from, int tag, unsigned int nDim_particles )
 {
     MPI_Status status;
-    MPI_Recv( &(diags->probesStart), 1, MPI_INT, from, tag, MPI_COMM_WORLD, &status );
+    // receive offset
+    MPI_Recv( &(probe->offset_in_file), 1, MPI_INT, from, tag, MPI_COMM_WORLD, &status );
+    // receive number of particles
+    int nPart;
+    MPI_Recv( &nPart, 1, MPI_INT, from, tag+1, MPI_COMM_WORLD, &status );
+    // Resize particles
+    probe->particles.initialize(nPart, nDim_particles);
+    // receive particles
+    if( nPart>0 )
+        for( unsigned int i=0; i<nDim_particles; i++)
+            MPI_Recv( &(probe->particles.Position[i][0]), nPart, MPI_DOUBLE, from, tag+1+i, MPI_COMM_WORLD, &status );
 
-
-} // End recv ( Diagnostics )
+} // End recv ( probes )
 
 
 // ---------------------------------------------------------------------------------------------------------------------

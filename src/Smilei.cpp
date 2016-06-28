@@ -259,7 +259,7 @@ int main (int argc, char* argv[])
             // (1) interpolate the fields at the particle position
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
-            vecPatches.dynamics(params, smpiData, simWindow, &diag_flag, itime, timer);
+            vecPatches.dynamics(params, smpiData, simWindow, &diag_flag, time_dual, timer);
             
             /*******************************************/
             /*********** Sum densities *****************/

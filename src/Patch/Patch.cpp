@@ -125,14 +125,14 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
     // projection operator (virtual)
     Proj       = ProjectorFactory::create(params, this);    // + patchId -> idx_domain_begin (now = ref smpi)
     
-    // Initialize local diags
-    localDiags = DiagnosticFactory::createLocalDiagnostics(params, smpi, this);
-    
     // Initialize the collisions
     vecCollisions = Collisions::create(params, this, vecSpecies);
     
     // Initialize the particle walls
     partWalls = new PartWalls(params, this);
+    
+    // Initialize the probes
+    probes = DiagnosticFactory::createProbes();
     
     createType(params);
 }
@@ -150,14 +150,14 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi ) {
     // projection operator (virtual)
     Proj       = ProjectorFactory::create(params, this);
     
-    // clone local diags
-    localDiags = DiagnosticFactory::cloneLocalDiagnostics(patch->localDiags, params, smpi, this);
-    
     // clone the collisions
     vecCollisions = Collisions::clone(patch->vecCollisions, params);
     
     // clone the particle walls
     partWalls = new PartWalls(patch->partWalls, this);
+    
+    // clone the probes
+    probes = DiagnosticFactory::cloneProbes(patch->probes);
     
     createType(params);
 }
@@ -170,9 +170,6 @@ Patch::~Patch() {
     
     for(unsigned int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
     vecCollisions.clear();
-    
-    for (unsigned int idiag=0 ; idiag<localDiags.size(); idiag++) delete localDiags[idiag];
-    localDiags.clear();
     
     delete partWalls;
     

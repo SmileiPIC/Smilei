@@ -5,9 +5,8 @@
 
 using namespace std;
 
-DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch = NULL, int diagId = 0 )
+DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch = NULL )
 {
-    // diagId == 0    else error
     // patch  == NULL else error
     
     out_width.resize(0);
@@ -73,6 +72,8 @@ void DiagnosticScalar::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
     if (!smpi->isMaster()) return;
     
+    if (fout.is_open()) return;
+    
     //open file scalars.txt
     if ( newfile )
         fout.open("scalars.txt");
@@ -116,11 +117,11 @@ void DiagnosticScalar::run( Patch* patch, int timestep )
 } // END run
 
 
-void DiagnosticScalar::write(int itime)
+bool DiagnosticScalar::write(int itime)
 {
     unsigned int k, s=out_key.size();
     
-    if ( ! timeSelection->theTimeIsNow(itime) ) return;
+    if ( ! timeSelection->theTimeIsNow(itime) ) return true;
     
     fout << std::scientific << setprecision(precision);
     // At the beginning of the file, we write some headers
@@ -151,7 +152,8 @@ void DiagnosticScalar::write(int itime)
         }
     }
     fout << endl;
-
+    
+    return true;
 } // END write
 
 
