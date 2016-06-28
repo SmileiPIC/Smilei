@@ -78,7 +78,9 @@ public:
     unsigned int this_run_start_step;
 
 private:
-    
+    //! get dump name based on number and rank
+    std::string dumpName(unsigned int num, SmileiMPI *smpi);
+  
     //! initialize the time zero of the simulation 
     void initDumpCases();
 	
@@ -122,7 +124,7 @@ private:
     //! int deflate dump value
     int dump_deflate;
     
-    //! write dump drectory
+    //! directory of the restart
     std::string restart_dir;
     
     std::vector<MPI_Request> dump_request;

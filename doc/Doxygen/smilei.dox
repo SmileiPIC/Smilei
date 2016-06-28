@@ -1,6 +1,6 @@
 PROJECT_NAME           = "SMILEI"
 PROJECT_BRIEF          = "Simulation of Matter Irradiated by Light at Extreme Intensities"
-INPUT                  = ../src
+INPUT                  = ../../src
 CITE_BIB_FILES         = smilei.bib
 TOC_EXPAND             = YES
 COMPACT_LATEX          = NO

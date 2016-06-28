@@ -17,7 +17,7 @@ class VectorPatch;
 
 class ElectroMagn;
 class Field;
-class DiagnosticProbes;
+class ProbeParticles;
 
 class Diagnostic;
 class DiagnosticScalar;
@@ -65,20 +65,20 @@ public:
     //     - during load balancing process
     //     - during moving window
     // -----------------------------------
-    void isend(Patch* patch, int to  , int hindex);
-    void recv(Patch* patch, int from, int hindex, Params& params);
+    void isend(Patch* patch, int to  , int hindex, Params& params);
+    void recv (Patch* patch, int from, int hindex, Params& params);
 
     void isend(Particles* particles, int to   , int hindex, MPI_Datatype datatype);
-    void recv(Particles* partictles, int from, int hindex, MPI_Datatype datatype);
+    void recv (Particles* partictles, int from, int hindex, MPI_Datatype datatype);
     void isend(std::vector<int>* vec, int to  , int hindex);
-    void recv(std::vector<int> *vec, int from, int hindex);
+    void recv (std::vector<int> *vec, int from, int hindex);
 
     void isend(ElectroMagn* fields, int to  , int hindex);
-    void recv(ElectroMagn* fields, int from, int hindex);
+    void recv (ElectroMagn* fields, int from, int hindex);
     void isend(Field* field, int to  , int hindex);
-    void recv(Field* field, int from, int hindex);
-    void isend( DiagnosticProbes* diags, int to  , int hindex );
-    void recv( DiagnosticProbes* diags, int from, int hindex );
+    void recv (Field* field, int from, int hindex);
+    void isend( ProbeParticles* probe, int to  , int hindex, unsigned int );
+    void recv ( ProbeParticles* probe, int from, int hindex, unsigned int );
 
 
     // DIAGS MPI SYNC 

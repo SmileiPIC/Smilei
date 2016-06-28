@@ -19,15 +19,15 @@ time.sleep(rank)
 #directory = "/sps/beck/smilei/tst2d_accelec" #Directory of the simulation data
 directory = "." #Directory of the simulation data
 #list_fields=['Ex','Ey','Ez','Bz_m','Rho_electron1','Rho_proton','Jx','Jy','Jz'] #List of the fields you want to extract (Ei,Bi,Ji_sn,Rho,rho_sn, where n is the number of the species and i the direction (x,y,z))
-list_fields=['Ey','Ex'] 
-first_cycle = 1
-last_cycle = 750
-cycle_step = 100 # step between two displayed cycles (minimum is given by outputcyle of the inputfile)
+list_fields=['Ey','Ex','Rho_electron'] 
+first_cycle = 0
+last_cycle = 11000
+cycle_step = 5000 # step between two displayed cycles (minimum is given by outputcyle of the inputfile)
 plot_on_axis = 0 # Also plot 1D graph of the quantities on axis if ==1.
 suffix = "" #Suffix to be added in produced files name.
 ####################################################################################
 
-filename = directory + "/Fields.h5" # Proc file name
+filename = directory + "/Fields_folded.h5" # Proc file name
 h5file = tables.openFile(filename, mode = "r", title = "Fields_file")
 
 existing_files = scipy.arange(0,last_cycle,cycle_step)

@@ -169,7 +169,7 @@ and :ref:`particles <DiagParticles>`.
 
 
 
-.. py:method:: Smilei.TrackParticles(species=None, select="", axes=[], timesteps=None, units=[""], skipAnimation=False, **kwargs)
+.. py:method:: Smilei.TrackParticles(species=None, select="", axes=[], timesteps=None, length=None, units=[""], skipAnimation=False, **kwargs)
   
   * ``timesteps``, ``units``: same as before.
   * ``species``: the name of a tracked-particle species.
@@ -190,6 +190,7 @@ and :ref:`particles <DiagParticles>`.
      | **Example:** ``axes = ["x"]`` corresponds to :math:`x` versus time. 
      | **Example:** ``axes = ["x","y"]`` correspond to 2-D trajectories. 
      | **Example:** ``axes = ["x","px"]`` correspond to phase-space trajectories.
+  * ``length``: The length of each plotted trajectory, in number of timesteps.
   * ``skipAnimation``: when ``True``, the :py:func:`plot` will directly show the full trajectory.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 

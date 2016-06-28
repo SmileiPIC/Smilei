@@ -12,47 +12,57 @@ class DiagnosticTrack : public Diagnostic {
 
 public :
     //! Default constructor
-    DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int diagId, int );
+    DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int );
     //! Cloning constructor
     DiagnosticTrack(DiagnosticTrack* track, Patch* patch);
     //! Default destructor
-    ~DiagnosticTrack();
+    ~DiagnosticTrack() override;
     
-    virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile );
-    void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches );
+    void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     
-    virtual void closeFile();
+    void closeFile() override;
     
-    virtual bool prepare( int timestep );
+    void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
     
-    virtual void run( Patch* patch, int timestep );
+    bool prepare( int timestep ) override;
     
-    virtual void write(int timestep);
-    
-    void setGlobalNbrParticles(int totNbrParts) {
-        nbrParticles_ = totNbrParts;
-    }
+    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) override;
     
 private :
-    //! Pointer to the species used
-    Species* species;
+    //! Flag to test whether IDs have been set already
+    bool IDs_done;
+    
+    //! Index of the species used
     int speciesId_;
     
-    //! Size of the diag (number of particles)
+    //! Size of the diag (total number of particles)
     int nbrParticles_;
      
     //! HDF5 file transfer protocol
     hid_t transfer;
     //! HDF5 file space (dimensions of the array in file)
     hsize_t dims[2];
+    //! HDF5 memory space (dimensions of the current particle array in memory)
+    hid_t mem_space;
      
     //! Number of spatial dimensions
     int nDim_particle;
     
-    // iterator for dataset extension
-    int iter;
+    //! list of datasets to be added to the file
+    std::vector<std::string> datasets;
+    //! list of data types for each dataset
+    std::vector<hid_t> datatypes;
     
-    template <class T> void append( hid_t fid, std::string name, T & property,  hid_t  mem_space, int nParticles, hid_t type, std::vector<hsize_t> &locator);
+    //! Current particle partition among the patches own by current MPI
+    std::vector<int> patch_start;
+    
+    //! Buffer for the output of double array
+    std::vector<double> data_double;
+    //! Buffer for the output of short array
+    std::vector<short> data_short;
+    //! Buffer for the output of uint array
+    std::vector<unsigned int> data_uint;
+    
 };
 
 #endif

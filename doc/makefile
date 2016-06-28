@@ -17,7 +17,7 @@ html:
 #	convert -resize 100x100 doc/smileiLogo/smileiLogo.png doc/logo.png
 	@echo "-------------";
 	@if type "doxygen" >/dev/null 2>&1; then\
-		(echo "PROJECT_NUMBER=${VERSION}"; cat smilei.dox) | doxygen - ;\
+		cd Doxygen; (echo "PROJECT_NUMBER=${VERSION}"; cat smilei.dox) | doxygen - ;\
 	else \
 		echo "Cannot build doxygen doc because doxygen is not installed";\
 	fi	
@@ -34,5 +34,5 @@ html:
 	
 clean:
 	for fname in $(TEXFILES); do latexmk -cd -C $$fname; done;
-	rm -rf html smilei_warn.log
+	rm -rf Doxygen/html Doxygen/smilei_warn.log
 	rm -rf Sphinx/_build

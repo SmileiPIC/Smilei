@@ -24,7 +24,10 @@ class SimWindow {
     ~SimWindow();
     //! Move the simulation window (particles, fields, MPI environment & operator related to the grid)
     void operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& param);
-
+    
+    //! Tells whether there is a moving window or not
+    inline bool isActive() { return active; }
+    
     //! Returns a boolean : True if the window should be moved, False if it should not.
     //! Warning : Actually moving the window (function operate) changes the value of x_moved so the returned value of isMoving changes
     //! directly after moving the window.
@@ -36,20 +39,16 @@ class SimWindow {
     double getXmoved() {return x_moved;}
     //! Return the number of cells the window has moved
     unsigned int getNmoved() {return n_moved;}
-    //! Return total number of cell of the window
-    double getNspace_win_x() {return nspace_win_x_;}
     //! Set total length the window has moved (restart case)
     void   setXmoved(double new_val) {x_moved = new_val;}
     //! Set total number of cells the window has moved (restart case)
     void   setNmoved(int new_val) {n_moved = new_val;}
-
-    //! Set the simulation window (particles, fields, MPI environment & operator related to the grid) in restart case
-    void setOperators(VectorPatch& vecPatches);
     
 
  private:
-    //! Number of points of the window
-    int nspace_win_x_;
+    //! Tells whether there is a moving window or not
+    bool active;
+    
     //! Store locally params.cell_length[0], window slides only in x
     double cell_length_x_;
     //! Total length the window has moved along x up to now.
@@ -57,12 +56,11 @@ class SimWindow {
     //! Total number of cell the window has moved along x up to now.
     unsigned int n_moved;
     //! Velocity of the moving window along x expressed in c.
-    double vx_win_;
+    double velocity_x;
     //! Time at which the window starts moving.
-    double t_move_win_;
+    double time_start;
     //! Keep track of old patches assignement
     std::vector<Patch*> vecPatches_old;
-    std::vector<std::vector<int> > patch_to_be_created;
 
 };
 

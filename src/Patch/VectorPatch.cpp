@@ -47,10 +47,10 @@ void VectorPatch::close(SmileiMPI * smpiData)
     patches_.clear();
 }
 
-void VectorPatch::createGlobalDiags(Params& params, SmileiMPI* smpi)
+void VectorPatch::createDiags(Params& params, SmileiMPI* smpi)
 {
     globalDiags = DiagnosticFactory::createGlobalDiagnostics(params, smpi, (*this)(0) );
-
+    localDiags  = DiagnosticFactory::createLocalDiagnostics (params, smpi, (*this)(0) );
 }
 
 
@@ -68,7 +68,7 @@ void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow
                            int* diag_flag, double time_dual, vector<Timer>& timer)
 {
     timer[1].restart();
-    
+    ostringstream t;
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
@@ -202,24 +202,17 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
         }
     }
     
-    // Local diags : probes, track & fields
-    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
-        // Patch master manages splitting between patches
-        (*this)(0)->localDiags[idiag]->setFileSplitting( params, smpi, *this );
-        // Patch master opens the file
-        (*this)(0)->localDiags[idiag]->openFile( params, smpi, true );
-        // All patches initialize
-        hid_t fileId = (*this)(0)->localDiags[idiag]->getFileId();
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-            // The file ID is passed to all patches
-            (*this)(ipatch)->localDiags[idiag]->setFileId( fileId );
-            // Some more init
-            (*this)(ipatch)->localDiags[idiag]->init();
-        }
-        // If fields diag, save the timeSelection
-        if( fieldsTimeSelection==NULL && (*this)(0)->localDiags[idiag]->type_=="Fields" )
-            fieldsTimeSelection = new TimeSelection((*this)(0)->localDiags[idiag]->timeSelection);
+    // Local diags : fields, probes, tracks
+    for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
+        localDiags[idiag]->init(params, smpi, *this);
+        // Save the timeSelection
+        if( fieldsTimeSelection==NULL && localDiags[idiag]->type_=="Fields" )
+            fieldsTimeSelection = new TimeSelection(localDiags[idiag]->timeSelection);
     }
+    
+    // If no time selection has been found for fields, create an empty one
+    if( fieldsTimeSelection==NULL ) fieldsTimeSelection = new TimeSelection();
+    
 } // END initAllDiags
 
 
@@ -230,9 +223,9 @@ void VectorPatch::closeAllDiags(SmileiMPI* smpi)
         for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++)
             globalDiags[idiag]->closeFile();
     
-    // Patch master closes local diags
-    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++)
-        (*this)(0)->localDiags[idiag]->closeFile();
+    //// All MPI close local diags
+    //for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
+    //    localDiags[idiag]->closeFile();
 }
 
 
@@ -243,21 +236,9 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
         for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++)
             globalDiags[idiag]->openFile( params, smpi, false );
     
-    // Local diags
-    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
-        // Patch master opens the file
-        (*this)(0)->localDiags[idiag]->openFile( params, smpi, false );
-        // The file Id is passed to all patches
-        hid_t fileId = (*this)(0)->localDiags[idiag]->getFileId();
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-            (*this)(ipatch)->localDiags[idiag]->setFileId( fileId );
-            
-            //if( (*this)(ipatch)->localDiags[idiag]->type_=="Fields"){
-            //if( (*this)(ipatch)->Pcoordinates[0]!=params.number_of_patches[0]-1 )
-            //    static_cast<DiagnosticFields*>((*this)(ipatch)->localDiags[idiag])->updatePattern( params, (*this)(ipatch) );
-            //}
-        }
-    }
+    //// All MPI open local diags
+    //for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
+    //    localDiags[idiag]->openFile( params, smpi, false );
 }
 
 
@@ -268,8 +249,6 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, int itime, vector<Timer>& timer)
 {
-    //// Dump Fields
-    //// -------------------------------------------
     
     // Global diags: scalars + particles
     timer[3].restart();
@@ -289,15 +268,15 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
         }
     }
     
-    // Local diags : probes, track & fields
-    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
-        if( (*this)(0)->localDiags[idiag]->prepare( itime ) ) {
-            // All patches run
-            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
-                (*this)(ipatch)->localDiags[idiag]->run( (*this)(ipatch), itime );
-            // All patches write
-            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
-                (*this)(ipatch)->localDiags[idiag]->write( itime );
+    // Local diags : fields, probes, tracks
+    for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
+        if( localDiags[idiag]->prepare( itime ) ) {
+            // All MPI open the file
+            localDiags[idiag]->openFile( params, smpi, false );
+            // All MPI run their stuff and write out
+            localDiags[idiag]->run( smpi, *this, itime );
+            // All MPI close the file
+            localDiags[idiag]->closeFile();
         }
     }
     
@@ -639,7 +618,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
         //    newMPIrank = newMPIrankbis ;
         //}
         
-        smpi->isend( (*this)(send_patch_id_[ipatch]), newMPIrank, (refHindex_+send_patch_id_[ipatch])*nmessage );
+        smpi->isend( (*this)(send_patch_id_[ipatch]), newMPIrank, (refHindex_+send_patch_id_[ipatch])*nmessage, params );
     }
     
     for (unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++) {

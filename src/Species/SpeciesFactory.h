@@ -54,7 +54,6 @@ public:
         
         // Extract various parameters from the namelist
         
-        
         PyTools::extract("initPosition_type",thisSpecies->initPosition_type ,"Species",ispec);
         if (thisSpecies->initPosition_type.empty()) {
             ERROR("For species '" << species_type << "' empty initPosition_type");
@@ -331,7 +330,6 @@ public:
         // read from python namelist
         unsigned int tot_species_number = PyTools::nComponents("Species");
         for (unsigned int ispec = 0; ispec < tot_species_number; ispec++) {
-            
             Species* thisSpecies = SpeciesFactory::create(params, ispec, patch);
             
             // Put the newly created species in the vector of species

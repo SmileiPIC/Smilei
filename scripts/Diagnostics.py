@@ -36,7 +36,7 @@ class Smilei(object):
 		# Import packages
 		import h5py
 		import numpy as np
-		import os.path, glob, re, sys
+		import os, glob, re, sys
 		setMatplotLibBackend(show=show)
 		import matplotlib.pyplot
 		import matplotlib.pylab as pylab
@@ -45,7 +45,7 @@ class Smilei(object):
 		self._results_path = results_path
 		self._h5py = h5py
 		self._np = np
-		self._ospath = os.path
+		self._os = os
 		self._glob = glob.glob
 		self._re = re
 		self._plt = matplotlib.pyplot
@@ -54,7 +54,7 @@ class Smilei(object):
 	def reload(self):
 		self.valid = False
 		# Verify that results_path is valid
-		if not self._ospath.isdir(self._results_path):
+		if not self._os.path.isdir(self._results_path):
 			print "Could not find directory "+self._results_path
 			return
 		if len(self._glob(self._results_path+"/smilei.py"))==0:
@@ -441,7 +441,7 @@ class Diagnostic(object):
 		self._results_path = self.Smilei._results_path
 		self._h5py = self.Smilei._h5py
 		self._np = self.Smilei._np
-		self._ospath = self.Smilei._ospath
+		self._os = self.Smilei._os
 		self._glob = self.Smilei._glob
 		self._re = self.Smilei._re
 		self._plt = self.Smilei._plt
@@ -462,21 +462,21 @@ class Diagnostic(object):
 		try:
 			# get number of dimensions
 			error = "Error extracting 'dim' from the input file"
-			self._ndim = int(self.namelist.dim[0])
+			self._ndim = int(self.namelist.Main.geometry[0])
 			if self._ndim not in [1,2,3]: raise
 			# get box size
 			error = "Error extracting 'sim_length' from the input file"
-			sim_length = self._np.atleast_1d(self._np.double(self.namelist.sim_length))
+			sim_length = self._np.atleast_1d(self._np.double(self.namelist.Main.sim_length))
 			if sim_length.size != self._ndim: raise
 			# get cell size
 			error = "Error extracting 'cell_length' from the input file"
-			self._cell_length = self._np.atleast_1d(self._np.double(self.namelist.cell_length))
+			self._cell_length = self._np.atleast_1d(self._np.double(self.namelist.Main.cell_length))
 			if self._cell_length.size != self._ndim: raise
 			# calculate number of cells in each dimension
 			self._ncels = sim_length/self._cell_length
 			# extract time-step
 			error = "Error extracting 'timestep' from the input file"
-			self.timestep = self._np.double(self.namelist.timestep)
+			self.timestep = self._np.double(self.namelist.Main.timestep)
 			if not self._np.isfinite(self.timestep): raise
 		except:
 			print error
@@ -488,7 +488,7 @@ class Diagnostic(object):
 		# Prepare units
 		self._dim = len(self._shape)
 		if self.valid:
-			try:    referenceAngularFrequency_SI = self.namelist.referenceAngularFrequency_SI
+			try:    referenceAngularFrequency_SI = self.namelist.Main.referenceAngularFrequency_SI
 			except: referenceAngularFrequency_SI = None
 			xunits = None
 			yunits = None
@@ -1040,7 +1040,7 @@ class ParticleDiagnostic(Diagnostic):
 		# path to the file
 		file = self._results_path+'/ParticleDiagnostic'+str(diagNumber)+'.h5'
 		# if no file, return
-		if not self._ospath.isfile(file): return False
+		if not self._os.path.isfile(file): return False
 		# open file
 		f = self._h5py.File(file, 'r')
 		# get attributes from file
@@ -1176,10 +1176,10 @@ class Field(Diagnostic):
 		try:
 			self._f = self._h5py.File(self._file, 'r')
 		except:
-			print "Cannot open file "+self._file
+			print "No fields found"
 			return
 		self._h5items = self._f.values()
-
+		
 		if field is None:
 			fields = self.getFields()
 			if len(fields)>0:
@@ -1338,7 +1338,7 @@ class Field(Diagnostic):
 	
 	# get all available timesteps
 	def getAvailableTimesteps(self):
-		times = self._np.double(self._f.keys())
+		times = self._np.double(self._f.keys()[:-1])
 		return times
 	
 	# Method to obtain the data only
@@ -1725,30 +1725,31 @@ class Probe(Diagnostic):
 		
 		# Prepare the reordering of the points for patches disorder
 		positions = self._h5probe["positions"].value # actual probe points positions
-		p = self._np.array(p) # matrix of the probe generating vectors
-		# Subtract by p0
-		p0 = self._info["p0"]
-		for i in range(p0.size):
-			positions[:,i] -= p0[i]
-		# If 1D probe, convert positions to distances
-		if self._naxes==1:
-			p  = self._np.sqrt(self._np.sum(p**2))
-			invp = self._np.array(1./p, ndmin=1)
-			positions = self._np.sqrt(self._np.sum(positions**2,1))
-		# If 2D probe, must calculate matrix inverse
-		else:
-			invp = self._np.linalg.inv(p.transpose())
-		self._ordering = self._np.zeros((positions.shape[0],), dtype=int)
-		for n in range(positions.shape[0]):
-			pos = positions[n]
-			ijk = self._np.dot(invp, pos)*(self._ishape-1) # find the indices of the point
-			i = ijk[0]
-			for l in range(1,len(ijk)): i=i*self._ishape[l]+ijk[l] # linearized index
-			try:
-				self._ordering[int(round(i))] = n
-			except:
-				pass
-		self.p = self._ordering
+		self._ordering = None
+		if self._naxes>0:
+			p = self._np.array(p) # matrix of the probe generating vectors
+			# Subtract by p0
+			p0 = self._info["p0"]
+			for i in range(p0.size):
+				positions[:,i] -= p0[i]
+			# If 1D probe, convert positions to distances
+			if self._naxes==1:
+				p  = self._np.sqrt(self._np.sum(p**2))
+				invp = self._np.array(1./p, ndmin=1)
+				positions = self._np.sqrt(self._np.sum(positions**2,1))
+			# If 2D probe, must calculate matrix inverse
+			else:
+				invp = self._np.linalg.inv(p.transpose())
+			self._ordering = self._np.zeros((positions.shape[0],), dtype=int)
+			for n in range(positions.shape[0]):
+				pos = positions[n]
+				ijk = self._np.dot(invp, pos)*(self._ishape-1) # find the indices of the point
+				i = ijk[0]
+				for l in range(1,len(ijk)): i=i*self._ishape[l]+ijk[l] # linearized index
+				try:
+					self._ordering[int(round(i))] = n
+				except:
+					pass
 		
 		# Build units
 		titles = {}
@@ -1838,7 +1839,7 @@ class Probe(Diagnostic):
 		# Calculate the operation
 		exec op in None
 		# Reorder probes for patch disorder
-		A = A[self._ordering]
+		if self._ordering is not None: A = A[self._ordering]
 		# Reshape array because it is flattened in the file
 		A = self._np.reshape(A, self._ishape)
 		# Apply the slicing
@@ -1874,7 +1875,7 @@ class Probe(Diagnostic):
 class TrackParticles(Diagnostic):
 
 	# This is the constructor, which creates the object
-	def _init(self, species=None, select="", axes=[], timesteps=None, **kwargs):
+	def _init(self, species=None, select="", axes=[], timesteps=None, length=None, **kwargs):
 		
 		if not self.Smilei.valid: return None
 		
@@ -2042,6 +2043,7 @@ class TrackParticles(Diagnostic):
 		else: self._vunits = ""
 		
 		# Finish constructor
+		self.length = length or self.times[-1]
 		self.valid = True
 	
 	# Method to print info on included probe
@@ -2109,8 +2111,9 @@ class TrackParticles(Diagnostic):
 	def _animateOnAxes_0D(self, ax, t):
 		pass
 	def _animateOnAxes_1D(self, ax, t):
-		times = self.times[self.times<=t]
-		A     = self._tmpdata[0][self.times<=t,:]
+		timeSelection = (self.times<=t)*(self.times>=t-self.length)
+		times = self.times[timeSelection]
+		A     = self._tmpdata[0][timeSelection,:]
 		if times.size == 1:
 			times = self._np.double([times, times]).squeeze()
 			A = self._np.double([A, A]).squeeze()
@@ -2122,8 +2125,9 @@ class TrackParticles(Diagnostic):
 		ax.set_title(self._title) # override title
 		return 1
 	def _animateOnAxes_2D(self, ax, t):
-		x = self._tmpdata[0][self.times<=t,:]
-		y = self._tmpdata[1][self.times<=t,:]
+		timeSelection = (self.times<=t)*(self.times>=t-self.length)
+		x = self._tmpdata[0][timeSelection,:]
+		y = self._tmpdata[1][timeSelection,:]
 		ax.plot(self._xfactor*x, self._yfactor*y, **self.options.plot)
 		ax.set_xlabel(self._xlabel)
 		ax.set_ylabel(self._ylabel)

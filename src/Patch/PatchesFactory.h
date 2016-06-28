@@ -49,20 +49,25 @@ public:
         // Create patches (create patch#0 then clone it)
         vecPatches.resize(npatches);
         vecPatches.patches_[0] = create(params, smpi, firstpatch);
+        MESSAGE(1,"First patch created");
         for (unsigned int ipatch = 1 ; ipatch < npatches ; ipatch++) {
             vecPatches.patches_[ipatch] = clone(vecPatches(0), params, smpi, firstpatch + ipatch);
         }
+        MESSAGE(1,"All patches created");
         vecPatches.set_refHindex();
         
         vecPatches.update_field_list();
         
-        vecPatches.createGlobalDiags( params, smpi );
+        vecPatches.createDiags( params, smpi );
+        
+        MESSAGE(1,"Initializing diagnostics");
         vecPatches.initAllDiags( params, smpi );
         
         // Figure out if there are antennas
         vecPatches.hasAntennas = ( vecPatches(0)->EMfields->antennas.size() > 0 );
         vecPatches.initExternals( params );
         
+        MESSAGE(1,"Done initializing patches");
         return vecPatches;
     }
 

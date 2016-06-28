@@ -16,10 +16,10 @@ public:
     //! Cloning Constructor for Patch
     Patch2D(Patch2D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
 
-    void initStep2(Params& params) override;
+    void initStep2(Params& params) override final;
     
     //! Destructor for Patch
-    virtual ~Patch2D() {};
+    ~Patch2D() override  final{};
 
 
     // MPI exchange/sum methods for particles/fields
@@ -27,21 +27,21 @@ public:
     // --------------------------------------------------------------
 
     //! init comm / sum densities
-    virtual void initSumField( Field* field, int iDim );
+    void initSumField( Field* field, int iDim ) override final;
     //! finalize comm / sum densities
-    virtual void finalizeSumField( Field* field, int iDim );
+    void finalizeSumField( Field* field, int iDim ) override final;
 
     //! init comm / exchange fields
-    virtual void initExchange( Field* field );
+    void initExchange( Field* field ) override final;
     //! finalize comm / exchange fields
-    virtual void finalizeExchange( Field* field );
+    void finalizeExchange( Field* field ) override final;
     //! init comm / exchange fields in direction iDim only
-    virtual void initExchange( Field* field, int iDim );
+    void initExchange( Field* field, int iDim ) override final;
     //! finalize comm / exchange fields in direction iDim only
-    virtual void finalizeExchange( Field* field, int iDim );
+    void finalizeExchange( Field* field, int iDim ) override final;
 
     // Create MPI_Datatype to exchange fields
-    virtual void createType( Params& params );
+    void createType( Params& params ) override final;
 
     //! MPI_Datatype to sum [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
     MPI_Datatype ntypeSum_[2][2][2];
@@ -50,26 +50,6 @@ public:
     MPI_Datatype ntype_[3][2][2];
     // Use a buffer per direction to exchange data before summing
     Field2D buf[2][2];
-
-    //! Should be pure virtual, see Patch class
-    inline bool isWestern()  { return locateOnBorders(0, 0); }
-    //! Should be pure virtual, see Patch class
-    inline bool isEastern()  { return locateOnBorders(0, 1); }
-    //! Should be pure virtual, see Patch class
-    inline bool isSouthern() { return locateOnBorders(1, 0); }
-    //! Should be pure virtual, see Patch class
-    inline bool isNorthern() { return locateOnBorders(1, 1); }
-
-    //! Return MPI rank of this->hrank +/- 1
-    //! Should be replaced by an analytic formula
-    inline int getMPIRank(int hrank_pm1) {
-	if  (hrank_pm1 == neighbor_[0][0]) return MPI_neighbor_[0][0];
-	else if  (hrank_pm1 == neighbor_[0][1]) return MPI_neighbor_[0][1];
-	else if  (hrank_pm1 == neighbor_[1][0]) return MPI_neighbor_[1][0];
-	else if  (hrank_pm1 == neighbor_[1][1]) return MPI_neighbor_[1][1];
-	else
-	    return MPI_PROC_NULL;
-    }
 
 
 

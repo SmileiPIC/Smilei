@@ -100,10 +100,9 @@ int main (int argc, char* argv[])
     // Define Moving Window
     // --------------------
     TITLE("Initializing moving window");
-    SimWindow* simWindow = NULL;
     int start_moving(0);
-    if (params.nspace_win_x)
-        simWindow = new SimWindow(params);
+    SimWindow* simWindow = new SimWindow(params);
+    params.hasWindow = simWindow->isActive();
     
     // ---------------------------------------------------
     // Initialize patches (including particles and fields)
@@ -124,11 +123,8 @@ int main (int argc, char* argv[])
         double restart_time_dual = (checkpoint.this_run_start_step +0.5) * params.timestep;
         time_dual = restart_time_dual;
         // A revoir !
-        if ( simWindow ) {
-            simWindow->setOperators(vecPatches);
-            if ( simWindow->isMoving(restart_time_dual) ) {
-                simWindow->operate(vecPatches, smpiData, params);
-            }
+        if ( simWindow->isMoving(restart_time_dual) ) {
+            simWindow->operate(vecPatches, smpiData, params);
         }
         //smpiData->recompute_patch_count( params, vecPatches, restart_time_dual );
         
@@ -173,6 +169,7 @@ int main (int argc, char* argv[])
         timer[6].reboot();
     
     }
+    timer[0].reboot();
     
     // ------------------------------------------------------------------------
     // Check memory consumption
@@ -220,7 +217,7 @@ int main (int argc, char* argv[])
             "  Ukin= "   << scientific << setprecision(4)<< vecPatches.getScalar("Ukin") <<
             "  Ubal(%)= "<< scientific << fixed << setprecision(2) << 100.0*vecPatches.getScalar("Ubal_norm");
             
-            if (simWindow) {
+            if ( simWindow->isActive() ) {
                 double Uinj_mvw = vecPatches.getScalar("Uelm_inj_mvw") + vecPatches.getScalar("Ukin_inj_mvw");
                 double Uout_mvw = vecPatches.getScalar("Uelm_out_mvw") + vecPatches.getScalar("Ukin_out_mvw");
                 my_msg << "  Uinj_mvw = " << scientific << setprecision(4) << Uinj_mvw <<
@@ -259,7 +256,7 @@ int main (int argc, char* argv[])
             // (1) interpolate the fields at the particle position
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
-            vecPatches.dynamics(params, smpiData, simWindow, &diag_flag, itime, timer);
+            vecPatches.dynamics(params, smpiData, simWindow, &diag_flag, time_dual, timer);
             
             /*******************************************/
             /*********** Sum densities *****************/
@@ -303,7 +300,7 @@ int main (int argc, char* argv[])
         if (exit) break;
         
         timer[5].restart();
-        if ( simWindow && simWindow->isMoving(time_dual) ) {
+        if ( simWindow->isMoving(time_dual) ) {
             start_moving++;
             if ((start_moving==1) && (smpiData->isMaster()) ) {
                 MESSAGE(">>> Window starts moving");
@@ -314,7 +311,7 @@ int main (int argc, char* argv[])
         
         
         
-        if ((itime%params.balancing_freq == 0)&&(smpiData->getSize()!=1)) {
+        if ((itime%params.balancing_every == 0)&&(smpiData->getSize()!=1)) {
             timer[7].restart();
             //partperMPI = 0;
             //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
@@ -388,12 +385,11 @@ int main (int argc, char* argv[])
     vecPatches.close( smpiData );
     
     MPI_Barrier(MPI_COMM_WORLD); // Don't know why but sync needed by HDF5 Phasespace managment
-
-    if (params.nspace_win_x)
-        delete simWindow;
+    
+    delete simWindow;
     
     PyTools::closePython();
-
+    
     TITLE("END");
     delete smpiData;
     
@@ -418,7 +414,7 @@ void print_parallelism_params(Params& params, SmileiMPI* smpi)
     for (int iDim=0 ; iDim<params.nDim_field ; iDim++) 
         MESSAGE(2, "dimension " << iDim << " - n_space : " << params.n_space[iDim] << " cells.");        
 
-    MESSAGE(1, "Dynamic load balancing frequency: every " << params.balancing_freq << " iterations." );
+    MESSAGE(1, "Dynamic load balancing frequency: every " << params.balancing_every << " iterations." );
 
     // setup OpenMP
     TITLE("OpenMP");

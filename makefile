@@ -68,6 +68,7 @@ ifneq (,$(findstring debug,$(config)))
 	CXXFLAGS += -g -pg -Wall -D__DEBUG -O0 # -shared-intel 
 else
 	CXXFLAGS += -O3 # -xHost -ipo
+	SPHINXOPTS = '-W'
 endif
 
 ifneq (,$(findstring scalasca,$(config)))
@@ -128,7 +129,7 @@ $(EXEC): $(OBJS)
 
 # these are kept for backward compatibility and might be removed (see make help)
 obsolete:
-        @ echo "[WARNING] Please consider using make config=\"$(MAKECMDGOALS)\""
+	@ echo "[WARNING] Please consider using make config=\"$(MAKECMDGOALS)\""
 
 debug: obsolete
 	make config=debug
@@ -137,7 +138,7 @@ scalasca: obsolete
 	make config=scalasca
 
 
-ifeq ($(filter clean help doc tar,$(MAKECMDGOALS)),) 
+ifeq ($(filter pygenerator doc help clean default tar sphinx,$(MAKECMDGOALS)),) 
 # Let's try to make the next lines clear: we include $(DEPS) and pygenerator
 -include $(DEPS) pygenerator
 # and pygenerator will create all the $(PYHEADERS) (which are files)
@@ -145,13 +146,14 @@ pygenerator : $(PYHEADERS)
 endif
 
 
-.PHONY: pygenerator doc help clean default tar
+.PHONY: pygenerator doc help clean default tar sphinx
 
 doc:
 	make -C doc all
 
 sphinx:
-	make SPHINXOPTS='-W' -C doc/Sphinx html
+	make SPHINXOPTS=${SPHINXOPTS} -C doc/Sphinx html
+	
 tar:
 	git archive -o smilei-$(VERSION).tgz --prefix smilei-$(VERSION)/ HEAD
 
@@ -169,9 +171,12 @@ help:
 	@echo 'Environment variables :'
 	@echo "     SMILEICXX     : mpi c++ compiler [${SMILEICXX}]"
 	@echo "     HDF5_ROOT_DIR : HDF5 dir [${HDF5_ROOT_DIR}]"
-	@echo "     BUILD_DIR     :directory used to store build files [${BUILD_DIR}]"
+	@echo "     BUILD_DIR     : directory used to store build files [${BUILD_DIR}]"
 	@echo 
-	@echo '      make doc     : builds the documentation'
-	@echo '      make tar     : creates an archive of the sources'
-	@echo '      make clean   : remove build'
+	@echo 'Other commands :'
+	@echo '     make doc     : builds the documentation'
+	@echo '     make tar     : creates an archive of the sources'
+	@echo '     make clean   : remove build'
+	@echo 
+	@echo 'http://www.maisondelasimulation.fr/smilei'
 

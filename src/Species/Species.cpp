@@ -66,6 +66,8 @@ min_loc(patch->getDomainLocalMin(0))
     dy_inv_ = 1./cell_length[1];
     
     initCluster(params);
+    nDim_field = params.nDim_field;
+    inv_nDim_field = 1./((double)nDim_field);
 
 }//END Species creator
 
@@ -206,7 +208,7 @@ void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
     // if charge is not integer, then particles can have two different charges
     } else {
         int tot = 0, Nm, Np;
-        double rr=r/(1-r), diff;
+        double rr=r/(1.-r), diff;
         Np = (int)round(r*(double)nPart);
         Nm = (int)nPart - Np;
         for (unsigned int p = iPart; p<iPart+nPart; p++) {
@@ -219,7 +221,7 @@ void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
             }
             tot += (*particles).charge(p);
         }
-        diff = ((double)nPart)*q - (double)tot; // missing charge
+        diff = q - ((double)tot)/((double)nPart); // missing charge
         if (diff != 0.) {
             WARNING("Could not match exactly charge="<<q<<" for species "<< species_type <<" (difference of "<<diff<<"). Try to add particles.");
         }
@@ -235,18 +237,31 @@ void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::initPosition(unsigned int nPart, unsigned int iPart, double *indexes)
 {
-    for (unsigned  p= iPart; p<iPart+nPart; p++) {
-        for (unsigned  i=0; i<nDim_particle ; i++) {
-            
-            // define new position (either regular or random)
-            if (initPosition_type == "regular") {
-                (*particles).position(i,p)=indexes[i]+(p-iPart+0.5)*cell_length[i]/nPart;
-            } else if (initPosition_type == "random") {
+    if (initPosition_type == "regular") {
+    
+        double coeff = pow((double)nPart,inv_nDim_field);
+        if( coeff != round(coeff) )
+            ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `initPosition_type = 'random'`");
+        
+        int coeff_ = coeff;
+        coeff = 1./coeff;
+        for (int  p=iPart; p<iPart+nPart; p++) {
+            int i = p-iPart;
+            for(int idim=0; idim<nDim_particle; idim++) {
+                (*particles).position(idim,p) = indexes[idim] + cell_length[idim] * coeff * (0.5 + i%coeff_);
+                i /= coeff_; // integer division
+            }
+        }
+        
+    } else if (initPosition_type == "random") {
+        
+        for (unsigned  p= iPart; p<iPart+nPart; p++) {
+            for (unsigned  i=0; i<nDim_particle ; i++) {
                 (*particles).position(i,p)=indexes[i]+(((double)rand() / RAND_MAX))*cell_length[i];
             }
-            //(*particles).position_old(i,p) = (*particles).position(i,p);
-        }// i
-    }// p
+        }
+        
+    }
 }
 
 
@@ -499,9 +514,9 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             double* b_rho;
             for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
 
-                if (params.nDim_field==2)
+                if (nDim_field==2)
                     b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1);    
-                else if (params.nDim_field==1)
+                else if (nDim_field==1)
                     b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw);    
                 for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
                     (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_lastdim);
@@ -653,7 +668,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     // Create particles in a space starting at cell_position
     vector<double> cell_position(3,0);
     vector<double> cell_index(3,0);
-    for (int i=0 ; i<params.nDim_field ; i++) {
+    for (int i=0 ; i<nDim_field ; i++) {
         if (params.cell_length[i]!=0) { // REALLY NECESSARY ????
             cell_position[i] = patch->getDomainLocalMin(i);
             cell_index   [i] = (double) patch->getCellStartingGlobalIndex(i);
@@ -686,10 +701,12 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     }
     
     int npart_effective = 0;
-    double remainder, nppc, inv_nDim_field = -1./params.nDim_field;
+    double remainder, nppc;
+    
     for (unsigned int i=0; i<n_space_to_create[0]; i++) {
         for (unsigned int j=0; j<n_space_to_create[1]; j++) {
             for (unsigned int k=0; k<n_space_to_create[2]; k++) {
+                n_part_in_cell(i,j,k) = 0.;
                 
                 vector<double> x_cell(3,0);
                 x_cell[0] = cell_position[0] + (i+0.5)*cell_length[0];
@@ -698,12 +715,19 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                 
                 // Obtain the number of particles per cell
                 nppc = ppcProfile->valueAt(x_cell);
-                // If not a round number, then we need to decide how to round
-                remainder = pow(nppc - floor(nppc), inv_nDim_field);
+                
                 n_part_in_cell(i,j,k) = floor(nppc);
-                if( fmod(cell_index[0]+(double)i, remainder) < 1.
-                 && fmod(cell_index[1]+(double)j, remainder) < 1.
-                 && fmod(cell_index[2]+(double)k, remainder) < 1. ) n_part_in_cell(i,j,k)++;
+                // if nb of particle per cell is not an integer value
+                double intpart;
+                if ( modf(nppc, &intpart) > 0) {
+                    // If not a round number, then we need to decide how to round
+                    remainder = pow(nppc - floor(nppc), -inv_nDim_field);
+                    
+                    if(   fmod(cell_index[0]+(double)i, remainder) < 1.
+                       && fmod(cell_index[1]+(double)j, remainder) < 1.
+                       && fmod(cell_index[2]+(double)k, remainder) < 1. ) n_part_in_cell(i,j,k)++;
+                }
+                
                 // If zero or less, zero particles
                 if( n_part_in_cell(i,j,k)<=0. ) {
                     n_part_in_cell(i,j,k) = 0.;
@@ -810,25 +834,30 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                 if (density(i,j,k)>0) {
                     
                     if (initMomentum_type=="maxwell-juettner") {
-                        //! \todo{Pass this parameters in a code constants class (MG)}
-                        nE     = 20000;
-                        muEmax = 20.0;
                         
-                        max_jutt_cumul.resize(nE);
-                        double mu=mass/temperature[0](i,j,k); // For Temperature profile
-                        double Emax=muEmax/mu;
-                        dE=Emax/nE;
-                        
-                        double fl=0;
-                        double fr=0;
-                        max_jutt_cumul[0]=0.0;
-                        for (unsigned int l=1; l<nE; l++ ) {
-                            //! \todo{this is just the isotropic case, generalise to non-isotropic (MG)}
-                            fr=(1.+l*dE)*sqrt(pow(1.0+l*dE,2)-1.0) * exp(-mu*l*dE);
-                            max_jutt_cumul[l]=max_jutt_cumul[l-1] + 0.5*dE*(fr+fl);
-                            fl=fr;
+                        // Computes the cumulative MJ distribution only when needed
+                        // --------------------------------------------------------
+                        if ((max_jutt_cumul.size()==0)||(temperatureProfile[0]->profileName!="constant")) {
+                            //! \todo{Pass this parameters in a code constants class (MG)}
+                            nE     = 20000;
+                            muEmax = 20.0;
+                            
+                            max_jutt_cumul.resize(nE);
+                            double mu=mass/temperature[0](i,j,k); // For Temperature profile
+                            double Emax=muEmax/mu;
+                            dE=Emax/nE;
+                            
+                            double fl=0;
+                            double fr=0;
+                            max_jutt_cumul[0]=0.0;
+                            for (unsigned int l=1; l<nE; l++ ) {
+                                //! \todo{this is just the isotropic case, generalise to non-isotropic (MG)}
+                                fr=(1.+l*dE)*sqrt(pow(1.0+l*dE,2)-1.0) * exp(-mu*l*dE);
+                                max_jutt_cumul[l]=max_jutt_cumul[l-1] + 0.5*dE*(fr+fl);
+                                fl=fr;
+                            }
+                            for (unsigned int l=0; l<nE; l++) max_jutt_cumul[l]/=max_jutt_cumul[nE-1];
                         }
-                        for (unsigned int l=0; l<nE; l++) max_jutt_cumul[l]/=max_jutt_cumul[nE-1];
                     }
                     
                     temp[0] = temperature[0](i,j,k);
@@ -899,7 +928,7 @@ void Species::updateMvWinLimits(double x_moved)
 //Do we have to project this species ?
 bool Species::isProj(double time_dual, SimWindow* simWindow) {
 
-    return time_dual > time_frozen  || (simWindow && simWindow->isMoving(time_dual)) ;
+    return time_dual > time_frozen  || (simWindow->isMoving(time_dual)) ;
   
     //Recompute frozen particles density if
     //moving window is activated, actually moving at this time step, and we are not in a density slope.

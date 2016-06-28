@@ -147,7 +147,9 @@ DiagnosticParticles::~DiagnosticParticles()
 void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
     if (!smpi->isMaster()) return;
-
+    
+    if( fileId_>0 ) return;
+    
     if ( newfile ) {
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         // write all parameters as HDF5 attributes
@@ -472,9 +474,9 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
 // Now the data_sum has been filled
 // if needed now, store result to hdf file
 // called by MPI master only, when time-average has finished
-void DiagnosticParticles::write(int timestep)
+bool DiagnosticParticles::write(int timestep)
 {
-    if (timestep - timeSelection->previousTime() != time_average-1) return;
+    if (timestep - timeSelection->previousTime() != time_average-1) return true;
     
     double coeff;
     // if time_average, then we need to divide by the number of timesteps
@@ -497,6 +499,7 @@ void DiagnosticParticles::write(int timestep)
     clear();
     data_sum.resize(0);
     
+    return false;
 } // END write
 
 

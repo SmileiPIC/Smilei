@@ -74,10 +74,14 @@ namelist("")
     runScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py");
     
     smpi->barrier();
-
+    
+    // Error if no block Main() exists
+    if( PyTools::nComponents("Main") == 0 )
+        ERROR("Block Main() not defined");
+    
     // output dir: we force this to be the same on all mpi nodes
     string output_dir("");
-    PyTools::extract("output_dir", output_dir);
+    PyTools::extract("output_dir", output_dir, "Main");
     
     // CHECK namelist on python side
     PyTools::runPyFunction("_smilei_check");
@@ -104,7 +108,7 @@ namelist("")
     
     // random seed
     unsigned int random_seed=0;
-    if (!PyTools::extract("random_seed", random_seed)) {
+    if (!PyTools::extract("random_seed", random_seed, "Main")) {
         random_seed = time(NULL);
     }
     
@@ -112,23 +116,23 @@ namelist("")
     
     // --------------
     // Stop & Restart
-    // --------------   
+    // --------------
     
-    restart=false;
-    PyTools::extract("restart", restart);
-    if (restart) MESSAGE("Code running from restart"); //! \todo Give info on restart properties
-        
+    restart = false;
+    restart_dir = "";
+    if( PyTools::nComponents("DumpRestart")>0 && PyTools::extract("restart_dir", restart_dir, "DumpRestart") ) {
+        restart = true;
+        if( restart_dir.at(restart_dir.length()-1)!='/' ) restart_dir+="/";
+        MESSAGE("Code running from restart in directory "<<restart_dir);
+    }
+    
     
     // ---------------------
     // Normalisation & units
     // ---------------------
     
     referenceAngularFrequency_SI = 0.;
-    if( !PyTools::extract("referenceAngularFrequency_SI",referenceAngularFrequency_SI) ) {
-        if( PyTools::extract("wavelength_SI",referenceAngularFrequency_SI) ) {
-            ERROR("The parameter `wavelength_SI` is deprecated. Use `referenceAngularFrequency_SI` instead.");
-        }
-    }
+    PyTools::extract("referenceAngularFrequency_SI",referenceAngularFrequency_SI, "Main");
     
     
     // -------------------
@@ -136,14 +140,14 @@ namelist("")
     // -------------------
     
     // geometry of the simulation
-    PyTools::extract("dim", geometry);
+    PyTools::extract("geometry", geometry, "Main");
     if (geometry!="1d3v" && geometry!="2d3v") {
         ERROR("Geometry " << geometry << " does not exist");
     }
     setDimensions();
     
     // interpolation order
-    PyTools::extract("interpolation_order", interpolation_order);
+    PyTools::extract("interpolation_order", interpolation_order, "Main");
     if (interpolation_order!=2 && interpolation_order!=4) {
         ERROR("Interpolation/projection order " << interpolation_order << " not defined");
     }
@@ -160,9 +164,10 @@ namelist("")
     // TIME & SPACE RESOLUTION/TIME-STEPS
     
     // reads timestep & cell_length
-    PyTools::extract("timestep", timestep);
+    PyTools::extract("timestep", timestep, "Main");
     res_time = 1.0/timestep;
-    PyTools::extract("cell_length",cell_length);
+    
+    PyTools::extract("cell_length",cell_length, "Main");
     if (cell_length.size()!=nDim_field) {
         ERROR("Dimension of cell_length ("<< cell_length.size() << ") != " << nDim_field << " for geometry " << geometry);
     }
@@ -172,7 +177,7 @@ namelist("")
     }
     
     time_fields_frozen=0.0;
-    PyTools::extract("time_fields_frozen", time_fields_frozen);
+    PyTools::extract("time_fields_frozen", time_fields_frozen, "Main");
     
     // testing the CFL condition
     //!\todo (MG) CFL cond. depends on the Maxwell solv. ==> Move this computation to the ElectroMagn Solver
@@ -187,30 +192,30 @@ namelist("")
     
     
     // simulation duration & length
-    PyTools::extract("sim_time", sim_time);
+    PyTools::extract("sim_time", sim_time, "Main");
     
-    PyTools::extract("sim_length",sim_length);
+    PyTools::extract("sim_length",sim_length, "Main");
     if (sim_length.size()!=nDim_field) {
         ERROR("Dimension of sim_length ("<< sim_length.size() << ") != " << nDim_field << " for geometry " << geometry);
     }
     
     
     //! Boundary conditions for ElectroMagnetic Fields
-    if ( !PyTools::extract("bc_em_type_x", bc_em_type_x)  ) {
+    if ( !PyTools::extract("bc_em_type_x", bc_em_type_x, "Main")  ) {
         ERROR("Electromagnetic boundary condition type (bc_em_type_x) not defined" );
     }
     if (bc_em_type_x.size()==1) { // if just one type is specified, then take the same bc type in a given dimension
         bc_em_type_x.resize(2); bc_em_type_x[1]=bc_em_type_x[0];
     }
     if ( geometry == "2d3v" || geometry == "3d3v" ) {
-        if ( !PyTools::extract("bc_em_type_y", bc_em_type_y) )
+        if ( !PyTools::extract("bc_em_type_y", bc_em_type_y, "Main") )
             ERROR("Electromagnetic boundary condition type (bc_em_type_y) not defined" );
         if (bc_em_type_y.size()==1) { // if just one type is specified, then take the same bc type in a given dimension
             bc_em_type_y.resize(2); bc_em_type_y[1]=bc_em_type_y[0];
         }
     }
     if ( geometry == "3d3v" ) {
-        if ( !PyTools::extract("bc_em_type_z", bc_em_type_z) )
+        if ( !PyTools::extract("bc_em_type_z", bc_em_type_z, "Main") )
             ERROR("Electromagnetic boundary condition type (bc_em_type_z) not defined" );
         if (bc_em_type_z.size()==1) { // if just one type is specified, then take the same bc type in a given dimension
             bc_em_type_z.resize(2); bc_em_type_z[1]=bc_em_type_z[0];
@@ -218,36 +223,17 @@ namelist("")
     }
     
     // Maxwell Solver 
-        PyTools::extract("maxwell_sol", maxwell_sol);
-
-
-    // ------------------------
-    // Moving window parameters
-    // ------------------------
-    if (!PyTools::extract("nspace_win_x",nspace_win_x)) {
-        nspace_win_x = 0;
-    }
+    PyTools::extract("maxwell_sol", maxwell_sol, "Main");
     
-    if (!PyTools::extract("t_move_win",t_move_win)) {
-        t_move_win = 0.0;
-    }
     
-    if (!PyTools::extract("vx_win",vx_win)) {
-        vx_win = 1.;
-    }
-    
-    if (!PyTools::extract("clrw",clrw)) {
+    if (!PyTools::extract("clrw",clrw, "Main")) {
         clrw = 1;
     }
-    
-    global_every=0;
-    
-    PyTools::extract("every",global_every);
-    
+        
     // --------------------
     // Number of patches
     // --------------------
-    if ( !PyTools::extract("number_of_patches", number_of_patches) ) {
+    if ( !PyTools::extract("number_of_patches", number_of_patches, "Main") ) {
         ERROR("The parameter `number_of_patches` must be defined as a list of integers");
     }
     for ( int iDim=0 ; iDim<nDim_field ; iDim++ )
@@ -267,12 +253,14 @@ namelist("")
     }
     
     
-    if ( !PyTools::extract("balancing_freq", balancing_freq) )
-        balancing_freq = 150;
-    if ( !PyTools::extract("coef_cell", coef_cell) )
-        coef_cell = 1.;
-    if ( !PyTools::extract("coef_frozen", coef_frozen) )
-        coef_frozen = 0.1;
+    balancing_every = 150;
+    coef_cell = 1.;
+    coef_frozen = 0.1;
+    if( PyTools::nComponents("LoadBalancing")>0 ) {
+        PyTools::extract("every"      , balancing_every, "LoadBalancing");
+        PyTools::extract("coef_cell"  , coef_cell      , "LoadBalancing");
+        PyTools::extract("coef_frozen", coef_frozen    , "LoadBalancing");
+    }
     
     //mi.resize(nDim_field, 0);
     mi.resize(3, 0);
@@ -322,9 +310,7 @@ void Params::compute()
         // compute number of cells & normalized lengths
         for (unsigned int i=0; i<nDim_field; i++) {
             n_space[i]         = round(sim_length[i]/cell_length[i]);
-
-            if (i==0 && nspace_win_x != 0) n_space[i] = nspace_win_x;
-
+            
             double entered_sim_length = sim_length[i];
             sim_length[i]      = (double)(n_space[i])*cell_length[i]; // ensure that nspace = sim_length/cell_length
             if (sim_length[i]!=entered_sim_length)
@@ -406,7 +392,7 @@ void Params::print()
     }
 
     TITLE("Load Balancing: ");
-    MESSAGE(1,"Load balancing every " << balancing_freq << " iterations.");
+    MESSAGE(1,"Load balancing every " << balancing_every << " iterations.");
     MESSAGE(1,"Cell load coefficient = " << coef_cell );
     MESSAGE(1,"Frozen particle load coefficient = " << coef_frozen );
 }
