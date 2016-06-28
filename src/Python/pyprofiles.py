@@ -1,12 +1,12 @@
 # Some predefined profiles (see doc)
 
 def constant(value, xvacuum=-float("inf"), yvacuum=-float("inf")):
-    global dim
-    if not dim:
-        raise Exception("constant profile has been defined before `dim`")
-    if dim == "1d3v":
+    global Main
+    if len(Main)==0:
+        raise Exception("constant profile has been defined before `Main()`")
+    if Main.geometry == "1d3v":
         f = lambda x  : value if x>=xvacuum else 0.
-    if dim == "2d3v":
+    if Main.geometry == "2d3v":
         f = lambda x,y: value if (x>=xvacuum and y>=yvacuum) else 0.
         f.yvacuum = yvacuum
     f.profileName = "constant"
@@ -18,11 +18,11 @@ constant._reserved = True
 def trapezoidal(max,
                 xvacuum=0., xplateau=None, xslope1=0., xslope2=0.,
                 yvacuum=0., yplateau=None, yslope1=0., yslope2=0. ):
-    global dim, sim_length
-    if not dim or not sim_length:
-        raise Exception("trapezoidal profile has been defined before `dim` or `sim_length`")
-    if len(sim_length)>0 and xplateau is None: xplateau = sim_length[0]-xvacuum
-    if len(sim_length)>1 and yplateau is None: yplateau = sim_length[1]-yvacuum
+    global Main
+    if len(Main)==0:
+        raise Exception("trapezoidal profile has been defined before `Main()`")
+    if len(Main.sim_length)>0 and xplateau is None: xplateau = Main.sim_length[0]-xvacuum
+    if len(Main.sim_length)>1 and yplateau is None: yplateau = Main.sim_length[1]-yvacuum
     def fx(x):
         # vacuum region
         if x < xvacuum: return 0.
@@ -35,9 +35,9 @@ def trapezoidal(max,
             return max*(1. - ( x - (xvacuum+xslope1+xslope2) ) / xslope2)
         # beyond the plasma
         else: return 0.0
-    if dim == "1d3v":
+    if Main.geometry == "1d3v":
         f = fx
-    if dim == "2d3v":
+    if Main.geometry == "2d3v":
         def fy(y):
             # vacuum region
             if y < yvacuum: return 0.
@@ -67,15 +67,15 @@ def gaussian(max,
              xvacuum=0., xlength=float("inf"), xfwhm=None, xcenter=None, xorder=2,
              yvacuum=0., ylength=float("inf"), yfwhm=None, ycenter=None, yorder=2 ):
     import math
-    global dim, sim_length
-    if not dim or not sim_length:
-        raise Exception("gaussian profile has been defined before `dim` or `sim_length`")
-    if len(sim_length)>0:
-        if xlength is None: xlength = sim_length[0]-xvacuum
+    global Main
+    if len(Main)==0:
+        raise Exception("gaussian profile has been defined before `Main()`")
+    if len(Main.sim_length)>0:
+        if xlength is None: xlength = Main.sim_length[0]-xvacuum
         if xfwhm   is None: xfwhm   = xlength/3.
         if xcenter is None: xcenter = xvacuum + xlength/2.
-    if len(sim_length)>1: 
-        if ylength is None: ylength = sim_length[1]-yvacuum
+    if len(Main.sim_length)>1: 
+        if ylength is None: ylength = Main.sim_length[1]-yvacuum
         if yfwhm   is None: yfwhm   = ylength/3.
         if ycenter is None: ycenter = yvacuum + ylength/2.
     xsigma = (0.5*xfwhm)**xorder/math.log(2.0)
@@ -86,9 +86,9 @@ def gaussian(max,
         elif x < xvacuum+xlength: return max*math.exp( -(x-xcenter)**xorder / xsigma )
         # beyond
         else: return 0.0
-    if dim == "1d3v":
+    if Main.geometry == "1d3v":
         f = fx
-    if dim == "2d3v":
+    if Main.geometry == "2d3v":
         ysigma = (0.5*yfwhm)**yorder/math.log(2.0)
         def fy(y):
             if yorder == 0: return 1.
@@ -115,13 +115,13 @@ def gaussian(max,
 
 
 def polygonal(xpoints=[], xvalues=[]):
-    global dim, sim_length
-    if not dim or not sim_length:
-        raise Exception("polygonal profile has been defined before `dim` or `sim_length`")
+    global Main
+    if len(Main)==0:
+        raise Exception("polygonal profile has been defined before `Main()`")
     if len(xpoints)!=len(xvalues):
         raise Exception("polygonal profile requires as many points as values")
-    if len(sim_length)>0 and len(xpoints)==0:
-        xpoints = [0., sim_length[0]]
+    if len(Main.sim_length)>0 and len(xpoints)==0:
+        xpoints = [0., Main.sim_length[0]]
         xvalues = [1., 1.]
     N = len(xpoints)
     xpoints = [float(x) for x in xpoints]
@@ -145,12 +145,12 @@ def cosine(base,
            xamplitude=1., xvacuum=0., xlength=None, xphi=0., xnumber=2,
            yamplitude=1., yvacuum=0., ylength=None, yphi=0., ynumber=2):
     import math
-    global dim, sim_length
-    if not dim or not sim_length:
-        raise Exception("cosine profile has been defined before `dim` or `sim_length`")
+    global Main
+    if len(Main)==0:
+        raise Exception("cosine profile has been defined before `Main()`")
     
-    if len(sim_length)>0 and xlength is None: xlength = sim_length[0]-xvacuum
-    if len(sim_length)>1 and ylength is None: ylength = sim_length[1]-yvacuum
+    if len(Main.sim_length)>0 and xlength is None: xlength = Main.sim_length[0]-xvacuum
+    if len(Main.sim_length)>1 and ylength is None: ylength = Main.sim_length[1]-yvacuum
     
     def fx(x):
         #vacuum region
@@ -160,9 +160,9 @@ def cosine(base,
             return base + xamplitude * math.cos(xphi + 2.*math.pi * xnumber * (x-xvacuum)/xlength)
         # beyond
         else: return 0.
-    if dim == "1d3v":
+    if Main.geometry == "1d3v":
         f = fx
-    if dim == "2d3v":
+    if Main.geometry == "2d3v":
         def fy(y):
             #vacuum region
             if y < yvacuum: return 0.
@@ -187,9 +187,9 @@ def cosine(base,
     return f
 
 def polynomial(**kwargs):
-    global dim
-    if not dim:
-        raise Exception("polynomial profile has been defined before `dim`")
+    global Main
+    if len(Main)==0:
+        raise Exception("polynomial profile has been defined before `Main()`")
     x0 = 0.
     y0 = 0.
     coeffs = dict()
@@ -202,9 +202,9 @@ def polynomial(**kwargs):
             if type(a) is not list: a = [a]
             order = int(k[5:])
             coeffs[ order ] = a
-            if dim=="1d3v" and len(a)!=1:
+            if Main.geometry=="1d3v" and len(a)!=1:
                 raise Exception("1D polynomial profile must have one coefficient per order")
-    if dim=="1d3v":
+    if Main.geometry=="1d3v":
         def f(x):
             r = 0.
             xx0 = x-x0
@@ -216,7 +216,7 @@ def polynomial(**kwargs):
                     xx *= xx0
                 r += c[0] * xx
             return r
-    if dim=="2d3v":
+    if Main.geometry=="2d3v":
         def f(x,y):
             r = 0.
             xx0 = x-x0
@@ -252,10 +252,10 @@ def tconstant(start=0.):
 tconstant._reserved = True
 
 def ttrapezoidal(start=0., plateau=None, slope1=0., slope2=0.):
-    global sim_time
-    if not sim_time:
-        raise Exception("ttrapezoidal profile has been defined before `sim_time`")
-    if plateau is None: plateau = sim_time - start
+    global Main
+    if len(Main)==0:
+        raise Exception("ttrapezoidal profile has been defined before `Main()`")
+    if plateau is None: plateau = Main.sim_time - start
     def f(t):
         if t < start: return 0.
         elif t < start+slope1: return (t-start) / slope1
@@ -272,10 +272,10 @@ def ttrapezoidal(start=0., plateau=None, slope1=0., slope2=0.):
 
 def tgaussian(start=0., duration=None, fwhm=None, center=None, order=2):
     import math
-    global sim_time
-    if not sim_time:
-        raise Exception("tgaussian profile has been defined before `sim_time`")
-    if duration is None: duration = sim_time-start
+    global Main
+    if len(Main)==0:
+        raise Exception("tgaussian profile has been defined before `Main()`")
+    if duration is None: duration = Main.sim_time-start
     if fwhm     is None: fwhm     = duration/3.
     if center   is None: center   = start + duration/2.
     sigma = (0.5*fwhm)**order/math.log(2.0)
@@ -292,11 +292,11 @@ def tgaussian(start=0., duration=None, fwhm=None, center=None, order=2):
     return f
 
 def tpolygonal(points=[], values=[]):
-    global sim_time
-    if not sim_time:
-        raise Exception("tpolygonal profile has been defined before `sim_time`")
+    global Main
+    if len(Main)==0:
+        raise Exception("tpolygonal profile has been defined before `Main()`")
     if len(points)==0:
-        points = [0., sim_time]
+        points = [0., Main.sim_time]
         values = [1., 1.]
     N = len(points)
     points = [float(x) for x in points]
@@ -318,10 +318,10 @@ def tpolygonal(points=[], values=[]):
 
 def tcosine(base=0., amplitude=1., start=0., duration=None, phi=0., freq=1.):
     import math
-    global sim_time
-    if not sim_time:
-        raise Exception("tcosine profile has been defined before `sim_time`")
-    if duration is None: duration = sim_time-start
+    global Main
+    if len(Main)==0:
+        raise Exception("tcosine profile has been defined before `Main()`")
+    if duration is None: duration = Main.sim_time-start
     def f(t):
         if t < start: return 0.
         elif t < start+duration:

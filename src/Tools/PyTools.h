@@ -209,9 +209,14 @@ public:
 
     //! get python function without arguments
     template <typename T=double>
-    static T runPyFunction(std::string name) {
+    static T runPyFunction(std::string name, std::string component=std::string("")) {
         T retval(0);
-        PyObject* myFunction = PyObject_GetAttrString(PyImport_AddModule("__main__"),name.c_str());
+        PyObject *py_obj=PyImport_AddModule("__main__");
+        if (!component.empty()) {
+            py_obj = PyObject_GetAttrString(py_obj,component.c_str());
+            PyTools::checkPyError();
+        }
+        PyObject* myFunction = PyObject_GetAttrString(py_obj,name.c_str());
         if (myFunction) {
             PyObject *pyresult = PyObject_CallFunction(myFunction, const_cast<char *>(""));
             retval = (T) get_py_result(pyresult);

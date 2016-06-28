@@ -38,27 +38,29 @@ dump_deflate(0),
 restart_dir(""),
 dump_request(smpi->getSize())
 {
-    if (PyTools::extract("dump_step", dump_step)) {
-        if (dump_step)
-            MESSAGE(1,"Code will dump after " << dump_step << " steps");
+    if( PyTools::nComponents("DumpRestart") > 0 ) {
+        
+        if (PyTools::extract("dump_step", dump_step, "DumpRestart")) {
+            if (dump_step)
+                MESSAGE(1,"Code will dump after " << dump_step << " steps");
+        }
+        
+        if (PyTools::extract("dump_minutes", dump_minutes, "DumpRestart")) {
+            if (dump_minutes>0)
+                MESSAGE(1,"Code will stop after " << dump_minutes << " minutes");
+        }
+        
+        PyTools::extract("dump_file_sequence", dump_file_sequence, "DumpRestart");
+        dump_file_sequence=std::max((unsigned int)1,dump_file_sequence);
+        
+        PyTools::extract("exit_after_dump", exit_after_dump, "DumpRestart");
+        
+        PyTools::extract("dump_deflate", dump_deflate, "DumpRestart");
+        
     }
     
-    if (PyTools::extract("dump_minutes", dump_minutes)) {
-        if (dump_minutes>0)
-            MESSAGE(1,"Code will stop after " << dump_minutes << " minutes");
-    }
+    restart_dir = params.restart_dir;
     
-    PyTools::extract("dump_file_sequence", dump_file_sequence);
-    dump_file_sequence=std::max((unsigned int)1,dump_file_sequence);
-    
-    PyTools::extract("exit_after_dump", exit_after_dump);
-
-    PyTools::extract("dump_deflate", dump_deflate);
-
-    if (PyTools::extract("restart_dir", restart_dir) && restart_dir.at(restart_dir.length()-1)!='/') {
-        restart_dir+="/";
-    }
-
     if (dump_step || dump_minutes>0) {
         if (exit_after_dump) {
             MESSAGE(1,"Code will exit after dump");

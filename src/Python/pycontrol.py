@@ -10,26 +10,27 @@ import os
 def _smilei_check():
     """Do checks over the script"""
     # Verify classes were not overriden
-    for CheckClassName,CheckClass in {"SmileiComponent":SmileiComponent,"Species":Species,
-            "Laser":Laser,"Collisions":Collisions,"DiagProbe":DiagProbe,"DiagParticles":DiagParticles,
-            "DiagScalar":DiagScalar,"DiagFields":DiagFields,"ExtField":ExtField}.iteritems():
+    for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
+            "DiagProbe","DiagParticles", "DiagScalar","DiagFields","ExtField",
+            "SmileiSingleton","Main","DumpRestart","LoadBalancing","MovingWindow"]:
+        CheckClass = globals()[CheckClassName]
         try:
-            if not CheckClass.verify: raise
+            if not CheckClass._verify: raise
         except:
             raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
     # Verify the output_dir
-    if smilei_mpi_rank == 0 and output_dir:
-        if not os.path.exists(output_dir):
+    if smilei_mpi_rank == 0 and Main.output_dir:
+        if not os.path.exists(Main.output_dir):
             try:
-                os.makedirs(output_dir)
+                os.makedirs(Main.output_dir)
             except OSError as exception:
-                raise Exception("ERROR in the namelist: output_dir "+output_dir+" does not exists and cannot be created")
-        elif not os.path.isdir(output_dir):
-                raise Exception("ERROR in the namelist: output_dir "+output_dir+" exists and is not a dir")
+                raise Exception("ERROR in the namelist: output_dir "+Main.output_dir+" does not exists and cannot be created")
+        elif not os.path.isdir(Main.output_dir):
+                raise Exception("ERROR in the namelist: output_dir "+Main.output_dir+" exists and is not a directory")
     # Verify the restart_dir
-    if restart and restart_dir:
-        if not os.path.isdir(restart_dir):
-            raise Exception("ERROR in the namelist: restart_dir "+restart_dir+" is not a dir")
+    if len(DumpRestart)==1 and DumpRestart.restart_dir:
+        if not os.path.isdir(DumpRestart.restart_dir):
+            raise Exception("ERROR in the namelist: restart_dir = `"+DumpRestart.restart_dir+"` is not a directory")
     # Verify that constant() and tconstant() were not redefined
     if not hasattr(constant, "_reserved") or not hasattr(tconstant, "_reserved"):
         raise Exception("Names `constant` and `tconstant` cannot be overriden")
@@ -71,9 +72,9 @@ def _keep_python_running():
         prof = ant.time_profile
         if callable(prof) and not hasattr(prof,"profileName"): return True
     
-    if not nspace_win_x == 0:
+    if len(MovingWindow)>0:
         return True
-
+    
     return False
 
 # Prevent creating new components (by mistake)

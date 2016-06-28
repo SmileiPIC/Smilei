@@ -89,14 +89,6 @@ public:
    
     // 2D Maxwell Solver  
     std::string maxwell_sol; 
- 
-    //! window simulation box size in number of cells
-    int nspace_win_x;
-    //! Time at which the moving window starts.
-    double t_move_win;
-    //! Velocity of the moving window along x in c.
-    double vx_win;
-    
     
     //! Clusters width
     //unsigned int clrw;
@@ -134,8 +126,10 @@ public:
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;
     
-    //! restart namelist
+    //! True if restart requested
     bool restart;
+    //! Directory of restart
+    std::string restart_dir;
     
     //! frequency of exchange particles (default = 1, disabled for now, incompatible with sort) 
     int exchange_particles_each;
@@ -145,21 +139,20 @@ public:
     //! Number of patches per direction
     std::vector<int> number_of_patches;
     //! Load balancing frequency
-    int balancing_freq;
+    int balancing_every;
     //! Load coefficient applied to a cell (default = 1)
     double coef_cell;
     //! Load coefficient applied to a frozen particle (default = 0.1)
     double coef_frozen;
     //! Return if number of patch = number of MPI process, to tune IO //ism
     bool one_patch_per_MPI;
-
+    
+    //! Tells whether there is a moving window
+    bool hasWindow;
 
     //! Log2 of the number of patch in the whole simulation box in every direction.
     //! The number of patch in a given direction MUST be a power of 2 and is 2^(mi[i]).
     std::vector<unsigned int> mi;
-    
-    //! global number of time exits (it will be used if not specified in various diags/fields)
-    unsigned int global_every;
     
     //! string containing the whole clean namelist
     std::string namelist;

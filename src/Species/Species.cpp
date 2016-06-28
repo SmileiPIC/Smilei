@@ -208,7 +208,7 @@ void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
     // if charge is not integer, then particles can have two different charges
     } else {
         int tot = 0, Nm, Np;
-        double rr=r/(1-r), diff;
+        double rr=r/(1.-r), diff;
         Np = (int)round(r*(double)nPart);
         Nm = (int)nPart - Np;
         for (unsigned int p = iPart; p<iPart+nPart; p++) {
@@ -221,7 +221,7 @@ void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
             }
             tot += (*particles).charge(p);
         }
-        diff = ((double)nPart)*q - (double)tot; // missing charge
+        diff = q - ((double)tot)/((double)nPart); // missing charge
         if (diff != 0.) {
             WARNING("Could not match exactly charge="<<q<<" for species "<< species_type <<" (difference of "<<diff<<"). Try to add particles.");
         }
@@ -928,7 +928,7 @@ void Species::updateMvWinLimits(double x_moved)
 //Do we have to project this species ?
 bool Species::isProj(double time_dual, SimWindow* simWindow) {
 
-    return time_dual > time_frozen  || (simWindow && simWindow->isMoving(time_dual)) ;
+    return time_dual > time_frozen  || (simWindow->isMoving(time_dual)) ;
   
     //Recompute frozen particles density if
     //moving window is activated, actually moving at this time step, and we are not in a density slope.

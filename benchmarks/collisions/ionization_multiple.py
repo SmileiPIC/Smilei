@@ -13,12 +13,12 @@ for elm in ["C", "Al", "Zn", "Sn", "Au"]:
 	
 	color = colors.pop()
 	
-	timestep1 = np.round(np.double(S1.namelist.timestep), decimals=1)
+	timestep1 = np.round(np.double(S1.namelist.Main.timestep), decimals=1)
 	D.append( S1.ParticleDiagnostic(0,slice={"ekin":[0,1]},
 		linestyle="-", color=color,
 		label=elm) )
 	
-	timestep2 = int(np.double(S2.namelist.timestep))
+	timestep2 = int(np.double(S2.namelist.Main.timestep))
 	D.append( S2.ParticleDiagnostic(0,slice={"ekin":[0,1]},
 		linestyle="", marker=".", color=color ) )
 
