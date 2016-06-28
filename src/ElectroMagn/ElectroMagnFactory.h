@@ -5,6 +5,7 @@
 #include "ElectroMagn.h"
 #include "ElectroMagn1D.h"
 #include "ElectroMagn2D.h"
+#include "ElectroMagn3D.h"
 #include "ElectroMagnBC.h"
 
 #include "Patch.h"
@@ -19,8 +20,11 @@ public:
         if ( params.geometry == "1d3v" ) {
             EMfields = new ElectroMagn1D(params, vecSpecies, patch);
         }
-        else if ( params.geometry == "2d3v" ) {
+        else if ( params.geometry == "2d3v)" ) {
             EMfields = new ElectroMagn2D(params, vecSpecies, patch);
+        }
+        else if ( params.geometry == "3d3v)" ) {
+            EMfields = new ElectroMagn3D(params, vecSpecies, patch);
         }
         else {
             ERROR( "Unknown geometry : " << params.geometry );
@@ -112,6 +116,8 @@ public:
             newEMfields = new ElectroMagn1D(params, vecSpecies, patch);
         } else if ( params.geometry == "2d3v" ) {
             newEMfields = new ElectroMagn2D(params, vecSpecies, patch);
+        } else if ( params.geometry == "3d3v" ) {
+            newEMfields = new ElectroMagn3D(params, vecSpecies, patch);
         }
         
         // -----------------

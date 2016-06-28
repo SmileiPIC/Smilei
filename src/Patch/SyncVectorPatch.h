@@ -24,6 +24,7 @@ public :
     static void exchange ( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void exchange0( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void exchange1( std::vector<Field*> fields, VectorPatch& vecPatches );
+    static void exchange2( std::vector<Field*> fields, VectorPatch& vecPatches );
 
 };
 

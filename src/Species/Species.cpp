@@ -64,6 +64,7 @@ min_loc(patch->getDomainLocalMin(0))
     
     dx_inv_ = 1./cell_length[0];
     dy_inv_ = 1./cell_length[1];
+    dz_inv_ = 1./cell_length[2];
     
     initCluster(params);
     nDim_field = params.nDim_field;
@@ -121,7 +122,7 @@ void Species::initCluster(Params& params)
         b_dim0 =  (1 + clrw) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim1 = f_dim1;
         b_dim2 = f_dim2;
-        b_lastdim = b_dim2;
+        b_lastdim = b_dim1*b_dim2;
     }
     
     size_proj_buffer = b_dim0*b_dim1*b_dim2; //primal size of a single bufefr.
