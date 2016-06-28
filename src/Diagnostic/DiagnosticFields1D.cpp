@@ -36,7 +36,7 @@ void DiagnosticFields1D::setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatc
 {
     // Calculate the total size of the array in this proc
     unsigned int total_vecPatches_size = total_patch_size * vecPatches.size();
-    if( vecPatches(0)->isWestern() ) total_vecPatches_size++; // One more cell on the left
+    if( vecPatches(0)->hindex==0 ) total_vecPatches_size++; // One more cell on the left
     
     // Resize the data
     data.resize(total_vecPatches_size);
@@ -44,7 +44,7 @@ void DiagnosticFields1D::setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatc
     // Define offset and size for HDF5 file
     hsize_t offset[1], block[1], count[1];
     offset[0] = total_patch_size * refHindex;
-    if( ! vecPatches(0)->isWestern() ) offset[0]++;
+    if( vecPatches(0)->hindex!=0 ) offset[0]++;
     block[0] = total_vecPatches_size;
     count[0] = 1;
     // Select portion of the file where this MPI will write to
@@ -65,9 +65,9 @@ void DiagnosticFields1D::getField( Patch* patch, int field_index )
         field = static_cast<Field1D*>(patch->EMfields->allFields    [field_index]);
     }
     // Copy field to the "data" buffer
-    unsigned int ix = patch_offset_in_grid[0] - (patch->isWestern() ? 1:0);
-    unsigned int ix_max = ix + patch_size[0] + (patch->isWestern() ? 1:0);
-    unsigned int iout = total_patch_size * (patch->Hindex()-refHindex) + ((refHindex==0 && !patch->isWestern())?1:0);
+    unsigned int ix = patch_offset_in_grid[0] - (patch->hindex==0 ? 1:0);
+    unsigned int ix_max = ix + patch_size[0] + (patch->hindex==0 ? 1:0);
+    unsigned int iout = total_patch_size * (patch->Hindex()-refHindex) + ((refHindex==0 && !patch->hindex==0)?1:0);
     while( ix < ix_max ) {
         data[iout] = (*field)(ix);
         ix++;

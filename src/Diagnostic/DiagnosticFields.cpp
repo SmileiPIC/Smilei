@@ -9,6 +9,7 @@ using namespace std;
 DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patch, int ndiag )
 {
     fileId_ = 0;
+    tmp_dset_id = 0;
     
     // Extract the time_average parameter
     time_average = 1;
