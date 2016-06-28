@@ -84,7 +84,7 @@ and :math:`\delta` is the Dirac distribution.
 In PIC codes, Vlasov's equation :eq:`Vlasov` is integrated along the continuous trajectories
 of these quasi-particles, while Maxwell's equations :eq:`Maxwell` are solved on a
 discrete spatial grid, the spaces between consecutive grid points being referred to as
-*cells* (see Fig. TODO`Fig_PicCell`). Injecting the discrete distribution function of
+*cells* (see Fig. :numref:`Fig_PicCell`). Injecting the discrete distribution function of
 Eq. :eq:`fs_discretized` in Vlasov's equation :eq:`Vlasov`, multiplying the result by
 :math:`\mathbf{p}` and integrating over all :math:`\mathbf{p}` and over the volume of
 the quasi-particles, leads to the relativistic equations of motion of individual
@@ -112,7 +112,7 @@ approach [TafloveHagness]_ as well as refined methods based on this algorithm
 (for a review of these methods see [Nuter2014]_). In these methods, the electromagnetic
 fields are discretized onto a staggered grid, the so-called Yee-grid that allows for
 spatial-centering of the discretized curl operators in Maxwell's equations.
-Figure TODO`fig_Yee` summarizes at which points of the Yee-grid are defined the
+Figure :numref:`fig_Yee` summarizes at which points of the Yee-grid are defined the
 electromagnetic fields as well as charge and density currents. Similarly, the time-centering
 of the time-derivative in Maxwell's equations is ensured by considering the electric fields
 as defined at integer time-steps :math:`(n)` and magnetic fields at half-integer
@@ -172,7 +172,7 @@ are computed on the grid using a simple projection technique:
 
 Then, the initial electric fields are computed from :math:`\rho(t=0,\mathbf{x})`
 by solving Poisson's equation. In :program:`Smilei`, this is done using the conjugate gradient
-method TODO-REF`ConjugateGradient`. This iterative method is particularly interesting
+method :ref:`ConjugateGradient`. This iterative method is particularly interesting
 as it is easily implemented on massively parallel computers and requires mainly
 local information exchange between adjacent processes.
 
