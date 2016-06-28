@@ -120,7 +120,7 @@ void Species::initCluster(Params& params)
         b_dim0 =  (1 + clrw) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim1 = f_dim1;
         b_dim2 = f_dim2;
-        b_lastdim = b_dim2;
+        b_lastdim = b_dim1*b_dim2;
     }
     
     size_proj_buffer = b_dim0*b_dim1*b_dim2; //primal size of a single bufefr.
