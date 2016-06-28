@@ -5,11 +5,8 @@
   
   .. image:: ../smileiLogo/smileiLogo-horizontal2.svg
 
-
-:program:`Smilei` stands for **Simulating Matter Irradiated by Light at Extreme
-Intensies**. It is an **open-source** Particle-In-Cell (PIC) code,
-developed at `Paris-Saclay <https://www.universite-paris-saclay.fr/en>`_
-to support the development of the `Apollon laser <http://cilexsaclay.fr>`_.
+**Smilei is a new, open-source, particle-in-cell code.** 
+As a multi-purpose code, it is designed for and applied to a wide range of physics-related studies: from relativistic laser-plasma interaction to astrophysical plasmas. It is co-developed by both physicists and HPC experts. 
 
 
 .. raw:: html
@@ -25,13 +22,24 @@ to support the development of the `Apollon laser <http://cilexsaclay.fr>`_.
 
 .. raw:: html
   
+  <a href="https://github.com/SmileiPIC/Smilei" class="icon">
+
+.. image:: _static/github-logo.svg
+
+.. raw:: html
+  
+  GitHub</a>
+
+
+.. raw:: html
+  
   <a href="https://llrgit.in2p3.fr/smilei/smilei" class="icon">
 
 .. image:: _static/gitlab-logo.svg
 
 .. raw:: html
   
-  Gitlab page</a>
+  Gitlab (dev)</a>
 
 
 .. raw:: html
