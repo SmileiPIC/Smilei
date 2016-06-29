@@ -46,9 +46,9 @@ script:
   - git fetch -t
   - HDF5_ROOT_DIR=/usr/local make
   - travis-sphinx -n --source=doc/Sphinx build
-#  - git describe
+  - git archive -o smilei.tgz --prefix Smilei/ HEAD
+  - git describe
 #  - git tag
-#  - git archive -o smilei.tgz --prefix Smilei/ HEAD
 #  - git add smilei.tgz
 #  - git tag -a v2.4 -m "travis 2.4"
 #  - git commit -a -m "travis"
