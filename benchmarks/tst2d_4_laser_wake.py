@@ -18,7 +18,7 @@ Main(
     sim_time = 200,
     
     cell_length  = [dx, 3.],
-    sim_length = [ Lx,  120.],
+    sim_length = [ 2*Lx,  120.],
     
     number_of_patches = [npatch_x, 8],
     
@@ -33,7 +33,7 @@ Main(
 )
 
 MovingWindow(
-    time_start = Main.sim_length[0],
+    time_start = Main.sim_length[0]/2.,
     velocity_x = 0.9997
 )
 
