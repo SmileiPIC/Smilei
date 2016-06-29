@@ -15,48 +15,46 @@ addons:
  
     packages:
     # install toolchains
-#    - gcc-5
-#    - g++-5
+    - gcc-5
+    - g++-5
 
 before_install:
-#  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 20
-#  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20
-#  - wget --no-check-certificate https://www.open-mpi.org/software/ompi/v1.10/downloads/openmpi-1.10.3.tar.gz
-#  - tar -zxf openmpi-1.10.3.tar.gz
-#  - cd openmpi-1.10.3
-#  - ./configure --enable-mpi-thread-multiple --quiet && make > compile.out && sudo make install > install.out 
-#  - sudo sh -c 'echo "/usr/local/lib\n/usr/local/lib/openmpi" > /etc/ld.so.conf.d/openmpi.conf'
-#  - sudo ldconfig
-#  - cd ..
-#  - wget --no-check-certificate http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.17.tar.gz
-#  - tar -zxf hdf5-1.8.17.tar.gz
-#  - cd hdf5-1.8.17
-#  - CC=mpicc CXX=mpicxx ./configure --enable-parallel --prefix=/usr/local --quiet && make > compile.out && sudo make install > install.out 
-#  - sudo sh -c 'echo "/usr/local/lib" > /etc/ld.so.conf.d/hdf5.conf'
-#  - sudo ldconfig
-#  - cd ..
-#  - cat .travis.yml
-#  - sudo apt-get -qq update
-#  - sudo apt-get install -y python-dev sphinx-common python-pip
-#  - pip install --user alabaster
-#  - pip install --user travis-sphinx
-#  - export PATH=$HOME/.local/bin:$PATH
+  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 20
+  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20
+  - wget --no-check-certificate https://www.open-mpi.org/software/ompi/v1.10/downloads/openmpi-1.10.3.tar.gz
+  - tar -zxf openmpi-1.10.3.tar.gz
+  - cd openmpi-1.10.3
+  - ./configure --enable-mpi-thread-multiple --quiet && make > compile.out && sudo make install > install.out 
+  - sudo sh -c 'echo "/usr/local/lib\n/usr/local/lib/openmpi" > /etc/ld.so.conf.d/openmpi.conf'
+  - sudo ldconfig
+  - cd ..
+  - wget --no-check-certificate http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.17.tar.gz
+  - tar -zxf hdf5-1.8.17.tar.gz
+  - cd hdf5-1.8.17
+  - CC=mpicc CXX=mpicxx ./configure --enable-parallel --prefix=/usr/local --quiet && make > compile.out && sudo make install > install.out 
+  - sudo sh -c 'echo "/usr/local/lib" > /etc/ld.so.conf.d/hdf5.conf'
+  - sudo ldconfig
+  - cd ..
+  - cat .travis.yml
+  - sudo apt-get -qq update
+  - sudo apt-get install -y python-dev sphinx-common python-pip
+  - pip install --user alabaster
+  - pip install --user travis-sphinx
+  - export PATH=$HOME/.local/bin:$PATH
 
 script:
-#  - git checkout -b travis
-#  - git tag -a v1.0 -m "travis 1.0"
-#  - HDF5_ROOT_DIR=/usr/local make
-#  - travis-sphinx -n --source=doc/Sphinx build
   - git fetch -t
-  - git describe
-  - git tag
-  - git archive -o smilei.tgz --prefix Smilei/ HEAD
-  - git add smilei.tgz
-  - git tag -a v2.4 -m "travis 2.4"
-  - git commit -a -m "travis"
+  - HDF5_ROOT_DIR=/usr/local make
+  - travis-sphinx -n --source=doc/Sphinx build
+#  - git describe
+#  - git tag
+#  - git archive -o smilei.tgz --prefix Smilei/ HEAD
+#  - git add smilei.tgz
+#  - git tag -a v2.4 -m "travis 2.4"
+#  - git commit -a -m "travis"
 
 after_success:
-#  - travis-sphinx deploy
+  - travis-sphinx deploy
     
 install:
 
@@ -67,7 +65,7 @@ branches:
 
 deploy:
   provider: releases
-  api_key: env.GH_TOKEN
+  api_key: $GH_TOKEN
   file: smilei.tgz
   skip_cleanup: true
   on:
