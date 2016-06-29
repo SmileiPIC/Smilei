@@ -235,38 +235,6 @@ void ElectroMagn::dump()
 }
 
 
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Method used to initialize the total charge density
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn::initRhoJ(vector<Species*>& vecSpecies, Projector* Proj)
-{
-    // number of (none-test) used in the simulation
-    //! \todo fix this: n_species is already a member of electromagn, is it this confusing? what happens if n_species grows (i.e. with ionization)?
-    unsigned int n_species = vecSpecies.size();
-    
-    //loop on all (none-test) Species
-    for (unsigned int iSpec=0 ; iSpec<n_species; iSpec++ ) {
-        Particles &cuParticles = vecSpecies[iSpec]->getParticlesList();
-        unsigned int n_particles = vecSpecies[iSpec]->getNbrOfParticles();
-        
-        DEBUG(n_particles<<" species "<<iSpec);
-        if (!cuParticles.isTest) {
-            for (unsigned int iPart=0 ; iPart<n_particles; iPart++ ) {
-                // project charge & current densities
-                (*Proj)(Jx_s[iSpec], Jy_s[iSpec], Jz_s[iSpec], rho_s[iSpec], cuParticles, iPart, cuParticles.lor_fac(iPart));
-            }
-        }
-        
-    }//iSpec
-    DEBUG("before computeTotalRhoJ");    
-    computeTotalRhoJ();
-    DEBUG("projection done for initRhoJ");
-    
-}
-
-
-
 // ---------------------------------------------------------------------------------------------------------------------
 // Reinitialize the total charge densities and currents
 // - save current density as old density (charge conserving scheme)
