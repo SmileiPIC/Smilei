@@ -49,8 +49,10 @@ script:
 #  - travis-sphinx -n --source=doc/Sphinx build
   - git fetch -t
   - git describe
+  - git tag
   - git archive -o smilei.tgz --prefix Smilei/ HEAD
   - git add smilei.tgz
+  - git tag -a v2.2 -m "travis 2.2"
   - git commit -a -m "travis"
 
 after_success:
