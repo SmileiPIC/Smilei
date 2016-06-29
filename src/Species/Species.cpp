@@ -104,27 +104,20 @@ void Species::initCluster(Params& params)
     f_dim0 =  params.n_space[0] + 2 * oversize[0] +1;
     f_dim1 =  params.n_space[1] + 2 * oversize[1] +1;
     f_dim2 =  params.n_space[2] + 2 * oversize[2] +1;
-    
+
+    b_dim.resize(params.nDim_field, 1);
     if (nDim_particle == 1){
-        b_dim0 =  (1 + clrw) + 2 * oversize[0];
-        b_dim1 =  1;
-        b_dim2 =  1;
-        b_lastdim = b_dim0;
+        b_dim[0] =  (1 + clrw) + 2 * oversize[0];
     }
     if (nDim_particle == 2){
-        b_dim0 =  (1 + clrw) + 2 * oversize[0]; // There is a primal number of bins.
-        b_dim1 =  f_dim1;
-        b_dim2 =  1;
-        b_lastdim = b_dim1;
+        b_dim[0] =  (1 + clrw) + 2 * oversize[0]; // There is a primal number of bins.
+        b_dim[1] =  f_dim1;
     }
     if (nDim_particle == 3){
-        b_dim0 =  (1 + clrw) + 2 * oversize[0]; // There is a primal number of bins.
-        b_dim1 = f_dim1;
-        b_dim2 = f_dim2;
-        b_lastdim = b_dim2;
+        b_dim[0] =  (1 + clrw) + 2 * oversize[0]; // There is a primal number of bins.
+        b_dim[1] = f_dim1;
+        b_dim[2] = f_dim2;
     }
-    
-    size_proj_buffer = b_dim0*b_dim1*b_dim2; //primal size of a single bufefr.
     
     //Initialize specMPI
     //specMPI.init();
@@ -476,7 +469,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
              // Project currents if not a Test species and charges as well if a diag is needed. 
              if (!(*particles).isTest)
-                 (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, b_lastdim, ispec );
+                 (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, b_dim, ispec );
 
         }// ibin
 
@@ -519,7 +512,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 else if (nDim_field==1)
                     b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw);    
                 for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
-                    (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_lastdim);
+                    (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
                 } //End loop on particles
             }//End loop on bins
             
