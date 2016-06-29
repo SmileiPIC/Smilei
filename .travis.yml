@@ -47,12 +47,20 @@ script:
   - git tag -a v1.0 -m "travis 1.0"
   - HDF5_ROOT_DIR=/usr/local make
   - travis-sphinx -n --source=doc/Sphinx build
+  - git archive -o smilei.tgz --prefix Smilei/ HEAD
 
 after_success:
   - travis-sphinx deploy
     
 install:
 
+deploy:
+  provider: releases
+  api_key: env.GH_TOKEN
+  file: smilei.tgz
+  skip_cleanup: true
+  on:
+    tags: true
 
 
 
