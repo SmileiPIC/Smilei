@@ -52,7 +52,7 @@ script:
   - git archive -o smilei.tgz --prefix Smilei/ HEAD
 
 after_success:
-  - travis-sphinx deploy
+#  - travis-sphinx deploy
     
 install:
 
@@ -61,9 +61,6 @@ deploy:
   api_key: env.GH_TOKEN
   file: smilei.tgz
   skip_cleanup: true
-  on:
-    tags: true
-    all_branches: true
 
 
 
