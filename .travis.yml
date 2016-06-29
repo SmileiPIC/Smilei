@@ -56,11 +56,19 @@ after_success:
     
 install:
 
+branches:
+    only:
+    - master
+    - /v\d+\.\d+[a-z]/
+
 deploy:
   provider: releases
   api_key: env.GH_TOKEN
   file: smilei.tgz
   skip_cleanup: true
+  on:
+    tags: true
+    all_branches: true
 
 
 
