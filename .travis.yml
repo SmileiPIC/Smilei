@@ -46,32 +46,11 @@ script:
   - git fetch -t
   - HDF5_ROOT_DIR=/usr/local make
   - travis-sphinx -n --source=doc/Sphinx build
-  - git archive -o smilei.tgz --prefix Smilei/ HEAD
-  - git describe
-#  - git tag
-#  - git add smilei.tgz
-#  - git tag -a v2.4 -m "travis 2.4"
-#  - git commit -a -m "travis"
 
 after_success:
   - travis-sphinx deploy
     
 install:
-
-branches:
-    only:
-    - master
-    - /v\d+\.\d+[a-z]/
-
-deploy:
-  provider: releases
-  api_key: $GH_TOKEN
-  file: smilei.tgz
-  skip_cleanup: true
-  on:
-    tags: true
-    all_branches: true
-
 
 
 
