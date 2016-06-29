@@ -10,6 +10,13 @@ You will need to ask for a password first, but the process is fast and straightf
 
 .. _latestVersion:
 
+Current release 2.2
+^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v2.2 <_downloads/smilei-v2.2.tar.gz>`_
+
+----
+
 Current release 2.0
 ^^^^^^^^^^^^^^^^^^^
 
