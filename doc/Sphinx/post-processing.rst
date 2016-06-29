@@ -42,8 +42,8 @@ Once a simulation is selected as shown above, you can access the content of the 
 using the variable ``namelist``::
   
   S = Smilei("path/to/my/results") # select a simulation
-  print S.namelist.timestep        # print the timestep
-  print S.namelist.dim             # print the simulation dimensions
+  print S.namelist.Main.timestep   # print the timestep
+  print S.namelist.Main.geometry   # print the simulation dimensions
 
 All the variables defined in the original file are copied into this variable.
 
