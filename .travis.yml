@@ -50,6 +50,7 @@ script:
   - git fetch -t
   - git describe
   - git archive -o smilei.tgz --prefix Smilei/ HEAD
+  - git add smilei.tgz
   - git commit -a -m "travis"
 
 after_success:
