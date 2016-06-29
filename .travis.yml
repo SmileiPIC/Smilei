@@ -50,7 +50,6 @@ script:
   - git fetch -t
   - git describe
   - git archive -o smilei.tgz --prefix Smilei/ HEAD
-  - git push origin --tags 
 
 after_success:
   - travis-sphinx deploy
