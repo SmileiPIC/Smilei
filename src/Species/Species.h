@@ -178,10 +178,7 @@ public:
     //! first and last index of each particle bin
     std::vector<int> bmin, bmax;
     //! sub dimensions of buffers for dim > 1
-    unsigned int b_dim0, b_dim1, b_dim2, b_lastdim;
-
-    //! Size of the projection buffer
-    unsigned int size_proj_buffer;
+    std::vector<unsigned int> b_dim;
 
     //! Oversize (copy from Params)
     std::vector<unsigned int> oversize;
