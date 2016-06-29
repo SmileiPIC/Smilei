@@ -93,10 +93,6 @@ void Species::initCluster(Params& params)
     // Arrays of the min and max indices of the particle bins
     bmin.resize(params.n_space[0]/clrw);
     bmax.resize(params.n_space[0]/clrw);
-    if (nDim_particle == 3){
-        bmin.resize(params.n_space[0]/clrw*params.n_space[1]);
-        bmax.resize(params.n_space[0]/clrw*params.n_space[1]);
-    }
     
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
