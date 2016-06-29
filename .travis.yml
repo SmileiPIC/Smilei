@@ -52,7 +52,7 @@ script:
   - git tag
   - git archive -o smilei.tgz --prefix Smilei/ HEAD
   - git add smilei.tgz
-  - git tag -a v2.2 -m "travis 2.2"
+  - git tag -a v2.4 -m "travis 2.4"
   - git commit -a -m "travis"
 
 after_success:
