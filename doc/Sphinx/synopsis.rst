@@ -27,13 +27,3 @@ and innovative dynamic load balancing.
 :program:`Smilei` is therefore designed to run on massively parallel machines,
 and its flexibility should allow one to benefit from the newest and futures HPC architectures.
 
-
-References
-^^^^^^^^^^
-
-.. [Lobet2013] Lobet *et al.*, arXiv:1311.1107 (2013), Plasma Phys. Control. Fusion
-  
-
-
-
-

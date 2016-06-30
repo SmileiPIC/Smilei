@@ -344,6 +344,10 @@ void Params::compute()
         if(n_space_global[i]%number_of_patches[i] !=0) ERROR("ERROR in dimension " << i <<". Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i]);
         if ( n_space[i] <= 2*oversize[i] ) ERROR ( "ERROR in dimension " << i <<". Patches length = "<<n_space[i] << " cells must be at least " << 2*oversize[i] +1 << " cells long. Increase number of cells or reduce number of patches in this direction. " );
     }
+    
+    // Verify that clrw divides n_space[0]
+    if( n_space[0]%clrw != 0 )
+        ERROR("The parameter clrw must divide the number of cells in one patch (in dimension x)");
 
 }
 
