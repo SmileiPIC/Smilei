@@ -43,7 +43,7 @@ Projector2D2Order::~Projector2D2Order()
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, std::vector<unsigned int> b_dim, int* iold, double* deltaold)
+void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
 {
 
     // -------------------------------------
@@ -173,7 +173,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, std::vector<unsigned int> b_dim, int* iold, double* deltaold)
+void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
 {
 
     // -------------------------------------
@@ -307,7 +307,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> b_dim)
+void Projector2D2Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim)
 {
     //Warning : this function is used for frozen species only. It is assumed that position = position_old !!!
 
@@ -381,7 +381,7 @@ void Projector2D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, int diag_flag, std::vector<unsigned int> b_dim, int ispec)
+void Projector2D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, int diag_flag, std::vector<unsigned int> &b_dim, int ispec)
 {
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);

@@ -46,7 +46,7 @@ Projector1D4Order::~Projector1D4Order()
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, std::vector<unsigned int> b_dim, int* iold, double* delta)
+void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* delta)
 {
     // Declare local variables
     int ipo, ip;
@@ -134,7 +134,7 @@ void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, std::vector<unsigned int> b_dim, int* iold, double* delta)
+void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* delta)
 {
     // Declare local variables
     int ipo, ip;
@@ -223,7 +223,7 @@ void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D4Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> b_dim)
+void Projector1D4Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim)
 {
 
     //Warning : this function is used for frozen species only. It is assumed that position = position_old !!!
@@ -288,7 +288,7 @@ void Projector1D4Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &
 } // END Project global current densities (ionize)
 
 
-void Projector1D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, int diag_flag, std::vector<unsigned int> b_dim, int ispec)
+void Projector1D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, int diag_flag, std::vector<unsigned int> &b_dim, int ispec)
 {
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
