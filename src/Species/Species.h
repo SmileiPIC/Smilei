@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <mpi.h>
 
 #include "Particles.h"
 #include "Params.h"
@@ -14,7 +15,6 @@
 #include "Ionization.h"
 #include "ElectroMagn.h"
 #include "Profile.h"
-#include "SpeciesMPI.h"
 
 class ElectroMagn;
 class Pusher;
@@ -25,6 +25,29 @@ class PartWalls;
 class Field3D;
 class Patch;
 class SimWindow;
+
+
+
+struct SpeciesMPI {
+    Particles patchVectorRecv[2][2];
+    Particles patchVectorSend[2][2];
+    //Particles cornerVectorRecv[2][2];
+    //Particles cornerVectorSend[2][2];
+    
+    std::vector<int> patch_buff_index_send[2][2];
+    //std::vector<int> corner_buff_index_send[2][2];
+    int patch_buff_index_send_sz[2][2];
+    //int corner_buff_index_send_sz[2][2];
+    int patch_buff_index_recv_sz[2][2];
+    //int corner_buff_index_recv_sz[2][2];
+    
+    MPI_Request patch_srequest[2][2];
+    MPI_Request patch_rrequest[2][2];
+    //MPI_Request corner_srequest[2][2];
+    //MPI_Request corner_rrequest[2][2];
+};
+
+
 
 
 //! class Species

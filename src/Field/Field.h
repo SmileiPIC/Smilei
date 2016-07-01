@@ -10,7 +10,6 @@
 #include <fstream>
 
 #include "Tools.h"
-#include "SpeciesMPI.h"
 
 //! Structure containing the fields at a given position (e.g. at a Particle position)
 struct LocalFields
@@ -28,34 +27,22 @@ struct LocalFields
 class Field
 {
 public:
-    SpeciesMPI specMPI;
-
     //! name of the field
     std::string name;
 
     //! Constructor for Field: with no input argument
-    Field() {
-      specMPI.init();
-    };
+    Field() {};
 
     //! Constructor for Field: with the Field dimensions as input argument
-    Field( std::vector<unsigned int> dims ) {
-        specMPI.init();
-    };
+    Field( std::vector<unsigned int> dims ) {};
     //! Constructor, isPrimal define if mainDim is Primal or Dual
-    Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) {
-        specMPI.init();
-    };
+    Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) {};
 
     //! Constructor for Field: with the Field dimensions and dump file name as input argument
-    Field( std::vector<unsigned int> dims, std::string name_in ) : name(name_in) {
-        specMPI.init();
-    } ;
+    Field( std::vector<unsigned int> dims, std::string name_in ) : name(name_in) {} ;
     
     //! Constructor for Field: isPrimal define if mainDim is Primal or Dual
-    Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name_in ) : name(name_in) {
-       specMPI.init() ;
-    } ;
+    Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name_in ) : name(name_in) {} ;
 
     //! Destructor for Field
     virtual ~Field() {
@@ -159,8 +146,12 @@ public:
             (*this)(i)=(*from_field)(i);
         }
     }
-
-
+    
+    //! MPI requests for patch exchange
+    MPI_Request patch_srequest[2][2];
+    MPI_Request patch_rrequest[2][2];
+    
+    
 protected:
 
 private:
