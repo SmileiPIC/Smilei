@@ -348,7 +348,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     for (unsigned int idim = 1; idim < params.nDim_field; idim++)
         ncells_perpatch *= params.n_space[idim]+2*params.oversize[idim];
  
-    unsigned int tot_species_number = PyTools::nComponents("Species");
+    unsigned int tot_species_number = vecpatches(0)->vecSpecies.size();
     cells_load = ncells_perpatch*params.coef_cell ;
 
     Lp.resize(patch_count[smilei_rk], cells_load);
