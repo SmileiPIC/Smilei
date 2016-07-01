@@ -172,6 +172,12 @@ int main (int argc, char* argv[])
     timer[0].reboot();
     
     // ------------------------------------------------------------------------
+    // check here if we can close the python interpreter
+    // ------------------------------------------------------------------------
+    TITLE("Cleaning up python runtime environement");
+    params.cleanup(smpiData);
+    
+    // ------------------------------------------------------------------------
     // Check memory consumption
     // ------------------------------------------------------------------------
     check_memory_consumption( vecPatches, smpiData );
@@ -180,7 +186,7 @@ int main (int argc, char* argv[])
     //int partperMPI;
     //int npatchmoy=0, npartmoy=0;
     double old_print_time(0.), this_print_time;
-
+     
     // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)
     unsigned int latestTimeStep=checkpoint.this_run_start_step;
     bool exit(false);
@@ -352,12 +358,6 @@ int main (int argc, char* argv[])
     //                      HERE ENDS THE PIC LOOP
     // ------------------------------------------------------------------
     TITLE("End time loop, time dual = " << time_dual);
-    
-    // ------------------------------------------------------------------------
-    // check here if we can close the python interpreter
-    // ------------------------------------------------------------------------
-    TITLE("Cleaning up python runtime environement");
-    params.cleanup(smpiData);
     
     //double timElapsed=smpiData->time_seconds();
     //if ( smpiData->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
