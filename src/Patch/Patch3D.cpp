@@ -54,6 +54,9 @@ void Patch3D::initStep2(Params& params)
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch3D::initSumField( Field* field, int iDim )
 {
+    if (field->MPIbuff.srequest.size()==0)
+        field->MPIbuff.allocate(3);
+
     int patch_ndims_(3);
     int patch_nbNeighbors_(2);
     
@@ -105,14 +108,14 @@ void Patch3D::initSumField( Field* field, int iDim )
             iz = idx[2]*istart;
             int tag = buildtag( hindex, iDim, iNeighbor );
             MPI_Isend( &(f3D->data_3D[ix][iy][iz]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, 
-                       MPI_COMM_WORLD, &(f3D->specMPI.patch_srequest[iDim][iNeighbor]) );
+                       MPI_COMM_WORLD, &(f3D->MPIbuff.srequest[iDim][iNeighbor]) );
         } // END of Send
             
         if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
             int tmp_elem = (buf[iDim][(iNeighbor+1)%2]).dims_[0]*(buf[iDim][(iNeighbor+1)%2]).dims_[1]*(buf[iDim][(iNeighbor+1)%2]).dims_[2];
             int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor );
             MPI_Irecv( &( (buf[iDim][(iNeighbor+1)%2]).data_3D[0][0][0] ), tmp_elem, MPI_DOUBLE, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, 
-                       MPI_COMM_WORLD, &(f3D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
+                       MPI_COMM_WORLD, &(f3D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]) );
         } // END of Recv
             
     } // END for iNeighbor
@@ -154,10 +157,10 @@ void Patch3D::finalizeSumField( Field* field, int iDim )
         
     for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
         if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-            MPI_Wait( &(f3D->specMPI.patch_srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
+            MPI_Wait( &(f3D->MPIbuff.srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
         }
         if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-            MPI_Wait( &(f3D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
+            MPI_Wait( &(f3D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
         }
     }
 
@@ -198,6 +201,9 @@ void Patch3D::finalizeSumField( Field* field, int iDim )
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch3D::initExchange( Field* field )
 {
+    if (field->MPIbuff.srequest.size()==0)
+        field->MPIbuff.allocate(3);
+
     int patch_ndims_(3);
     int patch_nbNeighbors_(2);
 
@@ -224,7 +230,7 @@ void Patch3D::initExchange( Field* field )
                 iz = idx[iDim]*istart;
                 int tag = buildtag( hindex, iDim, iNeighbor );
                 MPI_Isend( &(f3D->data_3D[ix][iy][iz]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, 
-                           MPI_COMM_WORLD, &(f3D->specMPI.patch_srequest[iDim][iNeighbor]) );
+                           MPI_COMM_WORLD, &(f3D->MPIbuff.srequest[iDim][iNeighbor]) );
 
             } // END of Send
 
@@ -236,7 +242,7 @@ void Patch3D::initExchange( Field* field )
                 iz = idx[iDim]*istart;
                  int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor );
                 MPI_Irecv( &(f3D->data_3D[ix][iy][iz]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, 
-                           MPI_COMM_WORLD, &(f3D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]));
+                           MPI_COMM_WORLD, &(f3D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]));
 
             } // END of Recv
 
@@ -263,10 +269,10 @@ void Patch3D::finalizeExchange( Field* field )
 
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
             if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-                MPI_Wait( &(f3D->specMPI.patch_srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
+                MPI_Wait( &(f3D->MPIbuff.srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
             }
              if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-               MPI_Wait( &(f3D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
+               MPI_Wait( &(f3D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
             }
         }
 
@@ -281,6 +287,9 @@ void Patch3D::finalizeExchange( Field* field )
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch3D::initExchange( Field* field, int iDim )
 {
+    if (field->MPIbuff.srequest.size()==0)
+        field->MPIbuff.allocate(3);
+
     int patch_ndims_(3);
     int patch_nbNeighbors_(2);
 
@@ -304,7 +313,7 @@ void Patch3D::initExchange( Field* field, int iDim )
             iz = idx[iDim]*istart;
             int tag = buildtag( hindex, iDim, iNeighbor );
             MPI_Isend( &(f3D->data_3D[ix][iy][iz]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, 
-                       MPI_COMM_WORLD, &(f3D->specMPI.patch_srequest[iDim][iNeighbor]) );
+                       MPI_COMM_WORLD, &(f3D->MPIbuff.srequest[iDim][iNeighbor]) );
 
         } // END of Send
 
@@ -316,7 +325,7 @@ void Patch3D::initExchange( Field* field, int iDim )
             iz = idx[iDim]*istart;
             int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor );
             MPI_Irecv( &(f3D->data_3D[ix][iy][iz]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, 
-                       MPI_COMM_WORLD, &(f3D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]));
+                       MPI_COMM_WORLD, &(f3D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]));
 
         } // END of Recv
 
@@ -341,10 +350,10 @@ void Patch3D::finalizeExchange( Field* field, int iDim )
 
     for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
         if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-            MPI_Wait( &(f3D->specMPI.patch_srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
+            MPI_Wait( &(f3D->MPIbuff.srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
         }
         if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-            MPI_Wait( &(f3D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
+            MPI_Wait( &(f3D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
         }
     }
 
