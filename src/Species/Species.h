@@ -14,7 +14,7 @@
 #include "Ionization.h"
 #include "ElectroMagn.h"
 #include "Profile.h"
-#include "SpeciesMPI.h"
+#include "AsyncMPIbuffers.h"
 
 class ElectroMagn;
 class Pusher;
@@ -31,7 +31,7 @@ class SimWindow;
 class Species
 {
 public:
-    SpeciesMPI specMPI;
+    SpeciesMPIbuffers MPIbuff;
 
     //! Species creator
     Species(Params&, Patch*);

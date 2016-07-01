@@ -117,7 +117,7 @@ void Species::initCluster(Params& params)
     }
     
     //Initialize specMPI
-    //specMPI.init();
+    MPIbuff.allocate(nDim_particle);
        
     //ener_tot = 0.;
     nrj_bc_lost = 0.;
