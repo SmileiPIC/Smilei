@@ -130,7 +130,7 @@ void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
 
     //Loop on bin particles
-    for (unsigned int ipart=istart ; ipart<iend; ipart++ ) {
+    for (int ipart=istart ; ipart<iend; ipart++ ) {
         //Interpolation on current particle
         (*this)(EMfields, particles, ipart, &(*Epart)[ipart], &(*Bpart)[ipart]);
         //Buffering of iol and delta

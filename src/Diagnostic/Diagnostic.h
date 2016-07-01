@@ -31,7 +31,7 @@ public :
     virtual void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) {};
     
     //! Writes out a global diag diag.
-    virtual bool write(int timestep) {};
+    virtual bool write(int timestep) { return true; };
     
     //! Time selection
     TimeSelection * timeSelection;

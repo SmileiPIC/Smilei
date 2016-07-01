@@ -187,7 +187,7 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     int nPart_MPI = 0;
     
     // 1 - Loop patches to create particles
-    for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         
         // First loop on particles: calculate the number of points for this patch
         unsigned int nPart_patch=0, i, ipart, iDimProbe, iDim;
@@ -275,7 +275,7 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     // Add the MPI offset to all patches
     if( ! smpi->isMaster() ) {
         int offset = all_nPart[smpi->getRank()-1];
-        for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
             vecPatches(ipatch)->probes[probe_n]->offset_in_file += offset;
     }
     
@@ -290,12 +290,12 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     posArraySize[0] = nPart_MPI;
     posArraySize[1] = nDim_particle;
     Field2D* posArray = new Field2D(posArraySize);
-    int ipart = 0;
-    for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        if( ipart>=nPart_MPI ) break;
+    unsigned int ipart = 0;
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        if( ipart>=(unsigned int)nPart_MPI ) break;
         Particles * particles = &(vecPatches(ipatch)->probes[probe_n]->particles);
-        for ( int ip=0 ; ip<particles->size() ; ip++) {
-            for (int idim=0 ; idim<nDim_particle  ; idim++ )
+        for ( unsigned int ip=0 ; ip<particles->size() ; ip++) {
+            for (unsigned int idim=0 ; idim<nDim_particle  ; idim++ )
                 posArray->data_2D[ipart][idim] = particles->position(idim,ip);
             ipart++;
         }
@@ -354,8 +354,8 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     smpi->barrier();
     
     // Calculate the number of probe particles in this MPI
-    int nPart_MPI = 0;
-    for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+    unsigned int nPart_MPI = 0;
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
         nPart_MPI += vecPatches(ipatch)->probes[probe_n]->particles.size();
     
     // Make the array that will contain the data
@@ -365,11 +365,11 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     Field2D* probesArray = new Field2D(probesArraySize);
     
     // Loop patches to fill the array
-    int iPart_MPI = 0;
-    for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+    unsigned int iPart_MPI = 0;
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         // Loop probe ("fake") particles of current patch
-        int npart = vecPatches(ipatch)->probes[probe_n]->particles.size();
-        for (int ipart=0; ipart<npart; ipart++) {             
+        unsigned int npart = vecPatches(ipatch)->probes[probe_n]->particles.size();
+        for (unsigned int ipart=0; ipart<npart; ipart++) {             
             (*(vecPatches(ipatch)->Interp)) (
                 vecPatches(ipatch)->EMfields,
                 vecPatches(ipatch)->probes[probe_n]->particles,

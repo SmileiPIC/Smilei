@@ -62,10 +62,10 @@ void ElectroMagnBC2D_refl::apply_xmin(ElectroMagn* EMfields, double time_dual, P
 
         // APPLICATION OF BCs OVER THE FULL GHOST CELL REGION
         // Static cast of the fields
-        Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
-        Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
-        Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
-        Field2D* Bx2D = static_cast<Field2D*>(EMfields->Bx_);
+        //Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
+        //Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
+        //Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
+        //Field2D* Bx2D = static_cast<Field2D*>(EMfields->Bx_);
         Field2D* By2D = static_cast<Field2D*>(EMfields->By_);
         Field2D* Bz2D = static_cast<Field2D*>(EMfields->Bz_);
         
@@ -150,10 +150,10 @@ void ElectroMagnBC2D_refl::apply_xmax(ElectroMagn* EMfields, double time_dual, P
     if ( patch->isEastern() ) {
 
         // Static cast of the fields
-        Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
-        Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
-        Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
-        Field2D* Bx2D = static_cast<Field2D*>(EMfields->Bx_);
+        //Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
+        //Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
+        //Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
+        //Field2D* Bx2D = static_cast<Field2D*>(EMfields->Bx_);
         Field2D* By2D = static_cast<Field2D*>(EMfields->By_);
         Field2D* Bz2D = static_cast<Field2D*>(EMfields->Bz_);
         
@@ -241,11 +241,11 @@ void ElectroMagnBC2D_refl::apply_ymin(ElectroMagn* EMfields, double time_dual, P
 
         // APPLICATION OF BCs OVER THE FULL GHOST CELL REGION
         // Static cast of the fields
-        Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
-        Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
-        Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
+        //Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
+        //Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
+        //Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
         Field2D* Bx2D = static_cast<Field2D*>(EMfields->Bx_);
-        Field2D* By2D = static_cast<Field2D*>(EMfields->By_);
+        //Field2D* By2D = static_cast<Field2D*>(EMfields->By_);
         Field2D* Bz2D = static_cast<Field2D*>(EMfields->Bz_);
         
         // FORCE CONSTANT MAGNETIC FIELDS
@@ -327,11 +327,11 @@ void ElectroMagnBC2D_refl::apply_ymax(ElectroMagn* EMfields, double time_dual, P
     if ( patch->isNorthern() ) {
         
         // Static cast of the fields
-        Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
-        Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
-        Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
+        //Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
+        //Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
+        //Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
         Field2D* Bx2D = static_cast<Field2D*>(EMfields->Bx_);
-        Field2D* By2D = static_cast<Field2D*>(EMfields->By_);
+        //Field2D* By2D = static_cast<Field2D*>(EMfields->By_);
         Field2D* Bz2D = static_cast<Field2D*>(EMfields->Bz_);
         
         // FORCE CONSTANT MAGNETIC FIELDS

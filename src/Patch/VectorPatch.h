@@ -45,7 +45,7 @@ public :
     inline void resize(int npatches) {
         patches_.resize(npatches);
     }
-    inline int  size() const {
+    inline unsigned int  size() const {
         return patches_.size();
     }
     inline Patch* operator()(int ipatch) {

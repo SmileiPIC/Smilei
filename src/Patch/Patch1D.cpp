@@ -131,12 +131,11 @@ void Patch1D::finalizeSumField( Field* field, int iDim )
     oversize2[0] *= 2;
     oversize2[0] += 1 + f1D->isDual_[0];
     
-    int istart, ix;
+    int istart;
     /********************************************************************************/
     // Send/Recv in a buffer data to sum
     /********************************************************************************/
 
-    MPI_Datatype ntype = ntypeSum_[iDim][isDual[0]];
     MPI_Status sstat    [nDim_fields_][2];
     MPI_Status rstat    [nDim_fields_][2];
         
@@ -316,16 +315,13 @@ void Patch1D::finalizeExchange( Field* field, int iDim )
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch1D::createType( Params& params )
 {
-    int nx0 = params.n_space[0] + 1 + 2*params.oversize[0];
     unsigned int clrw = params.clrw;
     
     // MPI_Datatype ntype_[nDim][primDual]
-    int nx;
     int ny = oversize[0];
     int nline;
 
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
-        nx = nx0 + ix_isPrim;
 
         // Standard Type
         ntype_[0][ix_isPrim] = NULL;

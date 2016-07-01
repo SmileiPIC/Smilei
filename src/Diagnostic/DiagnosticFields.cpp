@@ -48,7 +48,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patc
     fields_indexes.resize(0);
     fields_names  .resize(0);
     bool hasfield;
-    for( int i=0; i<allFields->size(); i++ ) {
+    for( unsigned int i=0; i<allFields->size(); i++ ) {
         string field_name = (*allFields)[i]->name;
         if( field_name.find("_avg") < string::npos ) field_name.erase(field_name.find("_avg"));
         
@@ -56,7 +56,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patc
             hasfield = true;
         } else {
             hasfield = false;
-            for( int j=0; j<fieldsToDump.size(); j++ ) {
+            for( unsigned int j=0; j<fieldsToDump.size(); j++ ) {
                 if( field_name == fieldsToDump[j] ) {
                     hasfield = true;
                     break;
@@ -193,7 +193,7 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     timestep_group_id = H5Gcreate(fileId_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     
     // For each field, combine all patches and write out
-    for( int ifield=0; ifield < fields_indexes.size(); ifield++ ) {
+    for( unsigned int ifield=0; ifield < fields_indexes.size(); ifield++ ) {
         
         // Copy the patch field to the buffer
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)

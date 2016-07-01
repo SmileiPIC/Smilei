@@ -115,7 +115,7 @@ void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields 
             new_electrons.create_particle();
             //new_electrons.initialize( new_electrons.size()+1, new_electrons.dimension() );
             int idNew = new_electrons.size() - 1;
-            for (int i=0; i<new_electrons.dimension(); i++) {
+            for (unsigned int i=0; i<new_electrons.dimension(); i++) {
                 new_electrons.position(i,idNew)=particles.position(i, ipart);
                 new_electrons.position_old(i,idNew)=particles.position(i, ipart);
             }
@@ -229,7 +229,7 @@ void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields 
             new_electrons.create_particle();
             //new_electrons.initialize( new_electrons.size()+1, new_electrons.dimension() );
             int idNew = new_electrons.size() - 1;
-            for (int i=0; i<new_electrons.dimension(); i++) {
+            for (unsigned int i=0; i<new_electrons.dimension(); i++) {
                 new_electrons.position(i,idNew)=particles.position(i, ipart);
                 new_electrons.position_old(i,idNew)=particles.position(i, ipart);
             }

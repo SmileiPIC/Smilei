@@ -100,7 +100,7 @@ void Patch::initStep3( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
     min_local.resize(params.nDim_field, 0.);
     max_local.resize(params.nDim_field, 0.);
     cell_starting_global_index.resize(params.nDim_field, 0);
-    for (int i = 0 ; i<params.nDim_field ; i++) {
+    for (unsigned int i = 0 ; i<params.nDim_field ; i++) {
         min_local[i] =  Pcoordinates[i]   *params.n_space[i]*params.cell_length[i];
         max_local[i] = (Pcoordinates[i]+1)*params.n_space[i]*params.cell_length[i];
         cell_starting_global_index[i] += Pcoordinates[i]*params.n_space[i];
@@ -255,7 +255,7 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params)
             else if ( cuParticles.position(idim,iPart) >= max_local[idim]){
                 if( neighbor_[idim][1]!=MPI_PROC_NULL) { 
                     vecSpecies[ispec]->MPIbuff.part_index_send[idim][1].push_back( iPart );
-                    if (smpi->periods_[idim]==1 && Pcoordinates[idim] == params.number_of_patches[idim]-1) {
+                    if (smpi->periods_[idim]==1 && (int)Pcoordinates[idim] == params.number_of_patches[idim]-1) {
                         cuParticles.position(idim,iPart)     -= xmax[idim];
                     }
                 }
@@ -357,7 +357,7 @@ void Patch::CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, 
                     if ( ( iNeighbor==0 ) &&  (Pcoordinates[iDim] == 0 ) &&( cuParticles.position(iDim,vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor][iPart]) < 0. ) ) {
                         cuParticles.position(iDim,vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor][iPart])     += x_max;
                     }
-                    else if ( ( iNeighbor==1 ) &&  (Pcoordinates[iDim] == params.number_of_patches[iDim]-1 ) && ( cuParticles.position(iDim,vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor][iPart]) >= x_max ) ) {
+                    else if ( ( iNeighbor==1 ) &&  ((int)Pcoordinates[iDim] == params.number_of_patches[iDim]-1 ) && ( cuParticles.position(iDim,vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor][iPart]) >= x_max ) ) {
                         cuParticles.position(iDim,vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor][iPart])     -= x_max;
                     }
                 }
@@ -482,7 +482,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                         //Other side of idim
                         else if ( (vecSpecies[ispec]->MPIbuff.partRecv[iDim][(iNeighbor+1)%2]).position(idim,iPart) >= max_local[idim]) { 
                             if (neighbor_[idim][1]!=MPI_PROC_NULL){ //if neighbour exists
-                                    if (smpi->periods_[idim]==1 && Pcoordinates[idim] == params.number_of_patches[idim]-1) {
+                                    if (smpi->periods_[idim]==1 && (int)Pcoordinates[idim] == params.number_of_patches[idim]-1) {
                                     (vecSpecies[ispec]->MPIbuff.partRecv[iDim][(iNeighbor+1)%2]).position(idim,iPart)     -= xmax[idim];
                                 }
                                 (vecSpecies[ispec]->MPIbuff.partRecv[iDim][(iNeighbor+1)%2]).cp_particle(iPart, cuParticles);
@@ -522,7 +522,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
         for (idim = 1; idim < ndim; idim++){
             for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
                 n_part_recv = vecSpecies[ispec]->MPIbuff.part_index_recv_sz[idim][iNeighbor];
-                for (unsigned int j=0; j<n_part_recv ;j++){
+                for (unsigned int j=0; j<(unsigned int)n_part_recv ;j++){
                     //We first evaluate how many particles arrive in each bin.
                         ii = int((vecSpecies[ispec]->MPIbuff.partRecv[idim][iNeighbor].position(0,j)-min_local[0])/dbin);//bin in which the particle goes.
                     shift[ii+1]++; // It makes the next bins shift.
@@ -567,7 +567,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
             for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
                 n_part_recv = vecSpecies[ispec]->MPIbuff.part_index_recv_sz[idim][iNeighbor];
                 if ( (neighbor_[idim][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
-                        for(unsigned int j=0; j<n_part_recv; j++){
+                        for(unsigned int j=0; j<(unsigned int)n_part_recv; j++){
                             ii = int((vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor].position(0,j)-min_local[0])/dbin);//bin in which the particle goes.
                             vecSpecies[ispec]->MPIbuff.partRecv[idim][iNeighbor].overwrite_part(j, cuParticles,(*cubmax)[ii]);
                             (*cubmax)[ii] ++ ;

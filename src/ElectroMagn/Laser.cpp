@@ -190,24 +190,24 @@ LaserProfileSeparable::LaserProfileSeparable(
     double omega, Profile* chirpProfile, Profile* timeProfile,
     Profile* spaceProfile, Profile* phaseProfile, bool primal
 ):
+    primal       ( primal       ),
     omega        ( omega        ),
     timeProfile  ( timeProfile  ),
     chirpProfile ( chirpProfile ),
     spaceProfile ( spaceProfile ),
-    phaseProfile ( phaseProfile ),
-    primal       ( primal       )
+    phaseProfile ( phaseProfile )
 {
     space_envelope = NULL;
     phase = NULL;
 }
 // Cloning constructor
 LaserProfileSeparable::LaserProfileSeparable(LaserProfileSeparable * lp) :
+    primal       ( lp->primal       ),
     omega        ( lp->omega        ),
     timeProfile  ( lp->timeProfile  ),
     chirpProfile ( lp->chirpProfile ),
     spaceProfile ( lp->spaceProfile ),
-    phaseProfile ( lp->phaseProfile ),
-    primal       ( lp->primal       )
+    phaseProfile ( lp->phaseProfile )
 {
     space_envelope = NULL;
     phase = NULL;

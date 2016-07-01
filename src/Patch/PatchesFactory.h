@@ -38,7 +38,7 @@ public:
         unsigned int npatches, firstpatch;
         npatches = smpi->patch_count[smpi->getRank()];// Number of patches owned by current MPI process.
         firstpatch = 0;
-        for (unsigned int impi = 0 ; impi < smpi->getRank() ; impi++) {
+        for (unsigned int impi = 0 ; impi < (unsigned int)smpi->getRank() ; impi++) {
             firstpatch += smpi->patch_count[impi];
         }
         

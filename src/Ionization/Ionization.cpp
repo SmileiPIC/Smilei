@@ -20,7 +20,7 @@ Ionization::Ionization(Params& params, Species * species) {
     // Ionization potential & quantum numbers (all in atomic units 1 au = 27.2116 eV)
     Potential.resize(atomic_number_);
     Azimuthal_quantum_number.resize(atomic_number_);
-    for( int Zstar=0; Zstar<atomic_number_; Zstar++) {
+    for( int Zstar=0; Zstar<(int)atomic_number_; Zstar++) {
         Potential               [Zstar] = IonizationTables::ionization_energy      (atomic_number_, Zstar) * eV_to_au;
         Azimuthal_quantum_number[Zstar] = IonizationTables::azimuthal_atomic_number(atomic_number_, Zstar);
     }

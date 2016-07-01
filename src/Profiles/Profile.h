@@ -446,7 +446,7 @@ public:
         PyTools::getAttr(py_profile, "coeffs", coeffs );
         PyTools::getAttr(py_profile, "x0"    , x0     );
         PyTools::getAttr(py_profile, "y0"    , y0     );
-        for( int i=0; i<orders.size(); i++)
+        for( unsigned int i=0; i<orders.size(); i++)
             if( coeffs[i].size() != orders[i]+1 )
                 ERROR("2D polynomial profile has a wrong number of coefficients for order "<<orders[i]);
     };
@@ -459,7 +459,7 @@ public:
     double valueAt(std::vector<double>);
 private:
     double x0, y0;
-    std::vector<int> orders;
+    std::vector<unsigned int> orders;
     std::vector<std::vector<double> > coeffs;
 };
 

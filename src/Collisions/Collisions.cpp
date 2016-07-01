@@ -265,7 +265,7 @@ vector<Collisions*> Collisions::clone(vector<Collisions*> vecCollisions, Params&
 {
     vector<Collisions*> newVecCollisions(0);
     
-    for( int i=0; i<vecCollisions.size(); i++)
+    for( unsigned int i=0; i<vecCollisions.size(); i++)
         newVecCollisions.push_back( new Collisions( vecCollisions[i], params.nDim_particle ) );
     
     return newVecCollisions;
@@ -396,7 +396,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime)
     bool not_duplicated_particle;
     double smean, logLmean, ncol;//, *temperature
     ostringstream name;
-    hid_t did(0), fileId(0);
+    hid_t did(0);
     
     sg1 = &species_group1;
     sg2 = &species_group2;

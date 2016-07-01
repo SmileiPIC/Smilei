@@ -138,7 +138,7 @@ isEastern(patch->isEastern())
                     bufsize[i][isDual]--;
                 else if  (isDual) {
                     bufsize[i][isDual]--;
-                    if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=params.number_of_patches[i]-1) ) 
+                    if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=(unsigned int)params.number_of_patches[i]-1) ) 
                         bufsize[i][isDual]--;
                 }
                 

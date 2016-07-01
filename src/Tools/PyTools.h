@@ -423,7 +423,7 @@ public:
             // For each list, convert to vector
             vec.resize(0);
             std::vector<T> v;
-            for( int i=0; i<py_vec.size(); i++ ) {
+            for( unsigned int i=0; i<py_vec.size(); i++ ) {
                 if( !convert( py_vec[i], v ) ) return false;
                 vec.push_back( v );
             }

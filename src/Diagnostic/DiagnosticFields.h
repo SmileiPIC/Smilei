@@ -27,7 +27,7 @@ public :
     
 protected :
     //! Indexes of the fields to be dumped
-    std::vector<int> fields_indexes;
+    std::vector<unsigned int> fields_indexes;
     //! Names of the fields to be dumped
     std::vector<std::string> fields_names;
     
@@ -55,7 +55,7 @@ protected :
     int tot_number_of_patches;
     
     //! Copy patch field to current "data" buffer
-    virtual void getField( Patch* patch, int ) = 0;
+    virtual void getField( Patch* patch, unsigned int ) = 0;
     
     //! Temporary dataset that is used for folding the 2D hilbert curve
     hid_t tmp_dset_id;
