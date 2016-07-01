@@ -602,7 +602,9 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     newMPIrank = smpi->getRank() -1;
     oldMPIrank = smpi->getRank() -1;
     int istart( 0 );
-    int nmessage = 2*nSpecies+14;
+    int nmax_laser(4);
+    int nmessage = 2*nSpecies+(2+params.nDim_particle)*(*this)(0)->probes.size()+
+        9+(*this)(0)->EMfields->antennas.size()+4*nmax_laser;
     
     
     for (int irk=0 ; irk<smpi->getRank() ; irk++) istart += smpi->patch_count[irk];

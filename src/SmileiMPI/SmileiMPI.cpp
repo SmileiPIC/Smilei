@@ -530,13 +530,17 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
             MPI_Type_free( &(patch->vecSpecies[ispec]->typePartSend) );
         }
     }
-    isend( patch->EMfields, to, tag+2*patch->vecSpecies.size() );
-    
+
     // Send probes' particles
     for ( int iprobe = 0 ; iprobe < patch->probes.size() ; iprobe++ ) {
-        isend( patch->probes[iprobe], to, tag+2*patch->vecSpecies.size()+9+iprobe, params.nDim_particle );
+        isend( patch->probes[iprobe], to, tag+2*patch->vecSpecies.size()+iprobe, params.nDim_particle );
     }
 
+    // Count number max of comms :
+    int maxtag = 2 * patch->vecSpecies.size() + (2+params.nDim_particle) * patch->probes.size();
+    
+    isend( patch->EMfields, to, maxtag );
+    
 } // END isend( Patch )
 
 
@@ -562,12 +566,15 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
         }
     }
    
-    recv( patch->EMfields, from, tag+2*patch->vecSpecies.size() );
-
     // Receive probes' particles
     for ( int iprobe = 0 ; iprobe < patch->probes.size() ; iprobe++ ) {
-        recv( patch->probes[iprobe], from, tag+2*patch->vecSpecies.size()+9+iprobe, params.nDim_particle );
+        recv( patch->probes[iprobe], from, tag+2*patch->vecSpecies.size()+iprobe, params.nDim_particle );
     }
+
+    // Count number max of comms :
+    int maxtag = 2 * patch->vecSpecies.size() + (2+params.nDim_particle) * patch->probes.size();
+
+    recv( patch->EMfields, from, maxtag );
 
 } // END recv ( Patch )
 

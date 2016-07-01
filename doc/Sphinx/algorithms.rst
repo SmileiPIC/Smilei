@@ -329,20 +329,5 @@ Boundary conditions
 
 In progress
 
-----
-
-References
-^^^^^^^^^^
-
-.. [TafloveHagness] A. Taflove and S. C. Hagness, Computation Electrodynamics: The Finite-Difference Time-Domain Method, 3rd Ed. (Artech House, Norwood, 2005)
-
-.. [Nuter2014] `R. Nuter et al., Eur. Phys. J. D 68, 177 (2014) <https://doi.org/10.1140/epjd/e2014-50162-y>`_
-
-.. [Boris1970] J.P. Boris, Proceeding of the 4th Conference on Numerical Simulation of Plasmas, Naval Res. Lab., Washington DC, pp. 3-67 (1970)
-
-.. [Vay2008] `J.-L. Vay, Phys. Plasmas 15, 056701 (2008) <https://doi.org/10.1063/1.2837054>`_
-
-.. [Esirkepov2001] `T. Zh. Esirkepov, Comp. Phys. Comm. 135, 144 (2001) <https://doi.org/10.1016/S0010-4655(00)00228-9>`_
-
 
 
