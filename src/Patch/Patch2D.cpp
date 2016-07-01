@@ -134,8 +134,8 @@ void Patch2D::initSumField( Field* field, int iDim )
             //int tag = buildtag( 3, hindex, neighbor_[iDim][iNeighbor]);
             int tag = buildtag( hindex, iDim, iNeighbor );
             //cout << hindex << " send to " << neighbor_[iDim][iNeighbor] << endl;
-            //MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->patch_srequest[iDim][iNeighbor]) );
-            MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f2D->patch_srequest[iDim][iNeighbor]) );
+            //MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
+            MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
         } // END of Send
             
         if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
@@ -143,8 +143,8 @@ void Patch2D::initSumField( Field* field, int iDim )
             //int tag = buildtag( 3, neighbor_[iDim][(iNeighbor+1)%2], hindex);
             int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor );
             //cout << hindex << " recv from " << neighbor_[iDim][(iNeighbor+1)%2] << " ; n_elements = " << tmp_elem << endl;
-            //MPI_Irecv( &( (buf[iDim][(iNeighbor+1)%2]).data_2D[0][0] ), tmp_elem, MPI_DOUBLE, 0, tag, MPI_COMM_SELF, &(f2D->patch_rrequest[iDim][(iNeighbor+1)%2]) );
-            MPI_Irecv( &( (buf[iDim][(iNeighbor+1)%2]).data_2D[0][0] ), tmp_elem, MPI_DOUBLE, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f2D->patch_rrequest[iDim][(iNeighbor+1)%2]) );
+            //MPI_Irecv( &( (buf[iDim][(iNeighbor+1)%2]).data_2D[0][0] ), tmp_elem, MPI_DOUBLE, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
+            MPI_Irecv( &( (buf[iDim][(iNeighbor+1)%2]).data_2D[0][0] ), tmp_elem, MPI_DOUBLE, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
         } // END of Recv
             
     } // END for iNeighbor
@@ -185,11 +185,11 @@ void Patch2D::finalizeSumField( Field* field, int iDim )
     for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
         if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
             //cout << hindex << " is waiting for send at " << neighbor_[iDim][iNeighbor] << endl;
-            MPI_Wait( &(f2D->patch_srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
+            MPI_Wait( &(f2D->specMPI.patch_srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
         }
         if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
             //cout << hindex << " is waiting for recv from " << neighbor_[iDim][(iNeighbor+1)%2] << endl;        
-            MPI_Wait( &(f2D->patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
+            MPI_Wait( &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
         }
     }
 
@@ -247,8 +247,8 @@ void Patch2D::initExchange( Field* field )
                 iy =    iDim *istart;
                 //int tag = buildtag( 4, hindex, neighbor_[iDim][iNeighbor]);
                 int tag = buildtag( hindex, iDim, iNeighbor );
-                //MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->patch_srequest[iDim][iNeighbor]) );
-                MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f2D->patch_srequest[iDim][iNeighbor]) );
+                //MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
+                MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
 
             } // END of Send
 
@@ -259,8 +259,8 @@ void Patch2D::initExchange( Field* field )
                 iy =    iDim *istart;
                  //int tag = buildtag( 4, neighbor_[iDim][(iNeighbor+1)%2], hindex);
                  int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor );
-                //MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->patch_rrequest[iDim][(iNeighbor+1)%2]));
-                MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f2D->patch_rrequest[iDim][(iNeighbor+1)%2]));
+                //MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]));
+                MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]));
 
             } // END of Recv
 
@@ -287,10 +287,10 @@ void Patch2D::finalizeExchange( Field* field )
 
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
             if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-                MPI_Wait( &(f2D->patch_srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
+                MPI_Wait( &(f2D->specMPI.patch_srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
             }
              if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-               MPI_Wait( &(f2D->patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
+               MPI_Wait( &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
             }
         }
 
@@ -323,8 +323,8 @@ void Patch2D::initExchange( Field* field, int iDim )
             ix = (1-iDim)*istart;
             iy =    iDim *istart;
             int tag = buildtag( hindex, iDim, iNeighbor );
-            //MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->patch_srequest[iDim][iNeighbor]) );
-            MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f2D->patch_srequest[iDim][iNeighbor]) );
+            //MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
+            MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
 
         } // END of Send
 
@@ -334,8 +334,8 @@ void Patch2D::initExchange( Field* field, int iDim )
             ix = (1-iDim)*istart;
             iy =    iDim *istart;
             int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor );
-            //MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->patch_rrequest[iDim][(iNeighbor+1)%2]));
-            MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f2D->patch_rrequest[iDim][(iNeighbor+1)%2]));
+            //MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]));
+            MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]));
 
         } // END of Recv
 
@@ -360,10 +360,10 @@ void Patch2D::finalizeExchange( Field* field, int iDim )
 
     for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
         if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-            MPI_Wait( &(f2D->patch_srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
+            MPI_Wait( &(f2D->specMPI.patch_srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
         }
         if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-            MPI_Wait( &(f2D->patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
+            MPI_Wait( &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
         }
     }
 

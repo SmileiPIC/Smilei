@@ -36,7 +36,6 @@
 using namespace std;
 
 
-
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Species
 // input: simulation parameters & Species index
@@ -120,6 +119,9 @@ void Species::initCluster(Params& params)
         b_dim[2] = f_dim2;
     }
     
+    //Initialize specMPI
+    //specMPI.init();
+       
     //ener_tot = 0.;
     nrj_bc_lost = 0.;
     nrj_mw_lost = 0.;
