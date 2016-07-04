@@ -101,7 +101,7 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
         name.str("");
         name << "Laser[" << ilaser <<"].chirp_profile";
         pchirp = new Profile(chirp_profile, 1, name.str());
-        info << "\t\t\tchirp_profile       : " << pchirp->getInfo();
+        info << "\t\t\tchirp_profile      : " << pchirp->getInfo();
         
         // time envelope
         name.str("");
@@ -202,12 +202,12 @@ LaserProfileSeparable::LaserProfileSeparable(
 }
 // Cloning constructor
 LaserProfileSeparable::LaserProfileSeparable(LaserProfileSeparable * lp) :
-    primal       ( lp->primal       ),
-    omega        ( lp->omega        ),
-    timeProfile  ( lp->timeProfile  ),
-    chirpProfile ( lp->chirpProfile ),
-    spaceProfile ( lp->spaceProfile ),
-    phaseProfile ( lp->phaseProfile )
+    primal       ( lp->primal ),
+    omega        ( lp->omega  ),
+    timeProfile  ( new Profile(lp->timeProfile ) ),
+    chirpProfile ( new Profile(lp->chirpProfile) ),
+    spaceProfile ( new Profile(lp->spaceProfile) ),
+    phaseProfile ( new Profile(lp->phaseProfile) )
 {
     space_envelope = NULL;
     phase = NULL;
@@ -215,12 +215,14 @@ LaserProfileSeparable::LaserProfileSeparable(LaserProfileSeparable * lp) :
 //Destructor
 LaserProfileSeparable::~LaserProfileSeparable()
 {
-    delete timeProfile;
-    delete chirpProfile;
-    delete spaceProfile;
-    delete phaseProfile;
-    delete space_envelope;
-    delete phase;
+    if(primal) {
+        if(timeProfile   ) delete timeProfile;
+        if(chirpProfile  ) delete chirpProfile;
+    }
+    if(spaceProfile  ) delete spaceProfile;
+    if(phaseProfile  ) delete phaseProfile;
+    if(space_envelope) delete space_envelope;
+    if(phase         ) delete phase;
 }
 
 
@@ -283,13 +285,13 @@ double LaserProfileSeparable::getAmplitude(std::vector<double> pos, double t, in
     double omega_ = omega * chirpProfile->valueAt(t);
     double t0 = (*phase)(j) / omega_;
     return timeProfile->valueAt(t-t0) * (*space_envelope)(j)
-           * sin( omega_*t - (*phase)(j) );
+           * sin( omega_*(t - t0) );
 }
 
 //Destructor
 LaserProfileNonSeparable::~LaserProfileNonSeparable()
 {
-    delete spaceAndTimeProfile;
+    if(spaceAndTimeProfile) delete spaceAndTimeProfile;
 }
 
 
