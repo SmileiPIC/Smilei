@@ -46,16 +46,16 @@ dynamics_type("norm"),
 time_frozen(0), 
 radiating(false), 
 ionization_model("none"),
+velocityProfile(3,NULL),
+temperatureProfile(3,NULL),
 particles(&particles_sorted[0]),
+electron_species(NULL),
 clrw(params.clrw),  
 oversize(params.oversize), 
 cell_length(params.cell_length), 
-velocityProfile(3,NULL),
-temperatureProfile(3,NULL),
-electron_species(NULL),
-nDim_particle(params.nDim_particle),
 min_loc_vec(patch->getDomainLocalMin()), 
 partBoundCond(NULL),
+nDim_particle(params.nDim_particle),
 min_loc(patch->getDomainLocalMin(0)) 
 {
     DEBUG(species_type);
@@ -238,9 +238,9 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
         
         int coeff_ = coeff;
         coeff = 1./coeff;
-        for (int  p=iPart; p<iPart+nPart; p++) {
-            int i = p-iPart;
-            for(int idim=0; idim<nDim_particle; idim++) {
+        for (unsigned int  p=iPart; p<iPart+nPart; p++) {
+            int i = (int)(p-iPart);
+            for(unsigned int idim=0; idim<nDim_particle; idim++) {
                 (*particles).position(idim,p) = indexes[idim] + cell_length[idim] * coeff * (0.5 + i%coeff_);
                 i /= coeff_; // integer division
             }
@@ -248,8 +248,8 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
         
     } else if (initPosition_type == "random") {
         
-        for (unsigned  p= iPart; p<iPart+nPart; p++) {
-            for (unsigned  i=0; i<nDim_particle ; i++) {
+        for (unsigned int p= iPart; p<iPart+nPart; p++) {
+            for (unsigned int i=0; i<nDim_particle ; i++) {
                 (*particles).position(i,p)=indexes[i]+(((double)rand() / RAND_MAX))*cell_length[i];
             }
         }
@@ -427,7 +427,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
             //Ionization
             if (Ionize){                                
-                for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
+                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
                     // Do the ionization (!for testParticles)
                     if ( (*particles).charge(iPart) < (int) atomic_number) {
                         //!\todo Check if it is necessary to put to 0 or if LocalFields ensures it
@@ -449,7 +449,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
 
             // Apply wall and boundary conditions
-            for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
+            for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
                 for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
                     if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, ener_iPart)) {
                         nrj_lost_per_thd[tid] += mass * ener_iPart;
@@ -473,7 +473,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
         }// ibin
 
-        for (int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
+        for (unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
             nrj_bc_lost += nrj_lost_per_thd[tid];
 
         // Needs to be reviewed 
@@ -511,7 +511,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                     b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1);    
                 else if (nDim_field==1)
                     b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw);    
-                for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
+                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
                     (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
                 } //End loop on particles
             }//End loop on bins
@@ -661,7 +661,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     // Create particles in a space starting at cell_position
     vector<double> cell_position(3,0);
     vector<double> cell_index(3,0);
-    for (int i=0 ; i<nDim_field ; i++) {
+    for (unsigned int i=0 ; i<nDim_field ; i++) {
         if (params.cell_length[i]!=0) { // REALLY NECESSARY ????
             cell_position[i] = patch->getDomainLocalMin(i);
             cell_index   [i] = (double) patch->getCellStartingGlobalIndex(i);

@@ -393,14 +393,14 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
 	double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw*dim1);
 	double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1));
 	double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw*dim1);
-        for (unsigned int ipart=istart ; ipart<iend; ipart++ )
+        for (int ipart=istart ; ipart<iend; ipart++ )
     	    (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*gf)[ipart], ibin*clrw, b_dim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
     } else {
 	double* b_Jx =  &(*EMfields->Jx_s[ispec] )(ibin*clrw*dim1);
 	double* b_Jy =  &(*EMfields->Jy_s[ispec] )(ibin*clrw*(dim1+1));
 	double* b_Jz =  &(*EMfields->Jz_s[ispec] )(ibin*clrw*dim1);
 	double* b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*dim1);
-        for (unsigned int ipart=istart ; ipart<iend; ipart++ )
+        for (int ipart=istart ; ipart<iend; ipart++ )
 	    (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*gf)[ipart], ibin*clrw, b_dim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
     }
 

@@ -172,20 +172,20 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 void VectorPatch::initExternals(Params& params)
 {
     // Init all lasers
-    for( int ipatch=0; ipatch<size(); ipatch++ ) {
+    for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
         // check if patch is on the border
         int iBC;
         if     ( (*this)(ipatch)->isWestern() ) iBC = 0;
         else if( (*this)(ipatch)->isEastern() ) iBC = 1;
         else continue;
         // If patch is on border, then fill the fields arrays
-        int nlaser = (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser.size();
-        for (int ilaser = 0; ilaser < nlaser; ilaser++)
+        unsigned int nlaser = (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser.size();
+        for (unsigned int ilaser = 0; ilaser < nlaser; ilaser++)
              (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser[ilaser]->initFields(params, (*this)(ipatch));
     }
     
     // Init all antennas
-    for( int ipatch=0; ipatch<size(); ipatch++ ) {
+    for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
         (*this)(ipatch)->EMfields->initAntennas((*this)(ipatch));
     }
 }
@@ -326,7 +326,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     std::vector<Field*> Ex_;
     std::vector<Field*> Ap_;
     
-    for (int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         Ex_.push_back( (*this)(ipatch)->EMfields->Ex_ );
         Ap_.push_back( (*this)(ipatch)->EMfields->Ap_ );
     }
@@ -518,7 +518,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simWindow)
 {
-    unsigned int n_moved(0), nPatches_now;
+    unsigned int n_moved(0);
     recv_patches_.resize(0);
     
     // Set Index of the 1st patch of the vector yet on current MPI rank
@@ -526,7 +526,7 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
     refHindex_ = (*this)(0)->Hindex();
 
     //Current number of patch
-    nPatches_now = this->size() ;
+    int nPatches_now = this->size() ;
     
     //When going to openMP, these two vectors must be stored by patch and not by vectorPatch.
     recv_patch_id_.clear();
@@ -541,7 +541,7 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
         recv_patch_id_.push_back( istart+ipatch );
     
     //Loop on current patches...
-    for (unsigned int ipatch=0 ; ipatch < nPatches_now ; ipatch++)
+    for (int ipatch=0 ; ipatch < nPatches_now ; ipatch++)
       //if        current hindex        <  future refHindex  OR current hindex > future last hindex...
         if ( ( refHindex_+ipatch < recv_patch_id_[0] ) || ( refHindex_+ipatch > recv_patch_id_.back() ) )
       //    Put this patch in the send list. 
@@ -588,12 +588,11 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     (*this).closeAllDiags(smpi);
     
     int nSpecies( (*this)(0)->vecSpecies.size() );
-    int newMPIrank, oldMPIrank;
     //int newMPIrankbis, oldMPIrankbis, tmp;
-    newMPIrank = smpi->getRank() -1;
-    oldMPIrank = smpi->getRank() -1;
-    int istart( 0 );
-    int nmax_laser(4);
+    int newMPIrank = smpi->getRank() -1;
+    int oldMPIrank = smpi->getRank() -1;
+    int istart = 0;
+    int nmax_laser = 4;
     int nmessage = 2*nSpecies+(2+params.nDim_particle)*(*this)(0)->probes.size()+
         9+(*this)(0)->EMfields->antennas.size()+4*nmax_laser;
     
@@ -659,7 +658,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     }
     recv_patches_.clear();
     
-    for (int ipatch=0 ; ipatch<patches_.size() ; ipatch++ ) { 
+    for (unsigned int ipatch=0 ; ipatch<patches_.size() ; ipatch++ ) { 
         (*this)(ipatch)->updateMPIenv(smpi);
     }
     
@@ -713,7 +712,7 @@ void VectorPatch::update_field_list()
     listBy_.resize( size() ) ;
     listBz_.resize( size() ) ;
     
-    for (int ipatch=0 ; ipatch < size() ; ipatch++) {
+    for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
         listJx_[ipatch] = patches_[ipatch]->EMfields->Jx_ ;
         listJy_[ipatch] = patches_[ipatch]->EMfields->Jy_ ;
         listJz_[ipatch] = patches_[ipatch]->EMfields->Jz_ ;
@@ -737,7 +736,7 @@ void VectorPatch::update_field_list(int ispec)
     }
     
     #pragma omp for schedule(static)
-    for (int ipatch=0 ; ipatch < size() ; ipatch++) {
+    for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
         listJxs_[ipatch] = patches_[ipatch]->EMfields->Jx_s[ispec] ;
         listJys_[ipatch] = patches_[ipatch]->EMfields->Jy_s[ispec] ;
         listJzs_[ipatch] = patches_[ipatch]->EMfields->Jz_s[ispec] ;

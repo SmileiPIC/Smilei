@@ -119,7 +119,7 @@ void SmileiMPI::init( Params& params )
 
     // Set periodicity of the simulated problem
     periods_  = new int[params.nDim_field];
-    for (int i=0 ; i<params.nDim_field ; i++) periods_[i] = 0;
+    for (unsigned int i=0 ; i<params.nDim_field ; i++) periods_[i] = 0;
     // Geometry periodic in x
     if (params.bc_em_type_x[0]=="periodic") {
         periods_[0] = 1;
@@ -292,7 +292,7 @@ void SmileiMPI::init_patch_count( Params& params)
         Ncur++; // Try to assign current patch to rank r.
 
         //if (isMaster()) cout <<"h= " << hindex << " Tcur = " << Tcur << " Lcur = " << Lcur <<" Ncur = " << Ncur <<" r= " << r << endl;
-        if (r < smilei_sz-1){
+        if (r < (unsigned int)smilei_sz-1){
 
             if ( Lcur > Tcur || smilei_sz-r >= Npatches-hindex){ //Load target is exceeded or we have as many patches as procs left.
                 above_target = Lcur - Tcur;  //Including current patch, we exceed target by that much.
@@ -316,7 +316,7 @@ void SmileiMPI::init_patch_count( Params& params)
         }
     }// End loop on patches.
     if (isMaster()) {
-        for (unsigned int i=0; i<smilei_sz; i++) fout << "patch count = " << patch_count[i]<<endl;
+        for (int i=0; i<smilei_sz; i++) fout << "patch count = " << patch_count[i]<<endl;
         fout.close();
     }
     
@@ -329,7 +329,7 @@ void SmileiMPI::init_patch_count( Params& params)
 void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, double time_dual )
 {
 
-    unsigned int Npatches, r,Ncur,Pcoordinates[3],ncells_perpatch, Lmin, Lmin1, Lmin2, Lmax;
+    unsigned int Npatches, r,Ncur,ncells_perpatch, Lmin, Lmin1, Lmin2, Lmax;
     double Tload,Tcur, Lcur, above_target, below_target, cells_load;
     unsigned int npatchmin =1;
     //Load of a cell = coef_cell*load of a particle.
@@ -360,7 +360,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     Lcur = 0.; //Load assigned to current rank r.
 
     //Compute Local Loads of each Patch (Lp)
-    for(unsigned int ipatch=0; ipatch < patch_count[smilei_rk]; ipatch++){
+    for(unsigned int ipatch=0; ipatch < (unsigned int)patch_count[smilei_rk]; ipatch++){
         for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++) {
             Lp[ipatch] += vecpatches(ipatch)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(params.coef_frozen-1)*(time_dual > vecpatches(ipatch)->vecSpecies[ispecies]->time_frozen)) ;
         }
@@ -369,7 +369,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     //Allgatherv loads of all patches in Lp_global
   
     recv_counts[0] = 0;
-    for(unsigned int i=1; i < smilei_sz ; i++) recv_counts[i] = recv_counts[i-1]+patch_count[i-1];
+    for(int i=1; i < smilei_sz ; i++) recv_counts[i] = recv_counts[i-1]+patch_count[i-1];
 
     MPI_Allgatherv(&Lp[0],patch_count[smilei_rk],MPI_DOUBLE,&Lp_global[0], &patch_count[0], recv_counts, MPI_DOUBLE,MPI_COMM_WORLD);
 
@@ -384,7 +384,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         Lcur += Lp_global[ipatch]; 
         Ncur++; // Try to assign current patch to rank r.
 
-        if (r < smilei_sz-1){
+        if (r < (unsigned int)smilei_sz-1){
 
             if ( Lcur > Tcur || smilei_sz-r >= Npatches-ipatch){ //Load target is exceeded or we have as many patches as procs left.
                 above_target = Lcur - Tcur;  //Including current patch, we exceed target by that much.
@@ -416,7 +416,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     Tcur = 0;  
 
     //Loop
-    for(unsigned int i=0; i< smilei_sz-1; i++){
+    for(unsigned int i=0; i< (unsigned int)smilei_sz-1; i++){
 
         Lmin2 += patch_count[i];
         Tcur += target_patch_count[i];
@@ -458,7 +458,7 @@ int SmileiMPI::hrank(int h)
 {
     if (h == MPI_PROC_NULL) return MPI_PROC_NULL;
 
-    unsigned int patch_counter,rank;
+    int patch_counter,rank;
     rank=0;
     patch_counter = patch_count[0];
     while (h >= patch_counter) {
@@ -477,11 +477,11 @@ MPI_Datatype SmileiMPI::createMPIparticles( Particles* particles )
     int nbrOfProp = particles->double_prop.size() + particles->short_prop.size() + particles->uint_prop.size();
 
     MPI_Aint address[nbrOfProp];
-    for ( int iprop=0 ; iprop<particles->double_prop.size() ; iprop++ )
+    for ( unsigned int iprop=0 ; iprop<particles->double_prop.size() ; iprop++ )
         MPI_Get_address( &( (*(particles->double_prop[iprop]))[0] ), &(address[iprop]) );
-    for ( int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ )
+    for ( unsigned int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ )
         MPI_Get_address( &( (*(particles->short_prop[iprop]))[0] ), &(address[particles->double_prop.size()+iprop]) );
-    for ( int iprop=0 ; iprop<particles->uint_prop.size() ; iprop++ )
+    for ( unsigned int iprop=0 ; iprop<particles->uint_prop.size() ; iprop++ )
         MPI_Get_address( &( (*(particles->uint_prop[iprop]))[0] ), &(address[particles->double_prop.size()+particles->short_prop.size()+iprop]) );
 
     int nbr_parts[nbrOfProp];
@@ -497,15 +497,15 @@ MPI_Datatype SmileiMPI::createMPIparticles( Particles* particles )
 
     MPI_Datatype partDataType[nbrOfProp];
     // define MPI type of each property, default is DOUBLE
-    for (int i=0 ; i<particles->double_prop.size() ; i++)
+    for ( unsigned int i=0 ; i<particles->double_prop.size() ; i++)
         partDataType[i] = MPI_DOUBLE;
-    for ( int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ )
+    for ( unsigned int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ )
         partDataType[ particles->double_prop.size()+iprop] = MPI_SHORT;
-    for ( int iprop=0 ; iprop<particles->uint_prop.size() ; iprop++ )
+    for ( unsigned int iprop=0 ; iprop<particles->uint_prop.size() ; iprop++ )
         partDataType[ particles->double_prop.size()+particles->short_prop.size()+iprop] = MPI_UNSIGNED;
 
     MPI_Datatype typeParticlesMPI;
-    MPI_Type_struct( nbrOfProp, &(nbr_parts[0]), &(disp[0]), &(partDataType[0]), &typeParticlesMPI);
+    MPI_Type_create_struct( nbrOfProp, &(nbr_parts[0]), &(disp[0]), &(partDataType[0]), &typeParticlesMPI);
     MPI_Type_commit( &typeParticlesMPI );
     
     return typeParticlesMPI;
@@ -522,7 +522,7 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
 {
     //MPI_Request request;
 
-    for (int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++){
+    for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++){
         isend( &(patch->vecSpecies[ispec]->bmax), to, tag+2*ispec+1 );
         if ( patch->vecSpecies[ispec]->getNbrOfParticles() > 0 ){
             patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles );
@@ -532,7 +532,7 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
     }
 
     // Send probes' particles
-    for ( int iprobe = 0 ; iprobe < patch->probes.size() ; iprobe++ ) {
+    for ( int iprobe = 0 ; iprobe < (int)patch->probes.size() ; iprobe++ ) {
         isend( patch->probes[iprobe], to, tag+2*patch->vecSpecies.size()+iprobe, params.nDim_particle );
     }
 
@@ -548,7 +548,7 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
 {
     int nbrOfPartsRecv;
 
-    for (int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++){
+    for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++){
         //Receive bmax
         recv( &patch->vecSpecies[ispec]->bmax, from, tag+2*ispec+1 );
         //Reconstruct bmin from bmax
@@ -567,7 +567,7 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     }
    
     // Receive probes' particles
-    for ( int iprobe = 0 ; iprobe < patch->probes.size() ; iprobe++ ) {
+    for ( int iprobe = 0 ; iprobe < (int)patch->probes.size() ; iprobe++ ) {
         recv( patch->probes[iprobe], from, tag+2*patch->vecSpecies.size()+iprobe, params.nDim_particle );
     }
 
@@ -624,15 +624,15 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag)
     isend( EM->By_m, to, tag+7);
     isend( EM->Bz_m, to, tag+8);
     
-    for (int antennaId=0 ; antennaId<EM->antennas.size() ; antennaId++)
+    for (int antennaId=0 ; antennaId<(int)EM->antennas.size() ; antennaId++)
         isend( EM->antennas[antennaId].field, to, tag+9+antennaId );
     
     tag += 10 + EM->antennas.size();
     
-    for (int bcId=0 ; bcId<EM->emBoundCond.size() ; bcId++ ) {
+    for (unsigned int bcId=0 ; bcId<EM->emBoundCond.size() ; bcId++ ) {
         if(! EM->emBoundCond[bcId]) continue;
         
-        for (int laserId=0 ; laserId < EM->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
+        for (unsigned int laserId=0 ; laserId < EM->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
             
             Laser * laser = EM->emBoundCond[bcId]->vecLaser[laserId];
             if( !(laser->spacetime[0]) && !(laser->spacetime[1]) ){
@@ -663,15 +663,15 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
     recv( EM->By_m, from, tag+7 );
     recv( EM->Bz_m, from, tag+8 );
     
-    for (int antennaId=0 ; antennaId<EM->antennas.size() ; antennaId++)
+    for (int antennaId=0 ; antennaId<(int)EM->antennas.size() ; antennaId++)
         recv( EM->antennas[antennaId].field, from, tag+9+antennaId );
     
     tag += 10 + EM->antennas.size();
     
-    for (int bcId=0 ; bcId<EM->emBoundCond.size() ; bcId++ ) {
+    for (unsigned int bcId=0 ; bcId<EM->emBoundCond.size() ; bcId++ ) {
         if(! EM->emBoundCond[bcId]) continue;
         
-        for (int laserId=0 ; laserId<EM->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
+        for (unsigned int laserId=0 ; laserId<EM->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
             Laser * laser = EM->emBoundCond[bcId]->vecLaser[laserId];
             if( !(laser->spacetime[0]) && !(laser->spacetime[1]) ){
                 LaserProfileSeparable* profile;
@@ -774,8 +774,6 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
     if ( !(scalars->printNow(timestep))
       && !(scalars->timeSelection->theTimeIsNow(timestep)) ) return;
     
-    int nscalars(0);
-
     vector<string>::iterator iterKey = scalars->out_key.begin();
     for(vector<double>::iterator iter = scalars->out_value.begin(); iter !=scalars->out_value.end(); iter++) {
         if ( ( (*iterKey).find("Min") == std::string::npos ) && ( (*iterKey).find("Max") == std::string::npos ) ) {

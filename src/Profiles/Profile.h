@@ -13,7 +13,7 @@ public:
     //! Default constructor
     Function(){};
     //! Default destructor
-    ~Function(){};
+    virtual ~Function(){};
     // spatial
     virtual double valueAt(std::vector<double>         ) {
         return 0.;
@@ -433,7 +433,7 @@ public:
     double valueAt(std::vector<double>);
 private:
     double x0;
-    std::vector<int> orders;
+    std::vector<unsigned int> orders;
     std::vector<std::vector<double> > coeffs;
 };
 
