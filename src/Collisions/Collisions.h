@@ -1,26 +1,3 @@
-/*
-
-Collisions class - Frederic Perez - 03/2015
-
-This is based on the work described here
-http://dx.doi.org/10.1063/1.4742167
-
-Binary collisions, between macro-particles, are treated according to a scheme
-first described by Nanbu (http://dx.doi.org/10.1103/PhysRevE.55.4642).
-
-To include collisions in the simulations, add a block in the input file, 
-similar to the following:
-
-Collisions(
-	species1 = ["ion1"],
-	species2 = ["electron1"],
-	coulomb_log = 2.0
-)
-
-Several collision types can be defined. For each type, add a group "Collisions()".
-
-*/
-
 #ifndef COLLISIONS_H
 #define COLLISIONS_H
 

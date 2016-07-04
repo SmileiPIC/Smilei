@@ -11,11 +11,11 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
     fileId_ = 0;
     
     int n_diag_particles = diagId;
-
+    
     // n_diag_particles ...
-
+    
     std::vector<Species*>& vecSpecies = patch->vecSpecies;
-
+    
     ostringstream name("");
     name << "Diagnotic Particles #" << n_diag_particles;
     string errorPrefix = name.str();
@@ -124,13 +124,13 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
             if( axes[i].edge_inclusive ) mystream << " [EDGE INCLUSIVE]";
             MESSAGE(2,mystream.str());
         }
-
+        
         // init HDF files (by master, only if it doesn't yet exist)
         mystream.str(""); // clear
         mystream << "ParticleDiagnostic" << n_diag_particles << ".h5";
         filename = mystream.str();
     }
-
+    
     type_ = "Particles";
 
 } // END DiagnosticParticles::DiagnosticParticles
@@ -215,7 +215,7 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
 {
 
     std::vector<Species*>& vecSpecies = patch->vecSpecies;
-
+    
     Species *s;
     Particles *p;
     vector<int> index_array;

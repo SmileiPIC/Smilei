@@ -5,13 +5,13 @@
 Ionization::Ionization(Params& params, Species * species) {
 
     referenceAngularFrequency_SI = params.referenceAngularFrequency_SI;
-
+    
     dt                   = params.timestep;
     nDim_field           = params.nDim_field;
     nDim_particle        = params.nDim_particle;
     atomic_number_       = species->atomic_number;
     ionized_species_mass = species->mass;
-
+    
     // Normalization constant from Smilei normalization to/from atomic units
     eV_to_au = 1.0 / 27.2116;
     EC_to_au = 3.314742578e-15 * referenceAngularFrequency_SI; // hbar omega / (me c^2 alpha^3)
@@ -24,7 +24,7 @@ Ionization::Ionization(Params& params, Species * species) {
         Potential               [Zstar] = IonizationTables::ionization_energy      (atomic_number_, Zstar) * eV_to_au;
         Azimuthal_quantum_number[Zstar] = IonizationTables::azimuthal_atomic_number(atomic_number_, Zstar);
     }
-
+    
     for (unsigned int i=0; i<atomic_number_; i++) {
         DEBUG("ioniz: i " << i << " potential: " << Potential[i] << " Az.q.num: " << Azimuthal_quantum_number[i]);
     }

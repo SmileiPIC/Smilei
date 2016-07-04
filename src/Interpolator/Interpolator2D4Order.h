@@ -15,21 +15,21 @@ class Interpolator2D4Order : public Interpolator2D
 public:
     Interpolator2D4Order(Params&, Patch*);
     ~Interpolator2D4Order() override final {};
-
+    
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc) override final ;
     void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread) override final ;
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc) override final ;
-
+    
     inline double compute( double* coeffx, double* coeffy, Field2D* f, int idx, int idy) {
-	double interp_res(0.);
-	for (int iloc=-2 ; iloc<3 ; iloc++) {
-	    for (int jloc=-2 ; jloc<3 ; jloc++) {
-		interp_res += *(coeffx+iloc) * *(coeffy+jloc) * (*f)(idx+iloc,idy+jloc);
-	    }
-	}
-	return interp_res;
+        double interp_res(0.);
+        for (int iloc=-2 ; iloc<3 ; iloc++) {
+            for (int jloc=-2 ; jloc<3 ; jloc++) {
+                interp_res += *(coeffx+iloc) * *(coeffy+jloc) * (*f)(idx+iloc,idy+jloc);
+            }
+        }
+        return interp_res;
     };  
-
+    
 private:
     double dble_1_ov_384 ;
     double dble_1_ov_48 ;

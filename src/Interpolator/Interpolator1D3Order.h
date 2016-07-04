@@ -8,16 +8,16 @@ class Interpolator1D3Order : public Interpolator1D {
 public:
     Interpolator1D3Order(Params&, Patch*);
     ~Interpolator1D3Order() override final{};
-
+    
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc) override final;
     void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)override final;
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc) override final;
-
+    
     inline double compute( double* coeff, Field1D* f, int idx) {
-	double interp_res =  coeff[0] * (*f)(idx-1)   + coeff[1] * (*f)(idx)   + coeff[2] * (*f)(idx+1) + coeff[3] * (*f)(idx+2);
-	return interp_res;
+        double interp_res =  coeff[0] * (*f)(idx-1)   + coeff[1] * (*f)(idx)   + coeff[2] * (*f)(idx+1) + coeff[3] * (*f)(idx+2);
+        return interp_res;
     };
-
+    
 protected:
     double dble_1ov6;
     double dble_2ov3;

@@ -84,22 +84,21 @@ void Projector2D4Order::operator() (ElectroMagn* EMfields, Particles &particles,
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
     std::vector<double> *gf = &(smpi->dynamics_gf[ithread]);
-
+    
     int dim1 = EMfields->dimPrim[1];
-
+    
     if (diag_flag == 0){ 
-	double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw*dim1);
-	double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1));
-	double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw*dim1);
+        double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw*dim1);
+        double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1));
+        double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw*dim1);
         for (int ipart=istart ; ipart<iend; ipart++ )
-    	    (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*gf)[ipart], ibin*clrw, b_dim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
+            (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*gf)[ipart], ibin*clrw, b_dim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
     } else {
-	double* b_Jx =  &(*EMfields->Jx_s[ispec] )(ibin*clrw*dim1);
-	double* b_Jy =  &(*EMfields->Jy_s[ispec] )(ibin*clrw*(dim1+1));
-	double* b_Jz =  &(*EMfields->Jz_s[ispec] )(ibin*clrw*dim1);
-	double* b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*dim1);
+        double* b_Jx =  &(*EMfields->Jx_s[ispec] )(ibin*clrw*dim1);
+        double* b_Jy =  &(*EMfields->Jy_s[ispec] )(ibin*clrw*(dim1+1));
+        double* b_Jz =  &(*EMfields->Jz_s[ispec] )(ibin*clrw*dim1);
+        double* b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*dim1);
         for (int ipart=istart ; ipart<iend; ipart++ )
-	    (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*gf)[ipart], ibin*clrw, b_dim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
+            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*gf)[ipart], ibin*clrw, b_dim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
     }
-
 }

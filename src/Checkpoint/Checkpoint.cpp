@@ -130,7 +130,7 @@ bool Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* s
         if (params.dump_minutes != 0.0 && time/60.0 > params.dump_minutes*(dump_minutes_times+1) ) {
             cout << "Dump minutes" << endl;
             dump_minutes_times++;
-        }	
+        }
         dump_times++;
         return true;
     }
@@ -202,7 +202,7 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
     
     H5Fflush( patch_gid, H5F_SCOPE_GLOBAL );
     H5::attr(patch_gid, "species", vecSpecies.size());    
-
+    
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
         ostringstream name("");
         name << setfill('0') << setw(2) << ispec;
@@ -254,10 +254,10 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
 void Checkpoint::dumpFieldsPerProc(hid_t fid, Field* field)
 {
     hsize_t dims[1]={field->globalDims_};
-    hid_t sid = H5Screate_simple (1, dims, NULL);	
+    hid_t sid = H5Screate_simple (1, dims, NULL);
     hid_t did = H5Dcreate (fid, field->name.c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
     H5Dwrite(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &field->data_[0]);
-    H5Dclose (did);	
+    H5Dclose (did);
     H5Sclose(sid);
 }
 
@@ -290,10 +290,10 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, unsigned int &itime,  Smil
         ifstream f(dump_name.c_str());
         
         if (f.good()) {
-            hid_t fid = H5Fopen( dump_name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);			
+            hid_t fid = H5Fopen( dump_name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
             hid_t aid = H5Aopen(fid, "dump_step", H5T_NATIVE_UINT);
             unsigned int itimeTmp=0;
-            H5Aread(aid, H5T_NATIVE_UINT, &itimeTmp);	
+            H5Aread(aid, H5T_NATIVE_UINT, &itimeTmp);
             H5Aclose(aid);
             H5Fclose(fid);
             if (itimeTmp>itime) {
@@ -329,7 +329,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, unsigned int &itime,  Smil
     
     
     hid_t aid = H5Aopen(fid, "dump_step", H5T_NATIVE_UINT);
-    H5Aread(aid, H5T_NATIVE_UINT, &itime);	
+    H5Aread(aid, H5T_NATIVE_UINT, &itime);
     H5Aclose(aid);
     
     
@@ -377,7 +377,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
     aid = H5Aopen(patch_gid, "species", H5T_NATIVE_UINT);
     unsigned int vecSpeciesSize=0;
     H5Aread(aid, H5T_NATIVE_UINT, &vecSpeciesSize);
-    H5Aclose(aid);	
+    H5Aclose(aid);
     if (vecSpeciesSize != vecSpecies.size()) {
         ERROR("Number of species differs between dump (" << vecSpeciesSize << ") and namelist ("<<vecSpecies.size()<<")");
     }
@@ -393,13 +393,13 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
         unsigned int partCapacity=0;
         H5Aread(aid, H5T_NATIVE_UINT, &partCapacity);
         H5Aclose(aid);
-        vecSpecies[ispec]->particles->reserve(partCapacity,nDim_particle);		
+        vecSpecies[ispec]->particles->reserve(partCapacity,nDim_particle);
         
         aid = H5Aopen(gid, "partSize", H5T_NATIVE_UINT);
         unsigned int partSize=0;
         H5Aread(aid, H5T_NATIVE_UINT, &partSize);
-        H5Aclose(aid);	
-        vecSpecies[ispec]->particles->initialize(partSize,nDim_particle);		
+        H5Aclose(aid);
+        vecSpecies[ispec]->particles->initialize(partSize,nDim_particle);
         
         
         if (partSize>0) {
@@ -475,12 +475,12 @@ void Checkpoint::restartMovingWindow(hid_t fid, SimWindow* simWin)
 {  
     hid_t aid = H5Aopen(fid, "x_moved", H5T_NATIVE_DOUBLE);
     double x_moved=0.;
-    H5Aread(aid, H5T_NATIVE_DOUBLE, &x_moved);	
+    H5Aread(aid, H5T_NATIVE_DOUBLE, &x_moved);
     H5Aclose(aid);
     
     aid = H5Aopen(fid, "n_moved", H5T_NATIVE_UINT);
     unsigned int n_moved=0;
-    H5Aread(aid, H5T_NATIVE_UINT, &n_moved);	
+    H5Aread(aid, H5T_NATIVE_UINT, &n_moved);
     H5Aclose(aid);
     
     simWin->setXmoved(x_moved);
@@ -496,7 +496,7 @@ bool Checkpoint::fileStopCreated() {
     ifstream f("stop");
     if (f.good()) foundStopFile=1;
     f.close();
-    //int foundStopFileAll = 0;	
+    //int foundStopFileAll = 0;
     //MPI_Allreduce(&foundStopFile,&foundStopFileAll,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
     
     //if (foundStopFileAll>0) {
@@ -510,10 +510,10 @@ bool Checkpoint::fileStopCreated() {
 
 
 //double Checkpoint::time_seconds() {
-//	double time_temp = MPI_Wtime();	
-//	double time_sec=0;
-//	MPI_Allreduce(&time_temp,&time_sec,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-//	return (time_sec-time_reference);
+//    double time_temp = MPI_Wtime();
+//    double time_sec=0;
+//    MPI_Allreduce(&time_temp,&time_sec,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+//    return (time_sec-time_reference);
 //}
 
 

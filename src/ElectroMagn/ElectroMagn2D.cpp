@@ -67,7 +67,6 @@ isNorthern(patch->isNorthern())
     ny_d = n_space[1]+2+2*oversize[1];
     
     // Allocation of the EM fields
-
     Ex_  = new Field2D(dimPrim, 0, false, "Ex");
     Ey_  = new Field2D(dimPrim, 1, false, "Ey");
     Ez_  = new Field2D(dimPrim, 2, false, "Ez");
@@ -99,7 +98,7 @@ isNorthern(patch->isNorthern())
         Jz_s[ispec]  = new Field2D(dimPrim, 2, false, ("Jz_"+vecSpecies[ispec]->species_type).c_str());
         rho_s[ispec] = new Field2D(dimPrim, ("Rho_"+vecSpecies[ispec]->species_type).c_str());
     }
-
+    
     // ----------------------------------------------------------------
     // Definition of the min and max index according to chosen oversize
     // ----------------------------------------------------------------
@@ -136,11 +135,11 @@ isNorthern(patch->isNorthern())
         for (unsigned int i=0 ; i<nDim_field ; i++) {
             for (int isDual=0 ; isDual<2 ; isDual++)
                 bufsize[i][isDual] = n_space[i] + 1;
-        
+            
             for (int isDual=0 ; isDual<2 ; isDual++) {
                 bufsize[i][isDual] += isDual; 
                 if ( params.number_of_patches[i]!=1 ) {                
-
+                    
                     if ( ( !isDual ) && (patch->Pcoordinates[i]!=0) )
                         bufsize[i][isDual]--;
                     else if  (isDual) {
@@ -183,13 +182,13 @@ ElectroMagn2D::~ElectroMagn2D()
 void ElectroMagn2D::initPoisson(Patch *patch)
 {
     Field2D* rho2D = static_cast<Field2D*>(rho_);
-
+    
     // Min and max indices for calculation of the scalar product (for primal & dual grid)
     //     scalar products are computed accounting only on real nodes
     //     ghost cells are used only for the (non-periodic) boundaries
     // dual indexes suppressed during "patchization"
     // ----------------------------------------------------------------------------------
-
+    
     index_min_p_.resize(2,0);
     index_max_p_.resize(2,0);
     
@@ -203,12 +202,12 @@ void ElectroMagn2D::initPoisson(Patch *patch)
     if (patch->isEastern()) {
         index_max_p_[0] = nx_p-1;
     }
-
+    
     phi_ = new Field2D(dimPrim);    // scalar potential
     r_   = new Field2D(dimPrim);    // residual vector
     p_   = new Field2D(dimPrim);    // direction vector
     Ap_  = new Field2D(dimPrim);    // A*p vector
-
+    
     
     for (unsigned int i=0; i<nx_p; i++) {
         for (unsigned int j=0; j<ny_p; j++) {

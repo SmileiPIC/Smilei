@@ -19,7 +19,7 @@ PusherBoris::~PusherBoris()
 }
 
 /***********************************************************************
-	Lorentz Force -- leap-frog (Boris) scheme
+    Lorentz Force -- leap-frog (Boris) scheme
 ***********************************************************************/
 
 void PusherBoris::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
