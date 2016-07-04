@@ -41,10 +41,7 @@ public:
         for (unsigned int impi = 0 ; impi < (unsigned int)smpi->getRank() ; impi++) {
             firstpatch += smpi->patch_count[impi];
         }
-        
-#ifdef _DEBUGPATCH
-        std::cout << smpi->getRank() << ", nPatch = " << npatches << " - starting at " << firstpatch << std::endl;        
-#endif
+        DEBUG( smpi->getRank() << ", nPatch = " << npatches << " - starting at " << firstpatch );
         
         // Create patches (create patch#0 then clone it)
         vecPatches.resize(npatches);

@@ -480,10 +480,6 @@ void ElectroMagn2D::solveMaxwellAmpere()
             -               dt_ov_dy * ( (*Bx2D)(i,j+1) - (*Bx2D)(i,j) );
         }
     }
-#ifdef _PATCH_DEBUG
-    cout << "\tEx = "  << Ex_->norm() << endl;
-    cout << "\tEy = "  << Ey_->norm() << endl;
-#endif
 
 }//END solveMaxwellAmpere
 
@@ -527,11 +523,6 @@ void ElectroMagn2D::centerMagneticFields()
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Bz2D_m)(nx_p,j) = ( (*Bz2D)(nx_p,j) + (*Bz2D_m)(nx_p,j) )*0.5;
         } // end for j
-/*    cout << "\tBx_m = "  << Bx_m->norm() << endl;
-      cout << "\tBy_m = "  << By_m->norm() << endl;*/
-#ifdef _PATCH_DEBUG
-    cout << "\tBz_m = "  << Bz_m->norm() << endl;
-#endif
 
     
 }//END centerMagneticFields
