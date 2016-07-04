@@ -16,7 +16,10 @@ public:
     virtual void apply_xmax(ElectroMagn* EMfields, double time_dual, Patch* patch);
     virtual void apply_ymin(ElectroMagn* EMfields, double time_dual, Patch* patch);
     virtual void apply_ymax(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void save_fields_BC1D(Field*);
+    virtual void apply_zmin(ElectroMagn* EMfields, double time_dual, Patch* patch);
+    virtual void apply_zmax(ElectroMagn* EMfields, double time_dual, Patch* patch);
+
+   virtual void save_fields_BC1D(Field*);
  private:
     
     double Bz_xvalmin,Bz_xvalmax,By_xvalmin,By_xvalmax;

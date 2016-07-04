@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "Field.h"
+#include "Field2D.h"
 
 //! class Field3D used to defined a 3d vector
 class Field3D : public Field
@@ -65,6 +66,11 @@ public:
         DEBUGEXEC(if (!std::isfinite(data_3D[i])) ERROR("Not finite "<< i));
         return data_3D[i];
     };*/
+
+    void extract_slice_yz(unsigned int ix, Field2D *field);
+    void extract_slice_xz(unsigned int iy, Field2D *field);
+    void extract_slice_xy(unsigned int iz, Field2D *field);
+
 
     //! this will present the data as a 3d matrix
     double ***data_3D;
