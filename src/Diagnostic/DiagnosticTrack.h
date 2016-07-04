@@ -46,7 +46,7 @@ private :
     hid_t mem_space;
      
     //! Number of spatial dimensions
-    int nDim_particle;
+    unsigned int nDim_particle;
     
     //! list of datasets to be added to the file
     std::vector<std::string> datasets;

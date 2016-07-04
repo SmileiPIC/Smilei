@@ -110,7 +110,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
         if (patch->isWestern()) bc_west = &thermalize_particle;
     }
     else if ( species->bc_part_type_west == "none" ) {
-	if (patch->isMaster()) MESSAGE(2,"West boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+        if (patch->isMaster()) MESSAGE(2,"West boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
     }
     else {
         ERROR("West boundary condition undefined" );

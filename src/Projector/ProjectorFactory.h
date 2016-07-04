@@ -21,7 +21,7 @@ public:
         // 1d3v simulation
         // ---------------
         if ( ( params.geometry == "1d3v" ) && ( params.interpolation_order == (unsigned int)2 ) ) {
-	  Proj = new Projector1D2Order(params, patch);
+            Proj = new Projector1D2Order(params, patch);
         }
         else if ( ( params.geometry == "1d3v" ) && ( params.interpolation_order == (unsigned int)4 ) ) {
             Proj = new Projector1D4Order(params, patch);

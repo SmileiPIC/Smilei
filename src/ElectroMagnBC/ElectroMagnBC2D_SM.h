@@ -31,8 +31,8 @@ private:
     
     virtual void save_fields_BC2D_Long(Field*);
     virtual void save_fields_BC2D_Trans(Field*);
-
- 	//! Save external fields for silver muller EM Boundary condition
+    
+     //! Save external fields for silver muller EM Boundary condition
      std::vector<double>  Bz_xvalmin_Long, Bz_xvalmax_Long, By_xvalmin_Long, By_xvalmax_Long, Bx_xvalmin_Long, Bx_xvalmax_Long,
                           Bz_yvalmin_Trans, Bz_yvalmax_Trans, By_yvalmin_Trans, By_yvalmax_Trans, Bx_yvalmin_Trans, Bx_yvalmax_Trans;
     

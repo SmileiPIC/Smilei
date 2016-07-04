@@ -407,11 +407,11 @@ void print_parallelism_params(Params& params, SmileiMPI* smpi)
     TITLE("MPI");
     MESSAGE(1,"Number of MPI process : " << smpi->getSize() );
     MESSAGE(1,"Number of patches : " );
-    for (int iDim=0 ; iDim<params.nDim_field ; iDim++) 
+    for (unsigned int iDim=0 ; iDim<params.nDim_field ; iDim++) 
         MESSAGE(2, "dimension " << iDim << " - number_of_patches : " << params.number_of_patches[iDim] );
 
     MESSAGE(1, "Patch size :");
-    for (int iDim=0 ; iDim<params.nDim_field ; iDim++) 
+    for (unsigned int iDim=0 ; iDim<params.nDim_field ; iDim++) 
         MESSAGE(2, "dimension " << iDim << " - n_space : " << params.n_space[iDim] << " cells.");        
 
     MESSAGE(1, "Dynamic load balancing frequency: every " << params.balancing_every << " iterations." );
@@ -419,11 +419,11 @@ void print_parallelism_params(Params& params, SmileiMPI* smpi)
     // setup OpenMP
     TITLE("OpenMP");
 #ifdef _OPENMP
-    int nthds(0);
-#pragma omp parallel shared(nthds)
-    {
-        nthds = omp_get_num_threads();
-    }
+//    int nthds(0);
+//#pragma omp parallel shared(nthds)
+//    {
+//        nthds = omp_get_num_threads();
+//    }
     if (smpi->isMaster())
         MESSAGE(1,"Number of thread per MPI process : " << omp_get_max_threads() );
 #else

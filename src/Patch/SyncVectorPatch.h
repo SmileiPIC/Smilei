@@ -13,9 +13,6 @@ class SyncVectorPatch {
 public :
 
     static void exchangeParticles(VectorPatch& vecPatches, int ispec, Params &params, SmileiMPI* smpi);
-#ifdef _NOTFORNOW
-    static void exchangeParticles(VectorPatch& vecPatches, int ispec, Params &params);
-#endif
     static void sumRhoJ  ( VectorPatch& vecPatches, unsigned int diag_flag );
     static void sumRhoJs ( VectorPatch& vecPatches, int ispec );
     static void exchangeE( VectorPatch& vecPatches );

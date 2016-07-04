@@ -21,7 +21,7 @@ class LaserProfile {
 friend class SmileiMPI;
 public:
     LaserProfile() {};
-    ~LaserProfile() {};
+    virtual ~LaserProfile() {};
     virtual double getAmplitude(std::vector<double> pos, double t, int j) {return 0.;};
     virtual std::string getInfo() { return "?"; };
     virtual void createFields(Params& params, Patch* patch) {};
@@ -117,6 +117,7 @@ private:
 class LaserProfileNULL : public LaserProfile {
 public:
     LaserProfileNULL() {};
+    ~LaserProfileNULL() {};
     
     inline double getAmplitude(std::vector<double> pos, double t, int j) {
         return 0.;

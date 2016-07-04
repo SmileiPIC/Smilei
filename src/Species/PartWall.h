@@ -47,7 +47,7 @@ public:
     //! PartWalls destructor
     ~PartWalls();
     
-    int size()  { return vecPartWall.size();  };
+    unsigned int size()  { return vecPartWall.size();  };
     void clear() { vecPartWall.clear(); };
     void resize(int i) { vecPartWall.resize(i); };
     void push_back(PartWall* pw) { vecPartWall.push_back(pw); };

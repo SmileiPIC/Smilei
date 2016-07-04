@@ -8,8 +8,8 @@
 using namespace std;
 
 DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int speciesId ) :
-nDim_particle(params.nDim_particle),
-IDs_done( params.restart )
+IDs_done( params.restart ),
+nDim_particle(params.nDim_particle)
 {
     speciesId_ = speciesId;
     Species* species = patch->vecSpecies[speciesId_];
@@ -40,7 +40,7 @@ IDs_done( params.restart )
     datasets.push_back( "Momentum-2" );
     datatypes.push_back( H5T_NATIVE_DOUBLE );
     ostringstream name;
-    for (int idim=0 ; idim<nDim_particle ; idim++) {
+    for (unsigned int idim=0 ; idim<nDim_particle ; idim++) {
         name.str("");
         name << "Position-" << idim;
         datasets.push_back( name.str() );
@@ -143,7 +143,7 @@ void DiagnosticTrack::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatc
         // 1 - Internal patches offset
         
         int localNbrParticles = 0;
-        for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
             vecPatches(ipatch)->vecSpecies[speciesId_]->particles->addIdOffsets(localNbrParticles);
             localNbrParticles += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
         }
@@ -203,14 +203,14 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
     // Obtain the particle partition of all the patches in this MPI
     patch_start.resize( vecPatches.size() );
     int nParticles = 0;
-    for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         patch_start[ipatch] = nParticles;
         nParticles += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
     }
     
     // Build the "locator", an array indicating where each particle goes in the final array
     vector<hsize_t> locator (nParticles*2);
-    for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         Particles* particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
         int np=particles->size(), i=0, j=patch_start[ipatch];
         while( i<np ) {
@@ -225,7 +225,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
     mem_space = H5Screate_simple(1, count, NULL);
     
     // For each dataset
-    for( int idset=0; idset<datasets.size(); idset++) {
+    for( unsigned int idset=0; idset<datasets.size(); idset++) {
         
         // Fill the buffer for the current patch
         unsigned int patch_nParticles, i, j;

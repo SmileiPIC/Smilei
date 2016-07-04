@@ -266,7 +266,7 @@ void ElectroMagn::restartRhoJs()
 void ElectroMagn::laserDisabled()
 {
     if ( emBoundCond.size() )
-	emBoundCond[0]->laserDisabled();
+        emBoundCond[0]->laserDisabled();
 }
 
 double ElectroMagn::computeNRJ() {

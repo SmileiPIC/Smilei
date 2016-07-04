@@ -40,9 +40,9 @@ void Particles::initialize(unsigned int nParticles, unsigned int nDim)
     //}
     if (Weight.size()==0) {
         float c_part_max =1.2;
-	//float c_part_max = part.c_part_max;
-	//float c_part_max = params.species_param[0].c_part_max;
-	reserve( round( c_part_max * nParticles ), nDim );
+        //float c_part_max = part.c_part_max;
+        //float c_part_max = params.species_param[0].c_part_max;
+        reserve( round( c_part_max * nParticles ), nDim );
     }
     
     Position.resize(nDim);
@@ -53,7 +53,7 @@ void Particles::initialize(unsigned int nParticles, unsigned int nDim)
         Position_old[i].resize(nParticles, 0.);
     }
     Momentum.resize(3);
-    for (int i=0 ; i< 3 ; i++) {
+    for (unsigned int i=0 ; i< 3 ; i++) {
         Momentum[i].resize(nParticles, 0.);
     }
     Weight.resize(nParticles, 0.);
@@ -104,16 +104,16 @@ void Particles::initialize(unsigned int nParticles, Particles &part)
 // ---------------------------------------------------------------------------------------------------------------------
 // Set capacity of Particles vectors
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::reserve( unsigned int n_part_max, int nDim )
+void Particles::reserve( unsigned int n_part_max, unsigned int nDim )
 {
     Position.resize(nDim);
     Position_old.resize(nDim);
-    for (int i=0 ; i< nDim ; i++) {
+    for (unsigned int i=0 ; i< nDim ; i++) {
         Position[i].reserve(n_part_max);
         Position_old[i].reserve(n_part_max);
     }
     Momentum.resize(3);
-    for (int i=0 ; i< 3 ; i++) {
+    for (unsigned int i=0 ; i< 3 ; i++) {
         Momentum[i].reserve(n_part_max);
     }
     Weight.reserve(n_part_max);
@@ -136,7 +136,7 @@ void Particles::clear()
         Position[i].clear();
         Position_old[i].clear();
     }
-    for (int i=0 ; i< 3 ; i++) {
+    for (unsigned int i=0 ; i< 3 ; i++) {
         Momentum[i].clear();
     }
     Weight.clear();
@@ -152,7 +152,7 @@ void Particles::clear()
 // ---------------------------------------------------------------------------------------------------------------------
 // Copy particle iPart at the end of dest_parts
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::cp_particle(int ipart, Particles &dest_parts )
+void Particles::cp_particle(unsigned int ipart, Particles &dest_parts )
 {
     for (unsigned int i=0; i<Position.size(); i++) {
         dest_parts.Position[i].push_back(Position[i][ipart]);
@@ -175,7 +175,7 @@ void Particles::cp_particle(int ipart, Particles &dest_parts )
 // ---------------------------------------------------------------------------------------------------------------------
 // Insert particle iPart at dest_id in dest_parts
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::cp_particle(int ipart, Particles &dest_parts, int dest_id )
+void Particles::cp_particle(unsigned int ipart, Particles &dest_parts, int dest_id )
 {
     for (unsigned int i=0; i<Position.size(); i++) {
         dest_parts.Position[i].insert( dest_parts.Position[i].begin() + dest_id, Position[i][ipart] );
@@ -199,7 +199,7 @@ void Particles::cp_particle(int ipart, Particles &dest_parts, int dest_id )
 // ---------------------------------------------------------------------------------------------------------------------
 // Insert nPart particles starting at ipart to dest_id in dest_parts
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::cp_particles(int iPart, int nPart, Particles &dest_parts, int dest_id )
+void Particles::cp_particles(unsigned int iPart, unsigned int nPart, Particles &dest_parts, int dest_id )
 {
     for (unsigned int i=0; i<Position.size(); i++) {
         dest_parts.Position[i].insert( dest_parts.Position[i].begin() + dest_id, Position[i].begin()+iPart, Position[i].begin()+iPart+nPart );
@@ -223,7 +223,7 @@ void Particles::cp_particles(int iPart, int nPart, Particles &dest_parts, int de
 // ---------------------------------------------------------------------------------------------------------------------
 // Suppress particle iPart
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::erase_particle(int ipart )
+void Particles::erase_particle(unsigned int ipart )
 {
     for (unsigned int i=0; i<Position.size(); i++) {
         Position[i].erase(Position[i].begin()+ipart);
@@ -247,7 +247,7 @@ void Particles::erase_particle(int ipart )
 // ---------------------------------------------------------------------------------------------------------------------
 // Suppress all particles from iPart to the end of particle array  
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::erase_particle_trail(int ipart)
+void Particles::erase_particle_trail(unsigned int ipart)
 {
     for (unsigned int i=0; i<Position.size(); i++) {
         Position[i].erase(Position[i].begin()+ipart,Position[i].end() );
@@ -270,7 +270,7 @@ void Particles::erase_particle_trail(int ipart)
 // ---------------------------------------------------------------------------------------------------------------------
 // Suppress npart particles from ipart  
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::erase_particle(int ipart, int npart)
+void Particles::erase_particle(unsigned int ipart, unsigned int npart)
 {
     for (unsigned int i=0; i<Position.size(); i++) {
         Position[i].erase(Position[i].begin()+ipart,Position[i].begin()+ipart+npart );
@@ -290,7 +290,7 @@ void Particles::erase_particle(int ipart, int npart)
 // ---------------------------------------------------------------------------------------------------------------------
 // Print parameters of particle iPart
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::print(int iPart) {
+void Particles::print(unsigned int iPart) {
     for (unsigned int i=0; i<Position.size(); i++) {
         cout << Position[i][iPart] << " ";
         cout << Position_old[i][iPart] << " ";
@@ -337,7 +337,7 @@ ostream& operator << (ostream& out, const Particles& particles) {
 // ---------------------------------------------------------------------------------------------------------------------
 // Exchange particles part1 & part2 memory location
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::swap_part(int part1, int part2)
+void Particles::swap_part(unsigned int part1, unsigned int part2)
 {
     for (unsigned int i=0; i<Position.size(); i++) {
         std::swap( Position[i][part1], Position[i][part2] );
@@ -358,11 +358,11 @@ void Particles::swap_part(int part1, int part2)
 // ---------------------------------------------------------------------------------------------------------------------
 // Move particle part1 into part2 memory location, erasing part2.
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::overwrite_part(int part1, int part2)
+void Particles::overwrite_part(unsigned int part1, unsigned int part2)
 {
     for (unsigned int i=0; i<Position.size(); i++) {
-	Position[i][part2]     = Position[i][part1];
-	Position_old[i][part2] = Position_old[i][part1];
+        Position[i][part2]     = Position[i][part1];
+        Position_old[i][part2] = Position_old[i][part1];
     }
     Momentum[0][part2] = Momentum[0][part1];
     Momentum[1][part2] = Momentum[1][part1];
@@ -371,7 +371,7 @@ void Particles::overwrite_part(int part1, int part2)
     Weight[part2]      = Weight[part1];      
     
     if (tracked)
-	Id[part2] = Id[part1];
+        Id[part2] = Id[part1];
     
     if (isRadReaction)
         Chi[part2] = Chi[part1];
@@ -381,7 +381,7 @@ void Particles::overwrite_part(int part1, int part2)
 // ---------------------------------------------------------------------------------------------------------------------
 // Move particle part1->part1+N into part2->part2+N memory location erasing part2->part2+N.
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::overwrite_part(int part1, int part2, int N)
+void Particles::overwrite_part(unsigned int part1, unsigned int part2, unsigned int N)
 {
     unsigned int sizepart = N*sizeof(Position[0][0]);
     unsigned int sizecharge = N*sizeof(Charge[0]);
@@ -408,11 +408,11 @@ void Particles::overwrite_part(int part1, int part2, int N)
 // ---------------------------------------------------------------------------------------------------------------------
 // Move particle part1 into part2 memory location of dest vector, erasing part2.
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::overwrite_part(int part1, Particles &dest_parts, int part2)
+void Particles::overwrite_part(unsigned int part1, Particles &dest_parts, unsigned int part2)
 {
     for (unsigned int i=0; i<Position.size(); i++) {
-	dest_parts.Position[i][part2]     = Position[i][part1];
-	dest_parts.Position_old[i][part2] = Position_old[i][part1];
+        dest_parts.Position[i][part2]     = Position[i][part1];
+        dest_parts.Position_old[i][part2] = Position_old[i][part1];
     }
     dest_parts.Momentum[0][part2] = Momentum[0][part1];
     dest_parts.Momentum[1][part2] = Momentum[1][part1];
@@ -430,7 +430,7 @@ void Particles::overwrite_part(int part1, Particles &dest_parts, int part2)
 // ---------------------------------------------------------------------------------------------------------------------
 // Move particle part1->part1+N into part2->part2+N memory location of dest vector, erasing part2->part2+N.
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::overwrite_part(int part1, Particles &dest_parts, int part2, int N)
+void Particles::overwrite_part(unsigned int part1, Particles &dest_parts, unsigned int part2, unsigned int N)
 {
     unsigned int sizepart = N*sizeof(Position[0][0]);
     unsigned int sizecharge = N*sizeof(Charge[0]);
@@ -460,7 +460,7 @@ void Particles::overwrite_part(int part1, Particles &dest_parts, int part2, int 
 // ---------------------------------------------------------------------------------------------------------------------
 // Exchange N particles part1->part1+N & part2->part2+N memory location
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::swap_part(int part1, int part2, int N)
+void Particles::swap_part(unsigned int part1, unsigned int part2, unsigned int N)
 {
     double* buffer[N];
     
@@ -506,7 +506,7 @@ void Particles::swap_part(int part1, int part2, int N)
 // ---------------------------------------------------------------------------------------------------------------------
 // Move iPart at the end of vectors (to do for MPI)
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::push_to_end(int iPart )
+void Particles::push_to_end(unsigned int iPart )
 {
 
 }
@@ -563,7 +563,7 @@ void Particles::create_particle()
 // ---------------------------------------------------------------------------------------------------------------------
 // Test if ipart is in the local patch
 //---------------------------------------------------------------------------------------------------------------------
-bool Particles::is_part_in_domain(int ipart, Patch* patch)
+bool Particles::is_part_in_domain(unsigned int ipart, Patch* patch)
 {
     for (unsigned int i=0; i<Position.size(); i++) {
         if (Position[i][ipart] <  patch->getDomainLocalMin(i) ) return false;
@@ -598,18 +598,18 @@ void Particles::sortById() {
 //bool Particles::test_move( int iPartStart, int iPartEnd, Params& params )
 //{
 //    for ( int iDim = 0 ; iDim < Position.size() ; iDim++ ) {
-//	double dx2 = params.cell_length[iDim]*params.cell_length[iDim];
-//	for (int iPart = iPartStart ; iPart < iPartEnd ; iPart++ ) {
-//	    if ( dist(iPart,iDim) > dx2 ) {
-//		ERROR( "Too large displacment for particle : " << iPart << "\t: " << (*this)(iPart) );
-//		return false;
-//	    }
-//	}
+//        double dx2 = params.cell_length[iDim]*params.cell_length[iDim];
+//        for (int iPart = iPartStart ; iPart < iPartEnd ; iPart++ ) {
+//            if ( dist(iPart,iDim) > dx2 ) {
+//                ERROR( "Too large displacment for particle : " << iPart << "\t: " << (*this)(iPart) );
+//                return false;
+//            }
+//        }
 //    }
 //
 //}
 
-Particle Particles::operator()(int iPart)
+Particle Particles::operator()(unsigned int iPart)
 {
     return  Particle( *this, iPart);
 }

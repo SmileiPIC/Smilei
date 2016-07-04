@@ -314,7 +314,6 @@ void Patch2D::initExchange( Field* field, int iDim )
     if (field->MPIbuff.srequest.size()==0)
         field->MPIbuff.allocate(2);
 
-    int patch_ndims_(2);
     int patch_nbNeighbors_(2);
 
     std::vector<unsigned int> n_elem   = field->dims_;

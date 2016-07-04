@@ -302,7 +302,6 @@ void SyncVectorPatch::exchange0( std::vector<Field*> fields, VectorPatch& vecPat
     n_space[1] = vecPatches(0)->EMfields->n_space[1];
     n_space[2] = vecPatches(0)->EMfields->n_space[2];
 
-    nx_ = fields[0]->dims_[0];
     ny_ = 1;
     nz_ = 1;
     if (fields[0]->dims_.size()>1) {

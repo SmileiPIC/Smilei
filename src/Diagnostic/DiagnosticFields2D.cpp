@@ -138,7 +138,7 @@ void DiagnosticFields2D::setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatc
 
 
 // Copy patch field to current "data" buffer
-void DiagnosticFields2D::getField( Patch* patch, int field_index )
+void DiagnosticFields2D::getField( Patch* patch, unsigned int field_index )
 {
     // Get current field
     Field2D* field;

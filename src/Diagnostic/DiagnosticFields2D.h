@@ -16,7 +16,7 @@ public:
     void setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches ) override;
     
     //! Copy patch field to current "data" buffer
-    void getField( Patch* patch, int ) override;
+    void getField( Patch* patch, unsigned int ) override;
     
     void writeField(hid_t, int) override;
 

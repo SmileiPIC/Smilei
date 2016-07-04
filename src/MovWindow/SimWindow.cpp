@@ -72,12 +72,12 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     vecPatches.closeAllDiags(smpi);
     
     // Shift the patches, new patches will be created directly with their good patchid
-    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
+    for (int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
         vecPatches(ipatch)->neighbor_[0][1] = vecPatches(ipatch)->hindex;
         vecPatches(ipatch)->hindex = vecPatches(ipatch)->neighbor_[0][0];
     }
     // Init new patches (really new and received)
-    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
+    for (int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
 
         if ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][1] ) {
             int patchid = vecPatches(ipatch)->neighbor_[0][1];
@@ -93,7 +93,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 
             // Compute energy lost 
             energy_field_lost += vecPatches(ipatch)->EMfields->computeNRJ();
-            for ( int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size() ; ispec++ )
+            for ( unsigned int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size() ; ispec++ )
                 energy_part_lost[ispec] += vecPatches(ipatch)->vecSpecies[ispec]->computeNRJ();
 
             delete  vecPatches.patches_[ipatch];
@@ -105,7 +105,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 
     // Sync / Patches done for these diags -> Store in patch master 
     vecPatches(0)->EMfields->storeNRJlost( energy_field_lost );
-    for ( int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size() ; ispec++ )
+    for ( unsigned int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size() ; ispec++ )
         vecPatches(0)->vecSpecies[ispec]->storeNRJlost( energy_part_lost[ispec] );
 
     nPatches = vecPatches.size();
@@ -125,17 +125,17 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     } while(jpatch>=0);
 
             // Patch à envoyer
-            for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
+            for (int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
                 //if my MPI left neighbor is not me AND I'm not a newly created patch, send me !
-                if ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][0] && vecPatches(ipatch)->hindex == vecPatches(ipatch)->neighbor_[0][0] ) {
+                if ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][0] && (int)vecPatches(ipatch)->hindex == vecPatches(ipatch)->neighbor_[0][0] ) {
                     smpi->isend( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighbor_[0][0], vecPatches(ipatch)->hindex*nmessage, params );
                     //cout << vecPatches(ipatch)->MPI_me_ << " send : " << vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " & " << vecPatches(ipatch)->vecSpecies[1]->getNbrOfParticles() << endl;
                 }
             }
             // Patch à recevoir
-            for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
+            for (int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
                 //if my MPI right neighbor is not me AND my MPI right neighbor exists AND I am a newly created patch, I receive !
-                if ( ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][1] ) && ( vecPatches(ipatch)->MPI_neighbor_[0][1] != MPI_PROC_NULL )  && (vecPatches(ipatch)->neighbor_[0][0] != vecPatches(ipatch)->hindex) ){
+                if ( ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][1] ) && ( vecPatches(ipatch)->MPI_neighbor_[0][1] != MPI_PROC_NULL )  && (vecPatches(ipatch)->neighbor_[0][0] != (int)vecPatches(ipatch)->hindex) ){
                     smpi->recv( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighbor_[0][1], vecPatches(ipatch)->hindex*nmessage, params );
                     //cout << vecPatches(ipatch)->MPI_me_ << " recv : " << vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " & " << vecPatches(ipatch)->vecSpecies[1]->getNbrOfParticles() << endl;
                 }
@@ -147,7 +147,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 
     // Suppress after exchange to not distrub patch position during exchange
     for ( int ipatch = nPatches-1 ; ipatch >= 0 ; ipatch--) {
-        if ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][0] && vecPatches(ipatch)->hindex == vecPatches(ipatch)->neighbor_[0][0] ) {
+        if ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][0] && (int)vecPatches(ipatch)->hindex == vecPatches(ipatch)->neighbor_[0][0] ) {
 
             delete vecPatches.patches_[ipatch];
             vecPatches.patches_[ipatch] = NULL;
@@ -160,8 +160,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 
 
     // Finish shifting the patches, new patches will be created directly with their good patches
-    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
-        if (vecPatches(ipatch)->neighbor_[0][0] != vecPatches(ipatch)->hindex) continue;
+    for (int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
+        if (vecPatches(ipatch)->neighbor_[0][0] != (int)vecPatches(ipatch)->hindex) continue;
             
         //For now also need to update neighbor_, corner_neighbor and their MPI counterparts even if these will be obsolete eventually.
         vecPatches(ipatch)->corner_neighbor_[1][0]= vecPatches(ipatch)->neighbor_[1][0];
