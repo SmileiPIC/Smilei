@@ -182,9 +182,6 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------
     check_memory_consumption( vecPatches, smpiData );
     
-    // Define for some patch diags
-    //int partperMPI;
-    //int npatchmoy=0, npartmoy=0;
     double old_print_time(0.), this_print_time;
      
     // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)
@@ -319,33 +316,8 @@ int main (int argc, char* argv[])
         
         if ((itime%params.balancing_every == 0)&&(smpiData->getSize()!=1)) {
             timer[7].restart();
-            //partperMPI = 0;
-            //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
-            //    for (unsigned int ispec=0 ; ispec < vecPatches(0)->vecSpecies.size() ; ispec++)
-            //        partperMPI += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
-            //}
-            //partperMPI = 0;
-            
-            smpiData->recompute_patch_count( params, vecPatches, time_dual );
-            
-            vecPatches.createPatches(params, smpiData, simWindow);
-            
-            vecPatches.exchangePatches(smpiData, params);
-            //for (unsigned int irank=0 ; irank<smpiData->getSize() ; irank++){
-            //    if(smpiData->getRank() == irank){
-            //        vecPatches.output_exchanges(smpiData);
-            //    }
-            //    smpiData->barrier();
-            //}
-            
-            //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
-            //    for (unsigned int ispec=0 ; ispec < vecPatches(0)->vecSpecies.size() ; ispec++)
-            //        partperMPI += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
-            //}
-            //npatchmoy += vecPatches.size();
-            //npartmoy += partperMPI;
+            vecPatches.load_balance( params, time_dual, smpiData, simWindow );
             timer[7].update();
-            
         }
         
         latestTimeStep = itime;
