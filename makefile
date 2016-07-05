@@ -67,7 +67,7 @@ LDFLAGS+=$(PY_LDFLAGS)
 ifneq (,$(findstring debug,$(config)))
 	CXXFLAGS += -g -pg -Wall -D__DEBUG -O0 # -shared-intel 
 else
-	CXXFLAGS += -O3 # -xHost -ipo
+	CXXFLAGS += -O3 -xHost #-ipo
 endif
 
 ifneq (,$(findstring scalasca,$(config)))
