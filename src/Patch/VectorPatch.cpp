@@ -510,6 +510,49 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 
 
+void VectorPatch::load_balance(Params& params, double time_dual, SmileiMPI* smpi, SimWindow* simWindow)
+{
+    // Define for some patch diags
+
+    //int partperMPI;
+    //int npatchmoy=0, npartmoy=0;
+
+
+    //partperMPI = 0;
+    //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
+    //    for (unsigned int ispec=0 ; ispec < vecPatches(0)->vecSpecies.size() ; ispec++)
+    //        partperMPI += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
+    //}
+    //partperMPI = 0;
+
+    // Compute new patch distribution
+    smpi->recompute_patch_count( params, *this, time_dual );
+            
+    // Create empty patches according to this new distribution
+    this->createPatches(params, smpi, simWindow);
+
+    // Proceed to patch exchange, and delete patch which moved
+    this->exchangePatches(smpi, params);
+
+    //for (unsigned int irank=0 ; irank<smpi->getSize() ; irank++){
+    //    if(smpi->getRank() == irank){
+    //        this->output_exchanges(smpi);
+    //    }
+    //    smpi->barrier();
+    //}
+
+
+    // patch diags
+    
+    //for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++){
+    //    for (unsigned int ispec=0 ; ispec < (*this)(0)->vecSpecies.size() ; ispec++)
+    //        partperMPI += (*this)(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
+    //}
+    //npatchmoy += this->size();
+    //npartmoy += partperMPI;
+}
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Explicits patch movement regarding new patch distribution stored in smpi->patch_count
 //   - compute send_patch_id_
@@ -525,10 +568,10 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
     // Is this really necessary ? It should be done already ...
     refHindex_ = (*this)(0)->Hindex();
 
-    //Current number of patch
+    // Current number of patch
     int nPatches_now = this->size() ;
     
-    //When going to openMP, these two vectors must be stored by patch and not by vectorPatch.
+    // When going to openMP, these two vectors must be stored by patch and not by vectorPatch.
     recv_patch_id_.clear();
     send_patch_id_.clear();
     
@@ -539,18 +582,23 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
     // recv_patch_id_ = vector of the hindex this process must own at the end of the exchange.
     for (int ipatch=0 ; ipatch<smpi->patch_count[smpi->getRank()] ; ipatch++)
         recv_patch_id_.push_back( istart+ipatch );
+
     
-    //Loop on current patches...
-    for (int ipatch=0 ; ipatch < nPatches_now ; ipatch++)
-      //if        current hindex        <  future refHindex  OR current hindex > future last hindex...
-        if ( ( refHindex_+ipatch < recv_patch_id_[0] ) || ( refHindex_+ipatch > recv_patch_id_.back() ) )
-      //    Put this patch in the send list. 
+    // Loop on current patches to define patch to send
+    for (int ipatch=0 ; ipatch < nPatches_now ; ipatch++) {
+        //if  current hindex     <  future refHindex   OR      current hindex > future last hindex...
+        if ( ( refHindex_+ipatch < recv_patch_id_[0] ) || ( refHindex_+ipatch > recv_patch_id_.back() ) ) {
+            // Put this patch in the send list. 
             send_patch_id_.push_back( ipatch );
+        }
+    }
+
     
-    // Backward loop on future patches...
+    // Backward loop on future patches to define suppress patch in receive list
+    // before this loop, recv_patch_id_ stores all patches index define in SmileiMPI::patch_count
     int existing_patch_id = -1;
-      //if      future patch hindex  >= current refHindex             AND    future patch hindex <= current last hindex
     for ( int ipatch=recv_patch_id_.size()-1 ; ipatch>=0 ; ipatch--) {
+        //if    future patch hindex  >= current refHindex AND  future patch hindex <= current last hindex
         if ( ( recv_patch_id_[ipatch]>=refHindex_ ) && ( recv_patch_id_[ipatch] <= refHindex_ + nPatches_now - 1 ) ) {
             //Store an existing patch id for cloning.
             existing_patch_id = recv_patch_id_[ipatch];
@@ -558,23 +606,27 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
             recv_patch_id_.erase( recv_patch_id_.begin()+ipatch );
         }
     }
+
     
     // Get an existing patch that will be used for cloning
     if( existing_patch_id<0 )
         ERROR("No patch to clone. This should never happen!");
     Patch * existing_patch = (*this)(existing_patch_id-refHindex_);
-    
+
+
+    // Create new Patches 
     if (simWindow) n_moved = simWindow->getNmoved(); 
     // Store in local vector future patches
     // Loop on the patches I have to receive and do not already own.
     for (unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++) {
         // density profile is initializes as if t = 0 !
         // Species will be cleared when, nbr of particles will be known
-        //Creation of a new patch, ready to receive its content from MPI neighbours.
+        // Creation of a new patch, ready to receive its content from MPI neighbours.
         Patch* newPatch = PatchesFactory::clone(existing_patch, params, smpi, recv_patch_id_[ipatch], n_moved );
         //Store pointers to newly created patch in recv_patches_.
         recv_patches_.push_back( newPatch );
     }
+
 
 } // END createPatches
 
@@ -598,46 +650,26 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     
     
     for (int irk=0 ; irk<smpi->getRank() ; irk++) istart += smpi->patch_count[irk];
-    // Send part
+
+
     // Send particles
     for (unsigned int ipatch=0 ; ipatch < send_patch_id_.size() ; ipatch++) {
         // locate rank which will own send_patch_id_[ipatch]
         // We assume patches are only exchanged with neighbours.
         // Once all patches supposed to be sent to the left are done, we send the rest to the right.
-      //if   hindex of patch to be sent              >  future hindex of the first patch owned by this process 
-        if(send_patch_id_[ipatch]+refHindex_ > istart ) newMPIrank = smpi->getRank() + 1;
-        //cout << "Rank " << smpi->getRank() << " sending patch " << send_patch_id_[ipatch]+refHindex_ << " to " << newMPIrank << endl; 
-        //newMPIrankbis = 0 ;
-        //tmp = smpi->patch_count[newMPIrankbis];
-        //while ( tmp <= send_patch_id_[ipatch]+refHindex_ ) {
-        //    newMPIrankbis++;
-        //    tmp += smpi->patch_count[newMPIrankbis];
-        //}
-        
-        //if (newMPIrank != newMPIrankbis){
-        //    cout << "newMIPrank problem ! " << newMPIrank << endl;
-        //    newMPIrank = newMPIrankbis ;
-        //}
-        
+        // if hindex of patch to be sent      >  future hindex of the first patch owned by this process 
+        if (send_patch_id_[ipatch]+refHindex_ > istart ) newMPIrank = smpi->getRank() + 1;
+
         smpi->isend( (*this)(send_patch_id_[ipatch]), newMPIrank, (refHindex_+send_patch_id_[ipatch])*nmessage, params );
     }
     
     for (unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++) {
-      //if   hindex of patch to be received > first hindex actually owned, that means it comes from the next MPI process and not from the previous anymore. 
+        //if  hindex of patch to be received > first hindex actually owned, that means it comes from the next MPI process and not from the previous anymore. 
         if(recv_patch_id_[ipatch] > refHindex_ ) oldMPIrank = smpi->getRank() + 1;
-        //cout << "Rank " << smpi->getRank() << " receiving patch " << recv_patch_id_[ipatch] << " from " << oldMPIrank << endl; 
-        //oldMPIrankbis = 0 ; // Comparing recv_patch_id_[ipatch] to 1st yet on current MPI rank
-        //if ( recv_patch_id_[ipatch] > refHindex_ )
-        //    oldMPIrankbis = smpi->getRank()+1;
-        //else
-        //    oldMPIrankbis = smpi->getRank()-1;
-        
-        //if (oldMPIrank != oldMPIrankbis){
-        //    cout << "oldMIPrank problem ! " << oldMPIrank << endl;
-        //    oldMPIrank = oldMPIrankbis ;
-        //}
+
         smpi->recv( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch]*nmessage, params );
     }
+
     
     smpi->barrier();
     //Delete sent patches
@@ -649,6 +681,8 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
         patches_.erase( patches_.begin() + send_patch_id_[ipatch] );
         
     }
+
+
     //Put received patches in the global vecPatches
     for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
         if ( recv_patch_id_[ipatch] > refHindex_ )
@@ -657,15 +691,13 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
             patches_.insert( patches_.begin()+ipatch, recv_patches_[ipatch] );
     }
     recv_patches_.clear();
+
     
     for (unsigned int ipatch=0 ; ipatch<patches_.size() ; ipatch++ ) { 
         (*this)(ipatch)->updateMPIenv(smpi);
     }
-    
-    (*this).openAllDiags(params,smpi);
-    
+    (*this).openAllDiags(params,smpi);    
     (*this).set_refHindex() ;
-    
     update_field_list() ;    
     
 } // END exchangePatches

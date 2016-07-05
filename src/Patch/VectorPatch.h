@@ -116,6 +116,9 @@ public :
     //  Balancing methods
     // ------------------
 
+    //! Wrapper of load balancing methods, including SmileiMPI::recompute_patch_count. Called from main program
+    void load_balance(Params& params, double time_dual, SmileiMPI* smpi, SimWindow* simWindow);
+    
     //! Explicits patch movement regarding new patch distribution stored in smpi->patch_count
     void createPatches(Params& params, SmileiMPI* smpi, SimWindow* simWindow);
 
