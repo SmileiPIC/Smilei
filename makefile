@@ -67,7 +67,7 @@ LDFLAGS+=$(PY_LDFLAGS)
 ifneq (,$(findstring debug,$(config)))
 	CXXFLAGS += -g -pg -Wall -D__DEBUG -O0 # -shared-intel 
 else
-	CXXFLAGS += -O3 -xHost #-ipo
+	CXXFLAGS += -O3 #-ipo
 endif
 
 ifneq (,$(findstring scalasca,$(config)))
@@ -92,6 +92,14 @@ ifeq (,$(findstring noopenmp,$(config)))
     #LDFLAGS += -mt_mpi
     CXXFLAGS += $(OPENMPFLAGS)
 endif
+
+
+ifneq (,$(findstring icpc,$(SMILEI_COMPILER)))
+    CXXFLAGS += -xHost
+else
+    CXXFLAGS += -march=native
+endif
+
 
 clean:
 	rm -f $(OBJS) $(DEPS) $(PYHEADERS)
