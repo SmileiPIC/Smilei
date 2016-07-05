@@ -96,8 +96,6 @@ endif
 
 ifneq (,$(findstring icpc,$(SMILEI_COMPILER)))
     CXXFLAGS += -xHost
-else
-    CXXFLAGS += -march=native
 endif
 
 
