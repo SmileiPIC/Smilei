@@ -304,9 +304,9 @@ public:
         newSpecies->temperatureProfile[0] = new Profile(species->temperatureProfile[0]);
         newSpecies->temperatureProfile[1] = new Profile(species->temperatureProfile[1]);
         newSpecies->temperatureProfile[2] = new Profile(species->temperatureProfile[2]);
-        newSpecies->particles->isTest     = species->particles->isTest;
         newSpecies->max_charge            = species->max_charge;
         
+        newSpecies->particles->isTest              = species->particles->isTest;
         newSpecies->particles->tracked             = species->particles->tracked;
         newSpecies->particles->track_ordered       = species->particles->track_ordered;
         newSpecies->particles->track_timeSelection = new TimeSelection(species->particles->track_timeSelection);
