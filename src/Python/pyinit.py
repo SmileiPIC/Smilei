@@ -209,6 +209,7 @@ class Species(SmileiComponent):
     atomic_number = None
     isTest = False
     track_every = 0
+    track_ordered = True
 
 class Laser(SmileiComponent):
     """Laser parameters"""

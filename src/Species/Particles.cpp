@@ -17,7 +17,8 @@ using namespace std;
 // Constructor for Particle
 // ---------------------------------------------------------------------------------------------------------------------
 Particles::Particles():
-tracked(false)
+tracked(false),
+track_ordered(true)
 {
     Position.resize(0);
     Position_old.resize(0);
@@ -93,6 +94,7 @@ void Particles::initialize(unsigned int nParticles, Particles &part)
     
     tracked=part.tracked;
     track_timeSelection = part.track_timeSelection;
+    track_ordered=part.track_ordered;
     
     isRadReaction=part.isRadReaction;
     
