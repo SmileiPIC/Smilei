@@ -30,7 +30,7 @@ Main(
     random_seed = 0
 )
 
-globalEvery = 20
+globalEvery = 5
     
 Species(
 	initPosition_type = 'random',
@@ -62,7 +62,7 @@ Species(
 
 Antenna(
     field='Jz',
-    time_profile= lambda t: math.sin(2*t/t0),
+    time_profile= lambda t: math.sin(t/t0),
     space_profile=gaussian(0.2, xfwhm=l0, yfwhm=l0, xcenter=Main.sim_length[0]*0.6, ycenter=Main.sim_length[1]*0.5)
 )
 
@@ -75,6 +75,6 @@ DiagScalar(every=globalEvery)
 
 DiagFields(
     every = globalEvery,
-    fields = ['Ez','Rho_species0','Rho_species1']
+    fields = ['Ez','Jz','Rho_species0','Rho_species1']
 )
 

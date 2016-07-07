@@ -61,7 +61,7 @@ public:
         vecPatches.initAllDiags( params, smpi );
         
         // Figure out if there are antennas
-        vecPatches.hasAntennas = ( vecPatches(0)->EMfields->antennas.size() > 0 );
+        vecPatches.nAntennas = vecPatches(0)->EMfields->antennas.size();
         vecPatches.initExternals( params );
         
         MESSAGE(1,"Done initializing patches");

@@ -25,22 +25,22 @@ class SimWindow;
 
 class VectorPatch {
 public :
-
+    
     VectorPatch();
     ~VectorPatch();
     
     void close(SmileiMPI*);
-
+    
     //! VectorPatch = 
     //! - std::vector<Patch*>
     //! - interfaces between main programs & main PIC operators
     //! - methods to balance computation
     std::vector<Patch*> patches_;
-
+    
     std::vector<Diagnostic*> globalDiags;
     std::vector<Diagnostic*> localDiags;
-
-
+    
+    
     //! Some vector operations extended to VectorPatch
     inline void resize(int npatches) {
         patches_.resize(npatches);
@@ -51,7 +51,7 @@ public :
     inline Patch* operator()(int ipatch) {
         return patches_[ipatch];
     }
-
+    
     //! Set Id of the 1st patch stored on the current MPI process
     //!   used during balancing 
     inline void set_refHindex() {
@@ -60,15 +60,15 @@ public :
     //! Resize vector of field*
     void update_field_list();
     void update_field_list(int ispec);
-
+    
     void createDiags(Params& params, SmileiMPI* smpi);
-
+    
     //! get a particular scalar
     inline double getScalar(std::string name) {
         DiagnosticScalar* diag = static_cast<DiagnosticScalar*>( globalDiags[0] );
         return diag->getScalar( name );
     }
-
+    
     bool fieldTimeIsNow( int timestep ) {
         if( fieldsTimeSelection!=NULL )
             return fieldsTimeSelection->theTimeIsNow(timestep);
@@ -79,55 +79,57 @@ public :
     bool printScalars( int timestep ) {
         return static_cast<DiagnosticScalar*>(globalDiags[0])->printNow(timestep);
     }
-
-
-   
+    
+    
+    
     // Interfaces between main programs & main PIC operators
     // -----------------------------------------------------
-
+    
     //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
     void dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, int* diag_flag, double time_dual,
                   std::vector<Timer>& timer);
-
+    
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
     void sumDensities( int* diag_flag, std::vector<Timer>& timer );
-
+    
     //! For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
     void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual,
                       std::vector<Timer>& timer);
-
+    
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
     void runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, int itime, std::vector<Timer>& timer);
     void initAllDiags(Params& params, SmileiMPI* smpi);
     void closeAllDiags(SmileiMPI* smpi);
     void openAllDiags(Params& params, SmileiMPI* smpi);
-
+    
     //! Check if rho is null (MPI & patch sync)
     bool isRhoNull( SmileiMPI* smpi );
-
+    
     //! Solve Poisson to initialize E
     void solvePoisson( Params &params, SmileiMPI* smpi );
     
     //! For all patch initialize the externals (lasers, fields, antennas)
     void initExternals(Params& params);
-
-
-
+    
+    //! For all patches, apply the antenna current
+    void applyAntennas(double time);
+    
+    
     //  Balancing methods
     // ------------------
-
+    
     //! Wrapper of load balancing methods, including SmileiMPI::recompute_patch_count. Called from main program
     void load_balance(Params& params, double time_dual, SmileiMPI* smpi, SimWindow* simWindow);
     
     //! Explicits patch movement regarding new patch distribution stored in smpi->patch_count
     void createPatches(Params& params, SmileiMPI* smpi, SimWindow* simWindow);
-
+    
     //! Exchange patches, based on createPatches initialization
     void exchangePatches(SmileiMPI* smpi, Params& params);
-
+    
     //! Write in a file patches communications
     void output_exchanges(SmileiMPI* smpi);
-
+    
     // Lists of fields
     std::vector<Field*> listJx_;
     std::vector<Field*> listJy_;
@@ -145,7 +147,7 @@ public :
     std::vector<Field*> listBz_;
     
     //! True if any antennas
-    bool hasAntennas;
+    unsigned int nAntennas;
     
     //! 1st patch index of patches_ (stored for balancing op)
     int refHindex_;
@@ -154,7 +156,7 @@ public :
     TimeSelection * fieldsTimeSelection;
 
  private :
-
+    
     //! Methods to access readably to patch PIC operators.
     //!   - patches_ should not be access outsied of VectorPatch
     //!   - for now in SimWindow 
@@ -165,26 +167,28 @@ public :
     inline ElectroMagn* emfields(int ipatch) {
         return (*this)(ipatch)->EMfields;
     }
-
+    
     inline Interpolator* interp(int ipatch){
         return (*this)(ipatch)->Interp;
     }
-
+    
     inline Projector* proj(int ipatch){
         return (*this)(ipatch)->Proj;
     }
-
+    
     inline PartWalls* partwalls(int ipatch){
         return (*this)(ipatch)->partWalls;
     }
-
+    
     //  Internal balancing members
     // ---------------------------
     std::vector<Patch*> recv_patches_;
-
+    
     std::vector<int> recv_patch_id_;
     std::vector<int> send_patch_id_;
-
+    
+    //! Current intensity of antennas
+    double antenna_intensity;
     
 };
 

@@ -152,7 +152,6 @@ public:
         for (unsigned int n_antenna = 0; n_antenna < EMfields->antennas.size(); n_antenna++) {
             Antenna antenna;
             antenna.fieldName     = EMfields->antennas[n_antenna].fieldName    ;
-            antenna.field         = EMfields->antennas[n_antenna].field        ;
             antenna.space_profile = EMfields->antennas[n_antenna].space_profile;
             antenna.time_profile  = EMfields->antennas[n_antenna].time_profile ;
             newEMfields->antennas.push_back(antenna);

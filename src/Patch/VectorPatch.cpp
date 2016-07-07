@@ -757,6 +757,9 @@ void VectorPatch::update_field_list()
         listBz_[ipatch] = patches_[ipatch]->EMfields->Bz_ ;
     }
 }
+
+
+
 void VectorPatch::update_field_list(int ispec)
 {
     #pragma omp single
@@ -776,4 +779,22 @@ void VectorPatch::update_field_list(int ispec)
     }
 }
 
+
+void VectorPatch::applyAntennas(double time)
+{
+    // Loop antennas
+    for(unsigned int iAntenna=0; iAntenna<nAntennas; iAntenna++) {
+    
+        // Get intensity from antenna of the first patch
+        #pragma omp single
+        antenna_intensity = patches_[0]->EMfields->antennas[iAntenna].time_profile->valueAt(time);
+        
+        // Loop patches to apply
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++) {
+            patches_[ipatch]->EMfields->applyAntenna(iAntenna, antenna_intensity);
+        }
+        
+    }
+}
 

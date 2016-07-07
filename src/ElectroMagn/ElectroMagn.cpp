@@ -322,21 +322,18 @@ void ElectroMagn::applyExternalFields(Patch* patch) {
     Bz_m->copyFrom(Bz_);
 }
 
-void ElectroMagn::applyAntennas(SmileiMPI* smpi, double time) {
-    Field * field;
-    
-    for (vector<Antenna>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
-        if (antenna->field) {
-            double intensity = antenna->time_profile->valueAt(time);
-            
-            if     ( antenna->field->name == "Jx" ) field = Jx_;
-            else if( antenna->field->name == "Jy" ) field = Jy_;
-            else if( antenna->field->name == "Jz" ) field = Jz_;
-            
-            if (antenna->field->globalDims_ == field->globalDims_) // to do (TV): is this check really necessary ?
-                for (unsigned int i=0; i< field->globalDims_ ; i++)
-                    (*field)(i) += intensity * (*antenna->field)(i);
-        }
+
+void ElectroMagn::applyAntenna(unsigned int iAntenna, double intensity) {
+    Field *field, *antennaField = antennas[iAntenna].field;
+    if (antennaField) {
+        
+        if     ( antennaField->name == "Jx" ) field = Jx_;
+        else if( antennaField->name == "Jy" ) field = Jy_;
+        else if( antennaField->name == "Jz" ) field = Jz_;
+        
+        for (unsigned int i=0; i< field->globalDims_ ; i++)
+            (*field)(i) += intensity * (*antennaField)(i);
+        
     }
 }
 
