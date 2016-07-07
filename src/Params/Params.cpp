@@ -276,6 +276,10 @@ namelist("")
     // -------------------------------------------------------
     compute();
     
+    // Print 
+    smpi->barrier();
+    if ( smpi->isMaster() ) print();
+    smpi->barrier();
 }
 
 Params::~Params() {

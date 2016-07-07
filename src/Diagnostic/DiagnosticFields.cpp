@@ -163,64 +163,73 @@ bool DiagnosticFields::prepare( int timestep )
 
 void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep )
 {
-    
-    refHindex = (unsigned int)(vecPatches.refHindex_);
-    
-    setFileSplitting( smpi, vecPatches );
-    
     // If time-averaging, increment the average
     if( time_average>1 )
+        #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
             vecPatches(ipatch)->EMfields->incrementAvgFields(timestep);
     
     // If is not writing timestep, leave
     if (timestep - timeSelection->previousTime(timestep) != time_average-1) return;
     
-    // Create group for this timestep
-    ostringstream name_t;
-    name_t.str("");
-    name_t << "/" << setfill('0') << setw(10) << timestep;
-    
-    htri_t status = H5Lexists(fileId_, name_t.str().c_str(), H5P_DEFAULT);
-    // Do not output diag if this timestep has already been written
-    if( status > 0 ) return;
-    // Warning if file unreachable
-    if( status < 0 ) {
-        WARNING("Fields diagnostics could not write");
-        return;
+    #pragma omp master
+    {
+        // Calculate the structure of the file depending on 1D, 2D, ...
+        refHindex = (unsigned int)(vecPatches.refHindex_);
+        setFileSplitting( smpi, vecPatches );
+        
+        // Create group for this timestep
+        ostringstream name_t;
+        name_t.str("");
+        name_t << "/" << setfill('0') << setw(10) << timestep;
+        status = H5Lexists(fileId_, name_t.str().c_str(), H5P_DEFAULT);
+        if( status==0 )
+           timestep_group_id = H5Gcreate(fileId_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        // Warning if file unreachable
+        if( status < 0 ) WARNING("Fields diagnostics could not write");
     }
     
-    timestep_group_id = H5Gcreate(fileId_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    // Do not output diag if this timestep has already been written or if problem with file
+    if( status != 0 ) return;
     
     // For each field, combine all patches and write out
     for( unsigned int ifield=0; ifield < fields_indexes.size(); ifield++ ) {
         
+        unsigned int field_index = fields_indexes[ifield];
+        
         // Copy the patch field to the buffer
+        #pragma omp barrier
+        #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-            getField( vecPatches(ipatch), fields_indexes[ifield] );
+            getField( vecPatches(ipatch), field_index );
         
-        // Create or open field dataset in HDF5
-        hid_t dset_id;
-        htri_t status = H5Lexists( timestep_group_id, fields_names[ifield].c_str(), H5P_DEFAULT );
-        if (!status) {
-            hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
-            dset_id  = H5Dcreate( timestep_group_id, fields_names[ifield].c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
-            H5Pclose(plist_id);
-        } else {
-            dset_id = H5Dopen( timestep_group_id, fields_names[ifield].c_str(), H5P_DEFAULT);                
+        #pragma omp master
+        {
+            // Create or open field dataset in HDF5
+            hid_t dset_id;
+            htri_t status = H5Lexists( timestep_group_id, fields_names[ifield].c_str(), H5P_DEFAULT );
+            if (!status) {
+                hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
+                dset_id  = H5Dcreate( timestep_group_id, fields_names[ifield].c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+                H5Pclose(plist_id);
+            } else {
+                dset_id = H5Dopen( timestep_group_id, fields_names[ifield].c_str(), H5P_DEFAULT);                
+            }
+            
+            // Write
+            writeField(dset_id, timestep);
+            
+            // Close dataset
+            H5Dclose( dset_id );
         }
-        
-        // Write
-        writeField(dset_id, timestep);
-        
-        // Close dataset
-        H5Dclose( dset_id );
     }
     
+    #pragma omp master
     H5Gclose(timestep_group_id);
     
     // Final loop on patches to zero RhoJs
     if (fields_indexes.size()>0)
+        #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
             vecPatches(ipatch)->EMfields->restartRhoJs();
     

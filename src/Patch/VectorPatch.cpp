@@ -252,6 +252,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     
     // Global diags: scalars + particles
     timer[3].restart();
+    #pragma omp single
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
         if( globalDiags[idiag]->prepare( itime ) ) {
             // All patches run
@@ -272,10 +273,12 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
         if( localDiags[idiag]->prepare( itime ) ) {
             // All MPI open the file
+            #pragma omp single
             localDiags[idiag]->openFile( params, smpi, false );
             // All MPI run their stuff and write out
             localDiags[idiag]->run( smpi, *this, itime );
             // All MPI close the file
+            #pragma omp single
             localDiags[idiag]->closeFile();
         }
     }

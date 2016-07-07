@@ -262,7 +262,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
                     Utot_crtField+=pow((**field)(ii),2);
                 }
             }
-        }        
+        }
         // Utot = Dx^N/2 * Field^2
         Utot_crtField *= 0.5*cell_volume;
         
