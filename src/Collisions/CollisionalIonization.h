@@ -22,9 +22,9 @@ public:
     virtual ~CollisionalIonization() {};
     
     //! Initializes the arrays in the database and returns the index of these arrays in the DB
-    virtual int createDatabase(double);
+    virtual unsigned int createDatabase(double);
     //! Assigns the correct databases
-    virtual void assignDatabase(int);
+    virtual void assignDatabase(unsigned int);
     
     //! Gets the k-th binding energy of any neutral or ionized atom with atomic number Z and charge Zstar
     double binding_energy(int Zstar, int k);
@@ -56,7 +56,7 @@ public:
     Particles new_electrons;
     
     //! Index of the atomic number in the databases
-    int dataBaseIndex;
+    unsigned int dataBaseIndex;
 
 private:
 
@@ -107,8 +107,8 @@ public:
     CollisionalNoIonization() : CollisionalIonization(0,0,0.) {};
     ~CollisionalNoIonization(){};
     
-    virtual int  createDatabase(double) { return 0; };
-    virtual void assignDatabase(int) {};
+    virtual unsigned int createDatabase(double) { return 0; };
+    virtual void assignDatabase(unsigned int) {};
     
     void prepare2(Particles*, int, Particles*, int, bool){};
     void prepare3(double, int){};

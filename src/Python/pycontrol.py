@@ -65,16 +65,24 @@ def _smilei_check():
 # this function will be called after initialising the simulation, just before entering the time loop
 # if it returns false, the code will call a Py_Finalize();
 def _keep_python_running():
+    def isCustomProfile(prof):
+        if callable(prof) and not hasattr(prof,"profileName"):
+            return True
     for las in Laser:
-        for prof in [las.time_envelope, las.chirp_profile]:
-            if callable(prof) and not hasattr(prof,"profileName"): return True
+        if isCustomProfile(las.time_envelope): return True
+        if isCustomProfile(las.chirp_profile): return True
     for ant in Antenna:
-        prof = ant.time_profile
-        if callable(prof) and not hasattr(prof,"profileName"): return True
-    
-    if len(MovingWindow)>0:
-        return True
-    
+        if isCustomProfile(ant.time_profile ): return True
+    if len(MovingWindow)>0 or len(LoadBalancing)>0:
+        for s in Species:
+            if isCustomProfile(s.nb_density     ): return True
+            if isCustomProfile(s.charge_density ): return True
+            if isCustomProfile(s.n_part_per_cell): return True
+            if isCustomProfile(s.charge         ): return True
+            for p in s.mean_velocity:
+                if isCustomProfile(p): return True
+            for p in s.temperature:
+                if isCustomProfile(p): return True
     return False
 
 # Prevent creating new components (by mistake)

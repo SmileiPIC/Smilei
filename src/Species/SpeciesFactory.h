@@ -231,8 +231,12 @@ public:
         // Extract test Species flag
         PyTools::extract("isTest", thisSpecies->particles->isTest, "Species", ispec);
         
+        // Verify they don't ionize
+        if (thisSpecies->ionization_model!="none" && thisSpecies->particles->isTest) {
+            ERROR("For species '" << species_type << "' test & ionized is currently impossible");
+        }
         
-        // get parameter "track_every" which describes a timestep selection
+        // Get parameter "track_every" which describes a timestep selection
         std::ostringstream name("");
         name << "Tracking species '" << species_type << "'";
         thisSpecies->particles->track_timeSelection = new TimeSelection(
@@ -240,11 +244,8 @@ public:
             name.str()
         );
         thisSpecies->particles->tracked = ! thisSpecies->particles->track_timeSelection->isEmpty();
-        
-        // Verify they don't ionize
-        if (thisSpecies->ionization_model!="none" && thisSpecies->particles->isTest) {
-            ERROR("For species '" << species_type << "' test & ionized is currently impossible");
-        }
+        // Get parameter "track_ordered" which decides whether the track particle dumps are ordered by Id
+        PyTools::extract("track_ordered", thisSpecies->particles->track_ordered, "Species", ispec);
         
         // Create the particles
         if (!params.restart) {
@@ -303,10 +304,11 @@ public:
         newSpecies->temperatureProfile[0] = new Profile(species->temperatureProfile[0]);
         newSpecies->temperatureProfile[1] = new Profile(species->temperatureProfile[1]);
         newSpecies->temperatureProfile[2] = new Profile(species->temperatureProfile[2]);
-        newSpecies->particles->isTest     = species->particles->isTest;
         newSpecies->max_charge            = species->max_charge;
-        newSpecies->particles->tracked    = species->particles->tracked;
         
+        newSpecies->particles->isTest              = species->particles->isTest;
+        newSpecies->particles->tracked             = species->particles->tracked;
+        newSpecies->particles->track_ordered       = species->particles->track_ordered;
         newSpecies->particles->track_timeSelection = new TimeSelection(species->particles->track_timeSelection);
         
         // \todo : NOT SURE HOW THIS BEHAVES WITH RESTART

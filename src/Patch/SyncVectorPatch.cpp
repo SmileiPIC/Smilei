@@ -244,7 +244,7 @@ void SyncVectorPatch::exchange( std::vector<Field*> fields, VectorPatch& vecPatc
 
 void SyncVectorPatch::exchange0( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
-    unsigned int nx_, ny_, h0, oversize[2], n_space[2],gsp;
+    unsigned int ny_, h0, oversize[2], n_space[2],gsp;
     double *pt1,*pt2;
     h0 = vecPatches(0)->hindex;
 
@@ -254,7 +254,6 @@ void SyncVectorPatch::exchange0( std::vector<Field*> fields, VectorPatch& vecPat
     n_space[0] = vecPatches(0)->EMfields->n_space[0];
     n_space[1] = vecPatches(0)->EMfields->n_space[1];
 
-    nx_ = fields[0]->dims_[0];
     ny_ = 1;
     if (fields[0]->dims_.size()>1)
         ny_ = fields[0]->dims_[1];

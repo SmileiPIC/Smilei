@@ -14,7 +14,7 @@
 #include "Ionization.h"
 #include "ElectroMagn.h"
 #include "Profile.h"
-#include "SpeciesMPI.h"
+#include "AsyncMPIbuffers.h"
 
 class ElectroMagn;
 class Pusher;
@@ -31,7 +31,7 @@ class SimWindow;
 class Species
 {
 public:
-    SpeciesMPI specMPI;
+    SpeciesMPIbuffers MPIbuff;
 
     //! Species creator
     Species(Params&, Patch*);
@@ -190,12 +190,12 @@ public:
     std::vector<double> cell_length;
     //! min_loc_vec (copy from picparams)
     std::vector<double> min_loc_vec;
-
+    
     //inline void clearExchList(int tid) {
     //        indexes_of_particles_to_exchange_per_thd[tid].clear();
     //}
     inline void clearExchList() {
-	    indexes_of_particles_to_exchange.clear();
+        indexes_of_particles_to_exchange.clear();
     }
     //inline void addPartInExchList(int tid, int iPart) {
     //    indexes_of_particles_to_exchange_per_thd[tid].push_back(iPart);
@@ -206,7 +206,7 @@ public:
     //std::vector< std::vector<int> > indexes_of_particles_to_exchange_per_thd;
     std::vector<int>                indexes_of_particles_to_exchange;
     //std::vector<int>                new_indexes_of_particles_to_exchange;
-
+    
     //! Method to know if we have to project this species or not.
     bool  isProj(double time_dual, SimWindow* simWindow);
     
@@ -220,14 +220,14 @@ public:
     nrj_new_particles = 0;
     }
     inline void storeNRJlost( double nrj ) { nrj_mw_lost = nrj; };
-
+    
     inline double computeNRJ() {
-	double nrj(0.);
-	for ( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ )
-	    nrj += (*particles).weight(iPart)*((*particles).lor_fac(iPart)-1.0);
-	return nrj;
+        double nrj(0.);
+        for ( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ )
+            nrj += (*particles).weight(iPart)*((*particles).lor_fac(iPart)-1.0);
+        return nrj;
     }
-
+    
     inline int getMemFootPrint() {
         int speciesSize  = ( 2*nDim_particle + 3 + 1 )*sizeof(double) + sizeof(short);
         if ( particles->isTest )

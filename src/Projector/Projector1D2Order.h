@@ -9,9 +9,9 @@ public:
     ~Projector1D2Order();
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
-    void operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* delta);// override final;
+    inline void operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* delta);
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
-    void operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* delta);// override final;
+    inline void operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* delta);
 
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
     void operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim) override final;

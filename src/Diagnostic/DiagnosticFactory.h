@@ -85,7 +85,7 @@ public:
     static std::vector<ProbeParticles*> cloneProbes(std::vector<ProbeParticles*> probes) {
         std::vector<ProbeParticles*> newProbes( 0 );
         
-        for (int n_probe=0; n_probe<probes.size(); n_probe++) {
+        for (unsigned int n_probe=0; n_probe<probes.size(); n_probe++) {
             newProbes.push_back( new ProbeParticles(probes[n_probe]) );
         }
         

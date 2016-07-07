@@ -9,8 +9,8 @@ using namespace std;
 
 // Default constructor.
 Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
-    nvariables(nvariables),
-    profileName("")
+    profileName(""),
+    nvariables(nvariables)
 {
     ostringstream info_("");
     info_ << nvariables << "D";
@@ -352,8 +352,8 @@ double Function_Cosine2D::valueAt(vector<double> x_cell) {
 // Polynomial profiles
 double Function_Polynomial1D::valueAt(vector<double> x_cell) {
     double r = 0., xx0 = x_cell[0]-x0, xx = 1.;
-    int currentOrder = 0;
-    for( int i=0; i<orders.size(); i++ ) {
+    unsigned int currentOrder = 0;
+    for( unsigned int i=0; i<orders.size(); i++ ) {
         while( currentOrder<orders[i] ) {
             currentOrder += 1;
             xx *= xx0;
@@ -365,16 +365,16 @@ double Function_Polynomial1D::valueAt(vector<double> x_cell) {
 double Function_Polynomial2D::valueAt(vector<double> x_cell) {
     double r = 0., xx0 = x_cell[0]-x0, yy0 = x_cell[1]-y0;
     vector<double> xx;
-    int currentOrder = 0;
+    unsigned int currentOrder = 0;
     xx.resize(orders.back()+1);
     xx[0] = 1.;
-    for( int i=0; i<orders.size(); i++ ) {
+    for( unsigned int i=0; i<orders.size(); i++ ) {
         while( currentOrder<orders[i] ) {
             currentOrder += 1;
             xx[currentOrder] = xx[currentOrder-1] * yy0;
-            for( int j=0; j<currentOrder; j++ ) xx[j] *= xx0;
+            for( unsigned int j=0; j<currentOrder; j++ ) xx[j] *= xx0;
         }
-        for( int j=0; j<=orders[i]; j++ ) r += coeffs[i][j] * xx[j];
+        for( unsigned int j=0; j<=orders[i]; j++ ) r += coeffs[i][j] * xx[j];
     }
     return r;
 }
@@ -415,7 +415,7 @@ double Function_TimeCosine::valueAt(double time) {
 double Function_TimePolynomial::valueAt(double time) {
     double r = 0., tt0 = time-t0, tt = 1.;
     int currentOrder = 0;
-    for( int i=0; i<orders.size(); i++ ) {
+    for( unsigned int i=0; i<orders.size(); i++ ) {
         while( currentOrder<orders[i] ) {
             currentOrder += 1;
             tt *= tt0;

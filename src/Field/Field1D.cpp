@@ -60,13 +60,13 @@ void Field1D::allocateDims(std::vector<unsigned int> dims)
     // for Field1D only
     dims_ = dims;
     if (dims.size()!=1) ERROR("Alloc error must be 1 : " << dims.size());
-
+    
     isDual_.resize( dims.size(), 0 );
-
+    
     data_ = new double[ dims_[0] ];
     //! \todo{change to memset (JD)}
     for (unsigned int i=0; i<dims_[0]; i++) data_[i]=0.0;
-
+    
     globalDims_ = dims_[0];
 
 }
@@ -80,9 +80,9 @@ void Field1D::deallocateDims()
 
 void Field1D::allocateDims(unsigned int dims1)
 {
-	vector<unsigned int> dims(1);
-	dims[0]=dims1;
-	allocateDims(dims);
+    vector<unsigned int> dims(1);
+    dims[0]=dims1;
+    allocateDims(dims);
 }
 
 
@@ -95,7 +95,7 @@ void Field1D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim,
     // for Field1D only
     dims_ = dims;
     if (dims.size()!=1) ERROR("Alloc error must be 1 : " << dims.size());
-
+    
     // isPrimal define if mainDim is Primal or Dual
     isDual_.resize( dims.size(), 0 );
     for ( unsigned int j=0 ; j<dims.size() ; j++ ) {
@@ -104,14 +104,14 @@ void Field1D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim,
         else if ( (j!=mainDim) && (isPrimal) )
             isDual_[j] = 1;
     }
-
+    
     for ( unsigned int j=0 ; j<dims.size() ; j++ )
         dims_[j] += isDual_[j];
-
+    
     data_ = new double[ dims_[0] ];
     //! \todo{change to memset (JD)}
     for (unsigned int i=0; i<dims_[0]; i++) data_[i]=0.0;
-
+    
     globalDims_ = dims_[0];
 
 }

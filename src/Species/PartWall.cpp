@@ -92,15 +92,14 @@ PartWalls::PartWalls(Params& params, Patch* patch)
         // Find out wether this proc has the wall or not
         if ( position[iwall] >= patch->getDomainLocalMin(direction[iwall])
           && position[iwall] <= patch->getDomainLocalMax(direction[iwall])) {
-            
-            // Create new wall
-            if (patch->isMaster())
-                MESSAGE(2,"Adding a wall at " << position[iwall] << " in " <<  dirstring << " direction kind:" << kind[iwall] << (kind[iwall]=="thermalize" ? " thermCond" : ""));
             push_back( new PartWall(position[iwall], direction[iwall], kind[iwall]) );
         }
         
+        // Create new wall
+        MESSAGE(2,"Adding a wall at "<<dirstring<<" = "<< position[iwall] << ", kind:" << kind[iwall] << (kind[iwall]=="thermalize" ? " thermCond" : ""));
     }
-    if (!size()) {
+    
+    if (!direction.size()) {
         if (patch->isMaster()) MESSAGE(2,"Nothing to do");
     }
 }
@@ -113,13 +112,11 @@ PartWalls::PartWalls(PartWalls* partWalls, Patch* patch)
     position  = partWalls->position ;
     kind      = partWalls->kind     ;
     
-    for (unsigned int iwall = 0; iwall < partWalls->size(); iwall++) {
-        
+    for (unsigned int iwall = 0; iwall < direction.size(); iwall++) {
         if ( position[iwall] >= patch->getDomainLocalMin(direction[iwall])
           && position[iwall] <= patch->getDomainLocalMax(direction[iwall])) {
             push_back( new PartWall(position[iwall], direction[iwall], kind[iwall]) );
         }
-        
     }
 }
 

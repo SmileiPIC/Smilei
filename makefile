@@ -67,8 +67,7 @@ LDFLAGS+=$(PY_LDFLAGS)
 ifneq (,$(findstring debug,$(config)))
 	CXXFLAGS += -g -pg -Wall -D__DEBUG -O0 # -shared-intel 
 else
-	CXXFLAGS += -O3 # -xHost -ipo
-	SPHINXOPTS = '-W'
+	CXXFLAGS += -O3 #-ipo
 endif
 
 ifneq (,$(findstring scalasca,$(config)))
@@ -93,6 +92,12 @@ ifeq (,$(findstring noopenmp,$(config)))
     #LDFLAGS += -mt_mpi
     CXXFLAGS += $(OPENMPFLAGS)
 endif
+
+
+ifneq (,$(findstring icpc,$(SMILEI_COMPILER)))
+    CXXFLAGS += -xHost -no-vec
+endif
+
 
 clean:
 	rm -f $(OBJS) $(DEPS) $(PYHEADERS)
@@ -138,7 +143,7 @@ scalasca: obsolete
 	make config=scalasca
 
 
-ifeq ($(filter pygenerator doc help clean default tar sphinx,$(MAKECMDGOALS)),) 
+ifeq ($(filter clean help doc tar,$(MAKECMDGOALS)),) 
 # Let's try to make the next lines clear: we include $(DEPS) and pygenerator
 -include $(DEPS) pygenerator
 # and pygenerator will create all the $(PYHEADERS) (which are files)
@@ -146,14 +151,13 @@ pygenerator : $(PYHEADERS)
 endif
 
 
-.PHONY: pygenerator doc help clean default tar sphinx
+.PHONY: pygenerator doc help clean default tar
 
 doc:
 	make -C doc all
 
 sphinx:
-	make SPHINXOPTS=${SPHINXOPTS} -C doc/Sphinx html
-	
+	make -C doc/Sphinx html
 tar:
 	git archive -o smilei-$(VERSION).tgz --prefix smilei-$(VERSION)/ HEAD
 
@@ -169,14 +173,11 @@ help:
 	@echo '     make config="debug noopenmp"'
 	@echo ''
 	@echo 'Environment variables :'
-	@echo "     SMILEICXX     : mpi c++ compiler [${SMILEICXX}]"
-	@echo "     HDF5_ROOT_DIR : HDF5 dir [${HDF5_ROOT_DIR}]"
-	@echo "     BUILD_DIR     : directory used to store build files [${BUILD_DIR}]"
+	@echo '     SMILEICXX     : mpi c++ compiler'
+	@echo '     HDF5_ROOT_DIR : HDF5 dir'
+	@echo '     BUILD_DIR         :directory used to store build files (default: "build")'
 	@echo 
-	@echo 'Other commands :'
-	@echo '     make doc     : builds the documentation'
-	@echo '     make tar     : creates an archive of the sources'
-	@echo '     make clean   : remove build'
-	@echo 
-	@echo 'http://www.maisondelasimulation.fr/smilei'
+	@echo '      make doc     : builds the documentation'
+	@echo '      make tar     : creates an archive of the sources'
+	@echo '      make clean   : remove build'
 

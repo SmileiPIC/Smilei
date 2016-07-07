@@ -128,17 +128,17 @@ isEastern(patch->isEastern())
     for (unsigned int i=0 ; i<nDim_field ; i++) {
         for (int isDual=0 ; isDual<2 ; isDual++)
             bufsize[i][isDual] = n_space[i] + 1;
-
+        
         
         for (int isDual=0 ; isDual<2 ; isDual++) {
             bufsize[i][isDual] += isDual; 
             if ( params.number_of_patches[i]!=1 ) {                
-
+                
                 if ( ( !isDual ) && (patch->Pcoordinates[i]!=0) )
                     bufsize[i][isDual]--;
                 else if  (isDual) {
                     bufsize[i][isDual]--;
-                    if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=params.number_of_patches[i]-1) ) 
+                    if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=(unsigned int)params.number_of_patches[i]-1) ) 
                         bufsize[i][isDual]--;
                 }
                 
@@ -173,13 +173,13 @@ ElectroMagn1D::~ElectroMagn1D()
 void ElectroMagn1D::initPoisson(Patch *patch)
 {
     Field1D* rho1D = static_cast<Field1D*>(rho_);
-
+    
     // Min and max indices for calculation of the scalar product (for primal & dual grid)
     //     scalar products are computed accounting only on real nodes
     //     ghost cells are used only for the (non-periodic) boundaries
     // dual indexes suppressed during "patchization"
     // ----------------------------------------------------------------------------------
-
+    
     index_min_p_.resize(1,0);
     index_max_p_.resize(1,0);
     
@@ -191,14 +191,14 @@ void ElectroMagn1D::initPoisson(Patch *patch)
     if (patch->isEastern()) {
         index_max_p_[0] = nx_p-1;
     }
-
+    
     phi_ = new Field1D(dimPrim);    // scalar potential
     r_   = new Field1D(dimPrim);    // residual vector
     p_   = new Field1D(dimPrim);    // direction vector
     Ap_  = new Field1D(dimPrim);    // A*p vector
-
+    
     double       dx_sq          = dx*dx;
-
+    
     // phi: scalar potential, r: residual and p: direction
     for (unsigned int i=0 ; i<dimPrim[0] ; i++) {
         (*phi_)(i)   = 0.0;

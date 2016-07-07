@@ -70,20 +70,20 @@ void Field2D::allocateDims(std::vector<unsigned int> dims )
     dims_=dims;
     if (dims_.size()!=2) ERROR("Alloc error must be 2 : " << dims.size());
     if (data_!=NULL) delete [] data_;
-	
+
     isDual_.resize( dims.size(), 0 );
-	
+
     data_ = new double[dims_[0]*dims_[1]];
     //! \todo{check row major order!!! (JD)}
-	
+
     data_2D= new double*[dims_[0]];
     for (unsigned int i=0; i<dims_[0]; i++) {
         data_2D[i] = data_ + i*dims_[1];
         for (unsigned int j=0; j<dims_[1]; j++) data_2D[i][j] = 0.0;
     }
-	
+
     globalDims_ = dims_[0]*dims_[1];
-	
+
 }
 
 void Field2D::deallocateDims()
@@ -97,10 +97,10 @@ void Field2D::deallocateDims()
 
 void Field2D::allocateDims(unsigned int dims1, unsigned int dims2)
 {
-	vector<unsigned int> dims(2);
-	dims[0]=dims1;
-	dims[1]=dims2;
-	allocateDims(dims);
+    vector<unsigned int> dims(2);
+    dims[0]=dims1;
+    dims[1]=dims2;
+    allocateDims(dims);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -112,7 +112,7 @@ void Field2D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim,
     dims_=dims;
     if (dims_.size()!=2) ERROR("Alloc error must be 2 : " << dims.size());
     if (data_) delete [] data_;
-
+    
     // isPrimal define if mainDim is Primal or Dual
     isDual_.resize( dims.size(), 0 );
     for ( unsigned int j=0 ; j<dims.size() ; j++ ) {
@@ -121,21 +121,21 @@ void Field2D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim,
         else if ( (j!=mainDim) && (isPrimal) )
             isDual_[j] = 1;
     }
-
+    
     for ( unsigned int j=0 ; j<dims.size() ; j++ )
         dims_[j] += isDual_[j];
-
+    
     data_ = new double[dims_[0]*dims_[1]];
     //! \todo{check row major order!!! (JD)}
-
+    
     data_2D= new double*[dims_[0]];
     for (unsigned int i=0; i<dims_[0]; i++)  {
         data_2D[i] = data_ + i*dims_[1];
         for (unsigned int j=0; j<dims_[1]; j++) data_2D[i][j] = 0.0;
     }
-
+    
     globalDims_ = dims_[0]*dims_[1];
-
+    
 }
 
 
@@ -160,20 +160,18 @@ void Field2D::shift_x(unsigned int delta)
 
 double Field2D::norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]) {
     double nrj(0.);
-
+    
     int idxlocalstart[2];
     int idxlocalend[2];
     for ( int i=0 ; i<2 ; i++ ) {
-	idxlocalstart[i] = istart[i][isDual_[i]];
-	idxlocalend[i]   = istart[i][isDual_[i]]+bufsize[i][isDual_[i]];
+        idxlocalstart[i] = istart[i][isDual_[i]];
+        idxlocalend[i]   = istart[i][isDual_[i]]+bufsize[i][isDual_[i]];
     }
     
-
     for ( int i=idxlocalstart[0] ; i<idxlocalend[0] ; i++ ) {
-	for ( int j=idxlocalstart[1] ; j<idxlocalend[1] ; j++ ) {
-	    nrj += data_2D[i][j]*data_2D[i][j];
-
-	}
+        for ( int j=idxlocalstart[1] ; j<idxlocalend[1] ; j++ ) {
+             nrj += data_2D[i][j]*data_2D[i][j];
+        }
     }
     
     return nrj;

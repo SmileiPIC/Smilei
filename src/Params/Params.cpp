@@ -236,12 +236,12 @@ namelist("")
     if ( !PyTools::extract("number_of_patches", number_of_patches, "Main") ) {
         ERROR("The parameter `number_of_patches` must be defined as a list of integers");
     }
-    for ( int iDim=0 ; iDim<nDim_field ; iDim++ )
-        if( (number_of_patches[iDim] & number_of_patches[iDim]-1) != 0)
+    for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ )
+        if( (number_of_patches[iDim] & (number_of_patches[iDim]-1)) != 0)
             ERROR("Number of patches in each direction must be a power of 2");
     
     tot_number_of_patches = 1;
-    for ( int iDim=0 ; iDim<nDim_field ; iDim++ )
+    for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ )
         tot_number_of_patches *= number_of_patches[iDim];
     
     if ( tot_number_of_patches == smpi->getSize() ){
@@ -344,6 +344,10 @@ void Params::compute()
         if(n_space_global[i]%number_of_patches[i] !=0) ERROR("ERROR in dimension " << i <<". Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i]);
         if ( n_space[i] <= 2*oversize[i] ) ERROR ( "ERROR in dimension " << i <<". Patches length = "<<n_space[i] << " cells must be at least " << 2*oversize[i] +1 << " cells long. Increase number of cells or reduce number of patches in this direction. " );
     }
+    
+    // Verify that clrw divides n_space[0]
+    if( n_space[0]%clrw != 0 )
+        ERROR("The parameter clrw must divide the number of cells in one patch (in dimension x)");
 
 }
 

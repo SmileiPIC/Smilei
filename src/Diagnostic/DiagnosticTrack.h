@@ -29,6 +29,10 @@ public :
     void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) override;
     
 private :
+    
+    //! True if must be ordered by ID in the file
+    bool track_ordered;
+    
     //! Flag to test whether IDs have been set already
     bool IDs_done;
     
@@ -46,7 +50,7 @@ private :
     hid_t mem_space;
      
     //! Number of spatial dimensions
-    int nDim_particle;
+    unsigned int nDim_particle;
     
     //! list of datasets to be added to the file
     std::vector<std::string> datasets;

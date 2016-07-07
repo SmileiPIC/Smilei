@@ -140,13 +140,9 @@ int main (int argc, char* argv[])
         timer[4].reboot();
         timer[9].reboot();
         
-        #pragma omp single
-        {
-        if( vecPatches.hasAntennas )
+        if( vecPatches.nAntennas>0 )
             TITLE("Applying antennas at time t = " << 0.5 * params.timestep);
-            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
-                vecPatches(ipatch)->EMfields->applyAntennas(smpiData, 0.5 * params.timestep); // smpi useless
-        }
+            vecPatches.applyAntennas(0.5 * params.timestep);
         
         // Init electric field (Ex/1D, + Ey/2D)
         if (!vecPatches.isRhoNull(smpiData)) {
@@ -172,15 +168,18 @@ int main (int argc, char* argv[])
     timer[0].reboot();
     
     // ------------------------------------------------------------------------
+    // check here if we can close the python interpreter
+    // ------------------------------------------------------------------------
+    TITLE("Cleaning up python runtime environement");
+    params.cleanup(smpiData);
+    
+    // ------------------------------------------------------------------------
     // Check memory consumption
     // ------------------------------------------------------------------------
     check_memory_consumption( vecPatches, smpiData );
     
-    // Define for some patch diags
-    //int partperMPI;
-    //int npatchmoy=0, npartmoy=0;
     double old_print_time(0.), this_print_time;
-
+     
     // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)
     unsigned int latestTimeStep=checkpoint.this_run_start_step;
     bool exit(false);
@@ -264,12 +263,7 @@ int main (int argc, char* argv[])
             vecPatches.sumDensities( &diag_flag, timer );
             
             // apply currents from antennas
-            #pragma omp single
-            {
-            if( vecPatches.hasAntennas )
-                for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
-                    vecPatches(ipatch)->EMfields->applyAntennas(smpiData, time_dual);
-            }
+            vecPatches.applyAntennas(time_dual);
             
             /*******************************************/
             /*********** Maxwell solver ****************/
@@ -313,33 +307,8 @@ int main (int argc, char* argv[])
         
         if ((itime%params.balancing_every == 0)&&(smpiData->getSize()!=1)) {
             timer[7].restart();
-            //partperMPI = 0;
-            //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
-            //    for (unsigned int ispec=0 ; ispec < vecPatches(0)->vecSpecies.size() ; ispec++)
-            //        partperMPI += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
-            //}
-            //partperMPI = 0;
-            
-            smpiData->recompute_patch_count( params, vecPatches, time_dual );
-            
-            vecPatches.createPatches(params, smpiData, simWindow);
-            
-            vecPatches.exchangePatches(smpiData, params);
-            //for (unsigned int irank=0 ; irank<smpiData->getSize() ; irank++){
-            //    if(smpiData->getRank() == irank){
-            //        vecPatches.output_exchanges(smpiData);
-            //    }
-            //    smpiData->barrier();
-            //}
-            
-            //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
-            //    for (unsigned int ispec=0 ; ispec < vecPatches(0)->vecSpecies.size() ; ispec++)
-            //        partperMPI += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
-            //}
-            //npatchmoy += vecPatches.size();
-            //npartmoy += partperMPI;
+            vecPatches.load_balance( params, time_dual, smpiData, simWindow );
             timer[7].update();
-            
         }
         
         latestTimeStep = itime;
@@ -352,12 +321,6 @@ int main (int argc, char* argv[])
     //                      HERE ENDS THE PIC LOOP
     // ------------------------------------------------------------------
     TITLE("End time loop, time dual = " << time_dual);
-    
-    // ------------------------------------------------------------------------
-    // check here if we can close the python interpreter
-    // ------------------------------------------------------------------------
-    TITLE("Cleaning up python runtime environement");
-    params.cleanup(smpiData);
     
     //double timElapsed=smpiData->time_seconds();
     //if ( smpiData->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
@@ -407,11 +370,11 @@ void print_parallelism_params(Params& params, SmileiMPI* smpi)
     TITLE("MPI");
     MESSAGE(1,"Number of MPI process : " << smpi->getSize() );
     MESSAGE(1,"Number of patches : " );
-    for (int iDim=0 ; iDim<params.nDim_field ; iDim++) 
+    for (unsigned int iDim=0 ; iDim<params.nDim_field ; iDim++) 
         MESSAGE(2, "dimension " << iDim << " - number_of_patches : " << params.number_of_patches[iDim] );
 
     MESSAGE(1, "Patch size :");
-    for (int iDim=0 ; iDim<params.nDim_field ; iDim++) 
+    for (unsigned int iDim=0 ; iDim<params.nDim_field ; iDim++) 
         MESSAGE(2, "dimension " << iDim << " - n_space : " << params.n_space[iDim] << " cells.");        
 
     MESSAGE(1, "Dynamic load balancing frequency: every " << params.balancing_every << " iterations." );
@@ -419,11 +382,11 @@ void print_parallelism_params(Params& params, SmileiMPI* smpi)
     // setup OpenMP
     TITLE("OpenMP");
 #ifdef _OPENMP
-    int nthds(0);
-#pragma omp parallel shared(nthds)
-    {
-        nthds = omp_get_num_threads();
-    }
+//    int nthds(0);
+//#pragma omp parallel shared(nthds)
+//    {
+//        nthds = omp_get_num_threads();
+//    }
     if (smpi->isMaster())
         MESSAGE(1,"Number of thread per MPI process : " << omp_get_max_threads() );
 #else

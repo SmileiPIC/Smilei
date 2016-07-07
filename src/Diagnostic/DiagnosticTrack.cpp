@@ -8,8 +8,8 @@
 using namespace std;
 
 DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int speciesId ) :
-nDim_particle(params.nDim_particle),
-IDs_done( params.restart )
+IDs_done( params.restart ),
+nDim_particle(params.nDim_particle)
 {
     speciesId_ = speciesId;
     Species* species = patch->vecSpecies[speciesId_];
@@ -20,6 +20,9 @@ IDs_done( params.restart )
     
     // Get the time selection from the particles
     timeSelection = species->particles->track_timeSelection;
+    
+    // Get the track_ordered parameter from the particles
+    track_ordered = species->particles->track_ordered;
     
     // Create the filename
     ostringstream hdf_filename("");
@@ -40,7 +43,7 @@ IDs_done( params.restart )
     datasets.push_back( "Momentum-2" );
     datatypes.push_back( H5T_NATIVE_DOUBLE );
     ostringstream name;
-    for (int idim=0 ; idim<nDim_particle ; idim++) {
+    for (unsigned int idim=0 ; idim<nDim_particle ; idim++) {
         name.str("");
         name << "Position-" << idim;
         datasets.push_back( name.str() );
@@ -65,10 +68,6 @@ void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
         H5Pclose(pid);
         
-        // Define maximum size
-        //hsize_t maxDimsPart[2] = {H5S_UNLIMITED, (hsize_t)nParticles};
-        
-        //hid_t file_space = H5Screate_simple(2, dims, NULL);
         // Define maximum size
         hsize_t maxDimsPart[2] = {H5S_UNLIMITED, (hsize_t)nbrParticles_};
         hid_t file_space = H5Screate_simple(2, dims, maxDimsPart);   
@@ -143,7 +142,7 @@ void DiagnosticTrack::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatc
         // 1 - Internal patches offset
         
         int localNbrParticles = 0;
-        for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
             vecPatches(ipatch)->vecSpecies[speciesId_]->particles->addIdOffsets(localNbrParticles);
             localNbrParticles += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
         }
@@ -203,29 +202,48 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
     // Obtain the particle partition of all the patches in this MPI
     patch_start.resize( vecPatches.size() );
     int nParticles = 0;
-    for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         patch_start[ipatch] = nParticles;
         nParticles += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
     }
     
-    // Build the "locator", an array indicating where each particle goes in the final array
-    vector<hsize_t> locator (nParticles*2);
-    for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        Particles* particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
-        int np=particles->size(), i=0, j=patch_start[ipatch];
-        while( i<np ) {
-            locator[j*2  ] = dims[0]-1;
-            locator[j*2+1] = particles->id(i)-1; // because particles label Id starts at 1
-            i++; j++;
+    vector<hsize_t> locator;
+    hsize_t start[2], stride[2], count[2], block[2];
+    if(track_ordered) {
+        // Build the "locator", an array indicating where each particle goes in the final array
+        locator.resize(nParticles*2);
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+            Particles* particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
+            int np=particles->size(), i=0, j=patch_start[ipatch];
+            while( i<np ) {
+                locator[j*2  ] = dims[0]-1;
+                locator[j*2+1] = particles->id(i)-1; // because particles label Id starts at 1
+                i++; j++;
+            }
         }
+    } else {
+        // Get the number of particles for each MPI
+        int sz = smpi->getSize();
+        std::vector<int> all_nPart(sz, 0);
+        MPI_Allgather( &nParticles, 1, MPI_INT, &all_nPart[0], 1, MPI_INT, MPI_COMM_WORLD );
+        
+        // Calculate the cumulative sum
+        int offset=0;
+        for (int irk=1; irk<smpi->getRank(); irk++) offset += all_nPart[irk-1];
+        
+        // Prepare the hyperslab selection
+        start [0]=dims[0]-1; start [1]=offset;
+        stride[0]=1        ; stride[1]=1     ;
+        count [0]=1        ; count [1]=1     ;
+        block [0]=1        ; block [1]=nParticles;
     }
     
     // Specify the memory dataspace (the size of the local array)
-    hsize_t count[1] = {(hsize_t)nParticles};
-    mem_space = H5Screate_simple(1, count, NULL);
+    hsize_t count_[1] = {(hsize_t)nParticles};
+    mem_space = H5Screate_simple(1, count_, NULL);
     
     // For each dataset
-    for( int idset=0; idset<datasets.size(); idset++) {
+    for( unsigned int idset=0; idset<datasets.size(); idset++) {
         
         // Fill the buffer for the current patch
         unsigned int patch_nParticles, i, j;
@@ -301,10 +319,14 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
         hid_t file_space = H5Dget_space(did);
         
         // Select locations that this proc will write
-        if(nParticles>0)
-            H5Sselect_elements( file_space, H5S_SELECT_SET, nParticles, &locator[0] );
-        else
+        if(nParticles>0) {
+            if(track_ordered)
+                H5Sselect_elements( file_space, H5S_SELECT_SET, nParticles, &locator[0] );
+            else
+                H5Sselect_hyperslab(file_space, H5S_SELECT_SET, &start[0], &stride[0], &count[0], &block[0] );
+        } else {
             H5Sselect_none(file_space);
+        }
         
         // Write
         if( idset == 0 ) {

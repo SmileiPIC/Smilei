@@ -16,19 +16,19 @@ public:
     Interpolator2D2Order(Params&, Patch*);
     ~Interpolator2D2Order() override final {};
 
-    void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc) override final ;
+    inline void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc);
     void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread) override final ;
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc) override final ;
 
     inline double compute( double* coeffx, double* coeffy, Field2D* f, int idx, int idy) {
-	double interp_res(0.);
+        double interp_res(0.);
         //unroll ?
-	for (int iloc=-1 ; iloc<2 ; iloc++) {
-	    for (int jloc=-1 ; jloc<2 ; jloc++) {
+        for (int iloc=-1 ; iloc<2 ; iloc++) {
+            for (int jloc=-1 ; jloc<2 ; jloc++) {
                 interp_res += *(coeffx+iloc) * *(coeffy+jloc) * (*f)(idx+iloc,idy+jloc);
-	    }
-	}
-	return interp_res;
+            }
+        }
+        return interp_res;
     };  
 
 private:

@@ -97,7 +97,7 @@ bool DiagnosticScalar::prepare( int timestep )
 {
     // At the right timestep, zero-out the scalars
     if ( printNow(timestep) || timeSelection->theTimeIsNow(timestep) )
-        for (int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
+        for (unsigned int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
             out_value[iscalar] = 0.;
     
     // Scalars always run even if they don't dump
