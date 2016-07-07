@@ -73,7 +73,7 @@ def _keep_python_running():
         if isCustomProfile(las.chirp_profile): return True
     for ant in Antenna:
         if isCustomProfile(ant.time_profile ): return True
-    if len(MovingWindow)>0:
+    if len(MovingWindow)>0 or len(LoadBalancing)>0:
         for s in Species:
             if isCustomProfile(s.nb_density     ): return True
             if isCustomProfile(s.charge_density ): return True

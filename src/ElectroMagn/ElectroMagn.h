@@ -258,7 +258,7 @@ public:
     std::vector<Antenna> antennas;
     
     //! Method used to impose external currents (aka antennas)
-    void applyAntennas(SmileiMPI*, double time);
+    void applyAntenna(unsigned int iAntenna, double intensity);
     
     //! Method that fills the initial spatial profile of the antenna
     virtual void initAntennas(Patch* patch) {};
