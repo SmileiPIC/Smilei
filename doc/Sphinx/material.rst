@@ -8,7 +8,7 @@ Publications
   | in preparation
 * | M. Chiaramello, C. Riconda, F. Amiranoff, J. Fuchs, M. Grech, L. Lancia, J.-R. Marquès, T. Vinci and S. Weber,
   | *Optimization of interaction conditions for efficient short laser pulse amplification by Stimulated Brillouin Scattering in the Strongly Coupled regime*,
-  | submitted to Phys. Plasmas.
+  | `Phys. Plasmas 23, 072103 (2016) <http://scitation.aip.org/content/aip/journal/pop/23/7/10.1063/1.4955322>`_
 * | A. Beck, J. Trier Frederiksen and J. Derouillat, 
   | *Load management strategy for Particle-In-Cell simulations in high energy physics*, 
   | `Nucl. Inst. Meth. in Phys. Res. A (2016) <http://www.sciencedirect.com/science/article/pii/S0168900216301577>`_
