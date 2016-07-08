@@ -190,7 +190,7 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         return;
     }
     
-    timestep_group_id = H5Gcreate(fileId_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    timestep_group_id = H5::group(fileId_, name_t.str().c_str());
     
     // For each field, combine all patches and write out
     for( unsigned int ifield=0; ifield < fields_indexes.size(); ifield++ ) {
