@@ -134,11 +134,7 @@ void DiagnosticProbes::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         H5::attr(fileId_, "CommitDate", string(__COMMITDATE));
         
         // Dimension of the probe grid
-        hid_t sid = H5Screate(H5S_SCALAR);        
-        hid_t aid = H5Acreate(fileId_, "dimension", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(aid, H5T_NATIVE_UINT, &dimProbe);
-        H5Aclose(aid);
-        H5Sclose(sid);
+        H5::attr(fileId_, "dimension", dimProbe);
         
         // Add arrays "p0", "p1", ...
         ostringstream pk;

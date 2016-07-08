@@ -165,7 +165,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
         ostringstream patch_name("");
         patch_name << setfill('0') << setw(6) << vecPatches(ipatch)->Hindex();
         string patchName="patch-"+patch_name.str();
-        hid_t patch_gid = H5Gcreate(fid, patchName.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        hid_t patch_gid = H5::group(fid, patchName.c_str());
         
         dumpPatch( vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, patch_gid );
         
