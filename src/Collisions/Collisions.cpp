@@ -23,7 +23,6 @@ Collisions::Collisions(
     double coulomb_log, 
     bool intra_collisions,
     int debug_every,
-    unsigned int nbins,
     int Z,
     bool ionizing,
     int nDim,
@@ -244,7 +243,6 @@ vector<Collisions*> Collisions::create(Params& params, Patch* patch, vector<Spec
                 sgroup[1],
                 clog, intra,
                 debug_every,
-                vecSpecies[0]->bmin.size(),
                 Z,
                 ionizing,
                 params.nDim_particle,
@@ -273,8 +271,8 @@ vector<Collisions*> Collisions::clone(vector<Collisions*> vecCollisions, Params&
 
 
 // Declare other static variables here
-bool               Collisions::debye_length_required;
-vector<double>     Collisions::debye_length_squared;
+bool   Collisions::debye_length_required;
+double Collisions::debye_length_squared;
 
 
 
@@ -283,69 +281,55 @@ vector<double>     Collisions::debye_length_squared;
 void Collisions::calculate_debye_length(Params& params, vector<Species*>& vecSpecies)
 {
 
-    // get info on particle binning
-    unsigned int nbins = vecSpecies[0]->bmin.size(); // number of bins
     unsigned int nspec = vecSpecies.size(); // number of species
-    unsigned int bmin, bmax;
     double p2, density, density_max, charge, temperature, rmin2;
     Species   * s;
     Particles * p;
     double coeff = 299792458./(3.*params.referenceAngularFrequency_SI*2.8179403267e-15); // c / (3 omega re)
     
-    debye_length_squared.resize(nbins);
-    
-    // Loop on bins
-    //! \todo Make OpenMP parallelization (MF & JD)
-    for (unsigned int ibin=0 ; ibin<nbins ; ibin++) {
-        
-        density_max = 0.;
-        debye_length_squared[ibin] = 0.;
-        for (unsigned int ispec=0 ; ispec<nspec ; ispec++) { // loop all species
-            // Calculation of particles density, mean charge, and temperature
-            // Density is the sum of weights
-            // Temperature basic definition is the average <v*p> divided by 3
-            //    (instead of v*p, we use p^2/gamma)
-            s  = vecSpecies[ispec];
-            p  = (s->particles);
-            bmin = s->bmin[ibin];
-            bmax = s->bmax[ibin];
-            density     = 0.;
-            charge      = 0.;
-            temperature = 0.;
-            // loop particles to calculate average quantities
-            for (unsigned int iPart=bmin ; iPart<bmax ; iPart++ ) {
-                p2 = pow(p->momentum(0,iPart),2)+pow(p->momentum(1,iPart),2)+pow(p->momentum(2,iPart),2);
-                density     += p->weight(iPart);
-                charge      += p->weight(iPart) * p->charge(iPart);
-                temperature += p->weight(iPart) * p2/sqrt(1.+p2);
-            }
-            if (density <= 0.) continue;
-            charge /= density; // average charge
-            temperature *= (s->mass) / (3.*density); // Te in units of me*c^2
-            density /= params.n_cell_per_cluster; // density in units of critical density
-            // compute inverse debye length squared
-            if (temperature>0.) debye_length_squared[ibin] += density*charge*charge/temperature;
-            // compute maximum density of species
-            if (density>density_max) density_max = density;
+    density_max = 0.;
+    debye_length_squared = 0.;
+    for (unsigned int ispec=0 ; ispec<nspec ; ispec++) { // loop all species
+        // Calculation of particles density, mean charge, and temperature
+        // Density is the sum of weights
+        // Temperature basic definition is the average <v*p> divided by 3
+        //    (instead of v*p, we use p^2/gamma)
+        s  = vecSpecies[ispec];
+        p  = (s->particles);
+        density     = 0.;
+        charge      = 0.;
+        temperature = 0.;
+        // loop particles to calculate average quantities
+        for (unsigned int iPart=0 ; iPart<p->size() ; iPart++ ) {
+            p2 = pow(p->momentum(0,iPart),2)+pow(p->momentum(1,iPart),2)+pow(p->momentum(2,iPart),2);
+            density     += p->weight(iPart);
+            charge      += p->weight(iPart) * p->charge(iPart);
+            temperature += p->weight(iPart) * p2/sqrt(1.+p2);
         }
-        
-        // if there were particles, 
-        if (debye_length_squared[ibin] > 0.) {
-            // compute debye length squared in code units
-            debye_length_squared[ibin] = 1./(debye_length_squared[ibin]);
-            // apply lower limit to the debye length (minimum interatomic distance)
-            rmin2 = pow(coeff*density_max, -2./3.);
-            if (debye_length_squared[ibin] < rmin2) debye_length_squared[ibin] = rmin2;
-        }
-        
+        if (density <= 0.) continue;
+        charge /= density; // average charge
+        temperature *= (s->mass) / (3.*density); // Te in units of me*c^2
+        density /= (double)params.n_cell_per_patch; // density in units of critical density
+        // compute inverse debye length squared
+        if (temperature>0.) debye_length_squared += density*charge*charge/temperature;
+        // compute maximum density of species
+        if (density>density_max) density_max = density;
     }
+    
+    // if there were particles, 
+    if (debye_length_squared > 0.) {
+        // compute debye length squared in code units
+        debye_length_squared = 1./(debye_length_squared);
+        // apply lower limit to the debye length (minimum interatomic distance)
+        rmin2 = pow(coeff*density_max, -2./3.);
+        if (debye_length_squared < rmin2) debye_length_squared = rmin2;
+    }
+    
+    
     
 #ifdef  __DEBUG
     // calculate and print average debye length
-    double mean_debye_length = 0.;
-    for (unsigned int ibin=0 ; ibin<nbins ; ibin++)
-        mean_debye_length += sqrt(debye_length_squared[ibin]);
-    mean_debye_length /= (double)nbins;
+    double mean_debye_length = sqrt(debye_length_squared);
     //DEBUG("Mean Debye length in code length units = " << scientific << setprecision(3) << mean_debye_length);
     mean_debye_length *= 299792458./params.referenceAngularFrequency_SI; // switch to SI
     DEBUG("Mean Debye length in meters = " << scientific << setprecision(3) << mean_debye_length );
@@ -376,8 +360,7 @@ void Collisions::createTimestep(int itime)
 void Collisions::collide(Params& params, Patch* patch, int itime)
 {
 
-    unsigned int nbins = patch->vecSpecies[0]->bmin.size(); // number of bins
-    vector<unsigned int> *sg1, *sg2, *sgtmp, bmin1, bmax1, bmin2, bmax2, index1, index2;
+    vector<unsigned int> *sg1, *sg2, *sgtmp, index1, index2;
     unsigned int nspec1, nspec2; // numbers of species in each group
     unsigned int npart1, npart2; // numbers of macro-particles in each group
     unsigned int npairs; // number of pairs of macro-particles
@@ -392,7 +375,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime)
            vcv1, vcv2, px_COM, py_COM, pz_COM, p2_COM, p_COM, gamma1_COM, gamma2_COM,
            logL, bmin, s, vrel, smax,
            cosX, sinX, phi, sinXcosPhi, sinXsinPhi, p_perp, inv_p_perp, 
-           newpx_COM, newpy_COM, newpz_COM, U, vcp, n_cluster_per_cell;
+           newpx_COM, newpy_COM, newpz_COM, U, vcp, n_patch_per_cell;
     bool not_duplicated_particle;
     double smean, logLmean, ncol;//, *temperature
     ostringstream name;
@@ -408,254 +391,236 @@ void Collisions::collide(Params& params, Patch* patch, int itime)
         smean       = 0.;
         logLmean    = 0.;
         //temperature = 0.;
-        ncol        = 0.;
     }
     
     // Initialize some stuff
     twoPi = 2. * M_PI;
     coeff1 = 4.046650232e-21*params.referenceAngularFrequency_SI; // h*omega/(2*me*c^2)
     coeff2 = 2.817940327e-15*params.referenceAngularFrequency_SI/299792458.; // re omega / c
-    n_cluster_per_cell = 1./((double)params.n_cell_per_cluster);
+    n_patch_per_cell = 1./((double)params.n_cell_per_patch);
     
-    // Loop on bins
-    for (unsigned int ibin=0 ; ibin<nbins ; ibin++) {
-        
-        // get bin start/end for all necessary species, and number of particles
-        for (unsigned int i=0; i<2; i++) { // try twice to ensure group 1 has more macro-particles
-            nspec1 = sg1->size();
-            nspec2 = sg2->size();
-            bmin1.resize(nspec1); // bin starting point, for each of species group 1
-            np1  .resize(nspec1); // number of particles in that bin
-            bmin2.resize(nspec2); // bin starting point, for each of species group 2
-            np2  .resize(nspec2); // number of particles in that bin
-            npart1 = 0; npart2 = 0;
-            for (ispec1=0 ; ispec1<nspec1 ; ispec1++) {
-                s1 = patch->vecSpecies[(*sg1)[ispec1]];
-                bmin1[ispec1] = s1->bmin[ibin];
-                np1[ispec1] = s1->bmax[ibin] - bmin1[ispec1];
-                npart1 += np1[ispec1];
-            }
-            for (ispec2=0 ; ispec2<nspec2 ; ispec2++) {
-                s2 = patch->vecSpecies[(*sg2)[ispec2]];
-                bmin2[ispec2] = s2->bmin[ibin];
-                np2[ispec2] =  s2->bmax[ibin] - bmin2[ispec2];
-                npart2 += np2[ispec2];
-            }
-            if (npart2 <= npart1) break; // ok if group1 has more macro-particles
-            else { // otherwise, we exchange groups and try again
-                sgtmp = sg1; sg1 = sg2; sg2 = sgtmp;
-            }
+    // get number of particles for all necessary species
+    for (unsigned int i=0; i<2; i++) { // try twice to ensure group 1 has more macro-particles
+        nspec1 = sg1->size();
+        nspec2 = sg2->size();
+        np1.resize(nspec1); // number of particles in each species of group 1
+        np2.resize(nspec2); // number of particles in each species of group 2
+        npart1 = 0;
+        npart2 = 0;
+        for (ispec1=0 ; ispec1<nspec1 ; ispec1++) {
+            np1[ispec1] = patch->vecSpecies[(*sg1)[ispec1]]->particles->size();
+            npart1 += np1[ispec1];
         }
-        // now group1 has more macro-particles than group2
+        for (ispec2=0 ; ispec2<nspec2 ; ispec2++) {
+            np2[ispec2] = patch->vecSpecies[(*sg2)[ispec2]]->particles->size();
+            npart2 += np2[ispec2];
+        }
+        if (npart2 <= npart1) break; // ok if group1 has more macro-particles
+        else { // otherwise, we exchange groups and try again
+            sgtmp = sg1; sg1 = sg2; sg2 = sgtmp;
+        }
+    }
+    // now group1 has more macro-particles than group2
+    
+    // skip to next bin if no particles
+    if (npart1==0 || npart2==0) return;
+    
+    // Shuffle particles to have random pairs
+    //    (It does not really exchange them, it is just a temporary re-indexing)
+    index1.resize(npart1);
+    for (unsigned int i=0; i<npart1; i++) index1[i] = i; // first, we make an ordered array
+    random_shuffle(index1.begin(), index1.end()); // shuffle the index array
+    if (intra_collisions) { // In the case of collisions within one species
+        npairs = (int) ceil(((double)npart1)/2.); // half as many pairs as macro-particles
+        index2.resize(npairs);
+        for (unsigned int i=0; i<npairs; i++) index2[i] = index1[(i+npairs)%npart1]; // index2 is second half
+        index1.resize(npairs); // index1 is first half
+        N2max = npart1 - npairs; // number of not-repeated particles (in group 2 only)
+    } else { // In the case of collisions between two species
+        npairs = npart1; // as many pairs as macro-particles in group 1 (most numerous)
+        index2.resize(npairs);
+        for (unsigned int i=0; i<npart1; i++) index2[i] = i % npart2;
+        N2max = npart2; // number of not-repeated particles (in group 2 only)
+    }
+    
+    // Prepare the ionization
+    Ionization->prepare1(patch->vecSpecies[(*sg1)[0]]->atomic_number);
+    
+    // Calculate the densities
+    n1  = 0.; // density of group 1
+    n2  = 0.; // density of group 2
+    n12 = 0.; // "hybrid" density
+    for (unsigned int i=0; i<npairs; i++) { // for each pair of particles
+        // find species and index i1 of particle "1"
+        i1 = index1[i];
+        for (ispec1=0 ; i1>=np1[ispec1]; ispec1++) i1 -= np1[ispec1];
+        // find species and index i2 of particle "2"
+        not_duplicated_particle = (i<N2max);
+        i2 = index2[i];
+        for (ispec2=0 ; i2>=np2[ispec2]; ispec2++) i2 -= np2[ispec2];
+        // Pointers to particles
+        p1 = patch->vecSpecies[(*sg1)[ispec1]]->particles;
+        p2 = patch->vecSpecies[(*sg2)[ispec2]]->particles;
+        // sum weights
+        n1  += p1->weight(i1);
+        if( not_duplicated_particle ) n2  += p2->weight(i2); // special case for group 2 to avoid repeated particles
+        n12 += min( p1->weight(i1), p2->weight(i2) );
+        // Same for ionization
+        Ionization->prepare2(p1, i1, p2, i2, not_duplicated_particle);
+    }
+    if( intra_collisions ) { n1 += n2; n2 = n1; }
+    n1  *= n_patch_per_cell;
+    n2  *= n_patch_per_cell;
+    n12 *= n_patch_per_cell;
+    
+    // Pre-calculate some numbers before the big loop
+    n123 = pow(n1,2./3.);
+    n223 = pow(n2,2./3.);
+    coeff3 = params.timestep * n1*n2/n12;
+    coeff4 = pow( 3.*coeff2 , -1./3. ) * coeff3;
+    coeff3 *= coeff2;
+    
+    // Prepare the ionization
+    Ionization->prepare3(params.timestep, n_patch_per_cell);
+    
+    // Now start the real loop on pairs of particles
+    // See equations in http://dx.doi.org/10.1063/1.4742167
+    // ----------------------------------------------------
+    for (unsigned int i=0; i<npairs; i++) {
+    
+        // find species and index i1 of particle "1"
+        i1 = index1[i];
+        for (ispec1=0 ; i1>=np1[ispec1]; ispec1++) i1 -= np1[ispec1];
+        // find species and index i2 of particle "2"
+        i2 = index2[i];
+        for (ispec2=0 ; i2>=np2[ispec2]; ispec2++) i2 -= np2[ispec2];
         
-        // skip to next bin if no particles
-        if (npart1==0 or npart2==0) continue;
+        s1 = patch->vecSpecies[(*sg1)[ispec1]]; s2 = patch->vecSpecies[(*sg2)[ispec2]];
+        p1 = s1->particles;                     p2 = s2->particles;
+        m1 = s1->mass;                          m2 = s2->mass;
+        W1 = p1->weight(i1);                    W2 = p2->weight(i2);
         
-        // Shuffle particles to have random pairs
-        //    (It does not really exchange them, it is just a temporary re-indexing)
-        index1.resize(npart1);
-        for (unsigned int i=0; i<npart1; i++) index1[i] = i; // first, we make an ordered array
-        //! \todo benchmark and improve the shuffling method ?
-        random_shuffle(index1.begin(), index1.end()); // shuffle the index array
-        if (intra_collisions) { // In the case of collisions within one species
-            npairs = (int) ceil(((double)npart1)/2.); // half as many pairs as macro-particles
-            index2.resize(npairs);
-            for (unsigned int i=0; i<npairs; i++) index2[i] = index1[(i+npairs)%npart1]; // index2 is second half
-            index1.resize(npairs); // index1 is first half
-            N2max = npart1 - npairs; // number of not-repeated particles (in group 2 only)
-        } else { // In the case of collisions between two species
-            npairs = npart1; // as many pairs as macro-particles in group 1 (most numerous)
-            index2.resize(npairs);
-            for (unsigned int i=0; i<npart1; i++) index2[i] = i % npart2;
-            N2max = npart2; // number of not-repeated particles (in group 2 only)
+        // Calculate stuff
+        m12  = m1 / m2; // mass ratio
+        qqm  = p1->charge(i1) * p2->charge(i2) / m1;
+        qqm2 = qqm * qqm;
+        
+        // Get momenta and calculate gammas
+        gamma1 = sqrt(1. + pow(p1->momentum(0,i1),2) + pow(p1->momentum(1,i1),2) + pow(p1->momentum(2,i1),2));
+        gamma2 = sqrt(1. + pow(p2->momentum(0,i2),2) + pow(p2->momentum(1,i2),2) + pow(p2->momentum(2,i2),2));
+        gamma12 = m12 * gamma1 + gamma2;
+        gamma12_inv = 1./gamma12;
+        
+        // Calculate the center-of-mass (COM) frame
+        // Quantities starting with "COM" are those of the COM itself, expressed in the lab frame.
+        // They are NOT quantities relative to the COM.
+        COM_vx = ( m12 * (p1->momentum(0,i1)) + p2->momentum(0,i2) ) * gamma12_inv;
+        COM_vy = ( m12 * (p1->momentum(1,i1)) + p2->momentum(1,i2) ) * gamma12_inv;
+        COM_vz = ( m12 * (p1->momentum(2,i1)) + p2->momentum(2,i2) ) * gamma12_inv;
+        COM_vsquare = COM_vx*COM_vx + COM_vy*COM_vy + COM_vz*COM_vz;
+        COM_gamma = pow( 1.-COM_vsquare , -0.5);
+        
+        // Change the momentum to the COM frame (we work only on particle 1)
+        // Quantities ending with "COM" are quantities of the particle expressed in the COM frame.
+        term1 = (COM_gamma - 1.) / COM_vsquare;
+        vcv1  = (COM_vx*(p1->momentum(0,i1)) + COM_vy*(p1->momentum(1,i1)) + COM_vz*(p1->momentum(2,i1)))/gamma1;
+        vcv2  = (COM_vx*(p2->momentum(0,i2)) + COM_vy*(p2->momentum(1,i2)) + COM_vz*(p2->momentum(2,i2)))/gamma2;
+        term2 = (term1*vcv1 - COM_gamma) * gamma1;
+        px_COM = (p1->momentum(0,i1)) + term2*COM_vx;
+        py_COM = (p1->momentum(1,i1)) + term2*COM_vy;
+        pz_COM = (p1->momentum(2,i1)) + term2*COM_vz;
+        p2_COM = px_COM*px_COM + py_COM*py_COM + pz_COM*pz_COM;
+        p_COM  = sqrt(p2_COM);
+        gamma1_COM = (1.-vcv1)*COM_gamma*gamma1;
+        gamma2_COM = (1.-vcv2)*COM_gamma*gamma2;
+        
+        // Calculate some intermediate quantities
+        term3 = COM_gamma * gamma12_inv;
+        term4 = gamma1_COM * gamma2_COM;
+        term5 = term4/p2_COM + m12;
+        
+        // Calculate coulomb log if necessary
+        logL = coulomb_log;
+        if( logL <= 0. ) { // if auto-calculation requested
+            bmin = max( coeff1/m1/p_COM , abs(coeff2*qqm*term3*term5) ); // min impact parameter
+            logL = 0.5*log(1.+debye_length_squared/pow(bmin,2));
+            if (logL < 2.) logL = 2.;
         }
         
-        // Prepare the ionization
-        Ionization->prepare1(patch->vecSpecies[(*sg1)[0]]->atomic_number);
+        // Calculate the collision parameter s12 (similar to number of real collisions)
+        s = coeff3 * logL * qqm2 * term3 * p_COM * term5*term5 / (gamma1*gamma2);
         
-        // Calculate the densities
-        n1  = 0.; // density of group 1
-        n2  = 0.; // density of group 2
-        n12 = 0.; // "hybrid" density
-        for (unsigned int i=0; i<npairs; i++) { // for each pair of particles
-            // find species and index i1 of particle "1"
-            i1 = index1[i];
-            for (ispec1=0 ; i1>=np1[ispec1]; ispec1++) i1 -= np1[ispec1];
-            i1 += bmin1[ispec1];
-            // find species and index i2 of particle "2"
-            not_duplicated_particle = (i<N2max);
-            i2 = index2[i];
-            for (ispec2=0 ; i2>=np2[ispec2]; ispec2++) i2 -= np2[ispec2];
-            i2 += bmin2[ispec2];
-            // Pointers to particles
-            p1 = patch->vecSpecies[(*sg1)[ispec1]]->particles;
-            p2 = patch->vecSpecies[(*sg2)[ispec2]]->particles;
-            // sum weights
-            n1  += p1->weight(i1);
-            if( not_duplicated_particle ) n2  += p2->weight(i2); // special case for group 2 to avoid repeated particles
-            n12 += min( p1->weight(i1), p2->weight(i2) );
-            // Same for ionization
-            Ionization->prepare2(p1, i1, p2, i2, not_duplicated_particle);
+        // Low-temperature correction
+        vrel = p_COM/term3/term4; // relative velocity
+        smax = coeff4 * (m12+1.) * vrel / max(m12*n123,n223);
+        if (s>smax) s = smax;
+        
+        // Pick the deflection angles according to Nanbu's theory
+        cosX = cos_chi(s);
+        sinX = sqrt( 1. - cosX*cosX );
+        //!\todo make a faster rand by preallocating ??
+        phi = twoPi * ((double)rand() / RAND_MAX);
+        
+        // Calculate combination of angles
+        sinXcosPhi = sinX*cos(phi);
+        sinXsinPhi = sinX*sin(phi);
+        
+        // Apply the deflection
+        p_perp = sqrt( px_COM*px_COM + py_COM*py_COM );
+        if( p_perp > 1.e-10*p_COM ) { // make sure p_perp is not too small
+            inv_p_perp = 1./p_perp;
+            newpx_COM = (px_COM * pz_COM * sinXcosPhi - py_COM * p_COM * sinXsinPhi) * inv_p_perp + px_COM * cosX;
+            newpy_COM = (py_COM * pz_COM * sinXcosPhi + px_COM * p_COM * sinXsinPhi) * inv_p_perp + py_COM * cosX;
+            newpz_COM = -p_perp * sinXcosPhi  +  pz_COM * cosX;
+        } else { // if p_perp is too small, we use the limit px->0, py=0
+            newpx_COM = p_COM * sinXcosPhi;
+            newpy_COM = p_COM * sinXsinPhi;
+            newpz_COM = p_COM * cosX;
         }
-        if( intra_collisions ) { n1 += n2; n2 = n1; }
-        n1  *= n_cluster_per_cell;
-        n2  *= n_cluster_per_cell;
-        n12 *= n_cluster_per_cell;
         
-        // Pre-calculate some numbers before the big loop
-        n123 = pow(n1,2./3.);
-        n223 = pow(n2,2./3.);
-        coeff3 = params.timestep * n1*n2/n12;
-        coeff4 = pow( 3.*coeff2 , -1./3. ) * coeff3;
-        coeff3 *= coeff2;
+        // Random number to choose whether deflection actually applies.
+        // This is to conserve energy in average when weights are not equal.
+        //!\todo make a faster rand by preallocating ??
+        U = ((double)rand() / RAND_MAX);
         
-        // Prepare the ionization
-        Ionization->prepare3(params.timestep, n_cluster_per_cell);
+        // Go back to the lab frame and store the results in the particle array
+        vcp = COM_vx * newpx_COM + COM_vy * newpy_COM + COM_vz * newpz_COM;
+        if( U < W2/W1 ) { // deflect particle 1 only with some probability
+            term6 = term1*vcp + gamma1_COM * COM_gamma;
+            p1->momentum(0,i1) = newpx_COM + COM_vx * term6;
+            p1->momentum(1,i1) = newpy_COM + COM_vy * term6;
+            p1->momentum(2,i1) = newpz_COM + COM_vz * term6;
+        }
+        if( U < W1/W2 ) { // deflect particle 2 only with some probability
+            term6 = -m12 * term1*vcp + gamma2_COM * COM_gamma;
+            p2->momentum(0,i2) = -m12 * newpx_COM + COM_vx * term6;
+            p2->momentum(1,i2) = -m12 * newpy_COM + COM_vy * term6;
+            p2->momentum(2,i2) = -m12 * newpz_COM + COM_vz * term6;
+        }
         
-        // Now start the real loop on pairs of particles
-        // See equations in http://dx.doi.org/10.1063/1.4742167
-        // ----------------------------------------------------
-        for (unsigned int i=0; i<npairs; i++) {
-        
-            // find species and index i1 of particle "1"
-            i1 = index1[i];
-            for (ispec1=0 ; i1>=np1[ispec1]; ispec1++) i1 -= np1[ispec1];
-            i1 += bmin1[ispec1];
-            // find species and index i2 of particle "2"
-            i2 = index2[i];
-            for (ispec2=0 ; i2>=np2[ispec2]; ispec2++) i2 -= np2[ispec2];
-            i2 += bmin2[ispec2];
-            
-            s1 = patch->vecSpecies[(*sg1)[ispec1]]; s2 = patch->vecSpecies[(*sg2)[ispec2]];
-            p1 = s1->particles;                     p2 = s2->particles;
-            m1 = s1->mass;                          m2 = s2->mass;
-            W1 = p1->weight(i1);                    W2 = p2->weight(i2);
-            
-            // Calculate stuff
-            m12  = m1 / m2; // mass ratio
-            qqm  = p1->charge(i1) * p2->charge(i2) / m1;
-            qqm2 = qqm * qqm;
-            
-            // Get momenta and calculate gammas
-            gamma1 = sqrt(1. + pow(p1->momentum(0,i1),2) + pow(p1->momentum(1,i1),2) + pow(p1->momentum(2,i1),2));
-            gamma2 = sqrt(1. + pow(p2->momentum(0,i2),2) + pow(p2->momentum(1,i2),2) + pow(p2->momentum(2,i2),2));
-            gamma12 = m12 * gamma1 + gamma2;
-            gamma12_inv = 1./gamma12;
-            
-            // Calculate the center-of-mass (COM) frame
-            // Quantities starting with "COM" are those of the COM itself, expressed in the lab frame.
-            // They are NOT quantities relative to the COM.
-            COM_vx = ( m12 * (p1->momentum(0,i1)) + p2->momentum(0,i2) ) * gamma12_inv;
-            COM_vy = ( m12 * (p1->momentum(1,i1)) + p2->momentum(1,i2) ) * gamma12_inv;
-            COM_vz = ( m12 * (p1->momentum(2,i1)) + p2->momentum(2,i2) ) * gamma12_inv;
-            COM_vsquare = COM_vx*COM_vx + COM_vy*COM_vy + COM_vz*COM_vz;
-            COM_gamma = pow( 1.-COM_vsquare , -0.5);
-            
-            // Change the momentum to the COM frame (we work only on particle 1)
-            // Quantities ending with "COM" are quantities of the particle expressed in the COM frame.
-            term1 = (COM_gamma - 1.) / COM_vsquare;
-            vcv1  = (COM_vx*(p1->momentum(0,i1)) + COM_vy*(p1->momentum(1,i1)) + COM_vz*(p1->momentum(2,i1)))/gamma1;
-            vcv2  = (COM_vx*(p2->momentum(0,i2)) + COM_vy*(p2->momentum(1,i2)) + COM_vz*(p2->momentum(2,i2)))/gamma2;
-            term2 = (term1*vcv1 - COM_gamma) * gamma1;
-            px_COM = (p1->momentum(0,i1)) + term2*COM_vx;
-            py_COM = (p1->momentum(1,i1)) + term2*COM_vy;
-            pz_COM = (p1->momentum(2,i1)) + term2*COM_vz;
-            p2_COM = px_COM*px_COM + py_COM*py_COM + pz_COM*pz_COM;
-            p_COM  = sqrt(p2_COM);
-            gamma1_COM = (1.-vcv1)*COM_gamma*gamma1;
-            gamma2_COM = (1.-vcv2)*COM_gamma*gamma2;
-            
-            // Calculate some intermediate quantities
-            term3 = COM_gamma * gamma12_inv;
-            term4 = gamma1_COM * gamma2_COM;
-            term5 = term4/p2_COM + m12;
-            
-            // Calculate coulomb log if necessary
-            logL = coulomb_log;
-            if( logL <= 0. ) { // if auto-calculation requested
-                bmin = max( coeff1/m1/p_COM , abs(coeff2*qqm*term3*term5) ); // min impact parameter
-                logL = 0.5*log(1.+debye_length_squared[ibin]/pow(bmin,2));
-                if (logL < 2.) logL = 2.;
-            }
-            
-            // Calculate the collision parameter s12 (similar to number of real collisions)
-            s = coeff3 * logL * qqm2 * term3 * p_COM * term5*term5 / (gamma1*gamma2);
-            
-            // Low-temperature correction
-            vrel = p_COM/term3/term4; // relative velocity
-            smax = coeff4 * (m12+1.) * vrel / max(m12*n123,n223);
-            if (s>smax) s = smax;
-            
-            // Pick the deflection angles according to Nanbu's theory
-            cosX = cos_chi(s);
-            sinX = sqrt( 1. - cosX*cosX );
-            //!\todo make a faster rand by preallocating ??
-            phi = twoPi * ((double)rand() / RAND_MAX);
-            
-            // Calculate combination of angles
-            sinXcosPhi = sinX*cos(phi);
-            sinXsinPhi = sinX*sin(phi);
-            
-            // Apply the deflection
-            p_perp = sqrt( px_COM*px_COM + py_COM*py_COM );
-            if( p_perp > 1.e-10*p_COM ) { // make sure p_perp is not too small
-                inv_p_perp = 1./p_perp;
-                newpx_COM = (px_COM * pz_COM * sinXcosPhi - py_COM * p_COM * sinXsinPhi) * inv_p_perp + px_COM * cosX;
-                newpy_COM = (py_COM * pz_COM * sinXcosPhi + px_COM * p_COM * sinXsinPhi) * inv_p_perp + py_COM * cosX;
-                newpz_COM = -p_perp * sinXcosPhi  +  pz_COM * cosX;
-            } else { // if p_perp is too small, we use the limit px->0, py=0
-                newpx_COM = p_COM * sinXcosPhi;
-                newpy_COM = p_COM * sinXsinPhi;
-                newpz_COM = p_COM * cosX;
-            }
-            
-            // Random number to choose whether deflection actually applies.
-            // This is to conserve energy in average when weights are not equal.
-            //!\todo make a faster rand by preallocating ??
-            U = ((double)rand() / RAND_MAX);
-            
-            // Go back to the lab frame and store the results in the particle array
-            vcp = COM_vx * newpx_COM + COM_vy * newpy_COM + COM_vz * newpz_COM;
-            if( U < W2/W1 ) { // deflect particle 1 only with some probability
-                term6 = term1*vcp + gamma1_COM * COM_gamma;
-                p1->momentum(0,i1) = newpx_COM + COM_vx * term6;
-                p1->momentum(1,i1) = newpy_COM + COM_vy * term6;
-                p1->momentum(2,i1) = newpz_COM + COM_vz * term6;
-            }
-            if( U < W1/W2 ) { // deflect particle 2 only with some probability
-                term6 = -m12 * term1*vcp + gamma2_COM * COM_gamma;
-                p2->momentum(0,i2) = -m12 * newpx_COM + COM_vx * term6;
-                p2->momentum(1,i2) = -m12 * newpy_COM + COM_vy * term6;
-                p2->momentum(2,i2) = -m12 * newpz_COM + COM_vz * term6;
-            }
-            
-            // Handle ionization
-            Ionization->apply(p1, i1, p2, i2);
-            
-            if( debug ) {
-                smean    += s;
-                logLmean += logL;
-                //temperature += m1 * (sqrt(1.+pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.);
-            }
-            
-        } // end loop on pairs of particles
+        // Handle ionization
+        Ionization->apply(p1, i1, p2, i2);
         
         if( debug ) {
-            ncol += (double) npairs;
+            smean    += s;
+            logLmean += logL;
+            //temperature += m1 * (sqrt(1.+pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.);
         }
         
-    } // end loop on bins
+    } // end loop on pairs of particles
     
-    if( debug && ncol>0.) {
-        smean    /= ncol;
-        logLmean /= ncol;
-        //temperature /= ncol;
-    }
     
     // temporary to be removed
     Ionization->finish(patch->vecSpecies[(*sg1)[0]], patch->vecSpecies[(*sg2)[0]], params, patch);
     
     if( debug ) {
+        if( npairs>0) {
+            double ncol = (double)npairs;
+            smean    /= ncol;
+            logLmean /= ncol;
+            //temperature /= ncol;
+        }
+        
         const vector<int> local_size(params.number_of_patches.size(), 1);
         
         // Open the HDF5 file
@@ -674,11 +639,9 @@ void Collisions::collide(Params& params, Patch* patch, int itime)
         //name.str("");
         //name << "/t" << setfill('0') << setw(8) << itime << "/temperature";
         //H5::array3D_MPI(did, name.str(), temperature, params.number_of_patches, local_size, patch->Pcoordinates);
-        if(debye_length_squared.size()>0) {
-            double dmean = 0.;
-            for(unsigned int i=0; i<nbins; i++)
-                dmean += sqrt(debye_length_squared[i]);
-            dmean *=  299792458./params.referenceAngularFrequency_SI/nbins;
+        if(debye_length_squared>0) {
+            double dmean = sqrt(debye_length_squared);
+            dmean *= 299792458./params.referenceAngularFrequency_SI;
             name.str("");
             name << "/t" << setfill('0') << setw(8) << itime << "/debyelength";
             H5::array3D_MPI(did, name.str(), dmean, params.number_of_patches, local_size, patch->Pcoordinates);

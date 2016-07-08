@@ -322,8 +322,6 @@ void Params::compute()
             n_space[i]=1;
             cell_length[i]=0.0;
         }
-        // compute number of cells per cluster
-        n_cell_per_cluster = clrw * n_space[1] * n_space[2];
         
     } else {
         ERROR("Problem with the definition of nDim_field");
@@ -344,6 +342,9 @@ void Params::compute()
         if(n_space_global[i]%number_of_patches[i] !=0) ERROR("ERROR in dimension " << i <<". Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i]);
         if ( n_space[i] <= 2*oversize[i] ) ERROR ( "ERROR in dimension " << i <<". Patches length = "<<n_space[i] << " cells must be at least " << 2*oversize[i] +1 << " cells long. Increase number of cells or reduce number of patches in this direction. " );
     }
+    
+    // compute number of cells per patch
+    n_cell_per_patch = n_space[0] * n_space[1] * n_space[2];
     
     // Verify that clrw divides n_space[0]
     if( n_space[0]%clrw != 0 )

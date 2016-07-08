@@ -9,7 +9,7 @@ L0 = 2.*math.pi # conversion from normalization length to wavelength
 Main(
     geometry = "1d3v",
 
-    number_of_patches = [ 4 ],
+    number_of_patches = [ 8 ],
 
     interpolation_order = 2,
 
@@ -19,8 +19,8 @@ Main(
 
     time_fields_frozen = 100000000000.,
 
-    cell_length = [2500.*L0],
-    sim_length = [60000.*L0],
+    cell_length = [2000.*L0],
+    sim_length = [96000.*L0],
 
     bc_em_type_x = ["periodic"],
 
@@ -55,7 +55,7 @@ Species(
 	n_part_per_cell= 10000,
 	mass = 1.0,
 	charge = -1.0,
-	charge_density = trapezoidal(0.00001, xvacuum=0.*L0, xplateau=20000.*L0),
+	charge_density = trapezoidal(0.00001, xvacuum=0.*L0, xplateau=16000.*L0),
 	mean_velocity = [0.941, 0., 0.],
 	temperature = [0.0000001],
 	time_frozen = 100000000.0,
@@ -70,7 +70,7 @@ Species(
 	n_part_per_cell= 10000,
 	mass = 1.0,
 	charge = -1.0,
-	charge_density = trapezoidal(0.00001, xvacuum=20000.*L0, xplateau=20000.*L0),
+	charge_density = trapezoidal(0.00001, xvacuum=22000.*L0, xplateau=16000.*L0),
 	mean_velocity = [0.989, 0., 0.],
 	temperature = [0.0000001],
 	time_frozen = 100000000.0,
@@ -85,7 +85,7 @@ Species(
 	n_part_per_cell= 10000,
 	mass = 1.0,
 	charge = -1.0,
-	charge_density = trapezoidal(0.00001, xvacuum=40000.*L0, xplateau=20000.*L0),
+	charge_density = trapezoidal(0.00001, xvacuum=44000.*L0, xplateau=16000.*L0),
 	mean_velocity = [0.99882, 0., 0.],
 	temperature = [0.0000001],
 	time_frozen = 100000000.0,

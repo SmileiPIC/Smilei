@@ -50,7 +50,7 @@ public :
     
     void run( Patch* patch, int timestep ) override;
     
-    bool write(int timestep) override;
+    void write(int timestep) override;
     
     //! Clear the array
     void clear();

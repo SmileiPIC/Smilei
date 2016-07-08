@@ -16,7 +16,7 @@ class Collisions
 
 public:
     //! Constructor for Collisions between two species
-    Collisions(Patch*, unsigned int, std::vector<unsigned int>, std::vector<unsigned int>, double, bool, int, unsigned int, int, bool, int, double);
+    Collisions( Patch* patch, unsigned int n_collisions, std::vector<unsigned int>,std::vector<unsigned int>, double coulomb_log, bool intra_collisions,int debug_every,int Z,bool ionizing,int nDim,double);
     //! Cloning Constructor
     Collisions(Collisions*, int);
     //! destructor
@@ -58,8 +58,8 @@ public:
     
 private:
     
-    //! Contains the debye length in each cluster, computed each timestep
-    static std::vector<double> debye_length_squared; 
+    //! The debye length, computed each timestep
+    static double debye_length_squared; 
     
     static double cos_chi(double);
     
