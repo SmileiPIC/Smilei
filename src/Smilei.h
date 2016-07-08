@@ -118,4 +118,4 @@ int main (int argc, char* argv[]);
 
 void print_parallelism_params(Params& params, SmileiMPI* smpi);
 void check_memory_consumption(VectorPatch& vecPatches, SmileiMPI* smpi);
-void initialize_timers(std::vector<Timer>& timer, SmileiMPI* smpi);
+std::vector<Timer> initialize_timers(SmileiMPI* smpi);
