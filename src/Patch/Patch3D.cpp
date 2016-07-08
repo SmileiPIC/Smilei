@@ -404,7 +404,7 @@ void Patch3D::createType( Params& params )
 
                 ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim] = NULL;
                 MPI_Type_contiguous(nx_sum*ny*nz, 
-                                    MPI_DOUBLE, &(ntype_[0][ix_isPrim][iy_isPrim][iz_isPrim]));
+                                    MPI_DOUBLE, &(ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim]));
                 MPI_Type_commit( &(ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
             
                 ntypeSum_[1][ix_isPrim][iy_isPrim][iz_isPrim] = NULL;
