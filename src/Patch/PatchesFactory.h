@@ -56,6 +56,9 @@ public:
             vecPatches.patches_[ipatch] = clone(vecPatches(0), params, smpi, firstpatch + ipatch);
         }
         MESSAGE(1,"All patches created");
+        // print number of particles
+        vecPatches.printNumberOfParticles( smpi );
+
         vecPatches.set_refHindex();
         
         vecPatches.update_field_list();
