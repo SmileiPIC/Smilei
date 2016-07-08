@@ -141,7 +141,7 @@ namelist("")
     
     // geometry of the simulation
     PyTools::extract("geometry", geometry, "Main");
-    if (geometry!="1d3v" && geometry!="2d3v") {
+    if (geometry!="1d3v" && geometry!="2d3v" && geometry!="3d3v") {
         ERROR("Geometry " << geometry << " does not exist");
     }
     setDimensions();

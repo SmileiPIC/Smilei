@@ -28,6 +28,7 @@ Field3D::Field3D(vector<unsigned int> dims) : Field(dims)
 // with the dimensions and output (dump) file name as input argument
 Field3D::Field3D(vector<unsigned int> dims, string name) : Field(dims, name)
 {
+    data_=NULL;
     allocateDims(dims);
 }
 
@@ -41,6 +42,7 @@ Field3D::Field3D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal)
 // with the dimensions and output (dump) file name as input argument
 Field3D::Field3D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name) : Field(dims, mainDim, isPrimal, name)
 {
+    data_=NULL;
     allocateDims(dims, mainDim, isPrimal);
 }
 
