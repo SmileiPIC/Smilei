@@ -191,6 +191,8 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     
     // Do not output diag if this timestep has already been written or if problem with file
     if( status != 0 ) return;
+
+    unsigned int nPatches( vecPatches.size() );
     
     // For each field, combine all patches and write out
     for( unsigned int ifield=0; ifield < fields_indexes.size(); ifield++ ) {
@@ -200,7 +202,7 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         // Copy the patch field to the buffer
         #pragma omp barrier
         #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+        for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++)
             getField( vecPatches(ipatch), field_index );
         
         #pragma omp master

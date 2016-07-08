@@ -347,9 +347,9 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
 {
     unsigned int nPart_MPI;
     ostringstream name_t;
-    LocalFields Eloc_fields, Bloc_fields, Jloc_fields;
-    double Rloc_fields;
     
+    unsigned int nPatches( vecPatches.size() );
+
     // Leave if this timestep has already been written
     #pragma omp master
     {
@@ -380,10 +380,14 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     
     // Loop patches to fill the array
     #pragma omp for schedule(static)
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+    for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
         // Loop probe ("fake") particles of current patch
         unsigned int iPart_MPI = offset[ipatch];
         unsigned int npart = vecPatches(ipatch)->probes[probe_n]->particles.size();
+
+        LocalFields Eloc_fields, Bloc_fields, Jloc_fields;
+        double Rloc_fields;
+
         for (unsigned int ipart=0; ipart<npart; ipart++) {             
             (*(vecPatches(ipatch)->Interp)) (
                 vecPatches(ipatch)->EMfields,
