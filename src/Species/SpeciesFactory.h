@@ -337,8 +337,6 @@ public:
             // Put the newly created species in the vector of species
             retSpecies.push_back(thisSpecies);
             
-            // Print info
-            if (patch->isMaster()) MESSAGE(2, "Species " << ispec << " (" << thisSpecies->species_type << ") created,\t check scalars for the number of particles" );
         }
         
         // Loop species to find the electron species for ionizable species
