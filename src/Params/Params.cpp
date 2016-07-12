@@ -265,10 +265,11 @@ namelist("")
     //mi.resize(nDim_field, 0);
     mi.resize(3, 0);
     while ((number_of_patches[0] >> mi[0]) >1) mi[0]++ ;
-    if (number_of_patches.size()>1)
+    if (number_of_patches.size()>1){
         while ((number_of_patches[1] >> mi[1]) >1) mi[1]++ ;
-    else if (number_of_patches.size()>2)
-        while ((number_of_patches[2] >> mi[2]) >1) mi[2]++ ;
+        if (number_of_patches.size()>2)
+            while ((number_of_patches[2] >> mi[2]) >1) mi[2]++ ;
+    }
     
     // -------------------------------------------------------
     // Compute usefull quantities and introduce normalizations
