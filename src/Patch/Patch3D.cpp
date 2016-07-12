@@ -43,7 +43,60 @@ Patch3D::Patch3D(Patch3D* patch, Params& params, SmileiMPI* smpi, unsigned int i
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch3D::initStep2(Params& params)
 {
+    int xcall, ycall, zcall;
+    
+    // define patch coordinates
+    Pcoordinates.resize(3);
+    generalhilbertindexinv(params.mi[0], params.mi[1], params.mi[2], &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
+#ifdef _DEBUG
+    cout << "\tPatch coords : ";
+    for (int iDim=0; iDim<3;iDim++)
+        cout << "\t" << Pcoordinates[iDim] << " ";
+    cout << endl;
+#endif
+    
+
+    // 1st direction
+    xcall = Pcoordinates[0]-1;
+    ycall = Pcoordinates[1];
+    zcall = Pcoordinates[2];
+    if (params.bc_em_type_x[0]=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
+    neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], params.mi[2], xcall, ycall, zcall);
+    xcall = Pcoordinates[0]+1;
+    if (params.bc_em_type_x[0]=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
+    neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], params.mi[2], xcall, ycall, zcall);
+
+    // 2st direction
+    xcall = Pcoordinates[0];
+    ycall = Pcoordinates[1]-1;
+    zcall = Pcoordinates[2];
+    if (params.bc_em_type_y[0]=="periodic" && ycall < 0) ycall += (1<<params.mi[1]);
+    neighbor_[1][0] =  generalhilbertindex( params.mi[0], params.mi[1], params.mi[2], xcall, ycall, zcall);
+    ycall = Pcoordinates[0]+1;
+    if (params.bc_em_type_y[0]=="periodic" && ycall >= (1<<params.mi[1])) ycall -= (1<<params.mi[1]);
+    neighbor_[1][1] =  generalhilbertindex( params.mi[0], params.mi[1], params.mi[2], xcall, ycall, zcall);
+
+    // 3st direction
+    xcall = Pcoordinates[0];
+    ycall = Pcoordinates[1];
+    zcall = Pcoordinates[2]-1;
+    if (params.bc_em_type_z[0]=="periodic" && zcall < 0) zcall += (1<<params.mi[2]);
+    neighbor_[2][0] =  generalhilbertindex( params.mi[0], params.mi[1], params.mi[2], xcall, ycall, zcall);
+    zcall = Pcoordinates[0]+1;
+    if (params.bc_em_type_z[0]=="periodic" && zcall >= (1<<params.mi[2])) zcall -= (1<<params.mi[2]);
+    neighbor_[2][1] =  generalhilbertindex( params.mi[0], params.mi[1], params.mi[2], xcall, ycall, zcall);
+
+    // Corners (only used as reference during moving window operation)
+    xcall = Pcoordinates[0];
+    ycall = Pcoordinates[1];
+    zcall = Pcoordinates[2];
 #ifdef _PATCH3D_TODO
+    corner_neighbor_[0][0] = 
+    corner_neighbor_[0][1] = 
+    corner_neighbor_[1][0] = 
+    corner_neighbor_[1][1] = 
+    corner_neighbor_[2][0] = 
+    corner_neighbor_[2][1] = 
 #endif
 }
 

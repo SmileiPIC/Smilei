@@ -195,7 +195,7 @@ unsigned int generalhilbertindex(unsigned int m0, unsigned int m1, int x, int y,
        mmin = m0;
        mmax = m1;
     }
-    for (unsigned int i= mmax-1; i >= mmin ; i--){
+    for (int i= (int)mmax-1; i >= (int)mmin ; i--){
        l = bit(*target,i); 
        h += l*(1<<(i+mmin));
        *target -= l*(1<<i);
@@ -337,6 +337,7 @@ void generalhilbertindexinv(unsigned int m0, unsigned int m1, unsigned int m2,  
     mi[0] = m0;
     mi[1] = m1;
     mi[2] = m2;
+    cout << m0 << " " << m1 << " " << m2 << endl;
     //Compare dimension sizes
     if ((m0 >= m1) && (m0 >= m2) ){
         dimmax = 0;
@@ -362,6 +363,8 @@ void generalhilbertindexinv(unsigned int m0, unsigned int m1, unsigned int m2,  
     // We need to run the 3D inversion algorithm on this cube with the correct entry point and direction.
     // Run the 2D indexgenerator in order to evaluate e and d.
     localh = generalhilbertindex(mi[dimmax]-mi[dimmin],mi[dimmed]-mi[dimmin],*localp[dimmax],*localp[dimmed],&e,&d);
+    cout << dimmax << " - *localp[dimmax] = " << *localp[dimmax] << endl;
+    cout << dimmed << " - *localp[dimmed] = " << *localp[dimmed] << endl;
     //Transform coordinates in the global frame.
     *localp[dimmax] *= (1<<mi[dimmin]);
     *localp[dimmed] *= (1<<mi[dimmin]);
