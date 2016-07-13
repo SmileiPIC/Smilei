@@ -86,7 +86,7 @@ void Patch::initStep1(Params& params)
         MPI_neighbor_[iDim].resize(2,MPI_PROC_NULL);
     }
     
-    oversize.resize( 2 );
+    oversize.resize( nDim_fields_ );
     for ( int iDim = 0 ; iDim < nDim_fields_; iDim++ )
         oversize[iDim] = params.oversize[iDim];
 }
