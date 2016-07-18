@@ -26,7 +26,7 @@ nDim_particle(params.nDim_particle)
     
     // Create the filename
     ostringstream hdf_filename("");
-    hdf_filename << "TrackParticles_" << species->species_type  << ".h5" ;
+    hdf_filename << "TrackParticles"<<(track_ordered?"":"Disordered")<<"_" << species->species_type  << ".h5" ;
     filename = hdf_filename.str();
     
     // Create a list of the necessary datasets
@@ -208,12 +208,13 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
             patch_start[ipatch] = nParticles;
             nParticles += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
         }
-        locator.resize(nParticles*2);
+        if(track_ordered) locator.resize(nParticles*2);
         
         // Specify the memory dataspace (the size of the local array)
         hsize_t count_[1] = {(hsize_t)nParticles};
         mem_space = H5Screate_simple(1, count_, NULL);
     }
+    #pragma omp barrier
     
     hsize_t start[2], stride[2], count[2], block[2];
     if(track_ordered) {
@@ -238,7 +239,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
             
             // Calculate the cumulative sum
             int offset=0;
-            for (int irk=1; irk<smpi->getRank(); irk++) offset += all_nPart[irk-1];
+            for (int irk=0; irk<smpi->getRank(); irk++) offset += all_nPart[irk];
             
             // Prepare the hyperslab selection
             start [0]=dims[0]-1; start [1]=offset;
@@ -256,7 +257,8 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
         Particles* particles;
         if( idset == 0 ) { // Id
             #pragma omp master
-            data_uint.resize( nParticles );
+            data_uint.resize( nParticles, 0 );
+            #pragma omp barrier
             #pragma omp for schedule(static)
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
                 particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
@@ -271,6 +273,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
         } else if( idset == 1 ) { // Charge
             #pragma omp master
             data_short.resize( nParticles );
+            #pragma omp barrier
             #pragma omp for schedule(static)
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
                 particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
@@ -285,6 +288,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
         } else if( idset == 2 ) { // Weight
             #pragma omp master
             data_double.resize( nParticles );
+            #pragma omp barrier
             #pragma omp for schedule(static)
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
                 particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
@@ -299,6 +303,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
         } else if( idset < 6 ) { // Momentum
             #pragma omp master
             data_double.resize( nParticles );
+            #pragma omp barrier
             #pragma omp for schedule(static)
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
                 particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
@@ -313,6 +318,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
         } else { // Position
             #pragma omp master
             data_double.resize( nParticles );
+            #pragma omp barrier
             #pragma omp for schedule(static)
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
                 particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
