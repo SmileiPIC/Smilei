@@ -1924,7 +1924,11 @@ class TrackParticles(Diagnostic):
 		# -------------------------------------------------------------------
 		self.species  = species
 		self._file = self._results_path+"/TrackParticles_"+species+".h5"
-		f = self._h5py.File(self._file, 'r')
+		try:
+			f = self._h5py.File(self._file, 'r')
+		except:
+			self._orderFile( self._results_path+"/TrackParticlesDisordered_"+species+".h5", self._file )
+			f = self._h5py.File(self._file, 'r')
 		self._h5items = f.values()
 		
 		# Get available times in the hdf5 file
@@ -2085,10 +2089,10 @@ class TrackParticles(Diagnostic):
 	
 	# get all available tracked species
 	def getTrackSpecies(self):
-		files = self._glob(self._results_path+"/TrackParticles_*.h5")
+		files = self._glob(self._results_path+"/TrackParticles*.h5")
 		species = []
 		for file in files:
-			species.append(self._re.search("TrackParticles_(.*).h5",file).groups()[0])
+			species.append(self._re.search("_(.+).h5",self._os.path.basename(file)).groups()[0])
 		return species
 	
 	# get all available timesteps
@@ -2103,6 +2107,34 @@ class TrackParticles(Diagnostic):
 				return item.value
 		print "Unable to find the list of timesteps in file "+self._file
 		return self._np.array([])
+	
+	# Make the particles ordered by Id in the file, in case they are not
+	def _orderFile( self, fileDisordered, fileOrdered ):
+		print "Ordering particles ... (this could take a while)"
+		# Copy the disordered file
+		from shutil import copyfile
+		copyfile(fileDisordered, fileOrdered)
+		# Open the file which will become ordered
+		f = self._h5py.File(fileOrdered)
+		# Get list of properties
+		properties = [p.name[1:] for p in f.values() if len(p.shape)==2]
+		# For each time
+		ntimes, npart = f["Id"].shape
+		A = self._np.zeros((npart,))
+		for i in range(ntimes):
+			# Get the indices for sorting arrays
+			ids = f["Id"][i,:]
+			remaining_particles = ids>0
+			read_indices  = self._np.nonzero(remaining_particles)
+			write_indices = ids[read_indices]-1
+			B = self._np.zeros((npart,))
+			# Sort arrays
+			for property in properties:
+				f[property].read_direct (A, source_sel=self._np.s_[i,:])
+				B[write_indices] = A[read_indices]
+				f[property].write_direct(B, dest_sel  =self._np.s_[i,:])
+		# Close files
+		f.close()
 	
 	# We override the get and getData methods
 	def getData(self):
