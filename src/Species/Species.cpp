@@ -931,5 +931,5 @@ void Species::disableEast() {
 }
 
 void Species::setWestBoundaryCondition() {
-    partBoundCond->bc_west   = &stop_particle;
+    partBoundCond->bc_west   = &supp_particle;
 }

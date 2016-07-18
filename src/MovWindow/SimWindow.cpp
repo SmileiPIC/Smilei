@@ -64,15 +64,17 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     vector<int> nbrOfPartsSend(nSpecies,0);
     vector<int> nbrOfPartsRecv(nSpecies,0);
 
-    // Delete western patch
     double energy_field_lost(0.);
     vector<double> energy_part_lost( vecPatches(0)->vecSpecies.size(), 0. );
 
 
     vecPatches.closeAllDiags(smpi);
     
-    // Shift the patches, new patches will be created directly with their good patchid
+    // Shift the patches, new patches will be created directly with their good patchid and BC
     for (int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
+        if ( vecPatches(ipatch)->isEastern() )
+            for (int ispec=0 ; ispec<nSpecies ; ispec++)
+                vecPatches(ipatch)->vecSpecies[ispec]->disableEast();
         vecPatches(ipatch)->neighbor_[0][1] = vecPatches(ipatch)->hindex;
         vecPatches(ipatch)->hindex = vecPatches(ipatch)->neighbor_[0][0];
     }
@@ -188,19 +190,13 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         
     }
 
-    for (int ipatch=0 ; ipatch<nPatches ; ipatch++ ) {
+    for (int ipatch=0 ; ipatch<nPatches ; ipatch++){
         vecPatches(ipatch)->updateMPIenv(smpi);
-    }
-
-    for (int ipatch=0 ; ipatch<nPatches ; ipatch++ )
         vecPatches(ipatch)->EMfields->laserDisabled();
-
-    for (int ipatch=0 ; ipatch<nPatches ; ipatch++)
-        for (int ispec=0 ; ispec<nSpecies ; ispec++) {
-            if ( !vecPatches(ipatch)->isEastern() ) vecPatches(ipatch)->vecSpecies[ispec]->disableEast();
-            if ( vecPatches(ipatch)->isWestern() ) vecPatches(ipatch)->vecSpecies[ispec]->setWestBoundaryCondition(); 
-        }
-
+        if ( vecPatches(ipatch)->isWestern() )
+            for (int ispec=0 ; ispec<nSpecies ; ispec++)
+                vecPatches(ipatch)->vecSpecies[ispec]->setWestBoundaryCondition(); 
+    }
 
     // 
     vecPatches.openAllDiags(params,smpi);
