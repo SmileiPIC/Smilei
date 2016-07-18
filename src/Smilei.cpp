@@ -66,6 +66,7 @@ int main (int argc, char* argv[])
     Params params(smpi,vector<string>(argv + 1, argv + argc));
     
     // Initialize MPI environment with simulation parameters
+    TITLE("MPI");
     smpi->init(params);
     
     // Create timers
@@ -342,7 +343,6 @@ int main (int argc, char* argv[])
 
 void print_parallelism_params(Params& params, SmileiMPI* smpi)
 {
-    TITLE("MPI");
     MESSAGE(1,"Number of MPI process : " << smpi->getSize() );
     MESSAGE(1,"Number of patches : " );
     for (unsigned int iDim=0 ; iDim<params.nDim_field ; iDim++) 
