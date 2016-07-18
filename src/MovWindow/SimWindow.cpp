@@ -195,6 +195,12 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     for (int ipatch=0 ; ipatch<nPatches ; ipatch++ )
         vecPatches(ipatch)->EMfields->laserDisabled();
 
+    for (int ipatch=0 ; ipatch<nPatches ; ipatch++)
+        for (int ispec=0 ; ispec<nSpecies ; ispec++) {
+            if ( !vecPatches(ipatch)->isEastern() ) vecPatches(ipatch)->vecSpecies[ispec]->disableEast();
+            if ( vecPatches(ipatch)->isWestern() ) vecPatches(ipatch)->vecSpecies[ispec]->setWestBoundaryCondition(); 
+        }
+
 
     // 
     vecPatches.openAllDiags(params,smpi);
