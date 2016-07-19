@@ -201,6 +201,7 @@ bool DiagnosticTrack::prepare( int timestep )
 void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep )
 {
     int nParticles = 0;
+    unsigned int nPatches = vecPatches.size();
     
     #pragma omp master
     {
@@ -225,7 +226,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
     if(track_ordered) {
         // Build the "locator", an array indicating where each particle goes in the final array
         #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
             Particles* particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
             int np=particles->size(), i=0, j=patch_start[ipatch];
             while( i<np ) {
@@ -265,7 +266,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
             data_uint.resize( nParticles, 0 );
             #pragma omp barrier
             #pragma omp for schedule(static)
-            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+            for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
                 particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
                 patch_nParticles = particles->size();
                 i=0;
@@ -280,7 +281,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
             data_short.resize( nParticles );
             #pragma omp barrier
             #pragma omp for schedule(static)
-            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+            for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
                 particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
                 patch_nParticles = particles->size();
                 i=0;
@@ -295,7 +296,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
             data_double.resize( nParticles );
             #pragma omp barrier
             #pragma omp for schedule(static)
-            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+            for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
                 particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
                 patch_nParticles = particles->size();
                 i=0;
@@ -310,7 +311,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
             data_double.resize( nParticles );
             #pragma omp barrier
             #pragma omp for schedule(static)
-            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+            for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
                 particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
                 patch_nParticles = particles->size();
                 i=0;
@@ -325,7 +326,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
             data_double.resize( nParticles );
             #pragma omp barrier
             #pragma omp for schedule(static)
-            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+            for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
                 particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
                 patch_nParticles = particles->size();
                 i=0;
