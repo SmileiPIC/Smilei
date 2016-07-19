@@ -22,6 +22,12 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
         name.str()
     );
     
+    // Extract "flush_every" (time selection for flushing the file)
+    flush_timeSelection = new TimeSelection( 
+        PyTools::extract_py("flush_every", "DiagProbe", n_probe),
+        name.str()
+    );
+    
     // Extract "number" (number of points you have in each dimension of the probe,
     // which must be smaller than the code dimensions)
     PyTools::extract("number",vecNumber,"DiagProbe",n_probe);
@@ -117,6 +123,7 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
 DiagnosticProbes::~DiagnosticProbes()
 {
     delete timeSelection;
+    delete flush_timeSelection;
 }
 
 
@@ -334,7 +341,7 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     H5Sclose(memspace);
     delete posArray;
     
-    closeFile();
+    H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
 }
 
 
@@ -449,7 +456,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         
         delete probesArray;
         
-        H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+        if( flush_timeSelection->theTimeIsNow(timestep) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     }
     #pragma omp barrier
 }

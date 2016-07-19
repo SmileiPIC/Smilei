@@ -33,8 +33,11 @@ public :
     //! Writes out a global diag diag.
     virtual void write(int timestep) {};
     
-    //! Time selection
+    //! Time selection for writing the diagnostic
     TimeSelection * timeSelection;
+    
+    //! Time selection for flushing the file
+    TimeSelection * flush_timeSelection;
     
     //! this is the file name
     std::string filename;

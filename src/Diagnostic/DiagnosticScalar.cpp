@@ -50,13 +50,11 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patc
 DiagnosticScalar::DiagnosticScalar( DiagnosticScalar * scalar )
 {
     out_width.resize(0);
-    if( scalar->timeSelection ) {
-        timeSelection = new TimeSelection(scalar->timeSelection);
-        precision     = scalar->precision;
-        res_time      = scalar->res_time;
-        dt            = scalar->dt;
-        cell_volume   = scalar->cell_volume;
-    }
+    timeSelection = new TimeSelection(scalar->timeSelection);
+    precision     = scalar->precision;
+    res_time      = scalar->res_time;
+    dt            = scalar->dt;
+    cell_volume   = scalar->cell_volume;
     print_every = scalar->print_every;
     type_ = "Scalar";
 };
@@ -65,6 +63,7 @@ DiagnosticScalar::DiagnosticScalar( DiagnosticScalar * scalar )
 
 DiagnosticScalar::~DiagnosticScalar()
 {
+    delete timeSelection;
 } // END DiagnosticScalar::#DiagnosticScalar
 
 

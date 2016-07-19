@@ -63,12 +63,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     int nmessage = 14+2*nSpecies;
     vector<int> nbrOfPartsSend(nSpecies,0);
     vector<int> nbrOfPartsRecv(nSpecies,0);
-
+    
     double energy_field_lost(0.);
     vector<double> energy_part_lost( vecPatches(0)->vecSpecies.size(), 0. );
-
-
-    vecPatches.closeAllDiags(smpi);
     
     // Shift the patches, new patches will be created directly with their good patchid and BC
     for (int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
@@ -189,7 +186,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         vecPatches(ipatch)->corner_neighbor_[0][1] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
         
     }
-
+    
     for (int ipatch=0 ; ipatch<nPatches ; ipatch++){
         vecPatches(ipatch)->updateMPIenv(smpi);
         vecPatches(ipatch)->EMfields->laserDisabled();
@@ -197,15 +194,12 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             for (int ispec=0 ; ispec<nSpecies ; ispec++)
                 vecPatches(ipatch)->vecSpecies[ispec]->setWestBoundaryCondition(); 
     }
-
-    // 
-    vecPatches.openAllDiags(params,smpi);
     
     vecPatches.set_refHindex() ;
     vecPatches.update_field_list() ;
-
+    
     return;
-
+    
 }
 
 bool SimWindow::isMoving(double time_dual)

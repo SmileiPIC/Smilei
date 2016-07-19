@@ -18,11 +18,17 @@ nDim_particle(params.nDim_particle)
     transfer = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio( transfer, H5FD_MPIO_COLLECTIVE);
     
-    // Get the time selection from the particles
-    timeSelection = species->particles->track_timeSelection;
+    ostringstream name("");
+    name << "Tracking species '" << species->species_type << "'";
     
-    // Get the track_ordered parameter from the particles
-    track_ordered = species->particles->track_ordered;
+    // Get parameter "track_every" which describes a timestep selection
+    timeSelection = new TimeSelection( PyTools::extract_py("track_every", "Species", speciesId_), name.str() );
+    
+    // Get parameter "track_flush_every" which decides the file flushing time selection
+    flush_timeSelection = new TimeSelection( PyTools::extract_py("track_flush_every", "Species", speciesId_), name.str() );
+    
+    // Get parameter "track_ordered" which decides whether the track particle dumps are ordered by Id
+    PyTools::extract("track_ordered", track_ordered, "Species", speciesId_);
     
     // Create the filename
     ostringstream hdf_filename("");
@@ -42,7 +48,6 @@ nDim_particle(params.nDim_particle)
     datatypes.push_back( H5T_NATIVE_DOUBLE );
     datasets.push_back( "Momentum-2" );
     datatypes.push_back( H5T_NATIVE_DOUBLE );
-    ostringstream name;
     for (unsigned int idim=0 ; idim<nDim_particle ; idim++) {
         name.str("");
         name << "Position-" << idim;
@@ -55,6 +60,8 @@ nDim_particle(params.nDim_particle)
 
 DiagnosticTrack::~DiagnosticTrack()
 {
+    delete timeSelection;
+    delete flush_timeSelection;
 }
 
 
@@ -101,8 +108,6 @@ void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         H5Dclose(did);
         H5Pclose(plist);
         H5Sclose(file_space);
-        
-        H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
         
     }
     else {
@@ -179,7 +184,7 @@ void DiagnosticTrack::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatc
     
     // create the file
     openFile( params, smpi, true );
-    closeFile();
+    H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     
 }
 
@@ -386,7 +391,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
         H5Sclose(file_space);
         H5Dclose(did);
         
-        H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+        if( flush_timeSelection->theTimeIsNow(timestep) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
         
         // Clear buffers
         data_uint  .resize(0);

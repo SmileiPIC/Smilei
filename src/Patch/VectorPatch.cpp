@@ -199,13 +199,10 @@ void VectorPatch::initExternals(Params& params)
 void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
 {
     // Global diags: scalars + particles
-    for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
+    for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++)
         // MPI master creates the file
-        if( smpi->isMaster() ){
+        if( smpi->isMaster() )
             globalDiags[idiag]->openFile( params, smpi, true );
-            globalDiags[idiag]->closeFile();
-        }
-    }
     
     // Local diags : fields, probes, tracks
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
@@ -228,9 +225,9 @@ void VectorPatch::closeAllDiags(SmileiMPI* smpi)
         for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++)
             globalDiags[idiag]->closeFile();
     
-    //// All MPI close local diags
-    //for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
-    //    localDiags[idiag]->closeFile();
+    // All MPI close local diags
+    for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
+        localDiags[idiag]->closeFile();
 }
 
 
@@ -241,9 +238,9 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
         for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++)
             globalDiags[idiag]->openFile( params, smpi, false );
     
-    //// All MPI open local diags
-    //for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
-    //    localDiags[idiag]->openFile( params, smpi, false );
+    // All MPI open local diags
+    for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
+        localDiags[idiag]->openFile( params, smpi, false );
 }
 
 
@@ -265,28 +262,17 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
                 globalDiags[idiag]->run( (*this)(ipatch), itime );
             // MPI procs gather the data and compute
             smpi->computeGlobalDiags( globalDiags[idiag], itime);
-            // MPI master opens, writes, and closes
-            if ( smpi->isMaster() ) {
-                globalDiags[idiag]->openFile( params, smpi, false );
+            // MPI master writes
+            if ( smpi->isMaster() )
                 globalDiags[idiag]->write( itime );
-                globalDiags[idiag]->closeFile();
-            }
         }
     }
     
     // Local diags : fields, probes, tracks
-    for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
-        if( localDiags[idiag]->prepare( itime ) ) {
-            // All MPI open the file
-            #pragma omp single
-            localDiags[idiag]->openFile( params, smpi, false );
-            // All MPI run their stuff and write out
+    for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
+        // All MPI run their stuff and write out
+        if( localDiags[idiag]->prepare( itime ) )
             localDiags[idiag]->run( smpi, *this, itime );
-            // All MPI close the file
-            #pragma omp single
-            localDiags[idiag]->closeFile();
-        }
-    }
     
     *diag_flag = 0;
     timer[3].update();
@@ -645,7 +631,6 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
 {
-    (*this).closeAllDiags(smpi);
     
     int nSpecies( (*this)(0)->vecSpecies.size() );
     //int newMPIrankbis, oldMPIrankbis, tmp;
@@ -704,7 +689,6 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     for (unsigned int ipatch=0 ; ipatch<patches_.size() ; ipatch++ ) { 
         (*this)(ipatch)->updateMPIenv(smpi);
     }
-    (*this).openAllDiags(params,smpi);    
     (*this).set_refHindex() ;
     update_field_list() ;    
     
