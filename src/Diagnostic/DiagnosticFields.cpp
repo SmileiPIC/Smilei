@@ -10,6 +10,11 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patc
 {
     fileId_ = 0;
     tmp_dset_id = 0;
+
+    filespace_firstwrite = 0;
+    memspace_firstwrite = 0;
+    filespace_reread = 0;
+    memspace_reread = 0;
     
     // Extract the time_average parameter
     time_average = 1;
@@ -93,8 +98,6 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patc
 DiagnosticFields::~DiagnosticFields()
 {
     H5Pclose( write_plist );
-    H5Sclose( filespace );
-    H5Sclose( memspace );
     
     delete timeSelection;
     delete flush_timeSelection;
@@ -131,8 +134,17 @@ void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 
 void DiagnosticFields::closeFile()
 {
+    if ( filespace_firstwrite>0 ) H5Sclose( filespace_firstwrite );
+    if ( memspace_firstwrite >0 ) H5Sclose( memspace_firstwrite );
+    if ( filespace_reread    >0 ) H5Sclose( filespace_reread );
+    if ( memspace_reread     >0 ) H5Sclose( memspace_reread );
+    if ( filespace           >0 ) H5Sclose( filespace );
+    if ( memspace            >0 ) H5Sclose( memspace );
+    if ( tmp_dset_id         >0 ) H5Dclose( tmp_dset_id );
+
     if( fileId_>0 ) H5Fclose( fileId_ );
     fileId_ = 0;
+
 }
 
 

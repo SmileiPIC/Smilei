@@ -98,10 +98,6 @@ DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI* smpi, Patch* 
 
 DiagnosticFields2D::~DiagnosticFields2D()
 {
-    H5Sclose( filespace_firstwrite );
-    H5Sclose( memspace_firstwrite );
-    H5Sclose( filespace_reread );
-    H5Sclose( memspace_reread );
 }
 
 
