@@ -10,6 +10,7 @@
 #include "Field2D.h"
 #include "H5.h"
 #include "Patch.h"
+#include "VectorPatch.h"
 
 using namespace std;
 
@@ -37,9 +38,6 @@ debug_every     (debug_every     ),
 atomic_number   (Z               ),
 filename("")
 {
-    ostringstream mystream;
-    hid_t fileId;
-    
     // Create the ionization object
     if( ionizing ) {
         Ionization = new CollisionalIonization(Z, nDim, referenceAngularFrequency_SI);
@@ -50,38 +48,9 @@ filename("")
     // If debugging log requested
     if( debug_every>0 ) {
         // Build the file name
-        mystream.str("");
+        ostringstream mystream("");
         mystream << "Collisions" << n_collisions << ".h5";
         filename = mystream.str();
-        // Create the file access protocol for writing in the debug file later
-        file_access = H5Pcreate(H5P_FILE_ACCESS);
-        H5Pset_fapl_mpio(file_access, MPI_COMM_WORLD, MPI_INFO_NULL);
-        
-        // Create the file (only by patch master of the MPI master)
-        if( patch->isMaster() ) {
-            ifstream file(filename);
-            // Check if file exists
-            if (file) {
-                // Open the file if already exists (this can happen for restarts, or moving window)
-                fileId = H5Fopen( filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
-            // Otherwise, create the HDF5 file
-            } else {
-                fileId = H5Fcreate(filename.c_str(), H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
-                // write all parameters as HDF5 attributes
-                H5::attr(fileId, "Version", string(__VERSION));
-                mystream.str("");
-                mystream << species_group1[0];
-                for(unsigned int i=1; i<species_group1.size(); i++) mystream << "," << species_group1[i];
-                H5::attr(fileId, "species1" , mystream.str());
-                mystream.str("");
-                mystream << species_group2[0];
-                for(unsigned int i=1; i<species_group2.size(); i++) mystream << "," << species_group2[i];
-                H5::attr(fileId, "species2" , mystream.str());
-                H5::attr(fileId, "coulomb_log" , coulomb_log);
-                H5::attr(fileId, "debug_every"  , debug_every);
-                H5Fclose(fileId);
-            }
-        }
     }
 }
 
@@ -104,17 +73,11 @@ Collisions::Collisions( Collisions* coll, int nDim )
     } else {
         Ionization = new CollisionalNoIonization();
     }
-    
-    if( debug_every>0 ) {
-        file_access = H5Pcreate(H5P_FILE_ACCESS);
-        H5Pset_fapl_mpio(file_access, MPI_COMM_WORLD, MPI_INFO_NULL);
-    }
 }
 
 
 Collisions::~Collisions()
 {
-    if( debug_every>0 ) H5Pclose(file_access);
     delete Ionization;
 }
 
@@ -141,7 +104,7 @@ vector<Collisions*> Collisions::create(Params& params, Patch* patch, vector<Spec
     // Loop over each binary collisions group and parse info
     for (unsigned int n_collisions = 0; n_collisions < numcollisions; n_collisions++) {
         
-        MESSAGE("Parameters for collisions #" << n_collisions << " :");
+        MESSAGE(1,"Parameters for collisions #" << n_collisions << " :");
         
         // Read the input file by searching for the keywords "species1" and "species2"
         // which are the names of the two species that will collide
@@ -223,16 +186,16 @@ vector<Collisions*> Collisions::create(Params& params, Patch* patch, vector<Spec
         mystream << "(" << sgroup[0][0];
         for (unsigned int rs=1 ; rs<sgroup[0].size() ; rs++) mystream << " " << sgroup[0][rs];
         if( intra ) {
-            MESSAGE(1,"Intra collisions within species " << mystream.str() << ")");
+            MESSAGE(2,"Intra collisions within species " << mystream.str() << ")");
         } else {
             mystream << ") and (" << sgroup[1][0];
             for (unsigned int rs=1 ; rs<sgroup[1].size() ; rs++) mystream << " " << sgroup[1][rs];
-            MESSAGE(1,"Collisions between species " << mystream.str() << ")");
+            MESSAGE(2,"Collisions between species " << mystream.str() << ")");
         }
-        MESSAGE(1,"Coulomb logarithm: " << clog);
-        if( debug_every>0 ) MESSAGE(1,"Debug every " << debug_every << " timesteps");
+        MESSAGE(2,"Coulomb logarithm: " << clog);
+        if( debug_every>0 ) MESSAGE(2,"Debug every " << debug_every << " timesteps");
         mystream.str(""); // clear
-        if( ionizing>0 ) MESSAGE(1,"Collisional ionization with atomic number "<<Z);
+        if( ionizing>0 ) MESSAGE(2,"Collisional ionization with atomic number "<<Z);
         
         // Add new Collisions objects to vector
         vecCollisions.push_back(
@@ -249,6 +212,35 @@ vector<Collisions*> Collisions::create(Params& params, Patch* patch, vector<Spec
                 params.referenceAngularFrequency_SI
             )
         );
+        
+        // Create debug file
+        if( debug_every>0 ) {
+            string filename = vecCollisions.back()->filename;
+            ifstream file(filename);
+            // Check if file exists
+            if (! file) {
+                // Create the file access protocol for writing in the debug file later
+                hid_t file_access = H5Pcreate(H5P_FILE_ACCESS);
+                H5Pset_fapl_mpio(file_access, MPI_COMM_WORLD, MPI_INFO_NULL);
+                // Create file
+                hid_t fileId = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, file_access);
+                H5Pclose(file_access);
+                // write all parameters as HDF5 attributes
+                H5::attr(fileId, "Version", string(__VERSION));
+                ostringstream mystream("");
+                mystream << sgroup[0][0];
+                for(unsigned int i=1; i<sgroup[0].size(); i++) mystream << "," << sgroup[0][i];
+                H5::attr(fileId, "species1" , mystream.str());
+                mystream.str("");
+                mystream << sgroup[1][0];
+                for(unsigned int i=1; i<sgroup[1].size(); i++) mystream << "," << sgroup[1][i];
+                H5::attr(fileId, "species2" , mystream.str());
+                H5::attr(fileId, "coulomb_log" , clog);
+                H5::attr(fileId, "debug_every"  , debug_every);
+                H5Fclose(fileId);
+            }
+        }
+        
     }
     
     // pass the variable "debye_length_required" into the Collision class
@@ -272,29 +264,28 @@ vector<Collisions*> Collisions::clone(vector<Collisions*> vecCollisions, Params&
 
 // Declare other static variables here
 bool   Collisions::debye_length_required;
-double Collisions::debye_length_squared;
 
 
 
-// Calculates the debye length squared in each cluster
+// Calculates the debye length squared in each patch
 // The formula for the inverse debye length squared is sumOverSpecies(density*charge^2/temperature)
-void Collisions::calculate_debye_length(Params& params, vector<Species*>& vecSpecies)
+void Collisions::calculate_debye_length(Params& params, Patch * patch)
 {
 
-    unsigned int nspec = vecSpecies.size(); // number of species
+    unsigned int nspec = patch->vecSpecies.size(); // number of species
     double p2, density, density_max, charge, temperature, rmin2;
     Species   * s;
     Particles * p;
     double coeff = 299792458./(3.*params.referenceAngularFrequency_SI*2.8179403267e-15); // c / (3 omega re)
     
     density_max = 0.;
-    debye_length_squared = 0.;
+    patch->debye_length_squared = 0.;
     for (unsigned int ispec=0 ; ispec<nspec ; ispec++) { // loop all species
         // Calculation of particles density, mean charge, and temperature
         // Density is the sum of weights
-        // Temperature basic definition is the average <v*p> divided by 3
+        // Temperature definition is the average <v*p> divided by 3
         //    (instead of v*p, we use p^2/gamma)
-        s  = vecSpecies[ispec];
+        s  = patch->vecSpecies[ispec];
         p  = (s->particles);
         density     = 0.;
         charge      = 0.;
@@ -311,49 +302,28 @@ void Collisions::calculate_debye_length(Params& params, vector<Species*>& vecSpe
         temperature *= (s->mass) / (3.*density); // Te in units of me*c^2
         density /= (double)params.n_cell_per_patch; // density in units of critical density
         // compute inverse debye length squared
-        if (temperature>0.) debye_length_squared += density*charge*charge/temperature;
+        if (temperature>0.) patch->debye_length_squared += density*charge*charge/temperature;
         // compute maximum density of species
         if (density>density_max) density_max = density;
     }
     
     // if there were particles, 
-    if (debye_length_squared > 0.) {
+    if (patch->debye_length_squared > 0.) {
         // compute debye length squared in code units
-        debye_length_squared = 1./(debye_length_squared);
+        patch->debye_length_squared = 1./(patch->debye_length_squared);
         // apply lower limit to the debye length (minimum interatomic distance)
         rmin2 = pow(coeff*density_max, -2./3.);
-        if (debye_length_squared < rmin2) debye_length_squared = rmin2;
+        if (patch->debye_length_squared < rmin2) patch->debye_length_squared = rmin2;
     }
-    
-    
     
 #ifdef  __DEBUG
     // calculate and print average debye length
-    double mean_debye_length = sqrt(debye_length_squared);
+    double mean_debye_length = sqrt(patch->debye_length_squared);
     //DEBUG("Mean Debye length in code length units = " << scientific << setprecision(3) << mean_debye_length);
     mean_debye_length *= 299792458./params.referenceAngularFrequency_SI; // switch to SI
     DEBUG("Mean Debye length in meters = " << scientific << setprecision(3) << mean_debye_length );
 #endif
 
-}
-
-void Collisions::createTimestep(int itime)
-{
-    ostringstream name;
-    bool debug = (debug_every > 0 && itime % debug_every == 0); // debug only every N timesteps
-    if( debug ) { // Patch masters create a group
-        // Open the HDF5 file
-        hid_t fileId = H5Fopen(filename.c_str(), H5F_ACC_RDWR, file_access);
-        
-        // Create H5 group for the current timestep
-        name.str("");
-        name << "t" << setfill('0') << setw(8) << itime;
-        hid_t did = H5::group(fileId, name.str());
-        
-        // Close the group
-        H5Gclose(did);
-        H5Fclose(fileId);
-    }
 }
 
 // Calculates the collisions for a given Collisions object
@@ -377,9 +347,6 @@ void Collisions::collide(Params& params, Patch* patch, int itime)
            cosX, sinX, phi, sinXcosPhi, sinXsinPhi, p_perp, inv_p_perp, 
            newpx_COM, newpy_COM, newpz_COM, U, vcp, n_patch_per_cell;
     bool not_duplicated_particle;
-    double smean, logLmean, ncol;//, *temperature
-    ostringstream name;
-    hid_t did(0);
     
     sg1 = &species_group1;
     sg2 = &species_group2;
@@ -543,7 +510,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime)
         logL = coulomb_log;
         if( logL <= 0. ) { // if auto-calculation requested
             bmin = max( coeff1/m1/p_COM , abs(coeff2*qqm*term3*term5) ); // min impact parameter
-            logL = 0.5*log(1.+debye_length_squared/pow(bmin,2));
+            logL = 0.5*log(1.+patch->debye_length_squared/pow(bmin,2));
             if (logL < 2.) logL = 2.;
         }
         
@@ -609,46 +576,83 @@ void Collisions::collide(Params& params, Patch* patch, int itime)
         
     } // end loop on pairs of particles
     
-    
     // temporary to be removed
     Ionization->finish(patch->vecSpecies[(*sg1)[0]], patch->vecSpecies[(*sg2)[0]], params, patch);
     
-    if( debug ) {
-        if( npairs>0) {
-            double ncol = (double)npairs;
+    if(debug) {
+        if( npairs>0 ) {
+            ncol = (double)npairs;
             smean    /= ncol;
             logLmean /= ncol;
             //temperature /= ncol;
         }
+    }
+}
+
+
+void Collisions::debug(Params& params, int itime, unsigned int icoll, VectorPatch& vecPatches)
+{
+    
+    int debug_every = vecPatches(0)->vecCollisions[icoll]->debug_every;
+    if( debug_every > 0 && itime % debug_every == 0 ) {
         
-        const vector<int> local_size(params.number_of_patches.size(), 1);
+        unsigned int npatch = vecPatches.size();
+        
+        //vector<double> ncol(npatch, 0.);
+        vector<double> smean(npatch, 0.);
+        vector<double> logLmean(npatch, 0.);
+        //vector<double>  temperature=(npatch, 0.);
+        vector<double> debye_length_squared(npatch, 0.);
+        
+        // Collect info for all patches
+        for( unsigned int ipatch=0; ipatch<npatch; ipatch++ ) {
+            //ncol       [ipatch] = vecPatches(ipatch)->vecCollisions[icoll]->ncol       ;
+            smean      [ipatch] = vecPatches(ipatch)->vecCollisions[icoll]->smean      ;
+            logLmean   [ipatch] = vecPatches(ipatch)->vecCollisions[icoll]->logLmean   ;
+            //temperature[ipatch] = vecPatches(ipatch)->vecCollisions[icoll]->temperature;
+            debye_length_squared[ipatch] = vecPatches(ipatch)->debye_length_squared;
+        }
         
         // Open the HDF5 file
-        hid_t fileId = H5Fopen(filename.c_str(), H5F_ACC_RDWR, file_access);
+        hid_t file_access = H5Pcreate(H5P_FILE_ACCESS);
+        H5Pset_fapl_mpio(file_access, MPI_COMM_WORLD, MPI_INFO_NULL);
+        hid_t fileId = H5Fopen(vecPatches(0)->vecCollisions[icoll]->filename.c_str(), H5F_ACC_RDWR, file_access);
+        H5Pclose(file_access);
         // Create H5 group for the current timestep
-        name.str("");
+        ostringstream name("");
         name << "t" << setfill('0') << setw(8) << itime;
-        did = H5Gopen(fileId, name.str().c_str() ,H5P_DEFAULT);
-        // Create collective arrays in the current group
-        name.str("");
-        name << "/t" << setfill('0') << setw(8) << itime << "/s";
-        H5::array3D_MPI(did, name.str(), smean, params.number_of_patches, local_size, patch->Pcoordinates);
-        name.str("");
-        name << "/t" << setfill('0') << setw(8) << itime << "/coulomb_log";
-        H5::array3D_MPI(did, name.str(), logLmean, params.number_of_patches, local_size, patch->Pcoordinates);
-        //name.str("");
-        //name << "/t" << setfill('0') << setw(8) << itime << "/temperature";
-        //H5::array3D_MPI(did, name.str(), temperature, params.number_of_patches, local_size, patch->Pcoordinates);
-        if(debye_length_squared>0) {
-            double dmean = sqrt(debye_length_squared);
-            dmean *= 299792458./params.referenceAngularFrequency_SI;
-            name.str("");
-            name << "/t" << setfill('0') << setw(8) << itime << "/debyelength";
-            H5::array3D_MPI(did, name.str(), dmean, params.number_of_patches, local_size, patch->Pcoordinates);
-        }
-        // Close the group
-        H5Gclose(did);
-        // Close the file
+        hid_t group = H5::group(fileId, name.str());
+        // Define the size in memory for this MPI
+        hsize_t mem_size[1] = {npatch};
+        hid_t memspace  = H5Screate_simple(1, mem_size, NULL);
+        // Define size and location in file
+        hsize_t dimsf[1] = {(hsize_t)params.tot_number_of_patches};
+        hid_t filespace = H5Screate_simple(1, dimsf, NULL);
+        hsize_t offset[1] = {(hsize_t)vecPatches.refHindex_}, stride[1] = {1}, count[1] = {1}, block[1] = {npatch};
+        H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
+        // Define transfer
+        hid_t transfer = H5Pcreate(H5P_DATASET_XFER);
+        H5Pset_dxpl_mpio(transfer, H5FD_MPIO_COLLECTIVE);
+        // Define dataset property list
+        hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
+        H5Pset_alloc_time(plist_id, H5D_ALLOC_TIME_EARLY );
+        // Create new datasets for this timestep and write
+        hid_t dset_id;
+        dset_id  = H5Dcreate(group, "s", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &smean[0] );
+        H5Dclose(dset_id);
+        dset_id  = H5Dcreate(group, "coulom_log", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &logLmean[0] );
+        H5Dclose(dset_id);
+        //dset_id  = H5Dcreate(group, "temperature", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+        //H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &temperature[0] );
+        //H5Dclose(dset_id);
+        // Close all
+        H5Pclose(plist_id);
+        H5Pclose( transfer );
+        H5Sclose(filespace);
+        H5Sclose(memspace);
+        H5Gclose(group);
         H5Fclose(fileId);
     }
 
