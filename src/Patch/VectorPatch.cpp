@@ -722,7 +722,7 @@ void VectorPatch::output_exchanges(SmileiMPI* smpi)
     output_file.close();
 } // END output_exchanges
 
-    //! Resize vector of field*
+//! Resize vector of field*
 void VectorPatch::update_field_list()
 {
     listJx_.resize( size() ) ;
@@ -790,3 +790,27 @@ void VectorPatch::applyAntennas(double time)
     }
 }
 
+// For each patch, apply the collisions
+void VectorPatch::applyCollisions(Params& params, int itime, vector<Timer>& timer)
+{
+    timer[10].restart();
+    
+    if (Collisions::debye_length_required)
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
+            Collisions::calculate_debye_length(params,patches_[ipatch]);
+    
+    unsigned int ncoll = patches_[0]->vecCollisions.size();
+    
+    #pragma omp for schedule(static)
+    for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
+        for (unsigned int icoll=0 ; icoll<ncoll; icoll++)
+            patches_[ipatch]->vecCollisions[icoll]->collide(params,patches_[ipatch],itime);
+    
+    #pragma omp single
+    for (unsigned int icoll=0 ; icoll<ncoll; icoll++)
+        Collisions::debug(params, itime, icoll, *this);
+    #pragma omp barrier
+    
+    timer[10].update();
+}

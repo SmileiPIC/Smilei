@@ -222,22 +222,11 @@ int main (int argc, char* argv[])
             MESSAGE(my_msg.str());
         }
         
-        // apply collisions if requested
-        // -----------------------------
-        timer[10].restart();
-        if (Collisions::debye_length_required)
-            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-                Collisions::calculate_debye_length(params,vecPatches(ipatch)->vecSpecies);
-        for (unsigned int icoll=0 ; icoll<vecPatches(0)->vecCollisions.size(); icoll++)
-            vecPatches(0)->vecCollisions[icoll]->createTimestep(itime);
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-            for (unsigned int icoll=0 ; icoll<vecPatches(ipatch)->vecCollisions.size(); icoll++)
-                vecPatches(ipatch)->vecCollisions[icoll]->collide(params,vecPatches(ipatch),itime);
-        timer[10].update();
-        
-        
         #pragma omp parallel shared (time_dual,smpi,params, vecPatches, simWindow)
         {
+            // apply collisions if requested
+            vecPatches.applyCollisions(params, itime, timer);
+            
             // (1) interpolate the fields at the particle position
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
