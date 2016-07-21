@@ -209,7 +209,7 @@ class Species(SmileiComponent):
     atomic_number = None
     isTest = False
     track_every = 0
-    track_ordered = True
+    track_ordered = False
     track_flush_every = 1
 
 class Laser(SmileiComponent):
