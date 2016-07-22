@@ -180,8 +180,12 @@ void VectorPatch::initExternals(Params& params)
     for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
         // check if patch is on the border
         int iBC;
-        if     ( (*this)(ipatch)->isWestern() ) iBC = 0;
-        else if( (*this)(ipatch)->isEastern() ) iBC = 1;
+        if     ( (*this)(ipatch)->isWestern() ) {
+            iBC = 0;
+        }
+        else if( (*this)(ipatch)->isEastern() ) {
+            iBC = 1;
+        }
         else continue;
         // If patch is on border, then fill the fields arrays
         unsigned int nlaser = (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser.size();
