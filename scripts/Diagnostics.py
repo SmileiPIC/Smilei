@@ -2099,16 +2099,26 @@ class TrackParticles(Diagnostic):
 	def _orderFile( self, fileDisordered, fileOrdered ):
 		print "Ordering particles ... (this could take a while)"
 		# Copy the disordered file
-		from shutil import copyfile
-		copyfile(fileDisordered, fileOrdered)
+		from platform import system
+		s = system()
+		if s in ['Windows']:
+			self._os.system('xcopy "%s" "%s"' % (fileDisordered, fileOrdered))
+		elif s in ['Linux','Darwin']:
+			self._os.system('cp -fr %s %s' % (fileDisordered, fileOrdered) )
+		else:
+			from shutil import copyfile
+			shutil.copyfile(fileDisordered, fileOrdered)
 		# Open the file which will become ordered
+		print "    Created new file "+fileOrdered
 		f = self._h5py.File(fileOrdered)
 		# Get list of properties
 		properties = [p.name[1:] for p in f.values() if len(p.shape)==2]
 		# For each time
 		ntimes, npart = f["Id"].shape
+		times = f["Times"]
 		A = self._np.zeros((npart,))
 		for i in range(ntimes):
+			print "    Ordering @ timestep = "+str(times[i])
 			# Get the indices for sorting arrays
 			ids = f["Id"][i,:]
 			remaining_particles = ids>0
@@ -2122,6 +2132,7 @@ class TrackParticles(Diagnostic):
 				f[property].write_direct(B, dest_sel  =self._np.s_[i,:])
 		# Close files
 		f.close()
+		print "Ordering succeeded"
 	
 	# We override the get and getData methods
 	def getData(self):
@@ -2381,5 +2392,3 @@ def multiPlot(*Diags, **kwargs):
 			if t is not None: save.frame(int(t))
 		mov.finish()
 		return
-
-
