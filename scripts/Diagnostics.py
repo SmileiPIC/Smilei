@@ -16,6 +16,8 @@ def setMatplotLibBackend(show=True):
 	if show and usingAgg:
 		if "matplotlib.pyplot" in sys.modules:
 			print "WARNING: 'show=False' was set earlier. Restart python if you want figures to appear."
+	matplotlib.rcParams['font.family'] = 'serif'
+	matplotlib.rcParams['font.serif'] = 'Times New Roman'
 	#print matplotlib.get_backend()
 
 
@@ -2107,7 +2109,7 @@ class TrackParticles(Diagnostic):
 			self._os.system('cp -fr %s %s' % (fileDisordered, fileOrdered) )
 		else:
 			from shutil import copyfile
-			shutil.copyfile(fileDisordered, fileOrdered)
+			copyfile(fileDisordered, fileOrdered)
 		# Open the file which will become ordered
 		print "    Created new file "+fileOrdered
 		f = self._h5py.File(fileOrdered)
