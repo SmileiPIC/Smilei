@@ -16,13 +16,11 @@ class Collisions
 
 public:
     //! Constructor for Collisions between two species
-    Collisions(Patch*, unsigned int, std::vector<unsigned int>, std::vector<unsigned int>, double, bool, int, unsigned int, int, bool, int, double);
+    Collisions( Patch* patch, unsigned int n_collisions, std::vector<unsigned int>,std::vector<unsigned int>, double coulomb_log, bool intra_collisions,int debug_every,int Z,bool ionizing,int nDim,double);
     //! Cloning Constructor
     Collisions(Collisions*, int);
     //! destructor
     ~Collisions();
-    
-    void createTimestep(int timestep);
     
     //! Method that creates a vector of Collisions objects: one for each group in the input file.
     static std::vector<Collisions*> create(Params&, Patch*, std::vector<Species*>&);
@@ -45,7 +43,7 @@ public:
     int debug_every;
     
     //! Method to calculate the Debye length in each cluster
-    static void calculate_debye_length(Params&, std::vector<Species*>& vecSpecies);
+    static void calculate_debye_length(Params&, Patch*);
     
     //! is true if any of the collisions objects need automatically-computed coulomb log
     static bool debye_length_required;
@@ -53,13 +51,13 @@ public:
     //! Method called in the main smilei loop to apply collisions at each timestep
     void collide(Params&, Patch* ,int);
     
+    //! Outputs the debug info if requested
+    static void debug(Params& params, int itime, unsigned int icoll, VectorPatch& vecPatches);
+    
     //! CollisionalIonization object, created if ionization required
     CollisionalIonization * Ionization;
     
 private:
-    
-    //! Contains the debye length in each cluster, computed each timestep
-    static std::vector<double> debye_length_squared; 
     
     static double cos_chi(double);
     
@@ -67,8 +65,9 @@ private:
     
     //! Hdf5 file name
     std::string filename;
-    //! Hdf5 file access
-    hid_t file_access;
+    
+    //! Temporary variables for the debugging file
+    double smean, logLmean, ncol;//, temperature
 };
 
 

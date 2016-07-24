@@ -94,7 +94,7 @@ public:
     //unsigned int clrw;
     int clrw;
     //! Number of cells per cluster
-    int n_cell_per_cluster;
+    int n_cell_per_patch;
     
     //! initial number of particles
     unsigned int n_particles;

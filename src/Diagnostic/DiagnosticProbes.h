@@ -61,15 +61,14 @@ private :
     //! Indices in the output array where each field goes
     std::vector<unsigned int> fieldlocation;
     
-    //! E local fields for the projector
-    LocalFields Eloc_fields;
-    //! B local fields for the projector
-    LocalFields Bloc_fields;
-    //! J local fields for the projector
-    LocalFields Jloc_fields;
-    //! Rho local field for the projector
-    double Rloc_fields;
+    //! Variable to store the status of a dataset (whether it exists or not)
+    htri_t status;
     
+    //! Temporary buffer to write probes
+    Field2D* probesArray;
+    
+    //! Temporary array to locate the current patch in the buffer
+    std::vector<unsigned int> offset;
 };
 
 

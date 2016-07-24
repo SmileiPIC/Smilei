@@ -31,6 +31,12 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
         name.str()
     );
     
+    // get parameter "flush_every" which describes a timestep selection for flushing the file
+    flush_timeSelection = new TimeSelection(
+        PyTools::extract_py("flush_every", "DiagParticles", n_diag_particles),
+        name.str()
+    );
+    
     // get parameter "time_average" that determines the number of timestep to average the outputs
     time_average = 1;
     PyTools::extract("time_average",time_average,"DiagParticles",n_diag_particles);
@@ -139,7 +145,7 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
 DiagnosticParticles::~DiagnosticParticles()
 {
     delete timeSelection;
-    
+    delete flush_timeSelection;
 } // END DiagnosticParticles::~DiagnosticParticles
 
 
@@ -173,6 +179,7 @@ void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, bool newfil
             string str2 = mystream.str();
             H5::attr(fileId_, str1, str2);
         }
+        H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     }
     else {
         fileId_ = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
@@ -467,9 +474,9 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
 // Now the data_sum has been filled
 // if needed now, store result to hdf file
 // called by MPI master only, when time-average has finished
-bool DiagnosticParticles::write(int timestep)
+void DiagnosticParticles::write(int timestep)
 {
-    if (timestep - timeSelection->previousTime() != time_average-1) return true;
+    if (timestep - timeSelection->previousTime() != time_average-1) return;
     
     double coeff;
     // if time_average, then we need to divide by the number of timesteps
@@ -485,14 +492,12 @@ bool DiagnosticParticles::write(int timestep)
     // write the array
     if (! H5Lexists( fileId_, mystream.str().c_str(), H5P_DEFAULT ) )
         H5::vect(fileId_, mystream.str(), data_sum);
-    else
-        WARNING("DIAG PARTICLES COULD NOT WRITE");
+    
+    if( flush_timeSelection->theTimeIsNow(timestep) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     
     // Clear the array
     clear();
     data_sum.resize(0);
-    
-    return false;
 } // END write
 
 

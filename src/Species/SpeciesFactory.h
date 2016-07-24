@@ -236,16 +236,9 @@ public:
             ERROR("For species '" << species_type << "' test & ionized is currently impossible");
         }
         
-        // Get parameter "track_every" which describes a timestep selection
-        std::ostringstream name("");
-        name << "Tracking species '" << species_type << "'";
-        thisSpecies->particles->track_timeSelection = new TimeSelection(
-            PyTools::extract_py("track_every", "Species", ispec),
-            name.str()
-        );
-        thisSpecies->particles->tracked = ! thisSpecies->particles->track_timeSelection->isEmpty();
-        // Get parameter "track_ordered" which decides whether the track particle dumps are ordered by Id
-        PyTools::extract("track_ordered", thisSpecies->particles->track_ordered, "Species", ispec);
+        // Find out whether this species is tracked
+        TimeSelection track_timeSelection( PyTools::extract_py("track_every", "Species", ispec), "Track" );
+        thisSpecies->particles->tracked = ! track_timeSelection.isEmpty();
         
         // Create the particles
         if (!params.restart) {
@@ -308,8 +301,6 @@ public:
         
         newSpecies->particles->isTest              = species->particles->isTest;
         newSpecies->particles->tracked             = species->particles->tracked;
-        newSpecies->particles->track_ordered       = species->particles->track_ordered;
-        newSpecies->particles->track_timeSelection = new TimeSelection(species->particles->track_timeSelection);
         
         // \todo : NOT SURE HOW THIS BEHAVES WITH RESTART
         if (!params.restart) {
@@ -337,8 +328,6 @@ public:
             // Put the newly created species in the vector of species
             retSpecies.push_back(thisSpecies);
             
-            // Print info
-            if (patch->isMaster()) MESSAGE(2, "Species " << ispec << " (" << thisSpecies->species_type << ") created,\t check scalars for the number of particles" );
         }
         
         // Loop species to find the electron species for ionizable species

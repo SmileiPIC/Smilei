@@ -250,6 +250,12 @@ public:
     //! Particles pusher (change momentum & change position)
     Pusher* Push;
 
+    //! Moving window boundary conditions managment
+    void disableEast();
+    //! Moving window boundary conditions managment
+    void setWestBoundaryCondition();
+
+
 private:    
     //! Number of steps for Maxwell-Juettner cumulative function integration
     //! \todo{Put in a code constant class}

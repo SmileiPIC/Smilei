@@ -50,13 +50,11 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patc
 DiagnosticScalar::DiagnosticScalar( DiagnosticScalar * scalar )
 {
     out_width.resize(0);
-    if( scalar->timeSelection ) {
-        timeSelection = new TimeSelection(scalar->timeSelection);
-        precision     = scalar->precision;
-        res_time      = scalar->res_time;
-        dt            = scalar->dt;
-        cell_volume   = scalar->cell_volume;
-    }
+    timeSelection = new TimeSelection(scalar->timeSelection);
+    precision     = scalar->precision;
+    res_time      = scalar->res_time;
+    dt            = scalar->dt;
+    cell_volume   = scalar->cell_volume;
     print_every = scalar->print_every;
     type_ = "Scalar";
 };
@@ -65,6 +63,7 @@ DiagnosticScalar::DiagnosticScalar( DiagnosticScalar * scalar )
 
 DiagnosticScalar::~DiagnosticScalar()
 {
+    delete timeSelection;
 } // END DiagnosticScalar::#DiagnosticScalar
 
 
@@ -117,11 +116,11 @@ void DiagnosticScalar::run( Patch* patch, int timestep )
 } // END run
 
 
-bool DiagnosticScalar::write(int itime)
+void DiagnosticScalar::write(int itime)
 {
     unsigned int k, s=out_key.size();
     
-    if ( ! timeSelection->theTimeIsNow(itime) ) return true;
+    if ( ! timeSelection->theTimeIsNow(itime) ) return;
     
     fout << std::scientific << setprecision(precision);
     // At the beginning of the file, we write some headers
@@ -152,8 +151,6 @@ bool DiagnosticScalar::write(int itime)
         }
     }
     fout << endl;
-    
-    return true;
 } // END write
 
 
@@ -262,7 +259,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
                     Utot_crtField+=pow((**field)(ii),2);
                 }
             }
-        }        
+        }
         // Utot = Dx^N/2 * Field^2
         Utot_crtField *= 0.5*cell_volume;
         

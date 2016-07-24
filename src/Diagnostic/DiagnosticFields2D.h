@@ -22,9 +22,6 @@ public:
 
 private:
     
-    // Tools for re-reading and re-writing the file in a folded pattern
-    hid_t filespace_reread, filespace_firstwrite, memspace_reread, memspace_firstwrite;
-    std::vector<double> data_reread, data_rewrite;
     unsigned int rewrite_npatch, rewrite_xmin, rewrite_ymin, rewrite_npatchx, rewrite_npatchy;
     std::vector<unsigned int> rewrite_patches_x, rewrite_patches_y;
 };
