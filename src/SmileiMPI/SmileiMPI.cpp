@@ -802,12 +802,9 @@ void SmileiMPI::recv( ProbeParticles* probe, int from, int tag, unsigned int nDi
 // ---------------------------------------------------------------------------------------------------------------------
 void SmileiMPI::computeGlobalDiags(Diagnostic* diag, int timestep)
 {
-    if ( diag->type_ == "Scalar" ) {
-        DiagnosticScalar* scalar = static_cast<DiagnosticScalar*>( diag );
+    if ( DiagnosticScalar* scalar = dynamic_cast<DiagnosticScalar*>( diag ) ) {
         computeGlobalDiags(scalar, timestep);
-    }
-    else if ( diag->type_ == "Particles" ) {
-        DiagnosticParticles* particles = static_cast<DiagnosticParticles*>( diag );
+    } else if (DiagnosticParticles* particles = dynamic_cast<DiagnosticParticles*>( diag )) {
         computeGlobalDiags(particles, timestep);
     }
 }

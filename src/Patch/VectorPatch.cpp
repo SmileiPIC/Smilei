@@ -212,7 +212,7 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
         localDiags[idiag]->init(params, smpi, *this);
         // Save the timeSelection
-        if( fieldsTimeSelection==NULL && localDiags[idiag]->type_=="Fields" )
+        if( fieldsTimeSelection==NULL && dynamic_cast<DiagnosticFields*>(localDiags[idiag]))
             fieldsTimeSelection = new TimeSelection(localDiags[idiag]->timeSelection);
     }
     

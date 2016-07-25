@@ -137,8 +137,7 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
         filename = mystream.str();
     }
     
-    type_ = "Particles";
-
+ 
 } // END DiagnosticParticles::DiagnosticParticles
 
 

@@ -91,7 +91,6 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patc
     write_plist = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
     
-    type_ = "Fields";
 }
 
 

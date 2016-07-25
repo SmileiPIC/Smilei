@@ -114,8 +114,6 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
     
     MESSAGE(1, "Diagnostic created: probe #"<<n_probe);
     
-    type_ = "Probes";
-
 } // END DiagnosticProbes::DiagnosticProbes
 
 

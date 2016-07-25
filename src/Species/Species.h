@@ -215,9 +215,9 @@ public:
     
     double getNewParticlesNRJ() const {return mass*nrj_new_particles;}
     void reinitDiags() { 
-    nrj_bc_lost = 0;
-    nrj_mw_lost = 0;
-    nrj_new_particles = 0;
+        nrj_bc_lost = 0;
+        nrj_mw_lost = 0;
+        nrj_new_particles = 0;
     }
     inline void storeNRJlost( double nrj ) { nrj_mw_lost = nrj; };
     

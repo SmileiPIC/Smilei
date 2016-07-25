@@ -55,7 +55,6 @@ nDim_particle(params.nDim_particle)
         datatypes.push_back( H5T_NATIVE_DOUBLE );
     }
     
-    type_ = "Track";
 }
 
 DiagnosticTrack::~DiagnosticTrack()

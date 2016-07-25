@@ -40,25 +40,8 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patc
     print_every=params.n_time/10;
     PyTools::extract("print_every", print_every, "Main");
     
-    type_ = "Scalar";
     
 } // END DiagnosticScalar::DiagnosticScalar
-
-
-
-// Cloning constructor
-DiagnosticScalar::DiagnosticScalar( DiagnosticScalar * scalar )
-{
-    out_width.resize(0);
-    timeSelection = new TimeSelection(scalar->timeSelection);
-    precision     = scalar->precision;
-    res_time      = scalar->res_time;
-    dt            = scalar->dt;
-    cell_volume   = scalar->cell_volume;
-    print_every = scalar->print_every;
-    type_ = "Scalar";
-};
-
 
 
 DiagnosticScalar::~DiagnosticScalar()
@@ -196,8 +179,6 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         // particle energy added due to moving window
         double ener_added_mvw=0.0;
         ener_added_mvw = vecSpecies[ispec]->getNewParticlesNRJ();
-        
-        
         
         if (nPart!=0) charge_avg /= nPart;
         string nameSpec=vecSpecies[ispec]->species_type;

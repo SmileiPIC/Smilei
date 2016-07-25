@@ -41,7 +41,7 @@ public :
     
     //! this is the file name
     std::string filename;
-    std::string type_;
+
 protected :
     
     //! Id of the file for one diagnostic
