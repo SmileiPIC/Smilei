@@ -171,10 +171,12 @@ tar:
 help: 
 	@echo 'Usage: make config=OPTIONS'
 	@echo '	    OPTIONS is a string composed of one or more of:'
+	@echo '	        verbose    : to print compile command lines'
 	@echo '	        debug      : to compile in debug mode (code runs really slow)'
 	@echo '         scalasca   : to compile using scalasca'
 	@echo '         noopenmp   : to compile without openmp'
 	@echo ' examples:'
+	@echo '     make config=verbose'
 	@echo '     make config=debug'
 	@echo '     make config=noopenmp'
 	@echo '     make config="debug noopenmp"'
