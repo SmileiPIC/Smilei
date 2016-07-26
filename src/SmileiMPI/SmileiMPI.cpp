@@ -341,7 +341,7 @@ void SmileiMPI::init_patch_count( Params& params)
             if ( Lcur > Tcur || smilei_sz-r >= Npatches-hindex){ //Load target is exceeded or we have as many patches as procs left.
                 above_target = Lcur - Tcur;  //Including current patch, we exceed target by that much.
                 below_target = Tcur - (Lcur-local_load); // Excluding current patch, we mis the target by that much.
-                if(above_target > below_target) { // If we're closer to target without the current patch...
+                if((above_target > below_target) && (Ncur!=1)) { // If we're closer to target without the current patch...
                     patch_count[r] = Ncur-1;      // ... include patches up to current one.
                     Ncur = 1;
                     //Lcur = local_load;
@@ -433,7 +433,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
             if ( Lcur > Tcur || smilei_sz-r >= Npatches-ipatch){ //Load target is exceeded or we have as many patches as procs left.
                 above_target = Lcur - Tcur;  //Including current patch, we exceed target by that much.
                 below_target = Tcur - (Lcur-Lp_global[ipatch]); // Excluding current patch, we mis the target by that much.
-                if(above_target > below_target) { // If we're closer to target without the current patch...
+                if((above_target > below_target) && (Ncur!=1)) { // If we're closer to target without the current patch...
                     target_patch_count[r] = Ncur-1;      // ... include patches up to current one.
                     Ncur = 1;
                 } else {                          //Else ...
