@@ -7,7 +7,6 @@ Before installing :program:`Smilei`, you need to install a few dependencies:
 * MPI libraries (*openmpi* recommended), supporting `MPI_THREAD_MULTIPLE`
 * HDF5 libraries compatible with your versions of C++ and MPI
 * Python 2.7
-* `xxd` shell command
 
 Optional dependencies are:
 

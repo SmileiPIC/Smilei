@@ -111,30 +111,27 @@ distclean: clean
 env:
 	echo "$(MPIVERSION)"
 
-
+# set verbosity prefix
 ifeq (,$(findstring verbose,$(config)))
 Q := @
 else
 Q := 
 endif
 
-# this generates a .h file containing a char[] with the python script in binary then
-# you can just include this file to get the contents (in Params/Params.cpp)
+# this generates a .pyh header file containing a char[] with the text of the python script
 $(BUILD_DIR)/%.pyh: %.py
-	$(if $(shell command -v xxd 2> /dev/null),,$(error Please install xxd))
+	@echo "Creating binary char for $<"
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-	@echo "Creating binary char for $< : $@"
-	$(Q) cd "$(<D)" && xxd -i "$(<F)" > "$(@F)"
-	$(Q) mv "$(<D)/$(@F)" "$@"
-
+	$(Q) python scripts/CompileTools/hexdump.py "$<" "$@"
+	
 $(BUILD_DIR)/%.d: %.cpp
-	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
 	@echo "Checking dependencies for $<"
+	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
 # create and modify dependecy file .d to take into account the location subdir
 	$(Q) $(SMILEICXX) $(CXXFLAGS) -MM $< 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(BUILD_DIR)/$(shell  dirname $<)/\1.d $(BUILD_DIR)/$(shell  dirname $<)/\1.o:@" > $@  
 
 $(BUILD_DIR)/%.o : %.cpp
-	@echo "Compiling $< : $@"
+	@echo "Compiling $<"
 	$(Q) $(SMILEICXX) $(CXXFLAGS) -c $< -o $@
 
 $(EXEC): $(OBJS)
