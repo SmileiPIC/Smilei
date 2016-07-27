@@ -60,9 +60,8 @@ int main (int argc, char* argv[])
     MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |   " );//<< (string(__CONFIG).size()? "Config  : ":"") << __CONFIG);
     MESSAGE("                                /_/    ");
     
-    TITLE("Input data info");
-    
     // Read and print simulation parameters
+    TITLE("Input data info ");
     Params params(smpi,vector<string>(argv + 1, argv + argc));
     
     // Initialize MPI environment with simulation parameters
@@ -429,3 +428,4 @@ vector<Timer> initialize_timers(SmileiMPI* smpi)
     
     return timer;
 } // End initialize_timers
+
