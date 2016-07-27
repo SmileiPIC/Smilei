@@ -10,15 +10,15 @@ def setMatplotLibBackend(show=True):
 	usingAgg = (matplotlib.get_backend().lower() == "agg")
 	if not show and not usingAgg:
 		if "matplotlib.pyplot" in sys.modules:
-			print "WARNING: 'show=False' requires you restart python."
+			print("WARNING: 'show=False' requires you restart python.")
 		else:
 			matplotlib.use("Agg")
 	if show and usingAgg:
 		if "matplotlib.pyplot" in sys.modules:
-			print "WARNING: 'show=False' was set earlier. Restart python if you want figures to appear."
+			print("WARNING: 'show=False' was set earlier. Restart python if you want figures to appear.")
 	matplotlib.rcParams['font.family'] = 'serif'
 	matplotlib.rcParams['font.serif'] = 'Times New Roman'
-	#print matplotlib.get_backend()
+	#print(matplotlib.get_backend())
 
 
 class Smilei(object):
@@ -73,17 +73,17 @@ class Smilei(object):
 		self.valid = False
 		# Verify that results_path is valid
 		if not self._os.path.isdir(self._results_path):
-			print "Could not find directory "+self._results_path
+			print("Could not find directory "+self._results_path)
 			return
 		if len(self._glob(self._results_path+"/smilei.py"))==0:
-			print "Could not find an input file in directory "+self._results_path
+			print("Could not find an input file in directory "+self._results_path)
 			return
 		# Fetch the python namelist
 		namespace={}
-		execfile(self._results_path+'/smilei.py',namespace) # execute the namelist into an empty namespace
+		exec(open(self._results_path+'/smilei.py').read(), namespace) # execute the namelist into an empty namespace
 		class Namelist: pass # empty class to store the namelist variables
 		self.namelist = Namelist() # create new empty object
-		for key, value in namespace.iteritems(): # transfer all variables to this object
+		for key, value in namespace.items(): # transfer all variables to this object
 			if key[0]=="_": continue # skip builtins
 			setattr(self.namelist, key, value)
 		
@@ -293,7 +293,7 @@ class Options(object):
 		self.skipAnimation = kwargs.pop("skipAnimation", self.skipAnimation)
 		self.streakPlot    = kwargs.pop("streakPlot"   , self.streakPlot   )
 		# Second, we manage all the other arguments that are directly the ones of matplotlib
-		for kwa, val in kwargs.iteritems():
+		for kwa, val in kwargs.items():
 			if kwa in ["figsize"]:
 				self.figure0.update({kwa:val})
 			if kwa in ["dpi","facecolor","edgecolor"]:
@@ -339,7 +339,7 @@ class Units(object):
 				self.requestedUnits.append( a )
 			else:
 				raise TypeError("Arguments of Units() should be strings")
-		for kwa, val in kwargs.iteritems():
+		for kwa, val in kwargs.items():
 			if type(val) is not str:
 				raise TypeError("Arguments of Units() should be strings")
 			if   kwa == "x": self.requestedX = val
@@ -353,8 +353,8 @@ class Units(object):
 			from pint import UnitRegistry
 			self.UnitRegistry = UnitRegistry
 		except:
-			print "WARNING: you do not have the *pint* package, so you cannot modify units."
-			print "       : The results will stay in code units."
+			print("WARNING: you do not have the *pint* package, so you cannot modify units.")
+			print("       : The results will stay in code units.")
 			return
 	
 	def _divide(self,units1, units2):
@@ -368,8 +368,8 @@ class Units(object):
 				try:
 					return self._divide(knownUnits,requestedUnits)
 				except:
-					print "WARNING: cannot convert units to <"+requestedUnits+">"
-					print "       : Conversion discarded."
+					print("WARNING: cannot convert units to <"+requestedUnits+">")
+					print("       : Conversion discarded.")
 			else:
 				for units in self.requestedUnits:
 					try   : return self._divide(knownUnits,units)
@@ -450,10 +450,10 @@ class Diagnostic(object):
 			self.Smilei.reload()
 		# Otherwise, error
 		else:
-			print "Could not find information on the Smilei simulation"
+			print("Could not find information on the Smilei simulation")
 			return
 		if not self.Smilei.valid:
-			print "Invalid Smilei simulation"
+			print("Invalid Smilei simulation")
 			return
 		
 		# pass packages to each diagnostic
@@ -474,7 +474,7 @@ class Diagnostic(object):
 		if type(self.units) in [list, tuple]: self.units = Units(*self.units)
 		if type(self.units) is dict         : self.units = Units(**self.units)
 		if type(self.units) is not Units:
-			print "Could not understand the 'units' argument"
+			print("Could not understand the 'units' argument")
 			return
 		
 		# Get some info on the simulation
@@ -498,7 +498,7 @@ class Diagnostic(object):
 			self.timestep = self._np.double(self.namelist.Main.timestep)
 			if not self._np.isfinite(self.timestep): raise
 		except:
-			print error
+			print(error)
 			return None
 		
 		# Call the '_init' function of the child class
@@ -526,10 +526,10 @@ class Diagnostic(object):
 		try:
 			self.Smilei
 		except:
-			print "No valid Smilei simulation selected"
+			print("No valid Smilei simulation selected")
 			return False
 		if not self.Smilei.valid or not self.valid:
-			print "Diagnostic is invalid"
+			print("Diagnostic is invalid")
 			return False
 		return True
 	
@@ -580,16 +580,16 @@ class Diagnostic(object):
 		# Case of a streakPlot (no animation)
 		if self.options.streakPlot:
 			if len(self.times) < 2:
-				print "ERROR: a streak plot requires at least 2 times"
+				print("ERROR: a streak plot requires at least 2 times")
 				return
 			if not hasattr(self,"_getDataAtTime"):
-				print "ERROR: this diagnostic cannot do a streak plot"
+				print("ERROR: this diagnostic cannot do a streak plot")
 				return
 			if len(self._shape) != 1:
-				print "ERROR: Diagnostic must be 1-D for a streak plot"
+				print("ERROR: Diagnostic must be 1-D for a streak plot")
 				return
 			if not (self._np.diff(self.times)==self.times[1]-self.times[0]).all():
-				print "WARNING: times are not evenly spaced. Time-scale not plotted"
+				print("WARNING: times are not evenly spaced. Time-scale not plotted")
 				ylabel = "Unevenly-spaced times"
 			else:
 				ylabel = "Timesteps"
@@ -631,7 +631,7 @@ class Diagnostic(object):
 		save = SaveAs(saveAs, fig, self._plt)
 		# Loop times for animation
 		for time in self.times:
-			print "timestep "+str(time)
+			print("timestep "+str(time))
 			# plot
 			ax.cla()
 			if self._animateOnAxes(ax, time) is None: return
@@ -663,7 +663,7 @@ class Diagnostic(object):
 			elif self._dim == 1: self._animateOnAxes = self._animateOnAxes_1D
 			elif self._dim == 2: self._animateOnAxes = self._animateOnAxes_2D
 			else:
-				print "Cannot plot with more than 2 dimensions !"
+				print("Cannot plot with more than 2 dimensions !")
 				return
 		# prepare t label
 		self._tlabel = self.units.tname
@@ -754,12 +754,12 @@ class Diagnostic(object):
 		try:
 			if len(self.options.xtick)>0: ax.ticklabel_format(axis="x",**self.options.xtick)
 		except:
-			print "Cannot format x ticks (typically happens with log-scale)"
+			print("Cannot format x ticks (typically happens with log-scale)")
 			self.xtickkwargs = []
 		try:
 			if len(self.options.ytick)>0: ax.ticklabel_format(axis="y",**self.options.ytick)
 		except:
-			print "Cannot format y ticks (typically happens with log-scale)"
+			print("Cannot format y ticks (typically happens with log-scale)")
 			self.xtickkwargs = []
 	
 	def dim(self):
@@ -777,13 +777,13 @@ class ParticleDiagnostic(Diagnostic):
 		
 		if not self.Smilei.valid: return None
 		if diagNumber is None:
-			print "Printing available particle diagnostics:"
-			print "----------------------------------------"
+			print("Printing available particle diagnostics:")
+			print("----------------------------------------")
 			diagNumber = 0
 			while self._printInfo(self._getInfo(diagNumber)):
 				diagNumber += 1
 			if diagNumber == 0:
-				print "      No particle diagnostics found in "+self._results_path;
+				print("      No particle diagnostics found in "+self._results_path)
 			return None
 		
 		cell_size = {"x":self._cell_length[0]}
@@ -795,26 +795,26 @@ class ParticleDiagnostic(Diagnostic):
 		# Check the requested diags are ok
 		if type(diagNumber) is int:
 			if diagNumber<0:
-				print "Argument 'diagNumber' cannot be a negative integer."
+				print("Argument 'diagNumber' cannot be a negative integer.")
 				return
 			self.operation = '#' + str(diagNumber)
 		elif type(diagNumber) is str:
 			self.operation = diagNumber
 		else:
-			print"Argument 'diagNumber' must be and integer or a string."
+			print("Argument 'diagNumber' must be and integer or a string.")
 			return
 		
 		# Get list of requested diags
 		self._diags = sorted(set([ int(d[1:]) for d in self._re.findall('#\d+',self.operation) ]))
 		for diag in self._diags:
 			if not self._getInfo(diag):
-				print "No particle diagnostic #"+str(diag)
+				print("No particle diagnostic #"+str(diag))
 				return
 		try:
-			exec(self._re.sub('#\d+','1.',self.operation)) in None
+			exec(self._re.sub('#\d+','1.',self.operation))
 		except ZeroDivisionError: pass
 		except:
-			print "Cannot understand operation '"+self.operation+"'"
+			print("Cannot understand operation '"+self.operation+"'")
 			return
 		# Verify that all requested diags exist and they all have the same shape
 		self._info = {}
@@ -825,19 +825,19 @@ class ParticleDiagnostic(Diagnostic):
 			try:
 				self._info.update({ d:self._getInfo(d) })
 			except:
-				print "Particle diagnostic #"+str(d)+" not found."
+				print("Particle diagnostic #"+str(d)+" not found.")
 				return None
 			self._axes .update ({ d:self._info[d]["axes"] })
 			self._naxes.update ({ d:len(self._axes[d]) })
 			self._ishape.update({ d:[ axis["size"] for axis in self._axes[d] ] })
 			if self._naxes[d] != self._naxes[self._diags[0]]:
-				print ("All diagnostics in operation '"+self.operation+"' must have as many axes."
+				print("All diagnostics in operation '"+self.operation+"' must have as many axes."
 					+ " Diagnotic #"+str(d)+" has "+str(self._naxes[d])+" axes and #"+
 					str(self._diags[0])+" has "+str(self._naxes[self._diags[0]])+" axes")
 				return None
 			for a in self._axes[d]:
 				if self._axes[d] != self._axes[self._diags[0]]:
-					print ("In operation '"+self.operation+"', diagnostics #"+str(d)+" and #"
+					print("In operation '"+self.operation+"', diagnostics #"+str(d)+" and #"
 						+str(self._diags[0])+" must have the same shape.")
 					return None
 		
@@ -847,7 +847,7 @@ class ParticleDiagnostic(Diagnostic):
 		
 		# Check slice is a dict
 		if slice is not None  and  type(slice) is not dict:
-			print "Argument 'slice' must be a dictionary"
+			print("Argument 'slice' must be a dictionary")
 			return None
 		# Make slice a dictionary
 		if slice is None: slice = {}
@@ -885,11 +885,11 @@ class ParticleDiagnostic(Diagnostic):
 					else:
 						raise
 				except:
-					print "Argument 'timesteps' must be one or two non-negative integers"
+					print("Argument 'timesteps' must be one or two non-negative integers")
 					return None
 			# Verify that timesteps are the same for all diagnostics
 			if (self.times[d] != self.times[self._diags[0]]).any() :
-				print ("All diagnostics in operation '"+self.operation+"' must have the same timesteps."
+				print("All diagnostics in operation '"+self.operation+"' must have the same timesteps."
 					+" Diagnotic #"+str(d)+" has "+str(len(self.times[d]))+ " timesteps and #"
 					+str(self._diags[0])+" has "+str(len(self.times[self._diags[0]])))+ " timesteps"
 				return None
@@ -898,7 +898,7 @@ class ParticleDiagnostic(Diagnostic):
 		
 		# Need at least one timestep
 		if self.times.size < 1:
-			print "Timesteps not found"
+			print("Timesteps not found")
 			return None
 		
 		# 3 - Manage axes
@@ -956,7 +956,7 @@ class ParticleDiagnostic(Diagnostic):
 						s = self._np.double(slice[axis["type"]])
 						if s.size>2 or s.size<1: raise
 					except:
-						print "Slice along axis "+axis["type"]+" should be one or two floats"
+						print("Slice along axis "+axis["type"]+" should be one or two floats")
 						return None
 					# convert the slice into a range of indices
 					if s.size == 1:
@@ -995,7 +995,7 @@ class ParticleDiagnostic(Diagnostic):
 				plot_diff.append(self._np.diff(edges))
 		
 		if len(self._shape) > 2:
-			print "Cannot plot in "+str(len(self._shape))+"d. You need to 'slice' some axes."
+			print("Cannot plot in "+str(len(self._shape))+"d. You need to 'slice' some axes.")
 			return None
 		
 		# Build units
@@ -1072,12 +1072,12 @@ class ParticleDiagnostic(Diagnostic):
 			if (name == "output"): output = value
 			if (name == "time_average"): time_average = int(value)
 			if (name == "species"):
-				species = value.strip().split(" ") # get all species numbers
+				species = str(value.strip()).split(" ") # get all species numbers
 				for i in range(len(species)):
 					species[i] = int(species[i]) # convert string to int
 			if (name[0:4] == "axis" ):
 				n = int(name[4:]) # axis number
-				sp = value.split(" ")
+				sp = str(value).split(" ")
 				axistype  = sp[0]
 				axismin  = float(sp[1])
 				axismax  = float(sp[2])
@@ -1098,19 +1098,19 @@ class ParticleDiagnostic(Diagnostic):
 		# 1 - diag number, type and list of species
 		species = ""
 		for i in range(len(info["species"])): species += str(info["species"][i])+" " # reconstitute species string
-		print "Diag#"+str(info["#"])+" - "+info["output"]+" of species # "+species
+		print("Diag#"+str(info["#"])+" - "+info["output"]+" of species # "+species)
 		
 		# 2 - period and time-averaging
 		tavg = "no time-averaging"
 		if (info["tavg"] > 1):
-			print "    Averaging over "+str(info["tavg"])+" timesteps"
+			print("    Averaging over "+str(info["tavg"])+" timesteps")
 		
 		# 3 - axes
 		for i in range(len(info["axes"])):
 			axis = info["axes"][i];
 			logscale = "" if not axis["log"] else " [ LOG SCALE ] "
 			edges    = "" if not axis["edges_included"] else " [ INCLUDING EDGES ] "
-			print ("    "+axis["type"]+" from "+str(axis["min"])+" to "+str(axis["max"])
+			print("    "+axis["type"]+" from "+str(axis["min"])+" to "+str(axis["max"])
 				   +" in "+str(axis["size"])+" steps "+logscale+edges)
 		
 		return True
@@ -1120,9 +1120,9 @@ class ParticleDiagnostic(Diagnostic):
 		if not self._validate(): return
 		for d in self._diags:
 			self._printInfo(self._info[d])
-		if len(self.operation)>2: print "Operation : "+self.operation
+		if len(self.operation)>2: print("Operation : "+self.operation)
 		for ax in self._axes:
-			if "sliceInfo" in ax: print ax["sliceInfo"]
+			if "sliceInfo" in ax: print(ax["sliceInfo"])
 		return
 	
 	# get all available timesteps for a given diagnostic
@@ -1136,7 +1136,7 @@ class ParticleDiagnostic(Diagnostic):
 				file = self._results_path+'/ParticleDiagnostic'+str(diagNumber)+'.h5'
 				f = self._h5py.File(file, 'r')
 			except:
-				print "Cannot open file "+file
+				print("Cannot open file "+file)
 				return self._np.array([])
 			items = f.items()
 			ntimes = len(items)
@@ -1151,7 +1151,7 @@ class ParticleDiagnostic(Diagnostic):
 		if not self._validate(): return
 		# Verify that the timestep is valid
 		if t not in self.times:
-			print "Timestep "+t+" not found in this diagnostic"
+			print("Timestep "+t+" not found in this diagnostic")
 			return []
 		# Get arrays from all requested diagnostics
 		A = {}
@@ -1173,7 +1173,7 @@ class ParticleDiagnostic(Diagnostic):
 		data_operation = self.operation
 		for d in reversed(self._diags):
 			data_operation = data_operation.replace("#"+str(d),"A["+str(d)+"]")
-		exec("A = "+data_operation) in None
+		A = eval(data_operation)
 		# log scale if requested
 		if self._data_log: A = self._np.log10(A)
 		return A
@@ -1195,30 +1195,30 @@ class Field(Diagnostic):
 		try:
 			self._f = self._h5py.File(self._file, 'r')
 		except:
-			print "No fields found"
+			print("No fields found")
 			return
 		self._h5items = self._f.values()
 		
 		if field is None:
 			fields = self.getFields()
 			if len(fields)>0:
-				print "Printing available fields:"
-				print "--------------------------"
+				print("Printing available fields:")
+				print("--------------------------")
 				l = (len(fields)/3) * 3
 				maxlength = str(self._np.max([len(f) for f in fields])+4)
 				fields = [('%'+maxlength+'s')%f for f in fields]
 				if l>0:
-					print '\n'.join([''.join(list(i)) for i in self._np.reshape(fields[:l],(-1,3))])
-				print ''.join(list(fields[l:]))
+					print('\n'.join([''.join(list(i)) for i in self._np.reshape(fields[:l],(-1,3))]))
+				print(''.join(list(fields[l:])))
 			else:
-				print "No fields found in '"+self._results_path+"'"
+				print("No fields found in '"+self._results_path+"'")
 			return None
 		
 		
 		# Get available times
 		self.times = self.getAvailableTimesteps()
 		if self.times.size == 0:
-			print "No fields found in Fields.h5"
+			print("No fields found in Fields.h5")
 			return
 		
 		# Get available fields
@@ -1229,7 +1229,7 @@ class Field(Diagnostic):
 		# -------------------------------------------------------------------
 		# Parse the `field` argument
 		self.operation = field
-		self._operation = "A="+self.operation
+		self._operation = self.operation
 		self._fieldname = []
 		for f in sortedfields:
 			if f in self._operation:
@@ -1238,7 +1238,7 @@ class Field(Diagnostic):
 		
 		# Check slice is a dict
 		if slice is not None  and  type(slice) is not dict:
-			print "Argument `slice` must be a dictionary"
+			print("Argument `slice` must be a dictionary")
 			return None
 		# Make slice a dictionary
 		if slice is None: slice = {}
@@ -1247,9 +1247,9 @@ class Field(Diagnostic):
 		self._data_log = data_log
 		
 		# Get the shape of fields
-		iterfields = self._h5items[0].itervalues();
-		self._ishape = iterfields.next().shape;
-		for fd in iterfields:
+		fields = self._h5items[0].values();
+		self._ishape = fields[0].shape;
+		for fd in fields:
 			self._ishape = self._np.min((self._ishape, fd.shape), axis=0)
 		
 		
@@ -1272,12 +1272,12 @@ class Field(Diagnostic):
 				else:
 					raise
 			except:
-				print "Argument `timesteps` must be one or two non-negative integers"
+				print("Argument `timesteps` must be one or two non-negative integers")
 				return None
 		
 		# Need at least one timestep
 		if self.times.size < 1:
-			print "Timesteps not found"
+			print("Timesteps not found")
 			return None
 		
 		
@@ -1302,14 +1302,14 @@ class Field(Diagnostic):
 						s = self._np.double(slice[label])
 						if s.size>2 or s.size<1: raise
 					except:
-						print "Slice along axis "+label+" should be one or two floats"
+						print("Slice along axis "+label+" should be one or two floats")
 						return None
 					if s.size==1:
 						indices = self._np.array([(self._np.abs(centers-s)).argmin()])
 					elif s.size==2:
 						indices = self._np.nonzero( (centers>=s[0]) * (centers<=s[1]) )[0]
 					if indices.size == 0:
-						print "Slice along "+label+" is out of the box range"
+						print("Slice along "+label+" is out of the box range")
 						return None
 					if indices.size == 1:
 						self._sliceinfo.update({ label:"Sliced at "+label+" = "+str(centers[indices])+" "+axisunits })
@@ -1327,7 +1327,7 @@ class Field(Diagnostic):
 				self._log    .append(False)
 		
 		if len(self._centers) > 2:
-			print "Cannot plot in "+str(len(self._shape))+"d. You need to 'slice' some axes."
+			print("Cannot plot in "+str(len(self._shape))+"d. You need to 'slice' some axes.")
 			return
 		
 		# Build units
@@ -1346,12 +1346,12 @@ class Field(Diagnostic):
 	# Method to print info on included fields
 	def info(self):
 		if not self._validate(): return
-		print self._title
+		print(self._title)
 		return
 	
 	# get all available fields, sorted by name length
 	def getFields(self):
-		try:    fields = self._f.itervalues().next().keys() # list of fields
+		try:    fields = self._f.values()[0].keys() # list of fields
 		except: fields = []
 		return fields
 	
@@ -1365,7 +1365,7 @@ class Field(Diagnostic):
 		if not self._validate(): return
 		# Verify that the timestep is valid
 		if t not in self.times:
-			print "Timestep "+t+" not found in this diagnostic"
+			print("Timestep "+t+" not found in this diagnostic")
 			return []
 		# Get arrays from requested field
 		# get data
@@ -1379,7 +1379,7 @@ class Field(Diagnostic):
 				B = self._np.delete(B, l, axis=axis) # remove extra cells if necessary
 			C.update({ field:B })
 		# Calculate the operation
-		exec self._operation in None
+		A = eval(self._operation)
 		# Apply the slicing
 		for iaxis in range(self._naxes):
 			if self._slices[iaxis] is None: continue
@@ -1402,16 +1402,16 @@ class Scalar(Diagnostic):
 		if scalar is None:
 			scalars = self.getScalars()
 			if len(scalars)>0:
-				print "Printing available scalars:"
-				print "---------------------------"
+				print("Printing available scalars:")
+				print("---------------------------")
 				l = [""]
 				for s in scalars:
 					if s[:2] != l[-1][:2] and s[-2:]!=l[-1][-2:]:
-						if l!=[""]: print "\t".join(l)
+						if l!=[""]: print("\t".join(l))
 						l = []
 					l.append(s)
 			else:
-				print "No scalars found in '"+self._results_path+"'"
+				print("No scalars found in '"+self._results_path+"'")
 			return None
 		
 		# Get available scalars
@@ -1423,11 +1423,11 @@ class Scalar(Diagnostic):
 		if scalar not in scalars:
 			fs = filter(lambda x:scalar in x, scalars)
 			if len(fs)==0:
-				print "No scalar `"+scalar+"` found in scalars.txt"
+				print("No scalar `"+scalar+"` found in scalars.txt")
 				return
 			if len(fs)>1:
-				print "Several scalars match: "+(' '.join(fs))
-				print "Please be more specific and retry."
+				print("Several scalars match: "+(' '.join(fs)))
+				print("Please be more specific and retry.")
 				return
 			scalar = fs[0]
 		self._scalarn = scalars.index(scalar) # index of the requested scalar
@@ -1445,7 +1445,7 @@ class Scalar(Diagnostic):
 		for line in f:
 			line = line.strip()
 			if line[0]=="#": continue
-			line = line.split()
+			line = str(line).split()
 			self.times .append( int( self._np.round(float(line[0]) / float(self.timestep)) ) )
 			self._values.append( float(line[self._scalarn+1]) )
 		self.times  = self._np.array(self.times )
@@ -1471,12 +1471,12 @@ class Scalar(Diagnostic):
 				else:
 					raise
 			except:
-				print "Argument `timesteps` must be one or two non-negative integers"
+				print("Argument `timesteps` must be one or two non-negative integers")
 				return
 		
 		# Need at least one timestep
 		if self.times.size < 1:
-			print "Timesteps not found"
+			print("Timesteps not found")
 			return
 		
 		
@@ -1502,7 +1502,7 @@ class Scalar(Diagnostic):
 	# Method to print info on included scalars
 	def info(self):
 		if not self._validate(): return
-		print "Scalar "+self._scalarname
+		print("Scalar "+self._scalarname)
 		return
 	
 	# get all available scalars
@@ -1511,7 +1511,7 @@ class Scalar(Diagnostic):
 			file = self._results_path+'/scalars.txt'
 			f = open(file, 'r')
 		except:
-			print "Cannot open file "+file
+			print("Cannot open file "+file)
 			return []
 		try:
 			# Find last commented line 
@@ -1520,7 +1520,7 @@ class Scalar(Diagnostic):
 				line = line.strip()
 				if line[0]!="#": break
 				prevline = line[1:].strip()
-			scalars = prevline.split() # list of scalars
+			scalars = str(prevline).split() # list of scalars
 			scalars = scalars[1:] # remove first, which is "time"
 		except:
 			scalars = []
@@ -1536,7 +1536,7 @@ class Scalar(Diagnostic):
 		if not self._validate(): return
 		# Verify that the timestep is valid
 		if t not in self.times:
-			print "Timestep "+t+" not found in this diagnostic"
+			print("Timestep "+t+" not found in this diagnostic")
 			return []
 		# Get value at selected time
 		A = self._values[ self._data[t] ]
@@ -1561,12 +1561,12 @@ class Probe(Diagnostic):
 		if probeNumber is None:
 			probes = self.getProbes()
 			if len(probes)>0:
-				print "Printing available probes:"
-				print "--------------------------"
+				print("Printing available probes:")
+				print("--------------------------")
 				for p in probes:
 					self._printInfo(self._getInfo(p))
 			else:
-				print "No probes found in '"+self._results_path+"'"
+				print("No probes found in '"+self._results_path+"'")
 			return None
 		
 		# Try to get the probe from the hdf5 file
@@ -1575,28 +1575,28 @@ class Probe(Diagnostic):
 		try:
 			self._h5probe = self._h5py.File(self._file, 'r')
 		except:
-			print "Cannot find probe "+str(probeNumber)
+			print("Cannot find probe "+str(probeNumber))
 			self._h5probe.close()
 			return None
 		
 		# Extract available fields
-		fields = self._h5probe.attrs["fields"].split(",")
+		fields = str(self._h5probe.attrs["fields"]).split(",")
 		if len(fields) == 0:
-			print "Probe #"+probeNumber+" is empty"
+			print("Probe #"+probeNumber+" is empty")
 			self._h5probe.close()
 			return None
 		# If no field, print available fields
 		if field is None:
-			print "Printing available fields for probe #"+str(probeNumber)+":"
-			print "----------------------------------------"
-			print ", ".join(fields)
+			print("Printing available fields for probe #"+str(probeNumber)+":")
+			print("----------------------------------------")
+			print(", ".join(fields))
 			self._h5probe.close()
 			return None
 		
 		# Get available times
 		self.times = self.getAvailableTimesteps()
 		if self.times.size == 0:
-			print "No probes found in Probes.h5"
+			print("No probes found in Probes.h5")
 			return
 		
 		# 1 - verifications, initialization
@@ -1609,7 +1609,7 @@ class Probe(Diagnostic):
 			self.operation = self.operation.replace(f,"#"+str(i))
 		requested_fields = self._re.findall("#\d+",self.operation)
 		if len(requested_fields) == 0:
-			print "Could not find any existing field in `"+field+"`"
+			print("Could not find any existing field in `"+field+"`")
 			return None
 		self._fieldn = [ int(f[1:]) for f in requested_fields ] # indexes of the requested fields
 		self._fieldn = list(set(self._fieldn))
@@ -1617,7 +1617,7 @@ class Probe(Diagnostic):
 		
 		# Check slice is a dict
 		if slice is not None  and  type(slice) is not dict:
-			print "Argument `slice` must be a dictionary"
+			print("Argument `slice` must be a dictionary")
 			return None
 		# Make slice a dictionary
 		if slice is None: slice = {}
@@ -1649,12 +1649,12 @@ class Probe(Diagnostic):
 				else:
 					raise
 			except:
-				print "Argument `timesteps` must be one or two non-negative integers"
+				print("Argument `timesteps` must be one or two non-negative integers")
 				return
 		
 		# Need at least one timestep
 		if self.times.size < 1:
-			print "Timesteps not found"
+			print("Timesteps not found")
 			return
 		
 		
@@ -1690,14 +1690,14 @@ class Probe(Diagnostic):
 						s = self._np.double(slice[label])
 						if s.size>2 or s.size<1: raise
 					except:
-						print "Slice along axis "+label+" should be one or two floats"
+						print("Slice along axis "+label+" should be one or two floats")
 						return None
 					if s.size==1:
 						indices = self._np.array([(self._np.abs(indices-s)).argmin()])
 					elif s.size==2:
 						indices = self._np.nonzero( (indices>=s[0]) * (indices<=s[1]) )[0]
 					if indices.size == 0:
-						print "Slice along "+label+" is out of the box range"
+						print("Slice along "+label+" is out of the box range")
 						return None
 					if indices.size == 1:
 						self._sliceinfo.update({ label:"Sliced at "+label+" = "+str(indices[0]) })
@@ -1715,7 +1715,7 @@ class Probe(Diagnostic):
 			
 		
 		if len(self._shape) > 2:
-			print "Cannot plot in "+str(len(self._shape))+"d. You need to 'slice' some axes."
+			print("Cannot plot in "+str(len(self._shape))+"d. You need to 'slice' some axes.")
 			return
 		
 		# Special case in 1D: we convert the point locations to scalar distances
@@ -1794,14 +1794,14 @@ class Probe(Diagnostic):
 	# Method to print info previously obtained with getInfo
 	@staticmethod
 	def _printInfo(info):
-		print ("Probe #"+str(info["probeNumber"])+": "+str(info["dimension"])+"-dimensional,"
-			+" with fields "+info["fields"])
+		print("Probe #"+str(info["probeNumber"])+": "+str(info["dimension"])+"-dimensional,"
+			+" with fields "+str(info["fields"]))
 		i = 0
 		while "p"+str(i) in info:
-			print "p"+str(i)+" = "+" ".join(info["p"+str(i)].astype(str).tolist())
+			print("p"+str(i)+" = "+" ".join(info["p"+str(i)].astype(str).tolist()))
 			i += 1
 		if info["shape"].size>0:
-			print "number = "+" ".join(info["shape"].astype(str).tolist())
+			print("number = "+" ".join(info["shape"].astype(str).tolist()))
 	
 	# Method to get info on a given probe
 	def _getInfo(self, probeNumber):
@@ -1809,7 +1809,7 @@ class Probe(Diagnostic):
 			file = self._results_path+"/Probes"+str(probeNumber)+".h5"
 			probe = self._h5py.File(file, 'r')
 		except:
-			print "Cannot open file "+file
+			print("Cannot open file "+file)
 			return {}
 		out = {}
 		out.update({"probeNumber":probeNumber, "dimension":probe.attrs["dimension"],
@@ -1834,7 +1834,7 @@ class Probe(Diagnostic):
 	# get all available timesteps
 	def getAvailableTimesteps(self):
 		times = []
-		for key in self._h5probe.iterkeys():
+		for key in self._h5probe.keys():
 			try   : times.append( int(key) )
 			except: pass
 		return self._np.double(times)
@@ -1844,19 +1844,19 @@ class Probe(Diagnostic):
 		if not self._validate(): return
 		# Verify that the timestep is valid
 		if t not in self.times:
-			print "Timestep "+t+" not found in this diagnostic"
+			print("Timestep "+t+" not found in this diagnostic")
 			return []
 		# Get arrays from requested field
 		# get data
 		index = self._data[t]
 		C = {}
-		op = "A=" + self.operation
+		op = self.operation
 		for n in reversed(self._fieldn): # for each field in operation
 			B = self._np.double(self._h5probe[index][n,:]) # get array
 			C.update({ n:B })
 			op = op.replace("#"+str(n), "C["+str(n)+"]")
 		# Calculate the operation
-		exec op in None
+		A = eval(op)
 		# Reorder probes for patch disorder
 		if self._ordering is not None: A = A[self._ordering]
 		# Reshape array because it is flattened in the file
@@ -1902,11 +1902,11 @@ class TrackParticles(Diagnostic):
 		if species is None:
 			species = self.getTrackSpecies()
 			if len(species)>0:
-				print "Printing available tracked species:"
-				print "-----------------------------------"
-				for s in species: print s
+				print("Printing available tracked species:")
+				print("-----------------------------------")
+				for s in species: print(s)
 			else:
-				print "No tracked particles files found in '"+self._results_path+"'"
+				print("No tracked particles files found in '"+self._results_path+"'")
 			return None
 		
 		# Get info from the hdf5 files + verifications
@@ -1923,7 +1923,7 @@ class TrackParticles(Diagnostic):
 		# Get available times in the hdf5 file
 		self.times = self.getAvailableTimesteps()
 		if self.times.size == 0:
-			print "No tracked particles found in "+self._file
+			print("No tracked particles found in "+self._file)
 			return
 		alltimes = self.times
 		# If specific timesteps requested, narrow the selection
@@ -1939,11 +1939,11 @@ class TrackParticles(Diagnostic):
 				else:
 					raise
 			except:
-				print "Argument `timesteps` must be one or two non-negative integers"
+				print("Argument `timesteps` must be one or two non-negative integers")
 				return
 		# Need at least one timestep
 		if self.times.size < 1:
-			print "Timesteps not found"
+			print("Timesteps not found")
 			return
 		
 		# Get available properties ("x", "y", etc.)
@@ -1951,7 +1951,7 @@ class TrackParticles(Diagnostic):
 		translateProperties = {"Id":"Id", "x":"Position-0", "y":"Position-1", "z":"Position-2",
 			"px":"Momentum-0", "py":"Momentum-1", "pz":"Momentum-2"}
 		availableProperties = f.keys()
-		for k,v in translateProperties.iteritems():
+		for k,v in translateProperties.items():
 			try:
 				i = availableProperties.index(v)
 				self._properties.update({ k:i })
@@ -1965,7 +1965,7 @@ class TrackParticles(Diagnostic):
 		# Select particles
 		# -------------------------------------------------------------------
 		if type(select) is not str:
-			print "Error: the argument 'select' must be a string"
+			print("Error: the argument 'select' must be a string")
 			return
 		def findClosingCharacter(string, character, start=0):
 			i = start
@@ -2034,17 +2034,17 @@ class TrackParticles(Diagnostic):
 		# Manage axes
 		# -------------------------------------------------------------------
 		if type(axes) is not list:
-			print "Error: Argument 'axes' must be a list"
+			print("Error: Argument 'axes' must be a list")
 			return
 		if len(axes)==0:
-			print "Error: must define at least one axis."
+			print("Error: must define at least one axis.")
 			return
 		self.axes = axes
 		self._axesIndex = []
 		for axis in axes:
 			if axis not in self._properties.keys():
-				print "Error: Argument 'axes' has item '"+str(axis)+"' unknown."
-				print "       Available axes are: "+(", ".join(sorted(self._properties.keys())))
+				print("Error: Argument 'axes' has item '"+str(axis)+"' unknown.")
+				print("       Available axes are: "+(", ".join(sorted(self._properties.keys()))))
 				return
 			self._axesIndex.append( self._properties[axis] ) # axesIndex contains the index in the hdf5 file
 		self._type = axes
@@ -2072,9 +2072,9 @@ class TrackParticles(Diagnostic):
 	# Method to print info on included probe
 	def info(self):
 		if not self._validate(): return
-		print "Track particles: species '"+self.species+"' containing "+str(self.nParticles)+" particles"
+		print("Track particles: species '"+self.species+"' containing "+str(self.nParticles)+" particles")
 		if len(self.selectedParticles) != self.nParticles:
-			print "                with selection of "+str(len(self.selectedParticles))+" particles"
+			print("                with selection of "+str(len(self.selectedParticles))+" particles")
 	
 	# get all available tracked species
 	def getTrackSpecies(self):
@@ -2089,17 +2089,17 @@ class TrackParticles(Diagnostic):
 		try:
 			ntimes = self._h5items[0].len()
 		except:
-			print "Unable to find tracked particle data in file "+self._file
+			print("Unable to find tracked particle data in file "+self._file)
 			return self._np.array([])
 		for item in self._h5items:
 			if item.name == "/Times":
 				return item.value
-		print "Unable to find the list of timesteps in file "+self._file
+		print("Unable to find the list of timesteps in file "+self._file)
 		return self._np.array([])
 	
 	# Make the particles ordered by Id in the file, in case they are not
 	def _orderFile( self, fileDisordered, fileOrdered ):
-		print "Ordering particles ... (this could take a while)"
+		print("Ordering particles ... (this could take a while)")
 		# Copy the disordered file
 		from platform import system
 		s = system()
@@ -2111,7 +2111,7 @@ class TrackParticles(Diagnostic):
 			from shutil import copyfile
 			copyfile(fileDisordered, fileOrdered)
 		# Open the file which will become ordered
-		print "    Created new file "+fileOrdered
+		print("    Created new file "+fileOrdered)
 		f = self._h5py.File(fileOrdered)
 		# Get list of properties
 		properties = [p.name[1:] for p in f.values() if len(p.shape)==2]
@@ -2120,7 +2120,7 @@ class TrackParticles(Diagnostic):
 		times = f["Times"]
 		A = self._np.zeros((npart,))
 		for i in range(ntimes):
-			print "    Ordering @ timestep = "+str(times[i])
+			print("    Ordering @ timestep = "+str(times[i]))
 			# Get the indices for sorting arrays
 			ids = f["Id"][i,:]
 			remaining_particles = ids>0
@@ -2134,7 +2134,7 @@ class TrackParticles(Diagnostic):
 				f[property].write_direct(B, dest_sel  =self._np.s_[i,:])
 		# Close files
 		f.close()
-		print "Ordering succeeded"
+		print("Ordering succeeded")
 	
 	# We override the get and getData methods
 	def getData(self):
@@ -2204,24 +2204,24 @@ class Movie:
 		import os.path as ospath
 		self.writer = None
 		if type(movie) is not str:
-			print "ERROR: argument 'movie' must be a filename"
+			print("ERROR: argument 'movie' must be a filename")
 			return
 		if len(movie)>0:
 			if ospath.isfile(movie):
-				print "ERROR: file '"+movie+"' already exists. Please choose another name"
+				print("ERROR: file '"+movie+"' already exists. Please choose another name")
 				return
 			if ospath.isdir(movie):
-				print "ERROR: '"+movie+"' is a path, not a file"
+				print("ERROR: '"+movie+"' is a path, not a file")
 				return
 			try:
 				import matplotlib.animation as anim
 			except:
-				print "ERROR: it looks like your version of matplotlib is too old for movies"
+				print("ERROR: it looks like your version of matplotlib is too old for movies")
 				return
 			try:
 				self.writer = anim.writers['ffmpeg'](fps=fps)
 			except:
-				print "ERROR: you need the 'ffmpeg' software to make movies"
+				print("ERROR: you need the 'ffmpeg' software to make movies")
 				return
 			self.writer.setup(fig, movie, dpi)
 	
@@ -2252,7 +2252,7 @@ class SaveAs:
 				self.prefix = p.normpath(path)+sep
 				self.suffix = default_extension
 			else:
-				path, base = p.split(path)
+				path, base = str(p).split(path)
 				if p.isdir(path):
 					basesplit = base.rsplit(".",1)
 					self.prefix = path+sep+basesplit[0]
@@ -2265,15 +2265,15 @@ class SaveAs:
 			return
 		
 		if not self.prefix:
-			print "WARNING: "+self.suffix
-			print "         Will not save figures to files"
+			print("WARNING: "+self.suffix)
+			print("         Will not save figures to files")
 		
 		# For some reason, the following freezes the animation; removed temporarily
 		#else:
 		#	supportedTypes=plt.matplotlib.backend_bases.FigureCanvasBase(fig).get_supported_filetypes()
-		#	if self.suffix.strip(".") not in supportedTypes.iterkeys():
-		#		print "WARNING: file format not supported, will not save figures to files"
-		#		print "         Supported formats: "+",".join(supportedTypes.iterkeys())
+		#	if self.suffix.strip(".") not in supportedTypes.keys():
+		#		print("WARNING: file format not supported, will not save figures to files")
+		#		print("         Supported formats: "+",".join(supportedTypes.keys()))
 		#		self.prefix = False
 	
 	def frame(self, id):
@@ -2329,15 +2329,15 @@ def multiPlot(*Diags, **kwargs):
 				sameAxes = False
 				break
 	if not sameAxes and shape == [1,1]:
-		print "Cannot have shape=[1,1] with these diagnostics"
+		print("Cannot have shape=[1,1] with these diagnostics")
 		return
 	# Determine the shape
 	if sameAxes: shape = [1,1]
 	if shape is None: shape = [nDiags,1]
 	nplots = np.array(shape).prod()
 	if not sameAxes and nplots != nDiags:
-		print "The 'shape' argument is incompatible with the number of diagnostics:"
-		print "  "+str(nDiags)+" diagnostics do not fit "+str(nplots)+" plots"
+		print("The 'shape' argument is incompatible with the number of diagnostics:")
+		print("  "+str(nDiags)+" diagnostics do not fit "+str(nplots)+" plots")
 		return
 	# Make the figure
 	if "facecolor" not in kwargs: kwargs.update({ "facecolor":"w" })
