@@ -4,7 +4,7 @@
 
 import math, os, gc, operator
 
-def add_metaclass(metaclass):
+def _add_metaclass(metaclass):
     """Class decorator for creating a class with a metaclass."""
     # Taken from module "six" for compatibility with python 2 and 3
     def wrapper(cls):
@@ -63,7 +63,7 @@ class SmileiComponentType(type):
             for obj in self._list: l.append(str(obj))
             return "["+", ".join(l)+"]"
 
-@add_metaclass(SmileiComponentType)
+@_add_metaclass(SmileiComponentType)
 class SmileiComponent(object):
     """Smilei component generic class"""
     
@@ -95,7 +95,7 @@ class SmileiSingletonType(SmileiComponentType):
     def __repr__(self):
         return "<Smilei "+str(self.__name__)+">"
 
-@add_metaclass(SmileiSingletonType)
+@_add_metaclass(SmileiSingletonType)
 class SmileiSingleton(SmileiComponent):
     """Smilei singleton generic class"""
     

@@ -865,7 +865,7 @@ class ParticleDiagnostic(Diagnostic):
 		for d in self._diags:
 			# get all diagnostics files
 			self._file.update({ d:self._h5py.File(self._results_path+'/ParticleDiagnostic'+str(d)+'.h5') })
-			self._h5items.update({ d:self._file[d].items() })
+			self._h5items.update({ d:list(self._file[d].items()) })
 			# get all diagnostics timesteps
 			self.times.update({ d:self.getAvailableTimesteps(d) })
 			# fill the "data" dictionary with indices to the data arrays
@@ -1063,21 +1063,21 @@ class ParticleDiagnostic(Diagnostic):
 		# open file
 		f = self._h5py.File(file, 'r')
 		# get attributes from file
-		attrs = f.attrs.items()
+		attrs = list(f.attrs.items())
 		axes = []
 		# Parse each attribute
 		for i in range(len(attrs)):
 			name  = attrs[i][0]
 			value = attrs[i][1]
-			if (name == "output"): output = value
+			if (name == "output"): output = bytes.decode(value)
 			if (name == "time_average"): time_average = int(value)
 			if (name == "species"):
-				species = str(value.strip()).split(" ") # get all species numbers
+				species = bytes.decode(value.strip()).split(" ") # get all species numbers
 				for i in range(len(species)):
 					species[i] = int(species[i]) # convert string to int
 			if (name[0:4] == "axis" ):
 				n = int(name[4:]) # axis number
-				sp = str(value).split(" ")
+				sp = bytes.decode(value).split(" ")
 				axistype  = sp[0]
 				axismin  = float(sp[1])
 				axismax  = float(sp[2])
@@ -1138,7 +1138,7 @@ class ParticleDiagnostic(Diagnostic):
 			except:
 				print("Cannot open file "+file)
 				return self._np.array([])
-			items = f.items()
+			items = list(f.items())
 			ntimes = len(items)
 			times = self._np.zeros(ntimes)
 			for i in range(ntimes):
@@ -1197,14 +1197,14 @@ class Field(Diagnostic):
 		except:
 			print("No fields found")
 			return
-		self._h5items = self._f.values()
+		self._h5items = list(self._f.values())
 		
 		if field is None:
 			fields = self.getFields()
 			if len(fields)>0:
 				print("Printing available fields:")
 				print("--------------------------")
-				l = (len(fields)/3) * 3
+				l = int(len(fields)/3) * 3
 				maxlength = str(self._np.max([len(f) for f in fields])+4)
 				fields = [('%'+maxlength+'s')%f for f in fields]
 				if l>0:
@@ -1247,7 +1247,7 @@ class Field(Diagnostic):
 		self._data_log = data_log
 		
 		# Get the shape of fields
-		fields = self._h5items[0].values();
+		fields = list(self._h5items[0].values());
 		self._ishape = fields[0].shape;
 		for fd in fields:
 			self._ishape = self._np.min((self._ishape, fd.shape), axis=0)
@@ -1351,13 +1351,13 @@ class Field(Diagnostic):
 	
 	# get all available fields, sorted by name length
 	def getFields(self):
-		try:    fields = self._f.values()[0].keys() # list of fields
+		try:    fields = list(self._f.values())[0].keys() # list of fields
 		except: fields = []
-		return fields
+		return list(fields)
 	
 	# get all available timesteps
 	def getAvailableTimesteps(self):
-		times = self._np.double(self._f.keys()[:-1])
+		times = self._np.double(list(self._f.keys())[:-1])
 		return times
 	
 	# Method to obtain the data only
@@ -1421,7 +1421,7 @@ class Scalar(Diagnostic):
 		# -------------------------------------------------------------------
 		# Check value of field
 		if scalar not in scalars:
-			fs = filter(lambda x:scalar in x, scalars)
+			fs = list(filter(lambda x:scalar in x, scalars))
 			if len(fs)==0:
 				print("No scalar `"+scalar+"` found in scalars.txt")
 				return
@@ -1876,8 +1876,10 @@ class Probe(Diagnostic):
 		# If 2D plot, we remove kwargs that are not supported by pcolormesh
 		if self._dim == 2:
 			authorizedKwargs = ["cmap"]
+			newoptionsimage = {}
 			for kwarg in self.options.image.keys():
-				if kwarg not in authorizedKwargs: del self.options.image[kwarg]
+				if kwarg in authorizedKwargs: newoptionsimage[kwarg]=self.options.image[kwarg]
+			self.options.image = newoptionsimage
 	
 	# Overloading a plotting function in order to use pcolormesh instead of imshow
 	def _animateOnAxes_2D_(self, ax, A):
@@ -1918,7 +1920,7 @@ class TrackParticles(Diagnostic):
 		except:
 			self._orderFile( self._results_path+"/TrackParticlesDisordered_"+species+".h5", self._file )
 			f = self._h5py.File(self._file, 'r')
-		self._h5items = f.values()
+		self._h5items = list(f.values())
 		
 		# Get available times in the hdf5 file
 		self.times = self.getAvailableTimesteps()
@@ -1950,7 +1952,7 @@ class TrackParticles(Diagnostic):
 		self._properties = {}
 		translateProperties = {"Id":"Id", "x":"Position-0", "y":"Position-1", "z":"Position-2",
 			"px":"Momentum-0", "py":"Momentum-1", "pz":"Momentum-2"}
-		availableProperties = f.keys()
+		availableProperties = list(f.keys())
 		for k,v in translateProperties.items():
 			try:
 				i = availableProperties.index(v)
@@ -2081,7 +2083,8 @@ class TrackParticles(Diagnostic):
 		files = self._glob(self._results_path+"/TrackParticles*.h5")
 		species = []
 		for file in files:
-			species.append(self._re.search("_(.+).h5",self._os.path.basename(file)).groups()[0])
+			species_ = self._re.search("_(.+).h5",self._os.path.basename(file)).groups()[0]
+			if species_ not in species: species.append(species_)
 		return species
 	
 	# get all available timesteps
