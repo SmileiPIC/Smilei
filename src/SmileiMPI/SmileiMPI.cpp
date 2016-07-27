@@ -406,7 +406,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     //Compute Local Loads of each Patch (Lp)
     for(unsigned int ipatch=0; ipatch < (unsigned int)patch_count[smilei_rk]; ipatch++){
         for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++) {
-            Lp[ipatch] += vecpatches(ipatch)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(params.coef_frozen-1)*(time_dual > vecpatches(ipatch)->vecSpecies[ispecies]->time_frozen)) ;
+            Lp[ipatch] += vecpatches(ipatch)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(params.coef_frozen-1)*(time_dual < vecpatches(ipatch)->vecSpecies[ispecies]->time_frozen)) ;
         }
     }
 

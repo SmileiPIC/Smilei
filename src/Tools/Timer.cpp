@@ -32,15 +32,21 @@ void Timer::init(SmileiMPI *smpi, string name)
 
 void Timer::update()
 {
-    smpi_->barrier();
-    time_acc_ +=  MPI_Wtime()-last_start_;
-    last_start_ = MPI_Wtime();
+    #pragma omp barrier
+    #pragma omp master
+    {
+        time_acc_ +=  MPI_Wtime()-last_start_;
+        last_start_ = MPI_Wtime();
+    }
 }
 
 void Timer::restart()
 {
-    smpi_->barrier();
-    last_start_ = MPI_Wtime();
+    #pragma omp barrier
+    #pragma omp master
+    {
+        last_start_ = MPI_Wtime();
+    }
 }
 
 void Timer::reboot()
