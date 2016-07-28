@@ -130,11 +130,11 @@ int main (int argc, char* argv[])
         
         // Initialize the electromagnetic fields
         // -----------------------------------
-        vecPatches.dynamics(params, smpi, simWindow, &diag_flag, time_dual, timer);
+        vecPatches.dynamics(params, smpi, simWindow, &diag_flag, time_dual, timer, 0);
         timer[1].reboot();
         timer[8].reboot();
         
-        vecPatches.sumDensities( &diag_flag, timer );
+        vecPatches.sumDensities( &diag_flag, timer, 0 );
         timer[4].reboot();
         timer[9].reboot();
         
@@ -148,6 +148,7 @@ int main (int argc, char* argv[])
             Timer ptimer;
             ptimer.init(smpi, "global");
             ptimer.restart();
+
             vecPatches.solvePoisson( params, smpi );
             ptimer.update();
             MESSAGE("Time in Poisson : " << ptimer.getTime() );
@@ -229,10 +230,10 @@ int main (int argc, char* argv[])
             // (1) interpolate the fields at the particle position
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
-            vecPatches.dynamics(params, smpi, simWindow, &diag_flag, time_dual, timer);
+            vecPatches.dynamics(params, smpi, simWindow, &diag_flag, time_dual, timer, itime);
             
             // Sum densities
-            vecPatches.sumDensities( &diag_flag, timer );
+            vecPatches.sumDensities( &diag_flag, timer, itime );
             
             // apply currents from antennas
             vecPatches.applyAntennas(time_dual);
@@ -272,7 +273,7 @@ int main (int argc, char* argv[])
         if ((itime%params.balancing_every == 0)&&(smpi->getSize()!=1)) {
             timer[7].restart();
             vecPatches.load_balance( params, time_dual, smpi, simWindow );
-            timer[7].update();
+            timer[7].update( vecPatches.printScalars( itime ) );
         }
         
         latestTimeStep = itime;
@@ -289,12 +290,13 @@ int main (int argc, char* argv[])
     //double timElapsed=smpi->time_seconds();
     //if ( smpi->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
     timer[0].update();
-    TITLE("Time profiling :");
+    TITLE("Time profiling : (print time > 0.001%)");
     double coverage(0.);
     for (unsigned int i=1 ; i<timer.size() ; i++) coverage += timer[i].getTime();
     MESSAGE("Time in time loop :\t" << timer[0].getTime() << "\t"<<coverage/timer[0].getTime()*100.<< "% coverage" );
     if ( smpi->isMaster() )
         for (unsigned int i=1 ; i<timer.size() ; i++) timer[i].print(timer[0].getTime());
+    Timer::consolidate_timers( timer );
     
     //WARNING( "Diabled vecPatches.Diagnostics->printTimers(vecPatches(0), timer[3].getTime());" );
     
@@ -423,7 +425,7 @@ vector<Timer> initialize_timers(SmileiMPI* smpi)
     // Call to Collisions methods
     timer[10].init(smpi, "Collisions");
     // If necessary the following timers can be reintroduced
-    //timer[11].init(smpi, "Fields");
+    timer[11].init(smpi, "Sync Densities");
     //timer[12].init(smpi, "AvgFields");
     
     return timer;
