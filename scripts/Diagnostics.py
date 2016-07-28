@@ -1966,71 +1966,77 @@ class TrackParticles(Diagnostic):
 		
 		# Select particles
 		# -------------------------------------------------------------------
-		if type(select) is not str:
-			print("Error: the argument 'select' must be a string")
-			return
-		def findClosingCharacter(string, character, start=0):
-			i = start
+		if type(select) is str:
+			def findClosingCharacter(string, character, start=0):
+				i = start
+				stack = []
+				associatedBracket = {")":"(", "]":"[", "}":"{"}
+				while i < len(string):
+					if string[i] == character and len(stack)==0: return i
+					if string[i] in ["(", "[", "{"]:
+						stack.append(string[i])
+					if string[i] in [")", "]", "}"]:
+						if len(stack)==0:
+							raise Exception("Error in selector syntax: missing `"+character+"`")
+						if stack[-1]!=associatedBracket[string[i]]:
+							raise Exception("Error in selector syntax: missing closing parentheses or brackets")
+						del stack[-1]
+					i+=1
+				raise Exception("Error in selector syntax: missing `"+character+"`")
+			i = 0
 			stack = []
-			associatedBracket = {")":"(", "]":"[", "}":"{"}
-			while i < len(string):
-				if string[i] == character and len(stack)==0: return i
-				if string[i] in ["(", "[", "{"]:
-					stack.append(string[i])
-				if string[i] in [")", "]", "}"]:
-					if len(stack)==0:
-						raise Exception("Error in selector syntax: missing `"+character+"`")
-					if stack[-1]!=associatedBracket[string[i]]:
-						raise Exception("Error in selector syntax: missing closing parentheses or brackets")
-					del stack[-1]
+			operation = ""
+			while i < len(select):
+				if i+4<len(select):
+					if select[i:i+4] == "any(" or select[i:i+4] == "all(":
+						if select[i:i+4] == "any(": function = self._np.logical_or
+						if select[i:i+4] == "all(": function = self._np.logical_and
+						comma = findClosingCharacter(select, ",", i+4)
+						parenthesis = findClosingCharacter(select, ")", comma+1)
+						timeSelector = select[i+4:comma]
+						try:
+							s = self._re.sub(r"\bt\b","alltimes",timeSelector)
+							time_indices = self._np.nonzero(eval(s))[0]
+						except:
+							raise Exception("Error in selector syntax: time selector not understood in "+select[i:i+3]+"()")
+						try:
+							particleSelector = select[comma+1:parenthesis]
+							for prop in self._properties.keys():
+								particleSelector = self._re.sub(r"\b"+prop+r"\b", "self._np.double(self._h5items["+str(self._properties[prop])+"][ti,:])", particleSelector)
+						except:
+							raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
+						if select[i:i+4] == "any(": selection = self._np.array([False]*self.nParticles)
+						if select[i:i+4] == "all(": selection = self._np.array([True]*self.nParticles)
+						#try:
+						ID = self._np.zeros((self.nParticles,), dtype=self._np.int16)
+						for ti in time_indices:
+							selectionAtTimeT = eval(particleSelector) # array of True or False
+							self._Id.read_direct(ID, source_sel=self._np.s_[ti,:], dest_sel=self._np.s_[:]) # read the particle Ids
+							selectionAtTimeT = selectionAtTimeT[ID>0] # remove zeros, which are dead particles
+							id = ID[ID>0]-1 # remove zeros, which are dead particles
+							selection[id] = function( selection[id], selectionAtTimeT)
+						#except:
+						#	raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
+						stack.append(selection)
+						operation += "stack["+str(len(stack)-1)+"]"
+						i = parenthesis+1
+						continue
+				operation += select[i]
 				i+=1
-			raise Exception("Error in selector syntax: missing `"+character+"`")
-		i = 0
-		stack = []
-		operation = ""
-		while i < len(select):
-			if i+4<len(select):
-				if select[i:i+4] == "any(" or select[i:i+4] == "all(":
-					if select[i:i+4] == "any(": function = self._np.logical_or
-					if select[i:i+4] == "all(": function = self._np.logical_and
-					comma = findClosingCharacter(select, ",", i+4)
-					parenthesis = findClosingCharacter(select, ")", comma+1)
-					timeSelector = select[i+4:comma]
-					try:
-						s = self._re.sub(r"\bt\b","alltimes",timeSelector)
-						time_indices = self._np.nonzero(eval(s))[0]
-					except:
-						raise Exception("Error in selector syntax: time selector not understood in "+select[i:i+3]+"()")
-					try:
-						particleSelector = select[comma+1:parenthesis]
-						for prop in self._properties.keys():
-							particleSelector = self._re.sub(r"\b"+prop+r"\b", "self._np.double(self._h5items["+str(self._properties[prop])+"][ti,:])", particleSelector)
-					except:
-						raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
-					if select[i:i+4] == "any(": selection = self._np.array([False]*self.nParticles)
-					if select[i:i+4] == "all(": selection = self._np.array([True]*self.nParticles)
-					#try:
-					ID = self._np.zeros((self.nParticles,), dtype=self._np.int16)
-					for ti in time_indices:
-						selectionAtTimeT = eval(particleSelector) # array of True or False
-						self._Id.read_direct(ID, source_sel=self._np.s_[ti,:], dest_sel=self._np.s_[:]) # read the particle Ids
-						selectionAtTimeT = selectionAtTimeT[ID>0] # remove zeros, which are dead particles
-						id = ID[ID>0]-1 # remove zeros, which are dead particles
-						selection[id] = function( selection[id], selectionAtTimeT)
-					#except:
-					#	raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
-					stack.append(selection)
-					operation += "stack["+str(len(stack)-1)+"]"
-					i = parenthesis+1
-					continue
-			operation += select[i]
-			i+=1
-		if len(operation)==0.:
-			self.selectedParticles = self._np.arange(self.nParticles)
+			if len(operation)==0.:
+				self.selectedParticles = self._np.arange(self.nParticles)
+			else:
+				self.selectedParticles = eval(operation).nonzero()[0]
+			self.selectedParticles.sort()
+			self.selectedParticles += 1
+		
 		else:
-			self.selectedParticles = eval(operation).nonzero()[0]
-		self.selectedParticles.sort()
-		self.selectedParticles += 1
+			try:
+				self.selectedParticles = self._np.array(select,dtype=int)
+			except:
+				print("Error: argument 'select' must be a string or a list of particle IDs")
+				return
+		
 		self.nselectedParticles = len(self.selectedParticles)
 		
 		# Manage axes
