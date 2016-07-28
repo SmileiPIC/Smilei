@@ -87,10 +87,10 @@ public :
     
     //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
     void dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, int* diag_flag, double time_dual,
-                  std::vector<Timer>& timer);
+                  std::vector<Timer>& timer, int itime);
     
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
-    void sumDensities( int* diag_flag, std::vector<Timer>& timer );
+    void sumDensities( int* diag_flag, std::vector<Timer>& timer, int itime );
     
     //! For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
     void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual,
