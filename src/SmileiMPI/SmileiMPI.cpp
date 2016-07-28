@@ -452,19 +452,19 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
 
     //Make sure the new patch_count is not too different from the previous one.
     // First patch
-    Ncur = 0;
+    Ncur = 0;                           //Sold
     Lmin1 = npatchmin;
     Lmin2 = 1;
-    Lmin = std::max(Lmin1, Lmin2);
-    Lmax = patch_count[0] - npatchmin;
-    Tcur = 0;  
+    Lmin = std::max(Lmin1, Lmin2);      //Pmin
+    Lmax = patch_count[0] - npatchmin;  //Pmax
+    Tcur = 0;                           //Plast 
 
     //Loop
     for(unsigned int i=0; i< (unsigned int)smilei_sz-1; i++){
 
-        Lmin2 += patch_count[i];
-        Tcur += target_patch_count[i];
-        Lmax += patch_count[i+1];
+        Lmin2 += patch_count[i];         // futur Pmin
+        Tcur += target_patch_count[i];   //Plast
+        Lmax += patch_count[i+1];        //Pmax
  
         if (Tcur < Lmin){                      
             patch_count[i] = Lmin - Ncur;
@@ -473,9 +473,9 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         } else {
             patch_count[i] = Tcur-Ncur;
         }
-        Ncur += patch_count[i];
+        Ncur += patch_count[i];           //new Sold
         Lmin1 = Ncur + npatchmin;
-        Lmin = std::max(Lmin1, Lmin2);
+        Lmin = std::max(Lmin1, Lmin2);    //new Pmin
 
     }
 
