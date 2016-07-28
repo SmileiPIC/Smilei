@@ -54,10 +54,10 @@ int main (int argc, char* argv[])
     
     // Send information on current simulation
     MESSAGE("                   _            _");
-    MESSAGE(" ___           _  | |        _  \\ \\    ");
-    MESSAGE("/ __|  _ __   (_) | |  ___  (_)  | |   Version : " << __VERSION);
-    MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |   Date    : " );//<< __COMMITDATE);
-    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |   " );//<< (string(__CONFIG).size()? "Config  : ":"") << __CONFIG);
+    MESSAGE(" ___           _  | |        _  \\ \\   Version : " << __VERSION);
+    MESSAGE("/ __|  _ __   (_) | |  ___  (_)  | |   ");// Date    : " );//<< __COMMITDATE);
+    MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |  " );//<< (string(__CONFIG).size()? "Config  : ":"") << __CONFIG);
+    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |  "<<H5_VERS_INFO);
     MESSAGE("                                /_/    ");
     
     // Read and print simulation parameters
