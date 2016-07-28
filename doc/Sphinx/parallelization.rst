@@ -111,17 +111,10 @@ Each MPI region is handled by all the threads of the process. For example, if th
 4 threads will handle 10 patches. The 4 threads will successively work on the next
 available patch until all patches are done.
 
-.. rubric:: Advantages
-
-* Inside one MPI region, the threads do not need to wait for their friends to go to the
-  next patch; they can continue working on the next patch, thus avoiding long waiting
-  times. This is a form of **local load balancing**.
-* The patches are regularly exchanged between MPI regions in order to uniformize the load
-  carried by each. This is a form of **global load balancing**.
-* As the patches can be small, moving a patch from one MPI region to another is
-  fast: it can fit more easily in the cache, and does not require heavy memory
-  access.
-
+The great advantage of this scheme is that, inside one MPI region, the threads do not
+need to wait for their friends to go to the next patch; they can continue working on
+the available patches, thus avoiding long waiting times.
+This is a form of **local load balancing**.
 
 .. rubric:: Rules
 
@@ -130,22 +123,56 @@ available patch until all patches are done.
 * There must be more patches than threads.
 
 
-.. rubric:: Recommendations
+----
 
-* **Have as many MPI processes as nodes** in order to optimize the memory sharing.
+Load balancing between MPI regions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Even though the patches in one MPI region can be treated asynchronously to balance the load
+carried by each thread, it may not be sufficient. Indeed, when one MPI region holds much
+more load than the others, they will all wait for this one to be finished. This can cause
+large delays.
+
+:program:`Smilei` has an algorithm able to reduce this imbalance by exchanging patches 
+from one MPI region to another. A process that has too much load will give patches to
+other processes in order to reduce the size of its MPI region. This algorithm is based
+on an ordering of the patches by a *Hilbert curve*, as drawn in
+:numref:`PatchDecompositionHilbert`. One MPI region is one segment of this curve.
+When a segment has too much load, it will give some patches to the segments ahead or after,
+along the same curve.
+
+.. _PatchDecompositionHilbert:
+
+.. figure:: _static/PatchDecompositionHilbert.png
+  :width: 8cm
+  
+  The shape of the Hilbert curve which determines the patch order.
+
+
+As the patches can be small, moving a patch from one MPI region to another is
+fast: it can fit more easily in the cache, and does not require heavy memory
+access.
+
+
+
+----
+
+Recommendations
+^^^^^^^^^^^^^^^
+
+* **Have as many MPI processes as nodes** in order to optimize the memory distribution.
+
 * On each node, **have as many threads as cores per node**.
   If you have less threads than cores, you will not be using all your cores.
   Use more threads than cores only if hyper-threading is recommended on your architecture.
+  
 * Use dynamic scheduling for the OpenMP parallelism, by setting the environment variable ``OMP_SCHEDULE``::
     
     export OMP_SCHEDULE=dynamic
     
-  This variable affects only the particles treatment, which will dynamically assign threads.
+  This affects only the particles treatment, which will dynamically assign threads.
   Note that fields are always statically assigned to threads.
+
 * **Have small patches**. They can efficiently be as small as 5 cells in each direction.
   This allows good cache use, but also ensures that you have at least as many threads
   as patches, so that they can be treated in parallel.
-
-.. rst-class:: inprogress
-  
-  In progress ...
