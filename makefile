@@ -82,7 +82,7 @@ endif
 ifeq (,$(findstring noopenmp,$(config)))
 	SMILEI_COMPILER:=$(shell $(SMILEICXX) --version 2>&1|head -n 1)
     ifneq (,$(findstring icpc,$(SMILEI_COMPILER)))
-        OPENMPFLAGS = -openmp
+        OPENMPFLAGS = -qopenmp
     else
         OPENMPFLAGS = -fopenmp 
 	LDFLAGS += -lm
