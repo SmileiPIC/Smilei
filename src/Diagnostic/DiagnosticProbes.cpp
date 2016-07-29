@@ -24,6 +24,12 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
         name.str()
     );
     
+    // Extract "flush_every" (time selection for flushing the file)
+    flush_timeSelection = new TimeSelection( 
+        PyTools::extract_py("flush_every", "DiagProbe", n_probe),
+        name.str()
+    );
+    
     // Extract "number" (number of points you have in each dimension of the probe,
     // which must be smaller than the code dimensions)
     PyTools::extract("number",vecNumber,"DiagProbe",n_probe);
@@ -110,8 +116,6 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
     
     MESSAGE(1, "Diagnostic created: probe #"<<n_probe);
     
-    type_ = "Probes";
-
 } // END DiagnosticProbes::DiagnosticProbes
 
 
@@ -119,6 +123,7 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
 DiagnosticProbes::~DiagnosticProbes()
 {
     delete timeSelection;
+    delete flush_timeSelection;
 }
 
 
@@ -336,37 +341,56 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     H5Sclose(memspace);
     delete posArray;
     
-    closeFile();
+    H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
 }
 
 
 
 void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep )
 {
-    
-    // Leave if this timestep has already been written
+    unsigned int nPart_MPI;
     ostringstream name_t;
-    name_t.str("");
-    name_t << "/" << setfill('0') << setw(10) << timestep;
-    if (H5Lexists( fileId_, name_t.str().c_str(), H5P_DEFAULT )) return;
+    
+    unsigned int nPatches( vecPatches.size() );
+
+    // Leave if this timestep has already been written
+    #pragma omp master
+    {
+        name_t.str("");
+        name_t << "/" << setfill('0') << setw(10) << timestep;
+        status = H5Lexists( fileId_, name_t.str().c_str(), H5P_DEFAULT );
+    }
+    #pragma omp barrier
+    if (status != 0) return;
     smpi->barrier();
     
-    // Calculate the number of probe particles in this MPI
-    unsigned int nPart_MPI = 0;
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-        nPart_MPI += vecPatches(ipatch)->probes[probe_n]->particles.size();
-    
-    // Make the array that will contain the data
-    vector<unsigned int> probesArraySize(2);
-    probesArraySize[1] = nPart_MPI; // number of particles
-    probesArraySize[0] = nFields + 1; // number of fields (Ex, Ey, etc) +1 for garbage
-    Field2D* probesArray = new Field2D(probesArraySize);
+    #pragma omp master
+    {
+        // Calculate the number of probe particles in this MPI
+        offset.resize(vecPatches.size()+1);
+        offset[0] = 0;
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+            offset[ipatch+1] = offset[ipatch] + vecPatches(ipatch)->probes[probe_n]->particles.size();
+        nPart_MPI = offset.back();
+        
+        // Make the array that will contain the data
+        vector<unsigned int> probesArraySize(2);
+        probesArraySize[1] = nPart_MPI; // number of particles
+        probesArraySize[0] = nFields + 1; // number of fields (Ex, Ey, etc) +1 for garbage
+        probesArray = new Field2D(probesArraySize);
+    }
+    #pragma omp barrier
     
     // Loop patches to fill the array
-    unsigned int iPart_MPI = 0;
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+    #pragma omp for schedule(static)
+    for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
         // Loop probe ("fake") particles of current patch
+        unsigned int iPart_MPI = offset[ipatch];
         unsigned int npart = vecPatches(ipatch)->probes[probe_n]->particles.size();
+
+        LocalFields Eloc_fields, Bloc_fields, Jloc_fields;
+        double Rloc_fields;
+
         for (unsigned int ipart=0; ipart<npart; ipart++) {             
             (*(vecPatches(ipatch)->Interp)) (
                 vecPatches(ipatch)->EMfields,
@@ -390,45 +414,49 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         }
     }
     
-    // Define size in memory
-    hsize_t mem_size[2];
-    mem_size[1] = nPart_MPI;
-    mem_size[0] = nFields;
-    hid_t memspace  = H5Screate_simple(2, mem_size, NULL);
-    // Define size and location in file
-    hsize_t dimsf[2], offset[2], stride[2], count[2], block[2];
-    dimsf[1] = nPart_total;
-    dimsf[0] = nFields;
-    hid_t filespace = H5Screate_simple(2, dimsf, NULL);
-    if( nPart_MPI>0 ) {
-        offset[1] = vecPatches(0)->probes[probe_n]->offset_in_file;
-        offset[0] = 0;
-        stride[0] = 1;
-        stride[1] = 1;
-        count[0] = 1;
-        count[1] = 1;
-        block[1] = nPart_MPI;
-        block[0] = nFields;
-        H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
-    } else {
-        H5Sselect_none(filespace);
+    #pragma omp master
+    {
+        // Define size in memory
+        hsize_t mem_size[2];
+        mem_size[1] = nPart_MPI;
+        mem_size[0] = nFields;
+        hid_t memspace  = H5Screate_simple(2, mem_size, NULL);
+        // Define size and location in file
+        hsize_t dimsf[2], offset[2], stride[2], count[2], block[2];
+        dimsf[1] = nPart_total;
+        dimsf[0] = nFields;
+        hid_t filespace = H5Screate_simple(2, dimsf, NULL);
+        if( nPart_MPI>0 ) {
+            offset[1] = vecPatches(0)->probes[probe_n]->offset_in_file;
+            offset[0] = 0;
+            stride[0] = 1;
+            stride[1] = 1;
+            count[0] = 1;
+            count[1] = 1;
+            block[1] = nPart_MPI;
+            block[0] = nFields;
+            H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
+        } else {
+            H5Sselect_none(filespace);
+        }
+        // Create new dataset for this timestep
+        hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
+        H5Pset_alloc_time(plist_id, H5D_ALLOC_TIME_EARLY );
+        hid_t dset_id  = H5Dcreate(fileId_, name_t.str().c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+        H5Pclose(plist_id);
+        // Define transfer
+        hid_t transfer = H5Pcreate(H5P_DATASET_XFER);
+        H5Pset_dxpl_mpio(transfer, H5FD_MPIO_COLLECTIVE);
+        // Write
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &(probesArray->data_2D[0][0]) );
+        H5Dclose(dset_id);
+        H5Pclose( transfer );
+        H5Sclose(filespace);
+        H5Sclose(memspace);
+        
+        delete probesArray;
+        
+        if( flush_timeSelection->theTimeIsNow(timestep) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     }
-    // Create new dataset for this timestep
-    hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
-    H5Pset_alloc_time(plist_id, H5D_ALLOC_TIME_EARLY );
-    hid_t dset_id  = H5Dcreate(fileId_, name_t.str().c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
-    H5Pclose(plist_id);
-    // Define transfer
-    hid_t transfer = H5Pcreate(H5P_DATASET_XFER);
-    H5Pset_dxpl_mpio(transfer, H5FD_MPIO_COLLECTIVE);
-    // Write
-    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &(probesArray->data_2D[0][0]) );
-    H5Dclose(dset_id);
-    H5Pclose( transfer );
-    H5Sclose(filespace);
-    H5Sclose(memspace);
-    
-    delete probesArray;
-    
-    H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+    #pragma omp barrier
 }

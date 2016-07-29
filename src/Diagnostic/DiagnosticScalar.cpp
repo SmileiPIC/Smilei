@@ -41,31 +41,13 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patc
     PyTools::extract("print_every", print_every, "Main");
     if (!print_every) print_every = 1;
    
-    type_ = "Scalar";
     
 } // END DiagnosticScalar::DiagnosticScalar
 
 
-
-// Cloning constructor
-DiagnosticScalar::DiagnosticScalar( DiagnosticScalar * scalar )
-{
-    out_width.resize(0);
-    if( scalar->timeSelection ) {
-        timeSelection = new TimeSelection(scalar->timeSelection);
-        precision     = scalar->precision;
-        res_time      = scalar->res_time;
-        dt            = scalar->dt;
-        cell_volume   = scalar->cell_volume;
-    }
-    print_every = scalar->print_every;
-    type_ = "Scalar";
-};
-
-
-
 DiagnosticScalar::~DiagnosticScalar()
 {
+    delete timeSelection;
 } // END DiagnosticScalar::#DiagnosticScalar
 
 
@@ -118,11 +100,11 @@ void DiagnosticScalar::run( Patch* patch, int timestep )
 } // END run
 
 
-bool DiagnosticScalar::write(int itime)
+void DiagnosticScalar::write(int itime)
 {
     unsigned int k, s=out_key.size();
     
-    if ( ! timeSelection->theTimeIsNow(itime) ) return true;
+    if ( ! timeSelection->theTimeIsNow(itime) ) return;
     
     fout << std::scientific << setprecision(precision);
     // At the beginning of the file, we write some headers
@@ -153,8 +135,6 @@ bool DiagnosticScalar::write(int itime)
         }
     }
     fout << endl;
-    
-    return true;
 } // END write
 
 
@@ -200,8 +180,6 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         // particle energy added due to moving window
         double ener_added_mvw=0.0;
         ener_added_mvw = vecSpecies[ispec]->getNewParticlesNRJ();
-        
-        
         
         if (nPart!=0) charge_avg /= nPart;
         string nameSpec=vecSpecies[ispec]->species_type;
@@ -263,7 +241,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
                     Utot_crtField+=pow((**field)(ii),2);
                 }
             }
-        }        
+        }
         // Utot = Dx^N/2 * Field^2
         Utot_crtField *= 0.5*cell_volume;
         

@@ -16,6 +16,8 @@ def setMatplotLibBackend(show=True):
 	if show and usingAgg:
 		if "matplotlib.pyplot" in sys.modules:
 			print "WARNING: 'show=False' was set earlier. Restart python if you want figures to appear."
+	matplotlib.rcParams['font.family'] = 'serif'
+	matplotlib.rcParams['font.serif'] = 'Times New Roman'
 	#print matplotlib.get_backend()
 
 
@@ -52,28 +54,14 @@ class Smilei(object):
 		# Custom colormaps
 		import matplotlib.colors
 		self._plt.register_cmap(cmap=
-			matplotlib.colors.LinearSegmentedColormap("smilei6", {
+			matplotlib.colors.LinearSegmentedColormap("smilei", {
 				'red'  :((0., 0., 0.), (0.0625 , 0.091, 0.091), (0.09375, 0.118, 0.118), (0.125 , 0.127, 0.127), (0.1875 , 0.135, 0.135), (0.21875, 0.125, 0.125), (0.28125, 0.034, 0.034), (0.3125 , 0.010, 0.010), (0.34375, 0.009, 0.009), (0.4375 , 0.049, 0.049), (0.46875, 0.057, 0.057), (0.5 , 0.058, 0.058), (0.59375, 0.031, 0.031), (0.625 , 0.028, 0.028), (0.65625, 0.047, 0.047), (0.71875, 0.143, 0.143), (0.78125, 0.294, 0.294), (0.84375, 0.519, 0.519), (0.90625, 0.664, 0.664), (0.9375 , 0.760, 0.760), (0.96875, 0.880, 0.880), (1., 1., 1. )),
 				'green':((0., 0., 0.), (0.21875, 0.228, 0.228), (0.78125, 0.827, 0.827), (0.8125 , 0.852, 0.852), (0.84375, 0.869, 0.869), (0.9375 , 0.937, 0.937), (0.96875, 0.967, 0.967), (1. , 1. , 1. )),
 				'blue' :((0., 0., 0.), (0.0625 , 0.174, 0.184), (0.09375, 0.207, 0.207), (0.21875, 0.447, 0.447), (0.25 , 0.500, 0.500), (0.5 , 0.507, 0.507), (0.5625 , 0.502, 0.502), (0.625 , 0.485, 0.485), (0.6875 , 0.452, 0.452), (0.75 , 0.398, 0.398), (0.78125, 0.363, 0.363), (0.8125 , 0.345, 0.345), (0.84375, 0.377, 0.377), (0.90625, 0.534, 0.534), (0.9375 , 0.660, 0.660), (0.96875, 0.790, 0.790), (1. , 1. , 1. ))
 				} , N=256, gamma=1.0)
 		)
 		self._plt.register_cmap(cmap=
-			matplotlib.colors.LinearSegmentedColormap("smilei7", {
-				'red'  :((0., 0., 0.), (0.09375, 0.077, 0.077), (0.1875 , 0.116, 0.116), (0.28125, 0.137, 0.137), (0.3125 , 0.136, 0.136), (0.375 , 0.121, 0.121), (0.40625, 0.132, 0.132), (0.5625 , 0.248, 0.248), (0.625 , 0.311, 0.311), (0.90625, 0.745, 0.745), (0.9375 , 0.805, 0.805), (0.96875, 0.880, 0.880), (1., 1., 1. )),
-				'green':((0., 0., 0.), (0.125 , 0.149, 0.149), (0.28125, 0.278, 0.278), (0.71875, 0.693, 0.693), (0.9375 , 0.887, 0.887), (0.96875, 0.930, 0.930), (1., 1., 1. )),
-				'blue' :((0., 0., 0.), (0.03125, 0.140, 0.140), (0.0625 , 0.220, 0.220), (0.09375, 0.278, 0.278), (0.3125 , 0.591, 0.591), (0.34375, 0.631, 0.631), (0.375 , 0.654, 0.654), (0.71875, 0.791, 0.791), (0.78125, 0.824, 0.824), (0.84375, 0.865, 0.865), (0.875 , 0.888, 0.888), (0.96875, 0.963, 0.963), (1., 1., 1. ))
-				} , N=256, gamma=1.0)
-		)
-		self._plt.register_cmap(cmap=
-			matplotlib.colors.LinearSegmentedColormap("smilei8", {
-				'red'  :((0., 0., 0.), (0.0625 , 0.143, 0.143), (0.125 , 0.163, 0.163), (0.1875 , 0.169, 0.169), (0.21875, 0.151, 0.151), (0.28125, 0.036, 0.036), (0.3125 , 0.009, 0.009), (0.34375, 0.018, 0.018), (0.46875, 0.125, 0.125), (0.53125, 0.215, 0.215), (0.78125, 0.845, 0.845), (0.84375, 0.941, 0.941), (0.875 , 0.962, 0.962), (1.0 , 1. , 1. )),
-				'green':((0., 0., 0.), (0.5 , 0.529, 0.529), (0.59375, 0.608, 0.608), (0.65625, 0.642, 0.642), (0.78125, 0.680, 0.680), (0.84375, 0.719, 0.719), (0.90625, 0.793, 0.793), (1.0 , 1. , 1. )),
-				'blue' :((0., 0., 0.), (0.0625 , 0.133, 0.133), (0.125 , 0.218, 0.218), (0.25 , 0.446, 0.446), (0.3125 , 0.446, 0.446), (0.4375 , 0.406, 0.406), (0.5 , 0.365, 0.365), (0.5625 , 0.297, 0.297), (0.65625, 0.148, 0.148), (0.6875 , 0.101, 0.101), (0.71875, 0.084, 0.084), (0.75 , 0.120, 0.120), (0.9375 , 0.717, 0.717), (1.0 , 1. , 1. )),
-				} , N=256, gamma=1.0)
-		)
-		self._plt.register_cmap(cmap=
-			matplotlib.colors.LinearSegmentedColormap("smileiD1", {
+			matplotlib.colors.LinearSegmentedColormap("smileiD", {
 				'red'  :((0., 0.028, 0.028), (0.0625 , 0.027, 0.027), (0.109375, 0.049, 0.049), (0.1875 , 0.122, 0.122), (0.296875, 0.464, 0.464), (0.5 , 1. , 1. ), (0.546875, 0.942, 0.942), (0.609375, 0.816, 0.816), (0.71875 , 0.532, 0.532), (0.765625, 0.366, 0.366), (0.8125 , 0.187, 0.187), (0.84375 , 0.114, 0.114), (0.875 , 0.083, 0.083), (1.0 , 0.061, 0.061)),
 				'green':((0., 0.163, 0.163), (0.5 , 1. , 1. ), (0.546875, 0.936, 0.936), (0.625 , 0.805, 0.805), (0.78125 , 0.612, 0.612), (0.84375 , 0.517, 0.517), (1.0 , 0.251, 0.251)),
 				'blue' :((0., 0.328, 0.328), (0.078125, 0.525, 0.525), (0.25 , 0.668, 0.668), (0.3125 , 0.727, 0.727), (0.390625, 0.822, 0.822), (0.484375, 0.965, 0.965), (0.5 , 1. , 1. ), (0.515625, 0.962, 0.962), (0.75 , 0.187, 0.187), (0.765625, 0.157, 0.157), (0.78125 , 0.157, 0.157), (0.828125, 0.217, 0.217), (0.859375, 0.243, 0.243), (0.890625, 0.255, 0.255), (0.9375 , 0.254, 0.254), (1.0 , 0.232, 0.232)) 
@@ -286,6 +274,7 @@ class Options(object):
 		self.colorbar = {}
 		self.xtick = {"useOffset":False}
 		self.ytick = {"useOffset":False}
+		if "cmap" not in kwargs.keys(): kwargs.update({"cmap":"smilei"})
 		self.set(**kwargs)
 	
 	# Method to set optional plotting arguments
@@ -1924,7 +1913,11 @@ class TrackParticles(Diagnostic):
 		# -------------------------------------------------------------------
 		self.species  = species
 		self._file = self._results_path+"/TrackParticles_"+species+".h5"
-		f = self._h5py.File(self._file, 'r')
+		try:
+			f = self._h5py.File(self._file, 'r')
+		except:
+			self._orderFile( self._results_path+"/TrackParticlesDisordered_"+species+".h5", self._file )
+			f = self._h5py.File(self._file, 'r')
 		self._h5items = f.values()
 		
 		# Get available times in the hdf5 file
@@ -2085,10 +2078,10 @@ class TrackParticles(Diagnostic):
 	
 	# get all available tracked species
 	def getTrackSpecies(self):
-		files = self._glob(self._results_path+"/TrackParticles_*.h5")
+		files = self._glob(self._results_path+"/TrackParticles*.h5")
 		species = []
 		for file in files:
-			species.append(self._re.search("TrackParticles_(.*).h5",file).groups()[0])
+			species.append(self._re.search("_(.+).h5",self._os.path.basename(file)).groups()[0])
 		return species
 	
 	# get all available timesteps
@@ -2103,6 +2096,45 @@ class TrackParticles(Diagnostic):
 				return item.value
 		print "Unable to find the list of timesteps in file "+self._file
 		return self._np.array([])
+	
+	# Make the particles ordered by Id in the file, in case they are not
+	def _orderFile( self, fileDisordered, fileOrdered ):
+		print "Ordering particles ... (this could take a while)"
+		# Copy the disordered file
+		from platform import system
+		s = system()
+		if s in ['Windows']:
+			self._os.system('xcopy "%s" "%s"' % (fileDisordered, fileOrdered))
+		elif s in ['Linux','Darwin']:
+			self._os.system('cp -fr %s %s' % (fileDisordered, fileOrdered) )
+		else:
+			from shutil import copyfile
+			copyfile(fileDisordered, fileOrdered)
+		# Open the file which will become ordered
+		print "    Created new file "+fileOrdered
+		f = self._h5py.File(fileOrdered)
+		# Get list of properties
+		properties = [p.name[1:] for p in f.values() if len(p.shape)==2]
+		# For each time
+		ntimes, npart = f["Id"].shape
+		times = f["Times"]
+		A = self._np.zeros((npart,))
+		for i in range(ntimes):
+			print "    Ordering @ timestep = "+str(times[i])
+			# Get the indices for sorting arrays
+			ids = f["Id"][i,:]
+			remaining_particles = ids>0
+			read_indices  = self._np.nonzero(remaining_particles)
+			write_indices = ids[read_indices]-1
+			B = self._np.zeros((npart,))
+			# Sort arrays
+			for property in properties:
+				f[property].read_direct (A, source_sel=self._np.s_[i,:])
+				B[write_indices] = A[read_indices]
+				f[property].write_direct(B, dest_sel  =self._np.s_[i,:])
+		# Close files
+		f.close()
+		print "Ordering succeeded"
 	
 	# We override the get and getData methods
 	def getData(self):
@@ -2362,5 +2394,3 @@ def multiPlot(*Diags, **kwargs):
 			if t is not None: save.frame(int(t))
 		mov.finish()
 		return
-
-

@@ -100,41 +100,48 @@ endif
 
 
 clean:
-	rm -f $(OBJS) $(DEPS) $(PYHEADERS)
-	rm -rf $(BUILD_DIR) 
-	rm -rf smilei-$(VERSION).tgz
-	make -C doc clean
+	@echo "Cleaning $(BUILD_DIR)"
+	$(Q) rm -rf $(BUILD_DIR) 
+	$(Q) rm -rf smilei-$(VERSION).tgz
+	$(Q) make -C doc clean
 
 distclean: clean
-	rm -f $(EXEC)
+	$(Q) rm -f $(EXEC)
 
 env:
 	echo "$(MPIVERSION)"
 
-# this generates a .h file containing a char[] with the python script in binary then
-# you can just include this file to get the contents (in Params/Params.cpp)
-$(BUILD_DIR)/%.pyh: %.py
-	@ if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-	@ echo "Creating binary char for $< : $@"
-	@ cd "$(<D)" && xxd -i "$(<F)" > "$(@F)"
-	@ mv "$(<D)/$(@F)" "$@"
+# set verbosity prefix
+ifeq (,$(findstring verbose,$(config)))
+Q := @
+else
+Q := 
+endif
 
+# this generates a .pyh header file containing a char[] with the text of the python script
+$(BUILD_DIR)/%.pyh: %.py
+	@echo "Creating binary char for $<"
+	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
+	$(Q) python scripts/CompileTools/hexdump.py "$<" "$@"
+	
 $(BUILD_DIR)/%.d: %.cpp
-	@ if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-	@ echo "Checking dependencies for $<"
+	@echo "Checking dependencies for $<"
+	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
 # create and modify dependecy file .d to take into account the location subdir
-	@ $(SMILEICXX) $(CXXFLAGS) -MM $< 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(BUILD_DIR)/$(shell  dirname $<)/\1.d $(BUILD_DIR)/$(shell  dirname $<)/\1.o:@" > $@  
+	$(Q) $(SMILEICXX) $(CXXFLAGS) -MM $< 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(BUILD_DIR)/$(shell  dirname $<)/\1.d $(BUILD_DIR)/$(shell  dirname $<)/\1.o:@" > $@  
 
 $(BUILD_DIR)/%.o : %.cpp
-	$(SMILEICXX) $(CXXFLAGS) -c $< -o $@
+	@echo "Compiling $<"
+	$(Q) $(SMILEICXX) $(CXXFLAGS) -c $< -o $@
 
 $(EXEC): $(OBJS)
-	$(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS) 
-	cp $(BUILD_DIR)/$@ $@
+	@echo "Linking $< : $@"
+	$(Q) $(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS) 
+	$(Q) cp $(BUILD_DIR)/$@ $@
 
 # these are kept for backward compatibility and might be removed (see make help)
 obsolete:
-	@ echo "[WARNING] Please consider using make config=\"$(MAKECMDGOALS)\""
+	@echo "[WARNING] Please consider using make config=\"$(MAKECMDGOALS)\""
 
 debug: obsolete
 	make config=debug
@@ -151,7 +158,7 @@ pygenerator : $(PYHEADERS)
 endif
 
 
-.PHONY: pygenerator doc help clean default tar
+.PHONY: pygenerator doc help clean default tar env
 
 doc:
 	make -C doc all
@@ -164,10 +171,12 @@ tar:
 help: 
 	@echo 'Usage: make config=OPTIONS'
 	@echo '	    OPTIONS is a string composed of one or more of:'
+	@echo '	        verbose    : to print compile command lines'
 	@echo '	        debug      : to compile in debug mode (code runs really slow)'
 	@echo '         scalasca   : to compile using scalasca'
 	@echo '         noopenmp   : to compile without openmp'
 	@echo ' examples:'
+	@echo '     make config=verbose'
 	@echo '     make config=debug'
 	@echo '     make config=noopenmp'
 	@echo '     make config="debug noopenmp"'

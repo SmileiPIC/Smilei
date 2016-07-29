@@ -114,6 +114,8 @@ public :
     //! For all patches, apply the antenna current
     void applyAntennas(double time);
     
+    //! For all patches, apply collisions
+    void applyCollisions(Params &params, int itime, std::vector<Timer>& timer);
     
     //  Balancing methods
     // ------------------
@@ -154,7 +156,7 @@ public :
     
     //! Copy of the fields time selection
     TimeSelection * fieldsTimeSelection;
-
+    
     //! Count global (MPI x patches) number of particles per species
     void printNumberOfParticles(SmileiMPI* smpi) {
         unsigned int nSpecies( (*this)(0)->vecSpecies.size() );

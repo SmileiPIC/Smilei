@@ -3,7 +3,7 @@ Install
 
 Before installing :program:`Smilei`, you need to install a few dependencies:
 
-* A C++ compiler, optionally implementing openMP
+* A C++ compiler (we force standard c++0x), optionally implementing openMP
 * MPI libraries (*openmpi* recommended), supporting `MPI_THREAD_MULTIPLE`
 * HDF5 libraries compatible with your versions of C++ and MPI
 * Python 2.7
@@ -95,7 +95,7 @@ This installation procedure has been tested on OS X "El Capitan" 10.11.1
      brew tap homebrew/science
      brew cask install java
      brew install makedepend
-     brew install  gcc5
+     brew install gcc5
      HOMEBREW_CC=gcc-5 HOMEBREW_CXX=g++-5 brew install -s openmpi --without-fortran --with-mpi-thread-multiple
      brew install hdf5 --with-mpi     
      brew install python

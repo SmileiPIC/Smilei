@@ -205,10 +205,6 @@ public:
     
     //! True if tracking the particles (activates one DiagTrack)
     bool tracked;
-    //! Time selection for tracking particles
-    TimeSelection * track_timeSelection;
-    //! True if tracked particles must be ordered by ID in the file
-    bool track_ordered;
     
     void setIds() {
         unsigned int s = Id.size();

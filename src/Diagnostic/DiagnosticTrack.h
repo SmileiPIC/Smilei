@@ -67,6 +67,9 @@ private :
     //! Buffer for the output of uint array
     std::vector<unsigned int> data_uint;
     
+    //! The locator array used to order the particles by ID
+    std::vector<hsize_t> locator;
+    
 };
 
 #endif

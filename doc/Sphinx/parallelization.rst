@@ -64,10 +64,11 @@ same memory.
 
 .. rubric:: Recommendations
 
-* **Have as many MPI processes as nodes** in order to optimize the memory sharing.
-* In each node, **have as many OpenMP threads as CUs**. If you have less threads than CUs,
-  you will not be using all your CUs. If you have more threads than CUs (overthreading),
-  some threads will be treated sequentially.
+* **Have as many MPI processes as multi-core CPU** in order to optimize the memory sharing.
+* On each multi-core CPU, **have as many OpenMP threads as cores per CPU**. If you have less threads than cores,
+  you will not be using all your CUs. Use more threads than CUs only if hyperthredism is recommended on the architecture that you are using.
+* Use a dynamic scheduling for the OpenMP parallelism setting OMP_SCHEDULE : **export OMP_SCHEDULE=dynamic**. 
+  It concerns the particles's section of the code whose cost in term of CPU time can move, openmp parallelism of the fields's section is set to static.
 * **Have small patches**. They can efficiently be as small as 5 cells in each direction.
   This allows good cache use, but also ensures that you have at least as many threads
   as patches, so that they can be treated in parallel.

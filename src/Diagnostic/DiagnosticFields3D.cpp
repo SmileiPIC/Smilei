@@ -62,6 +62,7 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, Patch* 
     // Define space in memory for re-reading
     memspace_reread = H5Screate_simple(1, block, NULL);
     data_reread.resize( block[0] );
+    cout << "--------------------------------------------" << endl;
     cout << " data_reread size : " << block[0] << endl;
     // Define the list of patches for re-writing
     rewrite_npatch = (unsigned int)npatch_local;
@@ -106,6 +107,7 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, Patch* 
     // Define space in memory for re-writing
     memspace = H5Screate_simple(3, block2, NULL);
     cout << " data_rewrite size : " << block2[0]*block2[1]*block2[2] << endl;
+    cout << "--------------------------------------------" << endl;
     data_rewrite.resize( block2[0]*block2[1]*block2[2] );
     
     tmp_dset_id=0;

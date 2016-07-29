@@ -212,7 +212,8 @@ class Species(SmileiComponent):
     atomic_number = None
     isTest = False
     track_every = 0
-    track_ordered = True
+    track_ordered = False
+    track_flush_every = 1
 
 class Laser(SmileiComponent):
     """Laser parameters"""
@@ -243,6 +244,7 @@ class DiagProbe(SmileiComponent):
     pos_second = []
     pos_third = []
     fields = []
+    flush_every = 1
 
 class DiagParticles(SmileiComponent):
     """Diagnostic particles"""
@@ -251,6 +253,7 @@ class DiagParticles(SmileiComponent):
     time_average = 1
     species = None
     axes = []
+    flush_every = 1
 
 class DiagScalar(SmileiComponent):
     """Diagnostic scalar"""
@@ -263,6 +266,7 @@ class DiagFields(SmileiComponent):
     every = None
     fields = []
     time_average = 1
+    flush_every = 1
 
 # external fields
 class ExtField(SmileiComponent):

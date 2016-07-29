@@ -15,7 +15,7 @@
 #include "IonizationFactory.h"
 #include "PartBoundCond.h"
 #include "PartWall.h"
-//#include "BoundaryConditionType.h"
+#include "BoundaryConditionType.h"
 
 #include "ElectroMagn.h"
 #include "Interpolator.h"
@@ -921,4 +921,12 @@ bool Species::isProj(double time_dual, SimWindow* simWindow) {
             );
             return isproj;*/
     //return time_dual > species_param.time_frozen  || (simWindow && simWindow->isMoving(time_dual)) ;
+}
+
+void Species::disableEast() {
+    partBoundCond->bc_east   = NULL;
+}
+
+void Species::setWestBoundaryCondition() {
+    partBoundCond->bc_west   = &supp_particle;
 }

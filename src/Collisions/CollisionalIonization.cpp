@@ -184,13 +184,13 @@ void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i
 }
 
 // Method to prepare the ionization
-void CollisionalIonization::prepare3(double timestep, int n_cluster_per_cell)
+void CollisionalIonization::prepare3(double timestep, int n_patch_per_cell)
 {
     // Calculate the coeff used later for ionization probability
     if( nei<=0. ) {
         coeff = 0.;
     } else {
-        coeff = ne*ni/nei * timestep * n_cluster_per_cell;
+        coeff = ne*ni/nei * timestep * n_patch_per_cell;
     }
 }
 

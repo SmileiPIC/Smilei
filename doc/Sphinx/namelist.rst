@@ -313,7 +313,9 @@ Each species has to be defined in a ``Species`` block::
       # ionization_electrons = None,
       # radiating = False,
       isTest = False,
-      track_every = 100,
+      track_every = 10,
+      track_ordered = False,
+      track_flush_every = 100,
       c_part_max = 1.0,
       dynamics_type = "norm",
   )
@@ -454,6 +456,23 @@ Each species has to be defined in a ``Species`` block::
   If non-zero, the particles positions will be tracked and written in a file named ``TrackParticles_abc.h5``
   (where ``abc`` is :py:data:`species_type`).
 
+.. py:data:: track_ordered
+  
+  :default: False
+  
+  If ``True``, tracked particles will be sorted by their ID at run-time. This can be very
+  slow. If ``False``, the sorting will occur at post-processing. Again, this may be slow,
+  but better for most simulations.
+
+.. py:data:: track_flush_every
+  
+  :default: 1
+  
+  Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
+  
+  When :py:data:`track_flush_every` coincides with :py:data:`track_every`, the output
+  file for tracked particles is actually written ("flushed" from the buffer). Flushing
+  too often can *dramatically* slow down the simulation.
 
 .. py:data:: c_part_max
   
@@ -1103,6 +1122,16 @@ This is done by including the block ``DiagScalar``::
   
   Number of timesteps between each output **or** a :ref:`time selection <TimeSelections>`.
 
+.. py:data:: flush_every
+  
+  :default: 1
+  
+  Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
+  
+  When `flush_every` coincides with `every`, the output
+  file is actually written ("flushed" from the buffer). Flushing
+  too often can *dramatically* slow down the simulation.
+
 
 .. py:data:: time_average
   
@@ -1175,6 +1204,17 @@ To add one probe diagnostic, include the block ``DiagProbe``::
 .. py:data:: every
   
   Number of timesteps between each output **or** a :ref:`time selection <TimeSelections>`.
+
+.. py:data:: flush_every
+  
+  :default: 1
+  
+  Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
+  
+  When `flush_every` coincides with `every`, the output
+  file is actually written ("flushed" from the buffer). Flushing
+  too often can *dramatically* slow down the simulation.
+
 
 .. py:data:: pos
              pos_first
@@ -1300,6 +1340,16 @@ All the possible variables inside this block are explained here:
 .. py:data:: every
   
   The number of time-steps between each output, **or** a :ref:`time selection <TimeSelections>`.
+
+.. py:data:: flush_every
+  
+  :default: 1
+  
+  Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
+  
+  When `flush_every` coincides with `every`, the output
+  file is actually written ("flushed" from the buffer). Flushing
+  too often can *dramatically* slow down the simulation.
 
 
 .. py:data:: time_average
