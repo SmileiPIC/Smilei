@@ -1,8 +1,23 @@
-"""@package pyinit
-    Definition of Smilei components
+"""
+    GENERAL DEFINITIONS FOR SMILEI
 """
 
-import math
+import math, os, gc, operator
+
+def _add_metaclass(metaclass):
+    """Class decorator for creating a class with a metaclass."""
+    # Taken from module "six" for compatibility with python 2 and 3
+    def wrapper(cls):
+        orig_vars = cls.__dict__.copy()
+        slots = orig_vars.get('__slots__')
+        if slots is not None:
+            if isinstance(slots, str): slots = [slots]
+            for slots_var in slots: orig_vars.pop(slots_var)
+        orig_vars.pop('__dict__', None)
+        orig_vars.pop('__weakref__', None)
+        return metaclass(cls.__name__, cls.__bases__, orig_vars)
+    return wrapper
+
 
 class SmileiComponentType(type):
     """Metaclass to all Smilei components"""
@@ -23,6 +38,7 @@ class SmileiComponentType(type):
             raise StopIteration
         self.current += 1
         return self._list[self.current - 1]
+    __next__ = next #python3
     
     # Function to return one given instance, for example DiagParticles[0]
     # Special case: species can also be indexed by their name: Species["ion1"]
@@ -38,7 +54,7 @@ class SmileiComponentType(type):
     def __len__(self):
         return len(self._list)
     
-    # Function to display the content of the component
+    # Function to display the list of instances
     def __repr__(self):
         if len(self._list)==0:
             return "<Empty list of "+self.__name__+">"
@@ -47,18 +63,17 @@ class SmileiComponentType(type):
             for obj in self._list: l.append(str(obj))
             return "["+", ".join(l)+"]"
 
-
+@_add_metaclass(SmileiComponentType)
 class SmileiComponent(object):
     """Smilei component generic class"""
-    __metaclass__ = SmileiComponentType
     
     # Function to initialize new components
     def _fillObjectAndAddToList(self, cls, obj, **kwargs):
         # add all kwargs as internal class variables
         if kwargs is not None:
-            for key, value in kwargs.iteritems():
+            for key, value in kwargs.items():
                 if key=="_list":
-                    print "Python warning: in "+cls.__name__+": cannot have argument named '_list'. Discarding."
+                    print("Python warning: in "+cls.__name__+": cannot have argument named '_list'. Discarding.")
                 elif not hasattr(cls, key):
                     raise Exception("ERROR in the namelist: cannot define `"+key+"` in block "+cls.__name__+"()");
                 else:
@@ -69,6 +84,9 @@ class SmileiComponent(object):
     # Constructor for all SmileiComponents
     def __init__(self, **kwargs):
         self._fillObjectAndAddToList(type(self), self, **kwargs)
+    
+    def __repr__(self):
+        return "<Smilei "+type(self).__name__+">"
 
 
 class SmileiSingletonType(SmileiComponentType):
@@ -77,9 +95,9 @@ class SmileiSingletonType(SmileiComponentType):
     def __repr__(self):
         return "<Smilei "+str(self.__name__)+">"
 
+@_add_metaclass(SmileiSingletonType)
 class SmileiSingleton(SmileiComponent):
     """Smilei singleton generic class"""
-    __metaclass__ = SmileiSingletonType
     
     # Prevent having two instances
     def __new__(cls, **kwargs):
@@ -121,7 +139,7 @@ class Main(SmileiSingleton):
     print_every = None
     output_dir = None
     random_seed = None
-
+    
     def __init__(self, **kwargs):
         super(Main, self).__init__(**kwargs)
         #initialize timestep if not defined based on timestep_over_CFL

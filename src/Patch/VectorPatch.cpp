@@ -65,7 +65,7 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi)
 // For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow,
-                           int* diag_flag, double time_dual, vector<Timer>& timer)
+                           int* diag_flag, double time_dual, vector<Timer>& timer, int itime)
 {
     timer[1].restart();
     ostringstream t;
@@ -82,7 +82,7 @@ void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow
         }
     
     }
-    timer[1].update();
+    timer[1].update( printScalars( itime ) );
     
     timer[8].restart();
     for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
@@ -90,7 +90,7 @@ void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow
             SyncVectorPatch::exchangeParticles((*this), ispec, params, smpi ); // Included sort_part
         }
     }
-    timer[8].update();
+    timer[8].update( printScalars( itime ) );
 
 } // END dynamics
 
@@ -98,7 +98,7 @@ void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::sumDensities( int* diag_flag, vector<Timer>& timer )
+void VectorPatch::sumDensities( int* diag_flag, vector<Timer>& timer, int itime )
 {
     timer[4].restart();
     if  (*diag_flag){
@@ -110,7 +110,7 @@ void VectorPatch::sumDensities( int* diag_flag, vector<Timer>& timer )
     }
     timer[4].update();
     
-    timer[9].restart();
+    timer[11].restart();
     SyncVectorPatch::sumRhoJ( (*this), *diag_flag ); // MPI
     
     if(*diag_flag){
@@ -121,7 +121,7 @@ void VectorPatch::sumDensities( int* diag_flag, vector<Timer>& timer )
             }
         }
     }
-    timer[9].update();
+    timer[11].update( printScalars( itime ) );
     
 } // End sumDensities
 
@@ -158,11 +158,11 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
     }
     
     //Synchronize B fields between patches.
-    timer[2].update();
+    timer[2].update( printScalars( itime ) );
     
     timer[9].restart();
     SyncVectorPatch::exchangeB( (*this) );
-    timer[9].update();
+    timer[9].update(  printScalars( itime ) );
     
     timer[2].restart();
     // Computes B at time n+1/2 using B and B_m.

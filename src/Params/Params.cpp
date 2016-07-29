@@ -23,12 +23,15 @@ namelist("")
     
     if (namelistsFiles.size()==0) ERROR("No namelists given!");
 
-    string commandLineStr("");
-    for (unsigned int i=0;i<namelistsFiles.size();i++) commandLineStr+="\""+namelistsFiles[i]+"\" ";
-    MESSAGE(1,commandLineStr);
+    //string commandLineStr("");
+    //for (unsigned int i=0;i<namelistsFiles.size();i++) commandLineStr+="\""+namelistsFiles[i]+"\" ";
+    //MESSAGE(1,commandLineStr);
     
     //init Python
     PyTools::openPython();
+    
+    // Print python version
+    MESSAGE(1, "Python version "<<PyTools::python_version());
     
     // First, we tell python to filter the ctrl-C kill command (or it would prevent to kill the code execution).
     // This is done separately from other scripts because we don't want it in the concatenated python namelist.
@@ -79,20 +82,19 @@ namelist("")
     if( PyTools::nComponents("Main") == 0 )
         ERROR("Block Main() not defined");
     
-    // output dir: we force this to be the same on all mpi nodes
-    string output_dir("");
-    PyTools::extract("output_dir", output_dir, "Main");
-    
     // CHECK namelist on python side
     PyTools::runPyFunction("_smilei_check");
     smpi->barrier();
-
+    
+    // output dir: we force this to be the same on all mpi nodes
+    string output_dir("");
+    PyTools::extract("output_dir", output_dir, "Main");
+    PyTools::checkPyError();
     if (!output_dir.empty()) {
         if (chdir(output_dir.c_str()) != 0) {
             WARNING("Could not chdir to output_dir = " << output_dir);
         }
     }
-
     
     // Now the string "namelist" contains all the python files concatenated
     // It is written as a file: smilei.py
@@ -105,13 +107,11 @@ namelist("")
         }
     }
     
-    
     // random seed
     unsigned int random_seed=0;
     if (!PyTools::extract("random_seed", random_seed, "Main")) {
         random_seed = time(NULL);
     }
-    
     srand(random_seed);
     
     // --------------
@@ -126,7 +126,6 @@ namelist("")
         MESSAGE("Code running from restart in directory "<<restart_dir);
     }
     
-    
     // ---------------------
     // Normalisation & units
     // ---------------------
@@ -140,19 +139,20 @@ namelist("")
     // -------------------
     
     // geometry of the simulation
-    PyTools::extract("geometry", geometry, "Main");
-    if (geometry!="1d3v" && geometry!="2d3v" && geometry!="3d3v") {
-        ERROR("Geometry " << geometry << " does not exist");
-    }
+    geometry = "";
+    if( !PyTools::extract("geometry", geometry, "Main") )
+        ERROR("Parameter Main.geometry is required");
+    if (geometry!="1d3v" && geometry!="2d3v" && geometry!="3d3v")
+        ERROR("Main.geometry `" << geometry << "` invalid");
     setDimensions();
     
     // interpolation order
     PyTools::extract("interpolation_order", interpolation_order, "Main");
     if (interpolation_order!=2 && interpolation_order!=4) {
-        ERROR("Interpolation/projection order " << interpolation_order << " not defined");
+        ERROR("Main.interpolation_order " << interpolation_order << " not defined");
     }
     if (geometry=="2d3v" && interpolation_order==4) {
-        ERROR("Interpolation/projection order " << interpolation_order << " not yet defined in 2D");
+        ERROR("Main.interpolation_order = 4 " << interpolation_order << " not yet available in 2D");
     }
     
     //!\todo (MG to JD) Please check if this parameter should still appear here
