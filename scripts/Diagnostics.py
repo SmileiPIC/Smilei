@@ -2009,6 +2009,7 @@ class TrackParticles(Diagnostic):
 						if select[i:i+4] == "all(": selection = self._np.array([True]*self.nParticles)
 						#try:
 						ID = self._np.zeros((self.nParticles,), dtype=self._np.int16)
+						print(time_indices)
 						for ti in time_indices:
 							selectionAtTimeT = eval(particleSelector) # array of True or False
 							self._Id.read_direct(ID, source_sel=self._np.s_[ti,:], dest_sel=self._np.s_[:]) # read the particle Ids
@@ -2058,12 +2059,18 @@ class TrackParticles(Diagnostic):
 		self._type = axes
 		for i, axis in enumerate(axes):
 			axisi = self._axesIndex[i]
-			vals = self._np.double(self._h5items[axisi])
 			axisunits = ""
-			if axis != "Id":
-				if axis in ["x" , "y" , "z" ]: axisunits = "L_r"
-				if axis in ["px", "py", "pz"]: axisunits = "P_r"
-			self._centers.append( [vals.min(), vals.max()] )
+			if axis == "Id":
+				self._centers.append( [0, self._h5items[axisi][0,-1]] )
+			if axis in ["x" , "y" , "z" ]:
+				axisunits = "L_r"
+				self._centers.append( [0., self.namelist.Main.sim_length[{"x":0,"y":1,"z":2}[axis]]] )
+			if axis in ["px", "py", "pz"]:
+				axisunits = "P_r"
+				self._centers.append( [-1., 1.] )
+			if axis == "Charge":
+				axisunits = "Q_r"
+				self._centers.append( [-10., 10.] )
 			self._log.append( False )
 			self._label.append( axis )
 			self._units.append( axisunits )
