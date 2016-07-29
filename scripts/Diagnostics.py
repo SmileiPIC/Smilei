@@ -1934,10 +1934,12 @@ class TrackParticles(Diagnostic):
 				ts = self._np.array(self._np.double(timesteps),ndmin=1)
 				if ts.size==2:
 					# get all times in between bounds
-					self.times = self.times[ (self.times>=ts[0]) * (self.times<=ts[1]) ]
+					self._itimes = self._np.nonzero((self.times>=ts[0]) * (self.times<=ts[1]))[0]
+					self.times = self.times[ self._itimes ]
 				elif ts.size==1:
 					# get nearest time
-					self.times = self._np.array([self.times[(self._np.abs(self.times-ts)).argmin()]])
+					self._itimes = self._np.array([(self._np.abs(self.times-ts)).argmin()])
+					self.times = self._np.array([self.times[ self._itimes ]])
 				else:
 					raise
 			except:
@@ -2008,8 +2010,7 @@ class TrackParticles(Diagnostic):
 						if select[i:i+4] == "any(": selection = self._np.array([False]*self.nParticles)
 						if select[i:i+4] == "all(": selection = self._np.array([True]*self.nParticles)
 						#try:
-						ID = self._np.zeros((self.nParticles,), dtype=self._np.int16)
-						print(time_indices)
+						ID = self._np.zeros((self.nParticles,), dtype=self._np.int32)
 						for ti in time_indices:
 							selectionAtTimeT = eval(particleSelector) # array of True or False
 							self._Id.read_direct(ID, source_sel=self._np.s_[ti,:], dest_sel=self._np.s_[:]) # read the particle Ids
@@ -2156,24 +2157,29 @@ class TrackParticles(Diagnostic):
 	def getData(self):
 		if not self._validate(): return
 		self._prepare1() # prepare the vfactor
+		print("Preparing data ...")
 		# create dictionary with info on the axes
 		data = {}
+		ntimes = len(self.times)
 		for axis in self.axes:
-			data.update({ axis:self._np.zeros((len(self.times), self.nselectedParticles)) })
+			data.update({ axis:self._np.zeros((ntimes, self.nselectedParticles)) })
 			data[axis].fill(self._np.nan)
+		print("Loading data ...")
 		# loop times and fill up the data
 		ID = self._np.zeros((self.nParticles,), dtype=self._np.int16)
 		B = self._np.zeros((self.nParticles,))
 		indices = self.selectedParticles - 1
-		for ti in range(len(self.times)):
+		for it, ti in enumerate(self._itimes):
+			print("     iteration "+str(it)+"/"+str(ntimes))
 			self._Id.read_direct(ID, source_sel=self._np.s_[ti,:], dest_sel=self._np.s_[:]) # read the particle Ids
 			deadParticles = (ID==0).nonzero()
 			for i, axis in enumerate(self.axes):
 				axisi = self._axesIndex[i]
 				self._h5items[axisi].read_direct(B, source_sel=self._np.s_[ti,:], dest_sel=self._np.s_[:])
 				B[deadParticles]=self._np.nan
-				data[axis][ti, :] = B[indices].squeeze() * self._vfactor
+				data[axis][it, :] = B[indices].squeeze() * self._vfactor
 		data.update({ "times":self.times })
+		print("... done")
 		return data
 	def get(self):
 		return self.getData()
