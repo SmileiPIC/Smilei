@@ -1,5 +1,5 @@
-Parallelization
----------------
+Parallelization basics
+----------------------
 
 For high performance, :program:`Smilei` makes complex use of parallel computing,
 and it is important to understand the basics of this technology. Parallel simply
@@ -11,10 +11,9 @@ much more than that.
 Nodes, cores, processes and threads
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Supercomputers now have complex architectures, mainly due to their processors
+Supercomputers have complex architectures, mainly due to their processors
 capability to **work together on the same memory space**. More precisely, *cores*
-are grouped in *nodes*. All the cores in one node share the same memory space.
-(older computers did not have this capability).
+are grouped in *nodes* (1). All the cores in one node share the same memory space.
 This hardware architecture is summarized in :numref:`NodesCoresThreads`.
 
 .. _NodesCoresThreads:
@@ -46,7 +45,7 @@ the two processes cannot access to the same memory.
 
 .. warning::
   
-  The terminology of *nodes, cores, processes and threads* is not universal. Depending
+  (1) The terminology of *nodes, cores, processes and threads* is not universal. Depending
   on the computer, software (etc.), they can have various meanings.
 
 ----
@@ -54,8 +53,9 @@ the two processes cannot access to the same memory.
 Managing processes and threads
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Although processes do not share their memory, they must sometimes communicate data or
-synchronize their advance in the execution of the program. For instance, they may have to
+Although processes do not share their memory, they must sometimes communicate data 
+(particles which move from a process to another) 
+or synchronize their advance in the execution of the program (convergence criterion). For instance, they may have to
 wait for other processes so that they all are at the same point of the simulation.
 Another example: to calculate the total energy in the simulation, they must communicate
 their contribution to the others and compute the sum. These tasks are accomplished by
