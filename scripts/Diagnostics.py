@@ -1939,12 +1939,14 @@ class TrackParticles(Diagnostic):
 				elif ts.size==1:
 					# get nearest time
 					self._itimes = self._np.array([(self._np.abs(self.times-ts)).argmin()])
-					self.times = self._np.array([self.times[ self._itimes ]])
+					self.times = self._np.array(self.times[ self._itimes ])
 				else:
 					raise
 			except:
 				print("Argument `timesteps` must be one or two non-negative integers")
 				return
+		else:
+			self._itimes = self._np.arange(len(self.times))
 		# Need at least one timestep
 		if self.times.size < 1:
 			print("Timesteps not found")
@@ -2123,12 +2125,18 @@ class TrackParticles(Diagnostic):
 		from platform import system
 		s = system()
 		if s in ['Windows']:
-			self._os.system('xcopy "%s" "%s"' % (fileDisordered, fileOrdered))
+			status = self._os.system('xcopy "%s" "%s"' % (fileDisordered, fileOrdered))
 		elif s in ['Linux','Darwin']:
-			self._os.system('cp -fr %s %s' % (fileDisordered, fileOrdered) )
+			status = self._os.system('cp -fr %s %s' % (fileDisordered, fileOrdered) )
 		else:
-			from shutil import copyfile
-			copyfile(fileDisordered, fileOrdered)
+			status = 0
+			try:
+				from shutil import copyfile
+				copyfile(fileDisordered, fileOrdered)
+			except:
+				status = 1
+		if status != 0:
+			raise Exception("New file could not be created: "+str(fileOrdered))
 		# Open the file which will become ordered
 		print("    Created new file "+fileOrdered)
 		f = self._h5py.File(fileOrdered)
@@ -2174,7 +2182,7 @@ class TrackParticles(Diagnostic):
 			B = self._np.zeros((self.nParticles,))
 			indices = self.selectedParticles - 1
 			for it, ti in enumerate(self._itimes):
-				print("     iteration "+str(it)+"/"+str(ntimes))
+				print("     iteration "+str(it+1)+"/"+str(ntimes))
 				self._Id.read_direct(ID, source_sel=self._np.s_[ti,:], dest_sel=self._np.s_[:]) # read the particle Ids
 				deadParticles = (ID==0).nonzero()
 				for i, axis in enumerate(self.axes):
