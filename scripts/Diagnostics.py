@@ -1939,7 +1939,7 @@ class TrackParticles(Diagnostic):
 				elif ts.size==1:
 					# get nearest time
 					self._itimes = self._np.array([(self._np.abs(self.times-ts)).argmin()])
-					self.times = self._np.array([self.times[ self._itimes ]])
+					self.times = self._np.array(self.times[ self._itimes ])
 				else:
 					raise
 			except:
@@ -2182,7 +2182,7 @@ class TrackParticles(Diagnostic):
 			B = self._np.zeros((self.nParticles,))
 			indices = self.selectedParticles - 1
 			for it, ti in enumerate(self._itimes):
-				print("     iteration "+str(it)+"/"+str(ntimes))
+				print("     iteration "+str(it+1)+"/"+str(ntimes))
 				self._Id.read_direct(ID, source_sel=self._np.s_[ti,:], dest_sel=self._np.s_[:]) # read the particle Ids
 				deadParticles = (ID==0).nonzero()
 				for i, axis in enumerate(self.axes):
