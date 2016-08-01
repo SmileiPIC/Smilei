@@ -24,8 +24,8 @@ class Solver;
 //! This structure contains the properties of each ExtField
 // ---------------------------------------------------------------------------------------------------------------------
 struct ExtField {
-    //! fields to which apply the external field
-    std::vector<std::string> fields;
+    //! field to which apply the external field
+    std::string field;
     
     Profile * profile;
 };

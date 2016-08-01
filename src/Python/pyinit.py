@@ -286,8 +286,7 @@ class DiagFields(SmileiComponent):
 # external fields
 class ExtField(SmileiComponent):
     """External Field"""
-    field = [] # deprecated: kept for backward compatibility (to be removed)
-    fields = []
+    field = None
     profile = None
 
 # external current (antenna)
