@@ -152,7 +152,6 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     MESSAGEALL("Step " << itime << " : DUMP fields and particles " << dumpName(num_dump,smpi));    
     
     H5::attr(fid, "Version", string(__VERSION));
-    //H5::attr(fid, "CommitDate", string(__COMMITDATE));
     
     H5::attr(fid, "dump_step", itime);
     
@@ -319,9 +318,9 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, unsigned int &itime,  Smil
     string dump_date;
     H5::getAttr(fid, "CommitDate", dump_date);
     
-    if ((dump_version != string(__VERSION)) || (dump_date != string(__COMMITDATE))) {
-        WARNING ("The code version that dumped the file is " << dump_version << " of " << dump_date);
-        WARNING ("                while running version is " << string(__VERSION) << " of " << string(__COMMITDATE));
+    if (dump_version != string(__VERSION)) {
+        WARNING ("The code version that dumped the file is " << dump_version);
+        WARNING ("                while running version is " << string(__VERSION));
     }
     
     H5::getAttr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );

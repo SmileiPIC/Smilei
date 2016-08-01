@@ -266,7 +266,7 @@ public:
         PyObject* py_val = extract_py(name,component,nComponent);
         PyTools::checkPyError();
         if (PyList_Check(py_val)) {
-            ERROR("Looking for single value " << name << " in " << component << " #" << nComponent << " but got a list.");
+            ERROR("Looking for single value \"" << name << "\" in " << component << " #" << nComponent << " but got a list.");
         }
         return PyTools::convert(py_val,val);
     }

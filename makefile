@@ -21,9 +21,8 @@ default: $(EXEC)
 DESCRIBE:=$(shell git describe 2>/dev/null || echo '??')
 BRANCH:=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '??')
 VERSION="$(DESCRIBE)-$(BRANCH)"
-COMMITDATE:="$(shell git show -s --pretty="%ci" 2>/dev/null || echo '??')"
 
-CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D__COMMITDATE=\"$(COMMITDATE)\" -D__CONFIG=\""$(config)"\"
+CXXFLAGS += -D__VERSION=\"$(VERSION)\"
 
 CXXFLAGS += -std=c++0x 
 ifneq ($(strip $(HDF5_ROOT_DIR)),)
