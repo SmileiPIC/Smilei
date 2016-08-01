@@ -82,7 +82,6 @@ endif
 ifeq (,$(findstring noopenmp,$(config)))
     OPENMP_FLAG ?= -fopenmp 
 	LDFLAGS += -lm
-    endif
     OPENMP_FLAG += -D_OMP
     LDFLAGS += $(OPENMP_FLAG)
     #LDFLAGS += -mt_mpi
