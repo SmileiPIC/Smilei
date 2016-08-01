@@ -52,14 +52,11 @@ the two processes cannot access to the same memory.
 
 Managing processes and threads
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Although processes do not share their memory, they must sometimes communicate data 
-(particles which move from a process to another) 
-or synchronize their advance in the execution of the program (convergence criterion). For instance, they may have to
-wait for other processes so that they all are at the same point of the simulation.
-Another example: to calculate the total energy in the simulation, they must communicate
-their contribution to the others and compute the sum. These tasks are accomplished by
-the *Message Passing Interface* (MPI) protocol.
+Although processes do not share their memory, they must sometimes synchronize their
+advance in the execution of the program, or communicate data between each other.
+For instance, to calculate the total energy in the simulation, they must communicate
+their contribution to the others and compute the sum.
+These tasks are accomplished by the Message Passing Interface (MPI) protocol.
 
 At the thread level, the communications do not work in the same manner because threads
 already share their data. However, they need synchronization and management to decide
