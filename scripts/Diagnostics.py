@@ -1945,6 +1945,8 @@ class TrackParticles(Diagnostic):
 			except:
 				print("Argument `timesteps` must be one or two non-negative integers")
 				return
+		else:
+			self._itimes = self._np.arange(len(self.times))
 		# Need at least one timestep
 		if self.times.size < 1:
 			print("Timesteps not found")
@@ -2123,12 +2125,18 @@ class TrackParticles(Diagnostic):
 		from platform import system
 		s = system()
 		if s in ['Windows']:
-			self._os.system('xcopy "%s" "%s"' % (fileDisordered, fileOrdered))
+			status = self._os.system('xcopy "%s" "%s"' % (fileDisordered, fileOrdered))
 		elif s in ['Linux','Darwin']:
-			self._os.system('cp -fr %s %s' % (fileDisordered, fileOrdered) )
+			status = self._os.system('cp -fr %s %s' % (fileDisordered, fileOrdered) )
 		else:
-			from shutil import copyfile
-			copyfile(fileDisordered, fileOrdered)
+			status = 0
+			try:
+				from shutil import copyfile
+				copyfile(fileDisordered, fileOrdered)
+			except:
+				status = 1
+		if status != 0:
+			raise Exception("New file could not be created: "+str(fileOrdered))
 		# Open the file which will become ordered
 		print("    Created new file "+fileOrdered)
 		f = self._h5py.File(fileOrdered)
