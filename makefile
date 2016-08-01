@@ -135,7 +135,7 @@ $(BUILD_DIR)/%.o : %.cpp
 	$(Q) $(SMILEICXX) $(CXXFLAGS) -c $< -o $@
 
 $(EXEC): $(OBJS)
-	@echo "Linking $< : $@"
+	@echo "Linking $@"
 	$(Q) $(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS) 
 	$(Q) cp $(BUILD_DIR)/$@ $@
 

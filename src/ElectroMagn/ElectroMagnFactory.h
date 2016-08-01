@@ -53,9 +53,15 @@ public:
             ExtField extField;
             PyObject * profile;
             std::ostringstream name;
-            if( !PyTools::extract("field",extField.fields,"ExtField",n_extfield))
-                ERROR("ExtField #"<<n_extfield<<": parameter 'field' not provided'");
-            
+            if( !PyTools::extract("fields",extField.fields,"ExtField",n_extfield)) {
+                if( PyTools::extract("field",extField.fields,"ExtField",n_extfield)) {
+                    WARNING("DEPRECATED : ExtField #"<<n_extfield<<": parameter 'field' has been chenged to 'fields'.");
+                    WARNING("             'field' keyword will be removed in a future release.");
+                    WARNING("             Please consider changing your input file.\n");
+                } else {
+                    ERROR("ExtField #"<<n_extfield<<": parameter 'fields' not provided'");
+                }
+            }
             // Now import the profile
             name.str("");
             name << "ExtField[" << n_extfield <<"].profile";

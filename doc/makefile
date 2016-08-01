@@ -33,6 +33,7 @@ html:
 	
 	
 clean:
-	for fname in $(TEXFILES); do latexmk -cd -C $$fname; done;
-	rm -rf Doxygen/html Doxygen/smilei_warn.log
-	rm -rf Sphinx/_build
+	@echo "Cleaning doc";
+	@for fname in $(TEXFILES); do latexmk -cd -C $$fname; done;
+	@rm -rf Doxygen/html Doxygen/smilei_warn.log
+	@rm -rf Sphinx/_build

@@ -305,17 +305,16 @@ void ElectroMagn::applyExternalFields(Patch* patch) {
             else field = NULL;
             
             if( field ) {
+                if (patch->isMaster()) {
+                    MESSAGE(1,"Applying External field to " << field->name);
+                }
                 applyExternalField( field, extfield->profile, patch );
                 found=true;
             }
         }
     }
-    if (patch->isMaster()) {
-        if (found) {
-            MESSAGE(1,"Finish");
-        } else {
-            MESSAGE(1,"Nothing to do");
-        }
+    if (patch->isMaster() && !found) {
+        MESSAGE(1,"Nothing to do");
     }
     Bx_m->copyFrom(Bx_);
     By_m->copyFrom(By_);
