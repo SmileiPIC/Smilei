@@ -23,7 +23,7 @@ Params::Params(SmileiMPI* smpi, std::vector<std::string> namelistsFiles) :
 namelist("")
 {
     
-    if((((H5_VERS_MAJOR==1) && (H5_VERS_MINOR==8) && (H5_VERS_RELEASE>15)) || \
+    if((((H5_VERS_MAJOR==1) && (H5_VERS_MINOR==8) && (H5_VERS_RELEASE>16)) || \
         ((H5_VERS_MAJOR==1) && (H5_VERS_MINOR>8)) || \
         (H5_VERS_MAJOR>1))) {
         WARNING("Smilei suggests using hdf5 version 1.8.16 you're using "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
