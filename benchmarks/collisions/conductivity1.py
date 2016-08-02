@@ -33,7 +33,7 @@ Main(
 
 # EXTERNAL FIELDS
 ExtField(
-	fields = ["Ex"],
+	field = "Ex",
 	profile = 0.001
 )
 

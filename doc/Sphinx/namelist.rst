@@ -678,15 +678,10 @@ An external field can be applied using an ``ExtField`` block::
       profile = constant(0.01, xvacuum=0.1)
   )
 
-.. py:data:: fields
-             field
+.. py:data:: field
                
-  List of field names: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"`` or ``"Bz"``.
+  Field name: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"`` or ``"Bz"``.
   
-  .. warning::
-    
-    ``field`` is deprecated but kept for backward compatibility (will be removed in a future release).
-
 .. py:data:: profile
   
   :type: float or *python* function (see section :ref:`profiles`)

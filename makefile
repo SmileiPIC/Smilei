@@ -21,9 +21,8 @@ default: $(EXEC)
 DESCRIBE:=$(shell git describe 2>/dev/null || echo '??')
 BRANCH:=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '??')
 VERSION="$(DESCRIBE)-$(BRANCH)"
-COMMITDATE:="$(shell git show -s --pretty="%ci" 2>/dev/null || echo '??')"
 
-CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D__COMMITDATE=\"$(COMMITDATE)\" -D__CONFIG=\""$(config)"\"
+CXXFLAGS += -D__VERSION=\"$(VERSION)\"
 
 CXXFLAGS += -std=c++0x 
 ifneq ($(strip $(HDF5_ROOT_DIR)),)
@@ -80,17 +79,12 @@ ifneq (,$(findstring turing,$(config)))
 endif
 
 ifeq (,$(findstring noopenmp,$(config)))
-	SMILEI_COMPILER:=$(shell $(SMILEICXX) --version 2>&1|head -n 1)
-    ifneq (,$(findstring icpc,$(SMILEI_COMPILER)))
-        OPENMPFLAGS = -qopenmp
-    else
-        OPENMPFLAGS = -fopenmp 
+    OPENMP_FLAG ?= -fopenmp 
 	LDFLAGS += -lm
-    endif
-    OPENMPFLAGS += -D_OMP
-    LDFLAGS += $(OPENMPFLAGS)
+    OPENMP_FLAG += -D_OMP
+    LDFLAGS += $(OPENMP_FLAG)
     #LDFLAGS += -mt_mpi
-    CXXFLAGS += $(OPENMPFLAGS)
+    CXXFLAGS += $(OPENMP_FLAG)
 endif
 
 
@@ -180,13 +174,15 @@ help:
 	@echo '     make config=debug'
 	@echo '     make config=noopenmp'
 	@echo '     make config="debug noopenmp"'
+	@echo 
+	@echo ' other usage:' 
+	@echo '      make doc     : builds the documentation'
+	@echo '      make tar     : creates an archive of the sources'
+	@echo '      make clean   : remove build'
 	@echo ''
 	@echo 'Environment variables :'
 	@echo '     SMILEICXX     : mpi c++ compiler'
 	@echo '     HDF5_ROOT_DIR : HDF5 dir'
-	@echo '     BUILD_DIR         :directory used to store build files (default: "build")'
-	@echo 
-	@echo '      make doc     : builds the documentation'
-	@echo '      make tar     : creates an archive of the sources'
-	@echo '      make clean   : remove build'
+	@echo '     BUILD_DIR     : directory used to store build files (default: "build")'
+	@echo '     OPENMP_FLAG   : flag to use openmp (default: "-fopenmp")'
 

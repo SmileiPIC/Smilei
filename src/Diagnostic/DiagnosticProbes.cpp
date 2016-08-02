@@ -136,7 +136,6 @@ void DiagnosticProbes::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         
         // Write the version of the code as an attribute
         H5::attr(fileId_, "Version", string(__VERSION));
-        H5::attr(fileId_, "CommitDate", string(__COMMITDATE));
         
         // Dimension of the probe grid
         H5::attr(fileId_, "dimension", dimProbe);
