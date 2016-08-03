@@ -1,18 +1,29 @@
 Post-process
 ------------
 
+A python module is provided to view or extract data from all the diagnostics.
+There are several ways to load this module in python.
 
-A python script *Diagnostics.py* is provided to view or extract data from all the diagnostics.
-To use this script, you will need *python2.7* with some packages
-(follow the :doc:`installation instructions <installation>`).
+.. rubric:: 1. Install Smilei's module
 
-For an interactive mode, we recommend installing and running *ipython*::
+..
+
+  ::
   
-  ipython -i scripts/Diagnostics.py
-
-Otherwise, you can add the following command in your own script::
+    make install_python
   
-  execfile("scripts/Diagnostics.py")
+  Then, in python, simply run::
+  
+    from Smilei import *
+
+
+.. rubric:: 2. Execute the ``Diagnostics.py`` script from python
+
+..
+
+  You can add the following command in your own python script::
+  
+    execfile("/path/to/Smilei/scripts/Diagnostics.py")
 
 
 ----
@@ -483,11 +494,12 @@ An example of the commands you may use from a UNIX *shell* is::
 
 From the same terminal, launch *python* using the command::
 
-  python -i scripts/Diagnostics.py
+  python
 
 You are now in the *python* prompt.
 Obtain a list of available particle diagnostics using::
 
+  >>> from Smilei import *
   >>> S = Smilei('tst1d_6_particle_diagnostic')
   >>> S.ParticleDiagnostic()
   Printing available particle diagnostics:
