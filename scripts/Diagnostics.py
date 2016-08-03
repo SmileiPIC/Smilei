@@ -120,7 +120,7 @@ class Smilei(object):
 		"""
 		return Scalar(self, *args, **kwargs)
 	def Field(self, *args, **kwargs):
-		""" Field(field=None, timesteps=None, slice=None, units=[""], data_log=False)
+		""" Field(field=None, timesteps=None, slice=None, units=[""], data_log=False, stride=1)
 		
 		Import and analyze a field diagnostic from a Smilei simulation
 		
@@ -138,9 +138,11 @@ class Smilei(object):
 			`range` may be "all", a float, or [float, float].
 			For instance, slice={"x":"all", "y":[2,3]}.
 			The average of all values within the 'slice' is computed.
-		units : A units specification such as ["m","second"]
+		units : a units specification such as ["m","second"]
 		data_log : True or False    (optional)
 			If True, then log10 is applied to the output array before plotting.
+		stride : step size for reading the grid.
+			If the grid is too large, use a stride > 1 to reduce the amount of data.
 		
 		Usage:
 		------
@@ -181,7 +183,7 @@ class Smilei(object):
 		"""
 		return Probe(self, *args, **kwargs)
 	def ParticleDiagnostic(self, *args, **kwargs):
-		""" ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None, units=[""], data_log=False)
+		""" ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None, units=[""], data_log=False, stride=1)
 		
 		Import and analyze a particle diagnostic from a Smilei simulation
 		
@@ -201,6 +203,8 @@ class Smilei(object):
 		units : A units specification such as ["m","second"]
 		data_log : True or False    (optional)
 			If True, then log10 is applied to the output array before plotting.
+		stride : step size for reading the grid.
+			If the grid is too large, use a stride > 1 to reduce the amount of data.
 		
 		Usage:
 		------
@@ -210,7 +214,7 @@ class Smilei(object):
 		"""
 		return ParticleDiagnostic(self, *args, **kwargs)
 	def TrackParticles(self, *args, **kwargs):
-		""" TrackParticles(species=None, select="", axes=[], timesteps=None, units=[""], skipAnimation=False)
+		""" TrackParticles(species=None, select="", axes=[], timesteps=None, length=None, units=[""], skipAnimation=False)
 		
 		Import and analyze tracked particles from a Smilei simulation
 		
@@ -233,6 +237,7 @@ class Smilei(object):
 			If omitted, all timesteps are used.
 			If one number  given, the nearest timestep available is used.
 			If two numbers given, all the timesteps in between are used.
+		length: The length of each plotted trajectory, in number of timesteps.
 		units : A units specification such as ["m","second"]
 		axes: A list of axes for plotting the trajectories.
 			Each axis is "x", "y", "z", "px", "py" or "pz".
@@ -773,7 +778,7 @@ class Diagnostic(object):
 class ParticleDiagnostic(Diagnostic):
 
 	# This is the constructor, which creates the object
-	def _init(self, diagNumber=None, timesteps=None, slice=None, data_log=False, **kwargs):
+	def _init(self, diagNumber=None, timesteps=None, slice=None, data_log=False, stride=1, **kwargs):
 		
 		if not self.Smilei.valid: return None
 		if diagNumber is None:
@@ -1049,6 +1054,14 @@ class ParticleDiagnostic(Diagnostic):
 			self._bsize = self._np.prod( self._np.array( self._np.meshgrid( *plot_diff ) ), axis=0)
 			self._bsize = self._bsize.transpose()
 		self._bsize /= coeff
+		self._bsize = self._np.squeeze(self._bsize)
+		
+		# Manage stride
+		self._stride = stride
+		if stride!=1:
+			for i in range(len(self._centers)): self._centers[i] = self._centers[i][::stride]
+			if   self._bsize.ndim==1: self._bsize = self._bsize[::stride]
+			elif self._bsize.ndim==2: self._bsize = self._bsize[::stride,::stride]
 		
 		# Finish constructor
 		self.valid = True
@@ -1151,7 +1164,7 @@ class ParticleDiagnostic(Diagnostic):
 		if not self._validate(): return
 		# Verify that the timestep is valid
 		if t not in self.times:
-			print("Timestep "+t+" not found in this diagnostic")
+			print("Timestep "+str(t)+" not found in this diagnostic")
 			return []
 		# Get arrays from all requested diagnostics
 		A = {}
@@ -1166,9 +1179,13 @@ class ParticleDiagnostic(Diagnostic):
 					A[d] = self._np.delete(A[d], axis["slice"], axis=iaxis) # remove parts outside of the slice
 					A[d][self._np.isnan(A[d])] = 0.
 					A[d] = self._np.sum(A[d], axis=iaxis, keepdims=True) # sum over the slice
-			A[d] = self._np.squeeze(A[d]) # remove sliced axes
+			# Apply stride
+			if   A[d].ndim==1: A[d] = A[d][::self._stride]
+			elif A[d].ndim==2: A[d] = A[d][::self._stride, ::self._stride]
+			# remove sliced axes
+			A[d] = self._np.squeeze(A[d])
 			# Divide by the bins size
-			A[d] /= self._np.squeeze(self._bsize)
+			A[d] /= self._bsize
 		# Calculate operation
 		data_operation = self.operation
 		for d in reversed(self._diags):
@@ -1187,7 +1204,7 @@ class ParticleDiagnostic(Diagnostic):
 class Field(Diagnostic):
 	
 	# This is the constructor, which creates the object
-	def _init(self, field=None, timesteps=None, slice=None, data_log=False, **kwargs):
+	def _init(self, field=None, timesteps=None, slice=None, data_log=False, stride=1, **kwargs):
 		
 		if not self.Smilei.valid: return None
 		
@@ -1340,6 +1357,11 @@ class Field(Diagnostic):
 		for f in self._fieldname:
 			self._vunits = self._vunits.replace(f, units[f])
 		
+		# Manage stride
+		self._stride = stride
+		if stride!=1:
+			for i in range(len(self._centers)): self._centers[i] = self._centers[i][::stride]
+		
 		# Finish constructor
 		self.valid = True
 	
@@ -1365,7 +1387,7 @@ class Field(Diagnostic):
 		if not self._validate(): return
 		# Verify that the timestep is valid
 		if t not in self.times:
-			print("Timestep "+t+" not found in this diagnostic")
+			print("Timestep "+str(t)+" not found in this diagnostic")
 			return []
 		# Get arrays from requested field
 		# get data
@@ -1385,7 +1407,11 @@ class Field(Diagnostic):
 			if self._slices[iaxis] is None: continue
 			A = self._np.delete(A, self._slices[iaxis], axis=iaxis) # remove parts outside of the slice
 			A = self._np.mean(A, axis=iaxis, keepdims=True) # sum over the slice
-		A = self._np.squeeze(A) # remove sliced axes
+		# Apply stride
+		if   A.ndim==1: A = A[::self._stride]
+		elif A.ndim==2: A = A[::self._stride, ::self._stride]
+		# remove sliced axes
+		A = self._np.squeeze(A)
 		# log scale if requested
 		if self._data_log: A = self._np.log10(A)
 		return A

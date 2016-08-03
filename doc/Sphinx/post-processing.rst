@@ -115,6 +115,8 @@ Open a Field diagnostic
      | - With syntax 2, only the bin closest to ``location`` is kept.
      | - With syntax 3, an average is performed between ``begin`` and ``end``.
      | Example: ``slice = {"x":[4,5]}`` will average for :math:`x` within [4,5].
+  * ``stride``: step size for reading the grid. If the grid is too large, use a stride > 1
+    to reduce the amount of data.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
 **Example**::
@@ -151,14 +153,14 @@ Open a Probe diagnostic
 Open a Particle diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None, units=[""], data_log=False, **kwargs)
+.. py:method:: Smilei.ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None, units=[""], data_log=False, stride=1, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: number of the particle diagnostic (the first one has number 0).
      | If not given, a list of available particle diagnostics is printed.
      | It can also be an operation between several particle diagnostics.
      | For example, ``"#0/#1"`` computes the division by diagnostics 0 and 1.
-  * ``slice``: A selection of rows or columns. This parameter is used to reduce the number of dimensions of the array.
+  * ``slice``: a selection of rows or columns. This parameter is used to reduce the number of dimensions of the array.
      | Syntax 1: ``slice = { axis : "all", ... }``
      | Syntax 2: ``slice = { axis : location, ... }``
      | Syntax 3: ``slice = { axis : [begin, end] , ... }``
@@ -170,6 +172,8 @@ Open a Particle diagnostic
      | - With syntax 2, only the bin closest to ``location`` is kept.
      | - With syntax 3, a **sum** is performed between ``begin`` and ``end``.
      | Example: ``slice={"x":[4,5]``} will sum all the data for x within [4,5].
+  * ``stride``: step size for reading the grid. If the grid is too large, use a stride > 1
+    to reduce the amount of data.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
 **Example**::
