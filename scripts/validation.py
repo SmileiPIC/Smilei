@@ -97,6 +97,9 @@ import glob
 from subprocess import check_call,CalledProcessError,call
 import os
 import sys
+import socket
+#
+# SMILEI PATH VARIABLES
 if "SMILEI_ROOT" in os.environ :
   SMILEI_ROOT=os.environ["SMILEI_ROOT"]
 else :
@@ -107,6 +110,11 @@ SMILEI_REFERENCES = SMILEI_ROOT+"validation/references/"
 SMILEI_BENCHS = SMILEI_ROOT+"benchmarks/"
 sys.path.insert(0, SMILEI_SCRIPTS)
 #
+# OTHER VARIABLES
+POINCARE="poincare"
+JOLLYJUMPER="llrlsi-gw"
+#HOSTNAME=socket.gethostname()
+HOSTNAME=JOLLYJUMPER                   
 # DEFAULT VALUES FOR OPTIONS
 OMP = 2
 MPI = 2
@@ -386,7 +394,6 @@ for BENCH in SMILEI_BENCH_LIST :
     SMILEI_BENCH = SMILEI_BENCHS+BENCH
     VALID_ALL_OK = False
     # CREATE THE WORKDIR CORRESPONDING TO THE INPUT FILE AND GO INTO                
-    #import pdb;pdb.set_trace()
     WORKDIR = WORKDIRS+'/wd_'+BENCH
     if not os.path.exists(WORKDIR) :
       os.mkdir(WORKDIR)
@@ -402,38 +409,87 @@ for BENCH in SMILEI_BENCH_LIST :
     #
     #  RUN smilei IF EXECUTION IS TRUE
     if EXECUTION :
-      # BUILD THE SMILEI EXECUTION SCRIPT                   
+      # RUN SMILEI                   
+        #  define the name of the execution script
       EXEC_SCRIPT = 'exec_script.sh'
       EXEC_SCRIPT_OUT = 'exec_script.out'
       SMILEI_EXE_OUT = 'smilei_exe.out'
       exec_script_desc = open(EXEC_SCRIPT, 'w')
       if VERBOSE :
         print "Executing smilei, please wait ...\n"
-      exec_script_desc.write( "\
+        #  depending on the host, build the script and run it
+      if POINCARE in HOSTNAME :
+        print "ON EST SUR POINCARE"
+#        exec_script_desc.write( "\n")
+        exec_script_desc.write( "\
     # environnement \n \
 module load intel/15.0.0 openmpi  hdf5/1.8.10_intel_openmpi python\n  \
 # \n \
 # execution \n \
 export OMP_NUM_THREADS="+str(OMP)+"\n \
 mpirun -bind-to-socket -np "+str(MPI)+" "+WORKDIRS+"/smilei "+SMILEI_BENCH+" >"+SMILEI_EXE_OUT+" \n exit $?  ")
-      exec_script_desc.close()
+        exec_script_desc.close()
     #
-    # RUN  SMILEI
-      COMMANDE = "/bin/bash "+EXEC_SCRIPT+" > "+EXEC_SCRIPT_OUT+" 2>&1"
-      try :
-        check_call(COMMANDE, shell=True)
-      except CalledProcessError,e:
+        # RUN  SMILEI
+        COMMANDE = "/bin/bash "+EXEC_SCRIPT+" > "+EXEC_SCRIPT_OUT+" 2>&1"
+        try :
+          check_call(COMMANDE, shell=True)
+        except CalledProcessError,e:
         # if execution fails, exit with exit status 2
-        os.chdir(WORKDIRS)
-        shutil.rmtree(WORKDIR)
-        if VERBOSE :
-          print  "Smilei validation cannot be done : execution failed."
-        sys.exit(2)
+          os.chdir(WORKDIRS)
+          shutil.rmtree(WORKDIR)
+          if VERBOSE :
+            print  "Smilei validation cannot be done : execution failed."
+          sys.exit(2)
+      elif JOLLYJUMPER in HOSTNAME :
+        NODES=(int(MPI)*int(OMP))/12
+        exec_script_desc.write( "\
+#PBS -l nodes="+str(NODES)+":ppn="+str(OMP)+" \n \
+#PBS -q default \n \
+#PBS -j oe.\n \
+#Set the correct modules available \n \
+unset MODULEPATH; \n \
+module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles \n \
+#Load compilers and mpi \n \
+module load compilers/icc/16.0.109 \n \
+module load mpi/openmpi/1.6.5-ib-icc \n \
+module load python/2.7.10 \n \
+ \n \
+#Go to current directory \n \
+cd $PBS_O_WORKDIR \n \
+# -loadbalance to spread the MPI processes among the different nodes. \n \
+# -bind-to-core to fix a given MPI process to a fixed set of cores. \n \
+# -cpus-per-proc 6 to set said set of cores to a size of 6 (half socket of JJ) which is also the number of omp threads. \n \
+export OMP_NUM_THREADS="+str(OMP)+" \n \
+export OMP_SCHEDULE=DYNAMIC \n \
+export KMP_AFFINITY=verbose \n \
+export PATH=$PATH:/opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck \n \
+#Specify the number of sockets per node in -mca orte_num_sockets \n \
+#Specify the number of cores per sockets in -mca orte_num_cores \n \
+which mpirun \n \
+mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket 1 -n "+str(MPI)+"\
+ -x $OMP_NUM_THREADS -x $OMP_SCHEDULE "+WORKDIRS+"/smilei "+SMILEI_BENCH+" >"+SMILEI_EXE_OUT+" \n \
+exit $?  \n  ")
+        exec_script_desc.close()
+        import pdb;pdb.set_trace()
+#    #
+#    # RUN  SMILEI
+#      COMMANDE = "/bin/qsub -sync y  "+EXEC_SCRIPT
+#      try :
+#        check_call(COMMANDE, shell=True)
+#      except CalledProcessError,e:
+#        # if execution fails, exit with exit status 2
+#        os.chdir(WORKDIRS)
+#        shutil.rmtree(WORKDIR)
+#        if VERBOSE :
+#          print  "Smilei validation cannot be done : execution failed."
+#        sys.exit(2)
 #
     # READ TIME STEPS AND VALIDATE 
     if VERBOSE :
       print "Testing scalars :\n"
     VALID_OK = False
+#    import pdb;pdb.set_trace()
     L=Diagnostics.Scalar(".",scalar="Utot") # scalar argument must be anything except none in order times is defined
     LISTE_TIMESTEPS = L.getAvailableTimesteps()
     if OPT_TIMESTEP == False or VALID_ALL:
