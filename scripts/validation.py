@@ -113,8 +113,7 @@ sys.path.insert(0, SMILEI_SCRIPTS)
 # OTHER VARIABLES
 POINCARE="poincare"
 JOLLYJUMPER="llrlsi-gw"
-#HOSTNAME=socket.gethostname()
-HOSTNAME=JOLLYJUMPER                   
+HOSTNAME=socket.gethostname()
 # DEFAULT VALUES FOR OPTIONS
 OMP = 2
 MPI = 2
