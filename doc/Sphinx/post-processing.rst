@@ -4,20 +4,22 @@ Post-process
 A python module is provided to view or extract data from all the diagnostics.
 There are several ways to load this module in python.
 
-.. rubric:: 1. Install Smilei's module
+.. rubric:: 1. Install Smilei's module (recommended)
 
 ..
 
   ::
   
     make install_python
+
+  This has to be done only once, unless you move the smilei directory elsewere.
   
   Then, in python, simply run::
   
     from Smilei import *
 
 
-.. rubric:: 2. Execute the ``Diagnostics.py`` script from python
+.. rubric:: 2. Execute the ``Diagnostics.py`` script from python 
 
 ..
 
@@ -25,6 +27,9 @@ There are several ways to load this module in python.
   
     execfile("/path/to/Smilei/scripts/Diagnostics.py")
 
+
+  .. warning:: This solution is kept for backward compatibility and may be removed in 
+    a future release
 
 ----
 

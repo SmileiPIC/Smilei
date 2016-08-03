@@ -162,7 +162,10 @@ Download and compile
      make config=debug            # to have debugging output (slow)
      make config=noopenmp         # to deactivate OpenMP support
      make config="debug noopenmp" # to activate debugging without OpenMP
+     
+   .. rubric:: Makefile alternatives:
      make doc                     # to compile the documentation
+     make install_python          # install the Smilei python module
      make help                    # to get some help on compilation
  
 #. The next step is to :doc:`write a namelist <namelist>`.

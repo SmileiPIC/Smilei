@@ -114,10 +114,10 @@ default: $(EXEC)
 clean:
 	@echo "Cleaning $(BUILD_DIR)"
 	$(Q) rm -rf $(BUILD_DIR) 
-	$(Q) rm -rf smilei-$(VERSION).tgz
+	$(Q) rm -rf $(EXEC)-$(VERSION).tgz
 	$(Q) make -C doc clean
 
-distclean: clean
+distclean: clean uninstall_python
 	$(Q) rm -f $(EXEC)
 
 env:
@@ -155,24 +155,27 @@ $(EXEC): $(OBJS)
 	$(Q) $(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS) 
 	$(Q) cp $(BUILD_DIR)/$@ $@
 
-# ????
-ifeq ($(filter clean help doc tar,$(MAKECMDGOALS)),) 
+# Avoid to check dependencies and to create .pyh if not necessary
+FILTER_RULES=clean distclean help env obsolete debug scalasca doc sphinx tar install_python uninstall_python
+ifeq ($(filter $(FILTER_RULES),$(MAKECMDGOALS)),) 
 # Let's try to make the next lines clear: we include $(DEPS) and pygenerator
 -include $(DEPS) pygenerator
 # and pygenerator will create all the $(PYHEADERS) (which are files)
 pygenerator : $(PYHEADERS)
 endif
 
-
-.PHONY: pygenerator doc help clean default tar env
+# these are not file-related rules
+.PHONY: pygenerator $(FILTER_RULES)
 
 doc:
 	make -C doc all
 
 sphinx:
 	make -C doc/Sphinx html
+	
 tar:
-	git archive -o smilei-$(VERSION).tgz --prefix smilei-$(VERSION)/ HEAD
+	@echo "Creating archive $(EXEC)-$(VERSION).tgz"
+	$(Q) git archive -o $(EXEC)-$(VERSION).tgz --prefix $(EXEC)-$(VERSION)/ HEAD
 
 # Install the python module in the python path
 install_python:
@@ -182,7 +185,7 @@ install_python:
 
 uninstall_python:
 	@echo "Uninstalling $(SITEDIR)/smilei.pth"
-	$(Q) rm "$(SITEDIR)/smilei.pth"
+	$(Q) rm -f "$(SITEDIR)/smilei.pth"
 
 help: 
 	@echo 'Usage: make config=OPTIONS'
@@ -198,9 +201,11 @@ help:
 	@echo '     make config="debug noopenmp"'
 	@echo 
 	@echo ' other usage:' 
-	@echo '      make doc     : builds the documentation'
-	@echo '      make tar     : creates an archive of the sources'
-	@echo '      make clean   : remove build'
+	@echo '      make doc              : builds the documentation'
+	@echo '      make tar              : creates an archive of the sources'
+	@echo '      make clean            : remove build'
+	@echo '      make install_python   : install Python Smilei module'
+	@echo '      make uninstall_python : remove Python Smilei module'
 	@echo ''
 	@echo 'Environment variables :'
 	@echo '     SMILEICXX     : mpi c++ compiler'
