@@ -388,7 +388,7 @@ except CalledProcessError,e:
 for BENCH in SMILEI_BENCH_LIST :
     # PRINT INFO           
     if VERBOSE :
-     print '\nTesting smilei with', OMP, 'OMP tasks,',MPI, 'MPI processes, case',BENCH,':\n'
+     print '\nTesting smilei on', HOSTNAME,'with', OMP, 'OMP tasks,',MPI, 'MPI processes, case',BENCH,':\n'
     #
     SMILEI_BENCH = SMILEI_BENCHS+BENCH
     VALID_ALL_OK = False
