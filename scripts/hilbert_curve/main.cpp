@@ -20,9 +20,9 @@ int main (int argc, char* argv[])
     std::cout.setf( std::ios::fixed, std:: ios::floatfield ); // floatfield set to fixed
 
 /******* USER DEFINED PARAMETERS*****/
-   unsigned int m0 = 1;
-   unsigned int m1 = 0;
-   unsigned int m2 = 1;
+   unsigned int m0 = 9;
+   unsigned int m1 = 7;
+   unsigned int m2 = 0;
 /************************************/
 
 
