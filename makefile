@@ -1,4 +1,3 @@
-
 #-----------------------------------------------------
 # Default variables
 
@@ -70,6 +69,9 @@ ifneq (,$(findstring turing,$(config)))
 	LDFLAGS  += -qnostaticlink -L(BG_PYTHONHOME)/lib64 -lpython2.7 -lutil
 endif
 
+#-----------------------------------------------------
+# Compiler-specific configuration
+
 ifneq (,$(findstring icpc,$(SMILEI_COMPILER)))
     CXXFLAGS += -xHost -no-vec
 endif
@@ -89,7 +91,7 @@ endif
 
 ifeq (,$(findstring noopenmp,$(config)))
     OPENMP_FLAG ?= -fopenmp 
-	LDFLAGS += -lm
+    LDFLAGS += -lm
     OPENMP_FLAG += -D_OMP
     LDFLAGS += $(OPENMP_FLAG)
     #LDFLAGS += -mt_mpi
@@ -100,9 +102,9 @@ endif
 #-----------------------------------------------------
 # Set verbosity prefix
 ifeq (,$(findstring verbose,$(config)))
-Q := @
+    Q := @
 else
-Q := 
+    Q := 
 endif
 
 
@@ -120,8 +122,12 @@ clean:
 distclean: clean uninstall_python
 	$(Q) rm -f $(EXEC)
 
-env:
-	@echo "$(MPIVERSION)"
+# print internal makefile variable (used to debug compilation problems)
+print-% :
+	$(info $* : $($*)) @true
+
+# print a set of important internal variables
+env: print-SMILEICXX print-MPIVERSION print-VERSION print-OPENMP_FLAG print-HDF5_ROOT_DIR print-SITEDIR print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS
 
 # Deprecated rules
 obsolete:
@@ -143,8 +149,8 @@ $(BUILD_DIR)/%.pyh: %.py
 $(BUILD_DIR)/%.d: %.cpp
 	@echo "Checking dependencies for $<"
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-# create and modify dependecy file .d to take into account the location subdir
-	$(Q) $(SMILEICXX) $(CXXFLAGS) -MM $< 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(BUILD_DIR)/$(shell  dirname $<)/\1.d $(BUILD_DIR)/$(shell  dirname $<)/\1.o:@" > $@  
+#	$(Q) $(SMILEICXX) $(CXXFLAGS) -MM $< 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(BUILD_DIR)/$(shell  dirname $<)/\1.d $(BUILD_DIR)/$(shell  dirname $<)/\1.o:@" > $@  
+	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MG -MM -MP -MT"$@ $(@:.d=.o)" $<
 
 $(BUILD_DIR)/%.o : %.cpp
 	@echo "Compiling $<"
@@ -156,12 +162,14 @@ $(EXEC): $(OBJS)
 	$(Q) cp $(BUILD_DIR)/$@ $@
 
 # Avoid to check dependencies and to create .pyh if not necessary
-FILTER_RULES=clean distclean help env obsolete debug scalasca doc sphinx tar install_python uninstall_python
-ifeq ($(filter $(FILTER_RULES),$(MAKECMDGOALS)),) 
-# Let's try to make the next lines clear: we include $(DEPS) and pygenerator
--include $(DEPS) pygenerator
-# and pygenerator will create all the $(PYHEADERS) (which are files)
-pygenerator : $(PYHEADERS)
+ifeq ($(filter-out $(wildcard print-*),$(MAKECMDGOALS)),) 
+    FILTER_RULES=clean distclean help env obsolete debug scalasca doc sphinx tar install_python uninstall_python
+    ifeq ($(filter $(FILTER_RULES),$(MAKECMDGOALS)),) 
+        # Let's try to make the next lines clear: we include $(DEPS) and pygenerator
+        -include $(DEPS) pygenerator
+        # and pygenerator will create all the $(PYHEADERS) (which are files)
+        pygenerator : $(PYHEADERS)
+    endif
 endif
 
 # these are not file-related rules
@@ -177,7 +185,7 @@ tar:
 	@echo "Creating archive $(EXEC)-$(VERSION).tgz"
 	$(Q) git archive -o $(EXEC)-$(VERSION).tgz --prefix $(EXEC)-$(VERSION)/ HEAD
 
-# Install the python module in the python path
+# Install the python module in the user python path
 install_python:
 	@echo "Installing $(SITEDIR)/smilei.pth"
 	$(Q) mkdir -p "$(SITEDIR)"
@@ -188,28 +196,34 @@ uninstall_python:
 	$(Q) rm -f "$(SITEDIR)/smilei.pth"
 
 help: 
-	@echo 'Usage: make config=OPTIONS'
-	@echo '	    OPTIONS is a string composed of one or more of:'
-	@echo '	        verbose    : to print compile command lines'
-	@echo '	        debug      : to compile in debug mode (code runs really slow)'
-	@echo '         scalasca   : to compile using scalasca'
-	@echo '         noopenmp   : to compile without openmp'
-	@echo ' examples:'
-	@echo '     make config=verbose'
-	@echo '     make config=debug'
-	@echo '     make config=noopenmp'
-	@echo '     make config="debug noopenmp"'
-	@echo 
-	@echo ' other usage:' 
-	@echo '      make doc              : builds the documentation'
-	@echo '      make tar              : creates an archive of the sources'
-	@echo '      make clean            : remove build'
-	@echo '      make install_python   : install Python Smilei module'
-	@echo '      make uninstall_python : remove Python Smilei module'
+	@echo 'Usage:'
+	@echo '  make config=OPTIONS'
+	@echo '    OPTIONS is a string composed of one or more of:'
+	@echo '    verbose    : to print compile command lines'
+	@echo '    debug      : to compile in debug mode (code runs really slow)'
+	@echo '    scalasca   : to compile using scalasca'
+	@echo '    noopenmp   : to compile without openmp'
+	@echo
+	@echo 'Examples:'
+	@echo '  make config=verbose'
+	@echo '  make config=debug'
+	@echo '  make config=noopenmp'
+	@echo '  make config="debug noopenmp"'
+	@echo
+	@echo 'Other usage:' 
+	@echo '  make doc              : builds the documentation'
+	@echo '  make tar              : creates an archive of the sources'
+	@echo '  make clean            : remove build'
+	@echo '  make install_python   : install Python Smilei module'
+	@echo '  make uninstall_python : remove Python Smilei module'
+	@echo '  make print-XXX        : print internal makefile variable XXX'
+	@echo '  make env              : print important internal makefile variables'
 	@echo ''
 	@echo 'Environment variables :'
-	@echo '     SMILEICXX     : mpi c++ compiler'
-	@echo '     HDF5_ROOT_DIR : HDF5 dir'
-	@echo '     BUILD_DIR     : directory used to store build files (default: "build")'
-	@echo '     OPENMP_FLAG   : flag to use openmp (default: "-fopenmp")'
+	@echo '  SMILEICXX     : mpi c++ compiler'
+	@echo '  HDF5_ROOT_DIR : HDF5 dir'
+	@echo '  BUILD_DIR     : directory used to store build files [$(BUILD_DIR)]'
+	@echo '  OPENMP_FLAG   : flag to use openmp [$(OPENMP_FLAG)]'
+	@echo 
+	@echo 'http://www.maisondelasimulation.fr/smilei'
 

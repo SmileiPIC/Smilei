@@ -6,6 +6,8 @@ Run
 Before you launch :program:`Smilei`, :doc:`write a namelist file<namelist>`
 containing all the information of your simulation (grid shape, particles, lasers, diagnostics, etc.).
 
+You can also start by picking up one simulation from the ``benchmarks`` directory.
+
 ----
 
 The ``smilei`` executable
@@ -51,9 +53,9 @@ it is recommended to create a new directory to store these results. For instance
 
 .. code-block:: bash
   
-  $ mkdir ~/my_simulation                 # New directory to store results
-  $ cp ~/my_namelist.py ~/my_simulation   # Copies the namelist there
-  $ cd ~/my_simulation                    # Goes there
+  $ mkdir ~/my_simulation                     # New directory to store results
+  $ cp ~/my_namelist.py ~/my_simulation       # Copies the namelist there
+  $ cd ~/my_simulation                        # Goes there
   $ mpiexec -np 4 ~/Smilei/smilei my_namelist # Run with 4 processors
 
 Note that the :py:data:`output_dir` parameter automatically changes the output directory.
@@ -82,4 +84,33 @@ We do not provide instructions to run on super-computers yet. Please refer to yo
 administrators.
 
 
+----
 
+Debug mode
+^^^^^^^^^^
+
+In case of problems, the code can be compiled with additional debugging flags (usual ``-g`` and ``-O0``) and internal 
+checks by compiling it with 
+
+.. code-block:: bash
+  
+    make config=debug
+
+In might worth noticing that if the code is completely rebuild in debug mode 
+(i.e. you did a ``make clean`` before), the code runs really slow. 
+If you want to check a particular routine inside a particular file for errors, using the 
+above command it is possible to mix the release mode and debug mode (just for the modified files).
+
+In debug mode, these C++ macros are activated:
+
+* ``DEBUG("some text" [<< other streamable])`` will generate (for each mpi process) a "text" along with the filename and line number.
+
+* ``HEREIAM("some text" [<< other streamable])`` is similar to ``DEBUG`` but more visible.
+
+
+----
+
+Reporting bugs
+^^^^^^^^^^^^^^
+
+To report bugs, please create an issues on the github page: https://github.com/SmileiPIC/Smilei/issues/new
