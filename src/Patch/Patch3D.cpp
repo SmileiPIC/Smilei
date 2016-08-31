@@ -72,7 +72,7 @@ void Patch3D::initStep2(Params& params)
     zcall = Pcoordinates[2];
     if (params.bc_em_type_y[0]=="periodic" && ycall < 0) ycall += (1<<params.mi[1]);
     neighbor_[1][0] =  generalhilbertindex( params.mi[0], params.mi[1], params.mi[2], xcall, ycall, zcall);
-    ycall = Pcoordinates[0]+1;
+    ycall = Pcoordinates[1]+1;
     if (params.bc_em_type_y[0]=="periodic" && ycall >= (1<<params.mi[1])) ycall -= (1<<params.mi[1]);
     neighbor_[1][1] =  generalhilbertindex( params.mi[0], params.mi[1], params.mi[2], xcall, ycall, zcall);
 
@@ -82,7 +82,7 @@ void Patch3D::initStep2(Params& params)
     zcall = Pcoordinates[2]-1;
     if (params.bc_em_type_z[0]=="periodic" && zcall < 0) zcall += (1<<params.mi[2]);
     neighbor_[2][0] =  generalhilbertindex( params.mi[0], params.mi[1], params.mi[2], xcall, ycall, zcall);
-    zcall = Pcoordinates[0]+1;
+    zcall = Pcoordinates[2]+1;
     if (params.bc_em_type_z[0]=="periodic" && zcall >= (1<<params.mi[2])) zcall -= (1<<params.mi[2]);
     neighbor_[2][1] =  generalhilbertindex( params.mi[0], params.mi[1], params.mi[2], xcall, ycall, zcall);
 
@@ -147,7 +147,7 @@ void Patch3D::initSumField( Field* field, int iDim )
     /********************************************************************************/
     // Send/Recv in a buffer data to sum
     /********************************************************************************/
-    idx.resize( patch_ndims_,0 );
+    memset(&(idx[0]), 0, sizeof(idx[0])*idx.size());
     idx[iDim] = 1;    
         
     MPI_Datatype ntype = ntypeSum_[iDim][isDual[0]][isDual[1]][isDual[2]];
