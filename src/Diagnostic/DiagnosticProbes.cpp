@@ -329,7 +329,10 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     hid_t dset_id = H5Dcreate(fileId_, "positions", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
     H5Pclose(plist_id);
     // Write
-    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &(posArray->data_2D[0][0]) );
+    if ( nPart_MPI>0 )
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &(posArray->data_2D[0][0]) );
+    else
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, NULL );
     H5Dclose(dset_id);
     H5Pclose( transfer );
     H5Sclose(filespace);
