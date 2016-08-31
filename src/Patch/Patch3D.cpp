@@ -278,9 +278,9 @@ void Patch3D::initExchange( Field* field )
             if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
 
                 istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( oversize[iDim] + 1 + isDual[iDim] );
-                ix = idx[iDim]*istart;
-                iy = idx[iDim]*istart;
-                iz = idx[iDim]*istart;
+                ix = idx[0]*istart;
+                iy = idx[1]*istart;
+                iz = idx[2]*istart;
                 int tag = buildtag( hindex, iDim, iNeighbor );
                 MPI_Isend( &(f3D->data_3D[ix][iy][iz]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, 
                            MPI_COMM_WORLD, &(f3D->MPIbuff.srequest[iDim][iNeighbor]) );
@@ -290,9 +290,9 @@ void Patch3D::initExchange( Field* field )
             if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
 
                 istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 - (oversize[iDim]-1) ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
-                ix = idx[iDim]*istart;
-                iy = idx[iDim]*istart;
-                iz = idx[iDim]*istart;
+                ix = idx[0]*istart;
+                iy = idx[1]*istart;
+                iz = idx[2]*istart;
                  int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor );
                 MPI_Irecv( &(f3D->data_3D[ix][iy][iz]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, 
                            MPI_COMM_WORLD, &(f3D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]));
@@ -361,9 +361,9 @@ void Patch3D::initExchange( Field* field, int iDim )
         if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
 
             istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( oversize[iDim] + 1 + isDual[iDim] );
-            ix = idx[iDim]*istart;
-            iy = idx[iDim]*istart;
-            iz = idx[iDim]*istart;
+            ix = idx[0]*istart;
+            iy = idx[1]*istart;
+            iz = idx[2]*istart;
             int tag = buildtag( hindex, iDim, iNeighbor );
             MPI_Isend( &(f3D->data_3D[ix][iy][iz]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, 
                        MPI_COMM_WORLD, &(f3D->MPIbuff.srequest[iDim][iNeighbor]) );
@@ -373,9 +373,9 @@ void Patch3D::initExchange( Field* field, int iDim )
         if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
 
             istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1- (oversize[iDim]-1) ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
-            ix = idx[iDim]*istart;
-            iy = idx[iDim]*istart;
-            iz = idx[iDim]*istart;
+            ix = idx[0]*istart;
+            iy = idx[1]*istart;
+            iz = idx[2]*istart;
             int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor );
             MPI_Irecv( &(f3D->data_3D[ix][iy][iz]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, 
                        MPI_COMM_WORLD, &(f3D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]));
