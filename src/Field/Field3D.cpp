@@ -52,10 +52,11 @@ Field3D::Field3D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal,
 // ---------------------------------------------------------------------------------------------------------------------
 Field3D::~Field3D()
 {
-    delete [] data_;
-    for (unsigned int i=0; i<dims_[0]; i++) delete [] data_3D[i];
-    delete [] data_3D;
-
+    if (data_!=NULL) {
+        delete [] data_;
+        for (unsigned int i=0; i<dims_[0]; i++) delete [] data_3D[i];
+        delete [] data_3D;
+    }
 }
 
 

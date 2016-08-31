@@ -92,6 +92,7 @@ ifeq (,$(findstring noopenmp,$(config)))
     #LDFLAGS += -mt_mpi
     CXXFLAGS += $(OPENMPFLAGS)
 endif
+#LDFLAGS += -mt_mpi
 
 
 ifneq (,$(findstring icpc,$(SMILEI_COMPILER)))
