@@ -14,7 +14,7 @@ public:
     //! Constructor for Patch
     Patch1D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
     //! Cloning Constructor for Patch
-    Patch1D(Patch1D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
+    Patch1D(Patch1D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles);
     
     void initStep2(Params& params) override;
     

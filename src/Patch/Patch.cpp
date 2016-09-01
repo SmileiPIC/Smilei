@@ -53,7 +53,7 @@ Patch::Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int 
 
 
 // Cloning patch constructor
-Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved) {
+Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles = true) {
     
     hindex = ipatch;
     nDim_fields_ = patch->nDim_fields_;
@@ -138,9 +138,9 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
 }
 
 
-void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi ) {
+void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool with_particles = true ) {
     // clone vector of Species (virtual)
-    vecSpecies = SpeciesFactory::cloneVector(patch->vecSpecies, params, this);
+    vecSpecies = SpeciesFactory::cloneVector(patch->vecSpecies, params, this, with_particles);
     
     // clone the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::clone(patch->EMfields, params, vecSpecies, this);

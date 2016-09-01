@@ -30,7 +30,7 @@ public:
     //! Constructor for Patch
     Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
     //! Cloning Constructor for Patch
-    Patch(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
+    Patch(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles);
     
     //! First initialization step for patches
     void initStep1(Params& params);
@@ -41,7 +41,7 @@ public:
     //! Last creation step
     void finishCreation( Params& params, SmileiMPI* smpi );
     //! Last cloning step
-    void finishCloning( Patch* patch, Params& params, SmileiMPI* smpi );
+    void finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool with_particles );
     
     //! Destructor for Patch
     virtual ~Patch();
