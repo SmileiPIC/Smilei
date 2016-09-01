@@ -285,20 +285,14 @@ void SyncVectorPatch::exchange( std::vector<Field*> fields, VectorPatch& vecPatc
 
 void SyncVectorPatch::exchange0( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
-    unsigned int nx_, ny_, nz_, h0, oversize[3], n_space[2], gsp;
+    unsigned int nx_, ny_(1), nz_(1), h0, oversize, n_space, gsp;
     double *pt1,*pt2;
     h0 = vecPatches(0)->hindex;
 
-    oversize[0] = vecPatches(0)->EMfields->oversize[0];
-    oversize[1] = vecPatches(0)->EMfields->oversize[1];
-    oversize[2] = vecPatches(0)->EMfields->oversize[2];
+    oversize = vecPatches(0)->EMfields->oversize[0];
 
-    n_space[0] = vecPatches(0)->EMfields->n_space[0];
-    n_space[1] = vecPatches(0)->EMfields->n_space[1];
-    n_space[2] = vecPatches(0)->EMfields->n_space[2];
+    n_space = vecPatches(0)->EMfields->n_space[0];
 
-    ny_ = 1;
-    nz_ = 1;
     if (fields[0]->dims_.size()>1) {
         ny_ = fields[0]->dims_[1];
         if (fields[0]->dims_.size()>2) 
@@ -307,19 +301,19 @@ void SyncVectorPatch::exchange0( std::vector<Field*> fields, VectorPatch& vecPat
 
     //gsp[0] = 2*oversize[0]+fields[0]->isDual_[0]; //Ghost size primal
     //for filter
-    gsp = ( oversize[0] + 1 + fields[0]->isDual_[0] ); //Ghost size primal
+    gsp = ( oversize + 1 + fields[0]->isDual_[0] ); //Ghost size primal
 
     #pragma omp for schedule(runtime) private(pt1,pt2)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
 
         if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[0][0]){
-            pt1 = &(*fields[vecPatches(ipatch)->neighbor_[0][0]-h0])((n_space[0])*ny_*nz_);
+            pt1 = &(*fields[vecPatches(ipatch)->neighbor_[0][0]-h0])(n_space*ny_*nz_);
             pt2 = &(*fields[ipatch])(0);
             //memcpy( pt2, pt1, ny_*sizeof(double)); 
             //memcpy( pt1+gsp[0]*ny_, pt2+gsp[0]*ny_, ny_*sizeof(double)); 
             //for filter
-            memcpy( pt2, pt1, oversize[0]*ny_*nz_*sizeof(double)); 
-            memcpy( pt1+gsp*ny_*nz_, pt2+gsp*ny_*nz_, oversize[0]*ny_*nz_*sizeof(double)); 
+            memcpy( pt2, pt1, oversize*ny_*nz_*sizeof(double)); 
+            memcpy( pt1+gsp*ny_*nz_, pt2+gsp*ny_*nz_, oversize*ny_*nz_*sizeof(double)); 
         } // End if ( MPI_me_ == MPI_neighbor_[0][0] ) 
 
 
@@ -338,37 +332,31 @@ void SyncVectorPatch::exchange0( std::vector<Field*> fields, VectorPatch& vecPat
 
 void SyncVectorPatch::exchange1( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
-    unsigned int nx_, ny_, nz_, h0, oversize[3], n_space[3], gsp;
+    unsigned int nx_, ny_, nz_(1), h0, oversize, n_space, gsp;
     double *pt1,*pt2;
     h0 = vecPatches(0)->hindex;
 
-    oversize[0] = vecPatches(0)->EMfields->oversize[0];
-    oversize[1] = vecPatches(0)->EMfields->oversize[1];
-    oversize[2] = vecPatches(0)->EMfields->oversize[2];
-
-    n_space[0] = vecPatches(0)->EMfields->n_space[0];
-    n_space[1] = vecPatches(0)->EMfields->n_space[1];
-    n_space[2] = vecPatches(0)->EMfields->n_space[2];
+    oversize = vecPatches(0)->EMfields->oversize[1];
+    n_space = vecPatches(0)->EMfields->n_space[1];
 
     nx_ = fields[0]->dims_[0];
     ny_ = fields[0]->dims_[1];
-    nz_ = 1;
     if (fields[0]->dims_.size()>2) 
         nz_ = fields[0]->dims_[2];
 
     //gsp = 2*oversize[1]+fields[0]->isDual_[1]; //Ghost size primal
     //for filter
-    gsp = ( oversize[1] + 1 + fields[0]->isDual_[1] ); //Ghost size primal
+    gsp = ( oversize + 1 + fields[0]->isDual_[1] ); //Ghost size primal
 
     #pragma omp for schedule(runtime) private(pt1,pt2)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
 
         if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[1][0]){
-            pt1 = &(*fields[vecPatches(ipatch)->neighbor_[1][0]-h0])(n_space[1]*nz_);
+            pt1 = &(*fields[vecPatches(ipatch)->neighbor_[1][0]-h0])(n_space*nz_);
             pt2 = &(*fields[ipatch])(0);
             for (unsigned int i = 0 ; i < nx_*ny_*nz_ ; i += ny_*nz_){
                 // for filter
-                for (unsigned int j = 0 ; j < oversize[1]*nz_ ; j++ ){
+                for (unsigned int j = 0 ; j < oversize*nz_ ; j++ ){
                     pt2[i+j] = pt1[i+j] ;
                     pt1[i+j+gsp] = pt2[i+j+gsp] ;
                 } // mempy to do
@@ -390,17 +378,12 @@ void SyncVectorPatch::exchange1( std::vector<Field*> fields, VectorPatch& vecPat
 
 void SyncVectorPatch::exchange2( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
-    unsigned int nx_, ny_, nz_, h0, oversize[3], n_space[3], gsp;
+    unsigned int nx_, ny_, nz_, h0, oversize, n_space, gsp;
     double *pt1,*pt2;
     h0 = vecPatches(0)->hindex;
 
-    oversize[0] = vecPatches(0)->EMfields->oversize[0];
-    oversize[1] = vecPatches(0)->EMfields->oversize[1];
-    oversize[2] = vecPatches(0)->EMfields->oversize[2];
-
-    n_space[0] = vecPatches(0)->EMfields->n_space[0];
-    n_space[1] = vecPatches(0)->EMfields->n_space[1];
-    n_space[2] = vecPatches(0)->EMfields->n_space[2];
+    oversize = vecPatches(0)->EMfields->oversize[2];
+    n_space = vecPatches(0)->EMfields->n_space[2];
 
     nx_ = fields[0]->dims_[0];
     ny_ = fields[0]->dims_[1];
@@ -408,17 +391,17 @@ void SyncVectorPatch::exchange2( std::vector<Field*> fields, VectorPatch& vecPat
 
     //gsp = 2*oversize[1]+fields[0]->isDual_[1]; //Ghost size primal
     //for filter
-    gsp = ( oversize[2] + 1 + fields[0]->isDual_[2] ); //Ghost size primal
+    gsp = ( oversize + 1 + fields[0]->isDual_[2] ); //Ghost size primal
 
     #pragma omp for schedule(runtime) private(pt1,pt2)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
 
         if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[2][0]){
-           pt1 = &(*fields[vecPatches(ipatch)->neighbor_[2][0]-h0])(n_space[2]);
+           pt1 = &(*fields[vecPatches(ipatch)->neighbor_[2][0]-h0])(n_space);
            pt2 = &(*fields[ipatch])(0);
            for (unsigned int i = 0 ; i < nx_*ny_*nz_ ; i += ny_*nz_){
                for (unsigned int j = 0 ; j < ny_*nz_ ; j += nz_){
-                   for (unsigned int k = 0 ; k < oversize[2] ; k++ ){
+                   for (unsigned int k = 0 ; k < oversize ; k++ ){
                        pt2[i+j+k] = pt1[i+j+k] ;
                        pt1[i+j+k+gsp] = pt2[i+j+k+gsp] ;
                    } 
