@@ -53,7 +53,7 @@ Patch::Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int 
 
 
 // Cloning patch constructor
-Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved) {
+Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles = true) {
     
     hindex = ipatch;
     nDim_fields_ = patch->nDim_fields_;
@@ -138,9 +138,9 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
 }
 
 
-void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi ) {
+void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool with_particles = true ) {
     // clone vector of Species (virtual)
-    vecSpecies = SpeciesFactory::cloneVector(patch->vecSpecies, params, this);
+    vecSpecies = SpeciesFactory::cloneVector(patch->vecSpecies, params, this, with_particles);
     
     // clone the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::clone(patch->EMfields, params, vecSpecies, this);
@@ -198,9 +198,14 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
 //        cout << "\tPatch Corner decomp : " << neighbor_[0][0] << "\t" << hindex << "\t" << neighbor_[0][1] << endl;
 //        cout << "\tPatch Corner decomp : " << corner_neighbor_[0][0] << "\t" << neighbor_[1][0]  << "\t" << corner_neighbor_[1][0] << endl;
 //        
+
+//        cout << "\n\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[2][1]  << "\t" << "MPI_PROC_NULL" << endl << endl;
+//
 //        cout << "\n\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[1][1]  << "\t" << "MPI_PROC_NULL" << endl;
 //        cout << "\tMPI Corner decomp : " << MPI_neighbor_[0][0] << "\t" << smpi->getRank() << "\t" << MPI_neighbor_[0][1] << endl;
-//        cout << "\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[1][0]  << "\t" << "MPI_PROC_NULL" << endl;
+//        cout << "\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[1][0]  << "\t" << "MPI_PROC_NULL" << endl << endl;
+//
+//        cout << "\n\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[2][0]  << "\t" << "MPI_PROC_NULL" << endl;
     
 } // END updateMPIenv
 

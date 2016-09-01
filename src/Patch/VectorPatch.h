@@ -163,7 +163,7 @@ public :
         std::vector<int> nParticles( nSpecies, 0 );
         for (unsigned int ipatch = 0 ; ipatch < this->size() ; ipatch++ ) {
             for (unsigned int ispec = 0 ; ispec < nSpecies ; ispec++ ) {
-                nParticles[ispec] += (*this)(0)->vecSpecies[ispec]->getNbrOfParticles();
+                nParticles[ispec] += (*this)(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
             }
         }
         for (unsigned int ispec = 0 ; ispec < nSpecies ; ispec++ ) {

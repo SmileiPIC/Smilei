@@ -28,12 +28,12 @@ Patch3D::Patch3D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned 
 // ---------------------------------------------------------------------------------------------------------------------
 // Patch3D cloning constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-Patch3D::Patch3D(Patch3D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
-  : Patch( patch, params, smpi, ipatch, n_moved)
+Patch3D::Patch3D(Patch3D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
+  : Patch( patch, params, smpi, ipatch, n_moved, with_particles)
 {
     initStep2(params);
     initStep3(params, smpi, n_moved);
-    finishCloning(patch, params, smpi);
+    finishCloning(patch, params, smpi, with_particles);
 } // End Patch3D::Patch3D
 
 
@@ -72,7 +72,7 @@ void Patch3D::initStep2(Params& params)
     zcall = Pcoordinates[2];
     if (params.bc_em_type_y[0]=="periodic" && ycall < 0) ycall += (1<<params.mi[1]);
     neighbor_[1][0] =  generalhilbertindex( params.mi[0], params.mi[1], params.mi[2], xcall, ycall, zcall);
-    ycall = Pcoordinates[0]+1;
+    ycall = Pcoordinates[1]+1;
     if (params.bc_em_type_y[0]=="periodic" && ycall >= (1<<params.mi[1])) ycall -= (1<<params.mi[1]);
     neighbor_[1][1] =  generalhilbertindex( params.mi[0], params.mi[1], params.mi[2], xcall, ycall, zcall);
 
@@ -82,7 +82,7 @@ void Patch3D::initStep2(Params& params)
     zcall = Pcoordinates[2]-1;
     if (params.bc_em_type_z[0]=="periodic" && zcall < 0) zcall += (1<<params.mi[2]);
     neighbor_[2][0] =  generalhilbertindex( params.mi[0], params.mi[1], params.mi[2], xcall, ycall, zcall);
-    zcall = Pcoordinates[0]+1;
+    zcall = Pcoordinates[2]+1;
     if (params.bc_em_type_z[0]=="periodic" && zcall >= (1<<params.mi[2])) zcall -= (1<<params.mi[2]);
     neighbor_[2][1] =  generalhilbertindex( params.mi[0], params.mi[1], params.mi[2], xcall, ycall, zcall);
 
@@ -147,7 +147,7 @@ void Patch3D::initSumField( Field* field, int iDim )
     /********************************************************************************/
     // Send/Recv in a buffer data to sum
     /********************************************************************************/
-    idx.resize( patch_ndims_,0 );
+    memset(&(idx[0]), 0, sizeof(idx[0])*idx.size());
     idx[iDim] = 1;    
         
     MPI_Datatype ntype = ntypeSum_[iDim][isDual[0]][isDual[1]][isDual[2]];
@@ -278,9 +278,9 @@ void Patch3D::initExchange( Field* field )
             if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
 
                 istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( oversize[iDim] + 1 + isDual[iDim] );
-                ix = idx[iDim]*istart;
-                iy = idx[iDim]*istart;
-                iz = idx[iDim]*istart;
+                ix = idx[0]*istart;
+                iy = idx[1]*istart;
+                iz = idx[2]*istart;
                 int tag = buildtag( hindex, iDim, iNeighbor );
                 MPI_Isend( &(f3D->data_3D[ix][iy][iz]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, 
                            MPI_COMM_WORLD, &(f3D->MPIbuff.srequest[iDim][iNeighbor]) );
@@ -290,9 +290,9 @@ void Patch3D::initExchange( Field* field )
             if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
 
                 istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 - (oversize[iDim]-1) ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
-                ix = idx[iDim]*istart;
-                iy = idx[iDim]*istart;
-                iz = idx[iDim]*istart;
+                ix = idx[0]*istart;
+                iy = idx[1]*istart;
+                iz = idx[2]*istart;
                  int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor );
                 MPI_Irecv( &(f3D->data_3D[ix][iy][iz]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, 
                            MPI_COMM_WORLD, &(f3D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]));
@@ -361,9 +361,9 @@ void Patch3D::initExchange( Field* field, int iDim )
         if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
 
             istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( oversize[iDim] + 1 + isDual[iDim] );
-            ix = idx[iDim]*istart;
-            iy = idx[iDim]*istart;
-            iz = idx[iDim]*istart;
+            ix = idx[0]*istart;
+            iy = idx[1]*istart;
+            iz = idx[2]*istart;
             int tag = buildtag( hindex, iDim, iNeighbor );
             MPI_Isend( &(f3D->data_3D[ix][iy][iz]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, 
                        MPI_COMM_WORLD, &(f3D->MPIbuff.srequest[iDim][iNeighbor]) );
@@ -373,9 +373,9 @@ void Patch3D::initExchange( Field* field, int iDim )
         if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
 
             istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1- (oversize[iDim]-1) ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
-            ix = idx[iDim]*istart;
-            iy = idx[iDim]*istart;
-            iz = idx[iDim]*istart;
+            ix = idx[0]*istart;
+            iy = idx[1]*istart;
+            iz = idx[2]*istart;
             int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor );
             MPI_Irecv( &(f3D->data_3D[ix][iy][iz]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, 
                        MPI_COMM_WORLD, &(f3D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]));

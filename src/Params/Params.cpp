@@ -153,8 +153,9 @@ namelist("")
     geometry = "";
     if( !PyTools::extract("geometry", geometry, "Main") )
         ERROR("Parameter Main.geometry is required");
-    if (geometry!="1d3v" && geometry!="2d3v" && geometry!="3d3v")
+    if (geometry!="1d3v" && geometry!="2d3v" && geometry!="3d3v") {
         ERROR("Main.geometry `" << geometry << "` invalid");
+    }
     setDimensions();
     
     // interpolation order

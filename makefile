@@ -95,6 +95,7 @@ ifeq (,$(findstring noopenmp,$(config)))
     #LDFLAGS += -mt_mpi
     CXXFLAGS += $(OPENMP_FLAG)
 endif
+#LDFLAGS += -mt_mpi
 
 
 #-----------------------------------------------------

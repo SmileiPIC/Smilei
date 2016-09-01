@@ -251,11 +251,12 @@ public:
         thisSpecies->initOperators(params, patch);
         
         return thisSpecies;
-    }
+    } // End Species* create()
+
     
     // Method to clone a species from an existing one
     // Note that this must be only called from cloneVector, because additional init is needed
-    static Species* clone(Species* species, Params &params, Patch* patch) {
+    static Species* clone(Species* species, Params &params, Patch* patch, bool with_particles = true) {
         // Create new species object
         Species * newSpecies = NULL;
         if (species->dynamics_type=="norm") {
@@ -303,14 +304,14 @@ public:
         newSpecies->particles->tracked             = species->particles->tracked;
         
         // \todo : NOT SURE HOW THIS BEHAVES WITH RESTART
-        if (!params.restart) {
+        if ( (!params.restart) && (with_particles) ) {
             newSpecies->createParticles(params.n_space, params, patch, 0 );
         }
         
         newSpecies->initOperators(params, patch);
         
         return newSpecies;
-    }
+    } // End Species* clone()
     
     
     static std::vector<Species*> createVector(Params& params, Patch* patch) {
@@ -352,13 +353,13 @@ public:
     }
     
     // Method to clone the whole vector of species
-    static std::vector<Species*> cloneVector(std::vector<Species*> vecSpecies, Params& params, Patch* patch)
+    static std::vector<Species*> cloneVector(std::vector<Species*> vecSpecies, Params& params, Patch* patch, bool with_particles = true)
     {
         std::vector<Species*> retSpecies;
         retSpecies.resize(0);
         
         for (unsigned int ispec = 0; ispec < vecSpecies.size(); ispec++) {
-            Species* newSpecies = SpeciesFactory::clone(vecSpecies[ispec], params, patch);
+            Species* newSpecies = SpeciesFactory::clone(vecSpecies[ispec], params, patch, with_particles);
             retSpecies.push_back( newSpecies );
         }
         

@@ -632,7 +632,7 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
         // density profile is initializes as if t = 0 !
         // Species will be cleared when, nbr of particles will be known
         // Creation of a new patch, ready to receive its content from MPI neighbours.
-        Patch* newPatch = PatchesFactory::clone(existing_patch, params, smpi, recv_patch_id_[ipatch], n_moved );
+        Patch* newPatch = PatchesFactory::clone(existing_patch, params, smpi, recv_patch_id_[ipatch], n_moved, false );
         //Store pointers to newly created patch in recv_patches_.
         recv_patches_.push_back( newPatch );
     }
