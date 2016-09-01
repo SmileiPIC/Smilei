@@ -215,9 +215,9 @@ public:
     
     double getNewParticlesNRJ() const {return mass*nrj_new_particles;}
     void reinitDiags() { 
-    nrj_bc_lost = 0;
-    nrj_mw_lost = 0;
-    nrj_new_particles = 0;
+        nrj_bc_lost = 0;
+        nrj_mw_lost = 0;
+        nrj_new_particles = 0;
     }
     inline void storeNRJlost( double nrj ) { nrj_mw_lost = nrj; };
     
@@ -249,6 +249,12 @@ public:
     
     //! Particles pusher (change momentum & change position)
     Pusher* Push;
+
+    //! Moving window boundary conditions managment
+    void disableEast();
+    //! Moving window boundary conditions managment
+    void setWestBoundaryCondition();
+
 
 private:    
     //! Number of steps for Maxwell-Juettner cumulative function integration

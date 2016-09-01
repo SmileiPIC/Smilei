@@ -2,6 +2,7 @@
 #define TIMER_H
 
 #include <string>
+#include <vector>
 
 class SmileiMPI;
 
@@ -19,7 +20,7 @@ public:
     //! Init t0 of the timer, synchronized through MPI
     void init(SmileiMPI *smpi, std::string name);
     //! Accumulate time couting from last init/restart
-    void update();
+    void update(bool store = false);
     //! Start a new cumulative period
     void restart();
     //! Start a new cumulative period
@@ -30,16 +31,24 @@ public:
     void print(double tot);
     //! name of the timer
     inline std::string name() {return name_;}
+
+    //! Timer name 
+    std::string name_;
+    std::vector<double> register_timers;
+
+    static void consolidate_timers( std::vector<Timer> timers );
+
+
 private:
     //! Accumulated time in current timer
     double time_acc_;
     //! Last timer start
     double last_start_;
-    //! Timer name 
-    std::string name_;
     //! MPI process timer synchronized through MPI
     SmileiMPI* smpi_;
+
 };
+
 
 #endif
 

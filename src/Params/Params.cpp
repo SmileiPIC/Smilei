@@ -10,6 +10,8 @@
 #include "pyprofiles.pyh"
 #include "pycontrol.pyh"
 
+#include "H5.h"
+
 #include <algorithm>
 
 using namespace std;
@@ -21,14 +23,26 @@ Params::Params(SmileiMPI* smpi, std::vector<std::string> namelistsFiles) :
 namelist("")
 {
     
+    if((((H5_VERS_MAJOR==1) && (H5_VERS_MINOR==8) && (H5_VERS_RELEASE>16)) || \
+        ((H5_VERS_MAJOR==1) && (H5_VERS_MINOR>8)) || \
+        (H5_VERS_MAJOR>1))) {
+        WARNING("Smilei suggests using hdf5 version 1.8.16 you're using "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
+        WARNING("Newer version are not tested and may cause the code to behave incorrectly");
+        WARNING("See http://hdf-forum.184993.n3.nabble.com/Segmentation-fault-using-H5Dset-extent-in-parallel-td4029082.html");
+    }
+    
+
     if (namelistsFiles.size()==0) ERROR("No namelists given!");
 
-    string commandLineStr("");
-    for (unsigned int i=0;i<namelistsFiles.size();i++) commandLineStr+="\""+namelistsFiles[i]+"\" ";
-    MESSAGE(1,commandLineStr);
+    //string commandLineStr("");
+    //for (unsigned int i=0;i<namelistsFiles.size();i++) commandLineStr+="\""+namelistsFiles[i]+"\" ";
+    //MESSAGE(1,commandLineStr);
     
     //init Python
     PyTools::openPython();
+    
+    // Print python version
+    MESSAGE(1, "Python version "<<PyTools::python_version());
     
     // First, we tell python to filter the ctrl-C kill command (or it would prevent to kill the code execution).
     // This is done separately from other scripts because we don't want it in the concatenated python namelist.
@@ -79,20 +93,19 @@ namelist("")
     if( PyTools::nComponents("Main") == 0 )
         ERROR("Block Main() not defined");
     
-    // output dir: we force this to be the same on all mpi nodes
-    string output_dir("");
-    PyTools::extract("output_dir", output_dir, "Main");
-    
     // CHECK namelist on python side
     PyTools::runPyFunction("_smilei_check");
     smpi->barrier();
-
+    
+    // output dir: we force this to be the same on all mpi nodes
+    string output_dir("");
+    PyTools::extract("output_dir", output_dir, "Main");
+    PyTools::checkPyError();
     if (!output_dir.empty()) {
         if (chdir(output_dir.c_str()) != 0) {
             WARNING("Could not chdir to output_dir = " << output_dir);
         }
     }
-
     
     // Now the string "namelist" contains all the python files concatenated
     // It is written as a file: smilei.py
@@ -105,13 +118,11 @@ namelist("")
         }
     }
     
-    
     // random seed
     unsigned int random_seed=0;
     if (!PyTools::extract("random_seed", random_seed, "Main")) {
         random_seed = time(NULL);
     }
-    
     srand(random_seed);
     
     // --------------
@@ -126,7 +137,6 @@ namelist("")
         MESSAGE("Code running from restart in directory "<<restart_dir);
     }
     
-    
     // ---------------------
     // Normalisation & units
     // ---------------------
@@ -140,19 +150,21 @@ namelist("")
     // -------------------
     
     // geometry of the simulation
-    PyTools::extract("geometry", geometry, "Main");
+    geometry = "";
+    if( !PyTools::extract("geometry", geometry, "Main") )
+        ERROR("Parameter Main.geometry is required");
     if (geometry!="1d3v" && geometry!="2d3v" && geometry!="3d3v") {
-        ERROR("Geometry " << geometry << " does not exist");
+        ERROR("Main.geometry `" << geometry << "` invalid");
     }
     setDimensions();
     
     // interpolation order
     PyTools::extract("interpolation_order", interpolation_order, "Main");
     if (interpolation_order!=2 && interpolation_order!=4) {
-        ERROR("Interpolation/projection order " << interpolation_order << " not defined");
+        ERROR("Main.interpolation_order " << interpolation_order << " not defined");
     }
     if (geometry=="2d3v" && interpolation_order==4) {
-        ERROR("Interpolation/projection order " << interpolation_order << " not yet defined in 2D");
+        ERROR("Main.interpolation_order = 4 " << interpolation_order << " not yet available in 2D");
     }
     
     //!\todo (MG to JD) Please check if this parameter should still appear here
@@ -251,6 +263,10 @@ namelist("")
         if (tot_number_of_patches < smpi->getSize())
             ERROR("The total number of patches must be greater or equal to the number of MPI processes"); 
     }
+#ifdef _OPENMP
+    if ( tot_number_of_patches < smpi->getSize()*omp_get_max_threads() )
+        WARNING( "Resources allocated underloaded regarding the total number of patches" );
+#endif
     
     
     balancing_every = 150;
@@ -277,6 +293,10 @@ namelist("")
     // -------------------------------------------------------
     compute();
     
+    // Print 
+    smpi->barrier();
+    if ( smpi->isMaster() ) print();
+    smpi->barrier();
 }
 
 Params::~Params() {
@@ -323,8 +343,6 @@ void Params::compute()
             n_space[i]=1;
             cell_length[i]=0.0;
         }
-        // compute number of cells per cluster
-        n_cell_per_cluster = clrw * n_space[1] * n_space[2];
         
     } else {
         ERROR("Problem with the definition of nDim_field");
@@ -345,6 +363,9 @@ void Params::compute()
         if(n_space_global[i]%number_of_patches[i] !=0) ERROR("ERROR in dimension " << i <<". Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i]);
         if ( n_space[i] <= 2*oversize[i] ) ERROR ( "ERROR in dimension " << i <<". Patches length = "<<n_space[i] << " cells must be at least " << 2*oversize[i] +1 << " cells long. Increase number of cells or reduce number of patches in this direction. " );
     }
+    
+    // compute number of cells per patch
+    n_cell_per_patch = n_space[0] * n_space[1] * n_space[2];
     
     // Verify that clrw divides n_space[0]
     if( n_space[0]%clrw != 0 )

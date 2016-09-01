@@ -3,9 +3,6 @@ build/*
 \#*\#
 *~
 .depend
-run*
-Run*
-RUN*
 Validation*
 src/smilei
 src/smilei.*
@@ -17,10 +14,7 @@ src/smilei.*
 *.synctex.gz
 *.toc
 *.orig
-*.pyh
 doc/Sphinx/_build/*
-*.o
-*.d
 *.user
 doc/html
 

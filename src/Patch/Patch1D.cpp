@@ -27,12 +27,12 @@ Patch1D::Patch1D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned 
 // ---------------------------------------------------------------------------------------------------------------------
 // Patch1D cloning constructor
 // ---------------------------------------------------------------------------------------------------------------------
-Patch1D::Patch1D(Patch1D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
-  : Patch( patch, params, smpi, ipatch, n_moved)
+Patch1D::Patch1D(Patch1D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
+    : Patch( patch, params, smpi, ipatch, n_moved, with_particles )
 {
     initStep2(params);
     initStep3(params, smpi, n_moved);
-    finishCloning(patch, params, smpi);
+    finishCloning(patch, params, smpi, with_particles);
 } // End Patch1D::Patch1D
 
 

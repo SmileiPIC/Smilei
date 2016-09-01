@@ -1,11 +1,10 @@
-"""@package pycontrol
-    here we check if the namelist is clean and without errors
+
+"""
+    END OF THE USER NAMELIST
+-----------------------------------------------------------------------
 """
 
-import gc 
 gc.collect()
-
-import os
 
 def _smilei_check():
     """Do checks over the script"""
@@ -15,7 +14,7 @@ def _smilei_check():
             "SmileiSingleton","Main","DumpRestart","LoadBalancing","MovingWindow"]:
         CheckClass = globals()[CheckClassName]
         try:
-            if not CheckClass._verify: raise
+            if not CheckClass._verify: raise Exception("")
         except:
             raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
     # Verify the output_dir
@@ -23,7 +22,7 @@ def _smilei_check():
         if not os.path.exists(Main.output_dir):
             try:
                 os.makedirs(Main.output_dir)
-            except OSError as exception:
+            except:
                 raise Exception("ERROR in the namelist: output_dir "+Main.output_dir+" does not exists and cannot be created")
         elif not os.path.isdir(Main.output_dir):
                 raise Exception("ERROR in the namelist: output_dir "+Main.output_dir+" exists and is not a directory")
@@ -61,33 +60,23 @@ def _smilei_check():
         l.space_envelope  = [ toSpaceProfile(p) for p in l.space_envelope ]
         l.phase           = [ toSpaceProfile(p) for p in l.phase          ]
 
-
 # this function will be called after initialising the simulation, just before entering the time loop
 # if it returns false, the code will call a Py_Finalize();
 def _keep_python_running():
-    def isCustomProfile(prof):
+    ps = [[las.time_envelope, las.chirp_profile] for las in Laser]
+    ps += [[ant.time_profile] for ant in Antenna]
+    if len(MovingWindow)>0 or len(LoadBalancing)>0:
+        ps += [[s.nb_density, s.charge_density, s.n_part_per_cell, s.charge] + s.mean_velocity + s.temperature for s in Species]
+    profiles = []
+    for p in ps: profiles += p
+    for prof in profiles:
         if callable(prof) and not hasattr(prof,"profileName"):
             return True
-    for las in Laser:
-        if isCustomProfile(las.time_envelope): return True
-        if isCustomProfile(las.chirp_profile): return True
-    for ant in Antenna:
-        if isCustomProfile(ant.time_profile ): return True
-    if len(MovingWindow)>0 or len(LoadBalancing)>0:
-        for s in Species:
-            if isCustomProfile(s.nb_density     ): return True
-            if isCustomProfile(s.charge_density ): return True
-            if isCustomProfile(s.n_part_per_cell): return True
-            if isCustomProfile(s.charge         ): return True
-            for p in s.mean_velocity:
-                if isCustomProfile(p): return True
-            for p in s.temperature:
-                if isCustomProfile(p): return True
     return False
 
 # Prevent creating new components (by mistake)
 def _noNewComponents(cls, *args, **kwargs):
-    print "Please do not create a new "+cls.__name__
+    print("Please do not create a new "+cls.__name__)
     return None
 SmileiComponent.__new__ = staticmethod(_noNewComponents)
 

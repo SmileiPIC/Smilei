@@ -60,19 +60,22 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     // Don't move during this process
     int nPatches( vecPatches.size() );
     int nSpecies  ( vecPatches(0)->vecSpecies.size() );
-    int nmessage = 14+2*nSpecies;
+    //int nmessage = 14+2*nSpecies;
+    int nmax_laser = 4;
+    int nmessage = 2*nSpecies+(2+params.nDim_particle)*vecPatches(0)->probes.size()+
+        9+vecPatches(0)->EMfields->antennas.size()+4*nmax_laser;
     vector<int> nbrOfPartsSend(nSpecies,0);
     vector<int> nbrOfPartsRecv(nSpecies,0);
-
-    // Delete western patch
+    
     double energy_field_lost(0.);
     vector<double> energy_part_lost( vecPatches(0)->vecSpecies.size(), 0. );
 
-
-    vecPatches.closeAllDiags(smpi);
     
-    // Shift the patches, new patches will be created directly with their good patchid
+    // Shift the patches, new patches will be created directly with their good patchid and BC
     for (int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
+        if ( vecPatches(ipatch)->isEastern() )
+            for (int ispec=0 ; ispec<nSpecies ; ispec++)
+                vecPatches(ipatch)->vecSpecies[ispec]->disableEast();
         vecPatches(ipatch)->neighbor_[0][1] = vecPatches(ipatch)->hindex;
         vecPatches(ipatch)->hindex = vecPatches(ipatch)->neighbor_[0][0];
     }
@@ -80,7 +83,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     for (int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
 
         if ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][1] ) {
-            int patchid = vecPatches(ipatch)->neighbor_[0][1];
+            int patchid = vecPatches(ipatch)->neighbor_[0][1]; //Because we just set neighbor_[0][1]= hindex in previous loop.
             Patch* newPatch = PatchesFactory::clone(vecPatches(0),params, smpi, patchid, n_moved );
             vecPatches.patches_.push_back( newPatch );
         }
@@ -89,6 +92,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     for ( int ipatch = nPatches-1 ; ipatch >= 0 ; ipatch--) {
 
         // Patch à supprimer
+        //if I'm western  AND I'm not a newly created patch (because we start at nPatches-1), delete me !
         if ( vecPatches(ipatch)->isWestern() ) {
 
             // Compute energy lost 
@@ -124,22 +128,26 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         jpatch--;
     } while(jpatch>=0);
 
-            // Patch à envoyer
-            for (int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
-                //if my MPI left neighbor is not me AND I'm not a newly created patch, send me !
-                if ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][0] && (int)vecPatches(ipatch)->hindex == vecPatches(ipatch)->neighbor_[0][0] ) {
-                    smpi->isend( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighbor_[0][0], vecPatches(ipatch)->hindex*nmessage, params );
-                    //cout << vecPatches(ipatch)->MPI_me_ << " send : " << vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " & " << vecPatches(ipatch)->vecSpecies[1]->getNbrOfParticles() << endl;
-                }
-            }
-            // Patch à recevoir
-            for (int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
-                //if my MPI right neighbor is not me AND my MPI right neighbor exists AND I am a newly created patch, I receive !
-                if ( ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][1] ) && ( vecPatches(ipatch)->MPI_neighbor_[0][1] != MPI_PROC_NULL )  && (vecPatches(ipatch)->neighbor_[0][0] != (int)vecPatches(ipatch)->hindex) ){
-                    smpi->recv( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighbor_[0][1], vecPatches(ipatch)->hindex*nmessage, params );
-                    //cout << vecPatches(ipatch)->MPI_me_ << " recv : " << vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " & " << vecPatches(ipatch)->vecSpecies[1]->getNbrOfParticles() << endl;
-                }
-            }
+    //Cut off laser before exchanging any patches to avoid deadlock
+    for (int ipatch=0 ; ipatch<nPatches ; ipatch++)
+        vecPatches(ipatch)->EMfields->laserDisabled();
+
+    // Patch à envoyer
+    for (int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
+        //if my MPI left neighbor is not me AND I'm not a newly created patch, send me !
+        if ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][0] && (int)vecPatches(ipatch)->hindex == vecPatches(ipatch)->neighbor_[0][0] ) {
+            //cout << vecPatches(ipatch)->MPI_me_ << " send : " << vecPatches(ipatch)->hindex << " to " << vecPatches(ipatch)->MPI_neighbor_[0][0]<<" with tag " << vecPatches(ipatch)->hindex*nmessage << endl;
+            smpi->isend( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighbor_[0][0], vecPatches(ipatch)->hindex*nmessage, params );
+        }
+    }
+    // Patch à recevoir
+    for (int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
+        //if my MPI right neighbor is not me AND my MPI right neighbor exists AND I am a newly created patch, I receive !
+        if ( ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][1] ) && ( vecPatches(ipatch)->MPI_neighbor_[0][1] != MPI_PROC_NULL )  && (vecPatches(ipatch)->neighbor_[0][0] != (int)vecPatches(ipatch)->hindex) ){
+            //cout << vecPatches(ipatch)->MPI_me_ << " recv : " << vecPatches(ipatch)->hindex << " from " << vecPatches(ipatch)->MPI_neighbor_[0][1] <<" with tag " << vecPatches(ipatch)->hindex*nmessage << endl;
+            smpi->recv( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighbor_[0][1], vecPatches(ipatch)->hindex*nmessage, params );
+        }
+    }
 
     //Wait for all send to be completed by the receivers too.
     //MPI_Barrier(MPI_COMM_WORLD);
@@ -187,23 +195,19 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         vecPatches(ipatch)->corner_neighbor_[0][1] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
         
     }
-
-    for (int ipatch=0 ; ipatch<nPatches ; ipatch++ ) {
+    
+    for (int ipatch=0 ; ipatch<nPatches ; ipatch++){
         vecPatches(ipatch)->updateMPIenv(smpi);
+        if ( vecPatches(ipatch)->isWestern() )
+            for (int ispec=0 ; ispec<nSpecies ; ispec++)
+                vecPatches(ipatch)->vecSpecies[ispec]->setWestBoundaryCondition(); 
     }
-
-    for (int ipatch=0 ; ipatch<nPatches ; ipatch++ )
-        vecPatches(ipatch)->EMfields->laserDisabled();
-
-
-    // 
-    vecPatches.openAllDiags(params,smpi);
     
     vecPatches.set_refHindex() ;
     vecPatches.update_field_list() ;
-
+    
     return;
-
+    
 }
 
 bool SimWindow::isMoving(double time_dual)

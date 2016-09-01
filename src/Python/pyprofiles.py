@@ -193,7 +193,7 @@ def polynomial(**kwargs):
     x0 = 0.
     y0 = 0.
     coeffs = dict()
-    for k, a in kwargs.iteritems():
+    for k, a in kwargs.items():
         if   k=="x0":
             x0 = a
         elif k=="y0":
@@ -210,7 +210,7 @@ def polynomial(**kwargs):
             xx0 = x-x0
             xx = 1.
             currentOrder = 0
-            for order, c in sorted(coeffs.iteritems()):
+            for order, c in sorted(coeffs.items()):
                 while currentOrder<order:
                     currentOrder += 1
                     xx *= xx0
@@ -223,7 +223,7 @@ def polynomial(**kwargs):
             yy0 = y-y0
             xx = [1.]
             currentOrder = 0
-            for order, c in sorted(coeffs.iteritems()):
+            for order, c in sorted(coeffs.items()):
                 while currentOrder<order:
                     currentOrder += 1
                     last = xx[-1]*yy0
@@ -236,7 +236,7 @@ def polynomial(**kwargs):
     f.y0 = y0
     f.orders = []
     f.coeffs = []
-    for order, c in sorted(coeffs.iteritems()):
+    for order, c in sorted(coeffs.items()):
         f.orders.append( order )
         f.coeffs.append( c     )
     return f
@@ -339,7 +339,7 @@ def tcosine(base=0., amplitude=1., start=0., duration=None, phi=0., freq=1.):
 def tpolynomial(**kwargs):
     t0 = 0.
     coeffs = dict()
-    for k, a in kwargs.iteritems():
+    for k, a in kwargs.items():
         if   k=="t0":
             t0 = a
         elif k[:5]=="order":
@@ -351,7 +351,7 @@ def tpolynomial(**kwargs):
         tt0 = t-t0
         tt = 1.
         currentOrder = 0
-        for order, c in sorted(coeffs.iteritems()):
+        for order, c in sorted(coeffs.items()):
             while currentOrder<order:
                 currentOrder += 1
                 tt *= tt0
@@ -361,7 +361,7 @@ def tpolynomial(**kwargs):
     f.t0 = t0
     f.orders = []
     f.coeffs = []
-    for order, c in sorted(coeffs.iteritems()):
+    for order, c in sorted(coeffs.items()):
         f.orders.append( order )
         f.coeffs.append( c     )
     return f
@@ -449,6 +449,7 @@ def LaserGaussian2D( boxSide="west", a0=1., omega=1., focus=None, waist=3., inci
     )
 
 
-
-
-
+"""
+-----------------------------------------------------------------------
+    BEGINNING OF THE USER NAMELIST
+"""

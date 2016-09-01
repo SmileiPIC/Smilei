@@ -24,8 +24,7 @@ class DiagnosticScalar : public Diagnostic {
 public :
     //! Default constructor
     DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch );
-    //! Cloning constructor
-    DiagnosticScalar( DiagnosticScalar * scalar );
+
     //! Default destructor
     ~DiagnosticScalar() override;
     
@@ -37,7 +36,7 @@ public :
     
     void run( Patch* patch, int timestep ) override;
     
-    bool write(int timestep) override;
+    void write(int timestep) override;
     
     //! get a particular scalar
     double getScalar(std::string name);
@@ -66,9 +65,15 @@ private :
     
     //! increment a particular scalar
     void incrementScalar(std::string name, double value);
-    
+
+    //! increment a particular scalar
+    void incrementScalar(std::string name, double value, int valIndex);
+
     //! append to outlist
     void append(std::string, double);
+
+    //! append to outlist
+    void append(std::string, double, int);
     
     //! prepend to outlist
     void prepend(std::string, double);

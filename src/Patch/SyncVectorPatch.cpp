@@ -234,8 +234,6 @@ void SyncVectorPatch::exchange( std::vector<Field*> fields, VectorPatch& vecPatc
     //gsp[1] = 2*oversize[1]+fields[0]->isDual_[1]; //Ghost size primal
     //for filter
     gsp[0] = ( oversize[0] + 1 + fields[0]->isDual_[0] ); //Ghost size primal
-    gsp[1] = ( oversize[1] + 1 + fields[0]->isDual_[1] ); //Ghost size primal
-    gsp[2] = ( oversize[2] + 1 + fields[0]->isDual_[2] ); //Ghost size primal
 
     #pragma omp for schedule(runtime) 
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
@@ -252,6 +250,7 @@ void SyncVectorPatch::exchange( std::vector<Field*> fields, VectorPatch& vecPatc
         } // End if ( MPI_me_ == MPI_neighbor_[0][0] ) 
 
         if (fields[0]->dims_.size()>1) {
+            gsp[1] = ( oversize[1] + 1 + fields[0]->isDual_[1] ); //Ghost size primal
             if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[1][0]){
                 pt1 = &(*fields[vecPatches(ipatch)->neighbor_[1][0]-h0])(n_space[1]*nz_);
                 pt2 = &(*fields[ipatch])(0);

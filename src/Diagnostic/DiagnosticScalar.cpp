@@ -41,31 +41,13 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patc
     PyTools::extract("print_every", print_every, "Main");
     if (!print_every) print_every = 1;
    
-    type_ = "Scalar";
     
 } // END DiagnosticScalar::DiagnosticScalar
 
 
-
-// Cloning constructor
-DiagnosticScalar::DiagnosticScalar( DiagnosticScalar * scalar )
-{
-    out_width.resize(0);
-    if( scalar->timeSelection ) {
-        timeSelection = new TimeSelection(scalar->timeSelection);
-        precision     = scalar->precision;
-        res_time      = scalar->res_time;
-        dt            = scalar->dt;
-        cell_volume   = scalar->cell_volume;
-    }
-    print_every = scalar->print_every;
-    type_ = "Scalar";
-};
-
-
-
 DiagnosticScalar::~DiagnosticScalar()
 {
+    delete timeSelection;
 } // END DiagnosticScalar::#DiagnosticScalar
 
 
@@ -118,11 +100,11 @@ void DiagnosticScalar::run( Patch* patch, int timestep )
 } // END run
 
 
-bool DiagnosticScalar::write(int itime)
+void DiagnosticScalar::write(int itime)
 {
     unsigned int k, s=out_key.size();
     
-    if ( ! timeSelection->theTimeIsNow(itime) ) return true;
+    if ( ! timeSelection->theTimeIsNow(itime) ) return;
     
     fout << std::scientific << setprecision(precision);
     // At the beginning of the file, we write some headers
@@ -153,8 +135,6 @@ bool DiagnosticScalar::write(int itime)
         }
     }
     fout << endl;
-    
-    return true;
 } // END write
 
 
@@ -200,8 +180,6 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         // particle energy added due to moving window
         double ener_added_mvw=0.0;
         ener_added_mvw = vecSpecies[ispec]->getNewParticlesNRJ();
-        
-        
         
         if (nPart!=0) charge_avg /= nPart;
         string nameSpec=vecSpecies[ispec]->species_type;
@@ -263,7 +241,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
                     Utot_crtField+=pow((**field)(ii),2);
                 }
             }
-        }        
+        }
         // Utot = Dx^N/2 * Field^2
         Utot_crtField *= 0.5*cell_volume;
         
@@ -330,11 +308,8 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         unsigned int i=0;
         for (vector<Field*>::iterator field=fields.begin(); field!=fields.end() && i<minis.size(); field++, i++) {
             
-            append((*field)->name+"Min",minis[i].val);
-            append((*field)->name+"MinCell",minis[i].index);
-            
-            append((*field)->name+"Max",maxis[i].val);
-            append((*field)->name+"MaxCell",maxis[i].index);
+            append((*field)->name+"Min", minis[i].val, minis[i].index);
+            append((*field)->name+"Max", maxis[i].val, maxis[i].index );
             
         }
     }
@@ -439,9 +414,30 @@ void DiagnosticScalar::setScalar(string my_var, double value){
 
 void DiagnosticScalar::incrementScalar(string my_var, double value){
     for (unsigned int i=0; i< out_key.size(); i++) {
-        if (out_key[i]==my_var) {
-          out_value[i] += value;
-          return;
+        if ( (out_key[i]==my_var) && ( (my_var.find("Min")== std::string::npos)&&(my_var.find("Max")== std::string::npos)) ) {
+            out_value[i] += value;
+            return;
+        }
+    }
+    DEBUG("key not found " << my_var);
+}
+
+
+void DiagnosticScalar::incrementScalar(string my_var, double value, int valIndex){
+    for (unsigned int i=0; i< out_key.size(); i++) {
+        if  ( (out_key[i]==my_var) && ( my_var.find("Min")!= std::string::npos ) && (my_var.find("Cell")== std::string::npos) ) {
+            if ( value < out_value[i] ) {
+                out_value[i] = value;
+                out_value[i+1] = valIndex;
+            }
+            return;
+        }
+        else if  ( (out_key[i]==my_var) && ( my_var.find("Max")!= std::string::npos ) && (my_var.find("Cell")== std::string::npos) ) {
+            if ( value > out_value[i] ) {
+                out_value[i] = value;
+                out_value[i+1] = valIndex;
+            }
+            return;
         }
     }
     DEBUG("key not found " << my_var);
@@ -449,23 +445,45 @@ void DiagnosticScalar::incrementScalar(string my_var, double value){
 
 
 void DiagnosticScalar::append(std::string key, double value) {
-    if ( !defined(key) ) {
-        out_key.push_back(key  );
-        out_value.push_back(value);
+    //#pragma omp critical
+    {
+        if ( !defined(key) ) {
+            out_key.push_back(key  );
+            out_value.push_back(value);
+        }
+        else
+            incrementScalar(key, value);
     }
-    else
-        incrementScalar(key, value);
+
+}  // END append
+
+
+void DiagnosticScalar::append(std::string key, double value, int valIndex) {
+    //#pragma omp critical
+    {
+        if ( !defined(key) ) {
+            out_key.push_back(key  );
+            out_value.push_back(value);
+            out_key.push_back(key+"Cell");
+            out_value.push_back(valIndex);
+        }
+        else
+            incrementScalar(key, value, valIndex);
+    }
 
 }  // END append
 
 
 void DiagnosticScalar::prepend(std::string key, double value) {
-    if ( !defined(key) ) {
-        out_key  .insert(out_key  .begin(), key  );
-        out_value.insert(out_value.begin(), value);
+    //#pragma omp critical
+    {
+        if ( !defined(key) ) {
+            out_key  .insert(out_key  .begin(), key  );
+            out_value.insert(out_value.begin(), value);
+        }
+        else
+            incrementScalar(key, value);
     }
-    else
-        incrementScalar(key, value);
 
 } // END prepend
 

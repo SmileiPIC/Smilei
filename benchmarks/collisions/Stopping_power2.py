@@ -20,7 +20,7 @@ Main(
     time_fields_frozen = 100000000000.,
 
     cell_length = [2000.*L0],
-    sim_length = [40000.*L0],
+    sim_length = [48000.*L0],
 
     bc_em_type_x = ["periodic"],
 
@@ -55,7 +55,7 @@ Species(
 	n_part_per_cell= 10000,
 	mass = 1.0,
 	charge = -1.0,
-	charge_density = trapezoidal(0.00001, xplateau=20000.*L0),
+	charge_density = trapezoidal(0.00001, xplateau=16000.*L0),
 	mean_velocity = [0.55, 0., 0.],
 	temperature = [0.0000001],
 	time_frozen = 100000000.0,
@@ -70,7 +70,7 @@ Species(
 	n_part_per_cell= 10000,
 	mass = 1.0,
 	charge = -1.0,
-	charge_density = trapezoidal(0.00001, xvacuum=20000.*L0, xplateau=20000.*L0),
+	charge_density = trapezoidal(0.00001, xvacuum=22000.*L0, xplateau=16000.*L0),
 	mean_velocity = [0.776, 0., 0.],
 	temperature = [0.0000001],
 	time_frozen = 100000000.0,

@@ -195,10 +195,17 @@ void SmileiMPI::init_patch_count( Params& params)
         PyTools::extract("species_type",species_type,"Species",ispecies);
 
         PyObject *profile1;
-        PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispecies);
-        PyTools::extract_pyProfile("charge_density", profile1, "Species", ispecies);
+        std::string densityProfileType("");
+        bool ok1 = PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispecies);
+        bool ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", ispecies);
+        if( ok1 ) densityProfileType = "nb";
+        if( ok2 ) densityProfileType = "charge";
+        Profile *densityProfile = new Profile(profile1, params.nDim_particle, densityProfileType+"_density "+species_type);
         PyTools::extract_pyProfile("n_part_per_cell", profile1, "Species", ispecies);
         Profile *ppcProfile = new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_type);
+        PyTools::extract_pyProfile("charge", profile1, "Species", ispecies);
+        Profile *chargeProfile = new Profile(profile1, params.nDim_particle, "charge "+species_type);
+
 
         local_load = 0;
         // Count global number of particles, 
@@ -210,11 +217,24 @@ void SmileiMPI::init_patch_count( Params& params)
                     x_cell[1] = (j+0.5)*params.cell_length[1];
                     x_cell[2] = (k+0.5)*params.cell_length[2];
 
-                    int n_part_in_cell = round(ppcProfile->valueAt(x_cell));
-                    if ( n_part_in_cell<=0. )
+                    int n_part_in_cell = floor(ppcProfile->valueAt(x_cell));
+                    // If zero or less, zero particles
+                    if( n_part_in_cell<=0. ) {
+                        n_part_in_cell = 0.;
                         continue;
-                    else
+                    }
+                    // assign charge its correct value in the cell
+                    double charge = chargeProfile->valueAt(x_cell);
+                    // assign density its correct value in the cell
+                    double density = densityProfile->valueAt(x_cell);
+                    if(density!=0. && densityProfileType=="charge") {
+                        density /= charge;
+                    }
+                    density = abs(density);
+
+                    if (density!=0.0) 
                         local_load += n_part_in_cell;
+
                 }
             }
         }
@@ -224,7 +244,9 @@ void SmileiMPI::init_patch_count( Params& params)
         if(time_frozen > 0.) local_load *= params.coef_frozen;
         Tload += local_load;
 
+        delete chargeProfile;
         delete ppcProfile;
+        delete densityProfile;
 
     } // End for ispecies
 
@@ -251,10 +273,16 @@ void SmileiMPI::init_patch_count( Params& params)
             PyTools::extract("species_type",species_type,"Species",ispecies);
 
             PyObject *profile1;
-            PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispecies);
-            PyTools::extract_pyProfile("charge_density", profile1, "Species", ispecies);
+            std::string densityProfileType("");
+            bool ok1 = PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispecies);
+            bool ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", ispecies);
+            if( ok1 ) densityProfileType = "nb";
+            if( ok2 ) densityProfileType = "charge";
+            Profile *densityProfile = new Profile(profile1, params.nDim_particle, densityProfileType+"_density "+species_type);
             PyTools::extract_pyProfile("n_part_per_cell", profile1, "Species", ispecies);
             Profile *ppcProfile = new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_type);
+            PyTools::extract_pyProfile("charge", profile1, "Species", ispecies);
+            Profile *chargeProfile = new Profile(profile1, params.nDim_particle, "charge "+species_type);
 
             vector<double> cell_index(3,0);
             for (unsigned int i=0 ; i<params.nDim_field ; i++) {
@@ -271,15 +299,31 @@ void SmileiMPI::init_patch_count( Params& params)
                         x_cell[1] = cell_index[1] + (j+0.5)*params.cell_length[1];
                         x_cell[2] = cell_index[2] + (k+0.5)*params.cell_length[2];
 
-                        int n_part_in_cell = round(ppcProfile->valueAt(x_cell));
-                        if ( n_part_in_cell<=0. )
+                        int n_part_in_cell = floor(ppcProfile->valueAt(x_cell));
+                        // If zero or less, zero particles
+                        if( n_part_in_cell<=0. ) {
+                            n_part_in_cell = 0.;
                             continue;
-                        else
+                        }
+                        // assign charge its correct value in the cell
+                        double charge = chargeProfile->valueAt(x_cell);
+                        // assign density its correct value in the cell
+                        double density = densityProfile->valueAt(x_cell);
+                        if(density!=0. && densityProfileType=="charge") {
+                            density /= charge;
+                        }
+                        density = abs(density);
+
+                        if (density!=0.0) 
                             local_load_temp += n_part_in_cell;
+
                     }
                 }
             }
+            delete chargeProfile;
             delete ppcProfile;
+            delete densityProfile;
+
             double time_frozen(0.);
             PyTools::extract("time_frozen",time_frozen ,"Species",ispecies);
             if(time_frozen > 0.) local_load_temp *= params.coef_frozen;
@@ -297,7 +341,7 @@ void SmileiMPI::init_patch_count( Params& params)
             if ( Lcur > Tcur || smilei_sz-r >= Npatches-hindex){ //Load target is exceeded or we have as many patches as procs left.
                 above_target = Lcur - Tcur;  //Including current patch, we exceed target by that much.
                 below_target = Tcur - (Lcur-local_load); // Excluding current patch, we mis the target by that much.
-                if(above_target > below_target) { // If we're closer to target without the current patch...
+                if((above_target > below_target) && (Ncur!=1)) { // If we're closer to target without the current patch...
                     patch_count[r] = Ncur-1;      // ... include patches up to current one.
                     Ncur = 1;
                     //Lcur = local_load;
@@ -362,7 +406,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     //Compute Local Loads of each Patch (Lp)
     for(unsigned int ipatch=0; ipatch < (unsigned int)patch_count[smilei_rk]; ipatch++){
         for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++) {
-            Lp[ipatch] += vecpatches(ipatch)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(params.coef_frozen-1)*(time_dual > vecpatches(ipatch)->vecSpecies[ispecies]->time_frozen)) ;
+            Lp[ipatch] += vecpatches(ipatch)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(params.coef_frozen-1)*(time_dual < vecpatches(ipatch)->vecSpecies[ispecies]->time_frozen)) ;
         }
     }
 
@@ -389,7 +433,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
             if ( Lcur > Tcur || smilei_sz-r >= Npatches-ipatch){ //Load target is exceeded or we have as many patches as procs left.
                 above_target = Lcur - Tcur;  //Including current patch, we exceed target by that much.
                 below_target = Tcur - (Lcur-Lp_global[ipatch]); // Excluding current patch, we mis the target by that much.
-                if(above_target > below_target) { // If we're closer to target without the current patch...
+                if((above_target > below_target) && (Ncur!=1)) { // If we're closer to target without the current patch...
                     target_patch_count[r] = Ncur-1;      // ... include patches up to current one.
                     Ncur = 1;
                 } else {                          //Else ...
@@ -408,19 +452,19 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
 
     //Make sure the new patch_count is not too different from the previous one.
     // First patch
-    Ncur = 0;
+    Ncur = 0;                           //Sold
     Lmin1 = npatchmin;
     Lmin2 = 1;
-    Lmin = std::max(Lmin1, Lmin2);
-    Lmax = patch_count[0] - npatchmin;
-    Tcur = 0;  
+    Lmin = std::max(Lmin1, Lmin2);      //Pmin
+    Lmax = patch_count[0] - npatchmin;  //Pmax
+    Tcur = 0;                           //Plast 
 
     //Loop
     for(unsigned int i=0; i< (unsigned int)smilei_sz-1; i++){
 
-        Lmin2 += patch_count[i];
-        Tcur += target_patch_count[i];
-        Lmax += patch_count[i+1];
+        Lmin2 += patch_count[i];         // futur Pmin
+        Tcur += target_patch_count[i];   //Plast
+        Lmax += patch_count[i+1];        //Pmax
  
         if (Tcur < Lmin){                      
             patch_count[i] = Lmin - Ncur;
@@ -429,9 +473,9 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         } else {
             patch_count[i] = Tcur-Ncur;
         }
-        Ncur += patch_count[i];
+        Ncur += patch_count[i];           //new Sold
         Lmin1 = Ncur + npatchmin;
-        Lmin = std::max(Lmin1, Lmin2);
+        Lmin = std::max(Lmin1, Lmin2);    //new Pmin
 
     }
 
@@ -574,7 +618,9 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     // Count number max of comms :
     int maxtag = 2 * patch->vecSpecies.size() + (2+params.nDim_particle) * patch->probes.size();
 
+    patch->EMfields->initAntennas(patch);
     recv( patch->EMfields, from, maxtag );
+
 
 } // END recv ( Patch )
 
@@ -624,8 +670,9 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag)
     isend( EM->By_m, to, tag+7);
     isend( EM->Bz_m, to, tag+8);
     
-    for (int antennaId=0 ; antennaId<(int)EM->antennas.size() ; antennaId++)
+    for (int antennaId=0 ; antennaId<(int)EM->antennas.size() ; antennaId++) {
         isend( EM->antennas[antennaId].field, to, tag+9+antennaId );
+    }
     
     tag += 10 + EM->antennas.size();
     
@@ -663,8 +710,9 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
     recv( EM->By_m, from, tag+7 );
     recv( EM->Bz_m, from, tag+8 );
     
-    for (int antennaId=0 ; antennaId<(int)EM->antennas.size() ; antennaId++)
+    for (int antennaId=0 ; antennaId<(int)EM->antennas.size() ; antennaId++) {
         recv( EM->antennas[antennaId].field, from, tag+9+antennaId );
+    }
     
     tag += 10 + EM->antennas.size();
     
@@ -754,12 +802,9 @@ void SmileiMPI::recv( ProbeParticles* probe, int from, int tag, unsigned int nDi
 // ---------------------------------------------------------------------------------------------------------------------
 void SmileiMPI::computeGlobalDiags(Diagnostic* diag, int timestep)
 {
-    if ( diag->type_ == "Scalar" ) {
-        DiagnosticScalar* scalar = static_cast<DiagnosticScalar*>( diag );
+    if ( DiagnosticScalar* scalar = dynamic_cast<DiagnosticScalar*>( diag ) ) {
         computeGlobalDiags(scalar, timestep);
-    }
-    else if ( diag->type_ == "Particles" ) {
-        DiagnosticParticles* particles = static_cast<DiagnosticParticles*>( diag );
+    } else if (DiagnosticParticles* particles = dynamic_cast<DiagnosticParticles*>( diag )) {
         computeGlobalDiags(particles, timestep);
     }
 }
@@ -785,6 +830,10 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
             minVal.val   = (*iterVal);
             minVal.index = (*iter);
             MPI_Reduce(isMaster()?MPI_IN_PLACE:&minVal, &minVal, 1, MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
+            if (isMaster()) {
+                (*iterVal) = minVal.val;
+                (*iter)    = minVal.index;
+            }
         }
         else if ( (*iterKey).find("MaxCell") != std::string::npos ) {
             vector<double>::iterator iterVal = iter-1;
@@ -792,6 +841,10 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
             maxVal.val   = (*iterVal);
             maxVal.index = (*iter);
             MPI_Reduce(isMaster()?MPI_IN_PLACE:&maxVal, &maxVal, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
+            if (isMaster()) {
+                (*iterVal) = maxVal.val;
+                (*iter)    = maxVal.index;
+            }
         }
         iterKey++;
     }

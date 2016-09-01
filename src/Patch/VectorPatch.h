@@ -87,10 +87,10 @@ public :
     
     //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
     void dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, int* diag_flag, double time_dual,
-                  std::vector<Timer>& timer);
+                  std::vector<Timer>& timer, int itime);
     
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
-    void sumDensities( int* diag_flag, std::vector<Timer>& timer );
+    void sumDensities( int* diag_flag, std::vector<Timer>& timer, int itime );
     
     //! For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
     void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual,
@@ -114,6 +114,8 @@ public :
     //! For all patches, apply the antenna current
     void applyAntennas(double time);
     
+    //! For all patches, apply collisions
+    void applyCollisions(Params &params, int itime, std::vector<Timer>& timer);
     
     //  Balancing methods
     // ------------------
@@ -154,14 +156,14 @@ public :
     
     //! Copy of the fields time selection
     TimeSelection * fieldsTimeSelection;
-
+    
     //! Count global (MPI x patches) number of particles per species
     void printNumberOfParticles(SmileiMPI* smpi) {
         unsigned int nSpecies( (*this)(0)->vecSpecies.size() );
         std::vector<int> nParticles( nSpecies, 0 );
         for (unsigned int ipatch = 0 ; ipatch < this->size() ; ipatch++ ) {
             for (unsigned int ispec = 0 ; ispec < nSpecies ; ispec++ ) {
-                nParticles[ispec] += (*this)(0)->vecSpecies[ispec]->getNbrOfParticles();
+                nParticles[ispec] += (*this)(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
             }
         }
         for (unsigned int ispec = 0 ; ispec < nSpecies ; ispec++ ) {

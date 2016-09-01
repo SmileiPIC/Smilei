@@ -24,17 +24,17 @@ public:
     }
     
     // Clone one patch (avoid reading again the namelist)
-    static Patch* clone(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved=0) {
+    static Patch* clone(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved=0, bool with_particles = true) {
         Patch* newPatch;
         if (params.geometry == "1d3v")
-            newPatch = new Patch1D(static_cast<Patch1D*>(patch), params, smpi, ipatch, n_moved);
+            newPatch = new Patch1D(static_cast<Patch1D*>(patch), params, smpi, ipatch, n_moved, with_particles);
         else if (params.geometry == "2d3v")
-            newPatch = new Patch2D(static_cast<Patch2D*>(patch), params, smpi, ipatch, n_moved);
+            newPatch = new Patch2D(static_cast<Patch2D*>(patch), params, smpi, ipatch, n_moved, with_particles);
         else if (params.geometry == "3d3v")
-            newPatch = new Patch3D(static_cast<Patch3D*>(patch), params, smpi, ipatch, n_moved);
+            newPatch = new Patch3D(static_cast<Patch3D*>(patch), params, smpi, ipatch, n_moved, with_particles);
         return newPatch;
     }
-    
+
     // Create a vector of patches
     static VectorPatch createVector(Params& params, SmileiMPI* smpi) {
         VectorPatch vecPatches;

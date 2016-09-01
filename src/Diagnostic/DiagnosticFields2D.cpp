@@ -98,10 +98,6 @@ DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI* smpi, Patch* 
 
 DiagnosticFields2D::~DiagnosticFields2D()
 {
-    H5Sclose( filespace_firstwrite );
-    H5Sclose( memspace_firstwrite );
-    H5Sclose( filespace_reread );
-    H5Sclose( memspace_reread );
 }
 
 
@@ -177,6 +173,7 @@ void DiagnosticFields2D::writeField( hid_t dset_id, int timestep ) {
     H5Dread( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_reread, filespace_reread, write_plist, &(data_reread[0]) );
     
     // Fold the data according to the Hilbert curve
+    // TO DO: openMP-ize this loop
     unsigned int read_position, write_position, read_skip, write_skip, sx, sy;
     unsigned int write_sizey = rewrite_npatchy*(patch_size[1]-1) + ((rewrite_ymin==0)?1:0);
     read_position = 0;
