@@ -255,6 +255,7 @@ void SyncVectorPatch::exchange( std::vector<Field*> fields, VectorPatch& vecPatc
             } // End if ( MPI_me_ == MPI_neighbor_[1][0] ) 
 
             if (fields[0]->dims_.size()>2) {
+                gsp[2] = ( oversize[2] + 1 + fields[0]->isDual_[2] ); //Ghost size primal
                 if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[2][0]){
                     pt1 = &(*fields[vecPatches(ipatch)->neighbor_[2][0]-h0])(n_space[2]);
                     pt2 = &(*fields[ipatch])(0);
