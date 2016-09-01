@@ -9,7 +9,7 @@ L0 = 2.*math.pi # conversion from normalization length to wavelength
 Main(
     geometry = "1d3v",
 
-    number_of_patches = [ 4 ],
+    number_of_patches = [ 8 ],
 
     interpolation_order = 2,
 
@@ -19,8 +19,8 @@ Main(
 
     time_fields_frozen = 100000000000.,
 
-    cell_length = [2.5*L0],
-    sim_length = [60.*L0],
+    cell_length = [2.*L0],
+    sim_length = [96.*L0],
 
     bc_em_type_x = ["periodic"],
 
@@ -55,7 +55,7 @@ Species(
 	n_part_per_cell= 10000,
 	mass = 1.0,
 	charge = -1.0,
-	charge_density = trapezoidal(0.00001, xplateau=20.*L0),
+	charge_density = trapezoidal(0.00001, xplateau=24.*L0),
 	mean_velocity = [0.2, 0., 0.],
 	temperature = [0.0000001],
 	time_frozen = 100000000.0,
@@ -70,7 +70,7 @@ Species(
 	n_part_per_cell= 10000,
 	mass = 1.0,
 	charge = -1.0,
-	charge_density = trapezoidal(0.00001, xvacuum=20.*L0, xplateau=20.*L0),
+	charge_density = trapezoidal(0.00001, xvacuum=24.*L0, xplateau=24.*L0),
 	mean_velocity = [0.27, 0., 0.],
 	temperature = [0.0000001],
 	time_frozen = 100000000.0,
@@ -85,7 +85,7 @@ Species(
 	n_part_per_cell= 10000,
 	mass = 1.0,
 	charge = -1.0,
-	charge_density = trapezoidal(0.00001,xvacuum=40.*L0, xplateau=20.*L0),
+	charge_density = trapezoidal(0.00001,xvacuum=48.*L0, xplateau=24.*L0),
 	mean_velocity = [0.33, 0., 0.],
 	temperature = [0.0000001],
 	time_frozen = 100000000.0,
@@ -119,7 +119,7 @@ DiagParticles(
 	time_average = 1,
 	species = ["electron1", "electron2", "electron3"],
 	axes = [
-		 ["x",    0*L0,    60.*L0,   3],
+		 ["x",    0*L0,    72.*L0,   3],
 		 ["ekin",   0.01,  0.1,   500, "logscale"]
 	]
 )

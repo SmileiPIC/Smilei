@@ -13,7 +13,7 @@ public :
     
     virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     
-    virtual void closeFile() override;
+    void closeFile() override;
     
     virtual void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
     
@@ -59,6 +59,14 @@ protected :
     
     //! Temporary dataset that is used for folding the 2D hilbert curve
     hid_t tmp_dset_id;
+    
+    //! Variable to store the status of a dataset (whether it exists or not)
+    htri_t status;
+
+    // Tools for re-reading and re-writing the file in a folded pattern
+    hid_t filespace_reread, filespace_firstwrite, memspace_reread, memspace_firstwrite;
+    std::vector<double> data_reread, data_rewrite;
+
 };
 
 #endif

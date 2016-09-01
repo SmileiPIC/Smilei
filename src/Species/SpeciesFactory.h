@@ -236,16 +236,9 @@ public:
             ERROR("For species '" << species_type << "' test & ionized is currently impossible");
         }
         
-        // Get parameter "track_every" which describes a timestep selection
-        std::ostringstream name("");
-        name << "Tracking species '" << species_type << "'";
-        thisSpecies->particles->track_timeSelection = new TimeSelection(
-            PyTools::extract_py("track_every", "Species", ispec),
-            name.str()
-        );
-        thisSpecies->particles->tracked = ! thisSpecies->particles->track_timeSelection->isEmpty();
-        // Get parameter "track_ordered" which decides whether the track particle dumps are ordered by Id
-        PyTools::extract("track_ordered", thisSpecies->particles->track_ordered, "Species", ispec);
+        // Find out whether this species is tracked
+        TimeSelection track_timeSelection( PyTools::extract_py("track_every", "Species", ispec), "Track" );
+        thisSpecies->particles->tracked = ! track_timeSelection.isEmpty();
         
         // Create the particles
         if (!params.restart) {
@@ -258,11 +251,12 @@ public:
         thisSpecies->initOperators(params, patch);
         
         return thisSpecies;
-    }
+    } // End Species* create()
+
     
     // Method to clone a species from an existing one
     // Note that this must be only called from cloneVector, because additional init is needed
-    static Species* clone(Species* species, Params &params, Patch* patch) {
+    static Species* clone(Species* species, Params &params, Patch* patch, bool with_particles = true) {
         // Create new species object
         Species * newSpecies = NULL;
         if (species->dynamics_type=="norm") {
@@ -308,18 +302,16 @@ public:
         
         newSpecies->particles->isTest              = species->particles->isTest;
         newSpecies->particles->tracked             = species->particles->tracked;
-        newSpecies->particles->track_ordered       = species->particles->track_ordered;
-        newSpecies->particles->track_timeSelection = new TimeSelection(species->particles->track_timeSelection);
         
         // \todo : NOT SURE HOW THIS BEHAVES WITH RESTART
-        if (!params.restart) {
+        if ( (!params.restart) && (with_particles) ) {
             newSpecies->createParticles(params.n_space, params, patch, 0 );
         }
         
         newSpecies->initOperators(params, patch);
         
         return newSpecies;
-    }
+    } // End Species* clone()
     
     
     static std::vector<Species*> createVector(Params& params, Patch* patch) {
@@ -361,13 +353,13 @@ public:
     }
     
     // Method to clone the whole vector of species
-    static std::vector<Species*> cloneVector(std::vector<Species*> vecSpecies, Params& params, Patch* patch)
+    static std::vector<Species*> cloneVector(std::vector<Species*> vecSpecies, Params& params, Patch* patch, bool with_particles = true)
     {
         std::vector<Species*> retSpecies;
         retSpecies.resize(0);
         
         for (unsigned int ispec = 0; ispec < vecSpecies.size(); ispec++) {
-            Species* newSpecies = SpeciesFactory::clone(vecSpecies[ispec], params, patch);
+            Species* newSpecies = SpeciesFactory::clone(vecSpecies[ispec], params, patch, with_particles);
             retSpecies.push_back( newSpecies );
         }
         

@@ -2,6 +2,7 @@
 
 #include "ElectroMagn.h"
 #include "Profile.h"
+#include "PyTools.h"
 
 using namespace std;
 
@@ -129,13 +130,20 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
     
     // Otherwise (if the python profile cannot be hard-coded) ....
     else {
-        // Check how the profile looks like (debug only)
+        string message;
+        
+#ifdef  __DEBUG
+        // Check how the profile looks like
         PyObject* repr = PyObject_Repr(py_profile);
-        DEBUG(string(PyString_AsString(repr)));
+        PyTools::convert(repr, message);
+        MESSAGE(message);
         Py_XDECREF(repr);
-        repr=PyObject_Str(py_profile);
-        DEBUG(string(PyString_AsString(repr)));
+        
+        repr = PyObject_Str(py_profile);
+        PyTools::convert(repr, message);
+        MESSAGE(message);
         Py_XDECREF(repr);
+#endif
         
         // Verify that the profile has the right number of arguments
         PyObject* inspect=PyImport_ImportModule("inspect");
@@ -148,7 +156,8 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
             for (int i=0; i<size; i++){
                 PyObject *arg=PyList_GetItem(arglist,i);
                 PyObject* repr = PyObject_Repr(arg);
-                args+=string(PyString_AsString(repr))+" ";
+                PyTools::convert(repr, message);
+                args += message+" ";
                 Py_XDECREF(repr);
             }
             WARNING ("Profile " << name << " takes "<< size <<" variables (" << args << ") but it is created with " << nvariables);
