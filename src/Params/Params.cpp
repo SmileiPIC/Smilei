@@ -10,6 +10,8 @@
 #include "pyprofiles.pyh"
 #include "pycontrol.pyh"
 
+#include "H5.h"
+
 #include <algorithm>
 
 using namespace std;
@@ -21,6 +23,15 @@ Params::Params(SmileiMPI* smpi, std::vector<std::string> namelistsFiles) :
 namelist("")
 {
     
+    if((((H5_VERS_MAJOR==1) && (H5_VERS_MINOR==8) && (H5_VERS_RELEASE>16)) || \
+        ((H5_VERS_MAJOR==1) && (H5_VERS_MINOR>8)) || \
+        (H5_VERS_MAJOR>1))) {
+        WARNING("Smilei suggests using hdf5 version 1.8.16 you're using "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
+        WARNING("Newer version are not tested and may cause the code to behave incorrectly");
+        WARNING("See http://hdf-forum.184993.n3.nabble.com/Segmentation-fault-using-H5Dset-extent-in-parallel-td4029082.html");
+    }
+    
+
     if (namelistsFiles.size()==0) ERROR("No namelists given!");
 
     //string commandLineStr("");
@@ -251,6 +262,10 @@ namelist("")
         if (tot_number_of_patches < smpi->getSize())
             ERROR("The total number of patches must be greater or equal to the number of MPI processes"); 
     }
+#ifdef _OPENMP
+    if ( tot_number_of_patches < smpi->getSize()*omp_get_max_threads() )
+        WARNING( "Resources allocated underloaded regarding the total number of patches" );
+#endif
     
     
     balancing_every = 150;

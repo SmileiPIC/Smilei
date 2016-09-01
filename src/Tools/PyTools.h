@@ -139,7 +139,7 @@ public:
     //! convert python list to vector of python objects
     static bool convert(PyObject * py_list, std::vector<PyObject*> & py_vec) {
         if (py_list) {
-            if (PyTuple_Check(py_list) || PyList_Check(py_list)) {
+            if (PyList_Check(py_list)) {
                 PyObject* seq = PySequence_Fast(py_list, "expected a sequence");
                 int len = PySequence_Size(seq);
                 py_vec.resize(len);
@@ -265,6 +265,9 @@ public:
     static bool extract(std::string name, T &val, std::string component=std::string(""), int nComponent=0) {
         PyObject* py_val = extract_py(name,component,nComponent);
         PyTools::checkPyError();
+        if (PyList_Check(py_val)) {
+            ERROR("Looking for single value \"" << name << "\" in " << component << " #" << nComponent << " but got a list.");
+        }
         return PyTools::convert(py_val,val);
     }
     

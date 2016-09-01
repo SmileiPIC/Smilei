@@ -1,19 +1,35 @@
 Post-process
 ------------
 
+A python module is provided to view or extract data from all the diagnostics.
+There are several ways to load this module in python.
 
-A python script *Diagnostics.py* is provided to view or extract data from all the diagnostics.
-To use this script, you will need *python2.7* with some packages
-(follow the :doc:`installation instructions <installation>`).
+.. rubric:: 1. Install Smilei's module (recommended)
 
-For an interactive mode, we recommend installing and running *ipython*::
+..
+
+  ::
   
-  ipython -i scripts/Diagnostics.py
+    make install_python
 
-Otherwise, you can add the following command in your own script::
+  This has to be done only once, unless you move the smilei directory elsewere.
   
-  execfile("scripts/Diagnostics.py")
+  Then, in python, simply run::
+  
+    from Smilei import *
 
+
+.. rubric:: 2. Execute the ``Diagnostics.py`` script from python 
+
+..
+
+  You can add the following command in your own python script::
+  
+    execfile("/path/to/Smilei/scripts/Diagnostics.py")
+
+
+  .. warning:: This solution is kept for backward compatibility and may be removed in 
+    a future release
 
 ----
 
@@ -115,6 +131,8 @@ Open a Field diagnostic
      | - With syntax 2, only the bin closest to ``location`` is kept.
      | - With syntax 3, an average is performed between ``begin`` and ``end``.
      | Example: ``slice = {"x":[4,5]}`` will average for :math:`x` within [4,5].
+  * ``stride``: step size for reading the grid. If the grid is too large, use a stride > 1
+    to reduce the amount of data.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
 **Example**::
@@ -151,14 +169,14 @@ Open a Probe diagnostic
 Open a Particle diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None, units=[""], data_log=False, **kwargs)
+.. py:method:: Smilei.ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None, units=[""], data_log=False, stride=1, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: number of the particle diagnostic (the first one has number 0).
      | If not given, a list of available particle diagnostics is printed.
      | It can also be an operation between several particle diagnostics.
      | For example, ``"#0/#1"`` computes the division by diagnostics 0 and 1.
-  * ``slice``: A selection of rows or columns. This parameter is used to reduce the number of dimensions of the array.
+  * ``slice``: a selection of rows or columns. This parameter is used to reduce the number of dimensions of the array.
      | Syntax 1: ``slice = { axis : "all", ... }``
      | Syntax 2: ``slice = { axis : location, ... }``
      | Syntax 3: ``slice = { axis : [begin, end] , ... }``
@@ -170,6 +188,8 @@ Open a Particle diagnostic
      | - With syntax 2, only the bin closest to ``location`` is kept.
      | - With syntax 3, a **sum** is performed between ``begin`` and ``end``.
      | Example: ``slice={"x":[4,5]``} will sum all the data for x within [4,5].
+  * ``stride``: step size for reading the grid. If the grid is too large, use a stride > 1
+    to reduce the amount of data.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
 **Example**::
@@ -479,11 +499,12 @@ An example of the commands you may use from a UNIX *shell* is::
 
 From the same terminal, launch *python* using the command::
 
-  python -i scripts/Diagnostics.py
+  python
 
 You are now in the *python* prompt.
 Obtain a list of available particle diagnostics using::
 
+  >>> from Smilei import *
   >>> S = Smilei('tst1d_6_particle_diagnostic')
   >>> S.ParticleDiagnostic()
   Printing available particle diagnostics:

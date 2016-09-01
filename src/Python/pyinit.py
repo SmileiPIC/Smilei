@@ -289,13 +289,13 @@ class DiagFields(SmileiComponent):
 # external fields
 class ExtField(SmileiComponent):
     """External Field"""
-    field = []
+    field = None
     profile = None
 
 # external current (antenna)
 class Antenna(SmileiComponent):
     """Antenna"""
-    field = []
+    field = None
     time_profile  = None
     space_profile = None
 

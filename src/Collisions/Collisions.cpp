@@ -641,12 +641,15 @@ void Collisions::debug(Params& params, int itime, unsigned int icoll, VectorPatc
         dset_id  = H5Dcreate(group, "s", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
         H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &smean[0] );
         H5Dclose(dset_id);
-        dset_id  = H5Dcreate(group, "coulom_log", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+        dset_id  = H5Dcreate(group, "coulomb_log", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
         H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &logLmean[0] );
         H5Dclose(dset_id);
         //dset_id  = H5Dcreate(group, "temperature", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
         //H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &temperature[0] );
         //H5Dclose(dset_id);
+        dset_id  = H5Dcreate(group, "debyelength", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &debye_length_squared[0] );
+        H5Dclose(dset_id);
         // Close all
         H5Pclose(plist_id);
         H5Pclose( transfer );

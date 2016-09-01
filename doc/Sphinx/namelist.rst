@@ -674,14 +674,14 @@ External fields
 An external field can be applied using an ``ExtField`` block::
 
   ExtField(
-      field = "Ex",
+      fields = ["Ex"],
       profile = constant(0.01, xvacuum=0.1)
   )
 
 .. py:data:: field
+               
+  Field name: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"`` or ``"Bz"``.
   
-  The name of the field: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"`` or ``"Bz"``.
-
 .. py:data:: profile
   
   :type: float or *python* function (see section :ref:`profiles`)

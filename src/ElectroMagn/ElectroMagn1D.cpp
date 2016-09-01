@@ -475,9 +475,6 @@ void ElectroMagn1D::computePoynting() {
 }
 
 void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, Patch* patch) {
-    
-    MESSAGE(1,"Applying External field to " << my_field->name);
-
     Field1D* field1D=static_cast<Field1D*>(my_field);
     
     vector<double> pos(1);
