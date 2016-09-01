@@ -416,9 +416,23 @@ void DiagnosticScalar::setScalar(string my_var, double value){
 
 void DiagnosticScalar::incrementScalar(string my_var, double value){
     for (unsigned int i=0; i< out_key.size(); i++) {
-        if (out_key[i]==my_var) {
-          out_value[i] += value;
-          return;
+        if ( (out_key[i]==my_var) && ( (my_var.find("Min")== std::string::npos)&&(my_var.find("Max")== std::string::npos)) ) {
+            out_value[i] += value;
+            return;
+        }
+        else if  ( (out_key[i]==my_var) && ( my_var.find("Min")!= std::string::npos ) && (my_var.find("Cell")== std::string::npos) ) {
+            if (value<out_value[i]) {
+                out_value[i] = value;
+                // needs to  update MinCell
+            }
+            return;
+        }
+        else if  ( (out_key[i]==my_var) && ( my_var.find("Max")!= std::string::npos ) && (my_var.find("Cell")== std::string::npos) ) {
+            if (value>out_value[i]) {
+                out_value[i] = value;
+                // needs to  update MaxCell
+            }
+            return;
         }
     }
     DEBUG("key not found " << my_var);
@@ -426,23 +440,29 @@ void DiagnosticScalar::incrementScalar(string my_var, double value){
 
 
 void DiagnosticScalar::append(std::string key, double value) {
-    if ( !defined(key) ) {
-        out_key.push_back(key  );
-        out_value.push_back(value);
+    //#pragma omp critical
+    {
+        if ( !defined(key) ) {
+            out_key.push_back(key  );
+            out_value.push_back(value);
+        }
+        else
+            incrementScalar(key, value);
     }
-    else
-        incrementScalar(key, value);
 
 }  // END append
 
 
 void DiagnosticScalar::prepend(std::string key, double value) {
-    if ( !defined(key) ) {
-        out_key  .insert(out_key  .begin(), key  );
-        out_value.insert(out_value.begin(), value);
+    //#pragma omp critical
+    {
+        if ( !defined(key) ) {
+            out_key  .insert(out_key  .begin(), key  );
+            out_value.insert(out_value.begin(), value);
+        }
+        else
+            incrementScalar(key, value);
     }
-    else
-        incrementScalar(key, value);
 
 } // END prepend
 
