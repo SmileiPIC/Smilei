@@ -420,7 +420,7 @@ void SyncVectorPatch::exchange2( std::vector<Field*> fields, VectorPatch& vecPat
                for (unsigned int j = 0 ; j < ny_*nz_ ; j += nz_){
                    for (unsigned int k = 0 ; k < oversize[2] ; k++ ){
                        pt2[i+j+k] = pt1[i+j+k] ;
-                       pt1[i+j+k+gsp[2]] = pt2[i+j+k+gsp[2]] ;
+                       pt1[i+j+k+gsp] = pt2[i+j+k+gsp] ;
                    } 
                }
            } 
