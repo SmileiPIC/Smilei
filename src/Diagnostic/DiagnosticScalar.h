@@ -65,9 +65,15 @@ private :
     
     //! increment a particular scalar
     void incrementScalar(std::string name, double value);
-    
+
+    //! increment a particular scalar
+    void incrementScalar(std::string name, double value, int valIndex);
+
     //! append to outlist
     void append(std::string, double);
+
+    //! append to outlist
+    void append(std::string, double, int);
     
     //! prepend to outlist
     void prepend(std::string, double);
