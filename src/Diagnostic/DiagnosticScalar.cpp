@@ -307,11 +307,8 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         unsigned int i=0;
         for (vector<Field*>::iterator field=fields.begin(); field!=fields.end() && i<minis.size(); field++, i++) {
             
-            append((*field)->name+"Min",minis[i].val);
-            append((*field)->name+"MinCell",minis[i].index);
-            
-            append((*field)->name+"Max",maxis[i].val);
-            append((*field)->name+"MaxCell",maxis[i].index);
+            append((*field)->name+"Min", minis[i].val, minis[i].index);
+            append((*field)->name+"Max", maxis[i].val, maxis[i].index );
             
         }
     }
@@ -420,17 +417,24 @@ void DiagnosticScalar::incrementScalar(string my_var, double value){
             out_value[i] += value;
             return;
         }
-        else if  ( (out_key[i]==my_var) && ( my_var.find("Min")!= std::string::npos ) && (my_var.find("Cell")== std::string::npos) ) {
-            if (value<out_value[i]) {
+    }
+    DEBUG("key not found " << my_var);
+}
+
+
+void DiagnosticScalar::incrementScalar(string my_var, double value, int valIndex){
+    for (unsigned int i=0; i< out_key.size(); i++) {
+        if  ( (out_key[i]==my_var) && ( my_var.find("Min")!= std::string::npos ) && (my_var.find("Cell")== std::string::npos) ) {
+            if ( value < out_value[i] ) {
                 out_value[i] = value;
-                // needs to  update MinCell
+                out_value[i+1] = valIndex;
             }
             return;
         }
         else if  ( (out_key[i]==my_var) && ( my_var.find("Max")!= std::string::npos ) && (my_var.find("Cell")== std::string::npos) ) {
-            if (value>out_value[i]) {
+            if ( value > out_value[i] ) {
                 out_value[i] = value;
-                // needs to  update MaxCell
+                out_value[i+1] = valIndex;
             }
             return;
         }
@@ -448,6 +452,22 @@ void DiagnosticScalar::append(std::string key, double value) {
         }
         else
             incrementScalar(key, value);
+    }
+
+}  // END append
+
+
+void DiagnosticScalar::append(std::string key, double value, int valIndex) {
+    //#pragma omp critical
+    {
+        if ( !defined(key) ) {
+            out_key.push_back(key  );
+            out_value.push_back(value);
+            out_key.push_back(key+"Cell");
+            out_value.push_back(valIndex);
+        }
+        else
+            incrementScalar(key, value, valIndex);
     }
 
 }  // END append
