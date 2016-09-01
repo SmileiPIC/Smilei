@@ -830,6 +830,10 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
             minVal.val   = (*iterVal);
             minVal.index = (*iter);
             MPI_Reduce(isMaster()?MPI_IN_PLACE:&minVal, &minVal, 1, MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
+            if (isMaster()) {
+                (*iterVal) = minVal.val;
+                (*iter)    = minVal.index;
+            }
         }
         else if ( (*iterKey).find("MaxCell") != std::string::npos ) {
             vector<double>::iterator iterVal = iter-1;
@@ -837,6 +841,10 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
             maxVal.val   = (*iterVal);
             maxVal.index = (*iter);
             MPI_Reduce(isMaster()?MPI_IN_PLACE:&maxVal, &maxVal, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
+            if (isMaster()) {
+                (*iterVal) = maxVal.val;
+                (*iter)    = maxVal.index;
+            }
         }
         iterKey++;
     }
