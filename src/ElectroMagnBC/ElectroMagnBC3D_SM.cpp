@@ -95,6 +95,8 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch )
     Gamma_SM_W    = 4.0 * cos(theta)        * factor;
     Delta_SM_W    = - (sin(theta)+dt_ov_dy) * factor;
     Epsilon_SM_W  = - (sin(theta)-dt_ov_dy) * factor;
+    Zeta_SM_W     = - dt_ov_dz              * factor;
+    Eta_SM_W      =   dt_ov_dz              * factor;
     
     // East boundary
     theta         = M_PI;
@@ -225,25 +227,44 @@ void ElectroMagnBC3D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
         Field3D* By3D = static_cast<Field3D*>(EMfields->By_);
         Field3D* Bz3D = static_cast<Field3D*>(EMfields->Bz_);
         
-        // for By^(d,p)
-        vector<double> yp(1);
-        yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy;
+        vector<double> posBy(2), posBz(2);
+
+        // for By^(d,p,d) and Bz^(d,d,p)
+        posBy[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy;
+        posBz[0] = patch->getDomainLocalMin(1) - (0.5 + EMfields->oversize[1])*dy;
         for (unsigned int j=0 ; j<ny_p ; j++) {
-            for (unsigned int k=0 ; k<nz_d ; k++) {
+             posBy[0] += dy;
+             posBz[0] += dy;
+             posBy[1] = patch->getDomainLocalMin(2) - (0.5 + EMfields->oversize[2])*dz;
+             posBz[1] = patch->getDomainLocalMin(2) - EMfields->oversize[2]*dz;
+             for (unsigned int k=0 ; k<nz_d ; k++) {
 
-                double byW = 0.;
-                yp[0] += dy;
-            
-                // Lasers
-                for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-                    byW += vecLaser[ilaser]->getAmplitude0(yp, time_dual, j);
-                }
-                //#ifdef _PATCH3D_TODO           
-                (*By3D)(0,j,k) = (*By3D)(1,j,k)-(*By_xvalmin_Long)(j,k);
-                //#endif           
+                 posBy[1] += dz;
+                 posBz[1] += dz;
+                 // Lasers
+                 double byW = 0.;
+                 double bzW = 0.;
+                 for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
+                     //byW += vecLaser[ilaser]->getAmplitude0(posBy, time_dual, j, k);
+                     //bzW += vecLaser[ilaser]->getAmplitude0(posBz, time_dual, j, k);
+                 }
 
-            }// k  ---end compute By
-        }//j  ---end compute By
+                 (*By3D)(0,j,k) = Alpha_SM_W   * (*Ez3D)(0,j,k)
+                 +              Beta_SM_W    *( (*By3D)(1,j,k)-(*By_xvalmin_Long)(j,k))
+                 +              Gamma_SM_W   * byW
+                 +              Delta_SM_W   *( (*Bx3D)(0,j+1,k)-(*Bx_xvalmin_Long)(j+1,k) )
+                 +              Epsilon_SM_W *( (*Bx3D)(0,j,k)-(*Bx_xvalmin_Long)(j,k) )
+                 +              (*By_xvalmin_Long)(j,k);
+
+                 (*Bz3D)(0,j,k) = - Alpha_SM_W   * (*Ey3D)(0,j,k)
+                 +              Beta_SM_W    *( (*Bz3D)(1,j,k)-(*Bz_xvalmin_Long)(j,k))
+                 +              Gamma_SM_W   * bzW
+                 +              Zeta_SM_W   *( (*Bx3D)(0,j,k+1)-(*Bx_xvalmin_Long)(j,k+1) )
+                 +              Eta_SM_W *( (*Bx3D)(0,j,k)-(*Bx_xvalmin_Long)(j,k) )
+                 +              (*Bz_xvalmin_Long)(j,k);
+
+             }// k  ---end compute By
+         }//j  ---end compute By
 
         
     }//if Western
