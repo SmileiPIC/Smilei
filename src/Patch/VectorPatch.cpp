@@ -262,11 +262,14 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
         if( globalDiags[idiag]->prepare( itime ) ) {
             // All patches run
+            //#pragma omp for 
             for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
                 globalDiags[idiag]->run( (*this)(ipatch), itime );
             // MPI procs gather the data and compute
+            //#pragma omp single
             smpi->computeGlobalDiags( globalDiags[idiag], itime);
             // MPI master writes
+            //#pragma omp single
             if ( smpi->isMaster() )
                 globalDiags[idiag]->write( itime );
         }
@@ -623,7 +626,7 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
         // density profile is initializes as if t = 0 !
         // Species will be cleared when, nbr of particles will be known
         // Creation of a new patch, ready to receive its content from MPI neighbours.
-        Patch* newPatch = PatchesFactory::clone(existing_patch, params, smpi, recv_patch_id_[ipatch], n_moved );
+        Patch* newPatch = PatchesFactory::clone(existing_patch, params, smpi, recv_patch_id_[ipatch], n_moved, false );
         //Store pointers to newly created patch in recv_patches_.
         recv_patches_.push_back( newPatch );
     }

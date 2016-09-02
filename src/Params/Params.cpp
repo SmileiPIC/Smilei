@@ -262,6 +262,10 @@ namelist("")
         if (tot_number_of_patches < smpi->getSize())
             ERROR("The total number of patches must be greater or equal to the number of MPI processes"); 
     }
+#ifdef _OPENMP
+    if ( tot_number_of_patches < smpi->getSize()*omp_get_max_threads() )
+        WARNING( "Resources allocated underloaded regarding the total number of patches" );
+#endif
     
     
     balancing_every = 150;
