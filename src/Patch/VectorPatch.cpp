@@ -308,8 +308,11 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 {
     unsigned int nx_p2_global = (params.n_space_global[0]+1) * (params.n_space_global[1]+1);
     
-    unsigned int iteration_max = 50000;
-    double       error_max     = 1.e-14;
+    unsigned int iteration_max;
+    PyTools::extract("poisson_iter_max", iteration_max, "Main");
+
+    double error_max;
+    PyTools::extract("poisson_error_max", error_max, "Main");
     unsigned int iteration=0;
     
     // Init & Store internal data (phi, r, p, Ap) per patch
@@ -388,7 +391,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     // --------------------------------
     // Status of the solver convergence
     // --------------------------------
-    if (iteration == iteration_max) {
+    if (iteration_max>0 && iteration == iteration_max) {
         if (smpi->isMaster())
             WARNING("Poisson solver did not converge: reached maximum iteration number: " << iteration
                     << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
