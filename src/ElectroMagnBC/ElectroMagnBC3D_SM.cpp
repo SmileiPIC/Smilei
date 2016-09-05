@@ -106,6 +106,8 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch )
     Gamma_SM_E    = 4.0 * cos(theta)         * factor;
     Delta_SM_E    = - (sin(theta)+dt_ov_dy)  * factor;
     Epsilon_SM_E  = - (sin(theta)-dt_ov_dy)  * factor;
+    Zeta_SM_E     = - dt_ov_dz              * factor;
+    Eta_SM_E      =   dt_ov_dz              * factor;
     
     // South boundary
     theta  = 0.0;
@@ -251,7 +253,7 @@ void ElectroMagnBC3D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
              }// k  ---end compute By
          }//j  ---end compute By
 
-        // for By^(d,p,d) and Bz^(d,d,p)
+        // for Bz^(d,d,p)
         pos[0] = patch->getDomainLocalMin(1) - (0.5 + EMfields->oversize[1])*dy;
         for (unsigned int j=0 ; j<ny_d ; j++) {
              pos[0] += dy;
@@ -292,8 +294,54 @@ void ElectroMagnBC3D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
         Field3D* By3D = static_cast<Field3D*>(EMfields->By_);
         Field3D* Bz3D = static_cast<Field3D*>(EMfields->Bz_);
         
-#ifdef _PATCH3D_TODO
-#endif
+        vector<double> pos(2);
+
+        // for By^(d,p,d)
+        pos[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy;
+        for (unsigned int j=0 ; j<ny_p ; j++) {
+             pos[0] += dy;
+             pos[1] = patch->getDomainLocalMin(2) - (0.5 + EMfields->oversize[2])*dz;
+             for (unsigned int k=0 ; k<nz_d ; k++) {
+                 pos[1] += dz;
+                // Lasers
+                double byE = 0.;
+                for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
+                    byE += vecLaser[ilaser]->getAmplitude0(pos, time_dual, j, 0);
+                }
+            
+                (*By3D)(nx_d-1,j,k) = Alpha_SM_E   * (*Ez3D)(nx_p-1,j,k)
+                +                   Beta_SM_E    *( (*By3D)(nx_d-2,j,k) -(*By_xvalmax_Long)(j,k))
+                +                   Gamma_SM_E   * byE
+                +                   Delta_SM_E   *( (*Bx3D)(nx_p-1,j+1,k) -(*Bx_xvalmax_Long)(j+1,k))// Check x-index
+                +                   Epsilon_SM_E *( (*Bx3D)(nx_p-1,j,k) -(*Bx_xvalmax_Long)(j,k))
+                +                   (*By_xvalmax_Long)(j,k);
+            
+            }//k  ---end compute By
+        }//j  ---end compute By
+        
+        
+        // for Bz^(d,d,p)
+        pos[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dy;
+        for (unsigned int j=0 ; j<ny_d ; j++) {
+            pos[1] = patch->getDomainLocalMin(2) - EMfields->oversize[2]*dz;
+            pos[0] += dy;
+            for (unsigned int k=0 ; k<nz_d ; k++) {
+                pos[1] += dz;
+                // Lasers
+                double bzE = 0.;
+                for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
+                    bzE += vecLaser[ilaser]->getAmplitude1(pos, time_dual, j, 0);
+                }
+                
+                (*Bz3D)(nx_d-1,j,k) = -Alpha_SM_E * (*Ey3D)(nx_p-1,j,k)
+                +                    Beta_SM_E  *( (*Bz3D)(nx_d-2,j,k) -(*Bz_xvalmax_Long)(j,k))
+                +                    Gamma_SM_E * bzE
+                +                    Zeta_SM_E   *( (*Bx3D)(0,j,k+1)-(*Bx_xvalmax_Long)(j,k+1) )
+                +                    Eta_SM_E *( (*Bx3D)(0,j,k)-(*Bx_xvalmax_Long)(j,k) )
+                +                    (*Bz_xvalmax_Long)(j,k);
+            
+            }//k  ---end compute Bz
+        }//j  ---end compute Bz
         
         
     }//if Eastern

@@ -125,6 +125,12 @@ private:
     //! Constant used for the Silver-Mueller boundary conditions (East)
     double Epsilon_SM_E;
     
+    //! Constant used for the Silver-Mueller boundary conditions (West)
+    double Zeta_SM_E;
+
+    //! Constant used for the Silver-Mueller boundary conditions (West)
+    double Eta_SM_E;
+
 
     //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
     double Alpha_SM_S;
@@ -138,6 +144,12 @@ private:
     //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
     double Epsilon_SM_S;
     
+    //! Constant used for the Silver-Mueller boundary conditions (West)
+    double Zeta_SM_S;
+
+    //! Constant used for the Silver-Mueller boundary conditions (West)
+    double Eta_SM_S;
+
     //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
     double Alpha_SM_N;
     
@@ -149,6 +161,12 @@ private:
     
     //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
     double Epsilon_SM_N;
+
+    //! Constant used for the Silver-Mueller boundary conditions (West)
+    double Zeta_SM_N;
+
+    //! Constant used for the Silver-Mueller boundary conditions (West)
+    double Eta_SM_N;
 
 
      //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
@@ -163,6 +181,12 @@ private:
     //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
     double Epsilon_SM_B;
     
+    //! Constant used for the Silver-Mueller boundary conditions (West)
+    double Zeta_SM_B;
+
+    //! Constant used for the Silver-Mueller boundary conditions (West)
+    double Eta_SM_B;
+
     //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
     double Alpha_SM_T;
     
@@ -175,6 +199,12 @@ private:
     //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
     double Epsilon_SM_T;
    
+    //! Constant used for the Silver-Mueller boundary conditions (West)
+    double Zeta_SM_T;
+
+    //! Constant used for the Silver-Mueller boundary conditions (West)
+    double Eta_SM_T;
+
 };
 
 #endif
