@@ -168,6 +168,18 @@ The block ``Main`` is **mandatory** and has the following syntax::
   
   The solver for Maxwell's equations. Only ``"Yee"`` is available at the moment.
 
+.. py:data:: poisson_iter_max
+  
+  :default: 50000
+  
+  Maximum number of iteration for the Poisson solver.
+
+.. py:data:: poisson_error_max
+  
+  :default: 1e-14
+  
+  Maximum error for the Poisson solver.
+
 
 .. py:data:: bc_em_type_x
              bc_em_type_y
