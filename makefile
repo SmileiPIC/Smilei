@@ -80,7 +80,7 @@ endif
 ifneq (,$(findstring debug,$(config)))
 	CXXFLAGS += -g -pg -Wall -D__DEBUG -O0 # -shared-intel 
 else
-	CXXFLAGS += -O3 #-ipo
+	CXXFLAGS += -O3 -g #-ipo
 endif
 
 ifneq (,$(findstring scalasca,$(config)))
