@@ -35,9 +35,9 @@ private:
     virtual void save_fields_BC3D_TransZ(Field*);
 
  	//! Save external fields for silver muller EM Boundary condition
-     Field2D *Bz_xvalmin_Long,  *Bz_xvalmax_Long,  *By_xvalmin_Long,  *By_xvalmax_Long,  *Bx_xvalmin_Long,  *Bx_xvalmax_Long,
-         *Bz_yvalmin_TransY, *Bz_yvalmax_TransY, *By_yvalmin_TransY, *By_yvalmax_TransY, *Bx_yvalmin_TransY, *Bx_yvalmax_TransY,
-         *Bz_zvalmin_TransZ, *Bz_zvalmax_TransZ, *By_zvalmin_TransZ, *By_zvalmax_TransZ, *Bx_zvalmin_TransZ, *Bx_zvalmax_TransZ;
+     Field2D *Bz_xvalmin,  *Bz_xvalmax,  *By_xvalmin,  *By_xvalmax,  *Bx_xvalmin,  *Bx_xvalmax,
+         *Bz_yvalmin, *Bz_yvalmax, *By_yvalmin, *By_yvalmax, *Bx_yvalmin, *Bx_yvalmax,
+         *Bz_zvalmin, *Bz_zvalmax, *By_zvalmin, *By_zvalmax, *Bx_zvalmin, *Bx_zvalmax;
     
     //! Conversion factor from degree to radian
     double conv_deg2rad;
