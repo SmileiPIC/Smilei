@@ -227,26 +227,19 @@ void ElectroMagnBC3D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
         Field3D* By3D = static_cast<Field3D*>(EMfields->By_);
         Field3D* Bz3D = static_cast<Field3D*>(EMfields->Bz_);
         
-        vector<double> posBy(2), posBz(2);
+        vector<double> pos(2);
 
-        // for By^(d,p,d) and Bz^(d,d,p)
-        posBy[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy;
-        posBz[0] = patch->getDomainLocalMin(1) - (0.5 + EMfields->oversize[1])*dy;
+        // for By^(d,p,d) 
+        pos[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy;
         for (unsigned int j=0 ; j<ny_p ; j++) {
-             posBy[0] += dy;
-             posBz[0] += dy;
-             posBy[1] = patch->getDomainLocalMin(2) - (0.5 + EMfields->oversize[2])*dz;
-             posBz[1] = patch->getDomainLocalMin(2) - EMfields->oversize[2]*dz;
+             pos[0] += dy;
+             pos[1] = patch->getDomainLocalMin(2) - (0.5 + EMfields->oversize[2])*dz;
              for (unsigned int k=0 ; k<nz_d ; k++) {
-
-                 posBy[1] += dz;
-                 posBz[1] += dz;
+                 pos[1] += dz;
                  // Lasers
                  double byW = 0.;
-                 double bzW = 0.;
                  for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-                     //byW += vecLaser[ilaser]->getAmplitude0(posBy, time_dual, j, k);
-                     //bzW += vecLaser[ilaser]->getAmplitude0(posBz, time_dual, j, k);
+                     byW += vecLaser[ilaser]->getAmplitude0(pos, time_dual, j, k);
                  }
 
                  (*By3D)(0,j,k) = Alpha_SM_W   * (*Ez3D)(0,j,k)
@@ -255,7 +248,21 @@ void ElectroMagnBC3D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
                  +              Delta_SM_W   *( (*Bx3D)(0,j+1,k)-(*Bx_xvalmin_Long)(j+1,k) )
                  +              Epsilon_SM_W *( (*Bx3D)(0,j,k)-(*Bx_xvalmin_Long)(j,k) )
                  +              (*By_xvalmin_Long)(j,k);
+             }// k  ---end compute By
+         }//j  ---end compute By
 
+        // for By^(d,p,d) and Bz^(d,d,p)
+        pos[0] = patch->getDomainLocalMin(1) - (0.5 + EMfields->oversize[1])*dy;
+        for (unsigned int j=0 ; j<ny_d ; j++) {
+             pos[0] += dy;
+             pos[1] = patch->getDomainLocalMin(2) - EMfields->oversize[2]*dz;
+             for (unsigned int k=0 ; k<nz_p ; k++) {
+                 pos[1] += dz;
+                 // Lasers
+                 double bzW = 0.;
+                 for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
+                     bzW += vecLaser[ilaser]->getAmplitude0(pos, time_dual, j, k);
+                 }
                  (*Bz3D)(0,j,k) = - Alpha_SM_W   * (*Ey3D)(0,j,k)
                  +              Beta_SM_W    *( (*Bz3D)(1,j,k)-(*Bz_xvalmin_Long)(j,k))
                  +              Gamma_SM_W   * bzW
@@ -263,8 +270,8 @@ void ElectroMagnBC3D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
                  +              Eta_SM_W *( (*Bx3D)(0,j,k)-(*Bx_xvalmin_Long)(j,k) )
                  +              (*Bz_xvalmin_Long)(j,k);
 
-             }// k  ---end compute By
-         }//j  ---end compute By
+             }// k  ---end compute Bz
+         }//j  ---end compute Bz
 
         
     }//if Western
