@@ -77,9 +77,13 @@ void Patch::initStep1(Params& params)
     nbNeighbors_ = 2;
     neighbor_.resize(nDim_fields_);
     corner_neighbor_.resize(params.nDim_field);
+    send_tags_.resize(nDim_fields_);
+    recv_tags_.resize(nDim_fields_);
     for ( int iDim = 0 ; iDim < nDim_fields_ ; iDim++ ) {
         neighbor_[iDim].resize(2,MPI_PROC_NULL);
         corner_neighbor_[iDim].resize(2,MPI_PROC_NULL);
+        send_tags_[iDim].resize(2,MPI_PROC_NULL);
+        recv_tags_[iDim].resize(2,MPI_PROC_NULL);
     }
     MPI_neighbor_.resize(nDim_fields_);
     for ( int iDim = 0 ; iDim < nDim_fields_; iDim++ ) {
@@ -202,6 +206,13 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
 //        cout << "\tMPI Corner decomp : " << MPI_neighbor_[0][0] << "\t" << smpi->getRank() << "\t" << MPI_neighbor_[0][1] << endl;
 //        cout << "\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[1][0]  << "\t" << "MPI_PROC_NULL" << endl;
     
+
+    for (int iDim=0 ; iDim< neighbor_.size() ; iDim++)
+        for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+            send_tags_[iDim][iNeighbor] = buildtag( hindex, iDim, iNeighbor );
+            recv_tags_[iDim][iNeighbor] = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor );
+        }
+
 } // END updateMPIenv
 
 
