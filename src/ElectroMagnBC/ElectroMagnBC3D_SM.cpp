@@ -310,7 +310,7 @@ void ElectroMagnBC3D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
                 // Lasers
                 double byE = 0.;
                 for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-                    byE += vecLaser[ilaser]->getAmplitude0(pos, time_dual, j, 0);
+                    byE += vecLaser[ilaser]->getAmplitude0(pos, time_dual, j, k);
                 }
             
                 (*By3D)(nx_d-1,j,k) = Alpha_SM_E   * (*Ez3D)(nx_p-1,j,k)
@@ -334,7 +334,7 @@ void ElectroMagnBC3D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
                 // Lasers
                 double bzE = 0.;
                 for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-                    bzE += vecLaser[ilaser]->getAmplitude1(pos, time_dual, j, 0);
+                    bzE += vecLaser[ilaser]->getAmplitude1(pos, time_dual, j, k);
                 }
                 
                 (*Bz3D)(nx_d-1,j,k) = -Alpha_SM_E * (*Ey3D)(nx_p-1,j,k)
