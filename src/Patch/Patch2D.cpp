@@ -82,12 +82,7 @@ void Patch2D::initStep2(Params& params)
 
 }
 
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Initialize current patch sum Fields communications through MPI in direction iDim
-// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
-// ---------------------------------------------------------------------------------------------------------------------
-void Patch2D::initSumField( Field* field, int iDim )
+void Patch2D::reallyinitSumField( Field* field, int iDim )
 {
     if (field->MPIbuff.srequest.size()==0)
         field->MPIbuff.allocate(2);
@@ -120,6 +115,45 @@ void Patch2D::initSumField( Field* field, int iDim )
             tmp[1] = 1;
         buf[iDim][iNeighbor].allocateDims( tmp );
     }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Initialize current patch sum Fields communications through MPI in direction iDim
+// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
+// ---------------------------------------------------------------------------------------------------------------------
+void Patch2D::initSumField( Field* field, int iDim )
+{
+    if (field->MPIbuff.srequest.size()==0)
+        field->MPIbuff.allocate(2);
+
+    int patch_ndims_(2);
+    int patch_nbNeighbors_(2);
+    
+    
+    std::vector<unsigned int> n_elem = field->dims_;
+    std::vector<unsigned int> isDual = field->isDual_;
+    Field2D* f2D =  static_cast<Field2D*>(field);
+   
+    // Use a buffer per direction to exchange data before summing
+    //Field2D buf[patch_ndims_][patch_nbNeighbors_];
+    // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
+    std::vector<unsigned int> oversize2 = oversize;
+    oversize2[0] *= 2;
+    oversize2[0] += 1 + f2D->isDual_[0];
+    if (field->dims_.size()>1) {
+        oversize2[1] *= 2;
+        oversize2[1] += 1 + f2D->isDual_[1];
+    }
+    
+    /*for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
+        std::vector<unsigned int> tmp(patch_ndims_,0);
+        tmp[0] =    iDim  * n_elem[0] + (1-iDim) * oversize2[0];
+        if (field->dims_.size()>1)
+            tmp[1] = (1-iDim) * n_elem[1] +    iDim  * oversize2[1];
+        else 
+            tmp[1] = 1;
+        buf[iDim][iNeighbor].allocateDims( tmp );
+    }*/
      
     int istart, ix, iy;
     /********************************************************************************/
@@ -193,8 +227,26 @@ void Patch2D::finalizeSumField( Field* field, int iDim )
             MPI_Wait( &(f2D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
         }
     }
+}
 
+void Patch2D::reallyfinalizeSumField( Field* field, int iDim )
+{
+    int patch_ndims_(2);
+    int patch_nbNeighbors_(2);
+    std::vector<unsigned int> n_elem = field->dims_;
+    std::vector<unsigned int> isDual = field->isDual_;
+    Field2D* f2D =  static_cast<Field2D*>(field);
+   
+    // Use a buffer per direction to exchange data before summing
+    //Field2D buf[patch_ndims_][patch_nbNeighbors_];
+    // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
+    std::vector<unsigned int> oversize2 = oversize;
+    oversize2[0] *= 2;
+    oversize2[0] += 1 + f2D->isDual_[0];
+    oversize2[1] *= 2;
+    oversize2[1] += 1 + f2D->isDual_[1];
 
+    int istart;
     /********************************************************************************/
     // Sum data on each process, same operation on both side
     /********************************************************************************/

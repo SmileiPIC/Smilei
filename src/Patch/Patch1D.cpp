@@ -57,6 +57,27 @@ void Patch1D::initStep2(Params& params)
     
 }
 
+void Patch1D::reallyinitSumField( Field* field, int iDim )
+{
+    if (field->MPIbuff.srequest.size()==0)
+        field->MPIbuff.allocate(1);
+
+    std::vector<unsigned int> n_elem = field->dims_;
+    std::vector<unsigned int> isDual = field->isDual_;
+    Field1D* f1D =  static_cast<Field1D*>(field);
+    
+    // Use a buffer per direction to exchange data before summing
+    // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
+    std::vector<unsigned int> oversize2 = oversize;
+    oversize2[0] *= 2;
+    oversize2[0] += 1 + f1D->isDual_[0];
+    
+    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+        std::vector<unsigned int> tmp(nDim_fields_,0);
+        tmp[0] =    iDim  * n_elem[0] + (1-iDim) * oversize2[0];
+        buf[iDim][iNeighbor].allocateDims( tmp );
+    }
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Initialize current patch sum Fields communications through MPI for direction iDim
@@ -77,11 +98,11 @@ void Patch1D::initSumField( Field* field, int iDim )
     oversize2[0] *= 2;
     oversize2[0] += 1 + f1D->isDual_[0];
     
-    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+    /*for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
         std::vector<unsigned int> tmp(nDim_fields_,0);
         tmp[0] =    iDim  * n_elem[0] + (1-iDim) * oversize2[0];
         buf[iDim][iNeighbor].allocateDims( tmp );
-    }
+    }*/
      
     int istart, ix;
     /********************************************************************************/
@@ -147,8 +168,21 @@ void Patch1D::finalizeSumField( Field* field, int iDim )
             MPI_Wait( &(f1D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
         }
     }
+}
 
-
+void Patch1D::reallyfinalizeSumField( Field* field, int iDim )
+{
+    std::vector<unsigned int> n_elem = field->dims_;
+    std::vector<unsigned int> isDual = field->isDual_;
+    Field1D* f1D =  static_cast<Field1D*>(field);
+   
+    // Use a buffer per direction to exchange data before summing
+    // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
+    std::vector<unsigned int> oversize2 = oversize;
+    oversize2[0] *= 2;
+    oversize2[0] += 1 + f1D->isDual_[0];
+    
+    int istart;
     /********************************************************************************/
     // Sum data on each process, same operation on both side
     /********************************************************************************/
