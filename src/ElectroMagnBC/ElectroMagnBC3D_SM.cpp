@@ -129,15 +129,17 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch )
     Zeta_SM_N     = - dt_ov_dx              * factor;
     Eta_SM_N      =   dt_ov_dx              * factor;
 
-#ifdef _PATCH3D_TODO
-    // Bottom boundary
+   // Bottom boundary
     theta  = 0.0;
-    factor = 1.0 / (cos(theta) + dt_ov_dz );
-    Alpha_SM_B    = 0.;
-    Beta_SM_B     = 0.;
-    Delta_SM_B    = 0.;
-    Epsilon_SM_B  = 0.;
+    factor = 1.0 / (cos(theta) + dt_ov_dz);
+    Alpha_SM_B    = 2.0                     * factor;
+    Beta_SM_B     = - (cos(theta)-dt_ov_dz) * factor;
+    Delta_SM_B    = - (sin(theta)+dt_ov_dx) * factor;
+    Epsilon_SM_B  = - (sin(theta)-dt_ov_dx) * factor;
+    Zeta_SM_B     = - dt_ov_dy              * factor;
+    Eta_SM_B      =   dt_ov_dy              * factor;
     
+#ifdef _PATCH3D_TODO
     // Top boundary
     theta  = M_PI;
     factor = 1.0 / (cos(theta) - dt_ov_dz);
@@ -454,15 +456,37 @@ void ElectroMagnBC3D_SM::apply_zmin(ElectroMagn* EMfields, double time_dual, Pat
         
         // Static cast of the fields
         Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
-        //Field3D* Ey3D = static_cast<Field3D*>(EMfields->Ey_);
-        Field3D* Ez3D = static_cast<Field3D*>(EMfields->Ez_);
+        Field3D* Ey3D = static_cast<Field3D*>(EMfields->Ey_);
+        //Field3D* Ez3D = static_cast<Field3D*>(EMfields->Ez_);
         Field3D* Bx3D = static_cast<Field3D*>(EMfields->Bx_);
         Field3D* By3D = static_cast<Field3D*>(EMfields->By_);
         Field3D* Bz3D = static_cast<Field3D*>(EMfields->Bz_);
-        
-#ifdef _PATCH3D_TODO
-#endif
 
+        // for Bx^(p,d,d) 
+        for (unsigned int i=0 ; i<nx_p ; i++) {
+             for (unsigned int j=0 ; j<ny_d ; j++) {
+
+                 (*Bx3D)(i,j,0) = Alpha_SM_B   * (*Ey3D)(i,j,0)
+                 +              Beta_SM_B    *( (*Bx3D)(i,j,1)-(*Bx_zvalmin)(i,j))
+                 +              Delta_SM_B   *( (*Bz3D)(i+1,j,0)-(*Bz_zvalmin)(i+1,j) )
+                 +              Epsilon_SM_B *( (*Bz3D)(i,j,0)-(*Bz_zvalmin)(i,j) )
+                 +              (*Bx_zvalmin)(i,j);
+             }// j  ---end compute Bx
+         }//i  ---end compute Bx
+
+        // for By^(d,p,d)
+        for (unsigned int i=0 ; i<nx_d ; i++) {
+             for (unsigned int j=0 ; j<ny_p ; j++) {
+
+                 (*By3D)(i,j,0) = - Alpha_SM_B   * (*Ex3D)(i,j,0)
+                 +              Beta_SM_B    *( (*By3D)(i,j,1)-(*By_zvalmin)(i,j))
+                 +              Zeta_SM_B   *( (*Bz3D)(i,j+1,0)-(*Bz_zvalmin)(i,j+1) )
+                 +              Eta_SM_B *( (*Bz3D)(i,j,0)-(*Bz_zvalmin)(i,j) )
+                 +              (*By_zvalmin)(i,j);
+
+             }// j  ---end compute By
+         }//i  ---end compute By
+        
     } //if Bottom
     
 }
