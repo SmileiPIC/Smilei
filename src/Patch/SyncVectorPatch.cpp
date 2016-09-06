@@ -124,14 +124,14 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
 
         if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[0][0]){
-            //The patch on my left belongs to the same MPI process than I.
+            //The patch to the west belongs to the same MPI process than I.
             pt1 = &(*fields[vecPatches(ipatch)->neighbor_[0][0]-h0])(n_space[0]*ny_*nz_);
             pt2 = &(*fields[ipatch])(0);
+            //Sum 2 ==> 1
             for (unsigned int i = 0; i < gsp[0]* ny_*nz_ ; i++) pt1[i] += pt2[i];
+            //Copy back the results to 2
             memcpy( pt2, pt1, gsp[0]*ny_*nz_*sizeof(double)); 
-                    
         }
-
     }
 
     // Sum per direction :
@@ -155,7 +155,7 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
         for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
 
             if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[1][0]){
-                //The patch below me belongs to the same MPI process than I.
+                //The patch to the south belongs to the same MPI process than I.
                 pt1 = &(*fields[vecPatches(ipatch)->neighbor_[1][0]-h0])(n_space[1]*nz_);
                 pt2 = &(*fields[ipatch])(0);
                 for (unsigned int j = 0; j < nx_ ; j++){
@@ -183,8 +183,25 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
 
         // iDim = 2 sync
         if (fields[0]->dims_.size()>2) {
-#ifdef _PATCH3D_TODO
-#endif
+            gsp[2] = 1+2*oversize[2]+fields[0]->isDual_[2]; //Ghost size primal
+            #pragma omp for schedule(runtime) private(pt1,pt2)
+            for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
+
+                if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[2][0]){
+                    //The patch below me belongs to the same MPI process than I.
+                    pt1 = &(*fields[vecPatches(ipatch)->neighbor_[2][0]-h0])(n_space[2]);
+                    pt2 = &(*fields[ipatch])(0);
+                    for (unsigned int j = 0; j < nx_*ny_ ; j++){
+                        for (unsigned int i = 0; i < gsp[2] ; i++){
+                            pt1[i] += pt2[i];
+                            pt2[i] =  pt1[i];
+                        }
+                        pt1 += nz_;
+                        pt2 += nz_;
+                    }
+                }
+            }
+
             // Sum per direction :
             //   - iDim = 2, complete non local sync through MPI
             for (int iDim=2;iDim<3;iDim++) {
