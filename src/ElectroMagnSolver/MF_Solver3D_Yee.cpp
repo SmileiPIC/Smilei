@@ -27,9 +27,7 @@ void MF_Solver3D_Yee::operator() ( ElectroMagn* fields )
     for (unsigned int i=0 ; i<nx_p;  i++) {
         for (unsigned int j=1 ; j<ny_d-1 ; j++) {
             for (unsigned int k=1 ; k<nz_d-1 ; k++) {
-#ifdef _PATCH3D_TODO
-                (*Bx3D)(i,j,k) -= ;
-#endif
+                (*Bx3D)(i,j,k) += -dt_ov_dy * ( (*Ez3D)(i,j,k) - (*Ez3D)(i,j-1,k) ) + dt_ov_dz * ( (*Ey3D)(i,j,k) - (*Ey3D)(i,j,k-1) );
             }
         }
     }
@@ -38,9 +36,7 @@ void MF_Solver3D_Yee::operator() ( ElectroMagn* fields )
     for (unsigned int i=1 ; i<nx_d-1 ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
             for (unsigned int k=1 ; k<nz_d-1 ; k++) {
-#ifdef _PATCH3D_TODO
-                (*By3D)(i,j,k) += ;
-#endif
+                (*By3D)(i,j,k) += -dt_ov_dz * ( (*Ex3D)(i,j,k) - (*Ex3D)(i,j,k-1) ) + dt_ov_dx * ( (*Ez3D)(i,j,k) - (*Ez3D)(i-1,j,k) );
             }
         }
     }
@@ -49,9 +45,7 @@ void MF_Solver3D_Yee::operator() ( ElectroMagn* fields )
     for (unsigned int i=1 ; i<nx_d-1 ; i++) {
         for (unsigned int j=1 ; j<ny_d-1 ; j++) {
             for (unsigned int k=0 ; k<nz_p ; k++) {
-#ifdef _PATCH3D_TODO
-                (*Bz3D)(i,j) += ;
-#endif
+                (*Bz3D)(i,j,k) += -dt_ov_dx * ( (*Ey3D)(i,j,k) - (*Ey3D)(i-1,j,k) ) + dt_ov_dy * ( (*Ex3D)(i,j,k) - (*Ex3D)(i,j-1,k) );
             }
         }
     }
