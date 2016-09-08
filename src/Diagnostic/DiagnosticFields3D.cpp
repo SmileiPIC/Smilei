@@ -104,7 +104,8 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, Patch* 
     H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset2, NULL, count2, block2);
     // Define space in memory for re-writing
     memspace = H5Screate_simple(3, block2, NULL);
-    data_rewrite.resize( block2[0]*block2[1]*block2[2] );
+    data_rewrite.resize( block2[0]*block2[1]*block2[2], -100 );
+    
     
     tmp_dset_id=0;
 }
@@ -207,7 +208,7 @@ void DiagnosticFields3D::writeField( hid_t dset_id, int timestep ) {
     //cout << "write_sizez "  << write_sizez  << endl;
     //cout << "write_sizeyz " << write_sizeyz << endl;
 
-
+    //cout << rewrite_npatchx << " " << rewrite_npatchy << " " << rewrite_npatchz << endl;
     //MESSAGE( "Before pre-processing loop, rewrite_npatch = " << rewrite_npatch );
     read_position = 0;
     for( unsigned int h=0; h<rewrite_npatch; h++ ) {
@@ -215,10 +216,15 @@ void DiagnosticFields3D::writeField( hid_t dset_id, int timestep ) {
         write_position =    (rewrite_patches_z[h]-rewrite_zmin)*(patch_size[2]-1) 
             + write_sizez *((rewrite_patches_y[h]-rewrite_ymin)*(patch_size[1]-1))
             + write_sizeyz*((rewrite_patches_x[h]-rewrite_xmin)*(patch_size[0]-1));
-        //cout << "write_position 0 =" << write_position  << endl;
+//        cout << "delta Z " << (rewrite_patches_z[h]-rewrite_zmin)*(patch_size[2]-1) <<endl;
+//        cout << "delta Y " << write_sizez *((rewrite_patches_y[h]-rewrite_ymin)*(patch_size[1]-1)) <<endl;
+//        cout << "delta X " << write_sizeyz*((rewrite_patches_x[h]-rewrite_xmin)*(patch_size[0]-1)) <<endl;
+//        cout << "write_position 0 =" << write_position  << endl;
         //cout << "read_position 0 =" << read_position  << endl;
+        int write_position0 = write_position;
 
         write_skip_z = (rewrite_npatchz - 1)*(patch_size[2]-1);
+        //write_skip_y =  write_sizeyz - ( rewrite_npatchz*(patch_size[2]-1) + ((rewrite_zmin==0)?1:0) )*(patch_size[1]-1)-(patch_size[2]);
         write_skip_y = 0;
 
 
@@ -228,6 +234,8 @@ void DiagnosticFields3D::writeField( hid_t dset_id, int timestep ) {
         sy = patch_size[1];
         sz = patch_size[2];
 
+        //cout << h << " " << rewrite_patches_x[h] << " " << rewrite_patches_y[h] << " " << rewrite_patches_z[h] << endl;
+
         if( rewrite_patches_z[h]!=0 ) {
             read_skip++;
             if( rewrite_zmin==0 ) {
@@ -236,16 +244,27 @@ void DiagnosticFields3D::writeField( hid_t dset_id, int timestep ) {
             } 
             sz--;
         }
+        //else if ()
         //cout << "write_position 1 =" << write_position  << endl;
         //cout << "read_position 1 =" << read_position  << endl;
         if( rewrite_patches_y[h]!=0 ) {
             read_skipZ = patch_size[2];
             if( rewrite_ymin==0 ) {
                 write_position += write_sizez;
+                //cout << "Set in rewrite_ymin==0" << endl;
                 write_skip_y    = write_sizeyz - ( rewrite_npatchz*(patch_size[2]-1) + ((rewrite_zmin==0)?1:0) )*(patch_size[1]-1);
-            } 
+            }
             sy--;
         }
+        else if (rewrite_npatchy!=1) { // solve 1D decomp / Y
+            /*cout << "Set in rewrite_npatchy!=1" << endl;
+            cout << " write_sizeyz = " << write_sizeyz << "\t rewrite_npatchz = "<< rewrite_npatchz << "\t patch_size[2] " << patch_size[2] << endl;
+            cout << " (rewrite_zmin==0)?1:0 = " << ((rewrite_zmin==0)?1:0) << endl;
+            cout << " (patch_size[1]-1) " << (patch_size[1]-1) << endl;
+            cout << " (patch_size[2])<< " <<  (patch_size[2]) << endl;*/
+            write_skip_y =  write_sizeyz - ( rewrite_npatchz*(patch_size[2]-1) + ((rewrite_zmin==0)?1:0) )*(patch_size[1]-1)-(patch_size[2]);
+        }
+        
         //cout << "write_position 2 =" << write_position  << endl;
         //cout << "read_position 2 =" << read_position  << endl;
         if( rewrite_patches_x[h]!=0 ) {
@@ -256,22 +275,19 @@ void DiagnosticFields3D::writeField( hid_t dset_id, int timestep ) {
         //cout << "write_position 3 =" << write_position  << endl;
         //cout << "read_position 3 =" << read_position  << endl;
         //MESSAGE( "Before data_rewrite" );
-
+        write_skip_y = write_sizeyz;// - (patch_size[1]-1)*(patch_size[2]-1);
         //cout << "WRITE SKIP = " << write_skip_y << " " << write_skip_z << endl;
+        //cout << " write_position = " << write_position  << endl;
 
-        unsigned int localmax(0);
-        unsigned int localmin(10000000);
-        unsigned int rlocalmax(0);
-        unsigned int rlocalmin(10000000);
         for( unsigned int ix=0; ix<sx; ix++ ) {
             for( unsigned int iy=0; iy<sy; iy++ ) {
                 for( unsigned int iz=0; iz<sz; iz++ ) {
                     //cout << ix << " " << iy << " " << iz << " write @ " << write_position << endl;
-                    data_rewrite[write_position] = data_reread[read_position];
-                    if (write_position > localmax) localmax = write_position;
-                    if (write_position < localmin) localmin = write_position;
-                    if (read_position > rlocalmax) rlocalmax = read_position;
-                    if (read_position < rlocalmin) rlocalmin = read_position;
+                    //if ((h==0) &&(ix<2)&&(iy<2)) {
+                    //if ((h==7)) {
+                        //cout << "write_position = " << write_position << endl;
+                        data_rewrite[write_position] = 10*h+1;//data_reread[read_position];
+                        //}
                     read_position ++;
                     write_position++;
 
@@ -280,10 +296,9 @@ void DiagnosticFields3D::writeField( hid_t dset_id, int timestep ) {
                 write_position += write_skip_z;
             }
             read_position  += read_skipZ; // 0/n_space[2]
-            write_position += write_skip_y;
+            //write_position += write_skip_y;
+            write_position = write_position0+ix*write_skip_y;
         }
-    //    cout << "Re-processing done, max write_position = " << localmax << " - localmin : " << localmin << endl;
-    //    cout << "Re-processing done, max read_position = " << rlocalmax << " - localmin : " << rlocalmin << endl;
     }
 
     // Rewrite the file with the previously defined partition
