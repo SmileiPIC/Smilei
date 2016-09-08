@@ -207,11 +207,9 @@ void DiagnosticFields3D::writeField( hid_t dset_id, int timestep ) {
     read_position = 0;
     for( unsigned int h=0; h<rewrite_npatch; h++ ) {
 
-        write_position =    (rewrite_patches_z[h]-rewrite_zmin)*(patch_size[2]-1) 
+        int write_position0 =    (rewrite_patches_z[h]-rewrite_zmin)*(patch_size[2]-1) 
             + write_sizez *((rewrite_patches_y[h]-rewrite_ymin)*(patch_size[1]-1))
             + write_sizeyz*((rewrite_patches_x[h]-rewrite_xmin)*(patch_size[0]-1));
-
-        int write_position0 = write_position;
 
         write_skip_z = (rewrite_npatchz - 1)*(patch_size[2]-1);
         write_skip_y = write_sizeyz;
@@ -226,7 +224,7 @@ void DiagnosticFields3D::writeField( hid_t dset_id, int timestep ) {
         if( rewrite_patches_z[h]!=0 ) {
             read_skip++;
             if( rewrite_zmin==0 ) {
-                write_position++;
+                write_position0++;
                 write_skip_z++;
             } 
             sz--;
@@ -234,17 +232,18 @@ void DiagnosticFields3D::writeField( hid_t dset_id, int timestep ) {
         if( rewrite_patches_y[h]!=0 ) {
             read_skipZ = patch_size[2];
             if( rewrite_ymin==0 ) {
-                write_position += write_sizez;
+                write_position0 += write_sizez;
             }
             sy--;
         }
         
         if( rewrite_patches_x[h]!=0 ) {
             read_position += patch_size[1]*patch_size[2];
-            if( rewrite_xmin==0 ) write_position += write_sizeyz;
+            if( rewrite_xmin==0 ) write_position0 += write_sizeyz;
             sx--;
         }
-
+        
+        write_position = write_position0;
         for( unsigned int ix=0; ix<sx; ix++ ) {
             for( unsigned int iy=0; iy<sy; iy++ ) {
                 for( unsigned int iz=0; iz<sz; iz++ ) {
