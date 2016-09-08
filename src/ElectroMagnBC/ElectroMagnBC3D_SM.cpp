@@ -249,7 +249,7 @@ void ElectroMagnBC3D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
                  for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
                      byW += vecLaser[ilaser]->getAmplitude0(pos, time_dual, j, k);
                  }
-
+                 
                  (*By3D)(0,j,k) = Alpha_SM_W   * (*Ez3D)(0,j,k)
                  +              Beta_SM_W    *( (*By3D)(1,j,k)-(*By_xvalmin)(j,k))
                  +              Gamma_SM_W   * byW
@@ -269,8 +269,9 @@ void ElectroMagnBC3D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
                  // Lasers
                  double bzW = 0.;
                  for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-                     bzW += vecLaser[ilaser]->getAmplitude0(pos, time_dual, j, k);
+                     bzW += vecLaser[ilaser]->getAmplitude1(pos, time_dual, j, k);
                  }
+
                  (*Bz3D)(0,j,k) = - Alpha_SM_W   * (*Ey3D)(0,j,k)
                  +              Beta_SM_W    *( (*Bz3D)(1,j,k)-(*Bz_xvalmin)(j,k))
                  +              Gamma_SM_W   * bzW
@@ -281,7 +282,8 @@ void ElectroMagnBC3D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
              }// k  ---end compute Bz
          }//j  ---end compute Bz
 
-        
+
+ 
     }//if Western
 
 }

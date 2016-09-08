@@ -459,7 +459,6 @@ def LaserGaussian3D( boxSide="west", a0=1., omega=1., focus=None, waist=3., inci
     Zr = omega * waist**2/2.
     phaseZero = 0.
     if incidence_angle == 0.:
-        Y1 = focus[1]
         w  = math.sqrt(1./(1.+(focus[0]/Zr)**2))
         invWaist2 = (w/waist)**2
         coeff = -omega * focus[0] * w**2 / (2.*Zr**2)
