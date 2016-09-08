@@ -17,9 +17,6 @@ public:
     //! Destructor for ElectroMagn3D
     ~ElectroMagn3D();
     
-    // --------------------------------------
-    //  --------- PATCH IN PROGRESS ---------
-    // --------------------------------------
     void initPoisson(Patch *patch);
     double compute_r();
     void compute_Ap(Patch *patch);
@@ -41,10 +38,6 @@ public:
 #ifdef _PATCH3D_TODO
 #endif
 
-    // --------------------------------------
-    //  --------- PATCH IN PROGRESS ---------
-    // --------------------------------------
-    
     //! Method used to solve Maxwell-Ampere equation
     void solveMaxwellAmpere();
 

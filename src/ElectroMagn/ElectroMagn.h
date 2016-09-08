@@ -181,9 +181,6 @@ public:
     //! Method used to sum all species densities and currents to compute the total charge density and currents
     virtual void computeTotalRhoJ() = 0;
     
-    // --------------------------------------
-    //  --------- PATCH IN PROGRESS ---------
-    // --------------------------------------
     virtual void initPoisson(Patch *patch) = 0;
     virtual double compute_r() = 0;
     virtual void compute_Ap(Patch *patch) = 0;
@@ -208,12 +205,6 @@ public:
     Field* r_;
     Field* p_;
     Field* Ap_;
-    
-    // --------------------------------------
-    // --------------------------------------
-    //  --------- PATCH IN PROGRESS ---------
-    // --------------------------------------
-    
     
     //! \todo check time_dual or time_prim (MG)
     //! method used to solve Maxwell's equation (takes current time and time-step as input parameter)
