@@ -142,17 +142,6 @@ void Field3D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim,
     
     //DEBUG(10,"Fields 3D created: " << dims_[0] << "x" << dims_[1] << "x" << dims_[2]);
     globalDims_ = dims_[0]*dims_[1]*dims_[2];
-   
-    for (unsigned int i=0; i<dims_[0]; i++)
-        for (unsigned int j=0; j<dims_[1]; j++)
-            for (unsigned int k=0; k<dims_[2]; k++) {
-                //cout << "k = " <<k << endl;
-                if (j<dims_[1]-4) 
-                    data_3D[i][j][k] = 10.;
-                else
-                    data_3D[i][j][k] = 1.;
-            }
-                        
 
     //isDual_ = isPrimal;
 }

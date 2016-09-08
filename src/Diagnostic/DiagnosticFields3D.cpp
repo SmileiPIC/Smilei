@@ -104,8 +104,8 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, Patch* 
     H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset2, NULL, count2, block2);
     // Define space in memory for re-writing
     memspace = H5Screate_simple(3, block2, NULL);
-    data_rewrite.resize( block2[0]*block2[1]*block2[2], -100 );
-    
+    //data_rewrite.resize( block2[0]*block2[1]*block2[2], -100 );
+    data_rewrite.resize( block2[0]*block2[1]*block2[2] );
     
     tmp_dset_id=0;
 }
@@ -247,7 +247,8 @@ void DiagnosticFields3D::writeField( hid_t dset_id, int timestep ) {
         for( unsigned int ix=0; ix<sx; ix++ ) {
             for( unsigned int iy=0; iy<sy; iy++ ) {
                 for( unsigned int iz=0; iz<sz; iz++ ) {
-                        data_rewrite[write_position] = 10*h+1;//data_reread[read_position];
+                    //data_rewrite[write_position] = 10*h+1;
+                    data_rewrite[write_position] = data_reread[read_position];
                     read_position ++;
                     write_position++;
 
