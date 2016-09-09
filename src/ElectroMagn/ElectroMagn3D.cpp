@@ -384,9 +384,7 @@ void ElectroMagn3D::solveMaxwellAmpere()
     for (unsigned int i=0 ; i<nx_d ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
             for (unsigned int k=0 ; k<nz_p ; k++) {
-#ifdef _PATCH3D_TODO
-                (*Ex3D)(i,j,k) += ;
-#endif
+                (*Ex3D)(i,j,k) += -timestep*(*Jx3D)(i,j,k) + dt_ov_dy * ( (*Bz3D)(i,j+1,k) - (*Bz3D)(i,j,k) ) - dt_ov_dz * ( (*By3D)(i,j,k+1) - (*By3D)(i,j,k) );
             }
         }
     }
@@ -395,9 +393,7 @@ void ElectroMagn3D::solveMaxwellAmpere()
     for (unsigned int i=0 ; i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_d ; j++) {
             for (unsigned int k=0 ; k<nz_p ; k++) {
-#ifdef _PATCH3D_TODO
-                (*Ey3D)(i,j,k) += ;
-#endif
+                (*Ey3D)(i,j,k) += -timestep*(*Jy3D)(i,j,k) - dt_ov_dx * ( (*Bz3D)(i+1,j,k) - (*Bz3D)(i,j,k) ) + dt_ov_dz * ( (*Bx3D)(i,j,k+1) - (*Bx3D)(i,j,k) );
             }
         }
     }
@@ -406,9 +402,7 @@ void ElectroMagn3D::solveMaxwellAmpere()
     for (unsigned int i=0 ;  i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
             for (unsigned int k=0 ; k<nz_d ; k++) {
-#ifdef _PATCH3D_TODO
-                (*Ez3D)(i,j,k) += ;
-#endif
+                (*Ez3D)(i,j,k) += -timestep*(*Jz3D)(i,j,k) + dt_ov_dx * ( (*By3D)(i+1,j,k) - (*By3D)(i,j,k) ) - dt_ov_dy * ( (*Bx3D)(i,j+1,k) - (*Bx3D)(i,j,k) );
             }
         }
     }

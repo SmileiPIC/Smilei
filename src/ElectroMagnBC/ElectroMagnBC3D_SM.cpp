@@ -249,7 +249,7 @@ void ElectroMagnBC3D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
                  for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
                      byW += vecLaser[ilaser]->getAmplitude0(pos, time_dual, j, k);
                  }
-
+                 
                  (*By3D)(0,j,k) = Alpha_SM_W   * (*Ez3D)(0,j,k)
                  +              Beta_SM_W    *( (*By3D)(1,j,k)-(*By_xvalmin)(j,k))
                  +              Gamma_SM_W   * byW
@@ -269,8 +269,9 @@ void ElectroMagnBC3D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
                  // Lasers
                  double bzW = 0.;
                  for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-                     bzW += vecLaser[ilaser]->getAmplitude0(pos, time_dual, j, k);
+                     bzW += vecLaser[ilaser]->getAmplitude1(pos, time_dual, j, k);
                  }
+
                  (*Bz3D)(0,j,k) = - Alpha_SM_W   * (*Ey3D)(0,j,k)
                  +              Beta_SM_W    *( (*Bz3D)(1,j,k)-(*Bz_xvalmin)(j,k))
                  +              Gamma_SM_W   * bzW
@@ -281,7 +282,8 @@ void ElectroMagnBC3D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
              }// k  ---end compute Bz
          }//j  ---end compute Bz
 
-        
+
+ 
     }//if Western
 
 }
@@ -394,7 +396,6 @@ void ElectroMagnBC3D_SM::apply_ymin(ElectroMagn* EMfields, double time_dual, Pat
 
              }// k  ---end compute Bz
          }//i  ---end compute Bz
-
         
     }//if Southern
     
@@ -405,7 +406,7 @@ void ElectroMagnBC3D_SM::apply_ymin(ElectroMagn* EMfields, double time_dual, Pat
 void ElectroMagnBC3D_SM::apply_ymax(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
     if ( patch->isNorthern() ) {
-        
+
         // Static cast of the fields
         Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
         //Field3D* Ey3D = static_cast<Field3D*>(EMfields->Ey_);
@@ -420,13 +421,12 @@ void ElectroMagnBC3D_SM::apply_ymax(ElectroMagn* EMfields, double time_dual, Pat
             
                 (*Bz3D)(i,ny_d-1,k) = Alpha_SM_N   * (*Ex3D)(i,ny_p-1,k)
                 +                   Beta_SM_N    *( (*Bz3D)(i,ny_d-2,k) -(*Bz_yvalmax)(i,k))
-                +                   Delta_SM_N   *( (*By3D)(i,ny_d-1,k+1) -(*By_yvalmax)(i,k+1))
-                +                   Epsilon_SM_N *( (*By3D)(i,ny_d-1,k) -(*By_yvalmax)(i,k))
+                +                   Delta_SM_N   *( (*By3D)(i,ny_p-1,k+1) -(*By_yvalmax)(i,k+1))
+                +                   Epsilon_SM_N *( (*By3D)(i,ny_p-1,k) -(*By_yvalmax)(i,k))
                 +                   (*Bz_yvalmax)(i,k);
             
             }//k  ---end compute Bz
         }//j  ---end compute Bz
-        
         
         // for Bx^(p,d,d)
         for (unsigned int i=0 ; i<nx_p ; i++) {
@@ -441,7 +441,6 @@ void ElectroMagnBC3D_SM::apply_ymax(ElectroMagn* EMfields, double time_dual, Pat
             }//k  ---end compute Bz
         }//j  ---end compute Bz
  
-        
     }//if Northern
     
 }

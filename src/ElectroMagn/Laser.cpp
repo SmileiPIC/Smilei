@@ -92,8 +92,8 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
         
         info << "\t\t" << errorPrefix << ": custom profile" << endl;
         
-        bool space_dims = params.geometry=="3d3v" ? 2 : 1;
-        
+        unsigned int space_dims = (params.geometry=="3d3v" ? 2 : 1);
+ 
         // omega
         info << "\t\t\tomega              : " << omega_value << endl;
         

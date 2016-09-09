@@ -204,6 +204,13 @@ void ElectroMagn::boundaryConditions(int itime, double time_dual, Patch* patch, 
             emBoundCond[3]->apply_ymax(this, time_dual, patch);
         }
     }
+    if (emBoundCond.size()>4) {
+        if (emBoundCond[4]!=NULL) {// <=> if !periodic
+            emBoundCond[4]->apply_zmin(this, time_dual, patch);
+            emBoundCond[5]->apply_zmax(this, time_dual, patch);
+        }
+    }
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

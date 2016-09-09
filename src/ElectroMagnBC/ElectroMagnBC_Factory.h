@@ -131,7 +131,7 @@ public:
                 }
             }
             
-        }//2d3v       
+        }//3d3v       
 
 
         // OTHER GEOMETRIES ARE NOT DEFINED ---
