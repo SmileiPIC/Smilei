@@ -47,8 +47,9 @@ public :
     //! initial energy (kinetic + EM)
     double Energy_time_zero;
     
-    //! energy used for the normalization of energy balance (former total energy)
+    //! energy used for the normalization of energy balance (always uses current energy for normalization)
     double EnergyUsedForNorm;
+    
     
     //! Compute the various scalars when requested
     void compute( Patch* patch, int timestep );

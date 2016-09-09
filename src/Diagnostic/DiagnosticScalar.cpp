@@ -320,30 +320,30 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     // electromagnetic energy injected in the simulation (calculated from Poynting fluxes)
     double Uelm_bnd=0.0;
     
-    for (unsigned int j=0; j<2;j++) {
-        for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {
+    for (unsigned int j=0; j<2;j++) {//directions (west/east, south/north, bottom/top)
+        for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {//axis 0=x, 1=y, 2=z
             
             double poy[2]={EMfields->poynting[j][i],EMfields->poynting_inst[j][i]};
             
-                string name("Poy");
-                switch (i) { // dimension
-                    case 0:
-                        name+=(j==0?"East":"West");
-                        break;
-                    case 1:
-                        name+=(j==0?"South":"North");
-                        break;
-                    case 2:
-                        name+=(j==0?"Bottom":"Top");
-                        break;
-                    default:
-                        break;
-                }
-                append(name,poy[0]);
-                append(name+"Inst",poy[1]);
-                
-                Uelm_bnd += poy[0];
-                
+            string name("Poy");
+            switch (i) { // dimension
+                case 0:
+                    name+=(j==0?"East":"West");
+                    break;
+                case 1:
+                    name+=(j==0?"South":"North");
+                    break;
+                case 2:
+                    name+=(j==0?"Bottom":"Top");
+                    break;
+                default:
+                    break;
+            }
+            append(name,poy[0]);
+            append(name+"Inst",poy[1]);
+            
+            Uelm_bnd += poy[0];
+            
         }// i
     }// j
     
