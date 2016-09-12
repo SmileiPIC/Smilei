@@ -125,21 +125,21 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
         for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
             vecPatches(ipatch)->reallyinitSumField( fields[ipatch], iDim );
 
-    #pragma omp master
+    //#pragma omp master
     {
     for (int iDim=0;iDim<1;iDim++) {
-        //#pragma omp for schedule(static)
+        #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
             vecPatches(ipatch)->initSumField( fields[ipatch], iDim ); // initialize
         }
     
-        //#pragma omp for schedule(static)
+        #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
             vecPatches(ipatch)->finalizeSumField( fields[ipatch], iDim ); // finalize (waitall + sum)
         }
     }
     }
-    #pragma omp barrier
+    //#pragma omp barrier
 
     for (int iDim=0;iDim<1;iDim++)
         #pragma omp for schedule(static)
@@ -169,21 +169,21 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
             for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
                 vecPatches(ipatch)->reallyinitSumField( fields[ipatch], iDim );
 
-        #pragma omp master
+        //#pragma omp master
         {
         for (int iDim=1;iDim<2;iDim++) {
-            //#pragma omp for schedule(static)
+            #pragma omp for schedule(static)
             for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
                 vecPatches(ipatch)->initSumField( fields[ipatch], iDim ); // initialize
             }
 
-            //#pragma omp for schedule(static)
+            #pragma omp for schedule(static)
             for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
                 vecPatches(ipatch)->finalizeSumField( fields[ipatch], iDim ); // finalize (waitall + sum)
             }
         }
         }
-        #pragma omp barrier
+        //#pragma omp barrier
 
         for (int iDim=1;iDim<2;iDim++)
             #pragma omp for schedule(static)
@@ -253,27 +253,27 @@ void SyncVectorPatch::exchange( std::vector<Field*> fields, VectorPatch& vecPatc
 
     } // End for( ipatch )
 
-    #pragma omp master
+    //#pragma omp master
     {
-    //#pragma omp for schedule(static)
+    #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
         vecPatches(ipatch)->initExchange( fields[ipatch], 0 );
 
-    //#pragma omp for schedule(static)
+    #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
         vecPatches(ipatch)->finalizeExchange( fields[ipatch], 0 );
 
     if (fields[0]->dims_.size()>1) {
-        //#pragma omp for schedule(static)
+        #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
             vecPatches(ipatch)->initExchange( fields[ipatch], 1 );
 
-        //#pragma omp for schedule(static)
+        #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
             vecPatches(ipatch)->finalizeExchange( fields[ipatch], 1 );
     }
     }
-    #pragma omp barrier
+    //#pragma omp barrier
 
 }
 
@@ -313,17 +313,17 @@ void SyncVectorPatch::exchange0( std::vector<Field*> fields, VectorPatch& vecPat
 
     } // End for( ipatch )
 
-    #pragma omp master
+    //#pragma omp master
     {
-    //#pragma omp for schedule(static)
+    #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
         vecPatches(ipatch)->initExchange( fields[ipatch], 0 );
 
-    //#pragma omp for schedule(static)
+    #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
         vecPatches(ipatch)->finalizeExchange( fields[ipatch], 0 );
     }
-    #pragma omp barrier
+    //#pragma omp barrier
 
 
 }
@@ -366,17 +366,17 @@ void SyncVectorPatch::exchange1( std::vector<Field*> fields, VectorPatch& vecPat
 
     } // End for( ipatch )
 
-    #pragma omp master
+    //#pragma omp master
     {
-    //#pragma omp for schedule(static)
+    #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
         vecPatches(ipatch)->initExchange( fields[ipatch], 1 );
 
-    //#pragma omp for schedule(static)
+    #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
         vecPatches(ipatch)->finalizeExchange( fields[ipatch], 1 );
     }
-    #pragma omp barrier
+    //#pragma omp barrier
 
 
 }
