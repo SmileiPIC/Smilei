@@ -2319,7 +2319,7 @@ class SaveAs:
 				self.prefix = p.normpath(path)+sep
 				self.suffix = default_extension
 			else:
-				path, base = str(p).split(path)
+				path, base = p.split(path)
 				if p.isdir(path):
 					basesplit = base.rsplit(".",1)
 					self.prefix = path+sep+basesplit[0]
