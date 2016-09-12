@@ -172,27 +172,46 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         if (vecPatches(ipatch)->neighbor_[0][0] != (int)vecPatches(ipatch)->hindex) continue;
             
         //For now also need to update neighbor_, corner_neighbor and their MPI counterparts even if these will be obsolete eventually.
-        vecPatches(ipatch)->corner_neighbor_[1][0]= vecPatches(ipatch)->neighbor_[1][0];
+        //vecPatches(ipatch)->corner_neighbor_[1][0]= vecPatches(ipatch)->neighbor_[1][0]; //useless
         vecPatches(ipatch)->neighbor_[1][0]=        vecPatches(ipatch)->corner_neighbor_[0][0];
 
-
-        vecPatches(ipatch)->corner_neighbor_[1][1]= vecPatches(ipatch)->neighbor_[1][1];
+        //vecPatches(ipatch)->corner_neighbor_[1][1]= vecPatches(ipatch)->neighbor_[1][1]; //useless
         vecPatches(ipatch)->neighbor_[1][1]=        vecPatches(ipatch)->corner_neighbor_[0][1];
 
+        if (params.nDim_field == 3) {
+            vecPatches(ipatch)->neighbor_[2][0]=    vecPatches(ipatch)->corner_neighbor_[1][0];
+            vecPatches(ipatch)->neighbor_[2][1]=    vecPatches(ipatch)->corner_neighbor_[1][1];
+        }
 
         //Compute missing part of the new neighborhood tables.
         vecPatches(ipatch)->Pcoordinates[0]--;
 
-        int xcall = vecPatches(ipatch)->Pcoordinates[0]-1;
-        int ycall = vecPatches(ipatch)->Pcoordinates[1]-1;
-        if (params.bc_em_type_x[0]=="periodic" && xcall <0) xcall += (1<<params.mi[0]);
-        if (params.bc_em_type_y[0]=="periodic" && ycall <0) ycall += (1<<params.mi[1]);
-        vecPatches(ipatch)->corner_neighbor_[0][0] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
-        ycall = vecPatches(ipatch)->Pcoordinates[1];
-        vecPatches(ipatch)->neighbor_[0][0] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, vecPatches(ipatch)->Pcoordinates[1]);
-        ycall = vecPatches(ipatch)->Pcoordinates[1]+1;
-        if (params.bc_em_type_y[0]=="periodic" && ycall >= 1<<params.mi[1]) ycall -= (1<<params.mi[1]);
-        vecPatches(ipatch)->corner_neighbor_[0][1] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
+        
+        if (params.nDim_field == 2) {
+
+            int xcall = vecPatches(ipatch)->Pcoordinates[0]-1;
+            int ycall = vecPatches(ipatch)->Pcoordinates[1]-1;
+            if (params.bc_em_type_x[0]=="periodic" && xcall <0) xcall += (1<<params.mi[0]);
+            if (params.bc_em_type_y[0]=="periodic" && ycall <0) ycall += (1<<params.mi[1]);
+            vecPatches(ipatch)->corner_neighbor_[0][0] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
+            ycall = vecPatches(ipatch)->Pcoordinates[1];
+            vecPatches(ipatch)->neighbor_[0][0] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, vecPatches(ipatch)->Pcoordinates[1]);
+            ycall = vecPatches(ipatch)->Pcoordinates[1]+1;
+            if (params.bc_em_type_y[0]=="periodic" && ycall >= 1<<params.mi[1]) ycall -= (1<<params.mi[1]);
+            vecPatches(ipatch)->corner_neighbor_[0][1] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
+
+        } else if (params.nDim_field == 3) {
+
+            int xcall = vecPatches(ipatch)->Pcoordinates[0]-1;
+            int ycall = vecPatches(ipatch)->Pcoordinates[1];
+            int zcall = vecPatches(ipatch)->Pcoordinates[2];
+            vecPatches(ipatch)->corner_neighbor_[0][0] = generalhilbertindex(params.mi[0] , params.mi[1], params.mi[2], xcall, ycall-1, zcall);
+            vecPatches(ipatch)->neighbor_[0][0] =        generalhilbertindex(params.mi[0] , params.mi[1], params.mi[2], xcall, ycall, zcall);
+            vecPatches(ipatch)->corner_neighbor_[0][1] = generalhilbertindex(params.mi[0] , params.mi[1], params.mi[2], xcall, ycall+1, zcall);
+            vecPatches(ipatch)->corner_neighbor_[1][0] = generalhilbertindex(params.mi[0] , params.mi[1], params.mi[2], xcall, ycall, zcall-1);
+            vecPatches(ipatch)->corner_neighbor_[1][1] = generalhilbertindex(params.mi[0] , params.mi[1], params.mi[2], xcall, ycall, zcall+1);
+
+        }
         
     }
     
