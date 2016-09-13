@@ -12,8 +12,6 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
     
     int n_diag_particles = diagId;
     
-    // n_diag_particles ...
-    
     std::vector<Species*>& vecSpecies = patch->vecSpecies;
     
     ostringstream name("");
@@ -462,6 +460,7 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
         for (ipart = 0 ; ipart < npart ; ipart++) {
             ind = index_array[ipart];
             if (ind<0) continue; // skip discarded particles
+            #pragma omp atomic
             data_sum[ind] += data_array[ipart];
         }
         
