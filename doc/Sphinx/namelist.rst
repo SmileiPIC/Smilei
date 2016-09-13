@@ -1550,7 +1550,7 @@ dumps are done::
   This tells :program:`Smilei` where to find dump files for restart.
   If not defined, it does not restart from a previous dump.
   
-  **WARNING:** this path must either absolute or be relative to** ``output_dir``
+  **WARNING:** this path must either absolute or be relative to ``output_dir``
 
 .. py:data:: dump_step
 

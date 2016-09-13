@@ -314,6 +314,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     }
     
     // ------------------------
+    
     // POYNTING-related scalars
     // ------------------------
     
@@ -444,7 +445,7 @@ void DiagnosticScalar::incrementScalar(string my_var, double value, int valIndex
 
 
 void DiagnosticScalar::append(std::string key, double value) {
-    //#pragma omp critical
+    #pragma omp critical
     {
         if ( !defined(key) ) {
             out_key.push_back(key  );
@@ -458,7 +459,7 @@ void DiagnosticScalar::append(std::string key, double value) {
 
 
 void DiagnosticScalar::append(std::string key, double value, int valIndex) {
-    //#pragma omp critical
+    #pragma omp critical
     {
         if ( !defined(key) ) {
             out_key.push_back(key  );
@@ -474,7 +475,7 @@ void DiagnosticScalar::append(std::string key, double value, int valIndex) {
 
 
 void DiagnosticScalar::prepend(std::string key, double value) {
-    //#pragma omp critical
+    #pragma omp critical
     {
         if ( !defined(key) ) {
             out_key  .insert(out_key  .begin(), key  );

@@ -258,18 +258,20 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     
     // Global diags: scalars + particles
     timer[3].restart();
-    #pragma omp single
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
-        if( globalDiags[idiag]->prepare( itime ) ) {
+        #pragma omp single
+        globalDiags[idiag]->theTimeIsNow = globalDiags[idiag]->prepare( itime );
+        #pragma omp barrier
+        if( globalDiags[idiag]->theTimeIsNow ) {
             // All patches run
-            //#pragma omp for 
+            #pragma omp for 
             for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
                 globalDiags[idiag]->run( (*this)(ipatch), itime );
             // MPI procs gather the data and compute
-            //#pragma omp single
+            #pragma omp single
             smpi->computeGlobalDiags( globalDiags[idiag], itime);
             // MPI master writes
-            //#pragma omp single
+            #pragma omp single
             if ( smpi->isMaster() )
                 globalDiags[idiag]->write( itime );
         }
