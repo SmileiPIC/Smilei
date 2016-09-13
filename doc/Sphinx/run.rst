@@ -86,8 +86,8 @@ administrators.
 
 ----
 
-Debug mode
-^^^^^^^^^^
+Debugging
+^^^^^^^^^
 
 In case of problems, the code can be compiled with additional debugging flags (usual ``-g`` and ``-O0``) and internal 
 checks by compiling it with 
@@ -96,16 +96,14 @@ checks by compiling it with
   
     make config=debug
 
-In might worth noticing that if the code is completely rebuild in debug mode 
-(i.e. you did a ``make clean`` before), the code runs really slow. 
-If you want to check a particular routine inside a particular file for errors, using the 
-above command it is possible to mix the release mode and debug mode (just for the modified files).
+Compiling the whole code with this command will make it very slow to run. 
+But to check only a particular file for errors, first compile the code with `make`, then
+modify the file, and recompile in debug mode.
 
 In debug mode, these C++ macros are activated:
 
-* ``DEBUG("some text" [<< other streamable])`` will generate (for each mpi process) a "text" along with the filename and line number.
-
-* ``HEREIAM("some text" [<< other streamable])`` is similar to ``DEBUG`` but more visible.
+* ``DEBUG("some text" [<< other streamable])``
+* ``HEREIAM("some text" [<< other streamable])``
 
 
 ----
@@ -113,4 +111,4 @@ In debug mode, these C++ macros are activated:
 Reporting bugs
 ^^^^^^^^^^^^^^
 
-To report bugs, please create an issues on the github page: https://github.com/SmileiPIC/Smilei/issues/new
+To report bugs, please create an issues on the `github page <https://github.com/SmileiPIC/Smilei/issues/new>`_ .
