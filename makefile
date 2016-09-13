@@ -117,7 +117,8 @@ clean:
 	@echo "Cleaning $(BUILD_DIR)"
 	$(Q) rm -rf $(BUILD_DIR) 
 	$(Q) rm -rf $(EXEC)-$(VERSION).tgz
-	$(Q) make -C doc clean
+	@echo "Cleaning doc/html"
+	$(Q) rm -rf doc/html
 
 distclean: clean uninstall_python
 	$(Q) rm -f $(EXEC)
@@ -163,7 +164,7 @@ $(EXEC): $(OBJS)
 
 # Avoid to check dependencies and to create .pyh if not necessary
 ifeq ($(filter-out $(wildcard print-*),$(MAKECMDGOALS)),) 
-    FILTER_RULES=clean distclean help env obsolete debug scalasca doc sphinx tar install_python uninstall_python
+    FILTER_RULES=clean distclean help env obsolete debug scalasca doc doxygen sphinx tar install_python uninstall_python
     ifeq ($(filter $(FILTER_RULES),$(MAKECMDGOALS)),) 
         # Let's try to make the next lines clear: we include $(DEPS) and pygenerator
         -include $(DEPS) pygenerator
@@ -175,12 +176,24 @@ endif
 # these are not file-related rules
 .PHONY: pygenerator $(FILTER_RULES)
 
-doc:
-	make -C doc all
+doc: sphinx doxygen
 
 sphinx:
-	make -C doc/Sphinx html
+	@echo "Compiling sphinx documentation in doc/html/Sphinx/html"
+	$(Q) if type "sphinx-build" >/dev/null 2>&1; then\
+		make -C doc/Sphinx BUILDDIR=../html/Sphinx html;\
+	else \
+		echo "Cannot build Sphinx doc because Sphinx is not installed";\
+	fi
 	
+doxygen:
+	@echo "Compiling doxygen documentation in doc/html/Doxygen/html"
+	$(Q) if type "doxygen" >/dev/null 2>&1; then\
+		mkdir -p doc/html/Doxygen; (echo "PROJECT_NUMBER=${VERSION}\nOUTPUT_DIRECTORY=doc/html/Doxygen"; cat doc/Doxygen/smilei.dox) | doxygen - ;\
+	else \
+		echo "Cannot build doxygen doc because doxygen is not installed";\
+	fi	
+
 tar:
 	@echo "Creating archive $(EXEC)-$(VERSION).tgz"
 	$(Q) git archive -o $(EXEC)-$(VERSION).tgz --prefix $(EXEC)-$(VERSION)/ HEAD
