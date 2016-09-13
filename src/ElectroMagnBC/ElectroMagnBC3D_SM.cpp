@@ -272,6 +272,12 @@ void ElectroMagnBC3D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
                      bzW += vecLaser[ilaser]->getAmplitude1(pos, time_dual, j, k);
                  }
 
+                 //Forcing because 3D profile fails
+                 for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
+                     bzW += 2*exp( - (time_dual-2*19.80)*(time_dual-2*19.80)/(19.80*19.80) )*exp( -( (pos[0]-60)*(pos[0]-60)+ (pos[1]-60)*(pos[1]-60))/ (26.16*26.16) )
+                           * sin(time_dual - 2*19.80);
+                 }
+
                  (*Bz3D)(0,j,k) = - Alpha_SM_W   * (*Ey3D)(0,j,k)
                  +              Beta_SM_W    *( (*Bz3D)(1,j,k)-(*Bz_xvalmin)(j,k))
                  +              Gamma_SM_W   * bzW
