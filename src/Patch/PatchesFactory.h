@@ -60,9 +60,6 @@ public:
         
         vecPatches.createDiags( params, smpi );
         
-        MESSAGE(1,"Initializing diagnostics");
-        vecPatches.initAllDiags( params, smpi );
-        
         // Figure out if there are antennas
         vecPatches.nAntennas = vecPatches(0)->EMfields->antennas.size();
         vecPatches.initExternals( params );

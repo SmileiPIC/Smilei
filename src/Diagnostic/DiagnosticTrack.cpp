@@ -173,6 +173,17 @@ void DiagnosticTrack::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatc
         nbrParticles_ = allNbrParticles[sz-1];
         
         IDs_done = true;
+        
+    } else {
+            
+        // Number of particles in current MPI
+        int localNbrParticles = 0;
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+            localNbrParticles += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
+        
+        // Total number of particles
+        MPI_Allreduce( &localNbrParticles, &nbrParticles_, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+        
     }
     
     // define the initial arrays sizes
