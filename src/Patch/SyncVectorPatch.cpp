@@ -266,7 +266,7 @@ void SyncVectorPatch::exchange( std::vector<Field*> fields, VectorPatch& vecPatc
                     for (unsigned int j = 0 ; j < oversize[1]*nz_ ; j++ ){
                         // Rewrite with memcpy ?
                         pt2[i+j] = pt1[i+j] ;
-                        pt1[i+j+gsp[1]] = pt2[i+j+gsp[1]] ;
+                        pt1[i+j+gsp[1]*nz_] = pt2[i+j+gsp[1]*nz_] ;
                     } 
                 } 
             } // End if ( MPI_me_ == MPI_neighbor_[1][0] ) 
