@@ -238,17 +238,17 @@ void ElectroMagnBC3D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
         vector<double> pos(2);
 
         // for By^(d,p,d) 
-        pos[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy;
+        pos[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy - dy;
         for (unsigned int j=0 ; j<ny_p ; j++) {
              pos[0] += dy;
-             pos[1] = patch->getDomainLocalMin(2) - (0.5 + EMfields->oversize[2])*dz;
+             pos[1] = patch->getDomainLocalMin(2) - (0.5 + EMfields->oversize[2])*dz - dz;
              for (unsigned int k=0 ; k<nz_d ; k++) {
                  pos[1] += dz;
                  // Lasers
                  double byW = 0.;
-                 for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-                     byW += vecLaser[ilaser]->getAmplitude0(pos, time_dual, j, k);
-                 }
+                 //for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
+                 //    byW += vecLaser[ilaser]->getAmplitude0(pos, time_dual, j, k);
+                 //}
                  
                  (*By3D)(0,j,k) = Alpha_SM_W   * (*Ez3D)(0,j,k)
                  +              Beta_SM_W    *( (*By3D)(1,j,k)-(*By_xvalmin)(j,k))
@@ -268,9 +268,9 @@ void ElectroMagnBC3D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
                  pos[1] += dz;
                  // Lasers
                  double bzW = 0.;
-                 for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-                     bzW += vecLaser[ilaser]->getAmplitude1(pos, time_dual, j, k);
-                 }
+                 //for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
+                 //    bzW += vecLaser[ilaser]->getAmplitude1(pos, time_dual, j, k);
+                 //}
 
                  //Forcing because 3D profile fails
                  for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
