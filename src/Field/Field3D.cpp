@@ -79,6 +79,7 @@ void Field3D::allocateDims(std::vector<unsigned int> dims ) {
         for (unsigned int j=0; j<dims_[1]; j++)
         {
             data_3D[i][j] = data_ + i*dims_[1]*dims_[2] + j*dims_[2];
+            for (unsigned int k=0; k<dims_[2]; k++) data_3D[i][j][k] = 0.0;
         }
     }//i
     
@@ -137,6 +138,7 @@ void Field3D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim,
         for (unsigned int j=0; j<dims_[1]; j++)
         {
             data_3D[i][j] = data_ + i*dims_[1]*dims_[2] + j*dims_[2];
+            for (unsigned int k=0; k<dims_[2]; k++) data_3D[i][j][k] = 0.0;
         }
     }//i
     

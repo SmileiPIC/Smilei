@@ -467,7 +467,7 @@ def LaserGaussian3D( boxSide="west", a0=1., omega=1., focus=None, waist=3., inci
         def phase(y,z):
             return coeff * ( (y-focus[1])**2 + (z-focus[2])**2 )
     else:
-        print "Not implemented yet"
+        raise Exception("3D laser not implemented with non-zero incidence angle yet")
         #invZr  = math.sin(incidence_angle) / Zr
         #invZr2 = invZr**2
         #invZr3 = (math.cos(incidence_angle) / Zr)**2 / 2.
