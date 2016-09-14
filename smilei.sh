@@ -37,9 +37,10 @@ while [[ $# -ge 1 ]]; do
         break
     fi
     # Try to convert to absolute path
-    absnml="$(cd "$(dirname "$nml")" && pwd)/$(basename "$arg")"
+    absnml="$(cd "$(dirname "$arg")" && pwd)/$(basename "$arg")"
     # If file, then add it as namelist
     if [ -f $absnml ]; then
+        echo "Namelist found: "$absnml
         namelists+=("`basename $absnml`")
         namelist_files+=("$absnml")
         # Save the first namelist

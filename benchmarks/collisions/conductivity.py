@@ -1,5 +1,5 @@
 
-execfile("../../scripts/Diagnostics.py")
+from Smilei import *
 execfile("resparis.py")
 import numpy as np
 import matplotlib.pyplot as plt

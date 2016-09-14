@@ -31,6 +31,7 @@
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
 #include "DiagnosticFactory.h"
+#include "CollisionsFactory.h"
 
 using namespace std;
 
@@ -130,7 +131,7 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
     Proj       = ProjectorFactory::create(params, this);    // + patchId -> idx_domain_begin (now = ref smpi)
     
     // Initialize the collisions
-    vecCollisions = Collisions::create(params, this, vecSpecies);
+    vecCollisions = CollisionsFactory::create(params, this, vecSpecies);
     
     // Initialize the particle walls
     partWalls = new PartWalls(params, this);
@@ -155,7 +156,7 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
     Proj       = ProjectorFactory::create(params, this);
     
     // clone the collisions
-    vecCollisions = Collisions::clone(patch->vecCollisions, params);
+    vecCollisions = CollisionsFactory::clone(patch->vecCollisions, params);
     
     // clone the particle walls
     partWalls = new PartWalls(patch->partWalls, this);

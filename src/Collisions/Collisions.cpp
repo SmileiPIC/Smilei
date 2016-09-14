@@ -27,7 +27,8 @@ Collisions::Collisions(
     int Z,
     bool ionizing,
     int nDim,
-    double referenceAngularFrequency_SI
+    double referenceAngularFrequency_SI,
+    string filename
 ) :
 n_collisions    (n_collisions    ),
 species_group1  (species_group1  ),
@@ -36,7 +37,7 @@ coulomb_log     (coulomb_log     ),
 intra_collisions(intra_collisions),
 debug_every     (debug_every     ),
 atomic_number   (Z               ),
-filename("")
+filename(filename)
 {
     // Create the ionization object
     if( ionizing ) {
@@ -45,13 +46,6 @@ filename("")
         Ionization = new CollisionalNoIonization();
     }
     
-    // If debugging log requested
-    if( debug_every>0 ) {
-        // Build the file name
-        ostringstream mystream("");
-        mystream << "Collisions" << n_collisions << ".h5";
-        filename = mystream.str();
-    }
 }
 
 
@@ -80,187 +74,6 @@ Collisions::~Collisions()
 {
     delete Ionization;
 }
-
-
-// Reads the input file and creates the Collisions objects accordingly
-vector<Collisions*> Collisions::create(Params& params, Patch* patch, vector<Species*>& vecSpecies)
-{
-    vector<Collisions*> vecCollisions;
-    
-    vector<string> sg1, sg2;
-    vector<vector<unsigned int>> sgroup;
-    double clog;
-    bool intra, debye_length_required = false, ionizing;
-    int debug_every, Z, Z0, Z1;
-    ostringstream mystream;
-    Species *s0, *s;
-    
-    // Needs referenceAngularFrequency_SI to be defined
-    unsigned int numcollisions=PyTools::nComponents("Collisions");
-    if (numcollisions > 0)
-        if (params.referenceAngularFrequency_SI <= 0.)
-            ERROR("The parameter `referenceAngularFrequency_SI` needs to be defined and positive to compute collisions");
-    
-    // Loop over each binary collisions group and parse info
-    for (unsigned int n_collisions = 0; n_collisions < numcollisions; n_collisions++) {
-        
-        MESSAGE(1,"Parameters for collisions #" << n_collisions << " :");
-        
-        // Read the input file by searching for the keywords "species1" and "species2"
-        // which are the names of the two species that will collide
-        sg1.resize(0);
-        sg2.resize(0);
-        PyTools::extract("species1",sg1,"Collisions",n_collisions);
-        PyTools::extract("species2",sg2,"Collisions",n_collisions);
-        
-        // Obtain the lists of species numbers from the lists of species names.
-        sgroup.resize(2);
-        sgroup[0] = params.FindSpecies(vecSpecies, sg1);
-        sgroup[1] = params.FindSpecies(vecSpecies, sg2);
-        
-        // Each group of species sgroup[0] and sgroup[1] must not be empty
-        if (sgroup[0].size()==0) ERROR("In collisions #" << n_collisions << ": No valid `species1`");
-        if (sgroup[1].size()==0) ERROR("In collisions #" << n_collisions << ": No valid `species2`");
-        
-        // sgroup[0] and sgroup[1] can be equal, but cannot have common species if they are not equal
-        if (sgroup[0] != sgroup[1]) {
-            for (unsigned int i0=0; i0<sgroup[0].size(); i0++) {
-                for (unsigned int i1=0; i1<sgroup[1].size(); i1++) {
-                    if (sgroup[0][i0] == sgroup[1][i1])
-                        ERROR("In collisions #" << n_collisions << ": species #" << sgroup[0][i0]
-                            << " cannot collide with itself");
-                }
-            }
-            intra = false;
-        } else {
-            intra = true;
-        }
-        
-        // Coulomb logarithm (if negative or unset, then automatically computed)
-        clog = 0.; // default
-        PyTools::extract("coulomb_log",clog,"Collisions",n_collisions);
-        if (clog <= 0.) debye_length_required = true; // auto coulomb log requires debye length
-        
-        // Number of timesteps between each debug output (if 0 or unset, no debug)
-        debug_every = 0; // default
-        PyTools::extract("debug_every",debug_every,"Collisions",n_collisions);
-        
-        // Collisional ionization
-        ionizing = false; Z = 0; // default
-        PyTools::extract("ionizing",ionizing,"Collisions",n_collisions);
-        if( ionizing ) {
-            if( intra )
-                ERROR("In collisions #" << n_collisions << ": cannot ionize with intra-collisions");
-            
-            for (int g=0; g<2; g++) { // do sgroup[0], then sgroup[1]
-                s0 = vecSpecies[sgroup[g][0]]; // first species of this group
-                for (unsigned int i=1; i<sgroup[g].size(); i++) { // loop other species of same group
-                    s = vecSpecies[sgroup[g][i]]; // current species
-                    if( s->mass != s0->mass )
-                        ERROR("In collisions #" << n_collisions << ": species in group `species"
-                            << g+1 << "` must all have same masses for ionization");
-                    
-                    if( s->atomic_number != s0->atomic_number ) {
-                        if( s->atomic_number * s0->atomic_number ==0 ) {
-                            ERROR("In collisions #" << n_collisions << ": species in group `species"
-                            << g+1 << "` cannot be mixed electrons and ions for ionization");
-                        } else {
-                            ERROR("In collisions #" << n_collisions << ": species in group `species"
-                            << g+1 << "` must all have same atomic_number for ionization");
-                        }
-                    }
-                }
-            }
-            // atomic number
-            Z0 = vecSpecies[sgroup[0][0]]->atomic_number;
-            Z1 = vecSpecies[sgroup[1][0]]->atomic_number;
-            Z = (int) ( Z0>Z1 ? Z0 : Z1 );
-            if( Z0*Z1!=0 )
-                ERROR("In collisions #" << n_collisions << ": ionization requires electrons (no or null atomic_number)");
-            if( Z==0 )
-                ERROR("In collisions #" << n_collisions << ": ionization requires ions (atomic_number>0)");
-        }
-        
-        // Print collisions parameters
-        mystream.str(""); // clear
-        mystream << "(" << sgroup[0][0];
-        for (unsigned int rs=1 ; rs<sgroup[0].size() ; rs++) mystream << " " << sgroup[0][rs];
-        if( intra ) {
-            MESSAGE(2,"Intra collisions within species " << mystream.str() << ")");
-        } else {
-            mystream << ") and (" << sgroup[1][0];
-            for (unsigned int rs=1 ; rs<sgroup[1].size() ; rs++) mystream << " " << sgroup[1][rs];
-            MESSAGE(2,"Collisions between species " << mystream.str() << ")");
-        }
-        MESSAGE(2,"Coulomb logarithm: " << clog);
-        if( debug_every>0 ) MESSAGE(2,"Debug every " << debug_every << " timesteps");
-        mystream.str(""); // clear
-        if( ionizing>0 ) MESSAGE(2,"Collisional ionization with atomic number "<<Z);
-        
-        // Add new Collisions objects to vector
-        vecCollisions.push_back(
-            new Collisions(
-                patch,
-                n_collisions,
-                sgroup[0],
-                sgroup[1],
-                clog, intra,
-                debug_every,
-                Z,
-                ionizing,
-                params.nDim_particle,
-                params.referenceAngularFrequency_SI
-            )
-        );
-        
-        // Create debug file
-        if( debug_every>0 ) {
-            string filename = vecCollisions.back()->filename;
-            ifstream file(filename);
-            // Check if file exists
-            if (! file) {
-                // Create the file access protocol for writing in the debug file later
-                hid_t file_access = H5Pcreate(H5P_FILE_ACCESS);
-                H5Pset_fapl_mpio(file_access, MPI_COMM_WORLD, MPI_INFO_NULL);
-                // Create file
-                hid_t fileId = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, file_access);
-                H5Pclose(file_access);
-                // write all parameters as HDF5 attributes
-                H5::attr(fileId, "Version", string(__VERSION));
-                ostringstream mystream("");
-                mystream << sgroup[0][0];
-                for(unsigned int i=1; i<sgroup[0].size(); i++) mystream << "," << sgroup[0][i];
-                H5::attr(fileId, "species1" , mystream.str());
-                mystream.str("");
-                mystream << sgroup[1][0];
-                for(unsigned int i=1; i<sgroup[1].size(); i++) mystream << "," << sgroup[1][i];
-                H5::attr(fileId, "species2" , mystream.str());
-                H5::attr(fileId, "coulomb_log" , clog);
-                H5::attr(fileId, "debug_every"  , debug_every);
-                H5Fclose(fileId);
-            }
-        }
-        
-    }
-    
-    // pass the variable "debye_length_required" into the Collision class
-    Collisions::debye_length_required = debye_length_required;
-    
-    return vecCollisions;
-}
-
-
-// Clone a vector of Collisions objects
-vector<Collisions*> Collisions::clone(vector<Collisions*> vecCollisions, Params& params)
-{
-    vector<Collisions*> newVecCollisions(0);
-    
-    for( unsigned int i=0; i<vecCollisions.size(); i++)
-        newVecCollisions.push_back( new Collisions( vecCollisions[i], params.nDim_particle ) );
-    
-    return newVecCollisions;
-}
-
 
 // Declare other static variables here
 bool   Collisions::debye_length_required;

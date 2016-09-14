@@ -1,4 +1,4 @@
-execfile("../../scripts/Diagnostics.py")
+from Smilei import *
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import kv
