@@ -41,6 +41,8 @@ public :
     
     //! this is the file name
     std::string filename;
+    
+    bool theTimeIsNow;
 
 protected :
     

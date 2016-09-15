@@ -135,24 +135,24 @@ void ElectroMagnBC2D_SM::save_fields_BC2D_Trans(Field* my_field) {
     if (field2D->name=="Bx"){
         // (Bx)^(pd)
         for (unsigned int i=0; i<nx_p; i++) {
-            Bx_xvalmin_Long[i]=(*field2D)(i,0);
-            Bx_xvalmax_Long[i]=(*field2D)(i,ny_d-1);
+            Bx_yvalmin_Trans[i]=(*field2D)(i,0);
+            Bx_yvalmax_Trans[i]=(*field2D)(i,ny_d-1);
         }
     }
     
     if (field2D->name=="By"){
         // (By)^(dp)
         for (unsigned int i=0; i<nx_d; i++) {
-            By_xvalmin_Long[i]=(*field2D)(i,0);
-            By_xvalmax_Long[i]=(*field2D)(i,ny_p-1);
+            By_yvalmin_Trans[i]=(*field2D)(i,0);
+            By_yvalmax_Trans[i]=(*field2D)(i,ny_p-1);
         }
     }
     
     if (field2D->name=="Bz"){
         // (By)^(dd)
         for (unsigned int i=0; i<nx_d; i++) {
-            Bz_xvalmin_Long[i]=(*field2D)(i,0);
-            Bz_xvalmax_Long[i]=(*field2D)(i,ny_d-1);
+            Bz_yvalmin_Trans[i]=(*field2D)(i,0);
+            Bz_yvalmax_Trans[i]=(*field2D)(i,ny_d-1);
         }
     }
     

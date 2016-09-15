@@ -12,8 +12,8 @@ There are several ways to load this module in python.
   
     make install_python
 
-  This has to be done only once, unless you move the smilei directory elsewere.
-  
+  .. note:: This has to be done only once, unless you move the smilei directory elsewere. This command creates a small file in the Python user-site directory. To remove it use the command: ``make uninstall_python``.
+      
   Then, in python, simply run::
   
     from Smilei import *

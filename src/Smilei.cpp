@@ -127,6 +127,9 @@ int main (int argc, char* argv[])
         }
         //smpi->recompute_patch_count( params, vecPatches, restart_time_dual );
         
+        TITLE("Initializing diagnostics");
+        vecPatches.initAllDiags( params, smpi );
+        
     } else {
         
         // Initialize the electromagnetic fields
@@ -159,6 +162,8 @@ int main (int argc, char* argv[])
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
             vecPatches(ipatch)->EMfields->applyExternalFields( vecPatches(ipatch) ); // Must be patch
         
+        TITLE("Initializing diagnostics");
+        vecPatches.initAllDiags( params, smpi );
         TITLE("Running diags at time t = 0");
         vecPatches.runAllDiags(params, smpi, &diag_flag, 0, timer);
         timer[3].reboot();

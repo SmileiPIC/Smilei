@@ -31,6 +31,7 @@
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
 #include "DiagnosticFactory.h"
+#include "CollisionsFactory.h"
 
 using namespace std;
 
@@ -77,9 +78,13 @@ void Patch::initStep1(Params& params)
     nbNeighbors_ = 2;
     neighbor_.resize(nDim_fields_);
     corner_neighbor_.resize(params.nDim_field);
+    send_tags_.resize(nDim_fields_);
+    recv_tags_.resize(nDim_fields_);
     for ( int iDim = 0 ; iDim < nDim_fields_ ; iDim++ ) {
         neighbor_[iDim].resize(2,MPI_PROC_NULL);
         corner_neighbor_[iDim].resize(2,MPI_PROC_NULL);
+        send_tags_[iDim].resize(2,MPI_PROC_NULL);
+        recv_tags_[iDim].resize(2,MPI_PROC_NULL);
     }
     MPI_neighbor_.resize(nDim_fields_);
     for ( int iDim = 0 ; iDim < nDim_fields_; iDim++ ) {
@@ -126,7 +131,7 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
     Proj       = ProjectorFactory::create(params, this);    // + patchId -> idx_domain_begin (now = ref smpi)
     
     // Initialize the collisions
-    vecCollisions = Collisions::create(params, this, vecSpecies);
+    vecCollisions = CollisionsFactory::create(params, this, vecSpecies);
     
     // Initialize the particle walls
     partWalls = new PartWalls(params, this);
@@ -151,7 +156,7 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
     Proj       = ProjectorFactory::create(params, this);
     
     // clone the collisions
-    vecCollisions = Collisions::clone(patch->vecCollisions, params);
+    vecCollisions = CollisionsFactory::clone(patch->vecCollisions, params);
     
     // clone the particle walls
     partWalls = new PartWalls(patch->partWalls, this);
@@ -207,6 +212,13 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
 //
 //        cout << "\n\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[2][0]  << "\t" << "MPI_PROC_NULL" << endl;
     
+
+    for (int iDim=0 ; iDim< neighbor_.size() ; iDim++)
+        for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+            send_tags_[iDim][iNeighbor] = buildtag( hindex, iDim, iNeighbor );
+            recv_tags_[iDim][iNeighbor] = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor );
+        }
+
 } // END updateMPIenv
 
 

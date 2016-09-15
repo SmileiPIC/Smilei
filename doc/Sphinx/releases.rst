@@ -6,15 +6,26 @@ Major releases are available here as well as on the
 For an access to the `developer's Gitlab repository <https://llrgit.in2p3.fr/smilei/smilei>`_,
 you will need to ask for a password first, but the process is fast and straightforward.
 
+----
+
+Future release 3.0
+^^^^^^^^^^^^^^^^^^
+
+In progress ...
+
+Major improvements:
+
+* 3D geometry
+
 
 ----
 
 .. _latestVersion:
 
-Current release 2.2
+Current release 2.3
 ^^^^^^^^^^^^^^^^^^^
 
-**Download**: `Smilei v2.2 <_downloads/smilei-v2.2.tar.gz>`_
+**Download**: `Smilei v2.3 <_downloads/smilei-v2.3.tar.gz>`_
 
 
 ----
@@ -29,7 +40,7 @@ Major improvements:
 * **state-of-the-art** dynamic load balancing
 * full *python* namelist, allowing for complex, user-friendly input
 * external fields and antennas
-* binary coulombian collisions
+* binary Coulomb collisions
 * new diagnostics
 * *python* scripts for post-processing
 

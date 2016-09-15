@@ -127,6 +127,10 @@ class Main(SmileiSingleton):
     timestep = None
     timestep_over_CFL = None
     
+    # Poisson tuning
+    poisson_iter_max = 50000
+    poisson_error_max = 1.e-14
+    
     # Default fields
     maxwell_sol = 'Yee'
     bc_em_type_x = []

@@ -28,8 +28,10 @@ public:
 
     //! init comm / sum densities
     void initSumField( Field* field, int iDim ) override final;
+    void reallyinitSumField( Field* field, int iDim ) override final;
     //! finalize comm / sum densities
     void finalizeSumField( Field* field, int iDim ) override final;
+    void reallyfinalizeSumField( Field* field, int iDim ) override final;
 
     //! init comm / exchange fields
     void initExchange( Field* field ) override final;

@@ -867,10 +867,13 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
         // total energy in the simulation
         double Utot = Ukin + Uelm;
         
+        // total energy at time 0
         if (timestep==0) {
             scalars->Energy_time_zero  = Utot;
-            scalars->EnergyUsedForNorm = scalars->Energy_time_zero;
         }
+        
+        // the normalized energy balanced is normalized with respect to the current energy
+        scalars->EnergyUsedForNorm = Utot;
         
         // expected total energy
         double Uexp = scalars->Energy_time_zero + Uelm_bnd + Ukin_inj_mvw + Uelm_inj_mvw

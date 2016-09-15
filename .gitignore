@@ -14,7 +14,7 @@ src/smilei.*
 *.synctex.gz
 *.toc
 *.orig
-doc/Sphinx/_build/*
+doc/html/*
 *.user
 doc/html
 

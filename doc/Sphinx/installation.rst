@@ -166,6 +166,9 @@ Download and compile
    .. rubric:: Makefile alternatives:
      make doc                     # to compile the documentation
      make install_python          # install the Smilei python module
+     make unnstall_python         # uninstall the Smilei python module
+     make print-XXX               # print value of make variable XXX
+     make env                     # print values of internal makefile variables
      make help                    # to get some help on compilation
  
 #. The next step is to :doc:`write a namelist <namelist>`.

@@ -97,11 +97,7 @@ void Patch3D::initStep2(Params& params)
 }
 
 
-// ---------------------------------------------------------------------------------------------------------------------
-// Initialize current patch sum Fields communications through MPI in direction iDim
-// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
-// ---------------------------------------------------------------------------------------------------------------------
-void Patch3D::initSumField( Field* field, int iDim )
+void Patch3D::reallyinitSumField( Field* field, int iDim )
 {
     if (field->MPIbuff.srequest.size()==0)
         field->MPIbuff.allocate(3);
@@ -138,6 +134,50 @@ void Patch3D::initSumField( Field* field, int iDim )
         tmp[2] =    idx[2]  * n_elem[2] + (1-idx[2]) * oversize2[2];
         buf[iDim][iNeighbor].allocateDims( tmp );
     }
+     
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Initialize current patch sum Fields communications through MPI in direction iDim
+// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
+// ---------------------------------------------------------------------------------------------------------------------
+void Patch3D::initSumField( Field* field, int iDim )
+{
+    if (field->MPIbuff.srequest.size()==0)
+        field->MPIbuff.allocate(3);
+
+    int patch_ndims_(3);
+    int patch_nbNeighbors_(2);
+    
+    std::vector<unsigned int> n_elem = field->dims_;
+    std::vector<unsigned int> isDual = field->isDual_;
+    Field3D* f3D =  static_cast<Field3D*>(field);
+   
+    // Use a buffer per direction to exchange data before summing
+    //Field3D buf[patch_ndims_][patch_nbNeighbors_];
+    // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
+    std::vector<unsigned int> oversize2 = oversize;
+    oversize2[0] *= 2;
+    oversize2[0] += 1 + f3D->isDual_[0];
+    if (field->dims_.size()>1) {
+        oversize2[1] *= 2;
+        oversize2[1] += 1 + f3D->isDual_[1];
+        if (field->dims_.size()>2) {
+            oversize2[2] *= 2;
+            oversize2[2] += 1 + f3D->isDual_[2];
+        }
+    }
+
+    vector<int> idx( patch_ndims_,1 );
+    idx[iDim] = 0;    
+
+    /*for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
+        std::vector<unsigned int> tmp(patch_ndims_,0);
+        tmp[0] =    idx[0]  * n_elem[0] + (1-idx[0]) * oversize2[0];
+        tmp[1] =    idx[1]  * n_elem[1] + (1-idx[1]) * oversize2[1];
+        tmp[2] =    idx[2]  * n_elem[2] + (1-idx[2]) * oversize2[2];
+        buf[iDim][iNeighbor].allocateDims( tmp );
+    }*/
      
     int istart, ix, iy, iz;
     /********************************************************************************/
@@ -213,7 +253,28 @@ void Patch3D::finalizeSumField( Field* field, int iDim )
         }
     }
 
+} // END finalizeSumField
 
+void Patch3D::reallyfinalizeSumField( Field* field, int iDim )
+{
+    int patch_ndims_(3);
+    int patch_nbNeighbors_(2);
+    std::vector<unsigned int> n_elem = field->dims_;
+    std::vector<unsigned int> isDual = field->isDual_;
+    Field3D* f3D =  static_cast<Field3D*>(field);
+   
+    // Use a buffer per direction to exchange data before summing
+    //Field3D buf[patch_ndims_][patch_nbNeighbors_];
+    // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
+    std::vector<unsigned int> oversize2 = oversize;
+    oversize2[0] *= 2;
+    oversize2[0] += 1 + f3D->isDual_[0];
+    oversize2[1] *= 2;
+    oversize2[1] += 1 + f3D->isDual_[1];
+    oversize2[2] *= 2;
+    oversize2[2] += 1 + f3D->isDual_[2];
+    
+    int istart;
     /********************************************************************************/
     // Sum data on each process, same operation on both side
     /********************************************************************************/

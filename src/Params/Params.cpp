@@ -66,24 +66,30 @@ namelist("")
     PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_rand_max", RAND_MAX);
     
     // Running the namelists
-    runScript("############### BEGIN USER NAMELISTS/COMMANDS ###############\n");
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
         string strNamelist="";
         if (smpi->isMaster()) {
             ifstream istr(it->c_str());
+            // If file
             if (istr.is_open()) {
                 std::stringstream buffer;
                 buffer << istr.rdbuf();
                 strNamelist+=buffer.str();
+            // If command
             } else {
-                strNamelist = "# Smilei:) From command line :\n" + (*it);
+                string command = *it;
+                // Remove quotes
+                unsigned int s = command.size();
+                if( s>1 && command.substr(0,1)=="\"" && command.substr(s-1,1)=="\"" )
+                    command = command.substr(1, s - 2);
+                // Add to namelist
+                strNamelist = "# Smilei:) From command line:\n" + command;
             }
             strNamelist +="\n";
         }
         smpi->bcast(strNamelist);
         runScript(strNamelist,(*it));
     }
-    runScript("################ END USER NAMELISTS/COMMANDS  ################\n");
     // Running pycontrol.py
     runScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py");
     

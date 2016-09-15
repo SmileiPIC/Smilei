@@ -253,18 +253,20 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     
     // Global diags: scalars + particles
     timer[3].restart();
-    #pragma omp single
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
-        if( globalDiags[idiag]->prepare( itime ) ) {
+        #pragma omp single
+        globalDiags[idiag]->theTimeIsNow = globalDiags[idiag]->prepare( itime );
+        #pragma omp barrier
+        if( globalDiags[idiag]->theTimeIsNow ) {
             // All patches run
-            //#pragma omp for 
+            #pragma omp for 
             for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
                 globalDiags[idiag]->run( (*this)(ipatch), itime );
             // MPI procs gather the data and compute
-            //#pragma omp single
+            #pragma omp single
             smpi->computeGlobalDiags( globalDiags[idiag], itime);
             // MPI master writes
-            //#pragma omp single
+            #pragma omp single
             if ( smpi->isMaster() )
                 globalDiags[idiag]->write( itime );
         }
@@ -304,8 +306,11 @@ bool VectorPatch::isRhoNull( SmileiMPI* smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 {
-    unsigned int iteration_max = 50000;
-    double       error_max     = 1.e-14;
+    unsigned int iteration_max;
+    PyTools::extract("poisson_iter_max", iteration_max, "Main");
+
+    double error_max;
+    PyTools::extract("poisson_error_max", error_max, "Main");
     unsigned int iteration=0;
     
     // Init & Store internal data (phi, r, p, Ap) per patch
@@ -392,7 +397,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     // --------------------------------
     // Status of the solver convergence
     // --------------------------------
-    if (iteration == iteration_max) {
+    if (iteration_max>0 && iteration == iteration_max) {
         if (smpi->isMaster())
             WARNING("Poisson solver did not converge: reached maximum iteration number: " << iteration
                     << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
