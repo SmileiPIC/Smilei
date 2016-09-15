@@ -50,36 +50,36 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch )
 
     // BCs at the x-border
     dims = { ny_d, nz_d }; // Bx^(p,d,d)
-    Bx_xvalmin = new Field2D(dims); 
-    Bx_xvalmax = new Field2D(dims);
+    Bx_xvalmin = new Field2D(dims); Bx_xvalmin->put_to(0.);
+    Bx_xvalmax = new Field2D(dims); Bx_xvalmax->put_to(0.);
     dims = { ny_p, nz_d }; // By^(d,p,d)
-    By_xvalmin = new Field2D(dims);
-    By_xvalmax = new Field2D(dims);
+    By_xvalmin = new Field2D(dims); By_xvalmin->put_to(0.);
+    By_xvalmax = new Field2D(dims); By_xvalmax->put_to(0.);
     dims = { ny_d, nz_p }; // Bz^(d,d,p)
-    Bz_xvalmin = new Field2D(dims);
-    Bz_xvalmax = new Field2D(dims);
+    Bz_xvalmin = new Field2D(dims); Bz_xvalmin->put_to(0.);
+    Bz_xvalmax = new Field2D(dims); Bz_xvalmax->put_to(0.);
     
     // BCs in the y-border
     dims = { nx_p, nz_d }; // Bx^(p,d,d)
-    Bx_yvalmin = new Field2D(dims);
-    Bx_yvalmax = new Field2D(dims);
+    Bx_yvalmin = new Field2D(dims); Bx_yvalmin->put_to(0.);
+    Bx_yvalmax = new Field2D(dims); Bx_yvalmax->put_to(0.);
     dims = { nx_d, nz_d }; // By^(d,p,d)
-    By_yvalmin = new Field2D(dims);
-    By_yvalmax = new Field2D(dims);
+    By_yvalmin = new Field2D(dims); By_yvalmin->put_to(0.);
+    By_yvalmax = new Field2D(dims); By_yvalmax->put_to(0.);
     dims = { nx_d, nz_p }; // Bz^(d,d,p)
-    Bz_yvalmin = new Field2D(dims);
-    Bz_yvalmax = new Field2D(dims);
+    Bz_yvalmin = new Field2D(dims); Bz_yvalmin->put_to(0.);
+    Bz_yvalmax = new Field2D(dims); Bz_yvalmax->put_to(0.);
     
     // BCs in the z-border
     dims = { nx_p, ny_d }; // Bx^(p,d,d)
-    Bx_zvalmin = new Field2D(dims);
-    Bx_zvalmax = new Field2D(dims);
+    Bx_zvalmin = new Field2D(dims); Bx_zvalmin->put_to(0.);
+    Bx_zvalmax = new Field2D(dims); Bx_zvalmax->put_to(0.);
     dims = { nx_d, ny_p }; // By^(d,p,d)
-    By_zvalmin = new Field2D(dims);
-    By_zvalmax = new Field2D(dims);
+    By_zvalmin = new Field2D(dims); By_zvalmin->put_to(0.);
+    By_zvalmax = new Field2D(dims); By_zvalmax->put_to(0.);
     dims = { nx_d, ny_d }; // Bz^(d,d,p)
-    Bz_zvalmin = new Field2D(dims);
-    Bz_zvalmax = new Field2D(dims);
+    Bz_zvalmin = new Field2D(dims); Bz_zvalmin->put_to(0.);
+    Bz_zvalmax = new Field2D(dims); Bz_zvalmax->put_to(0.);
     
     // -----------------------------------------------------
     // Parameters for the Silver-Mueller boundary conditions
@@ -236,29 +236,29 @@ void ElectroMagnBC3D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
         Field3D* Bz3D = static_cast<Field3D*>(EMfields->Bz_);
         
         vector<double> pos(2);
-
+        
         // for By^(d,p,d) 
-        pos[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy - dy;
+        pos[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy;
         for (unsigned int j=0 ; j<ny_p ; j++) {
-             pos[0] += dy;
-             pos[1] = patch->getDomainLocalMin(2) - (0.5 + EMfields->oversize[2])*dz - dz;
-             for (unsigned int k=0 ; k<nz_d ; k++) {
-                 pos[1] += dz;
-                 // Lasers
-                 double byW = 0.;
-                 //for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-                 //    byW += vecLaser[ilaser]->getAmplitude0(pos, time_dual, j, k);
-                 //}
-                 
-                 (*By3D)(0,j,k) = Alpha_SM_W   * (*Ez3D)(0,j,k)
-                 +              Beta_SM_W    *( (*By3D)(1,j,k)-(*By_xvalmin)(j,k))
-                 +              Gamma_SM_W   * byW
-                 +              Delta_SM_W   *( (*Bx3D)(0,j+1,k)-(*Bx_xvalmin)(j+1,k) )
-                 +              Epsilon_SM_W *( (*Bx3D)(0,j,k)-(*Bx_xvalmin)(j,k) )
-                 +              (*By_xvalmin)(j,k);
-             }// k  ---end compute By
-         }//j  ---end compute By
-
+            pos[0] += dy;
+            pos[1] = patch->getDomainLocalMin(2) - (0.5 + EMfields->oversize[2])*dz;
+            for (unsigned int k=0 ; k<nz_d ; k++) {
+                pos[1] += dz;
+                // Lasers
+                double byW = 0.;
+                for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
+                    byW += vecLaser[ilaser]->getAmplitude0(pos, time_dual, j, k);
+                }
+                
+                (*By3D)(0,j,k) = Alpha_SM_W   * (*Ez3D)(0,j,k)
+                +              Beta_SM_W    *( (*By3D)(1,j,k)-(*By_xvalmin)(j,k))
+                +              Gamma_SM_W   * byW
+                +              Delta_SM_W   *( (*Bx3D)(0,j+1,k)-(*Bx_xvalmin)(j+1,k) )
+                +              Epsilon_SM_W *( (*Bx3D)(0,j,k)-(*Bx_xvalmin)(j,k) )
+                +              (*By_xvalmin)(j,k);
+            }// k  ---end compute By
+        }//j  ---end compute By
+        
         // for Bz^(d,d,p)
         pos[0] = patch->getDomainLocalMin(1) - (0.5 + EMfields->oversize[1])*dy;
         for (unsigned int j=0 ; j<ny_d ; j++) {
@@ -268,28 +268,19 @@ void ElectroMagnBC3D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
                  pos[1] += dz;
                  // Lasers
                  double bzW = 0.;
-                 //for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-                 //    bzW += vecLaser[ilaser]->getAmplitude1(pos, time_dual, j, k);
-                 //}
-
-                 //Forcing because 3D profile fails
                  for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-                     bzW += 2*exp( - (time_dual-2*19.80)*(time_dual-2*19.80)/(19.80*19.80) )*exp( -( (pos[0]-60)*(pos[0]-60)+ (pos[1]-60)*(pos[1]-60))/ (26.16*26.16) )
-                           * sin(time_dual - 2*19.80);
+                     bzW += vecLaser[ilaser]->getAmplitude1(pos, time_dual, j, k);
                  }
-
+                
                  (*Bz3D)(0,j,k) = - Alpha_SM_W   * (*Ey3D)(0,j,k)
                  +              Beta_SM_W    *( (*Bz3D)(1,j,k)-(*Bz_xvalmin)(j,k))
                  +              Gamma_SM_W   * bzW
                  +              Zeta_SM_W   *( (*Bx3D)(0,j,k+1)-(*Bx_xvalmin)(j,k+1) )
                  +              Eta_SM_W *( (*Bx3D)(0,j,k)-(*Bx_xvalmin)(j,k) )
                  +              (*Bz_xvalmin)(j,k);
-
+             
              }// k  ---end compute Bz
          }//j  ---end compute Bz
-
-
- 
     }//if Western
 
 }
@@ -309,7 +300,7 @@ void ElectroMagnBC3D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
         Field3D* Bz3D = static_cast<Field3D*>(EMfields->Bz_);
         
         vector<double> pos(2);
-
+        
         // for By^(d,p,d)
         pos[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy;
         for (unsigned int j=0 ; j<ny_p ; j++) {
@@ -322,7 +313,7 @@ void ElectroMagnBC3D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
                 for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
                     byE += vecLaser[ilaser]->getAmplitude0(pos, time_dual, j, k);
                 }
-            
+                
                 (*By3D)(nx_d-1,j,k) = Alpha_SM_E   * (*Ez3D)(nx_p-1,j,k)
                 +                   Beta_SM_E    *( (*By3D)(nx_d-2,j,k) -(*By_xvalmax)(j,k))
                 +                   Gamma_SM_E   * byE
@@ -332,7 +323,6 @@ void ElectroMagnBC3D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
             
             }//k  ---end compute By
         }//j  ---end compute By
-        
         
         // for Bz^(d,d,p)
         pos[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dy;
@@ -353,10 +343,8 @@ void ElectroMagnBC3D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
                 +                    Zeta_SM_E   *( (*Bx3D)(nx_p-1,j,k+1)-(*Bx_xvalmax)(j,k+1) )
                 +                    Eta_SM_E *( (*Bx3D)(nx_p-1,j,k)-(*Bx_xvalmax)(j,k) )
                 +                    (*Bz_xvalmax)(j,k);
-            
             }//k  ---end compute Bz
         }//j  ---end compute Bz
-        
         
     }//if Eastern
 
@@ -379,27 +367,23 @@ void ElectroMagnBC3D_SM::apply_ymin(ElectroMagn* EMfields, double time_dual, Pat
         
         // for Bx^(p,d,d) 
         for (unsigned int i=0 ; i<nx_p ; i++) {
-             for (unsigned int k=0 ; k<nz_d ; k++) {
-
-                 (*Bx3D)(i,0,k) = - Alpha_SM_S   * (*Ez3D)(i,0,k)
-                 +              Beta_SM_S    *( (*Bx3D)(i,1,k)-(*Bx_yvalmin)(i,k))
-                 +              Zeta_SM_S   *( (*By3D)(i+1,0,k)-(*By_yvalmin)(i+1,k) )
-                 +              Eta_SM_S *( (*By3D)(i,0,k)-(*By_yvalmin)(i,k) )
-                 +              (*Bx_yvalmin)(i,k);
-
-             }// k  ---end compute Bx
-         }//i  ---end compute Bx
-
+            for (unsigned int k=0 ; k<nz_d ; k++) {
+                (*Bx3D)(i,0,k) = - Alpha_SM_S   * (*Ez3D)(i,0,k)
+                +              Beta_SM_S    *( (*Bx3D)(i,1,k)-(*Bx_yvalmin)(i,k))
+                +              Zeta_SM_S   *( (*By3D)(i+1,0,k)-(*By_yvalmin)(i+1,k) )
+                +              Eta_SM_S *( (*By3D)(i,0,k)-(*By_yvalmin)(i,k) )
+                +              (*Bx_yvalmin)(i,k);
+            }// k  ---end compute Bx
+        }//i  ---end compute Bx
+        
         // for Bz^(d,d,p)
         for (unsigned int i=0 ; i<nx_d ; i++) {
              for (unsigned int k=0 ; k<nz_p ; k++) {
-
                  (*Bz3D)(i,0,k) = Alpha_SM_S   * (*Ex3D)(i,0,k)
                  +              Beta_SM_S    *( (*Bz3D)(i,1,k)-(*Bz_yvalmin)(i,k))
                  +              Delta_SM_S   *( (*By3D)(i,0,k+1)-(*By_yvalmin)(i,k+1) )
                  +              Epsilon_SM_S *( (*By3D)(i,0,k)-(*By_yvalmin)(i,k) )
                  +              (*Bz_yvalmin)(i,k);
-
              }// k  ---end compute Bz
          }//i  ---end compute Bz
         
