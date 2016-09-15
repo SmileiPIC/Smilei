@@ -61,7 +61,8 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, Patch* 
     H5Sselect_hyperslab(filespace_reread, H5S_SELECT_SET, offset, NULL, count, block);
     // Define space in memory for re-reading
     memspace_reread = H5Screate_simple(1, block, NULL);
-    data_reread.resize( block[0] );
+    //data_reread.resize( block[0], -200. );
+    data_reread.resize( block[0], 0. );
     // Define the list of patches for re-writing
     rewrite_npatch = (unsigned int)npatch_local;
     rewrite_patches_x.resize( rewrite_npatch );
@@ -105,7 +106,7 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, Patch* 
     // Define space in memory for re-writing
     memspace = H5Screate_simple(3, block2, NULL);
     //data_rewrite.resize( block2[0]*block2[1]*block2[2], -100 );
-    data_rewrite.resize( block2[0]*block2[1]*block2[2] );
+    data_rewrite.resize( block2[0]*block2[1]*block2[2], 0. );
     
     tmp_dset_id=0;
 }
@@ -125,7 +126,8 @@ void DiagnosticFields3D::setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatc
     unsigned int total_vecPatches_size = total_patch_size * vecPatches.size();
     
     // Resize the data
-    data.resize(total_vecPatches_size);
+    //data.resize(total_vecPatches_size, -500.);
+    data.resize(total_vecPatches_size, 0.);
     
     // Define offset and size for HDF5 file
     hsize_t offset[1], block[1], count[1];
@@ -199,7 +201,7 @@ void DiagnosticFields3D::writeField( hid_t dset_id, int timestep ) {
     H5Dread( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_reread, filespace_reread, write_plist, &(data_reread[0]) );
     
     // Fold the data according to the Hilbert curve
-    unsigned int read_position, write_position, read_skip, read_skipZ, write_skip_y, write_skip_z, sx, sy, sz;
+    unsigned int read_position, write_position, write_skip_y, write_skip_z, sx, sy, sz;
 
     unsigned int write_sizez  =  ( rewrite_npatchz*(patch_size[2]-1) + ((rewrite_zmin==0)?1:0) );
     unsigned int write_sizeyz = ( rewrite_npatchy*(patch_size[1]-1) + ((rewrite_ymin==0)?1:0) ) * write_sizez;
@@ -213,15 +215,11 @@ void DiagnosticFields3D::writeField( hid_t dset_id, int timestep ) {
         write_skip_z = (rewrite_npatchz - 1)*(patch_size[2]-1);
         write_skip_y = write_sizeyz;
 
-        read_skip  = 0;
-        read_skipZ = 0;
-
         sx = patch_size[0];
         sy = patch_size[1];
         sz = patch_size[2];
 
         if( rewrite_patches_z[h]!=0 ) {
-            read_skip++;
             if( rewrite_zmin==0 ) {
                 write_position0++;
                 write_skip_z++;
@@ -229,7 +227,6 @@ void DiagnosticFields3D::writeField( hid_t dset_id, int timestep ) {
             sz--;
         }
         if( rewrite_patches_y[h]!=0 ) {
-            read_skipZ = patch_size[2];
             if( rewrite_ymin==0 ) {
                 write_position0 += write_sizez;
             }
@@ -244,18 +241,18 @@ void DiagnosticFields3D::writeField( hid_t dset_id, int timestep ) {
         
         write_position = write_position0;
         for( unsigned int ix=0; ix<sx; ix++ ) {
+            if( rewrite_patches_y[h]!=0 ) read_position+=patch_size[2];
             for( unsigned int iy=0; iy<sy; iy++ ) {
+                if (rewrite_patches_z[h]!=0) read_position ++;
                 for( unsigned int iz=0; iz<sz; iz++ ) {
-                    //data_rewrite[write_position] = h+1;
+                    //data_rewrite[write_position] += h+1;
                     data_rewrite[write_position] = data_reread[read_position];
                     read_position ++;
                     write_position++;
 
                 }
-                read_position  += read_skip; // 0/1
                 write_position += write_skip_z;
             }
-            read_position  += read_skipZ; // 0/n_space[2]
             write_position = write_position0+(ix+1)*write_skip_y;
         }
     }
