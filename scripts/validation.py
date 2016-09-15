@@ -1,4 +1,5 @@
-#!/gpfslocal/pub/python/anaconda/Anaconda-2.1.0/bin/python 
+#! /usr/bin/python
+##!/gpfslocal/pub/python/anaconda/Anaconda-2.1.0/bin/python 
 #
 # This script checks the validity of the results of the execution of smilei defined by :
 # - the bench file (default tst1d_0_em_propagation.py) given by the -b option
@@ -289,6 +290,13 @@ for opt, arg in options:
     elif opt in ('-a', '--ALL'):
         VALID_ALL = True
 #
+# TEST IF THE NUMBER OF THREADS IS COMPATIBLE WITH THE HOST
+if JOLLYJUMPER in HOSTNAME :
+  if (12 % OMP != 0) :
+    print  "Smilei cannot be run with " ,OMP ," threads on ", HOSTNAME
+    sys.exit(4)  
+  NPERSOCKET=12/OMP
+#
 # CASE PRECISION NOT DEFINED OR MULTIPLE SCALARS REQUIRED : 
 # CREATING A DICTIONNARY WITH THE LIST OF PRECISION VALUES FOUND IN ./references/precision_values
 if OPT_PRECISION and ( SCALAR_NAME == "all"  or  SCALAR_NAME == "?" or VALID_ALL ) :
@@ -385,6 +393,7 @@ except CalledProcessError,e:
     print  "Smilei validation cannot be done : compilation failed." ,e.returncode
   sys.exit(3)
 #
+#import pdb;pdb.set_trace()
 for BENCH in SMILEI_BENCH_LIST :
     # PRINT INFO           
     if VERBOSE :
@@ -441,11 +450,11 @@ mpirun -bind-to-socket -np "+str(MPI)+" "+WORKDIRS+"/smilei "+SMILEI_BENCH+" >"+
             print  "Smilei validation cannot be done : execution failed."
           sys.exit(2)
       elif JOLLYJUMPER in HOSTNAME :
-        NODES=(int(MPI)*int(OMP))/12
+        NODES=((int(MPI)*int(OMP)-1)/12)+1
         exec_script_desc.write( "\
-#PBS -l nodes="+str(NODES)+":ppn="+str(OMP)+" \n \
+#PBS -l nodes="+str(NODES)+":ppn=24 \n \
 #PBS -q default \n \
-#PBS -j oe.\n \
+#PBS -j oe\n \
 #Set the correct modules available \n \
 unset MODULEPATH; \n \
 module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles \n \
@@ -453,9 +462,8 @@ module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles \n \
 module load compilers/icc/16.0.109 \n \
 module load mpi/openmpi/1.6.5-ib-icc \n \
 module load python/2.7.10 \n \
+module load hdf5 \n \
  \n \
-#Go to current directory \n \
-cd $PBS_O_WORKDIR \n \
 # -loadbalance to spread the MPI processes among the different nodes. \n \
 # -bind-to-core to fix a given MPI process to a fixed set of cores. \n \
 # -cpus-per-proc 6 to set said set of cores to a size of 6 (half socket of JJ) which is also the number of omp threads. \n \
@@ -465,9 +473,9 @@ export KMP_AFFINITY=verbose \n \
 export PATH=$PATH:/opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck \n \
 #Specify the number of sockets per node in -mca orte_num_sockets \n \
 #Specify the number of cores per sockets in -mca orte_num_cores \n \
-which mpirun \n \
-mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket 1 -n "+str(MPI)+"\
- -x $OMP_NUM_THREADS -x $OMP_SCHEDULE "+WORKDIRS+"/smilei "+SMILEI_BENCH+" >"+SMILEI_EXE_OUT+" \n \
+cd "+SMILEI_SCRIPTS+" \n \
+mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+"\
+ -x $OMP_NUM_THREADS -x $OMP_SCHEDULE "+WORKDIRS+"/smilei "+SMILEI_BENCH+" >"+SMILEI_EXE_OUT+"2>&1 \n \
 exit $?  \n  ")
         exec_script_desc.close()
         import pdb;pdb.set_trace()
