@@ -194,6 +194,8 @@ Profile::Profile(Profile *p)
                 function = new Function_Constant1D(static_cast<Function_Constant1D*>(p->function));
             else if( nvariables == 2 )
                 function = new Function_Constant2D(static_cast<Function_Constant2D*>(p->function));
+            else if( nvariables == 3 )
+                function = new Function_Constant3D(static_cast<Function_Constant3D*>(p->function));
         } else if( profileName == "trapezoidal" ){
             if     ( nvariables == 1 )
                 function = new Function_Trapezoidal1D(static_cast<Function_Trapezoidal1D*>(p->function));
