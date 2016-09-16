@@ -53,7 +53,7 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     // Variable declaration & initialization
     // -------------------------------------
 
-    int iloc;
+    int iloc, jloc, kloc;
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double crx_p = charge_weight*dx_ov_dt;
@@ -155,12 +155,23 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     // Calculate the total current
     // ---------------------------
     ipo -= bin+2; //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+                  // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
     jpo -= 2;
     kpo -= 2;
 
-
-#ifdef _PATCH3D_TODO
-#endif
+    for (unsigned int i=0 ; i<5 ; i++) {
+        iloc = (i+ipo)*b_dim[2]*b_dim[1];
+        for (unsigned int j=0 ; j<5 ; j++) {
+            jloc = (jpo+j)*b_dim[2];
+            for (unsigned int k=0 ; k<5 ; k++) {
+                kloc = kpo + k;
+                Jx [iloc+jloc+kloc          ] += 0.; // iloc = (i+ipo)*b_dim[1];
+                Jy [iloc+jloc+kloc + (i+ipo)] += 0.; //
+                Jz [iloc+jloc+kloc          ] += 0.; //
+              //rho[iloc+jloc+kloc          ] += charge_weight * Sx1[i]*Sy1[j]*Sz1[k];
+            }
+        }
+    }//i
 
 } // END Project local current densities (Jx, Jy, Jz, sort)
 
@@ -376,17 +387,18 @@ void Projector3D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
     std::vector<double> *gf = &(smpi->dynamics_gf[ithread]);
 
     int dim1 = EMfields->dimPrim[1];
+    int dim2 = EMfields->dimPrim[2];
 
     if (diag_flag == 0){ 
-	double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw*dim1);
-	double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1));
-	double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw*dim1);
+	double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw* dim1   * dim2   );
+	double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1)* dim2   );
+	double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw* dim1   *(dim2+1));
         for (unsigned int ipart=istart ; ipart<iend; ipart++ )
     	    (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*gf)[ipart], ibin*clrw, b_dim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
     } else {
-	double* b_Jx =  &(*EMfields->Jx_s[ispec] )(ibin*clrw*dim1);
-	double* b_Jy =  &(*EMfields->Jy_s[ispec] )(ibin*clrw*(dim1+1));
-	double* b_Jz =  &(*EMfields->Jz_s[ispec] )(ibin*clrw*dim1);
+	double* b_Jx =  &(*EMfields->Jx_s[ispec] )(ibin*clrw*dim1*dim2);
+	double* b_Jy =  &(*EMfields->Jy_s[ispec] )(ibin*clrw*(dim1+1)*dim2);
+	double* b_Jz =  &(*EMfields->Jz_s[ispec] )(ibin*clrw*dim1*(dim1+1));
 	double* b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*dim1);
         for (unsigned int ipart=istart ; ipart<iend; ipart++ )
 	    (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*gf)[ipart], ibin*clrw, b_dim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
