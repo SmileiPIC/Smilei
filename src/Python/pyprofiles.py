@@ -10,7 +10,7 @@ def constant(value, xvacuum=-float("inf"), yvacuum=-float("inf"), zvacuum=-float
         f = lambda x,y: value if (x>=xvacuum and y>=yvacuum) else 0.
         f.yvacuum = yvacuum
     if Main.geometry == "3d3v":
-        f = lambda x,y: value if (x>=xvacuum and y>=yvacuum and z>zvacuum) else 0.
+        f = lambda x,y,z: value if (x>=xvacuum and y>=yvacuum and z>=zvacuum) else 0.
         f.yvacuum = yvacuum
         f.zvacuum = zvacuum
     f.profileName = "constant"
