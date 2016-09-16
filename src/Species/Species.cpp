@@ -490,6 +490,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
                 if (nDim_field==2)
                     b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1);    
+                if (nDim_field==3)
+                    b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1*f_dim2);    
                 else if (nDim_field==1)
                     b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw);    
                 for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
