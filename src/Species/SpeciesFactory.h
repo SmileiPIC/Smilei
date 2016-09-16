@@ -100,6 +100,13 @@ public:
                 ERROR("For species '" << species_type << "', bc_part_type_north not defined");
         }
         
+        if (params.nDim_particle>2) {
+            if (!PyTools::extract("bc_part_type_bottom",thisSpecies->bc_part_type_bottom,"Species",ispec) )
+                ERROR("For species '" << species_type << "', bc_part_type_bottom not defined");
+            if (!PyTools::extract("bc_part_type_up",thisSpecies->bc_part_type_up,"Species",ispec) )
+                ERROR("For species '" << species_type << "', bc_part_type_up not defined");
+        }
+        
         // for thermalizing BCs on particles check if thermT is correctly defined
         bool thermTisDefined=false;
         bool thermVisDefined=false;
