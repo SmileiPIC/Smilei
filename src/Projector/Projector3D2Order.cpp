@@ -66,7 +66,8 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     double xpn, ypn, zpn;
     double delta, delta2;
     // arrays used for the Esirkepov projection method
-    double  Sx0[5], Sx1[5], Sy0[5], Sy1[5], Sz0[5], Sz1[5], DSx[5], DSy[5], DSz[5], tmpJx[5];
+    double Sx0[5], Sx1[5], Sy0[5], Sy1[5], Sz0[5], Sz1[5], DSx[5], DSy[5], DSz[5], tmpJx[5];
+    double Wx[5][5][5], Wy[5][5][5], Wz[5][5][5];
 
     for (unsigned int i=0; i<5; i++) {
         Sx1[i] = 0.;
@@ -137,10 +138,19 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     Sz1[kp_m_kpo+2] = 0.75-delta2;
     Sz1[kp_m_kpo+3] = 0.5 * (delta2+delta+0.25);
 
+    // computes Esirkepov coefficients
     for (unsigned int i=0; i < 5; i++) {
         DSx[i] = Sx1[i] - Sx0[i];
         DSy[i] = Sy1[i] - Sy0[i];
         DSz[i] = Sz1[i] - Sz0[i];
+    }
+    for (unsigned int i=0 ; i<5 ; i++) {
+        for (unsigned int j=0 ; j<5 ; j++) {
+            for (unsigned int k=0 ; k<5 ; k++) {
+                Wx[i][j][k] = DSx[i] * (Sy0[j] + 0.5*DSy[j]);
+                Wy[i][j][k] = DSy[j] * (Sx0[i] + 0.5*DSx[i]);
+                Wz[i][j][k] = one_third * ( Sx1[i] * (0.5*Sy0[j]+Sy1[j]) + Sx0[i] * (Sy0[j]+0.5*Sy1[j]) );
+        }
     }
 
     // calculate Esirkepov coeff. Wx, Wy, Wz when used
@@ -157,6 +167,21 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     ipo -= bin+2; //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
     jpo -= 2;
     kpo -= 2;
+    
+    ip -= i_domain_begin + bin +2;
+    jp -= j_domain_begin + 2;
+    kp -= k_domain_begin + 2;
+    
+    for (unsigned int i=0 ; i<5 ; i++) {
+        iloc = (i+ip)*b_dim[2]*b_dim[1];
+        for (unsigned int j=0 ; j<5 ; j++) {
+            jloc = (jp+j)*b_dim[2];
+            for (unsigned int k=0 ; k<5 ; k++) {
+                rho[iloc+jloc+kp+k] += charge_weight * Sx1[i]*Sy1[j]*Sz1[k];
+            }
+        }
+    }//i
+
 
 
 #ifdef _PATCH3D_TODO
