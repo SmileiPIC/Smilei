@@ -344,6 +344,10 @@ public:
                         ERROR("For species '"<<retSpecies[ispec1]->species_type<<"' ionization_electrons must be a species with mass==1");
                     retSpecies[ispec1]->electron_species_index = ispec2;
                     retSpecies[ispec1]->electron_species = retSpecies[ispec2];
+                    if ( ( !retSpecies[ispec1]->getNbrOfParticles() ) && ( !retSpecies[ispec2]->getNbrOfParticles() ) ) {
+                        int max_eon_number = retSpecies[ispec1]->getNbrOfParticles() * retSpecies[ispec1]->atomic_number;
+                        retSpecies[ispec2]->particles->reserve( max_eon_number, retSpecies[ispec2]->particles->dimension() );
+                    }
                     break;
                 }
             }
