@@ -229,6 +229,8 @@ class Species(SmileiComponent):
     bc_part_type_east = None
     bc_part_type_north = None
     bc_part_type_south = None
+    bc_part_type_bottom = None
+    bc_part_type_up = None
     ionization_model = "none"
     ionization_electrons = None
     atomic_number = None
