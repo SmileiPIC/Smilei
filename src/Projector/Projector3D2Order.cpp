@@ -295,7 +295,7 @@ void Projector3D2Order::operator() (double* rho, Particles &particles, unsigned 
     // Variable declaration & initialization
     // -------------------------------------
 
-    int iloc;
+    int iloc,jloc,kloc;
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
 
@@ -347,7 +347,6 @@ void Projector3D2Order::operator() (double* rho, Particles &particles, unsigned 
     jp -= j_domain_begin + 2;
     kp -= k_domain_begin + 2;
 
-#ifdef _PATCH3D_TODO
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = (i+ip)*b_dim[2]*b_dim[1];
         for (unsigned int j=0 ; j<5 ; j++) {
@@ -357,7 +356,6 @@ void Projector3D2Order::operator() (double* rho, Particles &particles, unsigned 
             }
         }
     }//i
-#endif
 
 } // END Project local current densities (Frozen species)
 
