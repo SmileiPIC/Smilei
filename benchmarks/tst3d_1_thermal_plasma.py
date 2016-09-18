@@ -19,6 +19,12 @@ Ly    = 32.*dy
 Lz    = 32.*dz
 Tsim  = 2.*m.pi			
 
+def n0_(x,y,z):
+	if (0.1*Lx<x<0.9*Lx) and (0.1*Ly<y<0.9*Ly) and (0.1*Lz<z<0.9*Lz):
+		return n0
+	else:
+		return 0.
+
 
 Main(
     geometry = "3d3v",
@@ -31,7 +37,7 @@ Main(
     cell_length  = [dx,dy,dz],
     sim_length = [Lx,Ly,Lz],
     
-    number_of_patches = [4,4,4],
+    number_of_patches = [1,1,1],
     
     bc_em_type_x = ["periodic"],
     bc_em_type_y = ["periodic"],
@@ -58,11 +64,10 @@ Species(
     c_part_max = 1.0,
     mass = 1836.0,
     charge = 1.0,
-    charge_density = n0,
-    mean_velocity = [0.0, 0.0, 0.0],
+    charge_density = n0_,
+    mean_velocity = [0., 0.0, 0.0],
     temperature = [T],
     dynamics_type = "norm",
-	time_frozen = 2.*Tsim,
     bc_part_type_west  = "none",
     bc_part_type_east  = "none",
     bc_part_type_south = "none",
@@ -78,11 +83,10 @@ Species(
     c_part_max = 1.0,
     mass = 1.0,
     charge = -1.0,
-    charge_density = n0,
-    mean_velocity = [0.0, 0.0, 0.0],
+    charge_density = n0_,
+    mean_velocity = [0., 0.0, 0.0],
     temperature = [T],
     dynamics_type = "norm",
-	time_frozen = 2.*Tsim,
     bc_part_type_west  = "none",
     bc_part_type_east  = "none",
     bc_part_type_south = "none",
@@ -98,8 +102,7 @@ DumpRestart(
 )
 
 DiagFields(
-    every = 4,
-    fields = ['Ex','Ey','Rho_electron','Rho_proton','Jx_electron']
+    every = 4
 )
 
 DiagScalar(every = 1)
