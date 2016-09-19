@@ -1,8 +1,7 @@
-Smilei stands for Simulating Matter Irradiated by Light at Extreme Intensies,
-and is developed through a collaboration between various teams at
-Ecole Polytechnique, at the CEA/Saclay and with strong support from
-the Maison de la Simulation and IDRIS on the numerical side.
+**Smilei is a new, open-source, particle-in-cell code.** 
+
+As a multi-purpose code, it is designed for and applied to a wide range of physics-related studies: from relativistic laser-plasma interaction to astrophysical plasmas. It is co-developed by both physicists and HPC experts. 
 
 For more information, checkout our website:
 
-http://www.maisondelasimulation.fr/projects/Smilei/html/
+http://www.maisondelasimulation.fr/smilei

@@ -10,7 +10,7 @@ Particle::Particle(Particles& parts, int iPart)
     Position.resize( parts.Position.size() );
     Position_old.resize( parts.Position.size() );
     Momentum.resize( 3 );
-    for ( int iDim = 0 ; iDim < parts.Position.size() ; iDim++ ) {
+    for ( unsigned int iDim = 0 ; iDim < parts.Position.size() ; iDim++ ) {
         Position[iDim]     = parts.position    (iDim,iPart);
         Position_old[iDim] = parts.position_old(iDim,iPart);
     }

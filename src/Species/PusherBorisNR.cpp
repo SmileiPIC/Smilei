@@ -29,7 +29,6 @@ void PusherBorisNR::operator() (Particles &particles, SmileiMPI* smpi, int istar
     double charge_over_mass_ ;
     double umx, umy, umz;
     double upx, upy, upz;
-    double uprimex, uprimey, uprimez;
     double alpha;
     double Tx, Ty, Tz;
     double T2;
@@ -57,11 +56,6 @@ void PusherBorisNR::operator() (Particles &particles, SmileiMPI* smpi, int istar
         Sx = 2*Tx/(1.+T2);
         Sy = 2*Ty/(1.+T2);
         Sz = 2*Tz/(1.+T2);
-
-        // uprime = uminus + uminus x T
-        uprimex = umx + umy*Tz - umz*Ty;
-        uprimey = umy + umz*Tx - umx*Tz;
-        uprimez = umz + umx*Ty - umy*Tx;
 
         // uplus = uminus + uprims x S
         upx = umx + umy*Sz - umz*Sy;

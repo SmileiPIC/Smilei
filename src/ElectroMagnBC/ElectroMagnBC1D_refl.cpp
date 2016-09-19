@@ -22,13 +22,13 @@ using namespace std;
 ElectroMagnBC1D_refl::ElectroMagnBC1D_refl( Params &params, Patch* patch )
   : ElectroMagnBC( params, patch )
 {
-
+    
     // oversize
     oversize_ = params.oversize[0];
-
+    
     // number of nodes of the primal-grid
     nx_p = params.n_space[0]+1 + 2*params.oversize[0];
-
+    
     // number of nodes of the dual-grid
     nx_d = params.n_space[0]+2 + 2*params.oversize[0];
 
@@ -47,10 +47,10 @@ void ElectroMagnBC1D_refl::apply_xmin(ElectroMagn* EMfields, double time_dual, P
     if ( patch->isWestern() ) {
         
         // Application over the full-ghost cell
-        Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
-        Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);
-        Field1D* Ez1D   = static_cast<Field1D*>(EMfields->Ez_);
-        Field1D* Bx1D   = static_cast<Field1D*>(EMfields->Bx_);
+        //Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
+        //Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);
+        //Field1D* Ez1D   = static_cast<Field1D*>(EMfields->Ez_);
+        //Field1D* Bx1D   = static_cast<Field1D*>(EMfields->Bx_);
         Field1D* By1D   = static_cast<Field1D*>(EMfields->By_);
         Field1D* Bz1D   = static_cast<Field1D*>(EMfields->Bz_);
         
@@ -97,10 +97,10 @@ void ElectroMagnBC1D_refl::apply_xmax(ElectroMagn* EMfields, double time_dual, P
     if ( patch->isEastern() ) {
         
         // application of Bcs over the full ghost cells
-        Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
-        Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);
-        Field1D* Ez1D   = static_cast<Field1D*>(EMfields->Ez_);
-        Field1D* Bx1D   = static_cast<Field1D*>(EMfields->Bx_);
+        //Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
+        //Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);
+        //Field1D* Ez1D   = static_cast<Field1D*>(EMfields->Ez_);
+        //Field1D* Bx1D   = static_cast<Field1D*>(EMfields->Bx_);
         Field1D* By1D   = static_cast<Field1D*>(EMfields->By_);
         Field1D* Bz1D   = static_cast<Field1D*>(EMfields->Bz_);
         

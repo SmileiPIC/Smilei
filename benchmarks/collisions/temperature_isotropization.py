@@ -1,4 +1,4 @@
-execfile("../../scripts/Diagnostics.py")
+from Smilei import *
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import erf as erf
@@ -8,7 +8,7 @@ path = "temperature_isotropization1"
 sim = Smilei(path)
 density_electron     = np.double(sim.namelist.Species["electron1"].charge_density)
 coulomb_log          = np.double(sim.namelist.Collisions[0].coulomb_log)
-dt                   = np.double(sim.namelist.timestep)/(2*np.pi)
+dt                   = np.double(sim.namelist.Main.timestep)/(2*np.pi)
 
 re_ = 2.8179403267e-15 # meters
 wavelength = 1e-6 # meters

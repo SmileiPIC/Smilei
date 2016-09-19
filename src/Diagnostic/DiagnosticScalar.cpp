@@ -5,9 +5,8 @@
 
 using namespace std;
 
-DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch = NULL, int diagId = 0 )
+DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch = NULL )
 {
-    // diagId == 0    else error
     // patch  == NULL else error
     
     out_width.resize(0);
@@ -39,39 +38,23 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patc
     // defining default values & reading diagnostic every-parameter
     // ------------------------------------------------------------
     print_every=params.n_time/10;
-    PyTools::extract("print_every", print_every);
+    PyTools::extract("print_every", print_every, "Main");
     
-    type_ = "Scalar";
     
 } // END DiagnosticScalar::DiagnosticScalar
 
 
-
-// Cloning constructor
-DiagnosticScalar::DiagnosticScalar( DiagnosticScalar * scalar )
-{
-    out_width.resize(0);
-    if( scalar->timeSelection ) {
-        timeSelection = new TimeSelection(scalar->timeSelection);
-        precision     = scalar->precision;
-        res_time      = scalar->res_time;
-        dt            = scalar->dt;
-        cell_volume   = scalar->cell_volume;
-    }
-    print_every = scalar->print_every;
-    type_ = "Scalar";
-};
-
-
-
 DiagnosticScalar::~DiagnosticScalar()
 {
+    delete timeSelection;
 } // END DiagnosticScalar::#DiagnosticScalar
 
 
 void DiagnosticScalar::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
     if (!smpi->isMaster()) return;
+    
+    if (fout.is_open()) return;
     
     //open file scalars.txt
     if ( newfile )
@@ -96,7 +79,7 @@ bool DiagnosticScalar::prepare( int timestep )
 {
     // At the right timestep, zero-out the scalars
     if ( printNow(timestep) || timeSelection->theTimeIsNow(timestep) )
-        for (int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
+        for (unsigned int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
             out_value[iscalar] = 0.;
     
     // Scalars always run even if they don't dump
@@ -151,7 +134,6 @@ void DiagnosticScalar::write(int itime)
         }
     }
     fout << endl;
-
 } // END write
 
 
@@ -197,8 +179,6 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         // particle energy added due to moving window
         double ener_added_mvw=0.0;
         ener_added_mvw = vecSpecies[ispec]->getNewParticlesNRJ();
-        
-        
         
         if (nPart!=0) charge_avg /= nPart;
         string nameSpec=vecSpecies[ispec]->species_type;
@@ -260,7 +240,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
                     Utot_crtField+=pow((**field)(ii),2);
                 }
             }
-        }        
+        }
         // Utot = Dx^N/2 * Field^2
         Utot_crtField *= 0.5*cell_volume;
         
@@ -327,46 +307,44 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         unsigned int i=0;
         for (vector<Field*>::iterator field=fields.begin(); field!=fields.end() && i<minis.size(); field++, i++) {
             
-            append((*field)->name+"Min",minis[i].val);
-            append((*field)->name+"MinCell",minis[i].index);
-            
-            append((*field)->name+"Max",maxis[i].val);
-            append((*field)->name+"MaxCell",maxis[i].index);
+            append((*field)->name+"Min", minis[i].val, minis[i].index);
+            append((*field)->name+"Max", maxis[i].val, maxis[i].index );
             
         }
     }
     
     // ------------------------
+    
     // POYNTING-related scalars
     // ------------------------
     
     // electromagnetic energy injected in the simulation (calculated from Poynting fluxes)
     double Uelm_bnd=0.0;
     
-    for (unsigned int j=0; j<2;j++) {
-        for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {
+    for (unsigned int j=0; j<2;j++) {//directions (west/east, south/north, bottom/top)
+        for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {//axis 0=x, 1=y, 2=z
             
             double poy[2]={EMfields->poynting[j][i],EMfields->poynting_inst[j][i]};
             
-                string name("Poy");
-                switch (i) { // dimension
-                    case 0:
-                        name+=(j==0?"East":"West");
-                        break;
-                    case 1:
-                        name+=(j==0?"South":"North");
-                        break;
-                    case 2:
-                        name+=(j==0?"Bottom":"Top");
-                        break;
-                    default:
-                        break;
-                }
-                append(name,poy[0]);
-                append(name+"Inst",poy[1]);
-                
-                Uelm_bnd += poy[0];
-                
+            string name("Poy");
+            switch (i) { // dimension
+                case 0:
+                    name+=(j==0?"East":"West");
+                    break;
+                case 1:
+                    name+=(j==0?"South":"North");
+                    break;
+                case 2:
+                    name+=(j==0?"Bottom":"Top");
+                    break;
+                default:
+                    break;
+            }
+            append(name,poy[0]);
+            append(name+"Inst",poy[1]);
+            
+            Uelm_bnd += poy[0];
+            
         }// i
     }// j
     
@@ -436,9 +414,30 @@ void DiagnosticScalar::setScalar(string my_var, double value){
 
 void DiagnosticScalar::incrementScalar(string my_var, double value){
     for (unsigned int i=0; i< out_key.size(); i++) {
-        if (out_key[i]==my_var) {
-          out_value[i] += value;
-          return;
+        if ( (out_key[i]==my_var) && ( (my_var.find("Min")== std::string::npos)&&(my_var.find("Max")== std::string::npos)) ) {
+            out_value[i] += value;
+            return;
+        }
+    }
+    DEBUG("key not found " << my_var);
+}
+
+
+void DiagnosticScalar::incrementScalar(string my_var, double value, int valIndex){
+    for (unsigned int i=0; i< out_key.size(); i++) {
+        if  ( (out_key[i]==my_var) && ( my_var.find("Min")!= std::string::npos ) && (my_var.find("Cell")== std::string::npos) ) {
+            if ( value < out_value[i] ) {
+                out_value[i] = value;
+                out_value[i+1] = valIndex;
+            }
+            return;
+        }
+        else if  ( (out_key[i]==my_var) && ( my_var.find("Max")!= std::string::npos ) && (my_var.find("Cell")== std::string::npos) ) {
+            if ( value > out_value[i] ) {
+                out_value[i] = value;
+                out_value[i+1] = valIndex;
+            }
+            return;
         }
     }
     DEBUG("key not found " << my_var);
@@ -446,23 +445,45 @@ void DiagnosticScalar::incrementScalar(string my_var, double value){
 
 
 void DiagnosticScalar::append(std::string key, double value) {
-    if ( !defined(key) ) {
-        out_key.push_back(key  );
-        out_value.push_back(value);
+    #pragma omp critical
+    {
+        if ( !defined(key) ) {
+            out_key.push_back(key  );
+            out_value.push_back(value);
+        }
+        else
+            incrementScalar(key, value);
     }
-    else
-        incrementScalar(key, value);
+
+}  // END append
+
+
+void DiagnosticScalar::append(std::string key, double value, int valIndex) {
+    #pragma omp critical
+    {
+        if ( !defined(key) ) {
+            out_key.push_back(key  );
+            out_value.push_back(value);
+            out_key.push_back(key+"Cell");
+            out_value.push_back(valIndex);
+        }
+        else
+            incrementScalar(key, value, valIndex);
+    }
 
 }  // END append
 
 
 void DiagnosticScalar::prepend(std::string key, double value) {
-    if ( !defined(key) ) {
-        out_key  .insert(out_key  .begin(), key  );
-        out_value.insert(out_value.begin(), value);
+    #pragma omp critical
+    {
+        if ( !defined(key) ) {
+            out_key  .insert(out_key  .begin(), key  );
+            out_value.insert(out_value.begin(), value);
+        }
+        else
+            incrementScalar(key, value);
     }
-    else
-        incrementScalar(key, value);
 
 } // END prepend
 

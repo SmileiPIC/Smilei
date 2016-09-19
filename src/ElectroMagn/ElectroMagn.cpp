@@ -235,38 +235,6 @@ void ElectroMagn::dump()
 }
 
 
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Method used to initialize the total charge density
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn::initRhoJ(vector<Species*>& vecSpecies, Projector* Proj)
-{
-    // number of (none-test) used in the simulation
-    //! \todo fix this: n_species is already a member of electromagn, is it this confusing? what happens if n_species grows (i.e. with ionization)?
-    unsigned int n_species = vecSpecies.size();
-    
-    //loop on all (none-test) Species
-    for (unsigned int iSpec=0 ; iSpec<n_species; iSpec++ ) {
-        Particles &cuParticles = vecSpecies[iSpec]->getParticlesList();
-        unsigned int n_particles = vecSpecies[iSpec]->getNbrOfParticles();
-        
-        DEBUG(n_particles<<" species "<<iSpec);
-        if (!cuParticles.isTest) {
-            for (unsigned int iPart=0 ; iPart<n_particles; iPart++ ) {
-                // project charge & current densities
-                (*Proj)(Jx_s[iSpec], Jy_s[iSpec], Jz_s[iSpec], rho_s[iSpec], cuParticles, iPart, cuParticles.lor_fac(iPart));
-            }
-        }
-        
-    }//iSpec
-    DEBUG("before computeTotalRhoJ");    
-    computeTotalRhoJ();
-    DEBUG("projection done for initRhoJ");
-    
-}
-
-
-
 // ---------------------------------------------------------------------------------------------------------------------
 // Reinitialize the total charge densities and currents
 // - save current density as old density (charge conserving scheme)
@@ -298,7 +266,7 @@ void ElectroMagn::restartRhoJs()
 void ElectroMagn::laserDisabled()
 {
     if ( emBoundCond.size() )
-	emBoundCond[0]->laserDisabled();
+        emBoundCond[0]->laserDisabled();
 }
 
 double ElectroMagn::computeNRJ() {
@@ -326,49 +294,43 @@ void ElectroMagn::applyExternalFields(Patch* patch) {
     Field * field;
     bool found=false;
     for (vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
-        for (vector<string>::iterator fieldName=extfield->fields.begin();fieldName!=extfield->fields.end();fieldName++) {
-            string name = LowerCase(*fieldName);
-            if      ( Ex_ && name==LowerCase(Ex_->name) ) field = Ex_;
-            else if ( Ey_ && name==LowerCase(Ey_->name) ) field = Ey_;
-            else if ( Ez_ && name==LowerCase(Ez_->name) ) field = Ez_;
-            else if ( Bx_ && name==LowerCase(Bx_->name) ) field = Bx_;
-            else if ( By_ && name==LowerCase(By_->name) ) field = By_;
-            else if ( Bz_ && name==LowerCase(Bz_->name) ) field = Bz_;
-            else field = NULL;
-            
-            if( field ) {
-                applyExternalField( field, extfield->profile, patch );
-                found=true;
+        string name = LowerCase(extfield->field);
+        if      ( Ex_ && name==LowerCase(Ex_->name) ) field = Ex_;
+        else if ( Ey_ && name==LowerCase(Ey_->name) ) field = Ey_;
+        else if ( Ez_ && name==LowerCase(Ez_->name) ) field = Ez_;
+        else if ( Bx_ && name==LowerCase(Bx_->name) ) field = Bx_;
+        else if ( By_ && name==LowerCase(By_->name) ) field = By_;
+        else if ( Bz_ && name==LowerCase(Bz_->name) ) field = Bz_;
+        else field = NULL;
+        
+        if( field ) {
+            if (patch->isMaster()) {
+                MESSAGE(1,"Applying External field to " << field->name);
             }
+            applyExternalField( field, extfield->profile, patch );
+            found=true;
         }
     }
-    if (patch->isMaster()) {
-        if (found) {
-            MESSAGE(1,"Finish");
-        } else {
-            MESSAGE(1,"Nothing to do");
-        }
+    if (patch->isMaster() && !found) {
+        MESSAGE(1,"Nothing to do");
     }
     Bx_m->copyFrom(Bx_);
     By_m->copyFrom(By_);
     Bz_m->copyFrom(Bz_);
 }
 
-void ElectroMagn::applyAntennas(SmileiMPI* smpi, double time) {
-    Field * field;
-    
-    for (vector<Antenna>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
-        if (antenna->field) {
-            double intensity = antenna->time_profile->valueAt(time);
-            
-            if     ( antenna->field->name == "Jx" ) field = Jx_;
-            else if( antenna->field->name == "Jy" ) field = Jy_;
-            else if( antenna->field->name == "Jz" ) field = Jz_;
-            
-            if (antenna->field->globalDims_ == field->globalDims_) // to do (TV): is this check really necessary ?
-                for (unsigned int i=0; i< field->globalDims_ ; i++)
-                    (*field)(i) += intensity * (*antenna->field)(i);
-        }
+
+void ElectroMagn::applyAntenna(unsigned int iAntenna, double intensity) {
+    Field *field, *antennaField = antennas[iAntenna].field;
+    if (antennaField) {
+        
+        if     ( antennaField->name == "Jx" ) field = Jx_;
+        else if( antennaField->name == "Jy" ) field = Jy_;
+        else if( antennaField->name == "Jz" ) field = Jz_;
+        
+        for (unsigned int i=0; i< field->globalDims_ ; i++)
+            (*field)(i) += intensity * (*antennaField)(i);
+        
     }
 }
 

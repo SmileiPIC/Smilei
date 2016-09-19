@@ -21,15 +21,15 @@ public:
     }
     
     // Clone one patch (avoid reading again the namelist)
-    static Patch* clone(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved=0) {
+    static Patch* clone(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved=0, bool with_particles = true) {
         Patch* newPatch;
         if (params.geometry == "1d3v")
-            newPatch = new Patch1D(static_cast<Patch1D*>(patch), params, smpi, ipatch, n_moved);
+            newPatch = new Patch1D(static_cast<Patch1D*>(patch), params, smpi, ipatch, n_moved, with_particles);
         else 
-            newPatch = new Patch2D(static_cast<Patch2D*>(patch), params, smpi, ipatch, n_moved);
+            newPatch = new Patch2D(static_cast<Patch2D*>(patch), params, smpi, ipatch, n_moved, with_particles);
         return newPatch;
     }
-    
+
     // Create a vector of patches
     static VectorPatch createVector(Params& params, SmileiMPI* smpi) {
         VectorPatch vecPatches;
@@ -38,31 +38,33 @@ public:
         unsigned int npatches, firstpatch;
         npatches = smpi->patch_count[smpi->getRank()];// Number of patches owned by current MPI process.
         firstpatch = 0;
-        for (unsigned int impi = 0 ; impi < smpi->getRank() ; impi++) {
+        for (unsigned int impi = 0 ; impi < (unsigned int)smpi->getRank() ; impi++) {
             firstpatch += smpi->patch_count[impi];
         }
-        
-#ifdef _DEBUGPATCH
-        std::cout << smpi->getRank() << ", nPatch = " << npatches << " - starting at " << firstpatch << std::endl;        
-#endif
+        DEBUG( smpi->getRank() << ", nPatch = " << npatches << " - starting at " << firstpatch );
         
         // Create patches (create patch#0 then clone it)
         vecPatches.resize(npatches);
         vecPatches.patches_[0] = create(params, smpi, firstpatch);
+        MESSAGE(1,"First patch created");
         for (unsigned int ipatch = 1 ; ipatch < npatches ; ipatch++) {
             vecPatches.patches_[ipatch] = clone(vecPatches(0), params, smpi, firstpatch + ipatch);
         }
+        MESSAGE(1,"All patches created");
+        // print number of particles
+        vecPatches.printNumberOfParticles( smpi );
+
         vecPatches.set_refHindex();
         
         vecPatches.update_field_list();
         
-        vecPatches.createGlobalDiags( params, smpi );
-        vecPatches.initAllDiags( params, smpi );
+        vecPatches.createDiags( params, smpi );
         
         // Figure out if there are antennas
-        vecPatches.hasAntennas = ( vecPatches(0)->EMfields->antennas.size() > 0 );
+        vecPatches.nAntennas = vecPatches(0)->EMfields->antennas.size();
         vecPatches.initExternals( params );
         
+        MESSAGE(1,"Done initializing patches");
         return vecPatches;
     }
 

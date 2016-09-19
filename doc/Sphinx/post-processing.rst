@@ -1,25 +1,42 @@
 Post-process
 ------------
 
+A python module is provided to view or extract data from all the diagnostics.
+There are several ways to load this module in python.
 
-A python script *Diagnostics.py* is provided to view or extract data from all the diagnostics.
-To use this script, you will need *python2.7* with some packages
-(follow the :doc:`installation instructions <installation>`).
+.. rubric:: 1. Install Smilei's module (recommended)
 
-For an interactive mode, we recommend installing and running *ipython*::
+..
+
+  ::
   
-  ipython -i scripts/Diagnostics.py
+    make install_python
 
-Otherwise, you can add the following command in your own script::
+  .. note:: This has to be done only once, unless you move the smilei directory elsewere. This command creates a small file in the Python user-site directory. To remove it use the command: ``make uninstall_python``.
+      
+  Then, in python, simply run::
   
-  execfile("scripts/Diagnostics.py")
+    from Smilei import *
+
+
+.. rubric:: 2. Execute the ``Diagnostics.py`` script from python 
+
+..
+
+  You can add the following command in your own python script::
+  
+    execfile("/path/to/Smilei/scripts/Diagnostics.py")
+
+
+  .. warning:: This solution is kept for backward compatibility and may be removed in 
+    a future release
 
 ----
 
-Select a simulation
+Open a simulation
 ^^^^^^^^^^^^^^^^^^^
 
-In a *python* command line (or script), invoke the following class to select
+In a *python* command line (or script), invoke the following class to open
 your :program:`Smilei` simulation.
 
 .. py:class:: Smilei(results_path, show=True)
@@ -33,6 +50,11 @@ You can store this to a variable for later, for instance::
   S = Smilei("path/to/my/results")
 
 
+Once a simulation is opened, several methods are available to find information on the
+namelist or open various diagnostics. Checkout the namelist documentation to find out
+which diagnostics are included in Smilei: :ref:`scalars <DiagScalar>`,
+:ref:`fields <DiagFields>`, :ref:`probes <DiagProbe>` and :ref:`particles <DiagParticles>`.
+
 ----
 
 Extract namelist information
@@ -42,8 +64,8 @@ Once a simulation is selected as shown above, you can access the content of the 
 using the variable ``namelist``::
   
   S = Smilei("path/to/my/results") # select a simulation
-  print S.namelist.timestep        # print the timestep
-  print S.namelist.dim             # print the simulation dimensions
+  print S.namelist.Main.timestep   # print the timestep
+  print S.namelist.Main.geometry   # print the simulation dimensions
 
 All the variables defined in the original file are copied into this variable.
 
@@ -67,15 +89,8 @@ In the case of the species, you can also obtain a given species by its name (or
 
 ----
 
-Select a diagnostic
-^^^^^^^^^^^^^^^^^^^
-
-Once a simulation is selected, several methods are available to choose various diagnostics.
-
-Checkout the namelist documentation to find out which diagnostics are included in Smilei:
-:ref:`scalars <DiagScalar>`, :ref:`fields <DiagFields>`, :ref:`probes <DiagProbe>`
-and :ref:`particles <DiagParticles>`.
-
+Open a Scalar diagnostic
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. py:method:: Smilei.Scalar(scalar=None, timesteps=None, units=[""], data_log=False, **kwargs)
   
@@ -90,11 +105,15 @@ and :ref:`particles <DiagParticles>`.
      | If ``True``, then :math:`\log_{10}` is applied to the output.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
-  **Example**::
-    
-    S = Smilei("path/to/my/results")
-    Diag = S.Scalar("Utot")
+**Example**::
+  
+  S = Smilei("path/to/my/results")
+  Diag = S.Scalar("Utot")
 
+----
+
+Open a Field diagnostic
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. py:method:: Smilei.Field(field=None, timesteps=None, slice=None, units=[""], data_log=False, **kwargs)
   
@@ -112,14 +131,20 @@ and :ref:`particles <DiagParticles>`.
      | - With syntax 2, only the bin closest to ``location`` is kept.
      | - With syntax 3, an average is performed between ``begin`` and ``end``.
      | Example: ``slice = {"x":[4,5]}`` will average for :math:`x` within [4,5].
+  * ``stride``: step size for reading the grid. If the grid is too large, use a stride > 1
+    to reduce the amount of data.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
-  **Example**::
-    
-    S = Smilei("path/to/my/results")
-    Diag = S.Field("Ex", slice = {"x":[4,5]})
+**Example**::
+  
+  S = Smilei("path/to/my/results")
+  Diag = S.Field("Ex", slice = {"x":[4,5]})
 
 
+----
+
+Open a Probe diagnostic
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. py:method:: Smilei.Probe(probeNumber=None, field=None, timesteps=None, slice=None, units=[""], data_log=False, **kwargs)
   
@@ -133,21 +158,25 @@ and :ref:`particles <DiagParticles>`.
      | For instance, ``slice={"axis1":"all"}``. Note that ``"axis1"`` and ``"axis2"`` are not necessarily :math:`x` or :math:`y` because the probe mesh may be rotated.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
-  **Example**::
-    
-    S = Smilei("path/to/my/results")
-    Diag = S.Probe(0, "Ex")
+**Example**::
+  
+  S = Smilei("path/to/my/results")
+  Diag = S.Probe(0, "Ex")
 
 
+----
 
-.. py:method:: Smilei.ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None, units=[""], data_log=False, **kwargs)
+Open a Particle diagnostic
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:method:: Smilei.ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None, units=[""], data_log=False, stride=1, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: number of the particle diagnostic (the first one has number 0).
      | If not given, a list of available particle diagnostics is printed.
      | It can also be an operation between several particle diagnostics.
      | For example, ``"#0/#1"`` computes the division by diagnostics 0 and 1.
-  * ``slice``: A selection of rows or columns. This parameter is used to reduce the number of dimensions of the array.
+  * ``slice``: a selection of rows or columns. This parameter is used to reduce the number of dimensions of the array.
      | Syntax 1: ``slice = { axis : "all", ... }``
      | Syntax 2: ``slice = { axis : location, ... }``
      | Syntax 3: ``slice = { axis : [begin, end] , ... }``
@@ -159,44 +188,60 @@ and :ref:`particles <DiagParticles>`.
      | - With syntax 2, only the bin closest to ``location`` is kept.
      | - With syntax 3, a **sum** is performed between ``begin`` and ``end``.
      | Example: ``slice={"x":[4,5]``} will sum all the data for x within [4,5].
+  * ``stride``: step size for reading the grid. If the grid is too large, use a stride > 1
+    to reduce the amount of data.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
-  **Example**::
-    
-    S = Smilei("path/to/my/results")
-    Diag = S.ParticleDiagnostic(1)
+**Example**::
+  
+  S = Smilei("path/to/my/results")
+  Diag = S.ParticleDiagnostic(1)
 
 
 
+----
 
-.. py:method:: Smilei.TrackParticles(species=None, select="", axes=[], timesteps=None, units=[""], skipAnimation=False, **kwargs)
+Open a Track diagnostic
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:method:: Smilei.TrackParticles(species=None, select="", axes=[], timesteps=None, length=None, units=[""], skipAnimation=False, **kwargs)
   
   * ``timesteps``, ``units``: same as before.
   * ``species``: the name of a tracked-particle species.
      | If omitted, a list of available tracked-particle species is printed.
   * ``select``: Instructions for selecting particles among those available.
-     | Syntax 1: ``select="any(times, condition)"``
-     | Syntax 2: ``select="all(times, condition)"``
-     | ``times`` is a selection of timesteps ``t``, for instance ``t>50``.
-     | ``condition`` is a condition on particles properties  (``x``, ``y``, ``z``, ``px``, ``py``, ``pz``), for instance ``px>0``.
-     | Syntax 1 selects particles satisfying ``condition`` for at least one of the ``times``.
-     | Syntax 2 selects particles satisfying ``condition`` at all ``times``.
-     | **Example:** ``select="all(t<40, px<0.1)"`` selects particles that kept :math:`p_x<0.1` until timestep 40.
-     | **Example:** ``select="any(t>0, px>1.)"`` selects particles that reached :math:`p_x>1` at some point.
-     | It is possible to make logical operations: ``+`` is *OR*; ``*`` is *AND*; ``-`` is *NOT*.
-     | **Example:** ``select="any((t>30)*(t<60), px>1) + all(t>0, (x>1)*(x<2))"``
+    A detailed explanation is provided below
   * ``axes``: A list of axes for plotting the trajectories.
      | Each axis is ``"x"``, ``"y"``, ``"z"``, ``"px"``, ``"py"`` or ``"pz"``.
      | **Example:** ``axes = ["x"]`` corresponds to :math:`x` versus time. 
      | **Example:** ``axes = ["x","y"]`` correspond to 2-D trajectories. 
      | **Example:** ``axes = ["x","px"]`` correspond to phase-space trajectories.
+  * ``length``: The length of each plotted trajectory, in number of timesteps.
   * ``skipAnimation``: when ``True``, the :py:func:`plot` will directly show the full trajectory.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
-  **Example**::
-    
-    S = Smilei("path/to/my/results")
-    Diag = S.TrackParticles("electrons", axes=["px","py"])
+**Example**::
+  
+  S = Smilei("path/to/my/results")
+  Diag = S.TrackParticles("electrons", axes=["px","py"])
+
+
+**Detailed explanation of the** ``select`` **parameter**
+  
+  | **Syntax 1:** ``select="any(times, condition)"``
+  | **Syntax 2:** ``select="all(times, condition)"``
+  | ``times`` is a selection of timesteps ``t``, for instance ``t>50``.
+  | ``condition`` is a condition on particles properties  (``x``, ``y``, ``z``, ``px``, ``py``, ``pz``), for instance ``px>0``.
+  | Syntax 1 selects particles satisfying ``condition`` for at least one of the ``times``.
+  | Syntax 2 selects particles satisfying ``condition`` at all ``times``.
+  | **Example:** ``select="all(t<40, px<0.1)"`` selects particles that kept :math:`p_x<0.1` until timestep 40.
+  | **Example:** ``select="any(t>0, px>1.)"`` selects particles that reached :math:`p_x>1` at some point.
+  | It is possible to make logical operations: ``+`` is *OR*; ``*`` is *AND*; ``-`` is *NOT*.
+  | **Example:** ``select="any((t>30)*(t<60), px>1) + all(t>0, (x>1)*(x<2))"``
+  
+  | **Syntax 3:** ``select=selection`` where ``selection`` is a list of particle IDs to be selected.
+  | The selection can be obtained from a previous diagnostic using:
+  | ``Smilei.TrackParticles( ... ).selectedParticles``
 
 
 
@@ -454,11 +499,12 @@ An example of the commands you may use from a UNIX *shell* is::
 
 From the same terminal, launch *python* using the command::
 
-  python -i scripts/Diagnostics.py
+  python
 
 You are now in the *python* prompt.
 Obtain a list of available particle diagnostics using::
 
+  >>> from Smilei import *
   >>> S = Smilei('tst1d_6_particle_diagnostic')
   >>> S.ParticleDiagnostic()
   Printing available particle diagnostics:

@@ -30,8 +30,8 @@ public:
     //! Constructor for Patch
     Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
     //! Cloning Constructor for Patch
-    Patch(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
-
+    Patch(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles);
+    
     //! First initialization step for patches
     void initStep1(Params& params);
     //! Second initialization step for patches
@@ -41,45 +41,47 @@ public:
     //! Last creation step
     void finishCreation( Params& params, SmileiMPI* smpi );
     //! Last cloning step
-    void finishCloning( Patch* patch, Params& params, SmileiMPI* smpi );
-
+    void finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool with_particles );
+    
     //! Destructor for Patch
     virtual ~Patch();
-
+    
     // Main PIC objects : data & operators
     // -----------------------------------
-
+    
     //! Species, Particles, of the current Patch
     std::vector<Species*> vecSpecies;
     //! Electromagnetic fields and densities (E, B, J, rho) of the current Patch
     ElectroMagn* EMfields;
-
+    
     //! Optional internal boundary condifion on Particles
     PartWalls * partWalls;
     //! Optional binary collisions operators
     std::vector<Collisions*> vecCollisions;
-
+    
     //! Interpolator (used to push particles and for probes)
     Interpolator* Interp;
     //! Projector
     Projector* Proj;
-
-    std::vector<Diagnostic*> localDiags;
-
+    
+    //! "fake" particles for the probe diagnostics
+    std::vector<ProbeParticles*> probes;
+    
+    
     // Geometrical description
     // -----------------------
-
+    
     //!Hilbert index of the patch. Number of the patch along the Hilbert curve.
     unsigned int hindex;
-
+    
     //!Cartesian coordinates of the patch. X,Y,Z of the Patch according to its Hilbert index.
     std::vector<unsigned int> Pcoordinates;
-
-
+    
+    
     // MPI exchange/sum methods for particles/fields
     //   - fields communication specified per geometry (pure virtual)
     // --------------------------------------------------------------
-
+    
     //! manage Idx of particles per direction,
     void initExchParticles(SmileiMPI* smpi, int ispec, Params& params);
     //!init comm  nbr of particles/
@@ -90,12 +92,14 @@ public:
     void finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
     //! delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
     void cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_particles_to_exchange);
-
+    
     //! init comm / sum densities
     virtual void initSumField( Field* field, int iDim ) = 0;
+    virtual void reallyinitSumField( Field* field, int iDim ) = 0;
     //! finalize comm / sum densities
     virtual void finalizeSumField( Field* field, int iDim ) = 0;
-
+    virtual void reallyfinalizeSumField( Field* field, int iDim ) = 0;
+    
     //! init comm / exchange fields
     virtual void initExchange( Field* field ) = 0;
     //! finalize comm / exchange fields
@@ -107,16 +111,16 @@ public:
 
     // Create MPI_Datatype to exchange fields
     virtual void createType( Params& params ) = 0;
-
+    
     // Geometrical methods
     // --------------------
-
+    
     //! Return the hibert index of current patch
     inline unsigned int Hindex() { return  hindex; }
-
+    
     //! Method to identify the rank 0 MPI process
     inline bool isMaster() { return (hindex==0); }
-
+    
     //! Should be pure virtual, see child classes
     inline bool isWestern()  { return locateOnBorders(0, 0); }
     //! Should be pure virtual, see child classes
@@ -125,22 +129,22 @@ public:
     inline bool isSouthern() { return locateOnBorders(1, 0); }
     //! Should be pure virtual, see child classes
     inline bool isNorthern() { return locateOnBorders(1, 1); }
-
+    
     //! Test neighbbor's patch Id to apply or not a boundary condition
     inline bool locateOnBorders(int dir, int way) {
     if ( neighbor_[dir][way] == MPI_PROC_NULL )
         return true;
     return false;
     }
-
+    
     //! Compute MPI rank of neigbors patch regarding neigbors patch Ids
     void updateMPIenv(SmileiMPI *smpi);
-
+    
     // Test who is MPI neighbor of current patch
     inline bool is_a_MPI_neighbor(int iDim, int iNeighbor) {
     return( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (MPI_neighbor_[iDim][iNeighbor]!=MPI_me_) );
     }
-
+    
     //! Return real (excluding oversize) min coordinates (ex : rank 0 returns 0.) for direction i
     //! @see min_local
     inline double getDomainLocalMin(int i) const {
@@ -177,7 +181,7 @@ public:
     inline std::vector<double> getDomainLocalMin() const {
         return min_local;
     }
-
+    
     //! Set geometry data in case of moving window restart
     //! \param x_moved difference on coordinates regarding t0 geometry
     //! \param idx_moved number of displacement of the window
@@ -187,28 +191,34 @@ public:
         //cell_starting_global_index[0] = (idx_moved-oversize[0]);
         cell_starting_global_index[0] += (idx_moved);
     }
-
+    
     //! MPI rank of current patch
     int MPI_me_;
-
+    
+    //! The debye length, computed for collisions
+    double debye_length_squared; 
+    
 protected:
     // Complementary members for the description of the geometry
     // ---------------------------------------------------------
-
+    
     //! Store number of space dimensions for the fields
     int nDim_fields_;
-
+    
     //! Number of MPI process per direction in the cartesian topology (2)
     int nbNeighbors_;
-
+    
     //! Hilbert index of neighbors patch
     std::vector< std::vector<int> > neighbor_;
     //! Hilbert index of corners neighbors patch
     std::vector< std::vector<int> > corner_neighbor_; // Kept for Moving Windows
 
+    std::vector< std::vector<int> > send_tags_, recv_tags_;
+
+    
     //! MPI rank of neighbors patch
     std::vector< std::vector<int> > MPI_neighbor_;
-
+    
     //! "Real" min limit of local sub-subdomain (ghost data not concerned)
     //!     - "0." on rank 0
     std::vector<double> min_local;
@@ -218,9 +228,10 @@ protected:
     //!     - concerns ghost data
     //!     - "- oversize" on rank 0
     std::vector<int> cell_starting_global_index;
-
+    
     std::vector<unsigned int> oversize;
-
+    
+    
 };
 
 

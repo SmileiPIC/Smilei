@@ -18,7 +18,7 @@ PusherRRLL::~PusherRRLL()
 }
 
 /****************************************************************************
-	Lorentz Force -- leap-frog (Boris) scheme + classical rad. reaction force
+    Lorentz Force -- leap-frog (Boris) scheme + classical rad. reaction force
 *****************************************************************************/
 void PusherRRLL::operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields Bpart, double& gf)
 {

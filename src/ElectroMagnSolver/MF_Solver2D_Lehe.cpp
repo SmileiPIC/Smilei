@@ -39,7 +39,7 @@ void MF_Solver2D_Lehe::operator() ( ElectroMagn* fields )
     for (unsigned int i=1 ; i<nx_d-2;  i++) {
         for (unsigned int j=1 ; j<ny_d-1 ; j++) {
             (*Bx2D)(i,j) -= dt_ov_dy * ( Beta_x*((*Ez2D)(i,j) - (*Ez2D)(i,j-1)) +beta_x*( (*Ez2D)(i+1,j)- (*Ez2D)(i+1,j-1) +(*Ez2D)(i-1,j)- (*Ez2D)(i-1,j-1)));
-	}
+        }
     }
     
     // Magnetic field By^(d,p)
@@ -47,8 +47,8 @@ void MF_Solver2D_Lehe::operator() ( ElectroMagn* fields )
         for (unsigned int j=1 ; j<ny_p-1 ; j++) {
             (*By2D)(i,j) += dt_ov_dx * ( Beta_y*((*Ez2D)(i,j) - (*Ez2D)(i-1,j)) +beta_y*((*Ez2D)(i,j+1)- (*Ez2D)(i-1,j+1) +(*Ez2D)(i,j-1)- (*Ez2D)(i-1,j-1) ) +delta_x*( (*Ez2D)(i+1,j) - (*Ez2D)(i-2,j)));
         }
-	//(*By2D)(i,0) += dt_ov_dx *( (1-2*beta_y)*((*Ez2D)(i,0) - (*Ez2D)(i-1,0)) +beta_y*((*Ez2D)(i,1)- (*Ez2D)(i-1,1) +(*Ez2D)(i,ny_p-1)- (*Ez2D)(i-1,ny_p-1) ) );
-	//(*By2D)(i,ny_p-1) += dt_ov_dx * ( (1-2*beta_y)*((*Ez2D)(i,ny_p-1) - (*Ez2D)(i-1,ny_p-1)) +beta_y*((*Ez2D)(i,0)- (*Ez2D)(i-1,0) +(*Ez2D)(i,ny_p-2)- (*Ez2D)(i-1,ny_p-2) ) );
+        //(*By2D)(i,0) += dt_ov_dx *( (1-2*beta_y)*((*Ez2D)(i,0) - (*Ez2D)(i-1,0)) +beta_y*((*Ez2D)(i,1)- (*Ez2D)(i-1,1) +(*Ez2D)(i,ny_p-1)- (*Ez2D)(i-1,ny_p-1) ) );
+        //(*By2D)(i,ny_p-1) += dt_ov_dx * ( (1-2*beta_y)*((*Ez2D)(i,ny_p-1) - (*Ez2D)(i-1,ny_p-1)) +beta_y*((*Ez2D)(i,0)- (*Ez2D)(i-1,0) +(*Ez2D)(i,ny_p-2)- (*Ez2D)(i-1,ny_p-2) ) );
     
     
     // Magnetic field Bz^(d,d)
@@ -56,7 +56,7 @@ void MF_Solver2D_Lehe::operator() ( ElectroMagn* fields )
         for (unsigned int j=1 ; j<ny_d-1 ; j++) {
             (*Bz2D)(i,j) += dt_ov_dy * (Beta_x*( (*Ex2D)(i,j) - (*Ex2D)(i,j-1) ) +beta_x*((*Ex2D)(i+1,j)- (*Ex2D)(i+1,j-1)+ (*Ex2D)(i-1,j)- (*Ex2D)(i-1,j-1)))
             -               dt_ov_dx * (Beta_y*( (*Ey2D)(i,j) - (*Ey2D)(i-1,j) ) +beta_y*((*Ey2D)(i,j+1)- (*Ey2D)(i-1,j+1)+ (*Ey2D)(i,j-1)- (*Ey2D)(i-1,j-1)) +delta_x*( (*Ey2D)(i+1,j) - (*Ey2D)(i-2,j)));
-	}
+        }
     }
 //}// end parallel
 }//END solveMaxwellFaraday

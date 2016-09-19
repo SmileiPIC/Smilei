@@ -56,83 +56,69 @@ void ElectroMagnBC2D_Trans_Damping::apply(ElectroMagn* EMfields, double time_dua
     //   BC : Bx(i=0...nx_p, 0) & Bx(i=0...nx_p, ny_d-1)
     if ( patch->isSouthern() ) {
         // for Bx^(p,d)
-        for (unsigned int i=0 ; i<nx_p ; i++) {
-	    for (unsigned int j=0 ; j<ny_l ; j++)
-		(*Bx2D)(i,j) *= coeff[j];
-	}
+        for (unsigned int i=0 ; i<nx_p ; i++)
+            for (unsigned int j=0 ; j<ny_l ; j++)
+                (*Bx2D)(i,j) *= coeff[j];
+        
         // for Bz^(d,d)
-        for (unsigned int i=0 ; i<nx_d ; i++) {
-	    for (unsigned int j=0 ; j<ny_l ; j++)
-		(*Bz2D)(i,j) *= coeff[j];
-
-	}
-	
+        for (unsigned int i=0 ; i<nx_d ; i++)
+            for (unsigned int j=0 ; j<ny_l ; j++)
+                (*Bz2D)(i,j) *= coeff[j];
+        
         // for By^(d,p)
-        /*for (unsigned int i=0 ; i<nx_d ; i++) {
-	    for (unsigned int j=0 ; j<ny_l ; j++)
-		(*By2D)(i,j) *= coeff[j];
-
-	}*/
-	
-	
+        //for (unsigned int i=0 ; i<nx_d ; i++)
+        //    for (unsigned int j=0 ; j<ny_l ; j++)
+        //        (*By2D)(i,j) *= coeff[j];
+        
+        
         // for Ex^(d,p)
-        for (unsigned int i=0 ; i<nx_d ; i++) {
-	    for (unsigned int j=0 ; j<ny_l ; j++)
-		(*Ex2D)(i,j) *= coeff[j];
-	}
+        for (unsigned int i=0 ; i<nx_d ; i++)
+            for (unsigned int j=0 ; j<ny_l ; j++)
+                (*Ex2D)(i,j) *= coeff[j];
+        
         // for Ez^(p,p)
-        for (unsigned int i=0 ; i<nx_p ; i++) {
-	    for (unsigned int j=0 ; j<ny_l ; j++)
-		(*Ez2D)(i,j) *= coeff[j];
-	}
-	
+        for (unsigned int i=0 ; i<nx_p ; i++)
+            for (unsigned int j=0 ; j<ny_l ; j++)
+                (*Ez2D)(i,j) *= coeff[j];
+        
         // for Ey^(p,d)
-        /*for (unsigned int i=0 ; i<nx_p ; i++) {
-	    for (unsigned int j=0 ; j<ny_l ; j++)
-		(*Ey2D)(i,j) *= coeff[j];
-	}*/
-	
-
+        //for (unsigned int i=0 ; i<nx_p ; i++)
+        //    for (unsigned int j=0 ; j<ny_l ; j++)
+        //        (*Ey2D)(i,j) *= coeff[j];
+        
     }
-
+    
     //   BC : Bz(i=0...nx_d-1, 0) & Bz(i=0...nx_d-1, ny_d-1)
     if ( patch->isNorthern() ) {
         // for Bx^(p,d)
-        for (unsigned int i=0 ; i<nx_p ; i++) {
-	    for (unsigned int j=0 ; j<ny_l ; j++)
-	      (*Bx2D)(i,ny_d-1-j) *= coeff[j];
-        }
+        for (unsigned int i=0 ; i<nx_p ; i++)
+            for (unsigned int j=0 ; j<ny_l ; j++)
+                (*Bx2D)(i,ny_d-1-j) *= coeff[j];
+        
         // for Bz^(d,d)
-        for (unsigned int i=0 ; i<nx_d ; i++) {
-	    for (unsigned int j=0 ; j<ny_l ; j++)
-	      (*Bz2D)(i,ny_d-1-j) *= coeff[j];
-        }
-	
+        for (unsigned int i=0 ; i<nx_d ; i++)
+            for (unsigned int j=0 ; j<ny_l ; j++)
+                (*Bz2D)(i,ny_d-1-j) *= coeff[j];
+        
         // for By^(d,p)
-        /*for (unsigned int i=0 ; i<nx_d ; i++) {
-	    for (unsigned int j=0 ; j<ny_l ; j++)
-	      (*By2D)(i,ny_p-1-j) *= coeff[j];
-        }*/
-	
-	
-	// for Ex^(d,p)
-        for (unsigned int i=0 ; i<nx_d ; i++) {
-	    for (unsigned int j=0 ; j<ny_l ; j++)
-	      (*Ex2D)(i,ny_p-1-j) *= coeff[j];
-        }
+        //for (unsigned int i=0 ; i<nx_d ; i++)
+        //    for (unsigned int j=0 ; j<ny_l ; j++)
+        //        (*By2D)(i,ny_p-1-j) *= coeff[j];
+        
+        // for Ex^(d,p)
+        for (unsigned int i=0 ; i<nx_d ; i++)
+            for (unsigned int j=0 ; j<ny_l ; j++)
+                (*Ex2D)(i,ny_p-1-j) *= coeff[j];
+        
         // for Ez^(p,p)
-        for (unsigned int i=0 ; i<nx_p ; i++) {
-	    for (unsigned int j=0 ; j<ny_l ; j++)
-	      (*Ez2D)(i,ny_p-1-j) *= coeff[j];
-	}
-
-	
+        for (unsigned int i=0 ; i<nx_p ; i++)
+            for (unsigned int j=0 ; j<ny_l ; j++)
+                (*Ez2D)(i,ny_p-1-j) *= coeff[j];
+        
         // for Ey^(p,d)
-        /*for (unsigned int i=0 ; i<nx_p ; i++) {
-	    for (unsigned int j=0 ; j<ny_l ; j++)
-	      (*Ey2D)(i,ny_d-1-j) *= coeff[j];
-	}*/
-	
+        //for (unsigned int i=0 ; i<nx_p ; i++)
+        //    for (unsigned int j=0 ; j<ny_l ; j++)
+        //        (*Ey2D)(i,ny_d-1-j) *= coeff[j];
     }
 
 

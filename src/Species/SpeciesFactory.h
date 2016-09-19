@@ -54,7 +54,6 @@ public:
         
         // Extract various parameters from the namelist
         
-        
         PyTools::extract("initPosition_type",thisSpecies->initPosition_type ,"Species",ispec);
         if (thisSpecies->initPosition_type.empty()) {
             ERROR("For species '" << species_type << "' empty initPosition_type");
@@ -232,20 +231,14 @@ public:
         // Extract test Species flag
         PyTools::extract("isTest", thisSpecies->particles->isTest, "Species", ispec);
         
-        
-        // get parameter "track_every" which describes a timestep selection
-        std::ostringstream name("");
-        name << "Tracking species '" << species_type << "'";
-        thisSpecies->particles->track_timeSelection = new TimeSelection(
-            PyTools::extract_py("track_every", "Species", ispec),
-            name.str()
-        );
-        thisSpecies->particles->tracked = ! thisSpecies->particles->track_timeSelection->isEmpty();
-        
         // Verify they don't ionize
         if (thisSpecies->ionization_model!="none" && thisSpecies->particles->isTest) {
             ERROR("For species '" << species_type << "' test & ionized is currently impossible");
         }
+        
+        // Find out whether this species is tracked
+        TimeSelection track_timeSelection( PyTools::extract_py("track_every", "Species", ispec), "Track" );
+        thisSpecies->particles->tracked = ! track_timeSelection.isEmpty();
         
         // Create the particles
         if (!params.restart) {
@@ -258,11 +251,12 @@ public:
         thisSpecies->initOperators(params, patch);
         
         return thisSpecies;
-    }
+    } // End Species* create()
+
     
     // Method to clone a species from an existing one
     // Note that this must be only called from cloneVector, because additional init is needed
-    static Species* clone(Species* species, Params &params, Patch* patch) {
+    static Species* clone(Species* species, Params &params, Patch* patch, bool with_particles = true) {
         // Create new species object
         Species * newSpecies = NULL;
         if (species->dynamics_type=="norm") {
@@ -304,21 +298,20 @@ public:
         newSpecies->temperatureProfile[0] = new Profile(species->temperatureProfile[0]);
         newSpecies->temperatureProfile[1] = new Profile(species->temperatureProfile[1]);
         newSpecies->temperatureProfile[2] = new Profile(species->temperatureProfile[2]);
-        newSpecies->particles->isTest     = species->particles->isTest;
         newSpecies->max_charge            = species->max_charge;
-        newSpecies->particles->tracked    = species->particles->tracked;
         
-        newSpecies->particles->track_timeSelection = new TimeSelection(species->particles->track_timeSelection);
+        newSpecies->particles->isTest              = species->particles->isTest;
+        newSpecies->particles->tracked             = species->particles->tracked;
         
         // \todo : NOT SURE HOW THIS BEHAVES WITH RESTART
-        if (!params.restart) {
+        if ( (!params.restart) && (with_particles) ) {
             newSpecies->createParticles(params.n_space, params, patch, 0 );
         }
         
         newSpecies->initOperators(params, patch);
         
         return newSpecies;
-    }
+    } // End Species* clone()
     
     
     static std::vector<Species*> createVector(Params& params, Patch* patch) {
@@ -331,14 +324,11 @@ public:
         // read from python namelist
         unsigned int tot_species_number = PyTools::nComponents("Species");
         for (unsigned int ispec = 0; ispec < tot_species_number; ispec++) {
-            
             Species* thisSpecies = SpeciesFactory::create(params, ispec, patch);
             
             // Put the newly created species in the vector of species
             retSpecies.push_back(thisSpecies);
             
-            // Print info
-            if (patch->isMaster()) MESSAGE(2, "Species " << ispec << " (" << thisSpecies->species_type << ") created,\t check scalars for the number of particles" );
         }
         
         // Loop species to find the electron species for ionizable species
@@ -354,6 +344,10 @@ public:
                         ERROR("For species '"<<retSpecies[ispec1]->species_type<<"' ionization_electrons must be a species with mass==1");
                     retSpecies[ispec1]->electron_species_index = ispec2;
                     retSpecies[ispec1]->electron_species = retSpecies[ispec2];
+                    if ( ( !retSpecies[ispec1]->getNbrOfParticles() ) && ( !retSpecies[ispec2]->getNbrOfParticles() ) ) {
+                        int max_eon_number = retSpecies[ispec1]->getNbrOfParticles() * retSpecies[ispec1]->atomic_number;
+                        retSpecies[ispec2]->particles->reserve( max_eon_number, retSpecies[ispec2]->particles->dimension() );
+                    }
                     break;
                 }
             }
@@ -363,13 +357,13 @@ public:
     }
     
     // Method to clone the whole vector of species
-    static std::vector<Species*> cloneVector(std::vector<Species*> vecSpecies, Params& params, Patch* patch)
+    static std::vector<Species*> cloneVector(std::vector<Species*> vecSpecies, Params& params, Patch* patch, bool with_particles = true)
     {
         std::vector<Species*> retSpecies;
         retSpecies.resize(0);
         
         for (unsigned int ispec = 0; ispec < vecSpecies.size(); ispec++) {
-            Species* newSpecies = SpeciesFactory::clone(vecSpecies[ispec], params, patch);
+            Species* newSpecies = SpeciesFactory::clone(vecSpecies[ispec], params, patch, with_particles);
             retSpecies.push_back( newSpecies );
         }
         
