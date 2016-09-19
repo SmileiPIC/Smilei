@@ -132,6 +132,13 @@ void SmileiMPI::init( Params& params )
             MESSAGE(2,"applied topology for periodic BCs in y-direction");
         }
     }
+    if (params.nDim_field>2) {
+        // Geometry periodic in y
+        if (params.bc_em_type_z[0]=="periodic") {
+            periods_[2] = 1;
+            MESSAGE(2,"applied topology for periodic BCs in z-direction");
+        }
+    }
 } // END init
 
 
