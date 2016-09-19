@@ -1,4 +1,3 @@
-#! /usr/bin/python
 ##!/gpfslocal/pub/python/anaconda/Anaconda-2.1.0/bin/python 
 #
 # This script checks the validity of the results of the execution of smilei defined by :
@@ -473,30 +472,53 @@ export KMP_AFFINITY=verbose \n \
 export PATH=$PATH:/opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck \n \
 #Specify the number of sockets per node in -mca orte_num_sockets \n \
 #Specify the number of cores per sockets in -mca orte_num_cores \n \
-cd "+SMILEI_SCRIPTS+" \n \
+cd "+WORKDIR+" \n \
 mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+"\
  -x $OMP_NUM_THREADS -x $OMP_SCHEDULE "+WORKDIRS+"/smilei "+SMILEI_BENCH+" >"+SMILEI_EXE_OUT+"2>&1 \n \
-exit $?  \n  ")
+echo $? > exit_status_file \n  ")
         exec_script_desc.close()
-        import pdb;pdb.set_trace()
-#    #
-#    # RUN  SMILEI
-#      COMMANDE = "/bin/qsub -sync y  "+EXEC_SCRIPT
-#      try :
-#        check_call(COMMANDE, shell=True)
-#      except CalledProcessError,e:
-#        # if execution fails, exit with exit status 2
-#        os.chdir(WORKDIRS)
-#        shutil.rmtree(WORKDIR)
-#        if VERBOSE :
-#          print  "Smilei validation cannot be done : execution failed."
-#        sys.exit(2)
-#
+        EXIT_STATUS="100"
+        exit_status_fd = open(WORKDIR+"/exit_status_file", "w+")
+        exit_status_fd.write(str(EXIT_STATUS))
+        exit_status_fd.seek(0)
+        COMMANDE = "PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub  "+EXEC_SCRIPT
+        try :
+          check_call(COMMANDE, shell=True)
+          os.chdir(WORKDIRS)
+#          shutil.rmtree(WORKDIR)
+          os.rename(WORKDIR,WORKDIR+"_bad")
+#          os.chdir(WORKDIR)
+#          for file in os.listdir(WORKDIR) :
+#            os.remove(file)
+#          os.chdir(WORKDIRS)
+#          os.rmdir(WORKDIR)
+          # if smilei execution fails, exit with exit status 2
+          if ( EXIT_STATUS != 0 )  :
+            if VERBOSE :
+              print  "Smilei validation cannot be done : execution failed."
+              sys.exit(2)
+        except CalledProcessError,e:
+        # if commande qsub fails, exit with exit status 2
+          os.chdir(WORKDIRS)
+#          shutil.rmtree(WORKDIR)
+          os.rename(WORKDIR,WORKDIR+"_bad")
+#          os.chdir(WORKDIR)
+#          for file in os.listdir(WORKDIR) :
+#            os.remove(file)
+#          os.chdir(WORKDIRS)
+#          os.rmdir(WORKDIR)
+          if VERBOSE :
+            print  "Smilei validation cannot be done : execution failed."
+            sys.exit(2)
+        while ( EXIT_STATUS == "100" ) :
+          time.sleep(10)
+          EXIT_STATUS = exit_status_fd.readline()
+          exit_status_fd.seek(0)
     # READ TIME STEPS AND VALIDATE 
     if VERBOSE :
       print "Testing scalars :\n"
-    VALID_OK = False
 #    import pdb;pdb.set_trace()
+    VALID_OK = False
     L=Diagnostics.Scalar(".",scalar="Utot") # scalar argument must be anything except none in order times is defined
     LISTE_TIMESTEPS = L.getAvailableTimesteps()
     if OPT_TIMESTEP == False or VALID_ALL:
