@@ -498,7 +498,7 @@ void Patch3D::createType( Params& params )
                 MPI_Type_commit( &(ntype_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
 
                 ntype_[1][ix_isPrim][iy_isPrim][iz_isPrim] = NULL;
-                MPI_Type_vector(nx, params.oversize[1]*nz, ny, 
+                MPI_Type_vector(nx, params.oversize[1]*nz, ny*nz, 
                                 MPI_DOUBLE, &(ntype_[1][ix_isPrim][iy_isPrim][iz_isPrim]));
                 MPI_Type_commit( &(ntype_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );
 
