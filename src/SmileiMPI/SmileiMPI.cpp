@@ -132,6 +132,13 @@ void SmileiMPI::init( Params& params )
             MESSAGE(2,"applied topology for periodic BCs in y-direction");
         }
     }
+    if (params.nDim_field>2) {
+        // Geometry periodic in y
+        if (params.bc_em_type_z[0]=="periodic") {
+            periods_[2] = 1;
+            MESSAGE(2,"applied topology for periodic BCs in z-direction");
+        }
+    }
 } // END init
 
 
@@ -261,7 +268,7 @@ void SmileiMPI::init_patch_count( Params& params)
 
     //Loop over all patches
     for(unsigned int hindex=0; hindex < Npatches; hindex++){
-        generalhilbertindexinv(params.mi[0], params.mi[1], &Pcoordinates[0], &Pcoordinates[1], hindex);
+        generalhilbertindexinv(params.mi[0], params.mi[1], params.mi[2], &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
         for (unsigned int idim = 0; idim < params.nDim_field; idim++) {
             Pcoordinates[idim] *= params.n_space[idim]; //Compute patch cells coordinates
         }

@@ -180,12 +180,12 @@ void Interpolator3D2Order::operator() (ElectroMagn* EMfields, Particles &particl
         //Interpolation on current particle
         (*this)(EMfields, particles, ipart, &(*Epart)[ipart], &(*Bpart)[ipart]);
         //Buffering of iol and delta
-        (*iold)[ipart*2+0] = ip_;
-        (*iold)[ipart*2+1] = jp_;
-        (*iold)[ipart*2+2] = kp_;
-        (*delta)[ipart*2+0] = deltax;
-        (*delta)[ipart*2+1] = deltay;
-        (*delta)[ipart*2+2] = deltaz;
+        (*iold)[ipart*3]    = ip_;
+        (*iold)[ipart*3+1]  = jp_;
+        (*iold)[ipart*3+2]  = kp_;
+        (*delta)[ipart*3]   = deltax;
+        (*delta)[ipart*3+1] = deltay;
+        (*delta)[ipart*3+2] = deltaz;
     }
 
 }
