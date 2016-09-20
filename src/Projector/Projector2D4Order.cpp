@@ -40,59 +40,65 @@ Projector2D4Order::~Projector2D4Order()
 }
 
 
-//! Below, in this order :
-//!   Project global current densities (EMfields->Jx_/Jy_/Jz_), not used
-//!   Projection by species
-//!   Project global current charge
-//!   Project local current densities (sort)
-//!   Project global current densities (ionize)
-
-
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project global current densities (EMfields->Jx_/Jy_/Jz_), not used
+//! Project current densities : main projector
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, double gf)
+void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaol)
 {
-    ERROR("Not yet defined for 2D 4th order");
-
-} // END Project global current densities, not used
+    ERROR("Not defined");
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-//!   Projection by species
+//! Project current densities & charge : diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D4Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho, Particles &particles, int ipart, double gf)
+void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaol)
 {
-    ERROR("Not yet defined for 2D 4th order");
-
-} // END Projection by species
+    ERROR("Not defined");
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project global current charge
+//! Project charge : frozen & diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D4Order::operator() (Field* rho, Particles &particles, int ipart)
+void Projector2D4Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim)
 {
-    ERROR("Not yet defined for 2D 4th order");
-
-} // END Project global current charge
+    ERROR("Not defined");
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project local current densities (sort)
+//! Project global current densities : ionization
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim0)
+void  Projector2D4Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion)
 {
-    ERROR("Not yet defined for 2D 4th order");
-
-} // END Project local current densities (sort)
+    ERROR("Projection of ionization current not yet defined for 2D 4nd order");
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project global current densities (ionize)
+//! Wrapper for projection
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D4Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion)
+void Projector2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, int diag_flag, std::vector<unsigned int> &b_dim, int ispec)
 {
-    ERROR("Projection of ionization current not yet defined for 2D 4th order");
-
-} // END Project global current densities (ionize)
+    std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
+    std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
+    std::vector<double> *gf = &(smpi->dynamics_gf[ithread]);
+    
+    int dim1 = EMfields->dimPrim[1];
+    
+    if (diag_flag == 0){ 
+        double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw*dim1);
+        double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1));
+        double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw*dim1);
+        for (int ipart=istart ; ipart<iend; ipart++ )
+            (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*gf)[ipart], ibin*clrw, b_dim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
+    } else {
+        double* b_Jx =  &(*EMfields->Jx_s[ispec] )(ibin*clrw*dim1);
+        double* b_Jy =  &(*EMfields->Jy_s[ispec] )(ibin*clrw*(dim1+1));
+        double* b_Jz =  &(*EMfields->Jz_s[ispec] )(ibin*clrw*dim1);
+        double* b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*dim1);
+        for (int ipart=istart ; ipart<iend; ipart++ )
+            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*gf)[ipart], ibin*clrw, b_dim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
+    }
+}

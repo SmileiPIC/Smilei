@@ -78,9 +78,9 @@ void ElectroMagnBC1D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
         double byL=0.0, bzL=0.0;
         vector<double> pos(1);
         pos[0] = 0.;
-        for (int ilaser=0; ilaser<vecLaser.size(); ilaser++) {
-            byL += vecLaser[ilaser]->getAmplitude0(pos, time_dual, 0);
-            bzL += vecLaser[ilaser]->getAmplitude1(pos, time_dual, 0);
+        for (unsigned int ilaser=0; ilaser<vecLaser.size(); ilaser++) {
+            byL += vecLaser[ilaser]->getAmplitude0(pos, time_dual, 0, 0);
+            bzL += vecLaser[ilaser]->getAmplitude1(pos, time_dual, 0, 0);
         }
         
         // Apply Silver-Mueller EM boundary condition at x=xmin
@@ -108,8 +108,8 @@ void ElectroMagnBC1D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
         vector<double> pos(1);
         pos[0] = 0.;
         for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-            byR += vecLaser[ilaser]->getAmplitude0(pos, time_dual, 0);
-            bzR += vecLaser[ilaser]->getAmplitude1(pos, time_dual, 0);
+            byR += vecLaser[ilaser]->getAmplitude0(pos, time_dual, 0, 0);
+            bzR += vecLaser[ilaser]->getAmplitude1(pos, time_dual, 0, 0);
         }
     
         // Silver-Mueller boundary conditions (right)
@@ -123,5 +123,12 @@ void ElectroMagnBC1D_SM::apply_ymin(ElectroMagn* EMfields, double time_dual, Pat
 {
 }
 void ElectroMagnBC1D_SM::apply_ymax(ElectroMagn* EMfields, double time_dual, Patch* patch)
+{
+}
+
+void ElectroMagnBC1D_SM::apply_zmin(ElectroMagn* EMfields, double time_dual, Patch* patch)
+{
+}
+void ElectroMagnBC1D_SM::apply_zmax(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
 }

@@ -1,4 +1,4 @@
-execfile("../../scripts/Diagnostics.py")
+from Smilei import *
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -46,7 +46,7 @@ for sim in sims:
 	ni = np.double(S.namelist.Species["ion1"].nb_density) * 1.11e21 # cm^-3
 	Ee = S.namelist.E * 511. # electron energy in keV
 	vel = S.namelist.vel * 3e10 # electron velocity in cm/s
-	dt = 1e-15 * S.namelist.timestep*4. # in s
+	dt = 1e-15 * S.namelist.Main.timestep*4. # in s
 	t = 0.
 	energy = []
 	time = []
@@ -73,8 +73,8 @@ ax.set_title("")
 #########################################################
 S=Smilei("ionization_stopping_power1")
 
-referenceAngularFrequency_SI = np.double(S.namelist.referenceAngularFrequency_SI)
-timestep = np.double(S.namelist.timestep)
+referenceAngularFrequency_SI = np.double(S.namelist.Main.referenceAngularFrequency_SI)
+timestep = np.double(S.namelist.Main.timestep)
 
 # get ion stuff
 ni = np.double(S.namelist.Species["ion1"].nb_density)

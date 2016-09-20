@@ -69,7 +69,7 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
     // Apply bcs depending on the particle velocity
     // --------------------------------------------
     if ( v>3.0*species->thermalVelocity[0] ) {    //IF VELOCITY > 3*THERMAL VELOCITY THEN THERMALIZE IT
-
+        
         // velocity of the particle after thermalization/reflection 
         //for (int i=0; i<species->nDim_fields; i++) {
         for (int i=0; i<3; i++) {
@@ -120,7 +120,7 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
             particles.momentum(2,ipart) = pz;
             
         }//ENDif vel != 0
-
+        
     } else {                                    // IF VELOCITY < 3*THERMAL SIMPLY REFLECT IT
         particles.momentum(direction, ipart) = -particles.momentum(direction, ipart);
         
@@ -135,14 +135,14 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
     
     /* HERE IS AN ATTEMPT TO INTRODUCE A SPACE DEPENDENCE ON THE BCs
     // double val_min(params.dens_profile.vacuum_length[1]), val_max(params.dens_profile.vacuum_length[1]+params.dens_profile.length_params_y[0]);
-
+    
     if ( ( particles.position(1,ipart) >= val_min ) && ( particles.position(1,ipart) <= val_max ) ) {
-	// nrj computed during diagnostics
-	particles.position(direction, ipart) = limit_pos - particles.position(direction, ipart);
+        // nrj computed during diagnostics
+        particles.position(direction, ipart) = limit_pos - particles.position(direction, ipart);
         particles.momentum(direction, ipart) = sqrt(params.thermalVelocity[direction]) * tabFcts.erfinv( (double)rand() / RAND_MAX );
     }
     else {
-	stop_particle( particles, ipart, direction, limit_pos, params, nrj_iPart );
+        stop_particle( particles, ipart, direction, limit_pos, params, nrj_iPart );
     }
      */
     

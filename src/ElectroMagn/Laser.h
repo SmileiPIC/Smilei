@@ -21,8 +21,8 @@ class LaserProfile {
 friend class SmileiMPI;
 public:
     LaserProfile() {};
-    ~LaserProfile() {};
-    virtual double getAmplitude(std::vector<double> pos, double t, int j) {return 0.;};
+    virtual ~LaserProfile() {};
+    virtual double getAmplitude(std::vector<double> pos, double t, int j, int k) {return 0.;};
     virtual std::string getInfo() { return "?"; };
     virtual void createFields(Params& params, Patch* patch) {};
     virtual void initFields  (Params& params, Patch* patch) {};
@@ -43,12 +43,12 @@ public:
     void clean();
     
     //! Gets the amplitude from both time and space profiles (By)
-    inline double getAmplitude0(std::vector<double> pos, double t, int j) {
-        return profiles[0]->getAmplitude(pos, t, j);
+    inline double getAmplitude0(std::vector<double> pos, double t, int j, int k) {
+        return profiles[0]->getAmplitude(pos, t, j, k);
     }
     //! Gets the amplitude from both time and space profiles (Bz)
-    inline double getAmplitude1(std::vector<double> pos, double t, int j) {
-        return profiles[1]->getAmplitude(pos, t, j);
+    inline double getAmplitude1(std::vector<double> pos, double t, int j, int k) {
+        return profiles[1]->getAmplitude(pos, t, j, k);
     }
     
     void createFields(Params& params, Patch* patch)
@@ -89,7 +89,7 @@ public:
     ~LaserProfileSeparable();
     void createFields(Params& params, Patch* patch);
     void initFields  (Params& params, Patch* patch);
-    double getAmplitude(std::vector<double> pos, double t, int j);
+    double getAmplitude(std::vector<double> pos, double t, int j, int k);
 private:
     bool primal;
     double omega;
@@ -106,7 +106,7 @@ public:
     LaserProfileNonSeparable(LaserProfileNonSeparable* lp)
      : spaceAndTimeProfile(lp->spaceAndTimeProfile) {};
     ~LaserProfileNonSeparable();
-    inline double getAmplitude(std::vector<double> pos, double t, int j) {
+    inline double getAmplitude(std::vector<double> pos, double t, int j, int k) {
         return spaceAndTimeProfile->valueAt(pos, t);
     }
 private:
@@ -117,8 +117,9 @@ private:
 class LaserProfileNULL : public LaserProfile {
 public:
     LaserProfileNULL() {};
+    ~LaserProfileNULL() {};
     
-    inline double getAmplitude(std::vector<double> pos, double t, int j) {
+    inline double getAmplitude(std::vector<double> pos, double t, int j, int k) {
         return 0.;
     }
 };

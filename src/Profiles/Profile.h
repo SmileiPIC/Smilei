@@ -13,7 +13,7 @@ public:
     //! Default constructor
     Function(){};
     //! Default destructor
-    ~Function(){};
+    virtual ~Function(){};
     // spatial
     virtual double valueAt(std::vector<double>         ) {
         return 0.;
@@ -61,6 +61,9 @@ public:
     //! Get info on the loaded profile, to be printed later
     inline std::string getInfo() { return info; };
     
+    //! Name of the profile, in the case of a built-in profile
+    std::string profileName;
+    
 private:
     //! Object that holds the information on the profile function
     Function * function;
@@ -70,9 +73,6 @@ private:
     
     //! Number of variables for the profile function
     int nvariables;
-    
-    //! Name of the profile, in the case of a built-in profile
-    std::string profileName;
     
 };//END class Profile
 
@@ -163,6 +163,27 @@ public:
     double valueAt(std::vector<double>);
 private:
     double value, xvacuum, yvacuum;
+};
+
+
+class Function_Constant3D : public Function
+{
+public:
+    Function_Constant3D ( PyObject *py_profile ) {
+        PyTools::getAttr(py_profile, "value"   , value    );
+        PyTools::getAttr(py_profile, "xvacuum" , xvacuum  );
+        PyTools::getAttr(py_profile, "yvacuum" , yvacuum  );
+        PyTools::getAttr(py_profile, "zvacuum" , zvacuum  );
+    };
+    Function_Constant3D ( Function_Constant3D *f ) {
+        value   = f->value  ;
+        xvacuum = f->xvacuum;
+        yvacuum = f->yvacuum;
+        zvacuum = f->zvacuum;
+    };
+    double valueAt(std::vector<double>);
+private:
+    double value, xvacuum, yvacuum, zvacuum;
 };
 
 
@@ -433,7 +454,7 @@ public:
     double valueAt(std::vector<double>);
 private:
     double x0;
-    std::vector<int> orders;
+    std::vector<unsigned int> orders;
     std::vector<std::vector<double> > coeffs;
 };
 
@@ -446,7 +467,7 @@ public:
         PyTools::getAttr(py_profile, "coeffs", coeffs );
         PyTools::getAttr(py_profile, "x0"    , x0     );
         PyTools::getAttr(py_profile, "y0"    , y0     );
-        for( int i=0; i<orders.size(); i++)
+        for( unsigned int i=0; i<orders.size(); i++)
             if( coeffs[i].size() != orders[i]+1 )
                 ERROR("2D polynomial profile has a wrong number of coefficients for order "<<orders[i]);
     };
@@ -459,7 +480,7 @@ public:
     double valueAt(std::vector<double>);
 private:
     double x0, y0;
-    std::vector<int> orders;
+    std::vector<unsigned int> orders;
     std::vector<std::vector<double> > coeffs;
 };
 

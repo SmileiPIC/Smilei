@@ -2,6 +2,7 @@
 
 #include "ElectroMagn.h"
 #include "Profile.h"
+#include "PyTools.h"
 
 using namespace std;
 
@@ -9,8 +10,8 @@ using namespace std;
 
 // Default constructor.
 Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
-    nvariables(nvariables),
-    profileName("")
+    profileName(""),
+    nvariables(nvariables)
 {
     ostringstream info_("");
     info_ << nvariables << "D";
@@ -33,6 +34,8 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
                 function = new Function_Constant1D(py_profile);
             else if( nvariables == 2 )
                 function = new Function_Constant2D(py_profile);
+            else if( nvariables == 3 )
+                function = new Function_Constant3D(py_profile);
             else
               ERROR("Profile `"<<name<<"`: constant() profile defined only in 1D or 2D");
         
@@ -129,13 +132,20 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
     
     // Otherwise (if the python profile cannot be hard-coded) ....
     else {
-        // Check how the profile looks like (debug only)
+        string message;
+        
+#ifdef  __DEBUG
+        // Check how the profile looks like
         PyObject* repr = PyObject_Repr(py_profile);
-        DEBUG(string(PyString_AsString(repr)));
+        PyTools::convert(repr, message);
+        MESSAGE(message);
         Py_XDECREF(repr);
-        repr=PyObject_Str(py_profile);
-        DEBUG(string(PyString_AsString(repr)));
+        
+        repr = PyObject_Str(py_profile);
+        PyTools::convert(repr, message);
+        MESSAGE(message);
         Py_XDECREF(repr);
+#endif
         
         // Verify that the profile has the right number of arguments
         PyObject* inspect=PyImport_ImportModule("inspect");
@@ -148,7 +158,8 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
             for (int i=0; i<size; i++){
                 PyObject *arg=PyList_GetItem(arglist,i);
                 PyObject* repr = PyObject_Repr(arg);
-                args+=string(PyString_AsString(repr))+" ";
+                PyTools::convert(repr, message);
+                args += message+" ";
                 Py_XDECREF(repr);
             }
             WARNING ("Profile " << name << " takes "<< size <<" variables (" << args << ") but it is created with " << nvariables);
@@ -183,6 +194,8 @@ Profile::Profile(Profile *p)
                 function = new Function_Constant1D(static_cast<Function_Constant1D*>(p->function));
             else if( nvariables == 2 )
                 function = new Function_Constant2D(static_cast<Function_Constant2D*>(p->function));
+            else if( nvariables == 3 )
+                function = new Function_Constant3D(static_cast<Function_Constant3D*>(p->function));
         } else if( profileName == "trapezoidal" ){
             if     ( nvariables == 1 )
                 function = new Function_Trapezoidal1D(static_cast<Function_Trapezoidal1D*>(p->function));
@@ -264,10 +277,13 @@ double Function_Python4D::valueAt(vector<double> x_cell, double time) {
 
 // Constant profiles
 double Function_Constant1D::valueAt(vector<double> x_cell) {
-    return x_cell[0]>xvacuum ? value : 0.;
+    return (x_cell[0]>xvacuum) ? value : 0.;
 }
 double Function_Constant2D::valueAt(vector<double> x_cell) {
-    return (x_cell[0]>xvacuum) && (x_cell[1]>yvacuum) ? value : 0.;
+    return ((x_cell[0]>xvacuum) && (x_cell[1]>yvacuum)) ? value : 0.;
+}
+double Function_Constant3D::valueAt(vector<double> x_cell) {
+    return ((x_cell[0]>xvacuum) && (x_cell[1]>yvacuum) && (x_cell[2]>zvacuum)) ? value : 0.;
 }
 
 // Trapezoidal profiles
@@ -352,8 +368,8 @@ double Function_Cosine2D::valueAt(vector<double> x_cell) {
 // Polynomial profiles
 double Function_Polynomial1D::valueAt(vector<double> x_cell) {
     double r = 0., xx0 = x_cell[0]-x0, xx = 1.;
-    int currentOrder = 0;
-    for( int i=0; i<orders.size(); i++ ) {
+    unsigned int currentOrder = 0;
+    for( unsigned int i=0; i<orders.size(); i++ ) {
         while( currentOrder<orders[i] ) {
             currentOrder += 1;
             xx *= xx0;
@@ -365,16 +381,16 @@ double Function_Polynomial1D::valueAt(vector<double> x_cell) {
 double Function_Polynomial2D::valueAt(vector<double> x_cell) {
     double r = 0., xx0 = x_cell[0]-x0, yy0 = x_cell[1]-y0;
     vector<double> xx;
-    int currentOrder = 0;
+    unsigned int currentOrder = 0;
     xx.resize(orders.back()+1);
     xx[0] = 1.;
-    for( int i=0; i<orders.size(); i++ ) {
+    for( unsigned int i=0; i<orders.size(); i++ ) {
         while( currentOrder<orders[i] ) {
             currentOrder += 1;
             xx[currentOrder] = xx[currentOrder-1] * yy0;
-            for( int j=0; j<currentOrder; j++ ) xx[j] *= xx0;
+            for( unsigned int j=0; j<currentOrder; j++ ) xx[j] *= xx0;
         }
-        for( int j=0; j<=orders[i]; j++ ) r += coeffs[i][j] * xx[j];
+        for( unsigned int j=0; j<=orders[i]; j++ ) r += coeffs[i][j] * xx[j];
     }
     return r;
 }
@@ -415,7 +431,7 @@ double Function_TimeCosine::valueAt(double time) {
 double Function_TimePolynomial::valueAt(double time) {
     double r = 0., tt0 = time-t0, tt = 1.;
     int currentOrder = 0;
-    for( int i=0; i<orders.size(); i++ ) {
+    for( unsigned int i=0; i<orders.size(); i++ ) {
         while( currentOrder<orders[i] ) {
             currentOrder += 1;
             tt *= tt0;

@@ -33,16 +33,16 @@ public:
     void allocateDims(std::vector<unsigned int> dims);
     void deallocateDims();
     //! a Field1D can also be initialized win an unsigned int 
-	void allocateDims(unsigned int dims1);
+    void allocateDims(unsigned int dims1);
     //! 1D method used to allocate Field, isPrimal define if mainDim is Primal or Dual
-	void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal);
-
+    void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal);
+    
     //! Method used to dump the data contained in a Field1D
     void dump(std::vector<unsigned int> dims);
-
+    
     //! Method to shift field in space
     void shift_x(unsigned int delta);
-
+    
     //! Overloading of the () operator allowing to set a new value for the ith element of a Field1D
     inline double& operator () (unsigned int i)
     {
@@ -50,7 +50,7 @@ public:
         DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR(name << " not finite at i=" << i << " = " << data_[i]));
         return data_[i];
     };
-
+    
     //! Overloading of the () operator allowing to get the value of the ith element of a Field1D
     inline double operator () (unsigned int i) const
     {
@@ -58,14 +58,14 @@ public:
         DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR(name << "Not finite "<< i << " = " << data_[i]));
         return data_[i];
     };
-
+    
     //! \todo What is this? (MG)
     //! \todo private/friend/modify (JD)
     // 
     //! Now in Field, all arrays may be viewed as a 1D array
     //double* data_;
-
-
+    
+    
     virtual double norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]);
 private:
 };

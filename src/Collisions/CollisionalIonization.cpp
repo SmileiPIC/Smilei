@@ -53,10 +53,10 @@ vector<vector<vector<double> > > CollisionalIonization::DB_transferredEnergy;
 vector<vector<vector<double> > > CollisionalIonization::DB_lostEnergy;
 
 // Initializes the databases (by patch master only)
-int CollisionalIonization::createDatabase(double referenceAngularFrequency_SI)
+unsigned int CollisionalIonization::createDatabase(double referenceAngularFrequency_SI)
 {
     // Leave if the database already exists with same atomic number
-    for( int i=0; i<DB_Z.size(); i++ ) {
+    for( unsigned int i=0; i<DB_Z.size(); i++ ) {
         if( atomic_number == DB_Z[i] ) return i;
     }
     
@@ -131,7 +131,7 @@ int CollisionalIonization::createDatabase(double referenceAngularFrequency_SI)
 
 
 // Assign the correct databases
-void CollisionalIonization::assignDatabase(int index)
+void CollisionalIonization::assignDatabase(unsigned int index)
 {
 
     crossSection      = &(DB_crossSection     [index]);
@@ -184,13 +184,13 @@ void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i
 }
 
 // Method to prepare the ionization
-void CollisionalIonization::prepare3(double timestep, int n_cluster_per_cell)
+void CollisionalIonization::prepare3(double timestep, int n_patch_per_cell)
 {
     // Calculate the coeff used later for ionization probability
     if( nei<=0. ) {
         coeff = 0.;
     } else {
-        coeff = ne*ni/nei * timestep * n_cluster_per_cell;
+        coeff = ne*ni/nei * timestep * n_patch_per_cell;
     }
 }
 

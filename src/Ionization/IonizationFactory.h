@@ -16,13 +16,13 @@ public:
     static Ionization* create(Params& params, Species * species) {
         Ionization* Ionize = NULL;
         std::string model=species->ionization_model;
-
+        
         if ( model == "tunnel" ) {
             if (species->max_charge > (int)species->atomic_number)
                 ERROR( "Charge > atomic_number for species " << species->species_type );
-
+            
             Ionize = new IonizationTunnel( params, species );
-
+            
         } else if ( model != "none" ) {
             WARNING( "For species " << species->species_type << ": unknown ionization model `" << model << "` ... assuming no ionization");
         }
