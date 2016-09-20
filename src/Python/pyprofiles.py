@@ -1,6 +1,6 @@
 # Some predefined profiles (see doc)
 
-def constant(value, xvacuum=-float("inf"), yvacuum=-float("inf")):
+def constant(value, xvacuum=-float("inf"), yvacuum=-float("inf"), zvacuum=-float("inf")):
     global Main
     if len(Main)==0:
         raise Exception("constant profile has been defined before `Main()`")
@@ -9,6 +9,10 @@ def constant(value, xvacuum=-float("inf"), yvacuum=-float("inf")):
     if Main.geometry == "2d3v":
         f = lambda x,y: value if (x>=xvacuum and y>=yvacuum) else 0.
         f.yvacuum = yvacuum
+    if Main.geometry == "3d3v":
+        f = lambda x,y,z: value if (x>=xvacuum and y>=yvacuum and z>=zvacuum) else 0.
+        f.yvacuum = yvacuum
+        f.zvacuum = zvacuum
     f.profileName = "constant"
     f.value   = value
     f.xvacuum = xvacuum
@@ -448,6 +452,49 @@ def LaserGaussian2D( boxSide="west", a0=1., omega=1., focus=None, waist=3., inci
         phase          = [ lambda y:phase(y)-phaseZero+dephasing, lambda y:phase(y)-phaseZero ],
     )
 
+def LaserGaussian3D( boxSide="west", a0=1., omega=1., focus=None, waist=3., incidence_angle=0.,
+        polarizationPhi=0., ellipticity=0., time_envelope=tconstant()):
+    import math
+    # Polarization and amplitude
+    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarizationPhi, ellipticity)
+    amplitudeY *= a0
+    amplitudeZ *= a0
+    # Space and phase envelopes
+    Zr = omega * waist**2/2.
+    phaseZero = 0.
+    if incidence_angle == 0.:
+        w  = math.sqrt(1./(1.+(focus[0]/Zr)**2))
+        invWaist2 = (w/waist)**2
+        coeff = -omega * focus[0] * w**2 / (2.*Zr**2)
+        def spatial(y,z):
+            return w * math.exp( -invWaist2*((y-focus[1])**2 + (z-focus[2])**2 )  )
+        def phase(y,z):
+            return coeff * ( (y-focus[1])**2 + (z-focus[2])**2 )
+    else:
+        raise Exception("3D laser not implemented with non-zero incidence angle yet")
+        #invZr  = math.sin(incidence_angle) / Zr
+        #invZr2 = invZr**2
+        #invZr3 = (math.cos(incidence_angle) / Zr)**2 / 2.
+        #invWaist2 = (math.cos(incidence_angle) / waist)**2
+        #omega_ = omega * math.sin(incidence_angle)
+        #Y1 = focus[1] + focus[0]/math.tan(incidence_angle)
+        #Y2 = focus[1] - focus[0]*math.tan(incidence_angle)
+        #def spatial(y):
+        #    w2 = 1./(1. + invZr2*(y-Y1)**2)
+        #    return math.sqrt(w2) * math.exp( -invWaist2*w2*(y-Y2)**2 )
+        #def phase(y):
+        #    dy = y-Y1
+        #    return omega_*dy*(1.+ invZr3*(y-Y2)**2/(1.+invZr2*dy**2)) + math.atan(invZr*dy)
+        #phaseZero = phase(Y2)
+    # Create Laser
+    Laser(
+        boxSide        = boxSide,
+        omega          = omega,
+        chirp_profile  = tconstant(),
+        time_envelope  = time_envelope,
+        space_envelope = [ lambda y,z:amplitudeZ*spatial(y,z), lambda y,z:amplitudeY*spatial(y,z) ],
+        phase          = [ lambda y,z:phase(y,z)-phaseZero+dephasing, lambda y,z:phase(y,z)-phaseZero ],
+    )
 
 """
 -----------------------------------------------------------------------

@@ -143,3 +143,10 @@ void ElectroMagnBC1D_refl::apply_ymin(ElectroMagn* EMfields, double time_dual, P
 void ElectroMagnBC1D_refl::apply_ymax(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
 }
+
+void ElectroMagnBC1D_refl::apply_zmin(ElectroMagn* EMfields, double time_dual, Patch* patch)
+{
+}
+void ElectroMagnBC1D_refl::apply_zmax(ElectroMagn* EMfields, double time_dual, Patch* patch)
+{
+}

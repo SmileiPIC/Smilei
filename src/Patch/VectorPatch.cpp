@@ -142,20 +142,15 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         // E is already synchronized because J has been synchronized before.
         (*this)(ipatch)->EMfields->solveMaxwellAmpere();
     }
-    //(*this).exchangeE();
-    
     // Computes Bx_, By_, Bz_ at time n+1 on interior points.
     #pragma omp for schedule(static)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-        // (*this)(ipatch)->EMfields->solveMaxwellFaraday();
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
         (*(*this)(ipatch)->EMfields->MaxwellFaradaySolver_)((*this)(ipatch)->EMfields);
-    }
     
     // Applies boundary conditions on B
     #pragma omp single
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
         (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
-    }
     
     //Synchronize B fields between patches.
     timer[2].update( printScalars( itime ) );
@@ -311,8 +306,6 @@ bool VectorPatch::isRhoNull( SmileiMPI* smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 {
-    unsigned int nx_p2_global = (params.n_space_global[0]+1) * (params.n_space_global[1]+1);
-    
     unsigned int iteration_max;
     PyTools::extract("poisson_iter_max", iteration_max, "Main");
 
@@ -336,7 +329,15 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         Ex_.push_back( (*this)(ipatch)->EMfields->Ex_ );
         Ap_.push_back( (*this)(ipatch)->EMfields->Ap_ );
     }
-    
+
+    unsigned int nx_p2_global = (params.n_space_global[0]+1);
+    if ( Ex_[0]->dims_.size()>1 ) {
+        nx_p2_global *= (params.n_space_global[1]+1);
+        if ( Ex_[0]->dims_.size()>2 ) {
+            nx_p2_global *= (params.n_space_global[2]+1);
+        }
+    }
+        
     // compute control parameter
     double ctrl = rnew_dot_rnew / (double)(nx_p2_global);
     
@@ -417,9 +418,12 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     
     // Centering of the electrostatic fields
     // -------------------------------------
-    
     vector<double> E_Add(Ex_[0]->dims_.size(),0.);
     if ( Ex_[0]->dims_.size()>1 ) {
+#ifdef _PATCH3D_TODO
+#endif    
+    }
+    else if ( Ex_[0]->dims_.size()>1 ) {
         double Ex_WestNorth = 0.0;
         double Ey_WestNorth = 0.0;
         double Ex_EastSouth = 0.0;

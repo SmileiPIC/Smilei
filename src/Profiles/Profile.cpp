@@ -34,6 +34,8 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
                 function = new Function_Constant1D(py_profile);
             else if( nvariables == 2 )
                 function = new Function_Constant2D(py_profile);
+            else if( nvariables == 3 )
+                function = new Function_Constant3D(py_profile);
             else
               ERROR("Profile `"<<name<<"`: constant() profile defined only in 1D or 2D");
         
@@ -192,6 +194,8 @@ Profile::Profile(Profile *p)
                 function = new Function_Constant1D(static_cast<Function_Constant1D*>(p->function));
             else if( nvariables == 2 )
                 function = new Function_Constant2D(static_cast<Function_Constant2D*>(p->function));
+            else if( nvariables == 3 )
+                function = new Function_Constant3D(static_cast<Function_Constant3D*>(p->function));
         } else if( profileName == "trapezoidal" ){
             if     ( nvariables == 1 )
                 function = new Function_Trapezoidal1D(static_cast<Function_Trapezoidal1D*>(p->function));
@@ -277,6 +281,9 @@ double Function_Constant1D::valueAt(vector<double> x_cell) {
 }
 double Function_Constant2D::valueAt(vector<double> x_cell) {
     return ((x_cell[0]>xvacuum) && (x_cell[1]>yvacuum)) ? value : 0.;
+}
+double Function_Constant3D::valueAt(vector<double> x_cell) {
+    return ((x_cell[0]>xvacuum) && (x_cell[1]>yvacuum) && (x_cell[2]>zvacuum)) ? value : 0.;
 }
 
 // Trapezoidal profiles

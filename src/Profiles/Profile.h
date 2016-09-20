@@ -166,6 +166,27 @@ private:
 };
 
 
+class Function_Constant3D : public Function
+{
+public:
+    Function_Constant3D ( PyObject *py_profile ) {
+        PyTools::getAttr(py_profile, "value"   , value    );
+        PyTools::getAttr(py_profile, "xvacuum" , xvacuum  );
+        PyTools::getAttr(py_profile, "yvacuum" , yvacuum  );
+        PyTools::getAttr(py_profile, "zvacuum" , zvacuum  );
+    };
+    Function_Constant3D ( Function_Constant3D *f ) {
+        value   = f->value  ;
+        xvacuum = f->xvacuum;
+        yvacuum = f->yvacuum;
+        zvacuum = f->zvacuum;
+    };
+    double valueAt(std::vector<double>);
+private:
+    double value, xvacuum, yvacuum, zvacuum;
+};
+
+
 class Function_Trapezoidal1D : public Function
 {
 public:

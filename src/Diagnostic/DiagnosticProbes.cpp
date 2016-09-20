@@ -1,3 +1,5 @@
+
+
 #include <sstream>
 #include <vector>
 
@@ -64,7 +66,7 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
     keys[1] = "pos_first";
     keys[2] = "pos_second";
     keys[3] = "pos_third";
-    for( int i=0; i<3; i++) {
+    for( int i=0; i<nDim_particle+1; i++) {
         vector<double> pos;
         if (PyTools::extract(keys[i],pos,"DiagProbe",n_probe)) {
             if (pos.size()!=nDim_particle)
@@ -331,7 +333,10 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     hid_t dset_id = H5Dcreate(fileId_, "positions", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
     H5Pclose(plist_id);
     // Write
-    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &(posArray->data_2D[0][0]) );
+    if ( nPart_MPI>0 )
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &(posArray->data_2D[0][0]) );
+    else
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, NULL );
     H5Dclose(dset_id);
     H5Pclose( transfer );
     H5Sclose(filespace);

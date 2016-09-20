@@ -28,6 +28,7 @@ Field3D::Field3D(vector<unsigned int> dims) : Field(dims)
 // with the dimensions and output (dump) file name as input argument
 Field3D::Field3D(vector<unsigned int> dims, string name) : Field(dims, name)
 {
+    data_=NULL;
     allocateDims(dims);
 }
 
@@ -41,6 +42,7 @@ Field3D::Field3D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal)
 // with the dimensions and output (dump) file name as input argument
 Field3D::Field3D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name) : Field(dims, mainDim, isPrimal, name)
 {
+    data_=NULL;
     allocateDims(dims, mainDim, isPrimal);
 }
 
@@ -50,10 +52,11 @@ Field3D::Field3D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal,
 // ---------------------------------------------------------------------------------------------------------------------
 Field3D::~Field3D()
 {
-    delete [] data_;
-    for (unsigned int i=0; i<dims_[0]; i++) delete [] data_3D[i];
-    delete [] data_3D;
-
+    if (data_!=NULL) {
+        delete [] data_;
+        for (unsigned int i=0; i<dims_[0]; i++) delete [] data_3D[i];
+        delete [] data_3D;
+    }
 }
 
 
@@ -76,6 +79,7 @@ void Field3D::allocateDims(std::vector<unsigned int> dims ) {
         for (unsigned int j=0; j<dims_[1]; j++)
         {
             data_3D[i][j] = data_ + i*dims_[1]*dims_[2] + j*dims_[2];
+            for (unsigned int k=0; k<dims_[2]; k++) data_3D[i][j][k] = 0.0;
         }
     }//i
     
@@ -134,12 +138,13 @@ void Field3D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim,
         for (unsigned int j=0; j<dims_[1]; j++)
         {
             data_3D[i][j] = data_ + i*dims_[1]*dims_[2] + j*dims_[2];
+            for (unsigned int k=0; k<dims_[2]; k++) data_3D[i][j][k] = 0.0;
         }
     }//i
     
     //DEBUG(10,"Fields 3D created: " << dims_[0] << "x" << dims_[1] << "x" << dims_[2]);
     globalDims_ = dims_[0]*dims_[1]*dims_[2];
-    
+
     //isDual_ = isPrimal;
 }
 
@@ -182,4 +187,43 @@ double Field3D::norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]) {
     }
     
     return nrj;
+}
+
+void Field3D::extract_slice_yz(unsigned int ix, Field2D *slice)
+{
+    DEBUGEXEC(if (dims_[1]!=slice->dims_[1]) ERROR(name << " : " <<  dims_[1] << " and " << slice->dims_[1] ));
+    DEBUGEXEC(if (dims_[2]!=slice->dims_[2]) ERROR(name << " : " <<  dims_[2] << " and " << slice->dims_[2] ));
+
+    for (unsigned int j=0; j<dims_[1]; j++) {
+        for (unsigned int k=0; k<dims_[2]; k++) {
+            (*slice)(j, k) = (*this)(ix, j, k );
+        }
+    }
+
+}
+
+void Field3D::extract_slice_xz(unsigned int iy, Field2D *slice)
+{
+    DEBUGEXEC(if (dims_[0]!=slice->dims_[0]) ERROR(name << " : " <<  dims_[0] << " and " << slice->dims_[0] ));
+    DEBUGEXEC(if (dims_[2]!=slice->dims_[2]) ERROR(name << " : " <<  dims_[2] << " and " << slice->dims_[2] ));
+
+    for (unsigned int i=0; i<dims_[0]; i++) {
+        for (unsigned int k=0; k<dims_[2]; k++) {
+            (*slice)(i, k) = (*this)(i, iy, k );
+        }
+    }
+
+}
+
+void Field3D::extract_slice_xy(unsigned int iz, Field2D *slice)
+{
+    DEBUGEXEC(if (dims_[0]!=slice->dims_[0]) ERROR(name << " : " <<  dims_[0] << " and " << slice->dims_[0] ));
+    DEBUGEXEC(if (dims_[1]!=slice->dims_[1]) ERROR(name << " : " <<  dims_[1] << " and " << slice->dims_[1] ));
+
+    for (unsigned int i=0; i<dims_[0]; i++) {
+        for (unsigned int j=0; j<dims_[1]; j++) {
+            (*slice)(i, j) = (*this)(i, j, iz );
+        }
+    }
+
 }

@@ -16,6 +16,8 @@ public:
     virtual void apply_xmax(ElectroMagn* EMfields, double time_dual, Patch* patch);
     virtual void apply_ymin(ElectroMagn* EMfields, double time_dual, Patch* patch);
     virtual void apply_ymax(ElectroMagn* EMfields, double time_dual, Patch* patch);
+    virtual void apply_zmin(ElectroMagn* EMfields, double time_dual, Patch* patch);
+    virtual void apply_zmax(ElectroMagn* EMfields, double time_dual, Patch* patch);
     
 private:
     

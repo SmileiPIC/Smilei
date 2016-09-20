@@ -27,6 +27,14 @@ Current release 2.3
 
 **Download**: `Smilei v2.3 <_downloads/smilei-v2.3.tar.gz>`_
 
+
+----
+
+Current release 2.0
+^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v2.2 <_downloads/smilei-v2.2.tar.gz>`_
+
 Major improvements:
 
 * **state-of-the-art** dynamic load balancing

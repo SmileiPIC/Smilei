@@ -64,6 +64,7 @@ min_loc(patch->getDomainLocalMin(0))
     
     dx_inv_ = 1./cell_length[0];
     dy_inv_ = 1./cell_length[1];
+    dz_inv_ = 1./cell_length[2];
     
     initCluster(params);
     nDim_field = params.nDim_field;
@@ -76,10 +77,6 @@ void Species::initCluster(Params& params)
     // Arrays of the min and max indices of the particle bins
     bmin.resize(params.n_space[0]/clrw);
     bmax.resize(params.n_space[0]/clrw);
-    if (nDim_particle == 3){
-        bmin.resize(params.n_space[0]/clrw*params.n_space[1]);
-        bmax.resize(params.n_space[0]/clrw*params.n_space[1]);
-    }
     
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
@@ -493,6 +490,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
                 if (nDim_field==2)
                     b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1);    
+                if (nDim_field==3)
+                    b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1*f_dim2);    
                 else if (nDim_field==1)
                     b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw);    
                 for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {

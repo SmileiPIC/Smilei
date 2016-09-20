@@ -135,6 +135,7 @@ class Main(SmileiSingleton):
     maxwell_sol = 'Yee'
     bc_em_type_x = []
     bc_em_type_y = []
+    bc_em_type_z = []
     time_fields_frozen = 0.
     
     # Default Misc
@@ -157,6 +158,8 @@ class Main(SmileiSingleton):
                         Main.timestep = Main.timestep_over_CFL*Main.cell_length[0]
                     elif Main.geometry == '2d3v':         
                         Main.timestep = Main.timestep_over_CFL/math.sqrt(1.0/(Main.cell_length[0]**2)+1.0/(Main.cell_length[1]**2))
+                    elif Main.geometry == '3d3v':         
+                        Main.timestep = Main.timestep_over_CFL/math.sqrt(1.0/(Main.cell_length[0]**2)+1.0/(Main.cell_length[1]**2)+1.0/(Main.cell_length[2]**2))
                     else: 
                         raise Exception("timestep: geometry not implemented "+Main.geometry)
                 else:
@@ -226,6 +229,8 @@ class Species(SmileiComponent):
     bc_part_type_east = None
     bc_part_type_north = None
     bc_part_type_south = None
+    bc_part_type_bottom = None
+    bc_part_type_up = None
     ionization_model = "none"
     ionization_electrons = None
     atomic_number = None

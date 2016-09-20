@@ -195,7 +195,7 @@ unsigned int generalhilbertindex(unsigned int m0, unsigned int m1, int x, int y,
        mmin = m0;
        mmax = m1;
     }
-    for (unsigned int i= mmax-1; i >= mmin ; i--){
+    for (int i= (int)mmax-1; i >= (int)mmin ; i--){
        l = bit(*target,i); 
        h += l*(1<<(i+mmin));
        *target -= l*(1<<i);

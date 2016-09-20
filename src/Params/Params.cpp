@@ -159,8 +159,9 @@ namelist("")
     geometry = "";
     if( !PyTools::extract("geometry", geometry, "Main") )
         ERROR("Parameter Main.geometry is required");
-    if (geometry!="1d3v" && geometry!="2d3v")
+    if (geometry!="1d3v" && geometry!="2d3v" && geometry!="3d3v") {
         ERROR("Main.geometry `" << geometry << "` invalid");
+    }
     setDimensions();
     
     // interpolation order
@@ -168,7 +169,7 @@ namelist("")
     if (interpolation_order!=2 && interpolation_order!=4) {
         ERROR("Main.interpolation_order " << interpolation_order << " not defined");
     }
-    if (geometry=="2d3v" && interpolation_order==4) {
+    if ( (geometry=="2d3v" || geometry=="3d3v") && interpolation_order==4) {
         ERROR("Main.interpolation_order = 4 " << interpolation_order << " not yet available in 2D");
     }
     
@@ -286,7 +287,7 @@ namelist("")
     //mi.resize(nDim_field, 0);
     mi.resize(3, 0);
     while ((number_of_patches[0] >> mi[0]) >1) mi[0]++ ;
-    if (number_of_patches.size()>1){
+    if (number_of_patches.size()>1) {
         while ((number_of_patches[1] >> mi[1]) >1) mi[1]++ ;
         if (number_of_patches.size()>2)
             while ((number_of_patches[2] >> mi[2]) >1) mi[2]++ ;

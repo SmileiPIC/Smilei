@@ -13,7 +13,7 @@ to astrophysical plasmas. It is co-developed by both physicists and HPC experts.
 
 .. raw:: html
   
-  <a href="releases.html#current-release-2-0" class="icon">
+  <a href="releases.html#current-release-2-2" class="icon">
 
 .. image:: _static/download.svg
 

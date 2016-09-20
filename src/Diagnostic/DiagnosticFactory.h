@@ -8,6 +8,7 @@
 
 #include "DiagnosticFields1D.h"
 #include "DiagnosticFields2D.h"
+#include "DiagnosticFields3D.h"
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Create appropriate IO environment for the geometry 
@@ -23,6 +24,9 @@ public:
         }
         else if ( params.geometry == "2d3v" ) {
             diag = new DiagnosticFields2D(params, smpi, patch, idiag);
+        }
+        else if ( params.geometry == "3d3v" ) {
+            diag = new DiagnosticFields3D(params, smpi, patch, idiag);
         }
         else {
             ERROR( "Geometry " << params.geometry << " not implemented" );

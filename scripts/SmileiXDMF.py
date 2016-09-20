@@ -55,7 +55,9 @@ def fieldsXDMF():
 
             fields = fh5.itervalues().next().keys() # list of fields
 
-            timesteps = np.array(fh5.keys())
+            # array extract from fh5.keys() except last (tmp)
+            keys = fh5.keys()[0:len(fh5.keys())-1]
+            timesteps = np.array(keys)
 
             my_steps_times=zip(timesteps,timesteps.astype(np.float)*fh5.attrs['res_time'])
 
@@ -216,7 +218,7 @@ if not os.path.exists(out_dir):
 
 
 
-probesXDMF()
+#probesXDMF()
 
 fieldsXDMF()
 
