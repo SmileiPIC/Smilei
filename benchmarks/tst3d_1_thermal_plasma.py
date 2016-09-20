@@ -37,7 +37,7 @@ Main(
     cell_length  = [dx,dy,dz],
     sim_length = [Lx,Ly,Lz],
     
-    number_of_patches = [1,1,1],
+    number_of_patches = [4,4,4],
     
     bc_em_type_x = ["periodic"],
     bc_em_type_y = ["periodic"],
