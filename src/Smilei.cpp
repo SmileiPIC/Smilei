@@ -62,11 +62,11 @@ int main (int argc, char* argv[])
     MESSAGE("");
     
     // Read and print simulation parameters
-    TITLE("Input data info ");
+    TITLE("Reading the simulation parameters");
     Params params(smpi,vector<string>(argv + 1, argv + argc));
     
     // Initialize MPI environment with simulation parameters
-    TITLE("MPI");
+    TITLE("Initializing MPI");
     smpi->init(params);
     
     // Create timers
@@ -75,7 +75,7 @@ int main (int argc, char* argv[])
     // Print in stdout MPI, OpenMP, patchs parameters
     print_parallelism_params(params, smpi);
     
-    TITLE("Restart environments");
+    TITLE("Initializing the restart environment");
     Checkpoint checkpoint(params, smpi);
     
     // ------------------------------------------------------------------------
@@ -101,7 +101,6 @@ int main (int argc, char* argv[])
     TITLE("Initializing moving window");
     int start_moving(0);
     SimWindow* simWindow = new SimWindow(params);
-    params.hasWindow = simWindow->isActive();
     
     // ---------------------------------------------------
     // Initialize patches (including particles and fields)
@@ -121,7 +120,7 @@ int main (int argc, char* argv[])
         
         double restart_time_dual = (checkpoint.this_run_start_step +0.5) * params.timestep;
         time_dual = restart_time_dual;
-        // A revoir !
+        //! \todo a revoir
         if ( simWindow->isMoving(restart_time_dual) ) {
             simWindow->operate(vecPatches, smpi, params);
         }
@@ -152,7 +151,7 @@ int main (int argc, char* argv[])
             Timer ptimer;
             ptimer.init(smpi, "global");
             ptimer.restart();
-
+            
             vecPatches.solvePoisson( params, smpi );
             ptimer.update();
             MESSAGE("Time in Poisson : " << ptimer.getTime() );
