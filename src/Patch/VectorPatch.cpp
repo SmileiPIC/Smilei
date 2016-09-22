@@ -848,24 +848,36 @@ void VectorPatch::move_probes(Params& params, double x_moved)
             int ilocal_part(0);
             for ( unsigned int ipart_mpi=0 ; ipart_mpi < diagProbes->posArray->dims_[0] ; ipart_mpi++ ) {
 
-                //vector<double> pos( diagProbes->posArray->dims_[1], 0. );
-                double X = (*diagProbes->posArray)(ipart_mpi,0)+x_moved;
-                double Y = (*diagProbes->posArray)(ipart_mpi,1);
+                vector<double> pos( diagProbes->posArray->dims_[1], 0. );
+                pos[0] = (*diagProbes->posArray)(ipart_mpi,0)+x_moved;
+                for (unsigned int iDim=1 ; iDim<diagProbes->posArray->dims_[1] ; iDim++)
+                    pos[iDim] = (*diagProbes->posArray)(ipart_mpi,iDim);
 
-                bool dim0 = ( ( X <  patches_[iPatch]->getDomainLocalMin(0) ) || ( X >= patches_[iPatch]->getDomainLocalMax(0) ) );
-                bool dim1 = ( ( Y <  patches_[iPatch]->getDomainLocalMin(1) ) || ( Y >= patches_[iPatch]->getDomainLocalMax(1) ) ) ;
+                bool isNotIn;
+                vector<bool> posIsNotIn( diagProbes->posArray->dims_[1] );
+                for (unsigned int iDim=0 ; iDim<diagProbes->posArray->dims_[1] ; iDim++)
+                    posIsNotIn[iDim] = ( ( pos[iDim] <  patches_[iPatch]->getDomainLocalMin(iDim) ) || ( pos[iDim] >= patches_[iPatch]->getDomainLocalMax(iDim) ) );
+
+                isNotIn = posIsNotIn[0];
+                for (unsigned int iDim=0 ; iDim<diagProbes->posArray->dims_[1] ; iDim++)
+                    isNotIn = ( isNotIn || posIsNotIn[iDim] );
+                    
                 // Moved probes are ordered along the Hilbert curve in the same way as at t0
-                while ( dim0 || dim1 ) {
+                while ( isNotIn ) {
                     iPatch++;
                     if (iPatch>=size())
-                        ERROR( "\t" << ipart_mpi << " " << X << " " << Y  );
+                        ERROR( "\t" << ipart_mpi << " not in a patch on this process"  );
                     ilocal_part = 0;
-                    dim0 = ( ( X <  patches_[iPatch]->getDomainLocalMin(0) ) || ( X >= patches_[iPatch]->getDomainLocalMax(0) ) );
-                    dim1 = ( ( Y <  patches_[iPatch]->getDomainLocalMin(1) ) || ( Y >= patches_[iPatch]->getDomainLocalMax(1) ) ) ;
+
+                    for (unsigned int iDim=0 ; iDim<diagProbes->posArray->dims_[1] ; iDim++)
+                        posIsNotIn[iDim] = ( ( pos[iDim] <  patches_[iPatch]->getDomainLocalMin(iDim) ) || ( pos[iDim] >= patches_[iPatch]->getDomainLocalMax(iDim) ) );
+                    isNotIn = posIsNotIn[0];
+                    for (unsigned int iDim=0 ; iDim<diagProbes->posArray->dims_[1] ; iDim++)
+                        isNotIn = ( isNotIn || posIsNotIn[iDim] );
                 }
                 patches_[iPatch]->probes[nprobe]->particles.create_particle();
-                patches_[iPatch]->probes[nprobe]->particles.position(0,ilocal_part) = X;
-                patches_[iPatch]->probes[nprobe]->particles.position(1,ilocal_part) = Y;
+                for (unsigned int iDim=0 ; iDim<diagProbes->posArray->dims_[1] ; iDim++)
+                    patches_[iPatch]->probes[nprobe]->particles.position(iDim,ilocal_part) = pos[iDim];
                 ilocal_part++;
                  
             } // End for local probes
