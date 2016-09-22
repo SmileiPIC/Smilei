@@ -118,13 +118,46 @@ This installation procedure has been tested on OS X "El Capitan" 10.11.1
 Install dependencies on Ubuntu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     
+On Ubuntu 16.04
+"""""""""""""""
+
 Install the following packages from terminal:
 
   .. code-block:: bash
   
     sudo apt-get install git openmpi-bin libhdf5-openmpi-dev build-essential python-dev
 
-:red:`Need details`
+On older release
+""""""""""""""""
+
+A manual installation is required :
+
+1. Download `OpenMPI <https://www.open-mpi.org/software/ompi>`_
+
+  .. code-block:: bash
+  
+    $ taz zxvf openmpi-1.10.2.tar.gz
+    $ cd openmpi-1.10.2
+    $ ./configure --prefix=${INSTALL_DIR}/openmpi-1.10.2 --enable-mpi-thread-multiple --enable-mpirun-prefix-by-default
+    $ make
+    $ make install
+    $ export PATH=${INSTALL_DIR}/openmpi-1.10.2/bin:${PATH}
+    $ export LD_LIBRARY_PATH=${INSTALL_DIR}/openmpi-1.10.2/lib:${LD_LIBRARY_PATH}
+
+
+2. Download `HDF5 <https://support.hdfgroup.org/HDF5>`_
+
+  .. code-block:: bash
+  
+    $ tar zxvf hdf5-1.8.16.tar.gz
+    $ cd hdf5-1.8.16
+    $ ./configure --prefix=${INSTALL_DIR}/hdf5-1.8.16 --enable-parallel --with-pic --enable-linux-lfs --enable-shared --enable-production=yes --disable-sharedlib-rpath --enable-static CC=mpicc FC=mpif90
+    $ make
+    $ make install
+    $ export PATH=${INSTALL_DIR}/hdf5-1.8.16/bin:${PATH}
+    $ export LD_LIBRARY_PATH ${INSTALL_DIR}/hdf5-1.8.16/lib:${LD_LIBRARY_PATH}
+    $ # set HDF5 variable used in SMILEI makefile
+    $ export HDF5_ROOT_DIR=${INSTALL_DIR}/hdf5-1.8.16
 
 
 ----

@@ -41,6 +41,9 @@ SimWindow::SimWindow(Params& params)
         MESSAGE(1,"Moving window is active:");
         MESSAGE(2,"velocity_x : " << velocity_x);
         MESSAGE(2,"time_start : " << time_start);
+        params.hasWindow = true;
+    } else {
+        params.hasWindow = false;
     }
     
 }

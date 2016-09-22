@@ -10,5 +10,6 @@ module_file = this_script_dir+s+'PythonModule'+s+'Smilei'+s+'__init__.py'
 if not os.path.isfile(module_file):
 	print("The Diagnostics.py file cannot be open this way.")
 	print("Use the function `execfile`, or the `%run` command in ipython.")
+	print("In python 3, replace the command `execfile(file)` by `exec(compile(open(file).read(), file, 'exec'))`")
 else:
 	exec(open(module_file,'r').read())

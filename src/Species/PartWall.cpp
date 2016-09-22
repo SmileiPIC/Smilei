@@ -14,6 +14,7 @@
 
 using namespace std;
 
+// Partwall constructor
 PartWall::PartWall(double pos, unsigned short dir, string kind) :
     position(pos),
     direction(dir)
@@ -30,6 +31,7 @@ PartWall::PartWall(double pos, unsigned short dir, string kind) :
     }
 }
 
+// Applies the wall's boundary condition to one particle
 int PartWall::apply( Particles &particles, int ipart, Species * species, double &nrj_iPart) {
     if( (position-particles.position_old(direction, ipart))
        *(position-particles.position    (direction, ipart))<0.) {
@@ -38,8 +40,6 @@ int PartWall::apply( Particles &particles, int ipart, Species * species, double 
         return 1;
     }
 }
-
-
 
 
 // Reads the input file and creates the ParWall objects accordingly
@@ -107,12 +107,15 @@ PartWalls::PartWalls(Params& params, Patch* patch)
 // Clones an existing vector of partWalls
 PartWalls::PartWalls(PartWalls* partWalls, Patch* patch)
 {
+    // Copy all the walls info, so that all patches know about all walls
     resize(0);
     direction = partWalls->direction;
     position  = partWalls->position ;
     kind      = partWalls->kind     ;
     
-    for (unsigned int iwall = 0; iwall < direction.size(); iwall++) {
+    // Create walls, but only those within the current domain
+    int nwalls=direction.size();
+    for (unsigned int iwall = 0; iwall < nwalls; iwall++) {
         if ( position[iwall] >= patch->getDomainLocalMin(direction[iwall])
           && position[iwall] <= patch->getDomainLocalMax(direction[iwall])) {
             push_back( new PartWall(position[iwall], direction[iwall], kind[iwall]) );
@@ -124,8 +127,8 @@ PartWalls::PartWalls(PartWalls* partWalls, Patch* patch)
 // Destructor
 PartWalls::~PartWalls()
 {
-    int n=size();
-    for( int i=0; i<n; i++ ) delete vecPartWall[i];
+    int nwalls=size();
+    for( int i=0; i<nwalls; i++ ) delete vecPartWall[i];
     clear();
 }
 

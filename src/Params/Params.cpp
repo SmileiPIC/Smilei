@@ -26,7 +26,7 @@ namelist("")
     if((((H5_VERS_MAJOR==1) && (H5_VERS_MINOR==8) && (H5_VERS_RELEASE>16)) || \
         ((H5_VERS_MAJOR==1) && (H5_VERS_MINOR>8)) || \
         (H5_VERS_MAJOR>1))) {
-        WARNING("Smilei suggests using hdf5 version 1.8.16 you're using "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
+        WARNING("Smilei suggests using hdf5 version 1.8.16. You're using "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
         WARNING("Newer version are not tested and may cause the code to behave incorrectly");
         WARNING("See http://hdf-forum.184993.n3.nabble.com/Segmentation-fault-using-H5Dset-extent-in-parallel-td4029082.html");
     }

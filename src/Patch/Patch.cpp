@@ -177,7 +177,7 @@ Patch::~Patch() {
     vecCollisions.clear();
     
     delete partWalls;
-        delete Proj;
+    delete Proj;
     delete Interp;
     
     delete EMfields;
