@@ -830,3 +830,50 @@ void VectorPatch::applyCollisions(Params& params, int itime, vector<Timer>& time
     
     timer[10].update();
 }
+
+
+void VectorPatch::move_probes(Params& params, double x_moved)
+{
+    int nprobe(0);
+    // Look for DiagProbes 
+    for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
+        if ( dynamic_cast<DiagnosticProbes*>(localDiags[idiag]) ) {
+            DiagnosticProbes* diagProbes = dynamic_cast<DiagnosticProbes*>(localDiags[idiag]);
+
+            // Clean probes
+            for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
+                patches_[ipatch]->probes[nprobe]->particles.initialize(0,params.nDim_particle);
+
+            int iPatch(0);
+            int ilocal_part(0);
+            for ( unsigned int ipart_mpi=0 ; ipart_mpi < diagProbes->posArray->dims_[0] ; ipart_mpi++ ) {
+
+                //vector<double> pos( diagProbes->posArray->dims_[1], 0. );
+                double X = (*diagProbes->posArray)(ipart_mpi,0)+x_moved;
+                double Y = (*diagProbes->posArray)(ipart_mpi,1);
+
+                bool dim0 = ( ( X <  patches_[iPatch]->getDomainLocalMin(0) ) || ( X >= patches_[iPatch]->getDomainLocalMax(0) ) );
+                bool dim1 = ( ( Y <  patches_[iPatch]->getDomainLocalMin(1) ) || ( Y >= patches_[iPatch]->getDomainLocalMax(1) ) ) ;
+                // Moved probes are ordered along the Hilbert curve in the same way as at t0
+                while ( dim0 || dim1 ) {
+                    iPatch++;
+                    if (iPatch>=size())
+                        ERROR( "\t" << ipart_mpi << " " << X << " " << Y  );
+                    ilocal_part = 0;
+                    dim0 = ( ( X <  patches_[iPatch]->getDomainLocalMin(0) ) || ( X >= patches_[iPatch]->getDomainLocalMax(0) ) );
+                    dim1 = ( ( Y <  patches_[iPatch]->getDomainLocalMin(1) ) || ( Y >= patches_[iPatch]->getDomainLocalMax(1) ) ) ;
+                }
+                patches_[iPatch]->probes[nprobe]->particles.create_particle();
+                patches_[iPatch]->probes[nprobe]->particles.position(0,ilocal_part) = X;
+                patches_[iPatch]->probes[nprobe]->particles.position(1,ilocal_part) = Y;
+                ilocal_part++;
+                 
+            } // End for local probes
+
+            // Goes to next probe
+            nprobe++;
+
+
+        } // Enf if probes
+    } // End for idiag
+}

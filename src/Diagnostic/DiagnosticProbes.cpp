@@ -122,6 +122,11 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
 
 DiagnosticProbes::~DiagnosticProbes()
 {
+    if (posArray != NULL) {
+        delete posArray;
+        posArray = NULL;
+    }
+
     delete timeSelection;
     delete flush_timeSelection;
 }
@@ -291,7 +296,7 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     vector<unsigned int> posArraySize(2);
     posArraySize[0] = nPart_MPI;
     posArraySize[1] = nDim_particle;
-    Field2D* posArray = new Field2D(posArraySize);
+    posArray = new Field2D(posArraySize);
     unsigned int ipart = 0;
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         if( ipart>=(unsigned int)nPart_MPI ) break;
@@ -341,7 +346,11 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     H5Pclose( transfer );
     H5Sclose(filespace);
     H5Sclose(memspace);
-    delete posArray;
+
+    if (!params.hasWindow) {
+        delete posArray;
+        posArray = NULL;
+    }
     
     H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
 }

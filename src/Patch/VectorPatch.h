@@ -173,6 +173,8 @@ public :
         }
     }
 
+    void move_probes(Params& params, double x_moved);
+
 
  private :
     
