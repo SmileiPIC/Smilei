@@ -291,10 +291,10 @@ for opt, arg in options:
 #
 # TEST IF THE NUMBER OF THREADS IS COMPATIBLE WITH THE HOST
 if JOLLYJUMPER in HOSTNAME :
-  if (12 % OMP != 0) :
+  if (12 % int(OMP) != 0) :
     print  "Smilei cannot be run with " ,OMP ," threads on ", HOSTNAME
     sys.exit(4)  
-  NPERSOCKET=12/OMP
+  NPERSOCKET=12/int(OMP)
 #
 # CASE PRECISION NOT DEFINED OR MULTIPLE SCALARS REQUIRED : 
 # CREATING A DICTIONNARY WITH THE LIST OF PRECISION VALUES FOUND IN ./references/precision_values
@@ -401,7 +401,7 @@ for BENCH in SMILEI_BENCH_LIST :
     SMILEI_BENCH = SMILEI_BENCHS+BENCH
     VALID_ALL_OK = False
     # CREATE THE WORKDIR CORRESPONDING TO THE INPUT FILE AND GO INTO                
-    WORKDIR = WORKDIRS+'/wd_'+BENCH
+    WORKDIR = WORKDIRS+'/wd_'+BENCH.replace('.py','')
     if not os.path.exists(WORKDIR) :
       os.mkdir(WORKDIR)
     os.chdir(WORKDIR)
@@ -443,10 +443,17 @@ mpirun -bind-to-socket -np "+str(MPI)+" "+WORKDIRS+"/smilei "+SMILEI_BENCH+" >"+
           check_call(COMMANDE, shell=True)
         except CalledProcessError,e:
         # if execution fails, exit with exit status 2
-          os.chdir(WORKDIRS)
-          shutil.rmtree(WORKDIR)
           if VERBOSE :
             print  "Smilei validation cannot be done : execution failed."
+            os.chdir(WORKDIR)
+            COMMANDE = "/bin/bash cat "+SMILEI_EXE_OUT
+            try :
+              check_call(COMMANDE, shell=True)
+            except CalledProcessError,e:
+              print  "cat command failed"
+              sys.exit(2)
+          os.chdir(WORKDIRS)
+          shutil.rmtree(WORKDIR)
           sys.exit(2)
       elif JOLLYJUMPER in HOSTNAME :
         NODES=((int(MPI)*int(OMP)-1)/12)+1
@@ -474,7 +481,7 @@ export PATH=$PATH:/opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck \n \
 #Specify the number of cores per sockets in -mca orte_num_cores \n \
 cd "+WORKDIR+" \n \
 mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+"\
- -x $OMP_NUM_THREADS -x $OMP_SCHEDULE "+WORKDIRS+"/smilei "+SMILEI_BENCH+" >"+SMILEI_EXE_OUT+"2>&1 \n \
+ -x $OMP_NUM_THREADS -x $OMP_SCHEDULE "+WORKDIRS+"/smilei "+SMILEI_BENCH+" >"+SMILEI_EXE_OUT+" 2>&1 \n \
 echo $? > exit_status_file \n  ")
         exec_script_desc.close()
         EXIT_STATUS="100"
@@ -484,36 +491,32 @@ echo $? > exit_status_file \n  ")
         COMMANDE = "PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub  "+EXEC_SCRIPT
         try :
           check_call(COMMANDE, shell=True)
-          os.chdir(WORKDIRS)
-#          shutil.rmtree(WORKDIR)
-          os.rename(WORKDIR,WORKDIR+"_bad")
-#          os.chdir(WORKDIR)
-#          for file in os.listdir(WORKDIR) :
-#            os.remove(file)
-#          os.chdir(WORKDIRS)
-#          os.rmdir(WORKDIR)
-          # if smilei execution fails, exit with exit status 2
-          if ( EXIT_STATUS != 0 )  :
-            if VERBOSE :
-              print  "Smilei validation cannot be done : execution failed."
-              sys.exit(2)
         except CalledProcessError,e:
         # if commande qsub fails, exit with exit status 2
+          exit_status_fd.close()  
           os.chdir(WORKDIRS)
-#          shutil.rmtree(WORKDIR)
-          os.rename(WORKDIR,WORKDIR+"_bad")
-#          os.chdir(WORKDIR)
-#          for file in os.listdir(WORKDIR) :
-#            os.remove(file)
-#          os.chdir(WORKDIRS)
-#          os.rmdir(WORKDIR)
+          shutil.rmtree(WORKDIR)           
           if VERBOSE :
-            print  "Smilei validation cannot be done : execution failed."
+            print  "Smilei validation cannot be done : qsub command failed."
             sys.exit(2)
         while ( EXIT_STATUS == "100" ) :
           time.sleep(10)
           EXIT_STATUS = exit_status_fd.readline()
           exit_status_fd.seek(0)
+        if ( int(EXIT_STATUS) != 0 )  :
+          if VERBOSE :
+            print  "Smilei validation cannot be done : execution failed."
+            os.chdir(WORKDIR)
+            COMMANDE = "cat "+SMILEI_EXE_OUT
+            try :
+              check_call(COMMANDE, shell=True)
+            except CalledProcessError,e:
+              print  "cat command failed"
+              sys.exit(2)
+          exit_status_fd.close()  
+          os.chdir(WORKDIRS)
+#          shutil.rmtree(WORKDIR)
+          sys.exit(2)
     # READ TIME STEPS AND VALIDATE 
     if VERBOSE :
       print "Testing scalars :\n"
