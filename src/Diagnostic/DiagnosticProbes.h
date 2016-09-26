@@ -49,6 +49,12 @@ private :
     //! List of the coordinates of the probe vertices
     std::vector< std::vector<double> > allPos;
     
+    //! Matrix containing the probe's coordinate system
+    std::vector<double> axes;
+    
+    //! Inverse matrix from the probe's coordinate system
+    std::vector<double> axesInverse;
+    
     //! number of fake particles for each probe diagnostic
     unsigned int nPart_total;
     

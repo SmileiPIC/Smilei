@@ -1784,10 +1784,10 @@ class Probe(Diagnostic):
 				p  = self._np.sqrt(self._np.sum(p**2))
 				invp = self._np.array(1./p, ndmin=1)
 				positions = self._np.sqrt(self._np.sum(positions**2,1))
-			# If 2D probe, must calculate matrix inverse
+			# If 2D or 3D probe, must calculate matrix inverse
 			else:
 				invp = self._np.linalg.inv(p.transpose())
-			self._ordering = self._np.zeros((positions.shape[0],), dtype=int)
+			self._ordering = self._np.zeros((positions.shape[0],), dtype=int)-1
 			for n in range(positions.shape[0]):
 				pos = positions[n]
 				ijk = self._np.dot(invp, pos)*(self._ishape-1) # find the indices of the point

@@ -45,27 +45,7 @@ void Particles::initialize(unsigned int nParticles, unsigned int nDim)
         reserve( round( c_part_max * nParticles ), nDim );
     }
     
-    Position.resize(nDim);
-    
-    Position_old.resize(Position.size());
-    for (unsigned int i=0 ; i< Position.size() ; i++) {
-        Position[i].resize(nParticles, 0.);
-        Position_old[i].resize(nParticles, 0.);
-    }
-    Momentum.resize(3);
-    for (unsigned int i=0 ; i< 3 ; i++) {
-        Momentum[i].resize(nParticles, 0.);
-    }
-    Weight.resize(nParticles, 0.);
-    Charge.resize(nParticles, 0);
-    
-    if (tracked) {
-        Id.resize(nParticles, 0);
-    }
-    
-    if (isRadReaction) {
-        Chi.resize(nParticles, 0.);
-    }
+    resize(nParticles, nDim);
     
     if ( double_prop.empty() ) { // do this just once 
         for (unsigned int i=0 ; i< Position.size() ; i++)
@@ -89,7 +69,7 @@ void Particles::initialize(unsigned int nParticles, unsigned int nDim)
     }
     
 }
-                        
+
 // copy properties from another Particles
 void Particles::initialize(unsigned int nParticles, Particles &part)
 {
@@ -129,6 +109,59 @@ void Particles::reserve( unsigned int n_part_max, unsigned int nDim )
         Chi.reserve(n_part_max);
 
 }
+
+void Particles::resize( unsigned int nParticles, unsigned int nDim )
+{
+    Position.resize(nDim);
+    Position_old.resize(nDim);
+    for (unsigned int i=0 ; i<nDim ; i++) {
+        Position[i].resize(nParticles, 0.);
+        Position_old[i].resize(nParticles, 0.);
+    }
+    
+    Momentum.resize(3);
+    for (unsigned int i=0 ; i< 3 ; i++) {
+        Momentum[i].resize(nParticles, 0.);
+    }
+    
+    Weight.resize(nParticles, 0.);
+    Charge.resize(nParticles, 0);
+    
+    if (tracked) {
+        Id.resize(nParticles, 0);
+    }
+    
+    if (isRadReaction) {
+        Chi.resize(nParticles, 0.);
+    }
+}
+
+void Particles::shrink_to_fit( unsigned int nDim )
+{
+    Position.resize(nDim);
+    Position_old.resize(nDim);
+    for (unsigned int i=0 ; i<nDim; i++) {
+        Position[i].shrink_to_fit();
+        Position_old[i].shrink_to_fit();
+    }
+    
+    Momentum.resize(3);
+    for (unsigned int i=0 ; i< 3 ; i++) {
+        Momentum[i].shrink_to_fit();
+    }
+    
+    Weight.shrink_to_fit();
+    Charge.shrink_to_fit();
+    
+    if (tracked) {
+        Id.shrink_to_fit();
+    }
+    
+    if (isRadReaction) {
+        Chi.shrink_to_fit();
+    }
+}
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Reset of Particles vectors
