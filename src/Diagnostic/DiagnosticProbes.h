@@ -31,6 +31,10 @@ public :
     void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) override;
     
     void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
+
+    //! Probes position storage at initialization and for moving window
+    Field2D* posArray;
+    
     
 private :
     

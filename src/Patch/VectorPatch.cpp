@@ -830,3 +830,62 @@ void VectorPatch::applyCollisions(Params& params, int itime, vector<Timer>& time
     
     timer[10].update();
 }
+
+
+void VectorPatch::move_probes(Params& params, double x_moved)
+{
+    int nprobe(0);
+    // Look for DiagProbes 
+    for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
+        if ( dynamic_cast<DiagnosticProbes*>(localDiags[idiag]) ) {
+            DiagnosticProbes* diagProbes = dynamic_cast<DiagnosticProbes*>(localDiags[idiag]);
+
+            // Clean probes
+            for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
+                patches_[ipatch]->probes[nprobe]->particles.initialize(0,params.nDim_particle);
+
+            int iPatch(0);
+            int ilocal_part(0);
+            for ( unsigned int ipart_mpi=0 ; ipart_mpi < diagProbes->posArray->dims_[0] ; ipart_mpi++ ) {
+
+                vector<double> pos( diagProbes->posArray->dims_[1], 0. );
+                pos[0] = (*diagProbes->posArray)(ipart_mpi,0)+x_moved;
+                for (unsigned int iDim=1 ; iDim<diagProbes->posArray->dims_[1] ; iDim++)
+                    pos[iDim] = (*diagProbes->posArray)(ipart_mpi,iDim);
+
+                bool isNotIn;
+                vector<bool> posIsNotIn( diagProbes->posArray->dims_[1] );
+                for (unsigned int iDim=0 ; iDim<diagProbes->posArray->dims_[1] ; iDim++)
+                    posIsNotIn[iDim] = ( ( pos[iDim] <  patches_[iPatch]->getDomainLocalMin(iDim) ) || ( pos[iDim] >= patches_[iPatch]->getDomainLocalMax(iDim) ) );
+
+                isNotIn = posIsNotIn[0];
+                for (unsigned int iDim=0 ; iDim<diagProbes->posArray->dims_[1] ; iDim++)
+                    isNotIn = ( isNotIn || posIsNotIn[iDim] );
+                    
+                // Moved probes are ordered along the Hilbert curve in the same way as at t0
+                while ( isNotIn ) {
+                    iPatch++;
+                    if (iPatch>=size())
+                        ERROR( "\t" << ipart_mpi << " not in a patch on this process"  );
+                    ilocal_part = 0;
+
+                    for (unsigned int iDim=0 ; iDim<diagProbes->posArray->dims_[1] ; iDim++)
+                        posIsNotIn[iDim] = ( ( pos[iDim] <  patches_[iPatch]->getDomainLocalMin(iDim) ) || ( pos[iDim] >= patches_[iPatch]->getDomainLocalMax(iDim) ) );
+                    isNotIn = posIsNotIn[0];
+                    for (unsigned int iDim=0 ; iDim<diagProbes->posArray->dims_[1] ; iDim++)
+                        isNotIn = ( isNotIn || posIsNotIn[iDim] );
+                }
+                patches_[iPatch]->probes[nprobe]->particles.create_particle();
+                for (unsigned int iDim=0 ; iDim<diagProbes->posArray->dims_[1] ; iDim++)
+                    patches_[iPatch]->probes[nprobe]->particles.position(iDim,ilocal_part) = pos[iDim];
+                ilocal_part++;
+                 
+            } // End for local probes
+
+            // Goes to next probe
+            nprobe++;
+
+
+        } // Enf if probes
+    } // End for idiag
+}

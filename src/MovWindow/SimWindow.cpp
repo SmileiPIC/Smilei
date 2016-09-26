@@ -115,6 +115,12 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     for ( unsigned int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size() ; ispec++ )
         vecPatches(0)->vecSpecies[ispec]->storeNRJlost( energy_part_lost[ispec] );
 
+    // Store offset in file for current MPI process
+    //   Sould be store in the diagnostic itself
+    vector<int> offset(vecPatches(0)->probes.size());
+    for (int iprobe=0;iprobe<vecPatches(0)->probes.size();iprobe++)
+        offset[iprobe] = vecPatches(0)->probes[iprobe]->offset_in_file;
+
     nPatches = vecPatches.size();
 
     // Sort patch by hindex (to avoid deadlock)
@@ -227,6 +233,12 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     
     vecPatches.set_refHindex() ;
     vecPatches.update_field_list() ;
+
+
+    vecPatches.move_probes(params, x_moved);
+    for (int iprobe=0;iprobe<vecPatches(0)->probes.size();iprobe++)
+        for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+            vecPatches(ipatch)->probes[iprobe]->offset_in_file = offset[iprobe];
     
     return;
     
