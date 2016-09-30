@@ -1305,16 +1305,18 @@ class Field(Diagnostic):
 		# Fabricate all axes values
 		self._naxes = self._ndim
 		self._sliceinfo = {}
-		self._slices = [None]*self._ndim
+		self._slices = [False]*self._ndim
+		self._selection = ()
 		for iaxis in range(self._naxes):
 			centers = self._np.linspace(0., self._ishape[iaxis]*self._cell_length[iaxis], self._ishape[iaxis])
 			label = {0:"x", 1:"y", 2:"z"}[iaxis]
 			axisunits = "L_r"
 			
 			if label in slice:
+				self._slices[iaxis] = True
 				# if slice is "all", then all the axis has to be summed
 				if slice[label] == "all":
-					indices = self._np.arange(self._ishape[iaxis])
+					self._selection[iaxis] += ( self._np.s_[:], )
 				# Otherwise, get the slice from the argument `slice`
 				else:
 					try:
@@ -1332,18 +1334,23 @@ class Field(Diagnostic):
 						return None
 					if indices.size == 1:
 						self._sliceinfo.update({ label:"Sliced at "+label+" = "+str(centers[indices])+" "+axisunits })
+						self._selection[iaxis] += ( self._np.s_[indices[0]], )
+						self._ishape[iaxis] = 1
 					else:
 						self._sliceinfo.update({ label:"Sliced for "+label
-							+" from "+str(centers[indices[ 0]])+" to "+str(centers[indices[-1]])+" "+axisunits })
-				# convert the range of indices into their "conjugate"
-				self._slices[iaxis] = self._np.delete(self._np.arange(self._ishape[iaxis]), indices)
+							+" from "+str(centers[indices[0]])+" to "+str(centers[indices[-1]])+" "+axisunits })
+						self._selection[iaxis] += ( self._np.s_[indices[0]:indices[-1]], )
+						self._ishape[iaxis] = indices[-1] - indices[0]
 			else:
-				self._type   .append(label)
-				self._shape  .append(self._ishape[iaxis])
-				self._centers.append(centers)
-				self._label  .append(label)
-				self._units  .append(axisunits)
-				self._log    .append(False)
+				centers = centers[:self._ishape[iaxis]:stride]
+				self._selection += ( self._np.s_[:self._ishape[iaxis]:stride], )
+				self._ishape[iaxis] = len(centers)
+				self._type     .append(label)
+				self._shape    .append(self._ishape[iaxis])
+				self._centers  .append(centers)
+				self._label    .append(label)
+				self._units    .append(axisunits)
+				self._log      .append(False)
 		
 		if len(self._centers) > 2:
 			print("Cannot plot in "+str(len(self._shape))+"d. You need to 'slice' some axes.")
@@ -1358,11 +1365,6 @@ class Field(Diagnostic):
 		self._title  = self.operation
 		for f in self._fieldname:
 			self._vunits = self._vunits.replace(f, units[f])
-		
-		# Manage stride
-		self._stride = stride
-		if stride!=1:
-			for i in range(len(self._centers)): self._centers[i] = self._centers[i][::stride]
 		
 		# Finish constructor
 		self.valid = True
@@ -1397,21 +1399,15 @@ class Field(Diagnostic):
 		C = {}
 		h5item = self._h5items[index]
 		for field in self._fieldname: # for each field in operation
-			B = self._np.double(h5item.get(field)) # get array
-			for axis, size in enumerate(self._ishape):
-				l = self._np.arange(size, B.shape[axis])
-				B = self._np.delete(B, l, axis=axis) # remove extra cells if necessary
+			B = self._np.zeros(self._ishape)
+			h5item[field].read_direct(B, source_sel=self._selection) # get array
 			C.update({ field:B })
 		# Calculate the operation
 		A = eval(self._operation)
 		# Apply the slicing
 		for iaxis in range(self._naxes):
-			if self._slices[iaxis] is None: continue
-			A = self._np.delete(A, self._slices[iaxis], axis=iaxis) # remove parts outside of the slice
-			A = self._np.mean(A, axis=iaxis, keepdims=True) # sum over the slice
-		# Apply stride
-		if   A.ndim==1: A = A[::self._stride]
-		elif A.ndim==2: A = A[::self._stride, ::self._stride]
+			if self._slices[iaxis]:
+				A = self._np.mean(A, axis=iaxis, keepdims=True) # mean over the slice
 		# remove sliced axes
 		A = self._np.squeeze(A)
 		# log scale if requested
