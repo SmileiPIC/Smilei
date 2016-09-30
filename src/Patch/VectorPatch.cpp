@@ -844,7 +844,7 @@ void VectorPatch::move_probes(Params& params, double x_moved)
             for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
                 patches_[ipatch]->probes[nprobe]->particles.initialize(0,params.nDim_particle);
 
-            int iPatch(0);
+            unsigned int iPatch(0);
             int ilocal_part(0);
             for ( unsigned int ipart_mpi=0 ; ipart_mpi < diagProbes->posArray->dims_[0] ; ipart_mpi++ ) {
 

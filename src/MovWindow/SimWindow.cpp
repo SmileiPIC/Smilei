@@ -118,7 +118,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     // Store offset in file for current MPI process
     //   Sould be store in the diagnostic itself
     vector<int> offset(vecPatches(0)->probes.size());
-    for (int iprobe=0;iprobe<vecPatches(0)->probes.size();iprobe++)
+    for (unsigned int iprobe=0;iprobe<vecPatches(0)->probes.size();iprobe++)
         offset[iprobe] = vecPatches(0)->probes[iprobe]->offset_in_file;
 
     nPatches = vecPatches.size();
@@ -236,8 +236,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 
 
     vecPatches.move_probes(params, x_moved);
-    for (int iprobe=0;iprobe<vecPatches(0)->probes.size();iprobe++)
-        for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+    for (unsigned int iprobe=0;iprobe<vecPatches(0)->probes.size();iprobe++)
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
             vecPatches(ipatch)->probes[iprobe]->offset_in_file = offset[iprobe];
     
     return;

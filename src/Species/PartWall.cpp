@@ -114,7 +114,7 @@ PartWalls::PartWalls(PartWalls* partWalls, Patch* patch)
     kind      = partWalls->kind     ;
     
     // Create walls, but only those within the current domain
-    int nwalls=direction.size();
+    unsigned int nwalls=direction.size();
     for (unsigned int iwall = 0; iwall < nwalls; iwall++) {
         if ( position[iwall] >= patch->getDomainLocalMin(direction[iwall])
           && position[iwall] <= patch->getDomainLocalMax(direction[iwall])) {

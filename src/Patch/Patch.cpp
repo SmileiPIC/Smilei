@@ -212,7 +212,7 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
 //        cout << "\n\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[2][0]  << "\t" << "MPI_PROC_NULL" << endl;
     
 
-    for (int iDim=0 ; iDim< neighbor_.size() ; iDim++)
+    for (int iDim=0 ; iDim< (int)neighbor_.size() ; iDim++)
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
             send_tags_[iDim][iNeighbor] = buildtag( hindex, iDim, iNeighbor );
             recv_tags_[iDim][iNeighbor] = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor );
@@ -231,10 +231,10 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params)
     int ndim = params.nDim_field;
     int idim,check;
     std::vector<int>* indexes_of_particles_to_exchange = &vecSpecies[ispec]->indexes_of_particles_to_exchange;
-    double xmax[3]; 
+//    double xmax[3]; 
     
     for (int iDim=0 ; iDim < ndim ; iDim++){
-        xmax[iDim] = params.cell_length[iDim]*( params.n_space_global[iDim] );
+//        xmax[iDim] = params.cell_length[iDim]*( params.n_space_global[iDim] );
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
             vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor].initialize(0,cuParticles);
             vecSpecies[ispec]->MPIbuff.partSend[iDim][iNeighbor].initialize(0,cuParticles);
@@ -427,9 +427,9 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
     int idim, check;
 
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
-    double xmax[3]; 
-    for (int idim=0 ; idim < ndim ; idim++)
-        xmax[idim] = params.cell_length[idim]*( params.n_space_global[idim] );
+//    double xmax[3]; 
+//    for (int idim=0 ; idim < ndim ; idim++)
+//        xmax[idim] = params.cell_length[idim]*( params.n_space_global[idim] );
 
 
     std::vector<int>* indexes_of_particles_to_exchange = &vecSpecies[ispec]->indexes_of_particles_to_exchange;

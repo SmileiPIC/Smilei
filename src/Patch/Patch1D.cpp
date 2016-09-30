@@ -152,7 +152,6 @@ void Patch1D::finalizeSumField( Field* field, int iDim )
     oversize2[0] *= 2;
     oversize2[0] += 1 + f1D->isDual_[0];
     
-    int istart;
     /********************************************************************************/
     // Send/Recv in a buffer data to sum
     /********************************************************************************/

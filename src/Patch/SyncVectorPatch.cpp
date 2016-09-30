@@ -339,7 +339,7 @@ void SyncVectorPatch::exchange( std::vector<Field*> fields, VectorPatch& vecPatc
         } // End if dims_.size()>1
     } // End for( ipatch )
 
-    for ( int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
+    for ( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
         //#pragma omp master
         {
         #pragma omp for schedule(static)
@@ -359,7 +359,7 @@ void SyncVectorPatch::exchange( std::vector<Field*> fields, VectorPatch& vecPatc
 
 void SyncVectorPatch::exchange0( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
-    unsigned int nx_, ny_(1), nz_(1), h0, oversize, n_space, gsp;
+    unsigned int ny_(1), nz_(1), h0, oversize, n_space, gsp;
     double *pt1,*pt2;
     h0 = vecPatches(0)->hindex;
 

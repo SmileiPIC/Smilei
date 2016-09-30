@@ -220,7 +220,7 @@ void Patch3D::initSumField( Field* field, int iDim )
 void Patch3D::finalizeSumField( Field* field, int iDim )
 {
     int patch_ndims_(3);
-    int patch_nbNeighbors_(2);
+//    int patch_nbNeighbors_(2);
     std::vector<unsigned int> n_elem = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
     Field3D* f3D =  static_cast<Field3D*>(field);
@@ -236,7 +236,6 @@ void Patch3D::finalizeSumField( Field* field, int iDim )
     oversize2[2] *= 2;
     oversize2[2] += 1 + f3D->isDual_[2];
     
-    int istart;
     /********************************************************************************/
     // Send/Recv in a buffer data to sum
     /********************************************************************************/
@@ -478,7 +477,6 @@ void Patch3D::createType( Params& params )
     int nx0 = params.n_space[0] + 1 + 2*params.oversize[0];
     int ny0 = params.n_space[1] + 1 + 2*params.oversize[1];
     int nz0 = params.n_space[2] + 1 + 2*params.oversize[2];
-    unsigned int clrw = params.clrw;
     
     // MPI_Datatype ntype_[nDim][primDual][primDual]
     int nx, ny, nz;
