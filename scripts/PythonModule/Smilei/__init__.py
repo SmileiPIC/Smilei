@@ -1316,7 +1316,7 @@ class Field(Diagnostic):
 				self._slices[iaxis] = True
 				# if slice is "all", then all the axis has to be summed
 				if slice[label] == "all":
-					self._selection[iaxis] += ( self._np.s_[:], )
+					self._selection += ( self._np.s_[:], )
 				# Otherwise, get the slice from the argument `slice`
 				else:
 					try:
@@ -1334,12 +1334,12 @@ class Field(Diagnostic):
 						return None
 					if indices.size == 1:
 						self._sliceinfo.update({ label:"Sliced at "+label+" = "+str(centers[indices])+" "+axisunits })
-						self._selection[iaxis] += ( self._np.s_[indices[0]], )
+						self._selection += ( self._np.s_[indices[0]], )
 						self._ishape[iaxis] = 1
 					else:
 						self._sliceinfo.update({ label:"Sliced for "+label
 							+" from "+str(centers[indices[0]])+" to "+str(centers[indices[-1]])+" "+axisunits })
-						self._selection[iaxis] += ( self._np.s_[indices[0]:indices[-1]], )
+						self._selection += ( self._np.s_[indices[0]:indices[-1]], )
 						self._ishape[iaxis] = indices[-1] - indices[0]
 			else:
 				centers = centers[:self._ishape[iaxis]:stride]
