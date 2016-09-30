@@ -141,24 +141,24 @@ void Particles::shrink_to_fit( unsigned int nDim )
     Position.resize(nDim);
     Position_old.resize(nDim);
     for (unsigned int i=0 ; i<nDim; i++) {
-        Position[i].shrink_to_fit();
-        Position_old[i].shrink_to_fit();
+        std::vector<double>(Position[i]).swap(Position[i]);
+        std::vector<double>(Position_old[i]).swap(Position_old[i]);
     }
     
     Momentum.resize(3);
     for (unsigned int i=0 ; i< 3 ; i++) {
-        Momentum[i].shrink_to_fit();
+        std::vector<double>(Momentum[i]).swap(Momentum[i]);
     }
     
-    Weight.shrink_to_fit();
-    Charge.shrink_to_fit();
+    std::vector<double>(Weight).swap(Weight);
+    std::vector<short>(Charge).swap(Charge);
     
     if (tracked) {
-        Id.shrink_to_fit();
+        std::vector<unsigned int>(Id).swap(Id);
     }
     
     if (isRadReaction) {
-        Chi.shrink_to_fit();
+        std::vector<double>(Chi).swap(Chi);
     }
 }
 
