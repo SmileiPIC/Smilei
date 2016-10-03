@@ -8,11 +8,6 @@ class Field(Diagnostic):
 	# This is the constructor, which creates the object
 	def _init(self, field=None, timesteps=None, slice=None, data_log=False, stride=1, **kwargs):
 		
-		self._error = ""
-		if not self.Smilei.valid:
-			self._error = "Diagnostic not loaded: smilei simulation error"
-			return
-		
 		self._file = self._results_path+'/Fields.h5'
 		try:
 			self._f = self._h5py.File(self._file, 'r')

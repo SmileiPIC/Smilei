@@ -8,19 +8,19 @@ class Probe(Diagnostic):
 	# This is the constructor, which creates the object
 	def _init(self, probeNumber=None, field=None, timesteps=None, slice=None, data_log=False, **kwargs):
 		
-		if not self.Smilei.valid: return None
+		self._h5probe = None
 		
 		# If no probeNumber, print available probes
 		if probeNumber is None:
 			probes = self.getProbes()
 			if len(probes)>0:
-				print("Printing available probes:")
-				print("--------------------------")
+				self._error += "Printing available probes:\n"
+				self._error += "--------------------------\n"
 				for p in probes:
-					self._printInfo(self._getInfo(p))
+					self._error += self._printInfo(self._getInfo(p))
 			else:
-				print("No probes found in '"+self._results_path+"'")
-			return None
+				self._error += "No probes found in '"+self._results_path+"'"
+			return
 		
 		# Try to get the probe from the hdf5 file
 		self.probeNumber  = probeNumber
@@ -28,28 +28,25 @@ class Probe(Diagnostic):
 		try:
 			self._h5probe = self._h5py.File(self._file, 'r')
 		except:
-			print("Cannot find probe "+str(probeNumber))
-			self._h5probe.close()
-			return None
+			self._error += "Cannot find probe "+str(probeNumber)
+			return
 		
 		# Extract available fields
-		fields = str(self._h5probe.attrs["fields"]).split(",")
+		fields = self.getFields()
 		if len(fields) == 0:
-			print("Probe #"+probeNumber+" is empty")
-			self._h5probe.close()
-			return None
+			self._error += "Probe #"+probeNumber+" is empty"
+			return
 		# If no field, print available fields
 		if field is None:
-			print("Printing available fields for probe #"+str(probeNumber)+":")
-			print("----------------------------------------")
-			print(", ".join(fields))
-			self._h5probe.close()
-			return None
+			self._error += "Printing available fields for probe #"+str(probeNumber)+":\n"
+			self._error += "----------------------------------------\n"
+			self._error += ", ".join(fields)+"\n"
+			return
 		
 		# Get available times
 		self.times = self.getAvailableTimesteps()
 		if self.times.size == 0:
-			print("No probes found in Probes.h5")
+			self._error += "No probes found in Probes.h5"
 			return
 		
 		# 1 - verifications, initialization
@@ -62,16 +59,16 @@ class Probe(Diagnostic):
 			self.operation = self.operation.replace(f,"#"+str(i))
 		requested_fields = self._re.findall("#\d+",self.operation)
 		if len(requested_fields) == 0:
-			print("Could not find any existing field in `"+field+"`")
-			return None
+			self._error += "Could not find any existing field in `"+field+"`"
+			return
 		self._fieldn = [ int(f[1:]) for f in requested_fields ] # indexes of the requested fields
 		self._fieldn = list(set(self._fieldn))
 		self._fieldname = [ fields[i] for i in self._fieldn ] # names of the requested fields
 		
 		# Check slice is a dict
 		if slice is not None  and  type(slice) is not dict:
-			print("Argument `slice` must be a dictionary")
-			return None
+			self._error += "Argument `slice` must be a dictionary"
+			return
 		# Make slice a dictionary
 		if slice is None: slice = {}
 		
@@ -102,12 +99,12 @@ class Probe(Diagnostic):
 				else:
 					raise
 			except:
-				print("Argument `timesteps` must be one or two non-negative integers")
+				self._error += "Argument `timesteps` must be one or two non-negative integers"
 				return
 		
 		# Need at least one timestep
 		if self.times.size < 1:
-			print("Timesteps not found")
+			self._error += "Timesteps not found"
 			return
 		
 		
@@ -143,15 +140,15 @@ class Probe(Diagnostic):
 						s = self._np.double(slice[label])
 						if s.size>2 or s.size<1: raise
 					except:
-						print("Slice along axis "+label+" should be one or two floats")
-						return None
+						self._error += "Slice along axis "+label+" should be one or two floats"
+						return
 					if s.size==1:
 						indices = self._np.array([(self._np.abs(indices-s)).argmin()])
 					elif s.size==2:
 						indices = self._np.nonzero( (indices>=s[0]) * (indices<=s[1]) )[0]
 					if indices.size == 0:
-						print("Slice along "+label+" is out of the box range")
-						return None
+						self._error += "Slice along "+label+" is out of the box range"
+						return
 					if indices.size == 1:
 						self._sliceinfo.update({ label:"Sliced at "+label+" = "+str(indices[0]) })
 					else:
@@ -168,7 +165,7 @@ class Probe(Diagnostic):
 			
 		
 		if len(self._shape) > 2:
-			print("Cannot plot in "+str(len(self._shape))+"d. You need to 'slice' some axes.")
+			self._error += "Cannot plot in "+str(len(self._shape))+"d. You need to 'slice' some axes."
 			return
 		
 		# Special case in 1D: we convert the point locations to scalar distances
@@ -240,22 +237,29 @@ class Probe(Diagnostic):
 		# Finish constructor
 		self.valid = True
 	
+	# destructor
+	def __del__(self):
+		if self._h5probe is not None:
+			self._h5probe.close()
+	
 	# Method to print info on included probe
 	def info(self):
-		if not self._validate(): return
-		self._printInfo(self._getMyInfo())
+		if not self._validate():
+			print(self._error)
+		else:
+			print(self._printInfo(self._getMyInfo()))
 	
 	# Method to print info previously obtained with getInfo
 	@staticmethod
 	def _printInfo(info):
-		print("Probe #"+str(info["probeNumber"])+": "+str(info["dimension"])+"-dimensional,"
-			+" with fields "+str(info["fields"]))
+		printedInfo = "Probe #"+str(info["probeNumber"])+": "+str(info["dimension"])+"-dimensional,"+" with fields "+str(info["fields"])+"\n"
 		i = 0
 		while "p"+str(i) in info:
-			print("p"+str(i)+" = "+" ".join(info["p"+str(i)].astype(str).tolist()))
+			printedInfo += "p"+str(i)+" = "+" ".join(info["p"+str(i)].astype(str).tolist())+"\n"
 			i += 1
 		if info["shape"].size>0:
-			print("number = "+" ".join(info["shape"].astype(str).tolist()))
+			printedInfo += "number = "+" ".join(info["shape"].astype(str).tolist())+"\n"
+		return printedInfo
 	
 	# Method to get info on a given probe
 	def _getInfo(self, probeNumber):
@@ -277,13 +281,17 @@ class Probe(Diagnostic):
 	def _getMyInfo(self):
 		return self._getInfo(self.probeNumber)
 	
-	# get all available fields, sorted by name length
+	# get all available probes
 	def getProbes(self):
 		files = self._glob(self._results_path+"/Probes*.h5")
 		probes = []
 		for file in files:
 			probes.append( self._re.findall(r"Probes([0-9]+)[.]h5$",file)[0] )
 		return probes
+	
+	# get all available fields
+	def getFields(self):
+		return str(self._h5probe.attrs["fields"]).split(",")
 	
 	# get all available timesteps
 	def getAvailableTimesteps(self):

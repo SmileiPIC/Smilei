@@ -12,22 +12,25 @@ class Diagnostic(object):
 		self._units = []
 		self._log = []
 		self._data_log = False
+		self._error = ""
 		
 		self.Smilei = Smilei
-		self.Smilei.reload()
-		
-		if not self.Smilei.valid:
-			print("Invalid Smilei simulation")
-			return
 		
 		# pass packages to each diagnostic
-		self._results_path = self.Smilei._results_path
 		self._h5py = self.Smilei._h5py
 		self._np = self.Smilei._np
 		self._os = self.Smilei._os
 		self._glob = self.Smilei._glob
 		self._re = self.Smilei._re
 		self._plt = self.Smilei._plt
+		
+		self.Smilei.reload()
+		
+		if not self.Smilei.valid:
+			print("Invalid Smilei simulation")
+			return
+		
+		self._results_path = self.Smilei._results_path
 		self.namelist = self.Smilei.namelist
 		
 		# Make the Options object

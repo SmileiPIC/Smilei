@@ -8,17 +8,15 @@ class TrackParticles(Diagnostic):
 	# This is the constructor, which creates the object
 	def _init(self, species=None, select="", axes=[], timesteps=None, length=None, **kwargs):
 		
-		if not self.Smilei.valid: return None
-		
 		# If argument 'species' not provided, then print available species and leave
 		if species is None:
 			species = self.getTrackSpecies()
 			if len(species)>0:
-				print("Printing available tracked species:")
-				print("-----------------------------------")
-				for s in species: print(s)
+				self._error += "Printing available tracked species:\n"
+				self._error += "-----------------------------------\n"
+				self._error += "\n".join(species)
 			else:
-				print("No tracked particles files found in '"+self._results_path+"'")
+				self._error = "No tracked particles files found in '"+self._results_path+"'"
 			return None
 		
 		# Get info from the hdf5 files + verifications
@@ -35,7 +33,7 @@ class TrackParticles(Diagnostic):
 		# Get available times in the hdf5 file
 		self.times = self.getAvailableTimesteps()
 		if self.times.size == 0:
-			print("No tracked particles found in "+self._file)
+			self._error = "No tracked particles found in "+self._file
 			return
 		alltimes = self.times
 		# If specific timesteps requested, narrow the selection
@@ -53,13 +51,13 @@ class TrackParticles(Diagnostic):
 				else:
 					raise
 			except:
-				print("Argument `timesteps` must be one or two non-negative integers")
+				self._error = "Argument `timesteps` must be one or two non-negative integers"
 				return
 		else:
 			self._itimes = self._np.arange(len(self.times))
 		# Need at least one timestep
 		if self.times.size < 1:
-			print("Timesteps not found")
+			self._error = "Timesteps not found"
 			return
 		
 		# Get available properties ("x", "y", etc.)
@@ -148,7 +146,7 @@ class TrackParticles(Diagnostic):
 			try:
 				self.selectedParticles = self._np.array(select,dtype=int)
 			except:
-				print("Error: argument 'select' must be a string or a list of particle IDs")
+				self._error = "Error: argument 'select' must be a string or a list of particle IDs"
 				return
 		
 		self.nselectedParticles = len(self.selectedParticles)
@@ -156,17 +154,17 @@ class TrackParticles(Diagnostic):
 		# Manage axes
 		# -------------------------------------------------------------------
 		if type(axes) is not list:
-			print("Error: Argument 'axes' must be a list")
+			self._error = "Error: Argument 'axes' must be a list"
 			return
 		if len(axes)==0:
-			print("Error: must define at least one axis.")
+			self._error = "Error: must define at least one axis."
 			return
 		self.axes = axes
 		self._axesIndex = []
 		for axis in axes:
 			if axis not in self._properties.keys():
-				print("Error: Argument 'axes' has item '"+str(axis)+"' unknown.")
-				print("       Available axes are: "+(", ".join(sorted(self._properties.keys()))))
+				self._error += "Error: Argument 'axes' has item '"+str(axis)+"' unknown.\n"
+				self._error += "       Available axes are: "+(", ".join(sorted(self._properties.keys())))
 				return
 			self._axesIndex.append( self._properties[axis] ) # axesIndex contains the index in the hdf5 file
 		self._type = axes
@@ -201,10 +199,12 @@ class TrackParticles(Diagnostic):
 	
 	# Method to print info on included probe
 	def info(self):
-		if not self._validate(): return
-		print("Track particles: species '"+self.species+"' containing "+str(self.nParticles)+" particles")
-		if len(self.selectedParticles) != self.nParticles:
-			print("                with selection of "+str(len(self.selectedParticles))+" particles")
+		if not self._validate():
+			print(self._error)
+		else:
+			print("Track particles: species '"+self.species+"' containing "+str(self.nParticles)+" particles")
+			if len(self.selectedParticles) != self.nParticles:
+				print("                with selection of "+str(len(self.selectedParticles))+" particles")
 	
 	# get all available tracked species
 	def getTrackSpecies(self):

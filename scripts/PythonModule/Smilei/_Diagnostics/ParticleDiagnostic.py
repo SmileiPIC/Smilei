@@ -8,16 +8,15 @@ class ParticleDiagnostic(Diagnostic):
 	# This is the constructor, which creates the object
 	def _init(self, diagNumber=None, timesteps=None, slice=None, data_log=False, stride=1, **kwargs):
 		
-		if not self.Smilei.valid: return None
 		if diagNumber is None:
-			print("Printing available particle diagnostics:")
-			print("----------------------------------------")
-			diagNumber = 0
-			while self._printInfo(self._getInfo(diagNumber)):
-				diagNumber += 1
-			if diagNumber == 0:
-				print("      No particle diagnostics found in "+self._results_path)
-			return None
+			self._error += "Printing available particle diagnostics:\n"
+			self._error += "----------------------------------------\n"
+			diags = self.getDiags()
+			for diagNumber in diags:
+				self._error += self._printInfo(self._getInfo(diagNumber))
+			if len(diags)==0:
+				self._error += "      No particle diagnostics found in "+self._results_path
+			return
 		
 		cell_size = {"x":self._cell_length[0]}
 		if self._ndim>1: cell_size.update({"y":self._cell_length[1]})
@@ -28,26 +27,26 @@ class ParticleDiagnostic(Diagnostic):
 		# Check the requested diags are ok
 		if type(diagNumber) is int:
 			if diagNumber<0:
-				print("Argument 'diagNumber' cannot be a negative integer.")
+				self._error = "Argument 'diagNumber' cannot be a negative integer."
 				return
 			self.operation = '#' + str(diagNumber)
 		elif type(diagNumber) is str:
 			self.operation = diagNumber
 		else:
-			print("Argument 'diagNumber' must be and integer or a string.")
+			self._error = "Argument 'diagNumber' must be and integer or a string."
 			return
 		
 		# Get list of requested diags
 		self._diags = sorted(set([ int(d[1:]) for d in self._re.findall('#\d+',self.operation) ]))
 		for diag in self._diags:
 			if not self._getInfo(diag):
-				print("No particle diagnostic #"+str(diag))
+				self._error = "No particle diagnostic #"+str(diag)
 				return
 		try:
 			exec(self._re.sub('#\d+','1.',self.operation))
 		except ZeroDivisionError: pass
 		except:
-			print("Cannot understand operation '"+self.operation+"'")
+			self._error = "Cannot understand operation '"+self.operation+"'"
 			return
 		# Verify that all requested diags exist and they all have the same shape
 		self._info = {}
@@ -58,21 +57,21 @@ class ParticleDiagnostic(Diagnostic):
 			try:
 				self._info.update({ d:self._getInfo(d) })
 			except:
-				print("Particle diagnostic #"+str(d)+" not found.")
-				return None
+				self._error = "Particle diagnostic #"+str(d)+" not found."
+				return
 			self._axes .update ({ d:self._info[d]["axes"] })
 			self._naxes.update ({ d:len(self._axes[d]) })
 			self._ishape.update({ d:[ axis["size"] for axis in self._axes[d] ] })
 			if self._naxes[d] != self._naxes[self._diags[0]]:
-				print("All diagnostics in operation '"+self.operation+"' must have as many axes."
-					+ " Diagnotic #"+str(d)+" has "+str(self._naxes[d])+" axes and #"+
-					str(self._diags[0])+" has "+str(self._naxes[self._diags[0]])+" axes")
-				return None
+				self._error = "All diagnostics in operation '"+self.operation+"' must have as many axes." \
+					+ " Diagnotic #"+str(d)+" has "+str(self._naxes[d])+" axes and #"+ \
+					str(self._diags[0])+" has "+str(self._naxes[self._diags[0]])+" axes"
+				return
 			for a in self._axes[d]:
 				if self._axes[d] != self._axes[self._diags[0]]:
-					print("In operation '"+self.operation+"', diagnostics #"+str(d)+" and #"
-						+str(self._diags[0])+" must have the same shape.")
-					return None
+					self._error = "In operation '"+self.operation+"', diagnostics #"+str(d)+" and #"\
+						+str(self._diags[0])+" must have the same shape."
+					return
 		
 		self._axes  = self._axes [self._diags[0]]
 		self._naxes = self._naxes[self._diags[0]]
@@ -80,8 +79,8 @@ class ParticleDiagnostic(Diagnostic):
 		
 		# Check slice is a dict
 		if slice is not None  and  type(slice) is not dict:
-			print("Argument 'slice' must be a dictionary")
-			return None
+			self._error = "Argument 'slice' must be a dictionary"
+			return
 		# Make slice a dictionary
 		if slice is None: slice = {}
 		
@@ -118,20 +117,20 @@ class ParticleDiagnostic(Diagnostic):
 					else:
 						raise
 				except:
-					print("Argument 'timesteps' must be one or two non-negative integers")
-					return None
+					self._error = "Argument 'timesteps' must be one or two non-negative integers"
+					return
 			# Verify that timesteps are the same for all diagnostics
 			if (self.times[d] != self.times[self._diags[0]]).any() :
-				print("All diagnostics in operation '"+self.operation+"' must have the same timesteps."
-					+" Diagnotic #"+str(d)+" has "+str(len(self.times[d]))+ " timesteps and #"
-					+str(self._diags[0])+" has "+str(len(self.times[self._diags[0]])))+ " timesteps"
-				return None
+				self._error = "All diagnostics in operation '"+self.operation+"' must have the same timesteps."\
+					+" Diagnotic #"+str(d)+" has "+str(len(self.times[d]))+ " timesteps and #"\
+					+str(self._diags[0])+" has "+str(len(self.times[self._diags[0]]))+ " timesteps"
+				return
 		# Now we need to keep only one array of timesteps because they should be all the same
 		self.times = self.times[self._diags[0]]
 		
 		# Need at least one timestep
 		if self.times.size < 1:
-			print("Timesteps not found")
+			self._error = "Timesteps not found"
 			return None
 		
 		# 3 - Manage axes
@@ -189,8 +188,8 @@ class ParticleDiagnostic(Diagnostic):
 						s = self._np.double(slice[axis["type"]])
 						if s.size>2 or s.size<1: raise
 					except:
-						print("Slice along axis "+axis["type"]+" should be one or two floats")
-						return None
+						self._error = "Slice along axis "+axis["type"]+" should be one or two floats"
+						return
 					# convert the slice into a range of indices
 					if s.size == 1:
 						indices = self._np.array([(self._np.abs(centers-s)).argmin()])
@@ -228,8 +227,8 @@ class ParticleDiagnostic(Diagnostic):
 				plot_diff.append(self._np.diff(edges))
 		
 		if len(self._shape) > 2:
-			print("Cannot plot in "+str(len(self._shape))+"d. You need to 'slice' some axes.")
-			return None
+			self._error = "Cannot plot in "+str(len(self._shape))+"d. You need to 'slice' some axes."
+			return
 		
 		# Build units
 		titles = {}
@@ -294,7 +293,6 @@ class ParticleDiagnostic(Diagnostic):
 		# Finish constructor
 		self.valid = True
 	
-	
 	# Gets info about diagnostic number "diagNumber"
 	def _getInfo(self,diagNumber):
 		# path to the file
@@ -334,37 +332,40 @@ class ParticleDiagnostic(Diagnostic):
 	# Prints the info obtained by the function "getInfo"
 	@staticmethod
 	def _printInfo(info):
-		if info==False: return
-		
 		# 1 - diag number, type and list of species
 		species = ""
 		for i in range(len(info["species"])): species += str(info["species"][i])+" " # reconstitute species string
-		print("Diag#"+str(info["#"])+" - "+info["output"]+" of species # "+species)
+		printedInfo = "Diag#"+str(info["#"])+" - "+info["output"]+" of species # "+species+"\n"
 		
 		# 2 - period and time-averaging
 		tavg = "no time-averaging"
 		if (info["tavg"] > 1):
-			print("    Averaging over "+str(info["tavg"])+" timesteps")
+			printedInfo += "    Averaging over "+str(info["tavg"])+" timesteps\n"
 		
 		# 3 - axes
 		for i in range(len(info["axes"])):
 			axis = info["axes"][i];
 			logscale = "" if not axis["log"] else " [ LOG SCALE ] "
 			edges    = "" if not axis["edges_included"] else " [ INCLUDING EDGES ] "
-			print("    "+axis["type"]+" from "+str(axis["min"])+" to "+str(axis["max"])
-				   +" in "+str(axis["size"])+" steps "+logscale+edges)
+			printedInfo += "    "+axis["type"]+" from "+str(axis["min"])+" to "+str(axis["max"]) \
+				   +" in "+str(axis["size"])+" steps "+logscale+edges+"\n"
+		return printedInfo
 		
-		return True
-	
 	# Method to print info on all included diags
 	def info(self):
-		if not self._validate(): return
-		for d in self._diags:
-			self._printInfo(self._info[d])
-		if len(self.operation)>2: print("Operation : "+self.operation)
-		for ax in self._axes:
-			if "sliceInfo" in ax: print(ax["sliceInfo"])
-		return
+		if not self._validate():
+			print(self._error)
+		else:
+			for d in self._diags:
+				print(self._printInfo(self._info[d]))
+			if len(self.operation)>2: print("Operation : "+self.operation)
+			for ax in self._axes:
+				if "sliceInfo" in ax: print(ax["sliceInfo"])
+	
+	def getDiags(self):
+		files = self._glob(self._results_path+"/ParticleDiagnostic*.h5")
+		diags = [int(self._re.findall(r"ParticleDiagnostic([0-9]+)[.]h5$",file)[0]) for file in files]
+		return diags
 	
 	# get all available timesteps for a given diagnostic
 	def getAvailableTimesteps(self, diagNumber=None):

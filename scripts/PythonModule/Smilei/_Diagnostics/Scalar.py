@@ -7,21 +7,20 @@ from .._Utils import *
 class Scalar(Diagnostic):
 	# This is the constructor, which creates the object
 	def _init(self, scalar=None, timesteps=None, data_log=False, **kwargs):
-		
-		if not self.Smilei.valid: return None
+	
 		if scalar is None:
 			scalars = self.getScalars()
 			if len(scalars)>0:
-				print("Printing available scalars:")
-				print("---------------------------")
+				self._error += "Printing available scalars:\n"
+				self._error += "---------------------------\n"
 				l = [""]
 				for s in scalars:
 					if s[:2] != l[-1][:2] and s[-2:]!=l[-1][-2:]:
-						if l!=[""]: print("\t".join(l))
+						if l!=[""]: self._error += "\t".join(l)+"\n"
 						l = []
 					l.append(s)
 			else:
-				print("No scalars found in '"+self._results_path+"'")
+				self._error += "No scalars found in '"+self._results_path+"'"
 			return None
 		
 		# Get available scalars
@@ -33,11 +32,11 @@ class Scalar(Diagnostic):
 		if scalar not in scalars:
 			fs = list(filter(lambda x:scalar in x, scalars))
 			if len(fs)==0:
-				print("No scalar `"+scalar+"` found in scalars.txt")
+				self._error += "No scalar `"+scalar+"` found in scalars.txt"
 				return
 			if len(fs)>1:
-				print("Several scalars match: "+(' '.join(fs)))
-				print("Please be more specific and retry.")
+				self._error += "Several scalars match: "+(' '.join(fs))+"\n"
+				self._error += "Please be more specific and retry.\n"
 				return
 			scalar = fs[0]
 		self._scalarn = scalars.index(scalar) # index of the requested scalar
@@ -81,12 +80,12 @@ class Scalar(Diagnostic):
 				else:
 					raise
 			except:
-				print("Argument `timesteps` must be one or two non-negative integers")
+				self._error += "Argument `timesteps` must be one or two non-negative integers"
 				return
 		
 		# Need at least one timestep
 		if self.times.size < 1:
-			print("Timesteps not found")
+			self._error += "Timesteps not found"
 			return
 		
 		
@@ -111,8 +110,10 @@ class Scalar(Diagnostic):
 	
 	# Method to print info on included scalars
 	def info(self):
-		if not self._validate(): return
-		print("Scalar "+self._scalarname)
+		if not self._validate():
+			print(self._error)
+		else:
+			print("Scalar "+self._scalarname)
 		return
 	
 	# get all available scalars
