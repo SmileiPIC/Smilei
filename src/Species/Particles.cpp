@@ -89,6 +89,7 @@ void Particles::initialize(unsigned int nParticles, Particles &part)
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::reserve( unsigned int n_part_max, unsigned int nDim )
 {
+    return;
     Position.resize(nDim);
     Position_old.resize(nDim);
     for (unsigned int i=0 ; i< nDim ; i++) {

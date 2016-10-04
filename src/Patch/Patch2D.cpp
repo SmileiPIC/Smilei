@@ -82,6 +82,21 @@ void Patch2D::initStep2(Params& params)
 
 }
 
+
+Patch2D::~Patch2D()
+{
+    for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+        for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
+            MPI_Type_free( &(ntype_[0][ix_isPrim][iy_isPrim]) );
+            MPI_Type_free( &(ntype_[1][ix_isPrim][iy_isPrim]) );
+            MPI_Type_free( &(ntype_[2][ix_isPrim][iy_isPrim]) );
+            MPI_Type_free( &(ntypeSum_[0][ix_isPrim][iy_isPrim]) );
+            MPI_Type_free( &(ntypeSum_[1][ix_isPrim][iy_isPrim]) );            
+        }
+    }
+}
+
+
 void Patch2D::reallyinitSumField( Field* field, int iDim )
 {
     if (field->MPIbuff.srequest.size()==0)
