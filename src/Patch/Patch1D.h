@@ -19,7 +19,7 @@ public:
     void initStep2(Params& params) override;
     
     //! Destructor for Patch
-    ~Patch1D() override final {};
+    ~Patch1D() override final;
 
     // MPI exchange/sum methods for particles/fields
     //   - fields communication specified per geometry (pure virtual)

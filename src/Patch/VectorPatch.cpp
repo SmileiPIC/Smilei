@@ -31,11 +31,19 @@ VectorPatch::VectorPatch()
 
 VectorPatch::~VectorPatch()
 {
+    if( fieldsTimeSelection!=NULL ) {
+        delete fieldsTimeSelection;
+        fieldsTimeSelection = NULL;
+    }
 }
 
 void VectorPatch::close(SmileiMPI * smpiData)
 {
     closeAllDiags( smpiData );
+
+    for (unsigned int idiag=0 ; idiag<localDiags.size(); idiag++)
+        delete localDiags[idiag];
+    localDiags.clear();
     
     for (unsigned int idiag=0 ; idiag<globalDiags.size(); idiag++)
         delete globalDiags[idiag];

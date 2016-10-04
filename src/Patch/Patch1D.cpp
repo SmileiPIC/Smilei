@@ -57,6 +57,17 @@ void Patch1D::initStep2(Params& params)
     
 }
 
+Patch1D::~Patch1D()
+{
+    for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+        MPI_Type_free( &(ntype_[0][ix_isPrim]) );
+        MPI_Type_free( &(ntype_[1][ix_isPrim]) );
+        MPI_Type_free( &(ntypeSum_[0][ix_isPrim]) );
+        }
+
+}
+
+
 void Patch1D::reallyinitSumField( Field* field, int iDim )
 {
     if (field->MPIbuff.srequest.size()==0)
