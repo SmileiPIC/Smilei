@@ -15,12 +15,12 @@ Main(
     interpolation_order = 2,
     
     timestep = 0.124,
-    sim_time = 2,
+    sim_time = 250,
     
     cell_length  = [dx, 3., 3.],
     sim_length = [ Lx,  120., 120.],
     
-    number_of_patches = [npatch_x, 8, 8],
+    number_of_patches = [npatch_x, 4, 4],
     
     clrw = nx/npatch_x,
     
@@ -45,46 +45,50 @@ LoadBalancing(
 )
 
 
-#Species(
-#    species_type = "proton",
-#    initPosition_type = "regular",
-#    initMomentum_type = "cold",
-#    ionization_model = "none",
-#    n_part_per_cell = 16, 
-#    c_part_max = 1.0,
-#    mass = 1836.0,
-#    charge = 1.0,
-#    charge_density = 0.000494,
-#    mean_velocity = [0.0, 0.0, 0.0],
-#    temperature = [0.0],
-#    dynamics_type = "norm",
-#    time_frozen = 100000.,
-#    radiating = False,
-#    bc_part_type_west  = "supp",
-#    bc_part_type_east  = "supp",
-#    bc_part_type_south = "supp",
-#    bc_part_type_north = "supp"
-#)
-#
-#Species( 
-#    species_type = "electron",
-#    initPosition_type = "regular",
-#    initMomentum_type = "cold",
-#    n_part_per_cell = 16,
-#    c_part_max = 1.0,
-#    mass = 1.0,
-#    charge = -1.0,
-#    charge_density = 0.000494,
-#    mean_velocity = [0.0, 0.0, 0.0],
-#    temperature = [0.0],
-#    dynamics_type = "norm",    
-#    time_frozen = 0.0,
-#    radiating = False,
-#    bc_part_type_west = "supp",
-#    bc_part_type_east = "supp",
-#    bc_part_type_south ="stop",
-#    bc_part_type_north ="stop"
-#)
+Species(
+    species_type = "proton",
+    initPosition_type = "regular",
+    initMomentum_type = "cold",
+    ionization_model = "none",
+    n_part_per_cell = 8, 
+    c_part_max = 1.0,
+    mass = 1836.0,
+    charge = 1.0,
+    charge_density = 0.000494,
+    mean_velocity = [0.0, 0.0, 0.0],
+    temperature = [0.0],
+    dynamics_type = "norm",
+    time_frozen = 100000.,
+    radiating = False,
+    bc_part_type_west  = "supp",
+    bc_part_type_east  = "supp",
+    bc_part_type_south = "supp",
+    bc_part_type_north = "supp",
+    bc_part_type_up = "supp",
+    bc_part_type_bottom = "supp"
+)
+
+Species( 
+    species_type = "electron",
+    initPosition_type = "regular",
+    initMomentum_type = "cold",
+    n_part_per_cell = 8,
+    c_part_max = 1.0,
+    mass = 1.0,
+    charge = -1.0,
+    charge_density = 0.000494,
+    mean_velocity = [0.0, 0.0, 0.0],
+    temperature = [0.0],
+    dynamics_type = "norm",    
+    time_frozen = 0.0,
+    radiating = False,
+    bc_part_type_west = "supp",
+    bc_part_type_east = "supp",
+    bc_part_type_south ="supp",
+    bc_part_type_north ="supp",
+    bc_part_type_up = "supp",
+    bc_part_type_bottom = "supp"
+)
 
 LaserGaussian3D(
     boxSide         = "west",
@@ -101,9 +105,9 @@ DumpRestart(
 )
 
 DiagFields(
-    every = 4,
+    every = 50,
     fields = ['Ex','Ey','Rho_electron','Rho_proton','Jx_electron']
 )
 
-DiagScalar(every = 1)
+DiagScalar(every = 50, vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMax', 'RhoMaxCell'])
 
