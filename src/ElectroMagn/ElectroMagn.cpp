@@ -173,7 +173,7 @@ ElectroMagn::~ElectroMagn()
         antenna->field=NULL;
     }
     
-    for ( unsigned int iExt = 0 ; iExt < extFields.size() ; iExt )
+    for ( unsigned int iExt = 0 ; iExt < extFields.size() ; iExt++ )
         delete extFields[iExt].profile;
 
 }//END Destructer
