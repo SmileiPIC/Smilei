@@ -1,7 +1,17 @@
 from .._Utils import *
 
 class Diagnostic(object):
-	def __init__(self, Smilei, *args, **kwargs):
+	"""Mother class for all Diagnostics.
+	To create a diagnostic, refer to the doc of the Smilei class.
+	Once a Smilei object is created, you may get help on its diagnostics.
+	
+	Example:
+		S = Smilei("path/to/simulation") # Load a simulation
+		help( S )                        # General help on the simulation's diagnostics
+		help( S.Field )                  # Help on loading a Field diagnostic
+	"""
+	
+	def __init__(self, simulation, *args, **kwargs):
 		self.valid = False
 		self._tmpdata = None
 		self._animateOnAxes = None
@@ -14,24 +24,30 @@ class Diagnostic(object):
 		self._data_log = False
 		self._error = ""
 		
-		self.Smilei = Smilei
+		# The 'simulation' is a Smilei object. It is passed as an instance attribute
+		self.Smilei = simulation
 		
-		# pass packages to each diagnostic
+		# Transfer the simulation's packages to the diagnostic
 		self._h5py = self.Smilei._h5py
-		self._np = self.Smilei._np
-		self._os = self.Smilei._os
+		self._np   = self.Smilei._np
+		self._os   = self.Smilei._os
 		self._glob = self.Smilei._glob
-		self._re = self.Smilei._re
-		self._plt = self.Smilei._plt
+		self._re   = self.Smilei._re
+		self._plt  = self.Smilei._plt
 		
+		# Reload the simulation, in case it has been updated
 		self.Smilei.reload()
-		
 		if not self.Smilei.valid:
 			print("Invalid Smilei simulation")
 			return
 		
+		# Copy some parameters from the simulation
 		self._results_path = self.Smilei._results_path
-		self.namelist = self.Smilei.namelist
+		self.namelist      = self.Smilei.namelist
+		self._ndim         = self.Smilei._ndim
+		self._cell_length  = self.Smilei._cell_length
+		self._ncels        = self.Smilei._ncels
+		self.timestep      = self.Smilei._timestep
 		
 		# Make the Options object
 		self.options = Options(**kwargs)
@@ -44,43 +60,17 @@ class Diagnostic(object):
 			print("Could not understand the 'units' argument")
 			return
 		
-		# Get some info on the simulation
-		try:
-			# get number of dimensions
-			error = "Error extracting 'dim' from the input file"
-			self._ndim = int(self.namelist.Main.geometry[0])
-			if self._ndim not in [1,2,3]: raise
-			# get box size
-			error = "Error extracting 'sim_length' from the input file"
-			sim_length = self._np.atleast_1d(self._np.double(self.namelist.Main.sim_length))
-			if sim_length.size != self._ndim: raise
-			# get cell size
-			error = "Error extracting 'cell_length' from the input file"
-			self._cell_length = self._np.atleast_1d(self._np.double(self.namelist.Main.cell_length))
-			if self._cell_length.size != self._ndim: raise
-			# calculate number of cells in each dimension
-			self._ncels = sim_length/self._cell_length
-			# extract time-step
-			error = "Error extracting 'timestep' from the input file"
-			self.timestep = self._np.double(self.namelist.Main.timestep)
-			if not self._np.isfinite(self.timestep): raise
-		except:
-			print(error)
-			return None
-		
 		# Call the '_init' function of the child class
 		self._init(*args, **kwargs)
 		
 		# Prepare units
-		self._dim = len(self._shape)
+		self.dim = len(self._shape)
 		if self.valid:
-			try:    referenceAngularFrequency_SI = self.namelist.Main.referenceAngularFrequency_SI
-			except: referenceAngularFrequency_SI = None
 			xunits = None
 			yunits = None
-			if self._dim > 0: xunits = self._units[0]
-			if self._dim > 1: yunits = self._units[1]
-			self.units.prepare(referenceAngularFrequency_SI, xunits, yunits, self._vunits)
+			if self.dim > 0: xunits = self._units[0]
+			if self.dim > 1: yunits = self._units[1]
+			self.units.prepare(self.Smilei._referenceAngularFrequency_SI, xunits, yunits, self._vunits)
 	
 	# When no action is performed on the object, this is what appears
 	def __repr__(self):
@@ -90,7 +80,7 @@ class Diagnostic(object):
 	# Method to verify everything was ok during initialization
 	def _validate(self):
 		try:
-			self.Smilei
+			self.Smilei.valid
 		except:
 			print("No valid Smilei simulation selected")
 			return False
@@ -112,9 +102,16 @@ class Diagnostic(object):
 		A list of [min, max] for each axis.
 		"""
 		l = []
-		for i in range(len(self._shape)):
+		for i in range(self.dim):
 			l.append([min(self._centers[i]), max(self._centers[i])])
 		return l
+	
+	# Method to print info on this diag
+	def info(self):
+		if not self._validate():
+			print(self._error)
+		else:
+			print(self._info())
 	
 	# Method to get only the arrays of data
 	def getData(self):
@@ -209,7 +206,7 @@ class Diagnostic(object):
 			if not hasattr(self,"_getDataAtTime"):
 				print("ERROR: this diagnostic cannot do a streak plot")
 				return
-			if len(self._shape) != 1:
+			if self.dim != 1:
 				print("ERROR: Diagnostic must be 1-D for a streak plot")
 				return
 			if not (self._np.diff(self.times)==self.times[1]-self.times[0]).all():
@@ -266,6 +263,20 @@ class Diagnostic(object):
 		# Movie ?
 		if mov.writer is not None: mov.finish()
 	
+	
+	# Method to select specific timesteps among those available in times
+	def _selectTimesteps(timesteps, times):
+		ts = self._np.array(self._np.double(timesteps),ndmin=1)
+		if ts.size==2:
+			# get all times in between bounds
+			times = times[ (times>=ts[0]) * (times<=ts[1]) ]
+		elif ts.size==1:
+			# get nearest time
+			times = self._np.array([times[(self._np.abs(times-ts)).argmin()]])
+		else:
+			raise
+		return times
+	
 	# Method to prepare some data before plotting
 	def _prepare(self):
 		self._prepare1()
@@ -283,9 +294,9 @@ class Diagnostic(object):
 	def _prepare2(self):
 		# prepare the animating function
 		if not self._animateOnAxes:
-			if   self._dim == 0: self._animateOnAxes = self._animateOnAxes_0D
-			elif self._dim == 1: self._animateOnAxes = self._animateOnAxes_1D
-			elif self._dim == 2: self._animateOnAxes = self._animateOnAxes_2D
+			if   self.dim == 0: self._animateOnAxes = self._animateOnAxes_0D
+			elif self.dim == 1: self._animateOnAxes = self._animateOnAxes_1D
+			elif self.dim == 2: self._animateOnAxes = self._animateOnAxes_2D
 			else:
 				print("Cannot plot with more than 2 dimensions !")
 				return
@@ -294,13 +305,13 @@ class Diagnostic(object):
 		if self.options.xfactor: self._tlabel += "/"+str(self.options.xfactor)
 		self._tlabel = 'Time ( '+self._tlabel+' )'
 		# prepare x label
-		if self._dim > 0:
+		if self.dim > 0:
 			self._xlabel = self.units.xname
 			if self.options.xfactor: self._xlabel += "/"+str(self.options.xfactor)
 			self._xlabel = self._label[0] + " (" + self._xlabel + ")"
 			if self._log[0]: self._xlabel = "Log[ "+self._xlabel+" ]"
 		# prepare y label
-		if self._dim > 1:
+		if self.dim > 1:
 			self._ylabel = self.units.yname
 			if self.options.yfactor: self._ylabel += "/"+str(self.options.yfactor)
 			self._ylabel = self._label[1] + " (" + self._ylabel + ")"
@@ -320,7 +331,7 @@ class Diagnostic(object):
 		if self._data_log  : self._vlabel = "Log[ "+self._vlabel+" ]"
 	def _prepare3(self):
 		# prepare temporary data if zero-d plot
-		if self._dim == 0 and self._tmpdata is None:
+		if self.dim == 0 and self._tmpdata is None:
 			self._tmpdata = self._np.zeros(self.times.size)
 			for i, t in enumerate(self.times):
 				self._tmpdata[i] = self._getDataAtTime(t)
@@ -385,8 +396,3 @@ class Diagnostic(object):
 		except:
 			print("Cannot format y ticks (typically happens with log-scale)")
 			self.xtickkwargs = []
-	
-	def dim(self):
-		"""Gets the number of axes of this diagnostic.
-		"""
-		return len(self._shape)

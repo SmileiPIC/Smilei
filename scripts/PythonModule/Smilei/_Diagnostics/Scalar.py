@@ -1,15 +1,15 @@
 from .Diagnostic import Diagnostic
 from .._Utils import *
 
-# -------------------------------------------------------------------
-# Class for scalars
-# -------------------------------------------------------------------
 class Scalar(Diagnostic):
-	# This is the constructor, which creates the object
-	def _init(self, scalar=None, timesteps=None, data_log=False, **kwargs):
+	"""Class for loading a scalar diagnostic"""
 	
+	def _init(self, scalar=None, timesteps=None, data_log=False, **kwargs):
+		# Get available scalars
+		scalars = self.getScalars()
+		
+		# If no scalar chosen, only print the available scalars
 		if scalar is None:
-			scalars = self.getScalars()
 			if len(scalars)>0:
 				self._error += "Printing available scalars:\n"
 				self._error += "---------------------------\n"
@@ -21,14 +21,11 @@ class Scalar(Diagnostic):
 					l.append(s)
 			else:
 				self._error += "No scalars found in '"+self._results_path+"'"
-			return None
-		
-		# Get available scalars
-		scalars = self.getScalars()
+			return
 		
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------
-		# Check value of field
+		# Find which scalar is requested
 		if scalar not in scalars:
 			fs = list(filter(lambda x:scalar in x, scalars))
 			if len(fs)==0:
@@ -39,7 +36,7 @@ class Scalar(Diagnostic):
 				self._error += "Please be more specific and retry.\n"
 				return
 			scalar = fs[0]
-		self._scalarn = scalars.index(scalar) # index of the requested scalar
+		scalarindex = scalars.index(scalar) # index of the requested scalar
 		self._scalarname = scalar
 		
 		# Put data_log as object's variable
@@ -47,38 +44,29 @@ class Scalar(Diagnostic):
 		
 		# Already get the data from the file
 		# Loop file line by line
-		self.times = []
+		self._times = []
 		self._values = []
-		file = self._results_path+'/scalars.txt'
-		f = open(file, 'r')
-		for line in f:
-			line = line.strip()
-			if line[0]=="#": continue
-			line = str(line).split()
-			self.times .append( int( self._np.round(float(line[0]) / float(self.timestep)) ) )
-			self._values.append( float(line[self._scalarn+1]) )
-		self.times  = self._np.array(self.times )
-		self._values = self._np.array(self._values)
-		f.close()
+		with open(self._results_path+'/scalars.txt') as f:
+			for line in f:
+				line = line.strip()
+				if line[0]=="#": continue
+				line = str(line).split()
+				self._times.append( int( self._np.round(float(line[0]) / float(self.timestep)) ) )
+				self._values.append( float(line[scalarindex+1]) )
+			self._times  = self._np.array(self._times )
+			self._values = self._np.array(self._values)
+			self.times = self._times
 		
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
-		# fill the "data" dictionary with the index to each time
+		# fill the "_data" dictionary with the index to each time
 		self._data = {}
 		for i,t in enumerate(self.times):
 			self._data.update({ t : i })
 		# If timesteps is None, then keep all timesteps otherwise, select timesteps
 		if timesteps is not None:
 			try:
-				ts = self._np.array(self._np.double(timesteps),ndmin=1)
-				if ts.size==2:
-					# get all times in between bounds
-					self.times = self.times[ (self.times>=ts[0]) * (self.times<=ts[1]) ]
-				elif ts.size==1:
-					# get nearest time
-					self.times = self._np.array([self.times[(self._np.abs(self.times-ts)).argmin()]])
-				else:
-					raise
+				self.times = _selectTimesteps(timesteps, self.times)
 			except:
 				self._error += "Argument `timesteps` must be one or two non-negative integers"
 				return
@@ -89,12 +77,8 @@ class Scalar(Diagnostic):
 			return
 		
 		
-		# 3 - Manage axes
+		# 3 - Build units
 		# -------------------------------------------------------------------
-		# There are no axes for scalars
-		self._naxes = 0
-		self._slices = []
-		# Build units
 		self._vunits = "??"
 		if   self._scalarname == "time":
 			self._vunits = "T_r"
@@ -109,12 +93,8 @@ class Scalar(Diagnostic):
 		self.valid = True
 	
 	# Method to print info on included scalars
-	def info(self):
-		if not self._validate():
-			print(self._error)
-		else:
-			print("Scalar "+self._scalarname)
-		return
+	def _info(self):
+		return "Scalar "+self._scalarname
 	
 	# get all available scalars
 	def getScalars(self):
@@ -140,7 +120,7 @@ class Scalar(Diagnostic):
 	
 	# get all available timesteps
 	def getAvailableTimesteps(self):
-		return self.times
+		return self._times
 	
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):

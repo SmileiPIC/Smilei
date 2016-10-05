@@ -5,19 +5,19 @@ from .._Utils import *
 class Field(Diagnostic):
 	""" The Field diagnostic of a Smilei simulation"""
 	
-	# This is the constructor, which creates the object
 	def _init(self, field=None, timesteps=None, slice=None, data_log=False, stride=1, **kwargs):
 		
+		# Open the file
 		self._file = self._results_path+'/Fields.h5'
 		try:
-			self._f = self._h5py.File(self._file, 'r')
+			f = self._h5py.File(self._file, 'r')
 		except:
 			self._error = "Diagnostic not loaded: No fields found"
 			return
-		self._h5items = list(self._f.values())
+		self._h5items = list(f.values())
 		
+		# If no field selected, print available fields and leave
 		if field is None:
-			self._error = ""
 			fields = self.getFields()
 			if len(fields)>0:
 				self._error += "Printing available fields:\n"
@@ -26,10 +26,10 @@ class Field(Diagnostic):
 				maxlength = str(self._np.max([len(f) for f in fields])+4)
 				fields = [('%'+maxlength+'s')%f for f in fields]
 				if l>0:
-					self._error += '\n'.join([''.join(list(i)) for i in self._np.reshape(fields[:l],(-1,3))])+'\n'
-				self._error += ''.join(list(fields[l:]))+'\n'
+					self._error += '\n'.join([''.join(list(i)) for i in self._np.reshape(fields[:l],(-1,3))])
+				self._error += '\n'+''.join(list(fields[l:]))
 			else:
-				self._error += "No fields found in '"+self._results_path+"'\n"
+				self._error += "No fields found in '"+self._results_path
 			return
 		
 		# Get available times
@@ -69,7 +69,6 @@ class Field(Diagnostic):
 		for fd in fields:
 			self._ishape = self._np.min((self._ishape, fd.shape), axis=0)
 		
-		
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
 		# fill the "data" dictionary with indices to the data arrays
@@ -79,15 +78,7 @@ class Field(Diagnostic):
 		# If timesteps is None, then keep all timesteps otherwise, select timesteps
 		if timesteps is not None:
 			try:
-				ts = self._np.array(self._np.double(timesteps),ndmin=1)
-				if ts.size==2:
-					# get all times in between bounds
-					self.times = self.times[ (self.times>=ts[0]) * (self.times<=ts[1]) ]
-				elif ts.size==1:
-					# get nearest time
-					self.times = self._np.array([self.times[(self._np.abs(self.times-ts)).argmin()]])
-				else:
-					raise
+				self.times = _selectTimesteps(timesteps, self.times)
 			except:
 				self._error = "Diagnostic not loaded: Argument `timesteps` must be one or two non-negative integers"
 				return
@@ -168,22 +159,18 @@ class Field(Diagnostic):
 		self.valid = True
 	
 	# Method to print info on included fields
-	def info(self):
-		if not self._validate():
-			print(self._error)
-		else:
-			print("Field diagnostic "+self._title)
+	def _info(self):
+		return "Field diagnostic "+self._title
 	
 	# get all available fields, sorted by name length
 	def getFields(self):
-		try:    fields = list(self._f.values())[0].keys() # list of fields
+		try:    fields = self._h5items[0].keys() # list of fields
 		except: fields = []
 		return list(fields)
 	
 	# get all available timesteps
 	def getAvailableTimesteps(self):
-		times = self._np.double(list(self._f.keys())[:-1])
-		return times
+		return self._np.double([float(a.name[1:]) for a in self._h5items[:-1]])
 	
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):

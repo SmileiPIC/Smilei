@@ -198,13 +198,11 @@ class TrackParticles(Diagnostic):
 		self.valid = True
 	
 	# Method to print info on included probe
-	def info(self):
-		if not self._validate():
-			print(self._error)
-		else:
-			print("Track particles: species '"+self.species+"' containing "+str(self.nParticles)+" particles")
-			if len(self.selectedParticles) != self.nParticles:
-				print("                with selection of "+str(len(self.selectedParticles))+" particles")
+	def _info(self):
+		info = "Track particles: species '"+self.species+"' containing "+str(self.nParticles)+" particles"
+		if len(self.selectedParticles) != self.nParticles:
+			info += "\n                with selection of "+str(len(self.selectedParticles))+" particles"
+		return info
 	
 	# get all available tracked species
 	def getTrackSpecies(self):

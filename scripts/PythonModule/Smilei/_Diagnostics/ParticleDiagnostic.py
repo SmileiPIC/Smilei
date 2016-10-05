@@ -49,17 +49,17 @@ class ParticleDiagnostic(Diagnostic):
 			self._error = "Cannot understand operation '"+self.operation+"'"
 			return
 		# Verify that all requested diags exist and they all have the same shape
-		self._info = {}
+		self._myinfo = {}
 		self._ishape = {}
 		self._axes = {}
 		self._naxes = {}
 		for d in self._diags:
 			try:
-				self._info.update({ d:self._getInfo(d) })
+				self._myinfo.update({ d:self._getInfo(d) })
 			except:
 				self._error = "Particle diagnostic #"+str(d)+" not found."
 				return
-			self._axes .update ({ d:self._info[d]["axes"] })
+			self._axes .update ({ d:self._myinfo[d]["axes"] })
 			self._naxes.update ({ d:len(self._axes[d]) })
 			self._ishape.update({ d:[ axis["size"] for axis in self._axes[d] ] })
 			if self._naxes[d] != self._naxes[self._diags[0]]:
@@ -107,15 +107,7 @@ class ParticleDiagnostic(Diagnostic):
 			# If timesteps is None, then keep all timesteps, otherwise, select timesteps
 			if timesteps is not None:
 				try:
-					ts = self._np.array(self._np.double(timesteps),ndmin=1)
-					if ts.size==2:
-						# get all times in between bounds
-						self.times[d] = self.times[d][ (self.times[d]>=ts[0]) * (self.times[d]<=ts[1]) ]
-					elif ts.size==1:
-						# get nearest time
-						self.times[d] = self._np.array([self.times[d][(self._np.abs(self.times[d]-ts)).argmin()]])
-					else:
-						raise
+					self.times[d] = _selectTimesteps(timesteps, self.times[d])
 				except:
 					self._error = "Argument 'timesteps' must be one or two non-negative integers"
 					return
@@ -237,7 +229,7 @@ class ParticleDiagnostic(Diagnostic):
 			titles.update({ d:"??" })
 			units.update({ d:"??" })
 			val_units = "??"
-			output = self._info[d]["output"]
+			output = self._myinfo[d]["output"]
 			if   output == "density":
 				titles[d] = "Number density"
 				val_units = "N_r"
@@ -352,15 +344,14 @@ class ParticleDiagnostic(Diagnostic):
 		return printedInfo
 		
 	# Method to print info on all included diags
-	def info(self):
-		if not self._validate():
-			print(self._error)
-		else:
-			for d in self._diags:
-				print(self._printInfo(self._info[d]))
-			if len(self.operation)>2: print("Operation : "+self.operation)
-			for ax in self._axes:
-				if "sliceInfo" in ax: print(ax["sliceInfo"])
+	def _info(self):
+		info = ""
+		for d in self._diags:
+			info += self._printInfo(self._myinfo[d])+"\n"
+		if len(self.operation)>2: info += "Operation : "+self.operation+"\n"
+		for ax in self._axes:
+			if "sliceInfo" in ax: info += ax["sliceInfo"]+"\n"
+		return info
 	
 	def getDiags(self):
 		files = self._glob(self._results_path+"/ParticleDiagnostic*.h5")

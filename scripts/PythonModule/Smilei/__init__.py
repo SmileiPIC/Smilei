@@ -1,7 +1,7 @@
 from .Smilei import Smilei
 from ._Utils import multiPlot, Units
 
-# Custom colormaps
+# Add smilei's colormap to the available matplotlib colormaps
 import matplotlib.colors, matplotlib.pyplot
 matplotlib.pyplot.register_cmap(cmap=
 	matplotlib.colors.LinearSegmentedColormap(u"smilei", {
@@ -31,4 +31,4 @@ matplotlib.pyplot.register_cmap(cmap=
 		'blue' :((0.0, 0.232, 0.232), (0.0625, 0.254, 0.254), (0.109375, 0.255, 0.255), (0.140625, 0.243, 0.243), (0.171875, 0.217, 0.217), (0.21875, 0.157, 0.157), (0.234375, 0.157, 0.157), (0.25, 0.187, 0.187), (0.484375, 0.962, 0.962), (0.5, 1.0, 1.0), (0.515625, 0.965, 0.965), (0.609375, 0.822, 0.822), (0.6875, 0.727, 0.727), (0.75, 0.668, 0.668), (0.921875, 0.525, 0.525), (1.0, 0.328, 0.328))
 		} , N=256, gamma=1.0)
 )
-del matplotlib # remove module from local scope. It is kept in globals if previously loaded
+del matplotlib # remove module from local scope

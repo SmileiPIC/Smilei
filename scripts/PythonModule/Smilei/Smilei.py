@@ -296,7 +296,7 @@ class TrackParticlesFactory(object):
 		track = S.TrackParticles(...)    # Load the tracked-particle diagnostic
 		track.get()                      # Obtain the data
 	"""
-
+	
 	def __init__(self, simulation, species=None, timestep=None):
 		self._simulation = simulation
 		self._additionalKwargs = dict()
@@ -393,6 +393,7 @@ class Smilei(object):
 		# Load the simulation (verify the path, get the namelist)
 		self.reload()
 		
+		# Load diagnostics factories
 		if self.valid:
 			self.Field = FieldFactory(self)
 			self.Scalar = ScalarFactory(self)
@@ -401,7 +402,9 @@ class Smilei(object):
 			self.TrackParticles = TrackParticlesFactory(self)
 	
 	def reload(self):
+		"""Reloads the simulation, if it has been updated"""
 		self.valid = False
+		
 		# Verify that results_path is valid
 		if not self._os.path.isdir(self._results_path):
 			print("Could not find directory "+self._results_path)
@@ -409,9 +412,11 @@ class Smilei(object):
 		if len(self._glob(self._results_path+"/smilei.py"))==0:
 			print("Could not find an input file in directory "+self._results_path)
 			return
+		
 		# Check the last modification date
 		lastmodif = self._os.path.getmtime(self._results_path+"/smilei.py")
 		if self._mtime < lastmodif:
+			
 			# Fetch the python namelist
 			namespace={}
 			exec(open(self._results_path+'/smilei.py').read(), namespace) # execute the namelist into an empty namespace
@@ -420,6 +425,34 @@ class Smilei(object):
 			for key, value in namespace.items(): # transfer all variables to this object
 				if key[0]=="_": continue # skip builtins
 				setattr(self.namelist, key, value)
+			
+			# Get some info on the simulation
+			try:
+				# get number of dimensions
+				error = "Error extracting 'dim' from the input file"
+				self._ndim = int(self.namelist.Main.geometry[0])
+				if self._ndim not in [1,2,3]: raise
+				# get box size
+				error = "Error extracting 'sim_length' from the input file"
+				sim_length = self._np.atleast_1d(self._np.double(self.namelist.Main.sim_length))
+				if sim_length.size != self._ndim: raise
+				# get cell size
+				error = "Error extracting 'cell_length' from the input file"
+				self._cell_length = self._np.atleast_1d(self._np.double(self.namelist.Main.cell_length))
+				if self._cell_length.size != self._ndim: raise
+				# calculate number of cells in each dimension
+				self._ncels = sim_length/self._cell_length
+				# extract time-step
+				error = "Error extracting 'timestep' from the input file"
+				self._timestep = self._np.double(self.namelist.Main.timestep)
+				if not self._np.isfinite(self._timestep): raise
+			except:
+				print(error)
+				return
+			try:
+				self._referenceAngularFrequency_SI = self.namelist.Main.referenceAngularFrequency_SI
+			except:
+				self._referenceAngularFrequency_SI = None
 		
 		self._mtime = lastmodif
 		self.valid = True
@@ -427,6 +460,7 @@ class Smilei(object):
 	def __repr__(self):
 		if not self.valid:
 			return "Invalid Smilei simulation"
-		file = self._glob(self._results_path+"/smilei.py")[0]
-		return "Smilei simulation with input file located at `"+file+"`"
+		else:
+			file = self._glob(self._results_path+"/smilei.py")[0]
+			return "Smilei simulation with input file located at `"+file+"`"
 	

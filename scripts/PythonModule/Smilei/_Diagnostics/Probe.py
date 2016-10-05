@@ -17,7 +17,7 @@ class Probe(Diagnostic):
 				self._error += "Printing available probes:\n"
 				self._error += "--------------------------\n"
 				for p in probes:
-					self._error += self._printInfo(self._getInfo(p))
+					self._error += self._info(self._getInfo(p))
 			else:
 				self._error += "No probes found in '"+self._results_path+"'"
 			return
@@ -76,8 +76,8 @@ class Probe(Diagnostic):
 		self._data_log = data_log
 		
 		# Get the shape of the probe
-		self._info = self._getMyInfo()
-		self._ishape = self._info["shape"]
+		self._myinfo = self._getMyInfo()
+		self._ishape = self._myinfo["shape"]
 		if self._ishape.prod()==1: self._ishape=self._np.array([])
 		
 		# 2 - Manage timesteps
@@ -89,15 +89,7 @@ class Probe(Diagnostic):
 		# If timesteps is None, then keep all timesteps otherwise, select timesteps
 		if timesteps is not None:
 			try:
-				ts = self._np.array(self._np.double(timesteps),ndmin=1)
-				if ts.size==2:
-					# get all times in between bounds
-					self.times = self.times[ (self.times>=ts[0]) * (self.times<=ts[1]) ]
-				elif ts.size==1:
-					# get nearest time
-					self.times = self._np.array([self.times[(self._np.abs(self.times-ts)).argmin()]])
-				else:
-					raise
+				self.times = _selectTimesteps(timesteps, self.times)
 			except:
 				self._error += "Argument `timesteps` must be one or two non-negative integers"
 				return
@@ -118,8 +110,8 @@ class Probe(Diagnostic):
 		for iaxis in range(self._naxes):
 		
 			# calculate grid points locations
-			p0 = self._info["p0"            ] # reference point
-			pi = self._info["p"+str(iaxis+1)] # end point of this axis
+			p0 = self._myinfo["p0"            ] # reference point
+			pi = self._myinfo["p"+str(iaxis+1)] # end point of this axis
 			p.append( pi-p0 )
 			centers = self._np.zeros((self._ishape[iaxis],p0.size))
 			for i in range(p0.size):
@@ -198,7 +190,7 @@ class Probe(Diagnostic):
 		if self._naxes>0:
 			p = self._np.array(p) # matrix of the probe generating vectors
 			# Subtract by p0
-			p0 = self._info["p0"]
+			p0 = self._myinfo["p0"]
 			for i in range(p0.size):
 				positions[:,i] -= p0[i]
 			# If 1D probe, convert positions to distances
@@ -242,16 +234,9 @@ class Probe(Diagnostic):
 		if self._h5probe is not None:
 			self._h5probe.close()
 	
-	# Method to print info on included probe
-	def info(self):
-		if not self._validate():
-			print(self._error)
-		else:
-			print(self._printInfo(self._getMyInfo()))
-	
 	# Method to print info previously obtained with getInfo
-	@staticmethod
-	def _printInfo(info):
+	def _info(self, info=None):
+		if info is None: info = self._getMyInfo()
 		printedInfo = "Probe #"+str(info["probeNumber"])+": "+str(info["dimension"])+"-dimensional,"+" with fields "+str(info["fields"])+"\n"
 		i = 0
 		while "p"+str(i) in info:
@@ -336,7 +321,7 @@ class Probe(Diagnostic):
 	# We override _prepare4
 	def _prepare4(self):
 		# If 2D plot, we remove kwargs that are not supported by pcolormesh
-		if self._dim == 2:
+		if self.dim == 2:
 			authorizedKwargs = ["cmap"]
 			newoptionsimage = {}
 			for kwarg in self.options.image.keys():
