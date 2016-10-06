@@ -50,7 +50,7 @@ Species(
     initPosition_type = "regular",
     initMomentum_type = "cold",
     ionization_model = "none",
-    n_part_per_cell = 8, 
+    n_part_per_cell = 1, 
     c_part_max = 1.0,
     mass = 1836.0,
     charge = 1.0,
