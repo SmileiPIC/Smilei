@@ -11,7 +11,7 @@ Main(
     interpolation_order = 2,
     
     timestep = 0.124,
-    sim_time = 200,
+    sim_time = 2*Lx,
     
     cell_length  = [dx, 3.],
     sim_length = [ Lx,  120.],
@@ -77,8 +77,8 @@ Species(
     radiating = False,
     bc_part_type_west = "supp",
     bc_part_type_east = "supp",
-    bc_part_type_south ="stop",
-    bc_part_type_north ="stop"
+    bc_part_type_south ="supp",
+    bc_part_type_north ="supp"
 )
 
 LaserGaussian2D(
@@ -107,17 +107,8 @@ DiagProbe(
 	pos = [0., Main.sim_length[1]/2.],
 	pos_first = [Main.sim_length[0], Main.sim_length[1]/2.],
 	number = [nx],
-	fields = list_fields
+	fields = ['Ex','Ey','Rho','Jx']
 )
 
 DiagScalar(every = 10, vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMax', 'RhoMaxCell'])
-
-
-DiagProbe(
-    every = 100,
-    pos = [0., 0.],
-    pos_first = [Lx, 0.],
-    pos_second = [0., 120.],
-    number = [100,100]
-)
 
