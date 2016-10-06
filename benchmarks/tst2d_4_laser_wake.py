@@ -1,8 +1,4 @@
-# ----------------------------------------------------------------------------------------
-# 					SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
-# ----------------------------------------------------------------------------------------
 
-import math
 dx = 0.125
 nx = 896
 Lx = nx * dx
@@ -105,4 +101,13 @@ DiagFields(
 )
 
 DiagScalar(every = 100)
+
+
+DiagProbe(
+    every = 100,
+    pos = [0., 0.],
+    pos_first = [Lx, 0.],
+    pos_second = [0., 120.],
+    number = [100,100]
+)
 

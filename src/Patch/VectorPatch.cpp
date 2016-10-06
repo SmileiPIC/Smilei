@@ -568,6 +568,14 @@ void VectorPatch::load_balance(Params& params, double time_dual, SmileiMPI* smpi
     //}
     //npatchmoy += this->size();
     //npartmoy += partperMPI;
+    
+    
+    // \todo Temporary re-creation of probes. We must think of a way to move probes instead.
+    for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
+        DiagnosticProbes* diagProbes = dynamic_cast<DiagnosticProbes*>(localDiags[idiag]);
+        if ( diagProbes ) diagProbes->init(params, smpi, *this, false, simWindow->getXmoved());
+    }
+
 }
 
 
@@ -847,53 +855,49 @@ void VectorPatch::move_probes(Params& params, double x_moved)
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
         if ( dynamic_cast<DiagnosticProbes*>(localDiags[idiag]) ) {
             DiagnosticProbes* diagProbes = dynamic_cast<DiagnosticProbes*>(localDiags[idiag]);
-
+            
             // Clean probes
             for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
                 patches_[ipatch]->probes[nprobe]->particles.initialize(0,params.nDim_particle);
-
+            
+            unsigned int nDim = diagProbes->posArray->dims_[1];
             unsigned int iPatch(0);
             int ilocal_part(0);
+            // Loop all probe particles in this MPI
             for ( unsigned int ipart_mpi=0 ; ipart_mpi < diagProbes->posArray->dims_[0] ; ipart_mpi++ ) {
-
-                vector<double> pos( diagProbes->posArray->dims_[1], 0. );
-                pos[0] = (*diagProbes->posArray)(ipart_mpi,0)+x_moved;
-                for (unsigned int iDim=1 ; iDim<diagProbes->posArray->dims_[1] ; iDim++)
+                
+                // Get the particle position
+                vector<double> pos( nDim, 0. );
+                for (unsigned int iDim=0 ; iDim<nDim ; iDim++)
                     pos[iDim] = (*diagProbes->posArray)(ipart_mpi,iDim);
-
-                bool isNotIn;
-                vector<bool> posIsNotIn( diagProbes->posArray->dims_[1] );
-                for (unsigned int iDim=0 ; iDim<diagProbes->posArray->dims_[1] ; iDim++)
-                    posIsNotIn[iDim] = ( ( pos[iDim] <  patches_[iPatch]->getDomainLocalMin(iDim) ) || ( pos[iDim] >= patches_[iPatch]->getDomainLocalMax(iDim) ) );
-
-                isNotIn = posIsNotIn[0];
-                for (unsigned int iDim=0 ; iDim<diagProbes->posArray->dims_[1] ; iDim++)
-                    isNotIn = ( isNotIn || posIsNotIn[iDim] );
-                    
+                pos[0] += x_moved;
+                
+                // Figure out if the particle still belongs to this patch
+                bool isNotIn = false;
+                for (unsigned int iDim=0 ; iDim<nDim ; iDim++)
+                    isNotIn = isNotIn || ( ( pos[iDim] <  patches_[iPatch]->getDomainLocalMin(iDim) ) || ( pos[iDim] >= patches_[iPatch]->getDomainLocalMax(iDim) ) );
+                
                 // Moved probes are ordered along the Hilbert curve in the same way as at t0
+                vector<bool> posIsNotIn( nDim );
                 while ( isNotIn ) {
                     iPatch++;
                     if (iPatch>=size())
                         ERROR( "\t" << ipart_mpi << " not in a patch on this process"  );
                     ilocal_part = 0;
-
-                    for (unsigned int iDim=0 ; iDim<diagProbes->posArray->dims_[1] ; iDim++)
-                        posIsNotIn[iDim] = ( ( pos[iDim] <  patches_[iPatch]->getDomainLocalMin(iDim) ) || ( pos[iDim] >= patches_[iPatch]->getDomainLocalMax(iDim) ) );
-                    isNotIn = posIsNotIn[0];
-                    for (unsigned int iDim=0 ; iDim<diagProbes->posArray->dims_[1] ; iDim++)
-                        isNotIn = ( isNotIn || posIsNotIn[iDim] );
+                    
+                    for (unsigned int iDim=0 ; iDim<nDim ; iDim++)
+                        isNotIn = isNotIn || ( ( pos[iDim] <  patches_[iPatch]->getDomainLocalMin(iDim) ) || ( pos[iDim] >= patches_[iPatch]->getDomainLocalMax(iDim) ) );
                 }
                 patches_[iPatch]->probes[nprobe]->particles.create_particle();
-                for (unsigned int iDim=0 ; iDim<diagProbes->posArray->dims_[1] ; iDim++)
+                for (unsigned int iDim=0 ; iDim<nDim ; iDim++)
                     patches_[iPatch]->probes[nprobe]->particles.position(iDim,ilocal_part) = pos[iDim];
                 ilocal_part++;
                  
             } // End for local probes
-
+            
             // Goes to next probe
             nprobe++;
-
-
+        
         } // Enf if probes
     } // End for idiag
 }
