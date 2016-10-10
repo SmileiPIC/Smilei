@@ -265,7 +265,7 @@ class Diagnostic(object):
 	
 	
 	# Method to select specific timesteps among those available in times
-	def _selectTimesteps(timesteps, times):
+	def _selectTimesteps(self, timesteps, times):
 		ts = self._np.array(self._np.double(timesteps),ndmin=1)
 		if ts.size==2:
 			# get all times in between bounds

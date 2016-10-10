@@ -114,12 +114,14 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     vecPatches(0)->EMfields->storeNRJlost( energy_field_lost );
     for ( unsigned int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size() ; ispec++ )
         vecPatches(0)->vecSpecies[ispec]->storeNRJlost( energy_part_lost[ispec] );
-
-    // Store offset in file for current MPI process
-    //   Sould be store in the diagnostic itself
-    vector<int> offset(vecPatches(0)->probes.size());
-    for (unsigned int iprobe=0;iprobe<vecPatches(0)->probes.size();iprobe++)
-        offset[iprobe] = vecPatches(0)->probes[iprobe]->offset_in_file;
+    
+    //! \todo Removed the following block because Probes are not transferred together with the patches
+    //
+    //// Store offset in file for current MPI process
+    ////   Sould be store in the diagnostic itself
+    //vector<int> offset(vecPatches(0)->probes.size());
+    //for (unsigned int iprobe=0;iprobe<vecPatches(0)->probes.size();iprobe++)
+    //    offset[iprobe] = vecPatches(0)->probes[iprobe]->offset_in_file;
 
     nPatches = vecPatches.size();
 
@@ -244,7 +246,10 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     //
     for (unsigned int idiag = 0 ; idiag < vecPatches.localDiags.size() ; idiag++) {
         DiagnosticProbes* diagProbes = dynamic_cast<DiagnosticProbes*>(vecPatches.localDiags[idiag]);
-        if ( diagProbes ) diagProbes->init(params, smpi, vecPatches, false, x_moved);
+        if ( diagProbes ) {
+            diagProbes->patchesHaveMoved = true;
+            diagProbes->x_moved = x_moved;
+        }
     }
     
     return;

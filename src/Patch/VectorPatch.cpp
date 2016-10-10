@@ -573,7 +573,7 @@ void VectorPatch::load_balance(Params& params, double time_dual, SmileiMPI* smpi
     // \todo Temporary re-creation of probes. We must think of a way to move probes instead.
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
         DiagnosticProbes* diagProbes = dynamic_cast<DiagnosticProbes*>(localDiags[idiag]);
-        if ( diagProbes ) diagProbes->init(params, smpi, *this, false, simWindow->getXmoved());
+        if ( diagProbes ) diagProbes->patchesHaveMoved = true;
     }
 
 }

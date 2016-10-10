@@ -89,7 +89,7 @@ class Probe(Diagnostic):
 		# If timesteps is None, then keep all timesteps otherwise, select timesteps
 		if timesteps is not None:
 			try:
-				self.times = _selectTimesteps(timesteps, self.times)
+				self.times = self._selectTimesteps(timesteps, self.times)
 			except:
 				self._error += "Argument `timesteps` must be one or two non-negative integers"
 				return

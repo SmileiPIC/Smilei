@@ -78,7 +78,7 @@ class Field(Diagnostic):
 		# If timesteps is None, then keep all timesteps otherwise, select timesteps
 		if timesteps is not None:
 			try:
-				self.times = _selectTimesteps(timesteps, self.times)
+				self.times = self._selectTimesteps(timesteps, self.times)
 			except:
 				self._error = "Diagnostic not loaded: Argument `timesteps` must be one or two non-negative integers"
 				return
@@ -170,7 +170,9 @@ class Field(Diagnostic):
 	
 	# get all available timesteps
 	def getAvailableTimesteps(self):
-		return self._np.double([float(a.name[1:]) for a in self._h5items[:-1]])
+		try:    times = [float(a.name[1:]) for a in self._h5items[:-1]]
+		except: times = []
+		return self._np.double(times)
 	
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):

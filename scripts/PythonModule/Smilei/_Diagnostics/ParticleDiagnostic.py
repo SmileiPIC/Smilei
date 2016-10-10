@@ -107,7 +107,7 @@ class ParticleDiagnostic(Diagnostic):
 			# If timesteps is None, then keep all timesteps, otherwise, select timesteps
 			if timesteps is not None:
 				try:
-					self.times[d] = _selectTimesteps(timesteps, self.times[d])
+					self.times[d] = self._selectTimesteps(timesteps, self.times[d])
 				except:
 					self._error = "Argument 'timesteps' must be one or two non-negative integers"
 					return
