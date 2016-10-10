@@ -30,8 +30,11 @@ public :
     
     void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) override;
     
-    void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
-
+    inline void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override
+    { init(params, smpi, vecPatches, true, 0.); }
+    
+    void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool createFile, double x_moved);
+    
     //! Probes position storage at initialization and for moving window
     Field2D* posArray;
     

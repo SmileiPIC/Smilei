@@ -233,12 +233,19 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     
     vecPatches.set_refHindex() ;
     vecPatches.update_field_list() ;
-
-
-    vecPatches.move_probes(params, x_moved);
-    for (unsigned int iprobe=0;iprobe<vecPatches(0)->probes.size();iprobe++)
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-            vecPatches(ipatch)->probes[iprobe]->offset_in_file = offset[iprobe];
+    
+    // \todo Temporary change: instead of moving probes, we re-create them.
+    // This should allow load balancing and moving window to work for probes.
+    //
+    //vecPatches.move_probes(params, x_moved);
+    //for (unsigned int iprobe=0;iprobe<vecPatches(0)->probes.size();iprobe++)
+    //    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+    //        vecPatches(ipatch)->probes[iprobe]->offset_in_file = offset[iprobe];
+    //
+    for (unsigned int idiag = 0 ; idiag < vecPatches.localDiags.size() ; idiag++) {
+        DiagnosticProbes* diagProbes = dynamic_cast<DiagnosticProbes*>(vecPatches.localDiags[idiag]);
+        if ( diagProbes ) diagProbes->init(params, smpi, vecPatches, false, x_moved);
+    }
     
     return;
     
