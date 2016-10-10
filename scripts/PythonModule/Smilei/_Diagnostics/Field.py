@@ -105,6 +105,7 @@ class Field(Diagnostic):
 				self._slices[iaxis] = True
 				# if slice is "all", then all the axis has to be summed
 				if slice[label] == "all":
+					self._sliceinfo.update({ label:"Sliced for all "+label })
 					self._selection += ( self._np.s_[:], )
 				# Otherwise, get the slice from the argument `slice`
 				else:

@@ -50,7 +50,6 @@ class ParticleDiagnostic(Diagnostic):
 			return
 		# Verify that all requested diags exist and they all have the same shape
 		self._myinfo = {}
-		self._ishape = {}
 		self._axes = {}
 		self._naxes = {}
 		for d in self._diags:
@@ -61,7 +60,6 @@ class ParticleDiagnostic(Diagnostic):
 				return
 			self._axes .update ({ d:self._myinfo[d]["axes"] })
 			self._naxes.update ({ d:len(self._axes[d]) })
-			self._ishape.update({ d:[ axis["size"] for axis in self._axes[d] ] })
 			if self._naxes[d] != self._naxes[self._diags[0]]:
 				self._error = "All diagnostics in operation '"+self.operation+"' must have as many axes." \
 					+ " Diagnotic #"+str(d)+" has "+str(self._naxes[d])+" axes and #"+ \
@@ -75,7 +73,6 @@ class ParticleDiagnostic(Diagnostic):
 		
 		self._axes  = self._axes [self._diags[0]]
 		self._naxes = self._naxes[self._diags[0]]
-		self._ishape = self._ishape[self._diags[0]]
 		
 		# Check slice is a dict
 		if slice is not None  and  type(slice) is not dict:
@@ -92,18 +89,18 @@ class ParticleDiagnostic(Diagnostic):
 		# Get available timesteps
 		self._file = {}
 		self.times = {}
-		self._data  = {}
+		self._indexOfTime  = {}
 		self._h5items = {}
 		for d in self._diags:
 			# get all diagnostics files
 			self._file.update({ d:self._h5py.File(self._results_path+'/ParticleDiagnostic'+str(d)+'.h5') })
-			self._h5items.update({ d:list(self._file[d].items()) })
+			self._h5items.update({ d:list(self._file[d].values()) })
 			# get all diagnostics timesteps
 			self.times.update({ d:self.getAvailableTimesteps(d) })
-			# fill the "data" dictionary with indices to the data arrays
-			self._data.update({ d:{} })
+			# fill the "_indexOfTime" dictionary with indices to the data arrays
+			self._indexOfTime.update({ d:{} })
 			for i,t in enumerate(self.times[d]):
-				self._data[d].update({ t : i })
+				self._indexOfTime[d].update({ t : i })
 			# If timesteps is None, then keep all timesteps, otherwise, select timesteps
 			if timesteps is not None:
 				try:
@@ -132,8 +129,11 @@ class ParticleDiagnostic(Diagnostic):
 		coeff = 1.
 		unitsa = [0,0,0,0]
 		spatialaxes = {"x":False, "y":False, "z":False}
-		for axis in self._axes:
+		self._ishape = []
+		self._slices = []
+		self._selection = ()
 		
+		for axis in self._axes:
 			# Find the vector of values along the axis
 			if axis["log"]:
 				edges = self._np.linspace(self._np.log10(axis["min"]), self._np.log10(axis["max"]), axis["size"]+1)
@@ -170,9 +170,14 @@ class ParticleDiagnostic(Diagnostic):
 			# if this axis has to be sliced, then select the slice
 			if axis["type"] in slice:
 			
+				self._slices.append(True)
+				
 				# if slice is "all", then all the axis has to be summed
 				if slice[axis["type"]] == "all":
-					indices = self._np.arange(axis["size"])
+					axis.update({ "sliceInfo" : "      Slicing for all "+axis["type"] })
+					self._selection += ( self._np.s_[:], )
+					self._ishape.append( axis["size"] )
+					slice_size = edges[-1] - edges[0]
 				
 				# Otherwise, get the slice from the argument `slice`
 				else:
@@ -187,36 +192,31 @@ class ParticleDiagnostic(Diagnostic):
 						indices = self._np.array([(self._np.abs(centers-s)).argmin()])
 					else :
 						indices = self._np.nonzero( (centers>=s[0]) * (centers<=s[1]) )[0]
-				
-				# calculate the size of the slice
-				imin = indices.min()  ; emin = edges[imin]
-				imax = indices.max()+1; emax = edges[imax]
-				slice_size = emax - emin
-				
-				# print out the slicing
-				if imin==0            and axis["edges_included"]: emin = overall_min
-				if imin==axis["size"] and axis["edges_included"]: emax = overall_max
-				if indices.size == 1:
-					axis.update({ "sliceInfo" : "      Slicing at "+axis["type"]+" = "+str(centers[indices][0]) })
-				else:
-					axis.update({ "sliceInfo" : "      Slicing "+axis["type"]+" from "+str(edges[indices[0]])+" to "+str(edges[indices[-1]+1]) })
-				
-				# convert the range of indices into their "conjugate"
-				indices = self._np.delete(self._np.arange(axis["size"]), indices)
-				# put the slice in the dictionary
-				axis.update({"slice":indices, "slice_size":slice_size})
+					if indices.size == 1:
+						axis.update({ "sliceInfo" : "      Slicing at "+axis["type"]+" = "+str(centers[indices][0]) })
+						self._selection += ( self._np.s_[indices[0]], )
+						self._ishape.append( 1 )
+					else:
+						axis.update({ "sliceInfo" : "      Slicing "+axis["type"]+" from "+str(edges[indices[0]])+" to "+str(edges[indices[-1]+1]) })
+						self._selection += ( self._np.s_[indices[0]:indices[-1]], )
+						self._ishape.append( indices[-1] - indices[0] )
+					# calculate the size of the slice
+					slice_size = edges[indices[-1]+1] - edges[indices[0]]
 				
 				if axis["type"] in ["x","y","z"]: coeff /= slice_size
 			
 			# if not sliced, then add this axis to the overall plot
 			else:
+				self._selection += ( self._np.s_[::stride], )
+				self._slices .append(False)
 				self._type   .append(axis["type"])
 				self._shape  .append(axis["size"])
-				self._centers.append(centers)
+				self._centers.append(centers[::stride])
+				self._ishape .append( len(self._centers[-1]) )
 				self._log    .append(axis["log"])
 				self._label  .append(axis["type"])
 				self._units  .append(axis_units)
-				plot_diff.append(self._np.diff(edges))
+				plot_diff.append(self._np.diff(edges)[::stride])
 		
 		if len(self._shape) > 2:
 			self._error = "Cannot plot in "+str(len(self._shape))+"d. You need to 'slice' some axes."
@@ -274,13 +274,6 @@ class ParticleDiagnostic(Diagnostic):
 			self._bsize = self._bsize.transpose()
 		self._bsize /= coeff
 		self._bsize = self._np.squeeze(self._bsize)
-		
-		# Manage stride
-		self._stride = stride
-		if stride!=1:
-			for i in range(len(self._centers)): self._centers[i] = self._centers[i][::stride]
-			if   self._bsize.ndim==1: self._bsize = self._bsize[::stride]
-			elif self._bsize.ndim==2: self._bsize = self._bsize[::stride,::stride]
 		
 		# Finish constructor
 		self.valid = True
@@ -382,30 +375,29 @@ class ParticleDiagnostic(Diagnostic):
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):
 		if not self._validate(): return
-		# Verify that the timestep is valid
-		if t not in self.times:
-			print("Timestep "+str(t)+" not found in this diagnostic")
-			return []
 		# Get arrays from all requested diagnostics
 		A = {}
 		for d in self._diags:
+			# find the index of the array corresponding to the requested timestep
+			try:
+				index = self._indexOfTime[d][t]
+			except: 
+				print("Timestep "+str(t)+" not found in this diagnostic")
+				return []
 			# get data
-			index = self._data[d][t]
-			A.update({ d:self._np.reshape(self._h5items[d][index][1],self._ishape) })
+			B = self._np.zeros(self._ishape)
+			self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
+			B[self._np.isnan(B)] = 0.
 			# Apply the slicing
 			for iaxis in range(self._naxes):
-				axis = self._axes[iaxis]
-				if "slice" in axis:
-					A[d] = self._np.delete(A[d], axis["slice"], axis=iaxis) # remove parts outside of the slice
-					A[d][self._np.isnan(A[d])] = 0.
-					A[d] = self._np.sum(A[d], axis=iaxis, keepdims=True) # sum over the slice
-			# Apply stride
-			if   A[d].ndim==1: A[d] = A[d][::self._stride]
-			elif A[d].ndim==2: A[d] = A[d][::self._stride, ::self._stride]
+				if self._slices[iaxis]:
+					B = self._np.sum(B, axis=iaxis, keepdims=True) # sum over the slice
 			# remove sliced axes
-			A[d] = self._np.squeeze(A[d])
+			B = self._np.squeeze(B)
 			# Divide by the bins size
-			A[d] /= self._bsize
+			B /= self._bsize
+			# Append this diag's array for the operation
+			A.update({ d:B })
 		# Calculate operation
 		data_operation = self.operation
 		for d in reversed(self._diags):
