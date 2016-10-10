@@ -98,6 +98,10 @@ void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow
             SyncVectorPatch::exchangeParticles((*this), ispec, params, smpi ); // Included sort_part
         }
     }
+    if (itime%10==0)
+        #pragma omp for schedule(runtime)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
+            (*this)(ipatch)->cleanParticlesOverhead(params);
     timer[8].update( printScalars( itime ) );
 
 } // END dynamics
