@@ -90,6 +90,8 @@ public:
     void CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
     //! finalize exch / particles, manage particles suppr/introduce
     void finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! clean memory resizing particles structure
+    void cleanParticlesOverhead(Params& params);
     //! delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
     void cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_particles_to_exchange);
     

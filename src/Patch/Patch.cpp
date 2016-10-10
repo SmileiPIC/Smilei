@@ -574,25 +574,33 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
             }
         }
 
+    }//End Recv_buffers ==> particles
 
-        for (idim = 1; idim < ndim; idim++){
+
+} // finalizeCommParticles(... iDim)
+
+
+void Patch::cleanParticlesOverhead(Params& params)
+{
+    int ndim = params.nDim_field;
+    for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
+        Particles &cuParticles = (*vecSpecies[ispec]->particles);
+
+        for (int idim = 0; idim < ndim; idim++){
             for ( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
                 vecSpecies[ispec]->MPIbuff.partRecv[idim][iNeighbor].clear();
-                vecSpecies[ispec]->MPIbuff.partRecv[idim][iNeighbor].shrink_to_fit(2);
+                vecSpecies[ispec]->MPIbuff.partRecv[idim][iNeighbor].shrink_to_fit(ndim);
                 vecSpecies[ispec]->MPIbuff.partSend[idim][iNeighbor].clear();
-                vecSpecies[ispec]->MPIbuff.partSend[idim][iNeighbor].shrink_to_fit(2);
+                vecSpecies[ispec]->MPIbuff.partSend[idim][iNeighbor].shrink_to_fit(ndim);
                 vecSpecies[ispec]->MPIbuff.part_index_send[idim][iNeighbor].clear();
                 vector<int>(vecSpecies[ispec]->MPIbuff.part_index_send[idim][iNeighbor]).swap(vecSpecies[ispec]->MPIbuff.part_index_send[idim][iNeighbor]);
             }
         }
 
-    }//End Recv_buffers ==> particles
+        cuParticles.shrink_to_fit(ndim);
+    }
 
-    cuParticles.shrink_to_fit(ndim);
-
-
-} // finalizeCommParticles(... iDim)
-
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Clear vecSpecies[]->indexes_of_particles_to_exchange, suppress particles send and manage memory
