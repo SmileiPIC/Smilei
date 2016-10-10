@@ -33,10 +33,14 @@ SmileiMPI::SmileiMPI( int* argc, char*** argv )
 {    
     int mpi_provided;
 
+#ifdef _OPENMP
     MPI_Init_thread( argc, argv, MPI_THREAD_MULTIPLE, &mpi_provided );
     if (mpi_provided != MPI_THREAD_MULTIPLE){
         ERROR("MPI_THREAD_MULTIPLE not supported. Compile your MPI ibrary with THREAD_MULTIPLE support.");
     }
+#else
+    MPI_Init( argc, argv );
+#endif
 
     SMILEI_COMM_WORLD = MPI_COMM_WORLD;
     MPI_Comm_size( SMILEI_COMM_WORLD, &smilei_sz );
