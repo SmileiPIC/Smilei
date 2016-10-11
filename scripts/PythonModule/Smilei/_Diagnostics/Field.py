@@ -54,20 +54,19 @@ class Field(Diagnostic):
 				self._fieldname.append(f)
 		
 		# Check slice is a dict
-		if slice is not None  and  type(slice) is not dict:
+		if slice is None: slice = {}
+		if type(slice) is not dict:
 			self._error = "Diagnostic not loaded: Argument `slice` must be a dictionary"
 			return
-		# Make slice a dictionary
-		if slice is None: slice = {}
 		
 		# Put data_log as object's variable
 		self._data_log = data_log
 		
 		# Get the shape of fields
 		fields = list(self._h5items[0].values());
-		self._ishape = fields[0].shape;
+		self._initialShape = fields[0].shape;
 		for fd in fields:
-			self._ishape = self._np.min((self._ishape, fd.shape), axis=0)
+			self._initialShape = self._np.min((self._initialShape, fd.shape), axis=0)
 		
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
@@ -88,16 +87,16 @@ class Field(Diagnostic):
 			self._error = "Diagnostic not loaded: Timesteps not found"
 			return
 		
-		
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
 		# Fabricate all axes values
 		self._naxes = self._ndim
 		self._sliceinfo = {}
+		self._finalShape = self._initialShape
 		self._slices = [False]*self._ndim
 		self._selection = ()
 		for iaxis in range(self._naxes):
-			centers = self._np.linspace(0., self._ishape[iaxis]*self._cell_length[iaxis], self._ishape[iaxis])
+			centers = self._np.linspace(0., self._initialShape[iaxis]*self._cell_length[iaxis], self._initialShape[iaxis])
 			label = {0:"x", 1:"y", 2:"z"}[iaxis]
 			axisunits = "L_r"
 			
@@ -125,18 +124,18 @@ class Field(Diagnostic):
 					if indices.size == 1:
 						self._sliceinfo.update({ label:"Sliced at "+label+" = "+str(centers[indices])+" "+axisunits })
 						self._selection += ( self._np.s_[indices[0]], )
-						self._ishape[iaxis] = 1
+						self._finalShape[iaxis] = 1
 					else:
 						self._sliceinfo.update({ label:"Sliced for "+label
 							+" from "+str(centers[indices[0]])+" to "+str(centers[indices[-1]])+" "+axisunits })
 						self._selection += ( self._np.s_[indices[0]:indices[-1]], )
-						self._ishape[iaxis] = indices[-1] - indices[0]
+						self._finalShape[iaxis] = indices[-1] - indices[0]
 			else:
-				centers = centers[:self._ishape[iaxis]:stride]
-				self._selection += ( self._np.s_[:self._ishape[iaxis]:stride], )
-				self._ishape[iaxis] = len(centers)
+				centers = centers[:self._initialShape[iaxis]:stride]
+				self._selection += ( self._np.s_[:self._initialShape[iaxis]:stride], )
+				self._finalShape[iaxis] = len(centers)
 				self._type     .append(label)
-				self._shape    .append(self._ishape[iaxis])
+				self._shape    .append(self._finalShape[iaxis])
 				self._centers  .append(centers)
 				self._label    .append(label)
 				self._units    .append(axisunits)
@@ -188,7 +187,7 @@ class Field(Diagnostic):
 		C = {}
 		h5item = self._h5items[index]
 		for field in self._fieldname: # for each field in operation
-			B = self._np.zeros(self._ishape)
+			B = self._np.zeros(self._finalShape)
 			h5item[field].read_direct(B, source_sel=self._selection) # get array
 			C.update({ field:B })
 		# Calculate the operation

@@ -77,8 +77,8 @@ class Probe(Diagnostic):
 		
 		# Get the shape of the probe
 		self._myinfo = self._getMyInfo()
-		self._ishape = self._myinfo["shape"]
-		if self._ishape.prod()==1: self._ishape=self._np.array([])
+		self._initialShape = self._myinfo["shape"]
+		if self._initialShape.prod()==1: self._initialShape=self._np.array([])
 		
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
@@ -103,9 +103,11 @@ class Probe(Diagnostic):
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
 		# Fabricate all axes values
-		self._naxes = self._ishape.size
+		self._naxes = self._initialShape.size
+		self._finalShape = []
 		self._sliceinfo = {}
-		self._slices = [None]*self._ndim
+		self._slices = []
+		self._selection = ()
 		p = []
 		for iaxis in range(self._naxes):
 		
@@ -113,48 +115,56 @@ class Probe(Diagnostic):
 			p0 = self._myinfo["p0"            ] # reference point
 			pi = self._myinfo["p"+str(iaxis+1)] # end point of this axis
 			p.append( pi-p0 )
-			centers = self._np.zeros((self._ishape[iaxis],p0.size))
+			centers = self._np.zeros((self._initialShape[iaxis],p0.size))
 			for i in range(p0.size):
-				centers[:,i] = self._np.linspace(p0[i],pi[i],self._ishape[iaxis])
+				centers[:,i] = self._np.linspace(p0[i],pi[i],self._initialShape[iaxis])
 			
 			label = {0:"axis1", 1:"axis2", 2:"axis3"}[iaxis]
 			axisunits = "L_r"
 			
-			
 			if label in slice:
+				
+				self._slices.append(True)
+				
 				# if slice is "all", then all the axis has to be summed
 				if slice[label] == "all":
-					indices = self._np.arange(self._ishape[iaxis])
+					self._selection += ( self._np.s_[:], )
+					self._finalShape .append( self._initialShape[iaxis] )
+				
 				# Otherwise, get the slice from the argument `slice`
 				else:
-					indices = self._np.arange(self._ishape[iaxis])
 					try:
 						s = self._np.double(slice[label])
 						if s.size>2 or s.size<1: raise
 					except:
 						self._error += "Slice along axis "+label+" should be one or two floats"
 						return
+					indices = self._np.arange(self._initialShape[iaxis])
 					if s.size==1:
 						indices = self._np.array([(self._np.abs(indices-s)).argmin()])
 					elif s.size==2:
 						indices = self._np.nonzero( (indices>=s[0]) * (indices<=s[1]) )[0]
 					if indices.size == 0:
-						self._error += "Slice along "+label+" is out of the box range"
+						self._error += "Slice along "+label+" is out of range"
 						return
 					if indices.size == 1:
 						self._sliceinfo.update({ label:"Sliced at "+label+" = "+str(indices[0]) })
+						self._selection += ( self._np.s_[indices[0]], )
+						self._finalShape .append( 1 )
 					else:
 						self._sliceinfo.update({ label:"Sliced for "+label+" from "+str(indices[0])+" to "+str(indices[-1]) })
-				# convert the range of indices into their "conjugate"
-				self._slices[iaxis] = self._np.delete(self._np.arange(self._ishape[iaxis]), indices)
+						self._selection += ( self._np.s_[indices[0]:indices[-1]], )
+						self._finalShape.append( indices[-1] - indices[0] )
 			else:
+				self._selection += ( self._np.s_[:], )
+				self._finalShape.append( self._initialShape[iaxis] )
+				self._slices .append(False)
 				self._type   .append(label)
-				self._shape  .append(self._ishape[iaxis])
+				self._shape  .append(self._initialShape[iaxis])
 				self._centers.append(centers)
 				self._label  .append(label)
 				self._units  .append(axisunits)
 				self._log    .append(False)
-			
 		
 		if len(self._shape) > 2:
 			self._error += "Cannot plot in "+str(len(self._shape))+"d. You need to 'slice' some axes."
@@ -204,9 +214,9 @@ class Probe(Diagnostic):
 			self._ordering = self._np.zeros((positions.shape[0],), dtype=int)-1
 			for n in range(positions.shape[0]):
 				pos = positions[n]
-				ijk = self._np.dot(invp, pos)*(self._ishape-1) # find the indices of the point
+				ijk = self._np.dot(invp, pos)*(self._initialShape-1) # find the indices of the point
 				i = ijk[0]
-				for l in range(1,len(ijk)): i=i*self._ishape[l]+ijk[l] # linearized index
+				for l in range(1,len(ijk)): i=i*self._initialShape[l]+ijk[l] # linearized index
 				try:
 					self._ordering[int(round(i))] = n
 				except:
@@ -307,12 +317,13 @@ class Probe(Diagnostic):
 		# Reorder probes for patch disorder
 		if self._ordering is not None: A = A[self._ordering]
 		# Reshape array because it is flattened in the file
-		A = self._np.reshape(A, self._ishape)
+		A = self._np.reshape(A, self._initialShape)
+		# Extract the selection
+		A = self._np.reshape(A[self._selection], self._finalShape)
 		# Apply the slicing
 		for iaxis in range(self._naxes):
-			if self._slices[iaxis] is None: continue
-			A = self._np.delete(A, self._slices[iaxis], axis=iaxis) # remove parts outside of the slice
-			A = self._np.mean(A, axis=iaxis, keepdims=True) # average over the slice
+			if self._slices[iaxis]:
+				A = self._np.mean(A, axis=iaxis, keepdims=True) # average over the slice
 		A = self._np.squeeze(A) # remove sliced axes
 		# log scale if requested
 		if self._data_log: A = self._np.log10(A)

@@ -129,7 +129,7 @@ class ParticleDiagnostic(Diagnostic):
 		coeff = 1.
 		unitsa = [0,0,0,0]
 		spatialaxes = {"x":False, "y":False, "z":False}
-		self._ishape = []
+		self._finalShape = []
 		self._slices = []
 		self._selection = ()
 		
@@ -176,7 +176,7 @@ class ParticleDiagnostic(Diagnostic):
 				if slice[axis["type"]] == "all":
 					axis.update({ "sliceInfo" : "      Slicing for all "+axis["type"] })
 					self._selection += ( self._np.s_[:], )
-					self._ishape.append( axis["size"] )
+					self._finalShape.append( axis["size"] )
 					slice_size = edges[-1] - edges[0]
 				
 				# Otherwise, get the slice from the argument `slice`
@@ -195,11 +195,11 @@ class ParticleDiagnostic(Diagnostic):
 					if indices.size == 1:
 						axis.update({ "sliceInfo" : "      Slicing at "+axis["type"]+" = "+str(centers[indices][0]) })
 						self._selection += ( self._np.s_[indices[0]], )
-						self._ishape.append( 1 )
+						self._finalShape.append( 1 )
 					else:
 						axis.update({ "sliceInfo" : "      Slicing "+axis["type"]+" from "+str(edges[indices[0]])+" to "+str(edges[indices[-1]+1]) })
 						self._selection += ( self._np.s_[indices[0]:indices[-1]], )
-						self._ishape.append( indices[-1] - indices[0] )
+						self._finalShape.append( indices[-1] - indices[0] )
 					# calculate the size of the slice
 					slice_size = edges[indices[-1]+1] - edges[indices[0]]
 				
@@ -212,7 +212,7 @@ class ParticleDiagnostic(Diagnostic):
 				self._type   .append(axis["type"])
 				self._shape  .append(axis["size"])
 				self._centers.append(centers[::stride])
-				self._ishape .append( len(self._centers[-1]) )
+				self._finalShape.append( len(self._centers[-1]) )
 				self._log    .append(axis["log"])
 				self._label  .append(axis["type"])
 				self._units  .append(axis_units)
@@ -385,7 +385,7 @@ class ParticleDiagnostic(Diagnostic):
 				print("Timestep "+str(t)+" not found in this diagnostic")
 				return []
 			# get data
-			B = self._np.zeros(self._ishape)
+			B = self._np.zeros(self._finalShape)
 			self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
 			B[self._np.isnan(B)] = 0.
 			# Apply the slicing
