@@ -38,6 +38,12 @@ public:
     //! Set capacity of Particles vectors
     void reserve( unsigned int n_part_max, unsigned int nDim );
     
+    //! Resize Particles vectors
+    void resize( unsigned int nParticles, unsigned int nDim );
+    
+    //! Remove extra capacity of Particles vectors
+    void shrink_to_fit( unsigned int nDim );
+    
     //! Reset Particles vectors
     void clear();
     

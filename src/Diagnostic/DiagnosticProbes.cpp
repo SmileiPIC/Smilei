@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <vector>
+#include <limits>
 
 #include "DiagnosticProbes.h"
 
@@ -10,11 +11,64 @@
 
 using namespace std;
 
+
+
+
+
+// Calculates the inverse of a square matrix, given row by row
+vector<double> matrixInverse(vector<double> A) {
+    unsigned int size = A.size();
+    unsigned int dim  = sqrt( size );
+    
+    vector<double> invA (size);
+    
+    if( dim == 1 ) {
+        invA[0] = 1./A[0];
+    } else if (dim == 2) {
+        double idet = 1./(A[0]*A[3]-A[1]*A[2]);
+        invA[0] =  A[3]*idet;
+        invA[1] = -A[1]*idet;
+        invA[2] = -A[2]*idet;
+        invA[3] =  A[0]*idet;
+    } else if (dim == 3) {
+        double idet = 1./(A[0]*A[4]*A[8]+A[1]*A[5]*A[6]+A[2]*A[3]*A[7]-A[2]*A[4]*A[6]-A[1]*A[3]*A[8]-A[0]*A[5]*A[7]);
+        invA[0] = ( A[4]*A[8]-A[5]*A[7] )*idet;
+        invA[1] = ( A[2]*A[7]-A[1]*A[8] )*idet;
+        invA[2] = ( A[1]*A[5]-A[2]*A[4] )*idet;
+        invA[3] = ( A[5]*A[6]-A[3]*A[8] )*idet;
+        invA[4] = ( A[0]*A[8]-A[2]*A[6] )*idet;
+        invA[5] = ( A[2]*A[4]-A[0]*A[5] )*idet;
+        invA[6] = ( A[3]*A[7]-A[4]*A[6] )*idet;
+        invA[7] = ( A[1]*A[6]-A[0]*A[7] )*idet;
+        invA[8] = ( A[0]*A[4]-A[1]*A[3] )*idet;
+    }
+    
+    return invA;
+}
+
+// product between a square matrix A and a vector v
+vector<double> matrixTimesVector(vector<double> A, vector<double> v) {
+    unsigned int size = A.size();
+    unsigned int dim  = sqrt( size );
+    if( dim*dim != size ) ERROR("Matrix is not squared");
+    if( v.size() != dim ) ERROR("Vector has wrong size");
+    
+    vector<double> w(dim,0.);
+    for( unsigned int i=0; i<dim; i++ )
+        for( unsigned int j=0; j<dim; j++ )
+                w[i] += A[i+dim*j] * v[j];
+    return w;
+}
+
+
+
+
 DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe )
 {
     probe_n = n_probe;
     nDim_particle = params.nDim_particle;
     fileId_ = 0;
+    x_moved = 0.;
     
     // Extract "every" (time selection)
     ostringstream name("");
@@ -54,10 +108,6 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
         nPart_total *= vecNumber[iDimProbe];
     }
     
-    // -----------------------------------------------------
-    // Start definition of probeParticles (probes positions)
-    // -----------------------------------------------------            
-    
     // Extract "pos", "pos_first", "pos_second" and "pos_third"
     // (positions of the vertices of the grid)
     allPos.resize(0);
@@ -66,7 +116,7 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
     keys[1] = "pos_first";
     keys[2] = "pos_second";
     keys[3] = "pos_third";
-    for( int i=0; i<nDim_particle+1; i++) {
+    for( unsigned int i=0; i<nDim_particle+1; i++) {
         vector<double> pos;
         if (PyTools::extract(keys[i],pos,"DiagProbe",n_probe)) {
             if (pos.size()!=nDim_particle)
@@ -74,6 +124,36 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
             allPos.push_back(pos);
         }
     }
+    
+    // calculate the coordinate system (base vectors)
+    axes.resize(nDim_particle*nDim_particle, 0.);
+    vector<int> usedDirections (nDim_particle, 0);
+    double min, max, val;
+    unsigned int jmin, jmax;
+    // With available axes, fill the vector, and remember which major direction it occupies
+    for( unsigned int i=0; i<dimProbe; i++) {
+        max = 0.;
+        min = numeric_limits<double>::max();
+        for( unsigned int j=0; j<nDim_particle; j++) {
+            axes[j+nDim_particle*i] = allPos[i+1][j] - allPos[0][j];
+            val = abs(axes[j+nDim_particle*i]);
+            if( val<min ) { min=val; jmin=j; }
+            if( val>max ) { max=val; jmax=j; }
+        }
+        usedDirections[jmax] += 3; // avoid max
+        usedDirections[jmin] -= 1; // prefer min
+    }
+    // Then, complete the probe's coordinate system to have as many axes as the simulation dimension
+    for( unsigned int i=dimProbe; i<nDim_particle; i++) {
+        // find index of the most unused direction
+        unsigned int unusedDirectionIndex = min_element(usedDirections.begin(), usedDirections.end()) - usedDirections.begin();
+        // and use that direction as next axis
+        axes[i+nDim_particle*unusedDirectionIndex] = 1.;
+        for( unsigned int j=0; j<nDim_particle; j++) usedDirections[j]--;
+        usedDirections[unusedDirectionIndex] += 4;
+    }
+    // Calculate the inverse matrix of the probe's coordinate system
+    axesInverse = matrixInverse(axes);
     
     // Extract the list of requested fields
     vector<string> fs;
@@ -126,7 +206,7 @@ DiagnosticProbes::~DiagnosticProbes()
         delete posArray;
         posArray = NULL;
     }
-
+    
     delete timeSelection;
     delete flush_timeSelection;
 }
@@ -188,106 +268,10 @@ bool DiagnosticProbes::prepare( int timestep )
 }
 
 
-
 void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches)
 {
-    int nPart_MPI = 0;
-    
-    // 1 - Loop patches to create particles
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        
-        // First loop on particles: calculate the number of points for this patch
-        unsigned int nPart_patch=0, i, ipart, iDimProbe, iDim;
-        double dx;
-        vector<double> partPos(nDim_particle);
-        vector<unsigned int> ipartND (dimProbe);
-        bool is_in_domain;
-        for(ipart=0; ipart<nPart_total; ipart++) { // for each particle
-            // first, convert the index `ipart` into N-D indexes
-            i = ipart;
-            for (iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) {
-                ipartND[iDimProbe] = i%vecNumber[iDimProbe];
-                i = i/vecNumber[iDimProbe]; // integer division
-            }
-            is_in_domain = true;
-            // Now calculate the position of the particle
-            for(iDim=0; iDim!=nDim_particle; iDim++) { // for each dimension of the simulation
-                partPos[iDim] = allPos[0][iDim]; // position of `pos`
-                for (iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) { // for each of `pos`, `pos_first`, etc.
-                    dx = (allPos[iDimProbe+1][iDim]-allPos[0][iDim])/(vecNumber[iDimProbe]-1); // distance between 2 gridpoints
-                    partPos[iDim] += ipartND[iDimProbe] * dx;
-                }
-                // Stop if particle not in domain
-                if (partPos[iDim] <  vecPatches(ipatch)->getDomainLocalMin(iDim) 
-                 || partPos[iDim] >= vecPatches(ipatch)->getDomainLocalMax(iDim) ) {
-                    is_in_domain = false;
-                    break;
-                }
-            }
-            if(is_in_domain) nPart_patch++;
-        }
-        
-        // Initialize the list of "fake" particles just as actual macro-particles
-        Particles * particles = &(vecPatches(ipatch)->probes[probe_n]->particles);
-        particles->initialize(nPart_patch, nDim_particle);
-        // Add the local offset
-        vecPatches(ipatch)->probes[probe_n]->offset_in_file = nPart_MPI;
-        nPart_MPI += nPart_patch;
-        
-        // Second loop on particles: assign the position of each particle
-        // The particle position is a linear combination of the `pos` with `pos_first` or `pos_second`, etc.
-        unsigned int ipart_local = 0;
-        for(ipart=0; ipart<nPart_total; ipart++) { // for each particle
-            if( ipart_local>= nPart_patch ) break;
-            // first, convert the index `ipart` into N-D indexes
-            i = ipart;
-            for (iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) {
-                ipartND[iDimProbe] = i%vecNumber[iDimProbe];
-                i = i/vecNumber[iDimProbe]; // integer division
-            }
-            is_in_domain = true;
-            // Now calculate the position of the particle
-            for(iDim=0; iDim!=nDim_particle; iDim++) { // for each dimension of the simulation
-                partPos[iDim] = allPos[0][iDim]; // position of `pos`
-                for (iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) { // for each of `pos`, `pos_first`, etc.
-                    dx = (allPos[iDimProbe+1][iDim]-allPos[0][iDim])/(vecNumber[iDimProbe]-1); // distance between 2 gridpoints
-                    partPos[iDim] += ipartND[iDimProbe] * dx;
-                }
-                // Stop if particle not in domain
-                if (partPos[iDim] <  vecPatches(ipatch)->getDomainLocalMin(iDim) 
-                 || partPos[iDim] >= vecPatches(ipatch)->getDomainLocalMax(iDim) ) {
-                    is_in_domain = false;
-                    break;
-                }
-            }
-            if(is_in_domain) {
-                for(iDim=0; iDim!=nDim_particle; ++iDim)
-                    particles->position(iDim,ipart_local) = partPos[iDim];
-                ipart_local++;
-            }
-        }
-    }
-    
-    // 2 - Calculate the offset of each patch to write in the file
-    
-    // Get the number of particles for each MPI
-    int sz = smpi->getSize();
-    std::vector<int> all_nPart(sz, 0);
-    MPI_Allgather( &nPart_MPI, 1, MPI_INT, &all_nPart[0], 1, MPI_INT, MPI_COMM_WORLD );
-    
-    // Calculate the cumulative sum
-    for (int irk=1 ; irk<sz ; irk++)
-        all_nPart[irk] += all_nPart[irk-1];
-    
-    // Add the MPI offset to all patches
-    if( ! smpi->isMaster() ) {
-        int offset = all_nPart[smpi->getRank()-1];
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-            vecPatches(ipatch)->probes[probe_n]->offset_in_file += offset;
-    }
-    
-    
-    // 3 - Create file and write the array of the particle positions
+    // Generate the probe's points ("particles")
+    createPoints(smpi, vecPatches, true);
     
     // create the file
     openFile( params, smpi, true );
@@ -299,7 +283,7 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     posArray = new Field2D(posArraySize);
     unsigned int ipart = 0;
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        if( ipart>=(unsigned int)nPart_MPI ) break;
+        if( ipart>=nPart_MPI ) break;
         Particles * particles = &(vecPatches(ipatch)->probes[probe_n]->particles);
         for ( unsigned int ip=0 ; ip<particles->size() ; ip++) {
             for (unsigned int idim=0 ; idim<nDim_particle  ; idim++ )
@@ -318,7 +302,7 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     dimsf[1] = nDim_particle;
     hid_t filespace = H5Screate_simple(2, dimsf, NULL);
     if( nPart_MPI>0 ) {
-        offset[0] = vecPatches(0)->probes[probe_n]->offset_in_file;
+        offset[0] = offset_in_file[0];
         offset[1] = 0;
         stride[0] = 1;
         stride[1] = 1;
@@ -346,24 +330,152 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     H5Pclose( transfer );
     H5Sclose(filespace);
     H5Sclose(memspace);
-
+    
     if (!params.hasWindow) {
         delete posArray;
         posArray = NULL;
     }
     
     H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+    
+}
+
+
+void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bool createFile)
+{
+    // Loop patches to create particles
+    nPart_MPI = 0;
+    offset_in_MPI .resize( vecPatches.size() );
+    offset_in_file.resize( vecPatches.size() );
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        
+        unsigned int i, k, ipart, iDimProbe, iDim;
+        vector<double> partPos(nDim_particle);
+        vector<unsigned int> ipartND (dimProbe);
+        bool is_in_domain;
+        
+        // The first step is to reduce the area of the probe to search in this patch
+        unsigned int numCorners = 1<<nDim_particle; // number of patch corners
+        vector<double> point(nDim_particle, 0.);
+        vector<double> mins(nDim_particle, numeric_limits<double>::max());        
+        vector<double> maxs(nDim_particle, numeric_limits<double>::min());  
+        vector<double> patchMin(nDim_particle), patchMax(nDim_particle);
+        for( k=0; k<nDim_particle; k++ ) {
+            patchMin[k] = vecPatches(ipatch)->getDomainLocalMin(k);
+            patchMax[k] = vecPatches(ipatch)->getDomainLocalMax(k);
+        }
+        patchMin[0] -= x_moved; // compensate for moving-window
+        patchMax[0] -= x_moved; // compensate for moving-window
+        // loop patch corners
+        for( i=0; i<numCorners; i++ ) {
+            // Get coordinates of the current corner in terms of x,y,...
+            for( k=0; k<nDim_particle; k++ )
+                point[k] = ( (((i>>k)&1)==0) ? patchMin[k] : patchMax[k] )
+                          - allPos[0][k];
+            // Get position of the current corner in the probe's coordinate system
+            point = matrixTimesVector( axesInverse, point );
+            // Store mins and maxs
+            for( k=0; k<nDim_particle; k++ ) {
+                if( point[k]<mins[k] ) mins[k]=point[k];
+                if( point[k]>maxs[k] ) maxs[k]=point[k];
+            }
+        }
+        // Loop directions to figure out the range of useful indices
+        vector<unsigned int> minI(nDim_particle, 0), maxI(nDim_particle, 0), nI(nDim_particle, 0);
+        for( i=0; i<dimProbe; i++ ) {
+            if( mins[i]<0. ) mins[i]=0.;
+            if( mins[i]>1. ) mins[i]=1.;
+            minI[i] = (unsigned int) floor(mins[i]*((double)(vecNumber[i]-1)));
+            if( maxs[i]<0. ) maxs[i]=0.;
+            if( maxs[i]>1. ) maxs[i]=1.;
+            maxI[i] = (unsigned int) ceil (maxs[i]*((double)(vecNumber[i]-1)));
+        }
+        for( i=dimProbe; i<nDim_particle; i++ )
+            if( mins[i]*maxs[i] < 0 )
+                maxI[i]=0;
+        // Now, minI and maxI contain the min and max indexes of the probe, useful for this patch
+        // Calculate total number of useful points
+        unsigned int ntot = 1;
+        for( i=0; i<nDim_particle; i++ ) {
+            nI[i] = maxI[i]-minI[i]+1;
+            ntot *= nI[i];
+        }
+        
+        // Initialize the list of "fake" particles (points) just as actual macro-particles
+        Particles * particles = &(vecPatches(ipatch)->probes[probe_n]->particles);
+        particles->initialize(ntot, nDim_particle);
+        
+        // Loop useful probe points
+        unsigned int IP, ipart_local=0;
+        for( unsigned int ip=0; ip<ntot; ip++ ) {
+            // Find the coordinates of this point in the global probe array
+            IP = ip;
+            for( i=0; i<dimProbe; i++ ) {
+                point[i] = ((double)(IP % nI[i] + minI[i])) / ((double)(vecNumber[i]-1));
+                IP /= nI[i];
+            }
+            for( i=dimProbe; i<nDim_particle; i++ )
+                point[i] = 0.;
+            // Compute this point's coordinates in terms of x, y, ...
+            point = matrixTimesVector( axes, point );
+            // Check if point is in patch
+            is_in_domain = true;
+            for( i=0; i<nDim_particle; i++ ) {
+                point[i] += allPos[0][i];
+                if (point[i] < patchMin[i] || point[i] >= patchMax[i] ) {
+                    is_in_domain = false;
+                    break;
+                }
+            }
+            if(is_in_domain) {
+                point[0] += x_moved;
+                for(iDim=0; iDim<nDim_particle; iDim++)
+                    particles->position(iDim,ipart_local) = point[iDim];
+                ipart_local++;
+            }
+        }
+        
+        // Resize the array with only particles in this patch
+        particles->resize(ipart_local, nDim_particle);
+        particles->shrink_to_fit(nDim_particle);
+        
+        // Add the local offset
+        offset_in_MPI[ipatch] = nPart_MPI;
+        nPart_MPI += ipart_local;
+    }
+    
+    // Now calculate the offset of each patch to write in the file
+    
+    // Get the number of particles for each MPI
+    int sz = smpi->getSize();
+    std::vector<int> all_nPart(sz, 0);
+    MPI_Allgather( &nPart_MPI, 1, MPI_INT, &all_nPart[0], 1, MPI_INT, MPI_COMM_WORLD );
+    
+    // Calculate the cumulative sum
+    for (int irk=1 ; irk<sz ; irk++)
+        all_nPart[irk] += all_nPart[irk-1];
+    
+    // Add the MPI offset to all patches
+    if( ! smpi->isMaster() ) {
+        int offset = all_nPart[smpi->getRank()-1];
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+            offset_in_file[ipatch] = offset + offset_in_MPI[ipatch];
+            vecPatches(ipatch)->probes[probe_n]->offset_in_file = offset_in_file[ipatch];
+        }
+    }
+    
+    // (Re-) initialize the flag to tell whether probes should be re-calculated next time
+    patchesHaveMoved = false;
 }
 
 
 
 void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep )
 {
-    unsigned int nPart_MPI;
     ostringstream name_t;
     
     unsigned int nPatches( vecPatches.size() );
-
+    
     // Leave if this timestep has already been written
     #pragma omp master
     {
@@ -377,12 +489,9 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     
     #pragma omp master
     {
-        // Calculate the number of probe particles in this MPI
-        offset.resize(vecPatches.size()+1);
-        offset[0] = 0;
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-            offset[ipatch+1] = offset[ipatch] + vecPatches(ipatch)->probes[probe_n]->particles.size();
-        nPart_MPI = offset.back();
+        // If the patches have been moved (moving window or load balancing) we must re-compute the probes positions
+        if( patchesHaveMoved )
+            createPoints(smpi, vecPatches, false);
         
         // Make the array that will contain the data
         vector<unsigned int> probesArraySize(2);
@@ -396,7 +505,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
         // Loop probe ("fake") particles of current patch
-        unsigned int iPart_MPI = offset[ipatch];
+        unsigned int iPart_MPI = offset_in_MPI[ipatch];
         unsigned int npart = vecPatches(ipatch)->probes[probe_n]->particles.size();
 
         LocalFields Eloc_fields, Bloc_fields, Jloc_fields;
@@ -438,7 +547,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         dimsf[0] = nFields;
         hid_t filespace = H5Screate_simple(2, dimsf, NULL);
         if( nPart_MPI>0 ) {
-            offset[1] = vecPatches(0)->probes[probe_n]->offset_in_file;
+            offset[1] = offset_in_file[0];
             offset[0] = 0;
             stride[0] = 1;
             stride[1] = 1;

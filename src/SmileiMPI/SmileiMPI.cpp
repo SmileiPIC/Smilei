@@ -33,10 +33,14 @@ SmileiMPI::SmileiMPI( int* argc, char*** argv )
 {    
     int mpi_provided;
 
+#ifdef _OPENMP
     MPI_Init_thread( argc, argv, MPI_THREAD_MULTIPLE, &mpi_provided );
     if (mpi_provided != MPI_THREAD_MULTIPLE){
         ERROR("MPI_THREAD_MULTIPLE not supported. Compile your MPI ibrary with THREAD_MULTIPLE support.");
     }
+#else
+    MPI_Init( argc, argv );
+#endif
 
     SMILEI_COMM_WORLD = MPI_COMM_WORLD;
     MPI_Comm_size( SMILEI_COMM_WORLD, &smilei_sz );
@@ -582,10 +586,12 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
         }
     }
 
-    // Send probes' particles
-    for ( int iprobe = 0 ; iprobe < (int)patch->probes.size() ; iprobe++ ) {
-        isend( patch->probes[iprobe], to, tag+2*patch->vecSpecies.size()+iprobe, params.nDim_particle );
-    }
+    //! \todo Removed the following block because the probe particles are not exchanged
+    //
+    //// Send probes' particles
+    //for ( int iprobe = 0 ; iprobe < (int)patch->probes.size() ; iprobe++ ) {
+    //    isend( patch->probes[iprobe], to, tag+2*patch->vecSpecies.size()+iprobe, params.nDim_particle );
+    //}
 
     // Count number max of comms :
     int maxtag = 2 * patch->vecSpecies.size() + (2+params.nDim_particle) * patch->probes.size();
@@ -616,11 +622,13 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
             MPI_Type_free( &(patch->vecSpecies[ispec]->typePartSend) );
         }
     }
-   
-    // Receive probes' particles
-    for ( int iprobe = 0 ; iprobe < (int)patch->probes.size() ; iprobe++ ) {
-        recv( patch->probes[iprobe], from, tag+2*patch->vecSpecies.size()+iprobe, params.nDim_particle );
-    }
+    
+    // Removed next block because the probe particles are not exchanged.
+    //
+    //// Receive probes' particles
+    //for ( int iprobe = 0 ; iprobe < (int)patch->probes.size() ; iprobe++ ) {
+    //    recv( patch->probes[iprobe], from, tag+2*patch->vecSpecies.size()+iprobe, params.nDim_particle );
+    //}
 
     // Count number max of comms :
     int maxtag = 2 * patch->vecSpecies.size() + (2+params.nDim_particle) * patch->probes.size();
