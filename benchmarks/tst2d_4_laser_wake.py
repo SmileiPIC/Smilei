@@ -1,8 +1,4 @@
-# ----------------------------------------------------------------------------------------
-# 					SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
-# ----------------------------------------------------------------------------------------
 
-import math
 dx = 0.125
 nx = 896
 Lx = nx * dx
@@ -15,7 +11,7 @@ Main(
     interpolation_order = 2,
     
     timestep = 0.124,
-    sim_time = 200,
+    sim_time = 2*Lx,
     
     cell_length  = [dx, 3.],
     sim_length = [ Lx,  120.],
@@ -81,8 +77,8 @@ Species(
     radiating = False,
     bc_part_type_west = "supp",
     bc_part_type_east = "supp",
-    bc_part_type_south ="stop",
-    bc_part_type_north ="stop"
+    bc_part_type_south ="supp",
+    bc_part_type_north ="supp"
 )
 
 LaserGaussian2D(
@@ -99,10 +95,20 @@ DumpRestart(
     exit_after_dump = False,
 )
 
+list_fields = ['Ex','Ey','Rho_electron','Rho_proton','Jx_electron']
+
 DiagFields(
     every = 100,
-    fields = ['Ex','Ey','Rho_electron','Rho_proton','Jx_electron']
+    fields = list_fields
 )
 
-DiagScalar(every = 100)
+DiagProbe(
+	every = 10,
+	pos = [0., Main.sim_length[1]/2.],
+	pos_first = [Main.sim_length[0], Main.sim_length[1]/2.],
+	number = [nx],
+	fields = ['Ex','Ey','Rho','Jx']
+)
+
+DiagScalar(every = 10, vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMax', 'RhoMaxCell'])
 

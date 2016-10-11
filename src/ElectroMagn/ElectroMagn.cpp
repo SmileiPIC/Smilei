@@ -173,6 +173,13 @@ ElectroMagn::~ElectroMagn()
         antenna->field=NULL;
     }
     
+    /*for ( unsigned int iExt = 0 ; iExt < extFields.size() ; iExt++ ) {
+        if (extFields[iExt].profile!=NULL) {
+            delete extFields[iExt].profile;
+            extFields[iExt].profile = NULL;
+        } // Pb wih clones
+    }*/
+
 }//END Destructer
 
 

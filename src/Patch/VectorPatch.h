@@ -37,9 +37,10 @@ public :
     //! - methods to balance computation
     std::vector<Patch*> patches_;
     
+    //! Vector of global diagnostics (diagnostics which cannot be computed locally)
     std::vector<Diagnostic*> globalDiags;
+    //! Vector of local diagnostics (diagnostics which can partly be computed locally)
     std::vector<Diagnostic*> localDiags;
-    
     
     //! Some vector operations extended to VectorPatch
     inline void resize(int npatches) {

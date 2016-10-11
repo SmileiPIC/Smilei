@@ -89,6 +89,7 @@ void Particles::initialize(unsigned int nParticles, Particles &part)
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::reserve( unsigned int n_part_max, unsigned int nDim )
 {
+    return;
     Position.resize(nDim);
     Position_old.resize(nDim);
     for (unsigned int i=0 ; i< nDim ; i++) {
@@ -172,7 +173,7 @@ void Particles::clear()
         Position[i].clear();
         Position_old[i].clear();
     }
-    for (unsigned int i=0 ; i< 3 ; i++) {
+    for (unsigned int i=0 ; i< Momentum.size() ; i++) {
         Momentum[i].clear();
     }
     Weight.clear();

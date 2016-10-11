@@ -11,10 +11,15 @@ using namespace std;
 
 void SyncVectorPatch::exchangeParticles(VectorPatch& vecPatches, int ispec, Params &params, SmileiMPI* smpi)
 {
+//    #pragma omp master
+//    Tools::printMemFootPrint( "Before exchange" );
+
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         vecPatches(ipatch)->initExchParticles(smpi, ispec, params);
     }
+//    #pragma omp master
+//    Tools::printMemFootPrint( "After init" );
 
     //cout << "init exch done" << endl;
 
@@ -25,22 +30,32 @@ void SyncVectorPatch::exchangeParticles(VectorPatch& vecPatches, int ispec, Para
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
             vecPatches(ipatch)->initCommParticles(smpi, ispec, params, iDim, &vecPatches);
         }
+//        #pragma omp master
+//        Tools::printMemFootPrint( "After initComm" );
+
         #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
             vecPatches(ipatch)->CommParticles(smpi, ispec, params, iDim, &vecPatches);
         }
+//        #pragma omp master
+//        Tools::printMemFootPrint( "After Comm" );
         //cout << "init comm done for dim " << iDim << endl;
         //cout << "initCommParticles done for " << iDim << endl;
         #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
             vecPatches(ipatch)->finalizeCommParticles(smpi, ispec, params, iDim, &vecPatches);
         }
+//        #pragma omp master
+//        Tools::printMemFootPrint( "After finalizeComm" );
         //cout << "final comm done for dim " << iDim << endl;
     }
 
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
         vecPatches(ipatch)->vecSpecies[ispec]->sort_part();
+
+//    #pragma omp master
+//    Tools::printMemFootPrint( "After exchange" );
 
 }
 
