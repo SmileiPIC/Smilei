@@ -8,6 +8,10 @@ class TrackParticles(Diagnostic):
 	# This is the constructor, which creates the object
 	def _init(self, species=None, select="", axes=[], timesteps=None, length=None, **kwargs):
 		
+		if len(self._results_path)>1:
+			self._error = "Unable to process multiple simulations for now"
+			return
+		
 		# If argument 'species' not provided, then print available species and leave
 		if species is None:
 			species = self.getTrackSpecies()
@@ -16,17 +20,17 @@ class TrackParticles(Diagnostic):
 				self._error += "-----------------------------------\n"
 				self._error += "\n".join(species)
 			else:
-				self._error = "No tracked particles files found in '"+self._results_path+"'"
+				self._error = "No tracked particles files found in '"+self._results_path[0]+"'"
 			return None
 		
 		# Get info from the hdf5 files + verifications
 		# -------------------------------------------------------------------
 		self.species  = species
-		self._file = self._results_path+"/TrackParticles_"+species+".h5"
+		self._file = self._results_path[0]+"/TrackParticles_"+species+".h5"
 		try:
 			f = self._h5py.File(self._file, 'r')
 		except:
-			self._orderFile( self._results_path+"/TrackParticlesDisordered_"+species+".h5", self._file )
+			self._orderFile( self._results_path[0]+"/TrackParticlesDisordered_"+species+".h5", self._file )
 			f = self._h5py.File(self._file, 'r')
 		self._h5items = list(f.values())
 		
@@ -206,7 +210,7 @@ class TrackParticles(Diagnostic):
 	
 	# get all available tracked species
 	def getTrackSpecies(self):
-		files = self._glob(self._results_path+"/TrackParticles*.h5")
+		files = self._glob(self._results_path[0]+"/TrackParticles*.h5")
 		species = []
 		for file in files:
 			species_ = self._re.search("_(.+).h5",self._os.path.basename(file)).groups()[0]

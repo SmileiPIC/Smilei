@@ -8,6 +8,10 @@ class ParticleDiagnostic(Diagnostic):
 	# This is the constructor, which creates the object
 	def _init(self, diagNumber=None, timesteps=None, slice=None, data_log=False, stride=1, **kwargs):
 		
+		if len(self._results_path)>1:
+			self._error = "Unable to process multiple simulations for now"
+			return
+		
 		if diagNumber is None:
 			self._error += "Printing available particle diagnostics:\n"
 			self._error += "----------------------------------------\n"
@@ -15,7 +19,7 @@ class ParticleDiagnostic(Diagnostic):
 			for diagNumber in diags:
 				self._error += self._printInfo(self._getInfo(diagNumber))
 			if len(diags)==0:
-				self._error += "      No particle diagnostics found in "+self._results_path
+				self._error += "      No particle diagnostics found in "+self._results_path[0]
 			return
 		
 		cell_size = {"x":self._cell_length[0]}
@@ -93,7 +97,7 @@ class ParticleDiagnostic(Diagnostic):
 		self._h5items = {}
 		for d in self._diags:
 			# get all diagnostics files
-			self._file.update({ d:self._h5py.File(self._results_path+'/ParticleDiagnostic'+str(d)+'.h5') })
+			self._file.update({ d:self._h5py.File(self._results_path[0]+'/ParticleDiagnostic'+str(d)+'.h5') })
 			self._h5items.update({ d:list(self._file[d].values()) })
 			# get all diagnostics timesteps
 			self.times.update({ d:self.getAvailableTimesteps(d) })
@@ -281,7 +285,7 @@ class ParticleDiagnostic(Diagnostic):
 	# Gets info about diagnostic number "diagNumber"
 	def _getInfo(self,diagNumber):
 		# path to the file
-		file = self._results_path+'/ParticleDiagnostic'+str(diagNumber)+'.h5'
+		file = self._results_path[0]+'/ParticleDiagnostic'+str(diagNumber)+'.h5'
 		# if no file, return
 		if not self._os.path.isfile(file): return False
 		# open file
@@ -347,7 +351,7 @@ class ParticleDiagnostic(Diagnostic):
 		return info
 	
 	def getDiags(self):
-		files = self._glob(self._results_path+"/ParticleDiagnostic*.h5")
+		files = self._glob(self._results_path[0]+"/ParticleDiagnostic*.h5")
 		diags = [int(self._re.findall(r"ParticleDiagnostic([0-9]+)[.]h5$",file)[0]) for file in files]
 		return diags
 	
@@ -359,7 +363,7 @@ class ParticleDiagnostic(Diagnostic):
 		# Otherwise, get the timesteps specifically available for the single requested diagnostic
 		else:
 			try:
-				file = self._results_path+'/ParticleDiagnostic'+str(diagNumber)+'.h5'
+				file = self._results_path[0]+'/ParticleDiagnostic'+str(diagNumber)+'.h5'
 				f = self._h5py.File(file, 'r')
 			except:
 				print("Cannot open file "+file)

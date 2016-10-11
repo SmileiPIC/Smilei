@@ -10,6 +10,10 @@ class Probe(Diagnostic):
 		
 		self._h5probe = None
 		
+		if len(self._results_path)>1:
+			self._error = "Unable to process multiple simulations for now"
+			return
+		
 		# If no probeNumber, print available probes
 		if probeNumber is None:
 			probes = self.getProbes()
@@ -19,12 +23,12 @@ class Probe(Diagnostic):
 				for p in probes:
 					self._error += self._info(self._getInfo(p))
 			else:
-				self._error += "No probes found in '"+self._results_path+"'"
+				self._error += "No probes found in '"+self._results_path[0]+"'"
 			return
 		
 		# Try to get the probe from the hdf5 file
 		self.probeNumber  = probeNumber
-		self._file = self._results_path+"/Probes"+str(self.probeNumber)+".h5"
+		self._file = self._results_path[0]+"/Probes"+str(self.probeNumber)+".h5"
 		try:
 			self._h5probe = self._h5py.File(self._file, 'r')
 		except:
@@ -259,7 +263,7 @@ class Probe(Diagnostic):
 	# Method to get info on a given probe
 	def _getInfo(self, probeNumber):
 		try:
-			file = self._results_path+"/Probes"+str(probeNumber)+".h5"
+			file = self._results_path[0]+"/Probes"+str(probeNumber)+".h5"
 			probe = self._h5py.File(file, 'r')
 		except:
 			print("Cannot open file "+file)
@@ -278,7 +282,7 @@ class Probe(Diagnostic):
 	
 	# get all available probes
 	def getProbes(self):
-		files = self._glob(self._results_path+"/Probes*.h5")
+		files = self._glob(self._results_path[0]+"/Probes*.h5")
 		probes = []
 		for file in files:
 			probes.append( self._re.findall(r"Probes([0-9]+)[.]h5$",file)[0] )

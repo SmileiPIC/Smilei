@@ -146,6 +146,8 @@ class ProbeFactory(object):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
 		
+		if len(simulation._results_path)>1: return
+		
 		# If not a specific probe, build a list of probe shortcuts
 		if probeNumber is None:
 			# Create a temporary, empty probe diagnostic
@@ -222,6 +224,8 @@ class ParticleDiagnosticFactory(object):
 	def __init__(self, simulation, diagNumber=None, timestep=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
+		
+		if len(simulation._results_path)>1: return
 		
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
@@ -301,6 +305,8 @@ class TrackParticlesFactory(object):
 		self._simulation = simulation
 		self._additionalKwargs = dict()
 		
+		if len(simulation._results_path)>1: return
+		
 		# If not a specific species (root level), build a list of species shortcuts
 		if species is None:
 			# Create a temporary, empty tracked-particle diagnostic
@@ -337,13 +343,17 @@ class TrackParticlesFactory(object):
 		kwargs.update(self._additionalKwargs)
 		return TrackParticles.TrackParticles(self._simulation, *args, **kwargs)
 
+
+
+
+
 class Smilei(object):
 	""" Import a Smilei simulation
 	
 	Parameters:
 	-----------
-	results_path : string (default '.').
-		Directory containing simulation results.
+	results_path : string or list of strings (default '.').
+		Directory containing simulation results, or list of directories.
 		Omit this argument if you are already in the results directory.
 	
 	show : bool (default True)
@@ -395,64 +405,101 @@ class Smilei(object):
 		
 		# Load diagnostics factories
 		if self.valid:
-			self.Field = FieldFactory(self)
 			self.Scalar = ScalarFactory(self)
+			self.Field = FieldFactory(self)
 			self.Probe = ProbeFactory(self)
 			self.ParticleDiagnostic = ParticleDiagnosticFactory(self)
 			self.TrackParticles = TrackParticlesFactory(self)
+	
+	
+	def _openNamelist(self, path):
+		# Fetch the python namelist
+		namespace={}
+		exec(open(path+self._os.sep+'smilei.py').read(), namespace) # execute the namelist into an empty namespace
+		class Namelist: pass # empty class to store the namelist variables
+		namelist = Namelist() # create new empty object
+		for key, value in namespace.items(): # transfer all variables to this object
+			if key[0]=="_": continue # skip builtins
+			setattr(namelist, key, value)
+		
+		# Get some info on the simulation
+		try:
+			# get number of dimensions
+			error = "Error extracting 'dim' from the input file"
+			ndim = int(namelist.Main.geometry[0])
+			if ndim not in [1,2,3]: raise
+			# get box size
+			error = "Error extracting 'sim_length' from the input file"
+			sim_length = self._np.atleast_1d(self._np.double(namelist.Main.sim_length))
+			if sim_length.size != ndim: raise
+			# get cell size
+			error = "Error extracting 'cell_length' from the input file"
+			cell_length = self._np.atleast_1d(self._np.double(namelist.Main.cell_length))
+			if cell_length.size != ndim: raise
+			# calculate number of cells in each dimension
+			ncels = sim_length/cell_length
+			# extract time-step
+			error = "Error extracting 'timestep' from the input file"
+			timestep = self._np.double(namelist.Main.timestep)
+			if not self._np.isfinite(timestep): raise
+		except:
+			print(error)
+			return
+		try:
+			referenceAngularFrequency_SI = namelist.Main.referenceAngularFrequency_SI
+		except:
+			referenceAngularFrequency_SI = None
+		return namelist, ndim, cell_length, ncels, timestep, referenceAngularFrequency_SI
 	
 	def reload(self):
 		"""Reloads the simulation, if it has been updated"""
 		self.valid = False
 		
-		# Verify that results_path is valid
-		if not self._os.path.isdir(self._results_path):
-			print("Could not find directory "+self._results_path)
-			return
-		if len(self._glob(self._results_path+"/smilei.py"))==0:
-			print("Could not find an input file in directory "+self._results_path)
+		# Obtain the path(s) to the simulation(s) results
+		if type(self._results_path) is not list:
+			self._results_path = [self._results_path]
+		allPaths = []
+		for path in self._results_path:
+			if type(path) is not str:
+				print("The `results_path` parameter must be a string or a list of strings")
+				return
+			validPaths = []
+			for match in self._glob(path):
+				if self._os.path.isdir(match) and self._os.path.isfile(match+self._os.sep+"smilei.py"):
+					validPaths.append(match)
+			if len(validPaths)==0:
+				print("WARNING: `"+path+"` does not point to any valid Smilei simulation path")
+			allPaths.extend( validPaths )
+		self._results_path = allPaths
+		
+		if len(self._results_path)==0:
+			print("No valid paths to Smilei simulation results have been provided")
 			return
 		
-		# Check the last modification date
-		lastmodif = self._os.path.getmtime(self._results_path+"/smilei.py")
-		if self._mtime < lastmodif:
-			
-			# Fetch the python namelist
-			namespace={}
-			exec(open(self._results_path+'/smilei.py').read(), namespace) # execute the namelist into an empty namespace
-			class Namelist: pass # empty class to store the namelist variables
-			self.namelist = Namelist() # create new empty object
-			for key, value in namespace.items(): # transfer all variables to this object
-				if key[0]=="_": continue # skip builtins
-				setattr(self.namelist, key, value)
-			
-			# Get some info on the simulation
-			try:
-				# get number of dimensions
-				error = "Error extracting 'dim' from the input file"
-				self._ndim = int(self.namelist.Main.geometry[0])
-				if self._ndim not in [1,2,3]: raise
-				# get box size
-				error = "Error extracting 'sim_length' from the input file"
-				sim_length = self._np.atleast_1d(self._np.double(self.namelist.Main.sim_length))
-				if sim_length.size != self._ndim: raise
-				# get cell size
-				error = "Error extracting 'cell_length' from the input file"
-				self._cell_length = self._np.atleast_1d(self._np.double(self.namelist.Main.cell_length))
-				if self._cell_length.size != self._ndim: raise
-				# calculate number of cells in each dimension
-				self._ncels = sim_length/self._cell_length
-				# extract time-step
-				error = "Error extracting 'timestep' from the input file"
-				self._timestep = self._np.double(self.namelist.Main.timestep)
-				if not self._np.isfinite(self._timestep): raise
-			except:
-				print(error)
-				return
-			try:
-				self._referenceAngularFrequency_SI = self.namelist.Main.referenceAngularFrequency_SI
-			except:
-				self._referenceAngularFrequency_SI = None
+		# Check the last modification date and get paths which are newer
+		lastmodif = 0
+		newPaths = []
+		for path in self._results_path:
+			thismtime = self._os.path.getmtime(path+self._os.sep+"/smilei.py")
+			if thismtime > self._mtime: newPaths.append(path)
+			lastmodif = max(lastmodif, thismtime)
+		
+		# Reload if necessary
+		if lastmodif > self._mtime:
+			# Get the previous simulation parameters
+			try:    prevArgs = (self._ndim, self._cell_length, self._ncels, self._timestep, self._referenceAngularFrequency_SI)
+			except: prevArgs = ()
+			# Loop paths and verify the namelist is compatible
+			for path in newPaths:
+				args = self._openNamelist(path)
+				if len(prevArgs)==0:
+					prevArgs = args[1:]
+				elif args[1]!=prevArgs[0] or (args[2]!=prevArgs[1]).any() or (args[3]!=prevArgs[2]).any() or args[4:]!=prevArgs[3:]:
+					print("The simulation in path '"+path+"' is not compatible with the other ones")
+					return
+			# Update the simulation parameters
+			self._ndim, self._cell_length, self._ncels, self._timestep, self._referenceAngularFrequency_SI = args[1:]
+			self.namelist = args[0]
 		
 		self._mtime = lastmodif
 		self.valid = True
@@ -461,6 +508,6 @@ class Smilei(object):
 		if not self.valid:
 			return "Invalid Smilei simulation"
 		else:
-			file = self._glob(self._results_path+"/smilei.py")[0]
-			return "Smilei simulation with input file located at `"+file+"`"
-	
+			files = [self._glob(path+self._os.sep+"smilei.py")[0] for path in self._results_path]
+			files = "\n\t".join(files)
+			return "Smilei simulation with input file(s) located at:\n\t"+files
