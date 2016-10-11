@@ -8,10 +8,6 @@ class ParticleDiagnostic(Diagnostic):
 	# This is the constructor, which creates the object
 	def _init(self, diagNumber=None, timesteps=None, slice=None, data_log=False, stride=1, **kwargs):
 		
-		if len(self._results_path)>1:
-			self._error = "Unable to process multiple simulations for now"
-			return
-		
 		if diagNumber is None:
 			self._error += "Printing available particle diagnostics:\n"
 			self._error += "----------------------------------------\n"
@@ -19,7 +15,7 @@ class ParticleDiagnostic(Diagnostic):
 			for diagNumber in diags:
 				self._error += self._printInfo(self._getInfo(diagNumber))
 			if len(diags)==0:
-				self._error += "      No particle diagnostics found in "+self._results_path[0]
+				self._error += "      No particle diagnostics found"
 			return
 		
 		cell_size = {"x":self._cell_length[0]}
@@ -41,10 +37,15 @@ class ParticleDiagnostic(Diagnostic):
 			return
 		
 		# Get list of requested diags
+		self._myinfo = {}
 		self._diags = sorted(set([ int(d[1:]) for d in self._re.findall('#\d+',self.operation) ]))
-		for diag in self._diags:
-			if not self._getInfo(diag):
-				self._error = "No particle diagnostic #"+str(diag)
+		for d in self._diags:
+			try:
+				info = self._getInfo(d)
+				if info is False: raise
+				self._myinfo.update({ d:info })
+			except:
+				self._error = "Particle diagnostic #"+str(d)+" invalid"
 				return
 		try:
 			exec(self._re.sub('#\d+','1.',self.operation))
@@ -52,16 +53,10 @@ class ParticleDiagnostic(Diagnostic):
 		except:
 			self._error = "Cannot understand operation '"+self.operation+"'"
 			return
-		# Verify that all requested diags exist and they all have the same shape
-		self._myinfo = {}
+		# Verify that all requested diags all have the same shape
 		self._axes = {}
 		self._naxes = {}
 		for d in self._diags:
-			try:
-				self._myinfo.update({ d:self._getInfo(d) })
-			except:
-				self._error = "Particle diagnostic #"+str(d)+" not found."
-				return
 			self._axes .update ({ d:self._myinfo[d]["axes"] })
 			self._naxes.update ({ d:len(self._axes[d]) })
 			if self._naxes[d] != self._naxes[self._diags[0]]:
@@ -91,16 +86,19 @@ class ParticleDiagnostic(Diagnostic):
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
 		# Get available timesteps
-		self._file = {}
 		self.times = {}
 		self._indexOfTime  = {}
 		self._h5items = {}
 		for d in self._diags:
-			# get all diagnostics files
-			self._file.update({ d:self._h5py.File(self._results_path[0]+'/ParticleDiagnostic'+str(d)+'.h5') })
-			self._h5items.update({ d:list(self._file[d].values()) })
-			# get all diagnostics timesteps
-			self.times.update({ d:self.getAvailableTimesteps(d) })
+			# Gather data from all timesteps, and the list of timesteps
+			items = []
+			times = []
+			for path in self._results_path:
+				f = self._h5py.File(path+self._os.sep+'ParticleDiagnostic'+str(d)+'.h5')
+				items.extend( f.values() )
+				times.extend( f.keys()   )
+			self._h5items.update({ d:items })
+			self.times.update({ d:self._np.array([ int(t.strip("timestep")) for t in times ]) })
 			# fill the "_indexOfTime" dictionary with indices to the data arrays
 			self._indexOfTime.update({ d:{} })
 			for i,t in enumerate(self.times[d]):
@@ -284,38 +282,44 @@ class ParticleDiagnostic(Diagnostic):
 	
 	# Gets info about diagnostic number "diagNumber"
 	def _getInfo(self,diagNumber):
-		# path to the file
-		file = self._results_path[0]+'/ParticleDiagnostic'+str(diagNumber)+'.h5'
-		# if no file, return
-		if not self._os.path.isfile(file): return False
-		# open file
-		f = self._h5py.File(file, 'r')
-		# get attributes from file
-		attrs = list(f.attrs.items())
-		axes = []
-		# Parse each attribute
-		for i in range(len(attrs)):
-			name  = attrs[i][0]
-			value = attrs[i][1]
-			if (name == "output"): output = bytes.decode(value)
-			if (name == "time_average"): time_average = int(value)
-			if (name == "species"):
-				species = bytes.decode(value.strip()).split(" ") # get all species numbers
-				for i in range(len(species)):
-					species[i] = int(species[i]) # convert string to int
-			if (name[0:4] == "axis" ):
-				n = int(name[4:]) # axis number
-				sp = bytes.decode(value).split(" ")
-				axistype  = sp[0]
-				axismin  = float(sp[1])
-				axismax  = float(sp[2])
-				axissize = int(sp[3])
-				logscale = bool(int(sp[4]))
-				edge_inclusive = bool(int(sp[5]))
-				while len(axes)<n+1: axes.append({}) # extend the array to the adequate size
-				axes[n] = {"type":axistype,"min":axismin,"max":axismax,"size":axissize,"log":logscale,"edges_included":edge_inclusive}
-		f.close()
-		return {"#":diagNumber, "output":output, "tavg":time_average, "species":species, "axes":axes}
+		info = {}
+		for path in self._results_path:
+			# Open file
+			try:
+				file = path+self._os.sep+'ParticleDiagnostic'+str(diagNumber)+'.h5'
+				f = self._h5py.File(file, 'r')
+			except:
+				return False
+			# get attributes from file
+			attrs = f.attrs.items()
+			axes = []
+			# Parse each attribute
+			for name, value in attrs:
+				if (name == "output"): output = bytes.decode(value)
+				if (name == "time_average"): time_average = int(value)
+				if (name == "species"):
+					species = bytes.decode(value.strip()).split() # get all species numbers
+					species = [int(s) for s in species]
+				if (name[0:4] == "axis" ):
+					n = int(name[4:]) # axis number
+					sp = bytes.decode(value).split()
+					axistype  = sp[0]
+					axismin  = float(sp[1])
+					axismax  = float(sp[2])
+					axissize = int(sp[3])
+					logscale = bool(int(sp[4]))
+					edge_inclusive = bool(int(sp[5]))
+					while len(axes)<n+1: axes.append({}) # extend the array to the adequate size
+					axes[n] = {"type":axistype,"min":axismin,"max":axismax,"size":axissize,"log":logscale,"edges_included":edge_inclusive}
+			f.close()
+			# Verify that the info corresponds to the diag in the other paths
+			if info == {}:
+				info = {"#":diagNumber, "output":output, "tavg":time_average, "species":species, "axes":axes}
+			else:
+				if output!=info["output"] or axes!=info["axes"]:
+					print("Particle diagnostic #"+str(diagNumber)+" in path '"+path+"' is incompatible with the other ones")
+					return False
+		return info
 	
 	
 	# Prints the info obtained by the function "getInfo"
@@ -351,9 +355,15 @@ class ParticleDiagnostic(Diagnostic):
 		return info
 	
 	def getDiags(self):
-		files = self._glob(self._results_path[0]+"/ParticleDiagnostic*.h5")
-		diags = [int(self._re.findall(r"ParticleDiagnostic([0-9]+)[.]h5$",file)[0]) for file in files]
-		return diags
+		allDiags = []
+		for path in self._results_path:
+			files = self._glob(path+self._os.sep+"ParticleDiagnostic*.h5")
+			diags = [int(self._re.findall(r"ParticleDiagnostic([0-9]+)[.]h5$",file)[0]) for file in files]
+			if len(allDiags)>0:
+				allDiags = [d for d in diags if d in allDiags]
+			else:
+				allDiags = diags
+		return allDiags
 	
 	# get all available timesteps for a given diagnostic
 	def getAvailableTimesteps(self, diagNumber=None):
@@ -362,19 +372,18 @@ class ParticleDiagnostic(Diagnostic):
 			return self.times
 		# Otherwise, get the timesteps specifically available for the single requested diagnostic
 		else:
-			try:
-				file = self._results_path[0]+'/ParticleDiagnostic'+str(diagNumber)+'.h5'
-				f = self._h5py.File(file, 'r')
-			except:
-				print("Cannot open file "+file)
-				return self._np.array([])
-			items = list(f.items())
-			ntimes = len(items)
-			times = self._np.zeros(ntimes)
-			for i in range(ntimes):
-				times[i] = int(items[i][0].strip("timestep")) # fill the "times" array with the available timesteps
-			f.close()
-			return times
+			times = []
+			for path in self._results_path:
+				try:
+					file = path+self._os.sep+'ParticleDiagnostic'+str(diagNumber)+'.h5'
+					f = self._h5py.File(file, 'r')
+				except:
+					print("Cannot open file "+file)
+					return self._np.array([])
+				for t in f.keys():
+					times.append( int(t.strip("timestep")) )
+				f.close()
+			return self._np.array(times)
 	
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):

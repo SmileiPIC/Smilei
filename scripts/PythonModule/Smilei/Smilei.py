@@ -225,8 +225,6 @@ class ParticleDiagnosticFactory(object):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
 		
-		if len(simulation._results_path)>1: return
-		
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
 			# Create a temporary, empty particle diagnostic
