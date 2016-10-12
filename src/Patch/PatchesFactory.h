@@ -34,7 +34,7 @@ public:
             newPatch = new Patch3D(static_cast<Patch3D*>(patch), params, smpi, ipatch, n_moved, with_particles);
         return newPatch;
     }
-
+    
     // Create a vector of patches
     static VectorPatch createVector(Params& params, SmileiMPI* smpi) {
         VectorPatch vecPatches;
