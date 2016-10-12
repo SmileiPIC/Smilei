@@ -25,13 +25,17 @@ vector<double> matrixInverse(vector<double> A) {
     if( dim == 1 ) {
         invA[0] = 1./A[0];
     } else if (dim == 2) {
-        double idet = 1./(A[0]*A[3]-A[1]*A[2]);
+        double det = A[0]*A[3]-A[1]*A[2];
+        if( det==0. ) ERROR("Cannot inverse matrix");
+        double idet = 1./det;
         invA[0] =  A[3]*idet;
         invA[1] = -A[1]*idet;
         invA[2] = -A[2]*idet;
         invA[3] =  A[0]*idet;
     } else if (dim == 3) {
-        double idet = 1./(A[0]*A[4]*A[8]+A[1]*A[5]*A[6]+A[2]*A[3]*A[7]-A[2]*A[4]*A[6]-A[1]*A[3]*A[8]-A[0]*A[5]*A[7]);
+        double det = A[0]*A[4]*A[8]+A[1]*A[5]*A[6]+A[2]*A[3]*A[7]-A[2]*A[4]*A[6]-A[1]*A[3]*A[8]-A[0]*A[5]*A[7];
+        if( det==0. ) ERROR("Cannot inverse matrix");
+        double idet = 1./det;
         invA[0] = ( A[4]*A[8]-A[5]*A[7] )*idet;
         invA[1] = ( A[2]*A[7]-A[1]*A[8] )*idet;
         invA[2] = ( A[1]*A[5]-A[2]*A[4] )*idet;
@@ -129,7 +133,7 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
     axes.resize(nDim_particle*nDim_particle, 0.);
     vector<int> usedDirections (nDim_particle, 0);
     double min, max, val;
-    unsigned int jmin, jmax;
+    unsigned int jmin=0, jmax=0;
     // With available axes, fill the vector, and remember which major direction it occupies
     for( unsigned int i=0; i<dimProbe; i++) {
         max = 0.;
@@ -148,7 +152,7 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
         // find index of the most unused direction
         unsigned int unusedDirectionIndex = min_element(usedDirections.begin(), usedDirections.end()) - usedDirections.begin();
         // and use that direction as next axis
-        axes[i+nDim_particle*unusedDirectionIndex] = 1.;
+        axes[unusedDirectionIndex+nDim_particle*i] = 1.;
         for( unsigned int j=0; j<nDim_particle; j++) usedDirections[j]--;
         usedDirections[unusedDirectionIndex] += 4;
     }
@@ -194,7 +198,23 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
     mystream << "Probes" << n_probe << ".h5";
     filename = mystream.str();
     
-    MESSAGE(1, "Diagnostic created: probe #"<<n_probe);
+    
+    // Display info
+    MESSAGE(1, "Probe diagnostic #"<<n_probe<<" created");
+    
+    ostringstream t("");
+    t << vecNumber[0];
+    for (unsigned int i=1; i<dimProbe; i++) t << "x"<<vecNumber[i];
+    t << " points";
+    if( dimProbe>1 ) t << " (total = "<<nPart_total<<")";
+    MESSAGE(2, t.str());
+    
+    for( unsigned int i=0; i<allPos.size(); i++) {
+        t.str("");
+        t << "corner "<<i<<" : "<<allPos[i][0];
+        for( unsigned int k=1; k<nDim_particle; k++) t<<", "<<allPos[i][k];
+        MESSAGE(2, t.str());
+    }
     
 } // END DiagnosticProbes::DiagnosticProbes
 
@@ -343,24 +363,23 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
 
 void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bool createFile)
 {
-    // Loop patches to create particles
     nPart_MPI = 0;
     offset_in_MPI .resize( vecPatches.size() );
     offset_in_file.resize( vecPatches.size() );
+    unsigned int numCorners = 1<<nDim_particle; // number of patch corners
+    unsigned int ntot, IP, ipart_local, i, k, ipart, iDimProbe, iDim;;
+    bool is_in_domain;
+    vector<double> point(nDim_particle), mins(nDim_particle), maxs(nDim_particle);  
+    vector<double> patchMin(nDim_particle), patchMax(nDim_particle);
+    vector<unsigned int> minI(nDim_particle), maxI(nDim_particle), nI(nDim_particle);
+    
+    // Loop patches to create particles
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         
-        unsigned int i, k, ipart, iDimProbe, iDim;
-        vector<double> partPos(nDim_particle);
-        vector<unsigned int> ipartND (dimProbe);
-        bool is_in_domain;
-        
         // The first step is to reduce the area of the probe to search in this patch
-        unsigned int numCorners = 1<<nDim_particle; // number of patch corners
-        vector<double> point(nDim_particle, 0.);
-        vector<double> mins(nDim_particle, numeric_limits<double>::max());        
-        vector<double> maxs(nDim_particle, numeric_limits<double>::min());  
-        vector<double> patchMin(nDim_particle), patchMax(nDim_particle);
         for( k=0; k<nDim_particle; k++ ) {
+            mins[k] = numeric_limits<double>::max();
+            maxs[k] = numeric_limits<double>::min();
             patchMin[k] = vecPatches(ipatch)->getDomainLocalMin(k);
             patchMax[k] = vecPatches(ipatch)->getDomainLocalMax(k);
         }
@@ -370,8 +389,7 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
         for( i=0; i<numCorners; i++ ) {
             // Get coordinates of the current corner in terms of x,y,...
             for( k=0; k<nDim_particle; k++ )
-                point[k] = ( (((i>>k)&1)==0) ? patchMin[k] : patchMax[k] )
-                          - allPos[0][k];
+                point[k] = ( (((i>>k)&1)==0) ? patchMin[k] : patchMax[k] ) - allPos[0][k];
             // Get position of the current corner in the probe's coordinate system
             point = matrixTimesVector( axesInverse, point );
             // Store mins and maxs
@@ -381,32 +399,32 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
             }
         }
         // Loop directions to figure out the range of useful indices
-        vector<unsigned int> minI(nDim_particle, 0), maxI(nDim_particle, 0), nI(nDim_particle, 0);
         for( i=0; i<dimProbe; i++ ) {
             if( mins[i]<0. ) mins[i]=0.;
             if( mins[i]>1. ) mins[i]=1.;
-            minI[i] = (unsigned int) floor(mins[i]*((double)(vecNumber[i]-1)));
+            minI[i] = ((unsigned int) floor(mins[i]*((double)(vecNumber[i]-1))));
             if( maxs[i]<0. ) maxs[i]=0.;
             if( maxs[i]>1. ) maxs[i]=1.;
-            maxI[i] = (unsigned int) ceil (maxs[i]*((double)(vecNumber[i]-1)));
+            maxI[i] = ((unsigned int) ceil (maxs[i]*((double)(vecNumber[i]-1)))) + 1;
         }
-        for( i=dimProbe; i<nDim_particle; i++ )
-            if( mins[i]*maxs[i] < 0 )
-                maxI[i]=0;
+        for( i=dimProbe; i<nDim_particle; i++ ){
+            minI[i] = 0;
+            maxI[i] = (mins[i]*maxs[i]<0) ? 0:1;
+        }
         // Now, minI and maxI contain the min and max indexes of the probe, useful for this patch
         // Calculate total number of useful points
-        unsigned int ntot = 1;
+        ntot = 1;
         for( i=0; i<nDim_particle; i++ ) {
-            nI[i] = maxI[i]-minI[i]+1;
+            nI[i] = maxI[i]-minI[i];
             ntot *= nI[i];
         }
-        
+        if( ntot > 1000000000 ) ERROR("Probe too large");
         // Initialize the list of "fake" particles (points) just as actual macro-particles
         Particles * particles = &(vecPatches(ipatch)->probes[probe_n]->particles);
         particles->initialize(ntot, nDim_particle);
         
         // Loop useful probe points
-        unsigned int IP, ipart_local=0;
+        ipart_local=0;
         for( unsigned int ip=0; ip<ntot; ip++ ) {
             // Find the coordinates of this point in the global probe array
             IP = ip;

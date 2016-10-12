@@ -358,7 +358,6 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     // ---------------------------------------------------------
     if (smpi->isMaster()) DEBUG("Starting iterative loop for CG method");
     while ( (ctrl > error_max) && (iteration<iteration_max) ) {
-        
         iteration++;
         if (smpi->isMaster()) DEBUG("iteration " << iteration << " started with control parameter ctrl = " << ctrl*1.e14 << " x 1e-14");
         
