@@ -23,9 +23,8 @@ class DiagnosticScalar : public Diagnostic {
 
 public :
     //! Default constructor
-    DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
-    //! Cloning constructor
-    DiagnosticScalar( DiagnosticScalar * scalar );
+    DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch );
+
     //! Default destructor
     ~DiagnosticScalar() override;
     
@@ -37,7 +36,7 @@ public :
     
     void run( Patch* patch, int timestep ) override;
     
-    bool write(int timestep) override;
+    void write(int timestep) override;
     
     //! get a particular scalar
     double getScalar(std::string name);
@@ -48,8 +47,9 @@ public :
     //! initial energy (kinetic + EM)
     double Energy_time_zero;
     
-    //! energy used for the normalization of energy balance (former total energy)
+    //! energy used for the normalization of energy balance (always uses current energy for normalization)
     double EnergyUsedForNorm;
+    
     
     //! Compute the various scalars when requested
     void compute( Patch* patch, int timestep );
@@ -66,9 +66,15 @@ private :
     
     //! increment a particular scalar
     void incrementScalar(std::string name, double value);
-    
+
+    //! increment a particular scalar
+    void incrementScalar(std::string name, double value, int valIndex);
+
     //! append to outlist
     void append(std::string, double);
+
+    //! append to outlist
+    void append(std::string, double, int);
     
     //! prepend to outlist
     void prepend(std::string, double);

@@ -15,16 +15,16 @@ class Interpolator1D4Order : public Interpolator1D
 public:
     Interpolator1D4Order(Params&, Patch*);
     ~Interpolator1D4Order() override final{};
-
-    void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc) override final;
+    
+    inline void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc);
     void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread) override final;
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc) override final;
-
+    
     inline double compute( double* coeff, Field1D* f, int idx) {
-	double interp_res =  coeff[0] * (*f)(idx-2)   + coeff[1] * (*f)(idx-1)   + coeff[2] * (*f)(idx) + coeff[3] * (*f)(idx+1) + coeff[4] * (*f)(idx+2);
-	return interp_res;
+        double interp_res =  coeff[0] * (*f)(idx-2)   + coeff[1] * (*f)(idx-1)   + coeff[2] * (*f)(idx) + coeff[3] * (*f)(idx+1) + coeff[4] * (*f)(idx+2);
+        return interp_res;
     };
-
+    
 private:
     double dble_1_ov_384 ;
     double dble_1_ov_48 ;
@@ -37,7 +37,7 @@ private:
     double dble_1_ov_6 ;
     double dble_115_ov_192 ;
     double dble_5_ov_8 ;
-
+    
     // Last prim index computed
     int ip_;
     // Last dual index computed

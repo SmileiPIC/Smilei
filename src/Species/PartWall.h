@@ -33,6 +33,8 @@ public:
 private:
     //! position of a wall in its direction
     double position;
+    
+    //! direction of the partWall (x=0, y=1, z=2)
     unsigned short direction;
 
 };
@@ -47,18 +49,32 @@ public:
     //! PartWalls destructor
     ~PartWalls();
     
-    int size()  { return vecPartWall.size();  };
+    //! Returns the number of walls
+    unsigned int size()  { return vecPartWall.size();  };
+    
+    //! Clears the vector of walls
     void clear() { vecPartWall.clear(); };
+    
+    //! Resizes the vector of walls
     void resize(int i) { vecPartWall.resize(i); };
+    
+    //! Pushes a pointer to a wall at the end of the vector
     void push_back(PartWall* pw) { vecPartWall.push_back(pw); };
+    
+    //! Accesses the wall of index i
     PartWall* operator[](int i) const { return vecPartWall[i]; }
     
 private:
+    //! The vector of partWall objects
     std::vector<PartWall*> vecPartWall;
     
     // save all walls parameters even though the current patch doesn't contain them
+    
+    //! direction of all walls
     std::vector<short> direction;
+    //! position of all walls
     std::vector<double> position;
+    //! kind of all walls (type of boundary condition applied)
     std::vector<std::string> kind;
 };
 

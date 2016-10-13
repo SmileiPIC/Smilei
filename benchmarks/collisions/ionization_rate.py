@@ -1,4 +1,4 @@
-execfile("../../scripts/Diagnostics.py")
+from Smilei import *
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -57,7 +57,7 @@ D3 = S3.ParticleDiagnostic("#0/#1",slice={"x":"all"}, linestyle="None", marker="
 multiPlot(D1, D2, D3, vmin=q0,skipAnimation=True)
 
 # Plot theory
-tmax = np.double(S1.namelist.sim_time)
+tmax = np.double(S1.namelist.Main.sim_time)
 t = np.linspace(0., tmax, 100)
 q = q0 + 1. - np.exp(-ve*ne*cse*t)
 plt.plot(t,q,'-k',label="Theory")

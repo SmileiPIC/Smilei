@@ -3,7 +3,7 @@ Install
 
 Before installing :program:`Smilei`, you need to install a few dependencies:
 
-* A C++ compiler, optionally implementing openMP
+* A C++ compiler (we force standard c++0x), optionally implementing openMP
 * MPI libraries (*openmpi* recommended), supporting `MPI_THREAD_MULTIPLE`
 * HDF5 libraries compatible with your versions of C++ and MPI
 * Python 2.7
@@ -95,7 +95,7 @@ This installation procedure has been tested on OS X "El Capitan" 10.11.1
      brew tap homebrew/science
      brew cask install java
      brew install makedepend
-     brew install  gcc5
+     brew install gcc5
      HOMEBREW_CC=gcc-5 HOMEBREW_CXX=g++-5 brew install -s openmpi --without-fortran --with-mpi-thread-multiple
      brew install hdf5 --with-mpi     
      brew install python
@@ -118,13 +118,46 @@ This installation procedure has been tested on OS X "El Capitan" 10.11.1
 Install dependencies on Ubuntu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     
+On Ubuntu 16.04
+"""""""""""""""
+
 Install the following packages from terminal:
 
   .. code-block:: bash
   
     sudo apt-get install git openmpi-bin libhdf5-openmpi-dev build-essential python-dev
 
-:red:`Need details`
+On older release
+""""""""""""""""
+
+A manual installation is required :
+
+1. Download `OpenMPI <https://www.open-mpi.org/software/ompi>`_
+
+  .. code-block:: bash
+  
+    $ taz zxvf openmpi-1.10.2.tar.gz
+    $ cd openmpi-1.10.2
+    $ ./configure --prefix=${INSTALL_DIR}/openmpi-1.10.2 --enable-mpi-thread-multiple --enable-mpirun-prefix-by-default
+    $ make
+    $ make install
+    $ export PATH=${INSTALL_DIR}/openmpi-1.10.2/bin:${PATH}
+    $ export LD_LIBRARY_PATH=${INSTALL_DIR}/openmpi-1.10.2/lib:${LD_LIBRARY_PATH}
+
+
+2. Download `HDF5 <https://support.hdfgroup.org/HDF5>`_
+
+  .. code-block:: bash
+  
+    $ tar zxvf hdf5-1.8.16.tar.gz
+    $ cd hdf5-1.8.16
+    $ ./configure --prefix=${INSTALL_DIR}/hdf5-1.8.16 --enable-parallel --with-pic --enable-linux-lfs --enable-shared --enable-production=yes --disable-sharedlib-rpath --enable-static CC=mpicc FC=mpif90
+    $ make
+    $ make install
+    $ export PATH=${INSTALL_DIR}/hdf5-1.8.16/bin:${PATH}
+    $ export LD_LIBRARY_PATH ${INSTALL_DIR}/hdf5-1.8.16/lib:${LD_LIBRARY_PATH}
+    $ # set HDF5 variable used in SMILEI makefile
+    $ export HDF5_ROOT_DIR=${INSTALL_DIR}/hdf5-1.8.16
 
 
 ----
@@ -162,7 +195,13 @@ Download and compile
      make config=debug            # to have debugging output (slow)
      make config=noopenmp         # to deactivate OpenMP support
      make config="debug noopenmp" # to activate debugging without OpenMP
+     
+   .. rubric:: Makefile alternatives:
      make doc                     # to compile the documentation
+     make install_python          # install the Smilei python module
+     make unnstall_python         # uninstall the Smilei python module
+     make print-XXX               # print value of make variable XXX
+     make env                     # print values of internal makefile variables
      make help                    # to get some help on compilation
  
 #. The next step is to :doc:`write a namelist <namelist>`.

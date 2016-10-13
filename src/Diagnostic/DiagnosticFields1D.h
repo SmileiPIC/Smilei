@@ -13,13 +13,12 @@ public:
     DiagnosticFields1D( Params &params, SmileiMPI* smpi, Patch* patch, int );
     ~DiagnosticFields1D();
     
+    void setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches ) override;
+
     //! Copy patch field to current "data" buffer
-    void getField( Patch* patch, int ) override;
-
-    //! Basic write field on its own file (debug)
-    void write( Field* field );
-
-
+    void getField( Patch* patch, unsigned int ) override;
+    
+    void writeField(hid_t, int) override;
 };
 
 #endif

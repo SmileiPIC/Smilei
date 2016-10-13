@@ -10,7 +10,7 @@
 #include <fstream>
 
 #include "Tools.h"
-#include "SpeciesMPI.h"
+#include "AsyncMPIbuffers.h"
 
 //! Structure containing the fields at a given position (e.g. at a Particle position)
 struct LocalFields
@@ -28,60 +28,55 @@ struct LocalFields
 class Field
 {
 public:
-    SpeciesMPI specMPI;
-
+    AsyncMPIbuffers MPIbuff;
+    
     //! name of the field
     std::string name;
-
+    
     //! Constructor for Field: with no input argument
     Field() {
-      specMPI.init();
     };
-
+    
     //! Constructor for Field: with the Field dimensions as input argument
     Field( std::vector<unsigned int> dims ) {
-        specMPI.init();
     };
     //! Constructor, isPrimal define if mainDim is Primal or Dual
     Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) {
-        specMPI.init();
     };
-
+    
     //! Constructor for Field: with the Field dimensions and dump file name as input argument
     Field( std::vector<unsigned int> dims, std::string name_in ) : name(name_in) {
-        specMPI.init();
     } ;
     
     //! Constructor for Field: isPrimal define if mainDim is Primal or Dual
     Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name_in ) : name(name_in) {
-       specMPI.init() ;
     } ;
-
+    
     //! Destructor for Field
     virtual ~Field() {
         ;
     } ;
-
+    
     //! Virtual method used to allocate Field
     virtual void allocateDims(std::vector<unsigned int> dims) = 0;
     virtual void deallocateDims() = 0;
     
     //! Virtual method used to allocate Field, isPrimal define if mainDim is Primal or Dual
     virtual void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) = 0;
-
+    
     //! Virtual method used to make a dump of the Field data
     virtual void dump(std::vector<unsigned int> dims) = 0;
-
+    
     //! Virtual method to shift field in space
     virtual void shift_x(unsigned int delta) = 0;
-
+    
     //! vector containing the dimensions of the Field
     //! \todo private/friend/modify (JD)
     std::vector<unsigned int> dims_;
     
     //! keep track ofwich direction of the Field is dual
     std::vector<unsigned int> isDual_;
-
+    
     //! Return 0 if direction i is primal, 1 if dual
     inline unsigned int isDual(unsigned int i) {
         if (i<dims_.size())
@@ -89,9 +84,9 @@ public:
         else
             return 0;
     }
-
+    
     //! returns the dimension of the Field
-	inline std::vector<unsigned int> dims () {return dims_;}
+    inline std::vector<unsigned int> dims () {return dims_;}
     //! All arrays may be viewed as a 1D array
     //! Linearized diags
     unsigned int globalDims_;
@@ -127,11 +122,11 @@ public:
             for (unsigned int i=0; i<globalDims_; i++) data_[i] *= val;
     }
     
-
+    
     //! 2D reference access to the linearized array (with check in DEBUG mode)
     inline double& operator () (unsigned int i,unsigned int j)
     {
-	int unsigned idx = i*dims_[1]+j;
+        int unsigned idx = i*dims_[1]+j;
         DEBUGEXEC(if (idx>=globalDims_) ERROR("Out of limits & "<< i << " " << j));
         DEBUGEXEC(if (!std::isfinite(data_[idx])) ERROR("Not finite "<< i << " " << j << " = " << data_[idx]));
         return data_[idx];
@@ -140,6 +135,23 @@ public:
     inline double operator () (unsigned int i, unsigned int j) const
     {
         unsigned int idx = i*dims_[1]+j;
+        DEBUGEXEC(if (idx>=globalDims_) ERROR("Out of limits "<< i << " " << j));
+        DEBUGEXEC(if (!std::isfinite(data_[idx])) ERROR("Not finite "<< i << " " << j << " = " << data_[idx]));
+        return data_[idx];
+    };
+
+    //! 3D reference access to the linearized array (with check in DEBUG mode)
+    inline double& operator () (unsigned int i,unsigned int j, unsigned k)
+    {
+	unsigned int idx = i*dims_[1]*dims_[2]+j*dims_[2]+k;
+        DEBUGEXEC(if (idx>=globalDims_) ERROR("Out of limits & "<< i << " " << j));
+        DEBUGEXEC(if (!std::isfinite(data_[idx])) ERROR("Not finite "<< i << " " << j << " = " << data_[idx]));
+        return data_[idx];
+    };
+    //! 3D access to the linearized array (with check in DEBUG mode)
+    inline double operator () (unsigned int i, unsigned int j, unsigned k) const
+    {
+	unsigned int idx = i*dims_[1]*dims_[2]+j*dims_[2]+k;
         DEBUGEXEC(if (idx>=globalDims_) ERROR("Out of limits "<< i << " " << j));
         DEBUGEXEC(if (!std::isfinite(data_[idx])) ERROR("Not finite "<< i << " " << j << " = " << data_[idx]));
         return data_[idx];

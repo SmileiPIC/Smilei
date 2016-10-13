@@ -11,19 +11,16 @@
 
 #include "Field2D.h"
 
+
 class DiagnosticProbes : public Diagnostic {
     friend class SmileiMPI;
 
 public :
     
     //! Default constructor
-    DiagnosticProbes( Params &params, SmileiMPI* smpi, Patch* patch, int diagId, int n_probe );
-    //! Cloning constructor
-    DiagnosticProbes(DiagnosticProbes*, Params&, Patch* );
+    DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe );
     //! Default destructor
     ~DiagnosticProbes() override;
-    
-    void initParticles(Params&, Patch *);
     
     void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     
@@ -31,22 +28,26 @@ public :
     
     bool prepare( int timestep ) override;
     
-    void run( Patch* patch, int timestep ) override;
+    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) override;
     
-    bool write(int timestep) override;
+    void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;    
     
-    void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches ) override;
+    //! Creates the probe's particles (or "points")
+    void createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bool createFile);
     
-    void init() override;
+    //! Probes position storage at initialization and for moving window
+    Field2D* posArray;
     
-    void compute(unsigned int timestep, ElectroMagn* EMfields);
+    //! True if load balancing or moving window have taken place 
+    bool patchesHaveMoved;
     
-    int getLastPartId() {
-        return probesStart+probeParticles.size();
-    }
+    //! If the window has moved, then x_moved contains the movement
+    double x_moved;
     
-
 private :
+    
+    //! Index of the probe diagnostic
+    int probe_n;
     
     //! Dimension of the probe grid
     unsigned int dimProbe;
@@ -60,16 +61,17 @@ private :
     //! List of the coordinates of the probe vertices
     std::vector< std::vector<double> > allPos;
     
-    //! fake particles acting as probes
-    Particles probeParticles;
+    //! Matrix containing the probe's coordinate system
+    std::vector<double> axes;
     
-    //! each probe will write in a buffer
-    Field2D* probesArray;
+    //! Inverse matrix from the probe's coordinate system
+    std::vector<double> axesInverse;
     
-    int probesStart;
-    
-    //! number of fake particles for each probe diagnostic
+    //! number of points for this probe
     unsigned int nPart_total;
+    
+    //! number of point for this probe, in the current MPI process
+    unsigned int nPart_MPI;
     
     //! Number of fields to save
     int nFields;
@@ -80,18 +82,34 @@ private :
     //! Indices in the output array where each field goes
     std::vector<unsigned int> fieldlocation;
     
-    //! E local fields for the projector
-    LocalFields Eloc_fields;
-    //! B local fields for the projector
-    LocalFields Bloc_fields;
-    //! J local fields for the projector
-    LocalFields Jloc_fields;
-    //! Rho local field for the projector
-    double Rloc_fields;
+    //! Variable to store the status of a dataset (whether it exists or not)
+    htri_t status;
     
-    Interpolator* interp_;
+    //! Temporary buffer to write probes
+    Field2D* probesArray;
     
+    //! Array to locate the current patch in the local buffer
+    std::vector<unsigned int> offset_in_MPI;
+    
+    //! Array to locate the current patch in the file
+    std::vector<unsigned int> offset_in_file;
 };
+
+
+
+class ProbeParticles {
+public :
+    ProbeParticles() {};
+    ProbeParticles( ProbeParticles* probe ) { offset_in_file=probe->offset_in_file; }
+    ~ProbeParticles() {};
+    
+    Particles particles;
+    int offset_in_file;
+};
+
+
+
+
 
 #endif
 

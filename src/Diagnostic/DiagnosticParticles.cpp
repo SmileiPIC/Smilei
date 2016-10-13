@@ -11,11 +11,9 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
     fileId_ = 0;
     
     int n_diag_particles = diagId;
-
-    // n_diag_particles ...
-
+    
     std::vector<Species*>& vecSpecies = patch->vecSpecies;
-
+    
     ostringstream name("");
     name << "Diagnotic Particles #" << n_diag_particles;
     string errorPrefix = name.str();
@@ -28,6 +26,12 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
     // get parameter "every" which describes a timestep selection
     timeSelection = new TimeSelection(
         PyTools::extract_py("every", "DiagParticles", n_diag_particles),
+        name.str()
+    );
+    
+    // get parameter "flush_every" which describes a timestep selection for flushing the file
+    flush_timeSelection = new TimeSelection(
+        PyTools::extract_py("flush_every", "DiagParticles", n_diag_particles),
         name.str()
     );
     
@@ -124,22 +128,21 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
             if( axes[i].edge_inclusive ) mystream << " [EDGE INCLUSIVE]";
             MESSAGE(2,mystream.str());
         }
-
+        
         // init HDF files (by master, only if it doesn't yet exist)
         mystream.str(""); // clear
         mystream << "ParticleDiagnostic" << n_diag_particles << ".h5";
         filename = mystream.str();
     }
-
-    type_ = "Particles";
-
+    
+ 
 } // END DiagnosticParticles::DiagnosticParticles
 
 
 DiagnosticParticles::~DiagnosticParticles()
 {
     delete timeSelection;
-    
+    delete flush_timeSelection;
 } // END DiagnosticParticles::~DiagnosticParticles
 
 
@@ -173,6 +176,7 @@ void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, bool newfil
             string str2 = mystream.str();
             H5::attr(fileId_, str1, str2);
         }
+        H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     }
     else {
         fileId_ = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
@@ -215,15 +219,15 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
 {
 
     std::vector<Species*>& vecSpecies = patch->vecSpecies;
-
+    
     Species *s;
     Particles *p;
     vector<int> index_array;
     vector<double> *x, *y, *z, *px, *py, *pz, *w, *chi=NULL, axis_array, data_array;
     vector<short> *q;
-    int nbins = vecSpecies[0]->bmin.size(); // number of bins in the particles binning
-    int bmin, bmax, axissize, ind;
+    int axissize, ind;
     double axismin, axismax, mass, coeff;
+    unsigned int ipart, npart;
     string axistype;
     ostringstream mystream("");
     
@@ -244,227 +248,221 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
         if (s->dynamics_type == "rrll")
             chi  = &(p->Chi);               // chi (for rad reaction particles particles)
         mass = s->mass;       // mass
+        npart = p->size();    // number of particles
         
-        axis_array .resize(p->size()); // array to store particle axis data
-        index_array.resize(p->size()); // array to store particle output index
-        data_array .resize(p->size()); // array to store particle output data
+        axis_array .resize(npart); // array to store particle axis data
+        index_array.resize(npart); // array to store particle output index
+        data_array .resize(npart); // array to store particle output data
         
         fill(index_array.begin(), index_array.end(), 0);
         
-        // loop each bin
-        for (int ibin=0 ; ibin<nbins ; ibin++) {
+        // 1 - loop on the different axes requested and compute the output index of each particle
+        // --------------------------------------------------------------------------------------
+        for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++) {
             
-            bmin = s->bmin[ibin];
-            bmax = s->bmax[ibin];
+            axismin  = axes[iaxis].min;
+            axismax  = axes[iaxis].max;
+            axissize = axes[iaxis].nbins;
+            axistype = axes[iaxis].type;
             
-            // 1 - loop on the different axes requested and compute the output index of each particle
-            // --------------------------------------------------------------------------------------
-            for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++) {
-                
-                axismin  = axes[iaxis].min;
-                axismax  = axes[iaxis].max;
-                axissize = axes[iaxis].nbins;
-                axistype = axes[iaxis].type;
-                
-                // first loop on particles to store the indexing (axis) quantity
-                
-                if      (axistype == "x"     )
-                    for (int ipart = bmin ; ipart < bmax ; ipart++)
-                        axis_array[ipart] = (*x)[ipart];
-                
-                else if (axistype == "y"     )
-                    for (int ipart = bmin ; ipart < bmax ; ipart++)
-                        axis_array[ipart] = (*y)[ipart];
-                
-                else if (axistype == "z"     )
-                    for (int ipart = bmin ; ipart < bmax ; ipart++)
-                        axis_array[ipart] = (*z)[ipart];
-                
-                else if (axistype == "px"    )
-                    for (int ipart = bmin ; ipart < bmax ; ipart++)
-                        axis_array[ipart] = mass * (*px)[ipart];
-                
-                else if (axistype == "py"    )
-                    for (int ipart = bmin ; ipart < bmax ; ipart++)
-                        axis_array[ipart] = mass * (*py)[ipart];
-                
-                else if (axistype == "pz"    )
-                    for (int ipart = bmin ; ipart < bmax ; ipart++)
-                        axis_array[ipart] = mass * (*pz)[ipart];
-                
-                else if (axistype == "p"    )
-                    for (int ipart = bmin ; ipart < bmax ; ipart++)
-                        axis_array[ipart] = mass * sqrt(pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2));
-                
-                else if (axistype == "gamma" )
-                    for (int ipart = bmin ; ipart < bmax ; ipart++)
-                        axis_array[ipart] = sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
-                
-                else if (axistype == "ekin" )
-                    for (int ipart = bmin ; ipart < bmax ; ipart++)
-                        axis_array[ipart] = mass * (sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) ) - 1.);
-                
-                else if (axistype == "vx"    )
-                    for (int ipart = bmin ; ipart < bmax ; ipart++)
-                        axis_array[ipart] = (*px)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
-                
-                else if (axistype == "vy"    )
-                    for (int ipart = bmin ; ipart < bmax ; ipart++)
-                        axis_array[ipart] = (*py)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
-                
-                else if (axistype == "vz"    )
-                    for (int ipart = bmin ; ipart < bmax ; ipart++)
-                        axis_array[ipart] = (*pz)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
-                        
-                else if (axistype == "v"    )
-                    for (int ipart = bmin ; ipart < bmax ; ipart++)
-                        axis_array[ipart] = pow( 1. + 1./(pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2)) , -0.5);
-                
-                else if (axistype == "vperp2"    )
-                    for (int ipart = bmin ; ipart < bmax ; ipart++)
-                        axis_array[ipart] = (pow((*py)[ipart],2) + pow((*pz)[ipart],2)) / (1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
-                
-                else if (axistype == "charge")
-                    for (int ipart = bmin ; ipart < bmax ; ipart++)
-                        axis_array[ipart] = (double) (*q)[ipart];
-                
-                else if (axistype == "chi")
-                    for (int ipart = bmin ; ipart < bmax ; ipart++)
-                        axis_array[ipart] = (double) (*chi)[ipart];
-                
-                else   ERROR("In particle diagnostics, axis `" << axistype << "` unknown");
-                
-                // Now, axis_array points to the array that contains the particles data (for indexing)
-                
-                // if log scale
-                if (axes[iaxis].logscale) {
-                    // then loop again and convert to log
-                    for (int ipart = bmin ; ipart < bmax ; ipart++)
-                        axis_array[ipart] = log10(axis_array[ipart]);
-                    // also convert other quantities
-                    axismin = log10(axismin);
-                    axismax = log10(axismax);
-                }
-                
-                // The indexes are "reshaped" in one dimension.
-                // For instance, in 3d, the index has the form  i = i3 + n3*( i2 + n2*i1 )
-                // Here we do the multiplication by n3 or n2 (etc.)
-                if (iaxis>0) {
-                    for (int ipart = bmin ; ipart < bmax ; ipart++)
-                        index_array[ipart] *= axissize;
-                }
-                
-                // loop again on the particles and calculate index
-                // This is separated in two cases: edge_inclusive and edge_exclusive
-                coeff = ((double)axissize)/(axismax-axismin);
-                if (!axes[iaxis].edge_inclusive) { // if the particles out of the "box" must be excluded
+            // first loop on particles to store the indexing (axis) quantity
+            
+            if      (axistype == "x"     )
+                for ( ipart = 0 ; ipart < npart ; ipart++)
+                    axis_array[ipart] = (*x)[ipart];
+            
+            else if (axistype == "y"     )
+                for (ipart = 0 ; ipart < npart ; ipart++)
+                    axis_array[ipart] = (*y)[ipart];
+            
+            else if (axistype == "z"     )
+                for (ipart = 0 ; ipart < npart ; ipart++)
+                    axis_array[ipart] = (*z)[ipart];
+            
+            else if (axistype == "px"    )
+                for (ipart = 0 ; ipart < npart ; ipart++)
+                    axis_array[ipart] = mass * (*px)[ipart];
+            
+            else if (axistype == "py"    )
+                for (ipart = 0 ; ipart < npart ; ipart++)
+                    axis_array[ipart] = mass * (*py)[ipart];
+            
+            else if (axistype == "pz"    )
+                for (ipart = 0 ; ipart < npart ; ipart++)
+                    axis_array[ipart] = mass * (*pz)[ipart];
+            
+            else if (axistype == "p"    )
+                for (ipart = 0 ; ipart < npart ; ipart++)
+                    axis_array[ipart] = mass * sqrt(pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2));
+            
+            else if (axistype == "gamma" )
+                for (ipart = 0 ; ipart < npart ; ipart++)
+                    axis_array[ipart] = sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+            
+            else if (axistype == "ekin" )
+                for (ipart = 0 ; ipart < npart ; ipart++)
+                    axis_array[ipart] = mass * (sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) ) - 1.);
+            
+            else if (axistype == "vx"    )
+                for (ipart = 0 ; ipart < npart ; ipart++)
+                    axis_array[ipart] = (*px)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+            
+            else if (axistype == "vy"    )
+                for (ipart = 0 ; ipart < npart ; ipart++)
+                    axis_array[ipart] = (*py)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+            
+            else if (axistype == "vz"    )
+                for (ipart = 0 ; ipart < npart ; ipart++)
+                    axis_array[ipart] = (*pz)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
                     
-                    for (int ipart = bmin ; ipart < bmax ; ipart++) {
-                        // skip already discarded particles
-                        if (index_array[ipart] < 0) continue; 
-                        
-                        // calculate index
-                        ind = floor( (axis_array[ipart]-axismin) * coeff );
-                        
-                        // index valid only if in the "box"
-                        if (ind >= 0  &&  ind < axissize) index_array[ipart] += ind;
-                        else index_array[ipart] = -1; // discard particle
-                    }
-                    
-                } else { // if the particles out of the "box" must be included
-                    
-                    for (int ipart = bmin ; ipart < bmax ; ipart++) {
-                        // skip already discarded particles
-                        if (index_array[ipart] < 0) continue; 
-                        
-                        // calculate index
-                        ind = floor( (axis_array[ipart]-axismin) * coeff );
-                        
-                        // move out-of-range indexes back into range
-                        if (ind < 0) ind = 0;
-                        if (ind >= axissize) ind = axissize-1;
-                        index_array[ipart] += ind;
-                    }
-                    
-                }
-                
-            } // loop axes
+            else if (axistype == "v"    )
+                for (ipart = 0 ; ipart < npart ; ipart++)
+                    axis_array[ipart] = pow( 1. + 1./(pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2)) , -0.5);
             
-            // 2 - prepare the data to output
-            // ------------------------------
-            if      (output == "density")
-                for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = (*w)[ipart];
+            else if (axistype == "vperp2"    )
+                for (ipart = 0 ; ipart < npart ; ipart++)
+                    axis_array[ipart] = (pow((*py)[ipart],2) + pow((*pz)[ipart],2)) / (1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
             
-            else if (output == "charge_density")
-                for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]);
+            else if (axistype == "charge")
+                for (ipart = 0 ; ipart < npart ; ipart++)
+                    axis_array[ipart] = (double) (*q)[ipart];
             
-            else if (output == "jx_density")
-                for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*px)[ipart] / sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
+            else if (axistype == "chi")
+                for (ipart = 0 ; ipart < npart ; ipart++)
+                    axis_array[ipart] = (double) (*chi)[ipart];
             
-            else if (output == "jy_density")
-                for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*py)[ipart] / sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
+            else   ERROR("In particle diagnostics, axis `" << axistype << "` unknown");
             
-            else if (output == "jz_density")
-                for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*pz)[ipart] / sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
+            // Now, axis_array points to the array that contains the particles data (for indexing)
             
-            else if (output == "ekin_density")
-                for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = mass * (*w)[ipart] * (sqrt(1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart]) - 1.);
-            
-            else if (output == "p_density")
-                for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = mass * (*w)[ipart] * sqrt((*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart]);
-            
-            else if (output == "px_density")
-                for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = mass * (*w)[ipart] * (*px)[ipart];
-            
-            else if (output == "py_density")
-                for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = mass * (*w)[ipart] * (*py)[ipart];
-            
-            else if (output == "pz_density")
-                for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = mass * (*w)[ipart] * (*pz)[ipart];
-            
-            else if (output == "pressure_xx")
-                for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = mass * (*w)[ipart] * (*px)[ipart]*(*px)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
-            
-            else if (output == "pressure_yy")
-                for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = mass * (*w)[ipart] * (*py)[ipart]*(*py)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
-            
-            else if (output == "pressure_zz")
-                for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = mass * (*w)[ipart] * (*pz)[ipart]*(*pz)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
-            
-            else if (output == "pressure_xy")
-                for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = mass * (*w)[ipart] * (*px)[ipart]*(*py)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
-            
-            else if (output == "pressure_xz")
-                for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = mass * (*w)[ipart] * (*px)[ipart]*(*pz)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
-            
-            else if (output == "pressure_yz")
-                for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = mass * (*w)[ipart] * (*py)[ipart]*(*pz)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
-            
-            // 3 - sum the data into the data_sum according to the indexes
-            // ---------------------------------------------------------------
-            for (int ipart = bmin ; ipart < bmax ; ipart++) {
-                ind = index_array[ipart];
-                if (ind<0) continue; // skip discarded particles
-                data_sum[ind] += data_array[ipart];
+            // if log scale
+            if (axes[iaxis].logscale) {
+                // then loop again and convert to log
+                for (ipart = 0 ; ipart < npart ; ipart++)
+                    axis_array[ipart] = log10(axis_array[ipart]);
+                // also convert other quantities
+                axismin = log10(axismin);
+                axismax = log10(axismax);
             }
             
-        } // loop bins
+            // The indexes are "reshaped" in one dimension.
+            // For instance, in 3d, the index has the form  i = i3 + n3*( i2 + n2*i1 )
+            // Here we do the multiplication by n3 or n2 (etc.)
+            if (iaxis>0) {
+                for (ipart = 0 ; ipart < npart ; ipart++)
+                    index_array[ipart] *= axissize;
+            }
+            
+            // loop again on the particles and calculate index
+            // This is separated in two cases: edge_inclusive and edge_exclusive
+            coeff = ((double)axissize)/(axismax-axismin);
+            if (!axes[iaxis].edge_inclusive) { // if the particles out of the "box" must be excluded
+                
+                for (ipart = 0 ; ipart < npart ; ipart++) {
+                    // skip already discarded particles
+                    if (index_array[ipart] < 0) continue; 
+                    
+                    // calculate index
+                    ind = floor( (axis_array[ipart]-axismin) * coeff );
+                    
+                    // index valid only if in the "box"
+                    if (ind >= 0  &&  ind < axissize) index_array[ipart] += ind;
+                    else index_array[ipart] = -1; // discard particle
+                }
+                
+            } else { // if the particles out of the "box" must be included
+                
+                for (ipart = 0 ; ipart < npart ; ipart++) {
+                    // skip already discarded particles
+                    if (index_array[ipart] < 0) continue; 
+                    
+                    // calculate index
+                    ind = floor( (axis_array[ipart]-axismin) * coeff );
+                    
+                    // move out-of-range indexes back into range
+                    if (ind < 0) ind = 0;
+                    if (ind >= axissize) ind = axissize-1;
+                    index_array[ipart] += ind;
+                }
+                
+            }
+            
+        } // loop axes
+        
+        // 2 - prepare the data to output
+        // ------------------------------
+        if      (output == "density")
+            for (ipart = 0 ; ipart < npart ; ipart++)
+                data_array[ipart] = (*w)[ipart];
+        
+        else if (output == "charge_density")
+            for (ipart = 0 ; ipart < npart ; ipart++)
+                data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]);
+        
+        else if (output == "jx_density")
+            for (ipart = 0 ; ipart < npart ; ipart++)
+                data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*px)[ipart] / sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
+        
+        else if (output == "jy_density")
+            for (ipart = 0 ; ipart < npart ; ipart++)
+                data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*py)[ipart] / sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
+        
+        else if (output == "jz_density")
+            for (ipart = 0 ; ipart < npart ; ipart++)
+                data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*pz)[ipart] / sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
+        
+        else if (output == "ekin_density")
+            for (ipart = 0 ; ipart < npart ; ipart++)
+                data_array[ipart] = mass * (*w)[ipart] * (sqrt(1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart]) - 1.);
+        
+        else if (output == "p_density")
+            for (ipart = 0 ; ipart < npart ; ipart++)
+                data_array[ipart] = mass * (*w)[ipart] * sqrt((*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart]);
+        
+        else if (output == "px_density")
+            for (ipart = 0 ; ipart < npart ; ipart++)
+                data_array[ipart] = mass * (*w)[ipart] * (*px)[ipart];
+        
+        else if (output == "py_density")
+            for (ipart = 0 ; ipart < npart ; ipart++)
+                data_array[ipart] = mass * (*w)[ipart] * (*py)[ipart];
+        
+        else if (output == "pz_density")
+            for (ipart = 0 ; ipart < npart ; ipart++)
+                data_array[ipart] = mass * (*w)[ipart] * (*pz)[ipart];
+        
+        else if (output == "pressure_xx")
+            for (ipart = 0 ; ipart < npart ; ipart++)
+                data_array[ipart] = mass * (*w)[ipart] * (*px)[ipart]*(*px)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
+        
+        else if (output == "pressure_yy")
+            for (ipart = 0 ; ipart < npart ; ipart++)
+                data_array[ipart] = mass * (*w)[ipart] * (*py)[ipart]*(*py)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
+        
+        else if (output == "pressure_zz")
+            for (ipart = 0 ; ipart < npart ; ipart++)
+                data_array[ipart] = mass * (*w)[ipart] * (*pz)[ipart]*(*pz)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
+        
+        else if (output == "pressure_xy")
+            for (ipart = 0 ; ipart < npart ; ipart++)
+                data_array[ipart] = mass * (*w)[ipart] * (*px)[ipart]*(*py)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
+        
+        else if (output == "pressure_xz")
+            for (ipart = 0 ; ipart < npart ; ipart++)
+                data_array[ipart] = mass * (*w)[ipart] * (*px)[ipart]*(*pz)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
+        
+        else if (output == "pressure_yz")
+            for (ipart = 0 ; ipart < npart ; ipart++)
+                data_array[ipart] = mass * (*w)[ipart] * (*py)[ipart]*(*pz)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
+        
+        // 3 - sum the data into the data_sum according to the indexes
+        // ---------------------------------------------------------------
+        for (ipart = 0 ; ipart < npart ; ipart++) {
+            ind = index_array[ipart];
+            if (ind<0) continue; // skip discarded particles
+            #pragma omp atomic
+            data_sum[ind] += data_array[ipart];
+        }
         
     } // loop species
     
@@ -474,9 +472,9 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
 // Now the data_sum has been filled
 // if needed now, store result to hdf file
 // called by MPI master only, when time-average has finished
-bool DiagnosticParticles::write(int timestep)
+void DiagnosticParticles::write(int timestep)
 {
-    if (timestep - timeSelection->previousTime() != time_average-1) return true;
+    if (timestep - timeSelection->previousTime() != time_average-1) return;
     
     double coeff;
     // if time_average, then we need to divide by the number of timesteps
@@ -485,21 +483,36 @@ bool DiagnosticParticles::write(int timestep)
         for (int i=0; i<output_size; i++)
             data_sum[i] *= coeff;
     }
+    
     // make name of the array
     ostringstream mystream("");
     mystream.str("");
     mystream << "timestep" << setw(8) << setfill('0') << timestep;
-    // write the array
-    if (! H5Lexists( fileId_, mystream.str().c_str(), H5P_DEFAULT ) )
-        H5::vect(fileId_, mystream.str(), data_sum);
-    else
-        WARNING("DIAG PARTICLES COULD NOT WRITE");
+    
+    // write the array if it does not exist already
+    if (! H5Lexists( fileId_, mystream.str().c_str(), H5P_DEFAULT ) ) {
+        // Prepare array dimensions
+        unsigned int naxes = axes.size();
+        hsize_t dims[naxes];
+        for( unsigned int iaxis=0; iaxis<naxes; iaxis++) dims[iaxis] = axes[iaxis].nbins;
+        // Create file space
+        hid_t sid = H5Screate_simple(naxes, &dims[0], NULL);
+        hid_t pid = H5Pcreate(H5P_DATASET_CREATE);
+        // create dataset
+        hid_t did = H5Dcreate(fileId_, mystream.str().c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, pid, H5P_DEFAULT);
+        // write vector in dataset
+        H5Dwrite(did, H5T_NATIVE_DOUBLE, sid, sid, H5P_DEFAULT, &data_sum[0]);
+        // close all
+        H5Dclose(did);
+        H5Pclose(pid);
+        H5Sclose(sid);
+    }
+    
+    if( flush_timeSelection->theTimeIsNow(timestep) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     
     // Clear the array
     clear();
     data_sum.resize(0);
-    
-    return false;
 } // END write
 
 

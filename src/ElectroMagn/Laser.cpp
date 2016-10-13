@@ -92,8 +92,8 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
         
         info << "\t\t" << errorPrefix << ": custom profile" << endl;
         
-        bool space_dims = params.geometry=="3d3v" ? 2 : 1;
-        
+        unsigned int space_dims = (params.geometry=="3d3v" ? 2 : 1);
+ 
         // omega
         info << "\t\t\tomega              : " << omega_value << endl;
         
@@ -101,7 +101,7 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
         name.str("");
         name << "Laser[" << ilaser <<"].chirp_profile";
         pchirp = new Profile(chirp_profile, 1, name.str());
-        info << "\t\t\tchirp_profile       : " << pchirp->getInfo();
+        info << "\t\t\tchirp_profile      : " << pchirp->getInfo();
         
         // time envelope
         name.str("");
@@ -127,7 +127,7 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
         pphase1 = new Profile(phase_profile[0], space_dims, name.str());
         info << endl << "\t\t\tphase          (y) : " << pphase1->getInfo();
         
-        // phase (By)
+        // phase (Bz)
         name.str("");
         name << "Laser[" << ilaser <<"].phase[1]";
         pphase2 = new Profile(phase_profile[1], space_dims, name.str());
@@ -190,24 +190,24 @@ LaserProfileSeparable::LaserProfileSeparable(
     double omega, Profile* chirpProfile, Profile* timeProfile,
     Profile* spaceProfile, Profile* phaseProfile, bool primal
 ):
+    primal       ( primal       ),
     omega        ( omega        ),
     timeProfile  ( timeProfile  ),
     chirpProfile ( chirpProfile ),
     spaceProfile ( spaceProfile ),
-    phaseProfile ( phaseProfile ),
-    primal       ( primal       )
+    phaseProfile ( phaseProfile )
 {
     space_envelope = NULL;
     phase = NULL;
 }
 // Cloning constructor
 LaserProfileSeparable::LaserProfileSeparable(LaserProfileSeparable * lp) :
-    omega        ( lp->omega        ),
-    timeProfile  ( lp->timeProfile  ),
-    chirpProfile ( lp->chirpProfile ),
-    spaceProfile ( lp->spaceProfile ),
-    phaseProfile ( lp->phaseProfile ),
-    primal       ( lp->primal       )
+    primal       ( lp->primal ),
+    omega        ( lp->omega  ),
+    timeProfile  ( new Profile(lp->timeProfile ) ),
+    chirpProfile ( new Profile(lp->chirpProfile) ),
+    spaceProfile ( new Profile(lp->spaceProfile) ),
+    phaseProfile ( new Profile(lp->phaseProfile) )
 {
     space_envelope = NULL;
     phase = NULL;
@@ -215,35 +215,40 @@ LaserProfileSeparable::LaserProfileSeparable(LaserProfileSeparable * lp) :
 //Destructor
 LaserProfileSeparable::~LaserProfileSeparable()
 {
-    delete timeProfile;
-    delete chirpProfile;
-    delete spaceProfile;
-    delete phaseProfile;
-    delete space_envelope;
-    delete phase;
+    if(primal) {
+        if(timeProfile   ) delete timeProfile;
+        if(chirpProfile  ) delete chirpProfile;
+    }
+    if(spaceProfile  ) delete spaceProfile;
+    if(phaseProfile  ) delete phaseProfile;
+    if(space_envelope) delete space_envelope;
+    if(phase         ) delete phase;
 }
 
 
 void LaserProfileSeparable::createFields(Params& params, Patch* patch)
 {
-    if( params.geometry=="1d3v" ) {
+    vector<unsigned int> dim(2);
+    dim[0] = 1;
+    dim[1] = 1;
     
-        vector<unsigned int> dim(1);
-        dim[0] = 1;
-        space_envelope = new Field1D(dim);
-        phase          = new Field1D(dim);
-        
-    } else if( params.geometry=="2d3v" ) {
-        
+    if( params.geometry!="1d3v" && params.geometry!="2d3v" && params.geometry!="3d3v" )
+        ERROR("Unknown geometry in laser");
+    
+    if( params.geometry!="1d3v" ) {
         unsigned int ny_p = params.n_space[1]+1+2*params.oversize[1];
         unsigned int ny_d = ny_p+1;
-        
-        vector<unsigned int> dim(1);
         dim[0] = primal ? ny_p : ny_d;
-        space_envelope = new Field1D(dim);
-        phase          = new Field1D(dim);
         
+        if( params.geometry!="2d3v" ) {
+            unsigned int nz_p = params.n_space[2]+1+2*params.oversize[2];
+            unsigned int nz_d = nz_p+1;
+            dim[1] = primal ? nz_d : nz_p;
+        }
     }
+    
+    space_envelope = new Field2D(dim);
+    phase          = new Field2D(dim);
 }
 
 void LaserProfileSeparable::initFields(Params& params, Patch* patch)
@@ -251,10 +256,10 @@ void LaserProfileSeparable::initFields(Params& params, Patch* patch)
     if( params.geometry=="1d3v" ) {
         
         // Assign profile (only one point in 1D)
-        vector<double> yp(1);
-        yp[0] = 0.;
-        (*space_envelope)(0) = spaceProfile->valueAt(yp);
-        (*phase         )(0) = phaseProfile->valueAt(yp);
+        vector<double> pos(1);
+        pos[0] = 0.;
+        (*space_envelope)(0,0) = spaceProfile->valueAt(pos);
+        (*phase         )(0,0) = phaseProfile->valueAt(pos);
         
     } else if( params.geometry=="2d3v" ) {
         
@@ -265,12 +270,37 @@ void LaserProfileSeparable::initFields(Params& params, Patch* patch)
         dim[0] = primal ? ny_p : ny_d;
         
         // Assign profile
-        vector<double> yp(1);
-        yp[0] = patch->getDomainLocalMin(1) - ((primal?0.:0.5) + params.oversize[1])*dy;
+        vector<double> pos(1);
+        pos[0] = patch->getDomainLocalMin(1) - ((primal?0.:0.5) + params.oversize[1])*dy;
         for (unsigned int j=0 ; j<dim[0] ; j++) {
-            yp[0] += dy;
-            (*space_envelope)(j) = spaceProfile->valueAt(yp);
-            (*phase         )(j) = phaseProfile->valueAt(yp);
+            pos[0] += dy;
+            (*space_envelope)(j,0) = spaceProfile->valueAt(pos);
+            (*phase         )(j,0) = phaseProfile->valueAt(pos);
+        }
+        
+    } else if( params.geometry=="3d3v" ) {
+        
+        unsigned int ny_p = params.n_space[1]+1+2*params.oversize[1];
+        unsigned int ny_d = ny_p+1;
+        unsigned int nz_p = params.n_space[2]+1+2*params.oversize[2];
+        unsigned int nz_d = nz_p+1;
+        double dy = params.cell_length[1];
+        double dz = params.cell_length[2];
+        vector<unsigned int> dim(2);
+        dim[0] = primal ? ny_p : ny_d;
+        dim[1] = primal ? nz_d : nz_p;
+        
+        // Assign profile
+        vector<double> pos(2);
+        pos[0] = patch->getDomainLocalMin(1) - ((primal?0.:0.5) + params.oversize[1])*dy;
+        for (unsigned int j=0 ; j<dim[0] ; j++) {
+            pos[0] += dy;
+            pos[1] = patch->getDomainLocalMin(2) - ((primal?0.5:0.) + params.oversize[2])*dz;
+            for (unsigned int k=0 ; k<dim[1] ; k++) {
+                pos[1] += dz;
+                (*space_envelope)(j,k) = spaceProfile->valueAt(pos);
+                (*phase         )(j,k) = phaseProfile->valueAt(pos);
+            }
         }
     }
 }
@@ -278,18 +308,18 @@ void LaserProfileSeparable::initFields(Params& params, Patch* patch)
 
 
 // Amplitude of a separable laser profile
-double LaserProfileSeparable::getAmplitude(std::vector<double> pos, double t, int j)
+double LaserProfileSeparable::getAmplitude(std::vector<double> pos, double t, int j, int k)
 {
     double omega_ = omega * chirpProfile->valueAt(t);
-    double t0 = (*phase)(j) / omega_;
-    return timeProfile->valueAt(t-t0) * (*space_envelope)(j)
-           * sin( omega_*t - (*phase)(j) );
+    double t0 = (*phase)(j, k) / omega_;
+    return timeProfile->valueAt(t-t0) * (*space_envelope)(j, k)
+           * sin( omega_*(t - t0) );
 }
 
 //Destructor
 LaserProfileNonSeparable::~LaserProfileNonSeparable()
 {
-    delete spaceAndTimeProfile;
+    if(spaceAndTimeProfile) delete spaceAndTimeProfile;
 }
 
 

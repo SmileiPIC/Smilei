@@ -14,12 +14,12 @@ public:
     //! Constructor for Patch
     Patch1D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
     //! Cloning Constructor for Patch
-    Patch1D(Patch1D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
+    Patch1D(Patch1D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles);
     
     void initStep2(Params& params) override;
     
     //! Destructor for Patch
-    ~Patch1D() override final {};
+    ~Patch1D() override final;
 
     // MPI exchange/sum methods for particles/fields
     //   - fields communication specified per geometry (pure virtual)
@@ -27,8 +27,10 @@ public:
 
     //! init comm / sum densities
     void initSumField( Field* field, int iDim ) override final;
+    void reallyinitSumField( Field* field, int iDim ) override final;
     //! finalize comm / sum densities
     void finalizeSumField( Field* field, int iDim ) override final;
+    void reallyfinalizeSumField( Field* field, int iDim ) override final;
 
     //! init comm / exchange fields
     void initExchange( Field* field ) override final;

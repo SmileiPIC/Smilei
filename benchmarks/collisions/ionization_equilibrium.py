@@ -1,4 +1,4 @@
-execfile("../../scripts/Diagnostics.py")
+from Smilei import *
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -56,7 +56,7 @@ for element in ["H", "Al", "Zn", "Au"]:
 	
 	npoints = S.namelist.npoints
 	every = S.namelist.DiagParticles[0].every
-	ts = int(t0 * S.namelist.referenceAngularFrequency_SI/S.namelist.timestep/every) # timestep at 1ps
+	ts = int(t0 * S.namelist.Main.referenceAngularFrequency_SI/S.namelist.Main.timestep/every) # timestep at 1ps
     
 	Z = []
 	Zfinal = []

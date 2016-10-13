@@ -15,7 +15,7 @@
 #include "IonizationFactory.h"
 #include "PartBoundCond.h"
 #include "PartWall.h"
-//#include "BoundaryConditionType.h"
+#include "BoundaryConditionType.h"
 
 #include "ElectroMagn.h"
 #include "Interpolator.h"
@@ -46,16 +46,16 @@ dynamics_type("norm"),
 time_frozen(0), 
 radiating(false), 
 ionization_model("none"),
+velocityProfile(3,NULL),
+temperatureProfile(3,NULL),
 particles(&particles_sorted[0]),
+electron_species(NULL),
 clrw(params.clrw),  
 oversize(params.oversize), 
 cell_length(params.cell_length), 
-velocityProfile(3,NULL),
-temperatureProfile(3,NULL),
-electron_species(NULL),
-nDim_particle(params.nDim_particle),
 min_loc_vec(patch->getDomainLocalMin()), 
 partBoundCond(NULL),
+nDim_particle(params.nDim_particle),
 min_loc(patch->getDomainLocalMin(0)) 
 {
     DEBUG(species_type);
@@ -64,36 +64,19 @@ min_loc(patch->getDomainLocalMin(0))
     
     dx_inv_ = 1./cell_length[0];
     dy_inv_ = 1./cell_length[1];
+    dz_inv_ = 1./cell_length[2];
     
     initCluster(params);
+    nDim_field = params.nDim_field;
+    inv_nDim_field = 1./((double)nDim_field);
 
 }//END Species creator
 
 void Species::initCluster(Params& params)
 {
-
-    // Clusters must all have the same size:
-#ifdef _BLABLA
-    // -------------------
-    // Variable definition
-    // -------------------
-
-    // Width of clusters:
-    if (params.n_space[0]%clrw != 0)
-        ERROR("Cluster width (clrw) = " << clrw << "should divide n_space[0] = " << params.n_space[0] );
-    //Testing if clusters width (clrw) is large enough for the spliting technique:
-    if (clrw < 2*oversize[0]+2){
-        ERROR("Cluster width (clrw) = "<< clrw << " must be greater than 2*oversize[0]+1 = " << 2*oversize[0]+1 );
-    }
-#endif
-
     // Arrays of the min and max indices of the particle bins
     bmin.resize(params.n_space[0]/clrw);
     bmax.resize(params.n_space[0]/clrw);
-    if (nDim_particle == 3){
-        bmin.resize(params.n_space[0]/clrw*params.n_space[1]);
-        bmax.resize(params.n_space[0]/clrw*params.n_space[1]);
-    }
     
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
@@ -102,30 +85,23 @@ void Species::initCluster(Params& params)
     f_dim0 =  params.n_space[0] + 2 * oversize[0] +1;
     f_dim1 =  params.n_space[1] + 2 * oversize[1] +1;
     f_dim2 =  params.n_space[2] + 2 * oversize[2] +1;
-    
+
+    b_dim.resize(params.nDim_field, 1);
     if (nDim_particle == 1){
-        b_dim0 =  (1 + clrw) + 2 * oversize[0];
-        b_dim1 =  1;
-        b_dim2 =  1;
-        b_lastdim = b_dim0;
+        b_dim[0] =  (1 + clrw) + 2 * oversize[0];
     }
     if (nDim_particle == 2){
-        b_dim0 =  (1 + clrw) + 2 * oversize[0]; // There is a primal number of bins.
-        b_dim1 =  f_dim1;
-        b_dim2 =  1;
-        b_lastdim = b_dim1;
+        b_dim[0] =  (1 + clrw) + 2 * oversize[0]; // There is a primal number of bins.
+        b_dim[1] =  f_dim1;
     }
     if (nDim_particle == 3){
-        b_dim0 =  (1 + clrw) + 2 * oversize[0]; // There is a primal number of bins.
-        b_dim1 = f_dim1;
-        b_dim2 = f_dim2;
-        b_lastdim = b_dim2;
+        b_dim[0] =  (1 + clrw) + 2 * oversize[0]; // There is a primal number of bins.
+        b_dim[1] = f_dim1;
+        b_dim[2] = f_dim2;
     }
     
-    size_proj_buffer = b_dim0*b_dim1*b_dim2; //primal size of a single bufefr.
-    
     //Initialize specMPI
-    //specMPI.init();
+    MPIbuff.allocate(nDim_particle);
        
     //ener_tot = 0.;
     nrj_bc_lost = 0.;
@@ -167,6 +143,7 @@ Species::~Species()
     delete Push;
     if (Ionize) delete Ionize;
     if (partBoundCond) delete partBoundCond;
+    if (ppcProfile) delete ppcProfile;
     if (chargeProfile) delete chargeProfile;
     if (densityProfile) delete densityProfile;
     for (unsigned int i=0; i<velocityProfile.size(); i++)
@@ -206,7 +183,7 @@ void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
     // if charge is not integer, then particles can have two different charges
     } else {
         int tot = 0, Nm, Np;
-        double rr=r/(1-r), diff;
+        double rr=r/(1.-r), diff;
         Np = (int)round(r*(double)nPart);
         Nm = (int)nPart - Np;
         for (unsigned int p = iPart; p<iPart+nPart; p++) {
@@ -219,7 +196,7 @@ void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
             }
             tot += (*particles).charge(p);
         }
-        diff = ((double)nPart)*q - (double)tot; // missing charge
+        diff = q - ((double)tot)/((double)nPart); // missing charge
         if (diff != 0.) {
             WARNING("Could not match exactly charge="<<q<<" for species "<< species_type <<" (difference of "<<diff<<"). Try to add particles.");
         }
@@ -235,18 +212,31 @@ void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::initPosition(unsigned int nPart, unsigned int iPart, double *indexes)
 {
-    for (unsigned  p= iPart; p<iPart+nPart; p++) {
-        for (unsigned  i=0; i<nDim_particle ; i++) {
-            
-            // define new position (either regular or random)
-            if (initPosition_type == "regular") {
-                (*particles).position(i,p)=indexes[i]+(p-iPart+0.5)*cell_length[i]/nPart;
-            } else if (initPosition_type == "random") {
+    if (initPosition_type == "regular") {
+    
+        double coeff = pow((double)nPart,inv_nDim_field);
+        if( coeff != round(coeff) )
+            ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `initPosition_type = 'random'`");
+        
+        int coeff_ = coeff;
+        coeff = 1./coeff;
+        for (unsigned int  p=iPart; p<iPart+nPart; p++) {
+            int i = (int)(p-iPart);
+            for(unsigned int idim=0; idim<nDim_particle; idim++) {
+                (*particles).position(idim,p) = indexes[idim] + cell_length[idim] * coeff * (0.5 + i%coeff_);
+                i /= coeff_; // integer division
+            }
+        }
+        
+    } else if (initPosition_type == "random") {
+        
+        for (unsigned int p= iPart; p<iPart+nPart; p++) {
+            for (unsigned int i=0; i<nDim_particle ; i++) {
                 (*particles).position(i,p)=indexes[i]+(((double)rand() / RAND_MAX))*cell_length[i];
             }
-            //(*particles).position_old(i,p) = (*particles).position(i,p);
-        }// i
-    }// p
+        }
+        
+    }
 }
 
 
@@ -419,7 +409,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
             //Ionization
             if (Ionize){                                
-                for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
+                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
                     // Do the ionization (!for testParticles)
                     if ( (*particles).charge(iPart) < (int) atomic_number) {
                         //!\todo Check if it is necessary to put to 0 or if LocalFields ensures it
@@ -441,7 +431,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
 
             // Apply wall and boundary conditions
-            for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
+            for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
                 for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
                     if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, ener_iPart)) {
                         nrj_lost_per_thd[tid] += mass * ener_iPart;
@@ -461,11 +451,11 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
              // Project currents if not a Test species and charges as well if a diag is needed. 
              if (!(*particles).isTest)
-                 (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, b_lastdim, ispec );
+                 (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, b_dim, ispec );
 
         }// ibin
 
-        for (int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
+        for (unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
             nrj_bc_lost += nrj_lost_per_thd[tid];
 
         // Needs to be reviewed 
@@ -499,12 +489,14 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             double* b_rho;
             for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
 
-                if (params.nDim_field==2)
+                if (nDim_field==2)
                     b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1);    
-                else if (params.nDim_field==1)
+                if (nDim_field==3)
+                    b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1*f_dim2);    
+                else if (nDim_field==1)
                     b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw);    
-                for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
-                    (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_lastdim);
+                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                    (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
                 } //End loop on particles
             }//End loop on bins
             
@@ -653,8 +645,8 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     // Create particles in a space starting at cell_position
     vector<double> cell_position(3,0);
     vector<double> cell_index(3,0);
-    for (int i=0 ; i<params.nDim_field ; i++) {
-        if (params.cell_length[i]!=0) { // REALLY NECESSARY ????
+    for (unsigned int i=0 ; i<nDim_field ; i++) {
+        if (params.cell_length[i]!=0) {
             cell_position[i] = patch->getDomainLocalMin(i);
             cell_index   [i] = (double) patch->getCellStartingGlobalIndex(i);
         }
@@ -686,24 +678,28 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     }
     
     int npart_effective = 0;
-    double remainder, nppc, inv_nDim_field = -1./params.nDim_field;
+    double remainder, nppc;
+    
+    vector<double> x_cell(3,0);
     for (unsigned int i=0; i<n_space_to_create[0]; i++) {
+        x_cell[0] = cell_position[0] + (i+0.5)*cell_length[0];
         for (unsigned int j=0; j<n_space_to_create[1]; j++) {
+            x_cell[1] = cell_position[1] + (j+0.5)*cell_length[1];
             for (unsigned int k=0; k<n_space_to_create[2]; k++) {
-                
-                vector<double> x_cell(3,0);
-                x_cell[0] = cell_position[0] + (i+0.5)*cell_length[0];
-                x_cell[1] = cell_position[1] + (j+0.5)*cell_length[1];
                 x_cell[2] = cell_position[2] + (k+0.5)*cell_length[2];
                 
                 // Obtain the number of particles per cell
                 nppc = ppcProfile->valueAt(x_cell);
-                // If not a round number, then we need to decide how to round
-                remainder = pow(nppc - floor(nppc), inv_nDim_field);
                 n_part_in_cell(i,j,k) = floor(nppc);
-                if( fmod(cell_index[0]+(double)i, remainder) < 1.
-                 && fmod(cell_index[1]+(double)j, remainder) < 1.
-                 && fmod(cell_index[2]+(double)k, remainder) < 1. ) n_part_in_cell(i,j,k)++;
+                // If not a round number, then we need to decide how to round
+                double intpart;
+                if ( modf(nppc, &intpart) > 0) {
+                    remainder = pow(nppc - floor(nppc), -inv_nDim_field);
+                    if(   fmod(cell_index[0]+(double)i, remainder) < 1.
+                       && fmod(cell_index[1]+(double)j, remainder) < 1.
+                       && fmod(cell_index[2]+(double)k, remainder) < 1. ) n_part_in_cell(i,j,k)++;
+                }
+                
                 // If zero or less, zero particles
                 if( n_part_in_cell(i,j,k)<=0. ) {
                     n_part_in_cell(i,j,k) = 0.;
@@ -904,7 +900,7 @@ void Species::updateMvWinLimits(double x_moved)
 //Do we have to project this species ?
 bool Species::isProj(double time_dual, SimWindow* simWindow) {
 
-    return time_dual > time_frozen  || (simWindow && simWindow->isMoving(time_dual)) ;
+    return time_dual > time_frozen  || (simWindow->isMoving(time_dual)) ;
   
     //Recompute frozen particles density if
     //moving window is activated, actually moving at this time step, and we are not in a density slope.
@@ -923,4 +919,12 @@ bool Species::isProj(double time_dual, SimWindow* simWindow) {
             );
             return isproj;*/
     //return time_dual > species_param.time_frozen  || (simWindow && simWindow->isMoving(time_dual)) ;
+}
+
+void Species::disableEast() {
+    partBoundCond->bc_east   = NULL;
+}
+
+void Species::setWestBoundaryCondition() {
+    partBoundCond->bc_west   = &supp_particle;
 }

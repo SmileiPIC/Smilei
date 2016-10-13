@@ -1,5 +1,5 @@
 
-execfile("../../scripts/Diagnostics.py")
+from Smilei import *
 execfile("resparis.py")
 import numpy as np
 import matplotlib.pyplot as plt
@@ -30,7 +30,7 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 	if ncases == 0: continue
 
 	coulomb_log          = np.double(sim.namelist.Collisions[0].coulomb_log)
-	dt                   = np.double(sim.namelist.timestep)/(2*np.pi)
+	dt                   = np.double(sim.namelist.Main.timestep)/(2*np.pi)
 	
 	times = sim.ParticleDiagnostic(diagNumber=0).getAvailableTimesteps()
 	
