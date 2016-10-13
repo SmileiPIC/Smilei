@@ -87,6 +87,7 @@ class ParticleDiagnostic(Diagnostic):
 		# -------------------------------------------------------------------
 		# Get available timesteps
 		self.times = {}
+		self._times = {}
 		self._indexOfTime  = {}
 		self._h5items = {}
 		for d in self._diags:
@@ -97,8 +98,9 @@ class ParticleDiagnostic(Diagnostic):
 				f = self._h5py.File(path+self._os.sep+'ParticleDiagnostic'+str(d)+'.h5')
 				items.extend( f.values() )
 				times.extend( f.keys()   )
-			self._h5items.update({ d:items })
-			self.times.update({ d:self._np.array([ int(t.strip("timestep")) for t in times ]) })
+			self._h5items[d] = items
+			self.times[d] = self._np.array([ int(t.strip("timestep")) for t in times ])
+			self._times[d] = self.times[d]
 			# fill the "_indexOfTime" dictionary with indices to the data arrays
 			self._indexOfTime.update({ d:{} })
 			for i,t in enumerate(self.times[d]):
@@ -117,7 +119,8 @@ class ParticleDiagnostic(Diagnostic):
 					+str(self._diags[0])+" has "+str(len(self.times[self._diags[0]]))+ " timesteps"
 				return
 		# Now we need to keep only one array of timesteps because they should be all the same
-		self.times = self.times[self._diags[0]]
+		self.times  = self.times [self._diags[0]]
+		self._times = self._times[self._diags[0]]
 		
 		# Need at least one timestep
 		if self.times.size < 1:
@@ -369,7 +372,7 @@ class ParticleDiagnostic(Diagnostic):
 	def getAvailableTimesteps(self, diagNumber=None):
 		# if argument "diagNumber" not provided, return the times calculated in __init__
 		if diagNumber is None:
-			return self.times
+			return self._times
 		# Otherwise, get the timesteps specifically available for the single requested diagnostic
 		else:
 			times = []

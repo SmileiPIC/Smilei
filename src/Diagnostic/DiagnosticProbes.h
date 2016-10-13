@@ -70,6 +70,9 @@ private :
     //! number of points for this probe
     unsigned int nPart_total;
     
+    //! Actual number of points (without those outside the box)
+    unsigned int nPart_total_actual;
+    
     //! number of point for this probe, in the current MPI process
     unsigned int nPart_MPI;
     
