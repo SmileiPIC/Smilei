@@ -318,7 +318,7 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     hid_t memspace  = H5Screate_simple(2, mem_size, NULL);
     // Define size and location in file
     hsize_t dimsf[2], offset[2], stride[2], count[2], block[2];
-    dimsf[0] = nPart_total;
+    dimsf[0] = nPart_total_actual;
     dimsf[1] = nDim_particle;
     hid_t filespace = H5Screate_simple(2, dimsf, NULL);
     if( nPart_MPI>0 ) {
@@ -470,8 +470,8 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
     MPI_Allgather( &nPart_MPI, 1, MPI_INT, &all_nPart[0], 1, MPI_INT, MPI_COMM_WORLD );
     
     // Calculate the cumulative sum
-    for (int irk=1 ; irk<sz ; irk++)
-        all_nPart[irk] += all_nPart[irk-1];
+    for (int rk=1 ; rk<sz ; rk++)
+        all_nPart[rk] += all_nPart[rk-1];
     
     // Add the MPI offset to all patches
     if( ! smpi->isMaster() ) {
@@ -481,6 +481,9 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
             vecPatches(ipatch)->probes[probe_n]->offset_in_file = offset_in_file[ipatch];
         }
     }
+    
+    // Store the actual total number points
+    nPart_total_actual = all_nPart[sz-1];
     
     // (Re-) initialize the flag to tell whether probes should be re-calculated next time
     patchesHaveMoved = false;
@@ -561,7 +564,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         hid_t memspace  = H5Screate_simple(2, mem_size, NULL);
         // Define size and location in file
         hsize_t dimsf[2], offset[2], stride[2], count[2], block[2];
-        dimsf[1] = nPart_total;
+        dimsf[1] = nPart_total_actual;
         dimsf[0] = nFields;
         hid_t filespace = H5Screate_simple(2, dimsf, NULL);
         if( nPart_MPI>0 ) {

@@ -106,6 +106,7 @@ class Probe(Diagnostic):
 		self._myinfo = self._getMyInfo()
 		self._initialShape = self._myinfo["shape"]
 		if self._initialShape.prod()==1: self._initialShape=self._np.array([])
+		self.numpoints = self._h5probe[0]["positions"].shape[0]
 		
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
@@ -197,6 +198,8 @@ class Probe(Diagnostic):
 		# Special case in 1D: we convert the point locations to scalar distances
 		if len(self._centers) == 1:
 			self._centers[0] = self._np.sqrt(self._np.sum((self._centers[0]-self._centers[0][0])**2,axis=1))
+			self._centers[0] = self._np.maximum( self._centers[0], 0.)
+			self._centers[0] = self._np.minimum( self._centers[0], self._ncels[0]*self._cell_length[0])
 		# Special case in 2D: we have to prepare for pcolormesh instead of imshow
 		elif len(self._centers) == 2:
 			p1 = self._centers[0] # locations of grid points along first dimension
@@ -214,6 +217,10 @@ class Probe(Diagnostic):
 			for i in range(p2.shape[0]):
 				X[:,i] = p1[:,0] + p2[i,0]-p2[0,0]
 				Y[:,i] = p1[:,1] + p2[i,1]-p2[0,1]
+			X = self._np.maximum( X, 0.)
+			X = self._np.minimum( X, self._ncels[0]*self._cell_length[0])
+			Y = self._np.maximum( Y, 0.)
+			Y = self._np.minimum( Y, self._ncels[1]*self._cell_length[1])
 			self._edges = [X, Y]
 			self._label = ["x", "y"]
 			self._units = [axisunits, axisunits]
@@ -235,16 +242,17 @@ class Probe(Diagnostic):
 			# If 2D or 3D probe, must calculate matrix inverse
 			else:
 				invp = self._np.linalg.inv(p.transpose())
-			self._ordering = self._np.zeros((positions.shape[0],), dtype=int)-1
-			for n in range(positions.shape[0]):
-				pos = positions[n]
-				ijk = self._np.dot(invp, pos)*(self._initialShape-1) # find the indices of the point
-				i = ijk[0]
-				for l in range(1,len(ijk)): i=i*self._initialShape[l]+ijk[l] # linearized index
-				try:
-					self._ordering[int(round(i))] = n
-				except:
-					pass
+			# Make the ordering vector
+			self._ordering = self._np.zeros((self._initialShape.prod(),), dtype=int)-1
+			for indexInFile in range(positions.shape[0]):
+				posInFile = positions[indexInFile]
+				ijk = self._np.dot(invp, posInFile)*(self._initialShape-1) # find the indices of the point
+				indexInArray = ijk[0]
+				for l in range(1,len(ijk)): indexInArray = indexInArray*self._initialShape[l]+ijk[l] # linearized index
+				indexInArray = int(round(indexInArray))
+				#print indexInFile, indexInArray, posInFile, ijk
+				try   : self._ordering[indexInArray] = indexInFile
+				except: pass
 		
 		# Build units
 		titles = {}
@@ -260,7 +268,7 @@ class Probe(Diagnostic):
 			self._title  = self._title .replace("#"+str(n), titles    [n])
 			self._vunits = self._vunits.replace("#"+str(n), fieldunits[n])
 		
-		self._buffer = self._np.zeros((self._myinfo["shape"].prod(),), dtype="double")
+		self._buffer = self._np.zeros((self.numpoints,), dtype="double")
 		
 		# Finish constructor
 		self.valid = True
@@ -330,7 +338,7 @@ class Probe(Diagnostic):
 		C = {}
 		op = self.operation
 		for n in reversed(self._fieldn): # for each field in operation
-			self._dataForTime[t].read_direct(self._buffer, source_sel=self._np.s_[n,:]) # get array
+			self._dataForTime[t].read_direct(self._buffer, source_sel=self._np.s_[n,:])
 			C.update({ n:self._buffer })
 			op = op.replace("#"+str(n), "C["+str(n)+"]")
 		# Calculate the operation

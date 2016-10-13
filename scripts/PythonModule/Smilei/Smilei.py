@@ -493,6 +493,7 @@ class Smilei(object):
 				elif args[1]!=prevArgs[0] or (args[2]!=prevArgs[1]).any() or (args[3]!=prevArgs[2]).any() or args[4:]!=prevArgs[3:]:
 					print("The simulation in path '"+path+"' is not compatible with the other ones")
 					return
+				print("Loaded simulation '"+path+"'")
 			# Update the simulation parameters
 			self._ndim, self._cell_length, self._ncels, self._timestep, self._referenceAngularFrequency_SI = args[1:]
 			self.namelist = args[0]
