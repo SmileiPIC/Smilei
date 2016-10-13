@@ -2,6 +2,7 @@
 #include "DiagnosticScalar.h"
 
 #include <iomanip>
+#include <algorithm>
 
 using namespace std;
 
@@ -427,16 +428,26 @@ void DiagnosticScalar::incrementScalar(string my_var, double value){
 void DiagnosticScalar::incrementScalar(string my_var, double value, int valIndex){
     for (unsigned int i=0; i< out_key.size(); i++) {
         if  ( (out_key[i]==my_var) && ( my_var.find("Min")!= std::string::npos ) && (my_var.find("Cell")== std::string::npos) ) {
-            if ( value < out_value[i] ) {
+            if ( value <= out_value[i] ) {
+                // Retain the smallest valIndex when several min are reached.
+                if ( value < out_value[i] ) {
+                    out_value[i+1] = valIndex;
+                } else {
+                    out_value[i+1] = std::min(out_value[i+1], (double)valIndex);
+                }
                 out_value[i] = value;
-                out_value[i+1] = valIndex;
             }
             return;
         }
         else if  ( (out_key[i]==my_var) && ( my_var.find("Max")!= std::string::npos ) && (my_var.find("Cell")== std::string::npos) ) {
-            if ( value > out_value[i] ) {
+            if ( value >= out_value[i] ) {
+                // Retain the smallest valIndex when several max are reached.
+                if ( value > out_value[i] ) {
+                    out_value[i+1] = valIndex;
+                } else {
+                    out_value[i+1] = std::min(out_value[i+1], (double)valIndex);
+                }
                 out_value[i] = value;
-                out_value[i+1] = valIndex;
             }
             return;
         }

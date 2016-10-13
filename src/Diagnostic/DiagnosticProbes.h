@@ -30,7 +30,19 @@ public :
     
     void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) override;
     
-    void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
+    void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;    
+    
+    //! Creates the probe's particles (or "points")
+    void createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bool createFile);
+    
+    //! Probes position storage at initialization and for moving window
+    Field2D* posArray;
+    
+    //! True if load balancing or moving window have taken place 
+    bool patchesHaveMoved;
+    
+    //! If the window has moved, then x_moved contains the movement
+    double x_moved;
     
 private :
     
@@ -49,8 +61,17 @@ private :
     //! List of the coordinates of the probe vertices
     std::vector< std::vector<double> > allPos;
     
-    //! number of fake particles for each probe diagnostic
+    //! Matrix containing the probe's coordinate system
+    std::vector<double> axes;
+    
+    //! Inverse matrix from the probe's coordinate system
+    std::vector<double> axesInverse;
+    
+    //! number of points for this probe
     unsigned int nPart_total;
+    
+    //! number of point for this probe, in the current MPI process
+    unsigned int nPart_MPI;
     
     //! Number of fields to save
     int nFields;
@@ -67,8 +88,11 @@ private :
     //! Temporary buffer to write probes
     Field2D* probesArray;
     
-    //! Temporary array to locate the current patch in the buffer
-    std::vector<unsigned int> offset;
+    //! Array to locate the current patch in the local buffer
+    std::vector<unsigned int> offset_in_MPI;
+    
+    //! Array to locate the current patch in the file
+    std::vector<unsigned int> offset_in_file;
 };
 
 

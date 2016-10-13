@@ -82,6 +82,21 @@ void Patch2D::initStep2(Params& params)
 
 }
 
+
+Patch2D::~Patch2D()
+{
+    for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+        for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
+            MPI_Type_free( &(ntype_[0][ix_isPrim][iy_isPrim]) );
+            MPI_Type_free( &(ntype_[1][ix_isPrim][iy_isPrim]) );
+            MPI_Type_free( &(ntype_[2][ix_isPrim][iy_isPrim]) );
+            MPI_Type_free( &(ntypeSum_[0][ix_isPrim][iy_isPrim]) );
+            MPI_Type_free( &(ntypeSum_[1][ix_isPrim][iy_isPrim]) );            
+        }
+    }
+}
+
+
 void Patch2D::reallyinitSumField( Field* field, int iDim )
 {
     if (field->MPIbuff.srequest.size()==0)
@@ -126,7 +141,7 @@ void Patch2D::initSumField( Field* field, int iDim )
     if (field->MPIbuff.srequest.size()==0)
         field->MPIbuff.allocate(2);
 
-    int patch_ndims_(2);
+//    int patch_ndims_(2);
     int patch_nbNeighbors_(2);
     
     
@@ -195,7 +210,7 @@ void Patch2D::initSumField( Field* field, int iDim )
 void Patch2D::finalizeSumField( Field* field, int iDim )
 {
     int patch_ndims_(2);
-    int patch_nbNeighbors_(2);
+//    int patch_nbNeighbors_(2);
     std::vector<unsigned int> n_elem = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
     Field2D* f2D =  static_cast<Field2D*>(field);
@@ -209,7 +224,6 @@ void Patch2D::finalizeSumField( Field* field, int iDim )
     oversize2[1] *= 2;
     oversize2[1] += 1 + f2D->isDual_[1];
     
-    int istart;
     /********************************************************************************/
     // Send/Recv in a buffer data to sum
     /********************************************************************************/
@@ -231,7 +245,7 @@ void Patch2D::finalizeSumField( Field* field, int iDim )
 
 void Patch2D::reallyfinalizeSumField( Field* field, int iDim )
 {
-    int patch_ndims_(2);
+//    int patch_ndims_(2);
     int patch_nbNeighbors_(2);
     std::vector<unsigned int> n_elem = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;

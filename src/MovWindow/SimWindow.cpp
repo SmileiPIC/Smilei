@@ -41,6 +41,9 @@ SimWindow::SimWindow(Params& params)
         MESSAGE(1,"Moving window is active:");
         MESSAGE(2,"velocity_x : " << velocity_x);
         MESSAGE(2,"time_start : " << time_start);
+        params.hasWindow = true;
+    } else {
+        params.hasWindow = false;
     }
     
 }
@@ -111,6 +114,14 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     vecPatches(0)->EMfields->storeNRJlost( energy_field_lost );
     for ( unsigned int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size() ; ispec++ )
         vecPatches(0)->vecSpecies[ispec]->storeNRJlost( energy_part_lost[ispec] );
+    
+    //! \todo Removed the following block because Probes are not transferred together with the patches
+    //
+    //// Store offset in file for current MPI process
+    ////   Sould be store in the diagnostic itself
+    //vector<int> offset(vecPatches(0)->probes.size());
+    //for (unsigned int iprobe=0;iprobe<vecPatches(0)->probes.size();iprobe++)
+    //    offset[iprobe] = vecPatches(0)->probes[iprobe]->offset_in_file;
 
     nPatches = vecPatches.size();
 
@@ -224,6 +235,22 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     
     vecPatches.set_refHindex() ;
     vecPatches.update_field_list() ;
+    
+    // \todo Temporary change: instead of moving probes, we re-create them.
+    // This should allow load balancing and moving window to work for probes.
+    //
+    //vecPatches.move_probes(params, x_moved);
+    //for (unsigned int iprobe=0;iprobe<vecPatches(0)->probes.size();iprobe++)
+    //    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+    //        vecPatches(ipatch)->probes[iprobe]->offset_in_file = offset[iprobe];
+    //
+    for (unsigned int idiag = 0 ; idiag < vecPatches.localDiags.size() ; idiag++) {
+        DiagnosticProbes* diagProbes = dynamic_cast<DiagnosticProbes*>(vecPatches.localDiags[idiag]);
+        if ( diagProbes ) {
+            diagProbes->patchesHaveMoved = true;
+            diagProbes->x_moved = x_moved;
+        }
+    }
     
     return;
     

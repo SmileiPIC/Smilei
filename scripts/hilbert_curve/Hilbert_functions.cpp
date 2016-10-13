@@ -42,7 +42,7 @@ unsigned int gcinv(unsigned int g)
     unsigned int i,j;
     i=g;
     j=1;
-    while ((1<<j) <= g){
+    while ((((unsigned int)1)<<j) <= g){
     i = i ^ (g >> j);    
     j++;
     }
@@ -195,7 +195,7 @@ unsigned int generalhilbertindex(unsigned int m0, unsigned int m1, int x, int y,
        mmin = m0;
        mmax = m1;
     }
-    for (int i= mmax-1; i >= mmin ; i--){
+    for (int i= (int)mmax-1; i >= (int)mmin ; i--){
        l = bit(*target,i); 
        h += l*(1<<(i+mmin));
        *target -= l*(1<<i);
@@ -210,7 +210,8 @@ unsigned int generalhilbertindex(unsigned int m0, unsigned int m1, int x, int y)
 
     if( (x<0) || (x>=(1<<m0)) || (y<0) || (y>=(1<<m1)) )return -2 ;
 
-    unsigned int h,mmin,mmax,l,localx,localy,*target,einit,dinit;
+    unsigned int h,l,localx,localy,*target,einit,dinit;
+    int mmin, mmax;
     h=0;
     dinit=0;
     einit=0;
@@ -232,7 +233,7 @@ unsigned int generalhilbertindex(unsigned int m0, unsigned int m1, int x, int y)
        *target -= l*(1<<i);
     }
     if (mmin > 0) {
-        h += hilbertindex(mmin,localx,localy,&einit,&dinit);
+      h += hilbertindex((unsigned int)mmin,localx,localy,&einit,&dinit);
     }
 return h;
 }
@@ -242,7 +243,7 @@ unsigned int generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int 
 {
     if( (x<0) || (x>=(1<<m0)) || (y<0) || (y>=(1<<m1)) || (z<0) || (z>=(1<<m2)))return -2 ;
 
-    unsigned int h,e,d,*einit,*dinit,dimmin,dimmax,dimmed,l,localx,localy,localz, mi[3],localp[3],tempp[3],mmin;
+    unsigned int h,e,d,*einit,*dinit,dimmin,dimmax,dimmed, mi[3],localp[3],tempp[3];
     h=0;
     e=0;
     d=0;
@@ -326,7 +327,7 @@ void generalhilbertindexinv(unsigned int m0, unsigned int m1, unsigned int* x, u
 //3D version
 void generalhilbertindexinv(unsigned int m0, unsigned int m1, unsigned int m2,  unsigned int* x, unsigned int* y, unsigned int* z, unsigned int h)
 {
-    unsigned int e,d,dimmin,dimmax,dimmed,l,localx,localy,localz, mi[3],*localp[3],tempp[3],localh;
+    unsigned int e,d,dimmin,dimmax,dimmed, mi[3],*localp[3],tempp[3],localh;
     e=0;
     d=0;
     //Store positions and dimensions in arrays

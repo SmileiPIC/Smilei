@@ -19,7 +19,7 @@ public:
     void initStep2(Params& params) override final;
     
     //! Destructor for Patch
-    ~Patch2D() override  final{};
+    ~Patch2D() override  final;
 
 
     // MPI exchange/sum methods for particles/fields
