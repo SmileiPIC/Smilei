@@ -67,8 +67,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     int nmax_laser = 4;
     int nmessage = 2*nSpecies+(2+params.nDim_particle)*vecPatches(0)->probes.size()+
         9+vecPatches(0)->EMfields->antennas.size()+4*nmax_laser;
-    vector<int> nbrOfPartsSend(nSpecies,0);
-    vector<int> nbrOfPartsRecv(nSpecies,0);
     
     double energy_field_lost(0.);
     vector<double> energy_part_lost( vecPatches(0)->vecSpecies.size(), 0. );
@@ -161,7 +159,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     }
 
     //Wait for all send to be completed by the receivers too.
-    //MPI_Barrier(MPI_COMM_WORLD);
     smpi->barrier();
 
     // Suppress after exchange to not distrub patch position during exchange
@@ -183,10 +180,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         if (vecPatches(ipatch)->neighbor_[0][0] != (int)vecPatches(ipatch)->hindex) continue;
             
         //For now also need to update neighbor_, corner_neighbor and their MPI counterparts even if these will be obsolete eventually.
-        //vecPatches(ipatch)->corner_neighbor_[1][0]= vecPatches(ipatch)->neighbor_[1][0]; //useless
         vecPatches(ipatch)->neighbor_[1][0]=        vecPatches(ipatch)->corner_neighbor_[0][0];
-
-        //vecPatches(ipatch)->corner_neighbor_[1][1]= vecPatches(ipatch)->neighbor_[1][1]; //useless
         vecPatches(ipatch)->neighbor_[1][1]=        vecPatches(ipatch)->corner_neighbor_[0][1];
 
         if (params.nDim_field == 3) {
