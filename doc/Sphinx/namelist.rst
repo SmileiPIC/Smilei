@@ -342,6 +342,7 @@ Each species has to be defined in a ``Species`` block::
    
    * ``"regular"`` for regularly spaced
    * ``"random"`` for randomly distributed
+   * ``"centered"`` for centered in each cell
 
 
 .. py:data:: initMomentum_type
