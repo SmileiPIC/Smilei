@@ -146,8 +146,6 @@ class ProbeFactory(object):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
 		
-		if len(simulation._results_path)>1: return
-		
 		# If not a specific probe, build a list of probe shortcuts
 		if probeNumber is None:
 			# Create a temporary, empty probe diagnostic

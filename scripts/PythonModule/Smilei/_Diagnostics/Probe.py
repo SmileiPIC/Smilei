@@ -8,49 +8,72 @@ class Probe(Diagnostic):
 	# This is the constructor, which creates the object
 	def _init(self, probeNumber=None, field=None, timesteps=None, slice=None, data_log=False, **kwargs):
 		
-		self._h5probe = None
+		self._h5probe = []
+		self._times = []
 		
-		if len(self._results_path)>1:
-			self._error = "Unable to process multiple simulations for now"
-			return
+		# Get the available probes
+		for path in self._results_path:
+			files = self._glob(path+self._os.sep+"Probes*.h5")
+			probes = [self._re.findall(r"Probes([0-9]+)[.]h5$",file)[0] for file in files]
+			try   : self._probes = [p for p in probes if p in self._probes]
+			except: self._probes = probes
 		
 		# If no probeNumber, print available probes
 		if probeNumber is None:
-			probes = self.getProbes()
-			if len(probes)>0:
+			if len(self._probes)>0:
 				self._error += "Printing available probes:\n"
 				self._error += "--------------------------\n"
-				for p in probes:
+				for p in self._probes:
 					self._error += self._info(self._getInfo(p))
 			else:
-				self._error += "No probes found in '"+self._results_path[0]+"'"
+				self._error += "No probes found"
 			return
 		
 		# Try to get the probe from the hdf5 file
-		self.probeNumber  = probeNumber
-		self._file = self._results_path[0]+"/Probes"+str(self.probeNumber)+".h5"
-		try:
-			self._h5probe = self._h5py.File(self._file, 'r')
-		except:
-			self._error += "Cannot find probe "+str(probeNumber)
+		self.probeNumber = probeNumber
+		for path in self._results_path:
+			# Open file
+			file = path+self._os.sep+"Probes"+str(self.probeNumber)+".h5"
+			try:
+				self._h5probe.append( self._h5py.File(file, 'r') )
+			except:
+				self._error = "Error opening probe #"+str(probeNumber)+" in path '"+path+"'"
+				return
+			# Verify that this file is compatible with the previous ones
+			try:
+				for key, val in verifications.items():
+					if self._h5probe[-1][key].shape != val:
+						self._error = "Probe #"+str(probeNumber)+" in path '"+path+"' is incompatible with the other ones"
+						return
+			except:
+				verifications = {"number":self._h5probe[-1]["number"].shape}
+				for i in range(self._h5probe[-1]["number"].size+1):
+					verifications["p"+str(i)] = self._h5probe[-1]["p"+str(i)].shape
+		
+		# Get available times
+		self._dataForTime = {}
+		for file in self._h5probe:
+			for key, val in file.items():
+				try   :
+					t = int(key)
+					self._times.append( t )
+					self._dataForTime[t] = val
+				except: break
+		self._times = self._np.double(self._times)
+		if self._times.size == 0:
+			self._error = "No timesteps found"
 			return
 		
 		# Extract available fields
 		fields = self.getFields()
 		if len(fields) == 0:
-			self._error += "Probe #"+probeNumber+" is empty"
+			self._error = "No fields found for probe #"+probeNumber
 			return
 		# If no field, print available fields
 		if field is None:
 			self._error += "Printing available fields for probe #"+str(probeNumber)+":\n"
 			self._error += "----------------------------------------\n"
 			self._error += ", ".join(fields)+"\n"
-			return
-		
-		# Get available times
-		self.times = self.getAvailableTimesteps()
-		if self.times.size == 0:
-			self._error += "No probes found in Probes.h5"
 			return
 		
 		# 1 - verifications, initialization
@@ -86,21 +109,18 @@ class Probe(Diagnostic):
 		
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
-		# fill the "data" dictionary with indices to the data arrays
-		self._data = {}
-		for t in self.times:
-			self._data.update({ t : "%010i"%t })
 		# If timesteps is None, then keep all timesteps otherwise, select timesteps
+		self.times = self._times
 		if timesteps is not None:
 			try:
 				self.times = self._selectTimesteps(timesteps, self.times)
 			except:
-				self._error += "Argument `timesteps` must be one or two non-negative integers"
+				self._error = "Argument `timesteps` must be one or two non-negative integers"
 				return
 		
 		# Need at least one timestep
 		if self.times.size < 1:
-			self._error += "Timesteps not found"
+			self._error = "Timesteps not found"
 			return
 		
 		
@@ -199,7 +219,7 @@ class Probe(Diagnostic):
 			self._units = [axisunits, axisunits]
 		
 		# Prepare the reordering of the points for patches disorder
-		positions = self._h5probe["positions"].value # actual probe points positions
+		positions = self._h5probe[0]["positions"].value # actual probe points positions
 		self._ordering = None
 		if self._naxes>0:
 			p = self._np.array(p) # matrix of the probe generating vectors
@@ -240,13 +260,15 @@ class Probe(Diagnostic):
 			self._title  = self._title .replace("#"+str(n), titles    [n])
 			self._vunits = self._vunits.replace("#"+str(n), fieldunits[n])
 		
+		self._buffer = self._np.zeros((self._myinfo["shape"].prod(),), dtype="double")
+		
 		# Finish constructor
 		self.valid = True
 	
 	# destructor
 	def __del__(self):
-		if self._h5probe is not None:
-			self._h5probe.close()
+		for file in self._h5probe:
+			file.close()
 	
 	# Method to print info previously obtained with getInfo
 	def _info(self, info=None):
@@ -282,23 +304,19 @@ class Probe(Diagnostic):
 	
 	# get all available probes
 	def getProbes(self):
-		files = self._glob(self._results_path[0]+"/Probes*.h5")
-		probes = []
-		for file in files:
-			probes.append( self._re.findall(r"Probes([0-9]+)[.]h5$",file)[0] )
-		return probes
+		return self._probes
 	
 	# get all available fields
 	def getFields(self):
-		return str(self._h5probe.attrs["fields"]).split(",")
+		for file in self._h5probe:
+			fields_here = str(file.attrs["fields"]).split(",")
+			try   : fields = [f for f in fields_here if f in fields]
+			except: fields = fields_here
+		return fields
 	
 	# get all available timesteps
 	def getAvailableTimesteps(self):
-		times = []
-		for key in self._h5probe.keys():
-			try   : times.append( int(key) )
-			except: pass
-		return self._np.double(times)
+		return self._times
 	
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):
@@ -309,12 +327,11 @@ class Probe(Diagnostic):
 			return []
 		# Get arrays from requested field
 		# get data
-		index = self._data[t]
 		C = {}
 		op = self.operation
 		for n in reversed(self._fieldn): # for each field in operation
-			B = self._np.double(self._h5probe[index][n,:]) # get array
-			C.update({ n:B })
+			self._dataForTime[t].read_direct(self._buffer, source_sel=self._np.s_[n,:]) # get array
+			C.update({ n:self._buffer })
 			op = op.replace("#"+str(n), "C["+str(n)+"]")
 		# Calculate the operation
 		A = eval(op)
