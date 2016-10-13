@@ -263,6 +263,7 @@ void SmileiMPI::init_patch_count( Params& params)
         }
         //Add grid contribution to the load.
         PatchLoad[ipatch] += ncells_perpatch*params.coef_cell;
+        total_load += PatchLoad[ipatch];
     }
     densityProfiles.resize(0); densityProfiles.clear();
     ppcProfiles.resize(0); ppcProfiles.clear();
@@ -270,8 +271,8 @@ void SmileiMPI::init_patch_count( Params& params)
     // Fourth, the arrangement of patches is balanced
     
     // Initialize loads
-    total_load = Npatches*ncells_perpatch*params.coef_cell ; // We assume the load of one cell to be equal to coef_cell and account for ghost cells.
-    Tload = total_load/Tcapabilities; //Target load for each mpi process.
+    MPI_Reduce( &total_load, &Tload, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+    Tload /= Tcapabilities; //Target load for each mpi process.
     Tcur = Tload * capabilities[0];  //Init.
     r = 0;  //Start by finding work for rank 0.
     Ncur = 0; // Number of patches assigned to current rank r.
@@ -327,7 +328,7 @@ void SmileiMPI::init_patch_count( Params& params)
         // The master cpu also writes the patch count to the file
         ofstream fout;
         fout.open ("patch_load.txt");
-        fout << "Total load = " << total_load << endl;
+        fout << "Total load = " << Tload << endl;
         for (rk=0; rk<smilei_sz; rk++)
             fout << "patch count = " << patch_count[rk]<<endl;
         fout.close();
