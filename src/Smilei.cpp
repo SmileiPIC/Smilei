@@ -149,7 +149,7 @@ int main (int argc, char* argv[])
             vecPatches.applyAntennas(0.5 * params.timestep);
         
         // Init electric field (Ex/1D, + Ey/2D)
-        if (!vecPatches.isRhoNull(smpi)) {
+        if (!vecPatches.isRhoNull(smpi) && params.poisson_flag == true) {
             TITLE("Solving Poisson at time t = 0");
             Timer ptimer;
             ptimer.init(smpi, "global");
@@ -278,10 +278,12 @@ int main (int argc, char* argv[])
         
         
         
-        if ((itime%params.balancing_every == 0)&&(smpi->getSize()!=1)) {
-            timer[7].restart();
-            vecPatches.load_balance( params, time_dual, smpi, simWindow );
-            timer[7].update( vecPatches.printScalars( itime ) );
+        if ((params.balancing_every > 0) && (smpi->getSize()!=1) ) {
+            if (( itime%params.balancing_every == 0 )) {
+                timer[7].restart();
+                vecPatches.load_balance( params, time_dual, smpi, simWindow );
+                timer[7].update( vecPatches.printScalars( itime ) );
+            }
         }
         
         latestTimeStep = itime;

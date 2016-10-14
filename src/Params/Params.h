@@ -146,6 +146,8 @@ public:
     double coef_frozen;
     //! Return if number of patch = number of MPI process, to tune IO //ism
     bool one_patch_per_MPI;
+    //! Compute an initially balanced patch distribution right from the start
+    bool initial_balance;
     
     //! Tells whether there is a moving window
     bool hasWindow;
@@ -168,6 +170,14 @@ public:
     
     //! Method to find the numbers of requested species, sorted, and duplicates removed
     static std::vector<unsigned int> FindSpecies(std::vector<Species*>&, std::vector<std::string>);
+
+    //Poisson solver
+    //! Do we solve poisson
+    bool poisson_flag;
+    //! Maxium number of poisson iteration
+    unsigned int poisson_iter_max;
+    //! Maxium poisson error tolerated
+    double poisson_error_max;
     
 
 private:    

@@ -128,6 +128,7 @@ class Main(SmileiSingleton):
     timestep_over_CFL = None
     
     # Poisson tuning
+    poisson_flag = True
     poisson_iter_max = 50000
     poisson_error_max = 1.e-14
     
@@ -184,7 +185,8 @@ class Main(SmileiSingleton):
 class LoadBalancing(SmileiSingleton):
     """Load balancing parameters"""
     
-    every = None
+    every = 150
+    initial_balance = True
     coef_cell = 1.0
     coef_frozen = 0.1
 

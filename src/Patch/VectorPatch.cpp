@@ -318,11 +318,8 @@ bool VectorPatch::isRhoNull( SmileiMPI* smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 {
-    unsigned int iteration_max;
-    PyTools::extract("poisson_iter_max", iteration_max, "Main");
-
-    double error_max;
-    PyTools::extract("poisson_error_max", error_max, "Main");
+    unsigned int iteration_max = params.poisson_iter_max;
+    double           error_max = params.poisson_error_max;
     unsigned int iteration=0;
     
     // Init & Store internal data (phi, r, p, Ap) per patch

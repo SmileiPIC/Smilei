@@ -218,52 +218,56 @@ void SmileiMPI::init_patch_count( Params& params)
     }
     
     // Third, loop over local patches to obtain their approximate load
-    vector<double> PatchLoad (Npatches_local, 0.);
-    for(unsigned int ipatch=0; ipatch<Npatches_local; ipatch++){
-        // Get patch coordinates
-        unsigned int hindex = FirstPatch_local + ipatch;
-        generalhilbertindexinv(params.mi[0], params.mi[1], params.mi[2], &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
-        for (unsigned int i=0 ; i<params.nDim_field ; i++) {
-            Pcoordinates[i] *= params.n_space[i];
-            if (params.cell_length[i]!=0.) {
-                cell_xmin[i] = (Pcoordinates[i]+0.5)*params.cell_length[i];
-                cell_xmax[i] = (Pcoordinates[i]+0.5+params.n_space[i])*params.cell_length[i];
-            }
-        }
-        //Accumulate particles load of the current patch
-        for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++){
-            local_load = 0.;
-            
-            // This commented block loops through all cells of the current patch to calculate the load
-            //for (x_cell[0]=cell_xmin[0]; x_cell[0]<cell_xmax[0]; x_cell[0]+=cell_dx[0]) {
-            //    for (x_cell[1]=cell_xmin[1]; x_cell[1]<cell_xmax[1]; x_cell[1]+=cell_dx[1]) {
-            //        for (x_cell[2]=cell_xmin[2]; x_cell[2]<cell_xmax[2]; x_cell[2]+=cell_dx[2]) {
-            //            double n_part_in_cell = floor(ppcProfiles[ispecies]->valueAt(x_cell));
-            //            if( n_part_in_cell<=0. ) continue;
-            //            else if( densityProfiles[ispecies]->valueAt(x_cell)==0. ) continue;
-            //            local_load += n_part_in_cell;
-            //        }
-            //    }
-            //}
-            // Instead of looping all cells, the following takes only the central point (much faster)
+    vector<double> PatchLoad (Npatches_local, 1.);
+    if (params.balancing_every <= 0 || !(params.initial_balance) ){
+        total_load = Npatches_local; //We don't balance the simulation, all patches have a load of 1.
+    } else {
+        for(unsigned int ipatch=0; ipatch<Npatches_local; ipatch++){
+            // Get patch coordinates
+            unsigned int hindex = FirstPatch_local + ipatch;
+            generalhilbertindexinv(params.mi[0], params.mi[1], params.mi[2], &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
             for (unsigned int i=0 ; i<params.nDim_field ; i++) {
-                if (params.cell_length[i]==0.) x_cell[i] = 0.;
-                else x_cell[i] = 0.5*(cell_xmin[i]+cell_xmax[i]);
+                Pcoordinates[i] *= params.n_space[i];
+                if (params.cell_length[i]!=0.) {
+                    cell_xmin[i] = (Pcoordinates[i]+0.5)*params.cell_length[i];
+                    cell_xmax[i] = (Pcoordinates[i]+0.5+params.n_space[i])*params.cell_length[i];
+                }
             }
-            double n_part_in_cell = floor(ppcProfiles[ispecies]->valueAt(x_cell));
-            if( n_part_in_cell && densityProfiles[ispecies]->valueAt(x_cell)!=0.)
-                local_load += n_part_in_cell * ncells_perpatch;
-            
-            // Consider whether this species is frozen
-            double time_frozen(0.);
-            PyTools::extract("time_frozen",time_frozen ,"Species",ispecies);
-            if(time_frozen > 0.) local_load *= params.coef_frozen;
-            // Add the load of the species to the current patch load
-            PatchLoad[ipatch] += local_load;
+            //Accumulate particles load of the current patch
+            for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++){
+                local_load = 0.;
+                
+                // This commented block loops through all cells of the current patch to calculate the load
+                //for (x_cell[0]=cell_xmin[0]; x_cell[0]<cell_xmax[0]; x_cell[0]+=cell_dx[0]) {
+                //    for (x_cell[1]=cell_xmin[1]; x_cell[1]<cell_xmax[1]; x_cell[1]+=cell_dx[1]) {
+                //        for (x_cell[2]=cell_xmin[2]; x_cell[2]<cell_xmax[2]; x_cell[2]+=cell_dx[2]) {
+                //            double n_part_in_cell = floor(ppcProfiles[ispecies]->valueAt(x_cell));
+                //            if( n_part_in_cell<=0. ) continue;
+                //            else if( densityProfiles[ispecies]->valueAt(x_cell)==0. ) continue;
+                //            local_load += n_part_in_cell;
+                //        }
+                //    }
+                //}
+                // Instead of looping all cells, the following takes only the central point (much faster)
+                for (unsigned int i=0 ; i<params.nDim_field ; i++) {
+                    if (params.cell_length[i]==0.) x_cell[i] = 0.;
+                    else x_cell[i] = 0.5*(cell_xmin[i]+cell_xmax[i]);
+                }
+                double n_part_in_cell = floor(ppcProfiles[ispecies]->valueAt(x_cell));
+                if( n_part_in_cell && densityProfiles[ispecies]->valueAt(x_cell)!=0.)
+                    local_load += n_part_in_cell * ncells_perpatch;
+                
+                // Consider whether this species is frozen
+                double time_frozen(0.);
+                PyTools::extract("time_frozen",time_frozen ,"Species",ispecies);
+                if(time_frozen > 0.) local_load *= params.coef_frozen;
+                // Add the load of the species to the current patch load
+                PatchLoad[ipatch] += local_load;
+            }
+            //Add grid contribution to the load.
+            PatchLoad[ipatch] += ncells_perpatch*params.coef_cell-1; //-1 to compensate the initialization to 1.
+            total_load += PatchLoad[ipatch];
         }
-        //Add grid contribution to the load.
-        PatchLoad[ipatch] += ncells_perpatch*params.coef_cell;
-        total_load += PatchLoad[ipatch];
     }
     densityProfiles.resize(0); densityProfiles.clear();
     ppcProfiles.resize(0); ppcProfiles.clear();

@@ -168,6 +168,12 @@ The block ``Main`` is **mandatory** and has the following syntax::
   
   The solver for Maxwell's equations. Only ``"Yee"`` is available at the moment.
 
+.. py:data:: poisson_flag
+  
+   :default: True
+  
+   Decides if Poisson correction must be applied or not initially.
+
 .. py:data:: poisson_iter_max
   
   :default: 50000
@@ -240,10 +246,18 @@ occur every 150 iterations.
 .. code-block:: python
   
   LoadBalancing(
-      every = 100,
+      initial_balance = True
+      every = 150,
       coef_cell = 1.,
       coef_frozen = 0.1,
   )
+
+.. py:data:: initial_balance
+  
+  :default: True
+  
+  Decides if the load must be balanced at initialization. If not, the same amount of
+  patches will be attributed to each MPI rank.
 
 .. py:data:: every
   

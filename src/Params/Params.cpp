@@ -243,10 +243,13 @@ namelist("")
     // Maxwell Solver 
     PyTools::extract("maxwell_sol", maxwell_sol, "Main");
     
-    
-    if (!PyTools::extract("clrw",clrw, "Main")) {
-        clrw = 1;
-    }
+    // clrw 
+    PyTools::extract("clrw",clrw, "Main");
+
+    // Poisson Solver
+    PyTools::extract("poisson_flag", poisson_flag, "Main");
+    PyTools::extract("poisson_iter_max", poisson_iter_max, "Main");
+    PyTools::extract("poisson_error_max", poisson_error_max, "Main");
         
     // --------------------
     // Number of patches
@@ -275,13 +278,13 @@ namelist("")
 #endif
     
     
-    balancing_every = 150;
-    coef_cell = 1.;
-    coef_frozen = 0.1;
     if( PyTools::nComponents("LoadBalancing")>0 ) {
         PyTools::extract("every"      , balancing_every, "LoadBalancing");
         PyTools::extract("coef_cell"  , coef_cell      , "LoadBalancing");
         PyTools::extract("coef_frozen", coef_frozen    , "LoadBalancing");
+        PyTools::extract("initial_balance", initial_balance    , "LoadBalancing");
+    } else {
+        balancing_every = 0;
     }
     
     //mi.resize(nDim_field, 0);
@@ -423,10 +426,17 @@ void Params::print()
         MESSAGE(1,"            - (n_space_global,  cell_length) : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
     }
 
-    TITLE("Load Balancing: ");
-    MESSAGE(1,"Load balancing every " << balancing_every << " iterations.");
-    MESSAGE(1,"Cell load coefficient = " << coef_cell );
-    MESSAGE(1,"Frozen particle load coefficient = " << coef_frozen );
+    if (balancing_every > 0){
+        TITLE("Load Balancing: ");
+        if (initial_balance){
+        MESSAGE(1,"Computational load is initially balanced between MPI ranks. (initial_balance = true) ");
+        } else{
+        MESSAGE(1,"Patches are initially homogeneously distributed between MPI ranks. (initial_balance = false) ");
+        }
+        MESSAGE(1,"Load balancing every " << balancing_every << " iterations.");
+        MESSAGE(1,"Cell load coefficient = " << coef_cell );
+        MESSAGE(1,"Frozen particle load coefficient = " << coef_frozen );
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
