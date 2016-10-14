@@ -409,7 +409,7 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
         }
         for( i=dimProbe; i<nDim_particle; i++ ){
             minI[i] = 0;
-            maxI[i] = (mins[i]*maxs[i]<0) ? 1:0;
+            maxI[i] = (mins[i]*maxs[i]<=0) ? 1:0;
         }
         // Now, minI and maxI contain the min and max indexes of the probe, useful for this patch
         // Calculate total number of useful points
