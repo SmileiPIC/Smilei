@@ -106,11 +106,13 @@ int main (int argc, char* argv[])
     // Initialize patches (including particles and fields)
     // ---------------------------------------------------
     TITLE("Initializing particles & fields");
-    VectorPatch vecPatches = PatchesFactory::createVector(params, smpi);
+    VectorPatch vecPatches;
     
     // reading from dumped file the restart values
     if (params.restart) {
         MESSAGE(1, "READING fields and particles for restart");
+        // smpi->patch_count recomputed in restartAll
+        // vecPatches allocated in restartAll according to patch_count saved
         checkpoint.restartAll( vecPatches, stepStart, smpi, simWindow, params);
         
         // time at integer time-steps (primal grid)
@@ -130,6 +132,7 @@ int main (int argc, char* argv[])
         vecPatches.initAllDiags( params, smpi );
         
     } else {
+        vecPatches = PatchesFactory::createVector(params, smpi);
         
         // Initialize the electromagnetic fields
         // -----------------------------------
