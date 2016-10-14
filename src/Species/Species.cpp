@@ -236,6 +236,12 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
             }
         }
         
+    } else if (initPosition_type == "centered") {
+        
+        for (unsigned int p=iPart; p<iPart+nPart; p++)
+            for (unsigned int i=0; i<nDim_particle ; i++)
+                (*particles).position(i,p)=indexes[i]+0.5*cell_length[i];
+        
     }
 }
 
