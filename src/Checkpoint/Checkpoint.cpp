@@ -321,12 +321,12 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, unsigned int &itime,  Smil
     H5::getAttr(fid, "Version", dump_version);
     
     string dump_date;
-    //H5::getAttr(fid, "CommitDate", dump_date);
+    H5::getAttr(fid, "CommitDate", dump_date);
     
-    //if (dump_version != string(__VERSION)) {
-    //    WARNING ("The code version that dumped the file is " << dump_version);
-    //    WARNING ("                while running version is " << string(__VERSION));
-    //}
+    if (dump_version != string(__VERSION)) {
+        WARNING ("The code version that dumped the file is " << dump_version);
+        WARNING ("                while running version is " << string(__VERSION));
+    }
  
     vector<int> patch_count(smpi->getSize());
     H5::getVect( fid, "patch_count", patch_count );
@@ -460,7 +460,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
             sid = H5Dget_space(did);
             H5Sget_simple_extent_dims(sid,&dims[0],NULL);
             
-            vecSpecies[ispec]->bmin.resize(dims[0]);
+            vecSpecies[ispec]->bmax.resize(dims[0]);
             H5Dread(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->bmax[0]);
             H5Dclose(did);
             H5Sclose(sid);
