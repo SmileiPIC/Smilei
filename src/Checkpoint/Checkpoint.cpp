@@ -151,7 +151,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     
     MESSAGEALL("Step " << itime << " : DUMP fields and particles " << dumpName(num_dump,smpi));    
     
-    //H5::attr(fid, "Version", string(__VERSION));
+    H5::attr(fid, "Version", string(__VERSION));
     
     H5::attr(fid, "dump_step", itime);
     
@@ -192,6 +192,9 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
     dumpFieldsPerProc(patch_gid, EMfields->Bx_);
     dumpFieldsPerProc(patch_gid, EMfields->By_);
     dumpFieldsPerProc(patch_gid, EMfields->Bz_);
+    dumpFieldsPerProc(patch_gid, EMfields->Bx_m);
+    dumpFieldsPerProc(patch_gid, EMfields->By_m);
+    dumpFieldsPerProc(patch_gid, EMfields->Bz_m);
     if (EMfields->Ex_avg!=NULL) {
         dumpFieldsPerProc(patch_gid, EMfields->Ex_avg);
         dumpFieldsPerProc(patch_gid, EMfields->Ey_avg);
@@ -314,8 +317,8 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, unsigned int &itime,  Smil
     hid_t fid = H5Fopen( nameDump.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
     if (fid < 0) ERROR(nameDump << " is not a valid HDF5 file");
     
-    //string dump_version;
-    //H5::getAttr(fid, "Version", dump_version);
+    string dump_version;
+    H5::getAttr(fid, "Version", dump_version);
     
     string dump_date;
     //H5::getAttr(fid, "CommitDate", dump_date);
@@ -370,6 +373,9 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
     restartFieldsPerProc(patch_gid, EMfields->Bx_);
     restartFieldsPerProc(patch_gid, EMfields->By_);
     restartFieldsPerProc(patch_gid, EMfields->Bz_);
+    restartFieldsPerProc(patch_gid, EMfields->Bx_m);
+    restartFieldsPerProc(patch_gid, EMfields->By_m);
+    restartFieldsPerProc(patch_gid, EMfields->Bz_m);
     if (EMfields->Ex_avg!=NULL) {
         restartFieldsPerProc(patch_gid, EMfields->Ex_avg);
         restartFieldsPerProc(patch_gid, EMfields->Ey_avg);
