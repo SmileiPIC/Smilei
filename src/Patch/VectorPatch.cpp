@@ -210,10 +210,12 @@ void VectorPatch::initExternals(Params& params)
 void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
 {
     // Global diags: scalars + particles
-    for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++)
+    for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
+        globalDiags[idiag]->init(params, smpi, *this);
         // MPI master creates the file
         if( smpi->isMaster() )
             globalDiags[idiag]->openFile( params, smpi, true );
+    }
     
     // Local diags : fields, probes, tracks
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {

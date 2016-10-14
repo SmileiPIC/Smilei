@@ -32,6 +32,8 @@ public :
     
     void closeFile() override;
     
+    void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
+    
     bool prepare( int timestep ) override;
     
     void run( Patch* patch, int timestep ) override;
@@ -64,25 +66,11 @@ private :
     //! set a particular scalar
     void setScalar(std::string name, double value);
     
-    //! increment a particular scalar
-    void incrementScalar(std::string name, double value);
-
-    //! increment a particular scalar
-    void incrementScalar(std::string name, double value, int valIndex);
-
-    //! append to outlist
-    void append(std::string, double);
-
-    //! append to outlist
-    void append(std::string, double, int);
-    
-    //! prepend to outlist
-    void prepend(std::string, double);
+    //! sets a scalar name in the list of scalars (for initialization)
+    int setKey( std::string key, int &currentIndex );
     
     //! check if key is allowed
     bool allowedKey(std::string);
-    
-    bool defined(std::string);
     
     //! write precision
     unsigned int precision;
@@ -107,8 +95,13 @@ private :
     //! output stream
     std::ofstream fout;
     
-
-
+    //! Variables that hold the index of several scalars in the arrays
+    int index_Utot, index_Uexp, index_Ubal, index_Ubal_norm;
+    int index_Uelm, index_Ukin, index_Uelm_bnd, index_Ukin_bnd;
+    int index_Ukin_out_mvw, index_Ukin_inj_mvw, index_Uelm_out_mvw, index_Uelm_inj_mvw;
+    std::vector<int> index_sNtot, index_sZavg, index_sUkin, index_fieldUelm;
+    std::vector<int> index_fieldMin, index_fieldMinCell, index_fieldMax, index_fieldMaxCell;
+    std::vector<int> index_poy, index_poyInst;
 
 };
 

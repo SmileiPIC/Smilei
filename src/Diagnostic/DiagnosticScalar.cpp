@@ -1,5 +1,6 @@
 
 #include "DiagnosticScalar.h"
+#include "VectorPatch.h"
 
 #include <iomanip>
 #include <algorithm>
@@ -75,6 +76,104 @@ void DiagnosticScalar::closeFile()
     if (fout.is_open()) fout.close();
 
 } // END closeFile
+
+
+int DiagnosticScalar::setKey( string key, int &currentIndex )
+{
+    int actualIndex = -1;
+    if( allowedKey(key) ) {
+        out_key.push_back(key);
+        out_value.push_back(0.);
+        actualIndex = currentIndex;
+        currentIndex++;
+    }
+    return actualIndex;
+}
+
+void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches)
+{
+
+    // Define the indices of each scalar in the output array
+    int index = 0;
+    
+    // General scalars
+    index_Utot         = setKey( "Utot"         , index );
+    index_Uexp         = setKey( "Uexp"         , index );
+    index_Ubal         = setKey( "Ubal"         , index );
+    index_Ubal_norm    = setKey( "Ubal_norm"    , index );
+    index_Uelm         = setKey( "Uelm"         , index );
+    index_Ukin         = setKey( "Ukin"         , index );
+    index_Uelm_bnd     = setKey( "Uelm_bnd"     , index );
+    index_Ukin_bnd     = setKey( "Ukin_bnd"     , index );
+    index_Ukin_out_mvw = setKey( "Ukin_out_mvw" , index );
+    index_Ukin_inj_mvw = setKey( "Ukin_inj_mvw" , index );
+    index_Uelm_out_mvw = setKey( "Uelm_out_mvw" , index );
+    index_Uelm_inj_mvw = setKey( "Uelm_inj_mvw" , index );
+    
+    // Scalars related to species
+    unsigned int nspec = vecPatches(0)->vecSpecies.size();
+    string species_type;
+    index_sNtot.resize(3*nspec);
+    index_sZavg.resize(3*nspec);
+    index_sUkin.resize(3*nspec);
+    for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
+        if (vecPatches(0)->vecSpecies[ispec]->particles->isTest) continue;
+        species_type = vecPatches(0)->vecSpecies[ispec]->species_type;
+        index_sNtot[ispec] = setKey( "Ntot_"+species_type , index );
+        index_sZavg[ispec] = setKey( "Zavg_"+species_type , index );
+        index_sUkin[ispec] = setKey( "Ukin_"+species_type , index );
+    }
+    
+    // Scalars related to field's electromagnetic energy
+    vector<string> fields;
+    ElectroMagn* EMfields = vecPatches(0)->EMfields;
+    fields.push_back(EMfields->Ex_ ->name);
+    fields.push_back(EMfields->Ey_ ->name);
+    fields.push_back(EMfields->Ez_ ->name);
+    fields.push_back(EMfields->Bx_m->name);
+    fields.push_back(EMfields->By_m->name);
+    fields.push_back(EMfields->Bz_m->name);
+    unsigned int nfield = fields.size();
+    index_fieldUelm.resize(nfield);
+    for( unsigned int ifield=0; ifield<nfield; ifield++ )
+        index_fieldUelm[ifield] = setKey( "Uelm_"+fields[ifield] , index );
+    
+    // Scalars related to fields min and max
+    fields.push_back(EMfields->Jx_ ->name);
+    fields.push_back(EMfields->Jy_ ->name);
+    fields.push_back(EMfields->Jz_ ->name);
+    fields.push_back(EMfields->rho_->name);
+    nfield = fields.size();
+    index_fieldMin    .resize(nfield);
+    index_fieldMinCell.resize(nfield);
+    index_fieldMax    .resize(nfield);
+    index_fieldMaxCell.resize(nfield);
+    for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
+        index_fieldMin    [ifield] = setKey( fields[ifield]+"Min"     , index );
+        index_fieldMinCell[ifield] = setKey( fields[ifield]+"MinCell" , index );
+        index_fieldMax    [ifield] = setKey( fields[ifield]+"Max"     , index );
+        index_fieldMaxCell[ifield] = setKey( fields[ifield]+"MaxCell" , index );
+    }
+    
+    // Scalars related to the Poynting flux
+    unsigned int k=0;
+    index_poy    .resize(0);
+    index_poyInst.resize(0);
+    string poy_name;
+    for (unsigned int j=0; j<2;j++) {
+        for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {
+            if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
+            else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
+            else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
+            index_poy    .push_back(-1);
+            index_poyInst.push_back(-1);
+            index_poy    [k] = setKey( poy_name        , index );
+            index_poyInst[k] = setKey( poy_name+"Inst" , index );
+            k++;
+        }
+    }
+}
+
 
 
 bool DiagnosticScalar::prepare( int timestep )
@@ -183,11 +282,13 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         ener_added_mvw = vecSpecies[ispec]->getNewParticlesNRJ();
         
         if (nPart!=0) charge_avg /= nPart;
-        string nameSpec=vecSpecies[ispec]->species_type;
         
-        append("Ntot_"+nameSpec,nPart);
-        append("Zavg_"+nameSpec,charge_avg);
-        append("Ukin_"+nameSpec,ener_tot);
+        #pragma omp atomic
+        out_value[index_sNtot[ispec]] += nPart     ;
+        #pragma omp atomic
+        out_value[index_sZavg[ispec]] += charge_avg;
+        #pragma omp atomic
+        out_value[index_sUkin[ispec]] += ener_tot  ;
         
         // incremement the total kinetic energy
         Ukin += ener_tot;
@@ -220,33 +321,33 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     double Uelm=0.0; // total electromagnetic energy in the fields
     
     // loop on all electromagnetic fields
-    for (vector<Field*>::iterator field=fields.begin(); field!=fields.end(); field++) {
-        
-        map<string,val_index> scalars_map;
+    unsigned int nfield = fields.size();
+    for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
         
         double Utot_crtField=0.0; // total energy in current field
-        
+        Field * field = fields[ifield];
         // compute the starting/ending points of each fields (w/out ghost cells) as well as the field global size
         vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
-        for (unsigned int i=0 ; i<(*field)->isDual_.size() ; i++ ) {
-            iFieldStart[i]      = EMfields->istart[i][(*field)->isDual(i)];
-            iFieldEnd[i]        = iFieldStart[i] + EMfields->bufsize[i][(*field)->isDual(i)];
-            iFieldGlobalSize[i] = (*field)->dims_[i];
+        for (unsigned int i=0 ; i<field->isDual_.size() ; i++ ) {
+            iFieldStart[i]      = EMfields->istart[i][field->isDual(i)];
+            iFieldEnd[i]        = iFieldStart[i] + EMfields->bufsize[i][field->isDual(i)];
+            iFieldGlobalSize[i] = field->dims_[i];
         }
         
         // loop on all (none-ghost) cells & add-up the squared-field to the energy density
         for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
             for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
                 for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
-                    unsigned int ii=k+ j*iFieldGlobalSize[2] +i*iFieldGlobalSize[1]*iFieldGlobalSize[2];
-                    Utot_crtField+=pow((**field)(ii),2);
+                    unsigned int ii = k+ (j + i*iFieldGlobalSize[1]) *iFieldGlobalSize[2];
+                    Utot_crtField += (*field)(ii) * (*field)(ii);
                 }
             }
         }
         // Utot = Dx^N/2 * Field^2
         Utot_crtField *= 0.5*cell_volume;
         
-        append("Uelm_"+(*field)->name,Utot_crtField);
+        #pragma omp atomic
+        out_value[index_fieldUelm[ifield]] += Utot_crtField;
         Uelm+=Utot_crtField;
     }
     
@@ -271,47 +372,49 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     fields.push_back(EMfields->Jz_);
     fields.push_back(EMfields->rho_);
     
-    vector<val_index> minis, maxis;
+    double minval, maxval, fieldval;
+    unsigned int minindex, maxindex;
     
-    for (vector<Field*>::iterator field=fields.begin(); field!=fields.end(); field++) {
+    nfield = fields.size();
+    for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
         
-        val_index minVal, maxVal;
-        
-        minVal.val=maxVal.val=(**field)(0);
-        minVal.index=maxVal.index=0;
+        Field * field = fields[ifield];
+        minval=maxval=(*field)(0);
+        minindex=maxindex=0;
         
         vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
-        for (unsigned int i=0 ; i<(*field)->isDual_.size() ; i++ ) {
-            iFieldStart[i] = EMfields->istart[i][(*field)->isDual(i)];
-            iFieldEnd [i] = iFieldStart[i] + EMfields->bufsize[i][(*field)->isDual(i)];
-            iFieldGlobalSize [i] = (*field)->dims_[i];
+        for (unsigned int i=0 ; i<field->isDual_.size() ; i++ ) {
+            iFieldStart[i] = EMfields->istart[i][field->isDual(i)];
+            iFieldEnd [i] = iFieldStart[i] + EMfields->bufsize[i][field->isDual(i)];
+            iFieldGlobalSize [i] = field->dims_[i];
         }
         for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
             for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
                 for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
-                    unsigned int ii=k+ j*iFieldGlobalSize[2] +i*iFieldGlobalSize[1]*iFieldGlobalSize[2];
-                    if (minVal.val>(**field)(ii)) {
-                        minVal.val=(**field)(ii);
-                        minVal.index=ii; // rank encoded
+                    unsigned int ii = k+ (j + i*iFieldGlobalSize[1]) *iFieldGlobalSize[2];
+                    fieldval = (*field)(ii);
+                    if (minval>fieldval) {
+                        minval=fieldval;
+                        minindex=ii; // rank encoded
                     }
-                    if (maxVal.val<(**field)(ii)) {
-                        maxVal.val=(**field)(ii);
-                        maxVal.index=ii; // rank encoded
+                    if (maxval<fieldval) {
+                        maxval=fieldval;
+                        maxindex=ii; // rank encoded
                     }
                 }
             }
         }
-        minis.push_back(minVal);
-        maxis.push_back(maxVal);
-    }
-
-    if (minis.size() == maxis.size() && minis.size() == fields.size()) {
-        unsigned int i=0;
-        for (vector<Field*>::iterator field=fields.begin(); field!=fields.end() && i<minis.size(); field++, i++) {
-            
-            append((*field)->name+"Min", minis[i].val, minis[i].index);
-            append((*field)->name+"Max", maxis[i].val, maxis[i].index );
-            
+        
+        #pragma omp critical
+        {
+            if( minval < out_value[index_fieldMin    [ifield]] ) {
+                out_value[index_fieldMin    [ifield]] = minval  ;
+                out_value[index_fieldMinCell[ifield]] = minindex;
+            }
+            if( maxval > out_value[index_fieldMin    [ifield]] ) {
+                out_value[index_fieldMax    [ifield]] = maxval  ;
+                out_value[index_fieldMaxCell[ifield]] = maxindex;
+            }
         }
     }
     
@@ -322,31 +425,16 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     
     // electromagnetic energy injected in the simulation (calculated from Poynting fluxes)
     double Uelm_bnd=0.0;
-    
+    unsigned int k=0;
     for (unsigned int j=0; j<2;j++) {//directions (west/east, south/north, bottom/top)
         for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {//axis 0=x, 1=y, 2=z
+            #pragma omp atomic
+            out_value[index_poy    [k]] += EMfields->poynting     [j][i];
+            #pragma omp atomic
+            out_value[index_poyInst[k]] += EMfields->poynting_inst[j][i];
+            k++;
             
-            double poy[2]={EMfields->poynting[j][i],EMfields->poynting_inst[j][i]};
-            
-            string name("Poy");
-            switch (i) { // dimension
-                case 0:
-                    name+=(j==0?"East":"West");
-                    break;
-                case 1:
-                    name+=(j==0?"South":"North");
-                    break;
-                case 2:
-                    name+=(j==0?"Bottom":"Top");
-                    break;
-                default:
-                    break;
-            }
-            append(name,poy[0]);
-            append(name+"Inst",poy[1]);
-            
-            Uelm_bnd += poy[0];
-            
+            Uelm_bnd += EMfields->poynting[j][i];
         }// i
     }// j
     
@@ -355,25 +443,27 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     // FINAL steps
     // -----------
     
-    // added & lost energies due to the moving window
-    prepend("Ukin_out_mvw",Ukin_out_mvw);
-    prepend("Ukin_inj_mvw",Ukin_inj_mvw);
-    prepend("Uelm_out_mvw",Uelm_out_mvw);
-    prepend("Uelm_inj_mvw",Uelm_inj_mvw);
-    
-    // added & lost energies at the boundaries
-    prepend("Ukin_bnd",Ukin_bnd);
-    prepend("Uelm_bnd",Uelm_bnd);
-    
-    // Total energies
-    prepend("Ukin",Ukin);
-    prepend("Uelm",Uelm);
-    
-    // total energies & energy balance (set later in SmileiMPI::computeGlobalDiags)
-    prepend("Ubal_norm",0.);
-    prepend("Ubal"     ,0.);
-    prepend("Uexp"     ,0.);
-    prepend("Utot"     ,0.);
+    //// added & lost energies due to the moving window
+    //#pragma omp atomic
+    //out_value[index_Ukin_out_mvw] += Ukin_out_mvw;
+    //#pragma omp atomic
+    //out_value[index_Ukin_inj_mvw] += Ukin_inj_mvw;
+    //#pragma omp atomic
+    //out_value[index_Uelm_out_mvw] += Uelm_out_mvw;
+    //#pragma omp atomic
+    //out_value[index_Uelm_inj_mvw] += Uelm_inj_mvw;
+    //
+    //// added & lost energies at the boundaries
+    //#pragma omp atomic
+    //out_value[index_Ukin_bnd] += Ukin_bnd;
+    //#pragma omp atomic
+    //out_value[index_Uelm_bnd] += Uelm_bnd;
+    //
+    //// Total energies
+    //#pragma omp atomic
+    //out_value[index_Ukin] += Ukin;
+    //#pragma omp atomic
+    //out_value[index_Uelm] += Uelm;
     
     // Final thing to do: calculate the maximum size of the scalars names
     if (out_width.empty()) { // Only first time
@@ -413,93 +503,6 @@ void DiagnosticScalar::setScalar(string my_var, double value){
     DEBUG("key not found " << my_var);
 }
 
-
-void DiagnosticScalar::incrementScalar(string my_var, double value){
-    for (unsigned int i=0; i< out_key.size(); i++) {
-        if ( (out_key[i]==my_var) && ( (my_var.find("Min")== std::string::npos)&&(my_var.find("Max")== std::string::npos)) ) {
-            out_value[i] += value;
-            return;
-        }
-    }
-    DEBUG("key not found " << my_var);
-}
-
-
-void DiagnosticScalar::incrementScalar(string my_var, double value, int valIndex){
-    for (unsigned int i=0; i< out_key.size(); i++) {
-        if  ( (out_key[i]==my_var) && ( my_var.find("Min")!= std::string::npos ) && (my_var.find("Cell")== std::string::npos) ) {
-            if ( value <= out_value[i] ) {
-                // Retain the smallest valIndex when several min are reached.
-                if ( value < out_value[i] ) {
-                    out_value[i+1] = valIndex;
-                } else {
-                    out_value[i+1] = std::min(out_value[i+1], (double)valIndex);
-                }
-                out_value[i] = value;
-            }
-            return;
-        }
-        else if  ( (out_key[i]==my_var) && ( my_var.find("Max")!= std::string::npos ) && (my_var.find("Cell")== std::string::npos) ) {
-            if ( value >= out_value[i] ) {
-                // Retain the smallest valIndex when several max are reached.
-                if ( value > out_value[i] ) {
-                    out_value[i+1] = valIndex;
-                } else {
-                    out_value[i+1] = std::min(out_value[i+1], (double)valIndex);
-                }
-                out_value[i] = value;
-            }
-            return;
-        }
-    }
-    DEBUG("key not found " << my_var);
-}
-
-
-void DiagnosticScalar::append(std::string key, double value) {
-    #pragma omp critical
-    {
-        if ( !defined(key) ) {
-            out_key.push_back(key  );
-            out_value.push_back(value);
-        }
-        else
-            incrementScalar(key, value);
-    }
-
-}  // END append
-
-
-void DiagnosticScalar::append(std::string key, double value, int valIndex) {
-    #pragma omp critical
-    {
-        if ( !defined(key) ) {
-            out_key.push_back(key  );
-            out_value.push_back(value);
-            out_key.push_back(key+"Cell");
-            out_value.push_back(valIndex);
-        }
-        else
-            incrementScalar(key, value, valIndex);
-    }
-
-}  // END append
-
-
-void DiagnosticScalar::prepend(std::string key, double value) {
-    #pragma omp critical
-    {
-        if ( !defined(key) ) {
-            out_key  .insert(out_key  .begin(), key  );
-            out_value.insert(out_value.begin(), value);
-        }
-        else
-            incrementScalar(key, value);
-    }
-
-} // END prepend
-
-
 bool DiagnosticScalar::allowedKey(string key) {
     int s=vars.size();
     if (s==0) return true;
@@ -508,12 +511,3 @@ bool DiagnosticScalar::allowedKey(string key) {
     }
     return false;
 }
-
-bool DiagnosticScalar::defined(string key) {
-    int s=out_key.size();
-    for( int i=0; i<s; i++) {
-        if( key==out_key[i] ) return true;
-    }
-    return false;
-}
-
