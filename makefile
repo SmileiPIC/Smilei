@@ -1,5 +1,12 @@
 #-----------------------------------------------------
-# Default variables
+# Variables that can be defined by the user:
+# 
+# SMILEICXX     : the MPI C++ executable (for instance mpicxx, mpiicpc, etc.)
+# HDF5_ROOT_DIR : the local path to the HDF5 library
+# BUILD_DIR     : the path to the build directory (default: ./build)
+# PYTHON_CONFIG : the executable `python-config` usually shipped with python installation
+# EXEC          : the name of the created executable for Smilei
+
 
 MPIVERSION = $(shell mpirun --version 2>&1| head -n 1)
 ifneq (,$(findstring Open MPI,$(MPIVERSION)))
@@ -7,32 +14,36 @@ ifneq (,$(findstring Open MPI,$(MPIVERSION)))
 else
     SMILEICXX ?= mpiicpc
 endif
-
 HDF5_ROOT_DIR ?=
-
 BUILD_DIR ?= build
-
 PYTHONCONFIG ?= python-config
-
 EXEC = smilei
 
+
 #-----------------------------------------------------
-# Get some git information
-DESCRIBE:=$(shell git describe 2>/dev/null || echo '??')
-BRANCH:=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '??')
+# Set the verbosity prefix
+ifeq (,$(findstring verbose,$(config)))
+    Q := @
+else
+    Q := 
+endif
+
+#-----------------------------------------------------
+# Git information
+DESCRIBE=$(shell git describe 2>/dev/null || echo '??')
+BRANCH=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '??')
 VERSION="$(DESCRIBE)-$(BRANCH)"
 
 #-----------------------------------------------------
-# Collect directories and files
-DIRS := $(shell find src -type d)
-SRCS := $(shell find src/* -name \*.cpp)
-OBJS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.o))
-DEPS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.d))
-PYSCRIPTS := $(shell find src/Python -name \*.py)
-SITEDIR=$(shell python -c 'import site; site._script()' --user-site)
+# Directories and files
+DIRS = $(shell find src -type d)
+SRCS = $(shell find src/* -name \*.cpp)
+OBJS = $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.o))
+DEPS = $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.d))
+SITEDIR = $(shell python -c 'import site; site._script()' --user-site)
 
 #-----------------------------------------------------
-# Build flags 
+# Flags 
 
 # Smilei version
 CXXFLAGS += -D__VERSION=\"$(VERSION)\"
@@ -48,18 +59,17 @@ LDFLAGS += -lhdf5
 CXXFLAGS += $(DIRS:%=-I%)
 # Python-related flags
 CXXFLAGS += -I$(BUILD_DIR)/src/Python
-PYHEADERS := $(addprefix $(BUILD_DIR)/, $(PYSCRIPTS:.py=.pyh))
-PY_CXXFLAGS:=$(shell $(PYTHONCONFIG) --includes)
-CXXFLAGS+=$(PY_CXXFLAGS)
-PY_LDFLAGS:=$(shell $(PYTHONCONFIG) --ldflags)
-LDFLAGS+=$(PY_LDFLAGS)
+PYSCRIPTS = $(shell find src/Python -name \*.py)
+PYHEADERS = $(addprefix $(BUILD_DIR)/, $(PYSCRIPTS:.py=.pyh))
+PY_CXXFLAGS = $(shell $(PYTHONCONFIG) --includes)
+CXXFLAGS += $(PY_CXXFLAGS)
+PY_LDFLAGS = $(shell $(PYTHONCONFIG) --ldflags)
+LDFLAGS += $(PY_LDFLAGS)
 ifneq ($(strip $(PYTHONHOME)),)
-LDFLAGS+=-L$(PYTHONHOME)/lib
+    LDFLAGS += -L$(PYTHONHOME)/lib
 endif 
 
-#-----------------------------------------------------
 # Machine-specific configuration
-
 ifneq (,$(findstring poincare,$(HOSTNAME)))
     LDFLAGS += -lgpfs -lz -L/gpfslocal/pub/python/anaconda/Anaconda-2.1.0/lib
 endif
@@ -69,16 +79,12 @@ ifneq (,$(findstring turing,$(config)))
 	LDFLAGS  += -qnostaticlink -L(BG_PYTHONHOME)/lib64 -lpython2.7 -lutil
 endif
 
-#-----------------------------------------------------
 # Compiler-specific configuration
-
 ifneq (,$(findstring icpc,$(SMILEI_COMPILER)))
     CXXFLAGS += -xHost -no-vec
 endif
 
-#-----------------------------------------------------
 # Manage options in the "config" parameter
-
 ifneq (,$(findstring debug,$(config)))
 	CXXFLAGS += -g -pg -Wall -D__DEBUG -O0 # -shared-intel 
 else
@@ -99,18 +105,8 @@ ifeq (,$(findstring noopenmp,$(config)))
 endif
 #LDFLAGS += -mt_mpi
 
-
 #-----------------------------------------------------
-# Set verbosity prefix
-ifeq (,$(findstring verbose,$(config)))
-    Q := @
-else
-    Q := 
-endif
-
-
-#-----------------------------------------------------
-# Rules
+# Rules for building Smilei
 
 default: $(EXEC)
 
@@ -123,14 +119,6 @@ clean:
 
 distclean: clean uninstall_python
 	$(Q) rm -f $(EXEC)
-
-# print internal makefile variable (used to debug compilation problems)
-print-% :
-	$(info $* : $($*)) @true
-
-# print a set of important internal variables
-env: print-SMILEICXX print-MPIVERSION print-VERSION print-OPENMP_FLAG print-HDF5_ROOT_DIR print-SITEDIR print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS
-
 # Deprecated rules
 obsolete:
 	@echo "[WARNING] Please consider using make config=\"$(MAKECMDGOALS)\""
@@ -177,6 +165,9 @@ endif
 # these are not file-related rules
 .PHONY: pygenerator $(FILTER_RULES)
 
+#-----------------------------------------------------
+# Doc rules
+
 doc: sphinx doxygen
 
 sphinx:
@@ -199,6 +190,10 @@ tar:
 	@echo "Creating archive $(EXEC)-$(VERSION).tgz"
 	$(Q) git archive -o $(EXEC)-$(VERSION).tgz --prefix $(EXEC)-$(VERSION)/ HEAD
 
+
+#-----------------------------------------------------
+# Python module rules
+
 # Install the python module in the user python path
 install_python:
 	@echo "Installing $(SITEDIR)/smilei.pth"
@@ -209,10 +204,28 @@ uninstall_python:
 	@echo "Uninstalling $(SITEDIR)/smilei.pth"
 	$(Q) rm -f "$(SITEDIR)/smilei.pth"
 
+
+#-----------------------------------------------------
+# Info rules
+
+# print internal makefile variable (used to debug compilation problems)
+print-% :
+	$(info $* : $($*)) @true
+
+# print a set of important internal variables
+env: print-SMILEICXX print-MPIVERSION print-VERSION print-OPENMP_FLAG print-HDF5_ROOT_DIR print-SITEDIR print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS
+
+
 help: 
+	@echo 'TO BUILD SMILEI:'
+	@echo '----------------'
 	@echo 'Usage:'
-	@echo '  make config=OPTIONS'
-	@echo '    OPTIONS is a string composed of one or more of:'
+	@echo '  make'
+	@echo 'or, to compile with 4 cpus (for instance):'
+	@echo '  make -j 4'
+	@echo
+	@echo 'More options:'
+	@echo '  make config="[ verbose ] [ debug ] [ scalasca ] [ noopenmp ]"'
 	@echo '    verbose    : to print compile command lines'
 	@echo '    debug      : to compile in debug mode (code runs really slow)'
 	@echo '    scalasca   : to compile using scalasca'
@@ -221,15 +234,17 @@ help:
 	@echo 'Examples:'
 	@echo '  make config=verbose'
 	@echo '  make config=debug'
-	@echo '  make config=noopenmp'
 	@echo '  make config="debug noopenmp"'
 	@echo
-	@echo 'Other usage:' 
-	@echo '  make doc              : builds the documentation'
+	@echo 'OTHER PURPOSES:'
+	@echo '---------------'
+	@echo '  make doc              : builds all the documentation'
+	@echo '  make sphinx           : builds the `sphinx` documentation only (for users)'
+	@echo '  make doxygen          : builds the `doxygen` documentation only (for developers)'
 	@echo '  make tar              : creates an archive of the sources'
-	@echo '  make clean            : remove build'
-	@echo '  make install_python   : install Python Smilei module'
-	@echo '  make uninstall_python : remove Python Smilei module'
+	@echo '  make clean            : cleans the build directory'
+	@echo "  make install_python   : install Smilei's python module"
+	@echo "  make uninstall_python : remove Smilei's python module"
 	@echo '  make print-XXX        : print internal makefile variable XXX'
 	@echo '  make env              : print important internal makefile variables'
 	@echo ''

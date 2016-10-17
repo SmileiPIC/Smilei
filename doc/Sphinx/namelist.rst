@@ -1121,9 +1121,9 @@ The full list of scalars that are saved by this diagnostic:
 | | ExMax        | | Maximum of :math:`E_x`                                                  |
 | | ExMaxCell    | |  ... and its location (cell index)                                      |
 | |              | | ... same for fields Ey Ez Bx_m By_m Bz_m Jx Jy Jz Rho                   |
-| | PoyXmax      | | Accumulated Poynting flux through xmax boundary                      |
-| | PoyXmaxInst  | | Current Poynting flux through xmax boundary                          |
-| |              | |  ... same for boundaries xmin ymin ymax zmin zmax                    |
+| | PoyXmax      | | Accumulated Poynting flux through xmax boundary                         |
+| | PoyXmaxInst  | | Current Poynting flux through xmax boundary                             |
+| |              | |  ... same for boundaries xmin ymin ymax zmin zmax                       |
 +----------------+---------------------------------------------------------------------------+
 
 Checkout the :doc:`post-processing <post-processing>` documentation as well.
