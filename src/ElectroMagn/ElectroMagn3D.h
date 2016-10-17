@@ -115,22 +115,22 @@ public:
         
 private:
     
-    //! from smpi is west
+    //! from smpi is xmin
     const bool isWestern;
     
-    //! from smpi is east
+    //! from smpi is xmax
     const bool isEastern;
     
-    //! from smpi is north
+    //! from smpi is ymax
     const bool isSouthern;
     
-    //! from smpi is south
+    //! from smpi is ymin
     const bool isNorthern;
 
-    //! from smpi is top
+    //! from smpi is zmax
     const bool isTop;
     
-    //! from smpi is bottom
+    //! from smpi is zmin
     const bool isBottom;
 };
 

@@ -32,7 +32,7 @@ Main(
 )
 
 LaserGaussian2D(
-    boxSide         = "west",
+    boxSide         = "xmin",
     a0              = 0.1,
 	focus           = [10.*l0, 25.0*l0],
     waist           = 5.0*l0,

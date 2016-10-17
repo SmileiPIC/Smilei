@@ -513,7 +513,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
         }
 
         //idim=0
-        shift[1] += vecSpecies[ispec]->MPIbuff.part_index_recv_sz[0][0];//Particles coming from south all go to bin 0 and shift all the other bins.
+        shift[1] += vecSpecies[ispec]->MPIbuff.part_index_recv_sz[0][0];//Particles coming from ymin all go to bin 0 and shift all the other bins.
         shift[(*cubmax).size()] += vecSpecies[ispec]->MPIbuff.part_index_recv_sz[0][1];//Used only to count the total number of particles arrived.
         //idim>0
         for (idim = 1; idim < ndim; idim++){

@@ -389,7 +389,7 @@ def transformPolarization(polarizationPhi, ellipticity):
     return [dephasing, amplitudeY, amplitudeZ]
 
 
-def LaserPlanar1D( boxSide="west", a0=1., omega=1.,
+def LaserPlanar1D( boxSide="xmin", a0=1., omega=1.,
         polarizationPhi=0., ellipticity=0., time_envelope=tconstant()):
     import math
     # Polarization and amplitude
@@ -408,7 +408,7 @@ def LaserPlanar1D( boxSide="west", a0=1., omega=1.,
 
 
 
-def LaserGaussian2D( boxSide="west", a0=1., omega=1., focus=None, waist=3., incidence_angle=0.,
+def LaserGaussian2D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=0.,
         polarizationPhi=0., ellipticity=0., time_envelope=tconstant()):
     import math
     # Polarization and amplitude
@@ -452,7 +452,7 @@ def LaserGaussian2D( boxSide="west", a0=1., omega=1., focus=None, waist=3., inci
         phase          = [ lambda y:phase(y)-phaseZero+dephasing, lambda y:phase(y)-phaseZero ],
     )
 
-def LaserGaussian3D( boxSide="west", a0=1., omega=1., focus=None, waist=3., incidence_angle=0.,
+def LaserGaussian3D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=0.,
         polarizationPhi=0., ellipticity=0., time_envelope=tconstant()):
     import math
     # Polarization and amplitude

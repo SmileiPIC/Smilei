@@ -62,7 +62,7 @@ Species(
 )
 
 LaserPlanar1D(
-	boxSide = 'west',
+	boxSide = 'xmin',
 	a0 = 10.,
     omega = 1.,
     ellipticity = 1.,

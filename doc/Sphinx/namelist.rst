@@ -529,16 +529,16 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   .. code-block:: python
     
     Laser(
-        boxSide = "west",
+        boxSide = "xmin",
         space_time_profile = [ By_profile, Bz_profile ]
     )
   
   .. py:data:: boxSide
     
-    :default: ``"west"``
+    :default: ``"xmin"``
     
-    Side of the box from which the laser originates: at the moment, only ``"west"`` and
-    ``"east"`` are supported.
+    Side of the box from which the laser originates: at the moment, only ``"xmin"`` and
+    ``"xmax"`` are supported.
     
   .. py:data:: space_time_profile
   
@@ -557,7 +557,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   .. code-block:: python
     
     Laser(
-        boxSide        = "west",
+        boxSide        = "xmin",
         omega          = 1.,
         chirp_profile  = tconstant(),
         time_envelope  = tgaussian(),
@@ -623,7 +623,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   For one-dimensional simulations, you may use the simplified laser creator::
     
     LaserPlanar1D(
-        boxSide         = "west",
+        boxSide         = "xmin",
         a0              = 1.,
         omega           = 1.,
         polarizationPhi = 0.,
@@ -658,7 +658,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   For two-dimensional simulations, you may use the simplified laser creator::
     
     LaserGaussian2D(
-        boxSide         = "west",
+        boxSide         = "xmin",
         a0              = 1.,
         omega           = 1.,
         focus           = [50., 40.],
@@ -1121,8 +1121,8 @@ The full list of scalars that are saved by this diagnostic:
 | | ExMax        | | Maximum of :math:`E_x`                                                  |
 | | ExMaxCell    | |  ... and its location (cell index)                                      |
 | |              | | ... same for fields Ey Ez Bx_m By_m Bz_m Jx Jy Jz Rho                   |
-| | PoyEast      | | Accumulated Poynting flux through eastern boundary                      |
-| | PoyEastInst  | | Current Poynting flux through eastern boundary                          |
+| | PoyEast      | | Accumulated Poynting flux through xmax boundary                      |
+| | PoyEastInst  | | Current Poynting flux through xmax boundary                          |
 | |              | |  ... same for boundaries West South North Bottom Top                    |
 +----------------+---------------------------------------------------------------------------+
 

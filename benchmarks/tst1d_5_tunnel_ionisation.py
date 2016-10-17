@@ -58,7 +58,7 @@ Species(
 )
 
 LaserPlanar1D(
-	boxSide = 'west',
+	boxSide = 'xmin',
 	a0 = 0.1,
     omega = 1.,
     polarizationPhi = math.pi/2.,

@@ -93,7 +93,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     for ( int ipatch = nPatches-1 ; ipatch >= 0 ; ipatch--) {
 
         // Patch à supprimer
-        //if I'm western  AND I'm not a newly created patch (because we start at nPatches-1), delete me !
+        //if I'm xmin  AND I'm not a newly created patch (because we start at nPatches-1), delete me !
         if ( vecPatches(ipatch)->isWestern() ) {
 
             // Compute energy lost 

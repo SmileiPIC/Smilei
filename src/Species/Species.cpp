@@ -928,9 +928,9 @@ bool Species::isProj(double time_dual, SimWindow* simWindow) {
 }
 
 void Species::disableEast() {
-    partBoundCond->bc_east   = NULL;
+    partBoundCond->bc_xmax   = NULL;
 }
 
 void Species::setWestBoundaryCondition() {
-    partBoundCond->bc_west   = &supp_particle;
+    partBoundCond->bc_xmin   = &supp_particle;
 }

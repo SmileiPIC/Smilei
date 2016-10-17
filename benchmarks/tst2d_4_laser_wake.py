@@ -62,7 +62,7 @@ Species(
 )
 
 LaserGaussian2D(
-    boxSide         = "west",
+    boxSide         = "xmin",
     a0              = 2.,
     focus           = [0., Main.sim_length[1]/2.],
     waist           = 26.16,

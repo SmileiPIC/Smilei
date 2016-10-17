@@ -224,8 +224,8 @@ public:
     
     //! pointing vector on borders 
     //! 1D: poynting[0][0]=left , poynting[1][0]=right
-    //! 2D: poynting[0][0]=west , poynting[1][0]=east
-    //!     poynting[1][0]=south, poynting[1][0]=north
+    //! 2D: poynting[0][0]=xmin , poynting[1][0]=xmax
+    //!     poynting[1][0]=ymin, poynting[1][0]=ymax
     std::vector<double> poynting[2];
     
     //same as above but instantaneous

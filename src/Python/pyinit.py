@@ -243,7 +243,7 @@ class Species(SmileiComponent):
 
 class Laser(SmileiComponent):
     """Laser parameters"""
-    boxSide = "west"
+    boxSide = "xmin"
     omega = 1.
     chirp_profile = 1.
     time_envelope = 1.

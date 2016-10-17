@@ -82,10 +82,10 @@ public:
     void initAntennas(Patch* patch);
     
 private:
-    //! from patch is west
+    //! from patch is xmin
     const bool isWestern;
     
-    //! from patch is east
+    //! from patch is xmax
     const bool isEastern;
 };
 

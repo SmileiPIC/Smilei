@@ -37,11 +37,11 @@ public:
         int nlaser = PyTools::nComponents("Laser");
         for (int ilaser = 0; ilaser < nlaser; ilaser++) {
             Laser * laser = new Laser(params, ilaser, patch);
-            if     ( laser->boxSide == "west" && EMfields->emBoundCond[0]) {
+            if     ( laser->boxSide == "xmin" && EMfields->emBoundCond[0]) {
                 if( patch->isWestern() ) laser->createFields(params, patch);
                 EMfields->emBoundCond[0]->vecLaser.push_back( laser );
             }
-            else if( laser->boxSide == "east" && EMfields->emBoundCond[1]) {
+            else if( laser->boxSide == "xmax" && EMfields->emBoundCond[1]) {
                 if( patch->isEastern() ) laser->createFields(params, patch);
                 EMfields->emBoundCond[1]->vecLaser.push_back( laser );
             }
@@ -124,7 +124,7 @@ public:
         // Clone Lasers properties
         // -----------------
         int nlaser;
-        for( int iBC=0; iBC<2; iBC++ ) { // east and west
+        for( int iBC=0; iBC<2; iBC++ ) { // xmax and xmin
             if(! newEMfields->emBoundCond[iBC]) continue;
             
             newEMfields->emBoundCond[iBC]->vecLaser.resize(0);
@@ -208,11 +208,11 @@ public:
         int nlaser = PyTools::nComponents("Laser");
         for (int ilaser = 0; ilaser < nlaser; ilaser++) {
             Laser * laser = new Laser(params, ilaser, patch);
-            if     ( laser->boxSide == "west" && EMfields->emBoundCond[0]) {
+            if     ( laser->boxSide == "xmin" && EMfields->emBoundCond[0]) {
                 if( patch->isWestern() ) laser->createFields(params, patch);
                 EMfields->emBoundCond[0]->vecLaser.push_back( laser );
             }
-            else if( laser->boxSide == "east" && EMfields->emBoundCond[1]) {
+            else if( laser->boxSide == "xmax" && EMfields->emBoundCond[1]) {
                 if( patch->isEastern() ) laser->createFields(params, patch);
                 EMfields->emBoundCond[1]->vecLaser.push_back( laser );
             }
@@ -293,7 +293,7 @@ public:
         // Clone Lasers properties
         // -----------------
         int nlaser;
-        for( int iBC=0; iBC<2; iBC++ ) { // east and west
+        for( int iBC=0; iBC<2; iBC++ ) { // xmax and xmin
             if(! newEMfields->emBoundCond[iBC]) continue;
             
             newEMfields->emBoundCond[iBC]->vecLaser.resize(0);
