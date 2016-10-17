@@ -83,10 +83,10 @@ public:
     
 private:
     //! from patch is xmin
-    const bool isWestern;
+    const bool isXmin;
     
     //! from patch is xmax
-    const bool isEastern;
+    const bool isXmax;
 };
 
 #endif

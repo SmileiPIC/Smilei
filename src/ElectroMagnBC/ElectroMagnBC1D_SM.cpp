@@ -66,7 +66,7 @@ void ElectroMagnBC1D_SM::save_fields_BC1D(Field* my_field) {
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC1D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( patch->isWestern() ) {
+    if ( patch->isXmin() ) {
         
         //Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
         Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);
@@ -96,7 +96,7 @@ void ElectroMagnBC1D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
 void ElectroMagnBC1D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
     
-    if ( patch->isEastern() ) {
+    if ( patch->isXmax() ) {
         //Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
         Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);
         Field1D* Ez1D   = static_cast<Field1D*>(EMfields->Ez_);

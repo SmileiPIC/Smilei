@@ -58,7 +58,7 @@ ElectroMagnBC2D_refl::~ElectroMagnBC2D_refl()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC2D_refl::apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( patch->isWestern() ) {
+    if ( patch->isXmin() ) {
 
         // APPLICATION OF BCs OVER THE FULL GHOST CELL REGION
         // Static cast of the fields
@@ -147,7 +147,7 @@ void ElectroMagnBC2D_refl::apply_xmin(ElectroMagn* EMfields, double time_dual, P
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC2D_refl::apply_xmax(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( patch->isEastern() ) {
+    if ( patch->isXmax() ) {
 
         // Static cast of the fields
         //Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
@@ -237,7 +237,7 @@ void ElectroMagnBC2D_refl::apply_xmax(ElectroMagn* EMfields, double time_dual, P
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC2D_refl::apply_ymin(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( patch->isSouthern() ) {
+    if ( patch->isYmin() ) {
 
         // APPLICATION OF BCs OVER THE FULL GHOST CELL REGION
         // Static cast of the fields
@@ -324,7 +324,7 @@ void ElectroMagnBC2D_refl::apply_ymin(ElectroMagn* EMfields, double time_dual, P
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC2D_refl::apply_ymax(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( patch->isNorthern() ) {
+    if ( patch->isYmax() ) {
         
         // Static cast of the fields
         //Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);

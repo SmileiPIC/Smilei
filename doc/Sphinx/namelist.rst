@@ -1123,7 +1123,7 @@ The full list of scalars that are saved by this diagnostic:
 | |              | | ... same for fields Ey Ez Bx_m By_m Bz_m Jx Jy Jz Rho                   |
 | | PoyEast      | | Accumulated Poynting flux through xmax boundary                      |
 | | PoyEastInst  | | Current Poynting flux through xmax boundary                          |
-| |              | |  ... same for boundaries West South North Bottom Top                    |
+| |              | |  ... same for boundaries xmin ymin ymax zmin zmax                    |
 +----------------+---------------------------------------------------------------------------+
 
 Checkout the :doc:`post-processing <post-processing>` documentation as well.

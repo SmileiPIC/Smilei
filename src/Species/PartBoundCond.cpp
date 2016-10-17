@@ -98,16 +98,16 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     
     // West
     if ( species->bc_part_type_xmin == "refl" ) {
-        if (patch->isWestern()) bc_xmin = &refl_particle;
+        if (patch->isXmin()) bc_xmin = &refl_particle;
     }
     else if ( species->bc_part_type_xmin == "supp" ) {
-        if (patch->isWestern()) bc_xmin = &supp_particle;
+        if (patch->isXmin()) bc_xmin = &supp_particle;
     }
     else if ( species->bc_part_type_xmin == "stop" ) {
-        if (patch->isWestern()) bc_xmin = &stop_particle;
+        if (patch->isXmin()) bc_xmin = &stop_particle;
     }
     else if ( species->bc_part_type_xmin == "thermalize" ) {
-        if (patch->isWestern()) bc_xmin = &thermalize_particle;
+        if (patch->isXmin()) bc_xmin = &thermalize_particle;
     }
     else if ( species->bc_part_type_xmin == "none" ) {
         if (patch->isMaster()) MESSAGE(2,"West boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
@@ -118,16 +118,16 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     
     // East
     if ( species->bc_part_type_xmax == "refl" ) {
-        if (patch->isEastern()) bc_xmax = &refl_particle;
+        if (patch->isXmax()) bc_xmax = &refl_particle;
     }
     else if ( species->bc_part_type_xmax == "supp" ) {
-        if (patch->isEastern()) bc_xmax = &supp_particle;
+        if (patch->isXmax()) bc_xmax = &supp_particle;
     }
     else if ( species->bc_part_type_xmax == "stop" ) {
-        if (patch->isEastern()) bc_xmax = &stop_particle;
+        if (patch->isXmax()) bc_xmax = &stop_particle;
     }
     else if ( species->bc_part_type_xmax == "thermalize" ) {
-        if (patch->isEastern()) bc_xmax = &thermalize_particle;
+        if (patch->isXmax()) bc_xmax = &thermalize_particle;
     }
     else if ( species->bc_part_type_xmax == "none" ) {
         if (patch->isMaster()) MESSAGE(2,"East boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
@@ -140,16 +140,16 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     if ( nDim_particle > 1 ) {
         // South
         if ( species->bc_part_type_ymin == "refl" ) {
-            if (patch->isSouthern()) bc_ymin = &refl_particle;
+            if (patch->isYmin()) bc_ymin = &refl_particle;
         }
         else if ( species->bc_part_type_ymin == "supp" ) {
-            if (patch->isSouthern()) bc_ymin = &supp_particle;
+            if (patch->isYmin()) bc_ymin = &supp_particle;
         }
         else if ( species->bc_part_type_ymin == "stop" ) {
-            if (patch->isSouthern()) bc_ymin = &stop_particle;
+            if (patch->isYmin()) bc_ymin = &stop_particle;
         }
         else if ( species->bc_part_type_ymin == "thermalize" ) {
-            if (patch->isSouthern()) bc_ymin = &thermalize_particle;
+            if (patch->isYmin()) bc_ymin = &thermalize_particle;
         }
         else if ( species->bc_part_type_ymin == "none" ) {
             if (patch->isMaster()) MESSAGE(2,"South boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
@@ -160,16 +160,16 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
         
         // North
         if ( species->bc_part_type_ymax == "refl" ) {
-            if (patch->isNorthern()) bc_ymax = &refl_particle;
+            if (patch->isYmax()) bc_ymax = &refl_particle;
         }
         else if ( species->bc_part_type_ymax == "supp" ) {
-            if (patch->isNorthern()) bc_ymax = &supp_particle;
+            if (patch->isYmax()) bc_ymax = &supp_particle;
         }
         else if ( species->bc_part_type_ymax == "stop" ) {
-            if (patch->isNorthern()) bc_ymax = &stop_particle;
+            if (patch->isYmax()) bc_ymax = &stop_particle;
         }
         else if ( species->bc_part_type_ymax == "thermalize" ) {
-            if (patch->isNorthern()) bc_ymax = &thermalize_particle;
+            if (patch->isYmax()) bc_ymax = &thermalize_particle;
         }
         else if ( species->bc_part_type_ymax == "none" ) {
             if (patch->isMaster()) MESSAGE(2,"North boundary condition for species " << species->species_type << " is 'none', which means the same as fields");

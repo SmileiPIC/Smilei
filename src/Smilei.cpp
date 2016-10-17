@@ -214,9 +214,9 @@ int main (int argc, char* argv[])
             ostringstream my_msg;
             my_msg << setw(log10(params.n_time)+1) << itime <<
             "/"     << setw(log10(params.n_time)+1) << params.n_time <<
-            " t="          << scientific << setprecision(3)   << time_dual <<
-            " sec "    << scientific << setprecision(1)   << this_print_time <<
-            " ("    << scientific << setprecision(4)   << this_print_time - old_print_time << ")" <<
+            " t="          << scientific << setprecision(3)   << time_dual << " [Time unit] "    <<
+             scientific << setprecision(1)   << this_print_time << " sec "    <<
+            " ("    << scientific << setprecision(4)   << this_print_time - old_print_time << " sec)" <<
             "  Utot= "   << scientific << setprecision(4)<< vecPatches.getScalar("Utot") <<
             "  Uelm= "   << scientific << setprecision(4)<< vecPatches.getScalar("Uelm") <<
             "  Ukin= "   << scientific << setprecision(4)<< vecPatches.getScalar("Ukin") <<

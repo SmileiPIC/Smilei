@@ -225,7 +225,7 @@ void ElectroMagnBC3D_SM::save_fields_BC3D_TransZ(Field* my_field) {
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC3D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( patch->isWestern() ) {
+    if ( patch->isXmin() ) {
         
         // Static cast of the fields
         //Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
@@ -289,7 +289,7 @@ void ElectroMagnBC3D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC3D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( patch->isEastern() ) {
+    if ( patch->isXmax() ) {
         
         // Static cast of the fields
         //Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
@@ -355,7 +355,7 @@ void ElectroMagnBC3D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC3D_SM::apply_ymin(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( patch->isSouthern() ) {
+    if ( patch->isYmin() ) {
         
         // Static cast of the fields
         Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
@@ -395,7 +395,7 @@ void ElectroMagnBC3D_SM::apply_ymin(ElectroMagn* EMfields, double time_dual, Pat
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC3D_SM::apply_ymax(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( patch->isNorthern() ) {
+    if ( patch->isYmax() ) {
 
         // Static cast of the fields
         Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
@@ -441,7 +441,7 @@ void ElectroMagnBC3D_SM::apply_ymax(ElectroMagn* EMfields, double time_dual, Pat
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC3D_SM::apply_zmin(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( patch->isBottom() ) {
+    if ( patch->isZmin() ) {
         
         // Static cast of the fields
         Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
@@ -484,7 +484,7 @@ void ElectroMagnBC3D_SM::apply_zmin(ElectroMagn* EMfields, double time_dual, Pat
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC3D_SM::apply_zmax(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( patch->isTop() ) {
+    if ( patch->isZmax() ) {
         
         // Static cast of the fields
         Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);

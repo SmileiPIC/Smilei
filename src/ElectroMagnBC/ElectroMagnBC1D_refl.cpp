@@ -44,7 +44,7 @@ ElectroMagnBC1D_refl::~ElectroMagnBC1D_refl()
 void ElectroMagnBC1D_refl::apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
 
-    if ( patch->isWestern() ) {
+    if ( patch->isXmin() ) {
         
         // Application over the full-ghost cell
         //Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
@@ -94,7 +94,7 @@ void ElectroMagnBC1D_refl::apply_xmin(ElectroMagn* EMfields, double time_dual, P
 void ElectroMagnBC1D_refl::apply_xmax(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
 
-    if ( patch->isEastern() ) {
+    if ( patch->isXmax() ) {
         
         // application of Bcs over the full ghost cells
         //Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);

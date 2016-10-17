@@ -116,22 +116,22 @@ public:
 private:
     
     //! from smpi is xmin
-    const bool isWestern;
+    const bool isXmin;
     
     //! from smpi is xmax
-    const bool isEastern;
+    const bool isXmax;
     
     //! from smpi is ymax
-    const bool isSouthern;
+    const bool isYmin;
     
     //! from smpi is ymin
-    const bool isNorthern;
+    const bool isYmax;
 
     //! from smpi is zmax
-    const bool isTop;
+    const bool isZmax;
     
     //! from smpi is zmin
-    const bool isBottom;
+    const bool isZmin;
 };
 
 #endif

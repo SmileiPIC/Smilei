@@ -187,10 +187,10 @@ void VectorPatch::initExternals(Params& params)
     for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
         // check if patch is on the border
         int iBC;
-        if     ( (*this)(ipatch)->isWestern() ) {
+        if     ( (*this)(ipatch)->isXmin() ) {
             iBC = 0;
         }
-        else if( (*this)(ipatch)->isEastern() ) {
+        else if( (*this)(ipatch)->isXmax() ) {
             iBC = 1;
         }
         else continue;
