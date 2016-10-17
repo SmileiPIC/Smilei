@@ -173,7 +173,7 @@ public:
 
     //Poisson solver
     //! Do we solve poisson
-    bool poisson_flag;
+    bool solve_poisson;
     //! Maxium number of poisson iteration
     unsigned int poisson_iter_max;
     //! Maxium poisson error tolerated

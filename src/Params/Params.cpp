@@ -247,7 +247,7 @@ namelist("")
     PyTools::extract("clrw",clrw, "Main");
 
     // Poisson Solver
-    PyTools::extract("poisson_flag", poisson_flag, "Main");
+    PyTools::extract("solve_poisson", solve_poisson, "Main");
     PyTools::extract("poisson_iter_max", poisson_iter_max, "Main");
     PyTools::extract("poisson_error_max", poisson_error_max, "Main");
         

@@ -168,7 +168,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   
   The solver for Maxwell's equations. Only ``"Yee"`` is available at the moment.
 
-.. py:data:: poisson_flag
+.. py:data:: solve_poisson
   
    :default: True
   

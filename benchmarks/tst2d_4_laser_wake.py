@@ -25,7 +25,7 @@ Main(
     bc_em_type_y = ["silver-muller","silver-muller"],
     
     random_seed = 0,
-    poisson_flag = False,
+    solve_poisson = False,
     print_every = 100
 )
 

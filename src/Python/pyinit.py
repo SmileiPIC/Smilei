@@ -128,7 +128,7 @@ class Main(SmileiSingleton):
     timestep_over_CFL = None
     
     # Poisson tuning
-    poisson_flag = True
+    solve_poisson = True
     poisson_iter_max = 50000
     poisson_error_max = 1.e-14
     
