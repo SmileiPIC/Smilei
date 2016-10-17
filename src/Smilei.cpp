@@ -203,7 +203,7 @@ int main (int argc, char* argv[])
         time_prim += params.timestep;
         time_dual += params.timestep;
         
-        if ( vecPatches.fieldTimeIsNow(itime) ) diag_flag = 1;
+        if ( vecPatches.needsRhoJsNow(itime) ) diag_flag = 1;
         
         // pritn message at given time-steps
         // --------------------------------

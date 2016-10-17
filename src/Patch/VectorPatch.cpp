@@ -25,16 +25,12 @@ using namespace std;
 
 VectorPatch::VectorPatch()
 {
-    fieldsTimeSelection = NULL;
+    diagsTimeSelections.resize(0);
 }
 
 
 VectorPatch::~VectorPatch()
 {
-    if( fieldsTimeSelection!=NULL ) {
-        delete fieldsTimeSelection;
-        fieldsTimeSelection = NULL;
-    }
 }
 
 void VectorPatch::close(SmileiMPI * smpiData)
@@ -218,13 +214,10 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
     // Local diags : fields, probes, tracks
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
         localDiags[idiag]->init(params, smpi, *this);
-        // Save the timeSelection
-        if( fieldsTimeSelection==NULL && dynamic_cast<DiagnosticFields*>(localDiags[idiag]))
-            fieldsTimeSelection = new TimeSelection(localDiags[idiag]->timeSelection);
+        // Store the timeSelection if necessary
+        if( localDiags[idiag]->needsRhoJs() ) 
+            diagsTimeSelections.push_back( localDiags[idiag]->timeSelection );
     }
-    
-    // If no time selection has been found for fields, create an empty one
-    if( fieldsTimeSelection==NULL ) fieldsTimeSelection = new TimeSelection();
     
 } // END initAllDiags
 
