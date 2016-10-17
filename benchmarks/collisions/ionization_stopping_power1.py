@@ -56,10 +56,10 @@ for i in range(npoints):
 		mean_velocity = [vel, 0., 0.],
 		temperature = [0.0000001]*3,
 		time_frozen = 100000000.0,
-		bc_part_type_west = "none",
-		bc_part_type_east = "none",
-		bc_part_type_south = "none",
-		bc_part_type_north = "none",
+		bc_part_type_xmin = "none",
+		bc_part_type_xmax = "none",
+		bc_part_type_ymin = "none",
+		bc_part_type_ymax = "none",
 		c_part_max = 10.
 	)
 
@@ -74,10 +74,10 @@ Species(
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.00000001]*3,
 	time_frozen = 100000000.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none",
-	bc_part_type_south = "none",
-	bc_part_type_north = "none",
+	bc_part_type_xmin = "none",
+	bc_part_type_xmax = "none",
+	bc_part_type_ymin = "none",
+	bc_part_type_ymax = "none",
 	atomic_number = 13
 )
 

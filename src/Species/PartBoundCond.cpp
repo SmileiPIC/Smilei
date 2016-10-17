@@ -74,18 +74,18 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
 
     // Check for inconsistencies between EM and particle BCs
     if (! species->particles->tracked) {
-        if ( ((params.bc_em_type_x[0]=="periodic")&&(species->bc_part_type_west!="none"))
-         ||  ((params.bc_em_type_x[1]=="periodic")&&(species->bc_part_type_east!="none")) ) {
+        if ( ((params.bc_em_type_x[0]=="periodic")&&(species->bc_part_type_xmin!="none"))
+         ||  ((params.bc_em_type_x[1]=="periodic")&&(species->bc_part_type_xmax!="none")) ) {
             ERROR("For species " << species->species_type << ", periodic EM boundary conditions require x particle BCs to be periodic.");
         }
         if ( nDim_particle > 1 ) {
-            if ( ((params.bc_em_type_y[0]=="periodic")&&(species->bc_part_type_south!="none"))
-             ||  ((params.bc_em_type_y[1]=="periodic")&&(species->bc_part_type_north!="none")) ) {
+            if ( ((params.bc_em_type_y[0]=="periodic")&&(species->bc_part_type_ymin!="none"))
+             ||  ((params.bc_em_type_y[1]=="periodic")&&(species->bc_part_type_ymax!="none")) ) {
                 ERROR("For species #" << species->species_type << ", periodic EM boundary conditions require y particle BCs to be periodic.");
             }
             if ( nDim_particle > 2 ) {
-                if ( ((params.bc_em_type_z[0]=="periodic")&&(species->bc_part_type_bottom!="none"))
-                 ||  ((params.bc_em_type_z[1]=="periodic")&&(species->bc_part_type_up!="none"    )) ) {
+                if ( ((params.bc_em_type_z[0]=="periodic")&&(species->bc_part_type_zmin!="none"))
+                 ||  ((params.bc_em_type_z[1]=="periodic")&&(species->bc_part_type_zmax!="none"    )) ) {
                     ERROR("For species #" << species->species_type << ", periodic EM boundary conditions require z particle BCs to be periodic.");
                 }
             }
@@ -97,19 +97,19 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     // ----------------------------------------------
     
     // West
-    if ( species->bc_part_type_west == "refl" ) {
+    if ( species->bc_part_type_xmin == "refl" ) {
         if (patch->isWestern()) bc_west = &refl_particle;
     }
-    else if ( species->bc_part_type_west == "supp" ) {
+    else if ( species->bc_part_type_xmin == "supp" ) {
         if (patch->isWestern()) bc_west = &supp_particle;
     }
-    else if ( species->bc_part_type_west == "stop" ) {
+    else if ( species->bc_part_type_xmin == "stop" ) {
         if (patch->isWestern()) bc_west = &stop_particle;
     }
-    else if ( species->bc_part_type_west == "thermalize" ) {
+    else if ( species->bc_part_type_xmin == "thermalize" ) {
         if (patch->isWestern()) bc_west = &thermalize_particle;
     }
-    else if ( species->bc_part_type_west == "none" ) {
+    else if ( species->bc_part_type_xmin == "none" ) {
         if (patch->isMaster()) MESSAGE(2,"West boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
     }
     else {
@@ -117,19 +117,19 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     }
     
     // East
-    if ( species->bc_part_type_east == "refl" ) {
+    if ( species->bc_part_type_xmax == "refl" ) {
         if (patch->isEastern()) bc_east = &refl_particle;
     }
-    else if ( species->bc_part_type_east == "supp" ) {
+    else if ( species->bc_part_type_xmax == "supp" ) {
         if (patch->isEastern()) bc_east = &supp_particle;
     }
-    else if ( species->bc_part_type_east == "stop" ) {
+    else if ( species->bc_part_type_xmax == "stop" ) {
         if (patch->isEastern()) bc_east = &stop_particle;
     }
-    else if ( species->bc_part_type_east == "thermalize" ) {
+    else if ( species->bc_part_type_xmax == "thermalize" ) {
         if (patch->isEastern()) bc_east = &thermalize_particle;
     }
-    else if ( species->bc_part_type_east == "none" ) {
+    else if ( species->bc_part_type_xmax == "none" ) {
         if (patch->isMaster()) MESSAGE(2,"East boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
     }
     else {
@@ -139,64 +139,64 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     
     if ( nDim_particle > 1 ) {
         // South
-        if ( species->bc_part_type_south == "refl" ) {
+        if ( species->bc_part_type_ymin == "refl" ) {
             if (patch->isSouthern()) bc_south = &refl_particle;
         }
-        else if ( species->bc_part_type_south == "supp" ) {
+        else if ( species->bc_part_type_ymin == "supp" ) {
             if (patch->isSouthern()) bc_south = &supp_particle;
         }
-        else if ( species->bc_part_type_south == "stop" ) {
+        else if ( species->bc_part_type_ymin == "stop" ) {
             if (patch->isSouthern()) bc_south = &stop_particle;
         }
-        else if ( species->bc_part_type_south == "thermalize" ) {
+        else if ( species->bc_part_type_ymin == "thermalize" ) {
             if (patch->isSouthern()) bc_south = &thermalize_particle;
         }
-        else if ( species->bc_part_type_south == "none" ) {
+        else if ( species->bc_part_type_ymin == "none" ) {
             if (patch->isMaster()) MESSAGE(2,"South boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
         }
         else {
-            ERROR( "South boundary condition undefined : " << species->bc_part_type_south  );
+            ERROR( "South boundary condition undefined : " << species->bc_part_type_ymin  );
         }
         
         // North
-        if ( species->bc_part_type_north == "refl" ) {
+        if ( species->bc_part_type_ymax == "refl" ) {
             if (patch->isNorthern()) bc_north = &refl_particle;
         }
-        else if ( species->bc_part_type_north == "supp" ) {
+        else if ( species->bc_part_type_ymax == "supp" ) {
             if (patch->isNorthern()) bc_north = &supp_particle;
         }
-        else if ( species->bc_part_type_north == "stop" ) {
+        else if ( species->bc_part_type_ymax == "stop" ) {
             if (patch->isNorthern()) bc_north = &stop_particle;
         }
-        else if ( species->bc_part_type_north == "thermalize" ) {
+        else if ( species->bc_part_type_ymax == "thermalize" ) {
             if (patch->isNorthern()) bc_north = &thermalize_particle;
         }
-        else if ( species->bc_part_type_north == "none" ) {
+        else if ( species->bc_part_type_ymax == "none" ) {
             if (patch->isMaster()) MESSAGE(2,"North boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
         }
         else {
-            ERROR( "North boundary condition undefined : " << species->bc_part_type_north  );
+            ERROR( "North boundary condition undefined : " << species->bc_part_type_ymax  );
         }
         
         
         if ( nDim_particle > 2 ) {
-            if ( species->bc_part_type_bottom == "refl" ) {
+            if ( species->bc_part_type_zmin == "refl" ) {
                 if (z_min==z_min_global) bc_bottom = &refl_particle;
             }
-            else if ( species->bc_part_type_bottom == "supp" ) {
+            else if ( species->bc_part_type_zmin == "supp" ) {
                 if (z_min==z_min_global) bc_bottom = &supp_particle;
             }
-            else if ( species->bc_part_type_bottom == "stop" ) {
+            else if ( species->bc_part_type_zmin == "stop" ) {
                 if (z_min==z_min_global) bc_bottom = &stop_particle;
             }
             
-            if ( species->bc_part_type_up == "refl" ) {
+            if ( species->bc_part_type_zmax == "refl" ) {
                 if (z_min==z_min_global) bc_up = &refl_particle;
             }
-            else if ( species->bc_part_type_up == "supp" )  {
+            else if ( species->bc_part_type_zmax == "supp" )  {
                 if (z_min==z_min_global) bc_up = &supp_particle;
             }
-            else if ( species->bc_part_type_up == "stop" ) {
+            else if ( species->bc_part_type_zmax == "stop" ) {
                 if (z_min==z_min_global) bc_up = &stop_particle;
             }
             

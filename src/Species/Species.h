@@ -85,12 +85,12 @@ public:
     bool radiating;
     
     //! Boundary conditions for particules
-    std::string bc_part_type_west;
-    std::string bc_part_type_east;
-    std::string bc_part_type_south;
-    std::string bc_part_type_north;
-    std::string bc_part_type_bottom;
-    std::string bc_part_type_up;
+    std::string bc_part_type_xmin;
+    std::string bc_part_type_xmax;
+    std::string bc_part_type_ymin;
+    std::string bc_part_type_ymax;
+    std::string bc_part_type_zmin;
+    std::string bc_part_type_zmax;
     
     //! Ionization model per Specie (tunnel)
     std::string ionization_model;

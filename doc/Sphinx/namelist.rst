@@ -328,10 +328,10 @@ Each species has to be defined in a ``Species`` block::
       charge = -1.,
       mean_velocity = [0.],
       temperature = [1e-10],
-      bc_part_type_west = "refl",
-      bc_part_type_east = "refl",
-      # bc_part_type_north = None,
-      # bc_part_type_south = None,
+      bc_part_type_xmin = "refl",
+      bc_part_type_xmax = "refl",
+      # bc_part_type_ymax = None,
+      # bc_part_type_ymin = None,
       # thermT = None,
       # thermVelocity = None,
       time_frozen = 0.0,
@@ -419,10 +419,10 @@ Each species has to be defined in a ``Species`` block::
   The initial temperature of the particles, in units of :math:`m_ec^2`.
 
 
-.. py:data:: bc_part_type_west
-             bc_part_type_east
-             bc_part_type_south
-             bc_part_type_north
+.. py:data:: bc_part_type_xmin
+             bc_part_type_xmax
+             bc_part_type_ymin
+             bc_part_type_ymax
   
   The boundary condition for particles: ``"none"`` means periodic.
   

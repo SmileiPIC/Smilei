@@ -55,10 +55,10 @@ Species(
     dynamics_type = "norm",    
     time_frozen = 0.0,
     radiating = False,
-    bc_part_type_west = "supp",
-    bc_part_type_east = "supp",
-    bc_part_type_south ="supp",
-    bc_part_type_north ="supp"
+    bc_part_type_xmin = "supp",
+    bc_part_type_xmax = "supp",
+    bc_part_type_ymin ="supp",
+    bc_part_type_ymax ="supp"
 )
 
 LaserGaussian2D(
