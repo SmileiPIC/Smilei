@@ -629,7 +629,7 @@ void ElectroMagn3D::computePoynting() {
 
 #ifdef _PATCH3D_TODO
 #endif
-    }//if Western
+    }//if Xmin
     
     
     if (isXmax) {

@@ -226,7 +226,7 @@ void ElectroMagnBC2D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
         }//j  ---end compute Bz
         
         
-    }//if Western
+    }//if Xmin
 
 }
 // ---------------------------------------------------------------------------------------------------------------------
@@ -296,7 +296,7 @@ void ElectroMagnBC2D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
         }//j  ---end compute Bz
         
         
-    }//if Eastern
+    }//if Xmax
 
 }
 
@@ -338,7 +338,7 @@ void ElectroMagnBC2D_SM::apply_ymin(ElectroMagn* EMfields, double time_dual, Pat
             +               Bz_yvalmin_Trans[j];
         }//j  ---end Bz
         
-    }//if Southern
+    }//if Ymin
     
 }
 // ---------------------------------------------------------------------------------------------------------------------
@@ -379,7 +379,7 @@ void ElectroMagnBC2D_SM::apply_ymax(ElectroMagn* EMfields, double time_dual, Pat
             +                   Bz_yvalmax_Trans[j];
         }//j  ---end Bx
         
-    }//if Northern
+    }//if Ymax
     
 }
 

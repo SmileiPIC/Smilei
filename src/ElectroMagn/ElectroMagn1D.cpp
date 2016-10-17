@@ -448,7 +448,7 @@ void ElectroMagn1D::computeTotalRhoJ()
 // --------------------------------------------------------------------------
 void ElectroMagn1D::computePoynting() {
     
-    // Western border (Energy injected = +Poynting)
+    // Xmin border (Energy injected = +Poynting)
     if (isXmin) {
         unsigned int iEy=istart[0][Ey_->isDual(0)];
         unsigned int iBz=istart[0][Bz_m->isDual(0)];
@@ -460,7 +460,7 @@ void ElectroMagn1D::computePoynting() {
         poynting[0][0] += poynting_inst[0][0];
     }
     
-    // Eastern border (Energy injected = -Poynting)
+    // Xmax border (Energy injected = -Poynting)
     if (isXmax) {
         unsigned int iEy=istart[0][Ey_->isDual(0)]  + bufsize[0][Ey_->isDual(0)]-1;
         unsigned int iBz=istart[0][Bz_m->isDual(0)] + bufsize[0][Bz_m->isDual(0)]-1;

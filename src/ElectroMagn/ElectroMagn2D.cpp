@@ -246,7 +246,7 @@ void ElectroMagn2D::compute_Ap(Patch* patch)
     }//i
         
         
-    // Western BC
+    // Xmin BC
     if ( patch->isXmin() ) {
         for (unsigned int j=1; j<ny_p-1; j++) {
             //Ap_(0,j)      = one_ov_dx_sq*(pWest[j]+p_(1,j))
@@ -267,7 +267,7 @@ void ElectroMagn2D::compute_Ap(Patch* patch)
             -                   two_ov_dx2dy2*(*p_)(0,ny_p-1);
     }
         
-    // Eastern BC
+    // Xmax BC
     if ( patch->isXmax() ) {
             
         for (unsigned int j=1; j<ny_p-1; j++) {
@@ -353,14 +353,14 @@ void ElectroMagn2D::initE(Patch *patch)
     // ---------------------
     // Ex / West
     if (patch->isXmin()) {
-        DEBUG("Computing Western BC on Ex");
+        DEBUG("Computing Xmin BC on Ex");
         for (unsigned int j=0; j<ny_p; j++) {
             (*Ex2D)(0,j) = (*Ex2D)(1,j) + ((*Ey2D)(0,j+1)-(*Ey2D)(0,j))*dx/dy  - dx*(*rho2D)(0,j);
         }
     }
     // Ex / East
     if (patch->isXmax()) {
-        DEBUG("Computing Eastern BC on Ex");
+        DEBUG("Computing Xmax BC on Ex");
         for (unsigned int j=0; j<ny_p; j++) {
             (*Ex2D)(nx_d-1,j) = (*Ex2D)(nx_d-2,j) - ((*Ey2D)(nx_p-1,j+1)-(*Ey2D)(nx_p-1,j))*dx/dy + dx*(*rho2D)(nx_p-1,j);
         }
@@ -680,7 +680,7 @@ void ElectroMagn2D::computePoynting() {
             poynting_inst[0][0] = dy*timestep*(Ey__*Bz__ - Ez__*By__);
             poynting[0][0]+= poynting_inst[0][0];
         }
-    }//if Western
+    }//if Xmin
     
     
     if (isXmax) {

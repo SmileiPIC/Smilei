@@ -18,18 +18,18 @@ public:
     //! partBoundCond destructor
     ~PartBoundCond();
 
-    //! West particles boundary conditions pointers (same prototypes for all conditions)
+    //! Xmin particles boundary conditions pointers (same prototypes for all conditions)
     //! @see BoundaryConditionType.h for functions that this pointers will target
     int (*bc_xmin)  ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
-    //! East particles boundary conditions pointers
+    //! Xmax particles boundary conditions pointers
     int (*bc_xmax)  ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
-    //! South particles boundary conditions pointers
+    //! Ymin particles boundary conditions pointers
     int (*bc_ymin) ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
-    //! North particles boundary conditions pointers
+    //! Ymax particles boundary conditions pointers
     int (*bc_ymax) ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
-    //! Bottom particles boundary conditions pointers
+    //! Zmin particles boundary conditions pointers
     int (*bc_zmin)( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
-    //! Up particles boundary conditions pointers
+    //! Zmax particles boundary conditions pointers
     int (*bc_zmax)    ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
 
     //! Method which applies particles boundary conditions.

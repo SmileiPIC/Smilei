@@ -129,7 +129,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch )
     Zeta_SM_N     = - dt_ov_dx              * factor;
     Eta_SM_N      =   dt_ov_dx              * factor;
 
-   // Bottom boundary
+   // Zmin boundary
     theta  = 0.0;
     factor = 1.0 / (cos(theta) + dt_ov_dz);
     Alpha_SM_B    = 2.0                     * factor;
@@ -139,7 +139,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch )
     Zeta_SM_B     = - dt_ov_dy              * factor;
     Eta_SM_B      =   dt_ov_dy              * factor;
     
-    // Top boundary
+    // Zmax boundary
     theta         = M_PI;
     factor        = 1.0 / (cos(theta) - dt_ov_dz);
     Alpha_SM_T    = 2.0                      * factor;
@@ -281,7 +281,7 @@ void ElectroMagnBC3D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
              
              }// k  ---end compute Bz
          }//j  ---end compute Bz
-    }//if Western
+    }//if Xmin
 
 }
 // ---------------------------------------------------------------------------------------------------------------------
@@ -346,7 +346,7 @@ void ElectroMagnBC3D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
             }//k  ---end compute Bz
         }//j  ---end compute Bz
         
-    }//if Eastern
+    }//if Xmax
 
 }
 
@@ -387,7 +387,7 @@ void ElectroMagnBC3D_SM::apply_ymin(ElectroMagn* EMfields, double time_dual, Pat
              }// k  ---end compute Bz
          }//i  ---end compute Bz
         
-    }//if Southern
+    }//if Ymin
     
 }
 // ---------------------------------------------------------------------------------------------------------------------
@@ -431,7 +431,7 @@ void ElectroMagnBC3D_SM::apply_ymax(ElectroMagn* EMfields, double time_dual, Pat
             }//k  ---end compute Bz
         }//j  ---end compute Bz
  
-    }//if Northern
+    }//if Ymax
     
 }
 
@@ -476,7 +476,7 @@ void ElectroMagnBC3D_SM::apply_zmin(ElectroMagn* EMfields, double time_dual, Pat
              }// j  ---end compute By
          }//i  ---end compute By
         
-    } //if Bottom
+    } //if Zmin
     
 }
 // ---------------------------------------------------------------------------------------------------------------------
@@ -521,7 +521,7 @@ void ElectroMagnBC3D_SM::apply_zmax(ElectroMagn* EMfields, double time_dual, Pat
             }//j  ---end compute By
         }//i  ---end compute By
         
-    } //if Top
+    } //if Zmax
     
 }
 

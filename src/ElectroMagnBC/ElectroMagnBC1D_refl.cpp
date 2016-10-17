@@ -83,7 +83,7 @@ void ElectroMagnBC1D_refl::apply_xmin(ElectroMagn* EMfields, double time_dual, P
          (*Bz1D)(0) = (*Bz1D)(1);
          */
         
-    }//if Western
+    }//if Xmin
 
 }
 
@@ -130,7 +130,7 @@ void ElectroMagnBC1D_refl::apply_xmax(ElectroMagn* EMfields, double time_dual, P
         (*Bz1D)(nx_d-1) = (*Bz1D)(nx_d-2);
          */
 
-    }//if Eastern
+    }//if Xmax
 
 }
 
