@@ -331,13 +331,13 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             string name("Poy");
             switch (i) { // dimension
                 case 0:
-                    name+=(j==0?"East":"West");
+                    name+=(j==0?"Xmax":"Xmin");
                     break;
                 case 1:
-                    name+=(j==0?"South":"North");
+                    name+=(j==0?"Ymin":"Ymax");
                     break;
                 case 2:
-                    name+=(j==0?"Bottom":"Top");
+                    name+=(j==0?"Zmin":"Zmax");
                     break;
                 default:
                     break;

@@ -96,7 +96,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     // Define the kind of applied boundary conditions
     // ----------------------------------------------
     
-    // West
+    // Xmin
     if ( species->bc_part_type_xmin == "refl" ) {
         if (patch->isXmin()) bc_xmin = &refl_particle;
     }
@@ -110,13 +110,13 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
         if (patch->isXmin()) bc_xmin = &thermalize_particle;
     }
     else if ( species->bc_part_type_xmin == "none" ) {
-        if (patch->isMaster()) MESSAGE(2,"West boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+        if (patch->isMaster()) MESSAGE(2,"Xmin boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
     }
     else {
-        ERROR("West boundary condition undefined" );
+        ERROR("Xmin boundary condition undefined" );
     }
     
-    // East
+    // Xmax
     if ( species->bc_part_type_xmax == "refl" ) {
         if (patch->isXmax()) bc_xmax = &refl_particle;
     }
@@ -130,15 +130,15 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
         if (patch->isXmax()) bc_xmax = &thermalize_particle;
     }
     else if ( species->bc_part_type_xmax == "none" ) {
-        if (patch->isMaster()) MESSAGE(2,"East boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+        if (patch->isMaster()) MESSAGE(2,"Xmax boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
     }
     else {
-        ERROR( "East boundary condition undefined" );
+        ERROR( "Xmax boundary condition undefined" );
     }
     
     
     if ( nDim_particle > 1 ) {
-        // South
+        // Ymin
         if ( species->bc_part_type_ymin == "refl" ) {
             if (patch->isYmin()) bc_ymin = &refl_particle;
         }
@@ -152,13 +152,13 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
             if (patch->isYmin()) bc_ymin = &thermalize_particle;
         }
         else if ( species->bc_part_type_ymin == "none" ) {
-            if (patch->isMaster()) MESSAGE(2,"South boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+            if (patch->isMaster()) MESSAGE(2,"Ymin boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
         }
         else {
-            ERROR( "South boundary condition undefined : " << species->bc_part_type_ymin  );
+            ERROR( "Ymin boundary condition undefined : " << species->bc_part_type_ymin  );
         }
         
-        // North
+        // Ymax
         if ( species->bc_part_type_ymax == "refl" ) {
             if (patch->isYmax()) bc_ymax = &refl_particle;
         }
@@ -172,10 +172,10 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
             if (patch->isYmax()) bc_ymax = &thermalize_particle;
         }
         else if ( species->bc_part_type_ymax == "none" ) {
-            if (patch->isMaster()) MESSAGE(2,"North boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+            if (patch->isMaster()) MESSAGE(2,"Ymax boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
         }
         else {
-            ERROR( "North boundary condition undefined : " << species->bc_part_type_ymax  );
+            ERROR( "Ymax boundary condition undefined : " << species->bc_part_type_ymax  );
         }
         
         

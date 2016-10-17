@@ -76,7 +76,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     for (int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
         if ( vecPatches(ipatch)->isXmax() )
             for (int ispec=0 ; ispec<nSpecies ; ispec++)
-                vecPatches(ipatch)->vecSpecies[ispec]->disableEast();
+                vecPatches(ipatch)->vecSpecies[ispec]->disableXmax();
         vecPatches(ipatch)->neighbor_[0][1] = vecPatches(ipatch)->hindex;
         vecPatches(ipatch)->hindex = vecPatches(ipatch)->neighbor_[0][0];
     }
@@ -224,7 +224,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         vecPatches(ipatch)->updateMPIenv(smpi);
         if ( vecPatches(ipatch)->isXmin() )
             for (int ispec=0 ; ispec<nSpecies ; ispec++)
-                vecPatches(ipatch)->vecSpecies[ispec]->setWestBoundaryCondition(); 
+                vecPatches(ipatch)->vecSpecies[ispec]->setXminBoundaryCondition(); 
     }
     
     vecPatches.set_refHindex() ;

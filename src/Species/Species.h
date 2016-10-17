@@ -251,9 +251,9 @@ public:
     Pusher* Push;
 
     //! Moving window boundary conditions managment
-    void disableEast();
+    void disableXmax();
     //! Moving window boundary conditions managment
-    void setWestBoundaryCondition();
+    void setXminBoundaryCondition();
 
 
 private:    

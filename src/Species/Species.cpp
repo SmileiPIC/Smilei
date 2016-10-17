@@ -927,10 +927,10 @@ bool Species::isProj(double time_dual, SimWindow* simWindow) {
     //return time_dual > species_param.time_frozen  || (simWindow && simWindow->isMoving(time_dual)) ;
 }
 
-void Species::disableEast() {
+void Species::disableXmax() {
     partBoundCond->bc_xmax   = NULL;
 }
 
-void Species::setWestBoundaryCondition() {
+void Species::setXminBoundaryCondition() {
     partBoundCond->bc_xmin   = &supp_particle;
 }

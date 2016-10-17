@@ -27,13 +27,13 @@ public:
     void initE(Patch *patch);
     void centeringE( std::vector<double> E_Add );
 
-    double getEx_West() { return 0.; }
-    double getEx_East() { return 0.; }
+    double getEx_Xmin() { return 0.; }
+    double getEx_Xmax() { return 0.; }
 
-    double getEx_WestNorth() { return 0.; }
-    double getEy_WestNorth() { return 0.; }
-    double getEx_EastSouth() { return 0.; }
-    double getEy_EastSouth() { return 0.; }
+    double getEx_XminYmax() { return 0.; }
+    double getEy_XminYmax() { return 0.; }
+    double getEx_XmaxYmin() { return 0.; }
+    double getEy_XmaxYmin() { return 0.; }
 
 #ifdef _PATCH3D_TODO
 #endif

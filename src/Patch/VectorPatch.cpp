@@ -432,66 +432,66 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 #endif    
     }
     else if ( Ex_[0]->dims_.size()>1 ) {
-        double Ex_WestNorth = 0.0;
-        double Ey_WestNorth = 0.0;
-        double Ex_EastSouth = 0.0;
-        double Ey_EastSouth = 0.0;
+        double Ex_XminYmax = 0.0;
+        double Ey_XminYmax = 0.0;
+        double Ex_XmaxYmin = 0.0;
+        double Ey_XmaxYmin = 0.0;
         
-        //The NorthWest patch has Patch coordinates X=0, Y=2^m1-1= number_of_patches[1]-1.
+        //The YmaxXmin patch has Patch coordinates X=0, Y=2^m1-1= number_of_patches[1]-1.
         //Its hindex is
-        int patch_NorthWest = generalhilbertindex(params.mi[0], params.mi[1], 0,  params.number_of_patches[1]-1);
+        int patch_YmaxXmin = generalhilbertindex(params.mi[0], params.mi[1], 0,  params.number_of_patches[1]-1);
         //The MPI rank owning it is
-        int rank_WestNorth = smpi->hrank(patch_NorthWest);
-        //The SouthEast patch has Patch coordinates X=2^m0-1= number_of_patches[0]-1, Y=0.
+        int rank_XminYmax = smpi->hrank(patch_YmaxXmin);
+        //The YminXmax patch has Patch coordinates X=2^m0-1= number_of_patches[0]-1, Y=0.
         //Its hindex is
-        int patch_SouthEast = generalhilbertindex(params.mi[0], params.mi[1], params.number_of_patches[0]-1, 0);
+        int patch_YminXmax = generalhilbertindex(params.mi[0], params.mi[1], params.number_of_patches[0]-1, 0);
         //The MPI rank owning it is
-        int rank_EastSouth = smpi->hrank(patch_SouthEast);
+        int rank_XmaxYmin = smpi->hrank(patch_YminXmax);
         
         
         //cout << params.mi[0] << " " << params.mi[1] << " " << params.number_of_patches[0] << " " << params.number_of_patches[1] << endl;
-        //cout << patch_NorthWest << " " << rank_WestNorth << " " << patch_SouthEast << " " << rank_EastSouth << endl;
+        //cout << patch_YmaxXmin << " " << rank_XminYmax << " " << patch_YminXmax << " " << rank_XmaxYmin << endl;
         
-        if ( smpi->getRank() == rank_WestNorth ) {
-            Ex_WestNorth = (*this)(patch_NorthWest-((*this).refHindex_))->EMfields->getEx_WestNorth();
-            Ey_WestNorth = (*this)(patch_NorthWest-((*this).refHindex_))->EMfields->getEy_WestNorth();
+        if ( smpi->getRank() == rank_XminYmax ) {
+            Ex_XminYmax = (*this)(patch_YmaxXmin-((*this).refHindex_))->EMfields->getEx_XminYmax();
+            Ey_XminYmax = (*this)(patch_YmaxXmin-((*this).refHindex_))->EMfields->getEy_XminYmax();
         }
         
-        // East-South corner
-        if ( smpi->getRank() == rank_EastSouth ) {
-            Ex_EastSouth = (*this)(patch_SouthEast-((*this).refHindex_))->EMfields->getEx_EastSouth();
-            Ey_EastSouth = (*this)(patch_SouthEast-((*this).refHindex_))->EMfields->getEy_EastSouth();
+        // Xmax-Ymin corner
+        if ( smpi->getRank() == rank_XmaxYmin ) {
+            Ex_XmaxYmin = (*this)(patch_YminXmax-((*this).refHindex_))->EMfields->getEx_XmaxYmin();
+            Ey_XmaxYmin = (*this)(patch_YminXmax-((*this).refHindex_))->EMfields->getEy_XmaxYmin();
         }
         
-        MPI_Bcast(&Ex_WestNorth, 1, MPI_DOUBLE, rank_WestNorth, MPI_COMM_WORLD);
-        MPI_Bcast(&Ey_WestNorth, 1, MPI_DOUBLE, rank_WestNorth, MPI_COMM_WORLD);
+        MPI_Bcast(&Ex_XminYmax, 1, MPI_DOUBLE, rank_XminYmax, MPI_COMM_WORLD);
+        MPI_Bcast(&Ey_XminYmax, 1, MPI_DOUBLE, rank_XminYmax, MPI_COMM_WORLD);
         
-        MPI_Bcast(&Ex_EastSouth, 1, MPI_DOUBLE, rank_EastSouth, MPI_COMM_WORLD);
-        MPI_Bcast(&Ey_EastSouth, 1, MPI_DOUBLE, rank_EastSouth, MPI_COMM_WORLD);
+        MPI_Bcast(&Ex_XmaxYmin, 1, MPI_DOUBLE, rank_XmaxYmin, MPI_COMM_WORLD);
+        MPI_Bcast(&Ey_XmaxYmin, 1, MPI_DOUBLE, rank_XmaxYmin, MPI_COMM_WORLD);
         
         //This correction is always done, independantly of the periodicity. Is this correct ?
-        E_Add[0] = -0.5*(Ex_WestNorth+Ex_EastSouth);
-        E_Add[1] = -0.5*(Ey_WestNorth+Ey_EastSouth);
+        E_Add[0] = -0.5*(Ex_XminYmax+Ex_XmaxYmin);
+        E_Add[1] = -0.5*(Ey_XminYmax+Ey_XmaxYmin);
     
     }
     else if( Ex_[0]->dims_.size()==1 ) {
-        double Ex_West = 0.0;
-        double Ex_East = 0.0;
+        double Ex_Xmin = 0.0;
+        double Ex_Xmax = 0.0;
         
-        unsigned int rankWest = 0;
+        unsigned int rankXmin = 0;
         if ( smpi->getRank() == 0 ) {
-            //Ex_West = (*Ex1D)(index_bc_min[0]);
-            Ex_West = (*this)( (0)-((*this).refHindex_))->EMfields->getEx_West();
+            //Ex_Xmin = (*Ex1D)(index_bc_min[0]);
+            Ex_Xmin = (*this)( (0)-((*this).refHindex_))->EMfields->getEx_Xmin();
         }
-        MPI_Bcast(&Ex_West, 1, MPI_DOUBLE, rankWest, MPI_COMM_WORLD);
+        MPI_Bcast(&Ex_Xmin, 1, MPI_DOUBLE, rankXmin, MPI_COMM_WORLD);
         
-        unsigned int rankEast = smpi->getSize()-1;
+        unsigned int rankXmax = smpi->getSize()-1;
         if ( smpi->getRank() == smpi->getSize()-1 ) {
-            //Ex_East = (*Ex1D)(index_bc_max[0]);
-            Ex_East = (*this)( (params.number_of_patches[0]-1)-((*this).refHindex_))->EMfields->getEx_East();
+            //Ex_Xmax = (*Ex1D)(index_bc_max[0]);
+            Ex_Xmax = (*this)( (params.number_of_patches[0]-1)-((*this).refHindex_))->EMfields->getEx_Xmax();
         }
-        MPI_Bcast(&Ex_East, 1, MPI_DOUBLE, rankEast, MPI_COMM_WORLD);
-        E_Add[0] = -0.5*(Ex_West+Ex_East);
+        MPI_Bcast(&Ex_Xmax, 1, MPI_DOUBLE, rankXmax, MPI_COMM_WORLD);
+        E_Add[0] = -0.5*(Ex_Xmin+Ex_Xmax);
         
     }
     

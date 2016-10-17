@@ -645,7 +645,7 @@ void ElectroMagn3D::computePoynting() {
         
 #ifdef _PATCH3D_TODO
 #endif
-    }//if Easter
+    }//if Xmaxer
     
     if (isYmin) {
         
@@ -661,7 +661,7 @@ void ElectroMagn3D::computePoynting() {
 
 #ifdef _PATCH3D_TODO
 #endif        
-    }// if South
+    }// if Ymin
     
     if (isYmax) {
         unsigned int iEz=istart[0][Ez3D->isDual(0)];
@@ -676,7 +676,7 @@ void ElectroMagn3D::computePoynting() {
         
 #ifdef _PATCH3D_TODO
 #endif
-    }//if North
+    }//if Ymax
 
 }
 

@@ -87,7 +87,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch )
     
     //! \todo (MG) Check optimal angle for Silver-Muller BCs
     
-    // West boundary
+    // Xmin boundary
     double theta  = 0.0*conv_deg2rad; //0.0;
     double factor = 1.0 / (cos(theta) + dt_ov_dx);
     Alpha_SM_W    = 2.0                     * factor;
@@ -98,7 +98,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch )
     Zeta_SM_W     = - dt_ov_dz              * factor;
     Eta_SM_W      =   dt_ov_dz              * factor;
     
-    // East boundary
+    // Xmax boundary
     theta         = M_PI;
     factor        = 1.0 / (cos(theta) - dt_ov_dx);
     Alpha_SM_E    = 2.0                      * factor;
@@ -109,7 +109,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch )
     Zeta_SM_E     = - dt_ov_dz              * factor;
     Eta_SM_E      =   dt_ov_dz              * factor;
     
-    // South boundary
+    // Ymin boundary
     theta  = 0.0;
     factor = 1.0 / (cos(theta) + dt_ov_dy );
     Alpha_SM_S    = 2.0                     * factor;
@@ -119,7 +119,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch )
     Zeta_SM_S     = - dt_ov_dx              * factor;
     Eta_SM_S      =   dt_ov_dx              * factor;
     
-    // North boundary
+    // Ymax boundary
     theta  = M_PI;
     factor = 1.0 / (cos(theta) - dt_ov_dy);
     Alpha_SM_N    = 2.0                     * factor;
