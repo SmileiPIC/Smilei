@@ -27,13 +27,13 @@ public:
     void initE(Patch *patch);
     void centeringE( std::vector<double> E_Add );
 
-    double getEx_West() { return 0.; }
-    double getEx_East() { return 0.; }
+    double getEx_Xmin() { return 0.; }
+    double getEx_Xmax() { return 0.; }
 
-    double getEx_WestNorth() { return 0.; }
-    double getEy_WestNorth() { return 0.; }
-    double getEx_EastSouth() { return 0.; }
-    double getEy_EastSouth() { return 0.; }
+    double getEx_XminYmax() { return 0.; }
+    double getEy_XminYmax() { return 0.; }
+    double getEx_XmaxYmin() { return 0.; }
+    double getEy_XmaxYmin() { return 0.; }
 
 #ifdef _PATCH3D_TODO
 #endif
@@ -115,23 +115,23 @@ public:
         
 private:
     
-    //! from smpi is west
-    const bool isWestern;
+    //! from smpi is xmin
+    const bool isXmin;
     
-    //! from smpi is east
-    const bool isEastern;
+    //! from smpi is xmax
+    const bool isXmax;
     
-    //! from smpi is north
-    const bool isSouthern;
+    //! from smpi is ymax
+    const bool isYmin;
     
-    //! from smpi is south
-    const bool isNorthern;
+    //! from smpi is ymin
+    const bool isYmax;
 
-    //! from smpi is top
-    const bool isTop;
+    //! from smpi is zmax
+    const bool isZmax;
     
-    //! from smpi is bottom
-    const bool isBottom;
+    //! from smpi is zmin
+    const bool isZmin;
 };
 
 #endif

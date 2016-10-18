@@ -168,6 +168,12 @@ The block ``Main`` is **mandatory** and has the following syntax::
   
   The solver for Maxwell's equations. Only ``"Yee"`` is available at the moment.
 
+.. py:data:: solve_poisson
+  
+   :default: True
+  
+   Decides if Poisson correction must be applied or not initially.
+
 .. py:data:: poisson_iter_max
   
   :default: 50000
@@ -240,10 +246,18 @@ occur every 150 iterations.
 .. code-block:: python
   
   LoadBalancing(
-      every = 100,
+      initial_balance = True
+      every = 150,
       coef_cell = 1.,
       coef_frozen = 0.1,
   )
+
+.. py:data:: initial_balance
+  
+  :default: True
+  
+  Decides if the load must be balanced at initialization. If not, the same amount of
+  patches will be attributed to each MPI rank.
 
 .. py:data:: every
   
@@ -314,10 +328,10 @@ Each species has to be defined in a ``Species`` block::
       charge = -1.,
       mean_velocity = [0.],
       temperature = [1e-10],
-      bc_part_type_west = "refl",
-      bc_part_type_east = "refl",
-      # bc_part_type_north = None,
-      # bc_part_type_south = None,
+      bc_part_type_xmin = "refl",
+      bc_part_type_xmax = "refl",
+      # bc_part_type_ymax = None,
+      # bc_part_type_ymin = None,
       # thermT = None,
       # thermVelocity = None,
       time_frozen = 0.0,
@@ -405,10 +419,10 @@ Each species has to be defined in a ``Species`` block::
   The initial temperature of the particles, in units of :math:`m_ec^2`.
 
 
-.. py:data:: bc_part_type_west
-             bc_part_type_east
-             bc_part_type_south
-             bc_part_type_north
+.. py:data:: bc_part_type_xmin
+             bc_part_type_xmax
+             bc_part_type_ymin
+             bc_part_type_ymax
   
   The boundary condition for particles: ``"none"`` means periodic.
   
@@ -515,16 +529,16 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   .. code-block:: python
     
     Laser(
-        boxSide = "west",
+        boxSide = "xmin",
         space_time_profile = [ By_profile, Bz_profile ]
     )
   
   .. py:data:: boxSide
     
-    :default: ``"west"``
+    :default: ``"xmin"``
     
-    Side of the box from which the laser originates: at the moment, only ``"west"`` and
-    ``"east"`` are supported.
+    Side of the box from which the laser originates: at the moment, only ``"xmin"`` and
+    ``"xmax"`` are supported.
     
   .. py:data:: space_time_profile
   
@@ -543,7 +557,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   .. code-block:: python
     
     Laser(
-        boxSide        = "west",
+        boxSide        = "xmin",
         omega          = 1.,
         chirp_profile  = tconstant(),
         time_envelope  = tgaussian(),
@@ -609,7 +623,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   For one-dimensional simulations, you may use the simplified laser creator::
     
     LaserPlanar1D(
-        boxSide         = "west",
+        boxSide         = "xmin",
         a0              = 1.,
         omega           = 1.,
         polarizationPhi = 0.,
@@ -644,7 +658,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   For two-dimensional simulations, you may use the simplified laser creator::
     
     LaserGaussian2D(
-        boxSide         = "west",
+        boxSide         = "xmin",
         a0              = 1.,
         omega           = 1.,
         focus           = [50., 40.],
@@ -1107,9 +1121,9 @@ The full list of scalars that are saved by this diagnostic:
 | | ExMax        | | Maximum of :math:`E_x`                                                  |
 | | ExMaxCell    | |  ... and its location (cell index)                                      |
 | |              | | ... same for fields Ey Ez Bx_m By_m Bz_m Jx Jy Jz Rho                   |
-| | PoyEast      | | Accumulated Poynting flux through eastern boundary                      |
-| | PoyEastInst  | | Current Poynting flux through eastern boundary                          |
-| |              | |  ... same for boundaries West South North Bottom Top                    |
+| | PoyXmax      | | Accumulated Poynting flux through xmax boundary                         |
+| | PoyXmaxInst  | | Current Poynting flux through xmax boundary                             |
+| |              | |  ... same for boundaries xmin ymin ymax zmin zmax                       |
 +----------------+---------------------------------------------------------------------------+
 
 Checkout the :doc:`post-processing <post-processing>` documentation as well.

@@ -53,6 +53,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patc
     fields_indexes.resize(0);
     fields_names  .resize(0);
     bool hasfield;
+    hasRhoJs = false;
     for( unsigned int i=0; i<allFields->size(); i++ ) {
         string field_name = (*allFields)[i]->name;
         if( field_name.find("_avg") < string::npos ) field_name.erase(field_name.find("_avg"));
@@ -73,6 +74,9 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patc
             ss << field_name << " ";
             fields_indexes.push_back( i );
             fields_names  .push_back( field_name );
+            if( ! hasRhoJs )
+                if( field_name.at(0)=='J' || field_name.at(0)=='R' )
+                    hasRhoJs = true;
         }
     }
     MESSAGE(1,"EM fields dump "<<(time_average>1?"(avg)":"     ")<<" :");
@@ -241,4 +245,7 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     
 }
 
- 
+
+bool DiagnosticFields::needsRhoJs() {
+    return hasRhoJs;
+}

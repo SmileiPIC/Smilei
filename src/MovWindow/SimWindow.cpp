@@ -74,9 +74,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     
     // Shift the patches, new patches will be created directly with their good patchid and BC
     for (int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
-        if ( vecPatches(ipatch)->isEastern() )
+        if ( vecPatches(ipatch)->isXmax() )
             for (int ispec=0 ; ispec<nSpecies ; ispec++)
-                vecPatches(ipatch)->vecSpecies[ispec]->disableEast();
+                vecPatches(ipatch)->vecSpecies[ispec]->disableXmax();
         vecPatches(ipatch)->neighbor_[0][1] = vecPatches(ipatch)->hindex;
         vecPatches(ipatch)->hindex = vecPatches(ipatch)->neighbor_[0][0];
     }
@@ -93,8 +93,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     for ( int ipatch = nPatches-1 ; ipatch >= 0 ; ipatch--) {
 
         // Patch à supprimer
-        //if I'm western  AND I'm not a newly created patch (because we start at nPatches-1), delete me !
-        if ( vecPatches(ipatch)->isWestern() ) {
+        //if I'm xmin  AND I'm not a newly created patch (because we start at nPatches-1), delete me !
+        if ( vecPatches(ipatch)->isXmin() ) {
 
             // Compute energy lost 
             energy_field_lost += vecPatches(ipatch)->EMfields->computeNRJ();
@@ -222,9 +222,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     
     for (int ipatch=0 ; ipatch<nPatches ; ipatch++){
         vecPatches(ipatch)->updateMPIenv(smpi);
-        if ( vecPatches(ipatch)->isWestern() )
+        if ( vecPatches(ipatch)->isXmin() )
             for (int ispec=0 ; ispec<nSpecies ; ispec++)
-                vecPatches(ipatch)->vecSpecies[ispec]->setWestBoundaryCondition(); 
+                vecPatches(ipatch)->vecSpecies[ispec]->setXminBoundaryCondition(); 
     }
     
     vecPatches.set_refHindex() ;

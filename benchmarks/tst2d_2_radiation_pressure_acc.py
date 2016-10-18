@@ -31,7 +31,7 @@ Main(
 )
 
 LaserGaussian2D(
-    boxSide         = "west",
+    boxSide         = "xmin",
     a0              = 150.,
     focus           = [10.*l0, 5.*l0],
     waist           = 2.0*l0,
@@ -48,10 +48,10 @@ Species(
     mass = 1836.0,
     charge = 1.0,
     nb_density = trapezoidal(100.0,xvacuum=l0,xplateau=0.44*l0),
-    bc_part_type_west = 'refl',
-    bc_part_type_east = 'refl',
-    bc_part_type_south = 'none',
-    bc_part_type_north = 'none'
+    bc_part_type_xmin = 'refl',
+    bc_part_type_xmax = 'refl',
+    bc_part_type_ymin = 'none',
+    bc_part_type_ymax = 'none'
 )
 Species(
     species_type = 'eon',
@@ -62,10 +62,10 @@ Species(
     charge = -1.0,
     nb_density = trapezoidal(100.0,xvacuum=l0,xplateau=0.44*l0),
     temperature = [0.001],
-    bc_part_type_west = 'refl',
-    bc_part_type_east = 'refl',
-    bc_part_type_south = 'none',
-    bc_part_type_north = 'none'
+    bc_part_type_xmin = 'refl',
+    bc_part_type_xmax = 'refl',
+    bc_part_type_ymin = 'none',
+    bc_part_type_ymax = 'none'
 )
 
 

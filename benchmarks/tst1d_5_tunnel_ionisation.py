@@ -42,8 +42,8 @@ Species(
 	mass = 1836.0,
 	charge = 0.0,
 	nb_density = trapezoidal(1.0,xvacuum=0.49*l0,xplateau=0.02*l0),
-	bc_part_type_west = 'none',
-	bc_part_type_east = 'none'
+	bc_part_type_xmin = 'none',
+	bc_part_type_xmax = 'none'
 )
 Species(
 	species_type = 'electron',
@@ -53,12 +53,12 @@ Species(
 	mass = 1.0,
 	charge = -1.0,
 	charge_density = 0.0,
-	bc_part_type_west = 'none',
-	bc_part_type_east = 'none'
+	bc_part_type_xmin = 'none',
+	bc_part_type_xmax = 'none'
 )
 
 LaserPlanar1D(
-	boxSide = 'west',
+	boxSide = 'xmin',
 	a0 = 0.1,
     omega = 1.,
     polarizationPhi = math.pi/2.,

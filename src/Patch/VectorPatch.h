@@ -70,11 +70,11 @@ public :
         return diag->getScalar( name );
     }
     
-    bool fieldTimeIsNow( int timestep ) {
-        if( fieldsTimeSelection!=NULL )
-            return fieldsTimeSelection->theTimeIsNow(timestep);
-        else
-            return false;
+    bool needsRhoJsNow( int timestep ) {
+        for( unsigned int i=0; i<diagsTimeSelections.size(); i++ )
+            if( diagsTimeSelections[i]->theTimeIsNow(timestep) )
+                return true;
+        return false;
     }
     
     bool printScalars( int timestep ) {
@@ -155,9 +155,6 @@ public :
     //! 1st patch index of patches_ (stored for balancing op)
     int refHindex_;
     
-    //! Copy of the fields time selection
-    TimeSelection * fieldsTimeSelection;
-    
     //! Count global (MPI x patches) number of particles per species
     void printNumberOfParticles(SmileiMPI* smpi) {
         unsigned int nSpecies( (*this)(0)->vecSpecies.size() );
@@ -211,6 +208,9 @@ public :
     
     //! Current intensity of antennas
     double antenna_intensity;
+    
+    //! Vector of time selections of the diagnostics which require specific calculations
+    std::vector<TimeSelection*> diagsTimeSelections;
     
 };
 

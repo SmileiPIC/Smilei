@@ -37,12 +37,12 @@ public:
         int nlaser = PyTools::nComponents("Laser");
         for (int ilaser = 0; ilaser < nlaser; ilaser++) {
             Laser * laser = new Laser(params, ilaser, patch);
-            if     ( laser->boxSide == "west" && EMfields->emBoundCond[0]) {
-                if( patch->isWestern() ) laser->createFields(params, patch);
+            if     ( laser->boxSide == "xmin" && EMfields->emBoundCond[0]) {
+                if( patch->isXmin() ) laser->createFields(params, patch);
                 EMfields->emBoundCond[0]->vecLaser.push_back( laser );
             }
-            else if( laser->boxSide == "east" && EMfields->emBoundCond[1]) {
-                if( patch->isEastern() ) laser->createFields(params, patch);
+            else if( laser->boxSide == "xmax" && EMfields->emBoundCond[1]) {
+                if( patch->isXmax() ) laser->createFields(params, patch);
                 EMfields->emBoundCond[1]->vecLaser.push_back( laser );
             }
             else
@@ -124,7 +124,7 @@ public:
         // Clone Lasers properties
         // -----------------
         int nlaser;
-        for( int iBC=0; iBC<2; iBC++ ) { // east and west
+        for( int iBC=0; iBC<2; iBC++ ) { // xmax and xmin
             if(! newEMfields->emBoundCond[iBC]) continue;
             
             newEMfields->emBoundCond[iBC]->vecLaser.resize(0);
@@ -134,8 +134,8 @@ public:
                 // Create laser
                 Laser * laser = new Laser(EMfields->emBoundCond[iBC]->vecLaser[ilaser], params);
                 // If patch is on border, then fill the fields arrays
-                if( (iBC==0 && patch->isWestern())
-                   || (iBC==1 && patch->isEastern()) )
+                if( (iBC==0 && patch->isXmin())
+                   || (iBC==1 && patch->isXmax()) )
                     laser->createFields(params, patch);
                 // Append the laser to the vector
                 newEMfields->emBoundCond[iBC]->vecLaser.push_back( laser );
@@ -208,12 +208,12 @@ public:
         int nlaser = PyTools::nComponents("Laser");
         for (int ilaser = 0; ilaser < nlaser; ilaser++) {
             Laser * laser = new Laser(params, ilaser, patch);
-            if     ( laser->boxSide == "west" && EMfields->emBoundCond[0]) {
-                if( patch->isWestern() ) laser->createFields(params, patch);
+            if     ( laser->boxSide == "xmin" && EMfields->emBoundCond[0]) {
+                if( patch->isXmin() ) laser->createFields(params, patch);
                 EMfields->emBoundCond[0]->vecLaser.push_back( laser );
             }
-            else if( laser->boxSide == "east" && EMfields->emBoundCond[1]) {
-                if( patch->isEastern() ) laser->createFields(params, patch);
+            else if( laser->boxSide == "xmax" && EMfields->emBoundCond[1]) {
+                if( patch->isXmax() ) laser->createFields(params, patch);
                 EMfields->emBoundCond[1]->vecLaser.push_back( laser );
             }
             else
@@ -293,7 +293,7 @@ public:
         // Clone Lasers properties
         // -----------------
         int nlaser;
-        for( int iBC=0; iBC<2; iBC++ ) { // east and west
+        for( int iBC=0; iBC<2; iBC++ ) { // xmax and xmin
             if(! newEMfields->emBoundCond[iBC]) continue;
             
             newEMfields->emBoundCond[iBC]->vecLaser.resize(0);
@@ -303,8 +303,8 @@ public:
                 // Create laser
                 Laser * laser = new Laser(EMfields->emBoundCond[iBC]->vecLaser[ilaser], params);
                 // If patch is on border, then fill the fields arrays
-                if( (iBC==0 && patch->isWestern())
-                   || (iBC==1 && patch->isEastern()) )
+                if( (iBC==0 && patch->isXmin())
+                   || (iBC==1 && patch->isXmax()) )
                     laser->createFields(params, patch);
                 // Append the laser to the vector
                 newEMfields->emBoundCond[iBC]->vecLaser.push_back( laser );

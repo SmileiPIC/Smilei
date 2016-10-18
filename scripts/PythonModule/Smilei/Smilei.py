@@ -301,8 +301,6 @@ class TrackParticlesFactory(object):
 		self._simulation = simulation
 		self._additionalKwargs = dict()
 		
-		if len(simulation._results_path)>1: return
-		
 		# If not a specific species (root level), build a list of species shortcuts
 		if species is None:
 			# Create a temporary, empty tracked-particle diagnostic

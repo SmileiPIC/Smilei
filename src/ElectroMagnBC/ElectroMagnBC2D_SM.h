@@ -69,34 +69,34 @@ private:
     //! Ratio of the spatial-step by the time-step dy/dt for 2D3V cartesian simulations
     double dy_ov_dt;
     
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Alpha_SM_W;
     
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Beta_SM_W;
     
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Gamma_SM_W;
     
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Delta_SM_W;
     
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Epsilon_SM_W;
     
-    //! Constant used for the Silver-Mueller boundary conditions (East)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
     double Alpha_SM_E;
     
-    //! Constant used for the Silver-Mueller boundary conditions (East)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
     double Beta_SM_E;
     
-    //! Constant used for the Silver-Mueller boundary conditions (East)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
     double Gamma_SM_E;
     
-    //! Constant used for the Silver-Mueller boundary conditions (East)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
     double Delta_SM_E;
     
-    //! Constant used for the Silver-Mueller boundary conditions (East)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
     double Epsilon_SM_E;
     
     //! Constant used for the Silver-Mueller boundary conditions (Transverse)
