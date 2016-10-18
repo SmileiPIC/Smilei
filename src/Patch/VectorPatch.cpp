@@ -25,7 +25,6 @@ using namespace std;
 
 VectorPatch::VectorPatch()
 {
-    diagsTimeSelections.resize(0);
 }
 
 
@@ -212,12 +211,8 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
             globalDiags[idiag]->openFile( params, smpi, true );
     
     // Local diags : fields, probes, tracks
-    for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
+    for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
         localDiags[idiag]->init(params, smpi, *this);
-        // Store the timeSelection if necessary
-        if( localDiags[idiag]->needsRhoJs() ) 
-            diagsTimeSelections.push_back( localDiags[idiag]->timeSelection );
-    }
     
 } // END initAllDiags
 

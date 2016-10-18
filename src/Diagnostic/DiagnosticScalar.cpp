@@ -517,3 +517,8 @@ bool DiagnosticScalar::defined(string key) {
     return false;
 }
 
+
+bool DiagnosticScalar::needsRhoJs(int timestep) {
+    return printNow(timestep) || timeSelection->theTimeIsNow(timestep);
+}
+

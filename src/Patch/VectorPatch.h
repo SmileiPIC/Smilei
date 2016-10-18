@@ -71,8 +71,12 @@ public :
     }
     
     bool needsRhoJsNow( int timestep ) {
-        for( unsigned int i=0; i<diagsTimeSelections.size(); i++ )
-            if( diagsTimeSelections[i]->theTimeIsNow(timestep) )
+        // Figure out whether scalars need Rho and Js
+        if( globalDiags[0]->needsRhoJs(timestep) )
+            return true;
+        // Figure out whether fields or probes need Rho and Js
+        for( unsigned int i=0; i<localDiags.size(); i++ )
+            if( localDiags[i]->needsRhoJs(timestep) )
                 return true;
         return false;
     }
@@ -208,9 +212,6 @@ public :
     
     //! Current intensity of antennas
     double antenna_intensity;
-    
-    //! Vector of time selections of the diagnostics which require specific calculations
-    std::vector<TimeSelection*> diagsTimeSelections;
     
 };
 

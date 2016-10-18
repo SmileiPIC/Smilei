@@ -239,6 +239,6 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
 }
 
 
-bool DiagnosticFields::needsRhoJs() {
-    return hasRhoJs;
+bool DiagnosticFields::needsRhoJs(int timestep) {
+    return hasRhoJs && timeSelection->theTimeIsNow(timestep);
 }
