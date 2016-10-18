@@ -42,8 +42,8 @@ Species(
 	nb_density = 10.,
 	temperature = [0.00002],
 	time_frozen = 0.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
+	bc_part_type_xmin = "none",
+	bc_part_type_xmax = "none"
 )
 
 Species(
@@ -57,8 +57,8 @@ Species(
 	mean_velocity = [0.05, 0., 0.],
 	temperature = [0.00002],
 	time_frozen = 0.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
+	bc_part_type_xmin = "none",
+	bc_part_type_xmax = "none"
 )
 
 

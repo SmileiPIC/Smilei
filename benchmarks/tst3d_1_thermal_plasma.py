@@ -68,12 +68,12 @@ Species(
     mean_velocity = [0., 0.0, 0.0],
     temperature = [T],
     dynamics_type = "norm",
-    bc_part_type_west  = "none",
-    bc_part_type_east  = "none",
-    bc_part_type_south = "none",
-    bc_part_type_north = "none",
-    bc_part_type_bottom = "none",
-    bc_part_type_up = "none"
+    bc_part_type_xmin  = "none",
+    bc_part_type_xmax  = "none",
+    bc_part_type_ymin = "none",
+    bc_part_type_ymax = "none",
+    bc_part_type_zmin = "none",
+    bc_part_type_zmax = "none"
 )
 Species(
     species_type = "electron",
@@ -87,12 +87,12 @@ Species(
     mean_velocity = [0., 0.0, 0.0],
     temperature = [T],
     dynamics_type = "norm",
-    bc_part_type_west  = "none",
-    bc_part_type_east  = "none",
-    bc_part_type_south = "none",
-    bc_part_type_north = "none",
-    bc_part_type_bottom = "none",
-    bc_part_type_up = "none"
+    bc_part_type_xmin  = "none",
+    bc_part_type_xmax  = "none",
+    bc_part_type_ymin = "none",
+    bc_part_type_ymax = "none",
+    bc_part_type_zmin = "none",
+    bc_part_type_zmax = "none"
 )
 
 DumpRestart(

@@ -50,6 +50,13 @@ For each pair of particles:
   | Deflect particles in the COM frame and go back to the laboratory frame.
 
 
+.. rubric:: Modification in Smilei
+
+A typo has been introduced in [Perez2012]_, Eq. (22), corresponding to the calculation of
+the Coulomb Logarithm: the last parenthesis is written as a squared expression,
+but should not. This was corrected in :program:`Smilei`.
+
+
 ----
 
 Test cases for collisions

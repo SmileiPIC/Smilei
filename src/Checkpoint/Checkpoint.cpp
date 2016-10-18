@@ -18,7 +18,7 @@
 #include "SimWindow.h"
 #include "ElectroMagn.h"
 #include "Species.h"
-#include "VectorPatch.h"
+#include "PatchesFactory.h"
 
 using namespace std;
 
@@ -155,9 +155,11 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     
     H5::attr(fid, "dump_step", itime);
     
+    H5::vect( fid, "patch_count", smpi->patch_count );
+        
     H5::attr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
     H5::attr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
-    
+
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) {
     
         // Open a group
@@ -190,6 +192,9 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
     dumpFieldsPerProc(patch_gid, EMfields->Bx_);
     dumpFieldsPerProc(patch_gid, EMfields->By_);
     dumpFieldsPerProc(patch_gid, EMfields->Bz_);
+    dumpFieldsPerProc(patch_gid, EMfields->Bx_m);
+    dumpFieldsPerProc(patch_gid, EMfields->By_m);
+    dumpFieldsPerProc(patch_gid, EMfields->Bz_m);
     if (EMfields->Ex_avg!=NULL) {
         dumpFieldsPerProc(patch_gid, EMfields->Ex_avg);
         dumpFieldsPerProc(patch_gid, EMfields->Ey_avg);
@@ -316,16 +321,20 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, unsigned int &itime,  Smil
     H5::getAttr(fid, "Version", dump_version);
     
     string dump_date;
-    H5::getAttr(fid, "CommitDate", dump_date);
+    //H5::getAttr(fid, "CommitDate", dump_date);
     
-    if (dump_version != string(__VERSION)) {
-        WARNING ("The code version that dumped the file is " << dump_version);
-        WARNING ("                while running version is " << string(__VERSION));
-    }
+    //if (dump_version != string(__VERSION)) {
+    //    WARNING ("The code version that dumped the file is " << dump_version);
+    //    WARNING ("                while running version is " << string(__VERSION));
+    //}
+ 
+    vector<int> patch_count(smpi->getSize());
+    H5::getVect( fid, "patch_count", patch_count );
+    smpi->patch_count = patch_count;
+    vecPatches = PatchesFactory::createVector(params, smpi);
     
     H5::getAttr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
     H5::getAttr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
-    
     
     hid_t aid = H5Aopen(fid, "dump_step", H5T_NATIVE_UINT);
     H5Aread(aid, H5T_NATIVE_UINT, &itime);
@@ -364,6 +373,9 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
     restartFieldsPerProc(patch_gid, EMfields->Bx_);
     restartFieldsPerProc(patch_gid, EMfields->By_);
     restartFieldsPerProc(patch_gid, EMfields->Bz_);
+    restartFieldsPerProc(patch_gid, EMfields->Bx_m);
+    restartFieldsPerProc(patch_gid, EMfields->By_m);
+    restartFieldsPerProc(patch_gid, EMfields->Bz_m);
     if (EMfields->Ex_avg!=NULL) {
         restartFieldsPerProc(patch_gid, EMfields->Ex_avg);
         restartFieldsPerProc(patch_gid, EMfields->Ey_avg);

@@ -106,11 +106,13 @@ int main (int argc, char* argv[])
     // Initialize patches (including particles and fields)
     // ---------------------------------------------------
     TITLE("Initializing particles & fields");
-    VectorPatch vecPatches = PatchesFactory::createVector(params, smpi);
+    VectorPatch vecPatches;
     
     // reading from dumped file the restart values
     if (params.restart) {
         MESSAGE(1, "READING fields and particles for restart");
+        // smpi->patch_count recomputed in restartAll
+        // vecPatches allocated in restartAll according to patch_count saved
         checkpoint.restartAll( vecPatches, stepStart, smpi, simWindow, params);
         
         // time at integer time-steps (primal grid)
@@ -130,6 +132,7 @@ int main (int argc, char* argv[])
         vecPatches.initAllDiags( params, smpi );
         
     } else {
+        vecPatches = PatchesFactory::createVector(params, smpi);
         
         // Initialize the electromagnetic fields
         // -----------------------------------
@@ -146,7 +149,7 @@ int main (int argc, char* argv[])
             vecPatches.applyAntennas(0.5 * params.timestep);
         
         // Init electric field (Ex/1D, + Ey/2D)
-        if (!vecPatches.isRhoNull(smpi)) {
+        if (!vecPatches.isRhoNull(smpi) && params.solve_poisson == true) {
             TITLE("Solving Poisson at time t = 0");
             Timer ptimer;
             ptimer.init(smpi, "global");
@@ -200,7 +203,7 @@ int main (int argc, char* argv[])
         time_prim += params.timestep;
         time_dual += params.timestep;
         
-        if ( vecPatches.fieldTimeIsNow(itime) ) diag_flag = 1;
+        if ( vecPatches.needsRhoJsNow(itime) ) diag_flag = 1;
         
         // pritn message at given time-steps
         // --------------------------------
@@ -211,9 +214,9 @@ int main (int argc, char* argv[])
             ostringstream my_msg;
             my_msg << setw(log10(params.n_time)+1) << itime <<
             "/"     << setw(log10(params.n_time)+1) << params.n_time <<
-            " t="          << scientific << setprecision(3)   << time_dual <<
-            " sec "    << scientific << setprecision(1)   << this_print_time <<
-            " ("    << scientific << setprecision(4)   << this_print_time - old_print_time << ")" <<
+            " t="          << scientific << setprecision(3)   << time_dual << " [Time unit] "    <<
+             scientific << setprecision(1)   << this_print_time << " sec "    <<
+            " ("    << scientific << setprecision(4)   << this_print_time - old_print_time << " sec)" <<
             "  Utot= "   << scientific << setprecision(4)<< vecPatches.getScalar("Utot") <<
             "  Uelm= "   << scientific << setprecision(4)<< vecPatches.getScalar("Uelm") <<
             "  Ukin= "   << scientific << setprecision(4)<< vecPatches.getScalar("Ukin") <<
@@ -275,10 +278,12 @@ int main (int argc, char* argv[])
         
         
         
-        if ((itime%params.balancing_every == 0)&&(smpi->getSize()!=1)) {
-            timer[7].restart();
-            vecPatches.load_balance( params, time_dual, smpi, simWindow );
-            timer[7].update( vecPatches.printScalars( itime ) );
+        if ((params.balancing_every > 0) && (smpi->getSize()!=1) ) {
+            if (( itime%params.balancing_every == 0 )) {
+                timer[7].restart();
+                vecPatches.load_balance( params, time_dual, smpi, simWindow );
+                timer[7].update( vecPatches.printScalars( itime ) );
+            }
         }
         
         latestTimeStep = itime;

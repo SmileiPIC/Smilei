@@ -236,6 +236,12 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
             }
         }
         
+    } else if (initPosition_type == "centered") {
+        
+        for (unsigned int p=iPart; p<iPart+nPart; p++)
+            for (unsigned int i=0; i<nDim_particle ; i++)
+                (*particles).position(i,p)=indexes[i]+0.5*cell_length[i];
+        
     }
 }
 
@@ -646,7 +652,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     vector<double> cell_position(3,0);
     vector<double> cell_index(3,0);
     for (unsigned int i=0 ; i<nDim_field ; i++) {
-        if (params.cell_length[i]!=0) { // REALLY NECESSARY ????
+        if (params.cell_length[i]!=0) {
             cell_position[i] = patch->getDomainLocalMin(i);
             cell_index   [i] = (double) patch->getCellStartingGlobalIndex(i);
         }
@@ -680,26 +686,21 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     int npart_effective = 0;
     double remainder, nppc;
     
+    vector<double> x_cell(3,0);
     for (unsigned int i=0; i<n_space_to_create[0]; i++) {
+        x_cell[0] = cell_position[0] + (i+0.5)*cell_length[0];
         for (unsigned int j=0; j<n_space_to_create[1]; j++) {
+            x_cell[1] = cell_position[1] + (j+0.5)*cell_length[1];
             for (unsigned int k=0; k<n_space_to_create[2]; k++) {
-                n_part_in_cell(i,j,k) = 0.;
-                
-                vector<double> x_cell(3,0);
-                x_cell[0] = cell_position[0] + (i+0.5)*cell_length[0];
-                x_cell[1] = cell_position[1] + (j+0.5)*cell_length[1];
                 x_cell[2] = cell_position[2] + (k+0.5)*cell_length[2];
                 
                 // Obtain the number of particles per cell
                 nppc = ppcProfile->valueAt(x_cell);
-                
                 n_part_in_cell(i,j,k) = floor(nppc);
-                // if nb of particle per cell is not an integer value
+                // If not a round number, then we need to decide how to round
                 double intpart;
                 if ( modf(nppc, &intpart) > 0) {
-                    // If not a round number, then we need to decide how to round
                     remainder = pow(nppc - floor(nppc), -inv_nDim_field);
-                    
                     if(   fmod(cell_index[0]+(double)i, remainder) < 1.
                        && fmod(cell_index[1]+(double)j, remainder) < 1.
                        && fmod(cell_index[2]+(double)k, remainder) < 1. ) n_part_in_cell(i,j,k)++;
@@ -926,10 +927,10 @@ bool Species::isProj(double time_dual, SimWindow* simWindow) {
     //return time_dual > species_param.time_frozen  || (simWindow && simWindow->isMoving(time_dual)) ;
 }
 
-void Species::disableEast() {
-    partBoundCond->bc_east   = NULL;
+void Species::disableXmax() {
+    partBoundCond->bc_xmax   = NULL;
 }
 
-void Species::setWestBoundaryCondition() {
-    partBoundCond->bc_west   = &supp_particle;
+void Species::setXminBoundaryCondition() {
+    partBoundCond->bc_xmin   = &supp_particle;
 }

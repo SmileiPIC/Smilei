@@ -163,217 +163,187 @@ void SmileiMPI::init_patch_count( Params& params)
 //        return;
 //    }
 //#endif
-
-    unsigned int Npatches, r,Ncur,Pcoordinates[3],ncells_perpatch;
-    double Tload,Tcur, Lcur, local_load, local_load_temp, above_target, below_target;
-    std::vector<unsigned int> mincell,maxcell; //Min and max values of non empty cells for each species and in each dimension.
-    vector<double> density_length(params.nDim_field,0.);
-    //Load of a cell = coef_cell*load of a particle.
-    //Load of a frozen particle = coef_frozen*load of a particle.
-    ofstream fout;
-
+    
+    unsigned int Npatches, r, Ncur, Pcoordinates[3], ncells_perpatch;
+    double Tload,Tcur, Lcur, total_load, local_load, local_load_temp, above_target, below_target;
+    
     unsigned int tot_species_number = PyTools::nComponents("Species");
-    mincell.resize(tot_species_number*3);
-    maxcell.resize(tot_species_number*3);
-       
+    
     // Define capabilities here if not default.              
     //Capabilities of devices hosting the different mpi processes. All capabilities are assumed to be equal for the moment.
     //Compute total capability: Tcapabilities. Uncomment if cpability != 1 per MPI rank
     //Tcapabilities = 0;
     //for (unsigned int i = 0; i < smilei_sz; i++)
     //    Tcapabilities += capabilities[i];
-
+    
     //Compute target load: Tload = Total load * local capability / Total capability.
     
-    Tload = 0.;
+    // Some initialization of the box parameters
     Npatches = params.tot_number_of_patches;
+    ncells_perpatch = 1;
+    vector<double> cell_xmin(3,0.), cell_xmax(3,1.), cell_dx(3,2.), x_cell(3,0);
+    for (unsigned int i = 0; i < params.nDim_field; i++) {
+        ncells_perpatch *= params.n_space[i]+2*params.oversize[i];
+        if (params.cell_length[i]!=0.) cell_dx[i] = params.cell_length[i];
+    }
     
-    ncells_perpatch = params.n_space[0]+2*params.oversize[0]; //Initialization
-    for (unsigned int idim = 1; idim < params.nDim_field; idim++)
-        ncells_perpatch *= params.n_space[idim]+2*params.oversize[idim];
-
-    r = 0;  //Start by finding work for rank 0.
-    Ncur = 0; // Number of patches assigned to current rank r.
-    Lcur = 0.; //Load assigned to current rank r.
-
-
+    // First, distribute all patches evenly
+    unsigned int Npatches_local = Npatches / smilei_sz, FirstPatch_local;
+    unsigned int remainder = Npatches % smilei_sz;
+    if( smilei_rk < remainder ) {
+        Npatches_local++;
+        FirstPatch_local = Npatches_local * smilei_rk;
+    } else {
+        FirstPatch_local = Npatches_local * smilei_rk + remainder;
+    }
+//    // Test
+//    int tot, loc=Npatches_local;
+//    MPI_Allreduce( &loc, &tot, 1, MPI_INT, MPI_SUM, SMILEI_COMM_WORLD );
+//    if( tot != Npatches ) ERROR("Npatches should be "<<Npatches<<" but it is "<<tot);
+    
+    // Second, prepare the profiles for each species
+    vector<Profile*> densityProfiles(0), ppcProfiles(0);
     for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++){
-
-        //Needs to be updated when dens_lenth is a vector in params.
-
-        // Build profile
         std::string species_type("");
         PyTools::extract("species_type",species_type,"Species",ispecies);
-
         PyObject *profile1;
         std::string densityProfileType("");
         bool ok1 = PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispecies);
         bool ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", ispecies);
         if( ok1 ) densityProfileType = "nb";
         if( ok2 ) densityProfileType = "charge";
-        Profile *densityProfile = new Profile(profile1, params.nDim_particle, densityProfileType+"_density "+species_type);
+        densityProfiles.push_back(new Profile(profile1, params.nDim_particle, densityProfileType+"_density "+species_type));
         PyTools::extract_pyProfile("n_part_per_cell", profile1, "Species", ispecies);
-        Profile *ppcProfile = new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_type);
-        PyTools::extract_pyProfile("charge", profile1, "Species", ispecies);
-        Profile *chargeProfile = new Profile(profile1, params.nDim_particle, "charge "+species_type);
-
-
-        local_load = 0;
-        // Count global number of particles, 
-        for (unsigned int i=0; i<params.n_space_global[0]; i++) {
-            for (unsigned int j=0; j<params.n_space_global[1]; j++) {
-                for (unsigned int k=0; k<params.n_space_global[2]; k++) {
-                    vector<double> x_cell(3,0);
-                    x_cell[0] = (i+0.5)*params.cell_length[0];
-                    x_cell[1] = (j+0.5)*params.cell_length[1];
-                    x_cell[2] = (k+0.5)*params.cell_length[2];
-
-                    int n_part_in_cell = floor(ppcProfile->valueAt(x_cell));
-                    // If zero or less, zero particles
-                    if( n_part_in_cell<=0. ) {
-                        n_part_in_cell = 0.;
-                        continue;
-                    }
-                    // assign charge its correct value in the cell
-                    double charge = chargeProfile->valueAt(x_cell);
-                    // assign density its correct value in the cell
-                    double density = densityProfile->valueAt(x_cell);
-                    if(density!=0. && densityProfileType=="charge") {
-                        density /= charge;
-                    }
-                    density = abs(density);
-
-                    if (density!=0.0) 
-                        local_load += n_part_in_cell;
-
+        ppcProfiles.push_back(new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_type));
+    }
+    
+    // Third, loop over local patches to obtain their approximate load
+    vector<double> PatchLoad (Npatches_local, 1.);
+    if (params.balancing_every <= 0 || !(params.initial_balance) ){
+        total_load = Npatches_local; //We don't balance the simulation, all patches have a load of 1.
+    } else {
+        for(unsigned int ipatch=0; ipatch<Npatches_local; ipatch++){
+            // Get patch coordinates
+            unsigned int hindex = FirstPatch_local + ipatch;
+            generalhilbertindexinv(params.mi[0], params.mi[1], params.mi[2], &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
+            for (unsigned int i=0 ; i<params.nDim_field ; i++) {
+                Pcoordinates[i] *= params.n_space[i];
+                if (params.cell_length[i]!=0.) {
+                    cell_xmin[i] = (Pcoordinates[i]+0.5)*params.cell_length[i];
+                    cell_xmax[i] = (Pcoordinates[i]+0.5+params.n_space[i])*params.cell_length[i];
                 }
             }
+            //Accumulate particles load of the current patch
+            for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++){
+                local_load = 0.;
+                
+                // This commented block loops through all cells of the current patch to calculate the load
+                //for (x_cell[0]=cell_xmin[0]; x_cell[0]<cell_xmax[0]; x_cell[0]+=cell_dx[0]) {
+                //    for (x_cell[1]=cell_xmin[1]; x_cell[1]<cell_xmax[1]; x_cell[1]+=cell_dx[1]) {
+                //        for (x_cell[2]=cell_xmin[2]; x_cell[2]<cell_xmax[2]; x_cell[2]+=cell_dx[2]) {
+                //            double n_part_in_cell = floor(ppcProfiles[ispecies]->valueAt(x_cell));
+                //            if( n_part_in_cell<=0. ) continue;
+                //            else if( densityProfiles[ispecies]->valueAt(x_cell)==0. ) continue;
+                //            local_load += n_part_in_cell;
+                //        }
+                //    }
+                //}
+                // Instead of looping all cells, the following takes only the central point (much faster)
+                for (unsigned int i=0 ; i<params.nDim_field ; i++) {
+                    if (params.cell_length[i]==0.) x_cell[i] = 0.;
+                    else x_cell[i] = 0.5*(cell_xmin[i]+cell_xmax[i]);
+                }
+                double n_part_in_cell = floor(ppcProfiles[ispecies]->valueAt(x_cell));
+                if( n_part_in_cell && densityProfiles[ispecies]->valueAt(x_cell)!=0.)
+                    local_load += n_part_in_cell * ncells_perpatch;
+                
+                // Consider whether this species is frozen
+                double time_frozen(0.);
+                PyTools::extract("time_frozen",time_frozen ,"Species",ispecies);
+                if(time_frozen > 0.) local_load *= params.coef_frozen;
+                // Add the load of the species to the current patch load
+                PatchLoad[ipatch] += local_load;
+            }
+            //Add grid contribution to the load.
+            PatchLoad[ipatch] += ncells_perpatch*params.coef_cell-1; //-1 to compensate the initialization to 1.
+            total_load += PatchLoad[ipatch];
         }
-
-        double time_frozen(0.);
-        PyTools::extract("time_frozen",time_frozen ,"Species",ispecies);
-        if(time_frozen > 0.) local_load *= params.coef_frozen;
-        Tload += local_load;
-
-        delete chargeProfile;
-        delete ppcProfile;
-        delete densityProfile;
-
-    } // End for ispecies
-
-    Tload += Npatches*ncells_perpatch*params.coef_cell ; // We assume the load of one cell to be equal to coef_cell and account for ghost cells.
-    if (isMaster()) {
-        fout.open ("patch_load.txt");
-        fout << "Total load = " << Tload << endl;
     }
+    densityProfiles.resize(0); densityProfiles.clear();
+    ppcProfiles.resize(0); ppcProfiles.clear();
+    
+    // Fourth, the arrangement of patches is balanced
+    
+    // Initialize loads
+    MPI_Reduce( &total_load, &Tload, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
     Tload /= Tcapabilities; //Target load for each mpi process.
     Tcur = Tload * capabilities[0];  //Init.
-    //Tcur = 0;  //Init.
-
-    //Loop over all patches
-    for(unsigned int hindex=0; hindex < Npatches; hindex++){
-        generalhilbertindexinv(params.mi[0], params.mi[1], params.mi[2], &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
-        for (unsigned int idim = 0; idim < params.nDim_field; idim++) {
-            Pcoordinates[idim] *= params.n_space[idim]; //Compute patch cells coordinates
-        }
-        local_load = 0.; //Accumulate load of the current patch
-        for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++){
-
-            // Build profile
-            std::string species_type("");
-            PyTools::extract("species_type",species_type,"Species",ispecies);
-
-            PyObject *profile1;
-            std::string densityProfileType("");
-            bool ok1 = PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispecies);
-            bool ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", ispecies);
-            if( ok1 ) densityProfileType = "nb";
-            if( ok2 ) densityProfileType = "charge";
-            Profile *densityProfile = new Profile(profile1, params.nDim_particle, densityProfileType+"_density "+species_type);
-            PyTools::extract_pyProfile("n_part_per_cell", profile1, "Species", ispecies);
-            Profile *ppcProfile = new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_type);
-            PyTools::extract_pyProfile("charge", profile1, "Species", ispecies);
-            Profile *chargeProfile = new Profile(profile1, params.nDim_particle, "charge "+species_type);
-
-            vector<double> cell_index(3,0);
-            for (unsigned int i=0 ; i<params.nDim_field ; i++) {
-                if (params.cell_length[i]!=0)
-                    cell_index[i] = Pcoordinates[i]*params.cell_length[i];
-            }
-            local_load_temp = 0; 
-            // Count global number of particles, 
-            for (unsigned int i=0; i<params.n_space[0]; i++) {
-                for (unsigned int j=0; j<params.n_space[1]; j++) {
-                    for (unsigned int k=0; k<params.n_space[2]; k++) {
-                        vector<double> x_cell(3,0);
-                        x_cell[0] = cell_index[0] + (i+0.5)*params.cell_length[0];
-                        x_cell[1] = cell_index[1] + (j+0.5)*params.cell_length[1];
-                        x_cell[2] = cell_index[2] + (k+0.5)*params.cell_length[2];
-
-                        int n_part_in_cell = floor(ppcProfile->valueAt(x_cell));
-                        // If zero or less, zero particles
-                        if( n_part_in_cell<=0. ) {
-                            n_part_in_cell = 0.;
-                            continue;
+    r = 0;  //Start by finding work for rank 0.
+    Ncur = 0; // Number of patches assigned to current rank r.
+    Lcur = 0.; //Load assigned to current rank r.
+    
+    // MPI master loops patches and figures the best arrangement
+    if( smilei_rk==0 ) {
+        unsigned int rk = 0;
+        MPI_Status status;
+        while( true ) { // loop cpu ranks
+            unsigned int hindex = 0;
+            for(unsigned int ipatch=0; ipatch < Npatches_local; ipatch++){
+                local_load = PatchLoad[ipatch];
+                Lcur += local_load; //Add grid contribution to the load.
+                Ncur++; // Try to assign current patch to rank r.
+                
+                //if (isMaster()) cout <<"h= " << hindex << " Tcur = " << Tcur << " Lcur = " << Lcur <<" Ncur = " << Ncur <<" r= " << r << endl;
+                if (r < (unsigned int)smilei_sz-1){
+                    
+                    if ( Lcur > Tcur || smilei_sz-r >= Npatches-hindex){ //Load target is exceeded or we have as many patches as procs left.
+                        above_target = Lcur - Tcur;  //Including current patch, we exceed target by that much.
+                        below_target = Tcur - (Lcur-local_load); // Excluding current patch, we mis the target by that much.
+                        if((above_target > below_target) && (Ncur!=1)) { // If we're closer to target without the current patch...
+                            patch_count[r] = Ncur-1;      // ... include patches up to current one.
+                            Ncur = 1;
+                            //Lcur = local_load;
+                        } else {                          //Else ...
+                            patch_count[r] = Ncur;        //...assign patches including the current one.
+                            Ncur = 0;
+                            //Lcur = 0.;
                         }
-                        // assign charge its correct value in the cell
-                        double charge = chargeProfile->valueAt(x_cell);
-                        // assign density its correct value in the cell
-                        double density = densityProfile->valueAt(x_cell);
-                        if(density!=0. && densityProfileType=="charge") {
-                            density /= charge;
-                        }
-                        density = abs(density);
-
-                        if (density!=0.0) 
-                            local_load_temp += n_part_in_cell;
-
+                        r++; //Move on to the next rank.
+                        //Tcur = Tload * capabilities[r];  //Target load for current rank r.
+                        Tcur += Tload * capabilities[r];  //Target load for current rank r.
                     }
-                }
+                }// End if on r.
+                hindex++;
+            }// End loop on patches for rank rk
+            patch_count[smilei_sz-1] = Ncur; // the last MPI process takes what's left.
+            
+            // Go to next rank
+            rk++;
+            if( rk >= smilei_sz ) break;
+            
+            // Get the load of patches pre-calculated by the next rank
+            if( rk == remainder ) {
+                Npatches_local--;
+                PatchLoad.resize(Npatches_local);
             }
-            delete chargeProfile;
-            delete ppcProfile;
-            delete densityProfile;
-
-            double time_frozen(0.);
-            PyTools::extract("time_frozen",time_frozen ,"Species",ispecies);
-            if(time_frozen > 0.) local_load_temp *= params.coef_frozen;
-
-            local_load += local_load_temp; // Accumulate species contribution to the load.
-        } // End for ispecies
-
-        local_load += ncells_perpatch*params.coef_cell; //Add grid contribution to the load.
-        Lcur += local_load; //Add grid contribution to the load.
-        Ncur++; // Try to assign current patch to rank r.
-
-        //if (isMaster()) cout <<"h= " << hindex << " Tcur = " << Tcur << " Lcur = " << Lcur <<" Ncur = " << Ncur <<" r= " << r << endl;
-        if (r < (unsigned int)smilei_sz-1){
-
-            if ( Lcur > Tcur || smilei_sz-r >= Npatches-hindex){ //Load target is exceeded or we have as many patches as procs left.
-                above_target = Lcur - Tcur;  //Including current patch, we exceed target by that much.
-                below_target = Tcur - (Lcur-local_load); // Excluding current patch, we mis the target by that much.
-                if((above_target > below_target) && (Ncur!=1)) { // If we're closer to target without the current patch...
-                    patch_count[r] = Ncur-1;      // ... include patches up to current one.
-                    Ncur = 1;
-                    //Lcur = local_load;
-                } else {                          //Else ...
-                    patch_count[r] = Ncur;        //...assign patches including the current one.
-                    Ncur = 0;
-                    //Lcur = 0.;
-                }
-                r++; //Move on to the next rank.
-                //Tcur = Tload * capabilities[r];  //Target load for current rank r.
-                Tcur += Tload * capabilities[r];  //Target load for current rank r.
-            } 
-        }// End if on r.
-        if (hindex == Npatches-1){
-            patch_count[smilei_sz-1] = Ncur; //When we reach the last patch, the last MPI process takes what's left.
+            MPI_Recv(&PatchLoad[0], Npatches_local, MPI_DOUBLE, rk, rk, SMILEI_COMM_WORLD, &status);
         }
-    }// End loop on patches.
-    if (isMaster()) {
-        for (int i=0; i<smilei_sz; i++) fout << "patch count = " << patch_count[i]<<endl;
+        
+        // The master cpu also writes the patch count to the file
+        ofstream fout;
+        fout.open ("patch_load.txt");
+        fout << "Total load = " << Tload << endl;
+        for (rk=0; rk<smilei_sz; rk++)
+            fout << "patch count = " << patch_count[rk]<<endl;
         fout.close();
+        
+    // The other MPIs send their pre-calculated information
+    } else {
+        MPI_Send(&PatchLoad[0], Npatches_local, MPI_DOUBLE, 0, smilei_rk, SMILEI_COMM_WORLD);
     }
+    
+    // Lastly, the patch count is broadcast to all ranks
+    MPI_Bcast( &patch_count[0], smilei_sz, MPI_INT, 0, SMILEI_COMM_WORLD);
     
 } // END init_patch_count
 

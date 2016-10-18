@@ -62,7 +62,7 @@ public:
         profiles[1]->initFields(params, patch);
     };
     
-    //! Side (west/east) from which the laser enters the box
+    //! Side (xmin/xmax) from which the laser enters the box
     std::string boxSide;
     
     //! Disables the laser

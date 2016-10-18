@@ -60,12 +60,12 @@ Species(
     dynamics_type = "norm",
     time_frozen = 100000.,
     radiating = False,
-    bc_part_type_west  = "supp",
-    bc_part_type_east  = "supp",
-    bc_part_type_south = "supp",
-    bc_part_type_north = "supp",
-    bc_part_type_up = "supp",
-    bc_part_type_bottom = "supp"
+    bc_part_type_xmin  = "supp",
+    bc_part_type_xmax  = "supp",
+    bc_part_type_ymin = "supp",
+    bc_part_type_ymax = "supp",
+    bc_part_type_zmax = "supp",
+    bc_part_type_zmin = "supp"
 )
 
 Species( 
@@ -82,16 +82,16 @@ Species(
     dynamics_type = "norm",    
     time_frozen = 0.0,
     radiating = False,
-    bc_part_type_west = "supp",
-    bc_part_type_east = "supp",
-    bc_part_type_south ="supp",
-    bc_part_type_north ="supp",
-    bc_part_type_up = "supp",
-    bc_part_type_bottom = "supp"
+    bc_part_type_xmin = "supp",
+    bc_part_type_xmax = "supp",
+    bc_part_type_ymin ="supp",
+    bc_part_type_ymax ="supp",
+    bc_part_type_zmax = "supp",
+    bc_part_type_zmin = "supp"
 )
 
 LaserGaussian3D(
-    boxSide         = "west",
+    boxSide         = "xmin",
     a0              = 2.,
     focus           = [0., Main.sim_length[1]/2., Main.sim_length[2]/2.],
     waist           = 26.16,

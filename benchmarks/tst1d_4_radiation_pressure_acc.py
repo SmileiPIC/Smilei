@@ -45,8 +45,8 @@ Species(
 	charge = 1.0,
 	nb_density = trapezoidal(10.,xvacuum=l0,xplateau=l0),
 	temperature = [0.],
-	bc_part_type_west = 'refl',
-	bc_part_type_east = 'refl'
+	bc_part_type_xmin = 'refl',
+	bc_part_type_xmax = 'refl'
 )
 Species(
 	species_type = 'eon',
@@ -57,12 +57,12 @@ Species(
 	charge = -1.0,
 	nb_density = trapezoidal(10.,xvacuum=l0,xplateau=l0),
 	temperature = [0.],
-	bc_part_type_west = 'refl',
-	bc_part_type_east = 'refl'
+	bc_part_type_xmin = 'refl',
+	bc_part_type_xmax = 'refl'
 )
 
 LaserPlanar1D(
-	boxSide = 'west',
+	boxSide = 'xmin',
 	a0 = 10.,
     omega = 1.,
     ellipticity = 1.,
