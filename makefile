@@ -16,7 +16,16 @@ else
 endif
 HDF5_ROOT_DIR ?=
 BUILD_DIR ?= build
-PYTHONCONFIG ?= python-config
+
+
+HAVE_PYTHONCONFIG := $(shell command -v python-config 2> /dev/null)
+ifdef HAVE_PYTHONCONFIG
+	PYTHONCONFIG := python-config
+else
+	PYTHONCONFIG := python scripts/CompileTools/python-config.py
+endif
+    
+
 EXEC = smilei
 
 
