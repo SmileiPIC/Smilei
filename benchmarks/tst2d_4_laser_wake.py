@@ -83,12 +83,15 @@ DiagFields(
 )
 
 DiagProbe(
-	every = 10,
-	pos = [0., Main.sim_length[1]/2.],
-	pos_first = [Main.sim_length[0], Main.sim_length[1]/2.],
-	number = [nx],
-	fields = ['Ex','Ey','Rho','Jx']
+    every = 10,
+    pos = [0., Main.sim_length[1]/2.],
+    pos_first = [Main.sim_length[0], Main.sim_length[1]/2.],
+    number = [nx],
+    fields = ['Ex','Ey','Rho','Jx']
 )
 
-DiagScalar(every = 10, vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMax', 'RhoMaxCell'])
+DiagScalar(
+    every = 10, 
+    vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMax', 'RhoMaxCell']
+)
 

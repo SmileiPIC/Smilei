@@ -265,7 +265,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
         if( globalDiags[idiag]->theTimeIsNow ) {
             // All patches run
             #pragma omp for 
-            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
+            for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
                 globalDiags[idiag]->run( (*this)(ipatch), itime );
             // MPI procs gather the data and compute
             #pragma omp single
@@ -283,7 +283,15 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
         if( localDiags[idiag]->prepare( itime ) )
             localDiags[idiag]->run( smpi, *this, itime );
     
-    *diag_flag = 0;
+    // Manage the "diag_flag" parameter, which indicates whether Rho and Js were used
+    if( *diag_flag > 0 ) {
+        #pragma omp barrier
+        #pragma omp single
+        *diag_flag = 0;
+        #pragma omp for
+        for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
+            (*this)(ipatch)->EMfields->restartRhoJs();
+    }
     timer[3].update();
 
 } // END runAllDiags
