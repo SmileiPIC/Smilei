@@ -433,7 +433,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     // electromagnetic energy injected in the simulation (calculated from Poynting fluxes)
     double Uelm_bnd=0.0;
     unsigned int k=0;
-    for (unsigned int j=0; j<2;j++) {//directions (west/east, south/north, bottom/top)
+    for (unsigned int j=0; j<2;j++) {//directions (xmin/xmax, ymin/ymax, zmin/zmax)
         for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {//axis 0=x, 1=y, 2=z
             #pragma omp atomic
             out_value[index_poy    [k]] += EMfields->poynting     [j][i];
@@ -518,3 +518,9 @@ bool DiagnosticScalar::allowedKey(string key) {
     }
     return false;
 }
+
+
+bool DiagnosticScalar::needsRhoJs(int timestep) {
+    return printNow(timestep) || timeSelection->theTimeIsNow(timestep);
+}
+

@@ -44,8 +44,8 @@ Species(
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.00015],
 	time_frozen = 100000000.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
+	bc_part_type_xmin = "none",
+	bc_part_type_xmax = "none"
 )
 
 Species(
@@ -59,8 +59,8 @@ Species(
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.0002],
 	time_frozen = 100000000.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
+	bc_part_type_xmin = "none",
+	bc_part_type_xmax = "none"
 )
 
 Collisions(

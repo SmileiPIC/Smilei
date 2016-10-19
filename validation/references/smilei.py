@@ -75,10 +75,10 @@ class Species(SmileiComponent):
     dynamics_type = "norm"
     time_frozen = 0.0
     radiating = False
-    bc_part_type_west = None
-    bc_part_type_east = None
-    bc_part_type_north = None
-    bc_part_type_south = None
+    bc_part_type_xmin = None
+    bc_part_type_xmax = None
+    bc_part_type_ymax = None
+    bc_part_type_ymin = None
     ionization_model = "none"
     atomic_number = None
     isTest = False
@@ -487,8 +487,8 @@ Species(
 	charge = 1.0,
 	nb_density = 1.,
 	time_frozen = 10000.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
+	bc_part_type_xmin = "none",
+	bc_part_type_xmax = "none"
 )
 Species(
 	species_type = "eon1",
@@ -499,8 +499,8 @@ Species(
 	charge = -1.0,
 	nb_density = cosine(0.5,xamplitude=dn,xlength=L),
 	mean_velocity = [-0.1,0.0,0.0],
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
+	bc_part_type_xmin = "none",
+	bc_part_type_xmax = "none"
 )
 Species(
 	species_type = "eon2",
@@ -511,8 +511,8 @@ Species(
 	charge = -1.0,
 	nb_density = cosine(0.5,xamplitude=dn,xlength=L),
 	mean_velocity = [0.1,0.0,0.0],
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
+	bc_part_type_xmin = "none",
+	bc_part_type_xmax = "none"
 )
 
 

@@ -175,7 +175,7 @@ class Field(Diagnostic):
 	
 	# get all available timesteps
 	def getAvailableTimesteps(self):
-		try:    times = [float(a.name[1:]) for a in self._h5items[:-1]]
+		try:    times = [float(a.name[1:]) for a in self._h5items]
 		except: times = []
 		return self._np.double(times)
 	

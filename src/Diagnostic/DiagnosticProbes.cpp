@@ -73,6 +73,7 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
     nDim_particle = params.nDim_particle;
     fileId_ = 0;
     x_moved = 0.;
+    hasRhoJs = false;
     
     // Extract "every" (time selection)
     ostringstream name("");
@@ -189,6 +190,9 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
         else {
             ERROR("Probe #"<<n_probe<<": unknown field "<<fs[i]);
         }
+        if( ! hasRhoJs )
+            if( fs[i].at(0)=='J' || fs[i].at(0)=='R' )
+                hasRhoJs = true;
     }
     fieldlocation = locations;
     fieldname = fs;
@@ -409,7 +413,7 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
         }
         for( i=dimProbe; i<nDim_particle; i++ ){
             minI[i] = 0;
-            maxI[i] = (mins[i]*maxs[i]<0) ? 1:0;
+            maxI[i] = (mins[i]*maxs[i]<=0) ? 1:0;
         }
         // Now, minI and maxI contain the min and max indexes of the probe, useful for this patch
         // Calculate total number of useful points
@@ -602,3 +606,9 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     }
     #pragma omp barrier
 }
+
+
+bool DiagnosticProbes::needsRhoJs(int timestep) {
+    return hasRhoJs && timeSelection->theTimeIsNow(timestep);
+}
+

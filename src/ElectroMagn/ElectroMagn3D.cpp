@@ -22,12 +22,12 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn3D::ElectroMagn3D(Params &params, vector<Species*>& vecSpecies, Patch* patch) : 
   ElectroMagn(params, vecSpecies, patch),
-isWestern(patch->isWestern()),
-isEastern(patch->isEastern()),
-isSouthern(patch->isSouthern()),
-isNorthern(patch->isNorthern()),
-isTop(patch->isTop()),
-isBottom(patch->isBottom())
+isXmin(patch->isXmin()),
+isXmax(patch->isXmax()),
+isYmin(patch->isYmin()),
+isYmax(patch->isYmax()),
+isZmax(patch->isZmax()),
+isZmin(patch->isZmin())
 {    
     
     // --------------------------------------------------
@@ -208,10 +208,10 @@ void ElectroMagn3D::initPoisson(Patch *patch)
     index_max_p_[0] = nx_p - 2 - oversize[0];
     index_max_p_[1] = ny_p - 2 - oversize[1];
     index_max_p_[2] = nz_p - 2 - oversize[2];
-    if (patch->isWestern()) {
+    if (patch->isXmin()) {
         index_min_p_[0] = 0;
     }
-    if (patch->isEastern()) {
+    if (patch->isXmax()) {
         index_max_p_[0] = nx_p-1;
     }
 
@@ -611,7 +611,7 @@ void ElectroMagn3D::computePoynting() {
     Field3D* By3D_m   = static_cast<Field3D*>(By_m);
     Field3D* Bz3D_m   = static_cast<Field3D*>(Bz_m);
 
-    if (isWestern) {
+    if (isXmin) {
         unsigned int iEy=istart[0][Ey3D->isDual(0)];
         unsigned int iBz=istart[0][Bz3D_m->isDual(0)];
         unsigned int iEz=istart[0][Ez3D->isDual(0)];
@@ -629,10 +629,10 @@ void ElectroMagn3D::computePoynting() {
 
 #ifdef _PATCH3D_TODO
 #endif
-    }//if Western
+    }//if Xmin
     
     
-    if (isEastern) {
+    if (isXmax) {
         unsigned int iEy=istart[0][Ey3D->isDual(0)]  + bufsize[0][Ey3D->isDual(0)] -1;
         unsigned int iBz=istart[0][Bz3D_m->isDual(0)] + bufsize[0][Bz3D_m->isDual(0)]-1;
         unsigned int iEz=istart[0][Ez3D->isDual(0)]  + bufsize[0][Ez3D->isDual(0)] -1;
@@ -645,9 +645,9 @@ void ElectroMagn3D::computePoynting() {
         
 #ifdef _PATCH3D_TODO
 #endif
-    }//if Easter
+    }//if Xmaxer
     
-    if (isSouthern) {
+    if (isYmin) {
         
         unsigned int iEz=istart[0][Ez_->isDual(0)];
         unsigned int iBx=istart[0][Bx_m->isDual(0)]; 
@@ -661,9 +661,9 @@ void ElectroMagn3D::computePoynting() {
 
 #ifdef _PATCH3D_TODO
 #endif        
-    }// if South
+    }// if Ymin
     
-    if (isNorthern) {
+    if (isYmax) {
         unsigned int iEz=istart[0][Ez3D->isDual(0)];
         unsigned int iBx=istart[0][Bx3D_m->isDual(0)];
         unsigned int iEx=istart[0][Ex3D->isDual(0)];
@@ -676,7 +676,7 @@ void ElectroMagn3D::computePoynting() {
         
 #ifdef _PATCH3D_TODO
 #endif
-    }//if North
+    }//if Ymax
 
 }
 
