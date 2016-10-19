@@ -87,7 +87,7 @@ bool DiagnosticScalar::prepare( int timestep )
             if( out_key[iscalar].find("Min")!=string::npos && out_key[iscalar].find("Cell")==string::npos) {
                 out_value[iscalar] = numeric_limits<double>::max();
             } else if( out_key[iscalar].find("Max")!=string::npos && out_key[iscalar].find("Cell")==string::npos) {
-                out_value[iscalar] = numeric_limits<double>::min();
+                out_value[iscalar] = numeric_limits<double>::lowest();
             } else {
                 out_value[iscalar] = 0.;
             }
