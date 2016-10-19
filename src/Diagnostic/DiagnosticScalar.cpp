@@ -179,10 +179,19 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
 
 bool DiagnosticScalar::prepare( int timestep )
 {
-    // At the right timestep, zero-out the scalars
-    if ( printNow(timestep) || timeSelection->theTimeIsNow(timestep) )
-        for (unsigned int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
-            out_value[iscalar] = 0.;
+    // At the right timestep, initialize the scalars
+    if ( printNow(timestep) || timeSelection->theTimeIsNow(timestep) ) {
+        for (unsigned int iscalar=0 ; iscalar<out_value.size() ; iscalar++) {
+            // Different initial values depending on the type of scalar
+            if( out_key[iscalar].find("Min")!=string::npos && out_key[iscalar].find("Cell")==string::npos) {
+                out_value[iscalar] = numeric_limits<double>::max();
+            } else if( out_key[iscalar].find("Max")!=string::npos && out_key[iscalar].find("Cell")==string::npos) {
+                out_value[iscalar] = numeric_limits<double>::min();
+            } else {
+                out_value[iscalar] = 0.;
+            }
+        }
+    }
     
     // Scalars always run even if they don't dump
     return true;
@@ -378,14 +387,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     
     nfield = fields.size();
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
-        
-        #pragma omp single
-        {
-            out_value[index_fieldMin[ifield]] = numeric_limits<double>::max();
-            out_value[index_fieldMax[ifield]] = numeric_limits<double>::min();
-        }
-        #pragma omp barrier
-        
+                
         Field * field = fields[ifield];
         minval=maxval=(*field)(0);
         minindex=maxindex=0;
