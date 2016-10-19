@@ -236,16 +236,9 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         tmp_dset_id=0;
         if( flush_timeSelection->theTimeIsNow(timestep) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     }
-    
-    // Final loop on patches to zero RhoJs
-    if (fields_indexes.size()>0)
-        #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-            vecPatches(ipatch)->EMfields->restartRhoJs();
-    
 }
 
 
-bool DiagnosticFields::needsRhoJs() {
-    return hasRhoJs;
+bool DiagnosticFields::needsRhoJs(int timestep) {
+    return hasRhoJs && timeSelection->theTimeIsNow(timestep);
 }

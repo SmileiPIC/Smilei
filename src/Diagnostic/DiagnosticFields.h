@@ -25,7 +25,7 @@ public :
     
     virtual void writeField(hid_t, int) = 0;
     
-    virtual bool needsRhoJs() override;
+    virtual bool needsRhoJs(int timestep) override;
     
 protected :
     //! Indexes of the fields to be dumped

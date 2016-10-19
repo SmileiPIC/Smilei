@@ -42,13 +42,16 @@ class Probe(Diagnostic):
 			# Verify that this file is compatible with the previous ones
 			try:
 				for key, val in verifications.items():
-					if self._h5probe[-1][key].shape != val:
+					if self._h5probe[-1][key].value != val:
 						self._error = "Probe #"+str(probeNumber)+" in path '"+path+"' is incompatible with the other ones"
 						return
 			except:
-				verifications = {"number":self._h5probe[-1]["number"].shape}
-				for i in range(self._h5probe[-1]["number"].size+1):
-					verifications["p"+str(i)] = self._h5probe[-1]["p"+str(i)].shape
+				verifications = {"number":self._h5probe[-1]["number"].value}
+				npoints = self._h5probe[-1]["number"].size
+				if self._h5probe[-1]["number"].value.prod() > 1:
+					npoints += 1
+				for i in range(npoints):
+					verifications["p"+str(i)] = self._h5probe[-1]["p"+str(i)].value
 		
 		# Get available times
 		self._dataForTime = {}

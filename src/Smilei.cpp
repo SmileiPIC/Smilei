@@ -90,7 +90,7 @@ int main (int argc, char* argv[])
     // time at half-integer time-steps (dual grid)
     double time_dual = (stepStart +0.5) * params.timestep;
     // Do we initially do diags or not ?
-    int diag_flag = 1;
+    int diag_flag;
     
     // -------------------------------------------
     // Declaration of the main objects & operators
@@ -110,6 +110,8 @@ int main (int argc, char* argv[])
     
     // reading from dumped file the restart values
     if (params.restart) {
+        diag_flag = 0;
+        
         MESSAGE(1, "READING fields and particles for restart");
         // smpi->patch_count recomputed in restartAll
         // vecPatches allocated in restartAll according to patch_count saved
@@ -132,6 +134,8 @@ int main (int argc, char* argv[])
         vecPatches.initAllDiags( params, smpi );
         
     } else {
+        diag_flag = 1;
+        
         vecPatches = PatchesFactory::createVector(params, smpi);
         
         // Initialize the electromagnetic fields

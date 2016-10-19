@@ -608,7 +608,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
 }
 
 
-bool DiagnosticProbes::needsRhoJs() {
-    return hasRhoJs;
+bool DiagnosticProbes::needsRhoJs(int timestep) {
+    return hasRhoJs && timeSelection->theTimeIsNow(timestep);
 }
 

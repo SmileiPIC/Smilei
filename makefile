@@ -16,7 +16,16 @@ else
 endif
 HDF5_ROOT_DIR ?=
 BUILD_DIR ?= build
-PYTHONCONFIG ?= python-config
+
+
+HAVE_PYTHONCONFIG := $(shell command -v python-config 2> /dev/null)
+ifdef HAVE_PYTHONCONFIG
+	PYTHONCONFIG := python-config
+else
+	PYTHONCONFIG := python scripts/CompileTools/python-config.py
+endif
+    
+
 EXEC = smilei
 
 
@@ -30,16 +39,16 @@ endif
 
 #-----------------------------------------------------
 # Git information
-DESCRIBE=$(shell git describe 2>/dev/null || echo '??')
-BRANCH=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '??')
+DESCRIBE:=$(shell git describe 2>/dev/null || echo '??')
+BRANCH:=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '??')
 VERSION="$(DESCRIBE)-$(BRANCH)"
 
 #-----------------------------------------------------
 # Directories and files
-DIRS = $(shell find src -type d)
-SRCS = $(shell find src/* -name \*.cpp)
-OBJS = $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.o))
-DEPS = $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.d))
+DIRS := $(shell find src -type d)
+SRCS := $(shell find src/* -name \*.cpp)
+OBJS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.o))
+DEPS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.d))
 SITEDIR = $(shell python -c 'import site; site._script()' --user-site)
 
 #-----------------------------------------------------
@@ -60,10 +69,10 @@ CXXFLAGS += $(DIRS:%=-I%)
 # Python-related flags
 CXXFLAGS += -I$(BUILD_DIR)/src/Python
 PYSCRIPTS = $(shell find src/Python -name \*.py)
-PYHEADERS = $(addprefix $(BUILD_DIR)/, $(PYSCRIPTS:.py=.pyh))
-PY_CXXFLAGS = $(shell $(PYTHONCONFIG) --includes)
+PYHEADERS := $(addprefix $(BUILD_DIR)/, $(PYSCRIPTS:.py=.pyh))
+PY_CXXFLAGS := $(shell $(PYTHONCONFIG) --includes)
 CXXFLAGS += $(PY_CXXFLAGS)
-PY_LDFLAGS = $(shell $(PYTHONCONFIG) --ldflags)
+PY_LDFLAGS := $(shell $(PYTHONCONFIG) --ldflags)
 LDFLAGS += $(PY_LDFLAGS)
 ifneq ($(strip $(PYTHONHOME)),)
     LDFLAGS += -L$(PYTHONHOME)/lib

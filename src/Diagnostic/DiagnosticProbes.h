@@ -32,7 +32,7 @@ public :
     
     void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;    
     
-    virtual bool needsRhoJs() override;
+    virtual bool needsRhoJs(int timestep) override;
     
     //! Creates the probe's particles (or "points")
     void createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bool createFile);

@@ -34,7 +34,7 @@ public :
     virtual void write(int timestep) {};
     
     //! Tells whether this diagnostic requires the pre-calculation of the particle J & Rho
-    virtual bool needsRhoJs() { return false; };
+    virtual bool needsRhoJs(int timestep) { return false; };
     
     //! Time selection for writing the diagnostic
     TimeSelection * timeSelection;
