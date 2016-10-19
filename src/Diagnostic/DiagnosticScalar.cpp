@@ -4,6 +4,7 @@
 
 #include <iomanip>
 #include <algorithm>
+#include <limits>
 
 using namespace std;
 
@@ -378,6 +379,13 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     nfield = fields.size();
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
         
+        #pragma omp single
+        {
+            out_value[index_fieldMin[ifield]] = numeric_limits<double>::max();
+            out_value[index_fieldMax[ifield]] = numeric_limits<double>::min();
+        }
+        #pragma omp barrier
+        
         Field * field = fields[ifield];
         minval=maxval=(*field)(0);
         minindex=maxindex=0;
@@ -407,11 +415,11 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         
         #pragma omp critical
         {
-            if( minval < out_value[index_fieldMin    [ifield]] ) {
+            if( minval < out_value[index_fieldMin[ifield]] ) {
                 out_value[index_fieldMin    [ifield]] = minval  ;
                 out_value[index_fieldMinCell[ifield]] = minindex;
             }
-            if( maxval > out_value[index_fieldMin    [ifield]] ) {
+            if( maxval > out_value[index_fieldMax[ifield]] ) {
                 out_value[index_fieldMax    [ifield]] = maxval  ;
                 out_value[index_fieldMaxCell[ifield]] = maxindex;
             }
@@ -419,7 +427,6 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     }
     
     // ------------------------
-    
     // POYNTING-related scalars
     // ------------------------
     
@@ -443,27 +450,27 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     // FINAL steps
     // -----------
     
-    //// added & lost energies due to the moving window
-    //#pragma omp atomic
-    //out_value[index_Ukin_out_mvw] += Ukin_out_mvw;
-    //#pragma omp atomic
-    //out_value[index_Ukin_inj_mvw] += Ukin_inj_mvw;
-    //#pragma omp atomic
-    //out_value[index_Uelm_out_mvw] += Uelm_out_mvw;
-    //#pragma omp atomic
-    //out_value[index_Uelm_inj_mvw] += Uelm_inj_mvw;
-    //
-    //// added & lost energies at the boundaries
-    //#pragma omp atomic
-    //out_value[index_Ukin_bnd] += Ukin_bnd;
-    //#pragma omp atomic
-    //out_value[index_Uelm_bnd] += Uelm_bnd;
-    //
-    //// Total energies
-    //#pragma omp atomic
-    //out_value[index_Ukin] += Ukin;
-    //#pragma omp atomic
-    //out_value[index_Uelm] += Uelm;
+    // added & lost energies due to the moving window
+    #pragma omp atomic
+    out_value[index_Ukin_out_mvw] += Ukin_out_mvw;
+    #pragma omp atomic
+    out_value[index_Ukin_inj_mvw] += Ukin_inj_mvw;
+    #pragma omp atomic
+    out_value[index_Uelm_out_mvw] += Uelm_out_mvw;
+    #pragma omp atomic
+    out_value[index_Uelm_inj_mvw] += Uelm_inj_mvw;
+    
+    // added & lost energies at the boundaries
+    #pragma omp atomic
+    out_value[index_Ukin_bnd] += Ukin_bnd;
+    #pragma omp atomic
+    out_value[index_Uelm_bnd] += Uelm_bnd;
+    
+    // Total energies
+    #pragma omp atomic
+    out_value[index_Ukin] += Ukin;
+    #pragma omp atomic
+    out_value[index_Uelm] += Uelm;
     
     // Final thing to do: calculate the maximum size of the scalars names
     if (out_width.empty()) { // Only first time
