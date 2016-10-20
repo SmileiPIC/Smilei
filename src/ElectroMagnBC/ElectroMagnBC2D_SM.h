@@ -27,14 +27,15 @@ public:
     virtual void apply_zmin(ElectroMagn* EMfields, double time_dual, Patch* patch);
     virtual void apply_zmax(ElectroMagn* EMfields, double time_dual, Patch* patch);
 
+     //! Save external fields for silver muller EM Boundary condition
+     std::vector<double>  Bz_xvalmin_Long, Bz_xvalmax_Long, By_xvalmin_Long, By_xvalmax_Long, Bx_xvalmin_Long, Bx_xvalmax_Long,
+                          Bz_yvalmin_Trans, Bz_yvalmax_Trans, By_yvalmin_Trans, By_yvalmax_Trans, Bx_yvalmin_Trans, Bx_yvalmax_Trans;
+    
+
 private:
     
     virtual void save_fields_BC2D_Long(Field*);
     virtual void save_fields_BC2D_Trans(Field*);
-    
-     //! Save external fields for silver muller EM Boundary condition
-     std::vector<double>  Bz_xvalmin_Long, Bz_xvalmax_Long, By_xvalmin_Long, By_xvalmax_Long, Bx_xvalmin_Long, Bx_xvalmax_Long,
-                          Bz_yvalmin_Trans, Bz_yvalmax_Trans, By_yvalmin_Trans, By_yvalmax_Trans, Bx_yvalmin_Trans, Bx_yvalmax_Trans;
     
     //! Conversion factor from degree to radian
     double conv_deg2rad;
@@ -69,34 +70,34 @@ private:
     //! Ratio of the spatial-step by the time-step dy/dt for 2D3V cartesian simulations
     double dy_ov_dt;
     
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Alpha_SM_W;
     
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Beta_SM_W;
     
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Gamma_SM_W;
     
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Delta_SM_W;
     
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Epsilon_SM_W;
     
-    //! Constant used for the Silver-Mueller boundary conditions (East)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
     double Alpha_SM_E;
     
-    //! Constant used for the Silver-Mueller boundary conditions (East)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
     double Beta_SM_E;
     
-    //! Constant used for the Silver-Mueller boundary conditions (East)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
     double Gamma_SM_E;
     
-    //! Constant used for the Silver-Mueller boundary conditions (East)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
     double Delta_SM_E;
     
-    //! Constant used for the Silver-Mueller boundary conditions (East)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
     double Epsilon_SM_E;
     
     //! Constant used for the Silver-Mueller boundary conditions (Transverse)

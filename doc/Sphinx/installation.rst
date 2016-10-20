@@ -197,6 +197,9 @@ Download and compile
      make config="debug noopenmp" # to activate debugging without OpenMP
      
    .. rubric:: Makefile alternatives:
+   
+   .. code-block:: bash
+     
      make doc                     # to compile the documentation
      make install_python          # install the Smilei python module
      make unnstall_python         # uninstall the Smilei python module

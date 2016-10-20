@@ -35,8 +35,8 @@ Species(
 	charge = 1.0,
 	nb_density = 1.,
 	time_frozen = 10000.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
+	bc_part_type_xmin = "none",
+	bc_part_type_xmax = "none"
 )
 Species(
 	species_type = "eon1",
@@ -47,8 +47,8 @@ Species(
 	charge = -1.0,
 	nb_density = cosine(0.5,xamplitude=dn,xlength=L),
 	mean_velocity = [-0.1,0.0,0.0],
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
+	bc_part_type_xmin = "none",
+	bc_part_type_xmax = "none"
 )
 Species(
 	species_type = "eon2",
@@ -59,8 +59,8 @@ Species(
 	charge = -1.0,
 	nb_density = cosine(0.5,xamplitude=dn,xlength=L),
 	mean_velocity = [0.1,0.0,0.0],
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
+	bc_part_type_xmin = "none",
+	bc_part_type_xmax = "none"
 )
 
 

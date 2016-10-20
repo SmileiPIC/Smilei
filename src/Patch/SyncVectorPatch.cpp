@@ -141,7 +141,7 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
 
         if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[0][0]){
-            //The patch to the west belongs to the same MPI process than I.
+            //The patch to the xmin belongs to the same MPI process than I.
             pt1 = &(*fields[vecPatches(ipatch)->neighbor_[0][0]-h0])(n_space[0]*ny_*nz_);
             pt2 = &(*fields[ipatch])(0);
             //Sum 2 ==> 1
@@ -190,7 +190,7 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
         for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
 
             if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[1][0]){
-                //The patch to the south belongs to the same MPI process than I.
+                //The patch to the ymin belongs to the same MPI process than I.
                 pt1 = &(*fields[vecPatches(ipatch)->neighbor_[1][0]-h0])(n_space[1]*nz_);
                 pt2 = &(*fields[ipatch])(0);
                 for (unsigned int j = 0; j < nx_ ; j++){

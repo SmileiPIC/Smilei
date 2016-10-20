@@ -89,46 +89,46 @@ private:
 
 
 
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Alpha_SM_W;
     
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Beta_SM_W;
     
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Gamma_SM_W;
     
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Delta_SM_W;
     
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Epsilon_SM_W;
     
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Zeta_SM_W;
 
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Eta_SM_W;
 
-    //! Constant used for the Silver-Mueller boundary conditions (East)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
     double Alpha_SM_E;
     
-    //! Constant used for the Silver-Mueller boundary conditions (East)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
     double Beta_SM_E;
     
-    //! Constant used for the Silver-Mueller boundary conditions (East)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
     double Gamma_SM_E;
     
-    //! Constant used for the Silver-Mueller boundary conditions (East)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
     double Delta_SM_E;
     
-    //! Constant used for the Silver-Mueller boundary conditions (East)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
     double Epsilon_SM_E;
     
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Zeta_SM_E;
 
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Eta_SM_E;
 
 
@@ -144,10 +144,10 @@ private:
     //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
     double Epsilon_SM_S;
     
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Zeta_SM_S;
 
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Eta_SM_S;
 
     //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
@@ -162,10 +162,10 @@ private:
     //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
     double Epsilon_SM_N;
 
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Zeta_SM_N;
 
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Eta_SM_N;
 
 
@@ -181,10 +181,10 @@ private:
     //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
     double Epsilon_SM_B;
     
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Zeta_SM_B;
 
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Eta_SM_B;
 
     //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
@@ -199,10 +199,10 @@ private:
     //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
     double Epsilon_SM_T;
    
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Zeta_SM_T;
 
-    //! Constant used for the Silver-Mueller boundary conditions (West)
+    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Eta_SM_T;
 
 };

@@ -38,6 +38,8 @@ public :
     
     void write(int timestep) override;
     
+    virtual bool needsRhoJs(int timestep) override;
+    
     //! get a particular scalar
     double getScalar(std::string name);
     

@@ -7,29 +7,37 @@ class Field(Diagnostic):
 	
 	def _init(self, field=None, timesteps=None, slice=None, data_log=False, stride=1, **kwargs):
 		
-		# Open the file
-		self._file = self._results_path+'/Fields.h5'
-		try:
-			f = self._h5py.File(self._file, 'r')
-		except:
-			self._error = "Diagnostic not loaded: No fields found"
-			return
-		self._h5items = list(f.values())
+		# Open the file(s) and load the data
+		self._h5items = []
+		self._fields = []
+		for path in self._results_path:
+			file = path+self._os.sep+'Fields.h5'
+			try:
+				f = self._h5py.File(file, 'r')
+			except:
+				self._error = "Diagnostic not loaded: No fields found"
+				return
+			values = f.values()[:-1]
+			self._h5items.extend( values )
+			# Select only the fields that are common to all simulations
+			if len(self._fields)==0:
+				self._fields = values[0].keys()
+			else:
+				self._fields = [f for f in values[0].keys() if f in self._fields]
 		
 		# If no field selected, print available fields and leave
 		if field is None:
-			fields = self.getFields()
-			if len(fields)>0:
+			if len(self._fields)>0:
 				self._error += "Printing available fields:\n"
 				self._error += "--------------------------\n"
-				l = int(len(fields)/3) * 3
-				maxlength = str(self._np.max([len(f) for f in fields])+4)
-				fields = [('%'+maxlength+'s')%f for f in fields]
+				l = int(len(self._fields)/3) * 3
+				maxlength = str(self._np.max([len(f) for f in self._fields])+4)
+				fields = [('%'+maxlength+'s')%f for f in self._fields]
 				if l>0:
 					self._error += '\n'.join([''.join(list(i)) for i in self._np.reshape(fields[:l],(-1,3))])
 				self._error += '\n'+''.join(list(fields[l:]))
 			else:
-				self._error += "No fields found in '"+self._results_path
+				self._error += "No fields found"
 			return
 		
 		# Get available times
@@ -39,8 +47,7 @@ class Field(Diagnostic):
 			return
 		
 		# Get available fields
-		fields = self.getFields()
-		sortedfields = reversed(sorted(fields, key = len))
+		sortedfields = reversed(sorted(self._fields, key = len))
 		
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------
@@ -164,13 +171,11 @@ class Field(Diagnostic):
 	
 	# get all available fields, sorted by name length
 	def getFields(self):
-		try:    fields = self._h5items[0].keys() # list of fields
-		except: fields = []
-		return list(fields)
+		return self._fields
 	
 	# get all available timesteps
 	def getAvailableTimesteps(self):
-		try:    times = [float(a.name[1:]) for a in self._h5items[:-1]]
+		try:    times = [float(a.name[1:]) for a in self._h5items]
 		except: times = []
 		return self._np.double(times)
 	

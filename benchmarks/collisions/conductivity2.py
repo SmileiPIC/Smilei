@@ -50,8 +50,8 @@ Species(
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.00004], # 20 eV
 	time_frozen = 0.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
+	bc_part_type_xmin = "none",
+	bc_part_type_xmax = "none"
 )
 Species(
 	species_type = "electron1",
@@ -64,8 +64,8 @@ Species(
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.00004], # 20 eV
 	time_frozen = 0.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
+	bc_part_type_xmin = "none",
+	bc_part_type_xmax = "none"
 )
 
 Species(
@@ -79,8 +79,8 @@ Species(
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.0001], # 50 eV
 	time_frozen = 0.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
+	bc_part_type_xmin = "none",
+	bc_part_type_xmax = "none"
 )
 Species(
 	species_type = "electron2",
@@ -93,8 +93,8 @@ Species(
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.0001], # 50 eV
 	time_frozen = 0.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
+	bc_part_type_xmin = "none",
+	bc_part_type_xmax = "none"
 )
 
 Species(
@@ -108,8 +108,8 @@ Species(
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.0002], # 100 eV
 	time_frozen = 0.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
+	bc_part_type_xmin = "none",
+	bc_part_type_xmax = "none"
 )
 Species(
 	species_type = "electron3",
@@ -122,8 +122,8 @@ Species(
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.0002], # 100 eV
 	time_frozen = 0.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
+	bc_part_type_xmin = "none",
+	bc_part_type_xmax = "none"
 )
 
 

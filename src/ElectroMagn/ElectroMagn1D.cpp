@@ -24,8 +24,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn1D::ElectroMagn1D(Params &params, vector<Species*>& vecSpecies, Patch* patch)
   : ElectroMagn(params, vecSpecies, patch),
-isWestern(patch->isWestern()),
-isEastern(patch->isEastern())
+isXmin(patch->isXmin()),
+isXmax(patch->isXmax())
 {
     oversize_ = oversize[0];
     
@@ -185,10 +185,10 @@ void ElectroMagn1D::initPoisson(Patch *patch)
     
     index_min_p_[0] = oversize[0];
     index_max_p_[0] = nx_p - 2 - oversize[0];
-    if (patch->isWestern()) {
+    if (patch->isXmin()) {
         index_min_p_[0] = 0;
     }
-    if (patch->isEastern()) {
+    if (patch->isXmax()) {
         index_max_p_[0] = nx_p-1;
     }
     
@@ -222,8 +222,8 @@ void ElectroMagn1D::compute_Ap(Patch *patch)
         (*Ap_)(i) = (*p_)(i-1) - 2.0*(*p_)(i) + (*p_)(i+1);
         
     // apply BC on Ap
-    if (patch->isWestern()) (*Ap_)(0)      = (*p_)(1)      - 2.0*(*p_)(0);
-    if (patch->isEastern()) (*Ap_)(nx_p-1) = (*p_)(nx_p-2) - 2.0*(*p_)(nx_p-1); 
+    if (patch->isXmin()) (*Ap_)(0)      = (*p_)(1)      - 2.0*(*p_)(0);
+    if (patch->isXmax()) (*Ap_)(nx_p-1) = (*p_)(nx_p-2) - 2.0*(*p_)(nx_p-1); 
     
 } // compute_Ap
 
@@ -266,8 +266,8 @@ void ElectroMagn1D::initE(Patch *patch)
         (*Ex1D)(i) = ((*phi_)(i-1)-(*phi_)(i))/dx;
     
     // BC on Ex
-    if (patch->isWestern()) (*Ex1D)(0)      = (*Ex1D)(1)      - dx*(*rho1D)(0);
-    if (patch->isEastern()) (*Ex1D)(nx_d-1) = (*Ex1D)(nx_d-2) + dx*(*rho1D)(nx_p-1);
+    if (patch->isXmin()) (*Ex1D)(0)      = (*Ex1D)(1)      - dx*(*rho1D)(0);
+    if (patch->isXmax()) (*Ex1D)(nx_d-1) = (*Ex1D)(nx_d-2) + dx*(*rho1D)(nx_p-1);
     
     delete phi_;
     delete r_;
@@ -448,8 +448,8 @@ void ElectroMagn1D::computeTotalRhoJ()
 // --------------------------------------------------------------------------
 void ElectroMagn1D::computePoynting() {
     
-    // Western border (Energy injected = +Poynting)
-    if (isWestern) {
+    // Xmin border (Energy injected = +Poynting)
+    if (isXmin) {
         unsigned int iEy=istart[0][Ey_->isDual(0)];
         unsigned int iBz=istart[0][Bz_m->isDual(0)];
         unsigned int iEz=istart[0][Ez_->isDual(0)];
@@ -460,8 +460,8 @@ void ElectroMagn1D::computePoynting() {
         poynting[0][0] += poynting_inst[0][0];
     }
     
-    // Eastern border (Energy injected = -Poynting)
-    if (isEastern) {
+    // Xmax border (Energy injected = -Poynting)
+    if (isXmax) {
         unsigned int iEy=istart[0][Ey_->isDual(0)]  + bufsize[0][Ey_->isDual(0)]-1;
         unsigned int iBz=istart[0][Bz_m->isDual(0)] + bufsize[0][Bz_m->isDual(0)]-1;
         unsigned int iEz=istart[0][Ez_->isDual(0)]  + bufsize[0][Ez_->isDual(0)]-1;

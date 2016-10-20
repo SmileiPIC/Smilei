@@ -57,7 +57,9 @@ public:
         PyTools::extract("initPosition_type",thisSpecies->initPosition_type ,"Species",ispec);
         if (thisSpecies->initPosition_type.empty()) {
             ERROR("For species '" << species_type << "' empty initPosition_type");
-        } else if ( (thisSpecies->initPosition_type!="regular")&&(thisSpecies->initPosition_type!="random") ) {
+        } else if ( (thisSpecies->initPosition_type!="regular" )
+                  &&(thisSpecies->initPosition_type!="random"  )
+                  &&(thisSpecies->initPosition_type!="centered") ) {
             ERROR("For species '" << species_type << "' unknown initPosition_type: " << thisSpecies->initPosition_type);
         }
         
@@ -88,36 +90,36 @@ public:
             thisSpecies->radiating=true;
         }
         
-        if (!PyTools::extract("bc_part_type_west",thisSpecies->bc_part_type_west,"Species",ispec) )
-            ERROR("For species '" << species_type << "', bc_part_type_west not defined");
-        if (!PyTools::extract("bc_part_type_east",thisSpecies->bc_part_type_east,"Species",ispec) )
-            ERROR("For species '" << species_type << "', bc_part_type_east not defined");
+        if (!PyTools::extract("bc_part_type_xmin",thisSpecies->bc_part_type_xmin,"Species",ispec) )
+            ERROR("For species '" << species_type << "', bc_part_type_xmin not defined");
+        if (!PyTools::extract("bc_part_type_xmax",thisSpecies->bc_part_type_xmax,"Species",ispec) )
+            ERROR("For species '" << species_type << "', bc_part_type_xmax not defined");
         
         if (params.nDim_particle>1) {
-            if (!PyTools::extract("bc_part_type_south",thisSpecies->bc_part_type_south,"Species",ispec) )
-                ERROR("For species '" << species_type << "', bc_part_type_south not defined");
-            if (!PyTools::extract("bc_part_type_north",thisSpecies->bc_part_type_north,"Species",ispec) )
-                ERROR("For species '" << species_type << "', bc_part_type_north not defined");
+            if (!PyTools::extract("bc_part_type_ymin",thisSpecies->bc_part_type_ymin,"Species",ispec) )
+                ERROR("For species '" << species_type << "', bc_part_type_ymin not defined");
+            if (!PyTools::extract("bc_part_type_ymax",thisSpecies->bc_part_type_ymax,"Species",ispec) )
+                ERROR("For species '" << species_type << "', bc_part_type_ymax not defined");
         }
         
         if (params.nDim_particle>2) {
-            if (!PyTools::extract("bc_part_type_bottom",thisSpecies->bc_part_type_bottom,"Species",ispec) )
-                ERROR("For species '" << species_type << "', bc_part_type_bottom not defined");
-            if (!PyTools::extract("bc_part_type_up",thisSpecies->bc_part_type_up,"Species",ispec) )
-                ERROR("For species '" << species_type << "', bc_part_type_up not defined");
+            if (!PyTools::extract("bc_part_type_zmin",thisSpecies->bc_part_type_zmin,"Species",ispec) )
+                ERROR("For species '" << species_type << "', bc_part_type_zmin not defined");
+            if (!PyTools::extract("bc_part_type_zmax",thisSpecies->bc_part_type_zmax,"Species",ispec) )
+                ERROR("For species '" << species_type << "', bc_part_type_zmax not defined");
         }
         
         // for thermalizing BCs on particles check if thermT is correctly defined
         bool thermTisDefined=false;
         bool thermVisDefined=false;
-        if ( (thisSpecies->bc_part_type_west=="thermalize") || (thisSpecies->bc_part_type_east=="thermalize") ){
+        if ( (thisSpecies->bc_part_type_xmin=="thermalize") || (thisSpecies->bc_part_type_xmax=="thermalize") ){
             thermTisDefined=PyTools::extract("thermT",thisSpecies->thermT,"Species",ispec);
             if (!thermTisDefined) ERROR("For species '" << species_type << "' thermT needs to be defined due to x-BC thermalize");
             thermVisDefined=PyTools::extract("thermVelocity",thisSpecies->thermVelocity,"Species",ispec);
             if (!thermVisDefined) ERROR("For species '" << species_type << "' thermVelocity needs to be defined due to x-BC thermalize");
         }
         if ( (params.nDim_particle==2) && (!thermTisDefined) && (!thermVisDefined) &&
-             (thisSpecies->bc_part_type_south=="thermalize" || thisSpecies->bc_part_type_north=="thermalize") ) {
+             (thisSpecies->bc_part_type_ymin=="thermalize" || thisSpecies->bc_part_type_ymax=="thermalize") ) {
             thermTisDefined=PyTools::extract("thermT",thisSpecies->thermT,"Species",ispec);
             if (!thermTisDefined) ERROR("For species '" << species_type << "' thermT needs to be defined due to y-BC thermalize");
             thermVisDefined=PyTools::extract("thermVelocity",thisSpecies->thermVelocity,"Species",ispec);
@@ -281,12 +283,12 @@ public:
         newSpecies->mass                  = species->mass;
         newSpecies->time_frozen           = species->time_frozen;
         newSpecies->radiating             = species->radiating;
-        newSpecies->bc_part_type_west     = species->bc_part_type_west;
-        newSpecies->bc_part_type_east     = species->bc_part_type_east;
-        newSpecies->bc_part_type_south    = species->bc_part_type_south;
-        newSpecies->bc_part_type_north    = species->bc_part_type_north;
-        newSpecies->bc_part_type_bottom   = species->bc_part_type_bottom;
-        newSpecies->bc_part_type_up       = species->bc_part_type_up;
+        newSpecies->bc_part_type_xmin     = species->bc_part_type_xmin;
+        newSpecies->bc_part_type_xmax     = species->bc_part_type_xmax;
+        newSpecies->bc_part_type_ymin    = species->bc_part_type_ymin;
+        newSpecies->bc_part_type_ymax    = species->bc_part_type_ymax;
+        newSpecies->bc_part_type_zmin   = species->bc_part_type_zmin;
+        newSpecies->bc_part_type_zmax       = species->bc_part_type_zmax;
         newSpecies->thermT                = species->thermT;
         newSpecies->thermVelocity         = species->thermVelocity;
         newSpecies->thermalVelocity       = species->thermalVelocity;

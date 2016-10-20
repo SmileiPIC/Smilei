@@ -37,15 +37,18 @@ Open a simulation
 ^^^^^^^^^^^^^^^^^^^
 
 In a *python* command line (or script), invoke the following class to open
-your :program:`Smilei` simulation.
+your :program:`Smilei` simulation. Note that several simulations can be opened at once, 
+as long as they correspond to several :ref:`restarts <DumpAndRestart>` of the same simulation.
 
 .. py:class:: Smilei(results_path, show=True)
 
-  * ``results_path``: Path to the directory where the results of the simulation are stored.
+  * ``results_path``: string or list of strings (default: ``'.'``)
+     | Path or list of paths to the directory-ies where the results of the simulation-s are stored. It can also contain wildcards, such as ``*`` and ``?`` in order to include several simulations at once.
   
-  * ``show``: ``True``/``False`` toggles whether the figures will actually plot on screen.
+  * ``show``: boolean (default: ``True``)
+     | Toggles whether the figures will actually plot on screen.
 
-You can store this to a variable for later, for instance::
+**Example**::
 
   S = Smilei("path/to/my/results")
 
@@ -60,14 +63,14 @@ which diagnostics are included in Smilei: :ref:`scalars <DiagScalar>`,
 Extract namelist information
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Once a simulation is selected as shown above, you can access the content of the namelist
+Once a simulation is opened as shown above, you can access the content of the namelist
 using the variable ``namelist``::
   
-  S = Smilei("path/to/my/results") # select a simulation
+  S = Smilei("path/to/my/results") # Open a simulation
   print S.namelist.Main.timestep   # print the timestep
   print S.namelist.Main.geometry   # print the simulation dimensions
 
-All the variables defined in the original file are copied into this variable.
+All the variables defined in the original namelist are copied into this variable.
 
 Concerning components like :ref:`Species`, :ref:`ExtField` or :ref:`DiagProbe`, of which
 several instances may exist, you can directly iterate over them::

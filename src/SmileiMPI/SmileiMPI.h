@@ -72,7 +72,10 @@ public:
     void recv (Particles* partictles, int from, int hindex, MPI_Datatype datatype);
     void isend(std::vector<int>* vec, int to  , int hindex);
     void recv (std::vector<int> *vec, int from, int hindex);
-    
+
+    void isend(std::vector<double>* vec, int to  , int hindex);
+    void recv (std::vector<double> *vec, int from, int hindex);
+
     void isend(ElectroMagn* fields, int to  , int hindex);
     void recv (ElectroMagn* fields, int from, int hindex);
     void isend(Field* field, int to  , int hindex);
