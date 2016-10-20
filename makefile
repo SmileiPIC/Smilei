@@ -18,8 +18,9 @@ HDF5_ROOT_DIR ?=
 BUILD_DIR ?= build
 
 
-HAVE_PYTHONCONFIG := $(shell command -v python-config 2> /dev/null)
-ifdef HAVE_PYTHONCONFIG
+#-----------------------------------------------------
+# check if python-config exists
+ifeq (,$(shell command -v python-config 2> /dev/null))
 	PYTHONCONFIG := python-config
 else
 	PYTHONCONFIG := python scripts/CompileTools/python-config.py
