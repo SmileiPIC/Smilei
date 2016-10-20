@@ -286,15 +286,18 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         
         val_index minVal, maxVal;
         
-        minVal.val=maxVal.val=(**field)(0);
-        minVal.index=maxVal.index=0;
-        
+       
         vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
         for (unsigned int i=0 ; i<(*field)->isDual_.size() ; i++ ) {
             iFieldStart[i] = EMfields->istart[i][(*field)->isDual(i)];
             iFieldEnd [i] = iFieldStart[i] + EMfields->bufsize[i][(*field)->isDual(i)];
             iFieldGlobalSize [i] = (*field)->dims_[i];
         }
+
+        unsigned int ii= iFieldStart[2] + iFieldStart[1]*iFieldGlobalSize[2] +iFieldStart[0]*iFieldGlobalSize[1]*iFieldGlobalSize[2];
+        minVal.val=maxVal.val=(**field)(ii);
+        minVal.index=maxVal.index=0;
+
         for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
             for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
                 for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
