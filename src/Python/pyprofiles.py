@@ -76,12 +76,12 @@ def gaussian(max,
         raise Exception("gaussian profile has been defined before `Main()`")
     if len(Main.sim_length)>0:
         if xlength is None: xlength = Main.sim_length[0]-xvacuum
-        if xfwhm   is None: xfwhm   = xlength/3.
-        if xcenter is None: xcenter = xvacuum + xlength/2.
+        if xfwhm   is None: xfwhm   = (Main.sim_length[0]-xvacuum)/3.
+        if xcenter is None: xcenter = xvacuum + (Main.sim_length[0]-xvacuum)/2.
     if len(Main.sim_length)>1: 
         if ylength is None: ylength = Main.sim_length[1]-yvacuum
-        if yfwhm   is None: yfwhm   = ylength/3.
-        if ycenter is None: ycenter = yvacuum + ylength/2.
+        if yfwhm   is None: yfwhm   = (Main.sim_length[1]-yvacuum)/3.
+        if ycenter is None: ycenter = yvacuum + (Main.sim_length[1]-yvacuum)/2.
     xsigma = (0.5*xfwhm)**xorder/math.log(2.0)
     def fx(x):
         # vacuum region
@@ -280,8 +280,8 @@ def tgaussian(start=0., duration=None, fwhm=None, center=None, order=2):
     if len(Main)==0:
         raise Exception("tgaussian profile has been defined before `Main()`")
     if duration is None: duration = Main.sim_time-start
-    if fwhm     is None: fwhm     = duration/3.
-    if center   is None: center   = start + duration/2.
+    if fwhm     is None: fwhm     = (Main.sim_time-start)/3.
+    if center   is None: center   = start + (Main.sim_time-start)/2.
     sigma = (0.5*fwhm)**order/math.log(2.0)
     def f(t):
         if t < start: return 0.

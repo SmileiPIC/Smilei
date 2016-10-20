@@ -1542,6 +1542,8 @@ For more clarity, this graph illustrates the five syntaxes for time selections:
 
 ----
 
+.. _DumpAndRestart:
+
 Dump and restart
 ^^^^^^^^^^^^^^^^
 

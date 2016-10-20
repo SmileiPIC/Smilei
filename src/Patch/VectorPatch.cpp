@@ -719,7 +719,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     }
     (*this).set_refHindex() ;
     update_field_list() ;    
-    
+
 } // END exchangePatches
 
 // ---------------------------------------------------------------------------------------------------------------------
