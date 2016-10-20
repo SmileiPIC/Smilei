@@ -720,11 +720,6 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     (*this).set_refHindex() ;
     update_field_list() ;    
 
-
-    for (unsigned int ipatch=0 ; ipatch<patches_.size() ; ipatch++)
-        (*this)(ipatch)->EMfields->applyExternalFields( (*this)(ipatch) ); // Must be patch
-
-    
 } // END exchangePatches
 
 // ---------------------------------------------------------------------------------------------------------------------
