@@ -75,7 +75,7 @@ private:
     //! Maximum integer
     int maxint = std::numeric_limits<int>::max();
     //! Minimum integer
-    int minint = std::numeric_limits<int>::lowest();
+    int minint = std::numeric_limits<int>::min();
     
     //! Last answer of theTimeIsNow(int timestep)
     bool TheTimeIsNow;
