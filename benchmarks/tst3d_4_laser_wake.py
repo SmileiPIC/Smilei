@@ -46,7 +46,7 @@ Species(
     species_type = "electron",
     initPosition_type = "regular",
     initMomentum_type = "cold",
-    n_part_per_cell = 4,
+    n_part_per_cell = 8,
     c_part_max = 1.0,
     mass = 1.0,
     charge = -1.0,
@@ -78,7 +78,7 @@ DumpRestart(
     exit_after_dump = False,
 )
 
-list_fields = ['Ex','Ey','Rho_electron','Rho','Jx_electron']
+list_fields = ['Ex','Ey','Rho','Jx']
 
 DiagFields(
     every = 100,
@@ -93,5 +93,5 @@ DiagProbe(
 	fields = ['Ex','Ey','Rho','Jx']
 )
 
-DiagScalar(every = 10, vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMax', 'RhoMaxCell', 'RhoMin', 'RhoMinCell'])
+DiagScalar(every = 10, vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMin', 'RhoMinCell'])
 
