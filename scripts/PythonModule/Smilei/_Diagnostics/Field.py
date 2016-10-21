@@ -24,6 +24,8 @@ class Field(Diagnostic):
 				self._fields = values[0].keys()
 			else:
 				self._fields = [f for f in values[0].keys() if f in self._fields]
+			# Remove "tmp" datasets
+			self._h5items = [d for d in self._h5items if d.name[1:]!='tmp']
 		
 		# If no field selected, print available fields and leave
 		if field is None:

@@ -39,7 +39,7 @@ def trapezoidal(max,
             elif position < vacuum+slope1+plateau: return max
             # linearly decreasing density
             elif position < vacuum+slope1+plateau+slope2:
-                return max*(1. - ( position - (vacuum+slope1+slope2) ) / slope2)
+                return max*(1. - ( position - (vacuum+slope1+plateau) ) / slope2)
             # beyond the plasma
             else: return 0.0
         return f
@@ -88,7 +88,7 @@ def gaussian(max,
         if ylength is None: ylength = Main.sim_length[1]-yvacuum
         if yfwhm   is None: yfwhm   = (Main.sim_length[1]-yvacuum)/3.
         if ycenter is None: ycenter = yvacuum + (Main.sim_length[1]-yvacuum)/2.
-    if len(Main.sim_length)>1: 
+    if len(Main.sim_length)>2: 
         if zlength is None: zlength = Main.sim_length[2]-zvacuum
         if zfwhm   is None: zfwhm   = (Main.sim_length[2]-zvacuum)/3.
         if zcenter is None: zcenter = zvacuum + (Main.sim_length[2]-zvacuum)/2.

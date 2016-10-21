@@ -53,7 +53,7 @@ inline double trapeze(double x, double plateau, double slope1, double slope2, do
                 result = 1.;
             } else {
                 x -= slope2;
-                if ( x < 0. ) result = 1. - x * invslope2;
+                if ( x < 0. ) result = - x * invslope2;
             }
         }
     }
