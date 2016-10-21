@@ -78,7 +78,7 @@ DumpRestart(
     exit_after_dump = False,
 )
 
-list_fields = ['Ex','Ey','Rho_electron','Rho','Jx_electron']
+list_fields = ['Ex','Ey','Rho','Jx']
 
 DiagFields(
     every = 100,
@@ -93,5 +93,5 @@ DiagProbe(
 	fields = ['Ex','Ey','Rho','Jx']
 )
 
-DiagScalar(every = 10, vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMax', 'RhoMaxCell', 'RhoMin', 'RhoMinCell'])
+DiagScalar(every = 10, vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMin', 'RhoMinCell'])
 
