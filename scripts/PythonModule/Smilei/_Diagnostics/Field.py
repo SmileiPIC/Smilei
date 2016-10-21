@@ -148,10 +148,6 @@ class Field(Diagnostic):
 				self._units    .append(axisunits)
 				self._log      .append(False)
 		
-		if len(self._centers) > 2:
-			self._error = "Diagnostic not loaded: Cannot plot in "+str(len(self._shape))+"d. You need to 'slice' some axes."
-			return
-		
 		# Build units
 		units = {}
 		for f in self._fieldname:
