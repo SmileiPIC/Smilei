@@ -17,7 +17,7 @@ class Field(Diagnostic):
 			except:
 				self._error = "Diagnostic not loaded: No fields found"
 				return
-			values = f.values()[:-1]
+			values = f.values()
 			self._h5items.extend( values )
 			# Select only the fields that are common to all simulations
 			if len(self._fields)==0:

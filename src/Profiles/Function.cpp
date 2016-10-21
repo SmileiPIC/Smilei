@@ -67,6 +67,12 @@ double Function_Trapezoidal2D::valueAt(vector<double> x_cell) {
         * trapeze(x_cell[0]-xvacuum, xplateau, xslope1, xslope2, invxslope1, invxslope2)
         * trapeze(x_cell[1]-yvacuum, yplateau, yslope1, yslope2, invyslope1, invyslope2);
 }
+double Function_Trapezoidal3D::valueAt(vector<double> x_cell) {
+    return value
+        * trapeze(x_cell[0]-xvacuum, xplateau, xslope1, xslope2, invxslope1, invxslope2)
+        * trapeze(x_cell[1]-yvacuum, yplateau, yslope1, yslope2, invyslope1, invyslope2)
+        * trapeze(x_cell[2]-zvacuum, zplateau, zslope1, zslope2, invzslope1, invzslope2);
+}
 
 // Gaussian profiles
 double Function_Gaussian1D::valueAt(vector<double> x_cell) {
@@ -83,6 +89,18 @@ double Function_Gaussian2D::valueAt(vector<double> x_cell) {
     if ( y > yvacuum  && y < yvacuum+ylength )
         yfactor = exp( -pow(y-ycenter, yorder) * invysigma );
     return value * xfactor * yfactor;
+}
+double Function_Gaussian3D::valueAt(vector<double> x_cell) {
+    double x = x_cell[0], xfactor=0.;
+    double y = x_cell[1], yfactor=0.;
+    double z = x_cell[2], zfactor=0.;
+    if ( x > xvacuum  && x < xvacuum+xlength )
+        xfactor = exp( -pow(x-xcenter, xorder) * invxsigma );
+    if ( y > yvacuum  && y < yvacuum+ylength )
+        yfactor = exp( -pow(y-ycenter, yorder) * invysigma );
+    if ( z > yvacuum  && z < yvacuum+zlength )
+        zfactor = exp( -pow(z-zcenter, zorder) * invzsigma );
+    return value * xfactor * yfactor * zfactor;
 }
 
 // Polygonal profiles
@@ -118,6 +136,18 @@ double Function_Cosine2D::valueAt(vector<double> x_cell) {
     if( y > 0. && y < 1. )
         yfactor = base + yamplitude * cos(yphi + yfreq * y);
     return xfactor * yfactor;
+}
+double Function_Cosine3D::valueAt(vector<double> x_cell) {
+    double x = (x_cell[0] - xvacuum) * invxlength, xfactor = 0.;
+    double y = (x_cell[1] - yvacuum) * invylength, yfactor = 0.;
+    double z = (x_cell[2] - zvacuum) * invzlength, zfactor = 0.;
+    if( x > 0. && x < 1. )
+        xfactor = base + xamplitude * cos(xphi + xfreq * x);
+    if( y > 0. && y < 1. )
+        yfactor = base + yamplitude * cos(yphi + yfreq * y);
+    if( z > 0. && z < 1. )
+        zfactor = base + zamplitude * cos(zphi + zfreq * z);
+    return xfactor * yfactor * zfactor;
 }
 
 // Polynomial profiles
