@@ -46,7 +46,7 @@ Species(
     species_type = "electron",
     initPosition_type = "regular",
     initMomentum_type = "cold",
-    n_part_per_cell = 4,
+    n_part_per_cell = 8,
     c_part_max = 1.0,
     mass = 1.0,
     charge = -1.0,
