@@ -284,7 +284,8 @@ def multiPlot(*Diags, **kwargs):
 	saveAs : path where to store individual frames as pictures.
 	skipAnimation : toggle going directly to the last frame.
 	"""
-	from .Utils import Options, Movie, SaveAs
+	
+	from _Diagnostics import TrackParticles
 	
 	# Verify Diags are valid
 	nDiags = len(Diags)
@@ -313,9 +314,9 @@ def multiPlot(*Diags, **kwargs):
 			if type(Diag) is TrackParticles:
 				sameAxes = False
 				break
-			if Diag.dim()==0 and Diags[0].dim()==0:
+			if Diag.dim==0 and Diags[0].dim==0:
 				continue
-			if Diag.dim()!=1 or Diag._type != Diags[0]._type:
+			if Diag.dim!=1 or Diag._type != Diags[0]._type:
 				sameAxes = False
 				break
 	if not sameAxes and shape == [1,1]:

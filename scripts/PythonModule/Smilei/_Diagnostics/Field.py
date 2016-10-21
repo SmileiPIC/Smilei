@@ -192,12 +192,13 @@ class Field(Diagnostic):
 		C = {}
 		h5item = self._h5items[index]
 		for field in self._fieldname: # for each field in operation
-			B = self._np.zeros(self._finalShape)
+			B = self._np.squeeze(self._np.zeros(self._finalShape))
 			h5item[field].read_direct(B, source_sel=self._selection) # get array
 			C.update({ field:B })
 		# Calculate the operation
 		A = eval(self._operation)
 		# Apply the slicing
+		A = self._np.reshape(A,self._finalShape)
 		for iaxis in range(self._naxes):
 			if self._slices[iaxis]:
 				A = self._np.mean(A, axis=iaxis, keepdims=True) # mean over the slice
