@@ -12,6 +12,8 @@
 #include "Tools.h"
 
 #include "ElectroMagn.h"
+#include "ElectroMagnBC1D_SM.h"
+#include "ElectroMagnBC2D_SM.h"
 #include "Field.h"
 
 #include "Species.h"
@@ -218,51 +220,56 @@ void SmileiMPI::init_patch_count( Params& params)
     }
     
     // Third, loop over local patches to obtain their approximate load
-    vector<double> PatchLoad (Npatches_local, 0.);
-    for(unsigned int ipatch=0; ipatch<Npatches_local; ipatch++){
-        // Get patch coordinates
-        unsigned int hindex = FirstPatch_local + ipatch;
-        generalhilbertindexinv(params.mi[0], params.mi[1], params.mi[2], &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
-        for (unsigned int i=0 ; i<params.nDim_field ; i++) {
-            Pcoordinates[i] *= params.n_space[i];
-            if (params.cell_length[i]!=0.) {
-                cell_xmin[i] = (Pcoordinates[i]+0.5)*params.cell_length[i];
-                cell_xmax[i] = (Pcoordinates[i]+0.5+params.n_space[i])*params.cell_length[i];
-            }
-        }
-        //Accumulate particles load of the current patch
-        for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++){
-            local_load = 0.;
-            
-            // This commented block loops through all cells of the current patch to calculate the load
-            //for (x_cell[0]=cell_xmin[0]; x_cell[0]<cell_xmax[0]; x_cell[0]+=cell_dx[0]) {
-            //    for (x_cell[1]=cell_xmin[1]; x_cell[1]<cell_xmax[1]; x_cell[1]+=cell_dx[1]) {
-            //        for (x_cell[2]=cell_xmin[2]; x_cell[2]<cell_xmax[2]; x_cell[2]+=cell_dx[2]) {
-            //            double n_part_in_cell = floor(ppcProfiles[ispecies]->valueAt(x_cell));
-            //            if( n_part_in_cell<=0. ) continue;
-            //            else if( densityProfiles[ispecies]->valueAt(x_cell)==0. ) continue;
-            //            local_load += n_part_in_cell;
-            //        }
-            //    }
-            //}
-            // Instead of looping all cells, the following takes only the central point (much faster)
+    vector<double> PatchLoad (Npatches_local, 1.);
+    if (params.balancing_every <= 0 || !(params.initial_balance) ){
+        total_load = Npatches_local; //We don't balance the simulation, all patches have a load of 1.
+    } else {
+        for(unsigned int ipatch=0; ipatch<Npatches_local; ipatch++){
+            // Get patch coordinates
+            unsigned int hindex = FirstPatch_local + ipatch;
+            generalhilbertindexinv(params.mi[0], params.mi[1], params.mi[2], &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
             for (unsigned int i=0 ; i<params.nDim_field ; i++) {
-                if (params.cell_length[i]==0.) x_cell[i] = 0.;
-                else x_cell[i] = 0.5*(cell_xmin[i]+cell_xmax[i]);
+                Pcoordinates[i] *= params.n_space[i];
+                if (params.cell_length[i]!=0.) {
+                    cell_xmin[i] = (Pcoordinates[i]+0.5)*params.cell_length[i];
+                    cell_xmax[i] = (Pcoordinates[i]+0.5+params.n_space[i])*params.cell_length[i];
+                }
             }
-            double n_part_in_cell = floor(ppcProfiles[ispecies]->valueAt(x_cell));
-            if( n_part_in_cell && densityProfiles[ispecies]->valueAt(x_cell)!=0.)
-                local_load += n_part_in_cell * ncells_perpatch;
-            
-            // Consider whether this species is frozen
-            double time_frozen(0.);
-            PyTools::extract("time_frozen",time_frozen ,"Species",ispecies);
-            if(time_frozen > 0.) local_load *= params.coef_frozen;
-            // Add the load of the species to the current patch load
-            PatchLoad[ipatch] += local_load;
+            //Accumulate particles load of the current patch
+            for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++){
+                local_load = 0.;
+                
+                // This commented block loops through all cells of the current patch to calculate the load
+                //for (x_cell[0]=cell_xmin[0]; x_cell[0]<cell_xmax[0]; x_cell[0]+=cell_dx[0]) {
+                //    for (x_cell[1]=cell_xmin[1]; x_cell[1]<cell_xmax[1]; x_cell[1]+=cell_dx[1]) {
+                //        for (x_cell[2]=cell_xmin[2]; x_cell[2]<cell_xmax[2]; x_cell[2]+=cell_dx[2]) {
+                //            double n_part_in_cell = floor(ppcProfiles[ispecies]->valueAt(x_cell));
+                //            if( n_part_in_cell<=0. ) continue;
+                //            else if( densityProfiles[ispecies]->valueAt(x_cell)==0. ) continue;
+                //            local_load += n_part_in_cell;
+                //        }
+                //    }
+                //}
+                // Instead of looping all cells, the following takes only the central point (much faster)
+                for (unsigned int i=0 ; i<params.nDim_field ; i++) {
+                    if (params.cell_length[i]==0.) x_cell[i] = 0.;
+                    else x_cell[i] = 0.5*(cell_xmin[i]+cell_xmax[i]);
+                }
+                double n_part_in_cell = floor(ppcProfiles[ispecies]->valueAt(x_cell));
+                if( n_part_in_cell && densityProfiles[ispecies]->valueAt(x_cell)!=0.)
+                    local_load += n_part_in_cell * ncells_perpatch;
+                
+                // Consider whether this species is frozen
+                double time_frozen(0.);
+                PyTools::extract("time_frozen",time_frozen ,"Species",ispecies);
+                if(time_frozen > 0.) local_load *= params.coef_frozen;
+                // Add the load of the species to the current patch load
+                PatchLoad[ipatch] += local_load;
+            }
+            //Add grid contribution to the load.
+            PatchLoad[ipatch] += ncells_perpatch*params.coef_cell-1; //-1 to compensate the initialization to 1.
+            total_load += PatchLoad[ipatch];
         }
-        //Add grid contribution to the load.
-        PatchLoad[ipatch] += ncells_perpatch*params.coef_cell;
     }
     densityProfiles.resize(0); densityProfiles.clear();
     ppcProfiles.resize(0); ppcProfiles.clear();
@@ -270,8 +277,8 @@ void SmileiMPI::init_patch_count( Params& params)
     // Fourth, the arrangement of patches is balanced
     
     // Initialize loads
-    total_load = Npatches*ncells_perpatch*params.coef_cell ; // We assume the load of one cell to be equal to coef_cell and account for ghost cells.
-    Tload = total_load/Tcapabilities; //Target load for each mpi process.
+    MPI_Reduce( &total_load, &Tload, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+    Tload /= Tcapabilities; //Target load for each mpi process.
     Tcur = Tload * capabilities[0];  //Init.
     r = 0;  //Start by finding work for rank 0.
     Ncur = 0; // Number of patches assigned to current rank r.
@@ -327,7 +334,7 @@ void SmileiMPI::init_patch_count( Params& params)
         // The master cpu also writes the patch count to the file
         ofstream fout;
         fout.open ("patch_load.txt");
-        fout << "Total load = " << total_load << endl;
+        fout << "Total load = " << Tload << endl;
         for (rk=0; rk<smilei_sz; rk++)
             fout << "patch count = " << patch_count[rk]<<endl;
         fout.close();
@@ -637,6 +644,22 @@ void SmileiMPI::recv(std::vector<int> *vec, int from, int tag)
 
 } // End recv ( bmax )
 
+// Assuming vec.size() is known (number of species). Asynchronous.
+void SmileiMPI::isend(std::vector<double>* vec, int to, int tag)
+{
+    MPI_Request request; 
+    MPI_Isend( &((*vec)[0]), (*vec).size(), MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
+
+} // End isend ( bmax )
+
+
+void SmileiMPI::recv(std::vector<double> *vec, int from, int tag)
+{
+    MPI_Status status;
+    MPI_Recv( &((*vec)[0]), vec->size(), MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
+
+} // End recv ( bmax )
+
 
 void SmileiMPI::isend(ElectroMagn* EM, int to, int tag)
 {
@@ -674,6 +697,41 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag)
                 tag = tag + 4;
             }
         }
+        
+        if ( EM->extFields.size()>0 ) {
+
+            if (dynamic_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]) ) {
+                ElectroMagnBC1D_SM* embc = static_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]);
+                MPI_Request request;
+                MPI_Isend( &(embc->Bz_xvalmin), 1, MPI_DOUBLE, to, tag+0, MPI_COMM_WORLD, &request );
+                MPI_Isend( &(embc->Bz_xvalmax), 1, MPI_DOUBLE, to, tag+1, MPI_COMM_WORLD, &request );
+                MPI_Isend( &(embc->By_xvalmin), 1, MPI_DOUBLE, to, tag+2, MPI_COMM_WORLD, &request );
+                MPI_Isend( &(embc->By_xvalmax), 1, MPI_DOUBLE, to, tag+3, MPI_COMM_WORLD, &request );
+                tag = tag+4;
+            }
+            else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]) ) {
+                // BCs at the x-border
+                ElectroMagnBC2D_SM* embc = static_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]);
+                isend(&embc->Bx_xvalmin_Long, to, tag+0);
+                isend(&embc->Bx_xvalmax_Long, to, tag+1);
+                isend(&embc->By_xvalmin_Long, to, tag+2);
+                isend(&embc->By_xvalmax_Long, to, tag+3);
+                isend(&embc->Bz_xvalmin_Long, to, tag+4);
+                isend(&embc->Bz_xvalmax_Long, to, tag+5);
+                tag = tag+6;
+    
+                // BCs in the y-border
+                isend(&embc->Bx_yvalmin_Trans, to, tag+0);
+                isend(&embc->Bx_yvalmax_Trans, to, tag+1);
+                isend(&embc->By_yvalmin_Trans, to, tag+2);
+                isend(&embc->By_yvalmax_Trans, to, tag+3);
+                isend(&embc->Bz_yvalmin_Trans, to, tag+4);
+                isend(&embc->Bz_yvalmax_Trans, to, tag+5);
+                tag = tag+6;
+
+            }
+        }
+
     }
 } // End isend ( ElectroMagn )
 
@@ -713,7 +771,42 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
                 tag = tag + 4;
             }
         }
+        if ( EM->extFields.size()>0 ) {
+
+            if (dynamic_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]) ) {
+                ElectroMagnBC1D_SM* embc = static_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]);
+                MPI_Status status;
+                MPI_Recv( &(embc->Bz_xvalmin), 1, MPI_DOUBLE, from, tag+0, MPI_COMM_WORLD, &status );
+                MPI_Recv( &(embc->Bz_xvalmax), 1, MPI_DOUBLE, from, tag+1, MPI_COMM_WORLD, &status );
+                MPI_Recv( &(embc->By_xvalmin), 1, MPI_DOUBLE, from, tag+2, MPI_COMM_WORLD, &status );
+                MPI_Recv( &(embc->By_xvalmax), 1, MPI_DOUBLE, from, tag+3, MPI_COMM_WORLD, &status );
+                tag = tag+4;
+            }
+            else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]) ) {
+                // BCs at the x-border
+                ElectroMagnBC2D_SM* embc = static_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]);
+                recv(&embc->Bx_xvalmin_Long, from, tag+0);
+                recv(&embc->Bx_xvalmax_Long, from, tag+1);
+                recv(&embc->By_xvalmin_Long, from, tag+2);
+                recv(&embc->By_xvalmax_Long, from, tag+3);
+                recv(&embc->Bz_xvalmin_Long, from, tag+4);
+                recv(&embc->Bz_xvalmax_Long, from, tag+5);
+                tag = tag+6;
+    
+                // BCs in the y-border
+                recv(&embc->Bx_yvalmin_Trans, from, tag+0);
+                recv(&embc->Bx_yvalmax_Trans, from, tag+1);
+                recv(&embc->By_yvalmin_Trans, from, tag+2);
+                recv(&embc->By_yvalmax_Trans, from, tag+3);
+                recv(&embc->Bz_yvalmin_Trans, from, tag+4);
+                recv(&embc->Bz_yvalmax_Trans, from, tag+5);
+                tag = tag+6;
+
+            }
+        }
+
     }
+
 } // End recv ( ElectroMagn )
 
 

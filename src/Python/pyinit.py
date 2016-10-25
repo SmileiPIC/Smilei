@@ -128,6 +128,7 @@ class Main(SmileiSingleton):
     timestep_over_CFL = None
     
     # Poisson tuning
+    solve_poisson = True
     poisson_iter_max = 50000
     poisson_error_max = 1.e-14
     
@@ -184,7 +185,8 @@ class Main(SmileiSingleton):
 class LoadBalancing(SmileiSingleton):
     """Load balancing parameters"""
     
-    every = None
+    every = 150
+    initial_balance = True
     coef_cell = 1.0
     coef_frozen = 0.1
 
@@ -225,12 +227,12 @@ class Species(SmileiComponent):
     dynamics_type = "norm"
     time_frozen = 0.0
     radiating = False
-    bc_part_type_west = None
-    bc_part_type_east = None
-    bc_part_type_north = None
-    bc_part_type_south = None
-    bc_part_type_bottom = None
-    bc_part_type_up = None
+    bc_part_type_xmin = None
+    bc_part_type_xmax = None
+    bc_part_type_ymax = None
+    bc_part_type_ymin = None
+    bc_part_type_zmin = None
+    bc_part_type_zmax = None
     ionization_model = "none"
     ionization_electrons = None
     atomic_number = None
@@ -241,7 +243,7 @@ class Species(SmileiComponent):
 
 class Laser(SmileiComponent):
     """Laser parameters"""
-    boxSide = "west"
+    boxSide = "xmin"
     omega = 1.
     chirp_profile = 1.
     time_envelope = 1.

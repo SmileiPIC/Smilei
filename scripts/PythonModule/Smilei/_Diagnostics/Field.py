@@ -17,13 +17,15 @@ class Field(Diagnostic):
 			except:
 				self._error = "Diagnostic not loaded: No fields found"
 				return
-			values = f.values()[:-1]
+			values = f.values()
 			self._h5items.extend( values )
 			# Select only the fields that are common to all simulations
 			if len(self._fields)==0:
 				self._fields = values[0].keys()
 			else:
 				self._fields = [f for f in values[0].keys() if f in self._fields]
+			# Remove "tmp" datasets
+			self._h5items = [d for d in self._h5items if d.name[1:]!='tmp']
 		
 		# If no field selected, print available fields and leave
 		if field is None:
@@ -148,10 +150,6 @@ class Field(Diagnostic):
 				self._units    .append(axisunits)
 				self._log      .append(False)
 		
-		if len(self._centers) > 2:
-			self._error = "Diagnostic not loaded: Cannot plot in "+str(len(self._shape))+"d. You need to 'slice' some axes."
-			return
-		
 		# Build units
 		units = {}
 		for f in self._fieldname:
@@ -175,7 +173,7 @@ class Field(Diagnostic):
 	
 	# get all available timesteps
 	def getAvailableTimesteps(self):
-		try:    times = [float(a.name[1:]) for a in self._h5items[:-1]]
+		try:    times = [float(a.name[1:]) for a in self._h5items]
 		except: times = []
 		return self._np.double(times)
 	
@@ -192,12 +190,13 @@ class Field(Diagnostic):
 		C = {}
 		h5item = self._h5items[index]
 		for field in self._fieldname: # for each field in operation
-			B = self._np.zeros(self._finalShape)
+			B = self._np.squeeze(self._np.zeros(self._finalShape))
 			h5item[field].read_direct(B, source_sel=self._selection) # get array
 			C.update({ field:B })
 		# Calculate the operation
 		A = eval(self._operation)
 		# Apply the slicing
+		A = self._np.reshape(A,self._finalShape)
 		for iaxis in range(self._naxes):
 			if self._slices[iaxis]:
 				A = self._np.mean(A, axis=iaxis, keepdims=True) # mean over the slice

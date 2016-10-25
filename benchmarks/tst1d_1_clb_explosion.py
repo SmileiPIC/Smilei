@@ -36,8 +36,8 @@ Species(
 	mass = 1836.0,
 	charge = 1.0,
 	nb_density = trapezoidal(1., xvacuum=L, xplateau=L),
-	bc_part_type_west = "stop",
-	bc_part_type_east = "stop"
+	bc_part_type_xmin = "stop",
+	bc_part_type_xmax = "stop"
 )
 
 DiagFields(

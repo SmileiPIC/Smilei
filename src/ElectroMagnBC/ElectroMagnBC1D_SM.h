@@ -20,9 +20,10 @@ public:
     virtual void apply_zmax(ElectroMagn* EMfields, double time_dual, Patch* patch);
 
    virtual void save_fields_BC1D(Field*);
+
+   double Bz_xvalmin,Bz_xvalmax,By_xvalmin,By_xvalmax;
+   
  private:
-    
-    double Bz_xvalmin,Bz_xvalmax,By_xvalmin,By_xvalmax;
     
     //! Number of nodes on the primal grid
     unsigned int nx_p;

@@ -236,6 +236,12 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
             }
         }
         
+    } else if (initPosition_type == "centered") {
+        
+        for (unsigned int p=iPart; p<iPart+nPart; p++)
+            for (unsigned int i=0; i<nDim_particle ; i++)
+                (*particles).position(i,p)=indexes[i]+0.5*cell_length[i];
+        
     }
 }
 
@@ -921,10 +927,10 @@ bool Species::isProj(double time_dual, SimWindow* simWindow) {
     //return time_dual > species_param.time_frozen  || (simWindow && simWindow->isMoving(time_dual)) ;
 }
 
-void Species::disableEast() {
-    partBoundCond->bc_east   = NULL;
+void Species::disableXmax() {
+    partBoundCond->bc_xmax   = NULL;
 }
 
-void Species::setWestBoundaryCondition() {
-    partBoundCond->bc_west   = &supp_particle;
+void Species::setXminBoundaryCondition() {
+    partBoundCond->bc_xmin   = &supp_particle;
 }

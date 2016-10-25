@@ -210,6 +210,60 @@ private:
 };
 
 
+class Function_Trapezoidal3D : public Function
+{
+public:
+    Function_Trapezoidal3D ( PyObject *py_profile ) {
+        PyTools::getAttr(py_profile, "value"   , value    );
+        PyTools::getAttr(py_profile, "xvacuum" , xvacuum  );
+        PyTools::getAttr(py_profile, "xplateau", xplateau );
+        PyTools::getAttr(py_profile, "xslope1" , xslope1  );
+        PyTools::getAttr(py_profile, "xslope2" , xslope2  );
+        PyTools::getAttr(py_profile, "yvacuum" , yvacuum  );
+        PyTools::getAttr(py_profile, "yplateau", yplateau );
+        PyTools::getAttr(py_profile, "yslope1" , yslope1  );
+        PyTools::getAttr(py_profile, "yslope2" , yslope2  );
+        PyTools::getAttr(py_profile, "zvacuum" , zvacuum  );
+        PyTools::getAttr(py_profile, "zplateau", zplateau );
+        PyTools::getAttr(py_profile, "zslope1" , zslope1  );
+        PyTools::getAttr(py_profile, "zslope2" , zslope2  );
+        invxslope1 = 1./xslope1;
+        invxslope2 = 1./xslope2;
+        invyslope1 = 1./yslope1;
+        invyslope2 = 1./yslope2;
+        invzslope1 = 1./zslope1;
+        invzslope2 = 1./zslope2;
+    };
+    Function_Trapezoidal3D ( Function_Trapezoidal3D *f ) {
+        value    = f->value   ;
+        xvacuum  = f->xvacuum ;
+        xplateau = f->xplateau;
+        xslope1  = f->xslope1 ;
+        xslope2  = f->xslope2 ;
+        yvacuum  = f->yvacuum ;
+        yplateau = f->yplateau;
+        yslope1  = f->yslope1 ;
+        yslope2  = f->yslope2 ;
+        zvacuum  = f->zvacuum ;
+        zplateau = f->zplateau;
+        zslope1  = f->zslope1 ;
+        zslope2  = f->zslope2 ;
+        invxslope1 = 1./xslope1;
+        invxslope2 = 1./xslope2;
+        invyslope1 = 1./yslope1;
+        invyslope2 = 1./yslope2;
+        invzslope1 = 1./zslope1;
+        invzslope2 = 1./zslope2;
+    };
+    double valueAt(std::vector<double>);
+private:
+    double value, 
+        xvacuum, xplateau, xslope1, xslope2, invxslope1, invxslope2,
+        yvacuum, yplateau, yslope1, yslope2, invyslope1, invyslope2,
+        zvacuum, zplateau, zslope1, zslope2, invzslope1, invzslope2;
+};
+
+
 class Function_Gaussian1D : public Function
 {
 public:
@@ -276,6 +330,59 @@ private:
         xvacuum, xlength, invxsigma, xcenter,
         yvacuum, ylength, invysigma, ycenter;
     int xorder, yorder;
+};
+
+
+class Function_Gaussian3D : public Function
+{
+public:
+    Function_Gaussian3D ( PyObject *py_profile ) {
+        double xsigma, ysigma, zsigma;
+        PyTools::getAttr(py_profile, "value"   , value    );
+        PyTools::getAttr(py_profile, "xvacuum" , xvacuum  );
+        PyTools::getAttr(py_profile, "xlength" , xlength  );
+        PyTools::getAttr(py_profile, "xsigma"  , xsigma   );
+        PyTools::getAttr(py_profile, "xcenter" , xcenter  );
+        PyTools::getAttr(py_profile, "xorder"  , xorder   );
+        PyTools::getAttr(py_profile, "yvacuum" , yvacuum  );
+        PyTools::getAttr(py_profile, "ylength" , ylength  );
+        PyTools::getAttr(py_profile, "ysigma"  , ysigma   );
+        PyTools::getAttr(py_profile, "ycenter" , ycenter  );
+        PyTools::getAttr(py_profile, "yorder"  , yorder   );
+        PyTools::getAttr(py_profile, "zvacuum" , zvacuum  );
+        PyTools::getAttr(py_profile, "zlength" , zlength  );
+        PyTools::getAttr(py_profile, "zsigma"  , zsigma   );
+        PyTools::getAttr(py_profile, "zcenter" , zcenter  );
+        PyTools::getAttr(py_profile, "zorder"  , zorder   );
+        invxsigma = 1./xsigma;
+        invysigma = 1./ysigma;
+        invzsigma = 1./zsigma;
+    };
+    Function_Gaussian3D ( Function_Gaussian3D *f ) {
+        value     = f->value  ;
+        xvacuum   = f->xvacuum;
+        xlength   = f->xlength;
+        invxsigma = f->invxsigma ;
+        xcenter   = f->xcenter;
+        xorder    = f->xorder ;
+        yvacuum   = f->yvacuum;
+        ylength   = f->ylength;
+        invysigma = f->invysigma ;
+        ycenter   = f->ycenter;
+        yorder    = f->yorder ;
+        zvacuum   = f->zvacuum;
+        zlength   = f->zlength;
+        invzsigma = f->invzsigma ;
+        zcenter   = f->zcenter;
+        zorder    = f->zorder ;
+    };
+    double valueAt(std::vector<double>);
+private:
+    double value, 
+        xvacuum, xlength, invxsigma, xcenter,
+        yvacuum, ylength, invysigma, ycenter,
+        zvacuum, zlength, invzsigma, zcenter;
+    int xorder, yorder, zorder;
 };
 
 
@@ -390,6 +497,60 @@ private:
     double base, 
         xamplitude, xvacuum, invxlength, xphi, xfreq,
         yamplitude, yvacuum, invylength, yphi, yfreq;
+};
+
+class Function_Cosine3D : public Function
+{
+public:
+    Function_Cosine3D ( PyObject *py_profile ) {
+        double xlength, xnumber, ylength, ynumber, zlength, znumber;
+        PyTools::getAttr(py_profile, "base"      , base       );
+        PyTools::getAttr(py_profile, "xamplitude", xamplitude );
+        PyTools::getAttr(py_profile, "xvacuum"   , xvacuum    );
+        PyTools::getAttr(py_profile, "xlength"   , xlength    );
+        PyTools::getAttr(py_profile, "xphi"      , xphi       );
+        PyTools::getAttr(py_profile, "xnumber"   , xnumber    );
+        PyTools::getAttr(py_profile, "yamplitude", yamplitude );
+        PyTools::getAttr(py_profile, "yvacuum"   , yvacuum    );
+        PyTools::getAttr(py_profile, "ylength"   , ylength    );
+        PyTools::getAttr(py_profile, "yphi"      , yphi       );
+        PyTools::getAttr(py_profile, "ynumber"   , ynumber    );
+        PyTools::getAttr(py_profile, "zamplitude", zamplitude );
+        PyTools::getAttr(py_profile, "zvacuum"   , zvacuum    );
+        PyTools::getAttr(py_profile, "zlength"   , zlength    );
+        PyTools::getAttr(py_profile, "zphi"      , zphi       );
+        PyTools::getAttr(py_profile, "znumber"   , znumber    );
+        invxlength = 1./xlength;
+        xfreq = 2.*M_PI*xnumber*invxlength;
+        invylength = 1./ylength;
+        yfreq = 2.*M_PI*ynumber*invylength;
+        invzlength = 1./zlength;
+        zfreq = 2.*M_PI*znumber*invzlength;
+    };
+    Function_Cosine3D ( Function_Cosine3D *f ) {
+        base       = f->base      ;
+        xamplitude = f->xamplitude;
+        xvacuum    = f->xvacuum   ;
+        invxlength = f->invxlength;
+        xphi       = f->xphi      ;
+        xfreq      = f->xfreq     ;
+        yamplitude = f->yamplitude;
+        yvacuum    = f->yvacuum   ;
+        invylength = f->invylength;
+        yphi       = f->yphi      ;
+        yfreq      = f->yfreq     ;
+        zamplitude = f->zamplitude;
+        zvacuum    = f->zvacuum   ;
+        invzlength = f->invzlength;
+        zphi       = f->zphi      ;
+        zfreq      = f->zfreq     ;
+    };
+    double valueAt(std::vector<double>);
+private:
+    double base, 
+        xamplitude, xvacuum, invxlength, xphi, xfreq,
+        yamplitude, yvacuum, invylength, yphi, yfreq,
+        zamplitude, zvacuum, invzlength, zphi, zfreq;
 };
 
 

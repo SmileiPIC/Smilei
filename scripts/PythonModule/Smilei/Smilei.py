@@ -146,8 +146,6 @@ class ProbeFactory(object):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
 		
-		if len(simulation._results_path)>1: return
-		
 		# If not a specific probe, build a list of probe shortcuts
 		if probeNumber is None:
 			# Create a temporary, empty probe diagnostic
@@ -303,8 +301,6 @@ class TrackParticlesFactory(object):
 		self._simulation = simulation
 		self._additionalKwargs = dict()
 		
-		if len(simulation._results_path)>1: return
-		
 		# If not a specific species (root level), build a list of species shortcuts
 		if species is None:
 			# Create a temporary, empty tracked-particle diagnostic
@@ -378,7 +374,7 @@ class Smilei(object):
 		
 	"""
 	
-	def __init__(self, results_path=".", show=True):
+	def __init__(self, results_path=".", show=True, verbose=True):
 		self.valid = False
 		# Import packages
 		import h5py
@@ -397,6 +393,7 @@ class Smilei(object):
 		self._re = re
 		self._plt = matplotlib.pyplot
 		self._mtime = 0
+		self._verbose = verbose
 		
 		# Load the simulation (verify the path, get the namelist)
 		self.reload()
@@ -495,6 +492,7 @@ class Smilei(object):
 				elif args[1]!=prevArgs[0] or (args[2]!=prevArgs[1]).any() or (args[3]!=prevArgs[2]).any() or args[4:]!=prevArgs[3:]:
 					print("The simulation in path '"+path+"' is not compatible with the other ones")
 					return
+				if self._verbose: print("Loaded simulation '"+path+"'")
 			# Update the simulation parameters
 			self._ndim, self._cell_length, self._ncels, self._timestep, self._referenceAngularFrequency_SI = args[1:]
 			self.namelist = args[0]

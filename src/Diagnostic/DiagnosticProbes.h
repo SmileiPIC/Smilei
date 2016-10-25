@@ -32,6 +32,8 @@ public :
     
     void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;    
     
+    virtual bool needsRhoJs(int timestep) override;
+    
     //! Creates the probe's particles (or "points")
     void createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bool createFile);
     
@@ -70,6 +72,9 @@ private :
     //! number of points for this probe
     unsigned int nPart_total;
     
+    //! Actual number of points (without those outside the box)
+    unsigned int nPart_total_actual;
+    
     //! number of point for this probe, in the current MPI process
     unsigned int nPart_MPI;
     
@@ -93,6 +98,10 @@ private :
     
     //! Array to locate the current patch in the file
     std::vector<unsigned int> offset_in_file;
+    
+    //! True if this diagnostic requires the pre-calculation of the particle J & Rho
+    bool hasRhoJs;
+    
 };
 
 

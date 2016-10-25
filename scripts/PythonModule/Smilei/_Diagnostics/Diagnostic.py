@@ -188,7 +188,7 @@ class Diagnostic(object):
 			This takes the particle diagnostic #1 and plots the resulting array in figure 1 from 0 to 3e14.
 		"""
 		if not self._validate(): return
-		self._prepare()
+		if not self._prepare(): return
 		self.set(**kwargs)
 		self.info()
 		
@@ -280,9 +280,10 @@ class Diagnostic(object):
 	# Method to prepare some data before plotting
 	def _prepare(self):
 		self._prepare1()
-		self._prepare2()
+		if not self._prepare2(): return False
 		self._prepare3()
 		self._prepare4()
+		return True
 	
 	# Methods to prepare stuff
 	def _prepare1(self):
@@ -298,8 +299,8 @@ class Diagnostic(object):
 			elif self.dim == 1: self._animateOnAxes = self._animateOnAxes_1D
 			elif self.dim == 2: self._animateOnAxes = self._animateOnAxes_2D
 			else:
-				print("Cannot plot with more than 2 dimensions !")
-				return
+				print("Cannot plot in "+str(self.dim)+" dimensions !")
+				return False
 		# prepare t label
 		self._tlabel = self.units.tname
 		if self.options.xfactor: self._tlabel += "/"+str(self.options.xfactor)
@@ -329,6 +330,7 @@ class Diagnostic(object):
 		if self.units.vname: self._vlabel += " (" + self.units.vname + ")"
 		if self._title     : self._vlabel = self._title + self._vlabel
 		if self._data_log  : self._vlabel = "Log[ "+self._vlabel+" ]"
+		return True
 	def _prepare3(self):
 		# prepare temporary data if zero-d plot
 		if self.dim == 0 and self._tmpdata is None:

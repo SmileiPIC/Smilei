@@ -191,13 +191,13 @@ public:
     virtual void initE(Patch *patch) = 0;
     virtual void centeringE( std::vector<double> E_Add ) = 0;
     
-    virtual double getEx_West() = 0; // 2D !!!
-    virtual double getEx_East() = 0; // 2D !!!
+    virtual double getEx_Xmin() = 0; // 2D !!!
+    virtual double getEx_Xmax() = 0; // 2D !!!
     
-    virtual double getEx_WestNorth() = 0; // 1D !!!
-    virtual double getEy_WestNorth() = 0; // 1D !!!
-    virtual double getEx_EastSouth() = 0; // 1D !!!
-    virtual double getEy_EastSouth() = 0; // 1D !!!
+    virtual double getEx_XminYmax() = 0; // 1D !!!
+    virtual double getEy_XminYmax() = 0; // 1D !!!
+    virtual double getEx_XmaxYmin() = 0; // 1D !!!
+    virtual double getEy_XmaxYmin() = 0; // 1D !!!
     
     std::vector<unsigned int> index_min_p_;
     std::vector<unsigned int> index_max_p_;
@@ -224,8 +224,8 @@ public:
     
     //! pointing vector on borders 
     //! 1D: poynting[0][0]=left , poynting[1][0]=right
-    //! 2D: poynting[0][0]=west , poynting[1][0]=east
-    //!     poynting[1][0]=south, poynting[1][0]=north
+    //! 2D: poynting[0][0]=xmin , poynting[1][0]=xmax
+    //!     poynting[1][0]=ymin, poynting[1][0]=ymax
     std::vector<double> poynting[2];
     
     //same as above but instantaneous
