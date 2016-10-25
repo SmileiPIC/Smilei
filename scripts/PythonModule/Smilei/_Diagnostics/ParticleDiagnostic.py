@@ -223,10 +223,6 @@ class ParticleDiagnostic(Diagnostic):
 				self._units  .append(axis_units)
 				plot_diff.append(self._np.diff(edges)[::stride])
 		
-		if len(self._shape) > 2:
-			self._error = "Cannot plot in "+str(len(self._shape))+"d. You need to 'slice' some axes."
-			return
-		
 		# Build units
 		titles = {}
 		units = {}

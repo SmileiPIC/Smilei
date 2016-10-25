@@ -194,10 +194,6 @@ class Probe(Diagnostic):
 				self._units  .append(axisunits)
 				self._log    .append(False)
 		
-		if len(self._shape) > 2:
-			self._error += "Cannot plot in "+str(len(self._shape))+"d. You need to 'slice' some axes."
-			return
-		
 		# Special case in 1D: we convert the point locations to scalar distances
 		if len(self._centers) == 1:
 			self._centers[0] = self._np.sqrt(self._np.sum((self._centers[0]-self._centers[0][0])**2,axis=1))
