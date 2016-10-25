@@ -226,6 +226,7 @@ def polynomial(**kwargs):
         raise Exception("polynomial profile has been defined before `Main()`")
     x0 = 0.
     y0 = 0.
+    z0 = 0.
     coeffs = dict()
     for k, a in kwargs.items():
         if   k=="x0":
@@ -236,8 +237,15 @@ def polynomial(**kwargs):
             if type(a) is not list: a = [a]
             order = int(k[5:])
             coeffs[ order ] = a
-            if Main.geometry=="1d3v" and len(a)!=1:
-                raise Exception("1D polynomial profile must have one coefficient per order")
+            if Main.geometry=="1d3v":
+                if len(a)!=1:
+                    raise Exception("1D polynomial profile must have one coefficient at order "+str(order))
+            elif Main.geometry=="2d3v":
+                if len(a)!=order+1:
+                    raise Exception("2D polynomial profile must have "+str(order+1)+" coefficients at order "+str(order))
+            elif Main.geometry=="3d3v":
+                if len(a)!=(order+1)*(order+2)/2:
+                    raise Exception("3D polynomial profile must have "+str((order+1)*(order+2)/2)+" coefficients at order "+str(order))
     if Main.geometry=="1d3v":
         def f(x):
             r = 0.
@@ -260,9 +268,24 @@ def polynomial(**kwargs):
             for order, c in sorted(coeffs.items()):
                 while currentOrder<order:
                     currentOrder += 1
-                    last = xx[-1]*yy0
-                    xx = [ xxx * xx0 for xxx in xx ]
-                    xx.append(last)
+                    yy = xx[-1]*yy0
+                    xx = [ xxx * xx0 for xxx in xx ] . append(yy)
+                for i in range(order+1): r += c[i]*xx[i]
+            return r
+    elif Main.geometry=="3d3v":
+        def f(x,y,z):
+            r = 0.
+            xx0 = x-x0
+            yy0 = y-y0
+            zz0 = z-z0
+            xx = [1.]
+            currentOrder = 0
+            for order, c in sorted(coeffs.items()):
+                while currentOrder<order:
+                    currentOrder += 1
+                    zz = xx[-1]*zz0
+                    yy = [ xxx * yy0 for xxx in xx[-currentOrder-1:] ] . append(zz)
+                    xx = [ xxx * xx0 for xxx in xx ] . extend(yy)
                 for i in range(order+1): r += c[i]*xx[i]
             return r
     else:
@@ -270,6 +293,7 @@ def polynomial(**kwargs):
     f.profileName = "polynomial"
     f.x0 = x0
     f.y0 = y0
+    f.z0 = z0
     f.orders = []
     f.coeffs = []
     for order, c in sorted(coeffs.items()):

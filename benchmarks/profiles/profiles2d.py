@@ -38,7 +38,7 @@ for name, profile in profiles.items():
 		initMomentum_type = "maxwell-juettner",
 		n_part_per_cell= 100,
 		mass = 1.0,
-		charge = -1.0,
+		charge = 1.0,
 		nb_density = profile,
 		time_frozen = 10000.0,
 		bc_part_type_xmin = "none",

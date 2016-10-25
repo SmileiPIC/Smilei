@@ -120,6 +120,14 @@ double Function_Polygonal2D::valueAt(vector<double> x_cell) {
             return xvalues[i-1] + xslopes[i-1] * ( x - xpoints[i-1] );
     return 0.;
 }
+double Function_Polygonal3D::valueAt(vector<double> x_cell) {
+    double x = x_cell[0];
+    if( x < xpoints[0] ) return 0.;
+    for( int i=1; i<npoints; i++ )
+        if( x < xpoints[i] )
+            return xvalues[i-1] + xslopes[i-1] * ( x - xpoints[i-1] );
+    return 0.;
+}
 
 // Cosine profiles
 double Function_Cosine1D::valueAt(vector<double> x_cell) {
@@ -154,7 +162,7 @@ double Function_Cosine3D::valueAt(vector<double> x_cell) {
 double Function_Polynomial1D::valueAt(vector<double> x_cell) {
     double r = 0., xx0 = x_cell[0]-x0, xx = 1.;
     unsigned int currentOrder = 0;
-    for( unsigned int i=0; i<orders.size(); i++ ) {
+    for( unsigned int i=0; i<n_orders; i++ ) {
         while( currentOrder<orders[i] ) {
             currentOrder += 1;
             xx *= xx0;
@@ -166,16 +174,37 @@ double Function_Polynomial1D::valueAt(vector<double> x_cell) {
 double Function_Polynomial2D::valueAt(vector<double> x_cell) {
     double r = 0., xx0 = x_cell[0]-x0, yy0 = x_cell[1]-y0;
     vector<double> xx;
-    unsigned int currentOrder = 0;
-    xx.resize(orders.back()+1);
+    unsigned int currentOrder = 0, j;
+    xx.resize(n_coeffs);
     xx[0] = 1.;
-    for( unsigned int i=0; i<orders.size(); i++ ) {
+    for( unsigned int i=0; i<n_orders; i++ ) {
         while( currentOrder<orders[i] ) {
             currentOrder += 1;
-            xx[currentOrder] = xx[currentOrder-1] * yy0;
-            for( unsigned int j=0; j<currentOrder; j++ ) xx[j] *= xx0;
+            j = currentOrder;
+            xx[j] = xx[j-1] * yy0;
+            do { j--; xx[j] *= xx0; } while( j>0 );
         }
-        for( unsigned int j=0; j<=orders[i]; j++ ) r += coeffs[i][j] * xx[j];
+        for( j=0; j<=orders[i]; j++ ) r += coeffs[i][j] * xx[j];
+    }
+    return r;
+}
+double Function_Polynomial3D::valueAt(vector<double> x_cell) {
+    double r = 0., xx0 = x_cell[0]-x0, yy0 = x_cell[1]-y0, zz0 = x_cell[2]-z0;
+    vector<double> xx;
+    unsigned int currentOrder = 0, current_n_coeffs = 1, j, k;
+    xx.resize(n_coeffs);
+    xx[0] = 1.;
+    for( unsigned int i=0; i<n_orders; i++ ) {
+        while( currentOrder<orders[i] ) {
+            currentOrder += 1;
+            k = current_n_coeffs-1;
+            j = current_n_coeffs+currentOrder;
+            xx[j] = xx[k] * zz0;
+            do { j--; xx[j] = xx[k] * yy0; k--; } while( j>current_n_coeffs );
+            do { j--; xx[j] = xx[j] * xx0;      } while( j>0 );
+            current_n_coeffs += currentOrder+1;
+        }
+        for( unsigned int j=0; j<current_n_coeffs; j++ ) r += coeffs[i][j] * xx[j];
     }
     return r;
 }
