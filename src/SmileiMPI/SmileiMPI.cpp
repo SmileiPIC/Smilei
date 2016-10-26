@@ -697,36 +697,39 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag)
                 tag = tag + 4;
             }
         }
+        
+        if ( EM->extFields.size()>0 ) {
 
-        if (dynamic_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]) ) {
-            ElectroMagnBC1D_SM* embc = static_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]);
-            MPI_Request request;
-            MPI_Isend( &(embc->Bz_xvalmin), 1, MPI_DOUBLE, to, tag+0, MPI_COMM_WORLD, &request );
-            MPI_Isend( &(embc->Bz_xvalmax), 1, MPI_DOUBLE, to, tag+1, MPI_COMM_WORLD, &request );
-            MPI_Isend( &(embc->By_xvalmin), 1, MPI_DOUBLE, to, tag+2, MPI_COMM_WORLD, &request );
-            MPI_Isend( &(embc->By_xvalmax), 1, MPI_DOUBLE, to, tag+3, MPI_COMM_WORLD, &request );
-            tag = tag+4;
-        }
-        else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]) ) {
-            // BCs at the x-border
-            ElectroMagnBC2D_SM* embc = static_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]);
-            isend(&embc->Bx_xvalmin_Long, to, tag+0);
-            isend(&embc->Bx_xvalmax_Long, to, tag+1);
-            isend(&embc->By_xvalmin_Long, to, tag+2);
-            isend(&embc->By_xvalmax_Long, to, tag+3);
-            isend(&embc->Bz_xvalmin_Long, to, tag+4);
-            isend(&embc->Bz_xvalmax_Long, to, tag+5);
-            tag = tag+6;
+            if (dynamic_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]) ) {
+                ElectroMagnBC1D_SM* embc = static_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]);
+                MPI_Request request;
+                MPI_Isend( &(embc->Bz_xvalmin), 1, MPI_DOUBLE, to, tag+0, MPI_COMM_WORLD, &request );
+                MPI_Isend( &(embc->Bz_xvalmax), 1, MPI_DOUBLE, to, tag+1, MPI_COMM_WORLD, &request );
+                MPI_Isend( &(embc->By_xvalmin), 1, MPI_DOUBLE, to, tag+2, MPI_COMM_WORLD, &request );
+                MPI_Isend( &(embc->By_xvalmax), 1, MPI_DOUBLE, to, tag+3, MPI_COMM_WORLD, &request );
+                tag = tag+4;
+            }
+            else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]) ) {
+                // BCs at the x-border
+                ElectroMagnBC2D_SM* embc = static_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]);
+                isend(&embc->Bx_xvalmin_Long, to, tag+0);
+                isend(&embc->Bx_xvalmax_Long, to, tag+1);
+                isend(&embc->By_xvalmin_Long, to, tag+2);
+                isend(&embc->By_xvalmax_Long, to, tag+3);
+                isend(&embc->Bz_xvalmin_Long, to, tag+4);
+                isend(&embc->Bz_xvalmax_Long, to, tag+5);
+                tag = tag+6;
     
-            // BCs in the y-border
-            isend(&embc->Bx_yvalmin_Trans, to, tag+0);
-            isend(&embc->Bx_yvalmax_Trans, to, tag+1);
-            isend(&embc->By_yvalmin_Trans, to, tag+2);
-            isend(&embc->By_yvalmax_Trans, to, tag+3);
-            isend(&embc->Bz_yvalmin_Trans, to, tag+4);
-            isend(&embc->Bz_yvalmax_Trans, to, tag+5);
-            tag = tag+6;
+                // BCs in the y-border
+                isend(&embc->Bx_yvalmin_Trans, to, tag+0);
+                isend(&embc->Bx_yvalmax_Trans, to, tag+1);
+                isend(&embc->By_yvalmin_Trans, to, tag+2);
+                isend(&embc->By_yvalmax_Trans, to, tag+3);
+                isend(&embc->Bz_yvalmin_Trans, to, tag+4);
+                isend(&embc->Bz_yvalmax_Trans, to, tag+5);
+                tag = tag+6;
 
+            }
         }
 
     }
@@ -768,36 +771,38 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
                 tag = tag + 4;
             }
         }
+        if ( EM->extFields.size()>0 ) {
 
-        if (dynamic_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]) ) {
-            ElectroMagnBC1D_SM* embc = static_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]);
-            MPI_Status status;
-            MPI_Recv( &(embc->Bz_xvalmin), 1, MPI_DOUBLE, from, tag+0, MPI_COMM_WORLD, &status );
-            MPI_Recv( &(embc->Bz_xvalmax), 1, MPI_DOUBLE, from, tag+1, MPI_COMM_WORLD, &status );
-            MPI_Recv( &(embc->By_xvalmin), 1, MPI_DOUBLE, from, tag+2, MPI_COMM_WORLD, &status );
-            MPI_Recv( &(embc->By_xvalmax), 1, MPI_DOUBLE, from, tag+3, MPI_COMM_WORLD, &status );
-            tag = tag+4;
-        }
-        else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]) ) {
-            // BCs at the x-border
-            ElectroMagnBC2D_SM* embc = static_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]);
-            recv(&embc->Bx_xvalmin_Long, from, tag+0);
-            recv(&embc->Bx_xvalmax_Long, from, tag+1);
-            recv(&embc->By_xvalmin_Long, from, tag+2);
-            recv(&embc->By_xvalmax_Long, from, tag+3);
-            recv(&embc->Bz_xvalmin_Long, from, tag+4);
-            recv(&embc->Bz_xvalmax_Long, from, tag+5);
-            tag = tag+6;
+            if (dynamic_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]) ) {
+                ElectroMagnBC1D_SM* embc = static_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]);
+                MPI_Status status;
+                MPI_Recv( &(embc->Bz_xvalmin), 1, MPI_DOUBLE, from, tag+0, MPI_COMM_WORLD, &status );
+                MPI_Recv( &(embc->Bz_xvalmax), 1, MPI_DOUBLE, from, tag+1, MPI_COMM_WORLD, &status );
+                MPI_Recv( &(embc->By_xvalmin), 1, MPI_DOUBLE, from, tag+2, MPI_COMM_WORLD, &status );
+                MPI_Recv( &(embc->By_xvalmax), 1, MPI_DOUBLE, from, tag+3, MPI_COMM_WORLD, &status );
+                tag = tag+4;
+            }
+            else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]) ) {
+                // BCs at the x-border
+                ElectroMagnBC2D_SM* embc = static_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]);
+                recv(&embc->Bx_xvalmin_Long, from, tag+0);
+                recv(&embc->Bx_xvalmax_Long, from, tag+1);
+                recv(&embc->By_xvalmin_Long, from, tag+2);
+                recv(&embc->By_xvalmax_Long, from, tag+3);
+                recv(&embc->Bz_xvalmin_Long, from, tag+4);
+                recv(&embc->Bz_xvalmax_Long, from, tag+5);
+                tag = tag+6;
     
-            // BCs in the y-border
-            recv(&embc->Bx_yvalmin_Trans, from, tag+0);
-            recv(&embc->Bx_yvalmax_Trans, from, tag+1);
-            recv(&embc->By_yvalmin_Trans, from, tag+2);
-            recv(&embc->By_yvalmax_Trans, from, tag+3);
-            recv(&embc->Bz_yvalmin_Trans, from, tag+4);
-            recv(&embc->Bz_yvalmax_Trans, from, tag+5);
-            tag = tag+6;
+                // BCs in the y-border
+                recv(&embc->Bx_yvalmin_Trans, from, tag+0);
+                recv(&embc->Bx_yvalmax_Trans, from, tag+1);
+                recv(&embc->By_yvalmin_Trans, from, tag+2);
+                recv(&embc->By_yvalmax_Trans, from, tag+3);
+                recv(&embc->Bz_yvalmin_Trans, from, tag+4);
+                recv(&embc->Bz_yvalmax_Trans, from, tag+5);
+                tag = tag+6;
 
+            }
         }
 
     }

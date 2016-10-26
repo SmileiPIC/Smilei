@@ -17,6 +17,8 @@
 #include "Patch.h"
 #include "SimWindow.h"
 #include "ElectroMagn.h"
+#include "ElectroMagnBC1D_SM.h"
+#include "ElectroMagnBC2D_SM.h"
 #include "Species.h"
 #include "PatchesFactory.h"
 
@@ -203,7 +205,45 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
         dumpFieldsPerProc(patch_gid, EMfields->By_avg);
         dumpFieldsPerProc(patch_gid, EMfields->Bz_avg);
     }
-    
+
+    if ( EMfields->extFields.size()>0 ) {
+        for (unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
+            if(! EMfields->emBoundCond[bcId]) continue;
+            if (dynamic_cast<ElectroMagnBC1D_SM*>(EMfields->emBoundCond[bcId]) ) {
+                ElectroMagnBC1D_SM* embc = static_cast<ElectroMagnBC1D_SM*>(EMfields->emBoundCond[bcId]);
+                ostringstream name("");
+                name << setfill('0') << setw(2) << bcId;
+                string groupName="EM_boundary-species-"+name.str();
+                hid_t gid = H5::group(patch_gid, groupName);
+                H5::attr(gid, "Bz_xvalmin",embc->Bz_xvalmin );
+                H5::attr(gid, "Bz_xvalmin",embc->Bz_xvalmax );
+                H5::attr(gid, "Bz_xvalmin",embc->By_xvalmin );
+                H5::attr(gid, "Bz_xvalmin",embc->By_xvalmax );
+                H5Gclose(gid);
+            }
+            else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EMfields->emBoundCond[bcId]) ) {
+                ElectroMagnBC2D_SM* embc = static_cast<ElectroMagnBC2D_SM*>(EMfields->emBoundCond[bcId]);
+                ostringstream name("");
+                name << setfill('0') << setw(2) << bcId;
+                string groupName="EM_boundary-species-"+name.str();
+                hid_t gid = H5::group(patch_gid, groupName);
+                H5::vect(gid, "Bx_xvalmin_Long", embc->Bx_xvalmin_Long );
+                H5::vect(gid, "Bx_xvalmax_Long", embc->Bx_xvalmax_Long );
+                H5::vect(gid, "By_xvalmin_Long", embc->By_xvalmin_Long );
+                H5::vect(gid, "By_xvalmax_Long", embc->By_xvalmax_Long );
+                H5::vect(gid, "Bz_xvalmin_Long", embc->Bz_xvalmin_Long );
+                H5::vect(gid, "Bz_xvalmax_Long", embc->Bz_xvalmax_Long );
+                H5::vect(gid, "Bx_yvalmin_Trans", embc->Bx_yvalmin_Trans );
+                H5::vect(gid, "Bx_yvalmax_Trans", embc->Bx_yvalmax_Trans );
+                H5::vect(gid, "By_yvalmin_Trans", embc->By_yvalmin_Trans );
+                H5::vect(gid, "By_yvalmax_Trans", embc->By_yvalmax_Trans );
+                H5::vect(gid, "Bz_yvalmin_Trans", embc->Bz_yvalmin_Trans );
+                H5::vect(gid, "Bz_yvalmax_Trans", embc->Bz_yvalmax_Trans );
+                H5Gclose(gid);
+            }
+        }
+    }
+
     H5Fflush( patch_gid, H5F_SCOPE_GLOBAL );
     H5::attr(patch_gid, "species", vecSpecies.size());    
     
@@ -383,6 +423,45 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
         restartFieldsPerProc(patch_gid, EMfields->Bx_avg);
         restartFieldsPerProc(patch_gid, EMfields->By_avg);
         restartFieldsPerProc(patch_gid, EMfields->Bz_avg);
+    }
+
+    if ( EMfields->extFields.size()>0 ) {
+        for (unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
+            if(! EMfields->emBoundCond[bcId]) continue;
+            if (dynamic_cast<ElectroMagnBC1D_SM*>(EMfields->emBoundCond[bcId]) ) {
+                ElectroMagnBC1D_SM* embc = static_cast<ElectroMagnBC1D_SM*>(EMfields->emBoundCond[bcId]);
+                ostringstream name("");
+                name << setfill('0') << setw(2) << bcId;
+                string groupName="EM_boundary-species-"+name.str();
+                hid_t gid = H5Gopen(patch_gid, groupName.c_str(),H5P_DEFAULT);
+                H5::getAttr(gid, "Bz_xvalmin", embc->Bz_xvalmin );
+                H5::getAttr(gid, "Bz_xvalmin", embc->Bz_xvalmax );
+                H5::getAttr(gid, "Bz_xvalmin", embc->By_xvalmin );
+                H5::getAttr(gid, "Bz_xvalmin", embc->By_xvalmax );
+                H5Gclose(gid);
+       
+            }
+            else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EMfields->emBoundCond[bcId]) ) {
+                ElectroMagnBC2D_SM* embc = static_cast<ElectroMagnBC2D_SM*>(EMfields->emBoundCond[bcId]);
+                ostringstream name("");
+                name << setfill('0') << setw(2) << bcId;
+                string groupName="EM_boundary-species-"+name.str();
+                hid_t gid = H5Gopen(patch_gid, groupName.c_str(),H5P_DEFAULT);
+                H5::getVect(gid, "Bx_xvalmin_Long", embc->Bx_xvalmin_Long );
+                H5::getVect(gid, "Bx_xvalmax_Long", embc->Bx_xvalmax_Long );
+                H5::getVect(gid, "By_xvalmin_Long", embc->By_xvalmin_Long );
+                H5::getVect(gid, "By_xvalmax_Long", embc->By_xvalmax_Long );
+                H5::getVect(gid, "Bz_xvalmin_Long", embc->Bz_xvalmin_Long );
+                H5::getVect(gid, "Bz_xvalmax_Long", embc->Bz_xvalmax_Long );
+                H5::getVect(gid, "Bx_yvalmin_Trans", embc->Bx_yvalmin_Trans );
+                H5::getVect(gid, "Bx_yvalmax_Trans", embc->Bx_yvalmax_Trans );
+                H5::getVect(gid, "By_yvalmin_Trans", embc->By_yvalmin_Trans );
+                H5::getVect(gid, "By_yvalmax_Trans", embc->By_yvalmax_Trans );
+                H5::getVect(gid, "Bz_yvalmin_Trans", embc->Bz_yvalmin_Trans );
+                H5::getVect(gid, "Bz_yvalmax_Trans", embc->Bz_yvalmax_Trans );
+                H5Gclose(gid);
+           }
+        }
     }
     
     aid = H5Aopen(patch_gid, "species", H5T_NATIVE_UINT);
