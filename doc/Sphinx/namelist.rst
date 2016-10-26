@@ -690,6 +690,29 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
      Time envelope of the field (not intensity).
 
 
+.. rubric:: 5. Defining a 3D gaussian wave
+
+..
+
+  For three-dimensional simulations, you may use the simplified laser creator::
+    
+    LaserGaussian3D(
+        boxSide         = "xmin",
+        a0              = 1.,
+        omega           = 1.,
+        focus           = [50., 40., 40.],
+        waist           = 3.,
+        incidence_angle = [0., 0.1], 
+        polarizationPhi = 0.,
+        ellipticity     = 0.,
+        time_envelope   = tconstant()
+    )
+  
+  This is almost the same as ``LaserGaussian2D``, with the ``focus`` parameter having
+  now 3 elements (focus position in 3D), and the ``incidence_angle`` being a list of
+  two angles, corresponding to rotations around `y` and `z`, respectively.
+
+
 
 ----
 
