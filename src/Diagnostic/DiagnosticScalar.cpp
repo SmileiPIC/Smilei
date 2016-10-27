@@ -186,7 +186,7 @@ bool DiagnosticScalar::prepare( int timestep )
             if( out_key[iscalar].find("Min")!=string::npos && out_key[iscalar].find("Cell")==string::npos) {
                 out_value[iscalar] = numeric_limits<double>::max();
             } else if( out_key[iscalar].find("Max")!=string::npos && out_key[iscalar].find("Cell")==string::npos) {
-                out_value[iscalar] = numeric_limits<double>::min();
+                out_value[iscalar] = numeric_limits<double>::lowest();
             } else {
                 out_value[iscalar] = 0.;
             }
@@ -389,8 +389,6 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
                 
         Field * field = fields[ifield];
-        minval=maxval=(*field)(0);
-        minindex=maxindex=0;
         
         vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
         for (unsigned int i=0 ; i<field->isDual_.size() ; i++ ) {
@@ -398,6 +396,11 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             iFieldEnd [i] = iFieldStart[i] + EMfields->bufsize[i][field->isDual(i)];
             iFieldGlobalSize [i] = field->dims_[i];
         }
+        
+        unsigned int ii= iFieldStart[2] + iFieldStart[1]*iFieldGlobalSize[2] +iFieldStart[0]*iFieldGlobalSize[1]*iFieldGlobalSize[2];
+        minval=maxval=(*field)(ii);
+        minindex=maxindex=0;
+        
         for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
             for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
                 for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {

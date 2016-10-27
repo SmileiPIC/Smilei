@@ -1,37 +1,28 @@
-# ---------------------------------------------
-# SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
-# ---------------------------------------------
-
 import math
 
-L0 = 2.*math.pi
+L0 = 2.*math.pi # Wavelength in PIC units
 
 Main(
-    geometry = "1d3v",
-    
-    interpolation_order = 2,
-    
-    timestep = 0.005 * L0,
-    sim_time  = 0.5 * L0,
-    
-    time_fields_frozen = 100000000000.,
-    
-    
-    cell_length = [0.01 * L0],
-    sim_length  = [1. * L0],
-    
-    number_of_patches = [ 4 ],
-    
-    bc_em_type_x  = ["periodic"],
-    
-    referenceAngularFrequency_SI = L0 * 3e8 /1.e-6,
-    
-    random_seed = 0,
-    
-    print_every = 10
+	geometry = "1d3v",
+	
+	interpolation_order = 2,
+	
+	timestep = 0.005 * L0,
+	sim_time  = 0.5 * L0,
+	
+	cell_length = [0.01 * L0],
+	sim_length  = [1. * L0],
+	
+	number_of_patches = [ 4 ],
+	
+	bc_em_type_x  = ["periodic"],
+	
+	referenceAngularFrequency_SI = L0 * 3e8 /1.e-6,
+	
+	print_every = 10
 )
 
-
+# Ion species
 Species(
 	species_type = "ion1",
 	initPosition_type = "random",
@@ -46,6 +37,7 @@ Species(
 	bc_part_type_xmax = "none"
 )
 
+# Electron species
 Species(
 	species_type = "electron1",
 	initPosition_type = "random",
@@ -62,11 +54,17 @@ Species(
 )
 
 
-DiagFields(
-    every = 5,
+
+
+DiagScalar(
+	every = 1,
+	vars = ['Utot','Ubal','Ukin']
 )
 
-DiagScalar(every = 1)
+DiagFields(
+	every = 5,
+	fields = ['Ex','Ey','Ez','Rho_electron1','Rho_ion1']
+)
 
 
 DiagParticles(
