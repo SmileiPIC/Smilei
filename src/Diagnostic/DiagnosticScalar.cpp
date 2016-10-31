@@ -351,7 +351,9 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             ener_tot += vecSpecies[ispec]->particles->weight(iPart)
             *          (vecSpecies[ispec]->particles->lor_fac(iPart)-1.0);
         }
-        ener_tot *= vecSpecies[ispec]->mass * cell_volume;
+        density  *= cell_volume;
+        charge   *= cell_volume;
+        ener_tot *= cell_volume * vecSpecies[ispec]->mass;
         
         // particle energy lost due to boundary conditions
         double ener_lost_bcs=0.0;
