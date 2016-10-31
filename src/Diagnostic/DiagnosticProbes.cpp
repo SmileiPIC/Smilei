@@ -511,7 +511,6 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     }
     #pragma omp barrier
     if (status != 0) return;
-    smpi->barrier();
     
     #pragma omp master
     {
@@ -533,10 +532,10 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         // Loop probe ("fake") particles of current patch
         unsigned int iPart_MPI = offset_in_MPI[ipatch];
         unsigned int npart = vecPatches(ipatch)->probes[probe_n]->particles.size();
-
+        
         LocalFields Eloc_fields, Bloc_fields, Jloc_fields;
         double Rloc_fields;
-
+        
         for (unsigned int ipart=0; ipart<npart; ipart++) {             
             (*(vecPatches(ipatch)->Interp)) (
                 vecPatches(ipatch)->EMfields,
@@ -592,7 +591,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         H5Pclose(plist_id);
         // Define transfer
         hid_t transfer = H5Pcreate(H5P_DATASET_XFER);
-        H5Pset_dxpl_mpio(transfer, H5FD_MPIO_COLLECTIVE);
+        H5Pset_dxpl_mpio(transfer, H5FD_MPIO_INDEPENDENT);
         // Write
         H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &(probesArray->data_2D[0][0]) );
         H5Dclose(dset_id);
