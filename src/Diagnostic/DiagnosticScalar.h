@@ -119,7 +119,7 @@ private :
     int index_Utot, index_Uexp, index_Ubal, index_Ubal_norm;
     int index_Uelm, index_Ukin, index_Uelm_bnd, index_Ukin_bnd;
     int index_Ukin_out_mvw, index_Ukin_inj_mvw, index_Uelm_out_mvw, index_Uelm_inj_mvw;
-    std::vector<int> index_sNtot, index_sZavg, index_sUkin, index_fieldUelm;
+    std::vector<int> index_sDens, index_sNtot, index_sZavg, index_sUkin, index_fieldUelm;
     std::vector<int> index_fieldMin, index_fieldMax;
     std::vector<int> index_poy, index_poyInst;
 

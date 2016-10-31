@@ -1139,8 +1139,9 @@ The full list of scalars that are saved by this diagnostic:
 +----------------+---------------------------------------------------------------------------+
 | **Species information**                                                                    |
 +----------------+---------------------------------------------------------------------------+
-| | Zavg_abc     | | Average charge of species "abc"                                         |
-| | Ukin_abc     | |  ... their kinetic energy                                               |
+| | Dens_abc     | | Average density of species "abc"                                        |
+| | Zavg_abc     | |  ... its average charge                                                 |
+| | Ukin_abc     | |  ... its total kinetic energy                                           |
 | | Ntot_abc     | |  ... and number of particles                                            |
 +----------------+---------------------------------------------------------------------------+
 | **Fields information**                                                                     |

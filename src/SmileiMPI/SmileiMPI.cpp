@@ -910,18 +910,23 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
     // Complete the computation of the scalars after all reductions
     if (isMaster()) {
         
-        double Ukin = scalars->getScalar("Ukin");
-        double Uelm = scalars->getScalar("Uelm");
+        // Calculate average Z
+        for(unsigned int ispec=0; ispec<scalars->index_sDens.size(); ispec++)
+            scalars->out_value[scalars->index_sZavg[ispec]] /= scalars->out_value[scalars->index_sDens[ispec]];
+        
+        // Global energies
+        double Ukin = scalars->out_value[scalars->index_Ukin];
+        double Uelm = scalars->out_value[scalars->index_Uelm];
         
         // added & lost energies due to the moving window
-        double Ukin_out_mvw = scalars->getScalar("Ukin_out_mvw");
-        double Ukin_inj_mvw = scalars->getScalar("Ukin_inj_mvw");
-        double Uelm_out_mvw = scalars->getScalar("Uelm_out_mvw");
-        double Uelm_inj_mvw = scalars->getScalar("Uelm_inj_mvw");
+        double Ukin_out_mvw = scalars->out_value[scalars->index_Ukin_out_mvw];
+        double Ukin_inj_mvw = scalars->out_value[scalars->index_Ukin_inj_mvw];
+        double Uelm_out_mvw = scalars->out_value[scalars->index_Uelm_out_mvw];
+        double Uelm_inj_mvw = scalars->out_value[scalars->index_Uelm_inj_mvw];
         
         // added & lost energies at the boundaries
-        double Ukin_bnd = scalars->getScalar("Ukin_bnd");
-        double Uelm_bnd = scalars->getScalar("Uelm_bnd");
+        double Ukin_bnd = scalars->out_value[scalars->index_Ukin_bnd];
+        double Uelm_bnd = scalars->out_value[scalars->index_Uelm_bnd];
         
         // total energy in the simulation
         double Utot = Ukin + Uelm;
@@ -946,10 +951,10 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
         if (scalars->EnergyUsedForNorm>0.)
             Ubal_norm = Ubal / scalars->EnergyUsedForNorm;
         
-        scalars->setScalar("Ubal_norm",Ubal_norm);
-        scalars->setScalar("Ubal",Ubal);
-        scalars->setScalar("Uexp",Uexp);
-        scalars->setScalar("Utot",Utot);
+        scalars->out_value[scalars->index_Ubal_norm] = Ubal_norm;
+        scalars->out_value[scalars->index_Ubal     ] = Ubal     ;
+        scalars->out_value[scalars->index_Uexp     ] = Uexp     ;
+        scalars->out_value[scalars->index_Utot     ] = Utot     ;
         
     }
 } // END computeGlobalDiags(DiagnosticScalar& scalars ...)

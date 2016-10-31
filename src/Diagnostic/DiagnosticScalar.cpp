@@ -150,12 +150,14 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     // Scalars related to species
     unsigned int nspec = vecPatches(0)->vecSpecies.size();
     string species_type;
+    index_sDens.resize(nspec);
     index_sNtot.resize(nspec);
     index_sZavg.resize(nspec);
     index_sUkin.resize(nspec);
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         if (vecPatches(0)->vecSpecies[ispec]->particles->isTest) continue;
         species_type = vecPatches(0)->vecSpecies[ispec]->species_type;
+        index_sDens[ispec] = setKey( "Dens_"+species_type , index );
         index_sNtot[ispec] = setKey( "Ntot_"+species_type , index );
         index_sZavg[ispec] = setKey( "Zavg_"+species_type , index );
         index_sUkin[ispec] = setKey( "Ukin_"+species_type , index );
@@ -336,19 +338,20 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
         if (vecSpecies[ispec]->particles->isTest) continue;    // No scalar diagnostic for test particles
         
-        double charge_avg=0.0;  // average charge of current species ispec
-        double ener_tot=0.0;    // total kinetic energy of current species ispec
+        double density=0.0;  // sum of weights of current species ispec
+        double charge=0.0;   // sum of charges of current species ispec
+        double ener_tot=0.0; // total kinetic energy of current species ispec
         
         unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles(); // number of particles
-        if (nPart>0) {
-            for (unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
-                
-                charge_avg += (double)vecSpecies[ispec]->particles->charge(iPart);
-                ener_tot   += cell_volume * vecSpecies[ispec]->particles->weight(iPart)
-                *             (vecSpecies[ispec]->particles->lor_fac(iPart)-1.0);
-            }
-            ener_tot*=vecSpecies[ispec]->mass;
-        } // if
+        for (unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
+            
+            density  += vecSpecies[ispec]->particles->weight(iPart);
+            charge   += vecSpecies[ispec]->particles->weight(iPart)
+            *          (double)vecSpecies[ispec]->particles->charge(iPart);
+            ener_tot += vecSpecies[ispec]->particles->weight(iPart)
+            *          (vecSpecies[ispec]->particles->lor_fac(iPart)-1.0);
+        }
+        ener_tot *= vecSpecies[ispec]->mass * cell_volume;
         
         // particle energy lost due to boundary conditions
         double ener_lost_bcs=0.0;
@@ -362,14 +365,14 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         double ener_added_mvw=0.0;
         ener_added_mvw = vecSpecies[ispec]->getNewParticlesNRJ();
         
-        if (nPart!=0) charge_avg /= nPart;
-        
         #pragma omp atomic
-        out_value[index_sNtot[ispec]] += nPart     ;
+        out_value[index_sNtot[ispec]] += nPart;
         #pragma omp atomic
-        out_value[index_sZavg[ispec]] += charge_avg;
+        out_value[index_sDens[ispec]] += density;
         #pragma omp atomic
-        out_value[index_sUkin[ispec]] += ener_tot  ;
+        out_value[index_sZavg[ispec]] += charge;
+        #pragma omp atomic
+        out_value[index_sUkin[ispec]] += ener_tot;
         
         // incremement the total kinetic energy
         Ukin += ener_tot;
