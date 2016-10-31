@@ -892,41 +892,27 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
     if ( !(scalars->printNow(timestep))
       && !(scalars->timeSelection->theTimeIsNow(timestep)) ) return;
     
-    vector<string>::iterator iterKey = scalars->out_key.begin();
-    for(vector<double>::iterator iter = scalars->out_value.begin(); iter !=scalars->out_value.end(); iter++) {
-        if ( ( (*iterKey).find("Min") == std::string::npos ) && ( (*iterKey).find("Max") == std::string::npos ) ) {
-            MPI_Reduce(isMaster()?MPI_IN_PLACE:&((*iter)), &((*iter)), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        }
-        else if ( (*iterKey).find("MinCell") != std::string::npos ) {
-            vector<double>::iterator iterVal = iter-1;
-            val_index minVal;
-            minVal.val   = (*iterVal);
-            minVal.index = (*iter);
-            MPI_Reduce(isMaster()?MPI_IN_PLACE:&minVal, &minVal, 1, MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
-            if (isMaster()) {
-                (*iterVal) = minVal.val;
-                (*iter)    = minVal.index;
-            }
-        }
-        else if ( (*iterKey).find("MaxCell") != std::string::npos ) {
-            vector<double>::iterator iterVal = iter-1;
-            val_index maxVal;
-            maxVal.val   = (*iterVal);
-            maxVal.index = (*iter);
-            MPI_Reduce(isMaster()?MPI_IN_PLACE:&maxVal, &maxVal, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
-            if (isMaster()) {
-                (*iterVal) = maxVal.val;
-                (*iter)    = maxVal.index;
-            }
-        }
-        iterKey++;
-    }
-
+    // Reduce all scalars that should be summed
+    int n_sum = scalars->out_value.size();
+    double * d_sum = &scalars->out_value[0];
+    MPI_Reduce(isMaster()?MPI_IN_PLACE:d_sum, d_sum, n_sum, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    
+    // Reduce all scalars that are a "min" and its location
+    int n_min = scalars->out_value_MINLOC.size();
+    val_index * d_min = &scalars->out_value_MINLOC[0];
+    MPI_Reduce(isMaster()?MPI_IN_PLACE:d_min, d_min, n_min, MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
+    
+    // Reduce all scalars that are a "max" and its location
+    int n_max = scalars->out_value_MAXLOC.size();
+    val_index * d_max = &scalars->out_value_MAXLOC[0];
+    MPI_Reduce(isMaster()?MPI_IN_PLACE:d_max, d_max, n_max, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
+    
+    // Complete the computation of the scalars after all reductions
     if (isMaster()) {
-
+        
         double Ukin = scalars->getScalar("Ukin");
         double Uelm = scalars->getScalar("Uelm");
-
+        
         // added & lost energies due to the moving window
         double Ukin_out_mvw = scalars->getScalar("Ukin_out_mvw");
         double Ukin_inj_mvw = scalars->getScalar("Ukin_inj_mvw");
@@ -936,7 +922,7 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
         // added & lost energies at the boundaries
         double Ukin_bnd = scalars->getScalar("Ukin_bnd");
         double Uelm_bnd = scalars->getScalar("Uelm_bnd");
-
+        
         // total energy in the simulation
         double Utot = Ukin + Uelm;
         
@@ -959,12 +945,12 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
         double Ubal_norm(0.);
         if (scalars->EnergyUsedForNorm>0.)
             Ubal_norm = Ubal / scalars->EnergyUsedForNorm;
-
+        
         scalars->setScalar("Ubal_norm",Ubal_norm);
         scalars->setScalar("Ubal",Ubal);
         scalars->setScalar("Uexp",Uexp);
         scalars->setScalar("Utot",Utot);
-
+        
     }
 } // END computeGlobalDiags(DiagnosticScalar& scalars ...)
 

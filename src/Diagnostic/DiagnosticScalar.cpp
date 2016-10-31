@@ -79,15 +79,51 @@ void DiagnosticScalar::closeFile()
 } // END closeFile
 
 
+unsigned int DiagnosticScalar::calculateWidth( string key )
+{
+    return 2 + max(((unsigned int)key.length()),precision+8);
+     // The +8 accounts for the dot and exponent in decimal representation)
+}
+
 int DiagnosticScalar::setKey( string key, int &currentIndex )
 {
     int actualIndex = -1;
-    if( allowedKey(key) ) {
-        out_key.push_back(key);
-        out_value.push_back(0.);
-        actualIndex = currentIndex;
-        currentIndex++;
-    }
+    bool allow = allowedKey(key);
+    unsigned int width = calculateWidth( key );
+    out_key  .push_back(key  );
+    out_value.push_back(0.   );
+    out_width.push_back(width);
+    allowed  .push_back(allow);
+    actualIndex = currentIndex;
+    currentIndex++;
+    return actualIndex;
+}
+int DiagnosticScalar::setKey_MINLOC( string key, int &currentIndex )
+{
+    int actualIndex = -1;
+    bool allow = allowedKey(key) || allowedKey(key+"Cell");
+    unsigned int width = calculateWidth( key );
+    val_index default_; default_.index = -1; default_.val = 0.;
+    out_key_MINLOC  .push_back(key     );
+    out_value_MINLOC.push_back(default_);
+    out_width_MINLOC.push_back(width   );
+    allowed_MINLOC  .push_back(allow   );
+    actualIndex = currentIndex;
+    currentIndex++;
+    return actualIndex;
+}
+int DiagnosticScalar::setKey_MAXLOC( string key, int &currentIndex )
+{
+    int actualIndex = -1;
+    bool allow = allowedKey(key) || allowedKey(key+"Cell");
+    unsigned int width = calculateWidth( key );
+    val_index default_; default_.index = -1; default_.val = 0.;
+    out_key_MAXLOC  .push_back(key     );
+    out_value_MAXLOC.push_back(default_);
+    out_width_MAXLOC.push_back(width   );
+    allowed_MAXLOC  .push_back(allow   );
+    actualIndex = currentIndex;
+    currentIndex++;
     return actualIndex;
 }
 
@@ -95,7 +131,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
 {
 
     // Define the indices of each scalar in the output array
-    int index = 0;
+    int index = 0, index_MINLOC = 0, index_MAXLOC = 0;
     
     // General scalars
     index_Utot         = setKey( "Utot"         , index );
@@ -114,9 +150,9 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     // Scalars related to species
     unsigned int nspec = vecPatches(0)->vecSpecies.size();
     string species_type;
-    index_sNtot.resize(3*nspec);
-    index_sZavg.resize(3*nspec);
-    index_sUkin.resize(3*nspec);
+    index_sNtot.resize(nspec);
+    index_sZavg.resize(nspec);
+    index_sUkin.resize(nspec);
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         if (vecPatches(0)->vecSpecies[ispec]->particles->isTest) continue;
         species_type = vecPatches(0)->vecSpecies[ispec]->species_type;
@@ -145,15 +181,11 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     fields.push_back(EMfields->Jz_ ->name);
     fields.push_back(EMfields->rho_->name);
     nfield = fields.size();
-    index_fieldMin    .resize(nfield);
-    index_fieldMinCell.resize(nfield);
-    index_fieldMax    .resize(nfield);
-    index_fieldMaxCell.resize(nfield);
+    index_fieldMin.resize(nfield);
+    index_fieldMax.resize(nfield);
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
-        index_fieldMin    [ifield] = setKey( fields[ifield]+"Min"     , index );
-        index_fieldMinCell[ifield] = setKey( fields[ifield]+"MinCell" , index );
-        index_fieldMax    [ifield] = setKey( fields[ifield]+"Max"     , index );
-        index_fieldMaxCell[ifield] = setKey( fields[ifield]+"MaxCell" , index );
+        index_fieldMin[ifield] = setKey_MINLOC( fields[ifield]+"Min", index_MINLOC );
+        index_fieldMax[ifield] = setKey_MAXLOC( fields[ifield]+"Max", index_MAXLOC );
     }
     
     // Scalars related to the Poynting flux
@@ -182,14 +214,15 @@ bool DiagnosticScalar::prepare( int timestep )
     // At the right timestep, initialize the scalars
     if ( printNow(timestep) || timeSelection->theTimeIsNow(timestep) ) {
         for (unsigned int iscalar=0 ; iscalar<out_value.size() ; iscalar++) {
-            // Different initial values depending on the type of scalar
-            if( out_key[iscalar].find("Min")!=string::npos && out_key[iscalar].find("Cell")==string::npos) {
-                out_value[iscalar] = numeric_limits<double>::max();
-            } else if( out_key[iscalar].find("Max")!=string::npos && out_key[iscalar].find("Cell")==string::npos) {
-                out_value[iscalar] = numeric_limits<double>::lowest();
-            } else {
-                out_value[iscalar] = 0.;
-            }
+            out_value[iscalar] = 0.;
+        }
+        for (unsigned int iscalar=0 ; iscalar<out_value_MINLOC.size() ; iscalar++) {
+            out_value_MINLOC[iscalar].index = -1;
+            out_value_MINLOC[iscalar].val   = numeric_limits<double>::max();
+        }
+        for (unsigned int iscalar=0 ; iscalar<out_value_MAXLOC.size() ; iscalar++) {
+            out_value_MAXLOC[iscalar].index = -1;
+            out_value_MAXLOC[iscalar].val   = numeric_limits<double>::lowest();
         }
     }
     
@@ -212,7 +245,10 @@ void DiagnosticScalar::run( Patch* patch, int timestep )
 
 void DiagnosticScalar::write(int itime)
 {
-    unsigned int k, s=out_key.size();
+    unsigned int k;
+    unsigned int s        = out_key       .size();
+    unsigned int s_MINLOC = out_key_MINLOC.size();
+    unsigned int s_MAXLOC = out_key_MAXLOC.size();
     
     if ( ! timeSelection->theTimeIsNow(itime) ) return;
     
@@ -223,29 +259,64 @@ void DiagnosticScalar::write(int itime)
         fout << "# " << 1 << " time" << endl;
         unsigned int i=2;
         for(k=0; k<s; k++) {
-            if (allowedKey(out_key[k])) {
+            if (allowed[k]) {
                 fout << "# " << i << " " << out_key[k] << endl;
+                i++;
+            }
+        }
+        for(k=0; k<s_MINLOC; k++) {
+            if (allowed_MINLOC[k]) {
+                fout << "# " << i << " " << out_key_MINLOC[k] << endl;
+                fout << "# " << i << " " << out_key_MINLOC[k]+"Cell" << endl;
+                i++;
+            }
+        }
+        for(k=0; k<s_MAXLOC; k++) {
+            if (allowed_MAXLOC[k]) {
+                fout << "# " << i << " " << out_key_MAXLOC[k] << endl;
+                fout << "# " << i << " " << out_key_MAXLOC[k]+"Cell" << endl;
                 i++;
             }
         }
         // Second header: list of scalars, but all in one line
         fout << "#\n#" << setw(precision+9) << "time";
-        for(k=0; k<s; k++) {
-            if (allowedKey(out_key[k])) {
+        for(k=0; k<s; k++)
+            if (allowed[k])
                 fout << setw(out_width[k]) << out_key[k];
+        for(k=0; k<s_MINLOC; k++) {
+            if (allowed_MINLOC[k]) {
+                fout << setw(out_width_MINLOC[k]  ) << out_key_MINLOC[k];
+                fout << setw(out_width_MINLOC[k]+4) << out_key_MINLOC[k]+"Cell";
+            }
+        }
+        for(k=0; k<s_MAXLOC; k++) {
+            if (allowed_MAXLOC[k]) {
+                fout << setw(out_width_MAXLOC[k]  ) << out_key_MAXLOC[k];
+                fout << setw(out_width_MAXLOC[k]+4) << out_key_MAXLOC[k]+"Cell";
             }
         }
         fout << endl;
     }
     // Each requested timestep, the following writes the values of the scalars
     fout << setw(precision+10) << itime/res_time;
-    for(k=0; k<s; k++) {
-        if (allowedKey(out_key[k])) {
+    for(k=0; k<s; k++)
+        if (allowed[k])
             fout << setw(out_width[k]) << out_value[k];
+    for(k=0; k<s_MINLOC; k++) {
+        if (allowed_MINLOC[k]) {
+            fout << setw(out_width_MINLOC[k]  ) << out_value_MINLOC[k].val;
+            fout << setw(out_width_MINLOC[k]+4) << out_value_MINLOC[k].index;
+        }
+    }
+    for(k=0; k<s_MAXLOC; k++) {
+        if (allowed_MAXLOC[k]) {
+            fout << setw(out_width_MAXLOC[k]  ) << out_value_MAXLOC[k].val;
+            fout << setw(out_width_MAXLOC[k]+4) << out_value_MAXLOC[k].index;
         }
     }
     fout << endl;
 } // END write
+
 
 
 void DiagnosticScalar::compute( Patch* patch, int timestep )
@@ -382,8 +453,8 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     fields.push_back(EMfields->Jz_);
     fields.push_back(EMfields->rho_);
     
-    double minval, maxval, fieldval;
-    unsigned int minindex, maxindex;
+    val_index minloc, maxloc;
+    double fieldval;
     
     nfield = fields.size();
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
@@ -398,21 +469,21 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         }
         
         unsigned int ii= iFieldStart[2] + iFieldStart[1]*iFieldGlobalSize[2] +iFieldStart[0]*iFieldGlobalSize[1]*iFieldGlobalSize[2];
-        minval=maxval=(*field)(ii);
-        minindex=maxindex=0;
+        minloc.val = maxloc.val = (*field)(ii);
+        minloc.index = maxloc.index = 0;
         
         for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
             for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
                 for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
                     unsigned int ii = k+ (j + i*iFieldGlobalSize[1]) *iFieldGlobalSize[2];
                     fieldval = (*field)(ii);
-                    if (minval>fieldval) {
-                        minval=fieldval;
-                        minindex=ii; // rank encoded
+                    if (minloc.val > fieldval) {
+                        minloc.val   = fieldval;
+                        minloc.index = ii;
                     }
-                    if (maxval<fieldval) {
-                        maxval=fieldval;
-                        maxindex=ii; // rank encoded
+                    if (maxloc.val < fieldval) {
+                        maxloc.val   = fieldval;
+                        maxloc.index = ii;
                     }
                 }
             }
@@ -420,14 +491,10 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         
         #pragma omp critical
         {
-            if( minval < out_value[index_fieldMin[ifield]] ) {
-                out_value[index_fieldMin    [ifield]] = minval  ;
-                out_value[index_fieldMinCell[ifield]] = minindex;
-            }
-            if( maxval > out_value[index_fieldMax[ifield]] ) {
-                out_value[index_fieldMax    [ifield]] = maxval  ;
-                out_value[index_fieldMaxCell[ifield]] = maxindex;
-            }
+            if( minloc.val < out_value_MINLOC[index_fieldMin[ifield]].val )
+                out_value_MINLOC[index_fieldMin[ifield]] = minloc;
+            if( maxloc.val > out_value_MAXLOC[index_fieldMax[ifield]].val )
+                out_value_MAXLOC[index_fieldMax[ifield]] = maxloc;
         }
     }
     
@@ -477,17 +544,6 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     #pragma omp atomic
     out_value[index_Uelm] += Uelm;
     
-    // Final thing to do: calculate the maximum size of the scalars names
-    if (out_width.empty()) { // Only first time
-        unsigned int k, l, s=out_key.size();
-        out_width.resize(s);
-        for(k=0; k<s; k++) {
-            l = out_key[k].length();
-            out_width[k] = 2 + max(l,precision+8); // The +8 accounts for the dot and exponent in decimal representation
-        }
-    }
-    //MESSAGE ( "compute : Number of diags = " << out_key.size() ) ;
-
 } // END compute
 
 
@@ -528,4 +584,3 @@ bool DiagnosticScalar::allowedKey(string key) {
 bool DiagnosticScalar::needsRhoJs(int timestep) {
     return printNow(timestep) || timeSelection->theTimeIsNow(timestep);
 }
-

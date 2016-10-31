@@ -68,8 +68,15 @@ private :
     //! set a particular scalar
     void setScalar(std::string name, double value);
     
+    //! Calculate the length of a string when output to the file
+    unsigned int calculateWidth( std::string key);
+    
     //! sets a scalar name in the list of scalars (for initialization)
     int setKey( std::string key, int &currentIndex );
+    //! sets a scalar name in the list of scalars (for initialization), in the case of min scalar
+    int setKey_MINLOC( std::string key, int &currentIndex );
+    //! sets a scalar name in the list of scalars (for initialization), in the case of max scalar
+    int setKey_MAXLOC( std::string key, int &currentIndex );
     
     //! check if key is allowed
     bool allowedKey(std::string);
@@ -80,11 +87,22 @@ private :
     //! list of keys for scalars to be written
     std::vector<std::string> vars;
     
-    //! these are lists to keep variable names and values
-    std::vector<std::string> out_key;
-    std::vector<double>      out_value;
-    //! width of each field
+    //! these are lists to keep variable names, values, and allowance
+    std::vector<std::string>  out_key;
+    std::vector<double>       out_value;
     std::vector<unsigned int> out_width;
+    std::vector<bool>         allowed;
+    //! these are lists to keep variable names, values, and allowance, for min scalars
+    std::vector<std::string>  out_key_MINLOC;
+    std::vector<val_index>    out_value_MINLOC;
+    std::vector<unsigned int> out_width_MINLOC;
+    std::vector<bool>         allowed_MINLOC;
+    //! these are lists to keep variable names, values, and allowance, for max scalars
+    std::vector<std::string>  out_key_MAXLOC;
+    std::vector<val_index>    out_value_MAXLOC;
+    std::vector<unsigned int> out_width_MAXLOC;
+    std::vector<bool>         allowed_MAXLOC;
+    //! width of each field
     
     //! copied from params
     double cell_volume;
@@ -102,7 +120,7 @@ private :
     int index_Uelm, index_Ukin, index_Uelm_bnd, index_Ukin_bnd;
     int index_Ukin_out_mvw, index_Ukin_inj_mvw, index_Uelm_out_mvw, index_Uelm_inj_mvw;
     std::vector<int> index_sNtot, index_sZavg, index_sUkin, index_fieldUelm;
-    std::vector<int> index_fieldMin, index_fieldMinCell, index_fieldMax, index_fieldMaxCell;
+    std::vector<int> index_fieldMin, index_fieldMax;
     std::vector<int> index_poy, index_poyInst;
 
 };
