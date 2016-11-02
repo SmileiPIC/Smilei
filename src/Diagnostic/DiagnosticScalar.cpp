@@ -351,9 +351,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             ener_tot += vecSpecies[ispec]->particles->weight(iPart)
             *          (vecSpecies[ispec]->particles->lor_fac(iPart)-1.0);
         }
-        density  *= cell_volume;
-        charge   *= cell_volume;
-        ener_tot *= cell_volume * vecSpecies[ispec]->mass;
+        ener_tot *= vecSpecies[ispec]->mass;
         
         // particle energy lost due to boundary conditions
         double ener_lost_bcs=0.0;
@@ -370,19 +368,19 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         #pragma omp atomic
         out_value[index_sNtot[ispec]] += nPart;
         #pragma omp atomic
-        out_value[index_sDens[ispec]] += density;
+        out_value[index_sDens[ispec]] += cell_volume * density;
         #pragma omp atomic
-        out_value[index_sZavg[ispec]] += charge;
+        out_value[index_sZavg[ispec]] += cell_volume * charge;
         #pragma omp atomic
-        out_value[index_sUkin[ispec]] += ener_tot;
+        out_value[index_sUkin[ispec]] += cell_volume * ener_tot;
         
         // incremement the total kinetic energy
-        Ukin += ener_tot;
+        Ukin += cell_volume * ener_tot;
         
         // increment all energy loss & energy input
-        Ukin_bnd        += cell_volume*ener_lost_bcs;
-        Ukin_out_mvw    += cell_volume*ener_lost_mvw;
-        Ukin_inj_mvw    += cell_volume*ener_added_mvw;
+        Ukin_bnd        += cell_volume * ener_lost_bcs;
+        Ukin_out_mvw    += cell_volume * ener_lost_mvw;
+        Ukin_inj_mvw    += cell_volume * ener_added_mvw;
         
         vecSpecies[ispec]->reinitDiags();
     } // for ispec
@@ -564,17 +562,6 @@ double DiagnosticScalar::getScalar(std::string key)
     return 0.0;
 
 } // END getScalar
-
-
-void DiagnosticScalar::setScalar(string my_var, double value){
-    for (unsigned int i=0; i< out_key.size(); i++) {
-        if (out_key[i]==my_var) {
-          out_value[i] = value;
-          return;
-        }
-    }
-    DEBUG("key not found " << my_var);
-}
 
 bool DiagnosticScalar::allowedKey(string key) {
     int s=vars.size();

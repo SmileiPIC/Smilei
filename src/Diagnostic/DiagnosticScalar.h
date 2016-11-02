@@ -65,9 +65,6 @@ public :
     
 private :
     
-    //! set a particular scalar
-    void setScalar(std::string name, double value);
-    
     //! Calculate the length of a string when output to the file
     unsigned int calculateWidth( std::string key);
     
