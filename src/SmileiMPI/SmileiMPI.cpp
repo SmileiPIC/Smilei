@@ -888,45 +888,45 @@ void SmileiMPI::computeGlobalDiags(Diagnostic* diag, int timestep)
 // ---------------------------------------------------------------------------------------------------------------------
 void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
 {
-    
     if ( !(scalars->printNow(timestep))
       && !(scalars->timeSelection->theTimeIsNow(timestep)) ) return;
     
     // Reduce all scalars that should be summed
-    int n_sum = scalars->out_value.size();
-    double * d_sum = &scalars->out_value[0];
+    int n_sum = scalars->values_SUM.size();
+    double * d_sum = &scalars->values_SUM[0];
     MPI_Reduce(isMaster()?MPI_IN_PLACE:d_sum, d_sum, n_sum, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     
     // Reduce all scalars that are a "min" and its location
-    int n_min = scalars->out_value_MINLOC.size();
-    val_index * d_min = &scalars->out_value_MINLOC[0];
+    int n_min = scalars->values_MINLOC.size();
+    val_index * d_min = &scalars->values_MINLOC[0];
     MPI_Reduce(isMaster()?MPI_IN_PLACE:d_min, d_min, n_min, MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
     
     // Reduce all scalars that are a "max" and its location
-    int n_max = scalars->out_value_MAXLOC.size();
-    val_index * d_max = &scalars->out_value_MAXLOC[0];
+    int n_max = scalars->values_MAXLOC.size();
+    val_index * d_max = &scalars->values_MAXLOC[0];
     MPI_Reduce(isMaster()?MPI_IN_PLACE:d_max, d_max, n_max, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
     
     // Complete the computation of the scalars after all reductions
     if (isMaster()) {
         
         // Calculate average Z
-        for(unsigned int ispec=0; ispec<scalars->index_sDens.size(); ispec++)
-            scalars->out_value[scalars->index_sZavg[ispec]] /= scalars->out_value[scalars->index_sDens[ispec]];
+        for(unsigned int ispec=0; ispec<scalars->sDens.size(); ispec++)
+            if( scalars->sDens[ispec] )
+                *(scalars->sZavg[ispec]->value) /= *(scalars->sDens[ispec]->value);
         
         // Global energies
-        double Ukin = scalars->out_value[scalars->index_Ukin];
-        double Uelm = scalars->out_value[scalars->index_Uelm];
+        double Ukin = *(scalars->Ukin->value);
+        double Uelm = *(scalars->Uelm->value);
         
         // added & lost energies due to the moving window
-        double Ukin_out_mvw = scalars->out_value[scalars->index_Ukin_out_mvw];
-        double Ukin_inj_mvw = scalars->out_value[scalars->index_Ukin_inj_mvw];
-        double Uelm_out_mvw = scalars->out_value[scalars->index_Uelm_out_mvw];
-        double Uelm_inj_mvw = scalars->out_value[scalars->index_Uelm_inj_mvw];
+        double Ukin_out_mvw = *(scalars->Ukin_out_mvw->value);
+        double Ukin_inj_mvw = *(scalars->Ukin_inj_mvw->value);
+        double Uelm_out_mvw = *(scalars->Uelm_out_mvw->value);
+        double Uelm_inj_mvw = *(scalars->Uelm_inj_mvw->value);
         
         // added & lost energies at the boundaries
-        double Ukin_bnd = scalars->out_value[scalars->index_Ukin_bnd];
-        double Uelm_bnd = scalars->out_value[scalars->index_Uelm_bnd];
+        double Ukin_bnd = *(scalars->Ukin_bnd->value);
+        double Uelm_bnd = *(scalars->Uelm_bnd->value);
         
         // total energy in the simulation
         double Utot = Ukin + Uelm;
@@ -951,10 +951,10 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
         if (scalars->EnergyUsedForNorm>0.)
             Ubal_norm = Ubal / scalars->EnergyUsedForNorm;
         
-        scalars->out_value[scalars->index_Ubal_norm] = Ubal_norm;
-        scalars->out_value[scalars->index_Ubal     ] = Ubal     ;
-        scalars->out_value[scalars->index_Uexp     ] = Uexp     ;
-        scalars->out_value[scalars->index_Utot     ] = Utot     ;
+        *(scalars->Ubal_norm->value) = Ubal_norm;
+        *(scalars->Ubal     ->value) = Ubal     ;
+        *(scalars->Uexp     ->value) = Uexp     ;
+        *(scalars->Utot     ->value) = Utot     ;
         
     }
 } // END computeGlobalDiags(DiagnosticScalar& scalars ...)

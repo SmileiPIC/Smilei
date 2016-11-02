@@ -12,8 +12,6 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patc
 {
     // patch  == NULL else error
     
-    out_width.resize(0);
-    
     if (PyTools::nComponents("DiagScalar") > 1) {
         ERROR("Only one DiagScalar can be specified");
     }
@@ -85,87 +83,80 @@ unsigned int DiagnosticScalar::calculateWidth( string key )
      // The +8 accounts for the dot and exponent in decimal representation)
 }
 
-int DiagnosticScalar::setKey( string key, int &currentIndex )
+Scalar* DiagnosticScalar::newScalar_SUM( string name )
 {
-    int actualIndex = -1;
-    bool allow = allowedKey(key);
-    unsigned int width = calculateWidth( key );
-    out_key  .push_back(key  );
-    out_value.push_back(0.   );
-    out_width.push_back(width);
-    allowed  .push_back(allow);
-    actualIndex = currentIndex;
-    currentIndex++;
-    return actualIndex;
+    bool allow = allowedKey(name);
+    unsigned int width = calculateWidth( name );
+    values_SUM.push_back( 0. );
+    Scalar * scalar = new Scalar(name, "", width, allow, &values_SUM.back(), NULL, 0.);
+    allScalars.push_back( scalar );
+    return scalar;
 }
-int DiagnosticScalar::setKey_MINLOC( string key, int &currentIndex )
+Scalar* DiagnosticScalar::newScalar_MINLOC( string name )
 {
-    int actualIndex = -1;
-    bool allow = allowedKey(key) || allowedKey(key+"Cell");
-    unsigned int width = calculateWidth( key );
+    bool allow = allowedKey(name);
+    unsigned int width = calculateWidth( name );
     val_index default_; default_.index = -1; default_.val = 0.;
-    out_key_MINLOC  .push_back(key     );
-    out_value_MINLOC.push_back(default_);
-    out_width_MINLOC.push_back(width   );
-    allowed_MINLOC  .push_back(allow   );
-    actualIndex = currentIndex;
-    currentIndex++;
-    return actualIndex;
+    values_MINLOC.push_back( default_ );
+    Scalar * scalar = new Scalar(name, name+"Cell", width, allow, &(values_MINLOC.back().val), &(values_MINLOC.back().index), numeric_limits<double>::max());
+    allScalars.push_back( scalar );
+    return scalar;
 }
-int DiagnosticScalar::setKey_MAXLOC( string key, int &currentIndex )
+Scalar* DiagnosticScalar::newScalar_MAXLOC( string name )
 {
-    int actualIndex = -1;
-    bool allow = allowedKey(key) || allowedKey(key+"Cell");
-    unsigned int width = calculateWidth( key );
+    bool allow = allowedKey(name);
+    unsigned int width = calculateWidth( name );
     val_index default_; default_.index = -1; default_.val = 0.;
-    out_key_MAXLOC  .push_back(key     );
-    out_value_MAXLOC.push_back(default_);
-    out_width_MAXLOC.push_back(width   );
-    allowed_MAXLOC  .push_back(allow   );
-    actualIndex = currentIndex;
-    currentIndex++;
-    return actualIndex;
+    values_MAXLOC.push_back( default_ );
+    Scalar * scalar = new Scalar(name, name+"Cell", width, allow, &(values_MAXLOC.back().val), &(values_MAXLOC.back().index), numeric_limits<double>::lowest());
+    allScalars.push_back( scalar );
+    return scalar;
 }
+
 
 void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches)
 {
-
-    // Define the indices of each scalar in the output array
-    int index = 0, index_MINLOC = 0, index_MAXLOC = 0;
+    
+    // Prepare vectors
+    ElectroMagn* EMfields = vecPatches(0)->EMfields;
+    unsigned int nspec = vecPatches(0)->vecSpecies.size();
+    unsigned int npoy  = EMfields->poynting[0].size() * EMfields->poynting[1].size();
+    values_SUM   .reserve( 12 + nspec*4 + 6 + 2*npoy);
+    values_MINLOC.reserve( 10 );
+    values_MAXLOC.reserve( 10 );
     
     // General scalars
-    index_Utot         = setKey( "Utot"         , index );
-    index_Uexp         = setKey( "Uexp"         , index );
-    index_Ubal         = setKey( "Ubal"         , index );
-    index_Ubal_norm    = setKey( "Ubal_norm"    , index );
-    index_Uelm         = setKey( "Uelm"         , index );
-    index_Ukin         = setKey( "Ukin"         , index );
-    index_Uelm_bnd     = setKey( "Uelm_bnd"     , index );
-    index_Ukin_bnd     = setKey( "Ukin_bnd"     , index );
-    index_Ukin_out_mvw = setKey( "Ukin_out_mvw" , index );
-    index_Ukin_inj_mvw = setKey( "Ukin_inj_mvw" , index );
-    index_Uelm_out_mvw = setKey( "Uelm_out_mvw" , index );
-    index_Uelm_inj_mvw = setKey( "Uelm_inj_mvw" , index );
+    Utot         = newScalar_SUM( "Utot"         );
+    Uexp         = newScalar_SUM( "Uexp"         );
+    Ubal         = newScalar_SUM( "Ubal"         );
+    Ubal_norm    = newScalar_SUM( "Ubal_norm"    );
+    Uelm         = newScalar_SUM( "Uelm"         );
+    Ukin         = newScalar_SUM( "Ukin"         );
+    Uelm_bnd     = newScalar_SUM( "Uelm_bnd"     );
+    Ukin_bnd     = newScalar_SUM( "Ukin_bnd"     );
+    Ukin_out_mvw = newScalar_SUM( "Ukin_out_mvw" );
+    Ukin_inj_mvw = newScalar_SUM( "Ukin_inj_mvw" );
+    Uelm_out_mvw = newScalar_SUM( "Uelm_out_mvw" );
+    Uelm_inj_mvw = newScalar_SUM( "Uelm_inj_mvw" );
     
     // Scalars related to species
-    unsigned int nspec = vecPatches(0)->vecSpecies.size();
     string species_type;
-    index_sDens.resize(nspec);
-    index_sNtot.resize(nspec);
-    index_sZavg.resize(nspec);
-    index_sUkin.resize(nspec);
+    sDens.resize(nspec, NULL);
+    sNtot.resize(nspec, NULL);
+    sZavg.resize(nspec, NULL);
+    sUkin.resize(nspec, NULL);
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
-        if (vecPatches(0)->vecSpecies[ispec]->particles->isTest) continue;
-        species_type = vecPatches(0)->vecSpecies[ispec]->species_type;
-        index_sDens[ispec] = setKey( "Dens_"+species_type , index );
-        index_sNtot[ispec] = setKey( "Ntot_"+species_type , index );
-        index_sZavg[ispec] = setKey( "Zavg_"+species_type , index );
-        index_sUkin[ispec] = setKey( "Ukin_"+species_type , index );
+        if (! vecPatches(0)->vecSpecies[ispec]->particles->isTest) {
+            species_type = vecPatches(0)->vecSpecies[ispec]->species_type;
+            sDens[ispec] = newScalar_SUM( "Dens_"+species_type );
+            sNtot[ispec] = newScalar_SUM( "Ntot_"+species_type );
+            sZavg[ispec] = newScalar_SUM( "Zavg_"+species_type );
+            sUkin[ispec] = newScalar_SUM( "Ukin_"+species_type );
+        }
     }
     
     // Scalars related to field's electromagnetic energy
     vector<string> fields;
-    ElectroMagn* EMfields = vecPatches(0)->EMfields;
     fields.push_back(EMfields->Ex_ ->name);
     fields.push_back(EMfields->Ey_ ->name);
     fields.push_back(EMfields->Ez_ ->name);
@@ -173,9 +164,9 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     fields.push_back(EMfields->By_m->name);
     fields.push_back(EMfields->Bz_m->name);
     unsigned int nfield = fields.size();
-    index_fieldUelm.resize(nfield);
+    fieldUelm.resize(nfield);
     for( unsigned int ifield=0; ifield<nfield; ifield++ )
-        index_fieldUelm[ifield] = setKey( "Uelm_"+fields[ifield] , index );
+        fieldUelm[ifield] = newScalar_SUM( "Uelm_"+fields[ifield] );
     
     // Scalars related to fields min and max
     fields.push_back(EMfields->Jx_ ->name);
@@ -183,27 +174,25 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     fields.push_back(EMfields->Jz_ ->name);
     fields.push_back(EMfields->rho_->name);
     nfield = fields.size();
-    index_fieldMin.resize(nfield);
-    index_fieldMax.resize(nfield);
+    fieldMin.resize(nfield);
+    fieldMax.resize(nfield);
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
-        index_fieldMin[ifield] = setKey_MINLOC( fields[ifield]+"Min", index_MINLOC );
-        index_fieldMax[ifield] = setKey_MAXLOC( fields[ifield]+"Max", index_MAXLOC );
+        fieldMin[ifield] = newScalar_MINLOC( fields[ifield]+"Min" );
+        fieldMax[ifield] = newScalar_MAXLOC( fields[ifield]+"Max" );
     }
     
     // Scalars related to the Poynting flux
-    unsigned int k=0;
-    index_poy    .resize(0);
-    index_poyInst.resize(0);
+    poy    .resize(npoy);
+    poyInst.resize(npoy);
     string poy_name;
+    unsigned int k = 0;
     for (unsigned int j=0; j<2;j++) {
         for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {
             if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
             else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
             else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
-            index_poy    .push_back(-1);
-            index_poyInst.push_back(-1);
-            index_poy    [k] = setKey( poy_name        , index );
-            index_poyInst[k] = setKey( poy_name+"Inst" , index );
+            poy    [k] = newScalar_SUM( poy_name        );
+            poyInst[k] = newScalar_SUM( poy_name+"Inst" );
             k++;
         }
     }
@@ -213,20 +202,11 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
 
 bool DiagnosticScalar::prepare( int timestep )
 {
-    // At the right timestep, initialize the scalars
-    if ( printNow(timestep) || timeSelection->theTimeIsNow(timestep) ) {
-        for (unsigned int iscalar=0 ; iscalar<out_value.size() ; iscalar++) {
-            out_value[iscalar] = 0.;
-        }
-        for (unsigned int iscalar=0 ; iscalar<out_value_MINLOC.size() ; iscalar++) {
-            out_value_MINLOC[iscalar].index = -1;
-            out_value_MINLOC[iscalar].val   = numeric_limits<double>::max();
-        }
-        for (unsigned int iscalar=0 ; iscalar<out_value_MAXLOC.size() ; iscalar++) {
-            out_value_MAXLOC[iscalar].index = -1;
-            out_value_MAXLOC[iscalar].val   = numeric_limits<double>::lowest();
-        }
-    }
+
+    // At the right timestep, reset the scalars
+    if ( printNow(timestep) || timeSelection->theTimeIsNow(timestep) )
+        for (unsigned int iscalar=0 ; iscalar<allScalars.size() ; iscalar++)
+            allScalars[iscalar]->reset();
     
     // Scalars always run even if they don't dump
     return true;
@@ -247,10 +227,7 @@ void DiagnosticScalar::run( Patch* patch, int timestep )
 
 void DiagnosticScalar::write(int itime)
 {
-    unsigned int k;
-    unsigned int s        = out_key       .size();
-    unsigned int s_MINLOC = out_key_MINLOC.size();
-    unsigned int s_MAXLOC = out_key_MAXLOC.size();
+    unsigned int k, s = allScalars.size();
     
     if ( ! timeSelection->theTimeIsNow(itime) ) return;
     
@@ -259,61 +236,31 @@ void DiagnosticScalar::write(int itime)
     if (fout.tellp()==ifstream::pos_type(0)) { // file beginning
         // First header: list of scalars, one by line
         fout << "# " << 1 << " time" << endl;
-        unsigned int i=2;
         for(k=0; k<s; k++) {
-            if (allowed[k]) {
-                fout << "# " << i << " " << out_key[k] << endl;
-                i++;
-            }
-        }
-        for(k=0; k<s_MINLOC; k++) {
-            if (allowed_MINLOC[k]) {
-                fout << "# " << i << " " << out_key_MINLOC[k] << endl;
-                fout << "# " << i << " " << out_key_MINLOC[k]+"Cell" << endl;
-                i++;
-            }
-        }
-        for(k=0; k<s_MAXLOC; k++) {
-            if (allowed_MAXLOC[k]) {
-                fout << "# " << i << " " << out_key_MAXLOC[k] << endl;
-                fout << "# " << i << " " << out_key_MAXLOC[k]+"Cell" << endl;
-                i++;
+            if( allScalars[k]->allowed ) {
+                fout << "# " << (k+2) << " " << allScalars[k]->name << endl;
+                if( ! allScalars[k]->secondname.empty() )
+                    fout << "# " << (k+2) << " " << allScalars[k]->secondname << endl;
             }
         }
         // Second header: list of scalars, but all in one line
         fout << "#\n#" << setw(precision+9) << "time";
-        for(k=0; k<s; k++)
-            if (allowed[k])
-                fout << setw(out_width[k]) << out_key[k];
-        for(k=0; k<s_MINLOC; k++) {
-            if (allowed_MINLOC[k]) {
-                fout << setw(out_width_MINLOC[k]  ) << out_key_MINLOC[k];
-                fout << setw(out_width_MINLOC[k]+4) << out_key_MINLOC[k]+"Cell";
-            }
-        }
-        for(k=0; k<s_MAXLOC; k++) {
-            if (allowed_MAXLOC[k]) {
-                fout << setw(out_width_MAXLOC[k]  ) << out_key_MAXLOC[k];
-                fout << setw(out_width_MAXLOC[k]+4) << out_key_MAXLOC[k]+"Cell";
+        for(k=0; k<s; k++) {
+            if( allScalars[k]->allowed ) {
+                fout << setw(allScalars[k]->width) << allScalars[k]->name;
+                if( ! allScalars[k]->secondname.empty() )
+                    fout << setw(allScalars[k]->width) << allScalars[k]->secondname;
             }
         }
         fout << endl;
     }
     // Each requested timestep, the following writes the values of the scalars
     fout << setw(precision+10) << itime/res_time;
-    for(k=0; k<s; k++)
-        if (allowed[k])
-            fout << setw(out_width[k]) << out_value[k];
-    for(k=0; k<s_MINLOC; k++) {
-        if (allowed_MINLOC[k]) {
-            fout << setw(out_width_MINLOC[k]  ) << out_value_MINLOC[k].val;
-            fout << setw(out_width_MINLOC[k]+4) << out_value_MINLOC[k].index;
-        }
-    }
-    for(k=0; k<s_MAXLOC; k++) {
-        if (allowed_MAXLOC[k]) {
-            fout << setw(out_width_MAXLOC[k]  ) << out_value_MAXLOC[k].val;
-            fout << setw(out_width_MAXLOC[k]+4) << out_value_MAXLOC[k].index;
+    for(k=0; k<s; k++) {
+        if( allScalars[k]->allowed ) {
+            fout << setw(allScalars[k]->width) << allScalars[k]->get();
+            if( ! allScalars[k]->secondname.empty() )
+                fout << setw(allScalars[k]->width) << allScalars[k]->getloc();
         }
     }
     fout << endl;
@@ -329,10 +276,10 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     // ------------------------
     // SPECIES-related energies
     // ------------------------
-    double Ukin=0.;             // total (kinetic) energy carried by particles (test-particles do not contribute)
-    double Ukin_bnd=0.;         // total energy lost by particles due to boundary conditions
-    double Ukin_out_mvw=0.;     // total energy lost due to particles being suppressed by the moving-window
-    double Ukin_inj_mvw=0.;     // total energy added due to particles created by the moving-window
+    double Ukin_=0.;             // total (kinetic) energy carried by particles (test-particles do not contribute)
+    double Ukin_bnd_=0.;         // total energy lost by particles due to boundary conditions
+    double Ukin_out_mvw_=0.;     // total energy lost due to particles being suppressed by the moving-window
+    double Ukin_inj_mvw_=0.;     // total energy added due to particles created by the moving-window
     
     // Compute scalars for each species
     for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
@@ -366,21 +313,21 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         ener_added_mvw = vecSpecies[ispec]->getNewParticlesNRJ();
         
         #pragma omp atomic
-        out_value[index_sNtot[ispec]] += nPart;
+        *(sNtot[ispec]->value) += nPart;
         #pragma omp atomic
-        out_value[index_sDens[ispec]] += cell_volume * density;
+        *(sDens[ispec]->value) += cell_volume * density;
         #pragma omp atomic
-        out_value[index_sZavg[ispec]] += cell_volume * charge;
+        *(sZavg[ispec]->value) += cell_volume * charge;
         #pragma omp atomic
-        out_value[index_sUkin[ispec]] += cell_volume * ener_tot;
+        *(sUkin[ispec]->value) += cell_volume * ener_tot;
         
         // incremement the total kinetic energy
-        Ukin += cell_volume * ener_tot;
+        Ukin_ += cell_volume * ener_tot;
         
         // increment all energy loss & energy input
-        Ukin_bnd        += cell_volume * ener_lost_bcs;
-        Ukin_out_mvw    += cell_volume * ener_lost_mvw;
-        Ukin_inj_mvw    += cell_volume * ener_added_mvw;
+        Ukin_bnd_        += cell_volume * ener_lost_bcs;
+        Ukin_out_mvw_    += cell_volume * ener_lost_mvw;
+        Ukin_inj_mvw_    += cell_volume * ener_added_mvw;
         
         vecSpecies[ispec]->reinitDiags();
     } // for ispec
@@ -402,7 +349,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     // Compute all electromagnetic energies
     // ------------------------------------
     
-    double Uelm=0.0; // total electromagnetic energy in the fields
+    double Uelm_=0.0; // total electromagnetic energy in the fields
     
     // loop on all electromagnetic fields
     unsigned int nfield = fields.size();
@@ -431,17 +378,17 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         Utot_crtField *= 0.5*cell_volume;
         
         #pragma omp atomic
-        out_value[index_fieldUelm[ifield]] += Utot_crtField;
-        Uelm+=Utot_crtField;
+        *(fieldUelm[ifield]->value) += Utot_crtField;
+        Uelm_+=Utot_crtField;
     }
     
     // nrj lost with moving window (fields)
-    double Uelm_out_mvw = EMfields->getLostNrjMW();
-    Uelm_out_mvw *= 0.5*cell_volume;
+    double Uelm_out_mvw_ = EMfields->getLostNrjMW();
+    Uelm_out_mvw_ *= 0.5*cell_volume;
     
     // nrj added due to moving window (fields)
-    double Uelm_inj_mvw=EMfields->getNewFieldsNRJ();
-    Uelm_inj_mvw *= 0.5*cell_volume;
+    double Uelm_inj_mvw_=EMfields->getNewFieldsNRJ();
+    Uelm_inj_mvw_ *= 0.5*cell_volume;
     
     EMfields->reinitDiags();
     
@@ -494,10 +441,14 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         
         #pragma omp critical
         {
-            if( minloc.val < out_value_MINLOC[index_fieldMin[ifield]].val )
-                out_value_MINLOC[index_fieldMin[ifield]] = minloc;
-            if( maxloc.val > out_value_MAXLOC[index_fieldMax[ifield]].val )
-                out_value_MAXLOC[index_fieldMax[ifield]] = maxloc;
+            if( minloc.val < *(fieldMin[ifield]->value) ){
+                *(fieldMin[ifield]->value) = minloc.val;
+                *(fieldMin[ifield]->loc  ) = minloc.index;
+            }
+            if( maxloc.val > *(fieldMax[ifield]->value) ){
+                *(fieldMax[ifield]->value) = maxloc.val;
+                *(fieldMax[ifield]->loc  ) = maxloc.index;
+            }
         }
     }
     
@@ -506,17 +457,17 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     // ------------------------
     
     // electromagnetic energy injected in the simulation (calculated from Poynting fluxes)
-    double Uelm_bnd=0.0;
+    double Uelm_bnd_=0.0;
     unsigned int k=0;
     for (unsigned int j=0; j<2;j++) {//directions (xmin/xmax, ymin/ymax, zmin/zmax)
         for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {//axis 0=x, 1=y, 2=z
             #pragma omp atomic
-            out_value[index_poy    [k]] += EMfields->poynting     [j][i];
+            *(poy    [k]->value) += EMfields->poynting     [j][i];
             #pragma omp atomic
-            out_value[index_poyInst[k]] += EMfields->poynting_inst[j][i];
+            *(poyInst[k]->value) += EMfields->poynting_inst[j][i];
             k++;
             
-            Uelm_bnd += EMfields->poynting[j][i];
+            Uelm_bnd_ += EMfields->poynting[j][i];
         }// i
     }// j
     
@@ -527,36 +478,35 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     
     // added & lost energies due to the moving window
     #pragma omp atomic
-    out_value[index_Ukin_out_mvw] += Ukin_out_mvw;
+    *(Ukin_out_mvw->value) += Ukin_out_mvw_;
     #pragma omp atomic
-    out_value[index_Ukin_inj_mvw] += Ukin_inj_mvw;
+    *(Ukin_inj_mvw->value) += Ukin_inj_mvw_;
     #pragma omp atomic
-    out_value[index_Uelm_out_mvw] += Uelm_out_mvw;
+    *(Uelm_out_mvw->value) += Uelm_out_mvw_;
     #pragma omp atomic
-    out_value[index_Uelm_inj_mvw] += Uelm_inj_mvw;
+    *(Uelm_inj_mvw->value) += Uelm_inj_mvw_;
     
     // added & lost energies at the boundaries
     #pragma omp atomic
-    out_value[index_Ukin_bnd] += Ukin_bnd;
+    *(Ukin_bnd->value) += Ukin_bnd_;
     #pragma omp atomic
-    out_value[index_Uelm_bnd] += Uelm_bnd;
+    *(Uelm_bnd->value) += Uelm_bnd_;
     
     // Total energies
     #pragma omp atomic
-    out_value[index_Ukin] += Ukin;
+    *(Ukin->value) += Ukin_;
     #pragma omp atomic
-    out_value[index_Uelm] += Uelm;
+    *(Uelm->value) += Uelm_;
     
 } // END compute
 
 
 double DiagnosticScalar::getScalar(std::string key)
 {
-    unsigned int k, s=out_key.size();
+    unsigned int k, s=allScalars.size();
     for(k=0; k<s; k++) {
-        if (out_key[k]==key) {
-            return out_value[k];
-        }
+        if (allScalars[k]->name      ==key) return allScalars[k]->get();
+        if (allScalars[k]->secondname==key) return allScalars[k]->getloc();
     }
     DEBUG("key not found " << key);
     return 0.0;
@@ -564,6 +514,7 @@ double DiagnosticScalar::getScalar(std::string key)
 } // END getScalar
 
 bool DiagnosticScalar::allowedKey(string key) {
+    if( key.empty() ) return false;
     int s=vars.size();
     if (s==0) return true;
     for( int i=0; i<s; i++) {
