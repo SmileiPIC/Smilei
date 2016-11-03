@@ -22,12 +22,12 @@ struct val_index
 class Scalar {
 public:
     Scalar(std::string name, std::string secondname, unsigned int width, bool allowed, double * value, int * loc, double reset_value):
-        name(name), secondname(secondname), width(width), allowed(allowed), value(value), loc(loc), reset_value(reset_value)
+        name(name), secondname(secondname), width(width), allowed(allowed), value(value), reset_value(reset_value), loc(loc)
         {};
     ~Scalar() {};
-    virtual inline double get() { return *value; };
-    virtual inline int getloc() { return loc?(*loc):0; };
-    virtual inline void reset() { *value = reset_value; if(loc) *loc = -1; };
+    inline double get() { return *value; };
+    inline int getloc() { return loc?(*loc):0; };
+    inline void reset() { *value = reset_value; if(loc) *loc = -1; };
     std::string name, secondname;
     unsigned int width;
     bool allowed;

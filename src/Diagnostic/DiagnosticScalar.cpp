@@ -48,6 +48,7 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patc
 
 DiagnosticScalar::~DiagnosticScalar()
 {
+    for(unsigned int i=0; i<allScalars.size(); i++) delete allScalars[i];
     delete timeSelection;
 } // END DiagnosticScalar::#DiagnosticScalar
 
@@ -258,7 +259,6 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
 
 bool DiagnosticScalar::prepare( int timestep )
 {
-
     // At the right timestep, reset the scalars
     if ( printNow(timestep) || timeSelection->theTimeIsNow(timestep) )
         for (unsigned int iscalar=0 ; iscalar<allScalars.size() ; iscalar++)
