@@ -130,6 +130,13 @@ private :
     std::vector<Scalar *> sDens, sNtot, sZavg, sUkin, fieldUelm;
     std::vector<Scalar *> fieldMin, fieldMax;
     std::vector<Scalar *> poy, poyInst;
+    
+    //! Booleans to tell which scalars should be computed or not
+    bool necessary_Ubal_norm, necessary_Ubal, necessary_Utot, necessary_Uexp;
+    bool necessary_Ukin, necessary_Ukin_BC;
+    bool necessary_Uelm, necessary_Uelm_BC;
+    bool necessary_fieldMinMax_any;
+    std::vector<bool> necessary_species, necessary_fieldUelm, necessary_fieldMinMax, necessary_poy;
 
 };
 

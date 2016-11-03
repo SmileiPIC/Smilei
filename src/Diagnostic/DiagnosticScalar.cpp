@@ -117,36 +117,99 @@ Scalar* DiagnosticScalar::newScalar_MAXLOC( string name )
 void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches)
 {
     
-    // Prepare vectors
+    // Make the list of fields
     ElectroMagn* EMfields = vecPatches(0)->EMfields;
+    vector<string> fields;
+    fields.push_back(EMfields->Ex_ ->name);
+    fields.push_back(EMfields->Ey_ ->name);
+    fields.push_back(EMfields->Ez_ ->name);
+    fields.push_back(EMfields->Bx_m->name);
+    fields.push_back(EMfields->By_m->name);
+    fields.push_back(EMfields->Bz_m->name);
+    fields.push_back(EMfields->Jx_ ->name);
+    fields.push_back(EMfields->Jy_ ->name);
+    fields.push_back(EMfields->Jz_ ->name);
+    fields.push_back(EMfields->rho_->name);
+    
+    // 1 - Prepare the booleans that tell which scalars are necessary to compute
+    // -------------------------------------------------------------------------
+    
+    // General scalars
+    necessary_Ubal_norm = true;//temporarily for print_every
+//    necessary_Ubal_norm    = allowedKey("Ubal_norm");
+    necessary_Ubal    = necessary_Ubal_norm || allowedKey("Ubal");
+    necessary_Utot    = necessary_Ubal || allowedKey("Utot");
+    necessary_Uexp    = necessary_Ubal || allowedKey("Uexp");
+    necessary_Ukin    = necessary_Utot || allowedKey("Ukin");
+    necessary_Uelm    = necessary_Utot || allowedKey("Uelm");
+    necessary_Ukin_BC = necessary_Uexp || allowedKey("Ukin_bnd") || allowedKey("Ukin_out_mvw") || allowedKey("Ukin_inj_mvw");
+    necessary_Uelm_BC = necessary_Uexp || allowedKey("Uelm_bnd") || allowedKey("Uelm_out_mvw") || allowedKey("Uelm_inj_mvw");
+    // Species
     unsigned int nspec = vecPatches(0)->vecSpecies.size();
+    necessary_species.resize(nspec, false);
+    string species_type;
+    for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
+        if (! vecPatches(0)->vecSpecies[ispec]->particles->isTest) {
+            species_type = vecPatches(0)->vecSpecies[ispec]->species_type;
+            necessary_species[ispec] = necessary_Ukin || allowedKey("Dens_"+species_type) ||  allowedKey("Ntot_"+species_type) ||  allowedKey("Zavg_"+species_type) || allowedKey("Ukin_"+species_type);
+        }
+    }
+    // Fields
+    unsigned int nfield = 6;
+    necessary_fieldUelm.resize(nfield, false);
+    for( unsigned int ifield=0; ifield<nfield; ifield++ )
+        necessary_fieldUelm[ifield] = necessary_Uelm || allowedKey("Uelm_"+fields[ifield]);
+    // Fields min/max
+    nfield = fields.size();
+    necessary_fieldMinMax.resize(nfield, false);
+    necessary_fieldMinMax_any = false;
+    for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
+        necessary_fieldMinMax[ifield] = allowedKey( fields[ifield]+"Min" ) || allowedKey( fields[ifield]+"MinCell" ) || allowedKey( fields[ifield]+"Max" ) || allowedKey( fields[ifield]+"MaxCell" );
+        if( necessary_fieldMinMax[ifield] ) necessary_fieldMinMax_any = true;
+    }
+    // Poynting flux
     unsigned int npoy  = EMfields->poynting[0].size() * EMfields->poynting[1].size();
+    necessary_poy.resize(npoy);
+    string poy_name;
+    unsigned int k = 0;
+    for (unsigned int j=0; j<2;j++) {
+        for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {
+            if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
+            else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
+            else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
+            necessary_poy[k] = necessary_Uelm_BC || allowedKey(poy_name) || allowedKey(poy_name+"Inst");
+            k++;
+        }
+    }
+    
+    // 2 - Prepare the Scalar* objects that will contain the data
+    // ----------------------------------------------------------
+    
     values_SUM   .reserve( 12 + nspec*4 + 6 + 2*npoy);
     values_MINLOC.reserve( 10 );
     values_MAXLOC.reserve( 10 );
     
     // General scalars
-    Utot         = newScalar_SUM( "Utot"         );
-    Uexp         = newScalar_SUM( "Uexp"         );
-    Ubal         = newScalar_SUM( "Ubal"         );
-    Ubal_norm    = newScalar_SUM( "Ubal_norm"    );
-    Uelm         = newScalar_SUM( "Uelm"         );
-    Ukin         = newScalar_SUM( "Ukin"         );
-    Uelm_bnd     = newScalar_SUM( "Uelm_bnd"     );
-    Ukin_bnd     = newScalar_SUM( "Ukin_bnd"     );
-    Ukin_out_mvw = newScalar_SUM( "Ukin_out_mvw" );
-    Ukin_inj_mvw = newScalar_SUM( "Ukin_inj_mvw" );
-    Uelm_out_mvw = newScalar_SUM( "Uelm_out_mvw" );
-    Uelm_inj_mvw = newScalar_SUM( "Uelm_inj_mvw" );
+    Ubal_norm    = necessary_Ubal_norm ? newScalar_SUM( "Ubal_norm"    ) : NULL;
+    Ubal         = necessary_Ubal      ? newScalar_SUM( "Ubal"         ) : NULL;
+    Utot         = necessary_Uexp      ? newScalar_SUM( "Utot"         ) : NULL;
+    Uexp         = necessary_Uexp      ? newScalar_SUM( "Uexp"         ) : NULL;
+    Ukin         = necessary_Uexp      ? newScalar_SUM( "Ukin"         ) : NULL;
+    Uelm         = necessary_Uexp      ? newScalar_SUM( "Uelm"         ) : NULL;
+    Ukin_bnd     = necessary_Ukin_BC   ? newScalar_SUM( "Ukin_bnd"     ) : NULL;
+    Ukin_out_mvw = necessary_Ukin_BC   ? newScalar_SUM( "Ukin_out_mvw" ) : NULL;
+    Ukin_inj_mvw = necessary_Ukin_BC   ? newScalar_SUM( "Ukin_inj_mvw" ) : NULL;
+    Uelm_bnd     = necessary_Uelm_BC   ? newScalar_SUM( "Uelm_bnd"     ) : NULL;
+    Uelm_out_mvw = necessary_Uelm_BC   ? newScalar_SUM( "Uelm_out_mvw" ) : NULL;
+    Uelm_inj_mvw = necessary_Uelm_BC   ? newScalar_SUM( "Uelm_inj_mvw" ) : NULL;
     
     // Scalars related to species
-    string species_type;
     sDens.resize(nspec, NULL);
     sNtot.resize(nspec, NULL);
     sZavg.resize(nspec, NULL);
     sUkin.resize(nspec, NULL);
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
-        if (! vecPatches(0)->vecSpecies[ispec]->particles->isTest) {
+        if( necessary_species[ispec] || necessary_Uexp ) {
             species_type = vecPatches(0)->vecSpecies[ispec]->species_type;
             sDens[ispec] = newScalar_SUM( "Dens_"+species_type );
             sNtot[ispec] = newScalar_SUM( "Ntot_"+species_type );
@@ -156,43 +219,36 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     }
     
     // Scalars related to field's electromagnetic energy
-    vector<string> fields;
-    fields.push_back(EMfields->Ex_ ->name);
-    fields.push_back(EMfields->Ey_ ->name);
-    fields.push_back(EMfields->Ez_ ->name);
-    fields.push_back(EMfields->Bx_m->name);
-    fields.push_back(EMfields->By_m->name);
-    fields.push_back(EMfields->Bz_m->name);
-    unsigned int nfield = fields.size();
-    fieldUelm.resize(nfield);
+    nfield = 6;
+    fieldUelm.resize(nfield, NULL);
     for( unsigned int ifield=0; ifield<nfield; ifield++ )
-        fieldUelm[ifield] = newScalar_SUM( "Uelm_"+fields[ifield] );
+        if( necessary_fieldUelm[ifield] || necessary_Uexp )
+            fieldUelm[ifield] = newScalar_SUM( "Uelm_"+fields[ifield] );
     
     // Scalars related to fields min and max
-    fields.push_back(EMfields->Jx_ ->name);
-    fields.push_back(EMfields->Jy_ ->name);
-    fields.push_back(EMfields->Jz_ ->name);
-    fields.push_back(EMfields->rho_->name);
     nfield = fields.size();
-    fieldMin.resize(nfield);
-    fieldMax.resize(nfield);
+    fieldMin.resize(nfield, NULL);
+    fieldMax.resize(nfield, NULL);
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
-        fieldMin[ifield] = newScalar_MINLOC( fields[ifield]+"Min" );
-        fieldMax[ifield] = newScalar_MAXLOC( fields[ifield]+"Max" );
+        if( necessary_fieldMinMax[ifield] ) {
+            fieldMin[ifield] = newScalar_MINLOC( fields[ifield]+"Min" );
+            fieldMax[ifield] = newScalar_MAXLOC( fields[ifield]+"Max" );
+        }
     }
     
     // Scalars related to the Poynting flux
-    poy    .resize(npoy);
-    poyInst.resize(npoy);
-    string poy_name;
-    unsigned int k = 0;
+    poy    .resize(npoy, NULL);
+    poyInst.resize(npoy, NULL);
+    k = 0;
     for (unsigned int j=0; j<2;j++) {
         for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {
-            if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
-            else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
-            else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
-            poy    [k] = newScalar_SUM( poy_name        );
-            poyInst[k] = newScalar_SUM( poy_name+"Inst" );
+            if( necessary_poy[k] ) {
+                if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
+                else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
+                else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
+                poy    [k] = newScalar_SUM( poy_name        );
+                poyInst[k] = newScalar_SUM( poy_name+"Inst" );
+            }
             k++;
         }
     }
@@ -281,57 +337,76 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     double Ukin_out_mvw_=0.;     // total energy lost due to particles being suppressed by the moving-window
     double Ukin_inj_mvw_=0.;     // total energy added due to particles created by the moving-window
     
+    bool forceNow = necessary_Uexp && timestep==0;
+    
     // Compute scalars for each species
     for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
         if (vecSpecies[ispec]->particles->isTest) continue;    // No scalar diagnostic for test particles
         
-        double density=0.0;  // sum of weights of current species ispec
-        double charge=0.0;   // sum of charges of current species ispec
-        double ener_tot=0.0; // total kinetic energy of current species ispec
-        
-        unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles(); // number of particles
-        for (unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
+        if( necessary_species[ispec] || forceNow ) {
+            double density=0.0;  // sum of weights of current species ispec
+            double charge=0.0;   // sum of charges of current species ispec
+            double ener_tot=0.0; // total kinetic energy of current species ispec
             
-            density  += vecSpecies[ispec]->particles->weight(iPart);
-            charge   += vecSpecies[ispec]->particles->weight(iPart)
-            *          (double)vecSpecies[ispec]->particles->charge(iPart);
-            ener_tot += vecSpecies[ispec]->particles->weight(iPart)
-            *          (vecSpecies[ispec]->particles->lor_fac(iPart)-1.0);
+            unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles(); // number of particles
+            for (unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
+                
+                density  += vecSpecies[ispec]->particles->weight(iPart);
+                charge   += vecSpecies[ispec]->particles->weight(iPart)
+                *          (double)vecSpecies[ispec]->particles->charge(iPart);
+                ener_tot += vecSpecies[ispec]->particles->weight(iPart)
+                *          (vecSpecies[ispec]->particles->lor_fac(iPart)-1.0);
+            }
+            ener_tot *= vecSpecies[ispec]->mass;
+            
+            #pragma omp atomic
+            *(sNtot[ispec]->value) += nPart;
+            #pragma omp atomic
+            *(sDens[ispec]->value) += cell_volume * density;
+            #pragma omp atomic
+            *(sZavg[ispec]->value) += cell_volume * charge;
+            #pragma omp atomic
+            *(sUkin[ispec]->value) += cell_volume * ener_tot;
+            
+            // incremement the total kinetic energy
+            Ukin_ += cell_volume * ener_tot;
         }
-        ener_tot *= vecSpecies[ispec]->mass;
         
-        // particle energy lost due to boundary conditions
-        double ener_lost_bcs=0.0;
-        ener_lost_bcs = vecSpecies[ispec]->getLostNrjBC();
-        
-        // particle energy lost due to moving window
-        double ener_lost_mvw=0.0;
-        ener_lost_mvw = vecSpecies[ispec]->getLostNrjMW();
-        
-        // particle energy added due to moving window
-        double ener_added_mvw=0.0;
-        ener_added_mvw = vecSpecies[ispec]->getNewParticlesNRJ();
-        
-        #pragma omp atomic
-        *(sNtot[ispec]->value) += nPart;
-        #pragma omp atomic
-        *(sDens[ispec]->value) += cell_volume * density;
-        #pragma omp atomic
-        *(sZavg[ispec]->value) += cell_volume * charge;
-        #pragma omp atomic
-        *(sUkin[ispec]->value) += cell_volume * ener_tot;
-        
-        // incremement the total kinetic energy
-        Ukin_ += cell_volume * ener_tot;
-        
-        // increment all energy loss & energy input
-        Ukin_bnd_        += cell_volume * ener_lost_bcs;
-        Ukin_out_mvw_    += cell_volume * ener_lost_mvw;
-        Ukin_inj_mvw_    += cell_volume * ener_added_mvw;
+        if( necessary_Ukin_BC ) {
+            // particle energy lost due to boundary conditions
+            double ener_lost_bcs=0.0;
+            ener_lost_bcs = vecSpecies[ispec]->getLostNrjBC();
+            
+            // particle energy lost due to moving window
+            double ener_lost_mvw=0.0;
+            ener_lost_mvw = vecSpecies[ispec]->getLostNrjMW();
+            
+            // particle energy added due to moving window
+            double ener_added_mvw=0.0;
+            ener_added_mvw = vecSpecies[ispec]->getNewParticlesNRJ();
+            
+            // increment all energy loss & energy input
+            Ukin_bnd_        += cell_volume * ener_lost_bcs;
+            Ukin_out_mvw_    += cell_volume * ener_lost_mvw;
+            Ukin_inj_mvw_    += cell_volume * ener_added_mvw;
+        }
         
         vecSpecies[ispec]->reinitDiags();
     } // for ispec
     
+    // Add the calculated energies to the data arrays
+    if( necessary_Ukin || forceNow ) {
+        #pragma omp atomic
+        *(Ukin->value) += Ukin_;
+    }
+    if( necessary_Ukin_BC ) {
+        #pragma omp atomic
+        *(Ukin_bnd->value) += Ukin_bnd_;
+        #pragma omp atomic
+        *(Ukin_out_mvw->value) += Ukin_out_mvw_;
+        #pragma omp atomic
+        *(Ukin_inj_mvw->value) += Ukin_inj_mvw_;
+    }
     
     // --------------------------------
     // ELECTROMAGNETIC-related energies
@@ -346,56 +421,69 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     fields.push_back(EMfields->By_m);
     fields.push_back(EMfields->Bz_m);
     
-    // Compute all electromagnetic energies
-    // ------------------------------------
-    
     double Uelm_=0.0; // total electromagnetic energy in the fields
     
     // loop on all electromagnetic fields
     unsigned int nfield = fields.size();
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
         
-        double Utot_crtField=0.0; // total energy in current field
-        Field * field = fields[ifield];
-        // compute the starting/ending points of each fields (w/out ghost cells) as well as the field global size
-        vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
-        for (unsigned int i=0 ; i<field->isDual_.size() ; i++ ) {
-            iFieldStart[i]      = EMfields->istart[i][field->isDual(i)];
-            iFieldEnd[i]        = iFieldStart[i] + EMfields->bufsize[i][field->isDual(i)];
-            iFieldGlobalSize[i] = field->dims_[i];
-        }
-        
-        // loop on all (none-ghost) cells & add-up the squared-field to the energy density
-        for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
-            for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
-                for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
-                    unsigned int ii = k+ (j + i*iFieldGlobalSize[1]) *iFieldGlobalSize[2];
-                    Utot_crtField += (*field)(ii) * (*field)(ii);
+        if( necessary_fieldUelm[ifield] || forceNow ) {
+            double Utot_crtField=0.0; // total energy in current field
+            Field * field = fields[ifield];
+            // compute the starting/ending points of each fields (w/out ghost cells) as well as the field global size
+            vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
+            for (unsigned int i=0 ; i<field->isDual_.size() ; i++ ) {
+                iFieldStart[i]      = EMfields->istart[i][field->isDual(i)];
+                iFieldEnd[i]        = iFieldStart[i] + EMfields->bufsize[i][field->isDual(i)];
+                iFieldGlobalSize[i] = field->dims_[i];
+            }
+            
+            // loop on all (none-ghost) cells & add-up the squared-field to the energy density
+            for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
+                for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
+                    for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
+                        unsigned int ii = k+ (j + i*iFieldGlobalSize[1]) *iFieldGlobalSize[2];
+                        Utot_crtField += (*field)(ii) * (*field)(ii);
+                    }
                 }
             }
+            // Utot = Dx^N/2 * Field^2
+            Utot_crtField *= 0.5*cell_volume;
+            
+            #pragma omp atomic
+            *(fieldUelm[ifield]->value) += Utot_crtField;
+            Uelm_+=Utot_crtField;
         }
-        // Utot = Dx^N/2 * Field^2
-        Utot_crtField *= 0.5*cell_volume;
-        
-        #pragma omp atomic
-        *(fieldUelm[ifield]->value) += Utot_crtField;
-        Uelm_+=Utot_crtField;
     }
     
-    // nrj lost with moving window (fields)
-    double Uelm_out_mvw_ = EMfields->getLostNrjMW();
-    Uelm_out_mvw_ *= 0.5*cell_volume;
+    // Total elm energy
+    if( necessary_Uelm || forceNow ) {
+        #pragma omp atomic
+        *(Uelm->value) += Uelm_;
+    }
     
-    // nrj added due to moving window (fields)
-    double Uelm_inj_mvw_=EMfields->getNewFieldsNRJ();
-    Uelm_inj_mvw_ *= 0.5*cell_volume;
+    // Lost/added elm energies through the moving window
+    if( necessary_Uelm_BC ) {
+        // nrj lost with moving window (fields)
+        double Uelm_out_mvw_ = EMfields->getLostNrjMW();
+        Uelm_out_mvw_ *= 0.5*cell_volume;
+        
+        // nrj added due to moving window (fields)
+        double Uelm_inj_mvw_=EMfields->getNewFieldsNRJ();
+        Uelm_inj_mvw_ *= 0.5*cell_volume;
+        
+        #pragma omp atomic
+        *(Uelm_out_mvw->value) += Uelm_out_mvw_;
+        #pragma omp atomic
+        *(Uelm_inj_mvw->value) += Uelm_inj_mvw_;
+    }
     
     EMfields->reinitDiags();
     
     
-    // ---------------------------------------------------------------------------------------
-    // ALL FIELDS-RELATED SCALARS: Compute all min/max-related scalars (defined on all fields)
-    // ---------------------------------------------------------------------------------------
+    // ---------------------------
+    // ELECTROMAGNETIC MIN and MAX
+    // ---------------------------
     
     // add currents and density to fields
     fields.push_back(EMfields->Jx_);
@@ -408,46 +496,49 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     
     nfield = fields.size();
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
-                
-        Field * field = fields[ifield];
         
-        vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
-        for (unsigned int i=0 ; i<field->isDual_.size() ; i++ ) {
-            iFieldStart[i] = EMfields->istart[i][field->isDual(i)];
-            iFieldEnd [i] = iFieldStart[i] + EMfields->bufsize[i][field->isDual(i)];
-            iFieldGlobalSize [i] = field->dims_[i];
-        }
-        
-        unsigned int ii= iFieldStart[2] + iFieldStart[1]*iFieldGlobalSize[2] +iFieldStart[0]*iFieldGlobalSize[1]*iFieldGlobalSize[2];
-        minloc.val = maxloc.val = (*field)(ii);
-        minloc.index = maxloc.index = 0;
-        
-        for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
-            for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
-                for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
-                    unsigned int ii = k+ (j + i*iFieldGlobalSize[1]) *iFieldGlobalSize[2];
-                    fieldval = (*field)(ii);
-                    if (minloc.val > fieldval) {
-                        minloc.val   = fieldval;
-                        minloc.index = ii;
-                    }
-                    if (maxloc.val < fieldval) {
-                        maxloc.val   = fieldval;
-                        maxloc.index = ii;
+        if( necessary_fieldMinMax[ifield] ) {
+            
+            Field * field = fields[ifield];
+            
+            vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
+            for (unsigned int i=0 ; i<field->isDual_.size() ; i++ ) {
+                iFieldStart[i] = EMfields->istart[i][field->isDual(i)];
+                iFieldEnd [i] = iFieldStart[i] + EMfields->bufsize[i][field->isDual(i)];
+                iFieldGlobalSize [i] = field->dims_[i];
+            }
+            
+            unsigned int ii= iFieldStart[2] + iFieldStart[1]*iFieldGlobalSize[2] +iFieldStart[0]*iFieldGlobalSize[1]*iFieldGlobalSize[2];
+            minloc.val = maxloc.val = (*field)(ii);
+            minloc.index = maxloc.index = 0;
+            
+            for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
+                for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
+                    for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
+                        unsigned int ii = k+ (j + i*iFieldGlobalSize[1]) *iFieldGlobalSize[2];
+                        fieldval = (*field)(ii);
+                        if (minloc.val > fieldval) {
+                            minloc.val   = fieldval;
+                            minloc.index = ii;
+                        }
+                        if (maxloc.val < fieldval) {
+                            maxloc.val   = fieldval;
+                            maxloc.index = ii;
+                        }
                     }
                 }
             }
-        }
-        
-        #pragma omp critical
-        {
-            if( minloc.val < *(fieldMin[ifield]->value) ){
-                *(fieldMin[ifield]->value) = minloc.val;
-                *(fieldMin[ifield]->loc  ) = minloc.index;
-            }
-            if( maxloc.val > *(fieldMax[ifield]->value) ){
-                *(fieldMax[ifield]->value) = maxloc.val;
-                *(fieldMax[ifield]->loc  ) = maxloc.index;
+            
+            #pragma omp critical
+            {
+                if( minloc.val < *(fieldMin[ifield]->value) ){
+                    *(fieldMin[ifield]->value) = minloc.val;
+                    *(fieldMin[ifield]->loc  ) = minloc.index;
+                }
+                if( maxloc.val > *(fieldMax[ifield]->value) ){
+                    *(fieldMax[ifield]->value) = maxloc.val;
+                    *(fieldMax[ifield]->loc  ) = maxloc.index;
+                }
             }
         }
     }
@@ -461,42 +552,22 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     unsigned int k=0;
     for (unsigned int j=0; j<2;j++) {//directions (xmin/xmax, ymin/ymax, zmin/zmax)
         for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {//axis 0=x, 1=y, 2=z
-            #pragma omp atomic
-            *(poy    [k]->value) += EMfields->poynting     [j][i];
-            #pragma omp atomic
-            *(poyInst[k]->value) += EMfields->poynting_inst[j][i];
-            k++;
+            if( necessary_poy[k] ) {
+                #pragma omp atomic
+                *(poy    [k]->value) += EMfields->poynting     [j][i];
+                #pragma omp atomic
+                *(poyInst[k]->value) += EMfields->poynting_inst[j][i];
+                k++;
+            }
             
             Uelm_bnd_ += EMfields->poynting[j][i];
         }// i
     }// j
     
-    
-    // -----------
-    // FINAL steps
-    // -----------
-    
-    // added & lost energies due to the moving window
-    #pragma omp atomic
-    *(Ukin_out_mvw->value) += Ukin_out_mvw_;
-    #pragma omp atomic
-    *(Ukin_inj_mvw->value) += Ukin_inj_mvw_;
-    #pragma omp atomic
-    *(Uelm_out_mvw->value) += Uelm_out_mvw_;
-    #pragma omp atomic
-    *(Uelm_inj_mvw->value) += Uelm_inj_mvw_;
-    
-    // added & lost energies at the boundaries
-    #pragma omp atomic
-    *(Ukin_bnd->value) += Ukin_bnd_;
-    #pragma omp atomic
-    *(Uelm_bnd->value) += Uelm_bnd_;
-    
-    // Total energies
-    #pragma omp atomic
-    *(Ukin->value) += Ukin_;
-    #pragma omp atomic
-    *(Uelm->value) += Uelm_;
+    if( necessary_Uelm_BC ) {
+        #pragma omp atomic
+        *(Uelm_bnd->value) += Uelm_bnd_;
+    }
     
 } // END compute
 
