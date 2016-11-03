@@ -84,32 +84,32 @@ unsigned int DiagnosticScalar::calculateWidth( string key )
      // The +8 accounts for the dot and exponent in decimal representation)
 }
 
-Scalar* DiagnosticScalar::newScalar_SUM( string name )
+Scalar_value* DiagnosticScalar::newScalar_SUM( string name )
 {
     bool allow = allowedKey(name);
     unsigned int width = calculateWidth( name );
+    Scalar_value * scalar = new Scalar_value(name, width, allow, &values_SUM);
     values_SUM.push_back( 0. );
-    Scalar * scalar = new Scalar(name, "", width, allow, &values_SUM.back(), NULL, 0.);
     allScalars.push_back( scalar );
     return scalar;
 }
-Scalar* DiagnosticScalar::newScalar_MINLOC( string name )
+Scalar_value_location* DiagnosticScalar::newScalar_MINLOC( string name )
 {
     bool allow = allowedKey(name);
     unsigned int width = calculateWidth( name );
     val_index default_; default_.index = -1; default_.val = 0.;
+    Scalar_value_location * scalar = new Scalar_value_location(name, name+"Cell", width, allow, &values_MINLOC, numeric_limits<double>::max());
     values_MINLOC.push_back( default_ );
-    Scalar * scalar = new Scalar(name, name+"Cell", width, allow, &(values_MINLOC.back().val), &(values_MINLOC.back().index), numeric_limits<double>::max());
     allScalars.push_back( scalar );
     return scalar;
 }
-Scalar* DiagnosticScalar::newScalar_MAXLOC( string name )
+Scalar_value_location* DiagnosticScalar::newScalar_MAXLOC( string name )
 {
     bool allow = allowedKey(name);
     unsigned int width = calculateWidth( name );
     val_index default_; default_.index = -1; default_.val = 0.;
+    Scalar_value_location * scalar = new Scalar_value_location(name, name+"Cell", width, allow, &values_MAXLOC, numeric_limits<double>::lowest());
     values_MAXLOC.push_back( default_ );
-    Scalar * scalar = new Scalar(name, name+"Cell", width, allow, &(values_MAXLOC.back().val), &(values_MAXLOC.back().index), numeric_limits<double>::lowest());
     allScalars.push_back( scalar );
     return scalar;
 }
@@ -314,9 +314,9 @@ void DiagnosticScalar::write(int itime)
     fout << setw(precision+10) << itime/res_time;
     for(k=0; k<s; k++) {
         if( allScalars[k]->allowed ) {
-            fout << setw(allScalars[k]->width) << allScalars[k]->get();
+            fout << setw(allScalars[k]->width) << (double)*allScalars[k];
             if( ! allScalars[k]->secondname.empty() )
-                fout << setw(allScalars[k]->width) << allScalars[k]->getloc();
+                fout << setw(allScalars[k]->width) << (int)*allScalars[k];
         }
     }
     fout << endl;
@@ -359,14 +359,10 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             }
             ener_tot *= vecSpecies[ispec]->mass;
             
-            #pragma omp atomic
-            *(sNtot[ispec]->value) += nPart;
-            #pragma omp atomic
-            *(sDens[ispec]->value) += cell_volume * density;
-            #pragma omp atomic
-            *(sZavg[ispec]->value) += cell_volume * charge;
-            #pragma omp atomic
-            *(sUkin[ispec]->value) += cell_volume * ener_tot;
+            *sNtot[ispec] += (double)nPart;
+            *sDens[ispec] += cell_volume * density;
+            *sZavg[ispec] += cell_volume * charge;
+            *sUkin[ispec] += cell_volume * ener_tot;
             
             // incremement the total kinetic energy
             Ukin_ += cell_volume * ener_tot;
@@ -396,16 +392,12 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     
     // Add the calculated energies to the data arrays
     if( necessary_Ukin || forceNow ) {
-        #pragma omp atomic
-        *(Ukin->value) += Ukin_;
+        *Ukin += Ukin_;
     }
     if( necessary_Ukin_BC ) {
-        #pragma omp atomic
-        *(Ukin_bnd->value) += Ukin_bnd_;
-        #pragma omp atomic
-        *(Ukin_out_mvw->value) += Ukin_out_mvw_;
-        #pragma omp atomic
-        *(Ukin_inj_mvw->value) += Ukin_inj_mvw_;
+        *Ukin_bnd     += Ukin_bnd_     ;
+        *Ukin_out_mvw += Ukin_out_mvw_ ;
+        *Ukin_inj_mvw += Ukin_inj_mvw_ ;
     }
     
     // --------------------------------
@@ -450,16 +442,14 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             // Utot = Dx^N/2 * Field^2
             Utot_crtField *= 0.5*cell_volume;
             
-            #pragma omp atomic
-            *(fieldUelm[ifield]->value) += Utot_crtField;
+            *fieldUelm[ifield] += Utot_crtField;
             Uelm_+=Utot_crtField;
         }
     }
     
     // Total elm energy
     if( necessary_Uelm || forceNow ) {
-        #pragma omp atomic
-        *(Uelm->value) += Uelm_;
+        *Uelm += Uelm_;
     }
     
     // Lost/added elm energies through the moving window
@@ -472,10 +462,8 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         double Uelm_inj_mvw_=EMfields->getNewFieldsNRJ();
         Uelm_inj_mvw_ *= 0.5*cell_volume;
         
-        #pragma omp atomic
-        *(Uelm_out_mvw->value) += Uelm_out_mvw_;
-        #pragma omp atomic
-        *(Uelm_inj_mvw->value) += Uelm_inj_mvw_;
+        *Uelm_out_mvw += Uelm_out_mvw_;
+        *Uelm_inj_mvw += Uelm_inj_mvw_ ;
     }
     
     EMfields->reinitDiags();
@@ -531,14 +519,8 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             
             #pragma omp critical
             {
-                if( minloc.val < *(fieldMin[ifield]->value) ){
-                    *(fieldMin[ifield]->value) = minloc.val;
-                    *(fieldMin[ifield]->loc  ) = minloc.index;
-                }
-                if( maxloc.val > *(fieldMax[ifield]->value) ){
-                    *(fieldMax[ifield]->value) = maxloc.val;
-                    *(fieldMax[ifield]->loc  ) = maxloc.index;
-                }
+                if( minloc.val < (double)*fieldMin[ifield] ) *fieldMin[ifield] = minloc;
+                if( maxloc.val > (double)*fieldMax[ifield] ) *fieldMax[ifield] = maxloc;
             }
         }
     }
@@ -553,10 +535,8 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     for (unsigned int j=0; j<2;j++) {//directions (xmin/xmax, ymin/ymax, zmin/zmax)
         for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {//axis 0=x, 1=y, 2=z
             if( necessary_poy[k] ) {
-                #pragma omp atomic
-                *(poy    [k]->value) += EMfields->poynting     [j][i];
-                #pragma omp atomic
-                *(poyInst[k]->value) += EMfields->poynting_inst[j][i];
+                *poy    [k] += EMfields->poynting     [j][i];
+                *poyInst[k] += EMfields->poynting_inst[j][i];
                 k++;
             }
             
@@ -565,8 +545,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     }// j
     
     if( necessary_Uelm_BC ) {
-        #pragma omp atomic
-        *(Uelm_bnd->value) += Uelm_bnd_;
+        *Uelm_bnd += Uelm_bnd_;
     }
     
 } // END compute
@@ -576,8 +555,8 @@ double DiagnosticScalar::getScalar(std::string key)
 {
     unsigned int k, s=allScalars.size();
     for(k=0; k<s; k++) {
-        if (allScalars[k]->name      ==key) return allScalars[k]->get();
-        if (allScalars[k]->secondname==key) return allScalars[k]->getloc();
+        if (allScalars[k]->name      ==key) return (double)*allScalars[k];
+        if (allScalars[k]->secondname==key) return (int)   *allScalars[k];
     }
     DEBUG("key not found " << key);
     return 0.0;

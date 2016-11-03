@@ -21,18 +21,55 @@ struct val_index
 //! Class for containing info on one particular scalar data
 class Scalar {
 public:
-    Scalar(std::string name, std::string secondname, unsigned int width, bool allowed, double * value, int * loc, double reset_value):
-        name(name), secondname(secondname), width(width), allowed(allowed), value(value), reset_value(reset_value), loc(loc)
+    Scalar(std::string name, std::string secondname, unsigned int width, bool allowed):
+        name(name), secondname(secondname), width(width), allowed(allowed)
         {};
     ~Scalar() {};
-    inline double get() { return *value; };
-    inline int getloc() { return loc?(*loc):0; };
-    inline void reset() { *value = reset_value; if(loc) *loc = -1; };
+    virtual inline operator double() const { return 0.; }
+    virtual inline int getloc() { return 0; };
+    virtual inline void reset() { };
     std::string name, secondname;
     unsigned int width;
     bool allowed;
-    double * value, reset_value;
-    int * loc;
+};
+class Scalar_value : public Scalar {
+public:
+    Scalar_value(std::string name, unsigned int width, bool allowed, std::vector<double>* values):
+        Scalar(name, "", width, allowed), values(values), index(values->size())
+        {};
+    ~Scalar_value() {};
+    inline Scalar_value& operator= (double v) {
+        (*values)[index] = v;
+        return *this;
+    };
+    inline Scalar_value& operator+= (double v) {
+        #pragma omp atomic
+        (*values)[index]+=v;
+        return *this;
+    };
+    inline operator double() const { return (*values)[index]; }
+    inline void reset() override { (*values)[index]=0.; };
+    std::vector<double>* values;
+    unsigned int index;
+private:
+};
+class Scalar_value_location : public Scalar {
+public:
+    Scalar_value_location(std::string name, std::string secondname, unsigned int width, bool allowed, std::vector<val_index>* values, double reset_value):
+        Scalar(name, secondname, width, allowed), values(values), index(values->size()), reset_value(reset_value)
+        {};
+    ~Scalar_value_location() {};
+    inline operator double() const { return (*values)[index].val; }
+    inline operator int() const { return (*values)[index].index; }
+    inline Scalar_value_location& operator= (val_index v) {
+        (*values)[index] = v;
+        return *this;
+    };
+    inline void reset() override { (*values)[index].val=reset_value; (*values)[index].index=-1; };
+    std::vector<val_index>* values;
+    unsigned int index;
+    double reset_value;
+private:
 };
 
 //! Class for the diagnostic of scalars
@@ -87,11 +124,11 @@ private :
     unsigned int calculateWidth( std::string key);
     
     //! sets a scalar in the list of scalars (for initialization)
-    Scalar* newScalar_SUM( std::string name );
+    Scalar_value* newScalar_SUM( std::string name );
     //! sets a scalar in the list of scalars (for initialization), in the case of min scalar
-    Scalar* newScalar_MINLOC( std::string name );
+    Scalar_value_location* newScalar_MINLOC( std::string name );
     //! sets a scalar in the list of scalars (for initialization), in the case of max scalar
-    Scalar* newScalar_MAXLOC( std::string name );
+    Scalar_value_location* newScalar_MAXLOC( std::string name );
     
     //! check if key is allowed
     bool allowedKey(std::string);
@@ -124,12 +161,12 @@ private :
     std::ofstream fout;
     
     //! Pointers to the various scalars
-    Scalar *Utot, *Uexp, *Ubal, *Ubal_norm;
-    Scalar *Uelm, *Ukin, *Uelm_bnd, *Ukin_bnd;
-    Scalar *Ukin_out_mvw, *Ukin_inj_mvw, *Uelm_out_mvw, *Uelm_inj_mvw;
-    std::vector<Scalar *> sDens, sNtot, sZavg, sUkin, fieldUelm;
-    std::vector<Scalar *> fieldMin, fieldMax;
-    std::vector<Scalar *> poy, poyInst;
+    Scalar_value *Utot, *Uexp, *Ubal, *Ubal_norm;
+    Scalar_value *Uelm, *Ukin, *Uelm_bnd, *Ukin_bnd;
+    Scalar_value *Ukin_out_mvw, *Ukin_inj_mvw, *Uelm_out_mvw, *Uelm_inj_mvw;
+    std::vector<Scalar_value *> sDens, sNtot, sZavg, sUkin, fieldUelm;
+    std::vector<Scalar_value_location *> fieldMin, fieldMax;
+    std::vector<Scalar_value *> poy, poyInst;
     
     //! Booleans to tell which scalars should be computed or not
     bool necessary_Ubal_norm, necessary_Ubal, necessary_Utot, necessary_Uexp;

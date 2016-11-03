@@ -914,47 +914,47 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
         // Calculate average Z
         for(unsigned int ispec=0; ispec<scalars->sDens.size(); ispec++)
             if( scalars->necessary_species[ispec])
-                *(scalars->sZavg[ispec]->value) /= *(scalars->sDens[ispec]->value);
+                *scalars->sZavg[ispec] = (double)*scalars->sZavg[ispec] / (double)*scalars->sDens[ispec];
         
         // total energy in the simulation
         if( scalars->necessary_Utot || (scalars->necessary_Uexp && timestep==0) ) {
-            double Ukin = *(scalars->Ukin->value);
-            double Uelm = *(scalars->Uelm->value);
-            *(scalars->Utot->value) = Ukin + Uelm;
+            double Ukin = *scalars->Ukin;
+            double Uelm = *scalars->Uelm;
+            *scalars->Utot = Ukin + Uelm;
         }
         
         // expected total energy
         if( scalars->necessary_Uexp ) {
             // total energy at time 0
-            if (timestep==0) scalars->Energy_time_zero = *(scalars->Utot->value);
+            if (timestep==0) scalars->Energy_time_zero = *scalars->Utot;
             // Global kinetic energy, and BC losses/gains
-            double Ukin_bnd = *(scalars->Ukin_bnd->value);
-            double Ukin_out_mvw = *(scalars->Ukin_out_mvw->value);
-            double Ukin_inj_mvw = *(scalars->Ukin_inj_mvw->value);
+            double Ukin_bnd     = *scalars->Ukin_bnd    ;
+            double Ukin_out_mvw = *scalars->Ukin_out_mvw;
+            double Ukin_inj_mvw = *scalars->Ukin_inj_mvw;
             // Global elm energy, and BC losses/gains
-            double Uelm_bnd = *(scalars->Uelm_bnd->value);
-            double Uelm_out_mvw = *(scalars->Uelm_out_mvw->value);
-            double Uelm_inj_mvw = *(scalars->Uelm_inj_mvw->value);
+            double Uelm_bnd     = *scalars->Uelm_bnd    ;
+            double Uelm_out_mvw = *scalars->Uelm_out_mvw;
+            double Uelm_inj_mvw = *scalars->Uelm_inj_mvw;
             // expected total energy
             double Uexp = scalars->Energy_time_zero + Uelm_bnd + Ukin_inj_mvw + Uelm_inj_mvw
                 -  ( Ukin_bnd + Ukin_out_mvw + Uelm_out_mvw );
-            *(scalars->Uexp->value) = Uexp;
+            *scalars->Uexp = Uexp;
         }
         
         if( scalars->necessary_Ubal ) {
             // energy balance
-            double Ubal = *(scalars->Utot->value) - *(scalars->Uexp->value);
-            *(scalars->Ubal->value) = Ubal;
+            double Ubal = (double)*scalars->Utot - (double)*scalars->Uexp;
+            *scalars->Ubal = Ubal;
             
             if( scalars->necessary_Ubal_norm ) {
                 // the normalized energy balanced is normalized with respect to the current energy
-                scalars->EnergyUsedForNorm = *(scalars->Utot->value);
+                scalars->EnergyUsedForNorm = *scalars->Utot;
                 // normalized energy balance
                 double Ubal_norm(0.);
                 if (scalars->EnergyUsedForNorm>0.)
                     Ubal_norm = Ubal / scalars->EnergyUsedForNorm;
                 
-                *(scalars->Ubal_norm->value) = Ubal_norm;
+                *scalars->Ubal_norm = Ubal_norm;
             }
         }
         
