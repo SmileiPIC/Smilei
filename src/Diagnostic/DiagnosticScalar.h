@@ -117,6 +117,9 @@ public :
         return (timestep % print_every == 0);
     }
     
+    //! True if printout is needed now
+    bool print_now;
+    
 private :
     
     //! Calculate the length of a string when output to the file

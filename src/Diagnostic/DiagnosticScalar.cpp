@@ -136,8 +136,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     // -------------------------------------------------------------------------
     
     // General scalars
-    necessary_Ubal_norm = true;//temporarily for print_every
-//    necessary_Ubal_norm    = allowedKey("Ubal_norm");
+    necessary_Ubal_norm = allowedKey("Ubal_norm");
     necessary_Ubal    = necessary_Ubal_norm || allowedKey("Ubal");
     necessary_Utot    = necessary_Ubal || allowedKey("Utot");
     necessary_Uexp    = necessary_Ubal || allowedKey("Uexp");
@@ -191,18 +190,18 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     values_MAXLOC.reserve( 10 );
     
     // General scalars
-    Ubal_norm    = necessary_Ubal_norm ? newScalar_SUM( "Ubal_norm"    ) : NULL;
-    Ubal         = necessary_Ubal      ? newScalar_SUM( "Ubal"         ) : NULL;
-    Utot         = necessary_Uexp      ? newScalar_SUM( "Utot"         ) : NULL;
-    Uexp         = necessary_Uexp      ? newScalar_SUM( "Uexp"         ) : NULL;
-    Ukin         = necessary_Uexp      ? newScalar_SUM( "Ukin"         ) : NULL;
-    Uelm         = necessary_Uexp      ? newScalar_SUM( "Uelm"         ) : NULL;
-    Ukin_bnd     = necessary_Ukin_BC   ? newScalar_SUM( "Ukin_bnd"     ) : NULL;
-    Ukin_out_mvw = necessary_Ukin_BC   ? newScalar_SUM( "Ukin_out_mvw" ) : NULL;
-    Ukin_inj_mvw = necessary_Ukin_BC   ? newScalar_SUM( "Ukin_inj_mvw" ) : NULL;
-    Uelm_bnd     = necessary_Uelm_BC   ? newScalar_SUM( "Uelm_bnd"     ) : NULL;
-    Uelm_out_mvw = necessary_Uelm_BC   ? newScalar_SUM( "Uelm_out_mvw" ) : NULL;
-    Uelm_inj_mvw = necessary_Uelm_BC   ? newScalar_SUM( "Uelm_inj_mvw" ) : NULL;
+    Ubal_norm    = newScalar_SUM( "Ubal_norm"    );
+    Ubal         = newScalar_SUM( "Ubal"         );
+    Utot         = newScalar_SUM( "Utot"         );
+    Uexp         = newScalar_SUM( "Uexp"         );
+    Ukin         = newScalar_SUM( "Ukin"         );
+    Uelm         = newScalar_SUM( "Uelm"         );
+    Ukin_bnd     = newScalar_SUM( "Ukin_bnd"     );
+    Ukin_out_mvw = newScalar_SUM( "Ukin_out_mvw" );
+    Ukin_inj_mvw = newScalar_SUM( "Ukin_inj_mvw" );
+    Uelm_bnd     = newScalar_SUM( "Uelm_bnd"     );
+    Uelm_out_mvw = newScalar_SUM( "Uelm_out_mvw" );
+    Uelm_inj_mvw = newScalar_SUM( "Uelm_inj_mvw" );
     
     // Scalars related to species
     sDens.resize(nspec, NULL);
@@ -210,7 +209,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     sZavg.resize(nspec, NULL);
     sUkin.resize(nspec, NULL);
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
-        if( necessary_species[ispec] || necessary_Uexp ) {
+        if (! vecPatches(0)->vecSpecies[ispec]->particles->isTest) {
             species_type = vecPatches(0)->vecSpecies[ispec]->species_type;
             sDens[ispec] = newScalar_SUM( "Dens_"+species_type );
             sNtot[ispec] = newScalar_SUM( "Ntot_"+species_type );
@@ -223,8 +222,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     nfield = 6;
     fieldUelm.resize(nfield, NULL);
     for( unsigned int ifield=0; ifield<nfield; ifield++ )
-        if( necessary_fieldUelm[ifield] || necessary_Uexp )
-            fieldUelm[ifield] = newScalar_SUM( "Uelm_"+fields[ifield] );
+        fieldUelm[ifield] = newScalar_SUM( "Uelm_"+fields[ifield] );
     
     // Scalars related to fields min and max
     nfield = fields.size();
@@ -243,13 +241,11 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     k = 0;
     for (unsigned int j=0; j<2;j++) {
         for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {
-            if( necessary_poy[k] ) {
-                if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
-                else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
-                else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
-                poy    [k] = newScalar_SUM( poy_name        );
-                poyInst[k] = newScalar_SUM( poy_name+"Inst" );
-            }
+            if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
+            else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
+            else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
+            poy    [k] = newScalar_SUM( poy_name        );
+            poyInst[k] = newScalar_SUM( poy_name+"Inst" );
             k++;
         }
     }
@@ -259,8 +255,10 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
 
 bool DiagnosticScalar::prepare( int timestep )
 {
+    print_now = printNow(timestep);
+    
     // At the right timestep, reset the scalars
-    if ( printNow(timestep) || timeSelection->theTimeIsNow(timestep) )
+    if ( print_now || timeSelection->theTimeIsNow(timestep) )
         for (unsigned int iscalar=0 ; iscalar<allScalars.size() ; iscalar++)
             allScalars[iscalar]->reset();
     
@@ -275,7 +273,7 @@ void DiagnosticScalar::run( Patch* patch, int timestep )
     patch->EMfields->computePoynting(); 
     
     // Compute all scalars when needed
-    if ( printNow(timestep) || timeSelection->theTimeIsNow(timestep) )
+    if ( print_now || timeSelection->theTimeIsNow(timestep) )
         compute( patch, timestep );
 
 } // END run
@@ -341,13 +339,11 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     double Ukin_out_mvw_=0.;     // total energy lost due to particles being suppressed by the moving-window
     double Ukin_inj_mvw_=0.;     // total energy added due to particles created by the moving-window
     
-    bool forceNow = necessary_Uexp && timestep==0;
-    
     // Compute scalars for each species
     for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
         if (vecSpecies[ispec]->particles->isTest) continue;    // No scalar diagnostic for test particles
         
-        if( necessary_species[ispec] || forceNow ) {
+        if( necessary_species[ispec] || print_now ) {
             double density=0.0;  // sum of weights of current species ispec
             double charge=0.0;   // sum of charges of current species ispec
             double ener_tot=0.0; // total kinetic energy of current species ispec
@@ -372,7 +368,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             Ukin_ += cell_volume * ener_tot;
         }
         
-        if( necessary_Ukin_BC ) {
+        if( necessary_Ukin_BC || print_now ) {
             // particle energy lost due to boundary conditions
             double ener_lost_bcs=0.0;
             ener_lost_bcs = vecSpecies[ispec]->getLostNrjBC();
@@ -395,10 +391,10 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     } // for ispec
     
     // Add the calculated energies to the data arrays
-    if( necessary_Ukin || forceNow ) {
+    if( necessary_Ukin || print_now ) {
         *Ukin += Ukin_;
     }
-    if( necessary_Ukin_BC ) {
+    if( necessary_Ukin_BC || print_now ) {
         *Ukin_bnd     += Ukin_bnd_     ;
         *Ukin_out_mvw += Ukin_out_mvw_ ;
         *Ukin_inj_mvw += Ukin_inj_mvw_ ;
@@ -423,7 +419,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     unsigned int nfield = fields.size();
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
         
-        if( necessary_fieldUelm[ifield] || forceNow ) {
+        if( necessary_fieldUelm[ifield] || print_now ) {
             double Utot_crtField=0.0; // total energy in current field
             Field * field = fields[ifield];
             // compute the starting/ending points of each fields (w/out ghost cells) as well as the field global size
@@ -452,12 +448,12 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     }
     
     // Total elm energy
-    if( necessary_Uelm || forceNow ) {
+    if( necessary_Uelm || print_now ) {
         *Uelm += Uelm_;
     }
     
     // Lost/added elm energies through the moving window
-    if( necessary_Uelm_BC ) {
+    if( necessary_Uelm_BC || print_now ) {
         // nrj lost with moving window (fields)
         double Uelm_out_mvw_ = EMfields->getLostNrjMW();
         Uelm_out_mvw_ *= 0.5*cell_volume;
@@ -538,7 +534,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     unsigned int k=0;
     for (unsigned int j=0; j<2;j++) {//directions (xmin/xmax, ymin/ymax, zmin/zmax)
         for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {//axis 0=x, 1=y, 2=z
-            if( necessary_poy[k] ) {
+            if( necessary_poy[k] || print_now ) {
                 *poy    [k] += EMfields->poynting     [j][i];
                 *poyInst[k] += EMfields->poynting_inst[j][i];
                 k++;
@@ -548,7 +544,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         }// i
     }// j
     
-    if( necessary_Uelm_BC ) {
+    if( necessary_Uelm_BC || print_now ) {
         *Uelm_bnd += Uelm_bnd_;
     }
     
