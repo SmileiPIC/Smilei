@@ -283,7 +283,7 @@ void DiagnosticScalar::run( Patch* patch, int timestep )
 
 void DiagnosticScalar::write(int itime)
 {
-    unsigned int k, s = allScalars.size();
+    unsigned int j, k, s = allScalars.size();
     
     if ( ! timeSelection->theTimeIsNow(itime) ) return;
     
@@ -292,11 +292,15 @@ void DiagnosticScalar::write(int itime)
     if (fout.tellp()==ifstream::pos_type(0)) { // file beginning
         // First header: list of scalars, one by line
         fout << "# " << 1 << " time" << endl;
+        j = 2;
         for(k=0; k<s; k++) {
             if( allScalars[k]->allowed ) {
-                fout << "# " << (k+2) << " " << allScalars[k]->name << endl;
-                if( ! allScalars[k]->secondname.empty() )
-                    fout << "# " << (k+2) << " " << allScalars[k]->secondname << endl;
+                fout << "# " << j << " " << allScalars[k]->name << endl;
+                j++;
+                if( ! allScalars[k]->secondname.empty() ) {
+                    fout << "# " << j << " " << allScalars[k]->secondname << endl;
+                    j++;
+                }
             }
         }
         // Second header: list of scalars, but all in one line
