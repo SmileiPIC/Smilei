@@ -226,6 +226,7 @@ def polynomial(**kwargs):
         raise Exception("polynomial profile has been defined before `Main()`")
     x0 = 0.
     y0 = 0.
+    z0 = 0.
     coeffs = dict()
     for k, a in kwargs.items():
         if   k=="x0":
@@ -236,8 +237,15 @@ def polynomial(**kwargs):
             if type(a) is not list: a = [a]
             order = int(k[5:])
             coeffs[ order ] = a
-            if Main.geometry=="1d3v" and len(a)!=1:
-                raise Exception("1D polynomial profile must have one coefficient per order")
+            if Main.geometry=="1d3v":
+                if len(a)!=1:
+                    raise Exception("1D polynomial profile must have one coefficient at order "+str(order))
+            elif Main.geometry=="2d3v":
+                if len(a)!=order+1:
+                    raise Exception("2D polynomial profile must have "+str(order+1)+" coefficients at order "+str(order))
+            elif Main.geometry=="3d3v":
+                if len(a)!=(order+1)*(order+2)/2:
+                    raise Exception("3D polynomial profile must have "+str((order+1)*(order+2)/2)+" coefficients at order "+str(order))
     if Main.geometry=="1d3v":
         def f(x):
             r = 0.
@@ -260,9 +268,24 @@ def polynomial(**kwargs):
             for order, c in sorted(coeffs.items()):
                 while currentOrder<order:
                     currentOrder += 1
-                    last = xx[-1]*yy0
-                    xx = [ xxx * xx0 for xxx in xx ]
-                    xx.append(last)
+                    yy = xx[-1]*yy0
+                    xx = [ xxx * xx0 for xxx in xx ] . append(yy)
+                for i in range(order+1): r += c[i]*xx[i]
+            return r
+    elif Main.geometry=="3d3v":
+        def f(x,y,z):
+            r = 0.
+            xx0 = x-x0
+            yy0 = y-y0
+            zz0 = z-z0
+            xx = [1.]
+            currentOrder = 0
+            for order, c in sorted(coeffs.items()):
+                while currentOrder<order:
+                    currentOrder += 1
+                    zz = xx[-1]*zz0
+                    yy = [ xxx * yy0 for xxx in xx[-currentOrder-1:] ] . append(zz)
+                    xx = [ xxx * xx0 for xxx in xx ] . extend(yy)
                 for i in range(order+1): r += c[i]*xx[i]
             return r
     else:
@@ -270,6 +293,7 @@ def polynomial(**kwargs):
     f.profileName = "polynomial"
     f.x0 = x0
     f.y0 = y0
+    f.z0 = z0
     f.orders = []
     f.coeffs = []
     for order, c in sorted(coeffs.items()):
@@ -484,7 +508,7 @@ def LaserGaussian2D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., inci
         phase          = [ lambda y:phase(y)-phaseZero+dephasing, lambda y:phase(y)-phaseZero ],
     )
 
-def LaserGaussian3D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=0.,
+def LaserGaussian3D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=[0.,0.],
         polarizationPhi=0., ellipticity=0., time_envelope=tconstant()):
     import math
     # Polarization and amplitude
@@ -494,7 +518,7 @@ def LaserGaussian3D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., inci
     # Space and phase envelopes
     Zr = omega * waist**2/2.
     phaseZero = 0.
-    if incidence_angle == 0.:
+    if incidence_angle == [0.,0.]:
         w  = math.sqrt(1./(1.+(focus[0]/Zr)**2))
         invWaist2 = (w/waist)**2
         coeff = -omega * focus[0] * w**2 / (2.*Zr**2)
@@ -503,21 +527,25 @@ def LaserGaussian3D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., inci
         def phase(y,z):
             return coeff * ( (y-focus[1])**2 + (z-focus[2])**2 )
     else:
-        raise Exception("3D laser not implemented with non-zero incidence angle yet")
-        #invZr  = math.sin(incidence_angle) / Zr
-        #invZr2 = invZr**2
-        #invZr3 = (math.cos(incidence_angle) / Zr)**2 / 2.
-        #invWaist2 = (math.cos(incidence_angle) / waist)**2
-        #omega_ = omega * math.sin(incidence_angle)
-        #Y1 = focus[1] + focus[0]/math.tan(incidence_angle)
-        #Y2 = focus[1] - focus[0]*math.tan(incidence_angle)
-        #def spatial(y):
-        #    w2 = 1./(1. + invZr2*(y-Y1)**2)
-        #    return math.sqrt(w2) * math.exp( -invWaist2*w2*(y-Y2)**2 )
-        #def phase(y):
-        #    dy = y-Y1
-        #    return omega_*dy*(1.+ invZr3*(y-Y2)**2/(1.+invZr2*dy**2)) + math.atan(invZr*dy)
-        #phaseZero = phase(Y2)
+        invZr = 1./Zr
+        invW  = 1./waist
+        alpha = omega * Zr
+        cy = math.cos(incidence_angle[0]); sy = math.sin(incidence_angle[0])
+        cz = math.cos(incidence_angle[1]); sz = math.sin(incidence_angle[1])
+        cycz = cy*cz; cysz = cy*sz; sycz = sy*cz; sysz = sy*sz
+        def spatial(y,z):
+            X = invZr * (-focus[0]*cycz + (y-focus[1])*cysz - (z-focus[2])*sy )
+            Y = invW  * ( focus[0]*sz   + (y-focus[1])*cz                     )
+            Z = invW  * (-focus[0]*sycz + (y-focus[1])*sysz + (z-focus[2])*cy )
+            invW2 = 1./(1.+X**2)
+            return math.sqrt(invW2) * math.exp(-(Y**2+Z**2)*invW2)
+        def phase(y,z):
+            X = invZr * (-focus[0]*cycz + (y-focus[1])*cysz - (z-focus[2])*sy )
+            Y = invZr * ( focus[0]*sz   + (y-focus[1])*cz                     )
+            Z = invZr * (-focus[0]*sycz + (y-focus[1])*sysz + (z-focus[2])*cy )
+            return alpha * X*(1.+0.5*(Y**2+Z**2)/(1.+X**2)) - math.atan(X)
+        phaseZero = phase(focus[1]-sz/cz*focus[0], focus[2]+sy/cy/cz*focus[0])
+        
     # Create Laser
     Laser(
         boxSide        = boxSide,

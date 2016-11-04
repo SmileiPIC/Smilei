@@ -210,10 +210,7 @@ void DiagnosticTrack::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatc
 
 bool DiagnosticTrack::prepare( int timestep )
 {
-    if( ! timeSelection->theTimeIsNow(timestep) ) return false;
-    
-    return true;
-
+    return timeSelection->theTimeIsNow(timestep);
 }
 
 

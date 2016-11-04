@@ -430,6 +430,28 @@ private:
 };
 
 
+class Function_Polygonal3D : public Function
+{
+public:
+    Function_Polygonal3D ( PyObject *py_profile ) {
+        PyTools::getAttr(py_profile, "xpoints" , xpoints );
+        PyTools::getAttr(py_profile, "xvalues" , xvalues );
+        PyTools::getAttr(py_profile, "xslopes" , xslopes );
+        npoints = xpoints.size();
+    };
+    Function_Polygonal3D ( Function_Polygonal3D *f ) {
+        xpoints = f->xpoints;
+        xvalues = f->xvalues;
+        xslopes = f->xslopes;
+        npoints = xpoints.size();
+    };
+    double valueAt(std::vector<double>);
+private:
+    std::vector<double> xpoints, xvalues, xslopes;
+    int npoints;
+};
+
+
 class Function_Cosine1D : public Function
 {
 public:
@@ -561,15 +583,18 @@ public:
         PyTools::getAttr(py_profile, "orders", orders );
         PyTools::getAttr(py_profile, "coeffs", coeffs );
         PyTools::getAttr(py_profile, "x0"    , x0     );
+        n_orders = orders.size();
     };
     Function_Polynomial1D ( Function_Polynomial1D *f ) {
-        orders = f->orders;
-        coeffs = f->coeffs;
-        x0     = f->x0    ;
+        orders   = f->orders;
+        coeffs   = f->coeffs;
+        x0       = f->x0    ;
+        n_orders = f->n_orders;
     };
     double valueAt(std::vector<double>);
 private:
     double x0;
+    unsigned int n_orders;
     std::vector<unsigned int> orders;
     std::vector<std::vector<double> > coeffs;
 };
@@ -586,16 +611,54 @@ public:
         for( unsigned int i=0; i<orders.size(); i++)
             if( coeffs[i].size() != orders[i]+1 )
                 ERROR("2D polynomial profile has a wrong number of coefficients for order "<<orders[i]);
+        n_orders = orders.size();
+        n_coeffs = orders.back()+1;
     };
     Function_Polynomial2D ( Function_Polynomial2D *f ) {
-        orders = f->orders;
-        coeffs = f->coeffs;
-        x0     = f->x0    ;
-        y0     = f->y0    ;
+        orders   = f->orders;
+        coeffs   = f->coeffs;
+        x0       = f->x0    ;
+        y0       = f->y0    ;
+        n_orders = f->n_orders;
+        n_coeffs = f->n_coeffs;
     };
     double valueAt(std::vector<double>);
 private:
     double x0, y0;
+    unsigned int n_orders, n_coeffs;
+    std::vector<unsigned int> orders;
+    std::vector<std::vector<double> > coeffs;
+};
+
+
+class Function_Polynomial3D : public Function
+{
+public:
+    Function_Polynomial3D ( PyObject *py_profile ) {
+        PyTools::getAttr(py_profile, "orders", orders );
+        PyTools::getAttr(py_profile, "coeffs", coeffs );
+        PyTools::getAttr(py_profile, "x0"    , x0     );
+        PyTools::getAttr(py_profile, "y0"    , y0     );
+        PyTools::getAttr(py_profile, "z0"    , z0     );
+        for( unsigned int i=0; i<orders.size(); i++)
+            if( coeffs[i].size() != (orders[i]+1)*(orders[i]+2)/2 )
+                ERROR("3D polynomial profile has a wrong number of coefficients for order "<<orders[i]);
+        n_coeffs = (orders.back()+1)*(orders.back()+2)/2;
+        n_orders = orders.size();
+    };
+    Function_Polynomial3D ( Function_Polynomial3D *f ) {
+        orders   = f->orders;
+        coeffs   = f->coeffs;
+        x0       = f->x0    ;
+        y0       = f->y0    ;
+        z0       = f->z0    ;
+        n_orders = f->n_orders;
+        n_coeffs = f->n_coeffs;
+    };
+    double valueAt(std::vector<double>);
+private:
+    double x0, y0, z0;
+    unsigned int n_orders, n_coeffs;
     std::vector<unsigned int> orders;
     std::vector<std::vector<double> > coeffs;
 };
