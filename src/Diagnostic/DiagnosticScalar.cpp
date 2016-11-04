@@ -318,7 +318,7 @@ void DiagnosticScalar::write(int itime)
         if( allScalars[k]->allowed ) {
             fout << setw(allScalars[k]->width) << (double)*allScalars[k];
             if( ! allScalars[k]->secondname.empty() )
-                fout << setw(allScalars[k]->width) << (int)*allScalars[k];
+                fout << setw(allScalars[k]->width) << (int)*static_cast<Scalar_value_location*>(allScalars[k]);
         }
     }
     fout << endl;
