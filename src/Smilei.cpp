@@ -395,7 +395,7 @@ void check_memory_consumption(VectorPatch& vecPatches, SmileiMPI* smpi)
     // fieldsMem contains field per species
     int fieldsMem(0);
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-        fieldsMem = vecPatches(ipatch)->EMfields->getMemFootPrint();
+        fieldsMem += vecPatches(ipatch)->EMfields->getMemFootPrint();
     MESSAGE( 1, "(Master) Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " Mo" );
 
     double dFieldsMem = (double)fieldsMem / 1024./1024./1024.;
