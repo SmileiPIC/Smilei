@@ -15,10 +15,11 @@ class Scalar(Diagnostic):
 				self._error += "---------------------------\n"
 				l = [""]
 				for s in scalars:
-					if s[:3] != l[-1][:3] and s[-2:]!=l[-1][-2:]:
+					if len(s)>4 and s[:2]!=l[-1][:2] and s[-2:]!=l[-1][-2:]:
 						if l!=[""]: self._error += "\t".join(l)+"\n"
 						l = []
 					l.append(s)
+				if l!=[""]: self._error += "\t".join(l)+"\n"
 			else:
 				self._error += "No scalars found"
 			return

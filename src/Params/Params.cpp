@@ -225,12 +225,17 @@ namelist("")
     if (bc_em_type_x.size()==1) { // if just one type is specified, then take the same bc type in a given dimension
         bc_em_type_x.resize(2); bc_em_type_x[1]=bc_em_type_x[0];
     }
+    if ( (bc_em_type_x[0] != bc_em_type_x[1]) &&  (bc_em_type_x[0] == "periodic" || bc_em_type_x[1] == "periodic") )  
+        ERROR("Electromagnetic boundary conditions type (bc_em_type_x) must be periodic at both xmin and xmax sides." );
+
     if ( geometry == "2d3v" || geometry == "3d3v" ) {
         if ( !PyTools::extract("bc_em_type_y", bc_em_type_y, "Main") )
             ERROR("Electromagnetic boundary condition type (bc_em_type_y) not defined" );
         if (bc_em_type_y.size()==1) { // if just one type is specified, then take the same bc type in a given dimension
             bc_em_type_y.resize(2); bc_em_type_y[1]=bc_em_type_y[0];
         }
+        if ( (bc_em_type_y[0] != bc_em_type_y[1]) &&  (bc_em_type_y[0] == "periodic" || bc_em_type_y[1] == "periodic") )  
+            ERROR("Electromagnetic boundary conditions type (bc_em_type_y) must be periodic at both ymin and ymax sides." );
     }
     if ( geometry == "3d3v" ) {
         if ( !PyTools::extract("bc_em_type_z", bc_em_type_z, "Main") )
@@ -238,6 +243,8 @@ namelist("")
         if (bc_em_type_z.size()==1) { // if just one type is specified, then take the same bc type in a given dimension
             bc_em_type_z.resize(2); bc_em_type_z[1]=bc_em_type_z[0];
         }
+        if ( (bc_em_type_z[0] != bc_em_type_z[1]) &&  (bc_em_type_z[0] == "periodic" || bc_em_type_z[1] == "periodic") )  
+            ERROR("Electromagnetic boundary conditions type (bc_em_type_z) must be periodic at both zmin and zmax sides." );
     }
     
     // Maxwell Solver 

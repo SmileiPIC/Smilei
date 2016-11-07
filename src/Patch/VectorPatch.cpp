@@ -205,10 +205,12 @@ void VectorPatch::initExternals(Params& params)
 void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
 {
     // Global diags: scalars + particles
-    for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++)
+    for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
+        globalDiags[idiag]->init(params, smpi, *this);
         // MPI master creates the file
         if( smpi->isMaster() )
             globalDiags[idiag]->openFile( params, smpi, true );
+    }
     
     // Local diags : fields, probes, tracks
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
@@ -273,10 +275,14 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     }
     
     // Local diags : fields, probes, tracks
-    for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
+    for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
+        #pragma omp single
+        localDiags[idiag]->theTimeIsNow = localDiags[idiag]->prepare( itime );
+        #pragma omp barrier
         // All MPI run their stuff and write out
-        if( localDiags[idiag]->prepare( itime ) )
+        if( localDiags[idiag]->theTimeIsNow )
             localDiags[idiag]->run( smpi, *this, itime );
+    }
     
     // Manage the "diag_flag" parameter, which indicates whether Rho and Js were used
     if( *diag_flag > 0 ) {
