@@ -1139,8 +1139,9 @@ The full list of scalars that are saved by this diagnostic:
 +----------------+---------------------------------------------------------------------------+
 | **Species information**                                                                    |
 +----------------+---------------------------------------------------------------------------+
-| | Zavg_abc     | | Average charge of species "abc"                                         |
-| | Ukin_abc     | |  ... their kinetic energy                                               |
+| | Dens_abc     | | Average density of species "abc"                                        |
+| | Zavg_abc     | |  ... its average charge                                                 |
+| | Ukin_abc     | |  ... its total kinetic energy                                           |
 | | Ntot_abc     | |  ... and number of particles                                            |
 +----------------+---------------------------------------------------------------------------+
 | **Fields information**                                                                     |
@@ -1150,9 +1151,9 @@ The full list of scalars that are saved by this diagnostic:
 | | ExMax        | | Maximum of :math:`E_x`                                                  |
 | | ExMaxCell    | |  ... and its location (cell index)                                      |
 | |              | | ... same for fields Ey Ez Bx_m By_m Bz_m Jx Jy Jz Rho                   |
-| | PoyXmax      | | Accumulated Poynting flux through xmax boundary                         |
-| | PoyXmaxInst  | | Current Poynting flux through xmax boundary                             |
-| |              | |  ... same for boundaries xmin ymin ymax zmin zmax                       |
+| | PoyXmin      | | Accumulated Poynting flux through xmin boundary                         |
+| | PoyXminInst  | | Current Poynting flux through xmin boundary                             |
+| |              | |  ... same for other boundaries                                          |
 +----------------+---------------------------------------------------------------------------+
 
 Checkout the :doc:`post-processing <post-processing>` documentation as well.

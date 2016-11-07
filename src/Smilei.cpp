@@ -209,31 +209,6 @@ int main (int argc, char* argv[])
         
         if ( vecPatches.needsRhoJsNow(itime) ) diag_flag = 1;
         
-        // pritn message at given time-steps
-        // --------------------------------
-        timer[0].update();
-        if ( vecPatches.printScalars( itime ) &&  ( smpi->isMaster() ) ) {
-            old_print_time = this_print_time;
-            this_print_time=timer[0].getTime();
-            ostringstream my_msg;
-            my_msg << setw(log10(params.n_time)+1) << itime <<
-            "/"     << setw(log10(params.n_time)+1) << params.n_time <<
-            " t="          << scientific << setprecision(3)   << time_dual << " [Time unit] "    <<
-             scientific << setprecision(1)   << this_print_time << " sec "    <<
-            " ("    << scientific << setprecision(4)   << this_print_time - old_print_time << " sec)" <<
-            "  Utot= "   << scientific << setprecision(4)<< vecPatches.getScalar("Utot") <<
-            "  Uelm= "   << scientific << setprecision(4)<< vecPatches.getScalar("Uelm") <<
-            "  Ukin= "   << scientific << setprecision(4)<< vecPatches.getScalar("Ukin") <<
-            "  Ubal(%)= "<< scientific << fixed << setprecision(2) << 100.0*vecPatches.getScalar("Ubal_norm");
-            if ( simWindow->isActive() ) {
-                double Uinj_mvw = vecPatches.getScalar("Uelm_inj_mvw") + vecPatches.getScalar("Ukin_inj_mvw");
-                double Uout_mvw = vecPatches.getScalar("Uelm_out_mvw") + vecPatches.getScalar("Ukin_out_mvw");
-                my_msg << "  Uinj_mvw = " << scientific << setprecision(4) << Uinj_mvw <<
-                "  Uout_mvw = " << scientific << setprecision(4) << Uout_mvw;
-            }//simWindow
-            MESSAGE(my_msg.str());
-        }
-        
         #pragma omp parallel shared (time_dual,smpi,params, vecPatches, simWindow)
         {
             // apply collisions if requested
@@ -292,6 +267,30 @@ int main (int argc, char* argv[])
         
         latestTimeStep = itime;
         
+        // pritn message at given time-steps
+        // --------------------------------
+        timer[0].update();
+        if ( vecPatches.printScalars( itime ) &&  ( smpi->isMaster() ) ) {
+            old_print_time = this_print_time;
+            this_print_time=timer[0].getTime();
+            ostringstream my_msg;
+            my_msg << setw(log10(params.n_time)+1) << itime <<
+            "/"     << setw(log10(params.n_time)+1) << params.n_time <<
+            " t="          << scientific << setprecision(3)   << time_dual << " [Time unit] "    <<
+             scientific << setprecision(1)   << this_print_time << " sec "    <<
+            " ("    << scientific << setprecision(4)   << this_print_time - old_print_time << " sec)" <<
+            "  Utot= "   << scientific << setprecision(4)<< vecPatches.getScalar("Utot") <<
+            "  Uelm= "   << scientific << setprecision(4)<< vecPatches.getScalar("Uelm") <<
+            "  Ukin= "   << scientific << setprecision(4)<< vecPatches.getScalar("Ukin") <<
+            "  Ubal(%)= "<< scientific << fixed << setprecision(2) << 100.0*vecPatches.getScalar("Ubal_norm");
+            if ( simWindow->isActive() ) {
+                double Uinj_mvw = vecPatches.getScalar("Uelm_inj_mvw") + vecPatches.getScalar("Ukin_inj_mvw");
+                double Uout_mvw = vecPatches.getScalar("Uelm_out_mvw") + vecPatches.getScalar("Ukin_out_mvw");
+                my_msg << "  Uinj_mvw = " << scientific << setprecision(4) << Uinj_mvw <<
+                "  Uout_mvw = " << scientific << setprecision(4) << Uout_mvw;
+            }//simWindow
+            MESSAGE(my_msg.str());
+        }
     }//END of the time loop
     
     smpi->barrier();
