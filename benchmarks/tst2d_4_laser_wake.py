@@ -92,6 +92,6 @@ DiagProbe(
 
 DiagScalar(
     every = 10, 
-    vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMin', 'RhoMinCell']
+    vars=['Utot','Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMin', 'RhoMinCell']
 )
 

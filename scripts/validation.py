@@ -89,15 +89,21 @@
 # otherwise, default SMILEI_ROOT variable is the current directory (which must contain a smilei version).
 #
 # IMPORTS
-import Diagnostics
 import getopt
 import shutil
 import numpy as np
 import glob
 from subprocess import check_call,CalledProcessError,call
 import os
+import inspect
 import sys
 import socket
+this_script_dir = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
+s = os.sep
+module_dir = this_script_dir+s+'PythonModule'
+sys.path.insert(0, module_dir)
+from Smilei import *
+
 #
 # SMILEI PATH VARIABLES
 if "SMILEI_ROOT" in os.environ :
@@ -149,7 +155,7 @@ def scalarValidation(SCALAR_NAME,t):
   # COMPARES SCALAR_NAME VALUE AGAINST THE REFERENCE VALUE AT TIME t :
   #
   # FIND THE VALUE OF SCALAR_NAME in  scalars.txt
-  S = Diagnostics.Smilei(".")
+  S = Smilei(".")
   SCALAR = S.Scalar(SCALAR_NAME,timestep=t)
   VALEUR = SCALAR._getDataAtTime(t)
   #
@@ -157,7 +163,7 @@ def scalarValidation(SCALAR_NAME,t):
   shutil.copyfile('scalars.txt','scalars.txt_save')
   shutil.copyfile(SMILEI_REFERENCES+'/sca_'+BENCH, 'scalars.txt') 
   shutil.copyfile('smilei.py', 'smilei.py_save') 
-  Sref = Diagnostics.Smilei(".")
+  Sref = Smilei(".")
   SCALAR_REFERENCE = Sref.Scalar(SCALAR_NAME,timestep=t)
   VALEUR_REFERENCE = SCALAR_REFERENCE._getDataAtTime(t)
   os.rename('scalars.txt_save','scalars.txt')
@@ -184,12 +190,12 @@ def scalarListValidation(SCALAR_NAME,t) :
   # Check these scalars with the function scalarValidation()
   #
   it = np.int64(t)
-  L=Diagnostics.Scalar(".",scalar="Utot")
+  L=Smilei(".").Scalar(scalar="Utot")
   LISTE_SCALARS = L.getScalars()
   if SCALAR_NAME == "?":
     VERBOSE = True
     # Propose the list of all the scalars
-    L = Diagnostics.Scalar(".")
+    L = Scalar(".")
     print '\nEnter a scalar name from the above list (press <Enter> if no more scalar to check ):'
     SCALAR_NAME = raw_input()
     while SCALAR_NAME != "" :
@@ -365,8 +371,8 @@ else :
   STAT_SMILEI_R_OLD = ' '
 COMPILE_ERRORS='compilation_errors'
 COMPILE_OUT='compilation_out'
-COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS     
-CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python > /dev/null 2>&1;make clean > /dev/null 2>&1'
+COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS     
+CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
 # If the workdir does not contains a smilei bin, or it contains one older than the the smilei bin in directory smilei, force the compilation in order to generate the compilation_output
 #import pdb;pdb.set_trace()
 if not os.path.exists(WORKDIRS) :
@@ -430,12 +436,13 @@ for BENCH in SMILEI_BENCH_LIST :
 #        exec_script_desc.write( "\n")
         exec_script_desc.write( "\
     # environnement \n \
-module load intel/15.0.0 openmpi  hdf5/1.8.10_intel_openmpi python\n  \
+module load intel/15.0.0 openmpi  hdf5/1.8.10_intel_openmpi python gnu\n  \
 # \n \
 # execution \n \
 export OMP_NUM_THREADS="+str(OMP)+"\n \
 mpirun -bind-to-socket -np "+str(MPI)+" "+WORKDIRS+"/smilei "+SMILEI_BENCH+" >"+SMILEI_EXE_OUT+" \n exit $?  ")
         exec_script_desc.close()
+        SMILEI_EXE_OUT = 'smilei_exe.out'
     #
         # RUN  SMILEI
         COMMANDE = "/bin/bash "+EXEC_SCRIPT+" > "+EXEC_SCRIPT_OUT+" 2>&1"
@@ -522,7 +529,7 @@ echo $? > exit_status_file \n  ")
       print "Testing scalars :\n"
 #    import pdb;pdb.set_trace()
     VALID_OK = False
-    L=Diagnostics.Scalar(".",scalar="Utot") # scalar argument must be anything except none in order times is defined
+    L=Smilei(".").Scalar(scalar="Utot") # scalar argument must be anything except none in order times is defined
     LISTE_TIMESTEPS = L.getAvailableTimesteps()
     if OPT_TIMESTEP == False or VALID_ALL:
       # IF TIMESTEP NOT IN OPTIONS, COMPUTE THE LAST TIME STEP               

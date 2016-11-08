@@ -135,7 +135,7 @@ class Scalar(Diagnostic):
 		if not self._validate(): return
 		# Verify that the timestep is valid
 		if t not in self.times:
-			print("Timestep "+t+" not found in this diagnostic")
+			print("Timestep "+str(t)+" not found in this diagnostic")
 			return []
 		# Get value at selected time
 		A = self._values[ self._data[t] ]
