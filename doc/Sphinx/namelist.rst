@@ -1167,7 +1167,7 @@ Checkout the :doc:`post-processing <post-processing>` documentation as well.
 
 :program:`Smilei` can collect various field data (electromagnetic fields, currents and density)
 taken at the location of the PIC grid, both as instantaneous values and averaged values.
-This is done by including the block ``DiagScalar``::
+This is done by including a block ``DiagFields``::
 
   DiagFields(
       every = 10,
@@ -1195,8 +1195,6 @@ This is done by including the block ``DiagScalar``::
   :default: ``1`` *(no averaging)*
   
   The number of timesteps for time-averaging.
-  Note that only one diagnostic with averaging, and one diagnostic without averaging
-  can be defined.
 
 
 .. py:data:: fields
@@ -1212,8 +1210,12 @@ The full list of fields that are saved by this diagnostic:
 .. rst-class:: nowrap
 
 +----------------+-------------------------------------------------------+
+| | Bx           | |                                                     |
+| | By           | | Components of the magnetic field                    |
+| | Bz           | |                                                     |
++----------------+-------------------------------------------------------+
 | | Bx_m         | |                                                     |
-| | By_m         | | Components of the magnetic field                    |
+| | By_m         | | Components of the magnetic field (time-centered)    |
 | | Bz_m         | |                                                     |
 +----------------+-------------------------------------------------------+
 | | Ex           | |                                                     |
