@@ -83,14 +83,6 @@ isYmax(patch->isYmax())
     Jz_   = new Field2D(dimPrim, 2, false, "Jz");
     rho_  = new Field2D(dimPrim, "Rho" );
     
-    // Allocation of the time-averaged EM fields
-    Ex_avg  = new Field2D(dimPrim, 0, false, "Ex_avg");
-    Ey_avg  = new Field2D(dimPrim, 1, false, "Ey_avg");
-    Ez_avg  = new Field2D(dimPrim, 2, false, "Ez_avg");
-    Bx_avg  = new Field2D(dimPrim, 0, true,  "Bx_avg");
-    By_avg  = new Field2D(dimPrim, 1, true,  "By_avg");
-    Bz_avg  = new Field2D(dimPrim, 2, true,  "Bz_avg");
-    
     // Charge currents currents and density for each species
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
         Jx_s[ispec]  = new Field2D(dimPrim, 0, false, ("Jx_"+vecSpecies[ispec]->species_type).c_str());
@@ -528,73 +520,22 @@ void ElectroMagn2D::centerMagneticFields()
 
 
 
-// ---------------------------------------------------------------------------------------------------------------------
-// Reset/Increment the averaged fields
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn2D::incrementAvgFields(unsigned int time_step)
+// Create a new field
+Field * ElectroMagn2D::createField(string fieldname)
 {
-    // Static cast of the fields
-    Field2D* Ex2D     = static_cast<Field2D*>(Ex_);
-    Field2D* Ey2D     = static_cast<Field2D*>(Ey_);
-    Field2D* Ez2D     = static_cast<Field2D*>(Ez_);
-    Field2D* Bx2D_m   = static_cast<Field2D*>(Bx_m);
-    Field2D* By2D_m   = static_cast<Field2D*>(By_m);
-    Field2D* Bz2D_m   = static_cast<Field2D*>(Bz_m);
-    Field2D* Ex2D_avg = static_cast<Field2D*>(Ex_avg);
-    Field2D* Ey2D_avg = static_cast<Field2D*>(Ey_avg);
-    Field2D* Ez2D_avg = static_cast<Field2D*>(Ez_avg);
-    Field2D* Bx2D_avg = static_cast<Field2D*>(Bx_avg);
-    Field2D* By2D_avg = static_cast<Field2D*>(By_avg);
-    Field2D* Bz2D_avg = static_cast<Field2D*>(Bz_avg);
+    if     (fieldname.substr(0,2)=="Ex" ) return new Field2D(dimPrim, 0, false, "Ex");
+    else if(fieldname.substr(0,2)=="Ey" ) return new Field2D(dimPrim, 1, false, "Ey");
+    else if(fieldname.substr(0,2)=="Ez" ) return new Field2D(dimPrim, 2, false, "Ez");
+    else if(fieldname.substr(0,2)=="Bx" ) return new Field2D(dimPrim, 0, true,  "Bx");
+    else if(fieldname.substr(0,2)=="By" ) return new Field2D(dimPrim, 1, true,  "By");
+    else if(fieldname.substr(0,2)=="Bz" ) return new Field2D(dimPrim, 2, true,  "Bz");
+    else if(fieldname.substr(0,2)=="Jx" ) return new Field2D(dimPrim, 0, false, "Jx");
+    else if(fieldname.substr(0,2)=="Jy" ) return new Field2D(dimPrim, 1, false, "Jy");
+    else if(fieldname.substr(0,2)=="Jz" ) return new Field2D(dimPrim, 2, false, "Jz");
+    else if(fieldname.substr(0,3)=="Rho") return new Field2D(dimPrim, "Rho" );
     
-    // increment the time-averaged fields
-    
-    // Electric field Ex^(d,p)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*Ex2D_avg)(i,j) += (*Ex2D)(i,j);
-        }
-    }
-    
-    // Electric field Ey^(p,d)
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            (*Ey2D_avg)(i,j) += (*Ey2D)(i,j);
-        }
-    }
-    
-    // Electric field Ez^(p,p)
-    for (unsigned int i=0 ;  i<nx_p ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*Ez2D_avg)(i,j) += (*Ez2D)(i,j);
-        }
-    }
-    
-    // Magnetic field Bx^(p,d)
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            (*Bx2D_avg)(i,j) += (*Bx2D_m)(i,j);
-        }
-    }
-    
-    // Magnetic field By^(d,p)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*By2D_avg)(i,j) += (*By2D_m)(i,j);
-        }
-    }
-    
-    // Magnetic field Bz^(d,d)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            (*Bz2D_avg)(i,j) += (*Bz2D_m)(i,j);
-        }
-    }
-    
-    
-}//END incrementAvgFields
-
-
+    ERROR("Cannot create field "<<fieldname);
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute the total density and currents from species density and currents

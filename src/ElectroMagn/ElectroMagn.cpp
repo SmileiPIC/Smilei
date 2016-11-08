@@ -59,13 +59,6 @@ nrj_new_fields (  0.               )
     Jz_=NULL;
     rho_=NULL;
     
-    Ex_avg=NULL;
-    Ey_avg=NULL;
-    Ez_avg=NULL;
-    Bx_avg=NULL;
-    By_avg=NULL;
-    Bz_avg=NULL;
-    
     // Species charge currents and density
     Jx_s.resize(n_species);
     Jy_s.resize(n_species);
@@ -117,13 +110,6 @@ void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
         allFields.push_back(Jz_s[ispec] );
         allFields.push_back(rho_s[ispec]);
     }
-                
-    allFields_avg.push_back(Ex_avg);
-    allFields_avg.push_back(Ey_avg);
-    allFields_avg.push_back(Ez_avg);
-    allFields_avg.push_back(Bx_avg);
-    allFields_avg.push_back(By_avg);
-    allFields_avg.push_back(Bz_avg);
     
 }
 
@@ -145,14 +131,10 @@ ElectroMagn::~ElectroMagn()
     delete Jy_;
     delete Jz_;
     delete rho_;
-    if (Ex_avg!=NULL) {
-        delete Ex_avg;
-        delete Ey_avg;
-        delete Ez_avg;
-        delete Bx_avg;
-        delete By_avg;
-        delete Bz_avg;
-    }
+    
+    for( unsigned int idiag=0; idiag<allFields_avg.size(); idiag++ )
+        for( unsigned int ifield=0; ifield<allFields_avg[idiag].size(); ifield++ )
+            delete allFields_avg[idiag][ifield];
     
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
       delete Jx_s[ispec];
@@ -276,6 +258,17 @@ void ElectroMagn::restartRhoJs()
     Jz_ ->put_to(0.);
     rho_->put_to(0.);
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Increment an averaged field
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn::incrementAvgField(Field * field, Field * field_avg)
+{
+    for( unsigned int i=0; i<field->globalDims_; i++ )
+        (*field_avg)(i) += (*field)(i);
+}//END incrementAvgField
+
+
 
 void ElectroMagn::laserDisabled()
 {

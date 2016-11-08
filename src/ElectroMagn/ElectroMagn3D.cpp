@@ -93,14 +93,6 @@ isZmin(patch->isZmin())
     Jz_   = new Field3D(dimPrim, 2, false, "Jz");
     rho_  = new Field3D(dimPrim, "Rho" );
     
-    // Allocation of the time-averaged EM fields
-    Ex_avg  = new Field3D(dimPrim, 0, false, "Ex_avg");
-    Ey_avg  = new Field3D(dimPrim, 1, false, "Ey_avg");
-    Ez_avg  = new Field3D(dimPrim, 2, false, "Ez_avg");
-    Bx_avg  = new Field3D(dimPrim, 0, true,  "Bx_avg");
-    By_avg  = new Field3D(dimPrim, 1, true,  "By_avg");
-    Bz_avg  = new Field3D(dimPrim, 2, true,  "Bz_avg");
-    
     // Charge currents currents and density for each species
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
         Jx_s[ispec]  = new Field3D(dimPrim, 0, false, ("Jx_"+vecSpecies[ispec]->species_type).c_str());
@@ -410,6 +402,24 @@ void ElectroMagn3D::solveMaxwellAmpere()
 }//END solveMaxwellAmpere
 
 
+// Create a new field
+Field * ElectroMagn3D::createField(string fieldname)
+{
+    if     (fieldname.substr(0,2)=="Ex" ) return new Field3D(dimPrim, 0, false, "Ex");
+    else if(fieldname.substr(0,2)=="Ey" ) return new Field3D(dimPrim, 1, false, "Ey");
+    else if(fieldname.substr(0,2)=="Ez" ) return new Field3D(dimPrim, 2, false, "Ez");
+    else if(fieldname.substr(0,2)=="Bx" ) return new Field3D(dimPrim, 0, true,  "Bx");
+    else if(fieldname.substr(0,2)=="By" ) return new Field3D(dimPrim, 1, true,  "By");
+    else if(fieldname.substr(0,2)=="Bz" ) return new Field3D(dimPrim, 2, true,  "Bz");
+    else if(fieldname.substr(0,2)=="Jx" ) return new Field3D(dimPrim, 0, false, "Jx");
+    else if(fieldname.substr(0,2)=="Jy" ) return new Field3D(dimPrim, 1, false, "Jy");
+    else if(fieldname.substr(0,2)=="Jz" ) return new Field3D(dimPrim, 2, false, "Jz");
+    else if(fieldname.substr(0,3)=="Rho") return new Field3D(dimPrim, "Rho" );
+    
+    ERROR("Cannot create field "<<fieldname);
+}
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Center the Magnetic Fields (used to push the particle)
 // ---------------------------------------------------------------------------------------------------------------------
@@ -452,87 +462,6 @@ void ElectroMagn3D::centerMagneticFields()
 
     
 }//END centerMagneticFields
-
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Reset/Increment the averaged fields
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn3D::incrementAvgFields(unsigned int time_step)
-{
-    // Static cast of the fields
-    Field3D* Ex3D     = static_cast<Field3D*>(Ex_);
-    Field3D* Ey3D     = static_cast<Field3D*>(Ey_);
-    Field3D* Ez3D     = static_cast<Field3D*>(Ez_);
-    Field3D* Bx3D_m   = static_cast<Field3D*>(Bx_m);
-    Field3D* By3D_m   = static_cast<Field3D*>(By_m);
-    Field3D* Bz3D_m   = static_cast<Field3D*>(Bz_m);
-    Field3D* Ex3D_avg = static_cast<Field3D*>(Ex_avg);
-    Field3D* Ey3D_avg = static_cast<Field3D*>(Ey_avg);
-    Field3D* Ez3D_avg = static_cast<Field3D*>(Ez_avg);
-    Field3D* Bx3D_avg = static_cast<Field3D*>(Bx_avg);
-    Field3D* By3D_avg = static_cast<Field3D*>(By_avg);
-    Field3D* Bz3D_avg = static_cast<Field3D*>(Bz_avg);
-    
-    // increment the time-averaged fields
-    
-    // Electric field Ex^(d,p,p)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            for (unsigned int k=0 ; k<nz_p ; k++) {
-                (*Ex3D_avg)(i,j,k) += (*Ex3D)(i,j,k);
-            }
-        }
-    }
-    
-    // Electric field Ey^(p,d,p)
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            for (unsigned int k=0 ; k<nz_p ; k++) {
-                (*Ey3D_avg)(i,j,k) += (*Ey3D)(i,j,k);
-            }
-        }
-    }
-    
-    // Electric field Ez^(p,p,d)
-    for (unsigned int i=0 ;  i<nx_p ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            for (unsigned int k=0 ; k<nz_d ; k++) {
-                (*Ez3D_avg)(i,j,k) += (*Ez3D)(i,j,k);
-            }
-        }
-    }
-    
-    // Magnetic field Bx^(p,d,d)
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            for (unsigned int k=0 ; k<nz_d ; k++) {
-                (*Bx3D_avg)(i,j,k) += (*Bx3D_m)(i,j,k);
-            }
-        }
-    }
-    
-    // Magnetic field By^(d,p,d)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            for (unsigned int k=0 ; k<nz_d ; k++) {
-                (*By3D_avg)(i,j,k) += (*By3D_m)(i,j,k);
-            }
-        }
-    }
-    
-    // Magnetic field Bz^(d,d)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            for (unsigned int k=0 ; k<nz_p ; k++) {
-                (*Bz3D_avg)(i,j,k) += (*Bz3D_m)(i,j,k);
-            }
-        }
-    }
-    
-    
-}//END incrementAvgFields
-
 
 
 // ---------------------------------------------------------------------------------------------------------------------

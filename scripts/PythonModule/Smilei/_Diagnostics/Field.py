@@ -5,17 +5,30 @@ from .._Utils import *
 class Field(Diagnostic):
 	""" The Field diagnostic of a Smilei simulation"""
 	
-	def _init(self, field=None, timesteps=None, slice=None, data_log=False, stride=1, **kwargs):
+	def _init(self, diagNumber=None, field=None, timesteps=None, slice=None, data_log=False, stride=1, **kwargs):
+		
+		# Search available diags
+		diags = self.getDiags()
+		
+		# Return directly if no diag number provided
+		if diagNumber is None:
+			self._error += "Diagnostic not loaded: diagNumber is not defined\n"
+			self._error += "Please choose among: "+", ".join([str(d) for d in diags])
+			return
+		else:
+			if diagNumber not in diags:
+				self._error = "Diagnostic not loaded: no field diagnostic #"+str(diagNumber)+" found"
+				return
 		
 		# Open the file(s) and load the data
 		self._h5items = []
 		self._fields = []
 		for path in self._results_path:
-			file = path+self._os.sep+'Fields.h5'
+			file = path+self._os.sep+'Fields'+str(diagNumber)+'.h5'
 			try:
 				f = self._h5py.File(file, 'r')
 			except:
-				self._error = "Diagnostic not loaded: No fields found"
+				self._error = "Diagnostic not loaded: Could not open '"+file+"'"
 				return
 			values = f.values()
 			self._h5items.extend( values )
@@ -45,7 +58,7 @@ class Field(Diagnostic):
 		# Get available times
 		self.times = self.getAvailableTimesteps()
 		if self.times.size == 0:
-			self._error = "Diagnostic not loaded: No fields found in Fields.h5"
+			self._error = "Diagnostic not loaded: No fields found"
 			return
 		
 		# Get available fields
@@ -166,6 +179,19 @@ class Field(Diagnostic):
 	# Method to print info on included fields
 	def _info(self):
 		return "Field diagnostic "+self._title
+	
+	# get all available field diagnostics
+	def getDiags(self):
+		diags = None
+		for path in self._results_path:
+			files = self._glob(path+self._os.sep+'Fields*.h5')
+			if len(files)==0:
+				self._error = "Diagnostic not loaded: No fields found in '"+path+"'"
+				return
+			diagNumbers = [ int(self._re.findall("Fields([0-9]+).h5$",file)[0]) for file in files ]
+			if diags is None: diags = diagNumbers
+			else            : diags = [ d for d in diags if d in diagNumbers ]
+		return diags
 	
 	# get all available fields, sorted by name length
 	def getFields(self):

@@ -197,15 +197,19 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
     dumpFieldsPerProc(patch_gid, EMfields->Bx_m);
     dumpFieldsPerProc(patch_gid, EMfields->By_m);
     dumpFieldsPerProc(patch_gid, EMfields->Bz_m);
-    if (EMfields->Ex_avg!=NULL) {
-        dumpFieldsPerProc(patch_gid, EMfields->Ex_avg);
-        dumpFieldsPerProc(patch_gid, EMfields->Ey_avg);
-        dumpFieldsPerProc(patch_gid, EMfields->Ez_avg);
-        dumpFieldsPerProc(patch_gid, EMfields->Bx_avg);
-        dumpFieldsPerProc(patch_gid, EMfields->By_avg);
-        dumpFieldsPerProc(patch_gid, EMfields->Bz_avg);
+    
+    // Fields required for DiagFields
+    for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++ ) {
+        ostringstream group_name("");
+        group_name << "FieldsForDiag" << idiag;
+        hid_t diag_gid = H5::group(patch_gid, group_name.str());
+        
+        for( unsigned int ifield=0; ifield<EMfields->allFields_avg[idiag].size(); ifield++ )
+            dumpFieldsPerProc( diag_gid, EMfields->allFields_avg[idiag][ifield] );
+        
+        H5Gclose(diag_gid);
     }
-
+    
     if ( EMfields->extFields.size()>0 ) {
         for (unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
             if(! EMfields->emBoundCond[bcId]) continue;
@@ -416,15 +420,19 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
     restartFieldsPerProc(patch_gid, EMfields->Bx_m);
     restartFieldsPerProc(patch_gid, EMfields->By_m);
     restartFieldsPerProc(patch_gid, EMfields->Bz_m);
-    if (EMfields->Ex_avg!=NULL) {
-        restartFieldsPerProc(patch_gid, EMfields->Ex_avg);
-        restartFieldsPerProc(patch_gid, EMfields->Ey_avg);
-        restartFieldsPerProc(patch_gid, EMfields->Ez_avg);
-        restartFieldsPerProc(patch_gid, EMfields->Bx_avg);
-        restartFieldsPerProc(patch_gid, EMfields->By_avg);
-        restartFieldsPerProc(patch_gid, EMfields->Bz_avg);
+    
+    // Fields required for DiagFields
+    for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++ ) {
+        ostringstream group_name("");
+        group_name << "FieldsForDiag" << idiag;
+        hid_t diag_gid = H5Gopen(patch_gid, group_name.str().c_str(),H5P_DEFAULT);
+        
+        for( unsigned int ifield=0; ifield<EMfields->allFields_avg[idiag].size(); ifield++ )
+            restartFieldsPerProc( diag_gid, EMfields->allFields_avg[idiag][ifield] );
+        
+        H5Gclose(diag_gid);
     }
-
+    
     if ( EMfields->extFields.size()>0 ) {
         for (unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
             if(! EMfields->emBoundCond[bcId]) continue;

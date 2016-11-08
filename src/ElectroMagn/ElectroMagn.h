@@ -111,29 +111,11 @@ public:
     //! Total charge density
     Field* rho_;
     
-    //! time-average x-component of the electric field
-    Field* Ex_avg;
-    
-    //! time-average y-component of the electric field
-    Field* Ey_avg;
-    
-    //! time-average z-component of the electric field
-    Field* Ez_avg;
-    
-    //! time-average x-component of the magnetic field
-    Field* Bx_avg;
-    
-    //! time-average y-component of the magnetic field
-    Field* By_avg;
-    
-    //! time-average z-component of the magnetic field
-    Field* Bz_avg;
-    
     //! all Fields in electromagn (filled in ElectromagnFactory.h)
     std::vector<Field*> allFields;
     
-    //! all Fields in electromagn (filled in ElectromagnFactory.h)
-    std::vector<Field*> allFields_avg;
+    //! all Fields averages required in diagnostic Fields
+    std::vector<std::vector<Field*> > allFields_avg;
     
     //! Vector of charge density and currents for each species
     const unsigned int n_species;
@@ -141,6 +123,10 @@ public:
     std::vector<Field*> Jy_s;
     std::vector<Field*> Jz_s;
     std::vector<Field*> rho_s;
+    
+    //! Creates a new field with the right characteristics, depending on the name
+    virtual Field * createField(std::string fieldname) = 0;
+    
     //! Number of bins
     unsigned int nbin;
     //! Cluster width
@@ -217,7 +203,7 @@ public:
     
     void laserDisabled();
     
-    virtual void incrementAvgFields(unsigned int time_step) = 0;
+    void incrementAvgField(Field * field, Field * field_avg);
         
     //! compute Poynting on borders
     virtual void computePoynting() = 0;

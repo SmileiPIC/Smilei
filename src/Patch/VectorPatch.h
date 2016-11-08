@@ -10,7 +10,8 @@
 #include "ElectroMagnFactory.h"
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
-#include "DiagnosticFactory.h"
+
+#include "DiagnosticScalar.h"
 
 #include "Params.h"
 #include "SmileiMPI.h"

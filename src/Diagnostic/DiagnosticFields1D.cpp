@@ -8,8 +8,8 @@
 
 using namespace std;
 
-DiagnosticFields1D::DiagnosticFields1D( Params &params, SmileiMPI* smpi, Patch* patch, int ndiag )
-    : DiagnosticFields( params, smpi, patch, ndiag )
+DiagnosticFields1D::DiagnosticFields1D( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, int ndiag )
+    : DiagnosticFields( params, smpi, vecPatches, ndiag )
 {
     // Calculate the offset in the local grid
     patch_offset_in_grid.resize(1);
@@ -55,21 +55,21 @@ void DiagnosticFields1D::setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatc
 
 
 // Copy patch field to current "data" buffer
-void DiagnosticFields1D::getField( Patch* patch, unsigned int field_index )
+void DiagnosticFields1D::getField( Patch* patch, unsigned int ifield )
 {
     // Get current field
     Field1D* field;
     if( time_average>1 ) {
-        field = static_cast<Field1D*>(patch->EMfields->allFields_avg[field_index]);
+        field = static_cast<Field1D*>(patch->EMfields->allFields_avg[diag_n][ifield]);
     } else {
-        field = static_cast<Field1D*>(patch->EMfields->allFields    [field_index]);
+        field = static_cast<Field1D*>(patch->EMfields->allFields[fields_indexes[ifield]]);
     }
     // Copy field to the "data" buffer
     unsigned int ix = patch_offset_in_grid[0] - (patch->hindex==0 ? 1:0);
     unsigned int ix_max = ix + patch_size[0] + (patch->hindex==0 ? 1:0);
     unsigned int iout = total_patch_size * (patch->Hindex()-refHindex) + ((refHindex==0 && !patch->hindex==0)?1:0);
     while( ix < ix_max ) {
-        data[iout] = (*field)(ix);
+        data[iout] = (*field)(ix) * time_average_inv;
         ix++;
         iout++;
     }

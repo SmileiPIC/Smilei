@@ -7,6 +7,7 @@
 #include "Projector.h"
 #include "SmileiMPI.h"
 #include "VectorPatch.h"
+#include "DiagnosticProbes.h"
 #include "Hilbert_functions.h"
 #include "PatchesFactory.h"
 #include <iostream>

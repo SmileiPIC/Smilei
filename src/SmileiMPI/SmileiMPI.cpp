@@ -23,6 +23,7 @@
 #include "Diagnostic.h"
 #include "DiagnosticScalar.h"
 #include "DiagnosticParticles.h"
+#include "DiagnosticProbes.h"
 
 using namespace std;
 
@@ -663,21 +664,25 @@ void SmileiMPI::recv(std::vector<double> *vec, int from, int tag)
 
 void SmileiMPI::isend(ElectroMagn* EM, int to, int tag)
 {
-    isend( EM->Ex_, to, tag+0);
-    isend( EM->Ey_, to, tag+1);
-    isend( EM->Ez_, to, tag+2);
-    isend( EM->Bx_, to, tag+3);
-    isend( EM->By_, to, tag+4);
-    isend( EM->Bz_, to, tag+5);
-    isend( EM->Bx_m, to, tag+6);
-    isend( EM->By_m, to, tag+7);
-    isend( EM->Bz_m, to, tag+8);
+    isend( EM->Ex_ , to, tag); tag++;
+    isend( EM->Ey_ , to, tag); tag++;
+    isend( EM->Ez_ , to, tag); tag++;
+    isend( EM->Bx_ , to, tag); tag++;
+    isend( EM->By_ , to, tag); tag++;
+    isend( EM->Bz_ , to, tag); tag++;
+    isend( EM->Bx_m, to, tag); tag++;
+    isend( EM->By_m, to, tag); tag++;
+    isend( EM->Bz_m, to, tag); tag++;
     
-    for (int antennaId=0 ; antennaId<(int)EM->antennas.size() ; antennaId++) {
-        isend( EM->antennas[antennaId].field, to, tag+9+antennaId );
+    for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {
+        for( unsigned int ifield=0; ifield<EM->allFields_avg[idiag].size(); ifield++) {
+            isend( EM->allFields_avg[idiag][ifield], to, tag); tag++;
+        }
     }
     
-    tag += 10 + EM->antennas.size();
+    for (unsigned int antennaId=0 ; antennaId<EM->antennas.size() ; antennaId++) {
+        isend( EM->antennas[antennaId].field, to, tag ); tag++;
+    }
     
     for (unsigned int bcId=0 ; bcId<EM->emBoundCond.size() ; bcId++ ) {
         if(! EM->emBoundCond[bcId]) continue;
@@ -699,7 +704,7 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag)
         }
         
         if ( EM->extFields.size()>0 ) {
-
+            
             if (dynamic_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]) ) {
                 ElectroMagnBC1D_SM* embc = static_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]);
                 MPI_Request request;
@@ -738,21 +743,25 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag)
 
 void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
 {
-    recv( EM->Ex_, from, tag+0 );
-    recv( EM->Ey_, from, tag+1 );
-    recv( EM->Ez_, from, tag+2 );
-    recv( EM->Bx_, from, tag+3 );
-    recv( EM->By_, from, tag+4 );
-    recv( EM->Bz_, from, tag+5 );
-    recv( EM->Bx_m, from, tag+6 );
-    recv( EM->By_m, from, tag+7 );
-    recv( EM->Bz_m, from, tag+8 );
+    recv( EM->Ex_ , from, tag ); tag++;
+    recv( EM->Ey_ , from, tag ); tag++;
+    recv( EM->Ez_ , from, tag ); tag++;
+    recv( EM->Bx_ , from, tag ); tag++;
+    recv( EM->By_ , from, tag ); tag++;
+    recv( EM->Bz_ , from, tag ); tag++;
+    recv( EM->Bx_m, from, tag ); tag++;
+    recv( EM->By_m, from, tag ); tag++;
+    recv( EM->Bz_m, from, tag ); tag++;
     
-    for (int antennaId=0 ; antennaId<(int)EM->antennas.size() ; antennaId++) {
-        recv( EM->antennas[antennaId].field, from, tag+9+antennaId );
+    for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {
+        for( unsigned int ifield=0; ifield<EM->allFields_avg[idiag].size(); ifield++) {
+            recv( EM->allFields_avg[idiag][ifield], from, tag); tag++;
+        }
     }
     
-    tag += 10 + EM->antennas.size();
+    for (int antennaId=0 ; antennaId<(int)EM->antennas.size() ; antennaId++) {
+        recv( EM->antennas[antennaId].field, from, tag); tag++;
+    }
     
     for (unsigned int bcId=0 ; bcId<EM->emBoundCond.size() ; bcId++ ) {
         if(! EM->emBoundCond[bcId]) continue;

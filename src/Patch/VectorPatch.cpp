@@ -52,8 +52,8 @@ void VectorPatch::close(SmileiMPI * smpiData)
 
 void VectorPatch::createDiags(Params& params, SmileiMPI* smpi)
 {
-    globalDiags = DiagnosticFactory::createGlobalDiagnostics(params, smpi, (*this)(0) );
-    localDiags  = DiagnosticFactory::createLocalDiagnostics (params, smpi, (*this)(0) );
+    globalDiags = DiagnosticFactory::createGlobalDiagnostics(params, smpi, *this );
+    localDiags  = DiagnosticFactory::createLocalDiagnostics (params, smpi, *this );
 }
 
 

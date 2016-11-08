@@ -8,7 +8,7 @@ class DiagnosticFields  : public Diagnostic {
 
 public :
     
-    DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patch, int );
+    DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, int );
     ~DiagnosticFields() override;
     
     virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
@@ -28,6 +28,10 @@ public :
     virtual bool needsRhoJs(int timestep) override;
     
 protected :
+    
+    //! Index of this diag
+    unsigned int diag_n;
+    
     //! Indexes of the fields to be dumped
     std::vector<unsigned int> fields_indexes;
     //! Names of the fields to be dumped
@@ -35,6 +39,9 @@ protected :
     
     //! Number of timesteps for time averaging
     int time_average;
+    
+    //! Inverse of the time average
+    double time_average_inv;
     
     //! Property list for collective dataset write, set for // IO.
     hid_t write_plist;
