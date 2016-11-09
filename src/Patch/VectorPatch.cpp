@@ -54,6 +54,12 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi)
 {
     globalDiags = DiagnosticFactory::createGlobalDiagnostics(params, smpi, *this );
     localDiags  = DiagnosticFactory::createLocalDiagnostics (params, smpi, *this );
+    
+    // Delete all unused fields
+    for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
+        for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->allFields.size(); ifield++)
+            if( (*this)(ipatch)->EMfields->allFields[ifield]->data_ == NULL )
+                delete (*this)(ipatch)->EMfields->allFields[ifield];
 }
 
 
@@ -790,18 +796,18 @@ void VectorPatch::update_field_list(int ispec)
 {
     #pragma omp single
     {
-        listJxs_.resize( size() ) ;
-        listJys_.resize( size() ) ;
-        listJzs_.resize( size() ) ;
-        listrhos_.resize( size() ) ;
+        if(patches_[0]->EMfields->Jx_s [ispec]) listJxs_.resize( size() ) ;
+        if(patches_[0]->EMfields->Jy_s [ispec]) listJys_.resize( size() ) ;
+        if(patches_[0]->EMfields->Jz_s [ispec]) listJzs_.resize( size() ) ;
+        if(patches_[0]->EMfields->rho_s[ispec]) listrhos_.resize( size() ) ;
     }
     
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
-        listJxs_[ipatch] = patches_[ipatch]->EMfields->Jx_s[ispec] ;
-        listJys_[ipatch] = patches_[ipatch]->EMfields->Jy_s[ispec] ;
-        listJzs_[ipatch] = patches_[ipatch]->EMfields->Jz_s[ispec] ;
-        listrhos_[ipatch] =patches_[ipatch]->EMfields->rho_s[ispec];
+        if(patches_[ipatch]->EMfields->Jx_s [ispec]) listJxs_ [ipatch] = patches_[ipatch]->EMfields->Jx_s [ispec];
+        if(patches_[ipatch]->EMfields->Jy_s [ispec]) listJys_ [ipatch] = patches_[ipatch]->EMfields->Jy_s [ispec];
+        if(patches_[ipatch]->EMfields->Jz_s [ispec]) listJzs_ [ipatch] = patches_[ipatch]->EMfields->Jz_s [ispec];
+        if(patches_[ipatch]->EMfields->rho_s[ispec]) listrhos_[ipatch] = patches_[ipatch]->EMfields->rho_s[ispec];
     }
 }
 

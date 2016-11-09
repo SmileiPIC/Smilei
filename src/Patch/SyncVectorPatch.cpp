@@ -71,10 +71,10 @@ void SyncVectorPatch::sumRhoJ(VectorPatch& vecPatches, unsigned int diag_flag )
 void SyncVectorPatch::sumRhoJs(VectorPatch& vecPatches, int ispec )
 {
 
-    SyncVectorPatch::sum( vecPatches.listJxs_,  vecPatches );
-    SyncVectorPatch::sum( vecPatches.listJys_,  vecPatches );
-    SyncVectorPatch::sum( vecPatches.listJzs_,  vecPatches );
-    SyncVectorPatch::sum( vecPatches.listrhos_, vecPatches );
+    if(vecPatches.listJxs_ .size()>0) SyncVectorPatch::sum( vecPatches.listJxs_ , vecPatches );
+    if(vecPatches.listJxs_ .size()>0) SyncVectorPatch::sum( vecPatches.listJys_ , vecPatches );
+    if(vecPatches.listJxs_ .size()>0) SyncVectorPatch::sum( vecPatches.listJzs_ , vecPatches );
+    if(vecPatches.listrhos_.size()>0) SyncVectorPatch::sum( vecPatches.listrhos_, vecPatches );
 }
 
 void SyncVectorPatch::exchangeE( VectorPatch& vecPatches )

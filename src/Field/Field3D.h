@@ -26,16 +26,29 @@ public:
     //! Constructor, isPrimal define if mainDim is Primal or Dual and a name
     Field3D( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name );
     
+    //! Constructor, without allocating
+    Field3D( std::string name, std::vector<unsigned int> dims );
+    
     //! Destructor for Field3D
     ~Field3D();
     
     //! Method used to allocate a Field3D
-    void allocateDims(std::vector<unsigned int> dims );
+    void allocateDims();
     void deallocateDims();
     //! a Field3D can also be initialized win three unsigned int 
     void allocateDims(unsigned int dims1,unsigned int dims2,unsigned int dims3);
     //! allocate dimensions for field3D isPrimal define if mainDim is Primal or Dual
-    void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal );
+    void allocateDims(unsigned int mainDim, bool isPrimal );
+    
+    inline void allocateDims(std::vector<unsigned int> dims) {
+        dims_ = dims;
+        allocateDims();
+    };
+    
+    inline void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) {
+        dims_ = dims;
+        allocateDims(mainDim, isPrimal);
+    };
     
     //! Method used to dump the data contained in a Field3D
     void dump(std::vector<unsigned int> dims);

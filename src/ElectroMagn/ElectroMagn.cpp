@@ -137,10 +137,10 @@ ElectroMagn::~ElectroMagn()
             delete allFields_avg[idiag][ifield];
     
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-      delete Jx_s[ispec];
-      delete Jy_s[ispec];
-      delete Jz_s[ispec];
-      delete rho_s[ispec];
+        if( Jx_s [ispec] ) delete Jx_s [ispec];
+        if( Jy_s [ispec] ) delete Jy_s [ispec];
+        if( Jz_s [ispec] ) delete Jz_s [ispec];
+        if( rho_s[ispec] ) delete rho_s[ispec];
     }
     
     int nBC = emBoundCond.size();
@@ -247,10 +247,10 @@ void ElectroMagn::restartRhoJ()
 void ElectroMagn::restartRhoJs()
 {
     for (unsigned int ispec=0 ; ispec < n_species ; ispec++) {
-        Jx_s [ispec]->put_to(0.);
-        Jy_s [ispec]->put_to(0.);
-        Jz_s [ispec]->put_to(0.);
-        rho_s[ispec]->put_to(0.);
+        if( Jx_s [ispec] ) Jx_s [ispec]->put_to(0.);
+        if( Jy_s [ispec] ) Jy_s [ispec]->put_to(0.);
+        if( Jz_s [ispec] ) Jz_s [ispec]->put_to(0.);
+        if( rho_s[ispec] ) rho_s[ispec]->put_to(0.);
     }
     
     Jx_ ->put_to(0.);

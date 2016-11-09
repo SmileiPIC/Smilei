@@ -83,10 +83,10 @@ isXmax(patch->isXmax())
     // Charge currents currents and density for each species
     
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Jx_s[ispec]  = new Field1D(dimPrim, 0, false, ("Jx_"+vecSpecies[ispec]->species_type).c_str());
-        Jy_s[ispec]  = new Field1D(dimPrim, 1, false, ("Jy_"+vecSpecies[ispec]->species_type).c_str());
-        Jz_s[ispec]  = new Field1D(dimPrim, 2, false, ("Jz_"+vecSpecies[ispec]->species_type).c_str());
-        rho_s[ispec] = new Field1D(dimPrim, ("Rho_"+vecSpecies[ispec]->species_type).c_str());
+        Jx_s[ispec]  = new Field1D(("Jx_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
+        Jy_s[ispec]  = new Field1D(("Jy_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
+        Jz_s[ispec]  = new Field1D(("Jz_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
+        rho_s[ispec] = new Field1D(("Rho_"+vecSpecies[ispec]->species_type).c_str(), dimPrim);
     }
     
     // ----------------------------------------------------------------
@@ -372,16 +372,16 @@ void ElectroMagn1D::centerMagneticFields()
 // Create a new field
 Field * ElectroMagn1D::createField(string fieldname)
 {
-    if     (fieldname.substr(0,2)=="Ex" ) return new Field1D(dimPrim, 0, false, "Ex");
-    else if(fieldname.substr(0,2)=="Ey" ) return new Field1D(dimPrim, 1, false, "Ey");
-    else if(fieldname.substr(0,2)=="Ez" ) return new Field1D(dimPrim, 2, false, "Ez");
-    else if(fieldname.substr(0,2)=="Bx" ) return new Field1D(dimPrim, 0, true,  "Bx");
-    else if(fieldname.substr(0,2)=="By" ) return new Field1D(dimPrim, 1, true,  "By");
-    else if(fieldname.substr(0,2)=="Bz" ) return new Field1D(dimPrim, 2, true,  "Bz");
-    else if(fieldname.substr(0,2)=="Jx" ) return new Field1D(dimPrim, 0, false, "Jx");
-    else if(fieldname.substr(0,2)=="Jy" ) return new Field1D(dimPrim, 1, false, "Jy");
-    else if(fieldname.substr(0,2)=="Jz" ) return new Field1D(dimPrim, 2, false, "Jz");
-    else if(fieldname.substr(0,3)=="Rho") return new Field1D(dimPrim, "Rho" );
+    if     (fieldname.substr(0,2)=="Ex" ) return new Field1D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,2)=="Ey" ) return new Field1D(dimPrim, 1, false, fieldname);
+    else if(fieldname.substr(0,2)=="Ez" ) return new Field1D(dimPrim, 2, false, fieldname);
+    else if(fieldname.substr(0,2)=="Bx" ) return new Field1D(dimPrim, 0, true,  fieldname);
+    else if(fieldname.substr(0,2)=="By" ) return new Field1D(dimPrim, 1, true,  fieldname);
+    else if(fieldname.substr(0,2)=="Bz" ) return new Field1D(dimPrim, 2, true,  fieldname);
+    else if(fieldname.substr(0,2)=="Jx" ) return new Field1D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,2)=="Jy" ) return new Field1D(dimPrim, 1, false, fieldname);
+    else if(fieldname.substr(0,2)=="Jz" ) return new Field1D(dimPrim, 2, false, fieldname);
+    else if(fieldname.substr(0,3)=="Rho") return new Field1D(dimPrim, fieldname );
     
     ERROR("Cannot create field "<<fieldname);
 }
@@ -398,20 +398,21 @@ void ElectroMagn1D::computeTotalRhoJ()
     Field1D* rho1D   = static_cast<Field1D*>(rho_);
     
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Field1D* Jx1D_s  = static_cast<Field1D*>(Jx_s[ispec]);
-        Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
-        Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
-        Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
-        
-        for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
-            (*Jx1D)(ix)  += (*Jx1D_s)(ix);
-            (*Jy1D)(ix)  += (*Jy1D_s)(ix);
-            (*Jz1D)(ix)  += (*Jz1D_s)(ix);
-            (*rho1D)(ix) += (*rho1D_s)(ix);
+        if( Jx_s[ispec] ) {
+            Field1D* Jx1D_s  = static_cast<Field1D*>(Jx_s[ispec]);
+            for (unsigned int ix=0 ; ix<=dimPrim[0] ; ix++) (*Jx1D)(ix)  += (*Jx1D_s)(ix);
         }
-
-        {
-            (*Jx1D)(dimPrim[0])  += (*Jx1D_s)(dimPrim[0]);
+        if( Jy_s[ispec] ) {
+            Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
+            for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) (*Jy1D)(ix)  += (*Jy1D_s)(ix);
+        }
+        if( Jz_s[ispec] ) {
+            Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
+            for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) (*Jz1D)(ix)  += (*Jz1D_s)(ix);
+        }
+        if( rho_s[ispec] ) {
+            Field1D* rho1D_s  = static_cast<Field1D*>(rho_s[ispec]);
+            for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) (*rho1D)(ix)  += (*rho1D_s)(ix);
         }
     }//END loop on species ispec
 }

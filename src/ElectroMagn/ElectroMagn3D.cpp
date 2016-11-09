@@ -95,10 +95,10 @@ isZmin(patch->isZmin())
     
     // Charge currents currents and density for each species
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Jx_s[ispec]  = new Field3D(dimPrim, 0, false, ("Jx_"+vecSpecies[ispec]->species_type).c_str());
-        Jy_s[ispec]  = new Field3D(dimPrim, 1, false, ("Jy_"+vecSpecies[ispec]->species_type).c_str());
-        Jz_s[ispec]  = new Field3D(dimPrim, 2, false, ("Jz_"+vecSpecies[ispec]->species_type).c_str());
-        rho_s[ispec] = new Field3D(dimPrim, ("Rho_"+vecSpecies[ispec]->species_type).c_str());
+        Jx_s[ispec]  = new Field3D(("Jx_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
+        Jy_s[ispec]  = new Field3D(("Jy_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
+        Jz_s[ispec]  = new Field3D(("Jz_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
+        rho_s[ispec] = new Field3D(("Rho_"+vecSpecies[ispec]->species_type).c_str(), dimPrim);
     }
 
     // ----------------------------------------------------------------
@@ -405,16 +405,16 @@ void ElectroMagn3D::solveMaxwellAmpere()
 // Create a new field
 Field * ElectroMagn3D::createField(string fieldname)
 {
-    if     (fieldname.substr(0,2)=="Ex" ) return new Field3D(dimPrim, 0, false, "Ex");
-    else if(fieldname.substr(0,2)=="Ey" ) return new Field3D(dimPrim, 1, false, "Ey");
-    else if(fieldname.substr(0,2)=="Ez" ) return new Field3D(dimPrim, 2, false, "Ez");
-    else if(fieldname.substr(0,2)=="Bx" ) return new Field3D(dimPrim, 0, true,  "Bx");
-    else if(fieldname.substr(0,2)=="By" ) return new Field3D(dimPrim, 1, true,  "By");
-    else if(fieldname.substr(0,2)=="Bz" ) return new Field3D(dimPrim, 2, true,  "Bz");
-    else if(fieldname.substr(0,2)=="Jx" ) return new Field3D(dimPrim, 0, false, "Jx");
-    else if(fieldname.substr(0,2)=="Jy" ) return new Field3D(dimPrim, 1, false, "Jy");
-    else if(fieldname.substr(0,2)=="Jz" ) return new Field3D(dimPrim, 2, false, "Jz");
-    else if(fieldname.substr(0,3)=="Rho") return new Field3D(dimPrim, "Rho" );
+    if     (fieldname.substr(0,2)=="Ex" ) return new Field3D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,2)=="Ey" ) return new Field3D(dimPrim, 1, false, fieldname);
+    else if(fieldname.substr(0,2)=="Ez" ) return new Field3D(dimPrim, 2, false, fieldname);
+    else if(fieldname.substr(0,2)=="Bx" ) return new Field3D(dimPrim, 0, true,  fieldname);
+    else if(fieldname.substr(0,2)=="By" ) return new Field3D(dimPrim, 1, true,  fieldname);
+    else if(fieldname.substr(0,2)=="Bz" ) return new Field3D(dimPrim, 2, true,  fieldname);
+    else if(fieldname.substr(0,2)=="Jx" ) return new Field3D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,2)=="Jy" ) return new Field3D(dimPrim, 1, false, fieldname);
+    else if(fieldname.substr(0,2)=="Jz" ) return new Field3D(dimPrim, 2, false, fieldname);
+    else if(fieldname.substr(0,3)=="Rho") return new Field3D(dimPrim, fieldname );
     
     ERROR("Cannot create field "<<fieldname);
 }
@@ -480,47 +480,33 @@ void ElectroMagn3D::computeTotalRhoJ()
     // Species currents and charge density
     // -----------------------------------
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Field3D* Jx3D_s  = static_cast<Field3D*>(Jx_s[ispec]);
-        Field3D* Jy3D_s  = static_cast<Field3D*>(Jy_s[ispec]);
-        Field3D* Jz3D_s  = static_cast<Field3D*>(Jz_s[ispec]);
-        Field3D* rho3D_s = static_cast<Field3D*>(rho_s[ispec]);
-        
-        // Charge density rho^(p,p) to 0
-        for (unsigned int i=0 ; i<nx_p ; i++) {
-            for (unsigned int j=0 ; j<ny_p ; j++) {
-                for (unsigned int k=0 ; k<nz_p ; k++) {
-                    if(ispec==0){ // new timestep
-                        (*rho3D)(i,j,k) = 0.;
-                        (*Jx3D)(i,j,k)  = 0.;
-                        (*Jy3D)(i,j,k)  = 0.;
-                        (*Jz3D)(i,j,k)  = 0.;
-                    }
-                    (*rho3D)(i,j,k) += (*rho3D_s)(i,j,k);
-                    (*Jx3D)(i,j,k) += (*Jx3D_s)(i,j,k);
-                    (*Jy3D)(i,j,k) += (*Jy3D_s)(i,j,k);
-                    (*Jz3D)(i,j,k) += (*Jz3D_s)(i,j,k);
-                }
-                if(ispec==0) // new timestep
-                    (*Jz3D)(i,j,nz_p) = 0. ;
-                (*Jz3D)(i,j,nz_p) += (*Jz3D_s)(i,j,nz_p);
-            }
-
-            for (unsigned int k=0 ; k<nz_p ; k++) {
-                if(ispec==0) // new timestep
-                    (*Jy3D)(i,ny_p,k) = 0. ;
-                (*Jy3D)(i,ny_p,k) += (*Jy3D_s)(i,ny_p,k);
-            }
+        if( Jx_s[ispec] ) {
+            Field3D* Jx3D_s  = static_cast<Field3D*>(Jx_s[ispec]);
+            for (unsigned int i=0 ; i<=nx_p ; i++)
+                for (unsigned int j=0 ; j<ny_p ; j++)
+                    for (unsigned int k=0 ; k<nz_p ; k++)
+                        (*Jx3D)(i,j,k) += (*Jx3D_s)(i,j,k);
         }
-
-        // i = nx_p
-        {
-            for (unsigned int j=0 ; j<ny_p ; j++) {
-                for (unsigned int k=0 ; k<nz_p ; k++) {
-                    if(ispec==0) // new timestep
-                        (*Jx3D)(nx_p,j,k) = 0. ;
-                    (*Jx3D)(nx_p,j,k) += (*Jx3D_s)(nx_p,j,k);
-                }
-            }
+        if( Jy_s[ispec] ) {
+            Field3D* Jy3D_s  = static_cast<Field3D*>(Jy_s[ispec]);
+            for (unsigned int i=0 ; i<nx_p ; i++)
+                for (unsigned int j=0 ; j<=ny_p ; j++)
+                    for (unsigned int k=0 ; k<nz_p ; k++)
+                        (*Jy3D)(i,j,k) += (*Jy3D_s)(i,j,k);
+        }
+        if( Jz_s[ispec] ) {
+            Field3D* Jz3D_s  = static_cast<Field3D*>(Jz_s[ispec]);
+            for (unsigned int i=0 ; i<nx_p ; i++)
+                for (unsigned int j=0 ; j<ny_p ; j++)
+                    for (unsigned int k=0 ; k<=nz_p ; k++)
+                        (*Jz3D)(i,j,k) += (*Jz3D_s)(i,j,k);
+        }
+        if( rho_s[ispec] ) {
+            Field3D* rho3D_s  = static_cast<Field3D*>(rho_s[ispec]);
+            for (unsigned int i=0 ; i<nx_p ; i++)
+                for (unsigned int j=0 ; j<ny_p ; j++)
+                    for (unsigned int k=0 ; k<nz_p ; k++)
+                        (*rho3D)(i,j,k) += (*rho3D_s)(i,j,k);
         }
         
     }//END loop on species ispec

@@ -58,11 +58,15 @@ public:
     } ;
     
     //! Virtual method used to allocate Field
+    virtual void allocateDims() = 0;
     virtual void allocateDims(std::vector<unsigned int> dims) = 0;
-    virtual void deallocateDims() = 0;
     
     //! Virtual method used to allocate Field, isPrimal define if mainDim is Primal or Dual
+    virtual void allocateDims(unsigned int mainDim, bool isPrimal) = 0;
     virtual void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) = 0;
+    
+    //! Virtual method to deallocate Field
+    virtual void deallocateDims() = 0;
     
     //! Virtual method used to make a dump of the Field data
     virtual void dump(std::vector<unsigned int> dims) = 0;

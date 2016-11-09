@@ -85,10 +85,10 @@ isYmax(patch->isYmax())
     
     // Charge currents currents and density for each species
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Jx_s[ispec]  = new Field2D(dimPrim, 0, false, ("Jx_"+vecSpecies[ispec]->species_type).c_str());
-        Jy_s[ispec]  = new Field2D(dimPrim, 1, false, ("Jy_"+vecSpecies[ispec]->species_type).c_str());
-        Jz_s[ispec]  = new Field2D(dimPrim, 2, false, ("Jz_"+vecSpecies[ispec]->species_type).c_str());
-        rho_s[ispec] = new Field2D(dimPrim, ("Rho_"+vecSpecies[ispec]->species_type).c_str());
+        Jx_s[ispec]  = new Field2D(("Jx_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
+        Jy_s[ispec]  = new Field2D(("Jy_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
+        Jz_s[ispec]  = new Field2D(("Jz_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
+        rho_s[ispec] = new Field2D(("Rho_"+vecSpecies[ispec]->species_type).c_str(), dimPrim);
     }
     
     // ----------------------------------------------------------------
@@ -523,16 +523,16 @@ void ElectroMagn2D::centerMagneticFields()
 // Create a new field
 Field * ElectroMagn2D::createField(string fieldname)
 {
-    if     (fieldname.substr(0,2)=="Ex" ) return new Field2D(dimPrim, 0, false, "Ex");
-    else if(fieldname.substr(0,2)=="Ey" ) return new Field2D(dimPrim, 1, false, "Ey");
-    else if(fieldname.substr(0,2)=="Ez" ) return new Field2D(dimPrim, 2, false, "Ez");
-    else if(fieldname.substr(0,2)=="Bx" ) return new Field2D(dimPrim, 0, true,  "Bx");
-    else if(fieldname.substr(0,2)=="By" ) return new Field2D(dimPrim, 1, true,  "By");
-    else if(fieldname.substr(0,2)=="Bz" ) return new Field2D(dimPrim, 2, true,  "Bz");
-    else if(fieldname.substr(0,2)=="Jx" ) return new Field2D(dimPrim, 0, false, "Jx");
-    else if(fieldname.substr(0,2)=="Jy" ) return new Field2D(dimPrim, 1, false, "Jy");
-    else if(fieldname.substr(0,2)=="Jz" ) return new Field2D(dimPrim, 2, false, "Jz");
-    else if(fieldname.substr(0,3)=="Rho") return new Field2D(dimPrim, "Rho" );
+    if     (fieldname.substr(0,2)=="Ex" ) return new Field2D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,2)=="Ey" ) return new Field2D(dimPrim, 1, false, fieldname);
+    else if(fieldname.substr(0,2)=="Ez" ) return new Field2D(dimPrim, 2, false, fieldname);
+    else if(fieldname.substr(0,2)=="Bx" ) return new Field2D(dimPrim, 0, true,  fieldname);
+    else if(fieldname.substr(0,2)=="By" ) return new Field2D(dimPrim, 1, true,  fieldname);
+    else if(fieldname.substr(0,2)=="Bz" ) return new Field2D(dimPrim, 2, true,  fieldname);
+    else if(fieldname.substr(0,2)=="Jx" ) return new Field2D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,2)=="Jy" ) return new Field2D(dimPrim, 1, false, fieldname);
+    else if(fieldname.substr(0,2)=="Jz" ) return new Field2D(dimPrim, 2, false, fieldname);
+    else if(fieldname.substr(0,3)=="Rho") return new Field2D(dimPrim, fieldname );
     
     ERROR("Cannot create field "<<fieldname);
 }
@@ -548,41 +548,34 @@ void ElectroMagn2D::computeTotalRhoJ()
     Field2D* Jz2D    = static_cast<Field2D*>(Jz_);
     Field2D* rho2D   = static_cast<Field2D*>(rho_);
     
-    
     // -----------------------------------
     // Species currents and charge density
     // -----------------------------------
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Field2D* Jx2D_s  = static_cast<Field2D*>(Jx_s[ispec]);
-        Field2D* Jy2D_s  = static_cast<Field2D*>(Jy_s[ispec]);
-        Field2D* Jz2D_s  = static_cast<Field2D*>(Jz_s[ispec]);
-        Field2D* rho2D_s = static_cast<Field2D*>(rho_s[ispec]);
-        
-        // Charge density rho^(p,p) to 0
-        for (unsigned int i=0 ; i<nx_p ; i++) {
-            for (unsigned int j=0 ; j<ny_p ; j++) {
-                if(ispec==0){
-                    (*rho2D)(i,j) = 0.;
-                    (*Jx2D)(i,j)  = 0.;
-                    (*Jy2D)(i,j)  = 0.;
-                    (*Jz2D)(i,j)  = 0.;
-                }
-                (*rho2D)(i,j) += (*rho2D_s)(i,j);
-                (*Jx2D)(i,j) += (*Jx2D_s)(i,j);
-                (*Jy2D)(i,j) += (*Jy2D_s)(i,j);
-                (*Jz2D)(i,j) += (*Jz2D_s)(i,j);
-            }
-            if(ispec==0) (*Jy2D)(i,ny_p) = 0. ;
-            (*Jy2D)(i,ny_p) += (*Jy2D_s)(i,ny_p);
+        if( Jx_s[ispec] ) {
+            Field2D* Jx2D_s  = static_cast<Field2D*>(Jx_s[ispec]);
+            for (unsigned int i=0 ; i<=nx_p ; i++)
+                for (unsigned int j=0 ; j<ny_p ; j++)
+                    (*Jx2D)(i,j) += (*Jx2D_s)(i,j);
         }
-        
-        {
-            for (unsigned int j=0 ; j<ny_p ; j++) {
-                if(ispec==0) (*Jx2D)(nx_p,j) = 0. ;
-                (*Jx2D)(nx_p,j) += (*Jx2D_s)(nx_p,j);
-            }
+        if( Jx_s[ispec] ) {
+            Field2D* Jy2D_s  = static_cast<Field2D*>(Jy_s[ispec]);
+            for (unsigned int i=0 ; i<nx_p ; i++)
+                for (unsigned int j=0 ; j<=ny_p ; j++)
+                    (*Jy2D)(i,j) += (*Jy2D_s)(i,j);
         }
-        
+        if( Jz_s[ispec] ) {
+            Field2D* Jz2D_s  = static_cast<Field2D*>(Jz_s[ispec]);
+            for (unsigned int i=0 ; i<nx_p ; i++)
+                for (unsigned int j=0 ; j<ny_p ; j++)
+                    (*Jz2D)(i,j) += (*Jz2D_s)(i,j);
+        }
+        if( rho_s[ispec] ) {
+            Field2D* rho2D_s  = static_cast<Field2D*>(rho_s[ispec]);
+            for (unsigned int i=0 ; i<nx_p ; i++)
+                for (unsigned int j=0 ; j<ny_p ; j++)
+                    (*rho2D)(i,j) += (*rho2D_s)(i,j);
+        }
     }//END loop on species ispec
 //END computeTotalRhoJ
 }

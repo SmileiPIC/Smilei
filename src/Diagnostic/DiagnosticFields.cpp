@@ -29,7 +29,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
     filename = fn.str();
     
     // Extract the requested fields
-    std::vector<std::string> fieldsToDump(0);
+    vector<string> fieldsToDump(0);
     PyTools::extract("fields", fieldsToDump, "DiagFields", ndiag);
     
     // List all fields that are requested
@@ -37,40 +37,41 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
     ostringstream ss("");
     fields_indexes.resize(0);
     fields_names  .resize(0);
-    bool hasfield;
     hasRhoJs = false;
+    // Loop fields
     for( unsigned int i=0; i<vecPatches(0)->EMfields->allFields.size(); i++ ) {
         string field_name = vecPatches(0)->EMfields->allFields[i]->name;
-        
-        if( fieldsToDump.size()==0 ) {
-            hasfield = true;
-        } else {
-            hasfield = false;
-            for( unsigned int j=0; j<fieldsToDump.size(); j++ ) {
-                if( field_name == fieldsToDump[j] ) {
-                    hasfield = true;
-                    break;
-                }
-            }
-        }
-        
-        if( hasfield ) {
+        bool RhoJ = field_name.at(0)=='J' || field_name.at(0)=='R';
+        bool species_field = (field_name.at(0)=='J' && field_name.length()>2) || (field_name.at(0)=='R' && field_name.length()>3);
+        // If field in list of fields to dump, then add it
+        if( hasField(field_name, fieldsToDump) ) {
             ss << field_name << " ";
             fields_indexes.push_back( i );
             fields_names  .push_back( field_name );
-            if( field_name.at(0)=='J' || field_name.at(0)=='R' )
-                hasRhoJs = true;
+            if( RhoJ ) hasRhoJs = true;
+            // If field specific to a species, then allocate it
+            if( species_field ) {
+                for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+                    Field2D * field = static_cast<Field2D*>(vecPatches(ipatch)->EMfields->allFields[i]);
+                    if( field->data_ != NULL ) continue;
+                    if     ( field_name.substr(0,2)=="Jx" ) field->allocateDims(0,false);
+                    else if( field_name.substr(0,2)=="Jy" ) field->allocateDims(1,false);
+                    else if( field_name.substr(0,2)=="Jz" ) field->allocateDims(2,false);
+                    else if( field_name.substr(0,2)=="Rh" ) field->allocateDims();
+                }
+            }
         }
     }
+    
+    // Some output
     ostringstream p("");
     p << "(time average = " << time_average << ")";
     MESSAGE(1,"Diagnostic Fields #"<<ndiag<<" "<<(time_average>1?p.str():"")<<" :");
     MESSAGE(2, ss.str() );
     
-    // If time average is requested, create new fields in each patch
+    // Create new fields in each patch, for time-average storage
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         vecPatches(ipatch)->EMfields->allFields_avg.resize( diag_n+1 );
-        
         if( time_average > 1 ) {
             for( unsigned int ifield=0; ifield<fields_names.size(); ifield++)
                 vecPatches(ipatch)->EMfields->allFields_avg[diag_n].push_back(
@@ -107,6 +108,23 @@ DiagnosticFields::~DiagnosticFields()
     delete flush_timeSelection;
 }
 
+
+bool DiagnosticFields::hasField(string field_name, vector<string> fieldsToDump)
+{
+    bool hasfield;
+    if( fieldsToDump.size()==0 ) {
+        hasfield = true;
+    } else {
+        hasfield = false;
+        for( unsigned int j=0; j<fieldsToDump.size(); j++ ) {
+            if( field_name == fieldsToDump[j] ) {
+                hasfield = true;
+                break;
+            }
+        }
+    }
+    return hasfield;
+}
 
 void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {

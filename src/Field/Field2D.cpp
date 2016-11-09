@@ -46,6 +46,13 @@ Field2D::Field2D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal,
     allocateDims(dims, mainDim, isPrimal);
 }
 
+// without allocating
+Field2D::Field2D(string name, vector<unsigned int> dims) : Field(dims, name)
+{
+    data_=NULL;
+    dims_=dims;
+}
+
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -64,14 +71,13 @@ Field2D::~Field2D()
 // ---------------------------------------------------------------------------------------------------------------------
 // Method used for allocating the dimension of a Field2D
 // ---------------------------------------------------------------------------------------------------------------------
-void Field2D::allocateDims(std::vector<unsigned int> dims )
+void Field2D::allocateDims()
 {
     //! \todo{Comment on what you are doing here (MG for JD)}
-    dims_=dims;
-    if (dims_.size()!=2) ERROR("Alloc error must be 2 : " << dims.size());
+    if (dims_.size()!=2) ERROR("Alloc error must be 2 : " << dims_.size());
     if (data_!=NULL) delete [] data_;
 
-    isDual_.resize( dims.size(), 0 );
+    isDual_.resize( dims_.size(), 0 );
 
     data_ = new double[dims_[0]*dims_[1]];
     //! \todo{check row major order!!! (JD)}
@@ -106,23 +112,22 @@ void Field2D::allocateDims(unsigned int dims1, unsigned int dims2)
 // ---------------------------------------------------------------------------------------------------------------------
 // Method used for allocating the dimension of a Field2D
 // ---------------------------------------------------------------------------------------------------------------------
-void Field2D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal )
+void Field2D::allocateDims(unsigned int mainDim, bool isPrimal )
 {
     //! \todo{Comment on what you are doing here (MG for JD)}
-    dims_=dims;
-    if (dims_.size()!=2) ERROR("Alloc error must be 2 : " << dims.size());
+    if (dims_.size()!=2) ERROR("Alloc error must be 2 : " << dims_.size());
     if (data_) delete [] data_;
     
     // isPrimal define if mainDim is Primal or Dual
-    isDual_.resize( dims.size(), 0 );
-    for ( unsigned int j=0 ; j<dims.size() ; j++ ) {
+    isDual_.resize( dims_.size(), 0 );
+    for ( unsigned int j=0 ; j<dims_.size() ; j++ ) {
         if ( (j==mainDim) && (!isPrimal) )
             isDual_[j] = 1;
         else if ( (j!=mainDim) && (isPrimal) )
             isDual_[j] = 1;
     }
     
-    for ( unsigned int j=0 ; j<dims.size() ; j++ )
+    for ( unsigned int j=0 ; j<dims_.size() ; j++ )
         dims_[j] += isDual_[j];
     
     data_ = new double[dims_[0]*dims_[1]];
