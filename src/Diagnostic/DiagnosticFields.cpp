@@ -52,7 +52,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
             // If field specific to a species, then allocate it
             if( species_field ) {
                 for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-                    Field2D * field = static_cast<Field2D*>(vecPatches(ipatch)->EMfields->allFields[i]);
+                    Field * field = vecPatches(ipatch)->EMfields->allFields[i];
                     if( field->data_ != NULL ) continue;
                     if     ( field_name.substr(0,2)=="Jx" ) field->allocateDims(0,false);
                     else if( field_name.substr(0,2)=="Jy" ) field->allocateDims(1,false);

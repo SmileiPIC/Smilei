@@ -56,10 +56,32 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi)
     localDiags  = DiagnosticFactory::createLocalDiagnostics (params, smpi, *this );
     
     // Delete all unused fields
-    for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
-        for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->allFields.size(); ifield++)
-            if( (*this)(ipatch)->EMfields->allFields[ifield]->data_ == NULL )
-                delete (*this)(ipatch)->EMfields->allFields[ifield];
+    for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++) {
+        for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Jx_s.size(); ifield++) {
+            if( (*this)(ipatch)->EMfields->Jx_s[ifield]->data_ == NULL ){
+                delete (*this)(ipatch)->EMfields->Jx_s[ifield];
+                (*this)(ipatch)->EMfields->Jx_s[ifield]=NULL;
+            }
+        }
+        for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Jy_s.size(); ifield++) {
+            if( (*this)(ipatch)->EMfields->Jy_s[ifield]->data_ == NULL ){
+                delete (*this)(ipatch)->EMfields->Jy_s[ifield];
+                (*this)(ipatch)->EMfields->Jy_s[ifield]=NULL;
+            }
+        }
+        for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Jz_s.size(); ifield++) {
+            if( (*this)(ipatch)->EMfields->Jz_s[ifield]->data_ == NULL ){
+                delete (*this)(ipatch)->EMfields->Jz_s[ifield];
+                (*this)(ipatch)->EMfields->Jz_s[ifield]=NULL;
+            }
+        }
+        for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->rho_s.size(); ifield++) {
+            if( (*this)(ipatch)->EMfields->rho_s[ifield]->data_ == NULL ){
+                delete (*this)(ipatch)->EMfields->rho_s[ifield];
+                (*this)(ipatch)->EMfields->rho_s[ifield]=NULL;
+            }
+        }
+    }
 }
 
 
