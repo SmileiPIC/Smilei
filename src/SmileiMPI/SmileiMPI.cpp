@@ -889,82 +889,76 @@ void SmileiMPI::computeGlobalDiags(Diagnostic* diag, int timestep)
 void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
 {
     
-    if ( !(scalars->printNow(timestep))
-      && !(scalars->timeSelection->theTimeIsNow(timestep)) ) return;
+    if ( !scalars->print_now && !scalars->timeSelection->theTimeIsNow(timestep) ) return;
     
-    vector<string>::iterator iterKey = scalars->out_key.begin();
-    for(vector<double>::iterator iter = scalars->out_value.begin(); iter !=scalars->out_value.end(); iter++) {
-        if ( ( (*iterKey).find("Min") == std::string::npos ) && ( (*iterKey).find("Max") == std::string::npos ) ) {
-            MPI_Reduce(isMaster()?MPI_IN_PLACE:&((*iter)), &((*iter)), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        }
-        else if ( (*iterKey).find("MinCell") != std::string::npos ) {
-            vector<double>::iterator iterVal = iter-1;
-            val_index minVal;
-            minVal.val   = (*iterVal);
-            minVal.index = (*iter);
-            MPI_Reduce(isMaster()?MPI_IN_PLACE:&minVal, &minVal, 1, MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
-            if (isMaster()) {
-                (*iterVal) = minVal.val;
-                (*iter)    = minVal.index;
-            }
-        }
-        else if ( (*iterKey).find("MaxCell") != std::string::npos ) {
-            vector<double>::iterator iterVal = iter-1;
-            val_index maxVal;
-            maxVal.val   = (*iterVal);
-            maxVal.index = (*iter);
-            MPI_Reduce(isMaster()?MPI_IN_PLACE:&maxVal, &maxVal, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
-            if (isMaster()) {
-                (*iterVal) = maxVal.val;
-                (*iter)    = maxVal.index;
-            }
-        }
-        iterKey++;
+    // Reduce all scalars that should be summed
+    int n_sum = scalars->values_SUM.size();
+    double * d_sum = &scalars->values_SUM[0];
+    MPI_Reduce(isMaster()?MPI_IN_PLACE:d_sum, d_sum, n_sum, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    
+    if( scalars->necessary_fieldMinMax_any ) {
+        // Reduce all scalars that are a "min" and its location
+        int n_min = scalars->values_MINLOC.size();
+        val_index * d_min = &scalars->values_MINLOC[0];
+        MPI_Reduce(isMaster()?MPI_IN_PLACE:d_min, d_min, n_min, MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
+        
+        // Reduce all scalars that are a "max" and its location
+        int n_max = scalars->values_MAXLOC.size();
+        val_index * d_max = &scalars->values_MAXLOC[0];
+        MPI_Reduce(isMaster()?MPI_IN_PLACE:d_max, d_max, n_max, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
     }
-
+    
+    // Complete the computation of the scalars after all reductions
     if (isMaster()) {
-
-        double Ukin = scalars->getScalar("Ukin");
-        double Uelm = scalars->getScalar("Uelm");
-
-        // added & lost energies due to the moving window
-        double Ukin_out_mvw = scalars->getScalar("Ukin_out_mvw");
-        double Ukin_inj_mvw = scalars->getScalar("Ukin_inj_mvw");
-        double Uelm_out_mvw = scalars->getScalar("Uelm_out_mvw");
-        double Uelm_inj_mvw = scalars->getScalar("Uelm_inj_mvw");
         
-        // added & lost energies at the boundaries
-        double Ukin_bnd = scalars->getScalar("Ukin_bnd");
-        double Uelm_bnd = scalars->getScalar("Uelm_bnd");
-
+        // Calculate average Z
+        for(unsigned int ispec=0; ispec<scalars->sDens.size(); ispec++)
+            if ( scalars->sDens[ispec]
+            && (scalars->necessary_species[ispec] || scalars->print_now) )
+                *scalars->sZavg[ispec] = (double)*scalars->sZavg[ispec] / (double)*scalars->sDens[ispec];
+        
         // total energy in the simulation
-        double Utot = Ukin + Uelm;
-        
-        // total energy at time 0
-        if (timestep==0) {
-            scalars->Energy_time_zero  = Utot;
+        if( scalars->necessary_Utot || scalars->print_now ) {
+            double Ukin = *scalars->Ukin;
+            double Uelm = *scalars->Uelm;
+            *scalars->Utot = Ukin + Uelm;
         }
-        
-        // the normalized energy balanced is normalized with respect to the current energy
-        scalars->EnergyUsedForNorm = Utot;
         
         // expected total energy
-        double Uexp = scalars->Energy_time_zero + Uelm_bnd + Ukin_inj_mvw + Uelm_inj_mvw
-            -           ( Ukin_bnd + Ukin_out_mvw + Uelm_out_mvw );
+        if( scalars->necessary_Uexp || scalars->print_now ) {
+            // total energy at time 0
+            if (timestep==0) scalars->Energy_time_zero = *scalars->Utot;
+            // Global kinetic energy, and BC losses/gains
+            double Ukin_bnd     = *scalars->Ukin_bnd    ;
+            double Ukin_out_mvw = *scalars->Ukin_out_mvw;
+            double Ukin_inj_mvw = *scalars->Ukin_inj_mvw;
+            // Global elm energy, and BC losses/gains
+            double Uelm_bnd     = *scalars->Uelm_bnd    ;
+            double Uelm_out_mvw = *scalars->Uelm_out_mvw;
+            double Uelm_inj_mvw = *scalars->Uelm_inj_mvw;
+            // expected total energy
+            double Uexp = scalars->Energy_time_zero + Uelm_bnd + Ukin_inj_mvw + Uelm_inj_mvw
+                -  ( Ukin_bnd + Ukin_out_mvw + Uelm_out_mvw );
+            *scalars->Uexp = Uexp;
+        }
         
-        // energy balance
-        double Ubal = Utot - Uexp;
+        if( scalars->necessary_Ubal || scalars->print_now ) {
+            // energy balance
+            double Ubal = (double)*scalars->Utot - (double)*scalars->Uexp;
+            *scalars->Ubal = Ubal;
+            
+            if( scalars->necessary_Ubal_norm || scalars->print_now) {
+                // the normalized energy balanced is normalized with respect to the current energy
+                scalars->EnergyUsedForNorm = *scalars->Utot;
+                // normalized energy balance
+                double Ubal_norm(0.);
+                if (scalars->EnergyUsedForNorm>0.)
+                    Ubal_norm = Ubal / scalars->EnergyUsedForNorm;
+                
+                *scalars->Ubal_norm = Ubal_norm;
+            }
+        }
         
-        // normalized energy balance
-        double Ubal_norm(0.);
-        if (scalars->EnergyUsedForNorm>0.)
-            Ubal_norm = Ubal / scalars->EnergyUsedForNorm;
-
-        scalars->setScalar("Ubal_norm",Ubal_norm);
-        scalars->setScalar("Ubal",Ubal);
-        scalars->setScalar("Uexp",Uexp);
-        scalars->setScalar("Utot",Utot);
-
     }
 } // END computeGlobalDiags(DiagnosticScalar& scalars ...)
 

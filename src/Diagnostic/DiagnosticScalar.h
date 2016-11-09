@@ -18,6 +18,60 @@ struct val_index
 };
 
 
+//! Class for containing info on one particular scalar data
+class Scalar {
+public:
+    Scalar(std::string name, std::string secondname, unsigned int width, bool allowed):
+        name(name), secondname(secondname), width(width), allowed(allowed)
+        {};
+    ~Scalar() {};
+    virtual inline operator double() const { return 0.; }
+    virtual inline void reset() { };
+    std::string name, secondname;
+    unsigned int width;
+    bool allowed;
+};
+//! Child class of `Scalar` specific for scalars which only have one value
+class Scalar_value : public Scalar {
+public:
+    Scalar_value(std::string name, unsigned int width, bool allowed, std::vector<double>* values):
+        Scalar(name, "", width, allowed), values(values), index(values->size())
+        {};
+    ~Scalar_value() {};
+    inline Scalar_value& operator= (double v) {
+        (*values)[index] = v;
+        return *this;
+    };
+    inline Scalar_value& operator+= (double v) {
+        #pragma omp atomic
+        (*values)[index]+=v;
+        return *this;
+    };
+    inline operator double() const { return (*values)[index]; }
+    inline void reset() override { (*values)[index]=0.; };
+    std::vector<double>* values;
+    unsigned int index;
+};
+//! Child class of `Scalar` specific for scalars which have a value and a location
+class Scalar_value_location : public Scalar {
+public:
+    Scalar_value_location(std::string name, std::string secondname, unsigned int width, bool allowed, std::vector<val_index>* values, double reset_value):
+        Scalar(name, secondname, width, allowed), values(values), index(values->size()), reset_value(reset_value)
+        {};
+    ~Scalar_value_location() {};
+    inline Scalar_value_location& operator= (val_index v) {
+        (*values)[index] = v;
+        return *this;
+    };
+    inline operator double() const { return (*values)[index].val; }
+    inline operator int() const { return (*values)[index].index; }
+    inline void reset() override { (*values)[index].val=reset_value; (*values)[index].index=-1; };
+    std::vector<val_index>* values;
+    unsigned int index;
+    double reset_value;
+};
+
+//! Class for the diagnostic of scalars
 class DiagnosticScalar : public Diagnostic {
     friend class SmileiMPI;
 
@@ -31,6 +85,8 @@ public :
     void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     
     void closeFile() override;
+    
+    void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
     
     bool prepare( int timestep ) override;
     
@@ -58,33 +114,26 @@ public :
     
     //! Tell whether a printout is needed now
     inline bool printNow( int timestep ) {
-        return (timestep % print_every == 0.);
+        return (timestep % print_every == 0);
     }
+    
+    //! True if printout is needed now
+    bool print_now;
     
 private :
     
-    //! set a particular scalar
-    void setScalar(std::string name, double value);
+    //! Calculate the length of a string when output to the file
+    unsigned int calculateWidth( std::string key);
     
-    //! increment a particular scalar
-    void incrementScalar(std::string name, double value);
-
-    //! increment a particular scalar
-    void incrementScalar(std::string name, double value, int valIndex);
-
-    //! append to outlist
-    void append(std::string, double);
-
-    //! append to outlist
-    void append(std::string, double, int);
-    
-    //! prepend to outlist
-    void prepend(std::string, double);
+    //! sets a scalar in the list of scalars (for initialization)
+    Scalar_value* newScalar_SUM( std::string name );
+    //! sets a scalar in the list of scalars (for initialization), in the case of min scalar
+    Scalar_value_location* newScalar_MINLOC( std::string name );
+    //! sets a scalar in the list of scalars (for initialization), in the case of max scalar
+    Scalar_value_location* newScalar_MAXLOC( std::string name );
     
     //! check if key is allowed
     bool allowedKey(std::string);
-    
-    bool defined(std::string);
     
     //! write precision
     unsigned int precision;
@@ -92,25 +141,41 @@ private :
     //! list of keys for scalars to be written
     std::vector<std::string> vars;
     
-    //! these are lists to keep variable names and values
-    std::vector<std::string> out_key;
-    std::vector<double>      out_value;
-    //! width of each field
-    std::vector<unsigned int> out_width;
+    //! The list of scalars data
+    std::vector<Scalar*> allScalars;
+    //! List of scalar values to be summed by MPI
+    std::vector<double> values_SUM;
+    //! List of scalar values to be MINLOCed by MPI
+    std::vector<val_index> values_MINLOC;
+    //! List of scalar values to be MAXLOCed by MPI
+    std::vector<val_index> values_MAXLOC;
     
-    //! copied from params
+    //! Volume of a cell (copied from params)
     double cell_volume;
     
-    //! this is copied from params
+    //! Time resolution (copied from params)
     double res_time;
     
+    //! Timestep (copied from params)
     double dt;
     
     //! output stream
     std::ofstream fout;
     
-
-
+    //! Pointers to the various scalars
+    Scalar_value *Utot, *Uexp, *Ubal, *Ubal_norm;
+    Scalar_value *Uelm, *Ukin, *Uelm_bnd, *Ukin_bnd;
+    Scalar_value *Ukin_out_mvw, *Ukin_inj_mvw, *Uelm_out_mvw, *Uelm_inj_mvw;
+    std::vector<Scalar_value *> sDens, sNtot, sZavg, sUkin, fieldUelm;
+    std::vector<Scalar_value_location *> fieldMin, fieldMax;
+    std::vector<Scalar_value *> poy, poyInst;
+    
+    //! Booleans to tell which scalars should be computed or not
+    bool necessary_Ubal_norm, necessary_Ubal, necessary_Utot, necessary_Uexp;
+    bool necessary_Ukin, necessary_Ukin_BC;
+    bool necessary_Uelm, necessary_Uelm_BC;
+    bool necessary_fieldMinMax_any;
+    std::vector<bool> necessary_species, necessary_fieldUelm, necessary_fieldMinMax, necessary_poy;
 
 };
 
