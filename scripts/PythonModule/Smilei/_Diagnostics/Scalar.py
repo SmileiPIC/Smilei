@@ -54,6 +54,9 @@ class Scalar(Diagnostic):
 					prevline = line
 				scalars = prevline[1:].strip().split() # list of scalars
 				scalarindex = scalars.index(scalar) # index of the requested scalar
+				line = str(line.strip()).split()
+				self._times.append( int( self._np.round(float(line[0]) / float(self.timestep)) ) )
+				self._values.append( float(line[scalarindex]) )
 				for line in f:
 					line = str(line.strip()).split()
 					self._times.append( int( self._np.round(float(line[0]) / float(self.timestep)) ) )
