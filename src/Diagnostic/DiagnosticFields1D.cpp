@@ -65,15 +65,10 @@ void DiagnosticFields1D::getField( Patch* patch, unsigned int field_index )
         field = static_cast<Field1D*>(patch->EMfields->allFields    [field_index]);
     }
     // Copy field to the "data" buffer
-    unsigned int ix = patch_offset_in_grid[0] - (patch->hindex==0 ? 1:0);
-    unsigned int ix_max = ix + patch_size[0] + (patch->hindex==0 ? 1:0);
-    unsigned int iout = total_patch_size * (patch->Hindex()-refHindex) + ((refHindex==0 && !patch->hindex==0)?1:0);
-    while( ix < ix_max ) {
-        data[iout] = (*field)(ix);
-        ix++;
-        iout++;
-    }
-    
+    unsigned int ix = patch_offset_in_grid[0] ;
+    unsigned int iout = patch_size[0] * (patch->Hindex()-refHindex);
+    memcpy(&data[iout], &(*field)(ix), patch_size[0]*sizeof(double)); 
+
     if( time_average>1 ) field->put_to(0.0);
 }
 
