@@ -17,12 +17,12 @@ DiagnosticFields1D::DiagnosticFields1D( Params &params, SmileiMPI* smpi, Patch* 
     
     // Calculate the patch size
     patch_size.resize(1);
-    patch_size[0] = params.n_space[0];
+    patch_size[0] = params.n_space[0]+1;
     total_patch_size = patch_size[0];
     
     // define space in file
     hsize_t global_size[1];
-    global_size[0] = tot_number_of_patches * total_patch_size + 1;
+    global_size[0] = tot_number_of_patches * total_patch_size ;
     filespace = H5Screate_simple(1, global_size, NULL);
     memspace  = H5Screate_simple(1, global_size, NULL ); // redefined later
 
