@@ -133,16 +133,16 @@ double Function_Polygonal3D::valueAt(vector<double> x_cell) {
 double Function_Cosine1D::valueAt(vector<double> x_cell) {
     double x = (x_cell[0] - xvacuum) * invxlength, xfactor = 0.;
     if( x > 0. && x < 1. )
-        xfactor = base + xamplitude * cos(xphi + xfreq * x);
+        xfactor = base + xamplitude * cos(xphi + xnumber2pi * x);
     return xfactor;
 }
 double Function_Cosine2D::valueAt(vector<double> x_cell) {
     double x = (x_cell[0] - xvacuum) * invxlength, xfactor = 0.;
     double y = (x_cell[1] - yvacuum) * invylength, yfactor = 0.;
     if( x > 0. && x < 1. )
-        xfactor = base + xamplitude * cos(xphi + xfreq * x);
+        xfactor = base + xamplitude * cos(xphi + xnumber2pi * x);
     if( y > 0. && y < 1. )
-        yfactor = base + yamplitude * cos(yphi + yfreq * y);
+        yfactor = base + yamplitude * cos(yphi + ynumber2pi * y);
     return xfactor * yfactor;
 }
 double Function_Cosine3D::valueAt(vector<double> x_cell) {
@@ -150,11 +150,11 @@ double Function_Cosine3D::valueAt(vector<double> x_cell) {
     double y = (x_cell[1] - yvacuum) * invylength, yfactor = 0.;
     double z = (x_cell[2] - zvacuum) * invzlength, zfactor = 0.;
     if( x > 0. && x < 1. )
-        xfactor = base + xamplitude * cos(xphi + xfreq * x);
+        xfactor = base + xamplitude * cos(xphi + xnumber2pi * x);
     if( y > 0. && y < 1. )
-        yfactor = base + yamplitude * cos(yphi + yfreq * y);
+        yfactor = base + yamplitude * cos(yphi + ynumber2pi * y);
     if( z > 0. && z < 1. )
-        zfactor = base + zamplitude * cos(zphi + zfreq * z);
+        zfactor = base + zamplitude * cos(zphi + znumber2pi * z);
     return xfactor * yfactor * zfactor;
 }
 
