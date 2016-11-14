@@ -184,12 +184,14 @@ def scalarListValidation(SCALAR_NAME,t) :
   # Check these scalars with the function scalarValidation()
   #
   it = np.int64(t)
+  #import pdb;pdb.set_trace()
   L=Diagnostics.Scalar(".",scalar="Utot")
   LISTE_SCALARS = L.getScalars()
   if SCALAR_NAME == "?":
     VERBOSE = True
     # Propose the list of all the scalars
-    L = Diagnostics.Scalar(".")
+  #  L = Diagnostics.Scalar(".")
+    print LISTE_SCALARS
     print '\nEnter a scalar name from the above list (press <Enter> if no more scalar to check ):'
     SCALAR_NAME = raw_input()
     while SCALAR_NAME != "" :

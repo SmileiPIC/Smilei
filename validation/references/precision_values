@@ -48,6 +48,8 @@ Ntot_pon2 0.5
 Ntot_proton 0.5
 Ntot_species0 0.5
 Ntot_species1 0.5
+PoyBottom 0.5
+PoyBottomInst 0.5
 PoyEast 0.5
 PoyEastInst 0.5
 PoyNorth 0.5
@@ -56,6 +58,8 @@ PoySouth 0.5
 PoySouthInst 0.5
 PoyWest 0.5
 PoyWestInst 0.5
+PoyTop 0.5
+PoyTopInst 0.5
 RhoMax 0.5
 RhoMaxCell 0.5
 RhoMin 0.5
