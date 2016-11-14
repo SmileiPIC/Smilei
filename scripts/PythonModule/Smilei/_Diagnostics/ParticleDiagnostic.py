@@ -18,10 +18,6 @@ class ParticleDiagnostic(Diagnostic):
 				self._error += "      No particle diagnostics found"
 			return
 		
-		cell_size = {"x":self._cell_length[0]}
-		if self._ndim>1: cell_size.update({"y":self._cell_length[1]})
-		if self._ndim>2: cell_size.update({"z":self._cell_length[2]})
-		
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------
 		# Check the requested diags are ok
@@ -131,12 +127,14 @@ class ParticleDiagnostic(Diagnostic):
 		# -------------------------------------------------------------------
 		# Fabricate all axes values for all diags
 		plot_diff = []
+		cell_volume = self._cell_length.prod()
 		coeff = 1.
 		unitsa = [0,0,0,0]
 		spatialaxes = {"x":False, "y":False, "z":False}
 		self._finalShape = []
 		self._slices = []
 		self._selection = ()
+		hasComposite = False
 		
 		for axis in self._axes:
 			# Find the vector of values along the axis
@@ -158,7 +156,10 @@ class ParticleDiagnostic(Diagnostic):
 			if   axis["type"] in ["x","y","z"]:
 				axis_units = "L_r"
 				spatialaxes[axis["type"]] = True
-				coeff *= cell_size[axis["type"]]
+			elif axis["type"][:9] == "composite":
+				axis_units = "L_r"
+				hasComposite = True
+				axis["type"] = axis["type"][10:]
 			elif axis["type"] in ["px","py","pz","p"]:
 				axis_units = "P_r"
 			elif axis["type"] in ["vx","vy","vz","v"]:
@@ -232,24 +233,24 @@ class ParticleDiagnostic(Diagnostic):
 			val_units = "??"
 			output = self._myinfo[d]["output"]
 			if   output == "density":
-				titles[d] = "Number density"
-				val_units = "N_r"
+				titles[d] = "Number" + ("" if hasComposite else " density")
+				val_units = "1" if hasComposite else "N_r"
 			elif output == "charge_density":
-				titles[d] = "Charge density"
-				val_units = "N_r * Q_r"
+				titles[d] = "Charge" + ("" if hasComposite else " density")
+				val_units = "Q_r" if hasComposite else "N_r * Q_r"
 			elif output=="ekin_density":
-				titles[d] = "Energy density"
-				val_units = "N_r * K_r"
+				titles[d] = "Energy" + ("" if hasComposite else " density")
+				val_units = "K_r" if hasComposite else "N_r * K_r"
 			elif output[0] == "j":
-				titles[d] = "J"+output[1]
-				val_units = "J_r"
+				titles[d] = "J"+output[1] + (" x Volume" if hasComposite else "")
+				val_units = "J_r/N_r" if hasComposite else "J_r"
 			elif output[0]=="p" and output[-8:] == "_density":
-				titles[d] = "P"+output[1].strip("_")+" density"
-				val_units = "N_r * P_r"
+				titles[d] = "P"+output[1].strip("_") + ("" if hasComposite else " density")
+				val_units = "P_r" if hasComposite else "N_r * P_r"
 			elif output[:8]=="pressure":
-				titles[d] = "Pressure "+output[-2]
-				val_units = "N_r * K_r"
-			axes_units = [unit for unit in self._units if unit!="L_r"]
+				titles[d] = "Pressure "+output[-2] + (" x Volume" if hasComposite else "")
+				val_units = "K_r" if hasComposite else "N_r * K_r"
+			axes_units = [unit for unit in self._units if (hasComposite or unit!="L_r")]
 			units[d] = val_units
 			if len(axes_units)>0: units[d] += " / ( " + " * ".join(axes_units) + " )"
 		# Make total units and title
@@ -260,9 +261,9 @@ class ParticleDiagnostic(Diagnostic):
 			self._title  = self._title .replace("#"+str(d), titles[d])
 		
 		# If any spatial dimension did not appear, then count it for calculating the correct density
-		if self._ndim>=1 and not spatialaxes["x"]: coeff /= self._ncels[0]
-		if self._ndim>=2 and not spatialaxes["y"]: coeff /= self._ncels[1]
-		if self._ndim==3 and not spatialaxes["z"]: coeff /= self._ncels[2]
+		if self._ndim>=1 and not spatialaxes["x"]: coeff /= self._ncels[0]*self._cell_length[0]
+		if self._ndim>=2 and not spatialaxes["y"]: coeff /= self._ncels[1]*self._cell_length[1]
+		if self._ndim==3 and not spatialaxes["z"]: coeff /= self._ncels[2]*self._cell_length[2]
 		
 		# Calculate the array that represents the bins sizes in order to get units right.
 		# This array will be the same size as the plotted array
@@ -273,7 +274,8 @@ class ParticleDiagnostic(Diagnostic):
 		else:
 			self._bsize = self._np.prod( self._np.array( self._np.meshgrid( *plot_diff ) ), axis=0)
 			self._bsize = self._bsize.transpose()
-		self._bsize /= coeff
+		self._bsize = cell_volume / self._bsize
+		if not hasComposite: self._bsize *= coeff
 		self._bsize = self._np.squeeze(self._bsize)
 		
 		# Finish constructor
@@ -308,8 +310,9 @@ class ParticleDiagnostic(Diagnostic):
 					axissize = int(sp[3])
 					logscale = bool(int(sp[4]))
 					edge_inclusive = bool(int(sp[5]))
+					coefficients = eval(sp[6])
 					while len(axes)<n+1: axes.append({}) # extend the array to the adequate size
-					axes[n] = {"type":axistype,"min":axismin,"max":axismax,"size":axissize,"log":logscale,"edges_included":edge_inclusive}
+					axes[n] = {"type":axistype,"min":axismin,"max":axismax,"size":axissize,"log":logscale,"edges_included":edge_inclusive,"coefficients":coefficients}
 			f.close()
 			# Verify that the info corresponds to the diag in the other paths
 			if info == {}:
@@ -407,7 +410,7 @@ class ParticleDiagnostic(Diagnostic):
 			# remove sliced axes
 			B = self._np.squeeze(B)
 			# Divide by the bins size
-			B /= self._bsize
+			B *= self._bsize
 			# Append this diag's array for the operation
 			A.update({ d:B })
 		# Calculate operation

@@ -58,54 +58,115 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
     if (allAxes.size() == 0)
         ERROR(errorPrefix << ": axes must contain something");
     
+    // Loop axes and extract their format
     for (unsigned int iaxis=0; iaxis<allAxes.size(); iaxis++ ) {
         DiagnosticParticlesAxis tmpAxis;
         PyObject *oneAxis=allAxes[iaxis];
-        if (PyTuple_Check(oneAxis) || PyList_Check(oneAxis)) {
-            PyObject* seq = PySequence_Fast(oneAxis, "expected a sequence");
-            unsigned int lenAxisArgs=PySequence_Size(seq);
-            if (lenAxisArgs<4)
-                ERROR(errorPrefix << ": axis #" << iaxis << " contain at least 4 arguments");
+        
+        // Axis must be a list
+        if (!PyTuple_Check(oneAxis) && !PyList_Check(oneAxis))
+            ERROR(errorPrefix << ": axis #" << iaxis << " must be a list");
+        PyObject* seq = PySequence_Fast(oneAxis, "expected a sequence");
+        
+        // Axis must have 4 elements or more
+        unsigned int lenAxisArgs=PySequence_Size(seq);
+        if (lenAxisArgs<4)
+            ERROR(errorPrefix << ": axis #" << iaxis << " contain at least 4 arguments");
+        
+        // Try to extract first element: type
+        if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 0),tmpAxis.type))
+            ERROR(errorPrefix << ", axis #" << iaxis << ": First item must be a string (axis type)");
+        if ( tmpAxis.type == "composite" )
+            ERROR(errorPrefix << ": axis type cannot be 'composite'");
+        if (   (tmpAxis.type == "z" && params.nDim_particle <3)
+            || (tmpAxis.type == "y" && params.nDim_particle <2) )
+            ERROR(errorPrefix << ": axis " << tmpAxis.type << " cannot exist in " << params.nDim_particle << "D");
+        
+        // If type is "chi", then the requested species
+        if( tmpAxis.type=="chi" )
+            for (unsigned int ispec=0 ; ispec < species.size() ; ispec++)
+                if( ! patch->vecSpecies[species[ispec]]->particles->isRadReaction )
+                    ERROR(errorPrefix << ": axis #" << iaxis << " 'chi' requires all species to be 'radiating'");
+        
+        // If not "usual" type, try to find composite type
+        if (tmpAxis.type!="x" && tmpAxis.type!="y" && tmpAxis.type!="z"
+         && tmpAxis.type!="px" && tmpAxis.type!="py" && tmpAxis.type!="pz" && tmpAxis.type!="p"
+         && tmpAxis.type!="vx" && tmpAxis.type!="vy" && tmpAxis.type!="vz" && tmpAxis.type!="v" && tmpAxis.type!="vperp2"
+         && tmpAxis.type!="gamma" && tmpAxis.type!="ekin"
+         && tmpAxis.type!="charge" && tmpAxis.type!="chi") {
             
-            if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 0),tmpAxis.type)) {
-                ERROR(errorPrefix << ", axis #" << iaxis << ": First item must be a string (axis type)");
-            } else {
-                if (   (tmpAxis.type == "z" && params.nDim_particle <3)
-                    || (tmpAxis.type == "y" && params.nDim_particle <2) )
-                    ERROR(errorPrefix << ": axis " << tmpAxis.type << " cannot exist in " << params.nDim_particle << "D");
+            for( unsigned int i=1; i<=tmpAxis.type.length(); i++ )
+                if( tmpAxis.type.substr(i,1) == " " )
+                    ERROR(errorPrefix << ": axis #" << iaxis << " type cannot contain whitespace");
+            if( tmpAxis.type.length()<2 )
+                ERROR(errorPrefix << ": axis #" << iaxis << " type not understood");
+            
+            // Analyse character by character
+            tmpAxis.coefficients.resize( params.nDim_particle , 0. );
+            unsigned int previ=0;
+            double sign=1.;
+            tmpAxis.type += "+";
+            for( unsigned int i=1; i<=tmpAxis.type.length(); i++ ) {
+                // Split string at "+" or "-" location
+                if( tmpAxis.type.substr(i,1) == "+" || tmpAxis.type.substr(i,1) == "-" ) {
+                    // Get one segment of the split string
+                    string segment = tmpAxis.type.substr(previ,i-previ);
+                    // Get the last character, which should be one of x, y, or z
+                    unsigned int j = segment.length();
+                    string direction = j>0 ? segment.substr(j-1,1) : "";
+                    unsigned int direction_index;
+                    if     ( direction == "x" ) direction_index = 0;
+                    else if( direction == "y" ) direction_index = 1;
+                    else if( direction == "z" ) direction_index = 2;
+                    else { ERROR(errorPrefix << ": axis #" << iaxis << " type not understood"); }
+                    if( direction_index >= params.nDim_particle )
+                        ERROR(errorPrefix << ": axis #" << iaxis << " type " << direction << " cannot exist in " << params.nDim_particle << "D");
+                    if( tmpAxis.coefficients[direction_index] != 0. )
+                        ERROR(errorPrefix << ": axis #" << iaxis << " type " << direction << " appears twice");
+                    // Get the remaining characters, which should be a number
+                    tmpAxis.coefficients[direction_index] = j>1 ? ::atof(segment.substr(0,j-1).c_str()) : 1.;
+                    tmpAxis.coefficients[direction_index] *= sign;
+                    // Save sign and position for next segment
+                    sign = tmpAxis.type.substr(i,1) == "+" ? 1. : -1;
+                    previ = i+1;
+                }
             }
             
-            if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 1),tmpAxis.min)) {
-                ERROR(errorPrefix << ", axis #" << iaxis << ": Second item must be a double (axis min)");
-            }
-            
-            if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 2),tmpAxis.max)) {
-                ERROR(errorPrefix << ", axis #" << iaxis << ": Third item must be a double (axis max)");
-            }
-            
-            
-            if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 3),tmpAxis.nbins)) {
-                ERROR(errorPrefix << ", axis #" << iaxis << ": Fourth item must be an int (number of bins)");
-            }
-            
-            // 5 - Check for  other keywords such as "logscale" and "edge_inclusive"
-            tmpAxis.logscale = false;
-            tmpAxis.edge_inclusive = false;
-            for(unsigned int i=4; i<lenAxisArgs; i++) {
-                string my_str("");
-                PyTools::convert(PySequence_Fast_GET_ITEM(seq, i),my_str);
-                if(my_str=="logscale" ||  my_str=="log_scale" || my_str=="log")
-                    tmpAxis.logscale = true;
-                else if(my_str=="edges" ||  my_str=="edge" ||  my_str=="edge_inclusive" ||  my_str=="edges_inclusive")
-                    tmpAxis.edge_inclusive = true;
-                else
-                    ERROR(errorPrefix << ": keyword `" << my_str << "` not understood");
-            }
-            
-            axes.push_back(tmpAxis);
-            
-            Py_DECREF(seq);
+            tmpAxis.type = "composite:"+tmpAxis.type.substr(0,tmpAxis.type.length()-1);
         }
+        
+        // Try to extract secod element: type
+        if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 1),tmpAxis.min)) {
+            ERROR(errorPrefix << ", axis #" << iaxis << ": Second item must be a double (axis min)");
+        }
+        
+        if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 2),tmpAxis.max)) {
+            ERROR(errorPrefix << ", axis #" << iaxis << ": Third item must be a double (axis max)");
+        }
+        
+        
+        if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 3),tmpAxis.nbins)) {
+            ERROR(errorPrefix << ", axis #" << iaxis << ": Fourth item must be an int (number of bins)");
+        }
+        
+        // 5 - Check for  other keywords such as "logscale" and "edge_inclusive"
+        tmpAxis.logscale = false;
+        tmpAxis.edge_inclusive = false;
+        for(unsigned int i=4; i<lenAxisArgs; i++) {
+            string my_str("");
+            PyTools::convert(PySequence_Fast_GET_ITEM(seq, i),my_str);
+            if(my_str=="logscale" ||  my_str=="log_scale" || my_str=="log")
+                tmpAxis.logscale = true;
+            else if(my_str=="edges" ||  my_str=="edge" ||  my_str=="edge_inclusive" ||  my_str=="edges_inclusive")
+                tmpAxis.edge_inclusive = true;
+            else
+                ERROR(errorPrefix << ": keyword `" << my_str << "` not understood");
+        }
+        
+        axes.push_back(tmpAxis);
+        
+        Py_DECREF(seq);
+        
     }
     
     // calculate the total size of the output array
@@ -123,7 +184,22 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
         MESSAGE(1,"Created particle diagnostic #" << n_diag_particles << ": species " << mystream.str());
         for(unsigned int i=0; i<axes.size(); i++) {
             mystream.str("");
-            mystream << "Axis " << axes[i].type << " from " << axes[i].min << " to " << axes[i].max << " in " << axes[i].nbins << " steps";
+            mystream << "Axis ";
+            if( axes[i].type.substr(0,9) == "composite" ) {
+                bool first = true;
+                for( unsigned int idim=0; idim<axes[i].coefficients.size(); idim++ ) {
+                    if( axes[i].coefficients[idim]==0. ) continue;
+                    bool negative = axes[i].coefficients[idim]<0.;
+                    double coeff = (negative?-1.:1.)*axes[i].coefficients[idim];
+                    mystream << (negative?"-":(first?"":"+"));
+                    if( coeff!=1. ) mystream << coeff;
+                    mystream << (idim==0?"x":(idim==1?"y":"z"));
+                    first = false;
+                }
+            } else {
+                mystream << axes[i].type;
+            }
+            mystream << " from " << axes[i].min << " to " << axes[i].max << " in " << axes[i].nbins << " steps";
             if( axes[i].logscale       ) mystream << " [LOGSCALE] ";
             if( axes[i].edge_inclusive ) mystream << " [EDGE INCLUSIVE]";
             MESSAGE(2,mystream.str());
@@ -172,7 +248,12 @@ void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, bool newfil
             string str1 = mystream.str();
             mystream.str(""); // clear
             mystream << axes[iaxis].type << " " << axes[iaxis].min << " " << axes[iaxis].max << " "
-                     << axes[iaxis].nbins << " " << axes[iaxis].logscale << " " << axes[iaxis].edge_inclusive;
+                     << axes[iaxis].nbins << " " << axes[iaxis].logscale << " " << axes[iaxis].edge_inclusive << " [";
+            for( unsigned int idim=0; idim<axes[iaxis].coefficients.size(); idim++) {
+                mystream << axes[iaxis].coefficients[idim];
+                if(idim<axes[iaxis].coefficients.size()-1) mystream << ",";
+            }
+            mystream << "]";
             string str2 = mystream.str();
             H5::attr(fileId_, str1, str2);
         }
@@ -223,7 +304,7 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
     Species *s;
     Particles *p;
     vector<int> index_array;
-    vector<double> *x, *y, *z, *px, *py, *pz, *w, *chi=NULL, axis_array, data_array;
+    vector<double> *x, *y, *z, *px, *py, *pz, *w, *chi, axis_array, data_array;
     vector<short> *q;
     int axissize, ind;
     double axismin, axismax, mass, coeff;
@@ -245,8 +326,7 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
         pz   = &(p->Momentum[2]);           // -+
         q    = &(p->Charge);                // charge
         w    = &(p->Weight);                // weight
-        if (s->dynamics_type == "rrll")
-            chi  = &(p->Chi);               // chi (for rad reaction particles particles)
+        chi  = &(p->Chi);                   // chi (for rad reaction particles particles)
         mass = s->mass;       // mass
         npart = p->size();    // number of particles
         
@@ -263,7 +343,7 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
             axismin  = axes[iaxis].min;
             axismax  = axes[iaxis].max;
             axissize = axes[iaxis].nbins;
-            axistype = axes[iaxis].type;
+            axistype = axes[iaxis].type.substr(0,9);
             
             // first loop on particles to store the indexing (axis) quantity
             
@@ -329,7 +409,16 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
             
             else if (axistype == "chi")
                 for (ipart = 0 ; ipart < npart ; ipart++)
-                    axis_array[ipart] = (double) (*chi)[ipart];
+                    axis_array[ipart] = (*chi)[ipart];
+            
+            else if (axistype == "composite") {
+                unsigned int idim, ndim = axes[iaxis].coefficients.size();
+                for (ipart = 0 ; ipart < npart ; ipart++) {
+                    axis_array[ipart] = 0.;
+                    for (idim = 0 ; idim < ndim ; idim++)
+                        axis_array[ipart] += axes[iaxis].coefficients[idim] * p->Position[idim][ipart];
+                }
+            }
             
             else   ERROR("In particle diagnostics, axis `" << axistype << "` unknown");
             
