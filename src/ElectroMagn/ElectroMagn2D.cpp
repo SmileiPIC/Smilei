@@ -217,17 +217,17 @@ isYmax(patch->isYmax())
             else
                 Jx_s[ispec]  = new Field2D(emFields->Jx_s[ispec]->name, dimPrim);
         if ( emFields->Jy_s[ispec] != NULL )
-            if ( emFields->Jx_s[ispec]->data_ != NULL )
+            if ( emFields->Jy_s[ispec]->data_ != NULL )
                 Jy_s[ispec]  = new Field2D(dimPrim, 1, false, emFields->Jy_s[ispec]->name);
             else
                 Jy_s[ispec]  = new Field2D(emFields->Jy_s[ispec]->name, dimPrim);
-        if ( emFields->Jy_s[ispec] != NULL )
-            if ( emFields->Jx_s[ispec]->data_ != NULL )
+        if ( emFields->Jz_s[ispec] != NULL )
+            if ( emFields->Jz_s[ispec]->data_ != NULL )
                 Jz_s[ispec]  = new Field2D(dimPrim, 2, false, emFields->Jz_s[ispec]->name);
             else
                 Jz_s[ispec]  = new Field2D(emFields->Jz_s[ispec]->name, dimPrim);
         if ( emFields->rho_s[ispec] != NULL ) 
-            if ( emFields->Jx_s[ispec]->data_ != NULL )
+            if ( emFields->rho_s[ispec]->data_ != NULL )
                 rho_s[ispec] = new Field2D(dimPrim, emFields->rho_s[ispec]->name );
             else
                 rho_s[ispec]  = new Field2D(emFields->rho_s[ispec]->name, dimPrim);
