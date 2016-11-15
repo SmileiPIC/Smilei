@@ -11,10 +11,15 @@ using namespace std;
 
 void SyncVectorPatch::exchangeParticles(VectorPatch& vecPatches, int ispec, Params &params, SmileiMPI* smpi)
 {
+//    #pragma omp master
+//    Tools::printMemFootPrint( "Before exchange" );
+
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         vecPatches(ipatch)->initExchParticles(smpi, ispec, params);
     }
+//    #pragma omp master
+//    Tools::printMemFootPrint( "After init" );
 
     //cout << "init exch done" << endl;
 
@@ -25,22 +30,32 @@ void SyncVectorPatch::exchangeParticles(VectorPatch& vecPatches, int ispec, Para
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
             vecPatches(ipatch)->initCommParticles(smpi, ispec, params, iDim, &vecPatches);
         }
+//        #pragma omp master
+//        Tools::printMemFootPrint( "After initComm" );
+
         #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
             vecPatches(ipatch)->CommParticles(smpi, ispec, params, iDim, &vecPatches);
         }
+//        #pragma omp master
+//        Tools::printMemFootPrint( "After Comm" );
         //cout << "init comm done for dim " << iDim << endl;
         //cout << "initCommParticles done for " << iDim << endl;
         #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
             vecPatches(ipatch)->finalizeCommParticles(smpi, ispec, params, iDim, &vecPatches);
         }
+//        #pragma omp master
+//        Tools::printMemFootPrint( "After finalizeComm" );
         //cout << "final comm done for dim " << iDim << endl;
     }
 
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
         vecPatches(ipatch)->vecSpecies[ispec]->sort_part();
+
+//    #pragma omp master
+//    Tools::printMemFootPrint( "After exchange" );
 
 }
 
@@ -126,7 +141,7 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
 
         if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[0][0]){
-            //The patch to the west belongs to the same MPI process than I.
+            //The patch to the xmin belongs to the same MPI process than I.
             pt1 = &(*fields[vecPatches(ipatch)->neighbor_[0][0]-h0])(n_space[0]*ny_*nz_);
             pt2 = &(*fields[ipatch])(0);
             //Sum 2 ==> 1
@@ -175,7 +190,7 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
         for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
 
             if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[1][0]){
-                //The patch to the south belongs to the same MPI process than I.
+                //The patch to the ymin belongs to the same MPI process than I.
                 pt1 = &(*fields[vecPatches(ipatch)->neighbor_[1][0]-h0])(n_space[1]*nz_);
                 pt2 = &(*fields[ipatch])(0);
                 for (unsigned int j = 0; j < nx_ ; j++){
@@ -339,7 +354,7 @@ void SyncVectorPatch::exchange( std::vector<Field*> fields, VectorPatch& vecPatc
         } // End if dims_.size()>1
     } // End for( ipatch )
 
-    for ( int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
+    for ( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
         //#pragma omp master
         {
         #pragma omp for schedule(static)
@@ -359,7 +374,7 @@ void SyncVectorPatch::exchange( std::vector<Field*> fields, VectorPatch& vecPatc
 
 void SyncVectorPatch::exchange0( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
-    unsigned int nx_, ny_(1), nz_(1), h0, oversize, n_space, gsp;
+    unsigned int ny_(1), nz_(1), h0, oversize, n_space, gsp;
     double *pt1,*pt2;
     h0 = vecPatches(0)->hindex;
 

@@ -90,6 +90,8 @@ public:
     void CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
     //! finalize exch / particles, manage particles suppr/introduce
     void finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! clean memory resizing particles structure
+    void cleanParticlesOverhead(Params& params);
     //! delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
     void cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_particles_to_exchange);
     
@@ -122,17 +124,17 @@ public:
     inline bool isMaster() { return (hindex==0); }
     
     //! Should be pure virtual, see child classes
-    inline bool isWestern()  { return locateOnBorders(0, 0); }
+    inline bool isXmin()  { return locateOnBorders(0, 0); }
     //! Should be pure virtual, see child classes
-    inline bool isEastern()  { return locateOnBorders(0, 1); }
+    inline bool isXmax()  { return locateOnBorders(0, 1); }
     //! Should be pure virtual, see child classes
-    inline bool isSouthern() { return locateOnBorders(1, 0); }
+    inline bool isYmin() { return locateOnBorders(1, 0); }
     //! Should be pure virtual, see child classes
-    inline bool isNorthern() { return locateOnBorders(1, 1); }
+    inline bool isYmax() { return locateOnBorders(1, 1); }
     //! Should be pure virtual, see child classes
-    inline bool isBottom() { return locateOnBorders(2, 0); }
+    inline bool isZmin() { return locateOnBorders(2, 0); }
     //! Should be pure virtual, see child classes
-    inline bool isTop() { return locateOnBorders(2, 1); }
+    inline bool isZmax() { return locateOnBorders(2, 1); }
 
     //! Test neighbbor's patch Id to apply or not a boundary condition
     inline bool locateOnBorders(int dir, int way) {

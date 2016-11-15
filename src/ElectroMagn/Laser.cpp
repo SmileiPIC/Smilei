@@ -16,10 +16,10 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
     string errorPrefix = name.str();
     ostringstream info("");
     
-    // side from which the laser enters the simulation box (only west/east at the moment)
+    // side from which the laser enters the simulation box (only xmin/xmax at the moment)
     PyTools::extract("boxSide",boxSide,"Laser",ilaser);
-    if ( boxSide!="west" && boxSide!="east" ) {
-        ERROR(errorPrefix << ": boxSide must be `west` or `east`");
+    if ( boxSide!="xmin" && boxSide!="xmax" ) {
+        ERROR(errorPrefix << ": boxSide must be `xmin` or `xmax`");
     }
     
     // Profiles

@@ -154,7 +154,7 @@ void Interpolator3D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     // -------------------------
     // Interpolation of Jy^(p,d,p)
     // -------------------------
-    (*JLoc).y = compute( &coeffxp_[1], &coeffyd_[1], &coeffzp_[1], Jx3D, ip_, jd_, kp_);
+    (*JLoc).y = compute( &coeffxp_[1], &coeffyd_[1], &coeffzp_[1], Jy3D, ip_, jd_, kp_);
     
     // -------------------------
     // Interpolation of Jz^(p,p,d)
@@ -176,7 +176,7 @@ void Interpolator3D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
 
     //Loop on bin particles
-    for (unsigned int ipart=istart ; ipart<iend; ipart++ ) {
+    for (int ipart=istart ; ipart<iend; ipart++ ) {
         //Interpolation on current particle
         (*this)(EMfields, particles, ipart, &(*Epart)[ipart], &(*Bpart)[ipart]);
         //Buffering of iol and delta

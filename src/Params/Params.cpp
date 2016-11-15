@@ -26,7 +26,7 @@ namelist("")
     if((((H5_VERS_MAJOR==1) && (H5_VERS_MINOR==8) && (H5_VERS_RELEASE>16)) || \
         ((H5_VERS_MAJOR==1) && (H5_VERS_MINOR>8)) || \
         (H5_VERS_MAJOR>1))) {
-        WARNING("Smilei suggests using hdf5 version 1.8.16 you're using "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
+        WARNING("Smilei suggests using hdf5 version 1.8.16. You're using "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
         WARNING("Newer version are not tested and may cause the code to behave incorrectly");
         WARNING("See http://hdf-forum.184993.n3.nabble.com/Segmentation-fault-using-H5Dset-extent-in-parallel-td4029082.html");
     }
@@ -225,12 +225,17 @@ namelist("")
     if (bc_em_type_x.size()==1) { // if just one type is specified, then take the same bc type in a given dimension
         bc_em_type_x.resize(2); bc_em_type_x[1]=bc_em_type_x[0];
     }
+    if ( (bc_em_type_x[0] != bc_em_type_x[1]) &&  (bc_em_type_x[0] == "periodic" || bc_em_type_x[1] == "periodic") )  
+        ERROR("Electromagnetic boundary conditions type (bc_em_type_x) must be periodic at both xmin and xmax sides." );
+
     if ( geometry == "2d3v" || geometry == "3d3v" ) {
         if ( !PyTools::extract("bc_em_type_y", bc_em_type_y, "Main") )
             ERROR("Electromagnetic boundary condition type (bc_em_type_y) not defined" );
         if (bc_em_type_y.size()==1) { // if just one type is specified, then take the same bc type in a given dimension
             bc_em_type_y.resize(2); bc_em_type_y[1]=bc_em_type_y[0];
         }
+        if ( (bc_em_type_y[0] != bc_em_type_y[1]) &&  (bc_em_type_y[0] == "periodic" || bc_em_type_y[1] == "periodic") )  
+            ERROR("Electromagnetic boundary conditions type (bc_em_type_y) must be periodic at both ymin and ymax sides." );
     }
     if ( geometry == "3d3v" ) {
         if ( !PyTools::extract("bc_em_type_z", bc_em_type_z, "Main") )
@@ -238,15 +243,20 @@ namelist("")
         if (bc_em_type_z.size()==1) { // if just one type is specified, then take the same bc type in a given dimension
             bc_em_type_z.resize(2); bc_em_type_z[1]=bc_em_type_z[0];
         }
+        if ( (bc_em_type_z[0] != bc_em_type_z[1]) &&  (bc_em_type_z[0] == "periodic" || bc_em_type_z[1] == "periodic") )  
+            ERROR("Electromagnetic boundary conditions type (bc_em_type_z) must be periodic at both zmin and zmax sides." );
     }
     
     // Maxwell Solver 
     PyTools::extract("maxwell_sol", maxwell_sol, "Main");
     
-    
-    if (!PyTools::extract("clrw",clrw, "Main")) {
-        clrw = 1;
-    }
+    // clrw 
+    PyTools::extract("clrw",clrw, "Main");
+
+    // Poisson Solver
+    PyTools::extract("solve_poisson", solve_poisson, "Main");
+    PyTools::extract("poisson_iter_max", poisson_iter_max, "Main");
+    PyTools::extract("poisson_error_max", poisson_error_max, "Main");
         
     // --------------------
     // Number of patches
@@ -275,13 +285,13 @@ namelist("")
 #endif
     
     
-    balancing_every = 150;
-    coef_cell = 1.;
-    coef_frozen = 0.1;
     if( PyTools::nComponents("LoadBalancing")>0 ) {
         PyTools::extract("every"      , balancing_every, "LoadBalancing");
         PyTools::extract("coef_cell"  , coef_cell      , "LoadBalancing");
         PyTools::extract("coef_frozen", coef_frozen    , "LoadBalancing");
+        PyTools::extract("initial_balance", initial_balance    , "LoadBalancing");
+    } else {
+        balancing_every = 0;
     }
     
     //mi.resize(nDim_field, 0);
@@ -367,7 +377,7 @@ void Params::compute()
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];
         if(n_space_global[i]%number_of_patches[i] !=0) ERROR("ERROR in dimension " << i <<". Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i]);
-        if ( n_space[i] <= 2*oversize[i] ) ERROR ( "ERROR in dimension " << i <<". Patches length = "<<n_space[i] << " cells must be at least " << 2*oversize[i] +1 << " cells long. Increase number of cells or reduce number of patches in this direction. " );
+        if ( n_space[i] <= 2*oversize[i] ) ERROR ( "ERROR in dimension " << i <<". Patches length = "<<n_space[i] << " cells must be at lxmax " << 2*oversize[i] +1 << " cells long. Increase number of cells or reduce number of patches in this direction. " );
     }
     
     // compute number of cells per patch
@@ -423,10 +433,17 @@ void Params::print()
         MESSAGE(1,"            - (n_space_global,  cell_length) : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
     }
 
-    TITLE("Load Balancing: ");
-    MESSAGE(1,"Load balancing every " << balancing_every << " iterations.");
-    MESSAGE(1,"Cell load coefficient = " << coef_cell );
-    MESSAGE(1,"Frozen particle load coefficient = " << coef_frozen );
+    if (balancing_every > 0){
+        TITLE("Load Balancing: ");
+        if (initial_balance){
+        MESSAGE(1,"Computational load is initially balanced between MPI ranks. (initial_balance = true) ");
+        } else{
+        MESSAGE(1,"Patches are initially homogeneously distributed between MPI ranks. (initial_balance = false) ");
+        }
+        MESSAGE(1,"Load balancing every " << balancing_every << " iterations.");
+        MESSAGE(1,"Cell load coefficient = " << coef_cell );
+        MESSAGE(1,"Frozen particle load coefficient = " << coef_frozen );
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

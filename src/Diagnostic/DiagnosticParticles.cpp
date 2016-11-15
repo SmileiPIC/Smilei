@@ -483,13 +483,30 @@ void DiagnosticParticles::write(int timestep)
         for (int i=0; i<output_size; i++)
             data_sum[i] *= coeff;
     }
+    
     // make name of the array
     ostringstream mystream("");
     mystream.str("");
     mystream << "timestep" << setw(8) << setfill('0') << timestep;
-    // write the array
-    if (! H5Lexists( fileId_, mystream.str().c_str(), H5P_DEFAULT ) )
-        H5::vect(fileId_, mystream.str(), data_sum);
+    
+    // write the array if it does not exist already
+    if (! H5Lexists( fileId_, mystream.str().c_str(), H5P_DEFAULT ) ) {
+        // Prepare array dimensions
+        unsigned int naxes = axes.size();
+        hsize_t dims[naxes];
+        for( unsigned int iaxis=0; iaxis<naxes; iaxis++) dims[iaxis] = axes[iaxis].nbins;
+        // Create file space
+        hid_t sid = H5Screate_simple(naxes, &dims[0], NULL);
+        hid_t pid = H5Pcreate(H5P_DATASET_CREATE);
+        // create dataset
+        hid_t did = H5Dcreate(fileId_, mystream.str().c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, pid, H5P_DEFAULT);
+        // write vector in dataset
+        H5Dwrite(did, H5T_NATIVE_DOUBLE, sid, sid, H5P_DEFAULT, &data_sum[0]);
+        // close all
+        H5Dclose(did);
+        H5Pclose(pid);
+        H5Sclose(sid);
+    }
     
     if( flush_timeSelection->theTimeIsNow(timestep) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     

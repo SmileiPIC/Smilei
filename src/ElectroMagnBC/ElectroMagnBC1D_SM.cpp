@@ -66,7 +66,7 @@ void ElectroMagnBC1D_SM::save_fields_BC1D(Field* my_field) {
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC1D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( patch->isWestern() ) {
+    if ( patch->isXmin() ) {
         
         //Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
         Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);
@@ -87,7 +87,7 @@ void ElectroMagnBC1D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
         (*By1D)(0) =  Alpha_SM*(*Ez1D)(0) + Beta_SM*((*By1D)(1)-By_xvalmin) + Gamma_SM*byL+By_xvalmin;
         (*Bz1D)(0) = -Alpha_SM*(*Ey1D)(0) + Beta_SM*((*Bz1D)(1)-Bz_xvalmin) + Gamma_SM*bzL+Bz_xvalmin;
         
-    }//if Western
+    }//if Xmin
 
 }
 // ---------------------------------------------------------------------------------------------------------------------
@@ -96,7 +96,7 @@ void ElectroMagnBC1D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
 void ElectroMagnBC1D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
     
-    if ( patch->isEastern() ) {
+    if ( patch->isXmax() ) {
         //Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
         Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);
         Field1D* Ez1D   = static_cast<Field1D*>(EMfields->Ez_);
@@ -115,7 +115,7 @@ void ElectroMagnBC1D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
         // Silver-Mueller boundary conditions (right)
         (*By1D)(nx_d-1) = -Alpha_SM*(*Ez1D)(nx_p-1)+ Beta_SM*((*By1D)(nx_d-2)-By_xvalmax) + Gamma_SM*byR+By_xvalmax;
         (*Bz1D)(nx_d-1) =  Alpha_SM*(*Ey1D)(nx_p-1)+ Beta_SM*((*Bz1D)(nx_d-2)-Bz_xvalmax) + Gamma_SM*bzR+Bz_xvalmax;
-    }//if Eastern
+    }//if Xmax
     
 }
 

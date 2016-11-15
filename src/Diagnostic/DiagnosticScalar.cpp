@@ -2,6 +2,8 @@
 #include "DiagnosticScalar.h"
 
 #include <iomanip>
+#include <algorithm>
+#include <limits>
 
 using namespace std;
 
@@ -78,10 +80,19 @@ void DiagnosticScalar::closeFile()
 
 bool DiagnosticScalar::prepare( int timestep )
 {
-    // At the right timestep, zero-out the scalars
-    if ( printNow(timestep) || timeSelection->theTimeIsNow(timestep) )
-        for (unsigned int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
-            out_value[iscalar] = 0.;
+    // At the right timestep, initialize the scalars
+    if ( printNow(timestep) || timeSelection->theTimeIsNow(timestep) ) {
+        for (unsigned int iscalar=0 ; iscalar<out_value.size() ; iscalar++) {
+            // Different initial values depending on the type of scalar
+            if( out_key[iscalar].find("Min")!=string::npos && out_key[iscalar].find("Cell")==string::npos) {
+                out_value[iscalar] = numeric_limits<double>::max();
+            } else if( out_key[iscalar].find("Max")!=string::npos && out_key[iscalar].find("Cell")==string::npos) {
+                out_value[iscalar] = numeric_limits<double>::lowest();
+            } else {
+                out_value[iscalar] = 0.;
+            }
+        }
+    }
     
     // Scalars always run even if they don't dump
     return true;
@@ -271,20 +282,22 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     fields.push_back(EMfields->rho_);
     
     vector<val_index> minis, maxis;
-    
     for (vector<Field*>::iterator field=fields.begin(); field!=fields.end(); field++) {
         
         val_index minVal, maxVal;
         
-        minVal.val=maxVal.val=(**field)(0);
-        minVal.index=maxVal.index=0;
-        
+       
         vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
         for (unsigned int i=0 ; i<(*field)->isDual_.size() ; i++ ) {
             iFieldStart[i] = EMfields->istart[i][(*field)->isDual(i)];
             iFieldEnd [i] = iFieldStart[i] + EMfields->bufsize[i][(*field)->isDual(i)];
             iFieldGlobalSize [i] = (*field)->dims_[i];
         }
+
+        unsigned int ii= iFieldStart[2] + iFieldStart[1]*iFieldGlobalSize[2] +iFieldStart[0]*iFieldGlobalSize[1]*iFieldGlobalSize[2];
+        minVal.val=maxVal.val=(**field)(ii);
+        minVal.index=maxVal.index=0;
+
         for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
             for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
                 for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
@@ -322,7 +335,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     // electromagnetic energy injected in the simulation (calculated from Poynting fluxes)
     double Uelm_bnd=0.0;
     
-    for (unsigned int j=0; j<2;j++) {//directions (west/east, south/north, bottom/top)
+    for (unsigned int j=0; j<2;j++) {//directions (xmin/xmax, ymin/ymax, zmin/zmax)
         for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {//axis 0=x, 1=y, 2=z
             
             double poy[2]={EMfields->poynting[j][i],EMfields->poynting_inst[j][i]};
@@ -330,13 +343,13 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             string name("Poy");
             switch (i) { // dimension
                 case 0:
-                    name+=(j==0?"East":"West");
+                    name+=(j==0?"Xmax":"Xmin");
                     break;
                 case 1:
-                    name+=(j==0?"South":"North");
+                    name+=(j==0?"Ymin":"Ymax");
                     break;
                 case 2:
-                    name+=(j==0?"Bottom":"Top");
+                    name+=(j==0?"Zmin":"Zmax");
                     break;
                 default:
                     break;
@@ -427,16 +440,26 @@ void DiagnosticScalar::incrementScalar(string my_var, double value){
 void DiagnosticScalar::incrementScalar(string my_var, double value, int valIndex){
     for (unsigned int i=0; i< out_key.size(); i++) {
         if  ( (out_key[i]==my_var) && ( my_var.find("Min")!= std::string::npos ) && (my_var.find("Cell")== std::string::npos) ) {
-            if ( value < out_value[i] ) {
+            if ( value <= out_value[i] ) {
+                // Retain the smallest valIndex when several min are reached.
+                if ( value < out_value[i] ) {
+                    out_value[i+1] = valIndex;
+                } else {
+                    out_value[i+1] = std::min(out_value[i+1], (double)valIndex);
+                }
                 out_value[i] = value;
-                out_value[i+1] = valIndex;
             }
             return;
         }
         else if  ( (out_key[i]==my_var) && ( my_var.find("Max")!= std::string::npos ) && (my_var.find("Cell")== std::string::npos) ) {
-            if ( value > out_value[i] ) {
+            if ( value >= out_value[i] ) {
+                // Retain the smallest valIndex when several max are reached.
+                if ( value > out_value[i] ) {
+                    out_value[i+1] = valIndex;
+                } else {
+                    out_value[i+1] = std::min(out_value[i+1], (double)valIndex);
+                }
                 out_value[i] = value;
-                out_value[i+1] = valIndex;
             }
             return;
         }
@@ -504,5 +527,10 @@ bool DiagnosticScalar::defined(string key) {
         if( key==out_key[i] ) return true;
     }
     return false;
+}
+
+
+bool DiagnosticScalar::needsRhoJs(int timestep) {
+    return printNow(timestep) || timeSelection->theTimeIsNow(timestep);
 }
 

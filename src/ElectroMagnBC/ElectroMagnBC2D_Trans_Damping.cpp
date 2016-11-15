@@ -54,7 +54,7 @@ void ElectroMagnBC2D_Trans_Damping::apply(ElectroMagn* EMfields, double time_dua
 
 
     //   BC : Bx(i=0...nx_p, 0) & Bx(i=0...nx_p, ny_d-1)
-    if ( patch->isSouthern() ) {
+    if ( patch->isYmin() ) {
         // for Bx^(p,d)
         for (unsigned int i=0 ; i<nx_p ; i++)
             for (unsigned int j=0 ; j<ny_l ; j++)
@@ -89,7 +89,7 @@ void ElectroMagnBC2D_Trans_Damping::apply(ElectroMagn* EMfields, double time_dua
     }
     
     //   BC : Bz(i=0...nx_d-1, 0) & Bz(i=0...nx_d-1, ny_d-1)
-    if ( patch->isNorthern() ) {
+    if ( patch->isYmax() ) {
         // for Bx^(p,d)
         for (unsigned int i=0 ; i<nx_p ; i++)
             for (unsigned int j=0 ; j<ny_l ; j++)

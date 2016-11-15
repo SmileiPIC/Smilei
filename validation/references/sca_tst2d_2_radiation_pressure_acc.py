@@ -63,14 +63,14 @@
 # 63 RhoMinCell
 # 64 RhoMax
 # 65 RhoMaxCell
-# 66 PoyEast
-# 67 PoyEastInst
-# 68 PoySouth
-# 69 PoySouthInst
-# 70 PoyWest
-# 71 PoyWestInst
-# 72 PoyNorth
-# 73 PoyNorthInst
+# 66 PoyXmax
+# 67 PoyXmaxInst
+# 68 PoyYmin
+# 69 PoyYminInst
+# 70 PoyXmin
+# 71 PoyXminInst
+# 72 PoyYmax
+# 73 PoyYmaxInst
 #
 #               time                Utot                Uexp                Ubal           Ubal_norm                Uelm                Ukin            Uelm_bnd            Ukin_bnd        Uelm_inj_mvw        Uelm_out_mvw        Ukin_inj_mvw        Ukin_out_mvw            Ntot_ion            Zavg_ion            Ukin_ion            Ntot_eon            Zavg_eon            Ukin_eon             Uelm_Ex             Uelm_Ey             Uelm_Ez           Uelm_Bx_m           Uelm_By_m           Uelm_Bz_m               ExMin           ExMinCell               ExMax           ExMaxCell               EyMin           EyMinCell               EyMax           EyMaxCell               EzMin           EzMinCell               EzMax           EzMaxCell             Bx_mMin         Bx_mMinCell             Bx_mMax         Bx_mMaxCell             By_mMin         By_mMinCell             By_mMax         By_mMaxCell             Bz_mMin         Bz_mMinCell             Bz_mMax         Bz_mMaxCell               JxMin           JxMinCell               JxMax           JxMaxCell               JyMin           JyMinCell               JyMax           JyMaxCell               JzMin           JzMinCell               JzMax           JzMaxCell              RhoMin          RhoMinCell              RhoMax          RhoMaxCell             PoyEast         PoyEastInst            PoySouth        PoySouthInst             PoyWest         PoyWestInst            PoyNorth        PoyNorthInst
     0.0000000000e+00    1.9608762904e+01    3.9197941914e+01   -1.9589179010e+01   -9.9900126825e-01    1.9583894034e-02    1.9589179010e+01    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    1.9589179010e+01    0.0000000000e+00    1.7600000000e+05    1.6000000000e+01    0.0000000000e+00    1.7600000000e+05   -1.6000000000e+01    1.9589179010e+01    9.8399349039e-03    9.7439591297e-03    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00   -4.3917877192e-02    1.6568000000e+04    4.5380349395e-02    1.6067000000e+04   -4.7302202681e-02    7.5200000000e+02    4.5796556222e-02    2.1710000000e+03    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00   -1.6349433401e+00    1.5310000000e+04    1.7533440536e+00    1.6160000000e+04   -1.6682853945e+00    1.4706000000e+04    1.6527400685e+00    1.4415000000e+04   -1.8532403300e+00    1.4950000000e+03    1.8721535130e+00    2.5660000000e+03   -1.9175990841e+00    1.9790000000e+03    2.0578771786e+00    1.7700000000e+03    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00    0.0000000000e+00

@@ -37,9 +37,10 @@ public :
     //! - methods to balance computation
     std::vector<Patch*> patches_;
     
+    //! Vector of global diagnostics (diagnostics which cannot be computed locally)
     std::vector<Diagnostic*> globalDiags;
+    //! Vector of local diagnostics (diagnostics which can partly be computed locally)
     std::vector<Diagnostic*> localDiags;
-    
     
     //! Some vector operations extended to VectorPatch
     inline void resize(int npatches) {
@@ -69,11 +70,15 @@ public :
         return diag->getScalar( name );
     }
     
-    bool fieldTimeIsNow( int timestep ) {
-        if( fieldsTimeSelection!=NULL )
-            return fieldsTimeSelection->theTimeIsNow(timestep);
-        else
-            return false;
+    bool needsRhoJsNow( int timestep ) {
+        // Figure out whether scalars need Rho and Js
+        if( globalDiags[0]->needsRhoJs(timestep) )
+            return true;
+        // Figure out whether fields or probes need Rho and Js
+        for( unsigned int i=0; i<localDiags.size(); i++ )
+            if( localDiags[i]->needsRhoJs(timestep) )
+                return true;
+        return false;
     }
     
     bool printScalars( int timestep ) {
@@ -154,9 +159,6 @@ public :
     //! 1st patch index of patches_ (stored for balancing op)
     int refHindex_;
     
-    //! Copy of the fields time selection
-    TimeSelection * fieldsTimeSelection;
-    
     //! Count global (MPI x patches) number of particles per species
     void printNumberOfParticles(SmileiMPI* smpi) {
         unsigned int nSpecies( (*this)(0)->vecSpecies.size() );
@@ -172,6 +174,8 @@ public :
             MESSAGE(2, "Species " << ispec << " (" << (*this)(0)->vecSpecies[ispec]->species_type << ") created with " << tmp << " particles" );
         }
     }
+
+    void move_probes(Params& params, double x_moved);
 
 
  private :

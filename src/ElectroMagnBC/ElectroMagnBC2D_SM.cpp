@@ -60,7 +60,7 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch* patch )
     
     //! \todo (MG) Check optimal angle for Silver-Muller BCs
     
-    // West boundary
+    // Xmin boundary
     double theta  = 0.0*conv_deg2rad; //0.0;
     double factor = 1.0 / (cos(theta) + dt_ov_dx);
     Alpha_SM_W    = 2.0                     * factor;
@@ -69,7 +69,7 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch* patch )
     Delta_SM_W    = - (sin(theta)+dt_ov_dy) * factor;
     Epsilon_SM_W  = - (sin(theta)-dt_ov_dy) * factor;
     
-    // East boundary
+    // Xmax boundary
     theta         = M_PI;
     factor        = 1.0 / (cos(theta) - dt_ov_dx);
     Alpha_SM_E    = 2.0                      * factor;
@@ -78,7 +78,7 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch* patch )
     Delta_SM_E    = - (sin(theta)+dt_ov_dy)  * factor;
     Epsilon_SM_E  = - (sin(theta)-dt_ov_dy)  * factor;
     
-    // South boundary
+    // Ymin boundary
     theta  = 0.0;
     factor = 1.0 / (cos(theta) + dt_ov_dy );
     Alpha_SM_S    = 2.0                     * factor;
@@ -86,7 +86,7 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch* patch )
     Delta_SM_S    = - (sin(theta)+dt_ov_dx) * factor;
     Epsilon_SM_S  = - (sin(theta)-dt_ov_dx) * factor;
     
-    // North boundary
+    // Ymax boundary
     theta  = M_PI;
     factor = 1.0 / (cos(theta) - dt_ov_dy);
     Alpha_SM_N    = 2.0                     * factor;
@@ -164,7 +164,7 @@ void ElectroMagnBC2D_SM::save_fields_BC2D_Trans(Field* my_field) {
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC2D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( patch->isWestern() ) {
+    if ( patch->isXmin() ) {
         
         // Static cast of the fields
         //Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
@@ -226,7 +226,7 @@ void ElectroMagnBC2D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
         }//j  ---end compute Bz
         
         
-    }//if Western
+    }//if Xmin
 
 }
 // ---------------------------------------------------------------------------------------------------------------------
@@ -234,7 +234,7 @@ void ElectroMagnBC2D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC2D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( patch->isEastern() ) {
+    if ( patch->isXmax() ) {
         
         // Static cast of the fields
         //Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
@@ -296,7 +296,7 @@ void ElectroMagnBC2D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
         }//j  ---end compute Bz
         
         
-    }//if Eastern
+    }//if Xmax
 
 }
 
@@ -305,7 +305,7 @@ void ElectroMagnBC2D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC2D_SM::apply_ymin(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( patch->isSouthern() ) {
+    if ( patch->isYmin() ) {
         
         // Static cast of the fields
         Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
@@ -338,7 +338,7 @@ void ElectroMagnBC2D_SM::apply_ymin(ElectroMagn* EMfields, double time_dual, Pat
             +               Bz_yvalmin_Trans[j];
         }//j  ---end Bz
         
-    }//if Southern
+    }//if Ymin
     
 }
 // ---------------------------------------------------------------------------------------------------------------------
@@ -346,7 +346,7 @@ void ElectroMagnBC2D_SM::apply_ymin(ElectroMagn* EMfields, double time_dual, Pat
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC2D_SM::apply_ymax(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( patch->isNorthern() ) {
+    if ( patch->isYmax() ) {
         
         // Static cast of the fields
         Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
@@ -379,7 +379,7 @@ void ElectroMagnBC2D_SM::apply_ymax(ElectroMagn* EMfields, double time_dual, Pat
             +                   Bz_yvalmax_Trans[j];
         }//j  ---end Bx
         
-    }//if Northern
+    }//if Ymax
     
 }
 

@@ -1,9 +1,6 @@
-# ----------------------------------------------------------------------------------------
-# 					SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
-# ----------------------------------------------------------------------------------------
 
-import math
 dx = 0.125
+dt = 0.124
 nx = 896
 Lx = nx * dx
 npatch_x = 128
@@ -14,8 +11,8 @@ Main(
     
     interpolation_order = 2,
     
-    timestep = 0.124,
-    sim_time = 200,
+    timestep = dt,
+    sim_time = int(2*Lx/dt)*dt,
     
     cell_length  = [dx, 3.],
     sim_length = [ Lx,  120.],
@@ -28,7 +25,7 @@ Main(
     bc_em_type_y = ["silver-muller","silver-muller"],
     
     random_seed = 0,
-    
+    solve_poisson = False,
     print_every = 100
 )
 
@@ -38,31 +35,10 @@ MovingWindow(
 )
 
 LoadBalancing(
+    initial_balance = False,
     every = 20,
     coef_cell = 1.,
     coef_frozen = 0.1
-)
-
-
-Species(
-    species_type = "proton",
-    initPosition_type = "regular",
-    initMomentum_type = "cold",
-    ionization_model = "none",
-    n_part_per_cell = 16, 
-    c_part_max = 1.0,
-    mass = 1836.0,
-    charge = 1.0,
-    charge_density = 0.000494,
-    mean_velocity = [0.0, 0.0, 0.0],
-    temperature = [0.0],
-    dynamics_type = "norm",
-    time_frozen = 100000.,
-    radiating = False,
-    bc_part_type_west  = "supp",
-    bc_part_type_east  = "supp",
-    bc_part_type_south = "supp",
-    bc_part_type_north = "supp"
 )
 
 Species( 
@@ -79,14 +55,14 @@ Species(
     dynamics_type = "norm",    
     time_frozen = 0.0,
     radiating = False,
-    bc_part_type_west = "supp",
-    bc_part_type_east = "supp",
-    bc_part_type_south ="stop",
-    bc_part_type_north ="stop"
+    bc_part_type_xmin = "supp",
+    bc_part_type_xmax = "supp",
+    bc_part_type_ymin ="supp",
+    bc_part_type_ymax ="supp"
 )
 
 LaserGaussian2D(
-    boxSide         = "west",
+    boxSide         = "xmin",
     a0              = 2.,
     focus           = [0., Main.sim_length[1]/2.],
     waist           = 26.16,
@@ -99,10 +75,23 @@ DumpRestart(
     exit_after_dump = False,
 )
 
+list_fields = ['Ex','Ey','Rho','Jx']
+
 DiagFields(
     every = 100,
-    fields = ['Ex','Ey','Rho_electron','Rho_proton','Jx_electron']
+    fields = list_fields
 )
 
-DiagScalar(every = 100)
+DiagProbe(
+    every = 10,
+    pos = [0., Main.sim_length[1]/2.],
+    pos_first = [Main.sim_length[0], Main.sim_length[1]/2.],
+    number = [nx],
+    fields = ['Ex','Ey','Rho','Jx']
+)
+
+DiagScalar(
+    every = 10, 
+    vars=['Utot','Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMin', 'RhoMinCell']
+)
 

@@ -62,11 +62,11 @@ int main (int argc, char* argv[])
     MESSAGE("");
     
     // Read and print simulation parameters
-    TITLE("Input data info ");
+    TITLE("Reading the simulation parameters");
     Params params(smpi,vector<string>(argv + 1, argv + argc));
     
     // Initialize MPI environment with simulation parameters
-    TITLE("MPI");
+    TITLE("Initializing MPI");
     smpi->init(params);
     
     // Create timers
@@ -75,7 +75,7 @@ int main (int argc, char* argv[])
     // Print in stdout MPI, OpenMP, patchs parameters
     print_parallelism_params(params, smpi);
     
-    TITLE("Restart environments");
+    TITLE("Initializing the restart environment");
     Checkpoint checkpoint(params, smpi);
     
     // ------------------------------------------------------------------------
@@ -90,7 +90,7 @@ int main (int argc, char* argv[])
     // time at half-integer time-steps (dual grid)
     double time_dual = (stepStart +0.5) * params.timestep;
     // Do we initially do diags or not ?
-    int diag_flag = 1;
+    int diag_flag;
     
     // -------------------------------------------
     // Declaration of the main objects & operators
@@ -101,17 +101,20 @@ int main (int argc, char* argv[])
     TITLE("Initializing moving window");
     int start_moving(0);
     SimWindow* simWindow = new SimWindow(params);
-    params.hasWindow = simWindow->isActive();
     
     // ---------------------------------------------------
     // Initialize patches (including particles and fields)
     // ---------------------------------------------------
     TITLE("Initializing particles & fields");
-    VectorPatch vecPatches = PatchesFactory::createVector(params, smpi);
+    VectorPatch vecPatches;
     
     // reading from dumped file the restart values
     if (params.restart) {
+        diag_flag = 0;
+        
         MESSAGE(1, "READING fields and particles for restart");
+        // smpi->patch_count recomputed in restartAll
+        // vecPatches allocated in restartAll according to patch_count saved
         checkpoint.restartAll( vecPatches, stepStart, smpi, simWindow, params);
         
         // time at integer time-steps (primal grid)
@@ -121,7 +124,7 @@ int main (int argc, char* argv[])
         
         double restart_time_dual = (checkpoint.this_run_start_step +0.5) * params.timestep;
         time_dual = restart_time_dual;
-        // A revoir !
+        //! \todo a revoir
         if ( simWindow->isMoving(restart_time_dual) ) {
             simWindow->operate(vecPatches, smpi, params);
         }
@@ -131,6 +134,9 @@ int main (int argc, char* argv[])
         vecPatches.initAllDiags( params, smpi );
         
     } else {
+        diag_flag = 1;
+        
+        vecPatches = PatchesFactory::createVector(params, smpi);
         
         // Initialize the electromagnetic fields
         // -----------------------------------
@@ -147,12 +153,12 @@ int main (int argc, char* argv[])
             vecPatches.applyAntennas(0.5 * params.timestep);
         
         // Init electric field (Ex/1D, + Ey/2D)
-        if (!vecPatches.isRhoNull(smpi)) {
+        if (!vecPatches.isRhoNull(smpi) && params.solve_poisson == true) {
             TITLE("Solving Poisson at time t = 0");
             Timer ptimer;
             ptimer.init(smpi, "global");
             ptimer.restart();
-
+            
             vecPatches.solvePoisson( params, smpi );
             ptimer.update();
             MESSAGE("Time in Poisson : " << ptimer.getTime() );
@@ -201,7 +207,7 @@ int main (int argc, char* argv[])
         time_prim += params.timestep;
         time_dual += params.timestep;
         
-        if ( vecPatches.fieldTimeIsNow(itime) ) diag_flag = 1;
+        if ( vecPatches.needsRhoJsNow(itime) ) diag_flag = 1;
         
         // pritn message at given time-steps
         // --------------------------------
@@ -212,9 +218,9 @@ int main (int argc, char* argv[])
             ostringstream my_msg;
             my_msg << setw(log10(params.n_time)+1) << itime <<
             "/"     << setw(log10(params.n_time)+1) << params.n_time <<
-            " t="          << scientific << setprecision(3)   << time_dual <<
-            " sec "    << scientific << setprecision(1)   << this_print_time <<
-            " ("    << scientific << setprecision(4)   << this_print_time - old_print_time << ")" <<
+            " t="          << scientific << setprecision(3)   << time_dual << " [Time unit] "    <<
+             scientific << setprecision(1)   << this_print_time << " sec "    <<
+            " ("    << scientific << setprecision(4)   << this_print_time - old_print_time << " sec)" <<
             "  Utot= "   << scientific << setprecision(4)<< vecPatches.getScalar("Utot") <<
             "  Uelm= "   << scientific << setprecision(4)<< vecPatches.getScalar("Uelm") <<
             "  Ukin= "   << scientific << setprecision(4)<< vecPatches.getScalar("Ukin") <<
@@ -276,10 +282,12 @@ int main (int argc, char* argv[])
         
         
         
-        if ((itime%params.balancing_every == 0)&&(smpi->getSize()!=1)) {
-            timer[7].restart();
-            vecPatches.load_balance( params, time_dual, smpi, simWindow );
-            timer[7].update( vecPatches.printScalars( itime ) );
+        if ((params.balancing_every > 0) && (smpi->getSize()!=1) ) {
+            if (( itime%params.balancing_every == 0 )) {
+                timer[7].restart();
+                vecPatches.load_balance( params, time_dual, smpi, simWindow );
+                timer[7].update( vecPatches.printScalars( itime ) );
+            }
         }
         
         latestTimeStep = itime;
@@ -387,7 +395,7 @@ void check_memory_consumption(VectorPatch& vecPatches, SmileiMPI* smpi)
     // fieldsMem contains field per species
     int fieldsMem(0);
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-        fieldsMem = vecPatches(ipatch)->EMfields->getMemFootPrint();
+        fieldsMem += vecPatches(ipatch)->EMfields->getMemFootPrint();
     MESSAGE( 1, "(Master) Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " Mo" );
 
     double dFieldsMem = (double)fieldsMem / 1024./1024./1024.;

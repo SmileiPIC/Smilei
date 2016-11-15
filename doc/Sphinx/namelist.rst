@@ -168,6 +168,12 @@ The block ``Main`` is **mandatory** and has the following syntax::
   
   The solver for Maxwell's equations. Only ``"Yee"`` is available at the moment.
 
+.. py:data:: solve_poisson
+  
+   :default: True
+  
+   Decides if Poisson correction must be applied or not initially.
+
 .. py:data:: poisson_iter_max
   
   :default: 50000
@@ -240,10 +246,18 @@ occur every 150 iterations.
 .. code-block:: python
   
   LoadBalancing(
-      every = 100,
+      initial_balance = True
+      every = 150,
       coef_cell = 1.,
       coef_frozen = 0.1,
   )
+
+.. py:data:: initial_balance
+  
+  :default: True
+  
+  Decides if the load must be balanced at initialization. If not, the same amount of
+  patches will be attributed to each MPI rank.
 
 .. py:data:: every
   
@@ -314,10 +328,10 @@ Each species has to be defined in a ``Species`` block::
       charge = -1.,
       mean_velocity = [0.],
       temperature = [1e-10],
-      bc_part_type_west = "refl",
-      bc_part_type_east = "refl",
-      # bc_part_type_north = None,
-      # bc_part_type_south = None,
+      bc_part_type_xmin = "refl",
+      bc_part_type_xmax = "refl",
+      # bc_part_type_ymax = None,
+      # bc_part_type_ymin = None,
       # thermT = None,
       # thermVelocity = None,
       time_frozen = 0.0,
@@ -342,6 +356,7 @@ Each species has to be defined in a ``Species`` block::
    
    * ``"regular"`` for regularly spaced
    * ``"random"`` for randomly distributed
+   * ``"centered"`` for centered in each cell
 
 
 .. py:data:: initMomentum_type
@@ -404,10 +419,10 @@ Each species has to be defined in a ``Species`` block::
   The initial temperature of the particles, in units of :math:`m_ec^2`.
 
 
-.. py:data:: bc_part_type_west
-             bc_part_type_east
-             bc_part_type_south
-             bc_part_type_north
+.. py:data:: bc_part_type_xmin
+             bc_part_type_xmax
+             bc_part_type_ymin
+             bc_part_type_ymax
   
   The boundary condition for particles: ``"none"`` means periodic.
   
@@ -514,16 +529,16 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   .. code-block:: python
     
     Laser(
-        boxSide = "west",
+        boxSide = "xmin",
         space_time_profile = [ By_profile, Bz_profile ]
     )
   
   .. py:data:: boxSide
     
-    :default: ``"west"``
+    :default: ``"xmin"``
     
-    Side of the box from which the laser originates: at the moment, only ``"west"`` and
-    ``"east"`` are supported.
+    Side of the box from which the laser originates: at the moment, only ``"xmin"`` and
+    ``"xmax"`` are supported.
     
   .. py:data:: space_time_profile
   
@@ -542,7 +557,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   .. code-block:: python
     
     Laser(
-        boxSide        = "west",
+        boxSide        = "xmin",
         omega          = 1.,
         chirp_profile  = tconstant(),
         time_envelope  = tgaussian(),
@@ -608,7 +623,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   For one-dimensional simulations, you may use the simplified laser creator::
     
     LaserPlanar1D(
-        boxSide         = "west",
+        boxSide         = "xmin",
         a0              = 1.,
         omega           = 1.,
         polarizationPhi = 0.,
@@ -643,7 +658,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   For two-dimensional simulations, you may use the simplified laser creator::
     
     LaserGaussian2D(
-        boxSide         = "west",
+        boxSide         = "xmin",
         a0              = 1.,
         omega           = 1.,
         focus           = [50., 40.],
@@ -673,6 +688,29 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   .. py:data:: time_envelope
     
      Time envelope of the field (not intensity).
+
+
+.. rubric:: 5. Defining a 3D gaussian wave
+
+..
+
+  For three-dimensional simulations, you may use the simplified laser creator::
+    
+    LaserGaussian3D(
+        boxSide         = "xmin",
+        a0              = 1.,
+        omega           = 1.,
+        focus           = [50., 40., 40.],
+        waist           = 3.,
+        incidence_angle = [0., 0.1], 
+        polarizationPhi = 0.,
+        ellipticity     = 0.,
+        time_envelope   = tconstant()
+    )
+  
+  This is almost the same as ``LaserGaussian2D``, with the ``focus`` parameter having
+  now 3 elements (focus position in 3D), and the ``incidence_angle`` being a list of
+  two angles, corresponding to rotations around `y` and `z`, respectively.
 
 
 
@@ -837,16 +875,16 @@ profiles.
     :param xvalues: list of the values of the profile at each point
   
   .. py:function:: cosine( base, amplitude=1., \
-           xvacuum=0., xlength=None, phi=0., xnumber=1 )
+           xvacuum=0., xlength=None, xphi=0., xnumber=1 )
   
     :param base: offset of the profile value
     :param amplitude: amplitude of the cosine
     :param xvacuum: empty length before starting the profile
     :param xlength: length of the profile (default is :py:data:`sim_length` :math:`-` ``xvacuum``)
-    :param phi: phase offset
+    :param xphi: phase offset
     :param xnumber: number of periods within ``xlength``
   
-  .. py:function:: polynomial( x0=0., y0=0., order0=[], order1=[], ... )
+  .. py:function:: polynomial( x0=0., y0=0., z0=0., order0=[], order1=[], ... )
     
     :param x0,y0: The reference position(s)
     :param order0: Coefficient for the 0th order
@@ -860,17 +898,23 @@ profiles.
       
       \begin{eqnarray}
       &\sum_i a_i(x-x_0)^i & \quad\mathrm{in\, 1D}\\
-      &\sum_i \sum_j a_{ij}(x-x0)^j(y-y0)^{i-j} & \quad\mathrm{in\, 2D}
+      &\sum_i \sum_j a_{ij}(x-x0)^{i-j}(y-y0)^j & \quad\mathrm{in\, 2D}\\
+      &\sum_i \sum_j \sum_k a_{ijk}(x-x0)^{i-j-k}(y-y0)^j(z-z0)^k & \quad\mathrm{in\, 3D}
       \end{eqnarray}
     
     Each ``orderi`` is a coefficient (or list of coefficents) associated to the order ``i``.
     In 1D, there is only one coefficient per order. In 2D, each ``orderi`` is a list
     of ``i+1`` coefficients. For instance, the second order has three coefficients
     associated to :math:`x^2`, :math:`xy` and :math:`y^2`, respectively.
+    In 3D, each ``orderi`` is a list of ``(i+1)*(i+2)/2`` coefficients. For instance,
+    the second order has 6 coefficients associated to :math:`x^2`, :math:`xy`, :math:`xz`,
+    :math:`y^2`, :math:`yz` and :math:`z^2`, respectively.
   
-  **Example**::
+  **Examples**::
     
     Species( ... , density = gaussian(10., xfwhm=0.3, xcenter=0.8), ... )
+    
+    ExtField( ..., profile = constant(2.2), ... )
 
 
 .. rubric:: 4. Pre-defined *temporal* profiles
@@ -1106,9 +1150,9 @@ The full list of scalars that are saved by this diagnostic:
 | | ExMax        | | Maximum of :math:`E_x`                                                  |
 | | ExMaxCell    | |  ... and its location (cell index)                                      |
 | |              | | ... same for fields Ey Ez Bx_m By_m Bz_m Jx Jy Jz Rho                   |
-| | PoyEast      | | Accumulated Poynting flux through eastern boundary                      |
-| | PoyEastInst  | | Current Poynting flux through eastern boundary                          |
-| |              | |  ... same for boundaries West South North Bottom Top                    |
+| | PoyXmax      | | Accumulated Poynting flux through xmax boundary                         |
+| | PoyXmaxInst  | | Current Poynting flux through xmax boundary                             |
+| |              | |  ... same for boundaries xmin ymin ymax zmin zmax                       |
 +----------------+---------------------------------------------------------------------------+
 
 Checkout the :doc:`post-processing <post-processing>` documentation as well.
@@ -1526,6 +1570,8 @@ For more clarity, this graph illustrates the five syntaxes for time selections:
   * Special case: ``every=0`` means no output.
 
 ----
+
+.. _DumpAndRestart:
 
 Dump and restart
 ^^^^^^^^^^^^^^^^
