@@ -1438,6 +1438,14 @@ All the possible variables inside this block are explained here:
   
   There may be as many axes as wanted in one ``DiagParticles( ... )`` block.
 
+.. note::
+  
+  As an experimental capability, we created the "composite" axes ``type``.
+  You may write the axis type as ``"ax+by+cz"``, where ``a``, ``b`` and ``c`` are numbers.
+  This syntax does NOT accept characters other than numbers and the characters ``xyz+-``.
+  For instance, it does not accept divisions ``/`` or whitespace.
+  The resulting axis is along the vector of coordinates :math:`(a,b,c)`.
+  For instance, in 2D, ``"x+2y"`` makes an axis oriented along the vector :math:`(1,2)`.
 
 
 **Examples of particle diagnostics**

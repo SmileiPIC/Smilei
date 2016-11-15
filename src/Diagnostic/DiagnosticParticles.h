@@ -27,6 +27,9 @@ struct DiagnosticParticlesAxis {
     //! determines whether particles beyond min and max are counted in the first and last bin
     bool edge_inclusive;
     
+    //! List of coefficients (a,b,c) for a "composite" type of the form "ax+by+cz"
+    std::vector<double> coefficients;
+    
 };
 
 
