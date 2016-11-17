@@ -310,7 +310,9 @@ class ParticleDiagnostic(Diagnostic):
 					axissize = int(sp[3])
 					logscale = bool(int(sp[4]))
 					edge_inclusive = bool(int(sp[5]))
-					coefficients = eval(sp[6])
+					coefficients = 0
+					if sp[6]!="[]" :
+						coefficients = eval(sp[6])
 					while len(axes)<n+1: axes.append({}) # extend the array to the adequate size
 					axes[n] = {"type":axistype,"min":axismin,"max":axismax,"size":axissize,"log":logscale,"edges_included":edge_inclusive,"coefficients":coefficients}
 			f.close()
