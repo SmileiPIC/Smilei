@@ -42,8 +42,8 @@ void DiagnosticFields1D::setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatc
     // One more cell on the left
     if (smpi->isMaster()) total_vecPatches_size++;
     
-    // Resize the data
-    data.resize(total_vecPatches_size);
+    // Resize the data (must contain data[0] even if not used for all process, so +1)
+    data.resize(total_vecPatches_size+1);
     
     // Define offset and size for HDF5 file
     hsize_t offset[1], block[1], count[1];
