@@ -120,6 +120,18 @@ public:
             newEMfields = new ElectroMagn3D(static_cast<ElectroMagn3D*>(EMfields), params, patch);
         }
         
+        
+        // -----------------
+        // Clone time-average fields
+        // -----------------
+        newEMfields->allFields_avg.resize( EMfields->allFields_avg.size() );
+        for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++) {
+            for( unsigned int ifield=0; ifield<EMfields->allFields_avg[idiag].size(); ifield++)
+                newEMfields->allFields_avg[idiag].push_back(
+                    newEMfields->createField( EMfields->allFields_avg[idiag][ifield]->name )
+                );
+        }
+        
         // -----------------
         // Clone Lasers properties
         // -----------------
