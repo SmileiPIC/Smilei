@@ -819,9 +819,17 @@ void VectorPatch::update_field_list(int ispec)
     #pragma omp single
     {
         if(patches_[0]->EMfields->Jx_s [ispec]) listJxs_.resize( size() ) ;
+        else
+            listJxs_.clear();
         if(patches_[0]->EMfields->Jy_s [ispec]) listJys_.resize( size() ) ;
+        else
+            listJys_.clear();
         if(patches_[0]->EMfields->Jz_s [ispec]) listJzs_.resize( size() ) ;
+        else
+            listJzs_.clear();
         if(patches_[0]->EMfields->rho_s[ispec]) listrhos_.resize( size() ) ;
+        else
+            listrhos_.clear();
     }
     
     #pragma omp for schedule(static)
