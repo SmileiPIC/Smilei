@@ -72,8 +72,8 @@ void SyncVectorPatch::sumRhoJs(VectorPatch& vecPatches, int ispec )
 {
 
     if(vecPatches.listJxs_ .size()>0) SyncVectorPatch::sum( vecPatches.listJxs_ , vecPatches );
-    if(vecPatches.listJxs_ .size()>0) SyncVectorPatch::sum( vecPatches.listJys_ , vecPatches );
-    if(vecPatches.listJxs_ .size()>0) SyncVectorPatch::sum( vecPatches.listJzs_ , vecPatches );
+    if(vecPatches.listJys_ .size()>0) SyncVectorPatch::sum( vecPatches.listJys_ , vecPatches );
+    if(vecPatches.listJzs_ .size()>0) SyncVectorPatch::sum( vecPatches.listJzs_ , vecPatches );
     if(vecPatches.listrhos_.size()>0) SyncVectorPatch::sum( vecPatches.listrhos_, vecPatches );
 }
 
