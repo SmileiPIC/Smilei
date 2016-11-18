@@ -118,7 +118,7 @@ class Field(Diagnostic):
 		self._slices = [False]*self._ndim
 		self._selection = ()
 		for iaxis in range(self._naxes):
-			centers = self._np.linspace(0., self._initialShape[iaxis]*self._cell_length[iaxis], self._initialShape[iaxis])
+			centers = self._np.linspace(0., (self._initialShape[iaxis]-1)*self._cell_length[iaxis], self._initialShape[iaxis])
 			label = {0:"x", 1:"y", 2:"z"}[iaxis]
 			axisunits = "L_r"
 			
