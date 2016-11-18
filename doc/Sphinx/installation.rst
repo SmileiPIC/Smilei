@@ -95,10 +95,19 @@ This installation procedure has been tested on OS X "El Capitan" 10.11.1
      brew tap homebrew/science
      brew cask install java
      brew install makedepend
-     brew install gcc5
-     HOMEBREW_CC=gcc-5 HOMEBREW_CXX=g++-5 brew install -s openmpi --without-fortran --with-mpi-thread-multiple
+     brew install gcc
+     brew install openmpi --with-mpi-thread-multiple
      brew install hdf5 --with-mpi     
      brew install python
+
+#. Now you need to set the ``OMPI_CXX`` to the homebrew ``g++`` (``g++-6`` or similar):
+     
+   .. code-block:: bash
+
+     export OMPI_CXX=g++-6
+
+#. Alternatively you can put this line variable in a shell rc file (e.g. ``.bash_profile``) 
+   or you can just add it before the ``make`` command (``OMPI_CXX=g++-6 make`` ...)
 
 #. now you can compile :program:`smilei` (see :ref:`compile`)
 

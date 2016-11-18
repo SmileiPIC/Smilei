@@ -464,7 +464,7 @@ public:
         PyTools::getAttr(py_profile, "xphi"      , xphi       );
         PyTools::getAttr(py_profile, "xnumber"   , xnumber    );
         invxlength = 1./xlength;
-        xfreq = 2.*M_PI*xnumber*invxlength;
+        xnumber2pi = 2.*M_PI*xnumber;
     };
     Function_Cosine1D ( Function_Cosine1D *f ) {
         base       = f->base      ;
@@ -472,11 +472,11 @@ public:
         xvacuum    = f->xvacuum   ;
         invxlength = f->invxlength;
         xphi       = f->xphi      ;
-        xfreq      = f->xfreq     ;
+        xnumber2pi = f->xnumber2pi     ;
     };
     double valueAt(std::vector<double>);
 private:
-    double base, xamplitude, xvacuum, invxlength, xphi, xfreq;
+    double base, xamplitude, xvacuum, invxlength, xphi, xnumber2pi;
 };
 
 
@@ -497,9 +497,9 @@ public:
         PyTools::getAttr(py_profile, "yphi"      , yphi       );
         PyTools::getAttr(py_profile, "ynumber"   , ynumber    );
         invxlength = 1./xlength;
-        xfreq = 2.*M_PI*xnumber*invxlength;
+        xnumber2pi = 2.*M_PI*xnumber;
         invylength = 1./ylength;
-        yfreq = 2.*M_PI*ynumber*invylength;
+        ynumber2pi = 2.*M_PI*ynumber;
     };
     Function_Cosine2D ( Function_Cosine2D *f ) {
         base       = f->base      ;
@@ -507,18 +507,18 @@ public:
         xvacuum    = f->xvacuum   ;
         invxlength = f->invxlength;
         xphi       = f->xphi      ;
-        xfreq      = f->xfreq     ;
+        xnumber2pi = f->xnumber2pi;
         yamplitude = f->yamplitude;
         yvacuum    = f->yvacuum   ;
         invylength = f->invylength;
         yphi       = f->yphi      ;
-        yfreq      = f->yfreq     ;
+        ynumber2pi = f->ynumber2pi;
     };
     double valueAt(std::vector<double>);
 private:
     double base, 
-        xamplitude, xvacuum, invxlength, xphi, xfreq,
-        yamplitude, yvacuum, invylength, yphi, yfreq;
+        xamplitude, xvacuum, invxlength, xphi, xnumber2pi,
+        yamplitude, yvacuum, invylength, yphi, ynumber2pi;
 };
 
 class Function_Cosine3D : public Function
@@ -543,11 +543,11 @@ public:
         PyTools::getAttr(py_profile, "zphi"      , zphi       );
         PyTools::getAttr(py_profile, "znumber"   , znumber    );
         invxlength = 1./xlength;
-        xfreq = 2.*M_PI*xnumber*invxlength;
+        xnumber2pi = 2.*M_PI*xnumber;
         invylength = 1./ylength;
-        yfreq = 2.*M_PI*ynumber*invylength;
+        ynumber2pi = 2.*M_PI*ynumber;
         invzlength = 1./zlength;
-        zfreq = 2.*M_PI*znumber*invzlength;
+        znumber2pi = 2.*M_PI*znumber;
     };
     Function_Cosine3D ( Function_Cosine3D *f ) {
         base       = f->base      ;
@@ -555,24 +555,24 @@ public:
         xvacuum    = f->xvacuum   ;
         invxlength = f->invxlength;
         xphi       = f->xphi      ;
-        xfreq      = f->xfreq     ;
+        xnumber2pi = f->xnumber2pi;
         yamplitude = f->yamplitude;
         yvacuum    = f->yvacuum   ;
         invylength = f->invylength;
         yphi       = f->yphi      ;
-        yfreq      = f->yfreq     ;
+        ynumber2pi = f->ynumber2pi;
         zamplitude = f->zamplitude;
         zvacuum    = f->zvacuum   ;
         invzlength = f->invzlength;
         zphi       = f->zphi      ;
-        zfreq      = f->zfreq     ;
+        znumber2pi = f->znumber2pi;
     };
     double valueAt(std::vector<double>);
 private:
     double base, 
-        xamplitude, xvacuum, invxlength, xphi, xfreq,
-        yamplitude, yvacuum, invylength, yphi, yfreq,
-        zamplitude, zvacuum, invzlength, zphi, zfreq;
+        xamplitude, xvacuum, invxlength, xphi, xnumber2pi,
+        yamplitude, yvacuum, invylength, yphi, ynumber2pi,
+        zamplitude, zvacuum, invzlength, zphi, znumber2pi;
 };
 
 

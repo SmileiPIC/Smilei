@@ -144,6 +144,7 @@ void DiagnosticFields2D::getField( Patch* patch, unsigned int ifield )
         field = static_cast<Field2D*>(patch->EMfields->allFields[fields_indexes[ifield]]);
     }
     // Copy field to the "data" buffer
+
     unsigned int ix = patch_offset_in_grid[0];
     unsigned int ix_max = ix + patch_size[0];
     unsigned int iy;
@@ -158,6 +159,13 @@ void DiagnosticFields2D::getField( Patch* patch, unsigned int ifield )
         }
         ix++;
     }
+//    unsigned int ix_max = patch_offset_in_grid[0] + patch_size[0];
+//    unsigned int iy= patch_offset_in_grid[1];
+//    double * data_pt = &(data[total_patch_size * (patch->Hindex()-refHindex)]);
+//    for (unsigned int ix = patch_offset_in_grid[0]; ix < ix_max; ix++){
+//        memcpy( data_pt, &((*field)(ix, iy)), patch_size[1]*sizeof(double));
+//        data_pt += patch_size[1];
+//    }
     
     if( time_average>1 ) field->put_to(0.0);
 }
