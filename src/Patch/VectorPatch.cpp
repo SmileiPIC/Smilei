@@ -816,6 +816,7 @@ void VectorPatch::update_field_list()
 
 void VectorPatch::update_field_list(int ispec)
 {
+    #pragma omp barrier
     #pragma omp single
     {
         if(patches_[0]->EMfields->Jx_s [ispec]) listJxs_.resize( size() ) ;
