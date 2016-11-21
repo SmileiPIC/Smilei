@@ -33,7 +33,9 @@ class Field(Diagnostic):
 			values = f.values()
 			self._h5items.extend( values )
 			# Select only the fields that are common to all simulations
-			if len(self._fields)==0:
+			if len(values)==0:
+				self._fields = []
+			elif len(self._fields)==0:
 				self._fields = values[0].keys()
 			else:
 				self._fields = [f for f in values[0].keys() if f in self._fields]
