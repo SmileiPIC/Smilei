@@ -55,10 +55,9 @@
 # Using the -a option, smilei is executed for all the bench files. For every execution all the existing scalars in the scalars.txt file are checked.
 #
 # Using the -s option, you have the choice to check several scalars with their corresponding precision:
-#  - no -s option : scalar Utot is checked with the given precision (-p option, default found in the list of precision values))
 #  - the -s option is a scalar name: this scalar is  checked with the given precision (-p option, default found in the list of precision values)
 #  - the -s option is ? : several scalars that you can choose inside a provided list 
-#  - the -s option is all : all the existing scalars inside the file scalars.txt 
+#  - the -s option is all (default) : all the existing scalars inside the file scalars.txt 
 #  In these 2 last cases the list of precision values for all the possible scalars is examined. 
 #
 # In the same way, -t option allows to validate smilei for one or more timesteps :         
@@ -190,14 +189,12 @@ def scalarListValidation(SCALAR_NAME,t) :
   # Check these scalars with the function scalarValidation()
   #
   it = np.int64(t)
-  #import pdb;pdb.set_trace()
-  L=Smilei(".").Scalar(scalar="Utot")
+  L=Smilei(".").Scalar(scalar=None)
   LISTE_SCALARS = L.getScalars()
   if SCALAR_NAME == "?":
     VERBOSE = True
     # Propose the list of all the scalars
     print LISTE_SCALARS
-    L = Scalar(".")
     print '\nEnter a scalar name from the above list (press <Enter> if no more scalar to check ):'
     SCALAR_NAME = raw_input()
     while SCALAR_NAME != "" :
@@ -374,8 +371,14 @@ else :
   STAT_SMILEI_R_OLD = ' '
 COMPILE_ERRORS='compilation_errors'
 COMPILE_OUT='compilation_out'
-COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS     
-CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
+#
+# Find compile commend according to the host
+if JOLLYJUMPER in HOSTNAME :
+  COMPILE_COMMAND = 'unset MODULEPATH;module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles; module load compilers/icc/16.0.109 mpi/openmpi/1.6.5-ib-icc python/2.7.10 hdf5 compilers/gcc/4.8.2  > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS  
+  CLEAN_COMMAND = 'unset MODULEPATH;module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles; module load compilers/icc/16.0.109 mpi/openmpi/1.6.5-ib-icc python/2.7.10 hdf5 compilers/gcc/4.8.2 > /dev/null 2>&1;make clean > /dev/null 2>&1'
+elif POINCARE in HOSTNAME :
+  COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS     
+  CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
 # If the workdir does not contains a smilei bin, or it contains one older than the the smilei bin in directory smilei, force the compilation in order to generate the compilation_output
 #import pdb;pdb.set_trace()
 if not os.path.exists(WORKDIRS) :
@@ -532,7 +535,9 @@ echo $? > exit_status_file \n  ")
       print "Testing scalars :\n"
 #    import pdb;pdb.set_trace()
     VALID_OK = False
-    L=Smilei(".").Scalar(scalar="Utot") # scalar argument must be anything except none in order times is defined
+    L=Smilei(".").Scalar(scalar=None) # scalar argument must be anything except none in order times is defined
+    LISTE_SCALARS = L.getScalars()
+    L=Smilei(".").Scalar(scalar=LISTE_SCALARS[1])
     LISTE_TIMESTEPS = L.getAvailableTimesteps()
     if OPT_TIMESTEP == False or VALID_ALL:
       # IF TIMESTEP NOT IN OPTIONS, COMPUTE THE LAST TIME STEP               
