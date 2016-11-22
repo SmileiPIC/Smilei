@@ -160,7 +160,7 @@ def scalarValidation(SCALAR_NAME,t):
   #
   # FIND THE REFERENCE VALUE OF SCALAR_NAME                          
   shutil.copyfile('scalars.txt','scalars.txt_save')
-  shutil.copyfile(SMILEI_REFERENCES+'/sca_'+BENCH, 'scalars.txt') 
+  shutil.copyfile(SMILEI_REFERENCES+'/sca_'+BENCH.replace('.py','.txt'), 'scalars.txt') 
   shutil.copyfile('smilei.py', 'smilei.py_save') 
   Sref = Smilei(".")
   SCALAR_REFERENCE = Sref.Scalar(SCALAR_NAME,timestep=t)
