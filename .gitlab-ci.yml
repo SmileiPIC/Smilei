@@ -6,33 +6,12 @@ build:
   only:
     - CI
   script:
-    # Compilation
-    - make clean
-    - make -j 6
-    # Creation of a local directory to host the job
+    # Move in test dir
     - mkdir /sps/gitlab-runner/$CI_BUILD_ID
-    # Copy the executable in the local directory
-    - cp smilei /sps/gitlab-runner/$CI_BUILD_ID
-    # Copy the checking script in the local directory
-    # - cp check_results.py /sps/gitlab-runner/$CI_BUILD_ID
-    # Copy the submission script in the local directory
-    - cp ~/sub_testci.sh /sps/gitlab-runner/$CI_BUILD_ID
-    # Copy the input paramter file of the test case in the local directory
-    - cp benchmarks/tst2d_4_laser_wake.py /sps/gitlab-runner/$CI_BUILD_ID
-    - cd /sps/gitlab-runner/$CI_BUILD_ID
-    # Submit
-    - JOBID=$(PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub sub_testci.sh) 
-    # Wait for end of job
-    - while qstat $JOBID &> /dev/null; do echo "Waiting for end of Laser Wake run"; sleep 20 ; done
+    - cp -r $CI_PROJECT_DIR /sps/gitlab-runner/$CI_BUILD_ID
+    - cd scripts
     # Run checking script
-    - mkdir -p $CI_PROJECT_DIR/validation/workdirs/wd_tst2d_4_laser_wake.py/4_12
-    - cp /sps/gitlab-runner/$CI_BUILD_ID/scalars.txt $CI_PROJECT_DIR/validation/workdirs/wd_tst2d_4_laser_wake.py/4_12/
-    - cp /sps/gitlab-runner/$CI_BUILD_ID/smilei.py $CI_PROJECT_DIR/validation/workdirs/wd_tst2d_4_laser_wake.py/4_12/
-    - cp /sps/gitlab-runner/$CI_BUILD_ID/smilei $CI_PROJECT_DIR/validation/workdirs/smilei
-    - cp /sps/gitlab-runner/$CI_BUILD_ID/smilei $CI_PROJECT_DIR/smilei
-    - cd $CI_PROJECT_DIR/scripts
     #- python validation.py -m 4 -o 12 -b tst2d_4_laser_wake.py -s all -v
-    #- python validation.py -m 4 -o 12 -b tst2d_4_laser_wake.py -s Utot -v
     - python validation.py -a -v
 
 #test:
