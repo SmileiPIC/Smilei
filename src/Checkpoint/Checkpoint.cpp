@@ -158,10 +158,11 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     H5::attr(fid, "dump_step", itime);
     
     H5::vect( fid, "patch_count", smpi->patch_count );
-        
+    
     H5::attr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
     H5::attr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
-
+    H5::attr(fid, "latest_timestep",   static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->latest_timestep  );
+    
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) {
     
         // Open a group
@@ -379,6 +380,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, unsigned int &itime,  Smil
     
     H5::getAttr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
     H5::getAttr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
+    H5::getAttr(fid, "latest_timestep",   static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->latest_timestep  );
     
     hid_t aid = H5Aopen(fid, "dump_step", H5T_NATIVE_UINT);
     H5Aread(aid, H5T_NATIVE_UINT, &itime);

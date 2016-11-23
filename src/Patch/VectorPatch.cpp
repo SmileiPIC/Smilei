@@ -297,8 +297,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
             smpi->computeGlobalDiags( globalDiags[idiag], itime);
             // MPI master writes
             #pragma omp single
-            if ( smpi->isMaster() )
-                globalDiags[idiag]->write( itime );
+            globalDiags[idiag]->write( itime , smpi );
         }
     }
     
