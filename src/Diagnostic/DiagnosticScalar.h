@@ -24,13 +24,14 @@ public:
     Scalar(std::string name, std::string secondname, unsigned int width, bool allowed):
         name(name), secondname(secondname), width(width), allowed(allowed)
         {};
-    ~Scalar() {};
+    virtual ~Scalar() {};
     virtual inline operator double() const { return 0.; }
     virtual inline void reset() { };
     std::string name, secondname;
     unsigned int width;
     bool allowed;
 };
+
 //! Child class of `Scalar` specific for scalars which only have one value
 class Scalar_value : public Scalar {
 public:
@@ -52,6 +53,7 @@ public:
     std::vector<double>* values;
     unsigned int index;
 };
+
 //! Child class of `Scalar` specific for scalars which have a value and a location
 class Scalar_value_location : public Scalar {
 public:

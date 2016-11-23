@@ -11,8 +11,8 @@
 using namespace std;
 
 Timer::Timer() :
-time_acc_(0.0),
 name_(""),
+time_acc_(0.0),
 smpi_(NULL)
 {
     register_timers.resize(0,0.);    

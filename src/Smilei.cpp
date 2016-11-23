@@ -189,10 +189,10 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------
     check_memory_consumption( vecPatches, smpi );
     
-    double old_print_time(0.), this_print_time;
+    double old_print_time(0.), this_print_time(0.);
      
     // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)
-    unsigned int latestTimeStep=checkpoint.this_run_start_step;
+//tommaso    unsigned int latestTimeStep=checkpoint.this_run_start_step;
     bool exit(false);
     
     // ------------------------------------------------------------------
@@ -265,7 +265,7 @@ int main (int argc, char* argv[])
             }
         }
         
-        latestTimeStep = itime;
+//tommaso        latestTimeStep = itime;
         
         // pritn message at given time-steps
         // --------------------------------
@@ -314,12 +314,14 @@ int main (int argc, char* argv[])
     //WARNING( "Diabled vecPatches.Diagnostics->printTimers(vecPatches(0), timer[3].getTime());" );
     
     
+/*tommaso
     // ------------------------------------------------------------------
     //                      Temporary validation diagnostics
     // ------------------------------------------------------------------
     
     if (latestTimeStep==params.n_time)
         vecPatches.runAllDiags(params, smpi, &diag_flag, params.n_time, timer);
+*/
     
     // ------------------------------
     //  Cleanup & End the simulation

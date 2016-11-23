@@ -168,7 +168,7 @@ void SmileiMPI::init_patch_count( Params& params)
 //#endif
     
     unsigned int Npatches, r, Ncur, Pcoordinates[3], ncells_perpatch;
-    double Tload,Tcur, Lcur, total_load, local_load, local_load_temp, above_target, below_target;
+    double Tload,Tcur, Lcur, total_load, local_load, above_target, below_target;
     
     unsigned int tot_species_number = PyTools::nComponents("Species");
     
@@ -192,7 +192,7 @@ void SmileiMPI::init_patch_count( Params& params)
     
     // First, distribute all patches evenly
     unsigned int Npatches_local = Npatches / smilei_sz, FirstPatch_local;
-    unsigned int remainder = Npatches % smilei_sz;
+    int remainder = Npatches % smilei_sz;
     if( smilei_rk < remainder ) {
         Npatches_local++;
         FirstPatch_local = Npatches_local * smilei_rk;
@@ -209,7 +209,7 @@ void SmileiMPI::init_patch_count( Params& params)
     for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++){
         std::string species_type("");
         PyTools::extract("species_type",species_type,"Species",ispecies);
-        PyObject *profile1;
+        PyObject *profile1=nullptr;
         std::string densityProfileType("");
         bool ok1 = PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispecies);
         bool ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", ispecies);
@@ -287,7 +287,7 @@ void SmileiMPI::init_patch_count( Params& params)
     
     // MPI master loops patches and figures the best arrangement
     if( smilei_rk==0 ) {
-        unsigned int rk = 0;
+        int rk = 0;
         MPI_Status status;
         while( true ) { // loop cpu ranks
             unsigned int hindex = 0;

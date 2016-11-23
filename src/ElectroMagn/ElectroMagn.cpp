@@ -358,7 +358,6 @@ string LowerCase(string in){
 
 void ElectroMagn::applyExternalFields(Patch* patch) {    
     Field * field;
-    bool found=false;
     for (vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
         string name = LowerCase(extfield->field);
         if      ( Ex_ && name==LowerCase(Ex_->name) ) field = Ex_;
@@ -370,16 +369,9 @@ void ElectroMagn::applyExternalFields(Patch* patch) {
         else field = NULL;
         
         if( field ) {
-            /*if (patch->isMaster()) {
-                MESSAGE(1,"Applying External field to " << field->name);
-            }*/
             applyExternalField( field, extfield->profile, patch );
-            found=true;
         }
     }
-    /*if (patch->isMaster() && !found) {
-        MESSAGE(1,"Nothing to do");
-    }*/
     Bx_m->copyFrom(Bx_);
     By_m->copyFrom(By_);
     Bz_m->copyFrom(Bz_);
@@ -387,12 +379,14 @@ void ElectroMagn::applyExternalFields(Patch* patch) {
 
 
 void ElectroMagn::applyAntenna(unsigned int iAntenna, double intensity) {
-    Field *field, *antennaField = antennas[iAntenna].field;
+    Field *field=nullptr;
+    Field *antennaField = antennas[iAntenna].field;
     if (antennaField) {
         
         if     ( antennaField->name == "Jx" ) field = Jx_;
         else if( antennaField->name == "Jy" ) field = Jy_;
         else if( antennaField->name == "Jz" ) field = Jz_;
+        else ERROR("Antenna applied to field " << antennaField << " unknonw. This should not happend, please contact developers");
         
         for (unsigned int i=0; i< field->globalDims_ ; i++)
             (*field)(i) += intensity * (*antennaField)(i);

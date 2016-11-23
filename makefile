@@ -20,12 +20,11 @@ BUILD_DIR ?= build
 
 #-----------------------------------------------------
 # check if python-config exists
-ifeq (,$(shell command -v python-config 2> /dev/null))
+ifneq (,$(shell command -v python-config))
 	PYTHONCONFIG := python-config
 else
 	PYTHONCONFIG := python scripts/CompileTools/python-config.py
-endif
-    
+endif  
 
 EXEC = smilei
 
@@ -58,7 +57,7 @@ SITEDIR = $(shell python -c 'import site; site._script()' --user-site)
 # Smilei version
 CXXFLAGS += -D__VERSION=\"$(VERSION)\"
 # C++ version
-CXXFLAGS += -std=c++0x 
+CXXFLAGS += -std=c++11 -Wall 
 # HDF5 library
 ifneq ($(strip $(HDF5_ROOT_DIR)),)
 CXXFLAGS += -I${HDF5_ROOT_DIR}/include 
@@ -96,7 +95,7 @@ endif
 
 # Manage options in the "config" parameter
 ifneq (,$(findstring debug,$(config)))
-	CXXFLAGS += -g -pg -Wall -D__DEBUG -O0 # -shared-intel 
+	CXXFLAGS += -g -pg -D__DEBUG -O0 # -shared-intel 
 else
 	CXXFLAGS += -O3 # -g #-ipo
 endif

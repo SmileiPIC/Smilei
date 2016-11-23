@@ -167,7 +167,7 @@ void DiagnosticFields3D::getField( Patch* patch, unsigned int ifield )
     unsigned int ix_max = patch_offset_in_grid[0] + patch_size[0];
     unsigned int iy_max = patch_offset_in_grid[1] + patch_size[1];
     unsigned int iz = patch_offset_in_grid[2];
-    double * data_pt = &(data[total_patch_size * (patch->Hindex()-refHindex)]);
+//tommaso    double * data_pt = &(data[total_patch_size * (patch->Hindex()-refHindex)]);
 
     unsigned int ix = patch_offset_in_grid[0];
     unsigned int iy;

@@ -268,7 +268,7 @@ class Function_Gaussian1D : public Function
 {
 public:
     Function_Gaussian1D ( PyObject *py_profile ) {
-        double xsigma;
+        double xsigma(0);
         PyTools::getAttr(py_profile, "value"   , value    );
         PyTools::getAttr(py_profile, "xvacuum" , xvacuum  );
         PyTools::getAttr(py_profile, "xlength" , xlength  );
@@ -296,7 +296,7 @@ class Function_Gaussian2D : public Function
 {
 public:
     Function_Gaussian2D ( PyObject *py_profile ) {
-        double xsigma, ysigma;
+        double xsigma(0), ysigma(0);
         PyTools::getAttr(py_profile, "value"   , value    );
         PyTools::getAttr(py_profile, "xvacuum" , xvacuum  );
         PyTools::getAttr(py_profile, "xlength" , xlength  );
@@ -708,7 +708,7 @@ class Function_TimeGaussian : public Function
 {
 public:
     Function_TimeGaussian ( PyObject *py_profile ) {
-        double duration, sigma;
+        double duration(0), sigma(0);
         PyTools::getAttr(py_profile, "start"   , start    );
         PyTools::getAttr(py_profile, "duration", duration );
         PyTools::getAttr(py_profile, "sigma"   , sigma    );
@@ -756,7 +756,7 @@ class Function_TimeCosine : public Function
 {
 public:
     Function_TimeCosine ( PyObject *py_profile ) {
-        double duration;
+        double duration(0);
         PyTools::getAttr(py_profile, "base"     , base      );
         PyTools::getAttr(py_profile, "amplitude", amplitude );
         PyTools::getAttr(py_profile, "start"    , start     );
