@@ -5,18 +5,10 @@
 # HDF5_ROOT_DIR : the local path to the HDF5 library
 # BUILD_DIR     : the path to the build directory (default: ./build)
 # PYTHON_CONFIG : the executable `python-config` usually shipped with python installation
-# EXEC          : the name of the created executable for Smilei
 
-
-MPIVERSION = $(shell mpirun --version 2>&1| head -n 1)
-ifneq (,$(findstring Open MPI,$(MPIVERSION)))
-    SMILEICXX ?= mpicxx
-else
-    SMILEICXX ?= mpiicpc
-endif
-HDF5_ROOT_DIR ?=
+SMILEICXX ?= mpicxx
+HDF5_ROOT_DIR ?= 
 BUILD_DIR ?= build
-
 
 #-----------------------------------------------------
 # check if python-config exists
@@ -25,17 +17,6 @@ ifneq (,$(shell command -v python-config))
 else
 	PYTHONCONFIG := python scripts/CompileTools/python-config.py
 endif  
-
-EXEC = smilei
-
-
-#-----------------------------------------------------
-# Set the verbosity prefix
-ifeq (,$(findstring verbose,$(config)))
-    Q := @
-else
-    Q := 
-endif
 
 #-----------------------------------------------------
 # Git information
@@ -78,26 +59,11 @@ ifneq ($(strip $(PYTHONHOME)),)
     LDFLAGS += -L$(PYTHONHOME)/lib
 endif 
 
-# Machine-specific configuration
-ifneq (,$(findstring poincare,$(HOSTNAME)))
-    LDFLAGS += -lgpfs -lz -L/gpfslocal/pub/python/anaconda/Anaconda-2.1.0/lib
-endif
-
-ifneq (,$(findstring turing,$(config)))
-	CXXFLAGS += -I$(BG_PYTHONHOME)/include/python2.7 -qlanglvl=extended0x
-	LDFLAGS  += -qnostaticlink -L(BG_PYTHONHOME)/lib64 -lpython2.7 -lutil
-endif
-
-# Compiler-specific configuration
-ifneq (,$(findstring icpc,$(SMILEI_COMPILER)))
-    CXXFLAGS += -xHost -no-vec
-endif
-
 # Manage options in the "config" parameter
 ifneq (,$(findstring debug,$(config)))
-	CXXFLAGS += -g -pg -D__DEBUG -O0 # -shared-intel 
+	CXXFLAGS += -g -pg -D__DEBUG -O0
 else
-	CXXFLAGS += -O3 # -g #-ipo
+	CXXFLAGS += -O3
 endif
 
 ifneq (,$(findstring scalasca,$(config)))
@@ -109,13 +75,21 @@ ifeq (,$(findstring noopenmp,$(config)))
     LDFLAGS += -lm
     OPENMP_FLAG += -D_OMP
     LDFLAGS += $(OPENMP_FLAG)
-    #LDFLAGS += -mt_mpi
     CXXFLAGS += $(OPENMP_FLAG)
 endif
-#LDFLAGS += -mt_mpi
 
 #-----------------------------------------------------
-# Rules for building Smilei
+# Set the verbosity prefix
+ifeq (,$(findstring verbose,$(config)))
+    Q := @
+else
+    Q := 
+endif
+
+#-----------------------------------------------------
+# Rules for building the excutable smilei
+
+EXEC = smilei
 
 default: $(EXEC)
 
@@ -216,14 +190,14 @@ uninstall_python:
 
 #-----------------------------------------------------
 # Info rules
-
-# print internal makefile variable (used to debug compilation problems)
 print-% :
 	$(info $* : $($*)) @true
 
-# print a set of important internal variables
 env: print-SMILEICXX print-MPIVERSION print-VERSION print-OPENMP_FLAG print-HDF5_ROOT_DIR print-SITEDIR print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS
 
+
+#-----------------------------------------------------
+# help
 
 help: 
 	@echo 'TO BUILD SMILEI:'
@@ -254,8 +228,8 @@ help:
 	@echo '  make clean            : cleans the build directory'
 	@echo "  make install_python   : install Smilei's python module"
 	@echo "  make uninstall_python : remove Smilei's python module"
-	@echo '  make print-XXX        : print internal makefile variable XXX'
 	@echo '  make env              : print important internal makefile variables'
+	@echo '  make print-XXX        : print internal makefile variable XXX'
 	@echo ''
 	@echo 'Environment variables :'
 	@echo '  SMILEICXX     : mpi c++ compiler'
@@ -264,4 +238,5 @@ help:
 	@echo '  OPENMP_FLAG   : flag to use openmp [$(OPENMP_FLAG)]'
 	@echo 
 	@echo 'http://www.maisondelasimulation.fr/smilei'
+	@echo 'https://github.com/SmileiPIC/Smilei'
 
