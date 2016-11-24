@@ -560,9 +560,10 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
 
 // Now the data_sum has been filled
 // if needed now, store result to hdf file
-// called by MPI master only, when time-average has finished
-void DiagnosticParticles::write(int timestep)
+void DiagnosticParticles::write(int timestep, SmileiMPI* smpi)
 {
+    if ( !smpi->isMaster() ) return;
+    
     if (timestep - timeSelection->previousTime() != time_average-1) return;
     
     double coeff;

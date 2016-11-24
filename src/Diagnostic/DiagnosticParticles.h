@@ -53,7 +53,7 @@ public :
     
     void run( Patch* patch, int timestep ) override;
     
-    void write(int timestep) override;
+    void write(int timestep, SmileiMPI* smpi) override;
     
     //! Clear the array
     void clear();

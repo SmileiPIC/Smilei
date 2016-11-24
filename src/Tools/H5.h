@@ -93,6 +93,11 @@ class H5 {
         getAttr(locationId, attribute_name, attribute_value, H5T_NATIVE_UINT);
     }
     
+    //! retrieve a int attribute
+    static void getAttr(hid_t locationId, std::string attribute_name, int &attribute_value) {
+        getAttr(locationId, attribute_name, attribute_value, H5T_NATIVE_INT);
+    }
+    
     //! retrieve a string attribute
     static void getAttr(hid_t locationId, std::string attribute_name, std::string &attribute_value) {
         if (H5Aexists(locationId,attribute_name.c_str())>0) {

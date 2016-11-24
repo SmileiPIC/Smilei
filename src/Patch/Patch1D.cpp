@@ -368,17 +368,17 @@ void Patch1D::createType( Params& params )
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
 
         // Standard Type
-        ntype_[0][ix_isPrim] = NULL;
+        ntype_[0][ix_isPrim] = MPI_DATATYPE_NULL;
         MPI_Type_contiguous(ny, MPI_DOUBLE, &(ntype_[0][ix_isPrim]));    //line
         MPI_Type_commit( &(ntype_[0][ix_isPrim]) );
 
-        ntype_[1][ix_isPrim] = NULL;
+        ntype_[1][ix_isPrim] = MPI_DATATYPE_NULL;
         MPI_Type_contiguous(clrw, MPI_DOUBLE, &(ntype_[1][ix_isPrim]));   //clrw lines
         MPI_Type_commit( &(ntype_[1][ix_isPrim]) );
 
-        ntypeSum_[0][ix_isPrim] = NULL;
+        ntypeSum_[0][ix_isPrim] = MPI_DATATYPE_NULL;
 
-        MPI_Datatype tmpType = NULL;
+        MPI_Datatype tmpType = MPI_DATATYPE_NULL;
         MPI_Type_contiguous(1, MPI_DOUBLE, &(tmpType));    //line
         MPI_Type_commit( &(tmpType) );
 

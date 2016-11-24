@@ -94,7 +94,7 @@ public :
     
     void run( Patch* patch, int timestep ) override;
     
-    void write(int timestep) override;
+    void write(int timestep, SmileiMPI* smpi) override;
     
     virtual bool needsRhoJs(int timestep) override;
     
@@ -121,6 +121,9 @@ public :
     
     //! True if printout is needed now
     bool print_now;
+    
+    //! Latest timestep dumped
+    int latest_timestep;
     
 private :
     

@@ -273,55 +273,64 @@ void DiagnosticScalar::run( Patch* patch, int timestep )
     patch->EMfields->computePoynting(); 
     
     // Compute all scalars when needed
-    if ( print_now || timeSelection->theTimeIsNow(timestep) )
+    if ( (print_now || timeSelection->theTimeIsNow(timestep)) && timestep>latest_timestep )
         compute( patch, timestep );
 
 } // END run
 
 
-void DiagnosticScalar::write(int itime)
+void DiagnosticScalar::write(int itime, SmileiMPI* smpi)
 {
-    unsigned int j, k, s = allScalars.size();
-    
-    if ( ! timeSelection->theTimeIsNow(itime) ) return;
-    
-    fout << std::scientific << setprecision(precision);
-    // At the beginning of the file, we write some headers
-    if (fout.tellp()==ifstream::pos_type(0)) { // file beginning
-        // First header: list of scalars, one by line
-        fout << "# " << 1 << " time" << endl;
-        j = 2;
-        for(k=0; k<s; k++) {
-            if( allScalars[k]->allowed ) {
-                fout << "# " << j << " " << allScalars[k]->name << endl;
-                j++;
-                if( ! allScalars[k]->secondname.empty() ) {
-                    fout << "# " << j << " " << allScalars[k]->secondname << endl;
-                    j++;
+    if ( smpi->isMaster() ) {
+        
+        if ( timeSelection->theTimeIsNow(itime) && itime>latest_timestep  ) {
+            
+            unsigned int j, k, s = allScalars.size();
+            
+            fout << std::scientific << setprecision(precision);
+            // At the beginning of the file, we write some headers
+            if (fout.tellp()==ifstream::pos_type(0)) { // file beginning
+                // First header: list of scalars, one by line
+                fout << "# " << 1 << " time" << endl;
+                j = 2;
+                for(k=0; k<s; k++) {
+                    if( allScalars[k]->allowed ) {
+                        fout << "# " << j << " " << allScalars[k]->name << endl;
+                        j++;
+                        if( ! allScalars[k]->secondname.empty() ) {
+                            fout << "# " << j << " " << allScalars[k]->secondname << endl;
+                            j++;
+                        }
+                    }
+                }
+                // Second header: list of scalars, but all in one line
+                fout << "#\n#" << setw(precision+9) << "time";
+                for(k=0; k<s; k++) {
+                    if( allScalars[k]->allowed ) {
+                        fout << setw(allScalars[k]->width) << allScalars[k]->name;
+                        if( ! allScalars[k]->secondname.empty() )
+                            fout << setw(allScalars[k]->width) << allScalars[k]->secondname;
+                    }
+                }
+                fout << endl;
+            }
+            // Each requested timestep, the following writes the values of the scalars
+            fout << setw(precision+10) << itime/res_time;
+            for(k=0; k<s; k++) {
+                if( allScalars[k]->allowed ) {
+                    fout << setw(allScalars[k]->width) << (double)*allScalars[k];
+                    if( ! allScalars[k]->secondname.empty() )
+                        fout << setw(allScalars[k]->width) << (int)*static_cast<Scalar_value_location*>(allScalars[k]);
                 }
             }
+            fout << endl;
+        
         }
-        // Second header: list of scalars, but all in one line
-        fout << "#\n#" << setw(precision+9) << "time";
-        for(k=0; k<s; k++) {
-            if( allScalars[k]->allowed ) {
-                fout << setw(allScalars[k]->width) << allScalars[k]->name;
-                if( ! allScalars[k]->secondname.empty() )
-                    fout << setw(allScalars[k]->width) << allScalars[k]->secondname;
-            }
-        }
-        fout << endl;
-    }
-    // Each requested timestep, the following writes the values of the scalars
-    fout << setw(precision+10) << itime/res_time;
-    for(k=0; k<s; k++) {
-        if( allScalars[k]->allowed ) {
-            fout << setw(allScalars[k]->width) << (double)*allScalars[k];
-            if( ! allScalars[k]->secondname.empty() )
-                fout << setw(allScalars[k]->width) << (int)*static_cast<Scalar_value_location*>(allScalars[k]);
-        }
-    }
-    fout << endl;
+        
+    } // if smpi->isMaster
+    
+    latest_timestep = itime;
+    
 } // END write
 
 
