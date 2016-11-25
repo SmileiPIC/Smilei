@@ -14,11 +14,11 @@ class Interpolator2D2Order : public Interpolator2D
 
 public:
     Interpolator2D2Order(Params&, Patch*);
-    ~Interpolator2D2Order()  final {};
+    ~Interpolator2D2Order() {};
 
     inline void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc);
-    void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)  final ;
-    void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc)  final ;
+    void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread);
+    void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc);
 
     inline double compute( double* coeffx, double* coeffy, Field2D* f, int idx, int idy) {
         double interp_res(0.);

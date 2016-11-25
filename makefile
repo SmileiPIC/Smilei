@@ -66,7 +66,7 @@ ifneq ($(strip $(HDF5_ROOT_DIR)),)
 CXXFLAGS += -I${HDF5_ROOT_DIR}/include
 LDFLAGS += -L${HDF5_ROOT_DIR}/lib 
 endif
-LDFLAGS += -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lm -L/bglocal/cn/pub/zlib/1.2.5/lib -lz 
+LDFLAGS += -lhdf5
 # Include subdirs
 CXXFLAGS += $(DIRS:%=-I%)
 # Python-related flags
