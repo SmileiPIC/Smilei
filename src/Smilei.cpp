@@ -140,13 +140,8 @@ int main (int argc, char* argv[])
         
         // Initialize the electromagnetic fields
         // -----------------------------------
-        vecPatches.dynamics(params, smpi, simWindow, &diag_flag, time_dual, timer, 0);
-        timer[1].reboot();
-        timer[8].reboot();
-        
+        vecPatches.computeCharge();
         vecPatches.sumDensities( &diag_flag, timer, 0 );
-        timer[4].reboot();
-        timer[9].reboot();
         
         if( vecPatches.nAntennas>0 )
             TITLE("Applying antennas at time t = " << 0.5 * params.timestep);
@@ -163,7 +158,15 @@ int main (int argc, char* argv[])
             ptimer.update();
             MESSAGE("Time in Poisson : " << ptimer.getTime() );
         }
+
+        vecPatches.dynamics(params, smpi, simWindow, &diag_flag, time_dual, timer, 0);
+        timer[1].reboot();
+        timer[8].reboot();
         
+        vecPatches.sumDensities( &diag_flag, timer, 0 );
+        timer[4].reboot();
+        timer[9].reboot();
+       
         TITLE("Applying external fields at time t = 0");
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
             vecPatches(ipatch)->EMfields->applyExternalFields( vecPatches(ipatch) ); // Must be patch
