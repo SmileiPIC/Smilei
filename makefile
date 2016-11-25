@@ -75,7 +75,7 @@ PYSCRIPTS = $(shell find src/Python -name \*.py)
 PYHEADERS := $(addprefix $(BUILD_DIR)/, $(PYSCRIPTS:.py=.pyh))
 PY_CXXFLAGS := $(shell $(PYTHONCONFIG) --includes)
 CXXFLAGS += $(PY_CXXFLAGS)
-PY_LDFLAGS := $(shell $(PYTHONCONFIG) --ldflags)
+PY_LDFLAGS ?= $(shell $(PYTHONCONFIG) --ldflags)
 LDFLAGS += $(PY_LDFLAGS)
 ifneq ($(strip $(PYTHONHOME)),)
     LDFLAGS += -L$(PYTHONHOME)/lib

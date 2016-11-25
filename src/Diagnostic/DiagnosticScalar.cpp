@@ -108,7 +108,7 @@ Scalar_value_location* DiagnosticScalar::newScalar_MAXLOC( string name )
     bool allow = allowedKey(name);
     unsigned int width = calculateWidth( name );
     val_index default_; default_.index = -1; default_.val = 0.;
-    Scalar_value_location * scalar = new Scalar_value_location(name, name+"Cell", width, allow, &values_MAXLOC, numeric_limits<double>::lowest());
+    Scalar_value_location * scalar = new Scalar_value_location(name, name+"Cell", width, allow, &values_MAXLOC, -numeric_limits<double>::max());
     values_MAXLOC.push_back( default_ );
     allScalars.push_back( scalar );
     return scalar;

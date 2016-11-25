@@ -522,6 +522,7 @@ Field * ElectroMagn1D::createField(string fieldname)
     else if(fieldname.substr(0,3)=="Rho") return new Field1D(dimPrim, fieldname );
     
     ERROR("Cannot create field "<<fieldname);
+    return NULL;
 }
 
 

@@ -46,8 +46,8 @@ dynamics_type("norm"),
 time_frozen(0), 
 radiating(false), 
 ionization_model("none"),
-velocityProfile(3,NULL),
-temperatureProfile(3,NULL),
+velocityProfile(3),
+temperatureProfile(3),
 particles(&particles_sorted[0]),
 electron_species(NULL),
 clrw(params.clrw),  
@@ -69,6 +69,9 @@ min_loc(patch->getDomainLocalMin(0))
     initCluster(params);
     nDim_field = params.nDim_field;
     inv_nDim_field = 1./((double)nDim_field);
+    
+    for(unsigned int i=0; i<velocityProfile   .size(); i++) velocityProfile   [i]=NULL;
+    for(unsigned int i=0; i<temperatureProfile.size(); i++) temperatureProfile[i]=NULL;
 
 }//END Species creator
 

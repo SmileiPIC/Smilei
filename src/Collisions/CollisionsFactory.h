@@ -120,7 +120,7 @@ public:
             mystream.str("");
             mystream << "Collisions" << n_collisions << ".h5";
             filename = mystream.str();
-            std::ifstream file(filename);
+            std::ifstream file(filename.c_str());
             // Check if file exists
             if (! file) {
                 // Create the file access protocol for writing in the debug file later

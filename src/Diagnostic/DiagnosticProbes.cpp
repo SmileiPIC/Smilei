@@ -383,7 +383,7 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
         // The first step is to reduce the area of the probe to search in this patch
         for( k=0; k<nDim_particle; k++ ) {
             mins[k] = numeric_limits<double>::max();
-            maxs[k] = numeric_limits<double>::lowest();
+            maxs[k] = -numeric_limits<double>::max();
             patchMin[k] = vecPatches(ipatch)->getDomainLocalMin(k);
             patchMax[k] = vecPatches(ipatch)->getDomainLocalMax(k);
         }

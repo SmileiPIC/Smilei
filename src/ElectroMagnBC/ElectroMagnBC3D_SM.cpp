@@ -49,35 +49,35 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch )
     std::vector<unsigned int> dims(2,0);
 
     // BCs at the x-border
-    dims = { ny_d, nz_d }; // Bx^(p,d,d)
+    dims[0]=ny_d; dims[1]=nz_d; // Bx^(p,d,d)
     Bx_xvalmin = new Field2D(dims); Bx_xvalmin->put_to(0.);
     Bx_xvalmax = new Field2D(dims); Bx_xvalmax->put_to(0.);
-    dims = { ny_p, nz_d }; // By^(d,p,d)
+    dims[0]=ny_p; dims[1]=nz_d; // By^(d,p,d)
     By_xvalmin = new Field2D(dims); By_xvalmin->put_to(0.);
     By_xvalmax = new Field2D(dims); By_xvalmax->put_to(0.);
-    dims = { ny_d, nz_p }; // Bz^(d,d,p)
+    dims[0]=ny_d; dims[1]=nz_p; // Bz^(d,d,p)
     Bz_xvalmin = new Field2D(dims); Bz_xvalmin->put_to(0.);
     Bz_xvalmax = new Field2D(dims); Bz_xvalmax->put_to(0.);
     
     // BCs in the y-border
-    dims = { nx_p, nz_d }; // Bx^(p,d,d)
+    dims[0]=nx_p; dims[1]=nz_d; // Bx^(p,d,d)
     Bx_yvalmin = new Field2D(dims); Bx_yvalmin->put_to(0.);
     Bx_yvalmax = new Field2D(dims); Bx_yvalmax->put_to(0.);
-    dims = { nx_d, nz_d }; // By^(d,p,d)
+    dims[0]=nx_d; dims[1]=nz_d; // By^(d,p,d)
     By_yvalmin = new Field2D(dims); By_yvalmin->put_to(0.);
     By_yvalmax = new Field2D(dims); By_yvalmax->put_to(0.);
-    dims = { nx_d, nz_p }; // Bz^(d,d,p)
+    dims[0]=nx_d; dims[1]=nz_p; // Bz^(d,d,p)
     Bz_yvalmin = new Field2D(dims); Bz_yvalmin->put_to(0.);
     Bz_yvalmax = new Field2D(dims); Bz_yvalmax->put_to(0.);
     
     // BCs in the z-border
-    dims = { nx_p, ny_d }; // Bx^(p,d,d)
+    dims[0]=nx_p; dims[1]=ny_d; // Bx^(p,d,d)
     Bx_zvalmin = new Field2D(dims); Bx_zvalmin->put_to(0.);
     Bx_zvalmax = new Field2D(dims); Bx_zvalmax->put_to(0.);
-    dims = { nx_d, ny_p }; // By^(d,p,d)
+    dims[0]=nx_d; dims[1]=ny_p; // By^(d,p,d)
     By_zvalmin = new Field2D(dims); By_zvalmin->put_to(0.);
     By_zvalmax = new Field2D(dims); By_zvalmax->put_to(0.);
-    dims = { nx_d, ny_d }; // Bz^(d,d,p)
+    dims[0]=nx_d; dims[1]=ny_d; // Bz^(d,d,p)
     Bz_zvalmin = new Field2D(dims); Bz_zvalmin->put_to(0.);
     Bz_zvalmax = new Field2D(dims); Bz_zvalmax->put_to(0.);
     
