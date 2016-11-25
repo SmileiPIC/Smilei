@@ -24,7 +24,7 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
     
     // Profiles
     profiles.resize(0);
-    PyObject *chirp_profile=nullptr, *time_profile=nullptr;
+    PyObject *chirp_profile=NULL, *time_profile=NULL;
     vector<PyObject*>  space_profile, phase_profile, space_time_profile;
     bool time, space, omega, chirp, phase, space_time;
     double omega_value(0);

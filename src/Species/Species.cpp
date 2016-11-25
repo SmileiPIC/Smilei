@@ -492,7 +492,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     }
     else { // immobile particle (at the moment only project density)
         if ((diag_flag == 1)&&(!(*particles).isTest)){
-            double* b_rho=nullptr;
+            double* b_rho=NULL;
             for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
 
                 if (nDim_field==2)

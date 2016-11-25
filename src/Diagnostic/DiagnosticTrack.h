@@ -16,17 +16,17 @@ public :
     //! Cloning constructor
     DiagnosticTrack(DiagnosticTrack* track, Patch* patch);
     //! Default destructor
-    ~DiagnosticTrack() override;
+    ~DiagnosticTrack() ;
     
-    void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
+    void openFile( Params& params, SmileiMPI* smpi, bool newfile ) ;
     
-    void closeFile() override;
+    void closeFile() ;
     
-    void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
+    void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) ;
     
-    bool prepare( int timestep ) override;
+    bool prepare( int timestep ) ;
     
-    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) override;
+    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) ;
     
 private :
     

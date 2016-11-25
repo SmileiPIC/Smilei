@@ -9,23 +9,23 @@ class DiagnosticFields  : public Diagnostic {
 public :
     
     DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, int );
-    ~DiagnosticFields() override;
+    ~DiagnosticFields() ;
     
-    virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
+    virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile ) ;
     
-    void closeFile() override;
+    void closeFile() ;
     
-    virtual void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
+    virtual void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) ;
     
-    virtual bool prepare( int timestep ) override;
+    virtual bool prepare( int timestep ) ;
     
     virtual void setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches ) = 0;
     
-    virtual void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) override;
+    virtual void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) ;
     
     virtual void writeField(hid_t, int) = 0;
     
-    virtual bool needsRhoJs(int timestep) override;
+    virtual bool needsRhoJs(int timestep) ;
     
     bool hasField(std::string field_name, std::vector<std::string> fieldsToDump);
     

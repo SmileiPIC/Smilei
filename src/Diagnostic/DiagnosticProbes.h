@@ -20,19 +20,19 @@ public :
     //! Default constructor
     DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe );
     //! Default destructor
-    ~DiagnosticProbes() override;
+    ~DiagnosticProbes() ;
     
-    void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
+    void openFile( Params& params, SmileiMPI* smpi, bool newfile ) ;
     
-    void closeFile() override;
+    void closeFile() ;
     
-    bool prepare( int timestep ) override;
+    bool prepare( int timestep ) ;
     
-    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) override;
+    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) ;
     
-    void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;    
+    void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) ;    
     
-    virtual bool needsRhoJs(int timestep) override;
+    virtual bool needsRhoJs(int timestep) ;
     
     //! Creates the probe's particles (or "points")
     void createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bool createFile);

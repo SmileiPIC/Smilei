@@ -19,7 +19,7 @@ public:
             return new Patch2D(params, smpi, ipatch, n_moved);
         else if (params.geometry == "3d3v") 
             return new Patch3D(params, smpi, ipatch, n_moved);
-        return nullptr;
+        return NULL;
     }
     
     // Clone one patch (avoid reading again the namelist)
@@ -30,7 +30,7 @@ public:
             return new Patch2D(static_cast<Patch2D*>(patch), params, smpi, ipatch, n_moved, with_particles);
         else if (params.geometry == "3d3v")
             return new Patch3D(static_cast<Patch3D*>(patch), params, smpi, ipatch, n_moved, with_particles);
-        return nullptr;
+        return NULL;
     }
     
     // Create a vector of patches

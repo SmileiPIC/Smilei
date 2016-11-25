@@ -12,10 +12,10 @@ class Interpolator3D : public Interpolator
 public:
     Interpolator3D(Params& params, Patch *patch);
 
-    virtual ~Interpolator3D() override {} ;
+    virtual ~Interpolator3D()  {} ;
 
-    virtual void operator()  (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread) override = 0  ;
-    virtual void operator()  (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc) override = 0;
+    virtual void operator()  (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)  = 0  ;
+    virtual void operator()  (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc)  = 0;
 
 protected:
     //! Inverse of the spatial-step

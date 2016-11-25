@@ -8,7 +8,7 @@ gc.collect()
 
 def _smilei_check():
     """Do checks over the script"""
-    # Verify classes were not overriden
+    # Verify classes were not n
     for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
             "DiagProbe","DiagParticles", "DiagScalar","DiagFields","ExtField",
             "SmileiSingleton","Main","DumpRestart","LoadBalancing","MovingWindow"]:
@@ -16,7 +16,7 @@ def _smilei_check():
         try:
             if not CheckClass._verify: raise Exception("")
         except:
-            raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
+            raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been n")
     # Verify the output_dir
     if smilei_mpi_rank == 0 and Main.output_dir:
         if not os.path.exists(Main.output_dir):
@@ -32,7 +32,7 @@ def _smilei_check():
             raise Exception("ERROR in the namelist: restart_dir = `"+DumpRestart.restart_dir+"` is not a directory")
     # Verify that constant() and tconstant() were not redefined
     if not hasattr(constant, "_reserved") or not hasattr(tconstant, "_reserved"):
-        raise Exception("Names `constant` and `tconstant` cannot be overriden")
+        raise Exception("Names `constant` and `tconstant` cannot be n")
     # Convert float profiles to constant() or tconstant()
     def toSpaceProfile(input):
         try   : return constant(input*1.)

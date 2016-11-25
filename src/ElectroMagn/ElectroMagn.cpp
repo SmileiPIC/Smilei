@@ -379,7 +379,7 @@ void ElectroMagn::applyExternalFields(Patch* patch) {
 
 
 void ElectroMagn::applyAntenna(unsigned int iAntenna, double intensity) {
-    Field *field=nullptr;
+    Field *field=NULL;
     Field *antennaField = antennas[iAntenna].field;
     if (antennaField) {
         

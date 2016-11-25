@@ -49,7 +49,7 @@ public:
         return *this;
     };
     inline operator double() const { return (*values)[index]; }
-    inline void reset() override { (*values)[index]=0.; };
+    inline void reset()  { (*values)[index]=0.; };
     std::vector<double>* values;
     unsigned int index;
 };
@@ -67,7 +67,7 @@ public:
     };
     inline operator double() const { return (*values)[index].val; }
     inline operator int() const { return (*values)[index].index; }
-    inline void reset() override { (*values)[index].val=reset_value; (*values)[index].index=-1; };
+    inline void reset()  { (*values)[index].val=reset_value; (*values)[index].index=-1; };
     std::vector<val_index>* values;
     unsigned int index;
     double reset_value;
@@ -82,21 +82,21 @@ public :
     DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch );
 
     //! Default destructor
-    ~DiagnosticScalar() override;
+    ~DiagnosticScalar() ;
     
-    void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
+    void openFile( Params& params, SmileiMPI* smpi, bool newfile ) ;
     
-    void closeFile() override;
+    void closeFile() ;
     
-    void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
+    void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) ;
     
-    bool prepare( int timestep ) override;
+    bool prepare( int timestep ) ;
     
-    void run( Patch* patch, int timestep ) override;
+    void run( Patch* patch, int timestep ) ;
     
-    void write(int timestep, SmileiMPI* smpi) override;
+    void write(int timestep, SmileiMPI* smpi) ;
     
-    virtual bool needsRhoJs(int timestep) override;
+    virtual bool needsRhoJs(int timestep) ;
     
     //! get a particular scalar
     double getScalar(std::string name);

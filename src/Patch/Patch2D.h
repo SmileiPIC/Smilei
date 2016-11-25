@@ -16,10 +16,10 @@ public:
     //! Cloning Constructor for Patch
     Patch2D(Patch2D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles);
 
-    void initStep2(Params& params) override final;
+    void initStep2(Params& params)  final;
     
     //! Destructor for Patch
-    ~Patch2D() override  final;
+    ~Patch2D()   final;
 
 
     // MPI exchange/sum methods for particles/fields
@@ -27,23 +27,23 @@ public:
     // --------------------------------------------------------------
 
     //! init comm / sum densities
-    void initSumField( Field* field, int iDim ) override final;
-    void reallyinitSumField( Field* field, int iDim ) override final;
+    void initSumField( Field* field, int iDim )  final;
+    void reallyinitSumField( Field* field, int iDim )  final;
     //! finalize comm / sum densities
-    void finalizeSumField( Field* field, int iDim ) override final;
-    void reallyfinalizeSumField( Field* field, int iDim ) override final;
+    void finalizeSumField( Field* field, int iDim )  final;
+    void reallyfinalizeSumField( Field* field, int iDim )  final;
 
     //! init comm / exchange fields
-    void initExchange( Field* field ) override final;
+    void initExchange( Field* field )  final;
     //! finalize comm / exchange fields
-    void finalizeExchange( Field* field ) override final;
+    void finalizeExchange( Field* field )  final;
     //! init comm / exchange fields in direction iDim only
-    void initExchange( Field* field, int iDim ) override final;
+    void initExchange( Field* field, int iDim )  final;
     //! finalize comm / exchange fields in direction iDim only
-    void finalizeExchange( Field* field, int iDim ) override final;
+    void finalizeExchange( Field* field, int iDim )  final;
 
     // Create MPI_Datatype to exchange fields
-    void createType( Params& params ) override final;
+    void createType( Params& params )  final;
 
     //! MPI_Datatype to sum [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
     MPI_Datatype ntypeSum_[2][2][2];
