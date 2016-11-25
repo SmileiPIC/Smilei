@@ -19,30 +19,30 @@ public:
     void initStep2(Params& params) ;
     
     //! Destructor for Patch
-    ~Patch1D()  final;
+    ~Patch1D()  
 
     // MPI exchange/sum methods for particles/fields
     //   - fields communication specified per geometry (pure virtual)
     // --------------------------------------------------------------
 
     //! init comm / sum densities
-    void initSumField( Field* field, int iDim )  final;
-    void reallyinitSumField( Field* field, int iDim )  final;
+    void initSumField( Field* field, int iDim )  
+    void reallyinitSumField( Field* field, int iDim )  
     //! finalize comm / sum densities
-    void finalizeSumField( Field* field, int iDim )  final;
-    void reallyfinalizeSumField( Field* field, int iDim )  final;
+    void finalizeSumField( Field* field, int iDim )  
+    void reallyfinalizeSumField( Field* field, int iDim )  
 
     //! init comm / exchange fields
-    void initExchange( Field* field )  final;
+    void initExchange( Field* field )  
     //! finalize comm / exchange fields
-    void finalizeExchange( Field* field )  final;
+    void finalizeExchange( Field* field )  
     //! init comm / exchange fields in direction iDim only
-    void initExchange( Field* field, int iDim )  final;
+    void initExchange( Field* field, int iDim )  
     //! finalize comm / exchange fields in direction iDim only
-    void finalizeExchange( Field* field, int iDim )  final;
+    void finalizeExchange( Field* field, int iDim )  
 
     // Create MPI_Datatype to exchange fields
-    void createType( Params& params )  final;
+    void createType( Params& params )  
 
     //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial]
     MPI_Datatype ntypeSum_[2][2];

@@ -16,10 +16,10 @@ public:
     //! Cloning Constructor for Patch
     Patch3D(Patch3D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles);
 
-    void initStep2(Params& params)  final;
+    void initStep2(Params& params)  
     
     //! Destructor for Patch
-    ~Patch3D()   final;
+    ~Patch3D()   
 
 
     // MPI exchange/sum methods for particles/fields
@@ -27,23 +27,23 @@ public:
     // --------------------------------------------------------------
 
     //! init comm / sum densities
-    void initSumField( Field* field, int iDim )  final;
-    void reallyinitSumField( Field* field, int iDim )  final;
+    void initSumField( Field* field, int iDim )  
+    void reallyinitSumField( Field* field, int iDim )  
     //! finalize comm / sum densities
-    void finalizeSumField( Field* field, int iDim )  final;
-    void reallyfinalizeSumField( Field* field, int iDim )  final;
+    void finalizeSumField( Field* field, int iDim )  
+    void reallyfinalizeSumField( Field* field, int iDim )  
 
     //! init comm / exchange fields
-    void initExchange( Field* field )  final;
+    void initExchange( Field* field )  
     //! finalize comm / exchange fields
-    void finalizeExchange( Field* field )  final;
+    void finalizeExchange( Field* field )  
     //! init comm / exchange fields in direction iDim only
-    void initExchange( Field* field, int iDim )  final;
+    void initExchange( Field* field, int iDim )  
     //! finalize comm / exchange fields in direction iDim only
-    void finalizeExchange( Field* field, int iDim )  final;
+    void finalizeExchange( Field* field, int iDim )  
 
     // Create MPI_Datatype to exchange fields
-    void createType( Params& params )  final;
+    void createType( Params& params )  
 
     //! MPI_Datatype to sum [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
     MPI_Datatype ntypeSum_[3][2][2][2];

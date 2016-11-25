@@ -7,7 +7,10 @@ using namespace std;
 // Constructor
 TimeSelection::TimeSelection(PyObject* timeSelection, string name)
 {
-    
+
+    maxint = std::numeric_limits<int>::max();
+    minint = std::numeric_limits<int>::min();  
+      
     start   = 0;
     end     = maxint;
     period  = 1;
@@ -94,6 +97,9 @@ TimeSelection::TimeSelection(PyObject* timeSelection, string name)
 // Empty time selection
 TimeSelection::TimeSelection()
 {
+    maxint = std::numeric_limits<int>::max();
+    minint = std::numeric_limits<int>::min();
+    
     start   = maxint;
     end     = maxint;
     period  = 1;
@@ -108,6 +114,9 @@ TimeSelection::TimeSelection()
 // Cloning Constructor
 TimeSelection::TimeSelection(TimeSelection * timeSelection)
 {
+    maxint = std::numeric_limits<int>::max();
+    minint = std::numeric_limits<int>::min();
+    
     start        = timeSelection->start       ;
     end          = timeSelection->end         ;
     period       = timeSelection->period      ;

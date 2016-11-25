@@ -73,9 +73,9 @@ private:
     int groupWidth;
     
     //! Maximum integer
-    static const int maxint = std::numeric_limits<int>::max();
+    int maxint = std::numeric_limits<int>::max();
     //! Minimum integer
-    static const int minint = std::numeric_limits<int>::min();
+    int minint = std::numeric_limits<int>::min();
     
     //! Last answer of theTimeIsNow(int timestep)
     bool TheTimeIsNow;

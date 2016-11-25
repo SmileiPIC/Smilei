@@ -16,15 +16,18 @@ else
 endif
 HDF5_ROOT_DIR ?=
 BUILD_DIR ?= build
+OPENMP_FLAG ?= -fopenmp 
+CPP0X_FLAG ?= -std=c++0x
 
 
 #-----------------------------------------------------
 # check if python-config exists
-ifneq (,$(shell command -v python-config))
+ifeq (,$(shell command -v python-config 2> /dev/null))
 	PYTHONCONFIG := python-config
 else
 	PYTHONCONFIG := python scripts/CompileTools/python-config.py
-endif  
+endif
+    
 
 EXEC = smilei
 
@@ -57,13 +60,13 @@ SITEDIR = $(shell python -c 'import site; site._script()' --user-site)
 # Smilei version
 CXXFLAGS += -D__VERSION=\"$(VERSION)\"
 # C++ version
-CXXFLAGS += -std=c++11 -Wall 
+CXXFLAGS += $(CPP0X_FLAG)
 # HDF5 library
 ifneq ($(strip $(HDF5_ROOT_DIR)),)
-CXXFLAGS += -I${HDF5_ROOT_DIR}/include 
+CXXFLAGS += -I${HDF5_ROOT_DIR}/include
 LDFLAGS += -L${HDF5_ROOT_DIR}/lib 
 endif
-LDFLAGS += -lhdf5 
+LDFLAGS += -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lm -L/bglocal/cn/pub/zlib/1.2.5/lib -lz 
 # Include subdirs
 CXXFLAGS += $(DIRS:%=-I%)
 # Python-related flags
@@ -85,7 +88,7 @@ endif
 
 ifneq (,$(findstring turing,$(config)))
 	CXXFLAGS += -I$(BG_PYTHONHOME)/include/python2.7 -qlanglvl=extended0x
-	LDFLAGS  += -qnostaticlink -L(BG_PYTHONHOME)/lib64 -lpython2.7 -lutil
+	LDFLAGS  += -qnostaticlink -L$(BG_PYTHONHOME)/lib64 -lpython2.7 -lutil
 endif
 
 # Compiler-specific configuration
@@ -95,7 +98,7 @@ endif
 
 # Manage options in the "config" parameter
 ifneq (,$(findstring debug,$(config)))
-	CXXFLAGS += -g -pg -D__DEBUG -O0 # -shared-intel 
+	CXXFLAGS += -g -pg -Wall -D__DEBUG -O0 # -shared-intel 
 else
 	CXXFLAGS += -O3 # -g #-ipo
 endif
@@ -105,7 +108,6 @@ ifneq (,$(findstring scalasca,$(config)))
 endif
 
 ifeq (,$(findstring noopenmp,$(config)))
-    OPENMP_FLAG ?= -fopenmp 
     LDFLAGS += -lm
     OPENMP_FLAG += -D_OMP
     LDFLAGS += $(OPENMP_FLAG)
