@@ -310,10 +310,13 @@ int main (int argc, char* argv[])
     double coverage(0.);
     for (unsigned int i=1 ; i<timer.size() ; i++) coverage += timer[i].getTime();
     MESSAGE("Time in time loop :\t" << timer[0].getTime() << "\t"<<coverage/timer[0].getTime()*100.<< "% coverage" );
+    std::vector<Timer> avg_timers = Timer::consolidate_timers( timer );
+
     if ( smpi->isMaster() )
-        for (unsigned int i=1 ; i<timer.size() ; i++) timer[i].print(timer[0].getTime());
-    Timer::consolidate_timers( timer );
-    
+        for (unsigned int i=1 ; i<avg_timers.size() ; i++) avg_timers[i].print(timer[0].getTime());
+    MESSAGE(0, "\n\t Printed times are mean time per MPI process" );
+    MESSAGE(0, "\t\t See advanced metrics in profil.txt");
+
     //WARNING( "Diabled vecPatches.Diagnostics->printTimers(vecPatches(0), timer[3].getTime());" );
     
     
