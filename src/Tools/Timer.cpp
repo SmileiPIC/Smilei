@@ -107,13 +107,15 @@ std::vector<Timer> Timer::consolidate_timers( std::vector<Timer> timers )
         int idx_records=nrecords-1; // = last record
 
         double min( tmp[idx_records] ), max( tmp[idx_records] ), avg( tmp[idx_records] );
+        double sum( tmp[idx_records] ), sig( tmp[idx_records]*tmp[idx_records]/(double)sz );
         if (rk==0)
             for ( int i=1 ; i<sz ; i++) {
                 if ( tmp[idx_records+i*(nrecords)] < min ) min = tmp[idx_records+i*(nrecords)];
                 if ( tmp[idx_records+i*(nrecords)] > max ) max = tmp[idx_records+i*(nrecords)];
-                avg += tmp[idx_records+i*(nrecords)];
+                sum += tmp[idx_records+i*(nrecords)];
+                sig += tmp[idx_records+i*(nrecords)]*tmp[idx_records+i*(nrecords)]/(double)sz;
             }
-        avg /= sz;
+        avg = sum / sz;
 
         delete [] tmp;
 
@@ -123,6 +125,7 @@ std::vector<Timer> Timer::consolidate_timers( std::vector<Timer> timers )
                  << timers[itimer].name_ << "\t : " << "Min time =  " << min
                  << "\t - \t" <<  "Avg time =  " << avg
                  << "\t - \t" <<  "Max time =  " << max
+                 << "\t - \t" <<  "SD time =  " << sqrt( sig-sum*sum/(double)(sz)/(double)(sz) )
                  << endl;
         }
         if (rk==0) {
