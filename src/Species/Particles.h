@@ -272,7 +272,7 @@ public:
         return dist;
     }
     inline double dist( unsigned int iPart, unsigned int iDim ) {
-        double delta = abs( position(iDim,iPart)-position_old(iDim,iPart) );
+        double delta = std::abs( position(iDim,iPart)-position_old(iDim,iPart) );
         return delta;
     }
     

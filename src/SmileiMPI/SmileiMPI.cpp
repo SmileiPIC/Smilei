@@ -168,7 +168,7 @@ void SmileiMPI::init_patch_count( Params& params)
 //#endif
     
     unsigned int Npatches, r, Ncur, Pcoordinates[3], ncells_perpatch;
-    double Tload,Tcur, Lcur, total_load, local_load, above_target, below_target;
+    double Tload,Tcur, Lcur, total_load=0, local_load, above_target, below_target;
     
     unsigned int tot_species_number = PyTools::nComponents("Species");
     
