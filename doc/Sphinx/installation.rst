@@ -209,6 +209,17 @@ Download and compile
      make config=debug            # to have debugging output (slow)
      make config=noopenmp         # to deactivate OpenMP support
      make config="debug noopenmp" # to activate debugging without OpenMP
+
+   .. rubric:: Machine dependent configurations:
+   
+   For some machine, it might be important to modify internal makefile variables. 
+   We suggest to add a file in the folder ``scripts/CompileTools/machine/`` and compile 
+   with:
+
+   .. code-block:: bash
+     
+     make machine=my_machine
+   
      
    .. rubric:: Makefile alternatives:
    
