@@ -79,6 +79,13 @@ ifeq (,$(findstring noopenmp,$(config)))
 endif
 
 #-----------------------------------------------------
+# check whether to use a machine specific definitions
+ifneq ($(machine),)
+	ifneq ($(wildcard scripts/CompileTools/machine/$(machine)),)
+	-include scripts/CompileTools/machine/$(machine)
+	endif
+endif
+#-----------------------------------------------------
 # Set the verbosity prefix
 ifeq (,$(findstring verbose,$(config)))
     Q := @
@@ -193,7 +200,7 @@ uninstall_python:
 print-% :
 	$(info $* : $($*)) @true
 
-env: print-SMILEICXX print-MPIVERSION print-VERSION print-OPENMP_FLAG print-HDF5_ROOT_DIR print-SITEDIR print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS
+env: print-SMILEICXX print-MPIVERSION print-VERSION print-OPENMP_FLAG print-HDF5_ROOT_DIR print-SITEDIR print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS
 
 
 #-----------------------------------------------------
@@ -207,7 +214,7 @@ help:
 	@echo 'or, to compile with 4 cpus (for instance):'
 	@echo '  make -j 4'
 	@echo
-	@echo 'More options:'
+	@echo 'Config options:'
 	@echo '  make config="[ verbose ] [ debug ] [ scalasca ] [ noopenmp ]"'
 	@echo '    verbose    : to print compile command lines'
 	@echo '    debug      : to compile in debug mode (code runs really slow)'
@@ -218,6 +225,9 @@ help:
 	@echo '  make config=verbose'
 	@echo '  make config=debug'
 	@echo '  make config="debug noopenmp"'
+	@echo
+	@echo 'Machine options:'
+	@echo '  make machine=XXX : include machine file in scripts/CompileTools/machine/XXX'
 	@echo
 	@echo 'OTHER PURPOSES:'
 	@echo '---------------'
