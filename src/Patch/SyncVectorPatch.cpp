@@ -59,13 +59,13 @@ void SyncVectorPatch::exchangeParticles(VectorPatch& vecPatches, int ispec, Para
 
 }
 
-void SyncVectorPatch::sumRhoJ(VectorPatch& vecPatches, unsigned int diag_flag )
+void SyncVectorPatch::sumRhoJ(VectorPatch& vecPatches)
 {
 
     SyncVectorPatch::sum( vecPatches.listJx_ , vecPatches );
     SyncVectorPatch::sum( vecPatches.listJy_ , vecPatches );
     SyncVectorPatch::sum( vecPatches.listJz_ , vecPatches );
-    if(diag_flag) SyncVectorPatch::sum( vecPatches.listrho_, vecPatches );
+    if(vecPatches.diag_flag) SyncVectorPatch::sum( vecPatches.listrho_, vecPatches );
 }
 
 void SyncVectorPatch::sumRhoJs(VectorPatch& vecPatches, int ispec )

@@ -13,7 +13,7 @@ class SyncVectorPatch {
 public :
 
     static void exchangeParticles(VectorPatch& vecPatches, int ispec, Params &params, SmileiMPI* smpi);
-    static void sumRhoJ  ( VectorPatch& vecPatches, unsigned int diag_flag );
+    static void sumRhoJ  ( VectorPatch& vecPatches);
     static void sumRhoJs ( VectorPatch& vecPatches, int ispec );
     static void exchangeE( VectorPatch& vecPatches );
     static void exchangeB( VectorPatch& vecPatches );

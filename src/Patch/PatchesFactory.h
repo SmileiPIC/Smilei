@@ -37,6 +37,8 @@ public:
     static VectorPatch createVector(Params& params, SmileiMPI* smpi) {
         VectorPatch vecPatches;
         
+        vecPatches.diag_flag = (params.restart? 0 : 1);
+        
         // Compute npatches (1 is std MPI behavior)
         unsigned int npatches, firstpatch;
         npatches = smpi->patch_count[smpi->getRank()];// Number of patches owned by current MPI process.

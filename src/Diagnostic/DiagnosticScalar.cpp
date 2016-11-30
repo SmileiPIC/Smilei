@@ -8,7 +8,8 @@
 
 using namespace std;
 
-DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch = NULL )
+DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch = NULL ):
+latest_timestep(-1)
 {
     // patch  == NULL else error
     
