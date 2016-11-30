@@ -12,7 +12,7 @@ BUILD_DIR ?= build
 
 #-----------------------------------------------------
 # check if python-config exists
-ifneq (,$(shell command -v python-config))
+ifneq (,$(shell which python-config))
 	PYTHONCONFIG := python-config
 else
 	PYTHONCONFIG := python scripts/CompileTools/python-config.py

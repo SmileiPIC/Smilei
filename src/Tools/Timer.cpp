@@ -73,8 +73,10 @@ void Timer::print(double tot)
     }
 }
 
-void Timer::consolidate_timers( std::vector<Timer> timers )
+std::vector<Timer> Timer::consolidate_timers( std::vector<Timer> timers )
 {
+    std::vector<Timer> avg_timers(timers.size());
+
     int sz( 1 ), rk( 0 );
     MPI_Comm_size( MPI_COMM_WORLD, &sz );
     MPI_Comm_rank( MPI_COMM_WORLD, &rk );
@@ -82,26 +84,38 @@ void Timer::consolidate_timers( std::vector<Timer> timers )
     ofstream fout;
     if (rk==0) fout.open ("profil.txt");
 
-    for ( unsigned int itimer = 0 ; itimer < timers.size() ; itimer++ ) {
-        int nrecords( timers[itimer].register_timers.size() );
+    // timers[0] is the global PIC loop timer, naturally synchronized
+    for ( unsigned int itimer = 1 ; itimer < timers.size() ; itimer++ ) {
+        int nrecords(0);
+        if (timers[itimer].register_timers.size()>0)
+            nrecords = timers[itimer].register_timers.size();
+        else
+            nrecords = 1;
         double* tmp = new double[sz*nrecords];
 
-        MPI_Gather( &(timers[itimer].register_timers[0]), nrecords, MPI_DOUBLE,
-                    &(tmp[0]), nrecords, MPI_DOUBLE,
-                    0, MPI_COMM_WORLD);
+        if (timers[itimer].register_timers.size()>0)
+            MPI_Gather( &(timers[itimer].register_timers[0]), nrecords, MPI_DOUBLE,
+                        &(tmp[0]), nrecords, MPI_DOUBLE,
+                        0, MPI_COMM_WORLD);
+        else
+            MPI_Gather( &(timers[itimer].time_acc_), 1, MPI_DOUBLE,
+                        &(tmp[0]), 1, MPI_DOUBLE,
+                        0, MPI_COMM_WORLD);
 
 
         // Mean on last records
         int idx_records=nrecords-1; // = last record
 
         double min( tmp[idx_records] ), max( tmp[idx_records] ), avg( tmp[idx_records] );
+        double sum( tmp[idx_records] ), sig( tmp[idx_records]*tmp[idx_records]/(double)sz );
         if (rk==0)
             for ( int i=1 ; i<sz ; i++) {
                 if ( tmp[idx_records+i*(nrecords)] < min ) min = tmp[idx_records+i*(nrecords)];
                 if ( tmp[idx_records+i*(nrecords)] > max ) max = tmp[idx_records+i*(nrecords)];
-                avg += tmp[idx_records+i*(nrecords)];
+                sum += tmp[idx_records+i*(nrecords)];
+                sig += tmp[idx_records+i*(nrecords)]*tmp[idx_records+i*(nrecords)]/(double)sz;
             }
-        avg /= sz;
+        avg = sum / sz;
 
         delete [] tmp;
 
@@ -111,10 +125,18 @@ void Timer::consolidate_timers( std::vector<Timer> timers )
                  << timers[itimer].name_ << "\t : " << "Min time =  " << min
                  << "\t - \t" <<  "Avg time =  " << avg
                  << "\t - \t" <<  "Max time =  " << max
+                 << "\t - \t" <<  "SD time =  " << sqrt( sig-sum*sum/(double)(sz)/(double)(sz) )
                  << endl;
         }
+        if (rk==0) {
+            avg_timers[itimer].time_acc_ = avg;
+            avg_timers[itimer].name_ = timers[itimer].name_;
+        }
+
         
     }
     if (rk==0) fout.close();
+
+    return avg_timers;
 
 }

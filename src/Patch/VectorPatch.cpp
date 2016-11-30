@@ -130,6 +130,19 @@ void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow
 } // END dynamics
 
 
+void VectorPatch::computeCharge()
+{
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        (*this)(ipatch)->EMfields->restartRhoJ();
+        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+            species(ipatch, ispec)->computeCharge(ispec, emfields(ipatch), proj(ipatch) );
+        }
+    }
+
+} // END computeRho
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
 // ---------------------------------------------------------------------------------------------------------------------

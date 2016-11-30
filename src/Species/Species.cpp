@@ -89,10 +89,13 @@ void Species::initCluster(Params& params)
     b_dim.resize(params.nDim_field, 1);
     if (nDim_particle == 1){
         b_dim[0] =  (1 + clrw) + 2 * oversize[0];
+        f_dim1 = 1;
+        f_dim2 = 1;
     }
     if (nDim_particle == 2){
         b_dim[0] =  (1 + clrw) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim[1] =  f_dim1;
+        f_dim2 = 1;
     }
     if (nDim_particle == 3){
         b_dim[0] =  (1 + clrw) + 2 * oversize[0]; // There is a primal number of bins.
@@ -510,6 +513,35 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     }//END if time vs. time_frozen
 
 }//END dynamic
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// For all particles of the species
+//   - increment the charge (projection)
+//   - used at initialisation for Poisson (and diags if required, not for now dynamics )
+// ---------------------------------------------------------------------------------------------------------------------
+void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector* Proj)
+{
+    // -------------------------------
+    // calculate the particle charge
+    // -------------------------------
+    if ( (!(*particles).isTest) ) {
+        double* b_rho=nullptr;
+        for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
+            unsigned int bin_start = ibin*clrw*f_dim1*f_dim2;
+            // Not for now, else rho is incremented twice. Here and dynamics. Must add restartRhoJs and manage independantly diags output
+            //b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(bin_start) : &(*EMfields->rho_)(bin_start);
+            b_rho = &(*EMfields->rho_)(bin_start);
+
+            for (unsigned int iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
+
+            } //End loop on particles
+        }//End loop on bins
+            
+    }
+
+}//END computeCharge
 
 
 // ---------------------------------------------------------------------------------------------------------------------
