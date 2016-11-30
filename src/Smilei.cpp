@@ -341,7 +341,7 @@ int main (int argc, char* argv[])
     PyTools::closePython();
     
     TITLE("END");
-    //delete smpi;
+    delete smpi;
     
     return 0;
     
