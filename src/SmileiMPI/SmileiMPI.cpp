@@ -33,7 +33,16 @@ using namespace std;
 //     - Set MPI env
 // ---------------------------------------------------------------------------------------------------------------------
 SmileiMPI::SmileiMPI( int* argc, char*** argv )
-{    
+{
+    // Send information on current simulation
+    MESSAGE("                   _            _");
+    MESSAGE(" ___           _  | |        _  \\ \\   Version : " << __VERSION);
+    MESSAGE("/ __|  _ __   (_) | |  ___  (_)  | |   ");
+    MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |");
+    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |  ");
+    MESSAGE("                                /_/    ");
+    MESSAGE("");
+
     int mpi_provided;
 
 #ifdef _OPENMP

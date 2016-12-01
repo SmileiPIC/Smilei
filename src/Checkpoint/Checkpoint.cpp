@@ -27,9 +27,10 @@ using namespace std;
 // static varable must be defined and initialized here
 int Checkpoint::signal_received=0;
 
-Checkpoint::Checkpoint( Params& params, SmileiMPI* smpi ) : 
-dump_times(0), 
+Checkpoint::Checkpoint( Params& params, SmileiMPI* smpi ) :
+dump_times(0),
 this_run_start_step(0),
+exit_asap(false),
 time_reference(MPI_Wtime()),
 time_dump_step(0),
 dump_step(0),
@@ -82,7 +83,7 @@ dump_request(smpi->getSize())
     nDim_particle=params.nDim_particle;
     //particleSize = nDim_particle + 3 + 1;
     
-    // 
+    //
 }
 
 
@@ -91,10 +92,10 @@ Checkpoint::~Checkpoint()
 }
 
 
-//bool Checkpoint::dump( unsigned int itime, double time, Params &params ) { 
-bool Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* smpi, SimWindow* simWindow, Params &params ) { 
-
-    // check for excedeed time 
+//bool Checkpoint::dump( unsigned int itime, double time, Params &params ) {
+void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* smpi, SimWindow* simWindow, Params &params ) {
+    
+    // check for excedeed time
     if (dump_minutes != 0.0) {
         // master checks whenever we passed the time limit
         if (smpi->isMaster() && time_dump_step==0) {
@@ -120,38 +121,21 @@ bool Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* s
         (dump_step != 0 && (itime % dump_step == 0)) ||
         (time_dump_step!=0 && itime==time_dump_step)) {
         dumpAll( vecPatches, itime,  smpi, simWindow, params);
-        if (exit_after_dump || ((signal_received!=0) && (signal_received != SIGUSR2))) return true;
-    }
-    return false;
-    
-    
-    /*if  ((params.dump_step != 0 && ((itime + 1) % params.dump_step == 0)) ||  //+1 because itime2dump receives itime + 1.
-         (params.dump_minutes != 0.0 && time/60.0 > params.dump_minutes*(dump_minutes_times+1)) ||
-         (params.check_stop_file && fileStopCreated())) {
-        cout << "Dump global" << endl;
-        if (params.dump_minutes != 0.0 && time/60.0 > params.dump_minutes*(dump_minutes_times+1) ) {
-            cout << "Dump minutes" << endl;
-            dump_minutes_times++;
+        if (exit_after_dump || ((signal_received!=0) && (signal_received != SIGUSR2))) {
+            exit_asap=true;
         }
-        dump_times++;
-        return true;
     }
-    return false;*/
 }
 
 void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI* smpi, SimWindow* simWin,  Params &params )
 {
-
     
-    /*ostringstream nameDump("");
-    nameDump << "dump-" << setfill('0') << setw(4) << dump_times%dump_file_sequence << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
-    fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);*/
     unsigned int num_dump=dump_times%dump_file_sequence;
     
     hid_t fid = H5Fcreate( dumpName(num_dump,smpi).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     dump_times++;
     
-    MESSAGEALL("Step " << itime << " : DUMP fields and particles " << dumpName(num_dump,smpi));    
+    MESSAGEALL("Step " << itime << " : DUMP fields and particles " << dumpName(num_dump,smpi));
     
     H5::attr(fid, "Version", string(__VERSION));
     
@@ -164,7 +148,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     H5::attr(fid, "latest_timestep",   static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->latest_timestep  );
     
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) {
-    
+        
         // Open a group
         ostringstream patch_name("");
         patch_name << setfill('0') << setw(6) << vecPatches(ipatch)->Hindex();
@@ -175,20 +159,20 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
         
         // Close a group
         H5Gclose(patch_gid);
-    
+        
     }
     
     // Dump moving window status
     if (simWin!=NULL)
-    dumpMovingWindow(fid, simWin);
+        dumpMovingWindow(fid, simWin);
     
     H5Fclose( fid );
     
 }
 
 void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpecies, hid_t patch_gid )
-{ 
-
+{
+    
     dumpFieldsPerProc(patch_gid, EMfields->Ex_);
     dumpFieldsPerProc(patch_gid, EMfields->Ey_);
     dumpFieldsPerProc(patch_gid, EMfields->Ez_);
@@ -248,9 +232,9 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
             }
         }
     }
-
+    
     H5Fflush( patch_gid, H5F_SCOPE_GLOBAL );
-    H5::attr(patch_gid, "species", vecSpecies.size());    
+    H5::attr(patch_gid, "species", vecSpecies.size());
     
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
         ostringstream name("");
@@ -259,15 +243,15 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
         hid_t gid = H5::group(patch_gid, groupName);
         
         /*sid = H5Screate(H5S_SCALAR);
-        aid = H5Acreate(gid, "partCapacity", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
-        unsigned int partCapacity=vecSpecies[ispec]->particles->capacity();
-        H5Awrite(aid, H5T_NATIVE_UINT, &partCapacity);
-        H5Aclose(aid);
-        H5Sclose(sid);*/
+         aid = H5Acreate(gid, "partCapacity", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
+         unsigned int partCapacity=vecSpecies[ispec]->particles->capacity();
+         H5Awrite(aid, H5T_NATIVE_UINT, &partCapacity);
+         H5Aclose(aid);
+         H5Sclose(sid);*/
         
         H5::attr(gid, "partCapacity", vecSpecies[ispec]->particles->capacity());
         H5::attr(gid, "partSize", vecSpecies[ispec]->particles->size());
-            
+        
         if (vecSpecies[ispec]->particles->size()>0) {
             
             for (unsigned int i=0; i<vecSpecies[ispec]->particles->Position.size(); i++) {
@@ -296,7 +280,7 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
         } // End if partSize
         
         H5Gclose(gid);
-    
+        
     } // End for ispec
 };
 
@@ -311,10 +295,10 @@ void Checkpoint::dumpFieldsPerProc(hid_t fid, Field* field)
 }
 
 void Checkpoint::dumpMovingWindow(hid_t fid, SimWindow* simWin)
-{  
+{
     H5::attr(fid, "x_moved", simWin->getXmoved());
     H5::attr(fid, "n_moved", simWin->getNmoved());
-
+    
 }
 
 
@@ -325,92 +309,97 @@ string Checkpoint::dumpName(unsigned int num, SmileiMPI *smpi) {
 }
 
 
-void Checkpoint::restartAll( VectorPatch &vecPatches, unsigned int &itime,  SmileiMPI* smpi, SimWindow* simWin, Params &params )
-{ 
+void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindow* simWin, Params &params )
+{
     
-    string nameDump("");
-    
-    // This will open both dumps and pick the last one
-    for (unsigned int num_dump=0;num_dump<dump_file_sequence; num_dump++) {
-        //ostringstream nameDumpTmp("");
-        //nameDumpTmp << "dump-" << setfill('0') << setw(4) << i << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
-        //ifstream f(nameDumpTmp.str().c_str());
-        string dump_name=restart_dir+dumpName(num_dump,smpi);
-        ifstream f(dump_name.c_str());
+    if (params.restart) {
         
-        if (f.good()) {
-            hid_t fid = H5Fopen( dump_name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-            hid_t aid = H5Aopen(fid, "dump_step", H5T_NATIVE_UINT);
-            unsigned int itimeTmp=0;
-            H5Aread(aid, H5T_NATIVE_UINT, &itimeTmp);
-            H5Aclose(aid);
-            H5Fclose(fid);
-            if (itimeTmp>itime) {
-                    this_run_start_step=itimeTmp;
-                 itime=itimeTmp;
-                 nameDump=dump_name.c_str();
-                 dump_times=num_dump;
+        MESSAGE(1, "READING fields and particles for restart");
+        
+        string nameDump("");
+        
+        // This will open both dumps and pick the last one
+        for (unsigned int num_dump=0;num_dump<dump_file_sequence; num_dump++) {
+            //ostringstream nameDumpTmp("");
+            //nameDumpTmp << "dump-" << setfill('0') << setw(4) << i << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
+            //ifstream f(nameDumpTmp.str().c_str());
+            string dump_name=restart_dir+dumpName(num_dump,smpi);
+            ifstream f(dump_name.c_str());
+            
+            if (f.good()) {
+                hid_t fid = H5Fopen( dump_name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+                hid_t aid = H5Aopen(fid, "dump_step", H5T_NATIVE_UINT);
+                unsigned int stepStartTmp=0;
+                H5Aread(aid, H5T_NATIVE_UINT, &stepStartTmp);
+                H5Aclose(aid);
+                H5Fclose(fid);
+                if (stepStartTmp>this_run_start_step) {
+                    this_run_start_step=stepStartTmp;
+                    nameDump=dump_name.c_str();
+                    dump_times=num_dump;
+                }
             }
+            f.close();
         }
-        f.close();
+        
+        if (nameDump.empty()) ERROR("Cannot find a valid restart file");
+        
+        MESSAGEALL(2, " : Restarting fields and particles " << nameDump << " step=" << this_run_start_step);
+        
+        hid_t fid = H5Fopen( nameDump.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+        if (fid < 0) ERROR(nameDump << " is not a valid HDF5 file");
+        
+        string dump_version;
+        H5::getAttr(fid, "Version", dump_version);
+        
+        string dump_date;
+        H5::getAttr(fid, "CommitDate", dump_date);
+        
+        if (dump_version != string(__VERSION)) {
+            WARNING ("The code version that dumped the file is " << dump_version);
+            WARNING ("                while running version is " << string(__VERSION));
+        }
+        
+        vector<int> patch_count(smpi->getSize());
+        H5::getVect( fid, "patch_count", patch_count );
+        smpi->patch_count = patch_count;
+        vecPatches = PatchesFactory::createVector(params, smpi);
+        
+        H5::getAttr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
+        H5::getAttr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
+        H5::getAttr(fid, "latest_timestep",   static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->latest_timestep  );
+        
+        hid_t aid = H5Aopen(fid, "dump_step", H5T_NATIVE_UINT);
+        H5Aread(aid, H5T_NATIVE_UINT, &this_run_start_step);
+        H5Aclose(aid);
+        
+        
+        
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) {
+            
+            ostringstream patch_name("");
+            patch_name << setfill('0') << setw(6) << vecPatches(ipatch)->Hindex();
+            string patchName="patch-"+patch_name.str();
+            hid_t patch_gid = H5Gopen(fid, patchName.c_str(),H5P_DEFAULT);
+            
+            restartPatch( vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, params, patch_gid );
+            
+            H5Gclose(patch_gid);
+            
+        }
+        
+        // load window status
+        if (simWin!=NULL)
+            restartMovingWindow(fid, simWin);
+        
+        H5Fclose( fid );
     }
     
-    if (nameDump.empty()) ERROR("Cannot find a valid restart file");
-    
-    MESSAGEALL(2, " : Restarting fields and particles " << nameDump << " step=" << this_run_start_step);
-    
-    hid_t fid = H5Fopen( nameDump.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-    if (fid < 0) ERROR(nameDump << " is not a valid HDF5 file");
-    
-    string dump_version;
-    H5::getAttr(fid, "Version", dump_version);
-    
-    string dump_date;
-    H5::getAttr(fid, "CommitDate", dump_date);
-    
-    if (dump_version != string(__VERSION)) {
-        WARNING ("The code version that dumped the file is " << dump_version);
-        WARNING ("                while running version is " << string(__VERSION));
-    }
- 
-    vector<int> patch_count(smpi->getSize());
-    H5::getVect( fid, "patch_count", patch_count );
-    smpi->patch_count = patch_count;
-    vecPatches = PatchesFactory::createVector(params, smpi);
-    
-    H5::getAttr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
-    H5::getAttr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
-    H5::getAttr(fid, "latest_timestep",   static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->latest_timestep  );
-    
-    hid_t aid = H5Aopen(fid, "dump_step", H5T_NATIVE_UINT);
-    H5Aread(aid, H5T_NATIVE_UINT, &itime);
-    H5Aclose(aid);
-    
-    
-    
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) {
-        
-        ostringstream patch_name("");
-        patch_name << setfill('0') << setw(6) << vecPatches(ipatch)->Hindex();
-        string patchName="patch-"+patch_name.str();
-        hid_t patch_gid = H5Gopen(fid, patchName.c_str(),H5P_DEFAULT);
-        
-        restartPatch( vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, params, patch_gid );
-        
-        H5Gclose(patch_gid);
-        
-    }
-    
-    // load window status
-    if (simWin!=NULL)
-    restartMovingWindow(fid, simWin);
-    
-    H5Fclose( fid );
- };
+}
 
 
 void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecSpecies, Params& params, hid_t patch_gid )
-{ 
+{
     hid_t aid, gid, did, sid;
     
     restartFieldsPerProc(patch_gid, EMfields->Ex_);
@@ -449,7 +438,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
                 H5::getAttr(gid, "Bz_xvalmin", embc->By_xvalmin );
                 H5::getAttr(gid, "Bz_xvalmin", embc->By_xvalmax );
                 H5Gclose(gid);
-       
+                
             }
             else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EMfields->emBoundCond[bcId]) ) {
                 ElectroMagnBC2D_SM* embc = static_cast<ElectroMagnBC2D_SM*>(EMfields->emBoundCond[bcId]);
@@ -470,7 +459,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
                 H5::getVect(gid, "Bz_yvalmin_Trans", embc->Bz_yvalmin_Trans );
                 H5::getVect(gid, "Bz_yvalmax_Trans", embc->Bz_yvalmax_Trans );
                 H5Gclose(gid);
-           }
+            }
         }
     }
     
@@ -557,7 +546,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
         
         H5Gclose(gid);
     }
-
+    
 }
 
 
@@ -572,7 +561,7 @@ void Checkpoint::restartFieldsPerProc(hid_t fid, Field* field)
 }
 
 void Checkpoint::restartMovingWindow(hid_t fid, SimWindow* simWin)
-{  
+{
     hid_t aid = H5Aopen(fid, "x_moved", H5T_NATIVE_DOUBLE);
     double x_moved=0.;
     H5Aread(aid, H5T_NATIVE_DOUBLE, &x_moved);
@@ -585,36 +574,9 @@ void Checkpoint::restartMovingWindow(hid_t fid, SimWindow* simWin)
     
     simWin->setXmoved(x_moved);
     simWin->setNmoved(n_moved);
-
+    
 }
 
-
-bool Checkpoint::fileStopCreated() {
-    if (stop_file_seen_since_last_check) return false;
-    
-    int foundStopFile=0;
-    ifstream f("stop");
-    if (f.good()) foundStopFile=1;
-    f.close();
-    //int foundStopFileAll = 0;
-    //MPI_Allreduce(&foundStopFile,&foundStopFileAll,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
-    
-    //if (foundStopFileAll>0) {
-    if (foundStopFile>0) {
-        stop_file_seen_since_last_check=true;
-        return true;
-    } else {
-        return false;
-    }
-}
-
-
-//double Checkpoint::time_seconds() {
-//    double time_temp = MPI_Wtime();
-//    double time_sec=0;
-//    MPI_Allreduce(&time_temp,&time_sec,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-//    return (time_sec-time_reference);
-//}
 
 
 

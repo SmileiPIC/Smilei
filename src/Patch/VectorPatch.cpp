@@ -860,6 +860,9 @@ void VectorPatch::update_field_list(int ispec)
 
 void VectorPatch::applyAntennas(double time)
 {
+    if( nAntennas>0 ) {
+        TITLE("Applying antennas at time t = " << time);
+    }
     // Loop antennas
     for(unsigned int iAntenna=0; iAntenna<nAntennas; iAntenna++) {
     

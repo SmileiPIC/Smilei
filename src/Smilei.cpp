@@ -45,21 +45,12 @@ int main (int argc, char* argv[])
 {
     cout.setf( ios::fixed,  ios::floatfield ); // floatfield set to fixed
     
-    // Create MPI environment :
-    SmileiMPI *smpi= new SmileiMPI(&argc, &argv );
-    
     // -------------------------
     // Simulation Initialization
     // ------------------------- 
     
-    // Send information on current simulation
-    MESSAGE("                   _            _");
-    MESSAGE(" ___           _  | |        _  \\ \\   Version : " << __VERSION);
-    MESSAGE("/ __|  _ __   (_) | |  ___  (_)  | |   ");
-    MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |");
-    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |  ");
-    MESSAGE("                                /_/    ");
-    MESSAGE("");
+    // Create MPI environment :
+    SmileiMPI *smpi= new SmileiMPI(&argc, &argv );
     
     // Read and print simulation parameters
     TITLE("Reading the simulation parameters");
@@ -83,12 +74,10 @@ int main (int argc, char* argv[])
     // Update in "if restart" if necessary
     // ------------------------------------------------------------------------
     
-    unsigned int stepStart=0, stepStop=params.n_time;
-    
     // time at integer time-steps (primal grid)
-    double time_prim = stepStart * params.timestep;
+    double time_prim = 0;
     // time at half-integer time-steps (dual grid)
-    double time_dual = (stepStart +0.5) * params.timestep;
+    double time_dual = 0.5 * params.timestep;
     
     // -------------------------------------------
     // Declaration of the main objects & operators
@@ -109,10 +98,9 @@ int main (int argc, char* argv[])
     // reading from dumped file the restart values
     if (params.restart) {
         
-        MESSAGE(1, "READING fields and particles for restart");
         // smpi->patch_count recomputed in restartAll
         // vecPatches allocated in restartAll according to patch_count saved
-        checkpoint.restartAll( vecPatches, stepStart, smpi, simWindow, params);
+        checkpoint.restartAll( vecPatches, smpi, simWindow, params);
         
         // time at integer time-steps (primal grid)
         time_prim = checkpoint.this_run_start_step * params.timestep;
@@ -135,13 +123,13 @@ int main (int argc, char* argv[])
         vecPatches = PatchesFactory::createVector(params, smpi);
         
         // Initialize the electromagnetic fields
-        // -----------------------------------
+        // -------------------------------------
         vecPatches.computeCharge();
         vecPatches.sumDensities(timer, 0 );
         
-        if( vecPatches.nAntennas>0 )
-            TITLE("Applying antennas at time t = " << 0.5 * params.timestep);
-            vecPatches.applyAntennas(0.5 * params.timestep);
+        // Apply antennas
+        // --------------
+        vecPatches.applyAntennas(0.5 * params.timestep);
         
         // Init electric field (Ex/1D, + Ey/2D)
         if (!vecPatches.isRhoNull(smpi) && params.solve_poisson == true) {
@@ -194,14 +182,12 @@ int main (int argc, char* argv[])
     // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)
     unsigned int latestTimeStep=checkpoint.this_run_start_step;
 */
-    bool exit(false);
-    
     // ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------
     
     TITLE("Time-Loop started: number of time-steps n_time = " << params.n_time);
-    for (unsigned int itime=checkpoint.this_run_start_step+1 ; itime <= stepStop ; itime++) {
+    for (unsigned int itime=checkpoint.this_run_start_step+1 ; itime <= params.n_time ; itime++) {
         
         // calculate new times
         // -------------------
@@ -236,13 +222,13 @@ int main (int argc, char* argv[])
             // Restart patched moving window : to do
             // Break in an OpenMP region
             #pragma omp master
-            exit = checkpoint.dump(vecPatches, itime, smpi, simWindow, params);
+            checkpoint.dump(vecPatches, itime, smpi, simWindow, params);
             #pragma omp barrier
             // ----------------------------------------------------------------------        
             
         } //End omp parallel region
 
-        if (exit) break;
+        if (checkpoint.exit_asap) break;
         
         timer[5].restart();
         if ( simWindow->isMoving(time_dual) ) {

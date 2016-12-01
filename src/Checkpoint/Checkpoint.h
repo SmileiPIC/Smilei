@@ -37,7 +37,7 @@ public:
     unsigned int nDim_particle;
     
     //! restart everything to file per processor
-    void restartAll( VectorPatch &vecPatches, unsigned int &itime,  SmileiMPI* smpi, SimWindow* simWin, Params &params);
+    void restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindow* simWin, Params &params);
     void restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecSpecies, Params& params, hid_t patch_gid );
     
     //! restart field per proc
@@ -48,7 +48,7 @@ public:
     
     //! test before writing everything to file per processor
     //bool dump(unsigned int itime, double time, Params &params);
-    bool dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* smpi, SimWindow* simWindow, Params &params );
+    void dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* smpi, SimWindow* simWindow, Params &params );
     // OK
     
     //! dump everything to file per processor
@@ -77,6 +77,9 @@ public:
     //! start step of this run: zero if a first run, otherwise the number of the restart step
     unsigned int this_run_start_step;
     
+    //! checkpoint asks to politely quit from simulation
+    bool exit_asap;
+    
 private:
     //! get dump name based on number and rank
     std::string dumpName(unsigned int num, SmileiMPI *smpi);
@@ -97,10 +100,7 @@ private:
     //! is true if since last time a file named stop appeared
     bool stop_file_seen_since_last_check;
     
-    //! function that checks if file named "stop" exists;
-    bool fileStopCreated();
-    
-        //! time of the constructor
+    //! time of the constructor
     double time_reference;
     
     //! vector containing the step at which perform a dump in case time_dump returns true
