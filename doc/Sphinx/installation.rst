@@ -219,6 +219,11 @@ Download and compile
    .. code-block:: bash
      
      make machine=my_machine
+
+
+   .. note::    
+     It would be nice to share with developpers the makefile-machine files used on common
+     supercomputers.
    
      
    .. rubric:: Makefile alternatives:

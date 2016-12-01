@@ -38,6 +38,8 @@ public:
 
     static std::vector<Timer> consolidate_timers( std::vector<Timer> timers );
 
+    static std::vector<Timer> initialize_timers( SmileiMPI *smpi );
+
 
 private:
     //! Accumulated time in current timer

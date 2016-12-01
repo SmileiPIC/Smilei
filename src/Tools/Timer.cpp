@@ -140,3 +140,36 @@ std::vector<Timer> Timer::consolidate_timers( std::vector<Timer> timers )
     return avg_timers;
 
 }
+
+std::vector<Timer> Timer::initialize_timers( SmileiMPI *smpi ) {
+    // GC IDRIS : "Timer timer[ntimer];" to "Timer timer[8];"
+    int ntimer(13);
+    vector<Timer> timer(ntimer);
+    // The entire time loop
+    timer[0].init(smpi, "Global");
+    // Call dynamics + restartRhoJ(s)
+    timer[1].init(smpi, "Particles");
+    // Maxwell
+    timer[2].init(smpi, "Maxwell");
+    // Diags.runAllDiags + MPI & Patch sync
+    timer[3].init(smpi, "Diagnostics");
+    // Local sum of rho, Jxyz
+    timer[4].init(smpi, "Densities");
+    // Moving Window
+    timer[5].init(smpi, "Mov window");
+    // Dump fields (including average)
+    timer[6].init(smpi, "Diag fields");
+    // Load balancing
+    timer[7].init(smpi, "Load balacing");
+    // Call exchangeParticles (MPI & Patch sync)
+    timer[8].init(smpi, "Sync Particles");
+    // Call sumRhoJ(s), exchangeB (MPI & Patch sync)
+    timer[9].init(smpi, "Sync Fields");
+    // Call to Collisions methods
+    timer[10].init(smpi, "Collisions");
+    // If necessary the following timers can be reintroduced
+    timer[11].init(smpi, "Sync Densities");
+    //timer[12].init(smpi, "AvgFields");
+    
+    return timer;
+}
