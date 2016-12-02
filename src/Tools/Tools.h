@@ -100,11 +100,11 @@ if (__i==__rk) {std::cout << "Proc [" << __i << "] " <<__txt << std::endl;} MPI_
 
 #endif // __DEBUG
 
-class Tools {
- public:
-  static void printMemFootPrint(std::string tag);
-};
-
+//class Tools {
+// public:
+//  static void printMemFootPrint(std::string tag);
+//};
+//
 
 
 
