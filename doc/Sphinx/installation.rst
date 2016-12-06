@@ -3,19 +3,24 @@ Install
 
 Before installing :program:`Smilei`, you need to install a few dependencies:
 
-* A C++ compiler (we force standard c++0x), optionally implementing openMP
-* MPI libraries (*openmpi* recommended), supporting `MPI_THREAD_MULTIPLE`
+* A C++ compiler (we force standard c++11), optionally implementing openMP
+* MPI libraries (**openmpi** recommended), supporting ``MPI_THREAD_MULTIPLE``
 * HDF5 libraries compatible with your versions of C++ and MPI
-* Python 2.7
+* Python 2.7 (with header files)
+* ``make``
 
 Optional dependencies are:
 
+* Git
 * Doxygen
 * Python modules: sphinx, h5py, numpy, matplotlib, pylab, pint
 * ffmpeg
 
 On a large cluster, refer to the administrator to install these requirements.
 If you want to install :program:`Smilei` on your personal computer, refer to the following sections.
+
+To get some help on compilation and the environment variables you can change in order 
+to have a successful compilation, you can type ``make help``.
 
 ----
 
@@ -204,6 +209,17 @@ Download and compile
      make config=debug            # to have debugging output (slow)
      make config=noopenmp         # to deactivate OpenMP support
      make config="debug noopenmp" # to activate debugging without OpenMP
+
+   .. rubric:: Machine dependent configurations:
+   
+   For some machine, it might be important to modify internal makefile variables. 
+   We suggest to add a file in the folder ``scripts/CompileTools/machine/`` and compile 
+   with:
+
+   .. code-block:: bash
+     
+     make machine=my_machine
+   
      
    .. rubric:: Makefile alternatives:
    

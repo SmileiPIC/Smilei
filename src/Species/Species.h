@@ -137,6 +137,9 @@ public:
                           Projector* proj, Params &params, int diag_flag,
                           PartWalls* partWalls, Patch* patch, SmileiMPI* smpi);
 
+    //! Method calculating the Particle charge on the grid (projection)
+    virtual void computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector* Proj);
+
     //! Method used to initialize the Particle position in a given cell
     void initPosition(unsigned int, unsigned int, double *);
     

@@ -94,6 +94,9 @@ public :
     //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
     void dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, int* diag_flag, double time_dual,
                   std::vector<Timer>& timer, int itime);
+
+    void computeCharge();
+
     
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
     void sumDensities( int* diag_flag, std::vector<Timer>& timer, int itime );

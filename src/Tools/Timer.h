@@ -36,7 +36,7 @@ public:
     std::string name_;
     std::vector<double> register_timers;
 
-    static void consolidate_timers( std::vector<Timer> timers );
+    static std::vector<Timer> consolidate_timers( std::vector<Timer> timers );
 
 
 private:
