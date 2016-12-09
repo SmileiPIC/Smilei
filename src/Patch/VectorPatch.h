@@ -173,7 +173,7 @@ public :
             }
         }
         for (unsigned int ispec = 0 ; ispec < nSpecies ; ispec++ ) {
-            int tmp(0);
+            unsigned int tmp(0);
             MPI_Reduce( &(nParticles[ispec]), &tmp, 1, MPI_INT, MPI_SUM, 0, smpi->SMILEI_COMM_WORLD );
             MESSAGE(2, "Species " << ispec << " (" << (*this)(0)->vecSpecies[ispec]->species_type << ") created with " << tmp << " particles" );
         }
