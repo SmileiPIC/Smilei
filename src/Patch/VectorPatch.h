@@ -71,15 +71,18 @@ public :
         return diag->getScalar( name );
     }
     
-    bool needsRhoJsNow( int timestep ) {
+    void needsRhoJsNow( int timestep ) {
         // Figure out whether scalars need Rho and Js
-        if( globalDiags[0]->needsRhoJs(timestep) )
-            return true;
+        if( globalDiags[0]->needsRhoJs(timestep) ) {
+            diag_flag=1;
+            return;
+        }
         // Figure out whether fields or probes need Rho and Js
         for( unsigned int i=0; i<localDiags.size(); i++ )
-            if( localDiags[i]->needsRhoJs(timestep) )
-                return true;
-        return false;
+            if( localDiags[i]->needsRhoJs(timestep) ) {                
+                diag_flag=1;
+                return;
+            }
     }
     
     bool printScalars( int timestep ) {
@@ -92,21 +95,21 @@ public :
     // -----------------------------------------------------
     
     //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
-    void dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, int* diag_flag, double time_dual,
+    void dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, double time_dual,
                   std::vector<Timer>& timer, int itime);
 
     void computeCharge();
 
     
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
-    void sumDensities( int* diag_flag, std::vector<Timer>& timer, int itime );
+    void sumDensities(std::vector<Timer>& timer, int itime );
     
     //! For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
     void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual,
                       std::vector<Timer>& timer);
     
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
-    void runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, int itime, std::vector<Timer>& timer);
+    void runAllDiags(Params& params, SmileiMPI* smpi, int itime, std::vector<Timer>& timer);
     void initAllDiags(Params& params, SmileiMPI* smpi);
     void closeAllDiags(SmileiMPI* smpi);
     void openAllDiags(Params& params, SmileiMPI* smpi);
@@ -182,6 +185,9 @@ public :
     void move_probes(Params& params, double x_moved);
 
 
+    // Keep track if we need the needsRhoJsNow
+    int diag_flag;
+
  private :
     
     //! Methods to access readably to patch PIC operators.
@@ -216,6 +222,7 @@ public :
     
     //! Current intensity of antennas
     double antenna_intensity;
+    
     
 };
 

@@ -89,8 +89,6 @@ int main (int argc, char* argv[])
     double time_prim = stepStart * params.timestep;
     // time at half-integer time-steps (dual grid)
     double time_dual = (stepStart +0.5) * params.timestep;
-    // Do we initially do diags or not ?
-    int diag_flag;
     
     // -------------------------------------------
     // Declaration of the main objects & operators
@@ -110,7 +108,6 @@ int main (int argc, char* argv[])
     
     // reading from dumped file the restart values
     if (params.restart) {
-        diag_flag = 0;
         
         MESSAGE(1, "READING fields and particles for restart");
         // smpi->patch_count recomputed in restartAll
@@ -134,14 +131,13 @@ int main (int argc, char* argv[])
         vecPatches.initAllDiags( params, smpi );
         
     } else {
-        diag_flag = 1;
         
         vecPatches = PatchesFactory::createVector(params, smpi);
         
         // Initialize the electromagnetic fields
         // -----------------------------------
         vecPatches.computeCharge();
-        vecPatches.sumDensities( &diag_flag, timer, 0 );
+        vecPatches.sumDensities(timer, 0 );
         
         if( vecPatches.nAntennas>0 )
             TITLE("Applying antennas at time t = " << 0.5 * params.timestep);
@@ -159,11 +155,11 @@ int main (int argc, char* argv[])
             MESSAGE("Time in Poisson : " << ptimer.getTime() );
         }
 
-        vecPatches.dynamics(params, smpi, simWindow, &diag_flag, time_dual, timer, 0);
+        vecPatches.dynamics(params, smpi, simWindow, time_dual, timer, 0);
         timer[1].reboot();
         timer[8].reboot();
         
-        vecPatches.sumDensities( &diag_flag, timer, 0 );
+        vecPatches.sumDensities(timer, 0 );
         timer[4].reboot();
         timer[9].reboot();
        
@@ -174,7 +170,7 @@ int main (int argc, char* argv[])
         TITLE("Initializing diagnostics");
         vecPatches.initAllDiags( params, smpi );
         TITLE("Running diags at time t = 0");
-        vecPatches.runAllDiags(params, smpi, &diag_flag, 0, timer);
+        vecPatches.runAllDiags(params, smpi, 0, timer);
         timer[3].reboot();
         timer[6].reboot();
     
@@ -193,9 +189,11 @@ int main (int argc, char* argv[])
     check_memory_consumption( vecPatches, smpi );
     
     double old_print_time(0.), this_print_time(0.);
-     
+    
+/*tommaso
     // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)
-//tommaso    unsigned int latestTimeStep=checkpoint.this_run_start_step;
+    unsigned int latestTimeStep=checkpoint.this_run_start_step;
+*/
     bool exit(false);
     
     // ------------------------------------------------------------------
@@ -210,8 +208,6 @@ int main (int argc, char* argv[])
         time_prim += params.timestep;
         time_dual += params.timestep;
         
-        if ( vecPatches.needsRhoJsNow(itime) ) diag_flag = 1;
-        
         #pragma omp parallel shared (time_dual,smpi,params, vecPatches, simWindow)
         {
             // apply collisions if requested
@@ -220,10 +216,10 @@ int main (int argc, char* argv[])
             // (1) interpolate the fields at the particle position
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
-            vecPatches.dynamics(params, smpi, simWindow, &diag_flag, time_dual, timer, itime);
+            vecPatches.dynamics(params, smpi, simWindow, time_dual, timer, itime);
             
             // Sum densities
-            vecPatches.sumDensities( &diag_flag, timer, itime );
+            vecPatches.sumDensities(timer, itime );
             
             // apply currents from antennas
             vecPatches.applyAntennas(time_dual);
@@ -233,7 +229,7 @@ int main (int argc, char* argv[])
                 vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timer );
             
             // call the various diagnostics
-            vecPatches.runAllDiags(params, smpi, &diag_flag, itime, timer);            
+            vecPatches.runAllDiags(params, smpi, itime, timer);
             
             // ----------------------------------------------------------------------
             // Validate restart  : to do
@@ -268,9 +264,12 @@ int main (int argc, char* argv[])
             }
         }
         
-//tommaso        latestTimeStep = itime;
+/*tommaso
+        latestTimeStep = itime;
+*/
         
         // pritn message at given time-steps
+        // print message at given time-steps
         // --------------------------------
         timer[0].update();
         if ( vecPatches.printScalars( itime ) &&  ( smpi->isMaster() ) ) {
