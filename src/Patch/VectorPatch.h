@@ -125,6 +125,9 @@ public :
     
     //! For all patches, apply collisions
     void applyCollisions(Params &params, int itime, std::vector<Timer>& timer);
+
+    //! For each patch, apply external fields
+    void applyExternalFields();
     
     //  Balancing methods
     // ------------------
