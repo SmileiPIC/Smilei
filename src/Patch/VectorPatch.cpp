@@ -95,19 +95,22 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi)
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow,
-                           int* diag_flag, double time_dual, vector<Timer>& timer, int itime)
+void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, double time_dual, vector<Timer>& timer, int itime)
 {
+    
+    #pragma omp single
+    needsRhoJsNow(itime);
+    
     timer[1].restart();
     ostringstream t;
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
-            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || *diag_flag  ) {
+            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 species(ipatch, ispec)->dynamics(time_dual, ispec,
                                                  emfields(ipatch), interp(ipatch), proj(ipatch),
-                                                 params, *diag_flag, partwalls(ipatch),
+                                                 params, diag_flag, partwalls(ipatch),
                                                  (*this)(ipatch), smpi);
             }
         }
@@ -146,10 +149,10 @@ void VectorPatch::computeCharge()
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::sumDensities( int* diag_flag, vector<Timer>& timer, int itime )
+void VectorPatch::sumDensities(vector<Timer>& timer, int itime )
 {
     timer[4].restart();
-    if  (*diag_flag){
+    if  (diag_flag){
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
              // Per species in global, Attention if output -> Sync / per species fields
@@ -159,9 +162,9 @@ void VectorPatch::sumDensities( int* diag_flag, vector<Timer>& timer, int itime 
     timer[4].update();
     
     timer[11].restart();
-    SyncVectorPatch::sumRhoJ( (*this), *diag_flag ); // MPI
+    SyncVectorPatch::sumRhoJ( (*this)); // MPI
     
-    if(*diag_flag){
+    if(diag_flag){
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
             if( ! (*this)(0)->vecSpecies[ispec]->particles->isTest ) {
                 update_field_list(ispec);
@@ -291,7 +294,7 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
 //   - Scalars, Probes, Phases, TrackParticles, Fields, Average fields
 //   - set diag_flag to 0 after write
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, int itime, vector<Timer>& timer)
+void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int itime, vector<Timer>& timer)
 {
     
     // Global diags: scalars + particles
@@ -325,10 +328,10 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     }
     
     // Manage the "diag_flag" parameter, which indicates whether Rho and Js were used
-    if( *diag_flag > 0 ) {
+    if( diag_flag > 0 ) {
         #pragma omp barrier
         #pragma omp single
-        *diag_flag = 0;
+        diag_flag = 0;
         #pragma omp for
         for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
             (*this)(ipatch)->EMfields->restartRhoJs();
