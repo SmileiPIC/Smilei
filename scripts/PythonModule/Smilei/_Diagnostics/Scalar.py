@@ -110,7 +110,7 @@ class Scalar(Diagnostic):
 				file = path+'/scalars.txt'
 				f = open(file, 'r')
 			except:
-				print("Cannot open 'scalars.txt' in directory '"+path+"'")
+				self._error = "Cannot open 'scalars.txt' in directory '"+path+"'"
 				return []
 			try:
 				# Find last commented line 

@@ -13,7 +13,10 @@ class Field(Diagnostic):
 		# Return directly if no diag number provided
 		if diagNumber is None:
 			self._error += "Diagnostic not loaded: diagNumber is not defined\n"
-			self._error += "Please choose among: "+", ".join([str(d) for d in diags])
+			if len(diags)>0:
+				self._error += "Please choose among: "+", ".join([str(d) for d in diags])
+			else:
+				self._error += "(No Field diagnostics existing anyways)"
 			return
 		else:
 			if diagNumber not in diags:
@@ -186,15 +189,15 @@ class Field(Diagnostic):
 	
 	# get all available field diagnostics
 	def getDiags(self):
-		diags = None
+		diags = []
 		for path in self._results_path:
 			files = self._glob(path+self._os.sep+'Fields*.h5')
 			if len(files)==0:
 				self._error = "Diagnostic not loaded: No fields found in '"+path+"'"
-				return
+				return []
 			diagNumbers = [ int(self._re.findall("Fields([0-9]+).h5$",file)[0]) for file in files ]
-			if diags is None: diags = diagNumbers
-			else            : diags = [ d for d in diags if d in diagNumbers ]
+			if diags == []: diags = diagNumbers
+			else          : diags = [ d for d in diags if d in diagNumbers ]
 		return diags
 	
 	# get all available fields, sorted by name length
