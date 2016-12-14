@@ -28,7 +28,7 @@ using namespace std;
 int Checkpoint::signal_received=0;
 
 Checkpoint::Checkpoint( Params& params, SmileiMPI* smpi ) :
-dump_times(0),
+dump_number(0),
 this_run_start_step(0),
 exit_asap(false),
 time_reference(MPI_Wtime()),
@@ -87,9 +87,12 @@ dump_request(smpi->getSize())
 }
 
 
-Checkpoint::~Checkpoint()
-{
+string Checkpoint::dumpName(unsigned int num, SmileiMPI *smpi) {
+    ostringstream nameDumpTmp("");
+    nameDumpTmp << "dump-" << setfill('0') << setw(1+log10(dump_file_sequence)) << num << "-" << setfill('0') << setw(1+log10(smpi->getSize())) << smpi->getRank() << ".h5" ;
+    return nameDumpTmp.str();
 }
+
 
 
 //bool Checkpoint::dump( unsigned int itime, double time, Params &params ) {
@@ -100,7 +103,7 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* s
         // master checks whenever we passed the time limit
         if (smpi->isMaster() && time_dump_step==0) {
             double elapsed_time = (MPI_Wtime() - time_reference)/60.;
-            if (elapsed_time > dump_minutes*(dump_times+1)) {
+            if (elapsed_time > dump_minutes*(dump_number+1)) {
                 time_dump_step = itime+1; // we will dump at next timestep (in case non-master already passed)
                 MESSAGE("Reached time limit : " << elapsed_time << " minutes. Dump timestep : " << time_dump_step );
                 // master does a non-blocking send
@@ -130,16 +133,17 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* s
 void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI* smpi, SimWindow* simWin,  Params &params )
 {
     
-    unsigned int num_dump=dump_times%dump_file_sequence;
+    unsigned int num_dump=dump_number%dump_file_sequence;
     
     hid_t fid = H5Fcreate( dumpName(num_dump,smpi).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-    dump_times++;
+    dump_number++;
     
     MESSAGEALL("Step " << itime << " : DUMP fields and particles " << dumpName(num_dump,smpi));
     
     H5::attr(fid, "Version", string(__VERSION));
     
     H5::attr(fid, "dump_step", itime);
+    H5::attr(fid, "dump_number", dump_number);
     
     H5::vect( fid, "patch_count", smpi->patch_count );
     
@@ -284,30 +288,6 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
     } // End for ispec
 };
 
-void Checkpoint::dumpFieldsPerProc(hid_t fid, Field* field)
-{
-    hsize_t dims[1]={field->globalDims_};
-    hid_t sid = H5Screate_simple (1, dims, NULL);
-    hid_t did = H5Dcreate (fid, field->name.c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
-    H5Dwrite(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &field->data_[0]);
-    H5Dclose (did);
-    H5Sclose(sid);
-}
-
-void Checkpoint::dumpMovingWindow(hid_t fid, SimWindow* simWin)
-{
-    H5::attr(fid, "x_moved", simWin->getXmoved());
-    H5::attr(fid, "n_moved", simWin->getNmoved());
-    
-}
-
-
-string Checkpoint::dumpName(unsigned int num, SmileiMPI *smpi) {
-    ostringstream nameDumpTmp("");
-    nameDumpTmp << "dump-" << setfill('0') << setw(1+log10(dump_file_sequence)) << num << "-" << setfill('0') << setw(1+log10(smpi->getSize())) << smpi->getRank() << ".h5" ;
-    return nameDumpTmp.str();
-}
-
 
 void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindow* simWin, Params &params )
 {
@@ -320,24 +300,20 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
         
         // This will open both dumps and pick the last one
         for (unsigned int num_dump=0;num_dump<dump_file_sequence; num_dump++) {
-            //ostringstream nameDumpTmp("");
-            //nameDumpTmp << "dump-" << setfill('0') << setw(4) << i << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
-            //ifstream f(nameDumpTmp.str().c_str());
             string dump_name=restart_dir+dumpName(num_dump,smpi);
             ifstream f(dump_name.c_str());
             
             if (f.good()) {
                 hid_t fid = H5Fopen( dump_name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-                hid_t aid = H5Aopen(fid, "dump_step", H5T_NATIVE_UINT);
                 unsigned int stepStartTmp=0;
-                H5Aread(aid, H5T_NATIVE_UINT, &stepStartTmp);
-                H5Aclose(aid);
-                H5Fclose(fid);
+                H5::getAttr(fid, "dump_step", stepStartTmp );
                 if (stepStartTmp>this_run_start_step) {
                     this_run_start_step=stepStartTmp;
                     nameDump=dump_name.c_str();
-                    dump_times=num_dump;
+                    dump_number=num_dump;
+                    H5::getAttr(fid, "dump_number", dump_number );
                 }
+                H5Fclose(fid);
             }
             f.close();
         }
@@ -369,12 +345,6 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
         H5::getAttr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
         H5::getAttr(fid, "latest_timestep",   static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->latest_timestep  );
         
-        hid_t aid = H5Aopen(fid, "dump_step", H5T_NATIVE_UINT);
-        H5Aread(aid, H5T_NATIVE_UINT, &this_run_start_step);
-        H5Aclose(aid);
-        
-        
-        
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) {
             
             ostringstream patch_name("");
@@ -400,8 +370,6 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
 
 void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecSpecies, Params& params, hid_t patch_gid )
 {
-    hid_t aid, gid, did, sid;
-    
     restartFieldsPerProc(patch_gid, EMfields->Ex_);
     restartFieldsPerProc(patch_gid, EMfields->Ey_);
     restartFieldsPerProc(patch_gid, EMfields->Ez_);
@@ -463,10 +431,9 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
         }
     }
     
-    aid = H5Aopen(patch_gid, "species", H5T_NATIVE_UINT);
     unsigned int vecSpeciesSize=0;
-    H5Aread(aid, H5T_NATIVE_UINT, &vecSpeciesSize);
-    H5Aclose(aid);
+    H5::getAttr(patch_gid, "species", vecSpeciesSize );
+    
     if (vecSpeciesSize != vecSpecies.size()) {
         ERROR("Number of species differs between dump (" << vecSpeciesSize << ") and namelist ("<<vecSpecies.size()<<")");
     }
@@ -476,18 +443,14 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
         ostringstream name("");
         name << setfill('0') << setw(2) << ispec;
         string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->species_type;
-        gid = H5Gopen(patch_gid, groupName.c_str(),H5P_DEFAULT);
+        hid_t gid = H5Gopen(patch_gid, groupName.c_str(),H5P_DEFAULT);
         
-        aid = H5Aopen(gid, "partCapacity", H5T_NATIVE_UINT);
         unsigned int partCapacity=0;
-        H5Aread(aid, H5T_NATIVE_UINT, &partCapacity);
-        H5Aclose(aid);
+        H5::getAttr(gid, "partCapacity", partCapacity );
         vecSpecies[ispec]->particles->reserve(partCapacity,nDim_particle);
         
-        aid = H5Aopen(gid, "partSize", H5T_NATIVE_UINT);
         unsigned int partSize=0;
-        H5Aread(aid, H5T_NATIVE_UINT, &partSize);
-        H5Aclose(aid);
+        H5::getAttr(gid, "partSize", partSize );
         vecSpecies[ispec]->particles->initialize(partSize,nDim_particle);
         
         
@@ -495,53 +458,24 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
             for (unsigned int i=0; i<vecSpecies[ispec]->particles->Position.size(); i++) {
                 ostringstream namePos("");
                 namePos << "Position-" << i;
-                did = H5Dopen(gid, namePos.str().c_str(), H5P_DEFAULT);
-                H5Dread(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles->Position[i][0]);
-                H5Dclose(did);
+                H5::getVect(gid,namePos.str(),vecSpecies[ispec]->particles->Position[i]);
             }
             
             for (unsigned int i=0; i<vecSpecies[ispec]->particles->Momentum.size(); i++) {
                 ostringstream namePos("");
                 namePos << "Momentum-" << i;
-                did = H5Dopen(gid, namePos.str().c_str(), H5P_DEFAULT);
-                H5Dread(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles->Momentum[i][0]);
-                H5Dclose(did);
+                H5::getVect(gid,namePos.str(),vecSpecies[ispec]->particles->Momentum[i]);
             }
             
-            did = H5Dopen(gid, "Weight", H5P_DEFAULT);
-            H5Dread(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles->Weight[0]);
-            H5Dclose(did);
+            H5::getVect(gid,"Weight",vecSpecies[ispec]->particles->Weight);
             
-            did = H5Dopen(gid, "Charge", H5P_DEFAULT);
-            H5Dread(did, H5T_NATIVE_SHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles->Charge[0]);
-            H5Dclose(did);
+            H5::getVect(gid,"Charge",vecSpecies[ispec]->particles->Charge);
             
-            if (vecSpecies[ispec]->particles->tracked) {
-                did = H5Dopen(gid, "Id", H5P_DEFAULT);
-                H5Dread(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles->Id[0]);
-                H5Dclose(did);
-            }
-            
-            did = H5Dopen(gid, "bmin", H5P_DEFAULT);
-            sid = H5Dget_space(did);
-            
-            int ndims=H5Sget_simple_extent_ndims(sid);
-            vector<hsize_t> dims(ndims);
-            H5Sget_simple_extent_dims(sid,&dims[0],NULL);
-            
-            vecSpecies[ispec]->bmin.resize(dims[0]);
-            H5Dread(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->bmin[0]);
-            H5Dclose(did);
-            H5Sclose(sid);
-            
-            did = H5Dopen(gid, "bmax", H5P_DEFAULT);
-            sid = H5Dget_space(did);
-            H5Sget_simple_extent_dims(sid,&dims[0],NULL);
-            
-            vecSpecies[ispec]->bmax.resize(dims[0]);
-            H5Dread(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->bmax[0]);
-            H5Dclose(did);
-            H5Sclose(sid);
+            H5::getVect(gid,"Id",vecSpecies[ispec]->particles->Id);
+
+            H5::getVect(gid,"bmin",vecSpecies[ispec]->bmin,true);
+            H5::getVect(gid,"bmax",vecSpecies[ispec]->bmax,true);
+
         }
         
         H5Gclose(gid);
@@ -549,6 +483,15 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
     
 }
 
+void Checkpoint::dumpFieldsPerProc(hid_t fid, Field* field)
+{
+    hsize_t dims[1]={field->globalDims_};
+    hid_t sid = H5Screate_simple (1, dims, NULL);
+    hid_t did = H5Dcreate (fid, field->name.c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+    H5Dwrite(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &field->data_[0]);
+    H5Dclose (did);
+    H5Sclose(sid);
+}
 
 void Checkpoint::restartFieldsPerProc(hid_t fid, Field* field)
 {
@@ -560,19 +503,21 @@ void Checkpoint::restartFieldsPerProc(hid_t fid, Field* field)
     H5Sclose(sid);
 }
 
+void Checkpoint::dumpMovingWindow(hid_t fid, SimWindow* simWin)
+{
+    H5::attr(fid, "x_moved", simWin->getXmoved());
+    H5::attr(fid, "n_moved", simWin->getNmoved());
+    
+}
 void Checkpoint::restartMovingWindow(hid_t fid, SimWindow* simWin)
 {
-    hid_t aid = H5Aopen(fid, "x_moved", H5T_NATIVE_DOUBLE);
+
     double x_moved=0.;
-    H5Aread(aid, H5T_NATIVE_DOUBLE, &x_moved);
-    H5Aclose(aid);
-    
-    aid = H5Aopen(fid, "n_moved", H5T_NATIVE_UINT);
-    unsigned int n_moved=0;
-    H5Aread(aid, H5T_NATIVE_UINT, &n_moved);
-    H5Aclose(aid);
-    
+    H5::getAttr(fid, "x_moved", x_moved );
     simWin->setXmoved(x_moved);
+    
+    unsigned int n_moved=0;
+    H5::getAttr(fid, "n_moved", n_moved );
     simWin->setNmoved(n_moved);
     
 }

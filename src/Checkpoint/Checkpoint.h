@@ -31,7 +31,7 @@ class Checkpoint {
 public:
     Checkpoint( Params& params, SmileiMPI* smpi );
     //! Destructor for Checkpoint
-    virtual ~Checkpoint();
+    virtual ~Checkpoint(){};
     
     //! Space dimension of a particle
     unsigned int nDim_particle;
@@ -56,7 +56,7 @@ public:
     void dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpecies, hid_t patch_gid );
     
     //! incremental number of times we've done a dump
-    unsigned int dump_times;
+    unsigned int dump_number;
     
     //! incremental number of times we've done a dump_minutes
     unsigned int dump_minutes_times;

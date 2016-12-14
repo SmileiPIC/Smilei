@@ -35,14 +35,6 @@ using namespace std;
 SmileiMPI::SmileiMPI( int* argc, char*** argv )
 {
     // Send information on current simulation
-    MESSAGE("                   _            _");
-    MESSAGE(" ___           _  | |        _  \\ \\   Version : " << __VERSION);
-    MESSAGE("/ __|  _ __   (_) | |  ___  (_)  | |   ");
-    MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |");
-    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |  ");
-    MESSAGE("                                /_/    ");
-    MESSAGE("");
-
     int mpi_provided;
 
 #ifdef _OPENMP
@@ -57,6 +49,14 @@ SmileiMPI::SmileiMPI( int* argc, char*** argv )
     SMILEI_COMM_WORLD = MPI_COMM_WORLD;
     MPI_Comm_size( SMILEI_COMM_WORLD, &smilei_sz );
     MPI_Comm_rank( SMILEI_COMM_WORLD, &smilei_rk );
+
+    MESSAGE("                   _            _");
+    MESSAGE(" ___           _  | |        _  \\ \\   Version : " << __VERSION);
+    MESSAGE("/ __|  _ __   (_) | |  ___  (_)  | |   ");
+    MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |");
+    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |  ");
+    MESSAGE("                                /_/    ");
+    MESSAGE("");
 
 } // END SmileiMPI::SmileiMPI
 
