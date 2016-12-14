@@ -1650,6 +1650,12 @@ Checkpoints will be stored in a checkpoints dir
     checkpoint files by group of ``file_grouping``. This is useful on filesystem with a limited 
     number of files per directory
 
+.. py:data:: restart_number
+
+  :default: None
+  
+    If provided the code will restart from that checkpoint rather than lokking for the oldest
+
 ----
 
 Variables defined by Smilei
