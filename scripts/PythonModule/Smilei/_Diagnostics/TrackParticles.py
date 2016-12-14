@@ -36,7 +36,6 @@ class TrackParticles(Diagnostic):
 			# Create arrays to store h5 items
 			if self._h5items is None:
 				self._h5items = {}
-				self.times = []
 				self._locationForTime = {}
 				for prop, name in translateProperties.items():
 					if name in f.keys():
@@ -46,9 +45,8 @@ class TrackParticles(Diagnostic):
 				val.append( f[translateProperties[prop]] )
 			# Memorize the locations of timesteps in the files
 			for it, t in enumerate(f["Times"]):
-				self.times.append( t )
 				self._locationForTime[t] = [pathNumber, it]
-		self.times = self._np.array(self.times)
+		self.times = self._np.array(self._locationForTime.keys())
 		self._times = self.times[:]
 		
 		# Get available times in the hdf5 file

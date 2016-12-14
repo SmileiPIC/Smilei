@@ -1392,8 +1392,9 @@ All the possible variables inside this block are explained here:
   * with ``"density"``, the weights are summed.
   * with ``"charge_density"``, the weights :math:`\times` charge are summed.
   * with ``"jx_density"``, the weights :math:`\times` charge :math:`\times\; v_x` are summed (same with :math:`y` and :math:`z`).
-  * with ``"p_density"``, the weights :math:`\times\; p` are summed (same with :math:`px`, :math:`py` and :math:`pz`).
-  * with ``"pressure_xx"``, the weights :math:`\times\; v \times p` are summed (same with yy, zz, xy, yz and xz).
+  * with ``"p_density"``, the weights :math:`\times\; p` are summed (same with :math:`p_x`, :math:`p_y` and :math:`p_z`).
+  * with ``"ekin_density"``, the weights :math:`\times mc^2\; (\gamma-1)` are summed.
+  * with ``"pressure_xx"``, the weights :math:`\times\; v_x p_x` are summed (same with yy, zz, xy, yz and xz).
 
 
 .. py:data:: every
@@ -1651,11 +1652,11 @@ namelist. They should not be re-defined by the user!
 
 .. py:data:: smilei_mpi_rank
     
-  The MPI rank of the current CPU.
+  The MPI rank of the current process.
 
 .. py:data:: smilei_mpi_size
     
-  The total number of MPI CPUs.
+  The total number of MPI processes.
 
 .. py:data:: smilei_rand_max
 

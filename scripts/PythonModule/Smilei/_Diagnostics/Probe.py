@@ -57,12 +57,9 @@ class Probe(Diagnostic):
 		self._dataForTime = {}
 		for file in self._h5probe:
 			for key, val in file.items():
-				try   :
-					t = int(key)
-					self._times.append( t )
-					self._dataForTime[t] = val
+				try   : self._dataForTime[int(key)] = val
 				except: break
-		self._times = self._np.double(self._times)
+		self._times = self._np.double(self._dataForTime.keys())
 		if self._times.size == 0:
 			self._error = "No timesteps found"
 			return

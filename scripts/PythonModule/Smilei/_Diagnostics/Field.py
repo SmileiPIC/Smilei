@@ -21,7 +21,7 @@ class Field(Diagnostic):
 				return
 		
 		# Open the file(s) and load the data
-		self._h5items = []
+		self._h5items = {}
 		self._fields = []
 		for path in self._results_path:
 			file = path+self._os.sep+'Fields'+str(diagNumber)+'.h5'
@@ -30,17 +30,19 @@ class Field(Diagnostic):
 			except:
 				self._error = "Diagnostic not loaded: Could not open '"+file+"'"
 				return
-			values = f.values()
-			self._h5items.extend( values )
+			self._h5items.update( dict(f) )
 			# Select only the fields that are common to all simulations
+			values = f.values()
 			if len(values)==0:
 				self._fields = []
 			elif len(self._fields)==0:
 				self._fields = values[0].keys()
 			else:
 				self._fields = [f for f in values[0].keys() if f in self._fields]
-			# Remove "tmp" datasets
-			self._h5items = [d for d in self._h5items if d.name[1:]!='tmp']
+		# Remove "tmp" dataset
+		del self._h5items["tmp"]
+		# Converted to ordered list
+		self._h5items = sorted(self._h5items.values(), key=lambda x:int(x.name[1:]))
 		
 		# If no field selected, print available fields and leave
 		if field is None:
