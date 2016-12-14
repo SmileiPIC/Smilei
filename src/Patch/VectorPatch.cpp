@@ -905,6 +905,14 @@ void VectorPatch::applyCollisions(Params& params, int itime, vector<Timer>& time
 }
 
 
+// For each patch, apply external fields
+void VectorPatch::applyExternalFields()
+{
+    for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
+        patches_[ipatch]->EMfields->applyExternalFields( (*this)(ipatch) ); // Must be patch
+}
+
+
 void VectorPatch::move_probes(Params& params, double x_moved)
 {
     int nprobe(0);

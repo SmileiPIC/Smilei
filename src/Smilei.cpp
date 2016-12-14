@@ -152,8 +152,7 @@ int main (int argc, char* argv[])
         timer[9].reboot();
        
         TITLE("Applying external fields at time t = 0");
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
-            vecPatches(ipatch)->EMfields->applyExternalFields( vecPatches(ipatch) ); // Must be patch
+        vecPatches.applyExternalFields();
         
         TITLE("Initializing diagnostics");
         vecPatches.initAllDiags( params, smpi );

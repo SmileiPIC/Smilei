@@ -353,7 +353,7 @@ class Diagnostic(object):
 		im, = ax.plot(self._tfactor*times, self._vfactor*A, **self.options.plot)
 		ax.set_xlabel(self._tlabel)
 		self._setLimits(ax, xmax=self._tfactor*self.times[-1], ymin=self.options.vmin, ymax=self.options.vmax)
-		self._setSomeOptions(ax)
+		self._setSomeOptions(ax, t)
 		return im
 	def _animateOnAxes_1D(self, ax, t):
 		A = self._getDataAtTime(t)
@@ -361,7 +361,7 @@ class Diagnostic(object):
 		if self._log[0]: ax.set_xscale("log")
 		ax.set_xlabel(self._xlabel)
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.vmin, ymax=self.options.vmax)
-		self._setSomeOptions(ax)
+		self._setSomeOptions(ax, t)
 		return im
 	def _animateOnAxes_2D(self, ax, t):
 		A = self._getDataAtTime(t)
@@ -374,7 +374,7 @@ class Diagnostic(object):
 			self._plt.colorbar(mappable=im, cax=ax.cax, **self.options.colorbar)
 		except AttributeError:
 			ax.cax = self._plt.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
-		self._setSomeOptions(ax)
+		self._setSomeOptions(ax, t)
 		return im
 	
 	# Special case: 2D plot
@@ -385,8 +385,11 @@ class Diagnostic(object):
 		return im
 	
 	# set options during animation
-	def _setSomeOptions(self, ax):
-		if self._vlabel: ax.set_title(self._vlabel)
+	def _setSomeOptions(self, ax, t=None):
+		title = []
+		if self._vlabel: title += [self._vlabel]
+		if t is not None: title += ["t = "+str(t)]
+		ax.set_title("  ".join(title))
 		ax.set(**self.options.axes)
 		try:
 			if len(self.options.xtick)>0: ax.ticklabel_format(axis="x",**self.options.xtick)

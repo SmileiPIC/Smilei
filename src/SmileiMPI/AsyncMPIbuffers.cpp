@@ -11,7 +11,7 @@ AsyncMPIbuffers::~AsyncMPIbuffers()
 }
 
 
-void AsyncMPIbuffers::allocate(int ndims)
+void AsyncMPIbuffers::allocate(unsigned int ndims)
 {
     srequest.resize(ndims);
     rrequest.resize(ndims);
@@ -31,7 +31,7 @@ SpeciesMPIbuffers::~SpeciesMPIbuffers()
 }
 
 
-void SpeciesMPIbuffers::allocate(int ndims)
+void SpeciesMPIbuffers::allocate(unsigned int ndims)
 {
     srequest.resize(ndims);
     rrequest.resize(ndims);

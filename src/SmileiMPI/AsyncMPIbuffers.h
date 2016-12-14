@@ -3,7 +3,6 @@
 
 #include <mpi.h>
 #include <vector>
-#include <array>
 
 #include "Particles.h"
 
@@ -13,7 +12,7 @@ public:
     AsyncMPIbuffers();
     ~AsyncMPIbuffers();
 
-    virtual void allocate(int nDim_field);
+    virtual void allocate(unsigned int nDim_field);
     
     //! ndim vectors of 2 sent requests (1 per direction) 
     std::vector< std::vector<MPI_Request> > srequest;
@@ -26,7 +25,7 @@ public:
     SpeciesMPIbuffers();
     ~SpeciesMPIbuffers();
 
-    void allocate(int nDim_field) override;
+    void allocate(unsigned int nDim_field) ;
 
     //! ndim vectors of 2 sent packets of particles (1 per direction) 
     std::vector< std::vector<Particles > > partRecv;
