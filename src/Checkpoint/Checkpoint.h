@@ -131,7 +131,11 @@ private:
     MPI_Status dump_status_prob;
     MPI_Status dump_status_recv;
     
-
+    //! group checkpoint files in subdirs of file_grouping files
+    unsigned int file_grouping;
+    
+    //! restart from checkpoint number
+    int restart_number
 };
 
 #endif /* CHECKPOINT_H_ */

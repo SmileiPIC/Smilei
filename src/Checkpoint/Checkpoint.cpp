@@ -39,8 +39,11 @@ exit_after_dump(true),
 dump_file_sequence(2),
 dump_deflate(0),
 restart_dir(""),
-dump_request(smpi->getSize())
+dump_request(smpi->getSize()),
+file_grouping(0),
+restart_number(-1)
 {
+    
     if( PyTools::nComponents("DumpRestart") > 0 ) {
         
         if (PyTools::extract("dump_step", dump_step, "DumpRestart")) {
@@ -72,6 +75,15 @@ dump_request(smpi->getSize())
         }
     }
     
+    if (PyTools::extract("file_grouping", file_grouping, "DumpRestart") && file_grouping > 0) {
+        file_grouping=std::min((unsigned int)smpi->getSize(),file_grouping);
+        MESSAGE(1,"Code will group checkpoint files by "<< file_grouping << " processors");
+    }
+
+    if (PyTools::extract("restart_number", restart_number, "DumpRestart") && restart_number >= 0) {
+        MESSAGE(1,"Code will restart from checkpoint number " << restart_number);
+    }
+
     // registering signal handler
     if (SIG_ERR == signal(SIGUSR1, Checkpoint::signal_callback_handler)) {
         WARNING("Cannot catch signal SIGUSR1");
@@ -81,16 +93,18 @@ dump_request(smpi->getSize())
     }
     
     nDim_particle=params.nDim_particle;
-    //particleSize = nDim_particle + 3 + 1;
-    
-    //
 }
 
 
 string Checkpoint::dumpName(unsigned int num, SmileiMPI *smpi) {
     ostringstream nameDumpTmp("");
+    nameDumpTmp << "checkpoints" << PATH_SEPARATOR;
+    if (file_grouping>0) {
+        nameDumpTmp << setfill('0') << setw(int(1+log10(smpi->getSize()/file_grouping+1))) << smpi->getRank()/file_grouping << PATH_SEPARATOR;
+    }
+    
     nameDumpTmp << "dump-" << setfill('0') << setw(1+log10(dump_file_sequence)) << num << "-" << setfill('0') << setw(1+log10(smpi->getSize())) << smpi->getRank() << ".h5" ;
-    return nameDumpTmp.str();
+        return nameDumpTmp.str();
 }
 
 
@@ -246,13 +260,6 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
         string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->species_type;
         hid_t gid = H5::group(patch_gid, groupName);
         
-        /*sid = H5Screate(H5S_SCALAR);
-         aid = H5Acreate(gid, "partCapacity", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
-         unsigned int partCapacity=vecSpecies[ispec]->particles->capacity();
-         H5Awrite(aid, H5T_NATIVE_UINT, &partCapacity);
-         H5Aclose(aid);
-         H5Sclose(sid);*/
-        
         H5::attr(gid, "partCapacity", vecSpecies[ispec]->particles->capacity());
         H5::attr(gid, "partSize", vecSpecies[ispec]->particles->size());
         
@@ -261,20 +268,20 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
             for (unsigned int i=0; i<vecSpecies[ispec]->particles->Position.size(); i++) {
                 ostringstream my_name("");
                 my_name << "Position-" << i;
-                H5::vect(gid,my_name.str(), vecSpecies[ispec]->particles->Position[i]);
+                H5::vect(gid,my_name.str(), vecSpecies[ispec]->particles->Position[i], dump_deflate);
             }
             
             for (unsigned int i=0; i<vecSpecies[ispec]->particles->Momentum.size(); i++) {
                 ostringstream my_name("");
                 my_name << "Momentum-" << i;
-                H5::vect(gid,my_name.str(), vecSpecies[ispec]->particles->Momentum[i]);
+                H5::vect(gid,my_name.str(), vecSpecies[ispec]->particles->Momentum[i], dump_deflate);
             }
             
-            H5::vect(gid,"Weight", vecSpecies[ispec]->particles->Weight);
-            H5::vect(gid,"Charge", vecSpecies[ispec]->particles->Charge);
+            H5::vect(gid,"Weight", vecSpecies[ispec]->particles->Weight, dump_deflate);
+            H5::vect(gid,"Charge", vecSpecies[ispec]->particles->Charge, dump_deflate);
             
             if (vecSpecies[ispec]->particles->tracked) {
-                H5::vect(gid,"Id", vecSpecies[ispec]->particles->Id);
+                H5::vect(gid,"Id", vecSpecies[ispec]->particles->Id, dump_deflate);
             }
             
             
@@ -298,24 +305,27 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
         
         string nameDump("");
         
-        // This will open both dumps and pick the last one
-        for (unsigned int num_dump=0;num_dump<dump_file_sequence; num_dump++) {
-            string dump_name=restart_dir+dumpName(num_dump,smpi);
-            ifstream f(dump_name.c_str());
-            
-            if (f.good()) {
-                hid_t fid = H5Fopen( dump_name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-                unsigned int stepStartTmp=0;
-                H5::getAttr(fid, "dump_step", stepStartTmp );
-                if (stepStartTmp>this_run_start_step) {
-                    this_run_start_step=stepStartTmp;
-                    nameDump=dump_name.c_str();
-                    dump_number=num_dump;
-                    H5::getAttr(fid, "dump_number", dump_number );
+        if (restart_number>=0) {
+            nameDump=restart_dir+dumpName(restart_number,smpi)
+        } else {
+            // This will open both dumps and pick the last one
+            for (unsigned int num_dump=0;num_dump<dump_file_sequence; num_dump++) {
+                string dump_name=restart_dir+dumpName(num_dump,smpi);
+                ifstream f(dump_name.c_str());
+                if (f.good()) {
+                    f.close();
+                    hid_t fid = H5Fopen( dump_name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+                    unsigned int stepStartTmp=0;
+                    H5::getAttr(fid, "dump_step", stepStartTmp );
+                    if (stepStartTmp>this_run_start_step) {
+                        this_run_start_step=stepStartTmp;
+                        nameDump=dump_name;
+                        dump_number=num_dump;
+                        H5::getAttr(fid, "dump_number", dump_number );
+                    }
+                    H5Fclose(fid);
                 }
-                H5Fclose(fid);
             }
-            f.close();
         }
         
         if (nameDump.empty()) ERROR("Cannot find a valid restart file");

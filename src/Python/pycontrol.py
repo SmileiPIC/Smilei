@@ -5,6 +5,7 @@
 """
 
 gc.collect()
+import math
 
 def _smilei_check():
     """Do checks over the script"""
@@ -17,7 +18,7 @@ def _smilei_check():
             if not CheckClass._verify: raise Exception("")
         except:
             raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
-    # Verify the output_dir
+    # checkpoint: verify the output_dir
     if smilei_mpi_rank == 0 and Main.output_dir:
         if not os.path.exists(Main.output_dir):
             try:
@@ -26,6 +27,25 @@ def _smilei_check():
                 raise Exception("ERROR in the namelist: output_dir "+Main.output_dir+" does not exists and cannot be created")
         elif not os.path.isdir(Main.output_dir):
                 raise Exception("ERROR in the namelist: output_dir "+Main.output_dir+" exists and is not a directory")
+
+    # checkpoint: prepare dir tree
+    if smilei_mpi_rank == 0 and (DumpRestart.dump_step>0 or DumpRestart.dump_minutes>0.):
+        my_dir = (Main.output_dir or ".") + os.sep + "checkpoints" + os.sep
+        if DumpRestart.file_grouping :
+            ngroups_chars = int(math.log10(smilei_mpi_size/DumpRestart.file_grouping+1))+1
+            for group in range(smilei_mpi_size/DumpRestart.file_grouping):
+                group_dir=my_dir + '%*s'%(ngroups_chars,group)
+                if not os.path.exists(group_dir):
+                    try:
+                        os.makedirs(group_dir)
+                    except:
+                        raise Exception("ERROR: cannot create DumpRestart dir "+group_dir)
+        else:
+            if not os.path.exists(my_dir):
+                os.makedirs(my_dir)
+            
+
+
     # Verify the restart_dir
     if len(DumpRestart)==1 and DumpRestart.restart_dir:
         if not os.path.isdir(DumpRestart.restart_dir):

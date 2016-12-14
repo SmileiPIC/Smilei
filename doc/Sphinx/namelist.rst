@@ -1600,6 +1600,8 @@ dumps are done::
       dump_file_sequence = 2,
   )
 
+Checkpoints will be stored in a checkpoints dir
+
 .. py:data:: restart_dir
 
   :default: None
@@ -1608,7 +1610,7 @@ dumps are done::
   If not defined, it does not restart from a previous dump.
   
   **WARNING:** this path must either absolute or be relative to ``output_dir``
-
+  
 .. py:data:: dump_step
 
   :default: 0
@@ -1639,7 +1641,14 @@ dumps are done::
   
   This tells :program:`Smilei` to keep the last ``n`` dumps for a later restart.
   The default value, 2, saves one extra dump in case of a crash during the file dump.
+
+.. py:data:: file_grouping
+
+  :default: None
   
+    If provided the code will create a series of subdirectories in which it will store the 
+    checkpoint files by group of ``file_grouping``. This is useful on filesystem with a limited 
+    number of files per directory
 
 ----
 
