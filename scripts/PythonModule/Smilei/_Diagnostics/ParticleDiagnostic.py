@@ -89,14 +89,12 @@ class ParticleDiagnostic(Diagnostic):
 		for d in self._diags:
 			# Gather data from all timesteps, and the list of timesteps
 			items = []
-			times = []
 			for path in self._results_path:
 				f = self._h5py.File(path+self._os.sep+'ParticleDiagnostic'+str(d)+'.h5')
-				items.extend( f.values() )
-				times.extend( f.keys()   )
-			self._h5items[d] = items
-			self.times[d] = self._np.array([ int(t.strip("timestep")) for t in times ])
-			self._times[d] = self.times[d]
+				items.update( dict(f) )
+			self._h5items[d] = items.values()
+			self.times[d] = self._np.array([ int(t.strip("timestep")) for t in items.keys() ])
+			self._times[d] = self.times[d][:]
 			# fill the "_indexOfTime" dictionary with indices to the data arrays
 			self._indexOfTime.update({ d:{} })
 			for i,t in enumerate(self.times[d]):
@@ -376,7 +374,7 @@ class ParticleDiagnostic(Diagnostic):
 			return self._times
 		# Otherwise, get the timesteps specifically available for the single requested diagnostic
 		else:
-			times = []
+			times = set()
 			for path in self._results_path:
 				try:
 					file = path+self._os.sep+'ParticleDiagnostic'+str(diagNumber)+'.h5'
@@ -384,9 +382,9 @@ class ParticleDiagnostic(Diagnostic):
 				except:
 					print("Cannot open file "+file)
 					return self._np.array([])
-				for t in f.keys():
-					times.append( int(t.strip("timestep")) )
+				times.update( set(f.keys()) )
 				f.close()
+			times = [int(t.strip("timestep")) for t in times]
 			return self._np.array(times)
 	
 	# Method to obtain the data only

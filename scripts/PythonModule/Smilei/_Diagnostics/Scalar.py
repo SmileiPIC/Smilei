@@ -46,6 +46,7 @@ class Scalar(Diagnostic):
 		# Loop file line by line
 		self._times = []
 		self._values = []
+		times_values = {}
 		for path in self._results_path:
 			with open(path+'/scalars.txt') as f:
 				for line in f:
@@ -55,15 +56,13 @@ class Scalar(Diagnostic):
 				scalars = prevline[1:].strip().split() # list of scalars
 				scalarindex = scalars.index(scalar) # index of the requested scalar
 				line = str(line.strip()).split()
-				self._times.append( int( self._np.round(float(line[0]) / float(self.timestep)) ) )
-				self._values.append( float(line[scalarindex]) )
+				times_values[ int( self._np.round(float(line[0]) / float(self.timestep)) ) ] = float(line[scalarindex])
 				for line in f:
 					line = str(line.strip()).split()
-					self._times.append( int( self._np.round(float(line[0]) / float(self.timestep)) ) )
-					self._values.append( float(line[scalarindex]) )
-		self._times  = self._np.array(self._times )
-		self._values = self._np.array(self._values)
-		self.times = self._times
+					times_values[ int( self._np.round(float(line[0]) / float(self.timestep)) ) ] = float(line[scalarindex])
+		self._times  = self._np.array(times_values.keys  ())
+		self._values = self._np.array(times_values.values())
+		self.times = self._times[:]
 		
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
@@ -111,7 +110,7 @@ class Scalar(Diagnostic):
 				file = path+'/scalars.txt'
 				f = open(file, 'r')
 			except:
-				print("Cannot open 'scalars.txt' in directory '"+path+"'")
+				self._error = "Cannot open 'scalars.txt' in directory '"+path+"'"
 				return []
 			try:
 				# Find last commented line 
