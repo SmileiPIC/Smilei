@@ -107,11 +107,8 @@ string Checkpoint::dumpName(unsigned int num, SmileiMPI *smpi) {
         return nameDumpTmp.str();
 }
 
-
-
-//bool Checkpoint::dump( unsigned int itime, double time, Params &params ) {
 void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* smpi, SimWindow* simWindow, Params &params ) {
-
+    
     // check for excedeed time
     if (dump_minutes != 0.0) {
         // master checks whenever we passed the time limit
