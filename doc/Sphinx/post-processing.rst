@@ -38,7 +38,7 @@ Open a simulation
 
 In a *python* command line (or script), invoke the following class to open
 your :program:`Smilei` simulation. Note that several simulations can be opened at once, 
-as long as they correspond to several :ref:`restarts <DumpAndRestart>` of the same simulation.
+as long as they correspond to several :ref:`restarts <Checkpoints>` of the same simulation.
 
 .. py:class:: Smilei(results_path, show=True)
 
