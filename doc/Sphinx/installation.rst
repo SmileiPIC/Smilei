@@ -220,7 +220,6 @@ Download and compile
      
      make machine=my_machine
 
-
    .. note::    
      It would be nice to share with developpers the makefile-machine files used on common
      supercomputers.
