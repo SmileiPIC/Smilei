@@ -135,7 +135,7 @@ private:
     unsigned int file_grouping;
     
     //! restart from checkpoint number
-    int restart_number
+    int restart_number;
 };
 
 #endif /* CHECKPOINT_H_ */

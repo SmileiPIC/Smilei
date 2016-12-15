@@ -305,7 +305,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
         string nameDump("");
         
         if (restart_number>=0) {
-            nameDump=restart_dir+dumpName(restart_number,smpi)
+            nameDump=restart_dir+dumpName(restart_number,smpi);
         } else {
             // This will open both dumps and pick the last one
             for (unsigned int num_dump=0;num_dump<dump_file_sequence; num_dump++) {
