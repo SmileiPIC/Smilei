@@ -1583,14 +1583,19 @@ For more clarity, this graph illustrates the five syntaxes for time selections:
 
 ----
 
-.. _DumpAndRestart:
+.. _Checkpoints:
 
-Dump and restart
-^^^^^^^^^^^^^^^^
+Checkpoints
+^^^^^^^^^^^
 
-To restart the simulation from a previous point, a few instructions are needed to 
-tell :program:`Smilei` where to find the restart information, and how often the checkpoint
-dumps are done::
+The simulation can be *dumped* at given points (*checkpoints*) in order to be *restarted*
+at that point.
+
+A few things are important to know when you need dumps and restarts.
+
+* Do not restart the simulation in the same directory as the previous one. Files will be 
+  overwritten, and errors may occur. Create a new directory for your restarted simulation.
+* Manage your memory: each process dumps one file, and the total can be significant.
 
   DumpRestart(
       restart_dir = "dump1",

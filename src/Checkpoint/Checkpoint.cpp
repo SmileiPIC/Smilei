@@ -134,9 +134,9 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* s
         }
     }
     
-    if (signal_received!=0 ||
-        (dump_step != 0 && (itime % dump_step == 0)) ||
-        (time_dump_step!=0 && itime==time_dump_step)) {
+    if (signal_received!=0
+    || (dump_step != 0 && (itime % dump_step == 0))
+    || (time_dump_step!=0 && itime==time_dump_step)) {
         dumpAll( vecPatches, itime,  smpi, simWindow, params);
         if (exit_after_dump || ((signal_received!=0) && (signal_received != SIGUSR2))) {
             exit_asap=true;
