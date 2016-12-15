@@ -111,7 +111,7 @@ string Checkpoint::dumpName(unsigned int num, SmileiMPI *smpi) {
 
 //bool Checkpoint::dump( unsigned int itime, double time, Params &params ) {
 void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* smpi, SimWindow* simWindow, Params &params ) {
-    
+
     // check for excedeed time
     if (dump_minutes != 0.0) {
         // master checks whenever we passed the time limit
@@ -141,6 +141,8 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* s
         if (exit_after_dump || ((signal_received!=0) && (signal_received != SIGUSR2))) {
             exit_asap=true;
         }
+        signal_received=0;
+        time_dump_step=0;
     }
 }
 
