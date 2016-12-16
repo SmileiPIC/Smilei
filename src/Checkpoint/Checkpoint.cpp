@@ -57,7 +57,7 @@ restart_number(-1)
         }
         
         PyTools::extract("dump_file_sequence", dump_file_sequence, "DumpRestart");
-        dump_file_sequence=std::max((unsigned int)1,dump_file_sequence);
+        if(dump_file_sequence<1) dump_file_sequence=1;
         
         PyTools::extract("exit_after_dump", exit_after_dump, "DumpRestart");
         
@@ -67,23 +67,28 @@ restart_number(-1)
     
     restart_dir = params.restart_dir;
     
-    if (dump_step || dump_minutes>0) {
+    if (dump_step>0 || dump_minutes>0.) {
         if (exit_after_dump) {
             MESSAGE(1,"Code will exit after dump");
         } else {
-            MESSAGE(1,"Code will continue every " << dump_step << " steps, keeping " << dump_file_sequence << " dumps");
+            ostringstream message("");
+            message << "Code will dump";
+            if( dump_step>0 ) message << " every "<< dump_step << " steps,";
+            if( dump_minutes>0. ) message << " every "<<dump_minutes<< " min,";
+            message << " keeping "<< dump_file_sequence << " dumps at maximum";
+            MESSAGE(1,message.str());
         }
     }
     
     if (PyTools::extract("file_grouping", file_grouping, "DumpRestart") && file_grouping > 0) {
-        file_grouping=std::min((unsigned int)smpi->getSize(),file_grouping);
-        MESSAGE(1,"Code will group checkpoint files by "<< file_grouping << " processors");
+        if( file_grouping > (unsigned int)(smpi->getSize()) ) file_grouping = smpi->getSize();
+        MESSAGE(1,"Code will group checkpoint files by "<< file_grouping);
     }
-
+    
     if (PyTools::extract("restart_number", restart_number, "DumpRestart") && restart_number >= 0) {
         MESSAGE(1,"Code will restart from checkpoint number " << restart_number);
     }
-
+    
     // registering signal handler
     if (SIG_ERR == signal(SIGUSR1, Checkpoint::signal_callback_handler)) {
         WARNING("Cannot catch signal SIGUSR1");
