@@ -488,11 +488,13 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
             
             H5::getVect(gid,"Charge",vecSpecies[ispec]->particles->Charge);
             
-            H5::getVect(gid,"Id",vecSpecies[ispec]->particles->Id);
-
+            if (vecSpecies[ispec]->particles->tracked) {
+                H5::getVect(gid,"Id",vecSpecies[ispec]->particles->Id);
+            }
+            
             H5::getVect(gid,"bmin",vecSpecies[ispec]->bmin,true);
             H5::getVect(gid,"bmax",vecSpecies[ispec]->bmax,true);
-
+        
         }
         
         H5Gclose(gid);
