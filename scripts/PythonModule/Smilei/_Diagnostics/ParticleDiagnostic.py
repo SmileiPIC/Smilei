@@ -92,8 +92,9 @@ class ParticleDiagnostic(Diagnostic):
 			for path in self._results_path:
 				f = self._h5py.File(path+self._os.sep+'ParticleDiagnostic'+str(d)+'.h5')
 				items.update( dict(f) )
-			self._h5items[d] = items.values()
-			self.times[d] = self._np.array([ int(t.strip("timestep")) for t in items.keys() ])
+			items = sorted(items.items())
+			self._h5items[d] = [it[1] for it in items]
+			self.times[d] = self._np.array([ int(it[0].strip("timestep")) for it in items ])
 			self._times[d] = self.times[d][:]
 			# fill the "_indexOfTime" dictionary with indices to the data arrays
 			self._indexOfTime.update({ d:{} })
