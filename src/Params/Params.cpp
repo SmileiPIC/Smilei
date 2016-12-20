@@ -305,6 +305,11 @@ namelist("")
             while ((number_of_patches[2] >> mi[2]) >1) mi[2]++ ;
     }
     
+    // Read the "print_every" parameter
+    print_every = (int)(sim_time/timestep)/10;
+    PyTools::extract("print_every", print_every, "Main");
+    if (!print_every) print_every = 1;
+    
     // -------------------------------------------------------
     // Compute usefull quantities and introduce normalizations
     // also defines defaults values for the species lengths
@@ -313,7 +318,7 @@ namelist("")
     
     // Print 
     smpi->barrier();
-    if ( smpi->isMaster() ) print();
+    if ( smpi->isMaster() ) print_init();
     smpi->barrier();
 }
 
@@ -419,7 +424,7 @@ void Params::setDimensions()
 // ---------------------------------------------------------------------------------------------------------------------
 // Printing out the data at initialisation
 // ---------------------------------------------------------------------------------------------------------------------
-void Params::print()
+void Params::print_init()
 {
     // Numerical parameters
     // ---------------------
@@ -445,6 +450,68 @@ void Params::print()
         MESSAGE(1,"Load balancing every " << balancing_every << " iterations.");
         MESSAGE(1,"Cell load coefficient = " << coef_cell );
         MESSAGE(1,"Frozen particle load coefficient = " << coef_frozen );
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Printing out some data at a given timestep
+// ---------------------------------------------------------------------------------------------------------------------
+void Params::print_timestep(unsigned int itime, double time_dual, Timer & timer)
+{
+    double before = timer.getTime();
+    timer.update();
+    double now = timer.getTime();
+    ostringstream my_msg;
+    my_msg << "  " << setw(timestep_width) << itime << "/" << n_time << " "
+           << "  " << scientific << setprecision(4) << setw(12) << time_dual << " "
+           << "  " << scientific << setprecision(4) << setw(12) << now << " "
+           << "  " << "(" << scientific << setprecision(4) << setw(12) << now - before << " )"
+           ;
+    MESSAGE(my_msg.str());
+}
+
+void Params::print_timestep_headers()
+{
+    timestep_width = log10(n_time) + 1;
+    if( timestep_width<3 ) timestep_width = 3;
+    ostringstream my_msg;
+    my_msg << setw(timestep_width*2+4) << " timestep "
+           << setw(15) << "sim time "
+           << setw(15) << "cpu time [s] "
+           << "  (" << setw(12) << "diff [s]" << " )"
+           ;
+    MESSAGE(my_msg.str());
+}
+
+
+// Print information about the MPI aspects
+void Params::print_parallelism_params(SmileiMPI* smpi)
+{
+    if (smpi->isMaster()) {
+        MESSAGE(1,"Number of MPI process : " << smpi->getSize() );
+        MESSAGE(1,"Number of patches : " );
+        for (unsigned int iDim=0 ; iDim<nDim_field ; iDim++) 
+            MESSAGE(2, "dimension " << iDim << " - number_of_patches : " << number_of_patches[iDim] );
+        
+        MESSAGE(1, "Patch size :");
+        for (unsigned int iDim=0 ; iDim<nDim_field ; iDim++) 
+            MESSAGE(2, "dimension " << iDim << " - n_space : " << n_space[iDim] << " cells.");        
+        
+        MESSAGE(1, "Dynamic load balancing frequency: every " << balancing_every << " iterations." );
+    }
+    
+    if (smpi->isMaster()) {
+       TITLE("OpenMP");
+#ifdef _OPENMP
+//    int nthds(0);
+//#pragma omp parallel shared(nthds)
+//    {
+//        nthds = omp_get_num_threads();
+//    }
+        MESSAGE(1,"Number of thread per MPI process : " << omp_get_max_threads() );
+#else
+        MESSAGE("Disabled");
+#endif
     }
 }
 

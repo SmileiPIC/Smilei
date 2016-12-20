@@ -59,7 +59,7 @@ class Probe(Diagnostic):
 			for key, val in file.items():
 				try   : self._dataForTime[int(key)] = val
 				except: break
-		self._times = self._np.double(self._dataForTime.keys())
+		self._times = self._np.double(sorted(self._dataForTime.keys()))
 		if self._times.size == 0:
 			self._error = "No timesteps found"
 			return

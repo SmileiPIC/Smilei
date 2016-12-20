@@ -37,7 +37,7 @@ public:
     static VectorPatch createVector(Params& params, SmileiMPI* smpi) {
         VectorPatch vecPatches;
         
-        vecPatches.diag_flag = (params.restart? 0 : 1);
+        vecPatches.diag_flag = (params.restart? false : true);
         
         // Compute npatches (1 is std MPI behavior)
         unsigned int npatches, firstpatch;

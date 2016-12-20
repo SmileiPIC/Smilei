@@ -101,26 +101,14 @@ public :
     //! get a particular scalar
     double getScalar(std::string name);
     
-    //! every for the standard pic timeloop output
-    unsigned int print_every;
-    
     //! initial energy (kinetic + EM)
     double Energy_time_zero;
     
     //! energy used for the normalization of energy balance (always uses current energy for normalization)
     double EnergyUsedForNorm;
     
-    
     //! Compute the various scalars when requested
     void compute( Patch* patch, int timestep );
-    
-    //! Tell whether a printout is needed now
-    inline bool printNow( int timestep ) {
-        return (timestep % print_every == 0);
-    }
-    
-    //! True if printout is needed now
-    bool print_now;
     
     //! Latest timestep dumped
     int latest_timestep;

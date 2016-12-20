@@ -37,13 +37,6 @@ latest_timestep(-1)
         timeSelection = new TimeSelection();
     }
     
-    // defining default values & reading diagnostic every-parameter
-    // ------------------------------------------------------------
-    print_every=params.n_time/10;
-    PyTools::extract("print_every", print_every, "Main");
-    if (!print_every) print_every = 1;
-   
-    
 } // END DiagnosticScalar::DiagnosticScalar
 
 
@@ -256,10 +249,8 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
 
 bool DiagnosticScalar::prepare( int timestep )
 {
-    print_now = printNow(timestep);
-    
     // At the right timestep, reset the scalars
-    if ( print_now || timeSelection->theTimeIsNow(timestep) )
+    if ( timeSelection->theTimeIsNow(timestep) )
         for (unsigned int iscalar=0 ; iscalar<allScalars.size() ; iscalar++)
             allScalars[iscalar]->reset();
     
@@ -274,7 +265,7 @@ void DiagnosticScalar::run( Patch* patch, int timestep )
     patch->EMfields->computePoynting(); 
     
     // Compute all scalars when needed
-    if ( (print_now || timeSelection->theTimeIsNow(timestep)) && timestep>latest_timestep )
+    if ( timeSelection->theTimeIsNow(timestep) && timestep>latest_timestep )
         compute( patch, timestep );
 
 } // END run
@@ -353,7 +344,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
         if (vecSpecies[ispec]->particles->isTest) continue;    // No scalar diagnostic for test particles
         
-        if( necessary_species[ispec] || print_now ) {
+        if( necessary_species[ispec] ) {
             double density=0.0;  // sum of weights of current species ispec
             double charge=0.0;   // sum of charges of current species ispec
             double ener_tot=0.0; // total kinetic energy of current species ispec
@@ -378,7 +369,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             Ukin_ += cell_volume * ener_tot;
         }
         
-        if( necessary_Ukin_BC || print_now ) {
+        if( necessary_Ukin_BC ) {
             // particle energy lost due to boundary conditions
             double ener_lost_bcs=0.0;
             ener_lost_bcs = vecSpecies[ispec]->getLostNrjBC();
@@ -401,10 +392,10 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     } // for ispec
     
     // Add the calculated energies to the data arrays
-    if( necessary_Ukin || print_now ) {
+    if( necessary_Ukin ) {
         *Ukin += Ukin_;
     }
-    if( necessary_Ukin_BC || print_now ) {
+    if( necessary_Ukin_BC ) {
         *Ukin_bnd     += Ukin_bnd_     ;
         *Ukin_out_mvw += Ukin_out_mvw_ ;
         *Ukin_inj_mvw += Ukin_inj_mvw_ ;
@@ -429,7 +420,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     unsigned int nfield = fields.size();
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
         
-        if( necessary_fieldUelm[ifield] || print_now ) {
+        if( necessary_fieldUelm[ifield] ) {
             double Utot_crtField=0.0; // total energy in current field
             Field * field = fields[ifield];
             // compute the starting/ending points of each fields (w/out ghost cells) as well as the field global size
@@ -458,12 +449,12 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     }
     
     // Total elm energy
-    if( necessary_Uelm || print_now ) {
+    if( necessary_Uelm ) {
         *Uelm += Uelm_;
     }
     
     // Lost/added elm energies through the moving window
-    if( necessary_Uelm_BC || print_now ) {
+    if( necessary_Uelm_BC ) {
         // nrj lost with moving window (fields)
         double Uelm_out_mvw_ = EMfields->getLostNrjMW();
         Uelm_out_mvw_ *= 0.5*cell_volume;
@@ -544,7 +535,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     unsigned int k=0;
     for (unsigned int j=0; j<2;j++) {//directions (xmin/xmax, ymin/ymax, zmin/zmax)
         for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {//axis 0=x, 1=y, 2=z
-            if( necessary_poy[k] || print_now ) {
+            if( necessary_poy[k] ) {
                 *poy    [k] += EMfields->poynting     [j][i];
                 *poyInst[k] += EMfields->poynting_inst[j][i];
                 k++;
@@ -554,7 +545,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         }// i
     }// j
     
-    if( necessary_Uelm_BC || print_now ) {
+    if( necessary_Uelm_BC ) {
         *Uelm_bnd += Uelm_bnd_;
     }
     
@@ -585,5 +576,5 @@ bool DiagnosticScalar::allowedKey(string key) {
 
 
 bool DiagnosticScalar::needsRhoJs(int timestep) {
-    return printNow(timestep) || timeSelection->theTimeIsNow(timestep);
+    return timeSelection->theTimeIsNow(timestep);
 }

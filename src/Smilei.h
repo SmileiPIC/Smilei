@@ -43,6 +43,4 @@ class Timer;
 //! main function
 int main (int argc, char* argv[]);
 
-void print_parallelism_params(Params& params, SmileiMPI* smpi);
-void check_memory_consumption(VectorPatch& vecPatches, SmileiMPI* smpi);
 std::vector<Timer> initialize_timers(SmileiMPI* smpi);

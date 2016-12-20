@@ -4,6 +4,8 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <cstring>
+//#include <string>
 
 #include "Hilbert_functions.h"
 #include "PatchesFactory.h"
@@ -15,10 +17,7 @@
 
 #include "SyncVectorPatch.h"
 
-#include "Timer.h"
-
-#include <cstring>
-//#include <string>
+#include "Timers.h"
 
 using namespace std;
 
@@ -95,13 +94,13 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi)
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, double time_dual, vector<Timer>& timer, int itime)
+void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, double time_dual, Timers &timers, int itime)
 {
     
     #pragma omp single
-    needsRhoJsNow(itime);
+    diag_flag = needsRhoJsNow(itime);
     
-    timer[1].restart();
+    timers.particles.restart();
     ostringstream t;
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
@@ -116,9 +115,9 @@ void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow
         }
     
     }
-    timer[1].update( printScalars( itime ) );
+    timers.particles.update( params.printNow( itime ) );
     
-    timer[8].restart();
+    timers.syncPart.restart();
     for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
         if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
             SyncVectorPatch::exchangeParticles((*this), ispec, params, smpi ); // Included sort_part
@@ -128,7 +127,7 @@ void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow
         #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
             (*this)(ipatch)->cleanParticlesOverhead(params);
-    timer[8].update( printScalars( itime ) );
+    timers.syncPart.update( params.printNow( itime ) );
 
 } // END dynamics
 
@@ -149,9 +148,9 @@ void VectorPatch::computeCharge()
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::sumDensities(vector<Timer>& timer, int itime )
+void VectorPatch::sumDensities(Params &params, Timers &timers, int itime )
 {
-    timer[4].restart();
+    timers.densities.restart();
     if  (diag_flag){
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
@@ -159,9 +158,9 @@ void VectorPatch::sumDensities(vector<Timer>& timer, int itime )
             (*this)(ipatch)->EMfields->computeTotalRhoJ();
         }
     }
-    timer[4].update();
+    timers.densities.update();
     
-    timer[11].restart();
+    timers.syncDens.restart();
     SyncVectorPatch::sumRhoJ( (*this)); // MPI
     
     if(diag_flag){
@@ -172,7 +171,7 @@ void VectorPatch::sumDensities(vector<Timer>& timer, int itime )
             }
         }
     }
-    timer[11].update( printScalars( itime ) );
+    timers.syncDens.update( params.printNow( itime ) );
     
 } // End sumDensities
 
@@ -180,9 +179,9 @@ void VectorPatch::sumDensities(vector<Timer>& timer, int itime )
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual, vector<Timer>& timer)
+void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers)
 {
-    timer[2].restart();
+    timers.maxwell.restart();
     
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
@@ -204,18 +203,18 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
     
     //Synchronize B fields between patches.
-    timer[2].update( printScalars( itime ) );
+    timers.maxwell.update( params.printNow( itime ) );
     
-    timer[9].restart();
+    timers.syncField.restart();
     SyncVectorPatch::exchangeB( (*this) );
-    timer[9].update(  printScalars( itime ) );
+    timers.syncField.update(  params.printNow( itime ) );
     
-    timer[2].restart();
+    timers.maxwell.restart();
     // Computes B at time n+1/2 using B and B_m.
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
         (*this)(ipatch)->EMfields->centerMagneticFields();
-    timer[2].update();
+    timers.maxwell.update();
 
 } // END solveMaxwell
 
@@ -294,11 +293,11 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
 //   - Scalars, Probes, Phases, TrackParticles, Fields, Average fields
 //   - set diag_flag to 0 after write
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int itime, vector<Timer>& timer)
+void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int itime, Timers & timers)
 {
     
     // Global diags: scalars + particles
-    timer[3].restart();
+    timers.diags.restart();
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
         #pragma omp single
         globalDiags[idiag]->theTimeIsNow = globalDiags[idiag]->prepare( itime );
@@ -328,15 +327,15 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int itime, vector
     }
     
     // Manage the "diag_flag" parameter, which indicates whether Rho and Js were used
-    if( diag_flag > 0 ) {
+    if( diag_flag ) {
         #pragma omp barrier
         #pragma omp single
-        diag_flag = 0;
+        diag_flag = false;
         #pragma omp for
         for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
             (*this)(ipatch)->EMfields->restartRhoJs();
     }
-    timer[3].update();
+    timers.diags.update();
 
 } // END runAllDiags
 
@@ -877,9 +876,9 @@ void VectorPatch::applyAntennas(double time)
 }
 
 // For each patch, apply the collisions
-void VectorPatch::applyCollisions(Params& params, int itime, vector<Timer>& timer)
+void VectorPatch::applyCollisions(Params& params, int itime, Timers & timers)
 {
-    timer[10].restart();
+    timers.collisions.restart();
     
     if (Collisions::debye_length_required)
         #pragma omp for schedule(static)
@@ -898,7 +897,7 @@ void VectorPatch::applyCollisions(Params& params, int itime, vector<Timer>& time
         Collisions::debug(params, itime, icoll, *this);
     #pragma omp barrier
     
-    timer[10].update();
+    timers.collisions.update();
 }
 
 
@@ -962,4 +961,39 @@ void VectorPatch::move_probes(Params& params, double x_moved)
         
         } // Enf if probes
     } // End for idiag
+}
+
+
+
+// Print information on the memory consumption
+void VectorPatch::check_memory_consumption(SmileiMPI* smpi)
+{
+    int particlesMem(0);
+    for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
+        for (unsigned int ispec=0 ; ispec<patches_[ipatch]->vecSpecies.size(); ispec++)
+            particlesMem += patches_[ipatch]->vecSpecies[ispec]->getMemFootPrint();
+    MESSAGE( 1, "(Master) Species part = " << (int)( (double)particlesMem / 1024./1024.) << " Mo" );
+    
+    double dParticlesMem = (double)particlesMem / 1024./1024./1024.;
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dParticlesMem, &dParticlesMem, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+    MESSAGE( 1, setprecision(3) << "Global Species part = " << dParticlesMem << " Go" );
+    
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&particlesMem, &particlesMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
+    MESSAGE( 1, "Max Species part = " << (int)( (double)particlesMem / 1024./1024.) << " Mb" );
+    
+    // fieldsMem contains field per species
+    int fieldsMem(0);
+    for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
+        fieldsMem += patches_[ipatch]->EMfields->getMemFootPrint();
+    MESSAGE( 1, "(Master) Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " Mo" );
+    
+    double dFieldsMem = (double)fieldsMem / 1024./1024./1024.;
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dFieldsMem, &dFieldsMem, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+    MESSAGE( 1, setprecision(3) << "Global Fields part = " << dFieldsMem << " Go" );
+    
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&fieldsMem, &fieldsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
+    MESSAGE( 1, "Max Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " Mb" );
+    
+    // Read value in /proc/pid/status
+    //Tools::printMemFootPrint( "End Initialization" );
 }

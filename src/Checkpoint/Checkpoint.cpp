@@ -153,7 +153,10 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     hid_t fid = H5Fcreate( dumpName(num_dump,smpi).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     dump_times++;
     
-    MESSAGEALL("Step " << itime << " : DUMP fields and particles " << dumpName(num_dump,smpi));    
+    MESSAGE("Step " << itime << " : DUMP fields and particles");
+#ifdef  __DEBUG    
+    MESSAGEALL("Step " << itime << " : DUMP fields and particles " << dumpName(num_dump,smpi));
+#endif
     
     H5::attr(fid, "Version", string(__VERSION));
     
@@ -359,7 +362,10 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, unsigned int &itime,  Smil
     
     if (nameDump.empty()) ERROR("Cannot find a valid restart file");
     
+    MESSAGE(2, "Restarting fields and particles at step " << this_run_start_step);
+#ifdef  __DEBUG
     MESSAGEALL(2, " : Restarting fields and particles " << nameDump << " step=" << this_run_start_step);
+#endif
     
     hid_t fid = H5Fopen( nameDump.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
     if (fid < 0) ERROR(nameDump << " is not a valid HDF5 file");
