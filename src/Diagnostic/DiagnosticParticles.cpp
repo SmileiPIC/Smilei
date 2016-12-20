@@ -544,6 +544,10 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
             for (ipart = 0 ; ipart < npart ; ipart++)
                 data_array[ipart] = mass * (*w)[ipart] * (*py)[ipart]*(*pz)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
         
+        else if (output == "ekin_vx_density")
+            for (ipart = 0 ; ipart < npart ; ipart++)
+                data_array[ipart] = mass * (*w)[ipart] * (*px)[ipart] * (1. - 1./sqrt(1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart]));
+        
         // 3 - sum the data into the data_sum according to the indexes
         // ---------------------------------------------------------------
         for (ipart = 0 ; ipart < npart ; ipart++) {

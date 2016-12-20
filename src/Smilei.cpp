@@ -27,7 +27,7 @@
 #include "Solver.h"
 #include "SimWindow.h"
 #include "Diagnostic.h"
-#include "Timer.h"
+#include "Timers.h"
 
 using namespace std;
 
@@ -63,7 +63,7 @@ int main (int argc, char* argv[])
     smpi->init(params);
     
     // Create timers
-    vector<Timer> timer = initialize_timers(smpi);
+    Timers timers(smpi);
     
     // Print in stdout MPI, OpenMP, patchs parameters
     params.print_parallelism_params(smpi);
@@ -130,7 +130,7 @@ int main (int argc, char* argv[])
         // Initialize the electromagnetic fields
         // -----------------------------------
         vecPatches.computeCharge();
-        vecPatches.sumDensities(params, timer, 0 );
+        vecPatches.sumDensities(params, timers, 0 );
         
         if( vecPatches.nAntennas>0 )
             TITLE("Applying antennas at time t = " << 0.5 * params.timestep);
@@ -139,22 +139,22 @@ int main (int argc, char* argv[])
         // Init electric field (Ex/1D, + Ey/2D)
         if (!vecPatches.isRhoNull(smpi) && params.solve_poisson == true) {
             TITLE("Solving Poisson at time t = 0");
-            Timer ptimer;
-            ptimer.init(smpi, "global");
+            Timer ptimer("global");
+            ptimer.init(smpi);
             ptimer.restart();
             
             vecPatches.solvePoisson( params, smpi );
             ptimer.update();
             MESSAGE("Time in Poisson : " << ptimer.getTime() );
         }
-
-        vecPatches.dynamics(params, smpi, simWindow, time_dual, timer, 0);
-        timer[1].reboot();
-        timer[8].reboot();
         
-        vecPatches.sumDensities(params, timer, 0 );
-        timer[4].reboot();
-        timer[9].reboot();
+        vecPatches.dynamics(params, smpi, simWindow, time_dual, timers, 0);
+        timers.particles.reboot();
+        timers.syncPart .reboot();
+        
+        vecPatches.sumDensities(params, timers, 0 );
+        timers.densities.reboot();
+        timers.syncDens .reboot();
        
         TITLE("Applying external fields at time t = 0");
         vecPatches.applyExternalFields();
@@ -162,12 +162,11 @@ int main (int argc, char* argv[])
         TITLE("Initializing diagnostics");
         vecPatches.initAllDiags( params, smpi );
         TITLE("Running diags at time t = 0");
-        vecPatches.runAllDiags(params, smpi, 0, timer);
-        timer[3].reboot();
-        timer[6].reboot();
+        vecPatches.runAllDiags(params, smpi, 0, timers);
+        timers.diags.reboot();
     
     }
-    timer[0].reboot();
+    timers.global.reboot();
     
     // ------------------------------------------------------------------------
     // check here if we can close the python interpreter
@@ -204,25 +203,25 @@ int main (int argc, char* argv[])
         #pragma omp parallel shared (time_dual,smpi,params, vecPatches, simWindow)
         {
             // apply collisions if requested
-            vecPatches.applyCollisions(params, itime, timer);
+            vecPatches.applyCollisions(params, itime, timers);
             
             // (1) interpolate the fields at the particle position
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
-            vecPatches.dynamics(params, smpi, simWindow, time_dual, timer, itime);
+            vecPatches.dynamics(params, smpi, simWindow, time_dual, timers, itime);
             
             // Sum densities
-            vecPatches.sumDensities(params, timer, itime );
+            vecPatches.sumDensities(params, timers, itime );
             
             // apply currents from antennas
             vecPatches.applyAntennas(time_dual);
             
             // solve Maxwell's equations
             if( time_dual > params.time_fields_frozen )
-                vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timer );
+                vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
             
             // call the various diagnostics
-            vecPatches.runAllDiags(params, smpi, itime, timer);
+            vecPatches.runAllDiags(params, smpi, itime, timers);
             
             // ----------------------------------------------------------------------
             // Validate restart  : to do
@@ -234,10 +233,10 @@ int main (int argc, char* argv[])
             // ----------------------------------------------------------------------        
             
         } //End omp parallel region
-
+        
         if (exit) break;
         
-        timer[5].restart();
+        timers.movWindow.restart();
         if ( simWindow->isMoving(time_dual) ) {
             start_moving++;
             if ((start_moving==1) && (smpi->isMaster()) ) {
@@ -245,15 +244,13 @@ int main (int argc, char* argv[])
             }
             simWindow->operate(vecPatches, smpi, params);
         }
-        timer[5].update();
-        
-        
+        timers.movWindow.update();
         
         if ((params.balancing_every > 0) && (smpi->getSize()!=1) ) {
             if (( itime%params.balancing_every == 0 )) {
-                timer[7].restart();
+                timers.loadBal.restart();
                 vecPatches.load_balance( params, time_dual, smpi, simWindow );
-                timer[7].update( params.printNow( itime ) );
+                timers.loadBal.update( params.printNow( itime ) );
             }
         }
         
@@ -264,7 +261,7 @@ int main (int argc, char* argv[])
         // print message at given time-steps
         // --------------------------------
         if ( smpi->isMaster() &&  params.printNow( itime ) )
-            params.print_timestep(itime, time_dual, timer[0]);
+            params.print_timestep(itime, time_dual, timers.global);
     }//END of the time loop
     
     smpi->barrier();
@@ -273,24 +270,10 @@ int main (int argc, char* argv[])
     //                      HERE ENDS THE PIC LOOP
     // ------------------------------------------------------------------
     TITLE("End time loop, time dual = " << time_dual);
-    
-    //double timElapsed=smpi->time_seconds();
-    //if ( smpi->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
-    timer[0].update();
+    timers.global.update();
     
     TITLE("Time profiling : (print time > 0.001%)");
-    double coverage(0.);
-    for (unsigned int i=1 ; i<timer.size() ; i++) coverage += timer[i].getTime();
-    MESSAGE("Time in time loop :\t" << timer[0].getTime() << "\t"<<coverage/timer[0].getTime()*100.<< "% coverage" );
-    std::vector<Timer> avg_timers = Timer::consolidate_timers( timer );
-    
-    if ( smpi->isMaster() )
-        for (unsigned int i=1 ; i<avg_timers.size() ; i++) avg_timers[i].print(timer[0].getTime());
-    MESSAGE(0, "\n\t Printed times are mean time per MPI process" );
-    MESSAGE(0, "\t\t See advanced metrics in profil.txt");
-    
-    //WARNING( "Disabled vecPatches.Diagnostics->printTimers(vecPatches(0), timer[3].getTime());" );
-    
+    timers.profile(smpi);
     
 /*tommaso
     // ------------------------------------------------------------------
@@ -305,7 +288,7 @@ int main (int argc, char* argv[])
     //  Cleanup & End the simulation
     // ------------------------------
     vecPatches.close( smpi );
-    MPI_Barrier(MPI_COMM_WORLD); // Don't know why but sync needed by HDF5 Phasespace managment
+    smpi->barrier(); // Don't know why but sync needed by HDF5 Phasespace managment
     delete simWindow;
     PyTools::closePython();
     TITLE("END");
@@ -318,38 +301,4 @@ int main (int argc, char* argv[])
 // ---------------------------------------------------------------------------------------------------------------------
 //                                               END MAIN CODE
 // ---------------------------------------------------------------------------------------------------------------------
-
-vector<Timer> initialize_timers(SmileiMPI* smpi)
-{
-    // GC IDRIS : "Timer timer[ntimer];" to "Timer timer[8];"
-    int ntimer(13);
-    vector<Timer> timer(ntimer);
-    // The entire time loop
-    timer[0].init(smpi, "Global");
-    // Call dynamics + restartRhoJ(s)
-    timer[1].init(smpi, "Particles");
-    // Maxwell
-    timer[2].init(smpi, "Maxwell");
-    // Diags.runAllDiags + MPI & Patch sync
-    timer[3].init(smpi, "Diagnostics");
-    // Local sum of rho, Jxyz
-    timer[4].init(smpi, "Densities");
-    // Moving Window
-    timer[5].init(smpi, "Mov window");
-    // Dump fields (including average)
-    timer[6].init(smpi, "Diag fields");
-    // Load balancing
-    timer[7].init(smpi, "Load balacing");
-    // Call exchangeParticles (MPI & Patch sync)
-    timer[8].init(smpi, "Sync Particles");
-    // Call sumRhoJ(s), exchangeB (MPI & Patch sync)
-    timer[9].init(smpi, "Sync Fields");
-    // Call to Collisions methods
-    timer[10].init(smpi, "Collisions");
-    // If necessary the following timers can be reintroduced
-    timer[11].init(smpi, "Sync Densities");
-    //timer[12].init(smpi, "AvgFields");
-    
-    return timer;
-} // End initialize_timers
 
