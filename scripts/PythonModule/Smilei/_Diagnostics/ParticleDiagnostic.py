@@ -402,9 +402,13 @@ class ParticleDiagnostic(Diagnostic):
 				return []
 			# get data
 			B = self._np.squeeze(self._np.zeros(self._finalShape))
-			self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
+			try:
+				self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
+			except:
+					B = self._np.squeeze(B)
+					self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
+					B = self._np.reshape(B, self._finalShape)
 			B[self._np.isnan(B)] = 0.
-			B = self._np.reshape(B, self._finalShape)
 			# Apply the slicing
 			for iaxis in range(self._naxes):
 				if self._slices[iaxis]:

@@ -43,7 +43,7 @@ class Field(Diagnostic):
 			else:
 				self._fields = [f for f in values[0].keys() if f in self._fields]
 		# Remove "tmp" dataset
-		del self._h5items["tmp"]
+		if "tmp" in self._h5items: del self._h5items["tmp"]
 		# Converted to ordered list
 		self._h5items = sorted(self._h5items.values(), key=lambda x:int(x.name[1:]))
 		
