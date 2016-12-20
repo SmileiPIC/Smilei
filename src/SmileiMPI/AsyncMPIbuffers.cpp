@@ -15,7 +15,7 @@ void AsyncMPIbuffers::allocate(unsigned int ndims)
 {
     srequest.resize(ndims);
     rrequest.resize(ndims);
-    for (int i=0 ; i<ndims ; i++) {
+    for (unsigned int i=0 ; i<ndims ; i++) {
         srequest[i].resize(2);
         rrequest[i].resize(2);
     }
@@ -43,7 +43,7 @@ void SpeciesMPIbuffers::allocate(unsigned int ndims)
     part_index_send_sz.resize(ndims);
     part_index_recv_sz.resize(ndims);
 
-    for (int i=0 ; i<ndims ; i++) {
+    for (unsigned int i=0 ; i<ndims ; i++) {
         srequest[i].resize(2);
         rrequest[i].resize(2);
         partRecv[i].resize(2);

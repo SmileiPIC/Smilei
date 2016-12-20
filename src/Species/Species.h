@@ -134,7 +134,7 @@ public:
     
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
     virtual void dynamics(double time, unsigned int ispec, ElectroMagn* EMfields, Interpolator* interp,
-                          Projector* proj, Params &params, int diag_flag,
+                          Projector* proj, Params &params, bool diag_flag,
                           PartWalls* partWalls, Patch* patch, SmileiMPI* smpi);
 
     //! Method calculating the Particle charge on the grid (projection)

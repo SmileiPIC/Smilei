@@ -379,7 +379,7 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
-                       Projector* Proj, Params &params, int diag_flag, PartWalls* partWalls, Patch* patch, SmileiMPI* smpi)
+                       Projector* Proj, Params &params, bool diag_flag, PartWalls* partWalls, Patch* patch, SmileiMPI* smpi)
 {
     int ithread;
     #ifdef _OPENMP
@@ -494,7 +494,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         }
     }
     else { // immobile particle (at the moment only project density)
-        if ((diag_flag == 1)&&(!(*particles).isTest)){
+        if ( diag_flag &&(!(*particles).isTest)){
             double* b_rho=nullptr;
             for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
 

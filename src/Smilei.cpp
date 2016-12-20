@@ -13,28 +13,21 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "Smilei.h"
-
 #include <ctime>
 #include <cstdlib>
 #include <unistd.h>
-
 #include <iostream>
 #include <iomanip>
+#include <omp.h>
 
+#include "Smilei.h"
 #include "Params.h"
-
 #include "PatchesFactory.h"
 #include "Checkpoint.h"
-
 #include "Solver.h"
-
 #include "SimWindow.h"
-
 #include "Diagnostic.h"
-
 #include "Timer.h"
-#include <omp.h>
 
 using namespace std;
 
@@ -73,7 +66,7 @@ int main (int argc, char* argv[])
     vector<Timer> timer = initialize_timers(smpi);
     
     // Print in stdout MPI, OpenMP, patchs parameters
-    print_parallelism_params(params, smpi);
+    params.print_parallelism_params(smpi);
     
     TITLE("Initializing the restart environment");
     Checkpoint checkpoint(params, smpi);
@@ -137,7 +130,7 @@ int main (int argc, char* argv[])
         // Initialize the electromagnetic fields
         // -----------------------------------
         vecPatches.computeCharge();
-        vecPatches.sumDensities(timer, 0 );
+        vecPatches.sumDensities(params, timer, 0 );
         
         if( vecPatches.nAntennas>0 )
             TITLE("Applying antennas at time t = " << 0.5 * params.timestep);
@@ -159,7 +152,7 @@ int main (int argc, char* argv[])
         timer[1].reboot();
         timer[8].reboot();
         
-        vecPatches.sumDensities(timer, 0 );
+        vecPatches.sumDensities(params, timer, 0 );
         timer[4].reboot();
         timer[9].reboot();
        
@@ -185,9 +178,8 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------
     // Check memory consumption
     // ------------------------------------------------------------------------
-    check_memory_consumption( vecPatches, smpi );
-    
-    double old_print_time(0.), this_print_time(0.);
+    TITLE("Memory consumption");
+    vecPatches.check_memory_consumption( smpi );
     
 /*tommaso
     // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)
@@ -200,6 +192,8 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     
     TITLE("Time-Loop started: number of time-steps n_time = " << params.n_time);
+    if ( smpi->isMaster() ) params.print_timestep_headers();
+    
     for (unsigned int itime=checkpoint.this_run_start_step+1 ; itime <= stepStop ; itime++) {
         
         // calculate new times
@@ -218,7 +212,7 @@ int main (int argc, char* argv[])
             vecPatches.dynamics(params, smpi, simWindow, time_dual, timer, itime);
             
             // Sum densities
-            vecPatches.sumDensities(timer, itime );
+            vecPatches.sumDensities(params, timer, itime );
             
             // apply currents from antennas
             vecPatches.applyAntennas(time_dual);
@@ -259,7 +253,7 @@ int main (int argc, char* argv[])
             if (( itime%params.balancing_every == 0 )) {
                 timer[7].restart();
                 vecPatches.load_balance( params, time_dual, smpi, simWindow );
-                timer[7].update( vecPatches.printScalars( itime ) );
+                timer[7].update( params.printNow( itime ) );
             }
         }
         
@@ -267,31 +261,10 @@ int main (int argc, char* argv[])
         latestTimeStep = itime;
 */
         
-        // pritn message at given time-steps
         // print message at given time-steps
         // --------------------------------
-        timer[0].update();
-        if ( vecPatches.printScalars( itime ) &&  ( smpi->isMaster() ) ) {
-            old_print_time = this_print_time;
-            this_print_time=timer[0].getTime();
-            ostringstream my_msg;
-            my_msg << setw(log10(params.n_time)+1) << itime <<
-            "/"     << setw(log10(params.n_time)+1) << params.n_time <<
-            " t="          << scientific << setprecision(3)   << time_dual << " [Time unit] "    <<
-             scientific << setprecision(1)   << this_print_time << " sec "    <<
-            " ("    << scientific << setprecision(4)   << this_print_time - old_print_time << " sec)" <<
-            "  Utot= "   << scientific << setprecision(4)<< vecPatches.getScalar("Utot") <<
-            "  Uelm= "   << scientific << setprecision(4)<< vecPatches.getScalar("Uelm") <<
-            "  Ukin= "   << scientific << setprecision(4)<< vecPatches.getScalar("Ukin") <<
-            "  Ubal(%)= "<< scientific << fixed << setprecision(2) << 100.0*vecPatches.getScalar("Ubal_norm");
-            if ( simWindow->isActive() ) {
-                double Uinj_mvw = vecPatches.getScalar("Uelm_inj_mvw") + vecPatches.getScalar("Ukin_inj_mvw");
-                double Uout_mvw = vecPatches.getScalar("Uelm_out_mvw") + vecPatches.getScalar("Ukin_out_mvw");
-                my_msg << "  Uinj_mvw = " << scientific << setprecision(4) << Uinj_mvw <<
-                "  Uout_mvw = " << scientific << setprecision(4) << Uout_mvw;
-            }//simWindow
-            MESSAGE(my_msg.str());
-        }
+        if ( smpi->isMaster() &&  params.printNow( itime ) )
+            params.print_timestep(itime, time_dual, timer[0]);
     }//END of the time loop
     
     smpi->barrier();
@@ -304,18 +277,19 @@ int main (int argc, char* argv[])
     //double timElapsed=smpi->time_seconds();
     //if ( smpi->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
     timer[0].update();
+    
     TITLE("Time profiling : (print time > 0.001%)");
     double coverage(0.);
     for (unsigned int i=1 ; i<timer.size() ; i++) coverage += timer[i].getTime();
     MESSAGE("Time in time loop :\t" << timer[0].getTime() << "\t"<<coverage/timer[0].getTime()*100.<< "% coverage" );
     std::vector<Timer> avg_timers = Timer::consolidate_timers( timer );
-
+    
     if ( smpi->isMaster() )
         for (unsigned int i=1 ; i<avg_timers.size() ; i++) avg_timers[i].print(timer[0].getTime());
     MESSAGE(0, "\n\t Printed times are mean time per MPI process" );
     MESSAGE(0, "\t\t See advanced metrics in profil.txt");
-
-    //WARNING( "Diabled vecPatches.Diagnostics->printTimers(vecPatches(0), timer[3].getTime());" );
+    
+    //WARNING( "Disabled vecPatches.Diagnostics->printTimers(vecPatches(0), timer[3].getTime());" );
     
     
 /*tommaso
@@ -331,13 +305,9 @@ int main (int argc, char* argv[])
     //  Cleanup & End the simulation
     // ------------------------------
     vecPatches.close( smpi );
-    
     MPI_Barrier(MPI_COMM_WORLD); // Don't know why but sync needed by HDF5 Phasespace managment
-    
     delete simWindow;
-    
     PyTools::closePython();
-    
     TITLE("END");
     delete smpi;
     
@@ -348,73 +318,6 @@ int main (int argc, char* argv[])
 // ---------------------------------------------------------------------------------------------------------------------
 //                                               END MAIN CODE
 // ---------------------------------------------------------------------------------------------------------------------
-
-
-void print_parallelism_params(Params& params, SmileiMPI* smpi)
-{
-    MESSAGE(1,"Number of MPI process : " << smpi->getSize() );
-    MESSAGE(1,"Number of patches : " );
-    for (unsigned int iDim=0 ; iDim<params.nDim_field ; iDim++) 
-        MESSAGE(2, "dimension " << iDim << " - number_of_patches : " << params.number_of_patches[iDim] );
-
-    MESSAGE(1, "Patch size :");
-    for (unsigned int iDim=0 ; iDim<params.nDim_field ; iDim++) 
-        MESSAGE(2, "dimension " << iDim << " - n_space : " << params.n_space[iDim] << " cells.");        
-
-    MESSAGE(1, "Dynamic load balancing frequency: every " << params.balancing_every << " iterations." );
-
-    // setup OpenMP
-    TITLE("OpenMP");
-#ifdef _OPENMP
-//    int nthds(0);
-//#pragma omp parallel shared(nthds)
-//    {
-//        nthds = omp_get_num_threads();
-//    }
-    if (smpi->isMaster())
-        MESSAGE(1,"Number of thread per MPI process : " << omp_get_max_threads() );
-#else
-    if (smpi->isMaster()) MESSAGE("Disabled");
-#endif
-
-} // End print_parallelism_params
-
-
-void check_memory_consumption(VectorPatch& vecPatches, SmileiMPI* smpi)
-{
-    TITLE("Memory consumption");
-    
-    int particlesMem(0);
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-        for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++)
-            particlesMem += vecPatches(ipatch)->vecSpecies[ispec]->getMemFootPrint();
-    MESSAGE( 1, "(Master) Species part = " << (int)( (double)particlesMem / 1024./1024.) << " Mo" );
-
-    double dParticlesMem = (double)particlesMem / 1024./1024./1024.;
-    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dParticlesMem, &dParticlesMem, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-    MESSAGE( 1, setprecision(3) << "Global Species part = " << dParticlesMem << " Go" );
-
-    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&particlesMem, &particlesMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-    MESSAGE( 1, "Max Species part = " << (int)( (double)particlesMem / 1024./1024.) << " Mb" );
-    
-    // fieldsMem contains field per species
-    int fieldsMem(0);
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-        fieldsMem += vecPatches(ipatch)->EMfields->getMemFootPrint();
-    MESSAGE( 1, "(Master) Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " Mo" );
-
-    double dFieldsMem = (double)fieldsMem / 1024./1024./1024.;
-    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dFieldsMem, &dFieldsMem, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-    MESSAGE( 1, setprecision(3) << "Global Fields part = " << dFieldsMem << " Go" );
-    
-    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&fieldsMem, &fieldsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-    MESSAGE( 1, "Max Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " Mb" );
-
-    // Read value in /proc/pid/status
-    //Tools::printMemFootPrint( "End Initialization" );
-
-} // End check_memory_consumption
-
 
 vector<Timer> initialize_timers(SmileiMPI* smpi)
 {

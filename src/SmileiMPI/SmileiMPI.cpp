@@ -898,7 +898,7 @@ void SmileiMPI::computeGlobalDiags(Diagnostic* diag, int timestep)
 void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
 {
     
-    if ( !scalars->print_now && !scalars->timeSelection->theTimeIsNow(timestep) ) return;
+    if ( !scalars->timeSelection->theTimeIsNow(timestep) ) return;
     
     // Reduce all scalars that should be summed
     int n_sum = scalars->values_SUM.size();
@@ -922,19 +922,18 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
         
         // Calculate average Z
         for(unsigned int ispec=0; ispec<scalars->sDens.size(); ispec++)
-            if ( scalars->sDens[ispec]
-            && (scalars->necessary_species[ispec] || scalars->print_now) )
+            if ( scalars->sDens[ispec] && scalars->necessary_species[ispec] )
                 *scalars->sZavg[ispec] = (double)*scalars->sZavg[ispec] / (double)*scalars->sDens[ispec];
         
         // total energy in the simulation
-        if( scalars->necessary_Utot || scalars->print_now ) {
+        if( scalars->necessary_Utot ) {
             double Ukin = *scalars->Ukin;
             double Uelm = *scalars->Uelm;
             *scalars->Utot = Ukin + Uelm;
         }
         
         // expected total energy
-        if( scalars->necessary_Uexp || scalars->print_now ) {
+        if( scalars->necessary_Uexp ) {
             // total energy at time 0
             if (timestep==0) scalars->Energy_time_zero = *scalars->Utot;
             // Global kinetic energy, and BC losses/gains
@@ -951,12 +950,12 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
             *scalars->Uexp = Uexp;
         }
         
-        if( scalars->necessary_Ubal || scalars->print_now ) {
+        if( scalars->necessary_Ubal ) {
             // energy balance
             double Ubal = (double)*scalars->Utot - (double)*scalars->Uexp;
             *scalars->Ubal = Ubal;
             
-            if( scalars->necessary_Ubal_norm || scalars->print_now) {
+            if( scalars->necessary_Ubal_norm ) {
                 // the normalized energy balanced is normalized with respect to the current energy
                 scalars->EnergyUsedForNorm = *scalars->Utot;
                 // normalized energy balance
