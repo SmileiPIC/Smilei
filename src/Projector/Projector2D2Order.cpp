@@ -376,7 +376,7 @@ void Projector2D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, int diag_flag, std::vector<unsigned int> &b_dim, int ispec)
+void Projector2D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, std::vector<unsigned int> &b_dim, int ispec)
 {
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
@@ -385,7 +385,7 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
     int dim1 = EMfields->dimPrim[1];
     
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
-    if (diag_flag == 0){ 
+    if (!diag_flag){ 
         double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw*dim1);
         double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1));
         double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw*dim1);

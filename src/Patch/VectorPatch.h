@@ -71,25 +71,16 @@ public :
         return diag->getScalar( name );
     }
     
-    void needsRhoJsNow( int timestep ) {
+    bool needsRhoJsNow( int timestep ) {
         // Figure out whether scalars need Rho and Js
-        if( globalDiags[0]->needsRhoJs(timestep) ) {
-            diag_flag=1;
-            return;
-        }
+        if( globalDiags[0]->needsRhoJs(timestep) ) return true;
+        
         // Figure out whether fields or probes need Rho and Js
         for( unsigned int i=0; i<localDiags.size(); i++ )
-            if( localDiags[i]->needsRhoJs(timestep) ) {                
-                diag_flag=1;
-                return;
-            }
+            if( localDiags[i]->needsRhoJs(timestep) ) return true;
+        
+        return false;
     }
-    
-    bool printScalars( int timestep ) {
-        return static_cast<DiagnosticScalar*>(globalDiags[0])->printNow(timestep);
-    }
-    
-    
     
     // Interfaces between main programs & main PIC operators
     // -----------------------------------------------------
@@ -102,7 +93,7 @@ public :
 
     
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
-    void sumDensities(std::vector<Timer>& timer, int itime );
+    void sumDensities(Params &params, std::vector<Timer>& timer, int itime );
     
     //! For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
     void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual,
@@ -186,8 +177,9 @@ public :
     }
 
     void move_probes(Params& params, double x_moved);
-
-
+    
+    void check_memory_consumption(SmileiMPI* smpi);
+    
     // Keep track if we need the needsRhoJsNow
     int diag_flag;
 

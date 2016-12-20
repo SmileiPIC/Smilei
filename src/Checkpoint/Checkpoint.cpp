@@ -109,7 +109,7 @@ string Checkpoint::dumpName(unsigned int num, SmileiMPI *smpi) {
     }
     
     nameDumpTmp << "dump-" << setfill('0') << setw(1+log10(dump_file_sequence)) << num << "-" << setfill('0') << setw(1+log10(smpi->getSize())) << smpi->getRank() << ".h5" ;
-        return nameDumpTmp.str();
+    return nameDumpTmp.str();
 }
 
 void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* smpi, SimWindow* simWindow, Params &params ) {
@@ -156,7 +156,11 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     hid_t fid = H5Fcreate( dumpName(num_dump,smpi).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     dump_number++;
     
+#ifdef  __DEBUG
     MESSAGEALL("Step " << itime << " : DUMP fields and particles " << dumpName(num_dump,smpi));
+#else
+    MESSAGE("Step " << itime << " : DUMP fields and particles");
+#endif
     
     H5::attr(fid, "Version", string(__VERSION));
     
@@ -334,7 +338,11 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
         
         if (nameDump.empty()) ERROR("Cannot find a valid restart file");
         
+#ifdef  __DEBUG
         MESSAGEALL(2, " : Restarting fields and particles " << nameDump << " step=" << this_run_start_step);
+#else
+        MESSAGE(2, "Restarting fields and particles at step " << this_run_start_step);
+#endif
         
         hid_t fid = H5Fopen( nameDump.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
         if (fid < 0) ERROR(nameDump << " is not a valid HDF5 file");
@@ -491,7 +499,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
             
             H5::getVect(gid,"bmin",vecSpecies[ispec]->bmin,true);
             H5::getVect(gid,"bmax",vecSpecies[ispec]->bmax,true);
-        
+            
         }
         
         H5Gclose(gid);
@@ -527,7 +535,7 @@ void Checkpoint::dumpMovingWindow(hid_t fid, SimWindow* simWin)
 }
 void Checkpoint::restartMovingWindow(hid_t fid, SimWindow* simWin)
 {
-
+    
     double x_moved=0.;
     H5::getAttr(fid, "x_moved", x_moved );
     simWin->setXmoved(x_moved);

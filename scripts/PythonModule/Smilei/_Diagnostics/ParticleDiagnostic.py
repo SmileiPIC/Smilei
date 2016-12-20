@@ -88,12 +88,13 @@ class ParticleDiagnostic(Diagnostic):
 		self._h5items = {}
 		for d in self._diags:
 			# Gather data from all timesteps, and the list of timesteps
-			items = []
+			items = {}
 			for path in self._results_path:
 				f = self._h5py.File(path+self._os.sep+'ParticleDiagnostic'+str(d)+'.h5')
 				items.update( dict(f) )
-			self._h5items[d] = items.values()
-			self.times[d] = self._np.array([ int(t.strip("timestep")) for t in items.keys() ])
+			items = sorted(items.items())
+			self._h5items[d] = [it[1] for it in items]
+			self.times[d] = self._np.array([ int(it[0].strip("timestep")) for it in items ])
 			self._times[d] = self.times[d][:]
 			# fill the "_indexOfTime" dictionary with indices to the data arrays
 			self._indexOfTime.update({ d:{} })
@@ -400,8 +401,13 @@ class ParticleDiagnostic(Diagnostic):
 				print("Timestep "+str(t)+" not found in this diagnostic")
 				return []
 			# get data
-			B = self._np.zeros(self._finalShape)
-			self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
+			B = self._np.squeeze(self._np.zeros(self._finalShape))
+			try:
+				self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
+			except:
+					B = self._np.squeeze(B)
+					self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
+					B = self._np.reshape(B, self._finalShape)
 			B[self._np.isnan(B)] = 0.
 			# Apply the slicing
 			for iaxis in range(self._naxes):
