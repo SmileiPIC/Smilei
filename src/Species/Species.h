@@ -144,7 +144,7 @@ public:
     void initPosition(unsigned int, unsigned int, double *);
     
     //! Method used to initialize the Particle 3d momentum in a given cell
-    void initMomentum(unsigned int, unsigned int, double *, double *, std::vector<double>&);
+    void initMomentum(unsigned int, unsigned int, double *, double *);
     
     //! Method used to initialize the Particle weight (equivalent to a charge density) in a given cell
     void initWeight(unsigned int,  unsigned int, double);
@@ -291,6 +291,14 @@ private:
     double nrj_mw_lost;
     //! Accumulate nrj added with new particles
     double nrj_new_particles;
+    
+    //! Samples npoints values of energies in a Maxwell-Juttner distribution
+    std::vector<double> maxwellJuttner(unsigned int npoints, double temperature);
+    //! Array used in the Maxwell-Juttner sampling (see doc)
+    static const double lnInvF[1000];
+    //! Array used in the Maxwell-Juttner sampling (see doc)
+    static const double lnInvH[1000];
+
 };
 
 #endif

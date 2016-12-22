@@ -55,9 +55,10 @@ References
 
 .. [Rohrlich1954] `F. Rohrlich and B. C. Carlson, Phys. Rev. 93, 38 (1954) <http://journals.aps.org/pr/abstract/10.1103/PhysRev.93.38>`_
 
+.. [Schnittman2013] `J. D. Schnittman and J. H. Krolik, Astrophys. J. 777, 11 (2013) <http://dx.doi.org/10.1088/0004-637X/777/1/11>`_
+
 .. [Sentoku2008] `Y. Sentoku and A. J. Kemp, J. Comput. Phys. 227, 6846 (2008) <http://dx.doi.org/10.1016/j.jcp.2008.03.043>`_
 
 .. [TafloveHagness] A. Taflove and S. C. Hagness, Computation Electrodynamics: The Finite-Difference Time-Domain Method, 3rd Ed. (Artech House, Norwood, 2005)
 
 .. [Vay2008] `J.-L. Vay, Phys. Plasmas 15, 056701 (2008) <https://doi.org/10.1063/1.2837054>`_
-

@@ -363,7 +363,7 @@ Each species has to be defined in a ``Species`` block::
   
   The initialization of particle momenta:
   
-  * ``"maxwell-juettner"`` for a relativistic maxwellian
+  * ``"maxwell-juettner"`` for a relativistic maxwellian (see :doc:`how it is done<maxwell-juttner>`)
   * ``"rectangular"`` for a rectangular distribution
   * ``"cold"`` for zero temperature
   
