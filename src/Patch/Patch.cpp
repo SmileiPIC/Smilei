@@ -301,7 +301,7 @@ void Patch::CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, 
 
     int n_part_send;
     int h0 = (*vecPatch)(0)->hindex;
-    double x_max = params.cell_length[iDim]*( params.n_space_global[iDim] );
+    double x_max = params.sim_length[iDim];
 
     /********************************************************************************/
     // Wait for end of communications over number of particles
@@ -328,10 +328,10 @@ void Patch::CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, 
     /********************************************************************************/
 
     for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-                
-        // n_part_send : number of particles to send to current neighbor
-        n_part_send = (vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor]).size();
-        if ( n_part_send != 0)  {
+            
+        //If I have to send particles    
+        if ( vecSpecies[ispec]->MPIbuff.part_index_send_sz[iDim][iNeighbor] != 0)  {
+            n_part_send = (vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor]).size();
             // Enabled periodicity
             if (smpi->periods_[iDim]==1) {
                 for (int iPart=0 ; iPart<n_part_send ; iPart++) {
@@ -413,7 +413,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
         MPI_Status sstat    [2];
         MPI_Status rstat    [2];
                 
-        n_part_send = vecSpecies[ispec]->MPIbuff.part_index_send[iDim][(iNeighbor+1)%2].size();
+        n_part_send = vecSpecies[ispec]->MPIbuff.part_index_send_sz[iDim][(iNeighbor+1)%2];
         n_part_recv = vecSpecies[ispec]->MPIbuff.part_index_recv_sz[iDim][iNeighbor];
                
         if ( n_part_send!=0 && is_a_MPI_neighbor(iDim, (iNeighbor+1)%2) ) 
@@ -432,30 +432,20 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                     while (check == 0 && idim<ndim){
                         //If particle not in the domain...
                         if ( (vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor]).position(idim,iPart) < min_local[idim] ){  
-
-                            //... copy it at the back of the local particle vector ...
-                            (vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor]).cp_particle(iPart, cuParticles);
-                            //...adjust bmax ...
-                            (*cubmax)[(*cubmax).size()-1]++;
-                            //... and add its index to the particles to be sent later...
-                            vecSpecies[ispec]->MPIbuff.part_index_send[idim][0].push_back( cuParticles.size()-1 );
-                            //..without forgeting to add it to the list of particles to clean.
-                            vecSpecies[ispec]->addPartInExchList(cuParticles.size()-1);
-
-
-                            //if (is_a_MPI_neighbor(idim, iNeighbor)) {
-                            //    //... copy it at the back of the send particle vector ...
-                            //    (vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor]).cp_particle(iPart, vecSpecies[ispec]->MPIbuff.partSend[idim][iNeighbor]);
-                            //    //...adjust send size
-                            //    vecSpecies[ispec]->MPIbuff.part_index_send_sz[idim][iNeighbor] ++;
-                            //} else {
-                            //    //Copy directly in the receive buffer of the next dimension
-                            //    (vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor]).cp_particle( iPart, ((*vecPatch)( neighbor_[idim][0]- h0 )->vecSpecies[ispec]->MPIbuff.partRecv[idim][1]) );
-                            //    (*vecPatch)( neighbor_[idim][0]- h0 )->vecSpecies[ispec]->MPIbuff.part_index_recv_sz[idim][1]++;
-
-                            //}
-                            
-
+                            // Enabled periodicity
+                            if ( smpi->periods_[idim]==1)
+                                if ( Pcoordinates[idim] == 0 )
+                                    (vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor]).position(idim,iPart) += params.sim_length[idim] ;
+                            //Move particle
+                            if (is_a_MPI_neighbor(idim, 0)) {
+                                //... copy it at the back of the send particle vector ...
+                                (vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor]).cp_particle(iPart, vecSpecies[ispec]->MPIbuff.partSend[idim][0]);
+                            } else {
+                                //Copy directly in the receive buffer of the next dimension
+                                (vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor]).cp_particle( iPart, ((*vecPatch)( neighbor_[idim][0]- h0 )->vecSpecies[ispec]->MPIbuff.partRecv[idim][1]) );
+                            }
+                            // Adjust send size
+                            vecSpecies[ispec]->MPIbuff.part_index_send_sz[idim][0] ++;
                             //Remove it from receive buffer.
                             (vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor]).erase_particle(iPart);
                             vecSpecies[ispec]->MPIbuff.part_index_recv_sz[iDim][iNeighbor]--;
@@ -463,10 +453,21 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                         }
                         //Other side of idim
                         else if ( (vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor]).position(idim,iPart) >= max_local[idim]) { 
-                            (vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor]).cp_particle(iPart, cuParticles);
-                            (*cubmax)[(*cubmax).size()-1]++;
-                            vecSpecies[ispec]->MPIbuff.part_index_send[idim][1].push_back( cuParticles.size()-1 );
-                            vecSpecies[ispec]->addPartInExchList(cuParticles.size()-1);
+                            // Enabled periodicity
+                            if ( smpi->periods_[idim]==1)
+                                if ( Pcoordinates[idim] == params.number_of_patches[idim]-1 )
+                                    (vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor]).position(idim,iPart) -= params.sim_length[idim] ;
+                            //Move particle
+                            if (is_a_MPI_neighbor(idim, 1)) {
+                                //... copy it at the back of the send particle vector ...
+                                (vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor]).cp_particle(iPart, vecSpecies[ispec]->MPIbuff.partSend[idim][1]);
+                            } else {
+                                //Copy directly in the receive buffer of the next dimension
+                                (vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor]).cp_particle( iPart, ((*vecPatch)( neighbor_[idim][1]- h0 )->vecSpecies[ispec]->MPIbuff.partRecv[idim][0]) );
+                            }
+                            // Adjust send size
+                            vecSpecies[ispec]->MPIbuff.part_index_send_sz[idim][1] ++;
+                            //Remove it from receive buffer.
                             (vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor]).erase_particle(iPart);
                             vecSpecies[ispec]->MPIbuff.part_index_recv_sz[iDim][iNeighbor]--;
                             check = 1;
@@ -475,10 +476,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                     }
                 }
             }//If not last dim for diagonal particles.
-
         } //If received something
-
-
     } //loop i Neighbor
 
     //La recopie finale doit se faire au traitement de la dernière dimension seulement !!
