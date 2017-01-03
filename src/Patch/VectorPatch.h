@@ -16,6 +16,7 @@
 #include "Params.h"
 #include "SmileiMPI.h"
 #include "SimWindow.h"
+#include "Timers.h"
 
 class Field;
 class Timer;
@@ -87,20 +88,20 @@ public :
     
     //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
     void dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, double time_dual,
-                  std::vector<Timer>& timer, int itime);
+                  Timers &timers, int itime);
 
     void computeCharge();
 
     
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
-    void sumDensities(Params &params, std::vector<Timer>& timer, int itime );
+    void sumDensities(Params &params, Timers &timers, int itime );
     
     //! For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
     void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual,
-                      std::vector<Timer>& timer);
+                      Timers & timers);
     
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
-    void runAllDiags(Params& params, SmileiMPI* smpi, int itime, std::vector<Timer>& timer);
+    void runAllDiags(Params& params, SmileiMPI* smpi, int itime, Timers & timers);
     void initAllDiags(Params& params, SmileiMPI* smpi);
     void closeAllDiags(SmileiMPI* smpi);
     void openAllDiags(Params& params, SmileiMPI* smpi);
@@ -118,7 +119,7 @@ public :
     void applyAntennas(double time);
     
     //! For all patches, apply collisions
-    void applyCollisions(Params &params, int itime, std::vector<Timer>& timer);
+    void applyCollisions(Params &params, int itime, Timers & timer);
 
     //! For each patch, apply external fields
     void applyExternalFields();
