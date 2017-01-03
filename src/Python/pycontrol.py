@@ -5,6 +5,16 @@
 """
 
 gc.collect()
+import math
+
+def _mkdir(role, path):
+    if not os.path.exists(path):
+        try:
+            os.makedirs(path)
+        except:
+            raise Exception("ERROR in the namelist: "+role+" "+path+" cannot be created")
+    elif not os.path.isdir(path):
+        raise Exception("ERROR in the namelist: "+role+" "+path+" exists but is not a directory")
 
 def _smilei_check():
     """Do checks over the script"""
@@ -19,14 +29,19 @@ def _smilei_check():
             raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
     # Verify the output_dir
     if smilei_mpi_rank == 0 and Main.output_dir:
-        if not os.path.exists(Main.output_dir):
-            try:
-                os.makedirs(Main.output_dir)
-            except:
-                raise Exception("ERROR in the namelist: output_dir "+Main.output_dir+" does not exists and cannot be created")
-        elif not os.path.isdir(Main.output_dir):
-                raise Exception("ERROR in the namelist: output_dir "+Main.output_dir+" exists and is not a directory")
-    # Verify the restart_dir
+        _mkdir("output_dir", Main.output_dir)
+    # Checkpoint: prepare dir tree
+    if smilei_mpi_rank == 0 and (DumpRestart.dump_step>0 or DumpRestart.dump_minutes>0.):
+        checkpoint_dir = (Main.output_dir or ".") + os.sep + "checkpoints" + os.sep
+        if DumpRestart.file_grouping :
+            ngroups = smilei_mpi_size/DumpRestart.file_grouping+1
+            ngroups_chars = int(math.log10(ngroups))+1
+            for group in range(ngroups):
+                group_dir = checkpoint_dir + '%*s'%(ngroups_chars,group)
+                _mkdir("checkpoint", group_dir)
+        else:
+            _mkdir("checkpoint", checkpoint_dir)
+    # Checkpoint: Verify the restart_dir
     if len(DumpRestart)==1 and DumpRestart.restart_dir:
         if not os.path.isdir(DumpRestart.restart_dir):
             raise Exception("ERROR in the namelist: restart_dir = `"+DumpRestart.restart_dir+"` is not a directory")
