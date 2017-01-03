@@ -218,7 +218,7 @@ int main (int argc, char* argv[])
             
         } //End omp parallel region
         
-        if (exit) break;
+        if (checkpoint.exit_asap) break;
         
         timers.movWindow.restart();
         if ( simWindow->isMoving(time_dual) ) {

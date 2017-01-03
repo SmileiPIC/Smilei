@@ -62,6 +62,15 @@ restart_number(-1)
         PyTools::extract("exit_after_dump", exit_after_dump, "DumpRestart");
         
         PyTools::extract("dump_deflate", dump_deflate, "DumpRestart");
+
+        if (PyTools::extract("file_grouping", file_grouping, "DumpRestart") && file_grouping > 0) {
+            if( file_grouping > (unsigned int)(smpi->getSize()) ) file_grouping = smpi->getSize();
+            MESSAGE(1,"Code will group checkpoint files by "<< file_grouping);
+        }
+    
+        if (PyTools::extract("restart_number", restart_number, "DumpRestart") && restart_number >= 0) {
+            MESSAGE(1,"Code will restart from checkpoint number " << restart_number);
+        }
         
     }
     
@@ -79,16 +88,7 @@ restart_number(-1)
             MESSAGE(1,message.str());
         }
     }
-    
-    if (PyTools::extract("file_grouping", file_grouping, "DumpRestart") && file_grouping > 0) {
-        if( file_grouping > (unsigned int)(smpi->getSize()) ) file_grouping = smpi->getSize();
-        MESSAGE(1,"Code will group checkpoint files by "<< file_grouping);
-    }
-    
-    if (PyTools::extract("restart_number", restart_number, "DumpRestart") && restart_number >= 0) {
-        MESSAGE(1,"Code will restart from checkpoint number " << restart_number);
-    }
-    
+        
     // registering signal handler
     if (SIG_ERR == signal(SIGUSR1, Checkpoint::signal_callback_handler)) {
         WARNING("Cannot catch signal SIGUSR1");
