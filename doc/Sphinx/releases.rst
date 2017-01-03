@@ -12,25 +12,28 @@ but the process is fast and straightforward.
 
 ----
 
+.. _latestVersion:
+
 Current release 3.0
 ^^^^^^^^^^^^^^^^^^^
 
 **Download**: `Smilei v3.0 <_downloads/smilei-v3.0.tar.gz>`_
 
-* 3D geometry
-
+* **3D geometry**
+* Field and scalar diagnostics improved for more flexibility and memory saving
+* Faster initialization (including Maxwell-Jüttner sampling)
+* Post-processing handles restarts
+* Bugfixes in checkpoints, timers, memory profile
 
 ----
 
-.. _latestVersion:
-
-Current release 2.3
-^^^^^^^^^^^^^^^^^^^
+Release 2.3
+^^^^^^^^^^^
 
 **Download**: `Smilei v2.3 <_downloads/smilei-v2.3.tar.gz>`_
 
-* Many bugfixes, in particular addressing diagnostics efficiency
 * Post-processing scripts have been turned into a *python* module
+* Many bugfixes, such as addressing diagnostics efficiency
 
 
 ----
@@ -42,7 +45,7 @@ Release 2.0
 
 Major improvements:
 
-* **state-of-the-art** dynamic load balancing
+* **state-of-the-art dynamic load balancing**
 * full *python* namelist, allowing for complex, user-friendly input
 * external fields and antennas
 * binary Coulomb collisions
