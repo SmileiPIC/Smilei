@@ -12,12 +12,10 @@ but the process is fast and straightforward.
 
 ----
 
-Future release 3.0
-^^^^^^^^^^^^^^^^^^
+Current release 3.0
+^^^^^^^^^^^^^^^^^^^
 
-In progress ...
-
-Major improvements:
+**Download**: `Smilei v3.0 <_downloads/smilei-v3.0.tar.gz>`_
 
 * 3D geometry
 
