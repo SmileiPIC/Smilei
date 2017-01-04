@@ -883,117 +883,91 @@ def LaserGaussian3D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., inci
 -----------------------------------------------------------------------
     BEGINNING OF THE USER NAMELIST
 """
+# ----------------------------------------------------------------------------------------
+# 					SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
+# ----------------------------------------------------------------------------------------
+
 import math
 
-L0 = 2.*math.pi # Wavelength in PIC units
+l0 = 2.*math.pi			# laser wavelength
+t0 = l0					# optical cycle
+Lsim = [20.*l0,50.*l0]	# length of the simulation
+Tsim = 50.*t0			# duration of the simulation
+resx = 20.				# nb of cells in on laser wavelength
+rest = 30.				# time of timestep in one optical cycle 
+
 
 Main(
-	geometry = "1d3v",
-	
-	interpolation_order = 2,
-	
-	timestep = 0.005 * L0,
-	sim_time  = 0.5 * L0,
-	
-	cell_length = [0.01 * L0],
-	sim_length  = [1. * L0],
-	
-	number_of_patches = [ 4 ],
-	
-	bc_em_type_x  = ["periodic"],
-	
-	referenceAngularFrequency_SI = L0 * 3e8 /1.e-6,
-	
-	print_every = 10
+    geometry = "2d3v",
+    
+    interpolation_order = 2 ,
+    
+    cell_length = [l0/resx,l0/resx],
+    sim_length  = Lsim,
+    
+    number_of_patches = [ 16, 8 ],
+    
+    timestep = t0/rest,
+    sim_time = Tsim,
+     
+    bc_em_type_x = ['silver-muller'],
+    bc_em_type_y = ['silver-muller'],
+    
+    random_seed = 0
 )
 
-# Ion species
+LaserGaussian2D(
+    boxSide         = "xmin",
+    a0              = 0.1,
+	focus           = [10.*l0, 25.0*l0],
+    waist           = 5.0*l0,
+    incidence_angle = 20./180.*math.pi,
+    time_envelope   = tgaussian(fwhm=5.*t0, center=10.*t0)
+)
+
 Species(
-	species_type = "ion1",
-	initPosition_type = "random",
-	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell = 2000,
+	species_type = 'ion',
+	initPosition_type = 'random',
+	initMomentum_type = 'cold',
+	ionization_model = 'none',
+	n_part_per_cell = 5,
+	c_part_max = 1.0,
 	mass = 1836.0,
 	charge = 1.0,
-	nb_density = 10.,
-	temperature = [0.00002],
-	time_frozen = 0.0,
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
+	nb_density = trapezoidal(2.0,xvacuum=10.*l0,xplateau=4.*l0),
+	time_frozen = Tsim,
+	bc_part_type_xmin  = 'refl',
+	bc_part_type_xmax  = 'refl',
+	bc_part_type_ymin = 'none',
+	bc_part_type_ymax = 'none'
 )
 
-# Electron species
 Species(
-	species_type = "electron1",
-	initPosition_type = "random",
-	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell= 2000,
+	species_type = 'eon',
+	initPosition_type = 'random',
+	initMomentum_type = 'cold',
+	ionization_model = 'none',
+	n_part_per_cell = 5,
+	c_part_max = 1.0,
 	mass = 1.0,
 	charge = -1.0,
-	nb_density = 10.,
-	mean_velocity = [0.05, 0., 0.],
-	temperature = [0.00002],
-	time_frozen = 0.0,
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
+	nb_density = trapezoidal(2.0,xvacuum=10.*l0,xplateau=4.*l0),
+	time_frozen = 0.,
+	bc_part_type_xmin  = 'refl',
+	bc_part_type_xmax  = 'refl',
+	bc_part_type_ymin = 'none',
+	bc_part_type_ymax = 'none'
 )
 
 
+DiagScalar(every=5)
 
-
-DiagScalar(
-	every = 1,
-	vars = ['Utot','Ubal','Ukin']
-)
 
 DiagFields(
-	every = 5,
-	fields = ['Ex','Ey','Ez','Rho_electron1','Rho_ion1']
+    every = 15,
+    fields = ['Ex','Ey','Rho_eon']
 )
 
-
-DiagParticles(
-	output = "density",
-	every = 4,
-	time_average = 2,
-	species = ["electron1"],
-	axes = [
-		["x", 0.*L0, 1.*L0, 100],
-		["vx", -0.1, 0.1, 100]
-	]
-)
-
-DiagParticles(
-	output = "density",
-	every = 4,
-	time_average = 1,
-	species = ["ion1"],
-	axes = [
-		("x", 0.*L0, 1.*L0, 100),
-		("vx", -0.001, 0.001, 100)
-	]
-)
-
-DiagParticles(
-	output = "px_density",
-	every = 4,
-	time_average = 2,
-	species = ["electron1"],
-	axes = [
-		["x", 0.*L0, 1.*L0, 100],
-		["vx", -0.1, 0.1, 100]
-	]
-)
-
-DiagParticles(
-	output = "density",
-	every = 1,
-	time_average = 1,
-	species = ["electron1"],
-	axes = [
-		["ekin", 0.0001, 0.1, 100, "logscale", "edge_inclusive"]
-	]
-)
 
 
 """
