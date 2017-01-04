@@ -154,19 +154,12 @@ def scalarValidation(SCALAR_NAME,t):
   # COMPARES SCALAR_NAME VALUE AGAINST THE REFERENCE VALUE AT TIME t :
   #
   # FIND THE VALUE OF SCALAR_NAME in  scalars.txt
-  S = Smilei(".")
-  SCALAR = S.Scalar(SCALAR_NAME,timestep=t)
+  SCALAR = SIMULATION.Scalar(SCALAR_NAME,timestep=t)
   VALEUR = SCALAR._getDataAtTime(t)
   #
   # FIND THE REFERENCE VALUE OF SCALAR_NAME                          
-  shutil.copyfile('scalars.txt','scalars.txt_save')
-  shutil.copyfile(SMILEI_REFERENCES+'/sca_'+BENCH.replace('.py','.txt'), 'scalars.txt') 
-  shutil.copyfile('smilei.py', 'smilei.py_save') 
-  Sref = Smilei(".")
   SCALAR_REFERENCE = Sref.Scalar(SCALAR_NAME,timestep=t)
   VALEUR_REFERENCE = SCALAR_REFERENCE._getDataAtTime(t)
-  os.rename('scalars.txt_save','scalars.txt')
-  os.rename('smilei.py_save','smilei.py')
   # 
   # COMPARE VALEUR AGAINST VALEUR_REFERENCE WITH PRECISION PRECISION
   if VERBOSE :
@@ -189,7 +182,7 @@ def scalarListValidation(SCALAR_NAME,t) :
   # Check these scalars with the function scalarValidation()
   #
   it = np.int64(t)
-  L=Smilei(".").Scalar(scalar=None)
+  L=SIMULATION.Scalar(scalar=None)
   LISTE_SCALARS = L.getScalars()
   if SCALAR_NAME == "?":
     VERBOSE = True
@@ -308,7 +301,6 @@ if OPT_PRECISION and ( SCALAR_NAME == "all"  or  SCALAR_NAME == "?" or VALID_ALL
 if not OPT_PRECISION or  SCALAR_NAME == "all"  or  SCALAR_NAME == "?"  or VALID_ALL :
   precision_d = {}
   with open(SMILEI_REFERENCES+"/precision_values") as f:
-#      import pdb;pdb.set_trace()
       for line in f:
          (key, val) = line.split()
          precision_d[key] = val
@@ -388,7 +380,6 @@ elif POINCARE in HOSTNAME :
   COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS     
   CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
 # If the workdir does not contains a smilei bin, or it contains one older than the the smilei bin in directory smilei, force the compilation in order to generate the compilation_output
-#import pdb;pdb.set_trace()
 if not os.path.exists(WORKDIRS) :
   os.mkdir(WORKDIRS)
 if ( os.path.exists(SMILEI_R) and not os.path.exists(SMILEI_W)) or (os.path.exists(SMILEI_R) and date(SMILEI_W) < date(SMILEI_R)) :
@@ -412,7 +403,6 @@ except CalledProcessError,e:
     print  "Smilei validation cannot be done : compilation failed." ,e.returncode
   sys.exit(3)
 #
-#import pdb;pdb.set_trace()
 for BENCH in SMILEI_BENCH_LIST :
     # PRINT INFO           
     if VERBOSE :
@@ -538,28 +528,34 @@ echo $? > exit_status_file \n  ")
           os.chdir(WORKDIRS)
 #          shutil.rmtree(WORKDIR)
           sys.exit(2)
-    # READ TIME STEPS AND VALIDATE 
+#
+    # VALIDATION
+      # LOAD SIMULATION FOR BOTH current scalars.txt and the reference
+    SIMULATION=Smilei(".")
+    SIMULATION_SCALARS=SIMULATION.Scalar(scalar=None)
+    LISTE_SCALARS = SIMULATION_SCALARS.getScalars()
+    L=SIMULATION.Scalar(scalar=LISTE_SCALARS[1])
+    LISTE_TIMESTEPS = L.getAvailableTimesteps()
+    shutil.copyfile(SMILEI_REFERENCES+'/sca_'+BENCH.replace('.py','.txt'), SMILEI_REFERENCES+'/scalars.txt') 
+    shutil.copyfile('smilei.py',SMILEI_REFERENCES+'/smilei.py')
+    Sref = Smilei(SMILEI_REFERENCES)
+      # READ TIME STEPS AND VALIDATE 
     if VERBOSE :
       print "Testing scalars :\n"
-#    import pdb;pdb.set_trace()
     VALID_OK = False
-    L=Smilei(".").Scalar(scalar=None) # scalar argument must be anything except none in order times is defined
-    LISTE_SCALARS = L.getScalars()
-    L=Smilei(".").Scalar(scalar=LISTE_SCALARS[1])
-    LISTE_TIMESTEPS = L.getAvailableTimesteps()
     if OPT_TIMESTEP == False or VALID_ALL:
-      # IF TIMESTEP NOT IN OPTIONS, COMPUTE THE LAST TIME STEP               
+        # IF TIMESTEP NOT IN OPTIONS, COMPUTE THE LAST TIME STEP               
       TIMESTEP=LISTE_TIMESTEPS[-1]
       VALID_OK = scalarListValidation(SCALAR_NAME,TIMESTEP)
     elif TIMESTEP == "?":
       VERBOSE = True
-      # Test if either you want to choose one time step in a list, or all the time steps, or a given time step
-      # Validate smilei for a list of scalars (scalarListValidation function)
-      #
-      # Propose the list of all the timesteps
+        # Test if either you want to choose one time step in a list, or all the time steps, or a given time step
+        # Validate smilei for a list of scalars (scalarListValidation function)
+        #
+        # Propose the list of all the timesteps
       print LISTE_TIMESTEPS
       print 'Enter a time step from the above list (press <Enter> if no more time step to check ):'
-      # Test if either you want to choose one scalar in a list, or all the scalars, or a given scalar
+        # Test if either you want to choose one scalar in a list, or all the scalars, or a given scalar
       TIMESTEP_INPUT = raw_input()
       while TIMESTEP_INPUT != "" :
         TIMESTEP=TIMESTEP_INPUT     
