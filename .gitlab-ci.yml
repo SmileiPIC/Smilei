@@ -12,7 +12,8 @@ build:
     - cd /sps/gitlab-runner/$CI_BUILD_ID/smilei/scripts
     # Run checking script
     #- python validation.py -m 4 -o 12 -b tst2d_4_laser_wake.py -s all -v
-    - python validation.py -a -v
+    - python validation.py -b "tst1d_*_*.py" -v
+    - python validation.py -b "tst2d_*_*.py" -v
 
 #test:
 #  stage: test

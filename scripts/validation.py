@@ -339,10 +339,18 @@ elif BENCH == "?":
     SMILEI_BENCH_LIST = [ BENCH ]
 elif BENCH in list_bench:
   SMILEI_BENCH_LIST = [ BENCH ]
+elif glob.glob( BENCH ):
+  BENCH = glob.glob( BENCH )    
+  for ibench in BENCH:
+    if not ibench in list_bench:
+      if VERBOSE :
+        print "Input file",ibench,"not valid."
+      sys.exit(4)
+  SMILEI_BENCH_LIST = BENCH   
 else :
   if VERBOSE :
     print "Input file",BENCH,"not valid."
-  sys.exit(4)  
+  sys.exit(4)
 #
 # COMPILE  SMILEI
 import time
