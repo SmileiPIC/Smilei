@@ -1,6 +1,25 @@
-"""@package pyinit
-    Definition of Smilei components
+# coding: utf-8
+
 """
+    GENERAL DEFINITIONS FOR SMILEI
+"""
+
+import math, os, gc, operator
+
+def _add_metaclass(metaclass):
+    """Class decorator for creating a class with a metaclass."""
+    # Taken from module "six" for compatibility with python 2 and 3
+    def wrapper(cls):
+        orig_vars = cls.__dict__.copy()
+        slots = orig_vars.get('__slots__')
+        if slots is not None:
+            if isinstance(slots, str): slots = [slots]
+            for slots_var in slots: orig_vars.pop(slots_var)
+        orig_vars.pop('__dict__', None)
+        orig_vars.pop('__weakref__', None)
+        return metaclass(cls.__name__, cls.__bases__, orig_vars)
+    return wrapper
+
 
 class SmileiComponentType(type):
     """Metaclass to all Smilei components"""
@@ -8,7 +27,7 @@ class SmileiComponentType(type):
     # Constructor of classes
     def __init__(self, name, bases, attrs):
         self._list = []
-        self.verify = True
+        self._verify = True
         # Run standard metaclass init
         super(SmileiComponentType, self).__init__(name, bases, attrs)
     
@@ -21,6 +40,7 @@ class SmileiComponentType(type):
             raise StopIteration
         self.current += 1
         return self._list[self.current - 1]
+    __next__ = next #python3
     
     # Function to return one given instance, for example DiagParticles[0]
     # Special case: species can also be indexed by their name: Species["ion1"]
@@ -36,7 +56,7 @@ class SmileiComponentType(type):
     def __len__(self):
         return len(self._list)
     
-    # Function to display the content of the component
+    # Function to display the list of instances
     def __repr__(self):
         if len(self._list)==0:
             return "<Empty list of "+self.__name__+">"
@@ -45,20 +65,150 @@ class SmileiComponentType(type):
             for obj in self._list: l.append(str(obj))
             return "["+", ".join(l)+"]"
 
-
+@_add_metaclass(SmileiComponentType)
 class SmileiComponent(object):
     """Smilei component generic class"""
-    __metaclass__ = SmileiComponentType
     
-    # This constructor is used always for all child classes
-    def __init__(self, **kwargs):
-        if kwargs is not None: # add all kwargs as internal class variables
-            for key, value in kwargs.iteritems():
+    # Function to initialize new components
+    def _fillObjectAndAddToList(self, cls, obj, **kwargs):
+        # add all kwargs as internal class variables
+        if kwargs is not None:
+            for key, value in kwargs.items():
                 if key=="_list":
-                    print "Python warning: in "+type(self).__name__+": cannot have argument named '_list'. Discarding."
+                    print("Python warning: in "+cls.__name__+": cannot have argument named '_list'. Discarding.")
+                elif not hasattr(cls, key):
+                    raise Exception("ERROR in the namelist: cannot define `"+key+"` in block "+cls.__name__+"()");
                 else:
-                    setattr(self, key, value)
-        type(self)._list.append(self) # add the current object to the static list "list"
+                    setattr(obj, key, value)
+        # add the new component to the "_list"
+        cls._list.append(obj)
+    
+    # Constructor for all SmileiComponents
+    def __init__(self, **kwargs):
+        self._fillObjectAndAddToList(type(self), self, **kwargs)
+    
+    def __repr__(self):
+        return "<Smilei "+type(self).__name__+">"
+
+
+class SmileiSingletonType(SmileiComponentType):
+    """Metaclass to all Smilei singletons"""
+    
+    def __repr__(self):
+        return "<Smilei "+str(self.__name__)+">"
+
+@_add_metaclass(SmileiSingletonType)
+class SmileiSingleton(SmileiComponent):
+    """Smilei singleton generic class"""
+    
+    # Prevent having two instances
+    def __new__(cls, **kwargs):
+        if len(cls._list) >= 1:
+            raise Exception("ERROR in the namelist: cannot define block "+cls.__name__+"() twice")
+        return super(SmileiSingleton, cls).__new__(cls)
+    
+    # Constructor for all SmileiSingletons
+    def __init__(self, **kwargs):
+        self._fillObjectAndAddToList(type(self), type(self), **kwargs)
+
+
+class Main(SmileiSingleton):
+    """Main parameters"""
+    
+    # Default geometry info
+    geometry = None
+    cell_length = []
+    sim_length = []
+    number_of_cells = []
+    timestep = None
+    sim_time = None
+    number_of_timesteps = None
+    interpolation_order = 2
+    number_of_patches = None
+    clrw = 1
+    timestep = None
+    timestep_over_CFL = None
+    
+    # Poisson tuning
+    solve_poisson = True
+    poisson_iter_max = 50000
+    poisson_error_max = 1.e-14
+    
+    # Default fields
+    maxwell_sol = 'Yee'
+    bc_em_type_x = []
+    bc_em_type_y = []
+    bc_em_type_z = []
+    time_fields_frozen = 0.
+    
+    # Default Misc
+    referenceAngularFrequency_SI = 0.
+    print_every = None
+    output_dir = None
+    random_seed = None
+    
+    def __init__(self, **kwargs):
+        super(Main, self).__init__(**kwargs)
+        #initialize timestep if not defined based on timestep_over_CFL
+        if Main.timestep is None:
+            if Main.timestep_over_CFL is None:
+                raise Exception("timestep and timestep_over_CFL not defined")
+            else:
+                if Main.cell_length is None:
+                    raise Exception("Need cell_length to calculate timestep")
+                if Main.maxwell_sol == 'Yee':
+                    if Main.geometry == '1d3v':
+                        Main.timestep = Main.timestep_over_CFL*Main.cell_length[0]
+                    elif Main.geometry == '2d3v':         
+                        Main.timestep = Main.timestep_over_CFL/math.sqrt(1.0/(Main.cell_length[0]**2)+1.0/(Main.cell_length[1]**2))
+                    elif Main.geometry == '3d3v':         
+                        Main.timestep = Main.timestep_over_CFL/math.sqrt(1.0/(Main.cell_length[0]**2)+1.0/(Main.cell_length[1]**2)+1.0/(Main.cell_length[2]**2))
+                    else: 
+                        raise Exception("timestep: geometry not implemented "+Main.geometry)
+                else:
+                    raise Exception("timestep: maxwell_sol not implemented "+Main.maxwell_sol)
+
+        #initialize sim_length if not defined based on number_of_cells and cell_length
+        if len(Main.sim_length) is 0:
+            if len(Main.number_of_cells) is 0:
+                raise Exception("sim_length and number_of_cells not defined")
+            elif len(Main.number_of_cells) != len(Main.cell_length):
+                raise Exception("sim_length and number_of_cells not defined")
+            else :
+                Main.sim_length = [a*b for a,b in zip(Main.number_of_cells, Main.cell_length)]
+
+        #initialize sim_time if not defined based on number_of_timesteps and timestep
+        if Main.sim_time is None:
+            if Main.number_of_timesteps is None:
+                raise Exception("sim_time and number_of_timesteps not defined")
+            else:
+                Main.sim_time = Main.number_of_timesteps * Main.timestep
+
+class LoadBalancing(SmileiSingleton):
+    """Load balancing parameters"""
+    
+    every = 150
+    initial_balance = True
+    coef_cell = 1.0
+    coef_frozen = 0.1
+
+
+class MovingWindow(SmileiSingleton):
+    """Moving window parameters"""
+    
+    time_start = 0.
+    velocity_x = 1.
+
+
+class DumpRestart(SmileiSingleton):
+    """Dump and restart parameters"""
+    
+    restart_dir = None
+    dump_step = 0
+    dump_minutes = 0.
+    dump_file_sequence = 2
+    dump_deflate = 0
+    exit_after_dump = True
 
 
 class Species(SmileiComponent):
@@ -68,10 +218,14 @@ class Species(SmileiComponent):
     initMomentum_type = ""
     n_part_per_cell = None
     c_part_max = 1.0
+    mass = None
+    charge = None
     charge_density = None
     nb_density = None
     mean_velocity = [0.]
     temperature = [1e-10]
+    thermT = None
+    thermVelocity = None
     dynamics_type = "norm"
     time_frozen = 0.0
     radiating = False
@@ -79,27 +233,25 @@ class Species(SmileiComponent):
     bc_part_type_xmax = None
     bc_part_type_ymax = None
     bc_part_type_ymin = None
+    bc_part_type_zmin = None
+    bc_part_type_zmax = None
     ionization_model = "none"
+    ionization_electrons = None
     atomic_number = None
     isTest = False
     track_every = 0
+    track_ordered = False
+    track_flush_every = 1
 
 class Laser(SmileiComponent):
     """Laser parameters"""
-    boxSide = None
-    a0 = None
-    omega0 = 1.
-    delta = 1.
-    tchirp = 0.
-    focus = []
-    angle = 0.
-    delay = 0.
-    time_profile = None
-    int_params = []
-    double_params = []
-    transv_profile = None
-    int_params_transv = []
-    double_params_transv = []
+    boxSide = "xmin"
+    omega = 1.
+    chirp_profile = 1.
+    time_envelope = 1.
+    space_envelope = [1., 0.]
+    phase = [0., 0.]
+    space_time_profile = None
 
 class Collisions(SmileiComponent):
     """Collisions parameters"""
@@ -107,19 +259,20 @@ class Collisions(SmileiComponent):
     species2 = None
     coulomb_log = 0.
     debug_every = 0
+    ionizing = False
 
 
 #diagnostics
 class DiagProbe(SmileiComponent):
     """Diagnostic probe"""
-    every = 0
-    time_range = [None, None]
+    every = None
     number = []
     pos = []
     pos_first = []
     pos_second = []
     pos_third = []
     fields = []
+    flush_every = 1
 
 class DiagParticles(SmileiComponent):
     """Diagnostic particles"""
@@ -128,33 +281,31 @@ class DiagParticles(SmileiComponent):
     time_average = 1
     species = None
     axes = []
-
-class DiagPhase(SmileiComponent):
-    """Diagnostic phase"""
-    every=None
-    first=[]
-    second=[]
-    time_range = []
-    deflate = 0
-    pass
+    flush_every = 1
 
 class DiagScalar(SmileiComponent):
     """Diagnostic scalar"""
     every = None
-    time_range = []
     precision = 10
     vars = []
+
+class DiagFields(SmileiComponent):
+    """Diagnostic Fields"""
+    every = None
+    fields = []
+    time_average = 1
+    flush_every = 1
 
 # external fields
 class ExtField(SmileiComponent):
     """External Field"""
-    field = []
+    field = None
     profile = None
 
 # external current (antenna)
 class Antenna(SmileiComponent):
     """Antenna"""
-    field = []
+    field = None
     time_profile  = None
     space_profile = None
 
@@ -166,128 +317,158 @@ class PartWall(SmileiComponent):
     y = None
     z = None
 
-# default simulation values
-output_dir = None
+# Smilei-defined
 smilei_mpi_rank = 0
 smilei_mpi_size = 1
 smilei_rand_max = 2**31-1
-dump_step = 0
-dump_minutes = 0.0
-exit_after_dump = True
-restart = False
-dump_file_sequence = 2
-dump_deflate = 0
-restart_dir = None
-sim_units = ""
-wavelength_SI = 0.
-dim = ""
-interpolation_order = 2
-timestep = None
-cell_length = []
-sim_time = None
-sim_length = []
-maxwell_sol = 'Yee'
-bc_em_type_x = []
-bc_em_type_y = []
-time_fields_frozen = 0.0
-nspace_win_x = 0
-t_move_win = 0.0
-vx_win = 1.
-clrw = 1
-every = 0
-number_of_procs = [None]
-print_every = None
-fieldDump_every = None
-fieldsToDump = []
-avgfieldDump_every = None
-ntime_step_avg = 0
-time_fields_frozen = 0.
-random_seed = None
 # Some predefined profiles (see doc)
 
-def constant(value, xvacuum=0., yvacuum=0.):
-    global dim, sim_length
-    if dim == "1d3v": return lambda x: value #if x>=xvacuum else 0.
-    if dim == "2d3v": return lambda x,y: value #if (x>=xvacuum and y>=yvacuum) else 0.
+def constant(value, xvacuum=-float("inf"), yvacuum=-float("inf"), zvacuum=-float("inf")):
+    global Main
+    if len(Main)==0:
+        raise Exception("constant profile has been defined before `Main()`")
+    if Main.geometry == "1d3v":
+        f = lambda x  : value if x>=xvacuum else 0.
+    if Main.geometry == "2d3v":
+        f = lambda x,y: value if (x>=xvacuum and y>=yvacuum) else 0.
+        f.yvacuum = yvacuum
+    if Main.geometry == "3d3v":
+        f = lambda x,y,z: value if (x>=xvacuum and y>=yvacuum and z>=zvacuum) else 0.
+        f.yvacuum = yvacuum
+        f.zvacuum = zvacuum
+    f.profileName = "constant"
+    f.value   = value
+    f.xvacuum = xvacuum
+    return f
+constant._reserved = True
 
 def trapezoidal(max,
                 xvacuum=0., xplateau=None, xslope1=0., xslope2=0.,
-                yvacuum=0., yplateau=None, yslope1=0., yslope2=0. ):
-    global dim, sim_length
-    if not dim or not sim_length:
-        raise Exception("trapezoidal profile has been defined before `dim` or `sim_length`")
-    if len(sim_length)>0 and xplateau is None: xplateau = sim_length[0]-xvacuum
-    if len(sim_length)>1 and yplateau is None: yplateau = sim_length[1]-yvacuum
-    def fx(x):
-        # vacuum region
-        if x < xvacuum: return 0.
-        # linearly increasing density
-        elif x < xvacuum+xslope1: return max*(x-xvacuum) / xslope1
-        # density plateau
-        elif x < xvacuum+xslope1+xplateau: return max
-        # linearly decreasing density
-        elif x < xvacuum+xslope1+xplateau+xslope2:
-            return max*(1. - ( x - (xvacuum+xslope1+xslope2) ) / xslope2)
-        # beyond the plasma
-        else: return 0.0
-    if dim == "1d3v": return fx
-    def fy(y):
-        # vacuum region
-        if y < yvacuum: return 0.
-        # linearly increasing density
-        elif y < yvacuum+yslope1: return (y-yvacuum) / yslope1
-        # density plateau
-        elif y < yvacuum+yslope1+yplateau: return 1.
-        # linearly decreasing density
-        elif y < yvacuum+yslope1+yplateau+yslope2:
-            return 1. - ( y - (yvacuum+yslope1+yslope2) ) / yslope2
-        # beyond
-        else: return 0.0
-    if dim == "2d3v": return lambda x,y: fx(x)*fy(y)
+                yvacuum=0., yplateau=None, yslope1=0., yslope2=0.,
+                zvacuum=0., zplateau=None, zslope1=0., zslope2=0. ):
+    global Main
+    if len(Main)==0:
+        raise Exception("trapezoidal profile has been defined before `Main()`")
+    if len(Main.sim_length)>0 and xplateau is None: xplateau = Main.sim_length[0]-xvacuum
+    if len(Main.sim_length)>1 and yplateau is None: yplateau = Main.sim_length[1]-yvacuum
+    if len(Main.sim_length)>2 and zplateau is None: zplateau = Main.sim_length[2]-zvacuum
+    def trapeze(max, vacuum, plateau, slope1, slope2):
+        def f(position):
+            # vacuum region
+            if position < vacuum: return 0.
+            # linearly increasing density
+            elif position < vacuum+slope1: return max*(position-vacuum) / slope1
+            # density plateau
+            elif position < vacuum+slope1+plateau: return max
+            # linearly decreasing density
+            elif position < vacuum+slope1+plateau+slope2:
+                return max*(1. - ( position - (vacuum+slope1+plateau) ) / slope2)
+            # beyond the plasma
+            else: return 0.0
+        return f
+    if   Main.geometry == "1d3v": dim = 1
+    elif Main.geometry == "2d3v": dim = 2
+    elif Main.geometry == "3d3v": dim = 3
+    fx = trapeze(max, xvacuum, xplateau, xslope1, xslope2)
+    f = fx
+    if dim > 1:
+        fy = trapeze(1. , yvacuum, yplateau, yslope1, yslope2)
+        f = lambda x,y: fx(x)*fy(y)
+    if dim > 2:
+        fz = trapeze(1. , zvacuum, zplateau, zslope1, zslope2)
+        f = lambda x,y,z: fx(x)*fy(y)*fz(z)
+    f.profileName = "trapezoidal"
+    f.value    = max
+    f.xvacuum  = xvacuum
+    f.xplateau = xplateau
+    f.xslope1  = xslope1
+    f.xslope2  = xslope2
+    if dim > 1:
+        f.yvacuum  = yvacuum
+        f.yplateau = yplateau
+        f.yslope1  = yslope1
+        f.yslope2  = yslope2
+    if dim > 2:
+        f.zvacuum  = zvacuum
+        f.zplateau = zplateau
+        f.zslope1  = zslope1
+        f.zslope2  = zslope2
+    return f
 
 def gaussian(max,
-             xvacuum=0., xlength=None, xfwhm=None, xcenter=None, xorder=2,
-             yvacuum=0., ylength=None, yfwhm=None, ycenter=None, yorder=2 ):
+             xvacuum=0., xlength=float("inf"), xfwhm=None, xcenter=None, xorder=2,
+             yvacuum=0., ylength=float("inf"), yfwhm=None, ycenter=None, yorder=2,
+             zvacuum=0., zlength=float("inf"), zfwhm=None, zcenter=None, zorder=2 ):
     import math
-    global dim, sim_length
-    if not dim or not sim_length:
-        raise Exception("gaussian profile has been defined before `dim` or `sim_length`")
-    if len(sim_length)>0:
-        if xlength is None: xlength = sim_length[0]-xvacuum
-        if xfwhm   is None: xfwhm   = xlength/3.
-        if xcenter is None: xcenter = xvacuum + xlength/2.
-    if len(sim_length)>1: 
-        if ylength is None:ylength = sim_length[1]-yvacuum
-        if yfwhm   is None:yfwhm   = ylength/3.
-        if ycenter is None:ycenter = yvacuum + ylength/2.
-    sigmax = (0.5*xfwhm)**xorder/math.log(2.0)
-    def fx(x):
-        # vacuum region
-        if x < xvacuum: return 0.
-        # gaussian
-        elif x < xvacuum+xlength: return max*math.exp( -(x-xcenter)**xorder / sigmax )
-        # beyond
-        else: return 0.0
-    if dim == "1d3v": return fx
-    sigmay = (0.5*yfwhm)**yorder/math.log(2.0)
-    def fy(y):
-        if yorder == 0: return 1.
-        # vacuum region
-        if y < yvacuum: return 0.
-        # gaussian
-        elif y < yvacuum+ylength: return math.exp( -(y-ycenter)**yorder / sigmay )
-        # beyond
-        else: return 0.0
-    if dim == "2d3v": return lambda x,y: fx(x)*fy(y)
+    global Main
+    if len(Main)==0:
+        raise Exception("gaussian profile has been defined before `Main()`")
+    if len(Main.sim_length)>0:
+        if xlength is None: xlength = Main.sim_length[0]-xvacuum
+        if xfwhm   is None: xfwhm   = (Main.sim_length[0]-xvacuum)/3.
+        if xcenter is None: xcenter = xvacuum + (Main.sim_length[0]-xvacuum)/2.
+    if len(Main.sim_length)>1: 
+        if ylength is None: ylength = Main.sim_length[1]-yvacuum
+        if yfwhm   is None: yfwhm   = (Main.sim_length[1]-yvacuum)/3.
+        if ycenter is None: ycenter = yvacuum + (Main.sim_length[1]-yvacuum)/2.
+    if len(Main.sim_length)>2: 
+        if zlength is None: zlength = Main.sim_length[2]-zvacuum
+        if zfwhm   is None: zfwhm   = (Main.sim_length[2]-zvacuum)/3.
+        if zcenter is None: zcenter = zvacuum + (Main.sim_length[2]-zvacuum)/2.
+    def gauss(max, vacuum, length, sigma, center, order):
+        def f(position):
+            if order == 0: return max
+            # vacuum region
+            if position < vacuum: return 0.
+            # gaussian
+            elif position < vacuum+length: return max*math.exp( -(position-center)**order / sigma )
+            # beyond
+            else: return 0.0
+        return f
+    if Main.geometry == "1d3v": dim = 1
+    if Main.geometry == "2d3v": dim = 2
+    if Main.geometry == "3d3v": dim = 3
+    xsigma = (0.5*xfwhm)**xorder/math.log(2.0)
+    fx = gauss(max, xvacuum, xlength, xsigma, xcenter, xorder)
+    f = fx
+    if dim > 1:
+        ysigma = (0.5*yfwhm)**yorder/math.log(2.0)
+        fy = gauss(1., yvacuum, ylength, ysigma, ycenter, yorder)
+        f = lambda x,y: fx(x)*fy(y)
+    if dim > 2:
+        zsigma = (0.5*zfwhm)**zorder/math.log(2.0)
+        fz = gauss(1., zvacuum, zlength, zsigma, zcenter, zorder)
+        f = lambda x,y,z: fx(x)*fy(y)*fz(z)
+    f.profileName = "gaussian"
+    f.value   = max
+    f.xvacuum = xvacuum
+    f.xlength = xlength
+    f.xsigma  = xsigma
+    f.xcenter = xcenter
+    f.xorder  = xorder
+    if dim > 1:
+        f.yvacuum = yvacuum
+        f.ylength = ylength
+        f.ysigma  = ysigma
+        f.ycenter = ycenter
+        f.yorder  = yorder
+    if dim > 2:
+        f.zvacuum = zvacuum
+        f.zlength = zlength
+        f.zsigma  = zsigma
+        f.zcenter = zcenter
+        f.zorder  = zorder
+    return f
+
 
 def polygonal(xpoints=[], xvalues=[]):
-    global dim, sim_length
-    if not dim or not sim_length:
-        raise Exception("polygonal profile has been defined before `dim` or `sim_length`")
+    global Main
+    if len(Main)==0:
+        raise Exception("polygonal profile has been defined before `Main()`")
     if len(xpoints)!=len(xvalues):
         raise Exception("polygonal profile requires as many points as values")
-    if len(sim_length)>0 and len(xpoints)==0:
-        xpoints = [0., sim_length[0]]
+    if len(Main.sim_length)>0 and len(xpoints)==0:
+        xpoints = [0., Main.sim_length[0]]
         xvalues = [1., 1.]
     N = len(xpoints)
     xpoints = [float(x) for x in xpoints]
@@ -301,76 +482,204 @@ def polygonal(xpoints=[], xvalues=[]):
         for i in range(1,N):
             if x<xpoints[i]: return xvalues[i-1] + xslopes[i-1] * ( x-xpoints[i-1] )
         return 0.
+    f.profileName = "polygonal"
+    f.xpoints = xpoints
+    f.xvalues = xvalues
+    f.xslopes = xslopes
     return f
 
 def cosine(base,
-           xamplitude=1., xvacuum=0., xlength=None, xphi=0., xnumber=1,
-           yamplitude=1., yvacuum=0., ylength=None, yphi=0., ynumber=1):
+           xamplitude=1., xvacuum=0., xlength=None, xphi=0., xnumber=2,
+           yamplitude=1., yvacuum=0., ylength=None, yphi=0., ynumber=2,
+           zamplitude=1., zvacuum=0., zlength=None, zphi=0., znumber=2):
     import math
-    global dim, sim_length
-    if not dim or not sim_length:
-        raise Exception("cosine profile has been defined before `dim` or `sim_length`")
+    global Main
+    if len(Main)==0:
+        raise Exception("cosine profile has been defined before `Main()`")
     
-    if len(sim_length)>0 and xlength is None: xlength = sim_length[0]-xvacuum
-    if len(sim_length)>1 and ylength is None: ylength = sim_length[1]-yvacuum
+    if len(Main.sim_length)>0 and xlength is None: xlength = Main.sim_length[0]-xvacuum
+    if len(Main.sim_length)>1 and ylength is None: ylength = Main.sim_length[1]-yvacuum
+    if len(Main.sim_length)>2 and zlength is None: zlength = Main.sim_length[2]-zvacuum
     
-    def fx(x):
-        #vacuum region
-        if x < xvacuum: return 0.
-        # profile region
-        elif x < xvacuum+xlength:
-            return base + xamplitude * math.cos(xphi + 2.*math.pi * xnumber * (x-xvacuum)/xlength)
-        # beyond
-        else: return 0.
-    if dim == "1d3v": return fx
-    def fy(y):
-        #vacuum region
-        if y < yvacuum: return 0.
-        # profile region
-        elif y < yvacuum+ylength:
-            return base + yamplitude * math.cos(yyphi + 2.*math.pi * ynumber * (y-yvacuum)/ylength)
-        # beyond
-        else: return 0.
+    def cos(base, amplitude, vacuum, length, phi, number):
+        def f(position):
+            #vacuum region
+            if position < vacuum: return 0.
+            # profile region
+            elif position < vacuum+length:
+                return base + amplitude * math.cos(phi + 2.*math.pi * number * (position-vacuum)/length)
+            # beyond
+            else: return 0.
+        return f
+    if Main.geometry == "1d3v": dim = 1
+    if Main.geometry == "2d3v": dim = 2
+    if Main.geometry == "3d3v": dim = 3
+    fx = cos(base, xamplitude, xvacuum, xlength, xphi, xnumber)
+    f = fx
+    if dim > 1:
+        fy = cos(base, yamplitude, yvacuum, ylength, yphi, ynumber)
+        f = lambda x,y: fx(x)*fy(y)
+    if dim > 2:
+        fz = cos(base, zamplitude, zvacuum, zlength, zphi, znumber)
+        f = lambda x,y,z: fx(x)*fy(y)*fz(z)
+    f.profileName = "cosine"
+    f.base        = base
+    f.xamplitude  = xamplitude
+    f.xvacuum     = xvacuum
+    f.xlength     = xlength
+    f.xphi        = xphi
+    f.xnumber     = float(xnumber)
+    if dim > 1:
+        f.yamplitude  = yamplitude
+        f.yvacuum     = yvacuum
+        f.ylength     = ylength
+        f.yphi        = yphi
+        f.ynumber     = float(ynumber)
+    if dim > 2:
+        f.zamplitude  = zamplitude
+        f.zvacuum     = zvacuum
+        f.zlength     = zlength
+        f.zphi        = zphi
+        f.znumber     = float(znumber)
+    return f
 
-    if dim == "2d3v": return lambda x,y: fx(x)*fy(y)
+def polynomial(**kwargs):
+    global Main
+    if len(Main)==0:
+        raise Exception("polynomial profile has been defined before `Main()`")
+    x0 = 0.
+    y0 = 0.
+    z0 = 0.
+    coeffs = dict()
+    for k, a in kwargs.items():
+        if   k=="x0":
+            x0 = a
+        elif k=="y0":
+            y0 = a
+        elif k[:5]=="order":
+            if type(a) is not list: a = [a]
+            order = int(k[5:])
+            coeffs[ order ] = a
+            if Main.geometry=="1d3v":
+                if len(a)!=1:
+                    raise Exception("1D polynomial profile must have one coefficient at order "+str(order))
+            elif Main.geometry=="2d3v":
+                if len(a)!=order+1:
+                    raise Exception("2D polynomial profile must have "+str(order+1)+" coefficients at order "+str(order))
+            elif Main.geometry=="3d3v":
+                if len(a)!=(order+1)*(order+2)/2:
+                    raise Exception("3D polynomial profile must have "+str((order+1)*(order+2)/2)+" coefficients at order "+str(order))
+    if Main.geometry=="1d3v":
+        def f(x):
+            r = 0.
+            xx0 = x-x0
+            xx = 1.
+            currentOrder = 0
+            for order, c in sorted(coeffs.items()):
+                while currentOrder<order:
+                    currentOrder += 1
+                    xx *= xx0
+                r += c[0] * xx
+            return r
+    elif Main.geometry=="2d3v":
+        def f(x,y):
+            r = 0.
+            xx0 = x-x0
+            yy0 = y-y0
+            xx = [1.]
+            currentOrder = 0
+            for order, c in sorted(coeffs.items()):
+                while currentOrder<order:
+                    currentOrder += 1
+                    yy = xx[-1]*yy0
+                    xx = [ xxx * xx0 for xxx in xx ] . append(yy)
+                for i in range(order+1): r += c[i]*xx[i]
+            return r
+    elif Main.geometry=="3d3v":
+        def f(x,y,z):
+            r = 0.
+            xx0 = x-x0
+            yy0 = y-y0
+            zz0 = z-z0
+            xx = [1.]
+            currentOrder = 0
+            for order, c in sorted(coeffs.items()):
+                while currentOrder<order:
+                    currentOrder += 1
+                    zz = xx[-1]*zz0
+                    yy = [ xxx * yy0 for xxx in xx[-currentOrder-1:] ] . append(zz)
+                    xx = [ xxx * xx0 for xxx in xx ] . extend(yy)
+                for i in range(order+1): r += c[i]*xx[i]
+            return r
+    else:
+        raise Exception("polynomial profiles are not available in this geometry yet")
+    f.profileName = "polynomial"
+    f.x0 = x0
+    f.y0 = y0
+    f.z0 = z0
+    f.orders = []
+    f.coeffs = []
+    for order, c in sorted(coeffs.items()):
+        f.orders.append( order )
+        f.coeffs.append( c     )
+    return f
+
+
 
 def tconstant(start=0.):
-    return lambda t: 1. if t>=start else 0.
+    def f(t):
+        return 1. if t>=start else 0.
+    f.profileName = "tconstant"
+    f.start       = start
+    return f
+tconstant._reserved = True
 
 def ttrapezoidal(start=0., plateau=None, slope1=0., slope2=0.):
-    global sim_time
-    if not sim_time:
-        raise Exception("ttrapezoidal profile has been defined before `sim_time`")
-    if plateau is None: plateau = sim_time - start
-    def ft(t):
+    global Main
+    if len(Main)==0:
+        raise Exception("ttrapezoidal profile has been defined before `Main()`")
+    if plateau is None: plateau = Main.sim_time - start
+    def f(t):
         if t < start: return 0.
         elif t < start+slope1: return (t-start) / slope1
         elif t < start+slope1+plateau: return 1.
         elif t < start+slope1+plateau+slope2:
             return 1. - ( t - (start+slope1+slope2) ) / slope2
         else: return 0.0
-    return ft
+    f.profileName = "ttrapezoidal"
+    f.start       = start
+    f.plateau     = plateau
+    f.slope1      = slope1
+    f.slope2      = slope2
+    return f
 
 def tgaussian(start=0., duration=None, fwhm=None, center=None, order=2):
     import math
-    global sim_time
-    if not sim_time:
-        raise Exception("tgaussian profile has been defined before `sim_time`")
-    if duration is None: duration = sim_time-start
-    if fwhm     is None: fwhm     = duration/3.
-    if center   is None: center   = start + duration/2.
+    global Main
+    if len(Main)==0:
+        raise Exception("tgaussian profile has been defined before `Main()`")
+    if duration is None: duration = Main.sim_time-start
+    if fwhm     is None: fwhm     = (Main.sim_time-start)/3.
+    if center   is None: center   = start + (Main.sim_time-start)/2.
     sigma = (0.5*fwhm)**order/math.log(2.0)
-    def ft(t):
+    def f(t):
         if t < start: return 0.
         elif t < start+duration: return math.exp( -(t-center)**order / sigma )
         else: return 0.0
+    f.profileName = "tgaussian"
+    f.start       = start
+    f.duration    = duration
+    f.sigma       = sigma
+    f.center      = center
+    f.order       = order
+    return f
 
 def tpolygonal(points=[], values=[]):
-    global sim_time
-    if not sim_time:
-        raise Exception("tpolygonal profile has been defined before `sim_time`")
+    global Main
+    if len(Main)==0:
+        raise Exception("tpolygonal profile has been defined before `Main()`")
     if len(points)==0:
-        points = [0., sim_time]
+        points = [0., Main.sim_time]
         values = [1., 1.]
     N = len(points)
     points = [float(x) for x in points]
@@ -384,236 +693,387 @@ def tpolygonal(points=[], values=[]):
         for i in range(1,N):
             if t<points[i]: return values[i-1] + slopes[i-1] * ( t-points[i-1] )
         return 0.
+    f.profileName = "tpolygonal"
+    f.points      = points
+    f.values      = values
+    f.slopes      = slopes
     return f
 
 def tcosine(base=0., amplitude=1., start=0., duration=None, phi=0., freq=1.):
     import math
-    global sim_time
-    if not sim_time:
-        raise Exception("tcosine profile has been defined before `sim_time`")
-    if duration is None: duration = sim_time-start
+    global Main
+    if len(Main)==0:
+        raise Exception("tcosine profile has been defined before `Main()`")
+    if duration is None: duration = Main.sim_time-start
     def f(t):
         if t < start: return 0.
         elif t < start+duration:
             return base + amplitude * math.cos(phi + freq*(t-start))
         else: return 0.
+    f.profileName = "tcosine"
+    f.base        = base
+    f.amplitude   = amplitude
+    f.start       = start
+    f.duration    = duration
+    f.phi         = phi
+    f.freq        = freq
     return f
-############### BEGIN USER NAMELISTS/COMMANDS ###############
-# ----------------------------------------------------------------------------------------
-# 					SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
-# ----------------------------------------------------------------------------------------
-#
-# CAUTION:  never override the following names:
-#           SmileiComponent, Species, Laser, Collisions, DiagProbe, DiagParticles,
-#           DiagScalar, DiagPhase or ExtField
-#
 
-# MY PYTHON VARIABLES
-# here are defined some useful python variables
-# 
+def tpolynomial(**kwargs):
+    t0 = 0.
+    coeffs = dict()
+    for k, a in kwargs.items():
+        if   k=="t0":
+            t0 = a
+        elif k[:5]=="order":
+            order = int(k[5:])
+            try: coeffs[ order ] = a*1.
+            except: raise Exception("tpolynomial profile must have one coefficient per order")
+    def f(t):
+        r = 0.
+        tt0 = t-t0
+        tt = 1.
+        currentOrder = 0
+        for order, c in sorted(coeffs.items()):
+            while currentOrder<order:
+                currentOrder += 1
+                tt *= tt0
+            r += c * tt
+        return r
+    f.profileName = "tpolynomial"
+    f.t0 = t0
+    f.orders = []
+    f.coeffs = []
+    for order, c in sorted(coeffs.items()):
+        f.orders.append( order )
+        f.coeffs.append( c     )
+    return f
+
+
+def transformPolarization(polarizationPhi, ellipticity):
+    import math
+    p = (1.-ellipticity**2)*math.sin(2.*polarizationPhi)/2.
+    if abs(p) < 1e-10:
+        if abs(ellipticity**2-1.)<1e-10: polarizationPhi=0.
+        dephasing = math.pi/2.
+        amplitude = math.sqrt(1./(1.+ellipticity**2))
+        amplitudeY = amplitude * (math.cos(polarizationPhi)+math.sin(polarizationPhi)*ellipticity)
+        amplitudeZ = amplitude * (math.sin(polarizationPhi)+math.cos(polarizationPhi)*ellipticity)
+    else:
+        dephasing = math.atan(ellipticity/p)
+        theta = 0.5 * math.atan( math.tan(2.*polarizationPhi) / math.cos(dephasing) )
+        while theta<0.: theta += math.pi/2.
+        amplitudeY = math.sqrt(2.) * math.cos(theta)
+        amplitudeZ = math.sqrt(2.) * math.sin(theta)
+    return [dephasing, amplitudeY, amplitudeZ]
+
+
+def LaserPlanar1D( boxSide="xmin", a0=1., omega=1.,
+        polarizationPhi=0., ellipticity=0., time_envelope=tconstant()):
+    import math
+    # Polarization and amplitude
+    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarizationPhi, ellipticity)
+    amplitudeY *= a0
+    amplitudeZ *= a0
+    # Create Laser
+    Laser(
+        boxSide        = boxSide,
+        omega          = omega,
+        chirp_profile  = tconstant(),
+        time_envelope  = time_envelope,
+        space_envelope = [ amplitudeZ, amplitudeY ],
+        phase          = [ dephasing, 0. ],
+    )
+
+
+
+def LaserGaussian2D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=0.,
+        polarizationPhi=0., ellipticity=0., time_envelope=tconstant()):
+    import math
+    # Polarization and amplitude
+    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarizationPhi, ellipticity)
+    amplitudeY *= a0
+    amplitudeZ *= a0
+    # Space and phase envelopes
+    Zr = omega * waist**2/2.
+    phaseZero = 0.
+    if incidence_angle == 0.:
+        Y1 = focus[1]
+        w  = math.sqrt(1./(1.+(focus[0]/Zr)**2))
+        invWaist2 = (w/waist)**2
+        coeff = -omega * focus[0] * w**2 / (2.*Zr**2)
+        def spatial(y):
+            return w * math.exp( -invWaist2*(y-focus[1])**2 )
+        def phase(y):
+            return coeff * (y-focus[1])**2
+    else:
+        invZr  = math.sin(incidence_angle) / Zr
+        invZr2 = invZr**2
+        invZr3 = (math.cos(incidence_angle) / Zr)**2 / 2.
+        invWaist2 = (math.cos(incidence_angle) / waist)**2
+        omega_ = omega * math.sin(incidence_angle)
+        Y1 = focus[1] + focus[0]/math.tan(incidence_angle)
+        Y2 = focus[1] - focus[0]*math.tan(incidence_angle)
+        def spatial(y):
+            w2 = 1./(1. + invZr2*(y-Y1)**2)
+            return math.sqrt(w2) * math.exp( -invWaist2*w2*(y-Y2)**2 )
+        def phase(y):
+            dy = y-Y1
+            return omega_*dy*(1.+ invZr3*(y-Y2)**2/(1.+invZr2*dy**2)) + math.atan(invZr*dy)
+        phaseZero = phase(Y2)
+    # Create Laser
+    Laser(
+        boxSide        = boxSide,
+        omega          = omega,
+        chirp_profile  = tconstant(),
+        time_envelope  = time_envelope,
+        space_envelope = [ lambda y:amplitudeZ*spatial(y), lambda y:amplitudeY*spatial(y) ],
+        phase          = [ lambda y:phase(y)-phaseZero+dephasing, lambda y:phase(y)-phaseZero ],
+    )
+
+def LaserGaussian3D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=[0.,0.],
+        polarizationPhi=0., ellipticity=0., time_envelope=tconstant()):
+    import math
+    # Polarization and amplitude
+    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarizationPhi, ellipticity)
+    amplitudeY *= a0
+    amplitudeZ *= a0
+    # Space and phase envelopes
+    Zr = omega * waist**2/2.
+    phaseZero = 0.
+    if incidence_angle == [0.,0.]:
+        w  = math.sqrt(1./(1.+(focus[0]/Zr)**2))
+        invWaist2 = (w/waist)**2
+        coeff = -omega * focus[0] * w**2 / (2.*Zr**2)
+        def spatial(y,z):
+            return w * math.exp( -invWaist2*((y-focus[1])**2 + (z-focus[2])**2 )  )
+        def phase(y,z):
+            return coeff * ( (y-focus[1])**2 + (z-focus[2])**2 )
+    else:
+        invZr = 1./Zr
+        invW  = 1./waist
+        alpha = omega * Zr
+        cy = math.cos(incidence_angle[0]); sy = math.sin(incidence_angle[0])
+        cz = math.cos(incidence_angle[1]); sz = math.sin(incidence_angle[1])
+        cycz = cy*cz; cysz = cy*sz; sycz = sy*cz; sysz = sy*sz
+        def spatial(y,z):
+            X = invZr * (-focus[0]*cycz + (y-focus[1])*cysz - (z-focus[2])*sy )
+            Y = invW  * ( focus[0]*sz   + (y-focus[1])*cz                     )
+            Z = invW  * (-focus[0]*sycz + (y-focus[1])*sysz + (z-focus[2])*cy )
+            invW2 = 1./(1.+X**2)
+            return math.sqrt(invW2) * math.exp(-(Y**2+Z**2)*invW2)
+        def phase(y,z):
+            X = invZr * (-focus[0]*cycz + (y-focus[1])*cysz - (z-focus[2])*sy )
+            Y = invZr * ( focus[0]*sz   + (y-focus[1])*cz                     )
+            Z = invZr * (-focus[0]*sycz + (y-focus[1])*sysz + (z-focus[2])*cy )
+            return alpha * X*(1.+0.5*(Y**2+Z**2)/(1.+X**2)) - math.atan(X)
+        phaseZero = phase(focus[1]-sz/cz*focus[0], focus[2]+sy/cy/cz*focus[0])
+        
+    # Create Laser
+    Laser(
+        boxSide        = boxSide,
+        omega          = omega,
+        chirp_profile  = tconstant(),
+        time_envelope  = time_envelope,
+        space_envelope = [ lambda y,z:amplitudeZ*spatial(y,z), lambda y,z:amplitudeY*spatial(y,z) ],
+        phase          = [ lambda y,z:phase(y,z)-phaseZero+dephasing, lambda y,z:phase(y,z)-phaseZero ],
+    )
+
+"""
+-----------------------------------------------------------------------
+    BEGINNING OF THE USER NAMELIST
+"""
 import math
-L  = 1.03			# wavelength=simulation box length
-dn = 0.001			# amplitude of the perturbation
 
+L0 = 2.*math.pi # Wavelength in PIC units
 
+Main(
+	geometry = "1d3v",
+	
+	interpolation_order = 2,
+	
+	timestep = 0.005 * L0,
+	sim_time  = 0.5 * L0,
+	
+	cell_length = [0.01 * L0],
+	sim_length  = [1. * L0],
+	
+	number_of_patches = [ 4 ],
+	
+	bc_em_type_x  = ["periodic"],
+	
+	referenceAngularFrequency_SI = L0 * 3e8 /1.e-6,
+	
+	print_every = 10
+)
 
-# wavelength_SI: used by Fred Diags. (MG: should be removed at some point)
-#
-wavelength_SI = 1.e-6
-
-# dim: Geometry of the simulation
-#      1d3v = cartesian grid with 1d in space + 3d in velocity
-#      2d3v = cartesian grid with 2d in space + 3d in velocity
-#      3d3v = cartesian grid with 3d in space + 3d in velocity
-#      2drz = cylindrical (r,z) grid with 3d3v particles
-#
-dim = '1d3v'
- 
-# order of interpolation
-#
-interpolation_order = 2
- 
-# SIMULATION BOX : for all space directions (use vector)
-# cell_length: length of the cell
-# sim_length: length of the simulation in units of the normalization wavelength 
-#
-cell_length = [0.01]
-sim_length  = [L]
-
-# SIMULATION TIME
-# timestep: duration of the timestep
-# sim_time: duration of the simulation in units of the normalization period 
-#
-timestep = 0.0095
-sim_time = 50.
- 
-# ELECTROMAGNETIC BOUNDARY CONDITIONS
-# bc_em_type_x/y/z : boundary conditions used for EM fields 
-#                    periodic = periodic BC (using MPI topology)
-#                    silver-muller = injecting/absorbing BC
-#                    reflective = consider the ghost-cells as a perfect conductor
-#
-bc_em_type_x = ['periodic']
- 
-# RANDOM seed 
-# this is used to randomize the random number generator
-#
-random_seed = 0
-
-
-# DEFINE ALL SPECIES
-# species_type       = string, given name to the species (e.g. ion, electron, positron, test ...)
-# initPosition_type  = string, "regular" or "random"
-# initMomentum_type  = string "cold", "maxwell-juettner" or "rectangular"
-# c_part_max         = float, factor on the memory reserved for the total number of particles
-# mass               = float, particle mass in units of the electron mass
-# dynamics_type      = string, type of species dynamics = "norm" or "rrLL"
-# time_frozen        = float, time during which particles are frozen in units of the normalization time
-# radiating          = boolean, if true, incoherent radiation calculated using the Larmor formula 
-# n_part_per_cell    = integer or function, number of particles/cell
-# charge             = float or function, particle charge in units of the electron charge
-# charge_density     = float or function, species charge density in units of the "critical" density
-#     or nb_density for number density
-# mean_velocity      = list of floats or functions, mean velocity in units of the speed of light
-# temperature        = list of floats or functions, temperature in units of m_e c^2
-# Predefined functions: constant, trapezoidal, gaussian, polygonal, cosine
-#
+# Ion species
 Species(
-	species_type = "ion",
-	initPosition_type = "regular",
-	initMomentum_type = "cold",
-	n_part_per_cell = 10,
+	species_type = "ion1",
+	initPosition_type = "random",
+	initMomentum_type = "maxwell-juettner",
+	n_part_per_cell = 2000,
 	mass = 1836.0,
 	charge = 1.0,
-	nb_density = 1.,
-	time_frozen = 10000.0,
+	nb_density = 10.,
+	temperature = [0.00002],
+	time_frozen = 0.0,
 	bc_part_type_xmin = "none",
 	bc_part_type_xmax = "none"
 )
+
+# Electron species
 Species(
-	species_type = "eon1",
-	initPosition_type = "regular",
-	initMomentum_type = "cold",
-	n_part_per_cell = 10,
+	species_type = "electron1",
+	initPosition_type = "random",
+	initMomentum_type = "maxwell-juettner",
+	n_part_per_cell= 2000,
 	mass = 1.0,
 	charge = -1.0,
-	nb_density = cosine(0.5,xamplitude=dn,xlength=L),
-	mean_velocity = [-0.1,0.0,0.0],
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
-)
-Species(
-	species_type = "eon2",
-	initPosition_type = "regular",
-	initMomentum_type = "cold",
-	n_part_per_cell = 10,
-	mass = 1.0,
-	charge = -1.0,
-	nb_density = cosine(0.5,xamplitude=dn,xlength=L),
-	mean_velocity = [0.1,0.0,0.0],
+	nb_density = 10.,
+	mean_velocity = [0.05, 0., 0.],
+	temperature = [0.00002],
+	time_frozen = 0.0,
 	bc_part_type_xmin = "none",
 	bc_part_type_xmax = "none"
 )
 
 
-# ---------------------
-# DIAGNOSTIC PARAMETERS
-# ---------------------
-
-#every = 1000000000000
-every = 100
-
-# SCALAR DIAGNOSTICS
-# every       = integer, nb of timesteps between each output
-# tmin & tmax = floats, min & max times between which scalars are computed (optional)
-# precision   = integer, nb of digits for the outputs (default=10)
-DiagScalar(every = every, vars=['Utot','Ubal_norm','Uelm','Ukin'])	
 
 
-# FIELD DUMPS
-# fieldDump_every = integer, nb of timesteps between each output
-# fieldsToDump    = ('string'), name of the fields to dump
-fieldDump_every = every
-fieldsToDump = ('Ex','Ey','Ez','By_m','Bz_m');
-
-
-# PHASE-SPACE DIAGNOSTICS (older version working with TPUPMC/SmileiQt.py)
-# kind of projection: 1D) xPx xPy xPz xLor PxPy PxPz PyPz
-# kind of projection: 2D) xPx xPy xPz xLor yPx yPy yPz yLor PxPy PxPz PyPz
-#
-DiagPhase(
-	every	= every,
- 	species = ['eon1','eon2'],
- 	kind    = ['xpx'],
- 	first = [0., 0., 50],
- 	second = [-0.4, 0.4, 100],
- 	deflate=5
+DiagScalar(
+	every = 1,
+	vars = ['Utot','Ubal','Ukin']
 )
 
-# PHASE-SPACE DIAGNOSTICS (new version from DiagParticles)
+DiagFields(
+	every = 5,
+	fields = ['Ex','Ey','Ez','Rho_electron1','Rho_ion1']
+)
+
+
 DiagParticles(
 	output = "density",
-	every = every,
-	species = ["eon1","eon2"],
+	every = 4,
+	time_average = 2,
+	species = ["electron1"],
 	axes = [
-		["x", 0., L, 50],
-		["px", -0.4, 0.4, 100]
+		["x", 0.*L0, 1.*L0, 100],
+		["vx", -0.1, 0.1, 100]
 	]
 )
 
-################ END USER NAMELISTS/COMMANDS  ################
-"""@package pycontrol
-    here we check if the namelist is clean and without errors
+DiagParticles(
+	output = "density",
+	every = 4,
+	time_average = 1,
+	species = ["ion1"],
+	axes = [
+		("x", 0.*L0, 1.*L0, 100),
+		("vx", -0.001, 0.001, 100)
+	]
+)
+
+DiagParticles(
+	output = "px_density",
+	every = 4,
+	time_average = 2,
+	species = ["electron1"],
+	axes = [
+		["x", 0.*L0, 1.*L0, 100],
+		["vx", -0.1, 0.1, 100]
+	]
+)
+
+DiagParticles(
+	output = "density",
+	every = 1,
+	time_average = 1,
+	species = ["electron1"],
+	axes = [
+		["ekin", 0.0001, 0.1, 100, "logscale", "edge_inclusive"]
+	]
+)
+
+
+"""
+    END OF THE USER NAMELIST
+-----------------------------------------------------------------------
 """
 
-import gc 
 gc.collect()
-
-import os
 
 def _smilei_check():
     """Do checks over the script"""
     # Verify classes were not overriden
-    for CheckClassName,CheckClass in {"SmileiComponent":SmileiComponent,"Species":Species,
-            "Laser":Laser,"Collisions":Collisions,"DiagProbe":DiagProbe,"DiagParticles":DiagParticles,
-            "DiagScalar":DiagScalar,"DiagPhase":DiagPhase,"ExtField":ExtField}.iteritems():
+    for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
+            "DiagProbe","DiagParticles", "DiagScalar","DiagFields","ExtField",
+            "SmileiSingleton","Main","DumpRestart","LoadBalancing","MovingWindow"]:
+        CheckClass = globals()[CheckClassName]
         try:
-            if not CheckClass.verify: raise
+            if not CheckClass._verify: raise Exception("")
         except:
             raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
-
-    if smilei_mpi_rank == 0 and output_dir:
-        if not os.path.exists(output_dir):
+    # Verify the output_dir
+    if smilei_mpi_rank == 0 and Main.output_dir:
+        if not os.path.exists(Main.output_dir):
             try:
-                os.makedirs(output_dir)
-            except OSError as exception:
-                raise Exception("ERROR in the namelist: output_dir "+output_dir+" does not exists and cannot be created")
-        elif not os.path.isdir(output_dir):
-                raise Exception("ERROR in the namelist: output_dir "+output_dir+" exists and is not a dir")
-
-    if restart and restart_dir:
-        if not os.path.isdir(restart_dir):
-            raise Exception("ERROR in the namelist: restart_dir "+restart_dir+" is not a dir")
-
-
+                os.makedirs(Main.output_dir)
+            except:
+                raise Exception("ERROR in the namelist: output_dir "+Main.output_dir+" does not exists and cannot be created")
+        elif not os.path.isdir(Main.output_dir):
+                raise Exception("ERROR in the namelist: output_dir "+Main.output_dir+" exists and is not a directory")
+    # Verify the restart_dir
+    if len(DumpRestart)==1 and DumpRestart.restart_dir:
+        if not os.path.isdir(DumpRestart.restart_dir):
+            raise Exception("ERROR in the namelist: restart_dir = `"+DumpRestart.restart_dir+"` is not a directory")
+    # Verify that constant() and tconstant() were not redefined
+    if not hasattr(constant, "_reserved") or not hasattr(tconstant, "_reserved"):
+        raise Exception("Names `constant` and `tconstant` cannot be overriden")
+    # Convert float profiles to constant() or tconstant()
+    def toSpaceProfile(input):
+        try   : return constant(input*1.)
+        except: return input
+    def toTimeProfile(input):
+        try:
+            input*1.
+            return tconstant()
+        except: return input
+    for s in Species:
+        s.nb_density      = toSpaceProfile(s.nb_density      )
+        s.charge_density  = toSpaceProfile(s.charge_density  )
+        s.n_part_per_cell = toSpaceProfile(s.n_part_per_cell )
+        s.charge          = toSpaceProfile(s.charge          )
+        s.mean_velocity   = [ toSpaceProfile(p) for p in s.mean_velocity ]
+        s.temperature     = [ toSpaceProfile(p) for p in s.temperature   ]
+    for e in ExtField:
+        e.profile         = toSpaceProfile(e.profile         )
+    for a in Antenna:
+        a.space_profile   = toSpaceProfile(a.space_profile   )
+        a.time_profile    = toTimeProfile (a.time_profile    )
+    for l in Laser:
+        l.chirp_profile   = toTimeProfile( l.chirp_profile )
+        l.time_envelope   = toTimeProfile( l.time_envelope )
+        l.space_envelope  = [ toSpaceProfile(p) for p in l.space_envelope ]
+        l.phase           = [ toSpaceProfile(p) for p in l.phase          ]
 
 # this function will be called after initialising the simulation, just before entering the time loop
 # if it returns false, the code will call a Py_Finalize();
 def _keep_python_running():
-    for las in Laser:
-        for prof in (las.time_profile, las.transv_profile):
-            if callable(prof): return True
-    for ant in Antenna:
-        if callable(ant.time_profile): return True
-
-    if not nspace_win_x == 0:
-        return True
-
+    ps = [[las.time_envelope, las.chirp_profile] for las in Laser]
+    ps += [[ant.time_profile] for ant in Antenna]
+    if len(MovingWindow)>0 or len(LoadBalancing)>0:
+        ps += [[s.nb_density, s.charge_density, s.n_part_per_cell, s.charge] + s.mean_velocity + s.temperature for s in Species]
+    profiles = []
+    for p in ps: profiles += p
+    for prof in profiles:
+        if callable(prof) and not hasattr(prof,"profileName"):
+            return True
     return False
 
 # Prevent creating new components (by mistake)
 def _noNewComponents(cls, *args, **kwargs):
-    print "Please do not create a new "+cls.__name__
+    print("Please do not create a new "+cls.__name__)
     return None
 SmileiComponent.__new__ = staticmethod(_noNewComponents)
 
