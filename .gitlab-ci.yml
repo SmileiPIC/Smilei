@@ -2,7 +2,7 @@ stages:
     - makerun
     - makerun3D
 
-build:
+makerun:
   stage: makerun
   only:
     - CI
@@ -16,7 +16,7 @@ build:
     - python validation.py -b "tst1d_*_*.py" -s all -v
     - python validation.py -b "tst2d_*_*.py" -s all -v
 
-build:
+makerun3D:
   stage: makerun3D
   only:
     - CI
