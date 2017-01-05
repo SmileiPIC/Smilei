@@ -1,19 +1,39 @@
 stages:
-    - makerun
+    - compile
+    - makerun1D
+    - makerun2D
     - makerun3D
 
-makerun:
-  stage: makerun
+compile:
+  stage: compile
   only:
     - CI
   script:
     # Move in test dir
-    - mkdir /sps/gitlab-runner/$CI_BUILD_ID
-    - cp -r $CI_PROJECT_DIR /sps/gitlab-runner/$CI_BUILD_ID
-    - cd /sps/gitlab-runner/$CI_BUILD_ID/smilei/scripts
+    - mkdir /sps/gitlab-runner/$CI_PIPELINE_ID
+    - cp -r $CI_PROJECT_DIR /sps/gitlab-runner/$CI_PIPELINE_ID
+    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/scripts
     # Run checking script
-    #- python validation.py -m 4 -o 12 -b tst2d_4_laser_wake.py -s all -v
+    - python validation.py -c  -v
+
+makerun1D:
+  stage: makerun1D
+  only:
+    - CI
+  script:
+    # Move in test dir
+    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/scripts
+    # Run checking script
     - python validation.py -b "tst1d_*_*.py" -s all -v
+
+makerun2D:
+  stage: makerun2D
+  only:
+    - CI
+  script:
+    # Move in test dir
+    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/scripts
+    # Run checking script
     - python validation.py -b "tst2d_*_*.py" -s all -v
 
 makerun3D:
@@ -22,7 +42,7 @@ makerun3D:
     - CI
   script:
     # Move in test dir
-    - cd /sps/gitlab-runner/$CI_BUILD_ID/smilei/scripts
+    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/scripts
     # Run checking script
     - python validation.py -b "tst3d_*_*.py" -s all -m 8 -o 12 -v
 

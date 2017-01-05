@@ -131,17 +131,19 @@ OPT_PRECISION = False
 VERBOSE = False
 VALID_ALL = False
 BENCH=""
+COMPILE_ONLY = False
 #
 # FUNCTION FOR PARSING OPTIONS
 def usage():
     print 'Usage: validation.py [-o <nb_OMPThreads> -m <nb_MPIProcs> -b <bench_case> -s <scalar> -p <precision> '
 try:
-  options, remainder = getopt.getopt(sys.argv[1:], 'o:m:b:s:p:t:hva', ['OMP=', 
+  options, remainder = getopt.getopt(sys.argv[1:], 'o:m:b:s:p:t:hvac', ['OMP=', 
                                                           'MPI='
                                                           'BENCH='
                                                           'SCALAR='
                                                           'PRECISION='
                                                           'TIMESTEP='
+                                                          'COMPILE_ONLY='
                                                           'HELP='
                                                           'VERBOSE='
                                                           'ALL='
@@ -247,6 +249,8 @@ for opt, arg in options:
     elif opt in ('-t', '--TIMESTEP'):
         TIMESTEP = arg
         OPT_TIMESTEP=True
+    elif opt in ('-c', '--COMPILEONLY'):
+        COMPILE_ONLY=True
     elif opt in ('-h', '--HELP'):
         print "-s"
         print "     -s scalar_name"
@@ -280,6 +284,9 @@ for opt, arg in options:
         print "     -m mpi_procs"
         print "       mpi_procs : number of MPI processus used for the execution of smilei (option -e must be present)"
         print "     DEFAULT : 2"  
+        print "-c"
+        print "     This option allows to validate compilation only"
+        print "     DEFAULT : not set"
         print "-v"
         print "     This option allows to print the messages on standard output"
         exit()
@@ -398,6 +405,15 @@ try :
     shutil.copy2(SMILEI_R,SMILEI_W)
     if STAT_SMILEI_R_OLD != os.stat(SMILEI_R):
       os.rename('compilation_out_temp',WORKDIRS+'/'+COMPILE_OUT)
+    if COMPILE_ONLY :
+      if VERBOSE:
+        print  "Smilei validation succeed."
+      exit(0)
+  else: 
+    if COMPILE_ONLY :
+      if VERBOSE:
+        print  "Smilei validation not needed."
+    exit(0)
 except CalledProcessError,e:
 # if compiling errors, archive the workdir (if it contains a smilei bin), create a new one with compilation_errors inside and exit with error code
   workdir_archiv(SMILEI_W)
