@@ -413,7 +413,7 @@ try :
     if COMPILE_ONLY :
       if VERBOSE:
         print  "Smilei validation not needed."
-    exit(0)
+      exit(0)
 except CalledProcessError,e:
 # if compiling errors, archive the workdir (if it contains a smilei bin), create a new one with compilation_errors inside and exit with error code
   workdir_archiv(SMILEI_W)
