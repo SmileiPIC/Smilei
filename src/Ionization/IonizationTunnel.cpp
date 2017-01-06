@@ -207,8 +207,6 @@ void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields 
                 toto = newZ;
             }//END while
             
-            if (k_times>=2) std::cout << ">>>>> ktimes="<<k_times<<"   Z="<<Z<<"   newZ="<<toto<<std::endl;
-            
             // final ionization (of last electron)
             if ( ((1.0-Pint_tunnel)>ran_p) && (k_times==atomic_number_-Z-1) ) {
                 k_times++;
