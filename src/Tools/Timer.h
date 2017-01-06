@@ -32,6 +32,7 @@ public:
     
     //! Timer name 
     std::string name_;
+
     //! Accumulated time in current timer
     double time_acc_;
     

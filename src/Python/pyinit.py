@@ -202,11 +202,13 @@ class DumpRestart(SmileiSingleton):
     """Dump and restart parameters"""
     
     restart_dir = None
+    restart_number = None
     dump_step = 0
     dump_minutes = 0.
     dump_file_sequence = 2
     dump_deflate = 0
     exit_after_dump = True
+    file_grouping = None
 
 
 class Species(SmileiComponent):

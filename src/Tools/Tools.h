@@ -100,13 +100,18 @@ if (__i==__rk) {std::cout << "Proc [" << __i << "] " <<__txt << std::endl;} MPI_
 
 #endif // __DEBUG
 
-class Tools {
- public:
-  static void printMemFootPrint(std::string tag);
-};
+//class Tools {
+// public:
+//  static void printMemFootPrint(std::string tag);
+//};
+//
 
 
-
+#if defined(WIN32) || defined(_WIN32)
+#define PATH_SEPARATOR "\\"
+#else
+#define PATH_SEPARATOR "/"
+#endif
 
 
 #endif
