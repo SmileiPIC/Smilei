@@ -180,8 +180,6 @@ void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields 
             Dnom_tunnel[0]=1.0;
             double Pint_tunnel = exp(-IonizRate_tunnel[Z]*dt); // cummulative prob.
             
-            unsigned int toto;
-            
             //multiple ionization loop while Pint_tunnel < ran_p and still partial ionization
             while ((Pint_tunnel < ran_p) and (k_times < atomic_number_-Z-1)) {
                 unsigned int newZ = Z+k_times+1;
@@ -204,7 +202,6 @@ void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields 
                 Pint_tunnel            = Pint_tunnel+Prob;
                 
                 k_times++;
-                toto = newZ;
             }//END while
             
             // final ionization (of last electron)
