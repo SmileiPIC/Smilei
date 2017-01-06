@@ -162,22 +162,25 @@ void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields 
     // --------------------------------
     if (E!=0 && Z!=atomic_number_) {
     
-        // if ionization of the last electron: single ionization
-        // -----------------------------------------------------
         if ( Z == atomic_number_-1) {
+            // if ionization of the last electron: single ionization
+            // -----------------------------------------------------
             if ( ran_p < 1.0 -exp(-IonizRate_tunnel[Z]*dt) ) {
                 k_times        = 1;
             }
             
+        } else {
             // else : multiple ionization can occur in one time-step
             //        partial & final ionization are decoupled (see Nuter Phys. Plasmas)
             // -------------------------------------------------------------------------
-        } else {
+            
             // initialization
             double Mult = 1.0;
             vector<double> Dnom_tunnel(atomic_number_);
             Dnom_tunnel[0]=1.0;
             double Pint_tunnel = exp(-IonizRate_tunnel[Z]*dt); // cummulative prob.
+            
+            unsigned int toto;
             
             //multiple ionization loop while Pint_tunnel < ran_p and still partial ionization
             while ((Pint_tunnel < ran_p) and (k_times < atomic_number_-Z-1)) {
@@ -185,8 +188,8 @@ void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields 
                 double Prob  = 0.0;
                 delta = gamma_tunnel[newZ] / E;
                 IonizRate_tunnel[newZ] = beta_tunnel[newZ]
-                                         *                        pow(delta,alpha_tunnel[newZ])
-                                         *                        exp(-delta*one_third);
+                *                        pow(delta,alpha_tunnel[newZ])
+                *                        exp(-delta*one_third);
                 double D_sum = 0.0;
                 double P_sum = 0.0;
                 Mult  *= IonizRate_tunnel[Z+k_times];
@@ -201,7 +204,10 @@ void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields 
                 Pint_tunnel            = Pint_tunnel+Prob;
                 
                 k_times++;
+                toto = newZ;
             }//END while
+            
+            if (k_times>=2) std::cout << ">>>>> ktimes="<<k_times<<"   Z="<<Z<<"   newZ="<<toto<<std::endl;
             
             // final ionization (of last electron)
             if ( ((1.0-Pint_tunnel)>ran_p) && (k_times==atomic_number_-Z-1) ) {
