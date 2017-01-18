@@ -195,7 +195,14 @@ int main (int argc, char* argv[])
             vecPatches.dynamics(params, smpi, simWindow, time_dual, timers, itime);
             
             // Sum densities
-            vecPatches.sumDensities(params, timers, itime );
+            bool some_particles_are_moving = false;
+            unsigned int n_species( vecPatches(0)->vecSpecies.size() );
+            for ( unsigned int ispec=0 ; ispec < n_species ; ispec++ ) {
+                if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) )
+                    some_particles_are_moving = true;
+            }
+            if ( some_particles_are_moving )
+                vecPatches.sumDensities(params, timers, itime );
             
             // apply currents from antennas
             vecPatches.applyAntennas(time_dual);
