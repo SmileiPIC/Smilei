@@ -57,7 +57,15 @@ public :
     
     //! Clear the array
     void clear();
-     
+    
+     //! Get memory footprint of current diagnostic
+    int getMemFootPrint() override {
+        int size = output_size*sizeof(double);
+        // + data_array + index_array +  axis_array
+        // + nparts_max * (sizeof(double)+sizeof(int)+sizeof(double)) 
+        return size;
+    }
+    
 private :
 
     //! number of timesteps during which outputs are averaged

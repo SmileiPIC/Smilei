@@ -28,7 +28,12 @@ public :
     virtual bool needsRhoJs(int timestep) override;
     
     bool hasField(std::string field_name, std::vector<std::string> fieldsToDump);
-    
+
+    //! Get memory footprint of current diagnostic
+    int getMemFootPrint() override {
+        return 0;
+    }
+
 protected :
     
     //! Index of this diag

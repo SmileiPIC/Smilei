@@ -46,6 +46,21 @@ public :
     //! If the window has moved, then x_moved contains the movement
     double x_moved;
     
+    //! Get memory footprint of current diagnostic
+    int getMemFootPrint() override {
+        int size(0);
+        if (posArray!=NULL) {
+            // Size of the array of position
+            size += posArray->globalDims_*sizeof(double);
+            // Size of the simili particles structure
+            int partSize = (2*posArray->dims_[1]+3+1)*sizeof(double)+sizeof(short)+sizeof(unsigned int);
+            size += posArray->dims_[0]*partSize;
+            // eval probesArray (even if temporary)
+            size += posArray->dims_[0]*10*sizeof(double);
+        }
+        return size;
+    }
+
 private :
     
     //! Index of the probe diagnostic

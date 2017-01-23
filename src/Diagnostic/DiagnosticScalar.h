@@ -112,7 +112,12 @@ public :
     
     //! Latest timestep dumped
     int latest_timestep;
-    
+
+    //! Get memory footprint of current diagnostic
+    int getMemFootPrint() override {
+        return 0;
+    }
+
 private :
     
     //! Calculate the length of a string when output to the file
