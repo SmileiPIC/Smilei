@@ -270,11 +270,13 @@ public:
         */
     
         int emSize = 9+4; // 3 x (E, B, Bm) + 3 x J, rho
-        if (true) // For now, no test to compute or not per species
-            emSize += n_species * 4; // 3 x J, rho
-        if (true) // For now, no test to compute or not average
-            emSize += 6; // 3 x (E, B)
-    
+        for (unsigned int ispec=0 ; ispec<Jx_s.size() ; ispec++) {
+            if (Jx_s [ispec]) emSize++;
+            if (Jy_s [ispec]) emSize++;
+            if (Jz_s [ispec]) emSize++;
+            if (rho_s [ispec]) emSize++;
+        }
+
         for (size_t i=0 ; i<nDim_field ; i++)
             emSize *= dimPrim[i];
     
