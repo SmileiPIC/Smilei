@@ -1,8 +1,6 @@
 stages:
     - compile
-    - makerun1D
-    - makerun2D
-    - makerun3D
+    - makerun
 
 compile:
   stage: compile
@@ -17,7 +15,7 @@ compile:
     - python validation.py -c  -v
 
 makerun1D:
-  stage: makerun1D
+  stage: makerun
   only:
     - CI
   script:
@@ -27,7 +25,7 @@ makerun1D:
     - python validation.py -b "tst1d_*_*.py" -s all -v
 
 makerun2D:
-  stage: makerun2D
+  stage: makerun
   only:
     - CI
   script:
@@ -37,7 +35,7 @@ makerun2D:
     - python validation.py -b "tst2d_*_*.py" -s all -v
 
 makerun3D:
-  stage: makerun3D
+  stage: makerun
   only:
     - CI
   script:
