@@ -26,16 +26,29 @@ public:
     //! Constructor, isPrimal define if mainDim is Primal or Dual and a name
     Field1D( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name );
 
+    //! Constructor, without allocating
+    Field1D( std::string name, std::vector<unsigned int> dims );
+
     //! Destructor for Field1D
     ~Field1D();
 
     //! Method used to allocate a Field1D
-    void allocateDims(std::vector<unsigned int> dims);
+    void allocateDims();
     void deallocateDims();
     //! a Field1D can also be initialized win an unsigned int 
     void allocateDims(unsigned int dims1);
     //! 1D method used to allocate Field, isPrimal define if mainDim is Primal or Dual
-    void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal);
+    void allocateDims(unsigned int mainDim, bool isPrimal);
+    
+    inline void allocateDims(std::vector<unsigned int> dims) {
+        dims_ = dims;
+        allocateDims();
+    };
+    
+    inline void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) {
+        dims_ = dims;
+        allocateDims(mainDim, isPrimal);
+    };
     
     //! Method used to dump the data contained in a Field1D
     void dump(std::vector<unsigned int> dims);

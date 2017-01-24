@@ -10,9 +10,9 @@
 
 using namespace std;
 
-Timer::Timer() :
+Timer::Timer( string name ) :
+name_(name),
 time_acc_(0.0),
-name_(""),
 smpi_(NULL)
 {
     register_timers.resize(0,0.);    
@@ -22,12 +22,11 @@ Timer::~Timer()
 {
 }
 
-void Timer::init(SmileiMPI *smpi, string name)
+void Timer::init(SmileiMPI *smpi)
 {
     smpi_ = smpi;
     smpi_->barrier();
     last_start_ = MPI_Wtime();
-    name_ = name;
 }
 
 
@@ -71,50 +70,4 @@ void Timer::print(double tot)
             MESSAGE(0, "\t" << setw(14) << name_ << "\t" << time_acc_  << "\t" << perc << "%");
         }
     }
-}
-
-void Timer::consolidate_timers( std::vector<Timer> timers )
-{
-    int sz( 1 ), rk( 0 );
-    MPI_Comm_size( MPI_COMM_WORLD, &sz );
-    MPI_Comm_rank( MPI_COMM_WORLD, &rk );
-
-    ofstream fout;
-    if (rk==0) fout.open ("profil.txt");
-
-    for ( unsigned int itimer = 0 ; itimer < timers.size() ; itimer++ ) {
-        int nrecords( timers[itimer].register_timers.size() );
-        double* tmp = new double[sz*nrecords];
-
-        MPI_Gather( &(timers[itimer].register_timers[0]), nrecords, MPI_DOUBLE,
-                    &(tmp[0]), nrecords, MPI_DOUBLE,
-                    0, MPI_COMM_WORLD);
-
-
-        // Mean on last records
-        int idx_records=nrecords-1; // = last record
-
-        double min( tmp[idx_records] ), max( tmp[idx_records] ), avg( tmp[idx_records] );
-        if (rk==0)
-            for ( int i=1 ; i<sz ; i++) {
-                if ( tmp[idx_records+i*(nrecords)] < min ) min = tmp[idx_records+i*(nrecords)];
-                if ( tmp[idx_records+i*(nrecords)] > max ) max = tmp[idx_records+i*(nrecords)];
-                avg += tmp[idx_records+i*(nrecords)];
-            }
-        avg /= sz;
-
-        delete [] tmp;
-
-        if ((max>0.) && (rk==0)) {   
-            fout.setf( ios::fixed,  ios::floatfield );
-            fout << setw(14) << scientific << setprecision(3)
-                 << timers[itimer].name_ << "\t : " << "Min time =  " << min
-                 << "\t - \t" <<  "Avg time =  " << avg
-                 << "\t - \t" <<  "Max time =  " << max
-                 << endl;
-        }
-        
-    }
-    if (rk==0) fout.close();
-
 }

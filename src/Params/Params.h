@@ -12,6 +12,7 @@
 #undef _XOPEN_SOURCE
 
 #include "Profile.h"
+#include "Timer.h"
 
 #include <vector>
 #include <string>
@@ -45,7 +46,18 @@ public:
     void compute();
     
     //! print a summary of the values in txt
-    void print();
+    void print_init();
+    //! Printing out some data at a given timestep
+    void print_timestep(unsigned int itime, double time_dual, Timer & timer);
+    void print_timestep_headers();
+    
+    //! Print information about the parallel aspects
+    void print_parallelism_params(SmileiMPI* smpi);
+    
+    //! Tells whether standard output is this timestep
+    bool printNow( int timestep ) {
+        return (timestep % print_every == 0);
+    }
     
     //! sets nDim_particle and nDim_field based on the geometry
     void setDimensions();
@@ -179,11 +191,15 @@ public:
     //! Maxium poisson error tolerated
     double poisson_error_max;
     
+    //! every for the standard pic timeloop output
+    unsigned int print_every;
 
 private:    
     //! passing named command to python
     void runScript(std::string command, std::string name=std::string(""));
     
+    //! Characters width for timestep output
+    unsigned int timestep_width;
 };
 
 #endif

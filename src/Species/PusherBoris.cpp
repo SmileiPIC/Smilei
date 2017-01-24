@@ -47,7 +47,7 @@ void PusherBoris::operator() (Particles &particles, SmileiMPI* smpi, int istart,
 #endif
     short* charge = &( particles.charge(0) );
 
-    #pragma simd
+    #pragma omp simd
     for (int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass_dts2 = (double)(charge[ipart])*one_over_mass_*dts2;
 

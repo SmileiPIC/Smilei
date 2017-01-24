@@ -6,11 +6,12 @@
 
 using namespace std;
 
-DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patch, int ndiag )
+DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, int ndiag )
 {
     fileId_ = 0;
     tmp_dset_id = 0;
-
+    diag_n = ndiag;
+    
     filespace_firstwrite = 0;
     memspace_firstwrite = 0;
     filespace_reread = 0;
@@ -19,71 +20,72 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patc
     // Extract the time_average parameter
     time_average = 1;
     PyTools::extract("time_average", time_average, "DiagFields", ndiag);
-    if( time_average < 1 )
-        time_average = 1;
+    if( time_average < 1 ) time_average = 1;
+    time_average_inv = 1./((double)time_average);
     
-    // Verify that only one diag of this type exists
-    int tavg;
-    for( int idiag=0; idiag<ndiag; idiag++ ) {
-        tavg = 1;
-        PyTools::extract("time_average", tavg, "DiagFields", idiag);
-        if( tavg < 1 )
-            tavg = 1;
-        if( tavg*time_average == 1 || (tavg>1 && time_average>1) )
-            ERROR("Cannot have two DiagFields with time_average "<<(tavg==1?"=":">")<<" 1");
-    }
-    
-    // Define the filename and get the list of fields
-    std::vector<Field*> * allFields;
-    if ( time_average==1 ) {
-        filename = "Fields.h5";
-        allFields = &(patch->EMfields->allFields);
-    }
-    else {
-        filename = "Fields_avg.h5";
-        allFields = &(patch->EMfields->allFields_avg);
-    }
+    // Define the filename
+    ostringstream fn("");
+    fn << "Fields"<< ndiag <<".h5";
+    filename = fn.str();
     
     // Extract the requested fields
-    std::vector<std::string> fieldsToDump(0);
+    vector<string> fieldsToDump(0);
     PyTools::extract("fields", fieldsToDump, "DiagFields", ndiag);
     
     // List all fields that are requested
+    std::vector<Field*> allFields (0);
     ostringstream ss("");
     fields_indexes.resize(0);
     fields_names  .resize(0);
-    bool hasfield;
     hasRhoJs = false;
-    for( unsigned int i=0; i<allFields->size(); i++ ) {
-        string field_name = (*allFields)[i]->name;
-        if( field_name.find("_avg") < string::npos ) field_name.erase(field_name.find("_avg"));
-        
-        if( fieldsToDump.size()==0 ) {
-            hasfield = true;
-        } else {
-            hasfield = false;
-            for( unsigned int j=0; j<fieldsToDump.size(); j++ ) {
-                if( field_name == fieldsToDump[j] ) {
-                    hasfield = true;
-                    break;
-                }
-            }
-        }
-        
-        if( hasfield ) {
+    // Loop fields
+    for( unsigned int i=0; i<vecPatches(0)->EMfields->allFields.size(); i++ ) {
+        string field_name = vecPatches(0)->EMfields->allFields[i]->name;
+        bool RhoJ = field_name.at(0)=='J' || field_name.at(0)=='R';
+        bool species_field = (field_name.at(0)=='J' && field_name.length()>2) || (field_name.at(0)=='R' && field_name.length()>3);
+        // If field in list of fields to dump, then add it
+        if( hasField(field_name, fieldsToDump) ) {
             ss << field_name << " ";
             fields_indexes.push_back( i );
             fields_names  .push_back( field_name );
-            if( ! hasRhoJs )
-                if( field_name.at(0)=='J' || field_name.at(0)=='R' )
-                    hasRhoJs = true;
+            if( RhoJ ) hasRhoJs = true;
+            // If field specific to a species, then allocate it
+            if( species_field ) {
+                for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+                    Field * field = vecPatches(ipatch)->EMfields->allFields[i];
+                    if( field->data_ != NULL ) continue;
+                    if     ( field_name.substr(0,2)=="Jx" ) field->allocateDims(0,false);
+                    else if( field_name.substr(0,2)=="Jy" ) field->allocateDims(1,false);
+                    else if( field_name.substr(0,2)=="Jz" ) field->allocateDims(2,false);
+                    else if( field_name.substr(0,2)=="Rh" ) field->allocateDims();
+                }
+            }
         }
     }
-    MESSAGE(1,"EM fields dump "<<(time_average>1?"(avg)":"     ")<<" :");
+    
+    // Some output
+    ostringstream p("");
+    p << "(time average = " << time_average << ")";
+    MESSAGE(1,"Diagnostic Fields #"<<ndiag<<" "<<(time_average>1?p.str():"")<<" :");
     MESSAGE(2, ss.str() );
+    
+    // Create new fields in each patch, for time-average storage
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        vecPatches(ipatch)->EMfields->allFields_avg.resize( diag_n+1 );
+        if( time_average > 1 ) {
+            for( unsigned int ifield=0; ifield<fields_names.size(); ifield++)
+                vecPatches(ipatch)->EMfields->allFields_avg[diag_n].push_back(
+                    vecPatches(ipatch)->EMfields->createField(fields_names[ifield])
+                );
+        }
+    }
     
     // Extract the time selection
     timeSelection = new TimeSelection( PyTools::extract_py( "every", "DiagFields", ndiag ), "DiagFields" );
+    
+    // If the time selection contains intervals smaller than the time average, then error
+    if( timeSelection->smallestInterval() < time_average )
+        ERROR("Diagnostic Fields #"<<ndiag<<" has a time average too large compared to its time-selection interval ('every')");
     
     // Extract the flush time selection
     flush_timeSelection = new TimeSelection( PyTools::extract_py( "flush_every", "DiagFields", ndiag ), "DiagFields flush_every" );
@@ -106,6 +108,23 @@ DiagnosticFields::~DiagnosticFields()
     delete flush_timeSelection;
 }
 
+
+bool DiagnosticFields::hasField(string field_name, vector<string> fieldsToDump)
+{
+    bool hasfield;
+    if( fieldsToDump.size()==0 ) {
+        hasfield = true;
+    } else {
+        hasfield = false;
+        for( unsigned int j=0; j<fieldsToDump.size(); j++ ) {
+            if( field_name == fieldsToDump[j] ) {
+                hasfield = true;
+                break;
+            }
+        }
+    }
+    return hasfield;
+}
 
 void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
@@ -144,10 +163,9 @@ void DiagnosticFields::closeFile()
     if ( filespace           >0 ) H5Sclose( filespace );
     if ( memspace            >0 ) H5Sclose( memspace );
     if ( tmp_dset_id         >0 ) H5Dclose( tmp_dset_id );
-
+    
     if( fileId_>0 ) H5Fclose( fileId_ );
     fileId_ = 0;
-
 }
 
 
@@ -172,10 +190,17 @@ bool DiagnosticFields::prepare( int timestep )
 void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep )
 {
     // If time-averaging, increment the average
-    if( time_average>1 )
+    if( time_average>1 ) {
         #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-            vecPatches(ipatch)->EMfields->incrementAvgFields(timestep);
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+            for( unsigned int ifield=0; ifield<fields_names.size(); ifield++) {
+                vecPatches(ipatch)->EMfields->incrementAvgField(
+                    vecPatches(ipatch)->EMfields->allFields[fields_indexes[ifield]], // instantaneous field
+                    vecPatches(ipatch)->EMfields->allFields_avg[diag_n][ifield]      // averaged field
+                );
+            }
+        }
+    }
     
     // If is not writing timestep, leave
     if (timestep - timeSelection->previousTime(timestep) != time_average-1) return;
@@ -206,13 +231,11 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     // For each field, combine all patches and write out
     for( unsigned int ifield=0; ifield < fields_indexes.size(); ifield++ ) {
         
-        unsigned int field_index = fields_indexes[ifield];
-        
         // Copy the patch field to the buffer
         #pragma omp barrier
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++)
-            getField( vecPatches(ipatch), field_index );
+            getField( vecPatches(ipatch), ifield );
         
         #pragma omp master
         {

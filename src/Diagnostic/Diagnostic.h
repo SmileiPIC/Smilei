@@ -31,7 +31,7 @@ public :
     virtual void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) {};
     
     //! Writes out a global diag diag.
-    virtual void write(int timestep) {};
+    virtual void write(int timestep, SmileiMPI* smpi) {};
     
     //! Tells whether this diagnostic requires the pre-calculation of the particle J & Rho
     virtual bool needsRhoJs(int timestep) { return false; };

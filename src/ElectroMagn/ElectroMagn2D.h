@@ -13,6 +13,7 @@ class ElectroMagn2D : public ElectroMagn
 public:
     //! Constructor for ElectroMagn2D
     ElectroMagn2D(Params &params, std::vector<Species*>& vecSpecies, Patch* patch);
+    ElectroMagn2D( ElectroMagn2D* emFields, Params &params, Patch* patch );
 
     //! Destructor for ElectroMagn2D
     ~ElectroMagn2D();
@@ -51,8 +52,8 @@ public:
     //! Method used to center the Magnetic fields (used to push the particles)
     void centerMagneticFields();
     
-    //! Method used to reset/increment the averaged fields
-    void incrementAvgFields(unsigned int time_step);
+    //! Creates a new field with the right characteristics, depending on the name
+    Field * createField(std::string fieldname);
     
     //! Method used to compute the total charge density and currents by summing over all species
     void computeTotalRhoJ();

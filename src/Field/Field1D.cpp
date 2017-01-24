@@ -40,6 +40,13 @@ Field1D::Field1D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal,
     allocateDims(dims, mainDim, isPrimal);
 }
 
+// without allocating
+Field1D::Field1D(string name, vector<unsigned int> dims) : Field(dims, name)
+{
+    data_=NULL;
+    dims_ = dims;
+}
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Destructor for Field1D
@@ -55,13 +62,12 @@ Field1D::~Field1D()
 // ---------------------------------------------------------------------------------------------------------------------
 // Method used for allocating the dimension of a Field1D
 // ---------------------------------------------------------------------------------------------------------------------
-void Field1D::allocateDims(std::vector<unsigned int> dims)
+void Field1D::allocateDims()
 {
     // for Field1D only
-    dims_ = dims;
-    if (dims.size()!=1) ERROR("Alloc error must be 1 : " << dims.size());
+    if (dims_.size()!=1) ERROR("Alloc error must be 1 : " << dims_.size());
     
-    isDual_.resize( dims.size(), 0 );
+    isDual_.resize( dims_.size(), 0 );
     
     data_ = new double[ dims_[0] ];
     //! \todo{change to memset (JD)}
@@ -90,22 +96,21 @@ void Field1D::allocateDims(unsigned int dims1)
 // ---------------------------------------------------------------------------------------------------------------------
 // Method used for allocating the dimension of a Field1D
 // ---------------------------------------------------------------------------------------------------------------------
-void Field1D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal)
+void Field1D::allocateDims(unsigned int mainDim, bool isPrimal)
 {
     // for Field1D only
-    dims_ = dims;
-    if (dims.size()!=1) ERROR("Alloc error must be 1 : " << dims.size());
+    if (dims_.size()!=1) ERROR("Alloc error must be 1 : " << dims_.size());
     
     // isPrimal define if mainDim is Primal or Dual
-    isDual_.resize( dims.size(), 0 );
-    for ( unsigned int j=0 ; j<dims.size() ; j++ ) {
+    isDual_.resize( dims_.size(), 0 );
+    for ( unsigned int j=0 ; j<dims_.size() ; j++ ) {
         if ( (j==mainDim) && (!isPrimal) )
             isDual_[j] = 1;
         else if ( (j!=mainDim) && (isPrimal) )
             isDual_[j] = 1;
     }
     
-    for ( unsigned int j=0 ; j<dims.size() ; j++ )
+    for ( unsigned int j=0 ; j<dims_.size() ; j++ )
         dims_[j] += isDual_[j];
     
     data_ = new double[ dims_[0] ];

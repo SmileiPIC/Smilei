@@ -371,7 +371,7 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
     offset_in_MPI .resize( vecPatches.size() );
     offset_in_file.resize( vecPatches.size() );
     unsigned int numCorners = 1<<nDim_particle; // number of patch corners
-    unsigned int ntot, IP, ipart_local, i, k, ipart, iDimProbe, iDim;;
+    unsigned int ntot, IP, ipart_local, i, k, iDim;
     bool is_in_domain;
     vector<double> point(nDim_particle), mins(nDim_particle), maxs(nDim_particle);  
     vector<double> patchMin(nDim_particle), patchMax(nDim_particle);

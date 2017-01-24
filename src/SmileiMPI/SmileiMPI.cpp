@@ -23,6 +23,7 @@
 #include "Diagnostic.h"
 #include "DiagnosticScalar.h"
 #include "DiagnosticParticles.h"
+#include "DiagnosticProbes.h"
 
 using namespace std;
 
@@ -32,7 +33,8 @@ using namespace std;
 //     - Set MPI env
 // ---------------------------------------------------------------------------------------------------------------------
 SmileiMPI::SmileiMPI( int* argc, char*** argv )
-{    
+{
+    // Send information on current simulation
     int mpi_provided;
 
 #ifdef _OPENMP
@@ -47,6 +49,14 @@ SmileiMPI::SmileiMPI( int* argc, char*** argv )
     SMILEI_COMM_WORLD = MPI_COMM_WORLD;
     MPI_Comm_size( SMILEI_COMM_WORLD, &smilei_sz );
     MPI_Comm_rank( SMILEI_COMM_WORLD, &smilei_rk );
+
+    MESSAGE("                   _            _");
+    MESSAGE(" ___           _  | |        _  \\ \\   Version : " << __VERSION);
+    MESSAGE("/ __|  _ __   (_) | |  ___  (_)  | |   ");
+    MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |");
+    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |  ");
+    MESSAGE("                                /_/    ");
+    MESSAGE("");
 
 } // END SmileiMPI::SmileiMPI
 
@@ -167,7 +177,7 @@ void SmileiMPI::init_patch_count( Params& params)
 //#endif
     
     unsigned int Npatches, r, Ncur, Pcoordinates[3], ncells_perpatch;
-    double Tload,Tcur, Lcur, total_load, local_load, local_load_temp, above_target, below_target;
+    double Tload,Tcur, Lcur, total_load=0, local_load, above_target, below_target;
     
     unsigned int tot_species_number = PyTools::nComponents("Species");
     
@@ -191,7 +201,7 @@ void SmileiMPI::init_patch_count( Params& params)
     
     // First, distribute all patches evenly
     unsigned int Npatches_local = Npatches / smilei_sz, FirstPatch_local;
-    unsigned int remainder = Npatches % smilei_sz;
+    int remainder = Npatches % smilei_sz;
     if( smilei_rk < remainder ) {
         Npatches_local++;
         FirstPatch_local = Npatches_local * smilei_rk;
@@ -208,7 +218,7 @@ void SmileiMPI::init_patch_count( Params& params)
     for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++){
         std::string species_type("");
         PyTools::extract("species_type",species_type,"Species",ispecies);
-        PyObject *profile1;
+        PyObject *profile1=nullptr;
         std::string densityProfileType("");
         bool ok1 = PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispecies);
         bool ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", ispecies);
@@ -286,7 +296,7 @@ void SmileiMPI::init_patch_count( Params& params)
     
     // MPI master loops patches and figures the best arrangement
     if( smilei_rk==0 ) {
-        unsigned int rk = 0;
+        int rk = 0;
         MPI_Status status;
         while( true ) { // loop cpu ranks
             unsigned int hindex = 0;
@@ -663,21 +673,25 @@ void SmileiMPI::recv(std::vector<double> *vec, int from, int tag)
 
 void SmileiMPI::isend(ElectroMagn* EM, int to, int tag)
 {
-    isend( EM->Ex_, to, tag+0);
-    isend( EM->Ey_, to, tag+1);
-    isend( EM->Ez_, to, tag+2);
-    isend( EM->Bx_, to, tag+3);
-    isend( EM->By_, to, tag+4);
-    isend( EM->Bz_, to, tag+5);
-    isend( EM->Bx_m, to, tag+6);
-    isend( EM->By_m, to, tag+7);
-    isend( EM->Bz_m, to, tag+8);
+    isend( EM->Ex_ , to, tag); tag++;
+    isend( EM->Ey_ , to, tag); tag++;
+    isend( EM->Ez_ , to, tag); tag++;
+    isend( EM->Bx_ , to, tag); tag++;
+    isend( EM->By_ , to, tag); tag++;
+    isend( EM->Bz_ , to, tag); tag++;
+    isend( EM->Bx_m, to, tag); tag++;
+    isend( EM->By_m, to, tag); tag++;
+    isend( EM->Bz_m, to, tag); tag++;
     
-    for (int antennaId=0 ; antennaId<(int)EM->antennas.size() ; antennaId++) {
-        isend( EM->antennas[antennaId].field, to, tag+9+antennaId );
+    for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {
+        for( unsigned int ifield=0; ifield<EM->allFields_avg[idiag].size(); ifield++) {
+            isend( EM->allFields_avg[idiag][ifield], to, tag); tag++;
+        }
     }
     
-    tag += 10 + EM->antennas.size();
+    for (unsigned int antennaId=0 ; antennaId<EM->antennas.size() ; antennaId++) {
+        isend( EM->antennas[antennaId].field, to, tag ); tag++;
+    }
     
     for (unsigned int bcId=0 ; bcId<EM->emBoundCond.size() ; bcId++ ) {
         if(! EM->emBoundCond[bcId]) continue;
@@ -699,7 +713,7 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag)
         }
         
         if ( EM->extFields.size()>0 ) {
-
+            
             if (dynamic_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]) ) {
                 ElectroMagnBC1D_SM* embc = static_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]);
                 MPI_Request request;
@@ -738,21 +752,25 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag)
 
 void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
 {
-    recv( EM->Ex_, from, tag+0 );
-    recv( EM->Ey_, from, tag+1 );
-    recv( EM->Ez_, from, tag+2 );
-    recv( EM->Bx_, from, tag+3 );
-    recv( EM->By_, from, tag+4 );
-    recv( EM->Bz_, from, tag+5 );
-    recv( EM->Bx_m, from, tag+6 );
-    recv( EM->By_m, from, tag+7 );
-    recv( EM->Bz_m, from, tag+8 );
+    recv( EM->Ex_ , from, tag ); tag++;
+    recv( EM->Ey_ , from, tag ); tag++;
+    recv( EM->Ez_ , from, tag ); tag++;
+    recv( EM->Bx_ , from, tag ); tag++;
+    recv( EM->By_ , from, tag ); tag++;
+    recv( EM->Bz_ , from, tag ); tag++;
+    recv( EM->Bx_m, from, tag ); tag++;
+    recv( EM->By_m, from, tag ); tag++;
+    recv( EM->Bz_m, from, tag ); tag++;
     
-    for (int antennaId=0 ; antennaId<(int)EM->antennas.size() ; antennaId++) {
-        recv( EM->antennas[antennaId].field, from, tag+9+antennaId );
+    for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {
+        for( unsigned int ifield=0; ifield<EM->allFields_avg[idiag].size(); ifield++) {
+            recv( EM->allFields_avg[idiag][ifield], from, tag); tag++;
+        }
     }
     
-    tag += 10 + EM->antennas.size();
+    for (int antennaId=0 ; antennaId<(int)EM->antennas.size() ; antennaId++) {
+        recv( EM->antennas[antennaId].field, from, tag); tag++;
+    }
     
     for (unsigned int bcId=0 ; bcId<EM->emBoundCond.size() ; bcId++ ) {
         if(! EM->emBoundCond[bcId]) continue;
@@ -889,82 +907,75 @@ void SmileiMPI::computeGlobalDiags(Diagnostic* diag, int timestep)
 void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
 {
     
-    if ( !(scalars->printNow(timestep))
-      && !(scalars->timeSelection->theTimeIsNow(timestep)) ) return;
+    if ( !scalars->timeSelection->theTimeIsNow(timestep) ) return;
     
-    vector<string>::iterator iterKey = scalars->out_key.begin();
-    for(vector<double>::iterator iter = scalars->out_value.begin(); iter !=scalars->out_value.end(); iter++) {
-        if ( ( (*iterKey).find("Min") == std::string::npos ) && ( (*iterKey).find("Max") == std::string::npos ) ) {
-            MPI_Reduce(isMaster()?MPI_IN_PLACE:&((*iter)), &((*iter)), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        }
-        else if ( (*iterKey).find("MinCell") != std::string::npos ) {
-            vector<double>::iterator iterVal = iter-1;
-            val_index minVal;
-            minVal.val   = (*iterVal);
-            minVal.index = (*iter);
-            MPI_Reduce(isMaster()?MPI_IN_PLACE:&minVal, &minVal, 1, MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
-            if (isMaster()) {
-                (*iterVal) = minVal.val;
-                (*iter)    = minVal.index;
-            }
-        }
-        else if ( (*iterKey).find("MaxCell") != std::string::npos ) {
-            vector<double>::iterator iterVal = iter-1;
-            val_index maxVal;
-            maxVal.val   = (*iterVal);
-            maxVal.index = (*iter);
-            MPI_Reduce(isMaster()?MPI_IN_PLACE:&maxVal, &maxVal, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
-            if (isMaster()) {
-                (*iterVal) = maxVal.val;
-                (*iter)    = maxVal.index;
-            }
-        }
-        iterKey++;
+    // Reduce all scalars that should be summed
+    int n_sum = scalars->values_SUM.size();
+    double * d_sum = &scalars->values_SUM[0];
+    MPI_Reduce(isMaster()?MPI_IN_PLACE:d_sum, d_sum, n_sum, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    
+    if( scalars->necessary_fieldMinMax_any ) {
+        // Reduce all scalars that are a "min" and its location
+        int n_min = scalars->values_MINLOC.size();
+        val_index * d_min = &scalars->values_MINLOC[0];
+        MPI_Reduce(isMaster()?MPI_IN_PLACE:d_min, d_min, n_min, MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
+        
+        // Reduce all scalars that are a "max" and its location
+        int n_max = scalars->values_MAXLOC.size();
+        val_index * d_max = &scalars->values_MAXLOC[0];
+        MPI_Reduce(isMaster()?MPI_IN_PLACE:d_max, d_max, n_max, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
     }
-
+    
+    // Complete the computation of the scalars after all reductions
     if (isMaster()) {
-
-        double Ukin = scalars->getScalar("Ukin");
-        double Uelm = scalars->getScalar("Uelm");
-
-        // added & lost energies due to the moving window
-        double Ukin_out_mvw = scalars->getScalar("Ukin_out_mvw");
-        double Ukin_inj_mvw = scalars->getScalar("Ukin_inj_mvw");
-        double Uelm_out_mvw = scalars->getScalar("Uelm_out_mvw");
-        double Uelm_inj_mvw = scalars->getScalar("Uelm_inj_mvw");
         
-        // added & lost energies at the boundaries
-        double Ukin_bnd = scalars->getScalar("Ukin_bnd");
-        double Uelm_bnd = scalars->getScalar("Uelm_bnd");
-
+        // Calculate average Z
+        for(unsigned int ispec=0; ispec<scalars->sDens.size(); ispec++)
+            if ( scalars->sDens[ispec] && scalars->necessary_species[ispec] )
+                *scalars->sZavg[ispec] = (double)*scalars->sZavg[ispec] / (double)*scalars->sDens[ispec];
+        
         // total energy in the simulation
-        double Utot = Ukin + Uelm;
-        
-        // total energy at time 0
-        if (timestep==0) {
-            scalars->Energy_time_zero  = Utot;
+        if( scalars->necessary_Utot ) {
+            double Ukin = *scalars->Ukin;
+            double Uelm = *scalars->Uelm;
+            *scalars->Utot = Ukin + Uelm;
         }
-        
-        // the normalized energy balanced is normalized with respect to the current energy
-        scalars->EnergyUsedForNorm = Utot;
         
         // expected total energy
-        double Uexp = scalars->Energy_time_zero + Uelm_bnd + Ukin_inj_mvw + Uelm_inj_mvw
-            -           ( Ukin_bnd + Ukin_out_mvw + Uelm_out_mvw );
+        if( scalars->necessary_Uexp ) {
+            // total energy at time 0
+            if (timestep==0) scalars->Energy_time_zero = *scalars->Utot;
+            // Global kinetic energy, and BC losses/gains
+            double Ukin_bnd     = *scalars->Ukin_bnd    ;
+            double Ukin_out_mvw = *scalars->Ukin_out_mvw;
+            double Ukin_inj_mvw = *scalars->Ukin_inj_mvw;
+            // Global elm energy, and BC losses/gains
+            double Uelm_bnd     = *scalars->Uelm_bnd    ;
+            double Uelm_out_mvw = *scalars->Uelm_out_mvw;
+            double Uelm_inj_mvw = *scalars->Uelm_inj_mvw;
+            // expected total energy
+            double Uexp = scalars->Energy_time_zero + Uelm_bnd + Ukin_inj_mvw + Uelm_inj_mvw
+                -  ( Ukin_bnd + Ukin_out_mvw + Uelm_out_mvw );
+            *scalars->Uexp = Uexp;
+        }
         
-        // energy balance
-        double Ubal = Utot - Uexp;
+        if( scalars->necessary_Ubal ) {
+            // energy balance
+            double Ubal = (double)*scalars->Utot - (double)*scalars->Uexp;
+            *scalars->Ubal = Ubal;
+            
+            if( scalars->necessary_Ubal_norm ) {
+                // the normalized energy balanced is normalized with respect to the current energy
+                scalars->EnergyUsedForNorm = *scalars->Utot;
+                // normalized energy balance
+                double Ubal_norm(0.);
+                if (scalars->EnergyUsedForNorm>0.)
+                    Ubal_norm = Ubal / scalars->EnergyUsedForNorm;
+                
+                *scalars->Ubal_norm = Ubal_norm;
+            }
+        }
         
-        // normalized energy balance
-        double Ubal_norm(0.);
-        if (scalars->EnergyUsedForNorm>0.)
-            Ubal_norm = Ubal / scalars->EnergyUsedForNorm;
-
-        scalars->setScalar("Ubal_norm",Ubal_norm);
-        scalars->setScalar("Ubal",Ubal);
-        scalars->setScalar("Uexp",Uexp);
-        scalars->setScalar("Utot",Utot);
-
     }
 } // END computeGlobalDiags(DiagnosticScalar& scalars ...)
 

@@ -13,8 +13,8 @@
 
 using namespace std;
 
-DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI* smpi, Patch* patch, int ndiag )
-    : DiagnosticFields( params, smpi, patch, ndiag )
+DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI* smpi, VectorPatch &vecPatches, int ndiag )
+    : DiagnosticFields( params, smpi, vecPatches, ndiag )
 {
     
     // Calculate the offset in the local grid
@@ -134,16 +134,17 @@ void DiagnosticFields2D::setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatc
 
 
 // Copy patch field to current "data" buffer
-void DiagnosticFields2D::getField( Patch* patch, unsigned int field_index )
+void DiagnosticFields2D::getField( Patch* patch, unsigned int ifield )
 {
     // Get current field
     Field2D* field;
     if( time_average>1 ) {
-        field = static_cast<Field2D*>(patch->EMfields->allFields_avg[field_index]);
+        field = static_cast<Field2D*>(patch->EMfields->allFields_avg[diag_n][ifield]);
     } else {
-        field = static_cast<Field2D*>(patch->EMfields->allFields    [field_index]);
+        field = static_cast<Field2D*>(patch->EMfields->allFields[fields_indexes[ifield]]);
     }
     // Copy field to the "data" buffer
+
     unsigned int ix = patch_offset_in_grid[0];
     unsigned int ix_max = ix + patch_size[0];
     unsigned int iy;
@@ -152,12 +153,19 @@ void DiagnosticFields2D::getField( Patch* patch, unsigned int field_index )
     while( ix < ix_max ) {
         iy = patch_offset_in_grid[1];
         while( iy < iy_max ) {
-            data[iout] = (*field)(ix, iy);
+            data[iout] = (*field)(ix, iy) * time_average_inv;
             iout++;
             iy++;
         }
         ix++;
     }
+//    unsigned int ix_max = patch_offset_in_grid[0] + patch_size[0];
+//    unsigned int iy= patch_offset_in_grid[1];
+//    double * data_pt = &(data[total_patch_size * (patch->Hindex()-refHindex)]);
+//    for (unsigned int ix = patch_offset_in_grid[0]; ix < ix_max; ix++){
+//        memcpy( data_pt, &((*field)(ix, iy)), patch_size[1]*sizeof(double));
+//        data_pt += patch_size[1];
+//    }
     
     if( time_average>1 ) field->put_to(0.0);
 }

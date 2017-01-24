@@ -38,7 +38,7 @@ Open a simulation
 
 In a *python* command line (or script), invoke the following class to open
 your :program:`Smilei` simulation. Note that several simulations can be opened at once, 
-as long as they correspond to several :ref:`restarts <DumpAndRestart>` of the same simulation.
+as long as they correspond to several :ref:`restarts <Checkpoints>` of the same simulation.
 
 .. py:class:: Smilei(results_path, show=True)
 
@@ -118,9 +118,11 @@ Open a Scalar diagnostic
 Open a Field diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.Field(field=None, timesteps=None, slice=None, units=[""], data_log=False, **kwargs)
+.. py:method:: Smilei.Field(diagNumber=None, field=None, timesteps=None, slice=None, units=[""], data_log=False, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
+  * ``diagNumber``: The number of the fields diagnostic
+     | If not given, then a list of available diagnostic numbers is printed.
   * ``field``: The name of a field (``"Ex"``, ``"Ey"``, etc.)
      | If not given, then a list of available fields is printed.
      | The string can also be an operation between several fields, such as ``"Jx+Jy"``.
@@ -141,7 +143,7 @@ Open a Field diagnostic
 **Example**::
   
   S = Smilei("path/to/my/results")
-  Diag = S.Field("Ex", slice = {"x":[4,5]})
+  Diag = S.Field(0, "Ex", slice = {"x":[4,5]})
 
 
 ----
@@ -522,7 +524,7 @@ Print the list of available ``Scalar`` diagnostics::
 
 Print the list of available ``Field`` diagnostics::
 
-  >>> S.Field()
+  >>> S.Field(0)
   Diagnostic is invalid
   Printing available fields:
   --------------------------

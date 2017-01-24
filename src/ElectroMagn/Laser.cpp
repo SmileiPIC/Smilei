@@ -24,10 +24,10 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
     
     // Profiles
     profiles.resize(0);
-    PyObject *chirp_profile, *time_profile;
+    PyObject *chirp_profile=nullptr, *time_profile=nullptr;
     vector<PyObject*>  space_profile, phase_profile, space_time_profile;
     bool time, space, omega, chirp, phase, space_time;
-    double omega_value;
+    double omega_value(0);
     Profile *p, *pchirp, *ptime, *pspace1, *pspace2, *pphase1, *pphase2;
     omega      = PyTools::extract("omega",omega_value,"Laser",ilaser);
     chirp      = PyTools::extract_pyProfile("chirp_profile"     , chirp_profile, "Laser", ilaser);

@@ -10,11 +10,13 @@
 #include "ElectroMagnFactory.h"
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
-#include "DiagnosticFactory.h"
+
+#include "DiagnosticScalar.h"
 
 #include "Params.h"
 #include "SmileiMPI.h"
 #include "SimWindow.h"
+#include "Timers.h"
 
 class Field;
 class Timer;
@@ -72,37 +74,34 @@ public :
     
     bool needsRhoJsNow( int timestep ) {
         // Figure out whether scalars need Rho and Js
-        if( globalDiags[0]->needsRhoJs(timestep) )
-            return true;
+        if( globalDiags[0]->needsRhoJs(timestep) ) return true;
+        
         // Figure out whether fields or probes need Rho and Js
         for( unsigned int i=0; i<localDiags.size(); i++ )
-            if( localDiags[i]->needsRhoJs(timestep) )
-                return true;
+            if( localDiags[i]->needsRhoJs(timestep) ) return true;
+        
         return false;
     }
-    
-    bool printScalars( int timestep ) {
-        return static_cast<DiagnosticScalar*>(globalDiags[0])->printNow(timestep);
-    }
-    
-    
     
     // Interfaces between main programs & main PIC operators
     // -----------------------------------------------------
     
     //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
-    void dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, int* diag_flag, double time_dual,
-                  std::vector<Timer>& timer, int itime);
+    void dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, double time_dual,
+                  Timers &timers, int itime);
+
+    void computeCharge();
+
     
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
-    void sumDensities( int* diag_flag, std::vector<Timer>& timer, int itime );
+    void sumDensities(Params &params, Timers &timers, int itime );
     
     //! For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
     void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual,
-                      std::vector<Timer>& timer);
+                      Timers & timers);
     
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
-    void runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, int itime, std::vector<Timer>& timer);
+    void runAllDiags(Params& params, SmileiMPI* smpi, int itime, Timers & timers);
     void initAllDiags(Params& params, SmileiMPI* smpi);
     void closeAllDiags(SmileiMPI* smpi);
     void openAllDiags(Params& params, SmileiMPI* smpi);
@@ -120,7 +119,10 @@ public :
     void applyAntennas(double time);
     
     //! For all patches, apply collisions
-    void applyCollisions(Params &params, int itime, std::vector<Timer>& timer);
+    void applyCollisions(Params &params, int itime, Timers & timer);
+
+    //! For each patch, apply external fields
+    void applyExternalFields();
     
     //  Balancing methods
     // ------------------
@@ -169,14 +171,18 @@ public :
             }
         }
         for (unsigned int ispec = 0 ; ispec < nSpecies ; ispec++ ) {
-            int tmp(0);
+            unsigned int tmp(0);
             MPI_Reduce( &(nParticles[ispec]), &tmp, 1, MPI_INT, MPI_SUM, 0, smpi->SMILEI_COMM_WORLD );
             MESSAGE(2, "Species " << ispec << " (" << (*this)(0)->vecSpecies[ispec]->species_type << ") created with " << tmp << " particles" );
         }
     }
 
     void move_probes(Params& params, double x_moved);
-
+    
+    void check_memory_consumption(SmileiMPI* smpi);
+    
+    // Keep track if we need the needsRhoJsNow
+    int diag_flag;
 
  private :
     
@@ -212,6 +218,7 @@ public :
     
     //! Current intensity of antennas
     double antenna_intensity;
+    
     
 };
 

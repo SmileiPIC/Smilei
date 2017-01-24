@@ -78,34 +78,48 @@ class FieldFactory(object):
 		field.get()                      # Obtain the data
 	"""
 	
-	def __init__(self, simulation, field=None, timestep=None, availableTimesteps=None):
+	def __init__(self, simulation, diagNumber=None, field=None, timestep=None, availableTimesteps=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
 		
-		# If not a specific field (root level), build a list of field shortcuts
-		if field is None:
+		# If not a specific diag (root level), build a list of diag shortcuts
+		if diagNumber is None:
 			# Create a temporary, empty field diagnostic
 			tmpDiag = Field.Field(simulation)
-			# Get a list of fields
-			fields = tmpDiag.getFields()
-			# Get a list of timesteps
-			timesteps = tmpDiag.getAvailableTimesteps()
-			# Create fields shortcuts
-			for field in fields:
-				setattr(self, field, FieldFactory(simulation, field, availableTimesteps=timesteps))
+			# Get a list of diag
+			diags = tmpDiag.getDiags()
+			# Create diags shortcuts
+			for diag in diags:
+				setattr(self, "Field"+str(diag), FieldFactory(simulation, diag))
 		
 		else:
-			# the field is saved for generating the object in __call__
-			self._additionalArgs += (field, )
-			
-			# If not a specific timestep, build a list of timesteps shortcuts
-			if timestep is None:
-				for timestep in availableTimesteps:
-					setattr(self, 't%0.10i'%timestep, FieldFactory(simulation, field, timestep))
+			# the diag is saved for generating the object in __call__
+			self._additionalArgs += (diagNumber, )
+				
+			# If not a specific field, build a list of field shortcuts
+			if field is None:
+				# Create a temporary, empty field diagnostic
+				tmpDiag = Field.Field(simulation, diagNumber)
+				# Get a list of fields
+				fields = tmpDiag.getFields()
+				# Get a list of timesteps
+				timesteps = tmpDiag.getAvailableTimesteps()
+				# Create fields shortcuts
+				for field in fields:
+					setattr(self, field, FieldFactory(simulation, diagNumber, field, availableTimesteps=timesteps))
 			
 			else:
-				# the timestep is saved for generating the object in __call__
-				self._additionalArgs += (timestep, )
+				# the field is saved for generating the object in __call__
+				self._additionalArgs += (field, )
+				
+				# If not a specific timestep, build a list of timesteps shortcuts
+				if timestep is None:
+					for timestep in availableTimesteps:
+						setattr(self, 't%0.10i'%timestep, FieldFactory(simulation, diagNumber, field, timestep))
+				
+				else:
+					# the timestep is saved for generating the object in __call__
+					self._additionalArgs += (timestep, )
 	
 	def __call__(self, *args, **kwargs):
 		return Field.Field(self._simulation, *(self._additionalArgs+args), **kwargs)

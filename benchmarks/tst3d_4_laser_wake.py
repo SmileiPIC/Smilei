@@ -1,8 +1,11 @@
 
 dx = 0.125
+dtrans = 3.
 dt = 0.124
 nx = 896
+ntrans = 40
 Lx = nx * dx
+Ltrans = ntrans*dtrans
 npatch_x = 128
 laser_fwhm = 19.80
 
@@ -14,8 +17,8 @@ Main(
     timestep = dt,
     sim_time = int(2*Lx/dt)*dt,
     
-    cell_length  = [dx, 3., 3.],
-    sim_length = [ Lx,  120., 120.],
+    cell_length  = [dx, dtrans, dtrans],
+    sim_length = [ Lx,  Ltrans, Ltrans],
     
     number_of_patches = [npatch_x, 4, 4],
     
@@ -90,6 +93,15 @@ DiagProbe(
 	pos = [0., Main.sim_length[1]/2., Main.sim_length[2]/2.],
 	pos_first = [Main.sim_length[0], Main.sim_length[1]/2., Main.sim_length[2]/2.],
 	number = [nx],
+	fields = ['Ex','Ey','Rho','Jx']
+)
+
+DiagProbe(
+	every = 10,
+	pos = [0., Main.sim_length[1]/4., Main.sim_length[2]/2.],
+	pos_first = [0., 3*Main.sim_length[1]/4., Main.sim_length[2]/2.],
+	pos_second = [Main.sim_length[0], Main.sim_length[1]/4., Main.sim_length[2]/2.],
+	number = [nx, ntrans],
 	fields = ['Ex','Ey','Rho','Jx']
 )
 

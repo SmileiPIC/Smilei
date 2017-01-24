@@ -113,11 +113,23 @@ public:
     {
         ElectroMagn* newEMfields = NULL;
         if ( params.geometry == "1d3v" ) {
-            newEMfields = new ElectroMagn1D(params, vecSpecies, patch);
+            newEMfields = new ElectroMagn1D(static_cast<ElectroMagn1D*>(EMfields), params, patch);
         } else if ( params.geometry == "2d3v" ) {
-            newEMfields = new ElectroMagn2D(params, vecSpecies, patch);
+            newEMfields = new ElectroMagn2D(static_cast<ElectroMagn2D*>(EMfields), params, patch);
         } else if ( params.geometry == "3d3v" ) {
-            newEMfields = new ElectroMagn3D(params, vecSpecies, patch);
+            newEMfields = new ElectroMagn3D(static_cast<ElectroMagn3D*>(EMfields), params, patch);
+        }
+        
+        
+        // -----------------
+        // Clone time-average fields
+        // -----------------
+        newEMfields->allFields_avg.resize( EMfields->allFields_avg.size() );
+        for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++) {
+            for( unsigned int ifield=0; ifield<EMfields->allFields_avg[idiag].size(); ifield++)
+                newEMfields->allFields_avg[idiag].push_back(
+                    newEMfields->createField( EMfields->allFields_avg[idiag][ifield]->name )
+                );
         }
         
         // -----------------

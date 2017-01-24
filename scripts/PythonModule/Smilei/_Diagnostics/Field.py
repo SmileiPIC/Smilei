@@ -5,27 +5,47 @@ from .._Utils import *
 class Field(Diagnostic):
 	""" The Field diagnostic of a Smilei simulation"""
 	
-	def _init(self, field=None, timesteps=None, slice=None, data_log=False, stride=1, **kwargs):
+	def _init(self, diagNumber=None, field=None, timesteps=None, slice=None, data_log=False, stride=1, **kwargs):
+		
+		# Search available diags
+		diags = self.getDiags()
+		
+		# Return directly if no diag number provided
+		if diagNumber is None:
+			self._error += "Diagnostic not loaded: diagNumber is not defined\n"
+			if len(diags)>0:
+				self._error += "Please choose among: "+", ".join([str(d) for d in diags])
+			else:
+				self._error += "(No Field diagnostics existing anyways)"
+			return
+		else:
+			if diagNumber not in diags:
+				self._error = "Diagnostic not loaded: no field diagnostic #"+str(diagNumber)+" found"
+				return
 		
 		# Open the file(s) and load the data
-		self._h5items = []
+		self._h5items = {}
 		self._fields = []
 		for path in self._results_path:
-			file = path+self._os.sep+'Fields.h5'
+			file = path+self._os.sep+'Fields'+str(diagNumber)+'.h5'
 			try:
 				f = self._h5py.File(file, 'r')
 			except:
-				self._error = "Diagnostic not loaded: No fields found"
+				self._error = "Diagnostic not loaded: Could not open '"+file+"'"
 				return
-			values = f.values()
-			self._h5items.extend( values )
+			self._h5items.update( dict(f) )
 			# Select only the fields that are common to all simulations
-			if len(self._fields)==0:
+			values = f.values()
+			if len(values)==0:
+				self._fields = []
+			elif len(self._fields)==0:
 				self._fields = values[0].keys()
 			else:
 				self._fields = [f for f in values[0].keys() if f in self._fields]
-			# Remove "tmp" datasets
-			self._h5items = [d for d in self._h5items if d.name[1:]!='tmp']
+		# Remove "tmp" dataset
+		if "tmp" in self._h5items: del self._h5items["tmp"]
+		# Converted to ordered list
+		self._h5items = sorted(self._h5items.values(), key=lambda x:int(x.name[1:]))
 		
 		# If no field selected, print available fields and leave
 		if field is None:
@@ -45,7 +65,7 @@ class Field(Diagnostic):
 		# Get available times
 		self.times = self.getAvailableTimesteps()
 		if self.times.size == 0:
-			self._error = "Diagnostic not loaded: No fields found in Fields.h5"
+			self._error = "Diagnostic not loaded: No fields found"
 			return
 		
 		# Get available fields
@@ -105,7 +125,7 @@ class Field(Diagnostic):
 		self._slices = [False]*self._ndim
 		self._selection = ()
 		for iaxis in range(self._naxes):
-			centers = self._np.linspace(0., self._initialShape[iaxis]*self._cell_length[iaxis], self._initialShape[iaxis])
+			centers = self._np.linspace(0., (self._initialShape[iaxis]-1)*self._cell_length[iaxis], self._initialShape[iaxis])
 			label = {0:"x", 1:"y", 2:"z"}[iaxis]
 			axisunits = "L_r"
 			
@@ -166,6 +186,19 @@ class Field(Diagnostic):
 	# Method to print info on included fields
 	def _info(self):
 		return "Field diagnostic "+self._title
+	
+	# get all available field diagnostics
+	def getDiags(self):
+		diags = []
+		for path in self._results_path:
+			files = self._glob(path+self._os.sep+'Fields*.h5')
+			if len(files)==0:
+				self._error = "Diagnostic not loaded: No fields found in '"+path+"'"
+				return []
+			diagNumbers = [ int(self._re.findall("Fields([0-9]+).h5$",file)[0]) for file in files ]
+			if diags == []: diags = diagNumbers
+			else          : diags = [ d for d in diags if d in diagNumbers ]
+		return diags
 	
 	# get all available fields, sorted by name length
 	def getFields(self):

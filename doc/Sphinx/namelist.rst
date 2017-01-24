@@ -363,7 +363,7 @@ Each species has to be defined in a ``Species`` block::
   
   The initialization of particle momenta:
   
-  * ``"maxwell-juettner"`` for a relativistic maxwellian
+  * ``"maxwell-juettner"`` for a relativistic maxwellian (see :doc:`how it is done<maxwell-juttner>`)
   * ``"rectangular"`` for a rectangular distribution
   * ``"cold"`` for zero temperature
   
@@ -1139,8 +1139,9 @@ The full list of scalars that are saved by this diagnostic:
 +----------------+---------------------------------------------------------------------------+
 | **Species information**                                                                    |
 +----------------+---------------------------------------------------------------------------+
-| | Zavg_abc     | | Average charge of species "abc"                                         |
-| | Ukin_abc     | |  ... their kinetic energy                                               |
+| | Dens_abc     | | Average density of species "abc"                                        |
+| | Zavg_abc     | |  ... its average charge                                                 |
+| | Ukin_abc     | |  ... its total kinetic energy                                           |
 | | Ntot_abc     | |  ... and number of particles                                            |
 +----------------+---------------------------------------------------------------------------+
 | **Fields information**                                                                     |
@@ -1150,9 +1151,9 @@ The full list of scalars that are saved by this diagnostic:
 | | ExMax        | | Maximum of :math:`E_x`                                                  |
 | | ExMaxCell    | |  ... and its location (cell index)                                      |
 | |              | | ... same for fields Ey Ez Bx_m By_m Bz_m Jx Jy Jz Rho                   |
-| | PoyXmax      | | Accumulated Poynting flux through xmax boundary                         |
-| | PoyXmaxInst  | | Current Poynting flux through xmax boundary                             |
-| |              | |  ... same for boundaries xmin ymin ymax zmin zmax                       |
+| | PoyXmin      | | Accumulated Poynting flux through xmin boundary                         |
+| | PoyXminInst  | | Current Poynting flux through xmin boundary                             |
+| |              | |  ... same for other boundaries                                          |
 +----------------+---------------------------------------------------------------------------+
 
 Checkout the :doc:`post-processing <post-processing>` documentation as well.
@@ -1166,7 +1167,7 @@ Checkout the :doc:`post-processing <post-processing>` documentation as well.
 
 :program:`Smilei` can collect various field data (electromagnetic fields, currents and density)
 taken at the location of the PIC grid, both as instantaneous values and averaged values.
-This is done by including the block ``DiagScalar``::
+This is done by including a block ``DiagFields``::
 
   DiagFields(
       every = 10,
@@ -1194,8 +1195,6 @@ This is done by including the block ``DiagScalar``::
   :default: ``1`` *(no averaging)*
   
   The number of timesteps for time-averaging.
-  Note that only one diagnostic with averaging, and one diagnostic without averaging
-  can be defined.
 
 
 .. py:data:: fields
@@ -1211,8 +1210,12 @@ The full list of fields that are saved by this diagnostic:
 .. rst-class:: nowrap
 
 +----------------+-------------------------------------------------------+
+| | Bx           | |                                                     |
+| | By           | | Components of the magnetic field                    |
+| | Bz           | |                                                     |
++----------------+-------------------------------------------------------+
 | | Bx_m         | |                                                     |
-| | By_m         | | Components of the magnetic field                    |
+| | By_m         | | Components of the magnetic field (time-centered)    |
 | | Bz_m         | |                                                     |
 +----------------+-------------------------------------------------------+
 | | Ex           | |                                                     |
@@ -1389,8 +1392,9 @@ All the possible variables inside this block are explained here:
   * with ``"density"``, the weights are summed.
   * with ``"charge_density"``, the weights :math:`\times` charge are summed.
   * with ``"jx_density"``, the weights :math:`\times` charge :math:`\times\; v_x` are summed (same with :math:`y` and :math:`z`).
-  * with ``"p_density"``, the weights :math:`\times\; p` are summed (same with :math:`px`, :math:`py` and :math:`pz`).
-  * with ``"pressure_xx"``, the weights :math:`\times\; v \times p` are summed (same with yy, zz, xy, yz and xz).
+  * with ``"p_density"``, the weights :math:`\times\; p` are summed (same with :math:`p_x`, :math:`p_y` and :math:`p_z`).
+  * with ``"ekin_density"``, the weights :math:`\times mc^2\; (\gamma-1)` are summed.
+  * with ``"pressure_xx"``, the weights :math:`\times\; v_x p_x` are summed (same with yy, zz, xy, yz and xz).
 
 
 .. py:data:: every
@@ -1435,6 +1439,14 @@ All the possible variables inside this block are explained here:
   
   There may be as many axes as wanted in one ``DiagParticles( ... )`` block.
 
+.. note::
+  
+  As an experimental capability, we created the "composite" axes ``type``.
+  You may write the axis type as ``"ax+by+cz"``, where ``a``, ``b`` and ``c`` are numbers.
+  This syntax does NOT accept characters other than numbers and the characters ``xyz+-``.
+  For instance, it does not accept divisions ``/`` or whitespace.
+  The resulting axis is along the vector of coordinates :math:`(a,b,c)`.
+  For instance, in 2D, ``"x+2y"`` makes an axis oriented along the vector :math:`(1,2)`.
 
 
 **Examples of particle diagnostics**
@@ -1571,14 +1583,19 @@ For more clarity, this graph illustrates the five syntaxes for time selections:
 
 ----
 
-.. _DumpAndRestart:
+.. _Checkpoints:
 
-Dump and restart
-^^^^^^^^^^^^^^^^
+Checkpoints
+^^^^^^^^^^^
 
-To restart the simulation from a previous point, a few instructions are needed to 
-tell :program:`Smilei` where to find the restart information, and how often the checkpoint
-dumps are done::
+The simulation can be *dumped* at given points (*checkpoints*) in order to be *restarted*
+at that point.
+
+A few things are important to know when you need dumps and restarts.
+
+* Do not restart the simulation in the same directory as the previous one. Files will be 
+  overwritten, and errors may occur. Create a new directory for your restarted simulation.
+* Manage your memory: each process dumps one file, and the total can be significant.
 
   DumpRestart(
       restart_dir = "dump1",
@@ -1589,6 +1606,8 @@ dumps are done::
       dump_file_sequence = 2,
   )
 
+Checkpoints will be stored in a checkpoints dir
+
 .. py:data:: restart_dir
 
   :default: None
@@ -1597,7 +1616,7 @@ dumps are done::
   If not defined, it does not restart from a previous dump.
   
   **WARNING:** this path must either absolute or be relative to ``output_dir``
-
+  
 .. py:data:: dump_step
 
   :default: 0
@@ -1628,7 +1647,20 @@ dumps are done::
   
   This tells :program:`Smilei` to keep the last ``n`` dumps for a later restart.
   The default value, 2, saves one extra dump in case of a crash during the file dump.
+
+.. py:data:: file_grouping
+
+  :default: None
   
+    If provided the code will create a series of subdirectories in which it will store the 
+    checkpoint files by group of ``file_grouping``. This is useful on filesystem with a limited 
+    number of files per directory
+
+.. py:data:: restart_number
+
+  :default: None
+  
+    If provided the code will restart from that checkpoint rather than lokking for the oldest
 
 ----
 
@@ -1640,11 +1672,11 @@ namelist. They should not be re-defined by the user!
 
 .. py:data:: smilei_mpi_rank
     
-  The MPI rank of the current CPU.
+  The MPI rank of the current process.
 
 .. py:data:: smilei_mpi_size
     
-  The total number of MPI CPUs.
+  The total number of MPI processes.
 
 .. py:data:: smilei_rand_max
 
