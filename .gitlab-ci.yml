@@ -22,7 +22,7 @@ makerun1D:
     # Move in test dir
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/scripts
     # Run checking script
-    - python validation.py -b "tst1d_*_*.py" -s all -v
+    - python validation.py -b "tst1d_*_*.py" -s all -m 4 -o 4 -v
 
 makerun2D:
   stage: makerun
@@ -32,7 +32,7 @@ makerun2D:
     # Move in test dir
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/scripts
     # Run checking script
-    - python validation.py -b "tst2d_*_*.py" -s all -v
+    - python validation.py -b "tst2d_*_*.py" -s all -m 4 -o 4  -v
 
 makerun3D:
   stage: makerun
