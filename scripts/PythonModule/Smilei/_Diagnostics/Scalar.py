@@ -93,7 +93,7 @@ class Scalar(Diagnostic):
 			self._vunits = ""
 		else:
 			self._vunits = {"U":"K_r", "E":"E_r", "B":"B_r", "J":"J_r",
-									"R":"N_r", "P":"S_r"}[self._scalarname[0]]
+									"R":"N_r", "P":"S_r", "D":"N_r"}[self._scalarname[0]]
 		self._title =self._scalarname
 		
 		# Finish constructor

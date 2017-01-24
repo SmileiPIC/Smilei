@@ -204,11 +204,13 @@ class DumpRestart(SmileiSingleton):
     """Dump and restart parameters"""
     
     restart_dir = None
+    restart_number = None
     dump_step = 0
     dump_minutes = 0.
     dump_file_sequence = 2
     dump_deflate = 0
     exit_after_dump = True
+    file_grouping = None
 
 
 class Species(SmileiComponent):
@@ -321,6 +323,7 @@ class PartWall(SmileiComponent):
 smilei_mpi_rank = 0
 smilei_mpi_size = 1
 smilei_rand_max = 2**31-1
+smilei_version='v3.0-84-g92ff763-CI'
 # Some predefined profiles (see doc)
 
 def constant(value, xvacuum=-float("inf"), yvacuum=-float("inf"), zvacuum=-float("inf")):
@@ -883,92 +886,115 @@ def LaserGaussian3D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., inci
 -----------------------------------------------------------------------
     BEGINNING OF THE USER NAMELIST
 """
-# ----------------------------------------------------------------------------------------
-# 					SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
-# ----------------------------------------------------------------------------------------
 
-import math
-L  = 1.12			# wavelength=simulation box length
-dn = 0.001			# amplitude of the perturbation
-
+dx = 0.125
+dtrans = 3.
+dt = 0.124
+nx = 896
+ntrans = 40
+Lx = nx * dx
+Ltrans = ntrans*dtrans
+npatch_x = 128
+laser_fwhm = 19.80
 
 Main(
-    geometry = "1d3v",
-     
+    geometry = "3d3v",
+    
     interpolation_order = 2,
-     
-    cell_length = [0.01],
-    sim_length  = [L],
     
-    number_of_patches = [ 16 ],
+    timestep = dt,
+    sim_time = int(2*Lx/dt)*dt,
     
-    timestep = 0.0095,
-    sim_time = 50.,
-     
-    bc_em_type_x = ['periodic'],
-     
-    random_seed = 0
+    cell_length  = [dx, dtrans, dtrans],
+    sim_length = [ Lx,  Ltrans, Ltrans],
+    
+    number_of_patches = [npatch_x, 4, 4],
+    
+    clrw = nx/npatch_x,
+    
+    bc_em_type_x = ["silver-muller","silver-muller"],
+    bc_em_type_y = ["silver-muller","silver-muller"],
+    bc_em_type_z = ["silver-muller","silver-muller"],
+    
+    random_seed = 0,
+    solve_poisson = False,
+    print_every = 100
 )
 
-
-Species(
-	species_type = "ion",
-	initPosition_type = "regular",
-	initMomentum_type = "cold",
-	n_part_per_cell = 10,
-	mass = 1836.0,
-	charge = 1.0,
-	nb_density = 1.,
-	time_frozen = 10000.0,
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
-)
-Species(
-	species_type = "eon1",
-	initPosition_type = "regular",
-	initMomentum_type = "cold",
-	n_part_per_cell = 10,
-	mass = 1.0,
-	charge = -1.0,
-	nb_density = cosine(0.5,xamplitude=dn,xlength=L),
-	mean_velocity = [-0.1,0.0,0.0],
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
-)
-Species(
-	species_type = "eon2",
-	initPosition_type = "regular",
-	initMomentum_type = "cold",
-	n_part_per_cell = 10,
-	mass = 1.0,
-	charge = -1.0,
-	nb_density = cosine(0.5,xamplitude=dn,xlength=L),
-	mean_velocity = [0.1,0.0,0.0],
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
+MovingWindow(
+    time_start = Main.sim_length[0],
+    velocity_x = 0.9997
 )
 
+LoadBalancing(
+    initial_balance = False,
+    every = 20,
+    coef_cell = 1.,
+    coef_frozen = 0.1
+)
 
-every = 100
+Species( 
+    species_type = "electron",
+    initPosition_type = "regular",
+    initMomentum_type = "cold",
+    n_part_per_cell = 8,
+    c_part_max = 1.0,
+    mass = 1.0,
+    charge = -1.0,
+    charge_density = 0.000494,
+    mean_velocity = [0.0, 0.0, 0.0],
+    temperature = [0.0],
+    dynamics_type = "norm",    
+    time_frozen = 0.0,
+    radiating = False,
+    bc_part_type_xmin = "supp",
+    bc_part_type_xmax = "supp",
+    bc_part_type_ymin ="supp",
+    bc_part_type_ymax ="supp",
+    bc_part_type_zmin ="supp",
+    bc_part_type_zmax ="supp"
+)
 
-DiagScalar(
-    every = every,
-)	
+LaserGaussian3D(
+    boxSide         = "xmin",
+    a0              = 2.,
+    focus           = [0., Main.sim_length[1]/2., Main.sim_length[2]/2.],
+    waist           = 26.16,
+    time_envelope   = tgaussian(center=2**0.5*laser_fwhm, fwhm=laser_fwhm)
+)
+
+DumpRestart(
+    dump_step = 0,
+    dump_minutes = 0.0,
+    exit_after_dump = False,
+)
+
+list_fields = ['Ex','Ey','Rho','Jx']
 
 DiagFields(
-    every = every,
-    fields = ['Ex','Ey','Ez','By_m','Bz_m','Rho']
+    every = 100,
+    fields = list_fields
 )
 
-DiagParticles(
-	output = "density",
-	every = every,
-	species = ["eon1","eon2"],
-	axes = [
-		["x", 0., L, 50],
-		["px", -0.4, 0.4, 100]
-	]
+DiagProbe(
+	every = 10,
+	pos = [0., Main.sim_length[1]/2., Main.sim_length[2]/2.],
+	pos_first = [Main.sim_length[0], Main.sim_length[1]/2., Main.sim_length[2]/2.],
+	number = [nx],
+	fields = ['Ex','Ey','Rho','Jx']
 )
+
+DiagProbe(
+	every = 10,
+	pos = [0., Main.sim_length[1]/4., Main.sim_length[2]/2.],
+	pos_first = [0., 3*Main.sim_length[1]/4., Main.sim_length[2]/2.],
+	pos_second = [Main.sim_length[0], Main.sim_length[1]/4., Main.sim_length[2]/2.],
+	number = [nx, ntrans],
+	fields = ['Ex','Ey','Rho','Jx']
+)
+
+DiagScalar(every = 10, vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMin', 'RhoMinCell'])
+
 
 
 """
@@ -977,6 +1003,16 @@ DiagParticles(
 """
 
 gc.collect()
+import math
+
+def _mkdir(role, path):
+    if not os.path.exists(path):
+        try:
+            os.makedirs(path)
+        except:
+            raise Exception("ERROR in the namelist: "+role+" "+path+" cannot be created")
+    elif not os.path.isdir(path):
+        raise Exception("ERROR in the namelist: "+role+" "+path+" exists but is not a directory")
 
 def _smilei_check():
     """Do checks over the script"""
@@ -991,14 +1027,19 @@ def _smilei_check():
             raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
     # Verify the output_dir
     if smilei_mpi_rank == 0 and Main.output_dir:
-        if not os.path.exists(Main.output_dir):
-            try:
-                os.makedirs(Main.output_dir)
-            except:
-                raise Exception("ERROR in the namelist: output_dir "+Main.output_dir+" does not exists and cannot be created")
-        elif not os.path.isdir(Main.output_dir):
-                raise Exception("ERROR in the namelist: output_dir "+Main.output_dir+" exists and is not a directory")
-    # Verify the restart_dir
+        _mkdir("output_dir", Main.output_dir)
+    # Checkpoint: prepare dir tree
+    if smilei_mpi_rank == 0 and (DumpRestart.dump_step>0 or DumpRestart.dump_minutes>0.):
+        checkpoint_dir = (Main.output_dir or ".") + os.sep + "checkpoints" + os.sep
+        if DumpRestart.file_grouping :
+            ngroups = smilei_mpi_size/DumpRestart.file_grouping+1
+            ngroups_chars = int(math.log10(ngroups))+1
+            for group in range(ngroups):
+                group_dir = checkpoint_dir + '%*s'%(ngroups_chars,group)
+                _mkdir("checkpoint", group_dir)
+        else:
+            _mkdir("checkpoint", checkpoint_dir)
+    # Checkpoint: Verify the restart_dir
     if len(DumpRestart)==1 and DumpRestart.restart_dir:
         if not os.path.isdir(DumpRestart.restart_dir):
             raise Exception("ERROR in the namelist: restart_dir = `"+DumpRestart.restart_dir+"` is not a directory")
