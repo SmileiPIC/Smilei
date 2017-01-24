@@ -28,6 +28,11 @@ public :
     
     void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) override;
     
+    //! Get memory footprint of current diagnostic
+    int getMemFootPrint() override {
+        return 0;
+    }
+
 private :
     
     //! True if must be ordered by ID in the file

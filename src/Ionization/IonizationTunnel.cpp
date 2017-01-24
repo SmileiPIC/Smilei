@@ -22,7 +22,7 @@ IonizationTunnel::IonizationTunnel(Params& params, Species * species) : Ionizati
         DEBUG("Z : " << Z);
         double cst      = ((double)Z+1.0) * sqrt(2.0/Potential[Z]);
         alpha_tunnel[Z] = cst-1.0;
-        beta_tunnel[Z]  = pow(2,cst) * (4.0*Azimuthal_quantum_number[Z]+2.0) / tgamma(cst+1.0) * Potential[Z] * au_to_w0;
+        beta_tunnel[Z]  = pow(2,alpha_tunnel[Z]) * (8.*Azimuthal_quantum_number[Z]+4.0) / (cst*tgamma(cst)) * Potential[Z] * au_to_w0;
         gamma_tunnel[Z] = 2.0 * pow(2.0*Potential[Z],1.5);
     }
     
@@ -51,7 +51,7 @@ void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields 
     double E = EC_to_au * sqrt( Epart.x*Epart.x + Epart.y*Epart.y + Epart.z*Epart.z );
     
     // Ionization rate in normalized (SMILEI) units
-    double delta     = gamma_tunnel[Z] / E;
+    double delta = gamma_tunnel[Z] / E;
     vector<double> IonizRate_tunnel(atomic_number_);
     IonizRate_tunnel[Z] = beta_tunnel[Z] * pow(delta,alpha_tunnel[Z]) * exp(-delta*one_third);
     
@@ -162,17 +162,18 @@ void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields 
     // --------------------------------
     if (E!=0 && Z!=atomic_number_) {
     
-        // if ionization of the last electron: single ionization
-        // -----------------------------------------------------
         if ( Z == atomic_number_-1) {
+            // if ionization of the last electron: single ionization
+            // -----------------------------------------------------
             if ( ran_p < 1.0 -exp(-IonizRate_tunnel[Z]*dt) ) {
                 k_times        = 1;
             }
             
+        } else {
             // else : multiple ionization can occur in one time-step
             //        partial & final ionization are decoupled (see Nuter Phys. Plasmas)
             // -------------------------------------------------------------------------
-        } else {
+            
             // initialization
             double Mult = 1.0;
             vector<double> Dnom_tunnel(atomic_number_);
@@ -185,8 +186,8 @@ void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields 
                 double Prob  = 0.0;
                 delta = gamma_tunnel[newZ] / E;
                 IonizRate_tunnel[newZ] = beta_tunnel[newZ]
-                                         *                        pow(delta,alpha_tunnel[newZ])
-                                         *                        exp(-delta*one_third);
+                *                        pow(delta,alpha_tunnel[newZ])
+                *                        exp(-delta*one_third);
                 double D_sum = 0.0;
                 double P_sum = 0.0;
                 Mult  *= IonizRate_tunnel[Z+k_times];

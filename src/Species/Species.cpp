@@ -894,6 +894,9 @@ void Species::setXminBoundaryCondition() {
 // Provides a Maxwell-Juttner distribution of energies
 vector<double> Species::maxwellJuttner(unsigned int npoints, double temperature)
 {
+    if (temperature==0.) {
+        ERROR( "The species " << speciesNumber << " is initializing its momentum with the following temperature : " << temperature );
+    }
     vector<double> energies(npoints);
     
     // Classical case: Maxwell-Bolztmann

@@ -35,13 +35,16 @@ public :
     
     //! Tells whether this diagnostic requires the pre-calculation of the particle J & Rho
     virtual bool needsRhoJs(int timestep) { return false; };
-    
+
     //! Time selection for writing the diagnostic
     TimeSelection * timeSelection;
     
     //! Time selection for flushing the file
     TimeSelection * flush_timeSelection;
     
+    //! Get memory footprint of current diagnostic
+    virtual int getMemFootPrint() = 0;
+
     //! this is the file name
     std::string filename;
     
