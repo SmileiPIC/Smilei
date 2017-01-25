@@ -304,7 +304,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int itime, Timers
         #pragma omp barrier
         if( globalDiags[idiag]->theTimeIsNow ) {
             // All patches run
-            #pragma omp for 
+            #pragma omp for schedule(runtime)
             for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
                 globalDiags[idiag]->run( (*this)(ipatch), itime );
             // MPI procs gather the data and compute
@@ -860,6 +860,7 @@ void VectorPatch::update_field_list(int ispec)
 void VectorPatch::applyAntennas(double time)
 {
     if( nAntennas>0 ) {
+        #pragma omp single
         TITLE("Applying antennas at time t = " << time);
     }
     // Loop antennas
