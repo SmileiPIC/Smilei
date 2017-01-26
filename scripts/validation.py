@@ -485,7 +485,7 @@ mpirun -np "+str(MPI)+" "+WORKDIRS+"/smilei "+SMILEI_BENCH+" >"+SMILEI_EXE_OUT+"
           shutil.rmtree(WORKDIR)
           sys.exit(2)
       elif JOLLYJUMPER in HOSTNAME :
-        NODES=((int(MPI)*int(OMP)-1)/12)+1
+        NODES=((int(MPI)*int(OMP)-1)/24)+1
         exec_script_desc.write( "\
 #PBS -l nodes="+str(NODES)+":ppn=24 \n \
 #PBS -q default \n \
