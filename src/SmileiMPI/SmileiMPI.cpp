@@ -109,7 +109,6 @@ void SmileiMPI::init( Params& params )
 {
     // Initialize patch environment 
     patch_count.resize(smilei_sz, 0);
-    target_patch_count.resize(smilei_sz, 0);
     capabilities.resize(smilei_sz, 1);
     Tcapabilities = smilei_sz;
 
@@ -366,7 +365,7 @@ void SmileiMPI::init_patch_count( Params& params)
 void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, double time_dual )
 {
 
-    cout << "Start recompute" << endl;
+    //cout << "Start recompute" << endl;
     unsigned int Npatches, Ncur,ncells_perpatch, Lmin, Lmin1, Lmin2, Lmax, patch_start;
     double Tload,Tload_loc,Tcur, Lcur, above_target, below_target, cells_load;
     unsigned int npatchmin =1;
@@ -412,7 +411,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         Tload_loc += Lp[ipatch];
     }
 
-    cout << "Start all gather" << endl;
+    //cout << "Start all gather from rank " << smilei_rk << endl;
     //Allgatherv loads of all patches in Lp_global
   
     //recv_counts[0] = 0;
@@ -421,25 +420,38 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     //Communicate the total load of each MPI rank to everyone
     MPI_Allgather(&Tload_loc,1,MPI_DOUBLE,&Tload_vec[0], 1, MPI_DOUBLE,MPI_COMM_WORLD);
     //Communicate the detail of the load of each patch to neighbouring MPI ranks
-    if (smilei_rk < smilei_sz-1) MPI_Isend( &(Lp[0]), patch_count[smilei_rk], MPI_DOUBLE, smilei_rk+1, 0, MPI_COMM_WORLD, &request );
+    if (smilei_rk < smilei_sz-1) {
+        //cout << "sending to right" << endl;
+        MPI_Isend( &(Lp[0]), patch_count[smilei_rk], MPI_DOUBLE, smilei_rk+1, 0, MPI_COMM_WORLD, &request );
+    }
     if (smilei_rk > 0) {
+        //cout << "sending to left to " <<  endl;
         MPI_Isend( &(Lp[0]), patch_count[smilei_rk], MPI_DOUBLE, smilei_rk-1, 1, MPI_COMM_WORLD, &request );
+        //cout << "receiving from left" << endl;
         MPI_Recv( &(Lp_left[0]), patch_count[smilei_rk-1], MPI_DOUBLE, smilei_rk-1, 0, MPI_COMM_WORLD, &status );
     }
-    if (smilei_rk < smilei_sz-1) MPI_Recv( &(Lp_right[0]), patch_count[smilei_rk+1], MPI_DOUBLE, smilei_rk+1, 0, MPI_COMM_WORLD, &status);
+    if (smilei_rk < smilei_sz-1){
+        //cout << "receiving from right. Lp_right size = " << Lp_right.size() << " patch_count right = " << patch_count[smilei_rk+1] << endl;
+        MPI_Recv( &(Lp_right[0]), patch_count[smilei_rk+1], MPI_DOUBLE, smilei_rk+1, 1, MPI_COMM_WORLD, &status);
+    }
 
-    cout << "End  MPI" << endl;
+
+
+    //cout << "End  MPI" << endl;
 
     //Compute global total loads
     //for(unsigned int ipatch=0; ipatch < Npatches; ipatch++) Tload += Lp_global[ipatch];
     for(unsigned int rank=0; rank < smilei_sz; rank++) Tload += Tload_vec[rank];
     Tload /= Tcapabilities; //Target load for each mpi process.
     //Tcur = Tload * capabilities[smilei_rk];  //Init.
+    //cout << "T load per mpi process = " << Tload << endl;
 
     //Tcur is now initialized as the total load carried by previous ranks.
     for(unsigned int rank=0; rank < smilei_rk; rank++) Tcur += Tload_vec[rank];
+    //cout << "Tcur = " << Tcur << " mpi rank = " << smilei_rk << endl;
     //Check if my rank should start with additional patches from left neighbour ...
     if (Tcur > smilei_rk*Tload){
+        //cout << "Tcur >" << endl;
         unsigned int j = Lp_left.size()-1;
         //... progressively add some. 
         while (Tcur > smilei_rk*Tload && j>0){ //Keep at least 1 patch
@@ -456,18 +468,23 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
             Ncur--;
         }
     } else {
+        //cout << "Tcur <=" << endl;
     //  Check if some of my patches should be given to my left neighbour.
         while (Tcur < smilei_rk*Tload && patch_start<patch_count[smilei_rk]-1){ //Keep at least 1 patch
+            //cout << "patch_start = " << patch_start << endl;
             Tcur += Lp[patch_start];
             patch_start++;
         }
-        below_target = smilei_rk*Tload - Tcur + Lp[patch_start-1];
-        above_target = Tcur - smilei_rk*Tload; 
-        //Correction if I added one too many.
-        if (above_target > below_target){
-            patch_start--;
+        if (patch_start > 0){
+            below_target = smilei_rk*Tload - Tcur + Lp[patch_start-1];
+            above_target = Tcur - smilei_rk*Tload; 
+            //Correction if I added one too many.
+            if (above_target > below_target){
+                patch_start--;
+            }
         }
     }
+    //cout << "End  adjustement left" << endl;
 
     if (smilei_rk == smilei_sz-1){
 
@@ -497,11 +514,13 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         //Adjust in case it went too far
         if (above_target > below_target) Ncur--;
     }
+    //cout << "End  adjustement right" << endl;
 
     //Ncur now has to be gathered to all as target_patch_count[smilei_rk]
-    MPI_Allgather(&Ncur,1,MPI_INT,&target_patch_count[0], 1, MPI_INT,MPI_COMM_WORLD);
+    MPI_Allgather(&Ncur,1,MPI_INT,&patch_count[0], 1, MPI_INT,MPI_COMM_WORLD);
 
 
+    //cout << "End  final all gather" << endl;
 
     ////Loop over all patches to determine target_patch_count.
     //for(unsigned int ipatch=patch_start; ipatch < patch_count[]; ipatch++){
@@ -567,7 +586,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     if (smilei_rk==0) {
         fout << "\tt = " << time_dual << endl;
         for (int irk=0;irk<smilei_sz;irk++)
-            fout << " patch_count[" << irk << "] = " << patch_count[irk] << " target patch_count = "<< target_patch_count[irk] << endl;
+            fout << " patch_count[" << irk << "] = " << patch_count[irk] << endl;
         fout.close();
     }
 

@@ -165,7 +165,7 @@ protected:
     
     //! For patch decomposition
     //Number of patches owned by each mpi process.
-    std::vector<int>  patch_count, target_patch_count, capabilities;
+    std::vector<int>  patch_count, capabilities;
     int Tcapabilities; //Default = smilei_sz (1 per MPI rank)
 
 
