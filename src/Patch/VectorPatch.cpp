@@ -191,13 +191,13 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         // Computes Ex_, Ey_, Ez_ on all points.
         // E is already synchronized because J has been synchronized before.
         (*this)(ipatch)->EMfields->solveMaxwellAmpere();
-    }
-    // Computes Bx_, By_, Bz_ at time n+1 on interior points.
-    #pragma omp for schedule(static)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        // Computes Bx_, By_, Bz_ at time n+1 on interior points.
+        //for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*(*this)(ipatch)->EMfields->MaxwellFaradaySolver_)((*this)(ipatch)->EMfields);
         // Applies boundary conditions on B
         (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
+        // Computes B at time n+1/2 using B and B_m.
+        (*this)(ipatch)->EMfields->centerMagneticFields();
     }
     
     //Synchronize B fields between patches.
@@ -207,12 +207,6 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
     SyncVectorPatch::exchangeB( (*this) );
     timers.syncField.update(  params.printNow( itime ) );
     
-    timers.maxwell.restart();
-    // Computes B at time n+1/2 using B and B_m.
-    #pragma omp for schedule(static)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
-        (*this)(ipatch)->EMfields->centerMagneticFields();
-    timers.maxwell.update();
 
 } // END solveMaxwell
 
