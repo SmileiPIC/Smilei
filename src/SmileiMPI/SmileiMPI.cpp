@@ -444,17 +444,17 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     for(unsigned int rank=0; rank < smilei_sz; rank++) Tload += Tload_vec[rank];
     Tload /= Tcapabilities; //Target load for each mpi process.
     //Tcur = Tload * capabilities[smilei_rk];  //Init.
-    //cout << "T load per mpi process = " << Tload << endl;
+    cout << "T load per mpi process = " << Tload << endl;
 
     //Tcur is now initialized as the total load carried by previous ranks.
     for(unsigned int rank=0; rank < smilei_rk; rank++) Tcur += Tload_vec[rank];
-    //cout << "Tcur = " << Tcur << " mpi rank = " << smilei_rk << endl;
+    cout << "Tcur = " << Tcur << " mpi rank = " << smilei_rk << endl;
     //Check if my rank should start with additional patches from left neighbour ...
     if (Tcur > smilei_rk*Tload){
-        //cout << "Tcur >" << endl;
         unsigned int j = Lp_left.size()-1;
         //... progressively add some. 
         while (Tcur > smilei_rk*Tload && j>0){ //Keep at least 1 patch
+            cout << "j= " << j << endl;
             Tcur -= Lp_left[j];
             Lcur += Lp_left[j];
             j--;
@@ -471,7 +471,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         //cout << "Tcur <=" << endl;
     //  Check if some of my patches should be given to my left neighbour.
         while (Tcur < smilei_rk*Tload && patch_start<patch_count[smilei_rk]-1){ //Keep at least 1 patch
-            //cout << "patch_start = " << patch_start << endl;
+            cout << "patch_start = " << patch_start << endl;
             Tcur += Lp[patch_start];
             patch_start++;
         }
