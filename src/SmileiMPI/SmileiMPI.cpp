@@ -366,13 +366,12 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
 {
 
     //cout << "Start recompute" << endl;
-    unsigned int Npatches, Ncur,ncells_perpatch, Lmin, Lmin1, Lmin2, Lmax, patch_start;
-    double Tload,Tload_loc,Tcur, Lcur, above_target, below_target, cells_load;
-    unsigned int npatchmin =1;
+    unsigned int Npatches,ncells_perpatch, j;
+    int Ncur;
+    double Tload,Tload_loc,Tcur, cells_load, target;
     //Load of a cell = coef_cell*load of a particle.
     //Load of a frozen particle = coef_frozen*load of a particle.
-    std::vector<double> Lp,Lp_global,Tload_vec, Lp_left, Lp_right;
-    //int recv_counts[smilei_sz];
+    std::vector<double> Lp,Tload_vec, Lp_left, Lp_right;
     ofstream fout;
 
     if (isMaster()) {
@@ -392,7 +391,6 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     cells_load = ncells_perpatch*params.coef_cell ;
 
     Lp.resize(patch_count[smilei_rk], cells_load);
-    //Lp_global.resize(Npatches,0.);
     Tload_vec.resize(smilei_sz, 0.);
     if (smilei_rk > 0) Lp_left.resize(patch_count[smilei_rk-1]);
     if (smilei_rk < smilei_sz-1) Lp_right.resize(patch_count[smilei_rk+1]);
@@ -400,8 +398,6 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     Tload = 0.;
     Tload_loc = 0.;
     Ncur = 0; // Number of patches assigned to current rank r.
-    Lcur = 0.; //Load assigned to current rank r.
-    patch_start = 0;
 
     //Compute Local Loads of each Patch (Lp)
     for(unsigned int ipatch=0; ipatch < (unsigned int)patch_count[smilei_rk]; ipatch++){
@@ -411,176 +407,78 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         Tload_loc += Lp[ipatch];
     }
 
-    //cout << "Start all gather from rank " << smilei_rk << endl;
-    //Allgatherv loads of all patches in Lp_global
-  
-    //recv_counts[0] = 0;
-    //for(int i=1; i < smilei_sz ; i++) recv_counts[i] = recv_counts[i-1]+patch_count[i-1];
-    //MPI_Allgatherv(&Lp[0],patch_count[smilei_rk],MPI_DOUBLE,&Lp_global[0], &patch_count[0], recv_counts, MPI_DOUBLE,MPI_COMM_WORLD);
     //Communicate the total load of each MPI rank to everyone
     MPI_Allgather(&Tload_loc,1,MPI_DOUBLE,&Tload_vec[0], 1, MPI_DOUBLE,MPI_COMM_WORLD);
     //Communicate the detail of the load of each patch to neighbouring MPI ranks
     if (smilei_rk < smilei_sz-1) {
-        //cout << "sending to right" << endl;
         MPI_Isend( &(Lp[0]), patch_count[smilei_rk], MPI_DOUBLE, smilei_rk+1, 0, MPI_COMM_WORLD, &request );
     }
     if (smilei_rk > 0) {
-        //cout << "sending to left to " <<  endl;
         MPI_Isend( &(Lp[0]), patch_count[smilei_rk], MPI_DOUBLE, smilei_rk-1, 1, MPI_COMM_WORLD, &request );
-        //cout << "receiving from left" << endl;
         MPI_Recv( &(Lp_left[0]), patch_count[smilei_rk-1], MPI_DOUBLE, smilei_rk-1, 0, MPI_COMM_WORLD, &status );
     }
     if (smilei_rk < smilei_sz-1){
-        //cout << "receiving from right. Lp_right size = " << Lp_right.size() << " patch_count right = " << patch_count[smilei_rk+1] << endl;
         MPI_Recv( &(Lp_right[0]), patch_count[smilei_rk+1], MPI_DOUBLE, smilei_rk+1, 1, MPI_COMM_WORLD, &status);
     }
 
-
-
-    //cout << "End  MPI" << endl;
-
     //Compute global total loads
-    //for(unsigned int ipatch=0; ipatch < Npatches; ipatch++) Tload += Lp_global[ipatch];
     for(unsigned int rank=0; rank < smilei_sz; rank++) Tload += Tload_vec[rank];
     Tload /= Tcapabilities; //Target load for each mpi process.
     //Tcur = Tload * capabilities[smilei_rk];  //Init.
-    cout << "T load per mpi process = " << Tload << endl;
 
-    //Tcur is now initialized as the total load carried by previous ranks.
-    for(unsigned int rank=0; rank < smilei_rk; rank++) Tcur += Tload_vec[rank];
-    cout << "Tcur = " << Tcur << " mpi rank = " << smilei_rk << endl;
-    //Check if my rank should start with additional patches from left neighbour ...
-    if (Tcur > smilei_rk*Tload){
-        unsigned int j = Lp_left.size()-1;
-        //... progressively add some. 
-        while (Tcur > smilei_rk*Tload && j>0){ //Keep at least 1 patch
-            cout << "j= " << j << endl;
-            Tcur -= Lp_left[j];
-            Lcur += Lp_left[j];
-            j--;
-            Ncur++;
-        }
-        below_target = smilei_rk*Tload - Tcur;
-        above_target = Tcur + Lp_left[j+1] - smilei_rk*Tload; 
-        //Correction if I added one too many.
-        if (below_target > above_target){
-            Lcur -= Lp_left[j+1];
-            Ncur--;
-        }
-    } else {
-        //cout << "Tcur <=" << endl;
-    //  Check if some of my patches should be given to my left neighbour.
-        while (Tcur < smilei_rk*Tload && patch_start<patch_count[smilei_rk]-1){ //Keep at least 1 patch
-            cout << "patch_start = " << patch_start << endl;
-            Tcur += Lp[patch_start];
-            patch_start++;
-        }
-        if (patch_start > 0){
-            below_target = smilei_rk*Tload - Tcur + Lp[patch_start-1];
-            above_target = Tcur - smilei_rk*Tload; 
-            //Correction if I added one too many.
-            if (above_target > below_target){
-                patch_start--;
-            }
-        }
-    }
-    //cout << "End  adjustement left" << endl;
-
-    if (smilei_rk == smilei_sz-1){
-
-        Ncur += patch_count[smilei_rk] - patch_start; //Take all remaining patches
-
-    } else {
-
-        //Add patches to reach target load for my rank
-        while (Lcur <  (smilei_rk+1)*Tload && patch_start < patch_count[smilei_rk] ){
-            Tcur = Lcur; //Save old value of Lcur
-            Lcur += Lp[patch_start];
-            patch_start++;
-            Ncur++;
-        }
-        //If not enough, start adding patches from right neighbour. Should never happen for last MPI.
-        if (Lcur <  (smilei_rk+1)*Tload ){
-            patch_start = 0;
-            while (Lcur <  (smilei_rk+1)*Tload && patch_start < patch_count[smilei_rk+1]-1 ){
-                Tcur = Lcur; //Save old value of Lcur
-                Lcur += Lp_right[patch_start];
-                patch_start++;
+    if (smilei_rk > 0){
+        //Tcur is now initialized as the total load carried by previous ranks.
+        Tcur = 0;
+        for(unsigned int rank=0; rank < smilei_rk; rank++) Tcur += Tload_vec[rank];
+        //Check if my rank should start with additional patches from left neighbour.
+        target = smilei_rk*Tload;
+        if (Tcur > target){
+            j = Lp_left.size()-1;
+            while (abs(Tcur-target) > abs(Tcur-Lp_left[j] - target) && j>0){ //Leave at least 1 patch to my neighbour.
+                Tcur -= Lp_left[j];
+                j--;
                 Ncur++;
             }
+        } else {
+        //  Check if some of my patches should be given to my left neighbour.
+            j = 0;
+            while (abs(Tcur-target) > abs(Tcur+Lp[j]-target) && j < patch_count[smilei_rk]-1){ //Keep at least 1 patch
+                Tcur += Lp[j];
+                j++;
+                Ncur --;
+            }
         }
-        below_target = (smilei_rk+1)*Tload - Tcur;
-        above_target = Lcur - (smilei_rk+1)*Tload; 
-        //Adjust in case it went too far
-        if (above_target > below_target) Ncur--;
     }
-    //cout << "End  adjustement right" << endl;
+
+    if (smilei_rk < smilei_sz-1){
+        //Tcur is now initialized as the total load carried by previous ranks + my load.
+        Tcur =0;
+        for(unsigned int rank=0; rank < smilei_rk+1; rank++) Tcur += Tload_vec[rank];
+        target = (smilei_rk+1)*Tload;
+
+        //Check if my rank should start with additional patches from right neighbour ...
+        if (Tcur < target){
+            unsigned int j = 0;
+            while (abs(Tcur-target) > abs(Tcur+Lp_right[j] - target) && j<patch_count[smilei_rk]+1){ //Keep at least 1 patch
+                Tcur += Lp_right[j];
+                j++;
+                Ncur++;
+            }
+        } else {
+        //  Check if some of my patches should be given to my right neighbour.
+            j = patch_count[smilei_rk]-1;
+            while (abs(Tcur-target) > abs(Tcur-Lp[j]-target) && j > 0){ //Keep at least 1 patch
+                Tcur -= Lp[j];
+                j--;
+                Ncur --;
+            }
+        }
+    }
+
+    Ncur += patch_count[smilei_rk] ;
 
     //Ncur now has to be gathered to all as target_patch_count[smilei_rk]
     MPI_Allgather(&Ncur,1,MPI_INT,&patch_count[0], 1, MPI_INT,MPI_COMM_WORLD);
-
-
-    //cout << "End  final all gather" << endl;
-
-    ////Loop over all patches to determine target_patch_count.
-    //for(unsigned int ipatch=patch_start; ipatch < patch_count[]; ipatch++){
-
-    //    Lcur += Lp_global[ipatch]; 
-    //    Ncur++; // Try to assign current patch to rank r.
-
-    //    if (r < (unsigned int)smilei_sz-1){
-
-    //        if ( Lcur > Tcur || smilei_sz-r >= Npatches-ipatch){ //Load target is exceeded or we have as many patches as procs left.
-    //            above_target = Lcur - Tcur;  //Including current patch, we exceed target by that much.
-    //            below_target = Tcur - (Lcur-Lp_global[ipatch]); // Excluding current patch, we mis the target by that much.
-    //            if((above_target > below_target) && (Ncur!=1)) { // If we're closer to target without the current patch...
-    //                target_patch_count[r] = Ncur-1;      // ... include patches up to current one.
-    //                Ncur = 1;
-    //            } else {                          //Else ...
-    //                target_patch_count[r] = Ncur;        //...assign patches including the current one.
-    //                Ncur = 0;
-    //            }
-    //            r++; //Move on to the next rank.
-    //            Tcur += Tload * capabilities[r];  //Target load for current rank r.
-    //        } 
-    //    }// End if on r.
-    //    if (ipatch == Npatches-1){
-    //        target_patch_count[smilei_sz-1] = Ncur; //When we reach the last patch, the last MPI process takes what's left.
-    //    }
-    //}// End loop on patches.
-
-
-    //Make sure the new patch_count is not too different from the previous one.
-    // First patch
-    //Ncur = 0;                           //Sold
-    //Lmin1 = npatchmin;
-    //Lmin2 = 1;
-    //Lmin = std::max(Lmin1, Lmin2);      //Pmin
-    //Lmax = patch_count[0] - npatchmin;  //Pmax
-    //Tcur = 0;                           //Plast 
-
-    ////Loop
-    //for(unsigned int i=0; i< (unsigned int)smilei_sz-1; i++){
-
-    //    Lmin2 += patch_count[i];         // futur Pmin
-    //    Tcur += target_patch_count[i];   //Plast
-    //    Lmax += patch_count[i+1];        //Pmax
- 
-    //    if (Tcur < Lmin){                      
-    //        patch_count[i] = Lmin - Ncur;
-    //    } else if (Tcur > Lmax ){                      
-    //        patch_count[i] = Lmax - Ncur;
-    //    } else {
-    //        patch_count[i] = Tcur-Ncur;
-    //    }
-    //    Ncur += patch_count[i];           //new Sold
-    //    Lmin1 = Ncur + npatchmin;
-    //    Lmin = std::max(Lmin1, Lmin2);    //new Pmin
-
-    //}
-
-    ////Last patch
-    //patch_count[smilei_sz-1] = Npatches-Ncur;
 
     //Write patch_load.txt
     if (smilei_rk==0) {
