@@ -101,6 +101,7 @@ public:
     //! finalize comm / sum densities
     virtual void finalizeSumField( Field* field, int iDim ) = 0;
     virtual void reallyfinalizeSumField( Field* field, int iDim ) = 0;
+    void testSumField( Field* field, int iDim );
     
     //! init comm / exchange fields
     virtual void initExchange( Field* field ) = 0;

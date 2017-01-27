@@ -134,6 +134,12 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
         vecPatches(ipatch)->initSumField( fields[ifield], 0 );
     }
 
+    /*#pragma omp for schedule(static) 
+    for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++) {
+        unsigned int ipatch = ifield%nPatches;
+        vecPatches(ipatch)->testSumField( fields[ifield], 0 );
+        }*/
+
     // iDim = 0, local
     for (unsigned int icomp=0 ; icomp<nComp ; icomp++) {
         nx_ = fields[icomp*nPatches]->dims_[0];
@@ -153,6 +159,7 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
                 pt1 = &(*fields[vecPatches(ipatch)->neighbor_[0][0]-h0+icomp*nPatches])(n_space[0]*ny_*nz_);
                 pt2 = &(*fields[ifield])(0);
                 //Sum 2 ==> 1
+                #pragma simd
                 for (unsigned int i = 0; i < gsp[0]* ny_*nz_ ; i++) pt1[i] += pt2[i];
                 //Copy back the results to 2
                 memcpy( pt2, pt1, gsp[0]*ny_*nz_*sizeof(double)); 
@@ -180,6 +187,12 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
             vecPatches(ipatch)->initSumField( fields[ifield], 1 );
         }
 
+        /*#pragma omp for schedule(static) 
+        for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++) {
+            unsigned int ipatch = ifield%nPatches;
+            vecPatches(ipatch)->testSumField( fields[ifield], 1 );
+            }*/
+
         // iDim = 1, local
         for (unsigned int icomp=0 ; icomp<nComp ; icomp++) {
             nx_ = fields[icomp*nPatches]->dims_[0];
@@ -201,6 +214,7 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
                     pt1 = &(*fields[vecPatches(ipatch)->neighbor_[1][0]-h0+icomp*nPatches])(n_space[1]*nz_);
                     pt2 = &(*fields[ifield])(0);
                     for (unsigned int j = 0; j < nx_ ; j++){
+                        #pragma simd
                         for (unsigned int i = 0; i < gsp[1]*nz_ ; i++) pt1[i] += pt2[i];
                         memcpy( pt2, pt1, gsp[1]*nz_*sizeof(double)); 
                         pt1 += ny_*nz_;

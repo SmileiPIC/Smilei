@@ -223,6 +223,7 @@ void Patch2D::finalizeSumField( Field* field, int iDim )
         int iy0 =    iDim *istart;
         if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
             for (unsigned int ix=0 ; ix< tmp[0] ; ix++) {
+                #pragma simd
                 for (unsigned int iy=0 ; iy< tmp[1] ; iy++)
                     f2D->data_2D[ix0+ix][iy0+iy] += f2D->MPIbuff.buf[iDim][(iNeighbor+1)%2][ix*tmp[1] + iy];
             }
