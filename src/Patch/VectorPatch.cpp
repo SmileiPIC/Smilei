@@ -801,6 +801,8 @@ void VectorPatch::output_exchanges(SmileiMPI* smpi)
 //! Resize vector of field*
 void VectorPatch::update_field_list()
 {
+    densities.resize( 3*size() ) ;
+
     listJx_.resize( size() ) ;
     listJy_.resize( size() ) ;
     listJz_.resize( size() ) ;
@@ -823,6 +825,12 @@ void VectorPatch::update_field_list()
         listBx_[ipatch] = patches_[ipatch]->EMfields->Bx_ ;
         listBy_[ipatch] = patches_[ipatch]->EMfields->By_ ;
         listBz_[ipatch] = patches_[ipatch]->EMfields->Bz_ ;
+    }
+
+    for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+        densities[ipatch] = patches_[ipatch]->EMfields->Jx_ ;
+        densities[ipatch+size()] = patches_[ipatch]->EMfields->Jy_ ;
+        densities[ipatch+2*size()] = patches_[ipatch]->EMfields->Jz_ ;
     }
 }
 

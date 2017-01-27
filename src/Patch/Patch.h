@@ -253,5 +253,12 @@ inline int buildtag(int hindex, int send, int recv) {
     return (int)(tag);
 }
 
+inline int buildtag(int hindex, int send, int recv, int tagp) {
+    std::stringstream stag("");
+    stag << hindex << send  << recv << tagp;
+    long long int tag(0);
+    stag >> tag;
+    return (int)(tag);
+}
 
 #endif
