@@ -5,7 +5,7 @@ stages:
 compile:
   stage: compile
   only:
-    - CI
+    - develop
   script:
     # Move in test dir
     - mkdir /sps/gitlab-runner/$CI_PIPELINE_ID
@@ -17,7 +17,7 @@ compile:
 makerun1D:
   stage: makerun
   only:
-    - CI
+    - develop
   script:
     # Move in test dir
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/scripts
@@ -27,7 +27,7 @@ makerun1D:
 makerun2D:
   stage: makerun
   only:
-    - CI
+    - develop
   script:
     # Move in test dir
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/scripts
@@ -37,7 +37,7 @@ makerun2D:
 makerun3D:
   stage: makerun
   only:
-    - CI
+    - develop
   script:
     # Move in test dir
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/scripts
