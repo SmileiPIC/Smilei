@@ -49,8 +49,6 @@ public:
     //! MPI_Datatype to exchange [ndims_+1][iDim=0 prim/dial]
     //!   - +1 : an additional type to exchange clrw lines
     MPI_Datatype ntype_[2][2];
-    // Use a buffer per direction to exchange data before summing
-    Field1D buf[1][2];
 
 
 };

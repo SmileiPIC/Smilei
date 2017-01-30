@@ -230,8 +230,8 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     }
     
     // Scalars related to the Poynting flux
-    poy    .resize(npoy, NULL);
-    poyInst.resize(npoy, NULL);
+    poy    .resize(2*npoy, NULL);
+    poyInst.resize(2*npoy, NULL);
     k = 0;
     for (unsigned int j=0; j<2;j++) {
         for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {

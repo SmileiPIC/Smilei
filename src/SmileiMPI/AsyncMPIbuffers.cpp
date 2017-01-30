@@ -31,15 +31,21 @@ void AsyncMPIbuffers::allocate(int ndims, Field* f)
         srequest[i].resize(2);
         rrequest[i].resize(2);
     }
-
-    std::vector<unsigned int> oversize2(2,2);
+    
+    std::vector<unsigned int> oversize2(ndims,2);
     oversize2[0] *= 2;
     oversize2[0] += 1 + f->isDual_[0];
-    oversize2[1] *= 2;
-    oversize2[1] += 1 + f->isDual_[1];
+    if (ndims>1) {
+        oversize2[1] *= 2;
+        oversize2[1] += 1 + f->isDual_[1];
+        if (ndims>2) {
+            oversize2[2] *= 2;
+            oversize2[2] += 1 + f->isDual_[2];
+        }
+    }
     std::vector<unsigned int> n_elem = f->dims_;
 
-    for (int iDim=0 ; iDim<2 ; iDim++) {
+    for (int iDim=0 ; iDim<ndims ; iDim++) {
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
             std::vector<unsigned int> tmp(2,0);
             tmp[0] =    iDim  * n_elem[0] + (1-iDim) * oversize2[0];
