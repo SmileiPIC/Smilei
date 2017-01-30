@@ -50,8 +50,6 @@ public:
     //! MPI_Datatype to exchange [ndims_+1][iDim=0 prim/dial][iDim=1 prim/dial]
     //!   - +1 : an additional type to exchange clrw lines
     MPI_Datatype ntype_[3][2][2];
-    // Use a buffer per direction to exchange data before summing
-    Field2D buf[2][2];
 
 
 
