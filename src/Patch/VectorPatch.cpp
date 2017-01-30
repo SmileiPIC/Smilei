@@ -191,16 +191,14 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         // Computes Ex_, Ey_, Ez_ on all points.
         // E is already synchronized because J has been synchronized before.
         (*this)(ipatch)->EMfields->solveMaxwellAmpere();
-    }
-    // Computes Bx_, By_, Bz_ at time n+1 on interior points.
-    #pragma omp for schedule(static)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
+        // Computes Bx_, By_, Bz_ at time n+1 on interior points.
+        //for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*(*this)(ipatch)->EMfields->MaxwellFaradaySolver_)((*this)(ipatch)->EMfields);
-    
-    // Applies boundary conditions on B
-    #pragma omp single
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
+        // Applies boundary conditions on B
         (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
+        // Computes B at time n+1/2 using B and B_m.
+        (*this)(ipatch)->EMfields->centerMagneticFields();
+    }
     
     //Synchronize B fields between patches.
     timers.maxwell.update( params.printNow( itime ) );
@@ -209,12 +207,6 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
     SyncVectorPatch::exchangeB( (*this) );
     timers.syncField.update(  params.printNow( itime ) );
     
-    timers.maxwell.restart();
-    // Computes B at time n+1/2 using B and B_m.
-    #pragma omp for schedule(static)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
-        (*this)(ipatch)->EMfields->centerMagneticFields();
-    timers.maxwell.update();
 
 } // END solveMaxwell
 
@@ -304,7 +296,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int itime, Timers
         #pragma omp barrier
         if( globalDiags[idiag]->theTimeIsNow ) {
             // All patches run
-            #pragma omp for 
+            #pragma omp for schedule(runtime)
             for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
                 globalDiags[idiag]->run( (*this)(ipatch), itime );
             // MPI procs gather the data and compute
@@ -801,6 +793,8 @@ void VectorPatch::output_exchanges(SmileiMPI* smpi)
 //! Resize vector of field*
 void VectorPatch::update_field_list()
 {
+    densities.resize( 3*size() ) ;
+
     listJx_.resize( size() ) ;
     listJy_.resize( size() ) ;
     listJz_.resize( size() ) ;
@@ -823,6 +817,12 @@ void VectorPatch::update_field_list()
         listBx_[ipatch] = patches_[ipatch]->EMfields->Bx_ ;
         listBy_[ipatch] = patches_[ipatch]->EMfields->By_ ;
         listBz_[ipatch] = patches_[ipatch]->EMfields->Bz_ ;
+    }
+
+    for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+        densities[ipatch] = patches_[ipatch]->EMfields->Jx_ ;
+        densities[ipatch+size()] = patches_[ipatch]->EMfields->Jy_ ;
+        densities[ipatch+2*size()] = patches_[ipatch]->EMfields->Jz_ ;
     }
 }
 
@@ -860,6 +860,7 @@ void VectorPatch::update_field_list(int ispec)
 void VectorPatch::applyAntennas(double time)
 {
     if( nAntennas>0 ) {
+        #pragma omp single
         TITLE("Applying antennas at time t = " << time);
     }
     // Loop antennas

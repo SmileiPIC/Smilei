@@ -527,7 +527,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     #pragma omp barrier
     
     // Loop patches to fill the array
-    #pragma omp for schedule(static)
+    #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
         // Loop probe ("fake") particles of current patch
         unsigned int iPart_MPI = offset_in_MPI[ipatch];
