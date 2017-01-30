@@ -2,6 +2,9 @@
 #include <AsyncMPIbuffers.h>
 #include <Field.h>
 
+#include <vector>
+using namespace std;
+
 AsyncMPIbuffers::AsyncMPIbuffers()
 {
 }
@@ -46,14 +49,20 @@ void AsyncMPIbuffers::allocate(int ndims, Field* f)
     std::vector<unsigned int> n_elem = f->dims_;
 
     for (int iDim=0 ; iDim<ndims ; iDim++) {
+
+        vector<int> idx( ndims,1 );
+        idx[iDim] = 0;
+
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            std::vector<unsigned int> tmp(2,0);
-            tmp[0] =    iDim  * n_elem[0] + (1-iDim) * oversize2[0];
-            if (f->dims_.size()>1)
-                tmp[1] = (1-iDim) * n_elem[1] +    iDim  * oversize2[1];
-            else 
-                tmp[1] = 1;
-            buf[iDim][iNeighbor].resize( tmp[0]*tmp[1], 0. );
+
+            std::vector<unsigned int> tmp(3,1);
+            tmp[0] =    idx[0]  * n_elem[0] + (1-idx[0]) * oversize2[0];
+            if (ndims>1)
+                tmp[1] =    idx[1]  * n_elem[1] + (1-idx[1]) * oversize2[1];
+            if (ndims>2)
+                tmp[2] =    idx[2]  * n_elem[2] + (1-idx[2]) * oversize2[2];
+
+            buf[iDim][iNeighbor].resize( tmp[0]*tmp[1]*tmp[2], 0. );
         }
     }
 

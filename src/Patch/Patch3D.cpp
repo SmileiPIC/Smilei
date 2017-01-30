@@ -116,42 +116,6 @@ Patch3D::~Patch3D()
 
 void Patch3D::reallyinitSumField( Field* field, int iDim )
 {
-    if (field->MPIbuff.srequest.size()==0)
-        field->MPIbuff.allocate(3);
-
-    int patch_ndims_(3);
-    int patch_nbNeighbors_(2);
-    
-    std::vector<unsigned int> n_elem = field->dims_;
-    std::vector<unsigned int> isDual = field->isDual_;
-    Field3D* f3D =  static_cast<Field3D*>(field);
-   
-    // Use a buffer per direction to exchange data before summing
-    //Field3D buf[patch_ndims_][patch_nbNeighbors_];
-    // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
-    std::vector<unsigned int> oversize2 = oversize;
-    oversize2[0] *= 2;
-    oversize2[0] += 1 + f3D->isDual_[0];
-    if (field->dims_.size()>1) {
-        oversize2[1] *= 2;
-        oversize2[1] += 1 + f3D->isDual_[1];
-        if (field->dims_.size()>2) {
-            oversize2[2] *= 2;
-            oversize2[2] += 1 + f3D->isDual_[2];
-        }
-    }
-
-    vector<int> idx( patch_ndims_,1 );
-    idx[iDim] = 0;    
-
-    for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
-        std::vector<unsigned int> tmp(patch_ndims_,0);
-        tmp[0] =    idx[0]  * n_elem[0] + (1-idx[0]) * oversize2[0];
-        tmp[1] =    idx[1]  * n_elem[1] + (1-idx[1]) * oversize2[1];
-        tmp[2] =    idx[2]  * n_elem[2] + (1-idx[2]) * oversize2[2];
-        buf[iDim][iNeighbor].allocateDims( tmp );
-    }
-     
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -161,10 +125,16 @@ void Patch3D::reallyinitSumField( Field* field, int iDim )
 void Patch3D::initSumField( Field* field, int iDim )
 {
     if (field->MPIbuff.srequest.size()==0)
-        field->MPIbuff.allocate(3);
+        field->MPIbuff.allocate(3, field);
 
     int patch_ndims_(3);
     int patch_nbNeighbors_(2);
+    
+    int tagp(0);
+    if (field->name == "Jx") tagp = 1;
+    if (field->name == "Jy") tagp = 2;
+    if (field->name == "Jz") tagp = 3;
+    if (field->name == "Rho") tagp = 4;
     
     std::vector<unsigned int> n_elem = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
@@ -188,14 +158,6 @@ void Patch3D::initSumField( Field* field, int iDim )
     vector<int> idx( patch_ndims_,1 );
     idx[iDim] = 0;    
 
-    /*for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
-        std::vector<unsigned int> tmp(patch_ndims_,0);
-        tmp[0] =    idx[0]  * n_elem[0] + (1-idx[0]) * oversize2[0];
-        tmp[1] =    idx[1]  * n_elem[1] + (1-idx[1]) * oversize2[1];
-        tmp[2] =    idx[2]  * n_elem[2] + (1-idx[2]) * oversize2[2];
-        buf[iDim][iNeighbor].allocateDims( tmp );
-    }*/
-     
     int istart, ix, iy, iz;
     /********************************************************************************/
     // Send/Recv in a buffer data to sum
@@ -212,15 +174,15 @@ void Patch3D::initSumField( Field* field, int iDim )
             ix = idx[0]*istart;
             iy = idx[1]*istart;
             iz = idx[2]*istart;
-            int tag = buildtag( hindex, iDim, iNeighbor );
+            int tag = buildtag( hindex, iDim, iNeighbor, tagp );
             MPI_Isend( &(f3D->data_3D[ix][iy][iz]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, 
                        MPI_COMM_WORLD, &(f3D->MPIbuff.srequest[iDim][iNeighbor]) );
         } // END of Send
             
         if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-            int tmp_elem = (buf[iDim][(iNeighbor+1)%2]).dims_[0]*(buf[iDim][(iNeighbor+1)%2]).dims_[1]*(buf[iDim][(iNeighbor+1)%2]).dims_[2];
-            int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor );
-            MPI_Irecv( &( (buf[iDim][(iNeighbor+1)%2]).data_3D[0][0][0] ), tmp_elem, MPI_DOUBLE, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, 
+            int tmp_elem = f3D->MPIbuff.buf[iDim][(iNeighbor+1)%2].size();
+            int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor, tagp );
+            MPI_Irecv( &( f3D->MPIbuff.buf[iDim][(iNeighbor+1)%2][0] ), tmp_elem, MPI_DOUBLE, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, 
                        MPI_COMM_WORLD, &(f3D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]) );
         } // END of Recv
             
@@ -268,56 +230,43 @@ void Patch3D::finalizeSumField( Field* field, int iDim )
             MPI_Wait( &(f3D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
         }
     }
-
-} // END finalizeSumField
-
-void Patch3D::reallyfinalizeSumField( Field* field, int iDim )
-{
-    int patch_ndims_(3);
-    int patch_nbNeighbors_(2);
-    std::vector<unsigned int> n_elem = field->dims_;
-    std::vector<unsigned int> isDual = field->isDual_;
-    Field3D* f3D =  static_cast<Field3D*>(field);
-   
-    // Use a buffer per direction to exchange data before summing
-    //Field3D buf[patch_ndims_][patch_nbNeighbors_];
-    // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
-    std::vector<unsigned int> oversize2 = oversize;
-    oversize2[0] *= 2;
-    oversize2[0] += 1 + f3D->isDual_[0];
-    oversize2[1] *= 2;
-    oversize2[1] += 1 + f3D->isDual_[1];
-    oversize2[2] *= 2;
-    oversize2[2] += 1 + f3D->isDual_[2];
     
     int istart;
     /********************************************************************************/
     // Sum data on each process, same operation on both side
     /********************************************************************************/
-    vector<int> idx( patch_ndims_,0 );
+    vector<int> idx( 3, 1 );
+    idx[iDim] = 0;
+    std::vector<unsigned int> tmp(3,0);
+    tmp[0] =    idx[0]  * n_elem[0] + (1-idx[0]) * oversize2[0];
+    tmp[1] =    idx[1]  * n_elem[1] + (1-idx[1]) * oversize2[1];
+    tmp[2] =    idx[2]  * n_elem[2] + (1-idx[2]) * oversize2[2];
+
+    memset(&(idx[0]), 0, sizeof(idx[0])*idx.size());
     idx[iDim] = 1;    
-       
+   
     for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+
         istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim]- oversize2[iDim] ) + (1-(iNeighbor+1)%2) * ( 0 );
         int ix0 = idx[0]*istart;
         int iy0 = idx[1]*istart;
         int iz0 = idx[2]*istart;
         if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-            for (unsigned int ix=0 ; ix< (buf[iDim][(iNeighbor+1)%2]).dims_[0] ; ix++) {
-                for (unsigned int iy=0 ; iy< (buf[iDim][(iNeighbor+1)%2]).dims_[1] ; iy++) {
-                    for (unsigned int iz=0 ; iz< (buf[iDim][(iNeighbor+1)%2]).dims_[2] ; iz++)
-                        f3D->data_3D[ix0+ix][iy0+iy][iz0+iz] += (buf[iDim][(iNeighbor+1)%2])(ix,iy,iz);
+            for (unsigned int ix=0 ; ix< tmp[0] ; ix++) {
+                for (unsigned int iy=0 ; iy< tmp[1] ; iy++) {
+                    for (unsigned int iz=0 ; iz< tmp[2] ; iz++)
+                        f3D->data_3D[ix0+ix][iy0+iy][iz0+iz] += f3D->MPIbuff.buf[iDim][(iNeighbor+1)%2][ix*tmp[1]*tmp[2] + iy*tmp[2] + iz];
                 }
             }
         } // END if
             
     } // END for iNeighbor
-        
+      
+} // END finalizeSumField
 
-    for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
-        buf[iDim][iNeighbor].deallocateDims();
-    }
 
+void Patch3D::reallyfinalizeSumField( Field* field, int iDim )
+{
 } // END finalizeSumField
 
 

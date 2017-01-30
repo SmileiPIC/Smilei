@@ -20,7 +20,7 @@ public:
     std::vector< std::vector<MPI_Request> > srequest;
     //! ndim vectors of 2 received requests (1 per direction) 
     std::vector< std::vector<MPI_Request> > rrequest;
-    std::vector< double >  buf[2][2];
+    std::vector< double >  buf[3][2];
 
 };
 

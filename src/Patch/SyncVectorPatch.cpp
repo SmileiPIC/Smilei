@@ -280,7 +280,7 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
             #pragma omp for schedule(static)
             for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++){
                 unsigned int ipatch = ifield%nPatches;
-                vecPatches(ipatch)->finalizeSumField( fields[ifield], 3 );
+                vecPatches(ipatch)->finalizeSumField( fields[ifield], 2 );
             }
             // END iDim = 2 sync
             // -----------------
