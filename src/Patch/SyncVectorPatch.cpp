@@ -11,53 +11,68 @@ using namespace std;
 
 void SyncVectorPatch::exchangeParticles(VectorPatch& vecPatches, int ispec, Params &params, SmileiMPI* smpi)
 {
-//    #pragma omp master
-//    Tools::printMemFootPrint( "Before exchange" );
-
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         vecPatches(ipatch)->initExchParticles(smpi, ispec, params);
     }
-//    #pragma omp master
-//    Tools::printMemFootPrint( "After init" );
-
-    //cout << "init exch done" << endl;
 
     // Per direction
-    for (unsigned int iDim=0 ; iDim<params.nDim_particle ; iDim++) {
-        //cout << "initExchParticles done for " << iDim << endl;
+    for (unsigned int iDim=0 ; iDim<1 ; iDim++) {
         #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
             vecPatches(ipatch)->initCommParticles(smpi, ispec, params, iDim, &vecPatches);
         }
-//        #pragma omp master
-//        Tools::printMemFootPrint( "After initComm" );
+
+//        #pragma omp for schedule(runtime)
+//        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+//            vecPatches(ipatch)->CommParticles(smpi, ispec, params, iDim, &vecPatches);
+//        }
+//        #pragma omp for schedule(runtime)
+//        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+//            vecPatches(ipatch)->finalizeCommParticles(smpi, ispec, params, iDim, &vecPatches);
+//        }
+    }
+
+//    #pragma omp for schedule(runtime)
+//    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+//        vecPatches(ipatch)->vecSpecies[ispec]->sort_part();
+
+}
+
+
+void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec, Params &params, SmileiMPI* smpi)
+{
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        vecPatches(ipatch)->CommParticles(smpi, ispec, params, 0, &vecPatches);
+    }
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        vecPatches(ipatch)->finalizeCommParticles(smpi, ispec, params, 0, &vecPatches);
+    }
+
+    // Per direction
+    for (unsigned int iDim=1 ; iDim<params.nDim_particle ; iDim++) {
+        #pragma omp for schedule(runtime)
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+            vecPatches(ipatch)->initCommParticles(smpi, ispec, params, iDim, &vecPatches);
+        }
 
         #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
             vecPatches(ipatch)->CommParticles(smpi, ispec, params, iDim, &vecPatches);
         }
-//        #pragma omp master
-//        Tools::printMemFootPrint( "After Comm" );
-        //cout << "init comm done for dim " << iDim << endl;
-        //cout << "initCommParticles done for " << iDim << endl;
         #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
             vecPatches(ipatch)->finalizeCommParticles(smpi, ispec, params, iDim, &vecPatches);
         }
-//        #pragma omp master
-//        Tools::printMemFootPrint( "After finalizeComm" );
-        //cout << "final comm done for dim " << iDim << endl;
     }
 
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
         vecPatches(ipatch)->vecSpecies[ispec]->sort_part();
-
-//    #pragma omp master
-//    Tools::printMemFootPrint( "After exchange" );
-
 }
+
 
 void SyncVectorPatch::sumRhoJ(VectorPatch& vecPatches)
 {
@@ -134,11 +149,11 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
         vecPatches(ipatch)->initSumField( fields[ifield], 0 );
     }
 
-    /*#pragma omp for schedule(static) 
-    for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++) {
-        unsigned int ipatch = ifield%nPatches;
-        vecPatches(ipatch)->testSumField( fields[ifield], 0 );
-        }*/
+//    #pragma omp for schedule(static) 
+//    for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++) {
+//        unsigned int ipatch = ifield%nPatches;
+//        vecPatches(ipatch)->testSumField( fields[ifield], 0 );
+//    }
 
     // iDim = 0, local
     for (unsigned int icomp=0 ; icomp<nComp ; icomp++) {
@@ -187,11 +202,11 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
             vecPatches(ipatch)->initSumField( fields[ifield], 1 );
         }
 
-        /*#pragma omp for schedule(static) 
-        for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++) {
-            unsigned int ipatch = ifield%nPatches;
-            vecPatches(ipatch)->testSumField( fields[ifield], 1 );
-            }*/
+//        #pragma omp for schedule(static) 
+//        for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++) {
+//            unsigned int ipatch = ifield%nPatches;
+//            vecPatches(ipatch)->testSumField( fields[ifield], 1 );
+//        }
 
         // iDim = 1, local
         for (unsigned int icomp=0 ; icomp<nComp ; icomp++) {

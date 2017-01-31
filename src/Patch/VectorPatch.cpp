@@ -123,11 +123,26 @@ void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow
             SyncVectorPatch::exchangeParticles((*this), ispec, params, smpi ); // Included sort_part
         }
     }
+    timers.syncPart.update( params.printNow( itime ) );
+
+} // END dynamics
+
+
+void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWindow* simWindow,
+                           double time_dual, Timers &timers, int itime)
+{
+    timers.syncPart.restart();
+    for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
+        if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
+            SyncVectorPatch::finalize_and_sort_parts((*this), ispec, params, smpi ); // Included sort_part
+        }
+    }
     if (itime%10==0)
         #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
             (*this)(ipatch)->cleanParticlesOverhead(params);
     timers.syncPart.update( params.printNow( itime ) );
+
 
 } // END dynamics
 
