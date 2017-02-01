@@ -849,6 +849,17 @@ void VectorPatch::update_field_list()
         densities[ipatch+size()] = patches_[ipatch]->EMfields->Jy_ ;
         densities[ipatch+2*size()] = patches_[ipatch]->EMfields->Jz_ ;
     }
+
+    for ( unsigned int ifields = 0 ; ifields < listBx_.size() ; ifields++ ) {
+        listJx_[ifields]->MPIbuff.defineTags( patches_[ifields], 1 );
+        listJy_[ifields]->MPIbuff.defineTags( patches_[ifields], 2 );
+        listJz_[ifields]->MPIbuff.defineTags( patches_[ifields], 3 );
+        listBx_[ifields]->MPIbuff.defineTags( patches_[ifields], 6 );
+        listBy_[ifields]->MPIbuff.defineTags( patches_[ifields], 7 );
+        listBz_[ifields]->MPIbuff.defineTags( patches_[ifields], 8 );
+
+        listrho_[ifields]->MPIbuff.defineTags( patches_[ifields], 4 );
+    }
 }
 
 
