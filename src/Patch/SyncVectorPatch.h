@@ -17,6 +17,7 @@ public :
     static void sumRhoJ  ( VectorPatch& vecPatches);
     static void sumRhoJs ( VectorPatch& vecPatches, int ispec );
     static void exchangeE( VectorPatch& vecPatches );
+    static void finalizeexchangeE( VectorPatch& vecPatches );
     static void exchangeB( VectorPatch& vecPatches );
     static void finalizeexchangeB( VectorPatch& vecPatches );
     static void sum      ( std::vector<Field*> fields, VectorPatch& vecPatches );

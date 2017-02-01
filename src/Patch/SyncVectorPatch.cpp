@@ -97,6 +97,14 @@ void SyncVectorPatch::exchangeE( VectorPatch& vecPatches )
     SyncVectorPatch::exchange( vecPatches.listEz_, vecPatches );
 }
 
+void SyncVectorPatch::finalizeexchangeE( VectorPatch& vecPatches )
+{
+
+    SyncVectorPatch::finalizeexchange( vecPatches.listEx_, vecPatches );
+    SyncVectorPatch::finalizeexchange( vecPatches.listEy_, vecPatches );
+    SyncVectorPatch::finalizeexchange( vecPatches.listEz_, vecPatches );
+}
+
 void SyncVectorPatch::exchangeB( VectorPatch& vecPatches )
 {
 

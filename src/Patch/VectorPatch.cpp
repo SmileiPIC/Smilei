@@ -425,6 +425,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         
         // Exchange Ap_ (intra & extra MPI)
         SyncVectorPatch::exchange( Ap_, *this );
+        SyncVectorPatch::finalizeexchange( Ap_, *this );
         
        // scalar product p.Ap
         double p_dot_Ap       = 0.0;
@@ -482,7 +483,8 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         (*this)(ipatch)->EMfields->initE( (*this)(ipatch) );
 
     SyncVectorPatch::exchangeE( *this );    
-    
+    SyncVectorPatch::finalizeexchangeE( *this );    
+
     // Centering of the electrostatic fields
     // -------------------------------------
     vector<double> E_Add(Ex_[0]->dims_.size(),0.);
