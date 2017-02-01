@@ -245,6 +245,8 @@ void Patch2D::reallyfinalizeSumField( Field* field, int iDim )
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch2D::initExchange( Field* field )
 {
+    cout << "On ne passe jamais ici !!!!" << endl;
+
     if (field->MPIbuff.srequest.size()==0)
         field->MPIbuff.allocate(2);
 
@@ -330,6 +332,11 @@ void Patch2D::initExchange( Field* field, int iDim )
         field->MPIbuff.allocate(2);
 
     int patch_nbNeighbors_(2);
+    
+    int tagp(0);
+    if (field->name == "Bx") tagp = 6;
+    if (field->name == "By") tagp = 7;
+    if (field->name == "Bz") tagp = 8;
 
     std::vector<unsigned int> n_elem   = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
@@ -345,7 +352,8 @@ void Patch2D::initExchange( Field* field, int iDim )
             istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( oversize[iDim] + 1 + isDual[iDim] );
             ix = (1-iDim)*istart;
             iy =    iDim *istart;
-            int tag = send_tags_[iDim][iNeighbor];
+            //int tag = send_tags_[iDim][iNeighbor];
+            int tag = buildtag( hindex, iDim, iNeighbor, tagp );
             //MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->MPIbuff.srequest[iDim][iNeighbor]) );
             MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f2D->MPIbuff.srequest[iDim][iNeighbor]) );
 
@@ -356,7 +364,8 @@ void Patch2D::initExchange( Field* field, int iDim )
             istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1- (oversize[iDim]-1) ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
             ix = (1-iDim)*istart;
             iy =    iDim *istart;
-            int tag = recv_tags_[iDim][iNeighbor];
+            //int tag = recv_tags_[iDim][iNeighbor];
+            int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor, tagp );
             //MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]));
             MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f2D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]));
 

@@ -18,11 +18,16 @@ public :
     static void sumRhoJs ( VectorPatch& vecPatches, int ispec );
     static void exchangeE( VectorPatch& vecPatches );
     static void exchangeB( VectorPatch& vecPatches );
+    static void finalizeexchangeB( VectorPatch& vecPatches );
     static void sum      ( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void exchange ( std::vector<Field*> fields, VectorPatch& vecPatches );
+    static void finalizeexchange( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void exchange0( std::vector<Field*> fields, VectorPatch& vecPatches );
+    static void finalizeexchange0( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void exchange1( std::vector<Field*> fields, VectorPatch& vecPatches );
+    static void finalizeexchange1( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void exchange2( std::vector<Field*> fields, VectorPatch& vecPatches );
+    static void finalizeexchange2( std::vector<Field*> fields, VectorPatch& vecPatches );
 
 };
 

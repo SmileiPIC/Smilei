@@ -116,6 +116,10 @@ void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow
     
     }
     timers.particles.update( params.printNow( itime ) );
+
+//    timers.syncField.restart();
+//    SyncVectorPatch::finalizeexchangeB( (*this) );
+//    timers.syncField.update(  params.printNow( itime ) );
     
     timers.syncPart.restart();
     for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
@@ -143,6 +147,11 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
             (*this)(ipatch)->cleanParticlesOverhead(params);
     timers.syncPart.update( params.printNow( itime ) );
 
+    if (itime!=0) {
+        timers.syncField.restart();
+        SyncVectorPatch::finalizeexchangeB( (*this) );
+        timers.syncField.update(  params.printNow( itime ) );
+    }
 
 } // END dynamics
 
@@ -221,7 +230,6 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
     timers.syncField.restart();
     SyncVectorPatch::exchangeB( (*this) );
     timers.syncField.update(  params.printNow( itime ) );
-    
 
 } // END solveMaxwell
 
