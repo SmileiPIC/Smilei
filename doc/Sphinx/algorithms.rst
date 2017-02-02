@@ -84,7 +84,7 @@ and :math:`\delta` is the Dirac distribution.
 In PIC codes, Vlasov's equation :eq:`Vlasov` is integrated along the continuous trajectories
 of these quasi-particles, while Maxwell's equations :eq:`Maxwell` are solved on a
 discrete spatial grid, the spaces between consecutive grid points being referred to as
-*cells* (see Fig. :numref:`Fig_PicCell`). Injecting the discrete distribution function of
+*cells*. Injecting the discrete distribution function of
 Eq. :eq:`fs_discretized` in Vlasov's equation :eq:`Vlasov`, multiplying the result by
 :math:`\mathbf{p}` and integrating over all :math:`\mathbf{p}` and over the volume of
 the quasi-particles, leads to the relativistic equations of motion of individual
@@ -327,7 +327,31 @@ equation:
 Boundary conditions
 ^^^^^^^^^^^^^^^^^^^
 
-In progress
+
+After new quasi-particle positions and velocities have been computed, boundary conditions (BCs)
+are applied to each quasi-particle that may be located in a ghost cell,
+i.e. outside of the 'real' grid.
+Quasi-particle species may have a different BC for each boundary of the simulation box:
+the quasi-particles can either loop around the box (periodic),
+be stopped (momentum set to zero),
+suppressed (removed from memory),
+reflected (momentum and position follow specular reflection rules)
+or thermalized.
+In the latter case, the quasi-particle is set back inside the simulation box,
+and its new momentum is randomly sampled in a Maxwellian distribution
+with a given temperature and drift velocity, both specified by the user. 
+
+BCs are applied to the electromagnetic fields after Maxwell's equations have been solved.
+Each boundary of the simulation box can feature a different BC.
+First, injecting/absorbing BCs inspired from the Silver-Müller BC
+are able to inject an electromagnetic wave (e.g. a laser) and/or
+to absorb outgoing electromagnetic waves.
+In contrast, the reflective electromagnetic BC will reflect any outgoing
+electromagnetic wave reaching the simulation boundary. 
+Lastly, periodic BCs correspond to applying the fields from the opposite boundary. 
+
+
+
 
 
 
