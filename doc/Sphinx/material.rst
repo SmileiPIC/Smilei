@@ -31,6 +31,8 @@ Conferences & Seminars
 References
 ^^^^^^^^^^
 
+.. [Ammosov1986] `M. V. Ammosov, N. B. Delone, and V. P. Krainov, Sov. Phys. JETP 64, 1191 (1986) <http://www.jetp.ac.ru/cgi-bin/dn/e_064_06_1191.pdf>`_
+
 .. [Boris1970] J.P. Boris, Proceeding of the 4th Conference on Numerical Simulation of Plasmas, Naval Res. Lab., Washington DC, pp. 3-67 (1970)
 
 .. [Desjarlais2001] `M. Desjarlais, Contrib. Plasma Phys. 41, 267 (2001) <http://dx.doi.org/10.1002/1521-3986%28200103%2941%3A2%2F3%3C267%3A%3AAID-CTPP267%3E3.0.CO%3B2-P>`_
@@ -41,7 +43,7 @@ References
 
 .. [Lee1984] `Y. T. Lee and R. M. More, Phys. Fluids 27, 1273 (1984) <http://dx.doi.org/10.1063/1.864744>`_
 
-.. [Lobet2013] Lobet *et al.*, arXiv:1311.1107 (2013), Plasma Phys. Control. Fusion
+.. [Lobet2013] `Lobet et al., J. Phys.: Conf. Ser. 688, 012058 (2016) <http://iopscience.iop.org/article/10.1088/1742-6596/688/1/012058>`_
   
 .. [Nanbu1997] `K. Nanbu, Phys. Rev. E 55, 4642 (1997) <http://dx.doi.org/10.1103/PhysRevE.55.4642>`_
 
@@ -50,6 +52,10 @@ References
 .. [Nuter2011] `R. Nuter et al., Phys. of Plasmas 19, 033107 (2011) <http://dx.doi.org/10.1063/1.3559494>`_
 
 .. [Nuter2014] `R. Nuter et al., Eur. Phys. J. D 68, 177 (2014) <https://doi.org/10.1140/epjd/e2014-50162-y>`_
+
+.. [Perelomov1966] `A. M. Perelomov, V. S. Popov, and M. V. Terent’ev, Sov. Phys. JETP 23, 924 (1966) <http://www.jetp.ac.ru/cgi-bin/dn/e_023_05_0924.pdf>`_
+
+.. [Perelomov1967] `A. M. Perelomov, V. S. Popov, and M. V. Terent’ev, Sov. Phys. JETP 24, 207 (1967) <http://www.jetp.ac.ru/cgi-bin/dn/e_024_01_0207.pdf>`_
 
 .. [Perez2012] `F. Pérez et al., Phys. Plasmas 19, 083104 (2012) <http://dx.doi.org/10.1063/1.4742167>`_
 
