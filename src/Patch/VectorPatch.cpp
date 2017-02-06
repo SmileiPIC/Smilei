@@ -184,18 +184,19 @@ void VectorPatch::sumDensities(Params &params, Timers &timers, int itime )
     }
     timers.densities.update();
     
-    timers.syncDens.restart();
-    SyncVectorPatch::sumRhoJ( (*this)); // MPI
+    //timers.syncDens.restart();
+    SyncVectorPatch::sumRhoJ( (*this), timers, itime ); // MPI
     
     if(diag_flag){
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
             if( ! (*this)(0)->vecSpecies[ispec]->particles->isTest ) {
                 update_field_list(ispec);
-                SyncVectorPatch::sumRhoJs( (*this), ispec ); // MPI
+                SyncVectorPatch::sumRhoJs( (*this), ispec, timers, itime ); // MPI
             }
         }
     }
-    timers.syncDens.update( params.printNow( itime ) );
+    //timers.syncDens.update( params.printNow( itime ) );
+    //timers.syncDens.restart();
     
 } // End sumDensities
 
@@ -819,6 +820,15 @@ void VectorPatch::output_exchanges(SmileiMPI* smpi)
 void VectorPatch::update_field_list()
 {
     densities.resize( 3*size() ) ;
+    
+    densitiesLocalx.clear();
+    densitiesLocaly.clear();
+    densitiesMPIx.clear();
+    densitiesMPIy.clear();
+    densitiesLocalxIdx.clear();
+    densitiesLocalyIdx.clear();
+    densitiesMPIxIdx.clear();
+    densitiesMPIyIdx.clear();
 
     listJx_.resize( size() ) ;
     listJy_.resize( size() ) ;
@@ -848,6 +858,33 @@ void VectorPatch::update_field_list()
         densities[ipatch] = patches_[ipatch]->EMfields->Jx_ ;
         densities[ipatch+size()] = patches_[ipatch]->EMfields->Jy_ ;
         densities[ipatch+2*size()] = patches_[ipatch]->EMfields->Jz_ ;
+    }
+
+    for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+        if ( (*this)(ipatch)->has_an_MPI_neighbor( 0 ) ) {
+            densitiesMPIx.push_back( patches_[ipatch]->EMfields->Jx_ );
+            densitiesMPIx.push_back( patches_[ipatch]->EMfields->Jy_ );
+            densitiesMPIx.push_back( patches_[ipatch]->EMfields->Jz_ );
+            densitiesMPIxIdx.push_back(ipatch);
+        }
+        if ( (*this)(ipatch)->has_an_local_neighbor( 0 ) ) {
+            densitiesLocalx.push_back( patches_[ipatch]->EMfields->Jx_ );
+            densitiesLocalx.push_back( patches_[ipatch]->EMfields->Jy_ );
+            densitiesLocalx.push_back( patches_[ipatch]->EMfields->Jz_ );
+            densitiesLocalxIdx.push_back(ipatch);
+        }
+        if ( (*this)(ipatch)->has_an_MPI_neighbor( 1 ) ) {
+            densitiesMPIy.push_back( patches_[ipatch]->EMfields->Jx_ );
+            densitiesMPIy.push_back( patches_[ipatch]->EMfields->Jy_ );
+            densitiesMPIy.push_back( patches_[ipatch]->EMfields->Jz_ );
+            densitiesMPIyIdx.push_back(ipatch);
+        }
+        if ( (*this)(ipatch)->has_an_local_neighbor( 1 ) ) {
+            densitiesLocaly.push_back( patches_[ipatch]->EMfields->Jx_ );
+            densitiesLocaly.push_back( patches_[ipatch]->EMfields->Jy_ );
+            densitiesLocaly.push_back( patches_[ipatch]->EMfields->Jz_ );
+            densitiesLocalyIdx.push_back(ipatch);
+        }
     }
 
     for ( unsigned int ifields = 0 ; ifields < listBx_.size() ; ifields++ ) {

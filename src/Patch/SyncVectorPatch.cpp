@@ -74,19 +74,19 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
 }
 
 
-void SyncVectorPatch::sumRhoJ(VectorPatch& vecPatches)
+void SyncVectorPatch::sumRhoJ(VectorPatch& vecPatches, Timers &timers, int itime)
 {
-    SyncVectorPatch::sum( vecPatches.densities , vecPatches );
-    if(vecPatches.diag_flag) SyncVectorPatch::sum( vecPatches.listrho_, vecPatches );
+    SyncVectorPatch::new_sum( vecPatches.densities , vecPatches, timers, itime );
+    if(vecPatches.diag_flag) SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, itime );
 }
 
-void SyncVectorPatch::sumRhoJs(VectorPatch& vecPatches, int ispec )
+void SyncVectorPatch::sumRhoJs(VectorPatch& vecPatches, int ispec , Timers &timers, int itime)
 {
 
-    if(vecPatches.listJxs_ .size()>0) SyncVectorPatch::sum( vecPatches.listJxs_ , vecPatches );
-    if(vecPatches.listJys_ .size()>0) SyncVectorPatch::sum( vecPatches.listJys_ , vecPatches );
-    if(vecPatches.listJzs_ .size()>0) SyncVectorPatch::sum( vecPatches.listJzs_ , vecPatches );
-    if(vecPatches.listrhos_.size()>0) SyncVectorPatch::sum( vecPatches.listrhos_, vecPatches );
+    if(vecPatches.listJxs_ .size()>0) SyncVectorPatch::sum( vecPatches.listJxs_ , vecPatches, timers, itime  );
+    if(vecPatches.listJys_ .size()>0) SyncVectorPatch::sum( vecPatches.listJys_ , vecPatches, timers, itime  );
+    if(vecPatches.listJzs_ .size()>0) SyncVectorPatch::sum( vecPatches.listJzs_ , vecPatches, timers, itime  );
+    if(vecPatches.listrhos_.size()>0) SyncVectorPatch::sum( vecPatches.listrhos_, vecPatches, timers, itime  );
 }
 
 void SyncVectorPatch::exchangeE( VectorPatch& vecPatches )
@@ -151,7 +151,200 @@ void SyncVectorPatch::finalizeexchangeB( VectorPatch& vecPatches )
 }
 
 
-void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
+void SyncVectorPatch::new_sum( std::vector<Field*> fields, VectorPatch& vecPatches, Timers &timers, int itime )
+{
+    unsigned int h0, oversize[3], n_space[3];
+    double *pt1,*pt2;
+    h0 = vecPatches(0)->hindex;
+
+    int nPatches( vecPatches.size() );
+
+    oversize[0] = vecPatches(0)->EMfields->oversize[0];
+    oversize[1] = vecPatches(0)->EMfields->oversize[1];
+    oversize[2] = vecPatches(0)->EMfields->oversize[2];
+    
+    n_space[0] = vecPatches(0)->EMfields->n_space[0];
+    n_space[1] = vecPatches(0)->EMfields->n_space[1];
+    n_space[2] = vecPatches(0)->EMfields->n_space[2];
+
+    // -----------------
+    // Sum per direction :
+
+    // iDim = 0, initialize comms : Isend/Irecv
+    #pragma omp for schedule(static) 
+    for (unsigned int ifield=0 ; ifield<vecPatches.densitiesMPIxIdx.size() ; ifield=ifield+1) {
+        unsigned int ipatch = vecPatches.densitiesMPIxIdx[ifield];
+        vecPatches(ipatch)->initSumField( vecPatches.densitiesMPIx[3*ifield], 0 );   // Jx
+        //vecPatches(ipatch)->initSumField( vecPatches.densitiesMPIx[3*ifield+1], 0 ); // Jy
+        //vecPatches(ipatch)->initSumField( vecPatches.densitiesMPIx[3*ifield+2], 0 ); // Jz
+    }
+
+    // iDim = 0, local
+    timers.syncDens.restart();
+    #pragma omp for schedule(static) private(pt1,pt2)
+    for (unsigned int ifield=0 ; ifield<vecPatches.densitiesLocalx.size() ; ifield++) {
+
+        unsigned int nx_, ny_, nz_, gsp[3];
+        nx_ =  vecPatches.densitiesLocalx[ifield]->dims_[0];
+        ny_ = 1;
+        nz_ = 1;
+        if (vecPatches.densitiesLocalx[ifield]->dims_.size()>1) {
+            ny_ = vecPatches.densitiesLocalx[ifield]->dims_[1];
+            if (vecPatches.densitiesLocalx[ifield]->dims_.size()>2) 
+                nz_ = vecPatches.densitiesLocalx[ifield]->dims_[2];
+        }
+        gsp[0] = 1+2*oversize[0]+vecPatches.densitiesLocalx[ifield]->isDual_[0]; //Ghost size primal
+
+        int ipatch = vecPatches.densitiesLocalxIdx[ ifield/3 ];
+        int icomp = ifield-(ifield/3)*3;
+
+      //if (vecPatches(ipatch)->neighbor_[0][0]!=MPI_PROC_NULL ){
+        if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[0][0]){
+
+            pt1 = &(*fields[ vecPatches(ipatch)->neighbor_[0][0]-h0+icomp*nPatches ])(n_space[0]*ny_*nz_);
+            pt2 = &(*vecPatches.densitiesLocalx[ifield])(0);
+            //Sum 2 ==> 1
+            #pragma simd
+            for (unsigned int i = 0; i < gsp[0]* ny_*nz_ ; i++) pt1[i] += pt2[i];
+            //Copy back the results to 2
+            memcpy( pt2, pt1, gsp[0]*ny_*nz_*sizeof(double)); 
+        }
+
+    }
+    timers.syncDens.update();
+
+    // iDim = 0, finalize (waitall)
+    #pragma omp for schedule(static) 
+    for (unsigned int ifield=0 ; ifield<vecPatches.densitiesMPIxIdx.size() ; ifield=ifield+1) {
+        unsigned int ipatch = vecPatches.densitiesMPIxIdx[ifield];
+        vecPatches(ipatch)->finalizeSumField( vecPatches.densitiesMPIx[3*ifield], 0 );   // Jx
+        //vecPatches(ipatch)->finalizeSumField( vecPatches.densitiesMPIx[3*ifield+1], 0 ); // Jy
+        //vecPatches(ipatch)->finalizeSumField( vecPatches.densitiesMPIx[3*ifield+2], 0 ); // Jz
+    }
+    // END iDim = 0 sync
+    // -----------------
+
+    if (fields[0]->dims_.size()>1) {
+        // -----------------
+        // Sum per direction :
+        
+        // iDim = 1, initialize comms : Isend/Irecv
+        #pragma omp for schedule(static)
+        for (unsigned int ifield=0 ; ifield<vecPatches.densitiesMPIyIdx.size() ; ifield=ifield+1) {
+            unsigned int ipatch = vecPatches.densitiesMPIyIdx[ifield];
+            vecPatches(ipatch)->initSumField( vecPatches.densitiesMPIy[3*ifield], 1 );   // Jx
+            //vecPatches(ipatch)->initSumField( vecPatches.densitiesMPIy[3*ifield+1], 1 ); // Jy
+            //vecPatches(ipatch)->initSumField( vecPatches.densitiesMPIy[3*ifield+2], 1 ); // Jz
+        }
+
+        // iDim = 1, local
+        timers.syncDensY.restart();
+        #pragma omp for schedule(static) private(pt1,pt2)
+        for (unsigned int ifield=0 ; ifield<vecPatches.densitiesLocaly.size() ; ifield++) {
+
+            unsigned int nx_, ny_, nz_, gsp[3];
+
+            nx_ =  vecPatches.densitiesLocaly[ifield]->dims_[0];
+            ny_ = 1;
+            nz_ = 1;
+            if (vecPatches.densitiesLocaly[ifield]->dims_.size()>1) {
+                ny_ = vecPatches.densitiesLocaly[ifield]->dims_[1];
+                if (vecPatches.densitiesLocaly[ifield]->dims_.size()>2) 
+                    nz_ = vecPatches.densitiesLocaly[ifield]->dims_[2];
+            }
+            gsp[0] = 1+2*oversize[0]+vecPatches.densitiesLocaly[ifield]->isDual_[0]; //Ghost size primal
+            gsp[1] = 1+2*oversize[1]+vecPatches.densitiesLocaly[ifield]->isDual_[1]; //Ghost size primal
+
+            int ipatch = vecPatches.densitiesLocalyIdx[ ifield/3 ];
+            int icomp = ifield-(ifield/3)*3;
+          //if ( vecPatches(ipatch)->neighbor_[1][0]!=MPI_PROC_NULL ){
+            if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[1][0]){
+
+                //The patch to the south belongs to the same MPI process than I.
+                pt1 = &(*fields[vecPatches(ipatch)->neighbor_[1][0]-h0+icomp*nPatches])(n_space[1]*nz_);
+                pt2 = &(*vecPatches.densitiesLocaly[ifield])(0);
+                for (unsigned int j = 0; j < nx_ ; j++){
+                    #pragma simd
+                    for (unsigned int i = 0; i < gsp[1]*nz_ ; i++) pt1[i] += pt2[i];
+                    memcpy( pt2, pt1, gsp[1]*nz_*sizeof(double)); 
+                    pt1 += ny_*nz_;
+                    pt2 += ny_*nz_;
+                }
+            }
+        }
+        timers.syncDensY.update();
+
+        // iDim = 1, finalize (waitall)
+        #pragma omp for schedule(static) 
+        for (unsigned int ifield=0 ; ifield<vecPatches.densitiesMPIyIdx.size() ; ifield=ifield+1) {
+            unsigned int ipatch = vecPatches.densitiesMPIyIdx[ifield];
+            vecPatches(ipatch)->finalizeSumField( vecPatches.densitiesMPIy[3*ifield], 1 );   // Jx
+            //vecPatches(ipatch)->finalizeSumField( vecPatches.densitiesMPIy[3*ifield+1], 1 ); // Jy
+            //vecPatches(ipatch)->finalizeSumField( vecPatches.densitiesMPIy[3*ifield+2], 1 ); // Jz
+        }
+        // END iDim = 1 sync
+        // -----------------        
+
+        if (fields[0]->dims_.size()>2) {
+            // -----------------
+            // Sum per direction :
+
+            // iDim = 2, initialize comms : Isend/Irecv
+            #pragma omp for schedule(static)
+            for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++) {
+                unsigned int ipatch = ifield%nPatches;
+                vecPatches(ipatch)->initSumField( fields[ifield], 2 );
+            }
+
+            // iDim = 2 local
+//            for (unsigned int icomp=0 ; icomp<nComp ; icomp++) {
+//                nx_ = fields[icomp*nPatches]->dims_[0];
+//                ny_ = 1;
+//                nz_ = 1;
+//                if (fields[icomp*nPatches]->dims_.size()>1) {
+//                    ny_ = fields[icomp*nPatches]->dims_[1];
+//                    if (fields[icomp*nPatches]->dims_.size()>2) 
+//                        nz_ = fields[icomp*nPatches]->dims_[2];
+//                }
+//                gsp[0] = 1+2*oversize[0]+fields[icomp*nPatches]->isDual_[0]; //Ghost size primal
+//                gsp[1] = 1+2*oversize[1]+fields[icomp*nPatches]->isDual_[1]; //Ghost size primal
+//                gsp[2] = 1+2*oversize[2]+fields[icomp*nPatches]->isDual_[2]; //Ghost size primal
+//                #pragma omp for schedule(static) private(pt1,pt2)
+//                for (unsigned int ifield=icomp*nPatches ; ifield<(icomp+1)*nPatches ; ifield++) {
+//                    unsigned int ipatch = ifield%nPatches;
+//                    if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[2][0]){
+//                        //The patch below me belongs to the same MPI process than I.
+//                        pt1 = &(*fields[vecPatches(ipatch)->neighbor_[2][0]-h0+icomp*nPatches])(n_space[2]);
+//                        pt2 = &(*fields[ifield])(0);
+//                        for (unsigned int j = 0; j < nx_*ny_ ; j++){
+//                            for (unsigned int i = 0; i < gsp[2] ; i++){
+//                                pt1[i] += pt2[i];
+//                                pt2[i] =  pt1[i];
+//                            }
+//                            pt1 += nz_;
+//                            pt2 += nz_;
+//                        }
+//                    }
+//                }
+//            }
+
+            // iDim = 2, complete non local sync through MPIfinalize (waitall)
+            #pragma omp for schedule(static)
+            for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++){
+                unsigned int ipatch = ifield%nPatches;
+                vecPatches(ipatch)->finalizeSumField( fields[ifield], 2 );
+            }
+            // END iDim = 2 sync
+            // -----------------
+
+        } // End if dims_.size()>2
+
+    } // End if dims_.size()>1
+
+}
+
+
+void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches, Timers &timers, int itime )
 {
     unsigned int nx_, ny_, nz_, h0, oversize[3], n_space[3], gsp[3];
     double *pt1,*pt2;
@@ -186,6 +379,7 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
 //    }
 
     // iDim = 0, local
+    timers.syncDens.restart();
     for (unsigned int icomp=0 ; icomp<nComp ; icomp++) {
         nx_ = fields[icomp*nPatches]->dims_[0];
         ny_ = 1;
@@ -211,6 +405,7 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
             }
         }
     }
+    timers.syncDens.update();
 
     // iDim = 0, finalize (waitall)
     #pragma omp for schedule(static)
@@ -239,6 +434,7 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
 //        }
 
         // iDim = 1, local
+        timers.syncDensY.restart();
         for (unsigned int icomp=0 ; icomp<nComp ; icomp++) {
             nx_ = fields[icomp*nPatches]->dims_[0];
             ny_ = 1;
@@ -268,6 +464,7 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
                 }
             }
         }
+        timers.syncDensY.update();
 
         // iDim = 1, finalize (waitall)
         #pragma omp for schedule(static)
@@ -279,6 +476,7 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
         // -----------------        
 
         if (fields[0]->dims_.size()>2) {
+            cout << "Je ne suis oas un code 3d" << endl;
             // -----------------
             // Sum per direction :
 

@@ -143,6 +143,14 @@ public :
     
     // Lists of fields
     std::vector<Field*> densities;
+    std::vector<Field*> densitiesLocalx;
+    std::vector<Field*> densitiesLocaly;
+    std::vector<Field*> densitiesMPIx;
+    std::vector<Field*> densitiesMPIy;
+    std::vector<int> densitiesLocalxIdx;
+    std::vector<int> densitiesLocalyIdx;
+    std::vector<int> densitiesMPIxIdx;
+    std::vector<int> densitiesMPIyIdx;
     std::vector<Field*> listJx_;
     std::vector<Field*> listJy_;
     std::vector<Field*> listJz_;

@@ -29,6 +29,7 @@ public:
     Timer syncPart  ;
     Timer syncField ;
     Timer syncDens  ;
+    Timer syncDensY  ;
 
     void profile(SmileiMPI * smpi);
     std::vector<Timer*> consolidate(SmileiMPI * smpi);
