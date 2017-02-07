@@ -26,9 +26,13 @@ public :
     static void exchange ( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void finalizeexchange( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void exchange0( std::vector<Field*> fields, VectorPatch& vecPatches );
+    static void new_exchange0( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void finalizeexchange0( std::vector<Field*> fields, VectorPatch& vecPatches );
+    static void new_finalizeexchange0( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void exchange1( std::vector<Field*> fields, VectorPatch& vecPatches );
+    static void new_exchange1( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void finalizeexchange1( std::vector<Field*> fields, VectorPatch& vecPatches );
+    static void new_finalizeexchange1( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void exchange2( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void finalizeexchange2( std::vector<Field*> fields, VectorPatch& vecPatches );
 

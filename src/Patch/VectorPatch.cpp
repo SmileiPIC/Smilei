@@ -184,7 +184,7 @@ void VectorPatch::sumDensities(Params &params, Timers &timers, int itime )
     }
     timers.densities.update();
     
-    //timers.syncDens.restart();
+    timers.syncDens.restart();
     SyncVectorPatch::sumRhoJ( (*this), timers, itime ); // MPI
     
     if(diag_flag){
@@ -195,8 +195,7 @@ void VectorPatch::sumDensities(Params &params, Timers &timers, int itime )
             }
         }
     }
-    //timers.syncDens.update( params.printNow( itime ) );
-    //timers.syncDens.restart();
+    timers.syncDens.update( params.printNow( itime ) );
     
 } // End sumDensities
 
@@ -820,7 +819,9 @@ void VectorPatch::output_exchanges(SmileiMPI* smpi)
 void VectorPatch::update_field_list()
 {
     densities.resize( 3*size() ) ;
-    
+    Bs0.resize( 2*size() ) ;
+    Bs1.resize( 2*size() ) ;
+
     densitiesLocalx.clear();
     densitiesLocaly.clear();
     densitiesMPIx.clear();
@@ -854,10 +855,83 @@ void VectorPatch::update_field_list()
         listBz_[ipatch] = patches_[ipatch]->EMfields->Bz_ ;
     }
 
+    B_localx.clear();
+    B_localxIdx.clear();
+    B_MPIx.clear();
+    B_MPIxIdx.clear();
+
+    B_localy.clear();
+    B_localyIdx.clear();
+    B_MPIy.clear();
+    B_MPIyIdx.clear();
+
+    B1_localx.clear();
+    B1_localxIdx.clear();
+    B1_MPIx.clear();
+    B1_MPIxIdx.clear();
+
+    B1_localy.clear();
+    B1_localyIdx.clear();
+    B1_MPIy.clear();
+    B1_MPIyIdx.clear();
+
+// 2D IMPLEMENTATION
+//    SyncVectorPatch::exchange1( vecPatches.listBx_, vecPatches );
+//    SyncVectorPatch::exchange0( vecPatches.listBy_, vecPatches );
+//    SyncVectorPatch::exchange ( vecPatches.listBz_, vecPatches );
+
+    for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+
+        if ( (*this)(ipatch)->has_an_MPI_neighbor( 0 ) ) {
+            B_MPIx.push_back( patches_[ipatch]->EMfields->By_);
+            B_MPIx.push_back( patches_[ipatch]->EMfields->Bz_ );
+            B_MPIxIdx.push_back(ipatch);
+
+            B1_MPIx.push_back( patches_[ipatch]->EMfields->Bx_);
+            B1_MPIx.push_back( patches_[ipatch]->EMfields->Bz_ );
+            B1_MPIxIdx.push_back(ipatch);
+       }
+        if ( (*this)(ipatch)->has_an_local_neighbor( 0 ) ) {
+            B_localx.push_back( patches_[ipatch]->EMfields->By_);
+            B_localx.push_back( patches_[ipatch]->EMfields->Bz_ );
+            B_localxIdx.push_back(ipatch);
+
+            B1_localx.push_back( patches_[ipatch]->EMfields->Bx_);
+            B1_localx.push_back( patches_[ipatch]->EMfields->Bz_ );
+            B1_localxIdx.push_back(ipatch);
+        }
+        if ( (*this)(ipatch)->has_an_MPI_neighbor( 1 ) ) {
+            B_MPIy.push_back( patches_[ipatch]->EMfields->By_);
+            B_MPIy.push_back( patches_[ipatch]->EMfields->Bz_ );
+            B_MPIyIdx.push_back(ipatch);
+
+            B1_MPIy.push_back( patches_[ipatch]->EMfields->Bx_);
+            B1_MPIy.push_back( patches_[ipatch]->EMfields->Bz_ );
+            B1_MPIyIdx.push_back(ipatch);
+        }
+        if ( (*this)(ipatch)->has_an_local_neighbor( 1 ) ) {
+            B_localy.push_back( patches_[ipatch]->EMfields->By_);
+            B_localy.push_back( patches_[ipatch]->EMfields->Bz_ );
+            B_localyIdx.push_back(ipatch);
+
+            B1_localy.push_back( patches_[ipatch]->EMfields->Bx_);
+            B1_localy.push_back( patches_[ipatch]->EMfields->Bz_ );
+            B1_localyIdx.push_back(ipatch);
+        }
+
+    }
+
     for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
         densities[ipatch] = patches_[ipatch]->EMfields->Jx_ ;
         densities[ipatch+size()] = patches_[ipatch]->EMfields->Jy_ ;
         densities[ipatch+2*size()] = patches_[ipatch]->EMfields->Jz_ ;
+
+        Bs0[ipatch] = patches_[ipatch]->EMfields->By_ ;
+        Bs0[ipatch+size()] = patches_[ipatch]->EMfields->Bz_ ;
+
+        Bs1[ipatch] = patches_[ipatch]->EMfields->Bx_ ;
+        Bs1[ipatch+size()] = patches_[ipatch]->EMfields->Bz_ ;
+
     }
 
     for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
