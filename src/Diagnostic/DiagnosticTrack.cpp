@@ -154,6 +154,7 @@ void DiagnosticTrack::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatc
         
         int localNbrParticles = 0;
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+            vecPatches(ipatch)->vecSpecies[speciesId_]->particles->setIds();
             vecPatches(ipatch)->vecSpecies[speciesId_]->particles->addIdOffsets(localNbrParticles);
             localNbrParticles += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
         }
