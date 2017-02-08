@@ -212,6 +212,10 @@ public:
     //! True if tracking the particles (activates one DiagTrack)
     bool tracked;
     
+    void resetIds() {
+        unsigned int s = Id.size();
+        for (unsigned int iPart=0; iPart<s; iPart++) Id[iPart] = 0;
+    }
     void setIds() {
         unsigned int s = Id.size();
         for (unsigned int iPart=0; iPart<s; iPart++) Id[iPart] = iPart+1;

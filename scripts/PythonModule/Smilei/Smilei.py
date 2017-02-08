@@ -45,8 +45,11 @@ class ScalarFactory(object):
 	
 	def __call__(self, *args, **kwargs):
 		return Scalar.Scalar(self._simulation, *(self._additionalArgs+args), **kwargs)
-
-
+	
+	def toXDMF(self):
+		pass
+	
+	
 class FieldFactory(object):
 	"""Import and analyze a Field diagnostic from a Smilei simulation
 	
@@ -81,6 +84,7 @@ class FieldFactory(object):
 	def __init__(self, simulation, diagNumber=None, field=None, timestep=None, availableTimesteps=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
+		self._children = []
 		
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
@@ -90,12 +94,14 @@ class FieldFactory(object):
 			diags = tmpDiag.getDiags()
 			# Create diags shortcuts
 			for diag in diags:
-				setattr(self, "Field"+str(diag), FieldFactory(simulation, diag))
+				child = FieldFactory(simulation, diag)
+				setattr(self, "Field"+str(diag), child)
+				self._children += [child]
 		
 		else:
 			# the diag is saved for generating the object in __call__
 			self._additionalArgs += (diagNumber, )
-				
+			
 			# If not a specific field, build a list of field shortcuts
 			if field is None:
 				# Create a temporary, empty field diagnostic
@@ -106,7 +112,9 @@ class FieldFactory(object):
 				timesteps = tmpDiag.getAvailableTimesteps()
 				# Create fields shortcuts
 				for field in fields:
-					setattr(self, field, FieldFactory(simulation, diagNumber, field, availableTimesteps=timesteps))
+					child = FieldFactory(simulation, diagNumber, field, availableTimesteps=timesteps)
+					setattr(self, field, child)
+					self._children += [child]
 			
 			else:
 				# the field is saved for generating the object in __call__
@@ -123,6 +131,13 @@ class FieldFactory(object):
 	
 	def __call__(self, *args, **kwargs):
 		return Field.Field(self._simulation, *(self._additionalArgs+args), **kwargs)
+	
+	def toXDMF(self):
+		if len(self._children) > 0:
+			for child in self._children:
+				child.toXDMF()
+		else:
+			self().toXDMF()
 
 
 class ProbeFactory(object):
@@ -201,6 +216,9 @@ class ProbeFactory(object):
 	
 	def __call__(self, *args, **kwargs):
 		return Probe.Probe(self._simulation, *(self._additionalArgs+args), **kwargs)
+	
+	def toXDMF(self):
+		pass
 
 
 class ParticleDiagnosticFactory(object):
@@ -267,6 +285,9 @@ class ParticleDiagnosticFactory(object):
 	
 	def __call__(self, *args, **kwargs):
 		return ParticleDiagnostic.ParticleDiagnostic(self._simulation, *(self._additionalArgs+args), **kwargs)
+	
+	def toXDMF(self):
+		pass
 
 
 class TrackParticlesFactory(object):
@@ -350,6 +371,9 @@ class TrackParticlesFactory(object):
 	def __call__(self, *args, **kwargs):
 		kwargs.update(self._additionalKwargs)
 		return TrackParticles.TrackParticles(self._simulation, *args, **kwargs)
+	
+	def toXDMF(self):
+		pass
 
 
 
@@ -521,3 +545,14 @@ class Smilei(object):
 			files = [self._glob(path+self._os.sep+"smilei.py")[0] for path in self._results_path]
 			files = "\n\t".join(files)
 			return "Smilei simulation with input file(s) located at:\n\t"+files
+	
+	def toXDMF(self):
+		if not self.valid: return
+		
+		self.Scalar            .toXDMF()
+		self.Field             .toXDMF()
+		self.Probe             .toXDMF()
+		self.ParticleDiagnostic.toXDMF()
+		self.TrackParticles    .toXDMF()
+
+
