@@ -101,6 +101,7 @@ public:
     //! finalize comm / sum densities
     virtual void finalizeSumField( Field* field, int iDim ) = 0;
     virtual void reallyfinalizeSumField( Field* field, int iDim ) = 0;
+    void testSumField( Field* field, int iDim );
     
     //! init comm / exchange fields
     virtual void initExchange( Field* field ) = 0;
@@ -253,5 +254,13 @@ inline int buildtag(int hindex, int send, int recv) {
     return (int)(tag);
 }
 
+inline int buildtag(int hindex, int send, int recv, int tagp) {
+    std::stringstream stag("");
+    //stag << hindex << send  << recv << tagp;
+    stag << hindex << send*2+ recv << tagp;
+    long long int tag(0);
+    stag >> tag;
+    return (int)(tag);
+}
 
 #endif

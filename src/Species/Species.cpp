@@ -840,8 +840,8 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     }
     
     if ((*particles).tracked)
-        (*particles).setIds();
-
+        (*particles).resetIds();
+    
     return npart_effective;
     
 } // End createParticles

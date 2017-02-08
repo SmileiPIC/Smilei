@@ -19,6 +19,7 @@ class Field(Diagnostic):
 				self._error += "(No Field diagnostics existing anyways)"
 			return
 		else:
+			self.diagNumber = diagNumber
 			if diagNumber not in diags:
 				self._error = "Diagnostic not loaded: no field diagnostic #"+str(diagNumber)+" found"
 				return
@@ -238,3 +239,46 @@ class Field(Diagnostic):
 		# log scale if requested
 		if self._data_log: A = self._np.log10(A)
 		return A
+	
+	# Convert to XDMF format for ParaView
+	def toXDMF(self):
+		# Define output directory
+		sep = self._os.sep
+		if len(self._results_path) == 1:
+			directory = self._results_path[0]
+		else:
+			directory = self._results_path[0] +sep+ ".."
+		# Define a few parameters
+		field = self._fieldname[0]
+		shape = " ".join([str(a) for a in self._h5items[0][field].shape])
+		topology = '<Topology TopologyType="'+str(self._ndim)+'dCorectMesh" Dimensions="'+shape+'"/>\n'
+		geometry = '<Geometry GeometryType="ORIGIN_'+"".join(["DX","DY","DZ"][0:self._ndim])+'">\n'
+		field_axis = "xyz".index(field[1])
+		magnetic_field = (field[0]=="B")
+		origin = [ str(((field_axis==i)^magnetic_field)*(-0.5)) for i in range(self._ndim) ]
+		origin = '<DataItem Format="XML" NumberType="float" Dimensions="'+str(self._ndim)+'">'+" ".join(origin)+'</DataItem>\n'
+		cell_length = '<DataItem Format="XML" NumberType="float" Dimensions="'+str(self._ndim)+'">'+" ".join([str(l) for l in self._cell_length])+'</DataItem>\n'
+		# Open file and fill
+		with open(directory+sep+"Fields"+str(self.diagNumber)+"_"+field+".xmf",'w') as f:
+			f.write('<Xdmf Version="2.0">\n')
+			f.write('	<Domain Name="'+field+'">\n')
+			f.write('		<Grid GridType="Collection" CollectionType="Temporal">\n')
+			for time in self.times:
+				item = self._h5items[self._data[time]]
+				location = self._os.path.abspath(item.file.fid.name)+':/'+item.name+'/'+field
+				f.write('			<Grid Name="Mesh" GridType="Uniform">\n')
+				f.write('				<Time Value="'+str(time*self.timestep)+'" />\n')
+				f.write('				'+topology)
+				f.write('				'+geometry)
+				f.write('					'+origin)
+				f.write('					'+cell_length)
+				f.write('				</Geometry>\n')
+				f.write('				<Attribute Name="'+field+'" Center="Node" AttributeType="Scalar">\n')
+				f.write('					<DataItem NumberType="Float" Precision="8" Dimensions="'+shape+'" Format="HDF">'+location+'</DataItem>\n')
+				f.write('				</Attribute>\n')
+				f.write('			</Grid>\n')
+			f.write('		</Grid>\n')
+			f.write('	</Domain>\n')
+			f.write('</Xdmf>\n')
+			
+

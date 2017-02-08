@@ -70,24 +70,6 @@ Patch1D::~Patch1D()
 
 void Patch1D::reallyinitSumField( Field* field, int iDim )
 {
-    if (field->MPIbuff.srequest.size()==0)
-        field->MPIbuff.allocate(1);
-
-    std::vector<unsigned int> n_elem = field->dims_;
-    std::vector<unsigned int> isDual = field->isDual_;
-    Field1D* f1D =  static_cast<Field1D*>(field);
-    
-    // Use a buffer per direction to exchange data before summing
-    // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
-    std::vector<unsigned int> oversize2 = oversize;
-    oversize2[0] *= 2;
-    oversize2[0] += 1 + f1D->isDual_[0];
-    
-    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-        std::vector<unsigned int> tmp(nDim_fields_,0);
-        tmp[0] =    iDim  * n_elem[0] + (1-iDim) * oversize2[0];
-        buf[iDim][iNeighbor].allocateDims( tmp );
-    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -97,7 +79,13 @@ void Patch1D::reallyinitSumField( Field* field, int iDim )
 void Patch1D::initSumField( Field* field, int iDim )
 {
     if (field->MPIbuff.srequest.size()==0)
-        field->MPIbuff.allocate(1);
+        field->MPIbuff.allocate(1, field);
+    
+    int tagp(0);
+    if (field->name == "Jx") tagp = 1;
+    if (field->name == "Jy") tagp = 2;
+    if (field->name == "Jz") tagp = 3;
+    if (field->name == "Rho") tagp = 4;
 
     std::vector<unsigned int> n_elem = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
@@ -109,40 +97,30 @@ void Patch1D::initSumField( Field* field, int iDim )
     oversize2[0] *= 2;
     oversize2[0] += 1 + f1D->isDual_[0];
     
-    /*for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-        std::vector<unsigned int> tmp(nDim_fields_,0);
-        tmp[0] =    iDim  * n_elem[0] + (1-iDim) * oversize2[0];
-        buf[iDim][iNeighbor].allocateDims( tmp );
-    }*/
-     
     int istart, ix;
     /********************************************************************************/
     // Send/Recv in a buffer data to sum
     /********************************************************************************/
         
     MPI_Datatype ntype = ntypeSum_[iDim][isDual[0]];
-        
+    
     for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
             
         if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
             istart = iNeighbor * ( n_elem[iDim]- oversize2[iDim] ) + (1-iNeighbor) * ( 0 );
             ix = (1-iDim)*istart;
-            int tag = send_tags_[iDim][iNeighbor];
+            int tag = buildtag( hindex, iDim, iNeighbor, tagp );
             MPI_Isend( &(f1D->data_[ix]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f1D->MPIbuff.srequest[iDim][iNeighbor]) );
-            //MPI_Send( &(f1D->data_[ix]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD );
-            //MPI_Isend( &(f1D->data_[ix]), iDim  * n_elem[0] + (1-iDim) * oversize2[0], MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f1D->MPIbuff.srequest[iDim][iNeighbor]) );
         } // END of Send
             
         if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-            int tmp_elem = (buf[iDim][(iNeighbor+1)%2]).dims_[0];
-            int tag = recv_tags_[iDim][iNeighbor];
-            MPI_Irecv( &( (buf[iDim][(iNeighbor+1)%2]).data_[0] ), tmp_elem, MPI_DOUBLE, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f1D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]) );
-            //MPI_Status stat;
-            //MPI_Recv( &( (buf[iDim][(iNeighbor+1)%2]).data_[0] ), tmp_elem, MPI_DOUBLE, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &stat );
+            int tmp_elem = f1D->MPIbuff.buf[iDim][(iNeighbor+1)%2].size();
+            int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor, tagp );
+            MPI_Irecv( &( f1D->MPIbuff.buf[iDim][(iNeighbor+1)%2][0]) , tmp_elem, MPI_DOUBLE, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f1D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]) );
         } // END of Recv
             
     } // END for iNeighbor
-
+    
 } // END initSumField
 
 
@@ -169,7 +147,7 @@ void Patch1D::finalizeSumField( Field* field, int iDim )
 
     MPI_Status sstat    [nDim_fields_][2];
     MPI_Status rstat    [nDim_fields_][2];
-        
+    
     for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
         if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
             MPI_Wait( &(f1D->MPIbuff.srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
@@ -178,41 +156,22 @@ void Patch1D::finalizeSumField( Field* field, int iDim )
             MPI_Wait( &(f1D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
         }
     }
+
+    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+
+        int istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim]- oversize2[iDim] ) + (1-(iNeighbor+1)%2) * ( 0 );
+        int ix0 = (1-iDim)*istart;
+        if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
+            int tmp = f1D->MPIbuff.buf[iDim][(iNeighbor+1)%2].size();
+            for (unsigned int ix=0 ; ix< tmp ; ix++) {
+                f1D->data_[ix0+ix] += f1D->MPIbuff.buf[iDim][(iNeighbor+1)%2][ix];
+            }
+        } // END if
+    } // END for iNeighbor
 }
 
 void Patch1D::reallyfinalizeSumField( Field* field, int iDim )
 {
-    std::vector<unsigned int> n_elem = field->dims_;
-    std::vector<unsigned int> isDual = field->isDual_;
-    Field1D* f1D =  static_cast<Field1D*>(field);
-   
-    // Use a buffer per direction to exchange data before summing
-    // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
-    std::vector<unsigned int> oversize2 = oversize;
-    oversize2[0] *= 2;
-    oversize2[0] += 1 + f1D->isDual_[0];
-    
-    int istart;
-    /********************************************************************************/
-    // Sum data on each process, same operation on both side
-    /********************************************************************************/
-       
-    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-        istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim]- oversize2[iDim] ) + (1-(iNeighbor+1)%2) * ( 0 );
-        int ix0 = (1-iDim)*istart;
-        if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-            for (unsigned int ix=0 ; ix< (buf[iDim][(iNeighbor+1)%2]).dims_[0] ; ix++) {
-                f1D->data_[ix0+ix] += (buf[iDim][(iNeighbor+1)%2])(ix);
-            }
-        } // END if
-            
-    } // END for iNeighbor
-        
-
-    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-        buf[iDim][iNeighbor].deallocateDims();
-    }
-
 } // END finalizeSumField
 
 

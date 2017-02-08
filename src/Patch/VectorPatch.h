@@ -140,6 +140,7 @@ public :
     void output_exchanges(SmileiMPI* smpi);
     
     // Lists of fields
+    std::vector<Field*> densities;
     std::vector<Field*> listJx_;
     std::vector<Field*> listJy_;
     std::vector<Field*> listJz_;

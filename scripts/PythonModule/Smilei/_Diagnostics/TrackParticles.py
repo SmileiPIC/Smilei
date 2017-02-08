@@ -46,7 +46,7 @@ class TrackParticles(Diagnostic):
 			# Memorize the locations of timesteps in the files
 			for it, t in enumerate(f["Times"]):
 				self._locationForTime[t] = [pathNumber, it]
-		self.times = self._np.array(self._locationForTime.keys())
+		self.times = self._np.array(sorted(self._locationForTime.keys()))
 		self._times = self.times[:]
 		
 		# Get available times in the hdf5 file

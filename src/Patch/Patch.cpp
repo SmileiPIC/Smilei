@@ -629,3 +629,21 @@ void Patch::cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_parti
     }
 
 } // END cleanup_sent_particles
+
+void Patch::testSumField( Field* field, int iDim )
+{
+    MPI_Status sstat    [2];
+    MPI_Status rstat    [2];
+
+    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+        if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+            int received(false);
+            MPI_Test( &(field->MPIbuff.srequest[iDim][iNeighbor]), &received, &(sstat[iNeighbor]) );
+        }
+        if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
+            int received(false);
+            MPI_Test( &(field->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]), &received, &(rstat[(iNeighbor+1)%2]) );
+        }
+    }
+
+} // END testSumField

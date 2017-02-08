@@ -16,7 +16,7 @@ Timers::Timers( SmileiMPI * smpi ) :
     densities ("Densities"     ), // Local sum of rho, Jxyz
     collisions("Collisions"    ), // Call to Collisions methods
     movWindow ("Mov window"    ), // Moving Window
-    loadBal   ("Load balacing" ), // Load balancing
+    loadBal   ("Load balancing" ), // Load balancing
     syncPart  ("Sync Particles"), // Call exchangeParticles (MPI & Patch sync)
     syncField ("Sync Fields"   ), // Call sumRhoJ(s), exchangeB (MPI & Patch sync)
     syncDens  ("Sync Densities")  // If necessary the following timers can be reintroduced
