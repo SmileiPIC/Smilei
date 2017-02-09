@@ -334,6 +334,7 @@ class TrackParticlesFactory(object):
 	def __init__(self, simulation, species=None, timestep=None):
 		self._simulation = simulation
 		self._additionalKwargs = dict()
+		self._children = []
 		
 		# If not a specific species (root level), build a list of species shortcuts
 		if species is None:
@@ -343,7 +344,9 @@ class TrackParticlesFactory(object):
 			specs = tmpDiag.getTrackSpecies()
 			# Create species shortcuts
 			for spec in specs:
-				setattr(self, spec, TrackParticlesFactory(simulation, spec))
+				child = TrackParticlesFactory(simulation, spec)
+				setattr(self, spec, child)
+				self._children += [child]
 		
 		else:
 			# the species is saved for generating the object in __call__
@@ -372,7 +375,11 @@ class TrackParticlesFactory(object):
 		return TrackParticles.TrackParticles(self._simulation, *args, **kwargs)
 	
 	def toXDMF(self):
-		pass
+		if len(self._children) > 0:
+			for child in self._children:
+				child.toXDMF()
+		else:
+			self().toXDMF()
 
 
 

@@ -270,29 +270,25 @@ class Field(Diagnostic):
 			f.write('<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>\n')
 			f.write('<Xdmf Version="3.0">\n')
 			f.write('	<Domain>\n')
-			f.write('		<Topology Name="Fields topology" TopologyType="'+str(ndim)+'DCoRectMesh" Dimensions="'+shapestr+'"/>\n')
-			f.write('		<Geometry Name="Fields geometry" GeometryType="ORIGIN_'+"".join(["DX","DY","DZ"][0:ndim])+'">\n')
-			f.write('			<DataItem Format="XML" NumberType="float" Dimensions="'+str(ndim)+'">'+" ".join([str(o) for o in origin])+'</DataItem>\n')
-			f.write('			<DataItem Format="XML" NumberType="float" Dimensions="'+str(ndim)+'">'+" ".join([str(o) for o in cell_length])+'</DataItem>\n')
-			f.write('		</Geometry>\n')
+			topology='				<Topology Name="Fields topology" TopologyType="'+str(ndim)+'DCoRectMesh" Dimensions="'+shapestr+'"/>\n'
+			geometry=('				<Geometry Name="Fields geometry" GeometryType="ORIGIN_'+"".join(["DX","DY","DZ"][0:ndim])+'">\n'
+				+'					<DataItem Format="XML" NumberType="float" Dimensions="'+str(ndim)+'">'+" ".join([str(o) for o in origin])+'</DataItem>\n'
+				+'					<DataItem Format="XML" NumberType="float" Dimensions="'+str(ndim)+'">'+" ".join([str(o) for o in cell_length])+'</DataItem>\n'
+				+'				</Geometry>\n')
 			XYZ = self._np.meshgrid(*[[origin[dim]+i*self._cell_length[dim] for i in range(shape[dim])] for dim in range(self._ndim)])
 			for dim in range(self._ndim):
-				f.write('		<DataItem Name="Space_'+"XYZ"[dim]+'" ItemType="Uniform" NumberType="Float" Precision="8" Dimensions="'+shapestr+'" Format="XML">\n')
+				f.write('		<DataItem Name="Space'+"XYZ"[dim]+'" ItemType="Uniform" NumberType="Float" Dimensions="'+shapestr+'" Format="XML">\n')
 				f.write('			'+" ".join([str(i) for i in XYZ[dim].flatten()])+'\n')
 				f.write('		</DataItem>\n')
 			f.write('		<Grid GridType="Collection" CollectionType="Temporal">\n')
-			f.write('			<Time TimeType="List">\n')
-			f.write('				<DataItem Format="XML" NumberType="Float" Dimensions="'+str(len(self._h5items))+'">\n')
-			f.write('					'+str(" ".join([str(float(item.name[1:])*self.timestep) for item in self._h5items]))+'\n')
-			f.write('				</DataItem>\n')
-			f.write('			</Time>\n')
 			for item in self._h5items:
 				f.write('			<Grid Name="Timestep_'+str(item.name[1:])+'" GridType="Uniform">\n')
-				f.write('				<Topology Reference="XML">/Xdmf/Domain/Topology</Topology>\n')
-				f.write('				<Geometry Reference="XML">/Xdmf/Domain/Geometry</Geometry>\n')
+				f.write('				<Time Value="'+str(float(item.name[1:])*self.timestep)+'"/>\n')
+				f.write(topology)
+				f.write(geometry)
 				for dim in range(self._ndim):
 					f.write('				<Attribute Name="'+"XYZ"[dim]+'" Center="Node" AttributeType="Scalar">\n')
-					f.write('					<DataItem Reference="XML">/Xdmf/Domain/DataItem[@Name="Space_'+"XYZ"[dim]+'"]</DataItem>\n')
+					f.write('					<DataItem ItemType="Uniform" NumberType="Float" Dimensions="'+shapestr+'" Format="XML" Reference="XML">/Xdmf/Domain/DataItem[@Name="Space'+"XYZ"[dim]+'"]</DataItem>\n')
 					f.write('				</Attribute>\n')
 				for field in item.values():
 					location = self._os.path.abspath(item.file.filename)+':'+field.name
