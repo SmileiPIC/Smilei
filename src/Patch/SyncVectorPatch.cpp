@@ -181,10 +181,10 @@ void SyncVectorPatch::new_sum( std::vector<Field*> fields, VectorPatch& vecPatch
     // Sum per direction :
 
     // iDim = 0, initialize comms : Isend/Irecv
-    int nPatchMPIx = vecPatches.densitiesMPIxIdx.size();
+    int nPatchMPIx = vecPatches.MPIxIdx.size();
     #pragma omp for schedule(static) 
     for (unsigned int ifield=0 ; ifield<nPatchMPIx ; ifield++) {
-        unsigned int ipatch = vecPatches.densitiesMPIxIdx[ifield];
+        unsigned int ipatch = vecPatches.MPIxIdx[ifield];
         vecPatches(ipatch)->initSumField( vecPatches.densitiesMPIx[ifield             ], 0 ); // Jx
         vecPatches(ipatch)->initSumField( vecPatches.densitiesMPIx[ifield+nPatchMPIx  ], 0 ); // Jy
         vecPatches(ipatch)->initSumField( vecPatches.densitiesMPIx[ifield+2*nPatchMPIx], 0 ); // Jz
@@ -209,7 +209,7 @@ void SyncVectorPatch::new_sum( std::vector<Field*> fields, VectorPatch& vecPatch
         int iend    = (icomp+1)*nFieldLocalx;
         #pragma omp for schedule(static) private(pt1,pt2)
         for (unsigned int ifield=istart ; ifield<iend ; ifield++) {
-            int ipatch = vecPatches.densitiesLocalxIdx[ ifield-icomp*nFieldLocalx ];
+            int ipatch = vecPatches.LocalxIdx[ ifield-icomp*nFieldLocalx ];
             if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[0][0]){
                 pt1 = &(fields[ vecPatches(ipatch)->neighbor_[0][0]-h0+icomp*nPatches ]->data_[n_space[0]*ny_*nz_]);
                 pt2 = &(vecPatches.densitiesLocalx[ifield]->data_[0]);
@@ -226,7 +226,7 @@ void SyncVectorPatch::new_sum( std::vector<Field*> fields, VectorPatch& vecPatch
     // iDim = 0, finalize (waitall)
     #pragma omp for schedule(static) 
     for (unsigned int ifield=0 ; ifield<nPatchMPIx ; ifield++) {
-        unsigned int ipatch = vecPatches.densitiesMPIxIdx[ifield];
+        unsigned int ipatch = vecPatches.MPIxIdx[ifield];
         vecPatches(ipatch)->finalizeSumField( vecPatches.densitiesMPIx[ifield             ], 0 ); // Jx
         vecPatches(ipatch)->finalizeSumField( vecPatches.densitiesMPIx[ifield+nPatchMPIx  ], 0 ); // Jy
         vecPatches(ipatch)->finalizeSumField( vecPatches.densitiesMPIx[ifield+2*nPatchMPIx], 0 ); // Jz
@@ -239,10 +239,10 @@ void SyncVectorPatch::new_sum( std::vector<Field*> fields, VectorPatch& vecPatch
         // Sum per direction :
 
         // iDim = 1, initialize comms : Isend/Irecv
-        int nPatchMPIy = vecPatches.densitiesMPIyIdx.size();
+        int nPatchMPIy = vecPatches.MPIyIdx.size();
         #pragma omp for schedule(static)
         for (unsigned int ifield=0 ; ifield<nPatchMPIy ; ifield++) {
-            unsigned int ipatch = vecPatches.densitiesMPIyIdx[ifield];
+            unsigned int ipatch = vecPatches.MPIyIdx[ifield];
             vecPatches(ipatch)->initSumField( vecPatches.densitiesMPIy[ifield             ], 1 ); // Jx
             vecPatches(ipatch)->initSumField( vecPatches.densitiesMPIy[ifield+nPatchMPIy  ], 1 ); // Jy
             vecPatches(ipatch)->initSumField( vecPatches.densitiesMPIy[ifield+2*nPatchMPIy], 1 ); // Jz
@@ -268,7 +268,7 @@ void SyncVectorPatch::new_sum( std::vector<Field*> fields, VectorPatch& vecPatch
             int iend    = (icomp+1)*nFieldLocaly;
             #pragma omp for schedule(static) private(pt1,pt2)
             for (unsigned int ifield=istart ; ifield<iend ; ifield++) {
-                int ipatch = vecPatches.densitiesLocalyIdx[ ifield-icomp*nFieldLocaly ];
+                int ipatch = vecPatches.LocalyIdx[ ifield-icomp*nFieldLocaly ];
                 if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[1][0]){
                     //The patch to the south belongs to the same MPI process than I.
                     pt1 = &(fields[vecPatches(ipatch)->neighbor_[1][0]-h0+icomp*nPatches]->data_[n_space[1]*nz_]);
@@ -287,7 +287,7 @@ void SyncVectorPatch::new_sum( std::vector<Field*> fields, VectorPatch& vecPatch
         // iDim = 1, finalize (waitall)
         #pragma omp for schedule(static) 
         for (unsigned int ifield=0 ; ifield<nPatchMPIy ; ifield=ifield+1) {
-            unsigned int ipatch = vecPatches.densitiesMPIyIdx[ifield];
+            unsigned int ipatch = vecPatches.MPIyIdx[ifield];
             vecPatches(ipatch)->finalizeSumField( vecPatches.densitiesMPIy[ifield             ], 1 ); // Jx
             vecPatches(ipatch)->finalizeSumField( vecPatches.densitiesMPIy[ifield+nPatchMPIy  ], 1 ); // Jy
             vecPatches(ipatch)->finalizeSumField( vecPatches.densitiesMPIy[ifield+2*nPatchMPIy], 1 ); // Jz
@@ -676,10 +676,10 @@ void SyncVectorPatch::exchange0( std::vector<Field*> fields, VectorPatch& vecPat
 
 void SyncVectorPatch::new_exchange0( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
-    int nMPIx = vecPatches.B_MPIxIdx.size();
+    int nMPIx = vecPatches.MPIxIdx.size();
     #pragma omp for schedule(static)
     for (unsigned int ifield=0 ; ifield<nMPIx ; ifield++) {
-        unsigned int ipatch = vecPatches.B_MPIxIdx[ifield];
+        unsigned int ipatch = vecPatches.MPIxIdx[ifield];
         vecPatches(ipatch)->initExchange( vecPatches.B_MPIx[ifield      ], 0 ); // By
         vecPatches(ipatch)->initExchange( vecPatches.B_MPIx[ifield+nMPIx], 0 ); // Bz
     }
@@ -711,7 +711,7 @@ void SyncVectorPatch::new_exchange0( std::vector<Field*> fields, VectorPatch& ve
         int iend    = (icomp+1)*nFieldLocalx;
         #pragma omp for schedule(static) private(pt1,pt2)
         for (unsigned int ifield=istart ; ifield<iend ; ifield++) {
-            int ipatch = vecPatches.B_localxIdx[ ifield-icomp*nFieldLocalx ];
+            int ipatch = vecPatches.LocalxIdx[ ifield-icomp*nFieldLocalx ];
 
             if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[0][0]){
                 pt1 = &(fields[vecPatches(ipatch)->neighbor_[0][0]-h0+icomp*nPatches]->data_[n_space*ny_*nz_]);
@@ -729,10 +729,10 @@ void SyncVectorPatch::new_exchange0( std::vector<Field*> fields, VectorPatch& ve
 
 void SyncVectorPatch::new_finalizeexchange0( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
-    int nMPIx = vecPatches.B_MPIxIdx.size();
+    int nMPIx = vecPatches.MPIxIdx.size();
     #pragma omp for schedule(static)
     for (unsigned int ifield=0 ; ifield<nMPIx ; ifield++) {
-        unsigned int ipatch = vecPatches.B_MPIxIdx[ifield];
+        unsigned int ipatch = vecPatches.MPIxIdx[ifield];
         vecPatches(ipatch)->finalizeExchange( vecPatches.B_MPIx[ifield      ], 0 ); // By
         vecPatches(ipatch)->finalizeExchange( vecPatches.B_MPIx[ifield+nMPIx], 0 ); // Bz
     }
@@ -748,10 +748,10 @@ void SyncVectorPatch::finalizeexchange0( std::vector<Field*> fields, VectorPatch
 
 void SyncVectorPatch::new_exchange1( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
-    int nMPIy = vecPatches.B1_MPIyIdx.size();
+    int nMPIy = vecPatches.MPIyIdx.size();
     #pragma omp for schedule(static)
     for (unsigned int ifield=0 ; ifield<nMPIy ; ifield++) {
-        unsigned int ipatch = vecPatches.B1_MPIyIdx[ifield];
+        unsigned int ipatch = vecPatches.MPIyIdx[ifield];
         vecPatches(ipatch)->initExchange( vecPatches.B1_MPIy[ifield], 1 );   // Bx
         vecPatches(ipatch)->initExchange( vecPatches.B1_MPIy[ifield+nMPIy], 1 ); // Bz
     }
@@ -782,7 +782,7 @@ void SyncVectorPatch::new_exchange1( std::vector<Field*> fields, VectorPatch& ve
         #pragma omp for schedule(static) private(pt1,pt2)
         for (unsigned int ifield=istart ; ifield<iend ; ifield++) {
 
-            int ipatch = vecPatches.B1_localyIdx[ ifield-icomp*nFieldLocaly ];
+            int ipatch = vecPatches.LocalyIdx[ ifield-icomp*nFieldLocaly ];
             if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[1][0]){
                 pt1 = &(fields[vecPatches(ipatch)->neighbor_[1][0]-h0+icomp*nPatches]->data_[n_space*nz_]);
                 pt2 = &(vecPatches.B1_localy[ifield]->data_[0]);
@@ -843,10 +843,10 @@ void SyncVectorPatch::exchange1( std::vector<Field*> fields, VectorPatch& vecPat
 
 void SyncVectorPatch::new_finalizeexchange1( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
-    int nMPIy = vecPatches.B1_MPIyIdx.size();
+    int nMPIy = vecPatches.MPIyIdx.size();
     #pragma omp for schedule(static)
     for (unsigned int ifield=0 ; ifield<nMPIy ; ifield++) {
-        unsigned int ipatch = vecPatches.B1_MPIyIdx[ifield];
+        unsigned int ipatch = vecPatches.MPIyIdx[ifield];
         vecPatches(ipatch)->finalizeExchange( vecPatches.B1_MPIy[ifield      ], 1 ); // By
         vecPatches(ipatch)->finalizeExchange( vecPatches.B1_MPIy[ifield+nMPIy], 1 ); // Bz
     }
