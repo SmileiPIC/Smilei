@@ -173,7 +173,7 @@ void Particles::clear()
         Position[i].clear();
         Position_old[i].clear();
     }
-    for (unsigned int i=0 ; i< Momentum.size() ; i++) {
+    for (unsigned int i=0 ; i< 3 ; i++) {
         Momentum[i].clear();
     }
     Weight.clear();

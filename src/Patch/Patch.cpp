@@ -210,8 +210,8 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params)
     
     for (int iDim=0 ; iDim < ndim ; iDim++){
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-            vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor].initialize(0,cuParticles);
-            vecSpecies[ispec]->MPIbuff.partSend[iDim][iNeighbor].initialize(0,cuParticles);
+            vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor].resize(0,ndim);
+            vecSpecies[ispec]->MPIbuff.partSend[iDim][iNeighbor].resize(0,ndim);
             vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor].resize(0);
             vecSpecies[ispec]->MPIbuff.part_index_recv_sz[iDim][iNeighbor] = 0;
             vecSpecies[ispec]->MPIbuff.part_index_send_sz[iDim][iNeighbor] = 0;
@@ -389,21 +389,20 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
     int h0 = (*vecPatch)(0)->hindex;
 
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
-
+    
     std::vector<int>* indexes_of_particles_to_exchange = &vecSpecies[ispec]->indexes_of_particles_to_exchange;
-
+    
     std::vector<int>* cubmin = &vecSpecies[ispec]->bmin;
     std::vector<int>* cubmax = &vecSpecies[ispec]->bmax;
-
+    
     int nmove,lmove,ii; // local, OK
-    int shift[(*cubmax).size()+1];//how much we need to shift each bin in order to leave room for the new particles
+    int shift[(*cubmax).size()+1];//how much we need to shift each bin in order to leave room for the new particle
     double dbin;
-        
+    
     dbin = params.cell_length[0]*params.clrw; //width of a bin.
     for (unsigned int j=0; j<(*cubmax).size()+1 ;j++){
-      shift[j]=0;
+        shift[j]=0;
     }
-
     int n_part_send, n_part_recv, n_particles;
 
     /********************************************************************************/

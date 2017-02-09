@@ -13,8 +13,8 @@ class Timers;
 class SyncVectorPatch {
 public :
 
-    static void exchangeParticles(VectorPatch& vecPatches, int ispec, Params &params, SmileiMPI* smpi);
-    static void finalize_and_sort_parts(VectorPatch& vecPatches, int ispec, Params &params, SmileiMPI* smpi);
+    static void exchangeParticles(VectorPatch& vecPatches, int ispec, Params &params, SmileiMPI* smpi, Timers &timers, int itime);
+    static void finalize_and_sort_parts(VectorPatch& vecPatches, int ispec, Params &params, SmileiMPI* smpi, Timers &timers, int itime);
     static void sumRhoJ  ( VectorPatch& vecPatches, Timers &timers, int itime );
     static void sumRhoJs ( VectorPatch& vecPatches, int ispec, Timers &timers, int itime );
     static void exchangeE( VectorPatch& vecPatches );

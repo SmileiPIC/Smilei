@@ -136,6 +136,17 @@ void Species::initOperators(Params& params, Patch* patch)
     
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond(params, this, patch);
+
+    for (int iDim=0 ; iDim < nDim_particle ; iDim++){
+        for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+            MPIbuff.partRecv[iDim][iNeighbor].initialize(0, (*particles));
+            MPIbuff.partSend[iDim][iNeighbor].initialize(0, (*particles));
+            MPIbuff.part_index_send[iDim][iNeighbor].resize(0);
+            MPIbuff.part_index_recv_sz[iDim][iNeighbor] = 0;
+            MPIbuff.part_index_send_sz[iDim][iNeighbor] = 0;
+        }
+    }
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
