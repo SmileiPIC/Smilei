@@ -114,7 +114,6 @@ class FieldFactory(object):
 				for field in fields:
 					child = FieldFactory(simulation, diagNumber, field, availableTimesteps=timesteps)
 					setattr(self, field, child)
-					self._children += [child]
 			
 			else:
 				# the field is saved for generating the object in __call__
