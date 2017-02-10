@@ -702,7 +702,7 @@ void ElectroMagn2D::computeTotalRhoJ()
                 for (unsigned int j=0 ; j<ny_p ; j++)
                     (*Jx2D)(i,j) += (*Jx2D_s)(i,j);
         }
-        if( Jx_s[ispec] ) {
+        if( Jy_s[ispec] ) {
             Field2D* Jy2D_s  = static_cast<Field2D*>(Jy_s[ispec]);
             for (unsigned int i=0 ; i<nx_p ; i++)
                 for (unsigned int j=0 ; j<=ny_p ; j++)
