@@ -300,45 +300,43 @@ class Field(Diagnostic):
 			f.write('	</Domain>\n')
 			f.write('</Xdmf>\n')
 		
-		## Make the XDMF for time streak
-		#if self._ndim < 3:
-		#	ndim = self._ndim + 1
-		#	shape = self._h5items[0].values()[0].shape + (len(self._h5items),)
-		#	shapestr = " ".join([str(a) for a in shape])
-		#	origin = [ 0. for i in range(ndim) ]
-		#	cell_length = list(self._cell_length) + [self.timestep]
-		#	axes = "XYZ"[0:self._ndim] + "T"
-		#	fields = self._h5items[0].keys()
-		#	with open(directory+sep+"Fields"+str(self.diagNumber)+"_streak.xmf",'w') as f:
-		#		f.write('<?xml version="1.0" ?>\n')
-		#		f.write('<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>\n')
-		#		f.write('<Xdmf Version="3.0">\n')
-		#		f.write('	<Domain>\n')
-		#		f.write('		<Topology Name="Fields topology" TopologyType="'+str(ndim)+'DCoRectMesh" Dimensions="'+shapestr+'"/>\n')
-		#		f.write('		<Geometry Name="Fields geometry" GeometryType="ORIGIN_'+"".join(["DX","DY","DZ"][0:ndim])+'">\n')
-		#		f.write('			<DataItem Format="XML" NumberType="float" Dimensions="'+str(ndim)+'">'+" ".join([str(o) for o in origin])+'</DataItem>\n')
-		#		f.write('			<DataItem Format="XML" NumberType="float" Dimensions="'+str(ndim)+'">'+" ".join([str(o) for o in cell_length])+'</DataItem>\n')
-		#		f.write('		</Geometry>\n')
-		#		f.write('		<Grid GridType="Uniform">\n')
-		#		f.write('			<Topology Reference="XML">/Xdmf/Domain/Topology</Topology>\n')
-		#		f.write('			<Geometry Reference="XML">/Xdmf/Domain/Geometry</Geometry>\n')
-		#		XYZ = self._np.meshgrid(*[[origin[dim]+i*cell_length[dim] for i in range(shape[dim])] for dim in range(ndim)])
-		#		for dim in range(self._ndim):
-		#			f.write('			<Attribute Name="'+axes[dim]+'" Center="Node" AttributeType="Scalar">\n')
-		#			f.write('				<DataItem ItemType="Uniform" NumberType="Float" Precision="8" Dimensions="'+shapestr+'" Format="XML">\n')
-		#			f.write('					'+" ".join([str(i) for i in XYZ[dim].flatten()])+'\n')
-		#			f.write('				</DataItem>\n')
-		#			f.write('			</Attribute>\n')
-		#		for field in fields:
-		#			f.write('			<Attribute Name="'+self._os.path.basename(field)+'" Center="Node" AttributeType="Scalar">\n')
-		#			f.write('				<DataItem ItemType="Function" Function="JOIN('+",".join(["$"+str(i) for i in range(len(self._h5items))])+')" Dimensions="'+shapestr+'">\n')
-		#			for item in self._h5items:
-		#				location = self._os.path.abspath(item.file.filename)+':'+item.name+"/"+field
-		#				f.write('					<DataItem ItemType="Uniform" NumberType="Float" Precision="8" Dimensions="'+ " ".join([str(a) for a in shape[:-1]])+'" Format="HDF">'+location+'</DataItem>\n')
-		#			f.write('				</DataItem>\n')
-		#			f.write('			</Attribute>\n')
-		#		f.write('		</Grid>\n')
-		#		f.write('	</Domain>\n')
-		#		f.write('</Xdmf>\n')
-		#	
+		# Make the XDMF for time streak
+		if self._ndim < 3:
+			ndim = self._ndim + 1
+			shape = self._h5items[0].values()[0].shape + (len(self._h5items),)
+			shapestr = " ".join([str(a) for a in shape])
+			origin = [ 0. for i in range(ndim) ]
+			cell_length = list(self._cell_length) + [self.timestep]
+			axes = "XYZ"[0:self._ndim] + "T"
+			fields = self._h5items[0].keys()
+			with open(directory+sep+"Fields"+str(self.diagNumber)+"_streak.xmf",'w') as f:
+				f.write('<?xml version="1.0" ?>\n')
+				f.write('<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>\n')
+				f.write('<Xdmf Version="3.0">\n')
+				f.write('	<Domain>\n')
+				f.write('		<Grid GridType="Uniform">\n')
+				f.write('			<Topology Name="Fields topology" TopologyType="'+str(ndim)+'DCoRectMesh" Dimensions="'+shapestr+'"/>\n')
+				f.write('			<Geometry Name="Fields geometry" GeometryType="ORIGIN_'+"".join(["DX","DY","DZ"][0:ndim])+'">\n')
+				f.write('				<DataItem Format="XML" NumberType="float" Dimensions="'+str(ndim)+'">'+" ".join([str(o) for o in origin])+'</DataItem>\n')
+				f.write('				<DataItem Format="XML" NumberType="float" Dimensions="'+str(ndim)+'">'+" ".join([str(o) for o in cell_length])+'</DataItem>\n')
+				f.write('			</Geometry>\n')
+				XYZ = self._np.meshgrid(*[[origin[dim]+i*cell_length[dim] for i in range(shape[dim])] for dim in reversed(range(ndim))])
+				for dim in range(ndim):
+					f.write('			<Attribute Name="'+axes[ndim-dim-1]+'" Center="Node" AttributeType="Scalar">\n')
+					f.write('				<DataItem ItemType="Uniform" NumberType="Float" Precision="8" Dimensions="'+shapestr+'" Format="XML">\n')
+					f.write('					'+" ".join([str(i) for i in XYZ[ndim-dim-1].flatten()])+'\n')
+					f.write('				</DataItem>\n')
+					f.write('			</Attribute>\n')
+				for field in fields:
+					f.write('			<Attribute Name="'+self._os.path.basename(field)+'" Center="Node" AttributeType="Scalar">\n')
+					f.write('				<DataItem ItemType="Function" Function="'+"|".join(["$"+str(i) for i in range(len(self._h5items))])+'" Dimensions="'+shapestr+'">\n')
+					for item in self._h5items:
+						location = self._os.path.abspath(item.file.filename)+':'+item.name+"/"+field
+						f.write('					<DataItem ItemType="Uniform" NumberType="Float" Precision="8" Dimensions="'+ " ".join([str(a) for a in shape[:-1]])+'" Format="HDF">'+location+'</DataItem>\n')
+					f.write('				</DataItem>\n')
+					f.write('			</Attribute>\n')
+				f.write('		</Grid>\n')
+				f.write('	</Domain>\n')
+				f.write('</Xdmf>\n')
+			
 
