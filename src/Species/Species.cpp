@@ -434,8 +434,9 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
             // Apply wall and boundary conditions
             for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                double dtgf = params.timestep / smpi->dynamics_gf[ithread][iPart];
                 for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
-                    if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, ener_iPart)) {
+                    if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
                         nrj_lost_per_thd[tid] += mass * ener_iPart;
                     }
                 }
@@ -851,8 +852,8 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     }
     
     if ((*particles).tracked)
-        (*particles).setIds();
-
+        (*particles).resetIds();
+    
     return npart_effective;
     
 } // End createParticles

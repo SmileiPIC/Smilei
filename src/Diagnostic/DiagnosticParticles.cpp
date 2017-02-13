@@ -6,13 +6,229 @@
 using namespace std;
 
 
+
+// Functions that are used to compute the axis_array
+void axis_x        (Species * s, vector<double> &array, unsigned int npart, DiagnosticParticlesAxis &axis) {
+    for ( unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->particles->Position[0][ipart];
+}
+void axis_y        (Species * s, vector<double> &array, unsigned int npart, DiagnosticParticlesAxis &axis) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->particles->Position[1][ipart];
+}
+void axis_z        (Species * s, vector<double> &array, unsigned int npart, DiagnosticParticlesAxis &axis) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->particles->Position[2][ipart];
+}
+void axis_px       (Species * s, vector<double> &array, unsigned int npart, DiagnosticParticlesAxis &axis) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->mass * s->particles->Momentum[0][ipart];
+}
+void axis_py       (Species * s, vector<double> &array, unsigned int npart, DiagnosticParticlesAxis &axis) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->mass * s->particles->Momentum[1][ipart];
+}
+void axis_pz       (Species * s, vector<double> &array, unsigned int npart, DiagnosticParticlesAxis &axis) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->mass * s->particles->Momentum[2][ipart];
+}
+void axis_p        (Species * s, vector<double> &array, unsigned int npart, DiagnosticParticlesAxis &axis) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->mass * sqrt(pow(s->particles->Momentum[0][ipart],2)
+                                    + pow(s->particles->Momentum[1][ipart],2)
+                                    + pow(s->particles->Momentum[2][ipart],2));
+}
+void axis_gamma    (Species * s, vector<double> &array, unsigned int npart, DiagnosticParticlesAxis &axis) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
+                                + pow(s->particles->Momentum[1][ipart],2)
+                                + pow(s->particles->Momentum[2][ipart],2) );
+}
+void axis_ekin     (Species * s, vector<double> &array, unsigned int npart, DiagnosticParticlesAxis &axis) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->mass * (sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
+                                           + pow(s->particles->Momentum[1][ipart],2)
+                                           + pow(s->particles->Momentum[2][ipart],2) ) - 1.);
+}
+void axis_vx       (Species * s, vector<double> &array, unsigned int npart, DiagnosticParticlesAxis &axis) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->particles->Momentum[0][ipart]
+                       / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
+                                  + pow(s->particles->Momentum[1][ipart],2)
+                                  + pow(s->particles->Momentum[2][ipart],2) );
+}
+void axis_vy       (Species * s, vector<double> &array, unsigned int npart, DiagnosticParticlesAxis &axis) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->particles->Momentum[1][ipart]
+                       / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
+                                  + pow(s->particles->Momentum[1][ipart],2)
+                                  + pow(s->particles->Momentum[2][ipart],2) );
+}
+void axis_vz       (Species * s, vector<double> &array, unsigned int npart, DiagnosticParticlesAxis &axis) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->particles->Momentum[2][ipart]
+                       / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
+                                  + pow(s->particles->Momentum[1][ipart],2)
+                                  + pow(s->particles->Momentum[2][ipart],2) );
+}
+void axis_v        (Species * s, vector<double> &array, unsigned int npart, DiagnosticParticlesAxis &axis) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = pow( 1. + 1./(pow(s->particles->Momentum[0][ipart],2)
+                                   + pow(s->particles->Momentum[1][ipart],2)
+                                   + pow(s->particles->Momentum[2][ipart],2)) , -0.5);
+}
+void axis_vperp2   (Species * s, vector<double> &array, unsigned int npart, DiagnosticParticlesAxis &axis) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = (  pow(s->particles->Momentum[1][ipart],2)
+                        + pow(s->particles->Momentum[2][ipart],2)
+                       ) / (1. + pow(s->particles->Momentum[0][ipart],2)
+                               + pow(s->particles->Momentum[1][ipart],2)
+                               + pow(s->particles->Momentum[2][ipart],2) );
+}
+void axis_charge   (Species * s, vector<double> &array, unsigned int npart, DiagnosticParticlesAxis &axis) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = (double) s->particles->Charge[ipart];
+}
+void axis_chi      (Species * s, vector<double> &array, unsigned int npart, DiagnosticParticlesAxis &axis) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->particles->Chi[ipart];
+}
+void axis_composite(Species * s, vector<double> &array, unsigned int npart, DiagnosticParticlesAxis &axis) {
+    unsigned int idim, ndim = axis.coefficients.size();
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
+        array[ipart] = 0.;
+        for (idim = 0 ; idim < ndim ; idim++)
+            array[ipart] += axis.coefficients[idim] * s->particles->Position[idim][ipart];
+    }
+}
+
+
+// Functions that are used to compute the data_array
+void data_density(Species * s, vector<double> &array, unsigned int npart) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->particles->Weight[ipart];
+}
+void data_charge_density(Species * s, vector<double> &array, unsigned int npart) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->particles->Weight[ipart] * (double)(s->particles->Charge[ipart]);
+}
+void data_jx_density(Species * s, vector<double> &array, unsigned int npart) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->particles->Weight[ipart] * (double)(s->particles->Charge[ipart])
+                     * s->particles->Momentum[0][ipart]
+                     / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
+                                + pow(s->particles->Momentum[1][ipart],2)
+                                + pow(s->particles->Momentum[2][ipart],2) );
+}
+void data_jy_density(Species * s, vector<double> &array, unsigned int npart) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->particles->Weight[ipart] * (double)(s->particles->Charge[ipart])
+                     * s->particles->Momentum[1][ipart]
+                     / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
+                                + pow(s->particles->Momentum[1][ipart],2)
+                                + pow(s->particles->Momentum[2][ipart],2) );
+}
+void data_jz_density(Species * s, vector<double> &array, unsigned int npart) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->particles->Weight[ipart] * (double)(s->particles->Charge[ipart])
+                     * s->particles->Momentum[2][ipart]
+                     / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
+                                + pow(s->particles->Momentum[1][ipart],2)
+                                + pow(s->particles->Momentum[2][ipart],2) );
+}
+void data_ekin_density(Species * s, vector<double> &array, unsigned int npart) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->mass * s->particles->Weight[ipart]
+                     * ( sqrt(1. + pow(s->particles->Momentum[0][ipart],2)
+                                 + pow(s->particles->Momentum[1][ipart],2)
+                                 + pow(s->particles->Momentum[2][ipart],2)) - 1.);
+}
+void data_p_density(Species * s, vector<double> &array, unsigned int npart) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->mass * s->particles->Weight[ipart]
+                     * sqrt(pow(s->particles->Momentum[0][ipart],2)
+                          + pow(s->particles->Momentum[1][ipart],2)
+                          + pow(s->particles->Momentum[2][ipart],2));
+}
+void data_px_density(Species * s, vector<double> &array, unsigned int npart) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->mass * s->particles->Weight[ipart] * s->particles->Momentum[0][ipart];
+}
+void data_py_density(Species * s, vector<double> &array, unsigned int npart) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->mass * s->particles->Weight[ipart] * s->particles->Momentum[1][ipart];
+}
+void data_pz_density(Species * s, vector<double> &array, unsigned int npart) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->mass * s->particles->Weight[ipart] * s->particles->Momentum[2][ipart];
+}
+void data_pressure_xx(Species * s, vector<double> &array, unsigned int npart) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->mass * s->particles->Weight[ipart]
+                     * pow(s->particles->Momentum[0][ipart],2)
+                     / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
+                                + pow(s->particles->Momentum[1][ipart],2)
+                                + pow(s->particles->Momentum[2][ipart],2) );
+}
+void data_pressure_yy(Species * s, vector<double> &array, unsigned int npart) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->mass * s->particles->Weight[ipart]
+                     * pow(s->particles->Momentum[1][ipart],2)
+                     / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
+                                + pow(s->particles->Momentum[1][ipart],2)
+                                + pow(s->particles->Momentum[2][ipart],2) );
+}
+void data_pressure_zz(Species * s, vector<double> &array, unsigned int npart) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->mass * s->particles->Weight[ipart]
+                     * pow(s->particles->Momentum[2][ipart],2)
+                     / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
+                                + pow(s->particles->Momentum[1][ipart],2)
+                                + pow(s->particles->Momentum[2][ipart],2) );
+}
+void data_pressure_xy(Species * s, vector<double> &array, unsigned int npart) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->mass * s->particles->Weight[ipart]
+                     * s->particles->Momentum[0][ipart]
+                     * s->particles->Momentum[1][ipart]
+                     / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
+                                + pow(s->particles->Momentum[1][ipart],2)
+                                + pow(s->particles->Momentum[2][ipart],2) );
+}
+void data_pressure_xz(Species * s, vector<double> &array, unsigned int npart) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->mass * s->particles->Weight[ipart]
+                     * s->particles->Momentum[0][ipart]
+                     * s->particles->Momentum[2][ipart]
+                     / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
+                                + pow(s->particles->Momentum[1][ipart],2)
+                                + pow(s->particles->Momentum[2][ipart],2) );
+}
+void data_pressure_yz(Species * s, vector<double> &array, unsigned int npart) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->mass * s->particles->Weight[ipart]
+                     * s->particles->Momentum[1][ipart]
+                     * s->particles->Momentum[2][ipart]
+                     / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
+                                + pow(s->particles->Momentum[1][ipart],2)
+                                + pow(s->particles->Momentum[2][ipart],2) );
+}
+void data_ekin_vx_density(Species * s, vector<double> &array, unsigned int npart) {
+    for (unsigned int ipart = 0 ; ipart < npart ; ipart++)
+        array[ipart] = s->mass * s->particles->Weight[ipart]
+                     * s->particles->Momentum[0][ipart]
+                     * (1. - 1./sqrt(1. + pow(s->particles->Momentum[0][ipart],2)
+                                        + pow(s->particles->Momentum[1][ipart],2)
+                                        + pow(s->particles->Momentum[2][ipart],2)));
+}
+
+
+// Constructor
 DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
 {
     fileId_ = 0;
     
     int n_diag_particles = diagId;
-    
-    std::vector<Species*>& vecSpecies = patch->vecSpecies;
     
     ostringstream name("");
     name << "Diagnotic Particles #" << n_diag_particles;
@@ -23,6 +239,44 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
     if (!PyTools::extract("output",output,"DiagParticles",n_diag_particles))
         ERROR(errorPrefix << ": parameter `output` required");
     
+    if        (output == "density"        ) {
+        data_filling = &data_density;
+    } else if (output == "charge_density" ) {
+        data_filling = &data_charge_density;
+    } else if (output == "jx_density"     ) {
+        data_filling = &data_jx_density;
+    } else if (output == "jy_density"     ) {
+        data_filling = &data_jy_density;
+    } else if (output == "jz_density"     ) {
+        data_filling = &data_jz_density;
+    } else if (output == "ekin_density"   ) {
+        data_filling = &data_ekin_density;
+    } else if (output == "p_density"      ) {
+        data_filling = &data_p_density;
+    } else if (output == "px_density"     ) {
+        data_filling = &data_px_density;
+    } else if (output == "py_density"     ) {
+        data_filling = &data_py_density;
+    } else if (output == "pz_density"     ) {
+        data_filling = &data_pz_density;
+    } else if (output == "pressure_xx"    ) {
+        data_filling = &data_pressure_xx;
+    } else if (output == "pressure_yy"    ) {
+        data_filling = &data_pressure_yy;
+    } else if (output == "pressure_zz"    ) {
+        data_filling = &data_pressure_zz;
+    } else if (output == "pressure_xy"    ) {
+        data_filling = &data_pressure_xy;
+    } else if (output == "pressure_xz"    ) {
+        data_filling = &data_pressure_xz;
+    } else if (output == "pressure_yz"    ) {
+        data_filling = &data_pressure_yz;
+    } else if (output == "ekin_vx_density") {
+        data_filling = &data_ekin_vx_density;
+    } else {
+        ERROR(errorPrefix << ": parameter `output = "<< output <<"` not understood");
+    }
+
     // get parameter "every" which describes a timestep selection
     timeSelection = new TimeSelection(
         PyTools::extract_py("every", "DiagParticles", n_diag_particles),
@@ -47,7 +301,7 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
     if (!PyTools::extract("species",species_names,"DiagParticles",n_diag_particles))
         ERROR(errorPrefix << ": parameter `species` required");
     // verify that the species exist, remove duplicates and sort by number
-    species = params.FindSpecies(vecSpecies, species_names);
+    species = params.FindSpecies(patch->vecSpecies, species_names);
     
     
     // get parameter "axes" that adds axes to the diagnostic
@@ -76,25 +330,52 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
         // Try to extract first element: type
         if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 0),tmpAxis.type))
             ERROR(errorPrefix << ", axis #" << iaxis << ": First item must be a string (axis type)");
-        if ( tmpAxis.type == "composite" )
-            ERROR(errorPrefix << ": axis type cannot be 'composite'");
-        if (   (tmpAxis.type == "z" && params.nDim_particle <3)
-            || (tmpAxis.type == "y" && params.nDim_particle <2) )
-            ERROR(errorPrefix << ": axis " << tmpAxis.type << " cannot exist in " << params.nDim_particle << "D");
         
-        // If type is "chi", then the requested species
-        if( tmpAxis.type=="chi" )
+        if        (tmpAxis.type == "x" ) {
+            tmpAxis.axis_binning = &axis_x;
+        } else if (tmpAxis.type == "y" ) {
+            if (params.nDim_particle <2)
+                ERROR(errorPrefix << ": axis y cannot exist in <2D");
+            tmpAxis.axis_binning = &axis_y;
+        } else if (tmpAxis.type == "z" ) {
+            if (params.nDim_particle <3)
+                ERROR(errorPrefix << ": axis z cannot exist in <3D");
+            tmpAxis.axis_binning = &axis_z;
+        } else if (tmpAxis.type == "px" ) {
+            tmpAxis.axis_binning = &axis_px;
+        } else if (tmpAxis.type == "py" ) {
+            tmpAxis.axis_binning = &axis_py;
+        } else if (tmpAxis.type == "pz" ) {
+            tmpAxis.axis_binning = &axis_pz;
+        } else if (tmpAxis.type == "p" ) {
+            tmpAxis.axis_binning = &axis_p;
+        } else if (tmpAxis.type == "gamma" ) {
+            tmpAxis.axis_binning = &axis_gamma;
+        } else if (tmpAxis.type == "ekin" ) {
+            tmpAxis.axis_binning = &axis_ekin;
+        } else if (tmpAxis.type == "vx" ) {
+            tmpAxis.axis_binning = &axis_vx;
+        } else if (tmpAxis.type == "vy" ) {
+            tmpAxis.axis_binning = &axis_vy;
+        } else if (tmpAxis.type == "vz" ) {
+            tmpAxis.axis_binning = &axis_vz;
+        } else if (tmpAxis.type == "v" ) {
+            tmpAxis.axis_binning = &axis_v;
+        } else if (tmpAxis.type == "vperp2" ) {
+            tmpAxis.axis_binning = &axis_vperp2;
+        } else if (tmpAxis.type == "charge" ) {
+            tmpAxis.axis_binning = &axis_charge;
+        } else if (tmpAxis.type == "chi" ) {
+            // The requested species must be radiating
             for (unsigned int ispec=0 ; ispec < species.size() ; ispec++)
                 if( ! patch->vecSpecies[species[ispec]]->particles->isRadReaction )
                     ERROR(errorPrefix << ": axis #" << iaxis << " 'chi' requires all species to be 'radiating'");
+            tmpAxis.axis_binning = &axis_chi;
+        } else if (tmpAxis.type == "composite") {
+            ERROR(errorPrefix << ": axis type cannot be 'composite'");
         
-        // If not "usual" type, try to find composite type
-        if (tmpAxis.type!="x" && tmpAxis.type!="y" && tmpAxis.type!="z"
-         && tmpAxis.type!="px" && tmpAxis.type!="py" && tmpAxis.type!="pz" && tmpAxis.type!="p"
-         && tmpAxis.type!="vx" && tmpAxis.type!="vy" && tmpAxis.type!="vz" && tmpAxis.type!="v" && tmpAxis.type!="vperp2"
-         && tmpAxis.type!="gamma" && tmpAxis.type!="ekin"
-         && tmpAxis.type!="charge" && tmpAxis.type!="chi") {
-            
+        } else {
+            // If not "usual" type, try to find composite type
             for( unsigned int i=1; i<=tmpAxis.type.length(); i++ )
                 if( tmpAxis.type.substr(i,1) == " " )
                     ERROR(errorPrefix << ": axis #" << iaxis << " type cannot contain whitespace");
@@ -133,18 +414,20 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
             }
             
             tmpAxis.type = "composite:"+tmpAxis.type.substr(0,tmpAxis.type.length()-1);
+            tmpAxis.axis_binning = &axis_composite;
         }
         
-        // Try to extract secod element: type
+        // Try to extract second element: axis min
         if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 1),tmpAxis.min)) {
             ERROR(errorPrefix << ", axis #" << iaxis << ": Second item must be a double (axis min)");
         }
         
+        // Try to extract third element: axis max
         if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 2),tmpAxis.max)) {
             ERROR(errorPrefix << ", axis #" << iaxis << ": Third item must be a double (axis max)");
         }
         
-        
+        // Try to extract fourth element: axis nbins
         if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 3),tmpAxis.nbins)) {
             ERROR(errorPrefix << ", axis #" << iaxis << ": Fourth item must be an int (number of bins)");
         }
@@ -210,8 +493,7 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
         mystream << "ParticleDiagnostic" << n_diag_particles << ".h5";
         filename = mystream.str();
     }
-    
- 
+
 } // END DiagnosticParticles::DiagnosticParticles
 
 
@@ -298,38 +580,18 @@ bool DiagnosticParticles::prepare( int timestep )
 // run one particle diagnostic
 void DiagnosticParticles::run( Patch* patch, int timestep )
 {
-
-    std::vector<Species*>& vecSpecies = patch->vecSpecies;
     
-    Species *s;
-    Particles *p;
     vector<int> index_array;
-    vector<double> *x, *y, *z, *px, *py, *pz, *w, *chi, axis_array, data_array;
-    vector<short> *q;
+    vector<double> axis_array, data_array;
     int axissize, ind;
-    double axismin, axismax, mass, coeff;
+    double axismin, axismax, coeff;
     unsigned int ipart, npart;
-    string axistype;
-    ostringstream mystream("");
     
     // loop species
     for (unsigned int ispec=0 ; ispec < species.size() ; ispec++) {
         
-        // make shortcuts
-        s    = vecSpecies[species[ispec]];  // current species
-        p    = (s->particles);              // current particles array
-        x    = &(p->Position[0]);           // -+
-        y    = &(p->Position[1]);           //  |- position
-        z    = &(p->Position[2]);           // -+
-        px   = &(p->Momentum[0]);           // -+
-        py   = &(p->Momentum[1]);           //  |- momentum
-        pz   = &(p->Momentum[2]);           // -+
-        q    = &(p->Charge);                // charge
-        w    = &(p->Weight);                // weight
-        chi  = &(p->Chi);                   // chi (for rad reaction particles particles)
-        mass = s->mass;       // mass
-        npart = p->size();    // number of particles
-        
+        Species * s = patch->vecSpecies[species[ispec]];
+        npart = s->particles->size();
         axis_array .resize(npart); // array to store particle axis data
         index_array.resize(npart); // array to store particle output index
         data_array .resize(npart); // array to store particle output data
@@ -343,86 +605,12 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
             axismin  = axes[iaxis].min;
             axismax  = axes[iaxis].max;
             axissize = axes[iaxis].nbins;
-            axistype = axes[iaxis].type.substr(0,9);
             
             // first loop on particles to store the indexing (axis) quantity
+            (*(axes[iaxis].axis_binning))( s, axis_array, npart, axes[iaxis] );
             
-            if      (axistype == "x"     )
-                for ( ipart = 0 ; ipart < npart ; ipart++)
-                    axis_array[ipart] = (*x)[ipart];
-            
-            else if (axistype == "y"     )
-                for (ipart = 0 ; ipart < npart ; ipart++)
-                    axis_array[ipart] = (*y)[ipart];
-            
-            else if (axistype == "z"     )
-                for (ipart = 0 ; ipart < npart ; ipart++)
-                    axis_array[ipart] = (*z)[ipart];
-            
-            else if (axistype == "px"    )
-                for (ipart = 0 ; ipart < npart ; ipart++)
-                    axis_array[ipart] = mass * (*px)[ipart];
-            
-            else if (axistype == "py"    )
-                for (ipart = 0 ; ipart < npart ; ipart++)
-                    axis_array[ipart] = mass * (*py)[ipart];
-            
-            else if (axistype == "pz"    )
-                for (ipart = 0 ; ipart < npart ; ipart++)
-                    axis_array[ipart] = mass * (*pz)[ipart];
-            
-            else if (axistype == "p"    )
-                for (ipart = 0 ; ipart < npart ; ipart++)
-                    axis_array[ipart] = mass * sqrt(pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2));
-            
-            else if (axistype == "gamma" )
-                for (ipart = 0 ; ipart < npart ; ipart++)
-                    axis_array[ipart] = sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
-            
-            else if (axistype == "ekin" )
-                for (ipart = 0 ; ipart < npart ; ipart++)
-                    axis_array[ipart] = mass * (sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) ) - 1.);
-            
-            else if (axistype == "vx"    )
-                for (ipart = 0 ; ipart < npart ; ipart++)
-                    axis_array[ipart] = (*px)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
-            
-            else if (axistype == "vy"    )
-                for (ipart = 0 ; ipart < npart ; ipart++)
-                    axis_array[ipart] = (*py)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
-            
-            else if (axistype == "vz"    )
-                for (ipart = 0 ; ipart < npart ; ipart++)
-                    axis_array[ipart] = (*pz)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
-                    
-            else if (axistype == "v"    )
-                for (ipart = 0 ; ipart < npart ; ipart++)
-                    axis_array[ipart] = pow( 1. + 1./(pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2)) , -0.5);
-            
-            else if (axistype == "vperp2"    )
-                for (ipart = 0 ; ipart < npart ; ipart++)
-                    axis_array[ipart] = (pow((*py)[ipart],2) + pow((*pz)[ipart],2)) / (1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
-            
-            else if (axistype == "charge")
-                for (ipart = 0 ; ipart < npart ; ipart++)
-                    axis_array[ipart] = (double) (*q)[ipart];
-            
-            else if (axistype == "chi")
-                for (ipart = 0 ; ipart < npart ; ipart++)
-                    axis_array[ipart] = (*chi)[ipart];
-            
-            else if (axistype == "composite") {
-                unsigned int idim, ndim = axes[iaxis].coefficients.size();
-                for (ipart = 0 ; ipart < npart ; ipart++) {
-                    axis_array[ipart] = 0.;
-                    for (idim = 0 ; idim < ndim ; idim++)
-                        axis_array[ipart] += axes[iaxis].coefficients[idim] * p->Position[idim][ipart];
-                }
-            }
-            
-            else   ERROR("In particle diagnostics, axis `" << axistype << "` unknown");
-            
-            // Now, axis_array points to the array that contains the particles data (for indexing)
+            // Now, axis_array has the index of each particle
+            // This index tells where, along the axis, its data should go
             
             // if log scale
             if (axes[iaxis].logscale) {
@@ -478,75 +666,9 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
             
         } // loop axes
         
-        // 2 - prepare the data to output
-        // ------------------------------
-        if      (output == "density")
-            for (ipart = 0 ; ipart < npart ; ipart++)
-                data_array[ipart] = (*w)[ipart];
-        
-        else if (output == "charge_density")
-            for (ipart = 0 ; ipart < npart ; ipart++)
-                data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]);
-        
-        else if (output == "jx_density")
-            for (ipart = 0 ; ipart < npart ; ipart++)
-                data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*px)[ipart] / sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
-        
-        else if (output == "jy_density")
-            for (ipart = 0 ; ipart < npart ; ipart++)
-                data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*py)[ipart] / sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
-        
-        else if (output == "jz_density")
-            for (ipart = 0 ; ipart < npart ; ipart++)
-                data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*pz)[ipart] / sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
-        
-        else if (output == "ekin_density")
-            for (ipart = 0 ; ipart < npart ; ipart++)
-                data_array[ipart] = mass * (*w)[ipart] * (sqrt(1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart]) - 1.);
-        
-        else if (output == "p_density")
-            for (ipart = 0 ; ipart < npart ; ipart++)
-                data_array[ipart] = mass * (*w)[ipart] * sqrt((*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart]);
-        
-        else if (output == "px_density")
-            for (ipart = 0 ; ipart < npart ; ipart++)
-                data_array[ipart] = mass * (*w)[ipart] * (*px)[ipart];
-        
-        else if (output == "py_density")
-            for (ipart = 0 ; ipart < npart ; ipart++)
-                data_array[ipart] = mass * (*w)[ipart] * (*py)[ipart];
-        
-        else if (output == "pz_density")
-            for (ipart = 0 ; ipart < npart ; ipart++)
-                data_array[ipart] = mass * (*w)[ipart] * (*pz)[ipart];
-        
-        else if (output == "pressure_xx")
-            for (ipart = 0 ; ipart < npart ; ipart++)
-                data_array[ipart] = mass * (*w)[ipart] * (*px)[ipart]*(*px)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
-        
-        else if (output == "pressure_yy")
-            for (ipart = 0 ; ipart < npart ; ipart++)
-                data_array[ipart] = mass * (*w)[ipart] * (*py)[ipart]*(*py)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
-        
-        else if (output == "pressure_zz")
-            for (ipart = 0 ; ipart < npart ; ipart++)
-                data_array[ipart] = mass * (*w)[ipart] * (*pz)[ipart]*(*pz)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
-        
-        else if (output == "pressure_xy")
-            for (ipart = 0 ; ipart < npart ; ipart++)
-                data_array[ipart] = mass * (*w)[ipart] * (*px)[ipart]*(*py)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
-        
-        else if (output == "pressure_xz")
-            for (ipart = 0 ; ipart < npart ; ipart++)
-                data_array[ipart] = mass * (*w)[ipart] * (*px)[ipart]*(*pz)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
-        
-        else if (output == "pressure_yz")
-            for (ipart = 0 ; ipart < npart ; ipart++)
-                data_array[ipart] = mass * (*w)[ipart] * (*py)[ipart]*(*pz)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
-        
-        else if (output == "ekin_vx_density")
-            for (ipart = 0 ; ipart < npart ; ipart++)
-                data_array[ipart] = mass * (*w)[ipart] * (*px)[ipart] * (1. - 1./sqrt(1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart]));
+        // 2 - fill the data array with the particle data
+        // -----------------------------------------------
+        (*data_filling)( s, data_array, npart );
         
         // 3 - sum the data into the data_sum according to the indexes
         // ---------------------------------------------------------------

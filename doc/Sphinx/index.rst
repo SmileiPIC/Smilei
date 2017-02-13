@@ -88,6 +88,7 @@ Understand :program:`Smilei`
    algorithms
    parallelization
    collisions
+   field_ionization
 
 
 Install, run, analyze

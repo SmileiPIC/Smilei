@@ -48,10 +48,12 @@ void Particles::initialize(unsigned int nParticles, unsigned int nDim)
     resize(nParticles, nDim);
     
     if ( double_prop.empty() ) { // do this just once 
-        for (unsigned int i=0 ; i< Position.size() ; i++)
+        Position.resize(nDim);
+        for (unsigned int i=0 ; i< nDim ; i++)
             double_prop.push_back( &(Position[i]) );
 #ifdef  __DEBUG
-        for (unsigned int i=0 ; i< Position_old.size() ; i++)
+        Position_old.resize(nDim);
+        for (unsigned int i=0 ; i< nDim ; i++)
             double_prop.push_back( &(Position_old[i]) );
 #endif
         for (unsigned int i=0 ; i< 3 ; i++)

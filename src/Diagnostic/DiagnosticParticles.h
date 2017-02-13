@@ -4,6 +4,7 @@
 #include "Diagnostic.h"
 
 #include "Params.h"
+#include "Species.h"
 #include "Patch.h"
 #include "SmileiMPI.h"
 
@@ -30,6 +31,8 @@ struct DiagnosticParticlesAxis {
     //! List of coefficients (a,b,c) for a "composite" type of the form "ax+by+cz"
     std::vector<double> coefficients;
     
+    //! Pointer to a function that goes through the particles and find where they 
+    void (*axis_binning)(Species *, std::vector<double>&, unsigned int, DiagnosticParticlesAxis&);
 };
 
 
@@ -84,7 +87,9 @@ private :
     std::vector<double> data_sum;
     
     int output_size;
-
+    
+    //! Pointer to a function that goes through the particles and add their contribution to the data_array
+    void (*data_filling)(Species *, std::vector<double>&, unsigned int);
 };
 
 #endif

@@ -987,10 +987,13 @@ void VectorPatch::update_field_list(int ispec)
 
 void VectorPatch::applyAntennas(double time)
 {
+#ifdef  __DEBUG
     if( nAntennas>0 ) {
         #pragma omp single
         TITLE("Applying antennas at time t = " << time);
     }
+#endif
+    
     // Loop antennas
     for(unsigned int iAntenna=0; iAntenna<nAntennas; iAntenna++) {
     
