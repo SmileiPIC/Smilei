@@ -52,6 +52,9 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
     // verify that the species exist, remove duplicates and sort by number
     species = params.FindSpecies(patch->vecSpecies, species_names);
     
+    // Temporarily set the spatial min and max to the simulation box size
+    spatial_min.resize( params.nDim_particle, 0. );
+    spatial_max = params.sim_length;
     
     // get parameter "axes" that adds axes to the diagnostic
     // Each axis should contain several items:
@@ -114,14 +117,20 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
         vector<double> coefficients(0);
         if        (type == "x" ) {
             axis = new HistogramAxis_x( type, min, max, nbins, logscale, edge_inclusive, coefficients );
+            spatial_min[0] = min;
+            spatial_max[0] = max;
         } else if (type == "y" ) {
             if (params.nDim_particle <2)
                 ERROR(errorPrefix << ": axis y cannot exist in <2D");
             axis = new HistogramAxis_y( type, min, max, nbins, logscale, edge_inclusive, coefficients );
+            spatial_min[1] = min;
+            spatial_max[1] = max;
         } else if (type == "z" ) {
             if (params.nDim_particle <3)
                 ERROR(errorPrefix << ": axis z cannot exist in <3D");
             axis = new HistogramAxis_z( type, min, max, nbins, logscale, edge_inclusive, coefficients );
+            spatial_min[2] = min;
+            spatial_max[2] = max;
         } else if (type == "px" ) {
             axis = new HistogramAxis_px( type, min, max, nbins, logscale, edge_inclusive, coefficients );
         } else if (type == "py" ) {
@@ -369,7 +378,13 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
     
     vector<int> int_buffer;
     vector<double> double_buffer;
-    unsigned int npart;
+    unsigned int npart, ndim = spatial_min.size();
+    
+    // Verify that this patch is in a useful region for this diag
+    for( unsigned int idim=0; idim<ndim; idim++ )
+        if( patch->getDomainLocalMax(idim) < spatial_min[idim]
+         || patch->getDomainLocalMin(idim) > spatial_max[idim] )
+            return;
     
     // loop species
     for (unsigned int ispec=0 ; ispec < species.size() ; ispec++) {

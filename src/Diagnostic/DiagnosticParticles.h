@@ -60,6 +60,9 @@ private :
     Histogram * histogram;
     
     int output_size;
+    
+    //! Minimum and maximum spatial coordinates that are useful for this diag
+    std::vector<double> spatial_min, spatial_max;
 };
 
 #endif

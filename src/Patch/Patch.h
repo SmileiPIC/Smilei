@@ -205,6 +205,11 @@ public:
     //! The debye length, computed for collisions
     double debye_length_squared; 
     
+    //! The patch geometrical center
+    std::vector<double> center;
+    //! The patch geometrical maximal radius (from its center)
+    double radius;
+    
 protected:
     // Complementary members for the description of the geometry
     // ---------------------------------------------------------
