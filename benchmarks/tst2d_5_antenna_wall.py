@@ -31,8 +31,9 @@ Main(
 )
 
 globalEvery = 5
-    
+
 Species(
+    species_type = "electron",
 	initPosition_type = 'random',
 	initMomentum_type = 'cold',
 	n_part_per_cell = 2,
@@ -75,6 +76,16 @@ DiagScalar(every=globalEvery)
 
 DiagFields(
     every = globalEvery,
-    fields = ['Ez','Jz','Rho_species0','Rho_species1']
+    fields = ['Ez','Jz','Rho_electron','Rho_species1']
 )
 
+DiagScreen(
+    shape = "plane",
+    point = [10.*l0, 10.*l0],
+    vector = [1., 0.],
+    output = "density",
+    species = ["electron"],
+    axes = [["a", -10.*l0, 10.*l0, 40],
+            ["px", 0., 3., 30]],
+    every = 10
+)

@@ -219,7 +219,7 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patc
         
         // init HDF files (by master, only if it doesn't yet exist)
         mystream.str(""); // clear
-        mystream << "ParticleScreen" << screen_id << ".h5";
+        mystream << "Screen" << screen_id << ".h5";
         filename = mystream.str();
     }
 

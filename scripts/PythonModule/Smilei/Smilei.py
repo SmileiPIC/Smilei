@@ -1,5 +1,5 @@
 from ._Utils import *
-from ._Diagnostics import Scalar, Field, Probe, ParticleDiagnostic, TrackParticles
+from ._Diagnostics import Scalar, Field, Probe, ParticleDiagnostic, Screen, TrackParticles
 
 
 class ScalarFactory(object):
@@ -289,6 +289,75 @@ class ParticleDiagnosticFactory(object):
 		pass
 
 
+class ScreenFactory(object):
+	"""Import and analyze a screen diagnostic from a Smilei simulation
+	
+	Parameters:
+	-----------
+	diagNumber : int (optional)
+		Index of an available screen diagnostic.
+		To get a list of available diags, simply omit this argument.
+	timesteps : int or [int, int] (optional)
+		If omitted, all timesteps are used.
+		If one number  given, the nearest timestep available is used.
+		If two numbers given, all the timesteps in between are used.
+	slice : a python dictionary of the form { axis:range, ... } (optional)
+		`axis` may be "x", "y", "z", "a", "b", "theta", "phi", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
+		`range` may be "all", a float, or [float, float].
+		For instance, slice={"x":"all", "y":[2,3]}.
+		The SUM of all values within the 'slice' is computed.
+	units : A units specification such as ["m","second"]
+	data_log : bool (default: False)
+		If True, then log10 is applied to the output array before plotting.
+	stride : int (default: 1)
+		Step size for sampling the grid.
+	
+	Usage:
+	------
+		S = Smilei("path/to/simulation") # Load the simulation
+		screen = S.Screen(...) # Load the particle diagnostic
+		screen.get()                       # Obtain the data
+	"""
+	
+	def __init__(self, simulation, diagNumber=None, timestep=None):
+		self._simulation = simulation
+		self._additionalArgs = tuple()
+		
+		# If not a specific diag (root level), build a list of diag shortcuts
+		if diagNumber is None:
+			# Create a temporary, empty Screen diagnostic
+			tmpDiag = Screen.Screen(simulation)
+			# Get a list of diags
+			diags = tmpDiag.getDiags()
+			# Create diags shortcuts
+			for diag in diags:
+				setattr(self, 'Screen'+str(diag), ScreenFactory(simulation, diag))
+		
+		else:
+			# the diag is saved for generating the object in __call__
+			self._additionalArgs += (diagNumber, )
+			
+			# If not a specific timestep, build a list of timesteps shortcuts
+			if timestep is None:
+				# Create a temporary, empty Screen diagnostic
+				tmpDiag = Screen.Screen(simulation, diagNumber)
+				# Get a list of timesteps
+				timesteps = tmpDiag.getAvailableTimesteps()
+				# Create timesteps shortcuts
+				for timestep in timesteps:
+					setattr(self, 't%0.10i'%timestep, ScreenFactory(simulation, diagNumber, timestep))
+			
+			else:
+				# the timestep is saved for generating the object in __call__
+				self._additionalArgs += (timestep, )
+	
+	def __call__(self, *args, **kwargs):
+		return Screen.Screen(self._simulation, *(self._additionalArgs+args), **kwargs)
+	
+	def toXDMF(self):
+		pass
+
+
 class TrackParticlesFactory(object):
 	"""Import and analyze tracked particles from a Smilei simulation
 	
@@ -448,6 +517,7 @@ class Smilei(object):
 			self.Field = FieldFactory(self)
 			self.Probe = ProbeFactory(self)
 			self.ParticleDiagnostic = ParticleDiagnosticFactory(self)
+			self.Screen = ScreenFactory(self)
 			self.TrackParticles = TrackParticlesFactory(self)
 	
 	
@@ -559,6 +629,7 @@ class Smilei(object):
 		self.Field             .toXDMF()
 		self.Probe             .toXDMF()
 		self.ParticleDiagnostic.toXDMF()
+		self.Screen            .toXDMF()
 		self.TrackParticles    .toXDMF()
 
 
