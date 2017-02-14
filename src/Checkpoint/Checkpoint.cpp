@@ -21,6 +21,7 @@
 #include "ElectroMagnBC2D_SM.h"
 #include "Species.h"
 #include "PatchesFactory.h"
+#include "DiagnosticScreen.h"
 
 using namespace std;
 
@@ -172,6 +173,19 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     H5::attr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
     H5::attr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
     H5::attr(fid, "latest_timestep",   static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->latest_timestep  );
+    
+    // Master stores the diags screen data
+    ostringstream diagName("");
+    string attr;
+    if( smpi->isMaster() ) {
+        for( unsigned int idiag=0; idiag<vecPatches.globalDiags.size(); idiag++ )
+            if( DiagnosticScreen* screen = dynamic_cast<DiagnosticScreen*>(vecPatches.globalDiags[idiag]) ) {
+                diagName.str("");
+                diagName << "DiagScreen" << screen->screen_id;
+                attr = diagName.str();
+                H5::attr(fid, attr, screen->data_sum);
+            }
+    }
     
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) {
         
@@ -366,6 +380,19 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
         H5::getAttr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
         H5::getAttr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
         H5::getAttr(fid, "latest_timestep",   static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->latest_timestep  );
+        
+        // Master gets the diags screen data
+        ostringstream diagName("");
+        string attr;
+        if( smpi->isMaster() ) {
+            for( unsigned int idiag=0; idiag<vecPatches.globalDiags.size(); idiag++ )
+                if( DiagnosticScreen* screen = dynamic_cast<DiagnosticScreen*>(vecPatches.globalDiags[idiag]) ) {
+                    diagName.str("");
+                    diagName << "DiagScreen" << screen->screen_id;
+                    attr = diagName.str();
+                    H5::getAttr(fid, attr, screen->data_sum);
+                }
+        }
         
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) {
             

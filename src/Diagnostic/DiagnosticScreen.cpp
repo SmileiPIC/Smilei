@@ -1,5 +1,5 @@
 
-#include "DiagnosticParticles.h"
+#include "DiagnosticScreen.h"
 
 #include <iomanip>
 
@@ -7,61 +7,108 @@ using namespace std;
 
 
 // Constructor
-DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
+DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
 {
     fileId_ = 0;
     
-    int n_diag_particles = diagId;
+    screen_id = diagId;
+    dt = params.timestep;
     
     ostringstream name("");
-    name << "Diagnotic Particles #" << n_diag_particles;
+    name << "Diagnotic Screen #" << screen_id;
     string errorPrefix = name.str();
     
+    // get parameter "shape" that determines if the screen is a plane or a sphere
+    if (!PyTools::extract("shape",screen_shape,"DiagScreen",screen_id))
+        ERROR(errorPrefix << ": parameter `shape` required");
+    if( screen_shape == "plane" )
+        screen_type = 0;
+    else if( screen_shape != "sphere" )
+        screen_type = 1;
+    else
+        ERROR(errorPrefix << ": parameter `shape` must be 'plane' or 'sphere'");
+    
+    // get parameter "point" that determines the plane reference point, or the sphere center
+    if (!PyTools::extract("point",screen_point,"DiagScreen",screen_id))
+        ERROR(errorPrefix << ": parameter `point` required");
+    if( screen_point.size() != params.nDim_particle )
+        ERROR(errorPrefix << ": parameter `point` must have "<<params.nDim_particle<<" elements in "<<params.nDim_particle<<"D");
+    
+    // get parameter "vector" that determines the plane normal, or the sphere radius
+    if (!PyTools::extract("vector",screen_vector,"DiagScreen",screen_id)) {
+        if( params.nDim_particle == 1 ) {
+            screen_vector.resize( 1, 1. );
+        } else {
+            ERROR(errorPrefix << ": parameter `vector` required");
+        }
+    }
+    if( screen_vector.size() != params.nDim_particle )
+        ERROR(errorPrefix << ": parameter `vector` must have "<<params.nDim_particle<<" elements in "<<params.nDim_particle<<"D");
+    // Calculate the unit vector
+    screen_unitvector.resize( params.nDim_particle, 0. );
+    screen_vectornorm = 0.;
+    for( unsigned int i=0; i<params.nDim_particle; i++ ) screen_vectornorm += screen_vector[i]*screen_vector[i];
+    if( screen_vectornorm == 0. )
+        ERROR(errorPrefix << ": parameter `vector` must not be a null vector");
+    screen_vectornorm = sqrt(screen_vectornorm);
+    for( unsigned int i=0; i<params.nDim_particle; i++ ) screen_unitvector[i] = screen_vector[i]/screen_vectornorm;
+    // Calculate other unit vectors to form an orthogonal base
+    screen_vector_a.resize( params.nDim_particle, 0. );
+    screen_vector_b.resize( params.nDim_particle, 0. );
+    if( params.nDim_particle > 1 ) {
+        screen_vector_a[0] = -screen_unitvector[1];
+        screen_vector_a[1] =  screen_unitvector[0];
+        double norm = sqrt(pow(screen_vector_a[0],2) + pow(screen_vector_a[1],2));
+        if( norm < 1.e-8 ) {
+            screen_vector_a[0] = 0.;
+            screen_vector_a[1] = 1.;
+        } else {
+            screen_vector_a[0] /= norm;
+            screen_vector_a[1] /= norm;
+        }
+    }
+    if( params.nDim_particle > 2 ) {
+        screen_vector_b[0] = screen_unitvector[1]*screen_vector_a[2] - screen_unitvector[2]*screen_vector_a[1];
+        screen_vector_b[1] = screen_unitvector[2]*screen_vector_a[0] - screen_unitvector[0]*screen_vector_a[2];
+        screen_vector_b[2] = screen_unitvector[0]*screen_vector_a[1] - screen_unitvector[1]*screen_vector_a[0];
+    }
+    
     // get parameter "output" that determines the quantity to sum in the output array
-    output = "";
-    if (!PyTools::extract("output",output,"DiagParticles",n_diag_particles))
+    if (!PyTools::extract("output",output,"DiagScreen",screen_id))
         ERROR(errorPrefix << ": parameter `output` required");
     
     // get parameter "every" which describes a timestep selection
     timeSelection = new TimeSelection(
-        PyTools::extract_py("every", "DiagParticles", n_diag_particles),
+        PyTools::extract_py("every", "DiagScreen", screen_id),
         name.str()
     );
     
     // get parameter "flush_every" which describes a timestep selection for flushing the file
     flush_timeSelection = new TimeSelection(
-        PyTools::extract_py("flush_every", "DiagParticles", n_diag_particles),
+        PyTools::extract_py("flush_every", "DiagScreen", screen_id),
         name.str()
     );
     
-    // get parameter "time_average" that determines the number of timestep to average the outputs
-    time_average = 1;
-    PyTools::extract("time_average",time_average,"DiagParticles",n_diag_particles);
-    if ( time_average < 1 ) time_average=1;
-    if ( time_average > timeSelection->smallestInterval() )
-        ERROR(errorPrefix << ": `time_average` is incompatible with `every`");
-    
     // get parameter "species" that determines the species to use (can be a list of species)
     vector<string> species_names;
-    if (!PyTools::extract("species",species_names,"DiagParticles",n_diag_particles))
+    if (!PyTools::extract("species",species_names,"DiagScreen",screen_id))
         ERROR(errorPrefix << ": parameter `species` required");
     // verify that the species exist, remove duplicates and sort by number
     species = params.FindSpecies(patch->vecSpecies, species_names);
     
-    // Temporarily set the spatial min and max to the simulation box size
-    spatial_min.resize( params.nDim_particle, 0. );
-    spatial_max = params.sim_length;
-    
     // get parameter "axes" that adds axes to the diagnostic
     // Each axis should contain several items:
     //      requested quantity, min value, max value ,number of bins, log (optional), edge_inclusive (optional)
-    vector<PyObject*> pyAxes=PyTools::extract_pyVec("axes","DiagParticles",n_diag_particles);
+    vector<PyObject*> pyAxes=PyTools::extract_pyVec("axes","DiagScreen",screen_id);
     
     vector<string> excluded_types(0);
-    excluded_types.push_back( "a" );
-    excluded_types.push_back( "b" );
-    excluded_types.push_back( "theta" );
-    excluded_types.push_back( "phi" );
+    if( screen_shape == "plane" ) {
+        excluded_types.push_back( "theta_yx" );
+        excluded_types.push_back( "theta_zx" );
+    } else {
+        excluded_types.push_back( "a" );
+        excluded_types.push_back( "b" );
+    }
     
     // Create the Histogram object
     if        (output == "density"        ) {
@@ -104,17 +151,31 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
     
     histogram->init(params, pyAxes, species, errorPrefix, patch, excluded_types);
     
-    // Get info on the spatial extent
+    // If axes are "a", "b", "theta" or "phi", they need some coefficients
+    unsigned int idim;
     for( unsigned int i=0; i<histogram->axes.size(); i++ ) {
-        if        ( histogram->axes[i]->type == "x" ) {
-            spatial_min[0] = histogram->axes[i]->min;
-            spatial_max[0] = histogram->axes[i]->max;
-        } else if ( histogram->axes[i]->type == "y" ) {
-            spatial_min[1] = histogram->axes[i]->min;
-            spatial_max[1] = histogram->axes[i]->max;
-        } else if ( histogram->axes[i]->type == "z" ) {
-            spatial_min[2] = histogram->axes[i]->min;
-            spatial_max[2] = histogram->axes[i]->max;
+        string type = histogram->axes[i]->type;
+        if( type=="a" || type=="b" || type=="theta" || type=="phi" ) {
+            vector<double> coefficients(params.nDim_particle * 2);
+            for( idim=0; idim<params.nDim_particle; idim++ )
+                coefficients[idim] = screen_point[idim];
+            if( type == "a" )
+                for( idim=0; idim<params.nDim_particle; idim++ )
+                    coefficients[params.nDim_particle+idim] = screen_vector_a[idim];
+            else if( type == "b" )
+                for( idim=0; idim<params.nDim_particle; idim++ )
+                    coefficients[params.nDim_particle+idim] = screen_vector_b[idim];
+            else if( type == "theta" )
+                for( idim=0; idim<params.nDim_particle; idim++ )
+                    coefficients[params.nDim_particle+idim] = screen_vector[idim] / pow(screen_vectornorm,2);
+            else if( type == "phi" ) {
+                coefficients.resize(params.nDim_particle * 3);
+                for( idim=0; idim<params.nDim_particle; idim++ )
+                    coefficients[params.nDim_particle+idim] = screen_vector_a[idim];
+                for( idim=0; idim<params.nDim_particle; idim++ )
+                    coefficients[2*params.nDim_particle+idim] = screen_vector_b[idim];
+            }
+            histogram->axes[i]->coefficients = coefficients;
         }
     }
     
@@ -122,6 +183,7 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
     output_size = 1;
     for( unsigned int i=0; i<histogram->axes.size(); i++ )
         output_size *= histogram->axes[i]->nbins;
+    data_sum.resize( output_size, 0. );
     
     // Output info on diagnostics
     if ( smpi->isMaster() ) {
@@ -130,7 +192,7 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
         mystream << species_names[0];
         for(unsigned int i=1; i<species_names.size(); i++)
             mystream << "," << species_names[i];
-        MESSAGE(1,"Created particle diagnostic #" << n_diag_particles << ": species " << mystream.str());
+        MESSAGE(1,"Created screen diagnostic #" << screen_id << ": species " << mystream.str());
         for(unsigned int i=0; i<histogram->axes.size(); i++) {
             HistogramAxis * axis = histogram->axes[i];
             mystream.str("");
@@ -157,22 +219,22 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
         
         // init HDF files (by master, only if it doesn't yet exist)
         mystream.str(""); // clear
-        mystream << "ParticleDiagnostic" << n_diag_particles << ".h5";
+        mystream << "ParticleScreen" << screen_id << ".h5";
         filename = mystream.str();
     }
 
-} // END DiagnosticParticles::DiagnosticParticles
+} // END DiagnosticScreen::DiagnosticScreen
 
 
-DiagnosticParticles::~DiagnosticParticles()
+DiagnosticScreen::~DiagnosticScreen()
 {
     delete timeSelection;
     delete flush_timeSelection;
-} // END DiagnosticParticles::~DiagnosticParticles
+} // END DiagnosticScreen::~DiagnosticScreen
 
 
 // Called only by patch master of process master
-void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, bool newfile )
+void DiagnosticScreen::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
     if (!smpi->isMaster()) return;
     
@@ -183,7 +245,6 @@ void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, bool newfil
         // write all parameters as HDF5 attributes
         H5::attr(fileId_, "Version", string(__VERSION));
         H5::attr(fileId_, "output" , output);
-        H5::attr(fileId_, "time_average"  , time_average);
         // write all species
         ostringstream mystream("");
         mystream.str(""); // clear
@@ -214,7 +275,7 @@ void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, bool newfil
 }
 
 
-void DiagnosticParticles::closeFile()
+void DiagnosticScreen::closeFile()
 {
     if (fileId_!=0) {
         H5Fclose(fileId_);
@@ -224,39 +285,37 @@ void DiagnosticParticles::closeFile()
 } // END closeFile
 
 
-bool DiagnosticParticles::prepare( int timestep )
+bool DiagnosticScreen::prepare( int timestep )
 {
-    // Get the previous timestep of the time selection
-    int previousTime = timeSelection->previousTime(timestep);
     
-    // Leave if the timestep is not the good one
-    if (timestep - previousTime >= time_average) return false;
-    
-    // Allocate memory for the output array (already done if time-averaging)
-    data_sum.resize(output_size);
-    
-    // if first time, erase output array
-    if (timestep == previousTime)
-        fill(data_sum.begin(), data_sum.end(), 0.);
-    
+    // This diag always runs, but the output is not done at every timestep
     return true;
     
 } // END prepare
 
 
-// run one particle diagnostic
-void DiagnosticParticles::run( Patch* patch, int timestep )
+// run one screen diagnostic
+void DiagnosticScreen::run( Patch* patch, int timestep )
 {
     
     vector<int> int_buffer;
     vector<double> double_buffer;
-    unsigned int npart, ndim = spatial_min.size();
+    unsigned int npart, ndim = screen_point.size(), ipart, idim;
+    double side, side_old, dtg;
     
     // Verify that this patch is in a useful region for this diag
-    for( unsigned int idim=0; idim<ndim; idim++ )
-        if( patch->getDomainLocalMax(idim) < spatial_min[idim]
-         || patch->getDomainLocalMin(idim) > spatial_max[idim] )
-            return;
+    if( screen_type == 0 ) { // plane
+        double distance_to_plane = 0.;
+        for( idim=0; idim<ndim; idim++ )
+            distance_to_plane += (patch->center[idim] - screen_point[idim]) * screen_unitvector[idim];
+        if( abs(distance_to_plane) > patch->radius ) return;
+    } else { // sphere
+        double distance_to_center = 0.;
+        for( idim=0; idim<ndim; idim++ )
+            distance_to_center += pow(patch->center[idim] - screen_point[idim], 2);
+        distance_to_center = sqrt(distance_to_center);
+        if( abs(screen_vectornorm - distance_to_center) > patch->radius ) return;
+    }
     
     // loop species
     for (unsigned int ispec=0 ; ispec < species.size() ; ispec++) {
@@ -266,8 +325,42 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
         int_buffer   .resize(npart);
         double_buffer.resize(npart);
         
-        fill(int_buffer.begin(), int_buffer.end(), 0);
+        // Fill the int_buffer with -1 (not crossing screen) and 0 (crossing screen)
+        if( screen_type == 0 ) { // plane
+            for( ipart=0; ipart<npart; ipart++ ) {
+                side = 0.;
+                side_old = 0.;
+                dtg = dt / sqrt( 1. + pow(s->particles->Momentum[0][ipart], 2)
+                                    + pow(s->particles->Momentum[1][ipart], 2)
+                                    + pow(s->particles->Momentum[2][ipart], 2) );
+                for( idim=0; idim<ndim; idim++ ) {
+                    side += (s->particles->Position[idim][ipart] - screen_point[idim]) * screen_unitvector[idim];
+                    side_old += (s->particles->Position[idim][ipart] - dtg*(s->particles->Momentum[idim][ipart]) - screen_point[idim]) * screen_unitvector[idim];
+                }
+                if( side*side_old < 0. )
+                    int_buffer[ipart] = 0;
+                else
+                    int_buffer[ipart] = -1;
+            }
+        } else { // sphere
+            for( ipart=0; ipart<npart; ipart++ ) {
+                side = 0.;
+                side_old = 0.;
+                dtg = dt / sqrt( 1. + pow(s->particles->Momentum[0][ipart], 2)
+                                    + pow(s->particles->Momentum[1][ipart], 2)
+                                    + pow(s->particles->Momentum[2][ipart], 2) );
+                for( idim=0; idim<ndim; idim++ ) {
+                    side += pow(s->particles->Position[idim][ipart] - screen_point[idim], 2);
+                    side_old += pow(s->particles->Position[idim][ipart] - dtg*(s->particles->Momentum[idim][ipart]) - screen_point[idim], 2);
+                }
+                if( (screen_vectornorm-sqrt(side))*(screen_vectornorm-sqrt(side_old)) < 0. )
+                    int_buffer[ipart] = 0;
+                else
+                    int_buffer[ipart] = -1;
+            }
+        }
         
+        // digitize
         histogram->digitize( s, double_buffer, int_buffer, data_sum );
         
     }
@@ -275,21 +368,12 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
 } // END run
 
 
-// Now the data_sum has been filled
 // if needed now, store result to hdf file
-void DiagnosticParticles::write(int timestep, SmileiMPI* smpi)
+void DiagnosticScreen::write(int timestep, SmileiMPI* smpi)
 {
     if ( !smpi->isMaster() ) return;
     
-    if (timestep - timeSelection->previousTime() != time_average-1) return;
-    
-    double coeff;
-    // if time_average, then we need to divide by the number of timesteps
-    if (time_average > 1) {
-        coeff = 1./((double)time_average);
-        for (int i=0; i<output_size; i++)
-            data_sum[i] *= coeff;
-    }
+    if (!timeSelection->theTimeIsNow(timestep) ) return;
     
     // make name of the array
     ostringstream mystream("");
@@ -316,15 +400,10 @@ void DiagnosticParticles::write(int timestep, SmileiMPI* smpi)
     }
     
     if( flush_timeSelection->theTimeIsNow(timestep) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
-    
-    // Clear the array
-    clear();
-    data_sum.resize(0);
 } // END write
 
 
-//! Clear the array
-void DiagnosticParticles::clear() {
-    data_sum.resize(0);
-    vector<double>().swap( data_sum );
+//! Zero the array
+void DiagnosticScreen::clear() {
+    fill( data_sum.begin(), data_sum.end(), 0. );
 }

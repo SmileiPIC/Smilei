@@ -113,7 +113,7 @@ void Patch::initStep3( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
         cell_starting_global_index[i] += Pcoordinates[i]*params.n_space[i];
         cell_starting_global_index[i] -= params.oversize[i];
         center[i] = (min_local[i]+max_local[i])*0.5;
-        radius += pow(max_local[i] - center[i], 2);
+        radius += pow(max_local[i] - center[i] + params.cell_length[i], 2);
     }
     radius = sqrt(radius);
     

@@ -122,16 +122,41 @@ class H5 {
         }
     }
     
+    //! retrieve anything as an attribute
     template<class T>
     static void getAttr(hid_t locationId, std::string attribute_name, T &attribute_value, hid_t type) {
         if (H5Aexists(locationId,attribute_name.c_str())>0) {
-            hid_t aid = H5Aopen(locationId, attribute_name.c_str(), type);
+            hid_t aid = H5Aopen(locationId, attribute_name.c_str(), H5P_DEFAULT);
             H5Aread(aid, type, &(attribute_value));
             H5Aclose(aid);
         } else {
             WARNING("Cannot find attribute " << attribute_name);
         }
     }
+    
+    //! retrieve a vector<double> as an attribute
+    template<class T>
+    static void getAttr(hid_t locationId, std::string attribute_name, std::vector<T>& attribute_value) {
+        getAttr(locationId, attribute_name, attribute_value, H5T_NATIVE_DOUBLE);
+    }
+    
+    //! retrieve a vector<anything> as an attribute
+    template<class T>
+    static void getAttr(hid_t locationId, std::string attribute_name, std::vector<T>& attribute_value, hid_t type) {
+        if (H5Aexists(locationId,attribute_name.c_str())>0) {
+            hid_t aid = H5Aopen(locationId, attribute_name.c_str(), H5P_DEFAULT);
+            hid_t sid = H5Aget_space(aid);
+            hssize_t npoints = H5Sget_simple_extent_npoints( sid );
+            attribute_value.resize( npoints );
+            H5Sclose( sid );
+            H5Aread(aid, type, &(attribute_value[0]));
+            H5Aclose(aid);
+        } else {
+            WARNING("Cannot find attribute " << attribute_name);
+        }
+    }
+    
+    
     //! write a vector of unsigned ints
     //! v is the vector
     //! size is the number of elements in the vector
