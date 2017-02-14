@@ -401,3 +401,7 @@ class Diagnostic(object):
 		except:
 			print("Cannot format y ticks (typically happens with log-scale)")
 			self.xtickkwargs = []
+	
+	# Convert to XDMF format for ParaView (do nothing in the mother class)
+	def toXDMF(self):
+		pass

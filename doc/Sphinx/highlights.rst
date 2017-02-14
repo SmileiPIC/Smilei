@@ -16,29 +16,45 @@ A hotspot of electron is created behind the bubble.
 
 ----
 
-Scalability
-^^^^^^^^^^^
+Scalability in a wakefile acceleration simulation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. rst-class:: inprogress
-  
-  In progress ...
+Wakefield-acceleration of electrons in an underdense plasma creates a
+hotspot of electrons, which makes the simulation strongly imbalanced.
+This spot represent a large part of the total calculations, so that
+more computing power should be allocated on it.
 
-.. rubric :: 1. OpenMP: Electron Acceleration
+Please refer to the doc :doc:`parallelization` to learn the basics of the
+parallelization techniques employed in this section.
 
-The hotspot of electrons produces an important imbalance between the
-compute load of the different MPI processes involved in the simulation.
+.. rubric :: 1. OpenMP
 
-OpenMP permits to smooth this phenomenon by balancing macro-particles between threads.
+In a local area around this hotspot, OpenMP is able to manage the computing
+resources to make the overall simulation faster. The following figure shows
+the evolution of the time to calculate 100 iterations, as a function of time.
+Each line corresponds to a different partition of the box in terms of
+MPI processes and OpenMP threads: :math:`N\times M`, where :math:`N` is 
+the total number of MPI processes, and :math:`M` is the number of threads
+in each MPI process.
 
-.. image:: _static/perfsOMP.png
+.. image:: _static/openMP_balancing.png
     :width: 500px
 
+Using more OpenMP threads per MPI process (while keeping the total number
+of threads constant) clearly reduces the simulation time, because the 
+computing power is balanced within each MPI region.
 
-.. rubric :: 2. MPI: SBS Amplification
 
-In the completely opposite context of a very homogeneous plasma, we oberve during a
-"Grand challenge" on `Occigen <https://www.cines.fr/calcul/materiels/occigen>`_,
-a good scaling at very large scale.
+.. rubric :: 2. Dynamic load balancing between MPI processes
 
-.. image:: _static/SMILEI_Scaling.png
+At the global simulation scale, OpenMP cannot be used to smoothen the balance.
+Instead, a dynamic load balancing (DLB) algorithm periodically exchanges pieces of 
+the simulation box (*patches*) between MPI processes, so that each MPI
+process owns a fair amount of the simulation load. The following figure
+shows how this balancing reduces the time of the simulation.
+
+.. image:: _static/DLB_balancing.png
     :width: 500px
+
+The red curve is the best situation obtained in the previous section, while
+the black curve corresponds to the DLB algorithm enabled.

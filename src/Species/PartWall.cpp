@@ -32,9 +32,11 @@ PartWall::PartWall(double pos, unsigned short dir, string kind) :
 }
 
 // Applies the wall's boundary condition to one particle
-int PartWall::apply( Particles &particles, int ipart, Species * species, double &nrj_iPart) {
-    if( (position-particles.position_old(direction, ipart))
-       *(position-particles.position    (direction, ipart))<0.) {
+int PartWall::apply( Particles &particles, int ipart, Species * species, double dtgf, double &nrj_iPart) {
+    // The particle previous position needs to be computed
+    double particle_position     = particles.position(direction, ipart);
+    double particle_position_old = particle_position - dtgf*particles.momentum(direction, ipart);
+    if( (position-particle_position_old)*(position-particle_position)<0.) {
         return (*wall)( particles, ipart, direction, 2.*position, species, nrj_iPart );
     } else {
         return 1;
