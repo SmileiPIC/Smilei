@@ -206,6 +206,29 @@ Open a Particle diagnostic
 
 ----
 
+Open a Screen diagnostic
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:method:: Smilei.Screen(diagNumber=None, timesteps=None, slice=None, units=[""], data_log=False, stride=1, **kwargs)
+  
+  * ``timesteps``, ``units``, ``data_log``: same as before.
+  * ``diagNumber``: number of the screen diagnostic (the first one has number 0).
+     | If not given, a list of available screen diagnostics is printed.
+     | It can also be an operation between several screen diagnostics.
+     | For example, ``"#0/#1"`` computes the division by diagnostics 0 and 1.
+  * ``slice``: identical to that of particle diagnostics.
+  * ``stride``: identical to that of particle diagnostics.
+  * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
+
+**Example**::
+  
+  S = Smilei("path/to/my/results")
+  Diag = S.Screen(0)
+
+
+
+----
+
 Open a Track diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 

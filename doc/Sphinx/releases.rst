@@ -12,6 +12,14 @@ but the process is fast and straightforward.
 
 ----
 
+Upcoming changes
+^^^^^^^^^^^^^^^^
+
+* *Screen* diagnostics
+* Bugfixes in tracked particles, and small optimizations
+
+----
+
 .. _latestVersion:
 
 Current release 3.0
