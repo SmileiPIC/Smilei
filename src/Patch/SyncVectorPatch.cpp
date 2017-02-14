@@ -159,7 +159,7 @@ void SyncVectorPatch::finalizeexchangeB( VectorPatch& vecPatches )
 }
 
 
-void SyncVectorPatch::new_sum( std::vector<Field*> fields, VectorPatch& vecPatches, Timers &timers, int itime )
+void SyncVectorPatch::new_sum( std::vector<Field*>& fields, VectorPatch& vecPatches, Timers &timers, int itime )
 {
     unsigned int h0, oversize[3], n_space[3];
     double *pt1,*pt2;
@@ -214,7 +214,6 @@ void SyncVectorPatch::new_sum( std::vector<Field*> fields, VectorPatch& vecPatch
                 pt1 = &(fields[ vecPatches(ipatch)->neighbor_[0][0]-h0+icomp*nPatches ]->data_[n_space[0]*ny_*nz_]);
                 pt2 = &(vecPatches.densitiesLocalx[ifield]->data_[0]);
                 //Sum 2 ==> 1
-                #pragma simd
                 for (unsigned int i = 0; i < gsp[0]* ny_*nz_ ; i++) pt1[i] += pt2[i];
                 //Copy back the results to 2
                 memcpy( pt2, pt1, gsp[0]*ny_*nz_*sizeof(double)); 
@@ -274,7 +273,6 @@ void SyncVectorPatch::new_sum( std::vector<Field*> fields, VectorPatch& vecPatch
                     pt1 = &(fields[vecPatches(ipatch)->neighbor_[1][0]-h0+icomp*nPatches]->data_[n_space[1]*nz_]);
                     pt2 = &(vecPatches.densitiesLocaly[ifield]->data_[0]);
                     for (unsigned int j = 0; j < nx_ ; j++){
-                        #pragma simd
                         for (unsigned int i = 0; i < gsp[1]*nz_ ; i++) pt1[i] += pt2[i];
                         memcpy( pt2, pt1, gsp[1]*nz_*sizeof(double)); 
                         pt1 += ny_*nz_;
@@ -408,7 +406,6 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches, 
                 pt1 = &(*fields[vecPatches(ipatch)->neighbor_[0][0]-h0+icomp*nPatches])(n_space[0]*ny_*nz_);
                 pt2 = &(*fields[ifield])(0);
                 //Sum 2 ==> 1
-                #pragma simd
                 for (unsigned int i = 0; i < gsp[0]* ny_*nz_ ; i++) pt1[i] += pt2[i];
                 //Copy back the results to 2
                 memcpy( pt2, pt1, gsp[0]*ny_*nz_*sizeof(double)); 
@@ -465,7 +462,6 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches, 
                     pt1 = &(*fields[vecPatches(ipatch)->neighbor_[1][0]-h0+icomp*nPatches])(n_space[1]*nz_);
                     pt2 = &(*fields[ifield])(0);
                     for (unsigned int j = 0; j < nx_ ; j++){
-                        #pragma simd
                         for (unsigned int i = 0; i < gsp[1]*nz_ ; i++) pt1[i] += pt2[i];
                         memcpy( pt2, pt1, gsp[1]*nz_*sizeof(double)); 
                         pt1 += ny_*nz_;
@@ -674,7 +670,7 @@ void SyncVectorPatch::exchange0( std::vector<Field*> fields, VectorPatch& vecPat
 
 }
 
-void SyncVectorPatch::new_exchange0( std::vector<Field*> fields, VectorPatch& vecPatches )
+void SyncVectorPatch::new_exchange0( std::vector<Field*>& fields, VectorPatch& vecPatches )
 {
     int nMPIx = vecPatches.MPIxIdx.size();
     #pragma omp for schedule(static)
@@ -727,7 +723,7 @@ void SyncVectorPatch::new_exchange0( std::vector<Field*> fields, VectorPatch& ve
 }
 
 
-void SyncVectorPatch::new_finalizeexchange0( std::vector<Field*> fields, VectorPatch& vecPatches )
+void SyncVectorPatch::new_finalizeexchange0( std::vector<Field*>& fields, VectorPatch& vecPatches )
 {
     int nMPIx = vecPatches.MPIxIdx.size();
     #pragma omp for schedule(static)
@@ -746,7 +742,7 @@ void SyncVectorPatch::finalizeexchange0( std::vector<Field*> fields, VectorPatch
 
 }
 
-void SyncVectorPatch::new_exchange1( std::vector<Field*> fields, VectorPatch& vecPatches )
+void SyncVectorPatch::new_exchange1( std::vector<Field*>& fields, VectorPatch& vecPatches )
 {
     int nMPIy = vecPatches.MPIyIdx.size();
     #pragma omp for schedule(static)
@@ -841,7 +837,7 @@ void SyncVectorPatch::exchange1( std::vector<Field*> fields, VectorPatch& vecPat
 }
 
 
-void SyncVectorPatch::new_finalizeexchange1( std::vector<Field*> fields, VectorPatch& vecPatches )
+void SyncVectorPatch::new_finalizeexchange1( std::vector<Field*>& fields, VectorPatch& vecPatches )
 {
     int nMPIy = vecPatches.MPIyIdx.size();
     #pragma omp for schedule(static)

@@ -235,8 +235,8 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params)
     
     for (int iDim=0 ; iDim < ndim ; iDim++){
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-            vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor].resize(0,ndim);
-            vecSpecies[ispec]->MPIbuff.partSend[iDim][iNeighbor].resize(0,ndim);
+            vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor].clear();//resize(0,ndim);
+            vecSpecies[ispec]->MPIbuff.partSend[iDim][iNeighbor].clear();//resize(0,ndim);
             vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor].resize(0);
             vecSpecies[ispec]->MPIbuff.part_index_recv_sz[iDim][iNeighbor] = 0;
         }

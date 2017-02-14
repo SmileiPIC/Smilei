@@ -433,16 +433,18 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
 
             // Apply wall and boundary conditions
-            for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                double dtgf = params.timestep / smpi->dynamics_gf[ithread][iPart];
-                for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+            for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                    double dtgf = params.timestep / smpi->dynamics_gf[ithread][iPart];
                     if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
                         nrj_lost_per_thd[tid] += mass * ener_iPart;
                     }
                 }
-                // Boundary Condition may be physical or due to domain decomposition
-                // apply returns 0 if iPart is not in the local domain anymore
-                //        if omp, create a list per thread
+            }
+            // Boundary Condition may be physical or due to domain decomposition
+            // apply returns 0 if iPart is not in the local domain anymore
+            //        if omp, create a list per thread
+            for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
                 if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                     addPartInExchList( iPart );
                     //nrj_lost_per_thd[tid] += ener_iPart;
