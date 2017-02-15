@@ -58,3 +58,14 @@ shows how this balancing reduces the time of the simulation.
 
 The red curve is the best situation obtained in the previous section, while
 the black curve corresponds to the DLB algorithm enabled.
+
+The portion of the box belonging to each MPI process varies when the load balancing
+occurs. The following figure shows how each of these portions evolve with time.
+
+.. image:: _static/Patch_loadcomparision.jpg
+
+The four panels correspond to four timesteps during the simulation.
+The colorscale represents the log-scaled load of each patch.
+The black lines show the borders of each MPI process' portion of the box.
+The MPI processes that are close to the hotspot tend to handle a smaller portion
+of the box.
