@@ -1,23 +1,9 @@
 Highlights
 ----------
 
-Electron Acceleration
-^^^^^^^^^^^^^^^^^^^^^
 
-Below, an example of electron acceleration by laser wakefield.
-The figure represents the evolution of the electronic density in time. 
-A hotspot of electron is created behind the bubble.
-
-.. raw:: html
-
-    <video controls="controls">
-    <source src="_static/Rho_electron1long.ogg" type="video/ogg" />
-    </video>
-
-----
-
-Scalability in a wakefile acceleration simulation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Scalability in a wakefield acceleration simulation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Wakefield-acceleration of electrons in an underdense plasma creates a
 hotspot of electrons, which makes the simulation strongly imbalanced.
@@ -69,3 +55,166 @@ The colorscale represents the log-scaled load of each patch.
 The black lines show the borders of each MPI process' portion of the box.
 The MPI processes that are close to the hotspot tend to handle a smaller portion
 of the box.
+
+----
+
+High-harmonic generation
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+----
+
+Brillouin amplification
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Coupling, in a plasma, a long energetic "pump" pulse of moderate intensity to
+a short counter-propagating "seed" pulse of initially low intensity can transfer energy
+from the pump to the seed thanks to the excitation of a plasma wave [Forslund1975]_.
+Here, we look specifically at the stimulated Brillouin scattering (SBS) amplification,
+where the excited waves are ion-acoustic waves.
+
+A pump with intensity :math:`10^{15}` W/cm² (wavelength 1 µm)
+correspond to the ''strong-coupling'' regime, particularly robust with respect to
+plasma inhomogeneities and seed frequency [Chiaramello2016]_. 
+
+A 2-dimensional simulation, in conditions close to actual experiments, ran
+on a box size of 1024 µm x 512 µm for  10 ps
+with 25 billion quasi-particles. The following figure shows the evolution
+of the pump and seed intensities in the head-on collision at three different times.
+The blue-yellow maps correspond to the plasma density while the white-red maps
+correspond to the lasers intensity.
+
+.. image:: _static/pump_seed.jpg
+
+The final seed intensity is nearly 5 times its initial intensity
+while the spot size and phase front are well conserved,
+suggesting that such a beam could be further focused using plasma mirrors.
+
+This simulation used the IDRIS/Turing (BlueGene/Q) super-computer using 1.8 million
+CPU-hours on 32768 MPI processes, and 4 OpenMP threads per core.
+The average time to push a particle was 1.9 µs, including 5%
+for diagnostics. On the CINES/Occigen (Bullx) machine, we obtained an average time
+of 0.43 µs to push one particle (without diagnostics).
+
+----
+
+Magnetic reconnection at the Earth magnetopause
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Magnetic reconnection at the Earth magnetopause regulates the transport of matter,
+momentum and energy from the solar wind to the internal magnetosphere.
+The solar wind plasma temperature is typically one tenth that of the magnetospheric plasma,
+but its density is about ten times larger, and its magnetic field 2-3 times smaller.
+This asymmetry makes the reconnection dynamics vastly more complex than in symmetric
+environments, and has only been studied for a decade via numerical simulations and
+spacecraft observations [Hesse2013]_.
+
+Studying the impact of a plasmaspheric plume on magnetopause reconnection
+via kinetic numerical simulation is difficult. The simulation first needs
+to reach a quasi-steady state reconnection with a typical magnetopause asymmetry,
+see the arrival of the plume and then last longer for a quasi-steady state plume
+reconnection regime to settle. Due to the large particle density of plumes,
+the transition and last phases have substantially longer time scales than the early phase,
+which makes the simulation heavy. The domain must be long enough in the downstream direction
+for the plasma, expelled during the early and transition phases, to be evacuated from
+the reconnection region. Otherwise, upstream plasma would not inflow,
+thereby stopping reconnection.
+
+Three ion populations are present.
+The solar wind and magnetospheric populations have densities equal to :math:`n_0` and :math:`n_0/10`,
+respectively, on their side of the current sheet, and fall to zero on the other side.
+The plume population increases from 0 to :math:`2\,n_0` at :math:`20\,c/\omega_{pi}` from the initial
+current sheet on the magnetospheric side. The magnetic field amplitude goes from :math:`2\,B_0`
+in the magnetosphere to :math:`B_0=m_e\omega_{pe}/e` in the solar wind and is totally in the
+simulation plane. The temperature is initially isotropic and its profile is calculated
+to balance the total pressure.
+
+The domain size is 1280 :math:`c/\omega_{pi} \times` 256 :math:`c/\omega_{pi}`. 
+The total simulation time is :math:`800\times` the ion gyration time. 
+We used a reduced ion to electron mass ratio :math:`m_i/m_e = 25`, and a ratio
+50 of the speed of light by the Alfvén velocity. 
+There are initially 8.6 billion quasi-protons for the three populations, and 13 billion electrons.
+
+.. image:: _static/reconnection.jpg
+   :width: 15cm
+
+This figure presents some of the simulation results:
+the electron density at three different times.
+In the top panel, reconnection is in steady state between the solar wind plasma of
+density :math:`\simeq n_0` and the magnetosphere plasma of density :math:`\simeq 0.1~n_0`.
+At this time, the exhaust is filled with mixed solar wind/hot magnetospheric plasma as
+the plume (of density :math:`\simeq 2~n_0`) is still located at :math:`\simeq 10~c/\omega_{pi}`
+from the magnetospheric separatrix. The reconnection rate during this period has a
+typical value around :math:`0.1~\Omega_{ci}^{-1}`, with important fluctuations caused
+by plasmoid formation. The plume, originally at :math:`20~c/\omega_{pi}` from the magnetopause,
+is slowly advected towards the magnetosphere separatrix and finally touches the
+reconnection site at about :math:`t=300~\Omega_{ci}^{-1}`. The second panel at
+:math:`t=370~\Omega_{ci}^{-1}` shows the plume starting to fill the exhaust after
+reaching the reconnection site and mixing with solar wind plasma.
+At this time, the reconnection rate collapses to about half its previous value.
+The transition phase lasts for about :math:`100~\Omega_{ci}^{-1}` before a plume
+reconnection regime reaches a quasi-steady state.
+The third panel shows the electron density at the end of the simulation,
+where the exhaust is filled with plume and solar wind plasma.
+
+This large-scale simulation has run for a total of 14 million CPU-hours on 16384 cores
+of the CINES/Occigen (Bullx) supercomputer within a GENCI-CINES special call.
+Overall, the characteristic (full) push-time for a single particle was of the order
+of 1.6 µs (including 31% for diagnostics). 
+No dynamic load balancing was used for this simulation.
+
+----
+
+Collisionless shock in pair plasmas
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Relativistic collisionless shocks play a fundamental role in various astrophysical scenarios
+(active galactic nuclei, micro-quasars, pulsar wind nebulae and gamma-ray bursts)
+where they cause high-energy radiation and particle acceleration related to the
+cosmic-ray spectrum. In the absence of particle collisions, the shock is mediated
+by collective plasma processes, produced by electromagnetic plasma instabilities
+at the shock front. 
+
+Specifically, the Weibel (or current filamentation) instability
+is observed in most of the astrophysical relativistic outflows interacting with
+the interstellar medium. It can be excited by counter-streaming unmagnetized relativistic
+flows, and dominates the instability spectrum for a wide range of parameters.
+The resulting strong magnetic turbulence can isotropize the incoming flow,
+hence stopping it and leading to compression of the downstream (shocked plasma) and shock formation.
+
+We present a 2-dimensional PIC simulation of such shock,
+driven in an initially unmagnetized electron-positron plasma.
+The simulation relies on the ``piston'' method that consists in initializing the
+simulation with a single cold electron-positron plasma drifting 
+at a relativistic velocity :math:`v_0 \simeq 0.995\,c`. 
+Reflecting boundary conditions at the right border creates a counter-penetrating flow.
+
+The simulation box size is 2048 :math:`\delta_e \times` 128 :math:`\delta_e`
+(:math:`\delta_e = c/\omega_p` being the electron skin-depth of the initial flow), 
+with a total of 2.15 billion quasi-particles. 
+The following figure show an unstable overlapping region of incoming and
+reflected flows, resulting in the creation, before the shock
+of filamentary structures in both the magnetic field (panel a) and
+the total plasma density (panel b).
+
+.. image:: _static/shock1.jpg
+   :width: 15cm
+
+The magnetic field at the shock front becomes turbulent and it is strong
+enough to stop the incoming particles leading to a pile-up of the plasma
+density (panel c).
+
+
+The following figure demonstrates the build-up, at late times, of a supra-thermal tail
+in the downstream particle energy distribution.
+It is characteristic of first-order Fermi acceleration at the shock front,
+and appears to follow a :math:`\gamma^{-2.5}` power law.
+
+.. image:: _static/shock3.jpg
+   :width: 11cm
+
+This simulation run on the TGCC/Curie machine using 128 MPI x 8 OpenMP threads 
+for a total of 18800 CPU-hours for 49780 timesteps.
+The average push time for one quasi-particle was of 0.63 µs (including 20% for diagnostics). 
+
+
