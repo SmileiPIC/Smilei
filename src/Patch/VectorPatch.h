@@ -143,6 +143,7 @@ public :
     
     // Lists of fields
     std::vector<Field*> densities;
+
     std::vector<Field*> Bs0;
     std::vector<Field*> Bs1;
     std::vector<Field*> Bs2;

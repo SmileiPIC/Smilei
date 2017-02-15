@@ -821,7 +821,6 @@ void VectorPatch::update_field_list()
     int nDim = patches_[0]->EMfields->Ex_->dims_.size();
     densities.resize( 3*size() ) ; // Jx + Jy + Jz
 
-    // TO DO , B size depend of nDim
     //                          1D  2D  3D
     Bs0.resize( 2*size() ) ; //  2   2   2
     Bs1.resize( 2*size() ) ; //  0   2   2
