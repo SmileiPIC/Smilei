@@ -291,7 +291,6 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches, 
         // -----------------        
 
         if (fields[0]->dims_.size()>2) {
-            cout << "Je ne suis oas un code 3d" << endl;
             // -----------------
             // Sum per direction :
 
