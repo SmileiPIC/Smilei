@@ -73,6 +73,16 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patc
         screen_vector_b[2] = screen_unitvector[0]*screen_vector_a[1] - screen_unitvector[1]*screen_vector_a[0];
     }
     
+    // get parameter "oriented", true if particles coming from the other side count negatively
+    if (!PyTools::extract("direction",direction,"DiagScreen",screen_id))
+        ERROR(errorPrefix << ": parameter `direction` not understood");
+    if     ( direction=="both"      ) direction_type = 0;
+    else if( direction=="canceling" ) direction_type = 1;
+    else if( direction=="forward"   ) direction_type = 2;
+    else if( direction=="backward"  ) direction_type = 3;
+    else
+        ERROR(errorPrefix << ": parameter `direction` not understood");
+    
     // get parameter "output" that determines the quantity to sum in the output array
     if (!PyTools::extract("output",output,"DiagScreen",screen_id))
         ERROR(errorPrefix << ": parameter `output` required");
@@ -300,7 +310,8 @@ void DiagnosticScreen::run( Patch* patch, int timestep )
     
     vector<int> int_buffer;
     vector<double> double_buffer;
-    unsigned int npart, ndim = screen_point.size(), ipart, idim;
+    vector<bool> opposite;
+    unsigned int npart, ndim = screen_point.size(), ipart, idim, nuseful;
     double side, side_old, dtg;
     
     // Verify that this patch is in a useful region for this diag
@@ -322,8 +333,10 @@ void DiagnosticScreen::run( Patch* patch, int timestep )
         
         Species * s = patch->vecSpecies[species[ispec]];
         npart = s->particles->size();
+        nuseful = 0;
         int_buffer   .resize(npart);
         double_buffer.resize(npart);
+        opposite     .resize(npart, false);
         
         // Fill the int_buffer with -1 (not crossing screen) and 0 (crossing screen)
         if( screen_type == 0 ) { // plane
@@ -337,10 +350,13 @@ void DiagnosticScreen::run( Patch* patch, int timestep )
                     side += (s->particles->Position[idim][ipart] - screen_point[idim]) * screen_unitvector[idim];
                     side_old += (s->particles->Position[idim][ipart] - dtg*(s->particles->Momentum[idim][ipart]) - screen_point[idim]) * screen_unitvector[idim];
                 }
-                if( side*side_old < 0. )
+                if( side*side_old < 0. ) {
                     int_buffer[ipart] = 0;
-                else
+                    nuseful++;
+                    if( side < 0. ) opposite[ipart] = true;
+                } else {
                     int_buffer[ipart] = -1;
+                }
             }
         } else { // sphere
             for( ipart=0; ipart<npart; ipart++ ) {
@@ -353,15 +369,35 @@ void DiagnosticScreen::run( Patch* patch, int timestep )
                     side += pow(s->particles->Position[idim][ipart] - screen_point[idim], 2);
                     side_old += pow(s->particles->Position[idim][ipart] - dtg*(s->particles->Momentum[idim][ipart]) - screen_point[idim], 2);
                 }
-                if( (screen_vectornorm-sqrt(side))*(screen_vectornorm-sqrt(side_old)) < 0. )
+                side     = screen_vectornorm-sqrt(side    );
+                side_old = screen_vectornorm-sqrt(side_old);
+                if( side*side_old < 0. ) {
                     int_buffer[ipart] = 0;
-                else
+                    nuseful++;
+                    if( side < 0. ) opposite[ipart] = true;
+                } else {
                     int_buffer[ipart] = -1;
+                }
             }
         }
         
-        // digitize
-        histogram->digitize( s, double_buffer, int_buffer, data_sum );
+        if( nuseful == 0 ) continue;
+        
+        histogram->digitize  ( s, double_buffer, int_buffer );
+        histogram->valuate   ( s, double_buffer, int_buffer );
+        
+        if( direction_type == 1 ) {
+            for( ipart=0; ipart<npart; ipart++ )
+                if( opposite[ipart] ) double_buffer[ipart] = -double_buffer[ipart];
+        } else if( direction_type == 2 ) {
+            for( ipart=0; ipart<npart; ipart++ )
+                if( opposite[ipart] ) double_buffer[ipart] = 0.;
+        } else if( direction_type == 3 ) {
+            for( ipart=0; ipart<npart; ipart++ )
+                if( int_buffer[ipart]>=0 && !opposite[ipart] ) double_buffer[ipart] = 0.;
+        }
+        
+        histogram->distribute( double_buffer, int_buffer, data_sum );
         
     }
     

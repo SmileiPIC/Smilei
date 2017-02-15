@@ -268,7 +268,9 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
         
         fill(int_buffer.begin(), int_buffer.end(), 0);
         
-        histogram->digitize( s, double_buffer, int_buffer, data_sum );
+        histogram->digitize  ( s, double_buffer, int_buffer );
+        histogram->valuate   ( s, double_buffer, int_buffer );
+        histogram->distribute( double_buffer, int_buffer, data_sum );
         
     }
     

@@ -288,6 +288,7 @@ class DiagScreen(SmileiComponent):
     shape = None
     point = None
     vector = None
+    direction = "both"
     output = None
     species = None
     axes = []

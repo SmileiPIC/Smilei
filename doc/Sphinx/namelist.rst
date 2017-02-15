@@ -1553,6 +1553,7 @@ for instance::
       shape = "plane",
       point = [5., 10.],
       vector = [1., 0.],
+      direction = "canceling",
       output = "density",
       species = ["electron"],
       axes = [["a", -10.*l0, 10.*l0, 40],
@@ -1577,6 +1578,17 @@ for instance::
    
    The coordinates of a vector that defines the screen surface:
    the normal to the ``"plane"`` or a radius of the ``"sphere"``.
+
+.. py:data:: direction
+
+   :default: ``"both"``
+   
+   Determines how particles are counted depending on which side of the screen they come from.
+   
+   * ``"both"`` to account for both sides.
+   * ``"forward"`` for only the ones in the direction of the ``vector``.
+   * ``"backward"`` for only the ones in the opposite direction.
+   * ``"canceling"`` to count negatively the ones in the opposite direction.
 
 .. py:data:: output
 

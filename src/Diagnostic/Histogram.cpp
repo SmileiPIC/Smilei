@@ -180,16 +180,14 @@ void Histogram::init( Params &params, vector<PyObject*> pyAxes, vector<unsigned 
 }
 
 
+// Loop on the different axes requested and compute the output index of each particle
 void Histogram::digitize(  Species *s,
     std::vector<double> &double_buffer,
-    std::vector<int>    &int_buffer,
-    std::vector<double> &output_array    )
+    std::vector<int>    &int_buffer    )
 {
     unsigned int ipart, npart=s->particles->size();
     int ind;
     
-    // 1 - loop on the different axes requested and compute the output index of each particle
-    // --------------------------------------------------------------------------------------
     for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++) {
         
         // first loop on particles to store the indexing (axis) quantity
@@ -242,12 +240,18 @@ void Histogram::digitize(  Species *s,
         }
         
     } // loop axes
+}
+
+void Histogram::distribute(
+    std::vector<double> &double_buffer,
+    std::vector<int>    &int_buffer,
+    std::vector<double> &output_array    )
+{
     
-    // 2 - fill the buffer with the particle data
-    // -----------------------------------------------
-    data_filling( s, double_buffer, int_buffer, npart );
+    unsigned int ipart, npart=double_buffer.size();
+    int ind;
     
-    // 3 - sum the data into the data_sum according to the indexes
+    // Sum the data into the data_sum according to the indexes
     // ---------------------------------------------------------------
     for (ipart = 0 ; ipart < npart ; ipart++) {
         ind = int_buffer[ipart];

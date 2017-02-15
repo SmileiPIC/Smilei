@@ -76,6 +76,10 @@ private :
     //! Vectors forming an orthogonal base with the screen vector
     std::vector<double> screen_vector_a, screen_vector_b;
     
+    //! How to account for the particle direction: "both", "canceling", "forward" or "backward"
+    std::string direction;
+    int direction_type;
+    
     //! Copy of the timestep
     double dt;
 };

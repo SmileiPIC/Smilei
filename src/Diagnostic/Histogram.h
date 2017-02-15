@@ -46,12 +46,14 @@ public:
     
     void init(Params&, std::vector<PyObject*>, std::vector<unsigned int>, std::string, Patch*, std::vector<std::string>);
     
-    void digitize(Species *, std::vector<double>&, std::vector<int>&, std::vector<double>&);
+    //! Compute the index of each particle in the final histogram
+    void digitize(Species *, std::vector<double>&, std::vector<int>&);
+    //! Calculate the quantity of each particle to be summed in the histogram
+    virtual void valuate(Species*, std::vector<double>&, std::vector<int>&) {};
+    //! Add the contribution of each particle in the histogram
+    void distribute(std::vector<double>&, std::vector<int>&, std::vector<double>&);
     
     std::vector<HistogramAxis*> axes;
-    
-private:
-    virtual void data_filling(Species*, std::vector<double>&, std::vector<int>&, unsigned int) {};
 };
 
 
@@ -261,7 +263,8 @@ class HistogramAxis_composite : public HistogramAxis {
 
 //! Children classes, for various manners to fill the histogram
 class Histogram_density : public Histogram {
-    void data_filling(Species * s, std::vector<double> &array, std::vector<int> &index, unsigned int npart) {
+    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+        unsigned int npart = array.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->particles->Weight[ipart];
@@ -269,7 +272,8 @@ class Histogram_density : public Histogram {
     };
 };
 class Histogram_charge_density : public Histogram {
-    void data_filling(Species * s, std::vector<double> &array, std::vector<int> &index, unsigned int npart) {
+    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+        unsigned int npart = array.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->particles->Weight[ipart] * (double)(s->particles->Charge[ipart]);
@@ -277,7 +281,8 @@ class Histogram_charge_density : public Histogram {
     };
 };
 class Histogram_jx_density : public Histogram {
-    void data_filling(Species * s, std::vector<double> &array, std::vector<int> &index, unsigned int npart) {
+    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+        unsigned int npart = array.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->particles->Weight[ipart] * (double)(s->particles->Charge[ipart])
@@ -289,7 +294,8 @@ class Histogram_jx_density : public Histogram {
     };
 };
 class Histogram_jy_density : public Histogram {
-    void data_filling(Species * s, std::vector<double> &array, std::vector<int> &index, unsigned int npart) {
+    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+        unsigned int npart = array.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->particles->Weight[ipart] * (double)(s->particles->Charge[ipart])
@@ -301,7 +307,8 @@ class Histogram_jy_density : public Histogram {
     };
 };
 class Histogram_jz_density : public Histogram {
-    void data_filling(Species * s, std::vector<double> &array, std::vector<int> &index, unsigned int npart) {
+    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+        unsigned int npart = array.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->particles->Weight[ipart] * (double)(s->particles->Charge[ipart])
@@ -313,7 +320,8 @@ class Histogram_jz_density : public Histogram {
     };
 };
 class Histogram_ekin_density : public Histogram {
-    void data_filling(Species * s, std::vector<double> &array, std::vector<int> &index, unsigned int npart) {
+    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+        unsigned int npart = array.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->mass * s->particles->Weight[ipart]
@@ -324,7 +332,8 @@ class Histogram_ekin_density : public Histogram {
     };
 };
 class Histogram_p_density : public Histogram {
-    void data_filling(Species * s, std::vector<double> &array, std::vector<int> &index, unsigned int npart) {
+    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+        unsigned int npart = array.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->mass * s->particles->Weight[ipart]
@@ -335,7 +344,8 @@ class Histogram_p_density : public Histogram {
     };
 };
 class Histogram_px_density : public Histogram {
-    void data_filling(Species * s, std::vector<double> &array, std::vector<int> &index, unsigned int npart) {
+    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+        unsigned int npart = array.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->mass * s->particles->Weight[ipart] * s->particles->Momentum[0][ipart];
@@ -343,7 +353,8 @@ class Histogram_px_density : public Histogram {
     };
 };
 class Histogram_py_density : public Histogram {
-    void data_filling(Species * s, std::vector<double> &array, std::vector<int> &index, unsigned int npart) {
+    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+        unsigned int npart = array.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->mass * s->particles->Weight[ipart] * s->particles->Momentum[1][ipart];
@@ -351,7 +362,8 @@ class Histogram_py_density : public Histogram {
     };
 };
 class Histogram_pz_density : public Histogram {
-    void data_filling(Species * s, std::vector<double> &array, std::vector<int> &index, unsigned int npart) {
+    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+        unsigned int npart = array.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->mass * s->particles->Weight[ipart] * s->particles->Momentum[2][ipart];
@@ -359,7 +371,8 @@ class Histogram_pz_density : public Histogram {
     };
 };
 class Histogram_pressure_xx : public Histogram {
-    void data_filling(Species * s, std::vector<double> &array, std::vector<int> &index, unsigned int npart) {
+    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+        unsigned int npart = array.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->mass * s->particles->Weight[ipart]
@@ -371,7 +384,8 @@ class Histogram_pressure_xx : public Histogram {
     };
 };
 class Histogram_pressure_yy : public Histogram {
-    void data_filling(Species * s, std::vector<double> &array, std::vector<int> &index, unsigned int npart) {
+    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+        unsigned int npart = array.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->mass * s->particles->Weight[ipart]
@@ -383,7 +397,8 @@ class Histogram_pressure_yy : public Histogram {
     };
 };
 class Histogram_pressure_zz : public Histogram {
-    void data_filling(Species * s, std::vector<double> &array, std::vector<int> &index, unsigned int npart) {
+    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+        unsigned int npart = array.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->mass * s->particles->Weight[ipart]
@@ -395,7 +410,8 @@ class Histogram_pressure_zz : public Histogram {
     };
 };
 class Histogram_pressure_xy : public Histogram {
-    void data_filling(Species * s, std::vector<double> &array, std::vector<int> &index, unsigned int npart) {
+    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+        unsigned int npart = array.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->mass * s->particles->Weight[ipart]
@@ -408,7 +424,8 @@ class Histogram_pressure_xy : public Histogram {
     };
 };
 class Histogram_pressure_xz : public Histogram {
-    void data_filling(Species * s, std::vector<double> &array, std::vector<int> &index, unsigned int npart) {
+    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+        unsigned int npart = array.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->mass * s->particles->Weight[ipart]
@@ -421,7 +438,8 @@ class Histogram_pressure_xz : public Histogram {
     };
 };
 class Histogram_pressure_yz : public Histogram {
-    void data_filling(Species * s, std::vector<double> &array, std::vector<int> &index, unsigned int npart) {
+    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+        unsigned int npart = array.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->mass * s->particles->Weight[ipart]
@@ -434,7 +452,8 @@ class Histogram_pressure_yz : public Histogram {
     };
 };
 class Histogram_ekin_vx_density : public Histogram {
-    void data_filling(Species * s, std::vector<double> &array, std::vector<int> &index, unsigned int npart) {
+    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+        unsigned int npart = array.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->mass * s->particles->Weight[ipart]
