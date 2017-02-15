@@ -818,18 +818,27 @@ void VectorPatch::output_exchanges(SmileiMPI* smpi)
 //! Resize vector of field*
 void VectorPatch::update_field_list()
 {
-    densities.resize( 3*size() ) ;
-    Bs0.resize( 2*size() ) ;
-    Bs1.resize( 2*size() ) ;
+    int nDim = patches_[0]->EMfields->Ex_->dims_.size();
+    densities.resize( 3*size() ) ; // Jx + Jy + Jz
+
+    // TO DO , B size depend of nDim
+    //                          1D  2D  3D
+    Bs0.resize( 2*size() ) ; //  2   2   2
+    Bs1.resize( 2*size() ) ; //  0   2   2
+    Bs2.resize( 2*size() ) ; //  0   0   2
 
     densitiesLocalx.clear();
     densitiesLocaly.clear();
+    densitiesLocalz.clear();
     densitiesMPIx.clear();
     densitiesMPIy.clear();
+    densitiesMPIz.clear();
     LocalxIdx.clear();
     LocalyIdx.clear();
+    LocalzIdx.clear();
     MPIxIdx.clear();
     MPIyIdx.clear();
+    MPIzIdx.clear();
 
     listJx_.resize( size() ) ;
     listJy_.resize( size() ) ;
@@ -861,17 +870,26 @@ void VectorPatch::update_field_list()
     B1_localy.clear();
     B1_MPIy.clear();
 
+    B2_localz.clear();
+    B2_MPIz.clear();
+
     for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
-        densities[ipatch] = patches_[ipatch]->EMfields->Jx_ ;
-        densities[ipatch+size()] = patches_[ipatch]->EMfields->Jy_ ;
+        densities[ipatch         ] = patches_[ipatch]->EMfields->Jx_ ;
+        densities[ipatch+  size()] = patches_[ipatch]->EMfields->Jy_ ;
         densities[ipatch+2*size()] = patches_[ipatch]->EMfields->Jz_ ;
 
-        Bs0[ipatch] = patches_[ipatch]->EMfields->By_ ;
+        Bs0[ipatch       ] = patches_[ipatch]->EMfields->By_ ;
         Bs0[ipatch+size()] = patches_[ipatch]->EMfields->Bz_ ;
 
-        Bs1[ipatch] = patches_[ipatch]->EMfields->Bx_ ;
+        // TO DO , B size depend of nDim
+        // Pas grave, au pire inutil 
+        Bs1[ipatch       ] = patches_[ipatch]->EMfields->Bx_ ;
         Bs1[ipatch+size()] = patches_[ipatch]->EMfields->Bz_ ;
 
+        // TO DO , B size depend of nDim
+        // Pas grave, au pire inutil 
+        Bs2[ipatch       ] = patches_[ipatch]->EMfields->Bx_ ;
+        Bs2[ipatch+size()] = patches_[ipatch]->EMfields->By_ ;        
     }
 
     for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
@@ -881,11 +899,26 @@ void VectorPatch::update_field_list()
         if ( (*this)(ipatch)->has_an_local_neighbor( 0 ) ) {
             LocalxIdx.push_back(ipatch);
         }
-        if ( (*this)(ipatch)->has_an_MPI_neighbor( 1 ) ) {
-            MPIyIdx.push_back(ipatch);
+    }
+    if (nDim>1) {
+        for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+            if ( (*this)(ipatch)->has_an_MPI_neighbor( 1 ) ) {
+                MPIyIdx.push_back(ipatch);
+            }
+            if ( (*this)(ipatch)->has_an_local_neighbor( 1 ) ) {
+                LocalyIdx.push_back(ipatch);
+            }
         }
-        if ( (*this)(ipatch)->has_an_local_neighbor( 1 ) ) {
-            LocalyIdx.push_back(ipatch);
+        if (nDim>2) {
+            for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+
+                if ( (*this)(ipatch)->has_an_MPI_neighbor( 2 ) ) {
+                    MPIzIdx.push_back(ipatch);
+                }
+                if ( (*this)(ipatch)->has_an_local_neighbor( 2 ) ) {
+                    LocalzIdx.push_back(ipatch);
+                }
+            }
         }
     }
 
@@ -893,13 +926,17 @@ void VectorPatch::update_field_list()
     B_localx.resize( 2*LocalxIdx.size() );
     B1_MPIy.resize( 2*MPIyIdx.size() );
     B1_localy.resize( 2*LocalyIdx.size() );
+    B2_MPIz.resize( 2*MPIzIdx.size() );
+    B2_localz.resize( 2*LocalzIdx.size() );
 
     densitiesMPIx.resize( 3*MPIxIdx.size() );
     densitiesLocalx.resize( 3*LocalxIdx.size() );
     densitiesMPIy.resize( 3*MPIyIdx.size() );
     densitiesLocaly.resize( 3*LocalyIdx.size() );
+    densitiesMPIz.resize( 3*MPIzIdx.size() );
+    densitiesLocalz.resize( 3*LocalzIdx.size() );
 
-    int mpix(0), locx(0), mpiy(0), locy(0);
+    int mpix(0), locx(0), mpiy(0), locy(0), mpiz(0), locz(0);
 
     for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
 
@@ -921,23 +958,49 @@ void VectorPatch::update_field_list()
             densitiesLocalx[locx+2*LocalxIdx.size()] = patches_[ipatch]->EMfields->Jz_;
             locx++;
         }
-        if ( (*this)(ipatch)->has_an_MPI_neighbor( 1 ) ) {
-            B1_MPIy[mpiy               ] = patches_[ipatch]->EMfields->Bx_;
-            B1_MPIy[mpiy+MPIyIdx.size()] = patches_[ipatch]->EMfields->Bz_;
+    }
+    if (nDim>1) {
+        for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+            if ( (*this)(ipatch)->has_an_MPI_neighbor( 1 ) ) {
+                B1_MPIy[mpiy               ] = patches_[ipatch]->EMfields->Bx_;
+                B1_MPIy[mpiy+MPIyIdx.size()] = patches_[ipatch]->EMfields->Bz_;
 
-            densitiesMPIy[mpiy                 ] = patches_[ipatch]->EMfields->Jx_;
-            densitiesMPIy[mpiy+  MPIyIdx.size()] = patches_[ipatch]->EMfields->Jy_;
-            densitiesMPIy[mpiy+2*MPIyIdx.size()] = patches_[ipatch]->EMfields->Jz_;
-            mpiy++;
+                densitiesMPIy[mpiy                 ] = patches_[ipatch]->EMfields->Jx_;
+                densitiesMPIy[mpiy+  MPIyIdx.size()] = patches_[ipatch]->EMfields->Jy_;
+                densitiesMPIy[mpiy+2*MPIyIdx.size()] = patches_[ipatch]->EMfields->Jz_;
+                mpiy++;
+            }
+            if ( (*this)(ipatch)->has_an_local_neighbor( 1 ) ) {
+                B1_localy[locy                 ] = patches_[ipatch]->EMfields->Bx_;
+                B1_localy[locy+LocalyIdx.size()] = patches_[ipatch]->EMfields->Bz_;
+
+                densitiesLocaly[locy                   ] = patches_[ipatch]->EMfields->Jx_;
+                densitiesLocaly[locy+  LocalyIdx.size()] = patches_[ipatch]->EMfields->Jy_;
+                densitiesLocaly[locy+2*LocalyIdx.size()] = patches_[ipatch]->EMfields->Jz_;
+                locy++;
+            }
         }
-        if ( (*this)(ipatch)->has_an_local_neighbor( 1 ) ) {
-            B1_localy[locy                 ] = patches_[ipatch]->EMfields->Bx_;
-            B1_localy[locy+LocalyIdx.size()] = patches_[ipatch]->EMfields->Bz_;
+        if (nDim>2) {
+            for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+                if ( (*this)(ipatch)->has_an_MPI_neighbor( 2 ) ) {
+                    B2_MPIz[mpiz               ] = patches_[ipatch]->EMfields->Bx_;
+                    B2_MPIz[mpiz+MPIzIdx.size()] = patches_[ipatch]->EMfields->By_;
 
-            densitiesLocaly[locy                   ] = patches_[ipatch]->EMfields->Jx_;
-            densitiesLocaly[locy+  LocalyIdx.size()] = patches_[ipatch]->EMfields->Jy_;
-            densitiesLocaly[locy+2*LocalyIdx.size()] = patches_[ipatch]->EMfields->Jz_;
-            locy++;
+                    densitiesMPIz[mpiz                 ] = patches_[ipatch]->EMfields->Jx_;
+                    densitiesMPIz[mpiz+  MPIzIdx.size()] = patches_[ipatch]->EMfields->Jy_;
+                    densitiesMPIz[mpiz+2*MPIzIdx.size()] = patches_[ipatch]->EMfields->Jz_;
+                    mpiz++;
+                }
+                if ( (*this)(ipatch)->has_an_local_neighbor( 2 ) ) {
+                    B2_localz[locz                 ] = patches_[ipatch]->EMfields->Bx_;
+                    B2_localz[locz+LocalzIdx.size()] = patches_[ipatch]->EMfields->By_;
+
+                    densitiesLocalz[locz                   ] = patches_[ipatch]->EMfields->Jx_;
+                    densitiesLocalz[locz+  LocalzIdx.size()] = patches_[ipatch]->EMfields->Jy_;
+                    densitiesLocalz[locz+2*LocalzIdx.size()] = patches_[ipatch]->EMfields->Jz_;
+                    locz++;
+                }
+            }
         }
 
     }

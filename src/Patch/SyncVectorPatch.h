@@ -34,7 +34,9 @@ public :
     static void finalizeexchange1( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void new_finalizeexchange1( std::vector<Field*>& fields, VectorPatch& vecPatches );
     static void exchange2( std::vector<Field*> fields, VectorPatch& vecPatches );
+    static void new_exchange2( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void finalizeexchange2( std::vector<Field*> fields, VectorPatch& vecPatches );
+    static void new_finalizeexchange2( std::vector<Field*> fields, VectorPatch& vecPatches );
 
 };
 
