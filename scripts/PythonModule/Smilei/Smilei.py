@@ -135,7 +135,7 @@ class FieldFactory(object):
 		if len(self._children) > 0:
 			for child in self._children:
 				child.toXDMF()
-		else:
+		elif len(self._additionalArgs) > 0:
 			self().toXDMF()
 
 
@@ -447,7 +447,7 @@ class TrackParticlesFactory(object):
 		if len(self._children) > 0:
 			for child in self._children:
 				child.toXDMF()
-		else:
+		elif "species" in self._additionalKwargs:
 			self().toXDMF()
 
 
