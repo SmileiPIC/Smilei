@@ -145,32 +145,29 @@ public :
     std::vector<Field*> densities;
     std::vector<Field*> Bs0;
     std::vector<Field*> Bs1;
+    std::vector<Field*> Bs2;
     std::vector<Field*> densitiesLocalx;
     std::vector<Field*> densitiesLocaly;
+    std::vector<Field*> densitiesLocalz;
     std::vector<Field*> densitiesMPIx;
     std::vector<Field*> densitiesMPIy;
-    std::vector<int> densitiesLocalxIdx;
-    std::vector<int> densitiesLocalyIdx;
-    std::vector<int> densitiesMPIxIdx;
-    std::vector<int> densitiesMPIyIdx;
+    std::vector<Field*> densitiesMPIz;
+
+    std::vector<int> LocalxIdx;
+    std::vector<int> LocalyIdx;
+    std::vector<int> LocalzIdx;
+    std::vector<int> MPIxIdx;
+    std::vector<int> MPIyIdx;
+    std::vector<int> MPIzIdx;
 
     std::vector<Field*> B_localx;
-    std::vector<Field*> B_localy;
     std::vector<Field*> B_MPIx;
-    std::vector<Field*> B_MPIy;
-    std::vector<int> B_localxIdx;
-    std::vector<int> B_localyIdx;
-    std::vector<int> B_MPIxIdx;
-    std::vector<int> B_MPIyIdx;
 
-    std::vector<Field*> B1_localx;
     std::vector<Field*> B1_localy;
-    std::vector<Field*> B1_MPIx;
     std::vector<Field*> B1_MPIy;
-    std::vector<int> B1_localxIdx;
-    std::vector<int> B1_localyIdx;
-    std::vector<int> B1_MPIxIdx;
-    std::vector<int> B1_MPIyIdx;
+
+    std::vector<Field*> B2_localz;
+    std::vector<Field*> B2_MPIz;
 
     std::vector<Field*> listJx_;
     std::vector<Field*> listJy_;

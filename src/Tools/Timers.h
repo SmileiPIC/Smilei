@@ -27,6 +27,7 @@ public:
     Timer movWindow ;
     Timer loadBal   ;
     Timer syncPart  ;
+    Timer injectPart  ;
     Timer syncField ;
     Timer syncDens  ;
     Timer syncDensY  ;
