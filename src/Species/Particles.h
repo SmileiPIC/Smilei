@@ -266,7 +266,8 @@ public:
     
     
     //bool test_move( int iPartStart, int iPartEnd, Params& params );
-    
+
+#ifdef __DEBUG
     inline double dist2( unsigned int iPart ) {
         double dist(0.);
         for ( unsigned int iDim = 0 ; iDim < Position.size() ; iDim++ ) {
@@ -279,6 +280,7 @@ public:
         double delta = std::abs( position(iDim,iPart)-position_old(iDim,iPart) );
         return delta;
     }
+#endif
     
     Particle operator()(unsigned int iPart);
 
