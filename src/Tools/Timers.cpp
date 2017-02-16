@@ -18,10 +18,8 @@ Timers::Timers( SmileiMPI * smpi ) :
     movWindow ("Mov window"    ), // Moving Window
     loadBal   ("Load balancing" ), // Load balancing
     syncPart  ("Sync Particles"), // Call exchangeParticles (MPI & Patch sync)
-    injectPart  ("Inject Particles"), // Call exchangeParticles (MPI & Patch sync)
     syncField ("Sync Fields"   ), // Call sumRhoJ(s), exchangeB (MPI & Patch sync)
-    syncDens  ("Sync Densities"),  // If necessary the following timers can be reintroduced
-    syncDensY  ("NULL")  // If necessary the following timers can be reintroduced
+    syncDens  ("Sync Densities")  // If necessary the following timers can be reintroduced
 {
     timers.resize(0);
     timers.push_back( &global     );
@@ -33,10 +31,8 @@ Timers::Timers( SmileiMPI * smpi ) :
     timers.push_back( &movWindow  );
     timers.push_back( &loadBal    );
     timers.push_back( &syncPart   );
-    timers.push_back( &injectPart   );
     timers.push_back( &syncField  );
     timers.push_back( &syncDens   );
-    timers.push_back( &syncDensY   );
     
     for( unsigned int i=0; i<timers.size(); i++)
         timers[i]->init(smpi);
