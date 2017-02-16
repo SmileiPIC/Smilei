@@ -594,6 +594,7 @@ void ElectroMagn2D::solveMaxwellAmpere()
     Field2D* Jz2D = static_cast<Field2D*>(Jz_);
     // Electric field Ex^(d,p)
     for (unsigned int i=0 ; i<nx_d ; i++) {
+        #pragma omp simd
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*Ex2D)(i,j) += -timestep*(*Jx2D)(i,j) + dt_ov_dy * ( (*Bz2D)(i,j+1) - (*Bz2D)(i,j) );
         }
@@ -601,6 +602,7 @@ void ElectroMagn2D::solveMaxwellAmpere()
     
     // Electric field Ey^(p,d)
     for (unsigned int i=0 ; i<nx_p ; i++) {
+        #pragma omp simd
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Ey2D)(i,j) += -timestep*(*Jy2D)(i,j) - dt_ov_dx * ( (*Bz2D)(i+1,j) - (*Bz2D)(i,j) );
         }
@@ -608,6 +610,7 @@ void ElectroMagn2D::solveMaxwellAmpere()
     
     // Electric field Ez^(p,p)
     for (unsigned int i=0 ;  i<nx_p ; i++) {
+        #pragma omp simd
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*Ez2D)(i,j) += -timestep*(*Jz2D)(i,j)
             +               dt_ov_dx * ( (*By2D)(i+1,j) - (*By2D)(i,j) )
@@ -633,6 +636,7 @@ void ElectroMagn2D::centerMagneticFields()
     
     // Magnetic field Bx^(p,d)
     for (unsigned int i=0 ; i<nx_p ; i++) {
+        #pragma omp simd
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Bx2D_m)(i,j) = ( (*Bx2D)(i,j) + (*Bx2D_m)(i,j) )*0.5;
         }
@@ -640,6 +644,7 @@ void ElectroMagn2D::centerMagneticFields()
     
     // Magnetic field By^(d,p)
 //    for (unsigned int i=0 ; i<nx_d ; i++) {
+        #pragma omp simd
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*By2D_m)(i,j) = ( (*By2D)(i,j) + (*By2D_m)(i,j) )*0.5;
         }
@@ -647,13 +652,16 @@ void ElectroMagn2D::centerMagneticFields()
     
     // Magnetic field Bz^(d,d)
 //    for (unsigned int i=0 ; i<nx_d ; i++) {
+        #pragma omp simd
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Bz2D_m)(i,j) = ( (*Bz2D)(i,j) + (*Bz2D_m)(i,j) )*0.5;
         } // end for j
       } // end for i
+        #pragma omp simd
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*By2D_m)(nx_p,j) = ( (*By2D)(nx_p,j) + (*By2D_m)(nx_p,j) )*0.5;
         }
+        #pragma omp simd
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Bz2D_m)(nx_p,j) = ( (*Bz2D)(nx_p,j) + (*Bz2D_m)(nx_p,j) )*0.5;
         } // end for j

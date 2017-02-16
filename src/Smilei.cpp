@@ -146,7 +146,10 @@ int main (int argc, char* argv[])
        
         TITLE("Applying external fields at time t = 0");
         vecPatches.applyExternalFields();
-        
+
+        vecPatches.finalize_and_sort_parts(params, smpi, simWindow, time_dual, timers, 0);
+        timers.syncPart .reboot();
+
         TITLE("Initializing diagnostics");
         vecPatches.initAllDiags( params, smpi );
         TITLE("Running diags at time t = 0");
@@ -210,7 +213,9 @@ int main (int argc, char* argv[])
             // solve Maxwell's equations
             if( time_dual > params.time_fields_frozen )
                 vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
-            
+
+            vecPatches.finalize_and_sort_parts(params, smpi, simWindow, time_dual, timers, itime);
+
             // call the various diagnostics
             vecPatches.runAllDiags(params, smpi, itime, timers);
             

@@ -27,8 +27,10 @@ public:
     Timer movWindow ;
     Timer loadBal   ;
     Timer syncPart  ;
+    Timer injectPart  ;
     Timer syncField ;
     Timer syncDens  ;
+    Timer syncDensY  ;
 
     void profile(SmileiMPI * smpi);
     std::vector<Timer*> consolidate(SmileiMPI * smpi);

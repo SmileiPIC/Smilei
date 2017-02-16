@@ -7,20 +7,25 @@
 #include "Particles.h"
 
 class Field;
+class Patch;
 
 class AsyncMPIbuffers {
 public:
     AsyncMPIbuffers();
     ~AsyncMPIbuffers();
 
-    virtual void allocate(int nDim_field, Field* f);
     virtual void allocate(unsigned int nDim_field);
+
+    virtual void allocate(int nDim_field, Field* f);
+    void defineTags(Patch* patch, int tag ) ;
     
     //! ndim vectors of 2 sent requests (1 per direction) 
     std::vector< std::vector<MPI_Request> > srequest;
     //! ndim vectors of 2 received requests (1 per direction) 
     std::vector< std::vector<MPI_Request> > rrequest;
     std::vector< double >  buf[3][2];
+
+    std::vector< std::vector<int> > send_tags_, recv_tags_;
 
 };
 
