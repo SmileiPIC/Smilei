@@ -112,13 +112,20 @@ approach [TafloveHagness]_ as well as refined methods based on this algorithm
 (for a review of these methods see [Nuter2014]_). In these methods, the electromagnetic
 fields are discretized onto a staggered grid, the so-called Yee-grid that allows for
 spatial-centering of the discretized curl operators in Maxwell's equations.
-Figure :numref:`fig_Yee` summarizes at which points of the Yee-grid are defined the
-electromagnetic fields as well as charge and density currents. Similarly, the time-centering
+The followingfigure summarizes at which points of the Yee-grid are defined the
+electromagnetic fields as well as charge and density currents.
+
+.. image:: _static/figYee.png
+   :width: 13cm
+
+Similarly, the time-centering
 of the time-derivative in Maxwell's equations is ensured by considering the electric fields
 as defined at integer time-steps :math:`(n)` and magnetic fields at half-integer
 time-steps :math:`(n+\tfrac{1}{2})`. Time-centering of the magnetic fields is however
 necessary for diagnostic purposes, and most importantly when computing the Lorentz force
 acting on the quasi-particles.
+
+
 
 A *leap-frog* scheme is used to advance the particles in time, so that the particle positions
 and velocities are defined at integer :math:`(n)` and half-integer :math:`(n-\tfrac{1}{2})`

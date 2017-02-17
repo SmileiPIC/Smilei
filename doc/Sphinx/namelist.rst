@@ -424,11 +424,9 @@ Each species has to be defined in a ``Species`` block::
              bc_part_type_ymin
              bc_part_type_ymax
   
-  The boundary condition for particles: ``"none"`` means periodic.
+  The boundary condition for particles: ``"refl"`` for *reflecting*, ``"supp"`` for
+  *suppressing*, ``"stop"`` for *stopping*, ``"periodic"``, and ``"thermalize"``.
   
-  :red:`to do`
-
-
 .. py:data:: thermT
   
   :default: None

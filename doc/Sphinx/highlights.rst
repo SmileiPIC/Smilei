@@ -61,6 +61,51 @@ of the box.
 High-harmonic generation
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
+The interaction between an ultra-intense (:math:`I>10^{18}~{\rm W/cm^2}`) femtosecond laser pulse
+with a solid target generates a dense "plasma mirror" at its surface that reflects the laser
+in a strongly non-linear manner. The temporal distortion of the reflected wave creates
+a train of ultra-short attosecond pulses, associated, in the frequency domain,
+to a comb of high-order harmonics.
+
+We present a 2-dimensional :program:`Smilei` simulation of laser-solid interaction
+with wavelength :math:`\lambda_0 = 0.8` µm, peak intensity
+:math:`2\times10^{19}~{\rm W/cm^2}`, at 45° incidence with p-polarization on an overdense plasma slab
+of constant electron density :math:`n_0=200\,n_c` (:math:`n_c` being the critical density),
+:math:`5\lambda_0`-thick, with an exponential pre-plasma of gradient length :math:`0.1\,\lambda_0`
+down to a cut-off density :math:`0.05\,n_c`. The full box size is
+:math:`80\,\lambda_0 \times 60\lambda_0` and the simulation time :math:`150\,\lambda_0/c`
+with a total of :math:`\sim 1.4` billion quasi-particles in the box.
+
+The following figure (top panel) shows half of the simulation box in the
+y-direction, and the laser field is reported at three different times.
+The reflected laser pulse (at time :math:`t_2`) shows a different spectral content than
+the incident pulse (at time :math:`t_0`). The plasma electron density is shown in black.
+A close-up view of the interaction region is given in the bottom panel, illustrating
+the electron bunches being pulled out from the plasma surface.
+
+.. image:: _static/hhg1.jpg
+   :width: 13cm
+
+Fourier analysis of the reflected laser field, in space and time, provides the
+angular distribution of the frequency spectrum of the reflected light, shown in the 
+following figure (top panel). High harmonics appear up to order 16.
+
+.. image:: _static/hhg2.jpg
+   :width: 13cm
+
+The bottom panel shows trajectories of accelerated electrons ejected from the target.
+The angular histogram shows that the momenta of the escaping energetic electrons
+(1 to 10 MeV) are mostly directed along two directions which are close to the reflected
+laser direction.
+
+This simulation was run on the CINES/Occigen (Bullx) machine using 256 MPI x 14 OpenMP
+threads for about 10700 CPU-hours. The characteristic computing time per particle
+(average PIC iteration divided by the number of particles) is of the order of
+0.7 µs, including 25% for diagnostics. 
+
+
+
+
 
 ----
 
@@ -74,7 +119,7 @@ Here, we look specifically at the stimulated Brillouin scattering (SBS) amplific
 where the excited waves are ion-acoustic waves.
 
 A pump with intensity :math:`10^{15}` W/cm² (wavelength 1 µm)
-correspond to the ''strong-coupling'' regime, particularly robust with respect to
+correspond to the "strong-coupling" regime, particularly robust with respect to
 plasma inhomogeneities and seed frequency [Chiaramello2016]_. 
 
 A 2-dimensional simulation, in conditions close to actual experiments, ran
@@ -184,12 +229,12 @@ hence stopping it and leading to compression of the downstream (shocked plasma) 
 
 We present a 2-dimensional PIC simulation of such shock,
 driven in an initially unmagnetized electron-positron plasma.
-The simulation relies on the ``piston'' method that consists in initializing the
+The simulation relies on the "piston" method that consists in initializing the
 simulation with a single cold electron-positron plasma drifting 
 at a relativistic velocity :math:`v_0 \simeq 0.995\,c`. 
 Reflecting boundary conditions at the right border creates a counter-penetrating flow.
 
-The simulation box size is 2048 :math:`\delta_e \times` 128 :math:`\delta_e`
+The simulation box size is 2048 :math:`\delta_e \times` 128 :math:`\delta_e` 
 (:math:`\delta_e = c/\omega_p` being the electron skin-depth of the initial flow), 
 with a total of 2.15 billion quasi-particles. 
 The following figure show an unstable overlapping region of incoming and
