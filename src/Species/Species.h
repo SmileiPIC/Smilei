@@ -249,6 +249,7 @@ public:
     
     //! 2 times pi
     double PI2;
+    double PI_ov_2;
     double dx_inv_, dy_inv_, dz_inv_;
 
     //! Boundary condition for the Particles of the considered Species
