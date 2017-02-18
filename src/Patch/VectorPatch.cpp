@@ -207,6 +207,15 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 {
     timers.maxwell.restart();
     
+    for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_int ; ipassfilter++){
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+            // Current spatial filtering
+            (*this)(ipatch)->EMfields->binomialCurrentFilter();
+        }
+        SyncVectorPatch::exchangeJ( (*this) );
+    }
+    
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
         // Saving magnetic fields (to compute centered fields used in the particle pusher)
