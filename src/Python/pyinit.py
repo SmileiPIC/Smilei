@@ -138,6 +138,7 @@ class Main(SmileiSingleton):
     bc_em_type_y = []
     bc_em_type_z = []
     time_fields_frozen = 0.
+    currentFilter_int = 0
     
     # Default Misc
     referenceAngularFrequency_SI = 0.
