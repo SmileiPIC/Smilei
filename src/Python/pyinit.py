@@ -155,6 +155,8 @@ class Main(SmileiSingleton):
             else:
                 if Main.cell_length is None:
                     raise Exception("Need cell_length to calculate timestep")
+                
+                # Yee solver
                 if Main.maxwell_sol == 'Yee':
                     if Main.geometry == '1d3v':
                         Main.timestep = Main.timestep_over_CFL*Main.cell_length[0]
@@ -164,6 +166,22 @@ class Main(SmileiSingleton):
                         Main.timestep = Main.timestep_over_CFL/math.sqrt(1.0/(Main.cell_length[0]**2)+1.0/(Main.cell_length[1]**2)+1.0/(Main.cell_length[2]**2))
                     else: 
                         raise Exception("timestep: geometry not implemented "+Main.geometry)
+                            
+                # Grassi
+                elif Main.maxwell_sol == 'Grassi':
+                    if Main.geometry == '2d3v':
+                        Main.timestep = Main.timestep_over_CFL * 0.71*Main.cell_length[0];
+                    else:
+                        raise Exception("timestep: geometry not implemented "+Main.geometry)
+                        
+                # GrassiSpL
+                elif Main.maxwell_sol == 'GrassiSpL':
+                    if Main.geometry == '2d3v':
+                        Main.timestep = Main.timestep_over_CFL * 0.6712856534*Main.cell_length[0];
+                    else:
+                        raise Exception("timestep: geometry not implemented "+Main.geometry)
+
+                # None recognized solver
                 else:
                     raise Exception("timestep: maxwell_sol not implemented "+Main.maxwell_sol)
 
