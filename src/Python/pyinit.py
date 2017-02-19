@@ -170,14 +170,14 @@ class Main(SmileiSingleton):
                 # Grassi
                 elif Main.maxwell_sol == 'Grassi':
                     if Main.geometry == '2d3v':
-                        Main.timestep = Main.timestep_over_CFL * 0.71*Main.cell_length[0];
+                        Main.timestep = Main.timestep_over_CFL * 0.7071067811*Main.cell_length[0];
                     else:
                         raise Exception("timestep: geometry not implemented "+Main.geometry)
                         
                 # GrassiSpL
                 elif Main.maxwell_sol == 'GrassiSpL':
                     if Main.geometry == '2d3v':
-                        Main.timestep = Main.timestep_over_CFL * 0.6712856534*Main.cell_length[0];
+                        Main.timestep = Main.timestep_over_CFL * 0.6471948469*Main.cell_length[0];
                     else:
                         raise Exception("timestep: geometry not implemented "+Main.geometry)
 
