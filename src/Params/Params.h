@@ -100,7 +100,10 @@ public:
     
    
     // 2D Maxwell Solver  
-    std::string maxwell_sol; 
+    std::string maxwell_sol;
+    
+    //! Current spatial filter parameter: number of binomial pass
+    unsigned int currentFilter_int;
     
     //! Clusters width
     //unsigned int clrw;

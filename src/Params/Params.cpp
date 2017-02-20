@@ -252,6 +252,9 @@ namelist("")
     // Maxwell Solver 
     PyTools::extract("maxwell_sol", maxwell_sol, "Main");
     
+    // Filtering Method Parameters
+    PyTools::extract("currentFilter_int", currentFilter_int, "Main"); // nb of passes for binomial filering (default=0)
+    
     // clrw 
     PyTools::extract("clrw",clrw, "Main");
 

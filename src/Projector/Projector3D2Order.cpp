@@ -46,7 +46,7 @@ Projector3D2Order::~Projector3D2Order()
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
+void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
 {
 
     // -------------------------------------
@@ -244,7 +244,7 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local current densities (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
+void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
 {
 
     // -------------------------------------
@@ -542,7 +542,7 @@ void Projector3D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
 {
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
-    std::vector<double> *gf = &(smpi->dynamics_gf[ithread]);
+    std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
     
     int dim1 = EMfields->dimPrim[1];
     int dim2 = EMfields->dimPrim[2];
@@ -553,7 +553,7 @@ void Projector3D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
         double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1)* dim2   );
         double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw* dim1   *(dim2+1));
         for ( int ipart=istart ; ipart<iend; ipart++ )
-            (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*gf)[ipart], ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart]);
+            (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart]);
             
     // Otherwise, the projection may apply to the species-specific arrays
     } else {
@@ -562,7 +562,7 @@ void Projector3D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
         double* b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(ibin*clrw*dim1*(dim2+1)) : &(*EMfields->Jz_ )(ibin*clrw*dim1*(dim2+1)) ;
         double* b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw* dim1   *dim2) : &(*EMfields->rho_)(ibin*clrw* dim1   *dim2) ;
         for ( int ipart=istart ; ipart<iend; ipart++ )
-            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*gf)[ipart], ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart]);
+            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart]);
     }
 
 }

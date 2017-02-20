@@ -15,7 +15,7 @@ public:
     //! Creator for PusherSklv
     PusherSklv(Params& params, Species*);
     //! Overloading of () operator
-    virtual void operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields Bpart, double& gf) {
+    virtual void operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields Bpart, double& invgf) {
         std::cout << "\tSokolov Push particle" << std::endl;
     };
 private:

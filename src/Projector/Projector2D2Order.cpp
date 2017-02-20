@@ -43,7 +43,7 @@ Projector2D2Order::~Projector2D2Order()
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
+void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
 {
     
     // -------------------------------------
@@ -55,7 +55,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double crx_p = charge_weight*dx_ov_dt;
     double cry_p = charge_weight*dy_ov_dt;
-    double crz_p = charge_weight*particles.momentum(2, ipart)/gf;
+    double crz_p = charge_weight*particles.momentum(2, ipart)*invgf;
     
     
     // variable declaration
@@ -171,7 +171,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
+void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
 {
     
     // -------------------------------------
@@ -183,7 +183,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double crx_p = charge_weight*dx_ov_dt;
     double cry_p = charge_weight*dy_ov_dt;
-    double crz_p = charge_weight*particles.momentum(2, ipart)/gf;
+    double crz_p = charge_weight*particles.momentum(2, ipart)*invgf;
     
     
     // variable declaration
@@ -380,7 +380,7 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
 {
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
-    std::vector<double> *gf = &(smpi->dynamics_gf[ithread]);
+    std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
     
     int dim1 = EMfields->dimPrim[1];
     
@@ -390,7 +390,7 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
         double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1));
         double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw*dim1);
         for (int ipart=istart ; ipart<iend; ipart++ )
-            (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*gf)[ipart], ibin*clrw, b_dim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
+            (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
             
     // Otherwise, the projection may apply to the species-specific arrays
     } else {
@@ -399,6 +399,6 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
         double* b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(ibin*clrw* dim1   ) : &(*EMfields->Jz_ )(ibin*clrw* dim1   ) ;
         double* b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw* dim1   ) : &(*EMfields->rho_)(ibin*clrw* dim1   ) ;
         for (int ipart=istart ; ipart<iend; ipart++ )
-            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*gf)[ipart], ibin*clrw, b_dim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
+            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
     }
 }

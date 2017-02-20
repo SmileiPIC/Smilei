@@ -61,6 +61,7 @@ min_loc(patch->getDomainLocalMin(0))
     DEBUG(species_type);
     
     PI2 = 2.0 * M_PI;
+    PI_ov_2 = 0.5*M_PI;
     
     dx_inv_ = 1./cell_length[0];
     dy_inv_ = 1./cell_length[1];
@@ -324,7 +325,9 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
     }
     
     // Adding the mean velocity (using relativistic composition)
-    // ---------------------------------------------------------
+    // Also relies on the method proposed in Zenitani, Phys. Plasmas 22, 042116 (2015)
+    // to ensure the correct properties of a boosted distribution function
+    // -------------------------------------------------------------------------------
     double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, gp, px, py, pz;
     // mean-velocity
     vx  = -vel[0];
@@ -344,13 +347,60 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
         Lxz = gm1 * vx*vz/v2;
         Lyz = gm1 * vy*vz/v2;
         
+        // Volume transformation method (here is the correction by Zenitani)
+        double Volume_Acc = (double)rand() / RAND_MAX;
+        double CheckVelocity;
+        
         // Lorentz transformation of the momentum
         for (unsigned int p=iPart; p<iPart+nPart; p++)
         {
-            gp = sqrt(1.0 + pow((*particles).momentum(0,p),2) + pow((*particles).momentum(1,p),2) + pow((*particles).momentum(2,p),2));
+            gp = sqrt(1.0 + (*particles).momentum(0,p)*(*particles).momentum(0,p)
+                      +     (*particles).momentum(1,p)*(*particles).momentum(1,p)
+                      +     (*particles).momentum(2,p)*(*particles).momentum(2,p) );
+            
+            CheckVelocity = ( vx*(*particles).momentum(0,p) + vy*(*particles).momentum(1,p) + vz*(*particles).momentum(2,p) ) / gp;
+            if (CheckVelocity > Volume_Acc){
+
+                double Phi , Theta , vfl ,vflx , vfly, vflz, vpx , vpy , vpz ;
+                if (vz==0.0) {
+                    Phi = PI_ov_2;
+                } else {
+                    Phi = atan(sqrt(vx*vx +vy*vy)/vz);
+                }
+                if (vx==0.0) {
+                    if (vy<0.) {
+                        Theta = -PI_ov_2;
+                    } else if (vy==0.) {
+                        Theta = 0.;
+                    } else {
+                        Theta = PI_ov_2;
+                    }
+                } else {
+                    Theta = atan(vy/vx);
+                }
+
+                vpx = (*particles).momentum(0,p)/gp ;
+                vpy = (*particles).momentum(1,p)/gp ;
+                vpz = (*particles).momentum(2,p)/gp ;
+                vfl = vpx*cos(Theta)*sin(Phi) +vpy*sin(Theta)*sin(Phi) + vpz*cos(Phi) ;
+                vflx = vfl*cos(Theta)*sin(Phi) ;
+                vfly = vfl*sin(Theta)*sin(Phi) ;
+                vflz = vfl*cos(Phi) ;
+                vpx -= 2.*vflx ;
+                vpy -= 2.*vfly ;
+                vpz -= 2.*vflz ;
+                gp = 1./sqrt(1.0 - vpx*vpx - vpy*vpy - vpz*vpz);
+                (*particles).momentum(0,p) = vpx*gp ;
+                (*particles).momentum(1,p) = vpy*gp ;
+                (*particles).momentum(2,p) = vpz*gp ;
+                
+            }//here ends the corrections by Zenitani
+ 
+            
             px = -gp*g*vx + Lxx * (*particles).momentum(0,p) + Lxy * (*particles).momentum(1,p) + Lxz * (*particles).momentum(2,p);
             py = -gp*g*vy + Lxy * (*particles).momentum(0,p) + Lyy * (*particles).momentum(1,p) + Lyz * (*particles).momentum(2,p);
             pz = -gp*g*vz + Lxz * (*particles).momentum(0,p) + Lyz * (*particles).momentum(1,p) + Lzz * (*particles).momentum(2,p);
+            
             (*particles).momentum(0,p) = px;
             (*particles).momentum(1,p) = py;
             (*particles).momentum(2,p) = pz;
@@ -427,7 +477,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             // Push the particles
             (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
             //for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) 
-            //    (*Push)(*particles, iPart, (*Epart)[iPart], (*Bpart)[iPart] , (*gf)[iPart]);
+            //    (*Push)(*particles, iPart, (*Epart)[iPart], (*Bpart)[iPart] , (*invgf)[iPart]);
 
             //particles->test_move( bmin[ibin], bmax[ibin], params );
 
@@ -435,7 +485,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             // Apply wall and boundary conditions
             for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
                 for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                    double dtgf = params.timestep / smpi->dynamics_gf[ithread][iPart];
+                    double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
                     if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
                         nrj_lost_per_thd[tid] += mass * ener_iPart;
                     }

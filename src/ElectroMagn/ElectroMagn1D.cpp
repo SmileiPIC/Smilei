@@ -507,6 +507,46 @@ void ElectroMagn1D::centerMagneticFields()
 }//END centerMagneticFields
 
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Apply a single pass binomial filter on currents
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn1D::binomialCurrentFilter()
+{
+    
+    Field1D* Jx1D     = static_cast<Field1D*>(Jx_);
+    Field1D* Jy1D     = static_cast<Field1D*>(Jy_);
+    Field1D* Jz1D     = static_cast<Field1D*>(Jz_);
+    
+    // Apply a single pass of the binomial filter on currents
+    
+    // on Jx^(d) -- external points are treated by exchange
+    Field1D *tmp   = new Field1D(dimPrim, 0, false);
+    tmp->copyFrom(Jx1D);
+    for (unsigned int ix=1 ; ix<dimDual[0]-1 ; ix++) {
+        (*Jx1D)(ix) = 0.25 * ((*tmp)(ix-1) + 2.*(*tmp)(ix) + (*tmp)(ix+1));
+    }
+    delete tmp;
+    
+    // on Jy^(p) -- external points are treated by exchange
+    tmp   = new Field1D(dimPrim, 1, false);
+    tmp->copyFrom(Jy1D);
+    for (unsigned int ix=1 ; ix<dimPrim[0]-1 ; ix++) {
+        (*Jy1D)(ix) = 0.25 * ((*tmp)(ix-1) + 2.*(*tmp)(ix) + (*tmp)(ix+1));
+    }
+    delete tmp;
+    
+    // on Jz^(p) -- external points are treated by exchange
+    tmp   = new Field1D(dimPrim, 2, false);
+    tmp->copyFrom(Jz1D);
+    for (unsigned int ix=1 ; ix<dimPrim[0]-1 ; ix++) {
+        (*Jz1D)(ix) = 0.25 * ((*tmp)(ix-1) + 2.*(*tmp)(ix) + (*tmp)(ix+1));
+    }
+    delete tmp;
+    
+}
+
+
+
 // Create a new field
 Field * ElectroMagn1D::createField(string fieldname)
 {

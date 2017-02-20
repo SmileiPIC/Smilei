@@ -11,7 +11,6 @@ using namespace std;
 
 void SyncVectorPatch::exchangeParticles(VectorPatch& vecPatches, int ispec, Params &params, SmileiMPI* smpi, Timers &timers, int itime)
 {
-    //timers.syncPart.restart();
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         vecPatches(ipatch)->initExchParticles(smpi, ispec, params);
@@ -37,13 +36,11 @@ void SyncVectorPatch::exchangeParticles(VectorPatch& vecPatches, int ispec, Para
 //    #pragma omp for schedule(runtime)
 //    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 //        vecPatches(ipatch)->vecSpecies[ispec]->sort_part();
-    //timers.syncPart.update( params.printNow( itime ) );
 }
 
 
 void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec, Params &params, SmileiMPI* smpi, Timers &timers, int itime)
 {
-    //timers.syncPart.restart();
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         vecPatches(ipatch)->CommParticles(smpi, ispec, params, 0, &vecPatches);
@@ -69,9 +66,7 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
             vecPatches(ipatch)->finalizeCommParticles(smpi, ispec, params, iDim, &vecPatches);
         }
     }
-    //timers.syncPart.update( params.printNow( itime ) );
 
-    //timers.injectPart.restart();
 //    #pragma omp for schedule(runtime)
 //    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 //        vecPatches(ipatch)->injectParticles(smpi, ispec, params, params.nDim_particle-1, &vecPatches); // wait
@@ -80,7 +75,6 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
         vecPatches(ipatch)->vecSpecies[ispec]->sort_part();
-    //timers.injectPart.update( params.printNow( itime ) );
 }
 
 
@@ -131,6 +125,14 @@ void SyncVectorPatch::exchangeB( VectorPatch& vecPatches )
         SyncVectorPatch::new_exchange2( vecPatches.Bs2, vecPatches );
     }
 
+}
+
+void SyncVectorPatch::exchangeJ( VectorPatch& vecPatches )
+{
+    
+    SyncVectorPatch::exchange( vecPatches.listJx_, vecPatches );
+    SyncVectorPatch::exchange( vecPatches.listJy_, vecPatches );
+    SyncVectorPatch::exchange( vecPatches.listJz_, vecPatches );
 }
 
 void SyncVectorPatch::finalizeexchangeB( VectorPatch& vecPatches )
@@ -212,7 +214,6 @@ void SyncVectorPatch::new_sum( std::vector<Field*>& fields, VectorPatch& vecPatc
             }
         }
     }
-    //timers.syncDens.update();
 
     // iDim = 0, finalize (waitall)
     #pragma omp for schedule(static) 
@@ -392,7 +393,6 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches, 
 //    }
 
     // iDim = 0, local
-    timers.syncDens.restart();
     for (unsigned int icomp=0 ; icomp<nComp ; icomp++) {
         nx_ = fields[icomp*nPatches]->dims_[0];
         ny_ = 1;
@@ -417,7 +417,6 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches, 
             }
         }
     }
-    timers.syncDens.update();
 
     // iDim = 0, finalize (waitall)
     #pragma omp for schedule(static)
@@ -446,7 +445,6 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches, 
 //        }
 
         // iDim = 1, local
-        timers.syncDensY.restart();
         for (unsigned int icomp=0 ; icomp<nComp ; icomp++) {
             nx_ = fields[icomp*nPatches]->dims_[0];
             ny_ = 1;
@@ -475,7 +473,6 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches, 
                 }
             }
         }
-        timers.syncDensY.update();
 
         // iDim = 1, finalize (waitall)
         #pragma omp for schedule(static)
