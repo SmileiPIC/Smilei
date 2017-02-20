@@ -90,3 +90,15 @@ DiagScreen(
             ["p", 0., 3., 30]],
     every = 10
 )
+
+DiagScreen(
+    shape = "sphere",
+    point = [5.*l0, 10.*l0],
+    vector = [5.*l0, 0.],
+    direction = "both",
+    output = "density",
+    species = ["electron"],
+    axes = [["theta", -math.pi, math.pi, 40],
+            ["p", 0., 3., 30]],
+    every = 10
+)

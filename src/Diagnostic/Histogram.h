@@ -93,14 +93,24 @@ class HistogramAxis_vector : public HistogramAxis {
         }
     };
 };
-class HistogramAxis_theta : public HistogramAxis {
+class HistogramAxis_theta2D : public HistogramAxis {
     void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
-        unsigned int idim, ndim = coefficients.size()/2;
+        double X,Y;
         for ( unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
-            array[ipart] = 0.;
-            for( idim=0; idim<ndim; idim++ )
-                array[ipart] += (s->particles->Position[idim][ipart] - coefficients[idim]) * coefficients[idim+ndim];
+            X = s->particles->Position[0][ipart] - coefficients[0];
+            Y = s->particles->Position[1][ipart] - coefficients[1];
+            array[ipart] = atan2(coefficients[2]*Y - coefficients[3]*X, coefficients[2]*X + coefficients[3]*Y);
+        }
+    };
+};
+class HistogramAxis_theta3D : public HistogramAxis {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+        for ( unsigned int ipart = 0 ; ipart < npart ; ipart++) {
+            if( index[ipart]<0 ) continue;
+            array[ipart] = (s->particles->Position[0][ipart] - coefficients[0]) * coefficients[3]
+                         + (s->particles->Position[1][ipart] - coefficients[1]) * coefficients[4]
+                         + (s->particles->Position[2][ipart] - coefficients[2]) * coefficients[5];
             if      ( array[ipart]> 1. ) array[ipart] = 0.;
             else if ( array[ipart]<-1. ) array[ipart] = M_PI;
             else array[ipart] = acos(array[ipart]);

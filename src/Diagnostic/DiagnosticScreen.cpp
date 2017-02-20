@@ -23,7 +23,7 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patc
         ERROR(errorPrefix << ": parameter `shape` required");
     if( screen_shape == "plane" )
         screen_type = 0;
-    else if( screen_shape != "sphere" )
+    else if( screen_shape == "sphere" )
         screen_type = 1;
     else
         ERROR(errorPrefix << ": parameter `shape` must be 'plane' or 'sphere'");

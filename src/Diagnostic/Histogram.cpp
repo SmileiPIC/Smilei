@@ -88,9 +88,15 @@ void Histogram::init( Params &params, vector<PyObject*> pyAxes, vector<unsigned 
                 ERROR(errorPrefix << ": axis b cannot exist in <3D");
             axis = new HistogramAxis_vector();
         } else if (type == "theta" ) {
-            if (params.nDim_particle <2)
-                ERROR(errorPrefix << ": axis theta cannot exist in <2D");
-            axis = new HistogramAxis_theta();
+            if (params.nDim_particle == 1) {
+                ERROR(errorPrefix << ": axis theta cannot exist in 1D");
+            } else if (params.nDim_particle == 2) {
+                axis = new HistogramAxis_theta2D();
+            } else if (params.nDim_particle == 3) {
+                axis = new HistogramAxis_theta3D();
+            } else{
+                ERROR(errorPrefix << ": impossible");
+            }
         } else if (type == "phi" ) {
             if (params.nDim_particle <3)
                 ERROR(errorPrefix << ": axis phi cannot exist in <3D");
