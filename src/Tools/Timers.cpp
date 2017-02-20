@@ -58,6 +58,8 @@ void Timers::profile(SmileiMPI * smpi)
         MESSAGE(0, "\n\t Printed times are averaged per MPI process" );
         MESSAGE(0, "\t\t See advanced metrics in profil.txt");
     }
+    for (unsigned int i=0 ; i<avg_timers.size() ; i++)
+        delete avg_timers[i];
 }
 
 std::vector<Timer*> Timers::consolidate(SmileiMPI * smpi)
