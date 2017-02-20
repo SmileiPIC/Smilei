@@ -200,6 +200,8 @@ public:
     Solver* MaxwellFaradaySolver_;
     virtual void saveMagneticFields() = 0;
     virtual void centerMagneticFields() = 0;
+    virtual void binomialCurrentFilter() = 0;
+    
     void boundaryConditions(int itime, double time_dual, Patch* patch, Params &params, SimWindow* simWindow);
     
     void laserDisabled();

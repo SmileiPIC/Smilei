@@ -127,6 +127,14 @@ void SyncVectorPatch::exchangeB( VectorPatch& vecPatches )
 
 }
 
+void SyncVectorPatch::exchangeJ( VectorPatch& vecPatches )
+{
+    
+    SyncVectorPatch::exchange( vecPatches.listJx_, vecPatches );
+    SyncVectorPatch::exchange( vecPatches.listJy_, vecPatches );
+    SyncVectorPatch::exchange( vecPatches.listJz_, vecPatches );
+}
+
 void SyncVectorPatch::finalizeexchangeB( VectorPatch& vecPatches )
 {
     if (vecPatches.listBx_[0]->dims_.size()==1) {

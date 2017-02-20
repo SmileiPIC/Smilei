@@ -20,6 +20,7 @@ public :
     static void exchangeE( VectorPatch& vecPatches );
     static void finalizeexchangeE( VectorPatch& vecPatches );
     static void exchangeB( VectorPatch& vecPatches );
+    static void exchangeJ( VectorPatch& vecPatches );
     static void finalizeexchangeB( VectorPatch& vecPatches );
     static void sum      ( std::vector<Field*> fields, VectorPatch& vecPatches, Timers &timers, int itime );
     static void new_sum      ( std::vector<Field*>& fields, VectorPatch& vecPatches, Timers &timers, int itime );

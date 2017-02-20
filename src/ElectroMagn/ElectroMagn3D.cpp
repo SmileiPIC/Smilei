@@ -620,6 +620,16 @@ void ElectroMagn3D::centerMagneticFields()
 
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Apply a single pass binomial filter on currents
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn3D::binomialCurrentFilter()
+{
+    ERROR("Binomial current filtering not yet implemented in 3D3V");
+}
+
+
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Compute the total density and currents from species density and currents
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3D::computeTotalRhoJ()

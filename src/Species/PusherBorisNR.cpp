@@ -24,7 +24,6 @@ void PusherBorisNR::operator() (Particles &particles, SmileiMPI* smpi, int istar
 {
     std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
-    std::vector<double> *gf = &(smpi->dynamics_gf[ithread]);
 
     double charge_over_mass_ ;
     double umx, umy, umz;
@@ -69,6 +68,6 @@ void PusherBorisNR::operator() (Particles &particles, SmileiMPI* smpi, int istar
 
         // Move the particle
         for ( int i = 0 ; i<nDim_ ; i++ )
-            particles.position(i, ipart)     += dt*particles.momentum(i, ipart)/(*gf)[ipart];
+            particles.position(i, ipart)     += dt*particles.momentum(i, ipart);
     }
 }
