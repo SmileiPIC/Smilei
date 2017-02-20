@@ -113,9 +113,6 @@ public:
     //! finalize comm / exchange fields in direction iDim only
     virtual void finalizeExchange( Field* field, int iDim ) = 0;
 
-    // Create MPI_Datatype to exchange fields
-    virtual void createType( Params& params ) = 0;
-    
     // Geometrical methods
     // --------------------
     
@@ -272,7 +269,36 @@ protected:
     std::vector<int> cell_starting_global_index;
     
     std::vector<unsigned int> oversize;
+
+
+
+
+
+    // Create MPI_Datatype to exchange fields
+    void createType1D( Params& params );
+    //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial]
+    MPI_Datatype ntypeSum_1D[2][2];
+    //! MPI_Datatype to exchange [ndims_+1][iDim=0 prim/dial]
+    //!   - +1 : an additional type to exchange clrw lines
+    MPI_Datatype ntype_1D[2][2];
+
+
+    // Create MPI_Datatype to exchange fields
+    void createType2D( Params& params );
+    //! MPI_Datatype to sum [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
+    MPI_Datatype ntypeSum_2D[2][2][2];
+    //! MPI_Datatype to exchange [ndims_+1][iDim=0 prim/dial][iDim=1 prim/dial]
+    //!   - +1 : an additional type to exchange clrw lines
+    MPI_Datatype ntype_2D[3][2][2];
+
     
+    // Create MPI_Datatype to exchange fields
+    void createType3D( Params& params );
+    //! MPI_Datatype to sum [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
+    MPI_Datatype ntypeSum_3D[3][2][2][2];
+    //! MPI_Datatype to exchange [ndims_+1][iDim=0 prim/dial][iDim=1 prim/dial]
+    MPI_Datatype ntype_3D[3][2][2][2];
+
     
 };
 

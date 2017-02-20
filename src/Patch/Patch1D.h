@@ -41,14 +41,6 @@ public:
     //! finalize comm / exchange fields in direction iDim only
     void finalizeExchange( Field* field, int iDim ) override final;
 
-    // Create MPI_Datatype to exchange fields
-    void createType( Params& params ) override final;
-
-    //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial]
-    MPI_Datatype ntypeSum_[2][2];
-    //! MPI_Datatype to exchange [ndims_+1][iDim=0 prim/dial]
-    //!   - +1 : an additional type to exchange clrw lines
-    MPI_Datatype ntype_[2][2];
 
 
 };

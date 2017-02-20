@@ -54,16 +54,18 @@ void Patch1D::initStep2(Params& params)
     xcall = Pcoordinates[0]+1;
     if (params.bc_em_type_x[0]=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
     neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
+
+    createType1D(params);
     
 }
 
 Patch1D::~Patch1D()
 {
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
-        MPI_Type_free( &(ntype_[0][ix_isPrim]) );
-        MPI_Type_free( &(ntype_[1][ix_isPrim]) );
-        MPI_Type_free( &(ntypeSum_[0][ix_isPrim]) );
-        }
+        MPI_Type_free( &(ntype_1D[0][ix_isPrim]) );
+        MPI_Type_free( &(ntype_1D[1][ix_isPrim]) );
+        MPI_Type_free( &(ntypeSum_1D[0][ix_isPrim]) );
+    }
 
 }
 
@@ -105,7 +107,7 @@ void Patch1D::initSumField( Field* field, int iDim )
     // Send/Recv in a buffer data to sum
     /********************************************************************************/
         
-    MPI_Datatype ntype = ntypeSum_[iDim][isDual[0]];
+    MPI_Datatype ntype = ntypeSum_1D[iDim][isDual[0]];
     
     for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
             
@@ -198,7 +200,7 @@ void Patch1D::initExchange( Field* field )
     // Loop over dimField
     for (int iDim=0 ; iDim<nDim_fields_ ; iDim++) {
 
-        MPI_Datatype ntype = ntype_[iDim][isDual[0]];
+        MPI_Datatype ntype = ntype_1D[iDim][isDual[0]];
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
 
             if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
@@ -277,7 +279,7 @@ void Patch1D::initExchange( Field* field, int iDim )
 
     int istart, ix;
 
-    MPI_Datatype ntype = ntype_[iDim][isDual[0]];
+    MPI_Datatype ntype = ntype_1D[iDim][isDual[0]];
     for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
 
         if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
@@ -324,44 +326,4 @@ void Patch1D::finalizeExchange( Field* field, int iDim )
     }
 
 } // END finalizeExchange( Field* field, int iDim )
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Create MPI_Datatypes used in initSumField and initExchange
-// ---------------------------------------------------------------------------------------------------------------------
-void Patch1D::createType( Params& params )
-{
-    unsigned int clrw = params.clrw;
-    
-    // MPI_Datatype ntype_[nDim][primDual]
-    int ny = oversize[0];
-    int nline;
-
-    for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
-
-        // Standard Type
-        ntype_[0][ix_isPrim] = MPI_DATATYPE_NULL;
-        MPI_Type_contiguous(ny, MPI_DOUBLE, &(ntype_[0][ix_isPrim]));    //line
-        MPI_Type_commit( &(ntype_[0][ix_isPrim]) );
-
-        ntype_[1][ix_isPrim] = MPI_DATATYPE_NULL;
-        MPI_Type_contiguous(clrw, MPI_DOUBLE, &(ntype_[1][ix_isPrim]));   //clrw lines
-        MPI_Type_commit( &(ntype_[1][ix_isPrim]) );
-
-        ntypeSum_[0][ix_isPrim] = MPI_DATATYPE_NULL;
-
-        MPI_Datatype tmpType = MPI_DATATYPE_NULL;
-        MPI_Type_contiguous(1, MPI_DOUBLE, &(tmpType));    //line
-        MPI_Type_commit( &(tmpType) );
-
-
-        nline = 1 + 2*params.oversize[0] + ix_isPrim;
-        MPI_Type_contiguous(nline, tmpType, &(ntypeSum_[0][ix_isPrim]));    //line
-        MPI_Type_commit( &(ntypeSum_[0][ix_isPrim]) );
-
-        MPI_Type_free( &tmpType );
-            
-    }
-    
-} //END createType
 
