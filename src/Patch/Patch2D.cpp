@@ -85,6 +85,7 @@ void Patch2D::initStep2(Params& params)
 
 Patch2D::~Patch2D()
 {
+    if (!has_an_MPI_neighbor()) return;
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
         for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
             MPI_Type_free( &(ntype_[0][ix_isPrim][iy_isPrim]) );

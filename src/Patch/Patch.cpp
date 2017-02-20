@@ -139,7 +139,8 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
     // Initialize the probes
     probes = DiagnosticFactory::createProbes();
     
-    createType(params);
+    if (has_an_MPI_neighbor())
+        createType(params);
 }
 
 
@@ -164,7 +165,8 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
     // clone the probes
     probes = DiagnosticFactory::cloneProbes(patch->probes);
     
-    createType(params);
+    if (has_an_MPI_neighbor())
+        createType(params);
 }
 
 
