@@ -272,8 +272,8 @@ class Field(Diagnostic):
 			f.write('	<Domain>\n')
 			topology='				<Topology Name="Fields topology" TopologyType="'+str(ndim)+'DCoRectMesh" Dimensions="'+shapestr+'"/>\n'
 			geometry=('				<Geometry Name="Fields geometry" GeometryType="ORIGIN_'+"".join(["DX","DY","DZ"][0:ndim])+'">\n'
-				+'					<DataItem Format="XML" NumberType="float" Dimensions="'+str(ndim)+'">'+" ".join([str(o) for o in origin])+'</DataItem>\n'
-				+'					<DataItem Format="XML" NumberType="float" Dimensions="'+str(ndim)+'">'+" ".join([str(o) for o in cell_length])+'</DataItem>\n'
+				+'					<DataItem Format="XML" NumberType="Float" Dimensions="'+str(ndim)+'">'+" ".join([str(o) for o in origin])+'</DataItem>\n'
+				+'					<DataItem Format="XML" NumberType="Float" Dimensions="'+str(ndim)+'">'+" ".join([str(o) for o in cell_length])+'</DataItem>\n'
 				+'				</Geometry>\n')
 			XYZ = self._np.meshgrid(*[[origin[dim]+i*self._cell_length[dim] for i in range(shape[dim])] for dim in range(self._ndim)])
 			for dim in range(self._ndim):
@@ -317,8 +317,8 @@ class Field(Diagnostic):
 				f.write('		<Grid GridType="Uniform">\n')
 				f.write('			<Topology Name="Fields topology" TopologyType="'+str(ndim)+'DCoRectMesh" Dimensions="'+shapestr+'"/>\n')
 				f.write('			<Geometry Name="Fields geometry" GeometryType="ORIGIN_'+"".join(["DX","DY","DZ"][0:ndim])+'">\n')
-				f.write('				<DataItem Format="XML" NumberType="float" Dimensions="'+str(ndim)+'">'+" ".join([str(o) for o in origin])+'</DataItem>\n')
-				f.write('				<DataItem Format="XML" NumberType="float" Dimensions="'+str(ndim)+'">'+" ".join([str(o) for o in cell_length])+'</DataItem>\n')
+				f.write('				<DataItem Format="XML" NumberType="Float" Dimensions="'+str(ndim)+'">'+" ".join([str(o) for o in origin])+'</DataItem>\n')
+				f.write('				<DataItem Format="XML" NumberType="Float" Dimensions="'+str(ndim)+'">'+" ".join([str(o) for o in cell_length])+'</DataItem>\n')
 				f.write('			</Geometry>\n')
 				XYZ = self._np.meshgrid(*[[origin[dim]+i*cell_length[dim] for i in range(shape[dim])] for dim in reversed(range(ndim))])
 				for dim in range(ndim):

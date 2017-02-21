@@ -99,6 +99,7 @@ void Patch3D::initStep2(Params& params)
 
 Patch3D::~Patch3D()
 {
+    if (!has_an_MPI_neighbor()) return;
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
         for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
             for (int iz_isPrim=0 ; iz_isPrim<2 ; iz_isPrim++) {

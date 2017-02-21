@@ -145,7 +145,8 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
     // Initialize the probes
     probes = DiagnosticFactory::createProbes();
     
-    createType(params);
+    if (has_an_MPI_neighbor())
+        createType(params);
 }
 
 
@@ -170,7 +171,8 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
     // clone the probes
     probes = DiagnosticFactory::cloneProbes(patch->probes);
     
-    createType(params);
+    if (has_an_MPI_neighbor())
+        createType(params);
 }
 
 
@@ -178,6 +180,8 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
 // Delete Patch members
 // ---------------------------------------------------------------------------------------------------------------------
 Patch::~Patch() {
+    for(unsigned int i=0; i<probes.size(); i++)
+        delete probes[i];
     
     for(unsigned int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
     vecCollisions.clear();

@@ -226,6 +226,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         if ( vecPatches(ipatch)->isXmin() )
             for (int ispec=0 ; ispec<nSpecies ; ispec++)
                 vecPatches(ipatch)->vecSpecies[ispec]->setXminBoundaryCondition(); 
+        if (vecPatches(ipatch)->has_an_MPI_neighbor())
+            vecPatches(ipatch)->createType(params);
+
     }
     
     vecPatches.set_refHindex() ;

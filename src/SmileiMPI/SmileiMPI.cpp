@@ -282,6 +282,10 @@ void SmileiMPI::init_patch_count( Params& params)
             total_load += PatchLoad[ipatch];
         }
     }
+    for (int i=0 ; i< densityProfiles.size() ; i++)
+        delete densityProfiles[i];
+    for (int i=0 ; i< ppcProfiles.size() ; i++)
+        delete ppcProfiles[i];
     densityProfiles.resize(0); densityProfiles.clear();
     ppcProfiles.resize(0); ppcProfiles.clear();
     
