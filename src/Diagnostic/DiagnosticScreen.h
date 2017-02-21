@@ -1,5 +1,5 @@
-#ifndef DIAGNOSTICPARTICLES_H
-#define DIAGNOSTICPARTICLES_H
+#ifndef DIAGNOSTICSCREEN_H
+#define DIAGNOSTICSCREEN_H
 
 #include "Diagnostic.h"
 
@@ -9,17 +9,17 @@
 #include "SmileiMPI.h"
 #include "Histogram.h"
 
-class DiagnosticParticles : public Diagnostic {
+class DiagnosticScreen : public Diagnostic {
     friend class SmileiMPI;
 
 public :
     
     //! Default constructor
-    DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+    DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
     //! Cloning constructor
-    DiagnosticParticles( DiagnosticParticles* );
+    DiagnosticScreen( DiagnosticScreen* );
     //! Default destructor
-    ~DiagnosticParticles() override;
+    ~DiagnosticScreen() override;
     
     void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     
@@ -42,10 +42,13 @@ public :
         return size;
     };
     
+    //! vector for saving the output array
+    std::vector<double> data_sum;
+    
+    //! Id of this diag
+    int screen_id;
+    
 private :
-
-    //! number of timesteps during which outputs are averaged
-    int time_average;
     
     //! list of the species that will be accounted for
     std::vector<unsigned int> species;
@@ -53,16 +56,32 @@ private :
     //! quantity to be summed into the output array
     std::string output;
     
-    //! vector for saving the output array for time-averaging
-    std::vector<double> data_sum;
-    
     //! Histogram object
     Histogram * histogram;
     
     int output_size;
     
-    //! Minimum and maximum spatial coordinates that are useful for this diag
-    std::vector<double> spatial_min, spatial_max;
+    std::string screen_shape;
+    //! Relates to the shape of the screen (plane=0, sphere=1)
+    int screen_type;
+    
+    //! Screen reference point (plane point or sphere center)
+    std::vector<double> screen_point;
+    
+    //! Screen reference vector (plane normal or sphere radius)
+    std::vector<double> screen_vector;
+    std::vector<double> screen_unitvector;
+    //! norm of the vector
+    double screen_vectornorm;
+    //! Vectors forming an orthogonal base with the screen vector
+    std::vector<double> screen_vector_a, screen_vector_b;
+    
+    //! How to account for the particle direction: "both", "canceling", "forward" or "backward"
+    std::string direction;
+    int direction_type;
+    
+    //! Copy of the timestep
+    double dt;
 };
 
 #endif

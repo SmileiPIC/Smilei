@@ -296,10 +296,23 @@ class DiagProbe(SmileiComponent):
 class DiagParticles(SmileiComponent):
     """Diagnostic particles"""
     output = None
-    every = None
     time_average = 1
     species = None
     axes = []
+    every = None
+    flush_every = 1
+
+class DiagScreen(SmileiComponent):
+    """Diagnostic particles"""
+    shape = None
+    point = None
+    vector = None
+    direction = "both"
+    output = None
+    species = None
+    axes = []
+    time_average = 1
+    every = None
     flush_every = 1
 
 class DiagScalar(SmileiComponent):
