@@ -29,7 +29,6 @@ class Options(object):
 		self.vfactor = None
 		self.vmin    = None
 		self.vmax    = None
-		self.skipAnimation = False
 		self.streakPlot = False
 		self.figure0 = {}
 		self.figure1 = {"facecolor":"w"}
@@ -55,7 +54,6 @@ class Options(object):
 		self.vfactor  = kwargs.pop("vfactor",self.vfactor  )
 		self.vmin     = kwargs.pop("vmin"   ,kwargs.pop("data_min",self.vmin))
 		self.vmax     = kwargs.pop("vmax"   ,kwargs.pop("data_max",self.vmax))
-		self.skipAnimation = kwargs.pop("skipAnimation", self.skipAnimation)
 		self.streakPlot    = kwargs.pop("streakPlot"   , self.streakPlot   )
 		# Second, we manage all the other arguments that are directly the ones of matplotlib
 		for kwa, val in kwargs.items():
@@ -273,7 +271,7 @@ class SaveAs:
 
 
 
-def multiPlot(*Diags, **kwargs):
+def multiPlot(*Diags, skipAnimation=False, **kwargs):
 	""" multiplot(Diag1, Diag2, ..., shape=None, movie="", fps=15, dpi=200, saveAs=None)
 	
 	Plots simultaneously several diagnostics.
@@ -304,7 +302,6 @@ def multiPlot(*Diags, **kwargs):
 	fps    = kwargs.pop("fps"   , 15  )
 	dpi    = kwargs.pop("dpi"   , 200 )
 	saveAs = kwargs.pop("saveAs", None)
-	skipAnimation = kwargs.pop("skipAnimation", False )
 	# Gather all times
 	if skipAnimation:
 		alltimes = np.unique([Diag.times[-1]*Diag.timestep for Diag in Diags])
