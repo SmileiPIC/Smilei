@@ -271,7 +271,7 @@ class SaveAs:
 
 
 
-def multiPlot(*Diags, skipAnimation=False, **kwargs):
+def multiPlot(*Diags, **kwargs):
 	""" multiplot(Diag1, Diag2, ..., shape=None, movie="", fps=15, dpi=200, saveAs=None)
 	
 	Plots simultaneously several diagnostics.
@@ -302,6 +302,7 @@ def multiPlot(*Diags, skipAnimation=False, **kwargs):
 	fps    = kwargs.pop("fps"   , 15  )
 	dpi    = kwargs.pop("dpi"   , 200 )
 	saveAs = kwargs.pop("saveAs", None)
+	skipAnimation = kwargs.pop("skipAnimation", False )
 	# Gather all times
 	if skipAnimation:
 		alltimes = np.unique([Diag.times[-1]*Diag.timestep for Diag in Diags])
