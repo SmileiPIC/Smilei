@@ -115,7 +115,7 @@ public:
     //! Current spatial filter parameter: number of binomial pass
     unsigned int currentFilter_int;
     
-    //! is Friedman filter applied [Greenwood et al., J. Comp. Phys. 230, 5908 (2011)]
+    //! is Friedman filter applied [Greenwood et al., J. Comp. Phys. 201, 665 (2004)]
     bool Friedman_filter;
     
     //! Fridman filtering parameter [real between 0 and 1]
