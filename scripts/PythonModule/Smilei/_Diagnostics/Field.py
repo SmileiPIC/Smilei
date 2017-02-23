@@ -263,9 +263,13 @@ class Field(Diagnostic):
 		#magnetic_field = (field[0]=="B")
 		#origin = [ str(((field_axis==i)^magnetic_field)*(-0.5)) for i in range(ndim) ]
 		origin = [ 0. for i in range(ndim) ]
+		try:    requestedfields = self._fieldname
+		except: requestedfields = False
+		fileprefix = directory+sep+"Fields"+str(self.diagNumber)
+		if requestedfields: fileprefix += "".join(requestedfields)
 		
 		# Make the XDMF for usual time collections
-		with open(directory+sep+"Fields"+str(self.diagNumber)+".xmf",'w') as f:
+		with open(fileprefix+".xmf",'w') as f:
 			f.write('<?xml version="1.0" ?>\n')
 			f.write('<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>\n')
 			f.write('<Xdmf Version="3.0">\n')
@@ -291,6 +295,7 @@ class Field(Diagnostic):
 					f.write('					<DataItem ItemType="Uniform" NumberType="Float" Dimensions="'+shapestr+'" Format="XML" Reference="XML">/Xdmf/Domain/DataItem[@Name="Space'+"XYZ"[dim]+'"]</DataItem>\n')
 					f.write('				</Attribute>\n')
 				for field in item.values():
+					if requestedfields and field.name not in requestedfields: continue
 					location = self._os.path.abspath(item.file.filename)+':'+field.name
 					f.write('				<Attribute Name="'+self._os.path.basename(field.name)+'" Center="Node" AttributeType="Scalar">\n')
 					f.write('					<DataItem ItemType="Uniform" NumberType="Float" Precision="8" Dimensions="'+shapestr+'" Format="HDF">'+location+'</DataItem>\n')
@@ -309,7 +314,9 @@ class Field(Diagnostic):
 			cell_length = list(self._cell_length) + [self.timestep]
 			axes = "XYZ"[0:self._ndim] + "T"
 			fields = self._h5items[0].keys()
-			with open(directory+sep+"Fields"+str(self.diagNumber)+"_streak.xmf",'w') as f:
+			if requestedfields:
+				fields = [F for F in fields if F in requestedfields]
+			with open(fileprefix+"_streak.xmf",'w') as f:
 				f.write('<?xml version="1.0" ?>\n')
 				f.write('<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>\n')
 				f.write('<Xdmf Version="3.0">\n')
@@ -338,5 +345,57 @@ class Field(Diagnostic):
 				f.write('		</Grid>\n')
 				f.write('	</Domain>\n')
 				f.write('</Xdmf>\n')
+	
+	
+	# Convert data to VTK format
+	def toVTK(self, numberOfPieces=1):
+		if not self._validate(): return
+		
+		try: import vtk
+		except:
+			print "Python module 'vtk' not found. Could not export to VTK format"
+			return
+		
+		if self.dim != 3:
+			print "Cannot export "+str(self.dim)+"D data to VTK"
+			return
+		
+		# Define output directory
+		sep = self._os.sep
+		if len(self._results_path) == 1:
+			directory = self._results_path[0]
+		else:
+			directory = self._results_path[0] +sep+ ".."
+		directory += sep + "Field"+str(self.diagNumber)
+		if not self._os.path.exists(directory): self._os.makedirs(directory)
+		fileprefix = directory+sep+"Field"+str(self.diagNumber)+"_"
+		
+		numpoints = int(self._np.prod(self._shape))
+		spacings = self._cell_length[:]
+		extent = [0,self._shape[0]-1,0,self._shape[1]-1,0,self._shape[2]-1]
+		
+		ntimes = len(self.times)
+		for itime in range(ntimes):
+			data = self._getDataAtTime(self.times[itime])
+			data = data.astype('float32').flatten()
 			
-
+			arr = vtk.vtkFloatArray()
+			arr.SetNumberOfTuples(numpoints)
+			arr.SetNumberOfComponents(1)
+			arr.SetVoidArray(data, numpoints, 1)
+			arr.SetName(self.operation)
+			
+			img = vtk.vtkImageData()
+			img.SetOrigin(0.,0.,0.)
+			img.SetExtent(extent)
+			img.SetSpacing(spacings)
+			img.GetPointData().SetScalars(arr)
+			
+			writer = vtk.vtkXMLPImageDataWriter()
+			writer.SetFileName(fileprefix+str(itime)+".pvti")
+			writer.SetNumberOfPieces(numberOfPieces);
+			writer.SetEndPiece(numberOfPieces-1);
+			writer.SetStartPiece(0);
+			writer.SetInputData(img)
+			writer.Write()
+			
