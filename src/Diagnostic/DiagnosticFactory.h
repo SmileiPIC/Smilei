@@ -4,6 +4,7 @@
 #include "VectorPatch.h"
 
 #include "DiagnosticParticles.h"
+#include "DiagnosticScreen.h"
 #include "DiagnosticProbes.h"
 #include "DiagnosticScalar.h"
 #include "DiagnosticTrack.h"
@@ -47,6 +48,10 @@ public:
         
         for (unsigned int n_diag_particles = 0; n_diag_particles < PyTools::nComponents("DiagParticles"); n_diag_particles++) {
             vecDiagnostics.push_back( new DiagnosticParticles(params, smpi, vecPatches(0), n_diag_particles) );
+        }
+        
+        for (unsigned int n_diag_screen = 0; n_diag_screen < PyTools::nComponents("DiagScreen"); n_diag_screen++) {
+            vecDiagnostics.push_back( new DiagnosticScreen(params, smpi, vecPatches(0), n_diag_screen) );
         }
         
         return vecDiagnostics;

@@ -29,7 +29,6 @@ class Options(object):
 		self.vfactor = None
 		self.vmin    = None
 		self.vmax    = None
-		self.skipAnimation = False
 		self.streakPlot = False
 		self.figure0 = {}
 		self.figure1 = {"facecolor":"w"}
@@ -55,7 +54,6 @@ class Options(object):
 		self.vfactor  = kwargs.pop("vfactor",self.vfactor  )
 		self.vmin     = kwargs.pop("vmin"   ,kwargs.pop("data_min",self.vmin))
 		self.vmax     = kwargs.pop("vmax"   ,kwargs.pop("data_max",self.vmax))
-		self.skipAnimation = kwargs.pop("skipAnimation", self.skipAnimation)
 		self.streakPlot    = kwargs.pop("streakPlot"   , self.streakPlot   )
 		# Second, we manage all the other arguments that are directly the ones of matplotlib
 		for kwa, val in kwargs.items():
@@ -161,6 +159,10 @@ class Units(object):
 				self.ureg.define("M_r = [code_mass]"                      ) # mass
 				self.ureg.define("Q_r = [code_charge]"                    ) # charge
 				self.ureg.define("epsilon_0 = 1")
+				# Add radians and degrees
+				self.ureg.define("radian    = [] = rad"               )
+				self.ureg.define("degree    = pi/180*radian = deg"    )
+				self.ureg.define("steradian = radian ** 2 = sr"       )
 			self.ureg.define("L_r = V_r / W_r"                        ) # length
 			self.ureg.define("T_r = 1   / W_r"                        ) # time
 			self.ureg.define("P_r = M_r * V_r"                        ) # momentum

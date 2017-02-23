@@ -104,17 +104,23 @@ void Patch::initStep3( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
     // Compute patch boundaries
     min_local.resize(params.nDim_field, 0.);
     max_local.resize(params.nDim_field, 0.);
+    center   .resize(params.nDim_field, 0.);
     cell_starting_global_index.resize(params.nDim_field, 0);
+    radius = 0.;
     for (unsigned int i = 0 ; i<params.nDim_field ; i++) {
         min_local[i] =  Pcoordinates[i]   *params.n_space[i]*params.cell_length[i];
         max_local[i] = (Pcoordinates[i]+1)*params.n_space[i]*params.cell_length[i];
         cell_starting_global_index[i] += Pcoordinates[i]*params.n_space[i];
         cell_starting_global_index[i] -= params.oversize[i];
+        center[i] = (min_local[i]+max_local[i])*0.5;
+        radius += pow(max_local[i] - center[i] + params.cell_length[i], 2);
     }
+    radius = sqrt(radius);
     
     cell_starting_global_index[0] += n_moved;
     min_local[0] += n_moved*params.cell_length[0];
     max_local[0] += n_moved*params.cell_length[0];
+    center   [0] += n_moved*params.cell_length[0];
 }
 
 

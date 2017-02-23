@@ -4,7 +4,7 @@ Post-process
 A python module is provided to view or extract data from all the diagnostics.
 There are several ways to load this module in python.
 
-.. rubric:: 1. Install Smilei's module (recommended)
+.. rubric:: Recommended: Install Smilei's module
 
 ..
 
@@ -19,7 +19,7 @@ There are several ways to load this module in python.
     from Smilei import *
 
 
-.. rubric:: 2. Execute the ``Diagnostics.py`` script from python 
+.. rubric:: Alternative: Execute the ``Diagnostics.py`` script from python 
 
 ..
 
@@ -206,10 +206,33 @@ Open a Particle diagnostic
 
 ----
 
+Open a Screen diagnostic
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:method:: Smilei.Screen(diagNumber=None, timesteps=None, slice=None, units=[""], data_log=False, stride=1, **kwargs)
+  
+  * ``timesteps``, ``units``, ``data_log``: same as before.
+  * ``diagNumber``: number of the screen diagnostic (the first one has number 0).
+     | If not given, a list of available screen diagnostics is printed.
+     | It can also be an operation between several screen diagnostics.
+     | For example, ``"#0/#1"`` computes the division by diagnostics 0 and 1.
+  * ``slice``: identical to that of particle diagnostics.
+  * ``stride``: identical to that of particle diagnostics.
+  * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
+
+**Example**::
+  
+  S = Smilei("path/to/my/results")
+  Diag = S.Screen(0)
+
+
+
+----
+
 Open a Track diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.TrackParticles(species=None, select="", axes=[], timesteps=None, length=None, units=[""], skipAnimation=False, **kwargs)
+.. py:method:: Smilei.TrackParticles(species=None, select="", axes=[], timesteps=None, length=None, units=[""], **kwargs)
   
   * ``timesteps``, ``units``: same as before.
   * ``species``: the name of a tracked-particle species.
@@ -222,7 +245,6 @@ Open a Track diagnostic
      | **Example:** ``axes = ["x","y"]`` correspond to 2-D trajectories. 
      | **Example:** ``axes = ["x","px"]`` correspond to phase-space trajectories.
   * ``length``: The length of each plotted trajectory, in number of timesteps.
-  * ``skipAnimation``: when ``True``, the :py:func:`plot` will directly show the full trajectory.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
 **Example**::
@@ -286,18 +308,21 @@ It has three different syntaxes:
 Obtain the data as an array
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.Scalar.getData()
-               Smilei.Field.getData()
-               Smilei.Probe.getData()
-               Smilei.ParticleDiagnostic.getData()
+.. py:method:: Smilei.Scalar.getData(...)
+               Smilei.Field.getData(...)
+               Smilei.Probe.getData(...)
+               Smilei.ParticleDiagnostic.getData(...)
+               Smilei.Screen.getData(...)
   
   Returns a list of the data arrays, for each timestep requested.
-
-
+  By default, all timesteps are returned. If only one is desired, use the 
+  keyword-argument ``timestep`` in the ``getData()`` method.
+  
 .. py:method:: Smilei.Scalar.get()
                Smilei.Field.get()
                Smilei.Probe.get()
                Smilei.ParticleDiagnostic.get()
+               Smilei.Screen.get()
   
   Similar to :py:meth:`getData`, but returns more things as a python dictionary:
   
@@ -321,39 +346,33 @@ Obtain the data as an array
 
 ----
 
-Plot the data
-^^^^^^^^^^^^^
+Plot the data at one timestep
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This is the first method to plot the data. It produces a static image of the data
+at one given timestep.
 
 .. py:method:: Smilei.Scalar.plot(...)
                Smilei.Field.plot(...)
                Smilei.Probe.plot(...)
                Smilei.ParticleDiagnostic.plot(...)
                Smilei.TrackParticles.plot(...)
+               Smilei.Screen.plot(...)
   
   All these methods have the same arguments described below.
 
-.. py:function:: plot(figure=1, vmin=None, vmax=None, xmin=None, xmax=None, \
-                      ymin=None, ymax=None, xfactor=None, yfactor=None, streakPlot=False, \
-                      movie="", fps=10, dpi=100, saveAs=None)
+.. py:function:: plot(figure=1, axes=None, vmin=None, vmax=None, xmin=None, xmax=None, \
+                      ymin=None, ymax=None, xfactor=None, yfactor=None, saveAs=None)
   
-  Displays the data. All arguments of this method can be supplied to :py:meth:`Scalar`,
-  :py:meth:`Field`, :py:meth:`Probe`, :py:meth:`ParticleDiagnostic` or 
-  :py:meth:`TrackParticles` as well.
-  
-  | If the data is 1D, it is plotted as a **curve**, and is animated for all requested timesteps.
-  | If the data is 2D, it is plotted as a **map**, and is animated for all requested timesteps.
+  | If the data is 1D, it is plotted as a **curve**.
+  | If the data is 2D, it is plotted as a **map**.
   | If the data is 0D, it is plotted as a **curve** as function of time.
   
   * ``figure``: The figure number that is passed to matplotlib.
+  * ``axes``: Matplotlib's axes handle on which to plot. If None, make new axes.
   * ``vmin``, ``vmax``: data value limits.
   * ``xmin``, ``xmax``, ``ymin``, ``ymax``: axes limits.
   * ``xfactor``, ``yfactor``: factors to rescale axes.
-  * ``streakPlot``: when ``True``, will not be an animation, but will
-    have time on the vertical axis instead (only for 1D data).
-  * ``movie``: name of a file to create a movie, such as ``"movie.avi"``
-     | If ``movie=""`` no movie is created.
-  * ``fps``: number of frames per second (only if movie requested).
-  * ``dpi``: number of dots per inch (only if movie requested).
   * ``saveAs``: name of a directory where to save each frame as figures.
     You can even specify a filename such as ``mydir/prefix.png`` and it will automatically
     make successive files showing the timestep: ``mydir/prefix0.png``, ``mydir/prefix1.png``,
@@ -362,11 +381,67 @@ Plot the data
   **Example**::
     
     S = Smilei("path/to/my/results")
-    S.ParticleDiagnostic(1).plot(vmin=0, vmax=1e14)
+    S.ParticleDiagnostic(1).plot(timestep=40, vmin=0, vmax=1e14)
 
-..
+----
 
-  This takes the particle diagnostic #1 and plots the resulting array in figure 1 from 0 to 3e14.
+Plot the data streaked over time
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This second type of plot works only for 1D data. All available timesteps
+are streaked to produce a 2D image where the second axis is time.
+
+.. py:method:: Smilei.Scalar.streak(...)
+               Smilei.Field.streak(...)
+               Smilei.Probe.streak(...)
+               Smilei.ParticleDiagnostic.streak(...)
+               Smilei.TrackParticles.streak(...)
+               Smilei.Screen.streak(...)
+  
+  All these methods have the same arguments described below.
+
+.. py:function:: streak(figure=1, axes=None, vmin=None, vmax=None, xmin=None, xmax=None, \
+                      ymin=None, ymax=None, xfactor=None, yfactor=None, \
+                      saveAs=None)
+  
+  All arguments are identical to those of ``plot``.
+
+  **Example**::
+    
+    S = Smilei("path/to/my/results")
+    S.ParticleDiagnostic(1).streak()
+
+----
+
+Animated plot
+^^^^^^^^^^^^^
+
+This third plotting method animates the data over time.
+
+.. py:method:: Smilei.Scalar.animate(...)
+               Smilei.Field.animate(...)
+               Smilei.Probe.animate(...)
+               Smilei.ParticleDiagnostic.animate(...)
+               Smilei.TrackParticles.animate(...)
+               Smilei.Screen.animate(...)
+  
+  All these methods have the same arguments described below.
+
+.. py:function:: animate(figure=1, axes=None, vmin=None, vmax=None, xmin=None, xmax=None, \
+                      ymin=None, ymax=None, xfactor=None, yfactor=None, \
+                      movie="", fps=10, dpi=100, saveAs=None)
+  
+  All arguments are identical to those of ``plot``, with the addition of:
+  
+  * ``movie``: name of a file to create a movie, such as ``"movie.avi"``
+     | If ``movie=""`` no movie is created.
+  * ``fps``: number of frames per second (only if movie requested).
+  * ``dpi``: number of dots per inch (only if movie requested).
+
+  **Example**::
+    
+    S = Smilei("path/to/my/results")
+    S.ParticleDiagnostic(1).animate()
 
 ----
 
@@ -446,19 +521,18 @@ Options for the tick labels: ``style_x``, ``scilimits_x``, ``useOffset_x``, ``st
 ..
 
   Many colormaps are available from the *matplotlib* package. With ``cmap=""``, you will get a list of available colormaps.
+  Smilei's default colormap should have the names: ``smilei``, ``smilei_r``, ``smileiD`` and ``smileiD_r``.
 
 ----
 
 Update the plotting options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Passing arguments to :py:meth:`plot` or :py:meth:`set` automatically 
-updates the plotting options.
-
 .. py:method:: Smilei.Scalar.set(*args)
                Smilei.Field.set(*args)
                Smilei.Probe.set(*args)
                Smilei.ParticleDiagnostic.set(*args)
+               Smilei.Screen.set(*args)
   
   
   **Example**::
@@ -583,7 +657,7 @@ The particle diagnostic #0, as printed above, contains the density of the specie
 words, it corresponds to the phase-space of the electrons. We can plot this phase-space
 in the initial conditions, using::
 
-  >>> S.ParticleDiagnostic(0, timesteps=0, units=["um","c"]).plot()
+  >>> S.ParticleDiagnostic(0, units=["um","c"]).plot(timestep=0)
 
 .. figure:: _static/Tutorial3.png
   :width: 10cm
@@ -596,7 +670,7 @@ a drift velocity of :math:`0.05c`.
 
 To obtain the equivalent plot for the ions, use the particle diagnostic #1::
 
-  >>> S.ParticleDiagnostic(1, timesteps=0, units=["um","c"]).plot()
+  >>> S.ParticleDiagnostic(1, units=["um","c"]).plot(timestep=0)
 
 .. figure:: _static/Tutorial4.png
   :width: 10cm
@@ -613,7 +687,7 @@ Let us say we want to sum over the data that is contained between :math:`x=3` an
 and plot the result as a function of :math:`v_x`.
 This is achieved by the argument ``slice``::
 
-  >>> S.ParticleDiagnostic(0, timesteps=0, slice={"x":[3,4]}, units=["c"]).plot()
+  >>> S.ParticleDiagnostic(0, slice={"x":[3,4]}, units=["c"]).plot(timestep=0)
 
 
 .. figure:: _static/Tutorial5.png
@@ -625,7 +699,7 @@ We can see, again, that the peak is located at :math:`v_x=0.05c`.
 
 Now, let us do the slice on :math:`v_x` instead of :math:`x`::
   
-  >>> S.ParticleDiagnostic(0, timesteps=0, slice={"vx":"all"}, units=["um"]).plot(vmin=0, vmax=11)
+  >>> S.ParticleDiagnostic(0, slice={"vx":"all"}, units=["um"]).plot(timestep=0, vmin=0, vmax=11)
 
 .. figure:: _static/Tutorial6.png
   :width: 10cm
@@ -640,10 +714,9 @@ We obtain a constant density of :math:`10\,n_c`, which is consistent with input 
 
 .. rubric:: 6. Make animated plots
 
-To have an animation of the electron phase-space with time, remove
-the ``timesteps`` argument::
+To have an animation of the electron phase-space with time, use::
   
-  >>> S.ParticleDiagnostic(0, units=["um","c"]).plot()
+  >>> S.ParticleDiagnostic(0, units=["um","c"]).animate()
 
 You will see the electron velocity oscillate from :math:`0.05c` to :math:`-0.05c`.
 As explained before, this oscillation corresponds to a plasma wave with infinite wavelength.
@@ -651,7 +724,7 @@ As explained before, this oscillation corresponds to a plasma wave with infinite
 Note that all the available timesteps are animated. If you want to only animate
 between timesteps 20 and 60, use::
   
-  >>> S.ParticleDiagnostic( 0, units=["um","c"], timesteps=[20,60] ).plot()
+  >>> S.ParticleDiagnostic( 0, units=["um","c"], timesteps=[20,60] ).animate()
 
 
 .. rubric:: 7. Make multiple plots on the same figure

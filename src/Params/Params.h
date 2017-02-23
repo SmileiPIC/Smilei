@@ -59,6 +59,9 @@ public:
         return (timestep % print_every == 0);
     }
     
+    //! Returns a time string in the openPMD format
+    std::string getLocalTime();
+    
     //! sets nDim_particle and nDim_field based on the geometry
     void setDimensions();
     
