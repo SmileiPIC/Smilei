@@ -198,6 +198,10 @@ class TrackParticles(Diagnostic):
 		
 		self._rawData = None
 		
+		# Set the directory in case of exporting
+		self._exportPrefix = "TrackParticles_"+self.species+"_"+"".join(self.axes)
+		self._exportDir = self._setExportDir(self._exportPrefix)
+		
 		# Finish constructor
 		self.length = length or self.times[-1]
 		self.valid = True
@@ -345,15 +349,10 @@ class TrackParticles(Diagnostic):
 	# Convert to XDMF format for ParaView
 	def toXDMF(self):
 		
-		# Define output directory
-		sep = self._os.sep
-		if len(self._results_path) == 1:
-			directory = self._results_path[0]
-		else:
-			directory = self._results_path[0] +sep+ ".."
+		self._mkdir(self._exportDir)
 		
 		# Make the XDMF for usual time collections
-		with open(directory+sep+"TrackParticles_"+str(self.species)+".xmf",'w') as f:
+		with open(self._exportDir+sep+"TrackParticles_"+str(self.species)+".xmf",'w') as f:
 			f.write('<?xml version="1.0" ?>\n')
 			f.write('<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>\n')
 			f.write('<Xdmf Version="3.0">\n')

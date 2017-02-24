@@ -79,7 +79,7 @@ class Field(Diagnostic):
 		self._operation = self.operation
 		self._fieldname = []
 		for f in sortedfields:
-			if f in self._operation:
+			if self._re.search(r"\b"+f+r"\b",self._operation):
 				self._operation = self._re.sub(r"\b"+f+r"\b","C['"+f+"']",self._operation)
 				self._fieldname.append(f)
 		
@@ -181,6 +181,10 @@ class Field(Diagnostic):
 		for f in self._fieldname:
 			self._vunits = self._vunits.replace(f, units[f])
 		
+		# Set the directory in case of exporting
+		self._exportPrefix = "Field"+str(diagNumber)+"_"+"".join(self._fieldname)
+		self._exportDir = self._setExportDir(self._exportPrefix)
+		
 		# Finish constructor
 		self.valid = True
 	
@@ -243,13 +247,6 @@ class Field(Diagnostic):
 	# Convert to XDMF format for ParaView
 	def toXDMF(self):
 		
-		# Define output directory
-		sep = self._os.sep
-		if len(self._results_path) == 1:
-			directory = self._results_path[0]
-		else:
-			directory = self._results_path[0] +sep+ ".."
-		
 		# Calculate a few things
 		ndim = self._ndim
 		shape = self._h5items[0].values()[0].shape
@@ -265,7 +262,9 @@ class Field(Diagnostic):
 		origin = [ 0. for i in range(ndim) ]
 		try:    requestedfields = self._fieldname
 		except: requestedfields = False
-		fileprefix = directory+sep+"Fields"+str(self.diagNumber)
+		
+		self._mkdir(self._exportDir)
+		fileprefix = self._exportDir+sep+"Fields"+str(self.diagNumber)
 		if requestedfields: fileprefix += "".join(requestedfields)
 		
 		# Make the XDMF for usual time collections
@@ -345,57 +344,3 @@ class Field(Diagnostic):
 				f.write('		</Grid>\n')
 				f.write('	</Domain>\n')
 				f.write('</Xdmf>\n')
-	
-	
-	# Convert data to VTK format
-	def toVTK(self, numberOfPieces=1):
-		if not self._validate(): return
-		
-		try: import vtk
-		except:
-			print "Python module 'vtk' not found. Could not export to VTK format"
-			return
-		
-		if self.dim != 3:
-			print "Cannot export "+str(self.dim)+"D data to VTK"
-			return
-		
-		# Define output directory
-		sep = self._os.sep
-		if len(self._results_path) == 1:
-			directory = self._results_path[0]
-		else:
-			directory = self._results_path[0] +sep+ ".."
-		directory += sep + "Field"+str(self.diagNumber)
-		if not self._os.path.exists(directory): self._os.makedirs(directory)
-		fileprefix = directory+sep+"Field"+str(self.diagNumber)+"_"
-		
-		numpoints = int(self._np.prod(self._shape))
-		spacings = self._cell_length[:]
-		extent = [0,self._shape[0]-1,0,self._shape[1]-1,0,self._shape[2]-1]
-		
-		ntimes = len(self.times)
-		for itime in range(ntimes):
-			data = self._getDataAtTime(self.times[itime])
-			data = data.astype('float32').flatten()
-			
-			arr = vtk.vtkFloatArray()
-			arr.SetNumberOfTuples(numpoints)
-			arr.SetNumberOfComponents(1)
-			arr.SetVoidArray(data, numpoints, 1)
-			arr.SetName(self.operation)
-			
-			img = vtk.vtkImageData()
-			img.SetOrigin(0.,0.,0.)
-			img.SetExtent(extent)
-			img.SetSpacing(spacings)
-			img.GetPointData().SetScalars(arr)
-			
-			writer = vtk.vtkXMLPImageDataWriter()
-			writer.SetFileName(fileprefix+str(itime)+".pvti")
-			writer.SetNumberOfPieces(numberOfPieces);
-			writer.SetEndPiece(numberOfPieces-1);
-			writer.SetStartPiece(0);
-			writer.SetInputData(img)
-			writer.Write()
-			
