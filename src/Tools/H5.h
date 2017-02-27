@@ -53,23 +53,13 @@ class H5 {
     template<class T>
     static void attr(hid_t locationId, std::string attribute_name, T & attribute_value, hid_t type) {
         hid_t sid = H5Screate(H5S_SCALAR);
+        DEBUG("HERE " << attribute_name)
         hid_t aid = H5Acreate(locationId, attribute_name.c_str(), type, sid, H5P_DEFAULT, H5P_DEFAULT);
         H5Awrite(aid, type, &attribute_value);
         H5Sclose(sid);
         H5Aclose(aid);
     }
     
-    
-    //! write a vector<anything> as an attribute
-    template<class T>
-    static void attr(hid_t locationId, std::string attribute_name, std::vector<T>& attribute_value, hid_t type) {
-        hsize_t dims = attribute_value.size();
-        hid_t sid = H5Screate_simple(1, &dims, NULL);
-        hid_t aid = H5Acreate (locationId, attribute_name.c_str(), type, sid, H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(aid, type, &(attribute_value[0]));
-        H5Aclose(aid);
-        H5Sclose(sid);
-    }
     
     //! write a vector<unsigned int> as an attribute
     static void attr(hid_t locationId, std::string attribute_name, std::vector<unsigned int> attribute_value) {
@@ -85,8 +75,43 @@ class H5 {
     static void attr(hid_t locationId, std::string attribute_name, std::vector<std::string> attribute_value) {
         hid_t atype = H5Tcopy(H5T_C_S1);
         H5Tset_size(atype, H5T_VARIABLE);
-        attr(locationId, attribute_name, attribute_value, atype);
+        
+        for (unsigned int i=0; i< attribute_value.size() ; i++) {
+            DEBUG(attribute_value[i])
+        }
+        
+        std::vector<char*> wdata(attribute_value.size(),nullptr);
+        for (unsigned int i=0; i<attribute_value.size();i++) {
+            wdata[i]= new char(attribute_value[i].size()+1);
+            wdata[i][attribute_value[i].copy(wdata[i], attribute_value[i].size())] = '\0';
+        }
+        hsize_t dims = attribute_value.size();
+        hid_t sid = H5Screate_simple(1, &dims, NULL);
+        hid_t aid = H5Acreate (locationId, attribute_name.c_str(), atype, sid, H5P_DEFAULT, H5P_DEFAULT);
+        H5Awrite(aid, atype, &(wdata[0]));
+        H5Aclose(aid);
+        H5Sclose(sid);
+
         H5Tclose(atype);
+        for (unsigned int i=0; i<attribute_value.size();i++) {
+            delete wdata[i];
+        }
+
+    }
+    
+    //! write a vector<anything> as an attribute
+    template<class T>
+    static void attr(hid_t locationId, std::string attribute_name, std::vector<T>& attribute_value, hid_t type) {
+        DEBUG("HERE " << attribute_name)
+        for (unsigned int i=0; i< attribute_value.size() ; i++) {
+            DEBUG(attribute_value[i])
+        }
+        hsize_t dims = attribute_value.size();
+        hid_t sid = H5Screate_simple(1, &dims, NULL);
+        hid_t aid = H5Acreate (locationId, attribute_name.c_str(), type, sid, H5P_DEFAULT, H5P_DEFAULT);
+        H5Awrite(aid, type, &(attribute_value[0]));
+        H5Aclose(aid);
+        H5Sclose(sid);
     }
     
     

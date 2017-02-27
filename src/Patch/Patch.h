@@ -154,7 +154,6 @@ public:
     }
 
     inline bool has_an_MPI_neighbor() {
-        bool has(false);
         for ( unsigned int iDim=0 ; iDim<MPI_neighbor_.size() ; iDim++ ) {
             if ( ( MPI_neighbor_[iDim][0] != MPI_me_ ) &&  ( MPI_neighbor_[iDim][0]!= MPI_PROC_NULL ) )
                 return true;
@@ -165,7 +164,6 @@ public:
     }
 
     inline bool has_an_MPI_neighbor(int iDim) {
-        bool has(false);
         {
             if ( ( MPI_neighbor_[iDim][0] != MPI_me_ ) &&  ( MPI_neighbor_[iDim][0]!= MPI_PROC_NULL ) )
                 return true;
@@ -176,7 +174,6 @@ public:
     }
 
     inline bool has_an_local_neighbor(int iDim) {
-        bool has(false);
         {
             if ( ( MPI_neighbor_[iDim][0] == MPI_me_ ) &&  ( MPI_neighbor_[iDim][0]!= MPI_PROC_NULL ) )
                 return true;
