@@ -197,7 +197,7 @@ void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, bool newfile )
             H5::attr( fileId_, "fieldSolver", "other");
             H5::attr( fileId_, "fieldSolverParameters", params.maxwell_sol);
         }
-        std::vector<std::string> fieldBoundary(params.nDim_field * 2), fieldBoundaryParameters(params.nDim_field * 2);
+        vector<string> fieldBoundary(params.nDim_field * 2), fieldBoundaryParameters(params.nDim_field * 2);
         em_bc(params.bc_em_type_x[0], fieldBoundary[0], fieldBoundaryParameters[0]);
         em_bc(params.bc_em_type_x[1], fieldBoundary[1], fieldBoundaryParameters[1]);
         if( params.nDim_field > 1 ) {
@@ -208,7 +208,7 @@ void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, bool newfile )
                 em_bc(params.bc_em_type_z[1], fieldBoundary[5], fieldBoundaryParameters[5]);
             }
         }
-//        H5::attr( fileId_, "fieldBoundary", fieldBoundary);
+        H5::attr( fileId_, "fieldBoundary", fieldBoundary);
         H5::attr( fileId_, "fieldBoundaryParameters", fieldBoundaryParameters);
         vector<string> particleBoundary(params.nDim_field * 2, ""), particleBoundaryParameters(params.nDim_field * 2, "");
         H5::attr( fileId_, "particleBoundary", particleBoundary);
