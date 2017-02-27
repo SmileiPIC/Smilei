@@ -4,34 +4,10 @@
 #include "Diagnostic.h"
 
 #include "Params.h"
+#include "Species.h"
 #include "Patch.h"
 #include "SmileiMPI.h"
-
-
-// Class for each axis of the particle diags
-struct DiagnosticParticlesAxis {
-
-    //! quantity of the axis (e.g. 'x', 'px', ...)
-    std::string type;
-    
-    //! starting point for the axis binning
-    double min;
-    //! ending point for the axis binning
-    double max;
-    //! number of bins for the axis binning
-    int nbins;
-    
-    //! determines whether linear scale or log scale
-    bool logscale;
-    
-    //! determines whether particles beyond min and max are counted in the first and last bin
-    bool edge_inclusive;
-    
-    //! List of coefficients (a,b,c) for a "composite" type of the form "ax+by+cz"
-    std::vector<double> coefficients;
-    
-};
-
+#include "Histogram.h"
 
 class DiagnosticParticles : public Diagnostic {
     friend class SmileiMPI;
@@ -64,7 +40,7 @@ public :
         // + data_array + index_array +  axis_array
         // + nparts_max * (sizeof(double)+sizeof(int)+sizeof(double)) 
         return size;
-    }
+    };
     
 private :
 
@@ -74,17 +50,19 @@ private :
     //! list of the species that will be accounted for
     std::vector<unsigned int> species;
     
-    //! vector of axes
-    std::vector<DiagnosticParticlesAxis> axes;
-    
     //! quantity to be summed into the output array
     std::string output;
     
     //! vector for saving the output array for time-averaging
     std::vector<double> data_sum;
     
+    //! Histogram object
+    Histogram * histogram;
+    
     int output_size;
-
+    
+    //! Minimum and maximum spatial coordinates that are useful for this diag
+    std::vector<double> spatial_min, spatial_max;
 };
 
 #endif

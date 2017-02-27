@@ -52,6 +52,9 @@ public:
     //! Method used to center the Magnetic fields (used to push the particles)
     void centerMagneticFields();
     
+    //! Method used to apply a single-pass binomial filter on currents
+    void binomialCurrentFilter();
+    
     //! Creates a new field with the right characteristics, depending on the name
     Field * createField(std::string fieldname);
     

@@ -138,6 +138,7 @@ class Main(SmileiSingleton):
     bc_em_type_y = []
     bc_em_type_z = []
     time_fields_frozen = 0.
+    currentFilter_int = 0
     
     # Default Misc
     referenceAngularFrequency_SI = 0.
@@ -154,6 +155,8 @@ class Main(SmileiSingleton):
             else:
                 if Main.cell_length is None:
                     raise Exception("Need cell_length to calculate timestep")
+                
+                # Yee solver
                 if Main.maxwell_sol == 'Yee':
                     if Main.geometry == '1d3v':
                         Main.timestep = Main.timestep_over_CFL*Main.cell_length[0]
@@ -163,6 +166,22 @@ class Main(SmileiSingleton):
                         Main.timestep = Main.timestep_over_CFL/math.sqrt(1.0/(Main.cell_length[0]**2)+1.0/(Main.cell_length[1]**2)+1.0/(Main.cell_length[2]**2))
                     else: 
                         raise Exception("timestep: geometry not implemented "+Main.geometry)
+                            
+                # Grassi
+                elif Main.maxwell_sol == 'Grassi':
+                    if Main.geometry == '2d3v':
+                        Main.timestep = Main.timestep_over_CFL * 0.7071067811*Main.cell_length[0];
+                    else:
+                        raise Exception("timestep: geometry not implemented "+Main.geometry)
+                        
+                # GrassiSpL
+                elif Main.maxwell_sol == 'GrassiSpL':
+                    if Main.geometry == '2d3v':
+                        Main.timestep = Main.timestep_over_CFL * 0.6471948469*Main.cell_length[0];
+                    else:
+                        raise Exception("timestep: geometry not implemented "+Main.geometry)
+
+                # None recognized solver
                 else:
                     raise Exception("timestep: maxwell_sol not implemented "+Main.maxwell_sol)
 
@@ -277,10 +296,23 @@ class DiagProbe(SmileiComponent):
 class DiagParticles(SmileiComponent):
     """Diagnostic particles"""
     output = None
-    every = None
     time_average = 1
     species = None
     axes = []
+    every = None
+    flush_every = 1
+
+class DiagScreen(SmileiComponent):
+    """Diagnostic particles"""
+    shape = None
+    point = None
+    vector = None
+    direction = "both"
+    output = None
+    species = None
+    axes = []
+    time_average = 1
+    every = None
     flush_every = 1
 
 class DiagScalar(SmileiComponent):

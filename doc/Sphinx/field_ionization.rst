@@ -133,14 +133,13 @@ with a short (few optical-cycle long) laser with wavelength :math:`\lambda_0 = 0
 .. _FieldIonization:
 
 .. figure:: _static/FieldIonization.png
-  :width: 10cm
   
   Results of two benchmarks for the field ionization Model.
-  a) Average charge state of hydrogen ions as a function of time when irradiated by a laser.
+  Top: Average charge state of hydrogen ions as a function of time when irradiated by a laser.
   The red solid line corresponds to PIC results, the dashed line corresponds to
   theoretical predictions using the cycle-averaged ADK growth rate of :eq:`ADKrate`.
-  b) Relative distribution of carbon ions for different charge states as a function
-  of time. Dashed lines correspond to PIC results, thick gray lines correspond to
+  Bottom: Relative distribution of carbon ions for different charge states as a function
+  of time. Dashed lines correspond to PIC results, thin gray lines correspond to
   theoretical predictions obtained from :eq:`rateEqs`. The Gaussian gray shape
   indicates the laser electric field envelope.
 
@@ -148,7 +147,7 @@ In the first benchmark, featuring hydrogen, the laser intensity is kept constant
 at :math:`I_L = 10^{14}~{\rm W/cm^2}`, corresponding to a normalized vector
 potential :math:`a_0 \simeq 6.81 \times 10^{-3}`, over 10 optical cycles.
 The resulting averaged ion charge in the simulation is presented as a function of
-time in :numref:`FieldIonization` a. It is found to be in excellent agreement
+time in :numref:`FieldIonization` (top). It is found to be in excellent agreement
 with the theoretical prediction considering the cycle averaged ionization rate
 :math:`\Gamma_{\rm ADK} \simeq 2.55\times10^{12}~{\rm s^{-1}}` computed
 from :eq:`ADKrate`.
@@ -157,7 +156,7 @@ The second benchmark features carbon ions. The laser has a peak intensity
 :math:`I_L = 5 \times 10^{16}~{\rm W/cm^2}`, corresponding to a normalized
 vector potential :math:`a_0 \simeq 1.52 \times 10^{-1}`, and a gaussian time profile
 with FWHM :math:`\tau_L=5~\lambda_0/c` (in terms of
-electric field). :numref:`FieldIonization` b shows, as function of time,
+electric field). :numref:`FieldIonization` (bottom) shows, as function of time,
 the relative distribution of carbon ions for different charge states
 (from 0 to :math:`+4`). These numerical results are shown to be in excellent
 agreement with theoretical predictions obtained by numerically solving the coupled

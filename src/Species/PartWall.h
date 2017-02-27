@@ -28,7 +28,7 @@ public:
     int (*wall) ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
     
     //! Method which applies particles wall
-    int apply (Particles &particles, int ipart, Species *species, double &nrj_iPart);
+    int apply (Particles &particles, int ipart, Species *species, double dtgf, double &nrj_iPart);
     
 private:
     //! position of a wall in its direction

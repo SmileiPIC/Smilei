@@ -576,6 +576,51 @@ void ElectroMagn2D::saveMagneticFields()
 }//END saveMagneticFields
 
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Apply a single pass binomial filter on currents
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn2D::binomialCurrentFilter()
+{
+    // Static-cast of the currents
+    Field2D* Jx2D = static_cast<Field2D*>(Jx_);
+    Field2D* Jy2D = static_cast<Field2D*>(Jy_);
+    Field2D* Jz2D = static_cast<Field2D*>(Jz_);
+    
+    // applying a single pass of the binomial filter
+    // 9-point filter: (4*point itself + 2*(4*direct neighbors) + 1*(4*cross neghbors))/16
+    
+    // on Jx^(d,p) -- external points are treated by exchange
+    Field2D *tmp   = new Field2D(dimPrim, 0, false);
+    tmp->copyFrom(Jx2D);
+    for (unsigned int i=1; i<nx_d-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            (*Jx2D)(i,j) = ((*tmp)(i+1,j-1) + 2.*(*tmp)(i+1,j) + (*tmp)(i+1,j+1) + 2.*(*tmp)(i,j-1) + 4.*(*tmp)(i,j) + 2.*(*tmp)(i,j+1) + (*tmp)(i-1,j-1) + 2.*(*tmp)(i-1,j) + (*tmp)(i-1,j+1))/16.;
+        }
+    }
+    delete tmp;
+    
+    // on Jy^(p,d) -- external points are treated by exchange
+    tmp   = new Field2D(dimPrim, 1, false);
+    tmp->copyFrom(Jy2D);
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_d-1; j++) {
+            (*Jy2D)(i,j) = ((*tmp)(i+1,j-1) + 2.*(*tmp)(i+1,j) + (*tmp)(i+1,j+1) + 2.*(*tmp)(i,j-1) + 4.*(*tmp)(i,j) + 2.*(*tmp)(i,j+1) + (*tmp)(i-1,j-1) + 2.*(*tmp)(i-1,j) + (*tmp)(i-1,j+1))/16.;
+        }
+    }
+    delete tmp;
+    
+    // on Jz^(p,p) -- external points are treated by exchange
+    tmp   = new Field2D(dimPrim, 2, false);
+    tmp->copyFrom(Jz2D);
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            (*Jz2D)(i,j) = ((*tmp)(i+1,j-1) + 2.*(*tmp)(i+1,j) + (*tmp)(i+1,j+1) + 2.*(*tmp)(i,j-1) + 4.*(*tmp)(i,j) + 2.*(*tmp)(i,j+1) + (*tmp)(i-1,j-1) + 2.*(*tmp)(i-1,j) + (*tmp)(i-1,j+1))/16.;
+        }
+    }
+    delete tmp;
+    
+}//END binomialCurrentFilter
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Solve the Maxwell-Ampere equation
@@ -594,6 +639,7 @@ void ElectroMagn2D::solveMaxwellAmpere()
     Field2D* Jz2D = static_cast<Field2D*>(Jz_);
     // Electric field Ex^(d,p)
     for (unsigned int i=0 ; i<nx_d ; i++) {
+        #pragma omp simd
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*Ex2D)(i,j) += -timestep*(*Jx2D)(i,j) + dt_ov_dy * ( (*Bz2D)(i,j+1) - (*Bz2D)(i,j) );
         }
@@ -601,6 +647,7 @@ void ElectroMagn2D::solveMaxwellAmpere()
     
     // Electric field Ey^(p,d)
     for (unsigned int i=0 ; i<nx_p ; i++) {
+        #pragma omp simd
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Ey2D)(i,j) += -timestep*(*Jy2D)(i,j) - dt_ov_dx * ( (*Bz2D)(i+1,j) - (*Bz2D)(i,j) );
         }
@@ -608,6 +655,7 @@ void ElectroMagn2D::solveMaxwellAmpere()
     
     // Electric field Ez^(p,p)
     for (unsigned int i=0 ;  i<nx_p ; i++) {
+        #pragma omp simd
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*Ez2D)(i,j) += -timestep*(*Jz2D)(i,j)
             +               dt_ov_dx * ( (*By2D)(i+1,j) - (*By2D)(i,j) )
@@ -633,6 +681,7 @@ void ElectroMagn2D::centerMagneticFields()
     
     // Magnetic field Bx^(p,d)
     for (unsigned int i=0 ; i<nx_p ; i++) {
+        #pragma omp simd
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Bx2D_m)(i,j) = ( (*Bx2D)(i,j) + (*Bx2D_m)(i,j) )*0.5;
         }
@@ -640,6 +689,7 @@ void ElectroMagn2D::centerMagneticFields()
     
     // Magnetic field By^(d,p)
 //    for (unsigned int i=0 ; i<nx_d ; i++) {
+        #pragma omp simd
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*By2D_m)(i,j) = ( (*By2D)(i,j) + (*By2D_m)(i,j) )*0.5;
         }
@@ -647,13 +697,16 @@ void ElectroMagn2D::centerMagneticFields()
     
     // Magnetic field Bz^(d,d)
 //    for (unsigned int i=0 ; i<nx_d ; i++) {
+        #pragma omp simd
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Bz2D_m)(i,j) = ( (*Bz2D)(i,j) + (*Bz2D_m)(i,j) )*0.5;
         } // end for j
       } // end for i
+        #pragma omp simd
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*By2D_m)(nx_p,j) = ( (*By2D)(nx_p,j) + (*By2D_m)(nx_p,j) )*0.5;
         }
+        #pragma omp simd
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Bz2D_m)(nx_p,j) = ( (*Bz2D)(nx_p,j) + (*Bz2D_m)(nx_p,j) )*0.5;
         } // end for j
@@ -702,7 +755,7 @@ void ElectroMagn2D::computeTotalRhoJ()
                 for (unsigned int j=0 ; j<ny_p ; j++)
                     (*Jx2D)(i,j) += (*Jx2D_s)(i,j);
         }
-        if( Jx_s[ispec] ) {
+        if( Jy_s[ispec] ) {
             Field2D* Jy2D_s  = static_cast<Field2D*>(Jy_s[ispec]);
             for (unsigned int i=0 ; i<nx_p ; i++)
                 for (unsigned int j=0 ; j<=ny_p ; j++)

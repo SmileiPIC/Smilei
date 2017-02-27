@@ -232,10 +232,14 @@ public:
     }
     
     inline int getMemFootPrint() {
-        int speciesSize  = ( 2*nDim_particle + 3 + 1 )*sizeof(double) + sizeof(short);
+        /*int speciesSize  = ( 2*nDim_particle + 3 + 1 )*sizeof(double) + sizeof(short);
         if ( particles->isTest )
-            speciesSize += sizeof ( unsigned int );
+            speciesSize += sizeof ( unsigned int );*/
         //speciesSize *= getNbrOfParticles();
+        int speciesSize(0);
+        speciesSize += particles->double_prop.size()*sizeof(double);
+        speciesSize += particles->short_prop.size()*sizeof(short);
+        speciesSize += particles->uint_prop.size()*sizeof(unsigned int );
         speciesSize *= getParticlesCapacity();
         return speciesSize;
     }
@@ -245,6 +249,7 @@ public:
     
     //! 2 times pi
     double PI2;
+    double PI_ov_2;
     double dx_inv_, dy_inv_, dz_inv_;
 
     //! Boundary condition for the Particles of the considered Species

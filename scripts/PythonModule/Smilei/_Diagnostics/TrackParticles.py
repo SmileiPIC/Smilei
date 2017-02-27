@@ -198,6 +198,10 @@ class TrackParticles(Diagnostic):
 		
 		self._rawData = None
 		
+		# Set the directory in case of exporting
+		self._exportPrefix = "TrackParticles_"+self.species+"_"+"".join(self.axes)
+		self._exportDir = self._setExportDir(self._exportPrefix)
+		
 		# Finish constructor
 		self.length = length or self.times[-1]
 		self.valid = True
@@ -341,3 +345,52 @@ class TrackParticles(Diagnostic):
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
 		self._setSomeOptions(ax)
 		return 1
+	
+	# Convert to XDMF format for ParaView
+	def toXDMF(self):
+		
+		self._mkdir(self._exportDir)
+		
+		# Make the XDMF for usual time collections
+		with open(self._exportDir+sep+"TrackParticles_"+str(self.species)+".xmf",'w') as f:
+			f.write('<?xml version="1.0" ?>\n')
+			f.write('<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>\n')
+			f.write('<Xdmf Version="3.0">\n')
+			f.write('	<Domain>\n')
+			npoints = self._h5items['Id'][0].shape[1]
+			f.write('		<DataItem Name="Zeroes" ItemType="Uniform" NumberType="Float" Dimensions="'+str(npoints)+'" Format="XML">'+"0. "*npoints+'</DataItem>\n')
+			f.write('		<Grid GridType="Collection" CollectionType="Temporal">\n')
+			nfiles = len(self._h5items['Id'])
+			for ifile in range(nfiles):
+				file = self._h5items['Id'][ifile].file
+				filename = self._os.path.abspath(file.filename)
+				ntimes = len(file['Times'])
+				for itime in range(ntimes):
+					selection = "%d,%d:%d,%d:%d,%d:%d,%d" % (itime,0, 1,1, 1,npoints, 1,npoints)
+					f.write('			<Grid Name="Timestep_'+str(itime)+'" GridType="Uniform">\n')
+					f.write('				<Time Value="'+str(file['Times'][itime])+'" />\n')
+					f.write('				<Topology TopologyType="Polyvertex" NumberOfElements="'+str(npoints)+'"/>\n')
+					f.write('				<Geometry Name="geometry" GeometryType="VXVYVZ">\n')
+					f.write('					<DataItem ItemType="Uniform" NumberType="Float" Dimensions="'+str(npoints)+'" Precision="8" Format="HDF">'+filename+':/Position-0|'+selection+'</DataItem>\n')
+					if self._ndim < 2:
+						f.write('					<DataItem ItemType="Uniform" NumberType="Float" Dimensions="'+str(npoints)+'" Precision="8" Format="XML" Reference="XML">/Xdmf/Domain/DataItem[@Name="Zeroes"]</DataItem>\n')
+					else:
+						f.write('					<DataItem ItemType="Uniform" NumberType="Float" Dimensions="'+str(npoints)+'" Precision="8" Format="HDF">'+filename+':/Position-1|'+selection+'</DataItem>\n')
+					if self._ndim < 3:
+						f.write('					<DataItem ItemType="Uniform" NumberType="Float" Dimensions="'+str(npoints)+'" Precision="8" Format="XML" Reference="XML">/Xdmf/Domain/DataItem[@Name="Zeroes"]</DataItem>\n')
+					else:
+						f.write('					<DataItem ItemType="Uniform" NumberType="Float" Dimensions="'+str(npoints)+'" Precision="8" Format="HDF">'+filename+':/Position-2|'+selection+'</DataItem>\n')
+					f.write('				</Geometry>\n')
+					f.write('				<Attribute Name="Px" Center="Node" AttributeType="Scalar">\n')
+					f.write('					<DataItem ItemType="Uniform" NumberType="Float" Precision="8" Dimensions="'+str(npoints)+'" Format="HDF">'+filename+':/Momentum-0|'+selection+'</DataItem>\n')
+					f.write('				</Attribute>\n')
+					f.write('				<Attribute Name="Py" Center="Node" AttributeType="Scalar">\n')
+					f.write('					<DataItem ItemType="Uniform" NumberType="Float" Precision="8" Dimensions="'+str(npoints)+'" Format="HDF">'+filename+':/Momentum-1|'+selection+'</DataItem>\n')
+					f.write('				</Attribute>\n')
+					f.write('				<Attribute Name="Pz" Center="Node" AttributeType="Scalar">\n')
+					f.write('					<DataItem ItemType="Uniform" NumberType="Float" Precision="8" Dimensions="'+str(npoints)+'" Format="HDF">'+filename+':/Momentum-2|'+selection+'</DataItem>\n')
+					f.write('				</Attribute>\n')
+					f.write('			</Grid>\n')
+			f.write('		</Grid>\n')
+			f.write('	</Domain>\n')
+			f.write('</Xdmf>\n')

@@ -59,6 +59,9 @@ public:
         return (timestep % print_every == 0);
     }
     
+    //! Returns a time string in the openPMD format
+    std::string getLocalTime();
+    
     //! sets nDim_particle and nDim_field based on the geometry
     void setDimensions();
     
@@ -100,7 +103,10 @@ public:
     
    
     // 2D Maxwell Solver  
-    std::string maxwell_sol; 
+    std::string maxwell_sol;
+    
+    //! Current spatial filter parameter: number of binomial pass
+    unsigned int currentFilter_int;
     
     //! Clusters width
     //unsigned int clrw;

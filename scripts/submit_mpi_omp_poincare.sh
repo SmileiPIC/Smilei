@@ -15,6 +15,7 @@
 module load intel openmpi
 export OMP_NUM_THREADS=8
 export OMP_SCHEDULE=dynamic
+export OMP_PROC_BIND=true
 
 mpirun -bysocket -bind-to-socket ../src/smilei test_reconnection.in
 

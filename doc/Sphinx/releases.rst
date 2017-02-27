@@ -12,6 +12,15 @@ but the process is fast and straightforward.
 
 ----
 
+Upcoming changes
+^^^^^^^^^^^^^^^^
+
+* *Screen* diagnostics
+* Exporting diagnostics to XDMF for reading in ParaView or VisIt
+* Bugfixes (in tracked particles and walls), optimizations
+
+----
+
 .. _latestVersion:
 
 Current release 3.0
@@ -43,8 +52,6 @@ Release 2.0
 
 **Download**: `Smilei v2.2 <_downloads/smilei-v2.2.tar.gz>`_
 
-Major improvements:
-
 * **state-of-the-art dynamic load balancing**
 * full *python* namelist, allowing for complex, user-friendly input
 * external fields and antennas
@@ -59,16 +66,9 @@ Release 1.0
 
 **Download**: `Smilei v1.0 <_downloads/smilei-v1.0.tar.gz>`_
 
-After nearly two years of development, :program:`Smilei` v1.0 offers some nice features:
-
 * 1D & 2D cartesian geometries
 * Moving window
 * Hybrid MPI-OpenMP parallelization
 * Field ionization
 * Some python diagnostics
-
-.. warning::
-  This version does not have associated documentation.
-  Please refer to the examples.
-
 

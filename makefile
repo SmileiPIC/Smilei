@@ -63,7 +63,7 @@ endif
 ifneq (,$(findstring debug,$(config)))
 	CXXFLAGS += -g -pg -D__DEBUG -O0
 else
-	CXXFLAGS += -O3
+	CXXFLAGS += -O3 
 endif
 
 ifneq (,$(findstring scalasca,$(config)))

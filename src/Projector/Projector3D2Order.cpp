@@ -46,7 +46,7 @@ Projector3D2Order::~Projector3D2Order()
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
+void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
 {
 
     // -------------------------------------
@@ -244,7 +244,7 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local current densities (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
+void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
 {
 
     // -------------------------------------
@@ -533,7 +533,109 @@ void Projector3D2Order::operator() (double* rho, Particles &particles, unsigned 
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector3D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion)
 {
-    ERROR("Projection of ionization current not yet defined for 3D 2nd order");
+    Field3D* Jx3D  = static_cast<Field3D*>(Jx);
+    Field3D* Jy3D  = static_cast<Field3D*>(Jy);
+    Field3D* Jz3D  = static_cast<Field3D*>(Jz);
+    
+    
+    //Declaration of local variables
+    int ip, id, jp, jd, kp, kd;
+    double xpn, xpmxip, xpmxip2, xpmxid, xpmxid2;
+    double ypn, ypmyjp, ypmyjp2, ypmyjd, ypmyjd2;
+    double zpn, zpmzkp, zpmzkp2, zpmzkd, zpmzkd2;
+    double Sxp[3], Sxd[3], Syp[3], Syd[3], Szp[3], Szd[3];
+    
+    // weighted currents
+    double Jx_ion = Jion.x * particles.weight(ipart);
+    double Jy_ion = Jion.y * particles.weight(ipart);
+    double Jz_ion = Jion.z * particles.weight(ipart);
+    
+    //Locate particle on the grid
+    xpn    = particles.position(0, ipart) * dx_inv_;  // normalized distance to the first node
+    ypn    = particles.position(1, ipart) * dy_inv_;  // normalized distance to the first node
+    zpn    = particles.position(1, ipart) * dz_inv_;  // normalized distance to the first node
+    
+    // x-primal index
+    ip      = round(xpn);                    // x-index of the central node
+    xpmxip  = xpn - (double)ip;              // normalized distance to the nearest grid point
+    xpmxip2 = xpmxip*xpmxip;                 // square of the normalized distance to the nearest grid point
+    
+    // x-dual index
+    id      = round(xpn+0.5);                // x-index of the central node
+    xpmxid  = xpn - (double)id + 0.5;        // normalized distance to the nearest grid point
+    xpmxid2 = xpmxid*xpmxid;                 // square of the normalized distance to the nearest grid point
+    
+    // y-primal index
+    jp      = round(ypn);                    // y-index of the central node
+    ypmyjp  = ypn - (double)jp;              // normalized distance to the nearest grid point
+    ypmyjp2 = ypmyjp*ypmyjp;                 // square of the normalized distance to the nearest grid point
+    
+    // y-dual index
+    jd      = round(ypn+0.5);                // y-index of the central node
+    ypmyjd  = ypn - (double)jd + 0.5;        // normalized distance to the nearest grid point
+    ypmyjd2 = ypmyjd*ypmyjd;                 // square of the normalized distance to the nearest grid point
+    
+    // z-primal index
+    kp      = round(zpn);                    // z-index of the central node
+    zpmzkp  = zpn - (double)kp;              // normalized distance to the nearest grid point
+    zpmzkp2 = zpmzkp*zpmzkp;                 // square of the normalized distance to the nearest grid point
+    
+    // z-dual index
+    kd      = round(zpn+0.5);                // z-index of the central node
+    zpmzkd  = zpn - (double)kd + 0.5;        // normalized distance to the nearest grid point
+    zpmzkd2 = zpmzkd*zpmzkd;                 // square of the normalized distance to the nearest grid point
+    
+    Sxp[0] = 0.5 * (xpmxip2-xpmxip+0.25);
+    Sxp[1] = (0.75-xpmxip2);
+    Sxp[2] = 0.5 * (xpmxip2+xpmxip+0.25);
+    
+    Sxd[0] = 0.5 * (xpmxid2-xpmxid+0.25);
+    Sxd[1] = (0.75-xpmxid2);
+    Sxd[2] = 0.5 * (xpmxid2+xpmxid+0.25);
+    
+    Syp[0] = 0.5 * (ypmyjp2-ypmyjp+0.25);
+    Syp[1] = (0.75-ypmyjp2);
+    Syp[2] = 0.5 * (ypmyjp2+ypmyjp+0.25);
+    
+    Syd[0] = 0.5 * (ypmyjd2-ypmyjd+0.25);
+    Syd[1] = (0.75-ypmyjd2);
+    Syd[2] = 0.5 * (ypmyjd2+ypmyjd+0.25);
+    
+    Szp[0] = 0.5 * (zpmzkp2-zpmzkp+0.25);
+    Szp[1] = (0.75-zpmzkp2);
+    Szp[2] = 0.5 * (zpmzkp2+zpmzkp+0.25);
+    
+    Szd[0] = 0.5 * (zpmzkd2-zpmzkd+0.25);
+    Szd[1] = (0.75-zpmzkd2);
+    Szd[2] = 0.5 * (zpmzkd2+zpmzkd+0.25);
+    
+    ip  -= i_domain_begin;
+    id  -= i_domain_begin;
+    jp  -= j_domain_begin;
+    jd  -= j_domain_begin;
+    kp  -= k_domain_begin;
+    kd  -= k_domain_begin;
+    
+    for (unsigned int i=0 ; i<3 ; i++) {
+        int iploc=ip+i-1;
+        int idloc=id+i-1;
+        for (unsigned int j=0 ; j<3 ; j++) {
+            int jploc=jp+j-1;
+            int jdloc=jd+j-1;
+            for (unsigned int k=0 ; k<3 ; k++) {
+                int kploc=kp+k-1;
+                int kdloc=kd+k-1;
+                // Jx^(d,p,p)
+                (*Jx3D)(idloc,jploc,kploc) += Jx_ion * Sxd[i]*Syp[j]*Szp[k];
+                // Jy^(p,d,p)
+                (*Jy3D)(iploc,jdloc,kploc) += Jy_ion * Sxp[i]*Syd[j]*Szp[k];
+                // Jz^(p,p,d)
+                (*Jz3D)(iploc,jploc,kdloc) += Jz_ion * Sxp[i]*Syp[j]*Szd[k];
+            }//k
+        }//j
+    }//i
+    
+
 
 } // END Project global current densities (ionize)
 
@@ -542,7 +644,7 @@ void Projector3D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
 {
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
-    std::vector<double> *gf = &(smpi->dynamics_gf[ithread]);
+    std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
     
     int dim1 = EMfields->dimPrim[1];
     int dim2 = EMfields->dimPrim[2];
@@ -553,7 +655,7 @@ void Projector3D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
         double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1)* dim2   );
         double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw* dim1   *(dim2+1));
         for ( int ipart=istart ; ipart<iend; ipart++ )
-            (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*gf)[ipart], ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart]);
+            (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart]);
             
     // Otherwise, the projection may apply to the species-specific arrays
     } else {
@@ -562,7 +664,7 @@ void Projector3D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
         double* b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(ibin*clrw*dim1*(dim2+1)) : &(*EMfields->Jz_ )(ibin*clrw*dim1*(dim2+1)) ;
         double* b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw* dim1   *dim2) : &(*EMfields->rho_)(ibin*clrw* dim1   *dim2) ;
         for ( int ipart=istart ; ipart<iend; ipart++ )
-            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*gf)[ipart], ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart]);
+            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart]);
     }
 
 }

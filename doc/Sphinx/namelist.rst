@@ -226,7 +226,9 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: current working directory
   
   Output directory for the simulation.
-
+  
+  **WARNING:** This utility is deprecated and may be removed in a future release.
+  Please manage your directories before you run :program:`Smilei`.
 
 .. py:data:: random_seed
 
@@ -424,11 +426,9 @@ Each species has to be defined in a ``Species`` block::
              bc_part_type_ymin
              bc_part_type_ymax
   
-  The boundary condition for particles: ``"none"`` means periodic.
+  The boundary condition for particles: ``"refl"`` for *reflecting*, ``"supp"`` for
+  *suppressing*, ``"stop"`` for *stopping*, ``"periodic"``, and ``"thermalize"``.
   
-  :red:`to do`
-
-
 .. py:data:: thermT
   
   :default: None
@@ -989,8 +989,6 @@ reflect, stop, thermalize or kill particles which reach it::
       x = 20.
   )
 
-All the possible variables inside this block are explained here:
-
 .. py:data:: kind
   
   The kind of wall: ``"refl"``, ``"stop"``, ``"thermalize"`` or ``"supp"``;
@@ -1383,8 +1381,6 @@ for instance::
       ]
   )
 
-All the possible variables inside this block are explained here:
-
 .. py:data:: output
 
   determines the data that is summed in each cell of the grid:
@@ -1535,6 +1531,95 @@ All the possible variables inside this block are explained here:
     	axes = [ ["charge",    -0.5,   10.5,   11] ]
     )
 
+
+----
+
+.. _DiagScreen:
+
+*Screen* diagnostics
+^^^^^^^^^^^^^^^^^^^^
+
+A *screen* collects data from the macro-particles when they cross a surface.
+It processes this data similarly to the :ref:`particle diagnostics <DiagParticles>`
+as it makes a histogram of the macro-particle properties. The only difference is
+that the histogram is made only by the particles that cross the surface.
+
+You can add a screen by including a block ``DiagScreen()`` in the namelist,
+for instance::
+  
+  DiagScreen(
+      shape = "plane",
+      point = [5., 10.],
+      vector = [1., 0.],
+      direction = "canceling",
+      output = "density",
+      species = ["electron"],
+      axes = [["a", -10.*l0, 10.*l0, 40],
+              ["px", 0., 3., 30]],
+      every = 10
+  )
+
+.. py:data:: shape
+
+   The shape of the screen surface: ``"plane"`` or ``"sphere"``.
+
+.. py:data:: point
+
+   :type: A list of floats ``[X]`` in 1D,  ``[X,Y]`` in 2D,  ``[X,Y,Z]`` in 3D 
+   
+   The coordinates of a point that defines the screen surface:
+   a point of the ``"plane"`` or the center of the ``"sphere"``.
+
+.. py:data:: vector
+
+   :type: A list of floats ``[X]`` in 1D,  ``[X,Y]`` in 2D,  ``[X,Y,Z]`` in 3D 
+   
+   The coordinates of a vector that defines the screen surface:
+   the normal to the ``"plane"`` or a radius of the ``"sphere"``.
+
+.. py:data:: direction
+
+   :default: ``"both"``
+   
+   Determines how particles are counted depending on which side of the screen they come from.
+   
+   * ``"both"`` to account for both sides.
+   * ``"forward"`` for only the ones in the direction of the ``vector``.
+   * ``"backward"`` for only the ones in the opposite direction.
+   * ``"canceling"`` to count negatively the ones in the opposite direction.
+
+.. py:data:: output
+
+   Identical to the ``output`` of :ref:`particle diagnostics <DiagParticles>`.
+
+.. py:data:: every
+  
+  The number of time-steps between each output, **or** a :ref:`time selection <TimeSelections>`.
+
+.. py:data:: flush_every
+  
+  :default: 1
+  
+  Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
+  
+  When `flush_every` coincides with `every`, the output
+  file is actually written ("flushed" from the buffer). Flushing
+  too often can *dramatically* slow down the simulation.
+
+.. py:data:: species
+  
+  A list of the names of one or several species (see :py:data:`species_type`).
+
+.. py:data:: axes
+  
+  A list of "axes" that define the grid of the histogram.
+  It is identical to that of :ref:`particle diagnostics <DiagParticles>`, with the
+  addition of four types of axes:
+  ``"a"`` and ``"b"`` are the axes perpendicular to the ``vector``, when the screen
+  shape is a ``"plane"``.
+  ``"theta"`` and ``"phi"`` are the angles with respect to the ``vector``, when the screen
+  shape is a ``"sphere"``.
+  
 ----
 
 .. _TimeSelections:
@@ -1597,6 +1682,8 @@ A few things are important to know when you need dumps and restarts.
   overwritten, and errors may occur. Create a new directory for your restarted simulation.
 * Manage your memory: each process dumps one file, and the total can be significant.
 
+::
+
   DumpRestart(
       restart_dir = "dump1",
       dump_step = 10000,
@@ -1605,8 +1692,6 @@ A few things are important to know when you need dumps and restarts.
       exit_after_dump = True,
       dump_file_sequence = 2,
   )
-
-Checkpoints will be stored in a checkpoints dir
 
 .. py:data:: restart_dir
 
@@ -1652,15 +1737,15 @@ Checkpoints will be stored in a checkpoints dir
 
   :default: None
   
-    If provided the code will create a series of subdirectories in which it will store the 
-    checkpoint files by group of ``file_grouping``. This is useful on filesystem with a limited 
-    number of files per directory
+  The maximum number of checkpoint files that can be stored in one directory.
+  New subdirectories are created according to the total number of files.
+  This is useful on filesystem with a limited number of files per directory.
 
 .. py:data:: restart_number
 
   :default: None
   
-    If provided the code will restart from that checkpoint rather than lokking for the oldest
+  If provided, the code will restart from that checkpoint, otherwise it uses the most recent one.
 
 ----
 

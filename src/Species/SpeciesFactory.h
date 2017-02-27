@@ -316,7 +316,9 @@ public:
         if ( (!params.restart) && (with_particles) ) {
             newSpecies->createParticles(params.n_space, params, patch, 0 );
         }
-        
+        else
+            newSpecies->particles->initialize( 0, (*species->particles) );
+
         newSpecies->initOperators(params, patch);
         
         return newSpecies;

@@ -116,11 +116,29 @@ void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow
     
     }
     timers.particles.update( params.printNow( itime ) );
+
+//    timers.syncField.restart();
+//    SyncVectorPatch::finalizeexchangeB( (*this) );
+//    timers.syncField.update(  params.printNow( itime ) );
     
     timers.syncPart.restart();
     for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
         if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-            SyncVectorPatch::exchangeParticles((*this), ispec, params, smpi ); // Included sort_part
+            SyncVectorPatch::exchangeParticles((*this), ispec, params, smpi, timers, itime ); // Included sort_part
+        }
+    }
+    timers.syncPart.update( params.printNow( itime ) );
+
+} // END dynamics
+
+
+void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWindow* simWindow,
+                           double time_dual, Timers &timers, int itime)
+{
+    timers.syncPart.restart();
+    for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
+        if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
+            SyncVectorPatch::finalize_and_sort_parts((*this), ispec, params, smpi, timers, itime ); // Included sort_part
         }
     }
     if (itime%10==0)
@@ -128,6 +146,12 @@ void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
             (*this)(ipatch)->cleanParticlesOverhead(params);
     timers.syncPart.update( params.printNow( itime ) );
+
+    if (itime!=0) {
+        timers.syncField.restart();
+        SyncVectorPatch::finalizeexchangeB( (*this) );
+        timers.syncField.update(  params.printNow( itime ) );
+    }
 
 } // END dynamics
 
@@ -161,13 +185,13 @@ void VectorPatch::sumDensities(Params &params, Timers &timers, int itime )
     timers.densities.update();
     
     timers.syncDens.restart();
-    SyncVectorPatch::sumRhoJ( (*this)); // MPI
+    SyncVectorPatch::sumRhoJ( (*this), timers, itime ); // MPI
     
     if(diag_flag){
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
             if( ! (*this)(0)->vecSpecies[ispec]->particles->isTest ) {
                 update_field_list(ispec);
-                SyncVectorPatch::sumRhoJs( (*this), ispec ); // MPI
+                SyncVectorPatch::sumRhoJs( (*this), ispec, timers, itime ); // MPI
             }
         }
     }
@@ -182,6 +206,15 @@ void VectorPatch::sumDensities(Params &params, Timers &timers, int itime )
 void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers)
 {
     timers.maxwell.restart();
+    
+    for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_int ; ipassfilter++){
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+            // Current spatial filtering
+            (*this)(ipatch)->EMfields->binomialCurrentFilter();
+        }
+        SyncVectorPatch::exchangeJ( (*this) );
+    }
     
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
@@ -206,7 +239,6 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
     timers.syncField.restart();
     SyncVectorPatch::exchangeB( (*this) );
     timers.syncField.update(  params.printNow( itime ) );
-    
 
 } // END solveMaxwell
 
@@ -402,6 +434,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         
         // Exchange Ap_ (intra & extra MPI)
         SyncVectorPatch::exchange( Ap_, *this );
+        SyncVectorPatch::finalizeexchange( Ap_, *this );
         
        // scalar product p.Ap
         double p_dot_Ap       = 0.0;
@@ -459,7 +492,8 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         (*this)(ipatch)->EMfields->initE( (*this)(ipatch) );
 
     SyncVectorPatch::exchangeE( *this );    
-    
+    SyncVectorPatch::finalizeexchangeE( *this );    
+
     // Centering of the electrostatic fields
     // -------------------------------------
     vector<double> E_Add(Ex_[0]->dims_.size(),0.);
@@ -756,6 +790,9 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     
     for (unsigned int ipatch=0 ; ipatch<patches_.size() ; ipatch++ ) { 
         (*this)(ipatch)->updateMPIenv(smpi);
+        if ((*this)(ipatch)->has_an_MPI_neighbor())
+            (*this)(ipatch)->createType(params);
+
     }
     (*this).set_refHindex() ;
     update_field_list() ;    
@@ -793,7 +830,26 @@ void VectorPatch::output_exchanges(SmileiMPI* smpi)
 //! Resize vector of field*
 void VectorPatch::update_field_list()
 {
-    densities.resize( 3*size() ) ;
+    int nDim = patches_[0]->EMfields->Ex_->dims_.size();
+    densities.resize( 3*size() ) ; // Jx + Jy + Jz
+
+    //                          1D  2D  3D
+    Bs0.resize( 2*size() ) ; //  2   2   2
+    Bs1.resize( 2*size() ) ; //  0   2   2
+    Bs2.resize( 2*size() ) ; //  0   0   2
+
+    densitiesLocalx.clear();
+    densitiesLocaly.clear();
+    densitiesLocalz.clear();
+    densitiesMPIx.clear();
+    densitiesMPIy.clear();
+    densitiesMPIz.clear();
+    LocalxIdx.clear();
+    LocalyIdx.clear();
+    LocalzIdx.clear();
+    MPIxIdx.clear();
+    MPIyIdx.clear();
+    MPIzIdx.clear();
 
     listJx_.resize( size() ) ;
     listJy_.resize( size() ) ;
@@ -819,10 +875,156 @@ void VectorPatch::update_field_list()
         listBz_[ipatch] = patches_[ipatch]->EMfields->Bz_ ;
     }
 
+    B_localx.clear();
+    B_MPIx.clear();
+
+    B1_localy.clear();
+    B1_MPIy.clear();
+
+    B2_localz.clear();
+    B2_MPIz.clear();
+
     for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
-        densities[ipatch] = patches_[ipatch]->EMfields->Jx_ ;
-        densities[ipatch+size()] = patches_[ipatch]->EMfields->Jy_ ;
+        densities[ipatch         ] = patches_[ipatch]->EMfields->Jx_ ;
+        densities[ipatch+  size()] = patches_[ipatch]->EMfields->Jy_ ;
         densities[ipatch+2*size()] = patches_[ipatch]->EMfields->Jz_ ;
+
+        Bs0[ipatch       ] = patches_[ipatch]->EMfields->By_ ;
+        Bs0[ipatch+size()] = patches_[ipatch]->EMfields->Bz_ ;
+
+        // TO DO , B size depend of nDim
+        // Pas grave, au pire inutil 
+        Bs1[ipatch       ] = patches_[ipatch]->EMfields->Bx_ ;
+        Bs1[ipatch+size()] = patches_[ipatch]->EMfields->Bz_ ;
+
+        // TO DO , B size depend of nDim
+        // Pas grave, au pire inutil 
+        Bs2[ipatch       ] = patches_[ipatch]->EMfields->Bx_ ;
+        Bs2[ipatch+size()] = patches_[ipatch]->EMfields->By_ ;        
+    }
+
+    for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+        if ( (*this)(ipatch)->has_an_MPI_neighbor( 0 ) ) {
+            MPIxIdx.push_back(ipatch);
+        }
+        if ( (*this)(ipatch)->has_an_local_neighbor( 0 ) ) {
+            LocalxIdx.push_back(ipatch);
+        }
+    }
+    if (nDim>1) {
+        for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+            if ( (*this)(ipatch)->has_an_MPI_neighbor( 1 ) ) {
+                MPIyIdx.push_back(ipatch);
+            }
+            if ( (*this)(ipatch)->has_an_local_neighbor( 1 ) ) {
+                LocalyIdx.push_back(ipatch);
+            }
+        }
+        if (nDim>2) {
+            for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+
+                if ( (*this)(ipatch)->has_an_MPI_neighbor( 2 ) ) {
+                    MPIzIdx.push_back(ipatch);
+                }
+                if ( (*this)(ipatch)->has_an_local_neighbor( 2 ) ) {
+                    LocalzIdx.push_back(ipatch);
+                }
+            }
+        }
+    }
+
+    B_MPIx.resize( 2*MPIxIdx.size() );
+    B_localx.resize( 2*LocalxIdx.size() );
+    B1_MPIy.resize( 2*MPIyIdx.size() );
+    B1_localy.resize( 2*LocalyIdx.size() );
+    B2_MPIz.resize( 2*MPIzIdx.size() );
+    B2_localz.resize( 2*LocalzIdx.size() );
+
+    densitiesMPIx.resize( 3*MPIxIdx.size() );
+    densitiesLocalx.resize( 3*LocalxIdx.size() );
+    densitiesMPIy.resize( 3*MPIyIdx.size() );
+    densitiesLocaly.resize( 3*LocalyIdx.size() );
+    densitiesMPIz.resize( 3*MPIzIdx.size() );
+    densitiesLocalz.resize( 3*LocalzIdx.size() );
+
+    int mpix(0), locx(0), mpiy(0), locy(0), mpiz(0), locz(0);
+
+    for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+
+        if ( (*this)(ipatch)->has_an_MPI_neighbor( 0 ) ) {
+            B_MPIx[mpix               ] = patches_[ipatch]->EMfields->By_;
+            B_MPIx[mpix+MPIxIdx.size()] = patches_[ipatch]->EMfields->Bz_;
+
+            densitiesMPIx[mpix                 ] = patches_[ipatch]->EMfields->Jx_;
+            densitiesMPIx[mpix+  MPIxIdx.size()] = patches_[ipatch]->EMfields->Jy_;
+            densitiesMPIx[mpix+2*MPIxIdx.size()] = patches_[ipatch]->EMfields->Jz_;
+            mpix++;
+        }
+        if ( (*this)(ipatch)->has_an_local_neighbor( 0 ) ) {
+            B_localx[locx                 ] = patches_[ipatch]->EMfields->By_;
+            B_localx[locx+LocalxIdx.size()] = patches_[ipatch]->EMfields->Bz_;
+
+            densitiesLocalx[locx                   ] = patches_[ipatch]->EMfields->Jx_;
+            densitiesLocalx[locx+  LocalxIdx.size()] = patches_[ipatch]->EMfields->Jy_;
+            densitiesLocalx[locx+2*LocalxIdx.size()] = patches_[ipatch]->EMfields->Jz_;
+            locx++;
+        }
+    }
+    if (nDim>1) {
+        for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+            if ( (*this)(ipatch)->has_an_MPI_neighbor( 1 ) ) {
+                B1_MPIy[mpiy               ] = patches_[ipatch]->EMfields->Bx_;
+                B1_MPIy[mpiy+MPIyIdx.size()] = patches_[ipatch]->EMfields->Bz_;
+
+                densitiesMPIy[mpiy                 ] = patches_[ipatch]->EMfields->Jx_;
+                densitiesMPIy[mpiy+  MPIyIdx.size()] = patches_[ipatch]->EMfields->Jy_;
+                densitiesMPIy[mpiy+2*MPIyIdx.size()] = patches_[ipatch]->EMfields->Jz_;
+                mpiy++;
+            }
+            if ( (*this)(ipatch)->has_an_local_neighbor( 1 ) ) {
+                B1_localy[locy                 ] = patches_[ipatch]->EMfields->Bx_;
+                B1_localy[locy+LocalyIdx.size()] = patches_[ipatch]->EMfields->Bz_;
+
+                densitiesLocaly[locy                   ] = patches_[ipatch]->EMfields->Jx_;
+                densitiesLocaly[locy+  LocalyIdx.size()] = patches_[ipatch]->EMfields->Jy_;
+                densitiesLocaly[locy+2*LocalyIdx.size()] = patches_[ipatch]->EMfields->Jz_;
+                locy++;
+            }
+        }
+        if (nDim>2) {
+            for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+                if ( (*this)(ipatch)->has_an_MPI_neighbor( 2 ) ) {
+                    B2_MPIz[mpiz               ] = patches_[ipatch]->EMfields->Bx_;
+                    B2_MPIz[mpiz+MPIzIdx.size()] = patches_[ipatch]->EMfields->By_;
+
+                    densitiesMPIz[mpiz                 ] = patches_[ipatch]->EMfields->Jx_;
+                    densitiesMPIz[mpiz+  MPIzIdx.size()] = patches_[ipatch]->EMfields->Jy_;
+                    densitiesMPIz[mpiz+2*MPIzIdx.size()] = patches_[ipatch]->EMfields->Jz_;
+                    mpiz++;
+                }
+                if ( (*this)(ipatch)->has_an_local_neighbor( 2 ) ) {
+                    B2_localz[locz                 ] = patches_[ipatch]->EMfields->Bx_;
+                    B2_localz[locz+LocalzIdx.size()] = patches_[ipatch]->EMfields->By_;
+
+                    densitiesLocalz[locz                   ] = patches_[ipatch]->EMfields->Jx_;
+                    densitiesLocalz[locz+  LocalzIdx.size()] = patches_[ipatch]->EMfields->Jy_;
+                    densitiesLocalz[locz+2*LocalzIdx.size()] = patches_[ipatch]->EMfields->Jz_;
+                    locz++;
+                }
+            }
+        }
+
+    }
+
+    for ( unsigned int ifields = 0 ; ifields < listBx_.size() ; ifields++ ) {
+        listJx_[ifields]->MPIbuff.defineTags( patches_[ifields], 1 );
+        listJy_[ifields]->MPIbuff.defineTags( patches_[ifields], 2 );
+        listJz_[ifields]->MPIbuff.defineTags( patches_[ifields], 3 );
+        listBx_[ifields]->MPIbuff.defineTags( patches_[ifields], 6 );
+        listBy_[ifields]->MPIbuff.defineTags( patches_[ifields], 7 );
+        listBz_[ifields]->MPIbuff.defineTags( patches_[ifields], 8 );
+
+        listrho_[ifields]->MPIbuff.defineTags( patches_[ifields], 4 );
     }
 }
 
@@ -859,10 +1061,13 @@ void VectorPatch::update_field_list(int ispec)
 
 void VectorPatch::applyAntennas(double time)
 {
+#ifdef  __DEBUG
     if( nAntennas>0 ) {
         #pragma omp single
         TITLE("Applying antennas at time t = " << time);
     }
+#endif
+    
     // Loop antennas
     for(unsigned int iAntenna=0; iAntenna<nAntennas; iAntenna++) {
     
@@ -976,27 +1181,27 @@ void VectorPatch::check_memory_consumption(SmileiMPI* smpi)
     for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
         for (unsigned int ispec=0 ; ispec<patches_[ipatch]->vecSpecies.size(); ispec++)
             particlesMem += patches_[ipatch]->vecSpecies[ispec]->getMemFootPrint();
-    MESSAGE( 1, "(Master) Species part = " << (int)( (double)particlesMem / 1024./1024.) << " Mo" );
+    MESSAGE( 1, "(Master) Species part = " << (int)( (double)particlesMem / 1024./1024.) << " MB" );
     
     long double dParticlesMem = (double)particlesMem / 1024./1024./1024.;
     MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dParticlesMem, &dParticlesMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-    MESSAGE( 1, setprecision(3) << "Global Species part = " << dParticlesMem << " Go" );
+    MESSAGE( 1, setprecision(3) << "Global Species part = " << dParticlesMem << " GB" );
     
     MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&particlesMem, &particlesMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-    MESSAGE( 1, "Max Species part = " << (int)( (double)particlesMem / 1024./1024.) << " Mb" );
+    MESSAGE( 1, "Max Species part = " << (int)( (double)particlesMem / 1024./1024.) << " MB" );
     
     // fieldsMem contains field per species and average fields
     long int fieldsMem(0);
     for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
         fieldsMem += patches_[ipatch]->EMfields->getMemFootPrint();
-    MESSAGE( 1, "(Master) Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " Mo" );
+    MESSAGE( 1, "(Master) Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " MB" );
     
     long double dFieldsMem = (double)fieldsMem / 1024./1024./1024.;
     MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dFieldsMem, &dFieldsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-    MESSAGE( 1, setprecision(3) << "Global Fields part = " << dFieldsMem << " Go" );
+    MESSAGE( 1, setprecision(3) << "Global Fields part = " << dFieldsMem << " GB" );
     
     MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&fieldsMem, &fieldsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-    MESSAGE( 1, "Max Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " Mb" );
+    MESSAGE( 1, "Max Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " MB" );
 
     
     for (unsigned int idiags=0 ; idiags<globalDiags.size() ; idiags++) {
@@ -1007,13 +1212,13 @@ void VectorPatch::check_memory_consumption(SmileiMPI* smpi)
         long double dDiagsMem = (double)diagsMem / 1024./1024./1024.;
         MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dDiagsMem, &dDiagsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
         if (dDiagsMem>0.) {
-            MESSAGE( 1, "(Master) " <<  globalDiags[idiags]->filename << "  = " << (int)( (double)diagsMem / 1024./1024.) << " Mo" );
-            MESSAGE( 1, setprecision(3) << "Global " <<  globalDiags[idiags]->filename << " = " << dDiagsMem << " Go" );
+            MESSAGE( 1, "(Master) " <<  globalDiags[idiags]->filename << "  = " << (int)( (double)diagsMem / 1024./1024.) << " MB" );
+            MESSAGE( 1, setprecision(3) << "Global " <<  globalDiags[idiags]->filename << " = " << dDiagsMem << " GB" );
         }
     
         MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&diagsMem, &diagsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
         if (dDiagsMem>0.)
-            MESSAGE( 1, "Max " <<  globalDiags[idiags]->filename << " = " << (int)( (double)diagsMem / 1024./1024.) << " Mb" );
+            MESSAGE( 1, "Max " <<  globalDiags[idiags]->filename << " = " << (int)( (double)diagsMem / 1024./1024.) << " MB" );
     }
 
     for (unsigned int idiags=0 ; idiags<localDiags.size() ; idiags++) {
@@ -1024,13 +1229,13 @@ void VectorPatch::check_memory_consumption(SmileiMPI* smpi)
         long double dDiagsMem = (double)diagsMem / 1024./1024./1024.;
         MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dDiagsMem, &dDiagsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
         if (dDiagsMem>0.) {
-            MESSAGE( 1, "(Master) " <<  localDiags[idiags]->filename << "  = " << (int)( (double)diagsMem / 1024./1024.) << " Mo" );
-            MESSAGE( 1, setprecision(3) << "Global " <<  localDiags[idiags]->filename << " = " << dDiagsMem << " Go" );
+            MESSAGE( 1, "(Master) " <<  localDiags[idiags]->filename << "  = " << (int)( (double)diagsMem / 1024./1024.) << " MB" );
+            MESSAGE( 1, setprecision(3) << "Global " <<  localDiags[idiags]->filename << " = " << dDiagsMem << " GB" );
         }
     
         MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&diagsMem, &diagsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
         if (dDiagsMem>0.)
-            MESSAGE( 1, "Max " <<  localDiags[idiags]->filename << " = " << (int)( (double)diagsMem / 1024./1024.) << " Mb" );
+            MESSAGE( 1, "Max " <<  localDiags[idiags]->filename << " = " << (int)( (double)diagsMem / 1024./1024.) << " MB" );
     }
 
     // Read value in /proc/pid/status

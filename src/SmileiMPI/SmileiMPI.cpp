@@ -23,6 +23,7 @@
 #include "Diagnostic.h"
 #include "DiagnosticScalar.h"
 #include "DiagnosticParticles.h"
+#include "DiagnosticScreen.h"
 #include "DiagnosticProbes.h"
 
 using namespace std;
@@ -121,13 +122,13 @@ void SmileiMPI::init( Params& params )
 #ifdef _OPENMP
     dynamics_Epart.resize(omp_get_max_threads());
     dynamics_Bpart.resize(omp_get_max_threads());
-    dynamics_gf.resize(omp_get_max_threads());
+    dynamics_invgf.resize(omp_get_max_threads());
     dynamics_iold.resize(omp_get_max_threads());
     dynamics_deltaold.resize(omp_get_max_threads());
 #else
     dynamics_Epart.resize(1);
     dynamics_Bpart.resize(1);
-    dynamics_gf.resize(1);
+    dynamics_invgf.resize(1);
     dynamics_iold.resize(1);
     dynamics_deltaold.resize(1);
 #endif
@@ -280,6 +281,10 @@ void SmileiMPI::init_patch_count( Params& params)
             total_load += PatchLoad[ipatch];
         }
     }
+    for (int i=0 ; i< densityProfiles.size() ; i++)
+        delete densityProfiles[i];
+    for (int i=0 ; i< ppcProfiles.size() ; i++)
+        delete ppcProfiles[i];
     densityProfiles.resize(0); densityProfiles.clear();
     ppcProfiles.resize(0); ppcProfiles.clear();
     
@@ -902,6 +907,8 @@ void SmileiMPI::computeGlobalDiags(Diagnostic* diag, int timestep)
         computeGlobalDiags(scalar, timestep);
     } else if (DiagnosticParticles* particles = dynamic_cast<DiagnosticParticles*>( diag )) {
         computeGlobalDiags(particles, timestep);
+    } else if (DiagnosticScreen* screen = dynamic_cast<DiagnosticScreen*>( diag )) {
+        computeGlobalDiags(screen, timestep);
     }
 }
 
@@ -996,3 +1003,15 @@ void SmileiMPI::computeGlobalDiags(DiagnosticParticles* diagParticles, int times
         if( !isMaster() ) diagParticles->clear();
     }
 } // END computeGlobalDiags(DiagnosticParticles* diagParticles ...)
+
+// ---------------------------------------------------------------------------------------------------------------------
+// MPI synchronization of diags screen
+// ---------------------------------------------------------------------------------------------------------------------
+void SmileiMPI::computeGlobalDiags(DiagnosticScreen* diagScreen, int timestep)
+{
+    if ( diagScreen->timeSelection->theTimeIsNow(timestep) ) {
+        MPI_Reduce(diagScreen->filename.size()?MPI_IN_PLACE:&diagScreen->data_sum[0], &diagScreen->data_sum[0], diagScreen->output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        
+        if( !isMaster() ) diagScreen->clear();
+    }
+} // END computeGlobalDiags(DiagnosticScreen* diagScreen ...)

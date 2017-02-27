@@ -96,7 +96,7 @@ void DiagnosticFields1D::getField( Patch* patch, unsigned int ifield )
 
 
 // Write current buffer to file
-void DiagnosticFields1D::writeField(hid_t dset_id, int timestep)
+void DiagnosticFields1D::writeField(hid_t dset_id, int itime)
 {
     
     H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(data[0]) );

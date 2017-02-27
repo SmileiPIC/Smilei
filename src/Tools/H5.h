@@ -24,17 +24,18 @@ class H5 {
     //! write a string as an attribute
     static void attr(hid_t locationId, std::string attribute_name, std::string attribute_value) {
         hid_t atype = H5Tcopy(H5T_C_S1);
-        H5Tset_size(atype, attribute_value.size());
-        H5Tset_strpad(atype,H5T_STR_NULLTERM);
-        
-        attr(locationId, attribute_name, *(attribute_value.c_str()), atype);
-        
+        H5Tset_size(atype, H5T_VARIABLE);
+        attr(locationId, attribute_name, attribute_value, atype);
         H5Tclose(atype);
     }
     
     //! write an unsigned int as an attribute
     static void attr(hid_t locationId, std::string attribute_name, unsigned int attribute_value) {
         attr(locationId, attribute_name, attribute_value, H5T_NATIVE_UINT);}
+    
+    //! write an uint32 as an attribute
+    static void attr_uint32(hid_t locationId, std::string attribute_name, uint32_t attribute_value) {
+        attr(locationId, attribute_name, attribute_value, H5T_NATIVE_UINT32);}
     
     //! write size_t as an attribute
     static void attr(hid_t locationId, std::string attribute_name, size_t attribute_value) {
@@ -67,17 +68,25 @@ class H5 {
         hid_t aid = H5Acreate (locationId, attribute_name.c_str(), type, sid, H5P_DEFAULT, H5P_DEFAULT);
         H5Awrite(aid, type, &(attribute_value[0]));
         H5Aclose(aid);
-        H5Sclose(sid);        
+        H5Sclose(sid);
     }
     
-    //! write an vector<unsigned int> as an attribute
+    //! write a vector<unsigned int> as an attribute
     static void attr(hid_t locationId, std::string attribute_name, std::vector<unsigned int> attribute_value) {
         attr(locationId, attribute_name, attribute_value, H5T_NATIVE_UINT);
     }
     
-    //! write an vector<double> as an attribute
+    //! write a vector<double> as an attribute
     static void attr(hid_t locationId, std::string attribute_name, std::vector<double> attribute_value) {
         attr(locationId, attribute_name, attribute_value, H5T_NATIVE_DOUBLE);
+    }
+    
+    //! write a vector<string> as an attribute
+    static void attr(hid_t locationId, std::string attribute_name, std::vector<std::string> attribute_value) {
+        hid_t atype = H5Tcopy(H5T_C_S1);
+        H5Tset_size(atype, H5T_VARIABLE);
+        attr(locationId, attribute_name, attribute_value, atype);
+        H5Tclose(atype);
     }
     
     
@@ -122,16 +131,41 @@ class H5 {
         }
     }
     
+    //! retrieve anything as an attribute
     template<class T>
     static void getAttr(hid_t locationId, std::string attribute_name, T &attribute_value, hid_t type) {
         if (H5Aexists(locationId,attribute_name.c_str())>0) {
-            hid_t aid = H5Aopen(locationId, attribute_name.c_str(), type);
+            hid_t aid = H5Aopen(locationId, attribute_name.c_str(), H5P_DEFAULT);
             H5Aread(aid, type, &(attribute_value));
             H5Aclose(aid);
         } else {
             WARNING("Cannot find attribute " << attribute_name);
         }
     }
+    
+    //! retrieve a vector<double> as an attribute
+    template<class T>
+    static void getAttr(hid_t locationId, std::string attribute_name, std::vector<T>& attribute_value) {
+        getAttr(locationId, attribute_name, attribute_value, H5T_NATIVE_DOUBLE);
+    }
+    
+    //! retrieve a vector<anything> as an attribute
+    template<class T>
+    static void getAttr(hid_t locationId, std::string attribute_name, std::vector<T>& attribute_value, hid_t type) {
+        if (H5Aexists(locationId,attribute_name.c_str())>0) {
+            hid_t aid = H5Aopen(locationId, attribute_name.c_str(), H5P_DEFAULT);
+            hid_t sid = H5Aget_space(aid);
+            hssize_t npoints = H5Sget_simple_extent_npoints( sid );
+            attribute_value.resize( npoints );
+            H5Sclose( sid );
+            H5Aread(aid, type, &(attribute_value[0]));
+            H5Aclose(aid);
+        } else {
+            WARNING("Cannot find attribute " << attribute_name);
+        }
+    }
+    
+    
     //! write a vector of unsigned ints
     //! v is the vector
     //! size is the number of elements in the vector

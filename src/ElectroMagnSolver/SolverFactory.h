@@ -4,6 +4,8 @@
 #include "MF_Solver1D_Yee.h"
 #include "MF_Solver2D_Yee.h"
 #include "MF_Solver3D_Yee.h"
+#include "MF_Solver2D_Grassi.h"
+#include "MF_Solver2D_GrassiSpL.h"
 #include "MF_Solver2D_Cowan.h"
 #include "MF_Solver2D_Lehe.h"
 
@@ -24,6 +26,10 @@ public:
         } else if ( params.geometry == "2d3v" ) {
             if (params.maxwell_sol == "Yee") {
                 solver = new MF_Solver2D_Yee(params);
+            } else if (params.maxwell_sol == "Grassi") {
+                solver = new MF_Solver2D_Grassi(params);
+            } else if (params.maxwell_sol == "GrassiSpL") {
+                solver = new MF_Solver2D_GrassiSpL(params);
             } else if (params.maxwell_sol == "Cowan") {
                 solver = new MF_Solver2D_Cowan(params);
             } else if(params.maxwell_sol == "Lehe" ){
