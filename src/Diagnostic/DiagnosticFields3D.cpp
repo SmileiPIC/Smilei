@@ -199,7 +199,7 @@ void DiagnosticFields3D::getField( Patch* patch, unsigned int ifield )
 
 
 // Write current buffer to file
-void DiagnosticFields3D::writeField( hid_t dset_id, int itime ) {
+void DiagnosticFields3D::writeField( hid_t dset_id, int timestep ) {
     
     // Write the buffer in a temporary location
     H5Dwrite( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_firstwrite, filespace_firstwrite, write_plist, &(data[0]) );
