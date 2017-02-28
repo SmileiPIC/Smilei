@@ -55,16 +55,17 @@ void Patch1D::initStep2(Params& params)
     if (params.bc_em_type_x[0]=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
     neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
     
+    for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+        ntype_[0][ix_isPrim] = MPI_DATATYPE_NULL;
+        ntype_[1][ix_isPrim] = MPI_DATATYPE_NULL;
+        ntypeSum_[0][ix_isPrim] = MPI_DATATYPE_NULL;
+    }
+
 }
 
 Patch1D::~Patch1D()
 {
-    if (!has_an_MPI_neighbor()) return;
-    for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
-        MPI_Type_free( &(ntype_[0][ix_isPrim]) );
-        MPI_Type_free( &(ntype_[1][ix_isPrim]) );
-        MPI_Type_free( &(ntypeSum_[0][ix_isPrim]) );
-    }
+    cleanType();
 
 }
 
@@ -366,3 +367,14 @@ void Patch1D::createType( Params& params )
     
 } //END createType
 
+void Patch1D::cleanType()
+{
+    if (ntype_[0][0] == MPI_DATATYPE_NULL)
+        return;
+
+    for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+        MPI_Type_free( &(ntype_[0][ix_isPrim]) );
+        MPI_Type_free( &(ntype_[1][ix_isPrim]) );
+        MPI_Type_free( &(ntypeSum_[0][ix_isPrim]) );
+    }
+}

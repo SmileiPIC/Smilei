@@ -43,6 +43,7 @@ public:
 
     // Create MPI_Datatype to exchange fields
     void createType( Params& params ) override final;
+    void cleanType() override final;
 
     //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial]
     MPI_Datatype ntypeSum_[2][2];
