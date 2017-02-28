@@ -462,11 +462,11 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             //Ionization
             if (Ionize){                                
                 for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                    // Do the ionization (!for testParticles)
+                    //!todo Check if this is still necessary
+                    Jion.x=0.;
+                    Jion.y=0.;
+                    Jion.z=0.;
                     if ( (*particles).charge(iPart) < (int) atomic_number) {
-                        Jion.x=0.;
-                        Jion.y=0.;
-                        Jion.z=0.;
                         (*Ionize)(*particles, iPart, (*Epart)[iPart], Jion);
                         (*Proj)(EMfields->Jx_, EMfields->Jy_, EMfields->Jz_, *particles, iPart, Jion);
                     }
