@@ -119,7 +119,7 @@ void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields 
                 new_electrons.position(i,idNew)=particles.position(i, ipart);
             }
             for (unsigned int i=0; i<3; i++) {
-                new_electrons.momentum(i,idNew) = particles.momentum(i, ipart)/ionized_species_mass;
+                new_electrons.momentum(i,idNew) = particles.momentum(i, ipart)*ionized_species_invmass;
             }
             new_electrons.weight(idNew)=double(k_times)*particles.weight(ipart);
             new_electrons.charge(idNew)=-1;
@@ -134,37 +134,42 @@ void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields 
 
 
 
-void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields Jion) {
+void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields &Jion) {
+    
+    // Current charge state of the ion
+    unsigned int Z = (unsigned int)(particles.charge(ipart));
+    
+    // If ion already fully ionized then skip
+    if (Z==atomic_number_) return;
     
     // Total ionization potential (used to compute the ionization current)
     double TotalIonizPot = 0.0;
     
-    // Charge state of the ion (particle)
-    unsigned int Z = (unsigned int)(particles.charge(ipart));
-    
-    // Number of successive ionization in one time-step
-    unsigned int k_times = 0;
-    
-    // Generate a random number between 0 and 1
-    double ran_p = (double)rand() / RAND_MAX;
+    // k_times will give the nb of ionization events
+    unsigned int Zp1=Z+1, k_times = 0;
     
     // Absolute value of the electric field normalized in atomic units
-    double E = EC_to_au * sqrt( Epart.x*Epart.x + Epart.y*Epart.y + Epart.z*Epart.z );
-    
-    // Ionization rate in normalized (SMILEI) units
-    double delta     = gamma_tunnel[Z] / E;
-    vector<double> IonizRate_tunnel(atomic_number_);
-    IonizRate_tunnel[Z] = beta_tunnel[Z] * pow(delta,alpha_tunnel[Z]) * exp(-delta*one_third);
+    double E = EC_to_au * sqrt( Epart.x*Epart.x + Epart.y*Epart.y + Epart.z*Epart.z ), invE;
+
     
     // --------------------------------
     // Start of the Monte-Carlo routine
     // --------------------------------
-    if (E!=0 && Z!=atomic_number_) {
+    if (E!=0) {
+        
+        invE = 1./E;
+        double factorJion = au_to_mec2 * invdt*invE*invE;
+        double delta      = gamma_tunnel[Z]*invE;
+        double ran_p = (double)rand() / RAND_MAX;
+        static vector<double> IonizRate_tunnel(atomic_number_);
+        IonizRate_tunnel[Z] = beta_tunnel[Z] * exp( -delta*one_third + alpha_tunnel[Z]*log(delta));
+
     
-        if ( Z == atomic_number_-1) {
+        if ( Zp1 == atomic_number_) {
             // if ionization of the last electron: single ionization
             // -----------------------------------------------------
             if ( ran_p < 1.0 -exp(-IonizRate_tunnel[Z]*dt) ) {
+                TotalIonizPot += Potential[Z];
                 k_times        = 1;
             }
             
@@ -174,49 +179,43 @@ void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields 
             // -------------------------------------------------------------------------
             
             // initialization
-            double Mult = 1.0;
-            vector<double> Dnom_tunnel(atomic_number_);
+            double Mult = 1.0, D_sum, P_sum;
+            unsigned int newZ;
+            static vector<double> Dnom_tunnel(atomic_number_);
             Dnom_tunnel[0]=1.0;
             double Pint_tunnel = exp(-IonizRate_tunnel[Z]*dt); // cummulative prob.
             
             //multiple ionization loop while Pint_tunnel < ran_p and still partial ionization
-            while ((Pint_tunnel < ran_p) and (k_times < atomic_number_-Z-1)) {
-                unsigned int newZ = Z+k_times+1;
-                double Prob  = 0.0;
-                delta = gamma_tunnel[newZ] / E;
+            while ((Pint_tunnel < ran_p) and (k_times < atomic_number_-Zp1)) {
+                newZ = Zp1+k_times;
+                delta = gamma_tunnel[newZ]*invE;
                 IonizRate_tunnel[newZ] = beta_tunnel[newZ]
-                *                        pow(delta,alpha_tunnel[newZ])
-                *                        exp(-delta*one_third);
-                double D_sum = 0.0;
-                double P_sum = 0.0;
+                *                        exp(-delta*one_third+alpha_tunnel[newZ]*log(delta));
+                D_sum = 0.0;
+                P_sum = 0.0;
                 Mult  *= IonizRate_tunnel[Z+k_times];
                 for (unsigned int i=0; i<k_times+1; i++) {
                     Dnom_tunnel[i]=Dnom_tunnel[i]/(IonizRate_tunnel[newZ]-IonizRate_tunnel[Z+i]);
                     D_sum += Dnom_tunnel[i];
                     P_sum += exp(-IonizRate_tunnel[Z+i]*dt)*Dnom_tunnel[i];
                 }
-                Dnom_tunnel[k_times+1] = -D_sum;
-                P_sum                  = P_sum + Dnom_tunnel[k_times+1]*exp(-IonizRate_tunnel[newZ]*dt);
-                Prob                   = P_sum * Mult;
-                Pint_tunnel            = Pint_tunnel+Prob;
+                Dnom_tunnel[k_times+1] -= D_sum;
+                P_sum                   = P_sum + Dnom_tunnel[k_times+1]*exp(-IonizRate_tunnel[newZ]*dt);
+                Pint_tunnel             = Pint_tunnel + P_sum*Mult;
                 
+                TotalIonizPot += Potential[Z+k_times];
                 k_times++;
             }//END while
             
             // final ionization (of last electron)
-            if ( ((1.0-Pint_tunnel)>ran_p) && (k_times==atomic_number_-Z-1) ) {
+            if ( ((1.0-Pint_tunnel)>ran_p) && (k_times==atomic_number_-Zp1) ) {
+                TotalIonizPot += Potential[atomic_number_-1];
                 k_times++;
             }
         }//END Multiple ionization routine
         
-        
-        // Calculation of the ionization current
-        // -------------------------------------
-        for (unsigned int k=0; k<k_times; k++) {
-            TotalIonizPot += Potential[Z+k];
-        }//END for k
-        
-        double factorJion = TotalIonizPot/dt/E/E;
+        // Compute ionization current
+        factorJion *= TotalIonizPot;
         Jion.x = factorJion * Epart.x;
         Jion.y = factorJion * Epart.y;
         Jion.z = factorJion * Epart.z;
@@ -233,7 +232,7 @@ void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields 
                 new_electrons.position(i,idNew)=particles.position(i, ipart);
             }
             for (unsigned int i=0; i<3; i++) {
-                new_electrons.momentum(i,idNew) = particles.momentum(i, ipart)/ionized_species_mass;
+                new_electrons.momentum(i,idNew) = particles.momentum(i, ipart)*ionized_species_invmass;
             }
             new_electrons.weight(idNew)=double(k_times)*particles.weight(ipart);
             new_electrons.charge(idNew)=-1;
