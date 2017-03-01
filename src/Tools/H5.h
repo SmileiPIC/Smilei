@@ -25,7 +25,8 @@ class H5 {
     static void attr(hid_t locationId, std::string attribute_name, std::string attribute_value) {
         hid_t atype = H5Tcopy(H5T_C_S1);
         H5Tset_size(atype, H5T_VARIABLE);
-        attr(locationId, attribute_name, attribute_value, atype);
+        const char* tmp_var=attribute_value.c_str();
+        attr(locationId, attribute_name, tmp_var, atype);
         H5Tclose(atype);
     }
     
@@ -75,6 +76,9 @@ class H5 {
         hid_t atype = H5Tcopy(H5T_C_S1);
         H5Tset_size(atype, H5T_VARIABLE);
         std::vector<const char*> tmp_vec(attribute_value.size(),nullptr);
+        
+//        std::transform(attribute_value.begin(), attribute_value.end(), tmp_vec.begin(), [&](const std::string& str) {return str.c_str();});
+        
         for (unsigned int i=0; i<attribute_value.size();i++) {
             tmp_vec[i] = attribute_value[i].c_str();
         }
