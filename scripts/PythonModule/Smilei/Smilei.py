@@ -1,5 +1,5 @@
 from ._Utils import *
-from ._Diagnostics import Scalar, Field, Probe, ParticleDiagnostic, TrackParticles
+from ._Diagnostics import Scalar, Field, Probe, ParticleDiagnostic, Screen, TrackParticles
 
 
 class ScalarFactory(object):
@@ -45,8 +45,11 @@ class ScalarFactory(object):
 	
 	def __call__(self, *args, **kwargs):
 		return Scalar.Scalar(self._simulation, *(self._additionalArgs+args), **kwargs)
-
-
+	
+	def toXDMF(self):
+		pass
+	
+	
 class FieldFactory(object):
 	"""Import and analyze a Field diagnostic from a Smilei simulation
 	
@@ -78,37 +81,62 @@ class FieldFactory(object):
 		field.get()                      # Obtain the data
 	"""
 	
-	def __init__(self, simulation, field=None, timestep=None, availableTimesteps=None):
+	def __init__(self, simulation, diagNumber=None, field=None, timestep=None, availableTimesteps=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
+		self._children = []
 		
-		# If not a specific field (root level), build a list of field shortcuts
-		if field is None:
+		# If not a specific diag (root level), build a list of diag shortcuts
+		if diagNumber is None:
 			# Create a temporary, empty field diagnostic
 			tmpDiag = Field.Field(simulation)
-			# Get a list of fields
-			fields = tmpDiag.getFields()
-			# Get a list of timesteps
-			timesteps = tmpDiag.getAvailableTimesteps()
-			# Create fields shortcuts
-			for field in fields:
-				setattr(self, field, FieldFactory(simulation, field, availableTimesteps=timesteps))
+			# Get a list of diag
+			diags = tmpDiag.getDiags()
+			# Create diags shortcuts
+			for diag in diags:
+				child = FieldFactory(simulation, diag)
+				setattr(self, "Field"+str(diag), child)
+				self._children += [child]
 		
 		else:
-			# the field is saved for generating the object in __call__
-			self._additionalArgs += (field, )
+			# the diag is saved for generating the object in __call__
+			self._additionalArgs += (diagNumber, )
 			
-			# If not a specific timestep, build a list of timesteps shortcuts
-			if timestep is None:
-				for timestep in availableTimesteps:
-					setattr(self, 't%0.10i'%timestep, FieldFactory(simulation, field, timestep))
+			# If not a specific field, build a list of field shortcuts
+			if field is None:
+				# Create a temporary, empty field diagnostic
+				tmpDiag = Field.Field(simulation, diagNumber)
+				# Get a list of fields
+				fields = tmpDiag.getFields()
+				# Get a list of timesteps
+				timesteps = tmpDiag.getAvailableTimesteps()
+				# Create fields shortcuts
+				for field in fields:
+					child = FieldFactory(simulation, diagNumber, field, availableTimesteps=timesteps)
+					setattr(self, field, child)
 			
 			else:
-				# the timestep is saved for generating the object in __call__
-				self._additionalArgs += (timestep, )
+				# the field is saved for generating the object in __call__
+				self._additionalArgs += (field, )
+				
+				# If not a specific timestep, build a list of timesteps shortcuts
+				if timestep is None:
+					for timestep in availableTimesteps:
+						setattr(self, 't%0.10i'%timestep, FieldFactory(simulation, diagNumber, field, timestep))
+				
+				else:
+					# the timestep is saved for generating the object in __call__
+					self._additionalArgs += (timestep, )
 	
 	def __call__(self, *args, **kwargs):
 		return Field.Field(self._simulation, *(self._additionalArgs+args), **kwargs)
+	
+	def toXDMF(self):
+		if len(self._children) > 0:
+			for child in self._children:
+				child.toXDMF()
+		elif len(self._additionalArgs) > 0:
+			self().toXDMF()
 
 
 class ProbeFactory(object):
@@ -145,8 +173,6 @@ class ProbeFactory(object):
 	def __init__(self, simulation, probeNumber=None, field=None, timestep=None, availableTimesteps=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
-		
-		if len(simulation._results_path)>1: return
 		
 		# If not a specific probe, build a list of probe shortcuts
 		if probeNumber is None:
@@ -189,6 +215,9 @@ class ProbeFactory(object):
 	
 	def __call__(self, *args, **kwargs):
 		return Probe.Probe(self._simulation, *(self._additionalArgs+args), **kwargs)
+	
+	def toXDMF(self):
+		pass
 
 
 class ParticleDiagnosticFactory(object):
@@ -255,6 +284,78 @@ class ParticleDiagnosticFactory(object):
 	
 	def __call__(self, *args, **kwargs):
 		return ParticleDiagnostic.ParticleDiagnostic(self._simulation, *(self._additionalArgs+args), **kwargs)
+	
+	def toXDMF(self):
+		pass
+
+
+class ScreenFactory(object):
+	"""Import and analyze a screen diagnostic from a Smilei simulation
+	
+	Parameters:
+	-----------
+	diagNumber : int (optional)
+		Index of an available screen diagnostic.
+		To get a list of available diags, simply omit this argument.
+	timesteps : int or [int, int] (optional)
+		If omitted, all timesteps are used.
+		If one number  given, the nearest timestep available is used.
+		If two numbers given, all the timesteps in between are used.
+	slice : a python dictionary of the form { axis:range, ... } (optional)
+		`axis` may be "x", "y", "z", "a", "b", "theta", "phi", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
+		`range` may be "all", a float, or [float, float].
+		For instance, slice={"x":"all", "y":[2,3]}.
+		The SUM of all values within the 'slice' is computed.
+	units : A units specification such as ["m","second"]
+	data_log : bool (default: False)
+		If True, then log10 is applied to the output array before plotting.
+	stride : int (default: 1)
+		Step size for sampling the grid.
+	
+	Usage:
+	------
+		S = Smilei("path/to/simulation") # Load the simulation
+		screen = S.Screen(...) # Load the particle diagnostic
+		screen.get()                       # Obtain the data
+	"""
+	
+	def __init__(self, simulation, diagNumber=None, timestep=None):
+		self._simulation = simulation
+		self._additionalArgs = tuple()
+		
+		# If not a specific diag (root level), build a list of diag shortcuts
+		if diagNumber is None:
+			# Create a temporary, empty Screen diagnostic
+			tmpDiag = Screen.Screen(simulation)
+			# Get a list of diags
+			diags = tmpDiag.getDiags()
+			# Create diags shortcuts
+			for diag in diags:
+				setattr(self, 'Screen'+str(diag), ScreenFactory(simulation, diag))
+		
+		else:
+			# the diag is saved for generating the object in __call__
+			self._additionalArgs += (diagNumber, )
+			
+			# If not a specific timestep, build a list of timesteps shortcuts
+			if timestep is None:
+				# Create a temporary, empty Screen diagnostic
+				tmpDiag = Screen.Screen(simulation, diagNumber)
+				# Get a list of timesteps
+				timesteps = tmpDiag.getAvailableTimesteps()
+				# Create timesteps shortcuts
+				for timestep in timesteps:
+					setattr(self, 't%0.10i'%timestep, ScreenFactory(simulation, diagNumber, timestep))
+			
+			else:
+				# the timestep is saved for generating the object in __call__
+				self._additionalArgs += (timestep, )
+	
+	def __call__(self, *args, **kwargs):
+		return Screen.Screen(self._simulation, *(self._additionalArgs+args), **kwargs)
+	
+	def toXDMF(self):
+		pass
 
 
 class TrackParticlesFactory(object):
@@ -302,8 +403,7 @@ class TrackParticlesFactory(object):
 	def __init__(self, simulation, species=None, timestep=None):
 		self._simulation = simulation
 		self._additionalKwargs = dict()
-		
-		if len(simulation._results_path)>1: return
+		self._children = []
 		
 		# If not a specific species (root level), build a list of species shortcuts
 		if species is None:
@@ -313,7 +413,9 @@ class TrackParticlesFactory(object):
 			specs = tmpDiag.getTrackSpecies()
 			# Create species shortcuts
 			for spec in specs:
-				setattr(self, spec, TrackParticlesFactory(simulation, spec))
+				child = TrackParticlesFactory(simulation, spec)
+				setattr(self, spec, child)
+				self._children += [child]
 		
 		else:
 			# the species is saved for generating the object in __call__
@@ -340,6 +442,13 @@ class TrackParticlesFactory(object):
 	def __call__(self, *args, **kwargs):
 		kwargs.update(self._additionalKwargs)
 		return TrackParticles.TrackParticles(self._simulation, *args, **kwargs)
+	
+	def toXDMF(self):
+		if len(self._children) > 0:
+			for child in self._children:
+				child.toXDMF()
+		elif "species" in self._additionalKwargs:
+			self().toXDMF()
 
 
 
@@ -378,7 +487,7 @@ class Smilei(object):
 		
 	"""
 	
-	def __init__(self, results_path=".", show=True):
+	def __init__(self, results_path=".", show=True, verbose=True):
 		self.valid = False
 		# Import packages
 		import h5py
@@ -397,6 +506,7 @@ class Smilei(object):
 		self._re = re
 		self._plt = matplotlib.pyplot
 		self._mtime = 0
+		self._verbose = verbose
 		
 		# Load the simulation (verify the path, get the namelist)
 		self.reload()
@@ -407,6 +517,7 @@ class Smilei(object):
 			self.Field = FieldFactory(self)
 			self.Probe = ProbeFactory(self)
 			self.ParticleDiagnostic = ParticleDiagnosticFactory(self)
+			self.Screen = ScreenFactory(self)
 			self.TrackParticles = TrackParticlesFactory(self)
 	
 	
@@ -495,6 +606,7 @@ class Smilei(object):
 				elif args[1]!=prevArgs[0] or (args[2]!=prevArgs[1]).any() or (args[3]!=prevArgs[2]).any() or args[4:]!=prevArgs[3:]:
 					print("The simulation in path '"+path+"' is not compatible with the other ones")
 					return
+				if self._verbose: print("Loaded simulation '"+path+"'")
 			# Update the simulation parameters
 			self._ndim, self._cell_length, self._ncels, self._timestep, self._referenceAngularFrequency_SI = args[1:]
 			self.namelist = args[0]
@@ -509,3 +621,15 @@ class Smilei(object):
 			files = [self._glob(path+self._os.sep+"smilei.py")[0] for path in self._results_path]
 			files = "\n\t".join(files)
 			return "Smilei simulation with input file(s) located at:\n\t"+files
+	
+	def toXDMF(self):
+		if not self.valid: return
+		
+		self.Scalar            .toXDMF()
+		self.Field             .toXDMF()
+		self.Probe             .toXDMF()
+		self.ParticleDiagnostic.toXDMF()
+		self.Screen            .toXDMF()
+		self.TrackParticles    .toXDMF()
+
+

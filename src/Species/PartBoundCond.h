@@ -18,19 +18,19 @@ public:
     //! partBoundCond destructor
     ~PartBoundCond();
 
-    //! West particles boundary conditions pointers (same prototypes for all conditions)
+    //! Xmin particles boundary conditions pointers (same prototypes for all conditions)
     //! @see BoundaryConditionType.h for functions that this pointers will target
-    int (*bc_west)  ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
-    //! East particles boundary conditions pointers
-    int (*bc_east)  ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
-    //! South particles boundary conditions pointers
-    int (*bc_south) ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
-    //! North particles boundary conditions pointers
-    int (*bc_north) ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
-    //! Bottom particles boundary conditions pointers
-    int (*bc_bottom)( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
-    //! Up particles boundary conditions pointers
-    int (*bc_up)    ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
+    int (*bc_xmin)  ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
+    //! Xmax particles boundary conditions pointers
+    int (*bc_xmax)  ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
+    //! Ymin particles boundary conditions pointers
+    int (*bc_ymin) ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
+    //! Ymax particles boundary conditions pointers
+    int (*bc_ymax) ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
+    //! Zmin particles boundary conditions pointers
+    int (*bc_zmin)( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
+    //! Zmax particles boundary conditions pointers
+    int (*bc_zmax)    ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
 
     //! Method which applies particles boundary conditions.
     //! If the MPI process is not a border process, particles will be flagged as an exchange particle returning 0
@@ -42,44 +42,44 @@ public:
         
         int keep_part = 1;
         if ( particles.position(0, ipart) <  x_min ) {
-            if (bc_west==NULL) keep_part = 0;
+            if (bc_xmin==NULL) keep_part = 0;
             else {
-                keep_part = (*bc_west)( particles, ipart, 0, 2.*x_min, species,nrj_iPart );
+                keep_part = (*bc_xmin)( particles, ipart, 0, 2.*x_min, species,nrj_iPart );
             }
         }
         else if ( particles.position(0, ipart) >= x_max ) {
-            if (bc_east==NULL) keep_part = 0;
+            if (bc_xmax==NULL) keep_part = 0;
             else {
-                keep_part = (*bc_east)( particles, ipart, 0, 2.*x_max, species,nrj_iPart );
+                keep_part = (*bc_xmax)( particles, ipart, 0, 2.*x_max, species,nrj_iPart );
             }
         }
         if (nDim_particle >= 2) {
             
             if ( particles.position(1, ipart) <  y_min ) {
-                if (bc_south==NULL) keep_part = 0;
+                if (bc_ymin==NULL) keep_part = 0;
                 else {
-                    keep_part *= (*bc_south)( particles, ipart, 1, 2.*y_min, species,nrj_iPart );
+                    keep_part *= (*bc_ymin)( particles, ipart, 1, 2.*y_min, species,nrj_iPart );
                 }
             }
             else if ( particles.position(1, ipart) >= y_max ) {
-                if (bc_north==NULL) keep_part = 0;
+                if (bc_ymax==NULL) keep_part = 0;
                 else {
-                    keep_part *= (*bc_north)( particles, ipart, 1, 2.*y_max, species,nrj_iPart );
+                    keep_part *= (*bc_ymax)( particles, ipart, 1, 2.*y_max, species,nrj_iPart );
                 }
             }
             
             if (nDim_particle == 3) {
                 
                 if ( particles.position(2, ipart) <  z_min ) {
-                    if (bc_bottom==NULL) keep_part = 0;
+                    if (bc_zmin==NULL) keep_part = 0;
                     else {
-                        keep_part *= (*bc_bottom)( particles, ipart, 2, 2.*z_min, species,nrj_iPart );
+                        keep_part *= (*bc_zmin)( particles, ipart, 2, 2.*z_min, species,nrj_iPart );
                     }
                 }
                 else if ( particles.position(2, ipart) >= z_max ) {
-                    if (bc_up==NULL) keep_part = 0;
+                    if (bc_zmax==NULL) keep_part = 0;
                     else {
-                        keep_part *= (*bc_up)( particles, ipart, 2, 2.*z_max, species,nrj_iPart );
+                        keep_part *= (*bc_zmax)( particles, ipart, 2, 2.*z_max, species,nrj_iPart );
                     }
                 }
             } // end if (nDim_particle == 3)

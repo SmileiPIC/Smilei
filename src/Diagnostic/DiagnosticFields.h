@@ -8,7 +8,7 @@ class DiagnosticFields  : public Diagnostic {
 
 public :
     
-    DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patch, int );
+    DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, int );
     ~DiagnosticFields() override;
     
     virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
@@ -25,7 +25,20 @@ public :
     
     virtual void writeField(hid_t, int) = 0;
     
+    virtual bool needsRhoJs(int timestep) override;
+    
+    bool hasField(std::string field_name, std::vector<std::string> fieldsToDump);
+
+    //! Get memory footprint of current diagnostic
+    int getMemFootPrint() override {
+        return 0;
+    }
+
 protected :
+    
+    //! Index of this diag
+    unsigned int diag_n;
+    
     //! Indexes of the fields to be dumped
     std::vector<unsigned int> fields_indexes;
     //! Names of the fields to be dumped
@@ -33,6 +46,9 @@ protected :
     
     //! Number of timesteps for time averaging
     int time_average;
+    
+    //! Inverse of the time average
+    double time_average_inv;
     
     //! Property list for collective dataset write, set for // IO.
     hid_t write_plist;
@@ -63,9 +79,13 @@ protected :
     //! Variable to store the status of a dataset (whether it exists or not)
     htri_t status;
 
-    // Tools for re-reading and re-writing the file in a folded pattern
+    //! Tools for re-reading and re-writing the file in a folded pattern
     hid_t filespace_reread, filespace_firstwrite, memspace_reread, memspace_firstwrite;
     std::vector<double> data_reread, data_rewrite;
+    
+    //! True if this diagnostic requires the pre-calculation of the particle J & Rho
+    bool hasRhoJs;
+    
 
 };
 

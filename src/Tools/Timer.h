@@ -12,13 +12,11 @@ class SmileiMPI;
 class Timer {
 public:
     //! Timer creator, (default no MPI set)
-    Timer();
+    Timer( std::string name );
     //! Timer destructor
     ~Timer();
-    //! Init t0 of the timer, no MPI
-    void init(std::string name);
     //! Init t0 of the timer, synchronized through MPI
-    void init(SmileiMPI *smpi, std::string name);
+    void init( SmileiMPI *smpi );
     //! Accumulate time couting from last init/restart
     void update(bool store = false);
     //! Start a new cumulative period
@@ -31,17 +29,16 @@ public:
     void print(double tot);
     //! name of the timer
     inline std::string name() {return name_;}
-
+    
     //! Timer name 
     std::string name_;
-    std::vector<double> register_timers;
 
-    static void consolidate_timers( std::vector<Timer> timers );
-
-
-private:
     //! Accumulated time in current timer
     double time_acc_;
+    
+    std::vector<double> register_timers;    
+    
+private:
     //! Last timer start
     double last_start_;
     //! MPI process timer synchronized through MPI

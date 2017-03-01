@@ -128,6 +128,7 @@ class Main(SmileiSingleton):
     timestep_over_CFL = None
     
     # Poisson tuning
+    solve_poisson = True
     poisson_iter_max = 50000
     poisson_error_max = 1.e-14
     
@@ -137,6 +138,7 @@ class Main(SmileiSingleton):
     bc_em_type_y = []
     bc_em_type_z = []
     time_fields_frozen = 0.
+    currentFilter_int = 0
     
     # Default Misc
     referenceAngularFrequency_SI = 0.
@@ -153,6 +155,8 @@ class Main(SmileiSingleton):
             else:
                 if Main.cell_length is None:
                     raise Exception("Need cell_length to calculate timestep")
+                
+                # Yee solver
                 if Main.maxwell_sol == 'Yee':
                     if Main.geometry == '1d3v':
                         Main.timestep = Main.timestep_over_CFL*Main.cell_length[0]
@@ -162,6 +166,22 @@ class Main(SmileiSingleton):
                         Main.timestep = Main.timestep_over_CFL/math.sqrt(1.0/(Main.cell_length[0]**2)+1.0/(Main.cell_length[1]**2)+1.0/(Main.cell_length[2]**2))
                     else: 
                         raise Exception("timestep: geometry not implemented "+Main.geometry)
+                            
+                # Grassi
+                elif Main.maxwell_sol == 'Grassi':
+                    if Main.geometry == '2d3v':
+                        Main.timestep = Main.timestep_over_CFL * 0.7071067811*Main.cell_length[0];
+                    else:
+                        raise Exception("timestep: geometry not implemented "+Main.geometry)
+                        
+                # GrassiSpL
+                elif Main.maxwell_sol == 'GrassiSpL':
+                    if Main.geometry == '2d3v':
+                        Main.timestep = Main.timestep_over_CFL * 0.6471948469*Main.cell_length[0];
+                    else:
+                        raise Exception("timestep: geometry not implemented "+Main.geometry)
+
+                # None recognized solver
                 else:
                     raise Exception("timestep: maxwell_sol not implemented "+Main.maxwell_sol)
 
@@ -184,7 +204,8 @@ class Main(SmileiSingleton):
 class LoadBalancing(SmileiSingleton):
     """Load balancing parameters"""
     
-    every = None
+    every = 150
+    initial_balance = True
     coef_cell = 1.0
     coef_frozen = 0.1
 
@@ -200,11 +221,13 @@ class DumpRestart(SmileiSingleton):
     """Dump and restart parameters"""
     
     restart_dir = None
+    restart_number = None
     dump_step = 0
     dump_minutes = 0.
     dump_file_sequence = 2
     dump_deflate = 0
     exit_after_dump = True
+    file_grouping = None
 
 
 class Species(SmileiComponent):
@@ -225,12 +248,12 @@ class Species(SmileiComponent):
     dynamics_type = "norm"
     time_frozen = 0.0
     radiating = False
-    bc_part_type_west = None
-    bc_part_type_east = None
-    bc_part_type_north = None
-    bc_part_type_south = None
-    bc_part_type_bottom = None
-    bc_part_type_up = None
+    bc_part_type_xmin = None
+    bc_part_type_xmax = None
+    bc_part_type_ymax = None
+    bc_part_type_ymin = None
+    bc_part_type_zmin = None
+    bc_part_type_zmax = None
     ionization_model = "none"
     ionization_electrons = None
     atomic_number = None
@@ -241,7 +264,7 @@ class Species(SmileiComponent):
 
 class Laser(SmileiComponent):
     """Laser parameters"""
-    boxSide = "west"
+    boxSide = "xmin"
     omega = 1.
     chirp_profile = 1.
     time_envelope = 1.
@@ -273,10 +296,23 @@ class DiagProbe(SmileiComponent):
 class DiagParticles(SmileiComponent):
     """Diagnostic particles"""
     output = None
-    every = None
     time_average = 1
     species = None
     axes = []
+    every = None
+    flush_every = 1
+
+class DiagScreen(SmileiComponent):
+    """Diagnostic particles"""
+    shape = None
+    point = None
+    vector = None
+    direction = "both"
+    output = None
+    species = None
+    axes = []
+    time_average = 1
+    every = None
     flush_every = 1
 
 class DiagScalar(SmileiComponent):

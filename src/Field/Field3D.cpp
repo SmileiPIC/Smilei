@@ -47,6 +47,14 @@ Field3D::Field3D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal,
 }
 
 
+// without allocating
+Field3D::Field3D(string name, vector<unsigned int> dims) : Field(dims, name)
+{
+    data_=NULL;
+    dims_=dims;
+}
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Destructor for Field3D
 // ---------------------------------------------------------------------------------------------------------------------
@@ -63,12 +71,11 @@ Field3D::~Field3D()
 // ---------------------------------------------------------------------------------------------------------------------
 // Method used for allocating the dimension of a Field3D
 // ---------------------------------------------------------------------------------------------------------------------
-void Field3D::allocateDims(std::vector<unsigned int> dims ) {
-    dims_=dims;
-    if (dims_.size()!=3) ERROR("Alloc error must be 3 : " << dims.size());
+void Field3D::allocateDims() {
+    if (dims_.size()!=3) ERROR("Alloc error must be 3 : " << dims_.size());
     if (data_) delete [] data_;
     
-    isDual_.resize( dims.size(), 0 );
+    isDual_.resize( dims_.size(), 0 );
     
     data_ = new double[dims_[0]*dims_[1]*dims_[2]];
     //! \todo{check row major order!!!}
@@ -112,21 +119,20 @@ void Field3D::allocateDims(unsigned int dims1, unsigned int dims2, unsigned int 
 // ---------------------------------------------------------------------------------------------------------------------
 // Method used for allocating the dimension of a Field3D
 // ---------------------------------------------------------------------------------------------------------------------
-void Field3D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) {
-    dims_=dims;
-    if (dims_.size()!=3) ERROR("Alloc error must be 3 : " << dims.size());
+void Field3D::allocateDims(unsigned int mainDim, bool isPrimal ) {
+    if (dims_.size()!=3) ERROR("Alloc error must be 3 : " << dims_.size());
     if (data_) delete [] data_;
     
     // isPrimal define if mainDim is Primal or Dual
-    isDual_.resize( dims.size(), 0 );
-    for ( unsigned int j=0 ; j<dims.size() ; j++ ) {
+    isDual_.resize( dims_.size(), 0 );
+    for ( unsigned int j=0 ; j<dims_.size() ; j++ ) {
         if ( (j==mainDim) && (!isPrimal) )
             isDual_[j] = 1;
         else if ( (j!=mainDim) && (isPrimal) )
             isDual_[j] = 1;
     }
     
-    for ( unsigned int j=0 ; j<dims.size() ; j++ )
+    for ( unsigned int j=0 ; j<dims_.size() ; j++ )
         dims_[j] += isDual_[j];
     
     data_ = new double[dims_[0]*dims_[1]*dims_[2]];

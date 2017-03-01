@@ -4,6 +4,8 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <cstring>
+//#include <string>
 
 #include "Hilbert_functions.h"
 #include "PatchesFactory.h"
@@ -15,26 +17,18 @@
 
 #include "SyncVectorPatch.h"
 
-#include "Timer.h"
-
-#include <cstring>
-//#include <string>
+#include "Timers.h"
 
 using namespace std;
 
 
 VectorPatch::VectorPatch()
 {
-    fieldsTimeSelection = NULL;
 }
 
 
 VectorPatch::~VectorPatch()
 {
-    if( fieldsTimeSelection!=NULL ) {
-        delete fieldsTimeSelection;
-        fieldsTimeSelection = NULL;
-    }
 }
 
 void VectorPatch::close(SmileiMPI * smpiData)
@@ -57,8 +51,36 @@ void VectorPatch::close(SmileiMPI * smpiData)
 
 void VectorPatch::createDiags(Params& params, SmileiMPI* smpi)
 {
-    globalDiags = DiagnosticFactory::createGlobalDiagnostics(params, smpi, (*this)(0) );
-    localDiags  = DiagnosticFactory::createLocalDiagnostics (params, smpi, (*this)(0) );
+    globalDiags = DiagnosticFactory::createGlobalDiagnostics(params, smpi, *this );
+    localDiags  = DiagnosticFactory::createLocalDiagnostics (params, smpi, *this );
+    
+    // Delete all unused fields
+    for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++) {
+        for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Jx_s.size(); ifield++) {
+            if( (*this)(ipatch)->EMfields->Jx_s[ifield]->data_ == NULL ){
+                delete (*this)(ipatch)->EMfields->Jx_s[ifield];
+                (*this)(ipatch)->EMfields->Jx_s[ifield]=NULL;
+            }
+        }
+        for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Jy_s.size(); ifield++) {
+            if( (*this)(ipatch)->EMfields->Jy_s[ifield]->data_ == NULL ){
+                delete (*this)(ipatch)->EMfields->Jy_s[ifield];
+                (*this)(ipatch)->EMfields->Jy_s[ifield]=NULL;
+            }
+        }
+        for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Jz_s.size(); ifield++) {
+            if( (*this)(ipatch)->EMfields->Jz_s[ifield]->data_ == NULL ){
+                delete (*this)(ipatch)->EMfields->Jz_s[ifield];
+                (*this)(ipatch)->EMfields->Jz_s[ifield]=NULL;
+            }
+        }
+        for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->rho_s.size(); ifield++) {
+            if( (*this)(ipatch)->EMfields->rho_s[ifield]->data_ == NULL ){
+                delete (*this)(ipatch)->EMfields->rho_s[ifield];
+                (*this)(ipatch)->EMfields->rho_s[ifield]=NULL;
+            }
+        }
+    }
 }
 
 
@@ -72,68 +94,108 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi)
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow,
-                           int* diag_flag, double time_dual, vector<Timer>& timer, int itime)
+void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, double time_dual, Timers &timers, int itime)
 {
-    timer[1].restart();
+    
+    #pragma omp single
+    diag_flag = needsRhoJsNow(itime);
+    
+    timers.particles.restart();
     ostringstream t;
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
-            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || *diag_flag  ) {
+            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 species(ipatch, ispec)->dynamics(time_dual, ispec,
                                                  emfields(ipatch), interp(ipatch), proj(ipatch),
-                                                 params, *diag_flag, partwalls(ipatch),
+                                                 params, diag_flag, partwalls(ipatch),
                                                  (*this)(ipatch), smpi);
             }
         }
     
     }
-    timer[1].update( printScalars( itime ) );
+    timers.particles.update( params.printNow( itime ) );
+
+//    timers.syncField.restart();
+//    SyncVectorPatch::finalizeexchangeB( (*this) );
+//    timers.syncField.update(  params.printNow( itime ) );
     
-    timer[8].restart();
+    timers.syncPart.restart();
     for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
         if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-            SyncVectorPatch::exchangeParticles((*this), ispec, params, smpi ); // Included sort_part
+            SyncVectorPatch::exchangeParticles((*this), ispec, params, smpi, timers, itime ); // Included sort_part
+        }
+    }
+    timers.syncPart.update( params.printNow( itime ) );
+
+} // END dynamics
+
+
+void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWindow* simWindow,
+                           double time_dual, Timers &timers, int itime)
+{
+    timers.syncPart.restart();
+    for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
+        if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
+            SyncVectorPatch::finalize_and_sort_parts((*this), ispec, params, smpi, timers, itime ); // Included sort_part
         }
     }
     if (itime%10==0)
         #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
             (*this)(ipatch)->cleanParticlesOverhead(params);
-    timer[8].update( printScalars( itime ) );
+    timers.syncPart.update( params.printNow( itime ) );
+
+    if (itime!=0) {
+        timers.syncField.restart();
+        SyncVectorPatch::finalizeexchangeB( (*this) );
+        timers.syncField.update(  params.printNow( itime ) );
+    }
 
 } // END dynamics
+
+
+void VectorPatch::computeCharge()
+{
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        (*this)(ipatch)->EMfields->restartRhoJ();
+        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+            species(ipatch, ispec)->computeCharge(ispec, emfields(ipatch), proj(ipatch) );
+        }
+    }
+
+} // END computeRho
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::sumDensities( int* diag_flag, vector<Timer>& timer, int itime )
+void VectorPatch::sumDensities(Params &params, Timers &timers, int itime )
 {
-    timer[4].restart();
-    if  (*diag_flag){
+    timers.densities.restart();
+    if  (diag_flag){
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
              // Per species in global, Attention if output -> Sync / per species fields
             (*this)(ipatch)->EMfields->computeTotalRhoJ();
         }
     }
-    timer[4].update();
+    timers.densities.update();
     
-    timer[11].restart();
-    SyncVectorPatch::sumRhoJ( (*this), *diag_flag ); // MPI
+    timers.syncDens.restart();
+    SyncVectorPatch::sumRhoJ( (*this), timers, itime ); // MPI
     
-    if(*diag_flag){
+    if(diag_flag){
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
             if( ! (*this)(0)->vecSpecies[ispec]->particles->isTest ) {
                 update_field_list(ispec);
-                SyncVectorPatch::sumRhoJs( (*this), ispec ); // MPI
+                SyncVectorPatch::sumRhoJs( (*this), ispec, timers, itime ); // MPI
             }
         }
     }
-    timer[11].update( printScalars( itime ) );
+    timers.syncDens.update( params.printNow( itime ) );
     
 } // End sumDensities
 
@@ -141,9 +203,18 @@ void VectorPatch::sumDensities( int* diag_flag, vector<Timer>& timer, int itime 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual, vector<Timer>& timer)
+void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers)
 {
-    timer[2].restart();
+    timers.maxwell.restart();
+    
+    for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_int ; ipassfilter++){
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+            // Current spatial filtering
+            (*this)(ipatch)->EMfields->binomialCurrentFilter();
+        }
+        SyncVectorPatch::exchangeJ( (*this) );
+    }
     
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
@@ -153,30 +224,21 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         // Computes Ex_, Ey_, Ez_ on all points.
         // E is already synchronized because J has been synchronized before.
         (*this)(ipatch)->EMfields->solveMaxwellAmpere();
-    }
-    // Computes Bx_, By_, Bz_ at time n+1 on interior points.
-    #pragma omp for schedule(static)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
+        // Computes Bx_, By_, Bz_ at time n+1 on interior points.
+        //for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*(*this)(ipatch)->EMfields->MaxwellFaradaySolver_)((*this)(ipatch)->EMfields);
-    
-    // Applies boundary conditions on B
-    #pragma omp single
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
+        // Applies boundary conditions on B
         (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
+        // Computes B at time n+1/2 using B and B_m.
+        (*this)(ipatch)->EMfields->centerMagneticFields();
+    }
     
     //Synchronize B fields between patches.
-    timer[2].update( printScalars( itime ) );
+    timers.maxwell.update( params.printNow( itime ) );
     
-    timer[9].restart();
+    timers.syncField.restart();
     SyncVectorPatch::exchangeB( (*this) );
-    timer[9].update(  printScalars( itime ) );
-    
-    timer[2].restart();
-    // Computes B at time n+1/2 using B and B_m.
-    #pragma omp for schedule(static)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
-        (*this)(ipatch)->EMfields->centerMagneticFields();
-    timer[2].update();
+    timers.syncField.update(  params.printNow( itime ) );
 
 } // END solveMaxwell
 
@@ -187,10 +249,10 @@ void VectorPatch::initExternals(Params& params)
     for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
         // check if patch is on the border
         int iBC;
-        if     ( (*this)(ipatch)->isWestern() ) {
+        if     ( (*this)(ipatch)->isXmin() ) {
             iBC = 0;
         }
-        else if( (*this)(ipatch)->isEastern() ) {
+        else if( (*this)(ipatch)->isXmax() ) {
             iBC = 1;
         }
         else continue;
@@ -210,21 +272,16 @@ void VectorPatch::initExternals(Params& params)
 void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
 {
     // Global diags: scalars + particles
-    for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++)
+    for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
+        globalDiags[idiag]->init(params, smpi, *this);
         // MPI master creates the file
         if( smpi->isMaster() )
             globalDiags[idiag]->openFile( params, smpi, true );
-    
-    // Local diags : fields, probes, tracks
-    for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
-        localDiags[idiag]->init(params, smpi, *this);
-        // Save the timeSelection
-        if( fieldsTimeSelection==NULL && dynamic_cast<DiagnosticFields*>(localDiags[idiag]))
-            fieldsTimeSelection = new TimeSelection(localDiags[idiag]->timeSelection);
     }
     
-    // If no time selection has been found for fields, create an empty one
-    if( fieldsTimeSelection==NULL ) fieldsTimeSelection = new TimeSelection();
+    // Local diags : fields, probes, tracks
+    for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
+        localDiags[idiag]->init(params, smpi, *this);
     
 } // END initAllDiags
 
@@ -260,38 +317,49 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
 //   - Scalars, Probes, Phases, TrackParticles, Fields, Average fields
 //   - set diag_flag to 0 after write
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, int itime, vector<Timer>& timer)
+void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int itime, Timers & timers)
 {
     
     // Global diags: scalars + particles
-    timer[3].restart();
+    timers.diags.restart();
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
         #pragma omp single
         globalDiags[idiag]->theTimeIsNow = globalDiags[idiag]->prepare( itime );
         #pragma omp barrier
         if( globalDiags[idiag]->theTimeIsNow ) {
             // All patches run
-            #pragma omp for 
-            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
+            #pragma omp for schedule(runtime)
+            for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
                 globalDiags[idiag]->run( (*this)(ipatch), itime );
             // MPI procs gather the data and compute
             #pragma omp single
             smpi->computeGlobalDiags( globalDiags[idiag], itime);
             // MPI master writes
             #pragma omp single
-            if ( smpi->isMaster() )
-                globalDiags[idiag]->write( itime );
+            globalDiags[idiag]->write( itime , smpi );
         }
     }
     
     // Local diags : fields, probes, tracks
-    for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
+    for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
+        #pragma omp single
+        localDiags[idiag]->theTimeIsNow = localDiags[idiag]->prepare( itime );
+        #pragma omp barrier
         // All MPI run their stuff and write out
-        if( localDiags[idiag]->prepare( itime ) )
+        if( localDiags[idiag]->theTimeIsNow )
             localDiags[idiag]->run( smpi, *this, itime );
+    }
     
-    *diag_flag = 0;
-    timer[3].update();
+    // Manage the "diag_flag" parameter, which indicates whether Rho and Js were used
+    if( diag_flag ) {
+        #pragma omp barrier
+        #pragma omp single
+        diag_flag = false;
+        #pragma omp for
+        for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
+            (*this)(ipatch)->EMfields->restartRhoJs();
+    }
+    timers.diags.update();
 
 } // END runAllDiags
 
@@ -318,11 +386,8 @@ bool VectorPatch::isRhoNull( SmileiMPI* smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 {
-    unsigned int iteration_max;
-    PyTools::extract("poisson_iter_max", iteration_max, "Main");
-
-    double error_max;
-    PyTools::extract("poisson_error_max", error_max, "Main");
+    unsigned int iteration_max = params.poisson_iter_max;
+    double           error_max = params.poisson_error_max;
     unsigned int iteration=0;
     
     // Init & Store internal data (phi, r, p, Ap) per patch
@@ -369,6 +434,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         
         // Exchange Ap_ (intra & extra MPI)
         SyncVectorPatch::exchange( Ap_, *this );
+        SyncVectorPatch::finalizeexchange( Ap_, *this );
         
        // scalar product p.Ap
         double p_dot_Ap       = 0.0;
@@ -426,7 +492,8 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         (*this)(ipatch)->EMfields->initE( (*this)(ipatch) );
 
     SyncVectorPatch::exchangeE( *this );    
-    
+    SyncVectorPatch::finalizeexchangeE( *this );    
+
     // Centering of the electrostatic fields
     // -------------------------------------
     vector<double> E_Add(Ex_[0]->dims_.size(),0.);
@@ -435,66 +502,66 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 #endif    
     }
     else if ( Ex_[0]->dims_.size()>1 ) {
-        double Ex_WestNorth = 0.0;
-        double Ey_WestNorth = 0.0;
-        double Ex_EastSouth = 0.0;
-        double Ey_EastSouth = 0.0;
+        double Ex_XminYmax = 0.0;
+        double Ey_XminYmax = 0.0;
+        double Ex_XmaxYmin = 0.0;
+        double Ey_XmaxYmin = 0.0;
         
-        //The NorthWest patch has Patch coordinates X=0, Y=2^m1-1= number_of_patches[1]-1.
+        //The YmaxXmin patch has Patch coordinates X=0, Y=2^m1-1= number_of_patches[1]-1.
         //Its hindex is
-        int patch_NorthWest = generalhilbertindex(params.mi[0], params.mi[1], 0,  params.number_of_patches[1]-1);
+        int patch_YmaxXmin = generalhilbertindex(params.mi[0], params.mi[1], 0,  params.number_of_patches[1]-1);
         //The MPI rank owning it is
-        int rank_WestNorth = smpi->hrank(patch_NorthWest);
-        //The SouthEast patch has Patch coordinates X=2^m0-1= number_of_patches[0]-1, Y=0.
+        int rank_XminYmax = smpi->hrank(patch_YmaxXmin);
+        //The YminXmax patch has Patch coordinates X=2^m0-1= number_of_patches[0]-1, Y=0.
         //Its hindex is
-        int patch_SouthEast = generalhilbertindex(params.mi[0], params.mi[1], params.number_of_patches[0]-1, 0);
+        int patch_YminXmax = generalhilbertindex(params.mi[0], params.mi[1], params.number_of_patches[0]-1, 0);
         //The MPI rank owning it is
-        int rank_EastSouth = smpi->hrank(patch_SouthEast);
+        int rank_XmaxYmin = smpi->hrank(patch_YminXmax);
         
         
         //cout << params.mi[0] << " " << params.mi[1] << " " << params.number_of_patches[0] << " " << params.number_of_patches[1] << endl;
-        //cout << patch_NorthWest << " " << rank_WestNorth << " " << patch_SouthEast << " " << rank_EastSouth << endl;
+        //cout << patch_YmaxXmin << " " << rank_XminYmax << " " << patch_YminXmax << " " << rank_XmaxYmin << endl;
         
-        if ( smpi->getRank() == rank_WestNorth ) {
-            Ex_WestNorth = (*this)(patch_NorthWest-((*this).refHindex_))->EMfields->getEx_WestNorth();
-            Ey_WestNorth = (*this)(patch_NorthWest-((*this).refHindex_))->EMfields->getEy_WestNorth();
+        if ( smpi->getRank() == rank_XminYmax ) {
+            Ex_XminYmax = (*this)(patch_YmaxXmin-((*this).refHindex_))->EMfields->getEx_XminYmax();
+            Ey_XminYmax = (*this)(patch_YmaxXmin-((*this).refHindex_))->EMfields->getEy_XminYmax();
         }
         
-        // East-South corner
-        if ( smpi->getRank() == rank_EastSouth ) {
-            Ex_EastSouth = (*this)(patch_SouthEast-((*this).refHindex_))->EMfields->getEx_EastSouth();
-            Ey_EastSouth = (*this)(patch_SouthEast-((*this).refHindex_))->EMfields->getEy_EastSouth();
+        // Xmax-Ymin corner
+        if ( smpi->getRank() == rank_XmaxYmin ) {
+            Ex_XmaxYmin = (*this)(patch_YminXmax-((*this).refHindex_))->EMfields->getEx_XmaxYmin();
+            Ey_XmaxYmin = (*this)(patch_YminXmax-((*this).refHindex_))->EMfields->getEy_XmaxYmin();
         }
         
-        MPI_Bcast(&Ex_WestNorth, 1, MPI_DOUBLE, rank_WestNorth, MPI_COMM_WORLD);
-        MPI_Bcast(&Ey_WestNorth, 1, MPI_DOUBLE, rank_WestNorth, MPI_COMM_WORLD);
+        MPI_Bcast(&Ex_XminYmax, 1, MPI_DOUBLE, rank_XminYmax, MPI_COMM_WORLD);
+        MPI_Bcast(&Ey_XminYmax, 1, MPI_DOUBLE, rank_XminYmax, MPI_COMM_WORLD);
         
-        MPI_Bcast(&Ex_EastSouth, 1, MPI_DOUBLE, rank_EastSouth, MPI_COMM_WORLD);
-        MPI_Bcast(&Ey_EastSouth, 1, MPI_DOUBLE, rank_EastSouth, MPI_COMM_WORLD);
+        MPI_Bcast(&Ex_XmaxYmin, 1, MPI_DOUBLE, rank_XmaxYmin, MPI_COMM_WORLD);
+        MPI_Bcast(&Ey_XmaxYmin, 1, MPI_DOUBLE, rank_XmaxYmin, MPI_COMM_WORLD);
         
         //This correction is always done, independantly of the periodicity. Is this correct ?
-        E_Add[0] = -0.5*(Ex_WestNorth+Ex_EastSouth);
-        E_Add[1] = -0.5*(Ey_WestNorth+Ey_EastSouth);
+        E_Add[0] = -0.5*(Ex_XminYmax+Ex_XmaxYmin);
+        E_Add[1] = -0.5*(Ey_XminYmax+Ey_XmaxYmin);
     
     }
     else if( Ex_[0]->dims_.size()==1 ) {
-        double Ex_West = 0.0;
-        double Ex_East = 0.0;
+        double Ex_Xmin = 0.0;
+        double Ex_Xmax = 0.0;
         
-        unsigned int rankWest = 0;
+        unsigned int rankXmin = 0;
         if ( smpi->getRank() == 0 ) {
-            //Ex_West = (*Ex1D)(index_bc_min[0]);
-            Ex_West = (*this)( (0)-((*this).refHindex_))->EMfields->getEx_West();
+            //Ex_Xmin = (*Ex1D)(index_bc_min[0]);
+            Ex_Xmin = (*this)( (0)-((*this).refHindex_))->EMfields->getEx_Xmin();
         }
-        MPI_Bcast(&Ex_West, 1, MPI_DOUBLE, rankWest, MPI_COMM_WORLD);
+        MPI_Bcast(&Ex_Xmin, 1, MPI_DOUBLE, rankXmin, MPI_COMM_WORLD);
         
-        unsigned int rankEast = smpi->getSize()-1;
+        unsigned int rankXmax = smpi->getSize()-1;
         if ( smpi->getRank() == smpi->getSize()-1 ) {
-            //Ex_East = (*Ex1D)(index_bc_max[0]);
-            Ex_East = (*this)( (params.number_of_patches[0]-1)-((*this).refHindex_))->EMfields->getEx_East();
+            //Ex_Xmax = (*Ex1D)(index_bc_max[0]);
+            Ex_Xmax = (*this)( (params.number_of_patches[0]-1)-((*this).refHindex_))->EMfields->getEx_Xmax();
         }
-        MPI_Bcast(&Ex_East, 1, MPI_DOUBLE, rankEast, MPI_COMM_WORLD);
-        E_Add[0] = -0.5*(Ex_West+Ex_East);
+        MPI_Bcast(&Ex_Xmax, 1, MPI_DOUBLE, rankXmax, MPI_COMM_WORLD);
+        E_Add[0] = -0.5*(Ex_Xmin+Ex_Xmax);
         
     }
     
@@ -722,10 +789,14 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     
     for (unsigned int ipatch=0 ; ipatch<patches_.size() ; ipatch++ ) { 
         (*this)(ipatch)->updateMPIenv(smpi);
+        if ((*this)(ipatch)->has_an_MPI_neighbor())
+            (*this)(ipatch)->createType(params);
+         else
+            (*this)(ipatch)->cleanType();
     }
     (*this).set_refHindex() ;
     update_field_list() ;    
-    
+
 } // END exchangePatches
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -759,6 +830,27 @@ void VectorPatch::output_exchanges(SmileiMPI* smpi)
 //! Resize vector of field*
 void VectorPatch::update_field_list()
 {
+    int nDim = patches_[0]->EMfields->Ex_->dims_.size();
+    densities.resize( 3*size() ) ; // Jx + Jy + Jz
+
+    //                          1D  2D  3D
+    Bs0.resize( 2*size() ) ; //  2   2   2
+    Bs1.resize( 2*size() ) ; //  0   2   2
+    Bs2.resize( 2*size() ) ; //  0   0   2
+
+    densitiesLocalx.clear();
+    densitiesLocaly.clear();
+    densitiesLocalz.clear();
+    densitiesMPIx.clear();
+    densitiesMPIy.clear();
+    densitiesMPIz.clear();
+    LocalxIdx.clear();
+    LocalyIdx.clear();
+    LocalzIdx.clear();
+    MPIxIdx.clear();
+    MPIyIdx.clear();
+    MPIzIdx.clear();
+
     listJx_.resize( size() ) ;
     listJy_.resize( size() ) ;
     listJz_.resize( size() ) ;
@@ -782,32 +874,200 @@ void VectorPatch::update_field_list()
         listBy_[ipatch] = patches_[ipatch]->EMfields->By_ ;
         listBz_[ipatch] = patches_[ipatch]->EMfields->Bz_ ;
     }
+
+    B_localx.clear();
+    B_MPIx.clear();
+
+    B1_localy.clear();
+    B1_MPIy.clear();
+
+    B2_localz.clear();
+    B2_MPIz.clear();
+
+    for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+        densities[ipatch         ] = patches_[ipatch]->EMfields->Jx_ ;
+        densities[ipatch+  size()] = patches_[ipatch]->EMfields->Jy_ ;
+        densities[ipatch+2*size()] = patches_[ipatch]->EMfields->Jz_ ;
+
+        Bs0[ipatch       ] = patches_[ipatch]->EMfields->By_ ;
+        Bs0[ipatch+size()] = patches_[ipatch]->EMfields->Bz_ ;
+
+        // TO DO , B size depend of nDim
+        // Pas grave, au pire inutil 
+        Bs1[ipatch       ] = patches_[ipatch]->EMfields->Bx_ ;
+        Bs1[ipatch+size()] = patches_[ipatch]->EMfields->Bz_ ;
+
+        // TO DO , B size depend of nDim
+        // Pas grave, au pire inutil 
+        Bs2[ipatch       ] = patches_[ipatch]->EMfields->Bx_ ;
+        Bs2[ipatch+size()] = patches_[ipatch]->EMfields->By_ ;        
+    }
+
+    for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+        if ( (*this)(ipatch)->has_an_MPI_neighbor( 0 ) ) {
+            MPIxIdx.push_back(ipatch);
+        }
+        if ( (*this)(ipatch)->has_an_local_neighbor( 0 ) ) {
+            LocalxIdx.push_back(ipatch);
+        }
+    }
+    if (nDim>1) {
+        for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+            if ( (*this)(ipatch)->has_an_MPI_neighbor( 1 ) ) {
+                MPIyIdx.push_back(ipatch);
+            }
+            if ( (*this)(ipatch)->has_an_local_neighbor( 1 ) ) {
+                LocalyIdx.push_back(ipatch);
+            }
+        }
+        if (nDim>2) {
+            for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+
+                if ( (*this)(ipatch)->has_an_MPI_neighbor( 2 ) ) {
+                    MPIzIdx.push_back(ipatch);
+                }
+                if ( (*this)(ipatch)->has_an_local_neighbor( 2 ) ) {
+                    LocalzIdx.push_back(ipatch);
+                }
+            }
+        }
+    }
+
+    B_MPIx.resize( 2*MPIxIdx.size() );
+    B_localx.resize( 2*LocalxIdx.size() );
+    B1_MPIy.resize( 2*MPIyIdx.size() );
+    B1_localy.resize( 2*LocalyIdx.size() );
+    B2_MPIz.resize( 2*MPIzIdx.size() );
+    B2_localz.resize( 2*LocalzIdx.size() );
+
+    densitiesMPIx.resize( 3*MPIxIdx.size() );
+    densitiesLocalx.resize( 3*LocalxIdx.size() );
+    densitiesMPIy.resize( 3*MPIyIdx.size() );
+    densitiesLocaly.resize( 3*LocalyIdx.size() );
+    densitiesMPIz.resize( 3*MPIzIdx.size() );
+    densitiesLocalz.resize( 3*LocalzIdx.size() );
+
+    int mpix(0), locx(0), mpiy(0), locy(0), mpiz(0), locz(0);
+
+    for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+
+        if ( (*this)(ipatch)->has_an_MPI_neighbor( 0 ) ) {
+            B_MPIx[mpix               ] = patches_[ipatch]->EMfields->By_;
+            B_MPIx[mpix+MPIxIdx.size()] = patches_[ipatch]->EMfields->Bz_;
+
+            densitiesMPIx[mpix                 ] = patches_[ipatch]->EMfields->Jx_;
+            densitiesMPIx[mpix+  MPIxIdx.size()] = patches_[ipatch]->EMfields->Jy_;
+            densitiesMPIx[mpix+2*MPIxIdx.size()] = patches_[ipatch]->EMfields->Jz_;
+            mpix++;
+        }
+        if ( (*this)(ipatch)->has_an_local_neighbor( 0 ) ) {
+            B_localx[locx                 ] = patches_[ipatch]->EMfields->By_;
+            B_localx[locx+LocalxIdx.size()] = patches_[ipatch]->EMfields->Bz_;
+
+            densitiesLocalx[locx                   ] = patches_[ipatch]->EMfields->Jx_;
+            densitiesLocalx[locx+  LocalxIdx.size()] = patches_[ipatch]->EMfields->Jy_;
+            densitiesLocalx[locx+2*LocalxIdx.size()] = patches_[ipatch]->EMfields->Jz_;
+            locx++;
+        }
+    }
+    if (nDim>1) {
+        for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+            if ( (*this)(ipatch)->has_an_MPI_neighbor( 1 ) ) {
+                B1_MPIy[mpiy               ] = patches_[ipatch]->EMfields->Bx_;
+                B1_MPIy[mpiy+MPIyIdx.size()] = patches_[ipatch]->EMfields->Bz_;
+
+                densitiesMPIy[mpiy                 ] = patches_[ipatch]->EMfields->Jx_;
+                densitiesMPIy[mpiy+  MPIyIdx.size()] = patches_[ipatch]->EMfields->Jy_;
+                densitiesMPIy[mpiy+2*MPIyIdx.size()] = patches_[ipatch]->EMfields->Jz_;
+                mpiy++;
+            }
+            if ( (*this)(ipatch)->has_an_local_neighbor( 1 ) ) {
+                B1_localy[locy                 ] = patches_[ipatch]->EMfields->Bx_;
+                B1_localy[locy+LocalyIdx.size()] = patches_[ipatch]->EMfields->Bz_;
+
+                densitiesLocaly[locy                   ] = patches_[ipatch]->EMfields->Jx_;
+                densitiesLocaly[locy+  LocalyIdx.size()] = patches_[ipatch]->EMfields->Jy_;
+                densitiesLocaly[locy+2*LocalyIdx.size()] = patches_[ipatch]->EMfields->Jz_;
+                locy++;
+            }
+        }
+        if (nDim>2) {
+            for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+                if ( (*this)(ipatch)->has_an_MPI_neighbor( 2 ) ) {
+                    B2_MPIz[mpiz               ] = patches_[ipatch]->EMfields->Bx_;
+                    B2_MPIz[mpiz+MPIzIdx.size()] = patches_[ipatch]->EMfields->By_;
+
+                    densitiesMPIz[mpiz                 ] = patches_[ipatch]->EMfields->Jx_;
+                    densitiesMPIz[mpiz+  MPIzIdx.size()] = patches_[ipatch]->EMfields->Jy_;
+                    densitiesMPIz[mpiz+2*MPIzIdx.size()] = patches_[ipatch]->EMfields->Jz_;
+                    mpiz++;
+                }
+                if ( (*this)(ipatch)->has_an_local_neighbor( 2 ) ) {
+                    B2_localz[locz                 ] = patches_[ipatch]->EMfields->Bx_;
+                    B2_localz[locz+LocalzIdx.size()] = patches_[ipatch]->EMfields->By_;
+
+                    densitiesLocalz[locz                   ] = patches_[ipatch]->EMfields->Jx_;
+                    densitiesLocalz[locz+  LocalzIdx.size()] = patches_[ipatch]->EMfields->Jy_;
+                    densitiesLocalz[locz+2*LocalzIdx.size()] = patches_[ipatch]->EMfields->Jz_;
+                    locz++;
+                }
+            }
+        }
+
+    }
+
+    for ( unsigned int ifields = 0 ; ifields < listBx_.size() ; ifields++ ) {
+        listJx_[ifields]->MPIbuff.defineTags( patches_[ifields], 1 );
+        listJy_[ifields]->MPIbuff.defineTags( patches_[ifields], 2 );
+        listJz_[ifields]->MPIbuff.defineTags( patches_[ifields], 3 );
+        listBx_[ifields]->MPIbuff.defineTags( patches_[ifields], 6 );
+        listBy_[ifields]->MPIbuff.defineTags( patches_[ifields], 7 );
+        listBz_[ifields]->MPIbuff.defineTags( patches_[ifields], 8 );
+
+        listrho_[ifields]->MPIbuff.defineTags( patches_[ifields], 4 );
+    }
 }
 
 
 
 void VectorPatch::update_field_list(int ispec)
 {
+    #pragma omp barrier
     #pragma omp single
     {
-        listJxs_.resize( size() ) ;
-        listJys_.resize( size() ) ;
-        listJzs_.resize( size() ) ;
-        listrhos_.resize( size() ) ;
+        if(patches_[0]->EMfields->Jx_s [ispec]) listJxs_.resize( size() ) ;
+        else
+            listJxs_.clear();
+        if(patches_[0]->EMfields->Jy_s [ispec]) listJys_.resize( size() ) ;
+        else
+            listJys_.clear();
+        if(patches_[0]->EMfields->Jz_s [ispec]) listJzs_.resize( size() ) ;
+        else
+            listJzs_.clear();
+        if(patches_[0]->EMfields->rho_s[ispec]) listrhos_.resize( size() ) ;
+        else
+            listrhos_.clear();
     }
     
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
-        listJxs_[ipatch] = patches_[ipatch]->EMfields->Jx_s[ispec] ;
-        listJys_[ipatch] = patches_[ipatch]->EMfields->Jy_s[ispec] ;
-        listJzs_[ipatch] = patches_[ipatch]->EMfields->Jz_s[ispec] ;
-        listrhos_[ipatch] =patches_[ipatch]->EMfields->rho_s[ispec];
+        if(patches_[ipatch]->EMfields->Jx_s [ispec]) listJxs_ [ipatch] = patches_[ipatch]->EMfields->Jx_s [ispec];
+        if(patches_[ipatch]->EMfields->Jy_s [ispec]) listJys_ [ipatch] = patches_[ipatch]->EMfields->Jy_s [ispec];
+        if(patches_[ipatch]->EMfields->Jz_s [ispec]) listJzs_ [ipatch] = patches_[ipatch]->EMfields->Jz_s [ispec];
+        if(patches_[ipatch]->EMfields->rho_s[ispec]) listrhos_[ipatch] = patches_[ipatch]->EMfields->rho_s[ispec];
     }
 }
 
 
 void VectorPatch::applyAntennas(double time)
 {
+#ifdef  __DEBUG
+    if( nAntennas>0 ) {
+        #pragma omp single
+        TITLE("Applying antennas at time t = " << time);
+    }
+#endif
+    
     // Loop antennas
     for(unsigned int iAntenna=0; iAntenna<nAntennas; iAntenna++) {
     
@@ -825,9 +1085,9 @@ void VectorPatch::applyAntennas(double time)
 }
 
 // For each patch, apply the collisions
-void VectorPatch::applyCollisions(Params& params, int itime, vector<Timer>& timer)
+void VectorPatch::applyCollisions(Params& params, int itime, Timers & timers)
 {
-    timer[10].restart();
+    timers.collisions.restart();
     
     if (Collisions::debye_length_required)
         #pragma omp for schedule(static)
@@ -846,7 +1106,15 @@ void VectorPatch::applyCollisions(Params& params, int itime, vector<Timer>& time
         Collisions::debug(params, itime, icoll, *this);
     #pragma omp barrier
     
-    timer[10].update();
+    timers.collisions.update();
+}
+
+
+// For each patch, apply external fields
+void VectorPatch::applyExternalFields()
+{
+    for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
+        patches_[ipatch]->EMfields->applyExternalFields( (*this)(ipatch) ); // Must be patch
 }
 
 
@@ -902,4 +1170,74 @@ void VectorPatch::move_probes(Params& params, double x_moved)
         
         } // Enf if probes
     } // End for idiag
+}
+
+
+
+// Print information on the memory consumption
+void VectorPatch::check_memory_consumption(SmileiMPI* smpi)
+{
+    long int particlesMem(0);
+    for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
+        for (unsigned int ispec=0 ; ispec<patches_[ipatch]->vecSpecies.size(); ispec++)
+            particlesMem += patches_[ipatch]->vecSpecies[ispec]->getMemFootPrint();
+    MESSAGE( 1, "(Master) Species part = " << (int)( (double)particlesMem / 1024./1024.) << " MB" );
+    
+    long double dParticlesMem = (double)particlesMem / 1024./1024./1024.;
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dParticlesMem, &dParticlesMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+    MESSAGE( 1, setprecision(3) << "Global Species part = " << dParticlesMem << " GB" );
+    
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&particlesMem, &particlesMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
+    MESSAGE( 1, "Max Species part = " << (int)( (double)particlesMem / 1024./1024.) << " MB" );
+    
+    // fieldsMem contains field per species and average fields
+    long int fieldsMem(0);
+    for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
+        fieldsMem += patches_[ipatch]->EMfields->getMemFootPrint();
+    MESSAGE( 1, "(Master) Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " MB" );
+    
+    long double dFieldsMem = (double)fieldsMem / 1024./1024./1024.;
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dFieldsMem, &dFieldsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+    MESSAGE( 1, setprecision(3) << "Global Fields part = " << dFieldsMem << " GB" );
+    
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&fieldsMem, &fieldsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
+    MESSAGE( 1, "Max Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " MB" );
+
+    
+    for (unsigned int idiags=0 ; idiags<globalDiags.size() ; idiags++) {
+        // fieldsMem contains field per species
+        long int diagsMem(0);
+        diagsMem += globalDiags[idiags]->getMemFootPrint();
+    
+        long double dDiagsMem = (double)diagsMem / 1024./1024./1024.;
+        MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dDiagsMem, &dDiagsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+        if (dDiagsMem>0.) {
+            MESSAGE( 1, "(Master) " <<  globalDiags[idiags]->filename << "  = " << (int)( (double)diagsMem / 1024./1024.) << " MB" );
+            MESSAGE( 1, setprecision(3) << "Global " <<  globalDiags[idiags]->filename << " = " << dDiagsMem << " GB" );
+        }
+    
+        MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&diagsMem, &diagsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
+        if (dDiagsMem>0.)
+            MESSAGE( 1, "Max " <<  globalDiags[idiags]->filename << " = " << (int)( (double)diagsMem / 1024./1024.) << " MB" );
+    }
+
+    for (unsigned int idiags=0 ; idiags<localDiags.size() ; idiags++) {
+        // fieldsMem contains field per species
+        long int diagsMem(0);
+        diagsMem += localDiags[idiags]->getMemFootPrint();
+    
+        long double dDiagsMem = (double)diagsMem / 1024./1024./1024.;
+        MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dDiagsMem, &dDiagsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+        if (dDiagsMem>0.) {
+            MESSAGE( 1, "(Master) " <<  localDiags[idiags]->filename << "  = " << (int)( (double)diagsMem / 1024./1024.) << " MB" );
+            MESSAGE( 1, setprecision(3) << "Global " <<  localDiags[idiags]->filename << " = " << dDiagsMem << " GB" );
+        }
+    
+        MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&diagsMem, &diagsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
+        if (dDiagsMem>0.)
+            MESSAGE( 1, "Max " <<  localDiags[idiags]->filename << " = " << (int)( (double)diagsMem / 1024./1024.) << " MB" );
+    }
+
+    // Read value in /proc/pid/status
+    //Tools::printMemFootPrint( "End Initialization" );
 }

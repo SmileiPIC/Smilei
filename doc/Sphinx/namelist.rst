@@ -168,6 +168,12 @@ The block ``Main`` is **mandatory** and has the following syntax::
   
   The solver for Maxwell's equations. Only ``"Yee"`` is available at the moment.
 
+.. py:data:: solve_poisson
+  
+   :default: True
+  
+   Decides if Poisson correction must be applied or not initially.
+
 .. py:data:: poisson_iter_max
   
   :default: 50000
@@ -220,7 +226,9 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: current working directory
   
   Output directory for the simulation.
-
+  
+  **WARNING:** This utility is deprecated and may be removed in a future release.
+  Please manage your directories before you run :program:`Smilei`.
 
 .. py:data:: random_seed
 
@@ -240,10 +248,18 @@ occur every 150 iterations.
 .. code-block:: python
   
   LoadBalancing(
-      every = 100,
+      initial_balance = True
+      every = 150,
       coef_cell = 1.,
       coef_frozen = 0.1,
   )
+
+.. py:data:: initial_balance
+  
+  :default: True
+  
+  Decides if the load must be balanced at initialization. If not, the same amount of
+  patches will be attributed to each MPI rank.
 
 .. py:data:: every
   
@@ -314,10 +330,10 @@ Each species has to be defined in a ``Species`` block::
       charge = -1.,
       mean_velocity = [0.],
       temperature = [1e-10],
-      bc_part_type_west = "refl",
-      bc_part_type_east = "refl",
-      # bc_part_type_north = None,
-      # bc_part_type_south = None,
+      bc_part_type_xmin = "refl",
+      bc_part_type_xmax = "refl",
+      # bc_part_type_ymax = None,
+      # bc_part_type_ymin = None,
       # thermT = None,
       # thermVelocity = None,
       time_frozen = 0.0,
@@ -342,13 +358,14 @@ Each species has to be defined in a ``Species`` block::
    
    * ``"regular"`` for regularly spaced
    * ``"random"`` for randomly distributed
+   * ``"centered"`` for centered in each cell
 
 
 .. py:data:: initMomentum_type
   
   The initialization of particle momenta:
   
-  * ``"maxwell-juettner"`` for a relativistic maxwellian
+  * ``"maxwell-juettner"`` for a relativistic maxwellian (see :doc:`how it is done<maxwell-juttner>`)
   * ``"rectangular"`` for a rectangular distribution
   * ``"cold"`` for zero temperature
   
@@ -404,16 +421,14 @@ Each species has to be defined in a ``Species`` block::
   The initial temperature of the particles, in units of :math:`m_ec^2`.
 
 
-.. py:data:: bc_part_type_west
-             bc_part_type_east
-             bc_part_type_south
-             bc_part_type_north
+.. py:data:: bc_part_type_xmin
+             bc_part_type_xmax
+             bc_part_type_ymin
+             bc_part_type_ymax
   
-  The boundary condition for particles: ``"none"`` means periodic.
+  The boundary condition for particles: ``"refl"`` for *reflecting*, ``"supp"`` for
+  *suppressing*, ``"stop"`` for *stopping*, ``"periodic"``, and ``"thermalize"``.
   
-  :red:`to do`
-
-
 .. py:data:: thermT
   
   :default: None
@@ -514,16 +529,16 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   .. code-block:: python
     
     Laser(
-        boxSide = "west",
+        boxSide = "xmin",
         space_time_profile = [ By_profile, Bz_profile ]
     )
   
   .. py:data:: boxSide
     
-    :default: ``"west"``
+    :default: ``"xmin"``
     
-    Side of the box from which the laser originates: at the moment, only ``"west"`` and
-    ``"east"`` are supported.
+    Side of the box from which the laser originates: at the moment, only ``"xmin"`` and
+    ``"xmax"`` are supported.
     
   .. py:data:: space_time_profile
   
@@ -542,7 +557,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   .. code-block:: python
     
     Laser(
-        boxSide        = "west",
+        boxSide        = "xmin",
         omega          = 1.,
         chirp_profile  = tconstant(),
         time_envelope  = tgaussian(),
@@ -608,7 +623,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   For one-dimensional simulations, you may use the simplified laser creator::
     
     LaserPlanar1D(
-        boxSide         = "west",
+        boxSide         = "xmin",
         a0              = 1.,
         omega           = 1.,
         polarizationPhi = 0.,
@@ -643,7 +658,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   For two-dimensional simulations, you may use the simplified laser creator::
     
     LaserGaussian2D(
-        boxSide         = "west",
+        boxSide         = "xmin",
         a0              = 1.,
         omega           = 1.,
         focus           = [50., 40.],
@@ -673,6 +688,29 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   .. py:data:: time_envelope
     
      Time envelope of the field (not intensity).
+
+
+.. rubric:: 5. Defining a 3D gaussian wave
+
+..
+
+  For three-dimensional simulations, you may use the simplified laser creator::
+    
+    LaserGaussian3D(
+        boxSide         = "xmin",
+        a0              = 1.,
+        omega           = 1.,
+        focus           = [50., 40., 40.],
+        waist           = 3.,
+        incidence_angle = [0., 0.1], 
+        polarizationPhi = 0.,
+        ellipticity     = 0.,
+        time_envelope   = tconstant()
+    )
+  
+  This is almost the same as ``LaserGaussian2D``, with the ``focus`` parameter having
+  now 3 elements (focus position in 3D), and the ``incidence_angle`` being a list of
+  two angles, corresponding to rotations around `y` and `z`, respectively.
 
 
 
@@ -837,16 +875,16 @@ profiles.
     :param xvalues: list of the values of the profile at each point
   
   .. py:function:: cosine( base, amplitude=1., \
-           xvacuum=0., xlength=None, phi=0., xnumber=1 )
+           xvacuum=0., xlength=None, xphi=0., xnumber=1 )
   
     :param base: offset of the profile value
     :param amplitude: amplitude of the cosine
     :param xvacuum: empty length before starting the profile
     :param xlength: length of the profile (default is :py:data:`sim_length` :math:`-` ``xvacuum``)
-    :param phi: phase offset
+    :param xphi: phase offset
     :param xnumber: number of periods within ``xlength``
   
-  .. py:function:: polynomial( x0=0., y0=0., order0=[], order1=[], ... )
+  .. py:function:: polynomial( x0=0., y0=0., z0=0., order0=[], order1=[], ... )
     
     :param x0,y0: The reference position(s)
     :param order0: Coefficient for the 0th order
@@ -860,17 +898,23 @@ profiles.
       
       \begin{eqnarray}
       &\sum_i a_i(x-x_0)^i & \quad\mathrm{in\, 1D}\\
-      &\sum_i \sum_j a_{ij}(x-x0)^j(y-y0)^{i-j} & \quad\mathrm{in\, 2D}
+      &\sum_i \sum_j a_{ij}(x-x0)^{i-j}(y-y0)^j & \quad\mathrm{in\, 2D}\\
+      &\sum_i \sum_j \sum_k a_{ijk}(x-x0)^{i-j-k}(y-y0)^j(z-z0)^k & \quad\mathrm{in\, 3D}
       \end{eqnarray}
     
     Each ``orderi`` is a coefficient (or list of coefficents) associated to the order ``i``.
     In 1D, there is only one coefficient per order. In 2D, each ``orderi`` is a list
     of ``i+1`` coefficients. For instance, the second order has three coefficients
     associated to :math:`x^2`, :math:`xy` and :math:`y^2`, respectively.
+    In 3D, each ``orderi`` is a list of ``(i+1)*(i+2)/2`` coefficients. For instance,
+    the second order has 6 coefficients associated to :math:`x^2`, :math:`xy`, :math:`xz`,
+    :math:`y^2`, :math:`yz` and :math:`z^2`, respectively.
   
-  **Example**::
+  **Examples**::
     
     Species( ... , density = gaussian(10., xfwhm=0.3, xcenter=0.8), ... )
+    
+    ExtField( ..., profile = constant(2.2), ... )
 
 
 .. rubric:: 4. Pre-defined *temporal* profiles
@@ -944,8 +988,6 @@ reflect, stop, thermalize or kill particles which reach it::
       kind = "refl",
       x = 20.
   )
-
-All the possible variables inside this block are explained here:
 
 .. py:data:: kind
   
@@ -1095,8 +1137,9 @@ The full list of scalars that are saved by this diagnostic:
 +----------------+---------------------------------------------------------------------------+
 | **Species information**                                                                    |
 +----------------+---------------------------------------------------------------------------+
-| | Zavg_abc     | | Average charge of species "abc"                                         |
-| | Ukin_abc     | |  ... their kinetic energy                                               |
+| | Dens_abc     | | Average density of species "abc"                                        |
+| | Zavg_abc     | |  ... its average charge                                                 |
+| | Ukin_abc     | |  ... its total kinetic energy                                           |
 | | Ntot_abc     | |  ... and number of particles                                            |
 +----------------+---------------------------------------------------------------------------+
 | **Fields information**                                                                     |
@@ -1106,9 +1149,9 @@ The full list of scalars that are saved by this diagnostic:
 | | ExMax        | | Maximum of :math:`E_x`                                                  |
 | | ExMaxCell    | |  ... and its location (cell index)                                      |
 | |              | | ... same for fields Ey Ez Bx_m By_m Bz_m Jx Jy Jz Rho                   |
-| | PoyEast      | | Accumulated Poynting flux through eastern boundary                      |
-| | PoyEastInst  | | Current Poynting flux through eastern boundary                          |
-| |              | |  ... same for boundaries West South North Bottom Top                    |
+| | PoyXmin      | | Accumulated Poynting flux through xmin boundary                         |
+| | PoyXminInst  | | Current Poynting flux through xmin boundary                             |
+| |              | |  ... same for other boundaries                                          |
 +----------------+---------------------------------------------------------------------------+
 
 Checkout the :doc:`post-processing <post-processing>` documentation as well.
@@ -1122,7 +1165,7 @@ Checkout the :doc:`post-processing <post-processing>` documentation as well.
 
 :program:`Smilei` can collect various field data (electromagnetic fields, currents and density)
 taken at the location of the PIC grid, both as instantaneous values and averaged values.
-This is done by including the block ``DiagScalar``::
+This is done by including a block ``DiagFields``::
 
   DiagFields(
       every = 10,
@@ -1150,8 +1193,6 @@ This is done by including the block ``DiagScalar``::
   :default: ``1`` *(no averaging)*
   
   The number of timesteps for time-averaging.
-  Note that only one diagnostic with averaging, and one diagnostic without averaging
-  can be defined.
 
 
 .. py:data:: fields
@@ -1167,8 +1208,12 @@ The full list of fields that are saved by this diagnostic:
 .. rst-class:: nowrap
 
 +----------------+-------------------------------------------------------+
+| | Bx           | |                                                     |
+| | By           | | Components of the magnetic field                    |
+| | Bz           | |                                                     |
++----------------+-------------------------------------------------------+
 | | Bx_m         | |                                                     |
-| | By_m         | | Components of the magnetic field                    |
+| | By_m         | | Components of the magnetic field (time-centered)    |
 | | Bz_m         | |                                                     |
 +----------------+-------------------------------------------------------+
 | | Ex           | |                                                     |
@@ -1336,8 +1381,6 @@ for instance::
       ]
   )
 
-All the possible variables inside this block are explained here:
-
 .. py:data:: output
 
   determines the data that is summed in each cell of the grid:
@@ -1345,8 +1388,9 @@ All the possible variables inside this block are explained here:
   * with ``"density"``, the weights are summed.
   * with ``"charge_density"``, the weights :math:`\times` charge are summed.
   * with ``"jx_density"``, the weights :math:`\times` charge :math:`\times\; v_x` are summed (same with :math:`y` and :math:`z`).
-  * with ``"p_density"``, the weights :math:`\times\; p` are summed (same with :math:`px`, :math:`py` and :math:`pz`).
-  * with ``"pressure_xx"``, the weights :math:`\times\; v \times p` are summed (same with yy, zz, xy, yz and xz).
+  * with ``"p_density"``, the weights :math:`\times\; p` are summed (same with :math:`p_x`, :math:`p_y` and :math:`p_z`).
+  * with ``"ekin_density"``, the weights :math:`\times mc^2\; (\gamma-1)` are summed.
+  * with ``"pressure_xx"``, the weights :math:`\times\; v_x p_x` are summed (same with yy, zz, xy, yz and xz).
 
 
 .. py:data:: every
@@ -1391,6 +1435,14 @@ All the possible variables inside this block are explained here:
   
   There may be as many axes as wanted in one ``DiagParticles( ... )`` block.
 
+.. note::
+  
+  As an experimental capability, we created the "composite" axes ``type``.
+  You may write the axis type as ``"ax+by+cz"``, where ``a``, ``b`` and ``c`` are numbers.
+  This syntax does NOT accept characters other than numbers and the characters ``xyz+-``.
+  For instance, it does not accept divisions ``/`` or whitespace.
+  The resulting axis is along the vector of coordinates :math:`(a,b,c)`.
+  For instance, in 2D, ``"x+2y"`` makes an axis oriented along the vector :math:`(1,2)`.
 
 
 **Examples of particle diagnostics**
@@ -1479,6 +1531,95 @@ All the possible variables inside this block are explained here:
     	axes = [ ["charge",    -0.5,   10.5,   11] ]
     )
 
+
+----
+
+.. _DiagScreen:
+
+*Screen* diagnostics
+^^^^^^^^^^^^^^^^^^^^
+
+A *screen* collects data from the macro-particles when they cross a surface.
+It processes this data similarly to the :ref:`particle diagnostics <DiagParticles>`
+as it makes a histogram of the macro-particle properties. The only difference is
+that the histogram is made only by the particles that cross the surface.
+
+You can add a screen by including a block ``DiagScreen()`` in the namelist,
+for instance::
+  
+  DiagScreen(
+      shape = "plane",
+      point = [5., 10.],
+      vector = [1., 0.],
+      direction = "canceling",
+      output = "density",
+      species = ["electron"],
+      axes = [["a", -10.*l0, 10.*l0, 40],
+              ["px", 0., 3., 30]],
+      every = 10
+  )
+
+.. py:data:: shape
+
+   The shape of the screen surface: ``"plane"`` or ``"sphere"``.
+
+.. py:data:: point
+
+   :type: A list of floats ``[X]`` in 1D,  ``[X,Y]`` in 2D,  ``[X,Y,Z]`` in 3D 
+   
+   The coordinates of a point that defines the screen surface:
+   a point of the ``"plane"`` or the center of the ``"sphere"``.
+
+.. py:data:: vector
+
+   :type: A list of floats ``[X]`` in 1D,  ``[X,Y]`` in 2D,  ``[X,Y,Z]`` in 3D 
+   
+   The coordinates of a vector that defines the screen surface:
+   the normal to the ``"plane"`` or a radius of the ``"sphere"``.
+
+.. py:data:: direction
+
+   :default: ``"both"``
+   
+   Determines how particles are counted depending on which side of the screen they come from.
+   
+   * ``"both"`` to account for both sides.
+   * ``"forward"`` for only the ones in the direction of the ``vector``.
+   * ``"backward"`` for only the ones in the opposite direction.
+   * ``"canceling"`` to count negatively the ones in the opposite direction.
+
+.. py:data:: output
+
+   Identical to the ``output`` of :ref:`particle diagnostics <DiagParticles>`.
+
+.. py:data:: every
+  
+  The number of time-steps between each output, **or** a :ref:`time selection <TimeSelections>`.
+
+.. py:data:: flush_every
+  
+  :default: 1
+  
+  Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
+  
+  When `flush_every` coincides with `every`, the output
+  file is actually written ("flushed" from the buffer). Flushing
+  too often can *dramatically* slow down the simulation.
+
+.. py:data:: species
+  
+  A list of the names of one or several species (see :py:data:`species_type`).
+
+.. py:data:: axes
+  
+  A list of "axes" that define the grid of the histogram.
+  It is identical to that of :ref:`particle diagnostics <DiagParticles>`, with the
+  addition of four types of axes:
+  ``"a"`` and ``"b"`` are the axes perpendicular to the ``vector``, when the screen
+  shape is a ``"plane"``.
+  ``"theta"`` and ``"phi"`` are the angles with respect to the ``vector``, when the screen
+  shape is a ``"sphere"``.
+  
 ----
 
 .. _TimeSelections:
@@ -1527,12 +1668,21 @@ For more clarity, this graph illustrates the five syntaxes for time selections:
 
 ----
 
-Dump and restart
-^^^^^^^^^^^^^^^^
+.. _Checkpoints:
 
-To restart the simulation from a previous point, a few instructions are needed to 
-tell :program:`Smilei` where to find the restart information, and how often the checkpoint
-dumps are done::
+Checkpoints
+^^^^^^^^^^^
+
+The simulation can be *dumped* at given points (*checkpoints*) in order to be *restarted*
+at that point.
+
+A few things are important to know when you need dumps and restarts.
+
+* Do not restart the simulation in the same directory as the previous one. Files will be 
+  overwritten, and errors may occur. Create a new directory for your restarted simulation.
+* Manage your memory: each process dumps one file, and the total can be significant.
+
+::
 
   DumpRestart(
       restart_dir = "dump1",
@@ -1551,7 +1701,7 @@ dumps are done::
   If not defined, it does not restart from a previous dump.
   
   **WARNING:** this path must either absolute or be relative to ``output_dir``
-
+  
 .. py:data:: dump_step
 
   :default: 0
@@ -1582,7 +1732,20 @@ dumps are done::
   
   This tells :program:`Smilei` to keep the last ``n`` dumps for a later restart.
   The default value, 2, saves one extra dump in case of a crash during the file dump.
+
+.. py:data:: file_grouping
+
+  :default: None
   
+  The maximum number of checkpoint files that can be stored in one directory.
+  New subdirectories are created according to the total number of files.
+  This is useful on filesystem with a limited number of files per directory.
+
+.. py:data:: restart_number
+
+  :default: None
+  
+  If provided, the code will restart from that checkpoint, otherwise it uses the most recent one.
 
 ----
 
@@ -1594,11 +1757,11 @@ namelist. They should not be re-defined by the user!
 
 .. py:data:: smilei_mpi_rank
     
-  The MPI rank of the current CPU.
+  The MPI rank of the current process.
 
 .. py:data:: smilei_mpi_size
     
-  The total number of MPI CPUs.
+  The total number of MPI processes.
 
 .. py:data:: smilei_rand_max
 

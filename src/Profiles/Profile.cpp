@@ -37,7 +37,7 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
             else if( nvariables == 3 )
                 function = new Function_Constant3D(py_profile);
             else
-              ERROR("Profile `"<<name<<"`: constant() profile defined only in 1D, 2D, or 3D");
+              ERROR("Profile `"<<name<<"`: constant() profile defined only in 1D, 2D or 3D");
         
         } else if( profileName == "trapezoidal" ){
         
@@ -45,8 +45,10 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
                 function = new Function_Trapezoidal1D(py_profile);
             else if( nvariables == 2 )
                 function = new Function_Trapezoidal2D(py_profile);
+            else if( nvariables == 3 )
+                function = new Function_Trapezoidal3D(py_profile);
             else
-              ERROR("Profile `"<<name<<"`: trapezoidal() profile defined only in 1D or 2D");
+              ERROR("Profile `"<<name<<"`: trapezoidal() profile defined only in 1D, 2D or 3D");
         
         } else if( profileName == "gaussian" ){
         
@@ -54,8 +56,10 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
                 function = new Function_Gaussian1D(py_profile);
             else if( nvariables == 2 )
                 function = new Function_Gaussian2D(py_profile);
+            else if( nvariables == 3 )
+                function = new Function_Gaussian3D(py_profile);
             else
-                ERROR("Profile `"<<name<<"`: gaussian() profile defined only in 1D or 2D");
+                ERROR("Profile `"<<name<<"`: gaussian() profile defined only in 1D, 2D or 3D");
         
         } else if( profileName == "polygonal" ){
         
@@ -63,8 +67,10 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
                 function = new Function_Polygonal1D(py_profile);
             else if( nvariables == 2 )
                 function = new Function_Polygonal2D(py_profile);
+            else if( nvariables == 3 )
+                function = new Function_Polygonal3D(py_profile);
             else
-                ERROR("Profile `"<<name<<"`: polygonal() profile defined only in 1D or 2D");
+                ERROR("Profile `"<<name<<"`: polygonal() profile defined only in 1D, 2D or 3D");
                 
         } else if( profileName == "cosine" ){
         
@@ -72,8 +78,10 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
                 function = new Function_Cosine1D(py_profile);
             else if( nvariables == 2 )
                 function = new Function_Cosine2D(py_profile);
+            else if( nvariables == 3 )
+                function = new Function_Cosine3D(py_profile);
             else
-                ERROR("Profile `"<<name<<"`: cosine() profile defined only in 1D or 2D");
+                ERROR("Profile `"<<name<<"`: cosine() profile defined only in 1D, 2D or 3D");
                 
         } else if( profileName == "polynomial" ){
         
@@ -81,8 +89,10 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
                 function = new Function_Polynomial1D(py_profile);
             else if( nvariables == 2 )
                 function = new Function_Polynomial2D(py_profile);
+            else if( nvariables == 3 )
+                function = new Function_Polynomial3D(py_profile);
             else
-                ERROR("Profile `"<<name<<"`: polynomial() profile defined only in 1D or 2D");
+                ERROR("Profile `"<<name<<"`: polynomial() profile defined only in 1D, 2D or 3D");
             
         } else if( profileName == "tconstant" ){
         
@@ -201,26 +211,36 @@ Profile::Profile(Profile *p)
                 function = new Function_Trapezoidal1D(static_cast<Function_Trapezoidal1D*>(p->function));
             else if( nvariables == 2 )
                 function = new Function_Trapezoidal2D(static_cast<Function_Trapezoidal2D*>(p->function));
+            else if( nvariables == 3 )
+                function = new Function_Trapezoidal3D(static_cast<Function_Trapezoidal3D*>(p->function));
         } else if( profileName == "gaussian" ){
             if     ( nvariables == 1 )
                 function = new Function_Gaussian1D(static_cast<Function_Gaussian1D*>(p->function));
             else if( nvariables == 2 )
                 function = new Function_Gaussian2D(static_cast<Function_Gaussian2D*>(p->function));
+            else if( nvariables == 3 )
+                function = new Function_Gaussian3D(static_cast<Function_Gaussian3D*>(p->function));
         } else if( profileName == "polygonal" ){
             if     ( nvariables == 1 )
                 function = new Function_Polygonal1D(static_cast<Function_Polygonal1D*>(p->function));
             else if( nvariables == 2 )
                 function = new Function_Polygonal2D(static_cast<Function_Polygonal2D*>(p->function));
+            else if( nvariables == 3 )
+                function = new Function_Polygonal3D(static_cast<Function_Polygonal3D*>(p->function));
         } else if( profileName == "cosine" ){
             if     ( nvariables == 1 )
                 function = new Function_Cosine1D(static_cast<Function_Cosine1D*>(p->function));
             else if( nvariables == 2 )
                 function = new Function_Cosine2D(static_cast<Function_Cosine2D*>(p->function));
+            else if( nvariables == 3 )
+                function = new Function_Cosine3D(static_cast<Function_Cosine3D*>(p->function));
         } else if( profileName == "polynomial" ){
             if     ( nvariables == 1 )
                 function = new Function_Polynomial1D(static_cast<Function_Polynomial1D*>(p->function));
             else if( nvariables == 2 )
                 function = new Function_Polynomial2D(static_cast<Function_Polynomial2D*>(p->function));
+            else if( nvariables == 3 )
+                function = new Function_Polynomial3D(static_cast<Function_Polynomial3D*>(p->function));
         } else if( profileName == "tconstant" ){
             function = new Function_TimeConstant(static_cast<Function_TimeConstant*>(p->function));
         } else if( profileName == "ttrapezoidal" ){

@@ -13,8 +13,8 @@
 
 using namespace std;
 
-DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, Patch* patch, int ndiag )
-    : DiagnosticFields( params, smpi, patch, ndiag )
+DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, VectorPatch &vecPatches, int ndiag )
+    : DiagnosticFields( params, smpi, vecPatches, ndiag )
 {
     
     // Calculate the offset in the local grid
@@ -154,38 +154,45 @@ void DiagnosticFields3D::setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatc
 
 
 // Copy patch field to current "data" buffer
-void DiagnosticFields3D::getField( Patch* patch, unsigned int field_index )
+void DiagnosticFields3D::getField( Patch* patch, unsigned int ifield )
 {
     // Get current field
     Field3D* field;
     if( time_average>1 ) {
-        field = static_cast<Field3D*>(patch->EMfields->allFields_avg[field_index]);
+        field = static_cast<Field3D*>(patch->EMfields->allFields_avg[diag_n][ifield]);
     } else {
-        field = static_cast<Field3D*>(patch->EMfields->allFields    [field_index]);
+        field = static_cast<Field3D*>(patch->EMfields->allFields[fields_indexes[ifield]]);
     }
     // Copy field to the "data" buffer
-    unsigned int ix = patch_offset_in_grid[0];
-    unsigned int ix_max = ix + patch_size[0];
-    unsigned int iy;
+    unsigned int ix_max = patch_offset_in_grid[0] + patch_size[0];
     unsigned int iy_max = patch_offset_in_grid[1] + patch_size[1];
-    unsigned int iz;
+    unsigned int iz = patch_offset_in_grid[2];
+//tommaso    double * data_pt = &(data[total_patch_size * (patch->Hindex()-refHindex)]);
+
+    unsigned int ix = patch_offset_in_grid[0];
+    unsigned int iy;
     unsigned int iz_max = patch_offset_in_grid[2] + patch_size[2];
     unsigned int iout = total_patch_size * (patch->Hindex()-refHindex);
 
-    while( ix < ix_max ) {
+   while( ix < ix_max ) {
         iy = patch_offset_in_grid[1];
         while( iy < iy_max ) {
             iz = patch_offset_in_grid[2];
             while( iz < iz_max ) {
-                data[iout] = (*field)(ix, iy, iz);
+                data[iout] = (*field)(ix, iy, iz) * time_average_inv;
                 iout++;
                 iz++;
             }
             iy++;
         }
         ix++;
-
     }
+//    for (unsigned int ix = patch_offset_in_grid[0]; ix < ix_max; ix++){
+//        for (unsigned int iy = patch_offset_in_grid[1]; iy < iy_max; iy++){
+//            memcpy( data_pt, &((*field)(ix, iy, iz)), patch_size[2]*sizeof(double));
+//            data_pt += patch_size[2];
+//        }
+//    }
     
     if( time_average>1 ) field->put_to(0.0);
 }

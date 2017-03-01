@@ -212,6 +212,10 @@ public:
     //! True if tracking the particles (activates one DiagTrack)
     bool tracked;
     
+    void resetIds() {
+        unsigned int s = Id.size();
+        for (unsigned int iPart=0; iPart<s; iPart++) Id[iPart] = 0;
+    }
     void setIds() {
         unsigned int s = Id.size();
         for (unsigned int iPart=0; iPart<s; iPart++) Id[iPart] = iPart+1;
@@ -262,7 +266,8 @@ public:
     
     
     //bool test_move( int iPartStart, int iPartEnd, Params& params );
-    
+
+#ifdef __DEBUG
     inline double dist2( unsigned int iPart ) {
         double dist(0.);
         for ( unsigned int iDim = 0 ; iDim < Position.size() ; iDim++ ) {
@@ -272,9 +277,10 @@ public:
         return dist;
     }
     inline double dist( unsigned int iPart, unsigned int iDim ) {
-        double delta = abs( position(iDim,iPart)-position_old(iDim,iPart) );
+        double delta = std::abs( position(iDim,iPart)-position_old(iDim,iPart) );
         return delta;
     }
+#endif
     
     Particle operator()(unsigned int iPart);
 

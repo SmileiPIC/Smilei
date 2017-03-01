@@ -3,19 +3,24 @@ Install
 
 Before installing :program:`Smilei`, you need to install a few dependencies:
 
-* A C++ compiler (we force standard c++0x), optionally implementing openMP
-* MPI libraries (*openmpi* recommended), supporting `MPI_THREAD_MULTIPLE`
+* A C++ compiler (we force standard c++11), optionally implementing openMP
+* MPI libraries (**openmpi** recommended), supporting ``MPI_THREAD_MULTIPLE``
 * HDF5 libraries compatible with your versions of C++ and MPI
-* Python 2.7
+* Python 2.7 (with header files)
+* ``make``
 
 Optional dependencies are:
 
+* Git
 * Doxygen
 * Python modules: sphinx, h5py, numpy, matplotlib, pylab, pint
 * ffmpeg
 
 On a large cluster, refer to the administrator to install these requirements.
 If you want to install :program:`Smilei` on your personal computer, refer to the following sections.
+
+To get some help on compilation and the environment variables you can change in order 
+to have a successful compilation, you can type ``make help``.
 
 ----
 
@@ -95,10 +100,19 @@ This installation procedure has been tested on OS X "El Capitan" 10.11.1
      brew tap homebrew/science
      brew cask install java
      brew install makedepend
-     brew install gcc5
-     HOMEBREW_CC=gcc-5 HOMEBREW_CXX=g++-5 brew install -s openmpi --without-fortran --with-mpi-thread-multiple
+     brew install gcc
+     brew install openmpi --with-mpi-thread-multiple
      brew install hdf5 --with-mpi     
      brew install python
+
+#. Now you need to set the ``OMPI_CXX`` to the homebrew ``g++`` (``g++-6`` or similar):
+     
+   .. code-block:: bash
+
+     export OMPI_CXX=g++-6
+
+#. Alternatively you can put this line variable in a shell rc file (e.g. ``.bash_profile``) 
+   or you can just add it before the ``make`` command (``OMPI_CXX=g++-6 make`` ...)
 
 #. now you can compile :program:`smilei` (see :ref:`compile`)
 
@@ -195,8 +209,26 @@ Download and compile
      make config=debug            # to have debugging output (slow)
      make config=noopenmp         # to deactivate OpenMP support
      make config="debug noopenmp" # to activate debugging without OpenMP
+
+   .. rubric:: Machine dependent configurations:
+   
+   For some machine, it might be important to modify internal makefile variables. 
+   We suggest to add a file in the folder ``scripts/CompileTools/machine/`` and compile 
+   with:
+
+   .. code-block:: bash
+     
+     make machine=my_machine
+
+   .. note::    
+     It would be nice to share with developpers the makefile-machine files used on common
+     supercomputers.
+   
      
    .. rubric:: Makefile alternatives:
+   
+   .. code-block:: bash
+     
      make doc                     # to compile the documentation
      make install_python          # install the Smilei python module
      make unnstall_python         # uninstall the Smilei python module

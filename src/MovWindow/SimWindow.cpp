@@ -7,6 +7,7 @@
 #include "Projector.h"
 #include "SmileiMPI.h"
 #include "VectorPatch.h"
+#include "DiagnosticProbes.h"
 #include "Hilbert_functions.h"
 #include "PatchesFactory.h"
 #include <iostream>
@@ -67,8 +68,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     int nmax_laser = 4;
     int nmessage = 2*nSpecies+(2+params.nDim_particle)*vecPatches(0)->probes.size()+
         9+vecPatches(0)->EMfields->antennas.size()+4*nmax_laser;
-    vector<int> nbrOfPartsSend(nSpecies,0);
-    vector<int> nbrOfPartsRecv(nSpecies,0);
     
     double energy_field_lost(0.);
     vector<double> energy_part_lost( vecPatches(0)->vecSpecies.size(), 0. );
@@ -76,9 +75,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     
     // Shift the patches, new patches will be created directly with their good patchid and BC
     for (int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
-        if ( vecPatches(ipatch)->isEastern() )
+        if ( vecPatches(ipatch)->isXmax() )
             for (int ispec=0 ; ispec<nSpecies ; ispec++)
-                vecPatches(ipatch)->vecSpecies[ispec]->disableEast();
+                vecPatches(ipatch)->vecSpecies[ispec]->disableXmax();
         vecPatches(ipatch)->neighbor_[0][1] = vecPatches(ipatch)->hindex;
         vecPatches(ipatch)->hindex = vecPatches(ipatch)->neighbor_[0][0];
     }
@@ -95,8 +94,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     for ( int ipatch = nPatches-1 ; ipatch >= 0 ; ipatch--) {
 
         // Patch à supprimer
-        //if I'm western  AND I'm not a newly created patch (because we start at nPatches-1), delete me !
-        if ( vecPatches(ipatch)->isWestern() ) {
+        //if I'm xmin  AND I'm not a newly created patch (because we start at nPatches-1), delete me !
+        if ( vecPatches(ipatch)->isXmin() ) {
 
             // Compute energy lost 
             energy_field_lost += vecPatches(ipatch)->EMfields->computeNRJ();
@@ -161,7 +160,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     }
 
     //Wait for all send to be completed by the receivers too.
-    //MPI_Barrier(MPI_COMM_WORLD);
     smpi->barrier();
 
     // Suppress after exchange to not distrub patch position during exchange
@@ -183,10 +181,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         if (vecPatches(ipatch)->neighbor_[0][0] != (int)vecPatches(ipatch)->hindex) continue;
             
         //For now also need to update neighbor_, corner_neighbor and their MPI counterparts even if these will be obsolete eventually.
-        //vecPatches(ipatch)->corner_neighbor_[1][0]= vecPatches(ipatch)->neighbor_[1][0]; //useless
         vecPatches(ipatch)->neighbor_[1][0]=        vecPatches(ipatch)->corner_neighbor_[0][0];
-
-        //vecPatches(ipatch)->corner_neighbor_[1][1]= vecPatches(ipatch)->neighbor_[1][1]; //useless
         vecPatches(ipatch)->neighbor_[1][1]=        vecPatches(ipatch)->corner_neighbor_[0][1];
 
         if (params.nDim_field == 3) {
@@ -228,9 +223,13 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     
     for (int ipatch=0 ; ipatch<nPatches ; ipatch++){
         vecPatches(ipatch)->updateMPIenv(smpi);
-        if ( vecPatches(ipatch)->isWestern() )
+        if ( vecPatches(ipatch)->isXmin() )
             for (int ispec=0 ; ispec<nSpecies ; ispec++)
-                vecPatches(ipatch)->vecSpecies[ispec]->setWestBoundaryCondition(); 
+                vecPatches(ipatch)->vecSpecies[ispec]->setXminBoundaryCondition(); 
+        if (vecPatches(ipatch)->has_an_MPI_neighbor())
+            vecPatches(ipatch)->createType(params);
+        else
+            vecPatches(ipatch)->cleanType();
     }
     
     vecPatches.set_refHindex() ;

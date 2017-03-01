@@ -11,7 +11,7 @@ class ElectroMagn1D : public ElectroMagn
 public:
     //! Constructor for ElectroMagn1D
     ElectroMagn1D(Params &params, std::vector<Species*>& vecSpecies, Patch* patch);
-    
+    ElectroMagn1D( ElectroMagn1D* emFields, Params &params, Patch* patch );
     //! Destructor for ElectroMagn1D
     ~ElectroMagn1D();
     
@@ -31,13 +31,13 @@ public:
     void initE(Patch *patch);
     void centeringE( std::vector<double> E_Add );
     
-    double getEx_West() { return (*Ex_)(index_bc_min[0]);}//(*Ex_)     (0); }
-    double getEx_East() { return (*Ex_)(index_bc_max[0]);}//(*Ex_)(nx_d-1); }
+    double getEx_Xmin() { return (*Ex_)(index_bc_min[0]);}//(*Ex_)     (0); }
+    double getEx_Xmax() { return (*Ex_)(index_bc_max[0]);}//(*Ex_)(nx_d-1); }
     
-    double getEx_WestNorth() { return 0.; }
-    double getEy_WestNorth() { return 0.; }
-    double getEx_EastSouth() { return 0.; }
-    double getEy_EastSouth() { return 0.; }
+    double getEx_XminYmax() { return 0.; }
+    double getEy_XminYmax() { return 0.; }
+    double getEx_XmaxYmin() { return 0.; }
+    double getEy_XmaxYmin() { return 0.; }
     
     // --------------------------------------
     //  --------- PATCH IN PROGRESS ---------
@@ -52,8 +52,11 @@ public:
     //! Method used to center the Magnetic fields (used to push the particles)
     void centerMagneticFields();
     
-    //! Method used to reset/increment the averaged fields
-    void incrementAvgFields(unsigned int time_step);
+    //! Method used to apply a single-pass binomial filter on currents
+    void binomialCurrentFilter();
+    
+    //! Creates a new field with the right characteristics, depending on the name
+    Field * createField(std::string fieldname);
     
     //! Method used to compute the total charge density and currents by summing over all species
     void computeTotalRhoJ();
@@ -82,11 +85,11 @@ public:
     void initAntennas(Patch* patch);
     
 private:
-    //! from patch is west
-    const bool isWestern;
+    //! from patch is xmin
+    const bool isXmin;
     
-    //! from patch is east
-    const bool isEastern;
+    //! from patch is xmax
+    const bool isXmax;
 };
 
 #endif

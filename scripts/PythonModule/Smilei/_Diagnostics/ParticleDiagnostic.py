@@ -18,10 +18,6 @@ class ParticleDiagnostic(Diagnostic):
 				self._error += "      No particle diagnostics found"
 			return
 		
-		cell_size = {"x":self._cell_length[0]}
-		if self._ndim>1: cell_size.update({"y":self._cell_length[1]})
-		if self._ndim>2: cell_size.update({"z":self._cell_length[2]})
-		
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------
 		# Check the requested diags are ok
@@ -87,18 +83,19 @@ class ParticleDiagnostic(Diagnostic):
 		# -------------------------------------------------------------------
 		# Get available timesteps
 		self.times = {}
+		self._times = {}
 		self._indexOfTime  = {}
 		self._h5items = {}
 		for d in self._diags:
 			# Gather data from all timesteps, and the list of timesteps
-			items = []
-			times = []
+			items = {}
 			for path in self._results_path:
 				f = self._h5py.File(path+self._os.sep+'ParticleDiagnostic'+str(d)+'.h5')
-				items.extend( f.values() )
-				times.extend( f.keys()   )
-			self._h5items.update({ d:items })
-			self.times.update({ d:self._np.array([ int(t.strip("timestep")) for t in times ]) })
+				items.update( dict(f) )
+			items = sorted(items.items())
+			self._h5items[d] = [it[1] for it in items]
+			self.times[d] = self._np.array([ int(it[0].strip("timestep")) for it in items ])
+			self._times[d] = self.times[d][:]
 			# fill the "_indexOfTime" dictionary with indices to the data arrays
 			self._indexOfTime.update({ d:{} })
 			for i,t in enumerate(self.times[d]):
@@ -117,7 +114,8 @@ class ParticleDiagnostic(Diagnostic):
 					+str(self._diags[0])+" has "+str(len(self.times[self._diags[0]]))+ " timesteps"
 				return
 		# Now we need to keep only one array of timesteps because they should be all the same
-		self.times = self.times[self._diags[0]]
+		self.times  = self.times [self._diags[0]]
+		self._times = self._times[self._diags[0]]
 		
 		# Need at least one timestep
 		if self.times.size < 1:
@@ -128,12 +126,14 @@ class ParticleDiagnostic(Diagnostic):
 		# -------------------------------------------------------------------
 		# Fabricate all axes values for all diags
 		plot_diff = []
+		cell_volume = self._cell_length.prod()
 		coeff = 1.
 		unitsa = [0,0,0,0]
 		spatialaxes = {"x":False, "y":False, "z":False}
 		self._finalShape = []
 		self._slices = []
 		self._selection = ()
+		hasComposite = False
 		
 		for axis in self._axes:
 			# Find the vector of values along the axis
@@ -155,7 +155,10 @@ class ParticleDiagnostic(Diagnostic):
 			if   axis["type"] in ["x","y","z"]:
 				axis_units = "L_r"
 				spatialaxes[axis["type"]] = True
-				coeff *= cell_size[axis["type"]]
+			elif axis["type"][:9] == "composite":
+				axis_units = "L_r"
+				hasComposite = True
+				axis["type"] = axis["type"][10:]
 			elif axis["type"] in ["px","py","pz","p"]:
 				axis_units = "P_r"
 			elif axis["type"] in ["vx","vy","vz","v"]:
@@ -220,10 +223,6 @@ class ParticleDiagnostic(Diagnostic):
 				self._units  .append(axis_units)
 				plot_diff.append(self._np.diff(edges)[::stride])
 		
-		if len(self._shape) > 2:
-			self._error = "Cannot plot in "+str(len(self._shape))+"d. You need to 'slice' some axes."
-			return
-		
 		# Build units
 		titles = {}
 		units = {}
@@ -233,24 +232,24 @@ class ParticleDiagnostic(Diagnostic):
 			val_units = "??"
 			output = self._myinfo[d]["output"]
 			if   output == "density":
-				titles[d] = "Number density"
-				val_units = "N_r"
+				titles[d] = "Number" + ("" if hasComposite else " density")
+				val_units = "1" if hasComposite else "N_r"
 			elif output == "charge_density":
-				titles[d] = "Charge density"
-				val_units = "N_r * Q_r"
+				titles[d] = "Charge" + ("" if hasComposite else " density")
+				val_units = "Q_r" if hasComposite else "N_r * Q_r"
 			elif output=="ekin_density":
-				titles[d] = "Energy density"
-				val_units = "N_r * K_r"
+				titles[d] = "Energy" + ("" if hasComposite else " density")
+				val_units = "K_r" if hasComposite else "N_r * K_r"
 			elif output[0] == "j":
-				titles[d] = "J"+output[1]
-				val_units = "J_r"
+				titles[d] = "J"+output[1] + (" x Volume" if hasComposite else "")
+				val_units = "J_r/N_r" if hasComposite else "J_r"
 			elif output[0]=="p" and output[-8:] == "_density":
-				titles[d] = "P"+output[1].strip("_")+" density"
-				val_units = "N_r * P_r"
+				titles[d] = "P"+output[1].strip("_") + ("" if hasComposite else " density")
+				val_units = "P_r" if hasComposite else "N_r * P_r"
 			elif output[:8]=="pressure":
-				titles[d] = "Pressure "+output[-2]
-				val_units = "N_r * K_r"
-			axes_units = [unit for unit in self._units if unit!="L_r"]
+				titles[d] = "Pressure "+output[-2] + (" x Volume" if hasComposite else "")
+				val_units = "K_r" if hasComposite else "N_r * K_r"
+			axes_units = [unit for unit in self._units if (hasComposite or unit!="L_r")]
 			units[d] = val_units
 			if len(axes_units)>0: units[d] += " / ( " + " * ".join(axes_units) + " )"
 		# Make total units and title
@@ -261,9 +260,9 @@ class ParticleDiagnostic(Diagnostic):
 			self._title  = self._title .replace("#"+str(d), titles[d])
 		
 		# If any spatial dimension did not appear, then count it for calculating the correct density
-		if self._ndim>=1 and not spatialaxes["x"]: coeff /= self._ncels[0]
-		if self._ndim>=2 and not spatialaxes["y"]: coeff /= self._ncels[1]
-		if self._ndim==3 and not spatialaxes["z"]: coeff /= self._ncels[2]
+		if self._ndim>=1 and not spatialaxes["x"]: coeff /= self._ncels[0]*self._cell_length[0]
+		if self._ndim>=2 and not spatialaxes["y"]: coeff /= self._ncels[1]*self._cell_length[1]
+		if self._ndim==3 and not spatialaxes["z"]: coeff /= self._ncels[2]*self._cell_length[2]
 		
 		# Calculate the array that represents the bins sizes in order to get units right.
 		# This array will be the same size as the plotted array
@@ -274,8 +273,13 @@ class ParticleDiagnostic(Diagnostic):
 		else:
 			self._bsize = self._np.prod( self._np.array( self._np.meshgrid( *plot_diff ) ), axis=0)
 			self._bsize = self._bsize.transpose()
-		self._bsize /= coeff
+		self._bsize = cell_volume / self._bsize
+		if not hasComposite: self._bsize *= coeff
 		self._bsize = self._np.squeeze(self._bsize)
+		
+		# Set the directory in case of exporting
+		self._exportPrefix = "ParticleDiag_"+"-".join([str(d) for d in self._diags])
+		self._exportDir = self._setExportDir(self._exportPrefix)
 		
 		# Finish constructor
 		self.valid = True
@@ -309,8 +313,11 @@ class ParticleDiagnostic(Diagnostic):
 					axissize = int(sp[3])
 					logscale = bool(int(sp[4]))
 					edge_inclusive = bool(int(sp[5]))
+					coefficients = 0
+					if sp[6]!="[]" :
+						coefficients = eval(sp[6])
 					while len(axes)<n+1: axes.append({}) # extend the array to the adequate size
-					axes[n] = {"type":axistype,"min":axismin,"max":axismax,"size":axissize,"log":logscale,"edges_included":edge_inclusive}
+					axes[n] = {"type":axistype,"min":axismin,"max":axismax,"size":axissize,"log":logscale,"edges_included":edge_inclusive,"coefficients":coefficients}
 			f.close()
 			# Verify that the info corresponds to the diag in the other paths
 			if info == {}:
@@ -369,10 +376,10 @@ class ParticleDiagnostic(Diagnostic):
 	def getAvailableTimesteps(self, diagNumber=None):
 		# if argument "diagNumber" not provided, return the times calculated in __init__
 		if diagNumber is None:
-			return self.times
+			return self._times
 		# Otherwise, get the timesteps specifically available for the single requested diagnostic
 		else:
-			times = []
+			times = set()
 			for path in self._results_path:
 				try:
 					file = path+self._os.sep+'ParticleDiagnostic'+str(diagNumber)+'.h5'
@@ -380,9 +387,9 @@ class ParticleDiagnostic(Diagnostic):
 				except:
 					print("Cannot open file "+file)
 					return self._np.array([])
-				for t in f.keys():
-					times.append( int(t.strip("timestep")) )
+				times.update( set(f.keys()) )
 				f.close()
+			times = [int(t.strip("timestep")) for t in times]
 			return self._np.array(times)
 	
 	# Method to obtain the data only
@@ -398,8 +405,13 @@ class ParticleDiagnostic(Diagnostic):
 				print("Timestep "+str(t)+" not found in this diagnostic")
 				return []
 			# get data
-			B = self._np.zeros(self._finalShape)
-			self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
+			B = self._np.squeeze(self._np.zeros(self._finalShape))
+			try:
+				self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
+			except:
+					B = self._np.squeeze(B)
+					self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
+					B = self._np.reshape(B, self._finalShape)
 			B[self._np.isnan(B)] = 0.
 			# Apply the slicing
 			for iaxis in range(self._naxes):
@@ -408,7 +420,7 @@ class ParticleDiagnostic(Diagnostic):
 			# remove sliced axes
 			B = self._np.squeeze(B)
 			# Divide by the bins size
-			B /= self._bsize
+			B *= self._bsize
 			# Append this diag's array for the operation
 			A.update({ d:B })
 		# Calculate operation

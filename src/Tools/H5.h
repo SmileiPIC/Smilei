@@ -93,6 +93,11 @@ class H5 {
         getAttr(locationId, attribute_name, attribute_value, H5T_NATIVE_UINT);
     }
     
+    //! retrieve a int attribute
+    static void getAttr(hid_t locationId, std::string attribute_name, int &attribute_value) {
+        getAttr(locationId, attribute_name, attribute_value, H5T_NATIVE_INT);
+    }
+    
     //! retrieve a string attribute
     static void getAttr(hid_t locationId, std::string attribute_name, std::string &attribute_value) {
         if (H5Aexists(locationId,attribute_name.c_str())>0) {
@@ -117,16 +122,41 @@ class H5 {
         }
     }
     
+    //! retrieve anything as an attribute
     template<class T>
     static void getAttr(hid_t locationId, std::string attribute_name, T &attribute_value, hid_t type) {
         if (H5Aexists(locationId,attribute_name.c_str())>0) {
-            hid_t aid = H5Aopen(locationId, attribute_name.c_str(), type);
+            hid_t aid = H5Aopen(locationId, attribute_name.c_str(), H5P_DEFAULT);
             H5Aread(aid, type, &(attribute_value));
             H5Aclose(aid);
         } else {
             WARNING("Cannot find attribute " << attribute_name);
         }
     }
+    
+    //! retrieve a vector<double> as an attribute
+    template<class T>
+    static void getAttr(hid_t locationId, std::string attribute_name, std::vector<T>& attribute_value) {
+        getAttr(locationId, attribute_name, attribute_value, H5T_NATIVE_DOUBLE);
+    }
+    
+    //! retrieve a vector<anything> as an attribute
+    template<class T>
+    static void getAttr(hid_t locationId, std::string attribute_name, std::vector<T>& attribute_value, hid_t type) {
+        if (H5Aexists(locationId,attribute_name.c_str())>0) {
+            hid_t aid = H5Aopen(locationId, attribute_name.c_str(), H5P_DEFAULT);
+            hid_t sid = H5Aget_space(aid);
+            hssize_t npoints = H5Sget_simple_extent_npoints( sid );
+            attribute_value.resize( npoints );
+            H5Sclose( sid );
+            H5Aread(aid, type, &(attribute_value[0]));
+            H5Aclose(aid);
+        } else {
+            WARNING("Cannot find attribute " << attribute_name);
+        }
+    }
+    
+    
     //! write a vector of unsigned ints
     //! v is the vector
     //! size is the number of elements in the vector
@@ -179,28 +209,28 @@ class H5 {
     
     
     //! retrieve a double vector
-    static void getVect(hid_t locationId, std::string vect_name,  std::vector<double> &vect) {
-        getVect(locationId, vect_name, vect, H5T_NATIVE_DOUBLE);
+    static void getVect(hid_t locationId, std::string vect_name,  std::vector<double> &vect, bool resizeVect=false) {
+        getVect(locationId, vect_name, vect, H5T_NATIVE_DOUBLE,resizeVect);
     }
     
     //! retrieve an unsigned int vector
-    static void getVect(hid_t locationId, std::string vect_name,  std::vector<unsigned int> &vect) {
-        getVect(locationId, vect_name, vect, H5T_NATIVE_UINT);
+    static void getVect(hid_t locationId, std::string vect_name,  std::vector<unsigned int> &vect, bool resizeVect=false) {
+        getVect(locationId, vect_name, vect, H5T_NATIVE_UINT,resizeVect);
     }
     
     //! retrieve a int vector
-    static void getVect(hid_t locationId, std::string vect_name,  std::vector<int> &vect) {
-        getVect(locationId, vect_name, vect, H5T_NATIVE_INT);
+    static void getVect(hid_t locationId, std::string vect_name,  std::vector<int> &vect, bool resizeVect=false) {
+        getVect(locationId, vect_name, vect, H5T_NATIVE_INT,resizeVect);
     }
     
     //! retrieve a short vector
-    static void getVect(hid_t locationId, std::string vect_name,  std::vector<short> &vect) {
-        getVect(locationId, vect_name, vect, H5T_NATIVE_SHORT);
+    static void getVect(hid_t locationId, std::string vect_name,  std::vector<short> &vect, bool resizeVect=false) {
+        getVect(locationId, vect_name, vect, H5T_NATIVE_SHORT,resizeVect);
     }
     
     //! template to read generic 1d vector
     template<class T>
-    static void getVect(hid_t locationId, std::string vect_name, std::vector<T> &vect, hid_t type) {
+    static void getVect(hid_t locationId, std::string vect_name, std::vector<T> &vect, hid_t type, bool resizeVect=false) {
         hid_t did = H5Dopen(locationId, vect_name.c_str(), H5P_DEFAULT);
         hid_t sid = H5Dget_space(did);
         int sdim = H5Sget_simple_extent_ndims(sid);
@@ -210,7 +240,11 @@ class H5 {
         hsize_t dim[1];
         H5Sget_simple_extent_dims(sid,dim,NULL);
         if (dim[0] != vect.size()) {
-            ERROR("Reading vector " << vect_name << " mismatch " << vect.size() << " != " << dim);
+            if (resizeVect) {
+                vect.resize(dim[0]);
+            } else {
+                ERROR("Reading vector " << vect_name << " mismatch " << vect.size() << " != " << dim);
+            }
         }
         H5Sclose(sid);
         H5Dread(did, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vect[0]);

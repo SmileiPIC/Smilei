@@ -20,7 +20,7 @@ PusherRRLL::~PusherRRLL()
 /****************************************************************************
     Lorentz Force -- leap-frog (Boris) scheme + classical rad. reaction force
 *****************************************************************************/
-void PusherRRLL::operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields Bpart, double& gf)
+void PusherRRLL::operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields Bpart, double& invgf)
 {
     // Declaration of local variables
     // ------------------------------
@@ -41,10 +41,10 @@ void PusherRRLL::operator() (Particles &particles, int ipart, LocalFields Epart,
     umx = particles.momentum(0, ipart) + charge_over_mass_*Epart.x*dts2;
     umy = particles.momentum(1, ipart) + charge_over_mass_*Epart.y*dts2;
     umz = particles.momentum(2, ipart) + charge_over_mass_*Epart.z*dts2;
-    gf  = sqrt( 1.0 + umx*umx + umy*umy + umz*umz );
+    invgf  = 1. / sqrt( 1.0 + umx*umx + umy*umy + umz*umz );
 
     // Rotation in the magnetic field
-    alpha = charge_over_mass_*dts2/gf;
+    alpha = charge_over_mass_*dts2*invgf;
     Tx    = alpha * Bpart.x;
     Ty    = alpha * Bpart.y;
     Tz    = alpha * Bpart.z;
@@ -64,7 +64,7 @@ void PusherRRLL::operator() (Particles &particles, int ipart, LocalFields Epart,
     pxsm = upx + charge_over_mass_*Epart.x*dts2;
     pysm = upy + charge_over_mass_*Epart.y*dts2;
     pzsm = upz + charge_over_mass_*Epart.z*dts2;
-    gf = sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
+    invgf = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
 
     particles.momentum(0, ipart) = pxsm;
     particles.momentum(1, ipart) = pysm;
@@ -73,7 +73,7 @@ void PusherRRLL::operator() (Particles &particles, int ipart, LocalFields Epart,
     // Move the particle
     for ( int i = 0 ; i<nDim_ ; i++ ) {
         //particles.position_old(i, ipart)  = particles.position(i, ipart);
-        particles.position(i, ipart)     += dt*particles.momentum(i, ipart)/gf;
+        particles.position(i, ipart)     += dt*particles.momentum(i, ipart)*invgf;
     }
 
     // COMPUTE Chi
@@ -85,24 +85,25 @@ void PusherRRLL::operator() (Particles &particles, SmileiMPI* smpi, int istart, 
 {
     std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
-    std::vector<double> *gf = &(smpi->dynamics_gf[ithread]);
+    std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
     double charge_over_mass_ ;
     double umx, umy, umz, upx, upy, upz;
     double alpha, inv_det_T, Tx, Ty, Tz, Tx2, Ty2, Tz2;
     double TxTy, TyTz, TzTx;
     double pxsm, pysm, pzsm;
+    double local_invgf;
 
     for (int ipart=istart ; ipart<iend; ipart++ ) {
-        //(*this)(particles, iPart, (*Epart)[iPart], (*Bpart)[iPart] , (*gf)[iPart]);
+        //(*this)(particles, iPart, (*Epart)[iPart], (*Bpart)[iPart] , (*invgf)[iPart]);
         charge_over_mass_ = static_cast<double>(particles.charge(ipart))*one_over_mass_;
         // Half-acceleration in the electric field
         umx = particles.momentum(0, ipart) + charge_over_mass_*(*Epart)[ipart].x*dts2;
         umy = particles.momentum(1, ipart) + charge_over_mass_*(*Epart)[ipart].y*dts2;
         umz = particles.momentum(2, ipart) + charge_over_mass_*(*Epart)[ipart].z*dts2;
-        (*gf)[ipart]  = sqrt( 1.0 + umx*umx + umy*umy + umz*umz );
+        local_invgf  = 1. / sqrt( 1.0 + umx*umx + umy*umy + umz*umz );
 
         // Rotation in the magnetic field
-        alpha = charge_over_mass_*dts2/(*gf)[ipart];
+        alpha = charge_over_mass_*dts2*local_invgf;
         Tx    = alpha * (*Bpart)[ipart].x;
         Ty    = alpha * (*Bpart)[ipart].y;
         Tz    = alpha * (*Bpart)[ipart].z;
@@ -122,7 +123,7 @@ void PusherRRLL::operator() (Particles &particles, SmileiMPI* smpi, int istart, 
         pxsm = upx + charge_over_mass_*(*Epart)[ipart].x*dts2;
         pysm = upy + charge_over_mass_*(*Epart)[ipart].y*dts2;
         pzsm = upz + charge_over_mass_*(*Epart)[ipart].z*dts2;
-        (*gf)[ipart] = sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
+        (*invgf)[ipart] = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
 
         particles.momentum(0, ipart) = pxsm;
         particles.momentum(1, ipart) = pysm;
@@ -130,7 +131,7 @@ void PusherRRLL::operator() (Particles &particles, SmileiMPI* smpi, int istart, 
 
         // Move the particle
         for ( int i = 0 ; i<nDim_ ; i++ )
-            particles.position(i, ipart)     += dt*particles.momentum(i, ipart)/(*gf)[ipart];
+            particles.position(i, ipart)     += dt*particles.momentum(i, ipart)*(*invgf)[ipart];
 
         // COMPUTE Chi
         particles.chi(ipart)=0.5;

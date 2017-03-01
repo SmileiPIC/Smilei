@@ -13,8 +13,8 @@
 
 using namespace std;
 
-DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI* smpi, Patch* patch, int ndiag )
-    : DiagnosticFields( params, smpi, patch, ndiag )
+DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI* smpi, VectorPatch &vecPatches, int ndiag )
+    : DiagnosticFields( params, smpi, vecPatches, ndiag )
 {
     
     // Calculate the offset in the local grid
@@ -134,16 +134,17 @@ void DiagnosticFields2D::setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatc
 
 
 // Copy patch field to current "data" buffer
-void DiagnosticFields2D::getField( Patch* patch, unsigned int field_index )
+void DiagnosticFields2D::getField( Patch* patch, unsigned int ifield )
 {
     // Get current field
     Field2D* field;
     if( time_average>1 ) {
-        field = static_cast<Field2D*>(patch->EMfields->allFields_avg[field_index]);
+        field = static_cast<Field2D*>(patch->EMfields->allFields_avg[diag_n][ifield]);
     } else {
-        field = static_cast<Field2D*>(patch->EMfields->allFields    [field_index]);
+        field = static_cast<Field2D*>(patch->EMfields->allFields[fields_indexes[ifield]]);
     }
     // Copy field to the "data" buffer
+
     unsigned int ix = patch_offset_in_grid[0];
     unsigned int ix_max = ix + patch_size[0];
     unsigned int iy;
@@ -152,12 +153,19 @@ void DiagnosticFields2D::getField( Patch* patch, unsigned int field_index )
     while( ix < ix_max ) {
         iy = patch_offset_in_grid[1];
         while( iy < iy_max ) {
-            data[iout] = (*field)(ix, iy);
+            data[iout] = (*field)(ix, iy) * time_average_inv;
             iout++;
             iy++;
         }
         ix++;
     }
+//    unsigned int ix_max = patch_offset_in_grid[0] + patch_size[0];
+//    unsigned int iy= patch_offset_in_grid[1];
+//    double * data_pt = &(data[total_patch_size * (patch->Hindex()-refHindex)]);
+//    for (unsigned int ix = patch_offset_in_grid[0]; ix < ix_max; ix++){
+//        memcpy( data_pt, &((*field)(ix, iy)), patch_size[1]*sizeof(double));
+//        data_pt += patch_size[1];
+//    }
     
     if( time_average>1 ) field->put_to(0.0);
 }
@@ -165,48 +173,57 @@ void DiagnosticFields2D::getField( Patch* patch, unsigned int field_index )
 
 // Write current buffer to file
 void DiagnosticFields2D::writeField( hid_t dset_id, int timestep ) {
-    
+
     // Write the buffer in a temporary location
     H5Dwrite( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_firstwrite, filespace_firstwrite, write_plist, &(data[0]) );
-    
+   
     // Read the file with the previously defined partition
     H5Dread( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_reread, filespace_reread, write_plist, &(data_reread[0]) );
     
     // Fold the data according to the Hilbert curve
-    // TO DO: openMP-ize this loop
-    unsigned int read_position, write_position, read_skip, write_skip, sx, sy;
-    unsigned int write_sizey = rewrite_npatchy*(patch_size[1]-1) + ((rewrite_ymin==0)?1:0);
+    unsigned int read_position, write_position, write_skip_y, sx, sy;
+
+    unsigned int write_sizey  =  ( rewrite_npatchy*(patch_size[1]-1) + ((rewrite_ymin==0)?1:0) );
+
     read_position = 0;
     for( unsigned int h=0; h<rewrite_npatch; h++ ) {
-        write_position = (rewrite_patches_y[h]-rewrite_ymin)*(patch_size[1]-1) + write_sizey*((rewrite_patches_x[h]-rewrite_xmin)*(patch_size[0]-1));
-        write_skip = (rewrite_npatchy - 1)*(patch_size[1]-1);
-        read_skip = 0;
+        int write_position0 =    (rewrite_patches_y[h]-rewrite_ymin)*(patch_size[1]-1) 
+            + write_sizey *((rewrite_patches_x[h]-rewrite_xmin)*(patch_size[0]-1));
+
+        write_skip_y = (rewrite_npatchy - 1)*(patch_size[1]-1);
+
         sx = patch_size[0];
         sy = patch_size[1];
-        if( rewrite_patches_x[h]!=0 ) {
-            read_position += patch_size[1];
-            if( rewrite_xmin==0 ) write_position += write_sizey;
-            sx--;
-        }
+
         if( rewrite_patches_y[h]!=0 ) {
-            read_skip++;
             if( rewrite_ymin==0 ) {
-                write_position++;
-                write_skip++;
+                write_position0++;
+                write_skip_y++;
             } 
             sy--;
         }
+        if( rewrite_patches_x[h]!=0 ) {
+            read_position += patch_size[1];
+            if( rewrite_xmin==0 ) {
+                write_position0 += write_sizey;
+            }
+            sx--;
+        }
+        
+        write_position = write_position0;
         for( unsigned int ix=0; ix<sx; ix++ ) {
+            if (rewrite_patches_y[h]!=0) read_position ++;
             for( unsigned int iy=0; iy<sy; iy++ ) {
+                //data_rewrite[write_position] += h+1;
                 data_rewrite[write_position] = data_reread[read_position];
                 read_position ++;
                 write_position++;
+
             }
-            read_position  += read_skip;
-            write_position += write_skip;
+            write_position += write_skip_y;
         }
     }
-    
+
     // Rewrite the file with the previously defined partition
     H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(data_rewrite[0]) );
     

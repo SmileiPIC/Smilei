@@ -25,16 +25,29 @@ public:
     //! Constructor, isPrimal define if mainDim is Primal or Dual and a name
     Field2D( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name );
     
+    //! Constructor, without allocating
+    Field2D( std::string name, std::vector<unsigned int> dims );
+    
     //! Destructor for Field2D
     ~Field2D();
     
     //! Method used to allocate a Field2D
-    void allocateDims(std::vector<unsigned int> dims );
+    void allocateDims();
     void deallocateDims();
     //! a Field2D can also be initialized win two unsigned int 
     void allocateDims(unsigned int dims1,unsigned int dims2);
     //! allocate dimensions for field2D isPrimal define if mainDim is Primal or Dual
-    void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal );
+    void allocateDims(unsigned int mainDim, bool isPrimal );
+    
+    inline void allocateDims(std::vector<unsigned int> dims) {
+        dims_ = dims;
+        allocateDims();
+    };
+    
+    inline void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) {
+        dims_ = dims;
+        allocateDims(mainDim, isPrimal);
+    };
     
     //! Method used to dump the data contained in a Field2D
     void dump(std::vector<unsigned int> dims);

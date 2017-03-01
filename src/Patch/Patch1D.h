@@ -43,14 +43,13 @@ public:
 
     // Create MPI_Datatype to exchange fields
     void createType( Params& params ) override final;
+    void cleanType() override final;
 
     //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial]
     MPI_Datatype ntypeSum_[2][2];
     //! MPI_Datatype to exchange [ndims_+1][iDim=0 prim/dial]
     //!   - +1 : an additional type to exchange clrw lines
     MPI_Datatype ntype_[2][2];
-    // Use a buffer per direction to exchange data before summing
-    Field1D buf[1][2];
 
 
 };

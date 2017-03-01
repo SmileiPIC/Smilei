@@ -73,6 +73,7 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
     nDim_particle = params.nDim_particle;
     fileId_ = 0;
     x_moved = 0.;
+    hasRhoJs = false;
     
     // Extract "every" (time selection)
     ostringstream name("");
@@ -189,6 +190,9 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
         else {
             ERROR("Probe #"<<n_probe<<": unknown field "<<fs[i]);
         }
+        if( ! hasRhoJs )
+            if( fs[i].at(0)=='J' || fs[i].at(0)=='R' )
+                hasRhoJs = true;
     }
     fieldlocation = locations;
     fieldname = fs;
@@ -318,7 +322,7 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     hid_t memspace  = H5Screate_simple(2, mem_size, NULL);
     // Define size and location in file
     hsize_t dimsf[2], offset[2], stride[2], count[2], block[2];
-    dimsf[0] = nPart_total;
+    dimsf[0] = nPart_total_actual;
     dimsf[1] = nDim_particle;
     hid_t filespace = H5Screate_simple(2, dimsf, NULL);
     if( nPart_MPI>0 ) {
@@ -367,7 +371,7 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
     offset_in_MPI .resize( vecPatches.size() );
     offset_in_file.resize( vecPatches.size() );
     unsigned int numCorners = 1<<nDim_particle; // number of patch corners
-    unsigned int ntot, IP, ipart_local, i, k, ipart, iDimProbe, iDim;;
+    unsigned int ntot, IP, ipart_local, i, k, iDim;
     bool is_in_domain;
     vector<double> point(nDim_particle), mins(nDim_particle), maxs(nDim_particle);  
     vector<double> patchMin(nDim_particle), patchMax(nDim_particle);
@@ -379,7 +383,7 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
         // The first step is to reduce the area of the probe to search in this patch
         for( k=0; k<nDim_particle; k++ ) {
             mins[k] = numeric_limits<double>::max();
-            maxs[k] = numeric_limits<double>::min();
+            maxs[k] = numeric_limits<double>::lowest();
             patchMin[k] = vecPatches(ipatch)->getDomainLocalMin(k);
             patchMax[k] = vecPatches(ipatch)->getDomainLocalMax(k);
         }
@@ -409,7 +413,7 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
         }
         for( i=dimProbe; i<nDim_particle; i++ ){
             minI[i] = 0;
-            maxI[i] = (mins[i]*maxs[i]<0) ? 0:1;
+            maxI[i] = (mins[i]*maxs[i]<=0) ? 1:0;
         }
         // Now, minI and maxI contain the min and max indexes of the probe, useful for this patch
         // Calculate total number of useful points
@@ -470,8 +474,8 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
     MPI_Allgather( &nPart_MPI, 1, MPI_INT, &all_nPart[0], 1, MPI_INT, MPI_COMM_WORLD );
     
     // Calculate the cumulative sum
-    for (int irk=1 ; irk<sz ; irk++)
-        all_nPart[irk] += all_nPart[irk-1];
+    for (int rk=1 ; rk<sz ; rk++)
+        all_nPart[rk] += all_nPart[rk-1];
     
     // Add the MPI offset to all patches
     if( ! smpi->isMaster() ) {
@@ -481,6 +485,10 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
             vecPatches(ipatch)->probes[probe_n]->offset_in_file = offset_in_file[ipatch];
         }
     }
+    
+    // Store the actual total number points
+    nPart_total_actual = all_nPart[sz-1];
+    if( nPart_total_actual==0 ) ERROR("Probe has no points in the box");
     
     // (Re-) initialize the flag to tell whether probes should be re-calculated next time
     patchesHaveMoved = false;
@@ -503,7 +511,6 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     }
     #pragma omp barrier
     if (status != 0) return;
-    smpi->barrier();
     
     #pragma omp master
     {
@@ -520,15 +527,15 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     #pragma omp barrier
     
     // Loop patches to fill the array
-    #pragma omp for schedule(static)
+    #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
         // Loop probe ("fake") particles of current patch
         unsigned int iPart_MPI = offset_in_MPI[ipatch];
         unsigned int npart = vecPatches(ipatch)->probes[probe_n]->particles.size();
-
+        
         LocalFields Eloc_fields, Bloc_fields, Jloc_fields;
         double Rloc_fields;
-
+        
         for (unsigned int ipart=0; ipart<npart; ipart++) {             
             (*(vecPatches(ipatch)->Interp)) (
                 vecPatches(ipatch)->EMfields,
@@ -561,7 +568,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         hid_t memspace  = H5Screate_simple(2, mem_size, NULL);
         // Define size and location in file
         hsize_t dimsf[2], offset[2], stride[2], count[2], block[2];
-        dimsf[1] = nPart_total;
+        dimsf[1] = nPart_total_actual;
         dimsf[0] = nFields;
         hid_t filespace = H5Screate_simple(2, dimsf, NULL);
         if( nPart_MPI>0 ) {
@@ -584,7 +591,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         H5Pclose(plist_id);
         // Define transfer
         hid_t transfer = H5Pcreate(H5P_DATASET_XFER);
-        H5Pset_dxpl_mpio(transfer, H5FD_MPIO_COLLECTIVE);
+        H5Pset_dxpl_mpio(transfer, H5FD_MPIO_INDEPENDENT);
         // Write
         H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &(probesArray->data_2D[0][0]) );
         H5Dclose(dset_id);
@@ -598,3 +605,9 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     }
     #pragma omp barrier
 }
+
+
+bool DiagnosticProbes::needsRhoJs(int timestep) {
+    return hasRhoJs && timeSelection->theTimeIsNow(timestep);
+}
+

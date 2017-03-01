@@ -16,19 +16,21 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
     string errorPrefix = name.str();
     ostringstream info("");
     
-    // side from which the laser enters the simulation box (only west/east at the moment)
+    // side from which the laser enters the simulation box (only xmin/xmax at the moment)
     PyTools::extract("boxSide",boxSide,"Laser",ilaser);
-    if ( boxSide!="west" && boxSide!="east" ) {
-        ERROR(errorPrefix << ": boxSide must be `west` or `east`");
+    if ( boxSide!="xmin" && boxSide!="xmax" ) {
+        ERROR(errorPrefix << ": boxSide must be `xmin` or `xmax`");
     }
     
     // Profiles
     profiles.resize(0);
-    PyObject *chirp_profile, *time_profile;
+    PyObject *chirp_profile=nullptr, *time_profile=nullptr;
     vector<PyObject*>  space_profile, phase_profile, space_time_profile;
     bool time, space, omega, chirp, phase, space_time;
-    double omega_value;
-    Profile *p, *pchirp, *ptime, *pspace1, *pspace2, *pphase1, *pphase2;
+    double omega_value(0);
+    Profile *p, *pchirp, *pchirp2, *ptime, *ptime2, *pspace1, *pspace2, *pphase1, *pphase2;
+    pchirp2 = NULL;
+    ptime2  = NULL;
     omega      = PyTools::extract("omega",omega_value,"Laser",ilaser);
     chirp      = PyTools::extract_pyProfile("chirp_profile"     , chirp_profile, "Laser", ilaser);
     time       = PyTools::extract_pyProfile("time_envelope"     , time_profile , "Laser", ilaser);
@@ -101,14 +103,16 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
         name.str("");
         name << "Laser[" << ilaser <<"].chirp_profile";
         pchirp = new Profile(chirp_profile, 1, name.str());
+        pchirp2 = new Profile(chirp_profile, 1, name.str());
         info << "\t\t\tchirp_profile      : " << pchirp->getInfo();
         
         // time envelope
         name.str("");
         name << "Laser[" << ilaser <<"].time_envelope";
         ptime = new Profile(time_profile, 1, name.str());
+        ptime2 = new Profile(time_profile, 1, name.str());
         info << endl << "\t\t\ttime envelope      : " << ptime->getInfo();
-        
+         
         // space envelope (By)
         name.str("");
         name << "Laser[" << ilaser <<"].space_envelope[0]";
@@ -135,7 +139,7 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
         
         // Create the LaserProfiles
         profiles.push_back( new LaserProfileSeparable(omega_value, pchirp, ptime, pspace1, pphase1, true ) );
-        profiles.push_back( new LaserProfileSeparable(omega_value, pchirp, ptime, pspace2, pphase2, false) );
+        profiles.push_back( new LaserProfileSeparable(omega_value, pchirp2, ptime2, pspace2, pphase2, false) );
     
     }
     
@@ -215,10 +219,9 @@ LaserProfileSeparable::LaserProfileSeparable(LaserProfileSeparable * lp) :
 //Destructor
 LaserProfileSeparable::~LaserProfileSeparable()
 {
-    if(primal) {
-        if(timeProfile   ) delete timeProfile;
-        if(chirpProfile  ) delete chirpProfile;
-    }
+    if(timeProfile   ) delete timeProfile;
+    if(chirpProfile  ) delete chirpProfile;
+        
     if(spaceProfile  ) delete spaceProfile;
     if(phaseProfile  ) delete phaseProfile;
     if(space_envelope) delete space_envelope;

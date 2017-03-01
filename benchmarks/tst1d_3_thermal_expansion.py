@@ -46,8 +46,8 @@ Species(
     temperature = [1.e-6],
 	thermT = [1.e-6],
 	thermVelocity = [0.,0.,0.],
-    bc_part_type_west = 'thermalize',
-    bc_part_type_east = 'refl'
+    bc_part_type_xmin = 'thermalize',
+    bc_part_type_xmax = 'refl'
 )
 Species(
     species_type = 'eon',
@@ -60,8 +60,8 @@ Species(
     temperature = [Te],
     thermT = [Te],
     thermVelocity = [0.,0.,0.],
-    bc_part_type_west = 'thermalize',
-    bc_part_type_east = 'refl'
+    bc_part_type_xmin = 'thermalize',
+    bc_part_type_xmax = 'refl'
 )
 
 

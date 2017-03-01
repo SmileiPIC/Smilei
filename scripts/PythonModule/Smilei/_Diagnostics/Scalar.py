@@ -15,10 +15,11 @@ class Scalar(Diagnostic):
 				self._error += "---------------------------\n"
 				l = [""]
 				for s in scalars:
-					if s[:3] != l[-1][:3] and s[-2:]!=l[-1][-2:]:
+					if len(s)>4 and s[:2]!=l[-1][:2] and s[-2:]!=l[-1][-2:]:
 						if l!=[""]: self._error += "\t".join(l)+"\n"
 						l = []
 					l.append(s)
+				if l!=[""]: self._error += "\t".join(l)+"\n"
 			else:
 				self._error += "No scalars found"
 			return
@@ -45,6 +46,7 @@ class Scalar(Diagnostic):
 		# Loop file line by line
 		self._times = []
 		self._values = []
+		times_values = {}
 		for path in self._results_path:
 			with open(path+'/scalars.txt') as f:
 				for line in f:
@@ -53,13 +55,14 @@ class Scalar(Diagnostic):
 					prevline = line
 				scalars = prevline[1:].strip().split() # list of scalars
 				scalarindex = scalars.index(scalar) # index of the requested scalar
+				line = str(line.strip()).split()
+				times_values[ int( self._np.round(float(line[0]) / float(self.timestep)) ) ] = float(line[scalarindex])
 				for line in f:
 					line = str(line.strip()).split()
-					self._times.append( int( self._np.round(float(line[0]) / float(self.timestep)) ) )
-					self._values.append( float(line[scalarindex]) )
-		self._times  = self._np.array(self._times )
-		self._values = self._np.array(self._values)
-		self.times = self._times
+					times_values[ int( self._np.round(float(line[0]) / float(self.timestep)) ) ] = float(line[scalarindex])
+		self._times  = self._np.array(sorted(times_values.keys()))
+		self._values = self._np.array([times_values[k] for k in self._times])
+		self.times = self._times[:]
 		
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
@@ -90,7 +93,7 @@ class Scalar(Diagnostic):
 			self._vunits = ""
 		else:
 			self._vunits = {"U":"K_r", "E":"E_r", "B":"B_r", "J":"J_r",
-									"R":"N_r", "P":"S_r"}[self._scalarname[0]]
+									"R":"N_r", "P":"S_r", "D":"N_r"}[self._scalarname[0]]
 		self._title =self._scalarname
 		
 		# Finish constructor
@@ -107,7 +110,7 @@ class Scalar(Diagnostic):
 				file = path+'/scalars.txt'
 				f = open(file, 'r')
 			except:
-				print("Cannot open 'scalars.txt' in directory '"+path+"'")
+				self._error = "Cannot open 'scalars.txt' in directory '"+path+"'"
 				return []
 			try:
 				# Find last commented line 
@@ -134,7 +137,7 @@ class Scalar(Diagnostic):
 		if not self._validate(): return
 		# Verify that the timestep is valid
 		if t not in self.times:
-			print("Timestep "+t+" not found in this diagnostic")
+			print("Timestep "+str(t)+" not found in this diagnostic")
 			return []
 		# Get value at selected time
 		A = self._values[ self._data[t] ]

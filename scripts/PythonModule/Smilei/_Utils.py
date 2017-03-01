@@ -29,7 +29,6 @@ class Options(object):
 		self.vfactor = None
 		self.vmin    = None
 		self.vmax    = None
-		self.skipAnimation = False
 		self.streakPlot = False
 		self.figure0 = {}
 		self.figure1 = {"facecolor":"w"}
@@ -55,7 +54,6 @@ class Options(object):
 		self.vfactor  = kwargs.pop("vfactor",self.vfactor  )
 		self.vmin     = kwargs.pop("vmin"   ,kwargs.pop("data_min",self.vmin))
 		self.vmax     = kwargs.pop("vmax"   ,kwargs.pop("data_max",self.vmax))
-		self.skipAnimation = kwargs.pop("skipAnimation", self.skipAnimation)
 		self.streakPlot    = kwargs.pop("streakPlot"   , self.streakPlot   )
 		# Second, we manage all the other arguments that are directly the ones of matplotlib
 		for kwa, val in kwargs.items():
@@ -161,6 +159,10 @@ class Units(object):
 				self.ureg.define("M_r = [code_mass]"                      ) # mass
 				self.ureg.define("Q_r = [code_charge]"                    ) # charge
 				self.ureg.define("epsilon_0 = 1")
+				# Add radians and degrees
+				self.ureg.define("radian    = [] = rad"               )
+				self.ureg.define("degree    = pi/180*radian = deg"    )
+				self.ureg.define("steradian = radian ** 2 = sr"       )
 			self.ureg.define("L_r = V_r / W_r"                        ) # length
 			self.ureg.define("T_r = 1   / W_r"                        ) # time
 			self.ureg.define("P_r = M_r * V_r"                        ) # momentum
@@ -284,7 +286,8 @@ def multiPlot(*Diags, **kwargs):
 	saveAs : path where to store individual frames as pictures.
 	skipAnimation : toggle going directly to the last frame.
 	"""
-	from .Utils import Options, Movie, SaveAs
+	
+	from _Diagnostics import TrackParticles
 	
 	# Verify Diags are valid
 	nDiags = len(Diags)
@@ -313,9 +316,9 @@ def multiPlot(*Diags, **kwargs):
 			if type(Diag) is TrackParticles:
 				sameAxes = False
 				break
-			if Diag.dim()==0 and Diags[0].dim()==0:
+			if Diag.dim==0 and Diags[0].dim==0:
 				continue
-			if Diag.dim()!=1 or Diag._type != Diags[0]._type:
+			if Diag.dim!=1 or Diag._type != Diags[0]._type:
 				sameAxes = False
 				break
 	if not sameAxes and shape == [1,1]:
@@ -384,4 +387,86 @@ def multiPlot(*Diags, **kwargs):
 			if t is not None: save.frame(int(t))
 		mov.finish()
 		return
+
+
+class VTKfile:
+	
+	def __init__(self):
+		try:
+			import vtk
+		except:
+			print "Python module 'vtk' not found. Could not export to VTK format"
+			return
 		
+		self.vtk = vtk
+	
+	def Array(self, data, name):
+		shape = data.shape
+		if len(shape)==1:   npoints, nComponents = shape[0], 1
+		elif len(shape)==2: npoints, nComponents = shape
+		else: raise Exception("impossible")
+		arr = self.vtk.vtkFloatArray()
+		arr.SetNumberOfTuples(npoints)
+		arr.SetNumberOfComponents(nComponents)
+		arr.SetVoidArray(data, npoints*nComponents, 1)
+		arr.SetName(name)
+		return arr
+	def WriteImage(self, array, origin, extent, spacings, file, numberOfPieces):
+		img = self.vtk.vtkImageData()
+		img.SetOrigin(origin)
+		img.SetExtent(extent)
+		img.SetSpacing(spacings)
+		img.GetPointData().SetScalars(array)
+		writer = self.vtk.vtkXMLPImageDataWriter()
+		writer.SetFileName(file)
+		writer.SetNumberOfPieces(numberOfPieces)
+		writer.SetEndPiece(numberOfPieces-1)
+		writer.SetStartPiece(0);
+		writer.SetInputData(img)
+		writer.Write()
+	def WriteRectilinearGrid(self, dimensions, xcoords, ycoords, zcoords, array, file):
+		grid = self.vtk.vtkRectilinearGrid()
+		grid.SetDimensions(dimensions)
+		grid.SetXCoordinates(xcoords)
+		grid.SetYCoordinates(ycoords)
+		grid.SetZCoordinates(zcoords)
+		grid.GetPointData().SetScalars(array)
+		writer = self.vtk.vtkRectilinearGridWriter()
+		writer.SetFileName(file)
+		writer.SetInputData(grid)
+		writer.Write()
+	def WritePoints(self, pcoords, file):
+		points = self.vtk.vtkPoints()
+		points.SetData(pcoords)
+		grid = self.vtk.vtkUnstructuredGrid()
+		grid.SetPoints(points)
+		writer = self.vtk.vtkUnstructuredGridWriter()
+		writer.SetFileName(file)
+		writer.SetInputData(grid)
+		writer.Write()
+	def WriteLines(self, pcoords, connectivity, attributes, file):
+		ncel = len(connectivity)
+		connectivity = connectivity.flatten()
+		id = self.vtk.vtkIdTypeArray()
+		id.SetNumberOfTuples(connectivity.size)
+		id.SetNumberOfComponents(1)
+		id.SetVoidArray(connectivity, connectivity.size, 1)
+		connec = self.vtk.vtkCellArray()
+		connec.SetCells(ncel, id)
+		
+		points = self.vtk.vtkPoints()
+		points.SetData(pcoords)
+		
+		pdata = self.vtk.vtkPolyData()
+		pdata.SetPoints(points)
+		pdata.SetLines(connec)
+		
+		for a in attributes:
+			pdata.GetPointData().SetScalars(a)
+		
+		writer = self.vtk.vtkPolyDataWriter()
+		writer.SetFileName(file)
+		writer.SetInputData(pdata)
+		writer.Write()
+		
+

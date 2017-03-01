@@ -22,12 +22,12 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn3D::ElectroMagn3D(Params &params, vector<Species*>& vecSpecies, Patch* patch) : 
   ElectroMagn(params, vecSpecies, patch),
-isWestern(patch->isWestern()),
-isEastern(patch->isEastern()),
-isSouthern(patch->isSouthern()),
-isNorthern(patch->isNorthern()),
-isTop(patch->isTop()),
-isBottom(patch->isBottom())
+isXmin(patch->isXmin()),
+isXmax(patch->isXmax()),
+isYmin(patch->isYmin()),
+isYmax(patch->isYmax()),
+isZmax(patch->isZmax()),
+isZmin(patch->isZmin())
 {    
     
     // --------------------------------------------------
@@ -93,20 +93,12 @@ isBottom(patch->isBottom())
     Jz_   = new Field3D(dimPrim, 2, false, "Jz");
     rho_  = new Field3D(dimPrim, "Rho" );
     
-    // Allocation of the time-averaged EM fields
-    Ex_avg  = new Field3D(dimPrim, 0, false, "Ex_avg");
-    Ey_avg  = new Field3D(dimPrim, 1, false, "Ey_avg");
-    Ez_avg  = new Field3D(dimPrim, 2, false, "Ez_avg");
-    Bx_avg  = new Field3D(dimPrim, 0, true,  "Bx_avg");
-    By_avg  = new Field3D(dimPrim, 1, true,  "By_avg");
-    Bz_avg  = new Field3D(dimPrim, 2, true,  "Bz_avg");
-    
     // Charge currents currents and density for each species
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Jx_s[ispec]  = new Field3D(dimPrim, 0, false, ("Jx_"+vecSpecies[ispec]->species_type).c_str());
-        Jy_s[ispec]  = new Field3D(dimPrim, 1, false, ("Jy_"+vecSpecies[ispec]->species_type).c_str());
-        Jz_s[ispec]  = new Field3D(dimPrim, 2, false, ("Jz_"+vecSpecies[ispec]->species_type).c_str());
-        rho_s[ispec] = new Field3D(dimPrim, ("Rho_"+vecSpecies[ispec]->species_type).c_str());
+        Jx_s[ispec]  = new Field3D(("Jx_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
+        Jy_s[ispec]  = new Field3D(("Jy_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
+        Jz_s[ispec]  = new Field3D(("Jz_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
+        rho_s[ispec] = new Field3D(("Rho_"+vecSpecies[ispec]->species_type).c_str(), dimPrim);
     }
 
     // ----------------------------------------------------------------
@@ -154,7 +146,7 @@ isBottom(patch->isBottom())
                         bufsize[i][isDual]--;
                     else if  (isDual) {
                         bufsize[i][isDual]--;
-                        if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=params.number_of_patches[i]-1) ) 
+                        if ( (patch->Pcoordinates[i]!=0) && ((int)patch->Pcoordinates[i]!=params.number_of_patches[i]-1) )
                             bufsize[i][isDual]--;
                     }
                 
@@ -164,6 +156,161 @@ isBottom(patch->isBottom())
     
 }//END constructor Electromagn3D
 
+
+ElectroMagn3D::ElectroMagn3D( ElectroMagn3D* emFields, Params &params, Patch* patch ) : 
+    ElectroMagn(emFields, params, patch),
+isXmin(patch->isXmin()),
+isXmax(patch->isXmax()),
+isYmin(patch->isYmin()),
+isYmax(patch->isYmax()),
+isZmax(patch->isZmax()),
+isZmin(patch->isZmin())
+{
+    
+    // --------------------------------------------------
+    // Calculate quantities related to the simulation box
+    // --------------------------------------------------
+    
+    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the x-direction)
+    dx       = cell_length[0];
+    dt_ov_dx = timestep/dx;
+    dx_ov_dt = 1.0/dt_ov_dx;
+    
+    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the y-direction)
+    dy       = cell_length[1];
+    dt_ov_dy = timestep/dy;
+    dy_ov_dt = 1.0/dt_ov_dy;
+
+    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the z-direction)
+    dz       = cell_length[2];
+    dt_ov_dz = timestep/dz;
+    dz_ov_dt = 1.0/dt_ov_dz;
+    
+    // ----------------------
+    // Electromagnetic fields
+    // ----------------------
+    
+    dimPrim.resize( nDim_field );
+    dimDual.resize( nDim_field );
+    
+    // Dimension of the primal and dual grids
+    for (size_t i=0 ; i<nDim_field ; i++) {
+        // Standard scheme
+        dimPrim[i] = n_space[i]+1;
+        dimDual[i] = n_space[i]+2;
+        // + Ghost domain
+        dimPrim[i] += 2*oversize[i];
+        dimDual[i] += 2*oversize[i];
+    }
+    // number of nodes of the primal and dual grid in the x-direction
+    nx_p = n_space[0]+1+2*oversize[0];
+    nx_d = n_space[0]+2+2*oversize[0];
+    // number of nodes of the primal and dual grid in the y-direction
+    ny_p = n_space[1]+1+2*oversize[1];
+    ny_d = n_space[1]+2+2*oversize[1];
+    // number of nodes of the primal and dual grid in the z-direction
+    nz_p = n_space[2]+1+2*oversize[2];
+    nz_d = n_space[2]+2+2*oversize[2];
+    
+    // Allocation of the EM fields
+
+    Ex_  = new Field3D(dimPrim, 0, false, "Ex");
+    Ey_  = new Field3D(dimPrim, 1, false, "Ey");
+    Ez_  = new Field3D(dimPrim, 2, false, "Ez");
+    Bx_  = new Field3D(dimPrim, 0, true,  "Bx");
+    By_  = new Field3D(dimPrim, 1, true,  "By");
+    Bz_  = new Field3D(dimPrim, 2, true,  "Bz");
+    Bx_m = new Field3D(dimPrim, 0, true,  "Bx_m");
+    By_m = new Field3D(dimPrim, 1, true,  "By_m");
+    Bz_m = new Field3D(dimPrim, 2, true,  "Bz_m");
+    
+    // Total charge currents and densities
+    Jx_   = new Field3D(dimPrim, 0, false, "Jx");
+    Jy_   = new Field3D(dimPrim, 1, false, "Jy");
+    Jz_   = new Field3D(dimPrim, 2, false, "Jz");
+    rho_  = new Field3D(dimPrim, "Rho" );
+    
+    // Charge currents currents and density for each species
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+        if ( emFields->Jx_s[ispec] != NULL ) {
+            if ( emFields->Jx_s[ispec]->data_ != NULL )
+                Jx_s[ispec]  = new Field3D(dimPrim, 0, false, emFields->Jx_s[ispec]->name);
+            else
+                Jx_s[ispec]  = new Field3D(emFields->Jx_s[ispec]->name, dimPrim);
+        }
+        if ( emFields->Jy_s[ispec] != NULL ) {
+            if ( emFields->Jy_s[ispec]->data_ != NULL )
+                Jy_s[ispec]  = new Field3D(dimPrim, 1, false, emFields->Jy_s[ispec]->name);
+            else
+                Jy_s[ispec]  = new Field3D(emFields->Jy_s[ispec]->name, dimPrim);
+        }
+        if ( emFields->Jz_s[ispec] != NULL ) {
+            if ( emFields->Jz_s[ispec]->data_ != NULL )
+                Jz_s[ispec]  = new Field3D(dimPrim, 2, false, emFields->Jz_s[ispec]->name);
+            else
+                Jz_s[ispec]  = new Field3D(emFields->Jz_s[ispec]->name, dimPrim);
+        }
+        if ( emFields->rho_s[ispec] != NULL ) {
+            if ( emFields->rho_s[ispec]->data_ != NULL )
+                rho_s[ispec] = new Field3D(dimPrim, emFields->rho_s[ispec]->name );
+            else
+                rho_s[ispec]  = new Field3D(emFields->rho_s[ispec]->name, dimPrim);
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Definition of the min and max index according to chosen oversize
+    // ----------------------------------------------------------------
+    index_bc_min.resize( nDim_field, 0 );
+    index_bc_max.resize( nDim_field, 0 );
+    for (unsigned int i=0 ; i<nDim_field ; i++) {
+        index_bc_min[i] = oversize[i];
+        index_bc_max[i] = dimDual[i]-oversize[i]-1;
+    }
+    /*
+     MESSAGE("index_bc_min / index_bc_max / nx_p / nx_d" << index_bc_min[0]
+            << " " << index_bc_max[0] << " " << nx_p<< " " << nx_d);
+     */
+    
+    
+    // Define limits of non duplicated elements
+    // (by construction 1 (prim) or 2 (dual) elements shared between per MPI process)
+    // istart 
+    for (unsigned int i=0 ; i<3 ; i++)
+        for (unsigned int isDual=0 ; isDual<2 ; isDual++)
+            istart[i][isDual] = 0;
+    for (unsigned int i=0 ; i<nDim_field ; i++) {
+        for (unsigned int isDual=0 ; isDual<2 ; isDual++) {
+            istart[i][isDual] = oversize[i];
+            if (patch->Pcoordinates[i]!=0) istart[i][isDual]+=1;
+        }
+    }
+    
+    // bufsize = nelements
+    for (unsigned int i=0 ; i<3 ; i++) 
+        for (unsigned int isDual=0 ; isDual<2 ; isDual++)
+            bufsize[i][isDual] = 1;
+    
+    for (unsigned int i=0 ; i<nDim_field ; i++) {
+        for (int isDual=0 ; isDual<2 ; isDual++)
+            bufsize[i][isDual] = n_space[i] + 1;
+        
+        for (int isDual=0 ; isDual<2 ; isDual++) {
+            bufsize[i][isDual] += isDual; 
+            if ( params.number_of_patches[i]!=1 ) {                
+
+                if ( ( !isDual ) && (patch->Pcoordinates[i]!=0) )
+                    bufsize[i][isDual]--;
+                else if  (isDual) {
+                    bufsize[i][isDual]--;
+                    if ( (patch->Pcoordinates[i]!=0) && ((int)patch->Pcoordinates[i]!=params.number_of_patches[i]-1) )
+                        bufsize[i][isDual]--;
+                }
+                
+            } // if ( params.number_of_patches[i]!=1 )
+        } // for (int isDual=0 ; isDual
+    } // for (unsigned int i=0 ; i<nDim_field
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -208,10 +355,10 @@ void ElectroMagn3D::initPoisson(Patch *patch)
     index_max_p_[0] = nx_p - 2 - oversize[0];
     index_max_p_[1] = ny_p - 2 - oversize[1];
     index_max_p_[2] = nz_p - 2 - oversize[2];
-    if (patch->isWestern()) {
+    if (patch->isXmin()) {
         index_min_p_[0] = 0;
     }
-    if (patch->isEastern()) {
+    if (patch->isXmax()) {
         index_max_p_[0] = nx_p-1;
     }
 
@@ -288,6 +435,7 @@ void ElectroMagn3D::update_p(double rnew_dot_rnew, double r_dot_r)
 
 void ElectroMagn3D::initE(Patch *patch)
 {
+#ifdef _PATCH3D_TODO
     Field3D* Ex3D  = static_cast<Field3D*>(Ex_);
     Field3D* Ey3D  = static_cast<Field3D*>(Ey_);
     Field3D* rho3D = static_cast<Field3D*>(rho_);
@@ -296,7 +444,6 @@ void ElectroMagn3D::initE(Patch *patch)
     // Compute the electrostatic fields Ex and Ey
     // ------------------------------------------
     
-#ifdef _PATCH3D_TODO
 #endif
 
     // Apply BC on Ex and Ey
@@ -410,6 +557,24 @@ void ElectroMagn3D::solveMaxwellAmpere()
 }//END solveMaxwellAmpere
 
 
+// Create a new field
+Field * ElectroMagn3D::createField(string fieldname)
+{
+    if     (fieldname.substr(0,2)=="Ex" ) return new Field3D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,2)=="Ey" ) return new Field3D(dimPrim, 1, false, fieldname);
+    else if(fieldname.substr(0,2)=="Ez" ) return new Field3D(dimPrim, 2, false, fieldname);
+    else if(fieldname.substr(0,2)=="Bx" ) return new Field3D(dimPrim, 0, true,  fieldname);
+    else if(fieldname.substr(0,2)=="By" ) return new Field3D(dimPrim, 1, true,  fieldname);
+    else if(fieldname.substr(0,2)=="Bz" ) return new Field3D(dimPrim, 2, true,  fieldname);
+    else if(fieldname.substr(0,2)=="Jx" ) return new Field3D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,2)=="Jy" ) return new Field3D(dimPrim, 1, false, fieldname);
+    else if(fieldname.substr(0,2)=="Jz" ) return new Field3D(dimPrim, 2, false, fieldname);
+    else if(fieldname.substr(0,3)=="Rho") return new Field3D(dimPrim, fieldname );
+    
+    ERROR("Cannot create field "<<fieldname);
+}
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Center the Magnetic Fields (used to push the particle)
 // ---------------------------------------------------------------------------------------------------------------------
@@ -454,84 +619,13 @@ void ElectroMagn3D::centerMagneticFields()
 }//END centerMagneticFields
 
 
-
 // ---------------------------------------------------------------------------------------------------------------------
-// Reset/Increment the averaged fields
+// Apply a single pass binomial filter on currents
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn3D::incrementAvgFields(unsigned int time_step)
+void ElectroMagn3D::binomialCurrentFilter()
 {
-    // Static cast of the fields
-    Field3D* Ex3D     = static_cast<Field3D*>(Ex_);
-    Field3D* Ey3D     = static_cast<Field3D*>(Ey_);
-    Field3D* Ez3D     = static_cast<Field3D*>(Ez_);
-    Field3D* Bx3D_m   = static_cast<Field3D*>(Bx_m);
-    Field3D* By3D_m   = static_cast<Field3D*>(By_m);
-    Field3D* Bz3D_m   = static_cast<Field3D*>(Bz_m);
-    Field3D* Ex3D_avg = static_cast<Field3D*>(Ex_avg);
-    Field3D* Ey3D_avg = static_cast<Field3D*>(Ey_avg);
-    Field3D* Ez3D_avg = static_cast<Field3D*>(Ez_avg);
-    Field3D* Bx3D_avg = static_cast<Field3D*>(Bx_avg);
-    Field3D* By3D_avg = static_cast<Field3D*>(By_avg);
-    Field3D* Bz3D_avg = static_cast<Field3D*>(Bz_avg);
-    
-    // increment the time-averaged fields
-    
-    // Electric field Ex^(d,p,p)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            for (unsigned int k=0 ; k<nz_p ; k++) {
-                (*Ex3D_avg)(i,j,k) += (*Ex3D)(i,j,k);
-            }
-        }
-    }
-    
-    // Electric field Ey^(p,d,p)
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            for (unsigned int k=0 ; k<nz_p ; k++) {
-                (*Ey3D_avg)(i,j,k) += (*Ey3D)(i,j,k);
-            }
-        }
-    }
-    
-    // Electric field Ez^(p,p,d)
-    for (unsigned int i=0 ;  i<nx_p ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            for (unsigned int k=0 ; k<nz_d ; k++) {
-                (*Ez3D_avg)(i,j,k) += (*Ez3D)(i,j,k);
-            }
-        }
-    }
-    
-    // Magnetic field Bx^(p,d,d)
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            for (unsigned int k=0 ; k<nz_d ; k++) {
-                (*Bx3D_avg)(i,j,k) += (*Bx3D_m)(i,j,k);
-            }
-        }
-    }
-    
-    // Magnetic field By^(d,p,d)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            for (unsigned int k=0 ; k<nz_d ; k++) {
-                (*By3D_avg)(i,j,k) += (*By3D_m)(i,j,k);
-            }
-        }
-    }
-    
-    // Magnetic field Bz^(d,d)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            for (unsigned int k=0 ; k<nz_p ; k++) {
-                (*Bz3D_avg)(i,j,k) += (*Bz3D_m)(i,j,k);
-            }
-        }
-    }
-    
-    
-}//END incrementAvgFields
+    ERROR("Binomial current filtering not yet implemented in 3D3V");
+}
 
 
 
@@ -551,47 +645,33 @@ void ElectroMagn3D::computeTotalRhoJ()
     // Species currents and charge density
     // -----------------------------------
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Field3D* Jx3D_s  = static_cast<Field3D*>(Jx_s[ispec]);
-        Field3D* Jy3D_s  = static_cast<Field3D*>(Jy_s[ispec]);
-        Field3D* Jz3D_s  = static_cast<Field3D*>(Jz_s[ispec]);
-        Field3D* rho3D_s = static_cast<Field3D*>(rho_s[ispec]);
-        
-        // Charge density rho^(p,p) to 0
-        for (unsigned int i=0 ; i<nx_p ; i++) {
-            for (unsigned int j=0 ; j<ny_p ; j++) {
-                for (unsigned int k=0 ; k<nz_p ; k++) {
-                    if(ispec==0){ // new timestep
-                        (*rho3D)(i,j,k) = 0.;
-                        (*Jx3D)(i,j,k)  = 0.;
-                        (*Jy3D)(i,j,k)  = 0.;
-                        (*Jz3D)(i,j,k)  = 0.;
-                    }
-                    (*rho3D)(i,j,k) += (*rho3D_s)(i,j,k);
-                    (*Jx3D)(i,j,k) += (*Jx3D_s)(i,j,k);
-                    (*Jy3D)(i,j,k) += (*Jy3D_s)(i,j,k);
-                    (*Jz3D)(i,j,k) += (*Jz3D_s)(i,j,k);
-                }
-                if(ispec==0) // new timestep
-                    (*Jz3D)(i,j,nz_p) = 0. ;
-                (*Jz3D)(i,j,nz_p) += (*Jz3D_s)(i,j,nz_p);
-            }
-
-            for (unsigned int k=0 ; k<nz_p ; k++) {
-                if(ispec==0) // new timestep
-                    (*Jy3D)(i,ny_p,k) = 0. ;
-                (*Jy3D)(i,ny_p,k) += (*Jy3D_s)(i,ny_p,k);
-            }
+        if( Jx_s[ispec] ) {
+            Field3D* Jx3D_s  = static_cast<Field3D*>(Jx_s[ispec]);
+            for (unsigned int i=0 ; i<=nx_p ; i++)
+                for (unsigned int j=0 ; j<ny_p ; j++)
+                    for (unsigned int k=0 ; k<nz_p ; k++)
+                        (*Jx3D)(i,j,k) += (*Jx3D_s)(i,j,k);
         }
-
-        // i = nx_p
-        {
-            for (unsigned int j=0 ; j<ny_p ; j++) {
-                for (unsigned int k=0 ; k<nz_p ; k++) {
-                    if(ispec==0) // new timestep
-                        (*Jx3D)(nx_p,j,k) = 0. ;
-                    (*Jx3D)(nx_p,j,k) += (*Jx3D_s)(nx_p,j,k);
-                }
-            }
+        if( Jy_s[ispec] ) {
+            Field3D* Jy3D_s  = static_cast<Field3D*>(Jy_s[ispec]);
+            for (unsigned int i=0 ; i<nx_p ; i++)
+                for (unsigned int j=0 ; j<=ny_p ; j++)
+                    for (unsigned int k=0 ; k<nz_p ; k++)
+                        (*Jy3D)(i,j,k) += (*Jy3D_s)(i,j,k);
+        }
+        if( Jz_s[ispec] ) {
+            Field3D* Jz3D_s  = static_cast<Field3D*>(Jz_s[ispec]);
+            for (unsigned int i=0 ; i<nx_p ; i++)
+                for (unsigned int j=0 ; j<ny_p ; j++)
+                    for (unsigned int k=0 ; k<=nz_p ; k++)
+                        (*Jz3D)(i,j,k) += (*Jz3D_s)(i,j,k);
+        }
+        if( rho_s[ispec] ) {
+            Field3D* rho3D_s  = static_cast<Field3D*>(rho_s[ispec]);
+            for (unsigned int i=0 ; i<nx_p ; i++)
+                for (unsigned int j=0 ; j<ny_p ; j++)
+                    for (unsigned int k=0 ; k<nz_p ; k++)
+                        (*rho3D)(i,j,k) += (*rho3D_s)(i,j,k);
         }
         
     }//END loop on species ispec
@@ -604,14 +684,17 @@ void ElectroMagn3D::computeTotalRhoJ()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3D::computePoynting() {
 
+#ifdef _PATCH3D_TODO
     Field3D* Ex3D     = static_cast<Field3D*>(Ex_);
     Field3D* Ey3D     = static_cast<Field3D*>(Ey_);
     Field3D* Ez3D     = static_cast<Field3D*>(Ez_);
     Field3D* Bx3D_m   = static_cast<Field3D*>(Bx_m);
     Field3D* By3D_m   = static_cast<Field3D*>(By_m);
     Field3D* Bz3D_m   = static_cast<Field3D*>(Bz_m);
+#endif
 
-    if (isWestern) {
+    if (isXmin) {
+#ifdef _PATCH3D_TODO
         unsigned int iEy=istart[0][Ey3D->isDual(0)];
         unsigned int iBz=istart[0][Bz3D_m->isDual(0)];
         unsigned int iEz=istart[0][Ez3D->isDual(0)];
@@ -627,12 +710,12 @@ void ElectroMagn3D::computePoynting() {
         unsigned int kEz=istart[2][Ez3D->isDual(1)];
         unsigned int kBy=istart[2][By3D_m->isDual(1)];
 
-#ifdef _PATCH3D_TODO
 #endif
-    }//if Western
+    }//if Xmin
     
     
-    if (isEastern) {
+    if (isXmax) {
+#ifdef _PATCH3D_TODO
         unsigned int iEy=istart[0][Ey3D->isDual(0)]  + bufsize[0][Ey3D->isDual(0)] -1;
         unsigned int iBz=istart[0][Bz3D_m->isDual(0)] + bufsize[0][Bz3D_m->isDual(0)]-1;
         unsigned int iEz=istart[0][Ez3D->isDual(0)]  + bufsize[0][Ez3D->isDual(0)] -1;
@@ -643,12 +726,12 @@ void ElectroMagn3D::computePoynting() {
         unsigned int jEz=istart[1][Ez3D->isDual(1)];
         unsigned int jBy=istart[1][By3D_m->isDual(1)];
         
-#ifdef _PATCH3D_TODO
 #endif
-    }//if Easter
+    }//if Xmaxer
     
-    if (isSouthern) {
+    if (isYmin) {
         
+#ifdef _PATCH3D_TODO
         unsigned int iEz=istart[0][Ez_->isDual(0)];
         unsigned int iBx=istart[0][Bx_m->isDual(0)]; 
         unsigned int iEx=istart[0][Ex_->isDual(0)];
@@ -659,11 +742,11 @@ void ElectroMagn3D::computePoynting() {
         unsigned int jEx=istart[1][Ex_->isDual(1)];
         unsigned int jBz=istart[1][Bz_m->isDual(1)];
 
-#ifdef _PATCH3D_TODO
-#endif        
-    }// if South
+#endif
+    }// if Ymin
     
-    if (isNorthern) {
+    if (isYmax) {
+#ifdef _PATCH3D_TODO
         unsigned int iEz=istart[0][Ez3D->isDual(0)];
         unsigned int iBx=istart[0][Bx3D_m->isDual(0)];
         unsigned int iEx=istart[0][Ex3D->isDual(0)];
@@ -674,9 +757,8 @@ void ElectroMagn3D::computePoynting() {
         unsigned int jEx=istart[1][Ex3D->isDual(1)]  + bufsize[1][Ex3D->isDual(1)] -1;
         unsigned int jBz=istart[1][Bz3D_m->isDual(1)] + bufsize[1][Bz3D_m->isDual(1)]-1;
         
-#ifdef _PATCH3D_TODO
 #endif
-    }//if North
+    }//if Ymax
 
 }
 

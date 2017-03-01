@@ -53,7 +53,7 @@ inline double trapeze(double x, double plateau, double slope1, double slope2, do
                 result = 1.;
             } else {
                 x -= slope2;
-                if ( x < 0. ) result = 1. - x * invslope2;
+                if ( x < 0. ) result = - x * invslope2;
             }
         }
     }
@@ -66,6 +66,12 @@ double Function_Trapezoidal2D::valueAt(vector<double> x_cell) {
     return value
         * trapeze(x_cell[0]-xvacuum, xplateau, xslope1, xslope2, invxslope1, invxslope2)
         * trapeze(x_cell[1]-yvacuum, yplateau, yslope1, yslope2, invyslope1, invyslope2);
+}
+double Function_Trapezoidal3D::valueAt(vector<double> x_cell) {
+    return value
+        * trapeze(x_cell[0]-xvacuum, xplateau, xslope1, xslope2, invxslope1, invxslope2)
+        * trapeze(x_cell[1]-yvacuum, yplateau, yslope1, yslope2, invyslope1, invyslope2)
+        * trapeze(x_cell[2]-zvacuum, zplateau, zslope1, zslope2, invzslope1, invzslope2);
 }
 
 // Gaussian profiles
@@ -83,6 +89,18 @@ double Function_Gaussian2D::valueAt(vector<double> x_cell) {
     if ( y > yvacuum  && y < yvacuum+ylength )
         yfactor = exp( -pow(y-ycenter, yorder) * invysigma );
     return value * xfactor * yfactor;
+}
+double Function_Gaussian3D::valueAt(vector<double> x_cell) {
+    double x = x_cell[0], xfactor=0.;
+    double y = x_cell[1], yfactor=0.;
+    double z = x_cell[2], zfactor=0.;
+    if ( x > xvacuum  && x < xvacuum+xlength )
+        xfactor = exp( -pow(x-xcenter, xorder) * invxsigma );
+    if ( y > yvacuum  && y < yvacuum+ylength )
+        yfactor = exp( -pow(y-ycenter, yorder) * invysigma );
+    if ( z > yvacuum  && z < yvacuum+zlength )
+        zfactor = exp( -pow(z-zcenter, zorder) * invzsigma );
+    return value * xfactor * yfactor * zfactor;
 }
 
 // Polygonal profiles
@@ -102,29 +120,49 @@ double Function_Polygonal2D::valueAt(vector<double> x_cell) {
             return xvalues[i-1] + xslopes[i-1] * ( x - xpoints[i-1] );
     return 0.;
 }
+double Function_Polygonal3D::valueAt(vector<double> x_cell) {
+    double x = x_cell[0];
+    if( x < xpoints[0] ) return 0.;
+    for( int i=1; i<npoints; i++ )
+        if( x < xpoints[i] )
+            return xvalues[i-1] + xslopes[i-1] * ( x - xpoints[i-1] );
+    return 0.;
+}
 
 // Cosine profiles
 double Function_Cosine1D::valueAt(vector<double> x_cell) {
     double x = (x_cell[0] - xvacuum) * invxlength, xfactor = 0.;
     if( x > 0. && x < 1. )
-        xfactor = base + xamplitude * cos(xphi + xfreq * x);
+        xfactor = base + xamplitude * cos(xphi + xnumber2pi * x);
     return xfactor;
 }
 double Function_Cosine2D::valueAt(vector<double> x_cell) {
     double x = (x_cell[0] - xvacuum) * invxlength, xfactor = 0.;
     double y = (x_cell[1] - yvacuum) * invylength, yfactor = 0.;
     if( x > 0. && x < 1. )
-        xfactor = base + xamplitude * cos(xphi + xfreq * x);
+        xfactor = base + xamplitude * cos(xphi + xnumber2pi * x);
     if( y > 0. && y < 1. )
-        yfactor = base + yamplitude * cos(yphi + yfreq * y);
+        yfactor = base + yamplitude * cos(yphi + ynumber2pi * y);
     return xfactor * yfactor;
+}
+double Function_Cosine3D::valueAt(vector<double> x_cell) {
+    double x = (x_cell[0] - xvacuum) * invxlength, xfactor = 0.;
+    double y = (x_cell[1] - yvacuum) * invylength, yfactor = 0.;
+    double z = (x_cell[2] - zvacuum) * invzlength, zfactor = 0.;
+    if( x > 0. && x < 1. )
+        xfactor = base + xamplitude * cos(xphi + xnumber2pi * x);
+    if( y > 0. && y < 1. )
+        yfactor = base + yamplitude * cos(yphi + ynumber2pi * y);
+    if( z > 0. && z < 1. )
+        zfactor = base + zamplitude * cos(zphi + znumber2pi * z);
+    return xfactor * yfactor * zfactor;
 }
 
 // Polynomial profiles
 double Function_Polynomial1D::valueAt(vector<double> x_cell) {
     double r = 0., xx0 = x_cell[0]-x0, xx = 1.;
     unsigned int currentOrder = 0;
-    for( unsigned int i=0; i<orders.size(); i++ ) {
+    for( unsigned int i=0; i<n_orders; i++ ) {
         while( currentOrder<orders[i] ) {
             currentOrder += 1;
             xx *= xx0;
@@ -136,16 +174,37 @@ double Function_Polynomial1D::valueAt(vector<double> x_cell) {
 double Function_Polynomial2D::valueAt(vector<double> x_cell) {
     double r = 0., xx0 = x_cell[0]-x0, yy0 = x_cell[1]-y0;
     vector<double> xx;
-    unsigned int currentOrder = 0;
-    xx.resize(orders.back()+1);
+    unsigned int currentOrder = 0, j;
+    xx.resize(n_coeffs);
     xx[0] = 1.;
-    for( unsigned int i=0; i<orders.size(); i++ ) {
+    for( unsigned int i=0; i<n_orders; i++ ) {
         while( currentOrder<orders[i] ) {
             currentOrder += 1;
-            xx[currentOrder] = xx[currentOrder-1] * yy0;
-            for( unsigned int j=0; j<currentOrder; j++ ) xx[j] *= xx0;
+            j = currentOrder;
+            xx[j] = xx[j-1] * yy0;
+            do { j--; xx[j] *= xx0; } while( j>0 );
         }
-        for( unsigned int j=0; j<=orders[i]; j++ ) r += coeffs[i][j] * xx[j];
+        for( j=0; j<=orders[i]; j++ ) r += coeffs[i][j] * xx[j];
+    }
+    return r;
+}
+double Function_Polynomial3D::valueAt(vector<double> x_cell) {
+    double r = 0., xx0 = x_cell[0]-x0, yy0 = x_cell[1]-y0, zz0 = x_cell[2]-z0;
+    vector<double> xx;
+    unsigned int currentOrder = 0, current_n_coeffs = 1, j, k;
+    xx.resize(n_coeffs);
+    xx[0] = 1.;
+    for( unsigned int i=0; i<n_orders; i++ ) {
+        while( currentOrder<orders[i] ) {
+            currentOrder += 1;
+            k = current_n_coeffs-1;
+            j = current_n_coeffs+currentOrder;
+            xx[j] = xx[k] * zz0;
+            do { j--; xx[j] = xx[k] * yy0; k--; } while( j>current_n_coeffs );
+            do { j--; xx[j] = xx[j] * xx0;      } while( j>0 );
+            current_n_coeffs += currentOrder+1;
+        }
+        for( unsigned int j=0; j<current_n_coeffs; j++ ) r += coeffs[i][j] * xx[j];
     }
     return r;
 }

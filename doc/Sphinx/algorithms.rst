@@ -84,7 +84,7 @@ and :math:`\delta` is the Dirac distribution.
 In PIC codes, Vlasov's equation :eq:`Vlasov` is integrated along the continuous trajectories
 of these quasi-particles, while Maxwell's equations :eq:`Maxwell` are solved on a
 discrete spatial grid, the spaces between consecutive grid points being referred to as
-*cells* (see Fig. :numref:`Fig_PicCell`). Injecting the discrete distribution function of
+*cells*. Injecting the discrete distribution function of
 Eq. :eq:`fs_discretized` in Vlasov's equation :eq:`Vlasov`, multiplying the result by
 :math:`\mathbf{p}` and integrating over all :math:`\mathbf{p}` and over the volume of
 the quasi-particles, leads to the relativistic equations of motion of individual
@@ -112,13 +112,20 @@ approach [TafloveHagness]_ as well as refined methods based on this algorithm
 (for a review of these methods see [Nuter2014]_). In these methods, the electromagnetic
 fields are discretized onto a staggered grid, the so-called Yee-grid that allows for
 spatial-centering of the discretized curl operators in Maxwell's equations.
-Figure :numref:`fig_Yee` summarizes at which points of the Yee-grid are defined the
-electromagnetic fields as well as charge and density currents. Similarly, the time-centering
+The followingfigure summarizes at which points of the Yee-grid are defined the
+electromagnetic fields as well as charge and density currents.
+
+.. image:: _static/figYee.png
+   :width: 13cm
+
+Similarly, the time-centering
 of the time-derivative in Maxwell's equations is ensured by considering the electric fields
 as defined at integer time-steps :math:`(n)` and magnetic fields at half-integer
 time-steps :math:`(n+\tfrac{1}{2})`. Time-centering of the magnetic fields is however
 necessary for diagnostic purposes, and most importantly when computing the Lorentz force
 acting on the quasi-particles.
+
+
 
 A *leap-frog* scheme is used to advance the particles in time, so that the particle positions
 and velocities are defined at integer :math:`(n)` and half-integer :math:`(n-\tfrac{1}{2})`
@@ -327,7 +334,31 @@ equation:
 Boundary conditions
 ^^^^^^^^^^^^^^^^^^^
 
-In progress
+
+After new quasi-particle positions and velocities have been computed, boundary conditions (BCs)
+are applied to each quasi-particle that may be located in a ghost cell,
+i.e. outside of the 'real' grid.
+Quasi-particle species may have a different BC for each boundary of the simulation box:
+the quasi-particles can either loop around the box (periodic),
+be stopped (momentum set to zero),
+suppressed (removed from memory),
+reflected (momentum and position follow specular reflection rules)
+or thermalized.
+In the latter case, the quasi-particle is set back inside the simulation box,
+and its new momentum is randomly sampled in a Maxwellian distribution
+with a given temperature and drift velocity, both specified by the user. 
+
+BCs are applied to the electromagnetic fields after Maxwell's equations have been solved.
+Each boundary of the simulation box can feature a different BC.
+First, injecting/absorbing BCs inspired from the Silver-Müller BC
+are able to inject an electromagnetic wave (e.g. a laser) and/or
+to absorb outgoing electromagnetic waves.
+In contrast, the reflective electromagnetic BC will reflect any outgoing
+electromagnetic wave reaching the simulation boundary. 
+Lastly, periodic BCs correspond to applying the fields from the opposite boundary. 
+
+
+
 
 
 

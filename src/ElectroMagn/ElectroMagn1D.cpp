@@ -24,8 +24,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn1D::ElectroMagn1D(Params &params, vector<Species*>& vecSpecies, Patch* patch)
   : ElectroMagn(params, vecSpecies, patch),
-isWestern(patch->isWestern()),
-isEastern(patch->isEastern())
+isXmin(patch->isXmin()),
+isXmax(patch->isXmax())
 {
     oversize_ = oversize[0];
     
@@ -73,13 +73,6 @@ isEastern(patch->isEastern())
     //         (*By_m)(i) = (*By_)(i);
     //     }
     //     
-    // Allocation of time-averaged EM fields
-    Ex_avg  = new Field1D(dimPrim, 0, false, "Ex_avg");
-    Ey_avg  = new Field1D(dimPrim, 1, false, "Ey_avg");
-    Ez_avg  = new Field1D(dimPrim, 2, false, "Ez_avg");
-    Bx_avg  = new Field1D(dimPrim, 0, true,  "Bx_avg");
-    By_avg  = new Field1D(dimPrim, 1, true,  "By_avg");
-    Bz_avg  = new Field1D(dimPrim, 2, true,  "Bz_avg");
     
     // Total charge currents and densities
     Jx_   = new Field1D(dimPrim, 0, false, "Jx");
@@ -90,10 +83,10 @@ isEastern(patch->isEastern())
     // Charge currents currents and density for each species
     
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Jx_s[ispec]  = new Field1D(dimPrim, 0, false, ("Jx_"+vecSpecies[ispec]->species_type).c_str());
-        Jy_s[ispec]  = new Field1D(dimPrim, 1, false, ("Jy_"+vecSpecies[ispec]->species_type).c_str());
-        Jz_s[ispec]  = new Field1D(dimPrim, 2, false, ("Jz_"+vecSpecies[ispec]->species_type).c_str());
-        rho_s[ispec] = new Field1D(dimPrim, ("Rho_"+vecSpecies[ispec]->species_type).c_str());
+        Jx_s[ispec]  = new Field1D(("Jx_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
+        Jy_s[ispec]  = new Field1D(("Jy_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
+        Jz_s[ispec]  = new Field1D(("Jz_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
+        rho_s[ispec] = new Field1D(("Rho_"+vecSpecies[ispec]->species_type).c_str(), dimPrim);
     }
     
     // ----------------------------------------------------------------
@@ -149,6 +142,144 @@ isEastern(patch->isEastern())
 }//END constructor Electromagn1D
 
 
+ElectroMagn1D::ElectroMagn1D( ElectroMagn1D* emFields, Params &params, Patch* patch )
+    : ElectroMagn(emFields, params, patch),
+isXmin(patch->isXmin()),
+isXmax(patch->isXmax())
+{
+    oversize_ = oversize[0];
+    
+    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step
+    dx       = cell_length[0];
+    dt_ov_dx = timestep/cell_length[0];
+    dx_ov_dt = 1.0/dt_ov_dx;
+    
+    // Electromagnetic fields
+    // ----------------------
+    // number of nodes of the primal-grid
+    nx_p = n_space[0]+1 + 2*oversize[0];
+    // number of nodes of the dual-grid
+    nx_d = n_space[0]+2 + 2*oversize[0];
+    // dimPrim/dimDual = nx_p/nx_d
+    dimPrim.resize( nDim_field );
+    dimDual.resize( nDim_field );
+    for (size_t i=0 ; i<nDim_field ; i++) {
+        // Standard scheme
+        dimPrim[i] = n_space[i]+1;
+        dimDual[i] = n_space[i]+2;
+        // + Ghost domain
+        dimPrim[i] += 2*oversize[i];
+        dimDual[i] += 2*oversize[i];
+    }
+    
+    // Allocation of the EM fields
+    Ex_  = new Field1D(dimPrim, 0, false, "Ex");
+    Ey_  = new Field1D(dimPrim, 1, false, "Ey");
+    Ez_  = new Field1D(dimPrim, 2, false, "Ez");
+    Bx_  = new Field1D(dimPrim, 0, true,  "Bx");
+    By_  = new Field1D(dimPrim, 1, true,  "By");
+    Bz_  = new Field1D(dimPrim, 2, true,  "Bz");
+    Bx_m = new Field1D(dimPrim, 0, true,  "Bx_m");
+    By_m = new Field1D(dimPrim, 1, true,  "By_m");
+    Bz_m = new Field1D(dimPrim, 2, true,  "Bz_m");
+    
+    // for (unsigned int i=0 ; i<nx_d ; i++) {
+    //         double x = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i-0.5) )*params.cell_length[0];
+    //         (*By_)(i) = 0.001 * sin(x * 2.0*M_PI/params.sim_length[0] * 40.0);
+    //     }
+    //     smpi1D->exchangeField(By_);
+    //     for (unsigned int i=0 ; i<nx_d ; i++) {
+    // //        double x = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i-0.5) )*params.cell_length[0];
+    //         (*By_m)(i) = (*By_)(i);
+    //     }
+    //     
+    
+    // Total charge currents and densities
+    Jx_   = new Field1D(dimPrim, 0, false, "Jx");
+    Jy_   = new Field1D(dimPrim, 1, false, "Jy");
+    Jz_   = new Field1D(dimPrim, 2, false, "Jz");
+    rho_  = new Field1D(dimPrim, "Rho" );
+    
+    // Charge currents currents and density for each species
+    
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+        if ( emFields->Jx_s[ispec] != NULL ) {
+            if ( emFields->Jx_s[ispec]->data_ != NULL )
+                Jx_s[ispec]  = new Field1D(dimPrim, 0, false, emFields->Jx_s[ispec]->name);
+            else
+                Jx_s[ispec]  = new Field1D(emFields->Jx_s[ispec]->name, dimPrim);
+        }
+        if ( emFields->Jy_s[ispec] != NULL ) {
+            if ( emFields->Jy_s[ispec]->data_ != NULL )
+                Jy_s[ispec]  = new Field1D(dimPrim, 1, false, emFields->Jy_s[ispec]->name);
+            else
+                Jy_s[ispec]  = new Field1D(emFields->Jy_s[ispec]->name, dimPrim);
+        }
+        if ( emFields->Jz_s[ispec] != NULL ) {
+            if ( emFields->Jz_s[ispec]->data_ != NULL )
+                Jz_s[ispec]  = new Field1D(dimPrim, 2, false, emFields->Jz_s[ispec]->name);
+            else
+                Jz_s[ispec]  = new Field1D(emFields->Jz_s[ispec]->name, dimPrim);
+        }
+        if ( emFields->rho_s[ispec] != NULL ) {
+            if ( emFields->rho_s[ispec]->data_ != NULL )
+                rho_s[ispec] = new Field1D(dimPrim, emFields->rho_s[ispec]->name );
+            else
+                rho_s[ispec]  = new Field1D(emFields->rho_s[ispec]->name, dimPrim);
+        }
+    }
+    
+    // ----------------------------------------------------------------
+    // Definition of the min and max index according to chosen oversize
+    // ----------------------------------------------------------------
+    index_bc_min.resize( nDim_field, 0 );
+    index_bc_max.resize( nDim_field, 0 );
+    for (size_t i=0 ; i<nDim_field ; i++) {
+        index_bc_min[i] = oversize[i];
+        index_bc_max[i] = dimDual[i]-oversize[i]-1;
+    }
+    
+    
+    // Define limits of non duplicated elements
+    // (by construction 1 (prim) or 2 (dual) elements shared between per MPI process)
+    // istart
+    for (unsigned int i=0 ; i<3 ; i++)
+        for (unsigned int isDual=0 ; isDual<2 ; isDual++)
+            istart[i][isDual] = 0;
+    for (unsigned int i=0 ; i<nDim_field ; i++) {
+        for (unsigned int isDual=0 ; isDual<2 ; isDual++) {
+            istart[i][isDual] = oversize[i];
+            if (patch->Pcoordinates[i]!=0) istart[i][isDual]+=1;
+        }
+    }
+    
+    // bufsize = nelements
+    for (unsigned int i=0 ; i<3 ; i++) 
+        for (unsigned int isDual=0 ; isDual<2 ; isDual++)
+            bufsize[i][isDual] = 1;
+    
+    for (unsigned int i=0 ; i<nDim_field ; i++) {
+        for (int isDual=0 ; isDual<2 ; isDual++)
+            bufsize[i][isDual] = n_space[i] + 1;
+        
+        
+        for (int isDual=0 ; isDual<2 ; isDual++) {
+            bufsize[i][isDual] += isDual; 
+            if ( params.number_of_patches[i]!=1 ) {                
+                
+                if ( ( !isDual ) && (patch->Pcoordinates[i]!=0) )
+                    bufsize[i][isDual]--;
+                else if  (isDual) {
+                    bufsize[i][isDual]--;
+                    if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=(unsigned int)params.number_of_patches[i]-1) ) 
+                        bufsize[i][isDual]--;
+                }
+                
+            } // if ( params.number_of_patches[i]!=1 )
+        } // for (int isDual=0 ; isDual
+    } // for (unsigned int i=0 ; i<nDim_field 
+}
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Destructor for Electromagn1D
@@ -185,10 +316,10 @@ void ElectroMagn1D::initPoisson(Patch *patch)
     
     index_min_p_[0] = oversize[0];
     index_max_p_[0] = nx_p - 2 - oversize[0];
-    if (patch->isWestern()) {
+    if (patch->isXmin()) {
         index_min_p_[0] = 0;
     }
-    if (patch->isEastern()) {
+    if (patch->isXmax()) {
         index_max_p_[0] = nx_p-1;
     }
     
@@ -222,8 +353,8 @@ void ElectroMagn1D::compute_Ap(Patch *patch)
         (*Ap_)(i) = (*p_)(i-1) - 2.0*(*p_)(i) + (*p_)(i+1);
         
     // apply BC on Ap
-    if (patch->isWestern()) (*Ap_)(0)      = (*p_)(1)      - 2.0*(*p_)(0);
-    if (patch->isEastern()) (*Ap_)(nx_p-1) = (*p_)(nx_p-2) - 2.0*(*p_)(nx_p-1); 
+    if (patch->isXmin()) (*Ap_)(0)      = (*p_)(1)      - 2.0*(*p_)(0);
+    if (patch->isXmax()) (*Ap_)(nx_p-1) = (*p_)(nx_p-2) - 2.0*(*p_)(nx_p-1); 
     
 } // compute_Ap
 
@@ -266,8 +397,8 @@ void ElectroMagn1D::initE(Patch *patch)
         (*Ex1D)(i) = ((*phi_)(i-1)-(*phi_)(i))/dx;
     
     // BC on Ex
-    if (patch->isWestern()) (*Ex1D)(0)      = (*Ex1D)(1)      - dx*(*rho1D)(0);
-    if (patch->isEastern()) (*Ex1D)(nx_d-1) = (*Ex1D)(nx_d-2) + dx*(*rho1D)(nx_p-1);
+    if (patch->isXmin()) (*Ex1D)(0)      = (*Ex1D)(1)      - dx*(*rho1D)(0);
+    if (patch->isXmax()) (*Ex1D)(nx_d-1) = (*Ex1D)(nx_d-2) + dx*(*rho1D)(nx_p-1);
     
     delete phi_;
     delete r_;
@@ -376,42 +507,62 @@ void ElectroMagn1D::centerMagneticFields()
 }//END centerMagneticFields
 
 
-
 // ---------------------------------------------------------------------------------------------------------------------
-// Reset/Increment the averaged fields
+// Apply a single pass binomial filter on currents
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::incrementAvgFields(unsigned int time_step)
+void ElectroMagn1D::binomialCurrentFilter()
 {
-    // Static cast of the fields
-    Field1D* Ex1D     = static_cast<Field1D*>(Ex_);
-    Field1D* Ey1D     = static_cast<Field1D*>(Ey_);
-    Field1D* Ez1D     = static_cast<Field1D*>(Ez_);
-    Field1D* Bx1D_m   = static_cast<Field1D*>(Bx_m);
-    Field1D* By1D_m   = static_cast<Field1D*>(By_m);
-    Field1D* Bz1D_m   = static_cast<Field1D*>(Bz_m);
-    Field1D* Ex1D_avg = static_cast<Field1D*>(Ex_avg);
-    Field1D* Ey1D_avg = static_cast<Field1D*>(Ey_avg);
-    Field1D* Ez1D_avg = static_cast<Field1D*>(Ez_avg);
-    Field1D* Bx1D_avg = static_cast<Field1D*>(Bx_avg);
-    Field1D* By1D_avg = static_cast<Field1D*>(By_avg);
-    Field1D* Bz1D_avg = static_cast<Field1D*>(Bz_avg);
     
-    // for Ey^(p), Ez^(p) & Bx^(p)
-    for (unsigned int i=0 ; i<dimPrim[0] ; i++) {
-        (*Ey1D_avg)(i) += (*Ey1D)(i);
-        (*Ez1D_avg)(i) += (*Ez1D)(i);
-        (*Bx1D_avg)(i) += (*Bx1D_m)(i);
+    Field1D* Jx1D     = static_cast<Field1D*>(Jx_);
+    Field1D* Jy1D     = static_cast<Field1D*>(Jy_);
+    Field1D* Jz1D     = static_cast<Field1D*>(Jz_);
+    
+    // Apply a single pass of the binomial filter on currents
+    
+    // on Jx^(d) -- external points are treated by exchange
+    Field1D *tmp   = new Field1D(dimPrim, 0, false);
+    tmp->copyFrom(Jx1D);
+    for (unsigned int ix=1 ; ix<dimDual[0]-1 ; ix++) {
+        (*Jx1D)(ix) = 0.25 * ((*tmp)(ix-1) + 2.*(*tmp)(ix) + (*tmp)(ix+1));
     }
+    delete tmp;
     
-    // for Ex^(d), By^(d) & Bz^(d)
-    for (unsigned int i=0 ; i<dimDual[0] ; i++) {
-        (*Ex1D_avg)(i) += (*Ex1D)(i);
-        (*By1D_avg)(i) += (*By1D_m)(i);
-        (*Bz1D_avg)(i) += (*Bz1D_m)(i);
+    // on Jy^(p) -- external points are treated by exchange
+    tmp   = new Field1D(dimPrim, 1, false);
+    tmp->copyFrom(Jy1D);
+    for (unsigned int ix=1 ; ix<dimPrim[0]-1 ; ix++) {
+        (*Jy1D)(ix) = 0.25 * ((*tmp)(ix-1) + 2.*(*tmp)(ix) + (*tmp)(ix+1));
     }
+    delete tmp;
     
-}//END incrementAvgFields
+    // on Jz^(p) -- external points are treated by exchange
+    tmp   = new Field1D(dimPrim, 2, false);
+    tmp->copyFrom(Jz1D);
+    for (unsigned int ix=1 ; ix<dimPrim[0]-1 ; ix++) {
+        (*Jz1D)(ix) = 0.25 * ((*tmp)(ix-1) + 2.*(*tmp)(ix) + (*tmp)(ix+1));
+    }
+    delete tmp;
+    
+}
 
+
+
+// Create a new field
+Field * ElectroMagn1D::createField(string fieldname)
+{
+    if     (fieldname.substr(0,2)=="Ex" ) return new Field1D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,2)=="Ey" ) return new Field1D(dimPrim, 1, false, fieldname);
+    else if(fieldname.substr(0,2)=="Ez" ) return new Field1D(dimPrim, 2, false, fieldname);
+    else if(fieldname.substr(0,2)=="Bx" ) return new Field1D(dimPrim, 0, true,  fieldname);
+    else if(fieldname.substr(0,2)=="By" ) return new Field1D(dimPrim, 1, true,  fieldname);
+    else if(fieldname.substr(0,2)=="Bz" ) return new Field1D(dimPrim, 2, true,  fieldname);
+    else if(fieldname.substr(0,2)=="Jx" ) return new Field1D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,2)=="Jy" ) return new Field1D(dimPrim, 1, false, fieldname);
+    else if(fieldname.substr(0,2)=="Jz" ) return new Field1D(dimPrim, 2, false, fieldname);
+    else if(fieldname.substr(0,3)=="Rho") return new Field1D(dimPrim, fieldname );
+    
+    ERROR("Cannot create field "<<fieldname);
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -425,20 +576,21 @@ void ElectroMagn1D::computeTotalRhoJ()
     Field1D* rho1D   = static_cast<Field1D*>(rho_);
     
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Field1D* Jx1D_s  = static_cast<Field1D*>(Jx_s[ispec]);
-        Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
-        Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
-        Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
-        
-        for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
-            (*Jx1D)(ix)  += (*Jx1D_s)(ix);
-            (*Jy1D)(ix)  += (*Jy1D_s)(ix);
-            (*Jz1D)(ix)  += (*Jz1D_s)(ix);
-            (*rho1D)(ix) += (*rho1D_s)(ix);
+        if( Jx_s[ispec] ) {
+            Field1D* Jx1D_s  = static_cast<Field1D*>(Jx_s[ispec]);
+            for (unsigned int ix=0 ; ix<=dimPrim[0] ; ix++) (*Jx1D)(ix)  += (*Jx1D_s)(ix);
         }
-
-        {
-            (*Jx1D)(dimPrim[0])  += (*Jx1D_s)(dimPrim[0]);
+        if( Jy_s[ispec] ) {
+            Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
+            for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) (*Jy1D)(ix)  += (*Jy1D_s)(ix);
+        }
+        if( Jz_s[ispec] ) {
+            Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
+            for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) (*Jz1D)(ix)  += (*Jz1D_s)(ix);
+        }
+        if( rho_s[ispec] ) {
+            Field1D* rho1D_s  = static_cast<Field1D*>(rho_s[ispec]);
+            for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) (*rho1D)(ix)  += (*rho1D_s)(ix);
         }
     }//END loop on species ispec
 }
@@ -448,8 +600,8 @@ void ElectroMagn1D::computeTotalRhoJ()
 // --------------------------------------------------------------------------
 void ElectroMagn1D::computePoynting() {
     
-    // Western border (Energy injected = +Poynting)
-    if (isWestern) {
+    // Xmin border (Energy injected = +Poynting)
+    if (isXmin) {
         unsigned int iEy=istart[0][Ey_->isDual(0)];
         unsigned int iBz=istart[0][Bz_m->isDual(0)];
         unsigned int iEz=istart[0][Ez_->isDual(0)];
@@ -460,8 +612,8 @@ void ElectroMagn1D::computePoynting() {
         poynting[0][0] += poynting_inst[0][0];
     }
     
-    // Eastern border (Energy injected = -Poynting)
-    if (isEastern) {
+    // Xmax border (Energy injected = -Poynting)
+    if (isXmax) {
         unsigned int iEy=istart[0][Ey_->isDual(0)]  + bufsize[0][Ey_->isDual(0)]-1;
         unsigned int iBz=istart[0][Bz_m->isDual(0)] + bufsize[0][Bz_m->isDual(0)]-1;
         unsigned int iEz=istart[0][Ez_->isDual(0)]  + bufsize[0][Ez_->isDual(0)]-1;

@@ -13,6 +13,7 @@ class ElectroMagn3D : public ElectroMagn
 public:
     //! Constructor for ElectroMagn3D
     ElectroMagn3D(Params &params, std::vector<Species*>& vecSpecies, Patch* patch);
+    ElectroMagn3D( ElectroMagn3D* emFields, Params &params, Patch* patch );
 
     //! Destructor for ElectroMagn3D
     ~ElectroMagn3D();
@@ -27,13 +28,13 @@ public:
     void initE(Patch *patch);
     void centeringE( std::vector<double> E_Add );
 
-    double getEx_West() { return 0.; }
-    double getEx_East() { return 0.; }
+    double getEx_Xmin() { return 0.; }
+    double getEx_Xmax() { return 0.; }
 
-    double getEx_WestNorth() { return 0.; }
-    double getEy_WestNorth() { return 0.; }
-    double getEx_EastSouth() { return 0.; }
-    double getEy_EastSouth() { return 0.; }
+    double getEx_XminYmax() { return 0.; }
+    double getEy_XminYmax() { return 0.; }
+    double getEx_XmaxYmin() { return 0.; }
+    double getEy_XmaxYmin() { return 0.; }
 
 #ifdef _PATCH3D_TODO
 #endif
@@ -46,9 +47,12 @@ public:
 
     //! Method used to center the Magnetic fields (used to push the particles)
     void centerMagneticFields();
-
-    //! Method used to reset/increment the averaged fields
-    void incrementAvgFields(unsigned int time_step);
+    
+    //! Method used to apply a single-pass binomial filter on currents
+    void binomialCurrentFilter();
+    
+    //! Creates a new field with the right characteristics, depending on the name
+    Field * createField(std::string fieldname);
     
     //! Method used to compute the total charge density and currents by summing over all species
     void computeTotalRhoJ();
@@ -115,23 +119,23 @@ public:
         
 private:
     
-    //! from smpi is west
-    const bool isWestern;
+    //! from smpi is xmin
+    const bool isXmin;
     
-    //! from smpi is east
-    const bool isEastern;
+    //! from smpi is xmax
+    const bool isXmax;
     
-    //! from smpi is north
-    const bool isSouthern;
+    //! from smpi is ymax
+    const bool isYmin;
     
-    //! from smpi is south
-    const bool isNorthern;
+    //! from smpi is ymin
+    const bool isYmax;
 
-    //! from smpi is top
-    const bool isTop;
+    //! from smpi is zmax
+    const bool isZmax;
     
-    //! from smpi is bottom
-    const bool isBottom;
+    //! from smpi is zmin
+    const bool isZmin;
 };
 
 #endif

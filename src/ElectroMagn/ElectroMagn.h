@@ -50,6 +50,7 @@ class ElectroMagn
 public:
     //! Constructor for Electromagn
     ElectroMagn( Params &params, std::vector<Species*>& vecSpecies, Patch* patch );
+    ElectroMagn( ElectroMagn* emFields, Params &params, Patch* patch );
     //! Extra initialization. Used in ElectroMagnFactory
     void finishInitialization(int nspecies, Patch* patch);
     
@@ -111,29 +112,11 @@ public:
     //! Total charge density
     Field* rho_;
     
-    //! time-average x-component of the electric field
-    Field* Ex_avg;
-    
-    //! time-average y-component of the electric field
-    Field* Ey_avg;
-    
-    //! time-average z-component of the electric field
-    Field* Ez_avg;
-    
-    //! time-average x-component of the magnetic field
-    Field* Bx_avg;
-    
-    //! time-average y-component of the magnetic field
-    Field* By_avg;
-    
-    //! time-average z-component of the magnetic field
-    Field* Bz_avg;
-    
     //! all Fields in electromagn (filled in ElectromagnFactory.h)
     std::vector<Field*> allFields;
     
-    //! all Fields in electromagn (filled in ElectromagnFactory.h)
-    std::vector<Field*> allFields_avg;
+    //! all Fields averages required in diagnostic Fields
+    std::vector<std::vector<Field*> > allFields_avg;
     
     //! Vector of charge density and currents for each species
     const unsigned int n_species;
@@ -141,6 +124,10 @@ public:
     std::vector<Field*> Jy_s;
     std::vector<Field*> Jz_s;
     std::vector<Field*> rho_s;
+    
+    //! Creates a new field with the right characteristics, depending on the name
+    virtual Field * createField(std::string fieldname) = 0;
+    
     //! Number of bins
     unsigned int nbin;
     //! Cluster width
@@ -191,13 +178,13 @@ public:
     virtual void initE(Patch *patch) = 0;
     virtual void centeringE( std::vector<double> E_Add ) = 0;
     
-    virtual double getEx_West() = 0; // 2D !!!
-    virtual double getEx_East() = 0; // 2D !!!
+    virtual double getEx_Xmin() = 0; // 2D !!!
+    virtual double getEx_Xmax() = 0; // 2D !!!
     
-    virtual double getEx_WestNorth() = 0; // 1D !!!
-    virtual double getEy_WestNorth() = 0; // 1D !!!
-    virtual double getEx_EastSouth() = 0; // 1D !!!
-    virtual double getEy_EastSouth() = 0; // 1D !!!
+    virtual double getEx_XminYmax() = 0; // 1D !!!
+    virtual double getEy_XminYmax() = 0; // 1D !!!
+    virtual double getEx_XmaxYmin() = 0; // 1D !!!
+    virtual double getEy_XmaxYmin() = 0; // 1D !!!
     
     std::vector<unsigned int> index_min_p_;
     std::vector<unsigned int> index_max_p_;
@@ -213,19 +200,21 @@ public:
     Solver* MaxwellFaradaySolver_;
     virtual void saveMagneticFields() = 0;
     virtual void centerMagneticFields() = 0;
+    virtual void binomialCurrentFilter() = 0;
+    
     void boundaryConditions(int itime, double time_dual, Patch* patch, Params &params, SimWindow* simWindow);
     
     void laserDisabled();
     
-    virtual void incrementAvgFields(unsigned int time_step) = 0;
+    void incrementAvgField(Field * field, Field * field_avg);
         
     //! compute Poynting on borders
     virtual void computePoynting() = 0;
     
     //! pointing vector on borders 
     //! 1D: poynting[0][0]=left , poynting[1][0]=right
-    //! 2D: poynting[0][0]=west , poynting[1][0]=east
-    //!     poynting[1][0]=south, poynting[1][0]=north
+    //! 2D: poynting[0][0]=xmin , poynting[1][0]=xmax
+    //!     poynting[1][0]=ymin, poynting[1][0]=ymax
     std::vector<double> poynting[2];
     
     //same as above but instantaneous
@@ -268,26 +257,18 @@ public:
     
     inline int getMemFootPrint() {
     
-        // Size of temporary arrays in Species::createParticles
-        /*
-        int N1(1), N2(1);
-        if (nDim_field>1) {
-            N1 = dimPrim[1];
-            if (nDim_field>2) N2 = dimPrim[2];
-        }
-        int tmpArrayInit = (dimPrim[0]*N1*N2)*sizeof(double) //
-            + dimPrim[0]*sizeof(double**)
-            + dimPrim[0] * N1 * sizeof(double*);
-        tmpArrayInit *= 9;
-        std::cout << tmpArrayInit  << std::endl;
-        */
-    
         int emSize = 9+4; // 3 x (E, B, Bm) + 3 x J, rho
-        if (true) // For now, no test to compute or not per species
-            emSize += n_species * 4; // 3 x J, rho
-        if (true) // For now, no test to compute or not average
-            emSize += 6; // 3 x (E, B)
-    
+        for (unsigned int ispec=0 ; ispec<Jx_s.size() ; ispec++) {
+            if (Jx_s [ispec]) emSize++;
+            if (Jy_s [ispec]) emSize++;
+            if (Jz_s [ispec]) emSize++;
+            if (rho_s [ispec]) emSize++;
+        }
+
+        for ( unsigned int idiag = 0 ; idiag < allFields_avg.size() ; idiag++)
+            emSize += allFields_avg[idiag].size() ;
+
+
         for (size_t i=0 ; i<nDim_field ; i++)
             emSize *= dimPrim[i];
     

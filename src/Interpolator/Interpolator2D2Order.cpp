@@ -123,7 +123,7 @@ void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     
     // Static cast of the electromagnetic fields
     Field2D* Jx2D = static_cast<Field2D*>(EMfields->Jx_);
-//    Field2D* Jy2D = static_cast<Field2D*>(EMfields->Jy_);
+    Field2D* Jy2D = static_cast<Field2D*>(EMfields->Jy_);
     Field2D* Jz2D = static_cast<Field2D*>(EMfields->Jz_);
     Field2D* Rho2D= static_cast<Field2D*>(EMfields->rho_);
     
@@ -136,7 +136,7 @@ void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     // -------------------------
     // Interpolation of Jy^(p,d)
     // -------------------------
-    (*JLoc).y = compute( &coeffxp_[1], &coeffyd_[1], Jx2D, ip_, jd_);
+    (*JLoc).y = compute( &coeffxp_[1], &coeffyd_[1], Jy2D, ip_, jd_);
     
     // -------------------------
     // Interpolation of Ez^(p,p)

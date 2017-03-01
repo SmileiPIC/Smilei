@@ -85,12 +85,12 @@ public:
     bool radiating;
     
     //! Boundary conditions for particules
-    std::string bc_part_type_west;
-    std::string bc_part_type_east;
-    std::string bc_part_type_south;
-    std::string bc_part_type_north;
-    std::string bc_part_type_bottom;
-    std::string bc_part_type_up;
+    std::string bc_part_type_xmin;
+    std::string bc_part_type_xmax;
+    std::string bc_part_type_ymin;
+    std::string bc_part_type_ymax;
+    std::string bc_part_type_zmin;
+    std::string bc_part_type_zmax;
     
     //! Ionization model per Specie (tunnel)
     std::string ionization_model;
@@ -134,14 +134,17 @@ public:
     
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
     virtual void dynamics(double time, unsigned int ispec, ElectroMagn* EMfields, Interpolator* interp,
-                          Projector* proj, Params &params, int diag_flag,
+                          Projector* proj, Params &params, bool diag_flag,
                           PartWalls* partWalls, Patch* patch, SmileiMPI* smpi);
+
+    //! Method calculating the Particle charge on the grid (projection)
+    virtual void computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector* Proj);
 
     //! Method used to initialize the Particle position in a given cell
     void initPosition(unsigned int, unsigned int, double *);
     
     //! Method used to initialize the Particle 3d momentum in a given cell
-    void initMomentum(unsigned int, unsigned int, double *, double *, std::vector<double>&);
+    void initMomentum(unsigned int, unsigned int, double *, double *);
     
     //! Method used to initialize the Particle weight (equivalent to a charge density) in a given cell
     void initWeight(unsigned int,  unsigned int, double);
@@ -229,10 +232,14 @@ public:
     }
     
     inline int getMemFootPrint() {
-        int speciesSize  = ( 2*nDim_particle + 3 + 1 )*sizeof(double) + sizeof(short);
+        /*int speciesSize  = ( 2*nDim_particle + 3 + 1 )*sizeof(double) + sizeof(short);
         if ( particles->isTest )
-            speciesSize += sizeof ( unsigned int );
+            speciesSize += sizeof ( unsigned int );*/
         //speciesSize *= getNbrOfParticles();
+        int speciesSize(0);
+        speciesSize += particles->double_prop.size()*sizeof(double);
+        speciesSize += particles->short_prop.size()*sizeof(short);
+        speciesSize += particles->uint_prop.size()*sizeof(unsigned int );
         speciesSize *= getParticlesCapacity();
         return speciesSize;
     }
@@ -242,6 +249,7 @@ public:
     
     //! 2 times pi
     double PI2;
+    double PI_ov_2;
     double dx_inv_, dy_inv_, dz_inv_;
 
     //! Boundary condition for the Particles of the considered Species
@@ -251,9 +259,9 @@ public:
     Pusher* Push;
 
     //! Moving window boundary conditions managment
-    void disableEast();
+    void disableXmax();
     //! Moving window boundary conditions managment
-    void setWestBoundaryCondition();
+    void setXminBoundaryCondition();
 
 
 private:    
@@ -288,6 +296,14 @@ private:
     double nrj_mw_lost;
     //! Accumulate nrj added with new particles
     double nrj_new_particles;
+    
+    //! Samples npoints values of energies in a Maxwell-Juttner distribution
+    std::vector<double> maxwellJuttner(unsigned int npoints, double temperature);
+    //! Array used in the Maxwell-Juttner sampling (see doc)
+    static const double lnInvF[1000];
+    //! Array used in the Maxwell-Juttner sampling (see doc)
+    static const double lnInvH[1000];
+
 };
 
 #endif

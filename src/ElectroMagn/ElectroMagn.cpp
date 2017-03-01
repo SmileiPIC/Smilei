@@ -59,13 +59,6 @@ nrj_new_fields (  0.               )
     Jz_=NULL;
     rho_=NULL;
     
-    Ex_avg=NULL;
-    Ey_avg=NULL;
-    Ez_avg=NULL;
-    Bx_avg=NULL;
-    By_avg=NULL;
-    Bz_avg=NULL;
-    
     // Species charge currents and density
     Jx_s.resize(n_species);
     Jy_s.resize(n_species);
@@ -93,6 +86,65 @@ nrj_new_fields (  0.               )
 }
 
 
+ElectroMagn::ElectroMagn( ElectroMagn* emFields, Params &params, Patch* patch ) :
+timestep       ( emFields->timestep    ),
+cell_length    ( emFields->cell_length ),
+n_species      ( emFields->n_species   ),
+nDim_field     ( emFields->nDim_field  ),
+cell_volume    ( emFields->cell_volume ),
+n_space        ( emFields->n_space     ),
+oversize       ( emFields->oversize    ),
+nrj_mw_lost    ( 0. ),
+nrj_new_fields ( 0. )
+{
+    // initialize poynting vector
+    poynting[0].resize(nDim_field,0.0);
+    poynting[1].resize(nDim_field,0.0);
+    poynting_inst[0].resize(nDim_field,0.0);
+    poynting_inst[1].resize(nDim_field,0.0);
+    
+    if (n_space.size() != 3) ERROR("this should not happen");
+    
+    Ex_=NULL;
+    Ey_=NULL;
+    Ez_=NULL;
+    Bx_=NULL;
+    By_=NULL;
+    Bz_=NULL;
+    Bx_m=NULL;
+    By_m=NULL;
+    Bz_m=NULL;
+    Jx_=NULL;
+    Jy_=NULL;
+    Jz_=NULL;
+    rho_=NULL;
+    
+    // Species charge currents and density
+    Jx_s.resize(n_species);
+    Jy_s.resize(n_species);
+    Jz_s.resize(n_species);
+    rho_s.resize(n_species);
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+        Jx_s[ispec]  = NULL;
+        Jy_s[ispec]  = NULL;
+        Jz_s[ispec]  = NULL;
+        rho_s[ispec] = NULL;
+    }
+    
+    for (unsigned int i=0; i<3; i++) {
+        for (unsigned int j=0; j<2; j++) {
+            istart[i][j]=0;
+            bufsize[i][j]=0;
+        }
+    }
+    
+    
+    emBoundCond = ElectroMagnBC_Factory::create(params, patch);
+    
+    MaxwellFaradaySolver_ = SolverFactory::create(params);
+}
+
+
 void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
 {
 
@@ -117,13 +169,6 @@ void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
         allFields.push_back(Jz_s[ispec] );
         allFields.push_back(rho_s[ispec]);
     }
-                
-    allFields_avg.push_back(Ex_avg);
-    allFields_avg.push_back(Ey_avg);
-    allFields_avg.push_back(Ez_avg);
-    allFields_avg.push_back(Bx_avg);
-    allFields_avg.push_back(By_avg);
-    allFields_avg.push_back(Bz_avg);
     
 }
 
@@ -145,20 +190,16 @@ ElectroMagn::~ElectroMagn()
     delete Jy_;
     delete Jz_;
     delete rho_;
-    if (Ex_avg!=NULL) {
-        delete Ex_avg;
-        delete Ey_avg;
-        delete Ez_avg;
-        delete Bx_avg;
-        delete By_avg;
-        delete Bz_avg;
-    }
+    
+    for( unsigned int idiag=0; idiag<allFields_avg.size(); idiag++ )
+        for( unsigned int ifield=0; ifield<allFields_avg[idiag].size(); ifield++ )
+            delete allFields_avg[idiag][ifield];
     
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-      delete Jx_s[ispec];
-      delete Jy_s[ispec];
-      delete Jz_s[ispec];
-      delete rho_s[ispec];
+        if( Jx_s [ispec] ) delete Jx_s [ispec];
+        if( Jy_s [ispec] ) delete Jy_s [ispec];
+        if( Jz_s [ispec] ) delete Jz_s [ispec];
+        if( rho_s[ispec] ) delete rho_s[ispec];
     }
     
     int nBC = emBoundCond.size();
@@ -265,10 +306,10 @@ void ElectroMagn::restartRhoJ()
 void ElectroMagn::restartRhoJs()
 {
     for (unsigned int ispec=0 ; ispec < n_species ; ispec++) {
-        Jx_s [ispec]->put_to(0.);
-        Jy_s [ispec]->put_to(0.);
-        Jz_s [ispec]->put_to(0.);
-        rho_s[ispec]->put_to(0.);
+        if( Jx_s [ispec] ) Jx_s [ispec]->put_to(0.);
+        if( Jy_s [ispec] ) Jy_s [ispec]->put_to(0.);
+        if( Jz_s [ispec] ) Jz_s [ispec]->put_to(0.);
+        if( rho_s[ispec] ) rho_s[ispec]->put_to(0.);
     }
     
     Jx_ ->put_to(0.);
@@ -276,6 +317,17 @@ void ElectroMagn::restartRhoJs()
     Jz_ ->put_to(0.);
     rho_->put_to(0.);
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Increment an averaged field
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn::incrementAvgField(Field * field, Field * field_avg)
+{
+    for( unsigned int i=0; i<field->globalDims_; i++ )
+        (*field_avg)(i) += (*field)(i);
+}//END incrementAvgField
+
+
 
 void ElectroMagn::laserDisabled()
 {
@@ -306,7 +358,6 @@ string LowerCase(string in){
 
 void ElectroMagn::applyExternalFields(Patch* patch) {    
     Field * field;
-    bool found=false;
     for (vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
         string name = LowerCase(extfield->field);
         if      ( Ex_ && name==LowerCase(Ex_->name) ) field = Ex_;
@@ -318,15 +369,8 @@ void ElectroMagn::applyExternalFields(Patch* patch) {
         else field = NULL;
         
         if( field ) {
-            if (patch->isMaster()) {
-                MESSAGE(1,"Applying External field to " << field->name);
-            }
             applyExternalField( field, extfield->profile, patch );
-            found=true;
         }
-    }
-    if (patch->isMaster() && !found) {
-        MESSAGE(1,"Nothing to do");
     }
     Bx_m->copyFrom(Bx_);
     By_m->copyFrom(By_);
@@ -335,12 +379,14 @@ void ElectroMagn::applyExternalFields(Patch* patch) {
 
 
 void ElectroMagn::applyAntenna(unsigned int iAntenna, double intensity) {
-    Field *field, *antennaField = antennas[iAntenna].field;
+    Field *field=nullptr;
+    Field *antennaField = antennas[iAntenna].field;
     if (antennaField) {
         
         if     ( antennaField->name == "Jx" ) field = Jx_;
         else if( antennaField->name == "Jy" ) field = Jy_;
         else if( antennaField->name == "Jz" ) field = Jz_;
+        else ERROR("Antenna applied to field " << antennaField << " unknonw. This should not happend, please contact developers");
         
         for (unsigned int i=0; i< field->globalDims_ ; i++)
             (*field)(i) += intensity * (*antennaField)(i);

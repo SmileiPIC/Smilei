@@ -114,8 +114,12 @@ class Diagnostic(object):
 			print(self._info())
 	
 	# Method to get only the arrays of data
-	def getData(self):
+	def getData(self, timestep=None):
 		"""Obtains the data from the diagnostic.
+		
+		Parameters:
+		-----------
+		timestep: int (default: None, which means all available timesteps)
 		
 		Returns:
 		--------
@@ -124,8 +128,15 @@ class Diagnostic(object):
 		if not self._validate(): return
 		self._prepare1() # prepare the vfactor
 		data = []
-		for t in self.times:
-			data.append( self._vfactor*self._getDataAtTime(t) )
+		
+		if timestep is None:
+			for t in self.times:
+				data.append( self._vfactor*self._getDataAtTime(t) )
+		elif timestep not in self.times:
+			print("ERROR: timestep "+str(timestep)+" not available")
+		else:
+			data.append( self._vfactor*self._getDataAtTime(timestep) )
+		
 		return data
 	
 	# Method to obtain the data and the axes
@@ -146,35 +157,33 @@ class Diagnostic(object):
 			result.update({ self._type[i]:self._centers[i] })
 		return result
 	
-	# Method to plot the current diagnostic
-	def plot(self, movie="", fps=15, dpi=200, saveAs=None, **kwargs):
+	def _make_axes(self, axes, **kwargs):
+		if axes is None:
+			fig = self._plt.figure(**self.options.figure0)
+			fig.set(**self.options.figure1)
+			fig.clf()
+			return fig.add_subplot(1,1,1)
+		else:
+			return axes
+	
+	def plot(self, timestep=None, saveAs=None, axes=None, **kwargs):
 		""" Plots the diagnostic.
-		If the data is 1D, it is plotted as a curve, and is animated for all requested timesteps.
-		If the data is 2D, it is plotted as a map, and is animated for all requested timesteps.
-		If the data is 0D, it is plotted as a curve as function of time.
-		
 		
 		Parameters:
 		-----------
+		timestep: int (default: None, which means the last timestep)
+			The number of the timestep to plot
 		figure: int (default: 1)
 			The figure number that is passed to matplotlib.
+		axes: (default: None)
+			Matplotlib's axes handle on which to plot. If None, make new axes.
 		vmin, vmax: floats (default to the current limits)
 			Data value limits.
 		xmin, xmax, ymin, ymax: floats (default to the current limits)
 			Axes limits.
 		xfactor, yfactor: floats (default: 1)
 			Factors to rescale axes.
-		streakPlot: bool (default: False)
-			When True, will not be an animation, but will have time
-			on the vertical axis instead (only for 1D data).
-		movie: path string (default: "")
-			Name of a file to create a movie, such as "movie.avi"
-			If movie="" no movie is created.
-		fps: int (default: 15)
-			Number of frames per second (only if movie requested).
-		dpi: int (default: 200)
-			Number of dots per inch (only if movie requested).
-		saveAs: path string (default: "")
+		saveAs: path string (default: None)
 			Name of a directory where to save each frame as figures.
 			You can even specify a filename such as mydir/prefix.png
 			and it will automatically make successive files showing
@@ -184,68 +193,138 @@ class Diagnostic(object):
 		--------
 			S = Smilei("path/to/my/results")
 			S.ParticleDiagnostic(1).plot(vmin=0, vmax=1e14)
+		"""
+		if not self._validate(): return
+		if not self._prepare(): return
+		self.set(**kwargs)
+		self.info()
+		ax = self._make_axes(axes, **kwargs)
+		
+		if timestep is None:
+			timestep = self.times[-1]
+		elif timestep not in self.times:
+			print("ERROR: timestep "+str(timestep)+" not available")
+			return
+		
+		self._animateOnAxes(ax, timestep)
+		self._plt.draw()
+		self._plt.pause(0.00001)
+		return
+	
+	def streak(self, saveAs=None, axes=None, **kwargs):
+		""" Plots the diagnostic with one axis being time.
+		
+		Parameters:
+		-----------
+		figure: int (default: 1)
+			The figure number that is passed to matplotlib.
+		axes: (default: None)
+			Matplotlib's axes handle on which to plot. If None, make new axes.
+		vmin, vmax: floats (default to the current limits)
+			Data value limits.
+		xmin, xmax, ymin, ymax: floats (default to the current limits)
+			Axes limits.
+		xfactor, yfactor: floats (default: 1)
+			Factors to rescale axes.
+		saveAs: path string (default: None)
+			Name of a directory where to save each frame as figures.
+			You can even specify a filename such as mydir/prefix.png
+			and it will automatically make successive files showing
+			the timestep: mydir/prefix0.png, mydir/prefix1.png, etc.
+		
+		Example:
+		--------
+			S = Smilei("path/to/my/results")
+			S.ParticleDiagnostic(1).streak(vmin=0, vmax=1e14)
+		"""
+		if not self._validate(): return
+		if not self._prepare(): return
+		self.set(**kwargs)
+		self.info()
+		ax = self._make_axes(axes, **kwargs)
+		
+		if len(self.times) < 2:
+			print("ERROR: a streak plot requires at least 2 times")
+			return
+		if not hasattr(self,"_getDataAtTime"):
+			print("ERROR: this diagnostic cannot do a streak plot")
+			return
+		if self.dim != 1:
+			print("ERROR: Diagnostic must be 1-D for a streak plot")
+			return
+		if not (self._np.diff(self.times)==self.times[1]-self.times[0]).all():
+			print("WARNING: times are not evenly spaced. Time-scale not plotted")
+			ylabel = "Unevenly-spaced times"
+		else:
+			ylabel = "Timesteps"
+		# Loop times and accumulate data
+		A = []
+		for time in self.times: A.append(self._getDataAtTime(time))
+		A = self._np.double(A)
+		# Plot
+		ax.cla()
+		xmin = self._xfactor*self._centers[0][0]
+		xmax = self._xfactor*self._centers[0][-1]
+		extent = [xmin, xmax, self.times[0], self.times[-1]]
+		if self._log[0]: extent[0:2] = [self._np.log10(xmin), self._np.log10(xmax)]
+		im = ax.imshow(self._np.flipud(A), vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
+		ax.set_xlabel(self._xlabel)
+		ax.set_ylabel(ylabel)
+		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
+		try: # if colorbar exists
+			ax.cax.cla()
+			self._plt.colorbar(mappable=im, cax=ax.cax, **self.options.colorbar)
+		except AttributeError:
+			ax.cax = self._plt.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
+		self._setSomeOptions(ax)
+		self._plt.draw()
+		self._plt.pause(0.00001)
+	
+	def animate(self, movie="", fps=15, dpi=200, saveAs=None, axes=None, **kwargs):
+		""" Animates the diagnostic over all its timesteps.
+		If the data is 1D, it is plotted as a curve, and is animated for all requested timesteps.
+		If the data is 2D, it is plotted as a map, and is animated for all requested timesteps.
+		If the data is 0D, it is plotted as a curve as function of time.
+		
+		Parameters:
+		-----------
+		figure: int (default: 1)
+			The figure number that is passed to matplotlib.
+		axes: (default: None)
+			Matplotlib's axes handle on which to plot. If None, make new axes.
+		vmin, vmax: floats (default to the current limits)
+			Data value limits.
+		xmin, xmax, ymin, ymax: floats (default to the current limits)
+			Axes limits.
+		xfactor, yfactor: floats (default: 1)
+			Factors to rescale axes.
+		movie: path string (default: "")
+			Name of a file to create a movie, such as "movie.avi"
+			If movie="" no movie is created.
+		fps: int (default: 15)
+			Number of frames per second (only if movie requested).
+		dpi: int (default: 200)
+			Number of dots per inch (only if movie requested).
+		saveAs: path string (default: None)
+			Name of a directory where to save each frame as figures.
+			You can even specify a filename such as mydir/prefix.png
+			and it will automatically make successive files showing
+			the timestep: mydir/prefix0.png, mydir/prefix1.png, etc.
+		
+		Example:
+		--------
+			S = Smilei("path/to/my/results")
+			S.ParticleDiagnostic(1).animate(vmin=0, vmax=1e14)
 			
 			This takes the particle diagnostic #1 and plots the resulting array in figure 1 from 0 to 3e14.
 		"""
 		if not self._validate(): return
-		self._prepare()
+		if not self._prepare(): return
 		self.set(**kwargs)
 		self.info()
+		ax = self._make_axes(axes, **kwargs)
+		fig = ax.figure
 		
-		# Make figure
-		fig = self._plt.figure(**self.options.figure0)
-		fig.set(**self.options.figure1)
-		fig.clf()
-		ax = fig.add_subplot(1,1,1)
-		
-		# Case of a streakPlot (no animation)
-		if self.options.streakPlot:
-			if len(self.times) < 2:
-				print("ERROR: a streak plot requires at least 2 times")
-				return
-			if not hasattr(self,"_getDataAtTime"):
-				print("ERROR: this diagnostic cannot do a streak plot")
-				return
-			if self.dim != 1:
-				print("ERROR: Diagnostic must be 1-D for a streak plot")
-				return
-			if not (self._np.diff(self.times)==self.times[1]-self.times[0]).all():
-				print("WARNING: times are not evenly spaced. Time-scale not plotted")
-				ylabel = "Unevenly-spaced times"
-			else:
-				ylabel = "Timesteps"
-			# Loop times and accumulate data
-			A = []
-			for time in self.times: A.append(self._getDataAtTime(time))
-			A = self._np.double(A)
-			# Plot
-			ax.cla()
-			xmin = self._xfactor*self._centers[0][0]
-			xmax = self._xfactor*self._centers[0][-1]
-			extent = [xmin, xmax, self.times[0], self.times[-1]]
-			if self._log[0]: extent[0:2] = [self._np.log10(xmin), self._np.log10(xmax)]
-			im = ax.imshow(self._np.flipud(A), vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
-			ax.set_xlabel(self._xlabel)
-			ax.set_ylabel(ylabel)
-			self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
-			try: # if colorbar exists
-				ax.cax.cla()
-				self._plt.colorbar(mappable=im, cax=ax.cax, **self.options.colorbar)
-			except AttributeError:
-				ax.cax = self._plt.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
-			self._setSomeOptions(ax)
-			self._plt.draw()
-			self._plt.pause(0.00001)
-			return
-		
-		# Possible to skip animation
-		if self.options.skipAnimation:
-			self._animateOnAxes(ax, self.times[-1])
-			self._plt.draw()
-			self._plt.pause(0.00001)
-			return
-		
-		# Otherwise, animation
 		# Movie requested ?
 		mov = Movie(fig, movie, fps, dpi)
 		# Save to file requested ?
@@ -263,7 +342,6 @@ class Diagnostic(object):
 		# Movie ?
 		if mov.writer is not None: mov.finish()
 	
-	
 	# Method to select specific timesteps among those available in times
 	def _selectTimesteps(self, timesteps, times):
 		ts = self._np.array(self._np.double(timesteps),ndmin=1)
@@ -280,9 +358,10 @@ class Diagnostic(object):
 	# Method to prepare some data before plotting
 	def _prepare(self):
 		self._prepare1()
-		self._prepare2()
+		if not self._prepare2(): return False
 		self._prepare3()
 		self._prepare4()
+		return True
 	
 	# Methods to prepare stuff
 	def _prepare1(self):
@@ -298,8 +377,8 @@ class Diagnostic(object):
 			elif self.dim == 1: self._animateOnAxes = self._animateOnAxes_1D
 			elif self.dim == 2: self._animateOnAxes = self._animateOnAxes_2D
 			else:
-				print("Cannot plot with more than 2 dimensions !")
-				return
+				print("Cannot plot in "+str(self.dim)+" dimensions !")
+				return False
 		# prepare t label
 		self._tlabel = self.units.tname
 		if self.options.xfactor: self._tlabel += "/"+str(self.options.xfactor)
@@ -329,6 +408,7 @@ class Diagnostic(object):
 		if self.units.vname: self._vlabel += " (" + self.units.vname + ")"
 		if self._title     : self._vlabel = self._title + self._vlabel
 		if self._data_log  : self._vlabel = "Log[ "+self._vlabel+" ]"
+		return True
 	def _prepare3(self):
 		# prepare temporary data if zero-d plot
 		if self.dim == 0 and self._tmpdata is None:
@@ -351,7 +431,7 @@ class Diagnostic(object):
 		im, = ax.plot(self._tfactor*times, self._vfactor*A, **self.options.plot)
 		ax.set_xlabel(self._tlabel)
 		self._setLimits(ax, xmax=self._tfactor*self.times[-1], ymin=self.options.vmin, ymax=self.options.vmax)
-		self._setSomeOptions(ax)
+		self._setSomeOptions(ax, t)
 		return im
 	def _animateOnAxes_1D(self, ax, t):
 		A = self._getDataAtTime(t)
@@ -359,7 +439,7 @@ class Diagnostic(object):
 		if self._log[0]: ax.set_xscale("log")
 		ax.set_xlabel(self._xlabel)
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.vmin, ymax=self.options.vmax)
-		self._setSomeOptions(ax)
+		self._setSomeOptions(ax, t)
 		return im
 	def _animateOnAxes_2D(self, ax, t):
 		A = self._getDataAtTime(t)
@@ -372,7 +452,7 @@ class Diagnostic(object):
 			self._plt.colorbar(mappable=im, cax=ax.cax, **self.options.colorbar)
 		except AttributeError:
 			ax.cax = self._plt.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
-		self._setSomeOptions(ax)
+		self._setSomeOptions(ax, t)
 		return im
 	
 	# Special case: 2D plot
@@ -383,8 +463,11 @@ class Diagnostic(object):
 		return im
 	
 	# set options during animation
-	def _setSomeOptions(self, ax):
-		if self._vlabel: ax.set_title(self._vlabel)
+	def _setSomeOptions(self, ax, t=None):
+		title = []
+		if self._vlabel: title += [self._vlabel]
+		if t is not None: title += ["t = "+str(t)]
+		ax.set_title("  ".join(title))
 		ax.set(**self.options.axes)
 		try:
 			if len(self.options.xtick)>0: ax.ticklabel_format(axis="x",**self.options.xtick)
@@ -396,3 +479,76 @@ class Diagnostic(object):
 		except:
 			print("Cannot format y ticks (typically happens with log-scale)")
 			self.xtickkwargs = []
+	
+	# Define and output directory in case of exporting
+	def _setExportDir(self, diagName):
+		if len(self._results_path) == 1:
+			directory = self._results_path[0]
+		else:
+			directory = self._results_path[0] +self._os.sep+ ".."
+		directory += self._os.sep + diagName + self._os.sep
+		return directory
+	
+	def _mkdir(self, dir):
+		if not self._os.path.exists(dir): self._os.makedirs(dir)
+	
+	# Convert to XDMF format for ParaView (do nothing in the mother class)
+	def toXDMF(self):
+		pass
+	
+	# Convert data to VTK format
+	def toVTK(self, numberOfPieces=1):
+		if not self._validate(): return
+		
+		if self.dim<2 or self.dim>3:
+			print "Cannot export "+str(self.dim)+"D data to VTK"
+			return
+		
+		self._mkdir(self._exportDir)
+		fileprefix = self._exportDir + self._exportPrefix
+		
+		spacings = list(self._cell_length)
+		extent = []
+		for i in range(self.dim): extent += [0,self._shape[i]-1]
+		origin = [0.] * self.dim
+		ntimes = len(self.times)
+		
+		vtk = VTKfile()
+		
+		# If 2D data, then do a streak plot
+		if self.dim == 2:
+			dt = self.times[1]-self.times[0]
+			
+			# Get the data
+			data = self._np.zeros(list(self._shape)+[ntimes])
+			for itime in range(ntimes):
+				data[:,:,itime] = self._getDataAtTime(self.times[itime])
+			arr = vtk.Array(self._np.ascontiguousarray(data.flatten(order='F'), dtype='float32'), self._title)
+			
+			# If all timesteps are regularly spaced
+			if (self._np.diff(self.times)==dt).all():
+				spacings += [dt]
+				extent += [0, ntimes-1]
+				origin += [self.times[0]]
+				vtk.WriteImage(arr, origin, extent, spacings, fileprefix+".pvti", numberOfPieces)
+				print("Successfully exported regular streak plot to VTK, folder='"+self._exportDir)
+			
+			# If timesteps are irregular, make an irregular grid
+			else:
+				vtk.WriteRectilinearGrid(
+					(self._shape[0], self._shape[1], ntimes),
+					vtk.Array(self._centers[0].astype('float32'), "x"),
+					vtk.Array(self._centers[1].astype('float32'), "y"),
+					vtk.Array(self.times      .astype('float32'), "t"),
+					arr,
+					fileprefix+".vtk"
+				)
+				print("Successfully exported irregular streak plot to VTK, folder='"+self._exportDir)
+		
+		# If 3D data, then do a 3D plot
+		elif self.dim == 3:
+			for itime in range(ntimes):
+				arr = vtk.Array(self._getDataAtTime(self.times[itime]).astype('float32').flatten(order='F'), self._title)
+				vtk.WriteImage(arr, origin, extent, spacings, fileprefix+"_"+str(itime)+".pvti", numberOfPieces)
+			print("Successfully exported 3D plot to VTK, folder='"+self._exportDir)
+

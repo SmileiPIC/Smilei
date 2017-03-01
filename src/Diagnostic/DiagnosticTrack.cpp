@@ -74,16 +74,23 @@ void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
         H5Pclose(pid);
         
+        // Set the dataset parameters
+        hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
+        H5Pset_alloc_time(plist, H5D_ALLOC_TIME_EARLY); // necessary for collective dump
+        
+        // Set the chunk size
+        H5Pset_layout(plist, H5D_CHUNKED);
+        int maximum_chunk_size = 100000000;
+        int number_of_chunks = nbrParticles_/maximum_chunk_size;
+        if( nbrParticles_%maximum_chunk_size != 0 ) number_of_chunks++;
+        int chunk_size = nbrParticles_/number_of_chunks;
+        if( nbrParticles_%number_of_chunks != 0 ) chunk_size++;
+        hsize_t chunk_dims[2] = {1, (hsize_t)chunk_size};
+        H5Pset_chunk(plist, 2, chunk_dims);
+        
         // Define maximum size
         hsize_t maxDimsPart[2] = {H5S_UNLIMITED, (hsize_t)nbrParticles_};
         hid_t file_space = H5Screate_simple(2, dims, maxDimsPart);   
-        
-        // Create the overall dataset in the HDF5 file with a new chunk every timestep
-        hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
-        H5Pset_layout(plist, H5D_CHUNKED);
-        H5Pset_alloc_time(plist, H5D_ALLOC_TIME_EARLY); // necessary for collective dump
-        hsize_t chunk_dims[2] = {1, (hsize_t)nbrParticles_};
-        H5Pset_chunk(plist, 2, chunk_dims);
         
         // Create the datasets
         for (unsigned int i=0; i<datasets.size(); i++) {
@@ -147,6 +154,7 @@ void DiagnosticTrack::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatc
         
         int localNbrParticles = 0;
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+            vecPatches(ipatch)->vecSpecies[speciesId_]->particles->setIds();
             vecPatches(ipatch)->vecSpecies[speciesId_]->particles->addIdOffsets(localNbrParticles);
             localNbrParticles += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
         }
@@ -196,15 +204,14 @@ void DiagnosticTrack::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatc
     openFile( params, smpi, true );
     H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     
+    MESSAGE(1, "Tracking "<< nbrParticles_ <<" particles of species "<<vecPatches(0)->vecSpecies[speciesId_]->species_type);
+    
 }
 
 
 bool DiagnosticTrack::prepare( int timestep )
 {
-    if( ! timeSelection->theTimeIsNow(timestep) ) return false;
-    
-    return true;
-
+    return timeSelection->theTimeIsNow(timestep);
 }
 
 
@@ -235,7 +242,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
     hsize_t start[2], stride[2], count[2], block[2];
     if(track_ordered) {
         // Build the "locator", an array indicating where each particle goes in the final array
-        #pragma omp for schedule(static)
+        #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
             Particles* particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
             int np=particles->size(), i=0, j=patch_start[ipatch];
@@ -275,7 +282,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
             #pragma omp master
             data_uint.resize( nParticles, 0 );
             #pragma omp barrier
-            #pragma omp for schedule(static)
+            #pragma omp for schedule(runtime)
             for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
                 particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
                 patch_nParticles = particles->size();
@@ -290,7 +297,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
             #pragma omp master
             data_short.resize( nParticles );
             #pragma omp barrier
-            #pragma omp for schedule(static)
+            #pragma omp for schedule(runtime)
             for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
                 particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
                 patch_nParticles = particles->size();
@@ -305,7 +312,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
             #pragma omp master
             data_double.resize( nParticles );
             #pragma omp barrier
-            #pragma omp for schedule(static)
+            #pragma omp for schedule(runtime)
             for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
                 particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
                 patch_nParticles = particles->size();
@@ -320,7 +327,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
             #pragma omp master
             data_double.resize( nParticles );
             #pragma omp barrier
-            #pragma omp for schedule(static)
+            #pragma omp for schedule(runtime)
             for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
                 particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
                 patch_nParticles = particles->size();
@@ -335,7 +342,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
             #pragma omp master
             data_double.resize( nParticles );
             #pragma omp barrier
-            #pragma omp for schedule(static)
+            #pragma omp for schedule(runtime)
             for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
                 particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
                 patch_nParticles = particles->size();

@@ -19,7 +19,7 @@ This hardware architecture is summarized in :numref:`NodesCoresThreads`.
 .. _NodesCoresThreads:
 
 .. figure:: _static/NodesCoresThreads.png
-  :width: 14cm
+  :width: 11cm
   
   Simplified super-computer architecture.
 
@@ -67,7 +67,7 @@ An illustration of the roles of MPI and OpenMP is provided in :numref:`MPIandOpe
 .. _MPIandOpenMP:
 
 .. figure:: _static/MPIandOpenMP.png
-  :width: 10cm
+  :width: 9cm
   
   MPI handles process-to-process communications, while OpenMP manages threads in a given process.
 
