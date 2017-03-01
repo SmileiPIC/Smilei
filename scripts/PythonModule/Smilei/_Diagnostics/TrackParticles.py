@@ -394,3 +394,42 @@ class TrackParticles(Diagnostic):
 			f.write('		</Grid>\n')
 			f.write('	</Domain>\n')
 			f.write('</Xdmf>\n')
+	
+	
+	
+	# Convert data to VTK format
+	def toVTK(self, numberOfPieces=1):
+		if not self._validate(): return
+		
+		if self._ndim!=3:
+			print "Cannot export tracked particles of a "+str(self._ndim)+"D simulation to VTK"
+			return
+		
+		self._mkdir(self._exportDir)
+		fileprefix = self._exportDir + self._exportPrefix
+		
+		ntimes = len(self.times)
+		
+		vtk = VTKfile()
+		
+		# If 3D simulation, then do a 3D plot
+		if self._ndim == 3:
+			if "x" not in self.axes or "y" not in self.axes or "z" not in self.axes:
+				print("Error exporting tracked particles to VTK: axes 'x', 'y' and 'z' are required")
+				return
+			data = self.getData()
+			pcoords = self._np.stack((data["x"],data["y"],data["z"])).transpose()
+			npoints, nt, nd = pcoords.shape
+			pcoords = self._np.reshape(pcoords, (npoints*nt, nd))
+			pcoords = self._np.ascontiguousarray(pcoords, dtype='float32')
+			pcoords = vtk.Array(pcoords, "")
+			connectivity = self._np.ascontiguousarray([[nt]+[nt*i+j for j in range(nt)] for i in range(npoints)])
+			
+			attributes = []
+			for ax in self.axes:
+				if ax!="x" and  ax!="y" and  ax!="z":
+					attributes += [vtk.Array(self._np.ascontiguousarray(data[ax].flatten(),'float32'),ax)]
+			
+			vtk.WriteLines(pcoords, connectivity, attributes, fileprefix+".vtk")
+			print("Successfully exported tracked particles to VTK, folder='"+self._exportDir)
+		
