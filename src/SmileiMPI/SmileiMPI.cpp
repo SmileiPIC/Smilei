@@ -383,8 +383,8 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         fout.open ("patch_load.txt", std::ofstream::out | std::ofstream::app);
     }
     
-    MPI_Status status;
-    MPI_Request request; 
+    MPI_Status status0, status1;
+    MPI_Request request0, request1; 
 
     Npatches = params.tot_number_of_patches;
     
@@ -416,14 +416,14 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     MPI_Allgather(&Tload_loc,1,MPI_DOUBLE,&Tload_vec[0], 1, MPI_DOUBLE,MPI_COMM_WORLD);
     //Communicate the detail of the load of each patch to neighbouring MPI ranks
     if (smilei_rk < smilei_sz-1) {
-        MPI_Isend( &(Lp[0]), patch_count[smilei_rk], MPI_DOUBLE, smilei_rk+1, 0, MPI_COMM_WORLD, &request );
+        MPI_Isend( &(Lp[0]), patch_count[smilei_rk], MPI_DOUBLE, smilei_rk+1, 0, MPI_COMM_WORLD, &request0 );
     }
     if (smilei_rk > 0) {
-        MPI_Isend( &(Lp[0]), patch_count[smilei_rk], MPI_DOUBLE, smilei_rk-1, 1, MPI_COMM_WORLD, &request );
-        MPI_Recv( &(Lp_left[0]), patch_count[smilei_rk-1], MPI_DOUBLE, smilei_rk-1, 0, MPI_COMM_WORLD, &status );
+        MPI_Isend( &(Lp[0]), patch_count[smilei_rk], MPI_DOUBLE, smilei_rk-1, 1, MPI_COMM_WORLD, &request1 );
+        MPI_Recv( &(Lp_left[0]), patch_count[smilei_rk-1], MPI_DOUBLE, smilei_rk-1, 0, MPI_COMM_WORLD, &status0 );
     }
     if (smilei_rk < smilei_sz-1){
-        MPI_Recv( &(Lp_right[0]), patch_count[smilei_rk+1], MPI_DOUBLE, smilei_rk+1, 1, MPI_COMM_WORLD, &status);
+        MPI_Recv( &(Lp_right[0]), patch_count[smilei_rk+1], MPI_DOUBLE, smilei_rk+1, 1, MPI_COMM_WORLD, &status1);
     }
 
     //Compute global total loads
