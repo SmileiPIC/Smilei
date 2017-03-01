@@ -457,6 +457,9 @@ void Patch3D::finalizeExchange( Field* field, int iDim )
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch3D::createType( Params& params )
 {
+    if (ntype_[0][0][0][0] != MPI_DATATYPE_NULL)
+        return;
+
     int nx0 = params.n_space[0] + 1 + 2*params.oversize[0];
     int ny0 = params.n_space[1] + 1 + 2*params.oversize[1];
     int nz0 = params.n_space[2] + 1 + 2*params.oversize[2];

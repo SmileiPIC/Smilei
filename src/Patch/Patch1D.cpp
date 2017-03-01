@@ -333,6 +333,9 @@ void Patch1D::finalizeExchange( Field* field, int iDim )
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch1D::createType( Params& params )
 {
+    if (ntype_[0][0] != MPI_DATATYPE_NULL)
+        return;
+
     unsigned int clrw = params.clrw;
     
     // MPI_Datatype ntype_[nDim][primDual]
