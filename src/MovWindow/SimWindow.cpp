@@ -264,32 +264,22 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
 {
     int xcall, ycall, h0;
     double energy_field_lost(0.);
-    vector<double> energy_part_lost( vecPatches(0)->vecSpecies.size(), 0. );
+    std::vector<double> energy_part_lost( vecPatches(0)->vecSpecies.size(), 0. );
+    std::vector<unsigned int> patch_to_be_created;
     Patch* mypatch;
-    int tid(0), nthds(1);// Rneighbor, Lneighbor;
-    #ifdef _OPENMP
-        tid = omp_get_thread_num();
-        nthds = omp_get_num_threads();
-    #endif
 
     //Initialization for inter-process communications
     h0 = vecPatches(0)->hindex;
     int nPatches = vecPatches.size();
     int nSpecies( vecPatches(0)->vecSpecies.size() );
-    int nmessage = 2*nSpecies+14;
+    int nmax_laser = 4;
+    int nmessage = 2*nSpecies+(2+params.nDim_particle)*vecPatches(0)->probes.size()+
+        9+vecPatches(0)->EMfields->antennas.size()+4*nmax_laser;
     std::vector<Patch*> delete_patches_, update_patches_;
 
-    // Inits in a single to minize sync
-    //#pragma omp single
-    {
-        for (unsigned int i=0; i< nthds; i++)
-            patch_to_be_created[i].clear();
-        vecPatches_old.resize(nPatches);
-        x_moved += cell_length_x_*params.n_space[0];
-        n_moved += params.n_space[0];
-        //Handle diags
-        vecPatches.closeAllDiags(smpi);
-    }
+    vecPatches_old.resize(nPatches);
+    x_moved += cell_length_x_*params.n_space[0];
+    n_moved += params.n_space[0];
 
     //#pragma omp for schedule(static)
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++)
@@ -302,7 +292,7 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
         //If my right neighbor does not belong to me ...
         if (mypatch->MPI_neighbor_[0][1] != mypatch->MPI_me_){
             // Store it as a patch to be created later.
-            patch_to_be_created[tid].push_back(ipatch); //(shared omp vector of int)
+            patch_to_be_created.push_back(ipatch); //(shared omp vector of int)
         }
 
         //If my left neighbor does not belong to me ...
@@ -312,7 +302,7 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
             if (mypatch->MPI_neighbor_[0][0] != MPI_PROC_NULL){
                 //Left neighbour to which the patch should be sent to.
                 //Lneighbor = mypatch->MPI_neighbor_[0][0];
-                smpi->isend( mypatch, mypatch->MPI_neighbor_[0][0] , (mypatch->neighbor_[0][0]) * nmessage );
+                smpi->isend( mypatch, mypatch->MPI_neighbor_[0][0] , (mypatch->hindex) * nmessage, params );
             }
          } else { //In case my left neighbor does belong to me:
             // I become my left neighbor.
@@ -343,25 +333,20 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
     //#pragma omp single
     {
          //#pragma omp for schedule(static)
-         for (unsigned int i=0; i<nthds; i++){
-             for (unsigned int j=0; j< patch_to_be_created[i].size(); j++){
-                 //vecPatches.patches_[patch_to_be_created[i][j]] = new Patch(params, laser_params, smpi, h0 + patch_to_be_created[i][j], n_moved);
-                 vecPatches.patches_[patch_to_be_created[i][j]] = PatchesFactory::create(params, smpi, h0 + patch_to_be_created[i][j], n_moved );
-                 //stores all indices of patch_to_be_created in a single vector.
-                 if (i>0) patch_to_be_created[0].push_back(patch_to_be_created[i][j]);
+             for (unsigned int j=0; j< patch_to_be_created.size(); j++){
+                 vecPatches.patches_[patch_to_be_created[j]] = PatchesFactory::create(params, smpi, h0 + patch_to_be_created[j], n_moved );
              }
-         }
     } // This barrier is important.
 
 
     //Initialization of new Patches if necessary.
     //#pragma omp for schedule(static)
-    for (unsigned int ipatch = 0 ; ipatch < patch_to_be_created[0].size() ; ipatch++) {
-         mypatch = vecPatches(patch_to_be_created[0][ipatch]);
+    for (unsigned int ipatch = 0 ; ipatch < patch_to_be_created.size() ; ipatch++) {
+         mypatch = vecPatches(patch_to_be_created[ipatch]);
          //Rneighbor = mypatch->MPI_neighbor_[0][1];
          //If I receive something from my right neighbour:
          if (mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL)
-             smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], (mypatch->Hindex())*nmessage, params );
+             smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], (mypatch->hindex)*nmessage, params );
          // And else, nothing to do.
     } //This barrier matters. 
 

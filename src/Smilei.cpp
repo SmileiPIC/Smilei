@@ -104,7 +104,7 @@ int main (int argc, char* argv[])
         time_dual = restart_time_dual;
         if ( simWindow ) {
             if ( simWindow->isMoving(restart_time_dual) ) {
-                simWindow->operate_arnaud(vecPatches, smpiData, params);
+                simWindow->operate_arnaud(vecPatches, smpi, params);
             }
         }
         //smpi->recompute_patch_count( params, vecPatches, restart_time_dual );
