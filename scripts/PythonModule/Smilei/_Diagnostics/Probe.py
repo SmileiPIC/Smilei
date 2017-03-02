@@ -224,27 +224,31 @@ class Probe(Diagnostic):
 		# Prepare the reordering of the points for patches disorder
 		positions = self._h5probe[0]["positions"].value # actual probe points positions
 		self._ordering = None
+		tmpShape = self._initialShape
 		if self._naxes>0:
-			p = self._np.array(p) # matrix of the probe generating vectors
 			# Subtract by p0
 			p0 = self._myinfo["p0"]
 			for i in range(p0.size):
 				positions[:,i] -= p0[i]
 			# If 1D probe, convert positions to distances
 			if self._naxes==1:
-				p  = self._np.sqrt(self._np.sum(p**2))
+				p  = self._np.sqrt(self._np.sum(self._np.array(p)**2))
 				invp = self._np.array(1./p, ndmin=1)
 				positions = self._np.sqrt(self._np.sum(positions**2,1))
 			# If 2D or 3D probe, must calculate matrix inverse
 			else:
-				invp = self._np.linalg.inv(p.transpose())
+				if self._naxes==2 and self._ndim==3:
+					pp = self._np.cross(p[0],p[1])
+					p.append(pp/self._np.linalg.norm(pp))
+					tmpShape = self._np.hstack((tmpShape, 1))
+				invp = self._np.linalg.inv(self._np.array(p).transpose())
 			# Make the ordering vector
 			self._ordering = self._np.zeros((self._initialShape.prod(),), dtype=int)-1
 			for indexInFile in range(positions.shape[0]):
 				posInFile = positions[indexInFile]
-				ijk = self._np.dot(invp, posInFile)*(self._initialShape-1) # find the indices of the point
+				ijk = self._np.dot(invp, posInFile)*(tmpShape-1) # find the indices of the point
 				indexInArray = ijk[0]
-				for l in range(1,len(ijk)): indexInArray = indexInArray*self._initialShape[l]+ijk[l] # linearized index
+				for l in range(1,len(ijk)): indexInArray = indexInArray*tmpShape[l]+ijk[l] # linearized index
 				indexInArray = int(round(indexInArray))
 				#print indexInFile, indexInArray, posInFile, ijk
 				try   : self._ordering[indexInArray] = indexInFile

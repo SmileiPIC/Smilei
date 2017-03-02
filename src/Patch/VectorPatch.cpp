@@ -792,7 +792,8 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
         (*this)(ipatch)->updateMPIenv(smpi);
         if ((*this)(ipatch)->has_an_MPI_neighbor())
             (*this)(ipatch)->createType(params);
-
+         else
+            (*this)(ipatch)->cleanType();
     }
     (*this).set_refHindex() ;
     update_field_list() ;    

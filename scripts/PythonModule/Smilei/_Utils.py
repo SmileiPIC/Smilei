@@ -387,4 +387,86 @@ def multiPlot(*Diags, **kwargs):
 			if t is not None: save.frame(int(t))
 		mov.finish()
 		return
+
+
+class VTKfile:
+	
+	def __init__(self):
+		try:
+			import vtk
+		except:
+			print "Python module 'vtk' not found. Could not export to VTK format"
+			return
 		
+		self.vtk = vtk
+	
+	def Array(self, data, name):
+		shape = data.shape
+		if len(shape)==1:   npoints, nComponents = shape[0], 1
+		elif len(shape)==2: npoints, nComponents = shape
+		else: raise Exception("impossible")
+		arr = self.vtk.vtkFloatArray()
+		arr.SetNumberOfTuples(npoints)
+		arr.SetNumberOfComponents(nComponents)
+		arr.SetVoidArray(data, npoints*nComponents, 1)
+		arr.SetName(name)
+		return arr
+	def WriteImage(self, array, origin, extent, spacings, file, numberOfPieces):
+		img = self.vtk.vtkImageData()
+		img.SetOrigin(origin)
+		img.SetExtent(extent)
+		img.SetSpacing(spacings)
+		img.GetPointData().SetScalars(array)
+		writer = self.vtk.vtkXMLPImageDataWriter()
+		writer.SetFileName(file)
+		writer.SetNumberOfPieces(numberOfPieces)
+		writer.SetEndPiece(numberOfPieces-1)
+		writer.SetStartPiece(0);
+		writer.SetInputData(img)
+		writer.Write()
+	def WriteRectilinearGrid(self, dimensions, xcoords, ycoords, zcoords, array, file):
+		grid = self.vtk.vtkRectilinearGrid()
+		grid.SetDimensions(dimensions)
+		grid.SetXCoordinates(xcoords)
+		grid.SetYCoordinates(ycoords)
+		grid.SetZCoordinates(zcoords)
+		grid.GetPointData().SetScalars(array)
+		writer = self.vtk.vtkRectilinearGridWriter()
+		writer.SetFileName(file)
+		writer.SetInputData(grid)
+		writer.Write()
+	def WritePoints(self, pcoords, file):
+		points = self.vtk.vtkPoints()
+		points.SetData(pcoords)
+		grid = self.vtk.vtkUnstructuredGrid()
+		grid.SetPoints(points)
+		writer = self.vtk.vtkUnstructuredGridWriter()
+		writer.SetFileName(file)
+		writer.SetInputData(grid)
+		writer.Write()
+	def WriteLines(self, pcoords, connectivity, attributes, file):
+		ncel = len(connectivity)
+		connectivity = connectivity.flatten()
+		id = self.vtk.vtkIdTypeArray()
+		id.SetNumberOfTuples(connectivity.size)
+		id.SetNumberOfComponents(1)
+		id.SetVoidArray(connectivity, connectivity.size, 1)
+		connec = self.vtk.vtkCellArray()
+		connec.SetCells(ncel, id)
+		
+		points = self.vtk.vtkPoints()
+		points.SetData(pcoords)
+		
+		pdata = self.vtk.vtkPolyData()
+		pdata.SetPoints(points)
+		pdata.SetLines(connec)
+		
+		for a in attributes:
+			pdata.GetPointData().SetScalars(a)
+		
+		writer = self.vtk.vtkPolyDataWriter()
+		writer.SetFileName(file)
+		writer.SetInputData(pdata)
+		writer.Write()
+		
+
