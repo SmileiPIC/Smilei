@@ -284,6 +284,9 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++)
         vecPatches_old[ipatch] = vecPatches(ipatch);
 
+    for (int ipatch=0 ; ipatch<nPatches ; ipatch++ )
+	vecPatches(ipatch)->EMfields->laserDisabled();
+
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
          mypatch = vecPatches_old[ipatch];
 
@@ -301,6 +304,9 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
             // I become my left neighbor.
             //Update hindex and coordinates.
 
+            if ( vecPatches(ipatch)->isXmax() )
+                for (int ispec=0 ; ispec<nSpecies ; ispec++)
+                    mypatch->vecSpecies[ispec]->disableXmax();
             mypatch->Pcoordinates[0] -= 1;
             mypatch->neighbor_[0][1] =  mypatch->hindex;
             mypatch->hindex = mypatch->neighbor_[0][0];
@@ -330,11 +336,11 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
         mypatch = PatchesFactory::clone(vecPatches(0),params, smpi, h0 + patch_to_be_created[j], n_moved );
         if (mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL)
             smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], (mypatch->hindex)*nmessage, params );
+	mypatch->EMfields->laserDisabled();
         vecPatches.patches_[patch_to_be_created[j]] = mypatch ;
+        cout << "new patch created at index " << mypatch->hindex << " X = " << mypatch->Pcoordinates[0] << " nparticles = " << mypatch->vecSpecies[0]->getNbrOfParticles() << endl;
     }
 
-    for (int ipatch=0 ; ipatch<nPatches ; ipatch++ )
-	vecPatches(ipatch)->EMfields->laserDisabled();
 
     smpi->barrier();
 
@@ -351,13 +357,15 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
     }
 
     //Should be useless
-    //vecPatches.set_refHindex() ;
+    vecPatches.set_refHindex() ;
     vecPatches.update_field_list() ;
 
     for (int ipatch=0 ; ipatch<nPatches ; ipatch++){
-        if ( vecPatches(ipatch)->isXmin() )
+        if ( vecPatches(ipatch)->isXmin() ){
+            cout << "setting xmin CL to patch " << vecPatches(ipatch)->Hindex() << " X= " << vecPatches(ipatch)->Pcoordinates[0] << endl;
             for (int ispec=0 ; ispec<nSpecies ; ispec++)
                 vecPatches(ipatch)->vecSpecies[ispec]->setXminBoundaryCondition(); 
+        }
         if (vecPatches(ipatch)->has_an_MPI_neighbor())
             vecPatches(ipatch)->createType(params);
         else
