@@ -121,6 +121,7 @@ void Patch::initStep3( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
     min_local[0] += n_moved*params.cell_length[0];
     max_local[0] += n_moved*params.cell_length[0];
     center   [0] += n_moved*params.cell_length[0];
+
 }
 
 
@@ -147,6 +148,15 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
     
     if (has_an_MPI_neighbor())
         createType(params);
+
+
+    int nb_comms(9); // E, B, B_m : min number of comms
+    nb_comms += 2*vecSpecies.size();
+    
+    requests_.resize( nb_comms );
+
+
+
 }
 
 
