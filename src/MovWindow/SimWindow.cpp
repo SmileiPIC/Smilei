@@ -281,11 +281,11 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
     x_moved += cell_length_x_*params.n_space[0];
     n_moved += params.n_space[0];
 
-    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++)
+    //Cut off laser before exchanging any patches to avoid deadlock and store pointers in vecpatches_old.
+    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++){
         vecPatches_old[ipatch] = vecPatches(ipatch);
-
-    for (int ipatch=0 ; ipatch<nPatches ; ipatch++ )
 	vecPatches(ipatch)->EMfields->laserDisabled();
+    }
 
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
          mypatch = vecPatches_old[ipatch];
@@ -333,12 +333,12 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
     //Use clone instead of create ??
     //These patches are created with correct parameters.
     for (unsigned int j=0; j< patch_to_be_created.size(); j++){
+        cout << "creating patch " << h0 + patch_to_be_created[j] << endl;
         mypatch = PatchesFactory::clone(vecPatches(0),params, smpi, h0 + patch_to_be_created[j], n_moved );
         if (mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL)
             smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], (mypatch->hindex)*nmessage, params );
 	mypatch->EMfields->laserDisabled();
         vecPatches.patches_[patch_to_be_created[j]] = mypatch ;
-        cout << "new patch created at index " << mypatch->hindex << " X = " << mypatch->Pcoordinates[0] << " nparticles = " << mypatch->vecSpecies[0]->getNbrOfParticles() << endl;
     }
 
 
@@ -361,8 +361,9 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
     vecPatches.update_field_list() ;
 
     for (int ipatch=0 ; ipatch<nPatches ; ipatch++){
+        //Could be applied to newly created patch only ...
+        vecPatches(ipatch)->updateMPIenv(smpi);
         if ( vecPatches(ipatch)->isXmin() ){
-            cout << "setting xmin CL to patch " << vecPatches(ipatch)->Hindex() << " X= " << vecPatches(ipatch)->Pcoordinates[0] << endl;
             for (int ispec=0 ; ispec<nSpecies ; ispec++)
                 vecPatches(ipatch)->vecSpecies[ispec]->setXminBoundaryCondition(); 
         }

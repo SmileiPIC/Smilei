@@ -205,8 +205,12 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
     MPI_me_ = smpi->smilei_rk;
     
     for (int iDim = 0 ; iDim < nDim_fields_ ; iDim++)
-        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++)
+        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++){
+            if(MPI_neighbor_[iDim][iNeighbor] != smpi->hrank(neighbor_[iDim][iNeighbor])){
+                cout << "updating MPI neighbour for patch " << hindex << " from " << MPI_neighbor_[iDim][iNeighbor] << " to "<< smpi->hrank(neighbor_[iDim][iNeighbor])<< " neighbor = " << neighbor_[iDim][iNeighbor] << endl;
+            }
             MPI_neighbor_[iDim][iNeighbor] = smpi->hrank(neighbor_[iDim][iNeighbor]);
+        }
     
 //        cout << "\n\tPatch Corner decomp : " << corner_neighbor_[0][1] << "\t" << neighbor_[1][1]  << "\t" << corner_neighbor_[1][1] << endl;
 //        cout << "\tPatch Corner decomp : " << neighbor_[0][0] << "\t" << hindex << "\t" << neighbor_[0][1] << endl;
