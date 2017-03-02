@@ -350,7 +350,8 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
 	mypatch->neighbor_[1][1] = mypatch->tmp_neighbor_[1][1];
     }
 
-    vecPatches.set_refHindex() ;
+    //Should be useless
+    //vecPatches.set_refHindex() ;
     vecPatches.update_field_list() ;
 
     for (int ipatch=0 ; ipatch<nPatches ; ipatch++){
