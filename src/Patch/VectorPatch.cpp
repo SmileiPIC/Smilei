@@ -761,6 +761,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     for (unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++) {
         //if  hindex of patch to be received > first hindex actually owned, that means it comes from the next MPI process and not from the previous anymore. 
         if(recv_patch_id_[ipatch] > refHindex_ ) oldMPIrank = smpi->getRank() + 1;
+
         smpi->recv( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch]*nmessage, params );
     }
 

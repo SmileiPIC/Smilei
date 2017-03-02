@@ -75,11 +75,13 @@ void Patch::initStep1(Params& params)
     
     nbNeighbors_ = 2;
     neighbor_.resize(nDim_fields_);
+    tmp_neighbor_.resize(nDim_fields_);
     corner_neighbor_.resize(params.nDim_field);
     send_tags_.resize(nDim_fields_);
     recv_tags_.resize(nDim_fields_);
     for ( int iDim = 0 ; iDim < nDim_fields_ ; iDim++ ) {
         neighbor_[iDim].resize(2,MPI_PROC_NULL);
+        tmp_neighbor_[iDim].resize(2,MPI_PROC_NULL);
         corner_neighbor_[iDim].resize(2,MPI_PROC_NULL);
         send_tags_[iDim].resize(2,MPI_PROC_NULL);
         recv_tags_[iDim].resize(2,MPI_PROC_NULL);

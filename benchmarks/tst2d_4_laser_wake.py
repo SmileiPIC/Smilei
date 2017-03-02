@@ -61,14 +61,6 @@ Species(
     bc_part_type_ymax ="supp"
 )
 
-# ----------------
-# Boundary Conditions for fields
-# ----------------
-bc_em_type_x = ["silver-muller","silver-muller"]
-bc_em_type_y = ["silver-muller","silver-muller"]
-
-# Laser properties
-laser_fwhm = 19.80
 LaserGaussian2D(
     boxSide         = "xmin",
     a0              = 2.,
