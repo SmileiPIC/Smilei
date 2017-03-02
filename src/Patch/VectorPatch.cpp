@@ -765,6 +765,9 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
         smpi->recv( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch]*nmessage, params );
     }
 
+
+    for (unsigned int ipatch=0 ; ipatch < send_patch_id_.size() ; ipatch++)
+        smpi->waitall( (*this)(send_patch_id_[ipatch]) );
     
     smpi->barrier();
     //Delete sent patches
