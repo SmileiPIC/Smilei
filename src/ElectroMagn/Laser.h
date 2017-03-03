@@ -34,6 +34,7 @@ public:
 //  --------------------------------------------------------------------------------------------------------------------
 class Laser {
 friend class SmileiMPI;
+friend class Patch;
 public:
     //! Normal laser constructor
     Laser(Params &params, int ilaser, Patch* patch);
@@ -68,10 +69,11 @@ public:
     //! Disables the laser
     void disable();
     
-private:
+protected:
     //! Space and time profiles (Bx and By)
     std::vector<LaserProfile*> profiles;
     
+private:
     //! True if spatio-temporal profile (Bx and By)
     std::vector<bool> spacetime;
     
@@ -83,6 +85,7 @@ private:
 // Laser profile for separable space and time
 class LaserProfileSeparable : public LaserProfile {
 friend class SmileiMPI;
+friend class Patch;
 public:
     LaserProfileSeparable(double, Profile*, Profile*, Profile*, Profile*, bool);
     LaserProfileSeparable(LaserProfileSeparable*);
@@ -90,11 +93,12 @@ public:
     void createFields(Params& params, Patch* patch);
     void initFields  (Params& params, Patch* patch);
     double getAmplitude(std::vector<double> pos, double t, int j, int k);
+protected:
+    Field *space_envelope, *phase;
 private:
     bool primal;
     double omega;
     Profile *timeProfile, *chirpProfile, *spaceProfile, *phaseProfile;
-    Field *space_envelope, *phase;
 };
 
 // Laser profile for non-separable space and time
