@@ -179,7 +179,7 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
                 nb_comms += 12;
         }
     }
-    requests_.resize( nb_comms );
+    requests_.resize( nb_comms, MPI_REQUEST_NULL );
 
 }
 
@@ -236,7 +236,7 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
                 nb_comms += 12;
         }
     }
-    requests_.resize( nb_comms );
+    requests_.resize( nb_comms, MPI_REQUEST_NULL );
 
 }
 

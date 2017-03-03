@@ -585,7 +585,9 @@ void SmileiMPI::waitall(Patch* patch)
 {
     for (unsigned int ireq=0; ireq<patch->requests_.size() ; ireq++ ){
         MPI_Status status;
-        MPI_Wait(&(patch->requests_[ireq]), &status);
+        if (patch->requests_[ireq] != MPI_REQUEST_NULL)
+            MPI_Wait(&(patch->requests_[ireq]), &status);
+        patch->requests_[ireq] = MPI_REQUEST_NULL;
     }
         
 }
