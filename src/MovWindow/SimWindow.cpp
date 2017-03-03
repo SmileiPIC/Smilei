@@ -305,13 +305,13 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
             //... I might have to MPI send myself to the left...
             if (mypatch->MPI_neighbor_[0][0] != MPI_PROC_NULL){
                 cout << "sending index " << mypatch->hindex << " with tag " << (mypatch->neighbor_[0][0]) << " ymin = " << mypatch->getDomainLocalMin(1) << endl;
-                smpi->isend( mypatch, mypatch->MPI_neighbor_[0][0] , (mypatch->neighbor_[0][0]) * nmessage, params );
+                smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0] , (vecPatches_old[ipatch]->neighbor_[0][0]) * nmessage, params );
             }
         } else { //In case my left neighbor belongs to me:
             // I become my left neighbor.
             //Update hindex and coordinates.
 
-            if ( vecPatches(ipatch)->isXmax() )
+            if ( mypatch->isXmax() )
                 for (int ispec=0 ; ispec<nSpecies ; ispec++)
                     mypatch->vecSpecies[ispec]->disableXmax();
             mypatch->Pcoordinates[0] -= 1;
@@ -351,10 +351,13 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
     }
 
     //Wait for sends to be completed
-    for (int ipatch = 0 ; ipatch < nPatches ; ipatch++) 
-        if (vecPatches_old[ipatch]->MPI_neighbor_[0][0] !=  vecPatches_old[ipatch]->MPI_me_ && vecPatches_old[ipatch]->MPI_neighbor_[0][0] != MPI_PROC_NULL)
+    for (int ipatch = 0 ; ipatch < nPatches ; ipatch++){ 
+        cout << "ipatch = " << ipatch << " hindex  = " << vecPatches(ipatch)->Hindex() << endl;
+        if (vecPatches_old[ipatch]->MPI_neighbor_[0][0] !=  vecPatches_old[ipatch]->MPI_me_ && vecPatches_old[ipatch]->MPI_neighbor_[0][0] != MPI_PROC_NULL){
+            cout << " old hindex " <<  vecPatches_old[ipatch]->hindex << " is waiting now" << endl;
             smpi->waitall( vecPatches_old[ipatch] );
-
+        }
+    }
     smpi->barrier();
 
 
