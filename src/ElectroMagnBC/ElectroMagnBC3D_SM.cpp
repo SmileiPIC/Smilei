@@ -153,6 +153,24 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch )
 
 ElectroMagnBC3D_SM::~ElectroMagnBC3D_SM()
 {
+    delete Bx_xvalmin; 
+    delete Bx_xvalmax ;
+    delete By_xvalmin ;
+    delete By_xvalmax ;
+    delete Bz_xvalmin ;
+    delete Bz_xvalmax ;
+    delete Bx_yvalmin; 
+    delete Bx_yvalmax ;
+    delete By_yvalmin ;
+    delete By_yvalmax ;
+    delete Bz_yvalmin ;
+    delete Bz_yvalmax ;
+    delete Bx_zvalmin; 
+    delete Bx_zvalmax ;
+    delete By_zvalmin ;
+    delete By_zvalmax ;
+    delete Bz_zvalmin ;
+    delete Bz_zvalmax ;
 }
 
 
