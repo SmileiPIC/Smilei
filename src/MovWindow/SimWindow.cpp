@@ -339,7 +339,8 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
     //Creation of new Patches if necessary
     //Use clone instead of create ??
     //These patches are created with correct parameters.
-    for (unsigned int j=0; j< patch_to_be_created.size(); j++){
+    //for (unsigned int j=0; j< patch_to_be_created.size(); j++){
+    for (int j=1; j >= 0 ; j--){
         cout << "creating patch " << h0 + patch_to_be_created[j] << endl;
         mypatch = PatchesFactory::clone(vecPatches(0),params, smpi, h0 + patch_to_be_created[j], n_moved );
         if (mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL){
