@@ -282,9 +282,9 @@ void SmileiMPI::init_patch_count( Params& params)
             total_load += PatchLoad[ipatch];
         }
     }
-    for (int i=0 ; i< densityProfiles.size() ; i++)
+    for (unsigned int i=0 ; i< densityProfiles.size() ; i++)
         delete densityProfiles[i];
-    for (int i=0 ; i< ppcProfiles.size() ; i++)
+    for (unsigned int i=0 ; i< ppcProfiles.size() ; i++)
         delete ppcProfiles[i];
     densityProfiles.resize(0); densityProfiles.clear();
     ppcProfiles.resize(0); ppcProfiles.clear();
@@ -585,7 +585,9 @@ void SmileiMPI::waitall(Patch* patch)
 {
     for (unsigned int ireq=0; ireq<patch->requests_.size() ; ireq++ ){
         MPI_Status status;
-        MPI_Wait(&(patch->requests_[ireq]), &status);
+        if (patch->requests_[ireq] != MPI_REQUEST_NULL)
+            MPI_Wait(&(patch->requests_[ireq]), &status);
+        patch->requests_[ireq] = MPI_REQUEST_NULL;
     }
         
 }
@@ -712,7 +714,6 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
              
              if (dynamic_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]) ) {
                  ElectroMagnBC1D_SM* embc = static_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]);
-                 MPI_Request request;
                  MPI_Isend( &(embc->Bz_xvalmin), 1, MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &requests[tag] ); tag++;
                  MPI_Isend( &(embc->Bz_xvalmax), 1, MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &requests[tag] ); tag++;
                  MPI_Isend( &(embc->By_xvalmin), 1, MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &requests[tag] ); tag++;
