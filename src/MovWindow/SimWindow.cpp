@@ -158,6 +158,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             smpi->recv( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighbor_[0][1], vecPatches(ipatch)->hindex*nmessage, params );
         }
     }
+    for (int ipatch = 0 ; ipatch < nPatches ; ipatch++) 
+        if ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][0] && (int)vecPatches(ipatch)->hindex == vecPatches(ipatch)->neighbor_[0][0] )
+            smpi->waitall( vecPatches(ipatch) );
 
     //Wait for all send to be completed by the receivers too.
     smpi->barrier();

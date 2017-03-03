@@ -28,6 +28,7 @@
 #include "SpeciesFactory.h"
 #include "Particles.h"
 #include "ElectroMagnFactory.h"
+#include "ElectroMagnBC_Factory.h"
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
 #include "DiagnosticFactory.h"
@@ -121,6 +122,7 @@ void Patch::initStep3( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
     min_local[0] += n_moved*params.cell_length[0];
     max_local[0] += n_moved*params.cell_length[0];
     center   [0] += n_moved*params.cell_length[0];
+
 }
 
 
@@ -147,6 +149,38 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
     
     if (has_an_MPI_neighbor())
         createType(params);
+
+
+    int nb_comms(9); // E, B, B_m : min number of comms
+    nb_comms += 2*vecSpecies.size();
+
+    // Just apply on species & fields to start
+
+    for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++) {
+        nb_comms += EMfields->allFields_avg[idiag].size();
+    }
+    nb_comms += EMfields->antennas.size();
+ 
+    for (unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
+        if(EMfields->emBoundCond[bcId]) {
+            for (unsigned int laserId=0 ; laserId < EMfields->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
+                Laser * laser = EMfields->emBoundCond[bcId]->vecLaser[laserId];
+                if( !(laser->spacetime[0]) && !(laser->spacetime[1]) ) {
+                    LaserProfileSeparable* profile;
+                    profile = static_cast<LaserProfileSeparable*> ( laser->profiles[0] );
+                    if( profile->space_envelope ) nb_comms += 4;
+                }
+            }
+        }
+        if ( EMfields->extFields.size()>0 ) {
+            if (dynamic_cast<ElectroMagnBC1D_SM*>(EMfields->emBoundCond[bcId]) )
+                nb_comms += 4;
+            else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EMfields->emBoundCond[bcId]) )
+                nb_comms += 12;
+        }
+    }
+    requests_.resize( nb_comms );
+
 }
 
 
@@ -173,6 +207,37 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
     
     if (has_an_MPI_neighbor())
         createType(params);
+
+    int nb_comms(9); // E, B, B_m : min number of comms
+    nb_comms += 2*vecSpecies.size();
+
+    // Just apply on species & fields to start
+
+    for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++) {
+        nb_comms += EMfields->allFields_avg[idiag].size();
+    }
+    nb_comms += EMfields->antennas.size();
+ 
+    for (unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
+        if(EMfields->emBoundCond[bcId]) {
+            for (unsigned int laserId=0 ; laserId < EMfields->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
+                Laser * laser = EMfields->emBoundCond[bcId]->vecLaser[laserId];
+                if( !(laser->spacetime[0]) && !(laser->spacetime[1]) ) {
+                    LaserProfileSeparable* profile;
+                    profile = static_cast<LaserProfileSeparable*> ( laser->profiles[0] );
+                    if( profile->space_envelope ) nb_comms += 4;
+                }
+            }
+        }
+        if ( EMfields->extFields.size()>0 ) {
+            if (dynamic_cast<ElectroMagnBC1D_SM*>(EMfields->emBoundCond[bcId]) )
+                nb_comms += 4;
+            else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EMfields->emBoundCond[bcId]) )
+                nb_comms += 12;
+        }
+    }
+    requests_.resize( nb_comms );
+
 }
 
 
