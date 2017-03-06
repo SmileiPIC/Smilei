@@ -110,14 +110,16 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             mypatch->Pcoordinates[0] -= 1;
             mypatch->neighbor_[0][1] =  mypatch->hindex;
             mypatch->hindex = mypatch->neighbor_[0][0];
+            mypatch->MPI_neighbor_[0][1] = mypatch->MPI_me_ ;
             //stores indices in tmp buffers so that original values can be read by other patches.
 	    mypatch->tmp_neighbor_[0][0] = vecPatches_old[mypatch->hindex - h0 ]->neighbor_[0][0];
-	    mypatch->tmp_neighbor_[1][0] = vecPatches_old[mypatch->hindex - h0 ]->neighbor_[1][0];
-	    mypatch->tmp_neighbor_[1][1] = vecPatches_old[mypatch->hindex - h0 ]->neighbor_[1][1];
-            mypatch->MPI_neighbor_[0][1] = mypatch->MPI_me_ ;
 	    mypatch->tmp_MPI_neighbor_[0][0] = vecPatches_old[mypatch->hindex - h0 ]->MPI_neighbor_[0][0];
-	    mypatch->tmp_MPI_neighbor_[1][0] = vecPatches_old[mypatch->hindex - h0 ]->MPI_neighbor_[1][0];
-	    mypatch->tmp_MPI_neighbor_[1][1] = vecPatches_old[mypatch->hindex - h0 ]->MPI_neighbor_[1][1];
+            for (int idim = 1; idim < params.nDim_particle ; idim++){
+	        mypatch->tmp_neighbor_[idim][0] = vecPatches_old[mypatch->hindex - h0 ]->neighbor_[idim][0];
+	        mypatch->tmp_neighbor_[idim][1] = vecPatches_old[mypatch->hindex - h0 ]->neighbor_[idim][1];
+	        mypatch->tmp_MPI_neighbor_[idim][0] = vecPatches_old[mypatch->hindex - h0 ]->MPI_neighbor_[idim][0];
+	        mypatch->tmp_MPI_neighbor_[idim][1] = vecPatches_old[mypatch->hindex - h0 ]->MPI_neighbor_[idim][1];
+            }
             update_patches_.push_back(mypatch); // Stores pointers to patches that will need to update some neighbors from tmp_neighbors.
 
             //And finally put the patch at the correct rank in vecPatches.
@@ -146,11 +148,13 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     for (int j=0; j < update_patches_.size(); j++){
         mypatch = update_patches_[j];
 	mypatch->MPI_neighbor_[0][0] = mypatch->tmp_MPI_neighbor_[0][0];
-	mypatch->MPI_neighbor_[1][0] = mypatch->tmp_MPI_neighbor_[1][0];
-	mypatch->MPI_neighbor_[1][1] = mypatch->tmp_MPI_neighbor_[1][1];
 	mypatch->neighbor_[0][0] = mypatch->tmp_neighbor_[0][0];
-	mypatch->neighbor_[1][0] = mypatch->tmp_neighbor_[1][0];
-	mypatch->neighbor_[1][1] = mypatch->tmp_neighbor_[1][1];
+        for (int idim = 1; idim < params.nDim_particle ; idim++){
+	    mypatch->MPI_neighbor_[idim][0] = mypatch->tmp_MPI_neighbor_[idim][0];
+	    mypatch->MPI_neighbor_[idim][1] = mypatch->tmp_MPI_neighbor_[idim][1];
+	    mypatch->neighbor_[idim][0] = mypatch->tmp_neighbor_[idim][0];
+	    mypatch->neighbor_[idim][1] = mypatch->tmp_neighbor_[idim][1];
+        }
     }
 
     //Wait for sends to be completed
