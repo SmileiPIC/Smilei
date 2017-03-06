@@ -17,15 +17,15 @@ public :
     
     virtual void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
     
-    virtual bool prepare( int timestep ) override;
+    virtual bool prepare( int itime ) override;
     
     virtual void setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches ) = 0;
     
-    virtual void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) override;
+    virtual void run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime ) override;
     
     virtual void writeField(hid_t, int) = 0;
     
-    virtual bool needsRhoJs(int timestep) override;
+    virtual bool needsRhoJs(int itime) override;
     
     bool hasField(std::string field_name, std::vector<std::string> fieldsToDump);
 
@@ -65,7 +65,7 @@ protected :
     //! 1st patch index of vecPatches
     unsigned int refHindex;
     
-    hid_t timestep_group_id, filespace, memspace;
+    hid_t iteration_group_id, filespace, memspace;
     
     //! Total number of patches
     int tot_number_of_patches;
@@ -78,7 +78,7 @@ protected :
     
     //! Variable to store the status of a dataset (whether it exists or not)
     htri_t status;
-
+    
     //! Tools for re-reading and re-writing the file in a folded pattern
     hid_t filespace_reread, filespace_firstwrite, memspace_reread, memspace_firstwrite;
     std::vector<double> data_reread, data_rewrite;
@@ -86,6 +86,22 @@ protected :
     //! True if this diagnostic requires the pre-calculation of the particle J & Rho
     bool hasRhoJs;
     
+    //! Copy of the timestep
+    double timestep;
+    
+    //! axes labels
+    std::vector<std::string> axisLabels;
+    //! Spacing of the grid
+    std::vector<double> gridSpacing;
+    //! Offset of the grid for all fields
+    std::vector<double> gridGlobalOffset;
+    //! Offset of the grid for each field
+    std::vector<double> gridOffset;
+    //! Units of each field
+    std::vector<std::vector<double> > unitDimension;
+    
+    //! converts the boundary condition names to the openPMD format
+    void em_bc(std::string, std::string&, std::string&);
 
 };
 

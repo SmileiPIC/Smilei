@@ -11,6 +11,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
     fileId_ = 0;
     tmp_dset_id = 0;
     diag_n = ndiag;
+    timestep = params.timestep;
     
     filespace_firstwrite = 0;
     memspace_firstwrite = 0;
@@ -97,6 +98,39 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
     write_plist = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
     
+    // Prepare openPMD attributes
+    string xyz = "xyz";
+    axisLabels      .resize( params.nDim_field );
+    gridGlobalOffset.resize( params.nDim_field );
+    gridOffset      .resize( params.nDim_field );
+    gridSpacing = params.cell_length;
+    for( unsigned int idim=0; idim<params.nDim_field; idim++ ) {
+        axisLabels      [idim] = xyz.substr(idim, 1);
+        gridGlobalOffset[idim] = 0.;
+        gridOffset      [idim] = 0.;
+    }
+    unitDimension.resize( fields_names.size() );
+    for( unsigned int ifield=0; ifield<fields_names.size(); ifield++ ) {
+        unitDimension[ifield].resize(7, 0.);
+        string first_char = fields_names[ifield].substr(0,1);
+        if        ( first_char == "E" ) {
+            unitDimension[ifield][0] = 1.;
+            unitDimension[ifield][1] = 1.;
+            unitDimension[ifield][2] = -3.;
+            unitDimension[ifield][3] = -1.;
+        } else if ( first_char == "B" ) {
+            unitDimension[ifield][1] = 1.;
+            unitDimension[ifield][2] = -2.;
+            unitDimension[ifield][3] = -1.;
+        } else if ( first_char == "J" ) {
+            unitDimension[ifield][0] = -2.;
+            unitDimension[ifield][3] = 1.;
+        } else if ( first_char == "R" ) {
+            unitDimension[ifield][0] = -3.;
+        } else {
+            ERROR(" impossible field name ");
+        }
+    }
 }
 
 
@@ -137,13 +171,65 @@ void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         fileId_  = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
         H5Pclose(pid);
         
-        // Create property list for collective dataset write: for Fields.h5
+        // Attributes for smilei
+        //! \todo use openPMD attributes instead
         vector<double> my_cell_length=params.cell_length;
         my_cell_length.resize(params.nDim_field);
         H5::attr(fileId_, "res_time"    , params.res_time);
         H5::attr(fileId_, "res_space"   , params.res_space);
         H5::attr(fileId_, "cell_length" , my_cell_length);
         H5::attr(fileId_, "sim_length"  , params.sim_length);
+        
+        // Attributes for openPMD
+//        uint32_t extension = 1; // ED-PIC extension. Not supported yet
+        uint32_t extension = 0; // ED-PIC extension. Not supported yet
+        H5::attr( fileId_, "openPMDextension", extension, H5T_NATIVE_UINT32);
+        H5::attr( fileId_, "openPMD", "1.0.0");
+        H5::attr( fileId_, "basePath", "/%T/");
+        H5::attr( fileId_, "meshesPath", "");
+        H5::attr( fileId_, "particlesPath", "");
+        H5::attr( fileId_, "software", "Smilei");
+        H5::attr( fileId_, "softwareVersion", __VERSION);
+        H5::attr( fileId_, "date", params.getLocalTime());
+        H5::attr( fileId_, "iterationEncoding", "groupBased");
+        H5::attr( fileId_, "iterationFormat", "/%T/");
+        if       ( params.maxwell_sol == "Yee" ) {
+            H5::attr( fileId_, "fieldSolver", "Yee");
+        } else if( params.maxwell_sol == "Lehe" ) {
+            H5::attr( fileId_, "fieldSolver", "Lehe");
+        } else {
+            H5::attr( fileId_, "fieldSolver", "other");
+            H5::attr( fileId_, "fieldSolverParameters", params.maxwell_sol);
+        }
+        vector<string> fieldBoundary(params.nDim_field * 2), fieldBoundaryParameters(params.nDim_field * 2);
+        em_bc(params.bc_em_type_x[0], fieldBoundary[0], fieldBoundaryParameters[0]);
+        em_bc(params.bc_em_type_x[1], fieldBoundary[1], fieldBoundaryParameters[1]);
+        if( params.nDim_field > 1 ) {
+            em_bc(params.bc_em_type_y[0], fieldBoundary[2], fieldBoundaryParameters[2]);
+            em_bc(params.bc_em_type_y[1], fieldBoundary[3], fieldBoundaryParameters[3]);
+            if( params.nDim_field > 2 ) {
+                em_bc(params.bc_em_type_z[0], fieldBoundary[4], fieldBoundaryParameters[4]);
+                em_bc(params.bc_em_type_z[1], fieldBoundary[5], fieldBoundaryParameters[5]);
+            }
+        }
+        H5::attr( fileId_, "fieldBoundary", fieldBoundary);
+        H5::attr( fileId_, "fieldBoundaryParameters", fieldBoundaryParameters);
+        vector<string> particleBoundary(params.nDim_field * 2, ""), particleBoundaryParameters(params.nDim_field * 2, "");
+        H5::attr( fileId_, "particleBoundary", particleBoundary);
+        H5::attr( fileId_, "particleBoundaryParameters", particleBoundaryParameters);
+        if( params.currentFilter_int > 0 ) {
+            H5::attr( fileId_, "currentSmoothing", "Binomial");
+            ostringstream t("");
+            t << "numPasses="<<params.currentFilter_int;
+            H5::attr( fileId_, "currentSmoothingParameters", t.str());
+        } else {
+            H5::attr( fileId_, "currentSmoothing", "none");
+            H5::attr( fileId_, "currentSmoothingParameters", "");
+        }
+        H5::attr( fileId_, "chargeCorrection", "none");
+        H5::attr( fileId_, "chargeCorrectionParameters", "");
+        H5::attr( fileId_, "fieldSmoothing", "none");
+        H5::attr( fileId_, "fieldSmoothingParameters", "");
     }
     else {
         // Open the existing file
@@ -177,17 +263,17 @@ void DiagnosticFields::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
 }
 
-bool DiagnosticFields::prepare( int timestep )
+bool DiagnosticFields::prepare( int itime )
 {
     
-    // Leave if the timestep is not the good one
-    if (timestep - timeSelection->previousTime(timestep) >= time_average) return false;
+    // Leave if the iteration is not the good one
+    if (itime - timeSelection->previousTime(itime) >= time_average) return false;
     
     return true;
 }
 
 
-void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep )
+void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime )
 {
     // If time-averaging, increment the average
     if( time_average>1 ) {
@@ -202,8 +288,8 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         }
     }
     
-    // If is not writing timestep, leave
-    if (timestep - timeSelection->previousTime(timestep) != time_average-1) return;
+    // If is not writing iteration, leave
+    if (itime - timeSelection->previousTime(itime) != time_average-1) return;
     
     #pragma omp master
     {
@@ -211,19 +297,23 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         refHindex = (unsigned int)(vecPatches.refHindex_);
         setFileSplitting( smpi, vecPatches );
         
-        // Create group for this timestep
+        // Create group for this iteration
         ostringstream name_t;
         name_t.str("");
-        name_t << "/" << setfill('0') << setw(10) << timestep;
+        name_t << "/" << setfill('0') << setw(10) << itime;
         status = H5Lexists(fileId_, name_t.str().c_str(), H5P_DEFAULT);
         if( status==0 )
-           timestep_group_id = H5::group(fileId_, name_t.str().c_str());
+           iteration_group_id = H5::group(fileId_, name_t.str().c_str());
         // Warning if file unreachable
         if( status < 0 ) WARNING("Fields diagnostics could not write");
+        // Add openPMD attributes
+        H5::attr(iteration_group_id, "time", (double)(itime*timestep));
+        H5::attr(iteration_group_id, "dt", (double)timestep);
+        H5::attr(iteration_group_id, "timeUnitSI", 0.); // not relevant
     }
     #pragma omp barrier
     
-    // Do not output diag if this timestep has already been written or if problem with file
+    // Do not output diag if this iteration has already been written or if problem with file
     if( status != 0 ) return;
     
     unsigned int nPatches( vecPatches.size() );
@@ -241,11 +331,23 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         {
             // Create field dataset in HDF5
             hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
-            hid_t dset_id  = H5Dcreate( timestep_group_id, fields_names[ifield].c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+            hid_t dset_id  = H5Dcreate( iteration_group_id, fields_names[ifield].c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
             H5Pclose(plist_id);
             
             // Write
-            writeField(dset_id, timestep);
+            writeField(dset_id, itime);
+            
+            // Attributes for openPMD
+            H5::attr(dset_id, "geometry", "cartesian");
+            H5::attr(dset_id, "dataOrder", "C");
+            H5::attr(dset_id, "axisLabels", axisLabels);
+            H5::attr(dset_id, "gridSpacing", gridSpacing);
+            H5::attr(dset_id, "gridGlobalOffset", gridGlobalOffset);
+            H5::attr(dset_id, "gridOffset", gridOffset);
+            H5::attr(dset_id, "gridUnitSI", 0.);      
+            H5::attr(dset_id, "unitSI", 0.);      
+            H5::attr(dset_id, "unitDimension", unitDimension[ifield]);
+            H5::attr(dset_id, "timeOffset", 0.);      
             
             // Close dataset
             H5Dclose( dset_id );
@@ -254,14 +356,29 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     
     #pragma omp master
     {
-        H5Gclose(timestep_group_id);
+        H5Gclose(iteration_group_id);
         if( tmp_dset_id>0 ) H5Dclose( tmp_dset_id );
         tmp_dset_id=0;
-        if( flush_timeSelection->theTimeIsNow(timestep) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+        if( flush_timeSelection->theTimeIsNow(itime) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     }
 }
 
+void DiagnosticFields::em_bc(string bc, string& bc_0, string& bc_1)
+{
+    if( bc == "periodic" ) {
+        bc_0 = "periodic";
+        bc_1 = "periodic";
+    } else if( bc == "reflective" ) {
+        bc_0 = "reflecting";
+        bc_1 = "reflecting";
+    } else if( bc == "silver-muller" ) {
+        bc_0 = "open";
+        bc_1 = "silver-muller";
+    } else {
+        ERROR(" impossible boundary condition ");
+    }
+}
 
-bool DiagnosticFields::needsRhoJs(int timestep) {
-    return hasRhoJs && timeSelection->theTimeIsNow(timestep);
+bool DiagnosticFields::needsRhoJs(int itime) {
+    return hasRhoJs && timeSelection->theTimeIsNow(itime);
 }
