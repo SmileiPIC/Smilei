@@ -256,9 +256,7 @@ protected:
     
     //! Hilbert index of neighbors patch
     std::vector< std::vector<int> > neighbor_, tmp_neighbor_;
-    //! Hilbert index of corners neighbors patch
-    std::vector< std::vector<int> > corner_neighbor_; // Kept for Moving Windows
-
+    //! send and receive tags
     std::vector< std::vector<int> > send_tags_, recv_tags_;
 
     

@@ -104,7 +104,7 @@ int main (int argc, char* argv[])
         time_dual = restart_time_dual;
         if ( simWindow ) {
             if ( simWindow->isMoving(restart_time_dual) ) {
-                simWindow->operate_arnaud(vecPatches, smpi, params);
+                simWindow->operate(vecPatches, smpi, params);
             }
         }
         //smpi->recompute_patch_count( params, vecPatches, restart_time_dual );
@@ -239,7 +239,7 @@ int main (int argc, char* argv[])
             if ((start_moving==1) && (smpi->isMaster()) ) {
                 MESSAGE(">>> Window starts moving");
             }
-            simWindow->operate_arnaud(vecPatches, smpi, params);
+            simWindow->operate(vecPatches, smpi, params);
         }
         timers.movWindow.update();
         
