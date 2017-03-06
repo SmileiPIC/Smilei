@@ -102,11 +102,13 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
     // Prepare openPMD attributes
     string xyz = "xyz";
     axisLabels      .resize( params.nDim_field );
+    axisLabels_     .resize( params.nDim_field );
     gridGlobalOffset.resize( params.nDim_field );
     gridOffset      .resize( params.nDim_field );
     gridSpacing = params.cell_length;
     for( unsigned int idim=0; idim<params.nDim_field; idim++ ) {
         axisLabels      [idim] = xyz.substr(idim, 1);
+        axisLabels_     [idim] = axisLabels[idim].c_str();
         gridGlobalOffset[idim] = 0.;
         gridOffset      [idim] = 0.;
     }
@@ -131,6 +133,47 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
         } else {
             ERROR(" impossible field name ");
         }
+    }
+    fieldSolverParameters = "";
+    if       ( params.maxwell_sol == "Yee" ) {
+        fieldSolver = "Yee";
+    } else if( params.maxwell_sol == "Lehe" ) {
+        fieldSolver = "Lehe";
+    } else {
+        fieldSolver = "other";
+        fieldSolverParameters = params.maxwell_sol;
+    }
+    fieldBoundary .resize(params.nDim_field * 2);
+    fieldBoundary_.resize(params.nDim_field * 2);
+    fieldBoundaryParameters .resize(params.nDim_field * 2);
+    fieldBoundaryParameters_.resize(params.nDim_field * 2);
+    em_bc(params.bc_em_type_x[0], fieldBoundary[0], fieldBoundaryParameters[0]);
+    em_bc(params.bc_em_type_x[1], fieldBoundary[1], fieldBoundaryParameters[1]);
+    if( params.nDim_field > 1 ) {
+        em_bc(params.bc_em_type_y[0], fieldBoundary[2], fieldBoundaryParameters[2]);
+        em_bc(params.bc_em_type_y[1], fieldBoundary[3], fieldBoundaryParameters[3]);
+        if( params.nDim_field > 2 ) {
+            em_bc(params.bc_em_type_z[0], fieldBoundary[4], fieldBoundaryParameters[4]);
+            em_bc(params.bc_em_type_z[1], fieldBoundary[5], fieldBoundaryParameters[5]);
+        }
+    }
+    particleBoundary .resize(params.nDim_field * 2, "");
+    particleBoundary_.resize(params.nDim_field * 2);
+    particleBoundaryParameters .resize(params.nDim_field * 2, "");
+    particleBoundaryParameters_.resize(params.nDim_field * 2);
+    for( unsigned int i=0; i<params.nDim_field*2; i++ ) {
+        fieldBoundary_             [i] = fieldBoundary             [i].c_str();
+        fieldBoundaryParameters_   [i] = fieldBoundaryParameters   [i].c_str();
+        particleBoundary_          [i] = particleBoundary          [i].c_str();
+        particleBoundaryParameters_[i] = particleBoundaryParameters[i].c_str();
+    }
+    currentSmoothing = "none";
+    currentSmoothingParameters = "";
+    if( params.currentFilter_int > 0 ) {
+        currentSmoothing = "Binomial";
+        ostringstream t("");
+        t << "numPasses="<<params.currentFilter_int;
+        currentSmoothingParameters = t.str();
     }
 }
 
@@ -188,39 +231,6 @@ void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         
         // Make main "data" group where everything will be stored (required by openPMD)
         data_group_id = H5::group( fileId_, "data" );
-        
-        // Prepare some attributes for openPMD compatibility
-        fieldSolverParameters = "";
-        if       ( params.maxwell_sol == "Yee" ) {
-            fieldSolver = "Yee";
-        } else if( params.maxwell_sol == "Lehe" ) {
-            fieldSolver = "Lehe";
-        } else {
-            fieldSolver = "other";
-            fieldSolverParameters = params.maxwell_sol;
-        }
-        fieldBoundary.resize(params.nDim_field * 2);
-        fieldBoundaryParameters.resize(params.nDim_field * 2);
-        em_bc(params.bc_em_type_x[0], fieldBoundary[0], fieldBoundaryParameters[0]);
-        em_bc(params.bc_em_type_x[1], fieldBoundary[1], fieldBoundaryParameters[1]);
-        if( params.nDim_field > 1 ) {
-            em_bc(params.bc_em_type_y[0], fieldBoundary[2], fieldBoundaryParameters[2]);
-            em_bc(params.bc_em_type_y[1], fieldBoundary[3], fieldBoundaryParameters[3]);
-            if( params.nDim_field > 2 ) {
-                em_bc(params.bc_em_type_z[0], fieldBoundary[4], fieldBoundaryParameters[4]);
-                em_bc(params.bc_em_type_z[1], fieldBoundary[5], fieldBoundaryParameters[5]);
-            }
-        }
-        particleBoundary.resize(params.nDim_field * 2, "");
-        particleBoundaryParameters.resize(params.nDim_field * 2, "");
-        currentSmoothing = "none";
-        currentSmoothingParameters = "";
-        if( params.currentFilter_int > 0 ) {
-            currentSmoothing = "Binomial";
-            ostringstream t("");
-            t << "numPasses="<<params.currentFilter_int;
-            currentSmoothingParameters = t.str();
-        }
     }
     else {
         // Open the existing file

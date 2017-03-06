@@ -91,6 +91,7 @@ protected :
     
     //! axes labels
     std::vector<std::string> axisLabels;
+    std::vector<const char*> axisLabels_;
     //! Spacing of the grid
     std::vector<double> gridSpacing;
     //! Offset of the grid for all fields
@@ -103,6 +104,7 @@ protected :
     std::string fieldSolver, fieldSolverParameters;
     //! boundary conditions names
     std::vector<std::string> fieldBoundary, fieldBoundaryParameters, particleBoundary, particleBoundaryParameters;
+    std::vector<const char*> fieldBoundary_, fieldBoundaryParameters_, particleBoundary_, particleBoundaryParameters_;
     //! current smoothing description
     std::string currentSmoothing, currentSmoothingParameters;
     
