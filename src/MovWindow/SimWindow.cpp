@@ -280,7 +280,7 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
     int nmax_laser = 4;
     int nmessage = 2*nSpecies+(2+params.nDim_particle)*vecPatches(0)->probes.size()+
         9+vecPatches(0)->EMfields->antennas.size()+4*nmax_laser;
-    std::vector<Patch*> delete_patches_, update_patches_;
+    std::vector<Patch*> delete_patches_, update_patches_, send_patches_;
 
     vecPatches_old.resize(nPatches);
     x_moved += cell_length_x_*params.n_space[0];
@@ -304,7 +304,8 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
             delete_patches_.push_back(mypatch); // Stores pointers to patches to be deleted later 
             //... I might have to MPI send myself to the left...
             if (mypatch->MPI_neighbor_[0][0] != MPI_PROC_NULL){
-                cout << "sending index " << mypatch->hindex << " with tag " << (mypatch->neighbor_[0][0]) << " ymin = " << mypatch->getDomainLocalMin(1) << endl;
+                send_patches_.push_back(mypatch); // Stores pointers to patches to be sent later 
+                cout << "sending index " << mypatch->hindex << " with tag " << (mypatch->neighbor_[0][0])*nmessage << " ymin = " << mypatch->getDomainLocalMin(1) << endl;
                 smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0] , (vecPatches_old[ipatch]->neighbor_[0][0]) * nmessage, params );
             }
         } else { //In case my left neighbor belongs to me:
@@ -339,13 +340,13 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
     //Creation of new Patches if necessary
     //Use clone instead of create ??
     //These patches are created with correct parameters.
-    //for (unsigned int j=0; j< patch_to_be_created.size(); j++){
-    for (int j=1; j >= 0 ; j--){
+    for (unsigned int j=0; j< patch_to_be_created.size(); j++){
+    //for (int j=1; j >= 0 ; j--){
         cout << "creating patch " << h0 + patch_to_be_created[j] << endl;
         mypatch = PatchesFactory::clone(vecPatches(0),params, smpi, h0 + patch_to_be_created[j], n_moved );
         if (mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL){
             smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], (mypatch->hindex)*nmessage, params );
-            cout << "receiving tag " << (mypatch->hindex) << " and putting it in place " << patch_to_be_created[j] << " ymin = " << mypatch->getDomainLocalMin(1) << endl;
+            cout << "receiving tag " << (mypatch->hindex)*nmessage << " and putting it in place " << patch_to_be_created[j] << " ymin = " << mypatch->getDomainLocalMin(1) << endl;
         }
 	mypatch->EMfields->laserDisabled();
         vecPatches.patches_[patch_to_be_created[j]] = mypatch ;

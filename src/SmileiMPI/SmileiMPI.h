@@ -78,7 +78,7 @@ public:
     void isend(std::vector<double>* vec, int to  , int hindex, MPI_Request& request);
     void recv (std::vector<double> *vec, int from, int hindex);
 
-    void isend(ElectroMagn* fields, int to  , int hindex, std::vector<MPI_Request>& requests);
+    void isend(ElectroMagn* fields, int to  , int maxtag, std::vector<MPI_Request>& requests, int mpi_tag);
     void recv (ElectroMagn* fields, int from, int hindex);
     void isend(Field* field, int to  , int hindex, MPI_Request& request);
 

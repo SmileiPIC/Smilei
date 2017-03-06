@@ -576,7 +576,7 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
     // Count number max of comms :
     int maxtag = 2 * patch->vecSpecies.size();
     
-    isend( patch->EMfields, to, maxtag, patch->requests_ );
+    isend( patch->EMfields, to, maxtag, patch->requests_ , tag);
     
 } // END isend( Patch )
 
@@ -615,7 +615,7 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     }
     
     // Count number max of comms :
-    int maxtag = 2 * patch->vecSpecies.size();
+    int maxtag = tag + 2 * patch->vecSpecies.size();
 
     patch->EMfields->initAntennas(patch);
     recv( patch->EMfields, from, maxtag );
@@ -670,26 +670,26 @@ void SmileiMPI::recv(std::vector<double> *vec, int from, int tag)
 } // End recv ( bmax )
 
 
-void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& requests )
+void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& requests, int mpi_tag )
 {
-    isend( EM->Ex_ , to, tag, requests[tag]); tag++;
-    isend( EM->Ey_ , to, tag, requests[tag]); tag++;
-    isend( EM->Ez_ , to, tag, requests[tag]); tag++;
-    isend( EM->Bx_ , to, tag, requests[tag]); tag++;
-    isend( EM->By_ , to, tag, requests[tag]); tag++;
-    isend( EM->Bz_ , to, tag, requests[tag]); tag++;
-    isend( EM->Bx_m, to, tag, requests[tag]); tag++;
-    isend( EM->By_m, to, tag, requests[tag]); tag++;
-    isend( EM->Bz_m, to, tag, requests[tag]); tag++;
+    isend( EM->Ex_ , to, mpi_tag+tag, requests[tag]); tag++;
+    isend( EM->Ey_ , to, mpi_tag+tag, requests[tag]); tag++;
+    isend( EM->Ez_ , to, mpi_tag+tag, requests[tag]); tag++;
+    isend( EM->Bx_ , to, mpi_tag+tag, requests[tag]); tag++;
+    isend( EM->By_ , to, mpi_tag+tag, requests[tag]); tag++;
+    isend( EM->Bz_ , to, mpi_tag+tag, requests[tag]); tag++;
+    isend( EM->Bx_m, to, mpi_tag+tag, requests[tag]); tag++;
+    isend( EM->By_m, to, mpi_tag+tag, requests[tag]); tag++;
+    isend( EM->Bz_m, to, mpi_tag+tag, requests[tag]); tag++;
     
     for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {
         for( unsigned int ifield=0; ifield<EM->allFields_avg[idiag].size(); ifield++) {
-            isend( EM->allFields_avg[idiag][ifield], to, tag, requests[tag]); tag++;
+            isend( EM->allFields_avg[idiag][ifield], to, mpi_tag+tag, requests[tag]); tag++;
         }
     }
      
     for (unsigned int antennaId=0 ; antennaId<EM->antennas.size() ; antennaId++) {
-        isend( EM->antennas[antennaId].field, to, tag, requests[tag] ); tag++;
+        isend( EM->antennas[antennaId].field, to, mpi_tag+tag, requests[tag] ); tag++;
     }
      
     for (unsigned int bcId=0 ; bcId<EM->emBoundCond.size() ; bcId++ ) {
@@ -702,11 +702,11 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
                 LaserProfileSeparable* profile;
                 profile = static_cast<LaserProfileSeparable*> ( laser->profiles[0] );
                 if( ! profile->space_envelope ) continue;
-                isend( profile->space_envelope, to , tag, requests[tag] ); tag++;
-                isend( profile->phase, to, tag, requests[tag]); tag++;
+                isend( profile->space_envelope, to , mpi_tag+tag, requests[tag] ); tag++;
+                isend( profile->phase, to, mpi_tag+tag, requests[tag]); tag++;
                 profile = static_cast<LaserProfileSeparable*> ( laser->profiles[1] );
-                isend( profile->space_envelope, to , tag, requests[tag] ); tag++;
-                isend( profile->phase, to, tag, requests[tag]); tag++;
+                isend( profile->space_envelope, to , mpi_tag+tag, requests[tag] ); tag++;
+                isend( profile->phase, to, mpi_tag+tag, requests[tag]); tag++;
             }
         }
         
@@ -714,28 +714,28 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
              
              if (dynamic_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]) ) {
                  ElectroMagnBC1D_SM* embc = static_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]);
-                 MPI_Isend( &(embc->Bz_xvalmin), 1, MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &requests[tag] ); tag++;
-                 MPI_Isend( &(embc->Bz_xvalmax), 1, MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &requests[tag] ); tag++;
-                 MPI_Isend( &(embc->By_xvalmin), 1, MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &requests[tag] ); tag++;
-                 MPI_Isend( &(embc->By_xvalmax), 1, MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &requests[tag] ); tag++;
+                 MPI_Isend( &(embc->Bz_xvalmin), 1, MPI_DOUBLE, to, mpi_tag+tag, MPI_COMM_WORLD, &requests[tag] ); tag++;
+                 MPI_Isend( &(embc->Bz_xvalmax), 1, MPI_DOUBLE, to, mpi_tag+tag, MPI_COMM_WORLD, &requests[tag] ); tag++;
+                 MPI_Isend( &(embc->By_xvalmin), 1, MPI_DOUBLE, to, mpi_tag+tag, MPI_COMM_WORLD, &requests[tag] ); tag++;
+                 MPI_Isend( &(embc->By_xvalmax), 1, MPI_DOUBLE, to, mpi_tag+tag, MPI_COMM_WORLD, &requests[tag] ); tag++;
              }
              else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]) ) {
                  // BCs at the x-border
                  ElectroMagnBC2D_SM* embc = static_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]);
-                 isend(&embc->Bx_xvalmin_Long, to, tag, requests[tag]); tag++;
-                 isend(&embc->Bx_xvalmax_Long, to, tag, requests[tag]); tag++;
-                 isend(&embc->By_xvalmin_Long, to, tag, requests[tag]); tag++;
-                 isend(&embc->By_xvalmax_Long, to, tag, requests[tag]); tag++;
-                 isend(&embc->Bz_xvalmin_Long, to, tag, requests[tag]); tag++;
-                 isend(&embc->Bz_xvalmax_Long, to, tag, requests[tag]); tag++;
+                 isend(&embc->Bx_xvalmin_Long, to, mpi_tag+tag, requests[tag]); tag++;
+                 isend(&embc->Bx_xvalmax_Long, to, mpi_tag+tag, requests[tag]); tag++;
+                 isend(&embc->By_xvalmin_Long, to, mpi_tag+tag, requests[tag]); tag++;
+                 isend(&embc->By_xvalmax_Long, to, mpi_tag+tag, requests[tag]); tag++;
+                 isend(&embc->Bz_xvalmin_Long, to, mpi_tag+tag, requests[tag]); tag++;
+                 isend(&embc->Bz_xvalmax_Long, to, mpi_tag+tag, requests[tag]); tag++;
      
                  // BCs in the y-border
-                 isend(&embc->Bx_yvalmin_Trans, to, tag, requests[tag]); tag++;
-                 isend(&embc->Bx_yvalmax_Trans, to, tag, requests[tag]); tag++;
-                 isend(&embc->By_yvalmin_Trans, to, tag, requests[tag]); tag++;
-                 isend(&embc->By_yvalmax_Trans, to, tag, requests[tag]); tag++;
-                 isend(&embc->Bz_yvalmin_Trans, to, tag, requests[tag]); tag++;
-                 isend(&embc->Bz_yvalmax_Trans, to, tag, requests[tag]); tag++;
+                 isend(&embc->Bx_yvalmin_Trans, to, mpi_tag+tag, requests[tag]); tag++;
+                 isend(&embc->Bx_yvalmax_Trans, to, mpi_tag+tag, requests[tag]); tag++;
+                 isend(&embc->By_yvalmin_Trans, to, mpi_tag+tag, requests[tag]); tag++;
+                 isend(&embc->By_yvalmax_Trans, to, mpi_tag+tag, requests[tag]); tag++;
+                 isend(&embc->Bz_yvalmin_Trans, to, mpi_tag+tag, requests[tag]); tag++;
+                 isend(&embc->Bz_yvalmax_Trans, to, mpi_tag+tag, requests[tag]); tag++;
  
              }
          }
