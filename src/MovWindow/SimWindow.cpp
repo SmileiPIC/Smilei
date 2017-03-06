@@ -70,7 +70,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     h0 = vecPatches(0)->hindex;
     int nPatches = vecPatches.size();
     int nSpecies( vecPatches(0)->vecSpecies.size() );
-    int nmax_laser = 4;
     std::vector<Patch*> delete_patches_, update_patches_, send_patches_;
     int nmessage( vecPatches.nrequests );
 
