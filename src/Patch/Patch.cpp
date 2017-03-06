@@ -164,11 +164,9 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
         if(EMfields->emBoundCond[bcId]) {
             for (unsigned int laserId=0 ; laserId < EMfields->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
                 Laser * laser = EMfields->emBoundCond[bcId]->vecLaser[laserId];
-                if( !(laser->spacetime[0]) && !(laser->spacetime[1]) ) {
-                    LaserProfileSeparable* profile;
-                    profile = static_cast<LaserProfileSeparable*> ( laser->profiles[0] );
-                    if( profile->space_envelope ) nb_comms += 4;
-                }
+                LaserProfileSeparable* profile;
+                profile = static_cast<LaserProfileSeparable*> ( laser->profiles[0] );
+                nb_comms += 4;
             }
         }
         if ( EMfields->extFields.size()>0 ) {
@@ -221,11 +219,9 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
         if(EMfields->emBoundCond[bcId]) {
             for (unsigned int laserId=0 ; laserId < EMfields->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
                 Laser * laser = EMfields->emBoundCond[bcId]->vecLaser[laserId];
-                if( !(laser->spacetime[0]) && !(laser->spacetime[1]) ) {
-                    LaserProfileSeparable* profile;
-                    profile = static_cast<LaserProfileSeparable*> ( laser->profiles[0] );
-                    if( profile->space_envelope ) nb_comms += 4;
-                }
+                LaserProfileSeparable* profile;
+                profile = static_cast<LaserProfileSeparable*> ( laser->profiles[0] );
+                nb_comms += 4;
             }
         }
         if ( EMfields->extFields.size()>0 ) {

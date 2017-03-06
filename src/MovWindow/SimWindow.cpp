@@ -71,9 +71,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     int nPatches = vecPatches.size();
     int nSpecies( vecPatches(0)->vecSpecies.size() );
     int nmax_laser = 4;
-    int nmessage = 2*nSpecies+(2+params.nDim_particle)*vecPatches(0)->probes.size()+
-        9+vecPatches(0)->EMfields->antennas.size()+4*nmax_laser;
     std::vector<Patch*> delete_patches_, update_patches_, send_patches_;
+    int nmessage( vecPatches.nrequests );
 
     vecPatches_old.resize(nPatches);
     x_moved += cell_length_x_*params.n_space[0];

@@ -214,6 +214,8 @@ public :
     // Keep track if we need the needsRhoJsNow
     int diag_flag;
 
+    int nrequests;
+
  private :
     
     //! Methods to access readably to patch PIC operators.
