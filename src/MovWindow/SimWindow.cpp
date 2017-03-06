@@ -305,7 +305,6 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
             //... I might have to MPI send myself to the left...
             if (mypatch->MPI_neighbor_[0][0] != MPI_PROC_NULL){
                 send_patches_.push_back(mypatch); // Stores pointers to patches to be sent later 
-                cout << "sending index " << mypatch->hindex << " with tag " << (mypatch->neighbor_[0][0])*nmessage << " ymin = " << mypatch->getDomainLocalMin(1) << endl;
                 smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0] , (vecPatches_old[ipatch]->neighbor_[0][0]) * nmessage, params );
             }
         } else { //In case my left neighbor belongs to me:
@@ -342,26 +341,13 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
     //These patches are created with correct parameters.
     for (unsigned int j=0; j< patch_to_be_created.size(); j++){
     //for (int j=1; j >= 0 ; j--){
-        cout << "creating patch " << h0 + patch_to_be_created[j] << endl;
         mypatch = PatchesFactory::clone(vecPatches(0),params, smpi, h0 + patch_to_be_created[j], n_moved );
         if (mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL){
             smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], (mypatch->hindex)*nmessage, params );
-            cout << "receiving tag " << (mypatch->hindex)*nmessage << " and putting it in place " << patch_to_be_created[j] << " ymin = " << mypatch->getDomainLocalMin(1) << endl;
         }
 	mypatch->EMfields->laserDisabled();
         vecPatches.patches_[patch_to_be_created[j]] = mypatch ;
     }
-
-    //Wait for sends to be completed
-    for (int ipatch = 0 ; ipatch < nPatches ; ipatch++){ 
-        cout << "ipatch = " << ipatch << " hindex  = " << vecPatches(ipatch)->Hindex() << endl;
-        if (vecPatches_old[ipatch]->MPI_neighbor_[0][0] !=  vecPatches_old[ipatch]->MPI_me_ && vecPatches_old[ipatch]->MPI_neighbor_[0][0] != MPI_PROC_NULL){
-            cout << " old hindex " <<  vecPatches_old[ipatch]->hindex << " is waiting now" << endl;
-            smpi->waitall( vecPatches_old[ipatch] );
-        }
-    }
-    smpi->barrier();
-
 
     //Update the correct neighbor values
     for (int j=0; j < update_patches_.size(); j++){
@@ -374,10 +360,15 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
 	mypatch->neighbor_[1][1] = mypatch->tmp_neighbor_[1][1];
     }
 
+    //Wait for sends to be completed
+    for (int ipatch = 0 ; ipatch < nPatches ; ipatch++){ 
+        if (vecPatches_old[ipatch]->MPI_neighbor_[0][0] !=  vecPatches_old[ipatch]->MPI_me_ && vecPatches_old[ipatch]->MPI_neighbor_[0][0] != MPI_PROC_NULL){
+            smpi->waitall( vecPatches_old[ipatch] );
+        }
+    }
 
     for (int ipatch=0 ; ipatch<nPatches ; ipatch++){
-        //Could be applied to newly created patch only ...
-        vecPatches(ipatch)->updateMPIenv(smpi);
+        vecPatches(ipatch)->updateTagenv(smpi);
         if ( vecPatches(ipatch)->isXmin() ){
             for (int ispec=0 ; ispec<nSpecies ; ispec++)
                 vecPatches(ipatch)->vecSpecies[ispec]->setXminBoundaryCondition(); 
@@ -389,12 +380,9 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
     }
 
     //Should be useless
-    vecPatches.set_refHindex() ;
-    cout << " before list Ey[0] = " << vecPatches.listEy_[0] << " path to patch0 Ey = " << vecPatches.patches_[0]->EMfields->Ey_ << endl; ;
+    //vecPatches.set_refHindex() ;
     vecPatches.update_field_list() ;
     //update list fields for species diag too ??
-    cout << " after list Ey[0] = " << vecPatches.listEy_[0] << " path to patch0 Ey = " << vecPatches.patches_[0]->EMfields->Ey_ << endl; ;
-
 
     for (unsigned int idiag = 0 ; idiag < vecPatches.localDiags.size() ; idiag++) {
         DiagnosticProbes* diagProbes = dynamic_cast<DiagnosticProbes*>(vecPatches.localDiags[idiag]);

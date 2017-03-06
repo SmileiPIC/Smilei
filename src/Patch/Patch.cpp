@@ -265,31 +265,22 @@ Patch::~Patch() {
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute MPI rank of patch neigbors and current patch
 // ---------------------------------------------------------------------------------------------------------------------
+void Patch::updateTagenv(SmileiMPI* smpi)
+{
+    for (int iDim=0 ; iDim< (int)neighbor_.size() ; iDim++)
+        for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+            send_tags_[iDim][iNeighbor] = buildtag( hindex, iDim, iNeighbor, 5 );
+            recv_tags_[iDim][iNeighbor] = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor, 5 );
+        }
+}
 void Patch::updateMPIenv(SmileiMPI* smpi)
 {
     MPI_me_ = smpi->smilei_rk;
     
     for (int iDim = 0 ; iDim < nDim_fields_ ; iDim++)
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++){
-            if(MPI_neighbor_[iDim][iNeighbor] != smpi->hrank(neighbor_[iDim][iNeighbor])){
-                cout << "updating MPI neighbour for patch " << hindex << " from " << MPI_neighbor_[iDim][iNeighbor] << " to "<< smpi->hrank(neighbor_[iDim][iNeighbor])<< " neighbor = " << neighbor_[iDim][iNeighbor] << endl;
-            }
             MPI_neighbor_[iDim][iNeighbor] = smpi->hrank(neighbor_[iDim][iNeighbor]);
         }
-    
-//        cout << "\n\tPatch Corner decomp : " << corner_neighbor_[0][1] << "\t" << neighbor_[1][1]  << "\t" << corner_neighbor_[1][1] << endl;
-//        cout << "\tPatch Corner decomp : " << neighbor_[0][0] << "\t" << hindex << "\t" << neighbor_[0][1] << endl;
-//        cout << "\tPatch Corner decomp : " << corner_neighbor_[0][0] << "\t" << neighbor_[1][0]  << "\t" << corner_neighbor_[1][0] << endl;
-//        
-
-//        cout << "\n\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[2][1]  << "\t" << "MPI_PROC_NULL" << endl << endl;
-//
-//        cout << "\n\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[1][1]  << "\t" << "MPI_PROC_NULL" << endl;
-//        cout << "\tMPI Corner decomp : " << MPI_neighbor_[0][0] << "\t" << smpi->getRank() << "\t" << MPI_neighbor_[0][1] << endl;
-//        cout << "\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[1][0]  << "\t" << "MPI_PROC_NULL" << endl << endl;
-//
-//        cout << "\n\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[2][0]  << "\t" << "MPI_PROC_NULL" << endl;
-    
 
     for (int iDim=0 ; iDim< (int)neighbor_.size() ; iDim++)
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {

@@ -148,6 +148,7 @@ public:
     
     //! Compute MPI rank of neigbors patch regarding neigbors patch Ids
     void updateMPIenv(SmileiMPI *smpi);
+    void updateTagenv(SmileiMPI *smpi);
     
     // Test who is MPI neighbor of current patch
     inline bool is_a_MPI_neighbor(int iDim, int iNeighbor) {
