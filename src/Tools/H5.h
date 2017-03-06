@@ -25,7 +25,7 @@ class H5 {
         hid_t atype = H5Tcopy(H5T_C_S1);
         H5Tset_size(atype, attribute_value.size()+1);
         const char* tmp_var=attribute_value.c_str();
-        attr(locationId, attribute_name, tmp_var, atype);
+        attr(locationId, attribute_name, *tmp_var, atype);
         H5Tclose(atype);
     }
     
