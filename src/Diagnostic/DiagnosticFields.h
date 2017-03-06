@@ -65,7 +65,7 @@ protected :
     //! 1st patch index of vecPatches
     unsigned int refHindex;
     
-    hid_t iteration_group_id, filespace, memspace;
+    hid_t data_group_id, iteration_group_id, filespace, memspace;
     
     //! Total number of patches
     int tot_number_of_patches;
@@ -99,6 +99,12 @@ protected :
     std::vector<double> gridOffset;
     //! Units of each field
     std::vector<std::vector<double> > unitDimension;
+    //! field solver description
+    std::string fieldSolver, fieldSolverParameters;
+    //! boundary conditions names
+    std::vector<std::string> fieldBoundary, fieldBoundaryParameters, particleBoundary, particleBoundaryParameters;
+    //! current smoothing description
+    std::string currentSmoothing, currentSmoothingParameters;
     
     //! converts the boundary condition names to the openPMD format
     void em_bc(std::string, std::string&, std::string&);

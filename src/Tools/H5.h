@@ -23,9 +23,9 @@ class H5 {
     //! write a string as an attribute
     static void attr(hid_t locationId, std::string attribute_name, std::string attribute_value) {
         hid_t atype = H5Tcopy(H5T_C_S1);
-        H5Tset_size(atype, H5T_VARIABLE);
+        H5Tset_size(atype, attribute_value.size()+1);
         const char* tmp_var=attribute_value.c_str();
-        attr(locationId, attribute_name, tmp_var, atype);
+        attr(locationId, attribute_name, *tmp_var, atype);
         H5Tclose(atype);
     }
     

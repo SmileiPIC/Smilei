@@ -9,6 +9,7 @@ using namespace std;
 DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, int ndiag )
 {
     fileId_ = 0;
+    data_group_id = 0;
     tmp_dset_id = 0;
     diag_n = ndiag;
     timestep = params.timestep;
@@ -171,37 +172,35 @@ void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         fileId_  = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
         H5Pclose(pid);
         
-        // Attributes for smilei
-        //! \todo use openPMD attributes instead
-        vector<double> my_cell_length=params.cell_length;
-        my_cell_length.resize(params.nDim_field);
-        H5::attr(fileId_, "res_time"    , params.res_time);
-        H5::attr(fileId_, "res_space"   , params.res_space);
-        H5::attr(fileId_, "cell_length" , my_cell_length);
-        H5::attr(fileId_, "sim_length"  , params.sim_length);
-        
         // Attributes for openPMD
 //        uint32_t extension = 1; // ED-PIC extension. Not supported yet
-        uint32_t extension = 0; // ED-PIC extension. Not supported yet
+        uint32_t extension = 0;
         H5::attr( fileId_, "openPMDextension", extension, H5T_NATIVE_UINT32);
         H5::attr( fileId_, "openPMD", "1.0.0");
-        H5::attr( fileId_, "basePath", "/%T/");
+        H5::attr( fileId_, "basePath", "/data/%T/");
         H5::attr( fileId_, "meshesPath", "");
         H5::attr( fileId_, "particlesPath", "");
         H5::attr( fileId_, "software", "Smilei");
         H5::attr( fileId_, "softwareVersion", __VERSION);
         H5::attr( fileId_, "date", params.getLocalTime());
         H5::attr( fileId_, "iterationEncoding", "groupBased");
-        H5::attr( fileId_, "iterationFormat", "/%T/");
+        H5::attr( fileId_, "iterationFormat", "/data/%T/");
+        
+        // Make main "data" group where everything will be stored (required by openPMD)
+        data_group_id = H5::group( fileId_, "data" );
+        
+        // Prepare some attributes for openPMD compatibility
+        fieldSolverParameters = "";
         if       ( params.maxwell_sol == "Yee" ) {
-            H5::attr( fileId_, "fieldSolver", "Yee");
+            fieldSolver = "Yee";
         } else if( params.maxwell_sol == "Lehe" ) {
-            H5::attr( fileId_, "fieldSolver", "Lehe");
+            fieldSolver = "Lehe";
         } else {
-            H5::attr( fileId_, "fieldSolver", "other");
-            H5::attr( fileId_, "fieldSolverParameters", params.maxwell_sol);
+            fieldSolver = "other";
+            fieldSolverParameters = params.maxwell_sol;
         }
-        vector<string> fieldBoundary(params.nDim_field * 2), fieldBoundaryParameters(params.nDim_field * 2);
+        fieldBoundary.resize(params.nDim_field * 2);
+        fieldBoundaryParameters.resize(params.nDim_field * 2);
         em_bc(params.bc_em_type_x[0], fieldBoundary[0], fieldBoundaryParameters[0]);
         em_bc(params.bc_em_type_x[1], fieldBoundary[1], fieldBoundaryParameters[1]);
         if( params.nDim_field > 1 ) {
@@ -212,24 +211,16 @@ void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, bool newfile )
                 em_bc(params.bc_em_type_z[1], fieldBoundary[5], fieldBoundaryParameters[5]);
             }
         }
-        H5::attr( fileId_, "fieldBoundary", fieldBoundary);
-        H5::attr( fileId_, "fieldBoundaryParameters", fieldBoundaryParameters);
-        vector<string> particleBoundary(params.nDim_field * 2, ""), particleBoundaryParameters(params.nDim_field * 2, "");
-        H5::attr( fileId_, "particleBoundary", particleBoundary);
-        H5::attr( fileId_, "particleBoundaryParameters", particleBoundaryParameters);
+        particleBoundary.resize(params.nDim_field * 2, "");
+        particleBoundaryParameters.resize(params.nDim_field * 2, "");
+        currentSmoothing = "none";
+        currentSmoothingParameters = "";
         if( params.currentFilter_int > 0 ) {
-            H5::attr( fileId_, "currentSmoothing", "Binomial");
+            currentSmoothing = "Binomial";
             ostringstream t("");
             t << "numPasses="<<params.currentFilter_int;
-            H5::attr( fileId_, "currentSmoothingParameters", t.str());
-        } else {
-            H5::attr( fileId_, "currentSmoothing", "none");
-            H5::attr( fileId_, "currentSmoothingParameters", "");
+            currentSmoothingParameters = t.str();
         }
-        H5::attr( fileId_, "chargeCorrection", "none");
-        H5::attr( fileId_, "chargeCorrectionParameters", "");
-        H5::attr( fileId_, "fieldSmoothing", "none");
-        H5::attr( fileId_, "fieldSmoothingParameters", "");
     }
     else {
         // Open the existing file
@@ -237,6 +228,7 @@ void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
         fileId_ = H5Fopen( filename.c_str(), H5F_ACC_RDWR, pid );
         H5Pclose(pid);
+        data_group_id = H5Gopen( fileId_, "data", H5P_DEFAULT );
     }
 }
 
@@ -250,6 +242,8 @@ void DiagnosticFields::closeFile()
     if ( memspace            >0 ) H5Sclose( memspace );
     if ( tmp_dset_id         >0 ) H5Dclose( tmp_dset_id );
     
+    if( data_group_id>0 ) H5Gclose( data_group_id );
+    data_group_id = 0;
     if( fileId_>0 ) H5Fclose( fileId_ );
     fileId_ = 0;
 }
@@ -300,16 +294,29 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime 
         // Create group for this iteration
         ostringstream name_t;
         name_t.str("");
-        name_t << "/" << setfill('0') << setw(10) << itime;
-        status = H5Lexists(fileId_, name_t.str().c_str(), H5P_DEFAULT);
+        name_t << setfill('0') << setw(10) << itime;
+        status = H5Lexists(data_group_id, name_t.str().c_str(), H5P_DEFAULT);
         if( status==0 )
-           iteration_group_id = H5::group(fileId_, name_t.str().c_str());
+           iteration_group_id = H5::group(data_group_id, name_t.str().c_str());
         // Warning if file unreachable
         if( status < 0 ) WARNING("Fields diagnostics could not write");
-        // Add openPMD attributes
-        H5::attr(iteration_group_id, "time", (double)(itime*timestep));
-        H5::attr(iteration_group_id, "dt", (double)timestep);
-        H5::attr(iteration_group_id, "timeUnitSI", 0.); // not relevant
+        // Add openPMD attributes ( "basePath" )
+        H5::attr( iteration_group_id, "time", (double)(itime*timestep));
+        H5::attr( iteration_group_id, "dt", (double)timestep);
+        H5::attr( iteration_group_id, "timeUnitSI", 0.); // not relevant
+        // Add openPMD attributes ( "meshesPath" )
+        H5::attr( iteration_group_id, "fieldSolver", fieldSolver);
+        H5::attr( iteration_group_id, "fieldSolverParameters", fieldSolverParameters);
+        H5::attr( iteration_group_id, "fieldBoundary", fieldBoundary);
+        H5::attr( iteration_group_id, "fieldBoundaryParameters", fieldBoundaryParameters);
+        H5::attr( iteration_group_id, "particleBoundary", particleBoundary);
+        H5::attr( iteration_group_id, "particleBoundaryParameters", particleBoundaryParameters);
+        H5::attr( iteration_group_id, "currentSmoothing", currentSmoothing);
+        H5::attr( iteration_group_id, "currentSmoothingParameters", currentSmoothingParameters);
+        H5::attr( iteration_group_id, "chargeCorrection", "none");
+        H5::attr( iteration_group_id, "chargeCorrectionParameters", "");
+        H5::attr( iteration_group_id, "fieldSmoothing", "none");
+        H5::attr( iteration_group_id, "fieldSmoothingParameters", "");
     }
     #pragma omp barrier
     

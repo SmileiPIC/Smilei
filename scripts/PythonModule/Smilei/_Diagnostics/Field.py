@@ -34,9 +34,9 @@ class Field(Diagnostic):
 			except:
 				self._error = "Diagnostic not loaded: Could not open '"+file+"'"
 				return
-			self._h5items.update( dict(f) )
+			self._h5items.update( dict(f["data"]) )
 			# Select only the fields that are common to all simulations
-			values = f.values()
+			values = f["data"].values()
 			if len(values)==0:
 				self._fields = []
 			elif len(self._fields)==0:
@@ -46,7 +46,7 @@ class Field(Diagnostic):
 		# Remove "tmp" dataset
 		if "tmp" in self._h5items: del self._h5items["tmp"]
 		# Converted to ordered list
-		self._h5items = sorted(self._h5items.values(), key=lambda x:int(x.name[1:]))
+		self._h5items = sorted(self._h5items.values(), key=lambda x:int(x.name[6:]))
 		
 		# If no field selected, print available fields and leave
 		if field is None:
@@ -211,7 +211,7 @@ class Field(Diagnostic):
 	
 	# get all available timesteps
 	def getAvailableTimesteps(self):
-		try:    times = [float(a.name[1:]) for a in self._h5items]
+		try:    times = [float(a.name[6:]) for a in self._h5items]
 		except: times = []
 		return self._np.double(times)
 	
@@ -285,8 +285,8 @@ class Field(Diagnostic):
 				f.write('		</DataItem>\n')
 			f.write('		<Grid GridType="Collection" CollectionType="Temporal">\n')
 			for item in self._h5items:
-				f.write('			<Grid Name="Timestep_'+str(item.name[1:])+'" GridType="Uniform">\n')
-				f.write('				<Time Value="'+str(float(item.name[1:])*self.timestep)+'"/>\n')
+				f.write('			<Grid Name="Timestep_'+str(item.name[6:])+'" GridType="Uniform">\n')
+				f.write('				<Time Value="'+str(float(item.name[6:])*self.timestep)+'"/>\n')
 				f.write(topology)
 				f.write(geometry)
 				for dim in range(self._ndim):
