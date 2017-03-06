@@ -256,6 +256,8 @@ public:
             thisSpecies->createParticles(params.n_space, params, patch, 0 );
             
         }
+        else
+            thisSpecies->particles->initialize( 0, params.nDim_particle );
         
         thisSpecies->initOperators(params, patch);
         

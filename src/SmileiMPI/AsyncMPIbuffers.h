@@ -16,7 +16,7 @@ public:
 
     virtual void allocate(unsigned int nDim_field);
 
-    virtual void allocate(int nDim_field, Field* f);
+    virtual void allocate(unsigned int nDim_field, Field* f);
     void defineTags(Patch* patch, int tag ) ;
     
     //! ndim vectors of 2 sent requests (1 per direction) 

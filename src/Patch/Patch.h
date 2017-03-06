@@ -112,7 +112,7 @@ public:
     virtual void initExchange( Field* field, int iDim ) = 0;
     //! finalize comm / exchange fields in direction iDim only
     virtual void finalizeExchange( Field* field, int iDim ) = 0;
-
+    
     // Create MPI_Datatype to exchange fields
     virtual void createType( Params& params ) = 0;
     virtual void cleanType() = 0;
@@ -138,7 +138,7 @@ public:
     inline bool isZmin() { return locateOnBorders(2, 0); }
     //! Should be pure virtual, see child classes
     inline bool isZmax() { return locateOnBorders(2, 1); }
-
+    
     //! Test neighbbor's patch Id to apply or not a boundary condition
     inline bool locateOnBorders(int dir, int way) {
     if ( neighbor_[dir][way] == MPI_PROC_NULL )
@@ -148,14 +148,14 @@ public:
     
     //! Compute MPI rank of neigbors patch regarding neigbors patch Ids
     void updateMPIenv(SmileiMPI *smpi);
+    void updateTagenv(SmileiMPI *smpi);
     
     // Test who is MPI neighbor of current patch
     inline bool is_a_MPI_neighbor(int iDim, int iNeighbor) {
     return( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (MPI_neighbor_[iDim][iNeighbor]!=MPI_me_) );
     }
-
+    
     inline bool has_an_MPI_neighbor() {
-        bool has(false);
         for ( unsigned int iDim=0 ; iDim<MPI_neighbor_.size() ; iDim++ ) {
             if ( ( MPI_neighbor_[iDim][0] != MPI_me_ ) &&  ( MPI_neighbor_[iDim][0]!= MPI_PROC_NULL ) )
                 return true;
@@ -164,9 +164,8 @@ public:
         }
         return false;
     }
-
+    
     inline bool has_an_MPI_neighbor(int iDim) {
-        bool has(false);
         {
             if ( ( MPI_neighbor_[iDim][0] != MPI_me_ ) &&  ( MPI_neighbor_[iDim][0]!= MPI_PROC_NULL ) )
                 return true;
@@ -175,9 +174,8 @@ public:
         }
         return false;
     }
-
+    
     inline bool has_an_local_neighbor(int iDim) {
-        bool has(false);
         {
             if ( ( MPI_neighbor_[iDim][0] == MPI_me_ ) &&  ( MPI_neighbor_[iDim][0]!= MPI_PROC_NULL ) )
                 return true;
@@ -186,7 +184,7 @@ public:
         }
         return false;
     }
-
+    
     
     //! Return real (excluding oversize) min coordinates (ex : rank 0 returns 0.) for direction i
     //! @see min_local
@@ -245,6 +243,10 @@ public:
     std::vector<double> center;
     //! The patch geometrical maximal radius (from its center)
     double radius;
+
+    std::vector<MPI_Request> requests_;
+    
+
     
 protected:
     // Complementary members for the description of the geometry
@@ -257,16 +259,14 @@ protected:
     int nbNeighbors_;
     
     //! Hilbert index of neighbors patch
-    std::vector< std::vector<int> > neighbor_;
-    //! Hilbert index of corners neighbors patch
-    std::vector< std::vector<int> > corner_neighbor_; // Kept for Moving Windows
-
+    std::vector< std::vector<int> > neighbor_, tmp_neighbor_;
+    //! send and receive tags
     std::vector< std::vector<int> > send_tags_, recv_tags_;
 
     
     //! MPI rank of neighbors patch
-    std::vector< std::vector<int> > MPI_neighbor_;
-    
+    std::vector< std::vector<int> > MPI_neighbor_, tmp_MPI_neighbor_;
+
     //! "Real" min limit of local sub-subdomain (ghost data not concerned)
     //!     - "0." on rank 0
     std::vector<double> min_local;
@@ -278,7 +278,7 @@ protected:
     std::vector<int> cell_starting_global_index;
     
     std::vector<unsigned int> oversize;
-    
+
     
 };
 

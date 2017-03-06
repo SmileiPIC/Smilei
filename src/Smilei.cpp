@@ -102,9 +102,10 @@ int main (int argc, char* argv[])
         
         double restart_time_dual = (checkpoint.this_run_start_step +0.5) * params.timestep;
         time_dual = restart_time_dual;
-        //! \todo a revoir
-        if ( simWindow->isMoving(restart_time_dual) ) {
-            simWindow->operate(vecPatches, smpi, params);
+        if ( simWindow ) {
+            if ( simWindow->isMoving(restart_time_dual) ) {
+                simWindow->operate(vecPatches, smpi, params);
+            }
         }
         //smpi->recompute_patch_count( params, vecPatches, restart_time_dual );
         

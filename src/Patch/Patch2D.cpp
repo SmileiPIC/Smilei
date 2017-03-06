@@ -65,20 +65,6 @@ void Patch2D::initStep2(Params& params)
     ycall = Pcoordinates[1]+1;
     if (params.bc_em_type_y[0]=="periodic" && ycall >= (1<<params.mi[1])) ycall -= (1<<params.mi[1]);
     neighbor_[1][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-    
-    // Corners
-    //xcall = Pcoordinates[0]+1;
-    //if (params.bc_em_type_x[0]=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
-    //corner_neighbor_[1][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-    xcall = Pcoordinates[0]-1;
-    if (params.bc_em_type_x[0]=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
-    corner_neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-    ycall = Pcoordinates[1]-1;
-    if (params.bc_em_type_y[0]=="periodic" && ycall < 0) ycall += (1<<params.mi[1]);
-    corner_neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-    //xcall = Pcoordinates[0]+1;
-    //if (params.bc_em_type_x[0]=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
-    //corner_neighbor_[1][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
 
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
         for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
@@ -422,6 +408,9 @@ void Patch2D::finalizeExchange( Field* field, int iDim )
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch2D::createType( Params& params )
 {
+    if (ntype_[0][0][0] != MPI_DATATYPE_NULL)
+        return;
+
     int nx0 = params.n_space[0] + 1 + 2*params.oversize[0];
     int ny0 = params.n_space[1] + 1 + 2*params.oversize[1];
     unsigned int clrw = params.clrw;

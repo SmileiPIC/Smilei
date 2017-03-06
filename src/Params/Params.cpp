@@ -1,18 +1,18 @@
+#include <algorithm>
+#include <cmath>
+#include <ctime>
+#include <iomanip>
+
 #include "PyTools.h"
 #include "Params.h"
 #include "Species.h"
-#include <cmath>
-#include <iomanip>
 #include "Tools.h"
 #include "SmileiMPI.h"
+#include "H5.h"
 
 #include "pyinit.pyh"
 #include "pyprofiles.pyh"
 #include "pycontrol.pyh"
-
-#include "H5.h"
-
-#include <algorithm>
 
 using namespace std;
 
@@ -23,10 +23,12 @@ Params::Params(SmileiMPI* smpi, std::vector<std::string> namelistsFiles) :
 namelist("")
 {
     
+    MESSAGE("HDF5 version "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
+    
     if((((H5_VERS_MAJOR==1) && (H5_VERS_MINOR==8) && (H5_VERS_RELEASE>16)) || \
         ((H5_VERS_MAJOR==1) && (H5_VERS_MINOR>8)) || \
         (H5_VERS_MAJOR>1))) {
-        WARNING("Smilei suggests using hdf5 version 1.8.16. You're using "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
+        WARNING("Smilei suggests using HDF5 version 1.8.16");
         WARNING("Newer version are not tested and may cause the code to behave incorrectly");
         WARNING("See http://hdf-forum.184993.n3.nabble.com/Segmentation-fault-using-H5Dset-extent-in-parallel-td4029082.html");
     }
@@ -599,4 +601,15 @@ void Params::cleanup(SmileiMPI* smpi) {
     smpi->barrier();
 }
 
+// WARNING: do not change the format. It is required for OpenPMD compatibility.
+string Params::getLocalTime() {
+    time_t t = time(0);
+    struct tm * now = localtime( & t );
+    char buffer[25];
+    
+    strftime(buffer, 25, "%Y-%m-%d %H:%M:%S %z", now);
+
+    string s(buffer, 25);
+    return s;
+}
 

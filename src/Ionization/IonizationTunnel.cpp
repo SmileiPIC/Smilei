@@ -158,7 +158,7 @@ void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields 
     if (E!=0) {
         
         invE = 1./E;
-        double factorJion = au_to_mec2 * invdt*invE*invE;
+        double factorJion = au_to_mec2 * EC_to_au*EC_to_au * invdt*invE*invE;
         double delta      = gamma_tunnel[Z]*invE;
         double ran_p = (double)rand() / RAND_MAX;
         static vector<double> IonizRate_tunnel(atomic_number_);

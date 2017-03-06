@@ -167,8 +167,8 @@ void Patch1D::finalizeSumField( Field* field, int iDim )
         int istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim]- oversize2[iDim] ) + (1-(iNeighbor+1)%2) * ( 0 );
         int ix0 = (1-iDim)*istart;
         if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-            int tmp = f1D->MPIbuff.buf[iDim][(iNeighbor+1)%2].size();
-            for (unsigned int ix=0 ; ix< tmp ; ix++) {
+            unsigned int tmp = f1D->MPIbuff.buf[iDim][(iNeighbor+1)%2].size();
+            for (unsigned int ix=0 ; ix<tmp ; ix++) {
                 f1D->data_[ix0+ix] += f1D->MPIbuff.buf[iDim][(iNeighbor+1)%2][ix];
             }
         } // END if
@@ -333,6 +333,9 @@ void Patch1D::finalizeExchange( Field* field, int iDim )
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch1D::createType( Params& params )
 {
+    if (ntype_[0][0] != MPI_DATATYPE_NULL)
+        return;
+
     unsigned int clrw = params.clrw;
     
     // MPI_Datatype ntype_[nDim][primDual]

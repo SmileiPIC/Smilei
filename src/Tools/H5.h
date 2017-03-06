@@ -17,36 +17,37 @@ class H5 {
     //! Make an empty group
     // Returns the group ID
     static hid_t group(hid_t locationId, std::string group_name) {
-        
         return H5Gcreate(locationId, group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     }
     
     //! write a string as an attribute
     static void attr(hid_t locationId, std::string attribute_name, std::string attribute_value) {
         hid_t atype = H5Tcopy(H5T_C_S1);
-        H5Tset_size(atype, attribute_value.size());
-        H5Tset_strpad(atype,H5T_STR_NULLTERM);
-        
-        attr(locationId, attribute_name, *(attribute_value.c_str()), atype);
-        
+        H5Tset_size(atype, attribute_value.size()+1);
+        const char* tmp_var=attribute_value.c_str();
+        attr(locationId, attribute_name, *tmp_var, atype);
         H5Tclose(atype);
     }
     
     //! write an unsigned int as an attribute
     static void attr(hid_t locationId, std::string attribute_name, unsigned int attribute_value) {
-        attr(locationId, attribute_name, attribute_value, H5T_NATIVE_UINT);}
+        attr(locationId, attribute_name, attribute_value, H5T_NATIVE_UINT);
+    }
     
     //! write size_t as an attribute
     static void attr(hid_t locationId, std::string attribute_name, size_t attribute_value) {
-        attr(locationId, attribute_name, (unsigned int) attribute_value);}
+        attr(locationId, attribute_name, (unsigned int) attribute_value);
+    }
     
     //! write an int as an attribute
     static void attr(hid_t locationId, std::string attribute_name, int attribute_value) {
-        attr(locationId, attribute_name, attribute_value, H5T_NATIVE_INT);}
+        attr(locationId, attribute_name, attribute_value, H5T_NATIVE_INT);
+    }
     
     //! write a double as an attribute
     static void attr(hid_t locationId, std::string attribute_name, double attribute_value) {
-        attr(locationId, attribute_name, attribute_value, H5T_NATIVE_DOUBLE);}
+        attr(locationId, attribute_name, attribute_value, H5T_NATIVE_DOUBLE);
+    }
     
     //! write anything as an attribute
     template<class T>
@@ -58,19 +59,7 @@ class H5 {
         H5Aclose(aid);
     }
     
-    
-    //! write a vector<anything> as an attribute
-    template<class T>
-    static void attr(hid_t locationId, std::string attribute_name, std::vector<T>& attribute_value, hid_t type) {
-        hsize_t dims = attribute_value.size();
-        hid_t sid = H5Screate_simple(1, &dims, NULL);
-        hid_t aid = H5Acreate (locationId, attribute_name.c_str(), type, sid, H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(aid, type, &(attribute_value[0]));
-        H5Aclose(aid);
-        H5Sclose(sid);        
-    }
-    
-    //! write an vector<unsigned int> as an attribute
+    //! write a vector<unsigned int> as an attribute
     static void attr(hid_t locationId, std::string attribute_name, std::vector<unsigned int> attribute_value) {
         attr(locationId, attribute_name, attribute_value, H5T_NATIVE_UINT);
     }
@@ -80,6 +69,33 @@ class H5 {
         attr(locationId, attribute_name, attribute_value, H5T_NATIVE_DOUBLE);
     }
     
+    //! write a vector<string> as an attribute
+    static void attr(hid_t locationId, std::string attribute_name, std::vector<std::string> attribute_value) {
+        std::vector<const char*> tmp_vec(attribute_value.size(),nullptr);
+        for (unsigned int i=0; i<attribute_value.size();i++) {
+            tmp_vec[i] = attribute_value[i].c_str();
+        }
+        attr(locationId, attribute_name, tmp_vec);
+    }
+    
+    //! write a vector<const char*> as an attribute
+    static void attr(hid_t locationId, std::string attribute_name, std::vector<const char*> attribute_value) {
+        hid_t atype = H5Tcopy(H5T_C_S1);
+        H5Tset_size(atype, H5T_VARIABLE);
+        attr(locationId, attribute_name, attribute_value, atype);
+        H5Tclose(atype);
+    }
+    
+    //! write a vector<anything> as an attribute
+    template<class T>
+    static void attr(hid_t locationId, std::string attribute_name, std::vector<T>& attribute_value, hid_t type) {
+        hsize_t dims = attribute_value.size();
+        hid_t sid = H5Screate_simple(1, &dims, NULL);
+        hid_t aid = H5Acreate (locationId, attribute_name.c_str(), type, sid, H5P_DEFAULT, H5P_DEFAULT);
+        H5Awrite(aid, type, &(attribute_value[0]));
+        H5Aclose(aid);
+        H5Sclose(sid);
+    }
     
     //READ ATTRIBUTES
     
@@ -98,31 +114,32 @@ class H5 {
         getAttr(locationId, attribute_name, attribute_value, H5T_NATIVE_INT);
     }
     
-    //! retrieve a string attribute
+    //! retrieve a string attribute (specialized)
     static void getAttr(hid_t locationId, std::string attribute_name, std::string &attribute_value) {
         if (H5Aexists(locationId,attribute_name.c_str())>0) {
-            hid_t attr_id = H5Aopen_name(locationId, attribute_name.c_str());
-            hid_t attr_type = H5Aget_type(attr_id);
+            hid_t aid = H5Aopen_name(locationId, attribute_name.c_str());
+            hid_t attr_type = H5Aget_type(aid);
             int sdim = H5Tget_size(attr_type);
             hid_t mem_type = H5Tcopy(H5T_C_S1);
             H5Tset_size(mem_type, sdim);
             std::vector<char> tmpchar(sdim);
             // line below would crash (don't know why)
             // char* tmpchar= new char(sdim);
-            if (H5Aread(attr_id, mem_type, &tmpchar[0]) < 0) {
+            if (H5Aread(aid, mem_type, &tmpchar[0]) < 0) {
                 WARNING("Can't read string "<< attribute_name);
             } else {
                 attribute_value = std::string(tmpchar.begin(),tmpchar.end());
             }
+            DEBUG(attribute_name << " >" << attribute_value << "< " << sdim);
             H5Tclose(mem_type);
             H5Tclose(attr_type);
-            H5Aclose(attr_id);
+            H5Aclose(aid);
         } else {
             WARNING("Cannot find attribute " << attribute_name);
         }
     }
     
-    //! retrieve anything as an attribute
+    //! retrieve anything (but string) as an attribute
     template<class T>
     static void getAttr(hid_t locationId, std::string attribute_name, T &attribute_value, hid_t type) {
         if (H5Aexists(locationId,attribute_name.c_str())>0) {

@@ -67,19 +67,21 @@ public:
     //     - during moving window
     // -----------------------------------
     void isend(Patch* patch, int to  , int hindex, Params& params);
+    void waitall(Patch* patch);
     void recv (Patch* patch, int from, int hindex, Params& params);
     
-    void isend(Particles* particles, int to   , int hindex, MPI_Datatype datatype);
+    void isend(Particles* particles, int to   , int hindex, MPI_Datatype datatype, MPI_Request& request);
     void recv (Particles* partictles, int from, int hindex, MPI_Datatype datatype);
-    void isend(std::vector<int>* vec, int to  , int hindex);
+    void isend(std::vector<int>* vec, int to  , int hindex, MPI_Request& request);
     void recv (std::vector<int> *vec, int from, int hindex);
 
-    void isend(std::vector<double>* vec, int to  , int hindex);
+    void isend(std::vector<double>* vec, int to  , int hindex, MPI_Request& request);
     void recv (std::vector<double> *vec, int from, int hindex);
 
-    void isend(ElectroMagn* fields, int to  , int hindex);
+    void isend(ElectroMagn* fields, int to  , int maxtag, std::vector<MPI_Request>& requests, int mpi_tag);
     void recv (ElectroMagn* fields, int from, int hindex);
-    void isend(Field* field, int to  , int hindex);
+    void isend(Field* field, int to  , int hindex, MPI_Request& request);
+
     void recv (Field* field, int from, int hindex);
     void isend( ProbeParticles* probe, int to  , int hindex, unsigned int );
     void recv ( ProbeParticles* probe, int from, int hindex, unsigned int );

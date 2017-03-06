@@ -137,9 +137,9 @@ void Species::initOperators(Params& params, Patch* patch)
     
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond(params, this, patch);
-
-    for (int iDim=0 ; iDim < nDim_particle ; iDim++){
-        for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+    
+    for (unsigned int iDim=0 ; iDim < nDim_particle ; iDim++){
+        for (unsigned int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
             MPIbuff.partRecv[iDim][iNeighbor].initialize(0, (*particles));
             MPIbuff.partSend[iDim][iNeighbor].initialize(0, (*particles));
             MPIbuff.part_index_send[iDim][iNeighbor].resize(0);
@@ -462,11 +462,11 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             //Ionization
             if (Ionize){                                
                 for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                    // Do the ionization (!for testParticles)
+                    //!todo Check if this is still necessary
+                    Jion.x=0.;
+                    Jion.y=0.;
+                    Jion.z=0.;
                     if ( (*particles).charge(iPart) < (int) atomic_number) {
-                        Jion.x=0.;
-                        Jion.y=0.;
-                        Jion.z=0.;
                         (*Ionize)(*particles, iPart, (*Epart)[iPart], Jion);
                         (*Proj)(EMfields->Jx_, EMfields->Jy_, EMfields->Jz_, *particles, iPart, Jion);
                     }

@@ -28,13 +28,13 @@
 #include "SpeciesFactory.h"
 #include "Particles.h"
 #include "ElectroMagnFactory.h"
+#include "ElectroMagnBC_Factory.h"
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
 #include "DiagnosticFactory.h"
 #include "CollisionsFactory.h"
 
 using namespace std;
-
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Patch constructor :
@@ -63,7 +63,6 @@ Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch,
     
 }
 
-
 void Patch::initStep1(Params& params)
 {
     // for nDim_fields = 1 : bug if Pcoordinates.size = 1 !! 
@@ -77,18 +76,20 @@ void Patch::initStep1(Params& params)
     
     nbNeighbors_ = 2;
     neighbor_.resize(nDim_fields_);
-    corner_neighbor_.resize(params.nDim_field);
+    tmp_neighbor_.resize(nDim_fields_);
     send_tags_.resize(nDim_fields_);
     recv_tags_.resize(nDim_fields_);
     for ( int iDim = 0 ; iDim < nDim_fields_ ; iDim++ ) {
         neighbor_[iDim].resize(2,MPI_PROC_NULL);
-        corner_neighbor_[iDim].resize(2,MPI_PROC_NULL);
+        tmp_neighbor_[iDim].resize(2,MPI_PROC_NULL);
         send_tags_[iDim].resize(2,MPI_PROC_NULL);
         recv_tags_[iDim].resize(2,MPI_PROC_NULL);
     }
     MPI_neighbor_.resize(nDim_fields_);
+    tmp_MPI_neighbor_.resize(nDim_fields_);
     for ( int iDim = 0 ; iDim < nDim_fields_; iDim++ ) {
         MPI_neighbor_[iDim].resize(2,MPI_PROC_NULL);
+        tmp_MPI_neighbor_[iDim].resize(2,MPI_PROC_NULL);
     }
     
     oversize.resize( nDim_fields_ );
@@ -121,8 +122,8 @@ void Patch::initStep3( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
     min_local[0] += n_moved*params.cell_length[0];
     max_local[0] += n_moved*params.cell_length[0];
     center   [0] += n_moved*params.cell_length[0];
-}
 
+}
 
 void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
     // initialize vector of Species (virtual)
@@ -147,6 +148,36 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
     
     if (has_an_MPI_neighbor())
         createType(params);
+
+
+    int nb_comms(9); // E, B, B_m : min number of comms
+    nb_comms += 2*vecSpecies.size();
+
+    // Just apply on species & fields to start
+
+    for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++) {
+        nb_comms += EMfields->allFields_avg[idiag].size();
+    }
+    nb_comms += EMfields->antennas.size();
+ 
+    for (unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
+        if(EMfields->emBoundCond[bcId]) {
+            for (unsigned int laserId=0 ; laserId < EMfields->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
+                Laser * laser = EMfields->emBoundCond[bcId]->vecLaser[laserId];
+                LaserProfileSeparable* profile;
+                profile = static_cast<LaserProfileSeparable*> ( laser->profiles[0] );
+                nb_comms += 4;
+            }
+        }
+        if ( EMfields->extFields.size()>0 ) {
+            if (dynamic_cast<ElectroMagnBC1D_SM*>(EMfields->emBoundCond[bcId]) )
+                nb_comms += 4;
+            else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EMfields->emBoundCond[bcId]) )
+                nb_comms += 12;
+        }
+    }
+    requests_.resize( nb_comms, MPI_REQUEST_NULL );
+
 }
 
 
@@ -173,8 +204,36 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
     
     if (has_an_MPI_neighbor())
         createType(params);
-}
 
+    int nb_comms(9); // E, B, B_m : min number of comms
+    nb_comms += 2*vecSpecies.size();
+
+    // Just apply on species & fields to start
+
+    for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++) {
+        nb_comms += EMfields->allFields_avg[idiag].size();
+    }
+    nb_comms += EMfields->antennas.size();
+ 
+    for (unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
+        if(EMfields->emBoundCond[bcId]) {
+            for (unsigned int laserId=0 ; laserId < EMfields->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
+                Laser * laser = EMfields->emBoundCond[bcId]->vecLaser[laserId];
+                LaserProfileSeparable* profile;
+                profile = static_cast<LaserProfileSeparable*> ( laser->profiles[0] );
+                nb_comms += 4;
+            }
+        }
+        if ( EMfields->extFields.size()>0 ) {
+            if (dynamic_cast<ElectroMagnBC1D_SM*>(EMfields->emBoundCond[bcId]) )
+                nb_comms += 4;
+            else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EMfields->emBoundCond[bcId]) )
+                nb_comms += 12;
+        }
+    }
+    requests_.resize( nb_comms, MPI_REQUEST_NULL );
+
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Delete Patch members
@@ -200,27 +259,22 @@ Patch::~Patch() {
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute MPI rank of patch neigbors and current patch
 // ---------------------------------------------------------------------------------------------------------------------
+void Patch::updateTagenv(SmileiMPI* smpi)
+{
+    for (int iDim=0 ; iDim< (int)neighbor_.size() ; iDim++)
+        for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+            send_tags_[iDim][iNeighbor] = buildtag( hindex, iDim, iNeighbor, 5 );
+            recv_tags_[iDim][iNeighbor] = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor, 5 );
+        }
+}
 void Patch::updateMPIenv(SmileiMPI* smpi)
 {
     MPI_me_ = smpi->smilei_rk;
     
     for (int iDim = 0 ; iDim < nDim_fields_ ; iDim++)
-        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++)
+        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++){
             MPI_neighbor_[iDim][iNeighbor] = smpi->hrank(neighbor_[iDim][iNeighbor]);
-    
-//        cout << "\n\tPatch Corner decomp : " << corner_neighbor_[0][1] << "\t" << neighbor_[1][1]  << "\t" << corner_neighbor_[1][1] << endl;
-//        cout << "\tPatch Corner decomp : " << neighbor_[0][0] << "\t" << hindex << "\t" << neighbor_[0][1] << endl;
-//        cout << "\tPatch Corner decomp : " << corner_neighbor_[0][0] << "\t" << neighbor_[1][0]  << "\t" << corner_neighbor_[1][0] << endl;
-//        
-
-//        cout << "\n\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[2][1]  << "\t" << "MPI_PROC_NULL" << endl << endl;
-//
-//        cout << "\n\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[1][1]  << "\t" << "MPI_PROC_NULL" << endl;
-//        cout << "\tMPI Corner decomp : " << MPI_neighbor_[0][0] << "\t" << smpi->getRank() << "\t" << MPI_neighbor_[0][1] << endl;
-//        cout << "\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[1][0]  << "\t" << "MPI_PROC_NULL" << endl << endl;
-//
-//        cout << "\n\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[2][0]  << "\t" << "MPI_PROC_NULL" << endl;
-    
+        }
 
     for (int iDim=0 ; iDim< (int)neighbor_.size() ; iDim++)
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
