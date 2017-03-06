@@ -62,6 +62,7 @@ public:
             }
             vecPatches.patches_[ipatch] = clone(vecPatches(0), params, smpi, firstpatch + ipatch);
         }
+        vecPatches.nrequests = vecPatches(0)->requests_.size();
         MESSAGE(1,"All patches created");
         // print number of particles
         vecPatches.printNumberOfParticles( smpi );

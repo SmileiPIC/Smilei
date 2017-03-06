@@ -63,12 +63,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     // Store current number of patch on current MPI process
     // Don't move during this process
     int nPatches( vecPatches.size() );
-    int nSpecies  ( vecPatches(0)->vecSpecies.size() );
-    //int nmessage = 14+2*nSpecies;
-    int nmax_laser = 4;
-    int nmessage = 2*nSpecies+(2+params.nDim_particle)*vecPatches(0)->probes.size()+
-        9+vecPatches(0)->EMfields->antennas.size()+4*nmax_laser;
-    
+    int nSpecies( vecPatches(0)->vecSpecies.size() );
+    int nmessage( vecPatches.nrequests );
+
     double energy_field_lost(0.);
     vector<double> energy_part_lost( vecPatches(0)->vecSpecies.size(), 0. );
 

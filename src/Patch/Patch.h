@@ -242,6 +242,10 @@ public:
     std::vector<double> center;
     //! The patch geometrical maximal radius (from its center)
     double radius;
+
+    std::vector<MPI_Request> requests_;
+    
+
     
 protected:
     // Complementary members for the description of the geometry
@@ -276,8 +280,6 @@ protected:
     
     std::vector<unsigned int> oversize;
 
-    std::vector<MPI_Request> requests_;
-    
     
 };
 
