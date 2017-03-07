@@ -1,13 +1,7 @@
 #ifndef DIAGNOSTICPROBES_H
 #define DIAGNOSTICPROBES_H
 
-#include <hdf5.h>
-
 #include "Diagnostic.h"
-
-#include "Params.h"
-#include "Patch.h"
-#include "SmileiMPI.h"
 
 #include "Field2D.h"
 

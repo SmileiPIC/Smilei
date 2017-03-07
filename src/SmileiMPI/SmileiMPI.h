@@ -6,7 +6,6 @@
 
 #include <mpi.h>
 
-#include "Params.h"
 #include "Tools.h"
 #include "Particles.h"
 #include "Field.h"
@@ -16,7 +15,6 @@ class Species;
 class VectorPatch;
 
 class ElectroMagn;
-class Field;
 class ProbeParticles;
 
 class Diagnostic;

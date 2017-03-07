@@ -3,10 +3,6 @@
 
 #include "Diagnostic.h"
 
-#include "Params.h"
-#include "Species.h"
-#include "Patch.h"
-#include "SmileiMPI.h"
 #include "Histogram.h"
 
 class DiagnosticParticles : public Diagnostic {

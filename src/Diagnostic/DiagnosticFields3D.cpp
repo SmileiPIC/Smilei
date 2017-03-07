@@ -13,8 +13,8 @@
 
 using namespace std;
 
-DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, VectorPatch &vecPatches, int ndiag )
-    : DiagnosticFields( params, smpi, vecPatches, ndiag )
+DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, VectorPatch &vecPatches, int ndiag, OpenPMDparams& openPMD )
+    : DiagnosticFields( params, smpi, vecPatches, ndiag, openPMD )
 {
     
     // Calculate the offset in the local grid

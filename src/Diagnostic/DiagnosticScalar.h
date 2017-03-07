@@ -1,11 +1,13 @@
 #ifndef DIAGNOSTICSCALAR_H
 #define DIAGNOSTICSCALAR_H
 
+#include <fstream>
+
 #include "Diagnostic.h"
 
-#include "Params.h"
-#include "Patch.h"
-#include "SmileiMPI.h"
+class Patch;
+class Params;
+class SmileiMPI;
 
 
 //! double-int structure to communicate min/max and location trough MPI 

@@ -20,16 +20,16 @@
 //  --------------------------------------------------------------------------------------------------------------------
 class DiagnosticFieldsFactory {
 public:
-    static Diagnostic* create(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, unsigned int idiag) {
+    static Diagnostic* create(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, unsigned int idiag, OpenPMDparams& openPMD) {
         Diagnostic* diag = NULL;
         if ( params.geometry == "1d3v" ) {
-            diag = new DiagnosticFields1D(params, smpi, vecPatches, idiag);
+            diag = new DiagnosticFields1D(params, smpi, vecPatches, idiag, openPMD);
         }
         else if ( params.geometry == "2d3v" ) {
-            diag = new DiagnosticFields2D(params, smpi, vecPatches, idiag);
+            diag = new DiagnosticFields2D(params, smpi, vecPatches, idiag, openPMD);
         }
         else if ( params.geometry == "3d3v" ) {
-            diag = new DiagnosticFields3D(params, smpi, vecPatches, idiag);
+            diag = new DiagnosticFields3D(params, smpi, vecPatches, idiag, openPMD);
         }
         else {
             ERROR( "Geometry " << params.geometry << " not implemented" );
@@ -60,11 +60,11 @@ public:
     
     
     
-    static std::vector<Diagnostic*> createLocalDiagnostics(Params& params, SmileiMPI* smpi, VectorPatch &vecPatches) {
+    static std::vector<Diagnostic*> createLocalDiagnostics(Params& params, SmileiMPI* smpi, VectorPatch &vecPatches, OpenPMDparams& openPMD) {
         std::vector<Diagnostic*> vecDiagnostics;
         
         for (unsigned int n_diag_fields = 0; n_diag_fields < PyTools::nComponents("DiagFields"); n_diag_fields++) {
-            vecDiagnostics.push_back( DiagnosticFieldsFactory::create(params, smpi, vecPatches, n_diag_fields) );
+            vecDiagnostics.push_back( DiagnosticFieldsFactory::create(params, smpi, vecPatches, n_diag_fields, openPMD) );
         }
         
         for (unsigned int n_diag_probe = 0; n_diag_probe < PyTools::nComponents("DiagProbe"); n_diag_probe++) {

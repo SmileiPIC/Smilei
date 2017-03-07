@@ -3,12 +3,11 @@
 
 #include "Diagnostic.h"
 
-
 class DiagnosticFields  : public Diagnostic {
 
 public :
     
-    DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, int );
+    DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, int, OpenPMDparams& );
     ~DiagnosticFields() override;
     
     virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
@@ -86,31 +85,8 @@ protected :
     //! True if this diagnostic requires the pre-calculation of the particle J & Rho
     bool hasRhoJs;
     
-    //! Copy of the timestep
-    double timestep;
-    
-    //! axes labels
-    std::vector<std::string> axisLabels;
-    std::vector<const char*> axisLabels_;
-    //! Spacing of the grid
-    std::vector<double> gridSpacing;
-    //! Offset of the grid for all fields
-    std::vector<double> gridGlobalOffset;
-    //! Offset of the grid for each field
-    std::vector<double> gridOffset;
-    //! Units of each field
-    std::vector<std::vector<double> > unitDimension;
-    //! field solver description
-    std::string fieldSolver, fieldSolverParameters;
-    //! boundary conditions names
-    std::vector<std::string> fieldBoundary, fieldBoundaryParameters, particleBoundary, particleBoundaryParameters;
-    std::vector<const char*> fieldBoundary_, fieldBoundaryParameters_, particleBoundary_, particleBoundaryParameters_;
-    //! current smoothing description
-    std::string currentSmoothing, currentSmoothingParameters;
-    
-    //! converts the boundary condition names to the openPMD format
-    void em_bc(std::string, std::string&, std::string&);
-
+    //! Save the field type (needed for OpenPMD units dimensionality)
+    std::vector<unsigned int> field_type;
 };
 
 #endif

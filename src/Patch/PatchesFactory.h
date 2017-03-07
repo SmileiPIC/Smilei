@@ -34,7 +34,7 @@ public:
     }
     
     // Create a vector of patches
-    static VectorPatch createVector(Params& params, SmileiMPI* smpi) {
+    static VectorPatch createVector(Params& params, SmileiMPI* smpi, OpenPMDparams& openPMD) {
         VectorPatch vecPatches;
         
         vecPatches.diag_flag = (params.restart? false : true);
@@ -72,7 +72,7 @@ public:
         vecPatches.update_field_list();
         
         TITLE("Initializing Diagnostics, antennas, and external fields")
-        vecPatches.createDiags( params, smpi );
+        vecPatches.createDiags( params, smpi, openPMD );
         
         // Figure out if there are antennas
         vecPatches.nAntennas = vecPatches(0)->EMfields->antennas.size();

@@ -8,6 +8,34 @@
 
 #include <hdf5.h>
 #include <string>
+#include <sstream>
+#include <vector>
+#include "Tools.h"
+
+class DividedString {
+public:
+    DividedString( unsigned int w ) : width(std::max(w,(unsigned int)1)), numstr(0), str("") {};
+    ~DividedString() {};
+    
+    void addString( std::string s ) {
+        if( s.size() <= width ) {
+            str.append( s );
+            std::ostringstream t("");
+            for( unsigned int i=0; i<width-s.size(); i++ ) t<<"\0";
+            str.append( t.str() );
+        } else {
+            str.append( s.substr(0, width) );
+        }
+        numstr++;
+    };
+    
+    const char* c_str() {
+        return str.c_str();
+    };
+    
+    unsigned int width, numstr;
+    std::string str;
+};
 
 //! HDF5 help functions
 class H5 {
@@ -23,7 +51,11 @@ class H5 {
     //! write a string as an attribute
     static void attr(hid_t locationId, std::string attribute_name, std::string attribute_value) {
         hid_t atype = H5Tcopy(H5T_C_S1);
-        H5Tset_size(atype, attribute_value.size()+1);
+        if( attribute_value.size() == 0 ){
+            H5Tset_size(atype, 1);
+        } else {
+            H5Tset_size(atype, attribute_value.size());
+        }
         const char* tmp_var=attribute_value.c_str();
         attr(locationId, attribute_name, *tmp_var, atype);
         H5Tclose(atype);
@@ -93,6 +125,19 @@ class H5 {
         hid_t sid = H5Screate_simple(1, &dims, NULL);
         hid_t aid = H5Acreate (locationId, attribute_name.c_str(), type, sid, H5P_DEFAULT, H5P_DEFAULT);
         H5Awrite(aid, type, &(attribute_value[0]));
+        H5Aclose(aid);
+        H5Sclose(sid);
+    }
+    
+    //! write a DividedString as an attribute
+    static void attr(hid_t locationId, std::string attribute_name, DividedString& attribute_value) {
+        hid_t atype = H5Tcopy(H5T_C_S1);
+        H5Tset_size(atype, attribute_value.width);
+        hsize_t n = attribute_value.numstr;
+        hid_t sid = H5Screate_simple(1, &n, NULL);
+        hid_t aid = H5Acreate (locationId, attribute_name.c_str(), atype, sid, H5P_DEFAULT, H5P_DEFAULT);
+        H5Awrite(aid, atype, attribute_value.c_str());
+        H5Tclose(atype);
         H5Aclose(aid);
         H5Sclose(sid);
     }

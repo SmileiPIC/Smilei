@@ -8,6 +8,7 @@
 #include <cmath>
 
 #include "Particles.h"
+#include "Species.h"
 #include "BoundaryConditionType.h"
 #include "Patch.h"
 #include "Tools.h"

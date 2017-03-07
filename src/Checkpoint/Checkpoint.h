@@ -14,6 +14,7 @@
 #include <Tools.h>
 
 class Params;
+class OpenPMDparams;
 class SmileiMPI;
 class Patch;
 class SimWindow;
@@ -37,7 +38,7 @@ public:
     unsigned int nDim_particle;
     
     //! restart everything to file per processor
-    void restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindow* simWin, Params &params);
+    void restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindow* simWin, Params &params, OpenPMDparams& openPMD);
     void restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecSpecies, Params& params, hid_t patch_gid );
     
     //! restart field per proc

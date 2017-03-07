@@ -13,7 +13,7 @@
 
 #include "DiagnosticScalar.h"
 
-#include "Params.h"
+#include "OpenPMDparams.h"
 #include "SmileiMPI.h"
 #include "SimWindow.h"
 #include "Timers.h"
@@ -64,7 +64,7 @@ public :
     void update_field_list();
     void update_field_list(int ispec);
     
-    void createDiags(Params& params, SmileiMPI* smpi);
+    void createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams&);
     
     //! get a particular scalar
     inline double getScalar(std::string name) {

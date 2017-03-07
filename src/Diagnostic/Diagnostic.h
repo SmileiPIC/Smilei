@@ -1,16 +1,21 @@
 #ifndef DIAGNOSTIC_H
 #define DIAGNOSTIC_H
 
-#include "Params.h"
+#include "H5.h"
 #include "Patch.h"
-#include "SmileiMPI.h"
 
+class Params;
+class OpenPMDparams;
+class SmileiMPI;
+class VectorPatch;
+class TimeSelection;
 
 class Diagnostic {
 
 public :
 
-    Diagnostic() {};
+    Diagnostic( ) : openPMD(NULL) {};
+    Diagnostic( OpenPMDparams& o ) : openPMD(&o) {};
     virtual ~Diagnostic() {};
     
     //! Opens the file. Only by MPI master for global diags. Only by patch master for local diags.
@@ -54,6 +59,9 @@ protected :
     
     //! Id of the file for one diagnostic
     hid_t fileId_;
+    
+    //! Pointer to all parameters needed for openPMD compatibility
+    OpenPMDparams * openPMD;
 };
 
 #endif
