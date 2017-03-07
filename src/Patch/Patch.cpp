@@ -163,9 +163,6 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
     for (unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
         if(EMfields->emBoundCond[bcId]) {
             for (unsigned int laserId=0 ; laserId < EMfields->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
-                Laser * laser = EMfields->emBoundCond[bcId]->vecLaser[laserId];
-                LaserProfileSeparable* profile;
-                profile = static_cast<LaserProfileSeparable*> ( laser->profiles[0] );
                 nb_comms += 4;
             }
         }
@@ -218,9 +215,6 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
     for (unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
         if(EMfields->emBoundCond[bcId]) {
             for (unsigned int laserId=0 ; laserId < EMfields->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
-                Laser * laser = EMfields->emBoundCond[bcId]->vecLaser[laserId];
-                LaserProfileSeparable* profile;
-                profile = static_cast<LaserProfileSeparable*> ( laser->profiles[0] );
                 nb_comms += 4;
             }
         }

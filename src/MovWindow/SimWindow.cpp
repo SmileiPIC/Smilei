@@ -60,36 +60,36 @@ bool SimWindow::isMoving(double time_dual)
 
 void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params)
 {
-    int xcall, ycall, h0;
+    unsigned int h0;
     double energy_field_lost(0.);
     std::vector<double> energy_part_lost( vecPatches(0)->vecSpecies.size(), 0. );
     std::vector<unsigned int> patch_to_be_created;
     Patch* mypatch;
-
+    
     //Initialization for inter-process communications
     h0 = vecPatches(0)->hindex;
-    int nPatches = vecPatches.size();
-    int nSpecies( vecPatches(0)->vecSpecies.size() );
+    unsigned int nPatches = vecPatches.size();
+    unsigned int nSpecies( vecPatches(0)->vecSpecies.size() );
     std::vector<Patch*> delete_patches_, update_patches_, send_patches_;
     int nmessage( vecPatches.nrequests );
-
+    
     vecPatches_old.resize(nPatches);
     x_moved += cell_length_x_*params.n_space[0];
     n_moved += params.n_space[0];
-
+    
     //Cut off laser before exchanging any patches to avoid deadlock and store pointers in vecpatches_old.
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++){
         vecPatches_old[ipatch] = vecPatches(ipatch);
-	vecPatches(ipatch)->EMfields->laserDisabled();
+        vecPatches(ipatch)->EMfields->laserDisabled();
     }
-
+    
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
          mypatch = vecPatches_old[ipatch];
-
+    
         //If my right neighbor does not belong to me store it as a patch to be created later.
         if (mypatch->MPI_neighbor_[0][1] != mypatch->MPI_me_)
             patch_to_be_created.push_back(ipatch); 
-
+    
         //If my left neighbor does not belong to me ...
         if (mypatch->MPI_neighbor_[0][0] != mypatch->MPI_me_) {
             delete_patches_.push_back(mypatch); // Stores pointers to patches to be deleted later 
@@ -101,34 +101,34 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         } else { //In case my left neighbor belongs to me:
             // I become my left neighbor.
             //Update hindex and coordinates.
-
+            
             if ( mypatch->isXmax() )
-                for (int ispec=0 ; ispec<nSpecies ; ispec++)
+                for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++)
                     mypatch->vecSpecies[ispec]->disableXmax();
             mypatch->Pcoordinates[0] -= 1;
             mypatch->neighbor_[0][1] =  mypatch->hindex;
             mypatch->hindex = mypatch->neighbor_[0][0];
             mypatch->MPI_neighbor_[0][1] = mypatch->MPI_me_ ;
             //stores indices in tmp buffers so that original values can be read by other patches.
-	    mypatch->tmp_neighbor_[0][0] = vecPatches_old[mypatch->hindex - h0 ]->neighbor_[0][0];
-	    mypatch->tmp_MPI_neighbor_[0][0] = vecPatches_old[mypatch->hindex - h0 ]->MPI_neighbor_[0][0];
-            for (int idim = 1; idim < params.nDim_particle ; idim++){
-	        mypatch->tmp_neighbor_[idim][0] = vecPatches_old[mypatch->hindex - h0 ]->neighbor_[idim][0];
-	        mypatch->tmp_neighbor_[idim][1] = vecPatches_old[mypatch->hindex - h0 ]->neighbor_[idim][1];
-	        mypatch->tmp_MPI_neighbor_[idim][0] = vecPatches_old[mypatch->hindex - h0 ]->MPI_neighbor_[idim][0];
-	        mypatch->tmp_MPI_neighbor_[idim][1] = vecPatches_old[mypatch->hindex - h0 ]->MPI_neighbor_[idim][1];
+            mypatch->tmp_neighbor_[0][0] = vecPatches_old[mypatch->hindex - h0 ]->neighbor_[0][0];
+            mypatch->tmp_MPI_neighbor_[0][0] = vecPatches_old[mypatch->hindex - h0 ]->MPI_neighbor_[0][0];
+            for (unsigned int idim = 1; idim < params.nDim_particle ; idim++){
+                mypatch->tmp_neighbor_[idim][0] = vecPatches_old[mypatch->hindex - h0 ]->neighbor_[idim][0];
+                mypatch->tmp_neighbor_[idim][1] = vecPatches_old[mypatch->hindex - h0 ]->neighbor_[idim][1];
+                mypatch->tmp_MPI_neighbor_[idim][0] = vecPatches_old[mypatch->hindex - h0 ]->MPI_neighbor_[idim][0];
+                mypatch->tmp_MPI_neighbor_[idim][1] = vecPatches_old[mypatch->hindex - h0 ]->MPI_neighbor_[idim][1];
             }
             update_patches_.push_back(mypatch); // Stores pointers to patches that will need to update some neighbors from tmp_neighbors.
-
+            
             //And finally put the patch at the correct rank in vecPatches.
             vecPatches.patches_[mypatch->hindex - h0 ] = mypatch ; 
              
        }
-
+    
     }//End loop on Patches. This barrier matters.
     // At this point, all isends have been done and the list of patches to delete at the end is complete.
     // The lists of patches to create and patches to update is also complete.
-
+    
     //Creation of new Patches if necessary
     //Use clone instead of create ??
     //These patches are created with correct parameters.
@@ -138,34 +138,34 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         if (mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL){
             smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], (mypatch->hindex)*nmessage, params );
         }
-	mypatch->EMfields->laserDisabled();
+        mypatch->EMfields->laserDisabled();
         vecPatches.patches_[patch_to_be_created[j]] = mypatch ;
     }
-
+    
     //Update the correct neighbor values
-    for (int j=0; j < update_patches_.size(); j++){
+    for (unsigned int j=0; j < update_patches_.size(); j++){
         mypatch = update_patches_[j];
-	mypatch->MPI_neighbor_[0][0] = mypatch->tmp_MPI_neighbor_[0][0];
-	mypatch->neighbor_[0][0] = mypatch->tmp_neighbor_[0][0];
-        for (int idim = 1; idim < params.nDim_particle ; idim++){
-	    mypatch->MPI_neighbor_[idim][0] = mypatch->tmp_MPI_neighbor_[idim][0];
-	    mypatch->MPI_neighbor_[idim][1] = mypatch->tmp_MPI_neighbor_[idim][1];
-	    mypatch->neighbor_[idim][0] = mypatch->tmp_neighbor_[idim][0];
-	    mypatch->neighbor_[idim][1] = mypatch->tmp_neighbor_[idim][1];
+        mypatch->MPI_neighbor_[0][0] = mypatch->tmp_MPI_neighbor_[0][0];
+        mypatch->neighbor_[0][0] = mypatch->tmp_neighbor_[0][0];
+        for (unsigned int idim = 1; idim < params.nDim_particle ; idim++){
+            mypatch->MPI_neighbor_[idim][0] = mypatch->tmp_MPI_neighbor_[idim][0];
+            mypatch->MPI_neighbor_[idim][1] = mypatch->tmp_MPI_neighbor_[idim][1];
+            mypatch->neighbor_[idim][0] = mypatch->tmp_neighbor_[idim][0];
+            mypatch->neighbor_[idim][1] = mypatch->tmp_neighbor_[idim][1];
         }
     }
-
+    
     //Wait for sends to be completed
-    for (int ipatch = 0 ; ipatch < nPatches ; ipatch++){ 
+    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++){ 
         if (vecPatches_old[ipatch]->MPI_neighbor_[0][0] !=  vecPatches_old[ipatch]->MPI_me_ && vecPatches_old[ipatch]->MPI_neighbor_[0][0] != MPI_PROC_NULL){
             smpi->waitall( vecPatches_old[ipatch] );
         }
     }
-
-    for (int ipatch=0 ; ipatch<nPatches ; ipatch++){
+    
+    for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++){
         vecPatches(ipatch)->updateTagenv(smpi);
         if ( vecPatches(ipatch)->isXmin() ){
-            for (int ispec=0 ; ispec<nSpecies ; ispec++)
+            for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++)
                 vecPatches(ipatch)->vecSpecies[ispec]->setXminBoundaryCondition(); 
         }
         if (vecPatches(ipatch)->has_an_MPI_neighbor())
@@ -173,11 +173,11 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         else
             vecPatches(ipatch)->cleanType();
     }
-
+    
     //Should be useless
     vecPatches.update_field_list() ;
     //update list fields for species diag too ??
-
+    
     for (unsigned int idiag = 0 ; idiag < vecPatches.localDiags.size() ; idiag++) {
         DiagnosticProbes* diagProbes = dynamic_cast<DiagnosticProbes*>(vecPatches.localDiags[idiag]);
         if ( diagProbes ) {
@@ -185,15 +185,15 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             diagProbes->x_moved = x_moved;
         }
     }
-
+    
     //Delete useless patches
-    for (int j=0; j < delete_patches_.size(); j++){
+    for (unsigned int j=0; j < delete_patches_.size(); j++){
         mypatch = delete_patches_[j];
-
-       	energy_field_lost += mypatch->EMfields->computeNRJ();
-        for ( int ispec=0 ; ispec<nSpecies ; ispec++ )
+        
+        energy_field_lost += mypatch->EMfields->computeNRJ();
+        for ( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ )
             energy_part_lost[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
-
+        
         delete  mypatch;
     }
 
