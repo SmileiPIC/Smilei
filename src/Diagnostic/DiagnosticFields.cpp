@@ -6,9 +6,11 @@
 
 using namespace std;
 
-DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, int ndiag )
+DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, int ndiag, OpenPMDparams& oPMD ):
+    Diagnostic(oPMD)
 {
     fileId_ = 0;
+    data_group_id = 0;
     tmp_dset_id = 0;
     diag_n = ndiag;
     
@@ -97,6 +99,18 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
     write_plist = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
     
+    // Prepare some openPMD parameters
+    field_type.resize( fields_names.size() );
+    for( unsigned int ifield=0; ifield<fields_names.size(); ifield++ ) {
+        string first_char = fields_names[ifield].substr(0,1);
+        if      ( first_char == "E" ) field_type[ifield] = 0;
+        else if ( first_char == "B" ) field_type[ifield] = 1;
+        else if ( first_char == "J" ) field_type[ifield] = 2;
+        else if ( first_char == "R" ) field_type[ifield] = 3;
+        else {
+            ERROR(" impossible field name ");
+        }
+    }
 }
 
 
@@ -137,13 +151,11 @@ void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         fileId_  = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
         H5Pclose(pid);
         
-        // Create property list for collective dataset write: for Fields.h5
-        vector<double> my_cell_length=params.cell_length;
-        my_cell_length.resize(params.nDim_field);
-        H5::attr(fileId_, "res_time"    , params.res_time);
-        H5::attr(fileId_, "res_space"   , params.res_space);
-        H5::attr(fileId_, "cell_length" , my_cell_length);
-        H5::attr(fileId_, "sim_length"  , params.sim_length);
+        // Attributes for openPMD
+        openPMD->writeRootAttributes( fileId_, "", "no_particles" );
+        
+        // Make main "data" group where everything will be stored (required by openPMD)
+        data_group_id = H5::group( fileId_, "data" );
     }
     else {
         // Open the existing file
@@ -151,6 +163,7 @@ void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
         fileId_ = H5Fopen( filename.c_str(), H5F_ACC_RDWR, pid );
         H5Pclose(pid);
+        data_group_id = H5Gopen( fileId_, "data", H5P_DEFAULT );
     }
 }
 
@@ -164,6 +177,8 @@ void DiagnosticFields::closeFile()
     if ( memspace            >0 ) H5Sclose( memspace );
     if ( tmp_dset_id         >0 ) H5Dclose( tmp_dset_id );
     
+    if( data_group_id>0 ) H5Gclose( data_group_id );
+    data_group_id = 0;
     if( fileId_>0 ) H5Fclose( fileId_ );
     fileId_ = 0;
 }
@@ -177,17 +192,17 @@ void DiagnosticFields::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
 }
 
-bool DiagnosticFields::prepare( int timestep )
+bool DiagnosticFields::prepare( int itime )
 {
     
-    // Leave if the timestep is not the good one
-    if (timestep - timeSelection->previousTime(timestep) >= time_average) return false;
+    // Leave if the iteration is not the good one
+    if (itime - timeSelection->previousTime(itime) >= time_average) return false;
     
     return true;
 }
 
 
-void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep )
+void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime )
 {
     // If time-averaging, increment the average
     if( time_average>1 ) {
@@ -202,8 +217,8 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         }
     }
     
-    // If is not writing timestep, leave
-    if (timestep - timeSelection->previousTime(timestep) != time_average-1) return;
+    // If is not writing iteration, leave
+    if (itime - timeSelection->previousTime(itime) != time_average-1) return;
     
     #pragma omp master
     {
@@ -211,19 +226,23 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         refHindex = (unsigned int)(vecPatches.refHindex_);
         setFileSplitting( smpi, vecPatches );
         
-        // Create group for this timestep
+        // Create group for this iteration
         ostringstream name_t;
         name_t.str("");
-        name_t << "/" << setfill('0') << setw(10) << timestep;
-        status = H5Lexists(fileId_, name_t.str().c_str(), H5P_DEFAULT);
+        name_t << setfill('0') << setw(10) << itime;
+        status = H5Lexists(data_group_id, name_t.str().c_str(), H5P_DEFAULT);
         if( status==0 )
-           timestep_group_id = H5::group(fileId_, name_t.str().c_str());
+           iteration_group_id = H5::group(data_group_id, name_t.str().c_str());
         // Warning if file unreachable
         if( status < 0 ) WARNING("Fields diagnostics could not write");
+        // Add openPMD attributes ( "basePath" )
+        openPMD->writeBasePathAttributes( iteration_group_id, itime );
+        // Add openPMD attributes ( "meshesPath" )
+        openPMD->writeMeshesPathAttributes( iteration_group_id );
     }
     #pragma omp barrier
     
-    // Do not output diag if this timestep has already been written or if problem with file
+    // Do not output diag if this iteration has already been written or if problem with file
     if( status != 0 ) return;
     
     unsigned int nPatches( vecPatches.size() );
@@ -241,11 +260,15 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         {
             // Create field dataset in HDF5
             hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
-            hid_t dset_id  = H5Dcreate( timestep_group_id, fields_names[ifield].c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+            hid_t dset_id  = H5Dcreate( iteration_group_id, fields_names[ifield].c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
             H5Pclose(plist_id);
             
             // Write
-            writeField(dset_id, timestep);
+            writeField(dset_id, itime);
+            
+            // Attributes for openPMD
+            openPMD->writeFieldAttributes( dset_id, field_type[ifield] );
+            openPMD->writeFieldRecordAttributes( dset_id );
             
             // Close dataset
             H5Dclose( dset_id );
@@ -254,14 +277,13 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     
     #pragma omp master
     {
-        H5Gclose(timestep_group_id);
+        H5Gclose(iteration_group_id);
         if( tmp_dset_id>0 ) H5Dclose( tmp_dset_id );
         tmp_dset_id=0;
-        if( flush_timeSelection->theTimeIsNow(timestep) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+        if( flush_timeSelection->theTimeIsNow(itime) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     }
 }
 
-
-bool DiagnosticFields::needsRhoJs(int timestep) {
-    return hasRhoJs && timeSelection->theTimeIsNow(timestep);
+bool DiagnosticFields::needsRhoJs(int itime) {
+    return hasRhoJs && timeSelection->theTimeIsNow(itime);
 }

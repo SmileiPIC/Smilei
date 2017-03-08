@@ -3,9 +3,9 @@
 
 #include "Diagnostic.h"
 
-#include "Params.h"
-#include "Patch.h"
-#include "SmileiMPI.h"
+class Patch;
+class Params;
+class SmileiMPI;
 
 
 class DiagnosticTrack : public Diagnostic {

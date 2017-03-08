@@ -1,18 +1,18 @@
+#include <algorithm>
+#include <cmath>
+#include <ctime>
+#include <iomanip>
+
 #include "PyTools.h"
 #include "Params.h"
 #include "Species.h"
-#include <cmath>
-#include <iomanip>
 #include "Tools.h"
 #include "SmileiMPI.h"
+#include "H5.h"
 
 #include "pyinit.pyh"
 #include "pyprofiles.pyh"
 #include "pycontrol.pyh"
-
-#include "H5.h"
-
-#include <algorithm>
 
 using namespace std;
 
@@ -23,10 +23,12 @@ Params::Params(SmileiMPI* smpi, std::vector<std::string> namelistsFiles) :
 namelist("")
 {
     
+    MESSAGE("HDF5 version "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
+    
     if((((H5_VERS_MAJOR==1) && (H5_VERS_MINOR==8) && (H5_VERS_RELEASE>16)) || \
         ((H5_VERS_MAJOR==1) && (H5_VERS_MINOR>8)) || \
         (H5_VERS_MAJOR>1))) {
-        WARNING("Smilei suggests using hdf5 version 1.8.16. You're using "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
+        WARNING("Smilei suggests using HDF5 version 1.8.16");
         WARNING("Newer version are not tested and may cause the code to behave incorrectly");
         WARNING("See http://hdf-forum.184993.n3.nabble.com/Segmentation-fault-using-H5Dset-extent-in-parallel-td4029082.html");
     }
@@ -104,16 +106,6 @@ namelist("")
     // CHECK namelist on python side
     PyTools::runPyFunction("_smilei_check");
     smpi->barrier();
-    
-    // output dir: we force this to be the same on all mpi nodes
-    string output_dir("");
-    PyTools::extract("output_dir", output_dir, "Main");
-    PyTools::checkPyError();
-    if (!output_dir.empty()) {
-        if (chdir(output_dir.c_str()) != 0) {
-            WARNING("Could not chdir to output_dir = " << output_dir);
-        }
-    }
     
     // Now the string "namelist" contains all the python files concatenated
     // It is written as a file: smilei.py
@@ -616,5 +608,3 @@ void Params::cleanup(SmileiMPI* smpi) {
     }
     smpi->barrier();
 }
-
-

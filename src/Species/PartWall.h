@@ -2,11 +2,11 @@
 #define PartWall_H
 
 #include "Params.h"
-#include "Species.h"
-#include "Particles.h"
 #include "tabulatedFunctions.h"
 
 class Patch;
+class Species;
+class Particles;
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class PartWall

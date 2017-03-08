@@ -22,7 +22,7 @@ public:
     virtual void operator() (Particles &particles, int ipart, LocalFields Epart);
     
     //! apply the Tunnel Ionization model to the species (with ionization current)
-    virtual void operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields Jion);
+    virtual void operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields &Jion);
     
     double one_third;
     std::vector<double> alpha_tunnel;

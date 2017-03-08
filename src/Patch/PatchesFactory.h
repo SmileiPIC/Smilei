@@ -34,7 +34,7 @@ public:
     }
     
     // Create a vector of patches
-    static VectorPatch createVector(Params& params, SmileiMPI* smpi) {
+    static VectorPatch createVector(Params& params, SmileiMPI* smpi, OpenPMDparams& openPMD, unsigned int n_moved=0) {
         VectorPatch vecPatches;
         
         vecPatches.diag_flag = (params.restart? false : true);
@@ -50,7 +50,7 @@ public:
         
         // Create patches (create patch#0 then clone it)
         vecPatches.resize(npatches);
-        vecPatches.patches_[0] = create(params, smpi, firstpatch);
+        vecPatches.patches_[0] = create(params, smpi, firstpatch, n_moved);
         
         TITLE("Initializing Patches");
         MESSAGE(1,"First patch created");
@@ -60,8 +60,9 @@ public:
                 MESSAGE(2,"Approximately "<<percent<<"% of patches created");
                 percent += 10;
             }
-            vecPatches.patches_[ipatch] = clone(vecPatches(0), params, smpi, firstpatch + ipatch);
+            vecPatches.patches_[ipatch] = clone(vecPatches(0), params, smpi, firstpatch + ipatch, n_moved);
         }
+        vecPatches.nrequests = vecPatches(0)->requests_.size();
         MESSAGE(1,"All patches created");
         // print number of particles
         vecPatches.printNumberOfParticles( smpi );
@@ -71,7 +72,7 @@ public:
         vecPatches.update_field_list();
         
         TITLE("Initializing Diagnostics, antennas, and external fields")
-        vecPatches.createDiags( params, smpi );
+        vecPatches.createDiags( params, smpi, openPMD );
         
         // Figure out if there are antennas
         vecPatches.nAntennas = vecPatches(0)->EMfields->antennas.size();

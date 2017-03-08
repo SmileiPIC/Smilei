@@ -13,6 +13,7 @@
 #include <mpi.h>
 
 #include "Params.h"
+#include "OpenPMDparams.h"
 #include "SmileiMPI.h"
 #include "Patch.h"
 #include "SimWindow.h"
@@ -318,101 +319,100 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
 };
 
 
-void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindow* simWin, Params &params )
+void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindow* simWin, Params &params, OpenPMDparams& openPMD )
 {
+    MESSAGE(1, "READING fields and particles for restart");
     
-    if (params.restart) {
-        
-        MESSAGE(1, "READING fields and particles for restart");
-        
-        string nameDump("");
-        
-        if (restart_number>=0) {
-            nameDump=restart_dir+dumpName(restart_number,smpi);
-        } else {
-            // This will open both dumps and pick the last one
-            for (unsigned int num_dump=0;num_dump<dump_file_sequence; num_dump++) {
-                string dump_name=restart_dir+dumpName(num_dump,smpi);
-                ifstream f(dump_name.c_str());
-                if (f.good()) {
-                    f.close();
-                    hid_t fid = H5Fopen( dump_name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-                    unsigned int stepStartTmp=0;
-                    H5::getAttr(fid, "dump_step", stepStartTmp );
-                    if (stepStartTmp>this_run_start_step) {
-                        this_run_start_step=stepStartTmp;
-                        nameDump=dump_name;
-                        dump_number=num_dump;
-                        H5::getAttr(fid, "dump_number", dump_number );
-                    }
-                    H5Fclose(fid);
+    string nameDump("");
+    
+    if (restart_number>=0) {
+        nameDump=restart_dir+dumpName(restart_number,smpi);
+    } else {
+        // This will open both dumps and pick the last one
+        for (unsigned int num_dump=0;num_dump<dump_file_sequence; num_dump++) {
+            string dump_name=restart_dir+dumpName(num_dump,smpi);
+            ifstream f(dump_name.c_str());
+            if (f.good()) {
+                f.close();
+                hid_t fid = H5Fopen( dump_name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+                unsigned int stepStartTmp=0;
+                H5::getAttr(fid, "dump_step", stepStartTmp );
+                if (stepStartTmp>this_run_start_step) {
+                    this_run_start_step=stepStartTmp;
+                    nameDump=dump_name;
+                    dump_number=num_dump;
+                    H5::getAttr(fid, "dump_number", dump_number );
                 }
+                H5Fclose(fid);
             }
         }
-        
-        if (nameDump.empty()) ERROR("Cannot find a valid restart file");
-        
-#ifdef  __DEBUG
-        MESSAGEALL(2, " : Restarting fields and particles " << nameDump << " step=" << this_run_start_step);
-#else
-        MESSAGE(2, "Restarting fields and particles at step " << this_run_start_step);
-#endif
-        
-        hid_t fid = H5Fopen( nameDump.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-        if (fid < 0) ERROR(nameDump << " is not a valid HDF5 file");
-        
-        string dump_version;
-        H5::getAttr(fid, "Version", dump_version);
-        
-        string dump_date;
-        H5::getAttr(fid, "CommitDate", dump_date);
-        
-        if (dump_version != string(__VERSION)) {
-            WARNING ("The code version that dumped the file is " << dump_version);
-            WARNING ("                while running version is " << string(__VERSION));
-        }
-        
-        vector<int> patch_count(smpi->getSize());
-        H5::getVect( fid, "patch_count", patch_count );
-        smpi->patch_count = patch_count;
-        vecPatches = PatchesFactory::createVector(params, smpi);
-        
-        H5::getAttr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
-        H5::getAttr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
-        H5::getAttr(fid, "latest_timestep",   static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->latest_timestep  );
-        
-        // Master gets the diags screen data
-        ostringstream diagName("");
-        string attr;
-        if( smpi->isMaster() ) {
-            for( unsigned int idiag=0; idiag<vecPatches.globalDiags.size(); idiag++ )
-                if( DiagnosticScreen* screen = dynamic_cast<DiagnosticScreen*>(vecPatches.globalDiags[idiag]) ) {
-                    diagName.str("");
-                    diagName << "DiagScreen" << screen->screen_id;
-                    attr = diagName.str();
-                    H5::getAttr(fid, attr, screen->data_sum);
-                }
-        }
-        
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) {
-            
-            ostringstream patch_name("");
-            patch_name << setfill('0') << setw(6) << vecPatches(ipatch)->Hindex();
-            string patchName="patch-"+patch_name.str();
-            hid_t patch_gid = H5Gopen(fid, patchName.c_str(),H5P_DEFAULT);
-            
-            restartPatch( vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, params, patch_gid );
-            
-            H5Gclose(patch_gid);
-            
-        }
-        
-        // load window status
-        if (simWin!=NULL)
-            restartMovingWindow(fid, simWin);
-        
-        H5Fclose( fid );
     }
+    
+    if (nameDump.empty()) ERROR("Cannot find a valid restart file");
+    
+#ifdef  __DEBUG
+    MESSAGEALL(2, " : Restarting fields and particles " << nameDump << " step=" << this_run_start_step);
+#else
+    MESSAGE(2, "Restarting fields and particles at step " << this_run_start_step);
+#endif
+    
+    hid_t fid = H5Fopen( nameDump.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+    if (fid < 0) ERROR(nameDump << " is not a valid HDF5 file");
+    
+    string dump_version;
+    H5::getAttr(fid, "Version", dump_version);
+    
+    string dump_date;
+    H5::getAttr(fid, "CommitDate", dump_date);
+    
+    if (dump_version != string(__VERSION)) {
+        WARNING ("The code version that dumped the file is " << dump_version);
+        WARNING ("                while running version is " << string(__VERSION));
+    }
+    
+    // load window status
+    if (simWin!=NULL)
+        restartMovingWindow(fid, simWin);
+    
+    vector<int> patch_count(smpi->getSize());
+    H5::getVect( fid, "patch_count", patch_count );
+    smpi->patch_count = patch_count;
+    if (simWin==NULL)
+        vecPatches = PatchesFactory::createVector(params, smpi, openPMD);
+    else
+        vecPatches = PatchesFactory::createVector(params, smpi, openPMD, simWin->getNmoved());
+    
+    H5::getAttr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
+    H5::getAttr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
+    H5::getAttr(fid, "latest_timestep",   static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->latest_timestep  );
+    
+    // Master gets the diags screen data
+    ostringstream diagName("");
+    string attr;
+    if( smpi->isMaster() ) {
+        for( unsigned int idiag=0; idiag<vecPatches.globalDiags.size(); idiag++ )
+            if( DiagnosticScreen* screen = dynamic_cast<DiagnosticScreen*>(vecPatches.globalDiags[idiag]) ) {
+                diagName.str("");
+                diagName << "DiagScreen" << screen->screen_id;
+                attr = diagName.str();
+                H5::getAttr(fid, attr, screen->data_sum);
+            }
+    }
+    
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) {
+        
+        ostringstream patch_name("");
+        patch_name << setfill('0') << setw(6) << vecPatches(ipatch)->Hindex();
+        string patchName="patch-"+patch_name.str();
+        hid_t patch_gid = H5Gopen(fid, patchName.c_str(),H5P_DEFAULT);
+        
+        restartPatch( vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, params, patch_gid );
+        
+        H5Gclose(patch_gid);
+        
+    }
+    
+    H5Fclose( fid );
     
 }
 

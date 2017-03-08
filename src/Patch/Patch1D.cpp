@@ -55,16 +55,17 @@ void Patch1D::initStep2(Params& params)
     if (params.bc_em_type_x[0]=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
     neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
     
+    for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+        ntype_[0][ix_isPrim] = MPI_DATATYPE_NULL;
+        ntype_[1][ix_isPrim] = MPI_DATATYPE_NULL;
+        ntypeSum_[0][ix_isPrim] = MPI_DATATYPE_NULL;
+    }
+
 }
 
 Patch1D::~Patch1D()
 {
-    if (!has_an_MPI_neighbor()) return;
-    for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
-        MPI_Type_free( &(ntype_[0][ix_isPrim]) );
-        MPI_Type_free( &(ntype_[1][ix_isPrim]) );
-        MPI_Type_free( &(ntypeSum_[0][ix_isPrim]) );
-    }
+    cleanType();
 
 }
 
@@ -166,8 +167,8 @@ void Patch1D::finalizeSumField( Field* field, int iDim )
         int istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim]- oversize2[iDim] ) + (1-(iNeighbor+1)%2) * ( 0 );
         int ix0 = (1-iDim)*istart;
         if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-            int tmp = f1D->MPIbuff.buf[iDim][(iNeighbor+1)%2].size();
-            for (unsigned int ix=0 ; ix< tmp ; ix++) {
+            unsigned int tmp = f1D->MPIbuff.buf[iDim][(iNeighbor+1)%2].size();
+            for (unsigned int ix=0 ; ix<tmp ; ix++) {
                 f1D->data_[ix0+ix] += f1D->MPIbuff.buf[iDim][(iNeighbor+1)%2][ix];
             }
         } // END if
@@ -332,6 +333,9 @@ void Patch1D::finalizeExchange( Field* field, int iDim )
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch1D::createType( Params& params )
 {
+    if (ntype_[0][0] != MPI_DATATYPE_NULL)
+        return;
+
     unsigned int clrw = params.clrw;
     
     // MPI_Datatype ntype_[nDim][primDual]
@@ -366,3 +370,14 @@ void Patch1D::createType( Params& params )
     
 } //END createType
 
+void Patch1D::cleanType()
+{
+    if (ntype_[0][0] == MPI_DATATYPE_NULL)
+        return;
+
+    for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+        MPI_Type_free( &(ntype_[0][ix_isPrim]) );
+        MPI_Type_free( &(ntype_[1][ix_isPrim]) );
+        MPI_Type_free( &(ntypeSum_[0][ix_isPrim]) );
+    }
+}

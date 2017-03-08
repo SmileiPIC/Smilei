@@ -48,6 +48,7 @@ int main (int argc, char* argv[])
     // Read and print simulation parameters
     TITLE("Reading the simulation parameters");
     Params params(smpi,vector<string>(argv + 1, argv + argc));
+    OpenPMDparams openPMD(params);
     
     // Initialize MPI environment with simulation parameters
     TITLE("Initializing MPI");
@@ -93,27 +94,23 @@ int main (int argc, char* argv[])
         
         // smpi->patch_count recomputed in restartAll
         // vecPatches allocated in restartAll according to patch_count saved
-        checkpoint.restartAll( vecPatches, smpi, simWindow, params);
+        checkpoint.restartAll( vecPatches, smpi, simWindow, params, openPMD);
         
         // time at integer time-steps (primal grid)
         time_prim = checkpoint.this_run_start_step * params.timestep;
         // time at half-integer time-steps (dual grid)
         time_dual = (checkpoint.this_run_start_step +0.5) * params.timestep;
         
-        double restart_time_dual = (checkpoint.this_run_start_step +0.5) * params.timestep;
-        time_dual = restart_time_dual;
-        //! \todo a revoir
-        if ( simWindow->isMoving(restart_time_dual) ) {
+        if ( simWindow && simWindow->isMoving(time_dual) )
             simWindow->operate(vecPatches, smpi, params);
-        }
-        //smpi->recompute_patch_count( params, vecPatches, restart_time_dual );
+        //smpi->recompute_patch_count( params, vecPatches, time_dual );
         
         TITLE("Initializing diagnostics");
         vecPatches.initAllDiags( params, smpi );
         
     } else {
         
-        vecPatches = PatchesFactory::createVector(params, smpi);
+        vecPatches = PatchesFactory::createVector(params, smpi, openPMD);
         
         // Initialize the electromagnetic fields
         // -------------------------------------

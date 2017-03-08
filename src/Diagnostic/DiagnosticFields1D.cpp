@@ -8,8 +8,8 @@
 
 using namespace std;
 
-DiagnosticFields1D::DiagnosticFields1D( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, int ndiag )
-    : DiagnosticFields( params, smpi, vecPatches, ndiag )
+DiagnosticFields1D::DiagnosticFields1D( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, int ndiag, OpenPMDparams& openPMD )
+    : DiagnosticFields( params, smpi, vecPatches, ndiag, openPMD )
 {
     // Calculate the offset in the local grid
     patch_offset_in_grid.resize(1);
@@ -96,7 +96,7 @@ void DiagnosticFields1D::getField( Patch* patch, unsigned int ifield )
 
 
 // Write current buffer to file
-void DiagnosticFields1D::writeField(hid_t dset_id, int timestep)
+void DiagnosticFields1D::writeField(hid_t dset_id, int itime)
 {
     
     H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(data[0]) );

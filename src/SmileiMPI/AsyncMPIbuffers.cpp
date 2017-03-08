@@ -1,7 +1,7 @@
 
-#include <AsyncMPIbuffers.h>
-#include <Field.h>
-#include <Patch.h>
+#include "AsyncMPIbuffers.h"
+#include "Field.h"
+#include "Patch.h"
 
 #include <vector>
 using namespace std;
@@ -27,13 +27,13 @@ void AsyncMPIbuffers::allocate(unsigned int ndims)
 
     send_tags_.resize(ndims);
     recv_tags_.resize(ndims);
-    for ( int iDim = 0 ; iDim < ndims ; iDim++ ) {
+    for (unsigned int iDim = 0 ; iDim < ndims ; iDim++ ) {
         send_tags_[iDim].resize(2,MPI_PROC_NULL);
         recv_tags_[iDim].resize(2,MPI_PROC_NULL);
     }
 }
 
-void AsyncMPIbuffers::allocate(int ndims, Field* f)
+void AsyncMPIbuffers::allocate(unsigned int ndims, Field* f)
 {
     if (srequest.size()!=0) return;
     srequest.resize(ndims);
@@ -56,7 +56,7 @@ void AsyncMPIbuffers::allocate(int ndims, Field* f)
     }
     std::vector<unsigned int> n_elem = f->dims_;
 
-    for (int iDim=0 ; iDim<ndims ; iDim++) {
+    for (unsigned int iDim=0 ; iDim<ndims ; iDim++) {
 
         vector<int> idx( ndims,1 );
         idx[iDim] = 0;
@@ -76,7 +76,7 @@ void AsyncMPIbuffers::allocate(int ndims, Field* f)
 
     send_tags_.resize(ndims);
     recv_tags_.resize(ndims);
-    for ( int iDim = 0 ; iDim < ndims ; iDim++ ) {
+    for (unsigned int iDim = 0 ; iDim < ndims ; iDim++ ) {
         send_tags_[iDim].resize(2,MPI_PROC_NULL);
         recv_tags_[iDim].resize(2,MPI_PROC_NULL);
     }
@@ -86,7 +86,7 @@ void AsyncMPIbuffers::allocate(int ndims, Field* f)
 
 void AsyncMPIbuffers::defineTags(Patch* patch, int tag ) 
 {
-    for (int iDim=0 ; iDim< (int)send_tags_.size() ; iDim++)
+    for (unsigned int iDim=0 ; iDim< send_tags_.size() ; iDim++)
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
             send_tags_[iDim][iNeighbor] = buildtag( patch->hindex, iDim, iNeighbor, tag );
             recv_tags_[iDim][iNeighbor] = buildtag( patch->neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor, tag );

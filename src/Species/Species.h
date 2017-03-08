@@ -6,10 +6,8 @@
 
 #include "Particles.h"
 #include "Params.h"
-//#include "Pusher.h"
 //#include "PartBoundCond.h"
 
-#include "Params.h"
 #include "Pusher.h"
 #include "Ionization.h"
 #include "ElectroMagn.h"

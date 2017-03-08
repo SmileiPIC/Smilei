@@ -7,6 +7,7 @@
 #include <cstring>
 //#include <string>
 
+#include "Collisions.h"
 #include "Hilbert_functions.h"
 #include "PatchesFactory.h"
 #include "Species.h"
@@ -49,10 +50,10 @@ void VectorPatch::close(SmileiMPI * smpiData)
     patches_.clear();
 }
 
-void VectorPatch::createDiags(Params& params, SmileiMPI* smpi)
+void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& openPMD)
 {
     globalDiags = DiagnosticFactory::createGlobalDiagnostics(params, smpi, *this );
-    localDiags  = DiagnosticFactory::createLocalDiagnostics (params, smpi, *this );
+    localDiags  = DiagnosticFactory::createLocalDiagnostics (params, smpi, *this, openPMD );
     
     // Delete all unused fields
     for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++) {
@@ -734,16 +735,12 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
 void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
 {
     
-    int nSpecies( (*this)(0)->vecSpecies.size() );
     //int newMPIrankbis, oldMPIrankbis, tmp;
     int newMPIrank = smpi->getRank() -1;
     int oldMPIrank = smpi->getRank() -1;
     int istart = 0;
-    int nmax_laser = 4;
-    int nmessage = 2*nSpecies+(2+params.nDim_particle)*(*this)(0)->probes.size()+
-        9+(*this)(0)->EMfields->antennas.size()+4*nmax_laser;
-    
-    
+    int nmessage = nrequests;
+
     for (int irk=0 ; irk<smpi->getRank() ; irk++) istart += smpi->patch_count[irk];
 
 
@@ -765,6 +762,9 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
         smpi->recv( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch]*nmessage, params );
     }
 
+
+    for (unsigned int ipatch=0 ; ipatch < send_patch_id_.size() ; ipatch++)
+        smpi->waitall( (*this)(send_patch_id_[ipatch]) );
     
     smpi->barrier();
     //Delete sent patches
@@ -792,7 +792,8 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
         (*this)(ipatch)->updateMPIenv(smpi);
         if ((*this)(ipatch)->has_an_MPI_neighbor())
             (*this)(ipatch)->createType(params);
-
+         else
+            (*this)(ipatch)->cleanType();
     }
     (*this).set_refHindex() ;
     update_field_list() ;    
