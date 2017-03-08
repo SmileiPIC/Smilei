@@ -24,9 +24,9 @@ public :
     
     void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
     
-    bool prepare( int timestep ) override;
+    bool prepare( int itime ) override;
     
-    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) override;
+    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime ) override;
     
     //! Get memory footprint of current diagnostic
     int getMemFootPrint() override {
@@ -45,15 +45,8 @@ private :
     //! Flag to test whether IDs have been set already
     bool IDs_done;
     
-    //! Size of the diag (total number of particles)
-    int nbrParticles_;
-     
     //! HDF5 file transfer protocol
     hid_t transfer;
-    //! HDF5 file space (dimensions of the array in file)
-    hsize_t dims[2];
-    //! HDF5 memory space (dimensions of the current particle array in memory)
-    hid_t mem_space;
      
     //! Number of spatial dimensions
     unsigned int nDim_particle;
