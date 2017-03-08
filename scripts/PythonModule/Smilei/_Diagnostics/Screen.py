@@ -291,6 +291,10 @@ class Screen(Diagnostic):
 		if not hasComposite: self._bsize *= coeff
 		self._bsize = self._np.squeeze(self._bsize)
 		
+		# Set the directory in case of exporting
+		self._exportPrefix = "Screen_"+"-".join([str(d) for d in self._diags])
+		self._exportDir = self._setExportDir(self._exportPrefix)
+		
 		# Finish constructor
 		self.valid = True
 	

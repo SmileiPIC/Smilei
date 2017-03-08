@@ -266,6 +266,10 @@ class Probe(Diagnostic):
 		
 		self._buffer = self._np.zeros((self.numpoints,), dtype="double")
 		
+		# Set the directory in case of exporting
+		self._exportPrefix = "Probe"+str(probeNumber)+"_"+"".join(self._fieldname)
+		self._exportDir = self._setExportDir(self._exportPrefix)
+		
 		# Finish constructor
 		self.valid = True
 	

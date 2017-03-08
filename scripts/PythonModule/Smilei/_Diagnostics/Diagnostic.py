@@ -480,6 +480,111 @@ class Diagnostic(object):
 			print("Cannot format y ticks (typically happens with log-scale)")
 			self.xtickkwargs = []
 	
+	# Define and output directory in case of exporting
+	def _setExportDir(self, diagName):
+		if len(self._results_path) == 1:
+			directory = self._results_path[0]
+		else:
+			directory = self._results_path[0] +self._os.sep+ ".."
+		directory += self._os.sep + diagName + self._os.sep
+		return directory
+	
+	def _mkdir(self, dir):
+		if not self._os.path.exists(dir): self._os.makedirs(dir)
+	
 	# Convert to XDMF format for ParaView (do nothing in the mother class)
 	def toXDMF(self):
 		pass
+	
+	# Convert data to VTK format
+	def toVTK(self, numberOfPieces=1):
+		if not self._validate(): return
+		
+		try: import vtk
+		except:
+			print "Python module 'vtk' not found. Could not export to VTK format"
+			return
+		
+		if self.dim<2 or self.dim>3:
+			print "Cannot export "+str(self.dim)+"D data to VTK"
+			return
+		
+		def vtkArray(data, name, npoints):
+			arr = vtk.vtkFloatArray()
+			arr.SetNumberOfTuples(npoints)
+			arr.SetNumberOfComponents(1)
+			arr.SetVoidArray(data, npoints, 1)
+			arr.SetName(name)
+			return arr
+		def vtkImageData(array, origin, extent, spacings):
+			img = vtk.vtkImageData()
+			img.SetOrigin(origin)
+			img.SetExtent(extent)
+			img.SetSpacing(spacings)
+			img.GetPointData().SetScalars(array)
+			return img
+		def vtkWriteImage(img, file, numberOfPieces):
+			writer = vtk.vtkXMLPImageDataWriter()
+			writer.SetFileName(file)
+			writer.SetNumberOfPieces(numberOfPieces)
+			writer.SetEndPiece(numberOfPieces-1)
+			writer.SetStartPiece(0);
+			writer.SetInputData(img)
+			writer.Write()
+		
+		self._mkdir(self._exportDir)
+		fileprefix = self._exportDir + self._exportPrefix
+		
+		numpoints = int(self._np.prod(self._shape))
+		spacings = list(self._cell_length)
+		extent = []
+		for i in range(self.dim): extent += [0,self._shape[i]-1]
+		origin = [0.] * self.dim
+		ntimes = len(self.times)
+		
+		# If 2D data, then do a streak plot
+		if self.dim == 2:
+			arraysize = numpoints
+			numpoints *= ntimes
+			dt = self.times[1]-self.times[0]
+			
+			# Get the data
+			data = self._np.zeros(list(self._shape)+[ntimes])
+			for itime in range(ntimes):
+				data[:,:,itime] = self._getDataAtTime(self.times[itime])
+			arr = vtkArray(self._np.ascontiguousarray(data.flatten(order='F'), dtype='float32'), self._title, numpoints)
+			
+			# If all timesteps are regularly spaced
+			if (self._np.diff(self.times)==dt).all():
+				spacings += [dt]
+				extent += [0, ntimes-1]
+				origin += [self.times[0]]
+				img = vtkImageData(arr, origin, extent, spacings)
+				vtkWriteImage(img, fileprefix+".pvti", numberOfPieces)
+				print("Successfully exported regular streak plot to VTK, folder='"+self._exportDir)
+			
+			# If timesteps are irregular, make an irregular grid
+			else:
+				grid = vtk.vtkRectilinearGrid()
+				grid.SetDimensions((self._shape[0], self._shape[1], ntimes))
+				grid.SetXCoordinates(vtkArray(self._centers[0].astype('float32'), "x", self._shape[0]))
+				grid.SetYCoordinates(vtkArray(self._centers[1].astype('float32'), "y", self._shape[1]))
+				grid.SetZCoordinates(vtkArray(self.times      .astype('float32'), "t", ntimes        ))
+				grid.GetPointData().SetScalars(arr)
+				writer = vtk.vtkRectilinearGridWriter()
+				writer.SetFileName(fileprefix+".vtk")
+				writer.SetInputData(grid)
+				writer.Write()
+				print("Successfully exported irregular streak plot to VTK, folder='"+self._exportDir)
+		
+		# If 3D data, then do a 3D plot
+		elif self.dim == 3:
+			for itime in range(ntimes):
+				data = self._getDataAtTime(self.times[itime])
+				data = data.astype('float32').flatten(order='F')
+				
+				arr = vtkArray(data, self._title, numpoints)
+				img = vtkImageData(arr, origin, extent, spacings)
+				vtkWriteImage(img, fileprefix+"_"+str(itime)+".pvti", numberOfPieces)
+			print("Successfully exported 3D plot to VTK, folder='"+self._exportDir)
+			
