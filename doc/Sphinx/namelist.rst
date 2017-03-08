@@ -329,7 +329,6 @@ Each species has to be defined in a ``Species`` block::
       # radiating = False,
       isTest = False,
       track_every = 10,
-      track_ordered = False,
       track_flush_every = 100,
       c_part_max = 1.0,
       dynamics_type = "norm",
@@ -469,14 +468,6 @@ Each species has to be defined in a ``Species`` block::
   Number of timesteps between each output of particles trajectories, **or** a :ref:`time selection <TimeSelections>`.
   If non-zero, the particles positions will be tracked and written in a file named ``TrackParticles_abc.h5``
   (where ``abc`` is :py:data:`species_type`).
-
-.. py:data:: track_ordered
-  
-  :default: False
-  
-  If ``True``, tracked particles will be sorted by their ID at run-time. This can be very
-  slow. If ``False``, the sorting will occur at post-processing. Again, this may be slow,
-  but better for most simulations.
 
 .. py:data:: track_flush_every
   

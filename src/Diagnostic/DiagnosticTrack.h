@@ -35,9 +35,6 @@ public :
 
 private :
     
-    //! True if must be ordered by ID in the file
-    bool track_ordered;
-    
     //! Flag to test whether IDs have been set already
     bool IDs_done;
     

@@ -27,12 +27,9 @@ nDim_particle(params.nDim_particle)
     // Get parameter "track_flush_every" which decides the file flushing time selection
     flush_timeSelection = new TimeSelection( PyTools::extract_py("track_flush_every", "Species", speciesId_), name.str() );
     
-    // Get parameter "track_ordered" which decides whether the track particle dumps are ordered by Id
-    PyTools::extract("track_ordered", track_ordered, "Species", speciesId_);
-    
     // Create the filename
     ostringstream hdf_filename("");
-    hdf_filename << "TrackParticles"<<(track_ordered?"":"Disordered")<<"_" << species->species_type  << ".h5" ;
+    hdf_filename << "TrackParticlesDisordered_" << species->species_type  << ".h5" ;
     filename = hdf_filename.str();
     
     // Create a list of the necessary datasets
@@ -220,6 +217,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
     int nParticles = 0;
     unsigned int nPatches = vecPatches.size();
     
+    hsize_t start[2], stride[2], count[2], block[2];
     #pragma omp master
     {
         // Add a new timestep to the dimension of the arrays
@@ -231,46 +229,27 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
             patch_start[ipatch] = nParticles;
             nParticles += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
         }
-        if(track_ordered) locator.resize(nParticles*2);
         
         // Specify the memory dataspace (the size of the local array)
         hsize_t count_[1] = {(hsize_t)nParticles};
         mem_space = H5Screate_simple(1, count_, NULL);
+        
+        // Get the number of particles for each MPI
+        int sz = smpi->getSize();
+        std::vector<int> all_nPart(sz, 0);
+        MPI_Allgather( &nParticles, 1, MPI_INT, &all_nPart[0], 1, MPI_INT, MPI_COMM_WORLD );
+        
+        // Calculate the cumulative sum
+        int offset=0;
+        for (int irk=0; irk<smpi->getRank(); irk++) offset += all_nPart[irk];
+        
+        // Prepare the hyperslab selection
+        start [0]=dims[0]-1; start [1]=offset;
+        stride[0]=1        ; stride[1]=1     ;
+        count [0]=1        ; count [1]=1     ;
+        block [0]=1        ; block [1]=nParticles;
     }
-    #pragma omp barrier
     
-    hsize_t start[2], stride[2], count[2], block[2];
-    if(track_ordered) {
-        // Build the "locator", an array indicating where each particle goes in the final array
-        #pragma omp for schedule(runtime)
-        for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
-            Particles* particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
-            int np=particles->size(), i=0, j=patch_start[ipatch];
-            while( i<np ) {
-                locator[j*2  ] = dims[0]-1;
-                locator[j*2+1] = particles->id(i)-1; // because particles label Id starts at 1
-                i++; j++;
-            }
-        }
-    } else {
-        #pragma omp master
-        {
-            // Get the number of particles for each MPI
-            int sz = smpi->getSize();
-            std::vector<int> all_nPart(sz, 0);
-            MPI_Allgather( &nParticles, 1, MPI_INT, &all_nPart[0], 1, MPI_INT, MPI_COMM_WORLD );
-            
-            // Calculate the cumulative sum
-            int offset=0;
-            for (int irk=0; irk<smpi->getRank(); irk++) offset += all_nPart[irk];
-            
-            // Prepare the hyperslab selection
-            start [0]=dims[0]-1; start [1]=offset;
-            stride[0]=1        ; stride[1]=1     ;
-            count [0]=1        ; count [1]=1     ;
-            block [0]=1        ; block [1]=nParticles;
-        }
-    }
     
     // For each dataset
     for( unsigned int idset=0; idset<datasets.size(); idset++) {
@@ -366,10 +345,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
             
             // Select locations that this proc will write
             if(nParticles>0) {
-                if(track_ordered)
-                    H5Sselect_elements( file_space, H5S_SELECT_SET, nParticles, &locator[0] );
-                else
-                    H5Sselect_hyperslab(file_space, H5S_SELECT_SET, &start[0], &stride[0], &count[0], &block[0] );
+                H5Sselect_hyperslab(file_space, H5S_SELECT_SET, &start[0], &stride[0], &count[0], &block[0] );
             } else {
                 H5Sselect_none(file_space);
             }
