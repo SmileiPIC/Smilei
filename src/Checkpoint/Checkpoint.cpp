@@ -370,10 +370,17 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
         WARNING ("                while running version is " << string(__VERSION));
     }
     
+    // load window status
+    if (simWin!=NULL)
+        restartMovingWindow(fid, simWin);
+    
     vector<int> patch_count(smpi->getSize());
     H5::getVect( fid, "patch_count", patch_count );
     smpi->patch_count = patch_count;
-    vecPatches = PatchesFactory::createVector(params, smpi, openPMD);
+    if (simWin==NULL)
+        vecPatches = PatchesFactory::createVector(params, smpi, openPMD);
+    else
+        vecPatches = PatchesFactory::createVector(params, smpi, openPMD, simWin->getNmoved());
     
     H5::getAttr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
     H5::getAttr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
@@ -404,10 +411,6 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
         H5Gclose(patch_gid);
         
     }
-    
-    // load window status
-    if (simWin!=NULL)
-        restartMovingWindow(fid, simWin);
     
     H5Fclose( fid );
     
