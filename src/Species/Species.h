@@ -237,7 +237,7 @@ public:
         int speciesSize(0);
         speciesSize += particles->double_prop.size()*sizeof(double);
         speciesSize += particles->short_prop.size()*sizeof(short);
-        speciesSize += particles->uint_prop.size()*sizeof(unsigned int );
+        speciesSize += particles->uint64_prop.size()*sizeof(uint64_t);
         speciesSize *= getParticlesCapacity();
         return speciesSize;
     }

@@ -32,14 +32,18 @@ public :
     int getMemFootPrint() override {
         return 0;
     }
+    
+    //! Last ID assigned to a particle by this MPI domain
+    uint64_t latest_Id;
+    
+    //! Index of the species used
+    int speciesId_;
+    
 
 private :
     
     //! Flag to test whether IDs have been set already
     bool IDs_done;
-    
-    //! Index of the species used
-    int speciesId_;
     
     //! Size of the diag (total number of particles)
     int nbrParticles_;
@@ -66,11 +70,8 @@ private :
     std::vector<double> data_double;
     //! Buffer for the output of short array
     std::vector<short> data_short;
-    //! Buffer for the output of uint array
-    std::vector<unsigned int> data_uint;
-    
-    //! The locator array used to order the particles by ID
-    std::vector<hsize_t> locator;
+    //! Buffer for the output of uint64 array
+    std::vector<uint64_t> data_uint64;
     
 };
 

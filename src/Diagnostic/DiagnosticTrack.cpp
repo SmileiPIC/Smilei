@@ -34,7 +34,7 @@ nDim_particle(params.nDim_particle)
     
     // Create a list of the necessary datasets
     datasets.push_back( "Id" );
-    datatypes.push_back( H5T_NATIVE_UINT );
+    datatypes.push_back( H5T_NATIVE_UINT64 );
     datasets.push_back( "Charge" );
     datatypes.push_back( H5T_NATIVE_SHORT );
     datasets.push_back( "Weight" );
@@ -147,49 +147,26 @@ void DiagnosticTrack::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatc
     // Set the IDs of the particles
     if( ! IDs_done ) {
         
-        // 1 - Internal patches offset
+        latest_Id = smpi->getRank() * 4294967296; // 2^32
         
-        int localNbrParticles = 0;
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            vecPatches(ipatch)->vecSpecies[speciesId_]->particles->setIds();
-            vecPatches(ipatch)->vecSpecies[speciesId_]->particles->addIdOffsets(localNbrParticles);
-            localNbrParticles += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
+            unsigned int s = vecPatches(ipatch)->vecSpecies[speciesId_]->particles->size();
+            for (unsigned int iPart=0; iPart<s; iPart++) {
+                latest_Id++;
+                vecPatches(ipatch)->vecSpecies[speciesId_]->particles->id(iPart) = latest_Id;
+            }
         }
-        
-        // 2 - MPI offset
-        
-        // Get the number of particles for each MPI
-        int sz = smpi->getSize();
-        std::vector<int> allNbrParticles(sz, 0);
-        MPI_Allgather( &localNbrParticles, 1, MPI_INT, &allNbrParticles[0], 1, MPI_INT, MPI_COMM_WORLD );
-        
-        // Calculate the cumulative sum
-        for (int irk=1 ; irk<sz ; irk++)
-            allNbrParticles[irk] += allNbrParticles[irk-1];
-        
-        // Calculate the MPI offset
-        int offset = 0;
-        if( ! smpi->isMaster() ) offset = allNbrParticles[smpi->getRank()-1];
-        
-        // Apply the MPI offset
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            vecPatches(ipatch)->vecSpecies[speciesId_]->particles->addIdOffsets( offset );
-        }
-        nbrParticles_ = allNbrParticles[sz-1];
         
         IDs_done = true;
-        
-    } else {
-            
-        // Number of particles in current MPI
-        int localNbrParticles = 0;
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-            localNbrParticles += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
-        
-        // Total number of particles
-        MPI_Allreduce( &localNbrParticles, &nbrParticles_, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
-        
     }
+    
+    // Number of particles in current MPI
+    int localNbrParticles = 0;
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+        localNbrParticles += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
+    
+    // Total number of particles
+    MPI_Allreduce( &localNbrParticles, &nbrParticles_, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
     
     // define the initial arrays sizes
     dims[0] = 0;
@@ -259,7 +236,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
         Particles* particles;
         if( idset == 0 ) { // Id
             #pragma omp master
-            data_uint.resize( nParticles, 0 );
+            data_uint64.resize( nParticles, 0 );
             #pragma omp barrier
             #pragma omp for schedule(runtime)
             for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
@@ -268,7 +245,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
                 i=0;
                 j=patch_start[ipatch];
                 while( i<patch_nParticles ) {
-                    data_uint[j] = particles->id(i);
+                    data_uint64[j] = particles->id(i);
                     i++; j++;
                 }
             }
@@ -352,7 +329,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
             
             // Write
             if( idset == 0 ) {
-                H5Dwrite( did, datatypes[idset], mem_space , file_space , transfer, &data_uint[0] );
+                H5Dwrite( did, datatypes[idset], mem_space , file_space , transfer, &data_uint64[0] );
             } else if( idset == 1 ) {
                 H5Dwrite( did, datatypes[idset], mem_space , file_space , transfer, &data_short[0] );
             } else {
@@ -388,7 +365,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timeste
         if( flush_timeSelection->theTimeIsNow(timestep) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
         
         // Clear buffers
-        data_uint  .resize(0);
+        data_uint64.resize(0);
         data_short .resize(0);
         data_double.resize(0);
     }

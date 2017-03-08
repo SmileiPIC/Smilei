@@ -23,6 +23,7 @@
 #include "Species.h"
 #include "PatchesFactory.h"
 #include "DiagnosticScreen.h"
+#include "DiagnosticTrack.h"
 
 using namespace std;
 
@@ -64,7 +65,7 @@ restart_number(-1)
         PyTools::extract("exit_after_dump", exit_after_dump, "DumpRestart");
         
         PyTools::extract("dump_deflate", dump_deflate, "DumpRestart");
-
+        
         if (PyTools::extract("file_grouping", file_grouping, "DumpRestart") && file_grouping > 0) {
             if( file_grouping > (unsigned int)(smpi->getSize()) ) file_grouping = smpi->getSize();
             MESSAGE(1,"Code will group checkpoint files by "<< file_grouping);
@@ -114,6 +115,7 @@ string Checkpoint::dumpName(unsigned int num, SmileiMPI *smpi) {
     return nameDumpTmp.str();
 }
 
+
 void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* smpi, SimWindow* simWindow, Params &params ) {
     
     // check for excedeed time
@@ -150,9 +152,9 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* s
     }
 }
 
+
 void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI* smpi, SimWindow* simWin,  Params &params )
 {
-    
     unsigned int num_dump=dump_number%dump_file_sequence;
     
     hid_t fid = H5Fcreate( dumpName(num_dump,smpi).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
@@ -164,6 +166,8 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     MESSAGE("Step " << itime << " : DUMP fields and particles");
 #endif
     
+    
+    // Write basic attributes
     H5::attr(fid, "Version", string(__VERSION));
     
     H5::attr(fid, "dump_step", itime);
@@ -175,19 +179,21 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     H5::attr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
     H5::attr(fid, "latest_timestep",   static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->latest_timestep  );
     
-    // Master stores the diags screen data
+    // Write the diags screen data
     ostringstream diagName("");
     string attr;
     if( smpi->isMaster() ) {
-        for( unsigned int idiag=0; idiag<vecPatches.globalDiags.size(); idiag++ )
+        for( unsigned int idiag=0; idiag<vecPatches.globalDiags.size(); idiag++ ) {
             if( DiagnosticScreen* screen = dynamic_cast<DiagnosticScreen*>(vecPatches.globalDiags[idiag]) ) {
                 diagName.str("");
                 diagName << "DiagScreen" << screen->screen_id;
                 attr = diagName.str();
                 H5::attr(fid, attr, screen->data_sum);
             }
+        }
     }
     
+    // Write all the patch data
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) {
         
         // Open a group
@@ -203,7 +209,37 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
         
     }
     
-    // Dump moving window status
+    // Write the latest Ids that the MPI processes have given to each species
+    for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ ) {
+        if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) ) {
+            // Define the dataset name
+            ostringstream n("");
+            n<< "latest_IDs_" << vecPatches(0)->vecSpecies[track->speciesId_]->species_type;
+            // Create file space and select one element for each proc
+            hsize_t numel = smpi->getSize();
+            hid_t filespace = H5Screate_simple(1, &numel, NULL);
+            hsize_t offset=smpi->getRank(), count=1;
+            H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &offset, NULL, &count, NULL);
+            // Create dataset
+            hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
+            hid_t dset_id  = H5Dcreate( fid, n.str().c_str(), H5T_NATIVE_UINT64, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+            // Create memory space
+            hsize_t size_in_memory = 1;
+            hid_t memspace  = H5Screate_simple(1, &size_in_memory, NULL);
+            // Parallel write
+            hid_t write_plist = H5Pcreate(H5P_DATASET_XFER);
+            H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
+            H5Dwrite( dset_id, H5T_NATIVE_UINT64, memspace, filespace, write_plist, &track->latest_Id );
+            // Close all
+            H5Pclose( write_plist );
+            H5Pclose( plist_id );
+            H5Dclose( dset_id );
+            H5Sclose( filespace );
+            H5Sclose( memspace );
+        }
+    }
+    
+    // Write the moving window status
     if (simWin!=NULL)
         dumpMovingWindow(fid, simWin);
     
@@ -304,7 +340,7 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
             H5::vect(gid,"Charge", vecSpecies[ispec]->particles->Charge, dump_deflate);
             
             if (vecSpecies[ispec]->particles->tracked) {
-                H5::vect(gid,"Id", vecSpecies[ispec]->particles->Id, dump_deflate);
+                H5::vect(gid,"Id", vecSpecies[ispec]->particles->Id, H5T_NATIVE_UINT64, dump_deflate);
             }
             
             
@@ -359,6 +395,8 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
     hid_t fid = H5Fopen( nameDump.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
     if (fid < 0) ERROR(nameDump << " is not a valid HDF5 file");
     
+    
+    // Read basic attributes
     string dump_version;
     H5::getAttr(fid, "Version", dump_version);
     
@@ -370,6 +408,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
         WARNING ("                while running version is " << string(__VERSION));
     }
     
+    // Create the patches
     vector<int> patch_count(smpi->getSize());
     H5::getVect( fid, "patch_count", patch_count );
     smpi->patch_count = patch_count;
@@ -379,7 +418,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
     H5::getAttr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
     H5::getAttr(fid, "latest_timestep",   static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->latest_timestep  );
     
-    // Master gets the diags screen data
+    // Read the diags screen data
     ostringstream diagName("");
     string attr;
     if( smpi->isMaster() ) {
@@ -392,6 +431,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
             }
     }
     
+    // Read all the patch data
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) {
         
         ostringstream patch_name("");
@@ -405,7 +445,37 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
         
     }
     
-    // load window status
+    // Read the latest Ids that the MPI processes have given to each species
+    for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ ) {
+        if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) ) {
+            // Define the dataset name
+            ostringstream n("");
+            n<< "latest_IDs_" << vecPatches(0)->vecSpecies[track->speciesId_]->species_type;
+            // Create file space
+            hsize_t numel = smpi->getSize();
+            hid_t filespace = H5Screate_simple(1, &numel, NULL);
+            hsize_t offset=smpi->getRank(), count=1;
+            H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &offset, NULL, &count, NULL);
+            // Create dataset
+            hid_t plist_id = H5Pcreate(H5P_DATASET_ACCESS);
+            hid_t dset_id  = H5Dopen( fid, n.str().c_str(), plist_id);
+            // Create memory space and select one element for each proc
+            hsize_t size_in_memory = 1;
+            hid_t memspace  = H5Screate_simple(1, &size_in_memory, NULL);
+            // Parallel write
+            hid_t read_plist = H5Pcreate(H5P_DATASET_XFER);
+            H5Pset_dxpl_mpio(read_plist, H5FD_MPIO_COLLECTIVE);
+            H5Dread( dset_id, H5T_NATIVE_UINT64, memspace, filespace, read_plist, &track->latest_Id );
+            // Close all
+            H5Pclose( read_plist );
+            H5Pclose( plist_id );
+            H5Dclose( dset_id );
+            H5Sclose( filespace );
+            H5Sclose( memspace );
+        }
+    }
+    
+    // Read the moving window status
     if (simWin!=NULL)
         restartMovingWindow(fid, simWin);
     
@@ -518,7 +588,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
             H5::getVect(gid,"Charge",vecSpecies[ispec]->particles->Charge);
             
             if (vecSpecies[ispec]->particles->tracked) {
-                H5::getVect(gid,"Id",vecSpecies[ispec]->particles->Id);
+                H5::getVect(gid,"Id",vecSpecies[ispec]->particles->Id, H5T_NATIVE_UINT64);
             }
             
             H5::getVect(gid,"bmin",vecSpecies[ispec]->bmin,true);
