@@ -71,9 +71,6 @@ for each MPI node). The following steps are executed:
    (e.g. the user has defined a temporal :ref:`profile <profiles>` which requires *python*
    to calculate it every timestep). Otherwise, *python* is stopped.
 
-#. If the :py:data:`output_dir` variable was defined, the current working directory
-   changes to that value.
-
 All these instructions are summarized in a file ``smilei.py``,
 so that the user can directly run ``python -i smilei.py`` for post-processing purposes.
 
@@ -99,7 +96,6 @@ The block ``Main`` is **mandatory** and has the following syntax::
       time_fields_frozen = 0.,
       referenceAngularFrequency_SI = 0.,
       print_every = 100,
-      output_dir = ".",
       random_seed = 0,
   )
 
@@ -220,15 +216,6 @@ The block ``Main`` is **mandatory** and has the following syntax::
   Number of timesteps between each info output on screen. By default, 10 outputs per
   simulation.
 
-
-.. py:data:: output_dir
-
-  :default: current working directory
-  
-  Output directory for the simulation.
-  
-  **WARNING:** This utility is deprecated and may be removed in a future release.
-  Please manage your directories before you run :program:`Smilei`.
 
 .. py:data:: random_seed
 
@@ -1700,7 +1687,7 @@ A few things are important to know when you need dumps and restarts.
   This tells :program:`Smilei` where to find dump files for restart.
   If not defined, it does not restart from a previous dump.
   
-  **WARNING:** this path must either absolute or be relative to ``output_dir``
+  **WARNING:** this path must either absolute or be relative to the simulation directory
   
 .. py:data:: dump_step
 
