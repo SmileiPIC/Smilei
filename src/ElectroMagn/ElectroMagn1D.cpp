@@ -341,37 +341,37 @@ void ElectroMagn1D::saveMagneticFields()
 
 
 
-// ---------------------------------------------------------------------------------------------------------------------
-// Maxwell solver using the FDTD scheme
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::solveMaxwellAmpere()
-{
-    
-    Field1D* Ex1D = static_cast<Field1D*>(Ex_);
-    Field1D* Ey1D = static_cast<Field1D*>(Ey_);
-    Field1D* Ez1D = static_cast<Field1D*>(Ez_);
-    Field1D* By1D = static_cast<Field1D*>(By_);
-    Field1D* Bz1D = static_cast<Field1D*>(Bz_);
-    Field1D* Jx1D = static_cast<Field1D*>(Jx_);
-    Field1D* Jy1D = static_cast<Field1D*>(Jy_);
-    Field1D* Jz1D = static_cast<Field1D*>(Jz_);
-    
-    // --------------------
-    // Solve Maxwell-Ampere
-    // --------------------
-    // Calculate the electrostatic field ex on the dual grid
-    //for (unsigned int ix=0 ; ix<nx_d ; ix++){
-    for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
-        (*Ex1D)(ix)= (*Ex1D)(ix) - timestep* (*Jx1D)(ix) ;
-    }
-    // Transverse fields ey, ez  are defined on the primal grid
-    //for (unsigned int ix=0 ; ix<nx_p ; ix++) {
-    for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
-        (*Ey1D)(ix)= (*Ey1D)(ix) - dt_ov_dx * ( (*Bz1D)(ix+1) - (*Bz1D)(ix)) - timestep * (*Jy1D)(ix) ;
-        (*Ez1D)(ix)= (*Ez1D)(ix) + dt_ov_dx * ( (*By1D)(ix+1) - (*By1D)(ix)) - timestep * (*Jz1D)(ix) ;
-    }
-    
-}
+//// ---------------------------------------------------------------------------------------------------------------------
+//// Maxwell solver using the FDTD scheme
+//// ---------------------------------------------------------------------------------------------------------------------
+//void ElectroMagn1D::solveMaxwellAmpere()
+//{
+//    
+//    Field1D* Ex1D = static_cast<Field1D*>(Ex_);
+//    Field1D* Ey1D = static_cast<Field1D*>(Ey_);
+//    Field1D* Ez1D = static_cast<Field1D*>(Ez_);
+//    Field1D* By1D = static_cast<Field1D*>(By_);
+//    Field1D* Bz1D = static_cast<Field1D*>(Bz_);
+//    Field1D* Jx1D = static_cast<Field1D*>(Jx_);
+//    Field1D* Jy1D = static_cast<Field1D*>(Jy_);
+//    Field1D* Jz1D = static_cast<Field1D*>(Jz_);
+//    
+//    // --------------------
+//    // Solve Maxwell-Ampere
+//    // --------------------
+//    // Calculate the electrostatic field ex on the dual grid
+//    //for (unsigned int ix=0 ; ix<nx_d ; ix++){
+//    for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
+//        (*Ex1D)(ix)= (*Ex1D)(ix) - timestep* (*Jx1D)(ix) ;
+//    }
+//    // Transverse fields ey, ez  are defined on the primal grid
+//    //for (unsigned int ix=0 ; ix<nx_p ; ix++) {
+//    for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
+//        (*Ey1D)(ix)= (*Ey1D)(ix) - dt_ov_dx * ( (*Bz1D)(ix+1) - (*Bz1D)(ix)) - timestep * (*Jy1D)(ix) ;
+//        (*Ez1D)(ix)= (*Ez1D)(ix) + dt_ov_dx * ( (*By1D)(ix+1) - (*By1D)(ix)) - timestep * (*Jz1D)(ix) ;
+//    }
+//    
+//}
 
 
 // ---------------------------------------------------------------------------------------------------------------------

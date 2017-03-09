@@ -528,48 +528,48 @@ void ElectroMagn2D::binomialCurrentFilter()
 }//END binomialCurrentFilter
 
 
-// ---------------------------------------------------------------------------------------------------------------------
-// Solve the Maxwell-Ampere equation
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn2D::solveMaxwellAmpere()
-{
-    // Static-cast of the fields
-    Field2D* Ex2D = static_cast<Field2D*>(Ex_);
-    Field2D* Ey2D = static_cast<Field2D*>(Ey_);
-    Field2D* Ez2D = static_cast<Field2D*>(Ez_);
-    Field2D* Bx2D = static_cast<Field2D*>(Bx_);
-    Field2D* By2D = static_cast<Field2D*>(By_);
-    Field2D* Bz2D = static_cast<Field2D*>(Bz_);
-    Field2D* Jx2D = static_cast<Field2D*>(Jx_);
-    Field2D* Jy2D = static_cast<Field2D*>(Jy_);
-    Field2D* Jz2D = static_cast<Field2D*>(Jz_);
-    // Electric field Ex^(d,p)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
-        #pragma omp simd
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*Ex2D)(i,j) += -timestep*(*Jx2D)(i,j) + dt_ov_dy * ( (*Bz2D)(i,j+1) - (*Bz2D)(i,j) );
-        }
-    }
-    
-    // Electric field Ey^(p,d)
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-        #pragma omp simd
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            (*Ey2D)(i,j) += -timestep*(*Jy2D)(i,j) - dt_ov_dx * ( (*Bz2D)(i+1,j) - (*Bz2D)(i,j) );
-        }
-    }
-    
-    // Electric field Ez^(p,p)
-    for (unsigned int i=0 ;  i<nx_p ; i++) {
-        #pragma omp simd
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*Ez2D)(i,j) += -timestep*(*Jz2D)(i,j)
-            +               dt_ov_dx * ( (*By2D)(i+1,j) - (*By2D)(i,j) )
-            -               dt_ov_dy * ( (*Bx2D)(i,j+1) - (*Bx2D)(i,j) );
-        }
-    }
-
-}//END solveMaxwellAmpere
+//// ---------------------------------------------------------------------------------------------------------------------
+//// Solve the Maxwell-Ampere equation
+//// ---------------------------------------------------------------------------------------------------------------------
+//void ElectroMagn2D::solveMaxwellAmpere()
+//{
+//    // Static-cast of the fields
+//    Field2D* Ex2D = static_cast<Field2D*>(Ex_);
+//    Field2D* Ey2D = static_cast<Field2D*>(Ey_);
+//    Field2D* Ez2D = static_cast<Field2D*>(Ez_);
+//    Field2D* Bx2D = static_cast<Field2D*>(Bx_);
+//    Field2D* By2D = static_cast<Field2D*>(By_);
+//    Field2D* Bz2D = static_cast<Field2D*>(Bz_);
+//    Field2D* Jx2D = static_cast<Field2D*>(Jx_);
+//    Field2D* Jy2D = static_cast<Field2D*>(Jy_);
+//    Field2D* Jz2D = static_cast<Field2D*>(Jz_);
+//    // Electric field Ex^(d,p)
+//    for (unsigned int i=0 ; i<nx_d ; i++) {
+//        #pragma omp simd
+//        for (unsigned int j=0 ; j<ny_p ; j++) {
+//            (*Ex2D)(i,j) += -timestep*(*Jx2D)(i,j) + dt_ov_dy * ( (*Bz2D)(i,j+1) - (*Bz2D)(i,j) );
+//        }
+//    }
+//    
+//    // Electric field Ey^(p,d)
+//    for (unsigned int i=0 ; i<nx_p ; i++) {
+//        #pragma omp simd
+//        for (unsigned int j=0 ; j<ny_d ; j++) {
+//            (*Ey2D)(i,j) += -timestep*(*Jy2D)(i,j) - dt_ov_dx * ( (*Bz2D)(i+1,j) - (*Bz2D)(i,j) );
+//        }
+//    }
+//    
+//    // Electric field Ez^(p,p)
+//    for (unsigned int i=0 ;  i<nx_p ; i++) {
+//        #pragma omp simd
+//        for (unsigned int j=0 ; j<ny_p ; j++) {
+//            (*Ez2D)(i,j) += -timestep*(*Jz2D)(i,j)
+//            +               dt_ov_dx * ( (*By2D)(i+1,j) - (*By2D)(i,j) )
+//            -               dt_ov_dy * ( (*Bx2D)(i,j+1) - (*Bx2D)(i,j) );
+//        }
+//    }
+//
+//}//END solveMaxwellAmpere
 
 
 // ---------------------------------------------------------------------------------------------------------------------

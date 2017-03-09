@@ -42,7 +42,8 @@ nrj_new_fields (  0.               )
     
     emBoundCond = ElectroMagnBC_Factory::create(params, patch);
     
-    MaxwellFaradaySolver_ = SolverFactory::create(params);
+    MaxwellAmpereSolver_  = SolverFactory::createMA(params);
+    MaxwellFaradaySolver_ = SolverFactory::createMF(params);
     
 }
 
@@ -65,7 +66,8 @@ nrj_new_fields ( 0. )
     
     emBoundCond = ElectroMagnBC_Factory::create(params, patch);
     
-    MaxwellFaradaySolver_ = SolverFactory::create(params);
+    MaxwellAmpereSolver_  = SolverFactory::createMA(params);
+    MaxwellFaradaySolver_ = SolverFactory::createMF(params);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -177,6 +179,7 @@ ElectroMagn::~ElectroMagn()
     for ( int i=0 ; i<nBC ;i++ )
         if (emBoundCond[i]!=NULL) delete emBoundCond[i];
     
+    delete MaxwellAmpereSolver_;
     delete MaxwellFaradaySolver_;
     
     //antenna cleanup

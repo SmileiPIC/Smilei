@@ -195,8 +195,10 @@ public:
     Field* Ap_;
     
     //! \todo check time_dual or time_prim (MG)
-    //! method used to solve Maxwell's equation (takes current time and time-step as input parameter)
-    virtual void solveMaxwellAmpere() = 0;
+//    //! method used to solve Maxwell's equation (takes current time and time-step as input parameter)
+//    virtual void solveMaxwellAmpere() = 0;
+    //! Maxwell Ampere Solver
+    Solver* MaxwellAmpereSolver_;
     //! Maxwell Faraday Solver
     Solver* MaxwellFaradaySolver_;
     virtual void saveMagneticFields() = 0;

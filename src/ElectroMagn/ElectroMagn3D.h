@@ -39,8 +39,8 @@ public:
 #ifdef _PATCH3D_TODO
 #endif
 
-    //! Method used to solve Maxwell-Ampere equation
-    void solveMaxwellAmpere();
+//    //! Method used to solve Maxwell-Ampere equation
+//    void solveMaxwellAmpere();
 
     //! Method used to save the Magnetic fields (used to center them)
     void saveMagneticFields();
