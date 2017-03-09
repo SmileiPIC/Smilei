@@ -507,7 +507,7 @@ class Diagnostic(object):
 		self._mkdir(self._exportDir)
 		fileprefix = self._exportDir + self._exportPrefix
 		
-		spacings = list(self._cell_length)
+		spacings = [c[1]-c[0] for c in self._centers]
 		extent = []
 		for i in range(self.dim): extent += [0,self._shape[i]-1]
 		origin = [0.] * self.dim
@@ -548,7 +548,8 @@ class Diagnostic(object):
 		# If 3D data, then do a 3D plot
 		elif self.dim == 3:
 			for itime in range(ntimes):
-				arr = vtk.Array(self._getDataAtTime(self.times[itime]).astype('float32').flatten(order='F'), self._title)
+				data = self._np.ascontiguousarray(self._getDataAtTime(self.times[itime]).flatten(order='F'), dtype='float32')
+				arr = vtk.Array(data, self._title)
 				vtk.WriteImage(arr, origin, extent, spacings, fileprefix+"_"+str(itime)+".pvti", numberOfPieces)
 			print("Successfully exported 3D plot to VTK, folder='"+self._exportDir)
 
