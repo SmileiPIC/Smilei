@@ -8,8 +8,8 @@
 
 using namespace std;
 
-DiagnosticFields1D::DiagnosticFields1D( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, int ndiag )
-    : DiagnosticFields( params, smpi, vecPatches, ndiag )
+DiagnosticFields1D::DiagnosticFields1D( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, int ndiag, OpenPMDparams& openPMD )
+    : DiagnosticFields( params, smpi, vecPatches, ndiag, openPMD )
 {
     // Calculate the offset in the local grid
     patch_offset_in_grid.resize(1);

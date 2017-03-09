@@ -600,16 +600,3 @@ void Params::cleanup(SmileiMPI* smpi) {
     }
     smpi->barrier();
 }
-
-// WARNING: do not change the format. It is required for OpenPMD compatibility.
-string Params::getLocalTime() {
-    time_t t = time(0);
-    struct tm * now = localtime( & t );
-    char buffer[25];
-    
-    strftime(buffer, 25, "%Y-%m-%d %H:%M:%S %z", now);
-
-    string s(buffer, 25);
-    return s;
-}
-

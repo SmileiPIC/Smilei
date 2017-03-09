@@ -9,10 +9,11 @@
 
 #include "Params.h"
 #include "SmileiMPI.h"
-#include "SimWindow.h"
 #include "PartWall.h"
-#include "Collisions.h"
+#include "Interpolator.h"
+#include "Projector.h"
 
+class Collisions;
 class Diagnostic;
 class SimWindow;
 

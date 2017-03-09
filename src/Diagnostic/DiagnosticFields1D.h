@@ -10,7 +10,7 @@
 
 class DiagnosticFields1D : public DiagnosticFields {
 public:
-    DiagnosticFields1D( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, int );
+    DiagnosticFields1D( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, int, OpenPMDparams& );
     ~DiagnosticFields1D();
     
     void setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches ) override;

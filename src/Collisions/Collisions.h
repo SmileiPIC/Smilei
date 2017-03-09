@@ -4,12 +4,13 @@
 #include <vector>
 
 #include "Tools.h"
-#include "Params.h"
-#include "Species.h"
-#include "CollisionalIonization.h"
 #include "H5.h"
+#include "CollisionalIonization.h"
 
 class Patch;
+class Params;
+class Species;
+class VectorPatch;
 
 class Collisions
 {

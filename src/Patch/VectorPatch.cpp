@@ -7,6 +7,7 @@
 #include <cstring>
 //#include <string>
 
+#include "Collisions.h"
 #include "Hilbert_functions.h"
 #include "PatchesFactory.h"
 #include "Species.h"
@@ -49,10 +50,10 @@ void VectorPatch::close(SmileiMPI * smpiData)
     patches_.clear();
 }
 
-void VectorPatch::createDiags(Params& params, SmileiMPI* smpi)
+void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& openPMD)
 {
     globalDiags = DiagnosticFactory::createGlobalDiagnostics(params, smpi, *this );
-    localDiags  = DiagnosticFactory::createLocalDiagnostics (params, smpi, *this );
+    localDiags  = DiagnosticFactory::createLocalDiagnostics (params, smpi, *this, openPMD );
     
     // Delete all unused fields
     for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++) {
