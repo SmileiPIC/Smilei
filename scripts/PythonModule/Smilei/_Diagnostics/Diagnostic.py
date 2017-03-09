@@ -549,7 +549,6 @@ class Diagnostic(object):
 		elif self.dim == 3:
 			for itime in range(ntimes):
 				data = self._np.ascontiguousarray(self._getDataAtTime(self.times[itime]).flatten(order='F'), dtype='float32')
-				print data.max()
 				arr = vtk.Array(data, self._title)
 				vtk.WriteImage(arr, origin, extent, spacings, fileprefix+"_"+str(itime)+".pvti", numberOfPieces)
 			print("Successfully exported 3D plot to VTK, folder='"+self._exportDir)

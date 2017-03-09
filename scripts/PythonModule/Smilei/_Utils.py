@@ -207,11 +207,17 @@ class Movie:
 			except:
 				print("ERROR: it looks like your version of matplotlib is too old for movies")
 				return
+			filename, file_extension = ospath.splitext(movie)
+			if file_extension == ".gif":
+				writer = 'imagemagick_file'
+			else:
+				writer = 'ffmpeg'
 			try:
-				self.writer = anim.writers['ffmpeg'](fps=fps)
+				self.writer = anim.writers[writer](fps=fps)
 			except:
-				print("ERROR: you need the 'ffmpeg' software to make movies")
+				print("ERROR: you need the '"+writer+"' software to make movies")
 				return
+				
 			self.writer.setup(fig, movie, dpi)
 	
 	def finish(self):
@@ -411,6 +417,7 @@ class VTKfile:
 		arr.SetVoidArray(data, npoints*nComponents, 1)
 		arr.SetName(name)
 		return arr
+	
 	def WriteImage(self, array, origin, extent, spacings, file, numberOfPieces):
 		img = self.vtk.vtkImageData()
 		img.SetOrigin(origin)
@@ -424,6 +431,7 @@ class VTKfile:
 		writer.SetStartPiece(0);
 		writer.SetInputData(img)
 		writer.Write()
+	
 	def WriteRectilinearGrid(self, dimensions, xcoords, ycoords, zcoords, array, file):
 		grid = self.vtk.vtkRectilinearGrid()
 		grid.SetDimensions(dimensions)
@@ -435,6 +443,7 @@ class VTKfile:
 		writer.SetFileName(file)
 		writer.SetInputData(grid)
 		writer.Write()
+	
 	def WritePoints(self, pcoords, file):
 		points = self.vtk.vtkPoints()
 		points.SetData(pcoords)
@@ -444,6 +453,7 @@ class VTKfile:
 		writer.SetFileName(file)
 		writer.SetInputData(grid)
 		writer.Write()
+	
 	def WriteLines(self, pcoords, connectivity, attributes, file):
 		ncel = len(connectivity)
 		connectivity = connectivity.flatten()
@@ -468,5 +478,5 @@ class VTKfile:
 		writer.SetFileName(file)
 		writer.SetInputData(pdata)
 		writer.Write()
-		
+
 
