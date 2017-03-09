@@ -138,6 +138,13 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         if (mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL){
             smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], (mypatch->hindex)*nmessage, params );
         }
+        else { // Must force particles creation, see in SpeciesFactory :
+            // if (params.restart)
+            //     thisSpecies->particles->initialize( 0, params.nDim_particle );
+            if (params.restart)
+                for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++)
+                    mypatch->vecSpecies[ispec]->createParticles(params.n_space, params, mypatch, 0 );
+        }
         mypatch->EMfields->laserDisabled();
         vecPatches.patches_[patch_to_be_created[j]] = mypatch ;
     }

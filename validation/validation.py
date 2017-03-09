@@ -97,7 +97,8 @@ import os
 import inspect
 import sys
 import socket
-this_script_dir = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
+#this_script_dir = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
+this_script_dir=os.getcwd()+'/../scripts'
 s = os.sep
 module_dir = this_script_dir+s+'PythonModule'
 sys.path.insert(0, module_dir)
