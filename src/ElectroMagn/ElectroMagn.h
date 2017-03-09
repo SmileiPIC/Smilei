@@ -113,6 +113,17 @@ public:
     //! Total charge density
     Field* rho_;
     
+    //! Vector of electric fields used when a filter is applied
+    std::vector<Field*> Exfilter;
+    std::vector<Field*> Eyfilter;
+    std::vector<Field*> Ezfilter;
+    
+    //! Vector of magnetic fields used when a filter is applied
+    std::vector<Field*> Bxfilter;
+    std::vector<Field*> Byfilter;
+    std::vector<Field*> Bzfilter;
+
+    
     //! all Fields in electromagn (filled in ElectromagnFactory.h)
     std::vector<Field*> allFields;
     

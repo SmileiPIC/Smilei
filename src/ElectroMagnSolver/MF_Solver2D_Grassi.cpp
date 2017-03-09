@@ -24,9 +24,9 @@ MF_Solver2D_Grassi::MF_Solver2D_Grassi(Params &params)
     Dx    = delta*dt/dx;
     Dy    = delta*dt/dy;
     
-//    istimeFilterApplied = false;
-//    if (params.timeFilter_int!=0)
-//        istimeFilterApplied = true;
+    isEFilterApplied = false;
+    if (params.Friedman_filter)
+        isEFilterApplied = true;
     
 }
 
@@ -40,15 +40,15 @@ void MF_Solver2D_Grassi::operator() ( ElectroMagn* fields )
     Field2D* Ex2D;
     Field2D* Ey2D;
     Field2D* Ez2D;
-//    if (istimeFilterApplied) {
-//        Ex2D = static_cast<Field2D*>(fields->Ex_f);
-//        Ey2D = static_cast<Field2D*>(fields->Ey_f);
-//        Ez2D = static_cast<Field2D*>(fields->Ez_f);
-//    } else {
+    if (isEFilterApplied) {
+        Ex2D = static_cast<Field2D*>(fields->Exfilter[0]);
+        Ey2D = static_cast<Field2D*>(fields->Eyfilter[0]);
+        Ez2D = static_cast<Field2D*>(fields->Ezfilter[0]);
+    } else {
         Ex2D = static_cast<Field2D*>(fields->Ex_);
         Ey2D = static_cast<Field2D*>(fields->Ey_);
         Ez2D = static_cast<Field2D*>(fields->Ez_);
-//    }
+    }
     Field2D* Bx2D = static_cast<Field2D*>(fields->Bx_);
     Field2D* By2D = static_cast<Field2D*>(fields->By_);
     Field2D* Bz2D = static_cast<Field2D*>(fields->Bz_);

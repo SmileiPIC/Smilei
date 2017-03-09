@@ -97,6 +97,7 @@ void ElectroMagn::initElectroMagnQuantities()
     Jz_=NULL;
     rho_=NULL;
     
+    
     // Species charge currents and density
     Jx_s.resize(n_species);
     Jy_s.resize(n_species);
@@ -174,6 +175,19 @@ ElectroMagn::~ElectroMagn()
         if( Jz_s [ispec] ) delete Jz_s [ispec];
         if( rho_s[ispec] ) delete rho_s[ispec];
     }
+    
+    for (unsigned int i=0; i<Exfilter.size(); i++)
+        delete Exfilter[i];
+    for (unsigned int i=0; i<Eyfilter.size(); i++)
+        delete Eyfilter[i];
+    for (unsigned int i=0; i<Ezfilter.size(); i++)
+        delete Ezfilter[i];
+    for (unsigned int i=0; i<Bxfilter.size(); i++)
+        delete Bxfilter[i];
+    for (unsigned int i=0; i<Byfilter.size(); i++)
+        delete Byfilter[i];
+    for (unsigned int i=0; i<Bzfilter.size(); i++)
+        delete Bzfilter[i];
     
     int nBC = emBoundCond.size();
     for ( int i=0 ; i<nBC ;i++ )

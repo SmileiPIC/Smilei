@@ -3,6 +3,7 @@
 
 #include "MA_Solver1D_norm.h"
 #include "MA_Solver2D_norm.h"
+#include "MA_Solver2D_Friedman.h"
 #include "MA_Solver3D_norm.h"
 #include "MF_Solver1D_Yee.h"
 #include "MF_Solver2D_Yee.h"
@@ -28,7 +29,11 @@ public:
         if ( params.geometry == "1d3v" ) {
             solver = new MA_Solver1D_norm(params);
         } else if ( params.geometry == "2d3v" ) {
-            solver = new MA_Solver2D_norm(params);
+            if (params.Friedman_filter) {
+                solver = new MA_Solver2D_Friedman(params);
+            } else {
+                solver = new MA_Solver2D_norm(params);
+            }
         } else if ( params.geometry == "3d3v" ) {
             solver = new MA_Solver3D_norm(params);
         }

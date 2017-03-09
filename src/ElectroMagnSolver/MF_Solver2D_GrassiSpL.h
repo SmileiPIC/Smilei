@@ -25,11 +25,11 @@ public:
     double Ay;
     double Dx;
     double Dy;
-    
-    // Check if time filter is applied or not
-    bool istimeFilterApplied;
+
     
 protected:
+    // Check if time filter is applied or not
+    bool isEFilterApplied;
 
 };//END class
 
