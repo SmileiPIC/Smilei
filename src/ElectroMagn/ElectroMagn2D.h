@@ -119,6 +119,9 @@ private:
     
     //! from smpi is ymin
     const bool isYmax;
+    
+    //! Initialize quantities needed in the creators of ElectroMagn2D
+    void initElectroMagn2DQuantities(Params &params, Patch* patch);
 };
 
 #endif

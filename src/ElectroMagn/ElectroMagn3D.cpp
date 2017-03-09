@@ -30,68 +30,7 @@ isZmax(patch->isZmax()),
 isZmin(patch->isZmin())
 {    
     
-    // --------------------------------------------------
-    // Calculate quantities related to the simulation box
-    // --------------------------------------------------
-    
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the x-direction)
-    dx       = cell_length[0];
-    dt_ov_dx = timestep/dx;
-    dx_ov_dt = 1.0/dt_ov_dx;
-    
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the y-direction)
-    dy       = cell_length[1];
-    dt_ov_dy = timestep/dy;
-    dy_ov_dt = 1.0/dt_ov_dy;
-
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the z-direction)
-    dz       = cell_length[2];
-    dt_ov_dz = timestep/dz;
-    dz_ov_dt = 1.0/dt_ov_dz;
-    
-    // ----------------------
-    // Electromagnetic fields
-    // ----------------------
-    
-    dimPrim.resize( nDim_field );
-    dimDual.resize( nDim_field );
-    
-    // Dimension of the primal and dual grids
-    for (size_t i=0 ; i<nDim_field ; i++) {
-        // Standard scheme
-        dimPrim[i] = n_space[i]+1;
-        dimDual[i] = n_space[i]+2;
-        // + Ghost domain
-        dimPrim[i] += 2*oversize[i];
-        dimDual[i] += 2*oversize[i];
-    }
-    // number of nodes of the primal and dual grid in the x-direction
-    nx_p = n_space[0]+1+2*oversize[0];
-    nx_d = n_space[0]+2+2*oversize[0];
-    // number of nodes of the primal and dual grid in the y-direction
-    ny_p = n_space[1]+1+2*oversize[1];
-    ny_d = n_space[1]+2+2*oversize[1];
-    // number of nodes of the primal and dual grid in the z-direction
-    nz_p = n_space[2]+1+2*oversize[2];
-    nz_d = n_space[2]+2+2*oversize[2];
-    
-    // Allocation of the EM fields
-
-    Ex_  = new Field3D(dimPrim, 0, false, "Ex");
-    Ey_  = new Field3D(dimPrim, 1, false, "Ey");
-    Ez_  = new Field3D(dimPrim, 2, false, "Ez");
-    Bx_  = new Field3D(dimPrim, 0, true,  "Bx");
-    By_  = new Field3D(dimPrim, 1, true,  "By");
-    Bz_  = new Field3D(dimPrim, 2, true,  "Bz");
-    Bx_m = new Field3D(dimPrim, 0, true,  "Bx_m");
-    By_m = new Field3D(dimPrim, 1, true,  "By_m");
-    Bz_m = new Field3D(dimPrim, 2, true,  "Bz_m");
-    
-    // Total charge currents and densities
-    Jx_   = new Field3D(dimPrim, 0, false, "Jx");
-    Jy_   = new Field3D(dimPrim, 1, false, "Jy");
-    Jz_   = new Field3D(dimPrim, 2, false, "Jz");
-    rho_  = new Field3D(dimPrim, "Rho" );
+    initElectroMagn3DQuantities(params, patch);
     
     // Charge currents currents and density for each species
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
@@ -100,59 +39,6 @@ isZmin(patch->isZmin())
         Jz_s[ispec]  = new Field3D(("Jz_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
         rho_s[ispec] = new Field3D(("Rho_"+vecSpecies[ispec]->species_type).c_str(), dimPrim);
     }
-
-    // ----------------------------------------------------------------
-    // Definition of the min and max index according to chosen oversize
-    // ----------------------------------------------------------------
-    index_bc_min.resize( nDim_field, 0 );
-    index_bc_max.resize( nDim_field, 0 );
-    for (unsigned int i=0 ; i<nDim_field ; i++) {
-        index_bc_min[i] = oversize[i];
-        index_bc_max[i] = dimDual[i]-oversize[i]-1;
-    }
-    /*
-     MESSAGE("index_bc_min / index_bc_max / nx_p / nx_d" << index_bc_min[0]
-            << " " << index_bc_max[0] << " " << nx_p<< " " << nx_d);
-     */
-    
-    
-    // Define limits of non duplicated elements
-    // (by construction 1 (prim) or 2 (dual) elements shared between per MPI process)
-    // istart 
-        for (unsigned int i=0 ; i<3 ; i++)
-            for (unsigned int isDual=0 ; isDual<2 ; isDual++)
-                istart[i][isDual] = 0;
-        for (unsigned int i=0 ; i<nDim_field ; i++) {
-            for (unsigned int isDual=0 ; isDual<2 ; isDual++) {
-                istart[i][isDual] = oversize[i];
-                if (patch->Pcoordinates[i]!=0) istart[i][isDual]+=1;
-            }
-        }
-    
-        // bufsize = nelements
-        for (unsigned int i=0 ; i<3 ; i++) 
-            for (unsigned int isDual=0 ; isDual<2 ; isDual++)
-                bufsize[i][isDual] = 1;
-    
-        for (unsigned int i=0 ; i<nDim_field ; i++) {
-            for (int isDual=0 ; isDual<2 ; isDual++)
-                bufsize[i][isDual] = n_space[i] + 1;
-        
-            for (int isDual=0 ; isDual<2 ; isDual++) {
-                bufsize[i][isDual] += isDual; 
-                if ( params.number_of_patches[i]!=1 ) {                
-
-                    if ( ( !isDual ) && (patch->Pcoordinates[i]!=0) )
-                        bufsize[i][isDual]--;
-                    else if  (isDual) {
-                        bufsize[i][isDual]--;
-                        if ( (patch->Pcoordinates[i]!=0) && ((int)patch->Pcoordinates[i]!=params.number_of_patches[i]-1) )
-                            bufsize[i][isDual]--;
-                    }
-                
-                } // if ( params.number_of_patches[i]!=1 )
-            } // for (int isDual=0 ; isDual
-        } // for (unsigned int i=0 ; i<nDim_field
     
 }//END constructor Electromagn3D
 
@@ -167,68 +53,7 @@ isZmax(patch->isZmax()),
 isZmin(patch->isZmin())
 {
     
-    // --------------------------------------------------
-    // Calculate quantities related to the simulation box
-    // --------------------------------------------------
-    
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the x-direction)
-    dx       = cell_length[0];
-    dt_ov_dx = timestep/dx;
-    dx_ov_dt = 1.0/dt_ov_dx;
-    
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the y-direction)
-    dy       = cell_length[1];
-    dt_ov_dy = timestep/dy;
-    dy_ov_dt = 1.0/dt_ov_dy;
-
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the z-direction)
-    dz       = cell_length[2];
-    dt_ov_dz = timestep/dz;
-    dz_ov_dt = 1.0/dt_ov_dz;
-    
-    // ----------------------
-    // Electromagnetic fields
-    // ----------------------
-    
-    dimPrim.resize( nDim_field );
-    dimDual.resize( nDim_field );
-    
-    // Dimension of the primal and dual grids
-    for (size_t i=0 ; i<nDim_field ; i++) {
-        // Standard scheme
-        dimPrim[i] = n_space[i]+1;
-        dimDual[i] = n_space[i]+2;
-        // + Ghost domain
-        dimPrim[i] += 2*oversize[i];
-        dimDual[i] += 2*oversize[i];
-    }
-    // number of nodes of the primal and dual grid in the x-direction
-    nx_p = n_space[0]+1+2*oversize[0];
-    nx_d = n_space[0]+2+2*oversize[0];
-    // number of nodes of the primal and dual grid in the y-direction
-    ny_p = n_space[1]+1+2*oversize[1];
-    ny_d = n_space[1]+2+2*oversize[1];
-    // number of nodes of the primal and dual grid in the z-direction
-    nz_p = n_space[2]+1+2*oversize[2];
-    nz_d = n_space[2]+2+2*oversize[2];
-    
-    // Allocation of the EM fields
-
-    Ex_  = new Field3D(dimPrim, 0, false, "Ex");
-    Ey_  = new Field3D(dimPrim, 1, false, "Ey");
-    Ez_  = new Field3D(dimPrim, 2, false, "Ez");
-    Bx_  = new Field3D(dimPrim, 0, true,  "Bx");
-    By_  = new Field3D(dimPrim, 1, true,  "By");
-    Bz_  = new Field3D(dimPrim, 2, true,  "Bz");
-    Bx_m = new Field3D(dimPrim, 0, true,  "Bx_m");
-    By_m = new Field3D(dimPrim, 1, true,  "By_m");
-    Bz_m = new Field3D(dimPrim, 2, true,  "Bz_m");
-    
-    // Total charge currents and densities
-    Jx_   = new Field3D(dimPrim, 0, false, "Jx");
-    Jy_   = new Field3D(dimPrim, 1, false, "Jy");
-    Jz_   = new Field3D(dimPrim, 2, false, "Jz");
-    rho_  = new Field3D(dimPrim, "Rho" );
+    initElectroMagn3DQuantities(params, patch);
     
     // Charge currents currents and density for each species
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
@@ -258,6 +83,79 @@ isZmin(patch->isZmin())
         }
     }
 
+
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Initialize quantities used in ElectroMagn3D
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
+{
+
+    // --------------------------------------------------
+    // Calculate quantities related to the simulation box
+    // --------------------------------------------------
+    
+    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the x-direction)
+    dx       = cell_length[0];
+    dt_ov_dx = timestep/dx;
+    dx_ov_dt = 1.0/dt_ov_dx;
+    
+    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the y-direction)
+    dy       = cell_length[1];
+    dt_ov_dy = timestep/dy;
+    dy_ov_dt = 1.0/dt_ov_dy;
+    
+    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the z-direction)
+    dz       = cell_length[2];
+    dt_ov_dz = timestep/dz;
+    dz_ov_dt = 1.0/dt_ov_dz;
+    
+    // ----------------------
+    // Electromagnetic fields
+    // ----------------------
+    
+    dimPrim.resize( nDim_field );
+    dimDual.resize( nDim_field );
+    
+    // Dimension of the primal and dual grids
+    for (size_t i=0 ; i<nDim_field ; i++) {
+        // Standard scheme
+        dimPrim[i] = n_space[i]+1;
+        dimDual[i] = n_space[i]+2;
+        // + Ghost domain
+        dimPrim[i] += 2*oversize[i];
+        dimDual[i] += 2*oversize[i];
+    }
+    // number of nodes of the primal and dual grid in the x-direction
+    nx_p = n_space[0]+1+2*oversize[0];
+    nx_d = n_space[0]+2+2*oversize[0];
+    // number of nodes of the primal and dual grid in the y-direction
+    ny_p = n_space[1]+1+2*oversize[1];
+    ny_d = n_space[1]+2+2*oversize[1];
+    // number of nodes of the primal and dual grid in the z-direction
+    nz_p = n_space[2]+1+2*oversize[2];
+    nz_d = n_space[2]+2+2*oversize[2];
+    
+    // Allocation of the EM fields
+    
+    Ex_  = new Field3D(dimPrim, 0, false, "Ex");
+    Ey_  = new Field3D(dimPrim, 1, false, "Ey");
+    Ez_  = new Field3D(dimPrim, 2, false, "Ez");
+    Bx_  = new Field3D(dimPrim, 0, true,  "Bx");
+    By_  = new Field3D(dimPrim, 1, true,  "By");
+    Bz_  = new Field3D(dimPrim, 2, true,  "Bz");
+    Bx_m = new Field3D(dimPrim, 0, true,  "Bx_m");
+    By_m = new Field3D(dimPrim, 1, true,  "By_m");
+    Bz_m = new Field3D(dimPrim, 2, true,  "Bz_m");
+    
+    // Total charge currents and densities
+    Jx_   = new Field3D(dimPrim, 0, false, "Jx");
+    Jy_   = new Field3D(dimPrim, 1, false, "Jy");
+    Jz_   = new Field3D(dimPrim, 2, false, "Jz");
+    rho_  = new Field3D(dimPrim, "Rho" );
+    
+    
     // ----------------------------------------------------------------
     // Definition of the min and max index according to chosen oversize
     // ----------------------------------------------------------------
@@ -269,13 +167,13 @@ isZmin(patch->isZmin())
     }
     /*
      MESSAGE("index_bc_min / index_bc_max / nx_p / nx_d" << index_bc_min[0]
-            << " " << index_bc_max[0] << " " << nx_p<< " " << nx_d);
+     << " " << index_bc_max[0] << " " << nx_p<< " " << nx_d);
      */
     
     
     // Define limits of non duplicated elements
     // (by construction 1 (prim) or 2 (dual) elements shared between per MPI process)
-    // istart 
+    // istart
     for (unsigned int i=0 ; i<3 ; i++)
         for (unsigned int isDual=0 ; isDual<2 ; isDual++)
             istart[i][isDual] = 0;
@@ -287,7 +185,7 @@ isZmin(patch->isZmin())
     }
     
     // bufsize = nelements
-    for (unsigned int i=0 ; i<3 ; i++) 
+    for (unsigned int i=0 ; i<3 ; i++)
         for (unsigned int isDual=0 ; isDual<2 ; isDual++)
             bufsize[i][isDual] = 1;
     
@@ -296,9 +194,9 @@ isZmin(patch->isZmin())
             bufsize[i][isDual] = n_space[i] + 1;
         
         for (int isDual=0 ; isDual<2 ; isDual++) {
-            bufsize[i][isDual] += isDual; 
-            if ( params.number_of_patches[i]!=1 ) {                
-
+            bufsize[i][isDual] += isDual;
+            if ( params.number_of_patches[i]!=1 ) {
+                
                 if ( ( !isDual ) && (patch->Pcoordinates[i]!=0) )
                     bufsize[i][isDual]--;
                 else if  (isDual) {
@@ -311,7 +209,6 @@ isZmin(patch->isZmin())
         } // for (int isDual=0 ; isDual
     } // for (unsigned int i=0 ; i<nDim_field
 }
-
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Destructor for Electromagn3D

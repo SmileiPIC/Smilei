@@ -27,106 +27,15 @@ ElectroMagn1D::ElectroMagn1D(Params &params, vector<Species*>& vecSpecies, Patch
 isXmin(patch->isXmin()),
 isXmax(patch->isXmax())
 {
-    oversize_ = oversize[0];
+    initElectroMagn1DQuantities(params, patch);
     
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step
-    dx       = cell_length[0];
-    dt_ov_dx = timestep/cell_length[0];
-    dx_ov_dt = 1.0/dt_ov_dx;
-    
-    // Electromagnetic fields
-    // ----------------------
-    // number of nodes of the primal-grid
-    nx_p = n_space[0]+1 + 2*oversize[0];
-    // number of nodes of the dual-grid
-    nx_d = n_space[0]+2 + 2*oversize[0];
-    // dimPrim/dimDual = nx_p/nx_d
-    dimPrim.resize( nDim_field );
-    dimDual.resize( nDim_field );
-    for (size_t i=0 ; i<nDim_field ; i++) {
-        // Standard scheme
-        dimPrim[i] = n_space[i]+1;
-        dimDual[i] = n_space[i]+2;
-        // + Ghost domain
-        dimPrim[i] += 2*oversize[i];
-        dimDual[i] += 2*oversize[i];
-    }
-    
-    // Allocation of the EM fields
-    Ex_  = new Field1D(dimPrim, 0, false, "Ex");
-    Ey_  = new Field1D(dimPrim, 1, false, "Ey");
-    Ez_  = new Field1D(dimPrim, 2, false, "Ez");
-    Bx_  = new Field1D(dimPrim, 0, true,  "Bx");
-    By_  = new Field1D(dimPrim, 1, true,  "By");
-    Bz_  = new Field1D(dimPrim, 2, true,  "Bz");
-    Bx_m = new Field1D(dimPrim, 0, true,  "Bx_m");
-    By_m = new Field1D(dimPrim, 1, true,  "By_m");
-    Bz_m = new Field1D(dimPrim, 2, true,  "Bz_m");
-    
-    // Total charge currents and densities
-    Jx_   = new Field1D(dimPrim, 0, false, "Jx");
-    Jy_   = new Field1D(dimPrim, 1, false, "Jy");
-    Jz_   = new Field1D(dimPrim, 2, false, "Jz");
-    rho_  = new Field1D(dimPrim, "Rho" );
-    
-    // Charge currents currents and density for each species
-    
+    // Charge and current densities for each species
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
         Jx_s[ispec]  = new Field1D(("Jx_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
         Jy_s[ispec]  = new Field1D(("Jy_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
         Jz_s[ispec]  = new Field1D(("Jz_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
         rho_s[ispec] = new Field1D(("Rho_"+vecSpecies[ispec]->species_type).c_str(), dimPrim);
     }
-    
-    // ----------------------------------------------------------------
-    // Definition of the min and max index according to chosen oversize
-    // ----------------------------------------------------------------
-    index_bc_min.resize( nDim_field, 0 );
-    index_bc_max.resize( nDim_field, 0 );
-    for (size_t i=0 ; i<nDim_field ; i++) {
-        index_bc_min[i] = oversize[i];
-        index_bc_max[i] = dimDual[i]-oversize[i]-1;
-    }
-    
-    
-    // Define limits of non duplicated elements
-    // (by construction 1 (prim) or 2 (dual) elements shared between per MPI process)
-    // istart
-    for (unsigned int i=0 ; i<3 ; i++)
-        for (unsigned int isDual=0 ; isDual<2 ; isDual++)
-            istart[i][isDual] = 0;
-    for (unsigned int i=0 ; i<nDim_field ; i++) {
-        for (unsigned int isDual=0 ; isDual<2 ; isDual++) {
-            istart[i][isDual] = oversize[i];
-            if (patch->Pcoordinates[i]!=0) istart[i][isDual]+=1;
-        }
-    }
-    
-    // bufsize = nelements
-    for (unsigned int i=0 ; i<3 ; i++) 
-        for (unsigned int isDual=0 ; isDual<2 ; isDual++)
-            bufsize[i][isDual] = 1;
-    
-    for (unsigned int i=0 ; i<nDim_field ; i++) {
-        for (int isDual=0 ; isDual<2 ; isDual++)
-            bufsize[i][isDual] = n_space[i] + 1;
-        
-        
-        for (int isDual=0 ; isDual<2 ; isDual++) {
-            bufsize[i][isDual] += isDual; 
-            if ( params.number_of_patches[i]!=1 ) {                
-                
-                if ( ( !isDual ) && (patch->Pcoordinates[i]!=0) )
-                    bufsize[i][isDual]--;
-                else if  (isDual) {
-                    bufsize[i][isDual]--;
-                    if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=(unsigned int)params.number_of_patches[i]-1) ) 
-                        bufsize[i][isDual]--;
-                }
-                
-            } // if ( params.number_of_patches[i]!=1 )
-        } // for (int isDual=0 ; isDual
-    } // for (unsigned int i=0 ; i<nDim_field 
     
 }//END constructor Electromagn1D
 
@@ -135,6 +44,42 @@ ElectroMagn1D::ElectroMagn1D( ElectroMagn1D* emFields, Params &params, Patch* pa
     : ElectroMagn(emFields, params, patch),
 isXmin(patch->isXmin()),
 isXmax(patch->isXmax())
+{
+    initElectroMagn1DQuantities(params, patch);
+    
+    // Charge and current densities for each species
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+        if ( emFields->Jx_s[ispec] != NULL ) {
+            if ( emFields->Jx_s[ispec]->data_ != NULL )
+                Jx_s[ispec]  = new Field1D(dimPrim, 0, false, emFields->Jx_s[ispec]->name);
+            else
+                Jx_s[ispec]  = new Field1D(emFields->Jx_s[ispec]->name, dimPrim);
+        }
+        if ( emFields->Jy_s[ispec] != NULL ) {
+            if ( emFields->Jy_s[ispec]->data_ != NULL )
+                Jy_s[ispec]  = new Field1D(dimPrim, 1, false, emFields->Jy_s[ispec]->name);
+            else
+                Jy_s[ispec]  = new Field1D(emFields->Jy_s[ispec]->name, dimPrim);
+        }
+        if ( emFields->Jz_s[ispec] != NULL ) {
+            if ( emFields->Jz_s[ispec]->data_ != NULL )
+                Jz_s[ispec]  = new Field1D(dimPrim, 2, false, emFields->Jz_s[ispec]->name);
+            else
+                Jz_s[ispec]  = new Field1D(emFields->Jz_s[ispec]->name, dimPrim);
+        }
+        if ( emFields->rho_s[ispec] != NULL ) {
+            if ( emFields->rho_s[ispec]->data_ != NULL )
+                rho_s[ispec] = new Field1D(dimPrim, emFields->rho_s[ispec]->name );
+            else
+                rho_s[ispec]  = new Field1D(emFields->rho_s[ispec]->name, dimPrim);
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Initialize quantities used in ElectroMagn1D
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn1D::initElectroMagn1DQuantities(Params &params, Patch* patch)
 {
     oversize_ = oversize[0];
     
@@ -178,34 +123,6 @@ isXmax(patch->isXmax())
     Jz_   = new Field1D(dimPrim, 2, false, "Jz");
     rho_  = new Field1D(dimPrim, "Rho" );
     
-    // Charge currents currents and density for each species
-    
-    for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        if ( emFields->Jx_s[ispec] != NULL ) {
-            if ( emFields->Jx_s[ispec]->data_ != NULL )
-                Jx_s[ispec]  = new Field1D(dimPrim, 0, false, emFields->Jx_s[ispec]->name);
-            else
-                Jx_s[ispec]  = new Field1D(emFields->Jx_s[ispec]->name, dimPrim);
-        }
-        if ( emFields->Jy_s[ispec] != NULL ) {
-            if ( emFields->Jy_s[ispec]->data_ != NULL )
-                Jy_s[ispec]  = new Field1D(dimPrim, 1, false, emFields->Jy_s[ispec]->name);
-            else
-                Jy_s[ispec]  = new Field1D(emFields->Jy_s[ispec]->name, dimPrim);
-        }
-        if ( emFields->Jz_s[ispec] != NULL ) {
-            if ( emFields->Jz_s[ispec]->data_ != NULL )
-                Jz_s[ispec]  = new Field1D(dimPrim, 2, false, emFields->Jz_s[ispec]->name);
-            else
-                Jz_s[ispec]  = new Field1D(emFields->Jz_s[ispec]->name, dimPrim);
-        }
-        if ( emFields->rho_s[ispec] != NULL ) {
-            if ( emFields->rho_s[ispec]->data_ != NULL )
-                rho_s[ispec] = new Field1D(dimPrim, emFields->rho_s[ispec]->name );
-            else
-                rho_s[ispec]  = new Field1D(emFields->rho_s[ispec]->name, dimPrim);
-        }
-    }
     
     // ----------------------------------------------------------------
     // Definition of the min and max index according to chosen oversize
@@ -232,7 +149,7 @@ isXmax(patch->isXmax())
     }
     
     // bufsize = nelements
-    for (unsigned int i=0 ; i<3 ; i++) 
+    for (unsigned int i=0 ; i<3 ; i++)
         for (unsigned int isDual=0 ; isDual<2 ; isDual++)
             bufsize[i][isDual] = 1;
     
@@ -242,22 +159,21 @@ isXmax(patch->isXmax())
         
         
         for (int isDual=0 ; isDual<2 ; isDual++) {
-            bufsize[i][isDual] += isDual; 
-            if ( params.number_of_patches[i]!=1 ) {                
+            bufsize[i][isDual] += isDual;
+            if ( params.number_of_patches[i]!=1 ) {
                 
                 if ( ( !isDual ) && (patch->Pcoordinates[i]!=0) )
                     bufsize[i][isDual]--;
                 else if  (isDual) {
                     bufsize[i][isDual]--;
-                    if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=(unsigned int)params.number_of_patches[i]-1) ) 
+                    if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=(unsigned int)params.number_of_patches[i]-1) )
                         bufsize[i][isDual]--;
                 }
                 
             } // if ( params.number_of_patches[i]!=1 )
         } // for (int isDual=0 ; isDual
-    } // for (unsigned int i=0 ; i<nDim_field 
+    } // for (unsigned int i=0 ; i<nDim_field
 }
-
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Destructor for Electromagn1D
