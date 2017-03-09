@@ -32,52 +32,13 @@ nrj_mw_lost    (  0.               ),
 nrj_new_fields (  0.               )
 {
     
-    // initialize poynting vector
-    poynting[0].resize(nDim_field,0.0);
-    poynting[1].resize(nDim_field,0.0);
-    poynting_inst[0].resize(nDim_field,0.0);
-    poynting_inst[1].resize(nDim_field,0.0);
     
     // take useful things from params
     for (unsigned int i=0; i<3; i++) {
         DEBUG("____________________ OVERSIZE: " <<i << " " << oversize[i]);
     }
     
-    if (n_space.size() != 3) ERROR("this should not happen");
-    
-    Ex_=NULL;
-    Ey_=NULL;
-    Ez_=NULL;
-    Bx_=NULL;
-    By_=NULL;
-    Bz_=NULL;
-    Bx_m=NULL;
-    By_m=NULL;
-    Bz_m=NULL;
-    Jx_=NULL;
-    Jy_=NULL;
-    Jz_=NULL;
-    rho_=NULL;
-    
-    // Species charge currents and density
-    Jx_s.resize(n_species);
-    Jy_s.resize(n_species);
-    Jz_s.resize(n_species);
-    rho_s.resize(n_species);
-    for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Jx_s[ispec]  = NULL;
-        Jy_s[ispec]  = NULL;
-        Jz_s[ispec]  = NULL;
-        rho_s[ispec] = NULL;
-    }
-    
-    for (unsigned int i=0; i<3; i++) {
-        for (unsigned int j=0; j<2; j++) {
-            istart[i][j]=0;
-            bufsize[i][j]=0;
-        }
-    }
-    
+    initElectroMagnQuantities();
     
     emBoundCond = ElectroMagnBC_Factory::create(params, patch);
     
@@ -85,7 +46,9 @@ nrj_new_fields (  0.               )
     
 }
 
-
+// ---------------------------------------------------------------------------------------------------------------------
+// ElectroMagn constructor for patches 
+// ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn::ElectroMagn( ElectroMagn* emFields, Params &params, Patch* patch ) :
 timestep       ( emFields->timestep    ),
 cell_length    ( emFields->cell_length ),
@@ -96,6 +59,19 @@ n_space        ( emFields->n_space     ),
 oversize       ( emFields->oversize    ),
 nrj_mw_lost    ( 0. ),
 nrj_new_fields ( 0. )
+{
+
+    initElectroMagnQuantities();
+    
+    emBoundCond = ElectroMagnBC_Factory::create(params, patch);
+    
+    MaxwellFaradaySolver_ = SolverFactory::create(params);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Initialize quantities used in ElectroMagn
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn::initElectroMagnQuantities()
 {
     // initialize poynting vector
     poynting[0].resize(nDim_field,0.0);
@@ -137,11 +113,6 @@ nrj_new_fields ( 0. )
             bufsize[i][j]=0;
         }
     }
-    
-    
-    emBoundCond = ElectroMagnBC_Factory::create(params, patch);
-    
-    MaxwellFaradaySolver_ = SolverFactory::create(params);
 }
 
 

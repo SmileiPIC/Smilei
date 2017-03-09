@@ -51,6 +51,7 @@ public:
     //! Constructor for Electromagn
     ElectroMagn( Params &params, std::vector<Species*>& vecSpecies, Patch* patch );
     ElectroMagn( ElectroMagn* emFields, Params &params, Patch* patch );
+    void initElectroMagnQuantities();
     //! Extra initialization. Used in ElectroMagnFactory
     void finishInitialization(int nspecies, Patch* patch);
     
