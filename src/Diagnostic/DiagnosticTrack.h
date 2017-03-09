@@ -12,9 +12,7 @@ class DiagnosticTrack : public Diagnostic {
 
 public :
     //! Default constructor
-    DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int );
-    //! Cloning constructor
-    DiagnosticTrack(DiagnosticTrack* track, Patch* patch);
+    DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, unsigned int, OpenPMDparams& );
     //! Default destructor
     ~DiagnosticTrack() override;
     
@@ -33,11 +31,17 @@ public :
         return 0;
     }
     
+    //! Fills a buffer with the required particle property
+    template<typename T> void fill_buffer(VectorPatch& vecPatches, unsigned int iprop, std::vector<T>& buffer);
+    
+    //! Write a dataset with the given buffer
+    template<typename T> void write_dataset( hid_t location, std::string name, T& buffer, hid_t dtype, hid_t file_space, hid_t mem_space, hid_t plist );
+    
     //! Last ID assigned to a particle by this MPI domain
     uint64_t latest_Id;
     
     //! Index of the species used
-    int speciesId_;
+    unsigned int speciesId_;
     
 
 private :
@@ -45,19 +49,14 @@ private :
     //! Flag to test whether IDs have been set already
     bool IDs_done;
     
-    //! HDF5 file transfer protocol
-    hid_t transfer;
+    //! HDF5 objects
+    hid_t data_group_id, transfer;
      
     //! Number of spatial dimensions
     unsigned int nDim_particle;
     
-    //! list of datasets to be added to the file
-    std::vector<std::string> datasets;
-    //! list of data types for each dataset
-    std::vector<hid_t> datatypes;
-    
     //! Current particle partition among the patches own by current MPI
-    std::vector<int> patch_start;
+    std::vector<unsigned int> patch_start;
     
     //! Buffer for the output of double array
     std::vector<double> data_double;

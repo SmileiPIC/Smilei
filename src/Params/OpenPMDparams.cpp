@@ -113,6 +113,10 @@ void OpenPMDparams::writeBasePathAttributes( hid_t location, unsigned int itime 
     H5::attr( location, "timeUnitSI", 0.); // not relevant
 }
 
+void OpenPMDparams::writeParticlesPathAttributes( hid_t location )
+{
+}
+
 void OpenPMDparams::writeMeshesPathAttributes( hid_t location )
 {
     H5::attr( location, "fieldSolver", fieldSolver);

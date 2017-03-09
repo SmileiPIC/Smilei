@@ -22,8 +22,6 @@ class TrackParticles(Diagnostic):
 		# Get info from the hdf5 files + verifications
 		# -------------------------------------------------------------------
 		self.species  = species
-		translateProperties = {"Id":"Id", "x":"Position-0", "y":"Position-1", "z":"Position-2",
-			"px":"Momentum-0", "py":"Momentum-1", "pz":"Momentum-2"}
 		# If the first path does not contain the ordered file, we must create it
 		orderedfile = self._results_path[0]+self._os.sep+"TrackParticles_"+species+".h5"
 		if not self._os.path.isfile(orderedfile):
@@ -39,9 +37,9 @@ class TrackParticles(Diagnostic):
 		f = self._h5py.File(orderedfile)
 		self._h5items = {}
 		self._locationForTime = {}
-		for prop, name in translateProperties.items():
-			if name in f.keys():
-				self._h5items[prop] = f[name]
+		for prop in ["Id", "x", "y", "z", "px", "py", "pz"]:
+			if prop in f:
+				self._h5items[prop] = f[prop]
 		# Memorize the locations of timesteps in the files
 		for it, t in enumerate(f["Times"]):
 			self._locationForTime[t] = it
@@ -131,7 +129,6 @@ class TrackParticles(Diagnostic):
 					for time in times:
 						selectionAtTimeT = eval(particleSelector) # array of True or False
 						getData("Id", time, ID)
-						print ID
 						loc = self._np.flatnonzero(ID>0) # indices of existing particles
 						selection[loc] = function( selection[loc], selectionAtTimeT[loc])
 					#except:
@@ -232,14 +229,15 @@ class TrackParticles(Diagnostic):
 		time_locations = {}
 		for fileIndex, fileD in enumerate(filesDisordered):
 			f = self._h5py.File(fileD, "r")
-			for t in f["Times"]:
-				time_locations[t] = (fileIndex, "%010d"%t)
+			for t in f["data"].keys():
+				try   : time_locations[int(t)] = (fileIndex, t)
+				except: pass
 			f.close()
 		times = sorted(time_locations.keys())
 		# Open the last file and get the number of particles from each MPI
 		last_file_index, tname = time_locations[times[-1]]
 		f = self._h5py.File(filesDisordered[last_file_index], "r")
-		number_of_particles = (f[tname]["latest_IDs"].value % (2**32)).astype('uint32')
+		number_of_particles = (f["data"][tname]["latest_IDs"].value % (2**32)).astype('uint32')
 		# Calculate the offset that each MPI needs
 		offset = self._np.cumsum(number_of_particles)
 		total_number_of_particles = offset[-1]
@@ -247,26 +245,28 @@ class TrackParticles(Diagnostic):
 		offset[0] = 0
 		# Make new (ordered) file
 		f0 = self._h5py.File(fileOrdered, "w")
-		# Make new datasets, corresponding to those in the last disordered file
-		for k in f[tname].keys():
-			if k=="latest_IDs": continue
-			f0.create_dataset(k, (len(times), total_number_of_particles), f[tname][k].dtype, fillvalue=0)
+		# Make new datasets
+		properties = {"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
+		              "momentum/x":"px", "momentum/y":"py", "momentum/z":"pz"}
+		for k, name in properties.items():
+			try   : f0.create_dataset(name, (len(times), total_number_of_particles), f["data"][tname]["particles"][k].dtype, fillvalue=0)
+			except: pass
 		f.close()
 		# Loop times and fill arrays
 		for it, t in enumerate(times):
 			print("    Ordering @ timestep = "+str(t))
 			file_index, tname = time_locations[t]
 			f = self._h5py.File(filesDisordered[file_index], "r")
-			group = f[tname]
+			group = f["data"][tname]["particles"]
 			# Get the Ids and find where they should be stored in the final file
-			locs = group["Id"].value % 2**32 + offset[ group["Id"].value>>32 ] -1
+			locs = group["id"].value % 2**32 + offset[ group["id"].value>>32 ] -1
 			# Loop datasets and order them
-			for k in group.keys():
-				if k=="latest_IDs": continue
+			for k, name in properties.items():
+				if k not in group: continue
 				disordered = group[k].value
 				ordered = self._np.zeros((total_number_of_particles, ), dtype=disordered.dtype)
 				ordered[locs] = disordered
-				f0[k].write_direct(ordered, dest_sel=self._np.s_[it,:])
+				f0[name].write_direct(ordered, dest_sel=self._np.s_[it,:])
 			f.close()
 		# Create the "Times" dataset
 		f0.create_dataset("Times", data=times)

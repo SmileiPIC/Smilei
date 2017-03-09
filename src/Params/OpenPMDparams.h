@@ -47,6 +47,9 @@ public:
     //! Write the attributes for the meshesPath
     void writeMeshesPathAttributes( hid_t );
     
+    //! Write the attributes for the particlesPath
+    void writeParticlesPathAttributes( hid_t );
+    
     //! Write the attributes for a field in the meshesPath
     void writeFieldAttributes( hid_t, unsigned int );
     

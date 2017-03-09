@@ -48,17 +48,22 @@ void Particles::initialize(unsigned int nParticles, unsigned int nDim)
     resize(nParticles, nDim);
     
     if ( double_prop.empty() ) { // do this just once 
+        
         Position.resize(nDim);
         for (unsigned int i=0 ; i< nDim ; i++)
             double_prop.push_back( &(Position[i]) );
+        
+        for (unsigned int i=0 ; i< 3 ; i++)
+            double_prop.push_back( &(Momentum[i]) );
+        
+        double_prop.push_back( &Weight );
+        
 #ifdef  __DEBUG
         Position_old.resize(nDim);
         for (unsigned int i=0 ; i< nDim ; i++)
             double_prop.push_back( &(Position_old[i]) );
 #endif
-        for (unsigned int i=0 ; i< 3 ; i++)
-            double_prop.push_back( &(Momentum[i]) );
-        double_prop.push_back( &Weight );
+        
         short_prop.push_back( &Charge );
         if (tracked) {
             uint64_prop.push_back( &Id );

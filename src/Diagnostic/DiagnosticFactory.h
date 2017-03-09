@@ -73,7 +73,7 @@ public:
         
         for (unsigned int n_species = 0; n_species < vecPatches(0)->vecSpecies.size(); n_species++) {
             if ( vecPatches(0)->vecSpecies[n_species]->particles->tracked ) {
-                vecDiagnostics.push_back( new DiagnosticTrack(params, smpi, vecPatches(0), n_species) );
+                vecDiagnostics.push_back( new DiagnosticTrack(params, smpi, vecPatches(0), n_species, openPMD) );
             }
         }
         

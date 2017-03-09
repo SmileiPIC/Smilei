@@ -274,8 +274,18 @@ public:
 #endif
     
     Particle operator()(unsigned int iPart);
-
-
+    
+    //! Methods to obtain the any property, given its index in the arrays double_prop, uint64_prop, or short_prop
+    void getProperty(unsigned int iprop, std::vector<uint64_t>* &prop) {
+        prop = uint64_prop[iprop];
+    }
+    void getProperty(unsigned int iprop, std::vector<short>* &prop) {
+        prop = short_prop[iprop];
+    }
+    void getProperty(unsigned int iprop, std::vector<double>* &prop) {
+        prop = double_prop[iprop];
+    }
+    
 private:
 
 };
