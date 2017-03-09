@@ -107,16 +107,6 @@ namelist("")
     PyTools::runPyFunction("_smilei_check");
     smpi->barrier();
     
-    // output dir: we force this to be the same on all mpi nodes
-    string output_dir("");
-    PyTools::extract("output_dir", output_dir, "Main");
-    PyTools::checkPyError();
-    if (!output_dir.empty()) {
-        if (chdir(output_dir.c_str()) != 0) {
-            WARNING("Could not chdir to output_dir = " << output_dir);
-        }
-    }
-    
     // Now the string "namelist" contains all the python files concatenated
     // It is written as a file: smilei.py
     if (smpi->isMaster()) {

@@ -143,63 +143,58 @@ class Main(SmileiSingleton):
     # Default Misc
     referenceAngularFrequency_SI = 0.
     print_every = None
-    output_dir = None
     random_seed = None
     
     def __init__(self, **kwargs):
         super(Main, self).__init__(**kwargs)
         #initialize timestep if not defined based on timestep_over_CFL
-        if Main.timestep is None:
-            if Main.timestep_over_CFL is None:
+        if self.timestep is None:
+            if self.timestep_over_CFL is None:
                 raise Exception("timestep and timestep_over_CFL not defined")
             else:
-                if Main.cell_length is None:
+                if self.cell_length is None:
                     raise Exception("Need cell_length to calculate timestep")
                 
                 # Yee solver
-                if Main.maxwell_sol == 'Yee':
-                    if Main.geometry == '1d3v':
-                        Main.timestep = Main.timestep_over_CFL*Main.cell_length[0]
-                    elif Main.geometry == '2d3v':         
-                        Main.timestep = Main.timestep_over_CFL/math.sqrt(1.0/(Main.cell_length[0]**2)+1.0/(Main.cell_length[1]**2))
-                    elif Main.geometry == '3d3v':         
-                        Main.timestep = Main.timestep_over_CFL/math.sqrt(1.0/(Main.cell_length[0]**2)+1.0/(Main.cell_length[1]**2)+1.0/(Main.cell_length[2]**2))
-                    else: 
-                        raise Exception("timestep: geometry not implemented "+Main.geometry)
-                            
+                if self.maxwell_sol == 'Yee':
+                    dim = int(Main.geometry[0])
+                    if dim<1 or dim>3:
+                        raise Exception("timestep_over_CFL not implemented in geometry "+self.geometry)
+                    self.timestep = self.timestep_over_CFL / math.sqrt(sum([1./l**2 for l in self.cell_length]))
+                
                 # Grassi
-                elif Main.maxwell_sol == 'Grassi':
-                    if Main.geometry == '2d3v':
-                        Main.timestep = Main.timestep_over_CFL * 0.7071067811*Main.cell_length[0];
+                elif self.maxwell_sol == 'Grassi':
+                    if self.geometry == '2d3v':
+                        self.timestep = self.timestep_over_CFL * 0.7071067811*self.cell_length[0];
                     else:
-                        raise Exception("timestep: geometry not implemented "+Main.geometry)
+                        raise Exception("timestep_over_CFL not implemented in geometry "+self.geometry)
                         
                 # GrassiSpL
-                elif Main.maxwell_sol == 'GrassiSpL':
-                    if Main.geometry == '2d3v':
-                        Main.timestep = Main.timestep_over_CFL * 0.6471948469*Main.cell_length[0];
+                elif self.maxwell_sol == 'GrassiSpL':
+                    if self.geometry == '2d3v':
+                        self.timestep = self.timestep_over_CFL * 0.6471948469*self.cell_length[0];
                     else:
-                        raise Exception("timestep: geometry not implemented "+Main.geometry)
-
+                        raise Exception("timestep_over_CFL not implemented in geometry "+self.geometry)
+                
                 # None recognized solver
                 else:
-                    raise Exception("timestep: maxwell_sol not implemented "+Main.maxwell_sol)
-
+                    raise Exception("timestep: maxwell_sol not implemented "+self.maxwell_sol)
+                
         #initialize sim_length if not defined based on number_of_cells and cell_length
-        if len(Main.sim_length) is 0:
-            if len(Main.number_of_cells) is 0:
+        if len(self.sim_length) is 0:
+            if len(self.number_of_cells) is 0:
                 raise Exception("sim_length and number_of_cells not defined")
-            elif len(Main.number_of_cells) != len(Main.cell_length):
+            elif len(self.number_of_cells) != len(self.cell_length):
                 raise Exception("sim_length and number_of_cells not defined")
             else :
-                Main.sim_length = [a*b for a,b in zip(Main.number_of_cells, Main.cell_length)]
+                self.sim_length = [a*b for a,b in zip(self.number_of_cells, self.cell_length)]
 
         #initialize sim_time if not defined based on number_of_timesteps and timestep
-        if Main.sim_time is None:
-            if Main.number_of_timesteps is None:
+        if self.sim_time is None:
+            if self.number_of_timesteps is None:
                 raise Exception("sim_time and number_of_timesteps not defined")
             else:
-                Main.sim_time = Main.number_of_timesteps * Main.timestep
+                self.sim_time = self.number_of_timesteps * self.timestep
 
 class LoadBalancing(SmileiSingleton):
     """Load balancing parameters"""

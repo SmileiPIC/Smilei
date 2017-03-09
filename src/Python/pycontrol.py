@@ -27,12 +27,9 @@ def _smilei_check():
             if not CheckClass._verify: raise Exception("")
         except:
             raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
-    # Verify the output_dir
-    if smilei_mpi_rank == 0 and Main.output_dir:
-        _mkdir("output_dir", Main.output_dir)
     # Checkpoint: prepare dir tree
     if smilei_mpi_rank == 0 and (DumpRestart.dump_step>0 or DumpRestart.dump_minutes>0.):
-        checkpoint_dir = (Main.output_dir or ".") + os.sep + "checkpoints" + os.sep
+        checkpoint_dir = "." + os.sep + "checkpoints" + os.sep
         if DumpRestart.file_grouping :
             ngroups = smilei_mpi_size/DumpRestart.file_grouping+1
             ngroups_chars = int(math.log10(ngroups))+1

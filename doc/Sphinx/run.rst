@@ -58,8 +58,6 @@ it is recommended to create a new directory to store these results. For instance
   $ cd ~/my_simulation                        # Goes there
   $ mpiexec -np 4 ~/Smilei/smilei my_namelist # Run with 4 processors
 
-Note that the :py:data:`output_dir` parameter automatically changes the output directory.
-
 ----
 
 Using the provided script
