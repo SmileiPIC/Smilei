@@ -383,10 +383,8 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         fout.open ("patch_load.txt", std::ofstream::out | std::ofstream::app);
     }
     
-    MPI_Status status0, status1;
+    MPI_Status status, status0, status1;
     MPI_Request request0, request1; 
-
-    Npatches = params.tot_number_of_patches;
     
     ncells_perpatch = params.n_space[0]+2*params.oversize[0]; //Initialization
     for (unsigned int idim = 1; idim < params.nDim_field; idim++)
@@ -430,6 +428,11 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     for(unsigned int rank=0; rank < smilei_sz; rank++) Tload += Tload_vec[rank];
     Tload /= Tcapabilities; //Target load for each mpi process.
     //Tcur = Tload * capabilities[smilei_rk];  //Init.
+
+    if (smilei_rk > 0)
+        MPI_Wait(&request1, &status);
+    if (smilei_rk < smilei_sz-1)
+        MPI_Wait(&request0, &status);
 
     if (smilei_rk > 0){
         //Tcur is now initialized as the total load carried by previous ranks.
@@ -592,7 +595,8 @@ void SmileiMPI::waitall(Patch* patch)
         MPI_Status status;
         if (patch->requests_[ireq] != MPI_REQUEST_NULL)
             MPI_Wait(&(patch->requests_[ireq]), &status);
-        patch->requests_[ireq] = MPI_REQUEST_NULL;
+        //AB: This operation is done in MPI_Wait already.
+        //patch->requests_[ireq] = MPI_REQUEST_NULL;
     }
         
 }
