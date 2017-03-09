@@ -429,7 +429,10 @@ class VTKfile:
 		writer.SetNumberOfPieces(numberOfPieces)
 		writer.SetEndPiece(numberOfPieces-1)
 		writer.SetStartPiece(0);
-		writer.SetInputData(img)
+                if float(self.vtk.VTK_VERSION[:3]) < 6:
+		    writer.SetInput(img)
+                else:
+		    writer.SetInputData(img)
 		writer.Write()
 	
 	def WriteRectilinearGrid(self, dimensions, xcoords, ycoords, zcoords, array, file):
@@ -441,7 +444,10 @@ class VTKfile:
 		grid.GetPointData().SetScalars(array)
 		writer = self.vtk.vtkRectilinearGridWriter()
 		writer.SetFileName(file)
-		writer.SetInputData(grid)
+                if float(self.vtk.VTK_VERSION[:3]) < 6:
+		    writer.SetInput(grid)
+                else:
+		    writer.SetInputData(grid)
 		writer.Write()
 	
 	def WritePoints(self, pcoords, file):
@@ -451,7 +457,10 @@ class VTKfile:
 		grid.SetPoints(points)
 		writer = self.vtk.vtkUnstructuredGridWriter()
 		writer.SetFileName(file)
-		writer.SetInputData(grid)
+                if float(self.vtk.VTK_VERSION[:3]) < 6:
+		    writer.SetInput(grid)
+                else:
+		    writer.SetInputData(grid)
 		writer.Write()
 	
 	def WriteLines(self, pcoords, connectivity, attributes, file):
@@ -476,7 +485,10 @@ class VTKfile:
 		
 		writer = self.vtk.vtkPolyDataWriter()
 		writer.SetFileName(file)
-		writer.SetInputData(pdata)
+                if float(self.vtk.VTK_VERSION[:3]) < 6:
+		    writer.SetInput(pdata)
+                else:
+		    writer.SetInputData(pdata)
 		writer.Write()
 
 

@@ -39,8 +39,8 @@ public:
 #ifdef _PATCH3D_TODO
 #endif
 
-    //! Method used to solve Maxwell-Ampere equation
-    void solveMaxwellAmpere();
+//    //! Method used to solve Maxwell-Ampere equation
+//    void solveMaxwellAmpere();
 
     //! Method used to save the Magnetic fields (used to center them)
     void saveMagneticFields();
@@ -136,6 +136,9 @@ private:
     
     //! from smpi is zmin
     const bool isZmin;
+    
+    //! Initialize quantities needed in the creators of ElectroMagn3D
+    void initElectroMagn3DQuantities(Params &params, Patch* patch);
 };
 
 #endif
