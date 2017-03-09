@@ -136,6 +136,9 @@ private:
     
     //! from smpi is zmin
     const bool isZmin;
+    
+    //! Initialize quantities needed in the creators of ElectroMagn3D
+    void initElectroMagn3DQuantities(Params &params, Patch* patch);
 };
 
 #endif
