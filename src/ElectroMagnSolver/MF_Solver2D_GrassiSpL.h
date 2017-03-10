@@ -19,6 +19,8 @@ public:
     virtual void operator()( ElectroMagn* fields);
     
     // Parameters for the Maxwell-Faraday solver
+    double dt_ov_dx;
+    double dt_ov_dy;
     double dx;
     double dy;
     double Ax;
