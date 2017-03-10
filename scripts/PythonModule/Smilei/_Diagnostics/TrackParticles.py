@@ -249,7 +249,7 @@ class TrackParticles(Diagnostic):
 		properties = {"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
 		              "momentum/x":"px", "momentum/y":"py", "momentum/z":"pz"}
 		for k, name in properties.items():
-			try   : f0.create_dataset(name, (len(times), total_number_of_particles), f["data"][tname]["particles"][k].dtype, fillvalue=0)
+			try   : f0.create_dataset(name, (len(times), total_number_of_particles), f["data"][tname]["particles"][self.species][k].dtype, fillvalue=0)
 			except: pass
 		f.close()
 		# Loop times and fill arrays
@@ -257,7 +257,7 @@ class TrackParticles(Diagnostic):
 			print("    Ordering @ timestep = "+str(t))
 			file_index, tname = time_locations[t]
 			f = self._h5py.File(filesDisordered[file_index], "r")
-			group = f["data"][tname]["particles"]
+			group = f["data"][tname]["particles"][self.species]
 			# Get the Ids and find where they should be stored in the final file
 			locs = group["id"].value % 2**32 + offset[ group["id"].value>>32 ] -1
 			# Loop datasets and order them

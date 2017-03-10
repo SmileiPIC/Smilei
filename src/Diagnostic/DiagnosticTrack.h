@@ -34,8 +34,11 @@ public :
     //! Fills a buffer with the required particle property
     template<typename T> void fill_buffer(VectorPatch& vecPatches, unsigned int iprop, std::vector<T>& buffer);
     
-    //! Write a dataset with the given buffer
-    template<typename T> void write_dataset( hid_t location, std::string name, T& buffer, hid_t dtype, hid_t file_space, hid_t mem_space, hid_t plist );
+    //! Write a scalar dataset with the given buffer
+    template<typename T> void write_scalar( hid_t, std::string, T&, hid_t, hid_t, hid_t, hid_t, unsigned int );
+    
+    //! Write a vector component dataset with the given buffer
+    template<typename T> void write_component( hid_t, std::string, T&, hid_t, hid_t, hid_t, hid_t );
     
     //! Last ID assigned to a particle by this MPI domain
     uint64_t latest_Id;
