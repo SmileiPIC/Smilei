@@ -9,6 +9,7 @@
 MF_Solver2D_Lehe::MF_Solver2D_Lehe(Params &params)
     : Solver2D(params)
 {
+    ERROR("Under development, not yet working");
     dx = params.cell_length[0];
     dy = params.cell_length[1];
     delta_x = (1./4.)*(1.-pow( sin(M_PI*dt_ov_dx/2.)/dt_ov_dx,2 ) );

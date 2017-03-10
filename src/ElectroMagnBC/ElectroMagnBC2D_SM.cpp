@@ -186,12 +186,7 @@ void ElectroMagnBC2D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
             for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
                 byW += vecLaser[ilaser]->getAmplitude0(yp, time_dual, j, 0);
             }
-            
-            /*(*By2D)(0,j) = Alpha_SM_W   * (*Ez2D)(0,j)
-            +              Beta_SM_W    * (*By2D)(1,j)
-            +              Gamma_SM_W   * byW
-            +              Delta_SM_W   * (*Bx2D)(0,j+1)
-            +              Epsilon_SM_W * (*Bx2D)(0,j);*/
+
             (*By2D)(0,j) = Alpha_SM_W   * (*Ez2D)(0,j)
             +              Beta_SM_W    *( (*By2D)(1,j)-By_xvalmin_Long[j])
             +              Gamma_SM_W   * byW

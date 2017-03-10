@@ -137,6 +137,22 @@ void ElectroMagn2D::initElectroMagn2DQuantities(Params &params, Patch* patch)
     By_m = new Field2D(dimPrim, 1, true,  "By_m");
     Bz_m = new Field2D(dimPrim, 2, true,  "Bz_m");
     
+    // Allocation of filtered fields when Friedman filtering is required
+    if (params.Friedman_filter){
+        Exfilter.resize(3);
+        Exfilter[0] = new Field2D(dimPrim, 0, false, "Ex_f");
+        Exfilter[1] = new Field2D(dimPrim, 0, false, "Ex_m1");
+        Exfilter[2] = new Field2D(dimPrim, 0, false, "Ex_m2");
+        Eyfilter.resize(3);
+        Eyfilter[0] = new Field2D(dimPrim, 1, false, "Ey_f");
+        Eyfilter[1] = new Field2D(dimPrim, 1, false, "Ey_m1");
+        Eyfilter[2] = new Field2D(dimPrim, 1, false, "Ey_m2");
+        Ezfilter.resize(3);
+        Ezfilter[0] = new Field2D(dimPrim, 2, false, "Ez_f");
+        Ezfilter[1] = new Field2D(dimPrim, 2, false, "Ez_m1");
+        Ezfilter[2] = new Field2D(dimPrim, 2, false, "Ez_m2");
+    }
+    
     // Total charge currents and densities
     Jx_   = new Field2D(dimPrim, 0, false, "Jx");
     Jy_   = new Field2D(dimPrim, 1, false, "Jy");
