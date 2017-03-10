@@ -58,30 +58,28 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     double crx_p = charge_weight*dx_ov_dt;
     double cry_p = charge_weight*dy_ov_dt;
     double crz_p = charge_weight*dz_ov_dt;
-#ifdef _PATCH3D_TODO
-#endif
     
     // variable declaration
     double xpn, ypn, zpn;
     double delta, delta2;
     // arrays used for the Esirkepov projection method
     double Sx0[5], Sx1[5], Sy0[5], Sy1[5], Sz0[5], Sz1[5], DSx[5], DSy[5], DSz[5];
-    double Wx[5][5][5], Wy[5][5][5], Wz[5][5][5], Jx_p[5][5][5], Jy_p[5][5][5], Jz_p[5][5][5];
+    double tmpJx[5][5], tmpJy[5][5], tmpJz[5][5];
     
     for (unsigned int i=0; i<5; i++) {
         Sx1[i] = 0.;
         Sy1[i] = 0.;
         Sz1[i] = 0.;
     }
-    for (unsigned int i=0; i<5; i++) {
-        for (unsigned int j=0; j<5; j++) {
-            for (unsigned int k=0; k<5; k++) {
-                Jx_p[i][j][k] = 0.;
-                Jy_p[i][j][k] = 0.;
-                Jz_p[i][j][k] = 0.;
-            }
-        }
-    }
+    for (unsigned int j=0; j<5; j++)
+        for (unsigned int k=0; k<5; k++)
+            tmpJx[j][k] = 0.;
+    for (unsigned int i=0; i<5; i++)
+        for (unsigned int k=0; k<5; k++)
+            tmpJy[i][k] = 0.;
+    for (unsigned int i=0; i<5; i++)
+        for (unsigned int j=0; j<5; j++)
+            tmpJz[i][j] = 0.;
     
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
@@ -149,41 +147,11 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
         DSy[i] = Sy1[i] - Sy0[i];
         DSz[i] = Sz1[i] - Sz0[i];
     }
-    for (unsigned int i=0 ; i<5 ; i++) {
-        for (unsigned int j=0 ; j<5 ; j++) {
-            for (unsigned int k=0 ; k<5 ; k++) {
-                Wx[i][j][k] = DSx[i] * (Sy0[j]*Sz0[k] + 0.5*DSy[j]*Sz0[k] + 0.5*DSz[k]*Sy0[j] + one_third*DSy[j]*DSz[k]);
-                Wy[i][j][k] = DSy[j] * (Sz0[k]*Sx0[i] + 0.5*DSz[k]*Sx0[i] + 0.5*DSx[i]*Sz0[k] + one_third*DSz[k]*DSx[i]);
-                Wz[i][j][k] = DSz[k] * (Sx0[i]*Sy0[j] + 0.5*DSx[i]*Sy0[j] + 0.5*DSy[j]*Sx0[i] + one_third*DSx[i]*DSy[j]);
-            }
-        }
-    }
     
     // ------------------------------------------------
     // Local current created by the particle
     // calculate using the charge conservation equation
     // ------------------------------------------------
-    for (unsigned int i=1 ; i<5 ; i++) {
-        for (unsigned int j=0 ; j<5 ; j++) {
-            for (unsigned int k=0 ; k<5 ; k++) {
-                Jx_p[i][j][k] = Jx_p[i-1][j][k] - crx_p * Wx[i-1][j][k];
-            }
-        }
-    }
-    for (unsigned int i=0 ; i<5 ; i++) {
-        for (unsigned int j=1 ; j<5 ; j++) {
-            for (unsigned int k=0 ; k<5 ; k++) {
-                Jy_p[i][j][k] = Jy_p[i][j-1][k] - cry_p * Wy[i][j-1][k];
-            }
-        }
-    }
-    for (unsigned int i=0 ; i<5 ; i++) {
-        for (unsigned int j=0 ; j<5 ; j++) {
-            for (unsigned int k=1 ; k<5 ; k++) {
-                Jz_p[i][j][k] = Jz_p[i][j][k-1] - crz_p * Wz[i][j][k-1];
-            }
-        }
-    }
     
     // ---------------------------
     // Calculate the total current
@@ -195,16 +163,17 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     kpo -= 2;
     
     int iloc, jloc, kloc, linindex;
-    
+
     // Jx^(d,p,p)
-    for (unsigned int i=0 ; i<5 ; i++) {
+    for (unsigned int i=1 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             for (unsigned int k=0 ; k<5 ; k++) {
+                tmpJx[j][k] -= crx_p * DSx[i-1] * (Sy0[j]*Sz0[k] + 0.5*DSy[j]*Sz0[k] + 0.5*DSz[k]*Sy0[j] + one_third*DSy[j]*DSz[k]);
                 kloc = k+kpo;
                 linindex = iloc*b_dim[2]*b_dim[1]+jloc*b_dim[2]+kloc;
-                Jx [linindex] += Jx_p[i][j][k]; // iloc = (i+ipo)*b_dim[1];
+                Jx [linindex] += tmpJx[j][k]; // iloc = (i+ipo)*b_dim[1];
             }
         }
     }//i
@@ -212,12 +181,13 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     // Jy^(p,d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
-        for (unsigned int j=0 ; j<5 ; j++) {
+        for (unsigned int j=1 ; j<5 ; j++) {
             jloc = j+jpo;
             for (unsigned int k=0 ; k<5 ; k++) {
+                tmpJy[i][k] -= cry_p * DSy[j-1] * (Sz0[k]*Sx0[i] + 0.5*DSz[k]*Sx0[i] + 0.5*DSx[i]*Sz0[k] + one_third*DSz[k]*DSx[i]);
                 kloc = k+kpo;
                 linindex = iloc*b_dim[2]*(b_dim[1]+1)+jloc*b_dim[2]+kloc;
-                Jy [linindex] += Jy_p[i][j][k]; //
+                Jy [linindex] += tmpJy[i][k]; //
             }
         }
     }//i
@@ -227,16 +197,15 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            for (unsigned int k=0 ; k<5 ; k++) {
+            for (unsigned int k=1 ; k<5 ; k++) {
+                tmpJz[i][j] -= crz_p * DSz[k-1] * (Sx0[i]*Sy0[j] + 0.5*DSx[i]*Sy0[j] + 0.5*DSy[j]*Sx0[i] + one_third*DSx[i]*DSy[j]);
                 kloc = k+kpo;
                 linindex = iloc*(b_dim[2]+1)*b_dim[1]+jloc*(b_dim[2]+1)+kloc;
-                Jz [linindex] += Jz_p[i][j][k]; //
+                Jz [linindex] += tmpJz[i][j]; //
             }
         }
     }//i
     
-#ifdef _PATCH3D_TODO
-#endif
     
 } // END Project local current densities (Jx, Jy, Jz, sort)
 
