@@ -224,14 +224,13 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         (*this)(ipatch)->EMfields->saveMagneticFields();
         // Computes Ex_, Ey_, Ez_ on all points.
         // E is already synchronized because J has been synchronized before.
-        //(*this)(ipatch)->EMfields->solveMaxwellAmpere();
         (*(*this)(ipatch)->EMfields->MaxwellAmpereSolver_)((*this)(ipatch)->EMfields);
         // Computes Bx_, By_, Bz_ at time n+1 on interior points.
         //for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*(*this)(ipatch)->EMfields->MaxwellFaradaySolver_)((*this)(ipatch)->EMfields);
         // Applies boundary conditions on B
         (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
-        // Computes B at time n+1/2 using B and B_m.
+        // Computes B at time n using B and B_m.
         (*this)(ipatch)->EMfields->centerMagneticFields();
     }
     

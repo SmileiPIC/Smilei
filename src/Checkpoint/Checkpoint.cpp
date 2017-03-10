@@ -223,6 +223,21 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
     dumpFieldsPerProc(patch_gid, EMfields->Bx_m);
     dumpFieldsPerProc(patch_gid, EMfields->By_m);
     dumpFieldsPerProc(patch_gid, EMfields->Bz_m);
+
+    // filtered Electric fields
+    for (unsigned int i=0; i<EMfields->Exfilter.size(); i++)
+        dumpFieldsPerProc(patch_gid, EMfields->Exfilter[i]);
+    for (unsigned int i=0; i<EMfields->Eyfilter.size(); i++)
+        dumpFieldsPerProc(patch_gid, EMfields->Eyfilter[i]);
+    for (unsigned int i=0; i<EMfields->Ezfilter.size(); i++)
+        dumpFieldsPerProc(patch_gid, EMfields->Ezfilter[i]);
+    // filtered Magnetic fields
+    for (unsigned int i=0; i<EMfields->Bxfilter.size(); i++)
+        dumpFieldsPerProc(patch_gid, EMfields->Bxfilter[i]);
+    for (unsigned int i=0; i<EMfields->Byfilter.size(); i++)
+        dumpFieldsPerProc(patch_gid, EMfields->Byfilter[i]);
+    for (unsigned int i=0; i<EMfields->Bzfilter.size(); i++)
+        dumpFieldsPerProc(patch_gid, EMfields->Bzfilter[i]);
     
     // Fields required for DiagFields
     for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++ ) {
@@ -428,6 +443,21 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
     restartFieldsPerProc(patch_gid, EMfields->Bx_m);
     restartFieldsPerProc(patch_gid, EMfields->By_m);
     restartFieldsPerProc(patch_gid, EMfields->Bz_m);
+    
+    // filtered Electric fields
+    for (unsigned int i=0; i<EMfields->Exfilter.size(); i++)
+        restartFieldsPerProc(patch_gid, EMfields->Exfilter[i]);
+    for (unsigned int i=0; i<EMfields->Eyfilter.size(); i++)
+        restartFieldsPerProc(patch_gid, EMfields->Eyfilter[i]);
+    for (unsigned int i=0; i<EMfields->Ezfilter.size(); i++)
+        restartFieldsPerProc(patch_gid, EMfields->Ezfilter[i]);
+    // filtered Magnetic fields
+    for (unsigned int i=0; i<EMfields->Bxfilter.size(); i++)
+        restartFieldsPerProc(patch_gid, EMfields->Bxfilter[i]);
+    for (unsigned int i=0; i<EMfields->Byfilter.size(); i++)
+        restartFieldsPerProc(patch_gid, EMfields->Byfilter[i]);
+    for (unsigned int i=0; i<EMfields->Bzfilter.size(); i++)
+        restartFieldsPerProc(patch_gid, EMfields->Bzfilter[i]);
     
     // Fields required for DiagFields
     for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++ ) {
