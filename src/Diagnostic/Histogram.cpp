@@ -207,7 +207,7 @@ void Histogram::digitize(  Species *s,
         if (axes[iaxis]->logscale) {
             for (ipart = 0 ; ipart < npart ; ipart++) {
                 if( int_buffer[ipart] < 0 ) continue;
-                double_buffer[ipart] = log10(double_buffer[ipart]);
+                double_buffer[ipart] = copysign(log10(abs(double_buffer[ipart])), double_buffer[ipart]);
             }
         }
         
