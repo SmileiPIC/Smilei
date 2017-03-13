@@ -252,6 +252,14 @@ void DiagnosticParticles::run( Patch* patch, int timestep, SimWindow* simWindow 
     vector<double> double_buffer;
     unsigned int npart, ndim = spatial_min.size();
     
+    // Update spatial_min and spatial_max if needed
+    for( unsigned int i=0; i<histogram->axes.size(); i++ ) {
+        if( histogram->axes[i]->type == "moving_x" ) {
+            spatial_min[0] = histogram->axes[i]->min + simWindow->getXmoved();
+            spatial_max[0] = histogram->axes[i]->max + simWindow->getXmoved();
+        }
+    }
+    
     // Verify that this patch is in a useful region for this diag
     for( unsigned int idim=0; idim<ndim; idim++ )
         if( patch->getDomainLocalMax(idim) < spatial_min[idim]
