@@ -167,6 +167,14 @@ void Histogram::init( Params &params, vector<PyObject*> pyAxes, vector<unsigned 
                     if( coefficients[direction_index] != 0. )
                         ERROR(errorPrefix << ": axis #" << iaxis << " type " << direction << " appears twice");
                     // Get the remaining characters, which should be a number
+                    coefficients[direction_index] = 1.;
+                    if( j>1 ) {
+                        stringstream number("");
+                        number << segment.substr(0,j-1);
+                        number >> coefficients[direction_index];
+                        if( ! coefficients[direction_index] )
+                            ERROR(errorPrefix << ": axis #" << iaxis << " type not understood");
+                    }
                     coefficients[direction_index] = j>1 ? ::atof(segment.substr(0,j-1).c_str()) : 1.;
                     coefficients[direction_index] *= sign;
                     // Save sign and position for next segment
