@@ -2,6 +2,7 @@
 #define HISTOGRAM_H
 
 #include "Species.h"
+#include "SimWindow.h"
 
 
 // Class for each axis of the particle diags
@@ -13,7 +14,7 @@ public:
     void init(std::string, double, double, int, bool, bool, std::vector<double>);
     
     //! Function that goes through the particles and find where they should go in the axis
-    virtual void digitize(Species *, std::vector<double>&, std::vector<int>&, unsigned int) {};
+    virtual void digitize(Species *, std::vector<double>&, std::vector<int>&, unsigned int, SimWindow*) {};
     
     //! quantity of the axis (e.g. 'x', 'px', ...)
     std::string type;
@@ -47,7 +48,7 @@ public:
     void init(Params&, std::vector<PyObject*>, std::vector<unsigned int>, std::string, Patch*, std::vector<std::string>);
     
     //! Compute the index of each particle in the final histogram
-    void digitize(Species *, std::vector<double>&, std::vector<int>&);
+    void digitize(Species *, std::vector<double>&, std::vector<int>&, SimWindow*);
     //! Calculate the quantity of each particle to be summed in the histogram
     virtual void valuate(Species*, std::vector<double>&, std::vector<int>&) {};
     //! Add the contribution of each particle in the histogram
@@ -59,15 +60,24 @@ public:
 
 
 class HistogramAxis_x : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         for ( unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->particles->Position[0][ipart];
         }
     };
 };
+class HistogramAxis_moving_x : public HistogramAxis {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
+        double x_moved = simWindow->getXmoved();
+        for ( unsigned int ipart = 0 ; ipart < npart ; ipart++) {
+            if( index[ipart]<0 ) continue;
+            array[ipart] = s->particles->Position[0][ipart]-x_moved;
+        }
+    };
+};
 class HistogramAxis_y : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->particles->Position[1][ipart];
@@ -75,7 +85,7 @@ class HistogramAxis_y : public HistogramAxis {
     };
 };
 class HistogramAxis_z : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->particles->Position[2][ipart];
@@ -83,7 +93,7 @@ class HistogramAxis_z : public HistogramAxis {
     };
 };
 class HistogramAxis_vector : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         unsigned int idim, ndim = coefficients.size()/2;
         for ( unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
@@ -94,7 +104,7 @@ class HistogramAxis_vector : public HistogramAxis {
     };
 };
 class HistogramAxis_theta2D : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         double X,Y;
         for ( unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
@@ -105,7 +115,7 @@ class HistogramAxis_theta2D : public HistogramAxis {
     };
 };
 class HistogramAxis_theta3D : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         for ( unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = (s->particles->Position[0][ipart] - coefficients[0]) * coefficients[3]
@@ -118,7 +128,7 @@ class HistogramAxis_theta3D : public HistogramAxis {
     };
 };
 class HistogramAxis_phi : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         unsigned int idim;
         double a, b;
         for ( unsigned int ipart = 0 ; ipart < npart ; ipart++) {
@@ -134,7 +144,7 @@ class HistogramAxis_phi : public HistogramAxis {
     };
 };
 class HistogramAxis_px : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->mass * s->particles->Momentum[0][ipart];
@@ -142,7 +152,7 @@ class HistogramAxis_px : public HistogramAxis {
     };
 };
 class HistogramAxis_py : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->mass * s->particles->Momentum[1][ipart];
@@ -150,7 +160,7 @@ class HistogramAxis_py : public HistogramAxis {
     };
 };
 class HistogramAxis_pz : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->mass * s->particles->Momentum[2][ipart];
@@ -158,7 +168,7 @@ class HistogramAxis_pz : public HistogramAxis {
     };
 };
 class HistogramAxis_p : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->mass * sqrt(pow(s->particles->Momentum[0][ipart],2)
@@ -168,7 +178,7 @@ class HistogramAxis_p : public HistogramAxis {
     };
 };
 class HistogramAxis_gamma : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
@@ -178,7 +188,7 @@ class HistogramAxis_gamma : public HistogramAxis {
     };
 };
 class HistogramAxis_ekin : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->mass * (sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
@@ -188,7 +198,7 @@ class HistogramAxis_ekin : public HistogramAxis {
     };
 };
 class HistogramAxis_vx : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->particles->Momentum[0][ipart]
@@ -199,7 +209,7 @@ class HistogramAxis_vx : public HistogramAxis {
     };
 };
 class HistogramAxis_vy : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->particles->Momentum[1][ipart]
@@ -210,7 +220,7 @@ class HistogramAxis_vy : public HistogramAxis {
     };
 };
 class HistogramAxis_vz : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->particles->Momentum[2][ipart]
@@ -221,7 +231,7 @@ class HistogramAxis_vz : public HistogramAxis {
     };
 };
 class HistogramAxis_v : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = pow( 1. + 1./(pow(s->particles->Momentum[0][ipart],2)
@@ -231,7 +241,7 @@ class HistogramAxis_v : public HistogramAxis {
     };
 };
 class HistogramAxis_vperp2 : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = (  pow(s->particles->Momentum[1][ipart],2)
@@ -243,7 +253,7 @@ class HistogramAxis_vperp2 : public HistogramAxis {
     };
 };
 class HistogramAxis_charge : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = (double) s->particles->Charge[ipart];
@@ -251,7 +261,7 @@ class HistogramAxis_charge : public HistogramAxis {
     };
 };
 class HistogramAxis_chi : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->particles->Chi[ipart];
@@ -259,7 +269,7 @@ class HistogramAxis_chi : public HistogramAxis {
     };
 };
 class HistogramAxis_composite : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart) {
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
         unsigned int idim, ndim = coefficients.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;

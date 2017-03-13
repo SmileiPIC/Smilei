@@ -318,7 +318,7 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
 //   - Scalars, Probes, Phases, TrackParticles, Fields, Average fields
 //   - set diag_flag to 0 after write
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int itime, Timers & timers)
+void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int itime, Timers & timers, SimWindow* simWindow)
 {
     
     // Global diags: scalars + particles
@@ -331,7 +331,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int itime, Timers
             // All patches run
             #pragma omp for schedule(runtime)
             for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
-                globalDiags[idiag]->run( (*this)(ipatch), itime );
+                globalDiags[idiag]->run( (*this)(ipatch), itime, simWindow );
             // MPI procs gather the data and compute
             #pragma omp single
             smpi->computeGlobalDiags( globalDiags[idiag], itime);

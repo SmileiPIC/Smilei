@@ -71,6 +71,8 @@ void Histogram::init( Params &params, vector<PyObject*> pyAxes, vector<unsigned 
         vector<double> coefficients(0);
         if        (type == "x" ) {
             axis = new HistogramAxis_x();
+        } else if (type == "moving_x" ) {
+            axis = new HistogramAxis_moving_x();
         } else if (type == "y" ) {
             if (params.nDim_particle <2)
                 ERROR(errorPrefix << ": axis y cannot exist in <2D");
@@ -189,7 +191,8 @@ void Histogram::init( Params &params, vector<PyObject*> pyAxes, vector<unsigned 
 // Loop on the different axes requested and compute the output index of each particle
 void Histogram::digitize(  Species *s,
     std::vector<double> &double_buffer,
-    std::vector<int>    &int_buffer    )
+    std::vector<int>    &int_buffer,
+    SimWindow* simWindow                )
 {
     unsigned int ipart, npart=s->particles->size();
     int ind;
@@ -197,7 +200,7 @@ void Histogram::digitize(  Species *s,
     for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++) {
         
         // first loop on particles to store the indexing (axis) quantity
-        axes[iaxis]->digitize( s, double_buffer, int_buffer, npart );
+        axes[iaxis]->digitize( s, double_buffer, int_buffer, npart, simWindow );
         // Now, double_buffer has the location of each particle along the axis
         
         // if log scale, loop again and convert to log
