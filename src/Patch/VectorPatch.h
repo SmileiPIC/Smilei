@@ -103,7 +103,7 @@ public :
                       Timers & timers);
     
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
-    void runAllDiags(Params& params, SmileiMPI* smpi, int itime, Timers & timers);
+    void runAllDiags(Params& params, SmileiMPI* smpi, int itime, Timers & timers, SimWindow* simWindow);
     void initAllDiags(Params& params, SmileiMPI* smpi);
     void closeAllDiags(SmileiMPI* smpi);
     void openAllDiags(Params& params, SmileiMPI* smpi);
