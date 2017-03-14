@@ -40,6 +40,9 @@ public :
     //! Write a vector component dataset with the given buffer
     template<typename T> void write_component( hid_t, std::string, T&, hid_t, hid_t, hid_t, hid_t );
     
+    //! Set a given patch's particles with the required IDs
+    void setIDs(Patch * patch);
+    
     //! Last ID assigned to a particle by this MPI domain
     uint64_t latest_Id;
     

@@ -16,8 +16,10 @@ Upcoming changes
 ^^^^^^^^^^^^^^^^
 
 * *Screen* diagnostics
-* Exporting diagnostics to XDMF for reading in ParaView or VisIt
+* Exporting diagnostics to VTK for reading in ParaView or VisIt
+* Partial support of the `OpenPMD <https://www.openpmd.org>`_ standard
 * Bugfixes (in tracked particles and walls), optimizations
+
 
 ----
 

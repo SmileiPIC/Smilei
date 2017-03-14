@@ -88,13 +88,8 @@ void DiagnosticTrack::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatc
         
         latest_Id = smpi->getRank() * 4294967296; // 2^32
         
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            unsigned int s = vecPatches(ipatch)->vecSpecies[speciesId_]->particles->size();
-            for (unsigned int iPart=0; iPart<s; iPart++) {
-                latest_Id++;
-                vecPatches(ipatch)->vecSpecies[speciesId_]->particles->id(iPart) = latest_Id;
-            }
-        }
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+            setIDs(vecPatches(ipatch));
         
         IDs_done = true;
     }
@@ -302,6 +297,16 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime )
         if( flush_timeSelection->theTimeIsNow(itime) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     }
     #pragma omp barrier
+}
+
+
+void DiagnosticTrack::setIDs(Patch * patch)
+{
+    unsigned int s = patch->vecSpecies[speciesId_]->particles->size();
+    for (unsigned int iPart=0; iPart<s; iPart++) {
+        latest_Id++;
+        patch->vecSpecies[speciesId_]->particles->id(iPart) = latest_Id;
+    }
 }
 
 
