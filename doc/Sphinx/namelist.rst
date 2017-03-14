@@ -391,7 +391,7 @@ Each species has to be defined in a ``Species`` block::
   
   :type: float or *python* function (see section :ref:`profiles`)
   
-  The particle charge, in units of the electron charge :math:`e`.
+  The particle charge, in units of the elementary charge :math:`e`.
 
 
 .. py:data:: mean_velocity
