@@ -154,7 +154,7 @@ def polygonal(xpoints=[], xvalues=[]):
     for i in range(1,N):
         if xpoints[i] == xpoints[i-1]: continue
         xslopes[i-1] = (xvalues[i]-xvalues[i-1])/(xpoints[i]-xpoints[i-1])
-    def f(x,y=0.):
+    def f(x,y=0.,z=0.):
         if x < xpoints[0]: return 0.0;
         for i in range(1,N):
             if x<xpoints[i]: return xvalues[i-1] + xslopes[i-1] * ( x-xpoints[i-1] )
