@@ -128,18 +128,16 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime )
         hsize_t count_[1] = {(hsize_t)nParticles_local};
         mem_space = H5Screate_simple(1, count_, NULL);
         
-        // Get the number of particles for each MPI
-        int sz = smpi->getSize(), rk = smpi->getRank();
-        std::vector<uint32_t> all_nPart(sz);
-        MPI_Allgather( &nParticles_local, 1, MPI_UNSIGNED, &all_nPart[0], 1, MPI_UNSIGNED, MPI_COMM_WORLD );
-        
-        // Calculate the cumulative sum, which is where this MPI will start writing
-        uint64_t offset = 0;
-        for (int irk=0; irk<rk; irk++) offset += all_nPart[irk];
-        
-        // Continue to cumulate in order to get the total number of particles
-        nParticles_global = offset;
-        for (int irk=rk; irk<sz; irk++) nParticles_global += all_nPart[irk];
+        // Get the number of offset for this MPI rank
+        uint64_t np_local = nParticles_local, offset;
+        MPI_Scan( &np_local, &offset, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD );
+        if( smpi->getRank() == smpi->getSize()-1 ) {
+            nParticles_global = offset;
+            MPI_Scatter( &nParticles_global, 1, MPI_UNSIGNED_LONG_LONG, MPI_IN_PLACE, 1, MPI_UNSIGNED_LONG_LONG, smpi->getSize()-1, MPI_COMM_WORLD);
+        } else {
+            MPI_Scatter( NULL, 1, MPI_UNSIGNED_LONG_LONG, &nParticles_global, 1, MPI_UNSIGNED_LONG_LONG, smpi->getSize()-1, MPI_COMM_WORLD);
+        }
+        offset -= np_local;
         
         // Make a new group for this iteration
         ostringstream t("");

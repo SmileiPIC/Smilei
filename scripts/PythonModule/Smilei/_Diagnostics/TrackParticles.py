@@ -225,54 +225,59 @@ class TrackParticles(Diagnostic):
 	# Make the particles ordered by Id in the file, in case they are not
 	def _orderFiles( self, filesDisordered, fileOrdered ):
 		print("Ordering particles ... (this could take a while)")
-		# Obtain the list of all times in all disordered files
-		time_locations = {}
-		for fileIndex, fileD in enumerate(filesDisordered):
-			f = self._h5py.File(fileD, "r")
-			for t in f["data"].keys():
-				try   : time_locations[int(t)] = (fileIndex, t)
+		try:
+			# Obtain the list of all times in all disordered files
+			time_locations = {}
+			for fileIndex, fileD in enumerate(filesDisordered):
+				f = self._h5py.File(fileD, "r")
+				for t in f["data"].keys():
+					try   : time_locations[int(t)] = (fileIndex, t)
+					except: pass
+				f.close()
+			times = sorted(time_locations.keys())
+			# Open the last file and get the number of particles from each MPI
+			last_file_index, tname = time_locations[times[-1]]
+			f = self._h5py.File(filesDisordered[last_file_index], "r")
+			number_of_particles = (f["data"][tname]["latest_IDs"].value % (2**32)).astype('uint32')
+			# Calculate the offset that each MPI needs
+			offset = self._np.cumsum(number_of_particles)
+			total_number_of_particles = offset[-1]
+			offset = self._np.roll(offset, 1)
+			offset[0] = 0
+			# Make new (ordered) file
+			f0 = self._h5py.File(fileOrdered, "w")
+			# Make new datasets
+			properties = {"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
+			              "momentum/x":"px", "momentum/y":"py", "momentum/z":"pz"}
+			for k, name in properties.items():
+				try   : f0.create_dataset(name, (len(times), total_number_of_particles), f["data"][tname]["particles"][self.species][k].dtype, fillvalue=self._np.nan)
 				except: pass
 			f.close()
-		times = sorted(time_locations.keys())
-		# Open the last file and get the number of particles from each MPI
-		last_file_index, tname = time_locations[times[-1]]
-		f = self._h5py.File(filesDisordered[last_file_index], "r")
-		number_of_particles = (f["data"][tname]["latest_IDs"].value % (2**32)).astype('uint32')
-		# Calculate the offset that each MPI needs
-		offset = self._np.cumsum(number_of_particles)
-		total_number_of_particles = offset[-1]
-		offset = self._np.roll(offset, 1)
-		offset[0] = 0
-		# Make new (ordered) file
-		f0 = self._h5py.File(fileOrdered, "w")
-		# Make new datasets
-		properties = {"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
-		              "momentum/x":"px", "momentum/y":"py", "momentum/z":"pz"}
-		for k, name in properties.items():
-			try   : f0.create_dataset(name, (len(times), total_number_of_particles), f["data"][tname]["particles"][self.species][k].dtype, fillvalue=self._np.nan)
-			except: pass
-		f.close()
-		# Loop times and fill arrays
-		for it, t in enumerate(times):
-			print("    Ordering @ timestep = "+str(t))
-			file_index, tname = time_locations[t]
-			f = self._h5py.File(filesDisordered[file_index], "r")
-			group = f["data"][tname]["particles"][self.species]
-			if group["id"].size == 0: continue
-			# Get the Ids and find where they should be stored in the final file
-			locs = group["id"].value % 2**32 + offset[ group["id"].value>>32 ] -1
-			# Loop datasets and order them
-			for k, name in properties.items():
-				if k not in group: continue
-				disordered = group[k].value
-				ordered = self._np.zeros((total_number_of_particles, ), dtype=disordered.dtype)
-				ordered[locs] = disordered
-				f0[name].write_direct(ordered, dest_sel=self._np.s_[it,:])
-			f.close()
-		# Create the "Times" dataset
-		f0.create_dataset("Times", data=times)
-		# Close file
-		f0.close()
+			# Loop times and fill arrays
+			for it, t in enumerate(times):
+				print("    Ordering @ timestep = "+str(t))
+				file_index, tname = time_locations[t]
+				f = self._h5py.File(filesDisordered[file_index], "r")
+				group = f["data"][tname]["particles"][self.species]
+				if group["id"].size == 0: continue
+				# Get the Ids and find where they should be stored in the final file
+				locs = group["id"].value % 2**32 + offset[ group["id"].value>>32 ] -1
+				# Loop datasets and order them
+				for k, name in properties.items():
+					if k not in group: continue
+					disordered = group[k].value
+					ordered = self._np.zeros((total_number_of_particles, ), dtype=disordered.dtype)
+					ordered[locs] = disordered
+					f0[name].write_direct(ordered, dest_sel=self._np.s_[it,:])
+				f.close()
+			# Create the "Times" dataset
+			f0.create_dataset("Times", data=times)
+			# Close file
+			f0.close()
+		except:
+			self._os.remove(fileOrdered)
+			print("Error in the ordering of the tracked particles")
+			raise
 		print("Ordering succeeded")
 	
 	# We override the get and getData methods
