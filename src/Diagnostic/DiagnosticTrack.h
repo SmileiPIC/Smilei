@@ -35,10 +35,10 @@ public :
     template<typename T> void fill_buffer(VectorPatch& vecPatches, unsigned int iprop, std::vector<T>& buffer);
     
     //! Write a scalar dataset with the given buffer
-    template<typename T> void write_scalar( hid_t, std::string, T&, hid_t, hid_t, hid_t, hid_t, unsigned int );
+    template<typename T> void write_scalar( hid_t, std::string, T&, hid_t, hid_t, hid_t, hid_t, unsigned int, unsigned int );
     
     //! Write a vector component dataset with the given buffer
-    template<typename T> void write_component( hid_t, std::string, T&, hid_t, hid_t, hid_t, hid_t );
+    template<typename T> void write_component( hid_t, std::string, T&, hid_t, hid_t, hid_t, hid_t, unsigned int );
     
     //! Set a given patch's particles with the required IDs
     void setIDs(Patch *);

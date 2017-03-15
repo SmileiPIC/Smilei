@@ -219,7 +219,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime )
     fill_buffer(vecPatches, 0, data_uint64);
     #pragma omp master
     {
-        write_scalar( species_group, "id", data_uint64[0], H5T_NATIVE_UINT64, file_space, mem_space, plist, 0 );
+        write_scalar( species_group, "id", data_uint64[0], H5T_NATIVE_UINT64, file_space, mem_space, plist, 0, nParticles_global );
         data_uint64.resize(0);
     }
     
@@ -230,7 +230,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime )
     fill_buffer(vecPatches, 0, data_short);
     #pragma omp master
     {
-        write_scalar( species_group, "charge", data_short[0], H5T_NATIVE_SHORT, file_space, mem_space, plist, 7 );
+        write_scalar( species_group, "charge", data_short[0], H5T_NATIVE_SHORT, file_space, mem_space, plist, 7, nParticles_global );
         data_short.resize(0);
     }
     
@@ -240,7 +240,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime )
     #pragma omp barrier
     fill_buffer(vecPatches, nDim_particle+3, data_double);
     #pragma omp master
-    write_scalar( species_group, "weight", data_double[0], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, 4 );
+    write_scalar( species_group, "weight", data_double[0], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, 4, nParticles_global );
     
     // Momentum
     #pragma omp master
@@ -252,7 +252,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime )
         #pragma omp barrier
         fill_buffer(vecPatches, nDim_particle+idim, data_double);
         #pragma omp master
-        write_component( momentum_group, xyz.substr(idim,1).c_str(), data_double[0], H5T_NATIVE_DOUBLE, file_space, mem_space, plist );
+        write_component( momentum_group, xyz.substr(idim,1).c_str(), data_double[0], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, nParticles_global );
     }
     #pragma omp master
     H5Gclose( momentum_group );
@@ -267,7 +267,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime )
         #pragma omp barrier
         fill_buffer(vecPatches, idim, data_double);
         #pragma omp master
-        write_component( position_group, xyz.substr(idim,1).c_str(), data_double[0], H5T_NATIVE_DOUBLE, file_space, mem_space, plist );
+        write_component( position_group, xyz.substr(idim,1).c_str(), data_double[0], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, nParticles_global );
     }
     #pragma omp master
     H5Gclose( position_group );
@@ -345,20 +345,20 @@ void DiagnosticTrack::fill_buffer(VectorPatch& vecPatches, unsigned int iprop, v
 
 
 template<typename T>
-void DiagnosticTrack::write_scalar( hid_t location, string name, T& buffer, hid_t dtype, hid_t file_space, hid_t mem_space, hid_t plist, unsigned int unit_type )
+void DiagnosticTrack::write_scalar( hid_t location, string name, T& buffer, hid_t dtype, hid_t file_space, hid_t mem_space, hid_t plist, unsigned int unit_type, unsigned int npart_global )
 {
     hid_t did = H5Dcreate(location, name.c_str(), dtype, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
-    H5Dwrite( did, dtype, mem_space , file_space , transfer, &buffer );
+    if( npart_global>0 ) H5Dwrite( did, dtype, mem_space , file_space , transfer, &buffer );
     openPMD->writeRecordAttributes( did, unit_type );
     openPMD->writeComponentAttributes( did );
     H5Dclose(did);
 }
 
 template<typename T>
-void DiagnosticTrack::write_component( hid_t location, string name, T& buffer, hid_t dtype, hid_t file_space, hid_t mem_space, hid_t plist )
+void DiagnosticTrack::write_component( hid_t location, string name, T& buffer, hid_t dtype, hid_t file_space, hid_t mem_space, hid_t plist, unsigned int npart_global )
 {
     hid_t did = H5Dcreate(location, name.c_str(), dtype, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
-    H5Dwrite( did, dtype, mem_space , file_space , transfer, &buffer );
+    if( npart_global>0 ) H5Dwrite( did, dtype, mem_space , file_space , transfer, &buffer );
     openPMD->writeComponentAttributes( did );
     H5Dclose(did);
 }

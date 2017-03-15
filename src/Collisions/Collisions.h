@@ -17,7 +17,10 @@ class Collisions
 
 public:
     //! Constructor for Collisions between two species
-    Collisions( Patch* patch, unsigned int n_collisions, std::vector<unsigned int>,std::vector<unsigned int>, double coulomb_log, bool intra_collisions,int debug_every,int Z,bool ionizing,int nDim,double,std::string);
+    Collisions( Patch* patch, unsigned int n_collisions, std::vector<unsigned int>,
+        std::vector<unsigned int>, double coulomb_log, bool intra_collisions,
+        int debug_every, int Z, bool ionizing, bool tracked_electrons, int nDim,
+        double,std::string);
     //! Cloning Constructor
     Collisions(Collisions*, int);
     //! destructor

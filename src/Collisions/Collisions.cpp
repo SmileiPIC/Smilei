@@ -26,6 +26,7 @@ Collisions::Collisions(
     int debug_every,
     int Z,
     bool ionizing,
+    bool tracked_electrons,
     int nDim,
     double referenceAngularFrequency_SI,
     string filename
@@ -41,7 +42,7 @@ filename(filename)
 {
     // Create the ionization object
     if( ionizing ) {
-        Ionization = new CollisionalIonization(Z, nDim, referenceAngularFrequency_SI);
+        Ionization = new CollisionalIonization(Z, nDim, referenceAngularFrequency_SI, tracked_electrons);
     } else {
         Ionization = new CollisionalNoIonization();
     }

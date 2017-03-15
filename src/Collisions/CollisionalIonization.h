@@ -15,7 +15,7 @@ class CollisionalIonization
 
 public:
     //! Constructor
-    CollisionalIonization(int, int, double);
+    CollisionalIonization(int, int, double, bool);
     //! Cloning Constructor
     CollisionalIonization(CollisionalIonization*);
     //! Destructor
@@ -104,7 +104,7 @@ private:
 class CollisionalNoIonization : public CollisionalIonization
 {
 public:
-    CollisionalNoIonization() : CollisionalIonization(0,0,0.) {};
+    CollisionalNoIonization() : CollisionalIonization(0,0,0.,false) {};
     ~CollisionalNoIonization(){};
     
     virtual unsigned int createDatabase(double) { return 0; };

@@ -26,7 +26,6 @@ IonizationTunnel::IonizationTunnel(Params& params, Species * species) : Ionizati
         gamma_tunnel[Z] = 2.0 * pow(2.0*Potential[Z],1.5);
     }
     
-    new_electrons.initialize(0, params.nDim_particle );
     DEBUG("Finished Creating the Tunnel Ionizaton class");
 
 }
