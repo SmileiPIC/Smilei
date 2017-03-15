@@ -16,9 +16,10 @@ Upcoming changes
 ^^^^^^^^^^^^^^^^
 
 * *Screen* diagnostics
-* Exporting diagnostics to VTK for reading in ParaView or VisIt
+* Exporting 3D diagnostics to VTK for reading in ParaView or VisIt
 * Partial support of the `OpenPMD <https://www.openpmd.org>`_ standard
-* Bugfixes (in tracked particles and walls), optimizations
+* Some vectorization; advances in OpenMP management
+* Bugfixes in tracked particles, walls and collisional ionization
 
 
 ----
