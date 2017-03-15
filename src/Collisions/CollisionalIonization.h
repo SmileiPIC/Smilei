@@ -43,7 +43,7 @@ public:
     //! Method to apply the ionization
     virtual void apply(Particles *p1, int i1, Particles *p2, int i2);
     //! Method to finish the ionization and put new electrons in place
-    virtual void finish(Species *s1, Species *s2, Params&, Patch*);
+    virtual void finish(Species *s1, Species *s2, Params&, Patch*, std::vector<Diagnostic*>&);
     
     //! Local table of integrated cross-section
     std::vector<std::vector<double> > * crossSection;
@@ -113,7 +113,7 @@ public:
     void prepare2(Particles*, int, Particles*, int, bool){};
     void prepare3(double, int){};
     void apply(Particles*, int, Particles*, int){};
-    void finish(Species*, Species*, Params&, Patch*) {};
+    void finish(Species*, Species*, Params&, Patch*, std::vector<Diagnostic*>&) {};
 };
 
 

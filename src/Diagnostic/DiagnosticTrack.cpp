@@ -158,16 +158,20 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime )
         // Set the dataset parameters
         plist = H5Pcreate(H5P_DATASET_CREATE);
         H5Pset_alloc_time(plist, H5D_ALLOC_TIME_EARLY); // necessary for collective dump
-        H5Pset_layout(plist, H5D_CHUNKED);
         
-        // Set the chunk size
-        unsigned int maximum_chunk_size = 100000000;
-        unsigned int number_of_chunks = nParticles_global/maximum_chunk_size;
-        if( nParticles_global%maximum_chunk_size != 0 ) number_of_chunks++;
-        unsigned int chunk_size = nParticles_global/number_of_chunks;
-        if( nParticles_global%number_of_chunks != 0 ) chunk_size++;
-        hsize_t chunk_dims = chunk_size;
-        H5Pset_chunk(plist, 1, &chunk_dims);
+        if( nParticles_global>0 ){
+            H5Pset_layout(plist, H5D_CHUNKED);
+            
+            // Set the chunk size
+            unsigned int maximum_chunk_size = 100000000;
+            unsigned int number_of_chunks = nParticles_global/maximum_chunk_size;
+            if( nParticles_global%maximum_chunk_size != 0 ) number_of_chunks++;
+            if( number_of_chunks==0 ) number_of_chunks = 1;
+            unsigned int chunk_size = nParticles_global/number_of_chunks;
+            if( nParticles_global%number_of_chunks != 0 ) chunk_size++;
+            hsize_t chunk_dims = chunk_size;
+            H5Pset_chunk(plist, 1, &chunk_dims);
+        }
         
         // Define maximum size
         hsize_t dims = nParticles_global;
@@ -306,6 +310,17 @@ void DiagnosticTrack::setIDs(Patch * patch)
     for (unsigned int iPart=0; iPart<s; iPart++) {
         latest_Id++;
         patch->vecSpecies[speciesId_]->particles->id(iPart) = latest_Id;
+    }
+}
+
+
+void DiagnosticTrack::setIDs(Particles& particles)
+{
+    unsigned int s = particles.size(), id;
+    for (unsigned int iPart=0; iPart<s; iPart++) {
+        #pragma omp atomic capture
+        id = ++latest_Id;
+        particles.id(iPart) = id;
     }
 }
 

@@ -35,7 +35,7 @@ public:
     static bool debye_length_required;
     
     //! Method called in the main smilei loop to apply collisions at each timestep
-    void collide(Params&, Patch* ,int);
+    void collide(Params&, Patch* ,int, std::vector<Diagnostic*>&);
     
     //! Outputs the debug info if requested
     static void debug(Params& params, int itime, unsigned int icoll, VectorPatch& vecPatches);

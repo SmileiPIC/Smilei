@@ -111,7 +111,7 @@ void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow
                 species(ipatch, ispec)->dynamics(time_dual, ispec,
                                                  emfields(ipatch), interp(ipatch), proj(ipatch),
                                                  params, diag_flag, partwalls(ipatch),
-                                                 (*this)(ipatch), smpi);
+                                                 (*this)(ipatch), smpi, localDiags);
             }
         }
     
@@ -1100,7 +1100,7 @@ void VectorPatch::applyCollisions(Params& params, int itime, Timers & timers)
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
         for (unsigned int icoll=0 ; icoll<ncoll; icoll++)
-            patches_[ipatch]->vecCollisions[icoll]->collide(params,patches_[ipatch],itime);
+            patches_[ipatch]->vecCollisions[icoll]->collide(params,patches_[ipatch],itime, localDiags);
     
     #pragma omp single
     for (unsigned int icoll=0 ; icoll<ncoll; icoll++)

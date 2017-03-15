@@ -41,15 +41,17 @@ public :
     template<typename T> void write_component( hid_t, std::string, T&, hid_t, hid_t, hid_t, hid_t );
     
     //! Set a given patch's particles with the required IDs
-    void setIDs(Patch * patch);
+    void setIDs(Patch *);
     
-    //! Last ID assigned to a particle by this MPI domain
-    uint64_t latest_Id;
+    //! Set a given particles with the required IDs
+    void setIDs(Particles&);
     
     //! Index of the species used
     unsigned int speciesId_;
     
-
+    //! Last ID assigned to a particle by this MPI domain
+    uint64_t latest_Id;
+    
 private :
     
     //! Flag to test whether IDs have been set already
@@ -70,7 +72,6 @@ private :
     std::vector<short> data_short;
     //! Buffer for the output of uint64 array
     std::vector<uint64_t> data_uint64;
-    
 };
 
 #endif

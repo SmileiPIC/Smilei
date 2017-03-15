@@ -310,6 +310,7 @@ public:
         newSpecies->temperatureProfile[1] = new Profile(species->temperatureProfile[1]);
         newSpecies->temperatureProfile[2] = new Profile(species->temperatureProfile[2]);
         newSpecies->max_charge            = species->max_charge;
+        newSpecies->tracking_diagnostic   = species->tracking_diagnostic;
         
         newSpecies->particles->isTest              = species->particles->isTest;
         newSpecies->particles->tracked             = species->particles->tracked;

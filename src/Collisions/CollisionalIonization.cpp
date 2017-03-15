@@ -332,12 +332,12 @@ void CollisionalIonization::calculate(double gamma_s, double gammae, double gamm
 
 
 // Finish the ionization (moves new electrons in place)
-void CollisionalIonization::finish(Species *s1, Species *s2, Params &params, Patch* patch)
+void CollisionalIonization::finish(Species *s1, Species *s2, Params &params, Patch* patch, std::vector<Diagnostic*>& localDiags)
 {
     if( electronFirst ) {
-        s1->importParticles(params, patch, new_electrons );
+        s1->importParticles(params, patch, new_electrons, localDiags );
     } else {
-        s2->importParticles(params, patch, new_electrons );
+        s2->importParticles(params, patch, new_electrons, localDiags );
     }
 }
 
