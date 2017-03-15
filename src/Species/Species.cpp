@@ -430,57 +430,40 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     #else
         ithread = 0;
     #endif
-
-    // Ionization current
-    LocalFields Jion;
     
     unsigned int iPart;
     
     // Reset list of particles to exchange
     clearExchList();
-
+    
     int tid(0);
     double ener_iPart(0.);
     std::vector<double> nrj_lost_per_thd(1, 0.);
-            
+    
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
-    
+        
         smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
-
+        
         //Point to local thread dedicated buffers
         //Still needed for ionization
-        std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
-
+        vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
+        
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
-
+            
             // Interpolate the fields at the particle position
             (*Interp)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread );
-
+            
             //Ionization
-            if (Ionize){                                
-                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                    //!todo Check if this is still necessary
-                    Jion.x=0.;
-                    Jion.y=0.;
-                    Jion.z=0.;
-                    if ( (*particles).charge(iPart) < (int) atomic_number) {
-                        (*Ionize)(*particles, iPart, (*Epart)[iPart], Jion);
-                        (*Proj)(EMfields->Jx_, EMfields->Jy_, EMfields->Jz_, *particles, iPart, Jion);
-                    }
-                }
-            }    
-                
+            if (Ionize)
+                (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
+            
             // Push the particles
             (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
-            //for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) 
-            //    (*Push)(*particles, iPart, (*Epart)[iPart], (*Bpart)[iPart] , (*invgf)[iPart]);
-
             //particles->test_move( bmin[ibin], bmax[ibin], params );
-
-
+            
             // Apply wall and boundary conditions
             for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
                 for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
@@ -500,49 +483,27 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                     nrj_lost_per_thd[tid] += mass * ener_iPart;
                 }
              }
-
+            
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
-
+            
              // Project currents if not a Test species and charges as well if a diag is needed. 
              if (!(*particles).isTest)
                  (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, b_dim, ispec );
-
+            
         }// ibin
-
+        
         for (unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
             nrj_bc_lost += nrj_lost_per_thd[tid];
-
-        // Needs to be reviewed 
-        if (Ionize) {
-            for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
-                // electron_species->(*particles).push_back(Ionize->new_electrons[i]);
-                                
-                int ibin = (int) ((Ionize->new_electrons).position(0,i) / cell_length[0]) - ( patch->getCellStartingGlobalIndex(0) + oversize[0] );
-                DEBUG("here " << ibin << " " << (Ionize->new_electrons).position(0,i)/(2*M_PI));
-
-                // Copy Ionize->new_electrons(i) in electron_species->particles at position electron_species->bmin[ibin]
-                Ionize->new_electrons.cp_particle(i, (*electron_species->particles), electron_species->bmin[ibin] );
-                                
-                // Update bins status
-                // (ugly update, memory is allocated anywhere, OK with vectors per particles parameters)
-                electron_species->bmax[ibin]++;
-                DEBUG("e- " << i << " to bin " << ibin << " (" <<bmin.size() << "," <<bmax.size()<<")" );
-                for (unsigned int ii=ibin+1; ii<bmin.size(); ii++) {
-                    electron_species->bmin[ii]++;
-                    electron_species->bmax[ii]++;
-                }
-            }
-            
-            // if (Ionize->new_electrons.size())
-            //      DEBUG("number of electrons " << electron_species->(*particles).size() << " " << );
-            Ionize->new_electrons.clear();
-        }
+        
+        // Add the ionized electrons to the electron species
+        if (Ionize)
+            electron_species->importParticles( params, patch, Ionize->new_electrons );
     }
     else { // immobile particle (at the moment only project density)
         if ( diag_flag &&(!(*particles).isTest)){
             double* b_rho=nullptr;
             for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
-
+                
                 if (nDim_field==2)
                     b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1) : &(*EMfields->rho_)(ibin*clrw*f_dim1) ;
                 if (nDim_field==3)
@@ -908,6 +869,27 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     return npart_effective;
     
 } // End createParticles
+
+
+// Move all particles from another species to this one
+void Species::importParticles( Params& params, Patch* patch, Particles& source_species )
+{
+    unsigned int npart = source_species.size(), ibin, ii;
+    double inv_cell_length = 1./ params.cell_length[0];
+    
+    for (unsigned int i=0; i < npart; i++) {
+        
+        ibin = source_species.position(0,i)*inv_cell_length - ( patch->getCellStartingGlobalIndex(0) + params.oversize[0] );
+        source_species.cp_particle(i, *particles, bmin[ibin] );
+        
+        bmax[ibin]++;
+        for (ii=ibin+1; ii<bmin.size(); ii++) {
+            bmin[ii]++;
+            bmax[ii]++;
+        }
+    }
+    source_species.clear();
+}
 
 
 // ------------------------------------------------

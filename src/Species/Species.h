@@ -30,7 +30,7 @@ class Species
 {
 public:
     SpeciesMPIbuffers MPIbuff;
-
+    
     //! Species creator
     Species(Params&, Patch*);
     
@@ -134,10 +134,10 @@ public:
     virtual void dynamics(double time, unsigned int ispec, ElectroMagn* EMfields, Interpolator* interp,
                           Projector* proj, Params &params, bool diag_flag,
                           PartWalls* partWalls, Patch* patch, SmileiMPI* smpi);
-
+    
     //! Method calculating the Particle charge on the grid (projection)
     virtual void computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector* Proj);
-
+    
     //! Method used to initialize the Particle position in a given cell
     void initPosition(unsigned int, unsigned int, double *);
     
@@ -152,13 +152,13 @@ public:
     
     //! Maximum charge at initialization
     double max_charge;
-
+    
     //! Method used to sort particles
     void sort_part();
     void count_sort_part(Params& param);
-
+    
     void updateMvWinLimits(double x_moved);
-
+    
     //! Vector containing all Particles of the considered Species
     Particles *particles;
     Particles particles_sorted[2];
@@ -180,13 +180,13 @@ public:
     std::vector<int> bmin, bmax;
     //! sub dimensions of buffers for dim > 1
     std::vector<unsigned int> b_dim;
-
+    
     //! Oversize (copy from Params)
     std::vector<unsigned int> oversize;
-
+    
     //! MPI structure to exchange particles
     MPI_Datatype typePartSend ;
-
+    
     //! Cell_length (copy from Params)
     std::vector<double> cell_length;
     //! min_loc_vec (copy from picparams)
@@ -245,24 +245,27 @@ public:
     //! Method to create new particles.
     int  createParticles(std::vector<unsigned int> n_space_to_create, Params& params, Patch * patch, int new_bin_idx);
     
+    //! Method to import particles in this species while conserving the sorting among bins
+    void importParticles( Params&, Patch*, Particles& );
+    
     //! 2 times pi
     double PI2;
     double PI_ov_2;
     double dx_inv_, dy_inv_, dz_inv_;
-
+    
     //! Boundary condition for the Particles of the considered Species
     PartBoundCond* partBoundCond;
     
     //! Particles pusher (change momentum & change position)
     Pusher* Push;
-
+    
     //! Moving window boundary conditions managment
     void disableXmax();
     //! Moving window boundary conditions managment
     void setXminBoundaryCondition();
-
-
-private:    
+    
+    
+private:
     //! Number of steps for Maxwell-Juettner cumulative function integration
     //! \todo{Put in a code constant class}
     unsigned int nE;
@@ -284,7 +287,7 @@ private:
     
     //! Local minimum of MPI domain
     double min_loc;
-
+    
     //! sub primal dimensions of fields
     unsigned int f_dim0, f_dim1, f_dim2;
     
