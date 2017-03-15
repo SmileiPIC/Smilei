@@ -334,21 +334,10 @@ void CollisionalIonization::calculate(double gamma_s, double gammae, double gamm
 // Finish the ionization (moves new electrons in place)
 void CollisionalIonization::finish(Species *s1, Species *s2, Params &params, Patch* patch)
 {
-    Species * electron_species;
-    if( electronFirst ) {electron_species = s1;}
-    else {electron_species = s2;}
-    
-    for (unsigned int i=0; i < new_electrons.size(); i++) {
-        
-        unsigned int ibin = (int) (new_electrons.position(0,i) / params.cell_length[0]) - ( patch->getCellStartingGlobalIndex(0) + params.oversize[0] );
-        new_electrons.cp_particle(i, *(electron_species->particles), electron_species->bmin[ibin] );
-        
-        electron_species->bmax[ibin]++;
-        for (unsigned int ii=ibin+1; ii<electron_species->bmin.size(); ii++) {
-            electron_species->bmin[ii]++;
-            electron_species->bmax[ii]++;
-        }
+    if( electronFirst ) {
+        s1->importParticles(params, patch, new_electrons );
+    } else {
+        s2->importParticles(params, patch, new_electrons );
     }
-    new_electrons.clear();
 }
 
