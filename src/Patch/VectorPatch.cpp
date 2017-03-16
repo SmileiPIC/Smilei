@@ -1052,11 +1052,27 @@ void VectorPatch::update_field_list(int ispec)
     
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
-        if(patches_[ipatch]->EMfields->Jx_s [ispec]) listJxs_ [ipatch] = patches_[ipatch]->EMfields->Jx_s [ispec];
-        if(patches_[ipatch]->EMfields->Jy_s [ispec]) listJys_ [ipatch] = patches_[ipatch]->EMfields->Jy_s [ispec];
-        if(patches_[ipatch]->EMfields->Jz_s [ispec]) listJzs_ [ipatch] = patches_[ipatch]->EMfields->Jz_s [ispec];
-        if(patches_[ipatch]->EMfields->rho_s[ispec]) listrhos_[ipatch] = patches_[ipatch]->EMfields->rho_s[ispec];
+        if(patches_[ipatch]->EMfields->Jx_s [ispec]) {
+            listJxs_ [ipatch] = patches_[ipatch]->EMfields->Jx_s [ispec];
+            listJxs_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+        }
+        if(patches_[ipatch]->EMfields->Jy_s [ispec]) {
+            listJys_ [ipatch] = patches_[ipatch]->EMfields->Jy_s [ispec];
+            listJys_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+        }
+        if(patches_[ipatch]->EMfields->Jz_s [ispec]) {
+            listJzs_ [ipatch] = patches_[ipatch]->EMfields->Jz_s [ispec];
+            listJzs_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+        }
+        if(patches_[ipatch]->EMfields->rho_s[ispec]) {
+            listrhos_[ipatch] = patches_[ipatch]->EMfields->rho_s[ispec];
+            listrhos_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+        }
     }
+
+    
+
+
 }
 
 
