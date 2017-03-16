@@ -16,6 +16,9 @@
 
 using namespace std;
 
+double INV_RAND_MAX ;
+double INV_RAND_MAX1;
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Params : open & parse the input data file, test that parameters are coherent
 // ---------------------------------------------------------------------------------------------------------------------
@@ -68,6 +71,9 @@ namelist("")
     
     // here we add the larget int, important to get a valid seed for randomization
     PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_rand_max", RAND_MAX);
+    
+    INV_RAND_MAX = 1./RAND_MAX;
+    INV_RAND_MAX1 = 1./(RAND_MAX+0.1);
     
     // Running the namelists
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {

@@ -1,6 +1,9 @@
-#ifdef CODECONSTANT_H
+#ifndef CODECONSTANT_H
 #define CODECONSTANT_H
 
-//! \todo{define PI and other constants here}
+
+extern double INV_RAND_MAX ;
+extern double INV_RAND_MAX1;
+
 
 #endif

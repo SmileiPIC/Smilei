@@ -57,7 +57,7 @@ public:
     
     //! Index of the atomic number in the databases
     unsigned int dataBaseIndex;
-
+    
 private:
 
     //! Simulation dimension
@@ -104,13 +104,13 @@ public:
     CollisionalNoIonization() : CollisionalIonization(0,0,0.) {};
     ~CollisionalNoIonization(){};
     
-    virtual unsigned int createDatabase(double) { return 0; };
-    virtual void assignDatabase(unsigned int) {};
+    unsigned int createDatabase(double) override { return 0; };
+    void assignDatabase(unsigned int) override {};
     
-    void prepare2(Particles*, int, Particles*, int, bool){};
-    void prepare3(double, int){};
-    void apply(Particles*, int, Particles*, int){};
-    void finish(Species*, Species*, Params&, Patch*) {};
+    void prepare2(Particles*, int, Particles*, int, bool) override {};
+    void prepare3(double, double) override {};
+    void apply(Particles*, int, Particles*, int) override {};
+    void finish(Species*, Species*, Params&, Patch*) override {};
 };
 
 
