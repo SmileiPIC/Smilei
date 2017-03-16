@@ -13,6 +13,7 @@
 
 #include "Profile.h"
 #include "Timer.h"
+#include "codeConstants.h"
 
 #include <vector>
 #include <string>
