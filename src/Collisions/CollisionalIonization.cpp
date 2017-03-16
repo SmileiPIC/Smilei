@@ -224,7 +224,7 @@ void CollisionalIonization::calculate(double gamma_s, double gammae, double gamm
     static int i, j, k, p, kmax;
     
     // Get ion charge
-    static int Zstar = pi->charge(ii);
+    int Zstar = pi->charge(ii);
     if( Zstar>=atomic_number ) return; // if already fully ionized, do nothing
     
     // Calculate coefficient (1-ve.vi)*ve' where ve' is in ion frame
