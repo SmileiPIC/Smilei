@@ -95,9 +95,6 @@ private:
     //! Method called by ::apply to calculate the ionization, being sure that electrons are the first species
     void calculate(double, double, double, Particles *pe, int ie, Particles *pi, int ii);
     
-    //! Quantities used during computation
-    int Zstar; // ion charge
-    
 };
 
 //! Class to make empty ionization objects
