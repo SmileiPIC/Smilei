@@ -148,7 +148,7 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
             (*this)(ipatch)->cleanParticlesOverhead(params);
     timers.syncPart.update( params.printNow( itime ) );
 
-    if (itime!=0) {
+    if ( (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
         timers.syncField.restart();
         SyncVectorPatch::finalizeexchangeB( (*this) );
         timers.syncField.update(  params.printNow( itime ) );
