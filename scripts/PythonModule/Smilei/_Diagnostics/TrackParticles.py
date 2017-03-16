@@ -282,7 +282,7 @@ class TrackParticles(Diagnostic):
 			self._rawData = {}
 			ntimes = len(self.times)
 			for axis in self.axes:
-				self._rawData.update({ axis:self._np.zeros((ntimes, self.nselectedParticles)) })
+				self._rawData[axis] = self._np.zeros((ntimes, self.nselectedParticles))
 				self._rawData[axis].fill(self._np.nan)
 			print("Loading data ...")
 			# loop times and fill up the data
@@ -298,7 +298,24 @@ class TrackParticles(Diagnostic):
 					self._h5items[axis][pathNumber].read_direct(B, source_sel=self._np.s_[timeIndexInPath,:])
 					B[deadParticles]=self._np.nan
 					self._rawData[axis][it, :] = B[indices].squeeze()
-			self._rawData.update({ "times":self.times })
+			# Add the lineBreaks array which indicates where lines are broken (e.g. loop around the box)
+			self._rawData['brokenLine'] = self._np.zeros((self.nselectedParticles,), dtype=bool)
+			self._rawData['lineBreaks'] = {}
+			dt = self._np.diff(self.times)*self.timestep
+			for axis in ["x","y","z"]:
+				if axis in self.axes:
+					dudt = self._np.diff(self._rawData[axis],axis=0)
+					for i in range(dudt.shape[1]): dudt[:,i] /= dt
+					self._rawData['brokenLine'] += self._np.abs(dudt).max(axis=0) > 1.
+					broken_particles = self._np.flatnonzero(self._rawData['brokenLine'])
+					for broken_particle in broken_particles:
+						broken_times = list(self._np.flatnonzero(self._np.abs(dudt[:,broken_particle]) > 1.)+1)
+						if broken_particle in self._rawData['lineBreaks'].keys():
+							self._rawData['lineBreaks'][broken_particle] += broken_times
+						else:
+							self._rawData['lineBreaks'][broken_particle] = broken_times
+			# Add the times array
+			self._rawData["times"] = self.times
 			print("... done")
 		
 		# Multiply by the vfactor
@@ -336,10 +353,34 @@ class TrackParticles(Diagnostic):
 		ax.set_title(self._title) # override title
 		return 1
 	def _animateOnAxes_2D(self, ax, t):
-		timeSelection = (self.times<=t)*(self.times>=t-self.length)
-		x = self._tmpdata[0][timeSelection,:]
-		y = self._tmpdata[1][timeSelection,:]
+		tmin = t-self.length
+		tmax = t
+		timeSelection = (self.times<=tmax)*(self.times>=tmin)
+		selected_times = self._np.flatnonzero(timeSelection)
+		itmin = selected_times[0]
+		itmax = selected_times[-1]
+		# Plot first the non-broken lines
+		x = self._tmpdata[0][timeSelection,:][:,~self._rawData["brokenLine"]]
+		y = self._tmpdata[1][timeSelection,:][:,~self._rawData["brokenLine"]]
 		ax.plot(self._xfactor*x, self._yfactor*y, **self.options.plot)
+		# Then plot the broken lines
+		ax.hold("on")
+		for line, breaks in self._rawData['lineBreaks'].items():
+			x = self._tmpdata[0][:, line]
+			y = self._tmpdata[1][:, line]
+			prevline = None
+			for ibrk in range(len(breaks)):
+				if breaks[ibrk] <= itmin: continue
+				iti = itmin
+				if ibrk>0: iti = max(itmin, breaks[ibrk-1])
+				itf = min( itmax, breaks[ibrk] )
+				if prevline:
+					ax.plot(self._xfactor*x[iti:itf], self._yfactor*y[iti:itf], color=prevline.get_color(), **self.options.plot)
+				else:
+					prevline, = ax.plot(self._xfactor*x[iti:itf], self._yfactor*y[iti:itf], **self.options.plot)
+				if breaks[ibrk] > itmax: break
+		ax.hold("off")
+		# Add labels and options
 		ax.set_xlabel(self._xlabel)
 		ax.set_ylabel(self._ylabel)
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)

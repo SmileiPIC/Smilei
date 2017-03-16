@@ -9,6 +9,8 @@ MF_Solver2D_GrassiSpL::MF_Solver2D_GrassiSpL(Params &params)
 {
     
     double dt    = params.timestep;
+    dt_ov_dx  = dt/params.cell_length[0];
+    dt_ov_dy  = dt/params.cell_length[0];
     dx    = params.cell_length[0];
     dy    = params.cell_length[1];
     if (dx!=dy)
@@ -24,9 +26,9 @@ MF_Solver2D_GrassiSpL::MF_Solver2D_GrassiSpL(Params &params)
     Dx    = delta*dt/dx;
     Dy    = delta*dt/dy;
     
-//    istimeFilterApplied = false;
-//    if (params.timeFilter_int!=0)
-//        istimeFilterApplied = true;
+    isEFilterApplied = false;
+    if (params.Friedman_filter)
+        isEFilterApplied = true;
     
 }
 
@@ -40,21 +42,22 @@ void MF_Solver2D_GrassiSpL::operator() ( ElectroMagn* fields )
     Field2D* Ex2D;
     Field2D* Ey2D;
     Field2D* Ez2D;
-//    if (istimeFilterApplied) {
-//        Ex2D = static_cast<Field2D*>(fields->Ex_f);
-//        Ey2D = static_cast<Field2D*>(fields->Ey_f);
-//        Ez2D = static_cast<Field2D*>(fields->Ez_f);
-//    } else {
+    if (isEFilterApplied) {
+        Ex2D = static_cast<Field2D*>(fields->Exfilter[0]);
+        Ey2D = static_cast<Field2D*>(fields->Eyfilter[0]);
+        Ez2D = static_cast<Field2D*>(fields->Ezfilter[0]);
+    } else {
         Ex2D = static_cast<Field2D*>(fields->Ex_);
         Ey2D = static_cast<Field2D*>(fields->Ey_);
         Ez2D = static_cast<Field2D*>(fields->Ez_);
-//    }
+    }
     Field2D* Bx2D = static_cast<Field2D*>(fields->Bx_);
     Field2D* By2D = static_cast<Field2D*>(fields->By_);
     Field2D* Bz2D = static_cast<Field2D*>(fields->Bz_);
     
 
     // Magnetic field Bx^(p,d) using Ez^(p,p)
+    // --------------------------------------
     for (unsigned int i=0 ; i<nx_p;  i++) {
         for (unsigned int j=2 ; j<ny_d-2 ; j++) { // j=0,1 & nx_d-2,nx_d-1 treated by exchange and/or BCs
             
@@ -65,6 +68,7 @@ void MF_Solver2D_GrassiSpL::operator() ( ElectroMagn* fields )
     
     
     // Magnetic field By^(d,p) using Ez^(p,p)
+    // --------------------------------------
     for (unsigned int i=2 ; i<nx_d-2;  i++) { // i=0,1 & nx_d-2,nx_d-1 treated by exchange and/or BCs
         for (unsigned int j=0 ; j<ny_p ; j++) {
             
@@ -72,9 +76,18 @@ void MF_Solver2D_GrassiSpL::operator() ( ElectroMagn* fields )
             +               Dx * ( (*Ez2D)(i+1,j) - (*Ez2D)(i-2,j) );
         }
     }
+    // at Xmin+dx - treat using simple discretization of the curl (will be overwritten if not at the xmin-border)
+    for (unsigned int j=0 ; j<ny_p ; j++) {
+        (*By2D)(1,j) += dt_ov_dx * ( (*Ez2D)(1,j) - (*Ez2D)(0,j) );
+    }
+    // at Xmax-dx - treat using simple discretization of the curl (will be overwritten if not at the xmax-border)
+    for (unsigned int j=0 ; j<ny_p ; j++) {
+        (*By2D)(nx_d-2,j) += dt_ov_dx * ( (*Ez2D)(nx_d-2,j) - (*Ez2D)(nx_d-3,j) );
+    }
 
 
     // Magnetic field Bz^(d,d) using Ex^(d,p) & Ey^(p,d)
+    // -------------------------------------------------
     for (unsigned int i=2 ; i<nx_d-2;  i++) {       // i=0,1 & nx_d-2,nx_d-1 treated by exchange and/or BCs
         for (unsigned int j=2 ; j<ny_d-2 ; j++) {   // j=0,1 & nx_d-2,nx_d-1 treated by exchange and/or BCs
             
@@ -84,6 +97,16 @@ void MF_Solver2D_GrassiSpL::operator() ( ElectroMagn* fields )
             +               Dy * ( (*Ex2D)(i,j+1) - (*Ex2D)(i,j-2) );
             
         }
+    }
+    // at Xmin+dx - treat using simple discretization of the curl (will be overwritten if not at the xmin-border)
+    for (unsigned int j=2 ; j<ny_d-2 ; j++) {
+        (*Bz2D)(1,j) += dt_ov_dx * ( (*Ey2D)(0,j) - (*Ey2D)(1,j)   )
+        +               dt_ov_dy * ( (*Ex2D)(1,j) - (*Ex2D)(1,j-1) );
+    }
+    // at Xmax-dx - treat using simple discretization of the curl (will be overwritten if not at the xmax-border)
+    for (unsigned int j=2 ; j<ny_d-2 ; j++) {
+        (*Bz2D)(nx_d-2,j) += dt_ov_dx * ( (*Ey2D)(nx_d-3,j) - (*Ey2D)(nx_d-2,j)   )
+        +                    dt_ov_dy * ( (*Ex2D)(nx_d-2,j) - (*Ex2D)(nx_d-2,j-1) );
     }
 
 }

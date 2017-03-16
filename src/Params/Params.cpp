@@ -188,20 +188,6 @@ namelist("")
         res_space[i] = 1.0/cell_length[i];
     }
     
-    time_fields_frozen=0.0;
-    PyTools::extract("time_fields_frozen", time_fields_frozen, "Main");
-    
-    // testing the CFL condition
-    //!\todo (MG) CFL cond. depends on the Maxwell solv. ==> Move this computation to the ElectroMagn Solver
-    double res_space2=0;
-    for (unsigned int i=0; i<nDim_field; i++) {
-        res_space2 += res_space[i]*res_space[i];
-    }
-    dtCFL=1.0/sqrt(res_space2);
-    if ( timestep>dtCFL ) {
-        WARNING("CFL problem: timestep=" << timestep << " should be smaller than " << dtCFL);
-    }
-    
     
     // simulation duration & length
     PyTools::extract("sim_time", sim_time, "Main");
@@ -241,19 +227,51 @@ namelist("")
             ERROR("Electromagnetic boundary conditions type (bc_em_type_z) must be periodic at both zmin and zmax sides." );
     }
     
-    // Maxwell Solver 
-    PyTools::extract("maxwell_sol", maxwell_sol, "Main");
     
-    // Filtering Method Parameters
-    PyTools::extract("currentFilter_int", currentFilter_int, "Main"); // nb of passes for binomial filering (default=0)
+    // -----------------------------------
+    // MAXWELL SOLVERS & FILTERING OPTIONS
+    // -----------------------------------
     
-    // clrw 
-    PyTools::extract("clrw",clrw, "Main");
-
+    time_fields_frozen=0.0;
+    PyTools::extract("time_fields_frozen", time_fields_frozen, "Main");
+    
     // Poisson Solver
     PyTools::extract("solve_poisson", solve_poisson, "Main");
     PyTools::extract("poisson_iter_max", poisson_iter_max, "Main");
     PyTools::extract("poisson_error_max", poisson_error_max, "Main");
+    
+    // Maxwell Solver
+    PyTools::extract("maxwell_sol", maxwell_sol, "Main");
+    
+    // Filtering Method Parameters
+    PyTools::extract("currentFilter_int", currentFilter_int, "Main"); // nb of passes for binomial filering (default=0)
+    PyTools::extract("Friedman_filter",Friedman_filter, "Main");      // is Friedman filter applied (default=False)
+    PyTools::extract("Friedman_theta",Friedman_theta, "Main");        // Friedman filtering parameter (default=0)
+    if ( (!Friedman_filter) && (Friedman_theta!=0.) )
+        WARNING("Friedman filter is not applied even though parameter theta = "<<Friedman_theta);
+    if ( Friedman_filter && (Friedman_theta==0.) )
+        WARNING("Friedman filter is applied but parameter theta is set to zero");
+    if ( (Friedman_theta<0.) || (Friedman_theta>1.) )
+        ERROR("Friedman filter = " << Friedman_theta << " needs to be in between 0 and 1");
+    
+    
+    // testing the CFL condition
+    //!\todo (MG) CFL cond. depends on the Maxwell solv. ==> HERE JUST DONE FOR YEE!!!
+    double res_space2=0;
+    for (unsigned int i=0; i<nDim_field; i++) {
+        res_space2 += res_space[i]*res_space[i];
+    }
+    dtCFL=1.0/sqrt(res_space2);
+    if ( timestep>dtCFL ) {
+        WARNING("CFL problem: timestep=" << timestep << " should be smaller than " << dtCFL);
+    }
+    
+    
+    
+    // clrw 
+    PyTools::extract("clrw",clrw, "Main");
+
+
         
     // --------------------
     // Number of patches

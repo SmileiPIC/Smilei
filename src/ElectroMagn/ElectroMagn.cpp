@@ -32,60 +32,24 @@ nrj_mw_lost    (  0.               ),
 nrj_new_fields (  0.               )
 {
     
-    // initialize poynting vector
-    poynting[0].resize(nDim_field,0.0);
-    poynting[1].resize(nDim_field,0.0);
-    poynting_inst[0].resize(nDim_field,0.0);
-    poynting_inst[1].resize(nDim_field,0.0);
     
     // take useful things from params
     for (unsigned int i=0; i<3; i++) {
         DEBUG("____________________ OVERSIZE: " <<i << " " << oversize[i]);
     }
     
-    if (n_space.size() != 3) ERROR("this should not happen");
-    
-    Ex_=NULL;
-    Ey_=NULL;
-    Ez_=NULL;
-    Bx_=NULL;
-    By_=NULL;
-    Bz_=NULL;
-    Bx_m=NULL;
-    By_m=NULL;
-    Bz_m=NULL;
-    Jx_=NULL;
-    Jy_=NULL;
-    Jz_=NULL;
-    rho_=NULL;
-    
-    // Species charge currents and density
-    Jx_s.resize(n_species);
-    Jy_s.resize(n_species);
-    Jz_s.resize(n_species);
-    rho_s.resize(n_species);
-    for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Jx_s[ispec]  = NULL;
-        Jy_s[ispec]  = NULL;
-        Jz_s[ispec]  = NULL;
-        rho_s[ispec] = NULL;
-    }
-    
-    for (unsigned int i=0; i<3; i++) {
-        for (unsigned int j=0; j<2; j++) {
-            istart[i][j]=0;
-            bufsize[i][j]=0;
-        }
-    }
-    
+    initElectroMagnQuantities();
     
     emBoundCond = ElectroMagnBC_Factory::create(params, patch);
     
-    MaxwellFaradaySolver_ = SolverFactory::create(params);
+    MaxwellAmpereSolver_  = SolverFactory::createMA(params);
+    MaxwellFaradaySolver_ = SolverFactory::createMF(params);
     
 }
 
-
+// ---------------------------------------------------------------------------------------------------------------------
+// ElectroMagn constructor for patches 
+// ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn::ElectroMagn( ElectroMagn* emFields, Params &params, Patch* patch ) :
 timestep       ( emFields->timestep    ),
 cell_length    ( emFields->cell_length ),
@@ -96,6 +60,20 @@ n_space        ( emFields->n_space     ),
 oversize       ( emFields->oversize    ),
 nrj_mw_lost    ( 0. ),
 nrj_new_fields ( 0. )
+{
+
+    initElectroMagnQuantities();
+    
+    emBoundCond = ElectroMagnBC_Factory::create(params, patch);
+    
+    MaxwellAmpereSolver_  = SolverFactory::createMA(params);
+    MaxwellFaradaySolver_ = SolverFactory::createMF(params);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Initialize quantities used in ElectroMagn
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn::initElectroMagnQuantities()
 {
     // initialize poynting vector
     poynting[0].resize(nDim_field,0.0);
@@ -119,6 +97,7 @@ nrj_new_fields ( 0. )
     Jz_=NULL;
     rho_=NULL;
     
+    
     // Species charge currents and density
     Jx_s.resize(n_species);
     Jy_s.resize(n_species);
@@ -137,11 +116,6 @@ nrj_new_fields ( 0. )
             bufsize[i][j]=0;
         }
     }
-    
-    
-    emBoundCond = ElectroMagnBC_Factory::create(params, patch);
-    
-    MaxwellFaradaySolver_ = SolverFactory::create(params);
 }
 
 
@@ -202,10 +176,24 @@ ElectroMagn::~ElectroMagn()
         if( rho_s[ispec] ) delete rho_s[ispec];
     }
     
+    for (unsigned int i=0; i<Exfilter.size(); i++)
+        delete Exfilter[i];
+    for (unsigned int i=0; i<Eyfilter.size(); i++)
+        delete Eyfilter[i];
+    for (unsigned int i=0; i<Ezfilter.size(); i++)
+        delete Ezfilter[i];
+    for (unsigned int i=0; i<Bxfilter.size(); i++)
+        delete Bxfilter[i];
+    for (unsigned int i=0; i<Byfilter.size(); i++)
+        delete Byfilter[i];
+    for (unsigned int i=0; i<Bzfilter.size(); i++)
+        delete Bzfilter[i];
+    
     int nBC = emBoundCond.size();
     for ( int i=0 ; i<nBC ;i++ )
         if (emBoundCond[i]!=NULL) delete emBoundCond[i];
     
+    delete MaxwellAmpereSolver_;
     delete MaxwellFaradaySolver_;
     
     //antenna cleanup

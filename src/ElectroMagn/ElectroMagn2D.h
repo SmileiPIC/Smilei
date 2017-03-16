@@ -43,8 +43,8 @@ public:
     //  --------- PATCH IN PROGRESS ---------
     // --------------------------------------
     
-    //! Method used to solve Maxwell-Ampere equation
-    void solveMaxwellAmpere();
+//    //! Method used to solve Maxwell-Ampere equation
+//    void solveMaxwellAmpere();
     
     //! Method used to save the Magnetic fields (used to center them)
     void saveMagneticFields();
@@ -119,6 +119,9 @@ private:
     
     //! from smpi is ymin
     const bool isYmax;
+    
+    //! Initialize quantities needed in the creators of ElectroMagn2D
+    void initElectroMagn2DQuantities(Params &params, Patch* patch);
 };
 
 #endif

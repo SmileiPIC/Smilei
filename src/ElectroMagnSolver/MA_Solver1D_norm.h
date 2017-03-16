@@ -1,26 +1,24 @@
-#ifndef MF_SOLVER2D_YEE_H
-#define MF_SOLVER2D_YEE_H
+#ifndef MA_SOLVER1D_NORM_H
+#define MA_SOLVER1D_NORM_H
 
-#include "Solver2D.h" 
+#include "Solver1D.h" 
 class ElectroMagn;
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class Pusher
 //  --------------------------------------------------------------------------------------------------------------------
-class MF_Solver2D_Yee : public Solver2D
+class MA_Solver1D_norm : public Solver1D
 {
 
 public:
-    //! Creator for MF_Solver2D_Yee
-    MF_Solver2D_Yee(Params &params);
-    virtual ~MF_Solver2D_Yee();
+    //! Creator for MF_Solver1D_Yee
+    MA_Solver1D_norm(Params &params);
+    virtual ~MA_Solver1D_norm();
 
     //! Overloading of () operator
     virtual void operator()( ElectroMagn* fields);
 
 protected:
-    // Check if time filter is applied or not
-    bool isEFilterApplied;
 
 };//END class
 

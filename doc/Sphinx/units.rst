@@ -9,10 +9,10 @@ normalized to *reference* quantities.
 Basic reference quantities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The speed of light, the electron charge and the electron mass provide the basis
+The speed of light, the elementary charge and the electron mass provide the basis
 of the normalizations in :program:`Smilei`:
 
-* Reference electric charge :math:`Q_r = e` (the electron charge)
+* Reference electric charge :math:`Q_r = e` (the elementary charge)
 * Reference mass :math:`M_r = m_e` (the electron mass)
 * Reference velocity :math:`V_r = c` (the speed of light)
 

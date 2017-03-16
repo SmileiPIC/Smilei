@@ -513,11 +513,17 @@ class Smilei(object):
 		
 		# Load diagnostics factories
 		if self.valid:
+			if self._verbose: print("Scanning for Scalar diagnostics")
 			self.Scalar = ScalarFactory(self)
+			if self._verbose: print("Scanning for Field diagnostics")
 			self.Field = FieldFactory(self)
+			if self._verbose: print("Scanning for Probe diagnostics")
 			self.Probe = ProbeFactory(self)
+			if self._verbose: print("Scanning for Particle diagnostics")
 			self.ParticleDiagnostic = ParticleDiagnosticFactory(self)
+			if self._verbose: print("Scanning for Screen diagnostics")
 			self.Screen = ScreenFactory(self)
+			if self._verbose: print("Scanning for Tracked particle diagnostics")
 			self.TrackParticles = TrackParticlesFactory(self)
 	
 	

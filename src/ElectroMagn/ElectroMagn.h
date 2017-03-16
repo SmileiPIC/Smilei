@@ -51,6 +51,7 @@ public:
     //! Constructor for Electromagn
     ElectroMagn( Params &params, std::vector<Species*>& vecSpecies, Patch* patch );
     ElectroMagn( ElectroMagn* emFields, Params &params, Patch* patch );
+    void initElectroMagnQuantities();
     //! Extra initialization. Used in ElectroMagnFactory
     void finishInitialization(int nspecies, Patch* patch);
     
@@ -111,6 +112,17 @@ public:
     
     //! Total charge density
     Field* rho_;
+    
+    //! Vector of electric fields used when a filter is applied
+    std::vector<Field*> Exfilter;
+    std::vector<Field*> Eyfilter;
+    std::vector<Field*> Ezfilter;
+    
+    //! Vector of magnetic fields used when a filter is applied
+    std::vector<Field*> Bxfilter;
+    std::vector<Field*> Byfilter;
+    std::vector<Field*> Bzfilter;
+
     
     //! all Fields in electromagn (filled in ElectromagnFactory.h)
     std::vector<Field*> allFields;
@@ -194,8 +206,10 @@ public:
     Field* Ap_;
     
     //! \todo check time_dual or time_prim (MG)
-    //! method used to solve Maxwell's equation (takes current time and time-step as input parameter)
-    virtual void solveMaxwellAmpere() = 0;
+//    //! method used to solve Maxwell's equation (takes current time and time-step as input parameter)
+//    virtual void solveMaxwellAmpere() = 0;
+    //! Maxwell Ampere Solver
+    Solver* MaxwellAmpereSolver_;
     //! Maxwell Faraday Solver
     Solver* MaxwellFaradaySolver_;
     virtual void saveMagneticFields() = 0;

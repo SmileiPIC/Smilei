@@ -95,3 +95,13 @@ DiagScalar(
     vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMin', 'RhoMinCell']
 )
 
+DiagParticles(
+	output = "charge_density",
+	every = 50,
+	species = ["electron"],
+	axes = [
+		["moving_x", 0, Lx, 300],
+		["px", -1, 4., 100]
+	]
+)
+

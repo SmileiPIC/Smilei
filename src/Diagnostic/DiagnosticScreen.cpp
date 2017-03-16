@@ -305,7 +305,7 @@ bool DiagnosticScreen::prepare( int timestep )
 
 
 // run one screen diagnostic
-void DiagnosticScreen::run( Patch* patch, int timestep )
+void DiagnosticScreen::run( Patch* patch, int timestep, SimWindow* simWindow )
 {
     
     vector<int> int_buffer;
@@ -383,7 +383,7 @@ void DiagnosticScreen::run( Patch* patch, int timestep )
         
         if( nuseful == 0 ) continue;
         
-        histogram->digitize  ( s, double_buffer, int_buffer );
+        histogram->digitize  ( s, double_buffer, int_buffer, simWindow );
         histogram->valuate   ( s, double_buffer, int_buffer );
         
         if( direction_type == 1 ) {

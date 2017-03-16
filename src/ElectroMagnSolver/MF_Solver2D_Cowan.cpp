@@ -9,6 +9,7 @@
 MF_Solver2D_Cowan::MF_Solver2D_Cowan(Params &params)
 : Solver2D(params)
 {
+    ERROR("Under development, not yet working");
     dx = params.cell_length[0];
     dy = params.cell_length[1];
     
@@ -18,8 +19,7 @@ MF_Solver2D_Cowan::MF_Solver2D_Cowan(Params &params)
     double beta_yx =  0.125*delta*delta/(dx*dx);
     double alpha_x =  1.-2.*beta_xy;
     double alpha_y =  1.-2.*beta_yx;
-    std::cout << ">>>>>>>>>>>>>>>>>>> alpha = " << alpha_x << "   " << alpha_y << std::endl;
-    std::cout << ">>>>>>>>>>>>>>>>>>> beta  = " << beta_xy << "   " << beta_yx << std::endl;
+
     Ax = dt_ov_dx * alpha_x;
     Ay = dt_ov_dy * alpha_y;
     Bx = dt_ov_dx * beta_xy;
