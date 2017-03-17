@@ -270,6 +270,8 @@ occur every 150 iterations.
 
 ----
 
+.. _movingWindow:
+
 Moving window
 ^^^^^^^^^^^^^
 
@@ -295,7 +297,12 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
   :default: 0.
   
   The velocity of the moving window in the `x` direction.
-
+  
+.. note::
+  
+  The :ref:`particle diagnostics <DiagParticles>` accept an "axis" called ``moving_x``
+  corresponding to the `x` coordinate corrected by the moving window's current movement.
+  
 ----
 
 .. _Species:
@@ -391,7 +398,7 @@ Each species has to be defined in a ``Species`` block::
   
   :type: float or *python* function (see section :ref:`profiles`)
   
-  The particle charge, in units of the electron charge :math:`e`.
+  The particle charge, in units of the elementary charge :math:`e`.
 
 
 .. py:data:: mean_velocity
@@ -1415,6 +1422,9 @@ for instance::
   
   * ``type`` is one of ``"x"``, ``"y"``, ``"z"``, ``"px"``, ``"py"``, ``"pz"``, ``"p"``,
     ``"gamma"``, ``"ekin"``, ``"vx"``, ``"vy"``, ``"vz"``, ``"v"`` or ``"charge"``.
+    There is one additional type, specific for simulations that include a
+    :ref:`moving window<movingWindow>`\ : the x-coordinate corrected by the window
+    current movement ``moving_x``.
   * The axis is discretized for ``type`` from ``min`` to ``max`` in ``nsteps`` bins.
   * The optional keyword ``logscale`` sets the axis scale to logarithmic instead of linear.
   * The optional keyword ``edge_inclusive`` includes the particles outside the range

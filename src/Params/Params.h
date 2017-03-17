@@ -13,6 +13,7 @@
 
 #include "Profile.h"
 #include "Timer.h"
+#include "codeConstants.h"
 
 #include <vector>
 #include <string>
@@ -98,12 +99,25 @@ public:
     std::vector<std::string> bc_em_type_y;
     std::vector<std::string> bc_em_type_z;
     
+    //Poisson solver
+    //! Do we solve poisson
+    bool solve_poisson;
+    //! Maxium number of poisson iteration
+    unsigned int poisson_iter_max;
+    //! Maxium poisson error tolerated
+    double poisson_error_max;
    
-    // 2D Maxwell Solver  
+    //! Maxwell Solver (default='Yee')
     std::string maxwell_sol;
     
     //! Current spatial filter parameter: number of binomial pass
     unsigned int currentFilter_int;
+    
+    //! is Friedman filter applied [Greenwood et al., J. Comp. Phys. 201, 665 (2004)]
+    bool Friedman_filter;
+    
+    //! Fridman filtering parameter [real between 0 and 1]
+    double Friedman_theta;
     
     //! Clusters width
     //unsigned int clrw;
@@ -185,14 +199,6 @@ public:
     
     //! Method to find the numbers of requested species, sorted, and duplicates removed
     static std::vector<unsigned int> FindSpecies(std::vector<Species*>&, std::vector<std::string>);
-
-    //Poisson solver
-    //! Do we solve poisson
-    bool solve_poisson;
-    //! Maxium number of poisson iteration
-    unsigned int poisson_iter_max;
-    //! Maxium poisson error tolerated
-    double poisson_error_max;
     
     //! every for the standard pic timeloop output
     unsigned int print_every;

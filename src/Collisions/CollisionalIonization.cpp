@@ -1,7 +1,10 @@
+#include "CollisionalIonization.h"
+
 #include "Collisions.h"
 #include "Species.h"
 #include "Patch.h"
 #include "IonizationTables.h"
+
 #include <cmath>
 
 
@@ -72,7 +75,7 @@ unsigned int CollisionalIonization::createDatabase(double referenceAngularFreque
     double e, ep, bp, up, ep2, betae2, betab2, betau2, s0, A1, A2, A3, sk, wk, ek;
     int N; // occupation number
     double coeff = 2.81794e-15 * referenceAngularFrequency_SI / (2.*299792458.); // r_e omega / 2c
-    for( Zstar=0; Zstar<atomic_number; Zstar++ ) { // For each ionization state
+    for( int Zstar=0; Zstar<atomic_number; Zstar++ ) { // For each ionization state
         cs[Zstar].resize(npoints, 0.);
         te[Zstar].resize(npoints, 0.);
         le[Zstar].resize(npoints, 0.);
@@ -149,6 +152,7 @@ void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i
     static double E; // electron energy
     static double We, Wi; // weights
     static double cs, x;
+    static int Zstar;
     // Calculates the current electron energy, the ion charge and weight
     if( electronFirst ) {
         E = sqrt(1. + pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.;
@@ -184,7 +188,7 @@ void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i
 }
 
 // Method to prepare the ionization
-void CollisionalIonization::prepare3(double timestep, int n_patch_per_cell)
+void CollisionalIonization::prepare3(double timestep, double n_patch_per_cell)
 {
     // Calculate the coeff used later for ionization probability
     if( nei<=0. ) {
@@ -223,7 +227,7 @@ void CollisionalIonization::calculate(double gamma_s, double gammae, double gamm
     static int i, j, k, p, kmax;
     
     // Get ion charge
-    Zstar = pi->charge(ii);
+    int Zstar = pi->charge(ii);
     if( Zstar>=atomic_number ) return; // if already fully ionized, do nothing
     
     // Calculate coefficient (1-ve.vi)*ve' where ve' is in ion frame
@@ -236,7 +240,7 @@ void CollisionalIonization::calculate(double gamma_s, double gammae, double gamm
     WiWe = 1./WeWi;
     
     // Make a random number to choose if ionization or not
-    U1 = (double)rand() / RAND_MAX;
+    U1 = (double)rand() *INV_RAND_MAX;
     
     // Loop for multiple ionization
     // k+1 is the number of ionizations
@@ -288,7 +292,7 @@ void CollisionalIonization::calculate(double gamma_s, double gammae, double gamm
         if( U1 < cum_prob ) break;
         
         // Otherwise, we do the ionization
-        U2 = (double)rand() / RAND_MAX;
+        U2 = (double)rand() *INV_RAND_MAX;
         p2 = gamma_s*gamma_s - 1.;
         // Ionize the atom and create electron
         if( U2 < WeWi ) {
@@ -334,21 +338,10 @@ void CollisionalIonization::calculate(double gamma_s, double gammae, double gamm
 // Finish the ionization (moves new electrons in place)
 void CollisionalIonization::finish(Species *s1, Species *s2, Params &params, Patch* patch)
 {
-    Species * electron_species;
-    if( electronFirst ) {electron_species = s1;}
-    else {electron_species = s2;}
-    
-    for (unsigned int i=0; i < new_electrons.size(); i++) {
-        
-        unsigned int ibin = (int) (new_electrons.position(0,i) / params.cell_length[0]) - ( patch->getCellStartingGlobalIndex(0) + params.oversize[0] );
-        new_electrons.cp_particle(i, *(electron_species->particles), electron_species->bmin[ibin] );
-        
-        electron_species->bmax[ibin]++;
-        for (unsigned int ii=ibin+1; ii<electron_species->bmin.size(); ii++) {
-            electron_species->bmin[ii]++;
-            electron_species->bmax[ii]++;
-        }
+    if( electronFirst ) {
+        s1->importParticles(params, patch, new_electrons );
+    } else {
+        s2->importParticles(params, patch, new_electrons );
     }
-    new_electrons.clear();
 }
 

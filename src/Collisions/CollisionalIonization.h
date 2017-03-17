@@ -39,7 +39,7 @@ public:
         ne = 0.; ni = 0.; nei = 0.;
         };
     virtual void prepare2(Particles *p1, int i1, Particles *p2, int i2, bool);
-    virtual void prepare3(double, int);
+    virtual void prepare3(double, double);
     //! Method to apply the ionization
     virtual void apply(Particles *p1, int i1, Particles *p2, int i2);
     //! Method to finish the ionization and put new electrons in place
@@ -57,7 +57,7 @@ public:
     
     //! Index of the atomic number in the databases
     unsigned int dataBaseIndex;
-
+    
 private:
 
     //! Simulation dimension
@@ -95,9 +95,6 @@ private:
     //! Method called by ::apply to calculate the ionization, being sure that electrons are the first species
     void calculate(double, double, double, Particles *pe, int ie, Particles *pi, int ii);
     
-    //! Quantities used during computation
-    int Zstar; // ion charge
-    
 };
 
 //! Class to make empty ionization objects
@@ -107,13 +104,13 @@ public:
     CollisionalNoIonization() : CollisionalIonization(0,0,0.) {};
     ~CollisionalNoIonization(){};
     
-    virtual unsigned int createDatabase(double) { return 0; };
-    virtual void assignDatabase(unsigned int) {};
+    unsigned int createDatabase(double) override { return 0; };
+    void assignDatabase(unsigned int) override {};
     
-    void prepare2(Particles*, int, Particles*, int, bool){};
-    void prepare3(double, int){};
-    void apply(Particles*, int, Particles*, int){};
-    void finish(Species*, Species*, Params&, Patch*) {};
+    void prepare2(Particles*, int, Particles*, int, bool) override {};
+    void prepare3(double, double) override {};
+    void apply(Particles*, int, Particles*, int) override {};
+    void finish(Species*, Species*, Params&, Patch*) override {};
 };
 
 

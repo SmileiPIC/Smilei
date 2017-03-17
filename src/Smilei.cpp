@@ -150,7 +150,7 @@ int main (int argc, char* argv[])
         TITLE("Initializing diagnostics");
         vecPatches.initAllDiags( params, smpi );
         TITLE("Running diags at time t = 0");
-        vecPatches.runAllDiags(params, smpi, 0, timers);
+        vecPatches.runAllDiags(params, smpi, 0, timers, simWindow);
         timers.diags.reboot();
     
     }
@@ -214,7 +214,7 @@ int main (int argc, char* argv[])
             vecPatches.finalize_and_sort_parts(params, smpi, simWindow, time_dual, timers, itime);
 
             // call the various diagnostics
-            vecPatches.runAllDiags(params, smpi, itime, timers);
+            vecPatches.runAllDiags(params, smpi, itime, timers, simWindow);
             
             // ----------------------------------------------------------------------
             // Validate restart  : to do
@@ -274,7 +274,7 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     
     if (latestTimeStep==params.n_time)
-        vecPatches.runAllDiags(params, smpi, &diag_flag, params.n_time, timer);
+        vecPatches.runAllDiags(params, smpi, &diag_flag, params.n_time, timer, simWindow);
 */
     
     // ------------------------------

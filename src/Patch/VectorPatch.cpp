@@ -148,7 +148,7 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
             (*this)(ipatch)->cleanParticlesOverhead(params);
     timers.syncPart.update( params.printNow( itime ) );
 
-    if (itime!=0) {
+    if ( (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
         timers.syncField.restart();
         SyncVectorPatch::finalizeexchangeB( (*this) );
         timers.syncField.update(  params.printNow( itime ) );
@@ -224,13 +224,13 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         (*this)(ipatch)->EMfields->saveMagneticFields();
         // Computes Ex_, Ey_, Ez_ on all points.
         // E is already synchronized because J has been synchronized before.
-        (*this)(ipatch)->EMfields->solveMaxwellAmpere();
+        (*(*this)(ipatch)->EMfields->MaxwellAmpereSolver_)((*this)(ipatch)->EMfields);
         // Computes Bx_, By_, Bz_ at time n+1 on interior points.
         //for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*(*this)(ipatch)->EMfields->MaxwellFaradaySolver_)((*this)(ipatch)->EMfields);
         // Applies boundary conditions on B
         (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
-        // Computes B at time n+1/2 using B and B_m.
+        // Computes B at time n using B and B_m.
         (*this)(ipatch)->EMfields->centerMagneticFields();
     }
     
@@ -318,7 +318,7 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
 //   - Scalars, Probes, Phases, TrackParticles, Fields, Average fields
 //   - set diag_flag to 0 after write
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int itime, Timers & timers)
+void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int itime, Timers & timers, SimWindow* simWindow)
 {
     
     // Global diags: scalars + particles
@@ -331,7 +331,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int itime, Timers
             // All patches run
             #pragma omp for schedule(runtime)
             for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
-                globalDiags[idiag]->run( (*this)(ipatch), itime );
+                globalDiags[idiag]->run( (*this)(ipatch), itime, simWindow );
             // MPI procs gather the data and compute
             #pragma omp single
             smpi->computeGlobalDiags( globalDiags[idiag], itime);
@@ -1052,11 +1052,27 @@ void VectorPatch::update_field_list(int ispec)
     
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
-        if(patches_[ipatch]->EMfields->Jx_s [ispec]) listJxs_ [ipatch] = patches_[ipatch]->EMfields->Jx_s [ispec];
-        if(patches_[ipatch]->EMfields->Jy_s [ispec]) listJys_ [ipatch] = patches_[ipatch]->EMfields->Jy_s [ispec];
-        if(patches_[ipatch]->EMfields->Jz_s [ispec]) listJzs_ [ipatch] = patches_[ipatch]->EMfields->Jz_s [ispec];
-        if(patches_[ipatch]->EMfields->rho_s[ispec]) listrhos_[ipatch] = patches_[ipatch]->EMfields->rho_s[ispec];
+        if(patches_[ipatch]->EMfields->Jx_s [ispec]) {
+            listJxs_ [ipatch] = patches_[ipatch]->EMfields->Jx_s [ispec];
+            listJxs_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+        }
+        if(patches_[ipatch]->EMfields->Jy_s [ispec]) {
+            listJys_ [ipatch] = patches_[ipatch]->EMfields->Jy_s [ispec];
+            listJys_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+        }
+        if(patches_[ipatch]->EMfields->Jz_s [ispec]) {
+            listJzs_ [ipatch] = patches_[ipatch]->EMfields->Jz_s [ispec];
+            listJzs_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+        }
+        if(patches_[ipatch]->EMfields->rho_s[ispec]) {
+            listrhos_[ipatch] = patches_[ipatch]->EMfields->rho_s[ispec];
+            listrhos_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+        }
     }
+
+    
+
+
 }
 
 

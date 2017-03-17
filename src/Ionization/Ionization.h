@@ -7,6 +7,7 @@
 #include "Params.h"
 #include "Field.h"
 #include "Particles.h"
+#include "Projector.h"
 
 
 //! Class Ionization: generic class allowing to define Ionization physics
@@ -19,10 +20,7 @@ public:
     virtual ~Ionization();
     
     //! Overloading of () operator
-    virtual void operator() (Particles &particles, int ipart, LocalFields Epart) = 0;
-    
-    //! Overloading of () operator
-    virtual void operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields &Jion) = 0;
+    virtual void operator() (Particles*, unsigned int, unsigned int, std::vector<LocalFields>*, ElectroMagn*, Projector*) {};
     
     Particles new_electrons;
 

@@ -259,7 +259,7 @@ bool DiagnosticScalar::prepare( int timestep )
 } // END prepare
 
 
-void DiagnosticScalar::run( Patch* patch, int timestep )
+void DiagnosticScalar::run( Patch* patch, int timestep, SimWindow* simWindow )
 {
     // Must keep track of Poynting flux even without diag
     patch->EMfields->computePoynting(); 

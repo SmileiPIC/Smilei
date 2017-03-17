@@ -152,9 +152,9 @@ class ParticleDiagnostic(Diagnostic):
 			# Find some quantities depending on the axis type
 			overall_min = "-inf"; overall_max = "inf"
 			axis_units = ""
-			if   axis["type"] in ["x","y","z"]:
+			if   axis["type"] in ["x","y","z","moving_x"]:
 				axis_units = "L_r"
-				spatialaxes[axis["type"]] = True
+				spatialaxes[axis["type"][-1]] = True
 			elif axis["type"][:9] == "composite":
 				axis_units = "L_r"
 				hasComposite = True
@@ -208,7 +208,7 @@ class ParticleDiagnostic(Diagnostic):
 					# calculate the size of the slice
 					slice_size = edges[indices[-1]+1] - edges[indices[0]]
 				
-				if axis["type"] in ["x","y","z"]: coeff /= slice_size
+				if axis["type"] in ["x","y","z","moving_x"]: coeff /= slice_size
 			
 			# if not sliced, then add this axis to the overall plot
 			else:

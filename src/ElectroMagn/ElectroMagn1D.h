@@ -43,8 +43,8 @@ public:
     //  --------- PATCH IN PROGRESS ---------
     // --------------------------------------
     
-    //! Method used to solve Maxwell-Ampere equation
-    void solveMaxwellAmpere();
+//    //! Method used to solve Maxwell-Ampere equation
+//    void solveMaxwellAmpere();
     
     //! Method used to save the Magnetic fields (used to center them)
     void saveMagneticFields();
@@ -90,6 +90,9 @@ private:
     
     //! from patch is xmax
     const bool isXmax;
+    
+    //! Initialize quantities needed in the creators of ElectroMagn1D
+    void initElectroMagn1DQuantities(Params &params, Patch* patch);
 };
 
 #endif

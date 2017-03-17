@@ -30,7 +30,7 @@ public :
     virtual bool prepare( int timestep ) = 0;
     
     //! Runs the diag for a given patch for global diags.
-    virtual void run( Patch* patch, int timestep ) {};
+    virtual void run( Patch* patch, int timestep, SimWindow* simWindow ) {};
     
     //! Runs the diag for all patches for local diags.
     virtual void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) {};

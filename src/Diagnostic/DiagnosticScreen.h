@@ -27,7 +27,7 @@ public :
     
     bool prepare( int timestep ) override;
     
-    void run( Patch* patch, int timestep ) override;
+    void run( Patch* patch, int timestep, SimWindow* simWindow ) override;
     
     void write(int timestep, SmileiMPI* smpi) override;
     
