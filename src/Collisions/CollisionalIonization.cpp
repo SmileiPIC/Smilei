@@ -1,7 +1,10 @@
+#include "CollisionalIonization.h"
+
 #include "Collisions.h"
 #include "Species.h"
 #include "Patch.h"
 #include "IonizationTables.h"
+
 #include <cmath>
 
 
@@ -74,7 +77,7 @@ unsigned int CollisionalIonization::createDatabase(double referenceAngularFreque
     double e, ep, bp, up, ep2, betae2, betab2, betau2, s0, A1, A2, A3, sk, wk, ek;
     int N; // occupation number
     double coeff = 2.81794e-15 * referenceAngularFrequency_SI / (2.*299792458.); // r_e omega / 2c
-    for( Zstar=0; Zstar<atomic_number; Zstar++ ) { // For each ionization state
+    for( int Zstar=0; Zstar<atomic_number; Zstar++ ) { // For each ionization state
         cs[Zstar].resize(npoints, 0.);
         te[Zstar].resize(npoints, 0.);
         le[Zstar].resize(npoints, 0.);
@@ -151,6 +154,7 @@ void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i
     static double E; // electron energy
     static double We, Wi; // weights
     static double cs, x;
+    static int Zstar;
     // Calculates the current electron energy, the ion charge and weight
     if( electronFirst ) {
         E = sqrt(1. + pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.;
@@ -225,7 +229,7 @@ void CollisionalIonization::calculate(double gamma_s, double gammae, double gamm
     static int i, j, k, p, kmax;
     
     // Get ion charge
-    Zstar = pi->charge(ii);
+    int Zstar = pi->charge(ii);
     if( Zstar>=atomic_number ) return; // if already fully ionized, do nothing
     
     // Calculate coefficient (1-ve.vi)*ve' where ve' is in ion frame
@@ -238,7 +242,7 @@ void CollisionalIonization::calculate(double gamma_s, double gammae, double gamm
     WiWe = 1./WeWi;
     
     // Make a random number to choose if ionization or not
-    U1 = (double)rand() / RAND_MAX;
+    U1 = (double)rand() *INV_RAND_MAX;
     
     // Loop for multiple ionization
     // k+1 is the number of ionizations
@@ -290,7 +294,7 @@ void CollisionalIonization::calculate(double gamma_s, double gammae, double gamm
         if( U1 < cum_prob ) break;
         
         // Otherwise, we do the ionization
-        U2 = (double)rand() / RAND_MAX;
+        U2 = (double)rand() *INV_RAND_MAX;
         p2 = gamma_s*gamma_s - 1.;
         // Ionize the atom and create electron
         if( U2 < WeWi ) {

@@ -21,7 +21,7 @@ for path in ["beam_relaxation1","beam_relaxation2","beam_relaxation3"]:
 	c = 3e8
 	coeff = (2.*np.pi/wavelength)**2*re*c
 	
-	times = sim.ParticleDiagnostic(diagNumber=0).getAvailableTimesteps()
+	times = np.double(sim.ParticleDiagnostic(diagNumber=0).getAvailableTimesteps())
 	
 	e_vx_mean = np.zeros(len(times))
 	e_vperp2  = np.zeros(len(times))

@@ -148,7 +148,7 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
             (*this)(ipatch)->cleanParticlesOverhead(params);
     timers.syncPart.update( params.printNow( itime ) );
 
-    if (itime!=0) {
+    if ( (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
         timers.syncField.restart();
         SyncVectorPatch::finalizeexchangeB( (*this) );
         timers.syncField.update(  params.printNow( itime ) );
@@ -1052,11 +1052,27 @@ void VectorPatch::update_field_list(int ispec)
     
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
-        if(patches_[ipatch]->EMfields->Jx_s [ispec]) listJxs_ [ipatch] = patches_[ipatch]->EMfields->Jx_s [ispec];
-        if(patches_[ipatch]->EMfields->Jy_s [ispec]) listJys_ [ipatch] = patches_[ipatch]->EMfields->Jy_s [ispec];
-        if(patches_[ipatch]->EMfields->Jz_s [ispec]) listJzs_ [ipatch] = patches_[ipatch]->EMfields->Jz_s [ispec];
-        if(patches_[ipatch]->EMfields->rho_s[ispec]) listrhos_[ipatch] = patches_[ipatch]->EMfields->rho_s[ispec];
+        if(patches_[ipatch]->EMfields->Jx_s [ispec]) {
+            listJxs_ [ipatch] = patches_[ipatch]->EMfields->Jx_s [ispec];
+            listJxs_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+        }
+        if(patches_[ipatch]->EMfields->Jy_s [ispec]) {
+            listJys_ [ipatch] = patches_[ipatch]->EMfields->Jy_s [ispec];
+            listJys_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+        }
+        if(patches_[ipatch]->EMfields->Jz_s [ispec]) {
+            listJzs_ [ipatch] = patches_[ipatch]->EMfields->Jz_s [ispec];
+            listJzs_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+        }
+        if(patches_[ipatch]->EMfields->rho_s[ispec]) {
+            listrhos_[ipatch] = patches_[ipatch]->EMfields->rho_s[ispec];
+            listrhos_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+        }
     }
+
+    
+
+
 }
 
 
