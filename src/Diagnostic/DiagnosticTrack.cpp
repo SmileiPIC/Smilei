@@ -131,13 +131,9 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime )
         // Get the number of offset for this MPI rank
         uint64_t np_local = nParticles_local, offset;
         MPI_Scan( &np_local, &offset, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD );
-        if( smpi->getRank() == smpi->getSize()-1 ) {
-            nParticles_global = offset;
-            MPI_Scatter( &nParticles_global, 1, MPI_UNSIGNED_LONG_LONG, MPI_IN_PLACE, 1, MPI_UNSIGNED_LONG_LONG, smpi->getSize()-1, MPI_COMM_WORLD);
-        } else {
-            MPI_Scatter( NULL, 1, MPI_UNSIGNED_LONG_LONG, &nParticles_global, 1, MPI_UNSIGNED_LONG_LONG, smpi->getSize()-1, MPI_COMM_WORLD);
-        }
+        nParticles_global = offset;
         offset -= np_local;
+        MPI_Bcast( &nParticles_global, 1, MPI_UNSIGNED_LONG_LONG, smpi->getSize()-1, MPI_COMM_WORLD );
         
         // Make a new group for this iteration
         ostringstream t("");
