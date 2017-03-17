@@ -158,7 +158,11 @@ class Screen(Diagnostic):
 			elif axis["type"] in ["a","b"]:
 				axis_units = "L_r"
 				hasComposite = True
-			elif axis["type"] == "theta":
+			elif axis["type"] == "theta" and self._ndim==2:
+				axis_units = "rad"
+				overall_min = "-3.141592653589793"
+				overall_max = "3.141592653589793"
+			elif axis["type"] == "theta" and self._ndim==3:
 				axis_units = "rad"
 				overall_min = "0"
 				overall_max = "3.141592653589793"
@@ -232,7 +236,7 @@ class Screen(Diagnostic):
 				self._log    .append(axis["log"])
 				self._label  .append(axis["type"])
 				self._units  .append(axis_units)
-				if axis["type"] == "theta":
+				if axis["type"] == "theta" and self._ndim==3:
 					plot_diff.append(self._np.diff(self._np.cos(edges))[::stride])
 				else:
 					plot_diff.append(self._np.diff(edges)[::stride])
