@@ -311,7 +311,7 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
         Particles * particles = &(vecPatches(ipatch)->probes[probe_n]->particles);
         for ( unsigned int ip=0 ; ip<particles->size() ; ip++) {
             for (unsigned int idim=0 ; idim<nDim_particle  ; idim++ )
-                posArray->data_2D[ipart][idim] = particles->position(idim,ip);
+                (*posArray)(ipart,idim) = particles->position(idim,ip);
             ipart++;
         }
     }
@@ -347,7 +347,7 @@ void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     H5Pclose(plist_id);
     // Write
     if ( nPart_MPI>0 )
-        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &(posArray->data_2D[0][0]) );
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &((*posArray)(0,0)) );
     else
         H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, NULL );
     H5Dclose(dset_id);
@@ -545,16 +545,16 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
             );
             
             //! here we fill the probe data!!!
-            probesArray->data_2D[fieldlocation[0]][iPart_MPI]=Eloc_fields.x;
-            probesArray->data_2D[fieldlocation[1]][iPart_MPI]=Eloc_fields.y;
-            probesArray->data_2D[fieldlocation[2]][iPart_MPI]=Eloc_fields.z;
-            probesArray->data_2D[fieldlocation[3]][iPart_MPI]=Bloc_fields.x;
-            probesArray->data_2D[fieldlocation[4]][iPart_MPI]=Bloc_fields.y;
-            probesArray->data_2D[fieldlocation[5]][iPart_MPI]=Bloc_fields.z;
-            probesArray->data_2D[fieldlocation[6]][iPart_MPI]=Jloc_fields.x;
-            probesArray->data_2D[fieldlocation[7]][iPart_MPI]=Jloc_fields.y;
-            probesArray->data_2D[fieldlocation[8]][iPart_MPI]=Jloc_fields.z;          
-            probesArray->data_2D[fieldlocation[9]][iPart_MPI]=Rloc_fields;
+            (*probesArray)(fieldlocation[0],iPart_MPI)=Eloc_fields.x;
+            (*probesArray)(fieldlocation[1],iPart_MPI)=Eloc_fields.y;
+            (*probesArray)(fieldlocation[2],iPart_MPI)=Eloc_fields.z;
+            (*probesArray)(fieldlocation[3],iPart_MPI)=Bloc_fields.x;
+            (*probesArray)(fieldlocation[4],iPart_MPI)=Bloc_fields.y;
+            (*probesArray)(fieldlocation[5],iPart_MPI)=Bloc_fields.z;
+            (*probesArray)(fieldlocation[6],iPart_MPI)=Jloc_fields.x;
+            (*probesArray)(fieldlocation[7],iPart_MPI)=Jloc_fields.y;
+            (*probesArray)(fieldlocation[8],iPart_MPI)=Jloc_fields.z;          
+            (*probesArray)(fieldlocation[9],iPart_MPI)=Rloc_fields;
             iPart_MPI++;
         }
     }
@@ -593,7 +593,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         hid_t transfer = H5Pcreate(H5P_DATASET_XFER);
         H5Pset_dxpl_mpio(transfer, H5FD_MPIO_INDEPENDENT);
         // Write
-        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &(probesArray->data_2D[0][0]) );
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &((*probesArray)(0,0)) );
         H5Dclose(dset_id);
         H5Pclose( transfer );
         H5Sclose(filespace);

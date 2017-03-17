@@ -85,13 +85,13 @@ public:
     void extract_slice_xy(unsigned int iz, Field2D *field);
 
 
-    //! this will present the data as a 3d matrix
-    double ***data_3D;
     virtual double norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]);
 
 private:
     //!\todo{Comment what are these stuffs (MG for JD)}
     //double *data_3D;
+    //! this will present the data as a 3d matrix
+    double ***data_3D;
     
 };
 
