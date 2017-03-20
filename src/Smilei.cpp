@@ -115,7 +115,7 @@ int main (int argc, char* argv[])
         // Initialize the electromagnetic fields
         // -------------------------------------
         vecPatches.computeCharge();
-        vecPatches.sumDensities(params, timers, 0 );
+        vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
         
         // Apply antennas
         // --------------
@@ -137,7 +137,7 @@ int main (int argc, char* argv[])
         timers.particles.reboot();
         timers.syncPart .reboot();
         
-        vecPatches.sumDensities(params, timers, 0 );
+        vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
         timers.densities.reboot();
         timers.syncDens .reboot();
        
@@ -195,14 +195,7 @@ int main (int argc, char* argv[])
             vecPatches.dynamics(params, smpi, simWindow, time_dual, timers, itime);
             
             // Sum densities
-            bool some_particles_are_moving = false;
-            unsigned int n_species( vecPatches(0)->vecSpecies.size() );
-            for ( unsigned int ispec=0 ; ispec < n_species ; ispec++ ) {
-                if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) )
-                    some_particles_are_moving = true;
-            }
-            if ( some_particles_are_moving )
-                vecPatches.sumDensities(params, timers, itime );
+            vecPatches.sumDensities(params, time_dual, timers, itime, simWindow );
             
             // apply currents from antennas
             vecPatches.applyAntennas(time_dual);

@@ -96,7 +96,7 @@ public :
 
     
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
-    void sumDensities(Params &params, Timers &timers, int itime );
+    void sumDensities(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow );
     
     //! For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
     void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual,
