@@ -209,33 +209,12 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
         
     }
     
-    // Write the latest Ids that the MPI processes have given to each species
+    // Write the latest Id that the MPI processes have given to each species
     for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ ) {
         if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) ) {
-            // Define the dataset name
             ostringstream n("");
-            n<< "latest_IDs_" << vecPatches(0)->vecSpecies[track->speciesId_]->species_type;
-            // Create file space and select one element for each proc
-            hsize_t numel = smpi->getSize();
-            hid_t filespace = H5Screate_simple(1, &numel, NULL);
-            hsize_t offset=smpi->getRank(), count=1;
-            H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &offset, NULL, &count, NULL);
-            // Create dataset
-            hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
-            hid_t dset_id  = H5Dcreate( fid, n.str().c_str(), H5T_NATIVE_UINT64, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
-            // Create memory space
-            hsize_t size_in_memory = 1;
-            hid_t memspace  = H5Screate_simple(1, &size_in_memory, NULL);
-            // Parallel write
-            hid_t write_plist = H5Pcreate(H5P_DATASET_XFER);
-            H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
-            H5Dwrite( dset_id, H5T_NATIVE_UINT64, memspace, filespace, write_plist, &track->latest_Id );
-            // Close all
-            H5Pclose( write_plist );
-            H5Pclose( plist_id );
-            H5Dclose( dset_id );
-            H5Sclose( filespace );
-            H5Sclose( memspace );
+            n<< "latest_ID_" << vecPatches(0)->vecSpecies[track->speciesId_]->species_type;
+            H5::attr(fid, n.str().c_str(), track->latest_Id, H5T_NATIVE_UINT64);
         }
     }
     
@@ -466,33 +445,12 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
         
     }
     
-    // Read the latest Ids that the MPI processes have given to each species
+    // Read the latest Id that the MPI processes have given to each species
     for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ ) {
         if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) ) {
-            // Define the dataset name
             ostringstream n("");
-            n<< "latest_IDs_" << vecPatches(0)->vecSpecies[track->speciesId_]->species_type;
-            // Create file space
-            hsize_t numel = smpi->getSize();
-            hid_t filespace = H5Screate_simple(1, &numel, NULL);
-            hsize_t offset=smpi->getRank(), count=1;
-            H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &offset, NULL, &count, NULL);
-            // Create dataset
-            hid_t plist_id = H5Pcreate(H5P_DATASET_ACCESS);
-            hid_t dset_id  = H5Dopen( fid, n.str().c_str(), plist_id);
-            // Create memory space and select one element for each proc
-            hsize_t size_in_memory = 1;
-            hid_t memspace  = H5Screate_simple(1, &size_in_memory, NULL);
-            // Parallel write
-            hid_t read_plist = H5Pcreate(H5P_DATASET_XFER);
-            H5Pset_dxpl_mpio(read_plist, H5FD_MPIO_COLLECTIVE);
-            H5Dread( dset_id, H5T_NATIVE_UINT64, memspace, filespace, read_plist, &track->latest_Id );
-            // Close all
-            H5Pclose( read_plist );
-            H5Pclose( plist_id );
-            H5Dclose( dset_id );
-            H5Sclose( filespace );
-            H5Sclose( memspace );
+            n<< "latest_ID_" << vecPatches(0)->vecSpecies[track->speciesId_]->species_type;
+            H5::getAttr(fid, n.str().c_str(), track->latest_Id, H5T_NATIVE_UINT64);
         }
     }
     
