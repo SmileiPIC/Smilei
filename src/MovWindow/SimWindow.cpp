@@ -20,6 +20,7 @@ using namespace std;
 
 SimWindow::SimWindow(Params& params)
 {
+
     // ------------------------
     // Moving window parameters
     // ------------------------
@@ -38,6 +39,9 @@ SimWindow::SimWindow(Params& params)
     cell_length_x_   = params.cell_length[0];
     x_moved = 0.;      //The window has not moved at t=0. Warning: not true anymore for restarts.
     n_moved = 0 ;      //The window has not moved at t=0. Warning: not true anymore for restarts.
+
+    if (velocity_x != 0. && params.bc_em_type_x[0] == "periodic")
+        ERROR("Periodic topology in the moving window direction is neither encouraged nor supported");
     
     if( active ) {
         MESSAGE(1,"Moving window is active:");
