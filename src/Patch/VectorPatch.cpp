@@ -173,8 +173,18 @@ void VectorPatch::computeCharge()
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::sumDensities(Params &params, Timers &timers, int itime )
+void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow )
 {
+    bool some_particles_are_moving = false;
+    unsigned int n_species( (*this)(0)->vecSpecies.size() );
+    for ( unsigned int ispec=0 ; ispec < n_species ; ispec++ ) {
+        if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) )
+            some_particles_are_moving = true;
+    }
+    if ( !some_particles_are_moving  && !diag_flag )
+        return;
+
+
     timers.densities.restart();
     if  (diag_flag){
         #pragma omp for schedule(static)
