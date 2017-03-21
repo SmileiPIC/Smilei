@@ -347,7 +347,7 @@ void ElectroMagnBC3D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
         for (unsigned int j=0 ; j<ny_d ; j++) {
             pos[1] = patch->getDomainLocalMin(2) - EMfields->oversize[2]*dz;
             pos[0] += dy;
-            for (unsigned int k=0 ; k<nz_d ; k++) {
+            for (unsigned int k=0 ; k<nz_p ; k++) {
                 pos[1] += dz;
                 // Lasers
                 double bzE = 0.;
@@ -423,6 +423,19 @@ void ElectroMagnBC3D_SM::apply_ymax(ElectroMagn* EMfields, double time_dual, Pat
         Field3D* By3D = static_cast<Field3D*>(EMfields->By_);
         Field3D* Bz3D = static_cast<Field3D*>(EMfields->Bz_);
         
+        // for Bx^(p,d,d)
+        for (unsigned int i=0 ; i<nx_p ; i++) {
+            for (unsigned int k=0 ; k<nz_d ; k++) {
+                
+                (*Bx3D)(i,ny_d-1,k) = -Alpha_SM_N * (*Ez3D)(i,ny_p-1,k)
+                +                    Beta_SM_N  *( (*Bx3D)(i,ny_d-2,k) -(*Bx_yvalmax)(i,k))
+                +                    Zeta_SM_N   *( (*By3D)(i+1,ny_p-1,k)-(*By_yvalmax)(i+1,k) )
+                +                    Eta_SM_N *( (*By3D)(i,ny_p-1,k)-(*By_yvalmax)(i,k) )
+                +                    (*Bx_yvalmax)(i,k);
+                
+            }//k  ---end compute Bz
+        }//j  ---end compute Bz
+
         // for Bz^(d,d,p)
         for (unsigned int i=0 ; i<nx_d ; i++) {
              for (unsigned int k=0 ; k<nz_p ; k++) {
@@ -436,19 +449,6 @@ void ElectroMagnBC3D_SM::apply_ymax(ElectroMagn* EMfields, double time_dual, Pat
             }//k  ---end compute Bz
         }//j  ---end compute Bz
         
-        // for Bx^(p,d,d)
-        for (unsigned int i=0 ; i<nx_p ; i++) {
-            for (unsigned int k=0 ; k<nz_d ; k++) {
-                
-                (*Bx3D)(i,ny_d-1,k) = -Alpha_SM_N * (*Ez3D)(i,ny_p-1,k)
-                +                    Beta_SM_N  *( (*Bx3D)(i,ny_d-2,k) -(*Bx_yvalmax)(i,k))
-                +                    Zeta_SM_N   *( (*By3D)(i+1,ny_p-1,k)-(*By_yvalmax)(i+1,k) )
-                +                    Eta_SM_N *( (*By3D)(i,ny_p-1,k)-(*By_yvalmax)(i,k) )
-                +                    (*Bx_yvalmax)(i,k);
-            
-            }//k  ---end compute Bz
-        }//j  ---end compute Bz
- 
     }//if Ymax
     
 }
