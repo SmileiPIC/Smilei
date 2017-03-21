@@ -96,8 +96,9 @@ private:
 public:
 
     static void openPython() {
-        if (!Py_IsInitialized())
+        if (!Py_IsInitialized()) {
             Py_Initialize();
+        }
     }
     
     static void closePython() {

@@ -5,6 +5,12 @@
 #include "DiagnosticTrack.h"
 #include "VectorPatch.h"
 
+
+#ifdef EXPOSENUMPY
+#include <numpy/arrayobject.h>
+#endif
+
+
 using namespace std;
 
 DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, unsigned int speciesId, OpenPMDparams& oPMD ) :
@@ -28,6 +34,34 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch,
     // Get parameter "track_flush_every" which decides the file flushing time selection
     flush_timeSelection = new TimeSelection( PyTools::extract_py("track_flush_every", "Species", speciesId_), name.str() );
     
+    // Get parameter "selection" which gives a python function to select particles
+    selector = PyTools::extract_py("track_selection", "Species", speciesId_);
+    has_selection = (selector != Py_None);
+    if( has_selection ) {
+#ifdef EXPOSENUMPY
+        import_array();
+        // Check if selection is callable
+        if( ! PyCallable_Check(selector) )
+            ERROR("Tracked species '" << species->species_type << "' has a selection that is not callable");
+        unsigned int n_arg;
+        // Try to get the number of arguments of the selection function
+        try {
+            PyObject* code = PyObject_GetAttrString( selector, "__code__" );
+            PyObject* argcount = PyObject_GetAttrString( code, "co_argcount" );
+            n_arg = PyInt_AsLong( argcount );
+            Py_DECREF(argcount);
+            Py_DECREF(code);
+        } catch (...) {
+            ERROR("Tracked species '" << species->species_type << "' has a selection that does not look like a normal python function");
+        }
+        // Verify the number of arguments of the selection function
+        if( n_arg != nDim_particle+3 )
+            ERROR("Tracked species '" << species->species_type << "' has a selection function with "<<n_arg<<" arguments while requiring "<<nDim_particle+3);
+#else
+        ERROR("Tracking species '" << species->species_type << "' with a selection requires the numpy package");
+#endif
+    }
+    
     // Create the filename
     ostringstream hdf_filename("");
     hdf_filename << "TrackParticlesDisordered_" << species->species_type  << ".h5" ;
@@ -40,6 +74,7 @@ DiagnosticTrack::~DiagnosticTrack()
     delete timeSelection;
     delete flush_timeSelection;
     H5Pclose(transfer);
+    Py_DECREF(selector);
 }
 
 
@@ -117,11 +152,70 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime )
     hid_t plist=0, file_space=0, mem_space=0;
     #pragma omp master
     {
+    
         // Obtain the particle partition of all the patches in this MPI
         patch_start.resize( vecPatches.size() );
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            patch_start[ipatch] = nParticles_local;
-            nParticles_local += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
+        
+        if( has_selection ) {
+        
+#ifdef EXPOSENUMPY
+            patch_selection.resize( vecPatches.size() );
+            PyArrayObject *x,*y,*z,*px,*py,*pz,*ret;
+            
+            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+                // Expose particle data as numpy arrays, then run the selection function
+                Particles * p = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
+                npy_intp dims[1] = {p->size()};
+                px = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Momentum[0].data()));
+                py = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Momentum[1].data()));
+                pz = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Momentum[2].data()));
+                x  = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Position[0].data()));
+                if( nDim_particle>1 ) {
+                    y = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Position[1].data()));
+                    if( nDim_particle>2 ) {
+                        z = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Position[2].data()));
+                        ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(selector, x,y,z,px,py,pz, NULL);
+                        Py_DECREF(z);
+                    } else {
+                        ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(selector, x,y,px,py,pz, NULL);
+                    }
+                    Py_DECREF(y);
+                } else {
+                    ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(selector, x,px,py,pz, NULL);
+                }
+                Py_DECREF(x);
+                Py_DECREF(px);
+                Py_DECREF(py);
+                Py_DECREF(pz);
+                
+                // Verify the return value
+                if( !PyArray_ISBOOL(ret) )
+                    ERROR("Tracked particles selection must return an array of booleans");
+                unsigned int s = PyArray_SIZE(ret);
+                if( s != p->size() )
+                    ERROR("Tracked particles selection must not change the arrays sizes");
+                
+                // Loop the return value and store the particle IDs
+                bool* arr = (bool*) PyArray_GETPTR1( ret, 0 );
+                patch_selection[ipatch].resize(0);
+                for(unsigned int i=0; i<s; i++)
+                    if( arr[i] )
+                        patch_selection[ipatch].push_back( i );
+                patch_start[ipatch] = nParticles_local;
+                nParticles_local += patch_selection[ipatch].size();
+                
+                Py_DECREF(ret);
+            }
+            
+#else
+            ERROR("Tracked particles selection requires the numpy package");
+#endif
+            
+        } else {
+            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+                patch_start[ipatch] = nParticles_local;
+                nParticles_local += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
+            }
         }
         
         // Specify the memory dataspace (the size of the local buffer)
@@ -178,16 +272,13 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime )
         } else {
             H5Sselect_none(file_space);
         }
-    }
-    
-    #pragma omp master
-    {
+        
         // Create the "latest_IDs" dataset
         // Create file space and select one element for each proc
         hsize_t numel = smpi->getSize();
         hid_t filespace = H5Screate_simple(1, &numel, NULL);
-        hsize_t offset=smpi->getRank(), count=1;
-        H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &offset, NULL, &count, NULL);
+        hsize_t offset_ = smpi->getRank(), count=1;
+        H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &offset_, NULL, &count, NULL);
         // Create dataset
         hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
         hid_t dset_id  = H5Dcreate( iteration_group, "latest_IDs", H5T_NATIVE_UINT64, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
@@ -284,6 +375,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime )
         
     // Close and flush
         data_double.resize(0);
+        patch_selection.resize(0);
         
         H5Pclose(plist);
         H5Sclose(file_space);
@@ -324,15 +416,30 @@ void DiagnosticTrack::fill_buffer(VectorPatch& vecPatches, unsigned int iprop, v
 {
     unsigned int patch_nParticles, i, j, nPatches=vecPatches.size();
     vector<T>* property = NULL;
-    #pragma omp for schedule(runtime)
-    for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
-        patch_nParticles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles->size();
-        vecPatches(ipatch)->vecSpecies[speciesId_]->particles->getProperty(iprop, property);
-        i=0;
-        j=patch_start[ipatch];
-        while( i<patch_nParticles ) {
-            buffer[j] = (*property)[i];
-            i++; j++;
+    
+    if( has_selection ) {
+        #pragma omp for schedule(runtime)
+        for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
+            patch_nParticles = patch_selection[ipatch].size();
+            vecPatches(ipatch)->vecSpecies[speciesId_]->particles->getProperty(iprop, property);
+            i=0;
+            j=patch_start[ipatch];
+            while( i<patch_nParticles ) {
+                buffer[j] = (*property)[patch_selection[ipatch][i]];
+                i++; j++;
+            }
+        }
+    } else {
+        #pragma omp for schedule(runtime)
+        for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
+            patch_nParticles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles->size();
+            vecPatches(ipatch)->vecSpecies[speciesId_]->particles->getProperty(iprop, property);
+            i=0;
+            j=patch_start[ipatch];
+            while( i<patch_nParticles ) {
+                buffer[j] = (*property)[i];
+                i++; j++;
+            }
         }
     }
 }
@@ -356,3 +463,6 @@ void DiagnosticTrack::write_component( hid_t location, string name, T& buffer, h
     openPMD->writeComponentAttributes( did );
     H5Dclose(did);
 }
+
+
+

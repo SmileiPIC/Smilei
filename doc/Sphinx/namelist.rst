@@ -486,6 +486,26 @@ Each species has to be defined in a ``Species`` block::
   file for tracked particles is actually written ("flushed" from the buffer). Flushing
   too often can *dramatically* slow down the simulation.
 
+.. py:data:: track_selection
+  
+  A python function giving some condition on which particles are tracked.
+  If none provided, all particles are tracked. No particles are tracked if ``track_every``
+  is kept at ``0``. To use this option, the `numpy package <http://www.numpy.org/>`_ must
+  be available in your python installation.
+  
+  The function must have the arguments 
+  ``x``, ``y`` (if 2D or above), ``z`` (if 3D), ``px``, ``py`` and ``pz``. Each of these variables
+  are provided as **numpy** arrays of *doubles*. Each element corresponds to one particle.
+  The function must return a boolean **numpy** array of the same shape, containing ``True``
+  where the particle should be tracked, and ``False`` in other locations.
+  
+  The following 2D example selects all the particles that verify :math:`-1<p_x<1`
+  or :math:`p_z>3`::
+  
+    def select(x, y, px, py, pz):
+        return (px>-1.)*(px<1.) + (pz>3.)
+
+
 .. py:data:: c_part_max
   
   :red:`to do`

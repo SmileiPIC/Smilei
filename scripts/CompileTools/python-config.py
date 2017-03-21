@@ -37,6 +37,13 @@ for opt in opt_flags:
     elif opt in ('--includes', '--cflags'):
         flags = ['-I' + sysconfig.get_python_inc(),
                  '-I' + sysconfig.get_python_inc(plat_specific=True)]
+        
+        try:
+            import numpy
+            flags += ['-I' + numpy.get_include() + ' -DEXPOSENUMPY -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION']
+        except:
+            pass
+        
         if opt == '--cflags':
             flags.extend(getvar('CFLAGS').split())
         print ' '.join(flags)
