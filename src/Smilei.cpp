@@ -80,7 +80,6 @@ int main (int argc, char* argv[])
     // Define Moving Window
     // --------------------
     TITLE("Initializing moving window");
-    int start_moving(0);
     SimWindow* simWindow = new SimWindow(params);
     
     // ---------------------------------------------------
@@ -101,8 +100,7 @@ int main (int argc, char* argv[])
         // time at half-integer time-steps (dual grid)
         time_dual = (checkpoint.this_run_start_step +0.5) * params.timestep;
         
-        if ( simWindow && simWindow->isMoving(time_dual) )
-            simWindow->operate(vecPatches, smpi, params);
+        simWindow->operate(vecPatches, smpi, params, 0, time_dual);
         //smpi->recompute_patch_count( params, vecPatches, time_dual );
         
         TITLE("Initializing diagnostics");
@@ -110,7 +108,7 @@ int main (int argc, char* argv[])
         
     } else {
         
-        vecPatches = PatchesFactory::createVector(params, smpi, openPMD);
+        vecPatches = PatchesFactory::createVector(params, smpi, openPMD, 0);
         
         // Initialize the electromagnetic fields
         // -------------------------------------
@@ -223,19 +221,13 @@ int main (int argc, char* argv[])
         if (checkpoint.exit_asap) break;
         
         timers.movWindow.restart();
-        if ( simWindow->isMoving(time_dual) ) {
-            start_moving++;
-            if ((start_moving==1) && (smpi->isMaster()) ) {
-                MESSAGE(">>> Window starts moving");
-            }
-            simWindow->operate(vecPatches, smpi, params);
-        }
+        simWindow->operate(vecPatches, smpi, params, itime, time_dual);
         timers.movWindow.update();
         
         if ((params.balancing_every > 0) && (smpi->getSize()!=1) ) {
             if (( itime%params.balancing_every == 0 )) {
                 timers.loadBal.restart();
-                vecPatches.load_balance( params, time_dual, smpi, simWindow );
+                vecPatches.load_balance( params, time_dual, smpi, simWindow, itime );
                 timers.loadBal.update( params.printNow( itime ) );
             }
         }

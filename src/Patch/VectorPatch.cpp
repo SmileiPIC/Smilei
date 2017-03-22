@@ -328,7 +328,7 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
 //   - Scalars, Probes, Phases, TrackParticles, Fields, Average fields
 //   - set diag_flag to 0 after write
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int itime, Timers & timers, SimWindow* simWindow)
+void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itime, Timers & timers, SimWindow* simWindow)
 {
     
     // Global diags: scalars + particles
@@ -358,7 +358,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int itime, Timers
         #pragma omp barrier
         // All MPI run their stuff and write out
         if( localDiags[idiag]->theTimeIsNow )
-            localDiags[idiag]->run( smpi, *this, itime );
+            localDiags[idiag]->run( smpi, *this, itime, simWindow );
     }
     
     // Manage the "diag_flag" parameter, which indicates whether Rho and Js were used
@@ -609,7 +609,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 
 
-void VectorPatch::load_balance(Params& params, double time_dual, SmileiMPI* smpi, SimWindow* simWindow)
+void VectorPatch::load_balance(Params& params, double time_dual, SmileiMPI* smpi, SimWindow* simWindow, unsigned int itime)
 {
     // Define for some patch diags
 
@@ -650,12 +650,8 @@ void VectorPatch::load_balance(Params& params, double time_dual, SmileiMPI* smpi
     //npatchmoy += this->size();
     //npartmoy += partperMPI;
     
-    
-    // \todo Temporary re-creation of probes. We must think of a way to move probes instead.
-    for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
-        DiagnosticProbes* diagProbes = dynamic_cast<DiagnosticProbes*>(localDiags[idiag]);
-        if ( diagProbes ) diagProbes->patchesHaveMoved = true;
-    }
+    // Tell that the patches moved this iteration (needed for probes)
+    lastIterationPatchesMoved = itime;
 
 }
 
@@ -722,7 +718,7 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
 
 
     // Create new Patches 
-    if (simWindow) n_moved = simWindow->getNmoved(); 
+    n_moved = simWindow->getNmoved(); 
     // Store in local vector future patches
     // Loop on the patches I have to receive and do not already own.
     for (unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++) {
@@ -1143,62 +1139,6 @@ void VectorPatch::applyExternalFields()
     for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
         patches_[ipatch]->EMfields->applyExternalFields( (*this)(ipatch) ); // Must be patch
 }
-
-
-void VectorPatch::move_probes(Params& params, double x_moved)
-{
-    int nprobe(0);
-    // Look for DiagProbes 
-    for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
-        if ( dynamic_cast<DiagnosticProbes*>(localDiags[idiag]) ) {
-            DiagnosticProbes* diagProbes = dynamic_cast<DiagnosticProbes*>(localDiags[idiag]);
-            
-            // Clean probes
-            for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
-                patches_[ipatch]->probes[nprobe]->particles.initialize(0,params.nDim_particle);
-            
-            unsigned int nDim = diagProbes->posArray->dims_[1];
-            unsigned int iPatch(0);
-            int ilocal_part(0);
-            // Loop all probe particles in this MPI
-            for ( unsigned int ipart_mpi=0 ; ipart_mpi < diagProbes->posArray->dims_[0] ; ipart_mpi++ ) {
-                
-                // Get the particle position
-                vector<double> pos( nDim, 0. );
-                for (unsigned int iDim=0 ; iDim<nDim ; iDim++)
-                    pos[iDim] = (*diagProbes->posArray)(ipart_mpi,iDim);
-                pos[0] += x_moved;
-                
-                // Figure out if the particle still belongs to this patch
-                bool isNotIn = false;
-                for (unsigned int iDim=0 ; iDim<nDim ; iDim++)
-                    isNotIn = isNotIn || ( ( pos[iDim] <  patches_[iPatch]->getDomainLocalMin(iDim) ) || ( pos[iDim] >= patches_[iPatch]->getDomainLocalMax(iDim) ) );
-                
-                // Moved probes are ordered along the Hilbert curve in the same way as at t0
-                vector<bool> posIsNotIn( nDim );
-                while ( isNotIn ) {
-                    iPatch++;
-                    if (iPatch>=size())
-                        ERROR( "\t" << ipart_mpi << " not in a patch on this process"  );
-                    ilocal_part = 0;
-                    
-                    for (unsigned int iDim=0 ; iDim<nDim ; iDim++)
-                        isNotIn = isNotIn || ( ( pos[iDim] <  patches_[iPatch]->getDomainLocalMin(iDim) ) || ( pos[iDim] >= patches_[iPatch]->getDomainLocalMax(iDim) ) );
-                }
-                patches_[iPatch]->probes[nprobe]->particles.create_particle();
-                for (unsigned int iDim=0 ; iDim<nDim ; iDim++)
-                    patches_[iPatch]->probes[nprobe]->particles.position(iDim,ilocal_part) = pos[iDim];
-                ilocal_part++;
-                 
-            } // End for local probes
-            
-            // Goes to next probe
-            nprobe++;
-        
-        } // Enf if probes
-    } // End for idiag
-}
-
 
 
 // Print information on the memory consumption
