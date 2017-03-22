@@ -57,6 +57,23 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch,
         // Verify the number of arguments of the selection function
         if( n_arg != nDim_particle+3 )
             ERROR("Tracked species '" << species->species_type << "' has a selection function with "<<n_arg<<" arguments while requiring "<<nDim_particle+3);
+        // Verify the return value of the function
+        double test_value[2] = {1.2, 1.4};
+        npy_intp dims[1] = {2};
+        PyObject *ret;
+        PyArrayObject *a = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, &test_value);
+        if     ( nDim_particle == 1 ) ret = PyObject_CallFunctionObjArgs(selector, a,a,a,a, NULL);
+        else if( nDim_particle == 2 ) ret = PyObject_CallFunctionObjArgs(selector, a,a,a,a,a, NULL);
+        else if( nDim_particle == 3 ) ret = PyObject_CallFunctionObjArgs(selector, a,a,a,a,a,a, NULL);
+        Py_DECREF(a);
+        if( !PyArray_Check(ret) )
+            ERROR("Tracked particles selection must return a numpy array");
+        if( !PyArray_ISBOOL((PyArrayObject *)ret) )
+            ERROR("Tracked particles selection must return an array of booleans");
+        unsigned int s = PyArray_SIZE((PyArrayObject *)ret);
+        if( s != 2 )
+            ERROR("Tracked particles selection must not change the arrays sizes");
+        Py_DECREF(ret);
 #else
         ERROR("Tracking species '" << species->species_type << "' with a selection requires the numpy package");
 #endif
@@ -161,11 +178,13 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime )
 #ifdef EXPOSENUMPY
             patch_selection.resize( vecPatches.size() );
             PyArrayObject *x,*y,*z,*px,*py,*pz,*ret;
+            npy_intp dims[1];
             
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
                 // Expose particle data as numpy arrays, then run the selection function
                 Particles * p = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
-                npy_intp dims[1] = {p->size()};
+                unsigned int npart = p->size();
+                dims[0] = (npy_intp) npart;
                 px = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Momentum[0].data()));
                 py = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Momentum[1].data()));
                 pz = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Momentum[2].data()));
@@ -188,17 +207,10 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime )
                 Py_DECREF(py);
                 Py_DECREF(pz);
                 
-                // Verify the return value
-                if( !PyArray_ISBOOL(ret) )
-                    ERROR("Tracked particles selection must return an array of booleans");
-                unsigned int s = PyArray_SIZE(ret);
-                if( s != p->size() )
-                    ERROR("Tracked particles selection must not change the arrays sizes");
-                
                 // Loop the return value and store the particle IDs
                 bool* arr = (bool*) PyArray_GETPTR1( ret, 0 );
                 patch_selection[ipatch].resize(0);
-                for(unsigned int i=0; i<s; i++)
+                for(unsigned int i=0; i<npart; i++)
                     if( arr[i] )
                         patch_selection[ipatch].push_back( i );
                 patch_start[ipatch] = nParticles_local;
@@ -206,7 +218,6 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime )
                 
                 Py_DECREF(ret);
             }
-            
 #else
             ERROR("Tracked particles selection requires the numpy package");
 #endif
