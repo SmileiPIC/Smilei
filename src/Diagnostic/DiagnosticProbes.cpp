@@ -200,10 +200,15 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
     fieldname = fs;
     nFields = fs.size();
     
+    // Pre-calculate patch size
+    patch_size.resize(nDim_particle);
+    for( unsigned int k=0; k<nDim_particle; k++ )
+        patch_size[k] = params.n_space[k]*params.cell_length[k];
+    
+    // Create filename
     ostringstream mystream("");
     mystream << "Probes" << n_probe << ".h5";
     filename = mystream.str();
-    
     
     // Display info
     MESSAGE(1, "Probe diagnostic #"<<n_probe<<" created");
@@ -315,11 +320,9 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
         for( k=0; k<nDim_particle; k++ ) {
             mins[k] = numeric_limits<double>::max();
             maxs[k] = numeric_limits<double>::lowest();
-            patchMin[k] = vecPatches(ipatch)->getDomainLocalMin(k);
-            patchMax[k] = vecPatches(ipatch)->getDomainLocalMax(k);
+            patchMin[k] = ( vecPatches(ipatch)->Pcoordinates[k]   )*patch_size[k];
+            patchMax[k] = ( vecPatches(ipatch)->Pcoordinates[k]+1 )*patch_size[k];
         }
-        patchMin[0] -= x_moved; // compensate for moving-window
-        patchMax[0] -= x_moved; // compensate for moving-window
         // loop patch corners
         for( i=0; i<numCorners; i++ ) {
             // Get coordinates of the current corner in terms of x,y,...

@@ -60,11 +60,16 @@ SimWindow::~SimWindow()
 
 bool SimWindow::isMoving(double time_dual)
 {
-    return ((time_dual - time_start)*velocity_x > x_moved);
+    return active && ((time_dual - time_start)*velocity_x > x_moved);
 }
 
-void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params, unsigned int itime)
+void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params, unsigned int itime, double time_dual)
 {
+    if ( ! isMoving(time_dual) ) return;
+    
+    if ( n_moved==0 && smpi->isMaster() )
+        MESSAGE(">>> Window starts moving");
+    
     unsigned int h0;
     double energy_field_lost(0.);
     std::vector<double> energy_part_lost( vecPatches(0)->vecSpecies.size(), 0. );
