@@ -103,7 +103,7 @@ public :
                       Timers & timers);
     
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
-    void runAllDiags(Params& params, SmileiMPI* smpi, int itime, Timers & timers, SimWindow* simWindow);
+    void runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itime, Timers & timers, SimWindow* simWindow);
     void initAllDiags(Params& params, SmileiMPI* smpi);
     void closeAllDiags(SmileiMPI* smpi);
     void openAllDiags(Params& params, SmileiMPI* smpi);
@@ -130,7 +130,7 @@ public :
     // ------------------
     
     //! Wrapper of load balancing methods, including SmileiMPI::recompute_patch_count. Called from main program
-    void load_balance(Params& params, double time_dual, SmileiMPI* smpi, SimWindow* simWindow);
+    void load_balance(Params& params, double time_dual, SmileiMPI* smpi, SimWindow* simWindow, unsigned int itime);
     
     //! Explicits patch movement regarding new patch distribution stored in smpi->patch_count
     void createPatches(Params& params, SmileiMPI* smpi, SimWindow* simWindow);
@@ -206,16 +206,17 @@ public :
             MESSAGE(2, "Species " << ispec << " (" << (*this)(0)->vecSpecies[ispec]->species_type << ") created with " << tmp << " particles" );
         }
     }
-
-    void move_probes(Params& params, double x_moved);
     
     void check_memory_consumption(SmileiMPI* smpi);
     
     // Keep track if we need the needsRhoJsNow
     int diag_flag;
-
+    
     int nrequests;
-
+    
+    //! Tells which iteration was last time the patches moved (by moving window or load balancing)
+    unsigned int lastIterationPatchesMoved;
+    
  private :
     
     //! Methods to access readably to patch PIC operators.

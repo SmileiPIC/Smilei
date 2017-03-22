@@ -26,7 +26,7 @@ public :
     
     bool prepare( int timestep ) override;
     
-    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) override;
+    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep, SimWindow* simWindow ) override;
     
     //! Get memory footprint of current diagnostic
     int getMemFootPrint() override {

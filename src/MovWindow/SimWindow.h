@@ -23,7 +23,7 @@ class SimWindow {
     //! SimWindow destructor
     ~SimWindow();
     //! Move the simulation window (particles, fields, MPI environment & operator related to the grid)
-    void operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& param);
+    void operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& param, unsigned int itime);
 
     //! Tells whether there is a moving window or not
     inline bool isActive() { return active; }

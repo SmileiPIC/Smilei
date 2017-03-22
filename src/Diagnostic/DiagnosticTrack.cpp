@@ -215,7 +215,7 @@ bool DiagnosticTrack::prepare( int timestep )
 }
 
 
-void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep )
+void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep, SimWindow* simWindow )
 {
     int nParticles = 0;
     unsigned int nPatches = vecPatches.size();
