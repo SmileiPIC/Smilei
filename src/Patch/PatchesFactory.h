@@ -34,10 +34,11 @@ public:
     }
     
     // Create a vector of patches
-    static VectorPatch createVector(Params& params, SmileiMPI* smpi, OpenPMDparams& openPMD, unsigned int n_moved=0) {
+    static VectorPatch createVector(Params& params, SmileiMPI* smpi, OpenPMDparams& openPMD, unsigned int itime, unsigned int n_moved=0) {
         VectorPatch vecPatches;
         
         vecPatches.diag_flag = (params.restart? false : true);
+        vecPatches.lastIterationPatchesMoved = itime;
         
         // Compute npatches (1 is std MPI behavior)
         unsigned int npatches, firstpatch;

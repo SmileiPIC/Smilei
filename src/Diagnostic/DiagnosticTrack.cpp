@@ -107,7 +107,7 @@ bool DiagnosticTrack::prepare( int itime )
 }
 
 
-void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime )
+void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow )
 {
     uint32_t nParticles_local = 0;
     uint64_t nParticles_global = 0;

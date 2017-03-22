@@ -63,7 +63,7 @@ bool SimWindow::isMoving(double time_dual)
     return ((time_dual - time_start)*velocity_x > x_moved);
 }
 
-void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params)
+void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params, unsigned int itime)
 {
     unsigned int h0;
     double energy_field_lost(0.);
@@ -194,13 +194,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     vecPatches.update_field_list() ;
     //update list fields for species diag too ??
     
-    for (unsigned int idiag = 0 ; idiag < vecPatches.localDiags.size() ; idiag++) {
-        DiagnosticProbes* diagProbes = dynamic_cast<DiagnosticProbes*>(vecPatches.localDiags[idiag]);
-        if ( diagProbes ) {
-            diagProbes->patchesHaveMoved = true;
-            diagProbes->x_moved = x_moved;
-        }
-    }
+    // Tell that the patches moved this iteration (needed for probes)
+    vecPatches.lastIterationPatchesMoved = itime;
     
     //Delete useless patches
     for (unsigned int j=0; j < delete_patches_.size(); j++){
