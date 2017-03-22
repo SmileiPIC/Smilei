@@ -397,28 +397,20 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
         nPart_MPI += ipart_local;
     }
     
-    // Now calculate the offset of each patch to write in the file
+    // Calculate the offset of each MPI in the final file
+    unsigned int global_offset;
+    MPI_Scan(&nPart_MPI, &global_offset, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
     
-    // Get the number of particles for each MPI
-    int sz = smpi->getSize();
-    std::vector<int> all_nPart(sz, 0);
-    MPI_Allgather( &nPart_MPI, 1, MPI_INT, &all_nPart[0], 1, MPI_INT, MPI_COMM_WORLD );
+    // Broadcast the global number of points
+    nPart_total_actual = global_offset;
+    MPI_Bcast( &nPart_total_actual, 1, MPI_UNSIGNED, smpi->getSize()-1, MPI_COMM_WORLD );
     
-    // Calculate the cumulative sum
-    for (int rk=1 ; rk<sz ; rk++)
-        all_nPart[rk] += all_nPart[rk-1];
-    
-    // Add the MPI offset to all patches
-    if( ! smpi->isMaster() ) {
-        int offset = all_nPart[smpi->getRank()-1];
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            offset_in_file[ipatch] = offset + offset_in_MPI[ipatch];
-            vecPatches(ipatch)->probes[probe_n]->offset_in_file = offset_in_file[ipatch];
-        }
+    // For each patch, calculate its global offset
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        offset_in_file[ipatch] = global_offset - nPart_MPI + offset_in_MPI[ipatch];
+        vecPatches(ipatch)->probes[probe_n]->offset_in_file = offset_in_file[ipatch];
     }
     
-    // Store the actual total number points
-    nPart_total_actual = all_nPart[sz-1];
     if( nPart_total_actual==0 ) ERROR("Probe has no points in the box");
 }
 
@@ -443,12 +435,10 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     #pragma omp master
     {
         // If the patches have been moved (moving window or load balancing) we must re-compute the probes positions
-            MESSAGE(" --------- "<< last_iteration_points_calculated <<" "<< vecPatches.lastIterationPatchesMoved << " "<<" ----------- ");
         if( !positions_written || last_iteration_points_calculated < vecPatches.lastIterationPatchesMoved ) {
             double x_moved = simWindow ? simWindow->getXmoved() : 0.;
             createPoints(smpi, vecPatches, false, x_moved);
             last_iteration_points_calculated = timestep;
-            MESSAGE(" --------- points recreated ----------- ");
             
             // Store the positions of all particles, unless done already
             if( !positions_written ) {
