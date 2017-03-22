@@ -204,8 +204,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     }
     
     // Dump moving window status
-    if (simWin!=NULL)
-        dumpMovingWindow(fid, simWin);
+    dumpMovingWindow(fid, simWin);
     
     H5Fclose( fid );
     
@@ -386,16 +385,12 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
     }
     
     // load window status
-    if (simWin!=NULL)
-        restartMovingWindow(fid, simWin);
+    restartMovingWindow(fid, simWin);
     
     vector<int> patch_count(smpi->getSize());
     H5::getVect( fid, "patch_count", patch_count );
     smpi->patch_count = patch_count;
-    if (simWin==NULL)
-        vecPatches = PatchesFactory::createVector(params, smpi, openPMD, this_run_start_step+1);
-    else
-        vecPatches = PatchesFactory::createVector(params, smpi, openPMD, this_run_start_step+1, simWin->getNmoved());
+    vecPatches = PatchesFactory::createVector(params, smpi, openPMD, this_run_start_step+1, simWin->getNmoved());
     
     H5::getAttr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
     H5::getAttr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
