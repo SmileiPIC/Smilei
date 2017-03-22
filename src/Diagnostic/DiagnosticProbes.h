@@ -102,6 +102,9 @@ private :
     
     //! Whether positions have been written in the file
     bool positions_written;
+    
+    //! patch size
+    std::vector<double> patch_size;
 };
 
 
