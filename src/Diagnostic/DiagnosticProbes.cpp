@@ -456,6 +456,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
                     for ( unsigned int ip=0 ; ip<particles->size() ; ip++) {
                         for (unsigned int idim=0 ; idim<nDim_particle  ; idim++ )
                             (*posArray)(ipart,idim) = particles->position(idim,ip);
+                        (*posArray)(ipart,0) -= x_moved;
                         ipart++;
                     }
                 }
