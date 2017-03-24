@@ -250,13 +250,12 @@ try :
 	if os.path.exists(WORKDIR_BASE+s+COMPILE_ERRORS) :
 		os.remove(WORKDIR_BASE+s+COMPILE_ERRORS)
 	check_call(COMPILE_COMMAND, shell=True)
+	os.rename('compilation_out_temp',COMPILE_OUT)
 	if STAT_SMILEI_R_OLD!=os.stat(SMILEI_R) or date(SMILEI_W)<date(SMILEI_R):
 		# if new bin, archive the workdir (if it contains a smilei bin)  and create a new one with new smilei and compilation_out inside
 		if os.path.exists(SMILEI_W):
 			workdir_archiv(SMILEI_W)
 		shutil.copy2(SMILEI_R,SMILEI_W)
-		if STAT_SMILEI_R_OLD != os.stat(SMILEI_R):
-			os.rename('compilation_out_temp',COMPILE_OUT)
 		if COMPILE_ONLY:
 			if VERBOSE:
 				print  "Smilei validation succeed."
@@ -287,6 +286,11 @@ class CreateReference(object):
 	def write(self):
 		with open(self.reference_file, "w") as f:
 			pickle.dump(self.data, f)
+		size = os.path.getsize(self.reference_file)
+		if size > 1000000:
+			print "Reference file is too large ("+str(size)+"B) - suppressing ..."
+			os.remove(self.reference_file)
+			sys.exit(2)
 		if VERBOSE:
 			print "Created reference file "+self.reference_file
 
