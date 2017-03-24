@@ -1,603 +1,521 @@
 ##!/gpfslocal/pub/python/anaconda/Anaconda-2.1.0/bin/python 
-#
-# This script checks the validity of the results of the execution of smilei defined by :
-# - the bench file (default tst1d_0_em_propagation.py) given by the -b option
-# - the number of OpenMP tasks (default 2) given by the -o option
-# - the number of MPI processus (default 2) given by the -m option
-# 
-# Here are listed the files used in the validation process:
-###########################################################
-#- validation directory which contains:
-#  - a directory named "references" which contains one file scalars.txt for each file in benchmarks and a list of precision values for each scalar.
-#  - a workdirs directory for the current version of smilei.
-#  - archived workdirs for previous versions of smilei
-# Before the first execution of the script, workdirs is empty.
-# Then, workdirs will contain :
-#  - smilei binary : "smilei"
-#  - compilation output : "compilation_output"
-#  - a directory wd_<input_file> which contains one <o>_<m> directory 
-#    The <o>_<m> directory contains the output files of the execution of smilei with o OpenMP threads and m MPI processus :
-#    - exec_script.out 
-#    - exec_script.sh  
-#    - Fields.h5  
-#    - scalars.txt  
-#    - smilei_exe.out  
-#    - smilei.py
-#  or
-#  - the compilation errors file : "compilation_errors"
-#
-# The different steps of the script are the folllowing :
-########################################################
-# Compilation step :
-# +++++++++++++++
-# If the "workdirs" directory does not contains a smilei binary, or it contains one older than the the smilei bin in directory smilei, 
-# then the smilei binary in directory smilei is removed in order to force the compilation and so generate the compilation_output. 
-# Then the compilation occurs.
-# If a new smilei binary is created, then :
-# if the "workdirs" directory contains a smilei bin, then it is archived and a new one is created with the new smilei binary 
-# and the compilation output inside.
-# If compiling errors occur, the workdir (if it contains a smilei bin) is archived and a new one is created with compilation_errors inside 
-# and the script exits with status 3.
-#
-# Execution step :
-# +++++++++++++++
-# For the given execution defined by -b, -m, -o options, if the corresponding directory named wd_<bench_file>_<o>_<m> does not exist then :
-# - it is created.
-# - smilei is executed in this working directory. So, the different output files such as scalars.txt and the standard ouput of this execution are kept 
-#   in this working directory.
-# - if the execution fails then the script exits with status 2.
-#
-# Validation step :
-# +++++++++++++++
-# The validity of smilei is obtained by comparing the scalars contained in scalars.txt contained in the working directory "wd_<bench_file>/<o>_<m>" 
-# with those found in "references" with a given precision or a precision value found in the list.
-#
-# Using the -a option, smilei is executed for all the bench files. For every execution all the existing scalars in the scalars.txt file are checked.
-#
-# Using the -s option, you have the choice to check several scalars with their corresponding precision:
-#  - the -s option is a scalar name: this scalar is  checked with the given precision (-p option, default found in the list of precision values)
-#  - the -s option is ? : several scalars that you can choose inside a provided list 
-#  - the -s option is all (default) : all the existing scalars inside the file scalars.txt 
-#  In these 2 last cases the list of precision values for all the possible scalars is examined. 
-#
-# In the same way, -t option allows to validate smilei for one or more timesteps :         
-#  - no -t option : the last time step is considered                                                                                   
-#  - the -t option is a number : smilei is checked only for this time step                                                                               
-#  - the -t option is ? : time steps that you can choose inside a provided list are considered
-#  - the -t option is all : all the time steps are considered
-#  In these 2 last cases the list of precision values for all the possible scalars is examined. 
-#
-# Smilei is validated (exit status 0) only in the case where all the scalars are considered (-s all option) 
-# and validated at last time step (no -t option). Otherwise, exit status is one.
-#
-# Output of the script
-#+++++++++++++++++++++
-# If the -v option is present, the script gives information about what it does and lists the validity of the scalars
-#
-# Exit status of the script
-#++++++++++++++++++++++++++
-# 0  validation : all the scalars are validated for the last time step (this may happen only with the -s all option)                       
-# 1  no validation : not all the scalars are checked or one is wrong
-# 2  execution fails
-# 3  compilation fails
-# 4  bad option
-#
-# Remark
-#++++++++
-# This script may run anaywhere : you can define a SMILEI_ROOT variable which is a path containing a smilei version, 
-# otherwise, default SMILEI_ROOT variable is the current directory (which must contain a smilei version).
-#
-# IMPORTS
-import getopt
-import shutil
-import numpy as np
-import glob
-from subprocess import check_call,CalledProcessError,call
-import os
-import inspect
-import sys
-import socket
-#this_script_dir = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
-this_script_dir=os.getcwd()+'/../scripts'
-s = os.sep
-module_dir = this_script_dir+s+'PythonModule'
-sys.path.insert(0, module_dir)
-from Smilei import *
 
-#
+"""
+This script can do two things:
+  (1) generate validation reference(s) for given benchmark(s)
+  (2) compare benchmark(s) to their reference(s)
+
+Usage
+#######
+python validation.py [-c] [-h] [-b <bench_case> [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g] [-v]]
+
+For help on options, try 'python validation.py -h'
+
+
+Here are listed the files used in the validation process:
+#########################################################
+The "validation" directory which contains:
+  - the "references" directory with one file for each benchmark
+  - validation files (prefixed with "validate_") for each benchmark
+  - a "workdirs" directory, created during the validation process
+  - archived "workdirs" for previous versions of smilei
+
+A "workdirs" contains:
+ - the smilei binary : "smilei"
+ - the compilation output : "compilation_output"
+ - a directory wd_<input_file>/<o>/<m> directory, containing the output files
+ or
+ - the compilation errors file : "compilation_errors"
+
+The different steps of the script are the folllowing :
+######################################################
+Compilation step :
++++++++++++++++
+If the "workdirs" directory lacks a smilei binary, or it is too old),
+then the "workdirs" is backed up, and a new compilation occurs.
+If compiling errors occur, "compilation_errors" is created and the script exits with status 3.
+
+Execution step :
++++++++++++++++
+If wd_<input_file>/<o>/<m> does not exist then:
+- it is created
+- smilei is executed in that directory for the requested benchmark
+- if execution fails, the script exits with status 2
+
+Validation step :
++++++++++++++++
+Loops through all requested benchmarks
+	Runs the benchmark in the workdir
+	If requested to generate references:
+		Executes the "validate_*" script and stores the result as reference data
+	If requested to compare to previous references
+		Executes the "validate_*" script and compares the result to the reference data
+
+Exit status of the script
++++++++++++++++++++++++++
+0  validated
+1  validation fails
+2  execution fails
+3  compilation fails
+4  bad option
+
+Remark
++++++++
+This script may run anywhere: you can define a SMILEI_ROOT environment variable
+"""
+
+
+# IMPORTS
+import sys, os, re, glob
+import shutil, getopt, inspect, socket, pickle
+from subprocess import check_call,CalledProcessError,call
+s = os.sep
+
 # SMILEI PATH VARIABLES
 if "SMILEI_ROOT" in os.environ :
-  SMILEI_ROOT=os.environ["SMILEI_ROOT"]
+	SMILEI_ROOT=os.environ["SMILEI_ROOT"]+s
 else :
-  SMILEI_ROOT = os.getcwd()+'/..'
-SMILEI_ROOT = SMILEI_ROOT+'/'
-SMILEI_SCRIPTS = SMILEI_ROOT+"scripts/"
-SMILEI_REFERENCES = SMILEI_ROOT+"validation/references/"
-SMILEI_BENCHS = SMILEI_ROOT+"benchmarks/"
-sys.path.insert(0, SMILEI_SCRIPTS)
-#
+	SMILEI_ROOT = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))+s+".."+s
+	#SMILEI_ROOT = os.getcwd()+s+".."+s
+SMILEI_ROOT = os.path.abspath(SMILEI_ROOT)+s
+SMILEI_SCRIPTS = SMILEI_ROOT+"scripts"+s
+SMILEI_VALIDATION = SMILEI_ROOT+"validation"+s
+SMILEI_REFERENCES = SMILEI_VALIDATION+"references"+s
+SMILEI_BENCHS = SMILEI_ROOT+"benchmarks"+s
+
+# Load the Smilei module
+execfile(SMILEI_SCRIPTS+"Diagnostics.py")
+
 # OTHER VARIABLES
-POINCARE="poincare"
-JOLLYJUMPER="llrlsi-gw"
-HOSTNAME=socket.gethostname()
+POINCARE = "poincare"
+JOLLYJUMPER = "llrlsi-gw"
+HOSTNAME = socket.gethostname()
+
 # DEFAULT VALUES FOR OPTIONS
 OMP = 2
 MPI = 2
-SCALAR_LIST_ARG = [ "Utot" ]
-SCALAR_NAME = "Utot"
-OPT_BENCH = False
-OPT_TIMESTEP = False
 EXECUTION = False
-OPT_PRECISION = False
 VERBOSE = False
-VALID_ALL = False
 BENCH=""
 COMPILE_ONLY = False
-#
-# FUNCTION FOR PARSING OPTIONS
+GENERATE = False
+
+# TO PRINT USAGE
 def usage():
-    print 'Usage: validation.py [-o <nb_OMPThreads> -m <nb_MPIProcs> -b <bench_case> -s <scalar> -p <precision> '
+	print 'Usage: validation.py [-c] [-h] [-b <bench_case> [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g] [-v]]'
+
+# GET COMMAND-LINE OPTIONS
 try:
-  options, remainder = getopt.getopt(sys.argv[1:], 'o:m:b:s:p:t:hvac', ['OMP=', 
-                                                          'MPI='
-                                                          'BENCH='
-                                                          'SCALAR='
-                                                          'PRECISION='
-                                                          'TIMESTEP='
-                                                          'COMPILE_ONLY='
-                                                          'HELP='
-                                                          'VERBOSE='
-                                                          'ALL='
-                                                         ])
+	options, remainder = getopt.getopt(
+		sys.argv[1:],
+		'o:m:b:ghvc',
+		['OMP=', 'MPI=', 'BENCH=', 'COMPILE_ONLY=', 'GENERATE=', 'HELP=', 'VERBOSE='])
 except getopt.GetoptError as err:
-        usage()
-        sys.exit(4)
-#
-def scalarValidation(SCALAR_NAME,t):
-  # COMPARES SCALAR_NAME VALUE AGAINST THE REFERENCE VALUE AT TIME t :
-  #
-  # FIND THE VALUE OF SCALAR_NAME in  scalars.txt
-  SCALAR = SIMULATION.Scalar(SCALAR_NAME,timestep=t)
-  VALEUR = SCALAR._getDataAtTime(t)
-  #
-  # FIND THE REFERENCE VALUE OF SCALAR_NAME                          
-  SCALAR_REFERENCE = Sref.Scalar(SCALAR_NAME,timestep=t)
-  VALEUR_REFERENCE = SCALAR_REFERENCE._getDataAtTime(t)
-  # 
-  # COMPARE VALEUR AGAINST VALEUR_REFERENCE WITH PRECISION PRECISION
-  if VERBOSE :
-    print 'At time',t,',',SCALAR_NAME,'=',VALEUR,', Reference =',VALEUR_REFERENCE
-  if float(abs(VALEUR - VALEUR_REFERENCE)) < float(PRECISION) :
-    if VERBOSE :
-      print 'Scalar',SCALAR_NAME,'is OK with precision',PRECISION,'\n'
-    SCALAR_OK = True
-  else :
-    if VERBOSE :
-      print 'Scalar',SCALAR_NAME,'is wrong according to precision',PRECISION,'\n'
-    SCALAR_OK = False
-  #
-  return(SCALAR_OK) 
-#
-def scalarListValidation(SCALAR_NAME,t) :
-  global PRECISION
-  global VERBOSE
-  # Test if either you want to choose one scalar in a list, or all the scalars, or a given scalar
-  # Check these scalars with the function scalarValidation()
-  #
-  it = np.int64(t)
-  L=SIMULATION.Scalar(scalar=None)
-  LISTE_SCALARS = L.getScalars()
-  if SCALAR_NAME == "?":
-    VERBOSE = True
-    # Propose the list of all the scalars
-    print LISTE_SCALARS
-    print '\nEnter a scalar name from the above list (press <Enter> if no more scalar to check ):'
-    SCALAR_NAME = raw_input()
-    while SCALAR_NAME != "" :
-      if SCALAR_NAME in LISTE_SCALARS :                           
-        PRECISION = precision_d[SCALAR_NAME]
-        VALIDATION = scalarValidation(SCALAR_NAME,it)
-        print 'Enter a scalar name from the above list (press <Enter> if no more scalar to check ):'
-        SCALAR_NAME = raw_input()
-      else :
-        print "Scalar", SCALAR_NAME,"is not valid. Enter a scalar name again."
-        SCALAR_NAME = raw_input()
-        PRECISION = precision_d[SCALAR_NAME]
-  elif SCALAR_NAME == "all" or VALID_ALL :
-    for SCALAR_NAME in LISTE_SCALARS:
-      PRECISION = precision_d[SCALAR_NAME]
-      VALIDATION = scalarValidation(SCALAR_NAME,it)
-      if not VALIDATION :
-        return(False)
-    return(True)           
-  elif len(SCALAR_LIST_ARG) > 1 :
-    for SCALAR_NAME in SCALAR_LIST_ARG :
-      if SCALAR_NAME in LISTE_SCALARS :                    
-        PRECISION = precision_d[SCALAR_NAME]
-        VALIDATION = scalarValidation(SCALAR_NAME,it)
-      else :
-        print "Scalar", SCALAR_NAME,"is not valid."
-    return(False)
-  else:
-    if SCALAR_NAME in LISTE_SCALARS :                    
-      if not OPT_PRECISION :
-        PRECISION = precision_d[SCALAR_NAME]
-      VALIDATION = scalarValidation(SCALAR_NAME,it)
-      return VALIDATION
-    else :
-      print "Scalar", SCALAR_NAME,"is not valid."
-  return(False)
-#
+	usage()
+	sys.exit(4)
+
 # PROCESS THE OPTIONS
 for opt, arg in options:
-    if opt in ('-o', '--OMP'):
-        EXECUTION = True
-        OMP = arg
-    elif opt in ('-m', '--MPI'):
-        EXECUTION = True
-        MPI = arg
-    elif opt in ('-b', '--BENCH'):
-        BENCH=arg
-        OPT_BENCH = True
-    elif opt in ('-s', '--SCALAR'):
-        SCALAR_NAME = arg
-        SCALAR_LIST_ARG = arg.split()
-        if len(SCALAR_LIST_ARG) == 1 : 
-          SCALAR_NAME = arg
-    elif opt in ('-p', '--PRECISION'):
-        PRECISION = arg
-        OPT_PRECISION = True
-    elif opt in ('-t', '--TIMESTEP'):
-        TIMESTEP = arg
-        OPT_TIMESTEP=True
-    elif opt in ('-c', '--COMPILEONLY'):
-        COMPILE_ONLY=True
-    elif opt in ('-h', '--HELP'):
-        print "-s"
-        print "     -s scalar_name"
-        print "        scalar_name=? : a list of all possible scalars is provided : choose a name in this list and press enter when no more scalar to check"
-        print "        scalar_name=all : all the existing scalars inside the file scalars.txt are checked"
-        print "        scalar_name=<\"scalar_name1, scalar_name2, ...\"> : scalars scalar_name1, scalar_name2, ... are checked"
-        print "        scalar_name=<scalar_name> : only <scalar_name> is checked"
-        print "     DEFAULT : Utot\n"
-        print "-t"
-        print "     -t time_step"
-        print "       time_step : time step at which scalars are checked"
-        print "        time_step=? : a list of all possible time_steps is provided : choose a name in this list and press enter when no more time step to consider"
-        print "        time_step=all : all the existing time steps inside the file scalars.txt are considered"
-        print "        time_step=<time_step> : only <time_step> is considered"
-        print "     DEFAULT : last time step\n"
-        print "-p"
-        print "     -p precision"
-        print "       precision : precision with which <scalar_name> is checked"
-        print "       This option is used only when scalar_name is a single scalar name"
-        print "     DEFAULT : the precision of this scalar name find in the file references/precision_values\n"
-        print "-b"
-        print "     -b input_file"
-        print "       input_file : input file corresponding to the execution being validated"
-        print "       input_file=? : a list of all possible input file names is provided : choose a name in this list and press enter when no more input file to process"
-        print "     DEFAULT : tst1d_0_em_propagation.py"  
-        print "-o"
-        print "     -o omp_threads"
-        print "       omp_threads : number of OpenMP threads used for the execution of smilei (option -e must be present)"
-        print "     DEFAULT : 2"  
-        print "-m"
-        print "     -m mpi_procs"
-        print "       mpi_procs : number of MPI processus used for the execution of smilei (option -e must be present)"
-        print "     DEFAULT : 2"  
-        print "-c"
-        print "     This option allows to validate compilation only"
-        print "     DEFAULT : not set"
-        print "-v"
-        print "     This option allows to print the messages on standard output"
-        exit()
-    elif opt in ('-v', '--VERBOSE'):
-        VERBOSE = True
-    elif opt in ('-a', '--ALL'):
-        VALID_ALL = True
-#
+	if opt in ('-o', '--OMP'):
+		EXECUTION = True
+		OMP = int(arg)
+	elif opt in ('-m', '--MPI'):
+		EXECUTION = True
+		MPI = int(arg)
+	elif opt in ('-b', '--BENCH'):
+		BENCH = arg
+	elif opt in ('-c', '--COMPILEONLY'):
+		COMPILE_ONLY=True
+	elif opt in ('-h', '--HELP'):
+		print "-b"
+		print "     -b input_file"
+		print "       Chooses the benchmark(s) to validate."
+		print "       input_file : input file(s) to validate. Accepts wildcards."
+		print "       input_file=? : prompts a list of all possible input files"
+		print "     DEFAULT : All benchmarks are validated."  
+		print "-o"
+		print "     -o omp_threads"
+		print "       omp_threads : number of OpenMP threads used for the execution of smilei (option -e must be present)"
+		print "     DEFAULT : 2"  
+		print "-m"
+		print "     -m mpi_procs"
+		print "       mpi_procs : number of MPI processus used for the execution of smilei (option -e must be present)"
+		print "     DEFAULT : 2"
+		print "-g"
+		print "     Generation of references only"
+		print "-c"
+		print "     Compilation only"
+		print "-v"
+		print "     Verbose"
+		exit()
+	elif opt in ('-g', '--GENERATE'):
+		GENERATE = True
+	elif opt in ('-v', '--VERBOSE'):
+		VERBOSE = True
+
 # TEST IF THE NUMBER OF THREADS IS COMPATIBLE WITH THE HOST
 if JOLLYJUMPER in HOSTNAME :
-  if (12 % int(OMP) != 0) :
-    print  "Smilei cannot be run with " ,OMP ," threads on ", HOSTNAME
-    sys.exit(4)  
-  NPERSOCKET=12/int(OMP)
-#
-# CASE PRECISION NOT DEFINED OR MULTIPLE SCALARS REQUIRED : 
-# CREATING A DICTIONNARY WITH THE LIST OF PRECISION VALUES FOUND IN ./references/precision_values
-if OPT_PRECISION and ( SCALAR_NAME == "all"  or  SCALAR_NAME == "?" or VALID_ALL ) :
-  print "\n WARNING : Precision option ignored since a list of scalars is required."
-if not OPT_PRECISION or  SCALAR_NAME == "all"  or  SCALAR_NAME == "?"  or VALID_ALL :
-  precision_d = {}
-  with open(SMILEI_REFERENCES+"/precision_values") as f:
-      for line in f:
-         (key, val) = line.split()
-         precision_d[key] = val
-#
-# PROCESS THE INPUT FILE
-#
-  #-  Build the list of the input files
-os.chdir(SMILEI_BENCHS)
-list_bench = glob.glob("tst*py")
-if VALID_ALL or BENCH == "all":
-  SMILEI_BENCH_LIST = list_bench 
-elif OPT_BENCH == False :
-  #-  IF BENCH NOT IN OPTIONS, SET THE DEFAULT
-  BENCH = "tst1d_0_em_propagation.py"
-  SMILEI_BENCH_LIST = [ BENCH ]
+	if 12 % OMP != 0:
+		print  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME
+		sys.exit(4)  
+	NPERSOCKET = 12/OMP
+
+# Build the list of the requested input files
+list_bench = [os.path.basename(b) for b in glob.glob(SMILEI_BENCHS+"tst*py")]
+if BENCH == "":
+	SMILEI_BENCH_LIST = list_bench
 elif BENCH == "?":
-  VERBOSE = True
-  os.chdir(SMILEI_SCRIPTS)
-  #- Propose the list of all the input files
-  print '\n'.join(list_bench)
-  #- Choose an input file name in the list
-  print 'Enter an input file from the above list:'
-  BENCH = raw_input()
-  SMILEI_BENCH_LIST = [ BENCH ]
-  while not  BENCH in list_bench:
-    print "Input file",BENCH,"not valid. Enter an input file name again."
-    BENCH = raw_input()
-    SMILEI_BENCH_LIST = [ BENCH ]
+	VERBOSE = True
+	os.chdir(SMILEI_SCRIPTS)
+	#- Propose the list of all the input files
+	print '\n'.join(list_bench)
+	#- Choose an input file name in the list
+	print 'Enter an input file from the above list:'
+	BENCH = raw_input()
+	SMILEI_BENCH_LIST = [ BENCH ]
+	while BENCH not in list_bench:
+		print "Input file "+BENCH+" invalid. Try again."
+		BENCH = raw_input()
+		SMILEI_BENCH_LIST = [ BENCH ]
 elif BENCH in list_bench:
-  SMILEI_BENCH_LIST = [ BENCH ]
+	SMILEI_BENCH_LIST = [ BENCH ]
 elif glob.glob( BENCH ):
-  BENCH = glob.glob( BENCH )    
-  for ibench in BENCH:
-    if not ibench in list_bench:
-      if VERBOSE :
-        print "Input file",ibench,"not valid."
-      sys.exit(4)
-  SMILEI_BENCH_LIST = BENCH   
-else :
-  if VERBOSE :
-    print "Input file",BENCH,"not valid."
-  sys.exit(4)
-#
-# COMPILE  SMILEI
+	BENCH = glob.glob( BENCH )    
+	for b in BENCH:
+		if b not in list_bench:
+			if VERBOSE:
+				print "Input file "+b+" invalid."
+			sys.exit(4)
+	SMILEI_BENCH_LIST = BENCH
+else:
+	if VERBOSE:
+		print "Input file "+BENCH+" invalid."
+	sys.exit(4)
+
+if VERBOSE :
+	print ""
+	print "The list of input files to be validated is:\n\t"+"\n\t".join(SMILEI_BENCH_LIST)
+	print ""
+
+# COMPILE SMILEI
+
 import time
 def date(BIN_NAME):
-  statbin=os.stat(BIN_NAME)
-  return statbin.st_ctime
+	statbin = os.stat(BIN_NAME)
+	return statbin.st_ctime
 def date_string(BIN_NAME):
-  date_integer=date(BIN_NAME)
-  date_time=time.ctime(date_integer)
-  return date_time.replace(" ","-")
+	date_integer = date(BIN_NAME)
+	date_time = time.ctime(date_integer)
+	return date_time.replace(" ","-")
 def workdir_archiv(BIN_NAME) :
-  if os.path.exists(SMILEI_W):
-    ARCH_WORKDIR = WORKDIRS+'_'+date_string(SMILEI_W)
-    os.rename(WORKDIRS,ARCH_WORKDIR)
-    os.mkdir(WORKDIRS) 
-  return 
-if VERBOSE :
-  print "\nRunning make command."
-os.chdir(SMILEI_ROOT)
-WORKDIRS = SMILEI_ROOT+"validation/workdirs"
-SMILEI_W=WORKDIRS+"/smilei"
-SMILEI_R=SMILEI_ROOT+"smilei"
-if os.path.exists(SMILEI_R):
-  STAT_SMILEI_R_OLD=os.stat(SMILEI_R)
-else :
-  STAT_SMILEI_R_OLD = ' '
-COMPILE_ERRORS='compilation_errors'
-COMPILE_OUT='compilation_out'
-#
-# Find compile commend according to the host
-if JOLLYJUMPER in HOSTNAME :
-  COMPILE_COMMAND = 'unset MODULEPATH;module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles; module load compilers/icc/16.0.109 mpi/openmpi/1.6.5-ib-icc python/2.7.10 hdf5 compilers/gcc/4.8.2  > /dev/null 2>&1;make -j 2 > compilation_out_temp 2>'+COMPILE_ERRORS  
-  CLEAN_COMMAND = 'unset MODULEPATH;module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles; module load compilers/icc/16.0.109 mpi/openmpi/1.6.5-ib-icc python/2.7.10 hdf5 compilers/gcc/4.8.2 > /dev/null 2>&1;make clean > /dev/null 2>&1'
-elif POINCARE in HOSTNAME :
-  #COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS     
-  #CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
-  COMPILE_COMMAND = 'module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu ; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0 > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
-  CLEAN_COMMAND = 'module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu ; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0 > /dev/null 2>&1;make clean > /dev/null 2>&1'
-# If the workdir does not contains a smilei bin, or it contains one older than the the smilei bin in directory smilei, force the compilation in order to generate the compilation_output
-if not os.path.exists(WORKDIRS) :
-  os.mkdir(WORKDIRS)
-if ( os.path.exists(SMILEI_R) and not os.path.exists(SMILEI_W)) or (os.path.exists(SMILEI_R) and date(SMILEI_W) < date(SMILEI_R)) :
-  call(CLEAN_COMMAND , shell=True)
-try :
-  if os.path.exists(WORKDIRS+'/'+COMPILE_ERRORS) :
-    os.remove(WORKDIRS+'/'+COMPILE_ERRORS)
-  check_call(COMPILE_COMMAND, shell=True)
-  if STAT_SMILEI_R_OLD != os.stat(SMILEI_R) or date(SMILEI_W) < date(SMILEI_R):
-# if new bin, archive the workdir (if it contains a smilei bin)  and create a new one with new smilei and compilation_out inside
-    if os.path.exists(SMILEI_W):
-      workdir_archiv(SMILEI_W)
-    shutil.copy2(SMILEI_R,SMILEI_W)
-    if STAT_SMILEI_R_OLD != os.stat(SMILEI_R):
-      os.rename('compilation_out_temp',WORKDIRS+'/'+COMPILE_OUT)
-    if COMPILE_ONLY :
-      if VERBOSE:
-        print  "Smilei validation succeed."
-      exit(0)
-  else: 
-    if COMPILE_ONLY :
-      if VERBOSE:
-        print  "Smilei validation not needed."
-      exit(0)
-except CalledProcessError,e:
-# if compiling errors, archive the workdir (if it contains a smilei bin), create a new one with compilation_errors inside and exit with error code
-  workdir_archiv(SMILEI_W)
-  os.rename(COMPILE_ERRORS,WORKDIRS+'/'+COMPILE_ERRORS)
-  if VERBOSE :
-    print  "Smilei validation cannot be done : compilation failed." ,e.returncode
-  sys.exit(3)
-#
-for BENCH in SMILEI_BENCH_LIST :
-    # PRINT INFO           
-    if VERBOSE :
-     print '\nTesting smilei on', HOSTNAME,'with', OMP, 'OMP tasks,',MPI, 'MPI processes, case',BENCH,':\n'
-    #
-    SMILEI_BENCH = SMILEI_BENCHS+BENCH
-    VALID_ALL_OK = False
-    # CREATE THE WORKDIR CORRESPONDING TO THE INPUT FILE AND GO INTO                
-    WORKDIR = WORKDIRS+'/wd_'+BENCH.replace('.py','')
-    if not os.path.exists(WORKDIR) :
-      os.mkdir(WORKDIR)
-    os.chdir(WORKDIR)
-    WORKDIR = WORKDIR+"/"+str(MPI)+"_"+str(OMP)
-    if not os.path.exists(WORKDIR) :
-      os.mkdir(WORKDIR)
-      os.chdir(WORKDIR)
-      EXECUTION = True
-    else:
-      os.chdir(WORKDIR)
-      EXECUTION = False
-    #
-    #  RUN smilei IF EXECUTION IS TRUE
-    if EXECUTION :
-      # RUN SMILEI                   
-        #  define the name of the execution script
-      EXEC_SCRIPT = 'exec_script.sh'
-      EXEC_SCRIPT_OUT = 'exec_script.out'
-      SMILEI_EXE_OUT = 'smilei_exe.out'
-      exec_script_desc = open(EXEC_SCRIPT, 'w')
-      if VERBOSE :
-        print "Executing smilei, please wait ...\n"
-        #  depending on the host, build the script and run it
-      if POINCARE in HOSTNAME :
-        print "ON EST SUR POINCARE"
-#        exec_script_desc.write( "\n")
-        exec_script_desc.write( "\
-    # environnement \n \
-module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu 2>&1 > /dev/null; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0\n  \
-# \n \
-# execution \n \
-export OMP_NUM_THREADS="+str(OMP)+"\n \
-mpirun -np "+str(MPI)+" "+WORKDIRS+"/smilei "+SMILEI_BENCH+" >"+SMILEI_EXE_OUT+" \n exit $?  ")
-        exec_script_desc.close()
-    #
-        # RUN  SMILEI
-        COMMANDE = "/bin/bash "+EXEC_SCRIPT+" > "+EXEC_SCRIPT_OUT+" 2>&1"
-        try :
-          check_call(COMMANDE, shell=True)
-        except CalledProcessError,e:
-        # if execution fails, exit with exit status 2
-          if VERBOSE :
-            print  "Smilei validation cannot be done : execution failed."
-            os.chdir(WORKDIR)
-            COMMANDE = "/bin/bash cat "+SMILEI_EXE_OUT
-            try :
-              check_call(COMMANDE, shell=True)
-            except CalledProcessError,e:
-              print  "cat command failed"
-              sys.exit(2)
-          os.chdir(WORKDIRS)
-          shutil.rmtree(WORKDIR)
-          sys.exit(2)
-      elif JOLLYJUMPER in HOSTNAME :
-        NODES=((int(MPI)*int(OMP)-1)/24)+1
-        exec_script_desc.write( "\
-#PBS -l nodes="+str(NODES)+":ppn=24 \n \
-#PBS -q default \n \
-#PBS -j oe\n \
-#Set the correct modules available \n \
-unset MODULEPATH; \n \
-module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles \n \
-#Load compilers and mpi \n \
-module load compilers/icc/16.0.109 \n \
-module load mpi/openmpi/1.6.5-ib-icc \n \
-module load python/2.7.10 \n \
-module load hdf5 \n \
-module load compilers/gcc/4.8.2 \n \
- \n \
-# -loadbalance to spread the MPI processes among the different nodes. \n \
-# -bind-to-core to fix a given MPI process to a fixed set of cores. \n \
-# -cpus-per-proc 6 to set said set of cores to a size of 6 (half socket of JJ) which is also the number of omp threads. \n \
-export OMP_NUM_THREADS="+str(OMP)+" \n \
-export OMP_SCHEDULE=DYNAMIC \n \
-export KMP_AFFINITY=verbose \n \
-export PATH=$PATH:/opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck \n \
-#Specify the number of sockets per node in -mca orte_num_sockets \n \
-#Specify the number of cores per sockets in -mca orte_num_cores \n \
-cd "+WORKDIR+" \n \
-mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+"\
- -x $OMP_NUM_THREADS -x $OMP_SCHEDULE "+WORKDIRS+"/smilei "+SMILEI_BENCH+" >"+SMILEI_EXE_OUT+" 2>&1 \n \
-echo $? > exit_status_file \n  ")
-        exec_script_desc.close()
-        EXIT_STATUS="100"
-        exit_status_fd = open(WORKDIR+"/exit_status_file", "w+")
-        exit_status_fd.write(str(EXIT_STATUS))
-        exit_status_fd.seek(0)
-        COMMANDE = "PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub  "+EXEC_SCRIPT
-        try :
-          check_call(COMMANDE, shell=True)
-        except CalledProcessError,e:
-        # if commande qsub fails, exit with exit status 2
-          exit_status_fd.close()  
-          os.chdir(WORKDIRS)
-          shutil.rmtree(WORKDIR)           
-          if VERBOSE :
-            print  "Smilei validation cannot be done : qsub command failed."
-            sys.exit(2)
-        while ( EXIT_STATUS == "100" ) :
-          time.sleep(10)
-          EXIT_STATUS = exit_status_fd.readline()
-          exit_status_fd.seek(0)
-        if ( int(EXIT_STATUS) != 0 )  :
-          if VERBOSE :
-            print  "Smilei validation cannot be done : execution failed."
-            os.chdir(WORKDIR)
-            COMMANDE = "cat "+SMILEI_EXE_OUT
-            try :
-              check_call(COMMANDE, shell=True)
-            except CalledProcessError,e:
-              print  "cat command failed"
-              sys.exit(2)
-          exit_status_fd.close()  
-          os.chdir(WORKDIRS)
-#          shutil.rmtree(WORKDIR)
-          sys.exit(2)
-#
-    # VALIDATION
-      # LOAD SIMULATION FOR BOTH current scalars.txt and the reference
-    SIMULATION=Smilei(".")
-    SIMULATION_SCALARS=SIMULATION.Scalar(scalar=None)
-    LISTE_SCALARS = SIMULATION_SCALARS.getScalars()
-    L=SIMULATION.Scalar(scalar=LISTE_SCALARS[1])
-    LISTE_TIMESTEPS = L.getAvailableTimesteps()
-    shutil.copyfile(SMILEI_REFERENCES+'/sca_'+BENCH.replace('.py','.txt'), SMILEI_REFERENCES+'/scalars.txt') 
-    shutil.copyfile('smilei.py',SMILEI_REFERENCES+'/smilei.py')
-    Sref = Smilei(SMILEI_REFERENCES)
-      # READ TIME STEPS AND VALIDATE 
-    if VERBOSE :
-      print "Testing scalars :\n"
-    VALID_OK = False
-    if OPT_TIMESTEP == False or VALID_ALL:
-        # IF TIMESTEP NOT IN OPTIONS, COMPUTE THE LAST TIME STEP               
-      TIMESTEP=LISTE_TIMESTEPS[-1]
-      VALID_OK = scalarListValidation(SCALAR_NAME,TIMESTEP)
-    elif TIMESTEP == "?":
-      VERBOSE = True
-        # Test if either you want to choose one time step in a list, or all the time steps, or a given time step
-        # Validate smilei for a list of scalars (scalarListValidation function)
-        #
-        # Propose the list of all the timesteps
-      print LISTE_TIMESTEPS
-      print 'Enter a time step from the above list (press <Enter> if no more time step to check ):'
-        # Test if either you want to choose one scalar in a list, or all the scalars, or a given scalar
-      TIMESTEP_INPUT = raw_input()
-      while TIMESTEP_INPUT != "" :
-        TIMESTEP=TIMESTEP_INPUT     
-        if int(TIMESTEP) in LISTE_TIMESTEPS :
-          VALID = scalarListValidation(SCALAR_NAME,TIMESTEP) 
-        else :
-          print "Time step :", TIMESTEP,"is not valid. Enter a time step name again."
-          TIMESTEP_INPUT = raw_input()
-        print "Enter a time step name again (press <Enter> if no more time step to check ):"
-        TIMESTEP_INPUT = raw_input()
-    elif TIMESTEP == "all":
-      for TIMESTEP in LISTE_TIMESTEPS:
-        VALID = scalarListValidation(SCALAR_NAME,TIMESTEP)
-    else:
-        VALID = scalarListValidation(SCALAR_NAME,TIMESTEP)
-    if VALID_OK :
-      if VERBOSE :
-        print "Smilei is valid for the list of scalars at last timestep, input file "+BENCH+", "+str(OMP)+" OpenMP tasks and "+str(MPI)+" MPI processus"
-      if VALID_ALL :
-        VALID_ALL_OK = True
-    else :
-      exit(1)
-if VALID_ALL and VALID_ALL_OK  :
-    exit(0)
+	if os.path.exists(SMILEI_W):
+		ARCH_WORKDIR = WORKDIR_BASE+'_'+date_string(SMILEI_W)
+		os.rename(WORKDIR_BASE,ARCH_WORKDIR)
+		os.mkdir(WORKDIR_BASE)
 
+if VERBOSE :
+  print "Compiling Smilei"
+
+os.chdir(SMILEI_ROOT)
+WORKDIR_BASE = SMILEI_ROOT+"validation"+s+"workdirs"
+SMILEI_W = WORKDIR_BASE+s+"smilei"
+SMILEI_R = SMILEI_ROOT+s+"smilei"
+if os.path.exists(SMILEI_R):
+	STAT_SMILEI_R_OLD = os.stat(SMILEI_R)
+else :
+	STAT_SMILEI_R_OLD = ' '
+COMPILE_ERRORS=WORKDIR_BASE+s+'compilation_errors'
+COMPILE_OUT=WORKDIR_BASE+s+'compilation_out'
+
+# Find compile command according to the host
+if JOLLYJUMPER in HOSTNAME :
+	COMPILE_COMMAND = 'unset MODULEPATH;module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles; module load compilers/icc/16.0.109 mpi/openmpi/1.6.5-ib-icc python/2.7.10 hdf5 compilers/gcc/4.8.2  > /dev/null 2>&1;make -j 2 > compilation_out_temp 2>'+COMPILE_ERRORS  
+	CLEAN_COMMAND = 'unset MODULEPATH;module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles; module load compilers/icc/16.0.109 mpi/openmpi/1.6.5-ib-icc python/2.7.10 hdf5 compilers/gcc/4.8.2 > /dev/null 2>&1;make clean > /dev/null 2>&1'
+elif POINCARE in HOSTNAME :
+	#COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS     
+	#CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
+	COMPILE_COMMAND = 'module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu ; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0 > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
+	CLEAN_COMMAND = 'module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu ; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0 > /dev/null 2>&1;make clean > /dev/null 2>&1'
+else:
+	COMPILE_COMMAND = 'make -j4 > compilation_out_temp 2>'+COMPILE_ERRORS
+	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
+
+
+# If the workdir does not contains a smilei bin, or it contains one older than the the smilei bin in directory smilei, force the compilation in order to generate the compilation_output
+if not os.path.exists(WORKDIR_BASE):
+	os.mkdir(WORKDIR_BASE)
+if os.path.exists(SMILEI_R) and (not os.path.exists(SMILEI_W) or date(SMILEI_W)<date(SMILEI_R)):
+	call(CLEAN_COMMAND , shell=True)
+try :
+	if os.path.exists(WORKDIR_BASE+s+COMPILE_ERRORS) :
+		os.remove(WORKDIR_BASE+s+COMPILE_ERRORS)
+	check_call(COMPILE_COMMAND, shell=True)
+	if STAT_SMILEI_R_OLD!=os.stat(SMILEI_R) or date(SMILEI_W)<date(SMILEI_R):
+		# if new bin, archive the workdir (if it contains a smilei bin)  and create a new one with new smilei and compilation_out inside
+		if os.path.exists(SMILEI_W):
+			workdir_archiv(SMILEI_W)
+		shutil.copy2(SMILEI_R,SMILEI_W)
+		if STAT_SMILEI_R_OLD != os.stat(SMILEI_R):
+			os.rename('compilation_out_temp',COMPILE_OUT)
+		if COMPILE_ONLY:
+			if VERBOSE:
+				print  "Smilei validation succeed."
+			exit(0)
+	else: 
+		if COMPILE_ONLY :
+			if VERBOSE:
+				print  "Smilei validation not needed."
+			exit(0)
+except CalledProcessError,e:
+	# if compiling errors, archive the workdir (if it contains a smilei bin), create a new one with compilation_errors inside and exit with error code
+	workdir_archiv(SMILEI_W)
+	os.rename(COMPILE_ERRORS,WORKDIR_BASE+s+COMPILE_ERRORS)
+	if VERBOSE:
+		print "Smilei validation cannot be done : compilation failed." ,e.returncode
+	sys.exit(3)
+
+
+# DEFINE A CLASS TO CREATE A REFERENCE
+class CreateReference(object):
+	def __init__(self, bench_name):
+		self.reference_file = SMILEI_REFERENCES+s+bench_name+".txt"
+		self.data = {}
+	
+	def __call__(self, data_name, data, precision=None):
+		self.data[data_name] = data
+	
+	def write(self):
+		with open(self.reference_file, "w") as f:
+			pickle.dump(self.data, f)
+		if VERBOSE:
+			print "Created reference file "+self.reference_file
+
+# DEFINE A CLASS TO COMPARE A SIMULATION TO A REFERENCE
+class CompareToReference(object):
+	def __init__(self, bench_name):
+		try:
+			with open(SMILEI_REFERENCES+s+bench_name+".txt", 'r') as f:
+				self.data = pickle.load(f)
+		except:
+			print "Unable to find the reference data for "+bench_name
+			sys.exit(1)
+	
+	def __call__(self, data_name, data, precision=None):
+		# verify the name is in the reference
+		if data_name not in self.data.keys():
+			print "Reference quantity '"+data_name+"' not found"
+			sys.exit(1)
+		expected_data = self.data[data_name]
+		# ok if exactly equal (including strings or lists of strings)
+		try   :
+			if expected_data == data: return
+		except: pass
+		# If numbers:
+		try:
+			double_data = np.double(data)
+			if precision is not None:
+				error = np.abs( double_data-np.double(expected_data) )
+				max_error_index = np.argmax(error)
+				max_error = error[max_error_index]
+				if max_error < precision: return
+				print "Reference quantity '"+data_name+"' does not match the data (required precision "+str(precision)
+				print "Max error = "+str(max_error)+" at index "+str(max_error_index)
+			else:
+				if np.all(double_data == np.double(expected_data)): return
+				print "Reference quantity '"+data_name+"' does not match the data"
+		except:
+			print "Reference quantity '"+data_name+"': unable to compare to data"
+		print "Reference data:"
+		print expected_data
+		print "New data:"
+		print data
+		sys.exit(1)
+
+# RUN THE BENCHMARKS
+
+for BENCH in SMILEI_BENCH_LIST :
+	
+	SMILEI_BENCH = SMILEI_BENCHS + BENCH
+	
+	# CREATE THE WORKDIR CORRESPONDING TO THE INPUT FILE AND GO INTO                
+	WORKDIR = WORKDIR_BASE+s+'wd_'+os.path.basename(os.path.splitext(BENCH)[0])
+	if not os.path.exists(WORKDIR):
+		os.mkdir(WORKDIR)
+	os.chdir(WORKDIR)
+	
+	WORKDIR += s+str(MPI)
+	if not os.path.exists(WORKDIR):
+		os.mkdir(WORKDIR)
+	
+	WORKDIR += s+str(OMP)
+	if not os.path.exists(WORKDIR):
+		os.mkdir(WORKDIR)
+		EXECUTION = True
+	else:
+		EXECUTION = False
+	
+	os.chdir(WORKDIR)
+	
+	# define the name of the execution script
+	EXEC_SCRIPT = 'exec_script.sh'
+	EXEC_SCRIPT_OUT = 'exec_script.out'
+	SMILEI_EXE_OUT = 'smilei_exe.out'
+	
+	# RUN smilei IF EXECUTION IS TRUE
+	if EXECUTION :
+		if VERBOSE:
+			print 'Running '+BENCH+' on '+HOSTNAME+' with '+str(OMP)+'x'+str(MPI)+' OMPxMPI'
+		
+		#  depending on the host, build the script and run it
+		if POINCARE in HOSTNAME:
+			with open(EXEC_SCRIPT, 'w') as exec_script_desc:
+				print "ON POINCARE NOW"
+				exec_script_desc.write(
+					"# environnement \n"
+					+"module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu 2>&1 > /dev/null\n"
+					+"unset LD_PRELOAD\n"
+					+"export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0\n"
+					+"# \n"
+					+"# execution \n"
+					+"export OMP_NUM_THREADS="+str(OMP)+"\n"
+					+"mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei "+SMILEI_BENCH+" >"+SMILEI_EXE_OUT+" \n"
+					+"exit $?  "
+				)
+			
+			# RUN SMILEI
+			COMMAND = "/bin/bash "+EXEC_SCRIPT+" > "+EXEC_SCRIPT_OUT+" 2>&1"
+			try :
+			  check_call(COMMAND, shell=True)
+			except CalledProcessError,e:
+			# if execution fails, exit with exit status 2
+				if VERBOSE :
+					print  "Smilei validation cannot be done : execution failed."
+					os.chdir(WORKDIR)
+					COMMAND = "/bin/bash cat "+SMILEI_EXE_OUT
+					try :
+						check_call(COMMAND, shell=True)
+					except CalledProcessError,e:
+						print  "cat command failed"
+						sys.exit(2)
+				os.chdir(WORKDIR_BASE)
+				shutil.rmtree(WORKDIR)
+				sys.exit(2)
+		
+		elif JOLLYJUMPER in HOSTNAME :
+			with open(EXEC_SCRIPT, 'w') as exec_script_desc:
+				NODES=((int(MPI)*int(OMP)-1)/24)+1
+				exec_script_desc.write(
+					"#PBS -l nodes="+str(NODES)+":ppn=24 \n"
+					+"#PBS -q default \n"
+					+"#PBS -j oe\n"
+					+"#Set the correct modules available \n"
+					+"unset MODULEPATH; \n"
+					+"module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles \n"
+					+"#Load compilers and mpi \n"
+					+"module load compilers/icc/16.0.109 \n"
+					+"module load mpi/openmpi/1.6.5-ib-icc \n"
+					+"module load python/2.7.10 \n"
+					+"module load hdf5 \n"
+					+"module load compilers/gcc/4.8.2 \n"
+					+" \n"
+					+"# -loadbalance to spread the MPI processes among the different nodes. \n"
+					+"# -bind-to-core to fix a given MPI process to a fixed set of cores. \n"
+					+"# -cpus-per-proc 6 to set said set of cores to a size of 6 (half socket of JJ) which is also the number of omp threads. \n"
+					+"export OMP_NUM_THREADS="+str(OMP)+" \n"
+					+"export OMP_SCHEDULE=DYNAMIC \n"
+					+"export KMP_AFFINITY=verbose \n"
+					+"export PATH=$PATH:/opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck \n"
+					+"#Specify the number of sockets per node in -mca orte_num_sockets \n"
+					+"#Specify the number of cores per sockets in -mca orte_num_cores \n"
+					+"cd "+WORKDIR+" \n"
+					+"mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)
+					+" -x $OMP_NUM_THREADS -x $OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei "+SMILEI_BENCH+" >"+SMILEI_EXE_OUT+" 2>&1 \n"
+					+"echo $? > exit_status_file \n"
+				)
+			
+			EXIT_STATUS="100"
+			exit_status_fd = open(WORKDIR+"/exit_status_file", "w+")
+			exit_status_fd.write(str(EXIT_STATUS))
+			exit_status_fd.seek(0)
+			COMMAND = "PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub  "+EXEC_SCRIPT
+			try :
+				check_call(COMMAND, shell=True)
+			except CalledProcessError,e:
+				# if commande qsub fails, exit with exit status 2
+				exit_status_fd.close()  
+				os.chdir(WORKDIR_BASE)
+				shutil.rmtree(WORKDIR)           
+				if VERBOSE :
+					print  "Smilei validation cannot be done : qsub command failed."
+					sys.exit(2)
+			
+			while ( EXIT_STATUS == "100" ) :
+				time.sleep(10)
+				EXIT_STATUS = exit_status_fd.readline()
+				exit_status_fd.seek(0)
+			if ( int(EXIT_STATUS) != 0 )  :
+				if VERBOSE :
+					print  "Smilei validation cannot be done : execution failed."
+					os.chdir(WORKDIR)
+					COMMAND = "cat "+SMILEI_EXE_OUT
+					try :
+						check_call(COMMAND, shell=True)
+					except CalledProcessError,e:
+						print  "cat command failed"
+						sys.exit(2)
+				exit_status_fd.close()  
+				os.chdir(WORKDIR_BASE)
+				#shutil.rmtree(WORKDIR)
+				sys.exit(2)
+		
+		else:
+			COMMAND = (
+				"export OMP_NUM_THREADS="+str(OMP)+"; "
+				+"mpirun -mca btl tcp,sm,self -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei "+SMILEI_BENCH+" >"+SMILEI_EXE_OUT
+			)
+			try :
+				check_call(COMMAND, shell=True)
+			except CalledProcessError,e:
+				if VERBOSE :
+					print  "Smilei could not run"
+				sys.exit(2)
+	
+	# CHECK THE OUTPUT FOR ERRORS
+	errors = []
+	search_error = re.compile('error', re.IGNORECASE)
+	with open(SMILEI_EXE_OUT,"r") as fout:
+		for line in fout:
+			if search_error.search(line):
+				errors += [line]
+	if errors:
+		print ""
+		print("Errors appeared while running the simulation:")
+		print("---------------------------------------------")
+		for error in errors:
+			print(error)
+		sys.exit(2)
+	
+	# FIND THE VALIDATION SCRIPT FOR THIS BENCH
+	validation_script = SMILEI_VALIDATION + "validate_"+BENCH
+	print ""
+	if not os.path.exists(validation_script):
+		print "Unable to find the validation script "+validation_script
+		sys.exit(1)
+	
+	# IF REQUIRED, GENERATE THE REFERENCES
+	if GENERATE:
+		if VERBOSE:
+			print 'Generating reference for '+BENCH
+		Validate = CreateReference(BENCH)
+		execfile(validation_script)
+		Validate.write()
+	
+	# OTHERWISE, COMPARE TO THE EXISTING REFERENCES
+	else:
+		if VERBOSE:
+			print 'Validating '+BENCH
+		Validate = CompareToReference(BENCH)
+		execfile(validation_script)
+	
+
+print "Everything passed"
