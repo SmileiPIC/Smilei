@@ -137,7 +137,6 @@ void DiagnosticTrack::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatc
 {
     // Set the IDs of the particles
     if( ! IDs_done ) {
-        
         latest_Id = smpi->getRank() * 4294967296; // 2^32
         
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
@@ -179,7 +178,6 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
             patch_selection.resize( vecPatches.size() );
             PyArrayObject *x,*y,*z,*px,*py,*pz,*ret;
             npy_intp dims[1];
-            
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
                 // Expose particle data as numpy arrays, then run the selection function
                 Particles * p = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
@@ -210,9 +208,13 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
                 // Loop the return value and store the particle IDs
                 bool* arr = (bool*) PyArray_GETPTR1( ret, 0 );
                 patch_selection[ipatch].resize(0);
-                for(unsigned int i=0; i<npart; i++)
-                    if( arr[i] )
+                for(unsigned int i=0; i<npart; i++) {
+                    if( arr[i] ) {
                         patch_selection[ipatch].push_back( i );
+                        // If particle not tracked before (ID==0), then set its ID
+                        if( p->id(i) == 0 ) p->id(i) = ++latest_Id;
+                    }
+                }
                 patch_start[ipatch] = nParticles_local;
                 nParticles_local += patch_selection[ipatch].size();
                 
@@ -403,16 +405,18 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
 
 void DiagnosticTrack::setIDs(Patch * patch)
 {
+    // If selection, IDs are set on-the-fly
+    if( has_selection ) return;
     unsigned int s = patch->vecSpecies[speciesId_]->particles->size();
-    for (unsigned int iPart=0; iPart<s; iPart++) {
-        latest_Id++;
-        patch->vecSpecies[speciesId_]->particles->id(iPart) = latest_Id;
-    }
+    for (unsigned int iPart=0; iPart<s; iPart++)
+        patch->vecSpecies[speciesId_]->particles->id(iPart) = ++latest_Id;
 }
 
 
 void DiagnosticTrack::setIDs(Particles& particles)
 {
+    // If selection, IDs are set on-the-fly
+    if( has_selection ) return;
     unsigned int s = particles.size(), id;
     for (unsigned int iPart=0; iPart<s; iPart++) {
         #pragma omp atomic capture
