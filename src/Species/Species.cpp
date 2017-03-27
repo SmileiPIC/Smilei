@@ -689,6 +689,8 @@ void Species::count_sort_part(Params &params)
 
 int Species::createParticles(vector<unsigned int> n_space_to_create, Params& params, Patch *patch, int new_bin_idx)
 {
+    unsigned int nPart, i,j,k, idim;
+    
     // Create particles in a space starting at cell_position
     vector<double> cell_position(3,0);
     vector<double> cell_index(3,0);
@@ -724,15 +726,15 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
         temperature[i].allocateDims(n_space_to_create);
     }
     
-    int npart_effective = 0;
+    unsigned int npart_effective = 0;
     double remainder, nppc;
     
     vector<double> x_cell(3,0);
-    for (unsigned int i=0; i<n_space_to_create[0]; i++) {
+    for (i=0; i<n_space_to_create[0]; i++) {
         x_cell[0] = cell_position[0] + (i+0.5)*cell_length[0];
-        for (unsigned int j=0; j<n_space_to_create[1]; j++) {
+        for (j=0; j<n_space_to_create[1]; j++) {
             x_cell[1] = cell_position[1] + (j+0.5)*cell_length[1];
-            for (unsigned int k=0; k<n_space_to_create[2]; k++) {
+            for (k=0; k<n_space_to_create[2]; k++) {
                 x_cell[2] = cell_position[2] + (k+0.5)*cell_length[2];
                 
                 // Obtain the number of particles per cell
@@ -777,7 +779,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                     
                     // increment the effective number of particle by n_part_in_cell(i,j,k)
                     // for each cell with as non-zero density
-                    npart_effective += n_part_in_cell(i,j,k);
+                    npart_effective += (unsigned int) n_part_in_cell(i,j,k);
                     
                 }//ENDif non-zero density
                 
@@ -796,13 +798,12 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     //    (*particles).initialize(n_existing_particles+npart_effective, params_->nDim_particle);
     // }
     
-    int n_existing_particles = (*particles).size();
+    unsigned int n_existing_particles = (*particles).size();
     (*particles).initialize(n_existing_particles+npart_effective, nDim_particle);
     
     
     // Initialization of the particles properties
     // ------------------------------------------
-    unsigned int nPart;
     unsigned int iPart=n_existing_particles;
     double *indexes=new double[nDim_particle];
     double *temp=new double[3];
@@ -814,18 +815,18 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     //bmax[bin] point to end of bin (= bmin[bin+1])
     //if bmax = bmin, bin is empty of particle.
     
-    for (unsigned int i=0; i<n_space_to_create[0]; i++) {
+    for (i=0; i<n_space_to_create[0]; i++) {
         if (i%clrw == 0) bmin[new_bin_idx+i/clrw] = iPart;
-        for (unsigned int j=0; j<n_space_to_create[1]; j++) {
-            for (unsigned int k=0; k<n_space_to_create[2]; k++) {
+        for (j=0; j<n_space_to_create[1]; j++) {
+            for (k=0; k<n_space_to_create[2]; k++) {
                 // initialize particles in meshes where the density is non-zero
                 if (density(i,j,k)>0) {
                     
                     temp[0] = temperature[0](i,j,k);
-                    vel[0]  = velocity[0](i,j,k);
                     temp[1] = temperature[1](i,j,k);
-                    vel[1]  = velocity[1](i,j,k);
                     temp[2] = temperature[2](i,j,k);
+                    vel[0]  = velocity[0](i,j,k);
+                    vel[1]  = velocity[1](i,j,k);
                     vel[2]  = velocity[2](i,j,k);
                     nPart = n_part_in_cell(i,j,k);
                     
@@ -834,17 +835,14 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                         indexes[1]=j*cell_length[1]+cell_position[1];
                         if (nDim_particle > 2) {
                             indexes[2]=k*cell_length[2]+cell_position[2];
-                        }//nDim_particle > 2
-                    }//nDim_particle > 1
+                        }
+                    }
                     
                     initPosition(nPart, iPart, indexes);
-                    
                     initMomentum(nPart,iPart, temp, vel);
-                    
                     initWeight(nPart, iPart, density(i,j,k));
                     initCharge(nPart, iPart, charge(i,j,k));
                     
-                    //calculate new iPart (jump to next cell)
                     iPart+=nPart;
                 }//END if density > 0
             }//k end the loop on all cells
@@ -859,7 +857,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     
     // Recalculate former position using the particle velocity
     // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
-    for (int iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++) {
+    for (unsigned int iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++) {
         /*897 for (int i=0; i<(int)nDim_particle; i++) {
             (*particles).position_old(i,iPart) -= (*particles).momentum(i,iPart)/(*particles).lor_fac(iPart) * params.timestep;
         }897*/
