@@ -494,6 +494,7 @@ class Smilei(object):
 		import numpy as np
 		import os, glob, re, sys
 		setMatplotLibBackend(show=show)
+		updateMatplotLibColormaps()
 		import matplotlib.pyplot
 		import matplotlib.pylab as pylab
 		pylab.ion()
