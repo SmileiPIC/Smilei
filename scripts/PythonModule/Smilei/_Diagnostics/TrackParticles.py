@@ -72,6 +72,14 @@ class TrackParticles(Diagnostic):
 		
 		# Get number of particles
 		self.nParticles = self._h5items["Id"].shape[1]
+		first_time = self._locationForTime[self.times[ 0]]
+		last_time  = self._locationForTime[self.times[-1]]+1
+		IDs = self._h5items["Id"][first_time:last_time,:]
+		dead_particles = self._np.all( self._np.isnan(IDs) + (IDs==0), axis=0 )
+		self.nParticles_alive = self._np.count_nonzero( ~dead_particles )
+		if self.nParticles_alive == 0:
+			self._error = "No particles found"
+			return
 		
 		# Select particles
 		# -------------------------------------------------------------------
@@ -204,7 +212,7 @@ class TrackParticles(Diagnostic):
 	
 	# Method to print info on included probe
 	def _info(self):
-		info = "Track particles: species '"+self.species+"' containing "+str(self.nParticles)+" particles"
+		info = "Track particles: species '"+self.species+"' containing "+str(self.nParticles_alive)+" particles"
 		if len(self.selectedParticles) != self.nParticles:
 			info += "\n                with selection of "+str(len(self.selectedParticles))+" particles"
 		return info
@@ -250,7 +258,7 @@ class TrackParticles(Diagnostic):
 			properties = {"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
 			              "momentum/x":"px", "momentum/y":"py", "momentum/z":"pz"}
 			for k, name in properties.items():
-				try   : f0.create_dataset(name, (len(times), total_number_of_particles), f["data"][tname]["particles"][self.species][k].dtype, fillvalue=self._np.nan)
+				try   : f0.create_dataset(name, (len(times), total_number_of_particles), f["data"][tname]["particles"][self.species][k].dtype, fillvalue=(0 if name=="Id" else self._np.nan))
 				except: pass
 			f.close()
 			# Loop times and fill arrays
@@ -291,11 +299,11 @@ class TrackParticles(Diagnostic):
 			self._rawData = {}
 			ntimes = len(self.times)
 			for axis in self.axes:
-				self._rawData[axis] = self._np.zeros((ntimes, self.nselectedParticles))
-				self._rawData[axis].fill(self._np.nan)
+				self._rawData[axis] = self._np.zeros((ntimes, self.nselectedParticles), dtype=(self._np.uint64 if axis=="Id" else self._np.float64))
+				self._rawData[axis].fill((0 if axis=="Id" else self._np.nan))
 			print("Loading data ...")
 			# loop times and fill up the data
-			ID = self._np.zeros((self.nParticles,), dtype=self._np.int16)
+			ID = self._np.zeros((self.nParticles,), dtype=self._np.uint64)
 			B = self._np.zeros((self.nParticles,))
 			indices = self.selectedParticles - 1
 			for it, time in enumerate(self.times):
@@ -304,25 +312,40 @@ class TrackParticles(Diagnostic):
 				self._h5items["Id"].read_direct(ID, source_sel=self._np.s_[timeIndex,:]) # read the particle Ids
 				deadParticles = (ID==0).nonzero()
 				for axis in self.axes:
-					self._h5items[axis].read_direct(B, source_sel=self._np.s_[timeIndex,:])
-					B[deadParticles]=self._np.nan
-					self._rawData[axis][it, :] = B[indices].squeeze()
+					if axis == "Id":
+						self._rawData[axis][it, :] = ID[indices].squeeze()
+					else:
+						self._h5items[axis].read_direct(B, source_sel=self._np.s_[timeIndex,:])
+						B[deadParticles]=self._np.nan
+						self._rawData[axis][it, :] = B[indices].squeeze()
+			print("Removing useless data ...")
+			# Remove particles that always NaN during the times that are requested
+			first_time = self._locationForTime[self.times[ 0]]
+			last_time  = self._locationForTime[self.times[-1]]+1
+			ID = self._h5items["Id"][first_time:last_time,:]
+			dead_particles = self._np.all( self._np.isnan(ID) + (ID==0), axis=0 )
+			keep_indices = (~dead_particles).nonzero()[0]
+			for axis in self.axes:
+				self._rawData[axis] = self._rawData[axis][:, keep_indices]
+			print("Process broken lines ...")
 			# Add the lineBreaks array which indicates where lines are broken (e.g. loop around the box)
-			self._rawData['brokenLine'] = self._np.zeros((self.nselectedParticles,), dtype=bool)
+			self._rawData['brokenLine'] = self._np.zeros((len(keep_indices),), dtype=bool)
 			self._rawData['lineBreaks'] = {}
-			dt = self._np.diff(self.times)*self.timestep
-			for axis in ["x","y","z"]:
-				if axis in self.axes:
-					dudt = self._np.diff(self._rawData[axis],axis=0)
-					for i in range(dudt.shape[1]): dudt[:,i] /= dt
-					self._rawData['brokenLine'] += self._np.abs(dudt).max(axis=0) > 1.
-					broken_particles = self._np.flatnonzero(self._rawData['brokenLine'])
-					for broken_particle in broken_particles:
-						broken_times = list(self._np.flatnonzero(self._np.abs(dudt[:,broken_particle]) > 1.)+1)
-						if broken_particle in self._rawData['lineBreaks'].keys():
-							self._rawData['lineBreaks'][broken_particle] += broken_times
-						else:
-							self._rawData['lineBreaks'][broken_particle] = broken_times
+			if self.times.size > 1:
+				dt = self._np.diff(self.times)*self.timestep
+				for axis in ["x","y","z"]:
+					if axis in self.axes:
+						dudt = self._np.diff(self._rawData[axis],axis=0)
+						for i in range(dudt.shape[1]): dudt[:,i] /= dt
+						dudt[self._np.isnan(dudt)] = self._np.inf
+						self._rawData['brokenLine'] += self._np.abs(dudt).max(axis=0) > 1.
+						broken_particles = self._np.flatnonzero(self._rawData['brokenLine'])
+						for broken_particle in broken_particles:
+							broken_times = list(self._np.flatnonzero(self._np.abs(dudt[:,broken_particle]) > 1.)+1)
+							if broken_particle in self._rawData['lineBreaks'].keys():
+								self._rawData['lineBreaks'][broken_particle] += broken_times
+							else:
+								self._rawData['lineBreaks'][broken_particle] = broken_times
 			# Add the times array
 			self._rawData["times"] = self.times
 			print("... done")
@@ -331,7 +354,10 @@ class TrackParticles(Diagnostic):
 		data = {}
 		data.update({ "times":self.times })
 		for axis in self.axes:
-			data.update({ axis:self._rawData[axis]*self._vfactor })
+			if axis == "Id":
+				data.update({ axis:(self._rawData[axis]*self._vfactor).astype(self._np.uint64) })
+			else:
+				data.update({ axis:self._rawData[axis]*self._vfactor })
 		
 		return data
 	def get(self):
