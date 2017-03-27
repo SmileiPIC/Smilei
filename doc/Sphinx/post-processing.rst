@@ -267,8 +267,6 @@ Open a Track diagnostic
   | **Example:** ``select="any((t>30)*(t<60), px>1) + all(t>0, (x>1)*(x<2))"``
   
   | **Syntax 3:** ``select=selection`` where ``selection`` is a list of particle IDs to be selected.
-  | The selection can be obtained from a previous diagnostic using:
-  | ``Smilei.TrackParticles( ... ).selectedParticles``
 
 
 

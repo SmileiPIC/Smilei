@@ -486,7 +486,7 @@ Each species has to be defined in a ``Species`` block::
   file for tracked particles is actually written ("flushed" from the buffer). Flushing
   too often can *dramatically* slow down the simulation.
 
-.. py:data:: track_selection
+.. py:data:: track_filter
   
   A python function giving some condition on which particles are tracked.
   If none provided, all particles are tracked. No particles are tracked if ``track_every``
@@ -502,7 +502,7 @@ Each species has to be defined in a ``Species`` block::
   The following 2D example selects all the particles that verify :math:`-1<p_x<1`
   or :math:`p_z>3`::
   
-    def select(x, y, px, py, pz):
+    def my_filter(x, y, px, py, pz):
         return (px>-1.)*(px<1.) + (pz>3.)
 
 
