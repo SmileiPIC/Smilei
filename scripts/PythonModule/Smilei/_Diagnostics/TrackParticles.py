@@ -70,20 +70,21 @@ class TrackParticles(Diagnostic):
 			self._error = "Timesteps not found"
 			return
 		
-		# Get number of particles
 		self.nParticles = self._h5items["Id"].shape[1]
-		first_time = self._locationForTime[self.times[ 0]]
-		last_time  = self._locationForTime[self.times[-1]]+1
-		IDs = self._h5items["Id"][first_time:last_time,:]
-		dead_particles = self._np.all( self._np.isnan(IDs) + (IDs==0), axis=0 )
-		self.nParticles_alive = self._np.count_nonzero( ~dead_particles )
-		if self.nParticles_alive == 0:
-			self._error = "No particles found"
-			return
 		
 		# Select particles
 		# -------------------------------------------------------------------
+		# If the selection is a string (containing an operation)
 		if type(select) is str:
+			# Define a function that gets some requested data
+			def getData(property, time, buffer=None):
+				it = self._locationForTime[time]
+				dataset = self._h5items[property]
+				if buffer is None:
+					buffer = dataset[it,:]
+				else:
+					dataset.read_direct(buffer, source_sel=self._np.s_[it,:])
+				return buffer
 			# Define a function that finds the next closing character in a string
 			def findClosingCharacter(string, character, start=0):
 				i = start
@@ -101,21 +102,16 @@ class TrackParticles(Diagnostic):
 						del stack[-1]
 					i+=1
 				raise Exception("Error in selector syntax: missing `"+character+"`")
-			# Define a function that gets some requested data
-			def getData(property, time, buffer=None):
-				it = self._locationForTime[time]
-				dataset = self._h5items[property]
-				if buffer is None: buffer = self._np.zeros((self.nParticles,))
-				dataset.read_direct(buffer, source_sel=self._np.s_[it,:])
-				return buffer
 			# Start reading the selector
+			print("Selecting particles ... (this may take a while)")
 			i = 0
 			stack = []
 			operation = ""
 			while i < len(select):
 				if i+4<len(select) and select[i:i+4] in ["any(","all("]:
-					if select[i:i+4] == "any(": function = self._np.logical_or
-					if select[i:i+4] == "all(": function = self._np.logical_and
+					seltype = select[i:i+4]
+					if seltype == "any(": function = self._np.logical_or
+					if seltype == "all(": function = self._np.logical_and
 					comma = findClosingCharacter(select, ",", i+4)
 					parenthesis = findClosingCharacter(select, ")", comma+1)
 					timeSelector = select[i+4:comma]
@@ -130,12 +126,15 @@ class TrackParticles(Diagnostic):
 							particleSelector = self._re.sub(r"\b"+prop+r"\b", "getData('"+prop+"',time)", particleSelector)
 					except:
 						raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
-					if select[i:i+4] == "any(": selection = self._np.array([False]*self.nParticles)
-					if select[i:i+4] == "all(": selection = self._np.array([True]*self.nParticles)
+					if seltype == "any(": selection = self._np.zeros((self.nParticles,), dtype=bool)
+					if seltype == "all(": selection = self._np.ones ((self.nParticles,), dtype=bool)
 					#try:
 					ID = self._np.zeros((self.nParticles,), dtype=self._np.int32)
+					selstr  = select[i:parenthesis]
 					for time in times:
+						print("   Selecting block `"+selstr+")`, at time "+str(time))
 						selectionAtTimeT = eval(particleSelector) # array of True or False
+						selectionAtTimeT[self._np.isnan(selectionAtTimeT)] = False
 						getData("Id", time, ID)
 						loc = self._np.flatnonzero(ID>0) # indices of existing particles
 						selection[loc] = function( selection[loc], selectionAtTimeT[loc])
@@ -148,20 +147,35 @@ class TrackParticles(Diagnostic):
 					operation += select[i]
 					i+=1
 			if len(operation)==0.:
-				self.selectedParticles = self._np.arange(self.nParticles)
+				self.selectedParticles = self._np.arange(self.nParticles,dtype=self._np.uint64)
 			else:
 				self.selectedParticles = eval(operation).nonzero()[0]
 			self.selectedParticles.sort()
-			self.selectedParticles += 1
+			print("Done selecting particles")
 		
+		# Otherwise, the selection can be a list of particle IDs
 		else:
 			try:
-				self.selectedParticles = self._np.array(select,dtype=int)
+				IDs = f["unique_Ids"] # get all available IDs
+				self.selectedParticles = self._np.flatnonzero(self._np.in1d(IDs, select)) # find the requested IDs
 			except:
 				self._error = "Error: argument 'select' must be a string or a list of particle IDs"
 				return
 		
+		# Remove particles that are not actually tracked during the requested timesteps
+		if len(self.selectedParticles) > 0:
+			first_time = self._locationForTime[self.times[ 0]]
+			last_time  = self._locationForTime[self.times[-1]]+1
+			IDs = self._h5items["Id"][first_time:last_time,self.selectedParticles]
+			dead_particles = self._np.flatnonzero(self._np.all( self._np.isnan(IDs) + (IDs==0), axis=0 ))
+			self.selectedParticles = self._np.delete( self.selectedParticles, dead_particles )
+		
+		# Calculate the number of selected particles
 		self.nselectedParticles = len(self.selectedParticles)
+		if self.nselectedParticles == 0:
+			self._error = "No particles found"
+			return
+		print("Kept "+str(self.nselectedParticles)+" particles")
 		
 		# Manage axes
 		# -------------------------------------------------------------------
@@ -212,7 +226,7 @@ class TrackParticles(Diagnostic):
 	
 	# Method to print info on included probe
 	def _info(self):
-		info = "Track particles: species '"+self.species+"' containing "+str(self.nParticles_alive)+" particles"
+		info = "Track particles: species '"+self.species+"' containing "+str(self.nParticles)+" particles"
 		if len(self.selectedParticles) != self.nParticles:
 			info += "\n                with selection of "+str(len(self.selectedParticles))+" particles"
 		return info
@@ -280,6 +294,8 @@ class TrackParticles(Diagnostic):
 				f.close()
 			# Create the "Times" dataset
 			f0.create_dataset("Times", data=times)
+			# Create the "unique_Ids" dataset
+			f0.create_dataset("unique_Ids", data=self._np.max(f0["Id"], axis=0))
 			# Close file
 			f0.close()
 		except:
@@ -303,33 +319,23 @@ class TrackParticles(Diagnostic):
 				self._rawData[axis].fill((0 if axis=="Id" else self._np.nan))
 			print("Loading data ...")
 			# loop times and fill up the data
-			ID = self._np.zeros((self.nParticles,), dtype=self._np.uint64)
-			B = self._np.zeros((self.nParticles,))
-			indices = self.selectedParticles - 1
+			ID = self._np.zeros((self.nselectedParticles,), dtype=self._np.uint64)
+			B = self._np.zeros((self.nselectedParticles,))
 			for it, time in enumerate(self.times):
-				print("     iteration "+str(it+1)+"/"+str(ntimes))
+				print("     iteration "+str(it+1)+"/"+str(ntimes)+"  (timestep "+str(time)+")")
 				timeIndex = self._locationForTime[time]
-				self._h5items["Id"].read_direct(ID, source_sel=self._np.s_[timeIndex,:]) # read the particle Ids
+				self._h5items["Id"].read_direct(ID, source_sel=self._np.s_[timeIndex,self.selectedParticles]) # read the particle Ids
 				deadParticles = (ID==0).nonzero()
 				for axis in self.axes:
 					if axis == "Id":
-						self._rawData[axis][it, :] = ID[indices].squeeze()
+						self._rawData[axis][it, :] = ID.squeeze()
 					else:
-						self._h5items[axis].read_direct(B, source_sel=self._np.s_[timeIndex,:])
+						self._h5items[axis].read_direct(B, source_sel=self._np.s_[timeIndex,self.selectedParticles])
 						B[deadParticles]=self._np.nan
-						self._rawData[axis][it, :] = B[indices].squeeze()
-			print("Removing useless data ...")
-			# Remove particles that always NaN during the times that are requested
-			first_time = self._locationForTime[self.times[ 0]]
-			last_time  = self._locationForTime[self.times[-1]]+1
-			ID = self._h5items["Id"][first_time:last_time,:]
-			dead_particles = self._np.all( self._np.isnan(ID) + (ID==0), axis=0 )
-			keep_indices = (~dead_particles).nonzero()[0]
-			for axis in self.axes:
-				self._rawData[axis] = self._rawData[axis][:, keep_indices]
+						self._rawData[axis][it, :] = B.squeeze()
 			print("Process broken lines ...")
 			# Add the lineBreaks array which indicates where lines are broken (e.g. loop around the box)
-			self._rawData['brokenLine'] = self._np.zeros((len(keep_indices),), dtype=bool)
+			self._rawData['brokenLine'] = self._np.zeros((self.nselectedParticles,), dtype=bool)
 			self._rawData['lineBreaks'] = {}
 			if self.times.size > 1:
 				dt = self._np.diff(self.times)*self.timestep
@@ -337,7 +343,8 @@ class TrackParticles(Diagnostic):
 					if axis in self.axes:
 						dudt = self._np.diff(self._rawData[axis],axis=0)
 						for i in range(dudt.shape[1]): dudt[:,i] /= dt
-						dudt[self._np.isnan(dudt)] = self._np.inf
+						dudt[~self._np.isnan(dudt)] = 0. # NaNs already break lines
+						# Line is broken if velocity > c 
 						self._rawData['brokenLine'] += self._np.abs(dudt).max(axis=0) > 1.
 						broken_particles = self._np.flatnonzero(self._rawData['brokenLine'])
 						for broken_particle in broken_particles:
