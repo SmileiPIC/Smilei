@@ -66,13 +66,13 @@ private :
     //! Current particle partition among the patches own by current MPI
     std::vector<unsigned int> patch_start;
     
-    //! Tells whether this diag includes a particle selection
-    bool has_selection;
+    //! Tells whether this diag includes a particle filter
+    bool has_filter;
     
-    //! Tells whether this diag includes a particle selection
-    PyObject* selector;
+    //! Tells whether this diag includes a particle filter
+    PyObject* filter;
     
-    //! Selection of particles in each patch
+    //! Selection of the filtered particles in each patch
     std::vector<std::vector<unsigned int> > patch_selection;
     
     //! Buffer for the output of double array

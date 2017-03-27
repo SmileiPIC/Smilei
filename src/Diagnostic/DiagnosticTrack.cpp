@@ -28,54 +28,54 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch,
     ostringstream name("");
     name << "Tracking species '" << species->species_type << "'";
     
-    // Get parameter "track_every" which describes a iteration selection
+    // Get parameter "track_every" which describes an iteration selection
     timeSelection = new TimeSelection( PyTools::extract_py("track_every", "Species", speciesId_), name.str() );
     
     // Get parameter "track_flush_every" which decides the file flushing time selection
     flush_timeSelection = new TimeSelection( PyTools::extract_py("track_flush_every", "Species", speciesId_), name.str() );
     
-    // Get parameter "selection" which gives a python function to select particles
-    selector = PyTools::extract_py("track_selection", "Species", speciesId_);
-    has_selection = (selector != Py_None);
-    if( has_selection ) {
+    // Get parameter "filter" which gives a python function to select particles
+    filter = PyTools::extract_py("track_filter", "Species", speciesId_);
+    has_filter = (filter != Py_None);
+    if( has_filter ) {
 #ifdef EXPOSENUMPY
         import_array();
-        // Check if selection is callable
-        if( ! PyCallable_Check(selector) )
-            ERROR("Tracked species '" << species->species_type << "' has a selection that is not callable");
+        // Check if filter is callable
+        if( ! PyCallable_Check(filter) )
+            ERROR("Tracked species '" << species->species_type << "' has a filter that is not callable");
         unsigned int n_arg;
-        // Try to get the number of arguments of the selection function
+        // Try to get the number of arguments of the filter function
         try {
-            PyObject* code = PyObject_GetAttrString( selector, "__code__" );
+            PyObject* code = PyObject_GetAttrString( filter, "__code__" );
             PyObject* argcount = PyObject_GetAttrString( code, "co_argcount" );
             n_arg = PyInt_AsLong( argcount );
             Py_DECREF(argcount);
             Py_DECREF(code);
         } catch (...) {
-            ERROR("Tracked species '" << species->species_type << "' has a selection that does not look like a normal python function");
+            ERROR("Tracked species '" << species->species_type << "' has a filter that does not look like a normal python function");
         }
-        // Verify the number of arguments of the selection function
+        // Verify the number of arguments of the filter function
         if( n_arg != nDim_particle+3 )
-            ERROR("Tracked species '" << species->species_type << "' has a selection function with "<<n_arg<<" arguments while requiring "<<nDim_particle+3);
+            ERROR("Tracked species '" << species->species_type << "' has a filter function with "<<n_arg<<" arguments while requiring "<<nDim_particle+3);
         // Verify the return value of the function
         double test_value[2] = {1.2, 1.4};
         npy_intp dims[1] = {2};
         PyObject *ret;
         PyArrayObject *a = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, &test_value);
-        if     ( nDim_particle == 1 ) ret = PyObject_CallFunctionObjArgs(selector, a,a,a,a, NULL);
-        else if( nDim_particle == 2 ) ret = PyObject_CallFunctionObjArgs(selector, a,a,a,a,a, NULL);
-        else if( nDim_particle == 3 ) ret = PyObject_CallFunctionObjArgs(selector, a,a,a,a,a,a, NULL);
+        if     ( nDim_particle == 1 ) ret = PyObject_CallFunctionObjArgs(filter, a,a,a,a, NULL);
+        else if( nDim_particle == 2 ) ret = PyObject_CallFunctionObjArgs(filter, a,a,a,a,a, NULL);
+        else if( nDim_particle == 3 ) ret = PyObject_CallFunctionObjArgs(filter, a,a,a,a,a,a, NULL);
         Py_DECREF(a);
         if( !PyArray_Check(ret) )
-            ERROR("Tracked particles selection must return a numpy array");
+            ERROR("Tracked particles filter must return a numpy array");
         if( !PyArray_ISBOOL((PyArrayObject *)ret) )
-            ERROR("Tracked particles selection must return an array of booleans");
+            ERROR("Tracked particles filter must return an array of booleans");
         unsigned int s = PyArray_SIZE((PyArrayObject *)ret);
         if( s != 2 )
-            ERROR("Tracked particles selection must not change the arrays sizes");
+            ERROR("Tracked particles filter must not change the arrays sizes");
         Py_DECREF(ret);
 #else
-        ERROR("Tracking species '" << species->species_type << "' with a selection requires the numpy package");
+        ERROR("Tracking species '" << species->species_type << "' with a filter requires the numpy package");
 #endif
     }
     
@@ -91,7 +91,7 @@ DiagnosticTrack::~DiagnosticTrack()
     delete timeSelection;
     delete flush_timeSelection;
     H5Pclose(transfer);
-    Py_DECREF(selector);
+    Py_DECREF(filter);
 }
 
 
@@ -172,14 +172,14 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         // Obtain the particle partition of all the patches in this MPI
         patch_start.resize( vecPatches.size() );
         
-        if( has_selection ) {
+        if( has_filter ) {
         
 #ifdef EXPOSENUMPY
             patch_selection.resize( vecPatches.size() );
             PyArrayObject *x,*y,*z,*px,*py,*pz,*ret;
             npy_intp dims[1];
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-                // Expose particle data as numpy arrays, then run the selection function
+                // Expose particle data as numpy arrays, then run the filter function
                 Particles * p = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
                 unsigned int npart = p->size();
                 dims[0] = (npy_intp) npart;
@@ -191,14 +191,14 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
                     y = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Position[1].data()));
                     if( nDim_particle>2 ) {
                         z = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Position[2].data()));
-                        ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(selector, x,y,z,px,py,pz, NULL);
+                        ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(filter, x,y,z,px,py,pz, NULL);
                         Py_DECREF(z);
                     } else {
-                        ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(selector, x,y,px,py,pz, NULL);
+                        ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(filter, x,y,px,py,pz, NULL);
                     }
                     Py_DECREF(y);
                 } else {
-                    ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(selector, x,px,py,pz, NULL);
+                    ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(filter, x,px,py,pz, NULL);
                 }
                 Py_DECREF(x);
                 Py_DECREF(px);
@@ -221,7 +221,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
                 Py_DECREF(ret);
             }
 #else
-            ERROR("Tracked particles selection requires the numpy package");
+            ERROR("Tracked particles filter requires the numpy package");
 #endif
             
         } else {
@@ -405,8 +405,8 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
 
 void DiagnosticTrack::setIDs(Patch * patch)
 {
-    // If selection, IDs are set on-the-fly
-    if( has_selection ) return;
+    // If filter, IDs are set on-the-fly
+    if( has_filter ) return;
     unsigned int s = patch->vecSpecies[speciesId_]->particles->size();
     for (unsigned int iPart=0; iPart<s; iPart++)
         patch->vecSpecies[speciesId_]->particles->id(iPart) = ++latest_Id;
@@ -415,8 +415,8 @@ void DiagnosticTrack::setIDs(Patch * patch)
 
 void DiagnosticTrack::setIDs(Particles& particles)
 {
-    // If selection, IDs are set on-the-fly
-    if( has_selection ) return;
+    // If filter, IDs are set on-the-fly
+    if( has_filter ) return;
     unsigned int s = particles.size(), id;
     for (unsigned int iPart=0; iPart<s; iPart++) {
         #pragma omp atomic capture
@@ -432,7 +432,7 @@ void DiagnosticTrack::fill_buffer(VectorPatch& vecPatches, unsigned int iprop, v
     unsigned int patch_nParticles, i, j, nPatches=vecPatches.size();
     vector<T>* property = NULL;
     
-    if( has_selection ) {
+    if( has_filter ) {
         #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
             patch_nParticles = patch_selection[ipatch].size();

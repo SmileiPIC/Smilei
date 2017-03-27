@@ -257,7 +257,7 @@ class Species(SmileiComponent):
     isTest = False
     track_every = 0
     track_flush_every = 1
-    track_selection = None
+    track_filter = None
 
 class Laser(SmileiComponent):
     """Laser parameters"""
