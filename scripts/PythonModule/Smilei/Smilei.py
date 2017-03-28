@@ -268,19 +268,19 @@ class ParticleDiagnosticFactory(object):
 			# the diag is saved for generating the object in __call__
 			self._additionalArgs += (diagNumber, )
 			
-			# If not a specific timestep, build a list of timesteps shortcuts
-			if timestep is None:
-				# Create a temporary, empty particle diagnostic
-				tmpDiag = ParticleDiagnostic.ParticleDiagnostic(simulation, diagNumber)
-				# Get a list of timesteps
-				timesteps = tmpDiag.getAvailableTimesteps()
-				# Create timesteps shortcuts
-				for timestep in timesteps:
-					setattr(self, 't%0.10i'%timestep, ParticleDiagnosticFactory(simulation, diagNumber, timestep))
-			
-			else:
-				# the timestep is saved for generating the object in __call__
-				self._additionalArgs += (timestep, )
+			## If not a specific timestep, build a list of timesteps shortcuts
+			#if timestep is None:
+			#	# Create a temporary, empty particle diagnostic
+			#	tmpDiag = ParticleDiagnostic.ParticleDiagnostic(simulation, diagNumber)
+			#	# Get a list of timesteps
+			#	timesteps = tmpDiag.getAvailableTimesteps()
+			#	# Create timesteps shortcuts
+			#	for timestep in timesteps:
+			#		setattr(self, 't%0.10i'%timestep, ParticleDiagnosticFactory(simulation, diagNumber, timestep))
+			#
+			#else:
+			#	# the timestep is saved for generating the object in __call__
+			#	self._additionalArgs += (timestep, )
 	
 	def __call__(self, *args, **kwargs):
 		return ParticleDiagnostic.ParticleDiagnostic(self._simulation, *(self._additionalArgs+args), **kwargs)
@@ -337,19 +337,19 @@ class ScreenFactory(object):
 			# the diag is saved for generating the object in __call__
 			self._additionalArgs += (diagNumber, )
 			
-			# If not a specific timestep, build a list of timesteps shortcuts
-			if timestep is None:
-				# Create a temporary, empty Screen diagnostic
-				tmpDiag = Screen.Screen(simulation, diagNumber)
-				# Get a list of timesteps
-				timesteps = tmpDiag.getAvailableTimesteps()
-				# Create timesteps shortcuts
-				for timestep in timesteps:
-					setattr(self, 't%0.10i'%timestep, ScreenFactory(simulation, diagNumber, timestep))
-			
-			else:
-				# the timestep is saved for generating the object in __call__
-				self._additionalArgs += (timestep, )
+			## If not a specific timestep, build a list of timesteps shortcuts
+			#if timestep is None:
+			#	# Create a temporary, empty Screen diagnostic
+			#	tmpDiag = Screen.Screen(simulation, diagNumber)
+			#	# Get a list of timesteps
+			#	timesteps = tmpDiag.getAvailableTimesteps()
+			#	# Create timesteps shortcuts
+			#	for timestep in timesteps:
+			#		setattr(self, 't%0.10i'%timestep, ScreenFactory(simulation, diagNumber, timestep))
+			#
+			#else:
+			#	# the timestep is saved for generating the object in __call__
+			#	self._additionalArgs += (timestep, )
 	
 	def __call__(self, *args, **kwargs):
 		return Screen.Screen(self._simulation, *(self._additionalArgs+args), **kwargs)
