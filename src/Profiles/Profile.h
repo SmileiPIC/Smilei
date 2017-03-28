@@ -7,7 +7,11 @@
 #include "Tools.h"
 #include "PyTools.h"
 #include "Function.h"
+#include "Field.h"
 
+#ifdef EXPOSENUMPY
+#include <numpy/arrayobject.h>
+#endif
 
 class Profile
 {
@@ -32,6 +36,41 @@ public:
         return function->valueAt(coordinates, time);
     };
     
+    //! Get the value of the profile at several locations (spatial)
+    inline void valuesAt(std::vector<Field*> &coordinates, Field &ret) {
+        unsigned int ndim = coordinates.size();
+        unsigned int size = coordinates[0]->globalDims_;
+#ifdef EXPOSENUMPY
+        import_array();
+        // If numpy profile, then expose coordinates as numpy before evaluating profile
+        if( uses_numpy ) {
+            std::vector<PyArrayObject*> x(ndim);
+            npy_intp dims[1] = {(npy_intp) size};
+            // Expose arrays as numpy, and evaluate
+            for( unsigned int idim=0; idim<ndim; idim++ )
+                x[idim] = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(coordinates[idim]->data()));
+            PyArrayObject* values = function->valueAt(x);
+            for( unsigned int idim=0; idim<ndim; idim++ )
+                Py_DECREF(x[idim]);
+            // Copy array to return Field3D
+            double* arr = (double*) PyArray_GETPTR1(values, 0);
+            for( unsigned int i=0; i<size; i++)
+                ret(i) = arr[i];
+            Py_DECREF(values);
+        } else
+#endif
+        // Otherwise, calculate profile for each point
+        {
+            std::vector<double> x(ndim);
+            for( unsigned int i=0; i<size; i++ ) {
+               //MESSAGE("  - "<<i);
+               for( unsigned int idim=0; idim<ndim; idim++ )
+                   x[idim]=(*coordinates[idim])(i);
+               ret(i) = function->valueAt(x);
+            }
+        }
+    };
+    
     //! Get info on the loaded profile, to be printed later
     inline std::string getInfo() { return info; };
     
@@ -47,6 +86,9 @@ private:
     
     //! Number of variables for the profile function
     int nvariables;
+    
+    //! Whether the profile is using numpy
+    bool uses_numpy;
     
 };//END class Profile
 

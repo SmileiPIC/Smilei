@@ -30,6 +30,20 @@ double Function_Python4D::valueAt(vector<double> x_cell, double time) {
     return PyTools::runPyFunction(py_profile, x_cell[0], x_cell[1], x_cell[2], time);
 }
 
+// Special cases for locations specified in numpy arrays
+#ifdef EXPOSENUMPY
+PyArrayObject* Function_Python1D::valueAt(std::vector<PyArrayObject*> x) {
+    return (PyArrayObject*)PyObject_CallFunctionObjArgs(py_profile, x[0], NULL);
+}
+PyArrayObject* Function_Python2D::valueAt(std::vector<PyArrayObject*> x) {
+    return (PyArrayObject*)PyObject_CallFunctionObjArgs(py_profile, x[0], x[1], NULL);
+}
+PyArrayObject* Function_Python3D::valueAt(std::vector<PyArrayObject*> x) {
+    return (PyArrayObject*)PyObject_CallFunctionObjArgs(py_profile, x[0], x[1], x[2], NULL);
+}
+#endif
+
+
 // Constant profiles
 double Function_Constant1D::valueAt(vector<double> x_cell) {
     return (x_cell[0]>xvacuum) ? value : 0.;

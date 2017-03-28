@@ -690,16 +690,26 @@ void Species::count_sort_part(Params &params)
 int Species::createParticles(vector<unsigned int> n_space_to_create, Params& params, Patch *patch, int new_bin_idx)
 {
     unsigned int nPart, i,j,k, idim;
+    vector<Field*> xyz(nDim_field);
     
     // Create particles in a space starting at cell_position
     vector<double> cell_position(3,0);
     vector<double> cell_index(3,0);
-    for (unsigned int i=0 ; i<nDim_field ; i++) {
-        if (params.cell_length[i]!=0) {
-            cell_position[i] = patch->getDomainLocalMin(i);
-            cell_index   [i] = (double) patch->getCellStartingGlobalIndex(i);
+    for (unsigned int idim=0 ; idim<nDim_field ; idim++) {
+        if (params.cell_length[idim]!=0) {
+            cell_position[idim] = patch->getDomainLocalMin(idim);
+            cell_index   [idim] = (double) patch->getCellStartingGlobalIndex(idim);
+            xyz[idim] = new Field3D(n_space_to_create);
         }
     }
+    
+    // Create the x,y,z maps where profiles will be evaluated
+    vector<double> ijk(3);
+    for (ijk[0]=0; ijk[0]<n_space_to_create[0]; ijk[0]++)
+        for (ijk[1]=0; ijk[1]<n_space_to_create[1]; ijk[1]++)
+            for (ijk[2]=0; ijk[2]<n_space_to_create[2]; ijk[2]++)
+                for (idim=0 ; idim<nDim_field ; idim++)
+                    (*xyz[idim])(ijk[0],ijk[1],ijk[2]) = cell_position[idim] + (ijk[idim]+0.5)*cell_length[idim];
     
     // ---------------------------------------------------------
     // Calculate density and number of particles for the species
@@ -709,36 +719,41 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     Field3D charge(n_space_to_create);
     max_charge = 0.;
     
+    // field containing the number of particles in each cell
+    Field3D n_part_in_cell(n_space_to_create);
+    
     // field containing the density distribution (always 3d)
     Field3D density(n_space_to_create);
     
     // field containing the temperature distribution along all 3 momentum coordinates (always 3d * 3)
     Field3D temperature[3];
-    
     // field containing the temperature distribution along all 3 momentum coordinates (always 3d * 3)
     Field3D velocity[3];
-    
-    // field containing the number of particles in each cell
-    Field3D n_part_in_cell(n_space_to_create);
-
     for (unsigned int i=0; i<3; i++) {
         velocity[i].allocateDims(n_space_to_create);
         temperature[i].allocateDims(n_space_to_create);
     }
     
+    // Evaluate profiles
+    ppcProfile    ->valuesAt(xyz, n_part_in_cell);
+    densityProfile->valuesAt(xyz, density       );
+    chargeProfile ->valuesAt(xyz, charge        );
+    for (unsigned int m=0; m<3; m++) {
+        temperatureProfile[m]->valuesAt(xyz, temperature[m]);
+        velocityProfile[m]   ->valuesAt(xyz, velocity   [m]);
+    }
+    for (unsigned int idim=0 ; idim<nDim_field ; idim++)
+        delete xyz[idim];
+    
+    // Do some adjustments on the profiles
     unsigned int npart_effective = 0;
     double remainder, nppc;
-    
-    vector<double> x_cell(3,0);
     for (i=0; i<n_space_to_create[0]; i++) {
-        x_cell[0] = cell_position[0] + (i+0.5)*cell_length[0];
         for (j=0; j<n_space_to_create[1]; j++) {
-            x_cell[1] = cell_position[1] + (j+0.5)*cell_length[1];
             for (k=0; k<n_space_to_create[2]; k++) {
-                x_cell[2] = cell_position[2] + (k+0.5)*cell_length[2];
                 
                 // Obtain the number of particles per cell
-                nppc = ppcProfile->valueAt(x_cell);
+                nppc = n_part_in_cell(i,j,k);
                 n_part_in_cell(i,j,k) = floor(nppc);
                 // If not a round number, then we need to decide how to round
                 double intpart;
@@ -749,39 +764,26 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                        && fmod(cell_index[2]+(double)k, remainder) < 1. ) n_part_in_cell(i,j,k)++;
                 }
                 
+                // assign charge its correct value in the cell
+                if( charge(i,j,k)>max_charge ) max_charge=charge(i,j,k);
+                
                 // If zero or less, zero particles
-                if( n_part_in_cell(i,j,k)<=0. ) {
+                if( n_part_in_cell(i,j,k)<=0. || density(i,j,k)==0. ) {
                     n_part_in_cell(i,j,k) = 0.;
                     density(i,j,k) = 0.;
                     continue;
                 }
                 
-                // assign charge its correct value in the cell
-                charge(i,j,k) = chargeProfile->valueAt(x_cell);
-                if( charge(i,j,k)>max_charge ) max_charge=charge(i,j,k);
                 // assign density its correct value in the cell
-                density(i,j,k) = densityProfile->valueAt(x_cell);
-                if(density(i,j,k)!=0. && densityProfileType=="charge") {
+                if(densityProfileType=="charge") {
                     if(charge(i,j,k)==0.) ERROR("Encountered non-zero charge density and zero charge at the same location");
                     density(i,j,k) /= charge(i,j,k);
                 }
                 density(i,j,k) = abs(density(i,j,k));
                 
-                // for non-zero density define temperature & mean-velocity and increment the nb of particles
-                if (density(i,j,k)!=0.0) {
-                    
-                    // assign the temperature & mean-velocity their correct value in the cell
-                    for (unsigned int m=0; m<3; m++) {
-                        temperature[m](i,j,k) = temperatureProfile[m]->valueAt(x_cell);
-                        //MESSAGE("temp 1 :" <<  temperature[m](i,j,k))
-                        velocity[m](i,j,k) = velocityProfile[m]->valueAt(x_cell);
-                    }
-                    
-                    // increment the effective number of particle by n_part_in_cell(i,j,k)
-                    // for each cell with as non-zero density
-                    npart_effective += (unsigned int) n_part_in_cell(i,j,k);
-                    
-                }//ENDif non-zero density
+                // increment the effective number of particle by n_part_in_cell(i,j,k)
+                // for each cell with as non-zero density
+                npart_effective += (unsigned int) n_part_in_cell(i,j,k);
                 
             }//i
         }//j
