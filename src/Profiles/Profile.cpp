@@ -9,7 +9,7 @@ using namespace std;
 
 
 // Default constructor.
-Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
+Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, bool try_numpy) :
     profileName(""),
     nvariables(nvariables),
     uses_numpy(false)
@@ -182,28 +182,31 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
         
         
         // Verify that the profile transforms a float in a float
-        PyObject *ret;
 #ifdef EXPOSENUMPY
-        // If numpy available, verify that the profile accepts numpy arguments
-        import_array();
-        double test_value[2] = {0.,0.};
-        npy_intp dims[1] = {2};
-        PyArrayObject *a = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, &test_value);
-        if      ( nvariables == 1 ) ret = PyObject_CallFunctionObjArgs(py_profile, a, NULL);
-        else if ( nvariables == 2 ) ret = PyObject_CallFunctionObjArgs(py_profile, a,a, NULL);
-        else if ( nvariables == 3 ) ret = PyObject_CallFunctionObjArgs(py_profile, a,a,a, NULL);
-        Py_DECREF(a);
-        if( ret
-         && PyArray_Check(ret) // must be a numpy array
-         && PyArray_ISNUMBER((PyArrayObject *)ret) // must be an array of floats
-         && PyArray_SIZE((PyArrayObject *)ret) == 2 ) // must have the same size as arguments
-        {
-            uses_numpy = true;
-        } else {
-            WARNING("Profile `"<<name<<"`: does not seem to accept numpy arrays (and will be slow)");
-#else
-        {
+        if( try_numpy ) {
+            // If numpy available, verify that the profile accepts numpy arguments
+            import_array();
+            double test_value[2] = {0.,0.};
+            npy_intp dims[1] = {2};
+            PyArrayObject *a = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, &test_value);
+            PyObject *ret;
+            if      ( nvariables == 1 ) ret = PyObject_CallFunctionObjArgs(py_profile, a, NULL);
+            else if ( nvariables == 2 ) ret = PyObject_CallFunctionObjArgs(py_profile, a,a, NULL);
+            else if ( nvariables == 3 ) ret = PyObject_CallFunctionObjArgs(py_profile, a,a,a, NULL);
+            Py_DECREF(a);
+            if( ret
+             && PyArray_Check(ret) // must be a numpy array
+             && PyArray_ISNUMBER((PyArrayObject *)ret) // must be an array of floats
+             && PyArray_SIZE((PyArrayObject *)ret) == 2 ) // must have the same size as arguments
+            {
+                uses_numpy = true;
+            } else {
+                WARNING("Profile `"<<name<<"`: does not seem to accept numpy arrays (and will be slow)");
+            }
+            if(ret) Py_DECREF(ret);
+        }
 #endif
+        if( !uses_numpy ) {
             // Otherwise, try a float
             PyObject* z = PyFloat_FromDouble(0.);
             PyObject* ret;
@@ -213,9 +216,8 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
             Py_DECREF(z);
             if( !ret || !PyNumber_Check(ret) )
                 ERROR("Profile `"<<name<<"`: does not seem to return a correct value");
-            Py_DECREF(ret);
+            if(ret) Py_DECREF(ret);
         }
-        if(ret) Py_DECREF(ret);
         
         // Assign the evaluating function, which depends on the number of arguments
         if      ( nvariables == 1 ) function = new Function_Python1D(py_profile);

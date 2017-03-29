@@ -17,7 +17,7 @@ class Profile
 {
 public:
     //! Default constructor
-    Profile(PyObject*, unsigned int, std::string);
+    Profile(PyObject*, unsigned int, std::string, bool=false);
     //! Cloning constructor
     Profile(Profile*);
     //! Default destructor
