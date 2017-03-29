@@ -311,10 +311,12 @@ void DiagnosticTrack::setIDs(Patch * patch)
 void DiagnosticTrack::setIDs(Particles& particles)
 {
     unsigned int s = particles.size(), id;
-    for (unsigned int iPart=0; iPart<s; iPart++) {
-        #pragma omp atomic capture
-        id = ++latest_Id;
-        particles.id(iPart) = id;
+    #pragma omp critical 
+    {
+        for (unsigned int iPart=0; iPart<s; iPart++) {
+            id = ++latest_Id;
+            particles.id(iPart) = id;
+        }
     }
 }
 
