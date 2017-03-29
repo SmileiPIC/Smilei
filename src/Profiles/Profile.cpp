@@ -195,7 +195,7 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
         Py_DECREF(a);
         if( ret
          && PyArray_Check(ret) // must be a numpy array
-         && PyArray_ISFLOAT((PyArrayObject *)ret) // must be an array of floats
+         && PyArray_ISNUMBER((PyArrayObject *)ret) // must be an array of floats
          && PyArray_SIZE((PyArrayObject *)ret) == 2 ) // must have the same size as arguments
         {
             uses_numpy = true;
@@ -211,7 +211,7 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
             else if ( nvariables == 2 ) ret = PyObject_CallFunctionObjArgs(py_profile, z,z, NULL);
             else if ( nvariables == 3 ) ret = PyObject_CallFunctionObjArgs(py_profile, z,z,z, NULL);
             Py_DECREF(z);
-            if( !ret || !PyFloat_Check(ret) )
+            if( !ret || !PyNumber_Check(ret) )
                 ERROR("Profile `"<<name<<"`: does not seem to return a correct value");
             Py_DECREF(ret);
         }
