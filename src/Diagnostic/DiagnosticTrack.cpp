@@ -418,10 +418,12 @@ void DiagnosticTrack::setIDs(Particles& particles)
     // If filter, IDs are set on-the-fly
     if( has_filter ) return;
     unsigned int s = particles.size(), id;
-    for (unsigned int iPart=0; iPart<s; iPart++) {
-        #pragma omp atomic capture
-        id = ++latest_Id;
-        particles.id(iPart) = id;
+    #pragma omp critical 
+    {
+        for (unsigned int iPart=0; iPart<s; iPart++) {
+            id = ++latest_Id;
+            particles.id(iPart) = id;
+        }
     }
 }
 
