@@ -26,6 +26,7 @@ Collisions::Collisions(
     int debug_every,
     int Z,
     bool ionizing,
+    bool tracked_electrons,
     int nDim,
     double referenceAngularFrequency_SI,
     string filename
@@ -41,7 +42,7 @@ filename(filename)
 {
     // Create the ionization object
     if( ionizing ) {
-        Ionization = new CollisionalIonization(Z, nDim, referenceAngularFrequency_SI);
+        Ionization = new CollisionalIonization(Z, nDim, referenceAngularFrequency_SI, tracked_electrons);
     } else {
         Ionization = new CollisionalNoIonization();
     }
@@ -140,7 +141,7 @@ void Collisions::calculate_debye_length(Params& params, Patch * patch)
 }
 
 // Calculates the collisions for a given Collisions object
-void Collisions::collide(Params& params, Patch* patch, int itime)
+void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnostic*>& localDiags)
 {
 
     vector<unsigned int> *sg1, *sg2, *sgtmp, index1, index2;
@@ -390,7 +391,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime)
     } // end loop on pairs of particles
     
     // temporary to be removed
-    Ionization->finish(patch->vecSpecies[(*sg1)[0]], patch->vecSpecies[(*sg2)[0]], params, patch);
+    Ionization->finish(patch->vecSpecies[(*sg1)[0]], patch->vecSpecies[(*sg2)[0]], params, patch, localDiags);
     
     if(debug) {
         if( npairs>0 ) {

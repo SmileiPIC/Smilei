@@ -8,6 +8,7 @@
 #include "SmileiMPI.h"
 #include "VectorPatch.h"
 #include "DiagnosticProbes.h"
+#include "DiagnosticTrack.h"
 #include "Hilbert_functions.h"
 #include "PatchesFactory.h"
 #include <iostream>
@@ -19,6 +20,7 @@ using namespace std;
 
 SimWindow::SimWindow(Params& params)
 {
+
     // ------------------------
     // Moving window parameters
     // ------------------------
@@ -37,8 +39,10 @@ SimWindow::SimWindow(Params& params)
     cell_length_x_   = params.cell_length[0];
     x_moved = 0.;      //The window has not moved at t=0. Warning: not true anymore for restarts.
     n_moved = 0 ;      //The window has not moved at t=0. Warning: not true anymore for restarts.
-    
+
     if( active ) {
+        if (velocity_x != 0. && params.bc_em_type_x[0] == "periodic")
+            ERROR("Periodic topology in the moving window direction is neither encouraged nor supported");
         MESSAGE(1,"Moving window is active:");
         MESSAGE(2,"velocity_x : " << velocity_x);
         MESSAGE(2,"time_start : " << time_start);
@@ -127,8 +131,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             
             //And finally put the patch at the correct rank in vecPatches.
             vecPatches.patches_[mypatch->hindex - h0 ] = mypatch ; 
-             
-       }
+            
+        }
     
     }//End loop on Patches. This barrier matters.
     // At this point, all isends have been done and the list of patches to delete at the end is complete.
@@ -149,6 +153,10 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             if (params.restart)
                 for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++)
                     mypatch->vecSpecies[ispec]->createParticles(params.n_space, params, mypatch, 0 );
+            // We define the IDs of the new particles
+            for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ )
+                if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) )
+                    track->setIDs( mypatch );
         }
         mypatch->EMfields->laserDisabled();
         vecPatches.patches_[patch_to_be_created[j]] = mypatch ;

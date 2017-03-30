@@ -15,16 +15,37 @@ but the process is fast and straightforward.
 Upcoming changes
 ^^^^^^^^^^^^^^^^
 
-* *Screen* diagnostics
-* Exporting diagnostics to XDMF for reading in ParaView or VisIt
-* Bugfixes (in tracked particles and walls), optimizations
+* More OpenMP support
+* *Numpy* used for faster python profiles and for filtering track particles
+* Fourth order in 3D
+* Moving window along y and z
+* Tracking particles in *Screens*
+* Better time-average for B fields
 
 ----
 
 .. _latestVersion:
 
-Current release 3.0
+Current release 3.1
 ^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v3.1 <_downloads/smilei-v3.1.tar.gz>`_
+
+* *Screen* diagnostics
+* Exporting 3D diagnostics to VTK for reading in ParaView or VisIt
+* Partial support of the `OpenPMD <https://www.openpmd.org>`_ standard
+* Improvements: moving window (OpenMP), 3D projection
+* Bugfixes: tracked particles, walls, collisional ionization
+
+Notes:
+
+* Outputs of Fields and Tracks are incompatible with 3.0
+* The input "output_dir" is not supported anymore
+
+----
+
+Release 3.0
+^^^^^^^^^^^
 
 **Download**: `Smilei v3.0 <_downloads/smilei-v3.0.tar.gz>`_
 

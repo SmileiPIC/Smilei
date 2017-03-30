@@ -54,7 +54,8 @@ Species(
 	charge = -1.0,
 	charge_density = 0.0,
 	bc_part_type_xmin = 'none',
-	bc_part_type_xmax = 'none'
+	bc_part_type_xmax = 'none',
+	track_every = 30
 )
 
 LaserPlanar1D(

@@ -22,7 +22,7 @@ public:
                 ERROR( "Charge > atomic_number for species " << species->species_type );
             if( species->particles->isTest )
                 ERROR( "Cannot ionize test species " << species->species_type );
-
+            
             Ionize = new IonizationTunnel( params, species );
             
         } else if ( model != "none" ) {
