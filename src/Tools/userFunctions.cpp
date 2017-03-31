@@ -106,8 +106,11 @@ void userFunctions::modified_bessel_IK(double n, double x,
         1.2719271366546e-3,-4.9717367042e-6,-3.31261198e-8,2.423096e-10,
         -1.702e-13,-1.49e-15};
 
+    // Checks
     if (x <= 0.0) ERROR("Argument x is negative in modified_bessel_IK");   
     if (n <= 0) ERROR("Argument n is negative in modified_bessel_IK");
+    if (maxit == 0) ERROR("Maximal number of iteration is null in modified_bessel_IK")
+    if (eps <= 0) ERROR("Accuracy threashol, epsilon, <= 0 in modified_bessel_IK")
 
     nl=int(n+0.5);
     xmu=n-nl;
