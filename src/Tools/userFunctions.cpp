@@ -110,9 +110,9 @@ void userFunctions::modified_bessel_IK(double n, double x,
     if (x <= 0.0) ERROR("Argument x is negative in modified_bessel_IK");   
     if (n <= 0) ERROR("Argument n is negative in modified_bessel_IK");
     if (maxit == 0) ERROR("Maximal number of iteration is null in modified_bessel_IK")
-    if (eps <= 0) ERROR("Accuracy threashol, epsilon, <= 0 in modified_bessel_IK")
+        if (eps <= 0) ERROR("Accuracy threashol, epsilon, <= 0 in modified_bessel_IK")
 
-    nl=int(n+0.5);
+            nl=int(n+0.5);
     xmu=n-nl;
     xmu2=xmu*xmu;
     xi=1.0/x;
@@ -240,4 +240,57 @@ double userFunctions::chebychev_eval(const double * c, const int m,
     return x*d-dd+0.5*c[0];  
 }
 
+// ----------------------------------------------------------------------------
+//! \brief Computation of the abscissa and weight for the 
+//! Gauss-Legendre Integration between xmin and xmax.
+//
+//! \details This code is adpated from the Numerical Recipes.  
+//
+//! \param xmin minimum integration boundary
+//! \param xmax maximum integration boundary
+//! \param x array of abscissa
+//! \param w array of weight for integration
+//! \param nbit number of iteration for integration (array size)
+//! \param eps accuracy threshold for coef computation
+// ----------------------------------------------------------------------------
+void userFunctions::gauss_legendre_coef(double xmin,double xmax, double * x, 
+        double * w, int nbit, double eps)
+{
+    int m,j,i;
+    double z1,z,xm,xl,pp,p3,p2,p1;
+
+    // Checks
+    if (nbit <= 0) ERROR("Number of iteration <= 0 in gauss_legendre_coef")
+    if (xmax < xmin) ERROR("xmax < xmin in gauss_legendre_coef")
+    if (eps <= 0) ERROR("accuracy threshold epsilon <= 0 in gauss_legendre_coef")
+
+    // The roots are symmetric, so we only find half of them.
+    m=(nbit+1)/2;
+    xm=0.5*(xmin+xmax);
+    xl=0.5*(xmax-xmin);
+    for (i=1;i<=m;i++) { /* Loop over the desired roots. */
+        z=cos(M_PI*(i-0.25)/(nbit+0.5));
+        /* Starting with the above approximation to the ith root, we enter */
+        /* the main loop of refinement by Newton's method.                 */
+        do {
+            p1=1.0;
+            p2=0.0;
+            for (j=1;j<=nbit;j++) { /* Recurrence to get Legendre polynomial. */
+                p3=p2;
+                p2=p1;
+                p1=((2.0*j-1.0)*z*p2-(j-1.0)*p3)/j;
+            }
+            // p1 is now the desired Legendre polynomial. We next compute
+            // pp, its derivative, by a standard relation involving also
+            // p2, the polynomial of one lower order. 
+            pp=nbit*(z*p1-p2)/(z*z-1.0);
+            z1=z;
+            z=z1-p1/pp; /* Newton's method. */
+        } while (fabs(z-z1) > eps);
+        x[i]=xm-xl*z;      /* Scale the root to the desired interval, */
+        x[nbit+1-i]=xm+xl*z;  /* and put in its symmetric counterpart.   */
+        w[i]=2.0*xl/((1.0-z*z)*pp*pp); /* Compute the weight             */
+        w[nbit+1-i]=w[i];                 /* and its symmetric counterpart. */
+    }
+}
 

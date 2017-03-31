@@ -10,10 +10,14 @@ public:
 
     //! Modified Bessel function of first and second kind
     static void modified_bessel_IK(double n, double x, double & I, double & dI, 
-                                   double & K, double & dK, unsigned int maxit, double eps);
+		    double & K, double & dK, unsigned int maxit, double eps);
 
     //! Chebychev evaluation
     static double chebychev_eval(const double * c, const int m, const double x);
+
+    //! Computation of the Gauss-Legendre abscissa and weight 
+    static void gauss_legendre_coef(double xmin,double xmax, double * x, 
+		    double * w, int nbit, double eps);
  
 private:
     
