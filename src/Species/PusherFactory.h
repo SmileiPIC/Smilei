@@ -5,6 +5,7 @@
 #include "PusherBoris.h"
 #include "PusherBorisNR.h"
 #include "PusherRRLL.h"
+#include "PusherHigueraCary.h"
 
 #include "Params.h"
 #include "Species.h"
@@ -37,6 +38,10 @@ public:
         else if ( species->dynamics_type == "rrll" )
         {
             Push = new PusherRRLL( params, species );
+        }
+        else if ( species->dynamics_type == "higueracary" )
+        {
+            Push = new PusherHigueraCary( params, species );
         }
         else {
             ERROR( "For species " << species->species_type << ": unknown dynamics_type `" << species->dynamics_type << "`");
