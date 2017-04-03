@@ -139,6 +139,13 @@ table.citation td.label a {
     text-decoration: none;
     color: inherit;
 }
+/* Make a "bigcitation" class for citations with several lines */
+table.bigcitation td.label {
+    max-width: 3px;
+}
+table.bigcitation td.label + td {
+    padding-top: 25px;
+}
 
 /* --------------------------------------------------------------------*/
 /* Adjust code blocks */
@@ -202,7 +209,7 @@ div.admonition p {
 	margin-top:0;
 	margin-bottom:0;
 }
-.image-reference, table.noborder td > .reference {
+.image-reference, table.noborder td:first-child > .reference {
 	border-bottom:0 !important;
 }
 

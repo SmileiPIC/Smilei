@@ -35,7 +35,7 @@ Current release 3.1
 * Exporting 3D diagnostics to VTK for reading in ParaView or VisIt
 * Partial support of the `OpenPMD <https://www.openpmd.org>`_ standard
 * Improvements: moving window (OpenMP), 3D projection
-* Bugfixes: tracked particles, walls, collisional ionization
+* Bugfixes: tracked particles, walls, collisional ionization, etc.
 
 Notes:
 
