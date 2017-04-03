@@ -19,13 +19,14 @@ const double CollisionalIonization::a1 = 510998.9 ; // = me*c^2/Emin
 const double CollisionalIonization::a2 = 6.142165 ; // = (npoints-1) / ln( Emax/Emin )
 
 // Constructor
-CollisionalIonization::CollisionalIonization(int Z, int nDim_, double referenceAngularFrequency_SI)
+CollisionalIonization::CollisionalIonization(int Z, int nDim_, double referenceAngularFrequency_SI, bool tracked_electrons)
 {
     nDim = nDim_;
     atomic_number = Z;
     rate .resize(Z);
     irate.resize(Z);
     prob .resize(Z);
+    new_electrons.tracked = tracked_electrons;
     new_electrons.initialize(0, nDim); // to be removed if bins removed
     
     if( Z>0 ) {
@@ -43,6 +44,7 @@ CollisionalIonization::CollisionalIonization(CollisionalIonization* CI)
     rate .resize(atomic_number);
     irate.resize(atomic_number);
     prob .resize(atomic_number);
+    new_electrons.tracked = CI->new_electrons.tracked;
     new_electrons.initialize(0, nDim); // to be removed if bins removed
     
     assignDatabase(CI->dataBaseIndex);
@@ -336,12 +338,12 @@ void CollisionalIonization::calculate(double gamma_s, double gammae, double gamm
 
 
 // Finish the ionization (moves new electrons in place)
-void CollisionalIonization::finish(Species *s1, Species *s2, Params &params, Patch* patch)
+void CollisionalIonization::finish(Species *s1, Species *s2, Params &params, Patch* patch, std::vector<Diagnostic*>& localDiags)
 {
     if( electronFirst ) {
-        s1->importParticles(params, patch, new_electrons );
+        s1->importParticles(params, patch, new_electrons, localDiags );
     } else {
-        s2->importParticles(params, patch, new_electrons );
+        s2->importParticles(params, patch, new_electrons, localDiags );
     }
 }
 

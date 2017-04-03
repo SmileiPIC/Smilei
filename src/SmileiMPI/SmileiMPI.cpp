@@ -524,15 +524,15 @@ int SmileiMPI::hrank(int h)
 // ----------------------------------------------------------------------
 MPI_Datatype SmileiMPI::createMPIparticles( Particles* particles )
 {
-    int nbrOfProp = particles->double_prop.size() + particles->short_prop.size() + particles->uint_prop.size();
+    int nbrOfProp = particles->double_prop.size() + particles->short_prop.size() + particles->uint64_prop.size();
 
     MPI_Aint address[nbrOfProp];
     for ( unsigned int iprop=0 ; iprop<particles->double_prop.size() ; iprop++ )
         MPI_Get_address( &( (*(particles->double_prop[iprop]))[0] ), &(address[iprop]) );
     for ( unsigned int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ )
         MPI_Get_address( &( (*(particles->short_prop[iprop]))[0] ), &(address[particles->double_prop.size()+iprop]) );
-    for ( unsigned int iprop=0 ; iprop<particles->uint_prop.size() ; iprop++ )
-        MPI_Get_address( &( (*(particles->uint_prop[iprop]))[0] ), &(address[particles->double_prop.size()+particles->short_prop.size()+iprop]) );
+    for ( unsigned int iprop=0 ; iprop<particles->uint64_prop.size() ; iprop++ )
+        MPI_Get_address( &( (*(particles->uint64_prop[iprop]))[0] ), &(address[particles->double_prop.size()+particles->short_prop.size()+iprop]) );
 
     int nbr_parts[nbrOfProp];
     // number of elements per property
@@ -551,8 +551,8 @@ MPI_Datatype SmileiMPI::createMPIparticles( Particles* particles )
         partDataType[i] = MPI_DOUBLE;
     for ( unsigned int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ )
         partDataType[ particles->double_prop.size()+iprop] = MPI_SHORT;
-    for ( unsigned int iprop=0 ; iprop<particles->uint_prop.size() ; iprop++ )
-        partDataType[ particles->double_prop.size()+particles->short_prop.size()+iprop] = MPI_UNSIGNED;
+    for ( unsigned int iprop=0 ; iprop<particles->uint64_prop.size() ; iprop++ )
+        partDataType[ particles->double_prop.size()+particles->short_prop.size()+iprop] = MPI_UNSIGNED_LONG_LONG;
 
     MPI_Datatype typeParticlesMPI;
     MPI_Type_create_struct( nbrOfProp, &(nbr_parts[0]), &(disp[0]), &(partDataType[0]), &typeParticlesMPI);

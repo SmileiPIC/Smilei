@@ -68,12 +68,14 @@ vector<double> matrixTimesVector(vector<double> A, vector<double> v) {
 
 
 DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe )
+: offset_in_MPI(0)
 {
     probe_n = n_probe;
     nDim_particle = params.nDim_particle;
     fileId_ = 0;
-    x_moved = 0.;
     hasRhoJs = false;
+    last_iteration_points_calculated = 0;
+    positions_written = false;
     
     // Extract "every" (time selection)
     ostringstream name("");
@@ -198,10 +200,15 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
     fieldname = fs;
     nFields = fs.size();
     
+    // Pre-calculate patch size
+    patch_size.resize(nDim_particle);
+    for( unsigned int k=0; k<nDim_particle; k++ )
+        patch_size[k] = params.n_space[k]*params.cell_length[k];
+    
+    // Create filename
     ostringstream mystream("");
     mystream << "Probes" << n_probe << ".h5";
     filename = mystream.str();
-    
     
     // Display info
     MESSAGE(1, "Probe diagnostic #"<<n_probe<<" created");
@@ -226,11 +233,6 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
 
 DiagnosticProbes::~DiagnosticProbes()
 {
-    if (posArray != NULL) {
-        delete posArray;
-        posArray = NULL;
-    }
-    
     delete timeSelection;
     delete flush_timeSelection;
 }
@@ -294,78 +296,12 @@ bool DiagnosticProbes::prepare( int timestep )
 
 void DiagnosticProbes::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches)
 {
-    // Generate the probe's points ("particles")
-    createPoints(smpi, vecPatches, true);
-    
     // create the file
     openFile( params, smpi, true );
-    
-    // Store the positions of all particles in this MPI
-    vector<unsigned int> posArraySize(2);
-    posArraySize[0] = nPart_MPI;
-    posArraySize[1] = nDim_particle;
-    posArray = new Field2D(posArraySize);
-    unsigned int ipart = 0;
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        if( ipart>=nPart_MPI ) break;
-        Particles * particles = &(vecPatches(ipatch)->probes[probe_n]->particles);
-        for ( unsigned int ip=0 ; ip<particles->size() ; ip++) {
-            for (unsigned int idim=0 ; idim<nDim_particle  ; idim++ )
-                posArray->data_2D[ipart][idim] = particles->position(idim,ip);
-            ipart++;
-        }
-    }
-    // Define size in memory
-    hsize_t mem_size[2];
-    mem_size[0] = nPart_MPI;
-    mem_size[1] = nDim_particle; 
-    hid_t memspace  = H5Screate_simple(2, mem_size, NULL);
-    // Define size and location in file
-    hsize_t dimsf[2], offset[2], stride[2], count[2], block[2];
-    dimsf[0] = nPart_total_actual;
-    dimsf[1] = nDim_particle;
-    hid_t filespace = H5Screate_simple(2, dimsf, NULL);
-    if( nPart_MPI>0 ) {
-        offset[0] = offset_in_file[0];
-        offset[1] = 0;
-        stride[0] = 1;
-        stride[1] = 1;
-        count[0] = 1;
-        count[1] = 1;
-        block[0] = nPart_MPI;
-        block[1] = nDim_particle;
-        H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
-    } else {
-        H5Sselect_none(filespace);
-    }
-    // Define collective transfer 
-    hid_t transfer = H5Pcreate(H5P_DATASET_XFER);
-    H5Pset_dxpl_mpio(transfer, H5FD_MPIO_COLLECTIVE);
-    // Create dataset
-    hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
-    hid_t dset_id = H5Dcreate(fileId_, "positions", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
-    H5Pclose(plist_id);
-    // Write
-    if ( nPart_MPI>0 )
-        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &(posArray->data_2D[0][0]) );
-    else
-        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, NULL );
-    H5Dclose(dset_id);
-    H5Pclose( transfer );
-    H5Sclose(filespace);
-    H5Sclose(memspace);
-    
-    if (!params.hasWindow) {
-        delete posArray;
-        posArray = NULL;
-    }
-    
-    H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
-    
 }
 
 
-void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bool createFile)
+void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bool createFile, double x_moved)
 {
     nPart_MPI = 0;
     offset_in_MPI .resize( vecPatches.size() );
@@ -384,11 +320,9 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
         for( k=0; k<nDim_particle; k++ ) {
             mins[k] = numeric_limits<double>::max();
             maxs[k] = numeric_limits<double>::lowest();
-            patchMin[k] = vecPatches(ipatch)->getDomainLocalMin(k);
-            patchMax[k] = vecPatches(ipatch)->getDomainLocalMax(k);
+            patchMin[k] = ( vecPatches(ipatch)->Pcoordinates[k]   )*patch_size[k];
+            patchMax[k] = ( vecPatches(ipatch)->Pcoordinates[k]+1 )*patch_size[k];
         }
-        patchMin[0] -= x_moved; // compensate for moving-window
-        patchMax[0] -= x_moved; // compensate for moving-window
         // loop patch corners
         for( i=0; i<numCorners; i++ ) {
             // Get coordinates of the current corner in terms of x,y,...
@@ -466,37 +400,26 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
         nPart_MPI += ipart_local;
     }
     
-    // Now calculate the offset of each patch to write in the file
+    // Calculate the offset of each MPI in the final file
+    unsigned int global_offset;
+    MPI_Scan(&nPart_MPI, &global_offset, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
     
-    // Get the number of particles for each MPI
-    int sz = smpi->getSize();
-    std::vector<int> all_nPart(sz, 0);
-    MPI_Allgather( &nPart_MPI, 1, MPI_INT, &all_nPart[0], 1, MPI_INT, MPI_COMM_WORLD );
+    // Broadcast the global number of points
+    nPart_total_actual = global_offset;
+    MPI_Bcast( &nPart_total_actual, 1, MPI_UNSIGNED, smpi->getSize()-1, MPI_COMM_WORLD );
     
-    // Calculate the cumulative sum
-    for (int rk=1 ; rk<sz ; rk++)
-        all_nPart[rk] += all_nPart[rk-1];
-    
-    // Add the MPI offset to all patches
-    if( ! smpi->isMaster() ) {
-        int offset = all_nPart[smpi->getRank()-1];
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            offset_in_file[ipatch] = offset + offset_in_MPI[ipatch];
-            vecPatches(ipatch)->probes[probe_n]->offset_in_file = offset_in_file[ipatch];
-        }
+    // For each patch, calculate its global offset
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        offset_in_file[ipatch] = global_offset - nPart_MPI + offset_in_MPI[ipatch];
+        vecPatches(ipatch)->probes[probe_n]->offset_in_file = offset_in_file[ipatch];
     }
     
-    // Store the actual total number points
-    nPart_total_actual = all_nPart[sz-1];
     if( nPart_total_actual==0 ) ERROR("Probe has no points in the box");
-    
-    // (Re-) initialize the flag to tell whether probes should be re-calculated next time
-    patchesHaveMoved = false;
 }
 
 
 
-void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep )
+void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep, SimWindow* simWindow )
 {
     ostringstream name_t;
     
@@ -515,8 +438,66 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     #pragma omp master
     {
         // If the patches have been moved (moving window or load balancing) we must re-compute the probes positions
-        if( patchesHaveMoved )
-            createPoints(smpi, vecPatches, false);
+        if( !positions_written || last_iteration_points_calculated < vecPatches.lastIterationPatchesMoved ) {
+            double x_moved = simWindow ? simWindow->getXmoved() : 0.;
+            createPoints(smpi, vecPatches, false, x_moved);
+            last_iteration_points_calculated = timestep;
+            
+            // Store the positions of all particles, unless done already
+            if( !positions_written ) {
+                vector<unsigned int> posArraySize(2);
+                posArraySize[0] = nPart_MPI;
+                posArraySize[1] = nDim_particle;
+                Field2D* posArray = new Field2D(posArraySize);
+                unsigned int ipart = 0;
+                for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+                    if( ipart>=nPart_MPI ) break;
+                    Particles * particles = &(vecPatches(ipatch)->probes[probe_n]->particles);
+                    for ( unsigned int ip=0 ; ip<particles->size() ; ip++) {
+                        for (unsigned int idim=0 ; idim<nDim_particle  ; idim++ )
+                            (*posArray)(ipart,idim) = particles->position(idim,ip);
+                        (*posArray)(ipart,0) -= x_moved;
+                        ipart++;
+                    }
+                }
+                // Define size in memory
+                hsize_t mem_size[2];
+                mem_size[0] = nPart_MPI; mem_size[1] = nDim_particle; 
+                hid_t memspace  = H5Screate_simple(2, mem_size, NULL);
+                // Define size and location in file
+                hsize_t dimsf[2], offset[2], count[2], block[2];
+                dimsf[0] = nPart_total_actual; dimsf[1] = nDim_particle;
+                hid_t filespace = H5Screate_simple(2, dimsf, NULL);
+                if( nPart_MPI>0 ) {
+                    offset[0] = offset_in_file[0]; offset[1] = 0;
+                    count [0] = 1;                 count [1] = 1;
+                    block [0] = nPart_MPI;         block [1] = nDim_particle;
+                    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, NULL, count, block);
+                } else {
+                    H5Sselect_none(filespace);
+                }
+                // Define collective transfer 
+                hid_t transfer = H5Pcreate(H5P_DATASET_XFER);
+                H5Pset_dxpl_mpio(transfer, H5FD_MPIO_COLLECTIVE);
+                // Create dataset
+                hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
+                hid_t dset_id = H5Dcreate(fileId_, "positions", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+                H5Pclose(plist_id);
+                // Write
+                if ( nPart_MPI>0 )
+                    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &((*posArray)(0,0)) );
+                else
+                    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, NULL );
+                H5Dclose(dset_id);
+                H5Pclose( transfer );
+                H5Sclose(filespace);
+                H5Sclose(memspace);
+                
+                delete posArray;
+                H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+                positions_written = true;
+            }
+        }
         
         // Make the array that will contain the data
         vector<unsigned int> probesArraySize(2);
@@ -545,16 +526,16 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
             );
             
             //! here we fill the probe data!!!
-            probesArray->data_2D[fieldlocation[0]][iPart_MPI]=Eloc_fields.x;
-            probesArray->data_2D[fieldlocation[1]][iPart_MPI]=Eloc_fields.y;
-            probesArray->data_2D[fieldlocation[2]][iPart_MPI]=Eloc_fields.z;
-            probesArray->data_2D[fieldlocation[3]][iPart_MPI]=Bloc_fields.x;
-            probesArray->data_2D[fieldlocation[4]][iPart_MPI]=Bloc_fields.y;
-            probesArray->data_2D[fieldlocation[5]][iPart_MPI]=Bloc_fields.z;
-            probesArray->data_2D[fieldlocation[6]][iPart_MPI]=Jloc_fields.x;
-            probesArray->data_2D[fieldlocation[7]][iPart_MPI]=Jloc_fields.y;
-            probesArray->data_2D[fieldlocation[8]][iPart_MPI]=Jloc_fields.z;          
-            probesArray->data_2D[fieldlocation[9]][iPart_MPI]=Rloc_fields;
+            (*probesArray)(fieldlocation[0],iPart_MPI)=Eloc_fields.x;
+            (*probesArray)(fieldlocation[1],iPart_MPI)=Eloc_fields.y;
+            (*probesArray)(fieldlocation[2],iPart_MPI)=Eloc_fields.z;
+            (*probesArray)(fieldlocation[3],iPart_MPI)=Bloc_fields.x;
+            (*probesArray)(fieldlocation[4],iPart_MPI)=Bloc_fields.y;
+            (*probesArray)(fieldlocation[5],iPart_MPI)=Bloc_fields.z;
+            (*probesArray)(fieldlocation[6],iPart_MPI)=Jloc_fields.x;
+            (*probesArray)(fieldlocation[7],iPart_MPI)=Jloc_fields.y;
+            (*probesArray)(fieldlocation[8],iPart_MPI)=Jloc_fields.z;          
+            (*probesArray)(fieldlocation[9],iPart_MPI)=Rloc_fields;
             iPart_MPI++;
         }
     }
@@ -567,20 +548,18 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         mem_size[0] = nFields;
         hid_t memspace  = H5Screate_simple(2, mem_size, NULL);
         // Define size and location in file
-        hsize_t dimsf[2], offset[2], stride[2], count[2], block[2];
+        hsize_t dimsf[2], offset[2], count[2], block[2];
         dimsf[1] = nPart_total_actual;
         dimsf[0] = nFields;
         hid_t filespace = H5Screate_simple(2, dimsf, NULL);
         if( nPart_MPI>0 ) {
             offset[1] = offset_in_file[0];
             offset[0] = 0;
-            stride[0] = 1;
-            stride[1] = 1;
             count[0] = 1;
             count[1] = 1;
             block[1] = nPart_MPI;
             block[0] = nFields;
-            H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
+            H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, NULL, count, block);
         } else {
             H5Sselect_none(filespace);
         }
@@ -593,7 +572,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         hid_t transfer = H5Pcreate(H5P_DATASET_XFER);
         H5Pset_dxpl_mpio(transfer, H5FD_MPIO_INDEPENDENT);
         // Write
-        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &(probesArray->data_2D[0][0]) );
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &((*probesArray)(0,0)) );
         H5Dclose(dset_id);
         H5Pclose( transfer );
         H5Sclose(filespace);

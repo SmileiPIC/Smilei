@@ -30,7 +30,7 @@ private:
     //! charge state of the particle (multiples of e>0)
     short Charge;
     //! Id of the particle
-    unsigned int Id;    
+    uint64_t Id;    
 };
 
 #endif

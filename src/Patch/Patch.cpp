@@ -109,8 +109,8 @@ void Patch::initStep3( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
     cell_starting_global_index.resize(params.nDim_field, 0);
     radius = 0.;
     for (unsigned int i = 0 ; i<params.nDim_field ; i++) {
-        min_local[i] =  Pcoordinates[i]   *params.n_space[i]*params.cell_length[i];
-        max_local[i] = (Pcoordinates[i]+1)*params.n_space[i]*params.cell_length[i];
+        min_local[i] = ( Pcoordinates[i]   )*(params.n_space[i]*params.cell_length[i]);
+        max_local[i] = ((Pcoordinates[i]+1))*(params.n_space[i]*params.cell_length[i]);
         cell_starting_global_index[i] += Pcoordinates[i]*params.n_space[i];
         cell_starting_global_index[i] -= params.oversize[i];
         center[i] = (min_local[i]+max_local[i])*0.5;
@@ -148,33 +148,7 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
     
     if (has_an_MPI_neighbor())
         createType(params);
-
-
-    int nb_comms(9); // E, B, B_m : min number of comms
-    nb_comms += 2*vecSpecies.size();
-
-    // Just apply on species & fields to start
-
-    for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++) {
-        nb_comms += EMfields->allFields_avg[idiag].size();
-    }
-    nb_comms += EMfields->antennas.size();
- 
-    for (unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
-        if(EMfields->emBoundCond[bcId]) {
-            for (unsigned int laserId=0 ; laserId < EMfields->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
-                nb_comms += 4;
-            }
-        }
-        if ( EMfields->extFields.size()>0 ) {
-            if (dynamic_cast<ElectroMagnBC1D_SM*>(EMfields->emBoundCond[bcId]) )
-                nb_comms += 4;
-            else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EMfields->emBoundCond[bcId]) )
-                nb_comms += 12;
-        }
-    }
-    requests_.resize( nb_comms, MPI_REQUEST_NULL );
-
+    
 }
 
 
@@ -201,7 +175,10 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
     
     if (has_an_MPI_neighbor())
         createType(params);
+    
+}
 
+void Patch::finalizeMPIenvironment() {
     int nb_comms(9); // E, B, B_m : min number of comms
     nb_comms += 2*vecSpecies.size();
 

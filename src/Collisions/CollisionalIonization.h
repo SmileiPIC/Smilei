@@ -15,7 +15,7 @@ class CollisionalIonization
 
 public:
     //! Constructor
-    CollisionalIonization(int, int, double);
+    CollisionalIonization(int, int, double, bool);
     //! Cloning Constructor
     CollisionalIonization(CollisionalIonization*);
     //! Destructor
@@ -43,7 +43,7 @@ public:
     //! Method to apply the ionization
     virtual void apply(Particles *p1, int i1, Particles *p2, int i2);
     //! Method to finish the ionization and put new electrons in place
-    virtual void finish(Species *s1, Species *s2, Params&, Patch*);
+    virtual void finish(Species *s1, Species *s2, Params&, Patch*, std::vector<Diagnostic*>&);
     
     //! Local table of integrated cross-section
     std::vector<std::vector<double> > * crossSection;
@@ -101,7 +101,7 @@ private:
 class CollisionalNoIonization : public CollisionalIonization
 {
 public:
-    CollisionalNoIonization() : CollisionalIonization(0,0,0.) {};
+    CollisionalNoIonization() : CollisionalIonization(0,0,0.,false) {};
     ~CollisionalNoIonization(){};
     
     unsigned int createDatabase(double) override { return 0; };
@@ -110,7 +110,8 @@ public:
     void prepare2(Particles*, int, Particles*, int, bool) override {};
     void prepare3(double, double) override {};
     void apply(Particles*, int, Particles*, int) override {};
-    void finish(Species*, Species*, Params&, Patch*) override {};
+    //void finish(Species*, Species*, Params&, Patch*) override {};
+    void finish(Species*, Species*, Params&, Patch*, std::vector<Diagnostic*>&) override {};
 };
 
 

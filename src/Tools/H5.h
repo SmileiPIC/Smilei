@@ -245,6 +245,12 @@ class H5 {
     
     
     //! write any vector
+    template<class T>
+    static void vect(hid_t locationId, std::string name, std::vector<T> v, hid_t type, int deflate=0) {
+        vect(locationId, name, v[0], v.size(), type, deflate);
+    }
+    
+    //! Write a portion of a vector
     //! type is the h5 type (H5T_NATIVE_DOUBLE, H5T_NATIVE_INT, etc.)
     template<class T>
     static void vect(hid_t locationId, std::string name, T & v, int size, hid_t type, int deflate=0) {

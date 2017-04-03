@@ -313,10 +313,14 @@ void LaserProfileSeparable::initFields(Params& params, Patch* patch)
 // Amplitude of a separable laser profile
 double LaserProfileSeparable::getAmplitude(std::vector<double> pos, double t, int j, int k)
 {
-    double omega_ = omega * chirpProfile->valueAt(t);
-    double t0 = (*phase)(j, k) / omega_;
-    return timeProfile->valueAt(t-t0) * (*space_envelope)(j, k)
-           * sin( omega_*(t - t0) );
+    double amp;
+    #pragma omp critical
+    {
+        double omega_ = omega * chirpProfile->valueAt(t);
+        double t0 = (*phase)(j, k) / omega_;
+        amp = timeProfile->valueAt(t-t0) * (*space_envelope)(j, k) * sin( omega_*(t - t0) );
+    }
+    return amp;
 }
 
 //Destructor
