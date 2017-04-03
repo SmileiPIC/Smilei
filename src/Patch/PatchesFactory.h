@@ -74,6 +74,10 @@ public:
         
         TITLE("Initializing Diagnostics, antennas, and external fields")
         vecPatches.createDiags( params, smpi, openPMD );
+
+        for (unsigned int ipatch = 0 ; ipatch < npatches ; ipatch++) 
+            vecPatches.patches_[ipatch]->finalizeMPIenvironment();
+                    
         
         // Figure out if there are antennas
         vecPatches.nAntennas = vecPatches(0)->EMfields->antennas.size();
