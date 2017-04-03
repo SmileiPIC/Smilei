@@ -597,6 +597,8 @@ echo $? > exit_status_file \n  ")
       if VALID_ALL :
         VALID_ALL_OK = True
     else :
+      if VERBOSE :
+        print "Smilei is not valid for the specified scalar at last timestep, input file "+BENCH+", "+str(OMP)+" OpenMP tasks and "+str(MPI)+" MPI processus"
       exit(1)
 if VALID_ALL and VALID_ALL_OK  :
     exit(0)
