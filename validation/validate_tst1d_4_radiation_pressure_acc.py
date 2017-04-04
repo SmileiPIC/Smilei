@@ -1,6 +1,5 @@
 import os, re, numpy as np
 from Smilei import *
-from scipy.signal import butter, filtfilt
 
 S = Smilei(".", verbose=False)
 
