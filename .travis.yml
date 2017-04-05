@@ -28,7 +28,7 @@ before_install:
   - sudo sh -c 'echo "/usr/local/lib\n/usr/local/lib/openmpi" > /etc/ld.so.conf.d/openmpi.conf'
   - sudo ldconfig
   - cd ..
-  - wget --no-check-certificate http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.17.tar.gz
+  - wget --no-check-certificate https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.17/src/hdf5-1.8.17.tar.gz
   - tar -zxf hdf5-1.8.17.tar.gz
   - cd hdf5-1.8.17
   - CC=mpicc CXX=mpicxx ./configure --enable-parallel --prefix=/usr/local --quiet && make > compile.out && sudo make install > install.out 
