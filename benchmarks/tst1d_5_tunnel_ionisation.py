@@ -34,7 +34,7 @@ Main(
 Species(
 	species_type = 'hydrogen',
 	ionization_model = 'tunnel',
-	ionization_electrons = 'electronH',
+	ionization_electrons = 'electron',
 	atomic_number = 1,
 	initPosition_type = 'regular',
 	initMomentum_type = 'cold',
@@ -48,7 +48,7 @@ Species(
 Species(
 	species_type = 'carbon',
 	ionization_model = 'tunnel',
-	ionization_electrons = 'electronC',
+	ionization_electrons = 'electron',
 	atomic_number = 6,
 	initPosition_type = 'regular',
 	initMomentum_type = 'cold',
@@ -60,19 +60,7 @@ Species(
 	bc_part_type_xmax = 'none'
 )
 Species(
-	species_type = 'electronH',
-	initPosition_type = 'regular',
-	initMomentum_type = 'cold',
-	n_part_per_cell = 0,
-	mass = 1.0,
-	charge = -1.0,
-	charge_density = 0.0,
-	bc_part_type_xmin = 'none',
-	bc_part_type_xmax = 'none',
-	track_every = 30
-)
-Species(
-	species_type = 'electronC',
+	species_type = 'electron',
 	initPosition_type = 'regular',
 	initMomentum_type = 'cold',
 	n_part_per_cell = 0,

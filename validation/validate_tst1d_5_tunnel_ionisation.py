@@ -5,8 +5,8 @@ from Smilei import *
 S = Smilei(".", verbose=False)
 
 # COMPARE THE Ez FIELD
-Ez = S.Field.Field0.Ez(timesteps=300).getData()[0]
-Validate("Ez field at iteration 300", Ez, 0.01)
+Ey = S.Field.Field0.Ey(timesteps=1000).getData()[0]
+Validate("Ey field at iteration 1000", Ey, 0.005)
 
 # VERIFY THE IONIZATION RATE Vs THEORY
 w_r = S.namelist.Main.referenceAngularFrequency_SI
@@ -63,17 +63,17 @@ Zs_theory = interp(t, Zs) (times)
 Validate("Hydrogen ionization matches with theory", (np.abs(mean_charge-Zs_theory)<0.1).all())
 
 # carbon (does not work yet)
-#Ip  = np.array([11.2602,24.3845,47.8877,64.4935,392.0905,489.9931]) /27.2114
-#l   = np.array([1,1,0,0,0,0])
-#t, Zs = calculate_ionization(Ip, l)
-#charge = S.ParticleDiagnostic.Diag1().get()
-#charge_distribution = np.array( charge["data"] )
-#charge_distribution /= charge_distribution[0,:].sum()
-#n1, n2 = charge_distribution.shape
-#mean_charge = (charge_distribution * np.outer(np.ones((n1,)), np.arange(n2))).sum(axis=1)
-#times = charge["times"]*S.namelist.Main.timestep
-#Zs_theory = interp(t, Zs) (times)
-#Validate("Carbon ionization matches with theory", (np.abs(mean_charge-Zs_theory)<0.1).all())
+Ip  = np.array([11.2602,24.3845,47.8877,64.4935,392.0905,489.9931]) /27.2114
+l   = np.array([1,1,0,0,0,0])
+t, Zs = calculate_ionization(Ip, l)
+charge = S.ParticleDiagnostic.Diag1().get()
+charge_distribution = np.array( charge["data"] )
+charge_distribution /= charge_distribution[0,:].sum()
+n1, n2 = charge_distribution.shape
+mean_charge = (charge_distribution * np.outer(np.ones((n1,)), np.arange(n2))).sum(axis=1)
+times = charge["times"]*S.namelist.Main.timestep
+Zs_theory = interp(t, Zs) (times)
+Validate("Carbon ionization matches with theory", (np.abs(mean_charge-Zs_theory)<0.15).all())
 
 
 
