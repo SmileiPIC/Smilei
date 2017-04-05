@@ -162,6 +162,8 @@ if JOLLYJUMPER in HOSTNAME :
 
 # Build the list of the requested input files
 list_bench = [os.path.basename(b) for b in glob.glob(SMILEI_BENCHS+"tst*py")]
+list_validation = [os.path.basename(b) for b in glob.glob(SMILEI_VALIDATION+"validate_tst*py")]
+list_bench = [b for b in list_bench if "validate_"+b in list_validation]
 if BENCH == "":
 	SMILEI_BENCH_LIST = list_bench
 elif BENCH == "?":

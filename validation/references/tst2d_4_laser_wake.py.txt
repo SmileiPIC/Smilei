@@ -2,13 +2,13 @@
 S'Initial load balance'
 p1
 (lp2
-I512
-aI512
+I256
+aI256
 asS'Final load balance'
 p3
 (lp4
-I532
-aI492
+I264
+aI268
 asS'Ey field at iteration 1600'
 p5
 cnumpy.core.multiarray
