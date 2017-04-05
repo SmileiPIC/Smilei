@@ -12,5 +12,5 @@ Validate("Electron momentum distribution", momentum_distribution, 1e-7 )
 itimes = S.ParticleDiagnostic.Diag0().getAvailableTimesteps()
 Validate("Timesteps in particle diagnostic", itimes )
 
-phase_space = S.ParticleDiagnostic.Diag0(timesteps=2000).getData()[0]
-Validate("Electron phase-space", phase_space, 1.e-3)
+px = S.ParticleDiagnostic.Diag0(slice={"x":"all"}, timesteps=2000).getData()[0]
+Validate("Electron momentum distribution", px, 0.1)
