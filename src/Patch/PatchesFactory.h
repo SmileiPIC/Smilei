@@ -63,7 +63,6 @@ public:
             }
             vecPatches.patches_[ipatch] = clone(vecPatches(0), params, smpi, firstpatch + ipatch, n_moved);
         }
-        vecPatches.nrequests = vecPatches(0)->requests_.size();
         MESSAGE(1,"All patches created");
         // print number of particles
         vecPatches.printNumberOfParticles( smpi );
@@ -74,6 +73,11 @@ public:
         
         TITLE("Initializing Diagnostics, antennas, and external fields")
         vecPatches.createDiags( params, smpi, openPMD );
+
+        for (unsigned int ipatch = 0 ; ipatch < npatches ; ipatch++) 
+            vecPatches.patches_[ipatch]->finalizeMPIenvironment();
+        vecPatches.nrequests = vecPatches(0)->requests_.size();
+                    
         
         // Figure out if there are antennas
         vecPatches.nAntennas = vecPatches(0)->EMfields->antennas.size();

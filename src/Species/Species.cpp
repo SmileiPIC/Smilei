@@ -134,10 +134,6 @@ void Species::initOperators(Params& params, Patch* patch)
         DEBUG("Species " << species_type << " can be ionized!");
     }
     
-    if (Ionize && species_type=="electron") {
-        ERROR("Species " << species_type << " can be ionized but species_type='electron'");
-    }
-    
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond(params, this, patch);
     
@@ -877,7 +873,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
 // Move all particles from another species to this one
 void Species::importParticles( Params& params, Patch* patch, Particles& source_particles, vector<Diagnostic*>& localDiags )
 {
-    unsigned int npart = source_particles.size(), ibin, ii;
+    unsigned int npart = source_particles.size(), ibin, ii, nbin=bmin.size();
     double inv_cell_length = 1./ params.cell_length[0];
     
     // If this species is tracked, set the particle IDs
@@ -888,10 +884,11 @@ void Species::importParticles( Params& params, Patch* patch, Particles& source_p
     for( unsigned int i=0; i<npart; i++ ) {
         // Copy particle to the correct bin
         ibin = source_particles.position(0,i)*inv_cell_length - ( patch->getCellStartingGlobalIndex(0) + params.oversize[0] );
+        ibin /= params.clrw;
         source_particles.cp_particle(i, *particles, bmin[ibin] );
         // Update the bin counts
         bmax[ibin]++;
-        for (ii=ibin+1; ii<bmin.size(); ii++) {
+        for (ii=ibin+1; ii<nbin; ii++) {
             bmin[ii]++;
             bmax[ii]++;
         }

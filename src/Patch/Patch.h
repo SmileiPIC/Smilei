@@ -44,6 +44,9 @@ public:
     void finishCreation( Params& params, SmileiMPI* smpi );
     //! Last cloning step
     void finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool with_particles );
+
+    //! Finalize MPI environment : especially requests array for non blocking communications
+    void finalizeMPIenvironment();
     
     //! Destructor for Patch
     virtual ~Patch();
