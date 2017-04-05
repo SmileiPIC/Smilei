@@ -319,11 +319,11 @@ class CompareToReference(object):
 			double_data = np.double(data)
 			if precision is not None:
 				error = np.abs( double_data-np.double(expected_data) )
-				max_error_index = np.argmax(error)
-				max_error = error[max_error_index]
+				max_error_location = np.unravel_index(np.argmax(error), error.shape)
+				max_error = error[max_error_location]
 				if max_error < precision: return
-				print "Reference quantity '"+data_name+"' does not match the data (required precision "+str(precision)
-				print "Max error = "+str(max_error)+" at index "+str(max_error_index)
+				print "Reference quantity '"+data_name+"' does not match the data (required precision "+str(precision)+")"
+				print "Max error = "+str(max_error)+" at index "+str(max_error_location)
 			else:
 				if np.all(double_data == np.double(expected_data)): return
 				print "Reference quantity '"+data_name+"' does not match the data"
