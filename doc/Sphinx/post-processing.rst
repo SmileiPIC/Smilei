@@ -40,13 +40,20 @@ In a *python* command line (or script), invoke the following class to open
 your :program:`Smilei` simulation. Note that several simulations can be opened at once, 
 as long as they correspond to several :ref:`restarts <Checkpoints>` of the same simulation.
 
-.. py:class:: Smilei(results_path, show=True)
+.. py:class:: Smilei(results_path=".", show=True, referenceAngularFrequency_SI=None, verbose=True)
 
-  * ``results_path``: string or list of strings (default: ``'.'``)
-     | Path or list of paths to the directory-ies where the results of the simulation-s are stored. It can also contain wildcards, such as ``*`` and ``?`` in order to include several simulations at once.
+  * ``results_path``: path or list of paths to the directory-ies
+    where the results of the simulation-s are stored. It can also contain wildcards,
+    such as ``*`` and ``?`` in order to include several simulations at once.
   
-  * ``show``: boolean (default: ``True``)
-     | Toggles whether the figures will actually plot on screen.
+  * ``show``: if True, figures will actually plot on screen. If False, make sure that
+    you have not loaded another simulation or the matplotlib package. You may need to 
+    restart python.
+  
+  * ``referenceAngularFrequency_SI``: overrides the value of the simulation parameter
+    :py:data:`referenceAngularFrequency_SI`, in order to re-scale units.
+  
+  * ``verbose``: if True, more information is displayed while post-processing.
 
 **Example**::
 
@@ -253,22 +260,26 @@ Open a Track diagnostic
   Diag = S.TrackParticles("electrons", axes=["px","py"])
 
 
-**Detailed explanation of the** ``select`` **parameter**
-  
-  | **Syntax 1:** ``select="any(times, condition)"``
-  | **Syntax 2:** ``select="all(times, condition)"``
-  | ``times`` is a selection of timesteps ``t``, for instance ``t>50``.
-  | ``condition`` is a condition on particles properties  (``x``, ``y``, ``z``, ``px``, ``py``, ``pz``), for instance ``px>0``.
-  | Syntax 1 selects particles satisfying ``condition`` for at least one of the ``times``.
-  | Syntax 2 selects particles satisfying ``condition`` at all ``times``.
-  | **Example:** ``select="all(t<40, px<0.1)"`` selects particles that kept :math:`p_x<0.1` until timestep 40.
-  | **Example:** ``select="any(t>0, px>1.)"`` selects particles that reached :math:`p_x>1` at some point.
-  | It is possible to make logical operations: ``+`` is *OR*; ``*`` is *AND*; ``-`` is *NOT*.
-  | **Example:** ``select="any((t>30)*(t<60), px>1) + all(t>0, (x>1)*(x<2))"``
-  
-  | **Syntax 3:** ``select=selection`` where ``selection`` is a list of particle IDs to be selected.
-  | The selection can be obtained from a previous diagnostic using:
-  | ``Smilei.TrackParticles( ... ).selectedParticles``
+.. rubric:: Detailed explanation of the ``select`` parameter
+
+| Say ``times`` is a condition on timesteps ``t``, for instance ``t>50``.
+| Say ``condition`` is a condition on particles properties  (``x``, ``y``, ``z``, ``px``, ``py``, ``pz``), for instance ``px>0``.
+
+* **Syntax 1:** ``select="any(times, condition)"``
+   | Selects particles satisfying ``condition`` for at least one of the ``times``.
+   | For example, ``select="any(t>0, px>1.)"`` selects those reaching :math:`p_x>1` at some point.
+
+* **Syntax 2:** ``select="all(times, condition)"``
+   | Selects particles satisfying ``condition`` at all ``times``.
+   | For example, ``select="all(t<40, px<0.1)"`` selects those having :math:`p_x<0.1` until timestep 40.
+
+* **Syntax 3:** ``select=[ID1, ID2, ...]``
+   | Selects the provided particle IDs.
+
+* It is possible to make logical operations: ``+`` is *OR*; ``*`` is *AND*; ``~`` is *NOT*.
+   | For example, ``select="any((t>30)*(t<60), px>1) + all(t>0, (x>1)*(x<2))"``
+
+
 
 
 
@@ -299,9 +310,13 @@ It has three different syntaxes:
    
    This version combines the two previous ones.
 
-.. warning::
-  Changing units requires the `Pint module <https://pypi.python.org/pypi/Pint/>`_ .
+.. rubric:: Requirements for changing units
 
+* The `Pint module <https://pypi.python.org/pypi/Pint/>`_.
+* To obtain units in a non-normalized system (e.g. SI), the simulation must have the 
+  parameter :py:data:`referenceAngularFrequency_SI` set to a finite value. 
+  Otherwise, this parameter can be set during post-processing as an argument to the 
+  :py:class:`Smilei` class.
 
 ----
 
@@ -331,7 +346,7 @@ Obtain the data as an array
   * ``get()[myaxis]`` gives the locations of the axis bins. For instance ``get()["x"]``.
 
 
-  **Example**::
+**Example**::
     
     S = Smilei("path/to/my/results")
     Diag = S.ParticleDiagnostic(diagNumber=3, slice={"ekin":[1,10]})
@@ -361,24 +376,29 @@ at one given timestep.
   
   All these methods have the same arguments described below.
 
-.. py:function:: plot(figure=1, axes=None, vmin=None, vmax=None, xmin=None, xmax=None, \
-                      ymin=None, ymax=None, xfactor=None, yfactor=None, saveAs=None)
+.. py:function:: plot(timestep=None, saveAs=None, axes=None, **kwargs)
   
   | If the data is 1D, it is plotted as a **curve**.
   | If the data is 2D, it is plotted as a **map**.
   | If the data is 0D, it is plotted as a **curve** as function of time.
   
-  * ``figure``: The figure number that is passed to matplotlib.
-  * ``axes``: Matplotlib's axes handle on which to plot. If None, make new axes.
-  * ``vmin``, ``vmax``: data value limits.
-  * ``xmin``, ``xmax``, ``ymin``, ``ymax``: axes limits.
-  * ``xfactor``, ``yfactor``: factors to rescale axes.
+  * ``timestep``: The iteration number at which to plot the data.
   * ``saveAs``: name of a directory where to save each frame as figures.
     You can even specify a filename such as ``mydir/prefix.png`` and it will automatically
     make successive files showing the timestep: ``mydir/prefix0.png``, ``mydir/prefix1.png``,
     etc.
-
-  **Example**::
+  * ``axes``: Matplotlib's axes handle on which to plot. If None, make new axes.
+  
+  Other keyword-arguments (``kwargs``) include:
+  
+  * ``figure``: The figure number that is passed to matplotlib.
+  * ``vmin``, ``vmax``: data value limits.
+  * ``xmin``, ``xmax``, ``ymin``, ``ymax``: axes limits.
+  * ``xfactor``, ``yfactor``: factors to rescale axes.
+  * ``side``: "left" (by default) or "right" puts the y-axis on the left- or the right-hand-side.
+  * Many Matplotlib arguments listed in :ref:`advancedOptions`.
+    
+**Example**::
     
     S = Smilei("path/to/my/results")
     S.ParticleDiagnostic(1).plot(timestep=40, vmin=0, vmax=1e14)
@@ -400,13 +420,11 @@ are streaked to produce a 2D image where the second axis is time.
   
   All these methods have the same arguments described below.
 
-.. py:function:: streak(figure=1, axes=None, vmin=None, vmax=None, xmin=None, xmax=None, \
-                      ymin=None, ymax=None, xfactor=None, yfactor=None, \
-                      saveAs=None)
+.. py:function:: streak(saveAs=None, axes=None, **kwargs)
   
-  All arguments are identical to those of ``plot``.
+  All arguments are identical to those of ``plot``, with the exception of ``timestep``.
 
-  **Example**::
+**Example**::
     
     S = Smilei("path/to/my/results")
     S.ParticleDiagnostic(1).streak()
@@ -427,18 +445,16 @@ This third plotting method animates the data over time.
   
   All these methods have the same arguments described below.
 
-.. py:function:: animate(figure=1, axes=None, vmin=None, vmax=None, xmin=None, xmax=None, \
-                      ymin=None, ymax=None, xfactor=None, yfactor=None, \
-                      movie="", fps=10, dpi=100, saveAs=None)
+.. py:function:: animate(movie="", fps=15, dpi=200, saveAs=None, axes=None)
   
-  All arguments are identical to those of ``plot``, with the addition of:
+  All arguments are identical to those of ``streak``, with the addition of:
   
-  * ``movie``: name of a file to create a movie, such as ``"movie.avi"``
-     | If ``movie=""`` no movie is created.
+  * ``movie``: name of a file to create a movie, such as ``"movie.avi"`` or  ``"movie.gif"``.
+    If ``movie=""`` no movie is created.
   * ``fps``: number of frames per second (only if movie requested).
   * ``dpi``: number of dots per inch (only if movie requested).
 
-  **Example**::
+**Example**::
     
     S = Smilei("path/to/my/results")
     S.ParticleDiagnostic(1).animate()
@@ -448,23 +464,27 @@ This third plotting method animates the data over time.
 Simultaneous plotting of multiple diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: multiPlot(diag1, diag2, ... , figure=1, shape=None, movie="", \
-                           fps=15, dpi=200, saveAs=None, skipAnimation=False)
+.. py:function:: multiPlot(diag1, diag2, ... , **kwargs)
   
   * ``diag1``, ``diag2``, etc.
      | Diagnostics prepared by ``Scalar()``, ``Field()``, ``Probe()`` or ``ParticleDiagnostic()``
-  * ``figure``: The figure number that is passed to matplotlib.
-  * ``shape``: The arrangement of plots inside the figure.
-     | For instance, ``[2, 1]`` makes two plots stacked vertically, and ``[1, 2]`` makes two plots stacked horizontally. If absent, stacks plots vertically.
+
+  Keyword-arguments ``kwargs`` are:
+  
+  * ``figure``: The figure number that is passed to matplotlib (default is 1).
+  * ``shape``: The arrangement of plots inside the figure. For instance, ``[2, 1]``
+    makes two plots stacked vertically, and ``[1, 2]`` makes two plots stacked horizontally.
+    If absent, stacks plots vertically.
   * ``movie`` : filename to create a movie.
   * ``fps`` : frames per second for the movie.
   * ``dpi`` : resolution of the movie.
   * ``saveAs``: name of a directory where to save each frame as figures.
     You can even specify a filename such as ``mydir/prefix.png`` and it will automatically
     make successive files showing the timestep: ``mydir/prefix0.png``, ``mydir/prefix1.png``, etc.
-  * ``skipAnimation`` : True/False toggles going directly to the last frame.
+  * ``skipAnimation`` : if True, plots only the last frame.
+  * ``timesteps``: same as the ``timesteps`` argument of the :py:func:`plot` method.
   
-  **Example**::
+**Example**::
     
     S = Smilei("path/to/my/results")
     A = S.Probe(probeNumber=0, field="Ex")
@@ -476,6 +496,8 @@ Simultaneous plotting of multiple diagnostics
   This plots a probe and a particle diagnostic on the same figure, and makes an animation for all available timesteps.
 
 ----
+
+.. _advancedOptions:
 
 Advanced plotting options
 ^^^^^^^^^^^^^^^^^^^^^^^^^
