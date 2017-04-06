@@ -63,7 +63,6 @@ class Options(object):
 		self.vfactor = None
 		self.vmin    = None
 		self.vmax    = None
-		self.streakPlot = False
 		self.figure0 = {}
 		self.figure1 = {"facecolor":"w"}
 		self.axes = {}
@@ -72,51 +71,54 @@ class Options(object):
 		self.colorbar = {}
 		self.xtick = {"useOffset":False}
 		self.ytick = {"useOffset":False}
-		if "cmap" not in kwargs.keys(): kwargs.update({"cmap":"smilei"})
+		if "cmap" not in kwargs.keys(): kwargs["cmap"] = "smilei"
+		self.side = "left"
 		self.set(**kwargs)
 	
 	# Method to set optional plotting arguments
 	def set(self, **kwargs):
 		# First, we manage the main optional arguments
-		self.figure0.update({ "num":kwargs.pop("figure",self.figure) })
-		self.xfactor  = kwargs.pop("xfactor",self.xfactor  )
-		self.xmin     = kwargs.pop("xmin"   ,self.xmin  )
-		self.xmax     = kwargs.pop("xmax"   ,self.xmax  )
-		self.yfactor  = kwargs.pop("yfactor",self.yfactor  )
-		self.ymin     = kwargs.pop("ymin"   ,self.ymin  )
-		self.ymax     = kwargs.pop("ymax"   ,self.ymax  )
-		self.vfactor  = kwargs.pop("vfactor",self.vfactor  )
-		self.vmin     = kwargs.pop("vmin"   ,kwargs.pop("data_min",self.vmin))
-		self.vmax     = kwargs.pop("vmax"   ,kwargs.pop("data_max",self.vmax))
-		self.streakPlot    = kwargs.pop("streakPlot"   , self.streakPlot   )
+		self.figure0["num"] = kwargs.pop("figure", self.figure)
+		self.xfactor    = kwargs.pop("xfactor"    , self.xfactor  )
+		self.xmin       = kwargs.pop("xmin"       , self.xmin  )
+		self.xmax       = kwargs.pop("xmax"       , self.xmax  )
+		self.yfactor    = kwargs.pop("yfactor"    , self.yfactor  )
+		self.ymin       = kwargs.pop("ymin"       , self.ymin  )
+		self.ymax       = kwargs.pop("ymax"       , self.ymax  )
+		self.vfactor    = kwargs.pop("vfactor"    , self.vfactor  )
+		self.vmin       = kwargs.pop("vmin"       , self.vmin )
+		self.vmax       = kwargs.pop("vmax"       , self.vmax )
+		self.side       = kwargs.pop("side"       , self.side )
 		# Second, we manage all the other arguments that are directly the ones of matplotlib
 		for kwa, val in kwargs.items():
 			if kwa in ["figsize"]:
-				self.figure0.update({kwa:val})
+				self.figure0[kwa] = val
 			if kwa in ["dpi","facecolor","edgecolor"]:
-				self.figure1.update({kwa:val})
+				self.figure1[kwa] = val
 			if kwa in ["aspect","axis_bgcolor",
 					   "frame_on","position","title","visible","xlabel","xscale","xticklabels",
 					   "xticks","ylabel","yscale","yticklabels","yticks","zorder"]:
-				self.axes.update({kwa:val})
+				self.axes[kwa] = val
 			if kwa in ["color","dashes","drawstyle","fillstyle","label","linestyle",
 					   "linewidth","marker","markeredgecolor","markeredgewidth",
 					   "markerfacecolor","markerfacecoloralt","markersize","markevery",
 					   "visible","zorder"]:
-				self.plot.update({kwa:val})
+				self.plot[kwa] = val
 			if kwa in ["cmap","aspect","interpolation"]:
-				self.image.update({kwa:val})
+				self.image[kwa] = val
 			if kwa in ["orientation","fraction","pad","shrink","anchor","panchor",
 					   "extend","extendfrac","extendrect","spacing","ticks","format",
 					   "drawedges"]:
-				self.colorbar.update({kwa:val})
+				self.colorbar[kwa] = val
 			if kwa in ["style_x","scilimits_x","useOffset_x"]:
-				self.xtick.update({kwa[:-2]:val})
+				self.xtick[kwa] = val
 			if kwa in ["style_y","scilimits_y","useOffset_y"]:
-				self.ytick.update({kwa[:-2]:val})
+				self.ytick[kwa] = val
 		# special case: "aspect" is ambiguous because it exists for both imshow and colorbar
 		if "cbaspect" in kwargs:
-			self.colorbar.update({"aspect":kwargs["cbaspect"]})
+			self.colorbar["aspect"] = kwargs["cbaspect"]
+		if self.side=="right" and "pad" not in self.colorbar:
+			self.colorbar["pad"] = 0.15
 
 
 class Units(object):
@@ -305,26 +307,31 @@ class SaveAs:
 		#		print("         Supported formats: "+",".join(supportedTypes.keys()))
 		#		self.prefix = False
 	
-	def frame(self, id):
+	def frame(self, id=None):
 		if self.prefix:
-			self.figure.savefig(self.prefix + "%010d"%int(id) + self.suffix)
+			if id: self.figure.savefig(self.prefix + "%010d"%int(id) + self.suffix)
+			else : self.figure.savefig(self.prefix + self.suffix)
 
 
 
 def multiPlot(*Diags, **kwargs):
-	""" multiplot(Diag1, Diag2, ..., shape=None, movie="", fps=15, dpi=200, saveAs=None)
+	""" multiplot(Diag1, Diag2, ...,
+	              shape=None,
+	              movie="", fps=15, dpi=200, saveAs=None,
+	              skipAnimation=False
+	              )
 	
 	Plots simultaneously several diagnostics.
 	
 	Parameters:
 	-----------
 	Diag1, Diag2, ... : Several objects of classes 'Scalar', 'Field', 'Probe' or 'ParticleDiagnostic'
-	shape : 2D list giving the number of figures in x and y.
-	movie : filename to create a movie.
+	shape : 2-element list giving the number of figures in x and y.
+	movie : filename to create a movie, e.g. "my/path/mov.avi" or "my/path/mov.gif"
 	fps : frames per second for the movie.
 	dpi : resolution of the movie.
-	saveAs : path where to store individual frames as pictures.
-	skipAnimation : toggle going directly to the last frame.
+	saveAs : path where to store individual frames as pictures, e.g. "my/path/fig.png"
+	skipAnimation : if True, plots only the last frame.
 	"""
 	
 	from _Diagnostics import TrackParticles
@@ -343,25 +350,27 @@ def multiPlot(*Diags, **kwargs):
 	dpi    = kwargs.pop("dpi"   , 200 )
 	saveAs = kwargs.pop("saveAs", None)
 	skipAnimation = kwargs.pop("skipAnimation", False )
+	timesteps = kwargs.pop("timesteps", False )
 	# Gather all times
-	if skipAnimation:
-		alltimes = np.unique([Diag.times[-1]*Diag.timestep for Diag in Diags])
-	else:
-		alltimes = np.unique(np.concatenate([Diag.times*Diag.timestep for Diag in Diags]))
+	alltimes = []
+	for Diag in Diags:
+		diagtimes = Diag.times
+		if timesteps:
+			diagtimes = Diag._selectTimesteps(timesteps, diagtimes)
+		diagtimes = list( diagtimes*Diag.timestep )
+		if skipAnimation: alltimes += [diagtimes[-1]]
+		else            : alltimes += diagtimes
+	alltimes = np.sort(np.unique(alltimes))
 	# Determine whether to plot all cases on the same axes
 	sameAxes = False
 	if shape is None or shape == [1,1]:
 		sameAxes = True
-		for Diag in Diags:
-			if type(Diag) is TrackParticles:
+		if any( [type(d) is TrackParticles for d in Diags] ):
+			sameAxes = False
+		elif all([d._type==Diags[0]._type and d.dim==Diags[0].dim for d in Diags]):
+			if Diags[0].dim > 1:
 				sameAxes = False
-				break
-			if Diag.dim==0 and Diags[0].dim==0:
-				continue
-			if Diag.dim!=1 or Diag._type != Diags[0]._type:
-				sameAxes = False
-				break
-	if not sameAxes and shape == [1,1]:
+	if not sameAxes and shape == [1,1] and nDiags>1:
 		print("Cannot have shape=[1,1] with these diagnostics")
 		return
 	# Determine the shape
@@ -385,9 +394,18 @@ def multiPlot(*Diags, **kwargs):
 	c = plt.matplotlib.rcParams['axes.color_cycle']
 	for i in range(nplots):
 		ax.append( fig.add_subplot(shape[0], shape[1], i+1) )
+	allright = all([d.options.side=="right" for d in Diags])
 	for i, Diag in enumerate(Diags):
 		if sameAxes: Diag._ax = ax[0]
 		else       : Diag._ax = ax[i]
+		if Diag.options.side == "right":
+			if sameAxes and not allright:
+				try   : Diag._ax.twin # check if twin exists
+				except: Diag._ax.twin = Diag._ax.twinx()
+				Diag._ax = Diag._ax.twin
+			else:
+				Diag._ax.yaxis.tick_right()
+				Diag._ax.yaxis.set_label_position("right")
 		Diag._artist = None
 		try:
 			l = Diag.limits()[0]
