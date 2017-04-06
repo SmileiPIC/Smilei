@@ -36,7 +36,7 @@ public:
             for (unsigned int ii=0;ii<2;ii++) {
                 // silver-muller (injecting/absorbing bcs)
                 if ( params.bc_em_type_x[ii] == "silver-muller" ) {
-                    emBoundCond[ii] = new ElectroMagnBC1D_SM(params, patch);
+                    emBoundCond[ii] = new ElectroMagnBC1D_SM(params, patch, ii);
                 }
                 // reflective bcs
                 else if ( params.bc_em_type_x[ii] == "reflective" ) {

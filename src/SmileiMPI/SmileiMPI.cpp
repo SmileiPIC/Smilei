@@ -714,10 +714,8 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
              
              if (dynamic_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]) ) {
                  ElectroMagnBC1D_SM* embc = static_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]);
-                 MPI_Isend( &(embc->Bz_xvalmin), 1, MPI_DOUBLE, to, mpi_tag+tag, MPI_COMM_WORLD, &requests[tag] ); tag++;
-                 MPI_Isend( &(embc->Bz_xvalmax), 1, MPI_DOUBLE, to, mpi_tag+tag, MPI_COMM_WORLD, &requests[tag] ); tag++;
-                 MPI_Isend( &(embc->By_xvalmin), 1, MPI_DOUBLE, to, mpi_tag+tag, MPI_COMM_WORLD, &requests[tag] ); tag++;
-                 MPI_Isend( &(embc->By_xvalmax), 1, MPI_DOUBLE, to, mpi_tag+tag, MPI_COMM_WORLD, &requests[tag] ); tag++;
+                 MPI_Isend( &(embc->By_val), 1, MPI_DOUBLE, to, mpi_tag+tag, MPI_COMM_WORLD, &requests[tag] ); tag++;
+                 MPI_Isend( &(embc->Bz_val), 1, MPI_DOUBLE, to, mpi_tag+tag, MPI_COMM_WORLD, &requests[tag] ); tag++;
              }
              else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]) ) {
                  // BCs at the x-border
@@ -788,10 +786,8 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
             if (dynamic_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]) ) {
                 ElectroMagnBC1D_SM* embc = static_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]);
                 MPI_Status status;
-                MPI_Recv( &(embc->Bz_xvalmin), 1, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status ); tag++;
-                MPI_Recv( &(embc->Bz_xvalmax), 1, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status ); tag++;
-                MPI_Recv( &(embc->By_xvalmin), 1, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status ); tag++;
-                MPI_Recv( &(embc->By_xvalmax), 1, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status ); tag++;
+                MPI_Recv( &(embc->By_val), 1, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status ); tag++;
+                MPI_Recv( &(embc->Bz_val), 1, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status ); tag++;
             }
             else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]) ) {
                 // BCs at the x-border
