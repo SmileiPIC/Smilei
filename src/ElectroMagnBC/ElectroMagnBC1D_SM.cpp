@@ -13,7 +13,7 @@
 
 using namespace std;
 
-ElectroMagnBC1D_SM::ElectroMagnBC1D_SM( Params &params, Patch* patch )
+ElectroMagnBC1D_SM::ElectroMagnBC1D_SM( Params &params, Patch* patch, unsigned int _min_max )
   : ElectroMagnBC( params, patch )
 {
     // number of nodes of the primal-grid
@@ -31,11 +31,13 @@ ElectroMagnBC1D_SM::ElectroMagnBC1D_SM( Params &params, Patch* patch )
     Beta_SM  = (dt_ov_dx-1.)/(1.+dt_ov_dx);
     Gamma_SM = 4./(1.+dt_ov_dx);
     
+    By_val = 0.;
+    Bz_val = 0.;
     
-    Bz_xvalmin = 0.;
-    Bz_xvalmax = 0.;
-    By_xvalmin = 0.;
-    By_xvalmax = 0.;
+    min_max=_min_max;
+    
+    if (min_max>1) ERROR("This shold not happend");
+    
 }
 
 ElectroMagnBC1D_SM::~ElectroMagnBC1D_SM()
@@ -47,14 +49,13 @@ void ElectroMagnBC1D_SM::save_fields_BC1D(Field* my_field) {
     // Bx^(p) is not saved as it is defined on the primal grid and thus can be computed
     // we save only the field By and Bz that are computed on the dual grid
     
+    double val = (min_max==0 ? 0 :field1D->dims()[0]-1);
+
     if (field1D->name=="By"){
-        By_xvalmin=(*field1D)(0);
-        By_xvalmax=(*field1D)(field1D->dims()[0]-1);
+        By_val = val;
     }
-    
-    if (field1D->name=="Bz"){
-        Bz_xvalmin=(*field1D)(0);
-        Bz_xvalmax=(*field1D)(field1D->dims()[0]-1);
+    else if (field1D->name=="Bz"){
+        By_val = val;
     }
 
 }
@@ -84,8 +85,8 @@ void ElectroMagnBC1D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
         }
         
         // Apply Silver-Mueller EM boundary condition at x=xmin
-        (*By1D)(0) =  Alpha_SM*(*Ez1D)(0) + Beta_SM*((*By1D)(1)-By_xvalmin) + Gamma_SM*byL+By_xvalmin;
-        (*Bz1D)(0) = -Alpha_SM*(*Ey1D)(0) + Beta_SM*((*Bz1D)(1)-Bz_xvalmin) + Gamma_SM*bzL+Bz_xvalmin;
+        (*By1D)(0) =  Alpha_SM*(*Ez1D)(0) + Beta_SM*((*By1D)(1)-By_val) + Gamma_SM*byL+By_val;
+        (*Bz1D)(0) = -Alpha_SM*(*Ey1D)(0) + Beta_SM*((*Bz1D)(1)-Bz_val) + Gamma_SM*bzL+Bz_val;
         
     }//if Xmin
 
@@ -113,8 +114,8 @@ void ElectroMagnBC1D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
         }
     
         // Silver-Mueller boundary conditions (right)
-        (*By1D)(nx_d-1) = -Alpha_SM*(*Ez1D)(nx_p-1)+ Beta_SM*((*By1D)(nx_d-2)-By_xvalmax) + Gamma_SM*byR+By_xvalmax;
-        (*Bz1D)(nx_d-1) =  Alpha_SM*(*Ey1D)(nx_p-1)+ Beta_SM*((*Bz1D)(nx_d-2)-Bz_xvalmax) + Gamma_SM*bzR+Bz_xvalmax;
+        (*By1D)(nx_d-1) = -Alpha_SM*(*Ez1D)(nx_p-1)+ Beta_SM*((*By1D)(nx_d-2)-By_val) + Gamma_SM*byR+By_val;
+        (*Bz1D)(nx_d-1) =  Alpha_SM*(*Ey1D)(nx_p-1)+ Beta_SM*((*Bz1D)(nx_d-2)-Bz_val) + Gamma_SM*bzR+Bz_val;
     }//if Xmax
     
 }

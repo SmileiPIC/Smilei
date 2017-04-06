@@ -9,7 +9,7 @@ class ElectroMagn;
 
 class ElectroMagnBC1D_SM : public ElectroMagnBC {
 public:
-    ElectroMagnBC1D_SM( Params &param, Patch* patch );
+    ElectroMagnBC1D_SM( Params &param, Patch* patch, unsigned int Zmin_max );
     ~ElectroMagnBC1D_SM();
     
     virtual void apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch);
@@ -21,7 +21,7 @@ public:
 
    virtual void save_fields_BC1D(Field*);
 
-   double Bz_xvalmin,Bz_xvalmax,By_xvalmin,By_xvalmax;
+   double By_val, Bz_val;
    
  private:
     
@@ -50,6 +50,8 @@ public:
     //! Constant used for the Silver-Mueller boundary conditions
     double Gamma_SM;
     
+    // cell to which this BC is applied
+    unsigned int min_max;
     
 };
 
