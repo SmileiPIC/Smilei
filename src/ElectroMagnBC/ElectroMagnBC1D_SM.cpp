@@ -49,7 +49,7 @@ void ElectroMagnBC1D_SM::save_fields_BC1D(Field* my_field) {
     // Bx^(p) is not saved as it is defined on the primal grid and thus can be computed
     // we save only the field By and Bz that are computed on the dual grid
     
-    double val = (min_max==0 ? 0 :field1D->dims()[0]-1);
+    double val = (*my_field)(min_max==0 ? 0 :field1D->dims()[0]-1);
 
     if (field1D->name=="By"){
         By_val = val;
