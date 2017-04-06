@@ -428,6 +428,18 @@ class Diagnostic(object):
 			self._tmpdata = self._np.zeros(self.times.size)
 			for i, t in enumerate(self.times):
 				self._tmpdata[i] = self._getDataAtTime(t)
+		# prepare the colormap if 2d plot
+		if self.dim == 2 and self.options.transparent:
+			cmap = self.options.image["cmap"]
+			if type(cmap)==str: cmap = self._plt.matplotlib.cm.get_cmap(cmap)
+			d = cmap._segmentdata
+			new_cmap = self._plt.matplotlib.colors.LinearSegmentedColormap("tmp_cmap", cmap._segmentdata, N=256, gamma=1.0)
+			if self.options.transparent in ["both", "under"]:
+				new_cmap.set_under(color="white", alpha="0")
+			if self.options.transparent in ["both", "over"]:
+				new_cmap.set_over (color="white", alpha="0")
+			self.options.image["cmap"] = new_cmap
+			
 	def _prepare4(self): pass
 	
 	# Method to set limits to a plot
@@ -438,7 +450,7 @@ class Diagnostic(object):
 		if ymax is not None: ax.set_ylim(ymax=ymax)
 	
 	# Methods to plot the data when axes are made
-	def _animateOnAxes_0D(self, ax, t):
+	def _animateOnAxes_0D(self, ax, t, cax_id=0):
 		times = self.times[self.times<=t]
 		A     = self._tmpdata[self.times<=t]
 		im, = ax.plot(self._tfactor*times, self._vfactor*A, **self.options.plot)
@@ -446,7 +458,7 @@ class Diagnostic(object):
 		self._setLimits(ax, xmax=self._tfactor*self.times[-1], ymin=self.options.vmin, ymax=self.options.vmax)
 		self._setSomeOptions(ax, t)
 		return im
-	def _animateOnAxes_1D(self, ax, t):
+	def _animateOnAxes_1D(self, ax, t, cax_id=0):
 		A = self._getDataAtTime(t)
 		im, = ax.plot(self._xfactor*self._centers[0], self._vfactor*A, **self.options.plot)
 		if self._log[0]: ax.set_xscale("log")
@@ -454,17 +466,19 @@ class Diagnostic(object):
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.vmin, ymax=self.options.vmax)
 		self._setSomeOptions(ax, t)
 		return im
-	def _animateOnAxes_2D(self, ax, t):
+	def _animateOnAxes_2D(self, ax, t, cax_id=0):
 		A = self._getDataAtTime(t)
 		im = self._animateOnAxes_2D_(ax, self._vfactor*A)
 		ax.set_xlabel(self._xlabel)
 		ax.set_ylabel(self._ylabel)
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
+		try: ax.cax
+		except: ax.cax = {}
 		try: # if colorbar exists
-			ax.cax.cla()
-			ax.figure.colorbar(mappable=im, cax=ax.cax)
-		except AttributeError:
-			ax.cax = ax.figure.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
+			ax.cax[cax_id].cla()
+			ax.figure.colorbar(mappable=im, cax=ax.cax[cax_id])
+		except:
+			ax.cax[cax_id] = ax.figure.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
 		self._setSomeOptions(ax, t)
 		return im
 	
