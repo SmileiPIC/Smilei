@@ -92,6 +92,7 @@ class Diagnostic(object):
 	# Method to set optional plotting arguments
 	def set(self, **kwargs):
 		self.options.set(**kwargs)
+		return self
 	
 	# Method to obtain the plot limits
 	def limits(self):
@@ -162,7 +163,11 @@ class Diagnostic(object):
 			fig = self._plt.figure(**self.options.figure0)
 			fig.set(**self.options.figure1)
 			fig.clf()
-			return fig.add_subplot(1,1,1)
+			ax = fig.add_subplot(1,1,1)
+			if self.options.side == "right":
+				ax.yaxis.tick_right()
+				ax.yaxis.set_label_position("right")
+			return ax
 		else:
 			return axes
 	
@@ -199,6 +204,7 @@ class Diagnostic(object):
 		self.set(**kwargs)
 		self.info()
 		ax = self._make_axes(axes, **kwargs)
+		fig = ax.figure
 		
 		if timestep is None:
 			timestep = self.times[-1]
@@ -206,9 +212,11 @@ class Diagnostic(object):
 			print("ERROR: timestep "+str(timestep)+" not available")
 			return
 		
+		save = SaveAs(saveAs, fig, self._plt)
 		self._animateOnAxes(ax, timestep)
 		self._plt.draw()
 		self._plt.pause(0.00001)
+		save.frame()
 		return
 	
 	def streak(self, saveAs=None, axes=None, **kwargs):
@@ -242,6 +250,7 @@ class Diagnostic(object):
 		self.set(**kwargs)
 		self.info()
 		ax = self._make_axes(axes, **kwargs)
+		fig = ax.figure
 		
 		if len(self.times) < 2:
 			print("ERROR: a streak plot requires at least 2 times")
@@ -279,6 +288,10 @@ class Diagnostic(object):
 		self._setSomeOptions(ax)
 		self._plt.draw()
 		self._plt.pause(0.00001)
+		
+		# Save?
+		save = SaveAs(saveAs, fig, self._plt)
+		save.frame()
 	
 	def animate(self, movie="", fps=15, dpi=200, saveAs=None, axes=None, **kwargs):
 		""" Animates the diagnostic over all its timesteps.
@@ -449,9 +462,9 @@ class Diagnostic(object):
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
 		try: # if colorbar exists
 			ax.cax.cla()
-			self._plt.colorbar(mappable=im, cax=ax.cax, **self.options.colorbar)
+			ax.figure.colorbar(mappable=im, cax=ax.cax)
 		except AttributeError:
-			ax.cax = self._plt.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
+			ax.cax = ax.figure.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
 		self._setSomeOptions(ax, t)
 		return im
 	
@@ -466,7 +479,7 @@ class Diagnostic(object):
 	def _setSomeOptions(self, ax, t=None):
 		title = []
 		if self._vlabel: title += [self._vlabel]
-		if t is not None: title += ["t = "+str(t)]
+		if t is not None: title += ["t = "+str(t*self.timestep)]
 		ax.set_title("  ".join(title))
 		ax.set(**self.options.axes)
 		try:
