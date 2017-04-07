@@ -645,30 +645,28 @@ void SmileiMPI::isend(std::vector<int>* vec, int to, int tag, MPI_Request& reque
 {
     MPI_Isend( &((*vec)[0]), (*vec).size(), MPI_INT, to, tag, MPI_COMM_WORLD, &request );
 
-} // End isend ( bmax )
-
+} // End isend
 
 void SmileiMPI::recv(std::vector<int> *vec, int from, int tag)
 {
     MPI_Status status;
     MPI_Recv( &((*vec)[0]), vec->size(), MPI_INT, from, tag, MPI_COMM_WORLD, &status );
 
-} // End recv ( bmax )
+} // End recv
 
 // Assuming vec.size() is known (number of species). Asynchronous.
 void SmileiMPI::isend(std::vector<double>* vec, int to, int tag, MPI_Request& request)
 {
     MPI_Isend( &((*vec)[0]), (*vec).size(), MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
 
-} // End isend ( bmax )
-
+} // End isend
 
 void SmileiMPI::recv(std::vector<double> *vec, int from, int tag)
 {
     MPI_Status status;
     MPI_Recv( &((*vec)[0]), vec->size(), MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
 
-} // End recv ( bmax )
+} // End recv
 
 
 void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& requests, int mpi_tag )
@@ -730,10 +728,10 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
                 ElectroMagnBC3D_SM* embc = static_cast<ElectroMagnBC3D_SM*>(EM->emBoundCond[bcId]);
 
                  // BCs at the border
-                isend( embc->Bx_val, to, mpi_tag+tag, requests[tag]); tag++;
-                isend( embc->By_val, to, mpi_tag+tag, requests[tag]); tag++;
-                isend( embc->Bz_val, to, mpi_tag+tag, requests[tag]); tag++;
-                 
+                 if (embc->Bx_val) { isend( embc->Bx_val, to, mpi_tag+tag, requests[tag]); tag++;}
+                 if (embc->By_val) { isend( embc->By_val, to, mpi_tag+tag, requests[tag]); tag++;}
+                 if (embc->Bz_val) { isend( embc->Bz_val, to, mpi_tag+tag, requests[tag]); tag++;}
+        
              }
          }
 
@@ -801,9 +799,9 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
                 recv( EM->Bz_ , from, tag ); tag++;
 
                  // BCs at the border
-                recv( embc->Bx_val, from, tag); tag++;
-                recv( embc->By_val, from, tag); tag++;
-                recv( embc->Bz_val, from, tag); tag++;
+                 if (embc->Bx_val) { recv( embc->Bx_val, from, tag); tag++;}
+                 if (embc->By_val) { recv( embc->By_val, from, tag); tag++;}
+                 if (embc->Bz_val) { recv( embc->Bz_val, from, tag); tag++;}
 
              }
         }

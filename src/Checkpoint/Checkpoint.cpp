@@ -299,9 +299,9 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
 
                 hid_t gid = H5::group(patch_gid, groupName);
 
-                dumpFieldsPerProc(gid, embc->Bx_val );
-                dumpFieldsPerProc(gid, embc->By_val );
-                dumpFieldsPerProc(gid, embc->Bz_val );
+                if (embc->Bx_val) dumpFieldsPerProc(gid, embc->Bx_val );
+                if (embc->By_val) dumpFieldsPerProc(gid, embc->By_val );
+                if (embc->Bz_val) dumpFieldsPerProc(gid, embc->Bz_val );
                                        
                 H5Gclose(gid);
             }
@@ -530,9 +530,9 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
                 string groupName="EM_boundary-species-"+name.str();
                 hid_t gid = H5Gopen(patch_gid, groupName.c_str(),H5P_DEFAULT);
     
-                restartFieldsPerProc(gid, embc->Bx_val );
-                restartFieldsPerProc(gid, embc->By_val );
-                restartFieldsPerProc(gid, embc->Bz_val );
+                if (embc->Bx_val) restartFieldsPerProc(gid, embc->Bx_val );
+                if (embc->By_val) restartFieldsPerProc(gid, embc->By_val );
+                if (embc->Bz_val) restartFieldsPerProc(gid, embc->Bz_val );
                 H5Gclose(gid);
             }
         }

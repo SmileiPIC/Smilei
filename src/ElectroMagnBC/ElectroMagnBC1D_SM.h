@@ -14,7 +14,7 @@ public:
     
     void apply(ElectroMagn* EMfields, double time_dual, Patch* patch) override;
 
-    void save_fields(Field*) override;
+    void save_fields(Field*, Patch* patch) override;
 
     double By_val, Bz_val;
     

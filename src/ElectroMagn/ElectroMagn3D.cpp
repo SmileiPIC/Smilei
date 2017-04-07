@@ -691,7 +691,7 @@ void ElectroMagn3D::applyExternalField(Field* my_field,  Profile *profile, Patch
     }
     
     for (auto& embc: emBoundCond) {
-        if (embc) embc->save_fields(my_field);
+        if (embc) embc->save_fields(my_field, patch);
     }
 }
 
