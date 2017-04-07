@@ -273,7 +273,9 @@ public:
     static Species* clone(Species* species, Params &params, Patch* patch, bool with_particles = true) {
         // Create new species object
         Species * newSpecies = NULL;
-        if (species->dynamics_type=="norm") {
+        if (species->dynamics_type=="norm" 
+           || species->dynamics_type=="higueracary"
+           || species->dynamics_type=="borisnr") {
             newSpecies = new Species_norm(params, patch); // Boris
         } else if (species->dynamics_type=="rrll") {
             newSpecies = new Species_rrll(params, patch); // Boris + Radiation Reaction
