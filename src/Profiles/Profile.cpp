@@ -201,7 +201,7 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
             {
                 uses_numpy = true;
             } else {
-                WARNING("Profile `"<<name<<"`: does not seem to accept numpy arrays (and will be slow)");
+                DEBUG("Profile `"<<name<<"`: does not seem to accept numpy arrays (and will be slow)");
             }
             if(ret) Py_DECREF(ret);
         }

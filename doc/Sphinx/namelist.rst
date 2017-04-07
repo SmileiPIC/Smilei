@@ -489,8 +489,8 @@ Each species has to be defined in a ``Species`` block::
 .. py:data:: track_filter
   
   A python function giving some condition on which particles are tracked.
-  If none provided, all particles are tracked. No particles are tracked if ``track_every``
-  is kept at ``0``. To use this option, the `numpy package <http://www.numpy.org/>`_ must
+  If none provided, all particles are tracked.
+  To use this option, the `numpy package <http://www.numpy.org/>`_ must
   be available in your python installation.
   
   The function must have the arguments 
@@ -814,9 +814,7 @@ profiles.
 
 ..
 
-  Any *python* function can be a profile. You must have basic *python* knowledge to build these functions.
-  
-  Examples::
+  Any *python* function can be a profile. Examples::
   
     def f(x):
         if x<1.: return 0.
@@ -824,14 +822,14 @@ profiles.
   
   .. code-block:: python
   
+    import math
     def f(x,y):    # two variables for 2D simulation
-        import math
         twoPI = 2.* math.pi
         return math.cos(  twoPI * x/3.2 )
   
   .. code-block:: python
     
-    f = lambda x: x**2 - 1
+    f = lambda x: x**2 - 1.
   
   
   
@@ -841,7 +839,14 @@ profiles.
     Species( ... , charge = f, ... )
     
     Species( ... , mean_velocity = [f, 0, 0], ... )
-  
+
+
+.. note:: It is possible, for higher performances, to create functions with
+  arguments *(x, y, etc.)* that are actually *numpy* arrays. If the function returns
+  a *numpy* array of the same size, it will automatically be considered as a profile
+  acting on arrays instead of single floats. Currently, this feature is only available
+  on Species' profiles.
+
 
 .. rubric:: 3. Pre-defined *spatial* profiles
 
