@@ -421,6 +421,9 @@ class Diagnostic(object):
 		if self.units.vname: self._vlabel += " (" + self.units.vname + ")"
 		if self._title     : self._vlabel = self._title + self._vlabel
 		if self._data_log  : self._vlabel = "Log[ "+self._vlabel+" ]"
+		if self.dim==1:
+			self._ylabel = self._vlabel
+			self._vlabel = ""
 		return True
 	def _prepare3(self):
 		# prepare temporary data if zero-d plot
@@ -463,6 +466,7 @@ class Diagnostic(object):
 		im, = ax.plot(self._xfactor*self._centers[0], self._vfactor*A, **self.options.plot)
 		if self._log[0]: ax.set_xscale("log")
 		ax.set_xlabel(self._xlabel)
+		ax.set_ylabel(self._ylabel)
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.vmin, ymax=self.options.vmax)
 		self._setSomeOptions(ax, t)
 		return im
