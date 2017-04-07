@@ -157,7 +157,7 @@ public:
     void sort_part();
     void count_sort_part(Params& param);
     
-    void updateMvWinLimits(double x_moved);
+    //void updateMvWinLimits(double x_moved);
     
     //! Vector containing all Particles of the considered Species
     Particles *particles;
