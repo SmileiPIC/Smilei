@@ -233,6 +233,8 @@ def polynomial(**kwargs):
             x0 = a
         elif k=="y0":
             y0 = a
+        elif k=="z0":
+            z0 = a
         elif k[:5]=="order":
             if type(a) is not list: a = [a]
             order = int(k[5:])
@@ -269,7 +271,7 @@ def polynomial(**kwargs):
                 while currentOrder<order:
                     currentOrder += 1
                     yy = xx[-1]*yy0
-                    xx = [ xxx * xx0 for xxx in xx ] . append(yy)
+                    xx = [ xxx * xx0 for xxx in xx ] + [yy]
                 for i in range(order+1): r += c[i]*xx[i]
             return r
     elif Main.geometry=="3d3v":
@@ -284,9 +286,9 @@ def polynomial(**kwargs):
                 while currentOrder<order:
                     currentOrder += 1
                     zz = xx[-1]*zz0
-                    yy = [ xxx * yy0 for xxx in xx[-currentOrder-1:] ] . append(zz)
-                    xx = [ xxx * xx0 for xxx in xx ] . extend(yy)
-                for i in range(order+1): r += c[i]*xx[i]
+                    yy = [ xxx * yy0 for xxx in xx[-currentOrder-1:] ] + [zz]
+                    xx = [ xxx * xx0 for xxx in xx ] + yy
+                for i in range(len(c)): r += c[i]*xx[i]
             return r
     else:
         raise Exception("polynomial profiles are not available in this geometry yet")
