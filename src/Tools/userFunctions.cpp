@@ -261,11 +261,11 @@ void userFunctions::gauss_legendre_coef(double xmin,double xmax, double * x,
 
     // Checks
     if (nbit <= 0) ERROR("Number of iteration <= 0 in gauss_legendre_coef")
-    if (xmax < xmin) ERROR("xmax < xmin in gauss_legendre_coef")
-    if (eps <= 0) ERROR("accuracy threshold epsilon <= 0 in gauss_legendre_coef")
+        if (xmax < xmin) ERROR("xmax < xmin in gauss_legendre_coef")
+            if (eps <= 0) ERROR("accuracy threshold epsilon <= 0 in gauss_legendre_coef")
 
-    // The roots are symmetric, so we only find half of them.
-    m=(nbit+1)/2;
+                // The roots are symmetric, so we only find half of them.
+                m=(nbit+1)/2;
     xm=0.5*(xmin+xmax);
     xl=0.5*(xmax-xmin);
     for (i=1;i<=m;i++) { /* Loop over the desired roots. */

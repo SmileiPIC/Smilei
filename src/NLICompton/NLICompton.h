@@ -1,10 +1,11 @@
-/********************************************************************
-
- HEADER Nonlinear Inverse Compton Scattering
-
- This header contains the definition of the class NLICompton.
-
-********************************************************************/
+// ----------------------------------------------------------------------------
+//! \file NLICompton.h
+//
+//! \brief Nonlinear Inverse Compton Scattering
+//
+//! \details This header contains the definition of the class NLICompton.
+//
+// ----------------------------------------------------------------------------
 
 #ifndef NLICOMPTON_H
 #define NLICOMPTON_H
@@ -49,6 +50,8 @@ class NLICompton
     //! Generate table values for Integfochi
     void compute_integfochi(); 
 
+    //! Synchrotron emissivity from Ritus
+    double compute_sync_emissivity_ritus(double chie,double chiph, int nbit, double eps);
 };
 
 #endif
