@@ -684,12 +684,12 @@ void ElectroMagn3D::applyExternalField(Field* my_field,  Profile *profile, Patch
         }
         pos[0] += dx;
     }
-#ifdef _PATCH3D_TODO    
     if (emBoundCond[0]!=0) emBoundCond[0]->save_fields_BC3D_Long(my_field);
     if (emBoundCond[1]!=0) emBoundCond[1]->save_fields_BC3D_Long(my_field);
-    if (emBoundCond[2]!=0) emBoundCond[2]->save_fields_BC3D_Trans(my_field);
-    if (emBoundCond[3]!=0) emBoundCond[3]->save_fields_BC3D_Trans(my_field);
-#endif
+    if (emBoundCond[2]!=0) emBoundCond[2]->save_fields_BC3D_TransY(my_field);
+    if (emBoundCond[3]!=0) emBoundCond[3]->save_fields_BC3D_TransY(my_field);
+    if (emBoundCond[4]!=0) emBoundCond[2]->save_fields_BC3D_TransZ(my_field);
+    if (emBoundCond[5]!=0) emBoundCond[3]->save_fields_BC3D_TransZ(my_field);
 }
 
 
