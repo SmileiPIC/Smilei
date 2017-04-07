@@ -395,7 +395,8 @@ at one given timestep.
   * ``vmin``, ``vmax``: data value limits.
   * ``xmin``, ``xmax``, ``ymin``, ``ymax``: axes limits.
   * ``xfactor``, ``yfactor``: factors to rescale axes.
-  * ``side``: "left" (by default) or "right" puts the y-axis on the left- or the right-hand-side.
+  * ``side``: ``"left"`` (by default) or ``"right"`` puts the y-axis on the left- or the right-hand-side.
+  * ``transparent``: ``None`` (by default), ``"over"``, ``"under"`` or ``"both"`` makes the colormap transparent outside the requested boundary.
   * Many Matplotlib arguments listed in :ref:`advancedOptions`.
     
 **Example**::
@@ -466,9 +467,12 @@ Simultaneous plotting of multiple diagnostics
 
 .. py:function:: multiPlot(diag1, diag2, ... , **kwargs)
   
+  Makes an animated figure containing several plots (one for each diagnostic).
+  If all diagnostics are of similar type, they may be overlayed on only one plot.
+  
   * ``diag1``, ``diag2``, etc.
-     | Diagnostics prepared by ``Scalar()``, ``Field()``, ``Probe()`` or ``ParticleDiagnostic()``
-
+     | Diagnostics prepared by ``Scalar()``, ``Field()``, ``Probe()``, etc.
+  
   Keyword-arguments ``kwargs`` are:
   
   * ``figure``: The figure number that is passed to matplotlib (default is 1).
@@ -495,6 +499,7 @@ Simultaneous plotting of multiple diagnostics
 
   This plots a probe and a particle diagnostic on the same figure, and makes an animation for all available timesteps.
 
+
 ----
 
 .. _advancedOptions:
@@ -511,7 +516,7 @@ Options for the figure: ``figsize``, ``dpi``, ``facecolor``, ``edgecolor``
 Options for the axes frame: ``aspect``, ``axis_bgcolor``, ``frame_on``, ``position``, ``title``, ``visible``,
 ``xlabel``, ``xscale``, ``xticklabels``, ``xticks``, ``ylabel``, ``yscale``, ``yticklabels``, ``yticks``, ``zorder``
 
-    Please refer to `matplotlib's axes options <http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.set>`_.
+    Please refer to matplotlib's axes options: the same as functions starting with ``set_`` listed `here <http://matplotlib.org/api/axes_api.html>`_.
 
 Options for the lines: ``color``, ``dashes``, ``drawstyle``, ``fillstyle``, ``label``, ``linestyle``, ``linewidth``,
 ``marker``, ``markeredgecolor``, ``markeredgewidth``, ``markerfacecolor``, ``markerfacecoloralt``,
@@ -530,7 +535,7 @@ Options for the colorbar: ``cbaspect``, ``orientation``, ``fraction``, ``pad``, 
 
 Options for the tick labels: ``style_x``, ``scilimits_x``, ``useOffset_x``, ``style_y``, ``scilimits_y``, ``useOffset_y``
 
-    Please refer to `matplotlib's tick options <http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.ticklabel_format>`_.
+    Please refer to `matplotlib's tick label format <http://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.ticklabel_format.html>`_.
 
 
 **Example**:

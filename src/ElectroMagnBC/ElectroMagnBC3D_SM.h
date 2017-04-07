@@ -24,12 +24,12 @@ public:
     void apply(ElectroMagn* EMfields, double time_dual, Patch* patch) override;
     void save_fields(Field*) override;
 
-private:
+    //! Save external fields for silver muller EM Boundary condition
+    Field2D *Bz_xvalmin,  *Bz_xvalmax,  *By_xvalmin,  *By_xvalmax,  *Bx_xvalmin,  *Bx_xvalmax,
+        *Bz_yvalmin, *Bz_yvalmax, *By_yvalmin, *By_yvalmax, *Bx_yvalmin, *Bx_yvalmax,
+        *Bz_zvalmin, *Bz_zvalmax, *By_zvalmin, *By_zvalmax, *Bx_zvalmin, *Bx_zvalmax;
     
- 	//! Save external fields for silver muller EM Boundary condition
-     Field2D *Bz_xvalmin, *Bz_xvalmax, *By_xvalmin, *By_xvalmax, *Bx_xvalmin, *Bx_xvalmax,
-             *Bz_yvalmin, *Bz_yvalmax, *By_yvalmin, *By_yvalmax, *Bx_yvalmin, *Bx_yvalmax,
-             *Bz_zvalmin, *Bz_zvalmax, *By_zvalmin, *By_zvalmax, *Bx_zvalmin, *Bx_zvalmax;
+private:
     
     //! Conversion factor from degree to radian
     double conv_deg2rad;
