@@ -729,30 +729,11 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
              else if ( dynamic_cast<ElectroMagnBC3D_SM*>(EM->emBoundCond[bcId]) ) {
                 ElectroMagnBC3D_SM* embc = static_cast<ElectroMagnBC3D_SM*>(EM->emBoundCond[bcId]);
 
-                 // BCs at the x-border
-                isend( embc->Bx_xvalmin, to, mpi_tag+tag, requests[tag]); tag++;
-                isend( embc->Bx_xvalmax, to, mpi_tag+tag, requests[tag]); tag++;
-                isend( embc->By_xvalmin, to, mpi_tag+tag, requests[tag]); tag++;
-                isend( embc->By_xvalmax, to, mpi_tag+tag, requests[tag]); tag++;
-                isend( embc->Bz_xvalmin, to, mpi_tag+tag, requests[tag]); tag++;
-                isend( embc->Bz_xvalmax, to, mpi_tag+tag, requests[tag]); tag++;
-                                       
-                 // BCs at the y-border
-                isend( embc->Bx_yvalmin, to, mpi_tag+tag, requests[tag]); tag++;
-                isend( embc->Bx_yvalmax, to, mpi_tag+tag, requests[tag]); tag++;
-                isend( embc->By_yvalmin, to, mpi_tag+tag, requests[tag]); tag++;
-                isend( embc->By_yvalmax, to, mpi_tag+tag, requests[tag]); tag++;
-                isend( embc->Bz_yvalmin, to, mpi_tag+tag, requests[tag]); tag++;
-                isend( embc->Bz_yvalmax, to, mpi_tag+tag, requests[tag]); tag++;
-                                       
-                 // BCs at the z-border
-                isend( embc->Bx_zvalmin, to, mpi_tag+tag, requests[tag]); tag++;
-                isend( embc->Bx_zvalmax, to, mpi_tag+tag, requests[tag]); tag++;
-                isend( embc->By_zvalmin, to, mpi_tag+tag, requests[tag]); tag++;
-                isend( embc->By_zvalmax, to, mpi_tag+tag, requests[tag]); tag++;
-                isend( embc->Bz_zvalmin, to, mpi_tag+tag, requests[tag]); tag++;
-                isend( embc->Bz_zvalmax, to, mpi_tag+tag, requests[tag]); tag++;
-
+                 // BCs at the border
+                isend( embc->Bx_val, to, mpi_tag+tag, requests[tag]); tag++;
+                isend( embc->By_val, to, mpi_tag+tag, requests[tag]); tag++;
+                isend( embc->Bz_val, to, mpi_tag+tag, requests[tag]); tag++;
+                 
              }
          }
 
@@ -819,29 +800,10 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
 
                 recv( EM->Bz_ , from, tag ); tag++;
 
-                 // BCs at the x-border
-                recv( embc->Bx_xvalmin, from, tag); tag++;
-                recv( embc->Bx_xvalmax, from, tag); tag++;
-                recv( embc->By_xvalmin, from, tag); tag++;
-                recv( embc->By_xvalmax, from, tag); tag++;
-                recv( embc->Bz_xvalmin, from, tag); tag++;
-                recv( embc->Bz_xvalmax, from, tag); tag++;
-                                       
-                 // BCs at the y-border
-                recv( embc->Bx_yvalmin, from, tag); tag++;
-                recv( embc->Bx_yvalmax, from, tag); tag++;
-                recv( embc->By_yvalmin, from, tag); tag++;
-                recv( embc->By_yvalmax, from, tag); tag++;
-                recv( embc->Bz_yvalmin, from, tag); tag++;
-                recv( embc->Bz_yvalmax, from, tag); tag++;
-                                       
-                 // BCs at the z-border
-                recv( embc->Bx_zvalmin, from, tag); tag++;
-                recv( embc->Bx_zvalmax, from, tag); tag++;
-                recv( embc->By_zvalmin, from, tag); tag++;
-                recv( embc->By_zvalmax, from, tag); tag++;
-                recv( embc->Bz_zvalmin, from, tag); tag++;
-                recv( embc->Bz_zvalmax, from, tag); tag++;
+                 // BCs at the border
+                recv( embc->Bx_val, from, tag); tag++;
+                recv( embc->By_val, from, tag); tag++;
+                recv( embc->Bz_val, from, tag); tag++;
 
              }
         }

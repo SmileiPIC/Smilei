@@ -299,26 +299,10 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
 
                 hid_t gid = H5::group(patch_gid, groupName);
 
-                dumpFieldsPerProc(gid, embc->Bx_xvalmin );
-                dumpFieldsPerProc(gid, embc->Bx_xvalmax );
-                dumpFieldsPerProc(gid, embc->By_xvalmin );
-                dumpFieldsPerProc(gid, embc->By_xvalmax );
-                dumpFieldsPerProc(gid, embc->Bz_xvalmin );
-                dumpFieldsPerProc(gid, embc->Bz_xvalmax );
+                dumpFieldsPerProc(gid, embc->Bx_val );
+                dumpFieldsPerProc(gid, embc->By_val );
+                dumpFieldsPerProc(gid, embc->Bz_val );
                                        
-                dumpFieldsPerProc(gid, embc->Bx_yvalmin );
-                dumpFieldsPerProc(gid, embc->Bx_yvalmax );
-                dumpFieldsPerProc(gid, embc->By_yvalmin );
-                dumpFieldsPerProc(gid, embc->By_yvalmax );
-                dumpFieldsPerProc(gid, embc->Bz_yvalmin );
-                dumpFieldsPerProc(gid, embc->Bz_yvalmax );
-                                       
-                dumpFieldsPerProc(gid, embc->Bx_zvalmin );
-                dumpFieldsPerProc(gid, embc->Bx_zvalmax );
-                dumpFieldsPerProc(gid, embc->By_zvalmin );
-                dumpFieldsPerProc(gid, embc->By_zvalmax );
-                dumpFieldsPerProc(gid, embc->Bz_zvalmin );
-                dumpFieldsPerProc(gid, embc->Bz_zvalmax );
                 H5Gclose(gid);
             }
         }
@@ -546,26 +530,9 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
                 string groupName="EM_boundary-species-"+name.str();
                 hid_t gid = H5Gopen(patch_gid, groupName.c_str(),H5P_DEFAULT);
     
-                restartFieldsPerProc(gid, embc->Bx_xvalmin );
-                restartFieldsPerProc(gid, embc->Bx_xvalmax );
-                restartFieldsPerProc(gid, embc->By_xvalmin );
-                restartFieldsPerProc(gid, embc->By_xvalmax );
-                restartFieldsPerProc(gid, embc->Bz_xvalmin );
-                restartFieldsPerProc(gid, embc->Bz_xvalmax );
-                                          
-                restartFieldsPerProc(gid, embc->Bx_yvalmin );
-                restartFieldsPerProc(gid, embc->Bx_yvalmax );
-                restartFieldsPerProc(gid, embc->By_yvalmin );
-                restartFieldsPerProc(gid, embc->By_yvalmax );
-                restartFieldsPerProc(gid, embc->Bz_yvalmin );
-                restartFieldsPerProc(gid, embc->Bz_yvalmax );
-                                          
-                restartFieldsPerProc(gid, embc->Bx_zvalmin );
-                restartFieldsPerProc(gid, embc->Bx_zvalmax );
-                restartFieldsPerProc(gid, embc->By_zvalmin );
-                restartFieldsPerProc(gid, embc->By_zvalmax );
-                restartFieldsPerProc(gid, embc->Bz_zvalmin );
-                restartFieldsPerProc(gid, embc->Bz_zvalmax );
+                restartFieldsPerProc(gid, embc->Bx_val );
+                restartFieldsPerProc(gid, embc->By_val );
+                restartFieldsPerProc(gid, embc->Bz_val );
                 H5Gclose(gid);
             }
         }
