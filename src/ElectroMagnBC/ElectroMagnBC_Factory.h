@@ -40,7 +40,7 @@ public:
                 }
                 // reflective bcs
                 else if ( params.bc_em_type_x[ii] == "reflective" ) {
-                    emBoundCond[ii] = new ElectroMagnBC1D_refl(params, patch);
+                    emBoundCond[ii] = new ElectroMagnBC1D_refl(params, patch, ii);
                 }
                 // else: error
                 else if ( params.bc_em_type_x[ii] != "periodic" ) {
@@ -63,11 +63,11 @@ public:
                 // X DIRECTION
                 // silver-muller (injecting/absorbing bcs)
                 if ( params.bc_em_type_x[ii] == "silver-muller" ) {
-                    emBoundCond[ii] = new ElectroMagnBC2D_SM(params, patch);
+                    emBoundCond[ii] = new ElectroMagnBC2D_SM(params, patch, ii);
                 }
                 // reflective bcs
                 else if ( params.bc_em_type_x[ii] == "reflective" ) {
-                    emBoundCond[ii] = new ElectroMagnBC2D_refl(params, patch);
+                    emBoundCond[ii] = new ElectroMagnBC2D_refl(params, patch, ii);
                 }
                 // else: error
                 else if ( params.bc_em_type_x[ii] != "periodic" ) {
@@ -77,11 +77,11 @@ public:
                 // Y DIRECTION
                 // silver-muller bcs (injecting/absorbin)
                 if ( params.bc_em_type_y[ii] == "silver-muller" ) {
-                    emBoundCond[ii+2] = new ElectroMagnBC2D_SM(params, patch);
+                    emBoundCond[ii+2] = new ElectroMagnBC2D_SM(params, patch, 2+ii);
                 }
                 // reflective bcs
                 else if ( params.bc_em_type_y[ii] == "reflective" ) {
-                    emBoundCond[ii+2] = new ElectroMagnBC2D_refl(params, patch);
+                    emBoundCond[ii+2] = new ElectroMagnBC2D_refl(params, patch, 2+ii);
                 }
                 // else: error
                 else if ( params.bc_em_type_y[ii] != "periodic" ) {
@@ -103,7 +103,7 @@ public:
                 // X DIRECTION
                 // silver-muller (injecting/absorbing bcs)
                 if ( params.bc_em_type_x[ii] == "silver-muller" ) {
-                    emBoundCond[ii] = new ElectroMagnBC3D_SM(params, patch);
+                    emBoundCond[ii] = new ElectroMagnBC3D_SM(params, patch, ii);
                 }
                 // else: error
                 else if ( params.bc_em_type_x[ii] != "periodic" ) {
@@ -113,7 +113,7 @@ public:
                 // Y DIRECTION
                 // silver-muller bcs (injecting/absorbin)
                 if ( params.bc_em_type_y[ii] == "silver-muller" ) {
-                    emBoundCond[ii+2] = new ElectroMagnBC3D_SM(params, patch);
+                    emBoundCond[ii+2] = new ElectroMagnBC3D_SM(params, patch, 2+ii);
                 }
                 // else: error
                 else if ( params.bc_em_type_y[ii] != "periodic" ) {
@@ -123,7 +123,7 @@ public:
                 // Z DIRECTION
                 // silver-muller bcs (injecting/absorbin)
                 if ( params.bc_em_type_z[ii] == "silver-muller" ) {
-                    emBoundCond[ii+4] = new ElectroMagnBC3D_SM(params, patch);
+                    emBoundCond[ii+4] = new ElectroMagnBC3D_SM(params, patch, 4+ii);
                 }
                 // else: error
                 else if ( params.bc_em_type_z[ii] != "periodic" ) {

@@ -14,22 +14,16 @@ class Field;
 
 class ElectroMagnBC {
 public:
-    ElectroMagnBC( Params &params, Patch* patch );
+    ElectroMagnBC( Params &params, Patch* patch, unsigned int _min_max );
     virtual ~ElectroMagnBC();
     void clean();
     
-    virtual void apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch) = 0;
-    virtual void apply_xmax(ElectroMagn* EMfields, double time_dual, Patch* patch) = 0;
-    virtual void apply_ymin(ElectroMagn* EMfields, double time_dual, Patch* patch) = 0;
-    virtual void apply_ymax(ElectroMagn* EMfields, double time_dual, Patch* patch) = 0;
-    virtual void apply_zmin(ElectroMagn* EMfields, double time_dual, Patch* patch) = 0;
-    virtual void apply_zmax(ElectroMagn* EMfields, double time_dual, Patch* patch) = 0;
+    virtual void apply(ElectroMagn* EMfields, double time_dual, Patch* patch) = 0;
+
     void laserDisabled();
-    
-    virtual void save_fields_BC1D(Field*) {}
-    virtual void save_fields_BC2D_Long(Field*) {}
-    virtual void save_fields_BC2D_Trans(Field*) {}
-    
+
+    virtual void save_fields(Field*) {};
+
     //! Vector for the various lasers
     std::vector<Laser*> vecLaser;
     
@@ -37,6 +31,9 @@ protected:
 
     //! time-step
     double dt;
+
+    // side of BC is applied 0:xmin 1:xmax 2:ymin 3:ymax 4:zmin 5:zmax
+    unsigned int min_max;
 
 };
 

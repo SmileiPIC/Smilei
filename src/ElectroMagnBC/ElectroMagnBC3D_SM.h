@@ -18,26 +18,18 @@ class Field;
 class ElectroMagnBC3D_SM : public ElectroMagnBC {
 public:
 
-    ElectroMagnBC3D_SM( Params &params, Patch* patch );
+    ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned int _min_max );
     ~ElectroMagnBC3D_SM();
 
-    virtual void apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void apply_xmax(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void apply_ymin(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void apply_ymax(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void apply_zmin(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void apply_zmax(ElectroMagn* EMfields, double time_dual, Patch* patch);
+    void apply(ElectroMagn* EMfields, double time_dual, Patch* patch) override;
+    void save_fields(Field*) override;
 
 private:
     
-    virtual void save_fields_BC3D_Long(Field*);
-    virtual void save_fields_BC3D_TransY(Field*);
-    virtual void save_fields_BC3D_TransZ(Field*);
-
  	//! Save external fields for silver muller EM Boundary condition
-     Field2D *Bz_xvalmin,  *Bz_xvalmax,  *By_xvalmin,  *By_xvalmax,  *Bx_xvalmin,  *Bx_xvalmax,
-         *Bz_yvalmin, *Bz_yvalmax, *By_yvalmin, *By_yvalmax, *Bx_yvalmin, *Bx_yvalmax,
-         *Bz_zvalmin, *Bz_zvalmax, *By_zvalmin, *By_zvalmax, *Bx_zvalmin, *Bx_zvalmax;
+     Field2D *Bz_xvalmin, *Bz_xvalmax, *By_xvalmin, *By_xvalmax, *Bx_xvalmin, *Bx_xvalmax,
+             *Bz_yvalmin, *Bz_yvalmax, *By_yvalmin, *By_yvalmax, *Bx_yvalmin, *Bx_yvalmax,
+             *Bz_zvalmin, *Bz_zvalmax, *By_zvalmin, *By_zvalmax, *Bx_zvalmin, *Bx_zvalmax;
     
     //! Conversion factor from degree to radian
     double conv_deg2rad;

@@ -9,20 +9,16 @@ class ElectroMagn;
 
 class ElectroMagnBC1D_SM : public ElectroMagnBC {
 public:
-    ElectroMagnBC1D_SM( Params &param, Patch* patch, unsigned int Zmin_max );
+    ElectroMagnBC1D_SM( Params &param, Patch* patch, unsigned int _min_max );
     ~ElectroMagnBC1D_SM();
     
-    virtual void apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void apply_xmax(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void apply_ymin(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void apply_ymax(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void apply_zmin(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void apply_zmax(ElectroMagn* EMfields, double time_dual, Patch* patch);
+    void apply(ElectroMagn* EMfields, double time_dual, Patch* patch) override;
 
-   virtual void save_fields_BC1D(Field*);
+    void save_fields(Field*) override;
 
-   double By_val, Bz_val;
-   
+    double By_val, Bz_val;
+    
+
  private:
     
     //! Number of nodes on the primal grid
@@ -49,10 +45,7 @@ public:
     
     //! Constant used for the Silver-Mueller boundary conditions
     double Gamma_SM;
-    
-    // cell to which this BC is applied
-    unsigned int min_max;
-    
+        
 };
 
 #endif

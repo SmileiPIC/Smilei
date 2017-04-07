@@ -720,20 +720,9 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
              else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]) ) {
                  // BCs at the x-border
                  ElectroMagnBC2D_SM* embc = static_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]);
-                 isend(&embc->Bx_xvalmin_Long, to, mpi_tag+tag, requests[tag]); tag++;
-                 isend(&embc->Bx_xvalmax_Long, to, mpi_tag+tag, requests[tag]); tag++;
-                 isend(&embc->By_xvalmin_Long, to, mpi_tag+tag, requests[tag]); tag++;
-                 isend(&embc->By_xvalmax_Long, to, mpi_tag+tag, requests[tag]); tag++;
-                 isend(&embc->Bz_xvalmin_Long, to, mpi_tag+tag, requests[tag]); tag++;
-                 isend(&embc->Bz_xvalmax_Long, to, mpi_tag+tag, requests[tag]); tag++;
-     
-                 // BCs in the y-border
-                 isend(&embc->Bx_yvalmin_Trans, to, mpi_tag+tag, requests[tag]); tag++;
-                 isend(&embc->Bx_yvalmax_Trans, to, mpi_tag+tag, requests[tag]); tag++;
-                 isend(&embc->By_yvalmin_Trans, to, mpi_tag+tag, requests[tag]); tag++;
-                 isend(&embc->By_yvalmax_Trans, to, mpi_tag+tag, requests[tag]); tag++;
-                 isend(&embc->Bz_yvalmin_Trans, to, mpi_tag+tag, requests[tag]); tag++;
-                 isend(&embc->Bz_yvalmax_Trans, to, mpi_tag+tag, requests[tag]); tag++;
+                 isend(&embc->Bx_val, to, mpi_tag+tag, requests[tag]); tag++;
+                 isend(&embc->By_val, to, mpi_tag+tag, requests[tag]); tag++;
+                 isend(&embc->Bz_val, to, mpi_tag+tag, requests[tag]); tag++;
  
              }
          }
@@ -792,22 +781,9 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
             else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]) ) {
                 // BCs at the x-border
                 ElectroMagnBC2D_SM* embc = static_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]);
-                recv(&embc->Bx_xvalmin_Long, from, tag); tag++;
-                recv(&embc->Bx_xvalmax_Long, from, tag); tag++;
-                recv(&embc->By_xvalmin_Long, from, tag); tag++;
-                recv(&embc->By_xvalmax_Long, from, tag); tag++;
-                recv(&embc->Bz_xvalmin_Long, from, tag); tag++;
-                recv(&embc->Bz_xvalmax_Long, from, tag); tag++;
-                tag = tag+6;
-     
-                // BCs in the y-border
-                recv(&embc->Bx_yvalmin_Trans, from, tag); tag++;
-                recv(&embc->Bx_yvalmax_Trans, from, tag); tag++;
-                recv(&embc->By_yvalmin_Trans, from, tag); tag++;
-                recv(&embc->By_yvalmax_Trans, from, tag); tag++;
-                recv(&embc->Bz_yvalmin_Trans, from, tag); tag++;
-                recv(&embc->Bz_yvalmax_Trans, from, tag); tag++;
-                tag = tag+6;
+                recv(&embc->Bx_val, from, tag); tag++;
+                recv(&embc->By_val, from, tag); tag++;
+                recv(&embc->Bz_val, from, tag); tag++;
  
             }
         }
