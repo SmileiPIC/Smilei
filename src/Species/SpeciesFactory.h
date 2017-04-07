@@ -48,7 +48,7 @@ public:
              // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
              thisSpecies = new Species_rrll(params, patch);
         } else {
-            ERROR("For species `" << species_type << " dynamics_type must be either 'norm' or 'rrll'")
+            ERROR("For species `" << species_type << " dynamics_type must be 'norm', 'borisnr', 'higueracary' or 'rrll'")
         }
         
         thisSpecies->species_type = species_type;
