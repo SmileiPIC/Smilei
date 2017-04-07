@@ -29,6 +29,9 @@ public:
     virtual void save_fields_BC1D(Field*) {}
     virtual void save_fields_BC2D_Long(Field*) {}
     virtual void save_fields_BC2D_Trans(Field*) {}
+    virtual void save_fields_BC3D_Long(Field*) {}
+    virtual void save_fields_BC3D_TransY(Field*) {}
+    virtual void save_fields_BC3D_TransZ(Field*) {}
     
     //! Vector for the various lasers
     std::vector<Laser*> vecLaser;
