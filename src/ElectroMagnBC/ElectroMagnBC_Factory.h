@@ -22,14 +22,15 @@ public:
     static std::vector<ElectroMagnBC*> create(Params& params, Patch* patch) {
         
         std::vector<ElectroMagnBC*> emBoundCond;
+
+        // periodic (=NULL) boundary conditions
+        emBoundCond.resize(2*params.nDim_field, NULL);
         
         // -----------------
         // For 1d3v Geometry
         // -----------------
         if ( params.geometry == "1d3v" ) {
             
-            // periodic (=NULL) boundary conditions
-            emBoundCond.resize(2, NULL);
             
             // AT X = XMIN,XMAX
             // ----------------
@@ -56,9 +57,6 @@ public:
         // -----------------
         else if ( params.geometry == "2d3v" ) {
             
-            // by default use periodic (=NULL) boundary conditions
-            emBoundCond.resize(4, NULL);
-            
             for (unsigned int ii=0;ii<2;ii++) {
                 // X DIRECTION
                 // silver-muller (injecting/absorbing bcs)
@@ -77,11 +75,11 @@ public:
                 // Y DIRECTION
                 // silver-muller bcs (injecting/absorbin)
                 if ( params.bc_em_type_y[ii] == "silver-muller" ) {
-                    emBoundCond[ii+2] = new ElectroMagnBC2D_SM(params, patch, 2+ii);
+                    emBoundCond[ii+2] = new ElectroMagnBC2D_SM(params, patch, ii+2);
                 }
                 // reflective bcs
                 else if ( params.bc_em_type_y[ii] == "reflective" ) {
-                    emBoundCond[ii+2] = new ElectroMagnBC2D_refl(params, patch, 2+ii);
+                    emBoundCond[ii+2] = new ElectroMagnBC2D_refl(params, patch, ii+2);
                 }
                 // else: error
                 else if ( params.bc_em_type_y[ii] != "periodic" ) {
@@ -95,9 +93,6 @@ public:
         // For 3d3v Geometry
         // -----------------
         else if ( params.geometry == "3d3v" ) {
-            
-            // by default use periodic (=NULL) boundary conditions
-            emBoundCond.resize(6, NULL);
             
             for (unsigned int ii=0;ii<2;ii++) {
                 // X DIRECTION
@@ -113,7 +108,7 @@ public:
                 // Y DIRECTION
                 // silver-muller bcs (injecting/absorbin)
                 if ( params.bc_em_type_y[ii] == "silver-muller" ) {
-                    emBoundCond[ii+2] = new ElectroMagnBC3D_SM(params, patch, 2+ii);
+                    emBoundCond[ii+2] = new ElectroMagnBC3D_SM(params, patch, ii+2);
                 }
                 // else: error
                 else if ( params.bc_em_type_y[ii] != "periodic" ) {
@@ -123,7 +118,7 @@ public:
                 // Z DIRECTION
                 // silver-muller bcs (injecting/absorbin)
                 if ( params.bc_em_type_z[ii] == "silver-muller" ) {
-                    emBoundCond[ii+4] = new ElectroMagnBC3D_SM(params, patch, 4+ii);
+                    emBoundCond[ii+4] = new ElectroMagnBC3D_SM(params, patch, ii+4);
                 }
                 // else: error
                 else if ( params.bc_em_type_z[ii] != "periodic" ) {
