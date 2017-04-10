@@ -195,6 +195,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         else
             vecPatches(ipatch)->cleanType();
  
+        for (auto& embc:vecPatches(ipatch)->EMfields->emBoundCond) {
+            if (embc) delete embc;
+        }
         vecPatches(ipatch)->EMfields->emBoundCond = ElectroMagnBC_Factory::create(params, vecPatches(ipatch));
     }
     
