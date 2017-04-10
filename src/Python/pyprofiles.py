@@ -323,7 +323,7 @@ def ttrapezoidal(start=0., plateau=None, slope1=0., slope2=0.):
         elif t < start+slope1: return (t-start) / slope1
         elif t < start+slope1+plateau: return 1.
         elif t < start+slope1+plateau+slope2:
-            return 1. - ( t - (start+slope1+slope2) ) / slope2
+            return 1. - ( t - (start+slope1+plateau) ) / slope2
         else: return 0.0
     f.profileName = "ttrapezoidal"
     f.start       = start
