@@ -41,6 +41,9 @@ public:
         if (dynamics_type=="norm" || dynamics_type == "borisnr") {
              // Species with Boris (relativistic =='norm', nonrelativistic=='borisnr') dynamics
              thisSpecies = new Species_norm(params, patch);
+        } else if (dynamics_type=="vay") {
+             // Species with J.L. Vay dynamics
+             thisSpecies = new Species_norm(params, patch);
         } else if (dynamics_type=="higueracary") {
              // Species with Higuary Cary dynamics
              thisSpecies = new Species_norm(params, patch);
@@ -48,7 +51,7 @@ public:
              // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
              thisSpecies = new Species_rrll(params, patch);
         } else {
-            ERROR("For species `" << species_type << " dynamics_type must be 'norm', 'borisnr', 'higueracary' or 'rrll'")
+            ERROR("For species `" << species_type << " dynamics_type must be 'norm', 'borisnr', 'vay', 'higueracary' or 'rrll'")
         }
         
         thisSpecies->species_type = species_type;
@@ -275,6 +278,7 @@ public:
         Species * newSpecies = NULL;
         if (species->dynamics_type=="norm" 
            || species->dynamics_type=="higueracary"
+           || species->dynamics_type=="vay"
            || species->dynamics_type=="borisnr") {
             newSpecies = new Species_norm(params, patch); // Boris
         } else if (species->dynamics_type=="rrll") {

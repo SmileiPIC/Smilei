@@ -3,6 +3,7 @@
 
 #include "Pusher.h"
 #include "PusherBoris.h"
+#include "PusherVay.h"
 #include "PusherBorisNR.h"
 #include "PusherRRLL.h"
 #include "PusherHigueraCary.h"
@@ -38,6 +39,10 @@ public:
         else if ( species->dynamics_type == "rrll" )
         {
             Push = new PusherRRLL( params, species );
+        }
+        else if ( species->dynamics_type == "vay" )
+        {
+            Push = new PusherVay( params, species );
         }
         else if ( species->dynamics_type == "higueracary" )
         {
