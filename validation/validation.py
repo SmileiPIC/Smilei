@@ -1,4 +1,4 @@
-##!/gpfslocal/pub/python/anaconda/Anaconda-2.1.0/bin/python 
+#!/usr/bin/env python
 
 """
 This script can do three things:
@@ -69,7 +69,7 @@ This script may run anywhere: you can define a SMILEI_ROOT environment variable
 
 
 # IMPORTS
-import sys, os, re, glob
+import sys, os, re, glob, time
 import shutil, getopt, inspect, socket, pickle
 from subprocess import check_call,CalledProcessError,call
 s = os.sep
@@ -85,6 +85,11 @@ SMILEI_SCRIPTS = SMILEI_ROOT+"scripts"+s
 SMILEI_VALIDATION = SMILEI_ROOT+"validation"+s
 SMILEI_REFERENCES = SMILEI_VALIDATION+"references"+s
 SMILEI_BENCHS = SMILEI_ROOT+"benchmarks"+s
+
+# SCRIPTS VARIABLES
+EXEC_SCRIPT = 'exec_script.sh'
+EXEC_SCRIPT_OUT = 'exec_script.out'
+SMILEI_EXE_OUT = 'smilei_exe.out'
 
 # Load the Smilei module
 execfile(SMILEI_SCRIPTS+"Diagnostics.py")
@@ -165,13 +170,6 @@ if GENERATE and SHOWDIFF:
 	usage()
 	sys.exit(4)
 
-# TEST IF THE NUMBER OF THREADS IS COMPATIBLE WITH THE HOST
-if JOLLYJUMPER in HOSTNAME :
-	if 12 % OMP != 0:
-		print  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME
-		sys.exit(4)  
-	NPERSOCKET = 12/OMP
-
 # Build the list of the requested input files
 list_bench = [os.path.basename(b) for b in glob.glob(SMILEI_BENCHS+"tst*py")]
 list_validation = [os.path.basename(b) for b in glob.glob(SMILEI_VALIDATION+"validate_tst*py")]
@@ -211,7 +209,7 @@ if VERBOSE :
 	print "The list of input files to be validated is:\n\t"+"\n\t".join(SMILEI_BENCH_LIST)
 	print ""
 
-# COMPILE SMILEI
+# GENERIC FUNCTION FOR WORKDIR ORGANIZATION
 
 import time
 def date(BIN_NAME):
@@ -227,6 +225,102 @@ def workdir_archiv(BIN_NAME) :
 		os.rename(WORKDIR_BASE,ARCH_WORKDIR)
 		os.mkdir(WORKDIR_BASE)
 
+# PLATFORM-DEPENDENT INSTRUCTIONS FOR RUNNING PARALLEL COMMAND
+def RUN_POINCARE(command, dir):
+	# Create script
+	with open(EXEC_SCRIPT, 'w') as exec_script_desc:
+		print "ON POINCARE NOW"
+		exec_script_desc.write(
+			"# environnement \n"
+			+"module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu 2>&1 > /dev/null\n"
+			+"unset LD_PRELOAD\n"
+			+"export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0\n"
+			+"# \n"
+			+"# execution \n"
+			+"export OMP_NUM_THREADS="+str(OMP)+"\n"
+			+command+" \n"
+			+"exit $?  "
+		)
+	# Run command
+	COMMAND = "/bin/bash "+EXEC_SCRIPT+" > "+EXEC_SCRIPT_OUT+" 2>&1"
+	try:
+		check_call(COMMAND, shell=True)
+	except CalledProcessError,e:
+		# if execution fails, exit with exit status 2
+		if VERBOSE :
+			print  "Execution failed for command `"+command+"`"
+			COMMAND = "/bin/bash cat "+WORKDIR+s+SMILEI_EXE_OUT
+			try :
+				check_call(COMMAND, shell=True)
+			except CalledProcessError,e:
+				print  "cat command failed"
+				sys.exit(2)
+		if dir==WORKDIR:
+			os.chdir(WORKDIR_BASE)
+			shutil.rmtree(WORKDIR)           
+		sys.exit(2)
+def RUN_JOLLYJUMPER(command, dir):
+	EXIT_STATUS="100"
+	exit_status_fd = open(dir+s+"exit_status_file", "w+")
+	exit_status_fd.write(str(EXIT_STATUS))
+	exit_status_fd.seek(0)
+	# Create script
+	with open(EXEC_SCRIPT, 'w') as exec_script_desc:
+		NODES=((int(MPI)*int(OMP)-1)/24)+1
+		exec_script_desc.write(
+			"#PBS -l nodes="+str(NODES)+":ppn=24 \n"
+			+"#PBS -q default \n"
+			+"#PBS -j oe\n"
+			+"export OMP_NUM_THREADS="+str(OMP)+" \n"
+			+"export OMP_SCHEDULE=DYNAMIC \n"
+			+"export KMP_AFFINITY=verbose \n"
+			+"export PATH=$PATH:/opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck \n"
+			+"#Specify the number of sockets per node in -mca orte_num_sockets \n"
+			+"#Specify the number of cores per sockets in -mca orte_num_cores \n"
+			+"cd "+dir+" \n"
+			+command+" \n"
+			+"echo $? > exit_status_file \n"
+		)
+	# Run command
+	COMMAND = "PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub  "+EXEC_SCRIPT
+	try:
+		check_call(COMMAND, shell=True)
+	except CalledProcessError,e:
+		# if command qsub fails, exit with exit status 2
+		exit_status_fd.close()  
+		if dir==WORKDIR:
+			os.chdir(WORKDIR_BASE)
+			shutil.rmtree(WORKDIR)
+		if VERBOSE :
+			print  "qsub command failed: `"+COMMAND+"`"
+			sys.exit(2)
+	if VERBOSE:
+		print "Submitted job with command `"+command+"`"
+	while ( EXIT_STATUS == "100" ) :
+		time.sleep(5)
+		EXIT_STATUS = exit_status_fd.readline()
+		exit_status_fd.seek(0)
+	if ( int(EXIT_STATUS) != 0 )  :
+		if VERBOSE :
+			print  "Execution failed for command `"+command+"`"
+			COMMAND = "cat "+WORKDIR+s+SMILEI_EXE_OUT
+			try :
+				check_call(COMMAND, shell=True)
+			except CalledProcessError,e:
+				print  "cat command failed"
+				sys.exit(2)
+		exit_status_fd.close()
+		sys.exit(2)
+def RUN_OTHER(command, dir):
+		try :
+			check_call(command, shell=True)
+		except CalledProcessError,e:
+			if VERBOSE :
+				print  "Execution failed for command `"+command+"`"
+			sys.exit(2)
+
+
+# SET DIRECTORIES
 if VERBOSE :
   print "Compiling Smilei"
 
@@ -241,29 +335,43 @@ else :
 COMPILE_ERRORS=WORKDIR_BASE+s+'compilation_errors'
 COMPILE_OUT=WORKDIR_BASE+s+'compilation_out'
 
-# Find compile command according to the host
+# Find commands according to the host
 if JOLLYJUMPER in HOSTNAME :
-	COMPILE_COMMAND = 'unset MODULEPATH;module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles; module load compilers/icc/16.0.109 mpi/openmpi/1.6.5-ib-icc python/2.7.10 hdf5 compilers/gcc/4.8.2  > /dev/null 2>&1;make -j 2 > compilation_out_temp 2>'+COMPILE_ERRORS  
+	if 12 % OMP != 0:
+		print  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME
+		sys.exit(4)  
+	NPERSOCKET = 12/OMP
+	COMPILE_COMMAND = 'make -j 12 > compilation_out_temp 2>'+COMPILE_ERRORS  
 	CLEAN_COMMAND = 'unset MODULEPATH;module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles; module load compilers/icc/16.0.109 mpi/openmpi/1.6.5-ib-icc python/2.7.10 hdf5 compilers/gcc/4.8.2 > /dev/null 2>&1;make clean > /dev/null 2>&1'
+	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x $OMP_NUM_THREADS -x $OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
+	RUN = RUN_JOLLYJUMPER
 elif POINCARE in HOSTNAME :
 	#COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS     
 	#CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
-	COMPILE_COMMAND = 'module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu ; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0 > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
+	COMPILE_COMMAND = 'make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu ; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0 > /dev/null 2>&1;make clean > /dev/null 2>&1'
+	RUN_COMMAND = "mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
+	RUN = RUN_POINCARE
 else:
 	COMPILE_COMMAND = 'make -j4 > compilation_out_temp 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
+	RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; mpirun -mca btl tcp,sm,self -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
+	RUN = RUN_OTHER
 
-
+# CLEAN
 # If the workdir does not contains a smilei bin, or it contains one older than the the smilei bin in directory smilei, force the compilation in order to generate the compilation_output
 if not os.path.exists(WORKDIR_BASE):
 	os.mkdir(WORKDIR_BASE)
 if os.path.exists(SMILEI_R) and (not os.path.exists(SMILEI_W) or date(SMILEI_W)<date(SMILEI_R)):
 	call(CLEAN_COMMAND , shell=True)
+
+# COMPILE
 try :
+	# Remove the compiling errors files
 	if os.path.exists(WORKDIR_BASE+s+COMPILE_ERRORS) :
 		os.remove(WORKDIR_BASE+s+COMPILE_ERRORS)
-	check_call(COMPILE_COMMAND, shell=True)
+	# Compile
+	RUN( COMPILE_COMMAND, SMILEI_ROOT )
 	os.rename('compilation_out_temp',COMPILE_OUT)
 	if STAT_SMILEI_R_OLD!=os.stat(SMILEI_R) or date(SMILEI_W)<date(SMILEI_R):
 		# if new bin, archive the workdir (if it contains a smilei bin)  and create a new one with new smilei and compilation_out inside
@@ -286,6 +394,7 @@ except CalledProcessError,e:
 	if VERBOSE:
 		print "Smilei validation cannot be done : compilation failed." ,e.returncode
 	sys.exit(3)
+if VERBOSE: print ""
 
 
 # DEFINE A CLASS TO CREATE A REFERENCE
@@ -463,129 +572,11 @@ for BENCH in SMILEI_BENCH_LIST :
 	
 	os.chdir(WORKDIR)
 	
-	# define the name of the execution script
-	EXEC_SCRIPT = 'exec_script.sh'
-	EXEC_SCRIPT_OUT = 'exec_script.out'
-	SMILEI_EXE_OUT = 'smilei_exe.out'
-	
 	# RUN smilei IF EXECUTION IS TRUE
 	if EXECUTION :
 		if VERBOSE:
 			print 'Running '+BENCH+' on '+HOSTNAME+' with '+str(OMP)+'x'+str(MPI)+' OMPxMPI'
-		
-		#  depending on the host, build the script and run it
-		if POINCARE in HOSTNAME:
-			with open(EXEC_SCRIPT, 'w') as exec_script_desc:
-				print "ON POINCARE NOW"
-				exec_script_desc.write(
-					"# environnement \n"
-					+"module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu 2>&1 > /dev/null\n"
-					+"unset LD_PRELOAD\n"
-					+"export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0\n"
-					+"# \n"
-					+"# execution \n"
-					+"export OMP_NUM_THREADS="+str(OMP)+"\n"
-					+"mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei "+SMILEI_BENCH+" >"+SMILEI_EXE_OUT+" \n"
-					+"exit $?  "
-				)
-			
-			# RUN SMILEI
-			COMMAND = "/bin/bash "+EXEC_SCRIPT+" > "+EXEC_SCRIPT_OUT+" 2>&1"
-			try :
-			  check_call(COMMAND, shell=True)
-			except CalledProcessError,e:
-			# if execution fails, exit with exit status 2
-				if VERBOSE :
-					print  "Smilei validation cannot be done : execution failed."
-					os.chdir(WORKDIR)
-					COMMAND = "/bin/bash cat "+SMILEI_EXE_OUT
-					try :
-						check_call(COMMAND, shell=True)
-					except CalledProcessError,e:
-						print  "cat command failed"
-						sys.exit(2)
-				os.chdir(WORKDIR_BASE)
-				shutil.rmtree(WORKDIR)
-				sys.exit(2)
-		
-		elif JOLLYJUMPER in HOSTNAME :
-			with open(EXEC_SCRIPT, 'w') as exec_script_desc:
-				NODES=((int(MPI)*int(OMP)-1)/24)+1
-				exec_script_desc.write(
-					"#PBS -l nodes="+str(NODES)+":ppn=24 \n"
-					+"#PBS -q default \n"
-					+"#PBS -j oe\n"
-					+"#Set the correct modules available \n"
-					+"unset MODULEPATH; \n"
-					+"module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles \n"
-					+"#Load compilers and mpi \n"
-					+"module load compilers/icc/16.0.109 \n"
-					+"module load mpi/openmpi/1.6.5-ib-icc \n"
-					+"module load python/2.7.10 \n"
-					+"module load hdf5 \n"
-					+"module load compilers/gcc/4.8.2 \n"
-					+" \n"
-					+"# -loadbalance to spread the MPI processes among the different nodes. \n"
-					+"# -bind-to-core to fix a given MPI process to a fixed set of cores. \n"
-					+"# -cpus-per-proc 6 to set said set of cores to a size of 6 (half socket of JJ) which is also the number of omp threads. \n"
-					+"export OMP_NUM_THREADS="+str(OMP)+" \n"
-					+"export OMP_SCHEDULE=DYNAMIC \n"
-					+"export KMP_AFFINITY=verbose \n"
-					+"export PATH=$PATH:/opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck \n"
-					+"#Specify the number of sockets per node in -mca orte_num_sockets \n"
-					+"#Specify the number of cores per sockets in -mca orte_num_cores \n"
-					+"cd "+WORKDIR+" \n"
-					+"mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)
-					+" -x $OMP_NUM_THREADS -x $OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei "+SMILEI_BENCH+" >"+SMILEI_EXE_OUT+" 2>&1 \n"
-					+"echo $? > exit_status_file \n"
-				)
-			
-			EXIT_STATUS="100"
-			exit_status_fd = open(WORKDIR+"/exit_status_file", "w+")
-			exit_status_fd.write(str(EXIT_STATUS))
-			exit_status_fd.seek(0)
-			COMMAND = "PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub  "+EXEC_SCRIPT
-			try :
-				check_call(COMMAND, shell=True)
-			except CalledProcessError,e:
-				# if commande qsub fails, exit with exit status 2
-				exit_status_fd.close()  
-				os.chdir(WORKDIR_BASE)
-				shutil.rmtree(WORKDIR)           
-				if VERBOSE :
-					print  "Smilei validation cannot be done : qsub command failed."
-					sys.exit(2)
-			
-			while ( EXIT_STATUS == "100" ) :
-				time.sleep(10)
-				EXIT_STATUS = exit_status_fd.readline()
-				exit_status_fd.seek(0)
-			if ( int(EXIT_STATUS) != 0 )  :
-				if VERBOSE :
-					print  "Smilei validation cannot be done : execution failed."
-					os.chdir(WORKDIR)
-					COMMAND = "cat "+SMILEI_EXE_OUT
-					try :
-						check_call(COMMAND, shell=True)
-					except CalledProcessError,e:
-						print  "cat command failed"
-						sys.exit(2)
-				exit_status_fd.close()  
-				os.chdir(WORKDIR_BASE)
-				#shutil.rmtree(WORKDIR)
-				sys.exit(2)
-		
-		else:
-			COMMAND = (
-				"export OMP_NUM_THREADS="+str(OMP)+"; "
-				+"mpirun -mca btl tcp,sm,self -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei "+SMILEI_BENCH+" >"+SMILEI_EXE_OUT
-			)
-			try :
-				check_call(COMMAND, shell=True)
-			except CalledProcessError,e:
-				if VERBOSE :
-					print  "Smilei could not run"
-				sys.exit(2)
+		RUN( RUN_COMMAND % SMILEI_BENCH, WORKDIR )
 	
 	# CHECK THE OUTPUT FOR ERRORS
 	errors = []
@@ -604,7 +595,7 @@ for BENCH in SMILEI_BENCH_LIST :
 	
 	# FIND THE VALIDATION SCRIPT FOR THIS BENCH
 	validation_script = SMILEI_VALIDATION + "validate_"+BENCH
-	print ""
+	if VERBOSE: print ""
 	if not os.path.exists(validation_script):
 		print "Unable to find the validation script "+validation_script
 		sys.exit(1)
@@ -617,6 +608,7 @@ for BENCH in SMILEI_BENCH_LIST :
 		execfile(validation_script)
 		Validate.write()
 	
+	# OR PLOT DIFFERENCES WITH RESPECT TO EXISTING REFERENCES
 	elif SHOWDIFF:
 		if VERBOSE:
 			print 'Viewing differences for '+BENCH
@@ -630,5 +622,14 @@ for BENCH in SMILEI_BENCH_LIST :
 		Validate = CompareToReference(BENCH)
 		execfile(validation_script)
 	
+	if VERBOSE: print ""
+
+
+# CLEAN OLDER WORKDIRS
+all_workdirs = glob.glob(SMILEI_VALIDATION+s+"workdirs"+s+"wd_*")
+all_workdirs.sort(key=os.path.getmtime)
+for d in all_workdirs[:-10]: # keep last 10 workdirs
+	shutil.rmtree(d)
+
 
 print "Everything passed"
