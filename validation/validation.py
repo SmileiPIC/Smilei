@@ -334,6 +334,7 @@ else :
 	STAT_SMILEI_R_OLD = ' '
 COMPILE_ERRORS=WORKDIR_BASE+s+'compilation_errors'
 COMPILE_OUT=WORKDIR_BASE+s+'compilation_out'
+COMPILE_OUT_TMP=WORKDIR_BASE+s+'compilation_out_temp'
 
 # Find commands according to the host
 if JOLLYJUMPER in HOSTNAME :
@@ -341,19 +342,19 @@ if JOLLYJUMPER in HOSTNAME :
 		print  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME
 		sys.exit(4)  
 	NPERSOCKET = 12/OMP
-	COMPILE_COMMAND = 'make -j 12 > compilation_out_temp 2>'+COMPILE_ERRORS  
+	COMPILE_COMMAND = 'make -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS  
 	CLEAN_COMMAND = 'unset MODULEPATH;module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles; module load compilers/icc/16.0.109 mpi/openmpi/1.6.5-ib-icc python/2.7.10 hdf5 compilers/gcc/4.8.2 > /dev/null 2>&1;make clean > /dev/null 2>&1'
 	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x $OMP_NUM_THREADS -x $OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
 	RUN = RUN_JOLLYJUMPER
 elif POINCARE in HOSTNAME :
 	#COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS     
 	#CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
-	COMPILE_COMMAND = 'make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
+	COMPILE_COMMAND = 'make -j 6 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu ; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0 > /dev/null 2>&1;make clean > /dev/null 2>&1'
 	RUN_COMMAND = "mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
 	RUN = RUN_POINCARE
 else:
-	COMPILE_COMMAND = 'make -j4 > compilation_out_temp 2>'+COMPILE_ERRORS
+	COMPILE_COMMAND = 'make -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
 	RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; mpirun -mca btl tcp,sm,self -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
 	RUN = RUN_OTHER
@@ -372,7 +373,7 @@ try :
 		os.remove(WORKDIR_BASE+s+COMPILE_ERRORS)
 	# Compile
 	RUN( COMPILE_COMMAND, SMILEI_ROOT )
-	os.rename('compilation_out_temp',COMPILE_OUT)
+	os.rename(COMPILE_OUT_TMP, COMPILE_OUT)
 	if STAT_SMILEI_R_OLD!=os.stat(SMILEI_R) or date(SMILEI_W)<date(SMILEI_R):
 		# if new bin, archive the workdir (if it contains a smilei bin)  and create a new one with new smilei and compilation_out inside
 		if os.path.exists(SMILEI_W):
