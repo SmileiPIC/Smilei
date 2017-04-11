@@ -64,15 +64,10 @@ void PusherVay::operator() (Particles &particles, SmileiMPI* smpi, int istart, i
         // ____________________________________________
         // Part I: Computation of uprime
 
-        // init Half-acceleration in the electric field
-        pxsm = charge_over_mass_dts2*(*Epart)[ipart].x;
-        pysm = charge_over_mass_dts2*(*Epart)[ipart].y;
-        pzsm = charge_over_mass_dts2*(*Epart)[ipart].z;
-
         // Add Electric field
-        upx = momentum[0][ipart] + 2*pxsm;
-        upy = momentum[1][ipart] + 2*pysm;
-        upz = momentum[2][ipart] + 2*pzsm;
+        upx = momentum[0][ipart] + 2.*charge_over_mass_dts2*(*Epart)[ipart].x;
+        upy = momentum[1][ipart] + 2.*charge_over_mass_dts2*(*Epart)[ipart].y;
+        upz = momentum[2][ipart] + 2.*charge_over_mass_dts2*(*Epart)[ipart].z;
 
         // Add magnetic field
         Tx  = charge_over_mass_dts2* (*Bpart)[ipart].x;
@@ -80,8 +75,8 @@ void PusherVay::operator() (Particles &particles, SmileiMPI* smpi, int istart, i
         Tz  = charge_over_mass_dts2* (*Bpart)[ipart].z;
 
         upx += (*invgf)[ipart]*(momentum[1][ipart]*Tz - momentum[2][ipart]*Ty); 
-        upy += (*invgf)[ipart]*(momentum[3][ipart]*Tx - momentum[1][ipart]*Tz);
-        upz += (*invgf)[ipart]*(momentum[1][ipart]*Ty - momentum[2][ipart]*Tx);
+        upy += (*invgf)[ipart]*(momentum[2][ipart]*Tx - momentum[0][ipart]*Tz);
+        upz += (*invgf)[ipart]*(momentum[0][ipart]*Ty - momentum[1][ipart]*Tx);
 
         // alpha is gamma^2
         alpha = 1 + upx*upx + upy*upy + upz*upz;
@@ -101,8 +96,6 @@ void PusherVay::operator() (Particles &particles, SmileiMPI* smpi, int istart, i
         Ty *= alpha;
         Tz *= alpha;
 
-        s = 1.0/(1.0+Tx2+Ty2+Tz2);
-
         Tx2   = Tx*Tx;
         Ty2   = Ty*Ty;
         Tz2   = Tz*Tz;
@@ -110,6 +103,8 @@ void PusherVay::operator() (Particles &particles, SmileiMPI* smpi, int istart, i
         TxTy  = Tx*Ty;
         TyTz  = Ty*Tz;
         TzTx  = Tz*Tx;
+
+        s = 1.0/(1.0+Tx2+Ty2+Tz2);
 
         pxsm = ((1.0+Tx2)* upx  + (TxTy+Tz)* upy + (TzTx-Ty)* upz)*s;
         pysm = ((TxTy-Tz)* upx  + (1.0+Ty2)* upy + (TyTz+Tx)* upz)*s;
