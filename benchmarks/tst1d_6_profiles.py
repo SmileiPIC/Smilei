@@ -22,13 +22,18 @@ Main(
 	print_every = 10
 )
 
+def custom(x):
+	if x<L0/2.: return 0.
+	else: return math.exp(-x)
+
 profiles = {
 "constant"   :constant   (1.),
 "trapezoidal":trapezoidal(1., xvacuum=0.1*L0, xplateau=0.4*L0, xslope1=0.1*L0, xslope2=0.3*L0),
 "gaussian"   :gaussian   (1., xvacuum=0.1*L0, xlength =0.5*L0, xfwhm=0.2*L0, xcenter=0.2*L0, xorder=2),
 "polygonal"  :polygonal  (xpoints=[0.1*L0, 0.2*L0, 0.4*L0, 0.8*L0], xvalues=[1.,0.5,0.8, 0.1]),
 "cosine"     :cosine     (1., xamplitude=0.4, xvacuum=0.3*L0, xlength=0.4*L0, xphi=0.1*L0, xnumber=3),
-"polynomial" :polynomial (x0=0.4*L0, order0=1., order1=-1./L0, order2=(1./L0)**2)
+"polynomial" :polynomial (x0=0.4*L0, order0=1., order1=-1./L0, order2=(1./L0)**2),
+"custom"     :custom
 }
 
 for name, profile in profiles.items():
@@ -45,13 +50,18 @@ for name, profile in profiles.items():
 		bc_part_type_xmax = "none"
 	)
 
+def tcustom(t):
+	if t<L0/2.: return 0.
+	else: return math.exp(-t)
+
 tprofiles = [
 ["tconstant"   ,tconstant   ()],
 ["ttrapezoidal",ttrapezoidal(start=0.2*L0, plateau=0.4*L0, slope1=0.2*L0, slope2=0.1*L0)],
 ["tgaussian"   ,tgaussian   (start=0.2*L0, duration=0.7*L0, fwhm=0.4*L0, center=0.4*L0, order=2)],
 ["tpolygonal"  ,tpolygonal  (points=[0.1*L0, 0.2*L0, 0.4*L0, 0.8*L0], values=[1.,0.5,0.8, 0.1])],
 ["tcosine"     ,tcosine     (base=0.2, amplitude=1., start=0.2*L0, duration=0.5*L0, phi=1., freq=4.)],
-["tpolynomial" ,tpolynomial (t0=0.4*L0, order0=-1., order1=-1./L0, order2=(3./L0)**2)]
+["tpolynomial" ,tpolynomial (t0=0.4*L0, order0=-1., order1=-1./L0, order2=(3./L0)**2)],
+["tcustom"     ,tcustom]
 ]
 
 antenna_width = Main.sim_length[0]/len(tprofiles)
