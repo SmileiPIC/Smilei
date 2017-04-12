@@ -103,10 +103,10 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
     field_type.resize( fields_names.size() );
     for( unsigned int ifield=0; ifield<fields_names.size(); ifield++ ) {
         string first_char = fields_names[ifield].substr(0,1);
-        if      ( first_char == "E" ) field_type[ifield] = 1;
-        else if ( first_char == "B" ) field_type[ifield] = 2;
-        else if ( first_char == "J" ) field_type[ifield] = 3;
-        else if ( first_char == "R" ) field_type[ifield] = 4;
+        if      ( first_char == "E" ) field_type[ifield] = SMILEI_UNIT_EFIELD;
+        else if ( first_char == "B" ) field_type[ifield] = SMILEI_UNIT_BFIELD;
+        else if ( first_char == "J" ) field_type[ifield] = SMILEI_UNIT_CURRENT;
+        else if ( first_char == "R" ) field_type[ifield] = SMILEI_UNIT_DENSITY;
         else {
             ERROR(" impossible field name ");
         }
@@ -270,7 +270,7 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime,
             openPMD->writeFieldAttributes( dset_id );
             openPMD->writeRecordAttributes( dset_id, field_type[ifield] );
             openPMD->writeFieldRecordAttributes( dset_id );
-            openPMD->writeComponentAttributes( dset_id );
+            openPMD->writeComponentAttributes( dset_id, field_type[ifield] );
             
             // Close dataset
             H5Dclose( dset_id );
