@@ -64,6 +64,11 @@ void PusherVay::operator() (Particles &particles, SmileiMPI* smpi, int istart, i
         // ____________________________________________
         // Part I: Computation of uprime
 
+        // For unknown reason, this has to be computed again
+        (*invgf)[ipart] = 1./sqrt(1.0 + momentum[0][ipart]*momentum[0][ipart] 
+                              + momentum[1][ipart]*momentum[1][ipart] 
+                              + momentum[2][ipart]*momentum[2][ipart]);
+
         // Add Electric field
         upx = momentum[0][ipart] + 2.*charge_over_mass_dts2*(*Epart)[ipart].x;
         upy = momentum[1][ipart] + 2.*charge_over_mass_dts2*(*Epart)[ipart].y;
@@ -79,39 +84,45 @@ void PusherVay::operator() (Particles &particles, SmileiMPI* smpi, int istart, i
         upz += (*invgf)[ipart]*(momentum[0][ipart]*Ty - momentum[1][ipart]*Tx);
 
         // alpha is gamma^2
-        alpha = 1 + upx*upx + upy*upy + upz*upz;
-        T2      = Tx*Tx + Ty*Ty + Tz*Tz;
+        alpha = 1.0 + upx*upx + upy*upy + upz*upz;
+        T2    = Tx*Tx + Ty*Ty + Tz*Tz;
 
         // ___________________________________________
         // Part II: Computation of Gamma^{i+1}
 
         // s is sigma
-        s = alpha - T2; 
-        us2   = upx*Tx + upy*Ty + upz*Tz;
+        s     = alpha - T2; 
+        us2   = pow(upx*Tx + upy*Ty + upz*Tz,2.0);
 
-        // alpha becomes gamma^{i+1}
-        alpha = 1./sqrt(0.5*(s + sqrt(s*s + 4*( T2 + us2 ))));
+        // alpha becomes 1/gamma^{i+1}
+        alpha = 1.0/sqrt(0.5*(s + sqrt(s*s + 4.0*( T2 + us2 ))));
 
         Tx *= alpha;
         Ty *= alpha;
         Tz *= alpha;
 
-        Tx2   = Tx*Tx;
-        Ty2   = Ty*Ty;
-        Tz2   = Tz*Tz;
+        s = 1.0/(1.0+Tx*Tx+Ty*Ty+Tz*Tz);
+        alpha   = upx*Tx + upy*Ty + upz*Tz;
+        
+        pxsm = s*(upx + alpha*Tx + Tz*upy - Ty*upz);
+        pysm = s*(upy + alpha*Ty + Tx*upz - Tz*upx);
+        pzsm = s*(upz + alpha*Tz + Ty*upx - Tx*upy);
 
-        TxTy  = Tx*Ty;
-        TyTz  = Ty*Tz;
-        TzTx  = Tz*Tx;
+        // Second way of doing it like in the Boris pusher
+        //Tx2   = Tx*Tx;
+        //Ty2   = Ty*Ty;
+        //Tz2   = Tz*Tz;
 
-        s = 1.0/(1.0+Tx2+Ty2+Tz2);
+        //TxTy  = Tx*Ty;
+        //TyTz  = Ty*Tz;
+        //TzTx  = Tz*Tx;
 
-        pxsm = ((1.0+Tx2)* upx  + (TxTy+Tz)* upy + (TzTx-Ty)* upz)*s;
-        pysm = ((TxTy-Tz)* upx  + (1.0+Ty2)* upy + (TyTz+Tx)* upz)*s;
-        pzsm = ((TzTx+Ty)* upx  + (TyTz-Tx)* upy + (1.0+Tz2)* upz)*s;
+        //pxsm = ((1.0+Tx2)* upx  + (TxTy+Tz)* upy + (TzTx-Ty)* upz)*s;
+        //pysm = ((TxTy-Tz)* upx  + (1.0+Ty2)* upy + (TyTz+Tx)* upz)*s;
+        //pzsm = ((TzTx+Ty)* upx  + (TyTz-Tx)* upy + (1.0+Tz2)* upz)*s;
 
         // Inverse Gamma factor
-        (*invgf)[ipart] = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
+        (*invgf)[ipart] = 1.0 / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
 
         momentum[0][ipart] = pxsm;
         momentum[1][ipart] = pysm;
