@@ -8,7 +8,7 @@ This script can do three things:
 
 Usage
 #######
-python validation.py [-c] [-h] [-b <bench_case> [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -e]] [-v]
+python validation.py [-c] [-h] [-v] [-b <bench_case> [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s]]
 
 For help on options, try 'python validation.py -h'
 
@@ -137,23 +137,22 @@ for opt, arg in options:
 		COMPILE_ONLY=True
 	elif opt in ('-h', '--HELP'):
 		print "-b"
-		print "     -b input_file"
-		print "       Chooses the benchmark(s) to validate."
-		print "       input_file : input file(s) to validate. Accepts wildcards."
-		print "       input_file=? : prompts a list of all possible input files"
+		print "     -b <bench_case>"
+		print "       <bench_case> : benchmark(s) to validate. Accepts wildcards."
+		print "       <bench_case>=? : ask input for a benchmark"
 		print "     DEFAULT : All benchmarks are validated."  
 		print "-o"
-		print "     -o omp_threads"
-		print "       omp_threads : number of OpenMP threads used for the execution of smilei (option -e must be present)"
-		print "     DEFAULT : 2"  
+		print "     -o <nb_OMPThreads>"
+		print "       <nb_OMPThreads> : number of OpenMP threads used for the execution"
+		print "     DEFAULT : 4"  
 		print "-m"
-		print "     -m mpi_procs"
-		print "       mpi_procs : number of MPI processus used for the execution of smilei (option -e must be present)"
-		print "     DEFAULT : 2"
+		print "     -m <nb_MPIProcs>"
+		print "       <nb_MPIProcs> : number of MPI processes used for the execution"
+		print "     DEFAULT : 4"
 		print "-g"
 		print "     Generation of references only"
 		print "-s"
-		print "     Show differences with references only"
+		print "     Plot differences with references only"
 		print "-c"
 		print "     Compilation only"
 		print "-v"
@@ -182,7 +181,7 @@ elif BENCH == "?":
 	#- Propose the list of all the input files
 	print '\n'.join(list_bench)
 	#- Choose an input file name in the list
-	print 'Enter an input file from the above list:'
+	print 'Enter an input file from the list above:'
 	BENCH = raw_input()
 	SMILEI_BENCH_LIST = [ BENCH ]
 	while BENCH not in list_bench:
