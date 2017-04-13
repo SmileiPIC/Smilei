@@ -42,6 +42,13 @@ class NLICompton
                 double chiph, 
                 int nbit, 
                 double eps);
+
+        //! Generate table values for Integration of F/chi: Integfochi
+        void compute_integfochi_table();
+
+        //! Write in a file table values for Integration of F/chi: Integfochi
+        void output_integfochi_table();
+ 
     private:
 
 
@@ -59,9 +66,6 @@ class NLICompton
 
         //! Dimension of the array Integfochi
         unsigned int dim_integfochi;
-
-        //! Generate table values for Integration of F/chi: Integfochi
-        void compute_integfochi_table(); 
 
         
 };

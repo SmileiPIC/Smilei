@@ -11,6 +11,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <fstream>
 
 #include <cmath>
 
@@ -53,6 +54,32 @@ void NLICompton::compute_integfochi_table()
 
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Ouput in a file of the table values of integfochi
+// ---------------------------------------------------------------------------------------------------------------------
+void NLICompton::output_integfochi_table()
+{
+
+    std::ofstream file;
+    file.open("tab_integfochi.bin",std::ios::binary);
+
+    if (file.is_open()) {
+
+        file << dim_integfochi 
+            << log10(chie_integfochi_min) 
+            << log10(chie_integfochi_max);
+
+        // Loop over the table values
+        for(unsigned int i = 0 ; i < dim_integfochi ; i++)
+        {
+            file << Integfochi[i];
+        }
+
+    file.close();
+    }
+}
+
+
+// ---------------------------------------------------------------------------------------------------------------------
 //! \brief 
 //! Compute integration of F/chi between 
 //! using Gauss-Legendre for a given chie value
@@ -91,9 +118,9 @@ double NLICompton::compute_integfochi(double chie,
     integ = 0;
     for(i=0 ; i< nbit ; i++)
     {
-      chiph = pow(10.,gauleg_x[i]);
-      sync_emi = NLICompton::compute_sync_emissivity_ritus(chie,chiph,200,1e-15);
-      integ += gauleg_w[i]*sync_emi*log(10);
+        chiph = pow(10.,gauleg_x[i]);
+        sync_emi = NLICompton::compute_sync_emissivity_ritus(chie,chiph,200,1e-15);
+        integ += gauleg_w[i]*sync_emi*log(10);
     }
 
     return integ;
