@@ -31,3 +31,11 @@ for i, (name, tprofile) in enumerate(S.namelist.tprofiles):
 #	plt.plot(t, thisJz, color=c[i])
 #	plt.plot(t, v, "o", markeredgecolor=c[i], markerfacecolor="none")
 	Validate("Temporal profile "+name, thisJz, 0.01)
+
+# Verify that "time_fields_frozen" works
+Late_Ez = S.Field.Field0.Ez(timesteps=190).getData()[0]
+Validate("Ez field at late time", Late_Ez, 0.01)
+
+# Verify that "time_frozen" works
+Late_density = S.Field.Field0.Rho_trapezoidal(timesteps=190).getData()[0]
+Validate("Density of a species at a late time", Late_density, 0.01)

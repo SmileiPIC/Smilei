@@ -47,7 +47,8 @@ for name, profile in profiles.items():
 		nb_density = profile,
 		time_frozen = 10000.0,
 		bc_part_type_xmin = "none",
-		bc_part_type_xmax = "none"
+		bc_part_type_xmax = "none",
+		temperature = [0.1]
 	)
 
 def tcustom(t):
@@ -76,7 +77,7 @@ for i, (name, tprofile) in enumerate(tprofiles):
 
 DiagFields(
 	every = 2,
-	fields = ["Jz"] + ["Rho_"+name for name in profiles.keys()],
+	fields = ["Ez", "Jz"] + ["Rho_"+name for name in profiles.keys()],
 )
 
 
