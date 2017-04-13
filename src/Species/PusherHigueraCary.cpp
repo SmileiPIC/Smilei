@@ -84,7 +84,7 @@ void PusherHigueraCary::operator() (Particles &particles, SmileiMPI* smpi, int i
 
         // Equivalent of 1/\gamma_{new} in the paper
         local_invgf = 1./sqrt(0.5*(gfm2 - beta2 + 
-                    sqrt(pow(gfm2 - beta2,2) + 4*(beta2 + Tx*umx + Ty*umy + Tz*umz ))));
+                    sqrt(pow(gfm2 - beta2,2) + 4.0*(beta2 + pow(Tx*umx + Ty*umy + Tz*umz,2) ))));
 
         // Rotation in the magnetic field
         Tx    *= local_invgf;
