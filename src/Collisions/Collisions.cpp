@@ -340,7 +340,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
         cosX = cos_chi(s);
         sinX = sqrt( 1. - cosX*cosX );
         //!\todo make a faster rand by preallocating ??
-        phi = twoPi * ((double)rand() *INV_RAND_MAX);
+        phi = twoPi * Rand::uniform();
         
         // Calculate combination of angles
         sinXcosPhi = sinX*cos(phi);
@@ -362,7 +362,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
         // Random number to choose whether deflection actually applies.
         // This is to conserve energy in average when weights are not equal.
         //!\todo make a faster rand by preallocating ??
-        U = ((double)rand() *INV_RAND_MAX);
+        U = Rand::uniform();
         
         // Go back to the lab frame and store the results in the particle array
         vcp = COM_vx * newpx_COM + COM_vy * newpy_COM + COM_vz * newpz_COM;
@@ -486,7 +486,7 @@ inline double Collisions::cos_chi(double s)
     
     double A, invA;
     //!\todo make a faster rand by preallocating ??
-    double U = (double)rand() *INV_RAND_MAX;
+    double U = Rand::uniform();
     
     if( s < 0.1 ) {
         if ( U<0.0001 ) U=0.0001; // ensures cos_chi > 0

@@ -16,8 +16,27 @@
 
 using namespace std;
 
-double INV_RAND_MAX ;
-double INV_RAND_MAX1;
+namespace Rand
+{
+    std::random_device device;
+    std::mt19937 gen(device());
+    
+    std::uniform_real_distribution<double> uniform_distribution(0., 1.);
+    double uniform() {
+        return uniform_distribution(gen);
+    }
+    
+    std::uniform_real_distribution<double> uniform_distribution1(0., 1.-1e-11);
+    double uniform1() {
+        return uniform_distribution1(gen);
+    }
+    
+    std::uniform_real_distribution<double> uniform_distribution2(-1., 1.);
+    double uniform2() {
+        return uniform_distribution2(gen);
+    }
+}
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Params : open & parse the input data file, test that parameters are coherent
@@ -71,9 +90,6 @@ namelist("")
     
     // here we add the larget int, important to get a valid seed for randomization
     PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_rand_max", RAND_MAX);
-    
-    INV_RAND_MAX = 1./RAND_MAX;
-    INV_RAND_MAX1 = 1./(RAND_MAX+0.1);
     
     // Running the namelists
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {

@@ -246,7 +246,7 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
         
         for (unsigned int p= iPart; p<iPart+nPart; p++) {
             for (unsigned int i=0; i<nDim_particle ; i++) {
-                (*particles).position(i,p)=indexes[i]+(((double)rand() *INV_RAND_MAX))*cell_length[i];
+                (*particles).position(i,p)=indexes[i]+Rand::uniform()*cell_length[i];
             }
         }
         
@@ -289,8 +289,8 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
         
         // Sample angles randomly and calculate the momentum
         for (unsigned int p=iPart; p<iPart+nPart; p++) {
-            double phi   = acos(1.0-2.0*(double)rand() *INV_RAND_MAX);
-            double theta = 2.0*M_PI*(double)rand() *INV_RAND_MAX;
+            double phi   = acos(-Rand::uniform2());
+            double theta = 2.0*M_PI*Rand::uniform();
             double psm = sqrt(pow(1.0+energies[p-iPart],2)-1.0);
             
             (*particles).momentum(0,p) = psm*cos(theta)*sin(phi);
@@ -317,9 +317,9 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
     } else if (initMomentum_type == "rectangular") {
         
         for (unsigned int p= iPart; p<iPart+nPart; p++) {
-            (*particles).momentum(0,p) = (2.*(double)rand() *INV_RAND_MAX - 1.) * sqrt(temp[0]/mass);
-            (*particles).momentum(1,p) = (2.*(double)rand() *INV_RAND_MAX - 1.) * sqrt(temp[1]/mass);
-            (*particles).momentum(2,p) = (2.*(double)rand() *INV_RAND_MAX - 1.) * sqrt(temp[2]/mass);
+            (*particles).momentum(0,p) = Rand::uniform2() * sqrt(temp[0]/mass);
+            (*particles).momentum(1,p) = Rand::uniform2() * sqrt(temp[1]/mass);
+            (*particles).momentum(2,p) = Rand::uniform2() * sqrt(temp[2]/mass);
         }
     }
     
@@ -347,7 +347,7 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
         Lyz = gm1 * vy*vz/v2;
         
         // Volume transformation method (here is the correction by Zenitani)
-        double Volume_Acc = (double)rand() *INV_RAND_MAX;
+        double Volume_Acc = Rand::uniform();
         double CheckVelocity;
         
         // Lorentz transformation of the momentum
@@ -958,7 +958,7 @@ vector<double> Species::maxwellJuttner(unsigned int npoints, double temperature)
         // For each particle
         for( unsigned int i=0; i<npoints; i++ ) {
             // Pick a random number
-            U = (double)rand() *INV_RAND_MAX;
+            U = Rand::uniform();
             // Calculate the inverse of F
             lnlnU = log(-log(U));
             if( lnlnU>2. ) {
@@ -987,7 +987,7 @@ vector<double> Species::maxwellJuttner(unsigned int npoints, double temperature)
         for( unsigned int i=0; i<npoints; i++ ) {
             do {
                 // Pick a random number
-                U = (double)rand() *INV_RAND_MAX;
+                U = Rand::uniform();
                 // Calculate the inverse of H at the point log(1.-U) + H0
                 lnU = log(-log(1.-U) - H0);
                 if( lnU<-26. ) {
@@ -1003,7 +1003,7 @@ vector<double> Species::maxwellJuttner(unsigned int npoints, double temperature)
                 // Make a first guess for the value of gamma
                 gamma = temperature * invH;
                 // We use the rejection method, so we pick another random number
-                U = (double)rand() *INV_RAND_MAX;
+                U = Rand::uniform();
                 // And we are done only if U < beta, otherwise we try again
             } while( U >= sqrt(1.-1./(gamma*gamma) ) );
             // Store that value of the energy

@@ -26,9 +26,25 @@
 #include <ostream>
 #include <algorithm>
 #include <iterator>
+#include <random>
 
 class SmileiMPI;
 class Species;
+
+namespace Rand
+{
+    extern std::random_device device;
+    extern std::mt19937 gen;
+    
+    extern std::uniform_real_distribution<double> uniform_distribution;
+    extern double uniform();
+    
+    extern std::uniform_real_distribution<double> uniform_distribution1;
+    extern double uniform1();
+    
+    extern std::uniform_real_distribution<double> uniform_distribution2;
+    extern double uniform2();
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------
