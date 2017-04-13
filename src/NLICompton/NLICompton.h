@@ -21,37 +21,49 @@
 class NLICompton
 {
 
- public:
+    public:
 
-    //! Constructor for NLICompton
-    NLICompton();
-    
-    //! Destructor for NLICompton
-    ~NLICompton(){}
+        //! Constructor for NLICompton
+        NLICompton();
 
- private:
+        //! Destructor for NLICompton
+        ~NLICompton(){}
+
+        //! Compute integration of F/chi between 
+        //! using Gauss-Legendre for a given chie value
+        static double compute_integfochi(double chie,
+                double chipmin,
+                double chipmax,
+                int nbit,
+                double eps);
+
+        //! Synchrotron emissivity from Ritus
+        static double compute_sync_emissivity_ritus(double chie,
+                double chiph, 
+                int nbit, 
+                double eps);
+    private:
 
 
-    //! Array containing tabulated values for the computation of the photon production rate dN_{\gamma}/dt (which is also the optical depth for the Monte-Carlo process). This table is the integration of the Synchrotron emissivity refers to as F over the quantum parameter Chi.
-    std::vector<double > Integfochi;
+        //! Array containing tabulated values for the computation of the photon production rate dN_{\gamma}/dt (which is also the optical depth for the Monte-Carlo process). This table is the integration of the Synchrotron emissivity refers to as F over the quantum parameter Chi.
+        std::vector<double > Integfochi;
 
-    //! Minimum boundary of the table Integfochi
-    double chie_integfochi_min;
+        //! Minimum boundary of the table Integfochi
+        double chie_integfochi_min;
 
-    //! Minimum boundary of the table Integfochi
-    double chie_integfochi_max; 
+        //! Minimum boundary of the table Integfochi
+        double chie_integfochi_max; 
 
-    //! Delta chi for the table integfochi
-    double delta_chie_integfochi;
+        //! Delta chi for the table integfochi
+        double delta_chie_integfochi;
 
-    //! Dimension of the array Integfochi
-    unsigned int dim_integfochi;
+        //! Dimension of the array Integfochi
+        unsigned int dim_integfochi;
 
-    //! Generate table values for Integfochi
-    void compute_integfochi(); 
+        //! Generate table values for Integration of F/chi: Integfochi
+        void compute_integfochi_table(); 
 
-    //! Synchrotron emissivity from Ritus
-    double compute_sync_emissivity_ritus(double chie,double chiph, int nbit, double eps);
+        
 };
 
 #endif
