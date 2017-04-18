@@ -28,8 +28,8 @@ units which are designed to compute over a reserved space in memory (one process
 will not handle the memory of another process), and manage several cores.
 To treat these cores, a process must provide several *threads*. A thread is basically the
 sequence of instructions from the program, which must be executed by one core.
-However, a thread is not uniquely associated to one core: a core can run two threads,
-one after the other.
+However, a thread is not uniquely associated to one core: a core can in general run multiple threads alternatively. 
+The number of threads a core can handle depends on the architecture.
 
 The association between the software *threads* and the hardware *cores* can be more
 complicated. :numref:`NodeWith2Processes` shows an example where two processes share the
@@ -56,11 +56,11 @@ Although processes do not share their memory, they must sometimes synchronize th
 advance in the execution of the program, or communicate data between each other.
 For instance, to calculate the total energy in the simulation, they must communicate
 their contribution to the others and compute the sum.
-These tasks are accomplished by the Message Passing Interface (MPI) protocol.
+In :program:`Smilei`, these tasks are accomplished by the Message Passing Interface (MPI) protocol.
 
 At the thread level, the communications do not work in the same manner because threads
 already share their data. However, they need synchronization and management to decide
-which core handles which thread. This is accomplished by the *OpenMP* protocol.
+which core handles which thread. In :program:`Smilei`, this is accomplished by the *OpenMP* protocol.
 
 An illustration of the roles of MPI and OpenMP is provided in :numref:`MPIandOpenMP`
 
@@ -79,7 +79,7 @@ Decomposition of the box
 Traditionally, PIC codes would
 split the spatial grid into :math:`N` domains, where :math:`N` is the number
 of cores. Each core would manage its own domain on a separate memory space,
-and information was communicated between cores using the MPI protocol.
+and information is communicated between cores using the MPI protocol.
 :program:`Smilei` proposes an more efficient approach:
 it also decomposes the spatial grid in several domains,
 but one core is not directly associated to one domain.
@@ -92,13 +92,13 @@ These patch size is actually reasonable for :program:`Smilei`, whereas
 traditional PIC codes would have much larger domains.
 
 The issue is now to decide where these patches will be stored in the memory,
-and to choose which cores should do which patches.
+and to choose which cores should handle which patches.
 Recall that all the cores handled by one process share the same memory:
 we will refer to this memory as an *MPI region*.
 This means that one process manages one exclusive MPI region.
 :numref:`PatchDecomposition` shows an example with the 32 patches split in 5 regions
 recognized by their different colors.
-Note that these regions are all contiguous, but not necessarily rectangular.
+Note that these regions are formed by contiguous patches (the regions are connex), but not necessarily rectangular.
 
 .. _PatchDecomposition:
 
@@ -121,7 +121,7 @@ This is a form of **local load balancing**.
 
 * In each direction :math:`x`, :math:`y`, :math:`z`, the number of patches must be
   a power of 2.
-* There must be more patches than threads.
+* For efficiency reasons, each MPI process should own more patches than threads. And even many more if possible.
 
 
 ----
@@ -130,8 +130,11 @@ Load balancing between MPI regions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 As we just explained, threads treat the patches in one MPI region asynchronously to
-balance their loads carried. Unfortunately, it may not be sufficient.
-Indeed, when one MPI region holds much more load than the others, it will take a long
+balance their computational loads.
+Indeed, some patches may have more particles than others and therefore represent a heavier load for the thread
+which has to deal with it. In the meantime, other threads can take care of several lighter patches.
+Unfortunately, it may not be sufficient.
+When one MPI region holds more total load than the others, it will take a long
 time to compute, while the other processes have already finished and wait for this one.
 This can cause large delays.
 
@@ -142,8 +145,7 @@ on an ordering of the patches by a *Hilbert curve*, as drawn in
 :numref:`PatchDecompositionHilbert`. One MPI region contains only patches that contiguously
 follow this curve. If this "portion" of the curve has too much load, it will send
 some patches to the portions ahead or after, along the same curve. By repeating this
-operation every now and then, we ensure that all regions manage an equitable number
-of patches. 
+operation every now and then, we ensure that all regions manage an equitable computational load. 
 
 .. _PatchDecompositionHilbert:
 
@@ -153,22 +155,17 @@ of patches.
   The shape of the Hilbert curve which determines the patch order.
 
 
-As the patches can be small, moving a patch from one MPI region to another is
-fast: it can fit more easily in the cache, and does not require heavy memory
-access.
-
-
 
 ----
 
 Recommendations
 ^^^^^^^^^^^^^^^
 
-* **Have as many MPI processes as nodes** in order to optimize the memory distribution.
+* **Have as many MPI processes as sockets** in order to optimize the memory distribution. 
 
-* On each node, **have as many threads as cores per node**.
+* **have as many threads as cores per MPI process**.
   If you have less threads than cores, you will not be using all your cores.
-  Use more threads than cores only if hyper-threading is recommended on your architecture.
+  Use more threads than cores only if your architecture supports it well.
   
 * Use dynamic scheduling for the OpenMP parallelism, by setting the environment variable ``OMP_SCHEDULE``::
     
@@ -177,6 +174,9 @@ Recommendations
   This affects only the particles treatment, which will dynamically assign threads.
   Note that fields are always statically assigned to threads.
 
-* **Have small patches**. They can efficiently be as small as 5 cells in each direction.
-  This allows good cache use, but also ensures that you have at least as many threads
-  as patches, so that they can be treated in parallel.
+* **Have small patches**. Be aware that the minimum size of patch depends on the order of the numerical methods you use.
+  For typical order 2, the minimum size is 5 cells per dimension.
+  This allows good cache use, and good load distribution between threads.
+  Warning: it is commonly advised to use larger patches if more than half of your simulation domain is empty of particles.
+
+* **Take these recommendations with a pinch of salt**. Do your own tests and send us feedback !
