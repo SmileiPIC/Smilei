@@ -190,14 +190,19 @@ elif BENCH == "?":
 		SMILEI_BENCH_LIST = [ BENCH ]
 elif BENCH in list_bench:
 	SMILEI_BENCH_LIST = [ BENCH ]
-elif glob.glob( BENCH ):
-	BENCH = glob.glob( BENCH )    
+elif glob.glob( SMILEI_BENCHS+BENCH ):
+	BENCH = glob.glob( SMILEI_BENCHS+BENCH )    
+        list_all = glob.glob(SMILEI_BENCHS+"tst*py")
 	for b in BENCH:
-		if b not in list_bench:
+		if b not in list_all:
 			if VERBOSE:
 				print "Input file "+b+" invalid."
 			sys.exit(4)
-	SMILEI_BENCH_LIST = BENCH
+        SMILEI_BENCH_LIST= []
+        for b in BENCH:
+                if b.replace(SMILEI_BENCHS,'') in list_bench:
+                        SMILEI_BENCH_LIST.append( b.replace(SMILEI_BENCHS,'') )
+        BENCH = SMILEI_BENCH_LIST
 else:
 	if VERBOSE:
 		print "Input file "+BENCH+" invalid."
@@ -621,15 +626,10 @@ for BENCH in SMILEI_BENCH_LIST :
 			print 'Validating '+BENCH
 		Validate = CompareToReference(BENCH)
 		execfile(validation_script)
+
+        # CLEAN WORKDIRS, GOES HERE ONLY IF SUCCEED
+        shutil.rmtree( WORKDIR_BASE+s+'wd_'+os.path.basename(os.path.splitext(BENCH)[0]) )
 	
 	if VERBOSE: print ""
-
-
-# CLEAN OLDER WORKDIRS
-all_workdirs = glob.glob(SMILEI_VALIDATION+s+"workdirs"+s+"wd_*")
-all_workdirs.sort(key=os.path.getmtime)
-for d in all_workdirs[:-10]: # keep last 10 workdirs
-	shutil.rmtree(d)
-
 
 print "Everything passed"
