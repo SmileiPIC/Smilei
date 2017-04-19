@@ -280,8 +280,13 @@ void ElectroMagn3D::initPoisson(Patch *patch)
 double ElectroMagn3D::compute_r()
 {
     double rnew_dot_rnew_local(0.);
-#ifdef _PATCH3D_TODO
-#endif
+    for (unsigned int i=index_min_p_[0]; i<=index_max_p_[0]; i++) {
+        for (unsigned int j=index_min_p_[1]; j<=index_max_p_[1]; j++) {
+            for (unsigned int k=index_min_p_[2]; k<=index_max_p_[2]; k++) {
+                rnew_dot_rnew_local += (*r_)(i,j,k)*(*r_)(i,j,k)*(*r_)(i,j,k);
+            }
+        }
+    }
     return rnew_dot_rnew_local;
 } // compute_r
 
@@ -684,12 +689,10 @@ void ElectroMagn3D::applyExternalField(Field* my_field,  Profile *profile, Patch
         }
         pos[0] += dx;
     }
-    if (emBoundCond[0]!=0) emBoundCond[0]->save_fields_BC3D_Long(my_field);
-    if (emBoundCond[1]!=0) emBoundCond[1]->save_fields_BC3D_Long(my_field);
-    if (emBoundCond[2]!=0) emBoundCond[2]->save_fields_BC3D_TransY(my_field);
-    if (emBoundCond[3]!=0) emBoundCond[3]->save_fields_BC3D_TransY(my_field);
-    if (emBoundCond[4]!=0) emBoundCond[2]->save_fields_BC3D_TransZ(my_field);
-    if (emBoundCond[5]!=0) emBoundCond[3]->save_fields_BC3D_TransZ(my_field);
+    
+    for (auto& embc: emBoundCond) {
+        if (embc) embc->save_fields(my_field, patch);
+    }
 }
 
 

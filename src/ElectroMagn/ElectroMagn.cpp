@@ -228,22 +228,22 @@ ElectroMagn::~ElectroMagn()
 void ElectroMagn::boundaryConditions(int itime, double time_dual, Patch* patch, Params &params, SimWindow* simWindow)
 {
     // Compute EM Bcs
-    if ( (!simWindow) || (!simWindow->isMoving(time_dual)) ) {
+    if ( ! (simWindow && simWindow->isMoving(time_dual)) ) {
         if (emBoundCond[0]!=NULL) { // <=> if !periodic
-            emBoundCond[0]->apply_xmin(this, time_dual, patch);
-            emBoundCond[1]->apply_xmax(this, time_dual, patch);
+            emBoundCond[0]->apply(this, time_dual, patch);
+            emBoundCond[1]->apply(this, time_dual, patch);
         }
     }
     if (emBoundCond.size()>2) {
         if (emBoundCond[2]!=NULL) {// <=> if !periodic
-            emBoundCond[2]->apply_ymin(this, time_dual, patch);
-            emBoundCond[3]->apply_ymax(this, time_dual, patch);
+            emBoundCond[2]->apply(this, time_dual, patch);
+            emBoundCond[3]->apply(this, time_dual, patch);
         }
     }
     if (emBoundCond.size()>4) {
         if (emBoundCond[4]!=NULL) {// <=> if !periodic
-            emBoundCond[4]->apply_zmin(this, time_dual, patch);
-            emBoundCond[5]->apply_zmax(this, time_dual, patch);
+            emBoundCond[4]->apply(this, time_dual, patch);
+            emBoundCond[5]->apply(this, time_dual, patch);
         }
     }
 
