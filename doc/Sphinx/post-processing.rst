@@ -1,35 +1,8 @@
 Post-process
 ------------
 
-A python module is provided to view or extract data from all the diagnostics.
-There are several ways to load this module in python.
-
-.. rubric:: Recommended: Install Smilei's module
-
-..
-
-  ::
-  
-    make install_python
-
-  .. note:: This has to be done only once, unless you move the smilei directory elsewere. This command creates a small file in the Python user-site directory. To remove it use the command: ``make uninstall_python``.
-      
-  Then, in python, simply run::
-  
-    from Smilei import *
-
-
-.. rubric:: Alternative: Execute the ``Diagnostics.py`` script from python 
-
-..
-
-  You can add the following command in your own python script::
-  
-    execfile("/path/to/Smilei/scripts/Diagnostics.py")
-
-
-  .. warning:: This solution is kept for backward compatibility and may be removed in 
-    a future release
+This page describes the usage of the python module ``Smilei`` for extracting, viewing
+and post-processing simulation data. First, you need to :ref:`install this module <installModule>`.
 
 ----
 
