@@ -293,19 +293,26 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
             double theta = 2.0*M_PI*(double)rand() *INV_RAND_MAX;
             double psm = sqrt(pow(1.0+energies[p-iPart],2)-1.0);
             
-            (*particles).momentum(0,p) = psm*cos(theta)*sin(phi);
-            (*particles).momentum(1,p) = psm*sin(theta)*sin(phi);
-            (*particles).momentum(2,p) = psm*cos(phi);
+            particles->momentum(0,p) = psm*cos(theta)*sin(phi);
+            particles->momentum(1,p) = psm*sin(theta)*sin(phi);
+            particles->momentum(2,p) = psm*cos(phi);
             
             // Calculate the mean momentum
-            for (unsigned int i=0; i<3 ; i++)
-                pMean[i] += (*particles).momentum(i,p);
+            pMean[0] += particles->momentum(0,p);
+            pMean[1] += particles->momentum(1,p);
+            pMean[2] += particles->momentum(2,p);
         }
         
+        pMean[0] /= nPart;
+        pMean[1] /= nPart;
+        pMean[2] /= nPart;
+        
         // center the distribution function around pMean
-        for (unsigned int p= iPart; p<iPart+nPart; p++)
-            for (unsigned int i=0; i<3 ; i++)
-                (*particles).momentum(i,p) -= pMean[i]/nPart;
+        for (unsigned int p=iPart; p<iPart+nPart; p++) {
+            particles->momentum(0,p) -= pMean[0];
+            particles->momentum(1,p) -= pMean[1];
+            particles->momentum(2,p) -= pMean[2];
+        }
         
         // Trick to have non-isotropic distribution (not good)
         for (unsigned int p= iPart; p<iPart+nPart; p++) {
@@ -347,7 +354,7 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
         Lyz = gm1 * vy*vz/v2;
         
         // Volume transformation method (here is the correction by Zenitani)
-        double Volume_Acc = (double)rand() *INV_RAND_MAX;
+        double Volume_Acc;
         double CheckVelocity;
         
         // Lorentz transformation of the momentum
@@ -358,6 +365,7 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
                       +     (*particles).momentum(2,p)*(*particles).momentum(2,p) );
             
             CheckVelocity = ( vx*(*particles).momentum(0,p) + vy*(*particles).momentum(1,p) + vz*(*particles).momentum(2,p) ) / gp;
+            Volume_Acc = (double)rand() *INV_RAND_MAX;
             if (CheckVelocity > Volume_Acc){
 
                 double Phi , Theta , vfl ,vflx , vfly, vflz, vpx , vpy , vpz ;

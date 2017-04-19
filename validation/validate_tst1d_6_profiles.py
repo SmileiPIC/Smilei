@@ -1,4 +1,5 @@
 import os, re, numpy as np
+from scipy.signal import butter, filtfilt
 from Smilei import *
 
 S = Smilei(".", verbose=False)
@@ -39,3 +40,24 @@ Validate("Ez field at late time", Late_Ez, 0.01)
 # Verify that "time_frozen" works
 Late_density = S.Field.Field0.Rho_trapezoidal(timesteps=190).getData()[0]
 Validate("Density of a species at a late time", Late_density, 0.01)
+
+# Maxwell-Juttner initialization
+i = -1
+drift = ["no","px","py","pz"]
+for eon in S.namelist.mj_species:
+	i+=1
+	p = S.ParticleDiagnostic(i).get()
+	p_distr = p["data"][0]
+	p = p[drift[i]] if i>0 else p["px"]
+#	# theory
+#	g0 = S.namelist.g0 if i>0 else 1.
+#	Te = S.namelist.Te
+#	fth = (g0 * np.sqrt(1.+p**2)+Te) * np.exp( -g0/Te* (np.sqrt(1.+p**2) - np.sqrt(1.-g0**-2)*p) )
+#	itg = (p[1]-p[0])*np.sum(fth)
+#	fth = fth/itg
+#	plt.plot(px, p_distr, 'o', markeredgecolor=c[i], markerfacecolor="none")
+#	plt.plot(px, fth, '-', color=c[i])
+	b, a = butter(8, 0.15, btype='low', analog=False)
+	p_filt = filtfilt(b, a, p_distr)
+	Validate("Maxwell-Juttner Momentum distribution ("+drift[i]+" drift)", p_filt, p_filt.max()*1e-2)
+
