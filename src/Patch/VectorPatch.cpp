@@ -488,12 +488,12 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     if (iteration_max>0 && iteration == iteration_max) {
         if (smpi->isMaster())
             WARNING("Poisson solver did not converge: reached maximum iteration number: " << iteration
-                    << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
+                    << ", relative err is ctrl = " << 1.0e14*ctrl << " x 1e-14");
     }
     else {
         if (smpi->isMaster()) 
             MESSAGE(1,"Poisson solver converged at iteration: " << iteration
-                    << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
+                    << ", relative err is ctrl = " << 1.0e14*ctrl << " x 1e-14");
     }
     
     // ------------------------------------------
@@ -597,7 +597,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     
     //!\todo Reduce to find global max
     if (smpi->isMaster())
-        MESSAGE(1,"Poisson equation solved. Maximum error = " << deltaPoisson_max << " at i= " << i_deltaPoisson_max);
+        MESSAGE(1,"Poisson equation solved. Maximum err = " << deltaPoisson_max << " at i= " << i_deltaPoisson_max);
 
 } // END solvePoisson
 

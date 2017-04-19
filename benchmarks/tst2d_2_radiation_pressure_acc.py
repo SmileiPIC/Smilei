@@ -4,12 +4,12 @@
 
 import math
 
-l0 = 2.0*math.pi    # laser wavelength
-t0 = l0            # optical cicle
-Lsim = [10.*l0,10.*l0]    # length of the simulation
-Tsim = 10.*t0        # duration of the simulation
-resx = 100.        # nb of cells in on laser wavelength
-rest = 150.        # time of timestep in one optical cycle 
+l0 = 2.0*math.pi       # laser wavelength
+t0 = l0                # optical cycle
+Lsim = [6.*l0,10.*l0]  # length of the simulation
+Tsim = 10.*t0          # duration of the simulation
+resx = 100.            # nb of cells in on laser wavelength
+rest = 150.            # time of timestep in one optical cycle 
 
 Main(
     geometry = "2d3v",
@@ -65,7 +65,9 @@ Species(
     bc_part_type_xmin = 'refl',
     bc_part_type_xmax = 'refl',
     bc_part_type_ymin = 'none',
-    bc_part_type_ymax = 'none'
+    bc_part_type_ymax = 'none', 
+    track_every = 500, 
+    time_frozen = 0.1
 )
 
 

@@ -23,6 +23,10 @@ Main(
 	print_every = 10
 )
 
+def custom(x, y, z):
+	if z<L0/2.: return 0.
+	else: return math.exp(-z)
+
 profiles = {
 "constant"   :constant   (1.),
 "trapezoidal":trapezoidal(1.,
@@ -32,7 +36,7 @@ profiles = {
 "gaussian"   :gaussian   (1.,
 							xvacuum=0.1 *L0, xlength=0.5*L0, xfwhm=0.2*L0, xcenter=0.2*L0, xorder=2,
 							yvacuum=0.2 *L0, ylength=0.6*L0, yfwhm=0.4*L0, ycenter=0.5*L0, yorder=4,
-							zvacuum=0.05*L0, zlength=0.3*L0, zfwhm=0.6*L0, zcenter=0.4*L0, zorder=2),
+							zvacuum=0.05*L0, zlength=0.7*L0, zfwhm=0.6*L0, zcenter=0.4*L0, zorder=2),
 "polygonal"  :polygonal  (xpoints=[0.1*L0, 0.2*L0, 0.4*L0, 0.8*L0], xvalues=[1.,0.5,0.8, 0.1]),
 "cosine"     :cosine     (1.,
 							xamplitude=0.4, xvacuum=0.3*L0, xlength=0.4*L0, xphi=0.1*L0, xnumber=5,
@@ -41,7 +45,8 @@ profiles = {
 "polynomial" :polynomial (x0=0.4*L0, y0=0.5*L0, z0=0.6*L0,
 							order0=1.,
 							order1=[-1./L0,-0.1/L0, 2./L0],
-							order2=[(0.1/L0)**2]*6)
+							order2=[(0.1/L0)**2]*6),
+"custom"     :custom
 }
 
 for name, profile in profiles.items():

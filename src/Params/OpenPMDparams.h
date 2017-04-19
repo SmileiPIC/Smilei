@@ -35,6 +35,8 @@ public:
     std::vector<double> gridGlobalOffset;
     //! Offset of the grid for each field
     std::vector<double> gridOffset;
+    //! Patch size
+    std::vector<unsigned int> patchSize;
     //! Units of each quantity (contains length, mass, time, current, temperature, amount, intensity)
     std::vector<std::vector<double> > unitDimension;
     //! Conversion factor to SI for each quantity

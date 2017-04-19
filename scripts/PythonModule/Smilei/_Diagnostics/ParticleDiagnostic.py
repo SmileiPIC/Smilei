@@ -163,6 +163,9 @@ class ParticleDiagnostic(Diagnostic):
 				axis_units = "P_r"
 			elif axis["type"] in ["vx","vy","vz","v"]:
 				axis_units = "V_r"
+			elif axis["type"] in ["vperp2"]:
+				axis_units = "V_r**2"
+				overall_min = "0"
 			elif axis["type"] == "gamma":
 				overall_min = "1"
 			elif axis["type"] == "ekin":
@@ -171,6 +174,9 @@ class ParticleDiagnostic(Diagnostic):
 			elif axis["type"] == "charge":
 				axis_units = "Q_r"
 				overall_min = "0"
+			else:
+				self._error = "axis type "+axis["type"]+" not implemented"
+				return None
 			
 			# if this axis has to be sliced, then select the slice
 			if axis["type"] in slice:
@@ -332,6 +338,9 @@ class ParticleDiagnostic(Diagnostic):
 	# Prints the info obtained by the function "getInfo"
 	@staticmethod
 	def _printInfo(info):
+		if not info:
+			return "Error while reading file(s)"
+		
 		# 1 - diag number, type and list of species
 		species = ""
 		for i in range(len(info["species"])): species += str(info["species"][i])+" " # reconstitute species string

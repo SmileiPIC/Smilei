@@ -152,9 +152,9 @@ class Screen(Diagnostic):
 			# Find some quantities depending on the axis type
 			overall_min = "-inf"; overall_max = "inf"
 			axis_units = ""
-			if   axis["type"] in ["x","y","z"]:
+			if   axis["type"] in ["x","y","z", "moving_x"]:
 				axis_units = "L_r"
-				spatialaxes[axis["type"]] = True
+				spatialaxes[axis["type"][-1]] = True
 			elif axis["type"] in ["a","b"]:
 				axis_units = "L_r"
 				hasComposite = True
@@ -178,6 +178,9 @@ class Screen(Diagnostic):
 				axis_units = "P_r"
 			elif axis["type"] in ["vx","vy","vz","v"]:
 				axis_units = "V_r"
+			elif axis["type"] in ["vperp2"]:
+				axis_units = "V_r**2"
+				overall_min = "0"
 			elif axis["type"] == "gamma":
 				overall_min = "1"
 			elif axis["type"] == "ekin":
@@ -186,6 +189,9 @@ class Screen(Diagnostic):
 			elif axis["type"] == "charge":
 				axis_units = "Q_r"
 				overall_min = "0"
+			else:
+				self._error = "axis type "+axis["type"]+" not implemented"
+				return None
 			
 			# if this axis has to be sliced, then select the slice
 			if axis["type"] in slice:
@@ -223,7 +229,7 @@ class Screen(Diagnostic):
 					# calculate the size of the slice
 					slice_size = edges[indices[-1]+1] - edges[indices[0]]
 				
-				if axis["type"] in ["x","y","z"]: coeff /= slice_size
+				if axis["type"] in ["x","y","z","moving_x"]: coeff /= slice_size
 			
 			# if not sliced, then add this axis to the overall plot
 			else:

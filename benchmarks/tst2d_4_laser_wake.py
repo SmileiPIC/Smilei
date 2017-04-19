@@ -30,7 +30,7 @@ Main(
 )
 
 MovingWindow(
-    time_start = Main.sim_length[0],
+    time_start = Main.sim_length[0]*0.98,
     velocity_x = 0.9997
 )
 
