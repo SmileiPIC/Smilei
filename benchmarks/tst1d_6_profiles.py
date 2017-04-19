@@ -22,10 +22,11 @@ Main(
 	print_every = 10
 )
 
+
+# SPATIAL PROFILES
 def custom(x):
 	if x<L0/2.: return 0.
 	else: return math.exp(-x)
-
 profiles = {
 "constant"   :constant   (1.),
 "trapezoidal":trapezoidal(1., xvacuum=0.1*L0, xplateau=0.4*L0, xslope1=0.1*L0, xslope2=0.3*L0),
@@ -35,7 +36,6 @@ profiles = {
 "polynomial" :polynomial (x0=0.4*L0, order0=1., order1=-1./L0, order2=(1./L0)**2),
 "custom"     :custom
 }
-
 for name, profile in profiles.items():
 	Species(
 		species_type = name,
@@ -51,10 +51,10 @@ for name, profile in profiles.items():
 		temperature = [0.1]
 	)
 
+# TEMPORAL PROFILES
 def tcustom(t):
 	if t<L0/2.: return 0.
 	else: return math.exp(-t)
-
 tprofiles = [
 ["tconstant"   ,tconstant   ()],
 ["ttrapezoidal",ttrapezoidal(start=0.2*L0, plateau=0.4*L0, slope1=0.2*L0, slope2=0.1*L0)],
@@ -64,9 +64,7 @@ tprofiles = [
 ["tpolynomial" ,tpolynomial (t0=0.4*L0, order0=-1., order1=-1./L0, order2=(3./L0)**2)],
 ["tcustom"     ,tcustom]
 ]
-
 antenna_width = Main.sim_length[0]/len(tprofiles)
-
 for i, (name, tprofile) in enumerate(tprofiles):
 	Antenna(
 		field = "Jz",
@@ -74,10 +72,47 @@ for i, (name, tprofile) in enumerate(tprofiles):
 		time_profile = tprofile
 	)
 
+# MAXWELL-JUTTNER INITIALIZATION
+Te = 1.
+g0 = 5.
+mj_species = ['eon_nodrift', 'eon_xdrift', 'eon_ydrift', 'eon_zdrift']
+for eon in mj_species:
+	vmean = [0., 0., 0.]
+	direction = eon[4]
+	if direction in "xyz":
+		vmean[ "xyz".index(direction) ] = math.sqrt(1.-g0**-2)
+		pmax = 100.
+	else:
+		direction = "x"
+		pmax = 10.
+	
+	Species(
+		species_type = eon,
+		initPosition_type = 'random',
+		initMomentum_type = 'mj',
+		temperature = [Te,Te,Te],
+		n_part_per_cell = 100000,
+		mass = 1.0,
+		charge = -1.0,
+		nb_density = 1.,
+		mean_velocity=vmean,
+		time_frozen = 10000.,
+		bc_part_type_xmin  = 'none',
+		bc_part_type_xmax  = 'none',
+		isTest = True
+	)
+	
+	DiagParticles(
+	 	output = "density",
+	 	every = 1000.,
+	 	species = [eon],
+	 	axes = [
+	 		["p"+direction, -10., pmax, 500]
+	 	]
+	)
+
 
 DiagFields(
 	every = 2,
 	fields = ["Ez", "Jz"] + ["Rho_"+name for name in profiles.keys()],
 )
-
-

@@ -6,7 +6,7 @@ compile:
   stage: compile
   only:
     - develop
-
+    - develop_cleanBC
   script:
     # Move in test dir
     - mkdir /sps/gitlab-runner/$CI_PIPELINE_ID
@@ -19,6 +19,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
+    - develop_cleanBC
   script:
     # Move in test dir
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -29,6 +30,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
+    - develop_cleanBC
   script:
     # Move in test dir
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -49,6 +51,7 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
+    - develop_cleanBC
   script:
     # Move in test dir
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
