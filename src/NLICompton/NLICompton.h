@@ -48,6 +48,9 @@ class NLICompton
 
         //! Write in a file table values for Integration of F/chi: Integfochi
         void output_integfochi_table();
+
+        //! Computation of the cross-section dNph/dt
+        double compute_dNphdt(double chipa,double gfpa);
  
     private:
 
@@ -66,6 +69,9 @@ class NLICompton
 
         //! Dimension of the array Integfochi
         unsigned int dim_integfochi;
+
+        //! Factor for the computation of dNphdt
+        double factor_dNphdt;
 
         
 };

@@ -27,6 +27,52 @@ NLICompton::NLICompton()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Computation of the Cross Section dNph/dt which is also 
+// the number of photons generated per time unit.
+// ---------------------------------------------------------------------------------------------------------------------
+double NLICompton::compute_dNphdt(double chipa,double gfpa)
+{
+
+    // Log of the particle quantum parameter chipa
+    double logchipa;
+    double logchipam, logchipap;
+    // Index
+    unsigned int i_chipa;
+    // final value
+    double dNphdt;
+
+    logchipa = log10(chipa);
+
+    // Lower index for interpolation in the table integfochi
+    i_chipa = int(floor(logchipa-chie_integfochi_min)/delta_chie_integfochi);
+
+    // If we are not in the table...
+    if (i_chipa < 0)
+    {
+        i_chipa = 0;
+        dNphdt = Integfochi[i_chipa];
+    }
+    else if (i_chipa >= dim_integfochi-1)
+    {
+        i_chipa = dim_integfochi-2;
+        dNphdt = Integfochi[i_chipa];
+    }
+    else
+    {
+       // Upper and minor values for linear interpolation
+       logchipam = i_chipa*delta_chie_integfochi + log10(chie_integfochi_min);
+       logchipap = logchipam + delta_chie_integfochi;
+   
+       // Interpolation
+       dNphdt = (Integfochi[i_chipa+1]*abs(logchipa-logchipam) + 
+                 Integfochi[i_chipa]*abs(logchipap - logchipa))/delta_chie_integfochi;
+    }
+
+    return factor_dNphdt*dNphdt*chipa/gfpa;
+
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Computation of the table values of integfochi
 // ---------------------------------------------------------------------------------------------------------------------
 void NLICompton::compute_integfochi_table()
