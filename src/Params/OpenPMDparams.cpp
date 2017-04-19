@@ -37,6 +37,7 @@ OpenPMDparams::OpenPMDparams(Params& p):
         fieldSolver = "other";
         fieldSolverParameters = params->maxwell_sol;
     }
+    patchSize = params->n_space;
     
     // Units
     unitDimension.resize( SMILEI_NUNITS );
@@ -147,6 +148,7 @@ void OpenPMDparams::writeParticlesAttributes( hid_t location )
 
 void OpenPMDparams::writeMeshesAttributes( hid_t location )
 {
+    H5::attr( location, "patchSize", patchSize); // this one is not openPMD
     H5::attr( location, "fieldSolver", fieldSolver);
     H5::attr( location, "fieldSolverParameters", fieldSolverParameters);
     H5::attr( location, "fieldBoundary", fieldBoundary);
