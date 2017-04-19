@@ -628,7 +628,8 @@ for BENCH in SMILEI_BENCH_LIST :
 		execfile(validation_script)
 
         # CLEAN WORKDIRS, GOES HERE ONLY IF SUCCEED
-        #shutil.rmtree( WORKDIR_BASE+s+'wd_'+os.path.basename(os.path.splitext(BENCH)[0]) )
+	os.chdir(WORKDIR_BASE)
+        shutil.rmtree( WORKDIR_BASE+s+'wd_'+os.path.basename(os.path.splitext(BENCH)[0]), True )
 	
 	if VERBOSE: print ""
 
