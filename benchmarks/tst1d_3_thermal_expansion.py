@@ -101,10 +101,10 @@ DiagParticles(
 
 DiagParticles(
     output = "density",
-    every = every,
+    every = 10,
     time_average = 1,
     species = ["eon"],
     axes = [
-        ["ekin", 0.01*Te, 10*Te, 100, "logscale"]
+        ["ekin", 0.1*Te, 20*Te, 30, "logscale"]
     ]
 )
