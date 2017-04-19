@@ -1,4 +1,5 @@
 import os, re, numpy as np
+from scipy.signal import butter, filtfilt
 from Smilei import *
 
 S = Smilei(".", verbose=False)
@@ -37,3 +38,22 @@ for name, profile in S.namelist.profiles.items():
 #	plt.waitforbuttonpress()
 #	print "--------"
 #
+
+
+
+
+# Maxwell-Juttner initialization
+p = S.ParticleDiagnostic(0).get()
+p_distr = p["data"][0]
+p = p["px"]
+b, a = butter(8, 0.15, btype='low', analog=False)
+p_filt = filtfilt(b, a, p_distr)
+# # theory
+# Te = S.namelist.Te
+# fth = (np.sqrt(1.+p**2)+Te) * np.exp( -1./Te* np.sqrt(1.+p**2) )
+# itg = (p[1]-p[0])*np.sum(fth)
+# fth = fth/itg
+# plt.plot(p, p_filt, '.k')
+# plt.plot(p, fth, '-k')
+Validate("Maxwell-Juttner Momentum distribution", p_filt, p_filt.max()*1e-2)
+

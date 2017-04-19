@@ -72,7 +72,7 @@ for i, (name, tprofile) in enumerate(tprofiles):
 		time_profile = tprofile
 	)
 
-# MAXWELL-JUTTNER INITIALIZATION
+# RELATIVISTIC MAXWELL-JUTTNER INITIALIZATION
 Te = 1.
 g0 = 5.
 mj_species = ['eon_nodrift', 'eon_xdrift', 'eon_ydrift', 'eon_zdrift']
