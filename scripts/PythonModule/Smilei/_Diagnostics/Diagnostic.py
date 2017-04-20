@@ -501,7 +501,7 @@ class Diagnostic(object):
 		if not self._validate(): return
 		
 		if self.dim<2 or self.dim>3:
-			print "Cannot export "+str(self.dim)+"D data to VTK"
+			print ("Cannot export "+str(self.dim)+"D data to VTK")
 			return
 		
 		self._mkdir(self._exportDir)

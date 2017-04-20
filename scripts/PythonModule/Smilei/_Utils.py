@@ -435,7 +435,7 @@ class VTKfile:
 		try:
 			import vtk
 		except:
-			print "Python module 'vtk' not found. Could not export to VTK format"
+			print("Python module 'vtk' not found. Could not export to VTK format")
 			return
 		
 		self.vtk = vtk
@@ -463,9 +463,9 @@ class VTKfile:
 		writer.SetNumberOfPieces(numberOfPieces)
 		writer.SetEndPiece(numberOfPieces-1)
 		writer.SetStartPiece(0);
-                if float(self.vtk.VTK_VERSION[:3]) < 6:
+		if float(self.vtk.VTK_VERSION[:3]) < 6:
 		    writer.SetInput(img)
-                else:
+		else:
 		    writer.SetInputData(img)
 		writer.Write()
 	
@@ -478,9 +478,9 @@ class VTKfile:
 		grid.GetPointData().SetScalars(array)
 		writer = self.vtk.vtkRectilinearGridWriter()
 		writer.SetFileName(file)
-                if float(self.vtk.VTK_VERSION[:3]) < 6:
+		if float(self.vtk.VTK_VERSION[:3]) < 6:
 		    writer.SetInput(grid)
-                else:
+		else:
 		    writer.SetInputData(grid)
 		writer.Write()
 	
@@ -491,9 +491,9 @@ class VTKfile:
 		grid.SetPoints(points)
 		writer = self.vtk.vtkUnstructuredGridWriter()
 		writer.SetFileName(file)
-                if float(self.vtk.VTK_VERSION[:3]) < 6:
+		if float(self.vtk.VTK_VERSION[:3]) < 6:
 		    writer.SetInput(grid)
-                else:
+		else:
 		    writer.SetInputData(grid)
 		writer.Write()
 	
@@ -519,9 +519,9 @@ class VTKfile:
 		
 		writer = self.vtk.vtkPolyDataWriter()
 		writer.SetFileName(file)
-                if float(self.vtk.VTK_VERSION[:3]) < 6:
+		if float(self.vtk.VTK_VERSION[:3]) < 6:
 		    writer.SetInput(pdata)
-                else:
+		else:
 		    writer.SetInputData(pdata)
 		writer.Write()
 
