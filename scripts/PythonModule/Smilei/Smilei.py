@@ -487,7 +487,7 @@ class Smilei(object):
 		
 	"""
 	
-	def __init__(self, results_path=".", show=True, verbose=True):
+	def __init__(self, results_path=".", show=True, referenceAngularFrequency_SI=None, verbose=True):
 		self.valid = False
 		# Import packages
 		import h5py
@@ -508,6 +508,7 @@ class Smilei(object):
 		self._plt = matplotlib.pyplot
 		self._mtime = 0
 		self._verbose = verbose
+		self._referenceAngularFrequency_SI = referenceAngularFrequency_SI
 		
 		# Load the simulation (verify the path, get the namelist)
 		self.reload()
@@ -615,7 +616,9 @@ class Smilei(object):
 					return
 				if self._verbose: print("Loaded simulation '"+path+"'")
 			# Update the simulation parameters
-			self._ndim, self._cell_length, self._ncels, self._timestep, self._referenceAngularFrequency_SI = args[1:]
+			self._ndim, self._cell_length, self._ncels, self._timestep, referenceAngularFrequency_SI = args[1:]
+			if self._referenceAngularFrequency_SI is None:
+				self._referenceAngularFrequency_SI = referenceAngularFrequency_SI
 			self.namelist = args[0]
 		
 		self._mtime = lastmodif

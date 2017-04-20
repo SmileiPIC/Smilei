@@ -13,7 +13,8 @@
 using namespace std;
 
 // Constructor for ElectromagnBC
-ElectroMagnBC::ElectroMagnBC( Params &params, Patch* patch )
+ElectroMagnBC::ElectroMagnBC( Params &params, Patch* patch, unsigned int _min_max ) :
+min_max(_min_max)
 {
     vecLaser.resize(0);
     

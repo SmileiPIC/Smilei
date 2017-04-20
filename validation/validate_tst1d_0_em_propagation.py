@@ -1,4 +1,4 @@
-import os, re, numpy as np
+import os, re, numpy as np, h5py
 from Smilei import *
 
 S = Smilei(".", verbose=False)
@@ -22,3 +22,11 @@ Validate("Last Ez profile in Probe1", Ez, 1e-7 )
 max_ubal = np.max( np.abs(S.Scalar.Ubal().getData()) )
 Validate("Max Ubal is below 2%", max_ubal<0.02 )
 
+# TEST THE GRID PARAMETERS
+with h5py.File("Fields0.h5") as f:
+	dt = f["data/0000000000"].attrs["dt"]
+	dx = f["data/0000000000/Ex"].attrs["gridSpacing"]
+	patchSize = f["data/0000000000"].attrs["patchSize"]
+Validate("Value of the timestep" , dt, 1e-6)
+Validate("Value of the grid step", dx, 1e-6)
+Validate("Patch size", patchSize)

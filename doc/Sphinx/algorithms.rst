@@ -179,7 +179,7 @@ are computed on the grid using a simple projection technique:
 
 Then, the initial electric fields are computed from :math:`\rho(t=0,\mathbf{x})`
 by solving Poisson's equation. In :program:`Smilei`, this is done using the conjugate gradient
-method :ref:`ConjugateGradient`. This iterative method is particularly interesting
+method. This iterative method is particularly interesting
 as it is easily implemented on massively parallel computers and requires mainly
 local information exchange between adjacent processes.
 
