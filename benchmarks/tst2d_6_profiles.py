@@ -53,6 +53,37 @@ for name, profile in profiles.items():
 	)
 
 
+# NON-RELATIVISTIC MAXWELL-JUTTNER INITIALIZATION
+Te = 0.01
+Species(
+	species_type = "eon",
+	initPosition_type = 'random',
+	initMomentum_type = 'mj',
+	temperature = [Te,Te,Te],
+	n_part_per_cell = 300,
+	mass = 1.0,
+	charge = -1.0,
+	nb_density = 1.,
+	mean_velocity=[0., 0., 0.],
+	time_frozen = 10000.,
+	bc_part_type_xmin = 'none',
+	bc_part_type_xmax = 'none',
+	bc_part_type_ymin = "none",
+	bc_part_type_ymax = "none",
+	isTest = True
+)
+
+DiagParticles(
+ 	output = "density",
+ 	every = 1000.,
+ 	species = ["eon"],
+ 	axes = [
+ 		["px", -0.4, 0.4, 100]
+ 	]
+)
+
+
+
 DiagFields(
 	every = 5,
 )
