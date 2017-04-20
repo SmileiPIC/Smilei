@@ -296,7 +296,7 @@ class Screen(Diagnostic):
 			self._bsize = plot_diff[0]
 		else:
 			self._bsize = self._np.prod( self._np.array( self._np.meshgrid( *plot_diff ) ), axis=0)
-			self._bsize = self._bsize.transpose(range(1,len(plot_diff))+[0])
+			self._bsize = self._bsize.transpose([1,0]+range(2,len(plot_diff)))
 		self._bsize = cell_volume / self._bsize
 		if not hasComposite: self._bsize *= coeff
 		self._bsize = self._np.squeeze(self._bsize)
