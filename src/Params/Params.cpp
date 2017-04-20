@@ -309,15 +309,15 @@ namelist("")
     for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ )
         tot_number_of_patches *= number_of_patches[iDim];
     
-    if ( tot_number_of_patches == smpi->getSize() ){
+    if ( tot_number_of_patches == (unsigned int)(smpi->getSize()) ){
         one_patch_per_MPI = true;
     } else {
         one_patch_per_MPI = false;
-        if (tot_number_of_patches < smpi->getSize())
+        if (tot_number_of_patches < (unsigned int)(smpi->getSize()))
             ERROR("The total number of patches must be greater or equal to the number of MPI processes"); 
     }
 #ifdef _OPENMP
-    if ( tot_number_of_patches < smpi->getSize()*omp_get_max_threads() )
+    if ( tot_number_of_patches < (unsigned int)(smpi->getSize()*omp_get_max_threads()) )
         WARNING( "Resources allocated underloaded regarding the total number of patches" );
 #endif
     

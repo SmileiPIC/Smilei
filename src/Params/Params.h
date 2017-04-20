@@ -180,9 +180,9 @@ public:
     int exchange_particles_each;
     
     //! Total number of patches
-    int tot_number_of_patches;
+    unsigned int tot_number_of_patches;
     //! Number of patches per direction
-    std::vector<int> number_of_patches;
+    std::vector<unsigned int> number_of_patches;
     //! Load balancing frequency
     int balancing_every;
     //! Load coefficient applied to a cell (default = 1)

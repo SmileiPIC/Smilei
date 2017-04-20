@@ -201,7 +201,7 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
                     bufsize[i][isDual]--;
                 else if  (isDual) {
                     bufsize[i][isDual]--;
-                    if ( (patch->Pcoordinates[i]!=0) && ((int)patch->Pcoordinates[i]!=params.number_of_patches[i]-1) )
+                    if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=params.number_of_patches[i]-1) )
                         bufsize[i][isDual]--;
                 }
                 
