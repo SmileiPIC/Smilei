@@ -33,6 +33,8 @@
 #include "Field3D.h"
 #include "Tools.h"
 
+#include "DiagnosticTrack.h"
+
 using namespace std;
 
 
@@ -55,8 +57,9 @@ oversize(params.oversize),
 cell_length(params.cell_length), 
 min_loc_vec(patch->getDomainLocalMin()), 
 partBoundCond(NULL),
+tracking_diagnostic(10000),
 nDim_particle(params.nDim_particle),
-min_loc(patch->getDomainLocalMin(0)) 
+min_loc(patch->getDomainLocalMin(0))
 {
     DEBUG(species_type);
     
@@ -422,7 +425,7 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
-                       Projector* Proj, Params &params, bool diag_flag, PartWalls* partWalls, Patch* patch, SmileiMPI* smpi)
+                       Projector* Proj, Params &params, bool diag_flag, PartWalls* partWalls, Patch* patch, SmileiMPI* smpi, vector<Diagnostic*>& localDiags)
 {
     int ithread;
     #ifdef _OPENMP
@@ -497,7 +500,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         
         // Add the ionized electrons to the electron species
         if (Ionize)
-            electron_species->importParticles( params, patch, Ionize->new_electrons );
+            electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags );
     }
     else { // immobile particle (at the moment only project density)
         if ( diag_flag &&(!(*particles).isTest)){
@@ -872,23 +875,29 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
 
 
 // Move all particles from another species to this one
-void Species::importParticles( Params& params, Patch* patch, Particles& source_species )
+void Species::importParticles( Params& params, Patch* patch, Particles& source_particles, vector<Diagnostic*>& localDiags )
 {
-    unsigned int npart = source_species.size(), ibin, ii;
+    unsigned int npart = source_particles.size(), ibin, ii;
     double inv_cell_length = 1./ params.cell_length[0];
     
-    for (unsigned int i=0; i < npart; i++) {
-        
-        ibin = source_species.position(0,i)*inv_cell_length - ( patch->getCellStartingGlobalIndex(0) + params.oversize[0] );
-        source_species.cp_particle(i, *particles, bmin[ibin] );
-        
+    // If this species is tracked, set the particle IDs
+    if( particles->tracked )
+        dynamic_cast<DiagnosticTrack*>(localDiags[tracking_diagnostic])->setIDs( source_particles );
+    
+    // Move particles
+    for( unsigned int i=0; i<npart; i++ ) {
+        // Copy particle to the correct bin
+        ibin = source_particles.position(0,i)*inv_cell_length - ( patch->getCellStartingGlobalIndex(0) + params.oversize[0] );
+        source_particles.cp_particle(i, *particles, bmin[ibin] );
+        // Update the bin counts
         bmax[ibin]++;
         for (ii=ibin+1; ii<bmin.size(); ii++) {
             bmin[ii]++;
             bmax[ii]++;
         }
     }
-    source_species.clear();
+    
+    source_particles.clear();
 }
 
 

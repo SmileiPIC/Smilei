@@ -1,12 +1,8 @@
-# ----------------------------------------------------------------------------------------
-# 					SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
-# ----------------------------------------------------------------------------------------
-
 import math
-l0 = 2.0*math.pi	# wavelength in normalized units
-t0 = l0				# optical cycle in normalized units
-rest = 102.0		# nb of timestep in 1 optical cycle
-resx = 100.0		# nb cells in 1 wavelength
+l0 = 2.0*math.pi  # wavelength in normalized units
+t0 = l0           # optical cycle in normalized units
+rest = 102.0      # nb of timestep in 1 optical cycle
+resx = 100.0      # nb cells in 1 wavelength
 
 Main(
     geometry = "1d3v",
@@ -35,7 +31,7 @@ Laser(
 )
 
 DiagScalar(
-    every = 1
+    every = 5
 )
 
 DiagFields(

@@ -33,7 +33,7 @@ public :
     virtual void run( Patch* patch, int timestep, SimWindow* simWindow ) {};
     
     //! Runs the diag for all patches for local diags.
-    virtual void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) {};
+    virtual void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep, SimWindow* simWindow ) {};
     
     //! Writes out a global diag diag.
     virtual void write(int timestep, SmileiMPI* smpi) {};

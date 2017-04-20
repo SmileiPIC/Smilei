@@ -27,23 +27,30 @@ OpenPMDparams::OpenPMDparams(Params& p):
         gridOffset      [idim] = 0.;
         position        [idim] = 0.;
     }
-    unitDimension.resize( 4 );
-    for( unsigned int field_type=0; field_type<4; field_type++ ) {
-        unitDimension[field_type].resize(7, 0.);
-        if        ( field_type == 0 ) { // Electric field
-            unitDimension[field_type][0] = 1.;
-            unitDimension[field_type][1] = 1.;
-            unitDimension[field_type][2] = -3.;
-            unitDimension[field_type][3] = -1.;
-        } else if ( field_type == 1 ) { // Magnetic field
-            unitDimension[field_type][1] = 1.;
-            unitDimension[field_type][2] = -2.;
-            unitDimension[field_type][3] = -1.;
-        } else if ( field_type == 2 ) { // Current
-            unitDimension[field_type][0] = -2.;
-            unitDimension[field_type][3] = 1.;
-        } else if ( field_type == 3 ) { // Density
-            unitDimension[field_type][0] = -3.;
+    unitDimension.resize( 8 );
+    for( unsigned int unit_type=0; unit_type<8; unit_type++ ) {
+        unitDimension[unit_type].resize(7, 0.);
+        if        ( unit_type == 0 ) { // dimensionless
+        } else if ( unit_type == 1 ) { // Electric field
+            unitDimension[unit_type][0] = 1.;
+            unitDimension[unit_type][1] = 1.;
+            unitDimension[unit_type][2] = -3.;
+            unitDimension[unit_type][3] = -1.;
+        } else if ( unit_type == 2 ) { // Magnetic field
+            unitDimension[unit_type][1] = 1.;
+            unitDimension[unit_type][2] = -2.;
+            unitDimension[unit_type][3] = -1.;
+        } else if ( unit_type == 3 ) { // Current
+            unitDimension[unit_type][0] = -2.;
+            unitDimension[unit_type][3] = 1.;
+        } else if ( unit_type == 4 ) { // Density
+            unitDimension[unit_type][0] = -3.;
+        } else if ( unit_type == 5 ) { // Position
+            unitDimension[unit_type][0] = -3.;
+        } else if ( unit_type == 6 ) { // Momentum
+            unitDimension[unit_type][0] = -3.;
+        } else if ( unit_type == 7 ) { // Charge
+            unitDimension[unit_type][0] = -3.;
         }
     }
     fieldSolverParameters = "";
@@ -113,7 +120,11 @@ void OpenPMDparams::writeBasePathAttributes( hid_t location, unsigned int itime 
     H5::attr( location, "timeUnitSI", 0.); // not relevant
 }
 
-void OpenPMDparams::writeMeshesPathAttributes( hid_t location )
+void OpenPMDparams::writeParticlesAttributes( hid_t location )
+{
+}
+
+void OpenPMDparams::writeMeshesAttributes( hid_t location )
 {
     H5::attr( location, "fieldSolver", fieldSolver);
     H5::attr( location, "fieldSolverParameters", fieldSolverParameters);
@@ -129,7 +140,7 @@ void OpenPMDparams::writeMeshesPathAttributes( hid_t location )
     H5::attr( location, "fieldSmoothingParameters", "");
 }
 
-void OpenPMDparams::writeFieldAttributes( hid_t location, unsigned int field_type )
+void OpenPMDparams::writeFieldAttributes( hid_t location )
 {
     H5::attr( location, "geometry", "cartesian");
     H5::attr( location, "dataOrder", "C");
@@ -138,8 +149,15 @@ void OpenPMDparams::writeFieldAttributes( hid_t location, unsigned int field_typ
     H5::attr( location, "gridGlobalOffset", gridGlobalOffset);
     H5::attr( location, "gridOffset", gridOffset);
     H5::attr( location, "gridUnitSI", 0.);      
-    H5::attr( location, "unitSI", 0.);      
-    H5::attr( location, "unitDimension", unitDimension[field_type]);
+}
+
+void OpenPMDparams::writeSpeciesAttributes( hid_t location )
+{
+}
+
+void OpenPMDparams::writeRecordAttributes( hid_t location, unsigned int unit_type )
+{
+    H5::attr( location, "unitDimension", unitDimension[unit_type]);
     H5::attr( location, "timeOffset", 0.);
 }
 
@@ -147,6 +165,13 @@ void OpenPMDparams::writeFieldRecordAttributes( hid_t location )
 {
     H5::attr( location, "position", position);
 }
+
+void OpenPMDparams::writeComponentAttributes( hid_t location )
+{
+    H5::attr( location, "unitSI", 0.);      
+}
+
+
 
 // WARNING: do not change the format. It is required for OpenPMD compatibility.
 string OpenPMDparams::getLocalTime() {

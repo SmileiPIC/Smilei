@@ -272,7 +272,7 @@ class ParticleDiagnostic(Diagnostic):
 			self._bsize = plot_diff[0]
 		else:
 			self._bsize = self._np.prod( self._np.array( self._np.meshgrid( *plot_diff ) ), axis=0)
-			self._bsize = self._bsize.transpose()
+			self._bsize = self._bsize.transpose(range(1,len(plot_diff))+[0])
 		self._bsize = cell_volume / self._bsize
 		if not hasComposite: self._bsize *= coeff
 		self._bsize = self._np.squeeze(self._bsize)
@@ -405,13 +405,13 @@ class ParticleDiagnostic(Diagnostic):
 				print("Timestep "+str(t)+" not found in this diagnostic")
 				return []
 			# get data
-			B = self._np.squeeze(self._np.zeros(self._finalShape))
+			B = self._np.zeros(self._finalShape)
 			try:
 				self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
 			except:
-					B = self._np.squeeze(B)
-					self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
-					B = self._np.reshape(B, self._finalShape)
+				B = self._np.squeeze(B)
+				self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
+				B = self._np.reshape(B, self._finalShape)
 			B[self._np.isnan(B)] = 0.
 			# Apply the slicing
 			for iaxis in range(self._naxes):

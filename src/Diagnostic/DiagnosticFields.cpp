@@ -103,10 +103,10 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
     field_type.resize( fields_names.size() );
     for( unsigned int ifield=0; ifield<fields_names.size(); ifield++ ) {
         string first_char = fields_names[ifield].substr(0,1);
-        if      ( first_char == "E" ) field_type[ifield] = 0;
-        else if ( first_char == "B" ) field_type[ifield] = 1;
-        else if ( first_char == "J" ) field_type[ifield] = 2;
-        else if ( first_char == "R" ) field_type[ifield] = 3;
+        if      ( first_char == "E" ) field_type[ifield] = 1;
+        else if ( first_char == "B" ) field_type[ifield] = 2;
+        else if ( first_char == "J" ) field_type[ifield] = 3;
+        else if ( first_char == "R" ) field_type[ifield] = 4;
         else {
             ERROR(" impossible field name ");
         }
@@ -202,7 +202,7 @@ bool DiagnosticFields::prepare( int itime )
 }
 
 
-void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime )
+void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow )
 {
     // If time-averaging, increment the average
     if( time_average>1 ) {
@@ -238,7 +238,7 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime 
         // Add openPMD attributes ( "basePath" )
         openPMD->writeBasePathAttributes( iteration_group_id, itime );
         // Add openPMD attributes ( "meshesPath" )
-        openPMD->writeMeshesPathAttributes( iteration_group_id );
+        openPMD->writeMeshesAttributes( iteration_group_id );
     }
     #pragma omp barrier
     
@@ -267,8 +267,10 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime 
             writeField(dset_id, itime);
             
             // Attributes for openPMD
-            openPMD->writeFieldAttributes( dset_id, field_type[ifield] );
+            openPMD->writeFieldAttributes( dset_id );
+            openPMD->writeRecordAttributes( dset_id, field_type[ifield] );
             openPMD->writeFieldRecordAttributes( dset_id );
+            openPMD->writeComponentAttributes( dset_id );
             
             // Close dataset
             H5Dclose( dset_id );

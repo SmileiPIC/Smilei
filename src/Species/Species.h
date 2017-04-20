@@ -133,7 +133,7 @@ public:
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
     virtual void dynamics(double time, unsigned int ispec, ElectroMagn* EMfields, Interpolator* interp,
                           Projector* proj, Params &params, bool diag_flag,
-                          PartWalls* partWalls, Patch* patch, SmileiMPI* smpi);
+                          PartWalls* partWalls, Patch* patch, SmileiMPI* smpi, std::vector<Diagnostic*>& localDiags);
     
     //! Method calculating the Particle charge on the grid (projection)
     virtual void computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector* Proj);
@@ -237,7 +237,7 @@ public:
         int speciesSize(0);
         speciesSize += particles->double_prop.size()*sizeof(double);
         speciesSize += particles->short_prop.size()*sizeof(short);
-        speciesSize += particles->uint_prop.size()*sizeof(unsigned int );
+        speciesSize += particles->uint64_prop.size()*sizeof(uint64_t);
         speciesSize *= getParticlesCapacity();
         return speciesSize;
     }
@@ -246,7 +246,7 @@ public:
     int  createParticles(std::vector<unsigned int> n_space_to_create, Params& params, Patch * patch, int new_bin_idx);
     
     //! Method to import particles in this species while conserving the sorting among bins
-    void importParticles( Params&, Patch*, Particles& );
+    void importParticles( Params&, Patch*, Particles&, std::vector<Diagnostic*>& );
     
     //! 2 times pi
     double PI2;
@@ -264,6 +264,8 @@ public:
     //! Moving window boundary conditions managment
     void setXminBoundaryCondition();
     
+    //! Number of the associated tracking diagnostic
+    unsigned int tracking_diagnostic;
     
 private:
     //! Number of steps for Maxwell-Juettner cumulative function integration

@@ -20,6 +20,7 @@ public:
         std::string filename;
         std::ostringstream mystream;
         Species *s0, *s;
+        bool tracked_electrons = false;
         
         MESSAGE(1,"Parameters for collisions #" << n_collisions << " :");
         
@@ -96,6 +97,9 @@ public:
                 ERROR("In collisions #" << n_collisions << ": ionization requires electrons (no or null atomic_number)");
             if( Z==0 )
                 ERROR("In collisions #" << n_collisions << ": ionization requires ions (atomic_number>0)");
+            // Check whether electrons are tracked
+            if( Z0==0 )      tracked_electrons = vecSpecies[sgroup[0][0]]->particles->tracked;
+            else if( Z1==0 ) tracked_electrons = vecSpecies[sgroup[1][0]]->particles->tracked;
         }
         
         // Print collisions parameters
@@ -155,6 +159,7 @@ public:
                 debug_every,
                 Z,
                 ionizing,
+                tracked_electrons,
                 params.nDim_particle,
                 params.referenceAngularFrequency_SI,
                 filename

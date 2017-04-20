@@ -22,37 +22,23 @@ public :
     
     bool prepare( int timestep ) override;
     
-    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) override;
+    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep, SimWindow* simWindow ) override;
     
     void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;    
     
     virtual bool needsRhoJs(int timestep) override;
     
     //! Creates the probe's particles (or "points")
-    void createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bool createFile);
-    
-    //! Probes position storage at initialization and for moving window
-    Field2D* posArray;
-    
-    //! True if load balancing or moving window have taken place 
-    bool patchesHaveMoved;
-    
-    //! If the window has moved, then x_moved contains the movement
-    double x_moved;
+    void createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bool createFile, double x_moved);
     
     //! Get memory footprint of current diagnostic
     int getMemFootPrint() override {
-        int size(0);
-        if (posArray!=NULL) {
-            // Size of the array of position
-            size += posArray->globalDims_*sizeof(double);
+        return nPart_MPI * (
             // Size of the simili particles structure
-            int partSize = (2*posArray->dims_[1]+3+1)*sizeof(double)+sizeof(short)+sizeof(unsigned int);
-            size += posArray->dims_[0]*partSize;
+            (nDim_particle+3+1)*sizeof(double) + sizeof(short)
             // eval probesArray (even if temporary)
-            size += posArray->dims_[0]*10*sizeof(double);
-        }
-        return size;
+            + 10*sizeof(double)
+        );
     }
 
 private :
@@ -111,6 +97,14 @@ private :
     //! True if this diagnostic requires the pre-calculation of the particle J & Rho
     bool hasRhoJs;
     
+    //! Last iteration when points were re-calculated
+    unsigned int last_iteration_points_calculated;
+    
+    //! Whether positions have been written in the file
+    bool positions_written;
+    
+    //! patch size
+    std::vector<double> patch_size;
 };
 
 

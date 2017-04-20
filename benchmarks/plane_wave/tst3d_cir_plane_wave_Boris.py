@@ -1,11 +1,14 @@
-# ________________________________________________________
+# _____________________________________________________________________________
 #
 # Electron trajectory in a plane wave with Gaussian 
 # temporal profile.
 #
-# _________________________________________________________
+# _____________________________________________________________________________
 
 import math
+
+# _____________________________________________________________________________
+# Main parameters
 
 l0 = 2.0*math.pi              # laser wavelength
 t0 = l0                       # optical cicle
@@ -21,7 +24,12 @@ resx = 40.                    # nb of cells in one laser wavelength
 dx = l0/resx                            # space step
 dt  = 0.95 * dx/math.sqrt(3.)		# timestep (0.95 x CFL)
 
+start = 0                               # Laser start
 fwhm = 10*t0                            # Gaussian time fwhm
+duration = 90*t0                        # Laser duration
+center = duration*0.5                   # Laser profile center
+
+pusher = "norm"                         # dynamic type
 
 # Density profile for inital location of the particles
 def n0_(x,y,z):
@@ -29,6 +37,9 @@ def n0_(x,y,z):
                 return n0
         else:
                 return 0.
+
+# ______________________________________________________________________________
+# Namelists
 
 Main(
     geometry = "3d3v",
@@ -68,7 +79,7 @@ LaserGaussian3D(
     incidence_angle = [0., 0.],
     polarizationPhi = 0.,
     ellipticity     = 1,
-    time_envelope  = tgaussian(start=0,duration=90*t0,fwhm=fwhm,center=45*t0,order=2)
+    time_envelope  = tgaussian(start=start,duration=duration,fwhm=fwhm,center=center,order=2)
 )
 
 Species(
@@ -82,7 +93,7 @@ Species(
     charge_density = n0_,
     mean_velocity = [0., 0.0, 0.0],
     temperature = [0.],
-    dynamics_type = "norm",
+    dynamics_type = pusher,
     bc_part_type_xmin  = "none",
     bc_part_type_xmax  = "none",
     bc_part_type_ymin = "none",

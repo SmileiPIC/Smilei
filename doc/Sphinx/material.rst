@@ -3,11 +3,15 @@ Material
 
 Publications
 ^^^^^^^^^^^^
-.. [Derouillat]
 
+.. rst-class:: bigcitation
+
+.. [Derouillat]
+   
    J. Derouillat, A. Beck, T. Vinci, F. Pérez, M. Chiaramello, A. Grassi, G. Bouchard, N. Aunai, J. Dargent, C. Riconda and M. Grech,
-   SMILEI: a collaborative, open-source, multi-purpose particle-in-cell code for plasma simulation,
-   in preparation
+   SMILEI: a collaborative, open-source, multi-purpose particle-in-cell code for plasma simulation, submitted to CPC
+   
+.. rst-class:: bigcitation
 
 .. [Chiaramello2016]
 
@@ -17,27 +21,21 @@ Publications
    in the Strongly Coupled regime,
    `Phys. Plasmas 23, 072103 (2016) <http://scitation.aip.org/content/aip/journal/pop/23/7/10.1063/1.4955322>`_
 
+.. rst-class:: bigcitation
+
 .. [Beck2016]
    
    A. Beck, J. Trier Frederiksen and J. Derouillat, 
    Load management strategy for Particle-In-Cell simulations in high energy physics, 
    `Nucl. Inst. Meth. in Phys. Res. A (2016) <http://www.sciencedirect.com/science/article/pii/S0168900216301577>`_
 
+.. rst-class:: bigcitation
+
 .. [Lancia2016]
 
    L. Lancia, A. Giribono, L. Vassura, M. Chiaramello, C. Riconda, S. Weber, A. Castan, A. Chatelain, A. Frank, T. 	Gangolf, M. N. Quinn, J. Fuchs and J.-R. Marquès,
-   Signatures of the Self-Similar Regime of Strongly Coupled Stimulated Brillouin Scattering for Efficient Short Laser Pulse Amplification,
+   Signatures of the self-similar regime of strongly coupled stimulated brillouin scattering for efficient short laser pulse amplification,
    `Phys. Rev. Lett. 116, 075001 (2016) <http://journals.aps.org/prl/abstract/10.1103/PhysRevLett.116.075001>`_
-   
-
-----
-
-Conferences & Seminars
-^^^^^^^^^^^^^^^^^^^^^^
-
-.. rst-class:: inprogress
-  
-  In progress ...
 
 ----
 

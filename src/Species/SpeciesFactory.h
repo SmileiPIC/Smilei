@@ -319,6 +319,7 @@ public:
         newSpecies->temperatureProfile[1] = new Profile(species->temperatureProfile[1]);
         newSpecies->temperatureProfile[2] = new Profile(species->temperatureProfile[2]);
         newSpecies->max_charge            = species->max_charge;
+        newSpecies->tracking_diagnostic   = species->tracking_diagnostic;
         
         newSpecies->particles->isTest              = species->particles->isTest;
         newSpecies->particles->tracked             = species->particles->tracked;
@@ -366,6 +367,8 @@ public:
                         ERROR("For species '"<<retSpecies[ispec1]->species_type<<"' ionization_electrons must be a species with mass==1");
                     retSpecies[ispec1]->electron_species_index = ispec2;
                     retSpecies[ispec1]->electron_species = retSpecies[ispec2];
+                    retSpecies[ispec1]->Ionize->new_electrons.tracked = retSpecies[ispec1]->electron_species->particles->tracked;
+                    retSpecies[ispec1]->Ionize->new_electrons.initialize(0, params.nDim_particle );
                     if ( ( !retSpecies[ispec1]->getNbrOfParticles() ) && ( !retSpecies[ispec2]->getNbrOfParticles() ) ) {
                         int max_eon_number = retSpecies[ispec1]->getNbrOfParticles() * retSpecies[ispec1]->atomic_number;
                         retSpecies[ispec2]->particles->reserve( max_eon_number, retSpecies[ispec2]->particles->dimension() );
@@ -393,6 +396,8 @@ public:
             if (retSpecies[i]->Ionize) {
                 retSpecies[i]->electron_species_index = vecSpecies[i]->electron_species_index;
                 retSpecies[i]->electron_species = retSpecies[retSpecies[i]->electron_species_index];
+                retSpecies[i]->Ionize->new_electrons.tracked = retSpecies[i]->electron_species->particles->tracked;
+                retSpecies[i]->Ionize->new_electrons.initialize(0, params.nDim_particle );
             }
         }
         

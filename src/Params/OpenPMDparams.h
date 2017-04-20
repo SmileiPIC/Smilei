@@ -45,14 +45,27 @@ public:
     void writeBasePathAttributes( hid_t, unsigned int );
     
     //! Write the attributes for the meshesPath
-    void writeMeshesPathAttributes( hid_t );
+    void writeMeshesAttributes( hid_t );
+    
+    //! Write the attributes for the particlesPath
+    void writeParticlesAttributes( hid_t );
     
     //! Write the attributes for a field in the meshesPath
-    void writeFieldAttributes( hid_t, unsigned int );
+    void writeFieldAttributes( hid_t );
     
-    //! Write the attributes for a field record (x, y or z)
-    void writeFieldRecordAttributes( hid_t);
+    //! Write the attributes for the particlesPath
+    void writeSpeciesAttributes( hid_t );
     
+    //! Write the attributes for a record
+    void writeRecordAttributes( hid_t, unsigned int );
+    
+    //! Write the attributes for a field record
+    void writeFieldRecordAttributes( hid_t );
+
+    //! Write the attributes for a component
+    void writeComponentAttributes( hid_t );
+    
+
 private:
     Params * params;
     

@@ -204,7 +204,7 @@ public:
     std::vector<short> Charge;
     
     //! Id of the particle
-    std::vector<unsigned int> Id;
+    std::vector<uint64_t> Id;
     
     // TEST PARTICLE PARAMETERS
     bool isTest;
@@ -216,27 +216,18 @@ public:
         unsigned int s = Id.size();
         for (unsigned int iPart=0; iPart<s; iPart++) Id[iPart] = 0;
     }
-    void setIds() {
-        unsigned int s = Id.size();
-        for (unsigned int iPart=0; iPart<s; iPart++) Id[iPart] = iPart+1;
-    }
-    void addIdOffsets(int offset) {
-        unsigned int s = Id.size();
-        for (unsigned int iPart=0; iPart<s; iPart++) Id[iPart] += offset;
-    }
-    
     
     //! Method used to get the Particle Id
-    inline unsigned int id(unsigned int ipart) const {
+    inline uint64_t id(unsigned int ipart) const {
         DEBUG(ipart << " of " << Id.size());
         return Id[ipart];
     }
     //! Method used to set the Particle Id
-    inline unsigned int& id(unsigned int ipart) {
+    inline uint64_t& id(unsigned int ipart) {
         return Id[ipart];
     }
     //! Method used to get the Particle Ids
-    inline std::vector<unsigned int> id() const {
+    inline std::vector<uint64_t> id() const {
         return Id;
     }
     void sortById();
@@ -260,9 +251,9 @@ public:
         return Chi;
     }
     
-    std::vector< std::vector<double>* >       double_prop;
-    std::vector< std::vector<short>* >        short_prop;
-    std::vector< std::vector<unsigned int>* > uint_prop;
+    std::vector< std::vector<double  >*> double_prop;
+    std::vector< std::vector<short   >*> short_prop;
+    std::vector< std::vector<uint64_t>*> uint64_prop;
     
     
     //bool test_move( int iPartStart, int iPartEnd, Params& params );
@@ -283,8 +274,18 @@ public:
 #endif
     
     Particle operator()(unsigned int iPart);
-
-
+    
+    //! Methods to obtain the any property, given its index in the arrays double_prop, uint64_prop, or short_prop
+    void getProperty(unsigned int iprop, std::vector<uint64_t>* &prop) {
+        prop = uint64_prop[iprop];
+    }
+    void getProperty(unsigned int iprop, std::vector<short>* &prop) {
+        prop = short_prop[iprop];
+    }
+    void getProperty(unsigned int iprop, std::vector<double>* &prop) {
+        prop = double_prop[iprop];
+    }
+    
 private:
 
 };
