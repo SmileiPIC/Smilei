@@ -374,7 +374,7 @@ void ElectroMagn::applyAntenna(unsigned int iAntenna, double intensity) {
         if     ( antennaField->name == "Jx" ) field = Jx_;
         else if( antennaField->name == "Jy" ) field = Jy_;
         else if( antennaField->name == "Jz" ) field = Jz_;
-        else ERROR("Antenna applied to field " << antennaField << " unknonw. This should not happend, please contact developers");
+        else ERROR("Antenna applied to field " << antennaField->name << " unknown. This should not happend, please contact developers");
         
         for (unsigned int i=0; i< field->globalDims_ ; i++)
             (*field)(i) += intensity * (*antennaField)(i);

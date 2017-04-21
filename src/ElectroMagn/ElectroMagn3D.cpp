@@ -667,8 +667,8 @@ void ElectroMagn3D::computePoynting() {
 void ElectroMagn3D::applyExternalField(Field* my_field,  Profile *profile, Patch* patch) {
     
     Field3D* field3D=static_cast<Field3D*>(my_field);
-        
-    vector<double> pos(2,0);
+    
+    vector<double> pos(3);
     pos[0]      = dx*((double)(patch->getCellStartingGlobalIndex(0))+(field3D->isDual(0)?-0.5:0.));
     double pos1 = dy*((double)(patch->getCellStartingGlobalIndex(1))+(field3D->isDual(1)?-0.5:0.));
     double pos2 = dz*((double)(patch->getCellStartingGlobalIndex(2))+(field3D->isDual(2)?-0.5:0.));
@@ -708,6 +708,9 @@ void ElectroMagn3D::initAntennas(Patch* patch)
             antennas[i].field = new Field3D(dimPrim, 1, false, "Jy");
         else if (antennas[i].fieldName == "Jz")
             antennas[i].field = new Field3D(dimPrim, 2, false, "Jz");
+        else {
+            ERROR("Antenna cannot be applied to field "<<antennas[i].fieldName);
+        }
         
         if (antennas[i].field) 
             applyExternalField(antennas[i].field, antennas[i].space_profile, patch);

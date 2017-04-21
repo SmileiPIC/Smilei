@@ -6,7 +6,6 @@ compile:
   stage: compile
   only:
     - develop
-    - develop_cleanBC
     - develop-Higuera-Carry-pusher
   script:
     # Move in test dir
@@ -20,7 +19,6 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - develop_cleanBC
     - develop-Higuera-Carry-pusher
   script:
     # Move in test dir
@@ -32,7 +30,6 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - develop_cleanBC
   script:
     # Move in test dir
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -47,13 +44,12 @@ makerun3D:
     # Move in test dir
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
-    - python validation.py -b "tst3d_*_*.py" -m 16 -o 12 -v
+    - python validation.py -b "tst3d_*_*.py" -m 4 -o 4 -v
 
 makerunCollisions:
   stage: makerun
   only:
     - develop
-    - develop_cleanBC
   script:
     # Move in test dir
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
