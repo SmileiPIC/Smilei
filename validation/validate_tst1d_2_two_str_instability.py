@@ -3,7 +3,7 @@ from Smilei import *
 
 S = Smilei(".", verbose=False)
 
-some_particles_x = S.TrackParticles.ion(axes=["x"],select="any(t==0, x<0.02)").getData()["x"][0]
+some_particles_x = S.TrackParticles.ion(axes=["x"]).getData()["x"][0]
 Validate("Regularly spaced particles", some_particles_x, 1e-7)
 
 itimes = S.ParticleDiagnostic.Diag0().getAvailableTimesteps()

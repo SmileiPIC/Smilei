@@ -37,7 +37,8 @@ Species(
 	#time_frozen = 10000.0,
 	bc_part_type_xmin = "none",
 	bc_part_type_xmax = "none",
-	track_every = 1000, 
+	track_every = 1000,
+	track_filter = lambda x, px, py, pz: (x<0.02), 
 	time_frozen = 0.1
 )
 Species(
