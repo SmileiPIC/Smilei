@@ -444,9 +444,9 @@ class CompareToReference(object):
 		except: pass
 		# If numbers:
 		try:
-			double_data = np.double(data)
+			double_data = np.array(np.double(data), ndmin=1)
 			if precision is not None:
-				error = np.abs( double_data-np.double(expected_data) )
+				error = np.abs( double_data-np.array(np.double(expected_data), ndmin=1) )
 				max_error_location = np.unravel_index(np.argmax(error), error.shape)
 				max_error = error[max_error_location]
 				if max_error < precision: return

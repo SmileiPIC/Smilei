@@ -6,7 +6,7 @@ S = Smilei(".", verbose=False)
 ncel = [int(i) for i in S._ncels]
 
 for field in ["Ex", "Ey", "Ez", "Bx_m", "By_m", "Bz_m", "Jx", "Jy", "Jz", "Rho"]:
-	if field[0] in ["Ex", "Rho"]:
+	if field in ["Ex", "Rho"]:
 		precision = 0.2
 	else:
 		precision = 0.02
