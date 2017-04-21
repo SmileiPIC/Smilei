@@ -6,6 +6,7 @@ compile:
   stage: compile
   only:
     - develop
+    - develop_cleanBC
   script:
     # Move in test dir
     - mkdir /sps/gitlab-runner/$CI_PIPELINE_ID
@@ -18,21 +19,23 @@ makerun1D:
   stage: makerun
   only:
     - develop
+    - develop_cleanBC
   script:
     # Move in test dir
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
-    - python validation.py -b "tst1d_*_*.py" -s all -m 4 -o 4 -v
+    - python validation.py -b "tst1d_*_*.py" -m 4 -o 4 -v
 
 makerun2D:
   stage: makerun
   only:
     - develop
+    - develop_cleanBC
   script:
     # Move in test dir
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
-    - python validation.py -b "tst2d_*_*.py" -s all -m 4 -o 4  -v
+    - python validation.py -b "tst2d_*_*.py" -m 4 -o 4  -v
 
 makerun3D:
   stage: makerun
@@ -42,54 +45,17 @@ makerun3D:
     # Move in test dir
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
-    - python validation.py -b "tst3d_*_*.py" -s all -m 16 -o 12 -v
+    - python validation.py -b "tst3d_*_*.py" -m 16 -o 12 -v
 
-#test:
-#  stage: test
-#  only:
-#    - master
-#    - develop
-#  script:
-#    - make clean install unit_test
-#
-#doc_develop:
-#  stage: doc
-#  only:
-#    - develop
-#  script:
-#    - make clean install
-#    - make -C docs
-#
-#doc_master:
-#  stage: doc
-#  only:
-#    - master
-#  script:
-#    - make clean install
-#    - make -C docs
-#    - rsync -rL docs/documentation/html/* pyrame@llr.in2p3.fr:/home/llr/info/www/sites/pyrame/documentation
-#
-#web_master:
-#  stage: web
-#  only:
-#    - master
-#  script:
-#    - rsync -rL exclude_from_packaging/www/* pyrame@llr.in2p3.fr:/home/llr/info/www/sites/pyrame/
-#
-#publish_master:
-#  stage: publish
-#  only:
-#    - tags
-#  script:
-#    - make tarball
-#    - scp pyrame.tgz pyrame@llr.in2p3.fr:/home/llr/info/www/sites/pyrame/pyrame_${CI_BUILD_TAG}.tgz
-#    - rm pyrame.tgz
-#
-#uninstall:
-#  stage: uninstall
-#  only:
-#    - master
-#    - develop
-#  script:
-#    - make uninstall
-#  when: always
+makerunCollisions:
+  stage: makerun
+  only:
+    - develop
+    - develop_cleanBC
+  script:
+    # Move in test dir
+    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    # Run checking script
+    - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v
+
+

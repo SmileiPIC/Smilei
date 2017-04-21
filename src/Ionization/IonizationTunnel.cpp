@@ -61,7 +61,7 @@ void IonizationTunnel::operator() (Particles* particles, unsigned int ipart_min,
         invE = 1./E;
         factorJion = factorJion_0 * invE*invE;
         delta      = gamma_tunnel[Z]*invE;
-        ran_p = (double)rand() *INV_RAND_MAX;
+        ran_p = Rand::uniform();
         IonizRate_tunnel[Z] = beta_tunnel[Z] * exp( -delta*one_third + alpha_tunnel[Z]*log(delta));
         
         // Total ionization potential (used to compute the ionization current)

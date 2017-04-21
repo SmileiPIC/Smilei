@@ -30,9 +30,11 @@ latest_timestep(-1)
         PyTools::extract("vars",vars,"DiagScalar");
         
         // copy from params remaining stuff
-        res_time=params.res_time;
-        dt=params.timestep;
-        cell_volume=params.cell_volume;
+        res_time       = params.res_time;
+        dt             = params.timestep;
+        cell_volume    = params.cell_volume;
+        n_space        = params.n_space;
+        n_space_global = params.n_space_global;
     } else {
         timeSelection = new TimeSelection();
     }
@@ -480,8 +482,10 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     fields.push_back(EMfields->Jz_);
     fields.push_back(EMfields->rho_);
     
-    val_index minloc, maxloc;
     double fieldval;
+    unsigned int i_min, j_min, k_min;
+    unsigned int i_max, j_max, k_max;
+    val_index minloc, maxloc;
     
     nfield = fields.size();
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
@@ -499,7 +503,8 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             
             unsigned int ii= iFieldStart[2] + iFieldStart[1]*iFieldGlobalSize[2] +iFieldStart[0]*iFieldGlobalSize[1]*iFieldGlobalSize[2];
             minloc.val = maxloc.val = (*field)(ii);
-            minloc.index = maxloc.index = 0;
+            i_min = iFieldStart[0]; j_min = iFieldStart[1]; k_min = iFieldStart[2];
+            i_max = iFieldStart[0]; j_max = iFieldStart[1]; k_max = iFieldStart[2];
             
             for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
                 for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
@@ -507,16 +512,25 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
                         unsigned int ii = k+ (j + i*iFieldGlobalSize[1]) *iFieldGlobalSize[2];
                         fieldval = (*field)(ii);
                         if (minloc.val > fieldval) {
-                            minloc.val   = fieldval;
-                            minloc.index = ii;
+                            minloc.val = fieldval;
+                            i_min=i; j_min=j; k_min=k;
                         }
                         if (maxloc.val < fieldval) {
-                            maxloc.val   = fieldval;
-                            maxloc.index = ii;
+                            maxloc.val = fieldval;
+                            i_max=i; j_max=j; k_max=k;
                         }
                     }
                 }
             }
+            
+            i_min += patch->Pcoordinates[0]*n_space[0] - iFieldStart[0];
+            j_min += patch->Pcoordinates[1]*n_space[1] - iFieldStart[1];
+            k_min += patch->Pcoordinates[2]*n_space[2] - iFieldStart[2];
+            minloc.index = (int) (i_min*n_space_global[1]*n_space_global[2] + j_min*n_space_global[2] + k_min);
+            i_max += patch->Pcoordinates[0]*n_space[0] - iFieldStart[0];
+            j_max += patch->Pcoordinates[1]*n_space[1] - iFieldStart[1];
+            k_max += patch->Pcoordinates[2]*n_space[2] - iFieldStart[2];
+            maxloc.index = (int) (i_max*n_space_global[1]*n_space_global[2] + j_max*n_space_global[2] + k_max);
             
             #pragma omp critical
             {

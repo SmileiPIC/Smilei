@@ -5,8 +5,8 @@
 
 #include <vector>
 #include "Tools.h"
-#include "ElectroMagnBC.h" 
-#include "ElectroMagn2D.h" 
+#include "ElectroMagnBC.h"
+#include "ElectroMagn2D.h"
 #include "Field2D.h"
 
 
@@ -16,26 +16,19 @@ class Field;
 
 class ElectroMagnBC2D_SM : public ElectroMagnBC {
 public:
-
-    ElectroMagnBC2D_SM( Params &params, Patch* patch );
-    ~ElectroMagnBC2D_SM();
-
-    virtual void apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void apply_xmax(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void apply_ymin(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void apply_ymax(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void apply_zmin(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void apply_zmax(ElectroMagn* EMfields, double time_dual, Patch* patch);
-
-     //! Save external fields for silver muller EM Boundary condition
-     std::vector<double>  Bz_xvalmin_Long, Bz_xvalmax_Long, By_xvalmin_Long, By_xvalmax_Long, Bx_xvalmin_Long, Bx_xvalmax_Long,
-                          Bz_yvalmin_Trans, Bz_yvalmax_Trans, By_yvalmin_Trans, By_yvalmax_Trans, Bx_yvalmin_Trans, Bx_yvalmax_Trans;
     
+    ElectroMagnBC2D_SM( Params &params, Patch* patch, unsigned int _min_max );
+    ~ElectroMagnBC2D_SM() {};
+    
+    virtual void apply(ElectroMagn* EMfields, double time_dual, Patch* patch) override;
+    
+    void save_fields(Field*, Patch* patch) override;
 
+    //! Save external fields for silver muller EM Boundary condition
+    std::vector<double> Bx_val,  By_val,  Bz_val;
+    
 private:
     
-    virtual void save_fields_BC2D_Long(Field*);
-    virtual void save_fields_BC2D_Trans(Field*);
     
     //! Conversion factor from degree to radian
     double conv_deg2rad;

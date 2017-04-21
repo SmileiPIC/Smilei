@@ -347,12 +347,12 @@ def multiPlot(*Diags, **kwargs):
 	dpi    = kwargs.pop("dpi"   , 200 )
 	saveAs = kwargs.pop("saveAs", None)
 	skipAnimation = kwargs.pop("skipAnimation", False )
-	timesteps = kwargs.pop("timesteps", False )
+	timesteps = kwargs.pop("timesteps", None )
 	# Gather all times
 	alltimes = []
 	for Diag in Diags:
 		diagtimes = Diag.times
-		if timesteps:
+		if timesteps is not None:
 			diagtimes = Diag._selectTimesteps(timesteps, diagtimes)
 		diagtimes = list( diagtimes*Diag.timestep )
 		if skipAnimation: alltimes += [diagtimes[-1]]
@@ -439,6 +439,14 @@ def multiPlot(*Diags, **kwargs):
 					Diag._artist = Diag._animateOnAxes(Diag._ax, t, cax_id = Diag._cax_id)
 					if sameAxes:
 						Diag._ax.set_xlim(xmin,xmax)
+						color = Diag._artist.get_color()
+						Diag._ax.yaxis.label.set_color(color)
+						Diag._ax.tick_params(axis='y', colors=color)
+						if Diag.options.side == "right":
+							Diag._ax.spines['right'].set_color(color)
+							Diag._ax.spines['left'].set_color((1.,1.,1.,0.))
+						else:
+							Diag._ax.spines['left'].set_color(color)
 					try: Diag._ax.set_position(Diag._ax.twin.get_position())
 					except: pass
 			plt.draw()

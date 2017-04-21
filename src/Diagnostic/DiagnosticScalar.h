@@ -159,6 +159,12 @@ private :
     //! Timestep (copied from params)
     double dt;
     
+    //! Number of cells in a patch (copied from params)
+    std::vector<unsigned int> n_space;
+    
+    //! Overall number of cells (copied from params)
+    std::vector<unsigned int> n_space_global;
+    
     //! output stream
     std::ofstream fout;
     

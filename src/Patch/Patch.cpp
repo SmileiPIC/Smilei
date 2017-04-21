@@ -200,6 +200,8 @@ void Patch::finalizeMPIenvironment() {
                 nb_comms += 4;
             else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EMfields->emBoundCond[bcId]) )
                 nb_comms += 12;
+            else if ( dynamic_cast<ElectroMagnBC3D_SM*>(EMfields->emBoundCond[bcId]) )
+                nb_comms += 18;
         }
     }
     requests_.resize( nb_comms, MPI_REQUEST_NULL );
@@ -400,7 +402,7 @@ void Patch::CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, 
                     if ( ( iNeighbor==0 ) &&  (Pcoordinates[iDim] == 0 ) &&( cuParticles.position(iDim,vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor][iPart]) < 0. ) ) {
                         cuParticles.position(iDim,vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor][iPart])     += x_max;
                     }
-                    else if ( ( iNeighbor==1 ) &&  ((int)Pcoordinates[iDim] == params.number_of_patches[iDim]-1 ) && ( cuParticles.position(iDim,vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor][iPart]) >= x_max ) ) {
+                    else if ( ( iNeighbor==1 ) &&  (Pcoordinates[iDim] == params.number_of_patches[iDim]-1 ) && ( cuParticles.position(iDim,vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor][iPart]) >= x_max ) ) {
                         cuParticles.position(iDim,vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor][iPart])     -= x_max;
                     }
                 }

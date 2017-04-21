@@ -34,9 +34,11 @@ Species(
 	mass = 1836.0,
 	charge = 1.0,
 	nb_density = 1.,
-	time_frozen = 10000.0,
+	#time_frozen = 10000.0,
 	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
+	bc_part_type_xmax = "none",
+	track_every = 1000, 
+	time_frozen = 0.1
 )
 Species(
 	species_type = "eon1",

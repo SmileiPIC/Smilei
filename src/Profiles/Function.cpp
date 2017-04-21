@@ -112,7 +112,7 @@ double Function_Gaussian3D::valueAt(vector<double> x_cell) {
         xfactor = exp( -pow(x-xcenter, xorder) * invxsigma );
     if ( y > yvacuum  && y < yvacuum+ylength )
         yfactor = exp( -pow(y-ycenter, yorder) * invysigma );
-    if ( z > yvacuum  && z < yvacuum+zlength )
+    if ( z > zvacuum  && z < zvacuum+zlength )
         zfactor = exp( -pow(z-zcenter, zorder) * invzsigma );
     return value * xfactor * yfactor * zfactor;
 }

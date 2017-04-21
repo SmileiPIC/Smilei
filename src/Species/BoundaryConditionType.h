@@ -78,13 +78,13 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
                 // change of velocity in the direction normal to the reflection plane
                 double sign_vel = -particles.momentum(i,ipart)/std::abs(particles.momentum(i,ipart));
                 particles.momentum(i,ipart) = sign_vel * species->thermalMomentum[i]
-                *                             std::sqrt( -std::log(1.0-((double)rand() *INV_RAND_MAX1 ) ));
+                *                             std::sqrt( -std::log(1.0-Rand::uniform1()) );
                 
             } else {
                 // change of momentum in the direction(s) along the reflection plane
-                double sign_rnd = (double)rand() *INV_RAND_MAX - 0.5; sign_rnd = (sign_rnd)/std::abs(sign_rnd);
+                double sign_rnd = Rand::uniform() - 0.5; sign_rnd = (sign_rnd)/std::abs(sign_rnd);
                 particles.momentum(i,ipart) = sign_rnd * species->thermalMomentum[i]
-                *                             userFunctions::erfinv( (double)rand() *INV_RAND_MAX1 );
+                *                             userFunctions::erfinv( Rand::uniform1() );
             }//if
             
         }//i
@@ -139,7 +139,7 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
     if ( ( particles.position(1,ipart) >= val_min ) && ( particles.position(1,ipart) <= val_max ) ) {
         // nrj computed during diagnostics
         particles.position(direction, ipart) = limit_pos - particles.position(direction, ipart);
-        particles.momentum(direction, ipart) = sqrt(params.thermalVelocity[direction]) * tabFcts.erfinv( (double)rand() *INV_RAND_MAX );
+        particles.momentum(direction, ipart) = sqrt(params.thermalVelocity[direction]) * tabFcts.erfinv( Rand::uniform() );
     }
     else {
         stop_particle( particles, ipart, direction, limit_pos, params, nrj_iPart );
