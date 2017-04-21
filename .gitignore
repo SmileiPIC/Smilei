@@ -18,4 +18,8 @@ src/smilei.*
 doc/html/*
 *.user
 doc/html
+*.pyc
+*/*.pyc
+*/*/*.pyc
+*/*/*/*.pyc
 

@@ -1,8 +1,10 @@
 # _____________________________________________________________________________
 #
-# Electron trajectory in a plane wave with Gaussian 
-# temporal profile.
+# Electron trajectory in a plane wave 
+# with a Gaussian temporal profile.
 #
+# Validation in the relativist regime
+# 
 # _____________________________________________________________________________
 
 import math
@@ -12,24 +14,23 @@ import math
 
 l0 = 2.0*math.pi              # laser wavelength
 t0 = l0                       # optical cicle
-Lx = 12*l0
-Ly = 2.*l0
-Lz = 2.*l0
+Lx = 50*l0
 
 n0 = 1e-8                     # particle density
 
-Tsim = 90.*t0                 # duration of the simulation
-resx = 40.                    # nb of cells in one laser wavelength
+Tsim = 120.*t0                 # duration of the simulation
+resx = 64.                    # nb of cells in one laser wavelength
 
 dx = l0/resx                            # space step
 dt  = 0.95 * dx                 		# timestep (0.95 x CFL)
 
+a0 = 5
 start = 0                               # Laser start
 fwhm = 10*t0                            # Gaussian time fwhm
 duration = 90*t0                        # Laser duration
 center = duration*0.5                   # Laser profile center
 
-pusher = "norm"                         # dynamic type
+pusher_list = ["norm","vay","higueracary"]  # dynamic type
 
 # Density profile for inital location of the particles
 def n0_(x):
@@ -49,7 +50,7 @@ Main(
     cell_length = [dx],
     sim_length  = [Lx],
     
-    number_of_patches = [4],
+    number_of_patches = [32],
     
     timestep = dt,
     sim_time = Tsim,
@@ -59,46 +60,38 @@ Main(
     random_seed = 0
 )
 
-#Laser(
-#    boxSide        = "xmin",
-#    omega          = 1.,
-#    chirp_profile  = tconstant(),
-#    time_envelope  = tgaussian(start=0,duration=90*t0,fwhm=30*t0,center=45*t0,order=2),
-#    space_envelope = [ 1. , 1. ],
-#    phase          = [ 0., 0. ]
-#)
-
 LaserPlanar1D(
     boxSide         = "xmin",
-    a0              = 2.,
+    a0              = a0,
     omega           = 1.,
     polarizationPhi = 0.,
     ellipticity     = 1,
     time_envelope  = tgaussian(start=start,duration=duration,fwhm=fwhm,center=center,order=2)
 )
 
-Species(
-    species_type = "electron",
-    initPosition_type = "centered",
-    initMomentum_type = "cold",
-    n_part_per_cell = 10,
-    c_part_max = 1.0,
-    mass = 1.0,
-    charge = -1.0,
-    charge_density = n0_,
-    mean_velocity = [0., 0.0, 0.0],
-    temperature = [0.],
-    dynamics_type = pusher,
-    bc_part_type_xmin  = "none",
-    bc_part_type_xmax  = "none",
-    bc_part_type_ymin = "none",
-    bc_part_type_ymax = "none",
-    bc_part_type_zmin = "none",
-    bc_part_type_zmax = "none",
-    track_every = 2,
-    track_flush_every = 100,
-    isTest = False
-)
+for ipusher,pusher in enumerate(pusher_list):
+    Species(
+        species_type = "electron_" + pusher,
+        initPosition_type = "centered",
+        initMomentum_type = "cold",
+        n_part_per_cell = 10,
+        c_part_max = 1.0,
+        mass = 1.0,
+        charge = -1.0,
+        charge_density = n0_,
+        mean_velocity = [0., 0.0, 0.0],
+        temperature = [0.],
+        dynamics_type = pusher,
+        bc_part_type_xmin  = "none",
+        bc_part_type_xmax  = "none",
+        bc_part_type_ymin = "none",
+        bc_part_type_ymax = "none",
+        bc_part_type_zmin = "none",
+        bc_part_type_zmax = "none",
+        track_every = 2,
+        track_flush_every = 100,
+        isTest = True
+    )
 
 DiagScalar(
     every = 10,
