@@ -88,7 +88,7 @@ for ipusher,pusher in enumerate(pusher_list):
         bc_part_type_ymax = "none",
         bc_part_type_zmin = "none",
         bc_part_type_zmax = "none",
-        track_every = 2,
+        track_every = 10,
         track_flush_every = 100,
         isTest = True
     )

@@ -13,7 +13,7 @@ S = Smilei(".", verbose=False)
 
 # Step represents the step between trajectory points what we consider
 # This enables to reduce the size of the array
-step = 10
+step = 2
 
 # List of relativistic pushers
 pusher_list = ["norm","vay","higueracary"]
