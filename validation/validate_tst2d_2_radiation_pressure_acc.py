@@ -17,3 +17,13 @@ def getFrontPosition(timestep):
 	return np.argmax(ne)
 front_position = [getFrontPosition(t) for t in [500, 1000, 1500]]
 Validate("Electron front vs time", front_position, 20)
+
+# 2D SCREEN DIAGS
+for i,d in enumerate(S.namelist.DiagScreen):
+	last_data = S.Screen(i, timesteps=1400).getData()[-1]
+	if d.direction in ["backward", "canceling"]:
+		precision = 5
+	else:
+		precision = 20
+	if d.shape == "sphere": precision *= 0.02
+	Validate("Screen "+d.shape+" diag with "+d.direction+" direction", last_data, precision)

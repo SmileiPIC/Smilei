@@ -29,4 +29,11 @@ Validate("Scalar Uelm_Bz_m", S.Scalar.Uelm_Bz_m().getData(), 100.)
 # SCALARS RELATED TO SPECIES
 Validate("Scalar Ukin_ion" , S.Scalar.Ukin_ion ().getData(), 100.)
 
-
+# 1D SCREEN DIAGS
+for i,d in enumerate(S.namelist.DiagScreen):
+	last_data = S.Screen(i, timesteps=21000).getData()[-1]
+	if d.direction in ["backward", "canceling"]:
+		precision = 0.2
+	else:
+		precision = 0.8
+	Validate("Screen "+d.shape+" diag with "+d.direction+" direction", last_data, precision)
