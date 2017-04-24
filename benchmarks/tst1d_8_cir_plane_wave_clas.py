@@ -3,7 +3,7 @@
 # Electron trajectory in a plane wave 
 # with a Gaussian temporal profile.
 #
-# Validation in the relativist regime
+# Validation in the non-relativist regime
 # 
 # _____________________________________________________________________________
 
@@ -14,23 +14,24 @@ import math
 
 l0 = 2.0*math.pi              # laser wavelength
 t0 = l0                       # optical cicle
-Lx = 50*l0
+Lx = 0.5*l0
 
 n0 = 1e-8                     # particle density
 
-Tsim = 120.*t0                 # duration of the simulation
-resx = 64.                    # nb of cells in one laser wavelength
+Tsim = 30.*t0                 # duration of the simulation
+resx = 256.                    # nb of cells in one laser wavelength
 
 dx = l0/resx                            # space step
 dt  = 0.95 * dx                 		# timestep (0.95 x CFL)
 
-a0 = 5
+a0 = 0.1
 start = 0                               # Laser start
 fwhm = 10*t0                            # Gaussian time fwhm
-duration = 90*t0                        # Laser duration
+duration = 30*t0                        # Laser duration
 center = duration*0.5                   # Laser profile center
+order = 4                               # Gaussian order
 
-pusher_list = ["norm","vay","higueracary"]  # dynamic type
+pusher_list = ["borisnr","norm","vay","higueracary"]  # dynamic type
 
 # Density profile for inital location of the particles
 def n0_(x):
@@ -50,7 +51,7 @@ Main(
     cell_length = [dx],
     sim_length  = [Lx],
     
-    number_of_patches = [32],
+    number_of_patches = [16],
     
     timestep = dt,
     sim_time = Tsim,
@@ -66,7 +67,7 @@ LaserPlanar1D(
     omega           = 1.,
     polarizationPhi = 0.,
     ellipticity     = 1,
-    time_envelope  = tgaussian(start=start,duration=duration,fwhm=fwhm,center=center,order=2)
+    time_envelope  = tgaussian(start=start,duration=duration,fwhm=fwhm,center=center,order=order)
 )
 
 for ipusher,pusher in enumerate(pusher_list):
@@ -88,9 +89,8 @@ for ipusher,pusher in enumerate(pusher_list):
         bc_part_type_ymax = "none",
         bc_part_type_zmin = "none",
         bc_part_type_zmax = "none",
-        track_every = 2,
+        track_every = 10,
         track_flush_every = 100,
         isTest = True
     )
-
 
