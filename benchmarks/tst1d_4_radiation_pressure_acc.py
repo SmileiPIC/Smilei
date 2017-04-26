@@ -103,7 +103,7 @@ for direction in ["forward", "backward", "both", "canceling"]:
 	DiagScreen(
 	    shape = "sphere",
 	    point = [0.],
-	    vector = [Lsim/2.],
+	    vector = [Lsim/3.],
 	    direction = direction,
 	    output = "density",
 	    species = ["eon"],
@@ -112,7 +112,7 @@ for direction in ["forward", "backward", "both", "canceling"]:
 	)
 	DiagScreen(
 	    shape = "plane",
-	    point = [Lsim/2.],
+	    point = [Lsim/3.],
 	    vector = [1.],
 	    direction = direction,
 	    output = "density",
