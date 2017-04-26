@@ -493,56 +493,58 @@ class ShowDiffWithReference(object):
 		except:
 			print "\tQuantity cannot be plotted"
 			print_data = True
+			data_float = None
 		# Manage array plotting
-		if expected_data is not None and data_float.shape != expected_data_float.shape:
-			print "\tReference and new data do not have the same shape"
-			print_data = True
-		elif data_float.size == 0:
-			print "\t0D quantity cannot be plotted"
-			print_data = True
-		elif data_float.ndim == 1:
-			nplots = 2
-			if expected_data is None or data_float.shape != expected_data_float.shape:
-				nplots = 1
-			fig = plt.figure()
-			fig.suptitle(data_name)
-			print "\tPlotting in figure "+str(fig.number)
-			ax1 = fig.add_subplot(nplots,1,1)
-			ax1.plot( data_float, label="new data" )
-			ax1.plot( expected_data_float, label="reference data" )
-			ax1.legend()
-			if nplots == 2:
-				ax2 = fig.add_subplot(nplots,1,2)
-				ax2.plot( data_float-expected_data_float )
-				ax2.set_title("difference")
-		elif data_float.ndim == 2:
-			nplots = 3
-			if expected_data is None:
-				nplots = 1
-			elif data_float.shape != expected_data_float.shape:
+		if data_float is not None:
+			if expected_data is not None and data_float.shape != expected_data_float.shape:
+				print "\tReference and new data do not have the same shape"
+				print_data = True
+			elif data_float.size == 0:
+				print "\t0D quantity cannot be plotted"
+				print_data = True
+			elif data_float.ndim == 1:
 				nplots = 2
-			fig = plt.figure()
-			fig.suptitle(data_name)
-			print "\tPlotting in figure "+str(fig.number)
-			ax1 = fig.add_subplot(1,nplots,1)
-			im = ax1.imshow( data_float )
-			ax1.set_title("new data")
-			plt.colorbar(im)
-			if nplots > 1:
-				ax2 = fig.add_subplot(1,nplots,2)
-				im = ax2.imshow( expected_data_float )
-				ax2.set_title("reference data")
-				plt.colorbar( im )
-			if nplots > 2:
-				ax3 = fig.add_subplot(1,nplots,nplots)
-				im = ax3.imshow( data_float-expected_data_float )
-				ax3.set_title("difference")
-				plt.colorbar( im )
-			plt.draw()
-			plt.show()
-		else:
-			print "\t"+str(data_float.ndim)+"D quantity cannot be plotted"
-			print_data = True
+				if expected_data is None or data_float.shape != expected_data_float.shape:
+					nplots = 1
+				fig = plt.figure()
+				fig.suptitle(data_name)
+				print "\tPlotting in figure "+str(fig.number)
+				ax1 = fig.add_subplot(nplots,1,1)
+				ax1.plot( data_float, label="new data" )
+				ax1.plot( expected_data_float, label="reference data" )
+				ax1.legend()
+				if nplots == 2:
+					ax2 = fig.add_subplot(nplots,1,2)
+					ax2.plot( data_float-expected_data_float )
+					ax2.set_title("difference")
+			elif data_float.ndim == 2:
+				nplots = 3
+				if expected_data is None:
+					nplots = 1
+				elif data_float.shape != expected_data_float.shape:
+					nplots = 2
+				fig = plt.figure()
+				fig.suptitle(data_name)
+				print "\tPlotting in figure "+str(fig.number)
+				ax1 = fig.add_subplot(1,nplots,1)
+				im = ax1.imshow( data_float )
+				ax1.set_title("new data")
+				plt.colorbar(im)
+				if nplots > 1:
+					ax2 = fig.add_subplot(1,nplots,2)
+					im = ax2.imshow( expected_data_float )
+					ax2.set_title("reference data")
+					plt.colorbar( im )
+				if nplots > 2:
+					ax3 = fig.add_subplot(1,nplots,nplots)
+					im = ax3.imshow( data_float-expected_data_float )
+					ax3.set_title("difference")
+					plt.colorbar( im )
+				plt.draw()
+				plt.show()
+			else:
+				print "\t"+str(data_float.ndim)+"D quantity cannot be plotted"
+				print_data = True
 		# Print data if necessary
 		if print_data:
 			if expected_data is not None:

@@ -57,3 +57,10 @@ DiagProbe(
     pos_second = [3.*l0 , 40.*l0],
     fields = []
 )
+
+DiagProbe(
+    every = 10,
+    pos = [0.1*Lsim[0], 0.5*Lsim[1]],
+    fields = []
+)
+

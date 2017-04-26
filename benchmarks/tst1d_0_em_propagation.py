@@ -40,8 +40,8 @@ DiagFields(
 )
 
 DiagProbe(
-    every = 1, 
-    pos = [0.0]   
+    every = 5, 
+    pos = [Main.sim_length[0]*0.2]   
 )
 
 DiagProbe(
