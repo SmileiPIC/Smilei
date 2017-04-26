@@ -38,7 +38,7 @@ Main(
 
 Species(
 	species_type = 'ion',
-	initPosition_type = 'random',
+	initPosition_type = 'regular',
 	initMomentum_type = 'cold',
 	n_part_per_cell = 10,
 	mass = 1836.0,
@@ -50,7 +50,7 @@ Species(
 )
 Species(
 	species_type = 'eon',
-	initPosition_type = 'random',
+	initPosition_type = 'regular',
 	initMomentum_type = 'cold',
 	n_part_per_cell = 10,
 	mass = 1.0,
