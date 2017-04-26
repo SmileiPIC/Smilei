@@ -22,7 +22,7 @@ Validate("Electron front vs time", front_position, 20)
 for i,d in enumerate(S.namelist.DiagScreen):
 	last_data = S.Screen(i, timesteps=1400).getData()[-1]
 	if d.direction in ["backward", "canceling"]:
-		precision = 5
+		precision = 8
 	else:
 		precision = 20
 	if d.shape == "sphere": precision *= 0.02

@@ -33,7 +33,7 @@ Validate("Scalar Ukin_ion" , S.Scalar.Ukin_ion ().getData(), 100.)
 for i,d in enumerate(S.namelist.DiagScreen):
 	last_data = S.Screen(i, timesteps=21000).getData()[-1]
 	if d.direction in ["backward", "canceling"]:
-		precision = 0.2
+		precision = 0.4
 	else:
-		precision = 0.8
+		precision = 1.5
 	Validate("Screen "+d.shape+" diag with "+d.direction+" direction", last_data, precision)
