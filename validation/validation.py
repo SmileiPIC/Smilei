@@ -571,10 +571,10 @@ for BENCH in SMILEI_BENCH_LIST :
 		os.mkdir(WORKDIR)
 	
 	WORKDIR += s+str(OMP)
+	EXECUTION = True
 	if not os.path.exists(WORKDIR):
 		os.mkdir(WORKDIR)
-		EXECUTION = True
-	else:
+	elif GENERATE:
 		EXECUTION = False
 	
 	os.chdir(WORKDIR)
