@@ -132,6 +132,9 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
         }
     }
     
+    if( allPos.size() != dimProbe+1 )
+        ERROR("Probe #"<<n_probe<<": `number` has length "<<dimProbe<<" but "<<allPos.size()<<" points have been defined");
+    
     // calculate the coordinate system (base vectors)
     axes.resize(nDim_particle*nDim_particle, 0.);
     vector<int> usedDirections (nDim_particle, 0);

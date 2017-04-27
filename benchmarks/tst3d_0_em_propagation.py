@@ -47,3 +47,36 @@ DiagFields(
     every = globalEvery,
     fields = ['Ex','Ey','Ez']
 )
+
+DiagProbe(
+    every = 10,
+    pos = [0.1*Lsim[0], 0.5*Lsim[1], 0.5*Lsim[2]],
+    fields = []
+)
+
+DiagProbe(
+    every = 100,
+    number = [30],
+    pos = [0.1*Lsim[0], 0.5*Lsim[1], 0.5*Lsim[2]],
+    pos_first = [0.9*Lsim[0], 0.5*Lsim[1], 0.5*Lsim[2]],
+    fields = []
+)
+
+DiagProbe(
+    every = 100,
+    number = [10, 10],
+    pos = [0.1*Lsim[0], 0.*Lsim[1], 0.5*Lsim[2]],
+    pos_first  = [0.9*Lsim[0], 0. *Lsim[1], 0.5*Lsim[2]],
+    pos_second = [0.1*Lsim[0], 0.9*Lsim[1], 0.5*Lsim[2]],
+    fields = []
+)
+
+DiagProbe(
+    every = 100,
+    number = [4, 4, 4],
+    pos = [0.1*Lsim[0], 0.*Lsim[1], 0.5*Lsim[2]],
+    pos_first  = [0.9*Lsim[0], 0. *Lsim[1], 0.5*Lsim[2]],
+    pos_second = [0.1*Lsim[0], 0.9*Lsim[1], 0.5*Lsim[2]],
+    pos_third  = [0.1*Lsim[0], 0. *Lsim[1], 0.9*Lsim[2]],
+    fields = []
+)

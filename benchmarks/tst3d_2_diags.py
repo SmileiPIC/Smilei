@@ -12,7 +12,7 @@ Main(
 	interpolation_order = 2,
 	
 	timestep = 0.005 * L0,
-	sim_time  = .2 * L0,
+	sim_time  = .24 * L0,
 	
 	cell_length = [0.01 * L0]*3,
 	sim_length  = [1. * L0]*3,
@@ -62,8 +62,9 @@ Species(
 	mass = 1.0,
 	charge = -1.0,
 	nb_density = lambda x,y,z : poly3(x,y,z) * math.exp(-(y-0.5*L0)**2) * math.exp(-(z-0.5*L0)**2),
+	mean_velocity = [0.00001, 0.00001, 0.00001],
 	dynamics_type = "norm",
-	time_frozen = 1000000.0,
+	time_frozen = 1.30, # Move only after timestep 40
 	bc_part_type_xmin = "none",
 	bc_part_type_xmax = "none",
 	bc_part_type_ymin = "none",
@@ -82,6 +83,7 @@ Species(
 	mass = 1.0,
 	charge = 1.0,
 	nb_density = lambda x,y,z : poly4(x,y,z) * math.exp(-(y-0.5*L0)**2) * math.exp(-(z-0.5*L0)**2),
+	mean_velocity = [0.00001, 0.00001, 0.00001],
 	dynamics_type = "norm",
 	time_frozen = 1000000.0,
 	bc_part_type_xmin = "none",
@@ -96,5 +98,14 @@ DiagScalar(
     every = 10, 
 )
 DiagFields(
-    every = 10, 
+    every = 45, 
 )
+
+DiagProbe(
+    every = 40,
+    number = [10],
+    pos = [0., L0/2, L0/2],
+    pos_first = [L0, L0/2, L0/2],
+    fields = []
+)
+
