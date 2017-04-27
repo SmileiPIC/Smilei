@@ -107,3 +107,34 @@ DiagFields(
 
 DiagScalar(every = 1)
 
+for direction in ["forward", "backward", "both", "canceling"]:
+	DiagScreen(
+	    shape = "sphere",
+	    point = [0., Ly/2., Lz/2.],
+	    vector = [Lx*0.9, 0.1, 0.1],
+	    direction = direction,
+	    output = "density",
+	    species = ["electron"],
+	    axes = [
+	    	["theta", 0, math.pi, 10],
+	    	["phi", -math.pi, math.pi, 10],
+	    	],
+	    every = 40,
+	    time_average = 30
+	)
+	DiagScreen(
+	    shape = "plane",
+	    point = [Lx*0.9, Ly/2., Lz/2.],
+	    vector = [1., 0.1, 0.1],
+	    direction = direction,
+	    output = "density",
+	    species = ["electron"],
+	    axes = [
+	    	["a", -Ly/2., Ly/2., 10],
+	    	["b", -Lz/2., Lz/2., 10],
+	    	],
+	    every = 40,
+	    time_average = 30
+	)
+
+

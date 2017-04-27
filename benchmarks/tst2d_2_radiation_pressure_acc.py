@@ -80,3 +80,28 @@ DiagFields(
     every = globalEvery,
     fields = ['Ex','Ey','Ez','Bx','By','Bz','Rho_ion','Rho_eon']
 )
+
+
+for direction in ["forward", "backward", "both", "canceling"]:
+	DiagScreen(
+	    shape = "sphere",
+	    point = [0., Lsim[1]/2.],
+	    vector = [Lsim[0]/2., 0.1],
+	    direction = direction,
+	    output = "density",
+	    species = ["eon"],
+	    axes = [["theta", -math.pi, math.pi, 10],],
+	    every = 350
+	)
+	DiagScreen(
+	    shape = "plane",
+	    point = [Lsim[0]/2., Lsim[1]/2.],
+	    vector = [1., 0.1],
+	    direction = direction,
+	    output = "density",
+	    species = ["eon"],
+	    axes = [["a", -Lsim[1]/2., Lsim[1]/2., 10],],
+	    every = 350
+	)
+
+

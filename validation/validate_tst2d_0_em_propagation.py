@@ -7,9 +7,13 @@ S = Smilei(".", verbose=False)
 Ey = S.Field.Field0.Ey(timesteps=1500, stride=8).getData()[0]
 Validate("Ey field at iteration 1500", Ey, 0.01)
 
-# COMPARE THE Ey PROBE
+# 2-D probe in 2D
 Ey = S.Probe.Probe0.Ey(timesteps=1500).getData()[0]
 Validate("Ey probe at iteration 1500", Ey, 0.01)
+
+# 0-D probe in 2D
+Ey = S.Probe.Probe1.Ey().getData()
+Validate("0-D probe Ey vs time", Ey, 0.01)
 
 # TEST THAT Ubal_norm STAYS OK
 max_ubal_norm = np.max( np.abs(S.Scalar.Ubal_norm().getData()) )
