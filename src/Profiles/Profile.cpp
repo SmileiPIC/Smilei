@@ -182,10 +182,9 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
         
         
         // Verify that the profile transforms a float in a float
-#ifdef EXPOSENUMPY
+#ifdef SMILEI_USE_NUMPY
         if( try_numpy ) {
             // If numpy available, verify that the profile accepts numpy arguments
-            import_array();
             double test_value[2] = {0.,0.};
             npy_intp dims[1] = {2};
             PyArrayObject *a = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, &test_value);

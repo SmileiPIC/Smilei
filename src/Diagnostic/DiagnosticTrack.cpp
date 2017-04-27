@@ -6,7 +6,7 @@
 #include "VectorPatch.h"
 
 
-#ifdef EXPOSENUMPY
+#ifdef SMILEI_USE_NUMPY
 #include <numpy/arrayobject.h>
 #endif
 
@@ -38,8 +38,7 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch,
     filter = PyTools::extract_py("track_filter", "Species", speciesId_);
     has_filter = (filter != Py_None);
     if( has_filter ) {
-#ifdef EXPOSENUMPY
-        import_array();
+#ifdef SMILEI_USE_NUMPY
         // Check if filter is callable
         if( ! PyCallable_Check(filter) )
             ERROR("Tracked species '" << species->species_type << "' has a filter that is not callable");
@@ -174,7 +173,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         
         if( has_filter ) {
         
-#ifdef EXPOSENUMPY
+#ifdef SMILEI_USE_NUMPY
             patch_selection.resize( vecPatches.size() );
             PyArrayObject *x,*y,*z,*px,*py,*pz,*ret;
             npy_intp dims[1];

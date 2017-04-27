@@ -40,7 +40,7 @@ for opt in opt_flags:
         
         try:
             import numpy
-            flags += ['-I' + numpy.get_include() + ' -DEXPOSENUMPY -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION']
+            flags += ['-I' + numpy.get_include() + ' -DSMILEI_USE_NUMPY -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION']
         except:
             pass
         

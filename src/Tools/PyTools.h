@@ -17,11 +17,19 @@
 #endif
 #endif
 
-
 #include <Python.h>
 #include <vector>
 #include <sstream>
 #include "Tools.h"
+
+#ifdef SMILEI_USE_NUMPY
+#define PY_ARRAY_UNIQUE_SYMBOL SMILEI_ARRAY_API
+#ifndef SMILEI_IMPORT_ARRAY
+#define NO_IMPORT_ARRAY
+#endif
+#include <numpy/arrayobject.h>
+#endif
+
 
 //! tools to query python nemlist and get back C++ values and vectors
 class PyTools {

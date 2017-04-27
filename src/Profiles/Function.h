@@ -5,19 +5,11 @@
 #include <string>
 #include "PyTools.h"
 
-#ifdef EXPOSENUMPY
-#include <numpy/arrayobject.h>
-#endif
-
 class Function
 {
 public:
     //! Default constructor
-    Function(){
-#ifdef EXPOSENUMPY
-import_array();
-#endif
-    };
+    Function(){};
     //! Default destructor
     virtual ~Function(){};
     
@@ -39,7 +31,7 @@ import_array();
         return 0.; // virtual => will be redefined
     };
 
-#ifdef EXPOSENUMPY
+#ifdef SMILEI_USE_NUMPY
     //! Gets the value of an N-D function at points specified as numpy arrays
     virtual PyArrayObject* valueAt(std::vector<PyArrayObject*>) {
         return NULL;

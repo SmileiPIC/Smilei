@@ -31,7 +31,7 @@ double Function_Python4D::valueAt(vector<double> x_cell, double time) {
 }
 
 // Special cases for locations specified in numpy arrays
-#ifdef EXPOSENUMPY
+#ifdef SMILEI_USE_NUMPY
 PyArrayObject* Function_Python1D::valueAt(std::vector<PyArrayObject*> x) {
     return (PyArrayObject*)PyObject_CallFunctionObjArgs(py_profile, x[0], NULL);
 }

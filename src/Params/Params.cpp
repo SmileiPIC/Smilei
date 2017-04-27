@@ -3,6 +3,8 @@
 #include <ctime>
 #include <iomanip>
 
+#define SMILEI_IMPORT_ARRAY
+
 #include "PyTools.h"
 #include "Params.h"
 #include "Species.h"
@@ -64,6 +66,9 @@ namelist("")
     
     //init Python
     PyTools::openPython();
+#ifdef SMILEI_USE_NUMPY
+    import_array();
+#endif
     
     // Print python version
     MESSAGE(1, "Python version "<<PyTools::python_version());

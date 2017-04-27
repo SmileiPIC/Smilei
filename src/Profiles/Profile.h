@@ -9,10 +9,6 @@
 #include "Function.h"
 #include "Field.h"
 
-#ifdef EXPOSENUMPY
-#include <numpy/arrayobject.h>
-#endif
-
 class Profile
 {
 public:
@@ -40,8 +36,7 @@ public:
     inline void valuesAt(std::vector<Field*> &coordinates, Field &ret) {
         unsigned int ndim = coordinates.size();
         unsigned int size = coordinates[0]->globalDims_;
-#ifdef EXPOSENUMPY
-        import_array();
+#ifdef SMILEI_USE_NUMPY
         // If numpy profile, then expose coordinates as numpy before evaluating profile
         if( uses_numpy ) {
             std::vector<PyArrayObject*> x(ndim);
