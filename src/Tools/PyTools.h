@@ -172,7 +172,7 @@ public:
     }
     
     //! check if there has been a python error
-    static void checkPyError(bool exitOnError=false) {
+    static void checkPyError(bool exitOnError=false, bool print=true) {
         if (PyErr_Occurred()) {
             PyObject *type, *value, *traceback;
             PyErr_Fetch(&type, &value, &traceback);
@@ -195,7 +195,7 @@ public:
             Py_XDECREF(traceback);
             if (exitOnError) {
                 ERROR(message);
-            } else {
+            } else if( print ) {
                 MESSAGE(1,"[Python] " << message);
             }
         }

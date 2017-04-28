@@ -192,6 +192,7 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
             if      ( nvariables == 1 ) ret = PyObject_CallFunctionObjArgs(py_profile, a, NULL);
             else if ( nvariables == 2 ) ret = PyObject_CallFunctionObjArgs(py_profile, a,a, NULL);
             else if ( nvariables == 3 ) ret = PyObject_CallFunctionObjArgs(py_profile, a,a,a, NULL);
+            PyTools::checkPyError(false, false);
             Py_DECREF(a);
             if( ret
              && PyArray_Check(ret) // must be a numpy array
