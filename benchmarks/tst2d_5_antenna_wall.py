@@ -8,8 +8,8 @@ l0 = 2.0*math.pi		# laser wavelength
 t0 = l0					# optical cicle
 Lsim = [20.*l0,20.*l0]	# length of the simulation
 Tsim = 20.*t0			# duration of the simulation
-resx = 5.				# nb of cells in on laser wavelength
-rest = 8.				# time of timestep in one optical cycle 
+resx = 10.				# nb of cells in on laser wavelength
+rest = 16.				# time of timestep in one optical cycle 
 
 Main(
     geometry = "2d3v",
@@ -63,7 +63,7 @@ Species(
 
 Antenna(
     field='Jz',
-    time_profile= lambda t: math.sin(t/t0),
+    time_profile= lambda t: math.sin(2.*t/t0),
     space_profile=gaussian(0.2, xfwhm=l0, yfwhm=l0, xcenter=Main.sim_length[0]*0.6, ycenter=Main.sim_length[1]*0.5)
 )
 

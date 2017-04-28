@@ -7,7 +7,7 @@
 
 class Params;
 
-//! class ElectroMagn3D containing all information on the electromagnetic fields & currents for 2d3v simulations
+//! class ElectroMagn3D containing all information on the electromagnetic fields & currents for 3d3v simulations
 class ElectroMagn3D : public ElectroMagn
 {
 public:

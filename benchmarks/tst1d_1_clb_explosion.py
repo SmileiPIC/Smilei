@@ -50,3 +50,12 @@ DiagScalar(
 )
 
 
+DiagParticles(
+	output = "density",
+	every = 50,
+	species = ["charges"],
+	axes = [
+		["p", 0., 10., 10],
+	]
+)
+

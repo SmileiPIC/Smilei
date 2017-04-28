@@ -9,14 +9,7 @@
 SMILEICXX ?= mpicxx
 HDF5_ROOT_DIR ?= 
 BUILD_DIR ?= build
-
-#-----------------------------------------------------
-# check if python-config exists
-ifneq (,$(shell which python-config))
-	PYTHONCONFIG := python-config
-else
-	PYTHONCONFIG := python scripts/CompileTools/python-config.py
-endif  
+PYTHONCONFIG := python scripts/CompileTools/python-config.py
 
 #-----------------------------------------------------
 # Git information

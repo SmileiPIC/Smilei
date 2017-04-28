@@ -13,8 +13,8 @@
 
 using namespace std;
 
-ElectroMagnBC1D_SM::ElectroMagnBC1D_SM( Params &params, Patch* patch )
-  : ElectroMagnBC( params, patch )
+ElectroMagnBC1D_SM::ElectroMagnBC1D_SM( Params &params, Patch* patch, unsigned int _min_max )
+: ElectroMagnBC( params, patch, _min_max )
 {
     // number of nodes of the primal-grid
     nx_p = params.n_space[0]+1 + 2*params.oversize[0];
@@ -31,32 +31,36 @@ ElectroMagnBC1D_SM::ElectroMagnBC1D_SM( Params &params, Patch* patch )
     Beta_SM  = (dt_ov_dx-1.)/(1.+dt_ov_dx);
     Gamma_SM = 4./(1.+dt_ov_dx);
     
+    By_val = 0.;
+    Bz_val = 0.;
     
-    Bz_xvalmin = 0.;
-    Bz_xvalmax = 0.;
-    By_xvalmin = 0.;
-    By_xvalmax = 0.;
 }
 
 ElectroMagnBC1D_SM::~ElectroMagnBC1D_SM()
 {
 }
 
-void ElectroMagnBC1D_SM::save_fields_BC1D(Field* my_field) {
+void ElectroMagnBC1D_SM::save_fields(Field* my_field, Patch *patch) {
     Field1D* field1D=static_cast<Field1D*>(my_field);
     // Bx^(p) is not saved as it is defined on the primal grid and thus can be computed
     // we save only the field By and Bz that are computed on the dual grid
     
-    if (field1D->name=="By"){
-        By_xvalmin=(*field1D)(0);
-        By_xvalmax=(*field1D)(field1D->dims()[0]-1);
+    if (min_max == 0 && patch->isXmin() ) {
+        if (field1D->name=="By"){
+            By_val = (*my_field)(0);
+        }
+        else if (field1D->name=="Bz"){
+            Bz_val = (*my_field)(0);
+        }
+    } else if (min_max == 1 && patch->isXmax() ) {
+        if (field1D->name=="By"){
+            By_val = (*my_field)(field1D->dims()[0]-1);
+        }
+        else if (field1D->name=="Bz"){
+            Bz_val = (*my_field)(field1D->dims()[0]-1);
+        }
+        
     }
-    
-    if (field1D->name=="Bz"){
-        Bz_xvalmin=(*field1D)(0);
-        Bz_xvalmax=(*field1D)(field1D->dims()[0]-1);
-    }
-
 }
 
 
@@ -64,9 +68,9 @@ void ElectroMagnBC1D_SM::save_fields_BC1D(Field* my_field) {
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBC1D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch)
+void ElectroMagnBC1D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( patch->isXmin() ) {
+    if (min_max == 0 && patch->isXmin() ) {
         
         //Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
         Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);
@@ -84,25 +88,16 @@ void ElectroMagnBC1D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
         }
         
         // Apply Silver-Mueller EM boundary condition at x=xmin
-        (*By1D)(0) =  Alpha_SM*(*Ez1D)(0) + Beta_SM*((*By1D)(1)-By_xvalmin) + Gamma_SM*byL+By_xvalmin;
-        (*Bz1D)(0) = -Alpha_SM*(*Ey1D)(0) + Beta_SM*((*Bz1D)(1)-Bz_xvalmin) + Gamma_SM*bzL+Bz_xvalmin;
+        (*By1D)(0) =  Alpha_SM*(*Ez1D)(0) + Beta_SM*((*By1D)(1)-By_val) + Gamma_SM*byL+By_val;
+        (*Bz1D)(0) = -Alpha_SM*(*Ey1D)(0) + Beta_SM*((*Bz1D)(1)-Bz_val) + Gamma_SM*bzL+Bz_val;
         
-    }//if Xmin
-
-}
-// ---------------------------------------------------------------------------------------------------------------------
-// Apply Boundary Conditions
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBC1D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Patch* patch)
-{
-    
-    if ( patch->isXmax() ) {
+    } else if (min_max == 1 && patch->isXmax() ) {
         //Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
         Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);
         Field1D* Ez1D   = static_cast<Field1D*>(EMfields->Ez_);
         Field1D* By1D   = static_cast<Field1D*>(EMfields->By_);
         Field1D* Bz1D   = static_cast<Field1D*>(EMfields->Bz_);
-    
+        
         // Lasers
         double byR=0.0, bzR=0.0;
         vector<double> pos(1);
@@ -111,24 +106,10 @@ void ElectroMagnBC1D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
             byR += vecLaser[ilaser]->getAmplitude0(pos, time_dual, 0, 0);
             bzR += vecLaser[ilaser]->getAmplitude1(pos, time_dual, 0, 0);
         }
-    
+        
         // Silver-Mueller boundary conditions (right)
-        (*By1D)(nx_d-1) = -Alpha_SM*(*Ez1D)(nx_p-1)+ Beta_SM*((*By1D)(nx_d-2)-By_xvalmax) + Gamma_SM*byR+By_xvalmax;
-        (*Bz1D)(nx_d-1) =  Alpha_SM*(*Ey1D)(nx_p-1)+ Beta_SM*((*Bz1D)(nx_d-2)-Bz_xvalmax) + Gamma_SM*bzR+Bz_xvalmax;
-    }//if Xmax
+        (*By1D)(nx_d-1) = -Alpha_SM*(*Ez1D)(nx_p-1)+ Beta_SM*((*By1D)(nx_d-2)-By_val) + Gamma_SM*byR+By_val;
+        (*Bz1D)(nx_d-1) =  Alpha_SM*(*Ey1D)(nx_p-1)+ Beta_SM*((*Bz1D)(nx_d-2)-Bz_val) + Gamma_SM*bzR+Bz_val;
+    }
     
-}
-
-void ElectroMagnBC1D_SM::apply_ymin(ElectroMagn* EMfields, double time_dual, Patch* patch)
-{
-}
-void ElectroMagnBC1D_SM::apply_ymax(ElectroMagn* EMfields, double time_dual, Patch* patch)
-{
-}
-
-void ElectroMagnBC1D_SM::apply_zmin(ElectroMagn* EMfields, double time_dual, Patch* patch)
-{
-}
-void ElectroMagnBC1D_SM::apply_zmax(ElectroMagn* EMfields, double time_dual, Patch* patch)
-{
 }

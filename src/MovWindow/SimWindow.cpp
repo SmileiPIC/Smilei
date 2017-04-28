@@ -15,6 +15,7 @@
 #include <omp.h>
 #include <fstream>
 #include <limits>
+#include "ElectroMagnBC_Factory.h"
 
 using namespace std;
 
@@ -161,7 +162,15 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         }
 
     }
-    
+
+    //Wait for sends to be completed
+    #pragma omp for schedule(static) 
+    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++){ 
+        if (vecPatches_old[ipatch]->MPI_neighbor_[0][0] !=  vecPatches_old[ipatch]->MPI_me_ && vecPatches_old[ipatch]->MPI_neighbor_[0][0] != MPI_PROC_NULL){
+            smpi->waitall( vecPatches_old[ipatch] );
+        }
+    }
+     
     //Update the correct neighbor values
     for (unsigned int j=0; j < update_patches_.size(); j++){
         mypatch = update_patches_[j];
@@ -183,6 +192,21 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         else
             mypatch->cleanType();
 
+        if ( mypatch->isXmin() ){
+            for (auto& embc:mypatch->EMfields->emBoundCond) {
+                if (embc) delete embc;
+            }
+            mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create(params, mypatch);
+            mypatch->EMfields->laserDisabled();
+        }
+        if ( mypatch->wasXmax( params ) ){
+            for (auto& embc:mypatch->EMfields->emBoundCond) {
+                if (embc) delete embc;
+            }
+            mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create(params, mypatch);
+            mypatch->EMfields->laserDisabled();
+           
+        }
     }
     
     //Wait for sends to be completed

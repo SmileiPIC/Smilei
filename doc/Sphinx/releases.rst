@@ -15,8 +15,9 @@ but the process is fast and straightforward.
 Upcoming changes
 ^^^^^^^^^^^^^^^^
 
+* New pushers (Vay's and Higuera-Cary's)
 * More OpenMP support
-* *Numpy* used for faster python profiles and for filtering track particles
+* *Numpy* used for filtering track particles
 * Fourth order in 3D
 * Moving window along y and z
 * Tracking particles in *Screens*

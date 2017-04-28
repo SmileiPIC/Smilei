@@ -185,8 +185,10 @@ public:
     std::vector<unsigned int> oversize;
     
     //! MPI structure to exchange particles
-    MPI_Datatype typePartSend ;
-    
+    std::vector<MPI_Datatype> typePartSend ;
+    std::vector<MPI_Datatype> typePartRecv ;
+    MPI_Datatype exchangePatch;
+
     //! Cell_length (copy from Params)
     std::vector<double> cell_length;
     //! min_loc_vec (copy from picparams)

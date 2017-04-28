@@ -75,14 +75,19 @@ def _smilei_check():
 # this function will be called after initialising the simulation, just before entering the time loop
 # if it returns false, the code will call a Py_Finalize();
 def _keep_python_running():
-    ps = [[las.time_envelope, las.chirp_profile] for las in Laser]
-    ps += [[ant.time_profile] for ant in Antenna]
+    # Verify all temporal profiles, and all profiles that depend on the moving window or on the load balancing
+    profiles = [las.time_envelope for las in Laser]
+    profiles += [las.chirp_profile for las in Laser]
+    profiles += [ant.time_profile for ant in Antenna]
     if len(MovingWindow)>0 or len(LoadBalancing)>0:
-        ps += [[s.nb_density, s.charge_density, s.n_part_per_cell, s.charge] + s.mean_velocity + s.temperature for s in Species]
-    profiles = []
-    for p in ps: profiles += p
+        for s in Species:
+            profiles += [s.nb_density, s.charge_density, s.n_part_per_cell, s.charge] + s.mean_velocity + s.temperature
     for prof in profiles:
         if callable(prof) and not hasattr(prof,"profileName"):
+            return True
+    # Verify the tracked species that require a particle selection
+    for s in Species:
+        if s.track_every!=0 and s.track_filter is not None:
             return True
     return False
 
