@@ -146,6 +146,9 @@ void Species::initOperators(Params& params, Patch* patch)
             MPIbuff.part_index_send_sz[iDim][iNeighbor] = 0;
         }
     }
+    typePartSend.resize(nDim_particle*2, MPI_DATATYPE_NULL);
+    typePartRecv.resize(nDim_particle*2, MPI_DATATYPE_NULL);
+    exchangePatch = MPI_DATATYPE_NULL;
 
 }
 

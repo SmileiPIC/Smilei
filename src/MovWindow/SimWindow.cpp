@@ -162,6 +162,14 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         mypatch->EMfields->laserDisabled();
         vecPatches.patches_[patch_to_be_created[j]] = mypatch ;
     }
+
+    //Wait for sends to be completed
+    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++){ 
+        if (vecPatches_old[ipatch]->MPI_neighbor_[0][0] !=  vecPatches_old[ipatch]->MPI_me_ && vecPatches_old[ipatch]->MPI_neighbor_[0][0] != MPI_PROC_NULL){
+            smpi->waitall( vecPatches_old[ipatch] );
+            }
+    }
+
     
     //Update the correct neighbor values
     for (unsigned int j=0; j < update_patches_.size(); j++){
@@ -174,14 +182,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             mypatch->neighbor_[idim][0] = mypatch->tmp_neighbor_[idim][0];
             mypatch->neighbor_[idim][1] = mypatch->tmp_neighbor_[idim][1];
         }
-    }
-    
-    //Wait for sends to be completed
-    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++){ 
-        if (vecPatches_old[ipatch]->MPI_neighbor_[0][0] !=  vecPatches_old[ipatch]->MPI_me_ && vecPatches_old[ipatch]->MPI_neighbor_[0][0] != MPI_PROC_NULL){
-            smpi->waitall( vecPatches_old[ipatch] );
-        }
-    }
+    }    
     
     for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++){
         vecPatches(ipatch)->updateTagenv(smpi);

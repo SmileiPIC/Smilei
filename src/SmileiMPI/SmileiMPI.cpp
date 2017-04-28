@@ -568,9 +568,8 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
     for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++){
         isend( &(patch->vecSpecies[ispec]->bmax), to, tag+2*ispec+1, patch->requests_[2*ispec] );
         if ( patch->vecSpecies[ispec]->getNbrOfParticles() > 0 ){
-            patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles );
-            isend( patch->vecSpecies[ispec]->particles, to, tag+2*ispec, patch->vecSpecies[ispec]->typePartSend, patch->requests_[2*ispec+1] );
-            MPI_Type_free( &(patch->vecSpecies[ispec]->typePartSend) );
+            patch->vecSpecies[ispec]->exchangePatch = createMPIparticles( patch->vecSpecies[ispec]->particles );
+            isend( patch->vecSpecies[ispec]->particles, to, tag+2*ispec, patch->vecSpecies[ispec]->exchangePatch, patch->requests_[2*ispec+1] );
         }
     }
 
@@ -590,11 +589,21 @@ void SmileiMPI::waitall(Patch* patch)
             MPI_Wait(&(patch->requests_[ireq]), &status);
         patch->requests_[ireq] = MPI_REQUEST_NULL;
     }
+
+    for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
+        if ( patch->vecSpecies[ispec]->getNbrOfParticles() > 0 ) {
+            if (patch->vecSpecies[ispec]->exchangePatch != MPI_DATATYPE_NULL) {
+                MPI_Type_free( &(patch->vecSpecies[ispec]->exchangePatch) );
+                patch->vecSpecies[ispec]->exchangePatch = MPI_DATATYPE_NULL;
+            }
+        }
+
         
 }
 
 void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
 {
+    MPI_Datatype recvParts;
     int nbrOfPartsRecv;
 
     for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++){
@@ -609,9 +618,9 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
         patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params.nDim_particle );
         //Receive particles
         if ( nbrOfPartsRecv > 0 ) {
-            patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles );
-            recv( patch->vecSpecies[ispec]->particles, from, tag+2*ispec, patch->vecSpecies[ispec]->typePartSend );
-            MPI_Type_free( &(patch->vecSpecies[ispec]->typePartSend) );
+            recvParts = createMPIparticles( patch->vecSpecies[ispec]->particles );
+            recv( patch->vecSpecies[ispec]->particles, from, tag+2*ispec, recvParts );
+            MPI_Type_free( &(recvParts) );
         }
     }
     
