@@ -1,23 +1,26 @@
-/*! @file PusherBoris.h
+/*! @file PusherVay.h
 
- @brief PusherBoris.h  generic class for the particle pusher of Boris.
+ @brief PusherVay.h  generic class for the particle pusher of J.L. Vay.
 
- @date 2013-02-15
+ #details The description of the J.L. Vay pusher can be found in this reference:
+          http://dx.doi.org/10.1063/1.2837054 
+
+ @date 2017-04-10
  */
 
-#ifndef PUSHERBORIS_H
-#define PUSHERBORIS_H
+#ifndef PUSHERVAY_H
+#define PUSHERVAY_H
 
 #include "Pusher.h"
 
 //  --------------------------------------------------------------------------------------------------------------------
-//! Class PusherBoris
+//! Class PusherVay
 //  --------------------------------------------------------------------------------------------------------------------
-class PusherBoris : public Pusher {
+class PusherVay : public Pusher {
 public:
     //! Creator for Pusher
-    PusherBoris(Params& params, Species *species);
-    ~PusherBoris();
+    PusherVay(Params& params, Species *species);
+    ~PusherVay();
     //! Overloading of () operator
     virtual void operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread);
 

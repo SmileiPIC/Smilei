@@ -261,6 +261,7 @@ class TrackParticles(Diagnostic):
 			last_file_index, tname = time_locations[times[-1]]
 			f = self._h5py.File(filesDisordered[last_file_index], "r")
 			number_of_particles = (f["data"][tname]["latest_IDs"].value % (2**32)).astype('uint32')
+			print("Number of particles:",number_of_particles)
 			# Calculate the offset that each MPI needs
 			offset = self._np.cumsum(number_of_particles)
 			total_number_of_particles = offset[-1]
@@ -483,7 +484,7 @@ class TrackParticles(Diagnostic):
 		if not self._validate(): return
 		
 		if self._ndim!=3:
-			print "Cannot export tracked particles of a "+str(self._ndim)+"D simulation to VTK"
+			print ("Cannot export tracked particles of a "+str(self._ndim)+"D simulation to VTK")
 			return
 		
 		self._mkdir(self._exportDir)

@@ -513,8 +513,13 @@ Each species has to be defined in a ``Species`` block::
 
 .. py:data:: dynamics_type
   
-  :red:`to do`
-
+  :default: ``norm``
+  
+  Type of pusher to be used for this species. The default value corresponds to the 
+  relativistic Boris pusher. Smilei has the following solvers implemented:
+  * borisnr: The non-relativistic Boris pusher
+  * vay: The relativistic pusher of J. L. Vay
+  * higueracary: The relativistic pusher of A. V. Higuera and J. R. Cary
 
 
 ----

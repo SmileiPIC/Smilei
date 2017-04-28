@@ -83,3 +83,5 @@ References
 .. [TafloveHagness] A. Taflove and S. C. Hagness, Computation Electrodynamics: The Finite-Difference Time-Domain Method, 3rd Ed. (Artech House, Norwood, 2005)
 
 .. [Vay2008] `J.-L. Vay, Phys. Plasmas 15, 056701 (2008) <https://doi.org/10.1063/1.2837054>`_
+
+.. [Higuera2017] `Higuera, A. V., & Cary, J. R., arXiv preprint arXiv:1701.05605 (2017) <https://arxiv.org/abs/1701.05605>`_
