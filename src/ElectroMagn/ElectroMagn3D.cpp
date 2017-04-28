@@ -201,7 +201,7 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
                     bufsize[i][isDual]--;
                 else if  (isDual) {
                     bufsize[i][isDual]--;
-                    if ( (patch->Pcoordinates[i]!=0) && ((int)patch->Pcoordinates[i]!=params.number_of_patches[i]-1) )
+                    if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=params.number_of_patches[i]-1) )
                         bufsize[i][isDual]--;
                 }
                 
@@ -280,8 +280,13 @@ void ElectroMagn3D::initPoisson(Patch *patch)
 double ElectroMagn3D::compute_r()
 {
     double rnew_dot_rnew_local(0.);
-#ifdef _PATCH3D_TODO
-#endif
+    for (unsigned int i=index_min_p_[0]; i<=index_max_p_[0]; i++) {
+        for (unsigned int j=index_min_p_[1]; j<=index_max_p_[1]; j++) {
+            for (unsigned int k=index_min_p_[2]; k<=index_max_p_[2]; k++) {
+                rnew_dot_rnew_local += (*r_)(i,j,k)*(*r_)(i,j,k)*(*r_)(i,j,k);
+            }
+        }
+    }
     return rnew_dot_rnew_local;
 } // compute_r
 
@@ -662,8 +667,8 @@ void ElectroMagn3D::computePoynting() {
 void ElectroMagn3D::applyExternalField(Field* my_field,  Profile *profile, Patch* patch) {
     
     Field3D* field3D=static_cast<Field3D*>(my_field);
-        
-    vector<double> pos(2,0);
+    
+    vector<double> pos(3);
     pos[0]      = dx*((double)(patch->getCellStartingGlobalIndex(0))+(field3D->isDual(0)?-0.5:0.));
     double pos1 = dy*((double)(patch->getCellStartingGlobalIndex(1))+(field3D->isDual(1)?-0.5:0.));
     double pos2 = dz*((double)(patch->getCellStartingGlobalIndex(2))+(field3D->isDual(2)?-0.5:0.));
@@ -684,12 +689,10 @@ void ElectroMagn3D::applyExternalField(Field* my_field,  Profile *profile, Patch
         }
         pos[0] += dx;
     }
-    if (emBoundCond[0]!=0) emBoundCond[0]->save_fields_BC3D_Long(my_field);
-    if (emBoundCond[1]!=0) emBoundCond[1]->save_fields_BC3D_Long(my_field);
-    if (emBoundCond[2]!=0) emBoundCond[2]->save_fields_BC3D_TransY(my_field);
-    if (emBoundCond[3]!=0) emBoundCond[3]->save_fields_BC3D_TransY(my_field);
-    if (emBoundCond[4]!=0) emBoundCond[2]->save_fields_BC3D_TransZ(my_field);
-    if (emBoundCond[5]!=0) emBoundCond[3]->save_fields_BC3D_TransZ(my_field);
+    
+    for (auto& embc: emBoundCond) {
+        if (embc) embc->save_fields(my_field, patch);
+    }
 }
 
 
@@ -705,6 +708,9 @@ void ElectroMagn3D::initAntennas(Patch* patch)
             antennas[i].field = new Field3D(dimPrim, 1, false, "Jy");
         else if (antennas[i].fieldName == "Jz")
             antennas[i].field = new Field3D(dimPrim, 2, false, "Jz");
+        else {
+            ERROR("Antenna cannot be applied to field "<<antennas[i].fieldName);
+        }
         
         if (antennas[i].field) 
             applyExternalField(antennas[i].field, antennas[i].space_profile, patch);

@@ -26,9 +26,25 @@
 #include <ostream>
 #include <algorithm>
 #include <iterator>
+#include <random>
 
 class SmileiMPI;
 class Species;
+
+namespace Rand
+{
+    extern std::random_device device;
+    extern std::mt19937 gen;
+    
+    extern std::uniform_real_distribution<double> uniform_distribution;
+    extern double uniform();
+    
+    extern std::uniform_real_distribution<double> uniform_distribution1;
+    extern double uniform1();
+    
+    extern std::uniform_real_distribution<double> uniform_distribution2;
+    extern double uniform2();
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -164,9 +180,9 @@ public:
     int exchange_particles_each;
     
     //! Total number of patches
-    int tot_number_of_patches;
+    unsigned int tot_number_of_patches;
     //! Number of patches per direction
-    std::vector<int> number_of_patches;
+    std::vector<unsigned int> number_of_patches;
     //! Load balancing frequency
     int balancing_every;
     //! Load coefficient applied to a cell (default = 1)

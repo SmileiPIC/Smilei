@@ -486,6 +486,26 @@ Each species has to be defined in a ``Species`` block::
   file for tracked particles is actually written ("flushed" from the buffer). Flushing
   too often can *dramatically* slow down the simulation.
 
+.. py:data:: track_filter
+  
+  A python function giving some condition on which particles are tracked.
+  If none provided, all particles are tracked.
+  To use this option, the `numpy package <http://www.numpy.org/>`_ must
+  be available in your python installation.
+  
+  The function must have the arguments 
+  ``x``, ``y`` (if 2D or above), ``z`` (if 3D), ``px``, ``py`` and ``pz``. Each of these variables
+  are provided as **numpy** arrays of *doubles*. Each element corresponds to one particle.
+  The function must return a boolean **numpy** array of the same shape, containing ``True``
+  where the particle should be tracked, and ``False`` in other locations.
+  
+  The following 2D example selects all the particles that verify :math:`-1<p_x<1`
+  or :math:`p_z>3`::
+  
+    def my_filter(x, y, px, py, pz):
+        return (px>-1.)*(px<1.) + (pz>3.)
+
+
 .. py:data:: c_part_max
   
   :red:`to do`
@@ -493,8 +513,13 @@ Each species has to be defined in a ``Species`` block::
 
 .. py:data:: dynamics_type
   
-  :red:`to do`
-
+  :default: ``norm``
+  
+  Type of pusher to be used for this species. The default value corresponds to the 
+  relativistic Boris pusher. Smilei has the following solvers implemented:
+  * borisnr: The non-relativistic Boris pusher
+  * vay: The relativistic pusher of J. L. Vay
+  * higueracary: The relativistic pusher of A. V. Higuera and J. R. Cary
 
 
 ----
@@ -794,9 +819,7 @@ profiles.
 
 ..
 
-  Any *python* function can be a profile. You must have basic *python* knowledge to build these functions.
-  
-  Examples::
+  Any *python* function can be a profile. Examples::
   
     def f(x):
         if x<1.: return 0.
@@ -804,14 +827,14 @@ profiles.
   
   .. code-block:: python
   
+    import math
     def f(x,y):    # two variables for 2D simulation
-        import math
         twoPI = 2.* math.pi
         return math.cos(  twoPI * x/3.2 )
   
   .. code-block:: python
     
-    f = lambda x: x**2 - 1
+    f = lambda x: x**2 - 1.
   
   
   
@@ -821,7 +844,14 @@ profiles.
     Species( ... , charge = f, ... )
     
     Species( ... , mean_velocity = [f, 0, 0], ... )
-  
+
+
+.. note:: It is possible, for higher performances, to create functions with
+  arguments *(x, y, etc.)* that are actually *numpy* arrays. If the function returns
+  a *numpy* array of the same size, it will automatically be considered as a profile
+  acting on arrays instead of single floats. Currently, this feature is only available
+  on Species' profiles.
+
 
 .. rubric:: 3. Pre-defined *spatial* profiles
 

@@ -15,6 +15,7 @@
 #include <omp.h>
 #include <fstream>
 #include <limits>
+#include "ElectroMagnBC_Factory.h"
 
 using namespace std;
 
@@ -194,6 +195,22 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             vecPatches(ipatch)->createType(params);
         else
             vecPatches(ipatch)->cleanType();
+ 
+        if ( vecPatches(ipatch)->isXmin() ){
+            for (auto& embc:vecPatches(ipatch)->EMfields->emBoundCond) {
+                if (embc) delete embc;
+            }
+            vecPatches(ipatch)->EMfields->emBoundCond = ElectroMagnBC_Factory::create(params, vecPatches(ipatch));
+            vecPatches(ipatch)->EMfields->laserDisabled();
+        }
+        if ( vecPatches(ipatch)->wasXmax( params ) ){
+            for (auto& embc:vecPatches(ipatch)->EMfields->emBoundCond) {
+                if (embc) delete embc;
+            }
+            vecPatches(ipatch)->EMfields->emBoundCond = ElectroMagnBC_Factory::create(params, vecPatches(ipatch));
+            vecPatches(ipatch)->EMfields->laserDisabled();
+           
+        }
     }
     
     //Should be useless
