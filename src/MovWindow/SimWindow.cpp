@@ -231,4 +231,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         delete  mypatch;
     }
 
+    vecPatches(0)->EMfields->storeNRJlost( energy_field_lost );
+    for ( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ )
+        vecPatches(0)->vecSpecies[ispec]->storeNRJlost( energy_part_lost[ispec] );
+    
+
 }
