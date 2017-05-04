@@ -486,7 +486,9 @@ void Params::print_timestep(unsigned int itime, double time_dual, Timer & timer)
            << "  " << scientific << setprecision(4) << setw(12) << now << " "
            << "  " << "(" << scientific << setprecision(4) << setw(12) << now - before << " )"
            ;
+    #pragma omp master
     MESSAGE(my_msg.str());
+    #pragma omp barrier
 }
 
 void Params::print_timestep_headers()

@@ -176,14 +176,21 @@ int main (int argc, char* argv[])
     
     TITLE("Time-Loop started: number of time-steps n_time = " << params.n_time);
     if ( smpi->isMaster() ) params.print_timestep_headers();
-    for (unsigned int itime=checkpoint.this_run_start_step+1 ; itime <= params.n_time ; itime++) {
+
+    #pragma omp parallel shared (time_dual,smpi,params, vecPatches, simWindow, checkpoint)
+    {
+
+    unsigned int itime=checkpoint.this_run_start_step+1;
+    while ( (itime <= params.n_time) && (!checkpoint.exit_asap) ) {
+
         // calculate new times
         // -------------------
-        time_prim += params.timestep;
-        time_dual += params.timestep;
-        
-        #pragma omp parallel shared (time_dual,smpi,params, vecPatches, simWindow)
+        #pragma omp single
         {
+            time_prim += params.timestep;
+            time_dual += params.timestep;
+        }
+        
             // apply collisions if requested
             vecPatches.applyCollisions(params, itime, timers);
             
@@ -210,37 +217,36 @@ int main (int argc, char* argv[])
             // ----------------------------------------------------------------------
             // Validate restart  : to do
             // Restart patched moving window : to do
-            // Break in an OpenMP region
             #pragma omp master
             checkpoint.dump(vecPatches, itime, smpi, simWindow, params);
             #pragma omp barrier
             // ----------------------------------------------------------------------        
             
-        } //End omp parallel region
+            timers.movWindow.restart();
+            #pragma omp single
+            simWindow->operate(vecPatches, smpi, params, itime, time_dual);
+            timers.movWindow.update();
         
-        if (checkpoint.exit_asap) break;
-        
-        timers.movWindow.restart();
-        simWindow->operate(vecPatches, smpi, params, itime, time_dual);
-        timers.movWindow.update();
-        
-        if ((params.balancing_every > 0) && (smpi->getSize()!=1) ) {
-            if (( itime%params.balancing_every == 0 )) {
-                timers.loadBal.restart();
-                vecPatches.load_balance( params, time_dual, smpi, simWindow, itime );
-                timers.loadBal.update( params.printNow( itime ) );
+            if ((params.balancing_every > 0) && (smpi->getSize()!=1) ) {
+                if (( itime%params.balancing_every == 0 )) {
+                    timers.loadBal.restart();
+                    #pragma omp single
+                    vecPatches.load_balance( params, time_dual, smpi, simWindow, itime );
+                    timers.loadBal.update( params.printNow( itime ) );
+                }
             }
-        }
         
-/*tommaso
-        latestTimeStep = itime;
-*/
-        
-        // print message at given time-steps
-        // --------------------------------
-        if ( smpi->isMaster() &&  params.printNow( itime ) )
-            params.print_timestep(itime, time_dual, timers.global);
+            // print message at given time-steps
+            // --------------------------------
+            if ( smpi->isMaster() &&  params.printNow( itime ) )
+                params.print_timestep(itime, time_dual, timers.global); //contain a timer.update !!!
+
+            itime++;
+            
     }//END of the time loop
+
+    } //End omp parallel region
+
     
     smpi->barrier();
     
