@@ -180,16 +180,16 @@ int main (int argc, char* argv[])
     #pragma omp parallel shared (time_dual,smpi,params, vecPatches, simWindow, checkpoint)
     {
 
-    unsigned int itime=checkpoint.this_run_start_step+1;
-    while ( (itime <= params.n_time) && (!checkpoint.exit_asap) ) {
+        unsigned int itime=checkpoint.this_run_start_step+1;
+        while ( (itime <= params.n_time) && (!checkpoint.exit_asap) ) {
 
-        // calculate new times
-        // -------------------
-        #pragma omp single
-        {
-            time_prim += params.timestep;
-            time_dual += params.timestep;
-        }
+            // calculate new times
+            // -------------------
+            #pragma omp single
+            {
+                time_prim += params.timestep;
+                time_dual += params.timestep;
+            }
         
             // apply collisions if requested
             vecPatches.applyCollisions(params, itime, timers);
@@ -243,7 +243,7 @@ int main (int argc, char* argv[])
 
             itime++;
             
-    }//END of the time loop
+        }//END of the time loop
 
     } //End omp parallel region
 
