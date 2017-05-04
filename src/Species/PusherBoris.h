@@ -1,6 +1,6 @@
-/*! @file Pusher.h
+/*! @file PusherBoris.h
 
- @brief Pusher.h  generic class for the particle pusher
+ @brief PusherBoris.h  generic class for the particle pusher of Boris.
 
  @date 2013-02-15
  */

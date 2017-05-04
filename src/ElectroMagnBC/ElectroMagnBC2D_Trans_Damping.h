@@ -9,10 +9,10 @@ class ElectroMagn;
 
 class ElectroMagnBC2D_Trans_Damping : public ElectroMagnBC {
 public:
-    ElectroMagnBC2D_Trans_Damping( Params &params, Patch* patch );
-    ~ElectroMagnBC2D_Trans_Damping();
+    ElectroMagnBC2D_Trans_Damping( Params &params, Patch* patch, unsigned int _min_max );
+    ~ElectroMagnBC2D_Trans_Damping() {};
     
-    virtual void apply(ElectroMagn* EMfields, double time_dual, Patch* patch);
+    void apply(ElectroMagn* EMfields, double time_dual, Patch* patch) override;
     
 private:
     //! Number of nodes on the primal grid in the x-direction

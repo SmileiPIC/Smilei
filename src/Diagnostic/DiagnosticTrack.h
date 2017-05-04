@@ -38,7 +38,7 @@ public :
     template<typename T> void write_scalar( hid_t, std::string, T&, hid_t, hid_t, hid_t, hid_t, unsigned int, unsigned int );
     
     //! Write a vector component dataset with the given buffer
-    template<typename T> void write_component( hid_t, std::string, T&, hid_t, hid_t, hid_t, hid_t, unsigned int );
+    template<typename T> void write_component( hid_t, std::string, T&, hid_t, hid_t, hid_t, hid_t, unsigned int, unsigned int );
     
     //! Set a given patch's particles with the required IDs
     void setIDs(Patch *);
@@ -65,6 +65,15 @@ private :
     
     //! Current particle partition among the patches own by current MPI
     std::vector<unsigned int> patch_start;
+    
+    //! Tells whether this diag includes a particle filter
+    bool has_filter;
+    
+    //! Tells whether this diag includes a particle filter
+    PyObject* filter;
+    
+    //! Selection of the filtered particles in each patch
+    std::vector<std::vector<unsigned int> > patch_selection;
     
     //! Buffer for the output of double array
     std::vector<double> data_double;

@@ -30,7 +30,7 @@ Main(
 )
 
 MovingWindow(
-    time_start = Main.sim_length[0],
+    time_start = Main.sim_length[0]*0.98,
     velocity_x = 0.9997
 )
 
@@ -44,14 +44,14 @@ LoadBalancing(
 Species( 
     species_type = "electron",
     initPosition_type = "regular",
-    initMomentum_type = "cold",
+    initMomentum_type = "maxwell-juettner",
     n_part_per_cell = 16,
     c_part_max = 1.0,
     mass = 1.0,
     charge = -1.0,
     charge_density = 0.000494,
     mean_velocity = [0.0, 0.0, 0.0],
-    temperature = [0.0],
+    temperature = [0.000001],
     dynamics_type = "norm",    
     time_frozen = 0.0,
     radiating = False,
@@ -92,16 +92,20 @@ DiagProbe(
 
 DiagScalar(
     every = 10, 
-    vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMin', 'RhoMinCell']
+    vars=[
+        'Uelm','Ukin_electron',
+        'ExMax','ExMaxCell','EyMax','EyMaxCell','RhoMin','RhoMinCell',
+        'Ukin_bnd','Uelm_bnd','Ukin_out_mvw','Ukin_inj_mvw','Uelm_out_mvw','Uelm_inj_mvw'
+    ]
 )
 
 DiagParticles(
-	output = "charge_density",
-	every = 50,
-	species = ["electron"],
-	axes = [
-		["moving_x", 0, Lx, 300],
-		["px", -1, 4., 100]
-	]
+    output = "charge_density",
+    every = 50,
+    species = ["electron"],
+    axes = [
+        ["moving_x", 0, Lx, 300],
+        ["px", -1, 4., 100]
+    ]
 )
 

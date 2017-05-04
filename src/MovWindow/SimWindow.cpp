@@ -15,6 +15,7 @@
 #include <omp.h>
 #include <fstream>
 #include <limits>
+#include "ElectroMagnBC_Factory.h"
 
 using namespace std;
 
@@ -162,6 +163,14 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         mypatch->EMfields->laserDisabled();
         vecPatches.patches_[patch_to_be_created[j]] = mypatch ;
     }
+
+    //Wait for sends to be completed
+    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++){ 
+        if (vecPatches_old[ipatch]->MPI_neighbor_[0][0] !=  vecPatches_old[ipatch]->MPI_me_ && vecPatches_old[ipatch]->MPI_neighbor_[0][0] != MPI_PROC_NULL){
+            smpi->waitall( vecPatches_old[ipatch] );
+            }
+    }
+
     
     //Update the correct neighbor values
     for (unsigned int j=0; j < update_patches_.size(); j++){
@@ -174,14 +183,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             mypatch->neighbor_[idim][0] = mypatch->tmp_neighbor_[idim][0];
             mypatch->neighbor_[idim][1] = mypatch->tmp_neighbor_[idim][1];
         }
-    }
-    
-    //Wait for sends to be completed
-    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++){ 
-        if (vecPatches_old[ipatch]->MPI_neighbor_[0][0] !=  vecPatches_old[ipatch]->MPI_me_ && vecPatches_old[ipatch]->MPI_neighbor_[0][0] != MPI_PROC_NULL){
-            smpi->waitall( vecPatches_old[ipatch] );
-        }
-    }
+    }    
     
     for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++){
         vecPatches(ipatch)->updateTagenv(smpi);
@@ -193,6 +195,22 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             vecPatches(ipatch)->createType(params);
         else
             vecPatches(ipatch)->cleanType();
+ 
+        if ( vecPatches(ipatch)->isXmin() ){
+            for (auto& embc:vecPatches(ipatch)->EMfields->emBoundCond) {
+                if (embc) delete embc;
+            }
+            vecPatches(ipatch)->EMfields->emBoundCond = ElectroMagnBC_Factory::create(params, vecPatches(ipatch));
+            vecPatches(ipatch)->EMfields->laserDisabled();
+        }
+        if ( vecPatches(ipatch)->wasXmax( params ) ){
+            for (auto& embc:vecPatches(ipatch)->EMfields->emBoundCond) {
+                if (embc) delete embc;
+            }
+            vecPatches(ipatch)->EMfields->emBoundCond = ElectroMagnBC_Factory::create(params, vecPatches(ipatch));
+            vecPatches(ipatch)->EMfields->laserDisabled();
+           
+        }
     }
     
     //Should be useless
@@ -212,5 +230,10 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         
         delete  mypatch;
     }
+
+    vecPatches(0)->EMfields->storeNRJlost( energy_field_lost );
+    for ( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ )
+        vecPatches(0)->vecSpecies[ispec]->storeNRJlost( energy_part_lost[ispec] );
+    
 
 }

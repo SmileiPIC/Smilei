@@ -9,16 +9,11 @@ class ElectroMagn;
 
 class ElectroMagnBC1D_refl : public ElectroMagnBC {
 public:
-    ElectroMagnBC1D_refl( Params &param, Patch* patch );
-    ~ElectroMagnBC1D_refl();
+    ElectroMagnBC1D_refl( Params &param, Patch* patch, unsigned int _min_max );
+    ~ElectroMagnBC1D_refl() {};
     
-    virtual void apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void apply_xmax(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void apply_ymin(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void apply_ymax(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void apply_zmin(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    virtual void apply_zmax(ElectroMagn* EMfields, double time_dual, Patch* patch);
-    
+    void apply(ElectroMagn* EMfields, double time_dual, Patch* patch) override;
+
  private:
     
     //! Oversize
@@ -29,7 +24,7 @@ public:
     
     //! Number of nodes on the dual grid
     unsigned int nx_d;
-    
+  
 };
 
 #endif

@@ -9,9 +9,10 @@ using namespace std;
 
 
 // Default constructor.
-Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
+Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, bool try_numpy) :
     profileName(""),
-    nvariables(nvariables)
+    nvariables(nvariables),
+    uses_numpy(false)
 {
     ostringstream info_("");
     info_ << nvariables << "D";
@@ -172,18 +173,56 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
                 args += message+" ";
                 Py_XDECREF(repr);
             }
-            WARNING ("Profile " << name << " takes "<< size <<" variables (" << args << ") but it is created with " << nvariables);
+            WARNING ("Profile `" << name << "` takes "<< size <<" variables (" << args << ") but it is created with " << nvariables);
         }
         Py_XDECREF(tuple);
         Py_XDECREF(inspect);
+        if( nvariables<1 || nvariables>3 )
+            ERROR("Profile `"<<name<<"`: defined with unsupported number of variables");
+        
+        
+        // Verify that the profile transforms a float in a float
+#ifdef SMILEI_USE_NUMPY
+        if( try_numpy ) {
+            // If numpy available, verify that the profile accepts numpy arguments
+            double test_value[2] = {0.,0.};
+            npy_intp dims[1] = {2};
+            PyArrayObject *a = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, &test_value);
+            PyObject *ret;
+            if      ( nvariables == 1 ) ret = PyObject_CallFunctionObjArgs(py_profile, a, NULL);
+            else if ( nvariables == 2 ) ret = PyObject_CallFunctionObjArgs(py_profile, a,a, NULL);
+            else if ( nvariables == 3 ) ret = PyObject_CallFunctionObjArgs(py_profile, a,a,a, NULL);
+            PyTools::checkPyError(false, false);
+            Py_DECREF(a);
+            if( ret
+             && PyArray_Check(ret) // must be a numpy array
+             && PyArray_ISNUMBER((PyArrayObject *)ret) // must be an array of floats
+             && PyArray_SIZE((PyArrayObject *)ret) == 2 ) // must have the same size as arguments
+            {
+                uses_numpy = true;
+            } else {
+                DEBUG("Profile `"<<name<<"`: does not seem to accept numpy arrays (and will be slow)");
+            }
+            if(ret) Py_DECREF(ret);
+        }
+#endif
+        if( !uses_numpy ) {
+            // Otherwise, try a float
+            PyObject* z = PyFloat_FromDouble(0.);
+            PyObject* ret;
+            if      ( nvariables == 1 ) ret = PyObject_CallFunctionObjArgs(py_profile, z, NULL);
+            else if ( nvariables == 2 ) ret = PyObject_CallFunctionObjArgs(py_profile, z,z, NULL);
+            else if ( nvariables == 3 ) ret = PyObject_CallFunctionObjArgs(py_profile, z,z,z, NULL);
+            Py_DECREF(z);
+            if( !ret || !PyNumber_Check(ret) )
+                ERROR("Profile `"<<name<<"`: does not seem to return a correct value");
+            if(ret) Py_DECREF(ret);
+        }
         
         // Assign the evaluating function, which depends on the number of arguments
         if      ( nvariables == 1 ) function = new Function_Python1D(py_profile);
         else if ( nvariables == 2 ) function = new Function_Python2D(py_profile);
         else if ( nvariables == 3 ) function = new Function_Python3D(py_profile);
-        else {
-            ERROR("Profile `"<<name<<"`: defined with unsupported number of variables");
-        }
         
         info_ << " user-defined function";
     }
@@ -198,6 +237,7 @@ Profile::Profile(Profile *p)
     profileName = p->profileName;
     nvariables  = p->nvariables ;
     info        = p->info       ;
+    uses_numpy  = p->uses_numpy ;
     if( profileName != "" ) {
         if( profileName == "constant" ) {
             if     ( nvariables == 1 )
