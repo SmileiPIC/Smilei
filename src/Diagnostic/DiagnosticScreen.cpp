@@ -343,9 +343,10 @@ void DiagnosticScreen::run( Patch* patch, int timestep, SimWindow* simWindow )
             for( ipart=0; ipart<npart; ipart++ ) {
                 side = 0.;
                 side_old = 0.;
-                dtg = dt / sqrt( 1. + pow(s->particles->Momentum[0][ipart], 2)
-                                    + pow(s->particles->Momentum[1][ipart], 2)
-                                    + pow(s->particles->Momentum[2][ipart], 2) );
+                dtg = dt * pow( 1. + pow(s->particles->Momentum[0][ipart], 2)
+                                   + pow(s->particles->Momentum[1][ipart], 2)
+                                   + pow(s->particles->Momentum[2][ipart], 2)
+                               , -0.5 );
                 for( idim=0; idim<ndim; idim++ ) {
                     side += (s->particles->Position[idim][ipart] - screen_point[idim]) * screen_unitvector[idim];
                     side_old += (s->particles->Position[idim][ipart] - dtg*(s->particles->Momentum[idim][ipart]) - screen_point[idim]) * screen_unitvector[idim];
@@ -362,9 +363,10 @@ void DiagnosticScreen::run( Patch* patch, int timestep, SimWindow* simWindow )
             for( ipart=0; ipart<npart; ipart++ ) {
                 side = 0.;
                 side_old = 0.;
-                dtg = dt / sqrt( 1. + pow(s->particles->Momentum[0][ipart], 2)
-                                    + pow(s->particles->Momentum[1][ipart], 2)
-                                    + pow(s->particles->Momentum[2][ipart], 2) );
+                dtg = dt * pow( 1. + pow(s->particles->Momentum[0][ipart], 2)
+                                   + pow(s->particles->Momentum[1][ipart], 2)
+                                   + pow(s->particles->Momentum[2][ipart], 2)
+                               , -0.5 );
                 for( idim=0; idim<ndim; idim++ ) {
                     side += pow(s->particles->Position[idim][ipart] - screen_point[idim], 2);
                     side_old += pow(s->particles->Position[idim][ipart] - dtg*(s->particles->Momentum[idim][ipart]) - screen_point[idim], 2);
@@ -374,7 +376,7 @@ void DiagnosticScreen::run( Patch* patch, int timestep, SimWindow* simWindow )
                 if( side*side_old < 0. ) {
                     int_buffer[ipart] = 0;
                     nuseful++;
-                    if( side < 0. ) opposite[ipart] = true;
+                    if( side > 0. ) opposite[ipart] = true;
                 } else {
                     int_buffer[ipart] = -1;
                 }
@@ -386,13 +388,13 @@ void DiagnosticScreen::run( Patch* patch, int timestep, SimWindow* simWindow )
         histogram->digitize  ( s, double_buffer, int_buffer, simWindow );
         histogram->valuate   ( s, double_buffer, int_buffer );
         
-        if( direction_type == 1 ) {
+        if( direction_type == 1 ) { // canceling
             for( ipart=0; ipart<npart; ipart++ )
                 if( opposite[ipart] ) double_buffer[ipart] = -double_buffer[ipart];
-        } else if( direction_type == 2 ) {
+        } else if( direction_type == 2 ) { // forward
             for( ipart=0; ipart<npart; ipart++ )
                 if( opposite[ipart] ) double_buffer[ipart] = 0.;
-        } else if( direction_type == 3 ) {
+        } else if( direction_type == 3 ) { // backward
             for( ipart=0; ipart<npart; ipart++ )
                 if( int_buffer[ipart]>=0 && !opposite[ipart] ) double_buffer[ipart] = 0.;
         }

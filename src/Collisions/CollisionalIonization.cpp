@@ -19,13 +19,14 @@ const double CollisionalIonization::a1 = 510998.9 ; // = me*c^2/Emin
 const double CollisionalIonization::a2 = 6.142165 ; // = (npoints-1) / ln( Emax/Emin )
 
 // Constructor
-CollisionalIonization::CollisionalIonization(int Z, int nDim_, double referenceAngularFrequency_SI)
+CollisionalIonization::CollisionalIonization(int Z, int nDim_, double referenceAngularFrequency_SI, bool tracked_electrons)
 {
     nDim = nDim_;
     atomic_number = Z;
     rate .resize(Z);
     irate.resize(Z);
     prob .resize(Z);
+    new_electrons.tracked = tracked_electrons;
     new_electrons.initialize(0, nDim); // to be removed if bins removed
     
     if( Z>0 ) {
@@ -43,6 +44,7 @@ CollisionalIonization::CollisionalIonization(CollisionalIonization* CI)
     rate .resize(atomic_number);
     irate.resize(atomic_number);
     prob .resize(atomic_number);
+    new_electrons.tracked = CI->new_electrons.tracked;
     new_electrons.initialize(0, nDim); // to be removed if bins removed
     
     assignDatabase(CI->dataBaseIndex);
@@ -149,10 +151,10 @@ void CollisionalIonization::assignDatabase(unsigned int index)
 void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i2,
     bool not_duplicated_particle)
 {
-    static double E; // electron energy
-    static double We, Wi; // weights
-    static double cs, x;
-    static int Zstar;
+    double E; // electron energy
+    double We, Wi; // weights
+    double cs, x;
+    int Zstar;
     // Calculates the current electron energy, the ion charge and weight
     if( electronFirst ) {
         E = sqrt(1. + pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.;
@@ -201,7 +203,7 @@ void CollisionalIonization::prepare3(double timestep, double n_patch_per_cell)
 // Method to apply the ionization
 void CollisionalIonization::apply(Particles *p1, int i1, Particles *p2, int i2)
 {
-    static double gamma_s, gamma1, gamma2;
+    double gamma_s, gamma1, gamma2;
     gamma1 = p1->lor_fac(i1);
     gamma2 = p2->lor_fac(i2);
     // Calculate lorentz factor in the frame of ion
@@ -221,10 +223,10 @@ void CollisionalIonization::apply(Particles *p1, int i1, Particles *p2, int i2)
 void CollisionalIonization::calculate(double gamma_s, double gammae, double gammai, 
     Particles *pe, int ie, Particles *pi, int ii)
 {
-    static double We, Wi; // weights
-    static double U1, U2; // random number
-    static double a, x, cs, w, e, pr, p2, WeWi, WiWe, cum_prob, cp;
-    static int i, j, k, p, kmax;
+    double We, Wi; // weights
+    double U1, U2; // random number
+    double a, x, cs, w, e, pr, p2, WeWi, WiWe, cum_prob=0., cp;
+    int i, j, k, p, kmax;
     
     // Get ion charge
     int Zstar = pi->charge(ii);
@@ -240,7 +242,7 @@ void CollisionalIonization::calculate(double gamma_s, double gammae, double gamm
     WiWe = 1./WeWi;
     
     // Make a random number to choose if ionization or not
-    U1 = (double)rand() *INV_RAND_MAX;
+    U1 = Rand::uniform();
     
     // Loop for multiple ionization
     // k+1 is the number of ionizations
@@ -292,7 +294,7 @@ void CollisionalIonization::calculate(double gamma_s, double gammae, double gamm
         if( U1 < cum_prob ) break;
         
         // Otherwise, we do the ionization
-        U2 = (double)rand() *INV_RAND_MAX;
+        U2 = Rand::uniform();
         p2 = gamma_s*gamma_s - 1.;
         // Ionize the atom and create electron
         if( U2 < WeWi ) {
@@ -336,12 +338,12 @@ void CollisionalIonization::calculate(double gamma_s, double gammae, double gamm
 
 
 // Finish the ionization (moves new electrons in place)
-void CollisionalIonization::finish(Species *s1, Species *s2, Params &params, Patch* patch)
+void CollisionalIonization::finish(Species *s1, Species *s2, Params &params, Patch* patch, std::vector<Diagnostic*>& localDiags)
 {
     if( electronFirst ) {
-        s1->importParticles(params, patch, new_electrons );
+        s1->importParticles(params, patch, new_electrons, localDiags );
     } else {
-        s2->importParticles(params, patch, new_electrons );
+        s2->importParticles(params, patch, new_electrons, localDiags );
     }
 }
 

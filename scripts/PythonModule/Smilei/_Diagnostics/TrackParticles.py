@@ -17,36 +17,33 @@ class TrackParticles(Diagnostic):
 				self._error += "\n".join(species)
 			else:
 				self._error = "No tracked particles files found"
-			return None
+			return
 		
 		# Get info from the hdf5 files + verifications
 		# -------------------------------------------------------------------
 		self.species  = species
-		translateProperties = {"Id":"Id", "x":"Position-0", "y":"Position-1", "z":"Position-2",
-			"px":"Momentum-0", "py":"Momentum-1", "pz":"Momentum-2"}
-		self._h5items = None
-		for pathNumber, path in enumerate(self._results_path):
-			# Order the particles by ID
-			file = path+self._os.sep+"TrackParticles_"+species+".h5"
-			try:
-				f = self._h5py.File(file, 'r')
-			except:
-				self._orderFile( path+self._os.sep+"TrackParticlesDisordered_"+species+".h5", file )
-				f = self._h5py.File(file, 'r')
-			# Create arrays to store h5 items
-			if self._h5items is None:
-				self._h5items = {}
-				self._locationForTime = {}
-				for prop, name in translateProperties.items():
-					if name in f.keys():
-						self._h5items[prop] = []
-			# Memorize the locations of each property (x, y, etc) in the files
-			for prop, val in self._h5items.items():
-				val.append( f[translateProperties[prop]] )
-			# Memorize the locations of timesteps in the files
-			for it, t in enumerate(f["Times"]):
-				self._locationForTime[t] = [pathNumber, it]
-		self.times = self._np.array(sorted(self._locationForTime.keys()))
+		# If the first path does not contain the ordered file, we must create it
+		orderedfile = self._results_path[0]+self._os.sep+"TrackParticles_"+species+".h5"
+		if not self._os.path.isfile(orderedfile):
+			disorderedfiles = []
+			for path in self._results_path:
+				file = path+self._os.sep+"TrackParticlesDisordered_"+species+".h5"
+				if not self._os.path.isfile(file):
+					self._error = "Missing TrackParticles file in directory "+path
+					return
+				disorderedfiles += [file]
+			self._orderFiles(disorderedfiles, orderedfile)
+		# Create arrays to store h5 items
+		f = self._h5py.File(orderedfile)
+		self._h5items = {}
+		self._locationForTime = {}
+		for prop in ["Id", "x", "y", "z", "px", "py", "pz"]:
+			if prop in f:
+				self._h5items[prop] = f[prop]
+		# Memorize the locations of timesteps in the files
+		for it, t in enumerate(f["Times"]):
+			self._locationForTime[t] = it
+		self.times = self._np.array(sorted(f["Times"]))
 		self._times = self.times[:]
 		
 		# Get available times in the hdf5 file
@@ -73,12 +70,21 @@ class TrackParticles(Diagnostic):
 			self._error = "Timesteps not found"
 			return
 		
-		# Get number of particles
-		self.nParticles = self._h5items["Id"][0].shape[1]
+		self.nParticles = self._h5items["Id"].shape[1]
 		
 		# Select particles
 		# -------------------------------------------------------------------
+		# If the selection is a string (containing an operation)
 		if type(select) is str:
+			# Define a function that gets some requested data
+			def getData(property, time, buffer=None):
+				it = self._locationForTime[time]
+				dataset = self._h5items[property]
+				if buffer is None:
+					buffer = dataset[it,:]
+				else:
+					dataset.read_direct(buffer, source_sel=self._np.s_[it,:])
+				return buffer
 			# Define a function that finds the next closing character in a string
 			def findClosingCharacter(string, character, start=0):
 				i = start
@@ -96,21 +102,16 @@ class TrackParticles(Diagnostic):
 						del stack[-1]
 					i+=1
 				raise Exception("Error in selector syntax: missing `"+character+"`")
-			# Define a function that gets some requested data
-			def getData(property, time, buffer=None):
-				pathNumber, it = self._locationForTime[time]
-				dataset = self._h5items[property][pathNumber]
-				if buffer is None: buffer = self._np.zeros((self.nParticles,))
-				dataset.read_direct(buffer, source_sel=self._np.s_[it,:])
-				return buffer
 			# Start reading the selector
+			print("Selecting particles ... (this may take a while)")
 			i = 0
 			stack = []
 			operation = ""
 			while i < len(select):
 				if i+4<len(select) and select[i:i+4] in ["any(","all("]:
-					if select[i:i+4] == "any(": function = self._np.logical_or
-					if select[i:i+4] == "all(": function = self._np.logical_and
+					seltype = select[i:i+4]
+					if seltype == "any(": function = self._np.logical_or
+					if seltype == "all(": function = self._np.logical_and
 					comma = findClosingCharacter(select, ",", i+4)
 					parenthesis = findClosingCharacter(select, ")", comma+1)
 					timeSelector = select[i+4:comma]
@@ -125,39 +126,56 @@ class TrackParticles(Diagnostic):
 							particleSelector = self._re.sub(r"\b"+prop+r"\b", "getData('"+prop+"',time)", particleSelector)
 					except:
 						raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
-					if select[i:i+4] == "any(": selection = self._np.array([False]*self.nParticles)
-					if select[i:i+4] == "all(": selection = self._np.array([True]*self.nParticles)
+					if seltype == "any(": selection = self._np.zeros((self.nParticles,), dtype=bool)
+					if seltype == "all(": selection = self._np.ones ((self.nParticles,), dtype=bool)
 					#try:
 					ID = self._np.zeros((self.nParticles,), dtype=self._np.int32)
+					selstr  = select[i:parenthesis]
 					for time in times:
+						print("   Selecting block `"+selstr+")`, at time "+str(time))
 						selectionAtTimeT = eval(particleSelector) # array of True or False
+						selectionAtTimeT[self._np.isnan(selectionAtTimeT)] = False
 						getData("Id", time, ID)
-						selectionAtTimeT = selectionAtTimeT[ID>0] # remove zeros, which are dead particles
-						id = ID[ID>0]-1 # remove zeros, which are dead particles
-						selection[id] = function( selection[id], selectionAtTimeT)
+						loc = self._np.flatnonzero(ID>0) # indices of existing particles
+						selection[loc] = function( selection[loc], selectionAtTimeT[loc])
 					#except:
 					#	raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
 					stack.append(selection)
 					operation += "stack["+str(len(stack)-1)+"]"
 					i = parenthesis+1
-					continue
-				operation += select[i]
-				i+=1
+				else:
+					operation += select[i]
+					i+=1
 			if len(operation)==0.:
-				self.selectedParticles = self._np.arange(self.nParticles)
+				self.selectedParticles = self._np.arange(self.nParticles,dtype=self._np.uint64)
 			else:
 				self.selectedParticles = eval(operation).nonzero()[0]
 			self.selectedParticles.sort()
-			self.selectedParticles += 1
+			print("Done selecting particles")
 		
+		# Otherwise, the selection can be a list of particle IDs
 		else:
 			try:
-				self.selectedParticles = self._np.array(select,dtype=int)
+				IDs = f["unique_Ids"] # get all available IDs
+				self.selectedParticles = self._np.flatnonzero(self._np.in1d(IDs, select)) # find the requested IDs
 			except:
 				self._error = "Error: argument 'select' must be a string or a list of particle IDs"
 				return
 		
+		# Remove particles that are not actually tracked during the requested timesteps
+		if len(self.selectedParticles) > 0:
+			first_time = self._locationForTime[self.times[ 0]]
+			last_time  = self._locationForTime[self.times[-1]]+1
+			IDs = self._h5items["Id"][first_time:last_time,self.selectedParticles]
+			dead_particles = self._np.flatnonzero(self._np.all( self._np.isnan(IDs) + (IDs==0), axis=0 ))
+			self.selectedParticles = self._np.delete( self.selectedParticles, dead_particles )
+		
+		# Calculate the number of selected particles
 		self.nselectedParticles = len(self.selectedParticles)
+		if self.nselectedParticles == 0:
+			self._error = "No particles found"
+			return
+		print("Kept "+str(self.nselectedParticles)+" particles")
 		
 		# Manage axes
 		# -------------------------------------------------------------------
@@ -177,7 +195,7 @@ class TrackParticles(Diagnostic):
 		for axis in axes:
 			axisunits = ""
 			if axis == "Id":
-				self._centers.append( [0, self._h5items[axis][0][0,-1]] )
+				self._centers.append( [0, self._h5items[axis][0,-1]] )
 			if axis in ["x" , "y" , "z" ]:
 				axisunits = "L_r"
 				self._centers.append( [0., self.namelist.Main.sim_length[{"x":0,"y":1,"z":2}[axis]]] )
@@ -227,48 +245,64 @@ class TrackParticles(Diagnostic):
 		return self._times
 	
 	# Make the particles ordered by Id in the file, in case they are not
-	def _orderFile( self, fileDisordered, fileOrdered ):
+	def _orderFiles( self, filesDisordered, fileOrdered ):
 		print("Ordering particles ... (this could take a while)")
-		# Copy the disordered file
-		from platform import system
-		s = system()
-		if s in ['Windows']:
-			status = self._os.system('xcopy "%s" "%s"' % (fileDisordered, fileOrdered))
-		elif s in ['Linux','Darwin']:
-			status = self._os.system('cp -fr %s %s' % (fileDisordered, fileOrdered) )
-		else:
-			status = 0
-			try:
-				from shutil import copyfile
-				copyfile(fileDisordered, fileOrdered)
-			except:
-				status = 1
-		if status != 0:
-			raise Exception("New file could not be created: "+str(fileOrdered))
-		# Open the file which will become ordered
-		print("    Created new file "+fileOrdered)
-		f = self._h5py.File(fileOrdered)
-		# Get list of properties
-		properties = [p.name[1:] for p in f.values() if len(p.shape)==2]
-		# For each time
-		ntimes, npart = f["Id"].shape
-		times = f["Times"]
-		A = self._np.zeros((npart,))
-		for i in range(ntimes):
-			print("    Ordering @ timestep = "+str(times[i]))
-			# Get the indices for sorting arrays
-			ids = f["Id"][i,:]
-			remaining_particles = ids>0
-			read_indices  = self._np.nonzero(remaining_particles)
-			write_indices = ids[read_indices]-1
-			B = self._np.zeros((npart,))
-			# Sort arrays
-			for property in properties:
-				f[property].read_direct (A, source_sel=self._np.s_[i,:])
-				B[write_indices] = A[read_indices]
-				f[property].write_direct(B, dest_sel  =self._np.s_[i,:])
-		# Close files
-		f.close()
+		try:
+			# Obtain the list of all times in all disordered files
+			time_locations = {}
+			for fileIndex, fileD in enumerate(filesDisordered):
+				f = self._h5py.File(fileD, "r")
+				for t in f["data"].keys():
+					try   : time_locations[int(t)] = (fileIndex, t)
+					except: pass
+				f.close()
+			times = sorted(time_locations.keys())
+			# Open the last file and get the number of particles from each MPI
+			last_file_index, tname = time_locations[times[-1]]
+			f = self._h5py.File(filesDisordered[last_file_index], "r")
+			number_of_particles = (f["data"][tname]["latest_IDs"].value % (2**32)).astype('uint32')
+			print("Number of particles:",number_of_particles)
+			# Calculate the offset that each MPI needs
+			offset = self._np.cumsum(number_of_particles)
+			total_number_of_particles = offset[-1]
+			offset = self._np.roll(offset, 1)
+			offset[0] = 0
+			# Make new (ordered) file
+			f0 = self._h5py.File(fileOrdered, "w")
+			# Make new datasets
+			properties = {"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
+			              "momentum/x":"px", "momentum/y":"py", "momentum/z":"pz"}
+			for k, name in properties.items():
+				try   : f0.create_dataset(name, (len(times), total_number_of_particles), f["data"][tname]["particles"][self.species][k].dtype, fillvalue=(0 if name=="Id" else self._np.nan))
+				except: pass
+			f.close()
+			# Loop times and fill arrays
+			for it, t in enumerate(times):
+				print("    Ordering @ timestep = "+str(t))
+				file_index, tname = time_locations[t]
+				f = self._h5py.File(filesDisordered[file_index], "r")
+				group = f["data"][tname]["particles"][self.species]
+				if group["id"].size == 0: continue
+				# Get the Ids and find where they should be stored in the final file
+				locs = group["id"].value % 2**32 + offset[ group["id"].value>>32 ] -1
+				# Loop datasets and order them
+				for k, name in properties.items():
+					if k not in group: continue
+					disordered = group[k].value
+					ordered = self._np.zeros((total_number_of_particles, ), dtype=disordered.dtype)
+					ordered[locs] = disordered
+					f0[name].write_direct(ordered, dest_sel=self._np.s_[it,:])
+				f.close()
+			# Create the "Times" dataset
+			f0.create_dataset("Times", data=times)
+			# Create the "unique_Ids" dataset
+			f0.create_dataset("unique_Ids", data=self._np.max(f0["Id"], axis=0))
+			# Close file
+			f0.close()
+		except:
+			self._os.remove(fileOrdered)
+			print("Error in the ordering of the tracked particles")
+			raise
 		print("Ordering succeeded")
 	
 	# We override the get and getData methods
@@ -282,38 +316,44 @@ class TrackParticles(Diagnostic):
 			self._rawData = {}
 			ntimes = len(self.times)
 			for axis in self.axes:
-				self._rawData[axis] = self._np.zeros((ntimes, self.nselectedParticles))
-				self._rawData[axis].fill(self._np.nan)
+				self._rawData[axis] = self._np.zeros((ntimes, self.nselectedParticles), dtype=(self._np.uint64 if axis=="Id" else self._np.float64))
+				self._rawData[axis].fill((0 if axis=="Id" else self._np.nan))
 			print("Loading data ...")
 			# loop times and fill up the data
-			ID = self._np.zeros((self.nParticles,), dtype=self._np.int16)
-			B = self._np.zeros((self.nParticles,))
-			indices = self.selectedParticles - 1
+			ID = self._np.zeros((self.nselectedParticles,), dtype=self._np.uint64)
+			B = self._np.zeros((self.nselectedParticles,))
 			for it, time in enumerate(self.times):
-				print("     iteration "+str(it+1)+"/"+str(ntimes))
-				pathNumber, timeIndexInPath = self._locationForTime[time]
-				self._h5items["Id"][pathNumber].read_direct(ID, source_sel=self._np.s_[timeIndexInPath,:]) # read the particle Ids
+				print("     iteration "+str(it+1)+"/"+str(ntimes)+"  (timestep "+str(time)+")")
+				timeIndex = self._locationForTime[time]
+				self._h5items["Id"].read_direct(ID, source_sel=self._np.s_[timeIndex,self.selectedParticles]) # read the particle Ids
 				deadParticles = (ID==0).nonzero()
 				for axis in self.axes:
-					self._h5items[axis][pathNumber].read_direct(B, source_sel=self._np.s_[timeIndexInPath,:])
-					B[deadParticles]=self._np.nan
-					self._rawData[axis][it, :] = B[indices].squeeze()
+					if axis == "Id":
+						self._rawData[axis][it, :] = ID.squeeze()
+					else:
+						self._h5items[axis].read_direct(B, source_sel=self._np.s_[timeIndex,self.selectedParticles])
+						B[deadParticles]=self._np.nan
+						self._rawData[axis][it, :] = B.squeeze()
+			print("Process broken lines ...")
 			# Add the lineBreaks array which indicates where lines are broken (e.g. loop around the box)
 			self._rawData['brokenLine'] = self._np.zeros((self.nselectedParticles,), dtype=bool)
 			self._rawData['lineBreaks'] = {}
-			dt = self._np.diff(self.times)*self.timestep
-			for axis in ["x","y","z"]:
-				if axis in self.axes:
-					dudt = self._np.diff(self._rawData[axis],axis=0)
-					for i in range(dudt.shape[1]): dudt[:,i] /= dt
-					self._rawData['brokenLine'] += self._np.abs(dudt).max(axis=0) > 1.
-					broken_particles = self._np.flatnonzero(self._rawData['brokenLine'])
-					for broken_particle in broken_particles:
-						broken_times = list(self._np.flatnonzero(self._np.abs(dudt[:,broken_particle]) > 1.)+1)
-						if broken_particle in self._rawData['lineBreaks'].keys():
-							self._rawData['lineBreaks'][broken_particle] += broken_times
-						else:
-							self._rawData['lineBreaks'][broken_particle] = broken_times
+			if self.times.size > 1:
+				dt = self._np.diff(self.times)*self.timestep
+				for axis in ["x","y","z"]:
+					if axis in self.axes:
+						dudt = self._np.diff(self._rawData[axis],axis=0)
+						for i in range(dudt.shape[1]): dudt[:,i] /= dt
+						dudt[~self._np.isnan(dudt)] = 0. # NaNs already break lines
+						# Line is broken if velocity > c 
+						self._rawData['brokenLine'] += self._np.abs(dudt).max(axis=0) > 1.
+						broken_particles = self._np.flatnonzero(self._rawData['brokenLine'])
+						for broken_particle in broken_particles:
+							broken_times = list(self._np.flatnonzero(self._np.abs(dudt[:,broken_particle]) > 1.)+1)
+							if broken_particle in self._rawData['lineBreaks'].keys():
+								self._rawData['lineBreaks'][broken_particle] += broken_times
+							else:
+								self._rawData['lineBreaks'][broken_particle] = broken_times
 			# Add the times array
 			self._rawData["times"] = self.times
 			print("... done")
@@ -322,7 +362,10 @@ class TrackParticles(Diagnostic):
 		data = {}
 		data.update({ "times":self.times })
 		for axis in self.axes:
-			data.update({ axis:self._rawData[axis]*self._vfactor })
+			if axis == "Id":
+				data.update({ axis:(self._rawData[axis]*self._vfactor).astype(self._np.uint64) })
+			else:
+				data.update({ axis:self._rawData[axis]*self._vfactor })
 		
 		return data
 	def get(self):
@@ -398,40 +441,38 @@ class TrackParticles(Diagnostic):
 			f.write('<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>\n')
 			f.write('<Xdmf Version="3.0">\n')
 			f.write('	<Domain>\n')
-			npoints = self._h5items['Id'][0].shape[1]
+			npoints = self._h5items['Id'].shape[1]
 			f.write('		<DataItem Name="Zeroes" ItemType="Uniform" NumberType="Float" Dimensions="'+str(npoints)+'" Format="XML">'+"0. "*npoints+'</DataItem>\n')
 			f.write('		<Grid GridType="Collection" CollectionType="Temporal">\n')
-			nfiles = len(self._h5items['Id'])
-			for ifile in range(nfiles):
-				file = self._h5items['Id'][ifile].file
-				filename = self._os.path.abspath(file.filename)
-				ntimes = len(file['Times'])
-				for itime in range(ntimes):
-					selection = "%d,%d:%d,%d:%d,%d:%d,%d" % (itime,0, 1,1, 1,npoints, 1,npoints)
-					f.write('			<Grid Name="Timestep_'+str(itime)+'" GridType="Uniform">\n')
-					f.write('				<Time Value="'+str(file['Times'][itime])+'" />\n')
-					f.write('				<Topology TopologyType="Polyvertex" NumberOfElements="'+str(npoints)+'"/>\n')
-					f.write('				<Geometry Name="geometry" GeometryType="VXVYVZ">\n')
-					f.write('					<DataItem ItemType="Uniform" NumberType="Float" Dimensions="'+str(npoints)+'" Precision="8" Format="HDF">'+filename+':/Position-0|'+selection+'</DataItem>\n')
-					if self._ndim < 2:
-						f.write('					<DataItem ItemType="Uniform" NumberType="Float" Dimensions="'+str(npoints)+'" Precision="8" Format="XML" Reference="XML">/Xdmf/Domain/DataItem[@Name="Zeroes"]</DataItem>\n')
-					else:
-						f.write('					<DataItem ItemType="Uniform" NumberType="Float" Dimensions="'+str(npoints)+'" Precision="8" Format="HDF">'+filename+':/Position-1|'+selection+'</DataItem>\n')
-					if self._ndim < 3:
-						f.write('					<DataItem ItemType="Uniform" NumberType="Float" Dimensions="'+str(npoints)+'" Precision="8" Format="XML" Reference="XML">/Xdmf/Domain/DataItem[@Name="Zeroes"]</DataItem>\n')
-					else:
-						f.write('					<DataItem ItemType="Uniform" NumberType="Float" Dimensions="'+str(npoints)+'" Precision="8" Format="HDF">'+filename+':/Position-2|'+selection+'</DataItem>\n')
-					f.write('				</Geometry>\n')
-					f.write('				<Attribute Name="Px" Center="Node" AttributeType="Scalar">\n')
-					f.write('					<DataItem ItemType="Uniform" NumberType="Float" Precision="8" Dimensions="'+str(npoints)+'" Format="HDF">'+filename+':/Momentum-0|'+selection+'</DataItem>\n')
-					f.write('				</Attribute>\n')
-					f.write('				<Attribute Name="Py" Center="Node" AttributeType="Scalar">\n')
-					f.write('					<DataItem ItemType="Uniform" NumberType="Float" Precision="8" Dimensions="'+str(npoints)+'" Format="HDF">'+filename+':/Momentum-1|'+selection+'</DataItem>\n')
-					f.write('				</Attribute>\n')
-					f.write('				<Attribute Name="Pz" Center="Node" AttributeType="Scalar">\n')
-					f.write('					<DataItem ItemType="Uniform" NumberType="Float" Precision="8" Dimensions="'+str(npoints)+'" Format="HDF">'+filename+':/Momentum-2|'+selection+'</DataItem>\n')
-					f.write('				</Attribute>\n')
-					f.write('			</Grid>\n')
+			file = self._h5items['Id'].file
+			filename = self._os.path.abspath(file.filename)
+			ntimes = len(file['Times'])
+			for itime in range(ntimes):
+				selection = "%d,%d:%d,%d:%d,%d:%d,%d" % (itime,0, 1,1, 1,npoints, 1,npoints)
+				f.write('			<Grid Name="Timestep_'+str(itime)+'" GridType="Uniform">\n')
+				f.write('				<Time Value="'+str(file['Times'][itime])+'" />\n')
+				f.write('				<Topology TopologyType="Polyvertex" NumberOfElements="'+str(npoints)+'"/>\n')
+				f.write('				<Geometry Name="geometry" GeometryType="VXVYVZ">\n')
+				f.write('					<DataItem ItemType="Uniform" NumberType="Float" Dimensions="'+str(npoints)+'" Precision="8" Format="HDF">'+filename+':/Position-0|'+selection+'</DataItem>\n')
+				if self._ndim < 2:
+					f.write('					<DataItem ItemType="Uniform" NumberType="Float" Dimensions="'+str(npoints)+'" Precision="8" Format="XML" Reference="XML">/Xdmf/Domain/DataItem[@Name="Zeroes"]</DataItem>\n')
+				else:
+					f.write('					<DataItem ItemType="Uniform" NumberType="Float" Dimensions="'+str(npoints)+'" Precision="8" Format="HDF">'+filename+':/Position-1|'+selection+'</DataItem>\n')
+				if self._ndim < 3:
+					f.write('					<DataItem ItemType="Uniform" NumberType="Float" Dimensions="'+str(npoints)+'" Precision="8" Format="XML" Reference="XML">/Xdmf/Domain/DataItem[@Name="Zeroes"]</DataItem>\n')
+				else:
+					f.write('					<DataItem ItemType="Uniform" NumberType="Float" Dimensions="'+str(npoints)+'" Precision="8" Format="HDF">'+filename+':/Position-2|'+selection+'</DataItem>\n')
+				f.write('				</Geometry>\n')
+				f.write('				<Attribute Name="Px" Center="Node" AttributeType="Scalar">\n')
+				f.write('					<DataItem ItemType="Uniform" NumberType="Float" Precision="8" Dimensions="'+str(npoints)+'" Format="HDF">'+filename+':/Momentum-0|'+selection+'</DataItem>\n')
+				f.write('				</Attribute>\n')
+				f.write('				<Attribute Name="Py" Center="Node" AttributeType="Scalar">\n')
+				f.write('					<DataItem ItemType="Uniform" NumberType="Float" Precision="8" Dimensions="'+str(npoints)+'" Format="HDF">'+filename+':/Momentum-1|'+selection+'</DataItem>\n')
+				f.write('				</Attribute>\n')
+				f.write('				<Attribute Name="Pz" Center="Node" AttributeType="Scalar">\n')
+				f.write('					<DataItem ItemType="Uniform" NumberType="Float" Precision="8" Dimensions="'+str(npoints)+'" Format="HDF">'+filename+':/Momentum-2|'+selection+'</DataItem>\n')
+				f.write('				</Attribute>\n')
+				f.write('			</Grid>\n')
 			f.write('		</Grid>\n')
 			f.write('	</Domain>\n')
 			f.write('</Xdmf>\n')
@@ -443,7 +484,7 @@ class TrackParticles(Diagnostic):
 		if not self._validate(): return
 		
 		if self._ndim!=3:
-			print "Cannot export tracked particles of a "+str(self._ndim)+"D simulation to VTK"
+			print ("Cannot export tracked particles of a "+str(self._ndim)+"D simulation to VTK")
 			return
 		
 		self._mkdir(self._exportDir)

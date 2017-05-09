@@ -201,41 +201,94 @@ Download and compile
      cd ~/smilei
      make
 
-   .. rubric:: Compilation alternatives:
-     
-   .. code-block:: bash
-     
-     make -j 4                    # compile with 4 processors (fast)  
-     make config=debug            # to have debugging output (slow)
-     make config=noopenmp         # to deactivate OpenMP support
-     make config="debug noopenmp" # to activate debugging without OpenMP
-
-   .. rubric:: Machine dependent configurations:
-   
-   For some machine, it might be important to modify internal makefile variables. 
-   We suggest to add a file in the folder ``scripts/CompileTools/machine/`` and compile 
-   with:
-
-   .. code-block:: bash
-     
-     make machine=my_machine
-
-   .. note::    
-     It would be nice to share with developpers the makefile-machine files used on common
-     supercomputers.
-   
-     
-   .. rubric:: Makefile alternatives:
-   
-   .. code-block:: bash
-     
-     make doc                     # to compile the documentation
-     make install_python          # install the Smilei python module
-     make unnstall_python         # uninstall the Smilei python module
-     make print-XXX               # print value of make variable XXX
-     make env                     # print values of internal makefile variables
-     make help                    # to get some help on compilation
- 
 #. The next step is to :doc:`write a namelist <namelist>`.
+
+----
+
+Advanced compilation options
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Several ``make`` options are available:
+
+.. code-block:: bash
+  
+  make -j 4                    # Compiles with 4 procs (fast compilation)
+  make config=debug            # With debugging output (slow execution)
+  make config=noopenmp         # Without OpenMP support
+  make config="debug noopenmp" # With debugging output, without OpenMP
+  make print-XXX               # Prints the value of makefile variable XXX
+  make env                     # Prints the values of all makefile variables
+  make help                    # Gets some help on compilation
+
+
+Each machine may require a specific configuration (environment variables, modules, etc.).
+Such instructions may be included, from a file of your choice, via the ``machine`` argument:
+
+.. code-block:: bash
+  
+  make machine=my_machine_file
+
+where ``my_machine_file`` is a file, located in ``scripts/CompileTools/machine``, containing
+the lines of command to be executed before compilation.
+
+If you successfully write such a file for a common supercomputer, please share it
+with developpers so that it can be included in the next release of :program:`Smilei`.
+ 
+
+
+----
+
+Compile the documentation
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+There are two types of documentation:
+
+#. `Doxygen`, only useful for developers
+#. `Sphinx`, for users: the one you are currently reading
+
+They can be compiled with the following commands:
+
+.. code-block:: bash
+
+   make doc     # Compiles all the documentation
+   make doxygen # Compiles only the `doxygen` doc
+   make sphinx  # Compiles only the `sphinx` doc
+
+
+----
+
+.. _installModule:
+
+Install the Smilei python module
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A python module is provided to view, extract and post-process data from all the diagnostics.
+There are several ways to load this module in python.
+
+1. Recommended: Install Smilei's module
+  
+  .. code-block:: bash
+    
+    make install_python
+  
+  This has to be done only once, unless you move the smilei directory elsewhere.
+  This command creates a small file in the Python `user-site` directory that tells python
+  where to find the module.
+  To remove it use the command ``make uninstall_python``.
+  
+  The module is called ``Smilei`` and will directly be accessible from *python*::
+    
+    from Smilei import *
+
+2. Alternative: Execute the ``Diagnostics.py`` script from python 
+  
+  Adding a new *python* module is not always possible.
+  Instead, we provide the script ``Diagnostics.py`` which is able to find the ``Smilei``
+  module and import it into *python*.
+  
+  You may add the following command in your own python script::
+  
+    execfile("/path/to/Smilei/scripts/Diagnostics.py")
+
 
 

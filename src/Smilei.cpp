@@ -80,7 +80,6 @@ int main (int argc, char* argv[])
     // Define Moving Window
     // --------------------
     TITLE("Initializing moving window");
-    int start_moving(0);
     SimWindow* simWindow = new SimWindow(params);
     
     // ---------------------------------------------------
@@ -101,8 +100,7 @@ int main (int argc, char* argv[])
         // time at half-integer time-steps (dual grid)
         time_dual = (checkpoint.this_run_start_step +0.5) * params.timestep;
         
-        if ( simWindow && simWindow->isMoving(time_dual) )
-            simWindow->operate(vecPatches, smpi, params);
+        simWindow->operate(vecPatches, smpi, params, 0, time_dual);
         //smpi->recompute_patch_count( params, vecPatches, time_dual );
         
         TITLE("Initializing diagnostics");
@@ -110,12 +108,12 @@ int main (int argc, char* argv[])
         
     } else {
         
-        vecPatches = PatchesFactory::createVector(params, smpi, openPMD);
+        vecPatches = PatchesFactory::createVector(params, smpi, openPMD, 0);
         
         // Initialize the electromagnetic fields
         // -------------------------------------
         vecPatches.computeCharge();
-        vecPatches.sumDensities(params, timers, 0 );
+        vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
         
         // Apply antennas
         // --------------
@@ -137,7 +135,7 @@ int main (int argc, char* argv[])
         timers.particles.reboot();
         timers.syncPart .reboot();
         
-        vecPatches.sumDensities(params, timers, 0 );
+        vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
         timers.densities.reboot();
         timers.syncDens .reboot();
        
@@ -178,14 +176,21 @@ int main (int argc, char* argv[])
     
     TITLE("Time-Loop started: number of time-steps n_time = " << params.n_time);
     if ( smpi->isMaster() ) params.print_timestep_headers();
-    for (unsigned int itime=checkpoint.this_run_start_step+1 ; itime <= params.n_time ; itime++) {
-        // calculate new times
-        // -------------------
-        time_prim += params.timestep;
-        time_dual += params.timestep;
+
+    #pragma omp parallel shared (time_dual,smpi,params, vecPatches, simWindow, checkpoint)
+    {
+
+        unsigned int itime=checkpoint.this_run_start_step+1;
+        while ( (itime <= params.n_time) && (!checkpoint.exit_asap) ) {
+
+            // calculate new times
+            // -------------------
+            #pragma omp single
+            {
+                time_prim += params.timestep;
+                time_dual += params.timestep;
+            }
         
-        #pragma omp parallel shared (time_dual,smpi,params, vecPatches, simWindow)
-        {
             // apply collisions if requested
             vecPatches.applyCollisions(params, itime, timers);
             
@@ -195,14 +200,7 @@ int main (int argc, char* argv[])
             vecPatches.dynamics(params, smpi, simWindow, time_dual, timers, itime);
             
             // Sum densities
-            bool some_particles_are_moving = false;
-            unsigned int n_species( vecPatches(0)->vecSpecies.size() );
-            for ( unsigned int ispec=0 ; ispec < n_species ; ispec++ ) {
-                if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) )
-                    some_particles_are_moving = true;
-            }
-            if ( some_particles_are_moving )
-                vecPatches.sumDensities(params, timers, itime );
+            vecPatches.sumDensities(params, time_dual, timers, itime, simWindow );
             
             // apply currents from antennas
             vecPatches.applyAntennas(time_dual);
@@ -219,43 +217,36 @@ int main (int argc, char* argv[])
             // ----------------------------------------------------------------------
             // Validate restart  : to do
             // Restart patched moving window : to do
-            // Break in an OpenMP region
             #pragma omp master
             checkpoint.dump(vecPatches, itime, smpi, simWindow, params);
             #pragma omp barrier
             // ----------------------------------------------------------------------        
             
-        } //End omp parallel region
+            timers.movWindow.restart();
+            #pragma omp single
+            simWindow->operate(vecPatches, smpi, params, itime, time_dual);
+            timers.movWindow.update();
         
-        if (checkpoint.exit_asap) break;
-        
-        timers.movWindow.restart();
-        if ( simWindow->isMoving(time_dual) ) {
-            start_moving++;
-            if ((start_moving==1) && (smpi->isMaster()) ) {
-                MESSAGE(">>> Window starts moving");
+            if ((params.balancing_every > 0) && (smpi->getSize()!=1) ) {
+                if (( itime%params.balancing_every == 0 )) {
+                    timers.loadBal.restart();
+                    #pragma omp single
+                    vecPatches.load_balance( params, time_dual, smpi, simWindow, itime );
+                    timers.loadBal.update( params.printNow( itime ) );
+                }
             }
-            simWindow->operate(vecPatches, smpi, params);
-        }
-        timers.movWindow.update();
         
-        if ((params.balancing_every > 0) && (smpi->getSize()!=1) ) {
-            if (( itime%params.balancing_every == 0 )) {
-                timers.loadBal.restart();
-                vecPatches.load_balance( params, time_dual, smpi, simWindow );
-                timers.loadBal.update( params.printNow( itime ) );
-            }
-        }
-        
-/*tommaso
-        latestTimeStep = itime;
-*/
-        
-        // print message at given time-steps
-        // --------------------------------
-        if ( smpi->isMaster() &&  params.printNow( itime ) )
-            params.print_timestep(itime, time_dual, timers.global);
-    }//END of the time loop
+            // print message at given time-steps
+            // --------------------------------
+            if ( smpi->isMaster() &&  params.printNow( itime ) )
+                params.print_timestep(itime, time_dual, timers.global); //contain a timer.update !!!
+
+            itime++;
+            
+        }//END of the time loop
+
+    } //End omp parallel region
+
     
     smpi->barrier();
     

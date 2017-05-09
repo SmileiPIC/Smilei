@@ -12,9 +12,7 @@ class DiagnosticTrack : public Diagnostic {
 
 public :
     //! Default constructor
-    DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int );
-    //! Cloning constructor
-    DiagnosticTrack(DiagnosticTrack* track, Patch* patch);
+    DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, unsigned int, OpenPMDparams& );
     //! Default destructor
     ~DiagnosticTrack() override;
     
@@ -24,57 +22,65 @@ public :
     
     void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
     
-    bool prepare( int timestep ) override;
+    bool prepare( int itime ) override;
     
-    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep ) override;
+    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow ) override;
     
     //! Get memory footprint of current diagnostic
     int getMemFootPrint() override {
         return 0;
     }
-
-private :
     
-    //! True if must be ordered by ID in the file
-    bool track_ordered;
+    //! Fills a buffer with the required particle property
+    template<typename T> void fill_buffer(VectorPatch& vecPatches, unsigned int iprop, std::vector<T>& buffer);
+    
+    //! Write a scalar dataset with the given buffer
+    template<typename T> void write_scalar( hid_t, std::string, T&, hid_t, hid_t, hid_t, hid_t, unsigned int, unsigned int );
+    
+    //! Write a vector component dataset with the given buffer
+    template<typename T> void write_component( hid_t, std::string, T&, hid_t, hid_t, hid_t, hid_t, unsigned int, unsigned int );
+    
+    //! Set a given patch's particles with the required IDs
+    void setIDs(Patch *);
+    
+    //! Set a given particles with the required IDs
+    void setIDs(Particles&);
+    
+    //! Index of the species used
+    unsigned int speciesId_;
+    
+    //! Last ID assigned to a particle by this MPI domain
+    uint64_t latest_Id;
+    
+private :
     
     //! Flag to test whether IDs have been set already
     bool IDs_done;
     
-    //! Index of the species used
-    int speciesId_;
-    
-    //! Size of the diag (total number of particles)
-    int nbrParticles_;
-     
-    //! HDF5 file transfer protocol
-    hid_t transfer;
-    //! HDF5 file space (dimensions of the array in file)
-    hsize_t dims[2];
-    //! HDF5 memory space (dimensions of the current particle array in memory)
-    hid_t mem_space;
+    //! HDF5 objects
+    hid_t data_group_id, transfer;
      
     //! Number of spatial dimensions
     unsigned int nDim_particle;
     
-    //! list of datasets to be added to the file
-    std::vector<std::string> datasets;
-    //! list of data types for each dataset
-    std::vector<hid_t> datatypes;
-    
     //! Current particle partition among the patches own by current MPI
-    std::vector<int> patch_start;
+    std::vector<unsigned int> patch_start;
+    
+    //! Tells whether this diag includes a particle filter
+    bool has_filter;
+    
+    //! Tells whether this diag includes a particle filter
+    PyObject* filter;
+    
+    //! Selection of the filtered particles in each patch
+    std::vector<std::vector<unsigned int> > patch_selection;
     
     //! Buffer for the output of double array
     std::vector<double> data_double;
     //! Buffer for the output of short array
     std::vector<short> data_short;
-    //! Buffer for the output of uint array
-    std::vector<unsigned int> data_uint;
-    
-    //! The locator array used to order the particles by ID
-    std::vector<hsize_t> locator;
-    
+    //! Buffer for the output of uint64 array
+    std::vector<uint64_t> data_uint64;
 };
 
 #endif

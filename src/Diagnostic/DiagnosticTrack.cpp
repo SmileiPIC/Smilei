@@ -5,11 +5,18 @@
 #include "DiagnosticTrack.h"
 #include "VectorPatch.h"
 
+
+#ifdef SMILEI_USE_NUMPY
+#include <numpy/arrayobject.h>
+#endif
+
+
 using namespace std;
 
-DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int speciesId ) :
-IDs_done( params.restart ),
-nDim_particle(params.nDim_particle)
+DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, unsigned int speciesId, OpenPMDparams& oPMD ) :
+    Diagnostic(oPMD),
+    IDs_done( params.restart ),
+    nDim_particle(params.nDim_particle)
 {
     speciesId_ = speciesId;
     Species* species = patch->vecSpecies[speciesId_];
@@ -21,39 +28,60 @@ nDim_particle(params.nDim_particle)
     ostringstream name("");
     name << "Tracking species '" << species->species_type << "'";
     
-    // Get parameter "track_every" which describes a timestep selection
+    // Get parameter "track_every" which describes an iteration selection
     timeSelection = new TimeSelection( PyTools::extract_py("track_every", "Species", speciesId_), name.str() );
     
     // Get parameter "track_flush_every" which decides the file flushing time selection
     flush_timeSelection = new TimeSelection( PyTools::extract_py("track_flush_every", "Species", speciesId_), name.str() );
     
-    // Get parameter "track_ordered" which decides whether the track particle dumps are ordered by Id
-    PyTools::extract("track_ordered", track_ordered, "Species", speciesId_);
+    // Get parameter "filter" which gives a python function to select particles
+    filter = PyTools::extract_py("track_filter", "Species", speciesId_);
+    has_filter = (filter != Py_None);
+    if( has_filter ) {
+#ifdef SMILEI_USE_NUMPY
+        // Check if filter is callable
+        if( ! PyCallable_Check(filter) )
+            ERROR("Tracked species '" << species->species_type << "' has a filter that is not callable");
+        unsigned int n_arg;
+        // Try to get the number of arguments of the filter function
+        try {
+            PyObject* code = PyObject_GetAttrString( filter, "__code__" );
+            PyObject* argcount = PyObject_GetAttrString( code, "co_argcount" );
+            n_arg = PyInt_AsLong( argcount );
+            Py_DECREF(argcount);
+            Py_DECREF(code);
+        } catch (...) {
+            ERROR("Tracked species '" << species->species_type << "' has a filter that does not look like a normal python function");
+        }
+        // Verify the number of arguments of the filter function
+        if( n_arg != nDim_particle+3 )
+            ERROR("Tracked species '" << species->species_type << "' has a filter function with "<<n_arg<<" arguments while requiring "<<nDim_particle+3);
+        // Verify the return value of the function
+        double test_value[2] = {1.2, 1.4};
+        npy_intp dims[1] = {2};
+        PyObject *ret;
+        PyArrayObject *a = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, &test_value);
+        if     ( nDim_particle == 1 ) ret = PyObject_CallFunctionObjArgs(filter, a,a,a,a, NULL);
+        else if( nDim_particle == 2 ) ret = PyObject_CallFunctionObjArgs(filter, a,a,a,a,a, NULL);
+        else if( nDim_particle == 3 ) ret = PyObject_CallFunctionObjArgs(filter, a,a,a,a,a,a, NULL);
+        Py_DECREF(a);
+        if( !PyArray_Check(ret) )
+            ERROR("Tracked particles filter must return a numpy array");
+        if( !PyArray_ISBOOL((PyArrayObject *)ret) )
+            ERROR("Tracked particles filter must return an array of booleans");
+        unsigned int s = PyArray_SIZE((PyArrayObject *)ret);
+        if( s != 2 )
+            ERROR("Tracked particles filter must not change the arrays sizes");
+        Py_DECREF(ret);
+#else
+        ERROR("Tracking species '" << species->species_type << "' with a filter requires the numpy package");
+#endif
+    }
     
     // Create the filename
     ostringstream hdf_filename("");
-    hdf_filename << "TrackParticles"<<(track_ordered?"":"Disordered")<<"_" << species->species_type  << ".h5" ;
+    hdf_filename << "TrackParticlesDisordered_" << species->species_type  << ".h5" ;
     filename = hdf_filename.str();
-    
-    // Create a list of the necessary datasets
-    datasets.push_back( "Id" );
-    datatypes.push_back( H5T_NATIVE_UINT );
-    datasets.push_back( "Charge" );
-    datatypes.push_back( H5T_NATIVE_SHORT );
-    datasets.push_back( "Weight" );
-    datatypes.push_back( H5T_NATIVE_DOUBLE );
-    datasets.push_back( "Momentum-0" );
-    datatypes.push_back( H5T_NATIVE_DOUBLE );
-    datasets.push_back( "Momentum-1" );
-    datatypes.push_back( H5T_NATIVE_DOUBLE );
-    datasets.push_back( "Momentum-2" );
-    datatypes.push_back( H5T_NATIVE_DOUBLE );
-    for (unsigned int idim=0 ; idim<nDim_particle ; idim++) {
-        name.str("");
-        name << "Position-" << idim;
-        datasets.push_back( name.str() );
-        datatypes.push_back( H5T_NATIVE_DOUBLE );
-    }
     
 }
 
@@ -61,6 +89,8 @@ DiagnosticTrack::~DiagnosticTrack()
 {
     delete timeSelection;
     delete flush_timeSelection;
+    H5Pclose(transfer);
+    Py_DECREF(filter);
 }
 
 
@@ -74,46 +104,11 @@ void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
         H5Pclose(pid);
         
-        // Set the dataset parameters
-        hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
-        H5Pset_alloc_time(plist, H5D_ALLOC_TIME_EARLY); // necessary for collective dump
+        // Attributes for openPMD
+        openPMD->writeRootAttributes( fileId_, "no_meshes", "particles/" );
         
-        // Set the chunk size
-        H5Pset_layout(plist, H5D_CHUNKED);
-        int maximum_chunk_size = 100000000;
-        int number_of_chunks = nbrParticles_/maximum_chunk_size;
-        if( nbrParticles_%maximum_chunk_size != 0 ) number_of_chunks++;
-        int chunk_size = nbrParticles_/number_of_chunks;
-        if( nbrParticles_%number_of_chunks != 0 ) chunk_size++;
-        hsize_t chunk_dims[2] = {1, (hsize_t)chunk_size};
-        H5Pset_chunk(plist, 2, chunk_dims);
-        
-        // Define maximum size
-        hsize_t maxDimsPart[2] = {H5S_UNLIMITED, (hsize_t)nbrParticles_};
-        hid_t file_space = H5Screate_simple(2, dims, maxDimsPart);   
-        
-        // Create the datasets
-        for (unsigned int i=0; i<datasets.size(); i++) {
-            hid_t did = H5Dcreate(fileId_, datasets[i].c_str(), datatypes[i], file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
-            H5Dclose(did);
-        }
-        
-        H5Pclose(plist);
-        H5Sclose(file_space);
-        
-        // Create the dataset for the time array
-        hsize_t ntimes[1] = { 0 };
-        hsize_t maxtimes[1] = { H5S_UNLIMITED };
-        file_space = H5Screate_simple(1, ntimes, maxtimes);
-        plist = H5Pcreate(H5P_DATASET_CREATE);
-        H5Pset_layout(plist, H5D_CHUNKED);
-        H5Pset_alloc_time(plist, H5D_ALLOC_TIME_EARLY); // necessary for collective dump
-        hsize_t chunks[1] = {1};
-        H5Pset_chunk(plist, 1, chunks);
-        hid_t did = H5Dcreate(fileId_, "Times", H5T_NATIVE_INT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
-        H5Dclose(did);
-        H5Pclose(plist);
-        H5Sclose(file_space);
+        // Create "data" group for openPMD compatibility
+        data_group_id = H5::group(fileId_, "data");
         
     }
     else {
@@ -121,15 +116,6 @@ void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
         H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
         fileId_ = H5Fopen( filename.c_str(), H5F_ACC_RDWR, pid);
-        
-        // Open the "Id" group to get the current dimensions
-        hid_t did = H5Dopen( fileId_, "Id", H5P_DEFAULT );
-        hid_t sid = H5Dget_space( did );
-        H5Sget_simple_extent_dims(sid, &dims[0], NULL );
-        
-        // Close all things but not the file
-        H5Sclose(sid);
-        H5Dclose(did);
         H5Pclose(pid);
    }
 
@@ -139,6 +125,7 @@ void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 void DiagnosticTrack::closeFile()
 {
     if(fileId_>0) {
+        H5Gclose( data_group_id );
         H5Fclose( fileId_ );
         fileId_=0;
     }
@@ -149,273 +136,349 @@ void DiagnosticTrack::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatc
 {
     // Set the IDs of the particles
     if( ! IDs_done ) {
+        latest_Id = smpi->getRank() * 4294967296; // 2^32
         
-        // 1 - Internal patches offset
-        
-        int localNbrParticles = 0;
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            vecPatches(ipatch)->vecSpecies[speciesId_]->particles->setIds();
-            vecPatches(ipatch)->vecSpecies[speciesId_]->particles->addIdOffsets(localNbrParticles);
-            localNbrParticles += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
-        }
-        
-        // 2 - MPI offset
-        
-        // Get the number of particles for each MPI
-        int sz = smpi->getSize();
-        std::vector<int> allNbrParticles(sz, 0);
-        MPI_Allgather( &localNbrParticles, 1, MPI_INT, &allNbrParticles[0], 1, MPI_INT, MPI_COMM_WORLD );
-        
-        // Calculate the cumulative sum
-        for (int irk=1 ; irk<sz ; irk++)
-            allNbrParticles[irk] += allNbrParticles[irk-1];
-        
-        // Calculate the MPI offset
-        int offset = 0;
-        if( ! smpi->isMaster() ) offset = allNbrParticles[smpi->getRank()-1];
-        
-        // Apply the MPI offset
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            vecPatches(ipatch)->vecSpecies[speciesId_]->particles->addIdOffsets( offset );
-        }
-        nbrParticles_ = allNbrParticles[sz-1];
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+            setIDs(vecPatches(ipatch));
         
         IDs_done = true;
-        
-    } else {
-            
-        // Number of particles in current MPI
-        int localNbrParticles = 0;
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-            localNbrParticles += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
-        
-        // Total number of particles
-        MPI_Allreduce( &localNbrParticles, &nbrParticles_, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
-        
     }
-    
-    // define the initial arrays sizes
-    dims[0] = 0;
-    if ( !nbrParticles_ )
-        ERROR("DiagTrack empty or number of Particles in diag is null");
-    dims[1] = nbrParticles_;
     
     // create the file
     openFile( params, smpi, true );
     H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     
-    MESSAGE(1, "Tracking "<< nbrParticles_ <<" particles of species "<<vecPatches(0)->vecSpecies[speciesId_]->species_type);
+}
+
+
+bool DiagnosticTrack::prepare( int itime )
+{
+    return timeSelection->theTimeIsNow(itime);
+}
+
+
+void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow )
+{
+    uint32_t nParticles_local = 0;
+    uint64_t nParticles_global = 0;
+    string xyz = "xyz";
     
-}
-
-
-bool DiagnosticTrack::prepare( int timestep )
-{
-    return timeSelection->theTimeIsNow(timestep);
-}
-
-
-void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep )
-{
-    int nParticles = 0;
-    unsigned int nPatches = vecPatches.size();
+    hid_t momentum_group=0, position_group=0, iteration_group=0, particles_group=0, species_group=0;
+    hid_t plist=0, file_space=0, mem_space=0;
+    #pragma omp master
+    {
+    
+        // Obtain the particle partition of all the patches in this MPI
+        patch_start.resize( vecPatches.size() );
+        
+        if( has_filter ) {
+        
+#ifdef SMILEI_USE_NUMPY
+            patch_selection.resize( vecPatches.size() );
+            PyArrayObject *x,*y,*z,*px,*py,*pz,*ret;
+            npy_intp dims[1];
+            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+                // Expose particle data as numpy arrays, then run the filter function
+                Particles * p = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
+                unsigned int npart = p->size();
+                dims[0] = (npy_intp) npart;
+                px = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Momentum[0].data()));
+                py = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Momentum[1].data()));
+                pz = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Momentum[2].data()));
+                x  = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Position[0].data()));
+                if( nDim_particle>1 ) {
+                    y = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Position[1].data()));
+                    if( nDim_particle>2 ) {
+                        z = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Position[2].data()));
+                        ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(filter, x,y,z,px,py,pz, NULL);
+                        Py_DECREF(z);
+                    } else {
+                        ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(filter, x,y,px,py,pz, NULL);
+                    }
+                    Py_DECREF(y);
+                } else {
+                    ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(filter, x,px,py,pz, NULL);
+                }
+                Py_DECREF(x);
+                Py_DECREF(px);
+                Py_DECREF(py);
+                Py_DECREF(pz);
+                
+                // Loop the return value and store the particle IDs
+                bool* arr = (bool*) PyArray_GETPTR1( ret, 0 );
+                patch_selection[ipatch].resize(0);
+                for(unsigned int i=0; i<npart; i++) {
+                    if( arr[i] ) {
+                        patch_selection[ipatch].push_back( i );
+                        // If particle not tracked before (ID==0), then set its ID
+                        if( p->id(i) == 0 ) p->id(i) = ++latest_Id;
+                    }
+                }
+                patch_start[ipatch] = nParticles_local;
+                nParticles_local += patch_selection[ipatch].size();
+                
+                Py_DECREF(ret);
+            }
+#else
+            ERROR("Tracked particles filter requires the numpy package");
+#endif
+            
+        } else {
+            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+                patch_start[ipatch] = nParticles_local;
+                nParticles_local += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
+            }
+        }
+        
+        // Specify the memory dataspace (the size of the local buffer)
+        hsize_t count_[1] = {(hsize_t)nParticles_local};
+        mem_space = H5Screate_simple(1, count_, NULL);
+        
+        // Get the number of offset for this MPI rank
+        uint64_t np_local = nParticles_local, offset;
+        MPI_Scan( &np_local, &offset, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD );
+        nParticles_global = offset;
+        offset -= np_local;
+        MPI_Bcast( &nParticles_global, 1, MPI_UNSIGNED_LONG_LONG, smpi->getSize()-1, MPI_COMM_WORLD );
+        
+        // Make a new group for this iteration
+        ostringstream t("");
+        t << setfill('0') << setw(10) << itime;
+        iteration_group = H5::group( data_group_id, t.str().c_str() );
+        particles_group = H5::group( iteration_group, "particles" );
+        species_group = H5::group( particles_group, vecPatches(0)->vecSpecies[speciesId_]->species_type.c_str() );
+        
+        // Add openPMD attributes ( "basePath" )
+        openPMD->writeBasePathAttributes( iteration_group, itime );
+        // Add openPMD attributes ( "particles" )
+        openPMD->writeParticlesAttributes( particles_group );
+        // Add openPMD attributes ( path of a given species )
+        openPMD->writeSpeciesAttributes( species_group );
+        
+        // Set the dataset parameters
+        plist = H5Pcreate(H5P_DATASET_CREATE);
+        H5Pset_alloc_time(plist, H5D_ALLOC_TIME_EARLY); // necessary for collective dump
+        
+        if( nParticles_global>0 ){
+            H5Pset_layout(plist, H5D_CHUNKED);
+            
+            // Set the chunk size
+            unsigned int maximum_chunk_size = 100000000;
+            unsigned int number_of_chunks = nParticles_global/maximum_chunk_size;
+            if( nParticles_global%maximum_chunk_size != 0 ) number_of_chunks++;
+            if( number_of_chunks==0 ) number_of_chunks = 1;
+            unsigned int chunk_size = nParticles_global/number_of_chunks;
+            if( nParticles_global%number_of_chunks != 0 ) chunk_size++;
+            hsize_t chunk_dims = chunk_size;
+            H5Pset_chunk(plist, 1, &chunk_dims);
+        }
+        
+        // Define maximum size
+        hsize_t dims = nParticles_global;
+        file_space = H5Screate_simple(1, &dims, NULL);   
+        
+        // Select locations that this proc will write
+        if(nParticles_local>0) {
+            hsize_t start=offset, count=1, block=nParticles_local;
+            H5Sselect_hyperslab(file_space, H5S_SELECT_SET, &start, NULL, &count, &block );
+        } else {
+            H5Sselect_none(file_space);
+        }
+        
+        // Create the "latest_IDs" dataset
+        // Create file space and select one element for each proc
+        hsize_t numel = smpi->getSize();
+        hid_t filespace = H5Screate_simple(1, &numel, NULL);
+        hsize_t offset_ = smpi->getRank(), count=1;
+        H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &offset_, NULL, &count, NULL);
+        // Create dataset
+        hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
+        hid_t dset_id  = H5Dcreate( iteration_group, "latest_IDs", H5T_NATIVE_UINT64, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+        // Create memory space
+        hsize_t size_in_memory = 1;
+        hid_t memspace  = H5Screate_simple(1, &size_in_memory, NULL);
+        // Parallel write
+        hid_t write_plist = H5Pcreate(H5P_DATASET_XFER);
+        H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
+        H5Dwrite( dset_id, H5T_NATIVE_UINT64, memspace, filespace, write_plist, &latest_Id );
+        // Close all
+        H5Pclose( write_plist );
+        H5Pclose( plist_id );
+        H5Dclose( dset_id );
+        H5Sclose( filespace );
+        H5Sclose( memspace );
+    }
+    
+    // Id
+    #pragma omp master
+    data_uint64.resize( nParticles_local, 1 );
+    #pragma omp barrier
+    fill_buffer(vecPatches, 0, data_uint64);
+    #pragma omp master
+    {
+        write_scalar( species_group, "id", data_uint64[0], H5T_NATIVE_UINT64, file_space, mem_space, plist, SMILEI_UNIT_NONE, nParticles_global );
+        data_uint64.resize(0);
+    }
+    
+    // Charge
+    #pragma omp master
+    data_short.resize( nParticles_local, 0 );
+    #pragma omp barrier
+    fill_buffer(vecPatches, 0, data_short);
+    #pragma omp master
+    {
+        write_scalar( species_group, "charge", data_short[0], H5T_NATIVE_SHORT, file_space, mem_space, plist, SMILEI_UNIT_CHARGE, nParticles_global );
+        data_short.resize(0);
+    }
+    
+    // Weight
+    #pragma omp master
+    data_double.resize( nParticles_local, 0 );
+    #pragma omp barrier
+    fill_buffer(vecPatches, nDim_particle+3, data_double);
+    #pragma omp master
+    write_scalar( species_group, "weight", data_double[0], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, SMILEI_UNIT_DENSITY, nParticles_global );
+    
+    // Momentum
+    #pragma omp master
+    {
+        momentum_group = H5::group(species_group, "momentum");
+        openPMD->writeRecordAttributes( momentum_group, SMILEI_UNIT_MOMENTUM );
+    }
+    for( unsigned int idim=0; idim<3; idim++ ) {
+        #pragma omp barrier
+        fill_buffer(vecPatches, nDim_particle+idim, data_double);
+        #pragma omp master
+        write_component( momentum_group, xyz.substr(idim,1).c_str(), data_double[0], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, SMILEI_UNIT_MOMENTUM, nParticles_global );
+    }
+    #pragma omp master
+    H5Gclose( momentum_group );
+    
+    // Position
+    #pragma omp master
+    {
+        position_group = H5::group(species_group, "position");
+        openPMD->writeRecordAttributes( position_group, SMILEI_UNIT_POSITION );
+    }
+    for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
+        #pragma omp barrier
+        fill_buffer(vecPatches, idim, data_double);
+        #pragma omp master
+        write_component( position_group, xyz.substr(idim,1).c_str(), data_double[0], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, SMILEI_UNIT_POSITION, nParticles_global );
+    }
+    #pragma omp master
+    H5Gclose( position_group );
     
     #pragma omp master
     {
-        // Add a new timestep to the dimension of the arrays
-        dims[0]++;
         
-        // Obtain the particle partition of all the patches in this MPI
-        patch_start.resize( vecPatches.size() );
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            patch_start[ipatch] = nParticles;
-            nParticles += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
+    // PositionOffset (for OpenPMD)
+        hid_t positionoffset_group = H5::group(species_group, "positionOffset");
+        openPMD->writeRecordAttributes( positionoffset_group, SMILEI_UNIT_POSITION );
+        vector<uint64_t> np = {nParticles_global};
+        for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
+            hid_t xyz_group = H5::group(positionoffset_group, xyz.substr(idim,1));
+            openPMD->writeComponentAttributes( xyz_group, SMILEI_UNIT_POSITION );
+            H5::attr( xyz_group, "value", 0. );
+            H5::attr( xyz_group, "shape", np, H5T_NATIVE_UINT64 );
+            H5Gclose( xyz_group );
         }
-        if(track_ordered) locator.resize(nParticles*2);
+        H5Gclose( positionoffset_group );
         
-        // Specify the memory dataspace (the size of the local array)
-        hsize_t count_[1] = {(hsize_t)nParticles};
-        mem_space = H5Screate_simple(1, count_, NULL);
+    // Close and flush
+        data_double.resize(0);
+        patch_selection.resize(0);
+        
+        H5Pclose(plist);
+        H5Sclose(file_space);
+        H5Sclose( mem_space );
+        H5Gclose( species_group );
+        H5Gclose( particles_group );
+        H5Gclose( iteration_group );
+        
+        if( flush_timeSelection->theTimeIsNow(itime) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     }
     #pragma omp barrier
+}
+
+
+void DiagnosticTrack::setIDs(Patch * patch)
+{
+    // If filter, IDs are set on-the-fly
+    if( has_filter ) return;
+    unsigned int s = patch->vecSpecies[speciesId_]->particles->size();
+    for (unsigned int iPart=0; iPart<s; iPart++)
+        patch->vecSpecies[speciesId_]->particles->id(iPart) = ++latest_Id;
+}
+
+
+void DiagnosticTrack::setIDs(Particles& particles)
+{
+    // If filter, IDs are set on-the-fly
+    if( has_filter ) return;
+    unsigned int s = particles.size(), id;
+    #pragma omp critical 
+    {
+        for (unsigned int iPart=0; iPart<s; iPart++) {
+            id = ++latest_Id;
+            particles.id(iPart) = id;
+        }
+    }
+}
+
+
+template<typename T>
+void DiagnosticTrack::fill_buffer(VectorPatch& vecPatches, unsigned int iprop, vector<T>& buffer)
+{
+    unsigned int patch_nParticles, i, j, nPatches=vecPatches.size();
+    vector<T>* property = NULL;
     
-    hsize_t start[2], stride[2], count[2], block[2];
-    if(track_ordered) {
-        // Build the "locator", an array indicating where each particle goes in the final array
+    if( has_filter ) {
         #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
-            Particles* particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
-            int np=particles->size(), i=0, j=patch_start[ipatch];
-            while( i<np ) {
-                locator[j*2  ] = dims[0]-1;
-                locator[j*2+1] = particles->id(i)-1; // because particles label Id starts at 1
+            patch_nParticles = patch_selection[ipatch].size();
+            vecPatches(ipatch)->vecSpecies[speciesId_]->particles->getProperty(iprop, property);
+            i=0;
+            j=patch_start[ipatch];
+            while( i<patch_nParticles ) {
+                buffer[j] = (*property)[patch_selection[ipatch][i]];
                 i++; j++;
             }
         }
     } else {
-        #pragma omp master
-        {
-            // Get the number of particles for each MPI
-            int sz = smpi->getSize();
-            std::vector<int> all_nPart(sz, 0);
-            MPI_Allgather( &nParticles, 1, MPI_INT, &all_nPart[0], 1, MPI_INT, MPI_COMM_WORLD );
-            
-            // Calculate the cumulative sum
-            int offset=0;
-            for (int irk=0; irk<smpi->getRank(); irk++) offset += all_nPart[irk];
-            
-            // Prepare the hyperslab selection
-            start [0]=dims[0]-1; start [1]=offset;
-            stride[0]=1        ; stride[1]=1     ;
-            count [0]=1        ; count [1]=1     ;
-            block [0]=1        ; block [1]=nParticles;
-        }
-    }
-    
-    // For each dataset
-    for( unsigned int idset=0; idset<datasets.size(); idset++) {
-        
-        // Fill the buffer for the current patch
-        unsigned int patch_nParticles, i, j;
-        Particles* particles;
-        if( idset == 0 ) { // Id
-            #pragma omp master
-            data_uint.resize( nParticles, 0 );
-            #pragma omp barrier
-            #pragma omp for schedule(runtime)
-            for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
-                particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
-                patch_nParticles = particles->size();
-                i=0;
-                j=patch_start[ipatch];
-                while( i<patch_nParticles ) {
-                    data_uint[j] = particles->id(i);
-                    i++; j++;
-                }
-            }
-        } else if( idset == 1 ) { // Charge
-            #pragma omp master
-            data_short.resize( nParticles );
-            #pragma omp barrier
-            #pragma omp for schedule(runtime)
-            for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
-                particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
-                patch_nParticles = particles->size();
-                i=0;
-                j=patch_start[ipatch];
-                while( i<patch_nParticles ) {
-                    data_short[j] = particles->charge(i);
-                    i++; j++;
-                }
-            }
-        } else if( idset == 2 ) { // Weight
-            #pragma omp master
-            data_double.resize( nParticles );
-            #pragma omp barrier
-            #pragma omp for schedule(runtime)
-            for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
-                particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
-                patch_nParticles = particles->size();
-                i=0;
-                j=patch_start[ipatch];
-                while( i<patch_nParticles ) {
-                    data_double[j] = particles->weight(i);
-                    i++; j++;
-                }
-            }
-        } else if( idset < 6 ) { // Momentum
-            #pragma omp master
-            data_double.resize( nParticles );
-            #pragma omp barrier
-            #pragma omp for schedule(runtime)
-            for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
-                particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
-                patch_nParticles = particles->size();
-                i=0;
-                j=patch_start[ipatch];
-                while( i<patch_nParticles ) {
-                    data_double[j] = particles->momentum(idset-3, i);
-                    i++; j++;
-                }
-            }
-        } else { // Position
-            #pragma omp master
-            data_double.resize( nParticles );
-            #pragma omp barrier
-            #pragma omp for schedule(runtime)
-            for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
-                particles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
-                patch_nParticles = particles->size();
-                i=0;
-                j=patch_start[ipatch];
-                while( i<patch_nParticles ) {
-                    data_double[j] = particles->position(idset-6, i);
-                    i++; j++;
-                }
+        #pragma omp for schedule(runtime)
+        for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
+            patch_nParticles = vecPatches(ipatch)->vecSpecies[speciesId_]->particles->size();
+            vecPatches(ipatch)->vecSpecies[speciesId_]->particles->getProperty(iprop, property);
+            i=0;
+            j=patch_start[ipatch];
+            while( i<patch_nParticles ) {
+                buffer[j] = (*property)[i];
+                i++; j++;
             }
         }
-        
-        #pragma omp master
-        {
-            // Open existing dataset
-            hid_t did = H5Dopen( fileId_, datasets[idset].c_str(), H5P_DEFAULT );
-            // Update the size of this dataset for the new timestep
-            H5Dset_extent(did, dims);
-            // Get the extended file space
-            hid_t file_space = H5Dget_space(did);
-            
-            // Select locations that this proc will write
-            if(nParticles>0) {
-                if(track_ordered)
-                    H5Sselect_elements( file_space, H5S_SELECT_SET, nParticles, &locator[0] );
-                else
-                    H5Sselect_hyperslab(file_space, H5S_SELECT_SET, &start[0], &stride[0], &count[0], &block[0] );
-            } else {
-                H5Sselect_none(file_space);
-            }
-            
-            // Write
-            if( idset == 0 ) {
-                H5Dwrite( did, datatypes[idset], mem_space , file_space , transfer, &data_uint[0] );
-            } else if( idset == 1 ) {
-                H5Dwrite( did, datatypes[idset], mem_space , file_space , transfer, &data_short[0] );
-            } else {
-                H5Dwrite( did, datatypes[idset], mem_space , file_space , transfer, &data_double[0] );
-            }
-            
-            H5Sclose(file_space);
-            H5Dclose(did);
-        }
     }
-    
-    #pragma omp master
-    {
-        H5Sclose( mem_space );
-        
-        // Update the size of the times dataset for the new timestep
-        hsize_t tdims[1] = { dims[0] };
-        hid_t did = H5Dopen( fileId_, "Times", H5P_DEFAULT );
-        H5Dset_extent(did, tdims);
-        // Select only the last element of the array
-        hid_t file_space = H5Dget_space(did);
-        hsize_t loc[1] = { dims[0]-1 };
-        H5Sselect_elements( file_space, H5S_SELECT_SET, 1, &loc[0] );
-        // Define the space in memory as a single int
-        hsize_t onetime[1] = { 1 };
-        hid_t memspace = H5Screate_simple(1, onetime, NULL);
-        // Write the current timestep
-        H5Dwrite( did, H5T_NATIVE_INT, memspace , file_space , transfer, &timestep );
-        H5Sclose( memspace );
-        H5Sclose(file_space);
-        H5Dclose(did);
-        
-        if( flush_timeSelection->theTimeIsNow(timestep) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
-        
-        // Clear buffers
-        data_uint  .resize(0);
-        data_short .resize(0);
-        data_double.resize(0);
-    }
-    #pragma omp barrier
 }
+
+
+template<typename T>
+void DiagnosticTrack::write_scalar( hid_t location, string name, T& buffer, hid_t dtype, hid_t file_space, hid_t mem_space, hid_t plist, unsigned int unit_type, unsigned int npart_global )
+{
+    hid_t did = H5Dcreate(location, name.c_str(), dtype, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+    if( npart_global>0 ) H5Dwrite( did, dtype, mem_space , file_space , transfer, &buffer );
+    openPMD->writeRecordAttributes( did, unit_type );
+    openPMD->writeComponentAttributes( did, unit_type );
+    H5Dclose(did);
+}
+
+template<typename T>
+void DiagnosticTrack::write_component( hid_t location, string name, T& buffer, hid_t dtype, hid_t file_space, hid_t mem_space, hid_t plist, unsigned int unit_type, unsigned int npart_global )
+{
+    hid_t did = H5Dcreate(location, name.c_str(), dtype, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+    if( npart_global>0 ) H5Dwrite( did, dtype, mem_space , file_space , transfer, &buffer );
+    openPMD->writeComponentAttributes( did, unit_type );
+    H5Dclose(did);
+}
+
+
 

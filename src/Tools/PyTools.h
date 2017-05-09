@@ -17,11 +17,19 @@
 #endif
 #endif
 
-
 #include <Python.h>
 #include <vector>
 #include <sstream>
 #include "Tools.h"
+
+#ifdef SMILEI_USE_NUMPY
+#define PY_ARRAY_UNIQUE_SYMBOL SMILEI_ARRAY_API
+#ifndef SMILEI_IMPORT_ARRAY
+#define NO_IMPORT_ARRAY
+#endif
+#include <numpy/arrayobject.h>
+#endif
+
 
 //! tools to query python nemlist and get back C++ values and vectors
 class PyTools {
@@ -96,8 +104,9 @@ private:
 public:
 
     static void openPython() {
-        if (!Py_IsInitialized())
+        if (!Py_IsInitialized()) {
             Py_Initialize();
+        }
     }
     
     static void closePython() {
@@ -163,7 +172,7 @@ public:
     }
     
     //! check if there has been a python error
-    static void checkPyError(bool exitOnError=false) {
+    static void checkPyError(bool exitOnError=false, bool print=true) {
         if (PyErr_Occurred()) {
             PyObject *type, *value, *traceback;
             PyErr_Fetch(&type, &value, &traceback);
@@ -186,7 +195,7 @@ public:
             Py_XDECREF(traceback);
             if (exitOnError) {
                 ERROR(message);
-            } else {
+            } else if( print ) {
                 MESSAGE(1,"[Python] " << message);
             }
         }

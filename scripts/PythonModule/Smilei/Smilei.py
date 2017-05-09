@@ -268,19 +268,19 @@ class ParticleDiagnosticFactory(object):
 			# the diag is saved for generating the object in __call__
 			self._additionalArgs += (diagNumber, )
 			
-			# If not a specific timestep, build a list of timesteps shortcuts
-			if timestep is None:
-				# Create a temporary, empty particle diagnostic
-				tmpDiag = ParticleDiagnostic.ParticleDiagnostic(simulation, diagNumber)
-				# Get a list of timesteps
-				timesteps = tmpDiag.getAvailableTimesteps()
-				# Create timesteps shortcuts
-				for timestep in timesteps:
-					setattr(self, 't%0.10i'%timestep, ParticleDiagnosticFactory(simulation, diagNumber, timestep))
-			
-			else:
-				# the timestep is saved for generating the object in __call__
-				self._additionalArgs += (timestep, )
+			## If not a specific timestep, build a list of timesteps shortcuts
+			#if timestep is None:
+			#	# Create a temporary, empty particle diagnostic
+			#	tmpDiag = ParticleDiagnostic.ParticleDiagnostic(simulation, diagNumber)
+			#	# Get a list of timesteps
+			#	timesteps = tmpDiag.getAvailableTimesteps()
+			#	# Create timesteps shortcuts
+			#	for timestep in timesteps:
+			#		setattr(self, 't%0.10i'%timestep, ParticleDiagnosticFactory(simulation, diagNumber, timestep))
+			#
+			#else:
+			#	# the timestep is saved for generating the object in __call__
+			#	self._additionalArgs += (timestep, )
 	
 	def __call__(self, *args, **kwargs):
 		return ParticleDiagnostic.ParticleDiagnostic(self._simulation, *(self._additionalArgs+args), **kwargs)
@@ -337,19 +337,19 @@ class ScreenFactory(object):
 			# the diag is saved for generating the object in __call__
 			self._additionalArgs += (diagNumber, )
 			
-			# If not a specific timestep, build a list of timesteps shortcuts
-			if timestep is None:
-				# Create a temporary, empty Screen diagnostic
-				tmpDiag = Screen.Screen(simulation, diagNumber)
-				# Get a list of timesteps
-				timesteps = tmpDiag.getAvailableTimesteps()
-				# Create timesteps shortcuts
-				for timestep in timesteps:
-					setattr(self, 't%0.10i'%timestep, ScreenFactory(simulation, diagNumber, timestep))
-			
-			else:
-				# the timestep is saved for generating the object in __call__
-				self._additionalArgs += (timestep, )
+			## If not a specific timestep, build a list of timesteps shortcuts
+			#if timestep is None:
+			#	# Create a temporary, empty Screen diagnostic
+			#	tmpDiag = Screen.Screen(simulation, diagNumber)
+			#	# Get a list of timesteps
+			#	timesteps = tmpDiag.getAvailableTimesteps()
+			#	# Create timesteps shortcuts
+			#	for timestep in timesteps:
+			#		setattr(self, 't%0.10i'%timestep, ScreenFactory(simulation, diagNumber, timestep))
+			#
+			#else:
+			#	# the timestep is saved for generating the object in __call__
+			#	self._additionalArgs += (timestep, )
 	
 	def __call__(self, *args, **kwargs):
 		return Screen.Screen(self._simulation, *(self._additionalArgs+args), **kwargs)
@@ -487,13 +487,14 @@ class Smilei(object):
 		
 	"""
 	
-	def __init__(self, results_path=".", show=True, verbose=True):
+	def __init__(self, results_path=".", show=True, referenceAngularFrequency_SI=None, verbose=True):
 		self.valid = False
 		# Import packages
 		import h5py
 		import numpy as np
 		import os, glob, re, sys
 		setMatplotLibBackend(show=show)
+		updateMatplotLibColormaps()
 		import matplotlib.pyplot
 		import matplotlib.pylab as pylab
 		pylab.ion()
@@ -507,6 +508,7 @@ class Smilei(object):
 		self._plt = matplotlib.pyplot
 		self._mtime = 0
 		self._verbose = verbose
+		self._referenceAngularFrequency_SI = referenceAngularFrequency_SI
 		
 		# Load the simulation (verify the path, get the namelist)
 		self.reload()
@@ -614,7 +616,9 @@ class Smilei(object):
 					return
 				if self._verbose: print("Loaded simulation '"+path+"'")
 			# Update the simulation parameters
-			self._ndim, self._cell_length, self._ncels, self._timestep, self._referenceAngularFrequency_SI = args[1:]
+			self._ndim, self._cell_length, self._ncels, self._timestep, referenceAngularFrequency_SI = args[1:]
+			if self._referenceAngularFrequency_SI is None:
+				self._referenceAngularFrequency_SI = referenceAngularFrequency_SI
 			self.namelist = args[0]
 		
 		self._mtime = lastmodif

@@ -16,6 +16,7 @@ OpenPMDparams::OpenPMDparams(Params& p):
     extension = 0;
     //extension = 1; // ED-PIC extension. Not supported yet
     
+    // Grid parameters
     string xyz = "xyz";
     gridGlobalOffset.resize( params->nDim_field );
     gridOffset      .resize( params->nDim_field );
@@ -27,25 +28,6 @@ OpenPMDparams::OpenPMDparams(Params& p):
         gridOffset      [idim] = 0.;
         position        [idim] = 0.;
     }
-    unitDimension.resize( 4 );
-    for( unsigned int field_type=0; field_type<4; field_type++ ) {
-        unitDimension[field_type].resize(7, 0.);
-        if        ( field_type == 0 ) { // Electric field
-            unitDimension[field_type][0] = 1.;
-            unitDimension[field_type][1] = 1.;
-            unitDimension[field_type][2] = -3.;
-            unitDimension[field_type][3] = -1.;
-        } else if ( field_type == 1 ) { // Magnetic field
-            unitDimension[field_type][1] = 1.;
-            unitDimension[field_type][2] = -2.;
-            unitDimension[field_type][3] = -1.;
-        } else if ( field_type == 2 ) { // Current
-            unitDimension[field_type][0] = -2.;
-            unitDimension[field_type][3] = 1.;
-        } else if ( field_type == 3 ) { // Density
-            unitDimension[field_type][0] = -3.;
-        }
-    }
     fieldSolverParameters = "";
     if       ( params->maxwell_sol == "Yee" ) {
         fieldSolver = "Yee";
@@ -55,6 +37,51 @@ OpenPMDparams::OpenPMDparams(Params& p):
         fieldSolver = "other";
         fieldSolverParameters = params->maxwell_sol;
     }
+    patchSize = params->n_space;
+    
+    // Units
+    unitDimension.resize( SMILEI_NUNITS );
+    unitSI.resize( SMILEI_NUNITS );
+    double Wr = params->referenceAngularFrequency_SI;
+    if( Wr==0. ) Wr=1.;
+    for( unsigned int unit_type=0; unit_type<SMILEI_NUNITS; unit_type++ ) {
+        unitDimension[unit_type].resize(7, 0.);
+        if        ( unit_type == SMILEI_UNIT_NONE ) { // dimensionless
+            unitSI[unit_type] = 1.;
+        } else if ( unit_type == SMILEI_UNIT_EFIELD ) {
+            unitDimension[unit_type][0] = 1.;
+            unitDimension[unit_type][1] = 1.;
+            unitDimension[unit_type][2] = -3.;
+            unitDimension[unit_type][3] = -1.;
+            unitSI[unit_type] = 1.704508807123e-3 * Wr; // me * c * Wr / e
+        } else if ( unit_type == SMILEI_UNIT_BFIELD ) {
+            unitDimension[unit_type][1] = 1.;
+            unitDimension[unit_type][2] = -2.;
+            unitDimension[unit_type][3] = -1.;
+            unitSI[unit_type] = 5.685629380e-12 * Wr; // me * Wr / e
+        } else if ( unit_type == SMILEI_UNIT_CURRENT ) {
+            unitDimension[unit_type][0] = -2.;
+            unitDimension[unit_type][3] = 1.;
+            unitSI[unit_type] = 1.5092041114e-14 * Wr*Wr; // e0 * me * c * Wr^2 / e
+        } else if ( unit_type == SMILEI_UNIT_DENSITY ) {
+            unitDimension[unit_type][0] = -3.;
+            unitSI[unit_type] = 3.14207756427e-4 * Wr*Wr; // e0 * me * Wr^2 / e^2
+        } else if ( unit_type == SMILEI_UNIT_POSITION ) {
+            unitDimension[unit_type][0] = -3.;
+            unitSI[unit_type] = 299792458. / Wr; // c / Wr
+        } else if ( unit_type == SMILEI_UNIT_MOMENTUM ) {
+            unitDimension[unit_type][0] = -3.;
+            unitSI[unit_type] = 2.7309240656e-22; // me * c
+        } else if ( unit_type == SMILEI_UNIT_CHARGE ) {
+            unitDimension[unit_type][0] = -3.;
+            unitSI[unit_type] = 1.602176565e-19; // e
+        } else if ( unit_type == SMILEI_UNIT_TIME ) {
+            unitDimension[unit_type][2] = 1.;
+            unitSI[unit_type] = 1. / Wr; // 1 / Wr
+        }
+    }
+    
+    // Boundary conditions
     vector<string> bc_em_type;
     bc_em_type.push_back(params->bc_em_type_x[0]);
     bc_em_type.push_back(params->bc_em_type_x[1]);
@@ -82,6 +109,8 @@ OpenPMDparams::OpenPMDparams(Params& p):
         particleBoundary          .addString( "" );
         particleBoundaryParameters.addString( "" );
     }
+    
+    // Other parameters
     currentSmoothing = "none";
     currentSmoothingParameters = "";
     if( params->currentFilter_int > 0 ) {
@@ -110,11 +139,16 @@ void OpenPMDparams::writeBasePathAttributes( hid_t location, unsigned int itime 
 {
     H5::attr( location, "time", (double)(itime * params->timestep));
     H5::attr( location, "dt", (double)params->timestep);
-    H5::attr( location, "timeUnitSI", 0.); // not relevant
+    H5::attr( location, "timeUnitSI", unitSI[SMILEI_UNIT_TIME]);
 }
 
-void OpenPMDparams::writeMeshesPathAttributes( hid_t location )
+void OpenPMDparams::writeParticlesAttributes( hid_t location )
 {
+}
+
+void OpenPMDparams::writeMeshesAttributes( hid_t location )
+{
+    H5::attr( location, "patchSize", patchSize); // this one is not openPMD
     H5::attr( location, "fieldSolver", fieldSolver);
     H5::attr( location, "fieldSolverParameters", fieldSolverParameters);
     H5::attr( location, "fieldBoundary", fieldBoundary);
@@ -129,7 +163,7 @@ void OpenPMDparams::writeMeshesPathAttributes( hid_t location )
     H5::attr( location, "fieldSmoothingParameters", "");
 }
 
-void OpenPMDparams::writeFieldAttributes( hid_t location, unsigned int field_type )
+void OpenPMDparams::writeFieldAttributes( hid_t location )
 {
     H5::attr( location, "geometry", "cartesian");
     H5::attr( location, "dataOrder", "C");
@@ -137,9 +171,16 @@ void OpenPMDparams::writeFieldAttributes( hid_t location, unsigned int field_typ
     H5::attr( location, "gridSpacing", gridSpacing);
     H5::attr( location, "gridGlobalOffset", gridGlobalOffset);
     H5::attr( location, "gridOffset", gridOffset);
-    H5::attr( location, "gridUnitSI", 0.);      
-    H5::attr( location, "unitSI", 0.);      
-    H5::attr( location, "unitDimension", unitDimension[field_type]);
+    H5::attr( location, "gridUnitSI", unitSI[SMILEI_UNIT_POSITION]);      
+}
+
+void OpenPMDparams::writeSpeciesAttributes( hid_t location )
+{
+}
+
+void OpenPMDparams::writeRecordAttributes( hid_t location, unsigned int unit_type )
+{
+    H5::attr( location, "unitDimension", unitDimension[unit_type]);
     H5::attr( location, "timeOffset", 0.);
 }
 
@@ -147,6 +188,13 @@ void OpenPMDparams::writeFieldRecordAttributes( hid_t location )
 {
     H5::attr( location, "position", position);
 }
+
+void OpenPMDparams::writeComponentAttributes( hid_t location, unsigned int unit_type )
+{
+    H5::attr( location, "unitSI", unitSI[unit_type]);      
+}
+
+
 
 // WARNING: do not change the format. It is required for OpenPMD compatibility.
 string OpenPMDparams::getLocalTime() {

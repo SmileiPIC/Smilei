@@ -111,7 +111,10 @@ public:
      : spaceAndTimeProfile(lp->spaceAndTimeProfile) {};
     ~LaserProfileNonSeparable();
     inline double getAmplitude(std::vector<double> pos, double t, int j, int k) {
-        return spaceAndTimeProfile->valueAt(pos, t);
+        double amp;
+        #pragma omp critical
+        amp = spaceAndTimeProfile->valueAt(pos, t);
+        return amp;
     }
 private:
     Profile * spaceAndTimeProfile;

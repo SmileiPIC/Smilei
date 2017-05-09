@@ -30,6 +30,13 @@ public:
     virtual double valueAt(std::vector<double>, double ) {
         return 0.; // virtual => will be redefined
     };
+
+#ifdef SMILEI_USE_NUMPY
+    //! Gets the value of an N-D function at points specified as numpy arrays
+    virtual PyArrayObject* valueAt(std::vector<PyArrayObject*>) {
+        return NULL;
+    };
+#endif
 };
 
 
@@ -42,6 +49,7 @@ public:
     Function_Python1D(Function_Python1D *f) : py_profile(f->py_profile) {};
     double valueAt(double); // time
     double valueAt(std::vector<double>); // space
+    PyArrayObject* valueAt(std::vector<PyArrayObject*>); // numpy
 private:
     PyObject *py_profile;
 };
@@ -54,6 +62,7 @@ public:
     Function_Python2D(Function_Python2D *f) : py_profile(f->py_profile) {};
     double valueAt(std::vector<double>, double); // space + time
     double valueAt(std::vector<double>); // space
+    PyArrayObject* valueAt(std::vector<PyArrayObject*>); // numpy
 private:
     PyObject *py_profile;
 };
@@ -66,6 +75,7 @@ public:
     Function_Python3D(Function_Python3D *f) : py_profile(f->py_profile) {};
     double valueAt(std::vector<double>, double); // space + time
     double valueAt(std::vector<double>); // space
+    PyArrayObject* valueAt(std::vector<PyArrayObject*>); // numpy
 private:
     PyObject *py_profile;
 };

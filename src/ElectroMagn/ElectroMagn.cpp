@@ -228,22 +228,22 @@ ElectroMagn::~ElectroMagn()
 void ElectroMagn::boundaryConditions(int itime, double time_dual, Patch* patch, Params &params, SimWindow* simWindow)
 {
     // Compute EM Bcs
-    if ( (!simWindow) || (!simWindow->isMoving(time_dual)) ) {
+    if ( ! (simWindow && simWindow->isMoving(time_dual)) ) {
         if (emBoundCond[0]!=NULL) { // <=> if !periodic
-            emBoundCond[0]->apply_xmin(this, time_dual, patch);
-            emBoundCond[1]->apply_xmax(this, time_dual, patch);
+            emBoundCond[0]->apply(this, time_dual, patch);
+            emBoundCond[1]->apply(this, time_dual, patch);
         }
     }
     if (emBoundCond.size()>2) {
         if (emBoundCond[2]!=NULL) {// <=> if !periodic
-            emBoundCond[2]->apply_ymin(this, time_dual, patch);
-            emBoundCond[3]->apply_ymax(this, time_dual, patch);
+            emBoundCond[2]->apply(this, time_dual, patch);
+            emBoundCond[3]->apply(this, time_dual, patch);
         }
     }
     if (emBoundCond.size()>4) {
         if (emBoundCond[4]!=NULL) {// <=> if !periodic
-            emBoundCond[4]->apply_zmin(this, time_dual, patch);
-            emBoundCond[5]->apply_zmax(this, time_dual, patch);
+            emBoundCond[4]->apply(this, time_dual, patch);
+            emBoundCond[5]->apply(this, time_dual, patch);
         }
     }
 
@@ -319,7 +319,7 @@ void ElectroMagn::incrementAvgField(Field * field, Field * field_avg)
 
 void ElectroMagn::laserDisabled()
 {
-    if ( emBoundCond.size() )
+    if ( emBoundCond.size() && emBoundCond[0] )
         emBoundCond[0]->laserDisabled();
 }
 
@@ -374,7 +374,7 @@ void ElectroMagn::applyAntenna(unsigned int iAntenna, double intensity) {
         if     ( antennaField->name == "Jx" ) field = Jx_;
         else if( antennaField->name == "Jy" ) field = Jy_;
         else if( antennaField->name == "Jz" ) field = Jz_;
-        else ERROR("Antenna applied to field " << antennaField << " unknonw. This should not happend, please contact developers");
+        else ERROR("Antenna applied to field " << antennaField->name << " unknown. This should not happend, please contact developers");
         
         for (unsigned int i=0; i< field->globalDims_ ; i++)
             (*field)(i) += intensity * (*antennaField)(i);

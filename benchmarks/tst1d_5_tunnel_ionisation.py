@@ -5,10 +5,10 @@
 import math
 l0 = 2.0*math.pi	# wavelength in normalized units
 t0 = l0				# optical cycle in normalized units
-rest = 200.0		# nb of timestep in 1 optical cycle
-resx = 100.0		# nb cells in 1 wavelength
-Lsim = l0		# simulation length
-Tsim = 5.0*t0		# duration of the simulation
+rest = 6000.0		# nb of timestep in 1 optical cycle
+resx = 4000.0		# nb cells in 1 wavelength
+Lsim = 0.01*l0	    # simulation length
+Tsim = 0.2*t0		# duration of the simulation
 
 
 Main(
@@ -32,16 +32,30 @@ Main(
 )
 
 Species(
-	species_type = 'helium',
+	species_type = 'hydrogen',
 	ionization_model = 'tunnel',
 	ionization_electrons = 'electron',
-	atomic_number = 2,
+	atomic_number = 1,
 	initPosition_type = 'regular',
 	initMomentum_type = 'cold',
-	n_part_per_cell = 100,
-	mass = 1836.0,
+	n_part_per_cell = 10,
+	mass = 1836.0*1000.,
 	charge = 0.0,
-	nb_density = trapezoidal(1.0,xvacuum=0.49*l0,xplateau=0.02*l0),
+	nb_density = 0.1,
+	bc_part_type_xmin = 'none',
+	bc_part_type_xmax = 'none'
+)
+Species(
+	species_type = 'carbon',
+	ionization_model = 'tunnel',
+	ionization_electrons = 'electron',
+	atomic_number = 6,
+	initPosition_type = 'regular',
+	initMomentum_type = 'cold',
+	n_part_per_cell = 10,
+	mass = 1836.0*1000.,
+	charge = 0.0,
+	nb_density = 0.1,
 	bc_part_type_xmin = 'none',
 	bc_part_type_xmax = 'none'
 )
@@ -54,30 +68,40 @@ Species(
 	charge = -1.0,
 	charge_density = 0.0,
 	bc_part_type_xmin = 'none',
-	bc_part_type_xmax = 'none'
+	bc_part_type_xmax = 'none',
+	track_every = 30
 )
 
 LaserPlanar1D(
 	boxSide = 'xmin',
 	a0 = 0.1,
     omega = 1.,
-    polarizationPhi = math.pi/2.,
+    polarizationPhi = 0.,
     time_envelope = tconstant(),
 )
- 
-DiagScalar(every = 10)
- 
+
+DiagScalar(every = 20)
+
 DiagFields(
-    every = 1
+    every = 20,
+    time_average = 1,
+    fields = ["Ex", "Ey", "Ez"]
 )
 
 DiagParticles(
 	output = "density",
-	every = 10,
-	species = ["electron"],
+	every = 20,
+	species = ["hydrogen"],
 	axes = [
-		["x",  0.45*Lsim, 0.55*Lsim, 200],
-		["px", -0.1, 0.1, 200]
+		["charge",  -0.5, 1.5, 2]
 	]
 )
 
+DiagParticles(
+	output = "density",
+	every = 20,
+	species = ["carbon"],
+	axes = [
+		["charge",  -0.5, 6.5, 7]
+	]
+)

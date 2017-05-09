@@ -99,3 +99,25 @@ DiagParticles(
 )
 
 
+for direction in ["forward", "backward", "both", "canceling"]:
+	DiagScreen(
+	    shape = "sphere",
+	    point = [0.],
+	    vector = [Lsim/3.],
+	    direction = direction,
+	    output = "density",
+	    species = ["eon"],
+	    axes = [["ekin", 0., 0.4, 10],],
+	    every = 3000
+	)
+	DiagScreen(
+	    shape = "plane",
+	    point = [Lsim/3.],
+	    vector = [1.],
+	    direction = direction,
+	    output = "density",
+	    species = ["eon"],
+	    axes = [["ekin", 0., 0.4, 10],],
+	    every = 3000
+	)
+

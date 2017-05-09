@@ -44,6 +44,9 @@ public:
     void finishCreation( Params& params, SmileiMPI* smpi );
     //! Last cloning step
     void finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool with_particles );
+
+    //! Finalize MPI environment : especially requests array for non blocking communications
+    void finalizeMPIenvironment();
     
     //! Destructor for Patch
     virtual ~Patch();
@@ -139,6 +142,8 @@ public:
     inline bool isZmin() { return locateOnBorders(2, 0); }
     //! Should be pure virtual, see child classes
     inline bool isZmax() { return locateOnBorders(2, 1); }
+    //! Define old xmax patch for moiving window,(non periodic eature)
+    inline bool wasXmax( Params& params ) { return Pcoordinates[0]+1 ==  params.number_of_patches[0]-1; }
     
     //! Test neighbbor's patch Id to apply or not a boundary condition
     inline bool locateOnBorders(int dir, int way) {

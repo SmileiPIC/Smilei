@@ -26,6 +26,7 @@ Collisions::Collisions(
     int debug_every,
     int Z,
     bool ionizing,
+    bool tracked_electrons,
     int nDim,
     double referenceAngularFrequency_SI,
     string filename
@@ -41,7 +42,7 @@ filename(filename)
 {
     // Create the ionization object
     if( ionizing ) {
-        Ionization = new CollisionalIonization(Z, nDim, referenceAngularFrequency_SI);
+        Ionization = new CollisionalIonization(Z, nDim, referenceAngularFrequency_SI, tracked_electrons);
     } else {
         Ionization = new CollisionalNoIonization();
     }
@@ -140,7 +141,7 @@ void Collisions::calculate_debye_length(Params& params, Patch * patch)
 }
 
 // Calculates the collisions for a given Collisions object
-void Collisions::collide(Params& params, Patch* patch, int itime)
+void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnostic*>& localDiags)
 {
 
     vector<unsigned int> *sg1, *sg2, *sgtmp, index1, index2;
@@ -339,7 +340,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime)
         cosX = cos_chi(s);
         sinX = sqrt( 1. - cosX*cosX );
         //!\todo make a faster rand by preallocating ??
-        phi = twoPi * ((double)rand() *INV_RAND_MAX);
+        phi = twoPi * Rand::uniform();
         
         // Calculate combination of angles
         sinXcosPhi = sinX*cos(phi);
@@ -361,7 +362,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime)
         // Random number to choose whether deflection actually applies.
         // This is to conserve energy in average when weights are not equal.
         //!\todo make a faster rand by preallocating ??
-        U = ((double)rand() *INV_RAND_MAX);
+        U = Rand::uniform();
         
         // Go back to the lab frame and store the results in the particle array
         vcp = COM_vx * newpx_COM + COM_vy * newpy_COM + COM_vz * newpz_COM;
@@ -390,7 +391,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime)
     } // end loop on pairs of particles
     
     // temporary to be removed
-    Ionization->finish(patch->vecSpecies[(*sg1)[0]], patch->vecSpecies[(*sg2)[0]], params, patch);
+    Ionization->finish(patch->vecSpecies[(*sg1)[0]], patch->vecSpecies[(*sg2)[0]], params, patch, localDiags);
     
     if(debug) {
         if( npairs>0 ) {
@@ -485,7 +486,7 @@ inline double Collisions::cos_chi(double s)
     
     double A, invA;
     //!\todo make a faster rand by preallocating ??
-    double U = (double)rand() *INV_RAND_MAX;
+    double U = Rand::uniform();
     
     if( s < 0.1 ) {
         if ( U<0.0001 ) U=0.0001; // ensures cos_chi > 0

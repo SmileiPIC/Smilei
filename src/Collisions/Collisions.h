@@ -17,7 +17,10 @@ class Collisions
 
 public:
     //! Constructor for Collisions between two species
-    Collisions( Patch* patch, unsigned int n_collisions, std::vector<unsigned int>,std::vector<unsigned int>, double coulomb_log, bool intra_collisions,int debug_every,int Z,bool ionizing,int nDim,double,std::string);
+    Collisions( Patch* patch, unsigned int n_collisions, std::vector<unsigned int>,
+        std::vector<unsigned int>, double coulomb_log, bool intra_collisions,
+        int debug_every, int Z, bool ionizing, bool tracked_electrons, int nDim,
+        double,std::string);
     //! Cloning Constructor
     Collisions(Collisions*, int);
     //! destructor
@@ -35,7 +38,7 @@ public:
     static bool debye_length_required;
     
     //! Method called in the main smilei loop to apply collisions at each timestep
-    void collide(Params&, Patch* ,int);
+    void collide(Params&, Patch* ,int, std::vector<Diagnostic*>&);
     
     //! Outputs the debug info if requested
     static void debug(Params& params, int itime, unsigned int icoll, VectorPatch& vecPatches);

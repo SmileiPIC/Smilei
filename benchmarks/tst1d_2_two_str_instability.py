@@ -34,9 +34,12 @@ Species(
 	mass = 1836.0,
 	charge = 1.0,
 	nb_density = 1.,
-	time_frozen = 10000.0,
+	#time_frozen = 10000.0,
 	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
+	bc_part_type_xmax = "none",
+	track_every = 1000,
+	track_filter = lambda x, px, py, pz: (x<0.02), 
+	time_frozen = 0.1
 )
 Species(
 	species_type = "eon1",
@@ -45,7 +48,7 @@ Species(
 	n_part_per_cell = 10,
 	mass = 1.0,
 	charge = -1.0,
-	nb_density = cosine(0.5,xamplitude=dn,xlength=L),
+	nb_density = cosine(0.5,xamplitude=dn,xlength=L, xnumber=1),
 	mean_velocity = [-0.1,0.0,0.0],
 	bc_part_type_xmin = "none",
 	bc_part_type_xmax = "none"
@@ -57,7 +60,7 @@ Species(
 	n_part_per_cell = 10,
 	mass = 1.0,
 	charge = -1.0,
-	nb_density = cosine(0.5,xamplitude=dn,xlength=L),
+	nb_density = cosine(0.5,xamplitude=dn,xlength=L, xnumber=1),
 	mean_velocity = [0.1,0.0,0.0],
 	bc_part_type_xmin = "none",
 	bc_part_type_xmax = "none"

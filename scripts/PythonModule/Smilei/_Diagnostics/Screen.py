@@ -152,13 +152,17 @@ class Screen(Diagnostic):
 			# Find some quantities depending on the axis type
 			overall_min = "-inf"; overall_max = "inf"
 			axis_units = ""
-			if   axis["type"] in ["x","y","z"]:
+			if   axis["type"] in ["x","y","z", "moving_x"]:
 				axis_units = "L_r"
-				spatialaxes[axis["type"]] = True
+				spatialaxes[axis["type"][-1]] = True
 			elif axis["type"] in ["a","b"]:
 				axis_units = "L_r"
 				hasComposite = True
-			elif axis["type"] == "theta":
+			elif axis["type"] == "theta" and self._ndim==2:
+				axis_units = "rad"
+				overall_min = "-3.141592653589793"
+				overall_max = "3.141592653589793"
+			elif axis["type"] == "theta" and self._ndim==3:
 				axis_units = "rad"
 				overall_min = "0"
 				overall_max = "3.141592653589793"
@@ -174,6 +178,9 @@ class Screen(Diagnostic):
 				axis_units = "P_r"
 			elif axis["type"] in ["vx","vy","vz","v"]:
 				axis_units = "V_r"
+			elif axis["type"] in ["vperp2"]:
+				axis_units = "V_r**2"
+				overall_min = "0"
 			elif axis["type"] == "gamma":
 				overall_min = "1"
 			elif axis["type"] == "ekin":
@@ -182,6 +189,9 @@ class Screen(Diagnostic):
 			elif axis["type"] == "charge":
 				axis_units = "Q_r"
 				overall_min = "0"
+			else:
+				self._error = "axis type "+axis["type"]+" not implemented"
+				return None
 			
 			# if this axis has to be sliced, then select the slice
 			if axis["type"] in slice:
@@ -219,7 +229,7 @@ class Screen(Diagnostic):
 					# calculate the size of the slice
 					slice_size = edges[indices[-1]+1] - edges[indices[0]]
 				
-				if axis["type"] in ["x","y","z"]: coeff /= slice_size
+				if axis["type"] in ["x","y","z","moving_x"]: coeff /= slice_size
 			
 			# if not sliced, then add this axis to the overall plot
 			else:
@@ -232,7 +242,7 @@ class Screen(Diagnostic):
 				self._log    .append(axis["log"])
 				self._label  .append(axis["type"])
 				self._units  .append(axis_units)
-				if axis["type"] == "theta":
+				if axis["type"] == "theta" and self._ndim==3:
 					plot_diff.append(self._np.diff(self._np.cos(edges))[::stride])
 				else:
 					plot_diff.append(self._np.diff(edges)[::stride])
@@ -286,7 +296,7 @@ class Screen(Diagnostic):
 			self._bsize = plot_diff[0]
 		else:
 			self._bsize = self._np.prod( self._np.array( self._np.meshgrid( *plot_diff ) ), axis=0)
-			self._bsize = self._bsize.transpose()
+			self._bsize = self._bsize.transpose([1,0]+range(2,len(plot_diff)))
 		self._bsize = cell_volume / self._bsize
 		if not hasComposite: self._bsize *= coeff
 		self._bsize = self._np.squeeze(self._bsize)
@@ -413,13 +423,13 @@ class Screen(Diagnostic):
 				print("Timestep "+str(t)+" not found in this screen")
 				return []
 			# get data
-			B = self._np.squeeze(self._np.zeros(self._finalShape))
+			B = self._np.zeros(self._finalShape)
 			try:
 				self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
 			except:
-					B = self._np.squeeze(B)
-					self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
-					B = self._np.reshape(B, self._finalShape)
+				B = self._np.squeeze(B)
+				self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
+				B = self._np.reshape(B, self._finalShape)
 			B[self._np.isnan(B)] = 0.
 			# Apply the slicing
 			for iaxis in range(self._naxes):

@@ -4,6 +4,17 @@
 #include "Params.h"
 #include "H5.h"
 
+#define SMILEI_NUNITS 9
+#define SMILEI_UNIT_NONE     0
+#define SMILEI_UNIT_EFIELD   1
+#define SMILEI_UNIT_BFIELD   2
+#define SMILEI_UNIT_CURRENT  3
+#define SMILEI_UNIT_DENSITY  4
+#define SMILEI_UNIT_POSITION 5
+#define SMILEI_UNIT_MOMENTUM 6
+#define SMILEI_UNIT_CHARGE   7
+#define SMILEI_UNIT_TIME     8
+
 class OpenPMDparams {
 
 public:
@@ -24,8 +35,12 @@ public:
     std::vector<double> gridGlobalOffset;
     //! Offset of the grid for each field
     std::vector<double> gridOffset;
-    //! Units of each field
+    //! Patch size
+    std::vector<unsigned int> patchSize;
+    //! Units of each quantity (contains length, mass, time, current, temperature, amount, intensity)
     std::vector<std::vector<double> > unitDimension;
+    //! Conversion factor to SI for each quantity
+    std::vector<double> unitSI;
     //! field solver description
     std::string fieldSolver, fieldSolverParameters;
     //! boundary conditions names
@@ -45,14 +60,27 @@ public:
     void writeBasePathAttributes( hid_t, unsigned int );
     
     //! Write the attributes for the meshesPath
-    void writeMeshesPathAttributes( hid_t );
+    void writeMeshesAttributes( hid_t );
+    
+    //! Write the attributes for the particlesPath
+    void writeParticlesAttributes( hid_t );
     
     //! Write the attributes for a field in the meshesPath
-    void writeFieldAttributes( hid_t, unsigned int );
+    void writeFieldAttributes( hid_t );
     
-    //! Write the attributes for a field record (x, y or z)
-    void writeFieldRecordAttributes( hid_t);
+    //! Write the attributes for the particlesPath
+    void writeSpeciesAttributes( hid_t );
     
+    //! Write the attributes for a record
+    void writeRecordAttributes( hid_t, unsigned int );
+    
+    //! Write the attributes for a field record
+    void writeFieldRecordAttributes( hid_t );
+
+    //! Write the attributes for a component
+    void writeComponentAttributes( hid_t, unsigned int );
+    
+
 private:
     Params * params;
     

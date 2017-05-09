@@ -15,6 +15,35 @@ def setMatplotLibBackend(show=True):
 	#print(matplotlib.get_backend())
 
 
+def updateMatplotLibColormaps():
+	# Add smilei's colormap to the available matplotlib colormaps
+	import matplotlib.colors, matplotlib.pyplot
+	if "smilei" in matplotlib.pyplot.colormaps(): return
+	def register(name, d):
+		cmap = matplotlib.colors.LinearSegmentedColormap(name, d, N=256, gamma=1.0)
+		matplotlib.pyplot.register_cmap(cmap=cmap)
+	register(u"smilei", {
+			'red'  :((0., 0., 0.), (0.0625 , 0.091, 0.091), (0.09375, 0.118, 0.118), (0.125 , 0.127, 0.127), (0.1875 , 0.135, 0.135), (0.21875, 0.125, 0.125), (0.28125, 0.034, 0.034), (0.3125 , 0.010, 0.010), (0.34375, 0.009, 0.009), (0.4375 , 0.049, 0.049), (0.46875, 0.057, 0.057), (0.5 , 0.058, 0.058), (0.59375, 0.031, 0.031), (0.625 , 0.028, 0.028), (0.65625, 0.047, 0.047), (0.71875, 0.143, 0.143), (0.78125, 0.294, 0.294), (0.84375, 0.519, 0.519), (0.90625, 0.664, 0.664), (0.9375 , 0.760, 0.760), (0.96875, 0.880, 0.880), (1., 1., 1. )),
+			'green':((0., 0., 0.), (0.21875, 0.228, 0.228), (0.78125, 0.827, 0.827), (0.8125 , 0.852, 0.852), (0.84375, 0.869, 0.869), (0.9375 , 0.937, 0.937), (0.96875, 0.967, 0.967), (1. , 1. , 1. )),
+			'blue' :((0., 0., 0.), (0.0625 , 0.174, 0.184), (0.09375, 0.207, 0.207), (0.21875, 0.447, 0.447), (0.25 , 0.500, 0.500), (0.5 , 0.507, 0.507), (0.5625 , 0.502, 0.502), (0.625 , 0.485, 0.485), (0.6875 , 0.452, 0.452), (0.75 , 0.398, 0.398), (0.78125, 0.363, 0.363), (0.8125 , 0.345, 0.345), (0.84375, 0.377, 0.377), (0.90625, 0.534, 0.534), (0.9375 , 0.660, 0.660), (0.96875, 0.790, 0.790), (1. , 1. , 1. ))
+		})
+	register(u"smilei_r", {
+			'red'  :((0.0, 1.0, 1.0), (0.03125, 0.88, 0.88), (0.0625, 0.76, 0.76), (0.09375, 0.664, 0.664), (0.15625, 0.519, 0.519), (0.21875, 0.294, 0.294), (0.28125, 0.143, 0.143), (0.34375, 0.047, 0.047), (0.375, 0.028, 0.028), (0.40625, 0.031, 0.031), (0.5, 0.058, 0.058), (0.53125, 0.057, 0.057), (0.5625, 0.049, 0.049), (0.65625, 0.009, 0.009), (0.6875, 0.01, 0.01), (0.71875, 0.034, 0.034), (0.78125, 0.125, 0.125), (0.8125, 0.135, 0.135), (0.875, 0.127, 0.127), (0.90625, 0.118, 0.118), (0.9375, 0.091, 0.091), (1.0, 0.0, 0.0)),
+			'green':((0.0, 1.0, 1.0), (0.03125, 0.967, 0.967), (0.0625, 0.937, 0.937), (0.15625, 0.869, 0.869), (0.1875, 0.852, 0.852), (0.21875, 0.827, 0.827), (0.78125, 0.228, 0.228), (1.0, 0.0, 0.0)),
+			'blue' :((0.0, 1.0, 1.0), (0.03125, 0.79, 0.79), (0.0625, 0.66, 0.66), (0.09375, 0.534, 0.534), (0.15625, 0.377, 0.377), (0.1875, 0.345, 0.345), (0.21875, 0.363, 0.363), (0.25, 0.398, 0.398), (0.3125, 0.452, 0.452), (0.375, 0.485, 0.485), (0.4375, 0.502, 0.502), (0.5, 0.507, 0.507), (0.75, 0.5, 0.5), (0.78125, 0.447, 0.447), (0.90625, 0.207, 0.207), (0.9375, 0.174, 0.184), (1.0, 0.0, 0.0))
+		})
+	register(u"smileiD", {
+			'red'  :((0., 0.028, 0.028), (0.0625 , 0.027, 0.027), (0.109375, 0.049, 0.049), (0.1875 , 0.122, 0.122), (0.296875, 0.464, 0.464), (0.5 , 1. , 1. ), (0.546875, 0.942, 0.942), (0.609375, 0.816, 0.816), (0.71875 , 0.532, 0.532), (0.765625, 0.366, 0.366), (0.8125 , 0.187, 0.187), (0.84375 , 0.114, 0.114), (0.875 , 0.083, 0.083), (1.0 , 0.061, 0.061)),
+			'green':((0., 0.163, 0.163), (0.5 , 1. , 1. ), (0.546875, 0.936, 0.936), (0.625 , 0.805, 0.805), (0.78125 , 0.612, 0.612), (0.84375 , 0.517, 0.517), (1.0 , 0.251, 0.251)),
+			'blue' :((0., 0.328, 0.328), (0.078125, 0.525, 0.525), (0.25 , 0.668, 0.668), (0.3125 , 0.727, 0.727), (0.390625, 0.822, 0.822), (0.484375, 0.965, 0.965), (0.5 , 1. , 1. ), (0.515625, 0.962, 0.962), (0.75 , 0.187, 0.187), (0.765625, 0.157, 0.157), (0.78125 , 0.157, 0.157), (0.828125, 0.217, 0.217), (0.859375, 0.243, 0.243), (0.890625, 0.255, 0.255), (0.9375 , 0.254, 0.254), (1.0 , 0.232, 0.232)) 
+		})
+	register(u"smileiD_r", {
+			'red'  :((0.0, 0.061, 0.061), (0.125, 0.083, 0.083), (0.15625, 0.114, 0.114), (0.1875, 0.187, 0.187), (0.234375, 0.366, 0.366), (0.28125, 0.532, 0.532), (0.390625, 0.816, 0.816), (0.453125, 0.942, 0.942), (0.5, 1.0, 1.0), (0.703125, 0.464, 0.464), (0.8125, 0.122, 0.122), (0.890625, 0.049, 0.049), (0.9375, 0.027, 0.027), (1.0, 0.028, 0.028)),
+			'green':((0.0, 0.251, 0.251), (0.15625, 0.517, 0.517), (0.21875, 0.612, 0.612), (0.375, 0.805, 0.805), (0.453125, 0.936, 0.936), (0.5, 1.0, 1.0), (1.0, 0.163, 0.163)),
+			'blue' :((0.0, 0.232, 0.232), (0.0625, 0.254, 0.254), (0.109375, 0.255, 0.255), (0.140625, 0.243, 0.243), (0.171875, 0.217, 0.217), (0.21875, 0.157, 0.157), (0.234375, 0.157, 0.157), (0.25, 0.187, 0.187), (0.484375, 0.962, 0.962), (0.5, 1.0, 1.0), (0.515625, 0.965, 0.965), (0.609375, 0.822, 0.822), (0.6875, 0.727, 0.727), (0.75, 0.668, 0.668), (0.921875, 0.525, 0.525), (1.0, 0.328, 0.328))
+		})
+
+
 class Options(object):
 	""" Class to contain matplotlib plotting options """
 	
@@ -29,7 +58,6 @@ class Options(object):
 		self.vfactor = None
 		self.vmin    = None
 		self.vmax    = None
-		self.streakPlot = False
 		self.figure0 = {}
 		self.figure1 = {"facecolor":"w"}
 		self.axes = {}
@@ -38,51 +66,56 @@ class Options(object):
 		self.colorbar = {}
 		self.xtick = {"useOffset":False}
 		self.ytick = {"useOffset":False}
-		if "cmap" not in kwargs.keys(): kwargs.update({"cmap":"smilei"})
+		if "cmap" not in kwargs.keys(): kwargs["cmap"] = "smilei"
+		self.side = "left"
+		self.transparent = None
 		self.set(**kwargs)
 	
 	# Method to set optional plotting arguments
 	def set(self, **kwargs):
 		# First, we manage the main optional arguments
-		self.figure0.update({ "num":kwargs.pop("figure",self.figure) })
-		self.xfactor  = kwargs.pop("xfactor",self.xfactor  )
-		self.xmin     = kwargs.pop("xmin"   ,self.xmin  )
-		self.xmax     = kwargs.pop("xmax"   ,self.xmax  )
-		self.yfactor  = kwargs.pop("yfactor",self.yfactor  )
-		self.ymin     = kwargs.pop("ymin"   ,self.ymin  )
-		self.ymax     = kwargs.pop("ymax"   ,self.ymax  )
-		self.vfactor  = kwargs.pop("vfactor",self.vfactor  )
-		self.vmin     = kwargs.pop("vmin"   ,kwargs.pop("data_min",self.vmin))
-		self.vmax     = kwargs.pop("vmax"   ,kwargs.pop("data_max",self.vmax))
-		self.streakPlot    = kwargs.pop("streakPlot"   , self.streakPlot   )
+		self.figure0["num"] = kwargs.pop("figure", self.figure)
+		self.xfactor     = kwargs.pop("xfactor"    , self.xfactor  )
+		self.xmin        = kwargs.pop("xmin"       , self.xmin  )
+		self.xmax        = kwargs.pop("xmax"       , self.xmax  )
+		self.yfactor     = kwargs.pop("yfactor"    , self.yfactor  )
+		self.ymin        = kwargs.pop("ymin"       , self.ymin  )
+		self.ymax        = kwargs.pop("ymax"       , self.ymax  )
+		self.vfactor     = kwargs.pop("vfactor"    , self.vfactor  )
+		self.vmin        = kwargs.pop("vmin"       , self.vmin )
+		self.vmax        = kwargs.pop("vmax"       , self.vmax )
+		self.side        = kwargs.pop("side"       , self.side )
+		self.transparent = kwargs.pop("transparent", self.transparent )
 		# Second, we manage all the other arguments that are directly the ones of matplotlib
 		for kwa, val in kwargs.items():
 			if kwa in ["figsize"]:
-				self.figure0.update({kwa:val})
+				self.figure0[kwa] = val
 			if kwa in ["dpi","facecolor","edgecolor"]:
-				self.figure1.update({kwa:val})
+				self.figure1[kwa] = val
 			if kwa in ["aspect","axis_bgcolor",
 					   "frame_on","position","title","visible","xlabel","xscale","xticklabels",
 					   "xticks","ylabel","yscale","yticklabels","yticks","zorder"]:
-				self.axes.update({kwa:val})
+				self.axes[kwa] = val
 			if kwa in ["color","dashes","drawstyle","fillstyle","label","linestyle",
 					   "linewidth","marker","markeredgecolor","markeredgewidth",
 					   "markerfacecolor","markerfacecoloralt","markersize","markevery",
 					   "visible","zorder"]:
-				self.plot.update({kwa:val})
+				self.plot[kwa] = val
 			if kwa in ["cmap","aspect","interpolation"]:
-				self.image.update({kwa:val})
+				self.image[kwa] = val
 			if kwa in ["orientation","fraction","pad","shrink","anchor","panchor",
 					   "extend","extendfrac","extendrect","spacing","ticks","format",
 					   "drawedges"]:
-				self.colorbar.update({kwa:val})
+				self.colorbar[kwa] = val
 			if kwa in ["style_x","scilimits_x","useOffset_x"]:
-				self.xtick.update({kwa[:-2]:val})
+				self.xtick[kwa] = val
 			if kwa in ["style_y","scilimits_y","useOffset_y"]:
-				self.ytick.update({kwa[:-2]:val})
+				self.ytick[kwa] = val
 		# special case: "aspect" is ambiguous because it exists for both imshow and colorbar
 		if "cbaspect" in kwargs:
-			self.colorbar.update({"aspect":kwargs["cbaspect"]})
+			self.colorbar["aspect"] = kwargs["cbaspect"]
+		if self.side=="right" and "pad" not in self.colorbar:
+			self.colorbar["pad"] = 0.15
 
 
 class Units(object):
@@ -271,26 +304,31 @@ class SaveAs:
 		#		print("         Supported formats: "+",".join(supportedTypes.keys()))
 		#		self.prefix = False
 	
-	def frame(self, id):
+	def frame(self, id=None):
 		if self.prefix:
-			self.figure.savefig(self.prefix + "%010d"%int(id) + self.suffix)
+			if id: self.figure.savefig(self.prefix + "%010d"%int(id) + self.suffix)
+			else : self.figure.savefig(self.prefix + self.suffix)
 
 
 
 def multiPlot(*Diags, **kwargs):
-	""" multiplot(Diag1, Diag2, ..., shape=None, movie="", fps=15, dpi=200, saveAs=None)
+	""" multiplot(Diag1, Diag2, ...,
+	              shape=None,
+	              movie="", fps=15, dpi=200, saveAs=None,
+	              skipAnimation=False
+	              )
 	
 	Plots simultaneously several diagnostics.
 	
 	Parameters:
 	-----------
 	Diag1, Diag2, ... : Several objects of classes 'Scalar', 'Field', 'Probe' or 'ParticleDiagnostic'
-	shape : 2D list giving the number of figures in x and y.
-	movie : filename to create a movie.
+	shape : 2-element list giving the number of figures in x and y.
+	movie : filename to create a movie, e.g. "my/path/mov.avi" or "my/path/mov.gif"
 	fps : frames per second for the movie.
 	dpi : resolution of the movie.
-	saveAs : path where to store individual frames as pictures.
-	skipAnimation : toggle going directly to the last frame.
+	saveAs : path where to store individual frames as pictures, e.g. "my/path/fig.png"
+	skipAnimation : if True, plots only the last frame.
 	"""
 	
 	from _Diagnostics import TrackParticles
@@ -309,25 +347,26 @@ def multiPlot(*Diags, **kwargs):
 	dpi    = kwargs.pop("dpi"   , 200 )
 	saveAs = kwargs.pop("saveAs", None)
 	skipAnimation = kwargs.pop("skipAnimation", False )
+	timesteps = kwargs.pop("timesteps", None )
 	# Gather all times
-	if skipAnimation:
-		alltimes = np.unique([Diag.times[-1]*Diag.timestep for Diag in Diags])
-	else:
-		alltimes = np.unique(np.concatenate([Diag.times*Diag.timestep for Diag in Diags]))
+	alltimes = []
+	for Diag in Diags:
+		diagtimes = Diag.times
+		if timesteps is not None:
+			diagtimes = Diag._selectTimesteps(timesteps, diagtimes)
+		diagtimes = list( diagtimes*Diag.timestep )
+		if skipAnimation: alltimes += [diagtimes[-1]]
+		else            : alltimes += diagtimes
+	alltimes = np.sort(np.unique(alltimes))
 	# Determine whether to plot all cases on the same axes
 	sameAxes = False
 	if shape is None or shape == [1,1]:
 		sameAxes = True
-		for Diag in Diags:
-			if type(Diag) is TrackParticles:
+		for d in Diags:
+			if type(d) is TrackParticles or d._type!=Diags[0]._type or d.dim!=Diags[0].dim:
 				sameAxes = False
 				break
-			if Diag.dim==0 and Diags[0].dim==0:
-				continue
-			if Diag.dim!=1 or Diag._type != Diags[0]._type:
-				sameAxes = False
-				break
-	if not sameAxes and shape == [1,1]:
+	if not sameAxes and shape == [1,1] and nDiags>1:
 		print("Cannot have shape=[1,1] with these diagnostics")
 		return
 	# Determine the shape
@@ -351,9 +390,22 @@ def multiPlot(*Diags, **kwargs):
 	c = plt.matplotlib.rcParams['axes.color_cycle']
 	for i in range(nplots):
 		ax.append( fig.add_subplot(shape[0], shape[1], i+1) )
+	allright = all([d.options.side=="right" for d in Diags])
 	for i, Diag in enumerate(Diags):
-		if sameAxes: Diag._ax = ax[0]
-		else       : Diag._ax = ax[i]
+		Diag._cax_id = 0
+		if sameAxes:
+			Diag._ax = ax[0]
+			if Diag.dim==2: Diag._cax_id = i
+		else:
+			Diag._ax = ax[i]
+		if Diag.options.side == "right":
+			if sameAxes and not allright:
+				try   : Diag._ax.twin # check if twin exists
+				except: Diag._ax.twin = Diag._ax.twinx()
+				Diag._ax = Diag._ax.twin
+			else:
+				Diag._ax.yaxis.tick_right()
+				Diag._ax.yaxis.set_label_position("right")
 		Diag._artist = None
 		try:
 			l = Diag.limits()[0]
@@ -384,9 +436,19 @@ def multiPlot(*Diags, **kwargs):
 						if Diag._artist is not None: Diag._artist.remove()
 					else:
 						Diag._ax.cla()
-					Diag._artist = Diag._animateOnAxes(Diag._ax, t)
+					Diag._artist = Diag._animateOnAxes(Diag._ax, t, cax_id = Diag._cax_id)
 					if sameAxes:
 						Diag._ax.set_xlim(xmin,xmax)
+						color = Diag._artist.get_color()
+						Diag._ax.yaxis.label.set_color(color)
+						Diag._ax.tick_params(axis='y', colors=color)
+						if Diag.options.side == "right":
+							Diag._ax.spines['right'].set_color(color)
+							Diag._ax.spines['left'].set_color((1.,1.,1.,0.))
+						else:
+							Diag._ax.spines['left'].set_color(color)
+					try: Diag._ax.set_position(Diag._ax.twin.get_position())
+					except: pass
 			plt.draw()
 			plt.pause(0.00001)
 			mov.grab_frame()
@@ -401,7 +463,7 @@ class VTKfile:
 		try:
 			import vtk
 		except:
-			print "Python module 'vtk' not found. Could not export to VTK format"
+			print("Python module 'vtk' not found. Could not export to VTK format")
 			return
 		
 		self.vtk = vtk
@@ -429,9 +491,9 @@ class VTKfile:
 		writer.SetNumberOfPieces(numberOfPieces)
 		writer.SetEndPiece(numberOfPieces-1)
 		writer.SetStartPiece(0);
-                if float(self.vtk.VTK_VERSION[:3]) < 6:
+		if float(self.vtk.VTK_VERSION[:3]) < 6:
 		    writer.SetInput(img)
-                else:
+		else:
 		    writer.SetInputData(img)
 		writer.Write()
 	
@@ -444,9 +506,9 @@ class VTKfile:
 		grid.GetPointData().SetScalars(array)
 		writer = self.vtk.vtkRectilinearGridWriter()
 		writer.SetFileName(file)
-                if float(self.vtk.VTK_VERSION[:3]) < 6:
+		if float(self.vtk.VTK_VERSION[:3]) < 6:
 		    writer.SetInput(grid)
-                else:
+		else:
 		    writer.SetInputData(grid)
 		writer.Write()
 	
@@ -457,9 +519,9 @@ class VTKfile:
 		grid.SetPoints(points)
 		writer = self.vtk.vtkUnstructuredGridWriter()
 		writer.SetFileName(file)
-                if float(self.vtk.VTK_VERSION[:3]) < 6:
+		if float(self.vtk.VTK_VERSION[:3]) < 6:
 		    writer.SetInput(grid)
-                else:
+		else:
 		    writer.SetInputData(grid)
 		writer.Write()
 	
@@ -485,9 +547,9 @@ class VTKfile:
 		
 		writer = self.vtk.vtkPolyDataWriter()
 		writer.SetFileName(file)
-                if float(self.vtk.VTK_VERSION[:3]) < 6:
+		if float(self.vtk.VTK_VERSION[:3]) < 6:
 		    writer.SetInput(pdata)
-                else:
+		else:
 		    writer.SetInputData(pdata)
 		writer.Write()
 
