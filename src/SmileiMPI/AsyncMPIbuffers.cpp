@@ -33,7 +33,7 @@ void AsyncMPIbuffers::allocate(unsigned int ndims)
     }
 }
 
-void AsyncMPIbuffers::allocate(unsigned int ndims, Field* f)
+void AsyncMPIbuffers::allocate(unsigned int ndims, Field* f, std::vector<unsigned int>& oversize)
 {
     if (srequest.size()!=0) return;
     srequest.resize(ndims);
@@ -43,7 +43,7 @@ void AsyncMPIbuffers::allocate(unsigned int ndims, Field* f)
         rrequest[i].resize(2);
     }
     
-    std::vector<unsigned int> oversize2(ndims,2);
+    std::vector<unsigned int> oversize2(oversize);
     oversize2[0] *= 2;
     oversize2[0] += 1 + f->isDual_[0];
     if (ndims>1) {
