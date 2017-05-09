@@ -21,7 +21,8 @@ def _smilei_check():
     # Verify classes were not overriden
     for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
             "DiagProbe","DiagParticles", "DiagScalar","DiagFields","ExtField",
-            "SmileiSingleton","Main","DumpRestart","LoadBalancing","MovingWindow"]:
+            "SmileiSingleton","Main","DumpRestart","LoadBalancing","MovingWindow",
+            "NLICompton"]:
         CheckClass = globals()[CheckClassName]
         try:
             if not CheckClass._verify: raise Exception("")

@@ -146,7 +146,7 @@ class Main(SmileiSingleton):
     referenceAngularFrequency_SI = 0.
     print_every = None
     random_seed = None
-    
+
     def __init__(self, **kwargs):
         super(Main, self).__init__(**kwargs)
         #initialize timestep if not defined based on timestep_over_CFL
@@ -346,6 +346,13 @@ class PartWall(SmileiComponent):
     y = None
     z = None
 
+# Nonlinear Inverse Compton Scattering
+class NLICompton(SmileiComponent):
+    """Nonlinear inverse Compton scattering"""
+    chipa_integfochi_min = 1e-5
+    chipa_integfochi_max = 1e2
+    dim_integfochi = 128
+    
 # Smilei-defined
 smilei_mpi_rank = 0
 smilei_mpi_size = 1

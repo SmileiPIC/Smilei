@@ -260,16 +260,24 @@ void userFunctions::gauss_legendre_coef(double xmin,double xmax, double * x,
     double z1,z,xm,xl,pp,p3,p2,p1;
 
     // Checks
-    if (nbit <= 0) ERROR("Number of iteration <= 0 in gauss_legendre_coef")
-        if (xmax < xmin) ERROR("xmax < xmin in gauss_legendre_coef")
-            if (eps <= 0) ERROR("accuracy threshold epsilon <= 0 in gauss_legendre_coef")
-
-                // The roots are symmetric, so we only find half of them.
-                m=(nbit+1)/2;
+    if (nbit <= 0) 
+    {
+        ERROR("Number of iteration <= 0 in gauss_legendre_coef")
+    }
+    if (xmax < xmin)
+    {
+        ERROR("xmax < xmin in gauss_legendre_coef")
+    }
+    if (eps <= 0)
+    {
+        ERROR("accuracy threshold epsilon <= 0 in gauss_legendre_coef")
+    }
+    // The roots are symmetric, so we only find half of them.
+    m=(nbit+1)/2;
     xm=0.5*(xmin+xmax);
     xl=0.5*(xmax-xmin);
-    for (i=1;i<=m;i++) { /* Loop over the desired roots. */
-        z=cos(M_PI*(i-0.25)/(nbit+0.5));
+    for (i=0;i<=m-1;i++) { /* Loop over the desired roots. */
+        z=cos(M_PI*(i+1.0-0.25)/(nbit+0.5));
         /* Starting with the above approximation to the ith root, we enter */
         /* the main loop of refinement by Newton's method.                 */
         do {
@@ -288,9 +296,10 @@ void userFunctions::gauss_legendre_coef(double xmin,double xmax, double * x,
             z=z1-p1/pp; /* Newton's method. */
         } while (fabs(z-z1) > eps);
         x[i]=xm-xl*z;      /* Scale the root to the desired interval, */
-        x[nbit+1-i]=xm+xl*z;  /* and put in its symmetric counterpart.   */
+        x[nbit-1-i]=xm+xl*z;  /* and put in its symmetric counterpart.   */
         w[i]=2.0*xl/((1.0-z*z)*pp*pp); /* Compute the weight             */
-        w[nbit+1-i]=w[i];                 /* and its symmetric counterpart. */
+        w[nbit-1-i]=w[i];                 /* and its symmetric counterpart. */
+        std::cout << x[i] << " " << w[i] << " " << x[nbit-1-i]<< std::endl;
     }
 }
 

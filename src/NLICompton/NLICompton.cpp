@@ -34,15 +34,14 @@ NLICompton::NLICompton()
 void NLICompton::initParams(Params& params)
 {
 
-    // Default values
-    chipa_integfochi_min = 1e-5;
-    chipa_integfochi_max = 1e2;
-    dim_integfochi = 100;
-
-    // Extraction of the parameter from the input file
-    PyTools::extract("chipa_integfochi_min", chipa_integfochi_min, "NLICompton");
-    PyTools::extract("chipa_integfochi_max", chipa_integfochi_max, "NLICompton");
-    PyTools::extract("dim_integfochi", dim_integfochi, "NLICompton");
+    // If the namelist for Nonlinear Inverse Compton Scattering exists
+    if( PyTools::nComponents("NLICompton") != 0 )
+    {
+        // Extraction of the parameter from the input file
+        PyTools::extract("chipa_integfochi_min", chipa_integfochi_min, "NLICompton");
+        PyTools::extract("chipa_integfochi_max", chipa_integfochi_max, "NLICompton");
+        PyTools::extract("dim_integfochi", dim_integfochi, "NLICompton");
+    }
 
     // Computation of the factor factor_dNphdt
     norm_lambda_compton = red_planck_cst*params.referenceAngularFrequency_SI/(electron_mass*c_vacuum);       
@@ -51,7 +50,8 @@ void NLICompton::initParams(Params& params)
     // Some additional checks
     if (chipa_integfochi_min >= chipa_integfochi_max)
     {
-        ERROR("chipa_integfochi_min >= chipa_integfochi_max")
+        ERROR("chipa_integfochi_min (" << chipa_integfochi_min 
+           << ") >= chipa_integfochi_max (" << chipa_integfochi_max << ")")
     } 
 }
 
@@ -107,6 +107,8 @@ double NLICompton::compute_dNphdt(double chipa,double gfpa)
 void NLICompton::compute_integfochi_table()
 {
     double chipa; // Temporary particle chi value
+    int pct = 0;
+    int dpct = 10;
 
     // Allocation of the array
     Integfochi.resize(dim_integfochi);
@@ -115,14 +117,21 @@ void NLICompton::compute_integfochi_table()
     delta_chipa_integfochi = (log10(chipa_integfochi_max) 
             - log10(chipa_integfochi_min))/(dim_integfochi-1);
 
+    MESSAGE("Computation Integration F/chipa table:");
+
     // Loop over the table values
     for(unsigned int i = 0 ; i < dim_integfochi ; i++)
     {
         chipa = pow(i*delta_chipa_integfochi + log10(chipa_integfochi_min),10) ;
 
         Integfochi[i] = NLICompton::compute_integfochi(chipa,
-                1e-40*chipa,0.99*chipa,400,1e-15);
+                1e-40*chipa,0.98*chipa,400,1e-10);
 
+        if (100.*i >= (double)(dim_integfochi*pct))
+        {
+            MESSAGE(pct << "%");
+            pct += dpct;
+        }
     }  
 
 }
