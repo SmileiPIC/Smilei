@@ -212,6 +212,30 @@ ElectroMagn::~ElectroMagn()
 }//END Destructer
 
 
+void ElectroMagn::updateGridSize(Params &params, Patch* patch)
+{
+    unsigned int i=0;
+    {
+        for (int isDual=0 ; isDual<2 ; isDual++)
+            bufsize[i][isDual] = n_space[i] + 1;
+        
+        for (int isDual=0 ; isDual<2 ; isDual++) {
+            bufsize[i][isDual] += isDual;
+            if ( params.number_of_patches[i]!=1 ) {
+                
+                if ( ( !isDual ) )
+                    bufsize[i][isDual]--;
+                else if  (isDual) {
+                    bufsize[i][isDual]--;
+                    bufsize[i][isDual]--;
+                }
+                
+            } // if ( params.number_of_patches[i]!=1 )
+        } // for (int isDual=0 ; isDual
+    } // for (unsigned int i=0)
+}
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Maxwell solver using the FDTD scheme
 // ---------------------------------------------------------------------------------------------------------------------

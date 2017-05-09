@@ -57,7 +57,9 @@ public:
     
     //! Destructor for Electromagn
     virtual ~ElectroMagn();
-    
+
+    void updateGridSize(Params &params, Patch* patch);
+
     void clean();
         
     std::vector<unsigned int> dimPrim;

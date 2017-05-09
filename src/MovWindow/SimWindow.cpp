@@ -161,7 +161,10 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                     track->setIDs( mypatch );
         }
         mypatch->EMfields->laserDisabled();
+        mypatch->EMfields->updateGridSize(params, mypatch);
+
         vecPatches.patches_[patch_to_be_created[j]] = mypatch ;
+
     }
 
     //Wait for sends to be completed
@@ -209,6 +212,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             }
             vecPatches(ipatch)->EMfields->emBoundCond = ElectroMagnBC_Factory::create(params, vecPatches(ipatch));
             vecPatches(ipatch)->EMfields->laserDisabled();
+            vecPatches(ipatch)->EMfields->updateGridSize(params, mypatch);
+
            
         }
     }
