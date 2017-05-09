@@ -22,8 +22,6 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn3D::ElectroMagn3D(Params &params, vector<Species*>& vecSpecies, Patch* patch) : 
   ElectroMagn(params, vecSpecies, patch),
-isXmin(patch->isXmin()),
-isXmax(patch->isXmax()),
 isYmin(patch->isYmin()),
 isYmax(patch->isYmax()),
 isZmax(patch->isZmax()),
@@ -45,8 +43,6 @@ isZmin(patch->isZmin())
 
 ElectroMagn3D::ElectroMagn3D( ElectroMagn3D* emFields, Params &params, Patch* patch ) : 
     ElectroMagn(emFields, params, patch),
-isXmin(patch->isXmin()),
-isXmax(patch->isXmax()),
 isYmin(patch->isYmin()),
 isYmax(patch->isYmax()),
 isZmax(patch->isZmax()),

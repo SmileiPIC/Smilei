@@ -29,7 +29,9 @@ cell_volume    ( params.cell_volume),
 n_space        ( params.n_space    ),
 oversize       ( params.oversize   ),
 nrj_mw_lost    (  0.               ),
-nrj_new_fields (  0.               )
+nrj_new_fields (  0.               ),
+isXmin(patch->isXmin()),
+isXmax(patch->isXmax())
 {
     
     
@@ -59,7 +61,9 @@ cell_volume    ( emFields->cell_volume ),
 n_space        ( emFields->n_space     ),
 oversize       ( emFields->oversize    ),
 nrj_mw_lost    ( 0. ),
-nrj_new_fields ( 0. )
+nrj_new_fields ( 0. ),
+isXmin(patch->isXmin()),
+isXmax(patch->isXmax())
 {
 
     initElectroMagnQuantities();
@@ -214,6 +218,9 @@ ElectroMagn::~ElectroMagn()
 
 void ElectroMagn::updateGridSize(Params &params, Patch* patch)
 {
+    isXmin = patch->isXmin();
+    isXmax = patch->isXmax();
+
     unsigned int i=0;
     {
         for (int isDual=0 ; isDual<2 ; isDual++)

@@ -295,6 +295,13 @@ public:
     //! Vector of boundary-condition per side for the fields
     std::vector<ElectroMagnBC*> emBoundCond;
     
+protected :
+    //! from smpi is xmin
+    bool isXmin;
+    
+    //! from smpi is xmax
+    bool isXmax;
+    
 private:
     
     //! Accumulate nrj lost with moving window

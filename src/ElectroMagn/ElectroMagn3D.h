@@ -119,12 +119,6 @@ public:
         
 private:
     
-    //! from smpi is xmin
-    const bool isXmin;
-    
-    //! from smpi is xmax
-    const bool isXmax;
-    
     //! from smpi is ymax
     const bool isYmin;
     
