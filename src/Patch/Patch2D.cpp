@@ -97,7 +97,7 @@ void Patch2D::reallyinitSumField( Field* field, int iDim )
 void Patch2D::initSumField( Field* field, int iDim )
 {
     if (field->MPIbuff.srequest.size()==0) {
-        field->MPIbuff.allocate(2, field);
+        field->MPIbuff.allocate(2, field, oversize);
 
         int tagp(0);
         if (field->name == "Jx") tagp = 1;

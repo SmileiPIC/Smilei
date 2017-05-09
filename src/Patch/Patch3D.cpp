@@ -120,7 +120,7 @@ void Patch3D::reallyinitSumField( Field* field, int iDim )
 void Patch3D::initSumField( Field* field, int iDim )
 {
     if (field->MPIbuff.srequest.size()==0) {
-        field->MPIbuff.allocate(3, field);
+        field->MPIbuff.allocate(3, field, oversize);
 
         int tagp(0);
         if (field->name == "Jx") tagp = 1;
