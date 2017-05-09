@@ -15,8 +15,11 @@
 #include <fstream>
 #include <vector>
 
+#include "Params.h"
+
 //----------------------------------------------------------------------------------------------------------------------
-//! NLICompton class: holds parameters, tables and functions to compute cross-sections, optical depths and other usefull parameters for the Compton Monte-Carlo pusher.
+//! NLICompton class: holds parameters, tables and functions to compute cross-sections, 
+//! optical depths and other usefull parameters for the Compton Monte-Carlo pusher.
 //----------------------------------------------------------------------------------------------------------------------
 class NLICompton
 {
@@ -27,7 +30,10 @@ class NLICompton
         NLICompton();
 
         //! Destructor for NLICompton
-        ~NLICompton(){}
+        ~NLICompton(){};
+
+        //! Initialization of the parmeters for the nonlinear inverse Compton scattering  
+        void initParams(Params& params);
 
         //! Compute integration of F/chi between 
         //! using Gauss-Legendre for a given chie value
@@ -59,13 +65,13 @@ class NLICompton
         std::vector<double > Integfochi;
 
         //! Minimum boundary of the table Integfochi
-        double chie_integfochi_min;
+        double chipa_integfochi_min;
 
         //! Minimum boundary of the table Integfochi
-        double chie_integfochi_max; 
+        double chipa_integfochi_max; 
 
         //! Delta chi for the table integfochi
-        double delta_chie_integfochi;
+        double delta_chipa_integfochi;
 
         //! Dimension of the array Integfochi
         unsigned int dim_integfochi;
@@ -73,7 +79,21 @@ class NLICompton
         //! Factor for the computation of dNphdt
         double factor_dNphdt;
 
-        
+        //! Fine structure constant
+        const double fine_struct_cst = 7.2973525698e-3;
+
+        //! Reduced Planck Constant (J.s)
+        const double red_planck_cst = 1.054571628E-34;
+
+        //! Electron mass
+        const double electron_mass = 9.109382616e-31;
+
+        //! Speed of light in vacuum (m/s)
+        const double c_vacuum = 299792458;
+
+        //! Normalized reduced Compton wavelength
+        double norm_lambda_compton;       
+ 
 };
 
 #endif

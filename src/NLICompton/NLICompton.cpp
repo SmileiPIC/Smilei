@@ -15,7 +15,6 @@
 
 #include <cmath>
 
-#include "Params.h"
 #include "userFunctions.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -24,6 +23,36 @@
 NLICompton::NLICompton()
 {
     Integfochi.resize(0);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Initialization of the parmeters for the nonlinear inverse Compton scattering
+//
+// 
+// ---------------------------------------------------------------------------------------------------------------------
+void NLICompton::initParams(Params& params)
+{
+
+    // Default values
+    chipa_integfochi_min = 1e-5;
+    chipa_integfochi_max = 1e2;
+    dim_integfochi = 100;
+
+    // Extraction of the parameter from the input file
+    PyTools::extract("chipa_integfochi_min", chipa_integfochi_min, "NLICompton");
+    PyTools::extract("chipa_integfochi_max", chipa_integfochi_max, "NLICompton");
+    PyTools::extract("dim_integfochi", dim_integfochi, "NLICompton");
+
+    // Computation of the factor factor_dNphdt
+    norm_lambda_compton = red_planck_cst*params.referenceAngularFrequency_SI/(electron_mass*c_vacuum);       
+    factor_dNphdt = 1;
+
+    // Some additional checks
+    if (chipa_integfochi_min >= chipa_integfochi_max)
+    {
+        ERROR("chipa_integfochi_min >= chipa_integfochi_max")
+    } 
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -44,7 +73,7 @@ double NLICompton::compute_dNphdt(double chipa,double gfpa)
     logchipa = log10(chipa);
 
     // Lower index for interpolation in the table integfochi
-    i_chipa = int(floor(logchipa-chie_integfochi_min)/delta_chie_integfochi);
+    i_chipa = int(floor(logchipa-chipa_integfochi_min)/delta_chipa_integfochi);
 
     // If we are not in the table...
     if (i_chipa < 0)
@@ -60,12 +89,12 @@ double NLICompton::compute_dNphdt(double chipa,double gfpa)
     else
     {
        // Upper and minor values for linear interpolation
-       logchipam = i_chipa*delta_chie_integfochi + log10(chie_integfochi_min);
-       logchipap = logchipam + delta_chie_integfochi;
+       logchipam = i_chipa*delta_chipa_integfochi + log10(chipa_integfochi_min);
+       logchipap = logchipam + delta_chipa_integfochi;
    
        // Interpolation
        dNphdt = (Integfochi[i_chipa+1]*abs(logchipa-logchipam) + 
-                 Integfochi[i_chipa]*abs(logchipap - logchipa))/delta_chie_integfochi;
+                 Integfochi[i_chipa]*abs(logchipap - logchipa))/delta_chipa_integfochi;
     }
 
     return factor_dNphdt*dNphdt*chipa/gfpa;
@@ -77,22 +106,22 @@ double NLICompton::compute_dNphdt(double chipa,double gfpa)
 // ---------------------------------------------------------------------------------------------------------------------
 void NLICompton::compute_integfochi_table()
 {
-    double chie; // Temporary particle chi value
+    double chipa; // Temporary particle chi value
 
     // Allocation of the array
     Integfochi.resize(dim_integfochi);
 
     // Computation of the delta
-    delta_chie_integfochi = (log10(chie_integfochi_max) 
-            - log10(chie_integfochi_min))/(dim_integfochi-1);
+    delta_chipa_integfochi = (log10(chipa_integfochi_max) 
+            - log10(chipa_integfochi_min))/(dim_integfochi-1);
 
     // Loop over the table values
     for(unsigned int i = 0 ; i < dim_integfochi ; i++)
     {
-        chie = pow(i*delta_chie_integfochi + log10(chie_integfochi_min),10) ;
+        chipa = pow(i*delta_chipa_integfochi + log10(chipa_integfochi_min),10) ;
 
-        Integfochi[i] = NLICompton::compute_integfochi(chie,
-                1e-40*chie,0.99*chie,400,1e-15);
+        Integfochi[i] = NLICompton::compute_integfochi(chipa,
+                1e-40*chipa,0.99*chipa,400,1e-15);
 
     }  
 
@@ -111,8 +140,8 @@ void NLICompton::output_integfochi_table()
     if (file.is_open()) {
 
         file << dim_integfochi 
-            << log10(chie_integfochi_min) 
-            << log10(chie_integfochi_max);
+            << log10(chipa_integfochi_min) 
+            << log10(chipa_integfochi_max);
 
         // Loop over the table values
         for(unsigned int i = 0 ; i < dim_integfochi ; i++)
@@ -124,20 +153,19 @@ void NLICompton::output_integfochi_table()
     }
 }
 
-
 // ---------------------------------------------------------------------------------------------------------------------
 //! \brief 
 //! Compute integration of F/chi between 
-//! using Gauss-Legendre for a given chie value
+//! using Gauss-Legendre for a given chipa value
 //
 //
-//! \param chie particle (electron for instance) quantum parameter
+//! \param chipa particle (electron for instance) quantum parameter
 //! \param chipmin Minimal integration value (photon quantum parameter)
 //! \param chipmax Maximal integration value (photon quantum parameter)
 //! \param nbit number of points for integration
 //! \param eps integration accuracy
 // ---------------------------------------------------------------------------------------------------------------------
-double NLICompton::compute_integfochi(double chie,
+double NLICompton::compute_integfochi(double chipa,
         double chipmin,
         double chipmax,
         int nbit,
@@ -165,7 +193,7 @@ double NLICompton::compute_integfochi(double chie,
     for(i=0 ; i< nbit ; i++)
     {
         chiph = pow(10.,gauleg_x[i]);
-        sync_emi = NLICompton::compute_sync_emissivity_ritus(chie,chiph,200,1e-15);
+        sync_emi = NLICompton::compute_sync_emissivity_ritus(chipa,chiph,200,1e-15);
         integ += gauleg_w[i]*sync_emi*log(10);
     }
 
@@ -176,11 +204,11 @@ double NLICompton::compute_integfochi(double chie,
 // ---------------------------------------------------------------------------------------------------------------------
 // Computation of the synchrotron emissivity following the formulae of Ritus
 // ---------------------------------------------------------------------------------------------------------------------
-double NLICompton::compute_sync_emissivity_ritus(double chie, 
+double NLICompton::compute_sync_emissivity_ritus(double chipa, 
         double chiph, int nbit, double eps)
 {
     // The photon quantum parameter should be below the electron one
-    if (chie > chiph)
+    if (chipa > chiph)
     {
         // Arrays for Gauss-Legendre integration
         double * gauleg_x = new double[nbit];
@@ -193,7 +221,7 @@ double NLICompton::compute_sync_emissivity_ritus(double chie,
         // Iterator
         int i;
 
-        double y = chiph/(3.*chie*(chie-chiph));
+        double y = chiph/(3.*chipa*(chipa-chiph));
 
         // Computation of Part. 1
         // Call the modified Bessel function to get K
@@ -216,18 +244,18 @@ double NLICompton::compute_sync_emissivity_ritus(double chie,
         }
 
         // Factor for final result
-        y = 2*chiph/(3*pow(chie,2.));
+        y = 2*chiph/(3*pow(chipa,2.));
 
         return (part1 - part2)*y;
 
 
     }
-    else if (chie == chiph)
+    else if (chipa == chiph)
     {
         return 0;
     }
     else
     {
-        ERROR("In compute_sync_emissivity_ritus: chie " << chie << " < chiph " << chiph);
+        ERROR("In compute_sync_emissivity_ritus: chipa " << chipa << " < chiph " << chiph);
     }    
 }

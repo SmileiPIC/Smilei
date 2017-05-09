@@ -169,8 +169,7 @@ namelist("")
     // ---------------------
     
     referenceAngularFrequency_SI = 0.;
-    PyTools::extract("referenceAngularFrequency_SI",referenceAngularFrequency_SI, "Main");
-    
+    PyTools::extract("referenceAngularFrequency_SI",referenceAngularFrequency_SI, "Main"); 
     
     // -------------------
     // Simulation box info

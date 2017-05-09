@@ -28,6 +28,7 @@
 #include "SimWindow.h"
 #include "Diagnostic.h"
 #include "Timers.h"
+#include "NLICompton.h"
 
 using namespace std;
 
@@ -153,7 +154,15 @@ int main (int argc, char* argv[])
     
     }
     timers.global.reboot();
-    
+
+    // ------------------------------------------------------------------------
+    // Init nonlinear inverse Compton scattering
+    // ------------------------------------------------------------------------
+    TITLE("Initializing nonlinear inverse Compton Scattering")   
+    NLICompton nlics;
+    nlics.initParams(params);
+    nlics.compute_integfochi_table();
+
     // ------------------------------------------------------------------------
     // check here if we can close the python interpreter
     // ------------------------------------------------------------------------
