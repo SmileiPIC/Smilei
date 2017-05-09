@@ -856,11 +856,13 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     
     // Recalculate former position using the particle velocity
     // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
-    for (unsigned int iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++) {
-        /*897 for (int i=0; i<(int)nDim_particle; i++) {
-            particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
-        }897*/
-        nrj_new_particles += particles->weight(iPart)*(particles->lor_fac(iPart)-1.0);
+    if (patch->isXmax()) {
+        for (unsigned int iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++) {
+            /*897 for (int i=0; i<(int)nDim_particle; i++) {
+              particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
+              }897*/
+            nrj_new_particles += particles->weight(iPart)*(particles->lor_fac(iPart)-1.0);
+        }
     }
     
     if (particles->tracked)
