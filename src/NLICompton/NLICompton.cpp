@@ -107,6 +107,7 @@ double NLICompton::compute_dNphdt(double chipa,double gfpa)
 void NLICompton::compute_integfochi_table()
 {
     double chipa; // Temporary particle chi value
+    // For percentages
     int pct = 0;
     int dpct = 10;
 
@@ -129,8 +130,8 @@ void NLICompton::compute_integfochi_table()
 
         if (100.*i >= (double)(dim_integfochi*pct))
         {
-            MESSAGE(pct << "%");
             pct += dpct;
+            MESSAGE(i + 1<< "/" << dim_integfochi << " - " << pct << "%");
         }
     }  
 
@@ -181,6 +182,8 @@ double NLICompton::compute_integfochi(double chipa,
         double eps)
 {
 
+    //std::cout << "NLICompton::compute_integfochi" << std::endl;
+
     // Arrays for Gauss-Legendre integration
     double * gauleg_x = new double[nbit];
     double * gauleg_w = new double[nbit];
@@ -202,7 +205,7 @@ double NLICompton::compute_integfochi(double chipa,
     for(i=0 ; i< nbit ; i++)
     {
         chiph = pow(10.,gauleg_x[i]);
-        sync_emi = NLICompton::compute_sync_emissivity_ritus(chipa,chiph,200,1e-15);
+        sync_emi = NLICompton::compute_sync_emissivity_ritus(chipa,chiph,200,1e-10);
         integ += gauleg_w[i]*sync_emi*log(10);
     }
 
@@ -216,6 +219,9 @@ double NLICompton::compute_integfochi(double chipa,
 double NLICompton::compute_sync_emissivity_ritus(double chipa, 
         double chiph, int nbit, double eps)
 {
+
+    //std::cout << "NLICompton::compute_sync_emissivity_ritus" << std::endl;
+
     // The photon quantum parameter should be below the electron one
     if (chipa > chiph)
     {
@@ -234,7 +240,7 @@ double NLICompton::compute_sync_emissivity_ritus(double chipa,
 
         // Computation of Part. 1
         // Call the modified Bessel function to get K
-        userFunctions::modified_bessel_IK(2./3.,y,I,dI,K,dK,20000,eps);
+        userFunctions::modified_bessel_IK(2./3.,2*y,I,dI,K,dK,50000,eps);
 
         part1 = (2. + 3.*chiph*y)*(K);
 
@@ -248,7 +254,7 @@ double NLICompton::compute_sync_emissivity_ritus(double chipa,
         for(i=0 ; i< nbit ; i++)
         {
             y = pow(10.,gauleg_x[i]);
-            userFunctions::modified_bessel_IK(1./3.,y,I,dI,K,dK,20000,eps);
+            userFunctions::modified_bessel_IK(1./3.,y,I,dI,K,dK,50000,eps);
             part2 += gauleg_w[i]*K*y*log(10.);
         }
 

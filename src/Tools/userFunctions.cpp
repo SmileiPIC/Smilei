@@ -86,17 +86,19 @@ double userFunctions::erfinv2 (double x)
 void userFunctions::modified_bessel_IK(double n, double x, 
         double & I, double & dI, 
         double & K, double & dK,
-        unsigned int maxit, double eps)
+        long maxit, double eps)
 {
 
+    //std::cout << "userFunctions::modified_bessel_IK("
+    //          << n << ", " << x << ", " << maxit << ")" << std::endl;
+
     const double xmin=2.0;
-    const double pi=3.141592653589793;
     const double fpmin = 1.e-30;
     double a,a1,b,c,d,del,del1,delh,dels,e,f,fact,fact2,ff,gam1,gam2;
     double gammi,gampl,h,p,pimu,q,q1,q2,qnew,ril,ril1,rimu,rip1,ripl;
     double ritemp,rk1,rkmu,rkmup,rktemp,s,sum,sum1,x2,xi,xi2,xmu,xmu2,xx;
 
-    unsigned i,l,nl;
+    long i,l,nl;
 
     // Coefficient for Chebychev
     const double c1[7] = {-1.142022680371168e0,6.5165112670737e-3,
@@ -107,12 +109,20 @@ void userFunctions::modified_bessel_IK(double n, double x,
         -1.702e-13,-1.49e-15};
 
     // Checks
-    if (x <= 0.0) ERROR("Argument x is negative in modified_bessel_IK");   
-    if (n <= 0) ERROR("Argument n is negative in modified_bessel_IK");
-    if (maxit == 0) ERROR("Maximal number of iteration is null in modified_bessel_IK")
-        if (eps <= 0) ERROR("Accuracy threashol, epsilon, <= 0 in modified_bessel_IK")
-
-            nl=int(n+0.5);
+    if (x <= 0.0)
+    {
+        ERROR("Argument x is negative in modified_bessel_IK");   
+    }
+    if (n <= 0)
+    {
+        ERROR("Argument n is negative in modified_bessel_IK");
+    }
+    if (maxit <= 0) ERROR("Maximal number of iteration is null in modified_bessel_IK")
+        if (eps <= 0)
+        {
+            ERROR("Accuracy threashol, epsilon, <= 0 in modified_bessel_IK")
+        }
+    nl=long(n+0.5);
     xmu=n-nl;
     xmu2=xmu*xmu;
     xi=1.0/x;
@@ -149,12 +159,12 @@ void userFunctions::modified_bessel_IK(double n, double x,
     f=ripl/ril;
     if (x < xmin) {
         x2=0.5*x;
-        pimu=pi*xmu;
+        pimu=M_PI*xmu;
         fact = (abs(pimu) < eps ? 1.0 : pimu/sin(pimu));
         d = -log(x2);
         e=xmu*d;
         fact2 = (abs(e) < eps ? 1.0 : sinh(e)/e);
-        xx=8.0*sqrt(xmu)-1.0;
+        xx=8.0*xmu*xmu-1.0;
         gam1=chebychev_eval(c1,7,xx);
         gam2=chebychev_eval(c2,8,xx);
         gampl= gam2-xmu*gam1;
@@ -176,9 +186,10 @@ void userFunctions::modified_bessel_IK(double n, double x,
             sum += del;
             del1=c*(p-i*ff);
             sum1 += del1;
+            //MESSAGE(i << "/" << maxit << " " << abs(del) << " " << abs(sum) << " " << eps);
             if (abs(del) < abs(sum)*eps) break;
         }
-        if (i > maxit) ERROR("Series failed to converge in modified_bessel_IK");
+        //if (i > maxit) ERROR("Series failed to converge in modified_bessel_IK");
         rkmu=sum;
         rk1=sum1*xi2;
     } else {
@@ -208,7 +219,7 @@ void userFunctions::modified_bessel_IK(double n, double x,
         }
         if (i >= maxit) ERROR("Failure to converge in cf2 in modified_bessel_IK");
         h=a1*h;
-        rkmu=sqrt(pi/(2.0*x))*exp(-x)/s;
+        rkmu=sqrt(M_PI/(2.0*x))*exp(-x)/s;
         rk1=rkmu*(xmu+x+0.5-h)*xi;
     }
     rkmup=xmu*xi*rkmu-rk1;
@@ -222,6 +233,7 @@ void userFunctions::modified_bessel_IK(double n, double x,
     }
     K=rkmu;
     dK=n*xi*rkmu-rk1;
+    //std::cout << "leaving userFunctions::modified_bessel_IK(" << K<< ")" << std::endl;
 }
 
 // ----------------------------------------------------------------------------
@@ -256,6 +268,9 @@ double userFunctions::chebychev_eval(const double * c, const int m,
 void userFunctions::gauss_legendre_coef(double xmin,double xmax, double * x, 
         double * w, int nbit, double eps)
 {
+
+    //std::cout << "userFunctions::gauss_legendre_coef" << std::endl;
+
     int m,j,i;
     double z1,z,xm,xl,pp,p3,p2,p1;
 
@@ -299,7 +314,8 @@ void userFunctions::gauss_legendre_coef(double xmin,double xmax, double * x,
         x[nbit-1-i]=xm+xl*z;  /* and put in its symmetric counterpart.   */
         w[i]=2.0*xl/((1.0-z*z)*pp*pp); /* Compute the weight             */
         w[nbit-1-i]=w[i];                 /* and its symmetric counterpart. */
-        std::cout << x[i] << " " << w[i] << " " << x[nbit-1-i]<< std::endl;
+        //std::cout << x[i] << " " << w[i] << " " << x[nbit-1-i]<< std::endl;
     }
+    //std::cout << "leaving userFunctions::gauss_legendre_coef" << std::endl;
 }
 

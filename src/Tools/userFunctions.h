@@ -10,7 +10,7 @@ public:
 
     //! Modified Bessel function of first and second kind
     static void modified_bessel_IK(double n, double x, double & I, double & dI, 
-		    double & K, double & dK, unsigned int maxit, double eps);
+		    double & K, double & dK, long maxit, double eps);
 
     //! Chebychev evaluation
     static double chebychev_eval(const double * c, const int m, const double x);
