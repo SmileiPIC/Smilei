@@ -508,11 +508,23 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     // Centering of the electrostatic fields
     // -------------------------------------
     vector<double> E_Add(Ex_[0]->dims_.size(),0.);
-    if ( Ex_[0]->dims_.size()>1 ) {
-#ifdef _PATCH3D_TODO
-#endif    
+    if ( Ex_[0]->dims_.size()==3 ) {
+        double Ex_avg_local(0.), Ex_avg(0.), Ey_avg_local(0.), Ey_avg(0.), Ez_avg_local(0.), Ez_avg(0.);
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            Ex_avg_local += (*this)(ipatch)->EMfields->computeExSum();
+            Ey_avg_local += (*this)(ipatch)->EMfields->computeEySum();
+            Ez_avg_local += (*this)(ipatch)->EMfields->computeEzSum();
+        }
+        
+        MPI_Allreduce(&Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        MPI_Allreduce(&Ey_avg_local, &Ey_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        MPI_Allreduce(&Ez_avg_local, &Ez_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        
+        E_Add[0] = -Ex_avg/((params.n_space[0]+2)*(params.n_space[1]+1)*(params.n_space[2]+1));
+        E_Add[1] = -Ey_avg/((params.n_space[0]+1)*(params.n_space[1]+2)*(params.n_space[2]+1));;
+        E_Add[2] = -Ez_avg/((params.n_space[0]+1)*(params.n_space[1]+1)*(params.n_space[2]+2));;
     }
-    else if ( Ex_[0]->dims_.size()>1 ) {
+    else if ( Ex_[0]->dims_.size()==2 ) {
         double Ex_XminYmax = 0.0;
         double Ey_XminYmax = 0.0;
         double Ex_XmaxYmin = 0.0;

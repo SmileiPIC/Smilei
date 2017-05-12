@@ -240,6 +240,19 @@ public:
     inline double computeRhoNorm2() {
         return rho_->norm2(istart, bufsize);
     }
+
+    //! Compute local sum of Ex
+    inline double computeExSum() {
+        return Ex_->sum(istart, bufsize);
+    }
+    //! Compute local sum of Ey
+    inline double computeEySum() {
+        return Ey_->sum(istart, bufsize);
+    }
+    //! Compute local sum of Ez
+    inline double computeEzSum() {
+        return Ez_->sum(istart, bufsize);
+    }
     
     //! external fields parameters the key string is the name of the field and the value is a vector of ExtField
     std::vector<ExtField> extFields;

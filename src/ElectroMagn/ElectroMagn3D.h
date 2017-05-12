@@ -36,9 +36,6 @@ public:
     double getEx_XmaxYmin() { return 0.; }
     double getEy_XmaxYmin() { return 0.; }
 
-#ifdef _PATCH3D_TODO
-#endif
-
 //    //! Method used to solve Maxwell-Ampere equation
 //    void solveMaxwellAmpere();
 
