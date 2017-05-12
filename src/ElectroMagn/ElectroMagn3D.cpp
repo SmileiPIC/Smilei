@@ -710,17 +710,14 @@ void ElectroMagn3D::computeTotalRhoJ()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3D::computePoynting() {
 
-#ifdef _PATCH3D_TODO
     Field3D* Ex3D     = static_cast<Field3D*>(Ex_);
     Field3D* Ey3D     = static_cast<Field3D*>(Ey_);
     Field3D* Ez3D     = static_cast<Field3D*>(Ez_);
     Field3D* Bx3D_m   = static_cast<Field3D*>(Bx_m);
     Field3D* By3D_m   = static_cast<Field3D*>(By_m);
     Field3D* Bz3D_m   = static_cast<Field3D*>(Bz_m);
-#endif
 
     if (isXmin) {
-#ifdef _PATCH3D_TODO
         unsigned int iEy=istart[0][Ey3D->isDual(0)];
         unsigned int iBz=istart[0][Bz3D_m->isDual(0)];
         unsigned int iEz=istart[0][Ez3D->isDual(0)];
@@ -736,12 +733,27 @@ void ElectroMagn3D::computePoynting() {
         unsigned int kEz=istart[2][Ez3D->isDual(1)];
         unsigned int kBy=istart[2][By3D_m->isDual(1)];
 
-#endif
+        for (unsigned int j=0; j<=bufsize[1][Ez3D->isDual(1)]; j++) {
+            for (unsigned int k=0; k<=bufsize[2][Ey3D->isDual(2)]; k++) {
+            
+                double Ey__ = 0.5 *( (*Ey3D)(iEy, jEy+j, kEy+k) + (*Ey3D)(iEy, jEy+j+1, kEy+k) );
+                double Bz__ = 0.25*( (*Bz3D_m)(iBz, jBz+j,   kBz+k)+(*Bz3D_m)(iBz+1, jBz+j,   kBz+k)
+                                     +(*Bz3D_m)(iBz, jBz+j+1, kBz+k)+(*Bz3D_m)(iBz+1, jBz+j+1, kBz+k) );
+                double Ez__ = 0.5 *( (*Ez3D)(iEz, jEz+j, kEz+k) + (*Ez3D)(iEz, jEz+j, kEz+k+1));
+                double By__ = 0.25*( (*By3D_m)(iBy, jBy+j, kEz+k)   + (*By3D_m)(iBy+1, jBy+j, kEz+k)
+                                     +(*By3D_m)(iBy, jBy+j, kEz+k+1) + (*By3D_m)(iBy+1, jBy+j, kEz+k+1) );
+            
+                poynting_inst[0][0] = dy*timestep*(Ey__*Bz__ - Ez__*By__);
+                poynting[0][0]+= poynting_inst[0][0];
+
+            }
+        }
+        
     }//if Xmin
     
     
     if (isXmax) {
-#ifdef _PATCH3D_TODO
+        
         unsigned int iEy=istart[0][Ey3D->isDual(0)]  + bufsize[0][Ey3D->isDual(0)] -1;
         unsigned int iBz=istart[0][Bz3D_m->isDual(0)] + bufsize[0][Bz3D_m->isDual(0)]-1;
         unsigned int iEz=istart[0][Ez3D->isDual(0)]  + bufsize[0][Ez3D->isDual(0)] -1;
@@ -752,8 +764,28 @@ void ElectroMagn3D::computePoynting() {
         unsigned int jEz=istart[1][Ez3D->isDual(1)];
         unsigned int jBy=istart[1][By3D_m->isDual(1)];
         
-#endif
-    }//if Xmaxer
+        unsigned int kEy=istart[2][Ey3D->isDual(1)];
+        unsigned int kBz=istart[2][Bz3D_m->isDual(1)];
+        unsigned int kEz=istart[2][Ez3D->isDual(1)];
+        unsigned int kBy=istart[2][By3D_m->isDual(1)];
+        
+        for (unsigned int j=0; j<=bufsize[1][Ez3D->isDual(1)]; j++) {
+            for (unsigned int k=0; k<=bufsize[2][Ey3D->isDual(2)]; k++) {
+            
+                double Ey__ = 0.5 *( (*Ey3D)(iEy, jEy+j, kEy+k) + (*Ey3D)(iEy, jEy+j+1, kEy+k) );
+                double Bz__ = 0.25*( (*Bz3D_m)(iBz, jBz+j,   kBz+k)+(*Bz3D_m)(iBz+1, jBz+j,   kBz+k)
+                                     +(*Bz3D_m)(iBz, jBz+j+1, kBz+k)+(*Bz3D_m)(iBz+1, jBz+j+1, kBz+k) );
+                double Ez__ = 0.5 *( (*Ez3D)(iEz, jEz+j, kEz+k) + (*Ez3D)(iEz, jEz+j, kEz+k+1));
+                double By__ = 0.25*( (*By3D_m)(iBy, jBy+j, kEz+k)   + (*By3D_m)(iBy+1, jBy+j, kEz+k)
+                                     +(*By3D_m)(iBy, jBy+j, kEz+k+1) + (*By3D_m)(iBy+1, jBy+j, kEz+k+1) );
+            
+                poynting_inst[1][0] = dy*timestep*(Ey__*Bz__ - Ez__*By__);
+                poynting[1][0]+= poynting_inst[1][0];
+
+            }
+        }
+        
+    }//if Xmax
     
     if (isYmin) {
         
