@@ -116,8 +116,13 @@ public:
     inline int getSize() {
         return smilei_sz;
     }
-    
-    
+
+    //! Return MPI_Comm_world    
+    inline MPI_Comm getGlobalComm()
+    {
+        return SMILEI_COMM_WORLD;
+    }   
+
     // Global buffers for vectorization of Species::dynamics
     // -----------------------------------------------------
     

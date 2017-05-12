@@ -117,11 +117,14 @@ void userFunctions::modified_bessel_IK(double n, double x,
     {
         ERROR("Argument n is negative in modified_bessel_IK");
     }
-    if (maxit <= 0) ERROR("Maximal number of iteration is null in modified_bessel_IK")
-        if (eps <= 0)
-        {
-            ERROR("Accuracy threashol, epsilon, <= 0 in modified_bessel_IK")
-        }
+    if (maxit <= 0)
+    {
+        ERROR("Maximal number of iteration is null in modified_bessel_IK");
+    } 
+    if (eps <= 0)
+    {
+        ERROR("Accuracy threshold, epsilon, <= 0 in modified_bessel_IK");
+    }
     nl=long(n+0.5);
     xmu=n-nl;
     xmu2=xmu*xmu;
@@ -277,15 +280,15 @@ void userFunctions::gauss_legendre_coef(double xmin,double xmax, double * x,
     // Checks
     if (nbit <= 0) 
     {
-        ERROR("Number of iteration <= 0 in gauss_legendre_coef")
+        ERROR("Number of iteration <= 0 in gauss_legendre_coef");
     }
     if (xmax < xmin)
     {
-        ERROR("xmax < xmin in gauss_legendre_coef")
+        ERROR("xmax < xmin in gauss_legendre_coef");
     }
     if (eps <= 0)
     {
-        ERROR("accuracy threshold epsilon <= 0 in gauss_legendre_coef")
+        ERROR("accuracy threshold epsilon <= 0 in gauss_legendre_coef");
     }
     // The roots are symmetric, so we only find half of them.
     m=(nbit+1)/2;
@@ -319,3 +322,118 @@ void userFunctions::gauss_legendre_coef(double xmin,double xmax, double * x,
     //std::cout << "leaving userFunctions::gauss_legendre_coef" << std::endl;
 }
 
+
+// ----------------------------------------------------------------------------
+//! \brief Load repartition in 1d between MPI processes
+//
+//! \param rank MPI process rank number
+//! \param nb_ranks Total number of MPI tasks
+//! \param nb_elems Total number of element to be distributed
+//! \param imin Index of the first element for rank
+//! \param nb_loc_elems Number of element for rank
+// ----------------------------------------------------------------------------
+void userFunctions::distribute_load_1d(int rank,
+        int nb_ranks,
+        int nb_elems,
+        int& imin,
+        int& nb_loc_elems)
+{
+    // If more ranks than elements, 
+    // only a part of the processes will work
+    if (nb_ranks >= nb_elems)
+    {
+        if (rank < nb_elems)
+        {
+            imin = rank;
+            nb_loc_elems = 1;
+        }
+        else
+        {
+            imin = nb_elems;
+            nb_loc_elems = 0;
+        }
+    }
+    else
+    {
+
+        int quotient;
+        int remainder;
+
+        // Part of the load equally distributed
+        quotient = nb_elems/nb_ranks;
+
+        // Remaining load to be distributed after balanced repartition
+        remainder = nb_elems%nb_ranks; 
+
+        if (rank < remainder)
+        {
+            imin =  rank*quotient+rank;
+            nb_loc_elems = quotient + 1;
+        }
+        else
+        {
+            imin = remainder + rank*quotient;
+            nb_loc_elems = quotient;
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+//! \brief Load repartition in 1d between MPI processes. 
+//! This function returns tables of indexes and length for all rank
+//
+//! \param nb_ranks Total number of MPI tasks
+//! \param nb_elems Total number of element to be distributed
+//! \param imin_table Index of the first element for rank
+//! \param length_table Number of element for rank
+// ----------------------------------------------------------------------------
+void userFunctions::distribute_load_1d_table(
+        int nb_ranks,
+        int nb_elems,
+        int * imin_table,
+        int * length_table)
+{
+
+    // If more ranks than elements, 
+    // only a part of the processes will work
+    if (nb_ranks >= nb_elems)
+    {
+        #pragma omp simd
+        for(int rank = 0 ; rank < nb_elems ; rank ++)
+        {
+            imin_table[rank] = rank;
+            length_table[rank] = 1;
+        }
+        #pragma omp simd
+        for(int rank = nb_elems ; rank < nb_ranks ; rank ++)
+        {
+            imin_table[rank] = nb_elems;
+            length_table[rank] = 0;
+        }
+    }
+    else
+    {
+
+        int quotient;
+        int remainder;
+
+        // Part of the load equally distributed
+        quotient = nb_elems/nb_ranks;
+
+        // Remaining load to be distributed after balanced repartition
+        remainder = nb_elems%nb_ranks; 
+
+        #pragma omp simd
+        for (int rank = 0 ; rank < remainder ; rank ++)
+        {
+            imin_table[rank] =  rank*quotient+rank;
+            length_table[rank] = quotient + 1;
+        }
+        #pragma omp simd
+        for (int rank = remainder ; rank < nb_ranks ; rank ++)
+        {
+            imin_table[rank] = remainder + rank*quotient;
+            length_table[rank] = quotient;
+        }
+    }
+}

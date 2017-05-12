@@ -14,6 +14,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <string>
 
 #include "Params.h"
 
@@ -50,10 +51,10 @@ class NLICompton
                 double eps);
 
         //! Generate table values for Integration of F/chi: Integfochi
-        void compute_integfochi_table();
+        void compute_integfochi_table(SmileiMPI *smpi);
 
         //! Write in a file table values for Integration of F/chi: Integfochi
-        void output_integfochi_table();
+        void output_integfochi_table(std::string format);
 
         //! Computation of the cross-section dNph/dt
         double compute_dNphdt(double chipa,double gfpa);
@@ -61,7 +62,11 @@ class NLICompton
     private:
 
 
-        //! Array containing tabulated values for the computation of the photon production rate dN_{\gamma}/dt (which is also the optical depth for the Monte-Carlo process). This table is the integration of the Synchrotron emissivity refers to as F over the quantum parameter Chi.
+        //! Array containing tabulated values for the computation 
+        //! of the photon production rate dN_{\gamma}/dt 
+        //! (which is also the optical depth for the Monte-Carlo process). 
+        //! This table is the integration of the Synchrotron emissivity 
+        //! refers to as F over the quantum parameter Chi.
         std::vector<double > Integfochi;
 
         //! Minimum boundary of the table Integfochi
@@ -74,7 +79,7 @@ class NLICompton
         double delta_chipa_integfochi;
 
         //! Dimension of the array Integfochi
-        unsigned int dim_integfochi;
+        int dim_integfochi;
 
         //! Factor for the computation of dNphdt
         double factor_dNphdt;

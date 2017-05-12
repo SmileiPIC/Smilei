@@ -161,7 +161,8 @@ int main (int argc, char* argv[])
     TITLE("Initializing nonlinear inverse Compton Scattering")   
     NLICompton nlics;
     nlics.initParams(params);
-    nlics.compute_integfochi_table();
+    nlics.compute_integfochi_table(smpi);
+    nlics.output_integfochi_table("ascii");
 
     // ------------------------------------------------------------------------
     // check here if we can close the python interpreter

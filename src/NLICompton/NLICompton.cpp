@@ -51,7 +51,7 @@ void NLICompton::initParams(Params& params)
     if (chipa_integfochi_min >= chipa_integfochi_max)
     {
         ERROR("chipa_integfochi_min (" << chipa_integfochi_min 
-           << ") >= chipa_integfochi_max (" << chipa_integfochi_max << ")")
+                << ") >= chipa_integfochi_max (" << chipa_integfochi_max << ")")
     } 
 }
 
@@ -66,7 +66,7 @@ double NLICompton::compute_dNphdt(double chipa,double gfpa)
     double logchipa;
     double logchipam, logchipap;
     // Index
-    unsigned int i_chipa;
+    int i_chipa;
     // final value
     double dNphdt;
 
@@ -88,13 +88,13 @@ double NLICompton::compute_dNphdt(double chipa,double gfpa)
     }
     else
     {
-       // Upper and minor values for linear interpolation
-       logchipam = i_chipa*delta_chipa_integfochi + log10(chipa_integfochi_min);
-       logchipap = logchipam + delta_chipa_integfochi;
-   
-       // Interpolation
-       dNphdt = (Integfochi[i_chipa+1]*abs(logchipa-logchipam) + 
-                 Integfochi[i_chipa]*abs(logchipap - logchipa))/delta_chipa_integfochi;
+        // Upper and minor values for linear interpolation
+        logchipam = i_chipa*delta_chipa_integfochi + log10(chipa_integfochi_min);
+        logchipap = logchipam + delta_chipa_integfochi;
+
+        // Interpolation
+        dNphdt = (Integfochi[i_chipa+1]*abs(logchipa-logchipam) + 
+                Integfochi[i_chipa]*abs(logchipap - logchipa))/delta_chipa_integfochi;
     }
 
     return factor_dNphdt*dNphdt*chipa/gfpa;
@@ -102,38 +102,107 @@ double NLICompton::compute_dNphdt(double chipa,double gfpa)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Computation of the table values of integfochi
+//! Computation of the table values of integfochi
+//
+//! \param smpi Object of class SmileiMPI containing MPI properties 
 // ---------------------------------------------------------------------------------------------------------------------
-void NLICompton::compute_integfochi_table()
+void NLICompton::compute_integfochi_table(SmileiMPI *smpi)
 {
     double chipa; // Temporary particle chi value
     // For percentages
-    int pct = 0;
-    int dpct = 10;
+    double pct = 0.;
+    double dpct = 10.;
+    // table load repartition
+    int * imin_table;
+    int * length_table;
+    // Local array
+    double * buffer; 
+    int err;  // error MPI
+    int rank; // Rank number
+    int nb_ranks; // Number of ranks
+    // timers
+    double t0,t1;
 
-    // Allocation of the array
+    // Get the MPI rank
+    rank = smpi->getRank();
+
+    // Get the number of ranks
+    nb_ranks = smpi->getSize();
+
+    // Allocation of the array Integfochi
     Integfochi.resize(dim_integfochi);
+
+    // Allocation of the table for load repartition
+    imin_table = new int[nb_ranks];
+    length_table = new int[nb_ranks];
 
     // Computation of the delta
     delta_chipa_integfochi = (log10(chipa_integfochi_max) 
             - log10(chipa_integfochi_min))/(dim_integfochi-1);
 
-    MESSAGE("Computation Integration F/chipa table:");
+    // Load repartition
+    userFunctions::distribute_load_1d_table(nb_ranks,
+            dim_integfochi,
+            imin_table,
+            length_table);
 
-    // Loop over the table values
-    for(unsigned int i = 0 ; i < dim_integfochi ; i++)
+    // Allocation of the local buffer
+    buffer = new double [length_table[rank]];
+
+    MESSAGE("--- Integration F/chipa table:");
+
+    MESSAGE("MPI repartition:");
+    // Print repartition
+    if (rank==0)
     {
-        chipa = pow(i*delta_chipa_integfochi + log10(chipa_integfochi_min),10) ;
+        for(int i =0 ; i < nb_ranks ; i++)
+        {
+            MESSAGE( "Rank: " << i << " imin: " << imin_table[i] << " length: " << length_table[i] );
+        }
+    }
 
-        Integfochi[i] = NLICompton::compute_integfochi(chipa,
-                1e-40*chipa,0.98*chipa,400,1e-10);
+    MESSAGE("Computation:");
+    dpct = std::max(dpct,100./length_table[rank]);
+    t0 = MPI_Wtime();
+    // Loop over the table values
+    for(int i = 0 ; i < length_table[rank] ; i++)
+    {
+        chipa = pow(10.,(imin_table[rank] + i)*delta_chipa_integfochi + log10(chipa_integfochi_min));
 
-        if (100.*i >= (double)(dim_integfochi*pct))
+        buffer[i] = NLICompton::compute_integfochi(chipa,
+                0.98e-40*chipa,0.98*chipa,400,1e-15);
+
+        //std::cout << rank << " " << buffer[i] << std::endl;
+
+        if (100.*i >= length_table[rank]*pct)
         {
             pct += dpct;
-            MESSAGE(i + 1<< "/" << dim_integfochi << " - " << pct << "%");
+            MESSAGE(i + 1<< "/" << length_table[rank] << " - " << (int)(std::round(pct)) << "%");
         }
-    }  
+    }
+    t1 = MPI_Wtime();
+
+    MESSAGE("done in " << (t1 - t0) << "s");
+
+    // Communication of the data
+    err = MPI_Allgatherv(&buffer[0], length_table[rank], MPI_DOUBLE,
+            &Integfochi[0], &length_table[0], &imin_table[0], 
+            MPI_DOUBLE, smpi->getGlobalComm());    
+ 
+    // Print array after communications
+    /* 
+    if (rank==1) {
+        for (int i=0 ; i< dim_integfochi ; i++) 
+        {
+            std::cout << Integfochi[i] << std::endl;
+        }
+    }
+    */
+
+   // Free memory
+   // delete buffer;
+   // delete imin_table;
+   delete length_table; 
 
 }
 
@@ -141,25 +210,55 @@ void NLICompton::compute_integfochi_table()
 // ---------------------------------------------------------------------------------------------------------------------
 // Ouput in a file of the table values of integfochi
 // ---------------------------------------------------------------------------------------------------------------------
-void NLICompton::output_integfochi_table()
+void NLICompton::output_integfochi_table(std::string format)
 {
 
-    std::ofstream file;
-    file.open("tab_integfochi.bin",std::ios::binary);
+    if (format == "ascii") 
+    {
+        std::ofstream file;
+        file.open("tab_integfochi.dat");
 
-    if (file.is_open()) {
+        if (file.is_open()) {
 
-        file << dim_integfochi 
-            << log10(chipa_integfochi_min) 
-            << log10(chipa_integfochi_max);
+            file.precision(12);
 
-        // Loop over the table values
-        for(unsigned int i = 0 ; i < dim_integfochi ; i++)
-        {
-            file << Integfochi[i];
+            file << "Table Integration F(CHI)/CHI for Nonlinear Compton Scattering \n";
+
+            file << "Dimension - LOG10(chi_e min) - LOG10(chi_e max) \n";
+
+            file << dim_integfochi ;
+            file << " " 
+                 << log10(chipa_integfochi_min) << " " 
+                 << log10(chipa_integfochi_max) << "\n";;
+
+            // Loop over the table values
+            for(int i = 0 ; i < dim_integfochi ; i++)
+            {
+                file <<  Integfochi[i] << "\n";
+            }
+
+            file.close();
         }
+    }
+    else if (format == "binary")
+    {
+        std::ofstream file;
+        file.open("tab_integfochi.bin",std::ios::binary);
 
-    file.close();
+        if (file.is_open()) {
+
+            file.write((char*)&dim_integfochi,sizeof (dim_integfochi));
+            file.write((char*)&chipa_integfochi_min, sizeof (chipa_integfochi_min));
+            file.write((char*)&chipa_integfochi_max, sizeof (chipa_integfochi_max));
+
+            // Loop over the table values
+            for(int i = 0 ; i < dim_integfochi ; i++)
+            {
+                file.write((char*)&Integfochi[i], sizeof (double));
+            }
+
+            file.close();
+        }
     }
 }
 
@@ -202,10 +301,11 @@ double NLICompton::compute_integfochi(double chipa,
 
     // Integration loop
     integ = 0;
+    #pragma omp parallel for reduction(+:integ) private(chiph,sync_emi) shared(chipa,gauleg_w,gauleg_x)
     for(i=0 ; i< nbit ; i++)
     {
         chiph = pow(10.,gauleg_x[i]);
-        sync_emi = NLICompton::compute_sync_emissivity_ritus(chipa,chiph,200,1e-10);
+        sync_emi = NLICompton::compute_sync_emissivity_ritus(chipa,chiph,200,1e-15);
         integ += gauleg_w[i]*sync_emi*log(10);
     }
 

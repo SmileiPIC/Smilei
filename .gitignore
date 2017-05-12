@@ -22,4 +22,8 @@ doc/html
 */*.pyc
 */*/*.pyc
 */*/*/*.pyc
+*.swo
+*/*.swo
+*/*/*.swo
+*/*/*/*.swo
 
