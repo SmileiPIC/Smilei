@@ -436,8 +436,8 @@ void ElectroMagn3D::initE(Patch *patch)
     }
     DEBUG("Computing Ez from scalar potential");
     for (unsigned int i=0; i<nx_p; i++) {
-        for (unsigned int j=1; j<ny_d-1; j++) {
-            for (unsigned int k=0; k<nz_p; k++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+            for (unsigned int k=1; k<nz_d-1; k++) {
                 (*Ez3D)(i,j,k) = ((*phi_)(i,j,k-1)-(*phi_)(i,j,k))/dz;
             }
         }
@@ -445,8 +445,28 @@ void ElectroMagn3D::initE(Patch *patch)
 
     // Apply BC on Ex and Ey
     // ---------------------
-#ifdef _PATCH3D_TODO
-#endif
+    // Ex / Xmin
+    if (patch->isXmin()) {
+        DEBUG("Computing Xmin BC on Ex");
+        for (unsigned int j=0; j<ny_p; j++) {
+            for (unsigned int k=0; k<nz_p; k++) {
+                (*Ex3D)(0,j,k) = (*Ex3D)(1,j,k) - dx*(*rho3D)(0,j,k)
+                    + ((*Ey3D)(0,j+1,k)-(*Ey3D)(0,j,k))*dx/dy
+                    + ((*Ez3D)(0,j,k+1)-(*Ez3D)(0,j,k))*dx/dz;
+            }
+        }
+    }
+    // Ex / Xmax
+    if (patch->isXmax()) {
+        DEBUG("Computing Xmax BC on Ex");
+        for (unsigned int j=0; j<ny_p; j++) {
+            for (unsigned int k=0; k<nz_p; k++) {
+                (*Ex3D)(nx_d-1,j,k) = (*Ex3D)(nx_d-2,j,k) + dx*(*rho3D)(nx_p-1,j,k)
+                    - ((*Ey3D)(nx_p-1,j+1,k)-(*Ey3D)(nx_p-1,j,k))*dx/dy 
+                    - ((*Ey3D)(nx_p-1,j,k+1)-(*Ez3D)(nx_p-1,j,k))*dx/dz;
+            }
+        }
+    }
 
     delete phi_;
     delete r_;
@@ -460,6 +480,7 @@ void ElectroMagn3D::centeringE( std::vector<double> E_Add )
 {
     Field3D* Ex3D  = static_cast<Field3D*>(Ex_);
     Field3D* Ey3D  = static_cast<Field3D*>(Ey_);
+    Field3D* Ez3D  = static_cast<Field3D*>(Ez_);
 
     // Centering electrostatic fields
     for (unsigned int i=0; i<nx_d; i++) {
@@ -476,6 +497,14 @@ void ElectroMagn3D::centeringE( std::vector<double> E_Add )
             }
         }
     }
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+            for (unsigned int k=0; k<nz_d; k++) {
+                (*Ez3D)(i,j,k) += E_Add[2];
+            }
+        }
+    }
+
 } // centeringE
 
 // ---------------------------------------------------------------------------------------------------------------------
