@@ -168,21 +168,24 @@ public:
     
         int idxlocalstart[3];
         int idxlocalend[3];
+        int globalsize[3];
         for ( int i=0 ; i<3 ; i++ ) {
             if ( i < isDual_.size() ) {
                 idxlocalstart[i] = istart[i][isDual_[i]];
                 idxlocalend[i]   = istart[i][isDual_[i]]+bufsize[i][isDual_[i]];
+                globalsize[i]    = dims_[i];
             }
             else {
+
                 idxlocalstart[i] = 0;
                 idxlocalend[i]   = 1;
+                globalsize[i]    = 1;
             }
         }
-    
         for ( int i=idxlocalstart[0] ; i<idxlocalend[0] ; i++ ) {
             for ( int j=idxlocalstart[1] ; j<idxlocalend[1] ; j++ ) {
                 for ( int k=idxlocalstart[2] ; k<idxlocalend[2] ; k++ ) {
-                    unsigned int ii = k+ (j + i*dims_[1]) *dims_[2];
+                    unsigned int ii = k+ (j + i*globalsize[1]) *globalsize[2];
                     sum += data_[ii];
                 }
             }
