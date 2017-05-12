@@ -9,7 +9,7 @@ compile:
     - develop-Higuera-Carry-pusher
   script:
     # Move in test dir
-    - mkdir /sps/gitlab-runner/$CI_PIPELINE_ID
+    - mkdir -p /sps/gitlab-runner/$CI_PIPELINE_ID
     - cp -r $CI_PROJECT_DIR /sps/gitlab-runner/$CI_PIPELINE_ID
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
