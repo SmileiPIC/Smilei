@@ -58,7 +58,13 @@ class NLICompton
 
         //! Computation of the cross-section dNph/dt
         double compute_dNphdt(double chipa,double gfpa);
- 
+
+        //! Computation of the function g of Erber using the Ridgers formulae
+        double g_ridgers(double chipa);
+
+        //! Computation of the continuous quantum radiated energy
+        double norm_rad_energy(double chipa, double dt);
+
     private:
 
 
@@ -83,6 +89,9 @@ class NLICompton
 
         //! Factor for the computation of dNphdt
         double factor_dNphdt;
+
+        //! Factor Classical radiated power
+        double factor_cla_rad_power;
 
         //! Fine structure constant
         const double fine_struct_cst = 7.2973525698e-3;

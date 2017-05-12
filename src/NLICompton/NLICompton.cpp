@@ -27,9 +27,9 @@ NLICompton::NLICompton()
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// Initialization of the parmeters for the nonlinear inverse Compton scattering
+//! Initialization of the parameters for the nonlinear inverse Compton scattering
 //
-// 
+//! \param params Object Params for the parameters from the input script 
 // ---------------------------------------------------------------------------------------------------------------------
 void NLICompton::initParams(Params& params)
 {
@@ -43,9 +43,14 @@ void NLICompton::initParams(Params& params)
         PyTools::extract("dim_integfochi", dim_integfochi, "NLICompton");
     }
 
-    // Computation of the factor factor_dNphdt
+    // Computation of the normalized Compton wavelength
     norm_lambda_compton = red_planck_cst*params.referenceAngularFrequency_SI/(electron_mass*c_vacuum);       
-    factor_dNphdt = 1;
+
+    // Computation of the factor factor_dNphdt
+    factor_dNphdt = sqrt(3.)*fine_struct_cst/(2.*M_PI*norm_lambda_compton);
+
+    // Computation of the factor for the classical radiated power
+    factor_cla_rad_power = 2*fine_struct_cst/(3.*norm_lambda_compton);
 
     // Some additional checks
     if (chipa_integfochi_min >= chipa_integfochi_max)
@@ -56,8 +61,33 @@ void NLICompton::initParams(Params& params)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Computation of the Cross Section dNph/dt which is also 
-// the number of photons generated per time unit.
+//! Computation of the continuous quantum radiated energy during dt
+//
+//! \param chipa particle quantum parameter
+//! \param dt time step
+// ---------------------------------------------------------------------------------------------------------------------
+double NLICompton::norm_rad_energy(double chipa, double dt)
+{
+   return g_ridgers(chipa)*dt*chipa*chipa;
+}
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Computation of the function g of Erber using the Ridgers approximation formulae
+//
+//! \param chipa particle quantum parameter
+// ---------------------------------------------------------------------------------------------------------------------
+double NLICompton::g_ridgers(double chipa)
+{
+   return pow(1. + 4.8*(1+chipa)*log10(1. + 1.7*chipa) + 2.44*chipa*chipa,-2./3.);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Computation of the Cross Section dNph/dt which is also 
+//! the number of photons generated per time unit.
+//
+//! \param chipa particle quantum parameter
+//! \param gfpa particle gamma factor
 // ---------------------------------------------------------------------------------------------------------------------
 double NLICompton::compute_dNphdt(double chipa,double gfpa)
 {
@@ -314,7 +344,12 @@ double NLICompton::compute_integfochi(double chipa,
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Computation of the synchrotron emissivity following the formulae of Ritus
+//! Computation of the synchrotron emissivity following the formulae of Ritus
+//
+//! \param chipa particle quantum parameter
+//! \param chiph photon quantum parameter
+//! \param nbit number of iterations for the Gauss-Legendre integration
+//! \param eps epsilon for the modified bessel function
 // ---------------------------------------------------------------------------------------------------------------------
 double NLICompton::compute_sync_emissivity_ritus(double chipa, 
         double chiph, int nbit, double eps)
