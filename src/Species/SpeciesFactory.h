@@ -4,6 +4,7 @@
 #include "Species.h"
 #include "Species_norm.h"
 #include "Species_rrll.h"
+#include "Species_nlics.h"
 
 #include "PusherFactory.h"
 #include "IonizationFactory.h"
@@ -50,8 +51,11 @@ public:
         } else if (dynamics_type=="rrll") {
              // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
              thisSpecies = new Species_rrll(params, patch);
+        //} else if (dynamics_type=="nlics") {
+             // Species with Boris dynamics + nonlinear inverse Compton scattering (Monte-Carlo)
+             //thisSpecies = new Species_nlics(params, patch, nlics);
         } else {
-            ERROR("For species `" << species_type << " dynamics_type must be 'norm', 'borisnr', 'vay', 'higueracary' or 'rrll'")
+            ERROR("For species `" << species_type << " dynamics_type must be 'norm', 'borisnr', 'vay', 'higueracary', 'nlics' or 'rrll'")
         }
         
         thisSpecies->species_type = species_type;

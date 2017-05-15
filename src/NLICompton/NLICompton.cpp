@@ -61,6 +61,57 @@ void NLICompton::initParams(Params& params)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+//! Computation of the minimum photon quantum parameter for the array xip
+//
+//! \details Under this value, photon energy is 
+//! considered negligible
+//
+//! \param smpi Object of class SmileiMPI containing MPI properties 
+// ---------------------------------------------------------------------------------------------------------------------
+void NLICompton::compute_chimin_table(SmileiMPI *smpi)
+{
+
+    double chipa; // Temporary particle chi value
+    // For percentages
+    double pct = 0.;
+    double dpct = 10.;
+    // table load repartition
+    int * imin_table;
+    int * length_table;
+    // Local array
+    double * buffer; 
+    int err;  // error MPI
+    int rank; // Rank number
+    int nb_ranks; // Number of ranks
+    // timers
+    double t0,t1;
+
+    // Get the MPI rank
+    rank = smpi->getRank();
+
+    // Get the number of ranks
+    nb_ranks = smpi->getSize();
+
+    // Allocation of the array Integfochi
+    xip.resize(chipa_xip_dim);
+
+    // Allocation of the table for load repartition
+    imin_table = new int[nb_ranks];
+    length_table = new int[nb_ranks];
+
+    // Computation of the delta
+    chipa_xip_delta = (log10(chipa_xip_max) 
+            - log10(chipa_xip_min))/(chipa_xip_dim-1);
+
+    // Load repartition
+    userFunctions::distribute_load_1d_table(nb_ranks,
+            chipa_xip_dim,
+            imin_table,
+            length_table);
+
+} 
+
+// ---------------------------------------------------------------------------------------------------------------------
 //! Computation of the continuous quantum radiated energy during dt
 //
 //! \param chipa particle quantum parameter
@@ -68,7 +119,7 @@ void NLICompton::initParams(Params& params)
 // ---------------------------------------------------------------------------------------------------------------------
 double NLICompton::norm_rad_energy(double chipa, double dt)
 {
-   return g_ridgers(chipa)*dt*chipa*chipa;
+    return g_ridgers(chipa)*dt*chipa*chipa;
 }
 
 
@@ -79,7 +130,7 @@ double NLICompton::norm_rad_energy(double chipa, double dt)
 // ---------------------------------------------------------------------------------------------------------------------
 double NLICompton::g_ridgers(double chipa)
 {
-   return pow(1. + 4.8*(1+chipa)*log10(1. + 1.7*chipa) + 2.44*chipa*chipa,-2./3.);
+    return pow(1. + 4.8*(1+chipa)*log10(1. + 1.7*chipa) + 2.44*chipa*chipa,-2./3.);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -138,101 +189,140 @@ double NLICompton::compute_dNphdt(double chipa,double gfpa)
 // ---------------------------------------------------------------------------------------------------------------------
 void NLICompton::compute_integfochi_table(SmileiMPI *smpi)
 {
-    double chipa; // Temporary particle chi value
-    // For percentages
-    double pct = 0.;
-    double dpct = 10.;
-    // table load repartition
-    int * imin_table;
-    int * length_table;
-    // Local array
-    double * buffer; 
-    int err;  // error MPI
-    int rank; // Rank number
-    int nb_ranks; // Number of ranks
-    // timers
-    double t0,t1;
 
-    // Get the MPI rank
-    rank = smpi->getRank();
-
-    // Get the number of ranks
-    nb_ranks = smpi->getSize();
-
-    // Allocation of the array Integfochi
-    Integfochi.resize(dim_integfochi);
-
-    // Allocation of the table for load repartition
-    imin_table = new int[nb_ranks];
-    length_table = new int[nb_ranks];
-
-    // Computation of the delta
-    delta_chipa_integfochi = (log10(chipa_integfochi_max) 
-            - log10(chipa_integfochi_min))/(dim_integfochi-1);
-
-    // Load repartition
-    userFunctions::distribute_load_1d_table(nb_ranks,
-            dim_integfochi,
-            imin_table,
-            length_table);
-
-    // Allocation of the local buffer
-    buffer = new double [length_table[rank]];
-
-    MESSAGE("--- Integration F/chipa table:");
-
-    MESSAGE("MPI repartition:");
-    // Print repartition
-    if (rank==0)
+    // Test if an external table exists, we read the table...
+    if (Tools::file_exists("tab_integfochi.bin"))
     {
-        for(int i =0 ; i < nb_ranks ; i++)
+
+        if (rank==0)
         {
-            MESSAGE( "Rank: " << i << " imin: " << imin_table[i] << " length: " << length_table[i] );
-        }
-    }
 
-    MESSAGE("Computation:");
-    dpct = std::max(dpct,100./length_table[rank]);
-    t0 = MPI_Wtime();
-    // Loop over the table values
-    for(int i = 0 ; i < length_table[rank] ; i++)
-    {
-        chipa = pow(10.,(imin_table[rank] + i)*delta_chipa_integfochi + log10(chipa_integfochi_min));
+        // Reading of the table file
+        std::ifstream file;
+        file.open("tab_integfochi.bin",std::ios::binary);
 
-        buffer[i] = NLICompton::compute_integfochi(chipa,
-                0.98e-40*chipa,0.98*chipa,400,1e-15);
-
-        //std::cout << rank << " " << buffer[i] << std::endl;
-
-        if (100.*i >= length_table[rank]*pct)
+        if (file.is_open())
         {
-            pct += dpct;
-            MESSAGE(i + 1<< "/" << length_table[rank] << " - " << (int)(std::round(pct)) << "%");
-        }
-    }
-    t1 = MPI_Wtime();
-
-    MESSAGE("done in " << (t1 - t0) << "s");
-
-    // Communication of the data
-    err = MPI_Allgatherv(&buffer[0], length_table[rank], MPI_DOUBLE,
-            &Integfochi[0], &length_table[0], &imin_table[0], 
-            MPI_DOUBLE, smpi->getGlobalComm());    
  
-    // Print array after communications
-    /* 
-    if (rank==1) {
-        for (int i=0 ; i< dim_integfochi ; i++) 
-        {
-            std::cout << Integfochi[i] << std::endl;
+             // Read the header
+             file.read((char*)&dim_integfochi,sizeof (dim_integfochi));
+             file.read((char*)&chipa_integfochi_min, sizeof (chipa_integfochi_min));
+             file.read((char*)&chipa_integfochi_max, sizeof (chipa_integfochi_max));
+ 
+             // Read the table values
+             file.read((char*)&Integfochi[0], sizeof (double)*dim_integfochi);
+ 
+             file.close();
         }
-    }
-    */
 
-   // Free memory
-   // delete buffer;
-   // delete imin_table;
-   delete length_table; 
+        }
+
+        // Allgathering of the table
+        MPI_Bcast(&Integfochi[0], dim_integfochi, MPI_DOUBLE, 0, 
+           smpi->getGlobalComm());
+
+    }
+    // else the table is generated
+    else
+    {
+
+        double chipa; // Temporary particle chi value
+        // For percentages
+        double pct = 0.;
+        double dpct = 10.;
+        // table load repartition
+        int * imin_table;
+        int * length_table;
+        // Local array
+        double * buffer; 
+        int err;  // error MPI
+        int rank; // Rank number
+        int nb_ranks; // Number of ranks
+        // timers
+        double t0,t1;
+
+        // Get the MPI rank
+        rank = smpi->getRank();
+
+        // Get the number of ranks
+        nb_ranks = smpi->getSize();
+
+        // Allocation of the array Integfochi
+        Integfochi.resize(dim_integfochi);
+
+        // Allocation of the table for load repartition
+        imin_table = new int[nb_ranks];
+        length_table = new int[nb_ranks];
+
+        // Computation of the delta
+        delta_chipa_integfochi = (log10(chipa_integfochi_max) 
+                - log10(chipa_integfochi_min))/(dim_integfochi-1);
+
+        // Load repartition
+        userFunctions::distribute_load_1d_table(nb_ranks,
+                dim_integfochi,
+                imin_table,
+                length_table);
+
+        // Allocation of the local buffer
+        buffer = new double [length_table[rank]];
+
+        MESSAGE("--- Integration F/chipa table:");
+
+        MESSAGE("MPI repartition:");
+        // Print repartition
+        if (rank==0)
+        {
+            for(int i =0 ; i < nb_ranks ; i++)
+            {
+                MESSAGE( "Rank: " << i << " imin: " << imin_table[i] << " length: " << length_table[i] );
+            }
+        }
+
+        MESSAGE("Computation:");
+        dpct = std::max(dpct,100./length_table[rank]);
+        t0 = MPI_Wtime();
+        // Loop over the table values
+        for(int i = 0 ; i < length_table[rank] ; i++)
+        {
+            chipa = pow(10.,(imin_table[rank] + i)*delta_chipa_integfochi + log10(chipa_integfochi_min));
+
+            buffer[i] = NLICompton::compute_integfochi(chipa,
+                    0.98e-40*chipa,0.98*chipa,400,1e-15);
+
+            //std::cout << rank << " " << buffer[i] << std::endl;
+
+            if (100.*i >= length_table[rank]*pct)
+            {
+                pct += dpct;
+                MESSAGE(i + 1<< "/" << length_table[rank] << " - " << (int)(std::round(pct)) << "%");
+            }
+        }
+        t1 = MPI_Wtime();
+
+        MESSAGE("done in " << (t1 - t0) << "s");
+
+        // Communication of the data
+        err = MPI_Allgatherv(&buffer[0], length_table[rank], MPI_DOUBLE,
+                &Integfochi[0], &length_table[0], &imin_table[0], 
+                MPI_DOUBLE, smpi->getGlobalComm());    
+
+        // Print array after communications
+        /* 
+           if (rank==1) {
+           for (int i=0 ; i< dim_integfochi ; i++) 
+           {
+           std::cout << Integfochi[i] << std::endl;
+           }
+           }
+         */
+
+        // Free memory
+        // delete buffer;
+        // delete imin_table;
+        delete length_table; 
+
+    }
 
 }
 
@@ -258,8 +348,8 @@ void NLICompton::output_integfochi_table(std::string format)
 
             file << dim_integfochi ;
             file << " " 
-                 << log10(chipa_integfochi_min) << " " 
-                 << log10(chipa_integfochi_max) << "\n";;
+                << log10(chipa_integfochi_min) << " " 
+                << log10(chipa_integfochi_max) << "\n";;
 
             // Loop over the table values
             for(int i = 0 ; i < dim_integfochi ; i++)
@@ -331,7 +421,7 @@ double NLICompton::compute_integfochi(double chipa,
 
     // Integration loop
     integ = 0;
-    #pragma omp parallel for reduction(+:integ) private(chiph,sync_emi) shared(chipa,gauleg_w,gauleg_x)
+#pragma omp parallel for reduction(+:integ) private(chiph,sync_emi) shared(chipa,gauleg_w,gauleg_x)
     for(i=0 ; i< nbit ; i++)
     {
         chiph = pow(10.,gauleg_x[i]);

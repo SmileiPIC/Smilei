@@ -38,3 +38,14 @@ void Tools::printMemFootPrint(std::string tag) {
 
 }
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! This function returns true/flase whether the file exists or not
+//! \param file file name to test
+// ---------------------------------------------------------------------------------------------------------------------
+bool Tools::file_exists( const std::string & filename )  
+{  
+    std::ifstream file( filename.c_str() );  
+    return !file.fail();  
+}
+

@@ -4,12 +4,12 @@
 //! \brief Nonlinear Inverse Compton Scattering
 //
 //! \details This header contains the definition of the class NLICompton.
-//
+//! The implementation is adapted from the thesis results of M. Lobet
+//! See http://www.theses.fr/2015BORD0361
 // ----------------------------------------------------------------------------
 
 #ifndef NLICOMPTON_H
 #define NLICOMPTON_H
-
 
 #include <iostream>
 #include <fstream>
@@ -65,8 +65,13 @@ class NLICompton
         //! Computation of the continuous quantum radiated energy
         double norm_rad_energy(double chipa, double dt);
 
+        //! Computation of the minimum photon quantum parameter for the array xip
+        void compute_chimin_table(SmileiMPI *smpi);
+
     private:
 
+        // _________________________________________
+        // Table Integfochi
 
         //! Array containing tabulated values for the computation 
         //! of the photon production rate dN_{\gamma}/dt 
@@ -78,7 +83,7 @@ class NLICompton
         //! Minimum boundary of the table Integfochi
         double chipa_integfochi_min;
 
-        //! Minimum boundary of the table Integfochi
+        //! Maximum boundary of the table Integfochi
         double chipa_integfochi_max; 
 
         //! Delta chi for the table integfochi
@@ -86,6 +91,36 @@ class NLICompton
 
         //! Dimension of the array Integfochi
         int dim_integfochi;
+
+        // _________________________________________
+        // Table chiph min for xip table
+
+        //! Table containing the chiph min values
+        //! Under this value, photon energy is 
+        //! considered negligible
+        std::vector<double > xip_chiphmin;
+
+        // _________________________________________
+        // Table xip
+
+        //! Table containing the cumulative distribution function \f$P(0 \rightarrow \chi_{\gamma})\f$
+        //! that gives gives the probability for a photon emission in the range \f$[0, \chi_{\gamma}]\f$
+        std::vector<double> xip;
+
+        //! Minimum boundary for chipa in the table xip and xip_chiphmin
+        double chipa_xip_min;
+
+        //! Maximum boundary for chipa in the table xip and xip_chiphmin
+        double chipa_xip_max;
+
+        //! Delta for the chipa discretization  in the table xip and xip_chiphmin
+        double chipa_xip_delta;
+
+        //! Dimension of the discretized parameter chipa
+        int chipa_xip_dim;
+
+        // _________________________________________
+        // Factors
 
         //! Factor for the computation of dNphdt
         double factor_dNphdt;
