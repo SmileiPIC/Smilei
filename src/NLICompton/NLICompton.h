@@ -66,7 +66,11 @@ class NLICompton
         double norm_rad_energy(double chipa, double dt);
 
         //! Computation of the minimum photon quantum parameter for the array xip
-        void compute_chimin_table(SmileiMPI *smpi);
+        //! and computation of the xip array.
+        void compute_xip_table(SmileiMPI *smpi);
+
+        //! Write in a file the table xip_chiphmin and xip
+        void output_xip_table(std::string format);
 
     private:
 
@@ -98,14 +102,14 @@ class NLICompton
         //! Table containing the chiph min values
         //! Under this value, photon energy is 
         //! considered negligible
-        std::vector<double > xip_chiphmin;
+        std::vector<double > xip_chiphmin_table;
 
         // _________________________________________
         // Table xip
 
         //! Table containing the cumulative distribution function \f$P(0 \rightarrow \chi_{\gamma})\f$
         //! that gives gives the probability for a photon emission in the range \f$[0, \chi_{\gamma}]\f$
-        std::vector<double> xip;
+        std::vector<double> xip_table;
 
         //! Minimum boundary for chipa in the table xip and xip_chiphmin
         double chipa_xip_min;
@@ -118,6 +122,15 @@ class NLICompton
 
         //! Dimension of the discretized parameter chipa
         int chipa_xip_dim;
+
+        //! Dimension of the discretized parameter chiph
+        int chiph_xip_dim;
+
+        //! xip power
+        double xip_power;
+
+        //! xip threshold
+        double xip_threshold;
 
         // _________________________________________
         // Factors

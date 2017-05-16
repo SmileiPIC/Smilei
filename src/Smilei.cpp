@@ -162,7 +162,9 @@ int main (int argc, char* argv[])
     NLICompton nlics;
     nlics.initParams(params);
     nlics.compute_integfochi_table(smpi);
-    nlics.output_integfochi_table("ascii");
+    nlics.compute_xip_table(smpi);
+    nlics.output_integfochi_table("binary");
+    nlics.output_xip_table("ascii");
 
     // ------------------------------------------------------------------------
     // check here if we can close the python interpreter

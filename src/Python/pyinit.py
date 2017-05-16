@@ -351,8 +351,14 @@ class NLICompton(SmileiComponent):
     """Nonlinear inverse Compton scattering"""
     chipa_integfochi_min = 1e-5
     chipa_integfochi_max = 1e2
-    dim_integfochi = 128
-    
+    integfochi_dim = 128
+    chipa_xip_min = 1e-5
+    chipa_xip_max = 1e2
+    xip_power = 4
+    xip_threshold = 1e-3
+    chipa_xip_dim = 128
+    chiph_xip_dim = 128
+ 
 # Smilei-defined
 smilei_mpi_rank = 0
 smilei_mpi_size = 1
