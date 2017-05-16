@@ -206,11 +206,11 @@ void NLICompton::compute_xip_table(SmileiMPI *smpi)
         dpct = std::max(dpct,100./length_table[rank]);
         
         // Loop for chiphmin
-        for(int i = 0 ; i < length_table[rank] ; i++)
+        for(int ichipa = 0 ; ichipa < length_table[rank] ; ichipa++)
         {
 
             xip = 1;
-            chipa = pow(10.,(imin_table[rank] + i)*chipa_xip_delta + log10(chipa_xip_min));
+            chipa = pow(10.,(imin_table[rank] + ichipa)*chipa_xip_delta + log10(chipa_xip_min));
             logchiphmin = log10(chipa);
 
             // Denominator of xip
@@ -240,7 +240,7 @@ void NLICompton::compute_xip_table(SmileiMPI *smpi)
                     k += 1;
                 }
             }
-            buffer[i] = pow(10.,logchiphmin);
+            buffer[ichipa] = pow(10.,logchiphmin);
 
             // display percentage
             if (100.*ichipa >= length_table[rank]*pct)
