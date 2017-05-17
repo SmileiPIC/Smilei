@@ -206,10 +206,9 @@ public:
     std::vector<uint64_t> Id;
    
     // Discontinuous radiation losses 
-    //! Final optical depth Monte-Carlo process
-    std::vector<double> Tauf;
 
-    //! Incremental optical depth Monte-Carlo process
+    //! Incremental optical depth for 
+    //! the Monte-Carlo process
     std::vector<double> Tau;
 
     // TEST PARTICLE PARAMETERS
@@ -258,6 +257,21 @@ public:
     inline std::vector<double>  chi() const {
         return Chi;
     }
+
+    //! Method used to get the Particle optical depth
+    inline double  tau(unsigned int ipart) const {
+        return Tau[ipart];
+    }
+    //! Method used to set a new value to 
+    //! the Particle optical depth
+    inline double& tau(unsigned int ipart)       {
+        return Tau[ipart];
+    }
+    //! Method used to get the Particle optical depth
+    inline std::vector<double>  tau() const {
+        return Tau;
+    }
+ 
     
     std::vector< std::vector<double  >*> double_prop;
     std::vector< std::vector<short   >*> short_prop;

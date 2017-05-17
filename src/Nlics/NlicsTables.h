@@ -1,15 +1,16 @@
 // ----------------------------------------------------------------------------
-//! \file NLICompton.h
+//! \file NlicsTables.h
 //
-//! \brief Nonlinear Inverse Compton Scattering
+//! \brief This class contains the tables and the functions to generate them
+//! for the Nonlinear Inverse Compton Scattering
 //
-//! \details This header contains the definition of the class NLICompton.
+//! \details This header contains the definition of the class NlicsTables.
 //! The implementation is adapted from the thesis results of M. Lobet
 //! See http://www.theses.fr/2015BORD0361
 // ----------------------------------------------------------------------------
 
-#ifndef NLICOMPTON_H
-#define NLICOMPTON_H
+#ifndef NLICSTABLES_H
+#define NLICSTABLES_H
 
 #include <iostream>
 #include <fstream>
@@ -19,24 +20,24 @@
 #include "Params.h"
 
 //----------------------------------------------------------------------------------------------------------------------
-//! NLICompton class: holds parameters, tables and functions to compute cross-sections, 
-//! optical depths and other usefull parameters for the Compton Monte-Carlo pusher.
+//! NlicsTables class: holds parameters, tables and functions to compute cross-sections,
+//! optical depths and other useful parameters for the Compton Monte-Carlo pusher.
 //----------------------------------------------------------------------------------------------------------------------
-class NLICompton
+class NlicsTables
 {
 
     public:
 
-        //! Constructor for NLICompton
-        NLICompton();
+        //! Constructor for NlicsTables
+        NlicsTables();
 
-        //! Destructor for NLICompton
-        ~NLICompton(){};
+        //! Destructor for NlicsTables
+        ~NlicsTables(){};
 
-        //! Initialization of the parmeters for the nonlinear inverse Compton scattering  
+        //! Initialization of the parmeters for the nonlinear inverse Compton scattering
         void initParams(Params& params);
 
-        //! Compute integration of F/chi between 
+        //! Compute integration of F/chi between
         //! using Gauss-Legendre for a given chie value
         static double compute_integfochi(double chie,
                 double chipmin,
@@ -46,8 +47,8 @@ class NLICompton
 
         //! Synchrotron emissivity from Ritus
         static double compute_sync_emissivity_ritus(double chie,
-                double chiph, 
-                int nbit, 
+                double chiph,
+                int nbit,
                 double eps);
 
         //! Generate table values for Integration of F/chi: Integfochi
@@ -83,10 +84,10 @@ class NLICompton
         // _________________________________________
         // Table Integfochi
 
-        //! Array containing tabulated values for the computation 
-        //! of the photon production rate dN_{\gamma}/dt 
-        //! (which is also the optical depth for the Monte-Carlo process). 
-        //! This table is the integration of the Synchrotron emissivity 
+        //! Array containing tabulated values for the computation
+        //! of the photon production rate dN_{\gamma}/dt
+        //! (which is also the optical depth for the Monte-Carlo process).
+        //! This table is the integration of the Synchrotron emissivity
         //! refers to as F over the quantum parameter Chi.
         std::vector<double > Integfochi;
 
@@ -94,7 +95,7 @@ class NLICompton
         double chipa_integfochi_min;
 
         //! Maximum boundary of the table Integfochi
-        double chipa_integfochi_max; 
+        double chipa_integfochi_max;
 
         //! Delta chi for the table integfochi
         double delta_chipa_integfochi;
@@ -102,11 +103,14 @@ class NLICompton
         //! Dimension of the array Integfochi
         int dim_integfochi;
 
+        //! This variable is true if the table is computed, false if read
+        bool integfochi_computed;
+
         // _________________________________________
         // Table chiph min for xip table
 
         //! Table containing the chiph min values
-        //! Under this value, photon energy is 
+        //! Under this value, photon energy is
         //! considered negligible
         std::vector<double > xip_chiphmin_table;
 
@@ -138,6 +142,9 @@ class NLICompton
         //! xip threshold
         double xip_threshold;
 
+        //! This variable is true if the table is computed, false if read
+        bool xip_computed;
+
         // _________________________________________
         // Factors
 
@@ -160,8 +167,8 @@ class NLICompton
         const double c_vacuum = 299792458;
 
         //! Normalized reduced Compton wavelength
-        double norm_lambda_compton;       
- 
+        double norm_lambda_compton;
+
 };
 
 #endif

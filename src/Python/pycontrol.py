@@ -22,7 +22,7 @@ def _smilei_check():
     for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
             "DiagProbe","DiagParticles", "DiagScalar","DiagFields","ExtField",
             "SmileiSingleton","Main","DumpRestart","LoadBalancing","MovingWindow",
-            "NLICompton"]:
+            "Nlics"]:
         CheckClass = globals()[CheckClassName]
         try:
             if not CheckClass._verify: raise Exception("")
@@ -97,6 +97,3 @@ def _noNewComponents(cls, *args, **kwargs):
     print("Please do not create a new "+cls.__name__)
     return None
 SmileiComponent.__new__ = staticmethod(_noNewComponents)
-
-
-

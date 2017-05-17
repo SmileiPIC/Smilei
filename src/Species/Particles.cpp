@@ -78,11 +78,9 @@ void Particles::initialize(unsigned int nParticles, unsigned int nDim)
 
         // If the discontinuous (Monte-Carlo) radiation reaction 
         // are activated, we add addtional variables:
-        // tauf: final optical depth
         // tau: incremental optical depth to emission
         if (isRadReactionDisc)
         {
-            double_prop.push_back( &Tauf );
             double_prop.push_back( &Tau );
         }
         

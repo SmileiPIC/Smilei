@@ -21,14 +21,14 @@ def _add_metaclass(metaclass):
 
 class SmileiComponentType(type):
     """Metaclass to all Smilei components"""
-    
+
     # Constructor of classes
     def __init__(self, name, bases, attrs):
         self._list = []
         self._verify = True
         # Run standard metaclass init
         super(SmileiComponentType, self).__init__(name, bases, attrs)
-    
+
     # Functions to define the iterator
     def __iter__(self):
         self.current = 0
@@ -39,7 +39,7 @@ class SmileiComponentType(type):
         self.current += 1
         return self._list[self.current - 1]
     __next__ = next #python3
-    
+
     # Function to return one given instance, for example DiagParticles[0]
     # Special case: species can also be indexed by their name: Species["ion1"]
     def __getitem__(self, key):
@@ -49,11 +49,11 @@ class SmileiComponentType(type):
                     return obj
         else:
             return self._list[key]
-    
+
     # Function to return the number of instances, for example len(Species)
     def __len__(self):
         return len(self._list)
-    
+
     # Function to display the list of instances
     def __repr__(self):
         if len(self._list)==0:
@@ -66,7 +66,7 @@ class SmileiComponentType(type):
 @_add_metaclass(SmileiComponentType)
 class SmileiComponent(object):
     """Smilei component generic class"""
-    
+
     # Function to initialize new components
     def _fillObjectAndAddToList(self, cls, obj, **kwargs):
         # add all kwargs as internal class variables
@@ -80,31 +80,31 @@ class SmileiComponent(object):
                     setattr(obj, key, value)
         # add the new component to the "_list"
         cls._list.append(obj)
-    
+
     # Constructor for all SmileiComponents
     def __init__(self, **kwargs):
         self._fillObjectAndAddToList(type(self), self, **kwargs)
-    
+
     def __repr__(self):
         return "<Smilei "+type(self).__name__+">"
 
 
 class SmileiSingletonType(SmileiComponentType):
     """Metaclass to all Smilei singletons"""
-    
+
     def __repr__(self):
         return "<Smilei "+str(self.__name__)+">"
 
 @_add_metaclass(SmileiSingletonType)
 class SmileiSingleton(SmileiComponent):
     """Smilei singleton generic class"""
-    
+
     # Prevent having two instances
     def __new__(cls, **kwargs):
         if len(cls._list) >= 1:
             raise Exception("ERROR in the namelist: cannot define block "+cls.__name__+"() twice")
         return super(SmileiSingleton, cls).__new__(cls)
-    
+
     # Constructor for all SmileiSingletons
     def __init__(self, **kwargs):
         self._fillObjectAndAddToList(type(self), type(self), **kwargs)
@@ -112,7 +112,7 @@ class SmileiSingleton(SmileiComponent):
 
 class Main(SmileiSingleton):
     """Main parameters"""
-    
+
     # Default geometry info
     geometry = None
     cell_length = []
@@ -126,12 +126,12 @@ class Main(SmileiSingleton):
     clrw = 1
     timestep = None
     timestep_over_CFL = None
-    
+
     # Poisson tuning
     solve_poisson = True
     poisson_iter_max = 50000
     poisson_error_max = 1.e-14
-    
+
     # Default fields
     maxwell_sol = 'Yee'
     bc_em_type_x = []
@@ -141,7 +141,7 @@ class Main(SmileiSingleton):
     currentFilter_int = 0
     Friedman_filter = False
     Friedman_theta = 0.
-    
+
     # Default Misc
     referenceAngularFrequency_SI = 0.
     print_every = None
@@ -156,32 +156,32 @@ class Main(SmileiSingleton):
             else:
                 if Main.cell_length is None:
                     raise Exception("Need cell_length to calculate timestep")
-                
+
                 # Yee solver
                 if Main.maxwell_sol == 'Yee':
                     dim = int(Main.geometry[0])
                     if dim<1 or dim>3:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
                     Main.timestep = Main.timestep_over_CFL / math.sqrt(sum([1./l**2 for l in Main.cell_length]))
-                
+
                 # Grassi
                 elif Main.maxwell_sol == 'Grassi':
                     if Main.geometry == '2d3v':
                         Main.timestep = Main.timestep_over_CFL * 0.7071067811*Main.cell_length[0];
                     else:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
-                        
+
                 # GrassiSpL
                 elif Main.maxwell_sol == 'GrassiSpL':
                     if Main.geometry == '2d3v':
                         Main.timestep = Main.timestep_over_CFL * 0.6471948469*Main.cell_length[0];
                     else:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
-                
+
                 # None recognized solver
                 else:
                     raise Exception("timestep: maxwell_sol not implemented "+Main.maxwell_sol)
-                
+
         #initialize sim_length if not defined based on number_of_cells and cell_length
         if len(Main.sim_length) is 0:
             if len(Main.number_of_cells) is 0:
@@ -200,7 +200,7 @@ class Main(SmileiSingleton):
 
 class LoadBalancing(SmileiSingleton):
     """Load balancing parameters"""
-    
+
     every = 150
     initial_balance = True
     coef_cell = 1.0
@@ -209,14 +209,14 @@ class LoadBalancing(SmileiSingleton):
 
 class MovingWindow(SmileiSingleton):
     """Moving window parameters"""
-    
+
     time_start = 0.
     velocity_x = 1.
 
 
 class DumpRestart(SmileiSingleton):
     """Dump and restart parameters"""
-    
+
     restart_dir = None
     restart_number = None
     dump_step = 0
@@ -347,7 +347,7 @@ class PartWall(SmileiComponent):
     z = None
 
 # Nonlinear Inverse Compton Scattering
-class NLICompton(SmileiComponent):
+class Nlics(SmileiComponent):
     """Nonlinear inverse Compton scattering"""
     chipa_integfochi_min = 1e-5
     chipa_integfochi_max = 1e2
@@ -359,7 +359,7 @@ class NLICompton(SmileiComponent):
     chipa_xip_dim = 128
     chiph_xip_dim = 128
     output_format = "binary"
- 
+
 # Smilei-defined
 smilei_mpi_rank = 0
 smilei_mpi_size = 1

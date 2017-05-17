@@ -1,13 +1,14 @@
 // ----------------------------------------------------------------------------
-//! \file NLICompton.cpp
+//! \file NlicsTables.cpp
 //
-//! \brief Nonlinear Inverse Compton Scattering
+//! \brief This class contains the tables and the functions to generate them
+//! for the Nonlinear Inverse Compton Scattering
 //
-//! \details This header contains the definition of the class NLICompton.
-//
+//! \details The implementation is adapted from the thesis results of M. Lobet
+//! See http://www.theses.fr/2015BORD0361
 // ----------------------------------------------------------------------------
 
-#include "NLICompton.h" 
+#include "NlicsTables.h"
 
 #include <cstring>
 #include <iostream>
@@ -18,40 +19,46 @@
 #include "userFunctions.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Constructor for NLICompton
+// Constructor for NlicsTables
 // ---------------------------------------------------------------------------------------------------------------------
-NLICompton::NLICompton()
+NlicsTables::NlicsTables()
 {
     Integfochi.resize(0);
+    xip_chiphmin_table.resize(0);
+    xip_table.resize(0);
+
+    integfochi_computed = false;
+    xip_computed = false;
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
 //! Initialization of the parameters for the nonlinear inverse Compton scattering
 //
-//! \param params Object Params for the parameters from the input script 
+//! \param params Object Params for the parameters from the input script
 // ---------------------------------------------------------------------------------------------------------------------
-void NLICompton::initParams(Params& params)
+void NlicsTables::initParams(Params& params)
 {
 
     // If the namelist for Nonlinear Inverse Compton Scattering exists
-    if( PyTools::nComponents("NLICompton") != 0 )
+    if( PyTools::nComponents("Nlics") != 0 )
     {
         // Extraction of the parameter from the input file
-        PyTools::extract("chipa_integfochi_min", chipa_integfochi_min, "NLICompton");
-        PyTools::extract("chipa_integfochi_max", chipa_integfochi_max, "NLICompton");
-        PyTools::extract("integfochi_dim", dim_integfochi, "NLICompton");
-        PyTools::extract("chipa_xip_min", chipa_xip_min, "NLICompton");
-        PyTools::extract("chipa_xip_max", chipa_xip_max, "NLICompton");
-        PyTools::extract("xip_power", xip_power, "NLICompton");
-        PyTools::extract("xip_threshold", xip_threshold, "NLICompton");
-        PyTools::extract("chipa_xip_dim", chipa_xip_dim, "NLICompton");
-        PyTools::extract("chiph_xip_dim", chiph_xip_dim, "NLICompton");
-        PyTools::extract("output_format", output_format, "NLICompton");
+        PyTools::extract("chipa_integfochi_min", chipa_integfochi_min, "Nlics");
+        PyTools::extract("chipa_integfochi_max", chipa_integfochi_max, "Nlics");
+        PyTools::extract("integfochi_dim", dim_integfochi, "Nlics");
+        PyTools::extract("chipa_xip_min", chipa_xip_min, "Nlics");
+        PyTools::extract("chipa_xip_max", chipa_xip_max, "Nlics");
+        PyTools::extract("xip_power", xip_power, "Nlics");
+        PyTools::extract("xip_threshold", xip_threshold, "Nlics");
+        PyTools::extract("chipa_xip_dim", chipa_xip_dim, "Nlics");
+        PyTools::extract("chiph_xip_dim", chiph_xip_dim, "Nlics");
+        PyTools::extract("output_format", output_format, "Nlics");
     }
 
     // Computation of the normalized Compton wavelength
-    norm_lambda_compton = red_planck_cst*params.referenceAngularFrequency_SI/(electron_mass*c_vacuum);       
+    norm_lambda_compton = red_planck_cst*params.referenceAngularFrequency_SI/(electron_mass*c_vacuum);
 
     // Computation of the factor factor_dNphdt
     factor_dNphdt = sqrt(3.)*fine_struct_cst/(2.*M_PI*norm_lambda_compton);
@@ -62,21 +69,22 @@ void NLICompton::initParams(Params& params)
     // Some additional checks
     if (chipa_integfochi_min >= chipa_integfochi_max)
     {
-        ERROR("chipa_integfochi_min (" << chipa_integfochi_min 
+        ERROR("chipa_integfochi_min (" << chipa_integfochi_min
                 << ") >= chipa_integfochi_max (" << chipa_integfochi_max << ")")
-    } 
+    }
 }
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Computation of the minimum photon quantum parameter chiphmin for the xip array
 //! and computation of the xip array.
 //
-//! \details Under the minimum chiph value, photon energy is 
+//! \details Under the minimum chiph value, photon energy is
 //! considered negligible.
 //
-//! \param smpi Object of class SmileiMPI containing MPI properties 
+//! \param smpi Object of class SmileiMPI containing MPI properties
 // ---------------------------------------------------------------------------------------------------------------------
-void NLICompton::compute_xip_table(SmileiMPI *smpi)
+void NlicsTables::compute_xip_table(SmileiMPI *smpi)
 {
 
     // Parameters
@@ -98,6 +106,8 @@ void NLICompton::compute_xip_table(SmileiMPI *smpi)
         if (rank==0)
         {
 
+            MESSAGE("        Reading of the binary table");
+
             // Reading of the table file
             std::ifstream file;
             file.open("tab_xip.bin",std::ios::binary);
@@ -113,11 +123,11 @@ void NLICompton::compute_xip_table(SmileiMPI *smpi)
 
                 // Allocation of the array xip
                 xip_chiphmin_table.resize(chipa_xip_dim);
-                xip_table.resize(chipa_xip_dim);
+                xip_table.resize(chipa_xip_dim*chiph_xip_dim);
 
                 // Read the table values
                 file.read((char*)&xip_chiphmin_table[0], sizeof (double)*chipa_xip_dim);
-                
+
                 // Read the table values
                 file.read((char*)&xip_table[0], sizeof (double)*chipa_xip_dim*chiph_xip_dim);
 
@@ -127,17 +137,17 @@ void NLICompton::compute_xip_table(SmileiMPI *smpi)
         }
 
         if (rank != 0)
-        { 
+        {
             xip_chiphmin_table.resize(chipa_xip_dim);
             xip_table.resize(chipa_xip_dim*chiph_xip_dim);
         }
 
         // Bcast of the table xip_chiphmin
-        MPI_Bcast(&xip_chiphmin_table[0], chipa_xip_dim, MPI_DOUBLE, 0, 
+        MPI_Bcast(&xip_chiphmin_table[0], chipa_xip_dim, MPI_DOUBLE, 0,
            smpi->getGlobalComm());
 
         // Bcast of the table xip
-        MPI_Bcast(&xip_table[0], chipa_xip_dim*chiph_xip_dim, MPI_DOUBLE, 0, 
+        MPI_Bcast(&xip_table[0], chipa_xip_dim*chiph_xip_dim, MPI_DOUBLE, 0,
            smpi->getGlobalComm());
     }
     // else the table is generated
@@ -158,7 +168,7 @@ void NLICompton::compute_xip_table(SmileiMPI *smpi)
         int * imin_table;
         int * length_table;
         // Local array
-        double * buffer; 
+        double * buffer;
         //int err;  // error MPI
         int nb_ranks; // Number of ranks
         // Iterator
@@ -178,7 +188,7 @@ void NLICompton::compute_xip_table(SmileiMPI *smpi)
         length_table = new int[nb_ranks];
 
         // Computation of the delta
-        chipa_xip_delta = (log10(chipa_xip_max) 
+        chipa_xip_delta = (log10(chipa_xip_max)
                 - log10(chipa_xip_min))/(chipa_xip_dim-1);
 
         // Load repartition
@@ -196,8 +206,8 @@ void NLICompton::compute_xip_table(SmileiMPI *smpi)
         {
             for(int i =0 ; i < nb_ranks ; i++)
             {
-                MESSAGE( "        Rank: " << i 
-                                          << " imin: "   << imin_table[i] 
+                MESSAGE( "        Rank: " << i
+                                          << " imin: "   << imin_table[i]
                                           << " length: " << length_table[i] );
             }
         }
@@ -205,7 +215,7 @@ void NLICompton::compute_xip_table(SmileiMPI *smpi)
         // 1. - Computation of xip_chiphmin_table
         MESSAGE("        Computation of chiphmin:");
         dpct = std::max(dpct,100./length_table[rank]);
-        
+
         // Loop for chiphmin
         for(int ichipa = 0 ; ichipa < length_table[rank] ; ichipa++)
         {
@@ -215,7 +225,7 @@ void NLICompton::compute_xip_table(SmileiMPI *smpi)
             logchiphmin = log10(chipa);
 
             // Denominator of xip
-            denominator = NLICompton::compute_integfochi(chipa,
+            denominator = NlicsTables::compute_integfochi(chipa,
                     0.98e-40*chipa,0.98*chipa,200,1e-13);
 
             k = 0;
@@ -223,7 +233,7 @@ void NLICompton::compute_xip_table(SmileiMPI *smpi)
             {
                 logchiphmin -= pow(0.1,k);
                 chiph = pow(10.,logchiphmin);
-                numerator = NLICompton::compute_integfochi(chipa,
+                numerator = NlicsTables::compute_integfochi(chipa,
                     1e-40*chiph,chiph,200,1e-13);
 
                 if (numerator == 0)
@@ -247,15 +257,15 @@ void NLICompton::compute_xip_table(SmileiMPI *smpi)
             if (100.*ichipa >= length_table[rank]*pct)
             {
                 pct += dpct;
-                MESSAGE( "        " << ichipa + 1 << "/" << length_table[rank] 
+                MESSAGE( "        " << ichipa + 1 << "/" << length_table[rank]
                                     << " - " << (int)(std::round(pct)) << "%");
             }
         }
 
         // Communication of the xip_chiphmin table
         MPI_Allgatherv(&buffer[0], length_table[rank], MPI_DOUBLE,
-                &xip_chiphmin_table[0], &length_table[0], &imin_table[0], 
-                MPI_DOUBLE, smpi->getGlobalComm());    
+                &xip_chiphmin_table[0], &length_table[0], &imin_table[0],
+                MPI_DOUBLE, smpi->getGlobalComm());
 
         // 2. - Computation of the xip table
         MESSAGE("        Computation of xip:");
@@ -268,29 +278,29 @@ void NLICompton::compute_xip_table(SmileiMPI *smpi)
         pct = 0;
         for(int ichipa = 0 ; ichipa < length_table[rank] ; ichipa++)
         {
- 
+
             chipa = pow(10.,(imin_table[rank] + ichipa)*chipa_xip_delta + log10(chipa_xip_min));
 
             chiph_delta = (log10(chipa) - log10(xip_chiphmin_table[imin_table[rank] + ichipa]))
                         / (chiph_xip_dim - 1);
 
             // Denominator of xip
-            denominator = NLICompton::compute_integfochi(chipa,
+            denominator = NlicsTables::compute_integfochi(chipa,
                     1e-40*chipa,chipa,250,1e-15);
 
             // Loop in the chiph dimension
             for (int ichiph = 0 ; ichiph < chiph_xip_dim ; ichiph ++)
             {
                 // Local chiph value
-               chiph = pow(10.,ichiph*chiph_delta + log10(xip_chiphmin_table[imin_table[rank] + ichipa])); 
+               chiph = pow(10.,ichiph*chiph_delta + log10(xip_chiphmin_table[imin_table[rank] + ichipa]));
 
-               /* std::cout << "rank: " << rank 
-                         << " " << chipa 
-                         << " " << chiph 
+               /* std::cout << "rank: " << rank
+                         << " " << chipa
+                         << " " << chiph
                          << " " << xip_chiphmin_table[imin_table[rank] + ichipa] << std::endl; */
 
                // Denominator of xip
-               numerator = NLICompton::compute_integfochi(chipa,
+               numerator = NlicsTables::compute_integfochi(chipa,
                        1e-40*chiph,chiph,250,1e-15);
 
                // Update local buffer value
@@ -303,7 +313,7 @@ void NLICompton::compute_xip_table(SmileiMPI *smpi)
             if (100.*ichipa >= length_table[rank]*pct)
             {
                 pct += dpct;
-                MESSAGE( "        " << ichipa + 1 << "/" << length_table[rank] 
+                MESSAGE( "        " << ichipa + 1 << "/" << length_table[rank]
                                     << " - " << (int)(std::round(pct)) << "%");
             }
         }
@@ -317,9 +327,13 @@ void NLICompton::compute_xip_table(SmileiMPI *smpi)
 
         // Communication of the xip_chiphmin table
         MPI_Allgatherv(&buffer[0], length_table[rank], MPI_DOUBLE,
-                &xip_table[0], &length_table[0], &imin_table[0], 
-                MPI_DOUBLE, smpi->getGlobalComm());    
+                &xip_table[0], &length_table[0], &imin_table[0],
+                MPI_DOUBLE, smpi->getGlobalComm());
 
+        // flag computed at true
+        xip_computed = true;
+
+        // clean temporary arrays
         delete buffer;
         delete length_table;
         delete imin_table;
@@ -329,16 +343,16 @@ void NLICompton::compute_xip_table(SmileiMPI *smpi)
     t1 = MPI_Wtime();
     MESSAGE("        done in " << (t1 - t0) << "s");
 
-} 
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! File output of xip_chiphmin_table and xip_table
 //
 // ---------------------------------------------------------------------------------------------------------------------
-void NLICompton::output_xip_table()
+void NlicsTables::output_xip_table()
 {
 
-    if (output_format == "ascii") 
+    if (output_format == "ascii")
     {
         std::ofstream file;
         file.open("tab_xip.dat");
@@ -353,7 +367,7 @@ void NLICompton::output_xip_table()
 
             file << chipa_xip_dim << " "
                  << chiph_xip_dim << " "
-                 << log10(chipa_xip_min) << " " 
+                 << log10(chipa_xip_min) << " "
                  << log10(chipa_xip_max) << "\n";;
 
             // Loop over the xip_chiphmin values
@@ -416,7 +430,7 @@ void NLICompton::output_xip_table()
 //! \param chipa particle quantum parameter
 //! \param dt time step
 // ---------------------------------------------------------------------------------------------------------------------
-double NLICompton::norm_rad_energy(double chipa, double dt)
+double NlicsTables::norm_rad_energy(double chipa, double dt)
 {
     return g_ridgers(chipa)*dt*chipa*chipa;
 }
@@ -427,19 +441,19 @@ double NLICompton::norm_rad_energy(double chipa, double dt)
 //
 //! \param chipa particle quantum parameter
 // ---------------------------------------------------------------------------------------------------------------------
-double NLICompton::g_ridgers(double chipa)
+double NlicsTables::g_ridgers(double chipa)
 {
     return pow(1. + 4.8*(1.+chipa)*log10(1. + 1.7*chipa) + 2.44*chipa*chipa,-2./3.);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Computation of the Cross Section dNph/dt which is also 
+//! Computation of the Cross Section dNph/dt which is also
 //! the number of photons generated per time unit.
 //
 //! \param chipa particle quantum parameter
 //! \param gfpa particle gamma factor
 // ---------------------------------------------------------------------------------------------------------------------
-double NLICompton::compute_dNphdt(double chipa,double gfpa)
+double NlicsTables::compute_dNphdt(double chipa,double gfpa)
 {
 
     // Log of the particle quantum parameter chipa
@@ -473,7 +487,7 @@ double NLICompton::compute_dNphdt(double chipa,double gfpa)
         logchipap = logchipam + delta_chipa_integfochi;
 
         // Interpolation
-        dNphdt = (Integfochi[i_chipa+1]*abs(logchipa-logchipam) + 
+        dNphdt = (Integfochi[i_chipa+1]*abs(logchipa-logchipam) +
                 Integfochi[i_chipa]*abs(logchipap - logchipa))/delta_chipa_integfochi;
     }
 
@@ -484,13 +498,13 @@ double NLICompton::compute_dNphdt(double chipa,double gfpa)
 // ---------------------------------------------------------------------------------------------------------------------
 //! Computation of the table values of integfochi
 //
-//! \param smpi Object of class SmileiMPI containing MPI properties 
+//! \param smpi Object of class SmileiMPI containing MPI properties
 // ---------------------------------------------------------------------------------------------------------------------
-void NLICompton::compute_integfochi_table(SmileiMPI *smpi)
+void NlicsTables::compute_integfochi_table(SmileiMPI *smpi)
 {
 
     // Parameters
-    int rank; // Rank number 
+    int rank; // Rank number
     // timers
     double t0,t1;
 
@@ -506,7 +520,7 @@ void NLICompton::compute_integfochi_table(SmileiMPI *smpi)
     {
 
         MESSAGE("        Reading of the table:");
-        
+
         if (rank==0)
         {
 
@@ -540,7 +554,7 @@ void NLICompton::compute_integfochi_table(SmileiMPI *smpi)
         }
 
         // Allgathering of the table
-        MPI_Bcast(&Integfochi[0], dim_integfochi, MPI_DOUBLE, 0, 
+        MPI_Bcast(&Integfochi[0], dim_integfochi, MPI_DOUBLE, 0,
            smpi->getGlobalComm());
 
 
@@ -549,7 +563,7 @@ void NLICompton::compute_integfochi_table(SmileiMPI *smpi)
     else
     {
         // Temporary particle chi value
-        double chipa; 
+        double chipa;
         // For percentages
         double pct = 0.;
         double dpct = 10.;
@@ -557,7 +571,7 @@ void NLICompton::compute_integfochi_table(SmileiMPI *smpi)
         int * imin_table;
         int * length_table;
         // Local array
-        double * buffer; 
+        double * buffer;
         int nb_ranks; // Number of ranks
         //int err;  // error MPI
 
@@ -572,7 +586,7 @@ void NLICompton::compute_integfochi_table(SmileiMPI *smpi)
         length_table = new int[nb_ranks];
 
         // Computation of the delta
-        delta_chipa_integfochi = (log10(chipa_integfochi_max) 
+        delta_chipa_integfochi = (log10(chipa_integfochi_max)
                 - log10(chipa_integfochi_min))/(dim_integfochi-1);
 
         // Load repartition
@@ -591,8 +605,8 @@ void NLICompton::compute_integfochi_table(SmileiMPI *smpi)
         {
             for(int i =0 ; i < nb_ranks ; i++)
             {
-                MESSAGE( "        Rank: " << i 
-                                          << " imin: " << imin_table[i] 
+                MESSAGE( "        Rank: " << i
+                                          << " imin: " << imin_table[i]
                                           << " length: " << length_table[i] );
             }
         }
@@ -604,7 +618,7 @@ void NLICompton::compute_integfochi_table(SmileiMPI *smpi)
         {
             chipa = pow(10.,(imin_table[rank] + i)*delta_chipa_integfochi + log10(chipa_integfochi_min));
 
-            buffer[i] = NLICompton::compute_integfochi(chipa,
+            buffer[i] = NlicsTables::compute_integfochi(chipa,
                     0.98e-40*chipa,0.98*chipa,400,1e-15);
 
             //std::cout << rank << " " << buffer[i] << std::endl;
@@ -618,23 +632,26 @@ void NLICompton::compute_integfochi_table(SmileiMPI *smpi)
 
         // Communication of the data
         MPI_Allgatherv(&buffer[0], length_table[rank], MPI_DOUBLE,
-                &Integfochi[0], &length_table[0], &imin_table[0], 
-                MPI_DOUBLE, smpi->getGlobalComm());    
+                &Integfochi[0], &length_table[0], &imin_table[0],
+                MPI_DOUBLE, smpi->getGlobalComm());
 
         // Print array after communications
-        /* 
+        /*
            if (rank==1) {
-           for (int i=0 ; i< dim_integfochi ; i++) 
+           for (int i=0 ; i< dim_integfochi ; i++)
            {
            std::cout << Integfochi[i] << std::endl;
            }
            }
          */
 
+        // flag computed at true
+        integfochi_computed = true;
+
         // Free memory
         // delete buffer;
         // delete imin_table;
-        delete length_table; 
+        delete length_table;
 
     }
 
@@ -647,10 +664,10 @@ void NLICompton::compute_integfochi_table(SmileiMPI *smpi)
 //! Ouput in a file of the table values of integfochi
 //
 // ---------------------------------------------------------------------------------------------------------------------
-void NLICompton::output_integfochi_table()
+void NlicsTables::output_integfochi_table()
 {
 
-    if (output_format == "ascii") 
+    if (output_format == "ascii")
     {
         std::ofstream file;
         file.open("tab_integfochi.dat");
@@ -664,8 +681,8 @@ void NLICompton::output_integfochi_table()
             file << "Dimension chipa - LOG10(chipa min) - LOG10(chipa max) \n";
 
             file << dim_integfochi ;
-            file << " " 
-                << log10(chipa_integfochi_min) << " " 
+            file << " "
+                << log10(chipa_integfochi_min) << " "
                 << log10(chipa_integfochi_max) << "\n";;
 
             // Loop over the table values
@@ -709,8 +726,8 @@ void NLICompton::output_integfochi_table()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! \brief 
-//! Compute integration of F/chi between 
+//! \brief
+//! Compute integration of F/chi between
 //! using Gauss-Legendre for a given chipa value
 //
 //
@@ -720,14 +737,14 @@ void NLICompton::output_integfochi_table()
 //! \param nbit number of points for integration
 //! \param eps integration accuracy
 // ---------------------------------------------------------------------------------------------------------------------
-double NLICompton::compute_integfochi(double chipa,
+double NlicsTables::compute_integfochi(double chipa,
         double chipmin,
         double chipmax,
         int nbit,
         double eps)
 {
 
-    //std::cout << "NLICompton::compute_integfochi" << std::endl;
+    //std::cout << "NlicsTables::compute_integfochi" << std::endl;
 
     // Arrays for Gauss-Legendre integration
     double * gauleg_x = new double[nbit];
@@ -742,7 +759,7 @@ double NLICompton::compute_integfochi(double chipa,
     int i;
 
     // gauss Legendre coefficients
-    userFunctions::gauss_legendre_coef(log10(chipmin),log10(chipmax), 
+    userFunctions::gauss_legendre_coef(log10(chipmin),log10(chipmax),
             gauleg_x, gauleg_w, nbit, eps);
 
     // Integration loop
@@ -751,7 +768,7 @@ double NLICompton::compute_integfochi(double chipa,
     for(i=0 ; i< nbit ; i++)
     {
         chiph = pow(10.,gauleg_x[i]);
-        sync_emi = NLICompton::compute_sync_emissivity_ritus(chipa,chiph,200,1e-15);
+        sync_emi = NlicsTables::compute_sync_emissivity_ritus(chipa,chiph,200,1e-15);
         integ += gauleg_w[i]*sync_emi*log(10);
     }
 
@@ -767,11 +784,11 @@ double NLICompton::compute_integfochi(double chipa,
 //! \param nbit number of iterations for the Gauss-Legendre integration
 //! \param eps epsilon for the modified bessel function
 // ---------------------------------------------------------------------------------------------------------------------
-double NLICompton::compute_sync_emissivity_ritus(double chipa, 
+double NlicsTables::compute_sync_emissivity_ritus(double chipa,
         double chiph, int nbit, double eps)
 {
 
-    //std::cout << "NLICompton::compute_sync_emissivity_ritus" << std::endl;
+    //std::cout << "NlicsTables::compute_sync_emissivity_ritus" << std::endl;
 
     // The photon quantum parameter should be below the electron one
     if (chipa > chiph)
@@ -779,7 +796,7 @@ double NLICompton::compute_sync_emissivity_ritus(double chipa,
         // Arrays for Gauss-Legendre integration
         double * gauleg_x = new double[nbit];
         double * gauleg_w = new double[nbit];
-        // Values for Bessel results       
+        // Values for Bessel results
         double I,dI;
         double K,dK;
         // Parts of the formulae
@@ -796,9 +813,9 @@ double NLICompton::compute_sync_emissivity_ritus(double chipa,
         part1 = (2. + 3.*chiph*y)*(K);
 
         // Computation of Part. 2
-        // Using Gauss Legendre integration 
+        // Using Gauss Legendre integration
 
-        userFunctions::gauss_legendre_coef(log10(2*y),log10(y)+50., gauleg_x, 
+        userFunctions::gauss_legendre_coef(log10(2*y),log10(y)+50., gauleg_x,
                 gauleg_w, nbit, eps);
 
         part2 = 0;
@@ -823,5 +840,5 @@ double NLICompton::compute_sync_emissivity_ritus(double chipa,
     else
     {
         ERROR("In compute_sync_emissivity_ritus: chipa " << chipa << " < chiph " << chiph);
-    }    
+    }
 }

@@ -473,6 +473,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                     }
                 }
             }
+
             // Boundary Condition may be physical or due to domain decomposition
             // apply returns 0 if iPart is not in the local domain anymore
             //        if omp, create a list per thread

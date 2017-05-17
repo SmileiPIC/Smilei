@@ -2,7 +2,7 @@
 //
 //! \file Species_nlics.cpp
 //
-//! \brief Species_nlics.cpp  generic class for the species that use the Monte-Carlo 
+//! \brief Species_nlics.cpp  generic class for the species that use the Monte-Carlo
 //!  pusher for the Non Linear Inverse Compton Scattering.
 //
 //! \date 2017-05-12
@@ -23,11 +23,11 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Species_nlics
 // ---------------------------------------------------------------------------------------------------------------------
-Species_nlics::Species_nlics( Params& params, Patch* patch, NLICompton &)
+Species_nlics::Species_nlics( Params& params, Patch* patch)
     : Species( params, patch )
 {
     particles->isRadReaction=true;
-    
+
     DEBUG("Species is being created as nlics");
 }
 
