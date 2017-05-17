@@ -161,7 +161,10 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                     track->setIDs( mypatch );
         }
         mypatch->EMfields->laserDisabled();
+        mypatch->EMfields->updateGridSize(params, mypatch);
+
         vecPatches.patches_[patch_to_be_created[j]] = mypatch ;
+
     }
 
     //Wait for sends to be completed
@@ -209,6 +212,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             }
             vecPatches(ipatch)->EMfields->emBoundCond = ElectroMagnBC_Factory::create(params, vecPatches(ipatch));
             vecPatches(ipatch)->EMfields->laserDisabled();
+            vecPatches(ipatch)->EMfields->updateGridSize(params, mypatch);
+
            
         }
     }
@@ -219,21 +224,38 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     
     // Tell that the patches moved this iteration (needed for probes)
     vecPatches.lastIterationPatchesMoved = itime;
-    
+
+
+    std::vector<double> poynting[2];
+    poynting[0].resize(params.nDim_field,0.0);
+    poynting[1].resize(params.nDim_field,0.0);
+
     //Delete useless patches
     for (unsigned int j=0; j < delete_patches_.size(); j++){
         mypatch = delete_patches_[j];
-        
-        energy_field_lost += mypatch->EMfields->computeNRJ();
-        for ( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ )
-            energy_part_lost[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
-        
+
+        if (mypatch->isXmin()) {
+            energy_field_lost += mypatch->EMfields->computeNRJ();
+            for ( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ )
+                energy_part_lost[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
+        }
+
+        for (unsigned int j=0; j<2;j++) //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+            for (unsigned int i=0 ; i<params.nDim_field ; i++) //axis 0=x, 1=y, 2=z
+                poynting[j][i] += mypatch->EMfields->poynting[j][i];
+
+
         delete  mypatch;
     }
 
     vecPatches(0)->EMfields->storeNRJlost( energy_field_lost );
     for ( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ )
         vecPatches(0)->vecSpecies[ispec]->storeNRJlost( energy_part_lost[ispec] );
+
+    for (unsigned int j=0; j<2;j++) //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+        for (unsigned int i=0 ; i< params.nDim_field ; i++) //axis 0=x, 1=y, 2=z
+            vecPatches(0)->EMfields->poynting[j][i] += poynting[j][i];
+
     
 
 }
