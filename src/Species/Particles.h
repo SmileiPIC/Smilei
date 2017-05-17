@@ -196,16 +196,22 @@ public:
     //! containing the particle weight: equivalent to a charge density
     std::vector<double> Weight;
     
-    //! containing the particle weight: equivalent to a charge density
+    //! containing the particle quantum parameter
     std::vector<double> Chi;
-    
-    
+        
     //! charge state of the particle (multiples of e>0)
     std::vector<short> Charge;
     
     //! Id of the particle
     std::vector<uint64_t> Id;
-    
+   
+    // Discontinuous radiation losses 
+    //! Final optical depth Monte-Carlo process
+    std::vector<double> Tauf;
+
+    //! Incremental optical depth Monte-Carlo process
+    std::vector<double> Tau;
+
     // TEST PARTICLE PARAMETERS
     bool isTest;
     
@@ -232,11 +238,13 @@ public:
     }
     void sortById();
     
-    
-    // PARAMETERS FOR PARTICLES THAT ARE SUBMITTED TO A RADIATION REACTION FORCE (CED or QED)
-    
+    //! Parameters for particles that are submitted 
+    //! to a radiation reaction force (CED or QED)    
     bool isRadReaction;
-    
+
+    //! Parameters for particles that are submitted to a 
+    //! Monte-Carlo discontinuous radiation reaction force
+    bool isRadReactionDisc; 
     
     //! Method used to get the Particle chi factor
     inline double  chi(unsigned int ipart) const {

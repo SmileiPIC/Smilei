@@ -358,6 +358,7 @@ class NLICompton(SmileiComponent):
     xip_threshold = 1e-3
     chipa_xip_dim = 128
     chiph_xip_dim = 128
+    output_format = "binary"
  
 # Smilei-defined
 smilei_mpi_rank = 0

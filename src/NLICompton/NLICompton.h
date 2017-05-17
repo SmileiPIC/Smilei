@@ -54,7 +54,7 @@ class NLICompton
         void compute_integfochi_table(SmileiMPI *smpi);
 
         //! Write in a file table values for Integration of F/chi: Integfochi
-        void output_integfochi_table(std::string format);
+        void output_integfochi_table();
 
         //! Computation of the cross-section dNph/dt
         double compute_dNphdt(double chipa,double gfpa);
@@ -70,9 +70,15 @@ class NLICompton
         void compute_xip_table(SmileiMPI *smpi);
 
         //! Write in a file the table xip_chiphmin and xip
-        void output_xip_table(std::string format);
+        void output_xip_table();
 
     private:
+
+        // ________________________________________
+        // General parameters
+
+        //! Output format of the tables
+        std::string output_format;
 
         // _________________________________________
         // Table Integfochi

@@ -47,6 +47,7 @@ void NLICompton::initParams(Params& params)
         PyTools::extract("xip_threshold", xip_threshold, "NLICompton");
         PyTools::extract("chipa_xip_dim", chipa_xip_dim, "NLICompton");
         PyTools::extract("chiph_xip_dim", chiph_xip_dim, "NLICompton");
+        PyTools::extract("output_format", output_format, "NLICompton");
     }
 
     // Computation of the normalized Compton wavelength
@@ -264,6 +265,7 @@ void NLICompton::compute_xip_table(SmileiMPI *smpi)
         buffer = new double [length_table[rank]*chiph_xip_dim];
 
         // Loop for xip in the chipa dimension
+        pct = 0;
         for(int ichipa = 0 ; ichipa < length_table[rank] ; ichipa++)
         {
  
@@ -332,12 +334,11 @@ void NLICompton::compute_xip_table(SmileiMPI *smpi)
 // ---------------------------------------------------------------------------------------------------------------------
 //! File output of xip_chiphmin_table and xip_table
 //
-//! \param format output format (ascii, binary)
 // ---------------------------------------------------------------------------------------------------------------------
-void NLICompton::output_xip_table(std::string format)
+void NLICompton::output_xip_table()
 {
 
-    if (format == "ascii") 
+    if (output_format == "ascii") 
     {
         std::ofstream file;
         file.open("tab_xip.dat");
@@ -374,7 +375,7 @@ void NLICompton::output_xip_table(std::string format)
             file.close();
         }
     }
-    else if (format == "binary")
+    else if (output_format == "binary")
     {
         std::ofstream file;
         file.open("tab_xip.bin",std::ios::binary);
@@ -402,7 +403,7 @@ void NLICompton::output_xip_table(std::string format)
     }
     else
     {
-        MESSAGE("The output format " << format << " is not recognized");
+        MESSAGE("The output format " << output_format << " is not recognized");
     }
 }
 
@@ -645,12 +646,11 @@ void NLICompton::compute_integfochi_table(SmileiMPI *smpi)
 // ---------------------------------------------------------------------------------------------------------------------
 //! Ouput in a file of the table values of integfochi
 //
-//! \param format output format (ascii, binary)
 // ---------------------------------------------------------------------------------------------------------------------
-void NLICompton::output_integfochi_table(std::string format)
+void NLICompton::output_integfochi_table()
 {
 
-    if (format == "ascii") 
+    if (output_format == "ascii") 
     {
         std::ofstream file;
         file.open("tab_integfochi.dat");
@@ -677,7 +677,7 @@ void NLICompton::output_integfochi_table(std::string format)
             file.close();
         }
     }
-    else if (format == "binary")
+    else if (output_format == "binary")
     {
         std::ofstream file;
         file.open("tab_integfochi.bin",std::ios::binary);
@@ -704,7 +704,7 @@ void NLICompton::output_integfochi_table(std::string format)
     }
     else
     {
-        MESSAGE("The output format " << format << " is not recognized");
+        MESSAGE("The output format " << output_format << " is not recognized");
     }
 }
 
