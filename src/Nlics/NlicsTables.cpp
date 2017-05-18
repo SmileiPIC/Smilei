@@ -147,7 +147,7 @@ void NlicsTables::compute_xip_table(SmileiMPI *smpi)
 
     t0 = MPI_Wtime();
 
-    MESSAGE("        --- Table chiphmin for xip");
+    MESSAGE("        --- Table chiphmin and xip:");
 
     // Test if an external table exists, we read the table...
     if (Tools::file_exists("tab_xip.bin"))
@@ -156,7 +156,7 @@ void NlicsTables::compute_xip_table(SmileiMPI *smpi)
         if (rank==0)
         {
 
-            MESSAGE("        Reading of the binary table");
+            MESSAGE("            Reading of the binary table");
 
             // Reading of the table file
             std::ifstream file;
@@ -210,7 +210,7 @@ void NlicsTables::compute_xip_table(SmileiMPI *smpi)
                       smpi->getGlobalComm(), &position);
         buf_size += position;
 
-        MESSAGE("        Buffer size: " << buf_size);
+        MESSAGE("            Buffer size: " << buf_size);
 
         // Packet that will contain all parameters
         char * buffer = new char[buf_size];
@@ -319,20 +319,20 @@ void NlicsTables::compute_xip_table(SmileiMPI *smpi)
         // Allocation of the local buffer
         buffer = new double [length_table[rank]];
 
-        MESSAGE("        MPI repartition:");
+        MESSAGE("            MPI repartition:");
         // Print repartition
         if (rank==0)
         {
             for(int i =0 ; i < nb_ranks ; i++)
             {
-                MESSAGE( "        Rank: " << i
+                MESSAGE( "            Rank: " << i
                                           << " imin: "   << imin_table[i]
                                           << " length: " << length_table[i] );
             }
         }
 
         // 1. - Computation of xip_chiphmin_table
-        MESSAGE("        Computation of chiphmin:");
+        MESSAGE("            Computation of chiphmin:");
         dpct = std::max(dpct,100./length_table[rank]);
 
         // Loop for chiphmin
@@ -376,7 +376,7 @@ void NlicsTables::compute_xip_table(SmileiMPI *smpi)
             if (100.*ichipa >= length_table[rank]*pct)
             {
                 pct += dpct;
-                MESSAGE( "        " << ichipa + 1 << "/" << length_table[rank]
+                MESSAGE( "            " << ichipa + 1 << "/" << length_table[rank]
                                     << " - " << (int)(std::round(pct)) << "%");
             }
         }
@@ -387,7 +387,7 @@ void NlicsTables::compute_xip_table(SmileiMPI *smpi)
                 MPI_DOUBLE, smpi->getGlobalComm());
 
         // 2. - Computation of the xip table
-        MESSAGE("        Computation of xip:");
+        MESSAGE("            Computation of xip:");
         dpct = std::max(dpct,100./length_table[rank]);
 
         // Allocation of the local buffer
@@ -432,7 +432,7 @@ void NlicsTables::compute_xip_table(SmileiMPI *smpi)
             if (100.*ichipa >= length_table[rank]*pct)
             {
                 pct += dpct;
-                MESSAGE( "        " << ichipa + 1 << "/" << length_table[rank]
+                MESSAGE( "            " << ichipa + 1 << "/" << length_table[rank]
                                     << " - " << (int)(std::round(pct)) << "%");
             }
         }
@@ -638,7 +638,7 @@ void NlicsTables::compute_integfochi_table(SmileiMPI *smpi)
     if (Tools::file_exists("tab_integfochi.bin"))
     {
 
-        MESSAGE("        Reading of the table:");
+        MESSAGE("            Reading of the binary table:");
 
         if (rank==0)
         {
@@ -687,7 +687,7 @@ void NlicsTables::compute_integfochi_table(SmileiMPI *smpi)
                       &position);
         buf_size += position;
 
-        MESSAGE("        Buffer size: " << buf_size);
+        MESSAGE("            Buffer size: " << buf_size);
 
         // Packet that will contain all parameters
         char * buffer = new char[buf_size];
@@ -772,19 +772,19 @@ void NlicsTables::compute_integfochi_table(SmileiMPI *smpi)
         buffer = new double [length_table[rank]];
 
 
-        MESSAGE("        MPI repartition:");
+        MESSAGE("            MPI repartition:");
         // Print repartition
         if (rank==0)
         {
             for(int i =0 ; i < nb_ranks ; i++)
             {
-                MESSAGE( "        Rank: " << i
+                MESSAGE( "            Rank: " << i
                                           << " imin: " << imin_table[i]
                                           << " length: " << length_table[i] );
             }
         }
 
-        MESSAGE("        Computation:");
+        MESSAGE("            Computation:");
         dpct = std::max(dpct,100./length_table[rank]);
         // Loop over the table values
         for(int i = 0 ; i < length_table[rank] ; i++)
@@ -799,7 +799,7 @@ void NlicsTables::compute_integfochi_table(SmileiMPI *smpi)
             if (100.*i >= length_table[rank]*pct)
             {
                 pct += dpct;
-                MESSAGE("       " << i + 1<< "/" << length_table[rank] << " - " << (int)(std::round(pct)) << "%");
+                MESSAGE("            " << i + 1<< "/" << length_table[rank] << " - " << (int)(std::round(pct)) << "%");
             }
         }
 
@@ -1015,6 +1015,18 @@ double NlicsTables::compute_sync_emissivity_ritus(double chipa,
         ERROR("In compute_sync_emissivity_ritus: chipa " << chipa << " < chiph " << chiph);
     }
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Output the computed tables so that thay can be read at the next run.
+//
+//! \param smpi MPI parameters
+// ---------------------------------------------------------------------------------------------------------------------
+void NlicsTables::compute_tables(SmileiMPI *smpi)
+{
+    NlicsTables::compute_integfochi_table(smpi);
+    NlicsTables::compute_xip_table(smpi);
+}
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Output the computed tables so that thay can be read at the next run.

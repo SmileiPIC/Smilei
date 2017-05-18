@@ -83,6 +83,15 @@ int main (int argc, char* argv[])
     TITLE("Initializing moving window");
     SimWindow* simWindow = new SimWindow(params);
 
+    // ------------------------------------------------------------------------
+    // Init nonlinear inverse Compton scattering
+    // ------------------------------------------------------------------------
+    TITLE("Initializing nonlinear inverse Compton Scattering")
+    NlicsTables nlicsTables;
+    nlicsTables.initParams(params);
+    nlicsTables.compute_tables(smpi);
+    nlicsTables.output_tables();
+
     // ---------------------------------------------------
     // Initialize patches (including particles and fields)
     // ---------------------------------------------------
@@ -132,7 +141,8 @@ int main (int argc, char* argv[])
             MESSAGE("Time in Poisson : " << ptimer.getTime() );
         }
 
-        vecPatches.dynamics(params, smpi, simWindow, time_dual, timers, 0);
+        vecPatches.dynamics(params, smpi, simWindow, nlicsTables,
+                            time_dual, timers, 0);
         timers.particles.reboot();
         timers.syncPart .reboot();
 
@@ -154,16 +164,6 @@ int main (int argc, char* argv[])
 
     }
     timers.global.reboot();
-
-    // ------------------------------------------------------------------------
-    // Init nonlinear inverse Compton scattering
-    // ------------------------------------------------------------------------
-    TITLE("Initializing nonlinear inverse Compton Scattering")
-    NlicsTables nlicsTables;
-    nlicsTables.initParams(params);
-    nlicsTables.compute_integfochi_table(smpi);
-    nlicsTables.compute_xip_table(smpi);
-    nlicsTables.output_tables();
 
     // ------------------------------------------------------------------------
     // check here if we can close the python interpreter
@@ -208,7 +208,7 @@ int main (int argc, char* argv[])
             // (1) interpolate the fields at the particle position
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
-            vecPatches.dynamics(params, smpi, simWindow, time_dual, timers, itime);
+            vecPatches.dynamics(params, smpi, simWindow, nlicsTables, time_dual, timers, itime);
 
             // Sum densities
             vecPatches.sumDensities(params, time_dual, timers, itime, simWindow );

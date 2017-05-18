@@ -76,8 +76,12 @@ class NlicsTables
         //! \param chipa particle quantum parameter
         double compute_chiph_emission(double chipa);
 
+        //! Compute all the tables
+        void compute_tables(SmileiMPI *smpi);
+
         //! Write in a file the table xip_chiphmin and xip
         void output_xip_table();
+
 
         //! Output all computed tables so that they can be
         //! read at the next run
