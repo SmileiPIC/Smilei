@@ -163,8 +163,7 @@ int main (int argc, char* argv[])
     nlicsTables.initParams(params);
     nlicsTables.compute_integfochi_table(smpi);
     nlicsTables.compute_xip_table(smpi);
-    nlicsTables.output_integfochi_table();
-    nlicsTables.output_xip_table();
+    nlicsTables.output_tables();
 
     // ------------------------------------------------------------------------
     // check here if we can close the python interpreter

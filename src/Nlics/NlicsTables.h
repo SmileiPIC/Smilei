@@ -61,17 +61,27 @@ class NlicsTables
         double compute_dNphdt(double chipa,double gfpa);
 
         //! Computation of the function g of Erber using the Ridgers formulae
-        double g_ridgers(double chipa);
+        double compute_g_Ridgers(double chipa);
 
-        //! Computation of the continuous quantum radiated energy
-        double norm_rad_energy(double chipa, double dt);
+        //! Computation of the continuous quantum radiated energy during dt
+        //! from the quantum parameter chipa using the Ridgers formulae
+        double compute_cont_rad_energy_Ridgers(double chipa, double dt);
 
         //! Computation of the minimum photon quantum parameter for the array xip
         //! and computation of the xip array.
         void compute_xip_table(SmileiMPI *smpi);
 
+        //! Computation of the photon quantum parameter chiph for emission
+        //! ramdomly and using the tables xip and chiphmin
+        //! \param chipa particle quantum parameter
+        double compute_chiph_emission(double chipa);
+
         //! Write in a file the table xip_chiphmin and xip
         void output_xip_table();
+
+        //! Output all computed tables so that they can be
+        //! read at the next run
+        void output_tables();
 
     private:
 
@@ -129,6 +139,10 @@ class NlicsTables
 
         //! Delta for the chipa discretization  in the table xip and xip_chiphmin
         double chipa_xip_delta;
+
+        //! Inverse of the delta for the chipa discretization
+        //! in the table xip and xip_chiphmin
+        double inv_chipa_xip_delta;
 
         //! Dimension of the discretized parameter chipa
         int chipa_xip_dim;

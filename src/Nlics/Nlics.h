@@ -20,6 +20,7 @@
 #include "Params.h"
 #include "Particles.h"
 #include "Species.h"
+#include "NlicsTables.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 //! Nlics class: holds parameters and functions to apply the nonlinear inverse
@@ -39,6 +40,7 @@ class Nlics
         //! Overloading of () operator
         void operator() (Particles &particles,
                 SmileiMPI* smpi,
+                NlicsTables &nlicsTables,
                 int istart,
                 int iend,
                 int ithread);
@@ -56,6 +58,9 @@ class Nlics
                                      double & Ex, double & Ey, double & Ez,
                                      double & Bx, double & By, double & Bz);
 
+        //! Generate a photon and slow down the emitting particle
+        void photon_emission();
+
     private:
 
         // ________________________________________
@@ -70,8 +75,17 @@ class Nlics
         //! Time step
         double dt;
 
-        // Max number of Monte-Carlo iteration
+        //! Max number of Monte-Carlo iteration
         const int mc_it_nb_max = 100;
+
+        //! Espilon to check when tau is near 0
+        const double epsilon_tau = 0;
+
+        //! Under this value, the emission is considered continuous
+        const double chipa_disc_threshold = 1e-3;
+
+        //! Under this value, no radiation loss
+        const double chipa_cont_threshold = 1e-5;
 
         // _________________________________________
         // Factors
@@ -82,11 +96,17 @@ class Nlics
         //! Reduced Planck Constant (J.s)
         const double red_planck_cst = 1.054571628E-34;
 
-        //! Electron mass
+        //! Electron mass (kg)
         const double electron_mass = 9.109382616e-31;
 
         //! Speed of light in vacuum (m/s)
         const double c_vacuum = 299792458;
+
+        //! Normalized Schwinger Electric field
+        double norm_E_Schwinger;
+
+        //! Inverse Normalized Schwinger Electric field
+        double inv_norm_E_Schwinger;
 
 };
 

@@ -37,11 +37,11 @@ double userFunctions::erfinv (double x)
 //! inverse error function is taken from M.B. Giles. 'Approximating the erfinv function'. In GPU Computing Gems, volume 2, Morgan Kaufmann, 2011.
 double userFunctions::erfinv2 (double x)
 {
-    double w, p; 
+    double w, p;
     w = -log((1.0-x)*(1.0+x));
 
     if ( w < 5.000000 ) {
-        w = w - 2.500000; 
+        w = w - 2.500000;
         p = +2.81022636000e-08      ;
         p = +3.43273939000e-07 + p*w;
         p = -3.52338770000e-06 + p*w;
@@ -52,7 +52,7 @@ double userFunctions::erfinv2 (double x)
         p = +0.24664072700e+00 + p*w;
         p = +1.50140941000e+00 + p*w;
     } else {
-        w = sqrt(w) - 3.000000; 
+        w = sqrt(w) - 3.000000;
         p = -0.000200214257      ;
         p = +0.000100950558 + p*w;
         p = +0.001349343220 + p*w;
@@ -62,7 +62,7 @@ double userFunctions::erfinv2 (double x)
         p = +0.009438870470 + p*w;
         p = +1.001674060000 + p*w;
         p = +2.832976820000 + p*w;
-    }  
+    }
     return p*x;
 }
 
@@ -83,8 +83,8 @@ double userFunctions::erfinv2 (double x)
 //! \param maxit maximal number of iteration for convergence
 //! \param esp epsilon, accuracy threhold for convergence
 // ----------------------------------------------------------------------------
-void userFunctions::modified_bessel_IK(double n, double x, 
-        double & I, double & dI, 
+void userFunctions::modified_bessel_IK(double n, double x,
+        double & I, double & dI,
         double & K, double & dK,
         long maxit, double eps)
 {
@@ -111,7 +111,7 @@ void userFunctions::modified_bessel_IK(double n, double x,
     // Checks
     if (x <= 0.0)
     {
-        ERROR("Argument x is negative in modified_bessel_IK");   
+        ERROR("Argument x is negative in modified_bessel_IK");
     }
     if (n <= 0)
     {
@@ -120,7 +120,7 @@ void userFunctions::modified_bessel_IK(double n, double x,
     if (maxit <= 0)
     {
         ERROR("Maximal number of iteration is null in modified_bessel_IK");
-    } 
+    }
     if (eps <= 0)
     {
         ERROR("Accuracy threshold, epsilon, <= 0 in modified_bessel_IK");
@@ -242,7 +242,7 @@ void userFunctions::modified_bessel_IK(double n, double x,
 // ----------------------------------------------------------------------------
 //! \brief Chebychev evaluation adapted from the Numerical Recipes
 // ----------------------------------------------------------------------------
-double userFunctions::chebychev_eval(const double * c, const int m, 
+double userFunctions::chebychev_eval(const double * c, const int m,
         const double x)
 {
     double d=0.0,dd=0.0,sv;
@@ -252,14 +252,14 @@ double userFunctions::chebychev_eval(const double * c, const int m,
         d=2.*x*d-dd+c[j];
         dd=sv;
     }
-    return x*d-dd+0.5*c[0];  
+    return x*d-dd+0.5*c[0];
 }
 
 // ----------------------------------------------------------------------------
-//! \brief Computation of the abscissa and weight for the 
+//! \brief Computation of the abscissa and weight for the
 //! Gauss-Legendre Integration between xmin and xmax.
 //
-//! \details This code is adpated from the Numerical Recipes.  
+//! \details This code is adpated from the Numerical Recipes.
 //
 //! \param xmin minimum integration boundary
 //! \param xmax maximum integration boundary
@@ -268,7 +268,7 @@ double userFunctions::chebychev_eval(const double * c, const int m,
 //! \param nbit number of iteration for integration (array size)
 //! \param eps accuracy threshold for coef computation
 // ----------------------------------------------------------------------------
-void userFunctions::gauss_legendre_coef(double xmin,double xmax, double * x, 
+void userFunctions::gauss_legendre_coef(double xmin,double xmax, double * x,
         double * w, int nbit, double eps)
 {
 
@@ -278,7 +278,7 @@ void userFunctions::gauss_legendre_coef(double xmin,double xmax, double * x,
     double z1,z,xm,xl,pp,p3,p2,p1;
 
     // Checks
-    if (nbit <= 0) 
+    if (nbit <= 0)
     {
         ERROR("Number of iteration <= 0 in gauss_legendre_coef");
     }
@@ -308,7 +308,7 @@ void userFunctions::gauss_legendre_coef(double xmin,double xmax, double * x,
             }
             // p1 is now the desired Legendre polynomial. We next compute
             // pp, its derivative, by a standard relation involving also
-            // p2, the polynomial of one lower order. 
+            // p2, the polynomial of one lower order.
             pp=nbit*(z*p1-p2)/(z*z-1.0);
             z1=z;
             z=z1-p1/pp; /* Newton's method. */
@@ -338,7 +338,7 @@ void userFunctions::distribute_load_1d(int rank,
         int& imin,
         int& nb_loc_elems)
 {
-    // If more ranks than elements, 
+    // If more ranks than elements,
     // only a part of the processes will work
     if (nb_ranks >= nb_elems)
     {
@@ -363,7 +363,7 @@ void userFunctions::distribute_load_1d(int rank,
         quotient = nb_elems/nb_ranks;
 
         // Remaining load to be distributed after balanced repartition
-        remainder = nb_elems%nb_ranks; 
+        remainder = nb_elems%nb_ranks;
 
         if (rank < remainder)
         {
@@ -379,7 +379,7 @@ void userFunctions::distribute_load_1d(int rank,
 }
 
 // ----------------------------------------------------------------------------
-//! \brief Load repartition in 1d between MPI processes. 
+//! \brief Load repartition in 1d between MPI processes.
 //! This function returns tables of indexes and length for all rank
 //
 //! \param nb_ranks Total number of MPI tasks
@@ -394,7 +394,7 @@ void userFunctions::distribute_load_1d_table(
         int * length_table)
 {
 
-    // If more ranks than elements, 
+    // If more ranks than elements,
     // only a part of the processes will work
     if (nb_ranks >= nb_elems)
     {
@@ -421,7 +421,7 @@ void userFunctions::distribute_load_1d_table(
         quotient = nb_elems/nb_ranks;
 
         // Remaining load to be distributed after balanced repartition
-        remainder = nb_elems%nb_ranks; 
+        remainder = nb_elems%nb_ranks;
 
         #pragma omp simd
         for (int rank = 0 ; rank < remainder ; rank ++)
@@ -435,5 +435,51 @@ void userFunctions::distribute_load_1d_table(
             imin_table[rank] = remainder + rank*quotient;
             length_table[rank] = quotient;
         }
+    }
+}
+
+
+// ----------------------------------------------------------------------------
+//! \brief Equivalent of the function locate in the Numerical Recipes.
+//! This function uses a bijection algorithm in a monotonic double array
+//! to find the corresponding index i so that elem is between array[i]
+//! and array[i+1].
+//
+//! \param array array in which to find the value
+//! \param elem element to be found
+//! \param nb_elem number of elements
+// ----------------------------------------------------------------------------
+int userFunctions::search_elem_in_array(double * array,
+                                        double elem,
+                                        int nb_elems)
+{
+    int imin = 0; // lower bound
+    int imax = nb_elems-1; // upper bound
+    int imid = 0;
+
+    if (elem == array[0])
+    {
+        return 0;
+    }
+    else if (elem == array[nb_elems-1])
+    {
+        return nb_elems-2;
+    }
+    else
+    {
+        while(imax - imin > 1)
+        {
+            imid= (imin + imax) >> 1;
+
+            if (elem >= array[imid])
+            {
+                imin = imid;
+            }
+            else
+            {
+                imax = imid;
+            }
+        }
+        return imid;
     }
 }

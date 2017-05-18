@@ -74,10 +74,60 @@ void NlicsTables::initParams(Params& params)
     }
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//! Computation of the photon quantum parameter chiph for emission
+//! ramdomly and using the tables xip and chiphmin
+//! \param chipa particle quantum parameter
+// ---------------------------------------------------------------------------------------------------------------------
+double NlicsTables::compute_chiph_emission(double chipa)
+{
+    // Log10 of chipa
+    double logchipa;
+    double chiph;
+    // Random xip
+    double xip;
+    int ichipa;
+    int ichiph;
+
+    logchipa = log10(chipa);
+
+    // index of chipa in xip_table
+    ichipa = int(floor( (logchipa-log10(chipa_xip_min))*(inv_chipa_xip_delta)));
+
+    // Checking that ichipa is in the range of the tables
+    // Else we use the values at the boundaries
+    if (ichipa < 0)
+    {
+        ichipa = 0;
+    }
+    else if (ichipa > chipa_xip_dim-1)
+    {
+        ichipa = chipa_xip_dim-1;
+    }
+
+    // Search of the index ichiph for chiph
+
+    // First, we compute a random xip in [0,1]
+    xip = Rand::uniform();
+
+    // If the randomly computed xip if below the first one of the row,
+    // we take the first one which corresponds to the minimal photon chiph
+    if (xip <= xip_table[ichipa*chiph_xip_dim])
+    {
+        ichiph = 0;
+    }
+    else
+    {
+        // Search for the corresponding index ichiph for xip
+
+    }
+
+    return 0;
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Computation of the minimum photon quantum parameter chiphmin for the xip array
-//! and computation of the xip array.
+//! Computation of the minimum photon quantum parameter chiphmin
+//! for the xip array and computation of the xip array.
 //
 //! \details Under the minimum chiph value, photon energy is
 //! considered negligible.
@@ -142,13 +192,79 @@ void NlicsTables::compute_xip_table(SmileiMPI *smpi)
             xip_table.resize(chipa_xip_dim*chiph_xip_dim);
         }
 
-        // Bcast of the table xip_chiphmin
-        MPI_Bcast(&xip_chiphmin_table[0], chipa_xip_dim, MPI_DOUBLE, 0,
-           smpi->getGlobalComm());
+        // Position for MPI pack and unack
+        int position;
+        // buffer size for MPI pack and unpack
+        int buf_size;
 
-        // Bcast of the table xip
-        MPI_Bcast(&xip_table[0], chipa_xip_dim*chiph_xip_dim, MPI_DOUBLE, 0,
-           smpi->getGlobalComm());
+        // Bcast of all the parameters
+        // We pack everything in a buffer
+        MPI_Pack_size(2, MPI_INTEGER, smpi->getGlobalComm(), &position);
+        buf_size = position;
+        MPI_Pack_size(2, MPI_DOUBLE, smpi->getGlobalComm(), &position);
+        buf_size += position;
+        MPI_Pack_size(chipa_xip_dim, MPI_DOUBLE, smpi->getGlobalComm(),
+                      &position);
+        buf_size += position;
+        MPI_Pack_size(chipa_xip_dim*chiph_xip_dim, MPI_DOUBLE,
+                      smpi->getGlobalComm(), &position);
+        buf_size += position;
+
+        MESSAGE("        Buffer size: " << buf_size);
+
+        // Packet that will contain all parameters
+        char * buffer = new char[buf_size];
+
+        // Proc 0 packs
+        if (rank == 0)
+        {
+            position = 0;
+            MPI_Pack(&chipa_xip_dim,
+                 1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
+            MPI_Pack(&chiph_xip_dim,
+                 1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
+            MPI_Pack(&chipa_xip_min,
+                 1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
+            MPI_Pack(&chipa_xip_max,
+                 1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
+
+            MPI_Pack(&xip_chiphmin_table[0],chipa_xip_dim,
+                MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
+
+            MPI_Pack(&xip_table[0],chipa_xip_dim*chiph_xip_dim,
+                MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
+        }
+
+        // Bcast all parameters
+        MPI_Bcast(&buffer[0], buf_size, MPI_PACKED, 0,smpi->getGlobalComm());
+
+        // Other ranks unpack
+        if (rank != 0)
+        {
+            position = 0;
+            MPI_Unpack(buffer, buf_size, &position,
+                       &chipa_xip_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
+            MPI_Unpack(buffer, buf_size, &position,
+                       &chiph_xip_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
+            MPI_Unpack(buffer, buf_size, &position,
+                       &chipa_xip_min, 1, MPI_DOUBLE,smpi->getGlobalComm());
+            MPI_Unpack(buffer, buf_size, &position,
+                       &chipa_xip_max, 1, MPI_DOUBLE,smpi->getGlobalComm());
+
+            MPI_Unpack(buffer, buf_size, &position,&xip_chiphmin_table[0],
+                        chipa_xip_dim, MPI_DOUBLE,smpi->getGlobalComm());
+
+            MPI_Unpack(buffer, buf_size, &position,&xip_table[0],
+                chipa_xip_dim*chiph_xip_dim, MPI_DOUBLE,smpi->getGlobalComm());
+        }
+
+       // Computation of the delta
+       chipa_xip_delta = (log10(chipa_xip_max)
+               - log10(chipa_xip_min))/(chipa_xip_dim-1);
+
+       // Inverse of delta
+       inv_chipa_xip_delta = 1./chipa_xip_delta;
+
     }
     // else the table is generated
     else
@@ -190,6 +306,9 @@ void NlicsTables::compute_xip_table(SmileiMPI *smpi)
         // Computation of the delta
         chipa_xip_delta = (log10(chipa_xip_max)
                 - log10(chipa_xip_min))/(chipa_xip_dim-1);
+
+        // Inverse of delta
+        inv_chipa_xip_delta = 1./chipa_xip_delta;
 
         // Load repartition
         userFunctions::distribute_load_1d_table(nb_ranks,
@@ -425,14 +544,14 @@ void NlicsTables::output_xip_table()
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Computation of the continuous quantum radiated energy during dt
+//! Computation of the normalized continuous quantum radiated energy during dt
 //
 //! \param chipa particle quantum parameter
 //! \param dt time step
 // ---------------------------------------------------------------------------------------------------------------------
-double NlicsTables::norm_rad_energy(double chipa, double dt)
+double NlicsTables::compute_cont_rad_energy_Ridgers(double chipa, double dt)
 {
-    return g_ridgers(chipa)*dt*chipa*chipa;
+    return compute_g_Ridgers(chipa)*dt*chipa*chipa;
 }
 
 
@@ -441,7 +560,7 @@ double NlicsTables::norm_rad_energy(double chipa, double dt)
 //
 //! \param chipa particle quantum parameter
 // ---------------------------------------------------------------------------------------------------------------------
-double NlicsTables::g_ridgers(double chipa)
+double NlicsTables::compute_g_Ridgers(double chipa)
 {
     return pow(1. + 4.8*(1.+chipa)*log10(1. + 1.7*chipa) + 2.44*chipa*chipa,-2./3.);
 }
@@ -553,10 +672,64 @@ void NlicsTables::compute_integfochi_table(SmileiMPI *smpi)
             Integfochi.resize(dim_integfochi);
         }
 
-        // Allgathering of the table
-        MPI_Bcast(&Integfochi[0], dim_integfochi, MPI_DOUBLE, 0,
-           smpi->getGlobalComm());
+        // Position for MPI pack and unack
+        int position;
+        // buffer size for MPI pack and unpack
+        int buf_size;
 
+        // Bcast of all the parameters
+        // We pack everything in a buffer
+        MPI_Pack_size(1, MPI_INTEGER, smpi->getGlobalComm(), &position);
+        buf_size = position;
+        MPI_Pack_size(2, MPI_DOUBLE, smpi->getGlobalComm(), &position);
+        buf_size += position;
+        MPI_Pack_size(dim_integfochi, MPI_DOUBLE, smpi->getGlobalComm(),
+                      &position);
+        buf_size += position;
+
+        MESSAGE("        Buffer size: " << buf_size);
+
+        // Packet that will contain all parameters
+        char * buffer = new char[buf_size];
+
+        // Proc 0 packs
+        if (rank == 0)
+        {
+            position = 0;
+            MPI_Pack(&dim_integfochi,
+                 1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
+            MPI_Pack(&chipa_integfochi_min,
+                 1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
+            MPI_Pack(&chipa_integfochi_max,
+                 1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
+
+            MPI_Pack(&Integfochi[0],dim_integfochi,
+                MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
+
+        }
+
+        // Bcast all parameters
+        MPI_Bcast(&buffer[0], buf_size, MPI_PACKED, 0,smpi->getGlobalComm());
+
+        // Other ranks unpack
+        if (rank != 0)
+        {
+            position = 0;
+            MPI_Unpack(buffer, buf_size, &position,
+                       &dim_integfochi, 1, MPI_INTEGER,smpi->getGlobalComm());
+            MPI_Unpack(buffer, buf_size, &position,
+                       &chipa_integfochi_min, 1, MPI_DOUBLE,smpi->getGlobalComm());
+            MPI_Unpack(buffer, buf_size, &position,
+                       &chipa_integfochi_max, 1, MPI_DOUBLE,smpi->getGlobalComm());
+
+            MPI_Unpack(buffer, buf_size, &position,&Integfochi[0],
+                        dim_integfochi, MPI_DOUBLE,smpi->getGlobalComm());
+
+        }
+
+        // Computation of the delta
+        delta_chipa_integfochi = (log10(chipa_integfochi_max)
+                - log10(chipa_integfochi_min))/(dim_integfochi-1);
 
     }
     // else the table is generated
@@ -840,5 +1013,20 @@ double NlicsTables::compute_sync_emissivity_ritus(double chipa,
     else
     {
         ERROR("In compute_sync_emissivity_ritus: chipa " << chipa << " < chiph " << chiph);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Output the computed tables so that thay can be read at the next run.
+// ---------------------------------------------------------------------------------------------------------------------
+void NlicsTables::output_tables()
+{
+    if (integfochi_computed)
+    {
+        NlicsTables::output_integfochi_table();
+    }
+    if (xip_computed)
+    {
+        NlicsTables::output_xip_table();
     }
 }
