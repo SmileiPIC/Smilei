@@ -130,6 +130,9 @@ void Particles::reserve( unsigned int n_part_max, unsigned int nDim )
     if (isRadReaction)
         Chi.reserve(n_part_max);
 
+    if (isDiscRadReaction)
+        Tau.reserve(n_part_max);
+
 }
 
 void Particles::resize( unsigned int nParticles, unsigned int nDim )
@@ -158,6 +161,12 @@ void Particles::resize( unsigned int nParticles, unsigned int nDim )
     if (isRadReaction) {
         Chi.resize(nParticles, 0.);
     }
+
+    if (isDiscRadReaction)
+    {
+        Tau.resize(nParticles, 0.);
+    }
+
 }
 
 void Particles::shrink_to_fit( unsigned int nDim )
@@ -301,6 +310,9 @@ void Particles::print(unsigned int iPart) {
 
     if (isRadReaction)
         cout << Chi[iPart] << endl;
+
+    if (isDiscRadReaction)
+        cout << Tau[iPart] << endl;
 }
 
 
@@ -324,6 +336,9 @@ ostream& operator << (ostream& out, const Particles& particles) {
 
         if (particles.isRadReaction)
             out << particles.Chi[iPart] << endl;
+
+        if (particles.isDiscRadReaction)
+            out << particles.Tau[iPart] << endl;
     }
 
     return (out);

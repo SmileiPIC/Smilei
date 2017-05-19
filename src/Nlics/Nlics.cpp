@@ -113,7 +113,6 @@ void Nlics::operator() (Particles &particles,
     // Optical depth for the Monte-Carlo process
     double* chi = &( particles.chi(0));
 
-
     // _______________________________________________________________
     // Computation
 
