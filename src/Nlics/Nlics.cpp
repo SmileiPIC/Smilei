@@ -119,6 +119,8 @@ void Nlics::operator() (Particles &particles,
     for (int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass2 = (double)(charge[ipart])*pow(one_over_mass_,2.);
 
+        std:: cerr << tau[ipart] << std::endl;
+
         // Init local variables
         emission_time = 0;
         local_it_time = 0;
@@ -149,6 +151,8 @@ void Nlics::operator() (Particles &particles,
                 // New final optical depth to reach for emision
                 tau[ipart] = -log( -Rand::uniform() + 1);
             }
+
+            std:: cerr << tau[ipart] << std::endl;
 
             // Discontinuous emission: emission under progress
             // If epsilon_tau > 0
