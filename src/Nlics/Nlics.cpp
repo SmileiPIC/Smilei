@@ -53,12 +53,13 @@ Nlics::~Nlics()
 //! Overloading of the operator (): perform the Discontinuous radiation reaction
 //! induced by the nonlinear inverse Compton scattering
 //
-//! \param particles particle object containing the particle properties
-//! \param smpi
-//! \param nlicsTables
-//! \param istart
-//! \param iend
-//! \param ithread
+//! \param particles   particle object containing the particle properties
+//! \param smpi        MPI properties
+//! \param nlicsTables Cross-section data tables and useful functions
+//                     for nonlinear inverse Compton scattering
+//! \param istart      Index of the first particle
+//! \param iend        Index of the last particle
+//! \param ithread     Thread index
 // ---------------------------------------------------------------------------------------------------------------------
 void Nlics::operator() (Particles &particles,
         SmileiMPI* smpi,
@@ -111,6 +112,7 @@ void Nlics::operator() (Particles &particles,
 
     // Optical depth for the Monte-Carlo process
     double* chi = &( particles.chi(0));
+
 
     // _______________________________________________________________
     // Computation
@@ -243,5 +245,5 @@ double Nlics::compute_chipa(double & charge_over_mass2,
 
 void Nlics::photon_emission()
 {
-    
+
 }
