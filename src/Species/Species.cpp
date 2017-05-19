@@ -134,6 +134,9 @@ void Species::initOperators(Params& params, Patch* patch)
         DEBUG("Species " << species_type << " can be ionized!");
     }
 
+    // Create the Nonlinear inverse Compton Scattering model
+    nlics = new Nlics(params, this);
+
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond(params, this, patch);
 
@@ -460,9 +463,13 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             // Interpolate the fields at the particle position
             (*Interp)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread );
 
-            //Ionization
+            // Ionization
             if (Ionize)
                 (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
+
+            // Nonlinear inverse Compton Scattering
+            (*nlics)(*particles, smpi, nlicsTables,
+                     bmin[ibin], bmax[ibin], ithread );
 
             // Push the particles
             (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
