@@ -26,9 +26,14 @@ using namespace std;
 Species_nlics::Species_nlics( Params& params, Patch* patch)
     : Species( params, patch )
 {
+    // Continuous radiation reaction
     particles->isRadReaction=true;
 
-    DEBUG("Species is being created as nlics");
+    // Discontinuous radiation Reaction
+    particles->isDiscRadReaction=true;
+
+    DEBUG("Species is being created as nlics for nonlinear inverse"
+       << " Compton scattering");
 }
 
 
