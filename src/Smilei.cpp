@@ -125,6 +125,9 @@ int main (int argc, char* argv[])
         vecPatches.computeCharge();
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
 
+        TITLE("Applying external fields at time t = 0");
+        vecPatches.applyExternalFields();
+
         // Apply antennas
         // --------------
         vecPatches.applyAntennas(0.5 * params.timestep);
@@ -149,9 +152,6 @@ int main (int argc, char* argv[])
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
         timers.densities.reboot();
         timers.syncDens .reboot();
-
-        TITLE("Applying external fields at time t = 0");
-        vecPatches.applyExternalFields();
 
         vecPatches.finalize_and_sort_parts(params, smpi, simWindow, time_dual, timers, 0);
         timers.syncPart .reboot();

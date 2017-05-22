@@ -88,7 +88,9 @@ void Particles::initialize(unsigned int nParticles, unsigned int nDim)
 
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
 // copy properties from another Particles
+// ---------------------------------------------------------------------------------------------------------------------
 void Particles::initialize(unsigned int nParticles, Particles &part)
 {
     isTest=part.isTest;

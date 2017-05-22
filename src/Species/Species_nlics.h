@@ -22,8 +22,8 @@ class Params;
 
 //! class Species_nlics
 //! Species for which the dynamics is governed by the Lorentz force and the
-//! Nonlinear Inverse Compton Scattering quantum radiation reaction force (Monte-Carlo process):
-//! Boris pusher + first order spliting
+//! Nonlinear Inverse Compton Scattering quantum radiation reaction force
+//! (Monte-Carlo process)
 class Species_nlics : public Species
 {
 public:

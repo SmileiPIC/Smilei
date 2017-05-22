@@ -58,7 +58,8 @@ void NlicsTables::initParams(Params& params)
     }
 
     // Computation of the normalized Compton wavelength
-    norm_lambda_compton = red_planck_cst*params.referenceAngularFrequency_SI/(electron_mass*c_vacuum);
+    norm_lambda_compton = red_planck_cst*params.referenceAngularFrequency_SI
+                        / (electron_mass*c_vacuum*c_vacuum);
 
     // Computation of the factor factor_dNphdt
     factor_dNphdt = sqrt(3.)*fine_struct_cst/(2.*M_PI*norm_lambda_compton);
@@ -586,7 +587,7 @@ double NlicsTables::compute_dNphdt(double chipa,double gfpa)
     logchipa = log10(chipa);
 
     // Lower index for interpolation in the table integfochi
-    i_chipa = int(floor(logchipa-chipa_integfochi_min)/delta_chipa_integfochi);
+    i_chipa = int(floor(logchipa-log10(chipa_integfochi_min))/delta_chipa_integfochi);
 
     // If we are not in the table...
     if (i_chipa < 0)

@@ -411,8 +411,6 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
 
     }//ENDif vel != 0
 
-
-
 }//END initMomentum
 
 

@@ -119,8 +119,6 @@ void Nlics::operator() (Particles &particles,
     for (int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass2 = (double)(charge[ipart])*pow(one_over_mass_,2.);
 
-        std:: cerr << tau[ipart] << std::endl;
-
         // Init local variables
         emission_time = 0;
         local_it_time = 0;
@@ -132,7 +130,9 @@ void Nlics::operator() (Particles &particles,
         {
 
             // Gamma
-            gamma = 1./(*invgf)[ipart];
+            gamma = sqrt(1.0 + momentum[0][ipart]*momentum[0][ipart]
+                             + momentum[1][ipart]*momentum[1][ipart]
+                             + momentum[2][ipart]*momentum[2][ipart]);
 
             // Computation of the Lorentz invariant quantum parameter
             chipa = Nlics::compute_chipa(charge_over_mass2,
@@ -149,15 +149,26 @@ void Nlics::operator() (Particles &particles,
             && (tau[ipart] <= epsilon_tau) )
             {
                 // New final optical depth to reach for emision
-                tau[ipart] = -log( -Rand::uniform() + 1);
-            }
+                tau[ipart] = -log( -Rand::uniform() + 1.0);
 
-            std:: cerr << tau[ipart] << std::endl;
+                /*if (ipart == 1)
+                {
+                    std::cerr << "New discontinuous emission" << std::endl;
+                    std::cerr << "Tau: " << tau[ipart] << std::endl;
+                }*/
+
+            }
 
             // Discontinuous emission: emission under progress
             // If epsilon_tau > 0
             if (tau[ipart] > epsilon_tau)
             {
+
+                /*if (ipart == 1)
+                {
+                    std::cerr << "Continue discontinuous emission" << std::endl;
+                }*/
+
                 // from the cross section
                 temp = nlicsTables.compute_dNphdt(chipa,gamma);
 
@@ -168,6 +179,16 @@ void Nlics::operator() (Particles &particles,
 
                 // Update of the optical depth
                 tau[ipart] -= temp*emission_time;
+
+                /*if (ipart == 1)
+                {
+                    std::cerr << "tau: " << tau[ipart] << " "
+                              << "temp: " << temp << " "
+                              << "tau[ipart]/temp: " << tau[ipart]/temp << " "
+                              << "emission_time: " << emission_time << " "
+                              << "dt - local_it_time: " << dt - local_it_time << " "
+                              << std::endl;
+                }*/
 
                 // If the final optical depth is reached
                 if (tau[ipart] <= epsilon_tau)
@@ -198,6 +219,8 @@ void Nlics::operator() (Particles &particles,
             &&  (tau[ipart] <= epsilon_tau)
             &&  (chipa > chipa_cont_threshold))
             {
+
+                std::cerr << "Continuous" << std::endl;
 
                 // Remaining time of the iteration
                 emission_time = dt - local_it_time;
@@ -237,11 +260,18 @@ double Nlics::compute_chipa(double & charge_over_mass2,
 {
     double chipa;
 
-    chipa = charge_over_mass2*inv_norm_E_Schwinger
-          * sqrt( pow(Ex*px + Ey*py + Ez*pz,2)
+    chipa = abs(charge_over_mass2)*inv_norm_E_Schwinger
+          * sqrt( fabs( pow(Ex*px + Ey*py + Ez*pz,2)
           - pow(gamma*Ex - By*pz + Bz*py,2)
           - pow(gamma*Ey - Bz*px + Bx*pz,2)
-          - pow(gamma*Ez - Bx*py + By*px,2));
+          - pow(gamma*Ez - Bx*py + By*px,2)));
+
+    /*std::cerr << charge_over_mass2 << " " << inv_norm_E_Schwinger << " "
+              << "P: " << px << " " << py << " " << pz << " " << " "
+              << "Gamma: "<< gamma << " "
+              << "E: " << Ex << " " << Ey << " " << Ez << " "
+              << "B: " <<  Bx << " " << By << " " << Bz << " "
+              << "chipa: " << chipa << std::endl;*/
 
     return chipa;
 }
