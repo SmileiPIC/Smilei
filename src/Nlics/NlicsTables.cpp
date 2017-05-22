@@ -131,6 +131,12 @@ double NlicsTables::compute_chiph_emission(double chipa)
             &xip_table[ichipa*chiph_xip_dim],xip,chiph_xip_dim-1);
     }
 
+    std::cerr << "ichiph: " << ichiph << " "
+              << "ichipa: " << ichipa << " "
+              << "logchipa: " << logchipa << " "
+              << "log10(chipa_xip_min): " << chipa_xip_min
+              << std::endl;
+
     // Delta for the corresponding chipa
     chiph_xip_delta = (logchipa - log10(xip_chiphmin_table[ichipa]))
                     /(chiph_xip_dim-1);
@@ -502,8 +508,8 @@ void NlicsTables::output_xip_table()
 
             file << chipa_xip_dim << " "
                  << chiph_xip_dim << " "
-                 << log10(chipa_xip_min) << " "
-                 << log10(chipa_xip_max) << "\n";;
+                 << chipa_xip_min << " "
+                 << chipa_xip_max << "\n";;
 
             // Loop over the xip_chiphmin values
             for(int i = 0 ; i < chipa_xip_dim ; i++)
@@ -533,8 +539,8 @@ void NlicsTables::output_xip_table()
 
             double temp0, temp1;
 
-            temp0 = log10(chipa_xip_min);
-            temp1 = log10(chipa_xip_max);
+            temp0 = chipa_xip_min;
+            temp1 = chipa_xip_max;
 
             file.write((char*)&chipa_xip_dim,sizeof (int));
             file.write((char*)&chiph_xip_dim,sizeof (int));
@@ -871,8 +877,8 @@ void NlicsTables::output_integfochi_table()
 
             file << dim_integfochi ;
             file << " "
-                << log10(chipa_integfochi_min) << " "
-                << log10(chipa_integfochi_max) << "\n";;
+                << chipa_integfochi_min << " "
+                << chipa_integfochi_max << "\n";;
 
             // Loop over the table values
             for(int i = 0 ; i < dim_integfochi ; i++)
@@ -892,8 +898,8 @@ void NlicsTables::output_integfochi_table()
 
             double temp0, temp1;
 
-            temp0 = log10(chipa_integfochi_min);
-            temp1 = log10(chipa_integfochi_max);
+            temp0 = chipa_integfochi_min;
+            temp1 = chipa_integfochi_max;
 
             file.write((char*)&dim_integfochi,sizeof (dim_integfochi));
             file.write((char*)&temp0, sizeof (double));

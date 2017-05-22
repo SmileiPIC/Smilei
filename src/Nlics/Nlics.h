@@ -49,6 +49,8 @@ class Nlics
         //! Computation of the Lorentz invariant quantum parameter for particles
         //! \param charge_over_mass2 charge divided by the square of the mass
         //! \param px particle x momentum
+        //! \param py particle y momentum
+        //! \param pz particle z momentum
         //! \param gamma particle Lorentz factor
         //! \param Ex x component of the particle electric field
         //! \param Bx x component of the particle magnetic field
@@ -58,8 +60,23 @@ class Nlics
                                      double & Ex, double & Ey, double & Ez,
                                      double & Bx, double & By, double & Bz);
 
-        //! Generate a photon and slow down the emitting particle
-        void photon_emission(double &chipa, NlicsTables &nlicsTables);
+        // ---------------------------------------------------------------------------------------------------------------------
+        //! Perform the phoon emission (creation of a super-photon
+        //! and slow down of the emitting particle)
+        //! \param chipa          particle quantum parameter
+        //! \param gammapa          particle gamma factor
+        //! \param px             particle momentum in x
+        //! \param py             particle momentum in y
+        //! \param pz             particle momentum in z
+        //! \param nlicsTables    Cross-section data tables and useful functions
+        //                        for nonlinear inverse Compton scattering
+        // ---------------------------------------------------------------------------------------------------------------------
+        void photon_emission(double &chipa,
+                             double & gammapa,
+                             double & px,
+                             double & py,
+                             double & pz,
+                             NlicsTables &nlicsTables);
 
     private:
 

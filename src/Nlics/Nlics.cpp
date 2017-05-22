@@ -195,7 +195,11 @@ void Nlics::operator() (Particles &particles,
                 {
 
                     // Emission of a photon
-                    Nlics::photon_emission(chipa,nlicsTables);
+                    if (ipart == 1) Nlics::photon_emission(chipa,gamma,
+                                           momentum[0][ipart],
+                                           momentum[1][ipart],
+                                           momentum[2][ipart],
+                                           nlicsTables);
 
                     // Optical depth becomes negative meaning
                     // that a new drawing is possible
@@ -280,14 +284,48 @@ double Nlics::compute_chipa(double & charge_over_mass2,
 //! Perform the phoon emission (creation of a super-photon
 //! and slow down of the emitting particle)
 //! \param chipa          particle quantum parameter
+//! \param gammapa          particle gamma factor
+//! \param px             particle momentum in x
+//! \param py             particle momentum in y
+//! \param pz             particle momentum in z
 //! \param nlicsTables    Cross-section data tables and useful functions
 //                        for nonlinear inverse Compton scattering
 // ---------------------------------------------------------------------------------------------------------------------
-void Nlics::photon_emission(double &chipa, NlicsTables &nlicsTables)
+void Nlics::photon_emission(double &chipa,
+                            double & gammapa,
+                            double & px,
+                            double & py,
+                            double & pz,
+                            NlicsTables &nlicsTables)
 {
+    // ____________________________________________________
     // Parameters
-    double chiph;
+    double chiph;      // Photon quantum parameter
+    double gammaph;    // Photon gamma factor
+    double inv_old_norm_p;
+    double new_norm_p;
 
     // Get the photon quantum parameter from the table xip
     chiph = nlicsTables.compute_chiph_emission(chipa);
+
+    // compute the photon gamma factor
+    gammaph = chiph/chipa*gammapa;
+
+    std::cerr << "chiph: " << chiph << std::endl;
+
+    // ____________________________________________________
+    // Creation of the new photon
+
+    // ____________________________________________________
+    // Update of the particle properties
+    // direction d'emission // direction de l'electron (1/gamma << 1)
+    // With momentum conservation
+
+    // With energy conservation
+    inv_old_norm_p = sqrt(gammapa*gammapa - 1);
+    gammapa -= gammaph;
+    new_norm_p = sqrt(gammapa*gammapa - 1);
+    px *= new_norm_p * inv_old_norm_p;
+    py *= new_norm_p * inv_old_norm_p;
+    pz *= new_norm_p * inv_old_norm_p;
 }
