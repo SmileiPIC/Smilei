@@ -59,7 +59,7 @@ class Nlics
                                      double & Bx, double & By, double & Bz);
 
         //! Generate a photon and slow down the emitting particle
-        void photon_emission();
+        void photon_emission(double &chipa, NlicsTables &nlicsTables);
 
     private:
 

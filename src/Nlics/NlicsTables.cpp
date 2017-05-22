@@ -85,6 +85,7 @@ double NlicsTables::compute_chiph_emission(double chipa)
     // Log10 of chipa
     double logchipa;
     double chiph;
+    double chiph_xip_delta;
     // Random xip
     double xip;
     int ichipa;
@@ -117,13 +118,27 @@ double NlicsTables::compute_chiph_emission(double chipa)
     {
         ichiph = 0;
     }
+    // Above the last xip of the row, the last one corresponds
+    // to the maximal photon chiph
+    else if (xip >= xip_table[(ichipa+1)*chiph_xip_dim-1])
+    {
+        ichiph = chiph_xip_dim-1;
+    }
     else
     {
         // Search for the corresponding index ichiph for xip
-
+        ichiph = userFunctions::search_elem_in_array(
+            &xip_table[ichipa*chiph_xip_dim],xip,chiph_xip_dim-1);
     }
 
-    return 0;
+    // Delta for the corresponding chipa
+    chiph_xip_delta = (logchipa - log10(xip_chiphmin_table[ichipa]))
+                    /(chiph_xip_dim-1);
+
+    // final chiph
+    chiph = pow(10.,ichiph*chiph_xip_delta + log10(xip_chiphmin_table[ichipa]));
+
+    return chiph;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -195,7 +195,7 @@ void Nlics::operator() (Particles &particles,
                 {
 
                     // Emission of a photon
-                    Nlics::photon_emission();
+                    Nlics::photon_emission(chipa,nlicsTables);
 
                     // Optical depth becomes negative meaning
                     // that a new drawing is possible
@@ -276,7 +276,18 @@ double Nlics::compute_chipa(double & charge_over_mass2,
     return chipa;
 }
 
-void Nlics::photon_emission()
+// ---------------------------------------------------------------------------------------------------------------------
+//! Perform the phoon emission (creation of a super-photon
+//! and slow down of the emitting particle)
+//! \param chipa          particle quantum parameter
+//! \param nlicsTables    Cross-section data tables and useful functions
+//                        for nonlinear inverse Compton scattering
+// ---------------------------------------------------------------------------------------------------------------------
+void Nlics::photon_emission(double &chipa, NlicsTables &nlicsTables)
 {
+    // Parameters
+    double chiph;
 
+    // Get the photon quantum parameter from the table xip
+    chiph = nlicsTables.compute_chiph_emission(chipa);
 }
