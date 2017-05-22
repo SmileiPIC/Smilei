@@ -131,18 +131,20 @@ double NlicsTables::compute_chiph_emission(double chipa)
             &xip_table[ichipa*chiph_xip_dim],xip,chiph_xip_dim-1);
     }
 
-    std::cerr << "ichiph: " << ichiph << " "
-              << "ichipa: " << ichipa << " "
-              << "logchipa: " << logchipa << " "
-              << "log10(chipa_xip_min): " << chipa_xip_min
-              << std::endl;
-
     // Delta for the corresponding chipa
     chiph_xip_delta = (logchipa - log10(xip_chiphmin_table[ichipa]))
                     /(chiph_xip_dim-1);
 
     // final chiph
     chiph = pow(10.,ichiph*chiph_xip_delta + log10(xip_chiphmin_table[ichipa]));
+
+    /*std::cerr << "ichiph: " << ichiph << " "
+              << "chiph: " << chiph << " "
+              << "xip: " << xip << " "
+              << "ichipa: " << ichipa << " "
+              << "logchipa: " << logchipa << " "
+              << "chipa: " << chipa << " "
+              << std::endl;*/
 
     return chiph;
 }
@@ -504,7 +506,7 @@ void NlicsTables::output_xip_table()
 
             file << "Table xip_chiphmin and xip for Nonlinear Compton Scattering \n";
 
-            file << "Dimension chipa - Dimension chiph - LOG10(chipa min) - LOG10(chipa max) \n";
+            file << "Dimension chipa - Dimension chiph - chipa min - chipa max \n";
 
             file << chipa_xip_dim << " "
                  << chiph_xip_dim << " "
@@ -873,7 +875,7 @@ void NlicsTables::output_integfochi_table()
 
             file << "Table Integration F(CHI)/CHI for Nonlinear Compton Scattering \n";
 
-            file << "Dimension chipa - LOG10(chipa min) - LOG10(chipa max) \n";
+            file << "Dimension chipa - chipa min - chipa max \n";
 
             file << dim_integfochi ;
             file << " "

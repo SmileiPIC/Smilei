@@ -195,11 +195,20 @@ void Nlics::operator() (Particles &particles,
                 {
 
                     // Emission of a photon
-                    if (ipart == 1) Nlics::photon_emission(chipa,gamma,
+                    if (ipart == 1) {
+
+                        Nlics::photon_emission(chipa,gamma,
                                            momentum[0][ipart],
                                            momentum[1][ipart],
                                            momentum[2][ipart],
                                            nlicsTables);
+
+                        /*std::cerr << "gammapa: " << gamma << " "
+                                  << "Px: " << momentum[0][ipart] << " "
+                                  << "Py: " << momentum[1][ipart] << " "
+                                  << std::endl;*/
+
+                    }
 
                     // Optical depth becomes negative meaning
                     // that a new drawing is possible
@@ -311,7 +320,9 @@ void Nlics::photon_emission(double &chipa,
     // compute the photon gamma factor
     gammaph = chiph/chipa*gammapa;
 
-    std::cerr << "chiph: " << chiph << std::endl;
+    /*std::cerr << "chiph: " << chiph << " "
+              << "gammapa: " << gammapa << " "
+              << "gammaph: " << gammaph << std::endl;*/
 
     // ____________________________________________________
     // Creation of the new photon
@@ -322,10 +333,11 @@ void Nlics::photon_emission(double &chipa,
     // With momentum conservation
 
     // With energy conservation
-    inv_old_norm_p = sqrt(gammapa*gammapa - 1);
+    inv_old_norm_p = 1./sqrt(gammapa*gammapa - 1);
     gammapa -= gammaph;
     new_norm_p = sqrt(gammapa*gammapa - 1);
     px *= new_norm_p * inv_old_norm_p;
     py *= new_norm_p * inv_old_norm_p;
     pz *= new_norm_p * inv_old_norm_p;
+
 }
