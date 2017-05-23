@@ -2,7 +2,7 @@
 //! \file Nlics.cpp
 //
 //! \brief This class performs the Nonlinear Inverse Compton Scattering
-//! on particles.
+//! on particles using a Monte-Carlo approach.
 //
 //! The implementation is adapted from the thesis results of M. Lobet
 //! See http://www.theses.fr/2015BORD0361
@@ -331,6 +331,12 @@ void Nlics::photon_emission(double &chipa,
     // Update of the particle properties
     // direction d'emission // direction de l'electron (1/gamma << 1)
     // With momentum conservation
+    // kx = px*inv_old_norm_p*gammaph;
+    // ky = py*inv_old_norm_p*gammaph;
+    // kz = pz*inv_old_norm_p*gammaph;
+    // px -= kx
+    // py -= ky
+    // pz -= kz
 
     // With energy conservation
     inv_old_norm_p = 1./sqrt(gammapa*gammapa - 1);
