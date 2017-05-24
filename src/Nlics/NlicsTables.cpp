@@ -620,7 +620,8 @@ double NlicsTables::compute_dNphdt(double chipa,double gfpa)
     logchipa = log10(chipa);
 
     // Lower index for interpolation in the table integfochi
-    ichipa = int(floor((logchipa-log10(chipa_integfochi_min))/delta_chipa_integfochi));
+    ichipa = int(floor((logchipa-log10(chipa_integfochi_min))
+                 *inv_delta_chipa_integfochi));
 
     // If we are not in the table...
     if (ichipa < 0)
@@ -641,7 +642,7 @@ double NlicsTables::compute_dNphdt(double chipa,double gfpa)
 
         // Interpolation
         dNphdt = (Integfochi[ichipa+1]*fabs(logchipa-logchipam) +
-                Integfochi[ichipa]*fabs(logchipap - logchipa))/delta_chipa_integfochi;
+                Integfochi[ichipa]*fabs(logchipap - logchipa))*inv_delta_chipa_integfochi;
     }
 
     /*std::cerr << "factor_dNphdt: " << factor_dNphdt << " "
@@ -779,6 +780,9 @@ void NlicsTables::compute_integfochi_table(SmileiMPI *smpi)
         delta_chipa_integfochi = (log10(chipa_integfochi_max)
                 - log10(chipa_integfochi_min))/(dim_integfochi-1);
 
+        // Inverse delta
+        inv_delta_chipa_integfochi = 1./delta_chipa_integfochi;
+
     }
     // else the table is generated
     else
@@ -809,6 +813,9 @@ void NlicsTables::compute_integfochi_table(SmileiMPI *smpi)
         // Computation of the delta
         delta_chipa_integfochi = (log10(chipa_integfochi_max)
                 - log10(chipa_integfochi_min))/(dim_integfochi-1);
+
+        // Inverse delta
+        inv_delta_chipa_integfochi = 1./delta_chipa_integfochi;
 
         // Load repartition
         userFunctions::distribute_load_1d_table(nb_ranks,

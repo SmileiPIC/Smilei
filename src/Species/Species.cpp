@@ -466,8 +466,9 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                 (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
 
             // Nonlinear inverse Compton Scattering
-            (*nlics)(*particles, smpi, nlicsTables,
-                     bmin[ibin], bmax[ibin], ithread );
+            if (nlics)
+                (*nlics)(*particles, smpi, nlicsTables,
+                         bmin[ibin], bmax[ibin], ithread );
 
             // Push the particles
             (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );

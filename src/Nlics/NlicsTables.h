@@ -111,8 +111,11 @@ class NlicsTables
         //! Maximum boundary of the table Integfochi
         double chipa_integfochi_max;
 
-        //! Delta chi for the table integfochi
+        //! Delta chi for the table Integfochi
         double delta_chipa_integfochi;
+
+        //! Inverse delta chi for the table Integfochi
+        double inv_delta_chipa_integfochi;
 
         //! Dimension of the array Integfochi
         int dim_integfochi;
