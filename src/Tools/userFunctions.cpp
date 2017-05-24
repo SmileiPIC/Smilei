@@ -457,6 +457,8 @@ int userFunctions::search_elem_in_array(double * array,
     int imax = nb_elems-1; // upper bound
     int imid = 0;
 
+    //std::cerr << " userFunctions::search_elem_in_array " << std::endl;
+
     if (elem == array[0])
     {
         return 0;
@@ -469,17 +471,22 @@ int userFunctions::search_elem_in_array(double * array,
     {
         while(imax - imin > 1)
         {
-            imid= (imin + imax) >> 1;
+            imid= (imin + imax)/2;
+            //imid= (imin + imax)>>1;
 
             if (elem >= array[imid])
             {
                 imin = imid;
+                /*std::cerr << "elem >= array[imid]: "
+                            << imin << " " << imid << " " << imax << " "
+                            << elem << " > " << array[imid]  << std::endl;*/
             }
             else
             {
                 imax = imid;
+                //std::cerr << "elem < array[imid]: " << imin << " " << imid << " " << imax << " " << elem << " < " << array[imid] << std::endl;
             }
         }
-        return imid;
+        return imin;
     }
 }

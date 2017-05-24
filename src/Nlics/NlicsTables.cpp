@@ -710,6 +710,7 @@ void NlicsTables::compute_integfochi_table(SmileiMPI *smpi)
 
         }
 
+        MESSAGE("            Dimension quantum parameter: " << dim_integfochi);
         MESSAGE("            Minimum particle quantum parameter chi: " << chipa_integfochi_min);
         MESSAGE("            Maximum particle quantum parameter chi: " << chipa_integfochi_max);
 
