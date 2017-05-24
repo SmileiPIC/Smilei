@@ -166,7 +166,9 @@ void Nlics::operator() (Particles &particles,
 
                 /*if (ipart == 1)
                 {
-                    std::cerr << "Continue discontinuous emission" << std::endl;
+                    std::cerr << "Continue discontinuous emission - "
+                              << "tau: " << tau[ipart]
+                              << std::endl;
                 }*/
 
                 // from the cross section
@@ -195,7 +197,7 @@ void Nlics::operator() (Particles &particles,
                 {
 
                     // Emission of a photon
-                    if (ipart == 1) {
+                    //if (ipart == 1) {
 
                         Nlics::photon_emission(chipa,gamma,
                                            momentum[0][ipart],
@@ -208,12 +210,12 @@ void Nlics::operator() (Particles &particles,
                                   << "Py: " << momentum[1][ipart] << " "
                                   << std::endl;*/
 
-                    }
+                    //}
 
                     // Optical depth becomes negative meaning
                     // that a new drawing is possible
                     // at the next Monte-Carlo iteration
-                    tau[ipart] = -1;
+                    tau[ipart] = -1.;
                 }
 
                 // Incrementation of the Monte-Carlo iteration counter
@@ -233,7 +235,11 @@ void Nlics::operator() (Particles &particles,
             &&  (chipa > chipa_cont_threshold))
             {
 
-                std::cerr << "Continuous" << std::endl;
+                /*if (ipart == 1) {
+                    std::cerr << "Continuous - "
+                              << "chipa: " << chipa << std::endl;
+                }*/
+
 
                 // Remaining time of the iteration
                 emission_time = dt - local_it_time;
@@ -273,7 +279,7 @@ double Nlics::compute_chipa(double & charge_over_mass2,
 {
     double chipa;
 
-    chipa = abs(charge_over_mass2)*inv_norm_E_Schwinger
+    chipa = fabs(charge_over_mass2)*inv_norm_E_Schwinger
           * sqrt( fabs( pow(Ex*px + Ey*py + Ez*pz,2)
           - pow(gamma*Ex - By*pz + Bz*py,2)
           - pow(gamma*Ey - Bz*px + Bx*pz,2)

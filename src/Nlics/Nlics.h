@@ -96,7 +96,7 @@ class Nlics
         const int mc_it_nb_max = 100;
 
         //! Espilon to check when tau is near 0
-        const double epsilon_tau = 0;
+        const double epsilon_tau = 1e-100;
 
         //! Under this value, the emission is considered continuous
         const double chipa_disc_threshold = 1e-3;

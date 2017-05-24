@@ -128,7 +128,7 @@ double NlicsTables::compute_chiph_emission(double chipa)
     {
         // Search for the corresponding index ichiph for xip
         ichiph = userFunctions::search_elem_in_array(
-            &xip_table[ichipa*chiph_xip_dim],xip,chiph_xip_dim-1);
+            &xip_table[ichipa*chiph_xip_dim],xip,chiph_xip_dim);
     }
 
     // Delta for the corresponding chipa
@@ -139,11 +139,15 @@ double NlicsTables::compute_chiph_emission(double chipa)
     chiph = pow(10.,ichiph*chiph_xip_delta + log10(xip_chiphmin_table[ichipa]));
 
     /*std::cerr << "ichiph: " << ichiph << " "
-              << "chiph: " << chiph << " "
-              << "xip: " << xip << " "
               << "ichipa: " << ichipa << " "
+              << "" << xip_table[ichipa*chiph_xip_dim + ichiph] << " < "
+              << "xip: " << xip << " "
+              << " < " << xip_table[ichipa*chiph_xip_dim + ichiph+1] << " "
               << "logchipa: " << logchipa << " "
+              << "" << pow(10,(ichipa)*chipa_xip_delta + log10(chipa_xip_min)) << " < "
               << "chipa: " << chipa << " "
+              << pow(10,(ichipa+1)*chipa_xip_delta + log10(chipa_xip_min)) << " "
+              << "chiph: " << chiph << " "
               << std::endl;*/
 
     return chiph;
@@ -210,6 +214,11 @@ void NlicsTables::compute_xip_table(SmileiMPI *smpi)
 
         }
 
+        MESSAGE("            Dimension particle chi: " << chipa_xip_dim);
+        MESSAGE("            Dimension photon chi: " << chiph_xip_dim);
+        MESSAGE("            Minimum particle chi: " << chipa_xip_min);
+        MESSAGE("            Maximum particle chi: " << chipa_xip_max);
+
         if (rank != 0)
         {
             xip_chiphmin_table.resize(chipa_xip_dim);
@@ -234,7 +243,7 @@ void NlicsTables::compute_xip_table(SmileiMPI *smpi)
                       smpi->getGlobalComm(), &position);
         buf_size += position;
 
-        MESSAGE("            Buffer size: " << buf_size);
+        MESSAGE("            Buffer size for MPI exchange: " << buf_size);
 
         // Packet that will contain all parameters
         char * buffer = new char[buf_size];
@@ -601,38 +610,49 @@ double NlicsTables::compute_dNphdt(double chipa,double gfpa)
 
     // Log of the particle quantum parameter chipa
     double logchipa;
-    double logchipam, logchipap;
+    double logchipam;
+    double logchipap;
     // Index
-    int i_chipa;
+    int ichipa;
     // final value
     double dNphdt;
 
     logchipa = log10(chipa);
 
     // Lower index for interpolation in the table integfochi
-    i_chipa = int(floor(logchipa-log10(chipa_integfochi_min))/delta_chipa_integfochi);
+    ichipa = int(floor((logchipa-log10(chipa_integfochi_min))/delta_chipa_integfochi));
 
     // If we are not in the table...
-    if (i_chipa < 0)
+    if (ichipa < 0)
     {
-        i_chipa = 0;
-        dNphdt = Integfochi[i_chipa];
+        ichipa = 0;
+        dNphdt = Integfochi[ichipa];
     }
-    else if (i_chipa >= dim_integfochi-1)
+    else if (ichipa >= dim_integfochi-1)
     {
-        i_chipa = dim_integfochi-2;
-        dNphdt = Integfochi[i_chipa];
+        ichipa = dim_integfochi-2;
+        dNphdt = Integfochi[ichipa];
     }
     else
     {
-        // Upper and minor values for linear interpolation
-        logchipam = i_chipa*delta_chipa_integfochi + log10(chipa_integfochi_min);
+        // Upper and lower values for linear interpolation
+        logchipam = ichipa*delta_chipa_integfochi + log10(chipa_integfochi_min);
         logchipap = logchipam + delta_chipa_integfochi;
 
         // Interpolation
-        dNphdt = (Integfochi[i_chipa+1]*abs(logchipa-logchipam) +
-                Integfochi[i_chipa]*abs(logchipap - logchipa))/delta_chipa_integfochi;
+        dNphdt = (Integfochi[ichipa+1]*fabs(logchipa-logchipam) +
+                Integfochi[ichipa]*fabs(logchipap - logchipa))/delta_chipa_integfochi;
     }
+
+    /*std::cerr << "factor_dNphdt: " << factor_dNphdt << " "
+              << "dNphdt: " << dNphdt << " "
+              << "chipa: " << chipa << " "
+              << "ichipa: " << ichipa << " "
+              << "" << logchipam << " < logchipa: " << logchipa << " < " << logchipap << " "
+              << "delta_chipa_integfochi: " << delta_chipa_integfochi << " "
+              << "Integfochi[ichipa]: " << Integfochi[ichipa] << " "
+              << "Integfochi[ichipa+1]: " << Integfochi[ichipa+1] << " "
+              << std::endl;*/
 
     return factor_dNphdt*dNphdt*chipa/gfpa;
 
@@ -689,6 +709,9 @@ void NlicsTables::compute_integfochi_table(SmileiMPI *smpi)
             }
 
         }
+
+        MESSAGE("            Minimum particle quantum parameter chi: " << chipa_integfochi_min);
+        MESSAGE("            Maximum particle quantum parameter chi: " << chipa_integfochi_max);
 
         // Resize of the array Integfochi before communication
         if (rank != 0)
