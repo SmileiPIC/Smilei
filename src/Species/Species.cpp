@@ -465,7 +465,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             if (Ionize)
                 (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
 
-            // Nonlinear inverse Compton Scattering
+            // Radiatiob losses: Nonlinear inverse Compton Scattering
             if (nlics)
                 (*nlics)(*particles, smpi, nlicsTables,
                          bmin[ibin], bmax[ibin], ithread );
