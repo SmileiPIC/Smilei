@@ -45,21 +45,6 @@ class Nlics
                 int iend,
                 int ithread);
 
-
-        //! Computation of the Lorentz invariant quantum parameter for particles
-        //! \param charge_over_mass2 charge divided by the square of the mass
-        //! \param px particle x momentum
-        //! \param py particle y momentum
-        //! \param pz particle z momentum
-        //! \param gamma particle Lorentz factor
-        //! \param Ex x component of the particle electric field
-        //! \param Bx x component of the particle magnetic field
-        double compute_chipa(double & charge_over_mass2,
-                                     double & px, double & py, double & pz,
-                                     double & gamma,
-                                     double & Ex, double & Ey, double & Ez,
-                                     double & Bx, double & By, double & Bz);
-
         // ---------------------------------------------------------------------------------------------------------------------
         //! Perform the phoon emission (creation of a super-photon
         //! and slow down of the emitting particle)
