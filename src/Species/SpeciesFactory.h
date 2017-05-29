@@ -37,29 +37,44 @@ public:
         if (!PyTools::extract("dynamics_type", dynamics_type ,"Species",ispec) )
             if ( patch->isMaster() ) WARNING("For species '" << species_type << "' dynamics_type not defined: assumed = 'norm'.");
 
+
+        // Extract type of species radiation from namelist
+        std::string radiation_type = "none"; // default value
+        if (!PyTools::extract("radiation_type", dynamics_type ,"Species",ispec) )
+            if ( patch->isMaster() ) WARNING("For species '" << species_type << "' radiation_type not defined: assumed = 'none'.");
+
         // Create species object
         Species * thisSpecies=NULL;
-        if (dynamics_type=="norm" || dynamics_type == "borisnr") {
-             // Species with Boris (relativistic =='norm', nonrelativistic=='borisnr') dynamics
-             thisSpecies = new Species_norm(params, patch);
-        } else if (dynamics_type=="vay") {
-             // Species with J.L. Vay dynamics
-             thisSpecies = new Species_norm(params, patch);
-        } else if (dynamics_type=="higueracary") {
-             // Species with Higuary Cary dynamics
-             thisSpecies = new Species_norm(params, patch);
-        } else if (dynamics_type=="rrll") {
-             // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
-             thisSpecies = new Species_rrll(params, patch);
-        } else if (dynamics_type=="nlics") {
+        if (radiation_type == "none")
+        {
+            if (dynamics_type=="norm" || dynamics_type == "borisnr") {
+                 // Species with Boris (relativistic =='norm', nonrelativistic=='borisnr') dynamics
+                 thisSpecies = new Species_norm(params, patch);
+            } else if (dynamics_type=="vay") {
+                 // Species with J.L. Vay dynamics
+                 thisSpecies = new Species_norm(params, patch);
+            } else if (dynamics_type=="higueracary") {
+                 // Species with Higuary Cary dynamics
+                 thisSpecies = new Species_norm(params, patch);
+            } else if (dynamics_type=="rrll") {
+                 // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
+                 thisSpecies = new Species_rrll(params, patch);
+            } else {
+                ERROR("For species `" << species_type << " dynamics_type must be 'norm', 'borisnr', 'vay', 'higueracary', 'nlics' or 'rrll'")
+            }
+        }
+        else if (radiation_type=="Monte-Carlo") {
              // Species with nonlinear inverse Compton scattering (Monte-Carlo)
              thisSpecies = new Species_nlics(params, patch);
-        } else {
-            ERROR("For species `" << species_type << " dynamics_type must be 'norm', 'borisnr', 'vay', 'higueracary', 'nlics' or 'rrll'")
+        }
+        else
+        {
+            ERROR("For species `" << species_type << " radiation_type must be 'none', 'Monte-Carlo' or 'continuous'")
         }
 
         thisSpecies->species_type = species_type;
         thisSpecies->dynamics_type = dynamics_type;
+        thisSpecies->radiation_type = radiation_type;
         thisSpecies->speciesNumber = ispec;
 
         // Extract various parameters from the namelist

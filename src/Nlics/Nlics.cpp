@@ -12,7 +12,6 @@
 #include "Nlics.h"
 
 #include <cstring>
-#include <iostream>
 #include <fstream>
 
 #include <cmath>
@@ -260,39 +259,6 @@ void Nlics::operator() (Particles &particles,
         }
 
     }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-//! Computation of the Lorentz invariant quantum parameter for particles
-//
-//! \param charge_over_mass2 charge divided by the square of the mass
-//! \param px particle x momentum
-//! \param gamma particle Lorentz factor
-//! \param Ex x component of the particle electric field
-//! \param Bx x component of the particle magnetic field
-// ---------------------------------------------------------------------------------------------------------------------
-double Nlics::compute_chipa(double & charge_over_mass2,
-                             double & px, double & py, double & pz,
-                             double & gamma,
-                             double & Ex, double & Ey, double & Ez,
-                             double & Bx, double & By, double & Bz)
-{
-    double chipa;
-
-    chipa = fabs(charge_over_mass2)*inv_norm_E_Schwinger
-          * sqrt( fabs( pow(Ex*px + Ey*py + Ez*pz,2)
-          - pow(gamma*Ex - By*pz + Bz*py,2)
-          - pow(gamma*Ey - Bz*px + Bx*pz,2)
-          - pow(gamma*Ez - Bx*py + By*px,2)));
-
-    /*std::cerr << charge_over_mass2 << " " << inv_norm_E_Schwinger << " "
-              << "P: " << px << " " << py << " " << pz << " " << " "
-              << "Gamma: "<< gamma << " "
-              << "E: " << Ex << " " << Ey << " " << Ez << " "
-              << "B: " <<  Bx << " " << By << " " << Bz << " "
-              << "chipa: " << chipa << std::endl;*/
-
-    return chipa;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

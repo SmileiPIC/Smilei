@@ -34,9 +34,9 @@ public:
         Radiation* Radiate = NULL;
 
         // assign the correct Radiation model to Radiate
-        if ( species->radiation_type == "MC" )
+        if ( species->radiation_type == "Monte-Carlo" )
         {
-            Radiate = new RadiationNlcisMC( params, species );
+            //Radiate = new RadiationNlcisMC( params, species );
         }
         // Monte-Carlo nonlinear inverse Compton scattering
         else if ( species->radiation_type == "continuous" )
