@@ -124,6 +124,11 @@ void RadiationNlicsMC::operator() (Particles &particles,
                      (*Epart)[ipart].x,(*Epart)[ipart].y,(*Epart)[ipart].z,
                      (*Bpart)[ipart].x,(*Bpart)[ipart].y,(*Bpart)[ipart].z);
 
+            // Debugging
+            /*std::cerr << "mc_it_nb: " << mc_it_nb << " "
+                      << "chipa: " << chipa
+                      << std::endl;*/
+
             // Discontinuous emission: New emission
             // If tau[ipart] <= 0, this is a new emission
             // We also check that chipa > chipa_threshold,
@@ -239,6 +244,11 @@ void RadiationNlicsMC::operator() (Particles &particles,
 
                 local_it_time = dt;
             }
+            // No emission since chipa is too low
+            else if (chipa < chipa_cont_threshold)
+            {
+                local_it_time = dt;
+            }
 
         }
 
@@ -274,11 +284,7 @@ void RadiationNlicsMC::photon_emission(double &chipa,
     chiph = nlicsTables.compute_chiph_emission(chipa);
 
     // compute the photon gamma factor
-    gammaph = chiph/chipa*gammapa;
-
-    /*std::cerr << "chiph: " << chiph << " "
-              << "gammapa: " << gammapa << " "
-              << "gammaph: " << gammaph << std::endl;*/
+    gammaph = chiph/chipa*(gammapa-1);
 
     // ____________________________________________________
     // Creation of the new photon
@@ -295,11 +301,21 @@ void RadiationNlicsMC::photon_emission(double &chipa,
     // pz -= kz
 
     // With energy conservation
-    inv_old_norm_p = 1./sqrt(gammapa*gammapa - 1);
+    inv_old_norm_p = 1./sqrt(gammapa*gammapa - 1.0);
     gammapa -= gammaph;
-    new_norm_p = sqrt(gammapa*gammapa - 1);
+    new_norm_p = sqrt(abs(gammapa*gammapa - 1.0));
     px *= new_norm_p * inv_old_norm_p;
     py *= new_norm_p * inv_old_norm_p;
     pz *= new_norm_p * inv_old_norm_p;
+
+    // Debugging
+    /*std::cerr << "chipa: " << chipa << " "
+              << "chiph: " << chiph << " "
+              << "gammapa: " << gammapa << " "
+              << "gammaph: " << gammaph << " "
+              << "inv_old_norm_p: " << inv_old_norm_p << " "
+              << "new_norm_p: " << new_norm_p << " "
+              << "" << sqrt(1 + px*px + py*py + pz*pz) << " "
+              << std::endl;*/
 
 }

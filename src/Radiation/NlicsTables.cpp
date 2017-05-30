@@ -90,6 +90,10 @@ double NlicsTables::compute_chiph_emission(double chipa)
     double xip;
     int ichipa;
     int ichiph;
+    // For the interpolation
+    double chiphm,chiphp;
+    double d;
+    int ixip;
 
     logchipa = log10(chipa);
 
@@ -117,12 +121,15 @@ double NlicsTables::compute_chiph_emission(double chipa)
     if (xip <= xip_table[ichipa*chiph_xip_dim])
     {
         ichiph = 0;
+        xip = xip_table[ichipa*chiph_xip_dim];
     }
     // Above the last xip of the row, the last one corresponds
     // to the maximal photon chiph
-    else if (xip >= xip_table[(ichipa+1)*chiph_xip_dim-1])
+    else if (xip > xip_table[(ichipa+1)*chiph_xip_dim-2])
     {
-        ichiph = chiph_xip_dim-1;
+        ichiph = chiph_xip_dim-2;
+        xip = xip_table[(ichipa+1)*chiph_xip_dim-1];
+        // If nearest point: ichiph = chiph_xip_dim-1
     }
     else
     {
@@ -135,9 +142,39 @@ double NlicsTables::compute_chiph_emission(double chipa)
     chiph_xip_delta = (logchipa - log10(xip_chiphmin_table[ichipa]))
                     /(chiph_xip_dim-1);
 
-    // final chiph
-    chiph = pow(10.,ichiph*chiph_xip_delta + log10(xip_chiphmin_table[ichipa]));
+    // Computation of the final chiph by interpolation
+    // This method is slow but more accurate than taking the nearest point
+    chiphm = pow(10.,ichiph*chiph_xip_delta
+           + log10(xip_chiphmin_table[ichipa]));
+    chiphp = pow(10.,(ichiph+1)*chiph_xip_delta
+           + log10(xip_chiphmin_table[ichipa]));
 
+    ixip = ichipa*chiph_xip_dim + ichiph;
+
+    d = (xip - xip_table[ixip]) / (xip_table[ixip+1] - xip_table[ixip]);
+
+    /*if (d<0)
+    {
+        std::cerr << "d: " << d << " "
+                << "chipa: " << chipa << " "
+                << "xip_table[ichipa*chiph_xip_dim]" << xip_table[ichipa*chiph_xip_dim] << " "
+                << "ixip: " << ixip << " "
+                << "ichiph: " << ichiph << " "
+                << "ichipa: " << ichipa << " "
+                << "xip_table[ixip]: " << xip_table[ixip] << " < "
+                << "xip: " << xip << " < "
+                << "xip_table[ixip+1]: " << xip_table[ixip+1] << " "
+                << "chiphm: " << chiphm << " "
+                << std::endl;
+    }*/
+
+    chiph = chiphm*(1.0-d) + chiphp*(d);
+
+    // Fastest method using the nearest point
+    //chiph = pow(10.,ichiph*chiph_xip_delta
+    //       + log10(xip_chiphmin_table[ichipa]));
+
+    // Debugging
     /*std::cerr << "ichiph: " << ichiph << " "
               << "ichipa: " << ichipa << " "
               << "" << xip_table[ichipa*chiph_xip_dim + ichiph] << " < "
