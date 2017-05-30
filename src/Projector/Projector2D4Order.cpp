@@ -161,7 +161,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     // ---------------------------
     // Calculate the total current
     // ---------------------------
-    ipo -= bin+3; //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+    ipo -= bin+3; //This minus 3 come from the order 4 scheme, based on a 7 points stencil from -3 to +3.
     jpo -= 3;
     // i =0
     {
@@ -307,7 +307,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     // ---------------------------
     // Calculate the total current
     // ---------------------------
-    ipo -= bin+3; //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+    ipo -= bin+3; //This minus 3 come from the order 4 scheme, based on a 7 points stencil from -3 to +3.
     jpo -= 3;
     // i =0
     {
@@ -355,7 +355,71 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector2D4Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim)
 {
-    //ERROR("Not defined");
+    // -------------------------------------
+    // Variable declaration & initialization
+    // -------------------------------------
+    
+    int iloc;
+    // (x,y,z) components of the current density for the macro-particle
+    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+
+    // variable declaration
+    double xpn, ypn;
+    double delta, delta2, delta3, delta4;
+    // arrays used for the Esirkepov projection method
+    double  Sx0[7], Sx1[7], Sy0[5], Sy1[7];
+    
+    for (unsigned int i=0; i<7; i++) {
+        Sx1[i] = 0.;
+        Sy1[i] = 0.;
+    }
+    Sx0[0] = 0.;
+    Sx0[6] = 0.;
+    Sy0[0] = 0.;
+    Sy0[6] = 0.;
+    
+    // --------------------------------------------------------
+    // Locate particles & Calculate Esirkepov coef. S, DS and W
+    // --------------------------------------------------------
+    // locate the particle on the primal grid at current time-step & calculate coeff. S1
+    xpn = particles.position(0, ipart) * dx_inv_;
+    int ip = round(xpn);
+    delta  = xpn - (double)ip;
+    delta2 = delta*delta;
+    delta3 = delta2*delta;
+    delta4 = delta3*delta;
+
+    Sx1[1] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+    Sx1[2] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    Sx1[3] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4  * delta4;
+    Sx1[4] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    Sx1[5] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+    
+    ypn = particles.position(1, ipart) * dy_inv_;
+    int jp = round(ypn);
+    delta  = ypn - (double)jp;
+    delta2 = delta*delta;
+    delta3 = delta2*delta;
+    delta4 = delta3*delta;
+
+    Sy1[1] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+    Sy1[2] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    Sy1[3] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4  * delta4;
+    Sy1[4] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    Sy1[5] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+   
+    // ---------------------------
+    // Calculate the total current
+    // ---------------------------
+    ip -= i_domain_begin + bin +3;
+    jp -= j_domain_begin + 3;
+    
+    for (unsigned int i=0 ; i<7 ; i++) {
+        iloc = (i+ip)*b_dim[1]+jp;
+        for (unsigned int j=0 ; j<7 ; j++) {
+            rho[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
+        }
+    }//i
 }
 
 
