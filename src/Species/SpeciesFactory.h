@@ -40,7 +40,7 @@ public:
 
         // Extract type of species radiation from namelist
         std::string radiation_type = "none"; // default value
-        if (!PyTools::extract("radiation_type", dynamics_type ,"Species",ispec) )
+        if (!PyTools::extract("radiation_type", radiation_type ,"Species",ispec) )
             if ( patch->isMaster() ) WARNING("For species '" << species_type << "' radiation_type not defined: assumed = 'none'.");
 
         // Create species object
@@ -60,7 +60,7 @@ public:
                  // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
                  thisSpecies = new Species_rrll(params, patch);
             } else {
-                ERROR("For species `" << species_type << " dynamics_type must be 'norm', 'borisnr', 'vay', 'higueracary', 'nlics' or 'rrll'")
+                ERROR("For species `" << species_type << "` dynamics_type must be 'norm', 'borisnr', 'vay', 'higueracary' or 'rrll'")
             }
         }
         else if (radiation_type=="Monte-Carlo") {
@@ -69,7 +69,8 @@ public:
         }
         else
         {
-            ERROR("For species `" << species_type << " radiation_type must be 'none', 'Monte-Carlo' or 'continuous'")
+            ERROR("For species `" << species_type
+                                  << " radiation_type must be 'none', 'Monte-Carlo' or 'continuous'")
         }
 
         thisSpecies->species_type = species_type;
