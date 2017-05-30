@@ -282,6 +282,9 @@ void NlicsTables::compute_xip_table(SmileiMPI *smpi)
 
         MESSAGE("            Buffer size for MPI exchange: " << buf_size);
 
+        // Exchange buf_size with all ranks
+        MPI_Bcast(&buf_size, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
+
         // Packet that will contain all parameters
         char * buffer = new char[buf_size];
 
@@ -774,6 +777,9 @@ void NlicsTables::compute_integfochi_table(SmileiMPI *smpi)
         buf_size += position;
 
         MESSAGE("            Buffer size: " << buf_size);
+
+        // Exchange buf_size with all ranks
+        MPI_Bcast(&buf_size, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
 
         // Packet that will contain all parameters
         char * buffer = new char[buf_size];

@@ -4,7 +4,7 @@
 //! \brief This class performs the Nonlinear Inverse Compton Scattering
 //! on particles.
 //
-//! \details This header contains the definition of the class Nlics.
+//! \details This header contains the definition of the class RadiationNlicsMC.
 //! The implementation is adapted from the thesis results of M. Lobet
 //! See http://www.theses.fr/2015BORD0361
 // ----------------------------------------------------------------------------
@@ -17,17 +17,17 @@
 #include "userFunctions.h"
 
 //----------------------------------------------------------------------------------------------------------------------
-//! Nlics class: holds parameters and functions to apply the nonlinear inverse
-//! Compton scattering on Particles,
+//! RadiationNlicsMC class: holds parameters and functions to apply the
+//! nonlinear inverse Compton scattering on Particles,
 //----------------------------------------------------------------------------------------------------------------------
 class RadiationNlicsMC : public Radiation {
 
     public:
 
-        //! Constructor for Nlics
+        //! Constructor for RadiationNlicsMC
         RadiationNlicsMC(Params& params, Species * species);
 
-        //! Destructor for Nlics
+        //! Destructor for RadiationNlicsMC
         ~RadiationNlicsMC();
 
         // ---------------------------------------------------------------------
