@@ -136,7 +136,7 @@ void Species::initOperators(Params& params, Patch* patch)
     }
 
     // Create the Nonlinear inverse Compton Scattering model
-    nlics = new Nlics(params, this);
+    Radiate = new Radiation(params, this);
 
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond(params, this, patch);
@@ -427,7 +427,8 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                        ElectroMagn* EMfields, Interpolator* Interp,
                        Projector* Proj, Params &params, bool diag_flag,
                        PartWalls* partWalls,
-                       Patch* patch, SmileiMPI* smpi, NlicsTables & nlicsTables,
+                       Patch* patch, SmileiMPI* smpi,
+                       NlicsTables & nlicsTables,
                        vector<Diagnostic*>& localDiags)
 {
     int ithread;
@@ -467,8 +468,8 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                 (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
 
             // Radiatiob losses: Nonlinear inverse Compton Scattering
-            if (nlics)
-                (*nlics)(*particles, smpi, nlicsTables,
+            if (Radiate)
+                (*Radiate)(*particles, smpi, nlicsTables,
                          bmin[ibin], bmax[ibin], ithread );
 
             // Push the particles

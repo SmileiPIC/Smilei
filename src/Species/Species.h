@@ -13,7 +13,7 @@
 #include "ElectroMagn.h"
 #include "Profile.h"
 #include "AsyncMPIbuffers.h"
-#include "Nlics.h"
+#include "Radiation.h"
 #include "NlicsTables.h"
 
 class ElectroMagn;
@@ -25,7 +25,7 @@ class PartWalls;
 class Field3D;
 class Patch;
 class SimWindow;
-class Nlics;
+class Radiation;
 
 
 //! class Species
@@ -178,7 +178,7 @@ public:
     Ionization* Ionize;
 
     //! Nonlinear inverse Compton Scattering
-    Nlics * nlics;
+    Radiation * Radiate;
 
     //! Pointer to the species where field-ionized electrons go
     Species *electron_species;

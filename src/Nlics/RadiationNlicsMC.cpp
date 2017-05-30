@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------------
-//! \file Nlics.cpp
+//! \file RadiationNlicsMC.cpp
 //
 //! \brief This class performs the Nonlinear Inverse Compton Scattering
 //! on particles using a Monte-Carlo approach.
@@ -9,44 +9,28 @@
 //
 // ----------------------------------------------------------------------------
 
-#include "Nlics.h"
+#include "RadiationNlicsMC.h"
 
 #include <cstring>
 #include <fstream>
 
 #include <cmath>
 
-#include "userFunctions.h"
-
 // ---------------------------------------------------------------------------------------------------------------------
-// Constructor for Nlics
+//! Constructor for RadiationNlicsMC
+//! Inherit from Radiation
 // ---------------------------------------------------------------------------------------------------------------------
-Nlics::Nlics(Params& params, Species * species)
-{
-    // Dimension position
-    nDim_ = params.nDim_particle;
-
-    // Time step
-    dt    = params.timestep;
-
-    // Inverse of the species mass
-    one_over_mass_ = 1./species->mass;
-
-    // Normalized Schwinger Electric Field
-    norm_E_Schwinger = electron_mass*c_vacuum*c_vacuum
-                     / (red_planck_cst*params.referenceAngularFrequency_SI);
-
-    // Inverse of norm_E_Schwinger
-    inv_norm_E_Schwinger = 1./norm_E_Schwinger;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Destructor for Nlics
-// ---------------------------------------------------------------------------------------------------------------------
-Nlics::~Nlics()
+RadiationNlicsMC::RadiationNlicsMC(Params& params, Species * species)
+      : Radiation(params, species)
 {
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//! Destructor for RadiationNlicsMC
+// ---------------------------------------------------------------------------------------------------------------------
+RadiationNlicsMC::~RadiationNlicsMC()
+{
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Overloading of the operator (): perform the Discontinuous radiation reaction
@@ -60,7 +44,7 @@ Nlics::~Nlics()
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
 // ---------------------------------------------------------------------------------------------------------------------
-void Nlics::operator() (Particles &particles,
+void RadiationNlicsMC::operator() (Particles &particles,
         SmileiMPI* smpi,
         NlicsTables &nlicsTables,
         int istart,
@@ -134,7 +118,7 @@ void Nlics::operator() (Particles &particles,
                              + momentum[2][ipart]*momentum[2][ipart]);
 
             // Computation of the Lorentz invariant quantum parameter
-            chipa = Nlics::compute_chipa(charge_over_mass2,
+            chipa = RadiationNlicsMC::compute_chipa(charge_over_mass2,
                      momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
                      gamma,
                      (*Epart)[ipart].x,(*Epart)[ipart].y,(*Epart)[ipart].z,
@@ -198,7 +182,7 @@ void Nlics::operator() (Particles &particles,
                     // Emission of a photon
                     //if (ipart == 1) {
 
-                        Nlics::photon_emission(chipa,gamma,
+                        RadiationNlicsMC::photon_emission(chipa,gamma,
                                            momentum[0][ipart],
                                            momentum[1][ipart],
                                            momentum[2][ipart],
@@ -272,7 +256,7 @@ void Nlics::operator() (Particles &particles,
 //! \param nlicsTables    Cross-section data tables and useful functions
 //                        for nonlinear inverse Compton scattering
 // ---------------------------------------------------------------------------------------------------------------------
-void Nlics::photon_emission(double &chipa,
+void RadiationNlicsMC::photon_emission(double &chipa,
                             double & gammapa,
                             double & px,
                             double & py,

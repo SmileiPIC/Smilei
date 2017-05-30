@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------------
-//! \file Nlics.h
+//! \file RadiationNlicsMC.h
 //
 //! \brief This class performs the Nonlinear Inverse Compton Scattering
 //! on particles.
@@ -9,43 +9,47 @@
 //! See http://www.theses.fr/2015BORD0361
 // ----------------------------------------------------------------------------
 
-#ifndef NLICS_H
-#define NLICS_H
+#ifndef RADIATIONNLICSMC_H
+#define RADIATIONNLICSMC_H
 
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
-
-#include "Params.h"
-#include "Particles.h"
-#include "Species.h"
 #include "NlicsTables.h"
+#include "Radiation.h"
+#include "userFunctions.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 //! Nlics class: holds parameters and functions to apply the nonlinear inverse
 //! Compton scattering on Particles,
 //----------------------------------------------------------------------------------------------------------------------
-class Nlics
-{
+class RadiationNlicsMC : public Radiation {
 
     public:
 
         //! Constructor for Nlics
-        Nlics(Params& params, Species * species);
+        RadiationNlicsMC(Params& params, Species * species);
 
         //! Destructor for Nlics
-        ~Nlics();
+        ~RadiationNlicsMC();
 
-        //! Overloading of () operator
-        void operator() (Particles &particles,
+        // ---------------------------------------------------------------------
+        //! Overloading of () operator: perform the Discontinuous radiation
+        //! reaction induced by the nonlinear inverse Compton scattering
+        //! \param particles   particle object containing the particle
+        //!                    properties
+        //! \param smpi        MPI properties
+        //! \param nlicsTables Cross-section data tables and useful functions
+        //                     for nonlinear inverse Compton scattering
+        //! \param istart      Index of the first particle
+        //! \param iend        Index of the last particle
+        //! \param ithread     Thread index
+        // ---------------------------------------------------------------------
+        virtual void operator() (Particles &particles,
                 SmileiMPI* smpi,
                 NlicsTables &nlicsTables,
                 int istart,
                 int iend,
                 int ithread);
 
-        // ---------------------------------------------------------------------------------------------------------------------
+        // ---------------------------------------------------------------------
         //! Perform the phoon emission (creation of a super-photon
         //! and slow down of the emitting particle)
         //! \param chipa          particle quantum parameter
@@ -55,7 +59,7 @@ class Nlics
         //! \param pz             particle momentum in z
         //! \param nlicsTables    Cross-section data tables and useful functions
         //                        for nonlinear inverse Compton scattering
-        // ---------------------------------------------------------------------------------------------------------------------
+        // ---------------------------------------------------------------------
         void photon_emission(double &chipa,
                              double & gammapa,
                              double & px,
@@ -63,19 +67,10 @@ class Nlics
                              double & pz,
                              NlicsTables &nlicsTables);
 
-    private:
+    protected:
 
         // ________________________________________
         // General parameters
-
-        //! Dimension of position
-        int nDim_;
-
-        //! Inverse species mass
-        double one_over_mass_;
-
-        //! Time step
-        double dt;
 
         //! Max number of Monte-Carlo iteration
         const int mc_it_nb_max = 100;
@@ -89,26 +84,7 @@ class Nlics
         //! Under this value, no radiation loss
         const double chipa_cont_threshold = 1e-5;
 
-        // _________________________________________
-        // Factors
-
-        //! Fine structure constant
-        const double fine_struct_cst = 7.2973525698e-3;
-
-        //! Reduced Planck Constant (J.s)
-        const double red_planck_cst = 1.054571628E-34;
-
-        //! Electron mass (kg)
-        const double electron_mass = 9.109382616e-31;
-
-        //! Speed of light in vacuum (m/s)
-        const double c_vacuum = 299792458;
-
-        //! Normalized Schwinger Electric field
-        double norm_E_Schwinger;
-
-        //! Inverse Normalized Schwinger Electric field
-        double inv_norm_E_Schwinger;
+    private:
 
 };
 
