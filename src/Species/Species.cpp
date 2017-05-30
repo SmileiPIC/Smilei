@@ -13,6 +13,7 @@
 // IDRIS
 #include "PusherFactory.h"
 #include "IonizationFactory.h"
+#include "RadiationFactory.h"
 #include "PartBoundCond.h"
 #include "PartWall.h"
 #include "BoundaryConditionType.h"
@@ -135,8 +136,8 @@ void Species::initOperators(Params& params, Patch* patch)
         DEBUG("Species " << species_type << " can be ionized!");
     }
 
-    // Create the Nonlinear inverse Compton Scattering model
-    Radiate = new Radiation(params, this);
+    // Create the radiation model
+    Radiate = RadiationFactory::create(params, this);
 
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond(params, this, patch);

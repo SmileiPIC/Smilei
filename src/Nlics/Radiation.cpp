@@ -34,6 +34,13 @@ Radiation::Radiation(Params& params, Species * species)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+//! Destrructor for Radiation
+// ---------------------------------------------------------------------------------------------------------------------
+Radiation::~Radiation()
+{
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 //! Computation of the Lorentz invariant quantum parameter for particles
 //
 //! Computation of the Lorentz invariant quantum parameter for particles

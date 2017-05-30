@@ -36,7 +36,7 @@ class Radiation
                 NlicsTables &nlicsTables,
                 int istart,
                 int iend,
-                int ithread);
+                int ithread) = 0;
 
         //! Computation of the Lorentz invariant quantum parameter for particles
         //! \param charge_over_mass2 charge divided by the square of the mass
