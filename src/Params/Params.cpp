@@ -190,7 +190,7 @@ namelist("")
     if (interpolation_order!=2 && interpolation_order!=4) {
         ERROR("Main.interpolation_order " << interpolation_order << " not defined");
     }
-    if ( (geometry=="2d3v" || geometry=="3d3v") && interpolation_order==4) {
+    if ( (geometry=="3d3v") && interpolation_order==4) {
         ERROR("Main.interpolation_order = 4 " << interpolation_order << " not yet available in 2D");
     }
     

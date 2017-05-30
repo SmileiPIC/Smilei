@@ -32,6 +32,9 @@ public:
         else if ( ( params.geometry == "2d3v" ) && ( params.interpolation_order == (unsigned int)2 ) ) {
             Proj = new Projector2D2Order(params, patch);
         }
+        else if ( ( params.geometry == "2d3v" ) && ( params.interpolation_order == (unsigned int)4 ) ) {
+            Proj = new Projector2D4Order(params, patch);
+        }
         // ---------------
         // 3d3v simulation
         // ---------------

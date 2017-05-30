@@ -33,6 +33,9 @@ public:
         else if ( ( params.geometry == "2d3v" ) && ( params.interpolation_order == 2 ) ) {
             Interp = new Interpolator2D2Order(params, patch);
         }
+        else if ( ( params.geometry == "2d3v" ) && ( params.interpolation_order == 4 ) ) {
+            Interp = new Interpolator2D4Order(params, patch);
+        }
         // ---------------
         // 3d3v simulation
         // ---------------
