@@ -11,7 +11,7 @@
 
 #include "Radiation.h"
 #include "RadiationNlicsMC.h"
-//#include "RadiationNlicsCont.h"
+#include "RadiationNlicsCont.h"
 
 #include "Params.h"
 #include "Species.h"
@@ -41,7 +41,7 @@ public:
         // Monte-Carlo nonlinear inverse Compton scattering
         else if ( species->radiation_type == "continuous" )
         {
-            //Radiate = new RadiationNlicsCont( params, species );
+            Radiate = new RadiationNlicsCont( params, species );
         }
         else if ( species->radiation_type != "none" )
         {

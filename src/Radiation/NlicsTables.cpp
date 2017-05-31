@@ -65,7 +65,9 @@ void NlicsTables::initParams(Params& params)
     factor_dNphdt = sqrt(3.)*fine_struct_cst/(2.*M_PI*norm_lambda_compton);
 
     // Computation of the factor for the classical radiated power
-    factor_cla_rad_power = 2*fine_struct_cst/(3.*norm_lambda_compton);
+    factor_cla_rad_power = 2.*fine_struct_cst/(3.*norm_lambda_compton);
+
+    MESSAGE( "        factor_cla_rad_power: " << factor_cla_rad_power)
 
     // Some additional checks
     if (chipa_integfochi_min >= chipa_integfochi_max)
@@ -624,7 +626,7 @@ void NlicsTables::output_xip_table()
 // ---------------------------------------------------------------------------------------------------------------------
 double NlicsTables::compute_cont_rad_energy_Ridgers(double chipa, double dt)
 {
-    return compute_g_Ridgers(chipa)*dt*chipa*chipa;
+    return compute_g_Ridgers(chipa)*dt*chipa*chipa*factor_cla_rad_power;
 }
 
 
@@ -635,7 +637,7 @@ double NlicsTables::compute_cont_rad_energy_Ridgers(double chipa, double dt)
 // ---------------------------------------------------------------------------------------------------------------------
 double NlicsTables::compute_g_Ridgers(double chipa)
 {
-    return pow(1. + 4.8*(1.+chipa)*log10(1. + 1.7*chipa) + 2.44*chipa*chipa,-2./3.);
+    return pow(1. + 4.8*(1.+chipa)*log(1. + 1.7*chipa) + 2.44*chipa*chipa,-2./3.);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

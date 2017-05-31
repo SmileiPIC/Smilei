@@ -238,7 +238,7 @@ void RadiationNlicsMC::operator() (Particles &particles,
                                                              emission_time);
 
                 // Effect on the momentum
-                temp = rad_energy*(*invgf)[ipart];
+                temp = rad_energy/gamma;
                 for ( int i = 0 ; i<3 ; i++ )
                     momentum[i][ipart] -= temp*momentum[i][ipart];
 

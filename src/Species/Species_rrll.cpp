@@ -16,8 +16,6 @@ Species_rrll::Species_rrll( Params& params, Patch* patch)
     : Species( params, patch )
 {
     particles->isRadReaction=true;
-    
-    ERROR("Creating a RRLL species: this is a work in progress and is still not working. Exiting");
 
     DEBUG("Species is being created as rrLL");
 }

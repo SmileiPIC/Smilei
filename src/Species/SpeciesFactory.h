@@ -58,14 +58,21 @@ public:
                  thisSpecies = new Species_norm(params, patch);
             } else if (dynamics_type=="rrll") {
                  // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
+                 ERROR("Creating a RRLL species: this is a work in progress and is still not working. Exiting");
                  thisSpecies = new Species_rrll(params, patch);
             } else {
                 ERROR("For species `" << species_type << "` dynamics_type must be 'norm', 'borisnr', 'vay', 'higueracary' or 'rrll'")
             }
         }
         else if (radiation_type=="Monte-Carlo") {
-             // Species with nonlinear inverse Compton scattering (Monte-Carlo)
+             // Species with MC parameters for the discontinuous radiation loss
+             // (nonlinear inverse Compton scattering)
              thisSpecies = new Species_nlics(params, patch);
+        }
+        else if (radiation_type=="continuous")
+        {
+            // Species with specific parameters for the continuous radiation loss
+            thisSpecies = new Species_rrll(params, patch);
         }
         else
         {

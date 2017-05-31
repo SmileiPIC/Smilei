@@ -20,7 +20,7 @@
 //! Constructor for RadiationNlicsCont
 //! Inherited from Radiation
 // ---------------------------------------------------------------------------------------------------------------------
-RadiationNlicsMC::RadiationNlicsMC(Params& params, Species * species)
+RadiationNlicsCont::RadiationNlicsCont(Params& params, Species * species)
       : Radiation(params, species)
 {
 }
@@ -28,7 +28,7 @@ RadiationNlicsMC::RadiationNlicsMC(Params& params, Species * species)
 // ---------------------------------------------------------------------------------------------------------------------
 //! Destructor for RadiationNlicsCont
 // ---------------------------------------------------------------------------------------------------------------------
-RadiationNlicsMC::~RadiationNlicsMC()
+RadiationNlicsCont::~RadiationNlicsCont()
 {
 }
 
@@ -44,7 +44,7 @@ RadiationNlicsMC::~RadiationNlicsMC()
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
 // ---------------------------------------------------------------------------------------------------------------------
-void RadiationNlicsMC::operator() (Particles &particles,
+void RadiationNlicsCont::operator() (Particles &particles,
         SmileiMPI* smpi,
         NlicsTables &nlicsTables,
         int istart,
@@ -68,7 +68,7 @@ void RadiationNlicsMC::operator() (Particles &particles,
     double gamma;
 
     // Radiated energy
-    double rad_energy;
+    double rad_norm_energy;
 
     // Temporary double parameter
     double temp;
@@ -96,7 +96,7 @@ void RadiationNlicsMC::operator() (Particles &particles,
                              + momentum[2][ipart]*momentum[2][ipart]);
 
         // Computation of the Lorentz invariant quantum parameter
-        chipa = RadiationNlicsMC::compute_chipa(charge_over_mass2,
+        chipa = RadiationNlicsCont::compute_chipa(charge_over_mass2,
                      momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
                      gamma,
                      (*Epart)[ipart].x,(*Epart)[ipart].y,(*Epart)[ipart].z,
@@ -106,12 +106,16 @@ void RadiationNlicsMC::operator() (Particles &particles,
         //chi[ipart] = chipa
 
         // Radiated energy during the time step
-        rad_energy =
+        rad_norm_energy =
         nlicsTables.compute_cont_rad_energy_Ridgers(chipa,dt);
+
+        /*std::cerr << "rad_norm_energy: " << rad_norm_energy << " "
+                  << "gamma: " << gamma << " "
+                  << std::endl;*/
 
         // Effect on the momentum
         // Temporary factor
-        temp = rad_energy*(*invgf)[ipart];
+        temp = rad_norm_energy/gamma;
         // Update of the momentum
         momentum[0][ipart] -= temp*momentum[0][ipart];
         momentum[1][ipart] -= temp*momentum[1][ipart];
