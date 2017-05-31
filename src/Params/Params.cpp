@@ -190,9 +190,6 @@ namelist("")
     if (interpolation_order!=2 && interpolation_order!=4) {
         ERROR("Main.interpolation_order " << interpolation_order << " not defined");
     }
-    if ( (geometry=="3d3v") && interpolation_order==4) {
-        ERROR("Main.interpolation_order = 4 " << interpolation_order << " not yet available in 2D");
-    }
     
     //!\todo (MG to JD) Please check if this parameter should still appear here
     // Disabled, not compatible for now with particles sort

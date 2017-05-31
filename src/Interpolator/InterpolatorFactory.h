@@ -8,6 +8,7 @@
 #include "Interpolator2D2Order.h"
 #include "Interpolator2D4Order.h"
 #include "Interpolator3D2Order.h"
+#include "Interpolator3D4Order.h"
 
 #include "Params.h"
 #include "Patch.h"
@@ -41,6 +42,9 @@ public:
         // ---------------
         else if ( ( params.geometry == "3d3v" ) && ( params.interpolation_order == 2 ) ) {
             Interp = new Interpolator3D2Order(params, patch);
+        }
+        else if ( ( params.geometry == "3d3v" ) && ( params.interpolation_order == 4 ) ) {
+            Interp = new Interpolator3D4Order(params, patch);
         }
         else {
             ERROR( "Unknwon parameters : " << params.geometry << ", Order : " << params.interpolation_order );
