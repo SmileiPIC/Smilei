@@ -138,6 +138,9 @@ void Species::initOperators(Params& params, Patch* patch)
 
     // Create the radiation model
     Radiate = RadiationFactory::create(params, this);
+    if (Ionize) {
+        DEBUG("Species " << species_type << " will undergo radiation loss!");
+    }
 
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond(params, this, patch);

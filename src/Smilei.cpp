@@ -88,9 +88,6 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------
     TITLE("Initializing nonlinear inverse Compton Scattering")
     NlicsTables nlicsTables;
-    nlicsTables.initParams(params);
-    nlicsTables.compute_tables(smpi);
-    nlicsTables.output_tables();
 
     // ---------------------------------------------------
     // Initialize patches (including particles and fields)
@@ -119,6 +116,10 @@ int main (int argc, char* argv[])
     } else {
 
         vecPatches = PatchesFactory::createVector(params, smpi, openPMD, 0);
+
+        nlicsTables.initParams(params);
+        nlicsTables.compute_tables(smpi);
+        nlicsTables.output_tables();
 
         // Initialize the electromagnetic fields
         // -------------------------------------

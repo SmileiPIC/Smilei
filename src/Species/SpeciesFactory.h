@@ -47,21 +47,21 @@ public:
         Species * thisSpecies=NULL;
         if (radiation_type == "none")
         {
-            if (dynamics_type=="norm" || dynamics_type == "borisnr") {
-                 // Species with Boris (relativistic =='norm', nonrelativistic=='borisnr') dynamics
-                 thisSpecies = new Species_norm(params, patch);
-            } else if (dynamics_type=="vay") {
-                 // Species with J.L. Vay dynamics
-                 thisSpecies = new Species_norm(params, patch);
-            } else if (dynamics_type=="higueracary") {
-                 // Species with Higuary Cary dynamics
+            if (dynamics_type=="norm"
+             || dynamics_type == "borisnr"
+             || dynamics_type == "vay"
+             || dynamics_type=="higueracary") {
+                 // Species with relativistic Boris dynamics if  =='norm'
+                 // Species with nonrelativistic Boris dynamics == 'borisnr'
+                 // Species with J.L. Vay dynamics if == "vay"
+                 // Species with Higuary Cary dynamics if == "higueracary"
                  thisSpecies = new Species_norm(params, patch);
             } else if (dynamics_type=="rrll") {
                  // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
                  ERROR("Creating a RRLL species: this is a work in progress and is still not working. Exiting");
                  thisSpecies = new Species_rrll(params, patch);
             } else {
-                ERROR("For species `" << species_type << "` dynamics_type must be 'norm', 'borisnr', 'vay', 'higueracary' or 'rrll'")
+                ERROR("For species `" << species_type << "` dynamics_type must be 'norm', 'borisnr', 'vay', 'higueracary' or 'rrll'");
             }
         }
         else if (radiation_type=="Monte-Carlo") {
@@ -77,7 +77,19 @@ public:
         else
         {
             ERROR("For species `" << species_type
-                                  << " radiation_type must be 'none', 'Monte-Carlo' or 'continuous'")
+                                  << " radiation_type must be 'none', 'Monte-Carlo' or 'continuous'");
+        }
+
+        // Non compatibility
+        if (dynamics_type=="rrll"
+        && (radiation_type=="Monte-Carlo"
+        || radiation_type=="continuous"))
+        {
+            ERROR("For species `" << species_type
+                                  << "` radiation_type `"
+                                  << radiation_type
+                                  << "` is not compatible with dynamics_type "
+                                  << dynamics_type);
         }
 
         thisSpecies->species_type = species_type;
@@ -301,19 +313,39 @@ public:
     // Method to clone a species from an existing one
     // Note that this must be only called from cloneVector, because additional init is needed
     static Species* clone(Species* species, Params &params, Patch* patch, bool with_particles = true) {
+
         // Create new species object
         Species * newSpecies = NULL;
-        if (species->dynamics_type=="norm"
-           || species->dynamics_type=="higueracary"
-           || species->dynamics_type=="vay"
-           || species->dynamics_type=="borisnr") {
-            newSpecies = new Species_norm(params, patch); // Boris
-        } else if (species->dynamics_type=="rrll") {
-            newSpecies = new Species_rrll(params, patch); // Boris + Radiation Reaction
+        if (species->radiation_type == "none")
+        {
+            if (species->dynamics_type=="norm"
+            || species->dynamics_type=="higueracary"
+            || species->dynamics_type=="vay"
+            || species->dynamics_type=="borisnr") {
+                // Boris, Vay or Higuera-Cary
+                newSpecies = new Species_norm(params, patch);
+            }
+            else if (species->dynamics_type=="rrll")
+            {
+                // Boris + Radiation Reaction
+                newSpecies = new Species_rrll(params, patch);
+            }
         }
+        else if (species->radiation_type=="Monte-Carlo"
+             && species->dynamics_type != "rrll")
+        {
+            newSpecies = new Species_nlics(params, patch);
+        }
+        else if (species->radiation_type=="continuous"
+             && species->dynamics_type != "rrll")
+        {
+            newSpecies = new Species_rrll(params, patch);
+        }
+
         // Copy members
         newSpecies->species_type          = species->species_type;
         newSpecies->dynamics_type         = species->dynamics_type;
+        newSpecies->radiation_type        = species->radiation_type;
         newSpecies->speciesNumber         = species->speciesNumber;
         newSpecies->initPosition_type     = species->initPosition_type;
         newSpecies->initMomentum_type     = species->initMomentum_type;
