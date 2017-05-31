@@ -50,11 +50,19 @@ class Radiation
         //! \param Bx x component of the particle magnetic field
         //! \param By y component of the particle magnetic field
         //! \param Bz z component of the particle magnetic field
-        double compute_chipa(double & charge_over_mass2,
+        #pragma omp declare simd
+        double inline compute_chipa(double & charge_over_mass2,
                                      double & px, double & py, double & pz,
                                      double & gamma,
                                      double & Ex, double & Ey, double & Ez,
-                                     double & Bx, double & By, double & Bz);
+                                     double & Bx, double & By, double & Bz)
+        {
+            return fabs(charge_over_mass2)*inv_norm_E_Schwinger
+                  * sqrt( fabs( pow(Ex*px + Ey*py + Ez*pz,2)
+                  - pow(gamma*Ex - By*pz + Bz*py,2)
+                  - pow(gamma*Ey - Bz*px + Bx*pz,2)
+                  - pow(gamma*Ez - Bx*py + By*px,2)));
+        };
 
     protected:
 

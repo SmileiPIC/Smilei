@@ -60,12 +60,31 @@ class NlicsTables
         //! Computation of the cross-section dNph/dt
         double compute_dNphdt(double chipa,double gfpa);
 
-        //! Computation of the function g of Erber using the Ridgers formulae
-        double compute_g_Ridgers(double chipa);
+        // ---------------------------------------------------------------------
+        //! Computation of the function g of Erber using the Ridgers
+        //! approximation formulae
+        //
+        //! \param chipa particle quantum parameter
+        // ---------------------------------------------------------------------
+        #pragma omp declare simd
+        double inline compute_g_Ridgers(double chipa)
+        {
+            return pow(1. + 4.8*(1.+chipa)*log(1. + 1.7*chipa)
+                          + 2.44*chipa*chipa,-2./3.);
+        };
 
+        // ---------------------------------------------------------------------
         //! Computation of the continuous quantum radiated energy during dt
         //! from the quantum parameter chipa using the Ridgers formulae
-        double compute_cont_rad_energy_Ridgers(double chipa, double dt);
+        //
+        //! \param chipa particle quantum parameter
+        //! \param dt time step
+        // ---------------------------------------------------------------------
+        #pragma omp declare simd
+        double inline compute_cont_rad_energy_Ridgers(double chipa, double dt)
+        {
+            return compute_g_Ridgers(chipa)*dt*chipa*chipa*factor_cla_rad_power;
+        };
 
         //! Computation of the minimum photon quantum parameter for the array xip
         //! and computation of the xip array.

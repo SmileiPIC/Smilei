@@ -87,6 +87,7 @@ void RadiationNlicsCont::operator() (Particles &particles,
     // _______________________________________________________________
     // Computation
 
+    #pragma omp simd
     for (int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass2 = (double)(charge[ipart])*pow(one_over_mass_,2.);
 

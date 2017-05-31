@@ -616,30 +616,6 @@ void NlicsTables::output_xip_table()
 }
 
 
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-//! Computation of the normalized continuous quantum radiated energy during dt
-//
-//! \param chipa particle quantum parameter
-//! \param dt time step
-// ---------------------------------------------------------------------------------------------------------------------
-double NlicsTables::compute_cont_rad_energy_Ridgers(double chipa, double dt)
-{
-    return compute_g_Ridgers(chipa)*dt*chipa*chipa*factor_cla_rad_power;
-}
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-//! Computation of the function g of Erber using the Ridgers approximation formulae
-//
-//! \param chipa particle quantum parameter
-// ---------------------------------------------------------------------------------------------------------------------
-double NlicsTables::compute_g_Ridgers(double chipa)
-{
-    return pow(1. + 4.8*(1.+chipa)*log(1. + 1.7*chipa) + 2.44*chipa*chipa,-2./3.);
-}
-
 // ---------------------------------------------------------------------------------------------------------------------
 //! Computation of the Cross Section dNph/dt which is also
 //! the number of photons generated per time unit.
