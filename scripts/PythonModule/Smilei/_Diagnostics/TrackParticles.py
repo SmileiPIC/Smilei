@@ -6,7 +6,7 @@ from .._Utils import *
 # -------------------------------------------------------------------
 class TrackParticles(Diagnostic):
 	# This is the constructor, which creates the object
-	def _init(self, species=None, select="", axes=[], timesteps=None, length=None, **kwargs):
+	def _init(self, species=None, select="", axes=[], timesteps=None, sort=True, length=None, **kwargs):
 		
 		# If argument 'species' not provided, then print available species and leave
 		if species is None:
@@ -19,32 +19,50 @@ class TrackParticles(Diagnostic):
 				self._error = "No tracked particles files found"
 			return
 		
+		if sort not in [True, False]:
+			self._error += "Argument `sort` must be `True` or `False`\n"
+			return
+		if not sort and select!="":
+			self._error += "Cannot select particles if not sorted\n"
+			return
+		self._sort = sort
+		
 		# Get info from the hdf5 files + verifications
 		# -------------------------------------------------------------------
 		self.species  = species
-		# If the first path does not contain the ordered file, we must create it
-		orderedfile = self._results_path[0]+self._os.sep+"TrackParticles_"+species+".h5"
-		if not self._os.path.isfile(orderedfile):
-			disorderedfiles = []
-			for path in self._results_path:
-				file = path+self._os.sep+"TrackParticlesDisordered_"+species+".h5"
-				if not self._os.path.isfile(file):
-					self._error = "Missing TrackParticles file in directory "+path
-					return
-				disorderedfiles += [file]
-			self._orderFiles(disorderedfiles, orderedfile)
-		# Create arrays to store h5 items
-		f = self._h5py.File(orderedfile)
 		self._h5items = {}
 		self._locationForTime = {}
-		for prop in ["Id", "x", "y", "z", "px", "py", "pz"]:
-			if prop in f:
-				self._h5items[prop] = f[prop]
-		# Memorize the locations of timesteps in the files
-		for it, t in enumerate(f["Times"]):
-			self._locationForTime[t] = it
-		self.times = self._np.array(sorted(f["Times"]))
-		self._times = self.times[:]
+		
+		# If sorting allowed, then do the sorting
+		if sort:
+			# If the first path does not contain the ordered file, we must create it
+			orderedfile = self._results_path[0]+self._os.sep+"TrackParticles_"+species+".h5"
+			if not self._os.path.isfile(orderedfile):
+				disorderedfiles = self._findDisorderedFiles()
+				self._orderFiles(disorderedfiles, orderedfile)
+			# Create arrays to store h5 items
+			f = self._h5py.File(orderedfile)
+			for prop in ["Id", "x", "y", "z", "px", "py", "pz"]:
+				if prop in f:
+					self._h5items[prop] = f[prop]
+			# Memorize the locations of timesteps in the files
+			for it, t in enumerate(f["Times"]):
+				self._locationForTime[t] = it
+			self.times = self._np.array(sorted(f["Times"]))
+			self._times = self.times[:]
+			self.nParticles = self._h5items["Id"].shape[1]
+
+		# If sorting not allowed, only find the available times
+		else:
+			disorderedfiles = self._findDisorderedFiles()
+			self.times = []
+			for file in disorderedfiles:
+				f = self._h5py.File(file)
+				for it, t in enumerate(f["data"].keys()):
+					self._locationForTime[int(t)] = [f, it]
+					self.times += [int(t)]
+			self.times = self._np.array(self.times)
+			self._times = self.times[:]
 		
 		# Get available times in the hdf5 file
 		if self.times.size == 0:
@@ -70,129 +88,131 @@ class TrackParticles(Diagnostic):
 			self._error = "Timesteps not found"
 			return
 		
-		self.nParticles = self._h5items["Id"].shape[1]
-		
 		# Select particles
 		# -------------------------------------------------------------------
 		# If the selection is a string (containing an operation)
-		if type(select) is str:
-			# Define a function that gets some requested data
-			def getData(property, time, buffer=None):
-				it = self._locationForTime[time]
-				dataset = self._h5items[property]
-				if buffer is None:
-					buffer = dataset[it,:]
-				else:
-					dataset.read_direct(buffer, source_sel=self._np.s_[it,:])
-				return buffer
-			# Define a function that finds the next closing character in a string
-			def findClosingCharacter(string, character, start=0):
-				i = start
+		if sort:
+			if type(select) is str:
+				# Define a function that gets some requested data
+				def getData(property, time, buffer=None):
+					it = self._locationForTime[time]
+					dataset = self._h5items[property]
+					if buffer is None:
+						buffer = dataset[it,:]
+					else:
+						dataset.read_direct(buffer, source_sel=self._np.s_[it,:])
+					return buffer
+				# Define a function that finds the next closing character in a string
+				def findClosingCharacter(string, character, start=0):
+					i = start
+					stack = []
+					associatedBracket = {")":"(", "]":"[", "}":"{"}
+					while i < len(string):
+						if string[i] == character and len(stack)==0: return i
+						if string[i] in ["(", "[", "{"]:
+							stack.append(string[i])
+						if string[i] in [")", "]", "}"]:
+							if len(stack)==0:
+								raise Exception("Error in selector syntax: missing `"+character+"`")
+							if stack[-1]!=associatedBracket[string[i]]:
+								raise Exception("Error in selector syntax: missing closing parentheses or brackets")
+							del stack[-1]
+						i+=1
+					raise Exception("Error in selector syntax: missing `"+character+"`")
+				# Start reading the selector
+				print("Selecting particles ... (this may take a while)")
+				i = 0
 				stack = []
-				associatedBracket = {")":"(", "]":"[", "}":"{"}
-				while i < len(string):
-					if string[i] == character and len(stack)==0: return i
-					if string[i] in ["(", "[", "{"]:
-						stack.append(string[i])
-					if string[i] in [")", "]", "}"]:
-						if len(stack)==0:
-							raise Exception("Error in selector syntax: missing `"+character+"`")
-						if stack[-1]!=associatedBracket[string[i]]:
-							raise Exception("Error in selector syntax: missing closing parentheses or brackets")
-						del stack[-1]
-					i+=1
-				raise Exception("Error in selector syntax: missing `"+character+"`")
-			# Start reading the selector
-			print("Selecting particles ... (this may take a while)")
-			i = 0
-			stack = []
-			operation = ""
-			while i < len(select):
-				if i+4<len(select) and select[i:i+4] in ["any(","all("]:
-					seltype = select[i:i+4]
-					if seltype == "any(": function = self._np.logical_or
-					if seltype == "all(": function = self._np.logical_and
-					comma = findClosingCharacter(select, ",", i+4)
-					parenthesis = findClosingCharacter(select, ")", comma+1)
-					timeSelector = select[i+4:comma]
-					try:
-						s = self._re.sub(r"\bt\b","self._times",timeSelector)
-						times = self._times[eval(s)]
-					except:
-						raise Exception("Error in selector syntax: time selector not understood in "+select[i:i+3]+"()")
-					try:
-						particleSelector = select[comma+1:parenthesis]
-						for prop in self._h5items.keys():
-							particleSelector = self._re.sub(r"\b"+prop+r"\b", "getData('"+prop+"',time)", particleSelector)
-					except:
-						raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
-					if seltype == "any(": selection = self._np.zeros((self.nParticles,), dtype=bool)
-					if seltype == "all(": selection = self._np.ones ((self.nParticles,), dtype=bool)
-					#try:
-					ID = self._np.zeros((self.nParticles,), dtype=self._np.int32)
-					selstr  = select[i:parenthesis]
-					for time in times:
-						print("   Selecting block `"+selstr+")`, at time "+str(time))
-						selectionAtTimeT = eval(particleSelector) # array of True or False
-						selectionAtTimeT[self._np.isnan(selectionAtTimeT)] = False
-						getData("Id", time, ID)
-						loc = self._np.flatnonzero(ID>0) # indices of existing particles
-						selection[loc] = function( selection[loc], selectionAtTimeT[loc])
-					#except:
-					#	raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
-					stack.append(selection)
-					operation += "stack["+str(len(stack)-1)+"]"
-					i = parenthesis+1
+				operation = ""
+				while i < len(select):
+					if i+4<len(select) and select[i:i+4] in ["any(","all("]:
+						seltype = select[i:i+4]
+						if seltype == "any(": function = self._np.logical_or
+						if seltype == "all(": function = self._np.logical_and
+						comma = findClosingCharacter(select, ",", i+4)
+						parenthesis = findClosingCharacter(select, ")", comma+1)
+						timeSelector = select[i+4:comma]
+						try:
+							s = self._re.sub(r"\bt\b","self._times",timeSelector)
+							times = self._times[eval(s)]
+						except:
+							raise Exception("Error in selector syntax: time selector not understood in "+select[i:i+3]+"()")
+						try:
+							particleSelector = select[comma+1:parenthesis]
+							for prop in self._h5items.keys():
+								particleSelector = self._re.sub(r"\b"+prop+r"\b", "getData('"+prop+"',time)", particleSelector)
+						except:
+							raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
+						if seltype == "any(": selection = self._np.zeros((self.nParticles,), dtype=bool)
+						if seltype == "all(": selection = self._np.ones ((self.nParticles,), dtype=bool)
+						#try:
+						ID = self._np.zeros((self.nParticles,), dtype=self._np.int32)
+						selstr  = select[i:parenthesis]
+						for time in times:
+							print("   Selecting block `"+selstr+")`, at time "+str(time))
+							selectionAtTimeT = eval(particleSelector) # array of True or False
+							selectionAtTimeT[self._np.isnan(selectionAtTimeT)] = False
+							getData("Id", time, ID)
+							loc = self._np.flatnonzero(ID>0) # indices of existing particles
+							selection[loc] = function( selection[loc], selectionAtTimeT[loc])
+						#except:
+						#	raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
+						stack.append(selection)
+						operation += "stack["+str(len(stack)-1)+"]"
+						i = parenthesis+1
+					else:
+						operation += select[i]
+						i+=1
+				if len(operation)==0.:
+					self.selectedParticles = self._np.arange(self.nParticles,dtype=self._np.uint64)
 				else:
-					operation += select[i]
-					i+=1
-			if len(operation)==0.:
-				self.selectedParticles = self._np.arange(self.nParticles,dtype=self._np.uint64)
+					self.selectedParticles = eval(operation).nonzero()[0]
+				self.selectedParticles.sort()
+				print("Done selecting particles")
+			
+			# Otherwise, the selection can be a list of particle IDs
 			else:
-				self.selectedParticles = eval(operation).nonzero()[0]
-			self.selectedParticles.sort()
-			print("Done selecting particles")
-		
-		# Otherwise, the selection can be a list of particle IDs
-		else:
-			try:
-				IDs = f["unique_Ids"] # get all available IDs
-				self.selectedParticles = self._np.flatnonzero(self._np.in1d(IDs, select)) # find the requested IDs
-			except:
-				self._error = "Error: argument 'select' must be a string or a list of particle IDs"
+				try:
+					IDs = f["unique_Ids"] # get all available IDs
+					self.selectedParticles = self._np.flatnonzero(self._np.in1d(IDs, select)) # find the requested IDs
+				except:
+					self._error = "Error: argument 'select' must be a string or a list of particle IDs"
+					return
+			
+			# Remove particles that are not actually tracked during the requested timesteps
+			if len(self.selectedParticles) > 0:
+				first_time = self._locationForTime[self.times[ 0]]
+				last_time  = self._locationForTime[self.times[-1]]+1
+				IDs = self._h5items["Id"][first_time:last_time,self.selectedParticles]
+				dead_particles = self._np.flatnonzero(self._np.all( self._np.isnan(IDs) + (IDs==0), axis=0 ))
+				self.selectedParticles = self._np.delete( self.selectedParticles, dead_particles )
+			
+			# Calculate the number of selected particles
+			self.nselectedParticles = len(self.selectedParticles)
+			if self.nselectedParticles == 0:
+				self._error = "No particles found"
 				return
-		
-		# Remove particles that are not actually tracked during the requested timesteps
-		if len(self.selectedParticles) > 0:
-			first_time = self._locationForTime[self.times[ 0]]
-			last_time  = self._locationForTime[self.times[-1]]+1
-			IDs = self._h5items["Id"][first_time:last_time,self.selectedParticles]
-			dead_particles = self._np.flatnonzero(self._np.all( self._np.isnan(IDs) + (IDs==0), axis=0 ))
-			self.selectedParticles = self._np.delete( self.selectedParticles, dead_particles )
-		
-		# Calculate the number of selected particles
-		self.nselectedParticles = len(self.selectedParticles)
-		if self.nselectedParticles == 0:
-			self._error = "No particles found"
-			return
-		print("Kept "+str(self.nselectedParticles)+" particles")
+			print("Kept "+str(self.nselectedParticles)+" particles")
 		
 		# Manage axes
 		# -------------------------------------------------------------------
 		if type(axes) is not list:
 			self._error = "Error: Argument 'axes' must be a list"
 			return
-		if len(axes)==0:
-			self._error = "Error: must define at least one axis."
-			return
-		self.axes = axes
-		for axis in axes:
-			if axis not in self._h5items.keys():
-				self._error += "Error: Argument 'axes' has item '"+str(axis)+"' unknown.\n"
-				self._error += "       Available axes are: "+(", ".join(sorted(self._h5items.keys())))
-				return
-		self._type = axes
-		for axis in axes:
+		# if axes provided, verify them
+		if len(axes)>0:
+			self.axes = axes
+			for axis in axes:
+				if axis not in self._h5items.keys():
+					self._error += "Error: Argument 'axes' has item '"+str(axis)+"' unknown.\n"
+					self._error += "       Available axes are: "+(", ".join(sorted(self._h5items.keys())))
+					return
+		# otherwise use default
+		else:
+			self.axes = ["x","y","z"][:self._ndim] + ["px", "py", "pz"]
+		# Then figure out axis units
+		self._type = self.axes
+		for axis in self.axes:
 			axisunits = ""
 			if axis == "Id":
 				self._centers.append( [0, self._h5items[axis][0,-1]] )
@@ -209,7 +229,7 @@ class TrackParticles(Diagnostic):
 			self._label.append( axis )
 			self._units.append( axisunits )
 		self._title = "Track particles '"+species+"'"
-		self._shape = [0]*len(axes)
+		self._shape = [0]*len(self.axes)
 		# Hack to work with 1 axis
 		if len(axes)==1: self._vunits = self._units[0]
 		else: self._vunits = ""
@@ -224,7 +244,7 @@ class TrackParticles(Diagnostic):
 		self.length = length or self.times[-1]
 		self.valid = True
 	
-	# Method to print info on included probe
+	# Method to get info
 	def _info(self):
 		info = "Track particles: species '"+self.species+"' containing "+str(self.nParticles)+" particles"
 		if len(self.selectedParticles) != self.nParticles:
@@ -243,6 +263,18 @@ class TrackParticles(Diagnostic):
 	# get all available timesteps
 	def getAvailableTimesteps(self):
 		return self._times
+	
+	
+	# Get a list of disordered files
+	def _findDisorderedFiles(self):
+		disorderedfiles = []
+		for path in self._results_path:
+			file = path+self._os.sep+"TrackParticlesDisordered_"+self.species+".h5"
+			if not self._os.path.isfile(file):
+				self._error = "Missing TrackParticles file in directory "+path
+				return
+			disorderedfiles += [file]
+		return disorderedfiles
 	
 	# Make the particles ordered by Id in the file, in case they are not
 	def _orderFiles( self, filesDisordered, fileOrdered ):
@@ -306,77 +338,118 @@ class TrackParticles(Diagnostic):
 		print("Ordering succeeded")
 	
 	# We override the get and getData methods
-	def getData(self):
+	def getData(self, timestep=None):
 		if not self._validate(): return
 		self._prepare1() # prepare the vfactor
 		
-		if self._rawData is None:
-			print("Preparing data ...")
-			# create dictionary with info on the axes
-			self._rawData = {}
-			ntimes = len(self.times)
-			for axis in self.axes:
-				self._rawData[axis] = self._np.zeros((ntimes, self.nselectedParticles), dtype=(self._np.uint64 if axis=="Id" else self._np.float64))
-				self._rawData[axis].fill((0 if axis=="Id" else self._np.nan))
-			print("Loading data ...")
-			# loop times and fill up the data
-			ID = self._np.zeros((self.nselectedParticles,), dtype=self._np.uint64)
-			B = self._np.zeros((self.nselectedParticles,))
-			for it, time in enumerate(self.times):
-				print("     iteration "+str(it+1)+"/"+str(ntimes)+"  (timestep "+str(time)+")")
-				timeIndex = self._locationForTime[time]
-				self._h5items["Id"].read_direct(ID, source_sel=self._np.s_[timeIndex,self.selectedParticles]) # read the particle Ids
-				deadParticles = (ID==0).nonzero()
-				for axis in self.axes:
-					if axis == "Id":
-						self._rawData[axis][it, :] = ID.squeeze()
-					else:
-						self._h5items[axis].read_direct(B, source_sel=self._np.s_[timeIndex,self.selectedParticles])
-						B[deadParticles]=self._np.nan
-						self._rawData[axis][it, :] = B.squeeze()
-			print("Process broken lines ...")
-			# Add the lineBreaks array which indicates where lines are broken (e.g. loop around the box)
-			self._rawData['brokenLine'] = self._np.zeros((self.nselectedParticles,), dtype=bool)
-			self._rawData['lineBreaks'] = {}
-			if self.times.size > 1:
-				dt = self._np.diff(self.times)*self.timestep
-				for axis in ["x","y","z"]:
-					if axis in self.axes:
-						dudt = self._np.diff(self._rawData[axis],axis=0)
-						for i in range(dudt.shape[1]): dudt[:,i] /= dt
-						dudt[~self._np.isnan(dudt)] = 0. # NaNs already break lines
-						# Line is broken if velocity > c 
-						self._rawData['brokenLine'] += self._np.abs(dudt).max(axis=0) > 1.
-						broken_particles = self._np.flatnonzero(self._rawData['brokenLine'])
-						for broken_particle in broken_particles:
-							broken_times = list(self._np.flatnonzero(self._np.abs(dudt[:,broken_particle]) > 1.)+1)
-							if broken_particle in self._rawData['lineBreaks'].keys():
-								self._rawData['lineBreaks'][broken_particle] += broken_times
-							else:
-								self._rawData['lineBreaks'][broken_particle] = broken_times
-			# Add the times array
-			self._rawData["times"] = self.times
-			print("... done")
+		if timestep is None:
+			times = self.times
+		elif timestep not in self.times:
+			print("ERROR: timestep "+str(timestep)+" not available")
+			return {}
+		else:
+			times = [timestep]
+			indexOfRequestedTime = self._np.where(self.times==timestep)
 		
-		# Multiply by the vfactor
 		data = {}
-		data.update({ "times":self.times })
-		for axis in self.axes:
-			if axis == "Id":
-				data.update({ axis:(self._rawData[axis]*self._vfactor).astype(self._np.uint64) })
-			else:
-				data.update({ axis:self._rawData[axis]*self._vfactor })
+		data.update({ "times":times })
+		
+		if self._sort:
+			if self._rawData is None:
+				self._rawData = {}
+				print("Preparing data ...")
+				# create dictionary with info on the axes
+				ntimes = len(self.times)
+				for axis in self.axes:
+					self._rawData[axis] = self._np.zeros((ntimes, self.nselectedParticles), dtype=(self._np.uint64 if axis=="Id" else self._np.float64))
+					self._rawData[axis].fill((0 if axis=="Id" else self._np.nan))
+				print("Loading data ...")
+				# loop times and fill up the data
+				ID = self._np.zeros((self.nselectedParticles,), dtype=self._np.uint64)
+				B = self._np.zeros((self.nselectedParticles,))
+				for it, time in enumerate(self.times):
+					print("     iteration "+str(it+1)+"/"+str(ntimes)+"  (timestep "+str(time)+")")
+					timeIndex = self._locationForTime[time]
+					self._h5items["Id"].read_direct(ID, source_sel=self._np.s_[timeIndex,self.selectedParticles]) # read the particle Ids
+					deadParticles = (ID==0).nonzero()
+					for axis in self.axes:
+						if axis == "Id":
+							self._rawData[axis][it, :] = ID.squeeze()
+						else:
+							self._h5items[axis].read_direct(B, source_sel=self._np.s_[timeIndex,self.selectedParticles])
+							B[deadParticles]=self._np.nan
+							self._rawData[axis][it, :] = B.squeeze()
+				print("Process broken lines ...")
+				# Add the lineBreaks array which indicates where lines are broken (e.g. loop around the box)
+				self._rawData['brokenLine'] = self._np.zeros((self.nselectedParticles,), dtype=bool)
+				self._rawData['lineBreaks'] = {}
+				if self.times.size > 1:
+					dt = self._np.diff(self.times)*self.timestep
+					for axis in ["x","y","z"]:
+						if axis in self.axes:
+							dudt = self._np.diff(self._rawData[axis],axis=0)
+							for i in range(dudt.shape[1]): dudt[:,i] /= dt
+							dudt[~self._np.isnan(dudt)] = 0. # NaNs already break lines
+							# Line is broken if velocity > c 
+							self._rawData['brokenLine'] += self._np.abs(dudt).max(axis=0) > 1.
+							broken_particles = self._np.flatnonzero(self._rawData['brokenLine'])
+							for broken_particle in broken_particles:
+								broken_times = list(self._np.flatnonzero(self._np.abs(dudt[:,broken_particle]) > 1.)+1)
+								if broken_particle in self._rawData['lineBreaks'].keys():
+									self._rawData['lineBreaks'][broken_particle] += broken_times
+								else:
+									self._rawData['lineBreaks'][broken_particle] = broken_times
+				# Add the times array
+				self._rawData["times"] = self.times
+				print("... done")
+			
+			# Obtain the requested data and multiply by the vfactor
+			for axis in self.axes:
+				if timestep is None:
+					data[axis] = self._rawData[axis]*self._vfactor
+				else:
+					data[axis] = self._rawData[axis][indexOfRequestedTime, :]*self._vfactor
+				if axis == "Id":
+					data[axis] = data[axis].astype(self._np.uint64)
+			
+		# If not sorted, get different kind of data
+		else:
+			if self._rawData is None:
+				self._rawData = {}
+				print("Loading data ...")
+				properties = {"Id":"id", "x":"position/x", "y":"position/y", "z":"position/z",
+				              "px":"momentum/x", "py":"momentum/y", "pz":"momentum/z"}
+				for time in self.times:
+					[f, timeIndex] = self._locationForTime[time]
+					group = f["data/"+"%010i"%time+"/particles/"+self.species]
+					self._rawData[time] = {}
+					for axis in self.axes:
+						self._rawData[time][axis] = group[properties[axis]].value
+				print("... done")
+			
+			# Obtain the requested data and multiply by the vfactor
+			for time in times:
+				data[time] = {}
+				for axis in self.axes:
+					data[time][axis] = self._rawData[time][axis]*self._vfactor
+				if axis == "Id":
+					data[time][axis] = data[time][axis].astype(self._np.uint64)
 		
 		return data
+	
 	def get(self):
 		return self.getData()
 	
 	# We override _prepare3
 	def _prepare3(self):
+		if not self._sort:
+			print("Cannot plot non-sorted data")
+			return False
 		if self._tmpdata is None:
 			A = self.getData()
 			self._tmpdata = []
 			for axis in self.axes: self._tmpdata.append( A[axis] )
+		return True
 	
 	# We override the plotting methods
 	def _animateOnAxes_0D(self, ax, t):
@@ -433,6 +506,9 @@ class TrackParticles(Diagnostic):
 	# Convert to XDMF format for ParaView
 	def toXDMF(self):
 		
+		if not self._sort:
+			print("Cannot export non-sorted data")
+			return
 		self._mkdir(self._exportDir)
 		
 		# Make the XDMF for usual time collections
@@ -482,6 +558,9 @@ class TrackParticles(Diagnostic):
 	# Convert data to VTK format
 	def toVTK(self, numberOfPieces=1):
 		if not self._validate(): return
+		if not self._sort:
+			print("Cannot export non-sorted data")
+			return
 		
 		if self._ndim!=3:
 			print ("Cannot export tracked particles of a "+str(self._ndim)+"D simulation to VTK")
