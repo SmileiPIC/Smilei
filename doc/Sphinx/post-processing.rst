@@ -212,7 +212,7 @@ Open a Screen diagnostic
 Open a Track diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.TrackParticles(species=None, select="", axes=[], timesteps=None, length=None, units=[""], **kwargs)
+.. py:method:: Smilei.TrackParticles(species=None, select="", axes=[], timesteps=None, sort=True, length=None, units=[""], **kwargs)
   
   * ``timesteps``, ``units``: same as before.
   * ``species``: the name of a tracked-particle species.
@@ -224,6 +224,9 @@ Open a Track diagnostic
      | **Example:** ``axes = ["x"]`` corresponds to :math:`x` versus time. 
      | **Example:** ``axes = ["x","y"]`` correspond to 2-D trajectories. 
      | **Example:** ``axes = ["x","px"]`` correspond to phase-space trajectories.
+  * ``sort``: If ``False``, the particles are not sorted by ID. This can save significant
+    time, but prevents plotting, exporting to VTK, and the ``select`` argument. Only
+    ``getData()`` is available in this mode.
   * ``length``: The length of each plotted trajectory, in number of timesteps.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
@@ -301,10 +304,18 @@ Obtain the data as an array
                Smilei.Probe.getData(...)
                Smilei.ParticleDiagnostic.getData(...)
                Smilei.Screen.getData(...)
+               Smilei.TrackParticles.getData(...)
+
+  Returns a list of the data arrays (one element for each timestep requested).
+  In the case of ``TrackParticles``, this method returns a dictionary containing one
+  entry for each axis, and if ``sort==True``, these entries are included inside an entry
+  for each timestep.
   
-  Returns a list of the data arrays, for each timestep requested.
-  By default, all timesteps are returned. If only one is desired, use the 
-  keyword-argument ``timestep`` in the ``getData()`` method.
+  All these methods have the same arguments described below.
+
+.. py:function:: getData( timestep=None )
+  
+  * ``timestep``: If specified, this timestep number will be the only one read and returned.
   
 .. py:method:: Smilei.Scalar.get()
                Smilei.Field.get()
@@ -312,7 +323,7 @@ Obtain the data as an array
                Smilei.ParticleDiagnostic.get()
                Smilei.Screen.get()
   
-  Similar to :py:meth:`getData`, but returns more things as a python dictionary:
+  Similar to :py:meth:`getData`, but returns a python dictionary containing various information:
   
   * ``get()["data"]`` is the same as ``getData()``.
   * ``get()["times"]`` is a list of the requested timesteps.
