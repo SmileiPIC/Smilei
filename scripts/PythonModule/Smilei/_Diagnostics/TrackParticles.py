@@ -337,26 +337,15 @@ class TrackParticles(Diagnostic):
 			raise
 		print("Ordering succeeded")
 	
-	# We override the get and getData methods
-	def getData(self, timestep=None):
+	# Method to generate the raw data (only done once)
+	def _generateRawData(self):
 		if not self._validate(): return
 		self._prepare1() # prepare the vfactor
-		
-		if timestep is None:
-			times = self.times
-		elif timestep not in self.times:
-			print("ERROR: timestep "+str(timestep)+" not available")
-			return {}
-		else:
-			times = [timestep]
-			indexOfRequestedTime = self._np.where(self.times==timestep)
-		
-		data = {}
-		data.update({ "times":times })
-		
-		if self._sort:
-			if self._rawData is None:
-				self._rawData = {}
+	
+		if self._rawData is None:
+			self._rawData = {}
+			
+			if self._sort:
 				print("Preparing data ...")
 				# create dictionary with info on the axes
 				ntimes = len(self.times)
@@ -366,7 +355,7 @@ class TrackParticles(Diagnostic):
 				print("Loading data ...")
 				# loop times and fill up the data
 				ID = self._np.zeros((self.nselectedParticles,), dtype=self._np.uint64)
-				B = self._np.zeros((self.nselectedParticles,))
+				B  = self._np.zeros((self.nselectedParticles,), dtype=self._np.double)
 				for it, time in enumerate(self.times):
 					print("     iteration "+str(it+1)+"/"+str(ntimes)+"  (timestep "+str(time)+")")
 					timeIndex = self._locationForTime[time]
@@ -401,21 +390,9 @@ class TrackParticles(Diagnostic):
 									self._rawData['lineBreaks'][broken_particle] = broken_times
 				# Add the times array
 				self._rawData["times"] = self.times
-				print("... done")
 			
-			# Obtain the requested data and multiply by the vfactor
-			for axis in self.axes:
-				if timestep is None:
-					data[axis] = self._rawData[axis]*self._vfactor
-				else:
-					data[axis] = self._rawData[axis][indexOfRequestedTime, :]*self._vfactor
-				if axis == "Id":
-					data[axis] = data[axis].astype(self._np.uint64)
-			
-		# If not sorted, get different kind of data
-		else:
-			if self._rawData is None:
-				self._rawData = {}
+			# If not sorted, get different kind of data
+			else:
 				print("Loading data ...")
 				properties = {"Id":"id", "x":"position/x", "y":"position/y", "z":"position/z",
 				              "px":"momentum/x", "py":"momentum/y", "pz":"momentum/z"}
@@ -425,20 +402,88 @@ class TrackParticles(Diagnostic):
 					self._rawData[time] = {}
 					for axis in self.axes:
 						self._rawData[time][axis] = group[properties[axis]].value
-				print("... done")
 			
-			# Obtain the requested data and multiply by the vfactor
+			print("... done")
+
+	# We override the get and getData methods
+	def getData(self, timestep=None):
+		if not self._validate(): return
+		self._prepare1() # prepare the vfactor
+		
+		if timestep is None:
+			times = self.times
+		elif timestep not in self.times:
+			print("ERROR: timestep "+str(timestep)+" not available")
+			return {}
+		else:
+			times = [timestep]
+			indexOfRequestedTime = self._np.where(self.times==timestep)
+		
+		self._generateRawData()
+		
+		data = {}
+		data.update({ "times":times })
+		
+		if self._sort:
+			for axis in self.axes:
+				if timestep is None:
+					data[axis] = self._rawData[axis]*self._vfactor
+				else:
+					data[axis] = self._rawData[axis][indexOfRequestedTime, :]*self._vfactor
+				if axis == "Id":
+					data[axis] = data[axis].astype(self._np.uint64)
+			
+		else:
 			for time in times:
 				data[time] = {}
 				for axis in self.axes:
 					data[time][axis] = self._rawData[time][axis]*self._vfactor
-				if axis == "Id":
-					data[time][axis] = data[time][axis].astype(self._np.uint64)
+					if axis == "Id":
+						data[time][axis] = data[time][axis].astype(self._np.uint64)
 		
 		return data
 	
 	def get(self):
 		return self.getData()
+	
+	# Iterator on UNSORTED particles for a given timestep
+	def iterParticles(self, timestep, chunksize=1):
+		if not self._validate(): return
+		self._prepare1() # prepare the vfactor
+		
+		if timestep not in self.times:
+			print("ERROR: timestep "+str(timestep)+" not available")
+			return
+		
+		properties = {"Id":"id", "x":"position/x", "y":"position/y", "z":"position/z",
+		              "px":"momentum/x", "py":"momentum/y", "pz":"momentum/z"}
+		
+		disorderedfiles = self._findDisorderedFiles()
+		for file in disorderedfiles:
+			f = self._h5py.File(file)
+			for t in f["data"].keys():
+				if timestep == int(t):
+					# This is the timestep for which we want to produce an iterator
+					group = f["data/"+t+"/particles/"+self.species]
+					npart = group["id"].size
+					ID = self._np.zeros((chunksize,), dtype=self._np.uint64)
+					B  = self._np.zeros((chunksize,))
+					for chunkstart in range(0, npart, chunksize):
+						chunkend = chunkstart + chunksize
+						if chunkend > npart:
+							chunkend = npart
+							ID = self._np.zeros((chunkend-chunkstart,), dtype=self._np.uint64)
+							B  = self._np.zeros((chunkend-chunkstart,), dtype=self._np.double)
+						data = {}
+						for axis in self.axes:
+							if axis == "Id":
+								group[properties[axis]].read_direct(ID, source_sel=self._np.s_[chunkstart:chunkend])
+								data[axis] = ID
+							else:
+								group[properties[axis]].read_direct(B , source_sel=self._np.s_[chunkstart:chunkend])
+								data[axis] = B
+						yield data
+					return
 	
 	# We override _prepare3
 	def _prepare3(self):
