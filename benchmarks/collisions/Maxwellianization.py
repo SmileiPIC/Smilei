@@ -17,7 +17,7 @@ wavelength = 1e-6 # meters
 c = 3e8
 
 times = sim.ParticleDiagnostic(0).getAvailableTimesteps()
-electrons = sim.ParticleDiagnostic(0, slice={"x":"all"}).get()
+electrons = sim.ParticleDiagnostic(0, sum={"x":"all"}).get()
 vx = electrons["vx"]
 
 fig = None

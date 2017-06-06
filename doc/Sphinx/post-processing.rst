@@ -98,7 +98,7 @@ Open a Scalar diagnostic
 Open a Field diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.Field(diagNumber=None, field=None, timesteps=None, slice=None, units=[""], data_log=False, **kwargs)
+.. py:method:: Smilei.Field(diagNumber=None, field=None, timesteps=None, average=None, units=[""], data_log=False, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: The number of the fields diagnostic
@@ -106,16 +106,16 @@ Open a Field diagnostic
   * ``field``: The name of a field (``"Ex"``, ``"Ey"``, etc.)
      | If not given, then a list of available fields is printed.
      | The string can also be an operation between several fields, such as ``"Jx+Jy"``.
-  * ``slice``: A selection of rows or columns. This parameter is used to reduce the number of dimensions of the array.
-     | Syntax 1: ``slice = { axis : "all", ... }``
-     | Syntax 2: ``slice = { axis : location, ... }``
-     | Syntax 3: ``slice = { axis : [begin, end] , ... }``
+  * ``average``: A selection of coordinates on which to average.
+     | Syntax 1: ``average = { axis : "all", ... }``
+     | Syntax 2: ``average = { axis : location, ... }``
+     | Syntax 3: ``average = { axis : [begin, end] , ... }``
      | ``axis`` must be ``"x"``, ``"y"`` or ``"z"``.
      | The chosen axes will be removed:
      | - With syntax 1, an average is performed over all the axis.
      | - With syntax 2, only the bin closest to ``location`` is kept.
      | - With syntax 3, an average is performed between ``begin`` and ``end``.
-     | Example: ``slice = {"x":[4,5]}`` will average for :math:`x` within [4,5].
+     | Example: ``average = {"x":[4,5]}`` will average for :math:`x` within [4,5].
   * ``stride``: step size for reading the grid. If the grid is too large, use a stride > 1
     to reduce the amount of data.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
@@ -123,7 +123,7 @@ Open a Field diagnostic
 **Example**::
   
   S = Smilei("path/to/my/results")
-  Diag = S.Field(0, "Ex", slice = {"x":[4,5]})
+  Diag = S.Field(0, "Ex", average = {"x":[4,5]})
 
 
 ----
@@ -131,7 +131,7 @@ Open a Field diagnostic
 Open a Probe diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.Probe(probeNumber=None, field=None, timesteps=None, slice=None, units=[""], data_log=False, **kwargs)
+.. py:method:: Smilei.Probe(probeNumber=None, field=None, timesteps=None, average=None, units=[""], data_log=False, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``probeNumber``: number of the probe (the first one has number 0).
@@ -139,8 +139,8 @@ Open a Probe diagnostic
   * ``field``: name of the field (``"Bx"``, ``"By"``, ``"Bz"``, ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` or ``"Rho"``).
      | If not given, then a list of available fields is printed.
      | The string can also be an operation between several fields, such as ``"Jx+Jy"``.
-  * ``slice`` is very similar to that of :py:meth:`Field`, but it can only accept two axes: ``"axis1"``, ``"axis2"``.
-     | For instance, ``slice={"axis1":"all"}``. Note that ``"axis1"`` and ``"axis2"`` are not necessarily :math:`x` or :math:`y` because the probe mesh may be rotated.
+  * ``average`` is very similar to that of :py:meth:`Field`, but it can only have the axes: ``"axis1"``, ``"axis2"`` and ``"axis3"``.
+    For instance, ``average={"axis1":"all"}``. Note that the axes are not necessarily :math:`x`, :math:`y` or :math:`z` because the probe mesh is arbitrary.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
 **Example**::
@@ -154,25 +154,25 @@ Open a Probe diagnostic
 Open a Particle diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None, units=[""], data_log=False, stride=1, **kwargs)
+.. py:method:: Smilei.ParticleDiagnostic(diagNumber=None, timesteps=None, sum=None, units=[""], data_log=False, stride=1, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: number of the particle diagnostic (the first one has number 0).
      | If not given, a list of available particle diagnostics is printed.
      | It can also be an operation between several particle diagnostics.
      | For example, ``"#0/#1"`` computes the division by diagnostics 0 and 1.
-  * ``slice``: a selection of rows or columns. This parameter is used to reduce the number of dimensions of the array.
-     | Syntax 1: ``slice = { axis : "all", ... }``
-     | Syntax 2: ``slice = { axis : location, ... }``
-     | Syntax 3: ``slice = { axis : [begin, end] , ... }``
+  * ``sum``: a selection of coordinates on which to sum the data.
+     | Syntax 1: ``sum = { axis : "all", ... }``
+     | Syntax 2: ``sum = { axis : location, ... }``
+     | Syntax 3: ``sum = { axis : [begin, end] , ... }``
      
      ``axis`` must be ``"x"``, ``"y"``, ``"z"``, ``"px"``, ``"py"``, ``"pz"``, ``"p"``, ``"gamma"``, ``"ekin"``, ``"vx"``, ``"vy"``, ``"vz"``, ``"v"`` or ``"charge"``.
      
      | The chosen axes will be removed:
-     | - With syntax 1, a **sum** is performed over all the axis.
+     | - With syntax 1, a sum is performed over all the axis.
      | - With syntax 2, only the bin closest to ``location`` is kept.
-     | - With syntax 3, a **sum** is performed between ``begin`` and ``end``.
-     | Example: ``slice={"x":[4,5]``} will sum all the data for x within [4,5].
+     | - With syntax 3, a sum is performed between ``begin`` and ``end``.
+     | Example: ``sum={"x":[4,5]}`` will sum all the data for x within [4,5].
   * ``stride``: step size for reading the grid. If the grid is too large, use a stride > 1
     to reduce the amount of data.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
@@ -189,14 +189,14 @@ Open a Particle diagnostic
 Open a Screen diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.Screen(diagNumber=None, timesteps=None, slice=None, units=[""], data_log=False, stride=1, **kwargs)
+.. py:method:: Smilei.Screen(diagNumber=None, timesteps=None, sum=None, units=[""], data_log=False, stride=1, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: number of the screen diagnostic (the first one has number 0).
      | If not given, a list of available screen diagnostics is printed.
      | It can also be an operation between several screen diagnostics.
      | For example, ``"#0/#1"`` computes the division by diagnostics 0 and 1.
-  * ``slice``: identical to that of particle diagnostics.
+  * ``sum``: identical to that of particle diagnostics.
   * ``stride``: identical to that of particle diagnostics.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
@@ -241,19 +241,19 @@ Open a Track diagnostic
 | Say ``times`` is a condition on timesteps ``t``, for instance ``t>50``.
 | Say ``condition`` is a condition on particles properties  (``x``, ``y``, ``z``, ``px``, ``py``, ``pz``), for instance ``px>0``.
 
-* **Syntax 1:** ``select="any(times, condition)"``
-   | Selects particles satisfying ``condition`` for at least one of the ``times``.
-   | For example, ``select="any(t>0, px>1.)"`` selects those reaching :math:`p_x>1` at some point.
+* | **Syntax 1:** ``select="any(times, condition)"``
+  | Selects particles satisfying ``condition`` for at least one of the ``times``.
+  | For example, ``select="any(t>0, px>1.)"`` selects those reaching :math:`p_x>1` at some point.
 
-* **Syntax 2:** ``select="all(times, condition)"``
-   | Selects particles satisfying ``condition`` at all ``times``.
-   | For example, ``select="all(t<40, px<0.1)"`` selects those having :math:`p_x<0.1` until timestep 40.
+* | **Syntax 2:** ``select="all(times, condition)"``
+  | Selects particles satisfying ``condition`` at all ``times``.
+  | For example, ``select="all(t<40, px<1)"`` selects those having :math:`p_x<1` until timestep 40.
 
-* **Syntax 3:** ``select=[ID1, ID2, ...]``
-   | Selects the provided particle IDs.
+* | **Syntax 3:** ``select=[ID1, ID2, ...]``
+  | Selects the provided particle IDs.
 
-* It is possible to make logical operations: ``+`` is *OR*; ``*`` is *AND*; ``~`` is *NOT*.
-   | For example, ``select="any((t>30)*(t<60), px>1) + all(t>0, (x>1)*(x<2))"``
+* | It is possible to make logical operations: ``+`` is *OR*; ``*`` is *AND*; ``~`` is *NOT*.
+  | For example, ``select="any((t>30)*(t<60), px>1) + all(t>0, (x>1)*(x<2))"``
 
 
 
@@ -725,9 +725,9 @@ The ions clearly have a zero average velocity.
 The diagnostic #0 that we plotted above is the electron phase-space.
 Let us say we want to sum over the data that is contained between :math:`x=3` and 4,
 and plot the result as a function of :math:`v_x`.
-This is achieved by the argument ``slice``::
+This is achieved by the argument ``sum``::
 
-  >>> S.ParticleDiagnostic(0, slice={"x":[3,4]}, units=["c"]).plot(timestep=0)
+  >>> S.ParticleDiagnostic(0, sum={"x":[3,4]}, units=["c"]).plot(timestep=0)
 
 
 .. figure:: _static/Tutorial5.png
@@ -737,9 +737,9 @@ This is achieved by the argument ``slice``::
 
 We can see, again, that the peak is located at :math:`v_x=0.05c`.
 
-Now, let us do the slice on :math:`v_x` instead of :math:`x`::
+Now, let us do the sum on :math:`v_x` instead of :math:`x`::
   
-  >>> S.ParticleDiagnostic(0, slice={"vx":"all"}, units=["um"]).plot(timestep=0, vmin=0, vmax=11)
+  >>> S.ParticleDiagnostic(0, sum={"vx":"all"}, units=["um"]).plot(timestep=0, vmin=0, vmax=11)
 
 .. figure:: _static/Tutorial6.png
   :width: 10cm
@@ -747,7 +747,7 @@ Now, let us do the slice on :math:`v_x` instead of :math:`x`::
   :math:`x` -distribution of electrons contained between :math:`v_x=-0.1` and :math:`0.1`, at :math:`t=0`.
 
 
-By choosing ``"all"`` in the argument ``slice``, all the velocities :math:`v_x` are sliced.
+By choosing ``"all"`` in the argument ``sum``, all the velocities :math:`v_x` are summed.
 Note the parameters ``vmin`` and ``vmax`` to have clearer plotting limits.
 We obtain a constant density of :math:`10\,n_c`, which is consistent with input file.
 
@@ -782,11 +782,11 @@ on the same figure::
   Two plots on the same figure.
 
 If the two plots are 1D, and are both of the same type, then they will
-automatically be plotted on the same axes. For instance, we can slice one axis, like
+automatically be plotted on the same axes. For instance, we can sum one axis, like
 in the previous section::
   
-  >>> A = S.ParticleDiagnostic(0, slice={"x":"all"}, units=["c"])
-  >>> B = S.ParticleDiagnostic(1, slice={"x":"all"}, units=["c"], vmax=10000)
+  >>> A = S.ParticleDiagnostic(0, sum={"x":"all"}, units=["c"])
+  >>> B = S.ParticleDiagnostic(1, sum={"x":"all"}, units=["c"], vmax=10000)
   >>> multiPlot(A, B)
 
 .. figure:: _static/Tutorial8.png
@@ -803,13 +803,13 @@ of ``ouput="density"``. Consequently, if we divide #2 by #0, we will obtain the
 average value :math:`\left<p_x\right>` as a function of :math:`x` and :math:`v_x`.
 To do this operation, we need to indicate ``"#2/#0"`` instead of the diagnostic number::
 
-  >>> S.ParticleDiagnostic("#2/#0", slice={"x":"all","vx":"all"}).plot()
+  >>> S.ParticleDiagnostic("#2/#0", sum={"x":"all","vx":"all"}).plot()
 
 .. figure:: _static/Tutorial9.png
   :width: 10cm
   
   :math:`\left<p_x\right>` as a function of time.
 
-Note that we `sliced` both axis to average the result over all particles.
+Note that we summed both axis to average the result over all particles.
 It results in a plot of :math:`\left<p_x\right>` as a function of time.
 This value oscillates, as we have seen previously.

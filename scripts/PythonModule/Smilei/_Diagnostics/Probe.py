@@ -6,7 +6,7 @@ from .._Utils import *
 # -------------------------------------------------------------------
 class Probe(Diagnostic):
 	# This is the constructor, which creates the object
-	def _init(self, probeNumber=None, field=None, timesteps=None, slice=None, data_log=False, **kwargs):
+	def _init(self, probeNumber=None, field=None, timesteps=None, average=None, data_log=False, **kwargs):
 		
 		self._h5probe = []
 		self._times = []
@@ -92,12 +92,12 @@ class Probe(Diagnostic):
 		self._fieldn = list(set(self._fieldn))
 		self._fieldname = [ fields[i] for i in self._fieldn ] # names of the requested fields
 		
-		# Check slice is a dict
-		if slice is not None  and  type(slice) is not dict:
-			self._error += "Argument `slice` must be a dictionary"
+		# Check average is a dict
+		if average is not None  and  type(average) is not dict:
+			self._error += "Argument `average` must be a dictionary"
 			return
-		# Make slice a dictionary
-		if slice is None: slice = {}
+		# Make average a dictionary
+		if average is None: average = {}
 		
 		# Put data_log as object's variable
 		self._data_log = data_log
@@ -130,8 +130,8 @@ class Probe(Diagnostic):
 		# Fabricate all axes values
 		self._naxes = self._initialShape.size
 		self._finalShape = []
-		self._sliceinfo = {}
-		self._slices = []
+		self._averageinfo = {}
+		self._averages = []
 		self._selection = ()
 		p = []
 		for iaxis in range(self._naxes):
@@ -147,22 +147,22 @@ class Probe(Diagnostic):
 			label = {0:"axis1", 1:"axis2", 2:"axis3"}[iaxis]
 			axisunits = "L_r"
 			
-			if label in slice:
+			if label in average:
 				
-				self._slices.append(True)
+				self._averages.append(True)
 				
-				# if slice is "all", then all the axis has to be summed
-				if slice[label] == "all":
+				# if average is "all", then all the axis has to be summed
+				if average[label] == "all":
 					self._selection += ( self._np.s_[:], )
 					self._finalShape .append( self._initialShape[iaxis] )
 				
-				# Otherwise, get the slice from the argument `slice`
+				# Otherwise, get the average from the argument `average`
 				else:
 					try:
-						s = self._np.double(slice[label])
+						s = self._np.double(average[label])
 						if s.size>2 or s.size<1: raise
 					except:
-						self._error += "Slice along axis "+label+" should be one or two floats"
+						self._error += "`average` along axis "+label+" should be one or two floats"
 						return
 					indices = self._np.arange(self._initialShape[iaxis])
 					if s.size==1:
@@ -170,20 +170,20 @@ class Probe(Diagnostic):
 					elif s.size==2:
 						indices = self._np.nonzero( (indices>=s[0]) * (indices<=s[1]) )[0]
 					if indices.size == 0:
-						self._error += "Slice along "+label+" is out of range"
+						self._error += "`average` along "+label+" is out of range"
 						return
 					if indices.size == 1:
-						self._sliceinfo.update({ label:"Sliced at "+label+" = "+str(indices[0]) })
+						self._averageinfo.update({ label:"Averaged at "+label+" = "+str(indices[0]) })
 						self._selection += ( self._np.s_[indices[0]], )
 						self._finalShape .append( 1 )
 					else:
-						self._sliceinfo.update({ label:"Sliced for "+label+" from "+str(indices[0])+" to "+str(indices[-1]) })
+						self._averageinfo.update({ label:"Averaged for "+label+" from "+str(indices[0])+" to "+str(indices[-1]) })
 						self._selection += ( self._np.s_[indices[0]:indices[-1]], )
 						self._finalShape.append( indices[-1] - indices[0] )
 			else:
 				self._selection += ( self._np.s_[:], )
 				self._finalShape.append( self._initialShape[iaxis] )
-				self._slices .append(False)
+				self._averages .append(False)
 				self._type   .append(label)
 				self._shape  .append(self._initialShape[iaxis])
 				self._centers.append(centers)
@@ -353,11 +353,11 @@ class Probe(Diagnostic):
 		A = self._np.reshape(A, self._initialShape)
 		# Extract the selection
 		A = self._np.reshape(A[self._selection], self._finalShape)
-		# Apply the slicing
+		# Apply the averaging
 		for iaxis in range(self._naxes):
-			if self._slices[iaxis]:
-				A = self._np.mean(A, axis=iaxis, keepdims=True) # average over the slice
-		A = self._np.squeeze(A) # remove sliced axes
+			if self._averages[iaxis]:
+				A = self._np.mean(A, axis=iaxis, keepdims=True)
+		A = self._np.squeeze(A) # remove averaged axes
 		# log scale if requested
 		if self._data_log: A = self._np.log10(A)
 		return A

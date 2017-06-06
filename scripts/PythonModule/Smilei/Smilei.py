@@ -63,11 +63,11 @@ class FieldFactory(object):
 		If omitted, all timesteps are used.
 		If one number  given, the nearest timestep available is used.
 		If two numbers given, all the timesteps in between are used.
-	slice : a python dictionary of the form { axis:range, ... } (optional)
+	average : a python dictionary of the form { axis:range, ... } (optional)
 		`axis` may be "x", "y" or "z".
 		`range` may be "all", a float, or [float, float].
-		For instance, slice={"x":"all", "y":[2,3]}.
-		The average of all values within the 'slice' is computed.
+		For instance, average={"x":"all", "y":[2,3]}.
+		The average of all values within the bounds is computed.
 	units : a units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
@@ -154,11 +154,11 @@ class ProbeFactory(object):
 		If omitted, all timesteps are used.
 		If one number  given, the nearest timestep available is used.
 		If two numbers given, all the timesteps in between are used.
-	slice : a python dictionary of the form { axis:range, ... } (optional)
+	average : a python dictionary of the form { axis:range, ... } (optional)
 		`axis` may be "axis1" or "axis2" (the probe axes).
 		`range` may be "all", a float, or [float, float].
-		For instance, slice={"axis1":"all", "axis2":[2,3]}.
-		The average of all values within the 'slice' is computed.
+		For instance, average={"axis1":"all", "axis2":[2,3]}.
+		The average of all values within the bounds is computed.
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
@@ -232,11 +232,11 @@ class ParticleDiagnosticFactory(object):
 		If omitted, all timesteps are used.
 		If one number  given, the nearest timestep available is used.
 		If two numbers given, all the timesteps in between are used.
-	slice : a python dictionary of the form { axis:range, ... } (optional)
+	sum : a python dictionary of the form { axis:range, ... } (optional)
 		`axis` may be "x", "y", "z", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
 		`range` may be "all", a float, or [float, float].
-		For instance, slice={"x":"all", "y":[2,3]}.
-		The SUM of all values within the 'slice' is computed.
+		For instance, sum={"x":"all", "y":[2,3]}.
+		The sum of all values within the bounds is computed.
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
@@ -301,11 +301,11 @@ class ScreenFactory(object):
 		If omitted, all timesteps are used.
 		If one number  given, the nearest timestep available is used.
 		If two numbers given, all the timesteps in between are used.
-	slice : a python dictionary of the form { axis:range, ... } (optional)
+	sum : a python dictionary of the form { axis:range, ... } (optional)
 		`axis` may be "x", "y", "z", "a", "b", "theta", "phi", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
 		`range` may be "all", a float, or [float, float].
-		For instance, slice={"x":"all", "y":[2,3]}.
-		The SUM of all values within the 'slice' is computed.
+		For instance, sum={"x":"all", "y":[2,3]}.
+		The sum of all values within the bounds is computed.
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.

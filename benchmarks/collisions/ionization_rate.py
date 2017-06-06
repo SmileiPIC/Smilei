@@ -50,9 +50,9 @@ ne = np.double(S1.namelist.Species["electron1"].charge_density)
 q0 = np.double(S1.namelist.Species["ion1"].charge)
 
 # Plot simulation result
-D1 = S1.ParticleDiagnostic("#0/#1",slice={"x":"all"}, linestyle="None", marker=".", label="We=Wi")
-D2 = S2.ParticleDiagnostic("#0/#1",slice={"x":"all"}, linestyle="None", marker=".", label="We=10. Wi")
-D3 = S3.ParticleDiagnostic("#0/#1",slice={"x":"all"}, linestyle="None", marker=".", label="We=0.1 Wi")
+D1 = S1.ParticleDiagnostic("#0/#1",sum={"x":"all"}, linestyle="None", marker=".", label="We=Wi")
+D2 = S2.ParticleDiagnostic("#0/#1",sum={"x":"all"}, linestyle="None", marker=".", label="We=10. Wi")
+D3 = S3.ParticleDiagnostic("#0/#1",sum={"x":"all"}, linestyle="None", marker=".", label="We=0.1 Wi")
 
 multiPlot(D1, D2, D3, vmin=q0,skipAnimation=True)
 

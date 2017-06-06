@@ -28,9 +28,9 @@ for path in ["beam_relaxation1","beam_relaxation2","beam_relaxation3"]:
 	i_vx_mean = np.zeros(len(times))
 	Ti        = np.zeros(len(times))
 	
-	electrons0 = sim.ParticleDiagnostic(0, slice={"x":"all"}).get()
-	electrons1 = sim.ParticleDiagnostic(1, slice={"x":"all"}).get()
-	ions       = sim.ParticleDiagnostic(2, slice={"x":"all"}).get()
+	electrons0 = sim.ParticleDiagnostic(0, sum={"x":"all"}).get()
+	electrons1 = sim.ParticleDiagnostic(1, sum={"x":"all"}).get()
+	ions       = sim.ParticleDiagnostic(2, sum={"x":"all"}).get()
 	
 	fig = None
 	#fig = plt.figure(1)

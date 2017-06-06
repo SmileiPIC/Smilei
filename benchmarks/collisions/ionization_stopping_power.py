@@ -25,7 +25,7 @@ sims = ["2","3","4"]
 for sim in sims:
 	S=Smilei("ionization_stopping_power"+sim)
 	
-	D.append(S.ParticleDiagnostic("#0/#1",slice={"x":"all"},units=["fs"],
+	D.append(S.ParticleDiagnostic("#0/#1",sum={"x":"all"},units=["fs"],
 		linestyle="None", marker='o', markersize=4, markeredgewidth=0., skipAnimation=True))
 multiPlot(*D)
 fig = plt.gcf()
@@ -95,7 +95,7 @@ for i in range(npoints):
 	energy.append(Ee)
 	
 	# Get data
-	D = S.ParticleDiagnostic("#"+str(2*i)+"/#"+str(2*i+1)+"",slice={"x":"all"})
+	D = S.ParticleDiagnostic("#"+str(2*i)+"/#"+str(2*i+1)+"",sum={"x":"all"})
 	P = np.array(D.getData()) # momentum
 	# stopping power in MeV/cm
 	diffP = -(P[-1]-P[0])/(D.times[-1]-D.times[0]) * (0.511*1e-2*referenceAngularFrequency_SI/3e8/timestep)

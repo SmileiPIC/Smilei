@@ -6,7 +6,7 @@ from .._Utils import *
 # -------------------------------------------------------------------
 class ParticleDiagnostic(Diagnostic):
 	# This is the constructor, which creates the object
-	def _init(self, diagNumber=None, timesteps=None, slice=None, data_log=False, stride=1, **kwargs):
+	def _init(self, diagNumber=None, timesteps=None, sum=None, data_log=False, stride=1, **kwargs):
 		
 		if diagNumber is None:
 			self._error += "Printing available particle diagnostics:\n"
@@ -69,12 +69,12 @@ class ParticleDiagnostic(Diagnostic):
 		self._axes  = self._axes [self._diags[0]]
 		self._naxes = self._naxes[self._diags[0]]
 		
-		# Check slice is a dict
-		if slice is not None  and  type(slice) is not dict:
-			self._error = "Argument 'slice' must be a dictionary"
+		# Check sum is a dict
+		if sum is not None  and  type(sum) is not dict:
+			self._error = "Argument 'sum' must be a dictionary"
 			return
-		# Make slice a dictionary
-		if slice is None: slice = {}
+		# Make sum a dictionary
+		if sum is None: sum = {}
 		
 		# Put data_log as object's variable
 		self._data_log = data_log
@@ -131,7 +131,7 @@ class ParticleDiagnostic(Diagnostic):
 		unitsa = [0,0,0,0]
 		spatialaxes = {"x":False, "y":False, "z":False}
 		self._finalShape = []
-		self._slices = []
+		self._sums = []
 		self._selection = ()
 		hasComposite = False
 		
@@ -178,48 +178,48 @@ class ParticleDiagnostic(Diagnostic):
 				self._error = "axis type "+axis["type"]+" not implemented"
 				return None
 			
-			# if this axis has to be sliced, then select the slice
-			if axis["type"] in slice:
+			# if this axis has to be summed, then select the bounds
+			if axis["type"] in sum:
 			
-				self._slices.append(True)
+				self._sums.append(True)
 				
-				# if slice is "all", then all the axis has to be summed
-				if slice[axis["type"]] == "all":
-					axis.update({ "sliceInfo" : "      Slicing for all "+axis["type"] })
+				# if sum is "all", then all the axis has to be summed
+				if sum[axis["type"]] == "all":
+					axis.update({ "sumInfo" : "      Summing for all "+axis["type"] })
 					self._selection += ( self._np.s_[:], )
 					self._finalShape.append( axis["size"] )
-					slice_size = edges[-1] - edges[0]
+					sum_size = edges[-1] - edges[0]
 				
-				# Otherwise, get the slice from the argument `slice`
+				# Otherwise, get the bounds from the argument `sum`
 				else:
 					try:
-						s = self._np.double(slice[axis["type"]])
+						s = self._np.double(sum[axis["type"]])
 						if s.size>2 or s.size<1: raise
 					except:
-						self._error = "Slice along axis "+axis["type"]+" should be one or two floats"
+						self._error = "`sum` along axis "+axis["type"]+" should be one or two floats"
 						return
-					# convert the slice into a range of indices
+					# convert the sum into a range of indices
 					if s.size == 1:
 						indices = self._np.array([(self._np.abs(centers-s)).argmin()])
 					else :
 						indices = self._np.nonzero( (centers>=s[0]) * (centers<=s[1]) )[0]
 					if indices.size == 1:
-						axis.update({ "sliceInfo" : "      Slicing at "+axis["type"]+" = "+str(centers[indices][0]) })
+						axis.update({ "sumInfo" : "      summing at "+axis["type"]+" = "+str(centers[indices][0]) })
 						self._selection += ( self._np.s_[indices[0]], )
 						self._finalShape.append( 1 )
 					else:
-						axis.update({ "sliceInfo" : "      Slicing "+axis["type"]+" from "+str(edges[indices[0]])+" to "+str(edges[indices[-1]+1]) })
+						axis.update({ "sumInfo" : "      summing "+axis["type"]+" from "+str(edges[indices[0]])+" to "+str(edges[indices[-1]+1]) })
 						self._selection += ( self._np.s_[indices[0]:indices[-1]], )
 						self._finalShape.append( indices[-1] - indices[0] )
-					# calculate the size of the slice
-					slice_size = edges[indices[-1]+1] - edges[indices[0]]
+					# calculate the size of the sum
+					sum_size = edges[indices[-1]+1] - edges[indices[0]]
 				
-				if axis["type"] in ["x","y","z","moving_x"]: coeff /= slice_size
+				if axis["type"] in ["x","y","z","moving_x"]: coeff /= sum_size
 			
-			# if not sliced, then add this axis to the overall plot
+			# if not summed, then add this axis to the overall plot
 			else:
 				self._selection += ( self._np.s_[::stride], )
-				self._slices .append(False)
+				self._sums   .append(False)
 				self._type   .append(axis["type"])
 				self._shape  .append(axis["size"])
 				self._centers.append(centers[::stride])
@@ -367,7 +367,7 @@ class ParticleDiagnostic(Diagnostic):
 			info += self._printInfo(self._myinfo[d])+"\n"
 		if len(self.operation)>2: info += "Operation : "+self.operation+"\n"
 		for ax in self._axes:
-			if "sliceInfo" in ax: info += ax["sliceInfo"]+"\n"
+			if "sumInfo" in ax: info += ax["sumInfo"]+"\n"
 		return info
 	
 	def getDiags(self):
@@ -422,11 +422,11 @@ class ParticleDiagnostic(Diagnostic):
 				self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
 				B = self._np.reshape(B, self._finalShape)
 			B[self._np.isnan(B)] = 0.
-			# Apply the slicing
+			# Apply the summing
 			for iaxis in range(self._naxes):
-				if self._slices[iaxis]:
-					B = self._np.sum(B, axis=iaxis, keepdims=True) # sum over the slice
-			# remove sliced axes
+				if self._sums[iaxis]:
+					B = self._np.sum(B, axis=iaxis, keepdims=True)
+			# remove summed axes
 			B = self._np.squeeze(B)
 			# Divide by the bins size
 			B *= self._bsize

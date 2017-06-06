@@ -63,11 +63,11 @@ for element in ["H", "Al", "Zn", "Au"]:
 	T = []
 	Tfinal = []
 	for i in range(npoints):
-		D = S.ParticleDiagnostic("#"+str(4*i+2)+"/#"+str(4*i+3),slice={"x":"all"}, units=["ps"],marker=".")
+		D = S.ParticleDiagnostic("#"+str(4*i+2)+"/#"+str(4*i+3),sum={"x":"all"}, units=["ps"],marker=".")
 		Z.append( D )
 		Zfinal.append( np.array(D.getData())[ts] )
 		
-		D = S.ParticleDiagnostic("#"+str(4*i+0)+"/#"+str(4*i+1),slice={"x":"all"}, units=["ps"],marker=".")
+		D = S.ParticleDiagnostic("#"+str(4*i+0)+"/#"+str(4*i+1),sum={"x":"all"}, units=["ps"],marker=".")
 		T.append( D )
 		Tfinal.append( np.array(D.getData())[ts] *(511.*2./3.) )
 		

@@ -5,7 +5,7 @@ from .._Utils import *
 class Field(Diagnostic):
 	""" The Field diagnostic of a Smilei simulation"""
 	
-	def _init(self, diagNumber=None, field=None, timesteps=None, slice=None, data_log=False, stride=1, **kwargs):
+	def _init(self, diagNumber=None, field=None, timesteps=None, average=None, data_log=False, stride=1, **kwargs):
 		
 		# Search available diags
 		diags = self.getDiags()
@@ -83,10 +83,10 @@ class Field(Diagnostic):
 				self._operation = self._re.sub(r"\b"+f+r"\b","C['"+f+"']",self._operation)
 				self._fieldname.append(f)
 		
-		# Check slice is a dict
-		if slice is None: slice = {}
-		if type(slice) is not dict:
-			self._error = "Diagnostic not loaded: Argument `slice` must be a dictionary"
+		# Check average is a dict
+		if average is None: average = {}
+		if type(average) is not dict:
+			self._error = "Diagnostic not loaded: Argument `average` must be a dictionary"
 			return
 		
 		# Put data_log as object's variable
@@ -121,42 +121,42 @@ class Field(Diagnostic):
 		# -------------------------------------------------------------------
 		# Fabricate all axes values
 		self._naxes = self._ndim
-		self._sliceinfo = {}
+		self._averageinfo = {}
 		self._finalShape = self._initialShape
-		self._slices = [False]*self._ndim
+		self._averages = [False]*self._ndim
 		self._selection = ()
 		for iaxis in range(self._naxes):
 			centers = self._np.linspace(0., (self._initialShape[iaxis]-1)*self._cell_length[iaxis], self._initialShape[iaxis])
 			label = {0:"x", 1:"y", 2:"z"}[iaxis]
 			axisunits = "L_r"
 			
-			if label in slice:
-				self._slices[iaxis] = True
-				# if slice is "all", then all the axis has to be summed
-				if slice[label] == "all":
-					self._sliceinfo.update({ label:"Sliced for all "+label })
+			if label in average:
+				self._averages[iaxis] = True
+				# if average is "all", then all the axis has to be summed
+				if average[label] == "all":
+					self._averageinfo.update({ label:"Averaged for all "+label })
 					self._selection += ( self._np.s_[:], )
-				# Otherwise, get the slice from the argument `slice`
+				# Otherwise, get the average from the argument `average`
 				else:
 					try:
-						s = self._np.double(slice[label])
+						s = self._np.double(average[label])
 						if s.size>2 or s.size<1: raise
 					except:
-						self._error = "Diagnostic not loaded: Slice along axis "+label+" should be one or two floats"
+						self._error = "Diagnostic not loaded: `average` along axis "+label+" should be one or two floats"
 						return
 					if s.size==1:
 						indices = self._np.array([(self._np.abs(centers-s)).argmin()])
 					elif s.size==2:
 						indices = self._np.nonzero( (centers>=s[0]) * (centers<=s[1]) )[0]
 					if indices.size == 0:
-						self._error = "Diagnostic not loaded: Slice along "+label+" is out of the box range"
+						self._error = "Diagnostic not loaded: `average` along "+label+" is out of the box range"
 						return None
 					if indices.size == 1:
-						self._sliceinfo.update({ label:"Sliced at "+label+" = "+str(centers[indices])+" "+axisunits })
+						self._averageinfo.update({ label:"Averaged at "+label+" = "+str(centers[indices])+" "+axisunits })
 						self._selection += ( self._np.s_[indices[0]], )
 						self._finalShape[iaxis] = 1
 					else:
-						self._sliceinfo.update({ label:"Sliced for "+label
+						self._averageinfo.update({ label:"Averaged for "+label
 							+" from "+str(centers[indices[0]])+" to "+str(centers[indices[-1]])+" "+axisunits })
 						self._selection += ( self._np.s_[indices[0]:indices[-1]], )
 						self._finalShape[iaxis] = indices[-1] - indices[0]
@@ -233,12 +233,12 @@ class Field(Diagnostic):
 			C.update({ field:B })
 		# Calculate the operation
 		A = eval(self._operation)
-		# Apply the slicing
+		# Apply the averaging
 		A = self._np.reshape(A,self._finalShape)
 		for iaxis in range(self._naxes):
-			if self._slices[iaxis]:
-				A = self._np.mean(A, axis=iaxis, keepdims=True) # mean over the slice
-		# remove sliced axes
+			if self._averages[iaxis]:
+				A = self._np.mean(A, axis=iaxis, keepdims=True)
+		# remove averaged axes
 		A = self._np.squeeze(A)
 		# log scale if requested
 		if self._data_log: A = self._np.log10(A)
