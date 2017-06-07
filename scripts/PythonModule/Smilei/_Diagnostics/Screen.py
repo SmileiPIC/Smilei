@@ -130,12 +130,14 @@ class Screen(Diagnostic):
 		coeff = 1.
 		unitsa = [0,0,0,0]
 		spatialaxes = {"x":False, "y":False, "z":False}
-		self._finalShape = []
-		self._sums = []
-		self._selection = ()
+		self._finalShape = [[]]*self._naxes
+		self._sums = [False]*self._naxes
+		self._selection = (self._np.s_[:],)*self._naxes
 		hasComposite = False
 		
-		for axis in self._axes:
+		for iaxis in range(self._naxes):
+			axis = self._axes[iaxis]
+			
 			# Find the vector of values along the axis
 			if axis["log"]:
 				edges = self._np.linspace(self._np.log10(axis["min"]), self._np.log10(axis["max"]), axis["size"]+1)
@@ -152,7 +154,7 @@ class Screen(Diagnostic):
 			# Find some quantities depending on the axis type
 			overall_min = "-inf"; overall_max = "inf"
 			axis_units = ""
-			if   axis["type"] in ["x","y","z", "moving_x"]:
+			if   axis["type"] in ["x","y","z","moving_x"]:
 				axis_units = "L_r"
 				spatialaxes[axis["type"][-1]] = True
 			elif axis["type"] in ["a","b"]:
@@ -198,47 +200,19 @@ class Screen(Diagnostic):
 			
 				self._sums.append(True)
 				
-				# if sum is "all", then all the axis has to be summed
-				if sum[axis["type"]] == "all":
-					axis.update({ "sumInfo" : "      Summing for all "+axis["type"] })
-					self._selection += ( self._np.s_[:], )
-					self._finalShape.append( axis["size"] )
-					sum_size = edges[-1] - edges[0]
+				axis["sumInfo"], self._selection[iaxis], self._finalShape[iaxis] \
+					= self._selectRange(sum[axis["type"]], centers, axis["type"], "", "sum")
 				
-				# Otherwise, get the bounds from the argument `sum`
-				else:
-					try:
-						s = self._np.double(sum[axis["type"]])
-						if s.size>2 or s.size<1: raise
-					except:
-						self._error = "`sum` along axis "+axis["type"]+" should be one or two floats"
-						return
-					# convert the sum into a range of indices
-					if s.size == 1:
-						indices = self._np.array([(self._np.abs(centers-s)).argmin()])
-					else :
-						indices = self._np.nonzero( (centers>=s[0]) * (centers<=s[1]) )[0]
-					if indices.size == 1:
-						axis.update({ "sumInfo" : "      summing at "+axis["type"]+" = "+str(centers[indices][0]) })
-						self._selection += ( self._np.s_[indices[0]], )
-						self._finalShape.append( 1 )
-					else:
-						axis.update({ "sumInfo" : "      summing "+axis["type"]+" from "+str(edges[indices[0]])+" to "+str(edges[indices[-1]+1]) })
-						self._selection += ( self._np.s_[indices[0]:indices[-1]], )
-						self._finalShape.append( indices[-1] - indices[0] )
-					# calculate the size of the sum
-					sum_size = edges[indices[-1]+1] - edges[indices[0]]
-				
-				if axis["type"] in ["x","y","z","moving_x"]: coeff /= sum_size
+				if axis["type"] in ["x","y","z","moving_x"]:
+					first_edge = edges[self._selection[iaxis].start or 0]
+					last_edge  = edges[(self._selection[iaxis].stop or len(centers))+1]
+					coeff /= last_edge - first_edge
 			
 			# if not summed, then add this axis to the overall plot
 			else:
-				self._selection += ( self._np.s_[::stride], )
-				self._sums   .append(False)
 				self._type   .append(axis["type"])
 				self._shape  .append(axis["size"])
 				self._centers.append(centers[::stride])
-				self._finalShape.append( len(self._centers[-1]) )
 				self._log    .append(axis["log"])
 				self._label  .append(axis["type"])
 				self._units  .append(axis_units)
@@ -246,6 +220,8 @@ class Screen(Diagnostic):
 					plot_diff.append(self._np.diff(self._np.cos(edges))[::stride])
 				else:
 					plot_diff.append(self._np.diff(edges)[::stride])
+				self._selection [iaxis] = self._np.s_[::stride]
+				self._finalShape[iaxis] = len(self._centers[-1])
 		
 		# Build units
 		titles = {}

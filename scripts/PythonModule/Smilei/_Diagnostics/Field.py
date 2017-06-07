@@ -119,50 +119,25 @@ class Field(Diagnostic):
 		
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
-		# Fabricate all axes values
 		self._naxes = self._ndim
 		self._averageinfo = {}
-		self._finalShape = self._initialShape
+		self._finalShape = self._initialShape[:]
 		self._averages = [False]*self._ndim
 		self._selection = ()
 		for iaxis in range(self._naxes):
 			centers = self._np.linspace(0., (self._initialShape[iaxis]-1)*self._cell_length[iaxis], self._initialShape[iaxis])
 			label = {0:"x", 1:"y", 2:"z"}[iaxis]
 			axisunits = "L_r"
+			self._selection += ( self._np.s_[:self._initialShape[iaxis]:stride], )
 			
 			if label in average:
 				self._averages[iaxis] = True
-				# if average is "all", then all the axis has to be summed
-				if average[label] == "all":
-					self._averageinfo.update({ label:"Averaged for all "+label })
-					self._selection += ( self._np.s_[:], )
-				# Otherwise, get the average from the argument `average`
-				else:
-					try:
-						s = self._np.double(average[label])
-						if s.size>2 or s.size<1: raise
-					except:
-						self._error = "Diagnostic not loaded: `average` along axis "+label+" should be one or two floats"
-						return
-					if s.size==1:
-						indices = self._np.array([(self._np.abs(centers-s)).argmin()])
-					elif s.size==2:
-						indices = self._np.nonzero( (centers>=s[0]) * (centers<=s[1]) )[0]
-					if indices.size == 0:
-						self._error = "Diagnostic not loaded: `average` along "+label+" is out of the box range"
-						return None
-					if indices.size == 1:
-						self._averageinfo.update({ label:"Averaged at "+label+" = "+str(centers[indices])+" "+axisunits })
-						self._selection += ( self._np.s_[indices[0]], )
-						self._finalShape[iaxis] = 1
-					else:
-						self._averageinfo.update({ label:"Averaged for "+label
-							+" from "+str(centers[indices[0]])+" to "+str(centers[indices[-1]])+" "+axisunits })
-						self._selection += ( self._np.s_[indices[0]:indices[-1]], )
-						self._finalShape[iaxis] = indices[-1] - indices[0]
+				
+				self._averageinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
+					= self._selectRange(average[label], centers, label, axisunits, "average")
+				
 			else:
 				centers = centers[:self._initialShape[iaxis]:stride]
-				self._selection += ( self._np.s_[:self._initialShape[iaxis]:stride], )
 				self._finalShape[iaxis] = len(centers)
 				self._type     .append(label)
 				self._shape    .append(self._finalShape[iaxis])

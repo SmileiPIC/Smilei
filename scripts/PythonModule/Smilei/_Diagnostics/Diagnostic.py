@@ -368,6 +368,38 @@ class Diagnostic(object):
 			raise
 		return times
 	
+	# Method to select portion of a mesh based on a range, or a slice
+	def _selectRange(self, portion, meshpoints, axisname, axisunits, operation):
+		# if portion is "all", then select all the axis
+		if portion == "all":
+			info = operation+" for all "+axisname
+			selection = self._np.s_[:]
+			finalShape = meshpoints.size
+		# Otherwise, parse the portion
+		else:
+			try:
+				s = self._np.double(portion)
+				if s.size>2 or s.size<1: raise
+			except:
+				self._error = "`"+operation+"` along axis "+axisname+" should be one or two floats"
+				raise
+			if s.size==1:
+				indices = self._np.array([(self._np.abs(meshpoints-s)).argmin()])
+			elif s.size==2:
+				indices = self._np.nonzero( (meshpoints>=s[0]) * (meshpoints<=s[1]) )[0]
+			if indices.size == 0:
+				self._error = "`"+operation+"` along "+axisname+" is out of range"
+				raise
+			if indices.size == 1:
+				info = operation+" at "+axisname+" = "+str(meshpoints[indices])+" "+axisunits
+				selection = self._np.s_[indices[0]]
+				finalShape = 1
+			else:
+				info = operation+" for "+axisname+" from "+str(meshpoints[indices[0]])+" to "+str(meshpoints[indices[-1]])+" "+axisunits
+				selection = self._np.s_[indices[0]:indices[-1]]
+				finalShape = indices[-1] - indices[0]
+		return info, selection, finalShape
+	
 	# Method to prepare some data before plotting
 	def _prepare(self):
 		self._prepare1()
