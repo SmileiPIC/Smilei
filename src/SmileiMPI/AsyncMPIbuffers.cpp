@@ -35,7 +35,7 @@ void AsyncMPIbuffers::allocate(unsigned int ndims)
 
 void AsyncMPIbuffers::allocate(unsigned int ndims, Field* f, std::vector<unsigned int>& oversize)
 {
-    if (srequest.size()!=0) return;
+    if (buf[0][0].size()!=0) return;
     srequest.resize(ndims);
     rrequest.resize(ndims);
     for (unsigned int i=0 ; i<ndims ; i++) {

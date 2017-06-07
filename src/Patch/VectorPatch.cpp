@@ -225,6 +225,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
             (*this)(ipatch)->EMfields->binomialCurrentFilter();
         }
         SyncVectorPatch::exchangeJ( (*this) );
+        SyncVectorPatch::finalizeexchangeJ( (*this) );
     }
     
     #pragma omp for schedule(static)
