@@ -123,12 +123,12 @@ class Field(Diagnostic):
 		self._averageinfo = {}
 		self._finalShape = self._initialShape[:]
 		self._averages = [False]*self._ndim
-		self._selection = ()
+		self._selection = []
 		for iaxis in range(self._naxes):
 			centers = self._np.linspace(0., (self._initialShape[iaxis]-1)*self._cell_length[iaxis], self._initialShape[iaxis])
 			label = {0:"x", 1:"y", 2:"z"}[iaxis]
 			axisunits = "L_r"
-			self._selection += ( self._np.s_[:self._initialShape[iaxis]:stride], )
+			self._selection += [ self._np.s_[:self._initialShape[iaxis]:stride] ]
 			
 			if label in average:
 				self._averages[iaxis] = True
@@ -145,6 +145,7 @@ class Field(Diagnostic):
 				self._label    .append(label)
 				self._units    .append(axisunits)
 				self._log      .append(False)
+		self._selection = tuple(self._selection)
 		
 		# Build units
 		units = {}
@@ -162,6 +163,7 @@ class Field(Diagnostic):
 		
 		# Finish constructor
 		self.valid = True
+		return kwargs
 	
 	# Method to print info on included fields
 	def _info(self):

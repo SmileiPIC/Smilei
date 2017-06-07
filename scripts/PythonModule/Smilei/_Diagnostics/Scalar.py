@@ -98,6 +98,7 @@ class Scalar(Diagnostic):
 		
 		# Finish constructor
 		self.valid = True
+		return kwargs
 	
 	# Method to print info on included scalars
 	def _info(self):

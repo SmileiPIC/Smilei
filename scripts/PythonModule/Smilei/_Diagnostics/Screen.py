@@ -132,7 +132,7 @@ class Screen(Diagnostic):
 		spatialaxes = {"x":False, "y":False, "z":False}
 		self._finalShape = [[]]*self._naxes
 		self._sums = [False]*self._naxes
-		self._selection = (self._np.s_[:],)*self._naxes
+		self._selection = [self._np.s_[:]]*self._naxes
 		hasComposite = False
 		
 		for iaxis in range(self._naxes):
@@ -198,7 +198,7 @@ class Screen(Diagnostic):
 			# if this axis has to be summed, then select the bounds
 			if axis["type"] in sum:
 			
-				self._sums.append(True)
+				self._sums[iaxis] = True
 				
 				axis["sumInfo"], self._selection[iaxis], self._finalShape[iaxis] \
 					= self._selectRange(sum[axis["type"]], centers, axis["type"], "", "sum")
@@ -222,6 +222,7 @@ class Screen(Diagnostic):
 					plot_diff.append(self._np.diff(edges)[::stride])
 				self._selection [iaxis] = self._np.s_[::stride]
 				self._finalShape[iaxis] = len(self._centers[-1])
+		self._selection = tuple(self._selection)
 		
 		# Build units
 		titles = {}
@@ -283,6 +284,7 @@ class Screen(Diagnostic):
 		
 		# Finish constructor
 		self.valid = True
+		return kwargs
 	
 	# Gets info about diagnostic number "diagNumber"
 	def _getInfo(self,diagNumber):

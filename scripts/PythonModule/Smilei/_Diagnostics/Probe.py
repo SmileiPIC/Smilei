@@ -132,7 +132,7 @@ class Probe(Diagnostic):
 		self._finalShape = self._initialShape[:]
 		self._averageinfo = {}
 		self._averages = [False] * self._naxes
-		self._selection = ()
+		self._selection = []
 		p = []
 		for iaxis in range(self._naxes):
 		
@@ -146,48 +146,23 @@ class Probe(Diagnostic):
 			
 			label = {0:"axis1", 1:"axis2", 2:"axis3"}[iaxis]
 			axisunits = "L_r"
+			self._selection += [ self._np.s_[:] ]
 			
 			if label in average:
 				
 				self._averages[iaxis] = True
 				
-				# if average is "all", then all the axis has to be summed
-				if average[label] == "all":
-					self._selection += ( self._np.s_[:], )
-					self._averageinfo.update({ label:"Averaged for all "+label })
+				self._averageinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
+					= self._selectRange(average[label], centers, label, axisunits, "average")
 				
-				# Otherwise, get the average from the argument `average`
-				else:
-					try:
-						s = self._np.double(average[label])
-						if s.size>2 or s.size<1: raise
-					except:
-						self._error += "`average` along axis "+label+" should be one or two floats"
-						return
-					indices = self._np.arange(self._initialShape[iaxis])
-					if s.size==1:
-						indices = self._np.array([(self._np.abs(indices-s)).argmin()])
-					elif s.size==2:
-						indices = self._np.nonzero( (indices>=s[0]) * (indices<=s[1]) )[0]
-					if indices.size == 0:
-						self._error += "`average` along "+label+" is out of range"
-						return
-					if indices.size == 1:
-						self._averageinfo.update({ label:"Averaged at "+label+" = "+str(indices[0]) })
-						self._selection += ( self._np.s_[indices[0]], )
-						self._finalShape[iaxis] = 1
-					else:
-						self._averageinfo.update({ label:"Averaged for "+label+" from "+str(indices[0])+" to "+str(indices[-1]) })
-						self._selection += ( self._np.s_[indices[0]:indices[-1]], )
-						self._finalShape[iaxis] = indices[-1] - indices[0]
 			else:
-				self._selection += ( self._np.s_[:], )
 				self._type   .append(label)
 				self._shape  .append(self._initialShape[iaxis])
 				self._centers.append(centers)
 				self._label  .append(label)
 				self._units  .append(axisunits)
 				self._log    .append(False)
+		self._selection = tuple(self._selection)
 		
 		# Special case in 1D: we convert the point locations to scalar distances
 		if len(self._centers) == 1:
@@ -274,6 +249,7 @@ class Probe(Diagnostic):
 		
 		# Finish constructor
 		self.valid = True
+		return kwargs
 	
 	# destructor
 	def __del__(self):

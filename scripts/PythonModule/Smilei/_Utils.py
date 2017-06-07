@@ -90,30 +90,33 @@ class Options(object):
 		for kwa, val in kwargs.items():
 			if kwa in ["figsize"]:
 				self.figure0[kwa] = val
-			if kwa in ["dpi","facecolor","edgecolor"]:
+			elif kwa in ["dpi","facecolor","edgecolor"]:
 				self.figure1[kwa] = val
-			if kwa in ["aspect","axis_bgcolor",
+			elif kwa in ["aspect","axis_bgcolor",
 					   "frame_on","position","title","visible","xlabel","xscale","xticklabels",
 					   "xticks","ylabel","yscale","yticklabels","yticks","zorder"]:
 				self.axes[kwa] = val
-			if kwa in ["color","dashes","drawstyle","fillstyle","label","linestyle",
+			elif kwa in ["color","dashes","drawstyle","fillstyle","label","linestyle",
 					   "linewidth","marker","markeredgecolor","markeredgewidth",
 					   "markerfacecolor","markerfacecoloralt","markersize","markevery",
 					   "visible","zorder"]:
 				self.plot[kwa] = val
-			if kwa in ["cmap","aspect","interpolation"]:
+			elif kwa in ["cmap","aspect","interpolation"]:
 				self.image[kwa] = val
-			if kwa in ["orientation","fraction","pad","shrink","anchor","panchor",
+			elif kwa in ["orientation","fraction","pad","shrink","anchor","panchor",
 					   "extend","extendfrac","extendrect","spacing","ticks","format",
 					   "drawedges"]:
 				self.colorbar[kwa] = val
-			if kwa in ["style_x","scilimits_x","useOffset_x"]:
+			elif kwa in ["style_x","scilimits_x","useOffset_x"]:
 				self.xtick[kwa] = val
-			if kwa in ["style_y","scilimits_y","useOffset_y"]:
+			elif kwa in ["style_y","scilimits_y","useOffset_y"]:
 				self.ytick[kwa] = val
+			else:
+				continue
+			kwargs.pop(kwa)
 		# special case: "aspect" is ambiguous because it exists for both imshow and colorbar
 		if "cbaspect" in kwargs:
-			self.colorbar["aspect"] = kwargs["cbaspect"]
+			self.colorbar["aspect"] = kwargs.pop("cbaspect")
 		if self.side=="right" and "pad" not in self.colorbar:
 			self.colorbar["pad"] = 0.15
 

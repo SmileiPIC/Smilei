@@ -38,7 +38,7 @@ class Diagnostic(object):
 		# Reload the simulation, in case it has been updated
 		self.Smilei.reload()
 		if not self.Smilei.valid:
-			print("Invalid Smilei simulation")
+			self._error = "Invalid Smilei simulation"
 			return
 		
 		# Copy some parameters from the simulation
@@ -57,11 +57,15 @@ class Diagnostic(object):
 		if type(self.units) in [list, tuple]: self.units = Units(*self.units)
 		if type(self.units) is dict         : self.units = Units(**self.units)
 		if type(self.units) is not Units:
-			print("Could not understand the 'units' argument")
+			self._error = "Could not understand the 'units' argument"
 			return
 		
 		# Call the '_init' function of the child class
-		self._init(*args, **kwargs)
+		remaining_kwargs = self._init(*args, **kwargs)
+		if remaining_kwargs is not None and len(remaining_kwargs) > 0:
+			self.valid = False
+			self._error = "The following keyword-arguments are unknown: "+", ".join(remaining_kwargs.keys())
+			return
 		
 		# Prepare units
 		self.dim = len(self._shape)

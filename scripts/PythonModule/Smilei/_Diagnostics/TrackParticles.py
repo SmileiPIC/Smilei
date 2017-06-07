@@ -243,6 +243,7 @@ class TrackParticles(Diagnostic):
 		# Finish constructor
 		self.length = length or self.times[-1]
 		self.valid = True
+		return kwargs
 	
 	# Method to get info
 	def _info(self):
