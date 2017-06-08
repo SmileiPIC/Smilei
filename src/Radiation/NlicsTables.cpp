@@ -42,38 +42,58 @@ void NlicsTables::initParams(Params& params)
 {
 
     // If the namelist for Nonlinear Inverse Compton Scattering exists
+    // We read the properties
     if( PyTools::nComponents("Nlics") != 0 )
     {
-        // Extraction of the parameter from the input file
-        PyTools::extract("chipa_integfochi_min", chipa_integfochi_min, "Nlics");
-        PyTools::extract("chipa_integfochi_max", chipa_integfochi_max, "Nlics");
-        PyTools::extract("integfochi_dim", dim_integfochi, "Nlics");
-        PyTools::extract("chipa_xip_min", chipa_xip_min, "Nlics");
-        PyTools::extract("chipa_xip_max", chipa_xip_max, "Nlics");
-        PyTools::extract("xip_power", xip_power, "Nlics");
-        PyTools::extract("xip_threshold", xip_threshold, "Nlics");
-        PyTools::extract("chipa_xip_dim", chipa_xip_dim, "Nlics");
-        PyTools::extract("chiph_xip_dim", chiph_xip_dim, "Nlics");
-        PyTools::extract("output_format", output_format, "Nlics");
+
+        // If Monte-Carlo radiation loss is requested
+        if (params.hasMCRadiation)
+        {
+
+            // Extraction of the parameter from the input file
+            PyTools::extract("chipa_integfochi_min", chipa_integfochi_min, "Nlics");
+            PyTools::extract("chipa_integfochi_max", chipa_integfochi_max, "Nlics");
+            PyTools::extract("integfochi_dim", dim_integfochi, "Nlics");
+            PyTools::extract("chipa_xip_min", chipa_xip_min, "Nlics");
+            PyTools::extract("chipa_xip_max", chipa_xip_max, "Nlics");
+            PyTools::extract("xip_power", xip_power, "Nlics");
+            PyTools::extract("xip_threshold", xip_threshold, "Nlics");
+            PyTools::extract("chipa_xip_dim", chipa_xip_dim, "Nlics");
+            PyTools::extract("chiph_xip_dim", chiph_xip_dim, "Nlics");
+            PyTools::extract("output_format", output_format, "Nlics");
+
+        }
     }
 
-    // Computation of the normalized Compton wavelength
-    norm_lambda_compton = red_planck_cst*params.referenceAngularFrequency_SI
-                        / (electron_mass*c_vacuum*c_vacuum);
+    // Computation of some parameters
+    if (params.hasMCRadiation || params.hasContinuousRadiation)
+    {
+        MESSAGE( "        factor_cla_rad_power: " << factor_cla_rad_power)
 
-    // Computation of the factor factor_dNphdt
-    factor_dNphdt = sqrt(3.)*fine_struct_cst/(2.*M_PI*norm_lambda_compton);
+        // Computation of the normalized Compton wavelength
+        norm_lambda_compton = red_planck_cst*params.referenceAngularFrequency_SI
+                            / (electron_mass*c_vacuum*c_vacuum);
 
-    // Computation of the factor for the classical radiated power
-    factor_cla_rad_power = 2.*fine_struct_cst/(3.*norm_lambda_compton);
+        // Computation of the factor factor_dNphdt
+        factor_dNphdt = sqrt(3.)*fine_struct_cst/(2.*M_PI*norm_lambda_compton);
 
-    MESSAGE( "        factor_cla_rad_power: " << factor_cla_rad_power)
+        // Computation of the factor for the classical radiated power
+        factor_cla_rad_power = 2.*fine_struct_cst/(3.*norm_lambda_compton);
+    }
 
     // Some additional checks
-    if (chipa_integfochi_min >= chipa_integfochi_max)
+    if (params.hasMCRadiation)
     {
-        ERROR("chipa_integfochi_min (" << chipa_integfochi_min
-                << ") >= chipa_integfochi_max (" << chipa_integfochi_max << ")")
+        if (chipa_integfochi_min >= chipa_integfochi_max)
+        {
+            ERROR("chipa_integfochi_min (" << chipa_integfochi_min
+                    << ") >= chipa_integfochi_max (" << chipa_integfochi_max << ")")
+        }
+        if (chipa_xip_min >= chipa_xip_max)
+        {
+            ERROR("chipa_xip_min (" << chipa_xip_min
+                    << ") >= chipa_xip_max (" << chipa_xip_max << ")")
+        }
     }
 }
 
