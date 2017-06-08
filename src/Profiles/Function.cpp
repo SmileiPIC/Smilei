@@ -272,12 +272,12 @@ double Function_TimePolynomial::valueAt(double time) {
 double Function_TimeFlatTopSin2::valueAt(double time) {
   if (time<start) {
     return 0.;
-  } else if ((time < start+fwhm1)&&(fwhm1!=0.)) {
-    return pow( sin(0.5*M_PI*(time-start)/fwhm1) , 2 );
-  } else if (time < start+fwhm1+plateau) {
+  } else if ((time < start+fwhm)&&(fwhm!=0.)) {
+    return pow( sin(0.5*M_PI*(time-start)/fwhm) , 2 );
+  } else if (time < start+fwhm+plateau) {
     return 1.;
-  } else if ((time < start+fwhm1+plateau+fwhm2)&&(fwhm2!=0.)) {
-    return pow(  cos(0.5*M_PI*(time-start-fwhm1-plateau)/fwhm2) , 2 );
+  } else if ((time < start+fwhm+plateau+fwhm2)&&(fwhm2!=0.)) {
+    return pow(  cos(0.5*M_PI*(time-start-fwhm-plateau)/fwhm2) , 2 );
   } else {
     return 0.;
   }

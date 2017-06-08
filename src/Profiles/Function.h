@@ -814,21 +814,21 @@ class Function_TimeFlatTopSin2 : public Function{
     Function_TimeFlatTopSin2 ( PyObject *py_profile ){
       //double duration;
       PyTools::getAttr(py_profile, "start", start      );
-      PyTools::getAttr(py_profile, "fwhm1", fwhm1 );
+      PyTools::getAttr(py_profile, "fwhm", fwhm );
       PyTools::getAttr(py_profile, "plateau", plateau );
       PyTools::getAttr(py_profile, "fwhm2" , fwhm2 );
-      end = start + fwhm1 + plateau + fwhm2;
+      end = start + fwhm + plateau + fwhm2;
     };
     Function_TimeFlatTopSin2 ( Function_TimeFlatTopSin2 *f ){
       start   = f->start;
-      fwhm1   = f->fwhm1;
+      fwhm    = f->fwhm;
       plateau = f->plateau;
       fwhm2   = f->fwhm2;
       end     = f->end;
     };
     double valueAt(double);
   private:
-    double start, fwhm1, plateau, fwhm2, end;
+    double start, fwhm, plateau, fwhm2, end;
 };
 
 #endif
