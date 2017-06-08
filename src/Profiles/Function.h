@@ -809,9 +809,9 @@ private:
     std::vector<double> coeffs;
 };
 
-class Function_TimeFlatTopSin2 : public Function{
+class Function_TimeSin2Plateau : public Function{
     public:
-    Function_TimeFlatTopSin2 ( PyObject *py_profile ){
+    Function_TimeSin2Plateau ( PyObject *py_profile ){
       //double duration;
       PyTools::getAttr(py_profile, "start", start      );
       PyTools::getAttr(py_profile, "fwhm", fwhm );
@@ -819,7 +819,7 @@ class Function_TimeFlatTopSin2 : public Function{
       PyTools::getAttr(py_profile, "fwhm2" , fwhm2 );
       end = start + fwhm + plateau + fwhm2;
     };
-    Function_TimeFlatTopSin2 ( Function_TimeFlatTopSin2 *f ){
+    Function_TimeSin2Plateau ( Function_TimeSin2Plateau *f ){
       start   = f->start;
       fwhm    = f->fwhm;
       plateau = f->plateau;

@@ -137,12 +137,12 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
             else
                 ERROR("Profile `"<<name<<"`: tpolynomial() profile is only for time");
             
-        } else if( profileName == "tflattopsin2" ){
+        } else if( profileName == "tsin2plateau" ){
 
           if( nvariables == 1 )
-            function = new Function_TimeFlatTopSin2(py_profile);
+            function = new Function_TimeSin2Plateau(py_profile);
           else
-            ERROR("Profile `"<<name<<"`: tflattopsin2() profile is only for time");
+            ERROR("Profile `"<<name<<"`: tsin2plateau() profile is only for time");
         }
 
     }
@@ -298,8 +298,8 @@ Profile::Profile(Profile *p){
       function = new Function_TimeCosine(static_cast<Function_TimeCosine*>(p->function));
     } else if( profileName == "tpolynomial" ){
       function = new Function_TimePolynomial(static_cast<Function_TimePolynomial*>(p->function));
-    } else if( profileName == "tflattopsin2" ){
-      function = new Function_TimeFlatTopSin2(static_cast<Function_TimeFlatTopSin2*>(p->function));
+    } else if( profileName == "tsin2plateau" ){
+      function = new Function_TimeSin2Plateau(static_cast<Function_TimeSin2Plateau*>(p->function));
     }
   }else {
     if      ( nvariables == 1 ) function = new Function_Python1D(static_cast<Function_Python1D*>(p->function));

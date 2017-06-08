@@ -269,7 +269,7 @@ double Function_TimePolynomial::valueAt(double time) {
     return r;
 }
 // Time sin2 profile with a plateau the funtion and the derivative are continuos
-double Function_TimeFlatTopSin2::valueAt(double time) {
+double Function_TimeSin2Plateau::valueAt(double time) {
   if (time<start) {
     return 0.;
   } else if ((time < start+fwhm)&&(fwhm!=0.)) {

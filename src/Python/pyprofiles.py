@@ -428,11 +428,11 @@ def tpolynomial(**kwargs):
         f.coeffs.append( c     )
     return f
 
-def tflattopsin2(start=0., fwhm=0., plateau=None, fwhm2=None):
+def tsin2plateau(start=0., fwhm=0., plateau=None, fwhm2=None):
     import math
     global Main
     if len(Main)==0:
-        raise Exception("tflattopsin2 profile has been defined before `Main()`")
+        raise Exception("tsin2plateau profile has been defined before `Main()`")
     if plateau is None: plateau = 0 # default is a simple sin2 profile (could be used for a 2D or 3D laserPulse too)
     if fwhm2 is None: fwhm2 = fwhm
     def f(t):
@@ -446,7 +446,7 @@ def tflattopsin2(start=0., fwhm=0., plateau=None, fwhm2=None):
             return math.pow(  math.cos(0.5*math.pi*(t-start-fwhm-plateau)/fwhm2) , 2 )
         else:
             return 0.
-    f.profileName = "tflattopsin2"
+    f.profileName = "tsin2plateau"
     f.start       = start
     f.fwhm        = fwhm
     f.plateau     = plateau
