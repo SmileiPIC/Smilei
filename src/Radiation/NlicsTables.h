@@ -66,7 +66,7 @@ class NlicsTables
         //
         //! \param chipa particle quantum parameter
         // ---------------------------------------------------------------------
-        #pragma omp declare simd
+        //#pragma omp declare simd
         double inline compute_g_Ridgers(double chipa)
         {
             return pow(1. + 4.8*(1.+chipa)*log(1. + 1.7*chipa)
@@ -80,7 +80,7 @@ class NlicsTables
         //! \param chipa particle quantum parameter
         //! \param dt time step
         // ---------------------------------------------------------------------
-        #pragma omp declare simd
+        //#pragma omp declare simd
         double inline compute_cont_rad_energy_Ridgers(double chipa, double dt)
         {
             return compute_g_Ridgers(chipa)*dt*chipa*chipa*factor_cla_rad_power;

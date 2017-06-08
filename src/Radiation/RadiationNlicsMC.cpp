@@ -118,7 +118,7 @@ void RadiationNlicsMC::operator() (Particles &particles,
                              + momentum[2][ipart]*momentum[2][ipart]);
 
             // Computation of the Lorentz invariant quantum parameter
-            chipa = RadiationNlicsMC::compute_chipa(charge_over_mass2,
+            chipa = Radiation::compute_chipa(charge_over_mass2,
                      momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
                      gamma,
                      (*Epart)[ipart].x,(*Epart)[ipart].y,(*Epart)[ipart].z,

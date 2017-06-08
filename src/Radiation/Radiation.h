@@ -50,7 +50,7 @@ class Radiation
         //! \param Bx x component of the particle magnetic field
         //! \param By y component of the particle magnetic field
         //! \param Bz z component of the particle magnetic field
-        #pragma omp declare simd
+        //#pragma omp declare simd
         double inline compute_chipa(double & charge_over_mass2,
                                      double & px, double & py, double & pz,
                                      double & gamma,
