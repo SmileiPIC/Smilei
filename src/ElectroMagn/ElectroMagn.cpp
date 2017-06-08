@@ -28,10 +28,10 @@ nDim_field     ( params.nDim_field ),
 cell_volume    ( params.cell_volume),
 n_space        ( params.n_space    ),
 oversize       ( params.oversize   ),
-nrj_mw_lost    (  0.               ),
-nrj_new_fields (  0.               ),
 isXmin(patch->isXmin()),
-isXmax(patch->isXmax())
+isXmax(patch->isXmax()),
+nrj_mw_lost    (  0.               ),
+nrj_new_fields (  0.               )
 {
     
     
@@ -60,10 +60,10 @@ nDim_field     ( emFields->nDim_field  ),
 cell_volume    ( emFields->cell_volume ),
 n_space        ( emFields->n_space     ),
 oversize       ( emFields->oversize    ),
-nrj_mw_lost    ( 0. ),
-nrj_new_fields ( 0. ),
 isXmin(patch->isXmin()),
-isXmax(patch->isXmax())
+isXmax(patch->isXmax()),
+nrj_mw_lost    ( 0. ),
+nrj_new_fields ( 0. )
 {
 
     initElectroMagnQuantities();
