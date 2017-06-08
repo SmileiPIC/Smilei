@@ -106,7 +106,6 @@ int main (int argc, char* argv[])
         // Init and compute tables for radiation effects
         // (nonlinear inverse Compton scattering)
         // ---------------------------------------------------------------------
-        TITLE("Initializing nonlinear inverse Compton Scattering")
         nlicsTables.initParams(params);
         nlicsTables.compute_tables(params,smpi);
         nlicsTables.output_tables();
@@ -139,7 +138,6 @@ int main (int argc, char* argv[])
         // Init and compute tables for radiation effects
         // (nonlinear inverse Compton scattering)
         // ---------------------------------------------------------------------
-        TITLE("Initializing nonlinear inverse Compton Scattering")
         nlicsTables.initParams(params);
         nlicsTables.compute_tables(params,smpi);
         nlicsTables.output_tables();

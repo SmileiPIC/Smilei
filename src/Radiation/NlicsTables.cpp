@@ -41,6 +41,11 @@ NlicsTables::NlicsTables()
 void NlicsTables::initParams(Params& params)
 {
 
+    if (params.hasMCRadiation || params.hasContinuousRadiation)
+    {
+        TITLE("Initializing Radiation loss")
+    }
+
     // If the namelist for Nonlinear Inverse Compton Scattering exists
     // We read the properties
     if( PyTools::nComponents("Nlics") != 0 )
@@ -68,7 +73,6 @@ void NlicsTables::initParams(Params& params)
     // Computation of some parameters
     if (params.hasMCRadiation || params.hasContinuousRadiation)
     {
-        MESSAGE( "        factor_cla_rad_power: " << factor_cla_rad_power)
 
         // Computation of the normalized Compton wavelength
         norm_lambda_compton = red_planck_cst*params.referenceAngularFrequency_SI
@@ -79,6 +83,9 @@ void NlicsTables::initParams(Params& params)
 
         // Computation of the factor for the classical radiated power
         factor_cla_rad_power = 2.*fine_struct_cst/(3.*norm_lambda_compton);
+
+        MESSAGE( "        factor_cla_rad_power: " << factor_cla_rad_power)
+
     }
 
     // Some additional checks
