@@ -446,12 +446,12 @@ def tflattopsin2(start=0., fwhm1=0., plateau=None, fwhm2=None):
             return math.pow(  math.cos(0.5*math.pi*(t-start-fwhm1-plateau)/fwhm2) , 2 )
         else:
             return 0.
-        f.profileName = "tflattopsin2"
-        f.start       = start
-        f.fwhm1       = fwhm1
-        f.plateau     = plateau
-        f.fwhm2       = fwhm2
-        return f
+    f.profileName = "tflattopsin2"
+    f.start       = start
+    f.fwhm1       = fwhm1
+    f.plateau     = plateau
+    f.fwhm2       = fwhm2
+    return f
 
 
 def transformPolarization(polarizationPhi, ellipticity):
