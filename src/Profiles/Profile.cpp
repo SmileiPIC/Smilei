@@ -298,7 +298,7 @@ Profile::Profile(Profile *p){
       function = new Function_TimeCosine(static_cast<Function_TimeCosine*>(p->function));
     } else if( profileName == "tpolynomial" ){
       function = new Function_TimePolynomial(static_cast<Function_TimePolynomial*>(p->function));
-    }else if( profileName == "tflattopsin2" ){
+    } else if( profileName == "tflattopsin2" ){
       function = new Function_TimeFlatTopSin2(static_cast<Function_TimeFlatTopSin2*>(p->function));
     }
   }else {
