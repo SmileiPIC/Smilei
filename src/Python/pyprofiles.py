@@ -428,6 +428,31 @@ def tpolynomial(**kwargs):
         f.coeffs.append( c     )
     return f
 
+def tflattopsin2(start=0., fwhm1=0., plateau=None, fwhm2=None):
+    import math
+    global Main
+    if len(Main)==0:
+        raise Exception("tflattopsin2 profile has been defined before `Main()`")
+    if plateau is None: plateau = 0 # default is a simple sin2 profile (could be used for a 2D or 3D laserPulse too)
+    if fwhm2 is None: fwhm2 = fwhm1
+    def f(t):
+        if t < start:
+            return 0.
+        elif (t < start+fwhm1) and (fwhm1!=0.):
+            return math.pow( math.sin(0.5*math.pi*(t-start)/fwhm1) , 2 )
+        elif t < start+fwhm1+plateau:
+            return 1.
+        elif t < start+fwhm1+plateau+fwhm2 and (fwhm2!=0.):
+            return math.pow(  math.cos(0.5*math.pi*(t-start-fwhm1-plateau)/fwhm2) , 2 )
+        else:
+            return 0.
+        f.profileName = "tsin2"
+        f.start       = start
+        f.fwhm1       = fwhm1
+        f.plateau     = plateau
+        f.fwhm2       = fwhm2
+        return f
+
 
 def transformPolarization(polarizationPhi, ellipticity):
     import math
@@ -554,30 +579,6 @@ def LaserGaussian3D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., inci
         phase          = [ lambda y,z:phase(y,z)-phaseZero+dephasing, lambda y,z:phase(y,z)-phaseZero ],
     )
 
-def tflattopsin2(start=0., fwhm1=0., plateau=None, fwhm2=None):
-    import math
-    global Main
-    if len(Main)==0:
-        raise Exception("tflattopsin2 profile has been defined before `Main()`")
-    if plateau is None: plateau = 0 # default is a simple sin2 profile (could be used for a 2D or 3D laserPulse too)
-    if fwhm2 is None: fwhm2 = fwhm1
-    def f(t):
-        if t < start:
-            return 0.
-        elif (t < start+fwhm1) and (fwhm1!=0.):
-            return math.pow( math.sin(0.5*math.pi*(t-start)/fwhm1) , 2 )
-        elif t < start+fwhm1+plateau:
-            return 1.
-        elif t < start+fwhm1+plateau+fwhm2 and (fwhm2!=0.):
-            return math.pow(  math.cos(0.5*math.pi*(t-start-fwhm1-plateau)/fwhm2) , 2 )
-        else:
-            return 0.
-        f.profileName = "tsin2"
-        f.start       = start
-        f.fwhm1       = fwhm1
-        f.plateau     = plateau
-        f.fwhm2       = fwhm2
-        return f
 
 """
 -----------------------------------------------------------------------
