@@ -46,6 +46,11 @@ void NlicsTables::initParams(Params& params)
         TITLE("Initializing Radiation loss")
     }
 
+    if (params.hasMCRadiation)
+    {
+        MESSAGE("        The Monte-Carlo Compton radiation module is requested by some species.\n");
+    }
+
     // If the namelist for Nonlinear Inverse Compton Scattering exists
     // We read the properties
     if( PyTools::nComponents("Nlics") != 0 )
