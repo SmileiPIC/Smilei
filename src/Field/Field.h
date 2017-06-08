@@ -170,7 +170,7 @@ public:
         int idxlocalend[3];
         int globalsize[3];
         for ( int i=0 ; i<3 ; i++ ) {
-            if ( i < isDual_.size() ) {
+            if ( i < (int) isDual_.size() ) {
                 idxlocalstart[i] = istart[i][isDual_[i]];
                 idxlocalend[i]   = istart[i][isDual_[i]]+bufsize[i][isDual_[i]];
                 globalsize[i]    = dims_[i];

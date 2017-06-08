@@ -272,13 +272,13 @@ public:
 private:
     //! Number of steps for Maxwell-Juettner cumulative function integration
     //! \todo{Put in a code constant class}
-    unsigned int nE;
+//    unsigned int nE;
     
     //! Parameter used when defining the Maxwell-Juettner function (corresponds to a Maximum energy)
-    double muEmax;
+//    double muEmax;
     
     //! Parameter used when defining the Maxwell-Juettner function (corresponds to a discretization step in energy)
-    double dE;
+//    double dE;
     
     //! Number of spatial dimension for the particles
     unsigned int nDim_particle;

@@ -731,7 +731,7 @@ void ElectroMagn3D::computePoynting() {
         unsigned int kEy=istart[2][Ey3D->isDual(2)];
         unsigned int kBz=istart[2][Bz3D_m->isDual(2)];
         unsigned int kEz=istart[2][Ez3D->isDual(2)];
-        unsigned int kBy=istart[2][By3D_m->isDual(2)];
+//         unsigned int kBy=istart[2][By3D_m->isDual(2)];
 
         for (unsigned int j=0; j<=bufsize[1][Ez3D->isDual(1)]; j++) {
             for (unsigned int k=0; k<=bufsize[2][Ey3D->isDual(2)]; k++) {
@@ -767,7 +767,7 @@ void ElectroMagn3D::computePoynting() {
         unsigned int kEy=istart[2][Ey3D->isDual(2)];
         unsigned int kBz=istart[2][Bz3D_m->isDual(2)];
         unsigned int kEz=istart[2][Ez3D->isDual(2)];
-        unsigned int kBy=istart[2][By3D_m->isDual(2)];
+//         unsigned int kBy=istart[2][By3D_m->isDual(2)];
         
         for (unsigned int j=0; j<=bufsize[1][Ez3D->isDual(1)]; j++) {
             for (unsigned int k=0; k<=bufsize[2][Ey3D->isDual(2)]; k++) {
@@ -802,7 +802,7 @@ void ElectroMagn3D::computePoynting() {
         unsigned int kEz=istart[2][Ez_->isDual(2)];
         unsigned int kBx=istart[2][Bx_m->isDual(2)];
         unsigned int kEx=istart[2][Ex_->isDual(2)];
-        unsigned int kBz=istart[2][Bz_m->isDual(2)];
+//         unsigned int kBz=istart[2][Bz_m->isDual(2)];
         
         for (unsigned int i=0; i<=bufsize[0][Ez3D->isDual(0)]; i++) {
             for (unsigned int k=0; k<=bufsize[2][Ex3D->isDual(2)]; k++) {
@@ -835,7 +835,7 @@ void ElectroMagn3D::computePoynting() {
         unsigned int kEz=istart[2][Ez_->isDual(2)];
         unsigned int kBx=istart[2][Bx_m->isDual(2)];
         unsigned int kEx=istart[2][Ex_->isDual(2)];
-        unsigned int kBz=istart[2][Bz_m->isDual(2)];
+//         unsigned int kBz=istart[2][Bz_m->isDual(2)];
         
         for (unsigned int i=0; i<=bufsize[0][Ez3D->isDual(0)]; i++) {
             for (unsigned int k=0; k<=bufsize[2][Ex3D->isDual(2)]; k++) {
@@ -868,7 +868,7 @@ void ElectroMagn3D::computePoynting() {
         unsigned int kEx=istart[2][Ex_->isDual(2)];
         unsigned int kBy=istart[2][By_m->isDual(2)];
         unsigned int kEy=istart[2][Ey_->isDual(2)];
-        unsigned int kBx=istart[2][Bx_m->isDual(2)];
+//         unsigned int kBx=istart[2][Bx_m->isDual(2)];
 
         for (unsigned int i=0; i<=bufsize[0][Ez3D->isDual(0)]; i++) {
             for (unsigned int j=0; j<=bufsize[1][Ex3D->isDual(1)]; j++) {
@@ -902,7 +902,7 @@ void ElectroMagn3D::computePoynting() {
         unsigned int kEx=istart[2][Ex_->isDual(2)] + bufsize[2][Ex_->isDual(2)] - 1;
         unsigned int kBy=istart[2][By_m->isDual(2)] + bufsize[2][By_m->isDual(2)] - 1;
         unsigned int kEy=istart[2][Ey_->isDual(2)] + bufsize[2][Ey_->isDual(2)] - 1;
-        unsigned int kBx=istart[2][Bx_m->isDual(2)] + bufsize[2][Bx_m->isDual(2)] - 1;
+//         unsigned int kBx=istart[2][Bx_m->isDual(2)] + bufsize[2][Bx_m->isDual(2)] - 1;
 
         for (unsigned int i=0; i<=bufsize[0][Ez3D->isDual(0)]; i++) {
             for (unsigned int j=0; j<=bufsize[1][Ex3D->isDual(1)]; j++) {
