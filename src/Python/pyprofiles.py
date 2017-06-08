@@ -428,13 +428,14 @@ def tpolynomial(**kwargs):
         f.coeffs.append( c     )
     return f
 
-def tsin2plateau(start=0., fwhm=0., plateau=None, fwhm2=None):
+def tsin2plateau(start=0., fwhm=0., plateau=None, slope1=None, slope2=None):
     import math
     global Main
     if len(Main)==0:
         raise Exception("tsin2plateau profile has been defined before `Main()`")
     if plateau is None: plateau = 0 # default is a simple sin2 profile (could be used for a 2D or 3D laserPulse too)
-    if fwhm2 is None: fwhm2 = fwhm
+    if slope1 is None: slope1 = fwhm
+    if slope2 is None: slope2 = slope1
     def f(t):
         if t < start:
             return 0.
@@ -442,15 +443,16 @@ def tsin2plateau(start=0., fwhm=0., plateau=None, fwhm2=None):
             return math.pow( math.sin(0.5*math.pi*(t-start)/fwhm) , 2 )
         elif t < start+fwhm+plateau:
             return 1.
-        elif t < start+fwhm+plateau+fwhm2 and (fwhm2!=0.):
-            return math.pow(  math.cos(0.5*math.pi*(t-start-fwhm-plateau)/fwhm2) , 2 )
+        elif t < start+fwhm+plateau+slope2 and (slope2!=0.):
+            return math.pow(  math.cos(0.5*math.pi*(t-start-fwhm-plateau)/slope2) , 2 )
         else:
             return 0.
     f.profileName = "tsin2plateau"
     f.start       = start
-    f.fwhm        = fwhm
+    #f.fwhm        = fwhm
     f.plateau     = plateau
-    f.fwhm2       = fwhm2
+    f.slope1      = slope1
+    f.slope2      = slope2
     return f
 
 

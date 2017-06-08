@@ -814,21 +814,21 @@ class Function_TimeSin2Plateau : public Function{
     Function_TimeSin2Plateau ( PyObject *py_profile ){
       //double duration;
       PyTools::getAttr(py_profile, "start", start      );
-      PyTools::getAttr(py_profile, "fwhm", fwhm );
+      PyTools::getAttr(py_profile, "slope1", slope1 );
       PyTools::getAttr(py_profile, "plateau", plateau );
-      PyTools::getAttr(py_profile, "fwhm2" , fwhm2 );
-      end = start + fwhm + plateau + fwhm2;
+      PyTools::getAttr(py_profile, "slope2" , slope2 );
+      end = start + slope1 + plateau + slope2;
     };
     Function_TimeSin2Plateau ( Function_TimeSin2Plateau *f ){
       start   = f->start;
-      fwhm    = f->fwhm;
+      slope1    = f->slope1;
       plateau = f->plateau;
-      fwhm2   = f->fwhm2;
+      slope2   = f->slope2;
       end     = f->end;
     };
     double valueAt(double);
   private:
-    double start, fwhm, plateau, fwhm2, end;
+    double start, slope1, plateau, slope2, end;
 };
 
 #endif
