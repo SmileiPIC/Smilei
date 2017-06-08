@@ -53,7 +53,7 @@ void NlicsTables::initParams(Params& params)
 
     // If the namelist for Nonlinear Inverse Compton Scattering exists
     // We read the properties
-    if( PyTools::nComponents("Nlics") != 0 )
+    if( PyTools::nComponents("RadiationLoss") != 0 )
     {
 
         // If Monte-Carlo radiation loss is requested
@@ -61,16 +61,16 @@ void NlicsTables::initParams(Params& params)
         {
 
             // Extraction of the parameter from the input file
-            PyTools::extract("chipa_integfochi_min", chipa_integfochi_min, "Nlics");
-            PyTools::extract("chipa_integfochi_max", chipa_integfochi_max, "Nlics");
-            PyTools::extract("integfochi_dim", dim_integfochi, "Nlics");
-            PyTools::extract("chipa_xip_min", chipa_xip_min, "Nlics");
-            PyTools::extract("chipa_xip_max", chipa_xip_max, "Nlics");
-            PyTools::extract("xip_power", xip_power, "Nlics");
-            PyTools::extract("xip_threshold", xip_threshold, "Nlics");
-            PyTools::extract("chipa_xip_dim", chipa_xip_dim, "Nlics");
-            PyTools::extract("chiph_xip_dim", chiph_xip_dim, "Nlics");
-            PyTools::extract("output_format", output_format, "Nlics");
+            PyTools::extract("chipa_integfochi_min", chipa_integfochi_min, "RadiationLoss");
+            PyTools::extract("chipa_integfochi_max", chipa_integfochi_max, "RadiationLoss");
+            PyTools::extract("integfochi_dim", dim_integfochi, "RadiationLoss");
+            PyTools::extract("chipa_xip_min", chipa_xip_min, "RadiationLoss");
+            PyTools::extract("chipa_xip_max", chipa_xip_max, "RadiationLoss");
+            PyTools::extract("xip_power", xip_power, "RadiationLoss");
+            PyTools::extract("xip_threshold", xip_threshold, "RadiationLoss");
+            PyTools::extract("chipa_xip_dim", chipa_xip_dim, "RadiationLoss");
+            PyTools::extract("chiph_xip_dim", chiph_xip_dim, "RadiationLoss");
+            PyTools::extract("output_format", output_format, "RadiationLoss");
 
         }
     }
@@ -255,7 +255,7 @@ void NlicsTables::compute_xip_table(SmileiMPI *smpi)
         if (rank==0)
         {
 
-            MESSAGE("            Reading of the binary table");
+            MESSAGE("            Reading of the external binary table");
 
             // Reading of the table file
             std::ifstream file;
@@ -733,7 +733,7 @@ void NlicsTables::compute_integfochi_table(SmileiMPI *smpi)
     if (Tools::file_exists("tab_integfochi.bin"))
     {
 
-        MESSAGE("            Reading of the binary table:");
+        MESSAGE("            Reading of the external binary table");
 
         if (rank==0)
         {

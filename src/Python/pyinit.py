@@ -348,7 +348,7 @@ class PartWall(SmileiComponent):
     z = None
 
 # Nonlinear Inverse Compton Scattering
-class Nlics(SmileiComponent):
+class RadiationLoss(SmileiComponent):
     """Nonlinear inverse Compton scattering"""
     chipa_integfochi_min = 1e-5
     chipa_integfochi_max = 1e2
