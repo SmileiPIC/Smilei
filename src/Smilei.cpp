@@ -86,7 +86,6 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------
     // Init nonlinear inverse Compton scattering
     // ------------------------------------------------------------------------
-    TITLE("Initializing nonlinear inverse Compton Scattering")
     NlicsTables nlicsTables;
 
     // ---------------------------------------------------
@@ -95,12 +94,22 @@ int main (int argc, char* argv[])
     TITLE("Initializing particles & fields");
     VectorPatch vecPatches;
 
+
     // reading from dumped file the restart values
     if (params.restart) {
 
         // smpi->patch_count recomputed in restartAll
         // vecPatches allocated in restartAll according to patch_count saved
         checkpoint.restartAll( vecPatches, smpi, simWindow, params, openPMD);
+
+        // ---------------------------------------------------------------------
+        // Init and compute tables for radiation effects
+        // (nonlinear inverse Compton scattering)
+        // ---------------------------------------------------------------------
+        TITLE("Initializing nonlinear inverse Compton Scattering")
+        nlicsTables.initParams(params);
+        nlicsTables.compute_tables(params,smpi);
+        nlicsTables.output_tables();
 
         // time at integer time-steps (primal grid)
         time_prim = checkpoint.this_run_start_step * params.timestep;
@@ -117,10 +126,7 @@ int main (int argc, char* argv[])
 
         vecPatches = PatchesFactory::createVector(params, smpi, openPMD, 0);
 
-        nlicsTables.initParams(params);
-        nlicsTables.compute_tables(smpi);
-        nlicsTables.output_tables();
-
+        // ------------------------------------------------------------------------
         // Initialize the electromagnetic fields
         // -------------------------------------
         vecPatches.computeCharge();
@@ -128,6 +134,15 @@ int main (int argc, char* argv[])
 
         TITLE("Applying external fields at time t = 0");
         vecPatches.applyExternalFields();
+
+        // ---------------------------------------------------------------------
+        // Init and compute tables for radiation effects
+        // (nonlinear inverse Compton scattering)
+        // ---------------------------------------------------------------------
+        TITLE("Initializing nonlinear inverse Compton Scattering")
+        nlicsTables.initParams(params);
+        nlicsTables.compute_tables(params,smpi);
+        nlicsTables.output_tables();
 
         // Apply antennas
         // --------------

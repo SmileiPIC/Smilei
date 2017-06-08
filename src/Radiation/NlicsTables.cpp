@@ -1095,12 +1095,17 @@ double NlicsTables::compute_sync_emissivity_ritus(double chipa,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Output the computed tables so that thay can be read at the next run.
 //
+//! \param params list of simulation parameters
 //! \param smpi MPI parameters
 // ---------------------------------------------------------------------------------------------------------------------
-void NlicsTables::compute_tables(SmileiMPI *smpi)
+void NlicsTables::compute_tables(Params& params, SmileiMPI *smpi)
 {
-    NlicsTables::compute_integfochi_table(smpi);
-    NlicsTables::compute_xip_table(smpi);
+    // These tables are loaded only if if one species has Monte-Carlo Compton radiation
+    if (params.hasMCRadiation)
+    {
+        NlicsTables::compute_integfochi_table(smpi);
+        NlicsTables::compute_xip_table(smpi);
+    }
 }
 
 
@@ -1109,6 +1114,8 @@ void NlicsTables::compute_tables(SmileiMPI *smpi)
 // ---------------------------------------------------------------------------------------------------------------------
 void NlicsTables::output_tables()
 {
+    // If tables have been computed, they are output on the disk
+    // to be used for the next run
     if (integfochi_computed)
     {
         NlicsTables::output_integfochi_table();

@@ -96,7 +96,7 @@ class NlicsTables
         double compute_chiph_emission(double chipa);
 
         //! Compute all the tables
-        void compute_tables(SmileiMPI *smpi);
+        void compute_tables(Params& params, SmileiMPI *smpi);
 
         //! Write in a file the table xip_chiphmin and xip
         void output_xip_table();
