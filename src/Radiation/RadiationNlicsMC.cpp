@@ -133,7 +133,7 @@ void RadiationNlicsMC::operator() (Particles &particles,
             // If tau[ipart] <= 0, this is a new emission
             // We also check that chipa > chipa_threshold,
             // else chipa is too low to induce a discontinuous emission
-            if ((chipa > chipa_disc_threshold)
+            if ((chipa > RadiationTables.get_chipa_disc_min_threshold())
             && (tau[ipart] <= epsilon_tau) )
             {
                 // New final optical depth to reach for emision
@@ -218,7 +218,7 @@ void RadiationNlicsMC::operator() (Particles &particles,
             // chipa needs to be above the continuous threshold
             // No discontunous emission is in progress:
             // tau[ipart] <= epsilon_tau
-            else if ((chipa <= chipa_disc_threshold)
+            else if ((chipa <= RadiationTables.get_chipa_disc_min_threshold())
             &&  (tau[ipart] <= epsilon_tau)
             &&  (chipa > chipa_cont_threshold))
             {

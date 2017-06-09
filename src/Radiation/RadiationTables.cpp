@@ -79,6 +79,11 @@ void RadiationTables::initParams(Params& params)
             PyTools::extract("chiph_xip_dim", chiph_xip_dim, "RadiationLoss");
             PyTools::extract("output_format", output_format, "RadiationLoss");
 
+            // Discontinuous minimum threashold
+            PyTools::extract("chipa_disc_min_threshold",
+                             chipa_disc_min_threshold,"RadiationLoss");
+
+            // Additional regularly used parameters
             log10_chipa_xip_min = log10(chipa_xip_min);
             log10_chipa_integfochi_min = log10(chipa_integfochi_min);
             inv_chiph_xip_dim_minus_one = 1./(chiph_xip_dim - 1.);
@@ -102,6 +107,13 @@ void RadiationTables::initParams(Params& params)
         MESSAGE( "        factor_cla_rad_power: " << factor_cla_rad_power)
 
     }
+
+    if (params.hasMCRadiation)
+    {
+        MESSAGE( "        chipa_disc_min_threshold: " << chipa_disc_min_threshold)
+    }
+
+    MESSAGE("")
 
     // Some additional checks
     if (params.hasMCRadiation)

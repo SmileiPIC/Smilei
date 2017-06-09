@@ -106,16 +106,28 @@ class RadiationTables
         //! read at the next run
         void output_tables();
 
+        //! Return the get_chipa_disc_min_threshold value
+        double inline get_chipa_disc_min_threshold()
+        {
+            return chipa_disc_min_threshold;
+        }
+
     private:
 
-        // ________________________________________
+        // ---------------------------------------------
         // General parameters
+        // ---------------------------------------------
 
         //! Output format of the tables
         std::string output_format;
 
-        // _________________________________________
+        //! Minimum threashold above which the Monte-Carlo algorithm is working
+        //! This avoids using the Monte-Carlo algorithm when chipa is too low
+        double chipa_disc_min_threshold;
+
+        // ---------------------------------------------
         // Table Integfochi
+        // ---------------------------------------------
 
         //! Array containing tabulated values for the computation
         //! of the photon production rate dN_{\gamma}/dt
@@ -145,16 +157,18 @@ class RadiationTables
         //! This variable is true if the table is computed, false if read
         bool integfochi_computed;
 
-        // _________________________________________
+        // ---------------------------------------------
         // Table chiph min for xip table
+        // ---------------------------------------------
 
         //! Table containing the chiph min values
         //! Under this value, photon energy is
         //! considered negligible
         std::vector<double > xip_chiphmin_table;
 
-        // _________________________________________
+        // ---------------------------------------------
         // Table xip
+        // ---------------------------------------------
 
         //! Table containing the cumulative distribution function \f$P(0 \rightarrow \chi_{\gamma})\f$
         //! that gives gives the probability for a photon emission in the range \f$[0, \chi_{\gamma}]\f$
@@ -195,8 +209,9 @@ class RadiationTables
         //! This variable is true if the table is computed, false if read
         bool xip_computed;
 
-        // _________________________________________
+        // ---------------------------------------------
         // Factors
+        // ---------------------------------------------
 
         //! Factor for the computation of dNphdt
         double factor_dNphdt;

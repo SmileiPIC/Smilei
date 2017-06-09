@@ -359,7 +359,10 @@ class RadiationLoss(SmileiComponent):
     xip_threshold = 1e-3
     chipa_xip_dim = 128
     chiph_xip_dim = 128
+    
     output_format = "binary"
+
+    chipa_disc_min_threshold = 1e-2
 
 # Smilei-defined
 smilei_mpi_rank = 0
