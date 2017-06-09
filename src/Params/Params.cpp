@@ -195,6 +195,8 @@ namelist("")
     // Disabled, not compatible for now with particles sort
     // if ( !PyTools::extract("exchange_particles_each", exchange_particles_each) )
     exchange_particles_each = 1;
+
+    PyTools::extract("every_clean_particles_overhead", every_clean_particles_overhead, "Main");
     
     
     // TIME & SPACE RESOLUTION/TIME-STEPS

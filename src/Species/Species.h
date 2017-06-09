@@ -157,7 +157,7 @@ public:
     void sort_part();
     void count_sort_part(Params& param);
     
-    void updateMvWinLimits(double x_moved);
+    //void updateMvWinLimits(double x_moved);
     
     //! Vector containing all Particles of the considered Species
     Particles *particles;
@@ -222,7 +222,7 @@ public:
         nrj_mw_lost = 0;
         nrj_new_particles = 0;
     }
-    inline void storeNRJlost( double nrj ) { nrj_mw_lost = nrj; };
+    inline void storeNRJlost( double nrj ) { nrj_mw_lost += nrj; };
     
     inline double computeNRJ() {
         double nrj(0.);

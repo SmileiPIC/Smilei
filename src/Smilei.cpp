@@ -100,9 +100,6 @@ int main (int argc, char* argv[])
         // time at half-integer time-steps (dual grid)
         time_dual = (checkpoint.this_run_start_step +0.5) * params.timestep;
         
-        simWindow->operate(vecPatches, smpi, params, 0, time_dual);
-        //smpi->recompute_patch_count( params, vecPatches, time_dual );
-        
         TITLE("Initializing diagnostics");
         vecPatches.initAllDiags( params, smpi );
         
@@ -214,6 +211,10 @@ int main (int argc, char* argv[])
             // call the various diagnostics
             vecPatches.runAllDiags(params, smpi, itime, timers, simWindow);
             
+            timers.movWindow.restart();
+            simWindow->operate(vecPatches, smpi, params, itime, time_dual);
+            timers.movWindow.update();
+            
             // ----------------------------------------------------------------------
             // Validate restart  : to do
             // Restart patched moving window : to do
@@ -222,10 +223,6 @@ int main (int argc, char* argv[])
             #pragma omp barrier
             // ----------------------------------------------------------------------        
             
-            timers.movWindow.restart();
-            #pragma omp single
-            simWindow->operate(vecPatches, smpi, params, itime, time_dual);
-            timers.movWindow.update();
         
             if ((params.balancing_every > 0) && (smpi->getSize()!=1) ) {
                 if (( itime%params.balancing_every == 0 )) {
