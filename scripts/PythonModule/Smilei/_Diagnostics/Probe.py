@@ -153,8 +153,11 @@ class Probe(Diagnostic):
 				self._averages[iaxis] = True
 				
 				distances = self._np.sqrt(self._np.sum((centers-centers[0])**2,axis=1))
-				self._averageinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
-					= self._selectRange(average[label], distances, label, axisunits, "average")
+				try:
+					self._averageinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
+						= self._selectRange(average[label], distances, label, axisunits, "average")
+				except:
+					return
 				
 			else:
 				self._type   .append(label)

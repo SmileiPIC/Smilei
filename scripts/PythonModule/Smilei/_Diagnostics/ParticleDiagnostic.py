@@ -185,8 +185,11 @@ class ParticleDiagnostic(Diagnostic):
 			
 				self._sums[iaxis] = True
 				
-				axis["sumInfo"], self._selection[iaxis], self._finalShape[iaxis] \
-					= self._selectRange(sum[axis["type"]], centers, axis["type"], "", "sum")
+				try:
+					axis["sumInfo"], self._selection[iaxis], self._finalShape[iaxis] \
+						= self._selectRange(sum[axis["type"]], centers, axis["type"], "", "sum")
+				except:
+					return
 				
 				if axis["type"] in ["x","y","z","moving_x"]:
 					first_edge = edges[self._selection[iaxis].start or 0]

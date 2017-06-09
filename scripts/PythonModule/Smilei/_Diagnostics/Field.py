@@ -133,8 +133,11 @@ class Field(Diagnostic):
 			if label in average:
 				self._averages[iaxis] = True
 				
-				self._averageinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
-					= self._selectRange(average[label], centers, label, axisunits, "average")
+				try:
+					self._averageinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
+						= self._selectRange(average[label], centers, label, axisunits, "average")
+				except:
+					return
 				
 			else:
 				centers = centers[:self._initialShape[iaxis]:stride]

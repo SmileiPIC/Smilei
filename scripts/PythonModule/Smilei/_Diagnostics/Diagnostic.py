@@ -391,10 +391,12 @@ class Diagnostic(object):
 				indices = self._np.array([(self._np.abs(meshpoints-s)).argmin()])
 			elif s.size==2:
 				indices = self._np.nonzero( (meshpoints>=s[0]) * (meshpoints<=s[1]) )[0]
+				if indices.size == 0:
+					indices = self._np.array([(self._np.abs(meshpoints-s.mean())).argmin()])
 			if indices.size == 0:
 				self._error = "`"+operation+"` along "+axisname+" is out of range"
 				raise
-			if indices.size == 1:
+			elif indices.size == 1:
 				info = operation+" at "+axisname+" = "+str(meshpoints[indices])+" "+axisunits
 				selection = self._np.s_[indices[0]]
 				finalShape = 1
