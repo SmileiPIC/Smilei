@@ -188,7 +188,7 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
             double test_value[2] = {0.,0.};
             npy_intp dims[1] = {2};
             PyArrayObject *a = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, &test_value);
-            PyObject *ret;
+            PyObject *ret(nullptr);
             if      ( nvariables == 1 ) ret = PyObject_CallFunctionObjArgs(py_profile, a, NULL);
             else if ( nvariables == 2 ) ret = PyObject_CallFunctionObjArgs(py_profile, a,a, NULL);
             else if ( nvariables == 3 ) ret = PyObject_CallFunctionObjArgs(py_profile, a,a,a, NULL);
@@ -209,7 +209,7 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
         if( !uses_numpy ) {
             // Otherwise, try a float
             PyObject* z = PyFloat_FromDouble(0.);
-            PyObject* ret;
+            PyObject* ret(nullptr);
             if      ( nvariables == 1 ) ret = PyObject_CallFunctionObjArgs(py_profile, z, NULL);
             else if ( nvariables == 2 ) ret = PyObject_CallFunctionObjArgs(py_profile, z,z, NULL);
             else if ( nvariables == 3 ) ret = PyObject_CallFunctionObjArgs(py_profile, z,z,z, NULL);

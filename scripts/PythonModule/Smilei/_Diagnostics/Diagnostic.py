@@ -372,7 +372,7 @@ class Diagnostic(object):
 	def _prepare(self):
 		self._prepare1()
 		if not self._prepare2(): return False
-		self._prepare3()
+		if not self._prepare3(): return False
 		self._prepare4()
 		return True
 	
@@ -442,6 +442,7 @@ class Diagnostic(object):
 			if self.options.transparent in ["both", "over"]:
 				new_cmap.set_over (color="white", alpha="0")
 			self.options.image["cmap"] = new_cmap
+		return True
 			
 	def _prepare4(self): pass
 	

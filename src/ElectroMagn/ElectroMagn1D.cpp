@@ -23,9 +23,7 @@ using namespace std;
 // Constructor for Electromagn1D
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn1D::ElectroMagn1D(Params &params, vector<Species*>& vecSpecies, Patch* patch)
-  : ElectroMagn(params, vecSpecies, patch),
-isXmin(patch->isXmin()),
-isXmax(patch->isXmax())
+  : ElectroMagn(params, vecSpecies, patch)
 {
     initElectroMagn1DQuantities(params, patch);
     
@@ -41,9 +39,7 @@ isXmax(patch->isXmax())
 
 
 ElectroMagn1D::ElectroMagn1D( ElectroMagn1D* emFields, Params &params, Patch* patch )
-    : ElectroMagn(emFields, params, patch),
-isXmin(patch->isXmin()),
-isXmax(patch->isXmax())
+    : ElectroMagn(emFields, params, patch)
 {
     initElectroMagn1DQuantities(params, patch);
     

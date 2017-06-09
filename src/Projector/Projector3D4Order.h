@@ -1,13 +1,13 @@
-#ifndef PROJECTOR2D4ORDER_H
-#define PROJECTOR2D4ORDER_H
+#ifndef PROJECTOR3D4ORDER_H
+#define PROJECTOR3D4ORDER_H
 
-#include "Projector2D.h"
+#include "Projector3D.h"
 
 
-class Projector2D4Order : public Projector2D {
+class Projector3D4Order : public Projector3D {
 public:
-    Projector2D4Order(Params&, Patch* patch);
-    ~Projector2D4Order();
+    Projector3D4Order(Params&, Patch* patch);
+    ~Projector3D4Order();
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
     inline void operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold);
@@ -23,7 +23,7 @@ public:
     //!Wrapper
     void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, std::vector<unsigned int> &b_dim, int ispec) override final;
 
- private:
+private:
     double one_third;
 
     double dble_1_ov_384 ;
@@ -36,7 +36,9 @@ public:
     double dble_1_ov_4 ;
     double dble_1_ov_6 ;
     double dble_115_ov_192 ;
-    double dble_5_ov_8 ;};
+    double dble_5_ov_8 ;
+
+};
 
 #endif
 

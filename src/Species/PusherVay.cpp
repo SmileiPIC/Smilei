@@ -40,9 +40,11 @@ void PusherVay::operator() (Particles &particles, SmileiMPI* smpi, int istart, i
     double charge_over_mass_dts2;
     double upx, upy, upz, us2;
     double alpha, s, T2 ;
-    double Tx, Ty, Tz, Tx2, Ty2, Tz2;
-    double TxTy, TyTz, TzTx;
+    double Tx, Ty, Tz;
     double pxsm, pysm, pzsm;
+    // Only useful for the second method
+    //double Tx2, Ty2, Tz2;
+    //double TxTy, TyTz, TzTx;
 
     double* momentum[3];
     for ( int i = 0 ; i<3 ; i++ )

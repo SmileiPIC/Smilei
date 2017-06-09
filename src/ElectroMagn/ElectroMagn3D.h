@@ -36,9 +36,6 @@ public:
     double getEx_XmaxYmin() { return 0.; }
     double getEy_XmaxYmin() { return 0.; }
 
-#ifdef _PATCH3D_TODO
-#endif
-
 //    //! Method used to solve Maxwell-Ampere equation
 //    void solveMaxwellAmpere();
 
@@ -118,12 +115,6 @@ public:
     void initAntennas(Patch* patch);
         
 private:
-    
-    //! from smpi is xmin
-    const bool isXmin;
-    
-    //! from smpi is xmax
-    const bool isXmax;
     
     //! from smpi is ymax
     const bool isYmin;

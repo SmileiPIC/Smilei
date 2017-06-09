@@ -212,7 +212,7 @@ Open a Screen diagnostic
 Open a Track diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.TrackParticles(species=None, select="", axes=[], timesteps=None, length=None, units=[""], **kwargs)
+.. py:method:: Smilei.TrackParticles(species=None, select="", axes=[], timesteps=None, sort=True, length=None, units=[""], **kwargs)
   
   * ``timesteps``, ``units``: same as before.
   * ``species``: the name of a tracked-particle species.
@@ -224,6 +224,9 @@ Open a Track diagnostic
      | **Example:** ``axes = ["x"]`` corresponds to :math:`x` versus time. 
      | **Example:** ``axes = ["x","y"]`` correspond to 2-D trajectories. 
      | **Example:** ``axes = ["x","px"]`` correspond to phase-space trajectories.
+  * ``sort``: If ``False``, the particles are not sorted by ID. This can save significant
+    time, but prevents plotting, exporting to VTK, and the ``select`` argument. Only
+    ``getData()`` is available in this mode.
   * ``length``: The length of each plotted trajectory, in number of timesteps.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
@@ -293,44 +296,81 @@ It has three different syntaxes:
 
 ----
 
-Obtain the data as an array
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Obtain the data
+^^^^^^^^^^^^^^^
 
 .. py:method:: Smilei.Scalar.getData(...)
                Smilei.Field.getData(...)
                Smilei.Probe.getData(...)
                Smilei.ParticleDiagnostic.getData(...)
                Smilei.Screen.getData(...)
+               Smilei.TrackParticles.getData(...)
+
+  Returns a list of the data arrays (one element for each timestep requested).
+  In the case of ``TrackParticles``, this method returns a dictionary containing one
+  entry for each axis, and if ``sort==True``, these entries are included inside an entry
+  for each timestep.
   
-  Returns a list of the data arrays, for each timestep requested.
-  By default, all timesteps are returned. If only one is desired, use the 
-  keyword-argument ``timestep`` in the ``getData()`` method.
+  All these methods have the following syntax.
+
+  .. py:function:: getData( timestep=None )
   
+  where ``timestep``, if specified, is the only timestep number that is read and returned.
+  
+  **Example**::
+  
+      S = Smilei("path/to/results") # Open the simulation
+      Diag = S.Field(0, "Ex")       # Open Ex in the first Field diag
+      result = Diag.getData()       # Get list of Ex arrays (one for each time)
+
+
 .. py:method:: Smilei.Scalar.get()
                Smilei.Field.get()
                Smilei.Probe.get()
                Smilei.ParticleDiagnostic.get()
                Smilei.Screen.get()
+               Smilei.TrackParticles.get()
   
-  Similar to :py:meth:`getData`, but returns more things as a python dictionary:
+  Similar to :py:meth:`getData`, but returns a python dictionary containing various information:
   
   * ``get()["data"]`` is the same as ``getData()``.
   * ``get()["times"]`` is a list of the requested timesteps.
   * ``get()[myaxis]`` gives the locations of the axis bins. For instance ``get()["x"]``.
-
-
-**Example**::
+  
+  Exception: ``TrackParticles`` has no difference between ``get()`` and ``getData()``.
+  
+  **Example**::
     
-    S = Smilei("path/to/my/results")
-    Diag = S.ParticleDiagnostic(diagNumber=3, slice={"ekin":[1,10]})
-    result = Diag.get()
+      S = Smilei("path/to/results")  # Open the simulation
+      Diag = S.ParticleDiagnostic(3) # Open fourth particle diag
+      result = Diag.get()            # Get the data
+      result["data"] # This has the same value as Diag.getData()
+      result["x"]    # This has the locations of the diag's bins along x
+    
 
-..
-
-  This will take the particle diagnostic #3 and sum for all energies between 1 and 10.
-  The results are stored in the variable ``result``.
-  The data can be accessed with ``result["data"]``.
-  If one of the axes is ``"x"``, you can access the locations of the bins with ``result["x"]``. 
+.. py:method:: Smilei.TrackParticles.iterParticles(timestep, chunksize=1)
+  
+  This method, specific to the tracked particles, provides a fast iterator on chunks of particles
+  for a given timestep. The argument ``chunksize`` is the number of particles in each chunk.
+  Note that the data is *not ordered* by particle ID, meaning that particles are not ordered
+  the same way from one timestep to another.
+  
+  The returned quantity for each iteration is a python dictionary containing key/value
+  pairs ``axis:array``, where ``axis`` is the name of the particle characteristic (``"x"``, 
+  ``"px"``, etc.) and ``array`` contains the corresponding particle values.
+  
+  **Example**::
+     
+      S = Smilei("path/to/my/results")        # Open the simulation
+      Diag = S.TrackParticles("my_particles") # Open the tracked particles
+      npart = 0
+      sum_px = 0.
+      # Loop particles of timestep 100 by chunks of 10000
+      for particle_chunk in Diag.iterParticles(100, chunksize=10000):
+          npart  += particle_chunk["px"].size
+          sum_px += particle_chunk["px"].sum()
+      # Calculate the average px
+      mean_px = sum_px / npart
 
 ----
 

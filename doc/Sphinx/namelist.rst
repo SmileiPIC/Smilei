@@ -734,7 +734,7 @@ External fields
 An external field can be applied using an ``ExtField`` block::
 
   ExtField(
-      fields = ["Ex"],
+      field = "Ex",
       profile = constant(0.01, xvacuum=0.1)
   )
 

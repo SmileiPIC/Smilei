@@ -163,6 +163,37 @@ public:
 
     virtual double norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]) = 0;
 
+    double sum(unsigned int istart[3][2], unsigned int bufsize[3][2]) {
+        double sum(0.);
+    
+        int idxlocalstart[3];
+        int idxlocalend[3];
+        int globalsize[3];
+        for ( int i=0 ; i<3 ; i++ ) {
+            if ( i < (int) isDual_.size() ) {
+                idxlocalstart[i] = istart[i][isDual_[i]];
+                idxlocalend[i]   = istart[i][isDual_[i]]+bufsize[i][isDual_[i]];
+                globalsize[i]    = dims_[i];
+            }
+            else {
+
+                idxlocalstart[i] = 0;
+                idxlocalend[i]   = 1;
+                globalsize[i]    = 1;
+            }
+        }
+        for ( int i=idxlocalstart[0] ; i<idxlocalend[0] ; i++ ) {
+            for ( int j=idxlocalstart[1] ; j<idxlocalend[1] ; j++ ) {
+                for ( int k=idxlocalstart[2] ; k<idxlocalend[2] ; k++ ) {
+                    unsigned int ii = k+ (j + i*globalsize[1]) *globalsize[2];
+                    sum += data_[ii];
+                }
+            }
+        }
+    
+        return sum;
+    }
+
     inline long double norm() {
         long double sum(0.);
         for (unsigned int i=0;i<globalDims_;i++) sum+= data_[i]*data_[i];

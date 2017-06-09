@@ -152,7 +152,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         //create patch without particle.
         mypatch = PatchesFactory::clone(vecPatches(0),params, smpi, h0 + patch_to_be_created[my_thread][j], n_moved, false );
         mypatch->finalizeMPIenvironment();
-        mypatch->EMfields->laserDisabled();
         //Position new patch
         vecPatches.patches_[patch_to_be_created[my_thread][j]] = mypatch ;
         //Receive Patch if necessary
@@ -160,6 +159,19 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], (mypatch->hindex)*nmessage, params );
             patch_to_be_created[my_thread][j] = nPatches ; //Mark no needs of particles
         }
+        else { // Must force particles creation, see in SpeciesFactory :
+            // if (params.restart)
+            //     thisSpecies->particles->initialize( 0, params.nDim_particle );
+            if (params.restart)
+                for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++)
+                    mypatch->vecSpecies[ispec]->createParticles(params.n_space, params, mypatch, 0 );
+            // We define the IDs of the new particles
+            for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ )
+                if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) )
+                    track->setIDs( mypatch );
+        }
+        mypatch->EMfields->laserDisabled();
+        mypatch->EMfields->updateGridSize(params, mypatch);
 
     }
 
@@ -205,7 +217,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             }
             mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create(params, mypatch);
             mypatch->EMfields->laserDisabled();
-           
+            mypatch->EMfields->updateGridSize(params, mypatch);
+
         }
     }
     
@@ -245,15 +258,40 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         vecPatches.lastIterationPatchesMoved = itime;
     }
 
+    std::vector<double> poynting[2];
+    poynting[0].resize(params.nDim_field,0.0);
+    poynting[1].resize(params.nDim_field,0.0);
+
     //Delete useless patches
     for (unsigned int j=0; j < delete_patches_.size(); j++){
         mypatch = delete_patches_[j];
-        
-        energy_field_lost += mypatch->EMfields->computeNRJ();
-        for ( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ )
-            energy_part_lost[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
-        
+
+        if (mypatch->isXmin()) {
+            energy_field_lost += mypatch->EMfields->computeNRJ();
+            for ( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ )
+                energy_part_lost[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
+        }
+
+        for (unsigned int j=0; j<2;j++) //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+            for (unsigned int i=0 ; i<params.nDim_field ; i++) //axis 0=x, 1=y, 2=z
+                poynting[j][i] += mypatch->EMfields->poynting[j][i];
+
+
         delete  mypatch;
     }
+
+    // SUM energy_field_lost, energy_part_lost and poynting / All threads
+    #pragma omp critical 
+    {
+        vecPatches(0)->EMfields->storeNRJlost( energy_field_lost );
+        for ( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ )
+            vecPatches(0)->vecSpecies[ispec]->storeNRJlost( energy_part_lost[ispec] );
+
+        for (unsigned int j=0; j<2;j++) //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+            for (unsigned int i=0 ; i< params.nDim_field ; i++) //axis 0=x, 1=y, 2=z
+                vecPatches(0)->EMfields->poynting[j][i] += poynting[j][i];
+    }
+
+    
 
 }

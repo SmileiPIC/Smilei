@@ -28,6 +28,8 @@ nDim_field     ( params.nDim_field ),
 cell_volume    ( params.cell_volume),
 n_space        ( params.n_space    ),
 oversize       ( params.oversize   ),
+isXmin(patch->isXmin()),
+isXmax(patch->isXmax()),
 nrj_mw_lost    (  0.               ),
 nrj_new_fields (  0.               )
 {
@@ -58,6 +60,8 @@ nDim_field     ( emFields->nDim_field  ),
 cell_volume    ( emFields->cell_volume ),
 n_space        ( emFields->n_space     ),
 oversize       ( emFields->oversize    ),
+isXmin(patch->isXmin()),
+isXmax(patch->isXmax()),
 nrj_mw_lost    ( 0. ),
 nrj_new_fields ( 0. )
 {
@@ -210,6 +214,33 @@ ElectroMagn::~ElectroMagn()
     }*/
 
 }//END Destructer
+
+
+void ElectroMagn::updateGridSize(Params &params, Patch* patch)
+{
+    isXmin = patch->isXmin();
+    isXmax = patch->isXmax();
+
+    unsigned int i=0;
+    {
+        for (int isDual=0 ; isDual<2 ; isDual++)
+            bufsize[i][isDual] = n_space[i] + 1;
+        
+        for (int isDual=0 ; isDual<2 ; isDual++) {
+            bufsize[i][isDual] += isDual;
+            if ( params.number_of_patches[i]!=1 ) {
+                
+                if ( ( !isDual ) )
+                    bufsize[i][isDual]--;
+                else if  (isDual) {
+                    bufsize[i][isDual]--;
+                    bufsize[i][isDual]--;
+                }
+                
+            } // if ( params.number_of_patches[i]!=1 )
+        } // for (int isDual=0 ; isDual
+    } // for (unsigned int i=0)
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------
