@@ -17,7 +17,6 @@ before_install:
 
 script:
   - git fetch -t
-  - HDF5_ROOT_DIR=/usr/local make
   - travis-sphinx -n --source=doc/Sphinx build
 
 after_success:
