@@ -80,7 +80,7 @@ void RadiationTables::initParams(Params& params)
             PyTools::extract("output_format", output_format, "RadiationLoss");
 
             log10_chipa_xip_min = log10(chipa_xip_min);
-
+            inv_chiph_xip_dim_minus_one = 1./(chiph_xip_dim - 1.);
         }
     }
 
@@ -135,7 +135,8 @@ double RadiationTables::compute_chiph_emission(double chipa)
     int ichipa;
     int ichiph;
     // For the interpolation
-    double chiphm,chiphp;
+    double log10_chiphm;
+    double log10_chiphp;
     double d;
     int ixip;
 
@@ -193,24 +194,23 @@ double RadiationTables::compute_chiph_emission(double chipa)
     // --------------------------------------------------------------------
 
     // Corresponding chipa for ichipa
-    logchipa = ichipa*chipa_xip_delta+log10(chipa_xip_min);
+    logchipa = ichipa*chipa_xip_delta+log10_chipa_xip_min;
 
     // Delta for the corresponding chipa
     chiph_xip_delta = (logchipa - xip_chiphmin_table[ichipa])
-                    /(chiph_xip_dim-1);
+                    *inv_chiph_xip_dim_minus_one;
 
     // Computation of the final chiph by interpolation
-    chiphm = ichiph*chiph_xip_delta
+    log10_chiphm = ichiph*chiph_xip_delta
            + xip_chiphmin_table[ichipa];
-    chiphp = (ichiph+1)*chiph_xip_delta
-           + xip_chiphmin_table[ichipa];
+    log10_chiphp = log10_chiphm + chiph_xip_delta;
 
     ixip = ichipa*chiph_xip_dim + ichiph;
 
     d = (xip - xip_table[ixip]) / (xip_table[ixip+1] - xip_table[ixip]);
 
     // Chiph after linear interpolation in the logarithmic scale
-    chiph = pow(10.,chiphm*(1.0-d) + chiphp*(d));
+    chiph = pow(10.,log10_chiphm*(1.0-d) + log10_chiphp*(d));
 
     // ------------------------------------------------------------
     // Compute chiph
@@ -388,15 +388,18 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
                 chipa_xip_dim*chiph_xip_dim, MPI_DOUBLE,smpi->getGlobalComm());
         }
 
-       // Computation of the delta
-       chipa_xip_delta = (log10(chipa_xip_max)
-               - log10(chipa_xip_min))/(chipa_xip_dim-1);
+        // Log10 of chipa_xip_min for efficiency
+        log10_chipa_xip_min = log10(chipa_xip_min);
 
-       // Inverse of delta
-       inv_chipa_xip_delta = 1./chipa_xip_delta;
+        // Computation of the delta
+        chipa_xip_delta = (log10(chipa_xip_max)
+               - log10_chipa_xip_min)/(chipa_xip_dim-1);
 
-       // Log10 of chipa_xip_min for efficiency
-       log10_chipa_xip_min = log10(chipa_xip_min);
+        // Inverse of delta
+        inv_chipa_xip_delta = 1./chipa_xip_delta;
+
+        // Inverse chiph discetization (regularly used)
+        inv_chiph_xip_dim_minus_one = 1./(chiph_xip_dim - 1.);
 
     }
     // else the table is generated
@@ -438,7 +441,7 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 
         // Computation of the delta
         chipa_xip_delta = (log10(chipa_xip_max)
-                - log10(chipa_xip_min))/(chipa_xip_dim-1);
+                - log10_chipa_xip_min)/(chipa_xip_dim-1);
 
         // Inverse of delta
         inv_chipa_xip_delta = 1./chipa_xip_delta;
@@ -465,7 +468,7 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
         }
 
         // 1. - Computation of xip_chiphmin_table
-        MESSAGE("            Computation of chiphmin:");
+        MESSAGE("            Computation of log10(chiphmin):");
         dpct = std::max(dpct,100./length_table[rank]);
 
         // Loop for chiphmin
@@ -473,8 +476,9 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
         {
 
             xip = 1;
-            chipa = pow(10.,(imin_table[rank] + ichipa)*chipa_xip_delta + log10(chipa_xip_min));
-            logchiphmin = log10(chipa);
+            logchiphmin = (imin_table[rank] + ichipa)*chipa_xip_delta
+                  + log10_chipa_xip_min;
+            chipa = pow(10.,logchiphmin);
 
             // Denominator of xip
             denominator = RadiationTables::compute_integfochi(chipa,
@@ -531,7 +535,7 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
         for(int ichipa = 0 ; ichipa < length_table[rank] ; ichipa++)
         {
 
-            chipa = pow(10.,(imin_table[rank] + ichipa)*chipa_xip_delta + log10(chipa_xip_min));
+            chipa = pow(10.,(imin_table[rank] + ichipa)*chipa_xip_delta + log10_chipa_xip_min);
 
             chiph_delta = (log10(chipa) - xip_chiphmin_table[imin_table[rank] + ichipa])
                         / (chiph_xip_dim - 1);

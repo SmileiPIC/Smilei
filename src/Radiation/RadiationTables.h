@@ -180,6 +180,9 @@ class RadiationTables
         //! Dimension of the discretized parameter chiph
         int chiph_xip_dim;
 
+        //! 1/(chiph_xip_dim - 1)
+        double inv_chiph_xip_dim_minus_one;
+
         //! xip power
         double xip_power;
 
