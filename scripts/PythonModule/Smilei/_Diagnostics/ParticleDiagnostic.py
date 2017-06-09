@@ -95,7 +95,7 @@ class ParticleDiagnostic(Diagnostic):
 			items = sorted(items.items())
 			self._h5items[d] = [it[1] for it in items]
 			self.times[d] = self._np.array([ int(it[0].strip("timestep")) for it in items ])
-			self._times[d] = self.times[d][:]
+			self._times[d] = self._np.copy(self.times[d])
 			# fill the "_indexOfTime" dictionary with indices to the data arrays
 			self._indexOfTime.update({ d:{} })
 			for i,t in enumerate(self.times[d]):

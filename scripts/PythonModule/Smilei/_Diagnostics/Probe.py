@@ -129,13 +129,13 @@ class Probe(Diagnostic):
 		# -------------------------------------------------------------------
 		# Fabricate all axes values
 		self._naxes = self._initialShape.size
-		self._finalShape = self._initialShape[:]
+		self._finalShape = self._np.copy(self._initialShape)
 		self._averageinfo = {}
 		self._averages = [False] * self._naxes
 		self._selection = []
 		p = []
 		for iaxis in range(self._naxes):
-		
+			
 			# calculate grid points locations
 			p0 = self._myinfo["p0"            ] # reference point
 			pi = self._myinfo["p"+str(iaxis+1)] # end point of this axis
@@ -152,8 +152,9 @@ class Probe(Diagnostic):
 				
 				self._averages[iaxis] = True
 				
+				distances = self._np.sqrt(self._np.sum((centers-centers[0])**2,axis=1))
 				self._averageinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
-					= self._selectRange(average[label], centers, label, axisunits, "average")
+					= self._selectRange(average[label], distances, label, axisunits, "average")
 				
 			else:
 				self._type   .append(label)

@@ -49,7 +49,7 @@ class TrackParticles(Diagnostic):
 			for it, t in enumerate(f["Times"]):
 				self._locationForTime[t] = it
 			self.times = self._np.array(sorted(f["Times"]))
-			self._times = self.times[:]
+			self._times = self._np.copy(self.times)
 			self.nParticles = self._h5items["Id"].shape[1]
 
 		# If sorting not allowed, only find the available times
@@ -62,7 +62,7 @@ class TrackParticles(Diagnostic):
 					self._locationForTime[int(t)] = [f, it]
 					self.times += [int(t)]
 			self.times = self._np.array(self.times)
-			self._times = self.times[:]
+			self._times = self._np.copy(self.times)
 		
 		# Get available times in the hdf5 file
 		if self.times.size == 0:

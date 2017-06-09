@@ -121,7 +121,7 @@ class Field(Diagnostic):
 		# -------------------------------------------------------------------
 		self._naxes = self._ndim
 		self._averageinfo = {}
-		self._finalShape = self._initialShape[:]
+		self._finalShape = self._np.copy(self._initialShape)
 		self._averages = [False]*self._ndim
 		self._selection = []
 		for iaxis in range(self._naxes):

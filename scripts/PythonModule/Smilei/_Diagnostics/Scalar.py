@@ -62,7 +62,7 @@ class Scalar(Diagnostic):
 					times_values[ int( self._np.round(float(line[0]) / float(self.timestep)) ) ] = float(line[scalarindex])
 		self._times  = self._np.array(sorted(times_values.keys()))
 		self._values = self._np.array([times_values[k] for k in self._times])
-		self.times = self._times[:]
+		self.times = self._np.copy(self._times)
 		
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
