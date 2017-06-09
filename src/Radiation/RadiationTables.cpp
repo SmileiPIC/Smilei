@@ -79,6 +79,8 @@ void RadiationTables::initParams(Params& params)
             PyTools::extract("chiph_xip_dim", chiph_xip_dim, "RadiationLoss");
             PyTools::extract("output_format", output_format, "RadiationLoss");
 
+            log10_chipa_xip_min = log10(chipa_xip_min);
+
         }
     }
 
@@ -143,7 +145,7 @@ double RadiationTables::compute_chiph_emission(double chipa)
     // index of chipa in xip_table
     // -------------------------------
     // Use floor so that chipa corresponding to ichipa is <= given chipa
-    ichipa = int(floor((logchipa-log10(chipa_xip_min))*(inv_chipa_xip_delta)));
+    ichipa = int(floor((logchipa-log10_chipa_xip_min)*(inv_chipa_xip_delta)));
 
     // Checking that ichipa is in the range of the tables
     // Else we use the values at the boundaries
@@ -194,14 +196,14 @@ double RadiationTables::compute_chiph_emission(double chipa)
     logchipa = ichipa*chipa_xip_delta+log10(chipa_xip_min);
 
     // Delta for the corresponding chipa
-    chiph_xip_delta = (logchipa - log10(xip_chiphmin_table[ichipa]))
+    chiph_xip_delta = (logchipa - xip_chiphmin_table[ichipa])
                     /(chiph_xip_dim-1);
 
     // Computation of the final chiph by interpolation
     chiphm = ichiph*chiph_xip_delta
-           + log10(xip_chiphmin_table[ichipa]);
+           + xip_chiphmin_table[ichipa];
     chiphp = (ichiph+1)*chiph_xip_delta
-           + log10(xip_chiphmin_table[ichipa]);
+           + xip_chiphmin_table[ichipa];
 
     ixip = ichipa*chiph_xip_dim + ichiph;
 
@@ -286,6 +288,12 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 
                 // Read the table values
                 file.read((char*)&xip_chiphmin_table[0], sizeof (double)*chipa_xip_dim);
+
+                // Temporary
+                for (int i = 0 ; i < chipa_xip_dim ; i++)
+                {
+                    xip_chiphmin_table[i] = log10(xip_chiphmin_table[i]);
+                }
 
                 // Read the table values
                 file.read((char*)&xip_table[0], sizeof (double)*chipa_xip_dim*chiph_xip_dim);
@@ -386,6 +394,9 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 
        // Inverse of delta
        inv_chipa_xip_delta = 1./chipa_xip_delta;
+
+       // Log10 of chipa_xip_min for efficiency
+       log10_chipa_xip_min = log10(chipa_xip_min);
 
     }
     // else the table is generated
@@ -492,7 +503,7 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
                     k += 1;
                 }
             }
-            buffer[ichipa] = pow(10.,logchiphmin);
+            buffer[ichipa] = logchiphmin;
 
             // display percentage
             if (100.*ichipa >= length_table[rank]*pct)
@@ -522,7 +533,7 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 
             chipa = pow(10.,(imin_table[rank] + ichipa)*chipa_xip_delta + log10(chipa_xip_min));
 
-            chiph_delta = (log10(chipa) - log10(xip_chiphmin_table[imin_table[rank] + ichipa]))
+            chiph_delta = (log10(chipa) - xip_chiphmin_table[imin_table[rank] + ichipa])
                         / (chiph_xip_dim - 1);
 
             // Denominator of xip
@@ -533,7 +544,7 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
             for (int ichiph = 0 ; ichiph < chiph_xip_dim ; ichiph ++)
             {
                 // Local chiph value
-               chiph = pow(10.,ichiph*chiph_delta + log10(xip_chiphmin_table[imin_table[rank] + ichipa]));
+               chiph = pow(10.,ichiph*chiph_delta + xip_chiphmin_table[imin_table[rank] + ichipa]);
 
                /* std::cout << "rank: " << rank
                          << " " << chipa
@@ -610,12 +621,6 @@ void RadiationTables::output_xip_table()
                  << chiph_xip_dim << " "
                  << chipa_xip_min << " "
                  << chipa_xip_max << "\n";;
-
-            // Loop over the xip_chiphmin values
-            for(int i = 0 ; i < chipa_xip_dim ; i++)
-            {
-                file <<  xip_chiphmin_table[i] << "\n";
-            }
 
             // Loop over the xip values
             for(int ichipa = 0 ; ichipa < chipa_xip_dim ; ichipa++)
