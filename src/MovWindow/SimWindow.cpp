@@ -43,10 +43,11 @@ SimWindow::SimWindow(Params& params)
     x_moved = 0.;      //The window has not moved at t=0. Warning: not true anymore for restarts.
     n_moved = 0 ;      //The window has not moved at t=0. Warning: not true anymore for restarts.
 
-    if (velocity_x != 0. && params.bc_em_type_x[0] == "periodic")
-        ERROR("Periodic topology in the moving window direction is neither encouraged nor supported");
     
     if( active ) {
+        if (velocity_x != 0. && params.bc_em_type_x[0] == "periodic")
+            ERROR("Periodic topology in the moving window direction is neither encouraged nor supported");
+        
         MESSAGE(1,"Moving window is active:");
         MESSAGE(2,"velocity_x : " << velocity_x);
         MESSAGE(2,"time_start : " << time_start);
