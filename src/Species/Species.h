@@ -177,7 +177,7 @@ public:
     //! Ionization method
     Ionization* Ionize;
 
-    //! Nonlinear inverse Compton Scattering
+    //! Radiation method (Continuous or Monte-Carlo)
     Radiation * Radiate;
 
     //! Pointer to the species where field-ionized electrons go

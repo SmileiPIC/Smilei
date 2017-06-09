@@ -148,8 +148,8 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
         if (! vecPatches(0)->vecSpecies[ispec]->particles->isTest) {
             species_type = vecPatches(0)->vecSpecies[ispec]->species_type;
             necessary_species[ispec] = necessary_Ukin || allowedKey("Dens_"+species_type)
-                                                      ||  allowedKey("Ntot_"+species_type)
-                                                      ||  allowedKey("Zavg_"+species_type)
+                                                      || allowedKey("Ntot_"+species_type)
+                                                      || allowedKey("Zavg_"+species_type)
                                                       || allowedKey("Ukin_"+species_type);
         }
     }
@@ -184,7 +184,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     // 2 - Prepare the Scalar* objects that will contain the data
     // ----------------------------------------------------------
 
-    values_SUM   .reserve( 12 + nspec*4 + 6 + 2*npoy);
+    values_SUM   .reserve( 12 + nspec*5 + 6 + 2*npoy);
     values_MINLOC.reserve( 10 );
     values_MAXLOC.reserve( 10 );
 
@@ -207,6 +207,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     sNtot.resize(nspec, NULL);
     sZavg.resize(nspec, NULL);
     sUkin.resize(nspec, NULL);
+    sUrad.resize(nspec, NULL);
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         if (! vecPatches(0)->vecSpecies[ispec]->particles->isTest) {
             species_type = vecPatches(0)->vecSpecies[ispec]->species_type;
@@ -214,6 +215,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
             sNtot[ispec] = newScalar_SUM( "Ntot_"+species_type );
             sZavg[ispec] = newScalar_SUM( "Zavg_"+species_type );
             sUkin[ispec] = newScalar_SUM( "Ukin_"+species_type );
+            sUrad[ispec] = newScalar_SUM( "Urad_"+species_type );
         }
     }
 
@@ -331,7 +333,7 @@ void DiagnosticScalar::write(int itime, SmileiMPI* smpi)
 } // END write
 
 
-
+//! Compute the various scalars when requested
 void DiagnosticScalar::compute( Patch* patch, int timestep )
 {
     ElectroMagn* EMfields = patch->EMfields;
@@ -369,6 +371,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             *sDens[ispec] += cell_volume * density;
             *sZavg[ispec] += cell_volume * charge;
             *sUkin[ispec] += cell_volume * ener_tot;
+            *sUrad[ispec] += 0;
 
             // incremement the total kinetic energy
             Ukin_ += cell_volume * ener_tot;

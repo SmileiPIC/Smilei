@@ -10,10 +10,10 @@ class Params;
 class SmileiMPI;
 
 
-//! double-int structure to communicate min/max and location trough MPI 
+//! double-int structure to communicate min/max and location trough MPI
 struct val_index
 {
-    //! min/max 
+    //! min/max
     double val;
     //! cell location index
     int index;
@@ -85,33 +85,33 @@ public :
 
     //! Default destructor
     ~DiagnosticScalar() override;
-    
+
     void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
-    
+
     void closeFile() override;
-    
+
     void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
-    
+
     bool prepare( int timestep ) override;
-    
+
     void run( Patch* patch, int timestep, SimWindow* simWindow ) override;
-    
+
     void write(int timestep, SmileiMPI* smpi) override;
-    
+
     virtual bool needsRhoJs(int timestep) override;
-    
+
     //! get a particular scalar
     double getScalar(std::string name);
-    
+
     //! initial energy (kinetic + EM)
     double Energy_time_zero;
-    
+
     //! energy used for the normalization of energy balance (always uses current energy for normalization)
     double EnergyUsedForNorm;
-    
+
     //! Compute the various scalars when requested
     void compute( Patch* patch, int timestep );
-    
+
     //! Latest timestep dumped
     int latest_timestep;
 
@@ -121,26 +121,26 @@ public :
     }
 
 private :
-    
+
     //! Calculate the length of a string when output to the file
     unsigned int calculateWidth( std::string key);
-    
+
     //! sets a scalar in the list of scalars (for initialization)
     Scalar_value* newScalar_SUM( std::string name );
     //! sets a scalar in the list of scalars (for initialization), in the case of min scalar
     Scalar_value_location* newScalar_MINLOC( std::string name );
     //! sets a scalar in the list of scalars (for initialization), in the case of max scalar
     Scalar_value_location* newScalar_MAXLOC( std::string name );
-    
+
     //! check if key is allowed
     bool allowedKey(std::string);
-    
+
     //! write precision
     unsigned int precision;
-    
+
     //! list of keys for scalars to be written
     std::vector<std::string> vars;
-    
+
     //! The list of scalars data
     std::vector<Scalar*> allScalars;
     //! List of scalar values to be summed by MPI
@@ -149,33 +149,33 @@ private :
     std::vector<val_index> values_MINLOC;
     //! List of scalar values to be MAXLOCed by MPI
     std::vector<val_index> values_MAXLOC;
-    
+
     //! Volume of a cell (copied from params)
     double cell_volume;
-    
+
     //! Time resolution (copied from params)
     double res_time;
-    
+
     //! Timestep (copied from params)
     double dt;
-    
+
     //! Number of cells in a patch (copied from params)
     std::vector<unsigned int> n_space;
-    
+
     //! Overall number of cells (copied from params)
     std::vector<unsigned int> n_space_global;
-    
+
     //! output stream
     std::ofstream fout;
-    
+
     //! Pointers to the various scalars
     Scalar_value *Utot, *Uexp, *Ubal, *Ubal_norm;
     Scalar_value *Uelm, *Ukin, *Uelm_bnd, *Ukin_bnd;
     Scalar_value *Ukin_out_mvw, *Ukin_inj_mvw, *Uelm_out_mvw, *Uelm_inj_mvw;
-    std::vector<Scalar_value *> sDens, sNtot, sZavg, sUkin, fieldUelm;
+    std::vector<Scalar_value *> sDens, sNtot, sZavg, sUkin, sUrad, fieldUelm;
     std::vector<Scalar_value_location *> fieldMin, fieldMax;
     std::vector<Scalar_value *> poy, poyInst;
-    
+
     //! Booleans to tell which scalars should be computed or not
     bool necessary_Ubal_norm, necessary_Ubal, necessary_Utot, necessary_Uexp;
     bool necessary_Ukin, necessary_Ukin_BC;
@@ -186,4 +186,3 @@ private :
 };
 
 #endif
-

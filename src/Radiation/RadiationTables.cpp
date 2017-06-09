@@ -119,6 +119,7 @@ void RadiationTables::initParams(Params& params)
 // ---------------------------------------------------------------------------------------------------------------------
 //! Computation of the photon quantum parameter chiph for emission
 //! ramdomly and using the tables xip and chiphmin
+//
 //! \param chipa particle quantum parameter
 // ---------------------------------------------------------------------------------------------------------------------
 double RadiationTables::compute_chiph_emission(double chipa)
@@ -138,8 +139,11 @@ double RadiationTables::compute_chiph_emission(double chipa)
 
     logchipa = log10(chipa);
 
+    // -------------------------------
     // index of chipa in xip_table
-    ichipa = int(floor( (logchipa-log10(chipa_xip_min))*(inv_chipa_xip_delta)));
+    // -------------------------------
+    // Use floor so that chipa corresponding to ichipa is <= given chipa
+    ichipa = int(floor((logchipa-log10(chipa_xip_min))*(inv_chipa_xip_delta)));
 
     // Checking that ichipa is in the range of the tables
     // Else we use the values at the boundaries
@@ -152,7 +156,9 @@ double RadiationTables::compute_chiph_emission(double chipa)
         ichipa = chipa_xip_dim-1;
     }
 
+    // ---------------------------------------
     // Search of the index ichiph for chiph
+    // ---------------------------------------
 
     // First, we compute a random xip in [0,1]
     xip = Rand::uniform();
@@ -179,39 +185,36 @@ double RadiationTables::compute_chiph_emission(double chipa)
             &xip_table[ichipa*chiph_xip_dim],xip,chiph_xip_dim);
     }
 
+    // --------------------------------------------------------------------
+    // Compute chiph
+    // This method is slow but more accurate than taking the nearest point
+    // --------------------------------------------------------------------
+
+    // Corresponding chipa for ichipa
+    logchipa = ichipa*chipa_xip_delta+log10(chipa_xip_min);
+
     // Delta for the corresponding chipa
     chiph_xip_delta = (logchipa - log10(xip_chiphmin_table[ichipa]))
                     /(chiph_xip_dim-1);
 
     // Computation of the final chiph by interpolation
-    // This method is slow but more accurate than taking the nearest point
-    chiphm = pow(10.,ichiph*chiph_xip_delta
-           + log10(xip_chiphmin_table[ichipa]));
-    chiphp = pow(10.,(ichiph+1)*chiph_xip_delta
-           + log10(xip_chiphmin_table[ichipa]));
+    chiphm = ichiph*chiph_xip_delta
+           + log10(xip_chiphmin_table[ichipa]);
+    chiphp = (ichiph+1)*chiph_xip_delta
+           + log10(xip_chiphmin_table[ichipa]);
 
     ixip = ichipa*chiph_xip_dim + ichiph;
 
     d = (xip - xip_table[ixip]) / (xip_table[ixip+1] - xip_table[ixip]);
 
-    /*if (d<0)
-    {
-        std::cerr << "d: " << d << " "
-                << "chipa: " << chipa << " "
-                << "xip_table[ichipa*chiph_xip_dim]" << xip_table[ichipa*chiph_xip_dim] << " "
-                << "ixip: " << ixip << " "
-                << "ichiph: " << ichiph << " "
-                << "ichipa: " << ichipa << " "
-                << "xip_table[ixip]: " << xip_table[ixip] << " < "
-                << "xip: " << xip << " < "
-                << "xip_table[ixip+1]: " << xip_table[ixip+1] << " "
-                << "chiphm: " << chiphm << " "
-                << std::endl;
-    }*/
+    // Chiph after linear interpolation in the logarithmic scale
+    chiph = pow(10.,chiphm*(1.0-d) + chiphp*(d));
 
-    chiph = chiphm*(1.0-d) + chiphp*(d);
+    // ------------------------------------------------------------
+    // Compute chiph
+    // Fastest method using the nearest point but less accurate
+    // ------------------------------------------------------------
 
-    // Fastest method using the nearest point
     //chiph = pow(10.,ichiph*chiph_xip_delta
     //       + log10(xip_chiphmin_table[ichipa]));
 
