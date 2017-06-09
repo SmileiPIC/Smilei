@@ -12,7 +12,7 @@
 #ifndef RADIATIONNLICSMC_H
 #define RADIATIONNLICSMC_H
 
-#include "NlicsTables.h"
+#include "RadiationTables.h"
 #include "Radiation.h"
 #include "userFunctions.h"
 
@@ -36,7 +36,7 @@ class RadiationNlicsMC : public Radiation {
         //! \param particles   particle object containing the particle
         //!                    properties
         //! \param smpi        MPI properties
-        //! \param nlicsTables Cross-section data tables and useful functions
+        //! \param RadiationTables Cross-section data tables and useful functions
         //                     for nonlinear inverse Compton scattering
         //! \param istart      Index of the first particle
         //! \param iend        Index of the last particle
@@ -44,7 +44,7 @@ class RadiationNlicsMC : public Radiation {
         // ---------------------------------------------------------------------
         virtual void operator() (Particles &particles,
                 SmileiMPI* smpi,
-                NlicsTables &nlicsTables,
+                RadiationTables &RadiationTables,
                 int istart,
                 int iend,
                 int ithread);
@@ -57,7 +57,7 @@ class RadiationNlicsMC : public Radiation {
         //! \param px             particle momentum in x
         //! \param py             particle momentum in y
         //! \param pz             particle momentum in z
-        //! \param nlicsTables    Cross-section data tables and useful functions
+        //! \param RadiationTables    Cross-section data tables and useful functions
         //                        for nonlinear inverse Compton scattering
         // ---------------------------------------------------------------------
         void photon_emission(double &chipa,
@@ -65,7 +65,7 @@ class RadiationNlicsMC : public Radiation {
                              double & px,
                              double & py,
                              double & pz,
-                             NlicsTables &nlicsTables);
+                             RadiationTables &RadiationTables);
 
     protected:
 

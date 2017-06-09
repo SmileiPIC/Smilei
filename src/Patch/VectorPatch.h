@@ -17,7 +17,7 @@
 #include "SmileiMPI.h"
 #include "SimWindow.h"
 #include "Timers.h"
-#include "NlicsTables.h"
+#include "RadiationTables.h"
 
 class Field;
 class Timer;
@@ -91,7 +91,7 @@ public :
     void dynamics(Params& params,
                   SmileiMPI* smpi,
                   SimWindow* simWindow,
-                  NlicsTables & nlicsTables,double time_dual,
+                  RadiationTables & RadiationTables,double time_dual,
                   Timers &timers, int itime);
 
     void finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWindow* simWindow, double time_dual,

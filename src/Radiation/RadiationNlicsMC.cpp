@@ -38,7 +38,7 @@ RadiationNlicsMC::~RadiationNlicsMC()
 //
 //! \param particles   particle object containing the particle properties
 //! \param smpi        MPI properties
-//! \param nlicsTables Cross-section data tables and useful functions
+//! \param RadiationTables Cross-section data tables and useful functions
 //                     for nonlinear inverse Compton scattering
 //! \param istart      Index of the first particle
 //! \param iend        Index of the last particle
@@ -46,7 +46,7 @@ RadiationNlicsMC::~RadiationNlicsMC()
 // ---------------------------------------------------------------------------------------------------------------------
 void RadiationNlicsMC::operator() (Particles &particles,
         SmileiMPI* smpi,
-        NlicsTables &nlicsTables,
+        RadiationTables &RadiationTables,
         int istart,
         int iend,
         int ithread)
@@ -160,7 +160,7 @@ void RadiationNlicsMC::operator() (Particles &particles,
                 }*/
 
                 // from the cross section
-                temp = nlicsTables.compute_dNphdt(chipa,gamma);
+                temp = RadiationTables.compute_dNphdt(chipa,gamma);
 
                 // Time to discontinuous emission
                 // If this time is > the remaining iteration time,
@@ -191,7 +191,7 @@ void RadiationNlicsMC::operator() (Particles &particles,
                                            momentum[0][ipart],
                                            momentum[1][ipart],
                                            momentum[2][ipart],
-                                           nlicsTables);
+                                           RadiationTables);
 
                         /*std::cerr << "gammapa: " << gamma << " "
                                   << "Px: " << momentum[0][ipart] << " "
@@ -234,7 +234,7 @@ void RadiationNlicsMC::operator() (Particles &particles,
 
                 // Radiated energy during emission_time
                 rad_energy =
-                nlicsTables.compute_cont_rad_energy_Ridgers(chipa,
+                RadiationTables.compute_cont_rad_energy_Ridgers(chipa,
                                                              emission_time);
 
                 // Effect on the momentum
@@ -263,7 +263,7 @@ void RadiationNlicsMC::operator() (Particles &particles,
 //! \param px             particle momentum in x
 //! \param py             particle momentum in y
 //! \param pz             particle momentum in z
-//! \param nlicsTables    Cross-section data tables and useful functions
+//! \param RadiationTables    Cross-section data tables and useful functions
 //                        for nonlinear inverse Compton scattering
 // ---------------------------------------------------------------------------------------------------------------------
 void RadiationNlicsMC::photon_emission(double &chipa,
@@ -271,7 +271,7 @@ void RadiationNlicsMC::photon_emission(double &chipa,
                             double & px,
                             double & py,
                             double & pz,
-                            NlicsTables &nlicsTables)
+                            RadiationTables &RadiationTables)
 {
     // ____________________________________________________
     // Parameters
@@ -281,7 +281,7 @@ void RadiationNlicsMC::photon_emission(double &chipa,
     double new_norm_p;
 
     // Get the photon quantum parameter from the table xip
-    chiph = nlicsTables.compute_chiph_emission(chipa);
+    chiph = RadiationTables.compute_chiph_emission(chipa);
 
     // compute the photon gamma factor
     gammaph = chiph/chipa*(gammapa-1);

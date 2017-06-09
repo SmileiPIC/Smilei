@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------------
-//! \file NlicsTables.cpp
+//! \file RadiationTables.cpp
 //
 //! \brief This class contains the tables and the functions to generate them
 //! for the Nonlinear Inverse Compton Scattering
@@ -8,7 +8,7 @@
 //! See http://www.theses.fr/2015BORD0361
 // ----------------------------------------------------------------------------
 
-#include "NlicsTables.h"
+#include "RadiationTables.h"
 
 #include <cstring>
 #include <iostream>
@@ -19,9 +19,9 @@
 #include "userFunctions.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Constructor for NlicsTables
+// Constructor for RadiationTables
 // ---------------------------------------------------------------------------------------------------------------------
-NlicsTables::NlicsTables()
+RadiationTables::RadiationTables()
 {
     Integfochi.resize(0);
     xip_chiphmin_table.resize(0);
@@ -33,9 +33,9 @@ NlicsTables::NlicsTables()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Destructor for NlicsTables
+// Destructor for RadiationTables
 // ---------------------------------------------------------------------------------------------------------------------
-NlicsTables::~NlicsTables()
+RadiationTables::~RadiationTables()
 {
 }
 
@@ -45,7 +45,7 @@ NlicsTables::~NlicsTables()
 //
 //! \param params Object Params for the parameters from the input script
 // ---------------------------------------------------------------------------------------------------------------------
-void NlicsTables::initParams(Params& params)
+void RadiationTables::initParams(Params& params)
 {
 
     if (params.hasMCRadiation || params.hasContinuousRadiation)
@@ -121,7 +121,7 @@ void NlicsTables::initParams(Params& params)
 //! ramdomly and using the tables xip and chiphmin
 //! \param chipa particle quantum parameter
 // ---------------------------------------------------------------------------------------------------------------------
-double NlicsTables::compute_chiph_emission(double chipa)
+double RadiationTables::compute_chiph_emission(double chipa)
 {
     // Log10 of chipa
     double logchipa;
@@ -240,7 +240,7 @@ double NlicsTables::compute_chiph_emission(double chipa)
 //
 //! \param smpi Object of class SmileiMPI containing MPI properties
 // ---------------------------------------------------------------------------------------------------------------------
-void NlicsTables::compute_xip_table(SmileiMPI *smpi)
+void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 {
 
     // Parameters
@@ -463,7 +463,7 @@ void NlicsTables::compute_xip_table(SmileiMPI *smpi)
             logchiphmin = log10(chipa);
 
             // Denominator of xip
-            denominator = NlicsTables::compute_integfochi(chipa,
+            denominator = RadiationTables::compute_integfochi(chipa,
                     0.98e-40*chipa,0.98*chipa,200,1e-13);
 
             k = 0;
@@ -471,7 +471,7 @@ void NlicsTables::compute_xip_table(SmileiMPI *smpi)
             {
                 logchiphmin -= pow(0.1,k);
                 chiph = pow(10.,logchiphmin);
-                numerator = NlicsTables::compute_integfochi(chipa,
+                numerator = RadiationTables::compute_integfochi(chipa,
                     1e-40*chiph,chiph,200,1e-13);
 
                 if (numerator == 0)
@@ -523,7 +523,7 @@ void NlicsTables::compute_xip_table(SmileiMPI *smpi)
                         / (chiph_xip_dim - 1);
 
             // Denominator of xip
-            denominator = NlicsTables::compute_integfochi(chipa,
+            denominator = RadiationTables::compute_integfochi(chipa,
                     1e-40*chipa,chipa,250,1e-15);
 
             // Loop in the chiph dimension
@@ -538,7 +538,7 @@ void NlicsTables::compute_xip_table(SmileiMPI *smpi)
                          << " " << xip_chiphmin_table[imin_table[rank] + ichipa] << std::endl; */
 
                // Denominator of xip
-               numerator = NlicsTables::compute_integfochi(chipa,
+               numerator = RadiationTables::compute_integfochi(chipa,
                        1e-40*chiph,chiph,250,1e-15);
 
                // Update local buffer value
@@ -587,7 +587,7 @@ void NlicsTables::compute_xip_table(SmileiMPI *smpi)
 //! File output of xip_chiphmin_table and xip_table
 //
 // ---------------------------------------------------------------------------------------------------------------------
-void NlicsTables::output_xip_table()
+void RadiationTables::output_xip_table()
 {
 
     if (output_format == "ascii")
@@ -667,7 +667,7 @@ void NlicsTables::output_xip_table()
 //! \param chipa particle quantum parameter
 //! \param gfpa particle gamma factor
 // ---------------------------------------------------------------------------------------------------------------------
-double NlicsTables::compute_dNphdt(double chipa,double gfpa)
+double RadiationTables::compute_dNphdt(double chipa,double gfpa)
 {
 
     // Log of the particle quantum parameter chipa
@@ -726,7 +726,7 @@ double NlicsTables::compute_dNphdt(double chipa,double gfpa)
 //
 //! \param smpi Object of class SmileiMPI containing MPI properties
 // ---------------------------------------------------------------------------------------------------------------------
-void NlicsTables::compute_integfochi_table(SmileiMPI *smpi)
+void RadiationTables::compute_integfochi_table(SmileiMPI *smpi)
 {
 
     // Parameters
@@ -915,7 +915,7 @@ void NlicsTables::compute_integfochi_table(SmileiMPI *smpi)
         {
             chipa = pow(10.,(imin_table[rank] + i)*delta_chipa_integfochi + log10(chipa_integfochi_min));
 
-            buffer[i] = NlicsTables::compute_integfochi(chipa,
+            buffer[i] = RadiationTables::compute_integfochi(chipa,
                     0.98e-40*chipa,0.98*chipa,400,1e-15);
 
             //std::cout << rank << " " << buffer[i] << std::endl;
@@ -961,7 +961,7 @@ void NlicsTables::compute_integfochi_table(SmileiMPI *smpi)
 //! Ouput in a file of the table values of integfochi
 //
 // ---------------------------------------------------------------------------------------------------------------------
-void NlicsTables::output_integfochi_table()
+void RadiationTables::output_integfochi_table()
 {
 
     if (output_format == "ascii")
@@ -1034,14 +1034,14 @@ void NlicsTables::output_integfochi_table()
 //! \param nbit number of points for integration
 //! \param eps integration accuracy
 // ---------------------------------------------------------------------------------------------------------------------
-double NlicsTables::compute_integfochi(double chipa,
+double RadiationTables::compute_integfochi(double chipa,
         double chipmin,
         double chipmax,
         int nbit,
         double eps)
 {
 
-    //std::cout << "NlicsTables::compute_integfochi" << std::endl;
+    //std::cout << "RadiationTables::compute_integfochi" << std::endl;
 
     // Arrays for Gauss-Legendre integration
     double * gauleg_x = new double[nbit];
@@ -1065,7 +1065,7 @@ double NlicsTables::compute_integfochi(double chipa,
     for(i=0 ; i< nbit ; i++)
     {
         chiph = pow(10.,gauleg_x[i]);
-        sync_emi = NlicsTables::compute_sync_emissivity_ritus(chipa,chiph,200,1e-15);
+        sync_emi = RadiationTables::compute_sync_emissivity_ritus(chipa,chiph,200,1e-15);
         integ += gauleg_w[i]*sync_emi*log(10);
     }
 
@@ -1081,11 +1081,11 @@ double NlicsTables::compute_integfochi(double chipa,
 //! \param nbit number of iterations for the Gauss-Legendre integration
 //! \param eps epsilon for the modified bessel function
 // ---------------------------------------------------------------------------------------------------------------------
-double NlicsTables::compute_sync_emissivity_ritus(double chipa,
+double RadiationTables::compute_sync_emissivity_ritus(double chipa,
         double chiph, int nbit, double eps)
 {
 
-    //std::cout << "NlicsTables::compute_sync_emissivity_ritus" << std::endl;
+    //std::cout << "RadiationTables::compute_sync_emissivity_ritus" << std::endl;
 
     // The photon quantum parameter should be below the electron one
     if (chipa > chiph)
@@ -1146,13 +1146,13 @@ double NlicsTables::compute_sync_emissivity_ritus(double chipa,
 //! \param params list of simulation parameters
 //! \param smpi MPI parameters
 // ---------------------------------------------------------------------------------------------------------------------
-void NlicsTables::compute_tables(Params& params, SmileiMPI *smpi)
+void RadiationTables::compute_tables(Params& params, SmileiMPI *smpi)
 {
     // These tables are loaded only if if one species has Monte-Carlo Compton radiation
     if (params.hasMCRadiation)
     {
-        NlicsTables::compute_integfochi_table(smpi);
-        NlicsTables::compute_xip_table(smpi);
+        RadiationTables::compute_integfochi_table(smpi);
+        RadiationTables::compute_xip_table(smpi);
     }
 }
 
@@ -1160,16 +1160,16 @@ void NlicsTables::compute_tables(Params& params, SmileiMPI *smpi)
 // ---------------------------------------------------------------------------------------------------------------------
 //! Output the computed tables so that thay can be read at the next run.
 // ---------------------------------------------------------------------------------------------------------------------
-void NlicsTables::output_tables()
+void RadiationTables::output_tables()
 {
     // If tables have been computed, they are output on the disk
     // to be used for the next run
     if (integfochi_computed)
     {
-        NlicsTables::output_integfochi_table();
+        RadiationTables::output_integfochi_table();
     }
     if (xip_computed)
     {
-        NlicsTables::output_xip_table();
+        RadiationTables::output_xip_table();
     }
 }

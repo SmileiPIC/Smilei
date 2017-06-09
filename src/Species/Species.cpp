@@ -432,7 +432,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                        Projector* Proj, Params &params, bool diag_flag,
                        PartWalls* partWalls,
                        Patch* patch, SmileiMPI* smpi,
-                       NlicsTables & nlicsTables,
+                       RadiationTables & RadiationTables,
                        vector<Diagnostic*>& localDiags)
 {
     int ithread;
@@ -473,7 +473,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
             // Radiation losses: Nonlinear inverse Compton Scattering
             if (Radiate)
-                (*Radiate)(*particles, smpi, nlicsTables,
+                (*Radiate)(*particles, smpi, RadiationTables,
                          bmin[ibin], bmax[ibin], ithread );
 
             // Push the particles

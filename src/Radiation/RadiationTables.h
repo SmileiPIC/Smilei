@@ -1,16 +1,16 @@
 // ----------------------------------------------------------------------------
-//! \file NlicsTables.h
+//! \file RadiationTables.h
 //
 //! \brief This class contains the tables and the functions to generate them
 //! for the Nonlinear Inverse Compton Scattering
 //
-//! \details This header contains the definition of the class NlicsTables.
+//! \details This header contains the definition of the class RadiationTables.
 //! The implementation is adapted from the thesis results of M. Lobet
 //! See http://www.theses.fr/2015BORD0361
 // ----------------------------------------------------------------------------
 
-#ifndef NLICSTABLES_H
-#define NLICSTABLES_H
+#ifndef RADIATIONTABLES_H
+#define RADIATIONTABLES_H
 
 #include <iostream>
 #include <fstream>
@@ -20,19 +20,19 @@
 #include "Params.h"
 
 //----------------------------------------------------------------------------------------------------------------------
-//! NlicsTables class: holds parameters, tables and functions to compute cross-sections,
+//! RadiationTables class: holds parameters, tables and functions to compute cross-sections,
 //! optical depths and other useful parameters for the Compton Monte-Carlo pusher.
 //----------------------------------------------------------------------------------------------------------------------
-class NlicsTables
+class RadiationTables
 {
 
     public:
 
-        //! Constructor for NlicsTables
-        NlicsTables();
+        //! Constructor for RadiationTables
+        RadiationTables();
 
-        //! Destructor for NlicsTables
-        ~NlicsTables();
+        //! Destructor for RadiationTables
+        ~RadiationTables();
 
         //! Initialization of the parmeters for the nonlinear inverse Compton scattering
         void initParams(Params& params);

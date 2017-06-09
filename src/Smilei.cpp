@@ -28,7 +28,7 @@
 #include "SimWindow.h"
 #include "Diagnostic.h"
 #include "Timers.h"
-#include "NlicsTables.h"
+#include "RadiationTables.h"
 
 using namespace std;
 
@@ -86,7 +86,7 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------
     // Init nonlinear inverse Compton scattering
     // ------------------------------------------------------------------------
-    NlicsTables nlicsTables;
+    RadiationTables RadiationTables;
 
     // ---------------------------------------------------
     // Initialize patches (including particles and fields)
@@ -106,9 +106,9 @@ int main (int argc, char* argv[])
         // Init and compute tables for radiation effects
         // (nonlinear inverse Compton scattering)
         // ---------------------------------------------------------------------
-        nlicsTables.initParams(params);
-        nlicsTables.compute_tables(params,smpi);
-        nlicsTables.output_tables();
+        RadiationTables.initParams(params);
+        RadiationTables.compute_tables(params,smpi);
+        RadiationTables.output_tables();
 
         // time at integer time-steps (primal grid)
         time_prim = checkpoint.this_run_start_step * params.timestep;
@@ -138,9 +138,9 @@ int main (int argc, char* argv[])
         // Init and compute tables for radiation effects
         // (nonlinear inverse Compton scattering)
         // ---------------------------------------------------------------------
-        nlicsTables.initParams(params);
-        nlicsTables.compute_tables(params,smpi);
-        nlicsTables.output_tables();
+        RadiationTables.initParams(params);
+        RadiationTables.compute_tables(params,smpi);
+        RadiationTables.output_tables();
 
         // Apply antennas
         // --------------
@@ -158,7 +158,7 @@ int main (int argc, char* argv[])
             MESSAGE("Time in Poisson : " << ptimer.getTime() );
         }
 
-        vecPatches.dynamics(params, smpi, simWindow, nlicsTables,
+        vecPatches.dynamics(params, smpi, simWindow, RadiationTables,
                             time_dual, timers, 0);
         timers.particles.reboot();
         timers.syncPart .reboot();
@@ -222,7 +222,8 @@ int main (int argc, char* argv[])
             // (1) interpolate the fields at the particle position
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
-            vecPatches.dynamics(params, smpi, simWindow, nlicsTables, time_dual, timers, itime);
+            vecPatches.dynamics(params, smpi, simWindow, RadiationTables,
+                                time_dual, timers, itime);
 
             // Sum densities
             vecPatches.sumDensities(params, time_dual, timers, itime, simWindow );

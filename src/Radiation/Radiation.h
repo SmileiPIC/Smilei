@@ -17,7 +17,7 @@
 #include "Params.h"
 #include "Particles.h"
 #include "Species.h"
-#include "NlicsTables.h"
+#include "RadiationTables.h"
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class Radiation
@@ -33,7 +33,7 @@ class Radiation
         //! Overloading of () operator
         virtual void operator() (Particles &particles,
                 SmileiMPI* smpi,
-                NlicsTables &nlicsTables,
+                RadiationTables &RadiationTables,
                 int istart,
                 int iend,
                 int ithread) = 0;

@@ -12,14 +12,14 @@
 #ifndef RADIATIONNLICSCONT_H
 #define RADIATIONNLICSCONT_H
 
-#include "NlicsTables.h"
+#include "RadiationTables.h"
 #include "Radiation.h"
 #include "userFunctions.h"
 
-//----------------------------------------------------------------------------------------------------------------------
-//! Nlics class: holds parameters and functions to apply the nonlinear inverse
-//! Compton scattering on Particles,
-//----------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//! RadiationNlicsCont class: holds parameters and functions to apply the
+//! continuous radiation loss on Particles,
+//------------------------------------------------------------------------------
 class RadiationNlicsCont : public Radiation {
 
     public:
@@ -44,7 +44,7 @@ class RadiationNlicsCont : public Radiation {
         // ---------------------------------------------------------------------
         virtual void operator() (Particles &particles,
                 SmileiMPI* smpi,
-                NlicsTables &nlicsTables,
+                RadiationTables &RadiationTables,
                 int istart,
                 int iend,
                 int ithread);

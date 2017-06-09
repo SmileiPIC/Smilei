@@ -14,7 +14,7 @@
 #include "Profile.h"
 #include "AsyncMPIbuffers.h"
 #include "Radiation.h"
-#include "NlicsTables.h"
+#include "RadiationTables.h"
 
 class ElectroMagn;
 class Pusher;
@@ -142,7 +142,7 @@ public:
                           Interpolator* interp,
                           Projector* proj, Params &params, bool diag_flag,
                           PartWalls* partWalls, Patch* patch, SmileiMPI* smpi,
-                          NlicsTables &nlicsTables,
+                          RadiationTables &RadiationTables,
                           std::vector<Diagnostic*>& localDiags);
 
     //! Method calculating the Particle charge on the grid (projection)

@@ -98,7 +98,7 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
 void VectorPatch::dynamics(Params& params,
                            SmileiMPI* smpi,
                            SimWindow* simWindow,
-                           NlicsTables & nlicsTables,
+                           RadiationTables & RadiationTables,
                            double time_dual, Timers &timers, int itime)
 {
 
@@ -116,7 +116,7 @@ void VectorPatch::dynamics(Params& params,
                                                  emfields(ipatch), interp(ipatch), proj(ipatch),
                                                  params, diag_flag, partwalls(ipatch),
                                                  (*this)(ipatch), smpi,
-                                                 nlicsTables, 
+                                                 RadiationTables,
                                                  localDiags);
             }
         }

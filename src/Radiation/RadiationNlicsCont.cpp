@@ -38,7 +38,7 @@ RadiationNlicsCont::~RadiationNlicsCont()
 //
 //! \param particles   particle object containing the particle properties
 //! \param smpi        MPI properties
-//! \param nlicsTables Cross-section data tables and useful functions
+//! \param RadiationTables Cross-section data tables and useful functions
 //                     for nonlinear inverse Compton scattering
 //! \param istart      Index of the first particle
 //! \param iend        Index of the last particle
@@ -46,7 +46,7 @@ RadiationNlicsCont::~RadiationNlicsCont()
 // ---------------------------------------------------------------------------------------------------------------------
 void RadiationNlicsCont::operator() (Particles &particles,
         SmileiMPI* smpi,
-        NlicsTables &nlicsTables,
+        RadiationTables &RadiationTables,
         int istart,
         int iend,
         int ithread)
@@ -108,7 +108,7 @@ void RadiationNlicsCont::operator() (Particles &particles,
 
         // Radiated energy during the time step
         rad_norm_energy =
-        nlicsTables.compute_cont_rad_energy_Ridgers(chipa,dt);
+        RadiationTables.compute_cont_rad_energy_Ridgers(chipa,dt);
 
         /*std::cerr << "rad_norm_energy: " << rad_norm_energy << " "
                   << "gamma: " << gamma << " "
