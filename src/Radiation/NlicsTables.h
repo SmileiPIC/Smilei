@@ -32,7 +32,7 @@ class NlicsTables
         NlicsTables();
 
         //! Destructor for NlicsTables
-        ~NlicsTables(){};
+        ~NlicsTables();
 
         //! Initialization of the parmeters for the nonlinear inverse Compton scattering
         void initParams(Params& params);

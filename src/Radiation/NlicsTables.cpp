@@ -33,6 +33,13 @@ NlicsTables::NlicsTables()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Destructor for NlicsTables
+// ---------------------------------------------------------------------------------------------------------------------
+NlicsTables::~NlicsTables()
+{
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 //
 //! Initialization of the parameters for the nonlinear inverse Compton scattering
 //
@@ -290,29 +297,30 @@ void NlicsTables::compute_xip_table(SmileiMPI *smpi)
         MESSAGE("            Minimum particle chi: " << chipa_xip_min);
         MESSAGE("            Maximum particle chi: " << chipa_xip_max);
 
-        if (rank != 0)
-        {
-            xip_chiphmin_table.resize(chipa_xip_dim);
-            xip_table.resize(chipa_xip_dim*chiph_xip_dim);
-        }
-
         // Position for MPI pack and unack
-        int position;
+        int position = 0;
         // buffer size for MPI pack and unpack
-        int buf_size;
+        int buf_size = 0;
 
+        // -------------------------------------------
         // Bcast of all the parameters
         // We pack everything in a buffer
-        MPI_Pack_size(2, MPI_INTEGER, smpi->getGlobalComm(), &position);
-        buf_size = position;
-        MPI_Pack_size(2, MPI_DOUBLE, smpi->getGlobalComm(), &position);
-        buf_size += position;
-        MPI_Pack_size(chipa_xip_dim, MPI_DOUBLE, smpi->getGlobalComm(),
-                      &position);
-        buf_size += position;
-        MPI_Pack_size(chipa_xip_dim*chiph_xip_dim, MPI_DOUBLE,
-                      smpi->getGlobalComm(), &position);
-        buf_size += position;
+        // -------------------------------------------
+
+        // Compute the buffer size
+        if (rank == 0)
+        {
+            MPI_Pack_size(2, MPI_INTEGER, smpi->getGlobalComm(), &position);
+            buf_size = position;
+            MPI_Pack_size(2, MPI_DOUBLE, smpi->getGlobalComm(), &position);
+            buf_size += position;
+            MPI_Pack_size(chipa_xip_dim, MPI_DOUBLE, smpi->getGlobalComm(),
+                          &position);
+            buf_size += position;
+            MPI_Pack_size(chipa_xip_dim*chiph_xip_dim, MPI_DOUBLE,
+                          smpi->getGlobalComm(), &position);
+            buf_size += position;
+        }
 
         MESSAGE("            Buffer size for MPI exchange: " << buf_size);
 
@@ -357,6 +365,10 @@ void NlicsTables::compute_xip_table(SmileiMPI *smpi)
                        &chipa_xip_min, 1, MPI_DOUBLE,smpi->getGlobalComm());
             MPI_Unpack(buffer, buf_size, &position,
                        &chipa_xip_max, 1, MPI_DOUBLE,smpi->getGlobalComm());
+
+            // Resize tables before unpacking values
+            xip_chiphmin_table.resize(chipa_xip_dim);
+            xip_table.resize(chipa_xip_dim*chiph_xip_dim);
 
             MPI_Unpack(buffer, buf_size, &position,&xip_chiphmin_table[0],
                         chipa_xip_dim, MPI_DOUBLE,smpi->getGlobalComm());
@@ -765,26 +777,27 @@ void NlicsTables::compute_integfochi_table(SmileiMPI *smpi)
         MESSAGE("            Minimum particle quantum parameter chi: " << chipa_integfochi_min);
         MESSAGE("            Maximum particle quantum parameter chi: " << chipa_integfochi_max);
 
-        // Resize of the array Integfochi before communication
-        if (rank != 0)
-        {
-            Integfochi.resize(dim_integfochi);
-        }
-
         // Position for MPI pack and unack
         int position;
         // buffer size for MPI pack and unpack
         int buf_size;
 
+        // -------------------------------------------------------
         // Bcast of all the parameters
         // We pack everything in a buffer
-        MPI_Pack_size(1, MPI_INTEGER, smpi->getGlobalComm(), &position);
-        buf_size = position;
-        MPI_Pack_size(2, MPI_DOUBLE, smpi->getGlobalComm(), &position);
-        buf_size += position;
-        MPI_Pack_size(dim_integfochi, MPI_DOUBLE, smpi->getGlobalComm(),
-                      &position);
-        buf_size += position;
+        // --------------------------------------------------------
+
+        // buffer size
+        if (rank == 0)
+        {
+            MPI_Pack_size(1, MPI_INTEGER, smpi->getGlobalComm(), &position);
+            buf_size = position;
+            MPI_Pack_size(2, MPI_DOUBLE, smpi->getGlobalComm(), &position);
+            buf_size += position;
+            MPI_Pack_size(dim_integfochi, MPI_DOUBLE, smpi->getGlobalComm(),
+                          &position);
+            buf_size += position;
+        }
 
         MESSAGE("            Buffer size: " << buf_size);
 
@@ -823,6 +836,9 @@ void NlicsTables::compute_integfochi_table(SmileiMPI *smpi)
                        &chipa_integfochi_min, 1, MPI_DOUBLE,smpi->getGlobalComm());
             MPI_Unpack(buffer, buf_size, &position,
                        &chipa_integfochi_max, 1, MPI_DOUBLE,smpi->getGlobalComm());
+
+            // Resize table before unpacking values
+            Integfochi.resize(dim_integfochi);
 
             MPI_Unpack(buffer, buf_size, &position,&Integfochi[0],
                         dim_integfochi, MPI_DOUBLE,smpi->getGlobalComm());
