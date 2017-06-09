@@ -79,7 +79,7 @@ class RadiationNlicsMC : public Radiation {
         const double epsilon_tau = 1e-100;
 
         //! Under this value, the emission is considered continuous
-        const double chipa_disc_threshold = 1e-3;
+        const double chipa_disc_threshold = 1e-2;
 
         //! Under this value, no radiation loss
         const double chipa_cont_threshold = 1e-5;

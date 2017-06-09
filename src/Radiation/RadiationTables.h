@@ -127,6 +127,9 @@ class RadiationTables
         //! Minimum boundary of the table Integfochi
         double chipa_integfochi_min;
 
+        //! Log10 of the minimum boundary of the table Integfochi
+        double log10_chipa_integfochi_min;
+
         //! Maximum boundary of the table Integfochi
         double chipa_integfochi_max;
 

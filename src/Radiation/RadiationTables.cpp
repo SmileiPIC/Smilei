@@ -80,6 +80,7 @@ void RadiationTables::initParams(Params& params)
             PyTools::extract("output_format", output_format, "RadiationLoss");
 
             log10_chipa_xip_min = log10(chipa_xip_min);
+            log10_chipa_integfochi_min = log10(chipa_integfochi_min);
             inv_chiph_xip_dim_minus_one = 1./(chiph_xip_dim - 1.);
         }
     }
@@ -694,7 +695,7 @@ double RadiationTables::compute_dNphdt(double chipa,double gfpa)
     logchipa = log10(chipa);
 
     // Lower index for interpolation in the table integfochi
-    ichipa = int(floor((logchipa-log10(chipa_integfochi_min))
+    ichipa = int(floor((logchipa-log10_chipa_integfochi_min)
                  *inv_delta_chipa_integfochi));
 
     // If we are not in the table...
@@ -711,7 +712,7 @@ double RadiationTables::compute_dNphdt(double chipa,double gfpa)
     else
     {
         // Upper and lower values for linear interpolation
-        logchipam = ichipa*delta_chipa_integfochi + log10(chipa_integfochi_min);
+        logchipam = ichipa*delta_chipa_integfochi + log10_chipa_integfochi_min;
         logchipap = logchipam + delta_chipa_integfochi;
 
         // Interpolation
@@ -857,9 +858,11 @@ void RadiationTables::compute_integfochi_table(SmileiMPI *smpi)
 
         }
 
+        log10_chipa_integfochi_min = log10(chipa_integfochi_min);
+
         // Computation of the delta
         delta_chipa_integfochi = (log10(chipa_integfochi_max)
-                - log10(chipa_integfochi_min))/(dim_integfochi-1);
+                - log10_chipa_integfochi_min)/(dim_integfochi-1);
 
         // Inverse delta
         inv_delta_chipa_integfochi = 1./delta_chipa_integfochi;
@@ -893,7 +896,7 @@ void RadiationTables::compute_integfochi_table(SmileiMPI *smpi)
 
         // Computation of the delta
         delta_chipa_integfochi = (log10(chipa_integfochi_max)
-                - log10(chipa_integfochi_min))/(dim_integfochi-1);
+                - log10_chipa_integfochi_min)/(dim_integfochi-1);
 
         // Inverse delta
         inv_delta_chipa_integfochi = 1./delta_chipa_integfochi;
@@ -925,7 +928,8 @@ void RadiationTables::compute_integfochi_table(SmileiMPI *smpi)
         // Loop over the table values
         for(int i = 0 ; i < length_table[rank] ; i++)
         {
-            chipa = pow(10.,(imin_table[rank] + i)*delta_chipa_integfochi + log10(chipa_integfochi_min));
+            chipa = pow(10.,(imin_table[rank] + i)*delta_chipa_integfochi
+                  + log10_chipa_integfochi_min);
 
             buffer[i] = RadiationTables::compute_integfochi(chipa,
                     0.98e-40*chipa,0.98*chipa,400,1e-15);
