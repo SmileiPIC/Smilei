@@ -19,6 +19,7 @@ Upcoming changes
 * Moving window along y and z
 * Tracking particles in *Screens*
 * Better time-average for B fields
+* :doc:`Syntax changes<syntax_changes>`
 
 ----
 

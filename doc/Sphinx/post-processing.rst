@@ -268,8 +268,8 @@ Specifying units
 
 By default, all the diagnostics data is in code units (see :doc:`units`).
 
-To change the units, all the methods :py:meth:`Scalar`, :py:meth:`Field`, :py:meth:`Probe`,
-:py:meth:`ParticleDiagnostic` and :py:meth:`TrackParticles` support a ``units`` argument.
+To change the units, all the methods :py:meth:`Scalar() <Smilei.Scalar>`, :py:meth:`Field() <Smilei.Field>`, :py:meth:`Probe() <Smilei.Probe>`,
+:py:meth:`ParticleDiagnostic() <Smilei.ParticleDiagnostic>` and :py:meth:`TrackParticles() <Smilei.TrackParticles>` support a ``units`` argument.
 It has three different syntaxes:
 
 1. **A list**, for example ``units = ["um/ns", "feet", "W/cm^2"]``
