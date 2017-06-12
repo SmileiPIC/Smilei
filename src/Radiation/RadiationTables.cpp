@@ -201,17 +201,17 @@ double RadiationTables::compute_chiph_emission(double chipa)
             &xip_table[ichipa*chiph_xip_dim],xip,chiph_xip_dim);
     }
 
-    // --------------------------------------------------------------------
-    // Compute chiph
-    // This method is slow but more accurate than taking the nearest point
-    // --------------------------------------------------------------------
-
     // Corresponding chipa for ichipa
     logchipa = ichipa*chipa_xip_delta+log10_chipa_xip_min;
 
     // Delta for the corresponding chipa
     chiph_xip_delta = (logchipa - xip_chiphmin_table[ichipa])
                     *inv_chiph_xip_dim_minus_one;
+
+    // --------------------------------------------------------------------
+    // Compute chiph
+    // This method is slow but more accurate than taking the nearest point
+    // --------------------------------------------------------------------
 
     // Computation of the final chiph by interpolation
     log10_chiphm = ichiph*chiph_xip_delta
@@ -230,8 +230,8 @@ double RadiationTables::compute_chiph_emission(double chipa)
     // Fastest method using the nearest point but less accurate
     // ------------------------------------------------------------
 
-    //chiph = pow(10.,ichiph*chiph_xip_delta
-    //       + log10(xip_chiphmin_table[ichipa]));
+    /*chiph = pow(10.,ichiph*chiph_xip_delta
+           + xip_chiphmin_table[ichipa]);*/
 
     // Debugging
     /*std::cerr << "ichiph: " << ichiph << " "

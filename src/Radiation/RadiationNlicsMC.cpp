@@ -278,7 +278,8 @@ void RadiationNlicsMC::photon_emission(double &chipa,
     double chiph;      // Photon quantum parameter
     double gammaph;    // Photon gamma factor
     double inv_old_norm_p;
-    double new_norm_p;
+    //double new_norm_p;
+    double kx,ky,kz;   // Photon momentum
 
     // Get the photon quantum parameter from the table xip
     chiph = RadiationTables.compute_chiph_emission(chipa);
@@ -293,20 +294,21 @@ void RadiationNlicsMC::photon_emission(double &chipa,
     // Update of the particle properties
     // direction d'emission // direction de l'electron (1/gamma << 1)
     // With momentum conservation
-    // kx = px*inv_old_norm_p*gammaph;
-    // ky = py*inv_old_norm_p*gammaph;
-    // kz = pz*inv_old_norm_p*gammaph;
-    // px -= kx
-    // py -= ky
-    // pz -= kz
+    inv_old_norm_p = gammaph/sqrt(gammapa*gammapa - 1.0);
+    kx = px*inv_old_norm_p;
+    ky = py*inv_old_norm_p;
+    kz = pz*inv_old_norm_p;
+    px -= kx;
+    py -= ky;
+    pz -= kz;
 
     // With energy conservation
-    inv_old_norm_p = 1./sqrt(gammapa*gammapa - 1.0);
+    /*inv_old_norm_p = 1./sqrt(gammapa*gammapa - 1.0);
     gammapa -= gammaph;
-    new_norm_p = sqrt(abs(gammapa*gammapa - 1.0));
+    new_norm_p = sqrt(gammapa*gammapa - 1.0);
     px *= new_norm_p * inv_old_norm_p;
     py *= new_norm_p * inv_old_norm_p;
-    pz *= new_norm_p * inv_old_norm_p;
+    pz *= new_norm_p * inv_old_norm_p;*/
 
     // Debugging
     /*std::cerr << "chipa: " << chipa << " "
