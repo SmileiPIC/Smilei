@@ -28,8 +28,11 @@ SimWindow::SimWindow(Params& params)
     active = false;
     time_start = numeric_limits<double>::max();
     velocity_x = 1.;
-   
+#ifdef _OPENMP   
     max_threads = omp_get_max_threads();
+#else
+    max_threads = 1;
+#endif
     patch_to_be_created.resize(max_threads); 
     if( PyTools::nComponents("MovingWindow") ) {
         active = true;
@@ -83,7 +86,11 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     int nmessage( vecPatches.nrequests );
     std::vector<Patch*> delete_patches_, update_patches_, send_patches_;
 
+#ifdef _OPENMP   
     int my_thread = omp_get_thread_num();
+#else
+    int my_thread = 0;
+#endif
     (patch_to_be_created[my_thread]).clear();   
  
     #pragma omp single

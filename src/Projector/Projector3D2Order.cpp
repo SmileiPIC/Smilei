@@ -162,9 +162,40 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     // Jx^(d,p,p)
     for (unsigned int i=1 ; i<5 ; i++) {
         iloc = i+ipo;
-        for (unsigned int j=0 ; j<5 ; j++) {
+        jloc = jpo;
+        tmpJx[0][0] -= crx_p * DSx[i-1] * (one_third*Sy1[0]*Sz1[0]);
+        kloc = kpo;
+        linindex = iloc*b_dim[2]*b_dim[1]+jloc*b_dim[2]+kloc;
+        Jx [linindex] += tmpJx[0][0]; // iloc = (i+ipo)*b_dim[1];
+    }//i
+    // Jx^(d,p,p)
+    for (unsigned int i=1 ; i<5 ; i++) {
+        iloc = i+ipo;
+        jloc = jpo;
+        for (unsigned int k=1 ; k<5 ; k++) {
+            tmpJx[0][k] -= crx_p * DSx[i-1] * (0.5*Sy1[0]*Sz0[k] + one_third*Sy1[0]*DSz[k]);
+            kloc = k+kpo;
+            linindex = iloc*b_dim[2]*b_dim[1]+jloc*b_dim[2]+kloc;
+            Jx [linindex] += tmpJx[0][k]; // iloc = (i+ipo)*b_dim[1];
+        }
+    }//i
+    // Jx^(d,p,p)
+    for (unsigned int i=1 ; i<5 ; i++) {
+        iloc = i+ipo;
+        for (unsigned int j=1 ; j<5 ; j++) {
             jloc = j+jpo;
-            for (unsigned int k=0 ; k<5 ; k++) {
+            tmpJx[j][0] -= crx_p * DSx[i-1] * (0.5*Sz1[0]*Sy0[j] + one_third*DSy[j]*Sz1[0]);
+            kloc = kpo;
+            linindex = iloc*b_dim[2]*b_dim[1]+jloc*b_dim[2]+kloc;
+            Jx [linindex] += tmpJx[j][0]; // iloc = (i+ipo)*b_dim[1];
+        }
+    }//i
+    // Jx^(d,p,p)
+    for (unsigned int i=1 ; i<5 ; i++) {
+        iloc = i+ipo;
+        for (unsigned int j=1 ; j<5 ; j++) {
+            jloc = j+jpo;
+            for (unsigned int k=1 ; k<5 ; k++) {
                 tmpJx[j][k] -= crx_p * DSx[i-1] * (Sy0[j]*Sz0[k] + 0.5*DSy[j]*Sz0[k] + 0.5*DSz[k]*Sy0[j] + one_third*DSy[j]*DSz[k]);
                 kloc = k+kpo;
                 linindex = iloc*b_dim[2]*b_dim[1]+jloc*b_dim[2]+kloc;
@@ -172,13 +203,45 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
             }
         }
     }//i
+
     
     // Jy^(p,d,p)
-    for (unsigned int i=0 ; i<5 ; i++) {
+    iloc = ipo;
+    for (unsigned int j=1 ; j<5 ; j++) {
+        jloc = j+jpo;
+        tmpJy[0][0] -= cry_p * DSy[j-1] * (one_third*Sz1[0]*Sx1[0]);
+        kloc = kpo;
+        linindex = iloc*b_dim[2]*(b_dim[1]+1)+jloc*b_dim[2]+kloc;
+        Jy [linindex] += tmpJy[0][0]; //
+    }//i
+    // Jy^(p,d,p)
+    iloc = ipo;
+    for (unsigned int j=1 ; j<5 ; j++) {
+        jloc = j+jpo;
+        for (unsigned int k=1 ; k<5 ; k++) {
+            tmpJy[0][k] -= cry_p * DSy[j-1] * (0.5*Sx1[0]*Sz0[k] + one_third*DSz[k]*Sx1[0]);
+            kloc = k+kpo;
+            linindex = iloc*b_dim[2]*(b_dim[1]+1)+jloc*b_dim[2]+kloc;
+            Jy [linindex] += tmpJy[0][k]; //
+        }
+    }
+    // Jy^(p,d,p)
+    for (unsigned int i=1 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=1 ; j<5 ; j++) {
             jloc = j+jpo;
-            for (unsigned int k=0 ; k<5 ; k++) {
+            tmpJy[i][0] -= cry_p * DSy[j-1] * (0.5*Sz1[0]*Sx0[i] + one_third*Sz1[0]*DSx[i]);
+            kloc = kpo;
+            linindex = iloc*b_dim[2]*(b_dim[1]+1)+jloc*b_dim[2]+kloc;
+            Jy [linindex] += tmpJy[i][0]; //
+        }
+    }//i
+    // Jy^(p,d,p)
+    for (unsigned int i=1 ; i<5 ; i++) {
+        iloc = i+ipo;
+        for (unsigned int j=1 ; j<5 ; j++) {
+            jloc = j+jpo;
+            for (unsigned int k=1 ; k<5 ; k++) {
                 tmpJy[i][k] -= cry_p * DSy[j-1] * (Sz0[k]*Sx0[i] + 0.5*DSz[k]*Sx0[i] + 0.5*DSx[i]*Sz0[k] + one_third*DSz[k]*DSx[i]);
                 kloc = k+kpo;
                 linindex = iloc*b_dim[2]*(b_dim[1]+1)+jloc*b_dim[2]+kloc;
@@ -188,9 +251,40 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     }//i
     
     // Jz^(p,p,d)
-    for (unsigned int i=0 ; i<5 ; i++) {
+    iloc = ipo;
+    jloc = jpo;
+    for (unsigned int k=1 ; k<5 ; k++) {
+        tmpJz[0][0] -= crz_p * DSz[k-1] * (one_third*Sx1[0]*Sy1[0]);
+        kloc = k+kpo;
+        linindex = iloc*(b_dim[2]+1)*b_dim[1]+jloc*(b_dim[2]+1)+kloc;
+        Jz [linindex] += tmpJz[0][0]; //
+    }//i
+    // Jz^(p,p,d)
+    iloc = ipo;
+    for (unsigned int j=1 ; j<5 ; j++) {
+        jloc = j+jpo;
+        for (unsigned int k=1 ; k<5 ; k++) {
+            tmpJz[0][j] -= crz_p * DSz[k-1] * (0.5*Sx1[0]*Sy0[j] + one_third*Sx1[0]*DSy[j]);
+            kloc = k+kpo;
+            linindex = iloc*(b_dim[2]+1)*b_dim[1]+jloc*(b_dim[2]+1)+kloc;
+            Jz [linindex] += tmpJz[0][j]; //
+         }
+    }//i
+    // Jz^(p,p,d)
+    for (unsigned int i=1 ; i<5 ; i++) {
         iloc = i+ipo;
-        for (unsigned int j=0 ; j<5 ; j++) {
+        jloc = jpo;
+        for (unsigned int k=1 ; k<5 ; k++) {
+            tmpJz[i][0] -= crz_p * DSz[k-1] * (0.5*Sy1[0]*Sx0[i] + one_third*DSx[i]*Sy1[0]);
+            kloc = k+kpo;
+            linindex = iloc*(b_dim[2]+1)*b_dim[1]+jloc*(b_dim[2]+1)+kloc;
+            Jz [linindex] += tmpJz[i][0]; //
+        }
+    }//i
+    // Jz^(p,p,d)
+    for (unsigned int i=1 ; i<5 ; i++) {
+        iloc = i+ipo;
+        for (unsigned int j=1 ; j<5 ; j++) {
             jloc = j+jpo;
             for (unsigned int k=1 ; k<5 ; k++) {
                 tmpJz[i][j] -= crz_p * DSz[k-1] * (Sx0[i]*Sy0[j] + 0.5*DSx[i]*Sy0[j] + 0.5*DSy[j]*Sx0[i] + one_third*DSx[i]*DSy[j]);
