@@ -302,12 +302,6 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
                 // Read the table values
                 file.read((char*)&xip_chiphmin_table[0], sizeof (double)*chipa_xip_dim);
 
-                // Temporary
-                for (int i = 0 ; i < chipa_xip_dim ; i++)
-                {
-                    xip_chiphmin_table[i] = log10(xip_chiphmin_table[i]);
-                }
-
                 // Read the table values
                 file.read((char*)&xip_table[0], sizeof (double)*chipa_xip_dim*chiph_xip_dim);
 
@@ -575,15 +569,15 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
                // Update local buffer value
                buffer[ichipa*chiph_xip_dim + ichiph] = std::min(1.,numerator / denominator);
 
-            }
+               // display percentage
+               if (100.*(ichipa*chiph_xip_dim+ichiph)
+                   >= length_table[rank]*chiph_xip_dim*pct)
+               {
+                   pct += dpct;
+                   MESSAGE( "            " << ichipa + 1 << "/" << length_table[rank]
+                                       << " - " << (int)(std::round(pct)) << "%");
+               }
 
-
-            // display percentage
-            if (100.*ichipa >= length_table[rank]*pct)
-            {
-                pct += dpct;
-                MESSAGE( "            " << ichipa + 1 << "/" << length_table[rank]
-                                    << " - " << (int)(std::round(pct)) << "%");
             }
         }
 
