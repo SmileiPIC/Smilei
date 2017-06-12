@@ -164,7 +164,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
 #ifdef  __DEBUG
     MESSAGEALL("Step " << itime << " : DUMP fields and particles " << dumpName(num_dump,smpi));
 #else
-    MESSAGE("Step " << itime << " : DUMP fields and particles");
+    MESSAGE("Step " << itime << " : DUMP fields and particles " << num_dump);
 #endif
     
     
@@ -360,9 +360,22 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
     string nameDump("");
     
     if (restart_number>=0) {
-        nameDump=restart_dir+dumpName(restart_number,smpi);
+        string dump_name=restart_dir+dumpName(restart_number,smpi);
+        ifstream f(dump_name.c_str());
+        if (f.good()) {
+            f.close();
+            hid_t fid = H5Fopen( dump_name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+            unsigned int stepStartTmp=0;
+            H5::getAttr(fid, "dump_step", stepStartTmp );
+            this_run_start_step=stepStartTmp;
+            nameDump=dump_name;
+            dump_number=restart_number;
+            H5::getAttr(fid, "dump_number", dump_number );
+            H5Fclose(fid);
+        }
+
     } else {
-        // This will open both dumps and pick the last one
+        // This will open all dumps and pick the last one
         for (unsigned int num_dump=0;num_dump<dump_file_sequence; num_dump++) {
             string dump_name=restart_dir+dumpName(num_dump,smpi);
             ifstream f(dump_name.c_str());
