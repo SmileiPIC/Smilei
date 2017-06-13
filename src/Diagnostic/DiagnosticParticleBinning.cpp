@@ -1,5 +1,5 @@
 
-#include "DiagnosticParticles.h"
+#include "DiagnosticParticleBinning.h"
 
 #include <iomanip>
 
@@ -7,7 +7,7 @@ using namespace std;
 
 
 // Constructor
-DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
+DiagnosticParticleBinning::DiagnosticParticleBinning( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
 {
     fileId_ = 0;
     
@@ -19,31 +19,31 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
     
     // get parameter "output" that determines the quantity to sum in the output array
     output = "";
-    if (!PyTools::extract("output",output,"DiagParticles",n_diag_particles))
+    if (!PyTools::extract("output",output,"DiagParticleBinning",n_diag_particles))
         ERROR(errorPrefix << ": parameter `output` required");
     
     // get parameter "every" which describes a timestep selection
     timeSelection = new TimeSelection(
-        PyTools::extract_py("every", "DiagParticles", n_diag_particles),
+        PyTools::extract_py("every", "DiagParticleBinning", n_diag_particles),
         name.str()
     );
     
     // get parameter "flush_every" which describes a timestep selection for flushing the file
     flush_timeSelection = new TimeSelection(
-        PyTools::extract_py("flush_every", "DiagParticles", n_diag_particles),
+        PyTools::extract_py("flush_every", "DiagParticleBinning", n_diag_particles),
         name.str()
     );
     
     // get parameter "time_average" that determines the number of timestep to average the outputs
     time_average = 1;
-    PyTools::extract("time_average",time_average,"DiagParticles",n_diag_particles);
+    PyTools::extract("time_average",time_average,"DiagParticleBinning",n_diag_particles);
     if ( time_average < 1 ) time_average=1;
     if ( time_average > timeSelection->smallestInterval() )
         ERROR(errorPrefix << ": `time_average` is incompatible with `every`");
     
     // get parameter "species" that determines the species to use (can be a list of species)
     vector<string> species_names;
-    if (!PyTools::extract("species",species_names,"DiagParticles",n_diag_particles))
+    if (!PyTools::extract("species",species_names,"DiagParticleBinning",n_diag_particles))
         ERROR(errorPrefix << ": parameter `species` required");
     // verify that the species exist, remove duplicates and sort by number
     species = params.FindSpecies(patch->vecSpecies, species_names);
@@ -55,7 +55,7 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
     // get parameter "axes" that adds axes to the diagnostic
     // Each axis should contain several items:
     //      requested quantity, min value, max value ,number of bins, log (optional), edge_inclusive (optional)
-    vector<PyObject*> pyAxes=PyTools::extract_pyVec("axes","DiagParticles",n_diag_particles);
+    vector<PyObject*> pyAxes=PyTools::extract_pyVec("axes","DiagParticleBinning",n_diag_particles);
     
     vector<string> excluded_types(0);
     excluded_types.push_back( "a" );
@@ -130,7 +130,7 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
         mystream << species_names[0];
         for(unsigned int i=1; i<species_names.size(); i++)
             mystream << "," << species_names[i];
-        MESSAGE(1,"Created particle diagnostic #" << n_diag_particles << ": species " << mystream.str());
+        MESSAGE(1,"Created ParticleBinning diagnostic #" << n_diag_particles << ": species " << mystream.str());
         for(unsigned int i=0; i<histogram->axes.size(); i++) {
             HistogramAxis * axis = histogram->axes[i];
             mystream.str("");
@@ -157,22 +157,22 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
         
         // init HDF files (by master, only if it doesn't yet exist)
         mystream.str(""); // clear
-        mystream << "ParticleDiagnostic" << n_diag_particles << ".h5";
+        mystream << "ParticleBinning" << n_diag_particles << ".h5";
         filename = mystream.str();
     }
 
-} // END DiagnosticParticles::DiagnosticParticles
+} // END DiagnosticParticleBinning::DiagnosticParticleBinning
 
 
-DiagnosticParticles::~DiagnosticParticles()
+DiagnosticParticleBinning::~DiagnosticParticleBinning()
 {
     delete timeSelection;
     delete flush_timeSelection;
-} // END DiagnosticParticles::~DiagnosticParticles
+} // END DiagnosticParticleBinning::~DiagnosticParticleBinning
 
 
 // Called only by patch master of process master
-void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, bool newfile )
+void DiagnosticParticleBinning::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
     if (!smpi->isMaster()) return;
     
@@ -214,7 +214,7 @@ void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, bool newfil
 }
 
 
-void DiagnosticParticles::closeFile()
+void DiagnosticParticleBinning::closeFile()
 {
     if (fileId_!=0) {
         H5Fclose(fileId_);
@@ -224,7 +224,7 @@ void DiagnosticParticles::closeFile()
 } // END closeFile
 
 
-bool DiagnosticParticles::prepare( int timestep )
+bool DiagnosticParticleBinning::prepare( int timestep )
 {
     // Get the previous timestep of the time selection
     int previousTime = timeSelection->previousTime(timestep);
@@ -244,8 +244,8 @@ bool DiagnosticParticles::prepare( int timestep )
 } // END prepare
 
 
-// run one particle diagnostic
-void DiagnosticParticles::run( Patch* patch, int timestep, SimWindow* simWindow )
+// run one particle binning diagnostic
+void DiagnosticParticleBinning::run( Patch* patch, int timestep, SimWindow* simWindow )
 {
     
     vector<int> int_buffer;
@@ -287,7 +287,7 @@ void DiagnosticParticles::run( Patch* patch, int timestep, SimWindow* simWindow 
 
 // Now the data_sum has been filled
 // if needed now, store result to hdf file
-void DiagnosticParticles::write(int timestep, SmileiMPI* smpi)
+void DiagnosticParticleBinning::write(int timestep, SmileiMPI* smpi)
 {
     if ( !smpi->isMaster() ) return;
     
@@ -334,7 +334,7 @@ void DiagnosticParticles::write(int timestep, SmileiMPI* smpi)
 
 
 //! Clear the array
-void DiagnosticParticles::clear() {
+void DiagnosticParticleBinning::clear() {
     data_sum.resize(0);
     vector<double>().swap( data_sum );
 }

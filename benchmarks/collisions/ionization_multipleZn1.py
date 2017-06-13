@@ -98,7 +98,7 @@ DiagScalar(
 
 
 
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = 50,
 	species = [el],

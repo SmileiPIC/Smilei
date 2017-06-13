@@ -25,14 +25,14 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 	sim = Smilei(path)
 
 	ncases = 0
-	while sim.namelist.DiagParticles[ncases].output == "jx_density":
+	while sim.namelist.DiagParticleBinning[ncases].output == "jx_density":
 		ncases += 1
 	if ncases == 0: continue
 
 	coulomb_log          = np.double(sim.namelist.Collisions[0].coulomb_log)
 	dt                   = np.double(sim.namelist.Main.timestep)/(2*np.pi)
 	
-	times = sim.ParticleDiagnostic(diagNumber=0).getAvailableTimesteps()
+	times = sim.ParticleBinning(diagNumber=0).getAvailableTimesteps()
 	
 	vx_mean = np.zeros((ncases,len(times)))
 	
@@ -41,8 +41,8 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 	if fig: fig.clf()
 	if fig: ax = fig.add_subplot(1,1,1)
 	for k in range(ncases):
-		evx_density = -np.array(sim.ParticleDiagnostic(k).getData())
-		edensity = np.array(sim.ParticleDiagnostic(k+ncases).getData())
+		evx_density = -np.array(sim.ParticleBinning(k).getData())
+		edensity = np.array(sim.ParticleBinning(k+ncases).getData())
 		vx_mean[k,:] = evx_density/edensity
 	
 	

@@ -65,11 +65,11 @@ for path in ["Stopping_power1","Stopping_power2","Stopping_power3"]:
 	wavelength = 1e-6 # meters
 	c = 3e8
 	
-	times = sim.ParticleDiagnostic(diagNumber=0).getAvailableTimesteps()
-	nx = sim.ParticleDiagnostic(diagNumber=0,timesteps=0).get()["x"].size
+	times = sim.ParticleBinning(diagNumber=0).getAvailableTimesteps()
+	nx = sim.ParticleBinning(diagNumber=0,timesteps=0).get()["x"].size
 	
 	Ekin = np.zeros((nx,len(times)))
-	electrons = sim.ParticleDiagnostic(0).get()
+	electrons = sim.ParticleBinning(0).get()
 	ekin = electrons["ekin"]*0.511
 	dekin = np.diff(ekin)
 	dekin = np.hstack((dekin, dekin[-1]))

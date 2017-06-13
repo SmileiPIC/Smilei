@@ -157,7 +157,7 @@ DiagScalar(
 
 
 
-DiagParticles(
+DiagParticleBinning(
 	output = "jx_density",
 	every = 10,
 	time_average = 10,
@@ -166,7 +166,7 @@ DiagParticles(
 		 ["x",  0, 20*L0, 1]
 	]
 )
-DiagParticles(
+DiagParticleBinning(
 	output = "jx_density",
 	every = 10,
 	time_average = 10,
@@ -175,7 +175,7 @@ DiagParticles(
 		 ["x",  0, 20*L0, 1]
 	]
 )
-DiagParticles(
+DiagParticleBinning(
 	output = "jx_density",
 	every = 10,
 	time_average = 10,
@@ -185,7 +185,7 @@ DiagParticles(
 	]
 )
 
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = 10,
 	time_average = 10,
@@ -194,7 +194,7 @@ DiagParticles(
 		 ["x",  0, 20*L0, 1]
 	]
 )
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = 10,
 	time_average = 10,
@@ -203,7 +203,7 @@ DiagParticles(
 		 ["x",  0, 20*L0, 1]
 	]
 )
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = 10,
 	time_average = 10,

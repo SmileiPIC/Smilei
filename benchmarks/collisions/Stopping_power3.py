@@ -113,7 +113,7 @@ DiagScalar(
 
 
 
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = 2,
 	time_average = 1,

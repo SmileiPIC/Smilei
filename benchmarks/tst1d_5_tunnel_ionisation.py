@@ -88,7 +88,7 @@ DiagFields(
     fields = ["Ex", "Ey", "Ez"]
 )
 
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = 20,
 	species = ["hydrogen"],
@@ -97,7 +97,7 @@ DiagParticles(
 	]
 )
 
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = 20,
 	species = ["carbon"],

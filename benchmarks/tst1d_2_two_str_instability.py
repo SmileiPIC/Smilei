@@ -78,7 +78,7 @@ DiagFields(
     fields = ['Ex','Ey','Ez','By_m','Bz_m','Rho']
 )
 
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = every,
 	species = ["eon1","eon2"],

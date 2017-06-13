@@ -40,7 +40,7 @@ class SmileiComponentType(type):
         return self._list[self.current - 1]
     __next__ = next #python3
     
-    # Function to return one given instance, for example DiagParticles[0]
+    # Function to return one given instance, for example DiagParticleBinning[0]
     # Special case: species can also be indexed by their name: Species["ion1"]
     def __getitem__(self, key):
         if self.__name__ == "Species" and type(key) is str:
@@ -281,7 +281,7 @@ class Collisions(SmileiComponent):
 
 #diagnostics
 class DiagProbe(SmileiComponent):
-    """Diagnostic probe"""
+    """Probe diagnostic"""
     every = None
     number = []
     pos = []
@@ -291,8 +291,8 @@ class DiagProbe(SmileiComponent):
     fields = []
     flush_every = 1
 
-class DiagParticles(SmileiComponent):
-    """Diagnostic particles"""
+class DiagParticleBinning(SmileiComponent):
+    """Particle Binning diagnostic"""
     output = None
     time_average = 1
     species = None
@@ -301,7 +301,7 @@ class DiagParticles(SmileiComponent):
     flush_every = 1
 
 class DiagScreen(SmileiComponent):
-    """Diagnostic particles"""
+    """Screen diagnostic"""
     shape = None
     point = None
     vector = None
@@ -314,13 +314,13 @@ class DiagScreen(SmileiComponent):
     flush_every = 1
 
 class DiagScalar(SmileiComponent):
-    """Diagnostic scalar"""
+    """Scalar diagnostic"""
     every = None
     precision = 10
     vars = []
 
 class DiagFields(SmileiComponent):
-    """Diagnostic Fields"""
+    """Field diagnostic"""
     every = None
     fields = []
     time_average = 1
@@ -351,3 +351,9 @@ class PartWall(SmileiComponent):
 smilei_mpi_rank = 0
 smilei_mpi_size = 1
 smilei_rand_max = 2**31-1
+
+# DEPRECATION ERROR
+class DiagParticles(object):
+    def __init__(self, *args, **kwargs):
+        raise Exception("Deprecated `DiagParticles()` must be replaced by `DiagParticleBinning()`")
+

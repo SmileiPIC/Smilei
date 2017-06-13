@@ -3,7 +3,7 @@
 
 #include "VectorPatch.h"
 
-#include "DiagnosticParticles.h"
+#include "DiagnosticParticleBinning.h"
 #include "DiagnosticScreen.h"
 #include "DiagnosticProbes.h"
 #include "DiagnosticScalar.h"
@@ -46,8 +46,8 @@ public:
         std::vector<Diagnostic*> vecDiagnostics;
         vecDiagnostics.push_back( new DiagnosticScalar(params, smpi, vecPatches(0)) );
         
-        for (unsigned int n_diag_particles = 0; n_diag_particles < PyTools::nComponents("DiagParticles"); n_diag_particles++) {
-            vecDiagnostics.push_back( new DiagnosticParticles(params, smpi, vecPatches(0), n_diag_particles) );
+        for (unsigned int n_diag_particles = 0; n_diag_particles < PyTools::nComponents("DiagParticleBinning"); n_diag_particles++) {
+            vecDiagnostics.push_back( new DiagnosticParticleBinning(params, smpi, vecPatches(0), n_diag_particles) );
         }
         
         for (unsigned int n_diag_screen = 0; n_diag_screen < PyTools::nComponents("DiagScreen"); n_diag_screen++) {

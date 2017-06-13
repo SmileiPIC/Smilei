@@ -73,7 +73,7 @@ Species(
 	isTest = True
 )
 
-DiagParticles(
+DiagParticleBinning(
  	output = "density",
  	every = 1000.,
  	species = ["eon"],

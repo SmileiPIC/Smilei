@@ -6,7 +6,7 @@ b, a = butter(5, 0.2, btype='low', analog=False)
 
 S = Smilei(".", verbose=False)
 
-eon_spectrum = S.ParticleDiagnostic.Diag2().get()
+eon_spectrum = S.ParticleBinning.Diag2().get()
 ekin = eon_spectrum["ekin"]
 eon_spectrum = np.mean(eon_spectrum["data"], axis=0)
 eon_spectrum_filt = filtfilt(b, a, eon_spectrum)

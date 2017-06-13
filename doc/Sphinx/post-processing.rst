@@ -36,7 +36,7 @@ as long as they correspond to several :ref:`restarts <Checkpoints>` of the same 
 Once a simulation is opened, several methods are available to find information on the
 namelist or open various diagnostics. Checkout the namelist documentation to find out
 which diagnostics are included in Smilei: :ref:`scalars <DiagScalar>`,
-:ref:`fields <DiagFields>`, :ref:`probes <DiagProbe>` and :ref:`particles <DiagParticles>`.
+:ref:`fields <DiagFields>`, :ref:`probes <DiagProbe>` and :ref:`particle binning <DiagParticleBinning>`.
 
 ----
 
@@ -112,6 +112,7 @@ Open a Field diagnostic
      | Syntax 3: ``subset = { axis : [start, stop, step] , ... }``
      | ``axis`` must be ``"x"``, ``"y"`` or ``"z"``.
      | Only the data within the chosen axes' selections is extracted.
+     | **WARNING:** THE VALUE OF ``step`` IS A NUMBER OF CELLS.
      | Example: ``subset = {"y":[10, 80, 4]}``
   * ``average``: A selection of coordinates on which to average.
      | Syntax 1: ``average = { axis : "all", ... }``
@@ -156,18 +157,21 @@ Open a Probe diagnostic
 
 ----
 
-Open a Particle diagnostic
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Open a ParticleBinning diagnostic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.ParticleDiagnostic(diagNumber=None, timesteps=None, sum=None, units=[""], data_log=False, stride=1, **kwargs)
+.. py:method:: Smilei.ParticleBinning(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
-  * ``diagNumber``: number of the particle diagnostic (the first one has number 0).
-     | If not given, a list of available particle diagnostics is printed.
-     | It can also be an operation between several particle diagnostics.
+  * ``diagNumber``: number of the particle binning diagnostic (starts at 0).
+     | If not given, a list of available diagnostics is printed.
+     | It can also be an operation between several diagnostics.
      | For example, ``"#0/#1"`` computes the division by diagnostics 0 and 1.
   * ``subset`` is similar to that of :py:meth:`Field`, although the axis must be one of
      ``"x"``, ``"y"``, ``"z"``, ``"px"``, ``"py"``, ``"pz"``, ``"p"``, ``"gamma"``, ``"ekin"``, ``"vx"``, ``"vy"``, ``"vz"``, ``"v"`` or ``"charge"``.
+     
+     **WARNING:** With the syntax ``subset={axis:[start, stop, step]}``, the value of ``step``
+     is a number of bins.
   * ``sum``: a selection of coordinates on which to sum the data.
      | Syntax 1: ``sum = { axis : "all", ... }``
      | Syntax 2: ``sum = { axis : location, ... }``
@@ -180,14 +184,12 @@ Open a Particle diagnostic
      | - With syntax 2, only the bin closest to ``location`` is kept.
      | - With syntax 3, a sum is performed between ``begin`` and ``end``.
      | Example: ``sum={"x":[4,5]}`` will sum all the data for x within [4,5].
-  * ``stride``: step size for reading the grid. If the grid is too large, use a stride > 1
-    to reduce the amount of data.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
 **Example**::
   
   S = Smilei("path/to/my/results")
-  Diag = S.ParticleDiagnostic(1)
+  Diag = S.ParticleBinning(1)
 
 
 
@@ -196,15 +198,14 @@ Open a Particle diagnostic
 Open a Screen diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.Screen(diagNumber=None, timesteps=None, sum=None, units=[""], data_log=False, stride=1, **kwargs)
+.. py:method:: Smilei.Screen(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: number of the screen diagnostic (the first one has number 0).
      | If not given, a list of available screen diagnostics is printed.
-     | It can also be an operation between several screen diagnostics.
+     | It can also be an operation between several Screen diagnostics.
      | For example, ``"#0/#1"`` computes the division by diagnostics 0 and 1.
-  * ``subset``and ``sum``: identical to that of particle diagnostics.
-  * ``stride``: identical to that of particle diagnostics.
+  * ``subset`` and ``sum``: identical to that of ParticleBinning diagnostics.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
 **Example**::
@@ -276,7 +277,7 @@ Specifying units
 By default, all the diagnostics data is in code units (see :doc:`units`).
 
 To change the units, all the methods :py:meth:`Scalar() <Smilei.Scalar>`, :py:meth:`Field() <Smilei.Field>`, :py:meth:`Probe() <Smilei.Probe>`,
-:py:meth:`ParticleDiagnostic() <Smilei.ParticleDiagnostic>` and :py:meth:`TrackParticles() <Smilei.TrackParticles>` support a ``units`` argument.
+:py:meth:`ParticleBinning() <Smilei.ParticleBinning>` and :py:meth:`TrackParticles() <Smilei.TrackParticles>` support a ``units`` argument.
 It has three different syntaxes:
 
 1. **A list**, for example ``units = ["um/ns", "feet", "W/cm^2"]``
@@ -309,7 +310,7 @@ Obtain the data
 .. py:method:: Smilei.Scalar.getData(...)
                Smilei.Field.getData(...)
                Smilei.Probe.getData(...)
-               Smilei.ParticleDiagnostic.getData(...)
+               Smilei.ParticleBinning.getData(...)
                Smilei.Screen.getData(...)
                Smilei.TrackParticles.getData(...)
 
@@ -334,7 +335,7 @@ Obtain the data
 .. py:method:: Smilei.Scalar.get()
                Smilei.Field.get()
                Smilei.Probe.get()
-               Smilei.ParticleDiagnostic.get()
+               Smilei.ParticleBinning.get()
                Smilei.Screen.get()
                Smilei.TrackParticles.get()
   
@@ -349,7 +350,7 @@ Obtain the data
   **Example**::
     
       S = Smilei("path/to/results")  # Open the simulation
-      Diag = S.ParticleDiagnostic(3) # Open fourth particle diag
+      Diag = S.ParticleBinning(3) # Open fourth particle diag
       result = Diag.get()            # Get the data
       result["data"] # This has the same value as Diag.getData()
       result["x"]    # This has the locations of the diag's bins along x
@@ -390,7 +391,7 @@ at one given timestep.
 .. py:method:: Smilei.Scalar.plot(...)
                Smilei.Field.plot(...)
                Smilei.Probe.plot(...)
-               Smilei.ParticleDiagnostic.plot(...)
+               Smilei.ParticleBinning.plot(...)
                Smilei.TrackParticles.plot(...)
                Smilei.Screen.plot(...)
   
@@ -422,7 +423,7 @@ at one given timestep.
 **Example**::
     
     S = Smilei("path/to/my/results")
-    S.ParticleDiagnostic(1).plot(timestep=40, vmin=0, vmax=1e14)
+    S.ParticleBinning(1).plot(timestep=40, vmin=0, vmax=1e14)
 
 ----
 
@@ -435,7 +436,7 @@ are streaked to produce a 2D image where the second axis is time.
 .. py:method:: Smilei.Scalar.streak(...)
                Smilei.Field.streak(...)
                Smilei.Probe.streak(...)
-               Smilei.ParticleDiagnostic.streak(...)
+               Smilei.ParticleBinning.streak(...)
                Smilei.TrackParticles.streak(...)
                Smilei.Screen.streak(...)
   
@@ -448,7 +449,7 @@ are streaked to produce a 2D image where the second axis is time.
 **Example**::
     
     S = Smilei("path/to/my/results")
-    S.ParticleDiagnostic(1).streak()
+    S.ParticleBinning(1).streak()
 
 ----
 
@@ -460,7 +461,7 @@ This third plotting method animates the data over time.
 .. py:method:: Smilei.Scalar.animate(...)
                Smilei.Field.animate(...)
                Smilei.Probe.animate(...)
-               Smilei.ParticleDiagnostic.animate(...)
+               Smilei.ParticleBinning.animate(...)
                Smilei.TrackParticles.animate(...)
                Smilei.Screen.animate(...)
   
@@ -478,7 +479,7 @@ This third plotting method animates the data over time.
 **Example**::
     
     S = Smilei("path/to/my/results")
-    S.ParticleDiagnostic(1).animate()
+    S.ParticleBinning(1).animate()
 
 ----
 
@@ -512,12 +513,12 @@ Simultaneous plotting of multiple diagnostics
     
     S = Smilei("path/to/my/results")
     A = S.Probe(probeNumber=0, field="Ex")
-    B = S.ParticleDiagnostic(diagNumber=1)
+    B = S.ParticleBinning(diagNumber=1)
     multiPlot( A, B, figure=1 )
 
 ..
 
-  This plots a probe and a particle diagnostic on the same figure, and makes an animation for all available timesteps.
+  This plots a Probe and a ParticleBinning diagnostic on the same figure, and makes an animation for all available timesteps.
 
 
 ----
@@ -563,7 +564,7 @@ Options for the tick labels: ``style_x``, ``scilimits_x``, ``useOffset_x``, ``st
   To choose a gray colormap of the image, use ``cmap="gray"``::
     
     S = Smilei("path/to/my/results")
-    S.ParticleDiagnostic(0, figure=1, cmap="gray") .plot()
+    S.ParticleBinning(0, figure=1, cmap="gray") .plot()
 
 ..
 
@@ -578,14 +579,14 @@ Update the plotting options
 .. py:method:: Smilei.Scalar.set(*args)
                Smilei.Field.set(*args)
                Smilei.Probe.set(*args)
-               Smilei.ParticleDiagnostic.set(*args)
+               Smilei.ParticleBinning.set(*args)
                Smilei.Screen.set(*args)
   
   
   **Example**::
     
     S = Smilei("path/to/my/results")
-    A = ParticleDiagnostic(diagNumber=0, figure=1, vmax=1)
+    A = ParticleBinning(diagNumber=0, figure=1, vmax=1)
     A.plot( figure=2 )
     A.set( vmax=2 )
     A.plot()
@@ -652,12 +653,12 @@ Print the list of available ``Field`` diagnostics::
                  Ex               Ey               Ez
       Rho_electron1         Rho_ion1
   
-Print the list of available ``ParticleDiagnostic``::
+Print the list of available ``ParticleBinning``::
 
-  >>> S.ParticleDiagnostic()
+  >>> S.ParticleBinning()
   Diagnostic is invalid
-  Printing available particle diagnostics:
-  ----------------------------------------
+  Printing available particle binning diagnostics:
+  ------------------------------------------------
   Diag#0 - density of species # 1 
       Averaging over 2 timesteps
       x from 0.0 to 6.28319 in 100 steps 
@@ -697,14 +698,14 @@ If you have the ``Pint`` package installed, you may also choose units for the pl
   
   Kinetic energy as a function of time (displaying units)
 
-.. rubric:: 4. Plot a particle diagnostic result at :math:`t=0`
+.. rubric:: 4. Plot a ParticleBinning diagnostic result at :math:`t=0`
 
-The particle diagnostic #0, as printed above, contains the density of the species #1
+The ParticleBinning diagnostic #0, as printed above, contains the density of the species #1
 (electrons) as a function of their position ``x`` and their velocity ``vx``. In other
 words, it corresponds to the phase-space of the electrons. We can plot this phase-space
 in the initial conditions, using::
 
-  >>> S.ParticleDiagnostic(0, units=["um","c"]).plot(timestep=0)
+  >>> S.ParticleBinning(0, units=["um","c"]).plot(timestep=0)
 
 .. figure:: _static/Tutorial3.png
   :width: 10cm
@@ -715,9 +716,9 @@ A window appears. We can see that the electrons have indeed
 a drift velocity of :math:`0.05c`.
 
 
-To obtain the equivalent plot for the ions, use the particle diagnostic #1::
+To obtain the equivalent plot for the ions, use the ParticleBinning #1::
 
-  >>> S.ParticleDiagnostic(1, units=["um","c"]).plot(timestep=0)
+  >>> S.ParticleBinning(1, units=["um","c"]).plot(timestep=0)
 
 .. figure:: _static/Tutorial4.png
   :width: 10cm
@@ -734,7 +735,7 @@ Let us say we want to sum over the data that is contained between :math:`x=3` an
 and plot the result as a function of :math:`v_x`.
 This is achieved by the argument ``sum``::
 
-  >>> S.ParticleDiagnostic(0, sum={"x":[3,4]}, units=["c"]).plot(timestep=0)
+  >>> S.ParticleBinning(0, sum={"x":[3,4]}, units=["c"]).plot(timestep=0)
 
 
 .. figure:: _static/Tutorial5.png
@@ -746,7 +747,7 @@ We can see, again, that the peak is located at :math:`v_x=0.05c`.
 
 Now, let us do the sum on :math:`v_x` instead of :math:`x`::
   
-  >>> S.ParticleDiagnostic(0, sum={"vx":"all"}, units=["um"]).plot(timestep=0, vmin=0, vmax=11)
+  >>> S.ParticleBinning(0, sum={"vx":"all"}, units=["um"]).plot(timestep=0, vmin=0, vmax=11)
 
 .. figure:: _static/Tutorial6.png
   :width: 10cm
@@ -763,7 +764,7 @@ We obtain a constant density of :math:`10\,n_c`, which is consistent with input 
 
 To have an animation of the electron phase-space with time, use::
   
-  >>> S.ParticleDiagnostic(0, units=["um","c"]).animate()
+  >>> S.ParticleBinning(0, units=["um","c"]).animate()
 
 You will see the electron velocity oscillate from :math:`0.05c` to :math:`-0.05c`.
 As explained before, this oscillation corresponds to a plasma wave with infinite wavelength.
@@ -771,7 +772,7 @@ As explained before, this oscillation corresponds to a plasma wave with infinite
 Note that all the available timesteps are animated. If you want to only animate
 between timesteps 20 and 60, use::
   
-  >>> S.ParticleDiagnostic( 0, units=["um","c"], timesteps=[20,60] ).animate()
+  >>> S.ParticleBinning( 0, units=["um","c"], timesteps=[20,60] ).animate()
 
 
 .. rubric:: 7. Make multiple plots on the same figure
@@ -779,8 +780,8 @@ between timesteps 20 and 60, use::
 Use the following commands to have the animation with both electrons and ions
 on the same figure::
   
-  >>> A = S.ParticleDiagnostic( 0, units=["um","c"] )
-  >>> B = S.ParticleDiagnostic( 1, units=["um","c"] )
+  >>> A = S.ParticleBinning( 0, units=["um","c"] )
+  >>> B = S.ParticleBinning( 1, units=["um","c"] )
   >>> multiPlot(A, B, shape=[1,2])
 
 .. figure:: _static/Tutorial7.png
@@ -792,8 +793,8 @@ If the two plots are 1D, and are both of the same type, then they will
 automatically be plotted on the same axes. For instance, we can sum one axis, like
 in the previous section::
   
-  >>> A = S.ParticleDiagnostic(0, sum={"x":"all"}, units=["c"])
-  >>> B = S.ParticleDiagnostic(1, sum={"x":"all"}, units=["c"], vmax=10000)
+  >>> A = S.ParticleBinning(0, sum={"x":"all"}, units=["c"])
+  >>> B = S.ParticleBinning(1, sum={"x":"all"}, units=["c"], vmax=10000)
   >>> multiPlot(A, B)
 
 .. figure:: _static/Tutorial8.png
@@ -804,13 +805,13 @@ in the previous section::
 
 .. rubric:: 8. Make an operation between diagnostics
 
-Let us now consider the particle diagnostic #2, which is very similar to #0 as it has
+Let us now consider the ParticleBinning #2, which is very similar to #0 as it has
 the same axes :math:`x` and :math:`v_x`, but it has ``ouput="px_density"`` instead
 of ``ouput="density"``. Consequently, if we divide #2 by #0, we will obtain the
 average value :math:`\left<p_x\right>` as a function of :math:`x` and :math:`v_x`.
 To do this operation, we need to indicate ``"#2/#0"`` instead of the diagnostic number::
 
-  >>> S.ParticleDiagnostic("#2/#0", sum={"x":"all","vx":"all"}).plot()
+  >>> S.ParticleBinning("#2/#0", sum={"x":"all","vx":"all"}).plot()
 
 .. figure:: _static/Tutorial9.png
   :width: 10cm

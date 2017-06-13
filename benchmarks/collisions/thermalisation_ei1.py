@@ -92,7 +92,7 @@ DiagScalar(
 
 
 
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = 5,
 	species = ["electron1"],
@@ -101,7 +101,7 @@ DiagParticles(
 		 ["vx",  -0.2,  0.2,    1000]
 	]
 )
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = 5,
 	species = ["electron1"],
@@ -110,7 +110,7 @@ DiagParticles(
 		 ["vy",  -0.2,  0.2,    1000]
 	]
 )
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = 5,
 	species = ["electron1"],
@@ -121,7 +121,7 @@ DiagParticles(
 )
 
 
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = 5,
 	species = ["ion1"],
@@ -130,7 +130,7 @@ DiagParticles(
 		 ["vx",  -0.05,  0.05,    1000]
 	]
 )
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = 5,
 	species = ["ion1"],
@@ -139,7 +139,7 @@ DiagParticles(
 		 ["vy",  -0.05,  0.05,    1000]
 	]
 )
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = 5,
 	species = ["ion1"],

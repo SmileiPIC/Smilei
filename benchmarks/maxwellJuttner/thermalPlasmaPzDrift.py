@@ -2,7 +2,7 @@
 # SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
 # ---------------------------------------------
 # Remember: never override the following names:
-#           SmileiComponent, Species, Laser, Collisions, DiagProbe, DiagParticles,
+#           SmileiComponent, Species, Laser, Collisions, DiagProbe, DiagParticleBinning,
 #           DiagScalar, DiagPhase or ExtField
 
 import math as m
@@ -85,7 +85,7 @@ DiagFields(
     fields = ['Ex','Ey','Ez','By_m','Bz_m','Jz','Rho_eon1','Rho_eon2']
 )
 
-DiagParticles(
+DiagParticleBinning(
  	output = "density",
  	every = globalEvery,
  	time_average = 1,
@@ -94,7 +94,7 @@ DiagParticles(
  		["gamma", 1., 1+15.*Te, 1000]
  	]
 )
-DiagParticles(
+DiagParticleBinning(
  	output = "density",
  	every = globalEvery,
  	time_average = 1,

@@ -102,7 +102,7 @@ for eon in mj_species:
 		isTest = True
 	)
 	
-	DiagParticles(
+	DiagParticleBinning(
 	 	output = "density",
 	 	every = 1000.,
 	 	species = [eon],

@@ -21,7 +21,7 @@ for i in range(3):
 	ion = "ion"+str(i)
 	eon = "eon"+str(i)
 	
-	ion_mean_charge = S.ParticleDiagnostic("#"+str(2*i)+"/#"+str(2*i+1),slice={"x":"all"}).get()
+	ion_mean_charge = S.ParticleBinning("#"+str(2*i)+"/#"+str(2*i+1),slice={"x":"all"}).get()
 	times = ion_mean_charge["times"] * S.namelist.Main.timestep
 	ion_mean_charge = np.array(ion_mean_charge["data"])
 	

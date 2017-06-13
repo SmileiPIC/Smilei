@@ -325,7 +325,7 @@ def multiPlot(*Diags, **kwargs):
 	
 	Parameters:
 	-----------
-	Diag1, Diag2, ... : Several objects of classes 'Scalar', 'Field', 'Probe' or 'ParticleDiagnostic'
+	Diag1, Diag2, ... : Several objects of classes 'Scalar', 'Field', 'Probe' or 'ParticleBinning'
 	shape : 2-element list giving the number of figures in x and y.
 	movie : filename to create a movie, e.g. "my/path/mov.avi" or "my/path/mov.gif"
 	fps : frames per second for the movie.

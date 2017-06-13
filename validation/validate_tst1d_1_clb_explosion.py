@@ -6,7 +6,7 @@ S = Smilei(".", verbose=False)
 Ntot_charges = S.Scalar.Ntot_charges(timesteps=0).getData()[0]
 Validate("Initial number of particles", Ntot_charges )
 
-momentum_distribution = S.ParticleDiagnostic.Diag0(timesteps=0).getData()[0]
+momentum_distribution = S.ParticleBinning.Diag0(timesteps=0).getData()[0]
 Validate("Initial momentum distribution", momentum_distribution, 0.001 )
 
 max_ubal = np.max( np.abs(S.Scalar.Ubal().getData()) )

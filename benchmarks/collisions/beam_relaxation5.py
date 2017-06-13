@@ -81,7 +81,7 @@ DiagScalar(
 
 
 
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = 2,
 	time_average = 1,
@@ -92,7 +92,7 @@ DiagParticles(
 	]
 )
 
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = 2,
 	time_average = 1,
@@ -103,7 +103,7 @@ DiagParticles(
 	]
 )
 
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = 2,
 	time_average = 1,
@@ -114,7 +114,7 @@ DiagParticles(
 	]
 )
 
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = 10,
 	time_average = 1,

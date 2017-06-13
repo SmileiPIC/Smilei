@@ -209,7 +209,7 @@ class Diagnostic(object):
 		Example:
 		--------
 			S = Smilei("path/to/my/results")
-			S.ParticleDiagnostic(1).plot(vmin=0, vmax=1e14)
+			S.ParticleBinning(1).plot(vmin=0, vmax=1e14)
 		"""
 		if not self._validate(): return
 		if not self._prepare(): return
@@ -255,7 +255,7 @@ class Diagnostic(object):
 		Example:
 		--------
 			S = Smilei("path/to/my/results")
-			S.ParticleDiagnostic(1).streak(vmin=0, vmax=1e14)
+			S.ParticleBinning(1).streak(vmin=0, vmax=1e14)
 		"""
 		if not self._validate(): return
 		if not self._prepare(): return
@@ -339,9 +339,9 @@ class Diagnostic(object):
 		Example:
 		--------
 			S = Smilei("path/to/my/results")
-			S.ParticleDiagnostic(1).animate(vmin=0, vmax=1e14)
+			S.ParticleBinning(1).animate(vmin=0, vmax=1e14)
 			
-			This takes the particle diagnostic #1 and plots the resulting array in figure 1 from 0 to 3e14.
+			This takes the particle binning diagnostic #1 and plots the resulting array in figure 1 from 0 to 3e14.
 		"""
 		if not self._validate(): return
 		if not self._prepare(): return

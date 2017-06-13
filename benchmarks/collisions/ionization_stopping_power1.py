@@ -104,7 +104,7 @@ DiagScalar(
 
 
 for i in range(npoints):
-	DiagParticles(
+	DiagParticleBinning(
 		output = "p_density",
 		every = 20,
 		species = [electrons[i]],
@@ -112,7 +112,7 @@ for i in range(npoints):
 			 ["x",    0.,    Main.sim_length[0],   1]
 		]
 	)
-	DiagParticles(
+	DiagParticleBinning(
 		output = "density",
 		every = 20,
 		species = [electrons[i]],

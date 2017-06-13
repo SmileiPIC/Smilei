@@ -73,7 +73,7 @@ for ion_nppc, eon_nppc in [[1000, 1000], [1000, 100], [100, 1000]]:
 		coulomb_log = 3
 	)
 	
-	DiagParticles(
+	DiagParticleBinning(
 		output = "density",
 		every = 4,
 		time_average = 1,
@@ -84,7 +84,7 @@ for ion_nppc, eon_nppc in [[1000, 1000], [1000, 100], [100, 1000]]:
 		]
 	)
 	
-	DiagParticles(
+	DiagParticleBinning(
 		output = "density",
 		every = 4,
 		time_average = 1,
@@ -95,7 +95,7 @@ for ion_nppc, eon_nppc in [[1000, 1000], [1000, 100], [100, 1000]]:
 		]
 	)
 	
-	DiagParticles(
+	DiagParticleBinning(
 		output = "density",
 		every = 4,
 		time_average = 1,

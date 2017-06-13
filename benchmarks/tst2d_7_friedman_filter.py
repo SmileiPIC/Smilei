@@ -4,7 +4,7 @@
 # ----------------------------------------------------------------------------------------
 #
 # Remember: never override the following names:
-#           SmileiComponent, Species, Laser, Collisions, DiagProbe, DiagParticles,
+#           SmileiComponent, Species, Laser, Collisions, DiagProbe, DiagParticleBinning,
 #           DiagScalar, DiagPhase or ExtField
 #
 import math as m
@@ -167,7 +167,7 @@ DiagFields(
          fields = ['Ey','Bz','Rho_eon','Jy_eon','Jy_pos']
 )
 
-DiagParticles(
+DiagParticleBinning(
     output = "density",
     every = globalEvery,
     time_average = 1,
@@ -178,7 +178,7 @@ DiagParticles(
         ]
 )
 
-DiagParticles(
+DiagParticleBinning(
     output = "density",
     every = globalEvery,
     time_average = 1,

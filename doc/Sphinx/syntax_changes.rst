@@ -4,9 +4,13 @@ Syntax changes
 In the namelist
 ^^^^^^^^^^^^^^^
 
+- The ``DiagParticles`` diagnostic has been renamed :ref:`DiagParticleBinning <DiagParticleBinning>`.
+
 
 In the post-processing module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- The ``ParticleDiagnostic()`` method has been renamed :py:meth:`ParticleBinning() <Smilei.ParticleBinning>`.
 
 - The argument ``slice`` replaced by ``average`` or ``sum``, depending on the diagnostic.
 

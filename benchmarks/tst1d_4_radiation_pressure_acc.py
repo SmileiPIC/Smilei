@@ -79,7 +79,7 @@ DiagFields(
 
 DiagScalar(every=every)
 
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = every,
 	species = ["ion"],
@@ -89,7 +89,7 @@ DiagParticles(
 	]
 )
 
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = every,
 	species = ["ion"],

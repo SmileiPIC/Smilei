@@ -90,7 +90,7 @@ DiagScalar(
 
 
 
-DiagParticles(
+DiagParticleBinning(
 	output = "charge_density",
 	every = 20,
 	species = ["ion1"],
@@ -99,7 +99,7 @@ DiagParticles(
 	]
 )
 
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = 20,
 	species = ["ion1"],
@@ -109,7 +109,7 @@ DiagParticles(
 )
 
 
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = 20,
 	species = ["electron1"],

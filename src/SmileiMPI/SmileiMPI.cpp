@@ -23,7 +23,7 @@
 
 #include "Diagnostic.h"
 #include "DiagnosticScalar.h"
-#include "DiagnosticParticles.h"
+#include "DiagnosticParticleBinning.h"
 #include "DiagnosticScreen.h"
 #include "DiagnosticProbes.h"
 
@@ -886,7 +886,7 @@ void SmileiMPI::computeGlobalDiags(Diagnostic* diag, int timestep)
 {
     if ( DiagnosticScalar* scalar = dynamic_cast<DiagnosticScalar*>( diag ) ) {
         computeGlobalDiags(scalar, timestep);
-    } else if (DiagnosticParticles* particles = dynamic_cast<DiagnosticParticles*>( diag )) {
+    } else if (DiagnosticParticleBinning* particles = dynamic_cast<DiagnosticParticleBinning*>( diag )) {
         computeGlobalDiags(particles, timestep);
     } else if (DiagnosticScreen* screen = dynamic_cast<DiagnosticScreen*>( diag )) {
         computeGlobalDiags(screen, timestep);
@@ -974,16 +974,16 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// MPI synchronization of diags particles
+// MPI synchronization of diags particle binning
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI::computeGlobalDiags(DiagnosticParticles* diagParticles, int timestep)
+void SmileiMPI::computeGlobalDiags(DiagnosticParticleBinning* diagParticles, int timestep)
 {
     if (timestep - diagParticles->timeSelection->previousTime() == diagParticles->time_average-1) {
         MPI_Reduce(diagParticles->filename.size()?MPI_IN_PLACE:&diagParticles->data_sum[0], &diagParticles->data_sum[0], diagParticles->output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         
         if( !isMaster() ) diagParticles->clear();
     }
-} // END computeGlobalDiags(DiagnosticParticles* diagParticles ...)
+} // END computeGlobalDiags(DiagnosticParticleBinning* diagParticles ...)
 
 // ---------------------------------------------------------------------------------------------------------------------
 // MPI synchronization of diags screen

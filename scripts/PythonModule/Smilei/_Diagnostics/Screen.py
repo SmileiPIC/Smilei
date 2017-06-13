@@ -4,7 +4,7 @@ from .._Utils import *
 class Screen(Diagnostic):
 	"""Class for loading a Screen diagnostic"""
 	
-	def _init(self, diagNumber=None, timesteps=None, subset=None, sum=None, data_log=False, stride=1, **kwargs):
+	def _init(self, diagNumber=None, timesteps=None, subset=None, sum=None, data_log=False, **kwargs):
 		
 		if diagNumber is None:
 			self._error += "Printing available screens:\n"

@@ -43,7 +43,7 @@ for name, profile in S.namelist.profiles.items():
 
 
 # Maxwell-Juttner initialization
-p = S.ParticleDiagnostic(0).get()
+p = S.ParticleBinning(0).get()
 p_distr = p["data"][0]
 p = p["px"]
 b, a = butter(8, 0.15, btype='low', analog=False)

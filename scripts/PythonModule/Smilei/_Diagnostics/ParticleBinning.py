@@ -1,19 +1,19 @@
 from .Diagnostic import Diagnostic
 from .._Utils import *
 
-class ParticleDiagnostic(Diagnostic):
-	"""Class for loading a particle diagnostic"""
+class ParticleBinning(Diagnostic):
+	"""Class for loading a particle binning diagnostic"""
 	
-	def _init(self, diagNumber=None, timesteps=None, subset=None, sum=None, data_log=False, stride=1, **kwargs):
+	def _init(self, diagNumber=None, timesteps=None, subset=None, sum=None, data_log=False, **kwargs):
 		
 		if diagNumber is None:
-			self._error += "Printing available particle diagnostics:\n"
-			self._error += "----------------------------------------\n"
+			self._error += "Printing available particle binning diagnostics:\n"
+			self._error += "------------------------------------------------\n"
 			diags = self.getDiags()
 			for diagNumber in diags:
 				self._error += self._printInfo(self._getInfo(diagNumber))
 			if len(diags)==0:
-				self._error += "      No particle diagnostics found"
+				self._error += "      No particle binning diagnostics found"
 			return
 		
 		# 1 - verifications, initialization
@@ -39,7 +39,7 @@ class ParticleDiagnostic(Diagnostic):
 				if info is False: raise
 				self._myinfo.update({ d:info })
 			except:
-				self._error = "Particle diagnostic #"+str(d)+" invalid"
+				self._error = "Particle binning diagnostic #"+str(d)+" invalid"
 				return
 		try:
 			exec(self._re.sub('#\d+','1.',self.operation))
@@ -93,7 +93,7 @@ class ParticleDiagnostic(Diagnostic):
 			# Gather data from all timesteps, and the list of timesteps
 			items = {}
 			for path in self._results_path:
-				f = self._h5py.File(path+self._os.sep+'ParticleDiagnostic'+str(d)+'.h5')
+				f = self._h5py.File(path+self._os.sep+'ParticleBinning'+str(d)+'.h5')
 				items.update( dict(f) )
 			items = sorted(items.items())
 			self._h5items[d] = [it[1] for it in items]
@@ -294,7 +294,7 @@ class ParticleDiagnostic(Diagnostic):
 		for path in self._results_path:
 			# Open file
 			try:
-				file = path+self._os.sep+'ParticleDiagnostic'+str(diagNumber)+'.h5'
+				file = path+self._os.sep+'ParticleBinning'+str(diagNumber)+'.h5'
 				f = self._h5py.File(file, 'r')
 			except:
 				return False
@@ -328,7 +328,7 @@ class ParticleDiagnostic(Diagnostic):
 				info = {"#":diagNumber, "output":output, "tavg":time_average, "species":species, "axes":axes}
 			else:
 				if output!=info["output"] or axes!=info["axes"]:
-					print("Particle diagnostic #"+str(diagNumber)+" in path '"+path+"' is incompatible with the other ones")
+					print("Particle binning diagnostic #"+str(diagNumber)+" in path '"+path+"' is incompatible with the other ones")
 					return False
 		return info
 	
@@ -372,8 +372,8 @@ class ParticleDiagnostic(Diagnostic):
 	def getDiags(self):
 		allDiags = []
 		for path in self._results_path:
-			files = self._glob(path+self._os.sep+"ParticleDiagnostic*.h5")
-			diags = [int(self._re.findall(r"ParticleDiagnostic([0-9]+)[.]h5$",file)[0]) for file in files]
+			files = self._glob(path+self._os.sep+"ParticleBinning*.h5")
+			diags = [int(self._re.findall(r"ParticleBinning([0-9]+)[.]h5$",file)[0]) for file in files]
 			if len(allDiags)>0:
 				allDiags = [d for d in diags if d in allDiags]
 			else:
@@ -390,7 +390,7 @@ class ParticleDiagnostic(Diagnostic):
 			times = set()
 			for path in self._results_path:
 				try:
-					file = path+self._os.sep+'ParticleDiagnostic'+str(diagNumber)+'.h5'
+					file = path+self._os.sep+'ParticleBinning'+str(diagNumber)+'.h5'
 					f = self._h5py.File(file, 'r')
 				except:
 					print("Cannot open file "+file)

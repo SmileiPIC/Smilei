@@ -1,5 +1,5 @@
 from ._Utils import *
-from ._Diagnostics import Scalar, Field, Probe, ParticleDiagnostic, Screen, TrackParticles
+from ._Diagnostics import Scalar, Field, Probe, ParticleBinning, Screen, TrackParticles
 
 
 class ScalarFactory(object):
@@ -63,6 +63,12 @@ class FieldFactory(object):
 		If omitted, all timesteps are used.
 		If one number  given, the nearest timestep available is used.
 		If two numbers given, all the timesteps in between are used.
+	subset: a python dictionary of the form { axis:range, ... } (optional)
+		`axis` must be "x", "y" or "z".
+		`range` must be a list of 1 to 3 floats such as [start, stop, step]
+		WARNING: THE VALUE OF `step` IS A NUMBER OF CELLS.
+		Only the data within the chosen axes' selections is extracted.
+		Example: subset = {"y":[10, 80, 4]}
 	average : a python dictionary of the form { axis:range, ... } (optional)
 		`axis` may be "x", "y" or "z".
 		`range` may be "all", a float, or [float, float].
@@ -71,8 +77,6 @@ class FieldFactory(object):
 	units : a units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
-	stride : int (default: 1)
-		Step size for sampling the grid.
 	
 	Usage:
 	------
@@ -154,6 +158,12 @@ class ProbeFactory(object):
 		If omitted, all timesteps are used.
 		If one number  given, the nearest timestep available is used.
 		If two numbers given, all the timesteps in between are used.
+	subset: a python dictionary of the form { axis:range, ... } (optional)
+		`axis` must be "axis1", "axis2" or "axis3".
+		`range` must be a list of 1 to 3 floats such as [start, stop, step]
+		WARNING: THE VALUE OF `step` IS A NUMBER OF PROBE POINTS.
+		Only the data within the chosen axes' selections is extracted.
+		Example: subset = {"axis2":[10, 80, 4]}
 	average : a python dictionary of the form { axis:range, ... } (optional)
 		`axis` may be "axis1" or "axis2" (the probe axes).
 		`range` may be "all", a float, or [float, float].
@@ -220,18 +230,24 @@ class ProbeFactory(object):
 		pass
 
 
-class ParticleDiagnosticFactory(object):
-	"""Import and analyze a particle diagnostic from a Smilei simulation
+class ParticleBinningFactory(object):
+	"""Import and analyze a ParticleBinning diagnostic from a Smilei simulation
 	
 	Parameters:
 	-----------
 	diagNumber : int (optional)
-		Index of an available particle diagnostic.
+		Index of an available ParticleBinning diagnostic.
 		To get a list of available diags, simply omit this argument.
 	timesteps : int or [int, int] (optional)
 		If omitted, all timesteps are used.
 		If one number  given, the nearest timestep available is used.
 		If two numbers given, all the timesteps in between are used.
+	subset: a python dictionary of the form { axis:range, ... } (optional)
+		`axis` may be "x", "y", "z", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
+		`range` must be a list of 1 to 3 floats such as [start, stop, step]
+		WARNING: THE VALUE OF `step` IS A NUMBER OF BINS.
+		Only the data within the chosen axes' selections is extracted.
+		Example: subset = {"y":[10, 80, 4]}
 	sum : a python dictionary of the form { axis:range, ... } (optional)
 		`axis` may be "x", "y", "z", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
 		`range` may be "all", a float, or [float, float].
@@ -240,13 +256,11 @@ class ParticleDiagnosticFactory(object):
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
-	stride : int (default: 1)
-		Step size for sampling the grid.
 	
 	Usage:
 	------
 		S = Smilei("path/to/simulation") # Load the simulation
-		part = S.ParticleDiagnostic(...) # Load the particle diagnostic
+		part = S.ParticleBinning(...) # Load the particle binning diagnostic
 		part.get()                       # Obtain the data
 	"""
 	
@@ -256,13 +270,13 @@ class ParticleDiagnosticFactory(object):
 		
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
-			# Create a temporary, empty particle diagnostic
-			tmpDiag = ParticleDiagnostic.ParticleDiagnostic(simulation)
+			# Create a temporary, empty particle binning diagnostic
+			tmpDiag = ParticleBinning.ParticleBinning(simulation)
 			# Get a list of diags
 			diags = tmpDiag.getDiags()
 			# Create diags shortcuts
 			for diag in diags:
-				setattr(self, 'Diag'+str(diag), ParticleDiagnosticFactory(simulation, diag))
+				setattr(self, 'Diag'+str(diag), ParticleBinningFactory(simulation, diag))
 		
 		else:
 			# the diag is saved for generating the object in __call__
@@ -270,20 +284,20 @@ class ParticleDiagnosticFactory(object):
 			
 			## If not a specific timestep, build a list of timesteps shortcuts
 			#if timestep is None:
-			#	# Create a temporary, empty particle diagnostic
-			#	tmpDiag = ParticleDiagnostic.ParticleDiagnostic(simulation, diagNumber)
+			#	# Create a temporary, empty particle binning diagnostic
+			#	tmpDiag = ParticleBinning.ParticleBinning(simulation, diagNumber)
 			#	# Get a list of timesteps
 			#	timesteps = tmpDiag.getAvailableTimesteps()
 			#	# Create timesteps shortcuts
 			#	for timestep in timesteps:
-			#		setattr(self, 't%0.10i'%timestep, ParticleDiagnosticFactory(simulation, diagNumber, timestep))
+			#		setattr(self, 't%0.10i'%timestep, ParticleBinningFactory(simulation, diagNumber, timestep))
 			#
 			#else:
 			#	# the timestep is saved for generating the object in __call__
 			#	self._additionalArgs += (timestep, )
 	
 	def __call__(self, *args, **kwargs):
-		return ParticleDiagnostic.ParticleDiagnostic(self._simulation, *(self._additionalArgs+args), **kwargs)
+		return ParticleBinning.ParticleBinning(self._simulation, *(self._additionalArgs+args), **kwargs)
 	
 	def toXDMF(self):
 		pass
@@ -301,6 +315,12 @@ class ScreenFactory(object):
 		If omitted, all timesteps are used.
 		If one number  given, the nearest timestep available is used.
 		If two numbers given, all the timesteps in between are used.
+	subset: a python dictionary of the form { axis:range, ... } (optional)
+		`axis` may be "x", "y", "z", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
+		`range` must be a list of 1 to 3 floats such as [start, stop, step]
+		WARNING: THE VALUE OF `step` IS A NUMBER OF BINS.
+		Only the data within the chosen axes' selections is extracted.
+		Example: subset = {"y":[10, 80, 4]}
 	sum : a python dictionary of the form { axis:range, ... } (optional)
 		`axis` may be "x", "y", "z", "a", "b", "theta", "phi", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
 		`range` may be "all", a float, or [float, float].
@@ -309,13 +329,11 @@ class ScreenFactory(object):
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
-	stride : int (default: 1)
-		Step size for sampling the grid.
 	
 	Usage:
 	------
 		S = Smilei("path/to/simulation") # Load the simulation
-		screen = S.Screen(...) # Load the particle diagnostic
+		screen = S.Screen(...) # Load the Screen diagnostic
 		screen.get()                       # Obtain the data
 	"""
 	
@@ -475,15 +493,15 @@ class Smilei(object):
 	namelist :
 		An object that holds the information of the original user namelist.
 	Scalar :
-		A callable object to access the `DiagScalar` diagnostic.
+		A method to access the `DiagScalar` diagnostic.
 	Field :
-		A callable object to access the `DiagField` diagnostic.
+		A method to access the `DiagField` diagnostic.
 	Probe :
-		A callable object to access the `DiagProbe` diagnostic.
-	ParticleDiagnostic :
-		A callable object to access the `DiagParticle` diagnostic.
+		A method to access the `DiagProbe` diagnostic.
+	ParticleBinning :
+		A method to access the `DiagParticleBinning` diagnostic.
 	TrackParticles :
-		A callable object to access the tracked particles diagnostic.
+		A method to access the tracked particles diagnostic.
 		
 	"""
 	
@@ -521,8 +539,8 @@ class Smilei(object):
 			self.Field = FieldFactory(self)
 			if self._verbose: print("Scanning for Probe diagnostics")
 			self.Probe = ProbeFactory(self)
-			if self._verbose: print("Scanning for Particle diagnostics")
-			self.ParticleDiagnostic = ParticleDiagnosticFactory(self)
+			if self._verbose: print("Scanning for ParticleBinning diagnostics")
+			self.ParticleBinning = ParticleBinningFactory(self)
 			if self._verbose: print("Scanning for Screen diagnostics")
 			self.Screen = ScreenFactory(self)
 			if self._verbose: print("Scanning for Tracked particle diagnostics")
@@ -635,11 +653,11 @@ class Smilei(object):
 	def toXDMF(self):
 		if not self.valid: return
 		
-		self.Scalar            .toXDMF()
-		self.Field             .toXDMF()
-		self.Probe             .toXDMF()
-		self.ParticleDiagnostic.toXDMF()
-		self.Screen            .toXDMF()
-		self.TrackParticles    .toXDMF()
+		self.Scalar         .toXDMF()
+		self.Field          .toXDMF()
+		self.Probe          .toXDMF()
+		self.ParticleBinning.toXDMF()
+		self.Screen         .toXDMF()
+		self.TrackParticles .toXDMF()
 
 

@@ -107,7 +107,7 @@ DiagProbe(
 
 DiagScalar(every = 10, vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMin', 'RhoMinCell'])
 
-DiagParticles(
+DiagParticleBinning(
 	output = "charge_density",
 	every = 50,
 	species = ["electron"],

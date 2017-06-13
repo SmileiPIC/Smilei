@@ -55,7 +55,7 @@ for element in ["H", "Al", "Zn", "Au"]:
 	S=Smilei("ionization_equilibrium"+element)
 	
 	npoints = S.namelist.npoints
-	every = S.namelist.DiagParticles[0].every
+	every = S.namelist.DiagParticleBinning[0].every
 	ts = int(t0 * S.namelist.Main.referenceAngularFrequency_SI/S.namelist.Main.timestep/every) # timestep at 1ps
     
 	Z = []
@@ -63,11 +63,11 @@ for element in ["H", "Al", "Zn", "Au"]:
 	T = []
 	Tfinal = []
 	for i in range(npoints):
-		D = S.ParticleDiagnostic("#"+str(4*i+2)+"/#"+str(4*i+3),sum={"x":"all"}, units=["ps"],marker=".")
+		D = S.ParticleBinning("#"+str(4*i+2)+"/#"+str(4*i+3),sum={"x":"all"}, units=["ps"],marker=".")
 		Z.append( D )
 		Zfinal.append( np.array(D.getData())[ts] )
 		
-		D = S.ParticleDiagnostic("#"+str(4*i+0)+"/#"+str(4*i+1),sum={"x":"all"}, units=["ps"],marker=".")
+		D = S.ParticleBinning("#"+str(4*i+0)+"/#"+str(4*i+1),sum={"x":"all"}, units=["ps"],marker=".")
 		T.append( D )
 		Tfinal.append( np.array(D.getData())[ts] *(511.*2./3.) )
 		

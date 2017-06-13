@@ -100,31 +100,31 @@ for i in range(npoints):
 		ionizing = True
 	)
 	
-	DiagParticles(
+	DiagParticleBinning(
 		output = "ekin_density",
 		every = 10,
 		species = [eon],
 		axes = [ ["x", 0, Main.sim_length[0], 1] ]
 	)
-	DiagParticles(
+	DiagParticleBinning(
 		output = "density",
 		every = 10,
 		species = [eon],
 		axes = [ ["x", 0, Main.sim_length[0], 1] ]
 	)
-	DiagParticles(
+	DiagParticleBinning(
 		output = "charge_density",
 		every = 10,
 		species = [ion],
 		axes = [ ["x", 0, Main.sim_length[0], 1] ]
 	)
-	DiagParticles(
+	DiagParticleBinning(
 		output = "density",
 		every = 10,
 		species = [ion],
 		axes = [ ["x", 0, Main.sim_length[0], 1] ]
 	)
-	#DiagParticles(
+	#DiagParticleBinning(
 	#	output = "density",
 	#	every = 50,
 	#	species = [ion],

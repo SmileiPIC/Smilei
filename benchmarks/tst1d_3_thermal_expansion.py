@@ -78,7 +78,7 @@ DiagFields(
     fields = ['Ex','Rho_ion','Rho_eon']
 )
 
-DiagParticles(
+DiagParticleBinning(
     output = "density",
     every = every,
     species = ["ion"],
@@ -88,7 +88,7 @@ DiagParticles(
     ]
 )
 
-DiagParticles(
+DiagParticleBinning(
     output = "density",
     every = every,
     time_average = 1,
@@ -99,7 +99,7 @@ DiagParticles(
 )
 
 
-DiagParticles(
+DiagParticleBinning(
     output = "density",
     every = 10,
     time_average = 1,

@@ -99,7 +99,7 @@ DiagScalar(
     ]
 )
 
-DiagParticles(
+DiagParticleBinning(
     output = "charge_density",
     every = 50,
     species = ["electron"],

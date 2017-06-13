@@ -97,7 +97,7 @@ DiagScalar(
 
 
 
-DiagParticles(
+DiagParticleBinning(
 	output = "px_density",
 	every = 100,
 	species = [el],
@@ -105,7 +105,7 @@ DiagParticles(
 		 ["x",    0.,    Main.sim_length[0],   1]
 	]
 )
-DiagParticles(
+DiagParticleBinning(
 	output = "density",
 	every = 100,
 	species = [el],

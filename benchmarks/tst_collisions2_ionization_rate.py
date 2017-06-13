@@ -76,7 +76,7 @@ for ion_nppc, eon_nppc in [[100, 100], [100, 10], [10, 100]]:
 		ionizing = True
 	)
 	
-	DiagParticles(
+	DiagParticleBinning(
 		output = "charge_density",
 		every = 20,
 		species = [ion],
@@ -85,7 +85,7 @@ for ion_nppc, eon_nppc in [[100, 100], [100, 10], [10, 100]]:
 		]
 	)
 	
-	DiagParticles(
+	DiagParticleBinning(
 		output = "density",
 		every = 20,
 		species = [ion],

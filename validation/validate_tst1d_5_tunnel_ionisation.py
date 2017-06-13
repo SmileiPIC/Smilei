@@ -50,7 +50,7 @@ def calculate_ionization(Ip, l):
 	return times, Zstar
 
 # hydrogen
-charge = S.ParticleDiagnostic.Diag0().get()
+charge = S.ParticleBinning.Diag0().get()
 charge_distribution = np.array( charge["data"] )
 charge_distribution /= charge_distribution[0,:].sum()
 n1, n2 = charge_distribution.shape
@@ -64,7 +64,7 @@ mean_charge = (charge_distribution * np.outer(np.ones((n1,)), np.arange(n2))).su
 Validate("Hydrogen mean charge vs time", mean_charge, 0.1)
 
 # carbon (does not work yet)
-charge = S.ParticleDiagnostic.Diag1().get()
+charge = S.ParticleBinning.Diag1().get()
 charge_distribution = np.array( charge["data"] )
 charge_distribution /= charge_distribution[0,:].sum()
 n1, n2 = charge_distribution.shape

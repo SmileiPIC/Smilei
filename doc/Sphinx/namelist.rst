@@ -300,7 +300,7 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
   
 .. note::
   
-  The :ref:`particle diagnostics <DiagParticles>` accept an "axis" called ``moving_x``
+  The :ref:`particle binning diagnostics <DiagParticleBinning>` accept an "axis" called ``moving_x``
   corresponding to the `x` coordinate corrected by the moving window's current movement.
   
 ----
@@ -1359,12 +1359,12 @@ To add one probe diagnostic, include the block ``DiagProbe``::
 
 ----
 
-.. _DiagParticles:
+.. _DiagParticleBinning:
 
-*Particle* diagnostics
-^^^^^^^^^^^^^^^^^^^^^^
+*ParticleBinning* diagnostics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A *particle diagnostic* collects data from the macro-particles and processes them during runtime.
+A *particle binning diagnostic* collects data from the macro-particles and processes them during runtime.
 It does not provide information on individual particles: instead, it produces
 **averaged quantities** like the particle density, currents, etc.
 
@@ -1382,10 +1382,10 @@ Examples:
 
 Each dimension of the grid is called "axis".
 
-You can add a particle diagnostic by including a block ``DiagParticles()`` in the namelist,
+You can add a particle binning diagnostic by including a block ``DiagParticleBinning()`` in the namelist,
 for instance::
   
-  DiagParticles(
+  DiagParticleBinning(
       output = "density",
       every = 5,
       time_average = 1,
@@ -1451,7 +1451,7 @@ for instance::
   * The optional keyword ``edge_inclusive`` includes the particles outside the range
     [``min``, ``max``] into the extrema bins.
   
-  There may be as many axes as wanted in one ``DiagParticles( ... )`` block.
+  There may be as many axes as wanted in one ``DiagParticleBinning( ... )`` block.
 
 .. note::
   
@@ -1463,13 +1463,13 @@ for instance::
   For instance, in 2D, ``"x+2y"`` makes an axis oriented along the vector :math:`(1,2)`.
 
 
-**Examples of particle diagnostics**
+**Examples of particle binning diagnostics**
 
 * Variation of the density of species ``electron1``
   from :math:`x=0` to 1, every 5 time-steps, without time-averaging
   ::
     
-    DiagParticles(
+    DiagParticleBinning(
     	output = "density",
     	every = 5,
     	time_average = 1,
@@ -1480,7 +1480,7 @@ for instance::
 * Density map from :math:`x=0` to 1, :math:`y=0` to 1
   ::
     
-    DiagParticles(
+    DiagParticleBinning(
     	output = "density",
     	every = 5,
     	time_average = 1,
@@ -1492,7 +1492,7 @@ for instance::
 * Velocity distribution from :math:`v_x = -0.1` to :math:`0.1`
   ::
     
-    DiagParticles(
+    DiagParticleBinning(
     	output = "density",
     	every = 5,
     	time_average = 1,
@@ -1503,7 +1503,7 @@ for instance::
 * Phase space from :math:`x=0` to 1 and from :math:`px=-1` to 1
   ::
     
-    DiagParticles(
+    DiagParticleBinning(
     	output = "density",
     	every = 5,
     	time_average = 1,
@@ -1516,7 +1516,7 @@ for instance::
   Note that the input units are :math:`m_ec^2 \sim 0.5` MeV
   ::
     
-    DiagParticles(
+    DiagParticleBinning(
     	output = "density",
     	every = 5,
     	time_average = 1,
@@ -1528,7 +1528,7 @@ for instance::
   Note the use of ``edge_inclusive`` to reach energies up to :math:`\infty`
   ::
     
-    DiagParticles(
+    DiagParticleBinning(
     	output = "density",
     	every = 5,
     	time_average = 1,
@@ -1541,7 +1541,7 @@ for instance::
 * Charge distribution from :math:`Z^\star =0` to 10
   ::
     
-    DiagParticles(
+    DiagParticleBinning(
     	output = "density",
     	every = 5,
     	time_average = 1,
@@ -1558,7 +1558,7 @@ for instance::
 ^^^^^^^^^^^^^^^^^^^^
 
 A *screen* collects data from the macro-particles when they cross a surface.
-It processes this data similarly to the :ref:`particle diagnostics <DiagParticles>`
+It processes this data similarly to the :ref:`particle binning diagnostics <DiagParticleBinning>`
 as it makes a histogram of the macro-particle properties. The only difference is
 that the histogram is made only by the particles that cross the surface.
 
@@ -1608,7 +1608,7 @@ for instance::
 
 .. py:data:: output
 
-   Identical to the ``output`` of :ref:`particle diagnostics <DiagParticles>`.
+   Identical to the ``output`` of :ref:`particle binning diagnostics <DiagParticleBinning>`.
 
 .. py:data:: every
   
@@ -1631,7 +1631,7 @@ for instance::
 .. py:data:: axes
   
   A list of "axes" that define the grid of the histogram.
-  It is identical to that of :ref:`particle diagnostics <DiagParticles>`, with the
+  It is identical to that of :ref:`particle binning diagnostics <DiagParticleBinning>`, with the
   addition of four types of axes:
   ``"a"`` and ``"b"`` are the axes perpendicular to the ``vector``, when the screen
   shape is a ``"plane"``.
