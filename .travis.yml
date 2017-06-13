@@ -8,34 +8,7 @@ sudo: required
 
 dist: trusty
 
-addons:
-  apt:
-    sources:
-    - ubuntu-toolchain-r-test
- 
-    packages:
-    # install toolchains
-    - gcc-5
-    - g++-5
-
 before_install:
-  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 20
-  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20
-  - wget --no-check-certificate https://www.open-mpi.org/software/ompi/v1.10/downloads/openmpi-1.10.3.tar.gz
-  - tar -zxf openmpi-1.10.3.tar.gz
-  - cd openmpi-1.10.3
-  - ./configure --enable-mpi-thread-multiple --quiet && make > compile.out && sudo make install > install.out 
-  - sudo sh -c 'echo "/usr/local/lib\n/usr/local/lib/openmpi" > /etc/ld.so.conf.d/openmpi.conf'
-  - sudo ldconfig
-  - cd ..
-  - wget --no-check-certificate http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.17.tar.gz
-  - tar -zxf hdf5-1.8.17.tar.gz
-  - cd hdf5-1.8.17
-  - CC=mpicc CXX=mpicxx ./configure --enable-parallel --prefix=/usr/local --quiet && make > compile.out && sudo make install > install.out 
-  - sudo sh -c 'echo "/usr/local/lib" > /etc/ld.so.conf.d/hdf5.conf'
-  - sudo ldconfig
-  - cd ..
-  - cat .travis.yml
   - sudo apt-get -qq update
   - sudo apt-get install -y python-dev sphinx-common python-pip
   - pip install --user alabaster
@@ -44,7 +17,6 @@ before_install:
 
 script:
   - git fetch -t
-  - HDF5_ROOT_DIR=/usr/local make
   - travis-sphinx -n --source=doc/Sphinx build
 
 after_success:

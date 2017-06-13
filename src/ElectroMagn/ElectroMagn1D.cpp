@@ -23,9 +23,7 @@ using namespace std;
 // Constructor for Electromagn1D
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn1D::ElectroMagn1D(Params &params, vector<Species*>& vecSpecies, Patch* patch)
-  : ElectroMagn(params, vecSpecies, patch),
-isXmin(patch->isXmin()),
-isXmax(patch->isXmax())
+  : ElectroMagn(params, vecSpecies, patch)
 {
     initElectroMagn1DQuantities(params, patch);
     
@@ -41,9 +39,7 @@ isXmax(patch->isXmax())
 
 
 ElectroMagn1D::ElectroMagn1D( ElectroMagn1D* emFields, Params &params, Patch* patch )
-    : ElectroMagn(emFields, params, patch),
-isXmin(patch->isXmin()),
-isXmax(patch->isXmax())
+    : ElectroMagn(emFields, params, patch)
 {
     initElectroMagn1DQuantities(params, patch);
     
@@ -532,9 +528,11 @@ void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, Patch
         (*field1D)(i) += profile->valueAt(pos);
         pos[0] += dx;
     }
-        
-    if(emBoundCond[0]) emBoundCond[0]->save_fields_BC1D(my_field);
-    if(emBoundCond[1]) emBoundCond[1]->save_fields_BC1D(my_field);
+    
+    for (auto& embc: emBoundCond) {
+        if (embc) embc->save_fields(my_field, patch);
+    }
+
 }
 
 

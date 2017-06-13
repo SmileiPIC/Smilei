@@ -7,7 +7,7 @@
 
 class Params;
 
-//! class ElectroMagn3D containing all information on the electromagnetic fields & currents for 2d3v simulations
+//! class ElectroMagn3D containing all information on the electromagnetic fields & currents for 3d3v simulations
 class ElectroMagn3D : public ElectroMagn
 {
 public:
@@ -35,9 +35,6 @@ public:
     double getEy_XminYmax() { return 0.; }
     double getEx_XmaxYmin() { return 0.; }
     double getEy_XmaxYmin() { return 0.; }
-
-#ifdef _PATCH3D_TODO
-#endif
 
 //    //! Method used to solve Maxwell-Ampere equation
 //    void solveMaxwellAmpere();
@@ -118,12 +115,6 @@ public:
     void initAntennas(Patch* patch);
         
 private:
-    
-    //! from smpi is xmin
-    const bool isXmin;
-    
-    //! from smpi is xmax
-    const bool isXmax;
     
     //! from smpi is ymax
     const bool isYmin;

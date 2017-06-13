@@ -142,10 +142,12 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
             SyncVectorPatch::finalize_and_sort_parts((*this), ispec, params, smpi, timers, itime ); // Included sort_part
         }
     }
-    if (itime%10==0)
-        #pragma omp for schedule(runtime)
+    if (itime%params.every_clean_particles_overhead==0) {
+        #pragma omp master 
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
             (*this)(ipatch)->cleanParticlesOverhead(params);
+        #pragma omp barrier
+    }
     timers.syncPart.update( params.printNow( itime ) );
 
     if ( (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
@@ -225,6 +227,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
             (*this)(ipatch)->EMfields->binomialCurrentFilter();
         }
         SyncVectorPatch::exchangeJ( (*this) );
+        SyncVectorPatch::finalizeexchangeJ( (*this) );
     }
     
     #pragma omp for schedule(static)
@@ -488,12 +491,12 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     if (iteration_max>0 && iteration == iteration_max) {
         if (smpi->isMaster())
             WARNING("Poisson solver did not converge: reached maximum iteration number: " << iteration
-                    << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
+                    << ", relative err is ctrl = " << 1.0e14*ctrl << " x 1e-14");
     }
     else {
         if (smpi->isMaster()) 
             MESSAGE(1,"Poisson solver converged at iteration: " << iteration
-                    << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
+                    << ", relative err is ctrl = " << 1.0e14*ctrl << " x 1e-14");
     }
     
     // ------------------------------------------
@@ -508,11 +511,23 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     // Centering of the electrostatic fields
     // -------------------------------------
     vector<double> E_Add(Ex_[0]->dims_.size(),0.);
-    if ( Ex_[0]->dims_.size()>1 ) {
-#ifdef _PATCH3D_TODO
-#endif    
+    if ( Ex_[0]->dims_.size()==3 ) {
+        double Ex_avg_local(0.), Ex_avg(0.), Ey_avg_local(0.), Ey_avg(0.), Ez_avg_local(0.), Ez_avg(0.);
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            Ex_avg_local += (*this)(ipatch)->EMfields->computeExSum();
+            Ey_avg_local += (*this)(ipatch)->EMfields->computeEySum();
+            Ez_avg_local += (*this)(ipatch)->EMfields->computeEzSum();
+        }
+        
+        MPI_Allreduce(&Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        MPI_Allreduce(&Ey_avg_local, &Ey_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        MPI_Allreduce(&Ez_avg_local, &Ez_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        
+        E_Add[0] = -Ex_avg/((params.n_space[0]+2)*(params.n_space[1]+1)*(params.n_space[2]+1));
+        E_Add[1] = -Ey_avg/((params.n_space[0]+1)*(params.n_space[1]+2)*(params.n_space[2]+1));;
+        E_Add[2] = -Ez_avg/((params.n_space[0]+1)*(params.n_space[1]+1)*(params.n_space[2]+2));;
     }
-    else if ( Ex_[0]->dims_.size()>1 ) {
+    else if ( Ex_[0]->dims_.size()==2 ) {
         double Ex_XminYmax = 0.0;
         double Ey_XminYmax = 0.0;
         double Ex_XmaxYmin = 0.0;
@@ -553,7 +568,21 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         //This correction is always done, independantly of the periodicity. Is this correct ?
         E_Add[0] = -0.5*(Ex_XminYmax+Ex_XmaxYmin);
         E_Add[1] = -0.5*(Ey_XminYmax+Ey_XmaxYmin);
-    
+
+#ifdef _3D_LIKE_CENTERING
+        double Ex_avg_local(0.), Ex_avg(0.), Ey_avg_local(0.), Ey_avg(0.);
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            Ex_avg_local += (*this)(ipatch)->EMfields->computeExSum();
+            Ey_avg_local += (*this)(ipatch)->EMfields->computeEySum();
+        }
+        
+        MPI_Allreduce(&Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        MPI_Allreduce(&Ey_avg_local, &Ey_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        
+        E_Add[0] = -Ex_avg/((params.n_space[0]+2)*(params.n_space[1]+1));
+        E_Add[1] = -Ey_avg/((params.n_space[0]+1)*(params.n_space[1]+2));;
+#endif
+
     }
     else if( Ex_[0]->dims_.size()==1 ) {
         double Ex_Xmin = 0.0;
@@ -574,6 +603,17 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         MPI_Bcast(&Ex_Xmax, 1, MPI_DOUBLE, rankXmax, MPI_COMM_WORLD);
         E_Add[0] = -0.5*(Ex_Xmin+Ex_Xmax);
         
+#ifdef _3D_LIKE_CENTERING
+        double Ex_avg_local(0.), Ex_avg(0.);
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            Ex_avg_local += (*this)(ipatch)->EMfields->computeExSum();
+        }
+        
+        MPI_Allreduce(&Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        
+        E_Add[0] = -Ex_avg/((params.n_space[0]+2));
+#endif
+
     }
     
     // Centering electrostatic fields
@@ -597,7 +637,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     
     //!\todo Reduce to find global max
     if (smpi->isMaster())
-        MESSAGE(1,"Poisson equation solved. Maximum error = " << deltaPoisson_max << " at i= " << i_deltaPoisson_max);
+        MESSAGE(1,"Poisson equation solved. Maximum err = " << deltaPoisson_max << " at i= " << i_deltaPoisson_max);
 
 } // END solvePoisson
 

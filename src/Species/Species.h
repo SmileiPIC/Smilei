@@ -157,7 +157,7 @@ public:
     void sort_part();
     void count_sort_part(Params& param);
     
-    void updateMvWinLimits(double x_moved);
+    //void updateMvWinLimits(double x_moved);
     
     //! Vector containing all Particles of the considered Species
     Particles *particles;
@@ -185,8 +185,10 @@ public:
     std::vector<unsigned int> oversize;
     
     //! MPI structure to exchange particles
-    MPI_Datatype typePartSend ;
-    
+    std::vector<MPI_Datatype> typePartSend ;
+    std::vector<MPI_Datatype> typePartRecv ;
+    MPI_Datatype exchangePatch;
+
     //! Cell_length (copy from Params)
     std::vector<double> cell_length;
     //! min_loc_vec (copy from picparams)
@@ -220,7 +222,7 @@ public:
         nrj_mw_lost = 0;
         nrj_new_particles = 0;
     }
-    inline void storeNRJlost( double nrj ) { nrj_mw_lost = nrj; };
+    inline void storeNRJlost( double nrj ) { nrj_mw_lost += nrj; };
     
     inline double computeNRJ() {
         double nrj(0.);
@@ -270,13 +272,13 @@ public:
 private:
     //! Number of steps for Maxwell-Juettner cumulative function integration
     //! \todo{Put in a code constant class}
-    unsigned int nE;
+//    unsigned int nE;
     
     //! Parameter used when defining the Maxwell-Juettner function (corresponds to a Maximum energy)
-    double muEmax;
+//    double muEmax;
     
     //! Parameter used when defining the Maxwell-Juettner function (corresponds to a discretization step in energy)
-    double dE;
+//    double dE;
     
     //! Number of spatial dimension for the particles
     unsigned int nDim_particle;

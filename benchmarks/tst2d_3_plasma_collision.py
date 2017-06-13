@@ -4,12 +4,12 @@
 
 import math
 
-l0 = 2.0*math.pi	# laser wavelength
-t0 = l0			# optical cicle
-Lsim = [40.*l0,5.*l0]	# length of the simulation
-Tsim = 30.*t0		# duration of the simulation
-resx = 50.		# nb of cells in on laser wavelength
-rest = 75.		# time of timestep in one optical cycle 
+l0 = 2.0*math.pi        # laser wavelength
+t0 = l0                 # optical cicle
+Lsim = [40.*l0,5.*l0]   # length of the simulation
+Tsim = 30.*t0           # duration of the simulation
+resx = 50.              # nb of cells in on laser wavelength
+rest = 75.              # time of timestep in one optical cycle 
 
 Main(
     geometry = "2d3v",

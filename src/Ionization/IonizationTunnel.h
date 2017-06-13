@@ -22,10 +22,8 @@ public:
     void operator() (Particles*, unsigned int, unsigned int, std::vector<LocalFields>*, ElectroMagn*, Projector*) override;
     
     double one_third;
-    std::vector<double> alpha_tunnel;
-    std::vector<double> beta_tunnel;
-    std::vector<double> gamma_tunnel;
-
+    std::vector<double> alpha_tunnel, beta_tunnel, gamma_tunnel;
+    
 private:
 };
 

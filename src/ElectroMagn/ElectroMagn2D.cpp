@@ -22,8 +22,6 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn2D::ElectroMagn2D(Params &params, vector<Species*>& vecSpecies, Patch* patch) : 
   ElectroMagn(params, vecSpecies, patch),
-isXmin(patch->isXmin()),
-isXmax(patch->isXmax()),
 isYmin(patch->isYmin()),
 isYmax(patch->isYmax())
 {    
@@ -45,8 +43,6 @@ isYmax(patch->isYmax())
 
 ElectroMagn2D::ElectroMagn2D( ElectroMagn2D* emFields, Params &params, Patch* patch ) : 
     ElectroMagn(emFields, params, patch),
-isXmin(patch->isXmin()),
-isXmax(patch->isXmax()),
 isYmin(patch->isYmin()),
 isYmax(patch->isYmax())
 {
@@ -826,13 +822,12 @@ void ElectroMagn2D::applyExternalField(Field* my_field,  Profile *profile, Patch
         pos[0] += dx;
     }
     
-    if (emBoundCond[0]!=0) emBoundCond[0]->save_fields_BC2D_Long(my_field);
-    if (emBoundCond[1]!=0) emBoundCond[1]->save_fields_BC2D_Long(my_field);
-    if (emBoundCond[2]!=0) emBoundCond[2]->save_fields_BC2D_Trans(my_field);
-    if (emBoundCond[3]!=0) emBoundCond[3]->save_fields_BC2D_Trans(my_field);
     
-}
+    for (auto& embc: emBoundCond) {
+        if (embc) embc->save_fields(my_field, patch);
+    }
 
+}
 
 
 void ElectroMagn2D::initAntennas(Patch* patch)

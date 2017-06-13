@@ -16,8 +16,6 @@ Upcoming changes
 ^^^^^^^^^^^^^^^^
 
 * More OpenMP support
-* *Numpy* used for faster python profiles and for filtering track particles
-* Fourth order in 3D
 * Moving window along y and z
 * Tracking particles in *Screens*
 * Better time-average for B fields
@@ -26,7 +24,23 @@ Upcoming changes
 
 .. _latestVersion:
 
-Current release 3.1
+Current release 3.1.1
+^^^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v3.1.1 <_downloads/smilei-v3.1.1.tar.gz>`_
+
+* New pushers (Vay's and Higuera-Cary's)
+* *Numpy* used for filtering track particles
+* Fourth order in 3D
+* Bugfixes in energy computation in 3D and moving window case
+* Add some missing 3D features :
+
+  * External fields mangment 
+  * Non-neutral plasma initialization
+
+----
+
+Release 3.1
 ^^^^^^^^^^^^^^^^^^^
 
 **Download**: `Smilei v3.1 <_downloads/smilei-v3.1.tar.gz>`_

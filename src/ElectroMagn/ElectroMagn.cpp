@@ -28,6 +28,8 @@ nDim_field     ( params.nDim_field ),
 cell_volume    ( params.cell_volume),
 n_space        ( params.n_space    ),
 oversize       ( params.oversize   ),
+isXmin(patch->isXmin()),
+isXmax(patch->isXmax()),
 nrj_mw_lost    (  0.               ),
 nrj_new_fields (  0.               )
 {
@@ -58,6 +60,8 @@ nDim_field     ( emFields->nDim_field  ),
 cell_volume    ( emFields->cell_volume ),
 n_space        ( emFields->n_space     ),
 oversize       ( emFields->oversize    ),
+isXmin(patch->isXmin()),
+isXmax(patch->isXmax()),
 nrj_mw_lost    ( 0. ),
 nrj_new_fields ( 0. )
 {
@@ -212,6 +216,33 @@ ElectroMagn::~ElectroMagn()
 }//END Destructer
 
 
+void ElectroMagn::updateGridSize(Params &params, Patch* patch)
+{
+    isXmin = patch->isXmin();
+    isXmax = patch->isXmax();
+
+    unsigned int i=0;
+    {
+        for (int isDual=0 ; isDual<2 ; isDual++)
+            bufsize[i][isDual] = n_space[i] + 1;
+        
+        for (int isDual=0 ; isDual<2 ; isDual++) {
+            bufsize[i][isDual] += isDual;
+            if ( params.number_of_patches[i]!=1 ) {
+                
+                if ( ( !isDual ) )
+                    bufsize[i][isDual]--;
+                else if  (isDual) {
+                    bufsize[i][isDual]--;
+                    bufsize[i][isDual]--;
+                }
+                
+            } // if ( params.number_of_patches[i]!=1 )
+        } // for (int isDual=0 ; isDual
+    } // for (unsigned int i=0)
+}
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Maxwell solver using the FDTD scheme
 // ---------------------------------------------------------------------------------------------------------------------
@@ -228,22 +259,22 @@ ElectroMagn::~ElectroMagn()
 void ElectroMagn::boundaryConditions(int itime, double time_dual, Patch* patch, Params &params, SimWindow* simWindow)
 {
     // Compute EM Bcs
-    if ( (!simWindow) || (!simWindow->isMoving(time_dual)) ) {
+    if ( ! (simWindow && simWindow->isMoving(time_dual)) ) {
         if (emBoundCond[0]!=NULL) { // <=> if !periodic
-            emBoundCond[0]->apply_xmin(this, time_dual, patch);
-            emBoundCond[1]->apply_xmax(this, time_dual, patch);
+            emBoundCond[0]->apply(this, time_dual, patch);
+            emBoundCond[1]->apply(this, time_dual, patch);
         }
     }
     if (emBoundCond.size()>2) {
         if (emBoundCond[2]!=NULL) {// <=> if !periodic
-            emBoundCond[2]->apply_ymin(this, time_dual, patch);
-            emBoundCond[3]->apply_ymax(this, time_dual, patch);
+            emBoundCond[2]->apply(this, time_dual, patch);
+            emBoundCond[3]->apply(this, time_dual, patch);
         }
     }
     if (emBoundCond.size()>4) {
         if (emBoundCond[4]!=NULL) {// <=> if !periodic
-            emBoundCond[4]->apply_zmin(this, time_dual, patch);
-            emBoundCond[5]->apply_zmax(this, time_dual, patch);
+            emBoundCond[4]->apply(this, time_dual, patch);
+            emBoundCond[5]->apply(this, time_dual, patch);
         }
     }
 
@@ -374,7 +405,7 @@ void ElectroMagn::applyAntenna(unsigned int iAntenna, double intensity) {
         if     ( antennaField->name == "Jx" ) field = Jx_;
         else if( antennaField->name == "Jy" ) field = Jy_;
         else if( antennaField->name == "Jz" ) field = Jz_;
-        else ERROR("Antenna applied to field " << antennaField << " unknonw. This should not happend, please contact developers");
+        else ERROR("Antenna applied to field " << antennaField->name << " unknown. This should not happend, please contact developers");
         
         for (unsigned int i=0; i< field->globalDims_ ; i++)
             (*field)(i) += intensity * (*antennaField)(i);

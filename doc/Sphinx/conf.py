@@ -226,7 +226,7 @@ html_show_copyright = False
 htmlhelp_basename = 'Smileidoc'
 
 # Select charset that is compatible with maisondelasimulation.fr
-#html_output_encoding = 'ISO-8859-1'
+html_output_encoding = 'ISO-8859-1'
 
 # -- Options for LaTeX output ---------------------------------------------
 

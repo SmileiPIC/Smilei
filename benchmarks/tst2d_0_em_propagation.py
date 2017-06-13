@@ -4,12 +4,12 @@
 
 import math
 
-l0 = 2.0*math.pi		# laser wavelength
-t0 = l0					# optical cicle
-Lsim = [20.*l0,50.*l0]	# length of the simulation
-Tsim = 50.*t0			# duration of the simulation
-resx = 10.				# nb of cells in on laser wavelength
-rest = 30.				# time of timestep in one optical cycle 
+l0 = 2.0*math.pi        # laser wavelength
+t0 = l0                 # optical cycle
+Lsim = [20.*l0,50.*l0]  # length of the simulation
+Tsim = 50.*t0           # duration of the simulation
+resx = 28.              # nb of cells in on laser wavelength
+rest = 40.              # time of timestep in one optical cycle 
 
 Main(
     geometry = "2d3v",
@@ -50,10 +50,17 @@ DiagFields(
 )
 
 DiagProbe(
-	every = 100,
-	number = [100, 100],
-	pos = [0., 10.*l0],
-	pos_first = [20.*l0, 0.*l0],
-	pos_second = [3.*l0 , 40.*l0],
-	fields = []
+    every = 100,
+    number = [100, 100],
+    pos = [0., 10.*l0],
+    pos_first = [20.*l0, 0.*l0],
+    pos_second = [3.*l0 , 40.*l0],
+    fields = []
 )
+
+DiagProbe(
+    every = 10,
+    pos = [0.1*Lsim[0], 0.5*Lsim[1]],
+    fields = []
+)
+

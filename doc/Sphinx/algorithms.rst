@@ -179,7 +179,7 @@ are computed on the grid using a simple projection technique:
 
 Then, the initial electric fields are computed from :math:`\rho(t=0,\mathbf{x})`
 by solving Poisson's equation. In :program:`Smilei`, this is done using the conjugate gradient
-method :ref:`ConjugateGradient`. This iterative method is particularly interesting
+method. This iterative method is particularly interesting
 as it is easily implemented on massively parallel computers and requires mainly
 local information exchange between adjacent processes.
 
@@ -231,9 +231,10 @@ Particle push
 
 Knowing, for each quasi-particle, the electromagnetic fields at its position, the new
 particle momentum and position are computed using a (second order) leap-frog integrator.
-In :program:`Smilei`, two different schemes have been implemented: the well-known Boris
-pushe [Boris1970]_ and the pusher developed by J.-L. Vay [Vay2008]_. 
-Both schemes compute the new particle momentum and position according to
+In :program:`Smilei`, different schemes have been implemented: the well-known Boris
+pusher [Boris1970]_ both in the classical and relativistic form, the pusher developed 
+by J.-L. Vay [Vay2008]_, the pusher of Higuera and Cary [Higuera2017]_. 
+All schemes compute the new particle momentum and position according to
 
 .. math::
   

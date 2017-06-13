@@ -4,7 +4,7 @@ build/*
 \#*\#
 *~
 .depend
-Validation*
+validation/workdir*
 src/smilei
 src/smilei.*
 *smilei
@@ -18,4 +18,8 @@ src/smilei.*
 doc/html/*
 *.user
 doc/html
+*.pyc
+*/*.pyc
+*/*/*.pyc
+*/*/*/*.pyc
 

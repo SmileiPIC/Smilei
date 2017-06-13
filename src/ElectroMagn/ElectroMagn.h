@@ -57,7 +57,9 @@ public:
     
     //! Destructor for Electromagn
     virtual ~ElectroMagn();
-    
+
+    void updateGridSize(Params &params, Patch* patch);
+
     void clean();
         
     std::vector<unsigned int> dimPrim;
@@ -238,6 +240,19 @@ public:
     inline double computeRhoNorm2() {
         return rho_->norm2(istart, bufsize);
     }
+
+    //! Compute local sum of Ex
+    inline double computeExSum() {
+        return Ex_->sum(istart, bufsize);
+    }
+    //! Compute local sum of Ey
+    inline double computeEySum() {
+        return Ey_->sum(istart, bufsize);
+    }
+    //! Compute local sum of Ez
+    inline double computeEzSum() {
+        return Ez_->sum(istart, bufsize);
+    }
     
     //! external fields parameters the key string is the name of the field and the value is a vector of ExtField
     std::vector<ExtField> extFields;
@@ -267,7 +282,7 @@ public:
         nrj_new_fields = 0.;
     }
     
-    inline void storeNRJlost( double nrj ) { nrj_mw_lost = nrj; }
+    inline void storeNRJlost( double nrj ) { nrj_mw_lost += nrj; }
     
     inline int getMemFootPrint() {
     
@@ -292,6 +307,13 @@ public:
     
     //! Vector of boundary-condition per side for the fields
     std::vector<ElectroMagnBC*> emBoundCond;
+    
+protected :
+    //! from smpi is xmin
+    bool isXmin;
+    
+    //! from smpi is xmax
+    bool isXmax;
     
 private:
     

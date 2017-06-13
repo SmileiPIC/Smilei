@@ -30,6 +30,20 @@ double Function_Python4D::valueAt(vector<double> x_cell, double time) {
     return PyTools::runPyFunction(py_profile, x_cell[0], x_cell[1], x_cell[2], time);
 }
 
+// Special cases for locations specified in numpy arrays
+#ifdef SMILEI_USE_NUMPY
+PyArrayObject* Function_Python1D::valueAt(std::vector<PyArrayObject*> x) {
+    return (PyArrayObject*)PyObject_CallFunctionObjArgs(py_profile, x[0], NULL);
+}
+PyArrayObject* Function_Python2D::valueAt(std::vector<PyArrayObject*> x) {
+    return (PyArrayObject*)PyObject_CallFunctionObjArgs(py_profile, x[0], x[1], NULL);
+}
+PyArrayObject* Function_Python3D::valueAt(std::vector<PyArrayObject*> x) {
+    return (PyArrayObject*)PyObject_CallFunctionObjArgs(py_profile, x[0], x[1], x[2], NULL);
+}
+#endif
+
+
 // Constant profiles
 double Function_Constant1D::valueAt(vector<double> x_cell) {
     return (x_cell[0]>xvacuum) ? value : 0.;
@@ -98,7 +112,7 @@ double Function_Gaussian3D::valueAt(vector<double> x_cell) {
         xfactor = exp( -pow(x-xcenter, xorder) * invxsigma );
     if ( y > yvacuum  && y < yvacuum+ylength )
         yfactor = exp( -pow(y-ycenter, yorder) * invysigma );
-    if ( z > yvacuum  && z < yvacuum+zlength )
+    if ( z > zvacuum  && z < zvacuum+zlength )
         zfactor = exp( -pow(z-zcenter, zorder) * invzsigma );
     return value * xfactor * yfactor * zfactor;
 }
@@ -253,4 +267,18 @@ double Function_TimePolynomial::valueAt(double time) {
         r += coeffs[i] * tt;
     }
     return r;
+}
+// Time sin2 profile with a plateau the funtion and the derivative are continuos
+double Function_TimeSin2Plateau::valueAt(double time) {
+  if (time<start) {
+    return 0.;
+  } else if ((time < start+slope1)&&(slope1!=0.)) {
+    return pow( sin(0.5*M_PI*(time-start)/slope1) , 2 );
+  } else if (time < start+slope1+plateau) {
+    return 1.;
+  } else if ((time < start+slope1+plateau+slope2)&&(slope2!=0.)) {
+    return pow(  cos(0.5*M_PI*(time-start-slope1-plateau)/slope2) , 2 );
+  } else {
+    return 0.;
+  }
 }

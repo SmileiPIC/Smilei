@@ -9,14 +9,7 @@
 SMILEICXX ?= mpicxx
 HDF5_ROOT_DIR ?= 
 BUILD_DIR ?= build
-
-#-----------------------------------------------------
-# check if python-config exists
-ifneq (,$(shell which python-config))
-	PYTHONCONFIG := python-config
-else
-	PYTHONCONFIG := python scripts/CompileTools/python-config.py
-endif  
+PYTHONCONFIG := python scripts/CompileTools/python-config.py
 
 #-----------------------------------------------------
 # Git information
@@ -129,7 +122,6 @@ $(BUILD_DIR)/%.pyh: %.py
 $(BUILD_DIR)/%.d: %.cpp
 	@echo "Checking dependencies for $<"
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-#	$(Q) $(SMILEICXX) $(CXXFLAGS) -MM $< 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(BUILD_DIR)/$(shell  dirname $<)/\1.d $(BUILD_DIR)/$(shell  dirname $<)/\1.o:@" > $@  
 	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MG -MM -MP -MT"$@ $(@:.d=.o)" $<
 
 $(BUILD_DIR)/%.o : %.cpp

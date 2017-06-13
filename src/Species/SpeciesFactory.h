@@ -41,11 +41,17 @@ public:
         if (dynamics_type=="norm" || dynamics_type == "borisnr") {
              // Species with Boris (relativistic =='norm', nonrelativistic=='borisnr') dynamics
              thisSpecies = new Species_norm(params, patch);
+        } else if (dynamics_type=="vay") {
+             // Species with J.L. Vay dynamics
+             thisSpecies = new Species_norm(params, patch);
+        } else if (dynamics_type=="higueracary") {
+             // Species with Higuary Cary dynamics
+             thisSpecies = new Species_norm(params, patch);
         } else if (dynamics_type=="rrll") {
-            // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
-            thisSpecies = new Species_rrll(params, patch);
+             // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
+             thisSpecies = new Species_rrll(params, patch);
         } else {
-            ERROR("For species `" << species_type << " dynamics_type must be either 'norm' or 'rrll'")
+            ERROR("For species `" << species_type << " dynamics_type must be 'norm', 'borisnr', 'vay', 'higueracary' or 'rrll'")
         }
         
         thisSpecies->species_type = species_type;
@@ -185,29 +191,29 @@ public:
         if( ok1 ) thisSpecies->densityProfileType = "nb";
         if( ok2 ) thisSpecies->densityProfileType = "charge";
         
-        thisSpecies->densityProfile = new Profile(profile1, params.nDim_particle, thisSpecies->densityProfileType+"_density "+species_type);
+        thisSpecies->densityProfile = new Profile(profile1, params.nDim_particle, thisSpecies->densityProfileType+"_density "+species_type, true);
         
         // Number of particles per cell
         if( !PyTools::extract_pyProfile("n_part_per_cell", profile1, "Species", ispec))
             ERROR("For species '" << species_type << "', n_part_per_cell not found or not understood");
-        thisSpecies->ppcProfile = new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_type);
+        thisSpecies->ppcProfile = new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_type, true);
         
         // Charge
         if( !PyTools::extract_pyProfile("charge", profile1, "Species", ispec))
             ERROR("For species '" << species_type << "', charge not found or not understood");
-        thisSpecies->chargeProfile = new Profile(profile1, params.nDim_particle, "charge "+species_type);
+        thisSpecies->chargeProfile = new Profile(profile1, params.nDim_particle, "charge "+species_type, true);
         
         // Mean velocity
         PyTools::extract3Profiles("mean_velocity", ispec, profile1, profile2, profile3);
-        thisSpecies->velocityProfile[0] = new Profile(profile1, params.nDim_particle, "mean_velocity[0] "+species_type);
-        thisSpecies->velocityProfile[1] = new Profile(profile2, params.nDim_particle, "mean_velocity[1] "+species_type);
-        thisSpecies->velocityProfile[2] = new Profile(profile3, params.nDim_particle, "mean_velocity[2] "+species_type);
+        thisSpecies->velocityProfile[0] = new Profile(profile1, params.nDim_particle, "mean_velocity[0] "+species_type, true);
+        thisSpecies->velocityProfile[1] = new Profile(profile2, params.nDim_particle, "mean_velocity[1] "+species_type, true);
+        thisSpecies->velocityProfile[2] = new Profile(profile3, params.nDim_particle, "mean_velocity[2] "+species_type, true);
         
         // Temperature
         PyTools::extract3Profiles("temperature", ispec, profile1, profile2, profile3);
-        thisSpecies->temperatureProfile[0] = new Profile(profile1, params.nDim_particle, "temperature[0] "+species_type);
-        thisSpecies->temperatureProfile[1] = new Profile(profile2, params.nDim_particle, "temperature[1] "+species_type);
-        thisSpecies->temperatureProfile[2] = new Profile(profile3, params.nDim_particle, "temperature[2] "+species_type);
+        thisSpecies->temperatureProfile[0] = new Profile(profile1, params.nDim_particle, "temperature[0] "+species_type, true);
+        thisSpecies->temperatureProfile[1] = new Profile(profile2, params.nDim_particle, "temperature[1] "+species_type, true);
+        thisSpecies->temperatureProfile[2] = new Profile(profile3, params.nDim_particle, "temperature[2] "+species_type, true);
         
         
         // CALCULATE USEFUL VALUES
@@ -270,7 +276,10 @@ public:
     static Species* clone(Species* species, Params &params, Patch* patch, bool with_particles = true) {
         // Create new species object
         Species * newSpecies = NULL;
-        if (species->dynamics_type=="norm") {
+        if (species->dynamics_type=="norm" 
+           || species->dynamics_type=="higueracary"
+           || species->dynamics_type=="vay"
+           || species->dynamics_type=="borisnr") {
             newSpecies = new Species_norm(params, patch); // Boris
         } else if (species->dynamics_type=="rrll") {
             newSpecies = new Species_rrll(params, patch); // Boris + Radiation Reaction

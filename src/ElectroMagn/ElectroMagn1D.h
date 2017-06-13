@@ -85,12 +85,6 @@ public:
     void initAntennas(Patch* patch);
     
 private:
-    //! from patch is xmin
-    const bool isXmin;
-    
-    //! from patch is xmax
-    const bool isXmax;
-    
     //! Initialize quantities needed in the creators of ElectroMagn1D
     void initElectroMagn1DQuantities(Params &params, Patch* patch);
 };

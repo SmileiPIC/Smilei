@@ -3,6 +3,8 @@
 #include <ctime>
 #include <iomanip>
 
+#define SMILEI_IMPORT_ARRAY
+
 #include "PyTools.h"
 #include "Params.h"
 #include "Species.h"
@@ -16,8 +18,27 @@
 
 using namespace std;
 
-double INV_RAND_MAX ;
-double INV_RAND_MAX1;
+namespace Rand
+{
+    std::random_device device;
+    std::mt19937 gen(device());
+    
+    std::uniform_real_distribution<double> uniform_distribution(0., 1.);
+    double uniform() {
+        return uniform_distribution(gen);
+    }
+    
+    std::uniform_real_distribution<double> uniform_distribution1(0., 1.-1e-11);
+    double uniform1() {
+        return uniform_distribution1(gen);
+    }
+    
+    std::uniform_real_distribution<double> uniform_distribution2(-1., 1.);
+    double uniform2() {
+        return uniform_distribution2(gen);
+    }
+}
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Params : open & parse the input data file, test that parameters are coherent
@@ -45,6 +66,9 @@ namelist("")
     
     //init Python
     PyTools::openPython();
+#ifdef SMILEI_USE_NUMPY
+    import_array();
+#endif
     
     // Print python version
     MESSAGE(1, "Python version "<<PyTools::python_version());
@@ -71,9 +95,6 @@ namelist("")
     
     // here we add the larget int, important to get a valid seed for randomization
     PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_rand_max", RAND_MAX);
-    
-    INV_RAND_MAX = 1./RAND_MAX;
-    INV_RAND_MAX1 = 1./(RAND_MAX+0.1);
     
     // Running the namelists
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
@@ -169,14 +190,13 @@ namelist("")
     if (interpolation_order!=2 && interpolation_order!=4) {
         ERROR("Main.interpolation_order " << interpolation_order << " not defined");
     }
-    if ( (geometry=="2d3v" || geometry=="3d3v") && interpolation_order==4) {
-        ERROR("Main.interpolation_order = 4 " << interpolation_order << " not yet available in 2D");
-    }
     
     //!\todo (MG to JD) Please check if this parameter should still appear here
     // Disabled, not compatible for now with particles sort
     // if ( !PyTools::extract("exchange_particles_each", exchange_particles_each) )
     exchange_particles_each = 1;
+
+    PyTools::extract("every_clean_particles_overhead", every_clean_particles_overhead, "Main");
     
     
     // TIME & SPACE RESOLUTION/TIME-STEPS
@@ -293,15 +313,15 @@ namelist("")
     for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ )
         tot_number_of_patches *= number_of_patches[iDim];
     
-    if ( tot_number_of_patches == smpi->getSize() ){
+    if ( tot_number_of_patches == (unsigned int)(smpi->getSize()) ){
         one_patch_per_MPI = true;
     } else {
         one_patch_per_MPI = false;
-        if (tot_number_of_patches < smpi->getSize())
+        if (tot_number_of_patches < (unsigned int)(smpi->getSize()))
             ERROR("The total number of patches must be greater or equal to the number of MPI processes"); 
     }
 #ifdef _OPENMP
-    if ( tot_number_of_patches < smpi->getSize()*omp_get_max_threads() )
+    if ( tot_number_of_patches < (unsigned int)(smpi->getSize()*omp_get_max_threads()) )
         WARNING( "Resources allocated underloaded regarding the total number of patches" );
 #endif
     
@@ -403,7 +423,7 @@ void Params::compute()
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];
         if(n_space_global[i]%number_of_patches[i] !=0) ERROR("ERROR in dimension " << i <<". Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i]);
-        if ( n_space[i] <= 2*oversize[i] ) ERROR ( "ERROR in dimension " << i <<". Patches length = "<<n_space[i] << " cells must be at lxmax " << 2*oversize[i] +1 << " cells long. Increase number of cells or reduce number of patches in this direction. " );
+        if ( n_space[i] <= 2*oversize[i] ) ERROR ( "ERROR in dimension " << i <<". Patches length = "<<n_space[i] << " cells must be at least " << 2*oversize[i] +1 << " cells long. Increase number of cells or reduce number of patches in this direction. " );
     }
     
     // compute number of cells per patch
@@ -486,7 +506,9 @@ void Params::print_timestep(unsigned int itime, double time_dual, Timer & timer)
            << "  " << scientific << setprecision(4) << setw(12) << now << " "
            << "  " << "(" << scientific << setprecision(4) << setw(12) << now - before << " )"
            ;
+    #pragma omp master
     MESSAGE(my_msg.str());
+    #pragma omp barrier
 }
 
 void Params::print_timestep_headers()
