@@ -60,6 +60,14 @@ class Diagnostic(object):
 			self._error = "Could not understand the 'units' argument"
 			return
 		
+		# DEPRECATION ERRORS
+		if "slice" in kwargs:
+			self._error = "Argument `slice` is deprecated: use `average` instead."
+			return
+		if "stride" in kwargs:
+			self._error = "Argument `stride` is deprecated: use `average` instead."
+			return
+		
 		# Call the '_init' function of the child class
 		remaining_kwargs = self._init(*args, **kwargs)
 		if remaining_kwargs is not None and len(remaining_kwargs) > 0:
@@ -372,7 +380,44 @@ class Diagnostic(object):
 			raise
 		return times
 	
-	# Method to select portion of a mesh based on a range, or a slice
+	# Method to select portion of a mesh based on a slice
+	def _selectSubset(self, portion, meshpoints, axisname, axisunits, operation):
+		try:
+			s = self._np.double(portion)
+			if s.size>3 or s.size<1: raise
+		except:
+			self._error = "`"+operation+"` along axis "+axisname+" should be a list of 1 to 3 floats"
+			raise
+		step = 1
+		if s.size==1:
+			indices = self._np.array([(self._np.abs(meshpoints-s)).argmin()])
+		else:
+			indices = self._np.nonzero( (meshpoints>=s[0]) * (meshpoints<=s[1]) )[0]
+			if indices.size == 0:
+				indices = self._np.array([(self._np.abs(meshpoints-s[:2].mean())).argmin()])
+			if s.size==3:
+				try:
+					step = int(s[2])
+					if step - s[2] != 0: raise
+				except:
+					self._error = "`"+operation+"` along axis "+axisname+": third number must be an integer"
+					raise
+				indices = indices[::step]
+		if indices.size == 0:
+			self._error = "`"+operation+"` along "+axisname+" is out of range"
+			raise
+		elif indices.size == 1:
+			info = operation+" at "+axisname+" = "+str(meshpoints[indices])+" "+axisunits
+			selection = self._np.s_[indices[0]]
+			finalShape = 1
+		else:
+			info = operation+" for "+axisname+" from "+str(meshpoints[indices[0]])+" to "+str(meshpoints[indices[-1]])+" "+axisunits
+			if step > 1: info += " every "+str(step)+" cells"
+			selection = self._np.s_[indices[0]:indices[-1]+1:step]
+			finalShape = len(indices)
+		return info, selection, finalShape
+	
+	# Method to select portion of a mesh based on a range
 	def _selectRange(self, portion, meshpoints, axisname, axisunits, operation):
 		# if portion is "all", then select all the axis
 		if portion == "all":

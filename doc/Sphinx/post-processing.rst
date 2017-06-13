@@ -98,7 +98,7 @@ Open a Scalar diagnostic
 Open a Field diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.Field(diagNumber=None, field=None, timesteps=None, average=None, units=[""], data_log=False, **kwargs)
+.. py:method:: Smilei.Field(diagNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: The number of the fields diagnostic
@@ -106,18 +106,23 @@ Open a Field diagnostic
   * ``field``: The name of a field (``"Ex"``, ``"Ey"``, etc.)
      | If not given, then a list of available fields is printed.
      | The string can also be an operation between several fields, such as ``"Jx+Jy"``.
+  * ``subset``: A selection of coordinates to be extracted.
+     | Syntax 1: ``subset = { axis : location, ... }``
+     | Syntax 2: ``subset = { axis : [start, stop] , ... }``
+     | Syntax 3: ``subset = { axis : [start, stop, step] , ... }``
+     | ``axis`` must be ``"x"``, ``"y"`` or ``"z"``.
+     | Only the data within the chosen axes' selections is extracted.
+     | Example: ``subset = {"y":[10, 80, 4]}``
   * ``average``: A selection of coordinates on which to average.
      | Syntax 1: ``average = { axis : "all", ... }``
      | Syntax 2: ``average = { axis : location, ... }``
-     | Syntax 3: ``average = { axis : [begin, end] , ... }``
+     | Syntax 3: ``average = { axis : [start, stop] , ... }``
      | ``axis`` must be ``"x"``, ``"y"`` or ``"z"``.
      | The chosen axes will be removed:
      | - With syntax 1, an average is performed over all the axis.
      | - With syntax 2, only the bin closest to ``location`` is kept.
-     | - With syntax 3, an average is performed between ``begin`` and ``end``.
+     | - With syntax 3, an average is performed from ``start`` to ``stop``.
      | Example: ``average = {"x":[4,5]}`` will average for :math:`x` within [4,5].
-  * ``stride``: step size for reading the grid. If the grid is too large, use a stride > 1
-    to reduce the amount of data.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
 **Example**::

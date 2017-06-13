@@ -5,7 +5,7 @@ from .._Utils import *
 class Field(Diagnostic):
 	""" The Field diagnostic of a Smilei simulation"""
 	
-	def _init(self, diagNumber=None, field=None, timesteps=None, average=None, data_log=False, stride=1, **kwargs):
+	def _init(self, diagNumber=None, field=None, timesteps=None, subset=None, average=None, data_log=False, **kwargs):
 		
 		# Search available diags
 		diags = self.getDiags()
@@ -83,7 +83,13 @@ class Field(Diagnostic):
 				self._operation = self._re.sub(r"\b"+f+r"\b","C['"+f+"']",self._operation)
 				self._fieldname.append(f)
 		
-		# Check average is a dict
+		# Check subset
+		if subset is None: subset = {}
+		if type(subset) is not dict:
+			self._error = "Diagnostic not loaded: Argument `subset` must be a dictionary"
+			return
+		
+		# Check average
 		if average is None: average = {}
 		if type(average) is not dict:
 			self._error = "Diagnostic not loaded: Argument `average` must be a dictionary"
@@ -120,34 +126,49 @@ class Field(Diagnostic):
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
 		self._naxes = self._ndim
-		self._averageinfo = {}
+		self._subsetinfo = {}
 		self._finalShape = self._np.copy(self._initialShape)
 		self._averages = [False]*self._ndim
-		self._selection = []
+		self._subsets  = [False]*self._ndim
+		self._selection = [self._np.s_[:]]*self._ndim
 		for iaxis in range(self._naxes):
 			centers = self._np.linspace(0., (self._initialShape[iaxis]-1)*self._cell_length[iaxis], self._initialShape[iaxis])
 			label = {0:"x", 1:"y", 2:"z"}[iaxis]
 			axisunits = "L_r"
-			self._selection += [ self._np.s_[:self._initialShape[iaxis]:stride] ]
 			
+			# If averaging over this axis
 			if label in average:
+				if label in subset:
+					self._error = "Diagnostic not loaded: `subset` not possible on the same axes as `average`"
+					return
+				
 				self._averages[iaxis] = True
 				
 				try:
-					self._averageinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
+					self._subsetinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
 						= self._selectRange(average[label], centers, label, axisunits, "average")
 				except:
 					return
-				
+			# Otherwise
 			else:
-				centers = centers[:self._initialShape[iaxis]:stride]
-				self._finalShape[iaxis] = len(centers)
-				self._type     .append(label)
-				self._shape    .append(self._finalShape[iaxis])
-				self._centers  .append(centers)
-				self._label    .append(label)
-				self._units    .append(axisunits)
-				self._log      .append(False)
+				# If taking a subset of this axis
+				if label in subset:
+					self._subsets[iaxis] = True
+					
+					try:
+						self._subsetinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
+							= self._selectSubset(subset[label], centers, label, axisunits, "average")
+					except:
+						return
+				# If subset has more than 1 point (or no subset), use this axis in the plot
+				if type(self._selection[iaxis]) is slice:
+					self._type     .append(label)
+					self._shape    .append(self._finalShape[iaxis])
+					self._centers  .append(centers[self._selection[iaxis]])
+					self._label    .append(label)
+					self._units    .append(axisunits)
+					self._log      .append(False)
+		
 		self._selection = tuple(self._selection)
 		
 		# Build units
@@ -208,7 +229,7 @@ class Field(Diagnostic):
 		C = {}
 		h5item = self._h5items[index]
 		for field in self._fieldname: # for each field in operation
-			B = self._np.squeeze(self._np.zeros(self._finalShape))
+			B = self._np.squeeze(self._np.empty(self._finalShape))
 			h5item[field].read_direct(B, source_sel=self._selection) # get array
 			C.update({ field:B })
 		# Calculate the operation

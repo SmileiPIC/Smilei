@@ -8,15 +8,10 @@ In the namelist
 In the post-processing module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- In :py:meth:`Field() <Smilei.Field>` and :py:meth:`Probe() <Smilei.Probe>`,
-  the argument ``slice`` has been renamed ``average``
+- The argument ``slice`` replaced by ``average`` or ``sum``, depending on the diagnostic.
 
-- In :py:meth:`ParticleDiagnostic() <Smilei.ParticleDiagnostic>` and :py:meth:`Screen() <Smilei.Screen>`,
-  the argument ``slice`` has been renamed ``sum``
+- The argument ``stride`` has been replaced by a more complete ``subset``.
 
 - In :py:meth:`Probe() <Smilei.Probe>`, the argument ``average`` requires coordinates
   in code units instead of the indices of the bins.
-
-
-
 
