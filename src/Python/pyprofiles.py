@@ -428,6 +428,33 @@ def tpolynomial(**kwargs):
         f.coeffs.append( c     )
     return f
 
+def tsin2plateau(start=0., fwhm=0., plateau=None, slope1=None, slope2=None):
+    import math
+    global Main
+    if len(Main)==0:
+        raise Exception("tsin2plateau profile has been defined before `Main()`")
+    if plateau is None: plateau = 0 # default is a simple sin2 profile (could be used for a 2D or 3D laserPulse too)
+    if slope1 is None: slope1 = fwhm
+    if slope2 is None: slope2 = slope1
+    def f(t):
+        if t < start:
+            return 0.
+        elif (t < start+fwhm) and (fwhm!=0.):
+            return math.pow( math.sin(0.5*math.pi*(t-start)/fwhm) , 2 )
+        elif t < start+fwhm+plateau:
+            return 1.
+        elif t < start+fwhm+plateau+slope2 and (slope2!=0.):
+            return math.pow(  math.cos(0.5*math.pi*(t-start-fwhm-plateau)/slope2) , 2 )
+        else:
+            return 0.
+    f.profileName = "tsin2plateau"
+    f.start       = start
+    #f.fwhm        = fwhm
+    f.plateau     = plateau
+    f.slope1      = slope1
+    f.slope2      = slope2
+    return f
+
 
 def transformPolarization(polarizationPhi, ellipticity):
     import math
@@ -553,6 +580,7 @@ def LaserGaussian3D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., inci
         space_envelope = [ lambda y,z:amplitudeZ*spatial(y,z), lambda y,z:amplitudeY*spatial(y,z) ],
         phase          = [ lambda y,z:phase(y,z)-phaseZero+dephasing, lambda y,z:phase(y,z)-phaseZero ],
     )
+
 
 """
 -----------------------------------------------------------------------

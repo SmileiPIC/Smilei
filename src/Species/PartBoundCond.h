@@ -89,9 +89,9 @@ public:
         return keep_part;
     };
 
-    //! Set the condition window if restart (patch position not read)
-    inline void updateMvWinLimits( double x_moved ) {
-    }
+    ////! Set the condition window if restart (patch position not read)
+    //inline void updateMvWinLimits( double x_moved ) {
+    //}
 
 private:
     //! Min value of the x coordinate of particles on the current processor

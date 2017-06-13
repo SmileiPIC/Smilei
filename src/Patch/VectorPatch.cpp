@@ -142,10 +142,12 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
             SyncVectorPatch::finalize_and_sort_parts((*this), ispec, params, smpi, timers, itime ); // Included sort_part
         }
     }
-    if (itime%10==0)
-        #pragma omp for schedule(runtime)
+    if (itime%params.every_clean_particles_overhead==0) {
+        #pragma omp master 
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
             (*this)(ipatch)->cleanParticlesOverhead(params);
+        #pragma omp barrier
+    }
     timers.syncPart.update( params.printNow( itime ) );
 
     if ( (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
@@ -225,6 +227,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
             (*this)(ipatch)->EMfields->binomialCurrentFilter();
         }
         SyncVectorPatch::exchangeJ( (*this) );
+        SyncVectorPatch::finalizeexchangeJ( (*this) );
     }
     
     #pragma omp for schedule(static)

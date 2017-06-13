@@ -74,7 +74,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     double xpn, ypn;
     double delta, delta2, delta3, delta4;
     // arrays used for the Esirkepov projection method
-    double  Sx0[7], Sx1[7], Sy0[5], Sy1[7], DSx[7], DSy[7], tmpJx[7];
+    double  Sx0[7], Sx1[7], Sy0[7], Sy1[7], DSx[7], DSy[7], tmpJx[7];
     
     for (unsigned int i=0; i<7; i++) {
         Sx1[i] = 0.;
@@ -220,7 +220,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     double xpn, ypn;
     double delta, delta2, delta3, delta4;
     // arrays used for the Esirkepov projection method
-    double  Sx0[7], Sx1[7], Sy0[5], Sy1[7], DSx[7], DSy[7], tmpJx[7];
+    double  Sx0[7], Sx1[7], Sy0[7], Sy1[7], DSx[7], DSy[7], tmpJx[7];
     
     for (unsigned int i=0; i<7; i++) {
         Sx1[i] = 0.;
@@ -367,16 +367,12 @@ void Projector2D4Order::operator() (double* rho, Particles &particles, unsigned 
     double xpn, ypn;
     double delta, delta2, delta3, delta4;
     // arrays used for the Esirkepov projection method
-    double  Sx0[7], Sx1[7], Sy0[5], Sy1[7];
+    double  Sx1[7], Sy1[7];
     
     for (unsigned int i=0; i<7; i++) {
         Sx1[i] = 0.;
         Sy1[i] = 0.;
     }
-    Sx0[0] = 0.;
-    Sx0[6] = 0.;
-    Sy0[0] = 0.;
-    Sy0[6] = 0.;
     
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W

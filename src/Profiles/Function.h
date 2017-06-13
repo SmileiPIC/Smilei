@@ -49,7 +49,9 @@ public:
     Function_Python1D(Function_Python1D *f) : py_profile(f->py_profile) {};
     double valueAt(double); // time
     double valueAt(std::vector<double>); // space
+#ifdef SMILEI_USE_NUMPY
     PyArrayObject* valueAt(std::vector<PyArrayObject*>); // numpy
+#endif
 private:
     PyObject *py_profile;
 };
@@ -62,7 +64,9 @@ public:
     Function_Python2D(Function_Python2D *f) : py_profile(f->py_profile) {};
     double valueAt(std::vector<double>, double); // space + time
     double valueAt(std::vector<double>); // space
+#ifdef SMILEI_USE_NUMPY
     PyArrayObject* valueAt(std::vector<PyArrayObject*>); // numpy
+#endif
 private:
     PyObject *py_profile;
 };
@@ -75,7 +79,9 @@ public:
     Function_Python3D(Function_Python3D *f) : py_profile(f->py_profile) {};
     double valueAt(std::vector<double>, double); // space + time
     double valueAt(std::vector<double>); // space
+#ifdef SMILEI_USE_NUMPY
     PyArrayObject* valueAt(std::vector<PyArrayObject*>); // numpy
+#endif
 private:
     PyObject *py_profile;
 };
@@ -807,6 +813,28 @@ private:
     double t0;
     std::vector<int> orders;
     std::vector<double> coeffs;
+};
+
+class Function_TimeSin2Plateau : public Function{
+    public:
+    Function_TimeSin2Plateau ( PyObject *py_profile ){
+      //double duration;
+      PyTools::getAttr(py_profile, "start", start      );
+      PyTools::getAttr(py_profile, "slope1", slope1 );
+      PyTools::getAttr(py_profile, "plateau", plateau );
+      PyTools::getAttr(py_profile, "slope2" , slope2 );
+      end = start + slope1 + plateau + slope2;
+    };
+    Function_TimeSin2Plateau ( Function_TimeSin2Plateau *f ){
+      start   = f->start;
+      slope1    = f->slope1;
+      plateau = f->plateau;
+      slope2   = f->slope2;
+      end     = f->end;
+    };
+    double valueAt(double);
+  private:
+    double start, slope1, plateau, slope2, end;
 };
 
 #endif

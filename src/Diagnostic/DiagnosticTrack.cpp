@@ -59,7 +59,7 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch,
         // Verify the return value of the function
         double test_value[2] = {1.2, 1.4};
         npy_intp dims[1] = {2};
-        PyObject *ret;
+        PyObject *ret(nullptr);
         PyArrayObject *a = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, &test_value);
         if     ( nDim_particle == 1 ) ret = PyObject_CallFunctionObjArgs(filter, a,a,a,a, NULL);
         else if( nDim_particle == 2 ) ret = PyObject_CallFunctionObjArgs(filter, a,a,a,a,a, NULL);
