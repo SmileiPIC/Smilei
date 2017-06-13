@@ -243,7 +243,7 @@ public:
 
     //! Parameters for particles that are submitted to a
     //! Monte-Carlo discontinuous radiation reaction force
-    bool isDiscRadReaction; 
+    bool isDiscRadReaction;
 
     //! Method used to get the Particle chi factor
     inline double  chi(unsigned int ipart) const {

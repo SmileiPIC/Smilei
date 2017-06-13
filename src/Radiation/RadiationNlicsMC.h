@@ -65,6 +65,7 @@ class RadiationNlicsMC : public Radiation {
                              double & px,
                              double & py,
                              double & pz,
+                             double & weight,
                              RadiationTables &RadiationTables);
 
     protected:

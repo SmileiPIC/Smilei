@@ -116,6 +116,7 @@ void Species::initCluster(Params& params)
     nrj_bc_lost = 0.;
     nrj_mw_lost = 0.;
     nrj_new_particles = 0.;
+    nrj_radiation_lost = 0.;
 
 }//END initCluster
 
@@ -475,6 +476,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             if (Radiate)
                 (*Radiate)(*particles, smpi, RadiationTables,
                          bmin[ibin], bmax[ibin], ithread );
+                nrj_radiation_lost += (*Radiate).getRadiatedEnergy();
 
             // Push the particles
             (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );

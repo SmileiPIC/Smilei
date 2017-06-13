@@ -67,9 +67,6 @@ void RadiationNlicsCont::operator() (Particles &particles,
     // Temporary Lorentz factor
     double gamma;
 
-    // Radiated energy
-    double rad_norm_energy;
-
     // Temporary double parameter
     double temp;
 
@@ -81,8 +78,17 @@ void RadiationNlicsCont::operator() (Particles &particles,
     // Charge shortcut
     short* charge = &( particles.charge(0) );
 
+    // Weight shortcut
+    double* weight = &( particles.weight(0) );
+
     // Optical depth for the Monte-Carlo process
     double* chi = &( particles.chi(0));
+
+    // Local vector to store the radiated energy
+    std::vector <double> rad_norm_energy (iend-istart);
+
+    // Reinitialize the cumulative radiated energy for the current thread
+    this->radiated_energy = 0.;
 
     // _______________________________________________________________
     // Computation
@@ -107,7 +113,7 @@ void RadiationNlicsCont::operator() (Particles &particles,
         //chi[ipart] = chipa
 
         // Radiated energy during the time step
-        rad_norm_energy =
+        rad_norm_energy[ipart - istart] =
         RadiationTables.compute_cont_rad_energy_Ridgers(chipa,dt);
 
         /*std::cerr << "rad_norm_energy: " << rad_norm_energy << " "
@@ -116,11 +122,30 @@ void RadiationNlicsCont::operator() (Particles &particles,
 
         // Effect on the momentum
         // Temporary factor
-        temp = rad_norm_energy/gamma;
+        temp = rad_norm_energy[ipart - istart]/gamma;
         // Update of the momentum
         momentum[0][ipart] -= temp*momentum[0][ipart];
         momentum[1][ipart] -= temp*momentum[1][ipart];
         momentum[2][ipart] -= temp*momentum[2][ipart];
 
+        rad_norm_energy[ipart - istart] = gamma - sqrt(1.0
+                                     + momentum[0][ipart]*momentum[0][ipart]
+                                     + momentum[1][ipart]*momentum[1][ipart]
+                                     + momentum[2][ipart]*momentum[2][ipart]);
     }
+
+    // _______________________________________________________________
+    // Computation of the thread radiated energy
+
+    double radiated_energy_loc = 0;
+
+    #pragma omp simd reduction(+:radiated_energy_loc)
+    for (int ipart=istart ; ipart<iend; ipart++ )
+    {
+        radiated_energy_loc += weight[ipart]*rad_norm_energy[ipart - istart] ;
+        /*std::cerr << weight[ipart]
+                  << " " << rad_norm_energy[ipart - istart]
+                  << std::endl;*/
+    }
+    radiated_energy += radiated_energy_loc;
 }

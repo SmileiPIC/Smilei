@@ -226,15 +226,26 @@ public:
     //! Method to know if we have to project this species or not.
     bool  isProj(double time_dual, SimWindow* simWindow);
 
+    //! Get the energy lost in the boundary conditions
     double getLostNrjBC() const {return mass*nrj_bc_lost;}
+
+    //! Get energy lost with moving window (fields)
     double getLostNrjMW() const {return mass*nrj_mw_lost;}
 
+    //! Get the energy radiated away by the particles multiplied by the mass
+    double getLostNrjRadiation() const {return mass*nrj_radiation_lost;}
+
+    //! Get energy gained via new particles
     double getNewParticlesNRJ() const {return mass*nrj_new_particles;}
+
+    //! Reinitialize the scalar diagnostics buffer
     void reinitDiags() {
         //nrj_bc_lost = 0;
         nrj_mw_lost = 0;
         nrj_new_particles = 0;
+        //nrj_radiation_lost = 0;
     }
+
     inline void storeNRJlost( double nrj ) { nrj_mw_lost = nrj; };
 
     inline double computeNRJ() {
@@ -281,6 +292,11 @@ public:
 
     //! Number of the associated tracking diagnostic
     unsigned int tracking_diagnostic;
+
+protected:
+
+    //! Accumulate nrj lost by the particle with the radiation
+    double nrj_radiation_lost;
 
 private:
     //! Number of steps for Maxwell-Juettner cumulative function integration

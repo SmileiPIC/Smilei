@@ -138,6 +138,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     necessary_Uexp    = necessary_Ubal || allowedKey("Uexp");
     necessary_Ukin    = necessary_Utot || allowedKey("Ukin");
     necessary_Uelm    = necessary_Utot || allowedKey("Uelm");
+    necessary_Urad    = necessary_Uexp || allowedKey("Urad");
     necessary_Ukin_BC = necessary_Uexp || allowedKey("Ukin_bnd") || allowedKey("Ukin_out_mvw") || allowedKey("Ukin_inj_mvw");
     necessary_Uelm_BC = necessary_Uexp || allowedKey("Uelm_bnd") || allowedKey("Uelm_out_mvw") || allowedKey("Uelm_inj_mvw");
     // Species
@@ -150,7 +151,8 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
             necessary_species[ispec] = necessary_Ukin || allowedKey("Dens_"+species_type)
                                                       || allowedKey("Ntot_"+species_type)
                                                       || allowedKey("Zavg_"+species_type)
-                                                      || allowedKey("Ukin_"+species_type);
+                                                      || allowedKey("Ukin_"+species_type)
+                                                      || allowedKey("Urad_"+species_type);
         }
     }
     // Fields
@@ -184,7 +186,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     // 2 - Prepare the Scalar* objects that will contain the data
     // ----------------------------------------------------------
 
-    values_SUM   .reserve( 12 + nspec*5 + 6 + 2*npoy);
+    values_SUM   .reserve( 13 + nspec*5 + 6 + 2*npoy);
     values_MINLOC.reserve( 10 );
     values_MAXLOC.reserve( 10 );
 
@@ -194,6 +196,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     Utot         = newScalar_SUM( "Utot"         );
     Uexp         = newScalar_SUM( "Uexp"         );
     Ukin         = newScalar_SUM( "Ukin"         );
+    Urad         = newScalar_SUM( "Urad"         );  // Radiated energy
     Uelm         = newScalar_SUM( "Uelm"         );
     Ukin_bnd     = newScalar_SUM( "Ukin_bnd"     );
     Ukin_out_mvw = newScalar_SUM( "Ukin_out_mvw" );
@@ -343,6 +346,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     // SPECIES-related energies
     // ------------------------
     double Ukin_=0.;             // total (kinetic) energy carried by particles (test-particles do not contribute)
+    double Urad_=0.;             // total radiated energy by particles
     double Ukin_bnd_=0.;         // total energy lost by particles due to boundary conditions
     double Ukin_out_mvw_=0.;     // total energy lost due to particles being suppressed by the moving-window
     double Ukin_inj_mvw_=0.;     // total energy added due to particles created by the moving-window
@@ -371,10 +375,28 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             *sDens[ispec] += cell_volume * density;
             *sZavg[ispec] += cell_volume * charge;
             *sUkin[ispec] += cell_volume * ener_tot;
-            *sUrad[ispec] += 0;
+
+            // If radiation activated
+            if (vecSpecies[ispec]->Radiate)
+            {
+                *sUrad[ispec]  += cell_volume*
+                                 vecSpecies[ispec]->getLostNrjRadiation();
+                /*std::cerr << "Radiated energy for species " << ispec
+                          << ": " << *sUrad[ispec]
+                          << " / " << *sUkin[ispec]
+                          << std::endl;*/
+            }
 
             // incremement the total kinetic energy
-            Ukin_ += cell_volume * ener_tot;
+            Ukin_ += *sUkin[ispec];
+            // increment the total radiated energy
+            if (vecSpecies[ispec]->Radiate)
+            {
+                Urad_ += *sUrad[ispec];
+                /*std::cerr << "Radiated energy: " << Urad_
+                          << " / " << Ukin_
+                << std::endl;*/
+            }
         }
 
         if( necessary_Ukin_BC ) {
@@ -402,6 +424,12 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     // Add the calculated energies to the data arrays
     if( necessary_Ukin ) {
         *Ukin += Ukin_;
+    }
+    if( necessary_Urad ) {
+        *Urad += Urad_;
+        /*std::cerr << "Radiated energy: " << *Urad
+                  << " / " << *Ukin
+        << std::endl;*/
     }
     if( necessary_Ukin_BC ) {
         *Ukin_bnd     += Ukin_bnd_     ;

@@ -27,6 +27,7 @@ class Params;
 class Species_nlics : public Species
 {
 public:
+
     //! Creator for Species_nlics
     Species_nlics(Params&, Patch*);
     //! Destructor for Species_nlics

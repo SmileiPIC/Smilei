@@ -64,6 +64,12 @@ class Radiation
                   - pow(gamma*Ez - Bx*py + By*px,2)));
         };
 
+        //! Return the total normalized radiated energy
+        double inline getRadiatedEnergy()
+        {
+            return radiated_energy;
+        };
+
     protected:
 
         // ________________________________________
@@ -77,6 +83,9 @@ class Radiation
 
         //! Time step
         double dt;
+
+        //! Radiated energy of the total thread
+        double radiated_energy;
 
         // _________________________________________
         // Factors

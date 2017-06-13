@@ -172,7 +172,12 @@ private :
     Scalar_value *Utot, *Uexp, *Ubal, *Ubal_norm;
     Scalar_value *Uelm, *Ukin, *Uelm_bnd, *Ukin_bnd;
     Scalar_value *Ukin_out_mvw, *Ukin_inj_mvw, *Uelm_out_mvw, *Uelm_inj_mvw;
-    std::vector<Scalar_value *> sDens, sNtot, sZavg, sUkin, sUrad, fieldUelm;
+    // For the radiated energy
+    Scalar_value *Urad;
+
+    std::vector<Scalar_value *> sDens, sNtot, sZavg, sUkin, fieldUelm;
+    // For the radiated energy
+    std::vector<Scalar_value *> sUrad;
     std::vector<Scalar_value_location *> fieldMin, fieldMax;
     std::vector<Scalar_value *> poy, poyInst;
 
@@ -180,6 +185,8 @@ private :
     bool necessary_Ubal_norm, necessary_Ubal, necessary_Utot, necessary_Uexp;
     bool necessary_Ukin, necessary_Ukin_BC;
     bool necessary_Uelm, necessary_Uelm_BC;
+    // For the radiated energy
+    bool necessary_Urad;
     bool necessary_fieldMinMax_any;
     std::vector<bool> necessary_species, necessary_fieldUelm, necessary_fieldMinMax, necessary_poy;
 

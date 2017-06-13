@@ -68,7 +68,7 @@ void RadiationNlicsMC::operator() (Particles &particles,
     double gamma;
 
     // Radiated energy
-    double rad_energy;
+    double cont_rad_energy;
 
     // Temporary double parameter
     double temp;
@@ -90,11 +90,17 @@ void RadiationNlicsMC::operator() (Particles &particles,
     // Charge shortcut
     short* charge = &( particles.charge(0) );
 
+    // Weight shortcut
+    double* weight = &( particles.weight(0) );
+
     // Optical depth for the Monte-Carlo process
     double* tau = &( particles.tau(0));
 
     // Optical depth for the Monte-Carlo process
     double* chi = &( particles.chi(0));
+
+    // Reinitialize the cumulative radiated energy for the current thread
+    this->radiated_energy = 0.;
 
     // _______________________________________________________________
     // Computation
@@ -191,6 +197,7 @@ void RadiationNlicsMC::operator() (Particles &particles,
                                            momentum[0][ipart],
                                            momentum[1][ipart],
                                            momentum[2][ipart],
+                                           weight[ipart],
                                            RadiationTables);
 
                         /*std::cerr << "gammapa: " << gamma << " "
@@ -233,12 +240,15 @@ void RadiationNlicsMC::operator() (Particles &particles,
                 emission_time = dt - local_it_time;
 
                 // Radiated energy during emission_time
-                rad_energy =
+                cont_rad_energy =
                 RadiationTables.compute_cont_rad_energy_Ridgers(chipa,
                                                              emission_time);
 
+                // Incrementation of the radiated energy cumulative parameter
+                radiated_energy += weight[ipart]*cont_rad_energy;
+
                 // Effect on the momentum
-                temp = rad_energy/gamma;
+                temp = cont_rad_energy/gamma;
                 for ( int i = 0 ; i<3 ; i++ )
                     momentum[i][ipart] -= temp*momentum[i][ipart];
 
@@ -271,6 +281,7 @@ void RadiationNlicsMC::photon_emission(double &chipa,
                             double & px,
                             double & py,
                             double & pz,
+                            double & weight,
                             RadiationTables &RadiationTables)
 {
     // ____________________________________________________
@@ -279,13 +290,12 @@ void RadiationNlicsMC::photon_emission(double &chipa,
     double gammaph;    // Photon gamma factor
     double inv_old_norm_p;
     //double new_norm_p;
-    double kx,ky,kz;   // Photon momentum
 
     // Get the photon quantum parameter from the table xip
     chiph = RadiationTables.compute_chiph_emission(chipa);
 
     // compute the photon gamma factor
-    gammaph = chiph/chipa*(gammapa-1);
+    gammaph = chiph/chipa*(gammapa-1.0);
 
     // ____________________________________________________
     // Creation of the new photon
@@ -295,12 +305,9 @@ void RadiationNlicsMC::photon_emission(double &chipa,
     // direction d'emission // direction de l'electron (1/gamma << 1)
     // With momentum conservation
     inv_old_norm_p = gammaph/sqrt(gammapa*gammapa - 1.0);
-    kx = px*inv_old_norm_p;
-    ky = py*inv_old_norm_p;
-    kz = pz*inv_old_norm_p;
-    px -= kx;
-    py -= ky;
-    pz -= kz;
+    px -= px*inv_old_norm_p;
+    py -= py*inv_old_norm_p;
+    pz -= pz*inv_old_norm_p;
 
     // With energy conservation
     /*inv_old_norm_p = 1./sqrt(gammapa*gammapa - 1.0);
@@ -309,6 +316,10 @@ void RadiationNlicsMC::photon_emission(double &chipa,
     px *= new_norm_p * inv_old_norm_p;
     py *= new_norm_p * inv_old_norm_p;
     pz *= new_norm_p * inv_old_norm_p;*/
+
+    // Addition of the emitted energy in the cumulating parameter
+    gammaph = gammapa - sqrt(1.0 + px*px + py*py + pz*pz);
+    radiated_energy += weight*gammaph;
 
     // Debugging
     /*std::cerr << "chipa: " << chipa << " "

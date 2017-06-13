@@ -31,6 +31,9 @@ Radiation::Radiation(Params& params, Species * species)
 
     // Inverse of norm_E_Schwinger
     inv_norm_E_Schwinger = 1./norm_E_Schwinger;
+
+    // The thread radiated energy is initially null
+    radiated_energy = 0;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
