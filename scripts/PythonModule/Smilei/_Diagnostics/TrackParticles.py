@@ -1,11 +1,9 @@
 from .Diagnostic import Diagnostic
 from .._Utils import *
 
-# -------------------------------------------------------------------
-# Class for tracked particles diagnostics
-# -------------------------------------------------------------------
 class TrackParticles(Diagnostic):
-	# This is the constructor, which creates the object
+	"""Class for loading a TrackParticles diagnostic"""
+	
 	def _init(self, species=None, select="", axes=[], timesteps=None, sort=True, length=None, **kwargs):
 		
 		# If argument 'species' not provided, then print available species and leave

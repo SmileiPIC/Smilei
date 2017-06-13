@@ -1,9 +1,8 @@
 from .Diagnostic import Diagnostic
 from .._Utils import *
 
-
 class Field(Diagnostic):
-	""" The Field diagnostic of a Smilei simulation"""
+	"""Class for loading a Field diagnostic"""
 	
 	def _init(self, diagNumber=None, field=None, timesteps=None, subset=None, average=None, data_log=False, **kwargs):
 		
@@ -85,14 +84,14 @@ class Field(Diagnostic):
 		
 		# Check subset
 		if subset is None: subset = {}
-		if type(subset) is not dict:
-			self._error = "Diagnostic not loaded: Argument `subset` must be a dictionary"
+		elif type(subset) is not dict:
+			self._error = "Argument `subset` must be a dictionary"
 			return
 		
 		# Check average
 		if average is None: average = {}
-		if type(average) is not dict:
-			self._error = "Diagnostic not loaded: Argument `average` must be a dictionary"
+		elif type(average) is not dict:
+			self._error = "Argument `average` must be a dictionary"
 			return
 		
 		# Put data_log as object's variable
@@ -115,12 +114,12 @@ class Field(Diagnostic):
 			try:
 				self.times = self._selectTimesteps(timesteps, self.times)
 			except:
-				self._error = "Diagnostic not loaded: Argument `timesteps` must be one or two non-negative integers"
+				self._error = "Argument `timesteps` must be one or two non-negative integers"
 				return
 		
 		# Need at least one timestep
 		if self.times.size < 1:
-			self._error = "Diagnostic not loaded: Timesteps not found"
+			self._error = "Timesteps not found"
 			return
 		
 		# 3 - Manage axes
@@ -129,7 +128,6 @@ class Field(Diagnostic):
 		self._subsetinfo = {}
 		self._finalShape = self._np.copy(self._initialShape)
 		self._averages = [False]*self._ndim
-		self._subsets  = [False]*self._ndim
 		self._selection = [self._np.s_[:]]*self._ndim
 		for iaxis in range(self._naxes):
 			centers = self._np.linspace(0., (self._initialShape[iaxis]-1)*self._cell_length[iaxis], self._initialShape[iaxis])
@@ -139,7 +137,7 @@ class Field(Diagnostic):
 			# If averaging over this axis
 			if label in average:
 				if label in subset:
-					self._error = "Diagnostic not loaded: `subset` not possible on the same axes as `average`"
+					self._error = "`subset` not possible on the same axes as `average`"
 					return
 				
 				self._averages[iaxis] = True
@@ -153,11 +151,9 @@ class Field(Diagnostic):
 			else:
 				# If taking a subset of this axis
 				if label in subset:
-					self._subsets[iaxis] = True
-					
 					try:
 						self._subsetinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
-							= self._selectSubset(subset[label], centers, label, axisunits, "average")
+							= self._selectSubset(subset[label], centers, label, axisunits, "subset")
 					except:
 						return
 				# If subset has more than 1 point (or no subset), use this axis in the plot
@@ -199,7 +195,7 @@ class Field(Diagnostic):
 		for path in self._results_path:
 			files = self._glob(path+self._os.sep+'Fields*.h5')
 			if len(files)==0:
-				self._error = "Diagnostic not loaded: No fields found in '"+path+"'"
+				self._error = "No fields found in '"+path+"'"
 				return []
 			diagNumbers = [ int(self._re.findall("Fields([0-9]+).h5$",file)[0]) for file in files ]
 			if diags == []: diags = diagNumbers

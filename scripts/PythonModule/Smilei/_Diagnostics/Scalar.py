@@ -2,7 +2,7 @@ from .Diagnostic import Diagnostic
 from .._Utils import *
 
 class Scalar(Diagnostic):
-	"""Class for loading a scalar diagnostic"""
+	"""Class for loading a Scalar diagnostic"""
 	
 	def _init(self, scalar=None, timesteps=None, data_log=False, **kwargs):
 		# Get available scalars

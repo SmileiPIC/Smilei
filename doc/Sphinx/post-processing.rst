@@ -136,7 +136,7 @@ Open a Field diagnostic
 Open a Probe diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.Probe(probeNumber=None, field=None, timesteps=None, average=None, units=[""], data_log=False, **kwargs)
+.. py:method:: Smilei.Probe(probeNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``probeNumber``: number of the probe (the first one has number 0).
@@ -144,7 +144,7 @@ Open a Probe diagnostic
   * ``field``: name of the field (``"Bx"``, ``"By"``, ``"Bz"``, ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` or ``"Rho"``).
      | If not given, then a list of available fields is printed.
      | The string can also be an operation between several fields, such as ``"Jx+Jy"``.
-  * ``average`` is very similar to that of :py:meth:`Field`, but it can only have the axes: ``"axis1"``, ``"axis2"`` and ``"axis3"``.
+  * ``subset`` and ``average`` are very similar to those of :py:meth:`Field`, but they can only have the axes: ``"axis1"``, ``"axis2"`` and ``"axis3"``.
     For instance, ``average={"axis1":"all"}``. Note that the axes are not necessarily :math:`x`, :math:`y` or :math:`z` because the probe mesh is arbitrary.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
@@ -166,6 +166,8 @@ Open a Particle diagnostic
      | If not given, a list of available particle diagnostics is printed.
      | It can also be an operation between several particle diagnostics.
      | For example, ``"#0/#1"`` computes the division by diagnostics 0 and 1.
+  * ``subset`` is similar to that of :py:meth:`Field`, although the axis must be one of
+     ``"x"``, ``"y"``, ``"z"``, ``"px"``, ``"py"``, ``"pz"``, ``"p"``, ``"gamma"``, ``"ekin"``, ``"vx"``, ``"vy"``, ``"vz"``, ``"v"`` or ``"charge"``.
   * ``sum``: a selection of coordinates on which to sum the data.
      | Syntax 1: ``sum = { axis : "all", ... }``
      | Syntax 2: ``sum = { axis : location, ... }``
@@ -201,7 +203,7 @@ Open a Screen diagnostic
      | If not given, a list of available screen diagnostics is printed.
      | It can also be an operation between several screen diagnostics.
      | For example, ``"#0/#1"`` computes the division by diagnostics 0 and 1.
-  * ``sum``: identical to that of particle diagnostics.
+  * ``subset``and ``sum``: identical to that of particle diagnostics.
   * ``stride``: identical to that of particle diagnostics.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 

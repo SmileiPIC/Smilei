@@ -1,12 +1,10 @@
 from .Diagnostic import Diagnostic
 from .._Utils import *
 
-# -------------------------------------------------------------------
-# Class for probe diagnostics
-# -------------------------------------------------------------------
 class Probe(Diagnostic):
-	# This is the constructor, which creates the object
-	def _init(self, probeNumber=None, field=None, timesteps=None, average=None, data_log=False, **kwargs):
+	"""Class for loading a Probe diagnostic"""
+	
+	def _init(self, probeNumber=None, field=None, timesteps=None, subset=None, average=None, data_log=False, **kwargs):
 		
 		self._h5probe = []
 		self._times = []
@@ -92,12 +90,17 @@ class Probe(Diagnostic):
 		self._fieldn = list(set(self._fieldn))
 		self._fieldname = [ fields[i] for i in self._fieldn ] # names of the requested fields
 		
-		# Check average is a dict
-		if average is not None  and  type(average) is not dict:
-			self._error += "Argument `average` must be a dictionary"
+		# Check subset
+		if subset is None: subset = {}
+		elif type(subset) is not dict:
+			self._error = "Argument `subset` must be a dictionary"
 			return
-		# Make average a dictionary
+		
+		# Check average
 		if average is None: average = {}
+		elif type(average) is not dict:
+			self._error = "Argument `average` must be a dictionary"
+			return
 		
 		# Put data_log as object's variable
 		self._data_log = data_log
@@ -124,15 +127,14 @@ class Probe(Diagnostic):
 			self._error = "Timesteps not found"
 			return
 		
-		
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
 		# Fabricate all axes values
 		self._naxes = self._initialShape.size
+		self._subsetinfo = {}
 		self._finalShape = self._np.copy(self._initialShape)
-		self._averageinfo = {}
-		self._averages = [False] * self._naxes
-		self._selection = []
+		self._averages = [False]*self._naxes
+		self._selection = [self._np.s_[:]]*self._naxes
 		p = []
 		for iaxis in range(self._naxes):
 			
@@ -146,9 +148,12 @@ class Probe(Diagnostic):
 			
 			label = {0:"axis1", 1:"axis2", 2:"axis3"}[iaxis]
 			axisunits = "L_r"
-			self._selection += [ self._np.s_[:] ]
 			
+			# If averaging over this axis
 			if label in average:
+				if label in subset:
+					self._error = "`subset` not possible on the same axes as `average`"
+					return
 				
 				self._averages[iaxis] = True
 				
@@ -158,14 +163,25 @@ class Probe(Diagnostic):
 						= self._selectRange(average[label], distances, label, axisunits, "average")
 				except:
 					return
-				
+			# Otherwise
 			else:
-				self._type   .append(label)
-				self._shape  .append(self._initialShape[iaxis])
-				self._centers.append(centers)
-				self._label  .append(label)
-				self._units  .append(axisunits)
-				self._log    .append(False)
+				# If taking a subset of this axis
+				if label in subset:
+					distances = self._np.sqrt(self._np.sum((centers-centers[0])**2,axis=1))
+					try:
+						self._subsetinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
+							= self._selectSubset(subset[label], distances, label, axisunits, "subset")
+					except:
+						return
+				# If subset has more than 1 point (or no subset), use this axis in the plot
+				if type(self._selection[iaxis]) is slice:
+					self._type   .append(label)
+					self._shape  .append(self._initialShape[iaxis])
+					self._centers.append(centers[self._selection[iaxis],:])
+					self._label  .append(label)
+					self._units  .append(axisunits)
+					self._log    .append(False)
+		
 		self._selection = tuple(self._selection)
 		
 		# Special case in 1D: we convert the point locations to scalar distances

@@ -1,12 +1,10 @@
 from .Diagnostic import Diagnostic
 from .._Utils import *
 
-# -------------------------------------------------------------------
-# Class for particle diagnostics
-# -------------------------------------------------------------------
 class ParticleDiagnostic(Diagnostic):
-	# This is the constructor, which creates the object
-	def _init(self, diagNumber=None, timesteps=None, sum=None, data_log=False, stride=1, **kwargs):
+	"""Class for loading a particle diagnostic"""
+	
+	def _init(self, diagNumber=None, timesteps=None, subset=None, sum=None, data_log=False, stride=1, **kwargs):
 		
 		if diagNumber is None:
 			self._error += "Printing available particle diagnostics:\n"
@@ -69,12 +67,17 @@ class ParticleDiagnostic(Diagnostic):
 		self._axes  = self._axes [self._diags[0]]
 		self._naxes = self._naxes[self._diags[0]]
 		
-		# Check sum is a dict
-		if sum is not None  and  type(sum) is not dict:
+		# Check subset
+		if subset is None: subset = {}
+		elif type(subset) is not dict:
+			self._error = "Argument `subset` must be a dictionary"
+			return
+		
+		# Check sum
+		if sum is None: sum = {}
+		elif type(sum) is not dict:
 			self._error = "Argument 'sum' must be a dictionary"
 			return
-		# Make sum a dictionary
-		if sum is None: sum = {}
 		
 		# Put data_log as object's variable
 		self._data_log = data_log
@@ -120,7 +123,7 @@ class ParticleDiagnostic(Diagnostic):
 		# Need at least one timestep
 		if self.times.size < 1:
 			self._error = "Timesteps not found"
-			return None
+			return
 		
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
@@ -137,6 +140,7 @@ class ParticleDiagnostic(Diagnostic):
 		
 		for iaxis in range(self._naxes):
 			axis = self._axes[iaxis]
+			axistype = axis["type"]
 			
 			# Find the vector of values along the axis
 			if axis["log"]:
@@ -154,59 +158,72 @@ class ParticleDiagnostic(Diagnostic):
 			# Find some quantities depending on the axis type
 			overall_min = "-inf"; overall_max = "inf"
 			axis_units = ""
-			if   axis["type"] in ["x","y","z","moving_x"]:
+			if   axistype in ["x","y","z","moving_x"]:
 				axis_units = "L_r"
-				spatialaxes[axis["type"][-1]] = True
-			elif axis["type"][:9] == "composite":
+				spatialaxes[axistype[-1]] = True
+			elif axistype[:9] == "composite":
 				axis_units = "L_r"
 				hasComposite = True
-				axis["type"] = axis["type"][10:]
-			elif axis["type"] in ["px","py","pz","p"]:
+				axistype = axistype[10:]
+				axis["type"] = axistype
+			elif axistype in ["px","py","pz","p"]:
 				axis_units = "P_r"
-			elif axis["type"] in ["vx","vy","vz","v"]:
+			elif axistype in ["vx","vy","vz","v"]:
 				axis_units = "V_r"
-			elif axis["type"] in ["vperp2"]:
+			elif axistype in ["vperp2"]:
 				axis_units = "V_r**2"
 				overall_min = "0"
-			elif axis["type"] == "gamma":
+			elif axistype == "gamma":
 				overall_min = "1"
-			elif axis["type"] == "ekin":
+			elif axistype == "ekin":
 				axis_units = "K_r"
 				overall_min = "0"
-			elif axis["type"] == "charge":
+			elif axistype == "charge":
 				axis_units = "Q_r"
 				overall_min = "0"
 			else:
-				self._error = "axis type "+axis["type"]+" not implemented"
+				self._error = "axis type "+axistype+" not implemented"
 				return None
 			
 			# if this axis has to be summed, then select the bounds
-			if axis["type"] in sum:
-			
+			if axistype in sum:
+				if axistype in subset:
+					self._error = "`subset` not possible on the same axes as `sum`"
+					return
+				
 				self._sums[iaxis] = True
 				
 				try:
 					axis["sumInfo"], self._selection[iaxis], self._finalShape[iaxis] \
-						= self._selectRange(sum[axis["type"]], centers, axis["type"], "", "sum")
+						= self._selectRange(sum[axistype], centers, axistype, axis_units, "sum")
 				except:
 					return
 				
-				if axis["type"] in ["x","y","z","moving_x"]:
+				if axistype in ["x","y","z","moving_x"]:
 					first_edge = edges[self._selection[iaxis].start or 0]
 					last_edge  = edges[(self._selection[iaxis].stop or len(centers))+1]
 					coeff /= last_edge - first_edge
 			
-			# if not summed, then add this axis to the overall plot
+			# if not summed
 			else:
-				self._type   .append(axis["type"])
-				self._shape  .append(axis["size"])
-				self._centers.append(centers[::stride])
-				self._log    .append(axis["log"])
-				self._label  .append(axis["type"])
-				self._units  .append(axis_units)
-				plot_diff.append(self._np.diff(edges)[::stride])
-				self._selection [iaxis] = self._np.s_[::stride]
-				self._finalShape[iaxis] = len(self._centers[-1])
+				# If taking a subset of this axis
+				if axistype in subset:
+					try:
+						axis["subsetInfo"], self._selection[iaxis], self._finalShape[iaxis] \
+							= self._selectSubset(subset[axistype], centers, axistype, axis_units, "subset")
+					except:
+						return
+				# If subset has more than 1 point (or no subset), use this axis in the plot
+				if type(self._selection[iaxis]) is slice:
+					self._type   .append(axistype)
+					self._shape  .append(axis["size"])
+					self._centers.append(centers[self._selection[iaxis]])
+					self._log    .append(axis["log"])
+					self._label  .append(axistype)
+					self._units  .append(axis_units)
+					plot_diff.append(self._np.diff(edges)[self._selection[iaxis]])
+					self._finalShape[iaxis] = len(self._centers[-1])
+		
 		self._selection = tuple(self._selection)
 		
 		# Build units
@@ -349,6 +366,7 @@ class ParticleDiagnostic(Diagnostic):
 		if len(self.operation)>2: info += "Operation : "+self.operation+"\n"
 		for ax in self._axes:
 			if "sumInfo" in ax: info += ax["sumInfo"]+"\n"
+			if "subsetInfo" in ax: info += ax["subsetInfo"]+"\n"
 		return info
 	
 	def getDiags(self):
@@ -395,7 +413,7 @@ class ParticleDiagnostic(Diagnostic):
 				print("Timestep "+str(t)+" not found in this diagnostic")
 				return []
 			# get data
-			B = self._np.zeros(self._finalShape)
+			B = self._np.empty(self._finalShape)
 			try:
 				self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
 			except:
