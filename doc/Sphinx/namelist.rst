@@ -339,6 +339,7 @@ Each species has to be defined in a ``Species`` block::
       track_flush_every = 100,
       c_part_max = 1.0,
       dynamics_type = "norm",
+      radiation_type = "none",
   )
 
 .. py:data:: species_type
@@ -521,6 +522,18 @@ Each species has to be defined in a ``Species`` block::
   * vay: The relativistic pusher of J. L. Vay
   * higueracary: The relativistic pusher of A. V. Higuera and J. R. Cary
 
+.. py:data:: radiation_type
+
+  :default: ``none``
+
+  Type of radiation model used for this species.
+  The default value is for no radiation.
+  If `radiation_type` is set to an existing algorithm,radiation loss is
+  performed out of the particle pusher.
+  Smilei has the following solvers implemented:
+  * none: no radiation
+  * Monte-Carlo: Monte-Carlo algorithm
+  * continuous: Continuous algorithm with quantum correction
 
 ----
 

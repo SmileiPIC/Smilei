@@ -128,6 +128,7 @@ void RadiationNlicsCont::operator() (Particles &particles,
         momentum[1][ipart] -= temp*momentum[1][ipart];
         momentum[2][ipart] -= temp*momentum[2][ipart];
 
+        // Exact energy loss due to the radiation
         rad_norm_energy[ipart - istart] = gamma - sqrt(1.0
                                      + momentum[0][ipart]*momentum[0][ipart]
                                      + momentum[1][ipart]*momentum[1][ipart]
