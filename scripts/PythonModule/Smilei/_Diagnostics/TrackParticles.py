@@ -7,7 +7,8 @@ from .._Utils import *
 class TrackParticles(Diagnostic):
 	# This is the constructor, which creates the object
 
-	def _init(self, species=None, select="", axes=[], timesteps=None, length=None, verbose=True, **kwargs):
+	def _init(self, species=None, select="", axes=[], timesteps=None,
+		      sort=True, length=None, verbose=True, **kwargs):
 
 		# Verbose
 		self.verbose = verbose
