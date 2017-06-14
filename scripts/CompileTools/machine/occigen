@@ -1,0 +1,3 @@
+CXXFLAGS +=  -xHost -O3 -ip 
+
+
