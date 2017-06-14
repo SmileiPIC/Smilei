@@ -474,9 +474,11 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
             // Radiation losses: Nonlinear inverse Compton Scattering
             if (Radiate)
+            {
                 (*Radiate)(*particles, smpi, RadiationTables,
                          bmin[ibin], bmax[ibin], ithread );
                 nrj_radiation_lost += (*Radiate).getRadiatedEnergy();
+            }
 
             // Push the particles
             (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
