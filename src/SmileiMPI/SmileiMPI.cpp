@@ -374,10 +374,10 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     //cout << "Start recompute" << endl;
     unsigned int Npatches,ncells_perpatch, j;
     int Ncur;
-    double Tload,Tload_loc,Tcur, cells_load, target;
+    double Tload,Tload_loc,Tcur, cells_load, target, Tscan;
     //Load of a cell = coef_cell*load of a particle.
     //Load of a frozen particle = coef_frozen*load of a particle.
-    std::vector<double> Lp,Tload_vec, Lp_left, Lp_right;
+    std::vector<double> Lp, Lp_left, Lp_right;
     ofstream fout;
 
     if (isMaster()) {
@@ -395,11 +395,9 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     cells_load = ncells_perpatch*params.coef_cell ;
 
     Lp.resize(patch_count[smilei_rk], cells_load);
-    Tload_vec.resize(smilei_sz, 0.);
     if (smilei_rk > 0) Lp_left.resize(patch_count[smilei_rk-1]);
     if (smilei_rk < smilei_sz-1) Lp_right.resize(patch_count[smilei_rk+1]);
 
-    Tload = 0.;
     Tload_loc = 0.;
     Ncur = 0; // Number of patches assigned to current rank r.
 
@@ -411,8 +409,11 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         Tload_loc += Lp[ipatch];
     }
 
-    //Communicate the total load of each MPI rank to everyone
-    MPI_Allgather(&Tload_loc,1,MPI_DOUBLE,&Tload_vec[0], 1, MPI_DOUBLE,MPI_COMM_WORLD);
+    //Tscan = total load carried by previous ranks and me 
+    MPI_Scan(&Tload_loc, &Tscan, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    //Tload = total load carried by all ranks 
+    MPI_Allreduce(&Tload_loc, &Tload, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
     //Communicate the detail of the load of each patch to neighbouring MPI ranks
     if (smilei_rk < smilei_sz-1) {
         MPI_Isend( &(Lp[0]), patch_count[smilei_rk], MPI_DOUBLE, smilei_rk+1, 0, MPI_COMM_WORLD, &request0 );
@@ -425,8 +426,6 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         MPI_Recv( &(Lp_right[0]), patch_count[smilei_rk+1], MPI_DOUBLE, smilei_rk+1, 1, MPI_COMM_WORLD, &status1);
     }
 
-    //Compute global total loads
-    for(unsigned int rank=0; rank < smilei_sz; rank++) Tload += Tload_vec[rank];
     Tload /= Tcapabilities; //Target load for each mpi process.
     //Tcur = Tload * capabilities[smilei_rk];  //Init.
 
@@ -437,8 +436,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
 
     if (smilei_rk > 0){
         //Tcur is now initialized as the total load carried by previous ranks.
-        Tcur = 0;
-        for(unsigned int rank=0; rank < smilei_rk; rank++) Tcur += Tload_vec[rank];
+        Tcur = Tscan - Tload_loc;
         //Check if my rank should start with additional patches from left neighbour.
         target = smilei_rk*Tload;
         if (Tcur > target){
@@ -461,8 +459,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
 
     if (smilei_rk < smilei_sz-1){
         //Tcur is now initialized as the total load carried by previous ranks + my load.
-        Tcur =0;
-        for(unsigned int rank=0; rank < smilei_rk+1; rank++) Tcur += Tload_vec[rank];
+        Tcur = Tscan;
         target = (smilei_rk+1)*Tload;
 
         //Check if my rank should start with additional patches from right neighbour ...
