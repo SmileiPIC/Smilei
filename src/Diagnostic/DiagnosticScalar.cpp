@@ -388,7 +388,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             }
 
             // incremement the total kinetic energy
-            Ukin_ += *sUkin[ispec];
+            Ukin_ += cell_volume * ener_tot;
             // increment the total radiated energy
             if (vecSpecies[ispec]->Radiate)
             {
