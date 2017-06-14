@@ -946,7 +946,7 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
             double Uelm_bnd     = *scalars->Uelm_bnd    ;
             double Uelm_out_mvw = *scalars->Uelm_out_mvw;
             double Uelm_inj_mvw = *scalars->Uelm_inj_mvw;
-            // Global raduated energy
+            // Global radiated energy
             double Urad = *scalars->Urad;
             // expected total energy
             double Uexp = scalars->Energy_time_zero + Uelm_bnd + Ukin_inj_mvw
