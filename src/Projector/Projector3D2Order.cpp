@@ -276,9 +276,9 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
         linindex_x += z_size;
         linindex    = linindex_x; 
         for (int k=1 ; k<5 ; k++) {
-            vtmp[0] -= crz_p * DSz[k-1] * (0.5*Sx1[0]*Sy0[j] + one_third*Sx1[0]*DSy[j]);
+            vtmp[j] -= crz_p * DSz[k-1] * (0.5*Sx1[0]*Sy0[j] + one_third*Sx1[0]*DSy[j]);
             linindex += 1;
-            Jz [linindex] += vtmp[0]; //
+            Jz [linindex] += vtmp[j]; //
          }
     }//i
     for ( unsigned int i=0 ; i<5 ; i++) vtmp[i] = 0.;
