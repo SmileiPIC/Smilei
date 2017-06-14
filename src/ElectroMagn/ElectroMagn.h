@@ -282,7 +282,7 @@ public:
         nrj_new_fields = 0.;
     }
     
-    inline void storeNRJlost( double nrj ) { nrj_mw_lost = nrj; }
+    inline void storeNRJlost( double nrj ) { nrj_mw_lost += nrj; }
     
     inline int getMemFootPrint() {
     

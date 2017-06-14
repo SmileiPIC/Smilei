@@ -135,6 +135,15 @@ void SyncVectorPatch::exchangeJ( VectorPatch& vecPatches )
     SyncVectorPatch::exchange( vecPatches.listJz_, vecPatches );
 }
 
+void SyncVectorPatch::finalizeexchangeJ( VectorPatch& vecPatches )
+{
+
+    SyncVectorPatch::finalizeexchange( vecPatches.listJx_, vecPatches );
+    SyncVectorPatch::finalizeexchange( vecPatches.listJy_, vecPatches );
+    SyncVectorPatch::finalizeexchange( vecPatches.listJz_, vecPatches );
+}
+
+
 void SyncVectorPatch::finalizeexchangeB( VectorPatch& vecPatches )
 {
     if (vecPatches.listBx_[0]->dims_.size()==1) {

@@ -189,15 +189,13 @@ namelist("")
     if (interpolation_order!=2 && interpolation_order!=4) {
         ERROR("Main.interpolation_order " << interpolation_order << " not defined");
     }
-    if ( (geometry=="2d3v" || geometry=="3d3v") && interpolation_order==4) {
-        ERROR("Main.interpolation_order = 4 " << interpolation_order << " not yet available in 2D");
-    }
 
     //!\todo (MG to JD) Please check if this parameter should still appear here
     // Disabled, not compatible for now with particles sort
     // if ( !PyTools::extract("exchange_particles_each", exchange_particles_each) )
     exchange_particles_each = 1;
 
+    PyTools::extract("every_clean_particles_overhead", every_clean_particles_overhead, "Main");
 
     // TIME & SPACE RESOLUTION/TIME-STEPS
 
@@ -449,7 +447,7 @@ void Params::compute()
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];
         if(n_space_global[i]%number_of_patches[i] !=0) ERROR("ERROR in dimension " << i <<". Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i]);
-        if ( n_space[i] <= 2*oversize[i] ) ERROR ( "ERROR in dimension " << i <<". Patches length = "<<n_space[i] << " cells must be at lxmax " << 2*oversize[i] +1 << " cells long. Increase number of cells or reduce number of patches in this direction. " );
+        if ( n_space[i] <= 2*oversize[i] ) ERROR ( "ERROR in dimension " << i <<". Patches length = "<<n_space[i] << " cells must be at least " << 2*oversize[i] +1 << " cells long. Increase number of cells or reduce number of patches in this direction. " );
     }
 
     // compute number of cells per patch

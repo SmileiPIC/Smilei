@@ -85,7 +85,7 @@ that you can install following `these instructions <https://www.macports.org/ins
 Via HomeBrew
 """"""""""""
 
-This installation procedure has been tested on OS X "El Capitan" 10.11.1
+This installation procedure has been tested on OS X 10.12
 
 #. `HomeBrew <http://brew.sh>`_ does not need administrator privileges and can easily installed via:
 
@@ -98,21 +98,19 @@ This installation procedure has been tested on OS X "El Capitan" 10.11.1
    .. code-block:: bash
 
      brew tap homebrew/science
-     brew cask install java
-     brew install makedepend
      brew install gcc
      brew install openmpi --with-mpi-thread-multiple
      brew install hdf5 --with-mpi     
-     brew install python
+     brew install python numpy
 
-#. Now you need to set the ``OMPI_CXX`` to the homebrew ``g++`` (``g++-6`` or similar):
+#. Now you need to set the ``OMPI_CXX`` to the homebrew ``g++`` (``g++-7`` or similar):
      
    .. code-block:: bash
 
-     export OMPI_CXX=g++-6
+     export OMPI_CXX=g++-7
 
 #. Alternatively you can put this line variable in a shell rc file (e.g. ``.bash_profile``) 
-   or you can just add it before the ``make`` command (``OMPI_CXX=g++-6 make`` ...)
+   or you can just add it before the ``make`` command (``OMPI_CXX=g++-7 make`` ...)
 
 #. now you can compile :program:`smilei` (see :ref:`compile`)
 
@@ -123,7 +121,6 @@ This installation procedure has been tested on OS X "El Capitan" 10.11.1
      export LC_ALL=en_US.UTF-8
      export LANG=en_US.UTF-8
      pip install ipython h5py pint sphinx matplotlib pylab
-     brew install doxygen
 
 
 

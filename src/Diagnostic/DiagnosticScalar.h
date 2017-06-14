@@ -50,7 +50,7 @@ public:
         (*values)[index]+=v;
         return *this;
     };
-    inline operator double() const { return (*values)[index]; }
+    inline operator double() const override { return (*values)[index]; } ;
     inline void reset() override { (*values)[index]=0.; };
     std::vector<double>* values;
     unsigned int index;
@@ -67,7 +67,7 @@ public:
         (*values)[index] = v;
         return *this;
     };
-    inline operator double() const { return (*values)[index].val; }
+    inline operator double() const override { return (*values)[index].val; }
     inline operator int() const { return (*values)[index].index; }
     inline void reset() override { (*values)[index].val=reset_value; (*values)[index].index=-1; };
     std::vector<val_index>* values;

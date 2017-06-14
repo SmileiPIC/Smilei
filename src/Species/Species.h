@@ -167,7 +167,7 @@ public:
     void sort_part();
     void count_sort_part(Params& param);
 
-    void updateMvWinLimits(double x_moved);
+    //void updateMvWinLimits(double x_moved);
 
     //! Vector containing all Particles of the considered Species
     Particles *particles;
@@ -246,7 +246,7 @@ public:
         //nrj_radiation_lost = 0;
     }
 
-    inline void storeNRJlost( double nrj ) { nrj_mw_lost = nrj; };
+    inline void storeNRJlost( double nrj ) { nrj_mw_lost += nrj; };
 
     inline double computeNRJ() {
         double nrj(0.);
@@ -301,13 +301,14 @@ protected:
 private:
     //! Number of steps for Maxwell-Juettner cumulative function integration
     //! \todo{Put in a code constant class}
-    unsigned int nE;
+
+//    unsigned int nE;
 
     //! Parameter used when defining the Maxwell-Juettner function (corresponds to a Maximum energy)
-    double muEmax;
+//    double muEmax;
 
     //! Parameter used when defining the Maxwell-Juettner function (corresponds to a discretization step in energy)
-    double dE;
+//    double dE;
 
     //! Number of spatial dimension for the particles
     unsigned int nDim_particle;

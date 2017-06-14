@@ -924,12 +924,12 @@ void Species::importParticles( Params& params, Patch* patch, Particles& source_p
 // Set position when using restart & moving window
 // patch are initialized with t0 position
 // ------------------------------------------------
-void Species::updateMvWinLimits(double x_moved)
-{
-    partBoundCond->updateMvWinLimits(x_moved);
-    min_loc += x_moved;
-
-} // End updateMvWinLimits
+//void Species::updateMvWinLimits(double x_moved)
+//{
+//    partBoundCond->updateMvWinLimits(x_moved);
+//    min_loc += x_moved;
+//
+//} // End updateMvWinLimits
 
 
 //Do we have to project this species ?

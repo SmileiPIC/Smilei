@@ -232,12 +232,12 @@ public:
     //! Set geometry data in case of moving window restart
     //! \param x_moved difference on coordinates regarding t0 geometry
     //! \param idx_moved number of displacement of the window
-    inline void updateMvWinLimits(double x_moved, int idx_moved) {
-        min_local[0] += x_moved;
-        max_local[0] += x_moved;
-        //cell_starting_global_index[0] = (idx_moved-oversize[0]);
-        cell_starting_global_index[0] += (idx_moved);
-    }
+    //inline void updateMvWinLimits(double x_moved, int idx_moved) {
+    //    min_local[0] += x_moved;
+    //    max_local[0] += x_moved;
+    //    //cell_starting_global_index[0] = (idx_moved-oversize[0]);
+    //    cell_starting_global_index[0] += (idx_moved);
+    //}
     
     //! MPI rank of current patch
     int MPI_me_;

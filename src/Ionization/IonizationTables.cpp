@@ -1,7 +1,5 @@
 #include "IonizationTables.h"
 
-using namespace std;
-
 // Gets the ionization energy of a given ion
 double IonizationTables::ionization_energy(int atomic_number, int Zstar)
 {

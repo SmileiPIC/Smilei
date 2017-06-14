@@ -96,7 +96,7 @@ void Patch2D::reallyinitSumField( Field* field, int iDim )
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch2D::initSumField( Field* field, int iDim )
 {
-    if (field->MPIbuff.srequest.size()==0) {
+    if (field->MPIbuff.buf[0][0].size()==0) {
         field->MPIbuff.allocate(2, field, oversize);
 
         int tagp(0);
@@ -214,7 +214,7 @@ void Patch2D::finalizeSumField( Field* field, int iDim )
         int iy0 =    iDim *istart;
         if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
             for (unsigned int ix=0 ; ix< tmp[0] ; ix++) {
-                #pragma simd
+                #pragma omp simd
                 for (unsigned int iy=0 ; iy< tmp[1] ; iy++)
                     (*f2D)(ix0+ix,iy0+iy) += f2D->MPIbuff.buf[iDim][(iNeighbor+1)%2][ix*tmp[1] + iy];
             }

@@ -7,6 +7,7 @@
 #include "Projector2D2Order.h"
 #include "Projector2D4Order.h"
 #include "Projector3D2Order.h"
+#include "Projector3D4Order.h"
 
 #include "Params.h"
 #include "Patch.h" 
@@ -32,11 +33,17 @@ public:
         else if ( ( params.geometry == "2d3v" ) && ( params.interpolation_order == (unsigned int)2 ) ) {
             Proj = new Projector2D2Order(params, patch);
         }
+        else if ( ( params.geometry == "2d3v" ) && ( params.interpolation_order == (unsigned int)4 ) ) {
+            Proj = new Projector2D4Order(params, patch);
+        }
         // ---------------
         // 3d3v simulation
         // ---------------
         else if ( ( params.geometry == "3d3v" ) && ( params.interpolation_order == (unsigned int)2 ) ) {
             Proj = new Projector3D2Order(params, patch);
+        }
+        else if ( ( params.geometry == "3d3v" ) && ( params.interpolation_order == (unsigned int)4 ) ) {
+            Proj = new Projector3D4Order(params, patch);
         }
         else {
             ERROR( "Unknwon parameters : " << params.geometry << ", Order : " << params.interpolation_order );
