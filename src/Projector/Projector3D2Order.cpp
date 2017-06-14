@@ -158,7 +158,7 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     kpo -= 2;
     
     int iloc, jloc, kloc, linindex, linindex_x, linindex_y;
-    double tmp;
+    double tmp, tmp2;
     double vtmp[5];
 
     // Jx^(d,p,p)
@@ -167,30 +167,33 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     int linindex0 = ipo*yz_size+jpo*z_size+kpo;
     tmp = 0.;
     linindex = linindex0;
+    tmp2 = crx_p * (one_third*Sy1[0]*Sz1[0]);
     for (int i=1 ; i<5 ; i++) {
-        tmp -= crx_p * DSx[i-1] * (one_third*Sy1[0]*Sz1[0]);
+        tmp -= DSx[i-1] * tmp2;
         linindex += yz_size;
         Jx [linindex] += tmp; // iloc = (i+ipo)*b_dim[1];
     }//i
     for ( unsigned int i=0 ; i<5 ; i++) vtmp[i] = 0.;
     linindex_x = linindex0;
-    for (int i=1 ; i<5 ; i++) {
-        linindex_x += yz_size;
+    for (int k=1 ; k<5 ; k++) {
+        linindex_x += 1;
         linindex    = linindex_x;
-        for (int k=1 ; k<5 ; k++) {
-            vtmp[k] -= crx_p * DSx[i-1] * (0.5*Sy1[0]*Sz0[k] + one_third*Sy1[0]*DSz[k]);
-            linindex += 1;
+        tmp = crx_p * (0.5*Sy1[0]*Sz0[k] + one_third*Sy1[0]*DSz[k]);
+        for (int i=1 ; i<5 ; i++) {
+            vtmp[k] -= DSx[i-1] * tmp;
+            linindex += yz_size;
             Jx [linindex] += vtmp[k]; // iloc = (i+ipo)*b_dim[1];
         }
     }//i
     for ( unsigned int i=0 ; i<5 ; i++) vtmp[i] = 0.;
     linindex_x = linindex0;
-    for (int i=1 ; i<5 ; i++) {
-        linindex_x += yz_size;
+    for (int j=1 ; j<5 ; j++) {
+        linindex_x += z_size;
         linindex    = linindex_x;
-        for (int j=1 ; j<5 ; j++) {
-            vtmp[j] -= crx_p * DSx[i-1] * (0.5*Sz1[0]*Sy0[j] + one_third*DSy[j]*Sz1[0]);
-            linindex += z_size;
+        tmp = crx_p * (0.5*Sz1[0]*Sy0[j] + one_third*DSy[j]*Sz1[0]);
+        for (int i=1 ; i<5 ; i++) {
+            vtmp[j] -= DSx[i-1] * tmp;
+            linindex += yz_size;
             Jx [linindex] += vtmp[j]; // iloc = (i+ipo)*b_dim[1];
         }
     }//i
@@ -216,19 +219,21 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     linindex0 = ipo*yz_size+jpo*z_size+kpo;
     tmp = 0.;
     linindex = linindex0;
+    tmp2 = cry_p * (one_third*Sz1[0]*Sx1[0]);
     for (int j=1 ; j<5 ; j++) {
-        tmp -= cry_p * DSy[j-1] * (one_third*Sz1[0]*Sx1[0]);
+        tmp -= DSy[j-1] * tmp2;
         linindex += z_size;
         Jy [linindex] += tmp; //
     }//i
     for ( unsigned int i=0 ; i<5 ; i++) vtmp[i] = 0.;
     linindex_x = linindex0;
-    for (int j=1 ; j<5 ; j++) {
-        linindex_x += z_size;
+    for (int k=1 ; k<5 ; k++) {
+        linindex_x += 1;
         linindex    = linindex_x;
-        for (int k=1 ; k<5 ; k++) {
-            vtmp[k] -= cry_p * DSy[j-1] * (0.5*Sx1[0]*Sz0[k] + one_third*DSz[k]*Sx1[0]);
-            linindex += 1;
+        tmp  = cry_p * (0.5*Sx1[0]*Sz0[k] + one_third*DSz[k]*Sx1[0]);
+        for (int j=1 ; j<5 ; j++) {
+            vtmp[k] -= DSy[j-1] * tmp;
+            linindex += z_size;
             Jy [linindex] += vtmp[k]; //
         }
     }
@@ -236,9 +241,10 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     linindex_x = linindex0;
     for (int i=1 ; i<5 ; i++) {
         linindex_x += yz_size;
-        linindex    = linindex_x; 
+        linindex    = linindex_x;
+        tmp = cry_p * (0.5*Sz1[0]*Sx0[i] + one_third*Sz1[0]*DSx[i]); 
         for (int j=1 ; j<5 ; j++) {
-            vtmp[i] -= cry_p * DSy[j-1] * (0.5*Sz1[0]*Sx0[i] + one_third*Sz1[0]*DSx[i]);
+            vtmp[i] -= DSy[j-1] * tmp;
             linindex += z_size;
             Jy [linindex] += vtmp[i]; //
         }
@@ -265,8 +271,9 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     linindex0 = ipo*yz_size+jpo*z_size+kpo;
     tmp = 0.;
     linindex = linindex0;
+    tmp2 = crz_p * (one_third*Sx1[0]*Sy1[0]);
     for (int k=1 ; k<5 ; k++) {
-        tmp -= crz_p * DSz[k-1] * (one_third*Sx1[0]*Sy1[0]);
+        tmp -= DSz[k-1] * tmp2;
         linindex += 1;
         Jz [linindex] += tmp; //
     }//i
@@ -275,8 +282,9 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     for (int j=1 ; j<5 ; j++) {
         linindex_x += z_size;
         linindex    = linindex_x; 
+        tmp = crz_p * (0.5*Sx1[0]*Sy0[j] + one_third*Sx1[0]*DSy[j]);
         for (int k=1 ; k<5 ; k++) {
-            vtmp[j] -= crz_p * DSz[k-1] * (0.5*Sx1[0]*Sy0[j] + one_third*Sx1[0]*DSy[j]);
+            vtmp[j] -= DSz[k-1] * tmp;
             linindex += 1;
             Jz [linindex] += vtmp[j]; //
          }
@@ -286,8 +294,9 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     for (int i=1 ; i<5 ; i++) {
         linindex_x += yz_size;
         linindex    = linindex_x;
+        tmp = crz_p * (0.5*Sy1[0]*Sx0[i] + one_third*DSx[i]*Sy1[0]);
         for (int k=1 ; k<5 ; k++) {
-            vtmp[i] -= crz_p * DSz[k-1] * (0.5*Sy1[0]*Sx0[i] + one_third*DSx[i]*Sy1[0]);
+            vtmp[i] -= DSz[k-1] * tmp;
             linindex += 1;
             Jz [linindex] += vtmp[i]; //
         }
