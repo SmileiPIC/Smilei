@@ -142,7 +142,7 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     Sz1[kp_m_kpo+3] = 0.5 * (delta2+delta+0.25);
     
     // computes Esirkepov coefficients
-    for (unsigned int i=1; i < 5; i++) {
+    for (unsigned int i=0; i < 5; i++) {
         DSx[i] = Sx1[i] - Sx0[i];
         DSy[i] = Sy1[i] - Sy0[i];
         DSz[i] = Sz1[i] - Sz0[i];
