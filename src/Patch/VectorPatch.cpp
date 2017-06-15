@@ -651,18 +651,6 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 
 void VectorPatch::load_balance(Params& params, double time_dual, SmileiMPI* smpi, SimWindow* simWindow, unsigned int itime)
 {
-    // Define for some patch diags
-
-    //int partperMPI;
-    //int npatchmoy=0, npartmoy=0;
-
-
-    //partperMPI = 0;
-    //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
-    //    for (unsigned int ispec=0 ; ispec < vecPatches(0)->vecSpecies.size() ; ispec++)
-    //        partperMPI += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
-    //}
-    //partperMPI = 0;
 
     // Compute new patch distribution
     smpi->recompute_patch_count( params, *this, time_dual );
@@ -672,23 +660,6 @@ void VectorPatch::load_balance(Params& params, double time_dual, SmileiMPI* smpi
 
     // Proceed to patch exchange, and delete patch which moved
     this->exchangePatches(smpi, params);
-
-    //for (unsigned int irank=0 ; irank<smpi->getSize() ; irank++){
-    //    if(smpi->getRank() == irank){
-    //        this->output_exchanges(smpi);
-    //    }
-    //    smpi->barrier();
-    //}
-
-
-    // patch diags
-    
-    //for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++){
-    //    for (unsigned int ispec=0 ; ispec < (*this)(0)->vecSpecies.size() ; ispec++)
-    //        partperMPI += (*this)(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
-    //}
-    //npatchmoy += this->size();
-    //npartmoy += partperMPI;
     
     // Tell that the patches moved this iteration (needed for probes)
     lastIterationPatchesMoved = itime;
