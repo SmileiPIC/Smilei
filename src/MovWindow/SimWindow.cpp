@@ -150,44 +150,25 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             vecPatches.patches_[mypatch->hindex - h0 ] = mypatch ; 
             
         }
-    
     }//End loop on Patches. This barrier matters.
     // At this point, all isends have been done and the list of patches to delete at the end is complete.
     // The lists of patches to create and patches to update is also complete.
     
     //Creation of new Patches
-    #pragma omp master
-    {
-    for (unsigned int ithread = 0; ithread < patch_to_be_created.size(); ithread++){
-    for (unsigned int j = 0; j < patch_to_be_created[ithread].size();  j++){
+    for (unsigned int j = 0; j < patch_to_be_created[my_thread].size();  j++){
         //create patch without particle.
-        mypatch = PatchesFactory::clone(vecPatches(0),params, smpi, h0 + patch_to_be_created[ithread][j], n_moved, false );
+        mypatch = PatchesFactory::clone(vecPatches(0),params, smpi, h0 + patch_to_be_created[my_thread][j], n_moved, false );
         mypatch->finalizeMPIenvironment();
         //Position new patch
-        vecPatches.patches_[patch_to_be_created[ithread][j]] = mypatch ;
+        vecPatches.patches_[patch_to_be_created[my_thread][j]] = mypatch ;
         //Receive Patch if necessary
         if (mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL){
             smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], (mypatch->hindex)*nmessage, params );
-            patch_to_be_created[ithread][j] = nPatches ; //Mark no needs of particles
-        }
-        else { // Must force particles creation, see in SpeciesFactory :
-            // if (params.restart)
-            //     thisSpecies->particles->initialize( 0, params.nDim_particle );
-            if (params.restart)
-                for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++)
-                    mypatch->vecSpecies[ispec]->createParticles(params.n_space, params, mypatch, 0 );
-            // We define the IDs of the new particles
-            for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ )
-                if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) )
-                    track->setIDs( mypatch );
+            patch_to_be_created[my_thread][j] = nPatches ; //Mark no needs of particles
         }
         mypatch->EMfields->laserDisabled();
         mypatch->EMfields->updateGridSize(params, mypatch);
-
     }
-    }
-    }
-    #pragma omp barrier
 
     //Wait for sends to be completed
     #pragma omp for schedule(static) 
