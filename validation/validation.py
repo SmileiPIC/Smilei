@@ -69,7 +69,7 @@ This script may run anywhere: you can define a SMILEI_ROOT environment variable
 
 
 # IMPORTS
-import sys, os, re, glob, time
+import sys, os, re, glob, time, math
 import shutil, getopt, inspect, socket, pickle
 from subprocess import check_call,CalledProcessError,call
 s = os.sep
@@ -345,7 +345,8 @@ if JOLLYJUMPER in HOSTNAME :
 	if 12 % OMP != 0:
 		print  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME
 		sys.exit(4)  
-	NPERSOCKET = 12/OMP
+        NODES=((int(MPI)*int(OMP)-1)/24)+1
+	NPERSOCKET = math.ceil(MPI/NODES/2.)
 	COMPILE_COMMAND = 'make -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS  
 	CLEAN_COMMAND = 'unset MODULEPATH;module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles; module load compilers/icc/16.0.109 mpi/openmpi/1.6.5-ib-icc python/2.7.10 hdf5 compilers/gcc/4.8.2 > /dev/null 2>&1;make clean > /dev/null 2>&1'
 	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x $OMP_NUM_THREADS -x $OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
