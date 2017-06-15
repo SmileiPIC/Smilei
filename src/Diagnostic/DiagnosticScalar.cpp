@@ -392,7 +392,8 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             // increment the total radiated energy
             if (vecSpecies[ispec]->Radiate)
             {
-                Urad_ += *sUrad[ispec];
+                Urad_ += cell_volume*
+                         vecSpecies[ispec]->getLostNrjRadiation();
                 /*std::cerr << "Radiated energy: " << Urad_
                           << " / " << Ukin_
                 << std::endl;*/

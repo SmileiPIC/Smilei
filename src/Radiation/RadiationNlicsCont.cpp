@@ -56,7 +56,7 @@ void RadiationNlicsCont::operator() (Particles &particles,
     // Parameters
     std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
-    std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
+    //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
 
     // Charge divided by the square of the mass
     double charge_over_mass2;
@@ -82,7 +82,7 @@ void RadiationNlicsCont::operator() (Particles &particles,
     double* weight = &( particles.weight(0) );
 
     // Optical depth for the Monte-Carlo process
-    double* chi = &( particles.chi(0));
+    // double* chi = &( particles.chi(0));
 
     // Local vector to store the radiated energy
     std::vector <double> rad_norm_energy (iend-istart);
@@ -110,7 +110,7 @@ void RadiationNlicsCont::operator() (Particles &particles,
                      (*Bpart)[ipart].x,(*Bpart)[ipart].y,(*Bpart)[ipart].z);
 
         // Update the quantum parameter in species
-        //chi[ipart] = chipa
+        // chi[ipart] = chipa;
 
         // Radiated energy during the time step
         rad_norm_energy[ipart - istart] =

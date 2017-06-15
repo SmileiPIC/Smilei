@@ -38,7 +38,8 @@ class Radiation
                 int iend,
                 int ithread) = 0;
 
-        //! Computation of the Lorentz invariant quantum parameter for particles
+        //! Computation of the Lorentz invariant quantum parameter
+        //! for the given particle properties
         //! \param charge_over_mass2 charge divided by the square of the mass
         //! \param px particle x momentum
         //! \param py particle y momentum
@@ -69,6 +70,20 @@ class Radiation
         {
             return radiated_energy;
         };
+
+        //! Computation of the quantum parameter for the given
+        //! thread of particles
+        //! \param Particles class containg the particle property arrays
+        //! \param smpi class for mpi parameters
+        //! \param istart      Index of the first particle
+        //! \param iend        Index of the last particle
+        //! \param ithread     Thread index
+        void compute_thread_chipa(Particles &particles,
+                SmileiMPI* smpi,
+                int istart,
+                int iend,
+                int ithread);
+
 
     protected:
 

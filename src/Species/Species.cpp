@@ -139,7 +139,7 @@ void Species::initOperators(Params& params, Patch* patch)
 
     // Create the radiation model
     Radiate = RadiationFactory::create(params, this);
-    if (Ionize) {
+    if (Radiate) {
         DEBUG("Species " << species_type << " will undergo radiation loss!");
     }
 
@@ -168,6 +168,7 @@ Species::~Species()
 {
     delete Push;
     if (Ionize) delete Ionize;
+    if (Radiate) delete Radiate;
     if (partBoundCond) delete partBoundCond;
     if (ppcProfile) delete ppcProfile;
     if (chargeProfile) delete chargeProfile;
@@ -478,6 +479,13 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                 (*Radiate)(*particles, smpi, RadiationTables,
                          bmin[ibin], bmax[ibin], ithread );
                 nrj_radiation_lost += (*Radiate).getRadiatedEnergy();
+
+                // Update the quantum parameter chi
+                (*Radiate).compute_thread_chipa(*particles,
+                                                smpi,
+                                                bmin[ibin],
+                                                bmax[ibin],
+                                                ithread );
             }
 
             // Push the particles

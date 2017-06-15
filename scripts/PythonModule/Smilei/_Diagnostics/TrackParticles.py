@@ -48,7 +48,7 @@ class TrackParticles(Diagnostic):
 				self._orderFiles(disorderedfiles, orderedfile)
 			# Create arrays to store h5 items
 			f = self._h5py.File(orderedfile)
-			for prop in ["Id", "x", "y", "z", "px", "py", "pz"]:
+			for prop in ["Id", "x", "y", "z", "px", "py", "pz", "chi"]:
 				if prop in f:
 					self._h5items[prop] = f[prop]
 			# Memorize the locations of timesteps in the files
@@ -232,6 +232,8 @@ class TrackParticles(Diagnostic):
 			if axis == "Charge":
 				axisunits = "Q_r"
 				self._centers.append( [-10., 10.] )
+			if axis == "chi":
+				axisunits = "\chi"
 			self._log.append( False )
 			self._label.append( axis )
 			self._units.append( axisunits )
@@ -308,8 +310,11 @@ class TrackParticles(Diagnostic):
 			# Make new (ordered) file
 			f0 = self._h5py.File(fileOrdered, "w")
 			# Make new datasets
-			properties = {"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
-			              "momentum/x":"px", "momentum/y":"py", "momentum/z":"pz"}
+			properties = {"id":"Id", "position/x":"x", "position/y":"y",
+                          "position/z":"z",
+			              "momentum/x":"px", "momentum/y":"py",
+                          "momentum/z":"pz",
+                          "chi":"chi"}
 			for k, name in properties.items():
 				try   : f0.create_dataset(name, (len(times), total_number_of_particles), f["data"][tname]["particles"][self.species][k].dtype, fillvalue=(0 if name=="Id" else self._np.nan))
 				except: pass
@@ -363,7 +368,7 @@ class TrackParticles(Diagnostic):
 				ID = self._np.zeros((self.nselectedParticles,), dtype=self._np.uint64)
 				B  = self._np.zeros((self.nselectedParticles,), dtype=self._np.double)
 				for it, time in enumerate(self.times):
-					print("     iteration "+str(it+1)+"/"+str(ntimes)+"  (timestep "+str(time)+")")
+					if self.verbose: print("     iteration "+str(it+1)+"/"+str(ntimes)+"  (timestep "+str(time)+")")
 					timeIndex = self._locationForTime[time]
 					self._h5items["Id"].read_direct(ID, source_sel=self._np.s_[timeIndex,self.selectedParticles]) # read the particle Ids
 					deadParticles = (ID==0).nonzero()
@@ -400,8 +405,10 @@ class TrackParticles(Diagnostic):
 			# If not sorted, get different kind of data
 			else:
 				print("Loading data ...")
-				properties = {"Id":"id", "x":"position/x", "y":"position/y", "z":"position/z",
-				              "px":"momentum/x", "py":"momentum/y", "pz":"momentum/z"}
+				properties = {"Id":"id", "x":"position/x", "y":"position/y",
+                              "z":"position/z",
+				              "px":"momentum/x", "py":"momentum/y",
+                              "pz":"momentum/z","chi":"chi"}
 				for time in self.times:
 					[f, timeIndex] = self._locationForTime[time]
 					group = f["data/"+"%010i"%time+"/particles/"+self.species]
@@ -462,8 +469,10 @@ class TrackParticles(Diagnostic):
 			print("ERROR: timestep "+str(timestep)+" not available")
 			return
 
-		properties = {"Id":"id", "x":"position/x", "y":"position/y", "z":"position/z",
-		              "px":"momentum/x", "py":"momentum/y", "pz":"momentum/z"}
+		properties = {"Id":"id", "x":"position/x", "y":"position/y",
+                      "z":"position/z",
+		              "px":"momentum/x", "py":"momentum/y",
+                      "pz":"momentum/z", "chi":"chi"}
 
 		disorderedfiles = self._findDisorderedFiles()
 		for file in disorderedfiles:
