@@ -10,59 +10,59 @@ using namespace std;
 DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
 {
     fileId_ = 0;
-    
+
     int n_diag_particles = diagId;
-    
+
     ostringstream name("");
     name << "Diagnotic Particles #" << n_diag_particles;
     string errorPrefix = name.str();
-    
+
     // get parameter "output" that determines the quantity to sum in the output array
     output = "";
     if (!PyTools::extract("output",output,"DiagParticles",n_diag_particles))
         ERROR(errorPrefix << ": parameter `output` required");
-    
+
     // get parameter "every" which describes a timestep selection
     timeSelection = new TimeSelection(
         PyTools::extract_py("every", "DiagParticles", n_diag_particles),
         name.str()
     );
-    
+
     // get parameter "flush_every" which describes a timestep selection for flushing the file
     flush_timeSelection = new TimeSelection(
         PyTools::extract_py("flush_every", "DiagParticles", n_diag_particles),
         name.str()
     );
-    
+
     // get parameter "time_average" that determines the number of timestep to average the outputs
     time_average = 1;
     PyTools::extract("time_average",time_average,"DiagParticles",n_diag_particles);
     if ( time_average < 1 ) time_average=1;
     if ( time_average > timeSelection->smallestInterval() )
         ERROR(errorPrefix << ": `time_average` is incompatible with `every`");
-    
+
     // get parameter "species" that determines the species to use (can be a list of species)
     vector<string> species_names;
     if (!PyTools::extract("species",species_names,"DiagParticles",n_diag_particles))
         ERROR(errorPrefix << ": parameter `species` required");
     // verify that the species exist, remove duplicates and sort by number
     species = params.FindSpecies(patch->vecSpecies, species_names);
-    
+
     // Temporarily set the spatial min and max to the simulation box size
     spatial_min.resize( params.nDim_particle, 0. );
     spatial_max = params.sim_length;
-    
+
     // get parameter "axes" that adds axes to the diagnostic
     // Each axis should contain several items:
     //      requested quantity, min value, max value ,number of bins, log (optional), edge_inclusive (optional)
     vector<PyObject*> pyAxes=PyTools::extract_pyVec("axes","DiagParticles",n_diag_particles);
-    
+
     vector<string> excluded_types(0);
     excluded_types.push_back( "a" );
     excluded_types.push_back( "b" );
     excluded_types.push_back( "theta" );
     excluded_types.push_back( "phi" );
-    
+
     // Create the Histogram object
     if        (output == "density"        ) {
         histogram = new Histogram_density        ();
@@ -98,12 +98,22 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
         histogram = new Histogram_pressure_yz    ();
     } else if (output == "ekin_vx_density") {
         histogram = new Histogram_ekin_vx_density();
+    } else if (output == "chi_density" ) {
+        // The requested species must be radiating
+        for (unsigned int ispec=0 ; ispec < species.size() ; ispec++)
+            if( ! patch->vecSpecies[species[ispec]]->particles->isRadReaction)
+            {
+                ERROR(errorPrefix << ": for histogram preparation"
+                << " in diagParticles: "
+                << " 'chi_density' requires all species to be 'radiating'");
+            }
+        histogram = new Histogram_chi_density    ();
     } else {
         ERROR(errorPrefix << ": parameter `output = "<< output <<"` not understood");
     }
-    
+
     histogram->init(params, pyAxes, species, errorPrefix, patch, excluded_types);
-    
+
     // Get info on the spatial extent
     for( unsigned int i=0; i<histogram->axes.size(); i++ ) {
         if        ( histogram->axes[i]->type == "x" ) {
@@ -117,12 +127,12 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
             spatial_max[2] = histogram->axes[i]->max;
         }
     }
-    
+
     // Calculate the size of the output array
     output_size = 1;
     for( unsigned int i=0; i<histogram->axes.size(); i++ )
         output_size *= histogram->axes[i]->nbins;
-    
+
     // Output info on diagnostics
     if ( smpi->isMaster() ) {
         ostringstream mystream("");
@@ -154,7 +164,7 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
             if( axis->edge_inclusive ) mystream << " [EDGE INCLUSIVE]";
             MESSAGE(2,mystream.str());
         }
-        
+
         // init HDF files (by master, only if it doesn't yet exist)
         mystream.str(""); // clear
         mystream << "ParticleDiagnostic" << n_diag_particles << ".h5";
@@ -175,9 +185,9 @@ DiagnosticParticles::~DiagnosticParticles()
 void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
     if (!smpi->isMaster()) return;
-    
+
     if( fileId_>0 ) return;
-    
+
     if ( newfile ) {
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         // write all parameters as HDF5 attributes
@@ -228,30 +238,30 @@ bool DiagnosticParticles::prepare( int timestep )
 {
     // Get the previous timestep of the time selection
     int previousTime = timeSelection->previousTime(timestep);
-    
+
     // Leave if the timestep is not the good one
     if (timestep - previousTime >= time_average) return false;
-    
+
     // Allocate memory for the output array (already done if time-averaging)
     data_sum.resize(output_size);
-    
+
     // if first time, erase output array
     if (timestep == previousTime)
         fill(data_sum.begin(), data_sum.end(), 0.);
-    
+
     return true;
-    
+
 } // END prepare
 
 
 // run one particle diagnostic
 void DiagnosticParticles::run( Patch* patch, int timestep, SimWindow* simWindow )
 {
-    
+
     vector<int> int_buffer;
     vector<double> double_buffer;
     unsigned int npart, ndim = spatial_min.size();
-    
+
     // Update spatial_min and spatial_max if needed
     for( unsigned int i=0; i<histogram->axes.size(); i++ ) {
         if( histogram->axes[i]->type == "moving_x" ) {
@@ -259,29 +269,29 @@ void DiagnosticParticles::run( Patch* patch, int timestep, SimWindow* simWindow 
             spatial_max[0] = histogram->axes[i]->max + simWindow->getXmoved();
         }
     }
-    
+
     // Verify that this patch is in a useful region for this diag
     for( unsigned int idim=0; idim<ndim; idim++ )
         if( patch->getDomainLocalMax(idim) < spatial_min[idim]
          || patch->getDomainLocalMin(idim) > spatial_max[idim] )
             return;
-    
+
     // loop species
     for (unsigned int ispec=0 ; ispec < species.size() ; ispec++) {
-        
+
         Species * s = patch->vecSpecies[species[ispec]];
         npart = s->particles->size();
         int_buffer   .resize(npart);
         double_buffer.resize(npart);
-        
+
         fill(int_buffer.begin(), int_buffer.end(), 0);
-        
+
         histogram->digitize  ( s, double_buffer, int_buffer, simWindow );
         histogram->valuate   ( s, double_buffer, int_buffer );
         histogram->distribute( double_buffer, int_buffer, data_sum );
-        
+
     }
-    
+
 } // END run
 
 
@@ -290,9 +300,9 @@ void DiagnosticParticles::run( Patch* patch, int timestep, SimWindow* simWindow 
 void DiagnosticParticles::write(int timestep, SmileiMPI* smpi)
 {
     if ( !smpi->isMaster() ) return;
-    
+
     if (timestep - timeSelection->previousTime() != time_average-1) return;
-    
+
     double coeff;
     // if time_average, then we need to divide by the number of timesteps
     if (time_average > 1) {
@@ -300,12 +310,12 @@ void DiagnosticParticles::write(int timestep, SmileiMPI* smpi)
         for (int i=0; i<output_size; i++)
             data_sum[i] *= coeff;
     }
-    
+
     // make name of the array
     ostringstream mystream("");
     mystream.str("");
     mystream << "timestep" << setw(8) << setfill('0') << timestep;
-    
+
     // write the array if it does not exist already
     if (! H5Lexists( fileId_, mystream.str().c_str(), H5P_DEFAULT ) ) {
         // Prepare array dimensions
@@ -324,9 +334,9 @@ void DiagnosticParticles::write(int timestep, SmileiMPI* smpi)
         H5Pclose(pid);
         H5Sclose(sid);
     }
-    
+
     if( flush_timeSelection->theTimeIsNow(timestep) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
-    
+
     // Clear the array
     clear();
     data_sum.resize(0);
