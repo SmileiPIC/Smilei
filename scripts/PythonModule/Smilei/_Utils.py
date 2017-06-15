@@ -177,14 +177,14 @@ class Units(object):
 			return 1., u"{0.units:P}".format(val)
 		return 1., ""
 	
-	def prepare(self, referenceAngularFrequency_SI=None, xunits="", yunits="", vunits="", tunits=""):
+	def prepare(self, reference_angular_frequency_SI=None, xunits="", yunits="", vunits="", tunits=""):
 		if self.UnitRegistry:
-			if referenceAngularFrequency_SI:
+			if reference_angular_frequency_SI:
 				# Load pint's default unit registry
 				self.ureg = self.UnitRegistry()
 				# Define code units
 				self.ureg.define("V_r = speed_of_light"                   ) # velocity
-				self.ureg.define("W_r = "+str(referenceAngularFrequency_SI)+"*hertz") # frequency
+				self.ureg.define("W_r = "+str(reference_angular_frequency_SI)+"*hertz") # frequency
 				self.ureg.define("M_r = electron_mass"                    ) # mass
 				self.ureg.define("Q_r = 1.602176565e-19 * coulomb"        ) # charge
 			else:

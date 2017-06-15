@@ -73,7 +73,7 @@ ax.set_title("")
 #########################################################
 S=Smilei("ionization_stopping_power1")
 
-referenceAngularFrequency_SI = np.double(S.namelist.Main.referenceAngularFrequency_SI)
+reference_angular_frequency_SI = np.double(S.namelist.Main.reference_angular_frequency_SI)
 timestep = np.double(S.namelist.Main.timestep)
 
 # get ion stuff
@@ -98,7 +98,7 @@ for i in range(npoints):
 	D = S.ParticleBinning("#"+str(2*i)+"/#"+str(2*i+1)+"",sum={"x":"all"})
 	P = np.array(D.getData()) # momentum
 	# stopping power in MeV/cm
-	diffP = -(P[-1]-P[0])/(D.times[-1]-D.times[0]) * (0.511*1e-2*referenceAngularFrequency_SI/3e8/timestep)
+	diffP = -(P[-1]-P[0])/(D.times[-1]-D.times[0]) * (0.511*1e-2*reference_angular_frequency_SI/3e8/timestep)
 	# stopping power in MeV*cm2/g
 	Qsmilei.append( diffP/rho )
 	

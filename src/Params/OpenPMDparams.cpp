@@ -42,7 +42,7 @@ OpenPMDparams::OpenPMDparams(Params& p):
     // Units
     unitDimension.resize( SMILEI_NUNITS );
     unitSI.resize( SMILEI_NUNITS );
-    double Wr = params->referenceAngularFrequency_SI;
+    double Wr = params->reference_angular_frequency_SI;
     if( Wr==0. ) Wr=1.;
     for( unsigned int unit_type=0; unit_type<SMILEI_NUNITS; unit_type++ ) {
         unitDimension[unit_type].resize(7, 0.);

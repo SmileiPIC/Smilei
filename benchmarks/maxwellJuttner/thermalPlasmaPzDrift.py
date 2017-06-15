@@ -41,8 +41,8 @@ Main(
 # SPECIES DEFINITION
 Species(
 	species_type = 'ion',
-	initPosition_type = 'random',
-	initMomentum_type = 'mj',
+	position_initialization = 'random',
+	momentum_initialization = 'mj',
 	temperature = [Te,Te,Te],
 	n_part_per_cell = nppc,
 	mass = 1.0,
@@ -56,8 +56,8 @@ Species(
 )
 Species(
 	species_type = 'eon',
-	initPosition_type = 'random',
-	initMomentum_type = 'mj',
+	position_initialization = 'random',
+	momentum_initialization = 'mj',
 	temperature = [Te,Te,Te],
 	n_part_per_cell = nppc,
 	mass = 1.0,

@@ -37,11 +37,11 @@ public:
         int nlaser = PyTools::nComponents("Laser");
         for (int ilaser = 0; ilaser < nlaser; ilaser++) {
             Laser * laser = new Laser(params, ilaser, patch);
-            if     ( laser->boxSide == "xmin" && EMfields->emBoundCond[0]) {
+            if     ( laser->box_side == "xmin" && EMfields->emBoundCond[0]) {
                 if( patch->isXmin() ) laser->createFields(params, patch);
                 EMfields->emBoundCond[0]->vecLaser.push_back( laser );
             }
-            else if( laser->boxSide == "xmax" && EMfields->emBoundCond[1]) {
+            else if( laser->box_side == "xmax" && EMfields->emBoundCond[1]) {
                 if( patch->isXmax() ) laser->createFields(params, patch);
                 EMfields->emBoundCond[1]->vecLaser.push_back( laser );
             }

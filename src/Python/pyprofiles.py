@@ -456,33 +456,33 @@ def tsin2plateau(start=0., fwhm=0., plateau=None, slope1=None, slope2=None):
     return f
 
 
-def transformPolarization(polarizationPhi, ellipticity):
+def transformPolarization(polarization_phi, ellipticity):
     import math
-    p = (1.-ellipticity**2)*math.sin(2.*polarizationPhi)/2.
+    p = (1.-ellipticity**2)*math.sin(2.*polarization_phi)/2.
     if abs(p) < 1e-10:
-        if abs(ellipticity**2-1.)<1e-10: polarizationPhi=0.
+        if abs(ellipticity**2-1.)<1e-10: polarization_phi=0.
         dephasing = math.pi/2.
         amplitude = math.sqrt(1./(1.+ellipticity**2))
-        amplitudeY = amplitude * (math.cos(polarizationPhi)+math.sin(polarizationPhi)*ellipticity)
-        amplitudeZ = amplitude * (math.sin(polarizationPhi)+math.cos(polarizationPhi)*ellipticity)
+        amplitudeY = amplitude * (math.cos(polarization_phi)+math.sin(polarization_phi)*ellipticity)
+        amplitudeZ = amplitude * (math.sin(polarization_phi)+math.cos(polarization_phi)*ellipticity)
     else:
         dephasing = math.atan(ellipticity/p)
-        theta = 0.5 * math.atan( math.tan(2.*polarizationPhi) / math.cos(dephasing) )
+        theta = 0.5 * math.atan( math.tan(2.*polarization_phi) / math.cos(dephasing) )
         while theta<0.: theta += math.pi/2.
         amplitudeY = math.sqrt(2.) * math.cos(theta)
         amplitudeZ = math.sqrt(2.) * math.sin(theta)
     return [dephasing, amplitudeY, amplitudeZ]
 
-def LaserPlanar1D( boxSide="xmin", a0=1., omega=1.,
-        polarizationPhi=0., ellipticity=0., time_envelope=tconstant(),phaseZero=0.):
+def LaserPlanar1D( box_side="xmin", a0=1., omega=1.,
+        polarization_phi=0., ellipticity=0., time_envelope=tconstant(),phaseZero=0.):
     import math
     # Polarization and amplitude
-    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarizationPhi, ellipticity)
+    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
     amplitudeY *= a0
     amplitudeZ *= a0
     # Create Laser
     Laser(
-        boxSide        = boxSide,
+        box_side        = box_side,
         omega          = omega,
         chirp_profile  = tconstant(),
         time_envelope  = time_envelope,
@@ -491,11 +491,11 @@ def LaserPlanar1D( boxSide="xmin", a0=1., omega=1.,
     )
 
 
-def LaserGaussian2D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=0.,
-        polarizationPhi=0., ellipticity=0., time_envelope=tconstant(), phaseZero=0.):
+def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=0.,
+        polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phaseZero=0.):
     import math
     # Polarization and amplitude
-    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarizationPhi, ellipticity)
+    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
     amplitudeY *= a0
     amplitudeZ *= a0
     # Space and phase envelopes
@@ -526,7 +526,7 @@ def LaserGaussian2D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., inci
         phaseZero += phase(Y2)
     # Create Laser
     Laser(
-        boxSide        = boxSide,
+        box_side        = box_side,
         omega          = omega,
         chirp_profile  = tconstant(),
         time_envelope  = time_envelope,
@@ -534,11 +534,11 @@ def LaserGaussian2D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., inci
         phase          = [ lambda y:phase(y)-phaseZero+dephasing, lambda y:phase(y)-phaseZero ],
     )
 
-def LaserGaussian3D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=[0.,0.],
-        polarizationPhi=0., ellipticity=0., time_envelope=tconstant(), phaseZero=0.):
+def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=[0.,0.],
+        polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phaseZero=0.):
     import math
     # Polarization and amplitude
-    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarizationPhi, ellipticity)
+    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
     amplitudeY *= a0
     amplitudeZ *= a0
     # Space and phase envelopes
@@ -573,7 +573,7 @@ def LaserGaussian3D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., inci
         
     # Create Laser
     Laser(
-        boxSide        = boxSide,
+        box_side        = box_side,
         omega          = omega,
         chirp_profile  = tconstant(),
         time_envelope  = time_envelope,

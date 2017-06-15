@@ -166,7 +166,7 @@ public:
     double cell_volume;
     
     //! wavelength (in SI units)
-    double referenceAngularFrequency_SI;
+    double reference_angular_frequency_SI;
     
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;

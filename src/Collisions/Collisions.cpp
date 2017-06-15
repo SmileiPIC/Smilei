@@ -28,7 +28,7 @@ Collisions::Collisions(
     bool ionizing,
     bool tracked_electrons,
     int nDim,
-    double referenceAngularFrequency_SI,
+    double reference_angular_frequency_SI,
     string filename
 ) :
 n_collisions    (n_collisions    ),
@@ -42,7 +42,7 @@ filename(filename)
 {
     // Create the ionization object
     if( ionizing ) {
-        Ionization = new CollisionalIonization(Z, nDim, referenceAngularFrequency_SI, tracked_electrons);
+        Ionization = new CollisionalIonization(Z, nDim, reference_angular_frequency_SI, tracked_electrons);
     } else {
         Ionization = new CollisionalNoIonization();
     }
@@ -90,7 +90,7 @@ void Collisions::calculate_debye_length(Params& params, Patch * patch)
     double p2, density, density_max, charge, temperature, rmin2;
     Species   * s;
     Particles * p;
-    double coeff = 299792458./(3.*params.referenceAngularFrequency_SI*2.8179403267e-15); // c / (3 omega re)
+    double coeff = 299792458./(3.*params.reference_angular_frequency_SI*2.8179403267e-15); // c / (3 omega re)
     
     density_max = 0.;
     patch->debye_length_squared = 0.;
@@ -134,7 +134,7 @@ void Collisions::calculate_debye_length(Params& params, Patch * patch)
     // calculate and print average debye length
     double mean_debye_length = sqrt(patch->debye_length_squared);
     //DEBUG("Mean Debye length in code length units = " << scientific << setprecision(3) << mean_debye_length);
-    mean_debye_length *= 299792458./params.referenceAngularFrequency_SI; // switch to SI
+    mean_debye_length *= 299792458./params.reference_angular_frequency_SI; // switch to SI
     DEBUG("Mean Debye length in meters = " << scientific << setprecision(3) << mean_debye_length );
 #endif
 
@@ -176,8 +176,8 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
     
     // Initialize some stuff
     twoPi = 2. * M_PI;
-    coeff1 = 4.046650232e-21*params.referenceAngularFrequency_SI; // h*omega/(2*me*c^2)
-    coeff2 = 2.817940327e-15*params.referenceAngularFrequency_SI/299792458.; // re omega / c
+    coeff1 = 4.046650232e-21*params.reference_angular_frequency_SI; // h*omega/(2*me*c^2)
+    coeff2 = 2.817940327e-15*params.reference_angular_frequency_SI/299792458.; // re omega / c
     n_patch_per_cell = 1./((double)params.n_cell_per_patch);
     
     // get number of particles for all necessary species

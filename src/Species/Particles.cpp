@@ -22,7 +22,7 @@ tracked(false)
     Position.resize(0);
     Position_old.resize(0);
     Momentum.resize(0);
-    isTest = false;
+    is_test = false;
     isRadReaction = false;
 
     double_prop.resize(0);
@@ -80,7 +80,7 @@ void Particles::initialize(unsigned int nParticles, unsigned int nDim)
 // copy properties from another Particles
 void Particles::initialize(unsigned int nParticles, Particles &part)
 {
-    isTest=part.isTest;
+    is_test=part.is_test;
     
     tracked=part.tracked;
     

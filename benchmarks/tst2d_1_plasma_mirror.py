@@ -32,7 +32,7 @@ Main(
 )
 
 LaserGaussian2D(
-    boxSide         = "xmin",
+    box_side         = "xmin",
     a0              = 0.1,
 	focus           = [10.*l0, 25.0*l0],
     waist           = 5.0*l0,
@@ -42,8 +42,8 @@ LaserGaussian2D(
 
 Species(
 	species_type = 'ion',
-	initPosition_type = 'random',
-	initMomentum_type = 'cold',
+	position_initialization = 'random',
+	momentum_initialization = 'cold',
 	ionization_model = 'none',
 	n_part_per_cell = 5,
 	c_part_max = 1.0,
@@ -59,8 +59,8 @@ Species(
 
 Species(
 	species_type = 'eon',
-	initPosition_type = 'random',
-	initMomentum_type = 'cold',
+	position_initialization = 'random',
+	momentum_initialization = 'cold',
 	ionization_model = 'none',
 	n_part_per_cell = 5,
 	c_part_max = 1.0,

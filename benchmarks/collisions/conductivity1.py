@@ -26,7 +26,7 @@ Main(
 
     random_seed = 0,
 
-	referenceAngularFrequency_SI = L0 * 3e8 /1.e-6,
+	reference_angular_frequency_SI = L0 * 3e8 /1.e-6,
     print_every = 10,
 )
 
@@ -39,8 +39,8 @@ ExtField(
 
 Species(
 	species_type = "copper1",
-	initPosition_type = "regular",
-	initMomentum_type = "maxwell-juettner",
+	position_initialization = "regular",
+	momentum_initialization = "maxwell-juettner",
 	n_part_per_cell = 1000,
 	mass = 115845.,      # =  mass of Cu atom
 	charge = 4.4,
@@ -53,8 +53,8 @@ Species(
 )
 Species(
 	species_type = "electron1",
-	initPosition_type = "regular",
-	initMomentum_type = "maxwell-juettner",
+	position_initialization = "regular",
+	momentum_initialization = "maxwell-juettner",
 	n_part_per_cell= 10000,
 	mass = 1.0,
 	charge = -1.0,
@@ -68,8 +68,8 @@ Species(
 
 Species(
 	species_type = "copper2",
-	initPosition_type = "regular",
-	initMomentum_type = "maxwell-juettner",
+	position_initialization = "regular",
+	momentum_initialization = "maxwell-juettner",
 	n_part_per_cell = 1000,
 	mass = 115845.,      # =  mass of Cu atom
 	charge = 4.4,
@@ -82,8 +82,8 @@ Species(
 )
 Species(
 	species_type = "electron2",
-	initPosition_type = "regular",
-	initMomentum_type = "maxwell-juettner",
+	position_initialization = "regular",
+	momentum_initialization = "maxwell-juettner",
 	n_part_per_cell= 10000,
 	mass = 1.0,
 	charge = -1.0,
@@ -97,8 +97,8 @@ Species(
 
 Species(
 	species_type = "copper3",
-	initPosition_type = "regular",
-	initMomentum_type = "maxwell-juettner",
+	position_initialization = "regular",
+	momentum_initialization = "maxwell-juettner",
 	n_part_per_cell = 1000,
 	mass = 115845,      # =  mass of Cu atom
 	charge = 5.,
@@ -111,8 +111,8 @@ Species(
 )
 Species(
 	species_type = "electron3",
-	initPosition_type = "regular",
-	initMomentum_type = "maxwell-juettner",
+	position_initialization = "regular",
+	momentum_initialization = "maxwell-juettner",
 	n_part_per_cell= 10000,
 	mass = 1.0,
 	charge = -1.0,

@@ -71,7 +71,7 @@ Main(
      # sim_length: length of the simulation in units of the normalization wavelength
      cell_length = [dx,dx],
      sim_length  = [Lx,Ly],
-     maxwell_solver = 'Yee',
+     maxwell_sol = 'Yee',
      currentFilter_int = 3,
      Friedman_filter = True,
      Friedman_theta = 0.3,

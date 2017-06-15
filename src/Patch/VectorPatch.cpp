@@ -202,7 +202,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
     
     if(diag_flag){
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
-            if( ! (*this)(0)->vecSpecies[ispec]->particles->isTest ) {
+            if( ! (*this)(0)->vecSpecies[ispec]->particles->is_test ) {
                 update_field_list(ispec);
                 SyncVectorPatch::sumRhoJs( (*this), ispec, timers, itime ); // MPI
             }

@@ -43,8 +43,8 @@ LoadBalancing(
 
 Species( 
     species_type = "electron",
-    initPosition_type = "regular",
-    initMomentum_type = "maxwell-juettner",
+    position_initialization = "regular",
+    momentum_initialization = "maxwell-juettner",
     n_part_per_cell = 16,
     c_part_max = 1.0,
     mass = 1.0,
@@ -62,7 +62,7 @@ Species(
 )
 
 LaserGaussian2D(
-    boxSide         = "xmin",
+    box_side         = "xmin",
     a0              = 2.,
     focus           = [0., Main.sim_length[1]/2.],
     waist           = 26.16,

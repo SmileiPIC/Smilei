@@ -39,8 +39,8 @@ profiles = {
 for name, profile in profiles.items():
 	Species(
 		species_type = name,
-		initPosition_type = "regular",
-		initMomentum_type = "maxwell-juettner",
+		position_initialization = "regular",
+		momentum_initialization = "maxwell-juettner",
 		n_part_per_cell= 100,
 		mass = 1.0,
 		charge = 1.0,
@@ -57,8 +57,8 @@ for name, profile in profiles.items():
 Te = 0.01
 Species(
 	species_type = "eon",
-	initPosition_type = 'random',
-	initMomentum_type = 'mj',
+	position_initialization = 'random',
+	momentum_initialization = 'mj',
 	temperature = [Te,Te,Te],
 	n_part_per_cell = 300,
 	mass = 1.0,
@@ -70,7 +70,7 @@ Species(
 	bc_part_type_xmax = 'none',
 	bc_part_type_ymin = "none",
 	bc_part_type_ymax = "none",
-	isTest = True
+	is_test = True
 )
 
 DiagParticleBinning(

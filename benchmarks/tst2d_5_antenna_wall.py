@@ -34,8 +34,8 @@ globalEvery = 5
 
 Species(
     species_type = "electron",
-	initPosition_type = 'random',
-	initMomentum_type = 'cold',
+	position_initialization = 'random',
+	momentum_initialization = 'cold',
 	n_part_per_cell = 2,
 	mass = 1.0,
 	charge = -1.0,
@@ -48,8 +48,8 @@ Species(
 )
 
 Species(
-	initPosition_type = 'random',
-	initMomentum_type = 'cold',
+	position_initialization = 'random',
+	momentum_initialization = 'cold',
 	n_part_per_cell = 2,
 	mass = 1.0,
 	charge = 1.0,

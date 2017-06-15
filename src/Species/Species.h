@@ -49,10 +49,10 @@ public:
     std::string species_type;
     
     //! position initialization type, possible values: "regular" or "random"
-    std::string initPosition_type;
+    std::string position_initialization;
     
     //! momentum initialization type, possible values: "cold" or "maxwell-juettner"
-    std::string initMomentum_type;
+    std::string momentum_initialization;
     
     //! coefficient on the maximum number of particles for the species
     double c_part_max;
@@ -64,9 +64,9 @@ public:
     unsigned int atomic_number;
     
     //! thermalizing temperature for thermalizing BCs [\f$m_e c^2\f$]
-    std::vector<double> thermT;
+    std::vector<double> thermal_boundary_temperature;
     //! mean velocity used when thermalizing BCs are used [\f$c\f$]
-    std::vector<double> thermVelocity;
+    std::vector<double> thermal_boundary_velocity;
     
     //! thermal velocity [\f$c\f$]
     std::vector<double> thermalVelocity;
@@ -233,7 +233,7 @@ public:
     
     inline int getMemFootPrint() {
         /*int speciesSize  = ( 2*nDim_particle + 3 + 1 )*sizeof(double) + sizeof(short);
-        if ( particles->isTest )
+        if ( particles->is_test )
             speciesSize += sizeof ( unsigned int );*/
         //speciesSize *= getNbrOfParticles();
         int speciesSize(0);

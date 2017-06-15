@@ -27,7 +27,7 @@ Main(
 	
 	random_seed = 0,
 	
-	referenceAngularFrequency_SI = L0 * 3e8 /1.e-6,
+	reference_angular_frequency_SI = L0 * 3e8 /1.e-6,
 )
 
 
@@ -39,8 +39,8 @@ for ion_nppc, eon_nppc in [[100, 100], [100, 10], [10, 100]]:
 	
 	Species(
 		species_type = eon,
-		initPosition_type = "regular",
-		initMomentum_type = "maxwell-juettner",
+		position_initialization = "regular",
+		momentum_initialization = "maxwell-juettner",
 		n_part_per_cell= eon_nppc,
 		mass = 1.0,
 		charge = -1.0,
@@ -55,8 +55,8 @@ for ion_nppc, eon_nppc in [[100, 100], [100, 10], [10, 100]]:
 	
 	Species(
 		species_type = ion,
-		initPosition_type = "regular",
-		initMomentum_type = "maxwell-juettner",
+		position_initialization = "regular",
+		momentum_initialization = "maxwell-juettner",
 		n_part_per_cell= ion_nppc,
 		mass = 1836.0*13.,
 		charge = 3.0,

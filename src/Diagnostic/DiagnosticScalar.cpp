@@ -145,7 +145,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     necessary_species.resize(nspec, false);
     string species_type;
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
-        if (! vecPatches(0)->vecSpecies[ispec]->particles->isTest) {
+        if (! vecPatches(0)->vecSpecies[ispec]->particles->is_test) {
             species_type = vecPatches(0)->vecSpecies[ispec]->species_type;
             necessary_species[ispec] = necessary_Ukin || allowedKey("Dens_"+species_type) ||  allowedKey("Ntot_"+species_type) ||  allowedKey("Zavg_"+species_type) || allowedKey("Ukin_"+species_type);
         }
@@ -205,7 +205,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     sZavg.resize(nspec, NULL);
     sUkin.resize(nspec, NULL);
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
-        if (! vecPatches(0)->vecSpecies[ispec]->particles->isTest) {
+        if (! vecPatches(0)->vecSpecies[ispec]->particles->is_test) {
             species_type = vecPatches(0)->vecSpecies[ispec]->species_type;
             sDens[ispec] = newScalar_SUM( "Dens_"+species_type );
             sNtot[ispec] = newScalar_SUM( "Ntot_"+species_type );
@@ -344,7 +344,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     
     // Compute scalars for each species
     for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
-        if (vecSpecies[ispec]->particles->isTest) continue;    // No scalar diagnostic for test particles
+        if (vecSpecies[ispec]->particles->is_test) continue;    // No scalar diagnostic for test particles
         
         if( necessary_species[ispec] ) {
             double density=0.0;  // sum of weights of current species ispec

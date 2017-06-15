@@ -13,7 +13,7 @@ In a *python* command line (or script), invoke the following class to open
 your :program:`Smilei` simulation. Note that several simulations can be opened at once, 
 as long as they correspond to several :ref:`restarts <Checkpoints>` of the same simulation.
 
-.. py:class:: Smilei(results_path=".", show=True, referenceAngularFrequency_SI=None, verbose=True)
+.. py:class:: Smilei(results_path=".", show=True, reference_angular_frequency_SI=None, verbose=True)
 
   * ``results_path``: path or list of paths to the directory-ies
     where the results of the simulation-s are stored. It can also contain wildcards,
@@ -23,8 +23,8 @@ as long as they correspond to several :ref:`restarts <Checkpoints>` of the same 
     you have not loaded another simulation or the matplotlib package. You may need to 
     restart python.
   
-  * ``referenceAngularFrequency_SI``: overrides the value of the simulation parameter
-    :py:data:`referenceAngularFrequency_SI`, in order to re-scale units.
+  * ``reference_angular_frequency_SI``: overrides the value of the simulation parameter
+    :py:data:`reference_angular_frequency_SI`, in order to re-scale units.
   
   * ``verbose``: if True, more information is displayed while post-processing.
 
@@ -298,7 +298,7 @@ It has three different syntaxes:
 
 * The `Pint module <https://pypi.python.org/pypi/Pint/>`_.
 * To obtain units in a non-normalized system (e.g. SI), the simulation must have the 
-  parameter :py:data:`referenceAngularFrequency_SI` set to a finite value. 
+  parameter :py:data:`reference_angular_frequency_SI` set to a finite value. 
   Otherwise, this parameter can be set during post-processing as an argument to the 
   :py:class:`Smilei` class.
 

@@ -225,16 +225,16 @@ void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all (np) particles in a mesh initialize their position
-//   - either using regular distribution in the mesh (initPosition_type = regular)
-//   - or using uniform random distribution (initPosition_type = random)
+//   - either using regular distribution in the mesh (position_initialization = regular)
+//   - or using uniform random distribution (position_initialization = random)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::initPosition(unsigned int nPart, unsigned int iPart, double *indexes)
 {
-    if (initPosition_type == "regular") {
+    if (position_initialization == "regular") {
     
         double coeff = pow((double)nPart,inv_nDim_field);
         if( nPart != (unsigned int) pow(round(coeff), (double)nDim_field) )
-            ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `initPosition_type = 'random'`");
+            ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `position_initialization = 'random'`");
         
         int coeff_ = coeff;
         coeff = 1./coeff;
@@ -246,7 +246,7 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
             }
         }
         
-    } else if (initPosition_type == "random") {
+    } else if (position_initialization == "random") {
         
         for (unsigned int p= iPart; p<iPart+nPart; p++) {
             for (unsigned int i=0; i<nDim_particle ; i++) {
@@ -254,7 +254,7 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
             }
         }
         
-    } else if (initPosition_type == "centered") {
+    } else if (position_initialization == "centered") {
         
         for (unsigned int p=iPart; p<iPart+nPart; p++)
             for (unsigned int i=0; i<nDim_particle ; i++)
@@ -277,7 +277,7 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
     double pMean[3]= {0.0,0.0,0.0};
     
     // Cold distribution
-    if (initMomentum_type == "cold") {
+    if (momentum_initialization == "cold") {
         
         for (unsigned int p=iPart; p<iPart+nPart; p++) {
             particles->momentum(0,p) = 0.0;
@@ -286,7 +286,7 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
         }
     
     // Maxwell-Juttner distribution
-    } else if (initMomentum_type == "maxwell-juettner") {
+    } else if (momentum_initialization == "maxwell-juettner") {
         
         // Sample the enerrgies in the MJ distribution
         vector<double> energies = maxwellJuttner(nPart, temp[0]/mass);
@@ -328,7 +328,7 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
         }
     
     // Rectangular distribution
-    } else if (initMomentum_type == "rectangular") {
+    } else if (momentum_initialization == "rectangular") {
         
         double t0 = sqrt(temp[0]/mass), t1 = sqrt(temp[1]/mass), t2 = sqrt(temp[2]/mass);
         for (unsigned int p= iPart; p<iPart+nPart; p++) {
@@ -487,7 +487,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
             
              // Project currents if not a Test species and charges as well if a diag is needed. 
-             if (!particles->isTest)
+             if (!particles->is_test)
                  (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, b_dim, ispec );
             
         }// ibin
@@ -500,7 +500,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags );
     }
     else { // immobile particle (at the moment only project density)
-        if ( diag_flag &&(!particles->isTest)){
+        if ( diag_flag &&(!particles->is_test)){
             double* b_rho=nullptr;
             for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
                 
@@ -531,7 +531,7 @@ void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector
     // -------------------------------
     // calculate the particle charge
     // -------------------------------
-    if ( (!particles->isTest) ) {
+    if ( (!particles->is_test) ) {
         double* b_rho=nullptr;
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
             unsigned int bin_start = ibin*clrw*f_dim1*f_dim2;

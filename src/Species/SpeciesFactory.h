@@ -60,23 +60,23 @@ public:
         
         // Extract various parameters from the namelist
         
-        PyTools::extract("initPosition_type",thisSpecies->initPosition_type ,"Species",ispec);
-        if (thisSpecies->initPosition_type.empty()) {
-            ERROR("For species '" << species_type << "' empty initPosition_type");
-        } else if ( (thisSpecies->initPosition_type!="regular" )
-                  &&(thisSpecies->initPosition_type!="random"  )
-                  &&(thisSpecies->initPosition_type!="centered") ) {
-            ERROR("For species '" << species_type << "' unknown initPosition_type: " << thisSpecies->initPosition_type);
+        PyTools::extract("position_initialization",thisSpecies->position_initialization ,"Species",ispec);
+        if (thisSpecies->position_initialization.empty()) {
+            ERROR("For species '" << species_type << "' empty position_initialization");
+        } else if ( (thisSpecies->position_initialization!="regular" )
+                  &&(thisSpecies->position_initialization!="random"  )
+                  &&(thisSpecies->position_initialization!="centered") ) {
+            ERROR("For species '" << species_type << "' unknown position_initialization: " << thisSpecies->position_initialization);
         }
         
-        PyTools::extract("initMomentum_type",thisSpecies->initMomentum_type ,"Species",ispec);
-        if ( (thisSpecies->initMomentum_type=="mj") || (thisSpecies->initMomentum_type=="maxj") ) {
-            thisSpecies->initMomentum_type="maxwell-juettner";
+        PyTools::extract("momentum_initialization",thisSpecies->momentum_initialization ,"Species",ispec);
+        if ( (thisSpecies->momentum_initialization=="mj") || (thisSpecies->momentum_initialization=="maxj") ) {
+            thisSpecies->momentum_initialization="maxwell-juettner";
         }
-        if (   (thisSpecies->initMomentum_type!="cold")
-               && (thisSpecies->initMomentum_type!="maxwell-juettner")
-               && (thisSpecies->initMomentum_type!="rectangular") ) {
-            ERROR("For species '" << species_type << "' unknown initMomentum_type: "<<thisSpecies->initMomentum_type);
+        if (   (thisSpecies->momentum_initialization!="cold")
+               && (thisSpecies->momentum_initialization!="maxwell-juettner")
+               && (thisSpecies->momentum_initialization!="rectangular") ) {
+            ERROR("For species '" << species_type << "' unknown momentum_initialization: "<<thisSpecies->momentum_initialization);
         }
         
         PyTools::extract("c_part_max",thisSpecies->c_part_max,"Species",ispec);
@@ -86,7 +86,7 @@ public:
         }
         
         PyTools::extract("time_frozen",thisSpecies->time_frozen ,"Species",ispec);
-        if (thisSpecies->time_frozen > 0 && thisSpecies->initMomentum_type!="cold") {
+        if (thisSpecies->time_frozen > 0 && thisSpecies->momentum_initialization!="cold") {
             if ( patch->isMaster() ) WARNING("For species '" << species_type << "' possible conflict between time-frozen & not cold initialization");
         }
         
@@ -115,50 +115,36 @@ public:
                 ERROR("For species '" << species_type << "', bc_part_type_zmax not defined");
         }
         
-        // for thermalizing BCs on particles check if thermT is correctly defined
-        bool thermTisDefined=false;
-        bool thermVisDefined=false;
-        if ( (thisSpecies->bc_part_type_xmin=="thermalize") || (thisSpecies->bc_part_type_xmax=="thermalize") ){
-            thermTisDefined=PyTools::extract("thermT",thisSpecies->thermT,"Species",ispec);
-            if (!thermTisDefined) ERROR("For species '" << species_type << "' thermT needs to be defined due to x-BC thermalize");
-            thermVisDefined=PyTools::extract("thermVelocity",thisSpecies->thermVelocity,"Species",ispec);
-            if (!thermVisDefined) ERROR("For species '" << species_type << "' thermVelocity needs to be defined due to x-BC thermalize");
-        }
-        if ( (params.nDim_particle==2) && (!thermTisDefined) && (!thermVisDefined) &&
-             (thisSpecies->bc_part_type_ymin=="thermalize" || thisSpecies->bc_part_type_ymax=="thermalize") ) {
-            thermTisDefined=PyTools::extract("thermT",thisSpecies->thermT,"Species",ispec);
-            if (!thermTisDefined) ERROR("For species '" << species_type << "' thermT needs to be defined due to y-BC thermalize");
-            thermVisDefined=PyTools::extract("thermVelocity",thisSpecies->thermVelocity,"Species",ispec);
-            if (!thermTisDefined) ERROR("For species '" << species_type << "' thermVelocity needs to be defined due to y-BC thermalize");
-        }
-        if (thermTisDefined) {
-            if (thisSpecies->thermT.size()==1) {
-                WARNING("For species '" << species_type << "' Using thermT[0] in all directions");
-                thisSpecies->thermT.resize(3);
-                for (unsigned int i=1; i<3;i++)
-                    thisSpecies->thermT[i]=thisSpecies->thermT[0];
+        // for thermalizing BCs on particles check if thermal_boundary_temperature is correctly defined
+        bool has_temperature = PyTools::extract("thermal_boundary_temperature",thisSpecies->thermal_boundary_temperature,"Species",ispec);
+        bool has_velocity    = PyTools::extract("thermal_boundary_velocity",thisSpecies->thermal_boundary_velocity,"Species",ispec);
+        if ( thisSpecies->bc_part_type_xmin=="thermalize" || thisSpecies->bc_part_type_xmax=="thermalize"
+          || (params.nDim_particle>1 && (thisSpecies->bc_part_type_ymax=="thermalize" || thisSpecies->bc_part_type_ymax=="thermalize"))
+          || (params.nDim_particle>2 && (thisSpecies->bc_part_type_zmax=="thermalize" || thisSpecies->bc_part_type_zmax=="thermalize"))
+        ){
+            if (!has_temperature)
+                ERROR("For species '" << species_type << "' thermal_boundary_temperature needs to be defined due to thermalizing BC");
+            if (!has_velocity)
+                ERROR("For species '" << species_type << "' thermal_boundary_velocity needs to be defined due to thermalizing BC");
+            
+            if (thisSpecies->thermal_boundary_temperature.size()==1) {
+                WARNING("For species '" << species_type << "' Using thermal_boundary_temperature[0] in all directions");
+                thisSpecies->thermal_boundary_temperature.resize(3);
+                thisSpecies->thermal_boundary_temperature[1] = thisSpecies->thermal_boundary_temperature[0];
+                thisSpecies->thermal_boundary_temperature[2] = thisSpecies->thermal_boundary_temperature[0];
             }
-        } else {
-            thisSpecies->thermT.resize(3);
-            for (unsigned int i=0; i<3;i++)
-                thisSpecies->thermT[i]=0.0;
-            thisSpecies->thermVelocity.resize(3);
-            for (unsigned int i=0; i<3;i++)
-                thisSpecies->thermVelocity[i]=0.0;
+            
+            // Compute the thermalVelocity & Momentum for thermalizing bcs
+            thisSpecies->thermalVelocity.resize(3);
+            thisSpecies->thermalMomentum.resize(3);
+            for (unsigned int i=0; i<3; i++) {
+                thisSpecies->thermalVelocity[i] = sqrt(2.*thisSpecies->thermal_boundary_temperature[i]/thisSpecies->mass);
+                thisSpecies->thermalMomentum[i] = thisSpecies->thermalVelocity[i];
+                // Caution: momentum in SMILEI actually correspond to p/m
+                if (thisSpecies->thermalVelocity[i]>0.3)
+                    ERROR("For species '" << species_type << "' Thermalizing BCs require non-relativistic thermal_boundary_temperature");
+            }
         }
-        
-        // Compute the thermalVelocity & Momentum for thermalizing bcs
-        thisSpecies->thermalVelocity.resize(3);
-        thisSpecies->thermalMomentum.resize(3);
-        
-        for (unsigned int i=0; i<3; i++) {
-            thisSpecies->thermalVelocity[i] = sqrt(2.*thisSpecies->thermT[i]/thisSpecies->mass);
-            thisSpecies->thermalMomentum[i] = thisSpecies->thermalVelocity[i];
-            // Caution: momentum in SMILEI actually correspond to p/m
-            if (thisSpecies->thermalVelocity[i]>0.3) ERROR("For species '" << species_type << "' Thermalizing BCs require non-relativistic thermT");
-        }
-        
-        
         
         // Manage the ionization parameters
         thisSpecies->atomic_number = 0;
@@ -216,38 +202,11 @@ public:
         thisSpecies->temperatureProfile[2] = new Profile(profile3, params.nDim_particle, "temperature[2] "+species_type, true);
         
         
-        // CALCULATE USEFUL VALUES
-        
-        /*        double gamma=1.+thisSpecies->thermT[0]/thisSpecies->mass;
-            
-                  for (unsigned int i=0; i<3; i++) {
-                  thisSpecies->thermalVelocity[i] = sqrt( 1.-1./gamma*gamma );
-                  thisSpecies->thermalMomentum[i] = gamma*thisSpecies->thermalVelocity[i];
-                  }
-            
-                  double gamma=1.+thisSpecies->thermT[0]/thisSpecies->mass;
-        */
-        
-        thisSpecies->thermalVelocity.resize(3);
-        thisSpecies->thermalMomentum.resize(3);
-        
-        if (thermTisDefined) {
-            if ( patch->isMaster() ) WARNING("\tFor species '" << species_type << "' Using thermT[0] in all directions");
-            if (thisSpecies->thermalVelocity[0]>0.3) {
-                ERROR("For species '" << species_type << "' thermalising BCs require ThermT[0]="<<thisSpecies->thermT[0]<<"<<"<<thisSpecies->mass);
-            }
-            for (unsigned int i=0; i<3; i++) {
-                thisSpecies->thermalVelocity[i] = sqrt(2.*thisSpecies->thermT[0]/thisSpecies->mass);
-                thisSpecies->thermalMomentum[i] = thisSpecies->thermalVelocity[i];
-            }
-        }
-        
-        
         // Extract test Species flag
-        PyTools::extract("isTest", thisSpecies->particles->isTest, "Species", ispec);
+        PyTools::extract("is_test", thisSpecies->particles->is_test, "Species", ispec);
         
         // Verify they don't ionize
-        if (thisSpecies->ionization_model!="none" && thisSpecies->particles->isTest) {
+        if (thisSpecies->ionization_model!="none" && thisSpecies->particles->is_test) {
             ERROR("For species '" << species_type << "' test & ionized is currently impossible");
         }
         
@@ -288,8 +247,8 @@ public:
         newSpecies->species_type          = species->species_type;
         newSpecies->dynamics_type         = species->dynamics_type;
         newSpecies->speciesNumber         = species->speciesNumber;
-        newSpecies->initPosition_type     = species->initPosition_type;
-        newSpecies->initMomentum_type     = species->initMomentum_type;
+        newSpecies->position_initialization     = species->position_initialization;
+        newSpecies->momentum_initialization     = species->momentum_initialization;
         newSpecies->c_part_max            = species->c_part_max;
         newSpecies->mass                  = species->mass;
         newSpecies->time_frozen           = species->time_frozen;
@@ -300,8 +259,8 @@ public:
         newSpecies->bc_part_type_ymax    = species->bc_part_type_ymax;
         newSpecies->bc_part_type_zmin   = species->bc_part_type_zmin;
         newSpecies->bc_part_type_zmax       = species->bc_part_type_zmax;
-        newSpecies->thermT                = species->thermT;
-        newSpecies->thermVelocity         = species->thermVelocity;
+        newSpecies->thermal_boundary_temperature                = species->thermal_boundary_temperature;
+        newSpecies->thermal_boundary_velocity         = species->thermal_boundary_velocity;
         newSpecies->thermalVelocity       = species->thermalVelocity;
         newSpecies->thermalMomentum       = species->thermalMomentum;
         newSpecies->atomic_number         = species->atomic_number;
@@ -321,7 +280,7 @@ public:
         newSpecies->max_charge            = species->max_charge;
         newSpecies->tracking_diagnostic   = species->tracking_diagnostic;
         
-        newSpecies->particles->isTest              = species->particles->isTest;
+        newSpecies->particles->is_test              = species->particles->is_test;
         newSpecies->particles->tracked             = species->particles->tracked;
         
         // \todo : NOT SURE HOW THIS BEHAVES WITH RESTART

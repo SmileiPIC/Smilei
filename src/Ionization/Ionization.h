@@ -33,7 +33,7 @@ protected:
     double EC_to_au;
     double au_to_w0;
     
-    double referenceAngularFrequency_SI;
+    double reference_angular_frequency_SI;
     double dt;
     double invdt;
     unsigned int nDim_field;

@@ -30,8 +30,8 @@ Main(
 
 Species(
 	species_type = "charges",
-	initPosition_type = "random",
-	initMomentum_type = "cold",
+	position_initialization = "random",
+	momentum_initialization = "cold",
 	n_part_per_cell = 100,
 	mass = 1836.0,
 	charge = 1.0,

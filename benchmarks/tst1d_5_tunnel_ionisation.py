@@ -26,7 +26,7 @@ Main(
      
     bc_em_type_x = ['silver-muller'],
     
-    referenceAngularFrequency_SI = 6*math.pi*1e14,
+    reference_angular_frequency_SI = 6*math.pi*1e14,
     
     random_seed = 0
 )
@@ -36,8 +36,8 @@ Species(
 	ionization_model = 'tunnel',
 	ionization_electrons = 'electron',
 	atomic_number = 1,
-	initPosition_type = 'regular',
-	initMomentum_type = 'cold',
+	position_initialization = 'regular',
+	momentum_initialization = 'cold',
 	n_part_per_cell = 10,
 	mass = 1836.0*1000.,
 	charge = 0.0,
@@ -50,8 +50,8 @@ Species(
 	ionization_model = 'tunnel',
 	ionization_electrons = 'electron',
 	atomic_number = 6,
-	initPosition_type = 'regular',
-	initMomentum_type = 'cold',
+	position_initialization = 'regular',
+	momentum_initialization = 'cold',
 	n_part_per_cell = 10,
 	mass = 1836.0*1000.,
 	charge = 0.0,
@@ -61,8 +61,8 @@ Species(
 )
 Species(
 	species_type = 'electron',
-	initPosition_type = 'regular',
-	initMomentum_type = 'cold',
+	position_initialization = 'regular',
+	momentum_initialization = 'cold',
 	n_part_per_cell = 0,
 	mass = 1.0,
 	charge = -1.0,
@@ -73,10 +73,10 @@ Species(
 )
 
 LaserPlanar1D(
-	boxSide = 'xmin',
+	box_side = 'xmin',
 	a0 = 0.1,
     omega = 1.,
-    polarizationPhi = 0.,
+    polarization_phi = 0.,
     time_envelope = tconstant(),
 )
 

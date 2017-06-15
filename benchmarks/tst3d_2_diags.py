@@ -55,8 +55,8 @@ iportion = 3
 poly3 = polygonal( xpoints=[(iportion+i/3.)*portion_width for i in range(4)], xvalues=[0., 2., -1, 0.] )
 Species( 
 	species_type = "test0",
-	initPosition_type = "random",
-	initMomentum_type = "cold",
+	position_initialization = "random",
+	momentum_initialization = "cold",
 	n_part_per_cell = 10,
 	c_part_max = 1.0,
 	mass = 1.0,
@@ -76,8 +76,8 @@ iportion = 4
 poly4 = polygonal( xpoints=[(iportion+i/3.)*portion_width for i in range(4)], xvalues=[0., 2., -1, 0.] )
 Species( 
 	species_type = "test1",
-	initPosition_type = "random",
-	initMomentum_type = "cold",
+	position_initialization = "random",
+	momentum_initialization = "cold",
 	n_part_per_cell = 10,
 	c_part_max = 1.0,
 	mass = 1.0,

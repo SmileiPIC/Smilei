@@ -27,7 +27,7 @@ Main(
 
     random_seed = 0,
 
-	referenceAngularFrequency_SI = L0 * 3e8 /1.e-6,
+	reference_angular_frequency_SI = L0 * 3e8 /1.e-6,
     print_every = 100,
 )
 
@@ -59,8 +59,8 @@ for i in range(npoints):
 	
 	Species(
 		species_type = eon,
-		initPosition_type = "regular",
-		initMomentum_type = "maxwell-juettner",
+		position_initialization = "regular",
+		momentum_initialization = "maxwell-juettner",
 		n_part_per_cell= 1000,
 		mass = 1.0,
 		charge = -1.0,
@@ -77,8 +77,8 @@ for i in range(npoints):
 	
 	Species(
 		species_type = ion,
-		initPosition_type = "regular",
-		initMomentum_type = "maxwell-juettner",
+		position_initialization = "regular",
+		momentum_initialization = "maxwell-juettner",
 		n_part_per_cell= 1000,
 		mass = 1836.0*A,
 		charge = Zstar,

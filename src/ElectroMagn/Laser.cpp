@@ -17,9 +17,9 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
     ostringstream info("");
     
     // side from which the laser enters the simulation box (only xmin/xmax at the moment)
-    PyTools::extract("boxSide",boxSide,"Laser",ilaser);
-    if ( boxSide!="xmin" && boxSide!="xmax" ) {
-        ERROR(errorPrefix << ": boxSide must be `xmin` or `xmax`");
+    PyTools::extract("box_side",box_side,"Laser",ilaser);
+    if ( box_side!="xmin" && box_side!="xmax" ) {
+        ERROR(errorPrefix << ": box_side must be `xmin` or `xmax`");
     }
     
     // Profiles
@@ -153,7 +153,7 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
 // Cloning constructor
 Laser::Laser(Laser* laser, Params& params)
 {
-    boxSide   = laser->boxSide;
+    box_side   = laser->box_side;
     spacetime = laser->spacetime;
     profiles.resize(0);
     if( spacetime[0] || spacetime[1] ) {

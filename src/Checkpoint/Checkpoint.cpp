@@ -40,7 +40,7 @@ time_dump_step(0),
 dump_step(0),
 dump_minutes(0.0),
 exit_after_dump(true),
-dump_file_sequence(2),
+keep_n_dumps(2),
 dump_deflate(0),
 restart_dir(""),
 dump_request(smpi->getSize()),
@@ -60,8 +60,8 @@ restart_number(-1)
                 MESSAGE(1,"Code will stop after " << dump_minutes << " minutes");
         }
         
-        PyTools::extract("dump_file_sequence", dump_file_sequence, "DumpRestart");
-        if(dump_file_sequence<1) dump_file_sequence=1;
+        PyTools::extract("keep_n_dumps", keep_n_dumps, "DumpRestart");
+        if(keep_n_dumps<1) keep_n_dumps=1;
         
         PyTools::extract("exit_after_dump", exit_after_dump, "DumpRestart");
         
@@ -88,7 +88,7 @@ restart_number(-1)
             message << "Code will dump";
             if( dump_step>0 ) message << " every "<< dump_step << " steps,";
             if( dump_minutes>0. ) message << " every "<<dump_minutes<< " min,";
-            message << " keeping "<< dump_file_sequence << " dumps at maximum";
+            message << " keeping "<< keep_n_dumps << " dumps at maximum";
             MESSAGE(1,message.str());
         }
     }
@@ -112,7 +112,7 @@ string Checkpoint::dumpName(unsigned int num, SmileiMPI *smpi) {
         nameDumpTmp << setfill('0') << setw(int(1+log10(smpi->getSize()/file_grouping+1))) << smpi->getRank()/file_grouping << PATH_SEPARATOR;
     }
     
-    nameDumpTmp << "dump-" << setfill('0') << setw(1+log10(dump_file_sequence)) << num << "-" << setfill('0') << setw(1+log10(smpi->getSize())) << smpi->getRank() << ".h5" ;
+    nameDumpTmp << "dump-" << setfill('0') << setw(1+log10(keep_n_dumps)) << num << "-" << setfill('0') << setw(1+log10(smpi->getSize())) << smpi->getRank() << ".h5" ;
     return nameDumpTmp.str();
 }
 
@@ -156,7 +156,7 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* s
 
 void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI* smpi, SimWindow* simWin,  Params &params )
 {
-    unsigned int num_dump=dump_number%dump_file_sequence;
+    unsigned int num_dump=dump_number%keep_n_dumps;
     
     hid_t fid = H5Fcreate( dumpName(num_dump,smpi).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     dump_number++;
@@ -376,7 +376,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
 
     } else {
         // This will open all dumps and pick the last one
-        for (unsigned int num_dump=0;num_dump<dump_file_sequence; num_dump++) {
+        for (unsigned int num_dump=0;num_dump<keep_n_dumps; num_dump++) {
             string dump_name=restart_dir+dumpName(num_dump,smpi);
             ifstream f(dump_name.c_str());
             if (f.good()) {

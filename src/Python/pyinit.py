@@ -71,7 +71,21 @@ class SmileiComponent(object):
     def _fillObjectAndAddToList(self, cls, obj, **kwargs):
         # add all kwargs as internal class variables
         if kwargs is not None:
+            deprecated = {
+                "maxwell_sol":"maxwell_solver",
+                "referenceAngularFrequency_SI":"reference_angular_frequency_SI",
+                "initPosition_type":"position_initialization",
+                "initMomentum_type":"momentum_initialization",
+                "thermT":"thermal_boundary_temperature",
+                "thermVelocity":"thermal_boundary_velocity",
+                "isTest":"is_test",
+                "boxSide":"box_side",
+                "polarizationPhi":"polarization_phi",
+                "dump_file_sequence":"keep_n_dumps",
+            }
             for key, value in kwargs.items():
+                if key in deprecated:
+                    raise Exception("Deprecated `"+key+"` parameter should be replaced by `"+deprecated[key]+"`")
                 if key=="_list":
                     print("Python warning: in "+cls.__name__+": cannot have argument named '_list'. Discarding.")
                 elif not hasattr(cls, key):
@@ -134,7 +148,7 @@ class Main(SmileiSingleton):
     poisson_error_max = 1.e-14
     
     # Default fields
-    maxwell_sol = 'Yee'
+    maxwell_solver = 'Yee'
     bc_em_type_x = []
     bc_em_type_y = []
     bc_em_type_z = []
@@ -144,13 +158,15 @@ class Main(SmileiSingleton):
     Friedman_theta = 0.
     
     # Default Misc
-    referenceAngularFrequency_SI = 0.
+    reference_angular_frequency_SI = 0.
     print_every = None
     random_seed = None
     
     def __init__(self, **kwargs):
+        # Load all arguments to Main()
         super(Main, self).__init__(**kwargs)
-        #initialize timestep if not defined based on timestep_over_CFL
+        
+        # Initialize timestep if not defined based on timestep_over_CFL
         if Main.timestep is None:
             if Main.timestep_over_CFL is None:
                 raise Exception("timestep and timestep_over_CFL not defined")
@@ -159,21 +175,21 @@ class Main(SmileiSingleton):
                     raise Exception("Need cell_length to calculate timestep")
                 
                 # Yee solver
-                if Main.maxwell_sol == 'Yee':
+                if Main.maxwell_solver == 'Yee':
                     dim = int(Main.geometry[0])
                     if dim<1 or dim>3:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
                     Main.timestep = Main.timestep_over_CFL / math.sqrt(sum([1./l**2 for l in Main.cell_length]))
                 
                 # Grassi
-                elif Main.maxwell_sol == 'Grassi':
+                elif Main.maxwell_solver == 'Grassi':
                     if Main.geometry == '2d3v':
                         Main.timestep = Main.timestep_over_CFL * 0.7071067811*Main.cell_length[0];
                     else:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
                         
                 # GrassiSpL
-                elif Main.maxwell_sol == 'GrassiSpL':
+                elif Main.maxwell_solver == 'GrassiSpL':
                     if Main.geometry == '2d3v':
                         Main.timestep = Main.timestep_over_CFL * 0.6471948469*Main.cell_length[0];
                     else:
@@ -181,7 +197,7 @@ class Main(SmileiSingleton):
                 
                 # None recognized solver
                 else:
-                    raise Exception("timestep: maxwell_sol not implemented "+Main.maxwell_sol)
+                    raise Exception("timestep: maxwell_solver not implemented "+Main.maxwell_solver)
                 
         #initialize sim_length if not defined based on number_of_cells and cell_length
         if len(Main.sim_length) is 0:
@@ -222,7 +238,7 @@ class DumpRestart(SmileiSingleton):
     restart_number = None
     dump_step = 0
     dump_minutes = 0.
-    dump_file_sequence = 2
+    keep_n_dumps = 2
     dump_deflate = 0
     exit_after_dump = True
     file_grouping = None
@@ -231,8 +247,8 @@ class DumpRestart(SmileiSingleton):
 class Species(SmileiComponent):
     """Species parameters"""
     species_type = None
-    initPosition_type = None
-    initMomentum_type = ""
+    position_initialization = None
+    momentum_initialization = ""
     n_part_per_cell = None
     c_part_max = 1.0
     mass = None
@@ -241,8 +257,8 @@ class Species(SmileiComponent):
     nb_density = None
     mean_velocity = [0.]
     temperature = [1e-10]
-    thermT = None
-    thermVelocity = None
+    thermal_boundary_temperature = []
+    thermal_boundary_velocity = []
     dynamics_type = "norm"
     time_frozen = 0.0
     radiating = False
@@ -255,14 +271,14 @@ class Species(SmileiComponent):
     ionization_model = "none"
     ionization_electrons = None
     atomic_number = None
-    isTest = False
+    is_test = False
     track_every = 0
     track_flush_every = 1
     track_filter = None
 
 class Laser(SmileiComponent):
     """Laser parameters"""
-    boxSide = "xmin"
+    box_side = "xmin"
     omega = 1.
     chirp_profile = 1.
     time_envelope = 1.

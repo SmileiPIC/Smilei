@@ -27,7 +27,7 @@ Main(
 
     random_seed = 0,
 
-	referenceAngularFrequency_SI = L0 * 3e8 /1.e-6,
+	reference_angular_frequency_SI = L0 * 3e8 /1.e-6,
     print_every = 100,
 )
 
@@ -47,8 +47,8 @@ for i in range(npoints):
 	vel = math.sqrt(1.-1./(1.+E)**2)
 	Species(
 		species_type = el,
-		initPosition_type = "regular",
-		initMomentum_type = "maxwell-juettner",
+		position_initialization = "regular",
+		momentum_initialization = "maxwell-juettner",
 		n_part_per_cell= 10,
 		mass = 1.0,
 		charge = -1.0,
@@ -65,8 +65,8 @@ for i in range(npoints):
 
 Species(
 	species_type = "ion1",
-	initPosition_type = "regular",
-	initMomentum_type = "maxwell-juettner",
+	position_initialization = "regular",
+	momentum_initialization = "maxwell-juettner",
 	n_part_per_cell= 100,
 	mass = 1836.0*27.,
 	charge = 0,

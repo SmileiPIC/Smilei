@@ -38,8 +38,8 @@ Main(
 
 Species(
 	species_type = 'ion',
-	initPosition_type = 'regular',
-	initMomentum_type = 'cold',
+	position_initialization = 'regular',
+	momentum_initialization = 'cold',
 	n_part_per_cell = 10,
 	mass = 1836.0,
 	charge = 1.0,
@@ -50,8 +50,8 @@ Species(
 )
 Species(
 	species_type = 'eon',
-	initPosition_type = 'regular',
-	initMomentum_type = 'cold',
+	position_initialization = 'regular',
+	momentum_initialization = 'cold',
 	n_part_per_cell = 10,
 	mass = 1.0,
 	charge = -1.0,
@@ -62,7 +62,7 @@ Species(
 )
 
 LaserPlanar1D(
-	boxSide = 'xmin',
+	box_side = 'xmin',
 	a0 = 10.,
     omega = 1.,
     ellipticity = 1.,

@@ -207,7 +207,7 @@ public:
     std::vector<uint64_t> Id;
     
     // TEST PARTICLE PARAMETERS
-    bool isTest;
+    bool is_test;
     
     //! True if tracking the particles (activates one DiagTrack)
     bool tracked;

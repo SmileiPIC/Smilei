@@ -61,10 +61,10 @@ Main(
 )
 
 LaserPlanar1D(
-    boxSide         = "xmin",
+    box_side         = "xmin",
     a0              = a0,
     omega           = 1.,
-    polarizationPhi = 0.,
+    polarization_phi = 0.,
     ellipticity     = 1,
     time_envelope  = tgaussian(start=start,duration=duration,fwhm=fwhm,center=center,order=2)
 )
@@ -72,8 +72,8 @@ LaserPlanar1D(
 for ipusher,pusher in enumerate(pusher_list):
     Species(
         species_type = "electron_" + pusher,
-        initPosition_type = "centered",
-        initMomentum_type = "cold",
+        position_initialization = "centered",
+        momentum_initialization = "cold",
         n_part_per_cell = 10,
         c_part_max = 1.0,
         mass = 1.0,
@@ -90,7 +90,7 @@ for ipusher,pusher in enumerate(pusher_list):
         bc_part_type_zmax = "none",
         track_every = 10,
         track_flush_every = 100,
-        isTest = True
+        is_test = True
     )
 
 

@@ -505,7 +505,7 @@ class Smilei(object):
 		
 	"""
 	
-	def __init__(self, results_path=".", show=True, referenceAngularFrequency_SI=None, verbose=True):
+	def __init__(self, results_path=".", show=True, reference_angular_frequency_SI=None, verbose=True):
 		self.valid = False
 		# Import packages
 		import h5py
@@ -526,7 +526,7 @@ class Smilei(object):
 		self._plt = matplotlib.pyplot
 		self._mtime = 0
 		self._verbose = verbose
-		self._referenceAngularFrequency_SI = referenceAngularFrequency_SI
+		self._reference_angular_frequency_SI = reference_angular_frequency_SI
 		
 		# Load the simulation (verify the path, get the namelist)
 		self.reload()
@@ -581,10 +581,10 @@ class Smilei(object):
 			print(error)
 			return
 		try:
-			referenceAngularFrequency_SI = namelist.Main.referenceAngularFrequency_SI
+			reference_angular_frequency_SI = namelist.Main.reference_angular_frequency_SI
 		except:
-			referenceAngularFrequency_SI = None
-		return namelist, ndim, cell_length, ncels, timestep, referenceAngularFrequency_SI
+			reference_angular_frequency_SI = None
+		return namelist, ndim, cell_length, ncels, timestep, reference_angular_frequency_SI
 	
 	def reload(self):
 		"""Reloads the simulation, if it has been updated"""
@@ -622,7 +622,7 @@ class Smilei(object):
 		# Reload if necessary
 		if lastmodif > self._mtime:
 			# Get the previous simulation parameters
-			try:    prevArgs = (self._ndim, self._cell_length, self._ncels, self._timestep, self._referenceAngularFrequency_SI)
+			try:    prevArgs = (self._ndim, self._cell_length, self._ncels, self._timestep, self._reference_angular_frequency_SI)
 			except: prevArgs = ()
 			# Loop paths and verify the namelist is compatible
 			for path in newPaths:
@@ -634,9 +634,9 @@ class Smilei(object):
 					return
 				if self._verbose: print("Loaded simulation '"+path+"'")
 			# Update the simulation parameters
-			self._ndim, self._cell_length, self._ncels, self._timestep, referenceAngularFrequency_SI = args[1:]
-			if self._referenceAngularFrequency_SI is None:
-				self._referenceAngularFrequency_SI = referenceAngularFrequency_SI
+			self._ndim, self._cell_length, self._ncels, self._timestep, reference_angular_frequency_SI = args[1:]
+			if self._reference_angular_frequency_SI is None:
+				self._reference_angular_frequency_SI = reference_angular_frequency_SI
 			self.namelist = args[0]
 		
 		self._mtime = lastmodif

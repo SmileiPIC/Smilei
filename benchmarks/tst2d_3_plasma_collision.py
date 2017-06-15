@@ -36,8 +36,8 @@ fm = trapezoidal(1., xvacuum=11.*l0, xplateau=28.5*l0)
 
 Species(
 	species_type = 'pon1',
-	initPosition_type = 'regular',
-	initMomentum_type = 'mj',
+	position_initialization = 'regular',
+	momentum_initialization = 'mj',
 	ionization_model = 'none',
 	n_part_per_cell = 4,
 	c_part_max = 1.0,
@@ -54,8 +54,8 @@ Species(
 )
 Species(
 	species_type = 'eon1',
-	initPosition_type = 'regular',
-	initMomentum_type = 'mj',
+	position_initialization = 'regular',
+	momentum_initialization = 'mj',
 	ionization_model = 'none',
 	n_part_per_cell = 4,
 	c_part_max = 1.0,
@@ -72,8 +72,8 @@ Species(
 )
 Species(
 	species_type = 'pon2',
-	initPosition_type = 'regular',
-	initMomentum_type = 'mj',
+	position_initialization = 'regular',
+	momentum_initialization = 'mj',
 	ionization_model = 'none',
 	n_part_per_cell = 4,
 	c_part_max = 1.0,
@@ -90,8 +90,8 @@ Species(
 )
 Species(
 	species_type = 'eon2',
-	initPosition_type = 'regular',
-	initMomentum_type = 'mj',
+	position_initialization = 'regular',
+	momentum_initialization = 'mj',
 	ionization_model = 'none',
 	n_part_per_cell = 4,
 	c_part_max = 1.0,

@@ -168,8 +168,8 @@ namelist("")
     // Normalisation & units
     // ---------------------
     
-    referenceAngularFrequency_SI = 0.;
-    PyTools::extract("referenceAngularFrequency_SI",referenceAngularFrequency_SI, "Main");
+    reference_angular_frequency_SI = 0.;
+    PyTools::extract("reference_angular_frequency_SI",reference_angular_frequency_SI, "Main");
     
     
     // -------------------
@@ -267,7 +267,7 @@ namelist("")
     PyTools::extract("poisson_error_max", poisson_error_max, "Main");
     
     // Maxwell Solver
-    PyTools::extract("maxwell_sol", maxwell_sol, "Main");
+    PyTools::extract("maxwell_solver", maxwell_sol, "Main");
     
     // Filtering Method Parameters
     PyTools::extract("currentFilter_int", currentFilter_int, "Main"); // nb of passes for binomial filering (default=0)

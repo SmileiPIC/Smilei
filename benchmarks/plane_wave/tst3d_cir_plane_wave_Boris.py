@@ -62,7 +62,7 @@ Main(
 )
 
 #Laser(
-#    boxSide        = "xmin",
+#    box_side        = "xmin",
 #    omega          = 1.,
 #    chirp_profile  = tconstant(),
 #    time_envelope  = tgaussian(start=0,duration=90*t0,fwhm=30*t0,center=45*t0,order=2),
@@ -71,21 +71,21 @@ Main(
 #)
 
 LaserGaussian3D(
-    boxSide         = "xmin",
+    box_side         = "xmin",
     a0              = 2.,
     omega           = 1.,
     focus           = [0., 0.5*Ly, 0.5*Lz],
     waist           = 1e9,
     incidence_angle = [0., 0.],
-    polarizationPhi = 0.,
+    polarization_phi = 0.,
     ellipticity     = 1,
     time_envelope  = tgaussian(start=start,duration=duration,fwhm=fwhm,center=center,order=2)
 )
 
 Species(
     species_type = "electron",
-    initPosition_type = "centered",
-    initMomentum_type = "cold",
+    position_initialization = "centered",
+    momentum_initialization = "cold",
     n_part_per_cell = 10,
     c_part_max = 1.0,
     mass = 1.0,
@@ -102,7 +102,7 @@ Species(
     bc_part_type_zmax = "none",
     track_every = 2,
     track_flush_every = 100,
-    isTest = False
+    is_test = False
 )
 
 DiagScalar(

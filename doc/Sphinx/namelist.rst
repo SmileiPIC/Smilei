@@ -90,11 +90,11 @@ The block ``Main`` is **mandatory** and has the following syntax::
       timestep    = 0.005,
       number_of_patches = [64],
       clrw = 5,
-      maxwell_sol = 'Yee',
+      maxwell_solver = 'Yee',
       bc_em_type_x = ["silver-muller", "silver-muller"],
       bc_em_type_y = ["silver-muller", "silver-muller"],
       time_fields_frozen = 0.,
-      referenceAngularFrequency_SI = 0.,
+      reference_angular_frequency_SI = 0.,
       print_every = 100,
       random_seed = 0,
   )
@@ -149,16 +149,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   greater or equal than the number of MPI processes.
   See :doc:`parallelization`.
 
-
-.. py:data:: clrw
-  
-  :default: 0.
-  
-  Cluster width.
-  :red:`to do`
-
-
-.. py:data:: maxwell_sol
+.. py:data:: maxwell_solver
   
   :default: 'Yee'
   
@@ -201,9 +192,9 @@ The block ``Main`` is **mandatory** and has the following syntax::
   Time, at the beginning of the simulation, during which fields are frozen.
 
 
-.. _referenceAngularFrequency_SI:
+.. _reference_angular_frequency_SI:
 
-.. py:data:: referenceAngularFrequency_SI
+.. py:data:: reference_angular_frequency_SI
   
   The value of the reference angular frequency :math:`\omega_r` in SI units,
   **only needed when collisions or ionization are requested**.
@@ -314,8 +305,8 @@ Each species has to be defined in a ``Species`` block::
 
   Species(
       species_type      = "electrons1",
-      initPosition_type = "random",
-      initMomentum_type = "maxwell-juettner",
+      position_initialization = "random",
+      momentum_initialization = "maxwell-juettner",
       n_part_per_cell = 100,
       mass = 1.,
       atomic_number = None,
@@ -328,13 +319,13 @@ Each species has to be defined in a ``Species`` block::
       bc_part_type_xmax = "refl",
       # bc_part_type_ymax = None,
       # bc_part_type_ymin = None,
-      # thermT = None,
-      # thermVelocity = None,
+      # thermal_boundary_temperature = None,
+      # thermal_boundary_velocity = None,
       time_frozen = 0.0,
       # ionization_model = "none",
       # ionization_electrons = None,
       # radiating = False,
-      isTest = False,
+      is_test = False,
       track_every = 10,
       track_flush_every = 100,
       c_part_max = 1.0,
@@ -345,7 +336,7 @@ Each species has to be defined in a ``Species`` block::
   
   The name you want to give to this species.
 
-.. py:data:: initPosition_type
+.. py:data:: position_initialization
   
    The initialization of particle positions:
    
@@ -354,7 +345,7 @@ Each species has to be defined in a ``Species`` block::
    * ``"centered"`` for centered in each cell
 
 
-.. py:data:: initMomentum_type
+.. py:data:: momentum_initialization
   
   The initialization of particle momenta:
   
@@ -422,13 +413,13 @@ Each species has to be defined in a ``Species`` block::
   The boundary condition for particles: ``"refl"`` for *reflecting*, ``"supp"`` for
   *suppressing*, ``"stop"`` for *stopping*, ``"periodic"``, and ``"thermalize"``.
   
-.. py:data:: thermT
+.. py:data:: thermal_boundary_temperature
   
   :default: None
   
   :red:`to do`
 
-.. py:data:: thermVelocity
+.. py:data:: thermal_boundary_velocity
   
   :default: None
   
@@ -461,7 +452,7 @@ Each species has to be defined in a ``Species`` block::
   :red:`to do`
 
 
-.. py:data:: isTest
+.. py:data:: is_test
   
   :default: ``False``
   
@@ -539,11 +530,11 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   .. code-block:: python
     
     Laser(
-        boxSide = "xmin",
+        box_side = "xmin",
         space_time_profile = [ By_profile, Bz_profile ]
     )
   
-  .. py:data:: boxSide
+  .. py:data:: box_side
     
     :default: ``"xmin"``
     
@@ -567,7 +558,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   .. code-block:: python
     
     Laser(
-        boxSide        = "xmin",
+        box_side        = "xmin",
         omega          = 1.,
         chirp_profile  = tconstant(),
         time_envelope  = tgaussian(),
@@ -633,10 +624,10 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   For one-dimensional simulations, you may use the simplified laser creator::
     
     LaserPlanar1D(
-        boxSide         = "xmin",
+        box_side         = "xmin",
         a0              = 1.,
         omega           = 1.,
-        polarizationPhi = 0.,
+        polarization_phi = 0.,
         ellipticity     = 0.,
         time_envelope   = tconstant()
     )
@@ -647,7 +638,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     
     The normalized vector potential
     
-  .. py:data:: polarizationPhi
+  .. py:data:: polarization_phi
     
     :default: 0.
     
@@ -668,13 +659,13 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   For two-dimensional simulations, you may use the simplified laser creator::
     
     LaserGaussian2D(
-        boxSide         = "xmin",
+        box_side         = "xmin",
         a0              = 1.,
         omega           = 1.,
         focus           = [50., 40.],
         waist           = 3.,
         incidence_angle = 0.,
-        polarizationPhi = 0.,
+        polarization_phi = 0.,
         ellipticity     = 0.,
         time_envelope   = tconstant()
     )
@@ -707,13 +698,13 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   For three-dimensional simulations, you may use the simplified laser creator::
     
     LaserGaussian3D(
-        boxSide         = "xmin",
+        box_side         = "xmin",
         a0              = 1.,
         omega           = 1.,
         focus           = [50., 40., 40.],
         waist           = 3.,
         incidence_angle = [0., 0.1], 
-        polarizationPhi = 0.,
+        polarization_phi = 0.,
         ellipticity     = 0.,
         time_envelope   = tconstant()
     )
@@ -806,7 +797,7 @@ profiles.
 * ``Species( ... , mean_velocity = [0.05, 0., 0.], ... )`` defines a species
   with drift velocity :math:`v_x = 0.05\,c` over the whole box.
 
-* ``Species(..., initMomentum_type="maxwell-juettner", temperature=[1e-5], ...)`` defines
+* ``Species(..., momentum_initialization="maxwell-juettner", temperature=[1e-5], ...)`` defines
   a species with a Maxwell-Jüttner distribution of temperature :math:`T = 10^{-5}\,m_ec^2` over the whole box.
   Note that the temperature may be anisotropic: ``temperature=[1e-5, 2e-5, 2e-5]``.
 
@@ -1708,7 +1699,7 @@ A few things are important to know when you need dumps and restarts.
       dump_minutes = 240.,
       dump_deflate = 0,
       exit_after_dump = True,
-      dump_file_sequence = 2,
+      keep_n_dumps = 2,
   )
 
 .. py:data:: restart_dir
@@ -1744,7 +1735,7 @@ A few things are important to know when you need dumps and restarts.
 
   If ``True``, the code stops after the dump.
 
-.. py:data:: dump_file_sequence
+.. py:data:: keep_n_dumps
 
   :default: 2
   

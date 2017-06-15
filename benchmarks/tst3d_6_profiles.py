@@ -52,8 +52,8 @@ profiles = {
 for name, profile in profiles.items():
 	Species(
 		species_type = name,
-		initPosition_type = "regular",
-		initMomentum_type = "maxwell-juettner",
+		position_initialization = "regular",
+		momentum_initialization = "maxwell-juettner",
 		n_part_per_cell= 8,
 		mass = 1.0,
 		charge = 1.0,

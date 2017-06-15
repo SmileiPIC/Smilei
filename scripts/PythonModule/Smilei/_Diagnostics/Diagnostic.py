@@ -82,7 +82,7 @@ class Diagnostic(object):
 			yunits = None
 			if self.dim > 0: xunits = self._units[0]
 			if self.dim > 1: yunits = self._units[1]
-			self.units.prepare(self.Smilei._referenceAngularFrequency_SI, xunits, yunits, self._vunits)
+			self.units.prepare(self.Smilei._reference_angular_frequency_SI, xunits, yunits, self._vunits)
 	
 	# When no action is performed on the object, this is what appears
 	def __repr__(self):

@@ -47,8 +47,8 @@ LoadBalancing(
 
 Species( 
     species_type = "electron",
-    initPosition_type = "regular",
-    initMomentum_type = "cold",
+    position_initialization = "regular",
+    momentum_initialization = "cold",
     n_part_per_cell = 8,
     c_part_max = 1.0,
     mass = 1.0,
@@ -68,7 +68,7 @@ Species(
 )
 
 LaserGaussian3D(
-    boxSide         = "xmin",
+    box_side         = "xmin",
     a0              = 2.,
     focus           = [0., Main.sim_length[1]/2., Main.sim_length[2]/2.],
     waist           = 26.16,

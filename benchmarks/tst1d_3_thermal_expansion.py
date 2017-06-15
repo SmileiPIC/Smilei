@@ -37,29 +37,29 @@ Main(
 
 Species(
     species_type = 'ion',
-    initPosition_type = 'regular',
-    initMomentum_type = 'mj',
+    position_initialization = 'regular',
+    momentum_initialization = 'mj',
     n_part_per_cell = 10,
     mass = mi, 
     charge = 1.0,
     nb_density = trapezoidal(1., xplateau=20.*Ld),
     temperature = [1.e-6],
-    thermT = [1.e-6],
-    thermVelocity = [0.,0.,0.],
+    thermal_boundary_temperature = [1.e-6],
+    thermal_boundary_velocity = [0.,0.,0.],
     bc_part_type_xmin = 'thermalize',
     bc_part_type_xmax = 'refl'
 )
 Species(
     species_type = 'eon',
-    initPosition_type = 'regular',
-    initMomentum_type = 'maxwell-juettner',
+    position_initialization = 'regular',
+    momentum_initialization = 'maxwell-juettner',
     n_part_per_cell = 100,
     mass = 1.0,
     charge = -1.0,
     nb_density = trapezoidal(1., xplateau=20.*Ld),
     temperature = [Te],
-    thermT = [Te],
-    thermVelocity = [0.,0.,0.],
+    thermal_boundary_temperature = [Te],
+    thermal_boundary_velocity = [0.,0.,0.],
     bc_part_type_xmin = 'thermalize',
     bc_part_type_xmax = 'refl'
 )

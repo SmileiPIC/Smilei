@@ -58,8 +58,8 @@ LoadBalancing(
 
 Species(
     species_type = "proton",
-    initPosition_type = "regular",
-    initMomentum_type = "mj",
+    position_initialization = "regular",
+    momentum_initialization = "mj",
     n_part_per_cell = 8, 
     c_part_max = 1.0,
     mass = 1836.0,
@@ -77,8 +77,8 @@ Species(
 )
 Species(
     species_type = "electron",
-    initPosition_type = "regular",
-    initMomentum_type = "mj",
+    position_initialization = "regular",
+    momentum_initialization = "mj",
     n_part_per_cell = 8, 
     c_part_max = 1.0,
     mass = 1.0,
