@@ -6,7 +6,7 @@ compile:
   stage: compile
   only:
     - develop
-    - develop-Higuera-Carry-pusher
+    - scalable_loadbalance
   script:
     # Move in test dir
     - mkdir -p /sps/gitlab-runner/$CI_PIPELINE_ID
@@ -19,7 +19,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - develop-Higuera-Carry-pusher
+    - scalable_loadbalance
   script:
     # Move in test dir
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -30,7 +30,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - develop-Higuera-Carry-pusher
+    - scalable_loadbalance
   script:
     # Move in test dir
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -41,7 +41,7 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    - develop-Higuera-Carry-pusher
+    - scalable_loadbalance
   script:
     # Move in test dir
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -52,6 +52,7 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
+    - scalable_loadbalance
   script:
     # Move in test dir
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
