@@ -58,6 +58,7 @@ class Radiation
                                      double & Ex, double & Ey, double & Ez,
                                      double & Bx, double & By, double & Bz)
         {
+
             return fabs(charge_over_mass2)*inv_norm_E_Schwinger
                   * sqrt( fabs( pow(Ex*px + Ey*py + Ez*pz,2)
                   - pow(gamma*Ex - By*pz + Bz*py,2)

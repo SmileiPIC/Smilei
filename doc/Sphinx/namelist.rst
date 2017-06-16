@@ -206,7 +206,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 .. py:data:: referenceAngularFrequency_SI
 
   The value of the reference angular frequency :math:`\omega_r` in SI units,
-  **only needed when collisions or ionization are requested**.
+  **only needed when collisions, ionization or radiation losses are requested**.
   This frequency is related to the normalization length according to :math:`L_r\omega_r = c`
   (see :doc:`units`).
 
@@ -1529,6 +1529,8 @@ for instance::
   * with ``"p_density"``, the weights :math:`\times\; p` are summed (same with :math:`p_x`, :math:`p_y` and :math:`p_z`).
   * with ``"ekin_density"``, the weights :math:`\times mc^2\; (\gamma-1)` are summed.
   * with ``"pressure_xx"``, the weights :math:`\times\; v_x p_x` are summed (same with yy, zz, xy, yz and xz).
+  * with ``"chi_density"``, the weights :math:`\times\; \chi` (quantum parameter)
+         are summed (only for species with radiation losses).
 
 
 .. py:data:: every
@@ -1565,7 +1567,8 @@ for instance::
   Syntax of one axis: ``[type, min, max, nsteps, "logscale", "edge_inclusive"]``
 
   * ``type`` is one of ``"x"``, ``"y"``, ``"z"``, ``"px"``, ``"py"``, ``"pz"``, ``"p"``,
-    ``"gamma"``, ``"ekin"``, ``"vx"``, ``"vy"``, ``"vz"``, ``"v"`` or ``"charge"``.
+    ``"gamma"``, ``"ekin"``, ``"vx"``, ``"vy"``, ``"vz"``, ``"v"``, ``"chi"``
+    or ``"charge"``.
     There is one additional type, specific for simulations that include a
     :ref:`moving window<movingWindow>`\ : the x-coordinate corrected by the window
     current movement ``moving_x``.

@@ -83,6 +83,7 @@ void Radiation::compute_thread_chipa(Particles &particles,
     // _______________________________________________________________
     // Computation
 
+    #pragma omp simd
     for (int ipart=istart ; ipart<iend; ipart++ )
     {
         charge_over_mass2 = (double)(charge[ipart])*pow(one_over_mass_,2.);
@@ -98,6 +99,17 @@ void Radiation::compute_thread_chipa(Particles &particles,
                  gamma,
                  (*Epart)[ipart].x,(*Epart)[ipart].y,(*Epart)[ipart].z,
                  (*Bpart)[ipart].x,(*Bpart)[ipart].y,(*Bpart)[ipart].z);
+
+        /*if ( sqrt((*Epart)[ipart].y*(*Epart)[ipart].y + (*Epart)[ipart].z*(*Epart)[ipart].z) > 10. )
+        {
+        std::cerr << " chi: " << chi[ipart]
+                  << " charge_over_mass2: " << charge_over_mass2
+                  << " gamma: " << gamma
+                  << " Ey: " << (*Epart)[ipart].y
+                  << " By: " << (*Bpart)[ipart].y
+                  << " Bz: " << (*Bpart)[ipart].z
+                  << std::endl;
+        }*/
 
     }
 }

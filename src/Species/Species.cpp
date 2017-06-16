@@ -478,6 +478,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             {
                 (*Radiate)(*particles, smpi, RadiationTables,
                          bmin[ibin], bmax[ibin], ithread );
+
                 nrj_radiation_lost += (*Radiate).getRadiatedEnergy();
 
                 // Update the quantum parameter chi

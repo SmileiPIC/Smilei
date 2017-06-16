@@ -51,6 +51,12 @@ void RadiationTables::initParams(Params& params)
     if (params.hasMCRadiation || params.hasContinuousRadiation)
     {
         TITLE("Initializing Radiation loss")
+
+        // Preliminary checks
+        if (params.referenceAngularFrequency_SI <= 0.)
+            ERROR("The parameter `referenceAngularFrequency_SI` needs "
+                  << "to be defined and positive to compute radiation losses");
+
     }
 
     if (params.hasMCRadiation)
