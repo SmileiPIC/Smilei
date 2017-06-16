@@ -29,7 +29,11 @@ SimWindow::SimWindow(Params& params)
     time_start = numeric_limits<double>::max();
     velocity_x = 1.;
 
+#ifdef _OPENMP
     max_threads = omp_get_max_threads();
+#else
+    max_threads = 1;
+#endif
     patch_to_be_created.resize(max_threads);
 
     if( PyTools::nComponents("MovingWindow") ) {
@@ -85,8 +89,13 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 
     std::vector<Patch*> delete_patches_, update_patches_, send_patches_;
 
+#ifdef _OPENMP
     int my_thread = omp_get_thread_num();
+#else
+    int my_thread = 0;
+#endif
     (patch_to_be_created[my_thread]).clear();
+
 
     #pragma omp single
     {
@@ -147,7 +156,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             vecPatches.patches_[mypatch->hindex - h0 ] = mypatch ;
 
         }
-
     }//End loop on Patches. This barrier matters.
     // At this point, all isends have been done and the list of patches to delete at the end is complete.
     // The lists of patches to create and patches to update is also complete.
@@ -165,20 +173,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], (mypatch->hindex)*nmessage, params );
             patch_to_be_created[my_thread][j] = nPatches ; //Mark no needs of particles
         }
-        else { // Must force particles creation, see in SpeciesFactory :
-            // if (params.restart)
-            //     thisSpecies->particles->initialize( 0, params.nDim_particle );
-            if (params.restart)
-                for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++)
-                    mypatch->vecSpecies[ispec]->createParticles(params.n_space, params, mypatch, 0 );
-            // We define the IDs of the new particles
-            for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ )
-                if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) )
-                    track->setIDs( mypatch );
-        }
         mypatch->EMfields->laserDisabled();
         mypatch->EMfields->updateGridSize(params, mypatch);
-
     }
 
     //Wait for sends to be completed

@@ -69,7 +69,7 @@ This script may run anywhere: you can define a SMILEI_ROOT environment variable
 
 
 # IMPORTS
-import sys, os, re, glob, time
+import sys, os, re, glob, time, math
 import shutil, getopt, inspect, socket, pickle
 from subprocess import check_call,CalledProcessError,call
 s = os.sep
@@ -85,6 +85,10 @@ SMILEI_SCRIPTS = SMILEI_ROOT+"scripts"+s
 SMILEI_VALIDATION = SMILEI_ROOT+"validation"+s
 SMILEI_REFERENCES = SMILEI_VALIDATION+"references"+s
 SMILEI_BENCHS = SMILEI_ROOT+"benchmarks"+s
+
+# Path to external databases
+# For instance, the radiation loss
+DATABASE_DIR = ''
 
 # SCRIPTS VARIABLES
 EXEC_SCRIPT = 'exec_script.sh'
@@ -263,7 +267,15 @@ def RUN_POINCARE(command, dir):
 			os.chdir(WORKDIR_BASE)
 			shutil.rmtree(WORKDIR)
 		sys.exit(2)
+
 def RUN_JOLLYJUMPER(command, dir):
+	"""
+	Run the command `command` on the system Jollyjumper.
+
+	Inputs:
+	- command: command to run
+	- dir: working directory
+	"""
 	EXIT_STATUS="100"
 	exit_status_fd = open(dir+s+"exit_status_file", "w+")
 	exit_status_fd.write(str(EXIT_STATUS))
@@ -315,13 +327,21 @@ def RUN_JOLLYJUMPER(command, dir):
 				sys.exit(2)
 		exit_status_fd.close()
 		sys.exit(2)
+
 def RUN_OTHER(command, dir):
-		try :
-			check_call(command, shell=True)
-		except CalledProcessError,e:
-			if VERBOSE :
-				print  "Execution failed for command `"+command+"`"
-			sys.exit(2)
+	"""
+	Run the command `command` on an arbitrary system.
+
+	Inputs:
+	- command: command to run
+	- dir: working directory
+	"""
+	try :
+		check_call(command, shell=True)
+	except CalledProcessError,e:
+		if VERBOSE :
+			print  "Execution failed for command `"+command+"`"
+		sys.exit(2)
 
 
 # SET DIRECTORIES
@@ -345,8 +365,10 @@ if JOLLYJUMPER in HOSTNAME :
 	if 12 % OMP != 0:
 		print  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME
 		sys.exit(4)
-	NPERSOCKET = 12/OMP
+		NODES=((int(MPI)*int(OMP)-1)/24)+1
+	NPERSOCKET = int(math.ceil(MPI/NODES/2.))
 	COMPILE_COMMAND = 'make -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+
 	CLEAN_COMMAND = 'unset MODULEPATH;module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles; module load compilers/icc/16.0.109 mpi/openmpi/1.6.5-ib-icc python/2.7.10 hdf5 compilers/gcc/4.8.2 > /dev/null 2>&1;make clean > /dev/null 2>&1'
 	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x $OMP_NUM_THREADS -x $OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
 	RUN = RUN_JOLLYJUMPER
@@ -360,7 +382,8 @@ elif POINCARE in HOSTNAME :
 elif "mdlslx" in HOSTNAME :
 	COMPILE_COMMAND = 'make -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-	RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
+	DATABASE_DIR = '/local/home/mlobet/Simulations/Smilei/Synchrotron/tst2d_bfield_par/'
+	RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+"mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
 	RUN = RUN_OTHER
 else:
 	COMPILE_COMMAND = 'make -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
@@ -584,11 +607,25 @@ for BENCH in SMILEI_BENCH_LIST :
 
 	os.chdir(WORKDIR)
 
+	# Copy of the databases
+	# For the cases that need a database
+	if BENCH in ["tst2d_8_synchrotron.py"]:
+		DATABASE = DATABASE_DIR
+		try :
+			# Copy the database
+			check_call(['cp '+DATABASE+'/*.bin '+WORKDIR], shell=True)
+		except CalledProcessError,e:
+			if VERBOSE :
+				print  "Execution failed for copy database ",DATABASE
+			sys.exit(2)
+	else:
+		DATABASE = ''
+
 	# RUN smilei IF EXECUTION IS TRUE
 	if EXECUTION :
 		if VERBOSE:
 			print 'Running '+BENCH+' on '+HOSTNAME+' with '+str(OMP)+'x'+str(MPI)+' OMPxMPI'
-		RUN( RUN_COMMAND % SMILEI_BENCH, WORKDIR )
+		RUN( RUN_COMMAND % SMILEI_BENCH, WORKDIR)
 
 	# CHECK THE OUTPUT FOR ERRORS
 	errors = []
