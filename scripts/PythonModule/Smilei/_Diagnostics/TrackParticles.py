@@ -246,9 +246,11 @@ class TrackParticles(Diagnostic):
 	
 	# Method to get info
 	def _info(self):
-		info = "Track particles: species '"+self.species+"' containing "+str(self.nParticles)+" particles"
-		if len(self.selectedParticles) != self.nParticles:
-			info += "\n                with selection of "+str(len(self.selectedParticles))+" particles"
+		info = "Track particles: species '"+self.species+"'"
+		if self._sort:
+			info += " containing "+str(self.nParticles)+" particles"
+			if len(self.selectedParticles) != self.nParticles:
+				info += "\n                with selection of "+str(len(self.selectedParticles))+" particles"
 		return info
 	
 	# get all available tracked species
