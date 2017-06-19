@@ -549,6 +549,7 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 
         // Loop for xip in the chipa dimension
         pct = 0;
+        dpct = std::max(dpct,100./(length_table[rank]*chiph_xip_dim));
         for(int ichipa = 0 ; ichipa < length_table[rank] ; ichipa++)
         {
 
@@ -584,8 +585,11 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
                    >= length_table[rank]*chiph_xip_dim*pct)
                {
                    pct += dpct;
-                   MESSAGE( "            " << ichipa + 1 << "/" << length_table[rank]
-                                       << " - " << (int)(std::round(pct)) << "%");
+                   MESSAGE( "            " << ichipa*chiph_xip_dim+ichiph + 1
+                                           << "/"
+                                           << length_table[rank]*chiph_xip_dim
+                                           << " - " << (int)(std::round(pct))
+                                           << "%");
                }
 
             }

@@ -85,10 +85,9 @@ SMILEI_SCRIPTS = SMILEI_ROOT+"scripts"+s
 SMILEI_VALIDATION = SMILEI_ROOT+"validation"+s
 SMILEI_REFERENCES = SMILEI_VALIDATION+"references"+s
 SMILEI_BENCHS = SMILEI_ROOT+"benchmarks"+s
-
 # Path to external databases
 # For instance, the radiation loss
-DATABASE_DIR = ''
+SMILEI_DATABASE = ''
 
 # SCRIPTS VARIABLES
 EXEC_SCRIPT = 'exec_script.sh'
@@ -196,7 +195,7 @@ elif BENCH in list_bench:
 	SMILEI_BENCH_LIST = [ BENCH ]
 elif glob.glob( SMILEI_BENCHS+BENCH ):
 	BENCH = glob.glob( SMILEI_BENCHS+BENCH )
-		list_all = glob.glob(SMILEI_BENCHS+"tst*py")
+	list_all = glob.glob(SMILEI_BENCHS+"tst*py")
 	for b in BENCH:
 		if b not in list_all:
 			if VERBOSE:
@@ -370,6 +369,7 @@ if JOLLYJUMPER in HOSTNAME :
 	COMPILE_COMMAND = 'make -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 
 	CLEAN_COMMAND = 'unset MODULEPATH;module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles; module load compilers/icc/16.0.109 mpi/openmpi/1.6.5-ib-icc python/2.7.10 hdf5 compilers/gcc/4.8.2 > /dev/null 2>&1;make clean > /dev/null 2>&1'
+	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
 	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x $OMP_NUM_THREADS -x $OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
 	RUN = RUN_JOLLYJUMPER
 elif POINCARE in HOSTNAME :
@@ -377,17 +377,19 @@ elif POINCARE in HOSTNAME :
 	#CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
 	COMPILE_COMMAND = 'make -j 6 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu ; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0 > /dev/null 2>&1;make clean > /dev/null 2>&1'
+	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
 	RUN_COMMAND = "mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
 	RUN = RUN_POINCARE
 elif "mdlslx" in HOSTNAME :
 	COMPILE_COMMAND = 'make -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-	DATABASE_DIR = '/local/home/mlobet/Simulations/Smilei/Synchrotron/tst2d_bfield_par/'
+	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
 	RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+"mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
 	RUN = RUN_OTHER
 else:
 	COMPILE_COMMAND = 'make -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
+	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
 	RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; mpirun -mca btl tcp,sm,self -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
 	RUN = RUN_OTHER
 
@@ -610,16 +612,13 @@ for BENCH in SMILEI_BENCH_LIST :
 	# Copy of the databases
 	# For the cases that need a database
 	if BENCH in ["tst2d_8_synchrotron.py"]:
-		DATABASE = DATABASE_DIR
 		try :
 			# Copy the database
-			check_call(['cp '+DATABASE+'/*.bin '+WORKDIR], shell=True)
+			check_call(['cp '+SMILEI_DATABASE+'/*.bin '+WORKDIR], shell=True)
 		except CalledProcessError,e:
 			if VERBOSE :
-				print  "Execution failed for copy database ",DATABASE
+				print  "Execution failed for copy databases in ",DATABASE
 			sys.exit(2)
-	else:
-		DATABASE = ''
 
 	# RUN smilei IF EXECUTION IS TRUE
 	if EXECUTION :
