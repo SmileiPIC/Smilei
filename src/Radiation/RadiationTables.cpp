@@ -85,7 +85,10 @@ void RadiationTables::initParams(Params& params)
             PyTools::extract("chiph_xip_dim", chiph_xip_dim, "RadiationLoss");
             PyTools::extract("output_format", output_format, "RadiationLoss");
 
-            // Discontinuous minimum threashold
+            // Path to the databases
+            PyTools::extract("table_path", table_path, "RadiationLoss");
+
+            // Discontinuous minimum threshold
             PyTools::extract("chipa_disc_min_threshold",
                              chipa_disc_min_threshold,"RadiationLoss");
 
@@ -116,7 +119,8 @@ void RadiationTables::initParams(Params& params)
 
     if (params.hasMCRadiation)
     {
-        MESSAGE( "        chipa_disc_min_threshold: " << chipa_disc_min_threshold)
+        MESSAGE( "        chipa_disc_min_threshold: " << chipa_disc_min_threshold);
+        MESSAGE( "        table path: " << table_path);
     }
 
     MESSAGE("")
@@ -280,7 +284,7 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
     MESSAGE("        --- Table chiphmin and xip:");
 
     // Test if an external table exists, we read the table...
-    if (Tools::file_exists("tab_xip.bin"))
+    if (Tools::file_exists(table_path + "/tab_xip.bin"))
     {
 
         if (rank==0)
@@ -290,7 +294,7 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 
             // Reading of the table file
             std::ifstream file;
-            file.open("tab_xip.bin",std::ios::binary);
+            file.open(table_path + "/tab_xip.bin",std::ios::binary);
 
             if (file.is_open())
             {
@@ -624,7 +628,7 @@ void RadiationTables::output_xip_table()
     if (output_format == "ascii")
     {
         std::ofstream file;
-        file.open("tab_xip.dat");
+        file.open(table_path + "/tab_xip.dat");
 
         if (file.is_open()) {
 
@@ -655,7 +659,7 @@ void RadiationTables::output_xip_table()
     else if (output_format == "binary")
     {
         std::ofstream file;
-        file.open("tab_xip.bin",std::ios::binary);
+        file.open(table_path + "/tab_xip.bin",std::ios::binary);
 
         if (file.is_open()) {
 
@@ -767,7 +771,7 @@ void RadiationTables::compute_integfochi_table(SmileiMPI *smpi)
     t0 = MPI_Wtime();
 
     // Test if an external table exists, we read the table...
-    if (Tools::file_exists("tab_integfochi.bin"))
+    if (Tools::file_exists(table_path + "/tab_integfochi.bin"))
     {
 
         MESSAGE("            Reading of the external binary table");
@@ -777,7 +781,7 @@ void RadiationTables::compute_integfochi_table(SmileiMPI *smpi)
 
             // Reading of the table file
             std::ifstream file;
-            file.open("tab_integfochi.bin",std::ios::binary);
+            file.open(table_path + "/tab_integfochi.bin",std::ios::binary);
 
             if (file.is_open())
             {
@@ -995,7 +999,7 @@ void RadiationTables::output_integfochi_table()
     if (output_format == "ascii")
     {
         std::ofstream file;
-        file.open("tab_integfochi.dat");
+        file.open(table_path + "/tab_integfochi.dat");
 
         if (file.is_open()) {
 
@@ -1022,7 +1026,7 @@ void RadiationTables::output_integfochi_table()
     else if (output_format == "binary")
     {
         std::ofstream file;
-        file.open("tab_integfochi.bin",std::ios::binary);
+        file.open(table_path + "/tab_integfochi.bin",std::ios::binary);
 
         if (file.is_open()) {
 

@@ -121,6 +121,9 @@ class RadiationTables
         //! Output format of the tables
         std::string output_format;
 
+        //! Path to the tables
+        std::string table_path;
+
         //! Minimum threashold above which the Monte-Carlo algorithm is working
         //! This avoids using the Monte-Carlo algorithm when chipa is too low
         double chipa_disc_min_threshold;

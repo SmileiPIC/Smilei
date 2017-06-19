@@ -348,22 +348,27 @@ class PartWall(SmileiComponent):
     y = None
     z = None
 
-# Nonlinear Inverse Compton Scattering
+# Radiation loss (continuous and MC algorithms)
 class RadiationLoss(SmileiComponent):
-    """Nonlinear inverse Compton scattering"""
+    """Radiation loss (continuous and MC algorithms)"""
+    # First table parameters
     chipa_integfochi_min = 1e-5
     chipa_integfochi_max = 1e2
     integfochi_dim = 128
+    # Second table parameters
     chipa_xip_min = 1e-5
     chipa_xip_max = 1e2
     xip_power = 4
     xip_threshold = 1e-3
     chipa_xip_dim = 128
     chiph_xip_dim = 128
-    
+    # Output format, can be "ascii", "binary"
     output_format = "binary"
-
+    # Threshold on chipa between the continuous and
+    # the discontinuous approaches
     chipa_disc_min_threshold = 1e-2
+    # Path the tables/databases
+    table_path = "./"
 
 # Smilei-defined
 smilei_mpi_rank = 0
