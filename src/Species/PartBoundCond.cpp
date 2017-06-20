@@ -74,19 +74,19 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
 
     // Check for inconsistencies between EM and particle BCs
     if (! species->particles->tracked) {
-        if ( ((params.bc_em_type_x[0]=="periodic")&&(species->bc_part_type_xmin!="none"))
-         ||  ((params.bc_em_type_x[1]=="periodic")&&(species->bc_part_type_xmax!="none")) ) {
-            ERROR("For species " << species->species_type << ", periodic EM boundary conditions require x particle BCs to be periodic.");
+        if ( ((params.bc_em_type_x[0]=="periodic")&&(species->bc_part_type_xmin!="none")&&(species->bc_part_type_xmin!="periodic"))  
+         ||  ((params.bc_em_type_x[1]=="periodic")&&(species->bc_part_type_xmax!="none")&&(species->bc_part_type_xmax!="periodic")) ) {
+            ERROR("For species " << species->species_type << ", periodic EM boundary conditions require x particle BCs to be periodic or none.");
         }
         if ( nDim_particle > 1 ) {
-            if ( ((params.bc_em_type_y[0]=="periodic")&&(species->bc_part_type_ymin!="none"))
-             ||  ((params.bc_em_type_y[1]=="periodic")&&(species->bc_part_type_ymax!="none")) ) {
-                ERROR("For species #" << species->species_type << ", periodic EM boundary conditions require y particle BCs to be periodic.");
+            if ( ((params.bc_em_type_y[0]=="periodic")&&(species->bc_part_type_ymin!="none")&&(species->bc_part_type_ymin!="periodic"))
+             ||  ((params.bc_em_type_y[1]=="periodic")&&(species->bc_part_type_ymax!="none")&&(species->bc_part_type_ymax!="periodic")) ) {
+                ERROR("For species #" << species->species_type << ", periodic EM boundary conditions require y particle BCs to be periodic or none.");
             }
             if ( nDim_particle > 2 ) {
-                if ( ((params.bc_em_type_z[0]=="periodic")&&(species->bc_part_type_zmin!="none"))
-                 ||  ((params.bc_em_type_z[1]=="periodic")&&(species->bc_part_type_zmax!="none"    )) ) {
-                    ERROR("For species #" << species->species_type << ", periodic EM boundary conditions require z particle BCs to be periodic.");
+                if ( ((params.bc_em_type_z[0]=="periodic")&&(species->bc_part_type_zmin!="none")&&(species->bc_part_type_zmin!="periodic"))
+                 ||  ((params.bc_em_type_z[1]=="periodic")&&(species->bc_part_type_zmax!="none")&&(species->bc_part_type_zmax!="periodic")) ) {
+                    ERROR("For species #" << species->species_type << ", periodic EM boundary conditions require z particle BCs to be periodic or none.");
                 }
             }
         }

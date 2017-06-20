@@ -174,6 +174,9 @@ int main (int argc, char* argv[])
         timers.diags.reboot();
 
     }
+    TITLE("Species creation summary");
+    vecPatches.printNumberOfParticles( smpi );
+
     timers.global.reboot();
 
     // ------------------------------------------------------------------------

@@ -174,7 +174,6 @@ class TrackParticles(Diagnostic):
 				else:
 					self.selectedParticles = eval(operation).nonzero()[0]
 				self.selectedParticles.sort()
-				print("Done selecting particles")
 
 			# Otherwise, the selection can be a list of particle IDs
 			else:
@@ -255,9 +254,11 @@ class TrackParticles(Diagnostic):
 
 	# Method to get info
 	def _info(self):
-		info = "Track particles: species '"+self.species+"' containing "+str(self.nParticles)+" particles"
-		if len(self.selectedParticles) != self.nParticles:
-			info += "\n                with selection of "+str(len(self.selectedParticles))+" particles"
+		info = "Track particles: species '"+self.species+"'"
+		if self._sort:
+			info += " containing "+str(self.nParticles)+" particles"
+			if len(self.selectedParticles) != self.nParticles:
+				info += "\n                with selection of "+str(len(self.selectedParticles))+" particles"
 		return info
 
 	# get all available tracked species
@@ -301,7 +302,7 @@ class TrackParticles(Diagnostic):
 			last_file_index, tname = time_locations[times[-1]]
 			f = self._h5py.File(filesDisordered[last_file_index], "r")
 			number_of_particles = (f["data"][tname]["latest_IDs"].value % (2**32)).astype('uint32')
-			print("Number of particles:",number_of_particles)
+			print("Number of particles: "+str(number_of_particles.sum()))
 			# Calculate the offset that each MPI needs
 			offset = self._np.cumsum(number_of_particles)
 			total_number_of_particles = offset[-1]
@@ -325,16 +326,56 @@ class TrackParticles(Diagnostic):
 				file_index, tname = time_locations[t]
 				f = self._h5py.File(filesDisordered[file_index], "r")
 				group = f["data"][tname]["particles"][self.species]
-				if group["id"].size == 0: continue
-				# Get the Ids and find where they should be stored in the final file
-				locs = group["id"].value % 2**32 + offset[ group["id"].value>>32 ] -1
-				# Loop datasets and order them
-				for k, name in properties.items():
-					if k not in group: continue
-					disordered = group[k].value
-					ordered = self._np.zeros((total_number_of_particles, ), dtype=disordered.dtype)
-					ordered[locs] = disordered
-					f0[name].write_direct(ordered, dest_sel=self._np.s_[it,:])
+				nparticles = group["id"].size
+				if nparticles == 0: continue
+
+				# If not too many particles, sort all at once
+				chunksize = 20000000
+				if nparticles < chunksize:
+					# Get the Ids and find where they should be stored in the final file
+					locs = group["id"].value % 2**32 + offset[ group["id"].value>>32 ] -1
+					# Loop datasets and order them
+					for k, name in properties.items():
+						if k not in group: continue
+						disordered = group[k].value
+						ordered = self._np.zeros((total_number_of_particles, ), dtype=disordered.dtype)
+						ordered[locs] = disordered
+						f0[name].write_direct(ordered, dest_sel=self._np.s_[it,:])
+
+				# If too many particles, sort by chunks
+				else:
+					import math
+					nchunks = int(float(nparticles)/(chunksize+1) + 1)
+					chunksize = int(math.ceil(float(nparticles)/nchunks))
+					ID   = self._np.empty((chunksize,), dtype=self._np.uint64)
+					data = self._np.empty((chunksize,))
+					# Loop chunks
+					for ichunk in range(nchunks):
+						first = ichunk * chunksize
+						last  = min( first + chunksize, nparticles )
+						npart = last-first
+						# Obtain IDs and find their sorting indices
+						group["id"].read_direct( ID, source_sel=self._np.s_[first:last], dest_sel=self._np.s_[:npart] )
+						sort = self._np.argsort(ID[:npart])
+						ID[:npart] = ID[sort]
+						# Find consecutive-ID batches
+						batchsize = self._np.diff(self._np.concatenate(([0],1+self._np.flatnonzero(self._np.diff(ID[:npart])-1), [npart])))
+						# Loop datasets
+						for k, name in properties.items():
+							if k not in group: continue
+							# Get the data for this chunk and sort by ID
+							group[k].read_direct( data, source_sel=self._np.s_[first:last], dest_sel=self._np.s_[:npart] )
+							data[:npart] = data[sort]
+							# Loop by batch inside this chunk and store at the right place
+							stop = 0
+							for ibatch in range(len(batchsize)):
+								bs = int(batchsize[ibatch])
+								start = stop
+								stop = start + bs
+								start_in_file = int(ID[start] % 2**32 + offset[ int(ID[start])>>32 ] -1)
+								stop_in_file = start_in_file + bs
+								f0[name].write_direct( data, source_sel=self._np.s_[start:stop], dest_sel=self._np.s_[it, start_in_file:stop_in_file] )
+
 				f.close()
 			# Create the "Times" dataset
 			f0.create_dataset("Times", data=times)

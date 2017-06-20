@@ -64,14 +64,12 @@ public:
             vecPatches.patches_[ipatch] = clone(vecPatches(0), params, smpi, firstpatch + ipatch, n_moved);
         }
         MESSAGE(1,"All patches created");
-        // print number of particles
-        vecPatches.printNumberOfParticles( smpi );
         
         vecPatches.set_refHindex();
         
         vecPatches.update_field_list();
         
-        TITLE("Initializing Diagnostics, antennas, and external fields")
+        TITLE("Creating Diagnostics, antennas, and external fields")
         vecPatches.createDiags( params, smpi, openPMD );
 
         for (unsigned int ipatch = 0 ; ipatch < npatches ; ipatch++) 
