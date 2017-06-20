@@ -361,10 +361,9 @@ class TrackParticles(Diagnostic):
 						for k, name in properties.items():
 							if k not in group: continue
 							# Get the data for this chunk and sort by ID
-							if k == "charge":
-								group[k].read_direct( data_int16 , source_sel=self._np.s_[first:last], dest_sel=self._np.s_[:npart] )
-							else:
-								group[k].read_direct( data_double, source_sel=self._np.s_[first:last], dest_sel=self._np.s_[:npart] )
+							if k == "charge": data = data_int16
+							else:             data = data_double
+							group[k].read_direct( data, source_sel=self._np.s_[first:last], dest_sel=self._np.s_[:npart] )
 							data[:npart] = data[sort]
 							# Loop by batch inside this chunk and store at the right place
 							stop = 0
@@ -532,34 +531,32 @@ class TrackParticles(Diagnostic):
 		disorderedfiles = self._findDisorderedFiles()
 		for file in disorderedfiles:
 			f = self._h5py.File(file)
-			for t in f["data"].keys():
-				if timestep == int(t):
-					# This is the timestep for which we want to produce an iterator
-					group = f["data/"+t+"/particles/"+self.species]
-					npart = group["id"].size
-					ID          = self._np.zeros((chunksize,), dtype=self._np.uint64)
-					data_double = self._np.zeros((chunksize,), dtype=self._np.double)
-					data_int16  = self._np.zeros((chunksize,), dtype=self._np.int16 )
-					for chunkstart in range(0, npart, chunksize):
-						chunkend = chunkstart + chunksize
-						if chunkend > npart:
-							chunkend = npart
-							ID          = self._np.zeros((chunkend-chunkstart,), dtype=self._np.uint64)
-							data_double = self._np.zeros((chunkend-chunkstart,), dtype=self._np.double)
-							data_int16  = self._np.zeros((chunkend-chunkstart,), dtype=self._np.int16 )
-						data = {}
-						for axis in self.axes:
-							if axis == "Id":
-								group[properties[axis]].read_direct(ID, source_sel=self._np.s_[chunkstart:chunkend])
-								data[axis] = ID
-							elif axis == "q":
-								group[properties[axis]].read_direct(data_int16, source_sel=self._np.s_[chunkstart:chunkend])
-								data[axis] = data_int16
-							else:
-								group[properties[axis]].read_direct(data_double, source_sel=self._np.s_[chunkstart:chunkend])
-								data[axis] = data_double
-						yield data
-					return
+			# This is the timestep for which we want to produce an iterator
+			group = f["data/"+("%010d"%timestep)+"/particles/"+self.species]
+			npart = group["id"].size
+			ID          = self._np.empty((chunksize,), dtype=self._np.uint64)
+			data_double = self._np.empty((chunksize,), dtype=self._np.double)
+			data_int16  = self._np.empty((chunksize,), dtype=self._np.int16 )
+			for chunkstart in range(0, npart, chunksize):
+				chunkend = chunkstart + chunksize
+				if chunkend > npart:
+					chunkend = npart
+					ID          = self._np.empty((chunkend-chunkstart,), dtype=self._np.uint64)
+					data_double = self._np.empty((chunkend-chunkstart,), dtype=self._np.double)
+					data_int16  = self._np.empty((chunkend-chunkstart,), dtype=self._np.int16 )
+				data = {}
+				for axis in self.axes:
+					if axis == "Id":
+						group[properties[axis]].read_direct(ID, source_sel=self._np.s_[chunkstart:chunkend])
+						data[axis] = ID.copy()
+					elif axis == "q":
+						group[properties[axis]].read_direct(data_int16, source_sel=self._np.s_[chunkstart:chunkend])
+						data[axis] = data_int16.copy()
+					else:
+						group[properties[axis]].read_direct(data_double, source_sel=self._np.s_[chunkstart:chunkend])
+						data[axis] = data_double.copy()
+				yield data
+			return
 	
 	# We override _prepare3
 	def _prepare3(self):
