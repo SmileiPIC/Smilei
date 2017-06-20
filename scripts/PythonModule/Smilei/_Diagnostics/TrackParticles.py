@@ -164,10 +164,10 @@ class TrackParticles(Diagnostic):
 						operation += select[i]
 						i+=1
 				if len(operation)==0.:
-					self.selectedParticles = self._np.arange(self.nParticles,dtype=self._np.uint64)
+					self.selectedParticles = self._np.s_[:]
 				else:
 					self.selectedParticles = eval(operation).nonzero()[0]
-				self.selectedParticles.sort()
+					self.selectedParticles.sort()
 			
 			# Otherwise, the selection can be a list of particle IDs
 			else:
@@ -179,7 +179,7 @@ class TrackParticles(Diagnostic):
 					return
 			
 			# Remove particles that are not actually tracked during the requested timesteps
-			if len(self.selectedParticles) > 0:
+			if type(self.selectedParticles) is not slice and len(self.selectedParticles) > 0:
 				first_time = self._locationForTime[self.times[ 0]]
 				last_time  = self._locationForTime[self.times[-1]]+1
 				IDs = self._h5items["Id"][first_time:last_time,self.selectedParticles]
@@ -187,7 +187,10 @@ class TrackParticles(Diagnostic):
 				self.selectedParticles = self._np.delete( self.selectedParticles, dead_particles )
 			
 			# Calculate the number of selected particles
-			self.nselectedParticles = len(self.selectedParticles)
+			if type(self.selectedParticles) is slice:
+				self.nselectedParticles = self.nParticles
+			else:
+				self.nselectedParticles = len(self.selectedParticles)
 			if self.nselectedParticles == 0:
 				self._error = "No particles found"
 				return
@@ -251,8 +254,8 @@ class TrackParticles(Diagnostic):
 		info = "Track particles: species '"+self.species+"'"
 		if self._sort:
 			info += " containing "+str(self.nParticles)+" particles"
-			if len(self.selectedParticles) != self.nParticles:
-				info += "\n                with selection of "+str(len(self.selectedParticles))+" particles"
+			if self.nselectedParticles != self.nParticles:
+				info += "\n                with selection of "+str(self.nselectedParticles)+" particles"
 		return info
 	
 	# get all available tracked species
