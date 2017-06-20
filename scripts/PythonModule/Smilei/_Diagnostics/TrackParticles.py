@@ -42,7 +42,7 @@ class TrackParticles(Diagnostic):
 				self._orderFiles(disorderedfiles, orderedfile)
 			# Create arrays to store h5 items
 			f = self._h5py.File(orderedfile)
-			for prop in ["Id", "x", "y", "z", "px", "py", "pz"]:
+			for prop in ["Id", "x", "y", "z", "px", "py", "pz", "q", "w"]:
 				if prop in f:
 					self._h5items[prop] = f[prop]
 			# Memorize the locations of timesteps in the files
@@ -208,20 +208,23 @@ class TrackParticles(Diagnostic):
 					return
 		# otherwise use default
 		else:
-			self.axes = ["x","y","z"][:self._ndim] + ["px", "py", "pz"]
+			self.axes = ["x","y","z"][:self._ndim] + ["px", "py", "pz", "w", "q"]
 		# Then figure out axis units
 		self._type = self.axes
 		for axis in self.axes:
 			axisunits = ""
 			if axis == "Id":
 				self._centers.append( [0, self._h5items[axis][0,-1]] )
-			if axis in ["x" , "y" , "z" ]:
+			elif axis in ["x" , "y" , "z" ]:
 				axisunits = "L_r"
 				self._centers.append( [0., self.namelist.Main.sim_length[{"x":0,"y":1,"z":2}[axis]]] )
-			if axis in ["px", "py", "pz"]:
+			elif axis in ["px", "py", "pz"]:
 				axisunits = "P_r"
 				self._centers.append( [-1., 1.] )
-			if axis == "Charge":
+			elif axis == "w":
+				axisunits = "N_r"
+				self._centers.append( [0., 1.] )
+			elif axis == "q":
 				axisunits = "Q_r"
 				self._centers.append( [-10., 10.] )
 			self._log.append( False )
@@ -304,7 +307,8 @@ class TrackParticles(Diagnostic):
 			f0 = self._h5py.File(fileOrdered, "w")
 			# Make new datasets
 			properties = {"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
-			              "momentum/x":"px", "momentum/y":"py", "momentum/z":"pz"}
+			              "momentum/x":"px", "momentum/y":"py", "momentum/z":"pz",
+			              "charge":"q", "weight":"w"}
 			for k, name in properties.items():
 				try   : f0.create_dataset(name, (len(times), total_number_of_particles), f["data"][tname]["particles"][self.species][k].dtype, fillvalue=(0 if name=="Id" else self._np.nan))
 				except: pass
@@ -327,7 +331,7 @@ class TrackParticles(Diagnostic):
 					for k, name in properties.items():
 						if k not in group: continue
 						disordered = group[k].value
-						ordered = self._np.zeros((total_number_of_particles, ), dtype=disordered.dtype)
+						ordered = self._np.empty((total_number_of_particles, ), dtype=disordered.dtype)
 						ordered[locs] = disordered
 						f0[name].write_direct(ordered, dest_sel=self._np.s_[it,:])
 				
@@ -336,8 +340,9 @@ class TrackParticles(Diagnostic):
 					import math
 					nchunks = int(float(nparticles)/(chunksize+1) + 1)
 					chunksize = int(math.ceil(float(nparticles)/nchunks))
-					ID   = self._np.empty((chunksize,), dtype=self._np.uint64)
-					data = self._np.empty((chunksize,))
+					ID = self._np.empty((chunksize,), dtype=self._np.uint64)
+					data_double = self._np.empty((chunksize,))
+					data_int16  = self._np.empty((chunksize,), dtype=self._np.int16)
 					# Loop chunks
 					for ichunk in range(nchunks):
 						first = ichunk * chunksize
@@ -353,7 +358,10 @@ class TrackParticles(Diagnostic):
 						for k, name in properties.items():
 							if k not in group: continue
 							# Get the data for this chunk and sort by ID
-							group[k].read_direct( data, source_sel=self._np.s_[first:last], dest_sel=self._np.s_[:npart] )
+							if k == "charge":
+								group[k].read_direct( data_int16 , source_sel=self._np.s_[first:last], dest_sel=self._np.s_[:npart] )
+							else:
+								group[k].read_direct( data_double, source_sel=self._np.s_[first:last], dest_sel=self._np.s_[:npart] )
 							data[:npart] = data[sort]
 							# Loop by batch inside this chunk and store at the right place
 							stop = 0
@@ -379,24 +387,32 @@ class TrackParticles(Diagnostic):
 		print("Ordering succeeded")
 	
 	# Method to generate the raw data (only done once)
-	def _generateRawData(self):
+	def _generateRawData(self, times=None):
 		if not self._validate(): return
 		self._prepare1() # prepare the vfactor
-	
-		if self._rawData is None:
-			self._rawData = {}
-			
-			if self._sort:
+		
+		if self._sort:
+			if self._rawData is None:
+				self._rawData = {}
+				
 				print("Preparing data ...")
 				# create dictionary with info on the axes
 				ntimes = len(self.times)
 				for axis in self.axes:
-					self._rawData[axis] = self._np.zeros((ntimes, self.nselectedParticles), dtype=(self._np.uint64 if axis=="Id" else self._np.float64))
-					self._rawData[axis].fill((0 if axis=="Id" else self._np.nan))
+					if axis == "Id":
+						self._rawData[axis] = self._np.empty((ntimes, self.nselectedParticles), dtype=(self._np.uint64))
+						self._rawData[axis].fill(0)
+					elif axis == "q":
+						self._rawData[axis] = self._np.empty((ntimes, self.nselectedParticles), dtype=(self._np.int16 ))
+						self._rawData[axis].fill(0)
+					else:
+						self._rawData[axis] = self._np.empty((ntimes, self.nselectedParticles), dtype=(self._np.double))
+						self._rawData[axis].fill(self._np.nan)
 				print("Loading data ...")
 				# loop times and fill up the data
 				ID = self._np.zeros((self.nselectedParticles,), dtype=self._np.uint64)
-				B  = self._np.zeros((self.nselectedParticles,), dtype=self._np.double)
+				data_double = self._np.zeros((self.nselectedParticles,), dtype=self._np.double)
+				data_int16  = self._np.zeros((self.nselectedParticles,), dtype=self._np.int16 )
 				for it, time in enumerate(self.times):
 					print("     iteration "+str(it+1)+"/"+str(ntimes)+"  (timestep "+str(time)+")")
 					timeIndex = self._locationForTime[time]
@@ -405,10 +421,13 @@ class TrackParticles(Diagnostic):
 					for axis in self.axes:
 						if axis == "Id":
 							self._rawData[axis][it, :] = ID.squeeze()
+						elif axis == "q":
+							self._h5items[axis].read_direct(data_int16, source_sel=self._np.s_[timeIndex,self.selectedParticles])
+							self._rawData[axis][it, :] = data_int16.squeeze()
 						else:
-							self._h5items[axis].read_direct(B, source_sel=self._np.s_[timeIndex,self.selectedParticles])
-							B[deadParticles]=self._np.nan
-							self._rawData[axis][it, :] = B.squeeze()
+							self._h5items[axis].read_direct(data_double, source_sel=self._np.s_[timeIndex,self.selectedParticles])
+							data_double[deadParticles]=self._np.nan
+							self._rawData[axis][it, :] = data_double.squeeze()
 				print("Process broken lines ...")
 				# Add the lineBreaks array which indicates where lines are broken (e.g. loop around the box)
 				self._rawData['brokenLine'] = self._np.zeros((self.nselectedParticles,), dtype=bool)
@@ -431,18 +450,25 @@ class TrackParticles(Diagnostic):
 									self._rawData['lineBreaks'][broken_particle] = broken_times
 				# Add the times array
 				self._rawData["times"] = self.times
+				print("... done")
 			
-			# If not sorted, get different kind of data
-			else:
-				print("Loading data ...")
-				properties = {"Id":"id", "x":"position/x", "y":"position/y", "z":"position/z",
-				              "px":"momentum/x", "py":"momentum/y", "pz":"momentum/z"}
-				for time in self.times:
-					[f, timeIndex] = self._locationForTime[time]
-					group = f["data/"+"%010i"%time+"/particles/"+self.species]
-					self._rawData[time] = {}
-					for axis in self.axes:
-						self._rawData[time][axis] = group[properties[axis]].value
+		# If not sorted, get different kind of data
+		else:
+			if self._rawData is None:
+				self._rawData = {}
+			
+			print("Loading data ...")
+			properties = {"Id":"id", "x":"position/x", "y":"position/y", "z":"position/z",
+			              "px":"momentum/x", "py":"momentum/y", "pz":"momentum/z",
+			              "q":"charge", "w":"weight"}
+			if times is None: times = self.times
+			for time in times:
+				if time in self._rawData: continue
+				[f, timeIndex] = self._locationForTime[time]
+				group = f["data/"+"%010i"%time+"/particles/"+self.species]
+				self._rawData[time] = {}
+				for axis in self.axes:
+					self._rawData[time][axis] = group[properties[axis]].value
 			
 			print("... done")
 
@@ -460,7 +486,10 @@ class TrackParticles(Diagnostic):
 			times = [timestep]
 			indexOfRequestedTime = self._np.where(self.times==timestep)
 		
-		self._generateRawData()
+		if len(times)==1 and not self._sort:
+			self._generateRawData(times)
+		else:
+			self._generateRawData()
 		
 		data = {}
 		data.update({ "times":times })
@@ -468,19 +497,16 @@ class TrackParticles(Diagnostic):
 		if self._sort:
 			for axis in self.axes:
 				if timestep is None:
-					data[axis] = self._rawData[axis]*self._vfactor
+					data[axis] = self._rawData[axis]
 				else:
-					data[axis] = self._rawData[axis][indexOfRequestedTime, :]*self._vfactor
-				if axis == "Id":
-					data[axis] = data[axis].astype(self._np.uint64)
-			
+					data[axis] = self._rawData[axis][indexOfRequestedTime, :]
+				if axis not in ["Id", "q"]: data[axis] *= self._vfactor
 		else:
 			for time in times:
 				data[time] = {}
 				for axis in self.axes:
-					data[time][axis] = self._rawData[time][axis]*self._vfactor
-					if axis == "Id":
-						data[time][axis] = data[time][axis].astype(self._np.uint64)
+					data[time][axis] = self._rawData[time][axis]
+					if axis not in ["Id", "q"]: data[time][axis] *= self._vfactor
 		
 		return data
 	
