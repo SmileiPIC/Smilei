@@ -526,7 +526,8 @@ class TrackParticles(Diagnostic):
 			return
 		
 		properties = {"Id":"id", "x":"position/x", "y":"position/y", "z":"position/z",
-		              "px":"momentum/x", "py":"momentum/y", "pz":"momentum/z"}
+		              "px":"momentum/x", "py":"momentum/y", "pz":"momentum/z",
+		              "q":"charge", "w":"weight"}
 		
 		disorderedfiles = self._findDisorderedFiles()
 		for file in disorderedfiles:
@@ -536,22 +537,27 @@ class TrackParticles(Diagnostic):
 					# This is the timestep for which we want to produce an iterator
 					group = f["data/"+t+"/particles/"+self.species]
 					npart = group["id"].size
-					ID = self._np.zeros((chunksize,), dtype=self._np.uint64)
-					B  = self._np.zeros((chunksize,))
+					ID          = self._np.zeros((chunksize,), dtype=self._np.uint64)
+					data_double = self._np.zeros((chunksize,), dtype=self._np.double)
+					data_int16  = self._np.zeros((chunksize,), dtype=self._np.int16 )
 					for chunkstart in range(0, npart, chunksize):
 						chunkend = chunkstart + chunksize
 						if chunkend > npart:
 							chunkend = npart
-							ID = self._np.zeros((chunkend-chunkstart,), dtype=self._np.uint64)
-							B  = self._np.zeros((chunkend-chunkstart,), dtype=self._np.double)
+							ID          = self._np.zeros((chunkend-chunkstart,), dtype=self._np.uint64)
+							data_double = self._np.zeros((chunkend-chunkstart,), dtype=self._np.double)
+							data_int16  = self._np.zeros((chunkend-chunkstart,), dtype=self._np.int16 )
 						data = {}
 						for axis in self.axes:
 							if axis == "Id":
 								group[properties[axis]].read_direct(ID, source_sel=self._np.s_[chunkstart:chunkend])
 								data[axis] = ID
+							elif axis == "q":
+								group[properties[axis]].read_direct(data_int16, source_sel=self._np.s_[chunkstart:chunkend])
+								data[axis] = data_int16
 							else:
-								group[properties[axis]].read_direct(B , source_sel=self._np.s_[chunkstart:chunkend])
-								data[axis] = B
+								group[properties[axis]].read_direct(data_double, source_sel=self._np.s_[chunkstart:chunkend])
+								data[axis] = data_double
 						yield data
 					return
 	
