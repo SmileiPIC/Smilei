@@ -114,8 +114,9 @@ void SmileiMPI::init( Params& params )
     capabilities.resize(smilei_sz, 1);
     Tcapabilities = smilei_sz;
 
+    if (smilei_rk == 0)remove( "patch_load.txt" ) ;
     // Initialize patch distribution
-    init_patch_count(params);
+    if (!params.restart) init_patch_count(params);
 
     // Initialize buffers for particles push vectorization
     //     - 1 thread push particles for a unique patch at a given time
