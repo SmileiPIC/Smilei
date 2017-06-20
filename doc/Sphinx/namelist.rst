@@ -1272,6 +1272,7 @@ The full list of scalars that are saved by this diagnostic:
 | | Ubal_norm    | | Normalized energy balance (Ubal :math:`/` Utot)                         |
 | | Uelm_Ex      | | Energy in Ex field (:math:`\int E_x^2 dV /2`)                           |
 | |              | |  ... and idem for fields Ey, Ez, Bx_m, By_m and Bz_m                    |
+| | Urad         | | Total radiated energy                                                   |
 +----------------+---------------------------------------------------------------------------+
 | **Energies lost/gained at boundaries**                                                     |
 +----------------+---------------------------------------------------------------------------+
@@ -1287,6 +1288,7 @@ The full list of scalars that are saved by this diagnostic:
 | | Dens_abc     | | Average density of species "abc"                                        |
 | | Zavg_abc     | |  ... its average charge                                                 |
 | | Ukin_abc     | |  ... its total kinetic energy                                           |
+| | Urad_abc     | |  ... its total radiated energy                                          |
 | | Ntot_abc     | |  ... and number of particles                                            |
 +----------------+---------------------------------------------------------------------------+
 | **Fields information**                                                                     |
