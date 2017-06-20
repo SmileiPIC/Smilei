@@ -1132,7 +1132,9 @@ parameters in this block.
       chipa_xip_dim = 10,
       chiph_xip_dim = 10,
 
-      chipa_disc_min_threshold = 1e-2
+      chipa_disc_min_threshold = 1e-2,
+
+      table_path = "../databases/"
   )
 
 .. py:data:: chipa_integfochi_min
@@ -1211,6 +1213,13 @@ parameters in this block.
 
   Threshold on the particle quantum parameter chipa between the continuous
   and the discontinuous radiation model.
+
+.. py:data:: table_path
+
+  :default: "./"
+
+  Path to the external tables for the radiation losses.
+  Default tables are located in `databases`.
 
 ----
 

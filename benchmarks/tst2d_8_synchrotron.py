@@ -99,12 +99,14 @@ ExtField(
     profile = constant(B)
 )
 
+# Loop to create all the species
+# One species per radiation implementations
 for i,radiation in enumerate(radiation_list):
 
     Species(
         species_type = "electron_" + species_name_list[i],
         initPosition_type = "centered",
-        initMomentum_type = "rectangular",
+        initMomentum_type = "cold",
         n_part_per_cell = 10,
         c_part_max = 1.0,
         mass = 1.0,
