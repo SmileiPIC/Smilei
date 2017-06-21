@@ -32,7 +32,7 @@ for i in range(3):
 #	eon_velocity    = S.namelist.Species[eon].mean_velocity[0]
 #	eon_temperature = S.namelist.Species[eon].temperature[0]
 #	coulomb_log     = S.namelist.Collisions[i].coulomb_log
-#	W_r             = S.namelist.Main.referenceAngularFrequency_SI
+#	W_r             = S.namelist.Main.reference_angular_frequency_SI
 #	r_e = 2.8179403267e-15 # meters
 #	c = 3e8
 #	coeff = W_r**2*r_e/c * ion_charge * ion_density * coulomb_log

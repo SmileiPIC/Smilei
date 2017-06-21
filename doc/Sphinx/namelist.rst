@@ -332,8 +332,6 @@ Each species has to be defined in a ``Species`` block::
       # ionization_electrons = None,
       # radiating = False,
       is_test = False,
-      track_every = 10,
-      track_flush_every = 100,
       c_part_max = 1.0,
       dynamics_type = "norm",
   )
@@ -470,43 +468,6 @@ Each species has to be defined in a ``Species`` block::
   
   Flag for test particles. If ``True``, this species will contain only test particles
   which do not participate in the charge and currents.
-
-.. py:data:: track_every
-  
-  :default: 0
-  
-  Number of timesteps between each output of particles trajectories, **or** a :ref:`time selection <TimeSelections>`.
-  If non-zero, the particles positions will be tracked and written in a file named ``TrackParticles_abc.h5``
-  (where ``abc`` is :py:data:`species_type`).
-
-.. py:data:: track_flush_every
-  
-  :default: 1
-  
-  Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
-  
-  When :py:data:`track_flush_every` coincides with :py:data:`track_every`, the output
-  file for tracked particles is actually written ("flushed" from the buffer). Flushing
-  too often can *dramatically* slow down the simulation.
-
-.. py:data:: track_filter
-  
-  A python function giving some condition on which particles are tracked.
-  If none provided, all particles are tracked.
-  To use this option, the `numpy package <http://www.numpy.org/>`_ must
-  be available in your python installation.
-  
-  The function must have the arguments 
-  ``x``, ``y`` (if 2D or above), ``z`` (if 3D), ``px``, ``py`` and ``pz``. Each of these variables
-  are provided as **numpy** arrays of *doubles*. Each element corresponds to one particle.
-  The function must return a boolean **numpy** array of the same shape, containing ``True``
-  where the particle should be tracked, and ``False`` in other locations.
-  
-  The following 2D example selects all the particles that verify :math:`-1<p_x<1`
-  or :math:`p_z>3`::
-  
-    def my_filter(x, y, px, py, pz):
-        return (px>-1.)*(px<1.) + (pz>3.)
 
 
 .. py:data:: c_part_max
@@ -1649,6 +1610,69 @@ for instance::
   ``"theta"`` and ``"phi"`` are the angles with respect to the ``vector``, when the screen
   shape is a ``"sphere"``.
   
+----
+
+.. _DiagTrack:
+
+*Track* diagnostics
+^^^^^^^^^^^^^^^^^^^^
+
+A *tracking diagnostic* records the macro-particle positions and momenta at various timesteps.
+Typically, this is used for plotting trajectories.
+
+You can add a tracking diagnostic by including a block ``DiagTrack()`` in the namelist,
+for instance::
+  
+  DiagTrack(
+      species = "electron",
+      every = 10,
+  #    flush_every = 100,
+  #    filter = my_filter,
+  )
+
+.. py:data:: species
+  
+  The :py:data:`species_type` of the species to be tracked.
+
+.. py:data:: every
+  
+  :default: 0
+  
+  Number of timesteps between each output of particles trajectories, **or** a :ref:`time selection <TimeSelections>`.
+  If non-zero, the particles positions will be tracked and written in a file named ``TrackParticlesDisordered_abc.h5``
+  (where ``abc`` is :py:data:`species_type`).
+
+.. py:data:: flush_every
+  
+  :default: 1
+  
+  Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
+  
+  When ``flush_every`` coincides with ``every``, the output
+  file for tracked particles is actually written ("flushed" from the buffer). Flushing
+  too often can *dramatically* slow down the simulation.
+
+.. py:data:: filter
+  
+  A python function giving some condition on which particles are tracked.
+  If none provided, all particles are tracked.
+  To use this option, the `numpy package <http://www.numpy.org/>`_ must
+  be available in your python installation.
+  
+  The function must have the arguments 
+  ``x``, ``y`` (if 2D or above), ``z`` (if 3D), ``px``, ``py`` and ``pz``. Each of these variables
+  are provided as **numpy** arrays of *doubles*. Each element corresponds to one particle.
+  The function must return a boolean **numpy** array of the same shape, containing ``True``
+  where the particle should be tracked, and ``False`` in other locations.
+  
+  The following 2D example selects all the particles that verify :math:`-1<p_x<1`
+  or :math:`p_z>3`::
+  
+    def my_filter(x, y, px, py, pz):
+        return (px>-1.)*(px<1.) + (pz>3.)
+
+
+
 ----
 
 .. _TimeSelections:

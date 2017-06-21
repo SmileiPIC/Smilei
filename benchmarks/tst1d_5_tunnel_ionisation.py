@@ -72,7 +72,6 @@ Species(
 	boundary_conditions = [
 		["periodic", "periodic"],
 	],
-	track_every = 30
 )
 
 LaserPlanar1D(
@@ -107,4 +106,9 @@ DiagParticleBinning(
 	axes = [
 		["charge",  -0.5, 6.5, 7]
 	]
+)
+
+DiagTrack(
+	species = "electron",
+	every = 30
 )

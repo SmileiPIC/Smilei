@@ -202,6 +202,17 @@ public:
         thisSpecies->temperatureProfile[1] = new Profile(profile2, params.nDim_particle, "temperature[1] "+species_type, true);
         thisSpecies->temperatureProfile[2] = new Profile(profile3, params.nDim_particle, "temperature[2] "+species_type, true);
         
+        // Get info about tracking
+        unsigned int ntrack = PyTools::nComponents("DiagTrack");
+        thisSpecies->particles->tracked = false;
+        for( unsigned int itrack=0; itrack<ntrack; itrack++ ) {
+            std::string track_species;
+            if( PyTools::extract("species", track_species, "DiagTrack", itrack) && track_species==species_type ) {
+                if( thisSpecies->particles->tracked )
+                    ERROR("In this version, species '" << species_type << "' cannot be tracked by two DiagTrack");
+                thisSpecies->particles->tracked  = true;
+            }
+        }
         
         // Extract test Species flag
         PyTools::extract("is_test", thisSpecies->particles->is_test, "Species", ispec);
@@ -210,10 +221,6 @@ public:
         if (thisSpecies->ionization_model!="none" && thisSpecies->particles->is_test) {
             ERROR("For species '" << species_type << "' test & ionized is currently impossible");
         }
-        
-        // Find out whether this species is tracked
-        TimeSelection track_timeSelection( PyTools::extract_py("track_every", "Species", ispec), "Track" );
-        thisSpecies->particles->tracked = ! track_timeSelection.isEmpty();
         
         // Create the particles
         if (!params.restart) {
@@ -276,8 +283,8 @@ public:
         newSpecies->max_charge            = species->max_charge;
         newSpecies->tracking_diagnostic   = species->tracking_diagnostic;
         
-        newSpecies->particles->is_test              = species->particles->is_test;
-        newSpecies->particles->tracked             = species->particles->tracked;
+        newSpecies->particles->is_test    = species->particles->is_test;
+        newSpecies->particles->tracked    = species->particles->tracked;
         
         // \todo : NOT SURE HOW THIS BEHAVES WITH RESTART
         if ( (!params.restart) && (with_particles) ) {

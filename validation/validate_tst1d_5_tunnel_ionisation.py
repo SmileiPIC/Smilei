@@ -9,7 +9,7 @@ Ey = S.Field.Field0.Ey(timesteps=1000).getData()[0]
 Validate("Ey field at iteration 1000", Ey, 0.005)
 
 # VERIFY THE IONIZATION RATE Vs THEORY
-w_r = S.namelist.Main.referenceAngularFrequency_SI
+w_r = S.namelist.Main.reference_angular_frequency_SI
 au_to_w0 = 4.134137172e+16 / w_r;
 Ec_to_au = 3.314742578e-15 * w_r;
 a0 = S.namelist.Laser[0].space_envelope[1]

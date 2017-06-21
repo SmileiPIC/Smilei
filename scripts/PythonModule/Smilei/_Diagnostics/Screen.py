@@ -216,7 +216,7 @@ class Screen(Diagnostic):
 				
 				if axistype in ["x","y","z","moving_x"]:
 					first_edge = edges[self._selection[iaxis].start or 0]
-					last_edge  = edges[(self._selection[iaxis].stop or len(centers))+1]
+					last_edge  = edges[(self._selection[iaxis].stop or len(centers))]
 					coeff /= last_edge - first_edge
 			
 			# if not summed

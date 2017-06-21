@@ -95,6 +95,9 @@ class SmileiComponent(object):
                 "pos_first" :"corners or vectors",
                 "pos_second":"corners or vectors",
                 "pos_third" :"corners or vectors",
+                "track_every"      :"DiagTrack()",
+                "track_flush_every":"DiagTrack()",
+                "track_filter"     :"DiagTrack()",
             }
             for key, value in kwargs.items():
                 if key in deprecated:
@@ -278,9 +281,6 @@ class Species(SmileiComponent):
     ionization_electrons = None
     atomic_number = None
     is_test = False
-    track_every = 0
-    track_flush_every = 1
-    track_filter = None
 
 class Laser(SmileiComponent):
     """Laser parameters"""
@@ -346,6 +346,13 @@ class DiagFields(SmileiComponent):
     fields = []
     time_average = 1
     flush_every = 1
+
+class DiagTrack(SmileiComponent):
+    """Track diagnostic"""
+    species = None
+    every = 0
+    flush_every = 1
+    filter = None
 
 # external fields
 class ExtField(SmileiComponent):

@@ -38,8 +38,6 @@ Species(
 	boundary_conditions = [
 		["periodic", "periodic"],
 	],
-	track_every = 1000,
-	track_filter = lambda x, px, py, pz: (x<0.02), 
 	time_frozen = 0.1
 )
 Species(
@@ -89,4 +87,10 @@ DiagParticleBinning(
 		["x", 0., L, 50],
 		["px", -0.4, 0.4, 100]
 	]
+)
+
+DiagTrack(
+	species = "ion", 
+	every = 1000,
+	filter = lambda x, px, py, pz: (x<0.02), 
 )

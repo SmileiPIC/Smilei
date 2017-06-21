@@ -101,8 +101,6 @@ Species(
     	["periodic", "periodic"],
     	["periodic", "periodic"],
     ],
-    track_every = 2,
-    track_flush_every = 100,
     is_test = False
 )
 
@@ -116,4 +114,8 @@ DiagFields(
     fields = ['Ex','Ey','Ez','By','Bz']
 )
 
-
+DiagTrack(
+    species = "electron",
+    every = 2,
+    flush_every = 100,
+)

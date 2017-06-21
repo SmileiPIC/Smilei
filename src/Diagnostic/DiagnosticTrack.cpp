@@ -4,6 +4,7 @@
 
 #include "DiagnosticTrack.h"
 #include "VectorPatch.h"
+#include "Params.h"
 
 
 #ifdef SMILEI_USE_NUMPY
@@ -13,35 +14,49 @@
 
 using namespace std;
 
-DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, unsigned int speciesId, OpenPMDparams& oPMD ) :
+DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, unsigned int idiagtrack, unsigned int idiag, OpenPMDparams& oPMD ) :
     Diagnostic(oPMD),
     IDs_done( params.restart ),
     nDim_particle(params.nDim_particle)
 {
-    speciesId_ = speciesId;
-    Species* species = patch->vecSpecies[speciesId_];
+    // Extract the species
+    string species_type;
+    if( !PyTools::extract("species",species_type,"DiagTrack",idiagtrack) )
+        ERROR("DiagTrack #" << idiagtrack << " requires an argument `species`");
+    vector<string> species_types = {species_type};
+    vector<unsigned int> species_ids = Params::FindSpecies(vecPatches(0)->vecSpecies, species_types);
+    if( species_ids.size() > 1 )
+        ERROR("DiagTrack #" << idiagtrack << " corresponds to more than 1 species");
+    if( species_ids.size() < 1 )
+        ERROR("DiagTrack #" << idiagtrack << " does not correspond to any existing species");
+    speciesId_ = species_ids[0];
     
     // Define the transfer type (collective is faster than independent)
     transfer = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio( transfer, H5FD_MPIO_COLLECTIVE);
     
     ostringstream name("");
-    name << "Tracking species '" << species->species_type << "'";
+    name << "Tracking species '" << species_type << "'";
     
-    // Get parameter "track_every" which describes an iteration selection
-    timeSelection = new TimeSelection( PyTools::extract_py("track_every", "Species", speciesId_), name.str() );
+    // Get parameter "every" which describes an iteration selection
+    timeSelection = new TimeSelection( PyTools::extract_py("every", "DiagTrack", idiagtrack), name.str() );
     
-    // Get parameter "track_flush_every" which decides the file flushing time selection
-    flush_timeSelection = new TimeSelection( PyTools::extract_py("track_flush_every", "Species", speciesId_), name.str() );
+    // Get parameter "flush_every" which decides the file flushing time selection
+    flush_timeSelection = new TimeSelection( PyTools::extract_py("flush_every", "DiagTrack", idiagtrack), name.str() );
+    
+    // Inform each patch about this diag
+    for( unsigned int ipatch=0; ipatch<vecPatches.size(); ipatch++ ) {
+        vecPatches(ipatch)->vecSpecies[speciesId_]->tracking_diagnostic = idiag;
+    }
     
     // Get parameter "filter" which gives a python function to select particles
-    filter = PyTools::extract_py("track_filter", "Species", speciesId_);
+    filter = PyTools::extract_py("filter", "DiagTrack", idiagtrack);
     has_filter = (filter != Py_None);
     if( has_filter ) {
 #ifdef SMILEI_USE_NUMPY
         // Check if filter is callable
         if( ! PyCallable_Check(filter) )
-            ERROR("Tracked species '" << species->species_type << "' has a filter that is not callable");
+            ERROR("Tracked species '" << species_type << "' has a filter that is not callable");
         unsigned int n_arg;
         // Try to get the number of arguments of the filter function
         try {
@@ -51,11 +66,11 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch,
             Py_DECREF(argcount);
             Py_DECREF(code);
         } catch (...) {
-            ERROR("Tracked species '" << species->species_type << "' has a filter that does not look like a normal python function");
+            ERROR("Tracked species '" << species_type << "' has a filter that does not look like a normal python function");
         }
         // Verify the number of arguments of the filter function
         if( n_arg != nDim_particle+3 )
-            ERROR("Tracked species '" << species->species_type << "' has a filter function with "<<n_arg<<" arguments while requiring "<<nDim_particle+3);
+            ERROR("Tracked species '" << species_type << "' has a filter function with "<<n_arg<<" arguments while requiring "<<nDim_particle+3);
         // Verify the return value of the function
         double test_value[2] = {1.2, 1.4};
         npy_intp dims[1] = {2};
@@ -74,13 +89,13 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch,
             ERROR("Tracked particles filter must not change the arrays sizes");
         Py_DECREF(ret);
 #else
-        ERROR("Tracking species '" << species->species_type << "' with a filter requires the numpy package");
+        ERROR("Tracking species '" << species_type << "' with a filter requires the numpy package");
 #endif
     }
     
     // Create the filename
     ostringstream hdf_filename("");
-    hdf_filename << "TrackParticlesDisordered_" << species->species_type  << ".h5" ;
+    hdf_filename << "TrackParticlesDisordered_" << species_type  << ".h5" ;
     filename = hdf_filename.str();
     
 }

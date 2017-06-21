@@ -12,7 +12,7 @@ class DiagnosticTrack : public Diagnostic {
 
 public :
     //! Default constructor
-    DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, unsigned int, OpenPMDparams& );
+    DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, unsigned int, unsigned int, OpenPMDparams& );
     //! Default destructor
     ~DiagnosticTrack() override;
     

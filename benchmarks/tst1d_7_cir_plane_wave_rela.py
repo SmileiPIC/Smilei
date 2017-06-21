@@ -69,7 +69,7 @@ LaserPlanar1D(
     time_envelope  = tgaussian(start=start,duration=duration,fwhm=fwhm,center=center,order=2)
 )
 
-for ipusher,pusher in enumerate(pusher_list):
+for pusher in pusher_list:
     Species(
         species_type = "electron_" + pusher,
         position_initialization = "centered",
@@ -83,9 +83,12 @@ for ipusher,pusher in enumerate(pusher_list):
         temperature = [0.],
         dynamics_type = pusher,
 	    boundary_conditions = [["periodic"]],
-        track_every = 10,
-        track_flush_every = 100,
         is_test = True
     )
-
+    
+    DiagTrack(
+        species = "electron_" + pusher,
+        every = 10,
+        flush_every = 100,
+    )
 

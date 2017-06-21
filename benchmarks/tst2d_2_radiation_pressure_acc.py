@@ -68,7 +68,6 @@ Species(
         ["refl", "refl"],
         ["periodic", "periodic"],
     ], 
-    track_every = 500, 
     time_frozen = 0.1
 )
 
@@ -106,4 +105,8 @@ for direction in ["forward", "backward", "both", "canceling"]:
 	    every = 350
 	)
 
+DiagTrack(
+    species = "eon",
+    every = 500,
+)
 
