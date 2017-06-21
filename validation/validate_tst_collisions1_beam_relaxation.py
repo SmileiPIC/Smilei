@@ -12,15 +12,15 @@ for i in range(3):
 	times = np.double(S.ParticleBinning(0).getAvailableTimesteps())
 	ones = np.ones_like(times)
 	
-	eon_vx = S.ParticleBinning(i*3+0, slice={"x":"all"}).get()
+	eon_vx = S.ParticleBinning(i*3+0, sum={"x":"all"}).get()
 	eon_mean_vx = np.array(eon_vx["data"])
 	eon_mean_vx = (np.outer(ones, eon_vx["vx"])*eon_mean_vx).sum(axis=1) / eon_mean_vx.sum(axis=1)
 	
-	eon_vp2 = S.ParticleBinning(i*3+1, slice={"x":"all"}).get()
+	eon_vp2 = S.ParticleBinning(i*3+1, sum={"x":"all"}).get()
 	eon_mean_vp2 = np.array(eon_vp2["data"])
 	eon_mean_vp2 = (np.outer(ones, eon_vp2["vperp2"])*eon_mean_vp2).sum(axis=1) / eon_mean_vp2.sum(axis=1)
 	
-	ion_vx = S.ParticleBinning(i*3+2, slice={"x":"all"}).get()
+	ion_vx = S.ParticleBinning(i*3+2, sum={"x":"all"}).get()
 	ion_vxd = np.array(ion_vx["data"])
 	ion_mean_vx = (np.outer(ones, ion_vx["vx"])*ion_vxd).sum(axis=1) / ion_vxd.sum(axis=1)
 	ion_T = ( np.outer(ones, ion_vx["vx"]) - np.outer(ion_mean_vx, np.ones_like(ion_vx["vx"])) )**2 * ion_vxd

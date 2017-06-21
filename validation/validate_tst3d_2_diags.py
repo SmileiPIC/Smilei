@@ -23,7 +23,7 @@ for field in ["Ex", "Ey", "Ez", "Bx_m", "By_m", "Bz_m", "Jx", "Jy", "Jz", "Rho"]
 fields     = ["Ex","Ey" ,"Ez" ,"Bx" ,"By" ,"Bz" ,"Bx_m","By_m","Bz_m","Jx" ,"Jy" ,"Jz" ,"Rho","Jx_test0","Jy_test0","Jz_test0","Rho_test0"]
 precisions = [ 0.1, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01 , 0.01 , 0.01 , 0.01, 0.01, 0.01, 0.1 , 3e-5     , 2e-5     , 0.001    , 0.1       ]
 for field, precision in zip(fields, precisions) :
-	Validate("Field "+field, S.Field.Field0(field, slice={"z":"all"}, timesteps=40, stride=4).getData()[-1], precision)
+	Validate("Field "+field, S.Field.Field0(field, average={"z":"all"}, timesteps=40, subset={"x":[0,10,4], "y":[0,10,4]}).getData()[-1], precision)
 
 # PROBE DIAGNOSTICS
 fields     = ["Ex", "Ey", "Ez", "Bx", "By", "Bz", "Jx", "Jy", "Jz", "Rho"]

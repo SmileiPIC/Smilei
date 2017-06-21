@@ -87,17 +87,21 @@ DiagFields(
 
 DiagProbe(
 	every = 10,
-	pos = [0., Main.sim_length[1]/2., Main.sim_length[2]/2.],
-	pos_first = [Main.sim_length[0], Main.sim_length[1]/2., Main.sim_length[2]/2.],
+	origin = [0., Main.sim_length[1]/2., Main.sim_length[2]/2.],
+	corners = [
+	    [Main.sim_length[0], Main.sim_length[1]/2., Main.sim_length[2]/2.]
+	],
 	number = [nx],
 	fields = ['Ex','Ey','Rho','Jx']
 )
 
 DiagProbe(
 	every = 10,
-	pos = [0., Main.sim_length[1]/4., Main.sim_length[2]/2.],
-	pos_first = [0., 3*Main.sim_length[1]/4., Main.sim_length[2]/2.],
-	pos_second = [Main.sim_length[0], Main.sim_length[1]/4., Main.sim_length[2]/2.],
+	origin = [0., Main.sim_length[1]/4., Main.sim_length[2]/2.],
+	corners = [
+	    [0., 3*Main.sim_length[1]/4., Main.sim_length[2]/2.],
+	    [Main.sim_length[0], Main.sim_length[1]/4., Main.sim_length[2]/2.]
+	],
 	number = [nx, ntrans],
 	fields = ['Ex','Ey','Rho','Jx']
 )

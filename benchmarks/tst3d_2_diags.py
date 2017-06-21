@@ -100,8 +100,10 @@ DiagFields(
 DiagProbe(
     every = 40,
     number = [10],
-    pos = [0., L0/2, L0/2],
-    pos_first = [L0, L0/2, L0/2],
+    origin = [0., L0/2, L0/2],
+    corners = [
+        [L0, L0/2, L0/2]
+    ],
     fields = []
 )
 

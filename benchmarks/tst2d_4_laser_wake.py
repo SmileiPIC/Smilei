@@ -86,8 +86,10 @@ DiagFields(
 
 DiagProbe(
     every = 10,
-    pos = [0., Main.sim_length[1]/2.],
-    pos_first = [Main.sim_length[0], Main.sim_length[1]/2.],
+    origin = [0., Main.sim_length[1]/2.],
+    corners = [
+        [Main.sim_length[0], Main.sim_length[1]/2.],
+    ],
     number = [nx],
     fields = ['Ex','Ey','Rho','Jx']
 )

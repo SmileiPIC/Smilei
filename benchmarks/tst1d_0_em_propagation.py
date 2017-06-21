@@ -41,12 +41,12 @@ DiagFields(
 
 DiagProbe(
     every = 5, 
-    pos = [Main.sim_length[0]*0.2]   
+    origin = [Main.sim_length[0]*0.2]   
 )
 
 DiagProbe(
     every = 5,
-    pos = [0.0],
-    pos_first = Main.sim_length,
+    origin = [0.0],
+    corners = [Main.sim_length],
     number = [1000]
 )

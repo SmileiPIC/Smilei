@@ -91,6 +91,10 @@ class SmileiComponent(object):
                 "bc_part_type_ymax":"boundary_conditions",
                 "bc_part_type_zmin":"boundary_conditions",
                 "bc_part_type_zmax":"boundary_conditions",
+                "pos"       :"origin",
+                "pos_first" :"corners or vectors",
+                "pos_second":"corners or vectors",
+                "pos_third" :"corners or vectors",
             }
             for key, value in kwargs.items():
                 if key in deprecated:
@@ -302,10 +306,9 @@ class DiagProbe(SmileiComponent):
     """Probe diagnostic"""
     every = None
     number = []
-    pos = []
-    pos_first = []
-    pos_second = []
-    pos_third = []
+    origin = []
+    corners = []
+    vectors = []
     fields = []
     flush_every = 1
 
