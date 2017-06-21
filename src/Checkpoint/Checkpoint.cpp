@@ -41,6 +41,7 @@ dump_step(0),
 dump_minutes(0.0),
 exit_after_dump(true),
 dump_file_sequence(2),
+dump_file_sequence_max(10000),
 dump_deflate(0),
 restart_dir(""),
 dump_request(smpi->getSize()),
@@ -62,6 +63,11 @@ restart_number(-1)
         
         PyTools::extract("dump_file_sequence", dump_file_sequence, "DumpRestart");
         if(dump_file_sequence<1) dump_file_sequence=1;
+        
+        if(dump_file_sequence>dump_file_sequence_max) {
+            WARNING("Smilei supports a maximum of dump_file_sequence of "<< dump_file_sequence_max);
+            dump_file_sequence=dump_file_sequence_max;
+        }
         
         PyTools::extract("exit_after_dump", exit_after_dump, "DumpRestart");
         
@@ -112,7 +118,7 @@ string Checkpoint::dumpName(unsigned int num, SmileiMPI *smpi) {
         nameDumpTmp << setfill('0') << setw(int(1+log10(smpi->getSize()/file_grouping+1))) << smpi->getRank()/file_grouping << PATH_SEPARATOR;
     }
     
-    nameDumpTmp << "dump-" << setfill('0') << setw(1+log10(dump_file_sequence)) << num << "-" << setfill('0') << setw(1+log10(smpi->getSize())) << smpi->getRank() << ".h5" ;
+    nameDumpTmp << "dump-" << setfill('0') << setw(1+log10(dump_file_sequence_max)) << num << "-" << setfill('0') << setw(1+log10(smpi->getSize())) << smpi->getRank() << ".h5" ;
     return nameDumpTmp.str();
 }
 
@@ -376,7 +382,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
 
     } else {
         // This will open all dumps and pick the last one
-        for (unsigned int num_dump=0;num_dump<dump_file_sequence; num_dump++) {
+        for (unsigned int num_dump=0;num_dump<dump_file_sequence_max; num_dump++) {
             string dump_name=restart_dir+dumpName(num_dump,smpi);
             ifstream f(dump_name.c_str());
             if (f.good()) {
@@ -391,11 +397,13 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
                     H5::getAttr(fid, "dump_number", dump_number );
                 }
                 H5Fclose(fid);
+            } else {
+                break;
             }
         }
     }
     
-    if (nameDump.empty()) ERROR("Cannot find a valid restart file");
+    if (nameDump.empty()) ERROR("Cannot find a valid restart file. Try setting restart_number");
     
 #ifdef  __DEBUG
     MESSAGEALL(2, " : Restarting fields and particles " << nameDump << " step=" << this_run_start_step);

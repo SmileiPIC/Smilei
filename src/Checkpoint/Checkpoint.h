@@ -117,7 +117,8 @@ private:
     bool exit_after_dump;
     
     //! keep the last dump_file_sequence dump files
-    unsigned int dump_file_sequence;
+    unsigned int dump_file_sequence;    
+    const unsigned int dump_file_sequence_max;
     
     //! write dump drectory
     std::string dump_dir;

@@ -219,8 +219,6 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
                 
                 Py_DECREF(ret);
             }
-#else
-            ERROR("Tracked particles filter requires the numpy package");
 #endif
             
         } else {
