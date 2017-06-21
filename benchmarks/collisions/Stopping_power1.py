@@ -22,7 +22,7 @@ Main(
     cell_length = [2.*L0],
     sim_length = [96.*L0],
 
-    bc_em_type_x = ["periodic"],
+    EM_boundary_conditions = [ ["periodic"] ],
 
 
     random_seed = 0,
@@ -44,8 +44,9 @@ Species(
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.01],
 	time_frozen = 100000000.0,
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 )
 
 Species(
@@ -59,8 +60,9 @@ Species(
 	mean_velocity = [0.2, 0., 0.],
 	temperature = [0.0000001],
 	time_frozen = 100000000.0,
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 )
 
 Species(
@@ -74,8 +76,9 @@ Species(
 	mean_velocity = [0.27, 0., 0.],
 	temperature = [0.0000001],
 	time_frozen = 100000000.0,
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 )
 
 Species(
@@ -89,8 +92,9 @@ Species(
 	mean_velocity = [0.33, 0., 0.],
 	temperature = [0.0000001],
 	time_frozen = 100000000.0,
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 )
 
 Collisions(

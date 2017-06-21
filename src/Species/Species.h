@@ -83,12 +83,7 @@ public:
     bool radiating;
     
     //! Boundary conditions for particules
-    std::string bc_part_type_xmin;
-    std::string bc_part_type_xmax;
-    std::string bc_part_type_ymin;
-    std::string bc_part_type_ymax;
-    std::string bc_part_type_zmin;
-    std::string bc_part_type_zmax;
+    std::vector<std::vector<std::string> > boundary_conditions;
     
     //! Ionization model per Specie (tunnel)
     std::string ionization_model;

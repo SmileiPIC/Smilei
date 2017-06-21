@@ -21,8 +21,10 @@ Main(
     
     clrw = nx/npatch_x,
     
-    bc_em_type_x = ["silver-muller","silver-muller"],
-    bc_em_type_y = ["silver-muller","silver-muller"],
+    EM_boundary_conditions = [
+        ["silver-muller","silver-muller"],
+        ["silver-muller","silver-muller"],
+    ],
     
     random_seed = 0,
     solve_poisson = False,
@@ -55,10 +57,10 @@ Species(
     dynamics_type = "norm",    
     time_frozen = 0.0,
     radiating = False,
-    bc_part_type_xmin = "supp",
-    bc_part_type_xmax = "supp",
-    bc_part_type_ymin ="supp",
-    bc_part_type_ymax ="supp"
+    boundary_conditions = [
+        ["supp", "supp"],
+        ["supp", "supp"],
+    ],
 )
 
 LaserGaussian2D(

@@ -91,8 +91,11 @@ The block ``Main`` is **mandatory** and has the following syntax::
       number_of_patches = [64],
       clrw = 5,
       maxwell_solver = 'Yee',
-      bc_em_type_x = ["silver-muller", "silver-muller"],
-      bc_em_type_y = ["silver-muller", "silver-muller"],
+      EM_boundary_conditions = [
+          ["silver-muller", "silver-muller"],
+#          ["silver-muller", "silver-muller"],
+#          ["silver-muller", "silver-muller"],
+      ],
       time_fields_frozen = 0.,
       reference_angular_frequency_SI = 0.,
       print_every = 100,
@@ -174,15 +177,17 @@ The block ``Main`` is **mandatory** and has the following syntax::
   Maximum error for the Poisson solver.
 
 
-.. py:data:: bc_em_type_x
-             bc_em_type_y
+.. py:data:: EM_boundary_conditions
   
-  :type: lists of two strings: ``[bc_min, bc_max]``
-  :default: ``["periodic", "periodic"]``
+  :type: list of lists of strings
+  :default: ``[["periodic"]]``
   
-  The boundary conditions for the electromagnetic fields.
-  The strings ``bc_min`` and ``bc_max`` must be one of the following choices:
-  ``"periodic"``, ``"silver-muller"``, or ``"reflective"``.
+  The boundary conditions for the electromagnetic fields. Each boundary may have one of
+  the following conditions: ``"periodic"``, ``"silver-muller"``, or ``"reflective"``.
+  
+  | **Syntax 1:** ``[[bc_all]]``, identical for all boundaries.
+  | **Syntax 2:** ``[[bc_X], [bc_Y], ...]``, different depending on x, y or z.
+  | **Syntax 3:** ``[[bc_Xmin, bc_Xmax], ...]``,  different on each boundary.
 
 
 .. py:data:: time_fields_frozen
@@ -315,10 +320,11 @@ Each species has to be defined in a ``Species`` block::
       charge = -1.,
       mean_velocity = [0.],
       temperature = [1e-10],
-      bc_part_type_xmin = "refl",
-      bc_part_type_xmax = "refl",
-      # bc_part_type_ymax = None,
-      # bc_part_type_ymin = None,
+      boundary_conditions = [
+          ["refl", "refl"],
+#          ["periodic", "periodic"],
+#          ["periodic", "periodic"],
+      ],
       # thermal_boundary_temperature = None,
       # thermal_boundary_velocity = None,
       time_frozen = 0.0,
@@ -405,14 +411,20 @@ Each species has to be defined in a ``Species`` block::
   The initial temperature of the particles, in units of :math:`m_ec^2`.
 
 
-.. py:data:: bc_part_type_xmin
-             bc_part_type_xmax
-             bc_part_type_ymin
-             bc_part_type_ymax
+.. py:data:: boundary_conditions
   
-  The boundary condition for particles: ``"refl"`` for *reflecting*, ``"supp"`` for
-  *suppressing*, ``"stop"`` for *stopping*, ``"periodic"``, and ``"thermalize"``.
+  :type: a list of lists of strings
+  :default: ``[["periodic"]]``
   
+  The boundary conditions for the particles of this species.
+  Each boundary may have one of the following conditions:
+  ``"refl"`` for *reflecting*, ``"supp"`` for *suppressing*,
+  ``"stop"`` for *stopping*, ``"periodic"``, and ``"thermalize"``.
+  
+  | **Syntax 1:** ``[[bc_all]]``, identical for all boundaries.
+  | **Syntax 2:** ``[[bc_X], [bc_Y], ...]``, different depending on x, y or z.
+  | **Syntax 3:** ``[[bc_Xmin, bc_Xmax], ...]``,  different on each boundary.
+
 .. py:data:: thermal_boundary_temperature
   
   :default: None
@@ -520,7 +532,7 @@ Lasers
 
 A laser consists in applying oscillating boundary conditions for the magnetic
 field on one of the box sides. The only boundary conditions that support lasers
-are ``"silver-muller"`` (see :py:data:`bc_em_type_x`).
+are ``"silver-muller"`` (see :py:data:`EM_boundary_conditions`).
 There are several syntaxes to introduce a laser in :program:`Smilei`:
 
 .. rubric:: 1. Defining a generic wave

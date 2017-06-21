@@ -48,7 +48,7 @@ SimWindow::SimWindow(Params& params)
 
     
     if( active ) {
-        if (velocity_x != 0. && params.bc_em_type_x[0] == "periodic")
+        if (velocity_x != 0. && params.EM_BCs[0][0] == "periodic")
             ERROR("Periodic topology in the moving window direction is neither encouraged nor supported");
         
         MESSAGE(1,"Moving window is active:");

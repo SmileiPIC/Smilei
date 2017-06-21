@@ -31,7 +31,7 @@ Main(
     timestep = t0/rest,
     sim_time = Tsim,
      
-    bc_em_type_x = ['silver-muller'],
+    EM_boundary_conditions = [ ['silver-muller'] ],
      
     random_seed = 0
 )
@@ -45,8 +45,9 @@ Species(
 	charge = 1.0,
 	nb_density = trapezoidal(10.,xvacuum=l0,xplateau=l0),
 	temperature = [0.],
-	bc_part_type_xmin = 'refl',
-	bc_part_type_xmax = 'refl'
+	boundary_conditions = [
+		["refl", "refl"],
+	],
 )
 Species(
 	species_type = 'eon',
@@ -57,8 +58,9 @@ Species(
 	charge = -1.0,
 	nb_density = trapezoidal(10.,xvacuum=l0,xplateau=l0),
 	temperature = [0.],
-	bc_part_type_xmin = 'refl',
-	bc_part_type_xmax = 'refl'
+	boundary_conditions = [
+		["refl", "refl"],
+	],
 )
 
 LaserPlanar1D(

@@ -96,32 +96,33 @@ public:
             thisSpecies->radiating=true;
         }
         
-        if (!PyTools::extract("bc_part_type_xmin",thisSpecies->bc_part_type_xmin,"Species",ispec) )
-            ERROR("For species '" << species_type << "', bc_part_type_xmin not defined");
-        if (!PyTools::extract("bc_part_type_xmax",thisSpecies->bc_part_type_xmax,"Species",ispec) )
-            ERROR("For species '" << species_type << "', bc_part_type_xmax not defined");
+        if( !PyTools::extract("boundary_conditions", thisSpecies->boundary_conditions, "Species", ispec)  )
+            ERROR("For species '" << species_type << "', boundary_conditions not defined" );
         
-        if (params.nDim_particle>1) {
-            if (!PyTools::extract("bc_part_type_ymin",thisSpecies->bc_part_type_ymin,"Species",ispec) )
-                ERROR("For species '" << species_type << "', bc_part_type_ymin not defined");
-            if (!PyTools::extract("bc_part_type_ymax",thisSpecies->bc_part_type_ymax,"Species",ispec) )
-                ERROR("For species '" << species_type << "', bc_part_type_ymax not defined");
+        if( thisSpecies->boundary_conditions.size() == 0 ) {
+            ERROR("For species '" << species_type << "', boundary_conditions cannot be empty");
+        } else if( thisSpecies->boundary_conditions.size() == 1 ) {
+            while( thisSpecies->boundary_conditions.size() < params.nDim_particle )
+                thisSpecies->boundary_conditions.push_back( thisSpecies->boundary_conditions[0] );
+        } else if( thisSpecies->boundary_conditions.size() != params.nDim_particle ) {
+            ERROR("For species '" << species_type << "', boundary_conditions must be the same size as the number of dimensions");
         }
         
-        if (params.nDim_particle>2) {
-            if (!PyTools::extract("bc_part_type_zmin",thisSpecies->bc_part_type_zmin,"Species",ispec) )
-                ERROR("For species '" << species_type << "', bc_part_type_zmin not defined");
-            if (!PyTools::extract("bc_part_type_zmax",thisSpecies->bc_part_type_zmax,"Species",ispec) )
-                ERROR("For species '" << species_type << "', bc_part_type_zmax not defined");
+        bool has_thermalize = false;
+        for( unsigned int iDim=0; iDim<params.nDim_particle; iDim++ ) {
+            if( thisSpecies->boundary_conditions[iDim].size() == 1 )
+                thisSpecies->boundary_conditions[iDim].push_back( thisSpecies->boundary_conditions[iDim][0] );
+            if( thisSpecies->boundary_conditions[iDim].size() != 2 )
+                ERROR("For species '" << species_type << "', boundary_conditions["<<iDim<<"] must have one or two arguments")
+            if( thisSpecies->boundary_conditions[iDim][0] == "thermalize"
+             || thisSpecies->boundary_conditions[iDim][1] == "thermalize" )
+                has_thermalize = true;
         }
         
         // for thermalizing BCs on particles check if thermal_boundary_temperature is correctly defined
         bool has_temperature = PyTools::extract("thermal_boundary_temperature",thisSpecies->thermal_boundary_temperature,"Species",ispec);
         bool has_velocity    = PyTools::extract("thermal_boundary_velocity",thisSpecies->thermal_boundary_velocity,"Species",ispec);
-        if ( thisSpecies->bc_part_type_xmin=="thermalize" || thisSpecies->bc_part_type_xmax=="thermalize"
-          || (params.nDim_particle>1 && (thisSpecies->bc_part_type_ymax=="thermalize" || thisSpecies->bc_part_type_ymax=="thermalize"))
-          || (params.nDim_particle>2 && (thisSpecies->bc_part_type_zmax=="thermalize" || thisSpecies->bc_part_type_zmax=="thermalize"))
-        ){
+        if ( has_thermalize ) {
             if (!has_temperature)
                 ERROR("For species '" << species_type << "' thermal_boundary_temperature needs to be defined due to thermalizing BC");
             if (!has_velocity)
@@ -253,14 +254,9 @@ public:
         newSpecies->mass                  = species->mass;
         newSpecies->time_frozen           = species->time_frozen;
         newSpecies->radiating             = species->radiating;
-        newSpecies->bc_part_type_xmin     = species->bc_part_type_xmin;
-        newSpecies->bc_part_type_xmax     = species->bc_part_type_xmax;
-        newSpecies->bc_part_type_ymin    = species->bc_part_type_ymin;
-        newSpecies->bc_part_type_ymax    = species->bc_part_type_ymax;
-        newSpecies->bc_part_type_zmin   = species->bc_part_type_zmin;
-        newSpecies->bc_part_type_zmax       = species->bc_part_type_zmax;
-        newSpecies->thermal_boundary_temperature                = species->thermal_boundary_temperature;
-        newSpecies->thermal_boundary_velocity         = species->thermal_boundary_velocity;
+        newSpecies->boundary_conditions   = species->boundary_conditions;
+        newSpecies->thermal_boundary_temperature  = species->thermal_boundary_temperature;
+        newSpecies->thermal_boundary_velocity     = species->thermal_boundary_velocity;
         newSpecies->thermalVelocity       = species->thermalVelocity;
         newSpecies->thermalMomentum       = species->thermalMomentum;
         newSpecies->atomic_number         = species->atomic_number;

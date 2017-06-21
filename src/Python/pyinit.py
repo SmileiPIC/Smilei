@@ -82,6 +82,15 @@ class SmileiComponent(object):
                 "boxSide":"box_side",
                 "polarizationPhi":"polarization_phi",
                 "dump_file_sequence":"keep_n_dumps",
+                "bc_em_type_x":"EM_boundary_conditions",
+                "bc_em_type_y":"EM_boundary_conditions",
+                "bc_em_type_z":"EM_boundary_conditions",
+                "bc_part_type_xmin":"boundary_conditions",
+                "bc_part_type_xmax":"boundary_conditions",
+                "bc_part_type_ymin":"boundary_conditions",
+                "bc_part_type_ymax":"boundary_conditions",
+                "bc_part_type_zmin":"boundary_conditions",
+                "bc_part_type_zmax":"boundary_conditions",
             }
             for key, value in kwargs.items():
                 if key in deprecated:
@@ -149,9 +158,7 @@ class Main(SmileiSingleton):
     
     # Default fields
     maxwell_solver = 'Yee'
-    bc_em_type_x = []
-    bc_em_type_y = []
-    bc_em_type_z = []
+    EM_boundary_conditions = [["periodic"]]
     time_fields_frozen = 0.
     currentFilter_int = 0
     Friedman_filter = False
@@ -262,12 +269,7 @@ class Species(SmileiComponent):
     dynamics_type = "norm"
     time_frozen = 0.0
     radiating = False
-    bc_part_type_xmin = None
-    bc_part_type_xmax = None
-    bc_part_type_ymax = None
-    bc_part_type_ymin = None
-    bc_part_type_zmin = None
-    bc_part_type_zmax = None
+    boundary_conditions = [["periodic"]]
     ionization_model = "none"
     ionization_electrons = None
     atomic_number = None

@@ -24,8 +24,10 @@ Main(
     timestep = t0/rest,
     sim_time = Tsim,
      
-    bc_em_type_x = ['silver-muller'],
-    bc_em_type_y = ['periodic'],
+    EM_boundary_conditions = [
+        ['silver-muller'],
+        ['periodic'],
+    ],
     
     random_seed = 0
 )
@@ -47,10 +49,10 @@ Species(
 	mean_velocity = [0.,0.,0.],
 	temperature = [0.001],
 	time_frozen = 100000000.0,
-	bc_part_type_xmin  = 'stop',
-	bc_part_type_xmax  = 'refl',
-	bc_part_type_ymin = 'none',
-	bc_part_type_ymax = 'none'
+	boundary_conditions = [
+		["stop", "refl"],
+		["periodic", "periodic"],
+	],
 )
 Species(
 	species_type = 'eon1',
@@ -65,10 +67,10 @@ Species(
 	mean_velocity = [0.,0.,0.],
 	temperature = [0.001],
 	time_frozen = 0.0,
-	bc_part_type_xmin  = 'stop',
-	bc_part_type_xmax  = 'refl',
-	bc_part_type_ymin = 'none',
-	bc_part_type_ymax = 'none'
+	boundary_conditions = [
+		["stop", "refl"],
+		["periodic", "periodic"],
+	],
 )
 Species(
 	species_type = 'pon2',
@@ -83,10 +85,10 @@ Species(
 	mean_velocity = [-0.5,0.,0.],
 	temperature = [0.001],
 	time_frozen = 0.0,
-	bc_part_type_xmin  = 'stop',
-	bc_part_type_xmax  = 'refl',
-	bc_part_type_ymin = 'none',
-	bc_part_type_ymax = 'none'
+	boundary_conditions = [
+		["stop", "refl"],
+		["periodic", "periodic"],
+	],
 )
 Species(
 	species_type = 'eon2',
@@ -101,10 +103,10 @@ Species(
 	mean_velocity = [-0.5,0.,0.],
 	temperature = [0.001],
 	time_frozen = 0.0,
-	bc_part_type_xmin  = 'stop',
-	bc_part_type_xmax  = 'refl',
-	bc_part_type_ymin = 'none',
-	bc_part_type_ymax = 'none'
+	boundary_conditions = [
+		["stop", "refl"],
+		["periodic", "periodic"],
+	],
 )
 
 

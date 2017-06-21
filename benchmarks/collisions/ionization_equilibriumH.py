@@ -22,7 +22,7 @@ Main(
     cell_length = [5.*L0],
     sim_length = [160.*L0],
 
-    bc_em_type_x = ["periodic"],
+    EM_boundary_conditions = [ ["periodic"] ],
 
 
     random_seed = 0,
@@ -68,10 +68,12 @@ for i in range(npoints):
 		mean_velocity = [0., 0., 0.],
 		temperature = [T]*3,
 		time_frozen = 100000000.0,
-		bc_part_type_xmin = "none",
-		bc_part_type_xmax = "none",
-		bc_part_type_ymin = "none",
-		bc_part_type_ymax = "none",
+		boundary_conditions = [
+			["periodic", "periodic"],
+		],
+		boundary_conditions = [
+			["periodic", "periodic"],
+		],
 		c_part_max = 10.
 	)
 	
@@ -86,10 +88,12 @@ for i in range(npoints):
 		mean_velocity = [0., 0., 0.],
 		temperature = [T]*3,
 		time_frozen = 100000000.0,
-		bc_part_type_xmin = "none",
-		bc_part_type_xmax = "none",
-		bc_part_type_ymin = "none",
-		bc_part_type_ymax = "none",
+		boundary_conditions = [
+			["periodic", "periodic"],
+		],
+		boundary_conditions = [
+			["periodic", "periodic"],
+		],
 		atomic_number = Z
 	)
 	

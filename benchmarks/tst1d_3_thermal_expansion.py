@@ -30,7 +30,7 @@ Main(
     
     number_of_patches = [ 16 ],
     
-    bc_em_type_x = ['silver-muller','silver-muller'] ,
+    EM_boundary_conditions = [ ['silver-muller','silver-muller'] ] ,
     
     random_seed = 0
 )
@@ -46,8 +46,9 @@ Species(
     temperature = [1.e-6],
     thermal_boundary_temperature = [1.e-6],
     thermal_boundary_velocity = [0.,0.,0.],
-    bc_part_type_xmin = 'thermalize',
-    bc_part_type_xmax = 'refl'
+    boundary_conditions = [
+    	["thermalize", "refl"],
+    ],
 )
 Species(
     species_type = 'eon',
@@ -60,8 +61,9 @@ Species(
     temperature = [Te],
     thermal_boundary_temperature = [Te],
     thermal_boundary_velocity = [0.,0.,0.],
-    bc_part_type_xmin = 'thermalize',
-    bc_part_type_xmax = 'refl'
+    boundary_conditions = [
+    	["thermalize", "refl"],
+    ],
 )
 
 LoadBalancing(

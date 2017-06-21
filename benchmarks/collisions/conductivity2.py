@@ -22,7 +22,7 @@ Main(
     cell_length = [1*L0],
     sim_length = [20*L0],
 
-    bc_em_type_x = ["periodic"],
+    EM_boundary_conditions = [ ["periodic"] ],
 
 
     random_seed = 0,
@@ -50,8 +50,9 @@ Species(
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.00004], # 20 eV
 	time_frozen = 0.0,
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 )
 Species(
 	species_type = "electron1",
@@ -64,8 +65,9 @@ Species(
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.00004], # 20 eV
 	time_frozen = 0.0,
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 )
 
 Species(
@@ -79,8 +81,9 @@ Species(
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.0001], # 50 eV
 	time_frozen = 0.0,
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 )
 Species(
 	species_type = "electron2",
@@ -93,8 +96,9 @@ Species(
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.0001], # 50 eV
 	time_frozen = 0.0,
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 )
 
 Species(
@@ -108,8 +112,9 @@ Species(
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.0002], # 100 eV
 	time_frozen = 0.0,
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 )
 Species(
 	species_type = "electron3",
@@ -122,8 +127,9 @@ Species(
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.0002], # 100 eV
 	time_frozen = 0.0,
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 )
 
 

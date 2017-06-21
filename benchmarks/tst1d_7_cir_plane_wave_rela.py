@@ -55,7 +55,7 @@ Main(
     timestep = dt,
     sim_time = Tsim,
     
-    bc_em_type_x = ['silver-muller'],
+    EM_boundary_conditions = [ ['silver-muller'] ],
     
     random_seed = 0
 )
@@ -82,12 +82,7 @@ for ipusher,pusher in enumerate(pusher_list):
         mean_velocity = [0., 0.0, 0.0],
         temperature = [0.],
         dynamics_type = pusher,
-        bc_part_type_xmin  = "none",
-        bc_part_type_xmax  = "none",
-        bc_part_type_ymin = "none",
-        bc_part_type_ymax = "none",
-        bc_part_type_zmin = "none",
-        bc_part_type_zmax = "none",
+	    boundary_conditions = [["periodic"]],
         track_every = 10,
         track_flush_every = 100,
         is_test = True

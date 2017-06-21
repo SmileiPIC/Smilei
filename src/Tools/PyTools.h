@@ -280,13 +280,29 @@ public:
         return PyTools::convert(py_val,val);
     }
     
-    //! extract vectors
+    //! extract vector
     template< typename T>
     static bool extract(std::string name, std::vector<T> &val, std::string component=std::string(""), int nComponent=0) {
         std::vector<PyObject*> py_val = extract_pyVec(name,component,nComponent);
         if (py_val.size())
             return PyTools::convert(py_val,val);
         return false;
+    }
+    
+    //! extract vector of vectors
+    template< typename T>
+    static bool extract(std::string name, std::vector<std::vector<T> > &val, std::string component=std::string(""), int nComponent=0) {
+        std::vector<PyObject*> py_val = extract_pyVec(name,component,nComponent);
+        if( py_val.size() == 0 )
+            return false;
+        val.resize(0);
+        for( unsigned int i=0; i<py_val.size(); i++ ) {
+            std::vector<T> vec;
+            if( ! convert(py_val[i], vec) )
+                ERROR( name << " should be a list of lists");
+            val.push_back( vec );
+        }
+        return true;
     }
     
     //! retrieve python object

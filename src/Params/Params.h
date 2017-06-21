@@ -111,9 +111,7 @@ public:
     double time_fields_frozen;
     
     //! Boundary conditions for ElectroMagnetic Fields
-    std::vector<std::string> bc_em_type_x;
-    std::vector<std::string> bc_em_type_y;
-    std::vector<std::string> bc_em_type_z;
+    std::vector< std::vector<std::string> > EM_BCs;
     
     //Poisson solver
     //! Do we solve poisson
@@ -178,7 +176,7 @@ public:
     
     //! frequency of exchange particles (default = 1, disabled for now, incompatible with sort) 
     int exchange_particles_each;
-
+    
     //! frequency to apply shrink_to_fit on particles structure
     int every_clean_particles_overhead;
     

@@ -6,11 +6,17 @@ In the namelist
 
 - Parameter ``maxwell_sol`` renamed :py:data:`maxwell_solver`.
 
+- Parameters ``bc_em_type_*`` unified in a new parameter :py:data:`EM_boundary_conditions`.
+
 - Parameter ``referenceAngularFrequency_SI`` renamed :py:data:`reference_angular_frequency_SI`.
 
 - Parameter ``initPosition_type`` renamed :py:data:`position_initialization`
 
 - Parameter ``initMomentum_type`` renamed :py:data:`momentum_initialization`
+
+- Parameters ``bc_part_type_****`` unified in a new parameter :py:data:`boundary_conditions`. 
+
+- Particle boundary conditions do not accept ``"none"`` anymore. Use ``"periodic"`` instead.
 
 - Parameter ``thermT`` renamed :py:data:`thermal_boundary_temperature`
 

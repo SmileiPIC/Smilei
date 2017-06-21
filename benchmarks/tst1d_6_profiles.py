@@ -17,7 +17,7 @@ Main(
 	
 	time_fields_frozen = 10000000.,
 	
-	bc_em_type_x  = ["periodic"],
+	EM_boundary_conditions = [ ["periodic"] ],
 	
 	print_every = 10
 )
@@ -46,8 +46,9 @@ for name, profile in profiles.items():
 		charge = 1.0,
 		nb_density = profile,
 		time_frozen = 10000.0,
-		bc_part_type_xmin = "none",
-		bc_part_type_xmax = "none",
+		boundary_conditions = [
+			["periodic", "periodic"],
+		],
 		temperature = [0.1]
 	)
 
@@ -97,8 +98,7 @@ for eon in mj_species:
 		nb_density = 1.,
 		mean_velocity=vmean,
 		time_frozen = 10000.,
-		bc_part_type_xmin  = 'none',
-		bc_part_type_xmax  = 'none',
+		boundary_conditions = [["periodic"]],
 		is_test = True
 	)
 	

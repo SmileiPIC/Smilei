@@ -24,7 +24,7 @@ Main(
     timestep = t0/rest,
     sim_time = Tsim,
      
-    bc_em_type_x = ['silver-muller'],
+    EM_boundary_conditions = [ ['silver-muller'] ],
     
     reference_angular_frequency_SI = 6*math.pi*1e14,
     
@@ -42,8 +42,9 @@ Species(
 	mass = 1836.0*1000.,
 	charge = 0.0,
 	nb_density = 0.1,
-	bc_part_type_xmin = 'none',
-	bc_part_type_xmax = 'none'
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 )
 Species(
 	species_type = 'carbon',
@@ -56,8 +57,9 @@ Species(
 	mass = 1836.0*1000.,
 	charge = 0.0,
 	nb_density = 0.1,
-	bc_part_type_xmin = 'none',
-	bc_part_type_xmax = 'none'
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 )
 Species(
 	species_type = 'electron',
@@ -67,8 +69,9 @@ Species(
 	mass = 1.0,
 	charge = -1.0,
 	charge_density = 0.0,
-	bc_part_type_xmin = 'none',
-	bc_part_type_xmax = 'none',
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 	track_every = 30
 )
 

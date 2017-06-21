@@ -24,8 +24,10 @@ Main(
     timestep = t0/rest,
     sim_time = Tsim,
      
-    bc_em_type_x = ['silver-muller'],
-    bc_em_type_y = ['silver-muller'],
+    EM_boundary_conditions = [
+        ['silver-muller'],
+        ['silver-muller'],
+    ],
     
     random_seed = 0
 )
@@ -40,10 +42,10 @@ Species(
 	mass = 1.0,
 	charge = -1.0,
 	nb_density = trapezoidal(1.0,xvacuum=1.*l0,xplateau=4.*l0,yvacuum=5.*l0,yplateau=10.*l0),
-	bc_part_type_xmin  = 'refl',
-	bc_part_type_xmax  = 'refl',
-	bc_part_type_ymin = 'none',
-	bc_part_type_ymax = 'none',
+	boundary_conditions = [
+		["refl", "refl"],
+		["periodic", "periodic"],
+	],
 	mean_velocity=[0.9,0.01,0]
 )
 
@@ -54,10 +56,10 @@ Species(
 	mass = 1.0,
 	charge = 1.0,
 	nb_density = trapezoidal(1.0,xvacuum=1.*l0,xplateau=4.*l0,yvacuum=5.*l0,yplateau=10.*l0),
-	bc_part_type_xmin  = 'refl',
-	bc_part_type_xmax  = 'refl',
-	bc_part_type_ymin = 'none',
-	bc_part_type_ymax = 'none',
+	boundary_conditions = [
+		["refl", "refl"],
+		["periodic", "periodic"],
+	],
 	mean_velocity=[0.9,0.01,0]
 )
 

@@ -38,7 +38,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     
     // -----------------------------
     // Define limits of local domain
-    if (params.bc_em_type_x[0]=="periodic" || params.hasWindow) {
+    if (params.EM_BCs[0][0]=="periodic" || params.hasWindow) {
         x_min = patch->getDomainLocalMin(0);
         x_max = patch->getDomainLocalMax(0);
     }
@@ -48,7 +48,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     }
     
     if ( nDim_particle > 1 ) {
-        if (params.bc_em_type_y[0]=="periodic") {
+        if (params.EM_BCs[1][0]=="periodic") {
             y_min = patch->getDomainLocalMin(1);
             y_max = patch->getDomainLocalMax(1);
         }
@@ -58,7 +58,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
         }
         
         if ( nDim_particle > 2 ) {
-            if (params.bc_em_type_z[0]=="periodic") {
+            if (params.EM_BCs[2][0]=="periodic") {
                 z_min = patch->getDomainLocalMin(2);
                 z_max = patch->getDomainLocalMax(2);
             }
@@ -74,20 +74,10 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
 
     // Check for inconsistencies between EM and particle BCs
     if (! species->particles->tracked) {
-        if ( ((params.bc_em_type_x[0]=="periodic")&&(species->bc_part_type_xmin!="none")&&(species->bc_part_type_xmin!="periodic"))  
-         ||  ((params.bc_em_type_x[1]=="periodic")&&(species->bc_part_type_xmax!="none")&&(species->bc_part_type_xmax!="periodic")) ) {
-            ERROR("For species " << species->species_type << ", periodic EM boundary conditions require x particle BCs to be periodic or none.");
-        }
-        if ( nDim_particle > 1 ) {
-            if ( ((params.bc_em_type_y[0]=="periodic")&&(species->bc_part_type_ymin!="none")&&(species->bc_part_type_ymin!="periodic"))
-             ||  ((params.bc_em_type_y[1]=="periodic")&&(species->bc_part_type_ymax!="none")&&(species->bc_part_type_ymax!="periodic")) ) {
-                ERROR("For species #" << species->species_type << ", periodic EM boundary conditions require y particle BCs to be periodic or none.");
-            }
-            if ( nDim_particle > 2 ) {
-                if ( ((params.bc_em_type_z[0]=="periodic")&&(species->bc_part_type_zmin!="none")&&(species->bc_part_type_zmin!="periodic"))
-                 ||  ((params.bc_em_type_z[1]=="periodic")&&(species->bc_part_type_zmax!="none")&&(species->bc_part_type_zmax!="periodic")) ) {
-                    ERROR("For species #" << species->species_type << ", periodic EM boundary conditions require z particle BCs to be periodic or none.");
-                }
+        for( unsigned int iDim=0; iDim<nDim_particle; iDim++ ) {
+            if ( ((params.EM_BCs[iDim][0]=="periodic")&&(species->boundary_conditions[iDim][0]!="periodic"))  
+             ||  ((params.EM_BCs[iDim][1]=="periodic")&&(species->boundary_conditions[iDim][1]!="periodic")) ) {
+                ERROR("For species " << species->species_type << ", periodic EM "<<"xyz"[iDim]<<"-boundary conditions require particle BCs to be periodic.");
             }
         }
     }
@@ -97,106 +87,102 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     // ----------------------------------------------
     
     // Xmin
-    if ( species->bc_part_type_xmin == "refl" ) {
+    if ( species->boundary_conditions[0][0] == "refl" ) {
         if (patch->isXmin()) bc_xmin = &refl_particle;
     }
-    else if ( species->bc_part_type_xmin == "supp" ) {
+    else if ( species->boundary_conditions[0][0] == "supp" ) {
         if (patch->isXmin()) bc_xmin = &supp_particle;
     }
-    else if ( species->bc_part_type_xmin == "stop" ) {
+    else if ( species->boundary_conditions[0][0] == "stop" ) {
         if (patch->isXmin()) bc_xmin = &stop_particle;
     }
-    else if ( species->bc_part_type_xmin == "thermalize" ) {
+    else if ( species->boundary_conditions[0][0] == "thermalize" ) {
         if (patch->isXmin()) bc_xmin = &thermalize_particle;
     }
-    else if ( species->bc_part_type_xmin == "none" ) {
-        if (patch->isMaster()) MESSAGE(2,"Xmin boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+    else if ( species->boundary_conditions[0][0] == "periodic" ) {
     }
     else {
-        ERROR("Xmin boundary condition undefined" );
+        ERROR("Xmin boundary condition `"<<species->boundary_conditions[0][0]<<"` unknown" );
     }
     
     // Xmax
-    if ( species->bc_part_type_xmax == "refl" ) {
+    if ( species->boundary_conditions[0][1] == "refl" ) {
         if (patch->isXmax()) bc_xmax = &refl_particle;
     }
-    else if ( species->bc_part_type_xmax == "supp" ) {
+    else if ( species->boundary_conditions[0][1] == "supp" ) {
         if (patch->isXmax()) bc_xmax = &supp_particle;
     }
-    else if ( species->bc_part_type_xmax == "stop" ) {
+    else if ( species->boundary_conditions[0][1] == "stop" ) {
         if (patch->isXmax()) bc_xmax = &stop_particle;
     }
-    else if ( species->bc_part_type_xmax == "thermalize" ) {
+    else if ( species->boundary_conditions[0][1] == "thermalize" ) {
         if (patch->isXmax()) bc_xmax = &thermalize_particle;
     }
-    else if ( species->bc_part_type_xmax == "none" ) {
-        if (patch->isMaster()) MESSAGE(2,"Xmax boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+    else if ( species->boundary_conditions[0][1] == "periodic" ) {
     }
     else {
-        ERROR( "Xmax boundary condition undefined" );
+        ERROR( "Xmax boundary condition `"<<species->boundary_conditions[0][1]<<"`  unknown" );
     }
     
     
     if ( nDim_particle > 1 ) {
         // Ymin
-        if ( species->bc_part_type_ymin == "refl" ) {
+        if ( species->boundary_conditions[1][0] == "refl" ) {
             if (patch->isYmin()) bc_ymin = &refl_particle;
         }
-        else if ( species->bc_part_type_ymin == "supp" ) {
+        else if ( species->boundary_conditions[1][0] == "supp" ) {
             if (patch->isYmin()) bc_ymin = &supp_particle;
         }
-        else if ( species->bc_part_type_ymin == "stop" ) {
+        else if ( species->boundary_conditions[1][0] == "stop" ) {
             if (patch->isYmin()) bc_ymin = &stop_particle;
         }
-        else if ( species->bc_part_type_ymin == "thermalize" ) {
+        else if ( species->boundary_conditions[1][0] == "thermalize" ) {
             if (patch->isYmin()) bc_ymin = &thermalize_particle;
         }
-        else if ( species->bc_part_type_ymin == "none" ) {
-            if (patch->isMaster()) MESSAGE(2,"Ymin boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+        else if ( species->boundary_conditions[1][0] == "periodic" ) {
         }
         else {
-            ERROR( "Ymin boundary condition undefined : " << species->bc_part_type_ymin  );
+            ERROR( "Ymin boundary condition `"<< species->boundary_conditions[1][0] << "` unknown"  );
         }
         
         // Ymax
-        if ( species->bc_part_type_ymax == "refl" ) {
+        if ( species->boundary_conditions[1][1] == "refl" ) {
             if (patch->isYmax()) bc_ymax = &refl_particle;
         }
-        else if ( species->bc_part_type_ymax == "supp" ) {
+        else if ( species->boundary_conditions[1][1] == "supp" ) {
             if (patch->isYmax()) bc_ymax = &supp_particle;
         }
-        else if ( species->bc_part_type_ymax == "stop" ) {
+        else if ( species->boundary_conditions[1][1] == "stop" ) {
             if (patch->isYmax()) bc_ymax = &stop_particle;
         }
-        else if ( species->bc_part_type_ymax == "thermalize" ) {
+        else if ( species->boundary_conditions[1][1] == "thermalize" ) {
             if (patch->isYmax()) bc_ymax = &thermalize_particle;
         }
-        else if ( species->bc_part_type_ymax == "none" ) {
-            if (patch->isMaster()) MESSAGE(2,"Ymax boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+        else if ( species->boundary_conditions[1][1] == "periodic" ) {
         }
         else {
-            ERROR( "Ymax boundary condition undefined : " << species->bc_part_type_ymax  );
+            ERROR( "Ymax boundary condition `"<< species->boundary_conditions[1][1] <<"` undefined" );
         }
         
         
         if ( nDim_particle > 2 ) {
-            if ( species->bc_part_type_zmin == "refl" ) {
+            if ( species->boundary_conditions[2][0] == "refl" ) {
                 if (z_min==z_min_global) bc_zmin = &refl_particle;
             }
-            else if ( species->bc_part_type_zmin == "supp" ) {
+            else if ( species->boundary_conditions[2][0] == "supp" ) {
                 if (z_min==z_min_global) bc_zmin = &supp_particle;
             }
-            else if ( species->bc_part_type_zmin == "stop" ) {
+            else if ( species->boundary_conditions[2][0] == "stop" ) {
                 if (z_min==z_min_global) bc_zmin = &stop_particle;
             }
             
-            if ( species->bc_part_type_zmax == "refl" ) {
+            if ( species->boundary_conditions[2][1] == "refl" ) {
                 if (z_min==z_min_global) bc_zmax = &refl_particle;
             }
-            else if ( species->bc_part_type_zmax == "supp" )  {
+            else if ( species->boundary_conditions[2][1] == "supp" )  {
                 if (z_min==z_min_global) bc_zmax = &supp_particle;
             }
-            else if ( species->bc_part_type_zmax == "stop" ) {
+            else if ( species->boundary_conditions[2][1] == "stop" ) {
                 if (z_min==z_min_global) bc_zmax = &stop_particle;
             }
             

@@ -33,7 +33,7 @@ Main(
      clrw=1,
      timestep = dt,
      sim_time = 0.,
-     bc_em_type_x = ['periodic'],
+     EM_boundary_conditions = [ ['periodic'] ],
      random_seed = smilei_mpi_rank,
      print_every = int(t_sim/dt/100.)
 )
@@ -49,10 +49,7 @@ Species(
 	charge = 1.0,
 	nb_density = 1.,
 	mean_velocity=[0.,v0,0.],
-	bc_part_type_xmin  = 'none',
-	bc_part_type_xmax  = 'none',
-	bc_part_type_ymin  = 'none',
-	bc_part_type_ymax = 'none'
+	boundary_conditions = [["periodic"]],
 )
 Species(
 	species_type = 'eon',
@@ -64,10 +61,7 @@ Species(
 	charge = -1.0,
 	nb_density = 1.,
 	mean_velocity=[0.,v0,0.],
-	bc_part_type_xmin  = 'none',
-	bc_part_type_xmax  = 'none',
-	bc_part_type_ymin  = 'none',
-	bc_part_type_ymax = 'none'
+	boundary_conditions = [["periodic"]],
 )
 
 

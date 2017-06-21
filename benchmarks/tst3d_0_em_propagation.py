@@ -20,9 +20,7 @@ Main(
     timestep = t0/rest,
     sim_time = Tsim,
     
-    bc_em_type_x = ['silver-muller'],
-    bc_em_type_y = ['silver-muller'],
-    bc_em_type_z = ['silver-muller'],
+    EM_boundary_conditions = [ ['silver-muller'] ],
     
     random_seed = 0
 )

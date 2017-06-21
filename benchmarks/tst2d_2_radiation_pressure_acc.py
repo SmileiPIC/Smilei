@@ -24,8 +24,10 @@ Main(
     timestep = t0/rest,
     sim_time = Tsim,
      
-    bc_em_type_x = ['silver-muller'],
-    bc_em_type_y = ['periodic'],
+    EM_boundary_conditions = [
+        ['silver-muller'],
+        ['periodic'],
+    ],
     
     random_seed = 0
 )
@@ -48,10 +50,10 @@ Species(
     mass = 1836.0,
     charge = 1.0,
     nb_density = trapezoidal(100.0,xvacuum=l0,xplateau=0.44*l0),
-    bc_part_type_xmin = 'refl',
-    bc_part_type_xmax = 'refl',
-    bc_part_type_ymin = 'none',
-    bc_part_type_ymax = 'none'
+    boundary_conditions = [
+        ["refl", "refl"],
+        ["periodic", "periodic"],
+    ],
 )
 Species(
     species_type = 'eon',
@@ -62,10 +64,10 @@ Species(
     charge = -1.0,
     nb_density = trapezoidal(100.0,xvacuum=l0,xplateau=0.44*l0),
     temperature = [0.001],
-    bc_part_type_xmin = 'refl',
-    bc_part_type_xmax = 'refl',
-    bc_part_type_ymin = 'none',
-    bc_part_type_ymax = 'none', 
+    boundary_conditions = [
+        ["refl", "refl"],
+        ["periodic", "periodic"],
+    ], 
     track_every = 500, 
     time_frozen = 0.1
 )

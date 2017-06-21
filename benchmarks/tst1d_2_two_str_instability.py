@@ -20,7 +20,7 @@ Main(
     timestep = 0.0095,
     sim_time = 50.,
      
-    bc_em_type_x = ['periodic'],
+    EM_boundary_conditions = [ ['periodic'] ],
      
     random_seed = 0
 )
@@ -35,8 +35,9 @@ Species(
 	charge = 1.0,
 	nb_density = 1.,
 	#time_frozen = 10000.0,
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none",
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 	track_every = 1000,
 	track_filter = lambda x, px, py, pz: (x<0.02), 
 	time_frozen = 0.1
@@ -50,8 +51,9 @@ Species(
 	charge = -1.0,
 	nb_density = cosine(0.5,xamplitude=dn,xlength=L, xnumber=1),
 	mean_velocity = [-0.1,0.0,0.0],
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 )
 Species(
 	species_type = "eon2",
@@ -62,8 +64,9 @@ Species(
 	charge = -1.0,
 	nb_density = cosine(0.5,xamplitude=dn,xlength=L, xnumber=1),
 	mean_velocity = [0.1,0.0,0.0],
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 )
 
 

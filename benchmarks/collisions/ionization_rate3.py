@@ -22,7 +22,7 @@ Main(
     cell_length = [20.*L0],
     sim_length = [1600.*L0],
 
-    bc_em_type_x = ["periodic"],
+    EM_boundary_conditions = [ ["periodic"] ],
 
 
     random_seed = 0,
@@ -43,10 +43,12 @@ Species(
 	mean_velocity = [0.03, 0., 0.],
 	temperature = [0.0000001]*3,
 	time_frozen = 100000000.0,
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none",
-	bc_part_type_ymin = "none",
-	bc_part_type_ymax = "none",
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 	c_part_max = 10.
 )
 
@@ -61,10 +63,12 @@ Species(
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.00000001]*3,
 	time_frozen = 100000000.0,
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none",
-	bc_part_type_ymin = "none",
-	bc_part_type_ymax = "none",
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 	atomic_number = 13
 )
 

@@ -39,9 +39,7 @@ Main(
     
     number_of_patches = [4,4,4],
     
-    bc_em_type_x = ["periodic"],
-    bc_em_type_y = ["periodic"],
-    bc_em_type_z = ["periodic"],
+    EM_boundary_conditions = [ ["periodic"] ],
     
     random_seed = 0,
     
@@ -68,12 +66,11 @@ Species(
     mean_velocity = [0., 0.0, 0.0],
     temperature = [T],
     dynamics_type = "norm",
-    bc_part_type_xmin  = "none",
-    bc_part_type_xmax  = "none",
-    bc_part_type_ymin = "none",
-    bc_part_type_ymax = "none",
-    bc_part_type_zmin = "none",
-    bc_part_type_zmax = "none"
+    boundary_conditions = [
+    	["periodic", "periodic"],
+    	["periodic", "periodic"],
+    	["periodic", "periodic"],
+    ],
 )
 Species(
     species_type = "electron",
@@ -87,12 +84,11 @@ Species(
     mean_velocity = [0., 0.0, 0.0],
     temperature = [T],
     dynamics_type = "norm",
-    bc_part_type_xmin  = "none",
-    bc_part_type_xmax  = "none",
-    bc_part_type_ymin = "none",
-    bc_part_type_ymax = "none",
-    bc_part_type_zmin = "none",
-    bc_part_type_zmax = "none"
+    boundary_conditions = [
+    	["periodic", "periodic"],
+    	["periodic", "periodic"],
+    	["periodic", "periodic"],
+    ],
 )
 
 DumpRestart(

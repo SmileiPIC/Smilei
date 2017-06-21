@@ -82,32 +82,23 @@ OpenPMDparams::OpenPMDparams(Params& p):
     }
     
     // Boundary conditions
-    vector<string> bc_em_type;
-    bc_em_type.push_back(params->bc_em_type_x[0]);
-    bc_em_type.push_back(params->bc_em_type_x[1]);
-    if( params->nDim_field > 1 ) {
-        bc_em_type.push_back(params->bc_em_type_y[0]);
-        bc_em_type.push_back(params->bc_em_type_y[1]);
-        if( params->nDim_field > 2 ) {
-            bc_em_type.push_back(params->bc_em_type_z[0]);
-            bc_em_type.push_back(params->bc_em_type_z[1]);
+    for( unsigned int i=0; i<params->EM_BCs.size(); i++ ) {
+        for( unsigned int j=0; j<2; j++ ) {
+            if( params->EM_BCs[i][j] == "periodic" ) {
+                fieldBoundary          .addString( "periodic" );
+                fieldBoundaryParameters.addString( "periodic" );
+            } else if( params->EM_BCs[i][j] == "reflective" ) {
+                fieldBoundary          .addString( "reflecting" );
+                fieldBoundaryParameters.addString( "reflecting" );
+            } else if( params->EM_BCs[i][j] == "silver-muller" ) {
+                fieldBoundary          .addString( "open" );
+                fieldBoundaryParameters.addString( "silver-muller");
+            } else {
+                ERROR(" impossible boundary condition ");
+            }
+            particleBoundary          .addString( "" );
+            particleBoundaryParameters.addString( "" );
         }
-    }
-    for( unsigned int i=0; i<bc_em_type.size(); i++ ) {
-        if( bc_em_type[i] == "periodic" ) {
-            fieldBoundary          .addString( "periodic" );
-            fieldBoundaryParameters.addString( "periodic" );
-        } else if( bc_em_type[i] == "reflective" ) {
-            fieldBoundary          .addString( "reflecting" );
-            fieldBoundaryParameters.addString( "reflecting" );
-        } else if( bc_em_type[i] == "silver-muller" ) {
-            fieldBoundary          .addString( "open" );
-            fieldBoundaryParameters.addString( "silver-muller");
-        } else {
-            ERROR(" impossible boundary condition ");
-        }
-        particleBoundary          .addString( "" );
-        particleBoundaryParameters.addString( "" );
     }
     
     // Other parameters

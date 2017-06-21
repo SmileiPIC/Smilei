@@ -87,13 +87,14 @@ Main(
      sim_time = t_sim,
      
      # ELECTROMAGNETIC BOUNDARY CONDITIONS
-     # bc_em_type_x/y/z : boundary conditions used for EM fields
-     #                    periodic = periodic BC (using MPI topology)
-     #                    silver-muller = injecting/absorbing BC
-     #                    reflective = consider the ghost-cells as a perfect conductor
+     #  periodic = periodic BC (using MPI topology)
+     #  silver-muller = injecting/absorbing BC
+     #  reflective = consider the ghost-cells as a perfect conductor
      #
-     bc_em_type_x = ['silver-muller'],
-     bc_em_type_y = ['periodic'],
+     EM_boundary_conditions = [
+         ['silver-muller'],
+         ['periodic']
+     ],
  
      
      # regular seed
@@ -117,10 +118,7 @@ Species(
         thermal_boundary_temperature = [0.],
         thermal_boundary_velocity = [0.,0.,0.],
         time_frozen = 0.,
-        bc_part_type_xmin  = 'refl',
-        bc_part_type_xmax  = 'refl',
-        bc_part_type_ymin  = 'none',
-        bc_part_type_ymax  = 'none'
+	    boundary_conditions = [["refl"], ["periodic"]],
 )
 
      
@@ -140,11 +138,8 @@ Species(
         thermal_boundary_temperature = [0.],
         thermal_boundary_velocity = [0.,0.,0.],
         time_frozen = 0,
-        bc_part_type_xmin  = 'refl',
-        bc_part_type_xmax  = 'refl',
-        bc_part_type_ymin  = 'none',
-        bc_part_type_ymax  = 'none'
-        )
+	    boundary_conditions = [["refl"], ["periodic"]],
+)
 
 
 #ExtField(
