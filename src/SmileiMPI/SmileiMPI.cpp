@@ -114,8 +114,9 @@ void SmileiMPI::init( Params& params )
     capabilities.resize(smilei_sz, 1);
     Tcapabilities = smilei_sz;
 
+    if (smilei_rk == 0)remove( "patch_load.txt" ) ;
     // Initialize patch distribution
-    init_patch_count(params);
+    if (!params.restart) init_patch_count(params);
 
     // Initialize buffers for particles push vectorization
     //     - 1 thread push particles for a unique patch at a given time
@@ -435,10 +436,10 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         MPI_Wait(&request0, &status);
 
     if (smilei_rk > 0){
-        //Tcur is now initialized as the total load carried by previous ranks.
+        //Tcur is now initialized as the total load currently carried by previous ranks.
         Tcur = Tscan - Tload_loc;
         //Check if my rank should start with additional patches from left neighbour.
-        target = smilei_rk*Tload;
+        target = smilei_rk*Tload; //target here points at the optimal begining for current rank
         if (Tcur > target){
             j = Lp_left.size()-1;
             while (abs(Tcur-target) > abs(Tcur-Lp_left[j] - target) && j>0){ //Leave at least 1 patch to my neighbour.
@@ -465,7 +466,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         //Check if my rank should start with additional patches from right neighbour ...
         if (Tcur < target){
             unsigned int j = 0;
-            while (abs(Tcur-target) > abs(Tcur+Lp_right[j] - target) && j<patch_count[smilei_rk]+1){ //Keep at least 1 patch
+            while (abs(Tcur-target) > abs(Tcur+Lp_right[j] - target) && j<patch_count[smilei_rk+1] - 1 ){ //Keep at least 1 patch
                 Tcur += Lp_right[j];
                 j++;
                 Ncur++;
@@ -481,6 +482,8 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         }
     }
 
+    //Ncur is the variation of number of patches owned by current rank.
+    //Stores in Ncur the final patch count of this rank
     Ncur += patch_count[smilei_rk] ;
 
     //Ncur now has to be gathered to all as target_patch_count[smilei_rk]

@@ -228,7 +228,8 @@ Open a Track diagnostic
   * ``select``: Instructions for selecting particles among those available.
     A detailed explanation is provided below
   * ``axes``: A list of axes for plotting the trajectories.
-     | Each axis is ``"x"``, ``"y"``, ``"z"``, ``"px"``, ``"py"`` or ``"pz"``.
+     Each axis is ``"x"``, ``"y"``, ``"z"``, ``"px"``, ``"py"``, ``"pz"``, ``"q"`` (the charge) or ``"w"`` (the statistical weight).
+     
      | **Example:** ``axes = ["x"]`` corresponds to :math:`x` versus time. 
      | **Example:** ``axes = ["x","y"]`` correspond to 2-D trajectories. 
      | **Example:** ``axes = ["x","px"]`` correspond to phase-space trajectories.

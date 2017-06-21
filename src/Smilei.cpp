@@ -104,7 +104,7 @@ int main (int argc, char* argv[])
         vecPatches.initAllDiags( params, smpi );
         
     } else {
-        
+       
         vecPatches = PatchesFactory::createVector(params, smpi, openPMD, 0);
         
         // Initialize the electromagnetic fields
@@ -149,6 +149,9 @@ int main (int argc, char* argv[])
         timers.diags.reboot();
     
     }
+    TITLE("Species creation summary");
+    vecPatches.printNumberOfParticles( smpi );
+
     timers.global.reboot();
     
     // ------------------------------------------------------------------------

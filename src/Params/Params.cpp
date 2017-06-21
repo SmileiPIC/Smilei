@@ -180,7 +180,7 @@ namelist("")
     geometry = "";
     if( !PyTools::extract("geometry", geometry, "Main") )
         ERROR("Parameter Main.geometry is required");
-    if (geometry!="1d3v" && geometry!="2d3v" && geometry!="3d3v") {
+    if (geometry!="1d3v" && geometry!="2d3v" && geometry!="3d3v" && geometry!="3drz") {
         ERROR("Main.geometry `" << geometry << "` invalid");
     }
     setDimensions();
@@ -450,7 +450,7 @@ void Params::setDimensions()
     } else if (geometry=="3d3v") {
         nDim_particle=3;
         nDim_field=3;
-    } else if (geometry=="2drz") {
+    } else if (geometry=="3drz") {
         nDim_particle=3;
         nDim_field=2;
     } else {
