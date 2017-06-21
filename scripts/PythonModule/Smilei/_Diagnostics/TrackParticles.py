@@ -93,15 +93,6 @@ class TrackParticles(Diagnostic):
 		# If the selection is a string (containing an operation)
 		if sort:
 			if type(select) is str:
-				# Define a function that gets some requested data
-				def getData(property, time, buffer=None):
-					it = self._locationForTime[time]
-					dataset = self._h5items[property]
-					if buffer is None:
-						buffer = dataset[it,:]
-					else:
-						dataset.read_direct(buffer, source_sel=self._np.s_[it,:])
-					return buffer
 				# Define a function that finds the next closing character in a string
 				def findClosingCharacter(string, character, start=0):
 					i = start
@@ -119,54 +110,97 @@ class TrackParticles(Diagnostic):
 							del stack[-1]
 						i+=1
 					raise Exception("Error in selector syntax: missing `"+character+"`")
-				# Start reading the selector
-				print("Selecting particles ... (this may take a while)")
+				# Parse the selector
 				i = 0
-				stack = []
 				operation = ""
+				seltype = []
+				selstr = []
+				timeSelector = []
+				particleSelector = []
+				doubleProps = []
+				int16Props = []
 				while i < len(select):
 					if i+4<len(select) and select[i:i+4] in ["any(","all("]:
-						seltype = select[i:i+4]
-						if seltype == "any(": function = self._np.logical_or
-						if seltype == "all(": function = self._np.logical_and
+						seltype += [select[i:i+4]]
+						if seltype[-1] not in ["any(","all("]:
+							raise Exception("Error in selector syntax: unknown argument "+seltype[-1][:-1])
 						comma = findClosingCharacter(select, ",", i+4)
 						parenthesis = findClosingCharacter(select, ")", comma+1)
-						timeSelector = select[i+4:comma]
+						timeSelector += [select[i+4:comma]]
+						selstr += [select[i:parenthesis]]
 						try:
-							s = self._re.sub(r"\bt\b","self._times",timeSelector)
-							times = self._times[eval(s)]
+							timeSelector[-1] = "self._times["+self._re.sub(r"\bt\b","self._times",timeSelector[-1])+"]"
+							eval(timeSelector[-1])
 						except:
 							raise Exception("Error in selector syntax: time selector not understood in "+select[i:i+3]+"()")
 						try:
-							particleSelector = select[comma+1:parenthesis]
+							particleSelector += [select[comma+1:parenthesis]]
+							doubleProps += [[]]
+							int16Props += [[]]
 							for prop in self._h5items.keys():
-								particleSelector = self._re.sub(r"\b"+prop+r"\b", "getData('"+prop+"',time)", particleSelector)
+								(particleSelector[-1], nsubs) = self._re.subn(r"\b"+prop+r"\b", "properties['"+prop+"'][:actual_chunksize]", particleSelector[-1])
+								if nsubs > 0:
+									if   prop == "q" : int16Props [-1] += [prop]
+									else             : doubleProps[-1] += [prop]
 						except:
 							raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
-						if seltype == "any(": selection = self._np.zeros((self.nParticles,), dtype=bool)
-						if seltype == "all(": selection = self._np.ones ((self.nParticles,), dtype=bool)
-						#try:
-						ID = self._np.zeros((self.nParticles,), dtype=self._np.int32)
-						selstr  = select[i:parenthesis]
-						for time in times:
-							print("   Selecting block `"+selstr+")`, at time "+str(time))
-							selectionAtTimeT = eval(particleSelector) # array of True or False
-							selectionAtTimeT[self._np.isnan(selectionAtTimeT)] = False
-							getData("Id", time, ID)
-							loc = self._np.flatnonzero(ID>0) # indices of existing particles
-							selection[loc] = function( selection[loc], selectionAtTimeT[loc])
-						#except:
-						#	raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
-						stack.append(selection)
-						operation += "stack["+str(len(stack)-1)+"]"
+						operation += "stack["+str(len(seltype)-1)+"]"
 						i = parenthesis+1
 					else:
 						operation += select[i]
 						i+=1
+				nOperations = len(seltype)
+				# Execute the selector
+				print("Selecting particles ... (this may take a while)")
 				if len(operation)==0.:
 					self.selectedParticles = self._np.s_[:]
 				else:
-					self.selectedParticles = eval(operation).nonzero()[0]
+					# Setup the chunks of particles (if too many particles)
+					chunksize = min(20000000, self.nParticles)
+					nchunks = int(self.nParticles / chunksize)
+					chunksize = int(self.nParticles / nchunks)
+					self.selectedParticles = self._np.array([], dtype=self._np.uint64)
+					# Allocate buffers
+					properties = {}
+					for k in range(nOperations):
+						for prop in int16Props[k]:
+							if prop not in properties:
+								properties[prop] = self._np.empty((chunksize,), dtype=self._np.int16)
+						for prop in doubleProps[k]:
+							if prop not in properties:
+								properties[prop] = self._np.empty((chunksize,), dtype=self._np.double)
+					properties["Id"] = self._np.empty((chunksize,), dtype=self._np.uint64)
+					selection = self._np.empty((chunksize,), dtype=bool)
+					# Loop on chunks
+					chunkstop = 0
+					for ichunk in range(nchunks):
+						chunkstart = chunkstop
+						chunkstop  = min(chunkstart + chunksize, self.nParticles)
+						actual_chunksize = chunkstop - chunkstart
+						# Execute each of the selector items
+						stack = []
+						for k in range(nOperations):
+							if   seltype[k] == "any(": selection.fill(False)
+							elif seltype[k] == "all(": selection.fill(True )
+							requiredProps = doubleProps[k] + int16Props[k] + ["Id"]
+							# Loop times
+							times = eval(timeSelector[k])
+							for time in times:
+								print("   Selecting block `"+selstr[k]+")`, at time "+str(time))
+								# Extract required properties
+								it = self._locationForTime[time]
+								for prop in requiredProps:
+									self._h5items[prop].read_direct(properties[prop], source_sel=self._np.s_[it,chunkstart:chunkstop], dest_sel=self._np.s_[:actual_chunksize])
+								# Calculate the selector
+								selectionAtTimeT = eval(particleSelector[k]) # array of True or False
+								selectionAtTimeT[self._np.isnan(selectionAtTimeT)] = False
+								loc = self._np.flatnonzero(properties["Id"][:actual_chunksize]>0) # indices of existing particles
+								# Combine wth selection of previous times
+								if   seltype[k] == "any(": selection[loc] += selectionAtTimeT[loc]
+								elif seltype[k] == "all(": selection[loc] *= selectionAtTimeT[loc]
+							stack.append(selection)
+						# Merge all stack items according to the operations
+						self.selectedParticles = self._np.union1d( self.selectedParticles, eval(operation).nonzero()[0] )
 					self.selectedParticles.sort()
 			
 			# Otherwise, the selection can be a list of particle IDs
