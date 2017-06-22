@@ -61,7 +61,7 @@ tracking_diagnostic(10000),
 nDim_particle(params.nDim_particle),
 min_loc(patch->getDomainLocalMin(0))
 {
-    DEBUG(species_type);
+    DEBUG(name);
     
     PI2 = 2.0 * M_PI;
     PI_ov_2 = 0.5*M_PI;
@@ -131,7 +131,7 @@ void Species::initOperators(Params& params, Patch* patch)
     // \todo pay attention to restart
     Ionize = IonizationFactory::create(params, this);
     if (Ionize) {
-        DEBUG("Species " << species_type << " can be ionized!");
+        DEBUG("Species " << name << " can be ionized!");
     }
     
     // define limits for BC and functions applied and for domain decomposition
@@ -216,7 +216,7 @@ void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
         }
         diff = q - ((double)tot)/((double)nPart); // missing charge
         if (diff != 0.) {
-            WARNING("Could not match exactly charge="<<q<<" for species "<< species_type <<" (difference of "<<diff<<"). Try to add particles.");
+            WARNING("Could not match exactly charge="<<q<<" for species "<< name <<" (difference of "<<diff<<"). Try to add particles.");
         }
     }
 }

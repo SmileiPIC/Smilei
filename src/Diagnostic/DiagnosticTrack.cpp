@@ -20,11 +20,11 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& 
     nDim_particle(params.nDim_particle)
 {
     // Extract the species
-    string species_type;
-    if( !PyTools::extract("species",species_type,"DiagTrackParticles",iDiagTrackParticles) )
+    string species_name;
+    if( !PyTools::extract("species",species_name,"DiagTrackParticles",iDiagTrackParticles) )
         ERROR("DiagTrackParticles #" << iDiagTrackParticles << " requires an argument `species`");
-    vector<string> species_types = {species_type};
-    vector<unsigned int> species_ids = Params::FindSpecies(vecPatches(0)->vecSpecies, species_types);
+    vector<string> species_names = {species_name};
+    vector<unsigned int> species_ids = Params::FindSpecies(vecPatches(0)->vecSpecies, species_names);
     if( species_ids.size() > 1 )
         ERROR("DiagTrackParticles #" << iDiagTrackParticles << " corresponds to more than 1 species");
     if( species_ids.size() < 1 )
@@ -36,7 +36,7 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& 
     H5Pset_dxpl_mpio( transfer, H5FD_MPIO_COLLECTIVE);
     
     ostringstream name("");
-    name << "Tracking species '" << species_type << "'";
+    name << "Tracking species '" << species_name << "'";
     
     // Get parameter "every" which describes an iteration selection
     timeSelection = new TimeSelection( PyTools::extract_py("every", "DiagTrackParticles", iDiagTrackParticles), name.str() );
@@ -56,7 +56,7 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& 
 #ifdef SMILEI_USE_NUMPY
         // Check if filter is callable
         if( ! PyCallable_Check(filter) )
-            ERROR("Tracked species '" << species_type << "' has a filter that is not callable");
+            ERROR("Tracked species '" << species_name << "' has a filter that is not callable");
         unsigned int n_arg;
         // Try to get the number of arguments of the filter function
         try {
@@ -66,11 +66,11 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& 
             Py_DECREF(argcount);
             Py_DECREF(code);
         } catch (...) {
-            ERROR("Tracked species '" << species_type << "' has a filter that does not look like a normal python function");
+            ERROR("Tracked species '" << species_name << "' has a filter that does not look like a normal python function");
         }
         // Verify the number of arguments of the filter function
         if( n_arg != nDim_particle+3 )
-            ERROR("Tracked species '" << species_type << "' has a filter function with "<<n_arg<<" arguments while requiring "<<nDim_particle+3);
+            ERROR("Tracked species '" << species_name << "' has a filter function with "<<n_arg<<" arguments while requiring "<<nDim_particle+3);
         // Verify the return value of the function
         double test_value[2] = {1.2, 1.4};
         npy_intp dims[1] = {2};
@@ -89,13 +89,13 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& 
             ERROR("Tracked particles filter must not change the arrays sizes");
         Py_DECREF(ret);
 #else
-        ERROR("Tracking species '" << species_type << "' with a filter requires the numpy package");
+        ERROR("Tracking species '" << species_name << "' with a filter requires the numpy package");
 #endif
     }
     
     // Create the filename
     ostringstream hdf_filename("");
-    hdf_filename << "TrackParticlesDisordered_" << species_type  << ".h5" ;
+    hdf_filename << "TrackParticlesDisordered_" << species_name  << ".h5" ;
     filename = hdf_filename.str();
     
 }
@@ -261,7 +261,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         t << setfill('0') << setw(10) << itime;
         iteration_group = H5::group( data_group_id, t.str().c_str() );
         particles_group = H5::group( iteration_group, "particles" );
-        species_group = H5::group( particles_group, vecPatches(0)->vecSpecies[speciesId_]->species_type.c_str() );
+        species_group = H5::group( particles_group, vecPatches(0)->vecSpecies[speciesId_]->name.c_str() );
         
         // Add openPMD attributes ( "basePath" )
         openPMD->writeBasePathAttributes( iteration_group, itime );

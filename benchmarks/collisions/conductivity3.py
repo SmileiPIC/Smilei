@@ -40,7 +40,7 @@ ExtField(
 
 
 Species(
-	species_type = "copper1",
+	name = "copper1",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
 	n_part_per_cell = 50000,
@@ -55,7 +55,7 @@ Species(
 	],
 )
 Species(
-	species_type = "electron1",
+	name = "electron1",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
 	n_part_per_cell= 100000,
@@ -71,7 +71,7 @@ Species(
 )
 
 Species(
-	species_type = "copper2",
+	name = "copper2",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
 	n_part_per_cell = 50000,
@@ -86,7 +86,7 @@ Species(
 	],
 )
 Species(
-	species_type = "electron2",
+	name = "electron2",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
 	n_part_per_cell= 100000,

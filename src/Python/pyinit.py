@@ -45,7 +45,7 @@ class SmileiComponentType(type):
     def __getitem__(self, key):
         if self.__name__ == "Species" and type(key) is str:
             for obj in self._list:
-                if obj.species_type == key:
+                if obj.name == key:
                     return obj
         else:
             return self._list[key]
@@ -98,6 +98,7 @@ class SmileiComponent(object):
                 "track_every"      :"DiagTrackParticles()",
                 "track_flush_every":"DiagTrackParticles()",
                 "track_filter"     :"DiagTrackParticles()",
+                "species_type":"name",
             }
             for key, value in kwargs.items():
                 if key in deprecated:
@@ -260,7 +261,7 @@ class DumpRestart(SmileiSingleton):
 
 class Species(SmileiComponent):
     """Species parameters"""
-    species_type = None
+    name = None
     position_initialization = None
     momentum_initialization = ""
     n_part_per_cell = None

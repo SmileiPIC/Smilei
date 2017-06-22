@@ -19,22 +19,22 @@ class SpeciesFactory {
 public:
     static Species* create(Params& params, int ispec, Patch* patch) {
         
-        std::string species_type("");
+        std::string species_name("");
         
-        PyTools::extract("species_type",species_type,"Species",ispec);
+        PyTools::extract("name",species_name,"Species",ispec);
         
         unsigned int tot_species_number = PyTools::nComponents("Species");
-        if(species_type.empty()) {
+        if(species_name.empty()) {
             std::ostringstream name("");
             name << "species" << std::setfill('0') << std::setw(log10(tot_species_number)+1) << ispec;
-            species_type=name.str();
-            if (patch->isMaster() ) MESSAGE("For species #" << ispec << ", parameter species_type will be " << species_type);
+            species_name=name.str();
+            if (patch->isMaster() ) MESSAGE("For species #" << ispec << ", name will be " << species_name);
         }
         
         // Extract type of species dynamics from namelist
         std::string dynamics_type = "norm"; // default value
         if (!PyTools::extract("dynamics_type", dynamics_type ,"Species",ispec) )
-            if ( patch->isMaster() ) WARNING("For species '" << species_type << "' dynamics_type not defined: assumed = 'norm'.");
+            if ( patch->isMaster() ) WARNING("For species '" << species_name << "' dynamics_type not defined: assumed = 'norm'.");
         
         // Create species object
         Species * thisSpecies=NULL;
@@ -51,10 +51,10 @@ public:
              // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
              thisSpecies = new Species_rrll(params, patch);
         } else {
-            ERROR("For species `" << species_type << " dynamics_type must be 'norm', 'borisnr', 'vay', 'higueracary' or 'rrll'")
+            ERROR("For species `" << species_name << " dynamics_type must be 'norm', 'borisnr', 'vay', 'higueracary' or 'rrll'")
         }
         
-        thisSpecies->species_type = species_type;
+        thisSpecies->name = species_name;
         thisSpecies->dynamics_type = dynamics_type;
         thisSpecies->speciesNumber = ispec;
         
@@ -62,11 +62,11 @@ public:
         
         PyTools::extract("position_initialization",thisSpecies->position_initialization ,"Species",ispec);
         if (thisSpecies->position_initialization.empty()) {
-            ERROR("For species '" << species_type << "' empty position_initialization");
+            ERROR("For species '" << species_name << "' empty position_initialization");
         } else if ( (thisSpecies->position_initialization!="regular" )
                   &&(thisSpecies->position_initialization!="random"  )
                   &&(thisSpecies->position_initialization!="centered") ) {
-            ERROR("For species '" << species_type << "' unknown position_initialization: " << thisSpecies->position_initialization);
+            ERROR("For species '" << species_name << "' unknown position_initialization: " << thisSpecies->position_initialization);
         }
         
         PyTools::extract("momentum_initialization",thisSpecies->momentum_initialization ,"Species",ispec);
@@ -76,36 +76,36 @@ public:
         if (   (thisSpecies->momentum_initialization!="cold")
                && (thisSpecies->momentum_initialization!="maxwell-juettner")
                && (thisSpecies->momentum_initialization!="rectangular") ) {
-            ERROR("For species '" << species_type << "' unknown momentum_initialization: "<<thisSpecies->momentum_initialization);
+            ERROR("For species '" << species_name << "' unknown momentum_initialization: "<<thisSpecies->momentum_initialization);
         }
         
         PyTools::extract("c_part_max",thisSpecies->c_part_max,"Species",ispec);
         
         if( !PyTools::extract("mass",thisSpecies->mass ,"Species",ispec) ) {
-            ERROR("For species '" << species_type << "' mass not defined.");
+            ERROR("For species '" << species_name << "' mass not defined.");
         }
         
         PyTools::extract("time_frozen",thisSpecies->time_frozen ,"Species",ispec);
         if (thisSpecies->time_frozen > 0 && thisSpecies->momentum_initialization!="cold") {
-            if ( patch->isMaster() ) WARNING("For species '" << species_type << "' possible conflict between time-frozen & not cold initialization");
+            if ( patch->isMaster() ) WARNING("For species '" << species_name << "' possible conflict between time-frozen & not cold initialization");
         }
         
         PyTools::extract("radiating",thisSpecies->radiating ,"Species",ispec);
         if (thisSpecies->dynamics_type=="rrll" && (!thisSpecies->radiating)) {
-            if ( patch->isMaster() ) WARNING("For species '" << species_type << "', dynamics_type='rrll' forcing radiating=True");
+            if ( patch->isMaster() ) WARNING("For species '" << species_name << "', dynamics_type='rrll' forcing radiating=True");
             thisSpecies->radiating=true;
         }
         
         if( !PyTools::extract("boundary_conditions", thisSpecies->boundary_conditions, "Species", ispec)  )
-            ERROR("For species '" << species_type << "', boundary_conditions not defined" );
+            ERROR("For species '" << species_name << "', boundary_conditions not defined" );
         
         if( thisSpecies->boundary_conditions.size() == 0 ) {
-            ERROR("For species '" << species_type << "', boundary_conditions cannot be empty");
+            ERROR("For species '" << species_name << "', boundary_conditions cannot be empty");
         } else if( thisSpecies->boundary_conditions.size() == 1 ) {
             while( thisSpecies->boundary_conditions.size() < params.nDim_particle )
                 thisSpecies->boundary_conditions.push_back( thisSpecies->boundary_conditions[0] );
         } else if( thisSpecies->boundary_conditions.size() != params.nDim_particle ) {
-            ERROR("For species '" << species_type << "', boundary_conditions must be the same size as the number of dimensions");
+            ERROR("For species '" << species_name << "', boundary_conditions must be the same size as the number of dimensions");
         }
         
         bool has_thermalize = false;
@@ -113,7 +113,7 @@ public:
             if( thisSpecies->boundary_conditions[iDim].size() == 1 )
                 thisSpecies->boundary_conditions[iDim].push_back( thisSpecies->boundary_conditions[iDim][0] );
             if( thisSpecies->boundary_conditions[iDim].size() != 2 )
-                ERROR("For species '" << species_type << "', boundary_conditions["<<iDim<<"] must have one or two arguments")
+                ERROR("For species '" << species_name << "', boundary_conditions["<<iDim<<"] must have one or two arguments")
             if( thisSpecies->boundary_conditions[iDim][0] == "thermalize"
              || thisSpecies->boundary_conditions[iDim][1] == "thermalize" )
                 has_thermalize = true;
@@ -124,12 +124,12 @@ public:
         bool has_velocity    = PyTools::extract("thermal_boundary_velocity",thisSpecies->thermal_boundary_velocity,"Species",ispec);
         if ( has_thermalize ) {
             if (!has_temperature)
-                ERROR("For species '" << species_type << "' thermal_boundary_temperature needs to be defined due to thermalizing BC");
+                ERROR("For species '" << species_name << "' thermal_boundary_temperature needs to be defined due to thermalizing BC");
             if (!has_velocity)
-                ERROR("For species '" << species_type << "' thermal_boundary_velocity needs to be defined due to thermalizing BC");
+                ERROR("For species '" << species_name << "' thermal_boundary_velocity needs to be defined due to thermalizing BC");
             
             if (thisSpecies->thermal_boundary_temperature.size()==1) {
-                WARNING("For species '" << species_type << "' Using thermal_boundary_temperature[0] in all directions");
+                WARNING("For species '" << species_name << "' Using thermal_boundary_temperature[0] in all directions");
                 thisSpecies->thermal_boundary_temperature.resize(3);
                 thisSpecies->thermal_boundary_temperature[1] = thisSpecies->thermal_boundary_temperature[0];
                 thisSpecies->thermal_boundary_temperature[2] = thisSpecies->thermal_boundary_temperature[0];
@@ -143,7 +143,7 @@ public:
                 thisSpecies->thermalMomentum[i] = thisSpecies->thermalVelocity[i];
                 // Caution: momentum in SMILEI actually correspond to p/m
                 if (thisSpecies->thermalVelocity[i]>0.3)
-                    ERROR("For species '" << species_type << "' Thermalizing BCs require non-relativistic thermal_boundary_temperature");
+                    ERROR("For species '" << species_name << "' Thermalizing BCs require non-relativistic thermal_boundary_temperature");
             }
         }
         
@@ -157,11 +157,11 @@ public:
             thisSpecies->ionization_model = model;
             
             if( ! PyTools::extract("ionization_electrons", thisSpecies->ionization_electrons, "Species",ispec) ) {
-                ERROR("For species '" << species_type << "' undefined ionization_electrons (required for ionization)");
+                ERROR("For species '" << species_name << "' undefined ionization_electrons (required for ionization)");
             }
             
             if( thisSpecies->atomic_number==0 ) {
-                ERROR("For species '" << species_type << "' undefined atomic_number (required for ionization)");
+                ERROR("For species '" << species_name << "' undefined atomic_number (required for ionization)");
             }
         }
         
@@ -173,43 +173,43 @@ public:
         PyObject *profile1, *profile2, *profile3;
         ok1 = PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispec);
         ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", ispec);
-        if(  ok1 &&  ok2 ) ERROR("For species '" << species_type << "', cannot define both `nb_density` and `charge_density`.");
-        if( !ok1 && !ok2 ) ERROR("For species '" << species_type << "', must define `nb_density` or `charge_density`.");
+        if(  ok1 &&  ok2 ) ERROR("For species '" << species_name << "', cannot define both `nb_density` and `charge_density`.");
+        if( !ok1 && !ok2 ) ERROR("For species '" << species_name << "', must define `nb_density` or `charge_density`.");
         if( ok1 ) thisSpecies->densityProfileType = "nb";
         if( ok2 ) thisSpecies->densityProfileType = "charge";
         
-        thisSpecies->densityProfile = new Profile(profile1, params.nDim_particle, thisSpecies->densityProfileType+"_density "+species_type, true);
+        thisSpecies->densityProfile = new Profile(profile1, params.nDim_particle, thisSpecies->densityProfileType+"_density "+species_name, true);
         
         // Number of particles per cell
         if( !PyTools::extract_pyProfile("n_part_per_cell", profile1, "Species", ispec))
-            ERROR("For species '" << species_type << "', n_part_per_cell not found or not understood");
-        thisSpecies->ppcProfile = new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_type, true);
+            ERROR("For species '" << species_name << "', n_part_per_cell not found or not understood");
+        thisSpecies->ppcProfile = new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_name, true);
         
         // Charge
         if( !PyTools::extract_pyProfile("charge", profile1, "Species", ispec))
-            ERROR("For species '" << species_type << "', charge not found or not understood");
-        thisSpecies->chargeProfile = new Profile(profile1, params.nDim_particle, "charge "+species_type, true);
+            ERROR("For species '" << species_name << "', charge not found or not understood");
+        thisSpecies->chargeProfile = new Profile(profile1, params.nDim_particle, "charge "+species_name, true);
         
         // Mean velocity
         PyTools::extract3Profiles("mean_velocity", ispec, profile1, profile2, profile3);
-        thisSpecies->velocityProfile[0] = new Profile(profile1, params.nDim_particle, "mean_velocity[0] "+species_type, true);
-        thisSpecies->velocityProfile[1] = new Profile(profile2, params.nDim_particle, "mean_velocity[1] "+species_type, true);
-        thisSpecies->velocityProfile[2] = new Profile(profile3, params.nDim_particle, "mean_velocity[2] "+species_type, true);
+        thisSpecies->velocityProfile[0] = new Profile(profile1, params.nDim_particle, "mean_velocity[0] "+species_name, true);
+        thisSpecies->velocityProfile[1] = new Profile(profile2, params.nDim_particle, "mean_velocity[1] "+species_name, true);
+        thisSpecies->velocityProfile[2] = new Profile(profile3, params.nDim_particle, "mean_velocity[2] "+species_name, true);
         
         // Temperature
         PyTools::extract3Profiles("temperature", ispec, profile1, profile2, profile3);
-        thisSpecies->temperatureProfile[0] = new Profile(profile1, params.nDim_particle, "temperature[0] "+species_type, true);
-        thisSpecies->temperatureProfile[1] = new Profile(profile2, params.nDim_particle, "temperature[1] "+species_type, true);
-        thisSpecies->temperatureProfile[2] = new Profile(profile3, params.nDim_particle, "temperature[2] "+species_type, true);
+        thisSpecies->temperatureProfile[0] = new Profile(profile1, params.nDim_particle, "temperature[0] "+species_name, true);
+        thisSpecies->temperatureProfile[1] = new Profile(profile2, params.nDim_particle, "temperature[1] "+species_name, true);
+        thisSpecies->temperatureProfile[2] = new Profile(profile3, params.nDim_particle, "temperature[2] "+species_name, true);
         
         // Get info about tracking
         unsigned int ntrack = PyTools::nComponents("DiagTrackParticles");
         thisSpecies->particles->tracked = false;
         for( unsigned int itrack=0; itrack<ntrack; itrack++ ) {
             std::string track_species;
-            if( PyTools::extract("species", track_species, "DiagTrackParticles", itrack) && track_species==species_type ) {
+            if( PyTools::extract("species", track_species, "DiagTrackParticles", itrack) && track_species==species_name ) {
                 if( thisSpecies->particles->tracked )
-                    ERROR("In this version, species '" << species_type << "' cannot be tracked by two DiagTrackParticles");
+                    ERROR("In this version, species '" << species_name << "' cannot be tracked by two DiagTrackParticles");
                 thisSpecies->particles->tracked  = true;
             }
         }
@@ -219,7 +219,7 @@ public:
         
         // Verify they don't ionize
         if (thisSpecies->ionization_model!="none" && thisSpecies->particles->is_test) {
-            ERROR("For species '" << species_type << "' test & ionized is currently impossible");
+            ERROR("For species '" << species_name << "' test & ionized is currently impossible");
         }
         
         // Create the particles
@@ -252,7 +252,7 @@ public:
             newSpecies = new Species_rrll(params, patch); // Boris + Radiation Reaction
         }
         // Copy members
-        newSpecies->species_type          = species->species_type;
+        newSpecies->name          = species->name;
         newSpecies->dynamics_type         = species->dynamics_type;
         newSpecies->speciesNumber         = species->speciesNumber;
         newSpecies->position_initialization     = species->position_initialization;
@@ -322,11 +322,11 @@ public:
             
             // Loop all other species
             for (unsigned int ispec2 = 0; ispec2<retSpecies.size(); ispec2++) {
-                if( retSpecies[ispec1]->ionization_electrons == retSpecies[ispec2]->species_type) {
+                if( retSpecies[ispec1]->ionization_electrons == retSpecies[ispec2]->name) {
                     if( ispec1==ispec2 )
-                        ERROR("For species '"<<retSpecies[ispec1]->species_type<<"' ionization_electrons must be a distinct species");
+                        ERROR("For species '"<<retSpecies[ispec1]->name<<"' ionization_electrons must be a distinct species");
                     if (retSpecies[ispec2]->mass!=1)
-                        ERROR("For species '"<<retSpecies[ispec1]->species_type<<"' ionization_electrons must be a species with mass==1");
+                        ERROR("For species '"<<retSpecies[ispec1]->name<<"' ionization_electrons must be a species with mass==1");
                     retSpecies[ispec1]->electron_species_index = ispec2;
                     retSpecies[ispec1]->electron_species = retSpecies[ispec2];
                     retSpecies[ispec1]->Ionize->new_electrons.tracked = retSpecies[ispec1]->electron_species->particles->tracked;

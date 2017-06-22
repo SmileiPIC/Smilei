@@ -205,17 +205,17 @@ void SmileiMPI::init_patch_count( Params& params)
     // Second, prepare the profiles for each species
     vector<Profile*> densityProfiles(0), ppcProfiles(0);
     for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++){
-        std::string species_type("");
-        PyTools::extract("species_type",species_type,"Species",ispecies);
+        std::string species_name("");
+        PyTools::extract("name",species_name,"Species",ispecies);
         PyObject *profile1=nullptr;
         std::string densityProfileType("");
         bool ok1 = PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispecies);
         bool ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", ispecies);
         if( ok1 ) densityProfileType = "nb";
         if( ok2 ) densityProfileType = "charge";
-        densityProfiles.push_back(new Profile(profile1, params.nDim_particle, densityProfileType+"_density "+species_type));
+        densityProfiles.push_back(new Profile(profile1, params.nDim_particle, densityProfileType+"_density "+species_name));
         PyTools::extract_pyProfile("n_part_per_cell", profile1, "Species", ispecies);
-        ppcProfiles.push_back(new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_type));
+        ppcProfiles.push_back(new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_name));
     }
     
     // Third, loop over local patches to obtain their approximate load

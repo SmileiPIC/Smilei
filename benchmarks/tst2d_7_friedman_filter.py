@@ -104,7 +104,7 @@ Main(
      )
 
 Species(
-        species_type = 'pos',
+        name = 'pos',
         position_initialization = 'random',
         momentum_initialization = 'mj',
         ionization_model = 'none',
@@ -124,7 +124,7 @@ Species(
      
 
 Species(
-        species_type = 'eon',
+        name = 'eon',
         position_initialization = 'random',
         momentum_initialization = 'mj',
         ionization_model = 'none',

@@ -55,7 +55,7 @@ LoadBalancing(
 
 
 Species(
-    species_type = "proton",
+    name = "proton",
     position_initialization = "regular",
     momentum_initialization = "mj",
     n_part_per_cell = 8, 
@@ -73,7 +73,7 @@ Species(
     ],
 )
 Species(
-    species_type = "electron",
+    name = "electron",
     position_initialization = "regular",
     momentum_initialization = "mj",
     n_part_per_cell = 8, 

@@ -27,7 +27,7 @@ Main(
 
 
 Species(
-	species_type = "ion",
+	name = "ion",
 	position_initialization = "regular",
 	momentum_initialization = "cold",
 	n_part_per_cell = 10,
@@ -41,7 +41,7 @@ Species(
 	time_frozen = 0.1
 )
 Species(
-	species_type = "eon1",
+	name = "eon1",
 	position_initialization = "regular",
 	momentum_initialization = "cold",
 	n_part_per_cell = 10,
@@ -54,7 +54,7 @@ Species(
 	],
 )
 Species(
-	species_type = "eon2",
+	name = "eon2",
 	position_initialization = "regular",
 	momentum_initialization = "cold",
 	n_part_per_cell = 10,

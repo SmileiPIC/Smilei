@@ -49,7 +49,7 @@ public:
             Push = new PusherHigueraCary( params, species );
         }
         else {
-            ERROR( "For species " << species->species_type << ": unknown dynamics_type `" << species->dynamics_type << "`");
+            ERROR( "For species " << species->name << ": unknown dynamics_type `" << species->dynamics_type << "`");
         }
 
         return Push;

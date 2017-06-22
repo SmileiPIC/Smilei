@@ -19,14 +19,14 @@ public:
         
         if ( model == "tunnel" ) {
             if (species->max_charge > (int)species->atomic_number)
-                ERROR( "Charge > atomic_number for species " << species->species_type );
+                ERROR( "Charge > atomic_number for species " << species->name );
             if( species->particles->is_test )
-                ERROR( "Cannot ionize test species " << species->species_type );
+                ERROR( "Cannot ionize test species " << species->name );
             
             Ionize = new IonizationTunnel( params, species );
             
         } else if ( model != "none" ) {
-            WARNING( "For species " << species->species_type << ": unknown ionization model `" << model << "` ... assuming no ionization");
+            WARNING( "For species " << species->name << ": unknown ionization model `" << model << "` ... assuming no ionization");
         }
         return Ionize;
     }

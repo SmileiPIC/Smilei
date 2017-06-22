@@ -85,7 +85,7 @@ LaserGaussian3D(
 )
 
 Species(
-    species_type = "electron",
+    name = "electron",
     position_initialization = "centered",
     momentum_initialization = "cold",
     n_part_per_cell = 10,

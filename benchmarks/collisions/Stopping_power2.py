@@ -33,7 +33,7 @@ Main(
 
 
 Species(
-	species_type = "backgroundelectron",
+	name = "backgroundelectron",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
 	ionization_model = "none",
@@ -50,7 +50,7 @@ Species(
 )
 
 Species(
-	species_type = "electron1",
+	name = "electron1",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
 	n_part_per_cell= 10000,
@@ -66,7 +66,7 @@ Species(
 )
 
 Species(
-	species_type = "electron2",
+	name = "electron2",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
 	n_part_per_cell= 10000,

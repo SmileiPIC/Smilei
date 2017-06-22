@@ -44,7 +44,7 @@ LoadBalancing(
 )
 
 Species( 
-    species_type = "electron",
+    name = "electron",
     position_initialization = "regular",
     momentum_initialization = "maxwell-juettner",
     n_part_per_cell = 16,

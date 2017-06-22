@@ -58,7 +58,7 @@ for i in range(npoints):
 	Zstar = round(Zstar, 2)
 	
 	Species(
-		species_type = eon,
+		name = eon,
 		position_initialization = "regular",
 		momentum_initialization = "maxwell-juettner",
 		n_part_per_cell= 1000,
@@ -78,7 +78,7 @@ for i in range(npoints):
 	)
 	
 	Species(
-		species_type = ion,
+		name = ion,
 		position_initialization = "regular",
 		momentum_initialization = "maxwell-juettner",
 		n_part_per_cell= 1000,

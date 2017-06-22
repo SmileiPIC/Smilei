@@ -38,7 +38,7 @@ profiles = {
 }
 for name, profile in profiles.items():
 	Species(
-		species_type = name,
+		name = name,
 		position_initialization = "regular",
 		momentum_initialization = "maxwell-juettner",
 		n_part_per_cell= 1000,
@@ -88,7 +88,7 @@ for eon in mj_species:
 		pmax = 10.
 	
 	Species(
-		species_type = eon,
+		name = eon,
 		position_initialization = 'random',
 		momentum_initialization = 'mj',
 		temperature = [Te,Te,Te],

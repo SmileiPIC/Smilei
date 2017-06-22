@@ -40,7 +40,7 @@ E /= 511.
 vel = math.sqrt(1.-1./(1.+E)**2)
 mom = math.sqrt((1.+E)**2-1.)
 Species(
-	species_type = el,
+	name = el,
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
 	n_part_per_cell= 100,
@@ -60,7 +60,7 @@ Species(
 )
 
 Species(
-	species_type = "ion1",
+	name = "ion1",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
 	n_part_per_cell= 100,

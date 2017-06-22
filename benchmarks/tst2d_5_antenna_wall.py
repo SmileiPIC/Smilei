@@ -35,7 +35,7 @@ Main(
 globalEvery = 5
 
 Species(
-    species_type = "electron",
+    name = "electron",
 	position_initialization = 'random',
 	momentum_initialization = 'cold',
 	n_part_per_cell = 2,

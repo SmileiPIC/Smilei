@@ -32,7 +32,7 @@ Main(
 
 
 Species(
-	species_type = "electron1",
+	name = "electron1",
 	position_initialization = "regular",
 	momentum_initialization = "rectangular",
 	n_part_per_cell= 20000,

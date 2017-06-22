@@ -143,11 +143,11 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     // Species
     unsigned int nspec = vecPatches(0)->vecSpecies.size();
     necessary_species.resize(nspec, false);
-    string species_type;
+    string species_name;
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         if (! vecPatches(0)->vecSpecies[ispec]->particles->is_test) {
-            species_type = vecPatches(0)->vecSpecies[ispec]->species_type;
-            necessary_species[ispec] = necessary_Ukin || allowedKey("Dens_"+species_type) ||  allowedKey("Ntot_"+species_type) ||  allowedKey("Zavg_"+species_type) || allowedKey("Ukin_"+species_type);
+            species_name = vecPatches(0)->vecSpecies[ispec]->name;
+            necessary_species[ispec] = necessary_Ukin || allowedKey("Dens_"+species_name) ||  allowedKey("Ntot_"+species_name) ||  allowedKey("Zavg_"+species_name) || allowedKey("Ukin_"+species_name);
         }
     }
     // Fields
@@ -206,11 +206,11 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     sUkin.resize(nspec, NULL);
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         if (! vecPatches(0)->vecSpecies[ispec]->particles->is_test) {
-            species_type = vecPatches(0)->vecSpecies[ispec]->species_type;
-            sDens[ispec] = newScalar_SUM( "Dens_"+species_type );
-            sNtot[ispec] = newScalar_SUM( "Ntot_"+species_type );
-            sZavg[ispec] = newScalar_SUM( "Zavg_"+species_type );
-            sUkin[ispec] = newScalar_SUM( "Ukin_"+species_type );
+            species_name = vecPatches(0)->vecSpecies[ispec]->name;
+            sDens[ispec] = newScalar_SUM( "Dens_"+species_name );
+            sNtot[ispec] = newScalar_SUM( "Ntot_"+species_name );
+            sZavg[ispec] = newScalar_SUM( "Zavg_"+species_name );
+            sUkin[ispec] = newScalar_SUM( "Ukin_"+species_name );
         }
     }
     

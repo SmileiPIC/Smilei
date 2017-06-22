@@ -32,7 +32,7 @@ Main(
 )
 
 Species(
-	species_type = 'hydrogen',
+	name = 'hydrogen',
 	ionization_model = 'tunnel',
 	ionization_electrons = 'electron',
 	atomic_number = 1,
@@ -47,7 +47,7 @@ Species(
 	],
 )
 Species(
-	species_type = 'carbon',
+	name = 'carbon',
 	ionization_model = 'tunnel',
 	ionization_electrons = 'electron',
 	atomic_number = 6,
@@ -62,7 +62,7 @@ Species(
 	],
 )
 Species(
-	species_type = 'electron',
+	name = 'electron',
 	position_initialization = 'regular',
 	momentum_initialization = 'cold',
 	n_part_per_cell = 0,

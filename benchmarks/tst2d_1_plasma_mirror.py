@@ -43,7 +43,7 @@ LaserGaussian2D(
 )
 
 Species(
-	species_type = 'ion',
+	name = 'ion',
 	position_initialization = 'random',
 	momentum_initialization = 'cold',
 	ionization_model = 'none',
@@ -60,7 +60,7 @@ Species(
 )
 
 Species(
-	species_type = 'eon',
+	name = 'eon',
 	position_initialization = 'random',
 	momentum_initialization = 'cold',
 	ionization_model = 'none',

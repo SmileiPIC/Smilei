@@ -38,7 +38,7 @@ for ion_nppc, eon_nppc in [[1000, 1000], [1000, 100], [100, 1000]]:
 	eon = "eon"+str(i)
 	
 	Species(
-		species_type = ion,
+		name = ion,
 		position_initialization = "regular",
 		momentum_initialization = "maxwell-juettner",
 		n_part_per_cell = ion_nppc,
@@ -54,7 +54,7 @@ for ion_nppc, eon_nppc in [[1000, 1000], [1000, 100], [100, 1000]]:
 	)
 	
 	Species(
-		species_type = eon,
+		name = eon,
 		position_initialization = "regular",
 		momentum_initialization = "maxwell-juettner",
 		n_part_per_cell= eon_nppc,

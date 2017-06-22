@@ -46,7 +46,7 @@ public:
     unsigned int speciesNumber;
     
     //! kind/name of species
-    std::string species_type;
+    std::string name;
     
     //! position initialization type, possible values: "regular" or "random"
     std::string position_initialization;

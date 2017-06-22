@@ -309,7 +309,7 @@ Species
 Each species has to be defined in a ``Species`` block::
 
   Species(
-      species_type      = "electrons1",
+      name      = "electrons1",
       position_initialization = "random",
       momentum_initialization = "maxwell-juettner",
       n_part_per_cell = 100,
@@ -336,7 +336,7 @@ Each species has to be defined in a ``Species`` block::
       dynamics_type = "norm",
   )
 
-.. py:data:: species_type
+.. py:data:: name
   
   The name you want to give to this species.
 
@@ -1003,7 +1003,7 @@ To have binary collisions in :program:`Smilei`, add one or several ``Collisions`
 .. py:data:: species1
              species2
   
-  Lists of species names (see :py:data:`species_type`).
+  Lists of species' :py:data:`name`.
   
   The collisions will occur between all species under the group ``species1``
   and all species under the group ``species2``. For example, to collide all
@@ -1404,7 +1404,7 @@ for instance::
 
 .. py:data:: species
   
-  A list of the names of one or several species (see :py:data:`species_type`).
+  A list of the one or several species' :py:data:`name`.
 
 
 .. py:data:: axes
@@ -1598,7 +1598,7 @@ for instance::
 
 .. py:data:: species
   
-  A list of the names of one or several species (see :py:data:`species_type`).
+  A list of one or several species' :py:data:`name`.
 
 .. py:data:: axes
   
@@ -1632,7 +1632,7 @@ for instance::
 
 .. py:data:: species
   
-  The :py:data:`species_type` of the species to be tracked.
+  The :py:data:`name` of the species to be tracked.
 
 .. py:data:: every
   
@@ -1640,7 +1640,7 @@ for instance::
   
   Number of timesteps between each output of particles trajectories, **or** a :ref:`time selection <TimeSelections>`.
   If non-zero, the particles positions will be tracked and written in a file named ``TrackParticlesDisordered_abc.h5``
-  (where ``abc`` is :py:data:`species_type`).
+  (where ``abc`` is the species' :py:data:`name`).
 
 .. py:data:: flush_every
   

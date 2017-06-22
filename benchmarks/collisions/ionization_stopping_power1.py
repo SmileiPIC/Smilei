@@ -46,7 +46,7 @@ for i in range(npoints):
 	energy.append(E)
 	vel = math.sqrt(1.-1./(1.+E)**2)
 	Species(
-		species_type = el,
+		name = el,
 		position_initialization = "regular",
 		momentum_initialization = "maxwell-juettner",
 		n_part_per_cell= 10,
@@ -66,7 +66,7 @@ for i in range(npoints):
 	)
 
 Species(
-	species_type = "ion1",
+	name = "ion1",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
 	n_part_per_cell= 100,

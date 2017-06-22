@@ -71,7 +71,7 @@ LaserPlanar1D(
 
 for pusher in pusher_list:
     Species(
-        species_type = "electron_" + pusher,
+        name = "electron_" + pusher,
         position_initialization = "centered",
         momentum_initialization = "cold",
         n_part_per_cell = 10,

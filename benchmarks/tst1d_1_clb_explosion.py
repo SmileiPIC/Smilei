@@ -29,7 +29,7 @@ Main(
 )
 
 Species(
-	species_type = "charges",
+	name = "charges",
 	position_initialization = "random",
 	momentum_initialization = "cold",
 	n_part_per_cell = 100,

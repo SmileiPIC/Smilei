@@ -40,7 +40,7 @@ Main(
 
 # SPECIES DEFINITION
 Species(
-	species_type = 'ion',
+	name = 'ion',
 	position_initialization = 'random',
 	momentum_initialization = 'mj',
 	temperature = [Te,Te,Te],
@@ -52,7 +52,7 @@ Species(
 	boundary_conditions = [["periodic"]],
 )
 Species(
-	species_type = 'eon',
+	name = 'eon',
 	position_initialization = 'random',
 	momentum_initialization = 'mj',
 	temperature = [Te,Te,Te],

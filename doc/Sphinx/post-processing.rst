@@ -56,18 +56,17 @@ Concerning components like :ref:`Species`, :ref:`ExtField` or :ref:`DiagProbe`, 
 several instances may exist, you can directly iterate over them::
   
   for species in S.namelist.Species:
-      print "species "+species.species_type+" has mass "+str(species.mass)
+      print "species "+species.name+" has mass "+str(species.mass)
 
 You can also access to a specific component by referencing its number::
   
   F = S.namelist.ExtField[0]  # get the first external field
   print "An external field "+F.field+" was applied"
 
-In the case of the species, you can also obtain a given species by its name (or 
-``species_type``)::
+In the case of the species, you can also obtain a given species by its name::
   
   species = S.namelist.Species["electron1"]
-  print "species "+species.species_type+" has mass "+str(species.mass)
+  print "species "+species.name+" has mass "+str(species.mass)
 
 
 ----
@@ -632,7 +631,7 @@ Open the simulation using::
   
 Print the list of available species using::
 
-  >>> for species in S.namelist.Species: print species.species_type
+  >>> for species in S.namelist.Species: print species.name
   ... 
   ion1
   electron1
