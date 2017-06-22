@@ -86,7 +86,7 @@ for pusher in pusher_list:
         is_test = True
     )
     
-    DiagTrack(
+    DiagTrackParticles(
         species = "electron_" + pusher,
         every = 10,
         flush_every = 100,

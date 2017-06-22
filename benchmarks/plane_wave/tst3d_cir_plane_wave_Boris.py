@@ -114,7 +114,7 @@ DiagFields(
     fields = ['Ex','Ey','Ez','By','Bz']
 )
 
-DiagTrack(
+DiagTrackParticles(
     species = "electron",
     every = 2,
     flush_every = 100,

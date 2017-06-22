@@ -108,7 +108,7 @@ DiagParticleBinning(
 	]
 )
 
-DiagTrack(
+DiagTrackParticles(
 	species = "electron",
 	every = 30
 )

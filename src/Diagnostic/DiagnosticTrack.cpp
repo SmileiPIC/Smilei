@@ -14,21 +14,21 @@
 
 using namespace std;
 
-DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, unsigned int idiagtrack, unsigned int idiag, OpenPMDparams& oPMD ) :
+DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, unsigned int iDiagTrackParticles, unsigned int idiag, OpenPMDparams& oPMD ) :
     Diagnostic(oPMD),
     IDs_done( params.restart ),
     nDim_particle(params.nDim_particle)
 {
     // Extract the species
     string species_type;
-    if( !PyTools::extract("species",species_type,"DiagTrack",idiagtrack) )
-        ERROR("DiagTrack #" << idiagtrack << " requires an argument `species`");
+    if( !PyTools::extract("species",species_type,"DiagTrackParticles",iDiagTrackParticles) )
+        ERROR("DiagTrackParticles #" << iDiagTrackParticles << " requires an argument `species`");
     vector<string> species_types = {species_type};
     vector<unsigned int> species_ids = Params::FindSpecies(vecPatches(0)->vecSpecies, species_types);
     if( species_ids.size() > 1 )
-        ERROR("DiagTrack #" << idiagtrack << " corresponds to more than 1 species");
+        ERROR("DiagTrackParticles #" << iDiagTrackParticles << " corresponds to more than 1 species");
     if( species_ids.size() < 1 )
-        ERROR("DiagTrack #" << idiagtrack << " does not correspond to any existing species");
+        ERROR("DiagTrackParticles #" << iDiagTrackParticles << " does not correspond to any existing species");
     speciesId_ = species_ids[0];
     
     // Define the transfer type (collective is faster than independent)
@@ -39,10 +39,10 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& 
     name << "Tracking species '" << species_type << "'";
     
     // Get parameter "every" which describes an iteration selection
-    timeSelection = new TimeSelection( PyTools::extract_py("every", "DiagTrack", idiagtrack), name.str() );
+    timeSelection = new TimeSelection( PyTools::extract_py("every", "DiagTrackParticles", iDiagTrackParticles), name.str() );
     
     // Get parameter "flush_every" which decides the file flushing time selection
-    flush_timeSelection = new TimeSelection( PyTools::extract_py("flush_every", "DiagTrack", idiagtrack), name.str() );
+    flush_timeSelection = new TimeSelection( PyTools::extract_py("flush_every", "DiagTrackParticles", iDiagTrackParticles), name.str() );
     
     // Inform each patch about this diag
     for( unsigned int ipatch=0; ipatch<vecPatches.size(); ipatch++ ) {
@@ -50,7 +50,7 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& 
     }
     
     // Get parameter "filter" which gives a python function to select particles
-    filter = PyTools::extract_py("filter", "DiagTrack", idiagtrack);
+    filter = PyTools::extract_py("filter", "DiagTrackParticles", iDiagTrackParticles);
     has_filter = (filter != Py_None);
     if( has_filter ) {
 #ifdef SMILEI_USE_NUMPY

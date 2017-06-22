@@ -89,7 +89,7 @@ DiagParticleBinning(
 	]
 )
 
-DiagTrack(
+DiagTrackParticles(
 	species = "ion", 
 	every = 1000,
 	filter = lambda x, px, py, pz: (x<0.02), 

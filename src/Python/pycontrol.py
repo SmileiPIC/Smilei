@@ -86,7 +86,7 @@ def _keep_python_running():
         if callable(prof) and not hasattr(prof,"profileName"):
             return True
     # Verify the tracked species that require a particle selection
-    for d in DiagTrack:
+    for d in DiagTrackParticles:
         if d.filter is not None:
             return True
     return False

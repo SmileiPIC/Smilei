@@ -95,9 +95,9 @@ class SmileiComponent(object):
                 "pos_first" :"corners or vectors",
                 "pos_second":"corners or vectors",
                 "pos_third" :"corners or vectors",
-                "track_every"      :"DiagTrack()",
-                "track_flush_every":"DiagTrack()",
-                "track_filter"     :"DiagTrack()",
+                "track_every"      :"DiagTrackParticles()",
+                "track_flush_every":"DiagTrackParticles()",
+                "track_filter"     :"DiagTrackParticles()",
             }
             for key, value in kwargs.items():
                 if key in deprecated:
@@ -347,7 +347,7 @@ class DiagFields(SmileiComponent):
     time_average = 1
     flush_every = 1
 
-class DiagTrack(SmileiComponent):
+class DiagTrackParticles(SmileiComponent):
     """Track diagnostic"""
     species = None
     every = 0

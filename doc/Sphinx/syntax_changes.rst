@@ -32,6 +32,8 @@ In the namelist
 
 - Diagnostic ``DiagParticles`` renamed :ref:`DiagParticleBinning <DiagParticleBinning>`.
 
+- Removed parameters ``track_******``, and created the :ref:`DiagTrackParticles <DiagTrackParticles>` block.
+
 
 In the post-processing module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

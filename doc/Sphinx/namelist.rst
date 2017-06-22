@@ -93,8 +93,8 @@ The block ``Main`` is **mandatory** and has the following syntax::
       maxwell_solver = 'Yee',
       EM_boundary_conditions = [
           ["silver-muller", "silver-muller"],
-#          ["silver-muller", "silver-muller"],
-#          ["silver-muller", "silver-muller"],
+  #        ["silver-muller", "silver-muller"],
+  #        ["silver-muller", "silver-muller"],
       ],
       time_fields_frozen = 0.,
       reference_angular_frequency_SI = 0.,
@@ -322,8 +322,8 @@ Each species has to be defined in a ``Species`` block::
       temperature = [1e-10],
       boundary_conditions = [
           ["refl", "refl"],
-#          ["periodic", "periodic"],
-#          ["periodic", "periodic"],
+      #    ["periodic", "periodic"],
+      #    ["periodic", "periodic"],
       ],
       # thermal_boundary_temperature = None,
       # thermal_boundary_velocity = None,
@@ -1612,18 +1612,18 @@ for instance::
   
 ----
 
-.. _DiagTrack:
+.. _DiagTrackParticles:
 
-*Track* diagnostics
-^^^^^^^^^^^^^^^^^^^^
+*TrackParticles* diagnostics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A *tracking diagnostic* records the macro-particle positions and momenta at various timesteps.
+A *particle tracking diagnostic* records the macro-particle positions and momenta at various timesteps.
 Typically, this is used for plotting trajectories.
 
-You can add a tracking diagnostic by including a block ``DiagTrack()`` in the namelist,
+You can add a tracking diagnostic by including a block ``DiagTrackParticles()`` in the namelist,
 for instance::
   
-  DiagTrack(
+  DiagTrackParticles(
       species = "electron",
       every = 10,
   #    flush_every = 100,

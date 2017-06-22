@@ -209,7 +209,7 @@ public:
     // TEST PARTICLE PARAMETERS
     bool is_test;
     
-    //! True if tracking the particles (activates one DiagTrack)
+    //! True if tracking the particles
     bool tracked;
     
     void resetIds() {

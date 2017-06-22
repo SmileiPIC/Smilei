@@ -105,7 +105,7 @@ for direction in ["forward", "backward", "both", "canceling"]:
 	    every = 350
 	)
 
-DiagTrack(
+DiagTrackParticles(
     species = "eon",
     every = 500,
 )

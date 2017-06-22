@@ -71,7 +71,7 @@ public:
             vecDiagnostics.push_back( new DiagnosticProbes(params, smpi, n_diag_probe) );
         }
         
-        for (unsigned int n_diag_track = 0; n_diag_track < PyTools::nComponents("DiagTrack"); n_diag_track++) {
+        for (unsigned int n_diag_track = 0; n_diag_track < PyTools::nComponents("DiagTrackParticles"); n_diag_track++) {
             vecDiagnostics.push_back( new DiagnosticTrack(params, smpi, vecPatches, n_diag_track, vecDiagnostics.size(), openPMD) );
         }
         

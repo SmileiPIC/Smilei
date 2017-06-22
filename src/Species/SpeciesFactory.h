@@ -203,13 +203,13 @@ public:
         thisSpecies->temperatureProfile[2] = new Profile(profile3, params.nDim_particle, "temperature[2] "+species_type, true);
         
         // Get info about tracking
-        unsigned int ntrack = PyTools::nComponents("DiagTrack");
+        unsigned int ntrack = PyTools::nComponents("DiagTrackParticles");
         thisSpecies->particles->tracked = false;
         for( unsigned int itrack=0; itrack<ntrack; itrack++ ) {
             std::string track_species;
-            if( PyTools::extract("species", track_species, "DiagTrack", itrack) && track_species==species_type ) {
+            if( PyTools::extract("species", track_species, "DiagTrackParticles", itrack) && track_species==species_type ) {
                 if( thisSpecies->particles->tracked )
-                    ERROR("In this version, species '" << species_type << "' cannot be tracked by two DiagTrack");
+                    ERROR("In this version, species '" << species_type << "' cannot be tracked by two DiagTrackParticles");
                 thisSpecies->particles->tracked  = true;
             }
         }
