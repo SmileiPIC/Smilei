@@ -35,7 +35,7 @@ Current release 3.1.1
 * Bugfixes in energy computation in 3D and moving window case
 * Add some missing 3D features :
 
-  * External fields mangment 
+  * External fields management 
   * Non-neutral plasma initialization
 
 ----
