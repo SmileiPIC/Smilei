@@ -1228,6 +1228,18 @@ void RadiationTables::output_xip_table()
                                   H5P_DEFAULT, H5P_DEFAULT);
         H5Awrite(attributeId, H5T_NATIVE_INT, &dim_integfochi);
 
+        attributeId = H5Acreate2 (datasetId, "power",
+                                  H5T_NATIVE_DOUBLE,
+                                  dataspaceId,
+                                  H5P_DEFAULT, H5P_DEFAULT);
+        H5Awrite(attributeId, H5T_NATIVE_DOUBLE, &xip_power);
+
+        attributeId = H5Acreate2 (datasetId, "threshold",
+                                  H5T_NATIVE_DOUBLE,
+                                  dataspaceId,
+                                  H5P_DEFAULT, H5P_DEFAULT);
+        H5Awrite(attributeId, H5T_NATIVE_DOUBLE, &xip_threshold);
+
         // Close everything
         H5Aclose(attributeId);
         H5Dclose(datasetId);
