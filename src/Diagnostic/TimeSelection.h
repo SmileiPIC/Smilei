@@ -56,9 +56,9 @@ public:
     
 private:
     //! Starting timestep
-    int start;
+    double start;
     //! Ending timestep
-    int end;
+    double end;
     //! Period between each group
     double period;
     //! Number of repeats inside each group
@@ -70,11 +70,6 @@ private:
     int SmallestInterval;
     //! Width of each group
     double groupWidth;
-    
-    //! Maximum integer
-    int maxint = std::numeric_limits<int>::max();
-    //! Minimum integer
-    int minint = std::numeric_limits<int>::min();
     
     //! Last answer of theTimeIsNow(int timestep)
     bool TheTimeIsNow;

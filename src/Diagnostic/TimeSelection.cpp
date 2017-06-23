@@ -9,8 +9,8 @@ using namespace std;
 TimeSelection::TimeSelection(PyObject* timeSelection, string name)
 {
     
-    start   = 0;
-    end     = maxint;
+    start   = 0.;
+    end     = std::numeric_limits<double>::max();
     period  = 1.;
     repeat  = 1;
     spacing = 1.;
@@ -23,7 +23,7 @@ TimeSelection::TimeSelection(PyObject* timeSelection, string name)
             ERROR(name << ": time selection must be a number or a list of numbers");
         // If zero, no output, ever
         if( !period ) {
-            start = maxint;
+            start = std::numeric_limits<double>::max();
             return;
         }
         
@@ -97,15 +97,15 @@ TimeSelection::TimeSelection(PyObject* timeSelection, string name)
 // Empty time selection
 TimeSelection::TimeSelection()
 {
-    start   = maxint;
-    end     = maxint;
+    start   = std::numeric_limits<double>::max();
+    end     = std::numeric_limits<double>::max();
     period  = 1.;
     repeat  = 1;
     spacing = 1.;
     groupWidth   = 0.;
     TheTimeIsNow = false;
-    NextTime     = maxint;
-    PreviousTime = maxint;
+    NextTime     = std::numeric_limits<int>::max();
+    PreviousTime = std::numeric_limits<int>::max();
 }
 
 // Cloning Constructor
@@ -130,7 +130,7 @@ bool TimeSelection::theTimeIsNow(int timestep)
     // In selection if inside the start/end bounds
     if( timestep>=start && timestep<=end ) {
         // Calculate the number of timesteps since the start
-        double t = (double)(timestep - start) + 0.5;
+        double t = (double)timestep - start + 0.5;
         // Calculate the time from the previous period
         t -= floor(t/period)*period;
         // If within group, calculate the time to the previous repeat
@@ -149,9 +149,9 @@ int TimeSelection::nextTime(int timestep)
     if( timestep<=start ) { 
         NextTime = start;
     } else if( timestep>end ) { 
-        NextTime = maxint;
+        NextTime = std::numeric_limits<int>::max();
     } else {
-        double t = (double)(timestep-start) + 0.5; // number of timesteps since the start
+        double t = (double)(timestep)-start + 0.5; // number of timesteps since the start
         double p = floor(t/period)*period; // previous period
         double T = t - p; // time to the previous period
         
@@ -159,10 +159,10 @@ int TimeSelection::nextTime(int timestep)
         if( T < groupWidth ) {
             double r = floor(T/spacing)*spacing; // previous repeat
             if( T-r < 1. ) { NextTime = timestep; } // return current timestep if good
-            else { NextTime = start + (int)round(p + r + spacing); } // otherwise, return next good timestep
+            else { NextTime = (int) (start + round(p + r + spacing)); } // otherwise, return next repeat
         // If after group, return next group's beginning
         } else {
-            NextTime = start + (int)round(p+period);
+            NextTime = (int) (start + round(p+period));
         }
     }
     return NextTime;
@@ -174,20 +174,20 @@ int TimeSelection::nextTime(int timestep)
 int TimeSelection::previousTime(int timestep)
 {
     if( timestep<start ) {
-        PreviousTime = minint;
+        PreviousTime = std::numeric_limits<int>::min();
     } else if( timestep>=end ) {
         PreviousTime = end;
     } else {
-        double t = (double)(timestep-start) + 0.5; // number of timesteps since the start
+        double t = (double)(timestep)-start + 0.5; // number of timesteps since the start
         double p = floor(t/period)*period; // previous period
         double T = t - p; // time to the previous period
         
         // If within group
         if( T < groupWidth ) {
-            PreviousTime = start + (int)round(p + floor(T/spacing)*spacing); // return previous good timestep
+            PreviousTime = (int) (start + round(p + floor(T/spacing)*spacing)); // return previous good timestep
         // If after group, return end of that group
         } else {
-            PreviousTime = start + (int)round(p + groupWidth - 1);
+            PreviousTime = (int) (start + round(p + groupWidth - 1));
         }
     }
     return PreviousTime;
