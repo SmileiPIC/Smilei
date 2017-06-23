@@ -362,8 +362,8 @@ class RadiationLoss(SmileiComponent):
     xip_threshold = 1e-3
     chipa_xip_dim = 128
     chiph_xip_dim = 128
-    # Output format, can be "ascii", "binary"
-    output_format = "binary"
+    # Output format, can be "ascii", "binary", "hdf5"
+    output_format = "hdf5"
     # Threshold on chipa between the continuous and
     # the discontinuous approaches
     chipa_disc_min_threshold = 1e-2
