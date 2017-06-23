@@ -89,7 +89,7 @@ Understand :program:`Smilei`
    parallelization
    collisions
    field_ionization
-
+   radiation_loss
 
 Install, run, analyze
 =====================

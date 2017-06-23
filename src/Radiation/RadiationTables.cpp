@@ -623,77 +623,6 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! File output of xip_chiphmin_table and xip_table
-//
-// ---------------------------------------------------------------------------------------------------------------------
-void RadiationTables::output_xip_table()
-{
-
-    if (output_format == "ascii")
-    {
-        std::ofstream file;
-        file.open(table_path + "/tab_xip.dat");
-
-        if (file.is_open()) {
-
-            file.precision(12);
-
-            file << "Table xip_chiphmin and xip for Nonlinear Compton Scattering \n";
-
-            file << "Dimension chipa - Dimension chiph - chipa min - chipa max \n";
-
-            file << chipa_xip_dim << " "
-                 << chiph_xip_dim << " "
-                 << chipa_xip_min << " "
-                 << chipa_xip_max << "\n";;
-
-            // Loop over the xip values
-            for(int ichipa = 0 ; ichipa < chipa_xip_dim ; ichipa++)
-            {
-                for(int ichiph = 0 ; ichiph < chiph_xip_dim ; ichiph++)
-                {
-                    file <<  xip_table[ichipa*chiph_xip_dim+ichiph] << " ";
-                }
-                file << "\n";
-            }
-
-            file.close();
-        }
-    }
-    else if (output_format == "binary")
-    {
-        std::ofstream file;
-        file.open(table_path + "/tab_xip.bin",std::ios::binary);
-
-        if (file.is_open()) {
-
-            double temp0, temp1;
-
-            temp0 = chipa_xip_min;
-            temp1 = chipa_xip_max;
-
-            file.write((char*)&chipa_xip_dim,sizeof (int));
-            file.write((char*)&chiph_xip_dim,sizeof (int));
-            file.write((char*)&temp0, sizeof (double));
-            file.write((char*)&temp1, sizeof (double));
-
-            // Write all table values of xip_chimin_table
-            file.write((char*)&xip_chiphmin_table[0], sizeof (double)*chipa_xip_dim);
-
-            // Write all table values of xip_table
-            file.write((char*)&xip_table[0], sizeof (double)*chipa_xip_dim*chiph_xip_dim);
-
-            file.close();
-        }
-    }
-    else
-    {
-        MESSAGE("The output format " << output_format << " is not recognized");
-    }
-}
-
-
-// ---------------------------------------------------------------------------------------------------------------------
 //! Computation of the Cross Section dNph/dt which is also
 //! the number of photons generated per time unit.
 //
@@ -993,10 +922,34 @@ void RadiationTables::compute_integfochi_table(SmileiMPI *smpi)
 }
 
 
+// -----------------------------------------------------------------------------
+// TABLE COMPUTATION
+// -----------------------------------------------------------------------------
+
 // ---------------------------------------------------------------------------------------------------------------------
+//! Output the computed tables so that thay can be read at the next run.
+//
+//! \param params list of simulation parameters
+//! \param smpi MPI parameters
+// ---------------------------------------------------------------------------------------------------------------------
+void RadiationTables::compute_tables(Params& params, SmileiMPI *smpi)
+{
+    // These tables are loaded only if if one species has Monte-Carlo Compton radiation
+    if (params.hasMCRadiation)
+    {
+        RadiationTables::compute_integfochi_table(smpi);
+        RadiationTables::compute_xip_table(smpi);
+    }
+}
+
+// -----------------------------------------------------------------------------
+// TABLE OUTPUTS
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
 //! Ouput in a file of the table values of integfochi
 //
-// ---------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 void RadiationTables::output_integfochi_table()
 {
 
@@ -1052,11 +1005,261 @@ void RadiationTables::output_integfochi_table()
             file.close();
         }
     }
+    // HDF5
+    // The table is written as a dataset
+    else if (output_format == "hdf5")
+    {
+
+        hid_t       fileId;
+        hid_t       datasetId;
+        hid_t       dataspaceId;
+        hid_t       attributeId;
+        hsize_t     dims;
+        std::string buffer;
+
+        buffer = table_path + "/radiation_tables.h5";
+
+        // We first check whether the file already exists
+        // If yes, we simply open the file
+        if (Tools::file_exists(buffer))
+        {
+            fileId = H5Fopen(buffer.c_str(),
+                              H5F_ACC_RDWR,
+                              H5P_DEFAULT);
+
+        }
+        // Else, we create the file
+        else
+        {
+            fileId  = H5Fcreate(buffer.c_str(),
+                                 H5F_ACC_TRUNC,
+                                 H5P_DEFAULT,
+                                 H5P_DEFAULT);
+        }
+
+        // Create the data space for the dataset.
+        dims = dim_integfochi;
+        dataspaceId = H5Screate_simple(1, &dims, NULL);
+
+        // Creation of the dataset
+        datasetId = H5Dcreate(fileId,
+                              "integfochi",
+                              H5T_NATIVE_DOUBLE,
+                              dataspaceId,
+                              H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+
+        // Fill the dataset
+        H5Dwrite(datasetId, H5T_NATIVE_DOUBLE,
+                 H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                 &Integfochi[0]);
+
+        // Create attributes
+        dims = 1;
+        dataspaceId = H5Screate_simple(1, &dims, NULL);
+        attributeId = H5Acreate2 (datasetId, "chipa_min",
+                                  H5T_NATIVE_DOUBLE,
+                                  dataspaceId,
+                                  H5P_DEFAULT, H5P_DEFAULT);
+        H5Awrite(attributeId, H5T_NATIVE_DOUBLE, &chipa_integfochi_min);
+
+        attributeId = H5Acreate2 (datasetId, "chipa_max",
+                                  H5T_NATIVE_DOUBLE,
+                                  dataspaceId,
+                                  H5P_DEFAULT, H5P_DEFAULT);
+        H5Awrite(attributeId, H5T_NATIVE_DOUBLE, &chipa_integfochi_max);
+
+        attributeId = H5Acreate2 (datasetId, "dimension",
+                                  H5T_NATIVE_INT,
+                                  dataspaceId,
+                                  H5P_DEFAULT, H5P_DEFAULT);
+        H5Awrite(attributeId, H5T_NATIVE_INT, &dim_integfochi);
+
+        // Close everything
+        H5Aclose(attributeId);
+        H5Dclose(datasetId);
+        H5Dclose(dataspaceId);
+        H5Dclose(fileId);
+
+    }
+    else
+    {
+        MESSAGE("The table output format " << output_format
+             << " is not recognized");
+    }
+}
+
+// -----------------------------------------------------------------------------
+//! File output of xip_chiphmin_table and xip_table
+//
+// -----------------------------------------------------------------------------
+void RadiationTables::output_xip_table()
+{
+
+    if (output_format == "ascii")
+    {
+        std::ofstream file;
+        file.open(table_path + "/tab_xip.dat");
+
+        if (file.is_open()) {
+
+            file.precision(12);
+
+            file << "Table xip_chiphmin and xip for Nonlinear Compton Scattering \n";
+
+            file << "Dimension chipa - Dimension chiph - chipa min - chipa max \n";
+
+            file << chipa_xip_dim << " "
+                 << chiph_xip_dim << " "
+                 << chipa_xip_min << " "
+                 << chipa_xip_max << "\n";;
+
+            // Loop over the xip values
+            for(int ichipa = 0 ; ichipa < chipa_xip_dim ; ichipa++)
+            {
+                for(int ichiph = 0 ; ichiph < chiph_xip_dim ; ichiph++)
+                {
+                    file <<  xip_table[ichipa*chiph_xip_dim+ichiph] << " ";
+                }
+                file << "\n";
+            }
+
+            file.close();
+        }
+    }
+    else if (output_format == "binary")
+    {
+        std::ofstream file;
+        file.open(table_path + "/tab_xip.bin",std::ios::binary);
+
+        if (file.is_open()) {
+
+            double temp0, temp1;
+
+            temp0 = chipa_xip_min;
+            temp1 = chipa_xip_max;
+
+            file.write((char*)&chipa_xip_dim,sizeof (int));
+            file.write((char*)&chiph_xip_dim,sizeof (int));
+            file.write((char*)&temp0, sizeof (double));
+            file.write((char*)&temp1, sizeof (double));
+
+            // Write all table values of xip_chimin_table
+            file.write((char*)&xip_chiphmin_table[0], sizeof (double)*chipa_xip_dim);
+
+            // Write all table values of xip_table
+            file.write((char*)&xip_table[0], sizeof (double)*chipa_xip_dim*chiph_xip_dim);
+
+            file.close();
+        }
+    }
+    // HDF5
+    // The table is written as a dataset
+    else if (output_format == "hdf5")
+    {
+
+        hid_t       fileId;
+        hid_t       datasetId;
+        hid_t       dataspaceId;
+        hid_t       attributeId;
+        hsize_t     dims[2];
+        std::string buffer;
+
+        buffer = table_path + "/radiation_tables.h5";
+
+        // We first check whether the file already exists
+        // If yes, we simply open the file
+        if (Tools::file_exists(buffer))
+        {
+            fileId = H5Fopen(buffer.c_str(),
+                              H5F_ACC_RDWR,
+                              H5P_DEFAULT);
+
+        }
+        // Else, we create the file
+        else
+        {
+            fileId  = H5Fcreate(buffer.c_str(),
+                                 H5F_ACC_TRUNC,
+                                 H5P_DEFAULT,
+                                 H5P_DEFAULT);
+        }
+
+        // Create the data space for the dataset.
+        dims[0] = chipa_xip_dim;
+        dims[1] = chiph_xip_dim;
+        dataspaceId = H5Screate_simple(2, dims, NULL);
+
+        // Creation of the dataset
+        datasetId = H5Dcreate(fileId,
+                              "xip",
+                              H5T_NATIVE_DOUBLE,
+                              dataspaceId,
+                              H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+
+        // Fill the dataset
+        H5Dwrite(datasetId, H5T_NATIVE_DOUBLE,
+                 H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                 &xip_table[0]);
+
+        // Create attributes
+        dims[0] = 1;
+        dataspaceId = H5Screate_simple(1, dims, NULL);
+        attributeId = H5Acreate2 (datasetId, "chipa_xip_min",
+                                  H5T_NATIVE_DOUBLE,
+                                  dataspaceId,
+                                  H5P_DEFAULT, H5P_DEFAULT);
+        H5Awrite(attributeId, H5T_NATIVE_DOUBLE, &chipa_integfochi_min);
+
+        attributeId = H5Acreate2 (datasetId, "chipa_xip_max",
+                                  H5T_NATIVE_DOUBLE,
+                                  dataspaceId,
+                                  H5P_DEFAULT, H5P_DEFAULT);
+        H5Awrite(attributeId, H5T_NATIVE_DOUBLE, &chipa_integfochi_max);
+
+        attributeId = H5Acreate2 (datasetId, "chipa_xip_dim",
+                                  H5T_NATIVE_INT,
+                                  dataspaceId,
+                                  H5P_DEFAULT, H5P_DEFAULT);
+        H5Awrite(attributeId, H5T_NATIVE_INT, &dim_integfochi);
+
+        attributeId = H5Acreate2 (datasetId, "chiph_xip_dim",
+                                  H5T_NATIVE_INT,
+                                  dataspaceId,
+                                  H5P_DEFAULT, H5P_DEFAULT);
+        H5Awrite(attributeId, H5T_NATIVE_INT, &dim_integfochi);
+
+        // Close everything
+        H5Aclose(attributeId);
+        H5Dclose(datasetId);
+        H5Dclose(dataspaceId);
+        H5Dclose(fileId);
+    }
     else
     {
         MESSAGE("The output format " << output_format << " is not recognized");
     }
 }
+
+// -----------------------------------------------------------------------------
+//! Output the computed tables so that thay can be read at the next run.
+// -----------------------------------------------------------------------------
+void RadiationTables::output_tables()
+{
+    // If tables have been computed, they are output on the disk
+    // to be used for the next run
+    if (integfochi_computed)
+    {
+        RadiationTables::output_integfochi_table();
+    }
+    if (xip_computed)
+    {
+        RadiationTables::output_xip_table();
+    }
+}
+
+// -----------------------------------------------------------------------------
+// PHYSICAL COMPUTATION
+// -----------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! \brief
@@ -1097,7 +1300,7 @@ double RadiationTables::compute_integfochi(double chipa,
 
     // Integration loop
     integ = 0;
-#pragma omp parallel for reduction(+:integ) private(chiph,sync_emi) shared(chipa,gauleg_w,gauleg_x)
+    #pragma omp parallel for reduction(+:integ) private(chiph,sync_emi) shared(chipa,gauleg_w,gauleg_x)
     for(i=0 ; i< nbit ; i++)
     {
         chiph = pow(10.,gauleg_x[i]);
@@ -1173,39 +1376,5 @@ double RadiationTables::compute_sync_emissivity_ritus(double chipa,
     else
     {
         ERROR("In compute_sync_emissivity_ritus: chipa " << chipa << " < chiph " << chiph);
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-//! Output the computed tables so that thay can be read at the next run.
-//
-//! \param params list of simulation parameters
-//! \param smpi MPI parameters
-// ---------------------------------------------------------------------------------------------------------------------
-void RadiationTables::compute_tables(Params& params, SmileiMPI *smpi)
-{
-    // These tables are loaded only if if one species has Monte-Carlo Compton radiation
-    if (params.hasMCRadiation)
-    {
-        RadiationTables::compute_integfochi_table(smpi);
-        RadiationTables::compute_xip_table(smpi);
-    }
-}
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-//! Output the computed tables so that thay can be read at the next run.
-// ---------------------------------------------------------------------------------------------------------------------
-void RadiationTables::output_tables()
-{
-    // If tables have been computed, they are output on the disk
-    // to be used for the next run
-    if (integfochi_computed)
-    {
-        RadiationTables::output_integfochi_table();
-    }
-    if (xip_computed)
-    {
-        RadiationTables::output_xip_table();
     }
 }
