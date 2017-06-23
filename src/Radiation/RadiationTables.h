@@ -16,7 +16,6 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include <hdf5.h>
 
 #include "Params.h"
 #include "H5.h"
