@@ -765,7 +765,7 @@ void RadiationTables::output_integfochi_table()
 
         // Close everything
         H5Dclose(datasetId);
-        H5Dclose(dataspaceId);
+        H5Sclose(dataspaceId);
         H5Fclose(fileId);
 
     }
@@ -917,7 +917,7 @@ void RadiationTables::output_xip_table()
 
         // Close everything
         H5Dclose(datasetId);
-        H5Dclose(dataspaceId);
+        H5Sclose(dataspaceId);
         H5Fclose(fileId);
     }
     else
@@ -1211,6 +1211,9 @@ bool RadiationTables::read_integfochi_table(SmileiMPI *smpi)
                         H5T_NATIVE_DOUBLE, H5S_ALL,
                         H5S_ALL, H5P_DEFAULT,
                         &Integfochi[0]);
+
+                 H5Dclose(datasetId);
+                 H5Fclose(fileId);
              }
              // Else, we will have to compute it
              else
