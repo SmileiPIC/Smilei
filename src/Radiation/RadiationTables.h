@@ -19,6 +19,7 @@
 #include <hdf5.h>
 
 #include "Params.h"
+#include "H5.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 //! RadiationTables class: holds parameters, tables and functions to compute cross-sections,

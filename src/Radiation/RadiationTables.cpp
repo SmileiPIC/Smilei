@@ -1184,12 +1184,31 @@ void RadiationTables::output_xip_table()
                                  H5P_DEFAULT);
         }
 
-        // Create the data space for the dataset.
+        // Creation of the datasat chiphmin
+        dims[0] = chipa_xip_dim;
+        dataspaceId = H5Screate_simple(1, dims, NULL);
+        datasetId = H5Dcreate(fileId,
+                              "xip_chiphmin",
+                              H5T_NATIVE_DOUBLE,
+                              dataspaceId,
+                              H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+
+        // Fill the dataset chiphmin
+        H5Dwrite(datasetId, H5T_NATIVE_DOUBLE,
+               H5S_ALL, H5S_ALL, H5P_DEFAULT,
+               &xip_chiphmin_table[0]);
+
+        // Attribute creation
+        H5::attr(datasetId, "chipa_min", chipa_xip_min);
+        H5::attr(datasetId, "chipa_max", chipa_xip_max);
+        H5::attr(datasetId, "chipa_dim", chipa_xip_dim);
+        H5::attr(datasetId, "power", xip_power);
+        H5::attr(datasetId, "threshold", xip_threshold);
+
+        // Creation of the datasat chiphmin xip
         dims[0] = chipa_xip_dim;
         dims[1] = chiph_xip_dim;
         dataspaceId = H5Screate_simple(2, dims, NULL);
-
-        // Creation of the dataset
         datasetId = H5Dcreate(fileId,
                               "xip",
                               H5T_NATIVE_DOUBLE,
@@ -1201,47 +1220,15 @@ void RadiationTables::output_xip_table()
                  H5S_ALL, H5S_ALL, H5P_DEFAULT,
                  &xip_table[0]);
 
-        // Create attributes
-        dims[0] = 1;
-        dataspaceId = H5Screate_simple(1, dims, NULL);
-        attributeId = H5Acreate2 (datasetId, "chipa_min",
-                                  H5T_NATIVE_DOUBLE,
-                                  dataspaceId,
-                                  H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(attributeId, H5T_NATIVE_DOUBLE, &chipa_integfochi_min);
-
-        attributeId = H5Acreate2 (datasetId, "chipa_max",
-                                  H5T_NATIVE_DOUBLE,
-                                  dataspaceId,
-                                  H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(attributeId, H5T_NATIVE_DOUBLE, &chipa_integfochi_max);
-
-        attributeId = H5Acreate2 (datasetId, "chipa_dim",
-                                  H5T_NATIVE_INT,
-                                  dataspaceId,
-                                  H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(attributeId, H5T_NATIVE_INT, &dim_integfochi);
-
-        attributeId = H5Acreate2 (datasetId, "chiph_dim",
-                                  H5T_NATIVE_INT,
-                                  dataspaceId,
-                                  H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(attributeId, H5T_NATIVE_INT, &dim_integfochi);
-
-        attributeId = H5Acreate2 (datasetId, "power",
-                                  H5T_NATIVE_DOUBLE,
-                                  dataspaceId,
-                                  H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(attributeId, H5T_NATIVE_DOUBLE, &xip_power);
-
-        attributeId = H5Acreate2 (datasetId, "threshold",
-                                  H5T_NATIVE_DOUBLE,
-                                  dataspaceId,
-                                  H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(attributeId, H5T_NATIVE_DOUBLE, &xip_threshold);
+        // Attribute creation
+        H5::attr(datasetId, "chipa_min", chipa_xip_min);
+        H5::attr(datasetId, "chipa_max", chipa_xip_max);
+        H5::attr(datasetId, "chipa_dim", chipa_xip_dim);
+        H5::attr(datasetId, "chiph_dim", chiph_xip_dim);
+        H5::attr(datasetId, "power", xip_power);
+        H5::attr(datasetId, "threshold", xip_threshold);
 
         // Close everything
-        H5Aclose(attributeId);
         H5Dclose(datasetId);
         H5Dclose(dataspaceId);
         H5Dclose(fileId);
