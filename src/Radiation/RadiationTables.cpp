@@ -18,9 +18,13 @@
 
 #include "userFunctions.h"
 
-// ---------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// INITILIZATION AND DESTRUCTION
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
 // Constructor for RadiationTables
-// ---------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 RadiationTables::RadiationTables()
 {
     Integfochi.resize(0);
@@ -32,19 +36,20 @@ RadiationTables::RadiationTables()
 
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Destructor for RadiationTables
-// ---------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 RadiationTables::~RadiationTables()
 {
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
-//! Initialization of the parameters for the nonlinear inverse Compton scattering
+//! Initialization of the parameters for the nonlinear inverse Compton
+//! scattering
 //
 //! \param params Object Params for the parameters from the input script
-// ---------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 void RadiationTables::initParams(Params& params)
 {
 
@@ -259,7 +264,143 @@ double RadiationTables::compute_chiph_emission(double chipa)
     return chiph;
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// TABLE COMPUTATION
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+//! Computation of the table values of integfochi
+//
+//! \param smpi Object of class SmileiMPI containing MPI properties
+// -----------------------------------------------------------------------------
+void RadiationTables::compute_integfochi_table(SmileiMPI *smpi)
+{
+
+    // Parameters
+    int rank; // Rank number
+    // timers
+    double t0,t1;
+    // tabel_exists
+    bool table_exists;
+
+    // Get the MPI rank
+    rank = smpi->getRank();
+
+    MESSAGE("        --- Integration F/chipa table:");
+
+    // Initial timer
+    t0 = MPI_Wtime();
+
+    // If external tables are available, we read them
+    table_exists = RadiationTables::read_integfochi_table(smpi);
+
+    // Else we compute them
+    if (!table_exists)
+    {
+
+        // Temporary particle chi value
+        double chipa;
+        // For percentages
+        double pct = 0.;
+        double dpct = 10.;
+        // table load repartition
+        int * imin_table;
+        int * length_table;
+        // Local array
+        double * buffer;
+        int nb_ranks; // Number of ranks
+        //int err;  // error MPI
+
+        // Get the number of ranks
+        nb_ranks = smpi->getSize();
+
+        // Allocation of the array Integfochi
+        Integfochi.resize(dim_integfochi);
+
+        // Allocation of the table for load repartition
+        imin_table = new int[nb_ranks];
+        length_table = new int[nb_ranks];
+
+        // Computation of the delta
+        delta_chipa_integfochi = (log10(chipa_integfochi_max)
+                - log10_chipa_integfochi_min)/(dim_integfochi-1);
+
+        // Inverse delta
+        inv_delta_chipa_integfochi = 1./delta_chipa_integfochi;
+
+        // Load repartition
+        userFunctions::distribute_load_1d_table(nb_ranks,
+                dim_integfochi,
+                imin_table,
+                length_table);
+
+        // Allocation of the local buffer
+        buffer = new double [length_table[rank]];
+
+
+        MESSAGE("            MPI repartition:");
+        // Print repartition
+        if (rank==0)
+        {
+            for(int i =0 ; i < nb_ranks ; i++)
+            {
+                MESSAGE( "            Rank: " << i
+                                          << " imin: " << imin_table[i]
+                                          << " length: " << length_table[i] );
+            }
+        }
+
+        MESSAGE("            Computation:");
+        dpct = std::max(dpct,100./length_table[rank]);
+        // Loop over the table values
+        for(int i = 0 ; i < length_table[rank] ; i++)
+        {
+            chipa = pow(10.,(imin_table[rank] + i)*delta_chipa_integfochi
+                  + log10_chipa_integfochi_min);
+
+            buffer[i] = RadiationTables::compute_integfochi(chipa,
+                    0.98e-40*chipa,0.98*chipa,400,1e-15);
+
+            //std::cout << rank << " " << buffer[i] << std::endl;
+
+            if (100.*i >= length_table[rank]*pct)
+            {
+                pct += dpct;
+                MESSAGE("            " << i + 1<< "/" << length_table[rank] << " - " << (int)(std::round(pct)) << "%");
+            }
+        }
+
+        // Communication of the data
+        MPI_Allgatherv(&buffer[0], length_table[rank], MPI_DOUBLE,
+                &Integfochi[0], &length_table[0], &imin_table[0],
+                MPI_DOUBLE, smpi->getGlobalComm());
+
+        // Print array after communications
+        /*
+           if (rank==1) {
+           for (int i=0 ; i< dim_integfochi ; i++)
+           {
+           std::cout << Integfochi[i] << std::endl;
+           }
+           }
+         */
+
+        // flag computed at true
+        integfochi_computed = true;
+
+        // Free memory
+        // delete buffer;
+        // delete imin_table;
+        delete length_table;
+
+    }
+
+    // Final timer
+    t1 = MPI_Wtime();
+    MESSAGE("        done in " << (t1 - t0) << "s");
+}
+
+// -----------------------------------------------------------------------------
 //! Computation of the minimum photon quantum parameter chiphmin
 //! for the xip array and computation of the xip array.
 //
@@ -623,310 +764,6 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Computation of the Cross Section dNph/dt which is also
-//! the number of photons generated per time unit.
-//
-//! \param chipa particle quantum parameter
-//! \param gfpa particle gamma factor
-// ---------------------------------------------------------------------------------------------------------------------
-double RadiationTables::compute_dNphdt(double chipa,double gfpa)
-{
-
-    // Log of the particle quantum parameter chipa
-    double logchipa;
-    double logchipam;
-    double logchipap;
-    // Index
-    int ichipa;
-    // final value
-    double dNphdt;
-
-    logchipa = log10(chipa);
-
-    // Lower index for interpolation in the table integfochi
-    ichipa = int(floor((logchipa-log10_chipa_integfochi_min)
-                 *inv_delta_chipa_integfochi));
-
-    // If we are not in the table...
-    if (ichipa < 0)
-    {
-        ichipa = 0;
-        dNphdt = Integfochi[ichipa];
-    }
-    else if (ichipa >= dim_integfochi-1)
-    {
-        ichipa = dim_integfochi-2;
-        dNphdt = Integfochi[ichipa];
-    }
-    else
-    {
-        // Upper and lower values for linear interpolation
-        logchipam = ichipa*delta_chipa_integfochi + log10_chipa_integfochi_min;
-        logchipap = logchipam + delta_chipa_integfochi;
-
-        // Interpolation
-        dNphdt = (Integfochi[ichipa+1]*fabs(logchipa-logchipam) +
-                Integfochi[ichipa]*fabs(logchipap - logchipa))*inv_delta_chipa_integfochi;
-    }
-
-    /*std::cerr << "factor_dNphdt: " << factor_dNphdt << " "
-              << "dNphdt: " << dNphdt << " "
-              << "chipa: " << chipa << " "
-              << "ichipa: " << ichipa << " "
-              << "" << logchipam << " < logchipa: " << logchipa << " < " << logchipap << " "
-              << "delta_chipa_integfochi: " << delta_chipa_integfochi << " "
-              << "Integfochi[ichipa]: " << Integfochi[ichipa] << " "
-              << "Integfochi[ichipa+1]: " << Integfochi[ichipa+1] << " "
-              << std::endl;*/
-
-    return factor_dNphdt*dNphdt*chipa/gfpa;
-
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-//! Computation of the table values of integfochi
-//
-//! \param smpi Object of class SmileiMPI containing MPI properties
-// ---------------------------------------------------------------------------------------------------------------------
-void RadiationTables::compute_integfochi_table(SmileiMPI *smpi)
-{
-
-    // Parameters
-    int rank; // Rank number
-    // timers
-    double t0,t1;
-
-    // Get the MPI rank
-    rank = smpi->getRank();
-
-    MESSAGE("        --- Integration F/chipa table:");
-
-    t0 = MPI_Wtime();
-
-    // Test if an external table exists, we read the table...
-    if (Tools::file_exists(table_path + "/tab_integfochi.bin"))
-    {
-
-        MESSAGE("            Reading of the external binary table");
-
-        if (rank==0)
-        {
-
-            // Reading of the table file
-            std::ifstream file;
-            file.open(table_path + "/tab_integfochi.bin",std::ios::binary);
-
-            if (file.is_open())
-            {
-
-                // Read the header
-                file.read((char*)&dim_integfochi,sizeof (dim_integfochi));
-                file.read((char*)&chipa_integfochi_min, sizeof (chipa_integfochi_min));
-                file.read((char*)&chipa_integfochi_max, sizeof (chipa_integfochi_max));
-
-                // Resize of the array Integfochi before reading
-                Integfochi.resize(dim_integfochi);
-
-                // Read the table values
-                file.read((char*)&Integfochi[0], sizeof (double)*dim_integfochi);
-
-                file.close();
-            }
-
-        }
-
-        MESSAGE("            Dimension quantum parameter: " << dim_integfochi);
-        MESSAGE("            Minimum particle quantum parameter chi: " << chipa_integfochi_min);
-        MESSAGE("            Maximum particle quantum parameter chi: " << chipa_integfochi_max);
-
-        // Position for MPI pack and unack
-        int position;
-        // buffer size for MPI pack and unpack
-        int buf_size;
-
-        // -------------------------------------------------------
-        // Bcast of all the parameters
-        // We pack everything in a buffer
-        // --------------------------------------------------------
-
-        // buffer size
-        if (rank == 0)
-        {
-            MPI_Pack_size(1, MPI_INTEGER, smpi->getGlobalComm(), &position);
-            buf_size = position;
-            MPI_Pack_size(2, MPI_DOUBLE, smpi->getGlobalComm(), &position);
-            buf_size += position;
-            MPI_Pack_size(dim_integfochi, MPI_DOUBLE, smpi->getGlobalComm(),
-                          &position);
-            buf_size += position;
-        }
-
-        MESSAGE("            Buffer size: " << buf_size);
-
-        // Exchange buf_size with all ranks
-        MPI_Bcast(&buf_size, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
-
-        // Packet that will contain all parameters
-        char * buffer = new char[buf_size];
-
-        // Proc 0 packs
-        if (rank == 0)
-        {
-            position = 0;
-            MPI_Pack(&dim_integfochi,
-                 1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
-            MPI_Pack(&chipa_integfochi_min,
-                 1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
-            MPI_Pack(&chipa_integfochi_max,
-                 1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
-
-            MPI_Pack(&Integfochi[0],dim_integfochi,
-                MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
-
-        }
-
-        // Bcast all parameters
-        MPI_Bcast(&buffer[0], buf_size, MPI_PACKED, 0,smpi->getGlobalComm());
-
-        // Other ranks unpack
-        if (rank != 0)
-        {
-            position = 0;
-            MPI_Unpack(buffer, buf_size, &position,
-                       &dim_integfochi, 1, MPI_INTEGER,smpi->getGlobalComm());
-            MPI_Unpack(buffer, buf_size, &position,
-                       &chipa_integfochi_min, 1, MPI_DOUBLE,smpi->getGlobalComm());
-            MPI_Unpack(buffer, buf_size, &position,
-                       &chipa_integfochi_max, 1, MPI_DOUBLE,smpi->getGlobalComm());
-
-            // Resize table before unpacking values
-            Integfochi.resize(dim_integfochi);
-
-            MPI_Unpack(buffer, buf_size, &position,&Integfochi[0],
-                        dim_integfochi, MPI_DOUBLE,smpi->getGlobalComm());
-
-        }
-
-        log10_chipa_integfochi_min = log10(chipa_integfochi_min);
-
-        // Computation of the delta
-        delta_chipa_integfochi = (log10(chipa_integfochi_max)
-                - log10_chipa_integfochi_min)/(dim_integfochi-1);
-
-        // Inverse delta
-        inv_delta_chipa_integfochi = 1./delta_chipa_integfochi;
-
-    }
-    // else the table is generated
-    else
-    {
-        // Temporary particle chi value
-        double chipa;
-        // For percentages
-        double pct = 0.;
-        double dpct = 10.;
-        // table load repartition
-        int * imin_table;
-        int * length_table;
-        // Local array
-        double * buffer;
-        int nb_ranks; // Number of ranks
-        //int err;  // error MPI
-
-        // Get the number of ranks
-        nb_ranks = smpi->getSize();
-
-        // Allocation of the array Integfochi
-        Integfochi.resize(dim_integfochi);
-
-        // Allocation of the table for load repartition
-        imin_table = new int[nb_ranks];
-        length_table = new int[nb_ranks];
-
-        // Computation of the delta
-        delta_chipa_integfochi = (log10(chipa_integfochi_max)
-                - log10_chipa_integfochi_min)/(dim_integfochi-1);
-
-        // Inverse delta
-        inv_delta_chipa_integfochi = 1./delta_chipa_integfochi;
-
-        // Load repartition
-        userFunctions::distribute_load_1d_table(nb_ranks,
-                dim_integfochi,
-                imin_table,
-                length_table);
-
-        // Allocation of the local buffer
-        buffer = new double [length_table[rank]];
-
-
-        MESSAGE("            MPI repartition:");
-        // Print repartition
-        if (rank==0)
-        {
-            for(int i =0 ; i < nb_ranks ; i++)
-            {
-                MESSAGE( "            Rank: " << i
-                                          << " imin: " << imin_table[i]
-                                          << " length: " << length_table[i] );
-            }
-        }
-
-        MESSAGE("            Computation:");
-        dpct = std::max(dpct,100./length_table[rank]);
-        // Loop over the table values
-        for(int i = 0 ; i < length_table[rank] ; i++)
-        {
-            chipa = pow(10.,(imin_table[rank] + i)*delta_chipa_integfochi
-                  + log10_chipa_integfochi_min);
-
-            buffer[i] = RadiationTables::compute_integfochi(chipa,
-                    0.98e-40*chipa,0.98*chipa,400,1e-15);
-
-            //std::cout << rank << " " << buffer[i] << std::endl;
-
-            if (100.*i >= length_table[rank]*pct)
-            {
-                pct += dpct;
-                MESSAGE("            " << i + 1<< "/" << length_table[rank] << " - " << (int)(std::round(pct)) << "%");
-            }
-        }
-
-        // Communication of the data
-        MPI_Allgatherv(&buffer[0], length_table[rank], MPI_DOUBLE,
-                &Integfochi[0], &length_table[0], &imin_table[0],
-                MPI_DOUBLE, smpi->getGlobalComm());
-
-        // Print array after communications
-        /*
-           if (rank==1) {
-           for (int i=0 ; i< dim_integfochi ; i++)
-           {
-           std::cout << Integfochi[i] << std::endl;
-           }
-           }
-         */
-
-        // flag computed at true
-        integfochi_computed = true;
-
-        // Free memory
-        // delete buffer;
-        // delete imin_table;
-        delete length_table;
-
-    }
-
-    t1 = MPI_Wtime();
-    MESSAGE("        done in " << (t1 - t0) << "s");
-}
-
-
-// -----------------------------------------------------------------------------
-// TABLE COMPUTATION
-// -----------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------------------------------------------------
 //! Output the computed tables so that thay can be read at the next run.
 //
 //! \param params list of simulation parameters
@@ -1013,7 +850,6 @@ void RadiationTables::output_integfochi_table()
         hid_t       fileId;
         hid_t       datasetId;
         hid_t       dataspaceId;
-        hid_t       attributeId;
         hsize_t     dims;
         std::string buffer;
 
@@ -1059,7 +895,6 @@ void RadiationTables::output_integfochi_table()
         H5::attr(datasetId, "chipa_dim", dim_integfochi);
 
         // Close everything
-        H5Aclose(attributeId);
         H5Dclose(datasetId);
         H5Dclose(dataspaceId);
         H5Dclose(fileId);
@@ -1144,7 +979,6 @@ void RadiationTables::output_xip_table()
         hid_t       fileId;
         hid_t       datasetId;
         hid_t       dataspaceId;
-        hid_t       attributeId;
         hsize_t     dims[2];
         std::string buffer;
 
@@ -1243,6 +1077,67 @@ void RadiationTables::output_tables()
 // -----------------------------------------------------------------------------
 // PHYSICAL COMPUTATION
 // -----------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Computation of the Cross Section dNph/dt which is also
+//! the number of photons generated per time unit.
+//
+//! \param chipa particle quantum parameter
+//! \param gfpa particle gamma factor
+// ---------------------------------------------------------------------------------------------------------------------
+double RadiationTables::compute_dNphdt(double chipa,double gfpa)
+{
+
+    // Log of the particle quantum parameter chipa
+    double logchipa;
+    double logchipam;
+    double logchipap;
+    // Index
+    int ichipa;
+    // final value
+    double dNphdt;
+
+    logchipa = log10(chipa);
+
+    // Lower index for interpolation in the table integfochi
+    ichipa = int(floor((logchipa-log10_chipa_integfochi_min)
+                 *inv_delta_chipa_integfochi));
+
+    // If we are not in the table...
+    if (ichipa < 0)
+    {
+        ichipa = 0;
+        dNphdt = Integfochi[ichipa];
+    }
+    else if (ichipa >= dim_integfochi-1)
+    {
+        ichipa = dim_integfochi-2;
+        dNphdt = Integfochi[ichipa];
+    }
+    else
+    {
+        // Upper and lower values for linear interpolation
+        logchipam = ichipa*delta_chipa_integfochi + log10_chipa_integfochi_min;
+        logchipap = logchipam + delta_chipa_integfochi;
+
+        // Interpolation
+        dNphdt = (Integfochi[ichipa+1]*fabs(logchipa-logchipam) +
+                Integfochi[ichipa]*fabs(logchipap - logchipa))*inv_delta_chipa_integfochi;
+    }
+
+    /*std::cerr << "factor_dNphdt: " << factor_dNphdt << " "
+              << "dNphdt: " << dNphdt << " "
+              << "chipa: " << chipa << " "
+              << "ichipa: " << ichipa << " "
+              << "" << logchipam << " < logchipa: " << logchipa << " < " << logchipap << " "
+              << "delta_chipa_integfochi: " << delta_chipa_integfochi << " "
+              << "Integfochi[ichipa]: " << Integfochi[ichipa] << " "
+              << "Integfochi[ichipa+1]: " << Integfochi[ichipa+1] << " "
+              << std::endl;*/
+
+    return factor_dNphdt*dNphdt*chipa/gfpa;
+
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! \brief
@@ -1360,4 +1255,330 @@ double RadiationTables::compute_sync_emissivity_ritus(double chipa,
     {
         ERROR("In compute_sync_emissivity_ritus: chipa " << chipa << " < chiph " << chiph);
     }
+}
+
+// -----------------------------------------------------------------------------
+// TABLE READING
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+//! Read the external table integfochi
+//
+//! \param smpi Object of class SmileiMPI containing MPI properties
+// -----------------------------------------------------------------------------
+bool RadiationTables::read_integfochi_table(SmileiMPI *smpi)
+{
+    // Flag database available
+    bool table_exists = false;
+
+    MESSAGE("            Reading of the external database");
+
+    // Test if an external table exists, if yes we read the table...
+    // Binary table
+    if (Tools::file_exists(table_path + "/tab_integfochi.bin"))
+    {
+
+        table_exists = true;
+
+        if (smpi->getRank()==0)
+        {
+
+            // Reading of the table file
+            std::ifstream file;
+            file.open(table_path + "/tab_integfochi.bin",std::ios::binary);
+
+            if (file.is_open())
+            {
+
+                // Read the header
+                file.read((char*)&dim_integfochi,sizeof (dim_integfochi));
+                file.read((char*)&chipa_integfochi_min,
+                          sizeof (chipa_integfochi_min));
+                file.read((char*)&chipa_integfochi_max,
+                          sizeof (chipa_integfochi_max));
+
+                // Resize of the array Integfochi before reading
+                Integfochi.resize(dim_integfochi);
+
+                // Read the table values
+                file.read((char*)&Integfochi[0], sizeof (double)*dim_integfochi);
+
+                file.close();
+            }
+
+        }
+
+    }
+
+    // If the table exists, they have been read...
+    if (table_exists)
+    {
+
+        MESSAGE("            Dimension quantum parameter: " << dim_integfochi);
+        MESSAGE("            Minimum particle quantum parameter chi: " << chipa_integfochi_min);
+        MESSAGE("            Maximum particle quantum parameter chi: " << chipa_integfochi_max);
+
+        // Bcast the table to all MPI ranks
+        RadiationTables::bcast_integfochi_table(smpi);
+    }
+
+    return table_exists;
+
+}
+
+// -----------------------------------------------------------------------------
+//! Read the external table xip_chiphmin and xip
+//
+//! \param smpi Object of class SmileiMPI containing MPI properties
+// -----------------------------------------------------------------------------
+bool RadiationTables::read_xip_table(SmileiMPI *smpi)
+{
+    // Flag database available
+    bool table_exists = false;
+
+    MESSAGE("            Reading of the external database");
+
+    // Test if an external table exists, we read the table...
+    if (Tools::file_exists(table_path + "/tab_xip.bin"))
+    {
+
+        table_exists = true;
+
+        if (smpi->getRank()==0)
+        {
+
+            // Reading of the table file
+            std::ifstream file;
+            file.open(table_path + "/tab_xip.bin",std::ios::binary);
+
+            if (file.is_open())
+            {
+
+                // Read the header
+                file.read((char*)&chipa_xip_dim,sizeof (chipa_xip_dim));
+                file.read((char*)&chiph_xip_dim,sizeof (chiph_xip_dim));
+                file.read((char*)&chipa_xip_min, sizeof (chipa_xip_min));
+                file.read((char*)&chipa_xip_max, sizeof (chipa_xip_max));
+
+                // Allocation of the array xip
+                xip_chiphmin_table.resize(chipa_xip_dim);
+                xip_table.resize(chipa_xip_dim*chiph_xip_dim);
+
+                // Read the table values
+                file.read((char*)&xip_chiphmin_table[0], sizeof (double)*chipa_xip_dim);
+
+                // Read the table values
+                file.read((char*)&xip_table[0], sizeof (double)*chipa_xip_dim*chiph_xip_dim);
+
+                file.close();
+            }
+
+        }
+    }
+
+    // If the table exists, they have been read...
+    if (table_exists)
+    {
+
+        MESSAGE("            Dimension particle chi: " << chipa_xip_dim);
+        MESSAGE("            Dimension photon chi: " << chiph_xip_dim);
+        MESSAGE("            Minimum particle chi: " << chipa_xip_min);
+        MESSAGE("            Maximum particle chi: " << chipa_xip_max);
+
+        // Bcast the table to all MPI ranks
+        RadiationTables::bcast_xip_table(smpi);
+    }
+
+    return table_exists;
+}
+
+// -----------------------------------------------------------------------------
+// TABLE COMMUNICATIONS
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+//! Bcast of the external table integfochi
+//
+//! \param smpi Object of class SmileiMPI containing MPI properties
+// -----------------------------------------------------------------------------
+void RadiationTables::bcast_integfochi_table(SmileiMPI *smpi)
+{
+    // Position for MPI pack and unack
+    int position;
+    // buffer size for MPI pack and unpack
+    int buf_size;
+
+    // -------------------------------------------------------
+    // Bcast of all the parameters
+    // We pack everything in a buffer
+    // --------------------------------------------------------
+
+    // buffer size
+    if (smpi->getRank() == 0)
+    {
+        MPI_Pack_size(1, MPI_INTEGER, smpi->getGlobalComm(), &position);
+        buf_size = position;
+        MPI_Pack_size(2, MPI_DOUBLE, smpi->getGlobalComm(), &position);
+        buf_size += position;
+        MPI_Pack_size(dim_integfochi, MPI_DOUBLE, smpi->getGlobalComm(),
+                      &position);
+        buf_size += position;
+    }
+
+    MESSAGE("            Buffer size: " << buf_size);
+
+    // Exchange buf_size with all ranks
+    MPI_Bcast(&buf_size, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
+
+    // Packet that will contain all parameters
+    char * buffer = new char[buf_size];
+
+    // Proc 0 packs
+    if (smpi->getRank() == 0)
+    {
+        position = 0;
+        MPI_Pack(&dim_integfochi,
+             1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
+        MPI_Pack(&chipa_integfochi_min,
+             1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
+        MPI_Pack(&chipa_integfochi_max,
+             1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
+
+        MPI_Pack(&Integfochi[0],dim_integfochi,
+            MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
+
+    }
+
+    // Bcast all parameters
+    MPI_Bcast(&buffer[0], buf_size, MPI_PACKED, 0,smpi->getGlobalComm());
+
+    // Other ranks unpack
+    if (smpi->getRank() != 0)
+    {
+        position = 0;
+        MPI_Unpack(buffer, buf_size, &position,
+                   &dim_integfochi, 1, MPI_INTEGER,smpi->getGlobalComm());
+        MPI_Unpack(buffer, buf_size, &position,
+                   &chipa_integfochi_min, 1, MPI_DOUBLE,smpi->getGlobalComm());
+        MPI_Unpack(buffer, buf_size, &position,
+                   &chipa_integfochi_max, 1, MPI_DOUBLE,smpi->getGlobalComm());
+
+        // Resize table before unpacking values
+        Integfochi.resize(dim_integfochi);
+
+        MPI_Unpack(buffer, buf_size, &position,&Integfochi[0],
+                    dim_integfochi, MPI_DOUBLE,smpi->getGlobalComm());
+
+    }
+
+    log10_chipa_integfochi_min = log10(chipa_integfochi_min);
+
+    // Computation of the delta
+    delta_chipa_integfochi = (log10(chipa_integfochi_max)
+            - log10_chipa_integfochi_min)/(dim_integfochi-1);
+
+    // Inverse delta
+    inv_delta_chipa_integfochi = 1./delta_chipa_integfochi;
+}
+
+// -----------------------------------------------------------------------------
+//! Bcast of the external table xip_chiphmin and xip
+//
+//! \param smpi Object of class SmileiMPI containing MPI properties
+// -----------------------------------------------------------------------------
+void RadiationTables::bcast_xip_table(SmileiMPI *smpi)
+{
+    // Position for MPI pack and unack
+    int position = 0;
+    // buffer size for MPI pack and unpack
+    int buf_size = 0;
+
+    // -------------------------------------------
+    // Bcast of all the parameters
+    // We pack everything in a buffer
+    // -------------------------------------------
+
+    // Compute the buffer size
+    if (smpi->getRank() == 0)
+    {
+        MPI_Pack_size(2, MPI_INTEGER, smpi->getGlobalComm(), &position);
+        buf_size = position;
+        MPI_Pack_size(2, MPI_DOUBLE, smpi->getGlobalComm(), &position);
+        buf_size += position;
+        MPI_Pack_size(chipa_xip_dim, MPI_DOUBLE, smpi->getGlobalComm(),
+                      &position);
+        buf_size += position;
+        MPI_Pack_size(chipa_xip_dim*chiph_xip_dim, MPI_DOUBLE,
+                      smpi->getGlobalComm(), &position);
+        buf_size += position;
+    }
+
+    MESSAGE("            Buffer size for MPI exchange: " << buf_size);
+
+    // Exchange buf_size with all ranks
+    MPI_Bcast(&buf_size, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
+
+    // Packet that will contain all parameters
+    char * buffer = new char[buf_size];
+
+    // Proc 0 packs
+    if (smpi->getRank() == 0)
+    {
+        position = 0;
+        MPI_Pack(&chipa_xip_dim,
+             1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
+        MPI_Pack(&chiph_xip_dim,
+             1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
+        MPI_Pack(&chipa_xip_min,
+             1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
+        MPI_Pack(&chipa_xip_max,
+             1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
+
+        MPI_Pack(&xip_chiphmin_table[0],chipa_xip_dim,
+            MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
+
+        MPI_Pack(&xip_table[0],chipa_xip_dim*chiph_xip_dim,
+            MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
+    }
+
+    // Bcast all parameters
+    MPI_Bcast(&buffer[0], buf_size, MPI_PACKED, 0,smpi->getGlobalComm());
+
+    // Other ranks unpack
+    if (smpi->getRank() != 0)
+    {
+        position = 0;
+        MPI_Unpack(buffer, buf_size, &position,
+                   &chipa_xip_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
+        MPI_Unpack(buffer, buf_size, &position,
+                   &chiph_xip_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
+        MPI_Unpack(buffer, buf_size, &position,
+                   &chipa_xip_min, 1, MPI_DOUBLE,smpi->getGlobalComm());
+        MPI_Unpack(buffer, buf_size, &position,
+                   &chipa_xip_max, 1, MPI_DOUBLE,smpi->getGlobalComm());
+
+        // Resize tables before unpacking values
+        xip_chiphmin_table.resize(chipa_xip_dim);
+        xip_table.resize(chipa_xip_dim*chiph_xip_dim);
+
+        MPI_Unpack(buffer, buf_size, &position,&xip_chiphmin_table[0],
+                    chipa_xip_dim, MPI_DOUBLE,smpi->getGlobalComm());
+
+        MPI_Unpack(buffer, buf_size, &position,&xip_table[0],
+            chipa_xip_dim*chiph_xip_dim, MPI_DOUBLE,smpi->getGlobalComm());
+    }
+
+    // Log10 of chipa_xip_min for efficiency
+    log10_chipa_xip_min = log10(chipa_xip_min);
+
+    // Computation of the delta
+    chipa_xip_delta = (log10(chipa_xip_max)
+           - log10_chipa_xip_min)/(chipa_xip_dim-1);
+
+    // Inverse of delta
+    inv_chipa_xip_delta = 1./chipa_xip_delta;
+
+    // Inverse chiph discetization (regularly used)
+    inv_chiph_xip_dim_minus_one = 1./(chiph_xip_dim - 1.);
+
 }

@@ -39,6 +39,19 @@ class RadiationTables
         //! Initialization of the parmeters for the nonlinear inverse Compton scattering
         void initParams(Params& params);
 
+        // ---------------------------------------------------------------------
+        // PHYSICAL COMPUTATION
+        // ---------------------------------------------------------------------
+
+        //! Synchrotron emissivity from Ritus
+        static double compute_sync_emissivity_ritus(double chie,
+                double chiph,
+                int nbit,
+                double eps);
+
+        //! Computation of the cross-section dNph/dt
+        double compute_dNphdt(double chipa,double gfpa);
+
         //! Compute integration of F/chi between
         //! using Gauss-Legendre for a given chie value
         static double compute_integfochi(double chie,
@@ -47,20 +60,29 @@ class RadiationTables
                 int nbit,
                 double eps);
 
-        //! Synchrotron emissivity from Ritus
-        static double compute_sync_emissivity_ritus(double chie,
-                double chiph,
-                int nbit,
-                double eps);
+        //! Computation of the photon quantum parameter chiph for emission
+        //! ramdomly and using the tables xip and chiphmin
+        //! \param chipa particle quantum parameter
+        double compute_chiph_emission(double chipa);
 
-        //! Generate table values for Integration of F/chi: Integfochi
-        void compute_integfochi_table(SmileiMPI *smpi);
+        // ---------------------------------------------------------------------
+        //! Computation of the continuous quantum radiated energy during dt
+        //! from the quantum parameter chipa using the Ridgers formulae
+        //
+        //! \param chipa particle quantum parameter
+        //! \param dt time step
+        // ---------------------------------------------------------------------
+        //#pragma omp declare simd
+        double inline compute_cont_rad_energy_Ridgers(double chipa, double dt)
+        {
+            return compute_g_Ridgers(chipa)*dt*chipa*chipa*factor_cla_rad_power;
+        };
 
-        //! Write in a file table values for Integration of F/chi: Integfochi
-        void output_integfochi_table();
-
-        //! Computation of the cross-section dNph/dt
-        double compute_dNphdt(double chipa,double gfpa);
+        //! Return the get_chipa_disc_min_threshold value
+        double inline get_chipa_disc_min_threshold()
+        {
+            return chipa_disc_min_threshold;
+        }
 
         // ---------------------------------------------------------------------
         //! Computation of the function g of Erber using the Ridgers
@@ -76,43 +98,68 @@ class RadiationTables
         };
 
         // ---------------------------------------------------------------------
-        //! Computation of the continuous quantum radiated energy during dt
-        //! from the quantum parameter chipa using the Ridgers formulae
-        //
-        //! \param chipa particle quantum parameter
-        //! \param dt time step
+        // TABLE COMPUTATION
         // ---------------------------------------------------------------------
-        //#pragma omp declare simd
-        double inline compute_cont_rad_energy_Ridgers(double chipa, double dt)
-        {
-            return compute_g_Ridgers(chipa)*dt*chipa*chipa*factor_cla_rad_power;
-        };
+
+        //! Generate table values for Integration of F/chi: Integfochi
+        void compute_integfochi_table(SmileiMPI *smpi);
 
         //! Computation of the minimum photon quantum parameter for the array xip
         //! and computation of the xip array.
         void compute_xip_table(SmileiMPI *smpi);
 
-        //! Computation of the photon quantum parameter chiph for emission
-        //! ramdomly and using the tables xip and chiphmin
-        //! \param chipa particle quantum parameter
-        double compute_chiph_emission(double chipa);
-
         //! Compute all the tables
         void compute_tables(Params& params, SmileiMPI *smpi);
 
+        // ---------------------------------------------------------------------
+        // TABLE OUTPUTS
+        // ---------------------------------------------------------------------
+
+        //! Write in a file table values for Integration of F/chi: Integfochi
+        void output_integfochi_table();
+
         //! Write in a file the table xip_chiphmin and xip
         void output_xip_table();
-
 
         //! Output all computed tables so that they can be
         //! read at the next run
         void output_tables();
 
-        //! Return the get_chipa_disc_min_threshold value
-        double inline get_chipa_disc_min_threshold()
-        {
-            return chipa_disc_min_threshold;
-        }
+        // ---------------------------------------------------------------------
+        // TABLE READING
+        // ---------------------------------------------------------------------
+
+        // ---------------------------------------------------------------------
+        //! Read the external table integfochi
+        //
+        //! \param smpi Object of class SmileiMPI containing MPI properties
+        // ---------------------------------------------------------------------
+        bool read_integfochi_table(SmileiMPI *smpi);
+
+        // -----------------------------------------------------------------------------
+        //! Read the external table xip_chiphmin and xip
+        //
+        //! \param smpi Object of class SmileiMPI containing MPI properties
+        // -----------------------------------------------------------------------------
+        bool read_xip_table(SmileiMPI *smpi);
+
+        // ---------------------------------------------------------------------
+        // TABLE COMMUNICATIONS
+        // ---------------------------------------------------------------------
+
+        // ---------------------------------------------------------------------
+        //! Bcast of the external table integfochi
+        //
+        //! \param smpi Object of class SmileiMPI containing MPI properties
+        // ---------------------------------------------------------------------
+        void bcast_integfochi_table(SmileiMPI *smpi);
+
+        // -----------------------------------------------------------------------------
+        //! Bcast of the external table xip_chiphmin and xip
+        //
+        //! \param smpi Object of class SmileiMPI containing MPI properties
+        // -----------------------------------------------------------------------------
+        void bcast_xip_table(SmileiMPI *smpi);
 
     private:
 
