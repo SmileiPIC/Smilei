@@ -416,6 +416,8 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
     int rank; // Rank number
     // timers
     double t0,t1;
+    // Flag table exists
+    bool table_exists;
 
     // Get the MPI rank
     rank = smpi->getRank();
@@ -424,144 +426,11 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 
     MESSAGE("        --- Table chiphmin and xip:");
 
-    // Test if an external table exists, we read the table...
-    if (Tools::file_exists(table_path + "/tab_xip.bin"))
-    {
+    // If external tables are available, we read them
+    table_exists = RadiationTables::read_xip_table(smpi);
 
-        if (rank==0)
-        {
-
-            MESSAGE("            Reading of the external binary table");
-
-            // Reading of the table file
-            std::ifstream file;
-            file.open(table_path + "/tab_xip.bin",std::ios::binary);
-
-            if (file.is_open())
-            {
-
-                // Read the header
-                file.read((char*)&chipa_xip_dim,sizeof (chipa_xip_dim));
-                file.read((char*)&chiph_xip_dim,sizeof (chiph_xip_dim));
-                file.read((char*)&chipa_xip_min, sizeof (chipa_xip_min));
-                file.read((char*)&chipa_xip_max, sizeof (chipa_xip_max));
-
-                // Allocation of the array xip
-                xip_chiphmin_table.resize(chipa_xip_dim);
-                xip_table.resize(chipa_xip_dim*chiph_xip_dim);
-
-                // Read the table values
-                file.read((char*)&xip_chiphmin_table[0], sizeof (double)*chipa_xip_dim);
-
-                // Read the table values
-                file.read((char*)&xip_table[0], sizeof (double)*chipa_xip_dim*chiph_xip_dim);
-
-                file.close();
-            }
-
-        }
-
-        MESSAGE("            Dimension particle chi: " << chipa_xip_dim);
-        MESSAGE("            Dimension photon chi: " << chiph_xip_dim);
-        MESSAGE("            Minimum particle chi: " << chipa_xip_min);
-        MESSAGE("            Maximum particle chi: " << chipa_xip_max);
-
-        // Position for MPI pack and unack
-        int position = 0;
-        // buffer size for MPI pack and unpack
-        int buf_size = 0;
-
-        // -------------------------------------------
-        // Bcast of all the parameters
-        // We pack everything in a buffer
-        // -------------------------------------------
-
-        // Compute the buffer size
-        if (rank == 0)
-        {
-            MPI_Pack_size(2, MPI_INTEGER, smpi->getGlobalComm(), &position);
-            buf_size = position;
-            MPI_Pack_size(2, MPI_DOUBLE, smpi->getGlobalComm(), &position);
-            buf_size += position;
-            MPI_Pack_size(chipa_xip_dim, MPI_DOUBLE, smpi->getGlobalComm(),
-                          &position);
-            buf_size += position;
-            MPI_Pack_size(chipa_xip_dim*chiph_xip_dim, MPI_DOUBLE,
-                          smpi->getGlobalComm(), &position);
-            buf_size += position;
-        }
-
-        MESSAGE("            Buffer size for MPI exchange: " << buf_size);
-
-        // Exchange buf_size with all ranks
-        MPI_Bcast(&buf_size, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
-
-        // Packet that will contain all parameters
-        char * buffer = new char[buf_size];
-
-        // Proc 0 packs
-        if (rank == 0)
-        {
-            position = 0;
-            MPI_Pack(&chipa_xip_dim,
-                 1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
-            MPI_Pack(&chiph_xip_dim,
-                 1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
-            MPI_Pack(&chipa_xip_min,
-                 1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
-            MPI_Pack(&chipa_xip_max,
-                 1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
-
-            MPI_Pack(&xip_chiphmin_table[0],chipa_xip_dim,
-                MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
-
-            MPI_Pack(&xip_table[0],chipa_xip_dim*chiph_xip_dim,
-                MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
-        }
-
-        // Bcast all parameters
-        MPI_Bcast(&buffer[0], buf_size, MPI_PACKED, 0,smpi->getGlobalComm());
-
-        // Other ranks unpack
-        if (rank != 0)
-        {
-            position = 0;
-            MPI_Unpack(buffer, buf_size, &position,
-                       &chipa_xip_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
-            MPI_Unpack(buffer, buf_size, &position,
-                       &chiph_xip_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
-            MPI_Unpack(buffer, buf_size, &position,
-                       &chipa_xip_min, 1, MPI_DOUBLE,smpi->getGlobalComm());
-            MPI_Unpack(buffer, buf_size, &position,
-                       &chipa_xip_max, 1, MPI_DOUBLE,smpi->getGlobalComm());
-
-            // Resize tables before unpacking values
-            xip_chiphmin_table.resize(chipa_xip_dim);
-            xip_table.resize(chipa_xip_dim*chiph_xip_dim);
-
-            MPI_Unpack(buffer, buf_size, &position,&xip_chiphmin_table[0],
-                        chipa_xip_dim, MPI_DOUBLE,smpi->getGlobalComm());
-
-            MPI_Unpack(buffer, buf_size, &position,&xip_table[0],
-                chipa_xip_dim*chiph_xip_dim, MPI_DOUBLE,smpi->getGlobalComm());
-        }
-
-        // Log10 of chipa_xip_min for efficiency
-        log10_chipa_xip_min = log10(chipa_xip_min);
-
-        // Computation of the delta
-        chipa_xip_delta = (log10(chipa_xip_max)
-               - log10_chipa_xip_min)/(chipa_xip_dim-1);
-
-        // Inverse of delta
-        inv_chipa_xip_delta = 1./chipa_xip_delta;
-
-        // Inverse chiph discetization (regularly used)
-        inv_chiph_xip_dim_minus_one = 1./(chiph_xip_dim - 1.);
-
-    }
-    // else the table is generated
-    else
+    // Else we compute them
+    if (!table_exists)
     {
         // Parameters:
         double chipa; // Temporary particle chi value
@@ -897,7 +766,7 @@ void RadiationTables::output_integfochi_table()
         // Close everything
         H5Dclose(datasetId);
         H5Dclose(dataspaceId);
-        H5Dclose(fileId);
+        H5Fclose(fileId);
 
     }
     else
@@ -1049,7 +918,7 @@ void RadiationTables::output_xip_table()
         // Close everything
         H5Dclose(datasetId);
         H5Dclose(dataspaceId);
-        H5Dclose(fileId);
+        H5Fclose(fileId);
     }
     else
     {
@@ -1271,8 +1140,6 @@ bool RadiationTables::read_integfochi_table(SmileiMPI *smpi)
     // Flag database available
     bool table_exists = false;
 
-    MESSAGE("            Reading of the external database");
-
     // Test if an external table exists, if yes we read the table...
     // Binary table
     if (Tools::file_exists(table_path + "/tab_integfochi.bin"))
@@ -1309,11 +1176,59 @@ bool RadiationTables::read_integfochi_table(SmileiMPI *smpi)
         }
 
     }
+    // HDF5 format
+    else if (Tools::file_exists(table_path + "/radiation_tables.h5"))
+    {
+         hid_t       fileId;
+         hid_t       datasetId;
+         std::string buffer;
+
+         if (smpi->getRank()==0)
+         {
+
+             buffer = table_path + "/radiation_tables.h5";
+
+             fileId = H5Fopen(buffer.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+
+             datasetId = H5Dopen2(fileId, "integfochi", H5P_DEFAULT);
+
+             // If this dataset exists, we read it
+             if (datasetId > 0)
+             {
+
+                 table_exists = true;
+
+                 // First, we read attributes
+                 H5::getAttr(datasetId, "chipa_dim", dim_integfochi);
+                 H5::getAttr(datasetId, "chipa_min", chipa_integfochi_min);
+                 H5::getAttr(datasetId, "chipa_max", chipa_integfochi_max);
+
+                 // Resize of the array Integfochi before reading
+                 Integfochi.resize(dim_integfochi);
+
+                 // then the dataset
+                 H5Dread(datasetId,
+                        H5T_NATIVE_DOUBLE, H5S_ALL,
+                        H5S_ALL, H5P_DEFAULT,
+                        &Integfochi[0]);
+             }
+             // Else, we will have to compute it
+             else
+             {
+                 table_exists = false;
+             }
+        }
+
+        // Bcast table_exists
+        MPI_Bcast(&table_exists, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
+
+    }
 
     // If the table exists, they have been read...
     if (table_exists)
     {
 
+        MESSAGE("            Reading of the external database");
         MESSAGE("            Dimension quantum parameter: " << dim_integfochi);
         MESSAGE("            Minimum particle quantum parameter chi: " << chipa_integfochi_min);
         MESSAGE("            Maximum particle quantum parameter chi: " << chipa_integfochi_max);
@@ -1335,8 +1250,6 @@ bool RadiationTables::read_xip_table(SmileiMPI *smpi)
 {
     // Flag database available
     bool table_exists = false;
-
-    MESSAGE("            Reading of the external database");
 
     // Test if an external table exists, we read the table...
     if (Tools::file_exists(table_path + "/tab_xip.bin"))
@@ -1375,11 +1288,73 @@ bool RadiationTables::read_xip_table(SmileiMPI *smpi)
 
         }
     }
+    // HDF5 format
+    else if (Tools::file_exists(table_path + "/radiation_tables.h5"))
+    {
+         if (smpi->getRank()==0)
+         {
+
+             hid_t       fileId;
+             hid_t       datasetId_chiphmin;
+             hid_t       datasetId_xip;
+             std::string buffer;
+
+             buffer = table_path + "/radiation_tables.h5";
+
+             fileId = H5Fopen(buffer.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+
+             datasetId_chiphmin = H5Dopen2(fileId, "xip_chiphmin", H5P_DEFAULT);
+             datasetId_xip = H5Dopen2(fileId, "xip", H5P_DEFAULT);
+
+             // If this dataset exists, we read it
+             if (datasetId_chiphmin > 0 && datasetId_xip > 0)
+             {
+
+                 table_exists = true;
+
+                 // First, we read attributes
+                 H5::getAttr(datasetId_xip, "chipa_dim", chipa_xip_dim);
+                 H5::getAttr(datasetId_xip, "chiph_dim", chiph_xip_dim);
+                 H5::getAttr(datasetId_xip, "chipa_min", chipa_xip_min);
+                 H5::getAttr(datasetId_xip, "chipa_max", chipa_xip_max);
+
+                 // Allocation of the array xip
+                 xip_chiphmin_table.resize(chipa_xip_dim);
+                 xip_table.resize(chipa_xip_dim*chiph_xip_dim);
+
+                 // then the dataset for chiphmin
+                 H5Dread(datasetId_chiphmin,
+                        H5T_NATIVE_DOUBLE, H5S_ALL,
+                        H5S_ALL, H5P_DEFAULT,
+                        &xip_chiphmin_table[0]);
+
+                 // then the dataset for xip
+                 H5Dread(datasetId_xip,
+                        H5T_NATIVE_DOUBLE, H5S_ALL,
+                        H5S_ALL, H5P_DEFAULT,
+                        &xip_table[0]);
+
+                H5Dclose(datasetId_xip);
+                H5Dclose(datasetId_chiphmin);
+                H5Fclose(fileId);
+             }
+             // Else, we will have to compute it
+             else
+             {
+                 table_exists = false;
+             }
+        }
+
+        // Bcast table_exists
+        MPI_Bcast(&table_exists, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
+
+    }
 
     // If the table exists, they have been read...
     if (table_exists)
     {
 
+        MESSAGE("            Reading of the external database");
         MESSAGE("            Dimension particle chi: " << chipa_xip_dim);
         MESSAGE("            Dimension photon chi: " << chiph_xip_dim);
         MESSAGE("            Minimum particle chi: " << chipa_xip_min);
