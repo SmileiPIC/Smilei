@@ -1068,7 +1068,7 @@ void RadiationTables::output_integfochi_table()
                                   H5P_DEFAULT, H5P_DEFAULT);
         H5Awrite(attributeId, H5T_NATIVE_DOUBLE, &chipa_integfochi_max);
 
-        attributeId = H5Acreate2 (datasetId, "dimension",
+        attributeId = H5Acreate2 (datasetId, "chipa_dim",
                                   H5T_NATIVE_INT,
                                   dataspaceId,
                                   H5P_DEFAULT, H5P_DEFAULT);
@@ -1204,25 +1204,25 @@ void RadiationTables::output_xip_table()
         // Create attributes
         dims[0] = 1;
         dataspaceId = H5Screate_simple(1, dims, NULL);
-        attributeId = H5Acreate2 (datasetId, "chipa_xip_min",
+        attributeId = H5Acreate2 (datasetId, "chipa_min",
                                   H5T_NATIVE_DOUBLE,
                                   dataspaceId,
                                   H5P_DEFAULT, H5P_DEFAULT);
         H5Awrite(attributeId, H5T_NATIVE_DOUBLE, &chipa_integfochi_min);
 
-        attributeId = H5Acreate2 (datasetId, "chipa_xip_max",
+        attributeId = H5Acreate2 (datasetId, "chipa_max",
                                   H5T_NATIVE_DOUBLE,
                                   dataspaceId,
                                   H5P_DEFAULT, H5P_DEFAULT);
         H5Awrite(attributeId, H5T_NATIVE_DOUBLE, &chipa_integfochi_max);
 
-        attributeId = H5Acreate2 (datasetId, "chipa_xip_dim",
+        attributeId = H5Acreate2 (datasetId, "chipa_dim",
                                   H5T_NATIVE_INT,
                                   dataspaceId,
                                   H5P_DEFAULT, H5P_DEFAULT);
         H5Awrite(attributeId, H5T_NATIVE_INT, &dim_integfochi);
 
-        attributeId = H5Acreate2 (datasetId, "chiph_xip_dim",
+        attributeId = H5Acreate2 (datasetId, "chiph_dim",
                                   H5T_NATIVE_INT,
                                   dataspaceId,
                                   H5P_DEFAULT, H5P_DEFAULT);
