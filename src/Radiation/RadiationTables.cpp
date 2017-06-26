@@ -576,7 +576,8 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
             for (int ichiph = 0 ; ichiph < chiph_xip_dim ; ichiph ++)
             {
                 // Local chiph value
-               chiph = pow(10.,ichiph*chiph_delta + xip_chiphmin_table[imin_table[rank] + ichipa]);
+               chiph = pow(10.,ichiph*chiph_delta +
+                   xip_chiphmin_table[imin_table[rank] + ichipa]);
 
                /* std::cout << "rank: " << rank
                          << " " << chipa
@@ -589,6 +590,16 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 
                // Update local buffer value
                buffer[ichipa*chiph_xip_dim + ichiph] = std::min(1.,numerator / denominator);
+
+               // If == 1, end of the loop
+               if (buffer[ichipa*chiph_xip_dim + ichiph] == 1)
+               {
+                   for (int i = ichiph+1 ; i < chiph_xip_dim ; i ++)
+                   {
+                       buffer[ichipa*chiph_xip_dim + i] = 1.;
+                   }
+                   ichiph = chiph_xip_dim;
+               }
 
                // display percentage
                if (100.*(ichipa*chiph_xip_dim+ichiph)
