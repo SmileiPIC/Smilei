@@ -928,18 +928,24 @@ void RadiationTables::output_xip_table()
 
 // -----------------------------------------------------------------------------
 //! Output the computed tables so that thay can be read at the next run.
+//! Table output by the master MPI rank
+//! \param smpi Object of class SmileiMPI containing MPI properties
 // -----------------------------------------------------------------------------
-void RadiationTables::output_tables()
+void RadiationTables::output_tables(SmileiMPI *smpi)
 {
-    // If tables have been computed, they are output on the disk
-    // to be used for the next run
-    if (integfochi_computed)
+    // Sequential output
+    if (smpi->isMaster())
     {
-        RadiationTables::output_integfochi_table();
-    }
-    if (xip_computed)
-    {
-        RadiationTables::output_xip_table();
+        // If tables have been computed, they are output on the disk
+        // to be used for the next run
+        if (integfochi_computed)
+        {
+            RadiationTables::output_integfochi_table();
+        }
+        if (xip_computed)
+        {
+            RadiationTables::output_xip_table();
+        }
     }
 }
 

@@ -108,7 +108,7 @@ int main (int argc, char* argv[])
         // ---------------------------------------------------------------------
         RadiationTables.initParams(params);
         RadiationTables.compute_tables(params,smpi);
-        RadiationTables.output_tables();
+        RadiationTables.output_tables(smpi);
 
         // time at integer time-steps (primal grid)
         time_prim = checkpoint.this_run_start_step * params.timestep;
@@ -137,7 +137,7 @@ int main (int argc, char* argv[])
         // ---------------------------------------------------------------------
         RadiationTables.initParams(params);
         RadiationTables.compute_tables(params,smpi);
-        RadiationTables.output_tables();
+        RadiationTables.output_tables(smpi);
 
         // Apply antennas
         // --------------

@@ -20,10 +20,12 @@
 #include "Params.h"
 #include "H5.h"
 
-//----------------------------------------------------------------------------------------------------------------------
-//! RadiationTables class: holds parameters, tables and functions to compute cross-sections,
-//! optical depths and other useful parameters for the Compton Monte-Carlo pusher.
-//----------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//! RadiationTables class: holds parameters, tables and functions to compute
+//! cross-sections,
+//! optical depths and other useful parameters for the Compton Monte-Carlo
+//! pusher.
+//------------------------------------------------------------------------------
 class RadiationTables
 {
 
@@ -35,7 +37,8 @@ class RadiationTables
         //! Destructor for RadiationTables
         ~RadiationTables();
 
-        //! Initialization of the parmeters for the nonlinear inverse Compton scattering
+        //! Initialization of the parmeters for the nonlinear
+        //! inverse Compton scattering
         void initParams(Params& params);
 
         // ---------------------------------------------------------------------
@@ -64,13 +67,10 @@ class RadiationTables
         //! \param chipa particle quantum parameter
         double compute_chiph_emission(double chipa);
 
-        // ---------------------------------------------------------------------
         //! Computation of the continuous quantum radiated energy during dt
         //! from the quantum parameter chipa using the Ridgers formulae
-        //
         //! \param chipa particle quantum parameter
         //! \param dt time step
-        // ---------------------------------------------------------------------
         //#pragma omp declare simd
         double inline compute_cont_rad_energy_Ridgers(double chipa, double dt)
         {
@@ -83,12 +83,9 @@ class RadiationTables
             return chipa_disc_min_threshold;
         }
 
-        // ---------------------------------------------------------------------
         //! Computation of the function g of Erber using the Ridgers
         //! approximation formulae
-        //
         //! \param chipa particle quantum parameter
-        // ---------------------------------------------------------------------
         //#pragma omp declare simd
         double inline compute_g_Ridgers(double chipa)
         {
@@ -122,42 +119,32 @@ class RadiationTables
 
         //! Output all computed tables so that they can be
         //! read at the next run
-        void output_tables();
+        //! Table output by the master MPI rank
+        //! \param smpi Object of class SmileiMPI containing MPI properties
+        void output_tables(SmileiMPI *smpi);
 
         // ---------------------------------------------------------------------
         // TABLE READING
         // ---------------------------------------------------------------------
 
-        // ---------------------------------------------------------------------
         //! Read the external table integfochi
-        //
         //! \param smpi Object of class SmileiMPI containing MPI properties
-        // ---------------------------------------------------------------------
         bool read_integfochi_table(SmileiMPI *smpi);
 
-        // -----------------------------------------------------------------------------
         //! Read the external table xip_chiphmin and xip
-        //
         //! \param smpi Object of class SmileiMPI containing MPI properties
-        // -----------------------------------------------------------------------------
         bool read_xip_table(SmileiMPI *smpi);
 
         // ---------------------------------------------------------------------
         // TABLE COMMUNICATIONS
         // ---------------------------------------------------------------------
 
-        // ---------------------------------------------------------------------
         //! Bcast of the external table integfochi
-        //
         //! \param smpi Object of class SmileiMPI containing MPI properties
-        // ---------------------------------------------------------------------
         void bcast_integfochi_table(SmileiMPI *smpi);
 
-        // -----------------------------------------------------------------------------
         //! Bcast of the external table xip_chiphmin and xip
-        //
         //! \param smpi Object of class SmileiMPI containing MPI properties
-        // -----------------------------------------------------------------------------
         void bcast_xip_table(SmileiMPI *smpi);
 
     private:
