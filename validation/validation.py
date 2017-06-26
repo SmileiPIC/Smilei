@@ -614,7 +614,7 @@ for BENCH in SMILEI_BENCH_LIST :
                  "tst1d_9_rad_counter_prop.py"]:
 		try :
 			# Copy the database
-			check_call(['cp '+SMILEI_DATABASE+'/*.bin '+WORKDIR], shell=True)
+			check_call(['cp '+SMILEI_DATABASE+'/*.h5 '+WORKDIR], shell=True)
 		except CalledProcessError,e:
 			if VERBOSE :
 				print  "Execution failed for copy databases in ",DATABASE
