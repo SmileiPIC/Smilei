@@ -154,6 +154,14 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
         timers.syncField.restart();
         SyncVectorPatch::finalizeexchangeB( (*this) );
         timers.syncField.update(  params.printNow( itime ) );
+
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+            // Applies boundary conditions on B
+            (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
+            // Computes B at time n using B and B_m.
+            (*this)(ipatch)->EMfields->centerMagneticFields();
+        }
     }
 
 } // END dynamics
@@ -241,10 +249,6 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         // Computes Bx_, By_, Bz_ at time n+1 on interior points.
         //for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*(*this)(ipatch)->EMfields->MaxwellFaradaySolver_)((*this)(ipatch)->EMfields);
-        // Applies boundary conditions on B
-        (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
-        // Computes B at time n using B and B_m.
-        (*this)(ipatch)->EMfields->centerMagneticFields();
     }
     
     //Synchronize B fields between patches.
