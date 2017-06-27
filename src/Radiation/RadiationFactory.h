@@ -12,6 +12,7 @@
 #include "Radiation.h"
 #include "RadiationNlicsMC.h"
 #include "RadiationNlicsCont.h"
+#include "RadiationLL.h"
 
 #include "Params.h"
 #include "Species.h"
@@ -38,14 +39,21 @@ public:
         {
             Radiate = new RadiationNlicsMC( params, species );
         }
-        // Monte-Carlo nonlinear inverse Compton scattering
+        // Classical continuous radiation loss model from Landau-Lifshitz
+        else if ( species->radiation_type == "Landau-Lifshitz" )
+        {
+            Radiate = new RadiationLL( params, species );
+        }
+        // Corrected continuous radiation loss model
         else if ( species->radiation_type == "continuous" )
         {
             Radiate = new RadiationNlicsCont( params, species );
         }
         else if ( species->radiation_type != "none" )
         {
-            ERROR( "For species " << species->species_type << ": unknown radiation_type `" << species->radiation_type << "`");
+            ERROR( "For species " << species->species_type
+                                  << ": unknown radiation_type `"
+                                  << species->radiation_type << "`");
         }
 
         return Radiate;

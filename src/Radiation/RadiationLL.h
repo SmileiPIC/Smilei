@@ -1,38 +1,43 @@
 // ----------------------------------------------------------------------------
-//! \file RadiationNlicsCont.h
+//! \file RadiationLL.h
 //
-//! \brief This class is for the continuous radiation loss.
-//!        This model includes a quantum correction.
+//! \brief This class is for the classical continuous radiation loss with
+//!        the Landau-Lifshitz model.
+//!        This model does not include a quantum correction.
 //
-//! \details This header contains the definition of the class RadiationNlicsCont.
-//! The implementation is adapted from the thesis results of M. Lobet
-//! See http://www.theses.fr/2015BORD0361
+//! \details This header contains the definition of the class RadiationLL.
+//! L. D. Landau and E. M. Lifshitz, The classical theory of fields, 1947
+//! F. Niel et al., 2017
 // ----------------------------------------------------------------------------
 
-#ifndef RADIATIONNLICSCONT_H
-#define RADIATIONNLICSCONT_H
+#ifndef RADIATIONLL_H
+#define RADIATIONLL_H
 
 #include "RadiationTables.h"
 #include "Radiation.h"
 #include "userFunctions.h"
 
+#include <cstring>
+#include <fstream>
+#include <cmath>
+
 //------------------------------------------------------------------------------
-//! RadiationNlicsCont class: holds parameters and functions to apply the
-//! continuous radiation loss on particles.
+//! RadiationLL class: holds parameters and functions to apply the
+//! Landau-Lifshitz continuous radiation loss on Particles.
 //------------------------------------------------------------------------------
-class RadiationNlicsCont : public Radiation {
+class RadiationLL : public Radiation {
 
     public:
 
-        //! Constructor for RadiationNlicsCont
-        RadiationNlicsCont(Params& params, Species * species);
+        //! Constructor for RadiationLL
+        RadiationLL(Params& params, Species * species);
 
-        //! Destructor for RadiationNlicsCont
-        ~RadiationNlicsCont();
+        //! Destructor for RadiationLL
+        ~RadiationLL();
 
         // ---------------------------------------------------------------------
-        //! Overloading of () operator: perform the discontinuous radiation
-        //! reaction induced by the nonlinear inverse Compton scattering
+        //! Overloading of () operator: perform the Landau-Lifshitz
+        //! radiation loops.
         //! \param particles   particle object containing the particle
         //!                    properties
         //! \param smpi        MPI properties
@@ -54,8 +59,6 @@ class RadiationNlicsCont : public Radiation {
         // ________________________________________
         // General parameters
 
-        //! Under this value, no radiation loss
-        const double chipa_cont_threshold = 1e-5;
 
     private:
 

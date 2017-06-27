@@ -244,7 +244,7 @@ void RadiationNlicsMC::operator() (Particles &particles,
 
                 // Radiated energy during emission_time
                 cont_rad_energy =
-                RadiationTables.compute_cont_rad_energy_Ridgers(chipa,
+                RadiationTables.get_corrected_cont_rad_energy_Ridgers(chipa,
                                                              emission_time);
 
                 // Incrementation of the radiated energy cumulative parameter

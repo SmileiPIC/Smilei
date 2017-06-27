@@ -1,40 +1,37 @@
 // ----------------------------------------------------------------------------
-//! \file RadiationNlicsCont.cpp
+//! \file RadiationLL.cpp
 //
-//! \brief This class is for the continuous radiation loss.
-//!        This model includes a quantum correction.
+//! \brief This class is for the classical continuous radiation loss with
+//!        the Landau-Lifshitz model.
+//!        This model does not include a quantum correction.
 //
-//! The implementation is adapted from the thesis results of M. Lobet
-//! See http://www.theses.fr/2015BORD0361
+//! References:
+//! L. D. Landau and E. M. Lifshitz, The classical theory of fields, 1947
+//! F. Niel et al., 2017
 //
 // ----------------------------------------------------------------------------
 
-#include "RadiationNlicsCont.h"
+#include "RadiationLL.h"
 
-#include <cstring>
-#include <fstream>
-
-#include <cmath>
-
-// ---------------------------------------------------------------------------------------------------------------------
-//! Constructor for RadiationNlicsCont
+// -----------------------------------------------------------------------------
+//! Constructor for RadiationNLL
 //! Inherited from Radiation
-// ---------------------------------------------------------------------------------------------------------------------
-RadiationNlicsCont::RadiationNlicsCont(Params& params, Species * species)
+// -----------------------------------------------------------------------------
+RadiationLL::RadiationLL(Params& params, Species * species)
       : Radiation(params, species)
 {
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
-//! Destructor for RadiationNlicsCont
-// ---------------------------------------------------------------------------------------------------------------------
-RadiationNlicsCont::~RadiationNlicsCont()
+// -----------------------------------------------------------------------------
+//! Destructor for RadiationLL
+// -----------------------------------------------------------------------------
+RadiationLL::~RadiationLL()
 {
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
-//! Overloading of the operator (): perform the Discontinuous radiation reaction
-//! induced by the nonlinear inverse Compton scattering
+// -----------------------------------------------------------------------------
+//! Overloading of the operator (): perform the Landau-Lifshitz classical
+//! radiation reaction
 //
 //! \param particles   particle object containing the particle properties
 //! \param smpi        MPI properties
@@ -43,8 +40,8 @@ RadiationNlicsCont::~RadiationNlicsCont()
 //! \param istart      Index of the first particle
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
-// ---------------------------------------------------------------------------------------------------------------------
-void RadiationNlicsCont::operator() (Particles &particles,
+// -----------------------------------------------------------------------------
+void RadiationLL::operator() (Particles &particles,
         SmileiMPI* smpi,
         RadiationTables &RadiationTables,
         int istart,
@@ -69,6 +66,7 @@ void RadiationNlicsCont::operator() (Particles &particles,
 
     // Temporary double parameter
     double temp;
+    double temp2;
 
     // Momentum shortcut
     double* momentum[3];
@@ -109,20 +107,14 @@ void RadiationNlicsCont::operator() (Particles &particles,
                      (*Epart)[ipart].x,(*Epart)[ipart].y,(*Epart)[ipart].z,
                      (*Bpart)[ipart].x,(*Bpart)[ipart].y,(*Bpart)[ipart].z);
 
-        // Update the quantum parameter in species
-        // chi[ipart] = chipa;
-
         // Radiated energy during the time step
-        rad_norm_energy[ipart - istart] =
-        RadiationTables.get_corrected_cont_rad_energy_Ridgers(chipa,dt);
-
-        /*std::cerr << "rad_norm_energy: " << rad_norm_energy << " "
-                  << "gamma: " << gamma << " "
-                  << std::endl;*/
+        temp2 =
+        RadiationTables.get_classical_cont_rad_energy(chipa,dt);
 
         // Effect on the momentum
         // Temporary factor
-        temp = rad_norm_energy[ipart - istart]/gamma;
+        temp = temp2*gamma/(gamma*gamma-1.);
+
         // Update of the momentum
         momentum[0][ipart] -= temp*momentum[0][ipart];
         momentum[1][ipart] -= temp*momentum[1][ipart];

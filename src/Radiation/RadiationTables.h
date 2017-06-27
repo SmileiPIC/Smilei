@@ -67,14 +67,24 @@ class RadiationTables
         //! \param chipa particle quantum parameter
         double compute_chiph_emission(double chipa);
 
-        //! Computation of the continuous quantum radiated energy during dt
-        //! from the quantum parameter chipa using the Ridgers formulae
+        //! Computation of the corrected continuous quantum radiated energy
+        //! during dt from the quantum parameter chipa using the Ridgers
+        //! formulae.
         //! \param chipa particle quantum parameter
         //! \param dt time step
         //#pragma omp declare simd
-        double inline compute_cont_rad_energy_Ridgers(double chipa, double dt)
+        double inline get_corrected_cont_rad_energy_Ridgers(double chipa,
+                                                            double dt)
         {
             return compute_g_Ridgers(chipa)*dt*chipa*chipa*factor_cla_rad_power;
+        };
+
+        //! Get of the classical continuous radiated energy during dt
+        //! \param chipa particle quantum parameter
+        //! \param dt time step
+        double inline get_classical_cont_rad_energy(double chipa, double dt)
+        {
+            return dt*chipa*chipa*factor_cla_rad_power;
         };
 
         //! Return the get_chipa_disc_min_threshold value
