@@ -350,7 +350,10 @@ class PartWall(SmileiComponent):
 
 # Radiation loss (continuous and MC algorithms)
 class RadiationLoss(SmileiComponent):
-    """Radiation loss (continuous and MC algorithms)"""
+    """
+    Synchrotron-like radiation loss 
+    (classical continuous, quantum correction, stochastics and MC algorithms)
+    """
     # First table parameters
     chipa_integfochi_min = 1e-5
     chipa_integfochi_max = 1e2

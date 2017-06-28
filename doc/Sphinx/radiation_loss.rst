@@ -32,25 +32,38 @@ Physical model
 ^^^^^^^^^^^^^^
 
 The quantum Lorentz invariant parameter :math:`\chi_\pm` is an indicator of
-how strong are radiation losses.
+the radiation  regime,
 
 .. math::
   :label: particleQuantumParameter
 
-  \chi_{\pm} = \frac{\gamma_{\pm}}{E_s} \left| \left( \beta \cdot \mathbf{E} \right)^2 - \left( \mathbf{E} + \mathbf{v} \times \mathbf{B} \right)^2 \right|^{1/2}
+  \chi_{\pm} = \frac{\gamma_{\pm}}{E_s} \left| \left( \beta \cdot \mathbf{E}
+  \right)^2 - \left( \mathbf{E} + \mathbf{v} \times \mathbf{B} \right)^2
+  \right|^{1/2}
 
-Continuous schemes
-^^^^^^^^^^^^^^^^^^^^^
+where :math:`E_s = 4 \pi \alpha \varepsilon_0 m^2 c^4 / e^3` is the Schwinger field.
 
-Landau-Lifshitz
-"""""""""""""""
+Continuous classical schemes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Corrected radiated power
-""""""""""""""""""""""""
+Approximated Landau-Lifshitz classical model
+""""""""""""""""""""""""""""""""""""""""""""
 
-Monte-Carlo scheme
-^^^^^^^^^^^^^^^^^^
+Corrected classical model
+"""""""""""""""""""""""""
+
+Stochastic semi-classical or quantum schemes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Fokker-Planck model
+""""""""""""""""""
+
+Monte-Carlo quantum model
+"""""""""""""""""""""""""
 
 
 Benchmarks
 ^^^^^^^^^^
+
+Performances
+^^^^^^^^^^^^

@@ -13,6 +13,7 @@
 #include "RadiationNlicsMC.h"
 #include "RadiationNlicsCont.h"
 #include "RadiationLL.h"
+#include "RadiationNiel.h"
 
 #include "Params.h"
 #include "Species.h"
@@ -39,15 +40,20 @@ public:
         {
             Radiate = new RadiationNlicsMC( params, species );
         }
-        // Classical continuous radiation loss model from Landau-Lifshitz
-        else if ( species->radiation_type == "Landau-Lifshitz" )
+        // Corrected LL + stochastic diffusive operator
+        else if ( species->radiation_type == "Niel")
         {
-            Radiate = new RadiationLL( params, species );
+            Radiate = new RadiationNiel( params, species );
         }
         // Corrected continuous radiation loss model
         else if ( species->radiation_type == "continuous" )
         {
             Radiate = new RadiationNlicsCont( params, species );
+        }
+        // Classical continuous radiation loss model from Landau-Lifshitz (LL)
+        else if ( species->radiation_type == "Landau-Lifshitz" )
+        {
+            Radiate = new RadiationLL( params, species );
         }
         else if ( species->radiation_type != "none" )
         {
