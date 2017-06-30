@@ -48,7 +48,8 @@ class TrackParticles(Diagnostic):
 				self._orderFiles(disorderedfiles, orderedfile)
 			# Create arrays to store h5 items
 			f = self._h5py.File(orderedfile)
-			for prop in ["Id", "x", "y", "z", "px", "py", "pz", "chi"]:
+
+			for prop in ["Id", "x", "y", "z", "px", "py", "pz", "q", "w", "chi"]:
 				if prop in f:
 					self._h5items[prop] = f[prop]
 			# Memorize the locations of timesteps in the files
@@ -99,15 +100,6 @@ class TrackParticles(Diagnostic):
 		# If the selection is a string (containing an operation)
 		if sort:
 			if type(select) is str:
-				# Define a function that gets some requested data
-				def getData(property, time, buffer=None):
-					it = self._locationForTime[time]
-					dataset = self._h5items[property]
-					if buffer is None:
-						buffer = dataset[it,:]
-					else:
-						dataset.read_direct(buffer, source_sel=self._np.s_[it,:])
-					return buffer
 				# Define a function that finds the next closing character in a string
 				def findClosingCharacter(string, character, start=0):
 					i = start
@@ -125,55 +117,99 @@ class TrackParticles(Diagnostic):
 							del stack[-1]
 						i+=1
 					raise Exception("Error in selector syntax: missing `"+character+"`")
-				# Start reading the selector
-				print("Selecting particles ... (this may take a while)")
+				# Parse the selector
 				i = 0
-				stack = []
 				operation = ""
+				seltype = []
+				selstr = []
+				timeSelector = []
+				particleSelector = []
+				doubleProps = []
+				int16Props = []
 				while i < len(select):
 					if i+4<len(select) and select[i:i+4] in ["any(","all("]:
-						seltype = select[i:i+4]
-						if seltype == "any(": function = self._np.logical_or
-						if seltype == "all(": function = self._np.logical_and
+						seltype += [select[i:i+4]]
+						if seltype[-1] not in ["any(","all("]:
+							raise Exception("Error in selector syntax: unknown argument "+seltype[-1][:-1])
 						comma = findClosingCharacter(select, ",", i+4)
 						parenthesis = findClosingCharacter(select, ")", comma+1)
-						timeSelector = select[i+4:comma]
+						timeSelector += [select[i+4:comma]]
+						selstr += [select[i:parenthesis]]
 						try:
-							s = self._re.sub(r"\bt\b","self._times",timeSelector)
-							times = self._times[eval(s)]
+							timeSelector[-1] = "self._times["+self._re.sub(r"\bt\b","self._times",timeSelector[-1])+"]"
+							eval(timeSelector[-1])
 						except:
 							raise Exception("Error in selector syntax: time selector not understood in "+select[i:i+3]+"()")
 						try:
-							particleSelector = select[comma+1:parenthesis]
+							particleSelector += [select[comma+1:parenthesis]]
+							doubleProps += [[]]
+							int16Props += [[]]
 							for prop in self._h5items.keys():
-								particleSelector = self._re.sub(r"\b"+prop+r"\b", "getData('"+prop+"',time)", particleSelector)
+								(particleSelector[-1], nsubs) = self._re.subn(r"\b"+prop+r"\b", "properties['"+prop+"'][:actual_chunksize]", particleSelector[-1])
+								if nsubs > 0:
+									if   prop == "q" : int16Props [-1] += [prop]
+									else             : doubleProps[-1] += [prop]
 						except:
 							raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
-						if seltype == "any(": selection = self._np.zeros((self.nParticles,), dtype=bool)
-						if seltype == "all(": selection = self._np.ones ((self.nParticles,), dtype=bool)
-						#try:
-						ID = self._np.zeros((self.nParticles,), dtype=self._np.int32)
-						selstr  = select[i:parenthesis]
-						for time in times:
-							print("   Selecting block `"+selstr+")`, at time "+str(time))
-							selectionAtTimeT = eval(particleSelector) # array of True or False
-							selectionAtTimeT[self._np.isnan(selectionAtTimeT)] = False
-							getData("Id", time, ID)
-							loc = self._np.flatnonzero(ID>0) # indices of existing particles
-							selection[loc] = function( selection[loc], selectionAtTimeT[loc])
-						#except:
-						#	raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
-						stack.append(selection)
-						operation += "stack["+str(len(stack)-1)+"]"
+						operation += "stack["+str(len(seltype)-1)+"]"
 						i = parenthesis+1
 					else:
 						operation += select[i]
 						i+=1
+				nOperations = len(seltype)
+				# Execute the selector
+				print("Selecting particles ... (this may take a while)")
 				if len(operation)==0.:
-					self.selectedParticles = self._np.arange(self.nParticles,dtype=self._np.uint64)
+					self.selectedParticles = self._np.s_[:]
 				else:
-					self.selectedParticles = eval(operation).nonzero()[0]
-				self.selectedParticles.sort()
+
+					# Setup the chunks of particles (if too many particles)
+					chunksize = min(20000000, self.nParticles)
+					nchunks = int(self.nParticles / chunksize)
+					chunksize = int(self.nParticles / nchunks)
+					self.selectedParticles = self._np.array([], dtype=self._np.uint64)
+					# Allocate buffers
+					properties = {}
+					for k in range(nOperations):
+						for prop in int16Props[k]:
+							if prop not in properties:
+								properties[prop] = self._np.empty((chunksize,), dtype=self._np.int16)
+						for prop in doubleProps[k]:
+							if prop not in properties:
+								properties[prop] = self._np.empty((chunksize,), dtype=self._np.double)
+					properties["Id"] = self._np.empty((chunksize,), dtype=self._np.uint64)
+					selection = self._np.empty((chunksize,), dtype=bool)
+					# Loop on chunks
+					chunkstop = 0
+					for ichunk in range(nchunks):
+						chunkstart = chunkstop
+						chunkstop  = min(chunkstart + chunksize, self.nParticles)
+						actual_chunksize = chunkstop - chunkstart
+						# Execute each of the selector items
+						stack = []
+						for k in range(nOperations):
+							if   seltype[k] == "any(": selection.fill(False)
+							elif seltype[k] == "all(": selection.fill(True )
+							requiredProps = doubleProps[k] + int16Props[k] + ["Id"]
+							# Loop times
+							times = eval(timeSelector[k])
+							for time in times:
+								print("   Selecting block `"+selstr[k]+")`, at time "+str(time))
+								# Extract required properties
+								it = self._locationForTime[time]
+								for prop in requiredProps:
+									self._h5items[prop].read_direct(properties[prop], source_sel=self._np.s_[it,chunkstart:chunkstop], dest_sel=self._np.s_[:actual_chunksize])
+								# Calculate the selector
+								selectionAtTimeT = eval(particleSelector[k]) # array of True or False
+								selectionAtTimeT[self._np.isnan(selectionAtTimeT)] = False
+								loc = self._np.flatnonzero(properties["Id"][:actual_chunksize]>0) # indices of existing particles
+								# Combine wth selection of previous times
+								if   seltype[k] == "any(": selection[loc] += selectionAtTimeT[loc]
+								elif seltype[k] == "all(": selection[loc] *= selectionAtTimeT[loc]
+							stack.append(selection)
+						# Merge all stack items according to the operations
+						self.selectedParticles = self._np.union1d( self.selectedParticles, eval(operation).nonzero()[0] )
+					self.selectedParticles.sort()
 
 			# Otherwise, the selection can be a list of particle IDs
 			else:
@@ -186,7 +222,7 @@ class TrackParticles(Diagnostic):
 					return
 
 			# Remove particles that are not actually tracked during the requested timesteps
-			if len(self.selectedParticles) > 0:
+			if type(self.selectedParticles) is not slice and len(self.selectedParticles) > 0:
 				first_time = self._locationForTime[self.times[ 0]]
 				last_time  = self._locationForTime[self.times[-1]]+1
 				IDs = self._h5items["Id"][first_time:last_time,self.selectedParticles]
@@ -194,7 +230,10 @@ class TrackParticles(Diagnostic):
 				self.selectedParticles = self._np.delete( self.selectedParticles, dead_particles )
 
 			# Calculate the number of selected particles
-			self.nselectedParticles = len(self.selectedParticles)
+			if type(self.selectedParticles) is slice:
+				self.nselectedParticles = self.nParticles
+			else:
+				self.nselectedParticles = len(self.selectedParticles)
 			if self.nselectedParticles == 0:
 				self._error = "No particles found"
 				return
@@ -215,20 +254,23 @@ class TrackParticles(Diagnostic):
 					return
 		# otherwise use default
 		else:
-			self.axes = ["x","y","z"][:self._ndim] + ["px", "py", "pz"]
+			self.axes = ["x","y","z"][:self._ndim] + ["px", "py", "pz", "w", "q"]
 		# Then figure out axis units
 		self._type = self.axes
 		for axis in self.axes:
 			axisunits = ""
 			if axis == "Id":
 				self._centers.append( [0, self._h5items[axis][0,-1]] )
-			if axis in ["x" , "y" , "z" ]:
+			elif axis in ["x" , "y" , "z" ]:
 				axisunits = "L_r"
 				self._centers.append( [0., self.namelist.Main.sim_length[{"x":0,"y":1,"z":2}[axis]]] )
-			if axis in ["px", "py", "pz"]:
+			elif axis in ["px", "py", "pz"]:
 				axisunits = "P_r"
 				self._centers.append( [-1., 1.] )
-			if axis == "Charge":
+			elif axis == "w":
+				axisunits = "N_r"
+				self._centers.append( [0., 1.] )
+			elif axis == "q":
 				axisunits = "Q_r"
 				self._centers.append( [-10., 10.] )
 			if axis == "chi":
@@ -257,8 +299,8 @@ class TrackParticles(Diagnostic):
 		info = "Track particles: species '"+self.species+"'"
 		if self._sort:
 			info += " containing "+str(self.nParticles)+" particles"
-			if len(self.selectedParticles) != self.nParticles:
-				info += "\n                with selection of "+str(len(self.selectedParticles))+" particles"
+			if self.nselectedParticles != self.nParticles:
+				info += "\n                with selection of "+str(self.nselectedParticles)+" particles"
 		return info
 
 	# get all available tracked species
@@ -311,11 +353,15 @@ class TrackParticles(Diagnostic):
 			# Make new (ordered) file
 			f0 = self._h5py.File(fileOrdered, "w")
 			# Make new datasets
+
 			properties = {"id":"Id", "position/x":"x", "position/y":"y",
-                          "position/z":"z",
-			              "momentum/x":"px", "momentum/y":"py",
-                          "momentum/z":"pz",
-                          "chi":"chi"}
+						"position/z":"z",
+						"momentum/x":"px", "momentum/y":"py",
+						"momentum/z":"pz",
+						"charge":"q",
+						"weight":"w",
+						"chi":"chi"}
+
 			for k, name in properties.items():
 				try   : f0.create_dataset(name, (len(times), total_number_of_particles), f["data"][tname]["particles"][self.species][k].dtype, fillvalue=(0 if name=="Id" else self._np.nan))
 				except: pass
@@ -338,7 +384,7 @@ class TrackParticles(Diagnostic):
 					for k, name in properties.items():
 						if k not in group: continue
 						disordered = group[k].value
-						ordered = self._np.zeros((total_number_of_particles, ), dtype=disordered.dtype)
+						ordered = self._np.empty((total_number_of_particles, ), dtype=disordered.dtype)
 						ordered[locs] = disordered
 						f0[name].write_direct(ordered, dest_sel=self._np.s_[it,:])
 
@@ -347,8 +393,9 @@ class TrackParticles(Diagnostic):
 					import math
 					nchunks = int(float(nparticles)/(chunksize+1) + 1)
 					chunksize = int(math.ceil(float(nparticles)/nchunks))
-					ID   = self._np.empty((chunksize,), dtype=self._np.uint64)
-					data = self._np.empty((chunksize,))
+					ID = self._np.empty((chunksize,), dtype=self._np.uint64)
+					data_double = self._np.empty((chunksize,))
+					data_int16  = self._np.empty((chunksize,), dtype=self._np.int16)
 					# Loop chunks
 					for ichunk in range(nchunks):
 						first = ichunk * chunksize
@@ -364,6 +411,8 @@ class TrackParticles(Diagnostic):
 						for k, name in properties.items():
 							if k not in group: continue
 							# Get the data for this chunk and sort by ID
+							if k == "charge": data = data_int16
+							else:             data = data_double
 							group[k].read_direct( data, source_sel=self._np.s_[first:last], dest_sel=self._np.s_[:npart] )
 							data[:npart] = data[sort]
 							# Loop by batch inside this chunk and store at the right place
@@ -390,24 +439,32 @@ class TrackParticles(Diagnostic):
 		print("Ordering succeeded")
 
 	# Method to generate the raw data (only done once)
-	def _generateRawData(self):
+	def _generateRawData(self, times=None):
 		if not self._validate(): return
 		self._prepare1() # prepare the vfactor
 
-		if self._rawData is None:
-			self._rawData = {}
+		if self._sort:
+			if self._rawData is None:
+				self._rawData = {}
 
-			if self._sort:
 				print("Preparing data ...")
 				# create dictionary with info on the axes
 				ntimes = len(self.times)
 				for axis in self.axes:
-					self._rawData[axis] = self._np.zeros((ntimes, self.nselectedParticles), dtype=(self._np.uint64 if axis=="Id" else self._np.float64))
-					self._rawData[axis].fill((0 if axis=="Id" else self._np.nan))
+					if axis == "Id":
+						self._rawData[axis] = self._np.empty((ntimes, self.nselectedParticles), dtype=(self._np.uint64))
+						self._rawData[axis].fill(0)
+					elif axis == "q":
+						self._rawData[axis] = self._np.empty((ntimes, self.nselectedParticles), dtype=(self._np.int16 ))
+						self._rawData[axis].fill(0)
+					else:
+						self._rawData[axis] = self._np.empty((ntimes, self.nselectedParticles), dtype=(self._np.double))
+						self._rawData[axis].fill(self._np.nan)
 				print("Loading data ...")
 				# loop times and fill up the data
 				ID = self._np.zeros((self.nselectedParticles,), dtype=self._np.uint64)
-				B  = self._np.zeros((self.nselectedParticles,), dtype=self._np.double)
+				data_double = self._np.zeros((self.nselectedParticles,), dtype=self._np.double)
+				data_int16  = self._np.zeros((self.nselectedParticles,), dtype=self._np.int16 )
 				for it, time in enumerate(self.times):
 					if self.verbose: print("     iteration "+str(it+1)+"/"+str(ntimes)+"  (timestep "+str(time)+")")
 					timeIndex = self._locationForTime[time]
@@ -416,10 +473,13 @@ class TrackParticles(Diagnostic):
 					for axis in self.axes:
 						if axis == "Id":
 							self._rawData[axis][it, :] = ID.squeeze()
+						elif axis == "q":
+							self._h5items[axis].read_direct(data_int16, source_sel=self._np.s_[timeIndex,self.selectedParticles])
+							self._rawData[axis][it, :] = data_int16.squeeze()
 						else:
-							self._h5items[axis].read_direct(B, source_sel=self._np.s_[timeIndex,self.selectedParticles])
-							B[deadParticles]=self._np.nan
-							self._rawData[axis][it, :] = B.squeeze()
+							self._h5items[axis].read_direct(data_double, source_sel=self._np.s_[timeIndex,self.selectedParticles])
+							data_double[deadParticles]=self._np.nan
+							self._rawData[axis][it, :] = data_double.squeeze()
 				print("Process broken lines ...")
 				# Add the lineBreaks array which indicates where lines are broken (e.g. loop around the box)
 				self._rawData['brokenLine'] = self._np.zeros((self.nselectedParticles,), dtype=bool)
@@ -443,21 +503,24 @@ class TrackParticles(Diagnostic):
 				# Add the times array
 				self._rawData["times"] = self.times
 
+				print("... done")
+
 			# If not sorted, get different kind of data
 			else:
 				print("Loading data ...")
 				properties = {"Id":"id", "x":"position/x", "y":"position/y",
                               "z":"position/z",
 				              "px":"momentum/x", "py":"momentum/y",
-                              "pz":"momentum/z","chi":"chi"}
+                              "pz":"momentum/z",
+			                  "q":"charge",
+                              "w":"weight",
+                              "chi":"chi"}
 				for time in self.times:
 					[f, timeIndex] = self._locationForTime[time]
 					group = f["data/"+"%010i"%time+"/particles/"+self.species]
 					self._rawData[time] = {}
 					for axis in self.axes:
 						self._rawData[time][axis] = group[properties[axis]].value
-
-			print("... done")
 
 	# We override the get and getData methods
 	def getData(self, timestep=None):
@@ -473,7 +536,11 @@ class TrackParticles(Diagnostic):
 			times = [timestep]
 			indexOfRequestedTime = self._np.where(self.times==timestep)
 
-		self._generateRawData()
+		if len(times)==1 and not self._sort:
+			self._generateRawData(times)
+		else:
+			self._generateRawData()
+
 
 		data = {}
 		data.update({ "times":times })
@@ -481,20 +548,19 @@ class TrackParticles(Diagnostic):
 		if self._sort:
 			for axis in self.axes:
 				if timestep is None:
-					data[axis] = self._rawData[axis]*self._vfactor
+					data[axis] = self._rawData[axis]
 				else:
-					data[axis] = self._rawData[axis][indexOfRequestedTime, :]*self._vfactor
-				if axis == "Id":
-					data[axis] = data[axis].astype(self._np.uint64)
+
+					data[axis] = self._rawData[axis][indexOfRequestedTime, :]
+				if axis not in ["Id", "q"]: data[axis] *= self._vfactor
 
 		else:
 			for time in times:
 				data[time] = {}
 				for axis in self.axes:
-					data[time][axis] = self._rawData[time][axis]*self._vfactor
-					if axis == "Id":
-						data[time][axis] = data[time][axis].astype(self._np.uint64)
 
+					data[time][axis] = self._rawData[time][axis]
+					if axis not in ["Id", "q"]: data[time][axis] *= self._vfactor
 
 		return data
 
@@ -511,37 +577,42 @@ class TrackParticles(Diagnostic):
 			return
 
 		properties = {"Id":"id", "x":"position/x", "y":"position/y",
-                      "z":"position/z",
-		              "px":"momentum/x", "py":"momentum/y",
-                      "pz":"momentum/z", "chi":"chi"}
+						"z":"position/z",
+						"px":"momentum/x", "py":"momentum/y",
+						"pz":"momentum/z",
+						"q":"charge",
+						"w":"weight",
+						"chi":"chi"}
 
 		disorderedfiles = self._findDisorderedFiles()
 		for file in disorderedfiles:
 			f = self._h5py.File(file)
-			for t in f["data"].keys():
-				if timestep == int(t):
-					# This is the timestep for which we want to produce an iterator
-					group = f["data/"+t+"/particles/"+self.species]
-					npart = group["id"].size
-					ID = self._np.zeros((chunksize,), dtype=self._np.uint64)
-					B  = self._np.zeros((chunksize,))
-					for chunkstart in range(0, npart, chunksize):
-						chunkend = chunkstart + chunksize
-						if chunkend > npart:
-							chunkend = npart
-							ID = self._np.zeros((chunkend-chunkstart,), dtype=self._np.uint64)
-							B  = self._np.zeros((chunkend-chunkstart,), dtype=self._np.double)
-						data = {}
-						for axis in self.axes:
-							if axis == "Id":
-								group[properties[axis]].read_direct(ID, source_sel=self._np.s_[chunkstart:chunkend])
-								data[axis] = ID
-							else:
-								group[properties[axis]].read_direct(B , source_sel=self._np.s_[chunkstart:chunkend])
-								data[axis] = B
-						yield data
-					return
-
+			# This is the timestep for which we want to produce an iterator
+			group = f["data/"+("%010d"%timestep)+"/particles/"+self.species]
+			npart = group["id"].size
+			ID          = self._np.empty((chunksize,), dtype=self._np.uint64)
+			data_double = self._np.empty((chunksize,), dtype=self._np.double)
+			data_int16  = self._np.empty((chunksize,), dtype=self._np.int16 )
+			for chunkstart in range(0, npart, chunksize):
+				chunkend = chunkstart + chunksize
+				if chunkend > npart:
+					chunkend = npart
+					ID          = self._np.empty((chunkend-chunkstart,), dtype=self._np.uint64)
+					data_double = self._np.empty((chunkend-chunkstart,), dtype=self._np.double)
+					data_int16  = self._np.empty((chunkend-chunkstart,), dtype=self._np.int16 )
+				data = {}
+				for axis in self.axes:
+					if axis == "Id":
+						group[properties[axis]].read_direct(ID, source_sel=self._np.s_[chunkstart:chunkend])
+						data[axis] = ID.copy()
+					elif axis == "q":
+						group[properties[axis]].read_direct(data_int16, source_sel=self._np.s_[chunkstart:chunkend])
+						data[axis] = data_int16.copy()
+					else:
+						group[properties[axis]].read_direct(data_double, source_sel=self._np.s_[chunkstart:chunkend])
+						data[axis] = data_double.copy()
+				yield data
+			return
 
 	# We override _prepare3
 	def _prepare3(self):

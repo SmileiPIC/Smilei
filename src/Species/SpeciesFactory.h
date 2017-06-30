@@ -24,6 +24,8 @@ public:
 
         PyTools::extract("species_type",species_type,"Species",ispec);
 
+        if (patch->isMaster()) MESSAGE(1, "Creating Species : " << species_type );
+
         unsigned int tot_species_number = PyTools::nComponents("Species");
         if(species_type.empty()) {
             std::ostringstream name("");
@@ -400,8 +402,6 @@ public:
         // this will be returned
         std::vector<Species*> retSpecies;
         retSpecies.resize(0);
-
-        if (patch->isMaster()) MESSAGE(1, "Creating Species :" );
 
         // read from python namelist
         unsigned int tot_species_number = PyTools::nComponents("Species");

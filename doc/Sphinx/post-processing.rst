@@ -222,8 +222,7 @@ Open a Track diagnostic
   * ``select``: Instructions for selecting particles among those available.
     A detailed explanation is provided below
   * ``axes``: A list of axes for plotting the trajectories.
-     | Each axis is ``"x"``, ``"y"``, ``"z"``,
-     ``"px"``, ``"py"``, ``"pz"`` or ``"chi"``.
+     | Each axis is ``"x"``, ``"y"``, ``"z"``, ``"px"``, ``"py"``, ``"pz"``, ``"chi"`` (the quantum parameter), ``"q"`` (the charge) or ``"w"`` (the statistical weight).
      | ``"chi"`` available only if the particle radiates.
      | **Example:** ``axes = ["x"]`` corresponds to :math:`x` versus time.
      | **Example:** ``axes = ["x","y"]`` correspond to 2-D trajectories.

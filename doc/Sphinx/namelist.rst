@@ -1785,7 +1785,7 @@ Time selections
 Several components (mainly diagnostics) may require a selection of timesteps to
 be chosen by the user. When one of these timesteps is reached, the diagnostics will
 output data. A time selection is given through the parameter ``every`` and is a list
-of several integers.
+of several numbers.
 
 You may chose between five different syntaxes::
 
@@ -1820,6 +1820,7 @@ For more clarity, this graph illustrates the five syntaxes for time selections:
   * The syntax ``every = period`` is also accepted.
   * Any value set to ``0`` will be replaced by the default value.
   * Special case: ``every=0`` means no output.
+  * The numbers may be non-integers (apart from ``repeat``). The closest timesteps are chosen.
 
 ----
 

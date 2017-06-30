@@ -179,7 +179,7 @@ namelist("")
     geometry = "";
     if( !PyTools::extract("geometry", geometry, "Main") )
         ERROR("Parameter Main.geometry is required");
-    if (geometry!="1d3v" && geometry!="2d3v" && geometry!="3d3v") {
+    if (geometry!="1d3v" && geometry!="2d3v" && geometry!="3d3v" && geometry!="3drz") {
         ERROR("Main.geometry `" << geometry << "` invalid");
     }
     setDimensions();
@@ -447,7 +447,7 @@ void Params::compute()
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];
         if(n_space_global[i]%number_of_patches[i] !=0) ERROR("ERROR in dimension " << i <<". Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i]);
-        if ( n_space[i] <= 2*oversize[i] ) ERROR ( "ERROR in dimension " << i <<". Patches length = "<<n_space[i] << " cells must be at least " << 2*oversize[i] +1 << " cells long. Increase number of cells or reduce number of patches in this direction. " );
+        if ( n_space[i] <= 2*oversize[i]+1 ) ERROR ( "ERROR in dimension " << i <<". Patches length = "<<n_space[i] << " cells must be at least " << 2*oversize[i] +2 << " cells long. Increase number of cells or reduce number of patches in this direction. " );
     }
 
     // compute number of cells per patch
@@ -474,7 +474,7 @@ void Params::setDimensions()
     } else if (geometry=="3d3v") {
         nDim_particle=3;
         nDim_field=3;
-    } else if (geometry=="2drz") {
+    } else if (geometry=="3drz") {
         nDim_particle=3;
         nDim_field=2;
     } else {
