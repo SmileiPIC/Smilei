@@ -71,7 +71,9 @@ public:
              // (nonlinear inverse Compton scattering)
              thisSpecies = new Species_nlics(params, patch);
         }
-        else if (radiation_model=="continuous")
+        else if (radiation_model=="Landau-Lifshitz"
+             ||  radiation_model=="corrected-Landau-Lifshitz"
+             ||  radiation_model=="Niel")
         {
             // Species with specific parameters for the continuous radiation loss
             thisSpecies = new Species_rrll(params, patch);
@@ -79,13 +81,18 @@ public:
         else
         {
             ERROR("For species `" << species_type
-                                  << " radiation_model must be 'none', 'Monte-Carlo' or 'continuous'");
+                                  << " radiation_model must be 'none',"
+                                  << " 'Landau-Lifshitz',"
+                                  << " 'corrected-Landau-Lifshitz',"
+                                  << " 'Niel' or 'Monte-Carlo'");
         }
 
         // Non compatibility
         if (dynamics_type=="rrll"
         && (radiation_model=="Monte-Carlo"
-        || radiation_model=="continuous"))
+        || radiation_model=="Landau-Lifshitz"
+        || radiation_model=="corrected-Landau-Lifshitz"
+        || radiation_model=="Niel"))
         {
             ERROR("For species `" << species_type
                                   << "` radiation_model `"
@@ -329,7 +336,7 @@ public:
             }
             else if (species->dynamics_type=="rrll")
             {
-                // Boris + Radiation Reaction
+                // Boris + Radiation Reaction in the pusher
                 newSpecies = new Species_rrll(params, patch);
             }
         }
@@ -338,7 +345,9 @@ public:
         {
             newSpecies = new Species_nlics(params, patch);
         }
-        else if (species->radiation_model=="continuous"
+        else if ((species->radiation_model=="Landau-Lifshitz"
+             ||   species->radiation_model=="corrected-Landau-Lifshitz"
+             ||   species->radiation_model=="Niel")
              && species->dynamics_type != "rrll")
         {
             newSpecies = new Species_rrll(params, patch);

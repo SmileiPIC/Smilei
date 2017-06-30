@@ -46,7 +46,7 @@ public:
             Radiate = new RadiationNiel( params, species );
         }
         // Corrected continuous radiation loss model
-        else if ( species->radiation_model == "continuous" )
+        else if ( species->radiation_model == "corrected-Landau-Lifshitz" )
         {
             Radiate = new RadiationNlicsCont( params, species );
         }

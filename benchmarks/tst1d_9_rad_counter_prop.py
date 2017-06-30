@@ -47,7 +47,7 @@ gamma = 1000./0.511                     # Electron bunch initial energy
 v = math.sqrt(1 - 1./gamma**2)          # electron bunch initial velocity
 
 pusher = "vay"                         # dynamic type
-radiation_list = ["Monte-Carlo","continuous"]  # List of radiation models
+radiation_list = ["Monte-Carlo","Landau-Lifshitz"]  # List of radiation models
 species_name_list = ["disc","cont"]            # Name of the species
 
 # ______________________________________________________________________________
