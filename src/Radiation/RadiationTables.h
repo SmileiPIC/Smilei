@@ -67,6 +67,16 @@ class RadiationTables
         //! \param chipa particle quantum parameter
         double compute_chiph_emission(double chipa);
 
+        // -----------------------------------------------------------------------------
+        //! Return the value of the function h(chipa) of Niel et al.
+        //! Use an integration of Gauss-Legendre
+        //
+        //! \param chipa particle quantum parameter
+        //! \param nbit number of iterations for the Gauss-Legendre integration
+        //! \param eps epsilon for the modified bessel function
+        // -----------------------------------------------------------------------------
+        double get_h_Niel(double chipa,int nbit, double eps);
+
         //! Computation of the corrected continuous quantum radiated energy
         //! during dt from the quantum parameter chipa using the Ridgers
         //! formulae.
@@ -107,11 +117,18 @@ class RadiationTables
         // TABLE COMPUTATION
         // ---------------------------------------------------------------------
 
+        //! Computation of the table h that is a discetization of the h function
+        //! in the stochastic model of Niel.
+        //! \param smpi Object of class SmileiMPI containing MPI properties
+        void compute_h_table(SmileiMPI *smpi);
+
         //! Generate table values for Integration of F/chi: Integfochi
+        //! \param smpi Object of class SmileiMPI containing MPI properties
         void compute_integfochi_table(SmileiMPI *smpi);
 
-        //! Computation of the minimum photon quantum parameter for the array xip
-        //! and computation of the xip array.
+        //! Computation of the minimum photon quantum parameter for the array
+        //! xip (xip_chiphmin) and computation of the xip array.
+        //! \param smpi Object of class SmileiMPI containing MPI properties
         void compute_xip_table(SmileiMPI *smpi);
 
         //! Compute all the tables
@@ -136,6 +153,10 @@ class RadiationTables
         // ---------------------------------------------------------------------
         // TABLE READING
         // ---------------------------------------------------------------------
+
+        //! Read the external table h
+        //! \param smpi Object of class SmileiMPI containing MPI properties
+        bool read_h_table(SmileiMPI *smpi);
 
         //! Read the external table integfochi
         //! \param smpi Object of class SmileiMPI containing MPI properties
@@ -172,6 +193,36 @@ class RadiationTables
         //! Minimum threashold above which the Monte-Carlo algorithm is working
         //! This avoids using the Monte-Carlo algorithm when chipa is too low
         double chipa_disc_min_threshold;
+
+        // ---------------------------------------------
+        // Table h for the
+        // stochastic diffusive operator of Niel et al.
+        // ---------------------------------------------
+
+        //! Array containing tabulated values of the function h for the
+        //! stochastic diffusive operator of Niel et al.
+        std::vector<double > h_table;
+
+        //! Minimum boundary of the table h
+        double chipa_h_min;
+
+        //! Log10 of the minimum boundary of the table h
+        double log10_chipa_h_min;
+
+        //! Maximum boundary of the table h
+        double chipa_h_max;
+
+        //! Delta chi for the table h
+        double chipa_h_delta;
+
+        //! Dimension of the array h
+        int chipa_h_dim;
+
+        //! Inverse delta chi for the table h
+        double chipa_h_inv_delta;
+
+        //! This variable is true if the table is computed, false if read
+        bool h_computed;
 
         // ---------------------------------------------
         // Table Integfochi
