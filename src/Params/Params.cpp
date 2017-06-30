@@ -357,16 +357,16 @@ namelist("")
     unsigned int tot_species_number = PyTools::nComponents("Species");
     // Loop over all species to check if the radiation losses are activated
 
-    std::string radiation_type = "none";
+    std::string radiation_model = "none";
     for (unsigned int ispec = 0; ispec < tot_species_number; ispec++) {
 
-       PyTools::extract("radiation_type", radiation_type ,"Species",ispec);
+       PyTools::extract("radiation_model", radiation_model ,"Species",ispec);
 
-       if (radiation_type=="Monte-Carlo")
+       if (radiation_model=="Monte-Carlo")
        {
            this->hasMCRadiation = true;
        }
-       else if (radiation_type=="continuous")
+       else if (radiation_model=="continuous")
        {
            this->hasContinuousRadiation = true;
        }

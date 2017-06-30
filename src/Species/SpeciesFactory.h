@@ -41,13 +41,13 @@ public:
 
 
         // Extract type of species radiation from namelist
-        std::string radiation_type = "none"; // default value
-        if (!PyTools::extract("radiation_type", radiation_type ,"Species",ispec) )
-            if ( patch->isMaster() ) WARNING("For species '" << species_type << "' radiation_type not defined: assumed = 'none'.");
+        std::string radiation_model = "none"; // default value
+        if (!PyTools::extract("radiation_model", radiation_model ,"Species",ispec) )
+            if ( patch->isMaster() ) WARNING("For species '" << species_type << "' radiation_model not defined: assumed = 'none'.");
 
         // Create species object
         Species * thisSpecies=NULL;
-        if (radiation_type == "none")
+        if (radiation_model == "none")
         {
             if (dynamics_type=="norm"
              || dynamics_type == "borisnr"
@@ -66,12 +66,12 @@ public:
                 ERROR("For species `" << species_type << "` dynamics_type must be 'norm', 'borisnr', 'vay', 'higueracary' or 'rrll'");
             }
         }
-        else if (radiation_type=="Monte-Carlo") {
+        else if (radiation_model=="Monte-Carlo") {
              // Species with MC parameters for the discontinuous radiation loss
              // (nonlinear inverse Compton scattering)
              thisSpecies = new Species_nlics(params, patch);
         }
-        else if (radiation_type=="continuous")
+        else if (radiation_model=="continuous")
         {
             // Species with specific parameters for the continuous radiation loss
             thisSpecies = new Species_rrll(params, patch);
@@ -79,24 +79,24 @@ public:
         else
         {
             ERROR("For species `" << species_type
-                                  << " radiation_type must be 'none', 'Monte-Carlo' or 'continuous'");
+                                  << " radiation_model must be 'none', 'Monte-Carlo' or 'continuous'");
         }
 
         // Non compatibility
         if (dynamics_type=="rrll"
-        && (radiation_type=="Monte-Carlo"
-        || radiation_type=="continuous"))
+        && (radiation_model=="Monte-Carlo"
+        || radiation_model=="continuous"))
         {
             ERROR("For species `" << species_type
-                                  << "` radiation_type `"
-                                  << radiation_type
+                                  << "` radiation_model `"
+                                  << radiation_model
                                   << "` is not compatible with dynamics_type "
                                   << dynamics_type);
         }
 
         thisSpecies->species_type = species_type;
         thisSpecies->dynamics_type = dynamics_type;
-        thisSpecies->radiation_type = radiation_type;
+        thisSpecies->radiation_model = radiation_model;
         thisSpecies->speciesNumber = ispec;
 
         // Extract various parameters from the namelist
@@ -318,7 +318,7 @@ public:
 
         // Create new species object
         Species * newSpecies = NULL;
-        if (species->radiation_type == "none")
+        if (species->radiation_model == "none")
         {
             if (species->dynamics_type=="norm"
             || species->dynamics_type=="higueracary"
@@ -333,12 +333,12 @@ public:
                 newSpecies = new Species_rrll(params, patch);
             }
         }
-        else if (species->radiation_type=="Monte-Carlo"
+        else if (species->radiation_model=="Monte-Carlo"
              && species->dynamics_type != "rrll")
         {
             newSpecies = new Species_nlics(params, patch);
         }
-        else if (species->radiation_type=="continuous"
+        else if (species->radiation_model=="continuous"
              && species->dynamics_type != "rrll")
         {
             newSpecies = new Species_rrll(params, patch);
@@ -347,7 +347,7 @@ public:
         // Copy members
         newSpecies->species_type          = species->species_type;
         newSpecies->dynamics_type         = species->dynamics_type;
-        newSpecies->radiation_type        = species->radiation_type;
+        newSpecies->radiation_model       = species->radiation_model;
         newSpecies->speciesNumber         = species->speciesNumber;
         newSpecies->initPosition_type     = species->initPosition_type;
         newSpecies->initMomentum_type     = species->initMomentum_type;

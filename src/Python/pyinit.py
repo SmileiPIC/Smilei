@@ -244,7 +244,7 @@ class Species(SmileiComponent):
     thermT = None
     thermVelocity = None
     dynamics_type = "norm"
-    radiation_type = "none"
+    radiation_model = "none"
     time_frozen = 0.0
     radiating = False
     bc_part_type_xmin = None
@@ -351,16 +351,20 @@ class PartWall(SmileiComponent):
 # Radiation loss (continuous and MC algorithms)
 class RadiationLoss(SmileiComponent):
     """
-    Synchrotron-like radiation loss 
+    Synchrotron-like radiation loss
     (classical continuous, quantum correction, stochastics and MC algorithms)
     """
-    # First table parameters
-    chipa_integfochi_min = 1e-5
-    chipa_integfochi_max = 1e2
+    # Table h parameters
+    chipa_h_min = 1e-3
+    chipa_h_max = 1e1
+    h_dim = 128
+    # Table integfochi parameters
+    chipa_integfochi_min = 1e-3
+    chipa_integfochi_max = 1e1
     integfochi_dim = 128
-    # Second table parameters
-    chipa_xip_min = 1e-5
-    chipa_xip_max = 1e2
+    # Table xip_chiphmin and xip parameters
+    chipa_xip_min = 1e-3
+    chipa_xip_max = 1e1
     xip_power = 4
     xip_threshold = 1e-3
     chipa_xip_dim = 128

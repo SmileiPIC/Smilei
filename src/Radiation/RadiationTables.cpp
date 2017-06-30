@@ -79,6 +79,9 @@ void RadiationTables::initParams(Params& params)
         {
 
             // Extraction of the parameter from the input file
+            PyTools::extract("chipa_h_min", chipa_h_min, "RadiationLoss");
+            PyTools::extract("chipa_h_max", chipa_h_max, "RadiationLoss");
+            PyTools::extract("h_dim", chipa_h_dim, "RadiationLoss");
             PyTools::extract("chipa_integfochi_min", chipa_integfochi_min, "RadiationLoss");
             PyTools::extract("chipa_integfochi_max", chipa_integfochi_max, "RadiationLoss");
             PyTools::extract("integfochi_dim", dim_integfochi, "RadiationLoss");

@@ -115,7 +115,7 @@ for i,radiation in enumerate(radiation_list):
         mean_velocity = [0.0 ,v, 0.0],
         temperature = [0.],
         dynamics_type = pusher,
-        radiation_type = radiation,
+        radiation_model = radiation,
         bc_part_type_xmin  = "none",
         bc_part_type_xmax  = "none",
         bc_part_type_ymin = "none",

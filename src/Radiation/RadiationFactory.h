@@ -36,30 +36,30 @@ public:
         Radiation* Radiate = NULL;
 
         // assign the correct Radiation model to Radiate
-        if ( species->radiation_type == "Monte-Carlo" )
+        if ( species->radiation_model == "Monte-Carlo" )
         {
             Radiate = new RadiationNlicsMC( params, species );
         }
         // Corrected LL + stochastic diffusive operator
-        else if ( species->radiation_type == "Niel")
+        else if ( species->radiation_model == "Niel")
         {
             Radiate = new RadiationNiel( params, species );
         }
         // Corrected continuous radiation loss model
-        else if ( species->radiation_type == "continuous" )
+        else if ( species->radiation_model == "continuous" )
         {
             Radiate = new RadiationNlicsCont( params, species );
         }
         // Classical continuous radiation loss model from Landau-Lifshitz (LL)
-        else if ( species->radiation_type == "Landau-Lifshitz" )
+        else if ( species->radiation_model == "Landau-Lifshitz" )
         {
             Radiate = new RadiationLL( params, species );
         }
-        else if ( species->radiation_type != "none" )
+        else if ( species->radiation_model != "none" )
         {
             ERROR( "For species " << species->species_type
-                                  << ": unknown radiation_type `"
-                                  << species->radiation_type << "`");
+                                  << ": unknown radiation_model `"
+                                  << species->radiation_model << "`");
         }
 
         return Radiate;

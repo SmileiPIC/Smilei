@@ -80,7 +80,7 @@ public:
     std::string dynamics_type;
 
     //! radiation type.
-    std::string radiation_type;
+    std::string radiation_model;
 
     //! Time for which the species is frozen
     double time_frozen;
