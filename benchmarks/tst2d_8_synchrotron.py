@@ -54,7 +54,7 @@ dt *= dt_factor
 Tsim = 5000*dt/dt_factor                 # duration of the simulation
 
 pusher = "vay"                         # dynamic type
-radiation_list = ["Monte-Carlo","Landau-Lifshitz"]
+radiation_list = ["Monte-Carlo","corrected-Landau-Lifshitz"]
 species_name_list = ["disc","cont"]
 
 # ______________________________________________________________________________

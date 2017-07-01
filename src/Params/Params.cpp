@@ -366,9 +366,14 @@ namelist("")
        {
            this->hasMCRadiation = true;
        }
-       else if (radiation_model=="continuous")
+       else if (radiation_model=="Landau-Lifshitz"
+            || radiation_model=="corrected-Landau-Lifshitz")
        {
            this->hasContinuousRadiation = true;
+       }
+       else if (radiation_model=="Niel")
+       {
+
        }
     }
 
