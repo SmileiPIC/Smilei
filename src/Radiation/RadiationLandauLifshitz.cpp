@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------------
-//! \file RadiationLL.cpp
+//! \file RadiationLandauLifshitz.cpp
 //
 //! \brief This class is for the classical continuous radiation loss with
 //!        the Landau-Lifshitz model.
@@ -11,21 +11,22 @@
 //
 // ----------------------------------------------------------------------------
 
-#include "RadiationLL.h"
+#include "RadiationLandauLifshitz.h"
 
 // -----------------------------------------------------------------------------
-//! Constructor for RadiationNLL
+//! Constructor for RadiationNLandauLifshitz
 //! Inherited from Radiation
 // -----------------------------------------------------------------------------
-RadiationLL::RadiationLL(Params& params, Species * species)
+RadiationLandauLifshitz::RadiationLandauLifshitz(Params& params,
+                                                 Species * species)
       : Radiation(params, species)
 {
 }
 
 // -----------------------------------------------------------------------------
-//! Destructor for RadiationLL
+//! Destructor for RadiationLandauLifshitz
 // -----------------------------------------------------------------------------
-RadiationLL::~RadiationLL()
+RadiationLandauLifshitz::~RadiationLandauLifshitz()
 {
 }
 
@@ -41,7 +42,7 @@ RadiationLL::~RadiationLL()
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
 // -----------------------------------------------------------------------------
-void RadiationLL::operator() (Particles &particles,
+void RadiationLandauLifshitz::operator() (Particles &particles,
         SmileiMPI* smpi,
         RadiationTables &RadiationTables,
         int istart,

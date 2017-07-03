@@ -12,7 +12,7 @@
 #include "Radiation.h"
 #include "RadiationNlicsMC.h"
 #include "RadiationNlicsCont.h"
-#include "RadiationLL.h"
+#include "RadiationLandauLifshitz.h"
 #include "RadiationNiel.h"
 
 #include "Params.h"
@@ -53,7 +53,7 @@ public:
         // Classical continuous radiation loss model from Landau-Lifshitz (LL)
         else if ( species->radiation_model == "Landau-Lifshitz" )
         {
-            Radiate = new RadiationLL( params, species );
+            Radiate = new RadiationLandauLifshitz( params, species );
         }
         else if ( species->radiation_model != "none" )
         {

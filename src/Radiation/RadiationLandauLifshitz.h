@@ -1,17 +1,17 @@
 // ----------------------------------------------------------------------------
-//! \file RadiationLL.h
+//! \file RadiationLandauLifshitz.h
 //
 //! \brief This class is for the classical continuous radiation loss with
 //!        the Landau-Lifshitz model.
 //!        This model does not include a quantum correction.
 //
-//! \details This header contains the definition of the class RadiationLL.
+//! \details This header contains the definition of the class RadiationLandauLifshitz.
 //! L. D. Landau and E. M. Lifshitz, The classical theory of fields, 1947
 //! F. Niel et al., 2017
 // ----------------------------------------------------------------------------
 
-#ifndef RADIATIONLL_H
-#define RADIATIONLL_H
+#ifndef RADIATIONLANDAULIFSHITZ_H
+#define RADIATIONLANDAULIFSHITZ_H
 
 #include "RadiationTables.h"
 #include "Radiation.h"
@@ -22,18 +22,18 @@
 #include <cmath>
 
 //------------------------------------------------------------------------------
-//! RadiationLL class: holds parameters and functions to apply the
+//! RadiationLandauLifshitz class: holds parameters and functions to apply the
 //! Landau-Lifshitz continuous radiation loss on Particles.
 //------------------------------------------------------------------------------
-class RadiationLL : public Radiation {
+class RadiationLandauLifshitz : public Radiation {
 
     public:
 
-        //! Constructor for RadiationLL
-        RadiationLL(Params& params, Species * species);
+        //! Constructor for RadiationLandauLifshitz
+        RadiationLandauLifshitz(Params& params, Species * species);
 
-        //! Destructor for RadiationLL
-        ~RadiationLL();
+        //! Destructor for RadiationLandauLifshitz
+        ~RadiationLandauLifshitz();
 
         // ---------------------------------------------------------------------
         //! Overloading of () operator: perform the Landau-Lifshitz
