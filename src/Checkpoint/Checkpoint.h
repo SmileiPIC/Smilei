@@ -81,8 +81,6 @@ public:
     //! checkpoint asks to politely quit from simulation
     bool exit_asap;
     
-    bool restart()  {return !restart_file.empty();}
-
 private:
     
     //! initialize the time zero of the simulation 
