@@ -29,12 +29,12 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     double z_max_global = params.cell_length[2]*(params.n_space_global[2]);
     
     // by default apply no bcs
-    bc_xmin   = NULL;
-    bc_xmax   = NULL;
+    bc_xmin  = NULL;
+    bc_xmax  = NULL;
     bc_ymin  = NULL;
     bc_ymax  = NULL;
-    bc_zmin = NULL;
-    bc_zmax     = NULL;
+    bc_zmin  = NULL;
+    bc_zmax  = NULL;
     
     // -----------------------------
     // Define limits of local domain
@@ -167,23 +167,23 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
         
         if ( nDim_particle > 2 ) {
             if ( species->boundary_conditions[2][0] == "refl" ) {
-                if (z_min==z_min_global) bc_zmin = &refl_particle;
+                if (patch->isZmin()) bc_zmin = &refl_particle;
             }
             else if ( species->boundary_conditions[2][0] == "supp" ) {
-                if (z_min==z_min_global) bc_zmin = &supp_particle;
+                if (patch->isZmin()) bc_zmin = &supp_particle;
             }
             else if ( species->boundary_conditions[2][0] == "stop" ) {
-                if (z_min==z_min_global) bc_zmin = &stop_particle;
+                if (patch->isZmin()) bc_zmin = &stop_particle;
             }
             
             if ( species->boundary_conditions[2][1] == "refl" ) {
-                if (z_min==z_min_global) bc_zmax = &refl_particle;
+                if (patch->isZmax()) bc_zmax = &refl_particle;
             }
             else if ( species->boundary_conditions[2][1] == "supp" )  {
-                if (z_min==z_min_global) bc_zmax = &supp_particle;
+                if (patch->isZmax()) bc_zmax = &supp_particle;
             }
             else if ( species->boundary_conditions[2][1] == "stop" ) {
-                if (z_min==z_min_global) bc_zmax = &stop_particle;
+                if (patch->isZmax()) bc_zmax = &stop_particle;
             }
             
         }//nDim_particle>2

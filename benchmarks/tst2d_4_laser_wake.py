@@ -17,7 +17,7 @@ Main(
     cell_length  = [dx, 3.],
     sim_length = [ Lx,  120.],
     
-    number_of_patches = [npatch_x, 8],
+    number_of_patches = [npatch_x, 4],
     
     clrw = nx/npatch_x,
     

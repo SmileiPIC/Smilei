@@ -24,13 +24,13 @@ public:
     //! Xmax particles boundary conditions pointers
     int (*bc_xmax)  ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
     //! Ymin particles boundary conditions pointers
-    int (*bc_ymin) ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
+    int (*bc_ymin)  ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
     //! Ymax particles boundary conditions pointers
-    int (*bc_ymax) ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
+    int (*bc_ymax)  ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
     //! Zmin particles boundary conditions pointers
-    int (*bc_zmin)( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
+    int (*bc_zmin)  ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
     //! Zmax particles boundary conditions pointers
-    int (*bc_zmax)    ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
+    int (*bc_zmax)  ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
 
     //! Method which applies particles boundary conditions.
     //! If the MPI process is not a border process, particles will be flagged as an exchange particle returning 0
