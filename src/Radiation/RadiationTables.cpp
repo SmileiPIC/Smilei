@@ -382,16 +382,6 @@ void RadiationTables::compute_h_table(SmileiMPI *smpi)
                 &h_table[0], &length_table[0], &imin_table[0],
                 MPI_DOUBLE, smpi->getGlobalComm());
 
-        // Print array after communications
-        /*
-           if (rank==1) {
-           for (int i=0 ; i< dim_integfochi ; i++)
-           {
-           std::cout << Integfochi[i] << std::endl;
-           }
-           }
-         */
-
         // flag computed at true
         h_computed = true;
 
@@ -1298,8 +1288,32 @@ double RadiationTables::get_h_Niel(double chipa,
     // Arrays for Gauss-Legendre integration
     double * gauleg_x = new double[nbit];
     double * gauleg_w = new double[nbit];
+    double nu;
+    double I, dI;
+    double K23, K53, dK;
+    double h = 0;
+    int    i;
 
-    return 0;
+    // Gauss-Legendre coefs between log10(1E-20)
+    // and log10(50.) = 1.6989700043360187
+    userFunctions::gauss_legendre_coef(-20,1.6989700043360187, gauleg_x,
+            gauleg_w, nbit, eps);
+
+    for(i=0 ; i< nbit ; i++)
+    {
+
+        nu = pow(10.,gauleg_x[i]);
+
+        userFunctions::modified_bessel_IK(5./3.,nu,I,dI,K53,dK,50000,eps);
+
+        userFunctions::modified_bessel_IK(2./3.,nu,I,dI,K23,dK,50000,eps);
+
+        h += ( 2.*pow(chipa,3)*pow(nu,3) / pow(2. + 3.*nu*chipa,3)*K53 )
+          +  ( 54.*pow(chipa,5)*pow(nu,4) / pow(2. + 3.*nu*chipa,5)*K23 );
+
+    }
+
+    return h*9.*sqrt(3.)/(4.*M_PI);
 
 }
 
