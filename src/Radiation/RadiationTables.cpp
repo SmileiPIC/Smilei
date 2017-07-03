@@ -319,7 +319,7 @@ void RadiationTables::compute_h_table(SmileiMPI *smpi)
         nb_ranks = smpi->getSize();
 
         // Allocation of the array Integfochi
-        h_table.resize(dim_integfochi);
+        h_table.resize(chipa_h_dim);
 
         // Allocation of the table for load repartition
         imin_table = new int[nb_ranks];
