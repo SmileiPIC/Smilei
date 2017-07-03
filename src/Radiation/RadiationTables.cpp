@@ -834,8 +834,6 @@ void RadiationTables::output_h_table()
 
         if (file.is_open()) {
 
-            double temp0, temp1;
-
             file.write((char*)&chipa_h_dim,sizeof (chipa_h_dim));
             file.write((char*)&chipa_h_min, sizeof (double));
             file.write((char*)&chipa_h_max, sizeof (double));
@@ -1550,9 +1548,12 @@ bool RadiationTables::read_h_table(SmileiMPI *smpi)
     {
 
         MESSAGE("            Reading of the external database");
-        MESSAGE("            Dimension quantum parameter: " << dim_integfochi);
-        MESSAGE("            Minimum particle quantum parameter chi: " << chipa_integfochi_min);
-        MESSAGE("            Maximum particle quantum parameter chi: " << chipa_integfochi_max);
+        MESSAGE("            Dimension quantum parameter: "
+                             << chipa_h_dim);
+        MESSAGE("            Minimum particle quantum parameter chi: "
+                             << chipa_h_min);
+        MESSAGE("            Maximum particle quantum parameter chi: "
+                             << chipa_h_max);
 
         // Bcast the table to all MPI ranks
         RadiationTables::bcast_h_table(smpi);
