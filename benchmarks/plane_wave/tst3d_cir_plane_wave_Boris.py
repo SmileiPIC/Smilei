@@ -29,7 +29,7 @@ fwhm = 10*t0                            # Gaussian time fwhm
 duration = 90*t0                        # Laser duration
 center = duration*0.5                   # Laser profile center
 
-pusher = "norm"                         # dynamic type
+pusher = "boris"                         # dynamic type
 
 # Density profile for inital location of the particles
 def n0_(x,y,z):
@@ -95,7 +95,7 @@ Species(
     charge_density = n0_,
     mean_velocity = [0., 0.0, 0.0],
     temperature = [0.],
-    dynamics_type = pusher,
+    pusher = pusher,
     boundary_conditions = [
     	["periodic", "periodic"],
     	["periodic", "periodic"],

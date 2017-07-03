@@ -99,6 +99,7 @@ class SmileiComponent(object):
                 "track_flush_every":"DiagTrackParticles()",
                 "track_filter"     :"DiagTrackParticles()",
                 "species_type":"name",
+                "dynamics_type":"push",
             }
             for key, value in kwargs.items():
                 if key in deprecated:
@@ -274,7 +275,7 @@ class Species(SmileiComponent):
     temperature = [1e-10]
     thermal_boundary_temperature = []
     thermal_boundary_velocity = []
-    dynamics_type = "norm"
+    pusher = "boris"
     time_frozen = 0.0
     radiating = False
     boundary_conditions = [["periodic"]]

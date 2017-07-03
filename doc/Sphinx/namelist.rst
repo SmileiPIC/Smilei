@@ -333,7 +333,7 @@ Each species has to be defined in a ``Species`` block::
       # radiating = False,
       is_test = False,
       c_part_max = 1.0,
-      dynamics_type = "norm",
+      pusher = "boris",
   )
 
 .. py:data:: name
@@ -475,9 +475,9 @@ Each species has to be defined in a ``Species`` block::
   :red:`to do`
 
 
-.. py:data:: dynamics_type
+.. py:data:: pusher
   
-  :default: ``norm``
+  :default: ``boris``
   
   Type of pusher to be used for this species. The default value corresponds to the 
   relativistic Boris pusher. Smilei has the following solvers implemented:

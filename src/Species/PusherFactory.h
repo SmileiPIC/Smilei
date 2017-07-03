@@ -28,28 +28,28 @@ public:
         Pusher* Push = NULL;
 
         // assign the correct Pusher to Push
-        if ( species->dynamics_type == "norm" )
+        if ( species->pusher == "boris" )
         {
             Push = new PusherBoris( params, species );
         }
-        else if ( species->dynamics_type == "borisnr" )
+        else if ( species->pusher == "borisnr" )
         {
             Push = new PusherBorisNR( params, species );
         }
-        else if ( species->dynamics_type == "rrll" )
+        else if ( species->pusher == "rrll" )
         {
             Push = new PusherRRLL( params, species );
         }
-        else if ( species->dynamics_type == "vay" )
+        else if ( species->pusher == "vay" )
         {
             Push = new PusherVay( params, species );
         }
-        else if ( species->dynamics_type == "higueracary" )
+        else if ( species->pusher == "higueracary" )
         {
             Push = new PusherHigueraCary( params, species );
         }
         else {
-            ERROR( "For species " << species->name << ": unknown dynamics_type `" << species->dynamics_type << "`");
+            ERROR( "For species " << species->name << ": unknown pusher `" << species->pusher << "`");
         }
 
         return Push;

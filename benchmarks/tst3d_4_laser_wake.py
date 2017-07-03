@@ -54,7 +54,7 @@ Species(
     charge_density = 0.000494,
     mean_velocity = [0.0, 0.0, 0.0],
     temperature = [0.0],
-    dynamics_type = "norm",    
+    pusher = "boris",    
     time_frozen = 0.0,
     radiating = False,
     boundary_conditions = [

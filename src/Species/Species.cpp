@@ -44,7 +44,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 Species::Species(Params& params, Patch* patch) :
 c_part_max(1),
-dynamics_type("norm"), 
+pusher("boris"), 
 time_frozen(0), 
 radiating(false), 
 ionization_model("none"),

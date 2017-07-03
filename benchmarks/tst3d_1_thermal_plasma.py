@@ -65,7 +65,7 @@ Species(
     charge_density = n0_,
     mean_velocity = [0., 0.0, 0.0],
     temperature = [T],
-    dynamics_type = "norm",
+    pusher = "boris",
     boundary_conditions = [
     	["periodic", "periodic"],
     	["periodic", "periodic"],
@@ -83,7 +83,7 @@ Species(
     charge_density = n0_,
     mean_velocity = [0., 0.0, 0.0],
     temperature = [T],
-    dynamics_type = "norm",
+    pusher = "boris",
     boundary_conditions = [
     	["periodic", "periodic"],
     	["periodic", "periodic"],

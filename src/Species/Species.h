@@ -73,8 +73,8 @@ public:
     //! thermal momentum [\f$m_e c\f$]
     std::vector<double> thermalMomentum;
     
-    //! dynamics type. Possible values: "Norm" "Radiation Reaction"
-    std::string dynamics_type;
+    //! pusher name
+    std::string pusher;
     
     //! Time for which the species is frozen
     double time_frozen;

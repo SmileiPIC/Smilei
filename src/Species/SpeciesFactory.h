@@ -32,30 +32,30 @@ public:
         }
         
         // Extract type of species dynamics from namelist
-        std::string dynamics_type = "norm"; // default value
-        if (!PyTools::extract("dynamics_type", dynamics_type ,"Species",ispec) )
-            if ( patch->isMaster() ) WARNING("For species '" << species_name << "' dynamics_type not defined: assumed = 'norm'.");
+        std::string pusher = "boris"; // default value
+        if (!PyTools::extract("pusher", pusher ,"Species",ispec) )
+            if ( patch->isMaster() ) WARNING("For species '" << species_name << "' pusher not defined: assumed = 'boris'.");
         
         // Create species object
         Species * thisSpecies=NULL;
-        if (dynamics_type=="norm" || dynamics_type == "borisnr") {
-             // Species with Boris (relativistic =='norm', nonrelativistic=='borisnr') dynamics
+        if (pusher=="boris" || pusher == "borisnr") {
+             // Species with Boris (relativistic =='boris', nonrelativistic=='borisnr') dynamics
              thisSpecies = new Species_norm(params, patch);
-        } else if (dynamics_type=="vay") {
+        } else if (pusher=="vay") {
              // Species with J.L. Vay dynamics
              thisSpecies = new Species_norm(params, patch);
-        } else if (dynamics_type=="higueracary") {
+        } else if (pusher=="higueracary") {
              // Species with Higuary Cary dynamics
              thisSpecies = new Species_norm(params, patch);
-        } else if (dynamics_type=="rrll") {
+        } else if (pusher=="rrll") {
              // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
              thisSpecies = new Species_rrll(params, patch);
         } else {
-            ERROR("For species `" << species_name << " dynamics_type must be 'norm', 'borisnr', 'vay', 'higueracary' or 'rrll'")
+            ERROR("For species `" << species_name << " pusher must be 'boris', 'borisnr', 'vay', 'higueracary' or 'rrll'")
         }
         
         thisSpecies->name = species_name;
-        thisSpecies->dynamics_type = dynamics_type;
+        thisSpecies->pusher = pusher;
         thisSpecies->speciesNumber = ispec;
         
         // Extract various parameters from the namelist
@@ -91,8 +91,8 @@ public:
         }
         
         PyTools::extract("radiating",thisSpecies->radiating ,"Species",ispec);
-        if (thisSpecies->dynamics_type=="rrll" && (!thisSpecies->radiating)) {
-            if ( patch->isMaster() ) WARNING("For species '" << species_name << "', dynamics_type='rrll' forcing radiating=True");
+        if (thisSpecies->pusher=="rrll" && (!thisSpecies->radiating)) {
+            if ( patch->isMaster() ) WARNING("For species '" << species_name << "', pusher='rrll' forcing radiating=True");
             thisSpecies->radiating=true;
         }
         
@@ -243,17 +243,17 @@ public:
     static Species* clone(Species* species, Params &params, Patch* patch, bool with_particles = true) {
         // Create new species object
         Species * newSpecies = NULL;
-        if (species->dynamics_type=="norm" 
-           || species->dynamics_type=="higueracary"
-           || species->dynamics_type=="vay"
-           || species->dynamics_type=="borisnr") {
+        if (species->pusher=="boris" 
+           || species->pusher=="higueracary"
+           || species->pusher=="vay"
+           || species->pusher=="borisnr") {
             newSpecies = new Species_norm(params, patch); // Boris
-        } else if (species->dynamics_type=="rrll") {
+        } else if (species->pusher=="rrll") {
             newSpecies = new Species_rrll(params, patch); // Boris + Radiation Reaction
         }
         // Copy members
         newSpecies->name          = species->name;
-        newSpecies->dynamics_type         = species->dynamics_type;
+        newSpecies->pusher         = species->pusher;
         newSpecies->speciesNumber         = species->speciesNumber;
         newSpecies->position_initialization     = species->position_initialization;
         newSpecies->momentum_initialization     = species->momentum_initialization;

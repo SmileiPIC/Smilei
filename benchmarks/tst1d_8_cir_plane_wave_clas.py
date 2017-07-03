@@ -31,7 +31,7 @@ duration = 30*t0                        # Laser duration
 center = duration*0.5                   # Laser profile center
 order = 4                               # Gaussian order
 
-pusher_list = ["borisnr","norm","vay","higueracary"]  # dynamic type
+pusher_list = ["borisnr","boris","vay","higueracary"]  # dynamic type
 
 # Density profile for inital location of the particles
 def n0_(x):
@@ -82,7 +82,7 @@ for pusher in pusher_list:
         charge_density = n0_,
         mean_velocity = [0., 0.0, 0.0],
         temperature = [0.],
-        dynamics_type = pusher,
+        pusher = pusher,
 	    boundary_conditions = [["periodic"]],
         is_test = True
     )
