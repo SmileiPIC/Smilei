@@ -1429,7 +1429,7 @@ bool RadiationTables::read_h_table(SmileiMPI *smpi)
         MESSAGE("            Maximum particle quantum parameter chi: " << chipa_integfochi_max);
 
         // Bcast the table to all MPI ranks
-        RadiationTables::bcast_integfochi_table(smpi);
+        RadiationTables::bcast_h_table(smpi);
     }
 
     return table_exists;
@@ -1679,6 +1679,91 @@ bool RadiationTables::read_xip_table(SmileiMPI *smpi)
 // -----------------------------------------------------------------------------
 // TABLE COMMUNICATIONS
 // -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+//! Bcast of the external table integfochi
+//
+//! \param smpi Object of class SmileiMPI containing MPI properties
+// -----------------------------------------------------------------------------
+void RadiationTables::bcast_h_table(SmileiMPI *smpi)
+{
+    // Position for MPI pack and unack
+    int position;
+    // buffer size for MPI pack and unpack
+    int buf_size;
+
+    // -------------------------------------------------------
+    // Bcast of all the parameters
+    // We pack everything in a buffer
+    // --------------------------------------------------------
+
+    // buffer size
+    if (smpi->getRank() == 0)
+    {
+        MPI_Pack_size(1, MPI_INTEGER, smpi->getGlobalComm(), &position);
+        buf_size = position;
+        MPI_Pack_size(2, MPI_DOUBLE, smpi->getGlobalComm(), &position);
+        buf_size += position;
+        MPI_Pack_size(chipa_h_dim, MPI_DOUBLE, smpi->getGlobalComm(),
+                      &position);
+        buf_size += position;
+    }
+
+    MESSAGE("            Buffer size: " << buf_size);
+
+    // Exchange buf_size with all ranks
+    MPI_Bcast(&buf_size, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
+
+    // Packet that will contain all parameters
+    char * buffer = new char[buf_size];
+
+    // Proc 0 packs
+    if (smpi->getRank() == 0)
+    {
+        position = 0;
+        MPI_Pack(&chipa_h_dim,
+             1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
+        MPI_Pack(&chipa_h_min,
+             1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
+        MPI_Pack(&chipa_h_max,
+             1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
+
+        MPI_Pack(&h_table[0],chipa_h_dim,
+            MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
+
+    }
+
+    // Bcast all parameters
+    MPI_Bcast(&buffer[0], buf_size, MPI_PACKED, 0,smpi->getGlobalComm());
+
+    // Other ranks unpack
+    if (smpi->getRank() != 0)
+    {
+        position = 0;
+        MPI_Unpack(buffer, buf_size, &position,
+                   &chipa_h_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
+        MPI_Unpack(buffer, buf_size, &position,
+                   &chipa_h_min, 1, MPI_DOUBLE,smpi->getGlobalComm());
+        MPI_Unpack(buffer, buf_size, &position,
+                   &chipa_h_max, 1, MPI_DOUBLE,smpi->getGlobalComm());
+
+        // Resize table before unpacking values
+        h_table.resize(chipa_h_dim);
+
+        MPI_Unpack(buffer, buf_size, &position,&h_table[0],
+                    chipa_h_dim, MPI_DOUBLE,smpi->getGlobalComm());
+
+    }
+
+    log10_chipa_h_min = log10(chipa_h_min);
+
+    // Computation of the delta
+    chipa_h_delta = (log10(chipa_h_max)
+            - log10_chipa_h_min)/(chipa_h_dim-1);
+
+    // Inverse delta
+    inv_delta_chipa_h = 1./chipa_h_delta;
+}
 
 // -----------------------------------------------------------------------------
 //! Bcast of the external table integfochi

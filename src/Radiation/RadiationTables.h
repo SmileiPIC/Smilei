@@ -170,6 +170,10 @@ class RadiationTables
         // TABLE COMMUNICATIONS
         // ---------------------------------------------------------------------
 
+        //! Bcast of the external table h
+        //! \param smpi Object of class SmileiMPI containing MPI properties
+        void bcast_h_table(SmileiMPI *smpi);
+
         //! Bcast of the external table integfochi
         //! \param smpi Object of class SmileiMPI containing MPI properties
         void bcast_integfochi_table(SmileiMPI *smpi);
