@@ -155,15 +155,12 @@ namelist("")
     // --------------
     // Stop & Restart
     // --------------
-    
+
     restart = false;
-    restart_dir = "";
-    if( PyTools::nComponents("DumpRestart")>0 && PyTools::extract("restart_dir", restart_dir, "DumpRestart") ) {
-        restart = true;
-        if( restart_dir.at(restart_dir.length()-1)!='/' ) restart_dir+="/";
-        MESSAGE("Code running from restart in directory "<<restart_dir);
+    if( PyTools::nComponents("DumpRestart")>0 && PyTools::extract("restart", restart, "DumpRestart") && restart) {
+        MESSAGE(1,"Code will restart");
     }
-    
+
     // ---------------------
     // Normalisation & units
     // ---------------------

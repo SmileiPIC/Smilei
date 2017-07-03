@@ -42,10 +42,8 @@ dump_minutes(0.0),
 exit_after_dump(true),
 dump_file_sequence(2),
 dump_deflate(0),
-restart_dir(""),
 dump_request(smpi->getSize()),
-file_grouping(0),
-restart_number(-1)
+file_grouping(0)
 {
     
     if( PyTools::nComponents("DumpRestart") > 0 ) {
@@ -71,14 +69,39 @@ restart_number(-1)
             if( file_grouping > (unsigned int)(smpi->getSize()) ) file_grouping = smpi->getSize();
             MESSAGE(1,"Code will group checkpoint files by "<< file_grouping);
         }
-    
-        if (PyTools::extract("restart_number", restart_number, "DumpRestart") && restart_number >= 0) {
-            MESSAGE(1,"Code will restart from checkpoint number " << restart_number);
+
+        if( params.restart ) {
+            std::vector<std::string> restart_files;
+            PyTools::extract("restart_files", restart_files, "DumpRestart");
+
+            // This will open all dumps and pick the last one
+            for (unsigned int num_dump=0;num_dump<restart_files.size(); num_dump++) {
+                string dump_name=restart_files[num_dump];
+                hid_t fid = H5Fopen( dump_name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+                unsigned int stepStartTmp=0;
+                H5::getAttr(fid, "dump_step", stepStartTmp );
+                if (stepStartTmp>this_run_start_step) {
+                    this_run_start_step=stepStartTmp;
+                    restart_file=dump_name;
+                    dump_number=num_dump;
+                    H5::getAttr(fid, "dump_number", dump_number );
+                }
+                H5Fclose(fid);
+            }
+
+            if (restart_file.empty()) {
+                ERROR("Cannot find a valid restart file");
+            }
+
+#ifdef  __DEBUG
+            MESSAGEALL(2, " : Restarting fields and particles " << nameDump << " step=" << this_run_start_step << "\n\t\t" << restart_file);
+#else
+            MESSAGE(2, "Restarting fields and particles at step: " << this_run_start_step);
+            MESSAGE(2, "                            master file: " << restart_file);
+#endif
+
         }
-        
     }
-    
-    restart_dir = params.restart_dir;
     
     if (dump_step>0 || dump_minutes>0.) {
         if (exit_after_dump) {
@@ -103,19 +126,6 @@ restart_number(-1)
     
     nDim_particle=params.nDim_particle;
 }
-
-
-string Checkpoint::dumpName(unsigned int num, SmileiMPI *smpi) {
-    ostringstream nameDumpTmp("");
-    nameDumpTmp << "checkpoints" << PATH_SEPARATOR;
-    if (file_grouping>0) {
-        nameDumpTmp << setfill('0') << setw(int(1+log10(smpi->getSize()/file_grouping+1))) << smpi->getRank()/file_grouping << PATH_SEPARATOR;
-    }
-    
-    nameDumpTmp << "dump-" << setfill('0') << setw(1+log10(dump_file_sequence)) << num << "-" << setfill('0') << setw(1+log10(smpi->getSize())) << smpi->getRank() << ".h5" ;
-    return nameDumpTmp.str();
-}
-
 
 void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* smpi, SimWindow* simWindow, Params &params ) {
     
@@ -153,16 +163,25 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* s
     }
 }
 
-
 void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI* smpi, SimWindow* simWin,  Params &params )
 {
     unsigned int num_dump=dump_number%dump_file_sequence;
-    
-    hid_t fid = H5Fcreate( dumpName(num_dump,smpi).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+
+    ostringstream nameDumpTmp("");
+    nameDumpTmp << "checkpoints" << PATH_SEPARATOR;
+    if (file_grouping>0) {
+        nameDumpTmp << setfill('0') << setw(int(1+log10(smpi->getSize()/file_grouping+1))) << smpi->getRank()/file_grouping << PATH_SEPARATOR;
+    }
+
+    nameDumpTmp << "dump-" << setfill('0') << setw(5) << num_dump << "-" << setfill('0') << setw(10) << smpi->getRank() << ".h5" ;
+    std::string dumpName=nameDumpTmp.str();
+
+
+    hid_t fid = H5Fcreate( dumpName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     dump_number++;
     
 #ifdef  __DEBUG
-    MESSAGEALL("Step " << itime << " : DUMP fields and particles " << dumpName(num_dump,smpi));
+    MESSAGEALL("Step " << itime << " : DUMP fields and particles " << dumpName);
 #else
     MESSAGE("Step " << itime << " : DUMP fields and particles " << num_dump);
 #endif
@@ -356,55 +375,9 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
 void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindow* simWin, Params &params, OpenPMDparams& openPMD )
 {
     MESSAGE(1, "READING fields and particles for restart");
-    
-    string nameDump("");
-    
-    if (restart_number>=0) {
-        string dump_name=restart_dir+dumpName(restart_number,smpi);
-        ifstream f(dump_name.c_str());
-        if (f.good()) {
-            f.close();
-            hid_t fid = H5Fopen( dump_name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-            unsigned int stepStartTmp=0;
-            H5::getAttr(fid, "dump_step", stepStartTmp );
-            this_run_start_step=stepStartTmp;
-            nameDump=dump_name;
-            dump_number=restart_number;
-            H5::getAttr(fid, "dump_number", dump_number );
-            H5Fclose(fid);
-        }
-
-    } else {
-        // This will open all dumps and pick the last one
-        for (unsigned int num_dump=0;num_dump<dump_file_sequence; num_dump++) {
-            string dump_name=restart_dir+dumpName(num_dump,smpi);
-            ifstream f(dump_name.c_str());
-            if (f.good()) {
-                f.close();
-                hid_t fid = H5Fopen( dump_name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-                unsigned int stepStartTmp=0;
-                H5::getAttr(fid, "dump_step", stepStartTmp );
-                if (stepStartTmp>this_run_start_step) {
-                    this_run_start_step=stepStartTmp;
-                    nameDump=dump_name;
-                    dump_number=num_dump;
-                    H5::getAttr(fid, "dump_number", dump_number );
-                }
-                H5Fclose(fid);
-            }
-        }
-    }
-    
-    if (nameDump.empty()) ERROR("Cannot find a valid restart file");
-    
-#ifdef  __DEBUG
-    MESSAGEALL(2, " : Restarting fields and particles " << nameDump << " step=" << this_run_start_step);
-#else
-    MESSAGE(2, "Restarting fields and particles at step " << this_run_start_step);
-#endif
-    
-    hid_t fid = H5Fopen( nameDump.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-    if (fid < 0) ERROR(nameDump << " is not a valid HDF5 file");
+        
+    hid_t fid = H5Fopen( restart_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+    if (fid < 0) ERROR(restart_file << " is not a valid HDF5 file");
     
     
     // Read basic attributes

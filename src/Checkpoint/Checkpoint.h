@@ -81,9 +81,9 @@ public:
     //! checkpoint asks to politely quit from simulation
     bool exit_asap;
     
+    bool restart()  {return !restart_file.empty();}
+
 private:
-    //! get dump name based on number and rank
-    std::string dumpName(unsigned int num, SmileiMPI *smpi);
     
     //! initialize the time zero of the simulation 
     void initDumpCases();
@@ -125,9 +125,6 @@ private:
     //! int deflate dump value
     int dump_deflate;
     
-    //! directory of the restart
-    std::string restart_dir;
-    
     std::vector<MPI_Request> dump_request;
     MPI_Status dump_status_prob;
     MPI_Status dump_status_recv;
@@ -135,8 +132,9 @@ private:
     //! group checkpoint files in subdirs of file_grouping files
     unsigned int file_grouping;
     
-    //! restart from checkpoint number
-    int restart_number;
+    //! restart file
+    std::string restart_file;
+
 };
 
 #endif /* CHECKPOINT_H_ */

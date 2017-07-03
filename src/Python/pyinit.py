@@ -218,6 +218,7 @@ class MovingWindow(SmileiSingleton):
 class DumpRestart(SmileiSingleton):
     """Dump and restart parameters"""
     
+    restart = False
     restart_dir = None
     restart_number = None
     dump_step = 0
@@ -226,6 +227,7 @@ class DumpRestart(SmileiSingleton):
     dump_deflate = 0
     exit_after_dump = True
     file_grouping = None
+    restart_files = []
 
 
 class Species(SmileiComponent):

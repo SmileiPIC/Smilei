@@ -62,7 +62,7 @@ int main (int argc, char* argv[])
     
     TITLE("Initializing the restart environment");
     Checkpoint checkpoint(params, smpi);
-    
+
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=+1/2
     // Update in "if restart" if necessary

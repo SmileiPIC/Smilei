@@ -6,6 +6,7 @@
 
 gc.collect()
 import math
+import glob, re
 
 def _mkdir(role, path):
     if not os.path.exists(path):
@@ -31,17 +32,41 @@ def _smilei_check():
     if smilei_mpi_rank == 0 and (DumpRestart.dump_step>0 or DumpRestart.dump_minutes>0.):
         checkpoint_dir = "." + os.sep + "checkpoints" + os.sep
         if DumpRestart.file_grouping :
-            ngroups = smilei_mpi_size/DumpRestart.file_grouping+1
+            ngroups = (smilei_mpi_size+1)/DumpRestart.file_grouping
             ngroups_chars = int(math.log10(ngroups))+1
             for group in range(ngroups):
                 group_dir = checkpoint_dir + '%*s'%(ngroups_chars,group)
                 _mkdir("checkpoint", group_dir)
         else:
             _mkdir("checkpoint", checkpoint_dir)
-    # Checkpoint: Verify the restart_dir
+
+    # Checkpoint: Verify the restart_dir and find possible restart file for each rank
     if len(DumpRestart)==1 and DumpRestart.restart_dir:
-        if not os.path.isdir(DumpRestart.restart_dir):
-            raise Exception("ERROR in the namelist: restart_dir = `"+DumpRestart.restart_dir+"` is not a directory")
+        DumpRestart.restart=True
+        my_pattern=DumpRestart.restart_dir + os.sep + "checkpoints" + os.sep
+        if DumpRestart.file_grouping :
+            my_pattern += "*"+ os.sep
+        my_pattern += "dump-*-" + '%*s'%(int(math.log10(smilei_mpi_size))+1, smilei_mpi_rank) + ".h5";
+        my_files=glob.glob(my_pattern)
+        if DumpRestart.restart_number:
+            my_pattern=DumpRestart.restart_dir+ os.sep+r'.*'+os.sep+r'dump-([0-9]*)-[0-9]*.h5'
+            for my_file in my_files:
+                my_re=re.search(my_pattern,my_file)
+                if my_re and len(my_re.groups()):
+                    my_num=int(my_re.groups()[-1])
+                    if my_num == DumpRestart.restart_number:
+                        DumpRestart.restart_files.append(my_file)            
+        else:
+            DumpRestart.restart_files = my_files
+        
+        if not len(DumpRestart.restart_files):
+            raise Exception(
+            "ERROR in the namelist: cannot find valid restart files for processor "+str(smilei_mpi_rank) + 
+            "\n\t\trestart_dir = '" + DumpRestart.restart_dir + 
+            "'\n\t\trestart_number = " + str(DumpRestart.restart_number) + 
+            "\n\t\tmatching pattern: '" + my_pattern + "'" )
+
+
     # Verify that constant() and tconstant() were not redefined
     if not hasattr(constant, "_reserved") or not hasattr(tconstant, "_reserved"):
         raise Exception("Names `constant` and `tconstant` cannot be overriden")
