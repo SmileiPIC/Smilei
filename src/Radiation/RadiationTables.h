@@ -138,6 +138,9 @@ class RadiationTables
         // TABLE OUTPUTS
         // ---------------------------------------------------------------------
 
+        //! Write in a file table values of the h table
+        void output_h_table();
+
         //! Write in a file table values for Integration of F/chi: Integfochi
         void output_integfochi_table();
 
