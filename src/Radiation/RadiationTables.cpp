@@ -103,6 +103,7 @@ void RadiationTables::initParams(Params& params)
             // Additional regularly used parameters
             log10_chipa_xip_min = log10(chipa_xip_min);
             log10_chipa_integfochi_min = log10(chipa_integfochi_min);
+            log10_chipa_h_min = log10(chipa_h_min);
             inv_chiph_xip_dim_minus_one = 1./(chiph_xip_dim - 1.);
         }
     }
@@ -365,8 +366,6 @@ void RadiationTables::compute_h_table(SmileiMPI *smpi)
             // 100 iterations is in theory sufficient to get the convergence
             // at 1e-15
             buffer[i] = RadiationTables::get_h_Niel(chipa,400,1e-15);
-
-            //std::cout << rank << " " << buffer[i] << std::endl;
 
             if (100.*i >= length_table[rank]*pct)
             {
@@ -1415,12 +1414,12 @@ double RadiationTables::get_h_Niel(double chipa,
     double nu;
     double I, dI;
     double K23, K53, dK;
-    double h = 0;
+    double h = 0.;
     int    i;
 
     // Gauss-Legendre coefs between log10(1E-20)
     // and log10(50.) = 1.6989700043360187
-    userFunctions::gauss_legendre_coef(-20,1.6989700043360187, gauleg_x,
+    userFunctions::gauss_legendre_coef(-20.,log10(50.), gauleg_x,
             gauleg_w, nbit, eps);
 
     for(i=0 ; i< nbit ; i++)
@@ -1432,12 +1431,13 @@ double RadiationTables::get_h_Niel(double chipa,
 
         userFunctions::modified_bessel_IK(2./3.,nu,I,dI,K23,dK,50000,eps);
 
-        h += ( 2.*pow(chipa,3)*pow(nu,3) / pow(2. + 3.*nu*chipa,3)*K53 )
-          +  ( 54.*pow(chipa,5)*pow(nu,4) / pow(2. + 3.*nu*chipa,5)*K23 );
+        h += gauleg_w[i]*log(10.)*nu
+          *  (( 2.*pow(chipa*nu,3) / pow(2. + 3.*nu*chipa,3)*K53 )
+          +  ( 54.*pow(chipa,5)*pow(nu,4) / pow(2. + 3.*nu*chipa,5)*K23 ));
 
     }
 
-    return h*9.*sqrt(3.)/(4.*M_PI);
+    return 9.*sqrt(3.)/(4.*M_PI)*h;
 
 }
 
