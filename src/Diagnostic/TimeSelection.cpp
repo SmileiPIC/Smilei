@@ -1,5 +1,6 @@
 #include "TimeSelection.h"
 #include "PyTools.h"
+#include <math.h>
 
 using namespace std;
 
@@ -8,21 +9,21 @@ using namespace std;
 TimeSelection::TimeSelection(PyObject* timeSelection, string name)
 {
     
-    start   = 0;
-    end     = maxint;
-    period  = 1;
+    start   = 0.;
+    end     = std::numeric_limits<double>::max();
+    period  = 1.;
     repeat  = 1;
-    spacing = 1;
+    spacing = 1.;
     
     // If the selection is an int
     if( PyNumber_Check(timeSelection) ) {
         
         // Interpret as the period
         if( !PyTools::convert(timeSelection, period) )
-            ERROR(name << ": time selection must be an integer or a list of integers");
+            ERROR(name << ": time selection must be a number or a list of numbers");
         // If zero, no output, ever
         if( !period ) {
-            start = maxint;
+            start = std::numeric_limits<double>::max();
             return;
         }
         
@@ -39,31 +40,31 @@ TimeSelection::TimeSelection(PyObject* timeSelection, string name)
             ERROR(name << ": time selection must not have more than 5 arguments");
         
         // Extract all values
-        vector<int> items (nitems);
+        vector<double> items (nitems);
         for( int i=0; i<nitems; i++ )
             if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, i), items[i]))
-                ERROR(name << ": time selection must be a list of integers");
+                ERROR(name << ": time selection must be a list of numbers");
         
         // Depending on the number of values, they mean different things (see doc)
         if        ( nitems==1 ) {
             if(items[0]) period  = items[0];
         } else if ( nitems==2 ) {
-            if(items[0]) start   = items[0];
+            if(items[0]) start   = (int)round(items[0]);
             if(items[1]) period  = items[1];
         } else if ( nitems==3 ) {
-            if(items[0]) start   = items[0];
-            if(items[1]) end     = items[1];
+            if(items[0]) start   = (int)round(items[0]);
+            if(items[1]) end     = (int)round(items[1]);
             if(items[2]) period  = items[2];
         } else if ( nitems==4 ) {
-            if(items[0]) start   = items[0];
-            if(items[1]) end     = items[1];
+            if(items[0]) start   = (int)round(items[0]);
+            if(items[1]) end     = (int)round(items[1]);
             if(items[2]) period  = items[2];
-            if(items[3]) repeat  = items[3];
+            if(items[3]) repeat  = (int)round(items[3]);
         } else if ( nitems==5 ) {
-            if(items[0]) start   = items[0];
-            if(items[1]) end     = items[1];
+            if(items[0]) start   = (int)round(items[0]);
+            if(items[1]) end     = (int)round(items[1]);
             if(items[2]) period  = items[2];
-            if(items[3]) repeat  = items[3];
+            if(items[3]) repeat  = (int)round(items[3]);
             if(items[4]) spacing = items[4];
         }
         
@@ -71,20 +72,22 @@ TimeSelection::TimeSelection(PyObject* timeSelection, string name)
         
     } else {
         
-        ERROR(name << ": time selection (`every`) must be an integer or a list of integers");
+        ERROR(name << ": time selection (`every`) must be a number or a list of numbers");
         
     }
     
+    // Calculate the smallest interval
+    SmallestInterval = (repeat<=1) ? ((int)period) : ((int)spacing);
     // Calculate the group width
-    groupWidth = (repeat-1)*spacing + 1;
+    groupWidth = (repeat-1)*spacing + 1.;
     
     // Verify a few things
-    if( period<1 )
-        ERROR(name << ": time selection's period must be > 0");
+    if( period<1. )
+        ERROR(name << ": time selection's period must be >= 1.");
     if( repeat<1 )
-        ERROR(name << ": time selection's repeat must be > 0");
-    if( spacing<1 )
-        ERROR(name << ": time selection's spacing must be > 0");
+        ERROR(name << ": time selection's repeat must be >= 1");
+    if( spacing<1. )
+        ERROR(name << ": time selection's spacing must be >= 1.");
     if( groupWidth > period )
         ERROR(name << ": time selection must have repeat*spacing<period");
     
@@ -94,15 +97,15 @@ TimeSelection::TimeSelection(PyObject* timeSelection, string name)
 // Empty time selection
 TimeSelection::TimeSelection()
 {
-    start   = maxint;
-    end     = maxint;
-    period  = 1;
+    start   = std::numeric_limits<double>::max();
+    end     = std::numeric_limits<double>::max();
+    period  = 1.;
     repeat  = 1;
-    spacing = 1;
-    groupWidth   = 0;
+    spacing = 1.;
+    groupWidth   = 0.;
     TheTimeIsNow = false;
-    NextTime     = maxint;
-    PreviousTime = maxint;
+    NextTime     = std::numeric_limits<int>::max();
+    PreviousTime = std::numeric_limits<int>::max();
 }
 
 // Cloning Constructor
@@ -126,10 +129,14 @@ bool TimeSelection::theTimeIsNow(int timestep)
     TheTimeIsNow = false;
     // In selection if inside the start/end bounds
     if( timestep>=start && timestep<=end ) {
-        // Calculate the remainder to the period
-        int r = (timestep - start) % period; 
-        // The time is now if the remainder is a multiple of the spacing, but still inside the group
-        if( r%spacing==0 && r<groupWidth ) TheTimeIsNow = true;
+        // Calculate the number of timesteps since the start
+        double t = (double)timestep - start + 0.5;
+        // Calculate the time from the previous period
+        t -= floor(t/period)*period;
+        // If within group, calculate the time to the previous repeat
+        if( t < groupWidth ) t -= floor(t/spacing)*spacing;
+        // The time is now if closest repeat it within 0.5
+        if( t < 1. ) TheTimeIsNow = true;
     }
     return TheTimeIsNow;
 }
@@ -142,19 +149,20 @@ int TimeSelection::nextTime(int timestep)
     if( timestep<=start ) { 
         NextTime = start;
     } else if( timestep>end ) { 
-        NextTime = maxint;
+        NextTime = std::numeric_limits<int>::max();
     } else {
-        int t = timestep-start; // timestep with offset
-        int p = t / period;     // current period
-        int r = t % period;     // remainder to the current period
+        double t = (double)(timestep)-start + 0.5; // number of timesteps since the start
+        double p = floor(t/period)*period; // previous period
+        double T = t - p; // time to the previous period
         
-        // If inside a group
-        if( r < groupWidth ) {
-            if( r%spacing==0 ) { NextTime = timestep; } // return current timestep if good
-            else { NextTime = start + p * period + (r/spacing+1)*spacing; } // otherwise, return next good timestep
+        // If within group
+        if( T < groupWidth ) {
+            double r = floor(T/spacing)*spacing; // previous repeat
+            if( T-r < 1. ) { NextTime = timestep; } // return current timestep if good
+            else { NextTime = (int) (start + round(p + r + spacing)); } // otherwise, return next repeat
         // If after group, return next group's beginning
         } else {
-            NextTime = start + (p+1) * period;
+            NextTime = (int) (start + round(p+period));
         }
     }
     return NextTime;
@@ -166,54 +174,22 @@ int TimeSelection::nextTime(int timestep)
 int TimeSelection::previousTime(int timestep)
 {
     if( timestep<start ) {
-        PreviousTime = minint;
+        PreviousTime = std::numeric_limits<int>::min();
     } else if( timestep>=end ) {
         PreviousTime = end;
     } else {
-        int t = timestep-start; // timestep with offset
-        int p = t / period;     // current period
-        int r = t % period;     // remainder to the current period
+        double t = (double)(timestep)-start + 0.5; // number of timesteps since the start
+        double p = floor(t/period)*period; // previous period
+        double T = t - p; // time to the previous period
         
-        // If inside a group
-        if( r < groupWidth ) {
-            PreviousTime = start + p * period + (r/spacing)*spacing; // return previous good timestep
+        // If within group
+        if( T < groupWidth ) {
+            PreviousTime = (int) (start + round(p + floor(T/spacing)*spacing)); // return previous good timestep
         // If after group, return end of that group
         } else {
-            PreviousTime = start + p * period + groupWidth - 1;
+            PreviousTime = (int) (start + round(p + groupWidth - 1));
         }
     }
     return PreviousTime;
-}
-
-
-// Get the number of selected times between min and max timesteps
-int TimeSelection::numberOfEvents(int tmin, int tmax)
-{
-    if( tmin<start ) tmin = start;
-    if( tmin>end   ) tmax = end;
-    if( tmax<start ) tmax = start;
-    if( tmax>end   ) tmax = end;
-    
-    if( tmax<tmin ) return 0;
-    
-    int N = 0;
-    
-    // Work out the period containing tmin
-    tmin -= start; // min timestep with offset
-    int pmin = tmin / period;   // current period
-    int rmin = tmin % period;   // remainder to the current period
-    if( rmin < groupWidth ) N += (groupWidth-rmin-1)/spacing + 1; // Add the times in the current group
-    
-    // Work out the period containing tmax
-    tmax -= start; // timesteps with offset
-    int pmax = tmax / period;   // current period
-    int rmax = tmax % period;   // remainder to the current period
-    if( rmax < groupWidth ) N += rmax/spacing + 1; // Add the times in the current group
-    else                    N += repeat          ; // or add the full group
-    
-    // Add the other periods
-    N += (pmax-pmin-1) * repeat;
-    
-    return N;
 }
 

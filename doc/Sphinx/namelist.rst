@@ -1648,7 +1648,7 @@ Time selections
 Several components (mainly diagnostics) may require a selection of timesteps to
 be chosen by the user. When one of these timesteps is reached, the diagnostics will
 output data. A time selection is given through the parameter ``every`` and is a list
-of several integers.
+of several numbers.
 
 You may chose between five different syntaxes::
   
@@ -1683,6 +1683,7 @@ For more clarity, this graph illustrates the five syntaxes for time selections:
   * The syntax ``every = period`` is also accepted.
   * Any value set to ``0`` will be replaced by the default value.
   * Special case: ``every=0`` means no output.
+  * The numbers may be non-integers (apart from ``repeat``). The closest timesteps are chosen.
 
 ----
 
@@ -1699,6 +1700,8 @@ A few things are important to know when you need dumps and restarts.
 * Do not restart the simulation in the same directory as the previous one. Files will be 
   overwritten, and errors may occur. Create a new directory for your restarted simulation.
 * Manage your memory: each process dumps one file, and the total can be significant.
+* each MPI process will write its own hdf5 checkpoint file whicch will have the format `dump-XXXXX-YYYYYYYYYY.h5` 
+  where `XXXXX` is the sequence file (see below) and `YYYYYYYYYY` is the mpi rank.
 
 ::
 

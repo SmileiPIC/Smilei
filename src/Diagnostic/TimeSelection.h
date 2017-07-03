@@ -46,36 +46,30 @@ public:
     inline int previousTime() { return PreviousTime; };
     
     //! Get the smallest interval between two selected timesteps
-    inline int smallestInterval() { return (repeat==1) ? period : spacing; };
+    inline int smallestInterval() { return SmallestInterval; };
     
     //! Tell whether the timestep is between start and end
     inline bool inProgress(int timestep) { return timestep>=start && timestep<=end; };
     
     //! Tell whether this is an empty selection (no timesteps)
-    inline bool isEmpty() { return period ? false : true; };
-    
-    //! Get the number of times in the selection
-    int numberOfEvents(int tmin, int tmax);
+    inline bool isEmpty() { return period>0. ? false : true; };
     
 private:
     //! Starting timestep
-    int start;
+    double start;
     //! Ending timestep
-    int end;
+    double end;
     //! Period between each group
-    int period;
+    double period;
     //! Number of repeats inside each group
     int repeat;
     //! Spacing between each repeat
-    int spacing;
+    double spacing;
     
+    //! Smallest interval between two selected timesteps
+    int SmallestInterval;
     //! Width of each group
-    int groupWidth;
-    
-    //! Maximum integer
-    int maxint = std::numeric_limits<int>::max();
-    //! Minimum integer
-    int minint = std::numeric_limits<int>::min();
+    double groupWidth;
     
     //! Last answer of theTimeIsNow(int timestep)
     bool TheTimeIsNow;
