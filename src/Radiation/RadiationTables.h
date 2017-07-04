@@ -122,7 +122,7 @@ class RadiationTables
         //! \param smpi Object of class SmileiMPI containing MPI properties
         void compute_h_table(SmileiMPI *smpi);
 
-        //! Generate table values for Integration of F/chi: Integfochi
+        //! Generate table values for Integration of F/chi: integfochi_table
         //! \param smpi Object of class SmileiMPI containing MPI properties
         void compute_integfochi_table(SmileiMPI *smpi);
 
@@ -141,7 +141,7 @@ class RadiationTables
         //! Write in a file table values of the h table
         void output_h_table();
 
-        //! Write in a file table values for Integration of F/chi: Integfochi
+        //! Write in a file table values for Integration of F/chi: integfochi_table
         void output_integfochi_table();
 
         //! Write in a file the table xip_chiphmin and xip
@@ -211,28 +211,28 @@ class RadiationTables
         std::vector<double > h_table;
 
         //! Minimum boundary of the table h
-        double chipa_h_min;
+        double h_chipa_min;
 
         //! Log10 of the minimum boundary of the table h
-        double log10_chipa_h_min;
+        double h_log10_chipa_min;
 
         //! Maximum boundary of the table h
-        double chipa_h_max;
+        double h_chipa_max;
 
         //! Delta chi for the table h
-        double chipa_h_delta;
+        double h_chipa_delta;
 
         //! Dimension of the array h
-        int chipa_h_dim;
+        int h_dim;
 
         //! Inverse delta chi for the table h
-        double chipa_h_inv_delta;
+        double h_chipa_inv_delta;
 
         //! This variable is true if the table is computed, false if read
         bool h_computed;
 
         // ---------------------------------------------
-        // Table Integfochi
+        // Table integfochi
         // ---------------------------------------------
 
         //! Array containing tabulated values for the computation
@@ -240,25 +240,25 @@ class RadiationTables
         //! (which is also the optical depth for the Monte-Carlo process).
         //! This table is the integration of the Synchrotron emissivity
         //! refers to as F over the quantum parameter Chi.
-        std::vector<double > Integfochi;
+        std::vector<double > integfochi_table;
 
-        //! Minimum boundary of the table Integfochi
-        double chipa_integfochi_min;
+        //! Minimum boundary of the table integfochi_table
+        double integfochi_chipa_min;
 
-        //! Log10 of the minimum boundary of the table Integfochi
-        double log10_chipa_integfochi_min;
+        //! Log10 of the minimum boundary of the table integfochi_table
+        double integfochi_log10_chipa_min;
 
-        //! Maximum boundary of the table Integfochi
-        double chipa_integfochi_max;
+        //! Maximum boundary of the table integfochi_table
+        double integfochi_chipa_max;
 
-        //! Delta chi for the table Integfochi
-        double delta_chipa_integfochi;
+        //! Delta chi for the table integfochi_table
+        double integfochi_chipa_delta;
 
-        //! Inverse delta chi for the table Integfochi
-        double inv_delta_chipa_integfochi;
+        //! Inverse delta chi for the table integfochi_table
+        double integfochi_chipa_inv_delta;
 
-        //! Dimension of the array Integfochi
-        int dim_integfochi;
+        //! Dimension of the array integfochi_table
+        int integfochi_dim;
 
         //! This variable is true if the table is computed, false if read
         bool integfochi_computed;

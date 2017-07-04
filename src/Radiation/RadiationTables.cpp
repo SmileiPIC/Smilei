@@ -27,7 +27,7 @@
 // -----------------------------------------------------------------------------
 RadiationTables::RadiationTables()
 {
-    Integfochi.resize(0);
+    integfochi_table.resize(0);
     xip_chiphmin_table.resize(0);
     xip_table.resize(0);
 
@@ -79,18 +79,18 @@ void RadiationTables::initParams(Params& params)
         {
 
             // Extraction of the parameter from the input file
-            PyTools::extract("chipa_h_min", chipa_h_min, "RadiationLoss");
-            PyTools::extract("chipa_h_max", chipa_h_max, "RadiationLoss");
-            PyTools::extract("h_dim", chipa_h_dim, "RadiationLoss");
-            PyTools::extract("chipa_integfochi_min", chipa_integfochi_min, "RadiationLoss");
-            PyTools::extract("chipa_integfochi_max", chipa_integfochi_max, "RadiationLoss");
-            PyTools::extract("integfochi_dim", dim_integfochi, "RadiationLoss");
-            PyTools::extract("chipa_xip_min", chipa_xip_min, "RadiationLoss");
-            PyTools::extract("chipa_xip_max", chipa_xip_max, "RadiationLoss");
+            PyTools::extract("h_chipa_min", h_chipa_min, "RadiationLoss");
+            PyTools::extract("h_chipa_max", h_chipa_max, "RadiationLoss");
+            PyTools::extract("h_dim", h_dim, "RadiationLoss");
+            PyTools::extract("integfochi_chipa_min", integfochi_chipa_min, "RadiationLoss");
+            PyTools::extract("integfochi_chipa_max", integfochi_chipa_max, "RadiationLoss");
+            PyTools::extract("integfochi_dim", integfochi_dim, "RadiationLoss");
+            PyTools::extract("xip_chipa_min", chipa_xip_min, "RadiationLoss");
+            PyTools::extract("xip_chipa_max", chipa_xip_max, "RadiationLoss");
             PyTools::extract("xip_power", xip_power, "RadiationLoss");
             PyTools::extract("xip_threshold", xip_threshold, "RadiationLoss");
-            PyTools::extract("chipa_xip_dim", chipa_xip_dim, "RadiationLoss");
-            PyTools::extract("chiph_xip_dim", chiph_xip_dim, "RadiationLoss");
+            PyTools::extract("xip_chipa_dim", chipa_xip_dim, "RadiationLoss");
+            PyTools::extract("xip_chiph_dim", chiph_xip_dim, "RadiationLoss");
             PyTools::extract("output_format", output_format, "RadiationLoss");
 
             // Path to the databases
@@ -102,8 +102,8 @@ void RadiationTables::initParams(Params& params)
 
             // Additional regularly used parameters
             log10_chipa_xip_min = log10(chipa_xip_min);
-            log10_chipa_integfochi_min = log10(chipa_integfochi_min);
-            log10_chipa_h_min = log10(chipa_h_min);
+            integfochi_log10_chipa_min = log10(integfochi_chipa_min);
+            h_log10_chipa_min = log10(h_chipa_min);
             inv_chiph_xip_dim_minus_one = 1./(chiph_xip_dim - 1.);
         }
     }
@@ -137,10 +137,10 @@ void RadiationTables::initParams(Params& params)
     // Some additional checks
     if (params.hasMCRadiation)
     {
-        if (chipa_integfochi_min >= chipa_integfochi_max)
+        if (integfochi_chipa_min >= integfochi_chipa_max)
         {
-            ERROR("chipa_integfochi_min (" << chipa_integfochi_min
-                    << ") >= chipa_integfochi_max (" << chipa_integfochi_max << ")")
+            ERROR("integfochi_chipa_min (" << integfochi_chipa_min
+                    << ") >= integfochi_chipa_max (" << integfochi_chipa_max << ")")
         }
         if (chipa_xip_min >= chipa_xip_max)
         {
@@ -319,23 +319,23 @@ void RadiationTables::compute_h_table(SmileiMPI *smpi)
         // Get the number of ranks
         nb_ranks = smpi->getSize();
 
-        // Allocation of the array Integfochi
-        h_table.resize(chipa_h_dim);
+        // Allocation of the array integfochi_table
+        h_table.resize(h_dim);
 
         // Allocation of the table for load repartition
         imin_table = new int[nb_ranks];
         length_table = new int[nb_ranks];
 
         // Computation of the delta
-        chipa_h_delta = (log10(chipa_h_max)
-                - log10_chipa_h_min)/(chipa_h_dim-1);
+        h_chipa_delta = (log10(h_chipa_max)
+                - h_log10_chipa_min)/(h_dim-1);
 
         // Inverse delta
-        chipa_h_inv_delta = 1./chipa_h_delta;
+        h_chipa_inv_delta = 1./h_chipa_delta;
 
         // Load repartition
         userFunctions::distribute_load_1d_table(nb_ranks,
-                chipa_h_dim,
+                h_dim,
                 imin_table,
                 length_table);
 
@@ -360,8 +360,8 @@ void RadiationTables::compute_h_table(SmileiMPI *smpi)
         // Loop over the table values
         for(int i = 0 ; i < length_table[rank] ; i++)
         {
-            chipa = pow(10.,(imin_table[rank] + i)*chipa_h_delta
-                  + log10_chipa_h_min);
+            chipa = pow(10.,(imin_table[rank] + i)*h_chipa_delta
+                  + h_log10_chipa_min);
 
             // 100 iterations is in theory sufficient to get the convergence
             // at 1e-15
@@ -442,23 +442,23 @@ void RadiationTables::compute_integfochi_table(SmileiMPI *smpi)
         // Get the number of ranks
         nb_ranks = smpi->getSize();
 
-        // Allocation of the array Integfochi
-        Integfochi.resize(dim_integfochi);
+        // Allocation of the array integfochi_table
+        integfochi_table.resize(integfochi_dim);
 
         // Allocation of the table for load repartition
         imin_table = new int[nb_ranks];
         length_table = new int[nb_ranks];
 
         // Computation of the delta
-        delta_chipa_integfochi = (log10(chipa_integfochi_max)
-                - log10_chipa_integfochi_min)/(dim_integfochi-1);
+        integfochi_chipa_delta = (log10(integfochi_chipa_max)
+                - integfochi_log10_chipa_min)/(integfochi_dim-1);
 
         // Inverse delta
-        inv_delta_chipa_integfochi = 1./delta_chipa_integfochi;
+        integfochi_chipa_inv_delta = 1./integfochi_chipa_delta;
 
         // Load repartition
         userFunctions::distribute_load_1d_table(nb_ranks,
-                dim_integfochi,
+                integfochi_dim,
                 imin_table,
                 length_table);
 
@@ -483,8 +483,8 @@ void RadiationTables::compute_integfochi_table(SmileiMPI *smpi)
         // Loop over the table values
         for(int i = 0 ; i < length_table[rank] ; i++)
         {
-            chipa = pow(10.,(imin_table[rank] + i)*delta_chipa_integfochi
-                  + log10_chipa_integfochi_min);
+            chipa = pow(10.,(imin_table[rank] + i)*integfochi_chipa_delta
+                  + integfochi_log10_chipa_min);
 
             buffer[i] = RadiationTables::compute_integfochi(chipa,
                     0.98e-40*chipa,0.98*chipa,400,1e-15);
@@ -500,15 +500,15 @@ void RadiationTables::compute_integfochi_table(SmileiMPI *smpi)
 
         // Communication of the data
         MPI_Allgatherv(&buffer[0], length_table[rank], MPI_DOUBLE,
-                &Integfochi[0], &length_table[0], &imin_table[0],
+                &integfochi_table[0], &length_table[0], &imin_table[0],
                 MPI_DOUBLE, smpi->getGlobalComm());
 
         // Print array after communications
         /*
            if (rank==1) {
-           for (int i=0 ; i< dim_integfochi ; i++)
+           for (int i=0 ; i< integfochi_dim ; i++)
            {
-           std::cout << Integfochi[i] << std::endl;
+           std::cout << integfochi_table[i] << std::endl;
            }
            }
          */
@@ -812,13 +812,13 @@ void RadiationTables::output_h_table()
 
             file << "Dimension chipa - chipa min - chipa max \n";
 
-            file << chipa_h_dim;
+            file << h_dim;
             file << " "
-                << chipa_h_min << " "
-                << chipa_h_max << "\n";;
+                << h_chipa_min << " "
+                << h_chipa_max << "\n";;
 
             // Loop over the table values
-            for(int i = 0 ; i < chipa_h_dim ; i++)
+            for(int i = 0 ; i < h_dim ; i++)
             {
                 file <<  h_table[i] << "\n";
             }
@@ -833,12 +833,12 @@ void RadiationTables::output_h_table()
 
         if (file.is_open()) {
 
-            file.write((char*)&chipa_h_dim,sizeof (chipa_h_dim));
-            file.write((char*)&chipa_h_min, sizeof (double));
-            file.write((char*)&chipa_h_max, sizeof (double));
+            file.write((char*)&h_dim,sizeof (h_dim));
+            file.write((char*)&h_chipa_min, sizeof (double));
+            file.write((char*)&h_chipa_max, sizeof (double));
 
             // Loop over the table values
-            for(int i = 0 ; i < chipa_h_dim ; i++)
+            for(int i = 0 ; i < h_dim ; i++)
             {
                 file.write((char*)&h_table[i], sizeof (double));
             }
@@ -878,7 +878,7 @@ void RadiationTables::output_h_table()
         }
 
         // Create the data space for the dataset.
-        dims = chipa_h_dim;
+        dims = h_dim;
         dataspaceId = H5Screate_simple(1, &dims, NULL);
 
         // Creation of the dataset
@@ -894,9 +894,9 @@ void RadiationTables::output_h_table()
                  &h_table[0]);
 
         // Create attributes
-        H5::attr(datasetId, "chipa_min", chipa_h_min);
-        H5::attr(datasetId, "chipa_max", chipa_h_max);
-        H5::attr(datasetId, "chipa_dim", chipa_h_dim);
+        H5::attr(datasetId, "chipa_min", h_chipa_min);
+        H5::attr(datasetId, "chipa_max", h_chipa_max);
+        H5::attr(datasetId, "chipa_dim", h_dim);
 
         // Close everything
         H5Dclose(datasetId);
@@ -931,15 +931,15 @@ void RadiationTables::output_integfochi_table()
 
             file << "Dimension chipa - chipa min - chipa max \n";
 
-            file << dim_integfochi ;
+            file << integfochi_dim ;
             file << " "
-                << chipa_integfochi_min << " "
-                << chipa_integfochi_max << "\n";;
+                << integfochi_chipa_min << " "
+                << integfochi_chipa_max << "\n";;
 
             // Loop over the table values
-            for(int i = 0 ; i < dim_integfochi ; i++)
+            for(int i = 0 ; i < integfochi_dim ; i++)
             {
-                file <<  Integfochi[i] << "\n";
+                file <<  integfochi_table[i] << "\n";
             }
 
             file.close();
@@ -954,17 +954,17 @@ void RadiationTables::output_integfochi_table()
 
             double temp0, temp1;
 
-            temp0 = chipa_integfochi_min;
-            temp1 = chipa_integfochi_max;
+            temp0 = integfochi_chipa_min;
+            temp1 = integfochi_chipa_max;
 
-            file.write((char*)&dim_integfochi,sizeof (dim_integfochi));
+            file.write((char*)&integfochi_dim,sizeof (integfochi_dim));
             file.write((char*)&temp0, sizeof (double));
             file.write((char*)&temp1, sizeof (double));
 
             // Loop over the table values
-            for(int i = 0 ; i < dim_integfochi ; i++)
+            for(int i = 0 ; i < integfochi_dim ; i++)
             {
-                file.write((char*)&Integfochi[i], sizeof (double));
+                file.write((char*)&integfochi_table[i], sizeof (double));
             }
 
             file.close();
@@ -1002,7 +1002,7 @@ void RadiationTables::output_integfochi_table()
         }
 
         // Create the data space for the dataset.
-        dims = dim_integfochi;
+        dims = integfochi_dim;
         dataspaceId = H5Screate_simple(1, &dims, NULL);
 
         // Creation of the dataset
@@ -1015,12 +1015,12 @@ void RadiationTables::output_integfochi_table()
         // Fill the dataset
         H5Dwrite(datasetId, H5T_NATIVE_DOUBLE,
                  H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                 &Integfochi[0]);
+                 &integfochi_table[0]);
 
         // Create attributes
-        H5::attr(datasetId, "chipa_min", chipa_integfochi_min);
-        H5::attr(datasetId, "chipa_max", chipa_integfochi_max);
-        H5::attr(datasetId, "chipa_dim", dim_integfochi);
+        H5::attr(datasetId, "chipa_min", integfochi_chipa_min);
+        H5::attr(datasetId, "chipa_max", integfochi_chipa_max);
+        H5::attr(datasetId, "chipa_dim", integfochi_dim);
 
         // Close everything
         H5Dclose(datasetId);
@@ -1238,29 +1238,29 @@ double RadiationTables::compute_dNphdt(double chipa,double gfpa)
     logchipa = log10(chipa);
 
     // Lower index for interpolation in the table integfochi
-    ichipa = int(floor((logchipa-log10_chipa_integfochi_min)
-                 *inv_delta_chipa_integfochi));
+    ichipa = int(floor((logchipa-integfochi_log10_chipa_min)
+                 *integfochi_chipa_inv_delta));
 
     // If we are not in the table...
     if (ichipa < 0)
     {
         ichipa = 0;
-        dNphdt = Integfochi[ichipa];
+        dNphdt = integfochi_table[ichipa];
     }
-    else if (ichipa >= dim_integfochi-1)
+    else if (ichipa >= integfochi_dim-1)
     {
-        ichipa = dim_integfochi-2;
-        dNphdt = Integfochi[ichipa];
+        ichipa = integfochi_dim-2;
+        dNphdt = integfochi_table[ichipa];
     }
     else
     {
         // Upper and lower values for linear interpolation
-        logchipam = ichipa*delta_chipa_integfochi + log10_chipa_integfochi_min;
-        logchipap = logchipam + delta_chipa_integfochi;
+        logchipam = ichipa*integfochi_chipa_delta + integfochi_log10_chipa_min;
+        logchipap = logchipam + integfochi_chipa_delta;
 
         // Interpolation
-        dNphdt = (Integfochi[ichipa+1]*fabs(logchipa-logchipam) +
-                Integfochi[ichipa]*fabs(logchipap - logchipa))*inv_delta_chipa_integfochi;
+        dNphdt = (integfochi_table[ichipa+1]*fabs(logchipa-logchipam) +
+                integfochi_table[ichipa]*fabs(logchipap - logchipa))*integfochi_chipa_inv_delta;
     }
 
     /*std::cerr << "factor_dNphdt: " << factor_dNphdt << " "
@@ -1268,9 +1268,9 @@ double RadiationTables::compute_dNphdt(double chipa,double gfpa)
               << "chipa: " << chipa << " "
               << "ichipa: " << ichipa << " "
               << "" << logchipam << " < logchipa: " << logchipa << " < " << logchipap << " "
-              << "delta_chipa_integfochi: " << delta_chipa_integfochi << " "
-              << "Integfochi[ichipa]: " << Integfochi[ichipa] << " "
-              << "Integfochi[ichipa+1]: " << Integfochi[ichipa+1] << " "
+              << "integfochi_chipa_delta: " << integfochi_chipa_delta << " "
+              << "integfochi_table[ichipa]: " << integfochi_table[ichipa] << " "
+              << "integfochi_table[ichipa+1]: " << integfochi_table[ichipa+1] << " "
               << std::endl;*/
 
     return factor_dNphdt*dNphdt*chipa/gfpa;
@@ -1473,18 +1473,18 @@ bool RadiationTables::read_h_table(SmileiMPI *smpi)
             {
 
                 // Read the header
-                file.read((char*)&chipa_h_dim,
-                          sizeof (chipa_h_dim));
-                file.read((char*)&chipa_h_min,
-                          sizeof (chipa_h_min));
-                file.read((char*)&chipa_h_max,
-                          sizeof (chipa_h_max));
+                file.read((char*)&h_dim,
+                          sizeof (h_dim));
+                file.read((char*)&h_chipa_min,
+                          sizeof (h_chipa_min));
+                file.read((char*)&h_chipa_max,
+                          sizeof (h_chipa_max));
 
-                // Resize of the array Integfochi before reading
-                h_table.resize(chipa_h_dim);
+                // Resize of the array integfochi_table before reading
+                h_table.resize(h_dim);
 
                 // Read the table values
-                file.read((char*)&h_table[0], sizeof (double)*chipa_h_dim);
+                file.read((char*)&h_table[0], sizeof (double)*h_dim);
 
                 file.close();
             }
@@ -1515,12 +1515,12 @@ bool RadiationTables::read_h_table(SmileiMPI *smpi)
                  table_exists = true;
 
                  // First, we read attributes
-                 H5::getAttr(datasetId, "chipa_dim", chipa_h_dim);
-                 H5::getAttr(datasetId, "chipa_min", chipa_h_min);
-                 H5::getAttr(datasetId, "chipa_max", chipa_h_max);
+                 H5::getAttr(datasetId, "chipa_dim", h_dim);
+                 H5::getAttr(datasetId, "chipa_min", h_chipa_min);
+                 H5::getAttr(datasetId, "chipa_max", h_chipa_max);
 
-                 // Resize of the array Integfochi before reading
-                 h_table.resize(chipa_h_dim);
+                 // Resize of the array integfochi_table before reading
+                 h_table.resize(h_dim);
 
                  // then the dataset
                  H5Dread(datasetId,
@@ -1549,11 +1549,11 @@ bool RadiationTables::read_h_table(SmileiMPI *smpi)
 
         MESSAGE("            Reading of the external database");
         MESSAGE("            Dimension quantum parameter: "
-                             << chipa_h_dim);
+                             << h_dim);
         MESSAGE("            Minimum particle quantum parameter chi: "
-                             << chipa_h_min);
+                             << h_chipa_min);
         MESSAGE("            Maximum particle quantum parameter chi: "
-                             << chipa_h_max);
+                             << h_chipa_max);
 
         // Bcast the table to all MPI ranks
         RadiationTables::bcast_h_table(smpi);
@@ -1591,17 +1591,17 @@ bool RadiationTables::read_integfochi_table(SmileiMPI *smpi)
             {
 
                 // Read the header
-                file.read((char*)&dim_integfochi,sizeof (dim_integfochi));
-                file.read((char*)&chipa_integfochi_min,
-                          sizeof (chipa_integfochi_min));
-                file.read((char*)&chipa_integfochi_max,
-                          sizeof (chipa_integfochi_max));
+                file.read((char*)&integfochi_dim,sizeof (integfochi_dim));
+                file.read((char*)&integfochi_chipa_min,
+                          sizeof (integfochi_chipa_min));
+                file.read((char*)&integfochi_chipa_max,
+                          sizeof (integfochi_chipa_max));
 
-                // Resize of the array Integfochi before reading
-                Integfochi.resize(dim_integfochi);
+                // Resize of the array integfochi_table before reading
+                integfochi_table.resize(integfochi_dim);
 
                 // Read the table values
-                file.read((char*)&Integfochi[0], sizeof (double)*dim_integfochi);
+                file.read((char*)&integfochi_table[0], sizeof (double)*integfochi_dim);
 
                 file.close();
             }
@@ -1632,18 +1632,18 @@ bool RadiationTables::read_integfochi_table(SmileiMPI *smpi)
                  table_exists = true;
 
                  // First, we read attributes
-                 H5::getAttr(datasetId, "chipa_dim", dim_integfochi);
-                 H5::getAttr(datasetId, "chipa_min", chipa_integfochi_min);
-                 H5::getAttr(datasetId, "chipa_max", chipa_integfochi_max);
+                 H5::getAttr(datasetId, "chipa_dim", integfochi_dim);
+                 H5::getAttr(datasetId, "chipa_min", integfochi_chipa_min);
+                 H5::getAttr(datasetId, "chipa_max", integfochi_chipa_max);
 
-                 // Resize of the array Integfochi before reading
-                 Integfochi.resize(dim_integfochi);
+                 // Resize of the array integfochi_table before reading
+                 integfochi_table.resize(integfochi_dim);
 
                  // then the dataset
                  H5Dread(datasetId,
                         H5T_NATIVE_DOUBLE, H5S_ALL,
                         H5S_ALL, H5P_DEFAULT,
-                        &Integfochi[0]);
+                        &integfochi_table[0]);
 
                  H5Dclose(datasetId);
                  H5Fclose(fileId);
@@ -1665,9 +1665,9 @@ bool RadiationTables::read_integfochi_table(SmileiMPI *smpi)
     {
 
         MESSAGE("            Reading of the external database");
-        MESSAGE("            Dimension quantum parameter: " << dim_integfochi);
-        MESSAGE("            Minimum particle quantum parameter chi: " << chipa_integfochi_min);
-        MESSAGE("            Maximum particle quantum parameter chi: " << chipa_integfochi_max);
+        MESSAGE("            Dimension quantum parameter: " << integfochi_dim);
+        MESSAGE("            Minimum particle quantum parameter chi: " << integfochi_chipa_min);
+        MESSAGE("            Maximum particle quantum parameter chi: " << integfochi_chipa_max);
 
         // Bcast the table to all MPI ranks
         RadiationTables::bcast_integfochi_table(smpi);
@@ -1831,7 +1831,7 @@ void RadiationTables::bcast_h_table(SmileiMPI *smpi)
         buf_size = position;
         MPI_Pack_size(2, MPI_DOUBLE, smpi->getGlobalComm(), &position);
         buf_size += position;
-        MPI_Pack_size(chipa_h_dim, MPI_DOUBLE, smpi->getGlobalComm(),
+        MPI_Pack_size(h_dim, MPI_DOUBLE, smpi->getGlobalComm(),
                       &position);
         buf_size += position;
     }
@@ -1848,14 +1848,14 @@ void RadiationTables::bcast_h_table(SmileiMPI *smpi)
     if (smpi->getRank() == 0)
     {
         position = 0;
-        MPI_Pack(&chipa_h_dim,
+        MPI_Pack(&h_dim,
              1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
-        MPI_Pack(&chipa_h_min,
+        MPI_Pack(&h_chipa_min,
              1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
-        MPI_Pack(&chipa_h_max,
+        MPI_Pack(&h_chipa_max,
              1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
 
-        MPI_Pack(&h_table[0],chipa_h_dim,
+        MPI_Pack(&h_table[0],h_dim,
             MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
 
     }
@@ -1868,28 +1868,28 @@ void RadiationTables::bcast_h_table(SmileiMPI *smpi)
     {
         position = 0;
         MPI_Unpack(buffer, buf_size, &position,
-                   &chipa_h_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
+                   &h_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
         MPI_Unpack(buffer, buf_size, &position,
-                   &chipa_h_min, 1, MPI_DOUBLE,smpi->getGlobalComm());
+                   &h_chipa_min, 1, MPI_DOUBLE,smpi->getGlobalComm());
         MPI_Unpack(buffer, buf_size, &position,
-                   &chipa_h_max, 1, MPI_DOUBLE,smpi->getGlobalComm());
+                   &h_chipa_max, 1, MPI_DOUBLE,smpi->getGlobalComm());
 
         // Resize table before unpacking values
-        h_table.resize(chipa_h_dim);
+        h_table.resize(h_dim);
 
         MPI_Unpack(buffer, buf_size, &position,&h_table[0],
-                    chipa_h_dim, MPI_DOUBLE,smpi->getGlobalComm());
+                    h_dim, MPI_DOUBLE,smpi->getGlobalComm());
 
     }
 
-    log10_chipa_h_min = log10(chipa_h_min);
+    h_log10_chipa_min = log10(h_chipa_min);
 
     // Computation of the delta
-    chipa_h_delta = (log10(chipa_h_max)
-            - log10_chipa_h_min)/(chipa_h_dim-1);
+    h_chipa_delta = (log10(h_chipa_max)
+            - h_log10_chipa_min)/(h_dim-1);
 
     // Inverse delta
-    chipa_h_inv_delta = 1./chipa_h_delta;
+    h_chipa_inv_delta = 1./h_chipa_delta;
 }
 
 // -----------------------------------------------------------------------------
@@ -1916,7 +1916,7 @@ void RadiationTables::bcast_integfochi_table(SmileiMPI *smpi)
         buf_size = position;
         MPI_Pack_size(2, MPI_DOUBLE, smpi->getGlobalComm(), &position);
         buf_size += position;
-        MPI_Pack_size(dim_integfochi, MPI_DOUBLE, smpi->getGlobalComm(),
+        MPI_Pack_size(integfochi_dim, MPI_DOUBLE, smpi->getGlobalComm(),
                       &position);
         buf_size += position;
     }
@@ -1933,14 +1933,14 @@ void RadiationTables::bcast_integfochi_table(SmileiMPI *smpi)
     if (smpi->getRank() == 0)
     {
         position = 0;
-        MPI_Pack(&dim_integfochi,
+        MPI_Pack(&integfochi_dim,
              1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
-        MPI_Pack(&chipa_integfochi_min,
+        MPI_Pack(&integfochi_chipa_min,
              1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
-        MPI_Pack(&chipa_integfochi_max,
+        MPI_Pack(&integfochi_chipa_max,
              1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
 
-        MPI_Pack(&Integfochi[0],dim_integfochi,
+        MPI_Pack(&integfochi_table[0],integfochi_dim,
             MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
 
     }
@@ -1953,28 +1953,28 @@ void RadiationTables::bcast_integfochi_table(SmileiMPI *smpi)
     {
         position = 0;
         MPI_Unpack(buffer, buf_size, &position,
-                   &dim_integfochi, 1, MPI_INTEGER,smpi->getGlobalComm());
+                   &integfochi_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
         MPI_Unpack(buffer, buf_size, &position,
-                   &chipa_integfochi_min, 1, MPI_DOUBLE,smpi->getGlobalComm());
+                   &integfochi_chipa_min, 1, MPI_DOUBLE,smpi->getGlobalComm());
         MPI_Unpack(buffer, buf_size, &position,
-                   &chipa_integfochi_max, 1, MPI_DOUBLE,smpi->getGlobalComm());
+                   &integfochi_chipa_max, 1, MPI_DOUBLE,smpi->getGlobalComm());
 
         // Resize table before unpacking values
-        Integfochi.resize(dim_integfochi);
+        integfochi_table.resize(integfochi_dim);
 
-        MPI_Unpack(buffer, buf_size, &position,&Integfochi[0],
-                    dim_integfochi, MPI_DOUBLE,smpi->getGlobalComm());
+        MPI_Unpack(buffer, buf_size, &position,&integfochi_table[0],
+                    integfochi_dim, MPI_DOUBLE,smpi->getGlobalComm());
 
     }
 
-    log10_chipa_integfochi_min = log10(chipa_integfochi_min);
+    integfochi_log10_chipa_min = log10(integfochi_chipa_min);
 
     // Computation of the delta
-    delta_chipa_integfochi = (log10(chipa_integfochi_max)
-            - log10_chipa_integfochi_min)/(dim_integfochi-1);
+    integfochi_chipa_delta = (log10(integfochi_chipa_max)
+            - integfochi_log10_chipa_min)/(integfochi_dim-1);
 
     // Inverse delta
-    inv_delta_chipa_integfochi = 1./delta_chipa_integfochi;
+    integfochi_chipa_inv_delta = 1./integfochi_chipa_delta;
 }
 
 // -----------------------------------------------------------------------------

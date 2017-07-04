@@ -355,20 +355,20 @@ class RadiationLoss(SmileiComponent):
     (classical continuous, quantum correction, stochastics and MC algorithms)
     """
     # Table h parameters
-    chipa_h_min = 1e-3
-    chipa_h_max = 1e1
+    h_chipa_min = 1e-3
+    h_chipa_max = 1e1
     h_dim = 128
     # Table integfochi parameters
-    chipa_integfochi_min = 1e-3
-    chipa_integfochi_max = 1e1
+    integfochi_chipa_min = 1e-3
+    integfochi_chipa_max = 1e1
     integfochi_dim = 128
     # Table xip_chiphmin and xip parameters
-    chipa_xip_min = 1e-3
-    chipa_xip_max = 1e1
+    xip_chipa_min = 1e-3
+    xip_chipa_max = 1e1
     xip_power = 4
     xip_threshold = 1e-3
-    chipa_xip_dim = 128
-    chiph_xip_dim = 128
+    xip_chipa_dim = 128
+    xip_chiph_dim = 128
     # Output format, can be "ascii", "binary", "hdf5"
     output_format = "hdf5"
     # Threshold on chipa between the continuous and

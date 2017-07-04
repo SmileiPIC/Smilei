@@ -128,17 +128,6 @@ for i,radiation in enumerate(radiation_list):
     )
 
 RadiationLoss(
-    chipa_integfochi_min = 1e-4,
-    chipa_integfochi_max = 1e1,
-    integfochi_dim = 10,
-
-    chipa_xip_min = 1e-4,
-    chipa_xip_max = 1e1,
-    xip_power = 4,
-    xip_threshold = 1e-3,
-    chipa_xip_dim = 10,
-    chiph_xip_dim = 10,
-
     chipa_disc_min_threshold = 1e-2
 )
 
