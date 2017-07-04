@@ -365,7 +365,7 @@ void RadiationTables::compute_h_table(SmileiMPI *smpi)
 
             // 100 iterations is in theory sufficient to get the convergence
             // at 1e-15
-            buffer[i] = RadiationTables::get_h_Niel(chipa,400,1e-15);
+            buffer[i] = RadiationTables::compute_h_Niel(chipa,400,1e-15);
 
             if (100.*i >= length_table[rank]*pct)
             {
@@ -1405,7 +1405,7 @@ double RadiationTables::compute_sync_emissivity_ritus(double chipa,
 //! \param nbit number of iterations for the Gauss-Legendre integration
 //! \param eps epsilon for the modified bessel function
 // -----------------------------------------------------------------------------
-double RadiationTables::get_h_Niel(double chipa,
+double RadiationTables::compute_h_Niel(double chipa,
         int nbit, double eps)
 {
     // Arrays for Gauss-Legendre integration
@@ -1440,6 +1440,28 @@ double RadiationTables::get_h_Niel(double chipa,
     return 9.*sqrt(3.)/(4.*M_PI)*h;
 
 }
+
+// -----------------------------------------------------------------------------
+//! Return the value of the function h(chipa) of Niel et al.
+//! from the computed table h_table
+//! \param chipa particle quantum parameter
+// -----------------------------------------------------------------------------
+double RadiationTables::get_h_Niel_from_table(double chipa)
+{
+    int ichipa;
+    double d;
+
+    // Position in the h_table
+    d = (log10(chipa)-h_log10_chipa_min)*h_chipa_inv_delta;
+    ichipa = int(floor(d));
+
+    // distance for interpolation
+    d = d - floor(d);
+
+    // Linear interpolation
+    return h_table[ichipa]*(1.-d) + h_table[ichipa+1]*(d);
+}
+
 
 // -----------------------------------------------------------------------------
 // TABLE READING

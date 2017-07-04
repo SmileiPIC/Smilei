@@ -67,15 +67,18 @@ class RadiationTables
         //! \param chipa particle quantum parameter
         double compute_chiph_emission(double chipa);
 
-        // -----------------------------------------------------------------------------
         //! Return the value of the function h(chipa) of Niel et al.
         //! Use an integration of Gauss-Legendre
         //
         //! \param chipa particle quantum parameter
         //! \param nbit number of iterations for the Gauss-Legendre integration
         //! \param eps epsilon for the modified bessel function
-        // -----------------------------------------------------------------------------
-        double get_h_Niel(double chipa,int nbit, double eps);
+        double compute_h_Niel(double chipa,int nbit, double eps);
+
+        //! Return the value of the function h(chipa) of Niel et al.
+        //! from the computed table h_table
+        //! \param chipa particle quantum parameter
+        double get_h_Niel_from_table(double chipa);
 
         //! Computation of the corrected continuous quantum radiated energy
         //! during dt from the quantum parameter chipa using the Ridgers
