@@ -48,18 +48,15 @@ def _smilei_check():
                 my_pattern=DumpRestart.restart_dir + os.sep + "checkpoints" + os.sep
                 if DumpRestart.file_grouping :
                     my_pattern += "*"+ os.sep
-                my_pattern += "dump-*-" + '%*s'%(int(math.log10(smilei_mpi_size))+1, smilei_mpi_rank) + ".h5";
-                my_files=glob.glob(my_pattern)
+                my_pattern += "dump-*-*.h5";
+                # pick those file that match the mpi rank
+                my_files = filter(lambda a: smilei_mpi_rank==int(re.search(r'dump-[0-9]*-([0-9])*.h5$',a).groups()[-1]),glob.glob(my_pattern))
+
                 if DumpRestart.restart_number:
-                    my_pattern=DumpRestart.restart_dir+ os.sep+r'.*'+os.sep+r'dump-([0-9]*)-[0-9]*.h5'
-                    for my_file in my_files:
-                        my_re=re.search(my_pattern,my_file)
-                        if my_re and len(my_re.groups()):
-                            my_num=int(my_re.groups()[-1])
-                            if my_num == DumpRestart.restart_number:
-                                DumpRestart.restart_files.append(my_file)            
-                else:
-                    DumpRestart.restart_files = my_files
+                    # pick those file that match the restart_number
+                    my_files = filter(lambda a: DumpRestart.restart_number==int(re.search(r'dump-([0-9]*)-[0-9]*.h5$',a).groups()[-1]),my_files)
+
+                DumpRestart.restart_files = my_files
         
                 if not len(DumpRestart.restart_files):
                     raise Exception(
