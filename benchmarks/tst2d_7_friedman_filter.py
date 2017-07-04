@@ -8,7 +8,7 @@
 #           DiagScalar, DiagPhase or ExtField
 #
 import math as m
-    #DumpRestart(
+    #Checkpoints(
             #restart_dir = "/ccc/scratch/cont003/gen7678/grassia/Results/Test_S45Laser",
             #        dump_step = 20000,
             #dump_minutes = 240.,

@@ -1738,7 +1738,7 @@ A few things are important to know when you need dumps and restarts.
 
 ::
 
-  DumpRestart(
+  Checkpoints(
       restart_dir = "dump1",
       dump_step = 10000,
       dump_minutes = 240.,

@@ -21,17 +21,17 @@ def _smilei_check():
     # Verify classes were not overriden
     for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
             "DiagProbe","DiagParticleBinning", "DiagScalar","DiagFields","ExtField",
-            "SmileiSingleton","Main","DumpRestart","LoadBalancing","MovingWindow"]:
+            "SmileiSingleton","Main","Checkpoints","LoadBalancing","MovingWindow"]:
         CheckClass = globals()[CheckClassName]
         try:
             if not CheckClass._verify: raise Exception("")
         except:
             raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
     # Checkpoint: prepare dir tree
-    if smilei_mpi_rank == 0 and (DumpRestart.dump_step>0 or DumpRestart.dump_minutes>0.):
+    if smilei_mpi_rank == 0 and (Checkpoints.dump_step>0 or Checkpoints.dump_minutes>0.):
         checkpoint_dir = "." + os.sep + "checkpoints" + os.sep
-        if DumpRestart.file_grouping :
-            ngroups = smilei_mpi_size/DumpRestart.file_grouping+1
+        if Checkpoints.file_grouping :
+            ngroups = smilei_mpi_size/Checkpoints.file_grouping+1
             ngroups_chars = int(math.log10(ngroups))+1
             for group in range(ngroups):
                 group_dir = checkpoint_dir + '%*s'%(ngroups_chars,group)
@@ -39,9 +39,9 @@ def _smilei_check():
         else:
             _mkdir("checkpoint", checkpoint_dir)
     # Checkpoint: Verify the restart_dir
-    if len(DumpRestart)==1 and DumpRestart.restart_dir:
-        if not os.path.isdir(DumpRestart.restart_dir):
-            raise Exception("ERROR in the namelist: restart_dir = `"+DumpRestart.restart_dir+"` is not a directory")
+    if len(Checkpoints)==1 and Checkpoints.restart_dir:
+        if not os.path.isdir(Checkpoints.restart_dir):
+            raise Exception("ERROR in the namelist: restart_dir = `"+Checkpoints.restart_dir+"` is not a directory")
     # Verify that constant() and tconstant() were not redefined
     if not hasattr(constant, "_reserved") or not hasattr(tconstant, "_reserved"):
         raise Exception("Names `constant` and `tconstant` cannot be overriden")

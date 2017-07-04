@@ -247,8 +247,8 @@ class MovingWindow(SmileiSingleton):
     velocity_x = 1.
 
 
-class DumpRestart(SmileiSingleton):
-    """Dump and restart parameters"""
+class Checkpoints(SmileiSingleton):
+    """Checkpoints parameters"""
     
     restart_dir = None
     restart_number = None
@@ -382,8 +382,11 @@ smilei_mpi_rank = 0
 smilei_mpi_size = 1
 smilei_rand_max = 2**31-1
 
-# DEPRECATION ERROR
+# DEPRECATION ERRORS
 class DiagParticles(object):
     def __init__(self, *args, **kwargs):
         raise Exception("Deprecated `DiagParticles()` must be replaced by `DiagParticleBinning()`")
+class DumpRestart(object):
+    def __init__(self, *args, **kwargs):
+        raise Exception("Deprecated `DumpRestart()` must be replaced by `Checkpoints()`")
 

@@ -28,11 +28,15 @@ In the namelist
 
 - Parameter ``isTest`` renamed :py:data:`is_test`
 
+- Parameter ``dynamics_type`` renamed :py:data:`pusher`
+
 - Parameter ``boxSide`` renamed :py:data:`box_side`
 
 - Parameter ``polarizationPhi`` renamed :py:data:`polarization_phi`
 
 - Parameter ``dump_file_sequence`` renamed :py:data:`keep_n_dumps`
+
+- Block ``DumpRestart`` renamed :ref:`Checkpoints <Checkpoints>`
 
 - Diagnostic ``DiagParticles`` renamed :ref:`DiagParticleBinning <DiagParticleBinning>`
 

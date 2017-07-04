@@ -48,31 +48,31 @@ file_grouping(0),
 restart_number(-1)
 {
     
-    if( PyTools::nComponents("DumpRestart") > 0 ) {
+    if( PyTools::nComponents("Checkpoints") > 0 ) {
         
-        if (PyTools::extract("dump_step", dump_step, "DumpRestart")) {
+        if (PyTools::extract("dump_step", dump_step, "Checkpoints")) {
             if (dump_step)
                 MESSAGE(1,"Code will dump after " << dump_step << " steps");
         }
         
-        if (PyTools::extract("dump_minutes", dump_minutes, "DumpRestart")) {
+        if (PyTools::extract("dump_minutes", dump_minutes, "Checkpoints")) {
             if (dump_minutes>0)
                 MESSAGE(1,"Code will stop after " << dump_minutes << " minutes");
         }
         
-        PyTools::extract("keep_n_dumps", keep_n_dumps, "DumpRestart");
+        PyTools::extract("keep_n_dumps", keep_n_dumps, "Checkpoints");
         if(keep_n_dumps<1) keep_n_dumps=1;
         
-        PyTools::extract("exit_after_dump", exit_after_dump, "DumpRestart");
+        PyTools::extract("exit_after_dump", exit_after_dump, "Checkpoints");
         
-        PyTools::extract("dump_deflate", dump_deflate, "DumpRestart");
+        PyTools::extract("dump_deflate", dump_deflate, "Checkpoints");
         
-        if (PyTools::extract("file_grouping", file_grouping, "DumpRestart") && file_grouping > 0) {
+        if (PyTools::extract("file_grouping", file_grouping, "Checkpoints") && file_grouping > 0) {
             if( file_grouping > (unsigned int)(smpi->getSize()) ) file_grouping = smpi->getSize();
             MESSAGE(1,"Code will group checkpoint files by "<< file_grouping);
         }
     
-        if (PyTools::extract("restart_number", restart_number, "DumpRestart") && restart_number >= 0) {
+        if (PyTools::extract("restart_number", restart_number, "Checkpoints") && restart_number >= 0) {
             MESSAGE(1,"Code will restart from checkpoint number " << restart_number);
         }
         

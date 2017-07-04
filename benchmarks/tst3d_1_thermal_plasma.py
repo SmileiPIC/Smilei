@@ -91,7 +91,7 @@ Species(
     ],
 )
 
-DumpRestart(
+Checkpoints(
     dump_step = 0,
     dump_minutes = 0.0,
     exit_after_dump = False,

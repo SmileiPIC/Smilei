@@ -72,7 +72,7 @@ LaserGaussian3D(
     time_envelope   = tgaussian(center=2**0.5*laser_fwhm, fwhm=laser_fwhm)
 )
 
-DumpRestart(
+Checkpoints(
     dump_step = 0,
     dump_minutes = 0.0,
     exit_after_dump = False,
