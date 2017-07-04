@@ -47,8 +47,8 @@ gamma = 1000./0.511                     # Electron bunch initial energy
 v = math.sqrt(1 - 1./gamma**2)          # electron bunch initial velocity
 
 pusher = "vay"                         # dynamic type
-radiation_list = ["Monte-Carlo","corrected-Landau-Lifshitz"]  # List of radiation models
-species_name_list = ["disc","cont"]            # Name of the species
+radiation_list = ["Monte-Carlo","corrected-Landau-Lifshitz","Niel"]  # List of radiation models
+species_name_list = ["disc","cont","Niel"]            # Name of the species
 
 # ______________________________________________________________________________
 # Functions
@@ -134,6 +134,8 @@ DiagScalar(
     every = 100,
     vars=['Ukin_electron_disc',
           'Ukin_electron_cont',
+          'Ukin_electron_Niel',
           'Urad_electron_disc',
-          'Urad_electron_cont']
+          'Urad_electron_cont',
+          'Urad_electron_Niel']
 )

@@ -10,8 +10,9 @@
 # profile of wavelength \lambda.
 #
 # Validation:
-# - Discontinuous radiation loss
-# - Continuous radiation loss
+# - Monte-Carlo radiation model
+# - Landau-Lifshitz radiation model
+# - Niel stochastic radiation model
 # ______________________________________________________________________________
 
 import os, re, numpy as np, h5py
@@ -20,7 +21,7 @@ from Smilei import *
 S = Smilei(".", verbose=False)
 
 # List of relativistic pushers
-radiation_list = ["cont","disc"]
+radiation_list = ["cont","disc","Niel"]
 
 ukin_dict = {}
 urad_dict = {}
@@ -60,13 +61,25 @@ for radiation in radiation_list:
 # ______________________________________________________________________________
 # Comparision continuous and discontinuous methods
 
-urad_rel_err = abs(urad_dict["disc"] - urad_dict["cont"]) / urad_dict["cont"].max()
-ukin_rel_err = abs(ukin_dict["disc"] - ukin_dict["cont"]) / ukin_dict["cont"][0]
+urad_rel_err_MC = abs(urad_dict["disc"] - urad_dict["cont"]) / urad_dict["cont"].max()
+ukin_rel_err_MC = abs(ukin_dict["disc"] - ukin_dict["cont"]) / ukin_dict["cont"][0]
 
-print ' Comparision continuous/discontinuous methods'
-print ' Maximum relative error kinetic energy',ukin_rel_err.max()
-print ' Maximum relative error radiative energy',urad_rel_err.max()
+urad_rel_err_Niel = abs(urad_dict["Niel"] - urad_dict["cont"]) / urad_dict["cont"].max()
+ukin_rel_err_Niel = abs(ukin_dict["Niel"] - ukin_dict["cont"]) / ukin_dict["cont"][0]
 
-# Validation difference between continuous and discontinuous methods
-Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err.max(), 0.03 )
-Validate("Relative error on the radiative energy / urad max " , urad_rel_err.max(), 0.03 )
+print ' Comparision Landau-Lifshitz/Monte-Carlo radiation model'
+print ' Maximum relative error kinetic energy',ukin_rel_err_MC.max()
+print ' Maximum relative error radiative energy',urad_rel_err_MC.max()
+
+print
+print ' Comparision Landau-Lifshitz/Niel radiation model'
+print ' Maximum relative error kinetic energy',ukin_rel_err_Niel.max()
+print ' Maximum relative error radiative energy',urad_rel_err_Niel.max()
+
+# Validation difference between Landau-Lifshitz and Monte-Carlo methods
+Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err_MC.max(), 0.03 )
+Validate("Relative error on the radiative energy / urad max " , urad_rel_err_MC.max(), 0.03 )
+
+# Validation difference between Landau-Lifshitz and Niel methods
+Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err_Niel.max(), 0.03 )
+Validate("Relative error on the radiative energy / urad max " , urad_rel_err_Niel.max(), 0.03 )
