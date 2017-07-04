@@ -5,11 +5,13 @@
 #
 # In this tests case, an electron bunch is initialized per radiation
 # loss models at the same positions. The magnetic field and the initial energy
-# is computed so that the initial quantum parameter is equal to 1.
+# is computed so that the initial quantum parameter is equal to 0.1
 #
 # Validation:
-# - Discontinuous radiation loss
-# - Continuous radiation loss
+# - Niel stochastic radiation loss
+# - Corrected Landau-Lifshitz radiation loss
+# - Species scalar diagnostics
+# - External fields
 # _____________________________________________________________________________
 
 import math
@@ -28,8 +30,8 @@ Enorm = electron_mass*wr*c/electron_charge        # Normalization electric field
 
 l0 = 2.0*math.pi              # laser wavelength
 
-chi = 1.                      # Initial quantum parameter
-B = 270.                      # Magnetic field strength
+chi = 0.1                      # Initial quantum parameter
+B = 90.                      # Magnetic field strength
 gamma = chi* Schwinger_E_field/(Enorm*B) # Initial gamma factor
 Rsync = math.sqrt(gamma**2 - 1.)/B            # Synchrotron radius without radiation
 v = math.sqrt(1.-1./gamma**2)                 # Initial particle velocity
@@ -54,8 +56,8 @@ dt *= dt_factor
 Tsim = 5000*dt/dt_factor                 # duration of the simulation
 
 pusher = "vay"                         # dynamic type
-radiation_list = ["Monte-Carlo","corrected-Landau-Lifshitz"]
-species_name_list = ["disc","cont"]
+radiation_list = ["Niel","corrected-Landau-Lifshitz"]
+species_name_list = ["Niel","Landau_Lifshitz"]
 
 # ______________________________________________________________________________
 # Functions
@@ -133,8 +135,8 @@ RadiationLoss(
 
 DiagScalar(
     every = 100,
-    vars=['Ukin_electron_disc',
-          'Ukin_electron_cont',
-          'Urad_electron_disc',
-          'Urad_electron_cont']
+    vars=['Ukin_electron_Niel',
+          'Ukin_electron_Landau_Lifshitz',
+          'Urad_electron_Niel',
+          'Urad_electron_Landau_Lifshitz']
 )

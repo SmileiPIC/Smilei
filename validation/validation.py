@@ -610,7 +610,8 @@ for BENCH in SMILEI_BENCH_LIST :
 
 	# Copy of the databases
 	# For the cases that need a database
-	if BENCH in ["tst2d_8_synchrotron.py",
+	if BENCH in ["tst2d_8_synchrotron_chi1.py",
+                 "tst2d_9_synchrotron_chi0.1.py",
                  "tst1d_9_rad_counter_prop.py"]:
 		try :
 			# Copy the database
