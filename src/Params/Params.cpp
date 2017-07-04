@@ -37,8 +37,8 @@ namespace Rand
     double uniform2() {
         return uniform_distribution2(gen);
     }
-    double normal(double dt) {
-        std::uniform_real_distribution<double> normal_distribution(0., dt);
+    double normal(double stddev) {
+        std::normal_distribution<double> normal_distribution(0., stddev);
         return normal_distribution(gen);
     }
 }

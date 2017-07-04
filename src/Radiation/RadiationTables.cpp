@@ -103,21 +103,21 @@ void RadiationTables::initParams(Params& params)
             PyTools::extract("integfochi_chipa_max", integfochi_chipa_max, "RadiationLoss");
             PyTools::extract("integfochi_dim", integfochi_dim, "RadiationLoss");
 
-            PyTools::extract("xip_chipa_min", chipa_xip_min, "RadiationLoss");
-            PyTools::extract("xip_chipa_max", chipa_xip_max, "RadiationLoss");
+            PyTools::extract("xip_chipa_min", xip_chipa_min, "RadiationLoss");
+            PyTools::extract("xip_chipa_max", xip_chipa_max, "RadiationLoss");
             PyTools::extract("xip_power", xip_power, "RadiationLoss");
             PyTools::extract("xip_threshold", xip_threshold, "RadiationLoss");
-            PyTools::extract("xip_chipa_dim", chipa_xip_dim, "RadiationLoss");
-            PyTools::extract("xip_chiph_dim", chiph_xip_dim, "RadiationLoss");
+            PyTools::extract("xip_chipa_dim", xip_chipa_dim, "RadiationLoss");
+            PyTools::extract("xip_chiph_dim", xip_chiph_dim, "RadiationLoss");
 
             // Discontinuous minimum threshold
             PyTools::extract("chipa_disc_min_threshold",
                              chipa_disc_min_threshold,"RadiationLoss");
 
             // Additional regularly used parameters
-            xip_log10_chipa_min = log10(chipa_xip_min);
+            xip_log10_chipa_min = log10(xip_chipa_min);
             integfochi_log10_chipa_min = log10(integfochi_chipa_min);
-            inv_chiph_xip_dim_minus_one = 1./(chiph_xip_dim - 1.);
+            xip_inv_chiph_dim_minus_one = 1./(xip_chiph_dim - 1.);
         }
 
         // With any radiation model
@@ -172,10 +172,10 @@ void RadiationTables::initParams(Params& params)
             ERROR("integfochi_chipa_min (" << integfochi_chipa_min
                     << ") >= integfochi_chipa_max (" << integfochi_chipa_max << ")")
         }
-        if (chipa_xip_min >= chipa_xip_max)
+        if (xip_chipa_min >= xip_chipa_max)
         {
-            ERROR("chipa_xip_min (" << chipa_xip_min
-                    << ") >= chipa_xip_max (" << chipa_xip_max << ")")
+            ERROR("xip_chipa_min (" << xip_chipa_min
+                    << ") >= xip_chipa_max (" << xip_chipa_max << ")")
         }
     }
     if (params.hasNielRadiation)
@@ -216,7 +216,7 @@ double RadiationTables::compute_chiph_emission(double chipa)
     // index of chipa in xip_table
     // -------------------------------
     // Use floor so that chipa corresponding to ichipa is <= given chipa
-    ichipa = int(floor((logchipa-xip_log10_chipa_min)*(inv_chipa_xip_delta)));
+    ichipa = int(floor((logchipa-xip_log10_chipa_min)*(xip_chipa_inv_delta)));
 
     // Checking that ichipa is in the range of the tables
     // Else we use the values at the boundaries
@@ -224,9 +224,9 @@ double RadiationTables::compute_chiph_emission(double chipa)
     {
         ichipa = 0;
     }
-    else if (ichipa > chipa_xip_dim-1)
+    else if (ichipa > xip_chipa_dim-1)
     {
-        ichipa = chipa_xip_dim-1;
+        ichipa = xip_chipa_dim-1;
     }
 
     // ---------------------------------------
@@ -238,32 +238,32 @@ double RadiationTables::compute_chiph_emission(double chipa)
 
     // If the randomly computed xip if below the first one of the row,
     // we take the first one which corresponds to the minimal photon chiph
-    if (xip <= xip_table[ichipa*chiph_xip_dim])
+    if (xip <= xip_table[ichipa*xip_chiph_dim])
     {
         ichiph = 0;
-        xip = xip_table[ichipa*chiph_xip_dim];
+        xip = xip_table[ichipa*xip_chiph_dim];
     }
     // Above the last xip of the row, the last one corresponds
     // to the maximal photon chiph
-    else if (xip > xip_table[(ichipa+1)*chiph_xip_dim-2])
+    else if (xip > xip_table[(ichipa+1)*xip_chiph_dim-2])
     {
-        ichiph = chiph_xip_dim-2;
-        xip = xip_table[(ichipa+1)*chiph_xip_dim-1];
-        // If nearest point: ichiph = chiph_xip_dim-1
+        ichiph = xip_chiph_dim-2;
+        xip = xip_table[(ichipa+1)*xip_chiph_dim-1];
+        // If nearest point: ichiph = xip_chiph_dim-1
     }
     else
     {
         // Search for the corresponding index ichiph for xip
         ichiph = userFunctions::search_elem_in_array(
-            &xip_table[ichipa*chiph_xip_dim],xip,chiph_xip_dim);
+            &xip_table[ichipa*xip_chiph_dim],xip,xip_chiph_dim);
     }
 
     // Corresponding chipa for ichipa
-    logchipa = ichipa*chipa_xip_delta+xip_log10_chipa_min;
+    logchipa = ichipa*xip_chipa_delta+xip_log10_chipa_min;
 
     // Delta for the corresponding chipa
     chiph_xip_delta = (logchipa - xip_chiphmin_table[ichipa])
-                    *inv_chiph_xip_dim_minus_one;
+                    *xip_inv_chiph_dim_minus_one;
 
     // --------------------------------------------------------------------
     // Compute chiph
@@ -275,7 +275,7 @@ double RadiationTables::compute_chiph_emission(double chipa)
            + xip_chiphmin_table[ichipa];
     log10_chiphp = log10_chiphm + chiph_xip_delta;
 
-    ixip = ichipa*chiph_xip_dim + ichiph;
+    ixip = ichipa*xip_chiph_dim + ichiph;
 
     d = (xip - xip_table[ixip]) / (xip_table[ixip+1] - xip_table[ixip]);
 
@@ -293,13 +293,13 @@ double RadiationTables::compute_chiph_emission(double chipa)
     // Debugging
     /*std::cerr << "ichiph: " << ichiph << " "
               << "ichipa: " << ichipa << " "
-              << "" << xip_table[ichipa*chiph_xip_dim + ichiph] << " < "
+              << "" << xip_table[ichipa*xip_chiph_dim + ichiph] << " < "
               << "xip: " << xip << " "
-              << " < " << xip_table[ichipa*chiph_xip_dim + ichiph+1] << " "
+              << " < " << xip_table[ichipa*xip_chiph_dim + ichiph+1] << " "
               << "logchipa: " << logchipa << " "
-              << "" << pow(10,(ichipa)*chipa_xip_delta + log10(chipa_xip_min)) << " < "
+              << "" << pow(10,(ichipa)*xip_chipa_delta + log10(xip_chipa_min)) << " < "
               << "chipa: " << chipa << " "
-              << pow(10,(ichipa+1)*chipa_xip_delta + log10(chipa_xip_min)) << " "
+              << pow(10,(ichipa+1)*xip_chipa_delta + log10(xip_chipa_min)) << " "
               << "chiph: " << chiph << " "
               << std::endl;*/
 
@@ -623,25 +623,25 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
         nb_ranks = smpi->getSize();
 
         // Allocation of the array xip_chiphmin_table
-        xip_chiphmin_table.resize(chipa_xip_dim);
+        xip_chiphmin_table.resize(xip_chipa_dim);
 
         // Allocation of the array xip_table
-        xip_table.resize(chipa_xip_dim*chiph_xip_dim);
+        xip_table.resize(xip_chipa_dim*xip_chiph_dim);
 
         // Allocation of the table for load repartition
         imin_table = new int[nb_ranks];
         length_table = new int[nb_ranks];
 
         // Computation of the delta
-        chipa_xip_delta = (log10(chipa_xip_max)
-                - xip_log10_chipa_min)/(chipa_xip_dim-1);
+        xip_chipa_delta = (log10(xip_chipa_max)
+                - xip_log10_chipa_min)/(xip_chipa_dim-1);
 
         // Inverse of delta
-        inv_chipa_xip_delta = 1./chipa_xip_delta;
+        xip_chipa_inv_delta = 1./xip_chipa_delta;
 
         // Load repartition
         userFunctions::distribute_load_1d_table(nb_ranks,
-                chipa_xip_dim,
+                xip_chipa_dim,
                 imin_table,
                 length_table);
 
@@ -669,7 +669,7 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
         {
 
             xip = 1;
-            logchiphmin = (imin_table[rank] + ichipa)*chipa_xip_delta
+            logchiphmin = (imin_table[rank] + ichipa)*xip_chipa_delta
                   + xip_log10_chipa_min;
             chipa = pow(10.,logchiphmin);
 
@@ -721,25 +721,25 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
         dpct = std::max(dpct,100./length_table[rank]);
 
         // Allocation of the local buffer
-        buffer = new double [length_table[rank]*chiph_xip_dim];
+        buffer = new double [length_table[rank]*xip_chiph_dim];
 
         // Loop for xip in the chipa dimension
         pct = 0;
-        dpct = std::max(dpct,100./(length_table[rank]*chiph_xip_dim));
+        dpct = std::max(dpct,100./(length_table[rank]*xip_chiph_dim));
         for(int ichipa = 0 ; ichipa < length_table[rank] ; ichipa++)
         {
 
-            chipa = pow(10.,(imin_table[rank] + ichipa)*chipa_xip_delta + xip_log10_chipa_min);
+            chipa = pow(10.,(imin_table[rank] + ichipa)*xip_chipa_delta + xip_log10_chipa_min);
 
             chiph_delta = (log10(chipa) - xip_chiphmin_table[imin_table[rank] + ichipa])
-                        / (chiph_xip_dim - 1);
+                        / (xip_chiph_dim - 1);
 
             // Denominator of xip
             denominator = RadiationTables::compute_integfochi(chipa,
                     1e-40*chipa,chipa,250,1e-15);
 
             // Loop in the chiph dimension
-            for (int ichiph = 0 ; ichiph < chiph_xip_dim ; ichiph ++)
+            for (int ichiph = 0 ; ichiph < xip_chiph_dim ; ichiph ++)
             {
                 // Local chiph value
                chiph = pow(10.,ichiph*chiph_delta +
@@ -755,26 +755,26 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
                        1e-40*chiph,chiph,250,1e-15);
 
                // Update local buffer value
-               buffer[ichipa*chiph_xip_dim + ichiph] = std::min(1.,numerator / denominator);
+               buffer[ichipa*xip_chiph_dim + ichiph] = std::min(1.,numerator / denominator);
 
                // If == 1, end of the loop
-               if (buffer[ichipa*chiph_xip_dim + ichiph] == 1)
+               if (buffer[ichipa*xip_chiph_dim + ichiph] == 1)
                {
-                   for (int i = ichiph+1 ; i < chiph_xip_dim ; i ++)
+                   for (int i = ichiph+1 ; i < xip_chiph_dim ; i ++)
                    {
-                       buffer[ichipa*chiph_xip_dim + i] = 1.;
+                       buffer[ichipa*xip_chiph_dim + i] = 1.;
                    }
-                   ichiph = chiph_xip_dim;
+                   ichiph = xip_chiph_dim;
                }
 
                // display percentage
-               if (100.*(ichipa*chiph_xip_dim+ichiph)
-                   >= length_table[rank]*chiph_xip_dim*pct)
+               if (100.*(ichipa*xip_chiph_dim+ichiph)
+                   >= length_table[rank]*xip_chiph_dim*pct)
                {
                    pct += dpct;
-                   MESSAGE( "            " << ichipa*chiph_xip_dim+ichiph + 1
+                   MESSAGE( "            " << ichipa*xip_chiph_dim+ichiph + 1
                                            << "/"
-                                           << length_table[rank]*chiph_xip_dim
+                                           << length_table[rank]*xip_chiph_dim
                                            << " - " << (int)(std::round(pct))
                                            << "%");
                }
@@ -785,8 +785,8 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
         // Update length_table and imin_table
         for (int i = 0 ; i < nb_ranks ; i++)
         {
-            length_table[i] *= chiph_xip_dim;
-            imin_table[i] *= chiph_xip_dim;
+            length_table[i] *= xip_chiph_dim;
+            imin_table[i] *= xip_chiph_dim;
         }
 
         // Communication of the xip_chiphmin table
@@ -1096,17 +1096,17 @@ void RadiationTables::output_xip_table()
 
             file << "Dimension chipa - Dimension chiph - chipa min - chipa max \n";
 
-            file << chipa_xip_dim << " "
-                 << chiph_xip_dim << " "
-                 << chipa_xip_min << " "
-                 << chipa_xip_max << "\n";;
+            file << xip_chipa_dim << " "
+                 << xip_chiph_dim << " "
+                 << xip_chipa_min << " "
+                 << xip_chipa_max << "\n";;
 
             // Loop over the xip values
-            for(int ichipa = 0 ; ichipa < chipa_xip_dim ; ichipa++)
+            for(int ichipa = 0 ; ichipa < xip_chipa_dim ; ichipa++)
             {
-                for(int ichiph = 0 ; ichiph < chiph_xip_dim ; ichiph++)
+                for(int ichiph = 0 ; ichiph < xip_chiph_dim ; ichiph++)
                 {
-                    file <<  xip_table[ichipa*chiph_xip_dim+ichiph] << " ";
+                    file <<  xip_table[ichipa*xip_chiph_dim+ichiph] << " ";
                 }
                 file << "\n";
             }
@@ -1123,19 +1123,19 @@ void RadiationTables::output_xip_table()
 
             double temp0, temp1;
 
-            temp0 = chipa_xip_min;
-            temp1 = chipa_xip_max;
+            temp0 = xip_chipa_min;
+            temp1 = xip_chipa_max;
 
-            file.write((char*)&chipa_xip_dim,sizeof (int));
-            file.write((char*)&chiph_xip_dim,sizeof (int));
+            file.write((char*)&xip_chipa_dim,sizeof (int));
+            file.write((char*)&xip_chiph_dim,sizeof (int));
             file.write((char*)&temp0, sizeof (double));
             file.write((char*)&temp1, sizeof (double));
 
             // Write all table values of xip_chimin_table
-            file.write((char*)&xip_chiphmin_table[0], sizeof (double)*chipa_xip_dim);
+            file.write((char*)&xip_chiphmin_table[0], sizeof (double)*xip_chipa_dim);
 
             // Write all table values of xip_table
-            file.write((char*)&xip_table[0], sizeof (double)*chipa_xip_dim*chiph_xip_dim);
+            file.write((char*)&xip_table[0], sizeof (double)*xip_chipa_dim*xip_chiph_dim);
 
             file.close();
         }
@@ -1172,7 +1172,7 @@ void RadiationTables::output_xip_table()
         }
 
         // Creation of the datasat chiphmin
-        dims[0] = chipa_xip_dim;
+        dims[0] = xip_chipa_dim;
         dataspaceId = H5Screate_simple(1, dims, NULL);
         datasetId = H5Dcreate(fileId,
                               "xip_chiphmin",
@@ -1186,15 +1186,15 @@ void RadiationTables::output_xip_table()
                &xip_chiphmin_table[0]);
 
         // Attribute creation
-        H5::attr(datasetId, "chipa_min", chipa_xip_min);
-        H5::attr(datasetId, "chipa_max", chipa_xip_max);
-        H5::attr(datasetId, "chipa_dim", chipa_xip_dim);
+        H5::attr(datasetId, "chipa_min", xip_chipa_min);
+        H5::attr(datasetId, "chipa_max", xip_chipa_max);
+        H5::attr(datasetId, "chipa_dim", xip_chipa_dim);
         H5::attr(datasetId, "power", xip_power);
         H5::attr(datasetId, "threshold", xip_threshold);
 
         // Creation of the datasat chiphmin xip
-        dims[0] = chipa_xip_dim;
-        dims[1] = chiph_xip_dim;
+        dims[0] = xip_chipa_dim;
+        dims[1] = xip_chiph_dim;
         dataspaceId = H5Screate_simple(2, dims, NULL);
         datasetId = H5Dcreate(fileId,
                               "xip",
@@ -1208,10 +1208,10 @@ void RadiationTables::output_xip_table()
                  &xip_table[0]);
 
         // Attribute creation
-        H5::attr(datasetId, "chipa_min", chipa_xip_min);
-        H5::attr(datasetId, "chipa_max", chipa_xip_max);
-        H5::attr(datasetId, "chipa_dim", chipa_xip_dim);
-        H5::attr(datasetId, "chiph_dim", chiph_xip_dim);
+        H5::attr(datasetId, "chipa_min", xip_chipa_min);
+        H5::attr(datasetId, "chipa_max", xip_chipa_max);
+        H5::attr(datasetId, "chipa_dim", xip_chipa_dim);
+        H5::attr(datasetId, "chiph_dim", xip_chiph_dim);
         H5::attr(datasetId, "power", xip_power);
         H5::attr(datasetId, "threshold", xip_threshold);
 
@@ -1520,7 +1520,12 @@ double RadiationTables::get_Niel_stochastic_term(double gamma,
 
     // Pick a random number in the normal distribution of standard
     // deviation sqrt(dt) (variance dt)
-    r = Rand::normal(dt);
+    r = Rand::normal(sqrt(dt));
+
+    /*std::random_device device;
+    std::mt19937 gen(device());
+    std::normal_distribution<double> normal_distribution(0., sqrt(dt));
+    r = normal_distribution(gen);*/
 
     // Debugging
     //std::cerr << h << " " << r << std::endl;
@@ -1791,20 +1796,20 @@ bool RadiationTables::read_xip_table(SmileiMPI *smpi)
             {
 
                 // Read the header
-                file.read((char*)&chipa_xip_dim,sizeof (chipa_xip_dim));
-                file.read((char*)&chiph_xip_dim,sizeof (chiph_xip_dim));
-                file.read((char*)&chipa_xip_min, sizeof (chipa_xip_min));
-                file.read((char*)&chipa_xip_max, sizeof (chipa_xip_max));
+                file.read((char*)&xip_chipa_dim,sizeof (xip_chipa_dim));
+                file.read((char*)&xip_chiph_dim,sizeof (xip_chiph_dim));
+                file.read((char*)&xip_chipa_min, sizeof (xip_chipa_min));
+                file.read((char*)&xip_chipa_max, sizeof (xip_chipa_max));
 
                 // Allocation of the array xip
-                xip_chiphmin_table.resize(chipa_xip_dim);
-                xip_table.resize(chipa_xip_dim*chiph_xip_dim);
+                xip_chiphmin_table.resize(xip_chipa_dim);
+                xip_table.resize(xip_chipa_dim*xip_chiph_dim);
 
                 // Read the table values
-                file.read((char*)&xip_chiphmin_table[0], sizeof (double)*chipa_xip_dim);
+                file.read((char*)&xip_chiphmin_table[0], sizeof (double)*xip_chipa_dim);
 
                 // Read the table values
-                file.read((char*)&xip_table[0], sizeof (double)*chipa_xip_dim*chiph_xip_dim);
+                file.read((char*)&xip_table[0], sizeof (double)*xip_chipa_dim*xip_chiph_dim);
 
                 file.close();
             }
@@ -1836,14 +1841,14 @@ bool RadiationTables::read_xip_table(SmileiMPI *smpi)
                  table_exists = true;
 
                  // First, we read attributes
-                 H5::getAttr(datasetId_xip, "chipa_dim", chipa_xip_dim);
-                 H5::getAttr(datasetId_xip, "chiph_dim", chiph_xip_dim);
-                 H5::getAttr(datasetId_xip, "chipa_min", chipa_xip_min);
-                 H5::getAttr(datasetId_xip, "chipa_max", chipa_xip_max);
+                 H5::getAttr(datasetId_xip, "chipa_dim", xip_chipa_dim);
+                 H5::getAttr(datasetId_xip, "chiph_dim", xip_chiph_dim);
+                 H5::getAttr(datasetId_xip, "chipa_min", xip_chipa_min);
+                 H5::getAttr(datasetId_xip, "chipa_max", xip_chipa_max);
 
                  // Allocation of the array xip
-                 xip_chiphmin_table.resize(chipa_xip_dim);
-                 xip_table.resize(chipa_xip_dim*chiph_xip_dim);
+                 xip_chiphmin_table.resize(xip_chipa_dim);
+                 xip_table.resize(xip_chipa_dim*xip_chiph_dim);
 
                  // then the dataset for chiphmin
                  H5Dread(datasetId_chiphmin,
@@ -1878,10 +1883,10 @@ bool RadiationTables::read_xip_table(SmileiMPI *smpi)
     {
 
         MESSAGE("            Reading of the external database");
-        MESSAGE("            Dimension particle chi: " << chipa_xip_dim);
-        MESSAGE("            Dimension photon chi: " << chiph_xip_dim);
-        MESSAGE("            Minimum particle chi: " << chipa_xip_min);
-        MESSAGE("            Maximum particle chi: " << chipa_xip_max);
+        MESSAGE("            Dimension particle chi: " << xip_chipa_dim);
+        MESSAGE("            Dimension photon chi: " << xip_chiph_dim);
+        MESSAGE("            Minimum particle chi: " << xip_chipa_min);
+        MESSAGE("            Maximum particle chi: " << xip_chipa_max);
 
         // Bcast the table to all MPI ranks
         RadiationTables::bcast_xip_table(smpi);
@@ -2088,10 +2093,10 @@ void RadiationTables::bcast_xip_table(SmileiMPI *smpi)
         buf_size = position;
         MPI_Pack_size(2, MPI_DOUBLE, smpi->getGlobalComm(), &position);
         buf_size += position;
-        MPI_Pack_size(chipa_xip_dim, MPI_DOUBLE, smpi->getGlobalComm(),
+        MPI_Pack_size(xip_chipa_dim, MPI_DOUBLE, smpi->getGlobalComm(),
                       &position);
         buf_size += position;
-        MPI_Pack_size(chipa_xip_dim*chiph_xip_dim, MPI_DOUBLE,
+        MPI_Pack_size(xip_chipa_dim*xip_chiph_dim, MPI_DOUBLE,
                       smpi->getGlobalComm(), &position);
         buf_size += position;
     }
@@ -2108,19 +2113,19 @@ void RadiationTables::bcast_xip_table(SmileiMPI *smpi)
     if (smpi->getRank() == 0)
     {
         position = 0;
-        MPI_Pack(&chipa_xip_dim,
+        MPI_Pack(&xip_chipa_dim,
              1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
-        MPI_Pack(&chiph_xip_dim,
+        MPI_Pack(&xip_chiph_dim,
              1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
-        MPI_Pack(&chipa_xip_min,
+        MPI_Pack(&xip_chipa_min,
              1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
-        MPI_Pack(&chipa_xip_max,
+        MPI_Pack(&xip_chipa_max,
              1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
 
-        MPI_Pack(&xip_chiphmin_table[0],chipa_xip_dim,
+        MPI_Pack(&xip_chiphmin_table[0],xip_chipa_dim,
             MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
 
-        MPI_Pack(&xip_table[0],chipa_xip_dim*chiph_xip_dim,
+        MPI_Pack(&xip_table[0],xip_chipa_dim*xip_chiph_dim,
             MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
     }
 
@@ -2132,36 +2137,36 @@ void RadiationTables::bcast_xip_table(SmileiMPI *smpi)
     {
         position = 0;
         MPI_Unpack(buffer, buf_size, &position,
-                   &chipa_xip_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
+                   &xip_chipa_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
         MPI_Unpack(buffer, buf_size, &position,
-                   &chiph_xip_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
+                   &xip_chiph_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
         MPI_Unpack(buffer, buf_size, &position,
-                   &chipa_xip_min, 1, MPI_DOUBLE,smpi->getGlobalComm());
+                   &xip_chipa_min, 1, MPI_DOUBLE,smpi->getGlobalComm());
         MPI_Unpack(buffer, buf_size, &position,
-                   &chipa_xip_max, 1, MPI_DOUBLE,smpi->getGlobalComm());
+                   &xip_chipa_max, 1, MPI_DOUBLE,smpi->getGlobalComm());
 
         // Resize tables before unpacking values
-        xip_chiphmin_table.resize(chipa_xip_dim);
-        xip_table.resize(chipa_xip_dim*chiph_xip_dim);
+        xip_chiphmin_table.resize(xip_chipa_dim);
+        xip_table.resize(xip_chipa_dim*xip_chiph_dim);
 
         MPI_Unpack(buffer, buf_size, &position,&xip_chiphmin_table[0],
-                    chipa_xip_dim, MPI_DOUBLE,smpi->getGlobalComm());
+                    xip_chipa_dim, MPI_DOUBLE,smpi->getGlobalComm());
 
         MPI_Unpack(buffer, buf_size, &position,&xip_table[0],
-            chipa_xip_dim*chiph_xip_dim, MPI_DOUBLE,smpi->getGlobalComm());
+            xip_chipa_dim*xip_chiph_dim, MPI_DOUBLE,smpi->getGlobalComm());
     }
 
-    // Log10 of chipa_xip_min for efficiency
-    xip_log10_chipa_min = log10(chipa_xip_min);
+    // Log10 of xip_chipa_min for efficiency
+    xip_log10_chipa_min = log10(xip_chipa_min);
 
     // Computation of the delta
-    chipa_xip_delta = (log10(chipa_xip_max)
-           - xip_log10_chipa_min)/(chipa_xip_dim-1);
+    xip_chipa_delta = (log10(xip_chipa_max)
+           - xip_log10_chipa_min)/(xip_chipa_dim-1);
 
     // Inverse of delta
-    inv_chipa_xip_delta = 1./chipa_xip_delta;
+    xip_chipa_inv_delta = 1./xip_chipa_delta;
 
     // Inverse chiph discetization (regularly used)
-    inv_chiph_xip_dim_minus_one = 1./(chiph_xip_dim - 1.);
+    xip_inv_chiph_dim_minus_one = 1./(xip_chiph_dim - 1.);
 
 }

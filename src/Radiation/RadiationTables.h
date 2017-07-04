@@ -293,30 +293,30 @@ class RadiationTables
         std::vector<double> xip_table;
 
         //! Minimum boundary for chipa in the table xip and xip_chiphmin
-        double chipa_xip_min;
+        double xip_chipa_min;
 
         //! Logarithm of the minimum boundary for chipa in the table xip
         //! and xip_chiphmin
         double xip_log10_chipa_min;
 
         //! Maximum boundary for chipa in the table xip and xip_chiphmin
-        double chipa_xip_max;
+        double xip_chipa_max;
 
         //! Delta for the chipa discretization  in the table xip and xip_chiphmin
-        double chipa_xip_delta;
+        double xip_chipa_delta;
 
         //! Inverse of the delta for the chipa discretization
         //! in the table xip and xip_chiphmin
-        double inv_chipa_xip_delta;
+        double xip_chipa_inv_delta;
 
         //! Dimension of the discretized parameter chipa
-        int chipa_xip_dim;
+        int xip_chipa_dim;
 
         //! Dimension of the discretized parameter chiph
-        int chiph_xip_dim;
+        int xip_chiph_dim;
 
-        //! 1/(chiph_xip_dim - 1)
-        double inv_chiph_xip_dim_minus_one;
+        //! 1/(xip_chiph_dim - 1)
+        double xip_inv_chiph_dim_minus_one;
 
         //! xip power
         double xip_power;
