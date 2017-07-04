@@ -80,6 +80,15 @@ class RadiationTables
         //! \param chipa particle quantum parameter
         double get_h_Niel_from_table(double chipa);
 
+        //! Return the stochastic diffusive component of the pusher
+        //! of Niel et al.
+        //! \param gamma particle Lorentz factor
+        //! \param chipa particle quantum parameter
+        //! \param dt time step
+        double get_Niel_stochastic_term(double gamma,
+                                        double chipa,
+                                        double dt);
+
         //! Computation of the corrected continuous quantum radiated energy
         //! during dt from the quantum parameter chipa using the Ridgers
         //! formulae.

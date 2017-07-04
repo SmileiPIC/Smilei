@@ -204,6 +204,9 @@ public:
     bool hasMCRadiation;
     //! Tells whether there is a species with Continuous radiation loss.
     bool hasContinuousRadiation;
+    //! Tells whether there is a species with the stochastic radiation loss
+    //! of Niel et al.
+    bool hasNielRadiation;
 
     //! Log2 of the number of patch in the whole simulation box in every direction.
     //! The number of patch in a given direction MUST be a power of 2 and is 2^(mi[i]).

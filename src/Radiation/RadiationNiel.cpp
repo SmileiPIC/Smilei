@@ -23,7 +23,7 @@
 RadiationNiel::RadiationNiel(Params& params, Species * species)
       : Radiation(params, species)
 {
-} 
+}
 
 // -----------------------------------------------------------------------------
 //! Destructor for RadiationNiel
@@ -69,7 +69,12 @@ void RadiationNiel::operator() (Particles &particles,
 
     // Temporary double parameter
     double temp;
-    double temp2;
+
+    // Radiated energy
+    double rad_energy;
+
+    // Stochastic diffusive term fo Niel et al.
+    double diffusion;
 
     // Momentum shortcut
     double* momentum[3];
@@ -111,12 +116,15 @@ void RadiationNiel::operator() (Particles &particles,
                      (*Bpart)[ipart].x,(*Bpart)[ipart].y,(*Bpart)[ipart].z);
 
         // Radiated energy during the time step
-        temp2 =
-        RadiationTables.get_classical_cont_rad_energy(chipa,dt);
+        rad_energy =
+        RadiationTables.get_corrected_cont_rad_energy_Ridgers(chipa,dt);
+
+        // Diffusive stochastic component during dt
+        diffusion = RadiationTables.get_Niel_stochastic_term(gamma,chipa,dt);
 
         // Effect on the momentum
         // Temporary factor
-        temp = temp2*gamma/(gamma*gamma-1.);
+        temp = (rad_energy - diffusion)*gamma/(gamma*gamma-1.);
 
         // Update of the momentum
         momentum[0][ipart] -= temp*momentum[0][ipart];

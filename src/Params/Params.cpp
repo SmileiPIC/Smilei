@@ -352,6 +352,7 @@ namelist("")
     // -------------------------------------------------------
     hasMCRadiation = false ;// Default value
     hasContinuousRadiation = false ;// Default value
+    hasNielRadiation = false ;// Default value
 
     // read from python namelist the number of species
     unsigned int tot_species_number = PyTools::nComponents("Species");
@@ -373,7 +374,7 @@ namelist("")
        }
        else if (radiation_model=="Niel")
        {
-
+           this->hasNielRadiation = true;
        }
     }
 
@@ -409,7 +410,9 @@ void Params::compute()
     double entered_sim_time = sim_time;
     sim_time = (double)(n_time) * timestep;
     if (sim_time!=entered_sim_time)
-        WARNING("sim_time has been redefined from " << entered_sim_time << " to " << sim_time << " to match nxtimestep (" << scientific << setprecision(4) << sim_time - entered_sim_time<< ")" );
+        WARNING("sim_time has been redefined from " << entered_sim_time
+        << " to " << sim_time << " to match nxtimestep ("
+        << scientific << setprecision(4) << sim_time - entered_sim_time<< ")" );
 
 
     // grid/cell-related parameters

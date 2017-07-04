@@ -27,13 +27,14 @@
 // -----------------------------------------------------------------------------
 RadiationTables::RadiationTables()
 {
+    h_table.resize(0);
     integfochi_table.resize(0);
     xip_chiphmin_table.resize(0);
     xip_table.resize(0);
 
+    h_computed = false;
     integfochi_computed = false;
     xip_computed = false;
-    h_computed = false;
 }
 
 // -----------------------------------------------------------------------------
@@ -53,7 +54,9 @@ RadiationTables::~RadiationTables()
 void RadiationTables::initParams(Params& params)
 {
 
-    if (params.hasMCRadiation || params.hasContinuousRadiation)
+    if (params.hasMCRadiation ||
+        params.hasContinuousRadiation ||
+        params.hasNielRadiation)
     {
         TITLE("Initializing Radiation loss")
 
@@ -66,7 +69,13 @@ void RadiationTables::initParams(Params& params)
 
     if (params.hasMCRadiation)
     {
-        MESSAGE("        The Monte-Carlo Compton radiation module is requested by some species.\n");
+        MESSAGE("        The Monte-Carlo Compton radiation module"
+        << " is requested by some species.\n");
+    }
+    if (params.hasNielRadiation)
+    {
+        MESSAGE("        The synchrotron-like stochastic radiation module"
+        << " of Niel et al. is requested by some species.\n");
     }
 
     // If the namelist for Nonlinear Inverse Compton Scattering exists
@@ -74,27 +83,32 @@ void RadiationTables::initParams(Params& params)
     if( PyTools::nComponents("RadiationLoss") != 0 )
     {
 
+        // If stochastic radiation loss is requested
+        if (params.hasNielRadiation)
+        {
+            // Extraction of the parameter from the input file
+            PyTools::extract("h_chipa_min", h_chipa_min, "RadiationLoss");
+            PyTools::extract("h_chipa_max", h_chipa_max, "RadiationLoss");
+            PyTools::extract("h_dim", h_dim, "RadiationLoss");
+
+            h_log10_chipa_min = log10(h_chipa_min);
+        }
+
         // If Monte-Carlo radiation loss is requested
         if (params.hasMCRadiation)
         {
 
             // Extraction of the parameter from the input file
-            PyTools::extract("h_chipa_min", h_chipa_min, "RadiationLoss");
-            PyTools::extract("h_chipa_max", h_chipa_max, "RadiationLoss");
-            PyTools::extract("h_dim", h_dim, "RadiationLoss");
             PyTools::extract("integfochi_chipa_min", integfochi_chipa_min, "RadiationLoss");
             PyTools::extract("integfochi_chipa_max", integfochi_chipa_max, "RadiationLoss");
             PyTools::extract("integfochi_dim", integfochi_dim, "RadiationLoss");
+
             PyTools::extract("xip_chipa_min", chipa_xip_min, "RadiationLoss");
             PyTools::extract("xip_chipa_max", chipa_xip_max, "RadiationLoss");
             PyTools::extract("xip_power", xip_power, "RadiationLoss");
             PyTools::extract("xip_threshold", xip_threshold, "RadiationLoss");
             PyTools::extract("xip_chipa_dim", chipa_xip_dim, "RadiationLoss");
             PyTools::extract("xip_chiph_dim", chiph_xip_dim, "RadiationLoss");
-            PyTools::extract("output_format", output_format, "RadiationLoss");
-
-            // Path to the databases
-            PyTools::extract("table_path", table_path, "RadiationLoss");
 
             // Discontinuous minimum threshold
             PyTools::extract("chipa_disc_min_threshold",
@@ -103,13 +117,24 @@ void RadiationTables::initParams(Params& params)
             // Additional regularly used parameters
             log10_chipa_xip_min = log10(chipa_xip_min);
             integfochi_log10_chipa_min = log10(integfochi_chipa_min);
-            h_log10_chipa_min = log10(h_chipa_min);
             inv_chiph_xip_dim_minus_one = 1./(chiph_xip_dim - 1.);
+        }
+
+        // With any radiation model
+        if (params.hasNielRadiation || params.hasMCRadiation)
+        {
+            // Format of the tables
+            PyTools::extract("output_format", output_format, "RadiationLoss");
+
+            // Path to the databases
+            PyTools::extract("table_path", table_path, "RadiationLoss");
         }
     }
 
     // Computation of some parameters
-    if (params.hasMCRadiation || params.hasContinuousRadiation)
+    if (params.hasMCRadiation ||
+        params.hasContinuousRadiation ||
+        params.hasNielRadiation)
     {
 
         // Computation of the normalized Compton wavelength
@@ -126,9 +151,14 @@ void RadiationTables::initParams(Params& params)
 
     }
 
+    // Messages...
     if (params.hasMCRadiation)
     {
         MESSAGE( "        chipa_disc_min_threshold: " << chipa_disc_min_threshold);
+    }
+    if (params.hasMCRadiation ||
+        params.hasNielRadiation)
+    {
         MESSAGE( "        table path: " << table_path);
     }
 
@@ -146,6 +176,14 @@ void RadiationTables::initParams(Params& params)
         {
             ERROR("chipa_xip_min (" << chipa_xip_min
                     << ") >= chipa_xip_max (" << chipa_xip_max << ")")
+        }
+    }
+    if (params.hasNielRadiation)
+    {
+        if (h_chipa_min >= h_chipa_max)
+        {
+            ERROR("h_chipa_min (" << h_chipa_min
+                    << ") >= h_chipa_max (" << h_chipa_max << ")")
         }
     }
 }
@@ -780,9 +818,12 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 void RadiationTables::compute_tables(Params& params, SmileiMPI *smpi)
 {
     // These tables are loaded only if if one species has Monte-Carlo Compton radiation
-    if (params.hasMCRadiation)
+    if (params.hasNielRadiation)
     {
         RadiationTables::compute_h_table(smpi);
+    }
+    if (params.hasMCRadiation)
+    {
         RadiationTables::compute_integfochi_table(smpi);
         RadiationTables::compute_xip_table(smpi);
     }
@@ -1462,6 +1503,28 @@ double RadiationTables::get_h_Niel_from_table(double chipa)
     return h_table[ichipa]*(1.-d) + h_table[ichipa+1]*(d);
 }
 
+// -----------------------------------------------------------------------------
+//! Return the stochastic diffusive component of the pusher
+//! of Niel et al.
+//! \param gamma particle Lorentz factor
+//! \param chipa particle quantum parameter
+// -----------------------------------------------------------------------------
+double RadiationTables::get_Niel_stochastic_term(double gamma,
+                                                 double chipa,
+                                                 double dt)
+{
+    // Get the value of h for the corresponding chipa
+    double h = RadiationTables::get_h_Niel_from_table(chipa);
+
+    // Pick a random number in the normal distribution of standard
+    // deviation sqrt(dt) (variance dt)
+    std::default_random_engine generator;
+    std::normal_distribution<double> distribution(0.,sqrt(dt));
+
+    double r = distribution(generator);
+
+    return sqrt(factor_dNphdt*gamma*h)*r;
+}
 
 // -----------------------------------------------------------------------------
 // TABLE READING
