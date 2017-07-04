@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------------
-//! \file RadiationNlicsCont.cpp
+//! \file RadiationCorrLandauLifshitz.cpp
 //
 //! \brief This class is for the continuous radiation loss.
 //!        This model includes a quantum correction.
@@ -9,7 +9,7 @@
 //
 // ----------------------------------------------------------------------------
 
-#include "RadiationNlicsCont.h"
+#include "RadiationCorrLandauLifshitz.h"
 
 #include <cstring>
 #include <fstream>
@@ -17,18 +17,18 @@
 #include <cmath>
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Constructor for RadiationNlicsCont
+//! Constructor for RadiationCorrLandauLifshitz
 //! Inherited from Radiation
 // ---------------------------------------------------------------------------------------------------------------------
-RadiationNlicsCont::RadiationNlicsCont(Params& params, Species * species)
+RadiationCorrLandauLifshitz::RadiationCorrLandauLifshitz(Params& params, Species * species)
       : Radiation(params, species)
 {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Destructor for RadiationNlicsCont
+//! Destructor for RadiationCorrLandauLifshitz
 // ---------------------------------------------------------------------------------------------------------------------
-RadiationNlicsCont::~RadiationNlicsCont()
+RadiationCorrLandauLifshitz::~RadiationCorrLandauLifshitz()
 {
 }
 
@@ -44,7 +44,7 @@ RadiationNlicsCont::~RadiationNlicsCont()
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
 // ---------------------------------------------------------------------------------------------------------------------
-void RadiationNlicsCont::operator() (Particles &particles,
+void RadiationCorrLandauLifshitz::operator() (Particles &particles,
         SmileiMPI* smpi,
         RadiationTables &RadiationTables,
         int istart,

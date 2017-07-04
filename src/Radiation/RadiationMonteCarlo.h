@@ -1,10 +1,10 @@
 // ----------------------------------------------------------------------------
-//! \file RadiationNlicsMC.h
+//! \file RadiationMonteCarlo.h
 //
 //! \brief This class performs the Nonlinear Inverse Compton Scattering
 //! on particles.
 //
-//! \details This header contains the definition of the class RadiationNlicsMC.
+//! \details This header contains the definition of the class RadiationMonteCarlo.
 //! The implementation is adapted from the thesis results of M. Lobet
 //! See http://www.theses.fr/2015BORD0361
 // ----------------------------------------------------------------------------
@@ -17,18 +17,18 @@
 #include "userFunctions.h"
 
 //----------------------------------------------------------------------------------------------------------------------
-//! RadiationNlicsMC class: holds parameters and functions to apply the
+//! RadiationMonteCarlo class: holds parameters and functions to apply the
 //! nonlinear inverse Compton scattering on Particles,
 //----------------------------------------------------------------------------------------------------------------------
-class RadiationNlicsMC : public Radiation {
+class RadiationMonteCarlo : public Radiation {
 
     public:
 
-        //! Constructor for RadiationNlicsMC
-        RadiationNlicsMC(Params& params, Species * species);
+        //! Constructor for RadiationMonteCarlo
+        RadiationMonteCarlo(Params& params, Species * species);
 
-        //! Destructor for RadiationNlicsMC
-        ~RadiationNlicsMC();
+        //! Destructor for RadiationMonteCarlo
+        ~RadiationMonteCarlo();
 
         // ---------------------------------------------------------------------
         //! Overloading of () operator: perform the Discontinuous radiation

@@ -1,10 +1,10 @@
 // ----------------------------------------------------------------------------
-//! \file RadiationNlicsCont.h
+//! \file RadiationCorrLandauLifshitz.h
 //
 //! \brief This class is for the continuous radiation loss.
 //!        This model includes a quantum correction.
 //
-//! \details This header contains the definition of the class RadiationNlicsCont.
+//! \details This header contains the definition of the class RadiationCorrLandauLifshitz.
 //! The implementation is adapted from the thesis results of M. Lobet
 //! See http://www.theses.fr/2015BORD0361
 // ----------------------------------------------------------------------------
@@ -17,18 +17,18 @@
 #include "userFunctions.h"
 
 //------------------------------------------------------------------------------
-//! RadiationNlicsCont class: holds parameters and functions to apply the
+//! RadiationCorrLandauLifshitz class: holds parameters and functions to apply the
 //! continuous radiation loss on particles.
 //------------------------------------------------------------------------------
-class RadiationNlicsCont : public Radiation {
+class RadiationCorrLandauLifshitz : public Radiation {
 
     public:
 
-        //! Constructor for RadiationNlicsCont
-        RadiationNlicsCont(Params& params, Species * species);
+        //! Constructor for RadiationCorrLandauLifshitz
+        RadiationCorrLandauLifshitz(Params& params, Species * species);
 
-        //! Destructor for RadiationNlicsCont
-        ~RadiationNlicsCont();
+        //! Destructor for RadiationCorrLandauLifshitz
+        ~RadiationCorrLandauLifshitz();
 
         // ---------------------------------------------------------------------
         //! Overloading of () operator: perform the discontinuous radiation

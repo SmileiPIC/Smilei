@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------------
-//! \file RadiationNlicsMC.cpp
+//! \file RadiationMonteCarlo.cpp
 //
 //! \brief This class performs the Nonlinear Inverse Compton Scattering
 //! on particles using a Monte-Carlo approach.
@@ -9,7 +9,7 @@
 //
 // ----------------------------------------------------------------------------
 
-#include "RadiationNlicsMC.h"
+#include "RadiationMonteCarlo.h"
 
 #include <cstring>
 #include <fstream>
@@ -17,18 +17,18 @@
 #include <cmath>
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Constructor for RadiationNlicsMC
+//! Constructor for RadiationMonteCarlo
 //! Inherit from Radiation
 // ---------------------------------------------------------------------------------------------------------------------
-RadiationNlicsMC::RadiationNlicsMC(Params& params, Species * species)
+RadiationMonteCarlo::RadiationMonteCarlo(Params& params, Species * species)
       : Radiation(params, species)
 {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Destructor for RadiationNlicsMC
+//! Destructor for RadiationMonteCarlo
 // ---------------------------------------------------------------------------------------------------------------------
-RadiationNlicsMC::~RadiationNlicsMC()
+RadiationMonteCarlo::~RadiationMonteCarlo()
 {
 }
 
@@ -44,7 +44,7 @@ RadiationNlicsMC::~RadiationNlicsMC()
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
 // ---------------------------------------------------------------------------------------------------------------------
-void RadiationNlicsMC::operator() (Particles &particles,
+void RadiationMonteCarlo::operator() (Particles &particles,
         SmileiMPI* smpi,
         RadiationTables &RadiationTables,
         int istart,
@@ -196,7 +196,7 @@ void RadiationNlicsMC::operator() (Particles &particles,
                     // Emission of a photon
                     //if (ipart == 1) {
 
-                        RadiationNlicsMC::photon_emission(chipa,gamma,
+                        RadiationMonteCarlo::photon_emission(chipa,gamma,
                                            momentum[0][ipart],
                                            momentum[1][ipart],
                                            momentum[2][ipart],
@@ -281,7 +281,7 @@ void RadiationNlicsMC::operator() (Particles &particles,
 //! \param RadiationTables    Cross-section data tables and useful functions
 //                        for nonlinear inverse Compton scattering
 // ---------------------------------------------------------------------------------------------------------------------
-void RadiationNlicsMC::photon_emission(double &chipa,
+void RadiationMonteCarlo::photon_emission(double &chipa,
                             double & gammapa,
                             double & px,
                             double & py,

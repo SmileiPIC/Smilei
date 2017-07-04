@@ -115,27 +115,37 @@ void RadiationNiel::operator() (Particles &particles,
                      (*Epart)[ipart].x,(*Epart)[ipart].y,(*Epart)[ipart].z,
                      (*Bpart)[ipart].x,(*Bpart)[ipart].y,(*Bpart)[ipart].z);
 
-        // Radiated energy during the time step
-        rad_energy =
-        RadiationTables.get_corrected_cont_rad_energy_Ridgers(chipa,dt);
+        // Below chipa = 1E-3, radiation losses are negligible
+        if (chipa > 1E-3)
+        {
 
-        // Diffusive stochastic component during dt
-        diffusion = RadiationTables.get_Niel_stochastic_term(gamma,chipa,dt);
+            // Radiated energy during the time step
+            rad_energy =
+            RadiationTables.get_corrected_cont_rad_energy_Ridgers(chipa,dt);
 
-        // Effect on the momentum
-        // Temporary factor
-        temp = (rad_energy - diffusion)*gamma/(gamma*gamma-1.);
+            // Diffusive stochastic component during dt
+            diffusion = RadiationTables.get_Niel_stochastic_term(gamma,
+                                                                 chipa,dt);
 
-        // Update of the momentum
-        momentum[0][ipart] -= temp*momentum[0][ipart];
-        momentum[1][ipart] -= temp*momentum[1][ipart];
-        momentum[2][ipart] -= temp*momentum[2][ipart];
+            // Effect on the momentum
+            // Temporary factor
+            temp = (rad_energy - diffusion)*gamma/(gamma*gamma-1.);
 
-        // Exact energy loss due to the radiation
-        rad_norm_energy[ipart - istart] = gamma - sqrt(1.0
-                                     + momentum[0][ipart]*momentum[0][ipart]
-                                     + momentum[1][ipart]*momentum[1][ipart]
-                                     + momentum[2][ipart]*momentum[2][ipart]);
+            // Update of the momentum
+            momentum[0][ipart] -= temp*momentum[0][ipart];
+            momentum[1][ipart] -= temp*momentum[1][ipart];
+            momentum[2][ipart] -= temp*momentum[2][ipart];
+
+            // Exact energy loss due to the radiation
+            rad_norm_energy[ipart - istart] = gamma - sqrt(1.0
+                                    + momentum[0][ipart]*momentum[0][ipart]
+                                    + momentum[1][ipart]*momentum[1][ipart]
+                                    + momentum[2][ipart]*momentum[2][ipart]);
+        }
+        else
+        {
+            rad_norm_energy[ipart - istart] = 0;
+        }
     }
 
     // _______________________________________________________________

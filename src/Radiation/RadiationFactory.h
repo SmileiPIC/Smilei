@@ -10,8 +10,8 @@
 #define RADIATIONFACTORY_H
 
 #include "Radiation.h"
-#include "RadiationNlicsMC.h"
-#include "RadiationNlicsCont.h"
+#include "RadiationMonteCarlo.h"
+#include "RadiationCorrLandauLifshitz.h"
 #include "RadiationLandauLifshitz.h"
 #include "RadiationNiel.h"
 
@@ -38,7 +38,7 @@ public:
         // assign the correct Radiation model to Radiate
         if ( species->radiation_model == "Monte-Carlo" )
         {
-            Radiate = new RadiationNlicsMC( params, species );
+            Radiate = new RadiationMonteCarlo( params, species );
         }
         // Corrected LL + stochastic diffusive operator
         else if ( species->radiation_model == "Niel")
@@ -48,7 +48,7 @@ public:
         // Corrected continuous radiation loss model
         else if ( species->radiation_model == "corrected-Landau-Lifshitz" )
         {
-            Radiate = new RadiationNlicsCont( params, species );
+            Radiate = new RadiationCorrLandauLifshitz( params, species );
         }
         // Classical continuous radiation loss model from Landau-Lifshitz (LL)
         else if ( species->radiation_model == "Landau-Lifshitz" )

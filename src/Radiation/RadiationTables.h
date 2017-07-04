@@ -46,6 +46,10 @@ class RadiationTables
         // ---------------------------------------------------------------------
 
         //! Synchrotron emissivity from Ritus
+        //! \param chipa particle quantum parameter
+        //! \param chiph photon quantum parameter
+        //! \param nbit number of iterations for the Gauss-Legendre integration
+        //! \param eps epsilon for the modified bessel function
         static double compute_sync_emissivity_ritus(double chie,
                 double chiph,
                 int nbit,
@@ -79,6 +83,11 @@ class RadiationTables
         //! from the computed table h_table
         //! \param chipa particle quantum parameter
         double get_h_Niel_from_table(double chipa);
+
+        //! Return the value of the function h(chipa) of Niel et al.
+        //! from a numerical fit
+        //! \param chipa particle quantum parameter
+        double get_h_Niel_from_fit(double chipa);
 
         //! Return the stochastic diffusive component of the pusher
         //! of Niel et al.
