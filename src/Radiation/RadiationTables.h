@@ -297,7 +297,7 @@ class RadiationTables
 
         //! Logarithm of the minimum boundary for chipa in the table xip
         //! and xip_chiphmin
-        double log10_chipa_xip_min;
+        double xip_log10_chipa_min;
 
         //! Maximum boundary for chipa in the table xip and xip_chiphmin
         double chipa_xip_max;

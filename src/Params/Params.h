@@ -44,6 +44,8 @@ namespace Rand
 
     extern std::uniform_real_distribution<double> uniform_distribution2;
     extern double uniform2();
+
+    extern double normal(double dt);
 }
 
 

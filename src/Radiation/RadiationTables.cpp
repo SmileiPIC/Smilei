@@ -115,7 +115,7 @@ void RadiationTables::initParams(Params& params)
                              chipa_disc_min_threshold,"RadiationLoss");
 
             // Additional regularly used parameters
-            log10_chipa_xip_min = log10(chipa_xip_min);
+            xip_log10_chipa_min = log10(chipa_xip_min);
             integfochi_log10_chipa_min = log10(integfochi_chipa_min);
             inv_chiph_xip_dim_minus_one = 1./(chiph_xip_dim - 1.);
         }
@@ -216,7 +216,7 @@ double RadiationTables::compute_chiph_emission(double chipa)
     // index of chipa in xip_table
     // -------------------------------
     // Use floor so that chipa corresponding to ichipa is <= given chipa
-    ichipa = int(floor((logchipa-log10_chipa_xip_min)*(inv_chipa_xip_delta)));
+    ichipa = int(floor((logchipa-xip_log10_chipa_min)*(inv_chipa_xip_delta)));
 
     // Checking that ichipa is in the range of the tables
     // Else we use the values at the boundaries
@@ -259,7 +259,7 @@ double RadiationTables::compute_chiph_emission(double chipa)
     }
 
     // Corresponding chipa for ichipa
-    logchipa = ichipa*chipa_xip_delta+log10_chipa_xip_min;
+    logchipa = ichipa*chipa_xip_delta+xip_log10_chipa_min;
 
     // Delta for the corresponding chipa
     chiph_xip_delta = (logchipa - xip_chiphmin_table[ichipa])
@@ -634,7 +634,7 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 
         // Computation of the delta
         chipa_xip_delta = (log10(chipa_xip_max)
-                - log10_chipa_xip_min)/(chipa_xip_dim-1);
+                - xip_log10_chipa_min)/(chipa_xip_dim-1);
 
         // Inverse of delta
         inv_chipa_xip_delta = 1./chipa_xip_delta;
@@ -670,7 +670,7 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 
             xip = 1;
             logchiphmin = (imin_table[rank] + ichipa)*chipa_xip_delta
-                  + log10_chipa_xip_min;
+                  + xip_log10_chipa_min;
             chipa = pow(10.,logchiphmin);
 
             // Denominator of xip
@@ -729,7 +729,7 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
         for(int ichipa = 0 ; ichipa < length_table[rank] ; ichipa++)
         {
 
-            chipa = pow(10.,(imin_table[rank] + ichipa)*chipa_xip_delta + log10_chipa_xip_min);
+            chipa = pow(10.,(imin_table[rank] + ichipa)*chipa_xip_delta + xip_log10_chipa_min);
 
             chiph_delta = (log10(chipa) - xip_chiphmin_table[imin_table[rank] + ichipa])
                         / (chiph_xip_dim - 1);
@@ -1514,14 +1514,16 @@ double RadiationTables::get_Niel_stochastic_term(double gamma,
                                                  double dt)
 {
     // Get the value of h for the corresponding chipa
-    double h = RadiationTables::get_h_Niel_from_table(chipa);
+    double h,r;
+
+    h = RadiationTables::get_h_Niel_from_table(chipa);
 
     // Pick a random number in the normal distribution of standard
     // deviation sqrt(dt) (variance dt)
-    std::default_random_engine generator;
-    std::normal_distribution<double> distribution(0.,sqrt(dt));
+    r = Rand::normal(dt);
 
-    double r = distribution(generator);
+    // Debugging
+    //std::cerr << h << " " << r << std::endl;
 
     return sqrt(factor_dNphdt*gamma*h)*r;
 }
@@ -2150,11 +2152,11 @@ void RadiationTables::bcast_xip_table(SmileiMPI *smpi)
     }
 
     // Log10 of chipa_xip_min for efficiency
-    log10_chipa_xip_min = log10(chipa_xip_min);
+    xip_log10_chipa_min = log10(chipa_xip_min);
 
     // Computation of the delta
     chipa_xip_delta = (log10(chipa_xip_max)
-           - log10_chipa_xip_min)/(chipa_xip_dim-1);
+           - xip_log10_chipa_min)/(chipa_xip_dim-1);
 
     // Inverse of delta
     inv_chipa_xip_delta = 1./chipa_xip_delta;
