@@ -157,8 +157,10 @@ namelist("")
     // --------------
 
     restart = false;
-    if( PyTools::nComponents("DumpRestart")>0 && PyTools::extract("restart", restart, "DumpRestart") && restart) {
+    std::vector<std::string> _unused_restart_files;
+    if( PyTools::nComponents("DumpRestart")>0 && PyTools::extract("restart_files", _unused_restart_files, "DumpRestart")) {
         MESSAGE(1,"Code will restart");
+        restart=true;
     }
 
     // ---------------------

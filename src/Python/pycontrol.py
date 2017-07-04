@@ -41,30 +41,37 @@ def _smilei_check():
             _mkdir("checkpoint", checkpoint_dir)
 
     # Checkpoint: Verify the restart_dir and find possible restart file for each rank
-    if len(DumpRestart)==1 and DumpRestart.restart_dir:
-        DumpRestart.restart=True
-        my_pattern=DumpRestart.restart_dir + os.sep + "checkpoints" + os.sep
-        if DumpRestart.file_grouping :
-            my_pattern += "*"+ os.sep
-        my_pattern += "dump-*-" + '%*s'%(int(math.log10(smilei_mpi_size))+1, smilei_mpi_rank) + ".h5";
-        my_files=glob.glob(my_pattern)
-        if DumpRestart.restart_number:
-            my_pattern=DumpRestart.restart_dir+ os.sep+r'.*'+os.sep+r'dump-([0-9]*)-[0-9]*.h5'
-            for my_file in my_files:
-                my_re=re.search(my_pattern,my_file)
-                if my_re and len(my_re.groups()):
-                    my_num=int(my_re.groups()[-1])
-                    if my_num == DumpRestart.restart_number:
-                        DumpRestart.restart_files.append(my_file)            
-        else:
-            DumpRestart.restart_files = my_files
+    if len(DumpRestart)==1:
+        if len(DumpRestart.restart_files) == 0 :
+            if DumpRestart.restart_dir:
+                DumpRestart.restart=True
+                my_pattern=DumpRestart.restart_dir + os.sep + "checkpoints" + os.sep
+                if DumpRestart.file_grouping :
+                    my_pattern += "*"+ os.sep
+                my_pattern += "dump-*-" + '%*s'%(int(math.log10(smilei_mpi_size))+1, smilei_mpi_rank) + ".h5";
+                my_files=glob.glob(my_pattern)
+                if DumpRestart.restart_number:
+                    my_pattern=DumpRestart.restart_dir+ os.sep+r'.*'+os.sep+r'dump-([0-9]*)-[0-9]*.h5'
+                    for my_file in my_files:
+                        my_re=re.search(my_pattern,my_file)
+                        if my_re and len(my_re.groups()):
+                            my_num=int(my_re.groups()[-1])
+                            if my_num == DumpRestart.restart_number:
+                                DumpRestart.restart_files.append(my_file)            
+                else:
+                    DumpRestart.restart_files = my_files
         
-        if not len(DumpRestart.restart_files):
-            raise Exception(
-            "ERROR in the namelist: cannot find valid restart files for processor "+str(smilei_mpi_rank) + 
-            "\n\t\trestart_dir = '" + DumpRestart.restart_dir + 
-            "'\n\t\trestart_number = " + str(DumpRestart.restart_number) + 
-            "\n\t\tmatching pattern: '" + my_pattern + "'" )
+                if not len(DumpRestart.restart_files):
+                    raise Exception(
+                    "ERROR in the namelist: cannot find valid restart files for processor "+str(smilei_mpi_rank) + 
+                    "\n\t\trestart_dir = '" + DumpRestart.restart_dir + 
+                    "'\n\t\trestart_number = " + str(DumpRestart.restart_number) + 
+                    "\n\t\tmatching pattern: '" + my_pattern + "'" )
+
+        else :
+            if DumpRestart.restart_dir:
+                raise Exception("restart_dir and restart_files are both not empty")
+            
 
 
     # Verify that constant() and tconstant() were not redefined
