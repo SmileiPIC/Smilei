@@ -247,14 +247,18 @@ void RadiationMonteCarlo::operator() (Particles &particles,
                 RadiationTables.get_corrected_cont_rad_energy_Ridgers(chipa,
                                                              emission_time);
 
-                // Incrementation of the radiated energy cumulative parameter
-                radiated_energy += weight[ipart]*cont_rad_energy;
-
                 // Effect on the momentum
-                temp = cont_rad_energy/gamma;
+                temp = cont_rad_energy*gamma/(gamma*gamma-1.);
                 for ( int i = 0 ; i<3 ; i++ )
                     momentum[i][ipart] -= temp*momentum[i][ipart];
 
+                // Incrementation of the radiated energy cumulative parameter
+                radiated_energy += weight[ipart]*(gamma - sqrt(1.0
+                                    + momentum[0][ipart]*momentum[0][ipart]
+                                    + momentum[1][ipart]*momentum[1][ipart]
+                                    + momentum[2][ipart]*momentum[2][ipart]));
+                
+                // End for this particle
                 local_it_time = dt;
             }
             // No emission since chipa is too low
@@ -267,7 +271,6 @@ void RadiationMonteCarlo::operator() (Particles &particles,
 
     }
 
-    // Update the quantum parameter Chi
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
