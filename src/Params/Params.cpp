@@ -147,10 +147,9 @@ namelist("")
     
     // random seed
     unsigned int random_seed=0;
-    if (!PyTools::extract("random_seed", random_seed, "Main")) {
-        random_seed = time(NULL);
+    if (PyTools::extract("random_seed", random_seed, "Main")) {
+        Rand::gen = std::mt19937(random_seed);
     }
-    srand(random_seed);
     
     // --------------
     // Stop & Restart

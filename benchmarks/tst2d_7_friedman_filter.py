@@ -96,10 +96,11 @@ Main(
      bc_em_type_y = ['periodic'],
  
      
+     print_every = int(t_sim/dt/50.),
+
      # regular seed
      # this is used to regularize the regular number generator
-     random_seed = smilei_mpi_rank,
-     print_every = int(t_sim/dt/50.)
+     random_seed = smilei_mpi_rank
      )
 
 Species(

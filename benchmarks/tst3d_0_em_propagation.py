@@ -24,7 +24,7 @@ Main(
     bc_em_type_y = ['silver-muller'],
     bc_em_type_z = ['silver-muller'],
     
-    random_seed = 0
+    random_seed = smilei_mpi_rank
 )
 
 LaserGaussian3D(
