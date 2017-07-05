@@ -27,7 +27,7 @@ Main(
     bc_em_type_x = ['silver-muller'],
     bc_em_type_y = ['silver-muller'],
     
-    random_seed = 0
+    random_seed = smilei_mpi_rank
 )
 
 globalEvery = 5

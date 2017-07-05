@@ -19,7 +19,10 @@ Main(
 	
 	bc_em_type_x  = ["periodic"],
 	
-	print_every = 10
+	print_every = 10,
+	
+    random_seed = smilei_mpi_rank
+
 )
 
 
