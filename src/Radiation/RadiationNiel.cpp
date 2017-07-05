@@ -90,9 +90,6 @@ void RadiationNiel::operator() (Particles &particles,
     // Optical depth for the Monte-Carlo process
     // double* chi = &( particles.chi(0));
 
-    // Local vector to store the radiated energy
-    std::vector <double> rad_norm_energy (iend-istart);
-
     // Reinitialize the cumulative radiated energy for the current thread
     this->radiated_energy = 0.;
 
@@ -141,26 +138,12 @@ void RadiationNiel::operator() (Particles &particles,
         momentum[1][ipart] -= temp*momentum[1][ipart];
         momentum[2][ipart] -= temp*momentum[2][ipart];
 
-        // Exact energy loss due to the radiation
-        rad_norm_energy[ipart - istart] = gamma - sqrt(1.0
-                                + momentum[0][ipart]*momentum[0][ipart]
-                                + momentum[1][ipart]*momentum[1][ipart]
-                                + momentum[2][ipart]*momentum[2][ipart]);
+        // Incrementation of the radiated energy cumulative parameter
+        radiated_energy += weight[ipart]*(gamma - sqrt(1.0
+                            + momentum[0][ipart]*momentum[0][ipart]
+                            + momentum[1][ipart]*momentum[1][ipart]
+                            + momentum[2][ipart]*momentum[2][ipart]));
 
     }
 
-    // _______________________________________________________________
-    // Computation of the thread radiated energy
-
-    double radiated_energy_loc = 0;
-
-    #pragma omp simd reduction(+:radiated_energy_loc)
-    for (int ipart=istart ; ipart<iend; ipart++ )
-    {
-        radiated_energy_loc += weight[ipart]*rad_norm_energy[ipart - istart] ;
-        /*std::cerr << weight[ipart]
-                  << " " << rad_norm_energy[ipart - istart]
-                  << std::endl;*/
-    }
-    radiated_energy += radiated_energy_loc;
 }
