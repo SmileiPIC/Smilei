@@ -15,7 +15,6 @@ but the process is fast and straightforward.
 Upcoming changes
 ^^^^^^^^^^^^^^^^
 
-* More OpenMP support
 * Moving window along y and z
 * Tracking particles in *Screens*
 * Better time-average for B fields
@@ -24,10 +23,10 @@ Upcoming changes
 
 .. _latestVersion:
 
-Current release 3.1.1
+Current release 3.2
 ^^^^^^^^^^^^^^^^^^^^^
 
-**Download**: `Smilei v3.1.1 <_downloads/smilei-v3.1.1.tar.gz>`_
+**Download**: `Smilei v3.2 <_downloads/smilei-v3.2.tar.gz>`_
 
 * New pushers (Vay's and Higuera-Cary's)
 * *Numpy* used for filtering track particles
@@ -37,6 +36,9 @@ Current release 3.1.1
 
   * External fields management 
   * Non-neutral plasma initialization
+
+* OpenMP support in moving window
+* Bugfix in non-periodic boundary conditions
 
 ----
 
