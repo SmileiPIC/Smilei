@@ -61,5 +61,5 @@ print ' Maximum relative error kinetic energy',ukin_rel_err.max()
 print ' Maximum relative error radiative energy',urad_rel_err.max()
 
 # Validation difference between continuous and discontinuous methods
-Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err.max(), 0.01 )
-Validate("Relative error on the radiative energy / urad max " , urad_rel_err.max(), 0.01 )
+Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err.max(), 0.02 )
+Validate("Relative error on the radiative energy / urad max " , urad_rel_err.max(), 0.02 )

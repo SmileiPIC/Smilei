@@ -30,6 +30,12 @@ In the quantum regime, photons with energies of the order of the energies of
 the emitting electron can be produced. This is treated using a Monte-Carlo
 description of discrete high-energy photon emission.
 
+In the intermediate regime, where the energy of the emitted photons remains
+small with respect to that of the emitting electrons, but for which the
+stochastic nature of photon emission cannot be neglected, the electron dynamics
+is described by the addition of a stochastic term derived from a Fokker-Planck
+expansion.
+
 ----
 
 II. Physical models
@@ -45,7 +51,12 @@ the radiation  regime,
   \right)^2 - \left( \mathbf{E} + \mathbf{v} \times \mathbf{B} \right)^2
   \right|^{1/2}
 
-where :math:`E_s = 4 \pi \alpha \varepsilon_0 m^2 c^4 / e^3` is the Schwinger field.
+where :math:`E_s = m^2 c^3 / \hbar e \simeq 1.3 10^{18}\ \mathrm{V/m}` is
+the Schwinger field, :math:`e` is the electron charge,
+:math:`m` is the electron mass, :math:`c` the speed of light in vacuum,
+:math:`\hbar` the reduced Planck constant.
+
+:math:`\alpha = e^2 / \hbar c 4 \pi  \varepsilon_0` the fine structure constant
 
 III. Implementations
 ^^^^^^^^^^^^^^^^^^^^
@@ -69,11 +80,11 @@ Monte-Carlo quantum model
 """""""""""""""""""""""""
 
 
-Benchmarks
-^^^^^^^^^^
+IV. Benchmarks
+^^^^^^^^^^^^^^
 
-Performances
-^^^^^^^^^^^^
+V. Performances
+^^^^^^^^^^^^^^^
 
 The cost of the different models is summarized in table
 :numref:`radiationTimes`.
