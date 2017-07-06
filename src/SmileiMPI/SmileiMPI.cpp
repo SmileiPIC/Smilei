@@ -805,8 +805,6 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
              else if ( dynamic_cast<ElectroMagnBC3D_SM*>(EM->emBoundCond[bcId]) ) {
                 ElectroMagnBC3D_SM* embc = static_cast<ElectroMagnBC3D_SM*>(EM->emBoundCond[bcId]);
 
-                recv( EM->Bz_ , from, tag ); tag++;
-
                  // BCs at the border
                  if (embc->Bx_val) { recv( embc->Bx_val, from, tag); tag++;}
                  if (embc->By_val) { recv( embc->By_val, from, tag); tag++;}
