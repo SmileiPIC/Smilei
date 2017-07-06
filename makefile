@@ -68,6 +68,17 @@ ifneq (,$(findstring scalasca,$(config)))
     SMILEICXX = scalasca -instrument $(SMILEICXX)
 endif
 
+# With Intel Advisor
+ifneq (,$(findstring advisor,$(config)))
+    CXXFLAGS += -g -O3 -qopt-report5
+endif
+
+# Optimization report
+ifneq (,$(findstring opt-report,$(config)))
+    CXXFLAGS += -qopt-report5
+endif
+
+
 ifeq (,$(findstring noopenmp,$(config)))
     OPENMP_FLAG ?= -fopenmp 
     LDFLAGS += -lm
