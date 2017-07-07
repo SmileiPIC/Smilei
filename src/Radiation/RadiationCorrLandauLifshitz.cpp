@@ -122,7 +122,7 @@ void RadiationCorrLandauLifshitz::operator() (Particles &particles,
 
         // Effect on the momentum
         // Temporary factor
-        temp = rad_norm_energy[ipart - istart]/gamma;
+        temp = rad_norm_energy[ipart - istart]*gamma/(gamma*gamma - 1);
         // Update of the momentum
         momentum[0][ipart] -= temp*momentum[0][ipart];
         momentum[1][ipart] -= temp*momentum[1][ipart];
@@ -141,9 +141,9 @@ void RadiationCorrLandauLifshitz::operator() (Particles &particles,
     double radiated_energy_loc = 0;
 
     #pragma omp simd reduction(+:radiated_energy_loc)
-    for (int ipart=istart ; ipart<iend; ipart++ )
+    for (int ipart=0 ; ipart<iend-istart; ipart++ )
     {
-        radiated_energy_loc += weight[ipart]*rad_norm_energy[ipart - istart] ;
+        radiated_energy_loc += weight[ipart]*rad_norm_energy[ipart] ;
         /*std::cerr << weight[ipart]
                   << " " << rad_norm_energy[ipart - istart]
                   << std::endl;*/

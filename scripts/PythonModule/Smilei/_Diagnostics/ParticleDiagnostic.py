@@ -7,7 +7,7 @@ from .._Utils import *
 class ParticleDiagnostic(Diagnostic):
 	# This is the constructor, which creates the object
 	def _init(self, diagNumber=None, timesteps=None, slice=None, data_log=False, stride=1, **kwargs):
-		
+
 		if diagNumber is None:
 			self._error += "Printing available particle diagnostics:\n"
 			self._error += "----------------------------------------\n"
@@ -17,7 +17,7 @@ class ParticleDiagnostic(Diagnostic):
 			if len(diags)==0:
 				self._error += "      No particle diagnostics found"
 			return
-		
+
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------
 		# Check the requested diags are ok
@@ -31,7 +31,7 @@ class ParticleDiagnostic(Diagnostic):
 		else:
 			self._error = "Argument 'diagNumber' must be and integer or a string."
 			return
-		
+
 		# Get list of requested diags
 		self._myinfo = {}
 		self._diags = sorted(set([ int(d[1:]) for d in self._re.findall('#\d+',self.operation) ]))
@@ -65,20 +65,20 @@ class ParticleDiagnostic(Diagnostic):
 					self._error = "In operation '"+self.operation+"', diagnostics #"+str(d)+" and #"\
 						+str(self._diags[0])+" must have the same shape."
 					return
-		
+
 		self._axes  = self._axes [self._diags[0]]
 		self._naxes = self._naxes[self._diags[0]]
-		
+
 		# Check slice is a dict
 		if slice is not None  and  type(slice) is not dict:
 			self._error = "Argument 'slice' must be a dictionary"
 			return
 		# Make slice a dictionary
 		if slice is None: slice = {}
-		
+
 		# Put data_log as object's variable
 		self._data_log = data_log
-		
+
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
 		# Get available timesteps
@@ -116,12 +116,12 @@ class ParticleDiagnostic(Diagnostic):
 		# Now we need to keep only one array of timesteps because they should be all the same
 		self.times  = self.times [self._diags[0]]
 		self._times = self._times[self._diags[0]]
-		
+
 		# Need at least one timestep
 		if self.times.size < 1:
 			self._error = "Timesteps not found"
 			return None
-		
+
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
 		# Fabricate all axes values for all diags
@@ -134,7 +134,7 @@ class ParticleDiagnostic(Diagnostic):
 		self._slices = []
 		self._selection = ()
 		hasComposite = False
-		
+
 		for axis in self._axes:
 			# Find the vector of values along the axis
 			if axis["log"]:
@@ -148,7 +148,7 @@ class ParticleDiagnostic(Diagnostic):
 				centers = centers[:-1]
 			axis.update({ "edges"   : edges   })
 			axis.update({ "centers" : centers })
-			
+
 			# Find some quantities depending on the axis type
 			overall_min = "-inf"; overall_max = "inf"
 			axis_units = ""
@@ -174,22 +174,24 @@ class ParticleDiagnostic(Diagnostic):
 			elif axis["type"] == "charge":
 				axis_units = "Q_r"
 				overall_min = "0"
+			elif axis["type"] == "chi":
+				overall_min = "0"
 			else:
 				self._error = "axis type "+axis["type"]+" not implemented"
 				return None
-			
+
 			# if this axis has to be sliced, then select the slice
 			if axis["type"] in slice:
-			
+
 				self._slices.append(True)
-				
+
 				# if slice is "all", then all the axis has to be summed
 				if slice[axis["type"]] == "all":
 					axis.update({ "sliceInfo" : "      Slicing for all "+axis["type"] })
 					self._selection += ( self._np.s_[:], )
 					self._finalShape.append( axis["size"] )
 					slice_size = edges[-1] - edges[0]
-				
+
 				# Otherwise, get the slice from the argument `slice`
 				else:
 					try:
@@ -213,9 +215,9 @@ class ParticleDiagnostic(Diagnostic):
 						self._finalShape.append( indices[-1] - indices[0] )
 					# calculate the size of the slice
 					slice_size = edges[indices[-1]+1] - edges[indices[0]]
-				
+
 				if axis["type"] in ["x","y","z","moving_x"]: coeff /= slice_size
-			
+
 			# if not sliced, then add this axis to the overall plot
 			else:
 				self._selection += ( self._np.s_[::stride], )
@@ -228,7 +230,7 @@ class ParticleDiagnostic(Diagnostic):
 				self._label  .append(axis["type"])
 				self._units  .append(axis_units)
 				plot_diff.append(self._np.diff(edges)[::stride])
-		
+
 		# Build units
 		titles = {}
 		units = {}
@@ -264,12 +266,12 @@ class ParticleDiagnostic(Diagnostic):
 		for d in self._diags:
 			self._vunits = self._vunits.replace("#"+str(d), "( "+units[d]+" )")
 			self._title  = self._title .replace("#"+str(d), titles[d])
-		
+
 		# If any spatial dimension did not appear, then count it for calculating the correct density
 		if self._ndim>=1 and not spatialaxes["x"]: coeff /= self._ncels[0]*self._cell_length[0]
 		if self._ndim>=2 and not spatialaxes["y"]: coeff /= self._ncels[1]*self._cell_length[1]
 		if self._ndim==3 and not spatialaxes["z"]: coeff /= self._ncels[2]*self._cell_length[2]
-		
+
 		# Calculate the array that represents the bins sizes in order to get units right.
 		# This array will be the same size as the plotted array
 		if len(plot_diff)==0:
@@ -282,14 +284,14 @@ class ParticleDiagnostic(Diagnostic):
 		self._bsize = cell_volume / self._bsize
 		if not hasComposite: self._bsize *= coeff
 		self._bsize = self._np.squeeze(self._bsize)
-		
+
 		# Set the directory in case of exporting
 		self._exportPrefix = "ParticleDiag_"+"-".join([str(d) for d in self._diags])
 		self._exportDir = self._setExportDir(self._exportPrefix)
-		
+
 		# Finish constructor
 		self.valid = True
-	
+
 	# Gets info about diagnostic number "diagNumber"
 	def _getInfo(self,diagNumber):
 		info = {}
@@ -333,24 +335,24 @@ class ParticleDiagnostic(Diagnostic):
 					print("Particle diagnostic #"+str(diagNumber)+" in path '"+path+"' is incompatible with the other ones")
 					return False
 		return info
-	
-	
+
+
 	# Prints the info obtained by the function "getInfo"
 	@staticmethod
 	def _printInfo(info):
 		if not info:
 			return "Error while reading file(s)"
-		
+
 		# 1 - diag number, type and list of species
 		species = ""
 		for i in range(len(info["species"])): species += str(info["species"][i])+" " # reconstitute species string
 		printedInfo = "Diag#"+str(info["#"])+" - "+info["output"]+" of species # "+species+"\n"
-		
+
 		# 2 - period and time-averaging
 		tavg = "no time-averaging"
 		if (info["tavg"] > 1):
 			printedInfo += "    Averaging over "+str(info["tavg"])+" timesteps\n"
-		
+
 		# 3 - axes
 		for i in range(len(info["axes"])):
 			axis = info["axes"][i];
@@ -359,7 +361,7 @@ class ParticleDiagnostic(Diagnostic):
 			printedInfo += "    "+axis["type"]+" from "+str(axis["min"])+" to "+str(axis["max"]) \
 				   +" in "+str(axis["size"])+" steps "+logscale+edges+"\n"
 		return printedInfo
-		
+
 	# Method to print info on all included diags
 	def _info(self):
 		info = ""
@@ -369,7 +371,7 @@ class ParticleDiagnostic(Diagnostic):
 		for ax in self._axes:
 			if "sliceInfo" in ax: info += ax["sliceInfo"]+"\n"
 		return info
-	
+
 	def getDiags(self):
 		allDiags = []
 		for path in self._results_path:
@@ -380,7 +382,7 @@ class ParticleDiagnostic(Diagnostic):
 			else:
 				allDiags = diags
 		return allDiags
-	
+
 	# get all available timesteps for a given diagnostic
 	def getAvailableTimesteps(self, diagNumber=None):
 		# if argument "diagNumber" not provided, return the times calculated in __init__
@@ -400,7 +402,7 @@ class ParticleDiagnostic(Diagnostic):
 				f.close()
 			times = [int(t.strip("timestep")) for t in times]
 			return self._np.array(times)
-	
+
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):
 		if not self._validate(): return
@@ -410,7 +412,7 @@ class ParticleDiagnostic(Diagnostic):
 			# find the index of the array corresponding to the requested timestep
 			try:
 				index = self._indexOfTime[d][t]
-			except: 
+			except:
 				print("Timestep "+str(t)+" not found in this diagnostic")
 				return []
 			# get data

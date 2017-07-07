@@ -89,22 +89,35 @@ V. Performances
 The cost of the different models is summarized in table
 :numref:`radiationTimes`.
 Reported times are for the field projection, the particle pusher and
-the radiation losses together.
+the radiation losses together. Percentages correspond to the overhead induced by
+the radiation module in comparison to the standard PIC pusher.
+The keyword `None` means that there is no radiation loss.
+`LL` stands for the classical Landau-Lifshitz model approximated for large
+:math:`\gamma`. `CLL` is for the Landau-Lifshitz model with the quantum correction.
+All the presented numbers are not generalizable and are only indicated to give
+an idea of the model costs.
 
 .. _radiationTimes:
 
 +-------------------------------------+------------+----------+--------------+----------+--------+
-| Radiation model:                    | None       | LL       | Corrected LL | Niel     | MC     |
+| Radiation model:                    | None       | LL       | CLL          | Niel     | MC     |
 +=====================================+============+==========+==============+==========+========+
+| Counter-propagating Plane Wave 1D   | 0.25s      | 0.3s     | 0.36s        | 0.54s    | 0.84s  |
++-------------------------------------+------------+----------+--------------+----------+--------+
 | Synchrotron 2D                      | 3.9s       | 4.2s     | 4.8s         | 9s       | 5.6s   |
-| :math:`\chi=0.5`,  :math:`B=100`    |            |          |              |          |        |
+| :math:`\chi=0.5`,  :math:`B=100`    |            | 10%      | - 30%        | 140%     | 50%    |
++-------------------------------------+------------+----------+--------------+----------+--------+
+|                                     |            |          |              |          |        |
 +-------------------------------------+------------+----------+--------------+----------+--------+
 
 Descriptions of the cases:
 
-* **Synchrotron 2D**: the domain is fulfilled with electrons having the same
-  initial momentum so that initially :math:`\chi=0.5` with the constant magnetic field
-  :math:`B_z=100`. The domain has a dimension of 128x128 cells with
+* **Counter-propagating Plane Wave 1D**: Collision between an electron bunch
+  and a counter-propagating plane wave.
+
+* **Synchrotron 2D**: The domain is fulfilled with electrons having the same
+  initial momentum so that initially :math:`\chi=0.5` with the constant magnetic
+  field :math:`B_z=100`. The domain has a dimension of 128x128 cells with
   16 particles per cell and 8x8 patches.
   A 4th order B-spline shape factor is used for the projection.
   The case is run on a single node of Jureca with 2 MPI ranks and 12 OpenMP

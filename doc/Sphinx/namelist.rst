@@ -1123,32 +1123,56 @@ The table discretization and boundaries will depend on the given user
 parameters in this block.
 
   RadiationLoss(
-      chipa_integfochi_min = 1e-4,
-      chipa_integfochi_max = 1e1,
-      integfochi_dim = 10,
 
-      chipa_xip_min = 1e-4,
-      chipa_xip_max = 1e1,
+      h_chipa_min = 1E-3,
+      h_chipa_max = 1E1,
+      h_dim = 128,
+
+      integfochi_chipa_min = 1e-4,
+      integfochi_chipa_max = 1e1,
+      integfochi_dim = 128,
+
+      xip_chipa_min = 1e-4,
+      xip_chipa_max = 1e1,
       xip_power = 4,
       xip_threshold = 1e-3,
-      chipa_xip_dim = 10,
-      chiph_xip_dim = 10,
+      chipa_xip_dim = 128,
+      chiph_xip_dim = 128,
 
       chipa_disc_min_threshold = 1e-2,
 
       table_path = "../databases/"
   )
 
-.. py:data:: chipa_integfochi_min
 
-  :default: 1e-5
+.. py:data:: h_chipa_min
+
+  :default: 1e-3
+
+  Minimum value of the quantum parameter chi for the table h of Niel et al.
+
+.. py:data:: h_chipa_max
+
+  :default: 1e1
+
+  Maximum value of the quantum parameter chi for the table h of Niel et al.
+
+.. py:data:: h_dim
+
+  :default: 128
+
+  Dimension of the table h of Niel et al.
+
+.. py:data:: integfochi_chipa_min
+
+  :default: 1e-3
 
   Minimum value of the quantum parameter chi for the table containing
   the integration of F/chi.
 
-.. py:data:: chipa_integfochi_max
+.. py:data:: integfochi_chipa_max
 
-  :default: 1e2
+  :default: 1e1
 
   Maximum value of the quantum parameter chi for the table containing
   the integration of F/chi.
@@ -1160,16 +1184,16 @@ parameters in this block.
   Discretization of the table containing
   the integration of F/chi.
 
-.. py:data:: chipa_xip_min
+.. py:data:: xip_chipa_min
 
-  :default: 1e-5
+  :default: 1e-3
 
   Minimum particle quantum parameter for the computation of the chimin
   and xip tables.
 
-.. py:data:: chipa_xip_max
+.. py:data:: xip_chipa_max
 
-  :default: 1e2
+  :default: 1e1
 
   Maximum particle quantum parameter for the computation of the chimin
   and xip tables.
@@ -1188,13 +1212,13 @@ parameters in this block.
   Minimum value of xip to compute the minimum value of the photon
   quantum parameter. It is advised to keep this value by default.
 
-.. py:data:: chipa_xip_dim
+.. py:data:: xip_chipa_dim
 
   :default: 128
 
   Discretization of the chimin and xip tables in the chipa direction.
 
-.. py:data:: chiph_xip_dim
+.. py:data:: xip_chiph_dim
 
   :default: 128
 
