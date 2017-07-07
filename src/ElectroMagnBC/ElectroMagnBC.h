@@ -23,6 +23,7 @@ public:
     void laserDisabled();
 
     virtual void save_fields(Field*, Patch* patch) {};
+    virtual void disableExternalFields() {};
 
     //! Vector for the various lasers
     std::vector<Laser*> vecLaser;
