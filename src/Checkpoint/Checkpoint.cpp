@@ -100,7 +100,7 @@ file_grouping(0)
             }
 
 #ifdef  __DEBUG
-            MESSAGEALL(2, " : Restarting fields and particles " << nameDump << " step=" << this_run_start_step << "\n\t\t" << restart_file);
+            MESSAGEALL(2, " : Restarting fields and particles, dump_number = " << dump_number << " step=" << this_run_start_step << "\n\t\t" << restart_file);
 #else
             MESSAGE(2, "Restarting fields and particles at step: " << this_run_start_step);
             MESSAGE(2, "                            master file: " << restart_file);
