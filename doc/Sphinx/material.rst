@@ -7,10 +7,10 @@ Publications
 .. rst-class:: bigcitation
 
 .. [Derouillat]
-   
+
    J. Derouillat, A. Beck, T. Vinci, F. Pérez, M. Chiaramello, A. Grassi, G. Bouchard, N. Aunai, J. Dargent, C. Riconda and M. Grech,
    `SMILEI: a collaborative, open-source, multi-purpose particle-in-cell code for plasma simulation`, submitted to CPC
-   
+
 .. rst-class:: bigcitation
 
 .. [Chiaramello2016]
@@ -24,9 +24,9 @@ Publications
 .. rst-class:: bigcitation
 
 .. [Beck2016]
-   
-   A. Beck, J. Trier Frederiksen and J. Derouillat, 
-   `Load management strategy for Particle-In-Cell simulations in high energy physics`, 
+
+   A. Beck, J. Trier Frederiksen and J. Derouillat,
+   `Load management strategy for Particle-In-Cell simulations in high energy physics`,
    `Nucl. Inst. Meth. in Phys. Res. A (2016) <http://www.sciencedirect.com/science/article/pii/S0168900216301577>`_
 
 .. rst-class:: bigcitation
@@ -56,10 +56,14 @@ References
 
 .. [Hesse2013] `M. Hesse, et al., Phys. Plasmas 20, 061210 (2013) <http://dx.doi.org/10.1063/1.4811467>`_
 
+.. [Higuera2017] `Higuera, A. V., & Cary, J. R., arXiv preprint arXiv:1701.05605 (2017) <https://arxiv.org/abs/1701.05605>`_
+
+.. [Landau1947] `L. D. Landau and E. M. Lifshitz, The classical theory of fields. Butterworth-Heinemann (1947) <https://archive.org/details/TheClassicalTheoryOfFields>`_
+
 .. [Lee1984] `Y. T. Lee and R. M. More, Phys. Fluids 27, 1273 (1984) <http://dx.doi.org/10.1063/1.864744>`_
 
 .. [Lobet2013] `Lobet et al., J. Phys.: Conf. Ser. 688, 012058 (2016) <http://iopscience.iop.org/article/10.1088/1742-6596/688/1/012058>`_
-  
+
 .. [Nanbu1997] `K. Nanbu, Phys. Rev. E 55, 4642 (1997) <http://dx.doi.org/10.1103/PhysRevE.55.4642>`_
 
 .. [Nanbu1998] `K. Nanbu and S. Yonemura, J. Comput. Phys. 145, 639 (1998) <http://dx.doi.org/10.1006/jcph.1998.6049>`_
@@ -83,5 +87,3 @@ References
 .. [TafloveHagness] A. Taflove and S. C. Hagness, Computation Electrodynamics: The Finite-Difference Time-Domain Method, 3rd Ed. (Artech House, Norwood, 2005)
 
 .. [Vay2008] `J.-L. Vay, Phys. Plasmas 15, 056701 (2008) <https://doi.org/10.1063/1.2837054>`_
-
-.. [Higuera2017] `Higuera, A. V., & Cary, J. R., arXiv preprint arXiv:1701.05605 (2017) <https://arxiv.org/abs/1701.05605>`_

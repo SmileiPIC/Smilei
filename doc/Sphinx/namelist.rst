@@ -1149,13 +1149,13 @@ parameters in this block.
 
   :default: 1e-3
 
-  Minimum value of the quantum parameter chi for the table h of Niel et al.
+  Minimum value of the quantum parameter chi for the table h of Niel `et al`.
 
 .. py:data:: h_chipa_max
 
   :default: 1e1
 
-  Maximum value of the quantum parameter chi for the table h of Niel et al.
+  Maximum value of the quantum parameter chi for the table h of Niel `et al`.
 
 .. py:data:: h_dim
 
