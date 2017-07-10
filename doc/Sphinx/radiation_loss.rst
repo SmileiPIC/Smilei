@@ -47,13 +47,14 @@ the normalized particle velocity.
 | Regime                              | :math:`\chi` value       | Description                                    | Models                    |
 +=====================================+==========================+================================================+===========================+
 | Classical radiation emission        | :math:`\chi \sim 10^{-3}`| :math:`\varepsilon_\gamma  \ll \varepsilon_\pm`| Landau-Lifshitz           |
-|                                     |                          |                                                |                           |
+|                                     |                          | , radiated energy overestimated for            |                           |
+|                                     |                          | :math:`\chi > 10^{-2}`                         |                           |
 +-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
-| Semi-classical radiation emission   | :math:`\chi \in 10^{-3}  |                                                | Corrected Landau-Lifshitz |
-|                                     | - 10^{-2}`               |                                                |                           |
+| Semi-classical radiation emission   | :math:`\chi \sim 10^{-2}`| :math:`\varepsilon_\gamma  \ll \varepsilon_\pm`| Corrected Landau-Lifshitz |
+|                                     |                          | , no stochastic effects                        |                           |
 +-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
-| Weak quantum regime                 | :math:`\chi \sim 10^{-1}`|                                                | Stochastic model of       |
-|                                     |                          |                                                | Niel `et al` / Monte-Carlo|
+| Weak quantum regime                 | :math:`\chi \sim 10^{-1}`| :math:`\varepsilon_\gamma  < \varepsilon_\pm`, | Stochastic model of       |
+|                                     |                          | :math:`\varepsilon_\gamma / mc^2  \gg 1`       | Niel `et al` / Monte-Carlo|
 +-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
 | Quantum regime                      | :math:`\chi \sim 1`      | :math:`\varepsilon_\gamma \sim \varepsilon_\pm`| Monte-Carlo               |
 |                                     |                          |                                                |                           |
@@ -154,6 +155,50 @@ under the radiation model name `Landau-Lifshitz`.
 Corrected classical model
 """""""""""""""""""""""""
 
+In the quantum emission regime, under the conditions of slowly varying arbitrary
+field compared to the formation time of the radiated photon (i) and
+undercritical in respect to the Schwinger field (ii), the Lorentz invariant production
+rate of high-energy photons via the multiphoton inverse Compton scattering
+can be written as:
+
+.. math::
+  :label: PhotonProdRate
+
+  \frac{d^2N}{dt d\chi_\gamma} = \frac{1}{\pi \sqrt{3}} \frac{\alpha^2}{\tau_e \chi_\pm}
+  \left[ \int_\nu^{+\infty}{K_{5/3(y)}dy} + \frac{2 \chi_\gamma \nu}{2} K_{2/3}(\nu) \right]
+
+Conditions (i) is fulfilled when :math:`a_0 = e \| A^{\mu} \| / mc^2 \gg 1`, :math:`A^{\mu}`
+being the four-potential laser amplitude.
+conditions (ii) corresponds to :math:`\mathbf{B}^2 - \mathbf{E}^2 \ll E_s^2`
+and  :math:`\mathbf{B}\cdot \mathbf{E} \ll 1`.
+
+From Eq. :eq:`PhotonProdRate` can be deduced the emitted power distribution in
+term of the photon normalized energy. After integration, one obtains the
+expression of the radiated power in the quantum regime:
+
+.. math::
+  :label: quantumRadPower
+
+  P_{rad} = P_{cl} g(\chi_{\pm})
+
+with
+
+.. math::
+  :label: g
+
+  g \left( \chi_{\pm} \right) = \frac{9 \sqrt{3} }{8 \pi} \int_0^{+\infty}{d\nu
+  \left[  \frac{2\nu^2 K_{5/3}(\nu) }{\left( 2 + 3 \nu \chi_\pm \right) ^2} +
+  \frac{4 \nu \left( 3 \nu \chi_\pm\right)^2 }{\left( 2 + 3 \nu \chi_\pm \right)^4} \right]}
+
+The quantum instantaneous radiated power is nothing else than the classical one
+multiplied by a correction function called :math:`g \left( \chi_{\pm} \right)`.
+
+We can simply use Eq. :eq:`LLFrictionForceApprox` with this correction close to
+1 when :math:`\chi_{\pm} \ll 1` and rapidly dropping otherwise.
+Thanks to this correction, the radiated energy is correct but this model does
+not take into account the stochastic effects induced when the photon energy is
+closed to the emitting electron. This is the subject of the next sections.
+
 III. Stochastic schemes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -163,11 +208,51 @@ Fokker-Planck stochastic model
 Monte-Carlo quantum model
 """""""""""""""""""""""""
 
-
-IV. Benchmarks
+V. Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-V. Performances
+Classes for the radiations are located in the directory `src/Radiation`.
+In :program:`Smilei`, the radiative process is not incorporated in the pusher.
+The process is done separately using a `factory` as for the pusher and ionization.
+This decision has been taken in order to:
+
+* preserve the vector performance of the pusher when using non-vectorizable
+  radiation model such as the Monte-Carlo process.
+* be consistent with the current implementation
+* easily be able to use any pusher (without making the code more complex)
+
+
+Description of the files:
+
+* Class `RadiationTable`: useful tools, parameters and the tables.
+* Class `Radiation`: the generic one from which will inherit specific
+  classes for each model.
+* Class `RadiationFactory`: manage the choice of the correct radiation model
+  depending of the species.
+* Class `RadiationLandauLifshitz`: classical Landau-Lifshitz radiation process
+* Class `RadiationCorrLandauLifshitz`: corrected Landau-Lifshitz radiation process
+* Class `RadiationNiel`:
+* Class `RadiationMonteCarlo`:
+
+
+Landau-Lifshitz based models
+""""""""""""""""""""""""""""""""""""""""""""
+.. math::
+  :label: quantumCorrFit
+
+  g \left( \chi_{\pm} \right) = \left[ 1 + 4.8 \left( 1 + \chi_{\pm} \right)
+  \log \left( 1 + 1.7 \chi_{\pm} \right) + 2.44 \chi_{\pm}^2 \right]^{-2/3}
+
+Fokker-Planck stochastic model
+""""""""""""""""""""""""""""""""""""""""""""
+
+Monte-Carlo quantum model
+"""""""""""""""""""""""""
+
+V. Benchmarks
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+VI. Performances
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The cost of the different models is summarized in table
