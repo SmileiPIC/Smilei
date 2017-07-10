@@ -27,7 +27,7 @@ Main(
     bc_em_type_x = ['silver-muller'],
     bc_em_type_y = ['periodic'],
     
-    random_seed = 0
+    random_seed = smilei_mpi_rank
 )
 
 LaserGaussian2D(

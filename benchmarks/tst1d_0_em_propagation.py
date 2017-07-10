@@ -18,7 +18,7 @@ Main(
     
     bc_em_type_x = ['silver-muller'],
     
-    random_seed = 0,
+    random_seed = smilei_mpi_rank,
     
     print_every = int(rest/2.0)
 )

@@ -23,6 +23,7 @@ public:
 
     void apply(ElectroMagn* EMfields, double time_dual, Patch* patch) override;
     void save_fields(Field*, Patch* patch) override;
+    void disableExternalFields() override;
 
     //! Save external fields for silver muller EM Boundary condition
     Field2D *Bx_val, *By_val, *Bz_val;

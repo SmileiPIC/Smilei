@@ -43,9 +43,9 @@ Main(
     bc_em_type_y = ["periodic"],
     bc_em_type_z = ["periodic"],
     
-    random_seed = 0,
-    
-    print_every = 1
+    print_every = 1,
+
+    random_seed = smilei_mpi_rank
 )
 
 

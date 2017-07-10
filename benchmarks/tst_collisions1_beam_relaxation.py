@@ -25,7 +25,7 @@ Main(
 	bc_em_type_x = ["periodic"],
 	
 	
-	random_seed = 0,
+	random_seed = smilei_mpi_rank,
 	
 	referenceAngularFrequency_SI = L0 * 3e8 /1.e-6,
 	print_every = 10,

@@ -1863,6 +1863,8 @@ A few things are important to know when you need dumps and restarts.
 * Do not restart the simulation in the same directory as the previous one. Files will be
   overwritten, and errors may occur. Create a new directory for your restarted simulation.
 * Manage your memory: each process dumps one file, and the total can be significant.
+* each MPI process will write its own hdf5 checkpoint file which will have the format `dump-XXXXX-YYYYYYYYYY.h5` 
+  where `XXXXX` is the sequence file (see below) and `YYYYYYYYYY` is the mpi rank.
 
 ::
 

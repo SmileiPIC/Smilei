@@ -226,6 +226,7 @@ class DumpRestart(SmileiSingleton):
     dump_deflate = 0
     exit_after_dump = True
     file_grouping = None
+    restart_files = []
 
 
 class Species(SmileiComponent):

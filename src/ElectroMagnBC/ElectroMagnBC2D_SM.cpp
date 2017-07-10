@@ -190,6 +190,15 @@ void ElectroMagnBC2D_SM::save_fields(Field* my_field, Patch* patch) {
     }
 }
 
+void ElectroMagnBC2D_SM::disableExternalFields()
+{
+    Bx_val.resize(0);
+    By_val.resize(0);
+    Bz_val.resize(0);
+}
+
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------

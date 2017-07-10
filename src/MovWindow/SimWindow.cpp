@@ -122,6 +122,10 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             (patch_to_be_created[my_thread]).push_back(ipatch);
         }
 
+        // Do not sent Xmax conditions
+        if ( mypatch->isXmax() && mypatch->EMfields->emBoundCond[1] )
+            mypatch->EMfields->emBoundCond[1]->disableExternalFields();
+
         //If my left neighbor does not belong to me ...
         if (mypatch->MPI_neighbor_[0][0] != mypatch->MPI_me_) {
             delete_patches_.push_back(mypatch); // Stores pointers to patches to be deleted later
@@ -165,6 +169,10 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         //create patch without particle.
         mypatch = PatchesFactory::clone(vecPatches(0),params, smpi, h0 + patch_to_be_created[my_thread][j], n_moved, false );
 
+        // Do not receive Xmin condition
+        if ( mypatch->isXmin() && mypatch->EMfields->emBoundCond[0] )
+            mypatch->EMfields->emBoundCond[0]->disableExternalFields();
+
         mypatch->finalizeMPIenvironment();
         //Position new patch
         vecPatches.patches_[patch_to_be_created[my_thread][j]] = mypatch ;
@@ -173,6 +181,16 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], (mypatch->hindex)*nmessage, params );
             patch_to_be_created[my_thread][j] = nPatches ; //Mark no needs of particles
         }
+
+        // Create Xmin condition which could not be received
+        if ( mypatch->isXmin() ){
+            for (auto& embc:mypatch->EMfields->emBoundCond) {
+                if (embc) delete embc;
+            }
+            mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create(params, mypatch);
+            mypatch->EMfields->laserDisabled();
+        }
+
         mypatch->EMfields->laserDisabled();
         mypatch->EMfields->updateGridSize(params, mypatch);
     }

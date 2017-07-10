@@ -262,6 +262,18 @@ void ElectroMagnBC3D_SM::save_fields(Field* my_field, Patch* patch) {
     }
 }
 
+
+void ElectroMagnBC3D_SM::disableExternalFields()
+{
+    delete Bx_val;
+    Bx_val = NULL;
+    delete By_val;
+    By_val = NULL;
+    delete Bz_val;
+    Bz_val = NULL;
+}
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------

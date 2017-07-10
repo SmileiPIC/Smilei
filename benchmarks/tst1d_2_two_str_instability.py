@@ -22,7 +22,7 @@ Main(
      
     bc_em_type_x = ['periodic'],
      
-    random_seed = 0
+    random_seed = smilei_mpi_rank
 )
 
 

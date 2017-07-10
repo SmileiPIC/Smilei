@@ -82,8 +82,6 @@ public:
     bool exit_asap;
     
 private:
-    //! get dump name based on number and rank
-    std::string dumpName(unsigned int num, SmileiMPI *smpi);
     
     //! initialize the time zero of the simulation 
     void initDumpCases();
@@ -117,16 +115,14 @@ private:
     bool exit_after_dump;
     
     //! keep the last dump_file_sequence dump files
-    unsigned int dump_file_sequence;
+    unsigned int dump_file_sequence;    
+    const unsigned int dump_file_sequence_max;
     
     //! write dump drectory
     std::string dump_dir;
     
     //! int deflate dump value
     int dump_deflate;
-    
-    //! directory of the restart
-    std::string restart_dir;
     
     std::vector<MPI_Request> dump_request;
     MPI_Status dump_status_prob;
@@ -135,8 +131,9 @@ private:
     //! group checkpoint files in subdirs of file_grouping files
     unsigned int file_grouping;
     
-    //! restart from checkpoint number
-    int restart_number;
+    //! restart file
+    std::string restart_file;
+
 };
 
 #endif /* CHECKPOINT_H_ */
