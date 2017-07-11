@@ -48,6 +48,8 @@ References
 
 .. [Desjarlais2001] `M. Desjarlais, Contrib. Plasma Phys. 41, 267 (2001) <http://dx.doi.org/10.1002/1521-3986%28200103%2941%3A2%2F3%3C267%3A%3AAID-CTPP267%3E3.0.CO%3B2-P>`_
 
+.. [Duclous2011] `R. Duclous, J. G. Kirk, and A. R. Bell (2011), Plasma Physics and Controlled Fusion, 53 (1), 015009 <http://stacks.iop.org/0741-3335/53/i=1/a=015009>`_
+
 .. [Esirkepov2001] `T. Zh. Esirkepov, Comp. Phys. Comm. 135, 144 (2001) <https://doi.org/10.1016/S0010-4655(00)00228-9>`_
 
 .. [Forslund1975] `D. W. Forslund, J. M. Kindel, and E. L. Lindman, Phys. Fluids 18, 1002 (1975) <http://aip.scitation.org/doi/abs/10.1063/1.861248>`_
@@ -64,9 +66,13 @@ References
 
 .. [Lobet2013] `Lobet et al., J. Phys.: Conf. Ser. 688, 012058 (2016) <http://iopscience.iop.org/article/10.1088/1742-6596/688/1/012058>`_
 
+.. [Lobet2015] `M. Lobet, Effets radiatifs et d'électrodynamique quantique dans l'interaction laser-matière ultra-relativiste (2015) <http://www.theses.fr/2015BORD0361#>`_
+
 .. [Nanbu1997] `K. Nanbu, Phys. Rev. E 55, 4642 (1997) <http://dx.doi.org/10.1103/PhysRevE.55.4642>`_
 
 .. [Nanbu1998] `K. Nanbu and S. Yonemura, J. Comput. Phys. 145, 639 (1998) <http://dx.doi.org/10.1006/jcph.1998.6049>`_
+
+.. [Niel2017] `F. Niel, C. Riconda, F. Amiranoff, R. Duclous, and M. Grech (2017)`_
 
 .. [Nuter2011] `R. Nuter et al., Phys. of Plasmas 19, 033107 (2011) <http://dx.doi.org/10.1063/1.3559494>`_
 

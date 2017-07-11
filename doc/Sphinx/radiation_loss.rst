@@ -78,7 +78,7 @@ In the intermediate regime (:math:`\chi \sim 1`), where the energy of the emitte
 small with respect to that of the emitting electrons, but for which the
 stochastic nature of photon emission cannot be neglected, the electron dynamics
 is described by the addition of a stochastic term derived from a Fokker-Planck
-expansion.
+expansion ([Niel2017]_).
 
 Tab :numref:`radiationRegimes` can be used to well configure the radiation loss
 in :program:`Smilei` (see :ref:`the radiation configuration in Species <Species>`).
@@ -149,9 +149,6 @@ the emitting particle. This translates to :math:`\chi \ll 1` as given in the
 introduction. Otherwise, the radiated power is know to strongly overestimate
 the physical radiated energy when :math:`\chi` approaches 0.1.
 
-Eq. :eq:`LLFrictionForceApprox` has been implemented in :program:`Smilei`
-under the radiation model name `Landau-Lifshitz`.
-
 Corrected classical model
 """""""""""""""""""""""""
 
@@ -187,8 +184,8 @@ with
   :label: g
 
   g \left( \chi_{\pm} \right) = \frac{9 \sqrt{3} }{8 \pi} \int_0^{+\infty}{d\nu
-  \left[  \frac{2\nu^2 K_{5/3}(\nu) }{\left( 2 + 3 \nu \chi_\pm \right) ^2} +
-  \frac{4 \nu \left( 3 \nu \chi_\pm\right)^2 }{\left( 2 + 3 \nu \chi_\pm \right)^4} \right]}
+  \left[  \frac{2\nu^2 }{\left( 2 + 3 \nu \chi_\pm \right) ^2}K_{5/3}(\nu) +
+  \frac{4 \nu \left( 3 \nu \chi_\pm\right)^2 }{\left( 2 + 3 \nu \chi_\pm \right)^4}K_{2/3}(\nu) \right]}
 
 The quantum instantaneous radiated power is nothing else than the classical one
 multiplied by a correction function called :math:`g \left( \chi_{\pm} \right)`.
@@ -205,8 +202,96 @@ III. Stochastic schemes
 Fokker-Planck stochastic model
 """"""""""""""""""""""""""""""
 
+The Fokker-Planck approach is an extension of the corrected Landau-Lifshitz
+model with an operator that takes into account diffusive stochastic effects
+([Niel2017]_):
+
+.. math::
+  :label: NielStochasticForce
+
+  F_{rad} dt = \left[ -P_{cl} g \left( \chi \right) dt + mc^2
+  \sqrt{R\left( \chi, \gamma \right)} dW \right]
+  \mathbf{u} / \left( \mathbf{u} c^2 \right)
+
+where :math:`dW` is a Wiener process of variance :math:`dt`.
+
+.. math::
+  :label: NielR
+
+    R\left( \chi, \gamma \right) = \frac{2}{3} \frac{\alpha^2}{\tau_e} \gamma
+    h \left( \chi \right)
+
+.. math::
+  :label: Nielh
+
+    h \left( \chi \right) = \frac{9 \sqrt{3}}{4 \pi} \int_0^{+\infty}{d\nu
+    \left[ \frac{2\chi^3 \nu^3}{\left( 2 + 3\nu\chi \right)^3} K_{5/3}(\nu)
+    + \frac{54 \chi^5 \nu^4}{\left( 2 + 3 \nu \chi \right)^5} K_{2/3}(\nu) \right]}
+
 Monte-Carlo quantum model
 """""""""""""""""""""""""
+
+The Monte-Carlo treatment of the emission is a more complex process than
+the previous ones that can be divided into several steps ([Duclous2011]_,
+[Lobet2013]_, [Lobet2015]_):
+
+1. The particle (electron or positron) is first assigned a final optical depth
+:math:`\tau_f` sampled from :math:`\tau_f = -\log{\xi}` where :math:`\xi` is a
+random number between 0 and 1. Emission occurs when
+this final optical depth is reached. A incremental optical depth :math:`\tau`
+is therefore secondly assigned initially set to 0.
+
+2. The optical depth :math:`\tau` then evolves according to the field and particle
+energy variations following this integral:
+
+.. math::
+  :label: MCDtauDt
+
+    \frac{d\tau}{dt} = \int_0^{\chi_\pm}{ \frac{d^2N}{d\chi dt}  d\chi }
+
+that is nothing else than the production rate of photons
+(integration of Eq. :eq:`PhotonProdRate`).
+
+3. The emitted photon quantum parameter :math:`\chi_\gamma` is computed by
+inverting the cumulative distribution function:
+
+.. math::
+  :label: CumulativeDistr
+
+    P(\chi_\pm,\chi_\gamma) = \frac{\displaystyle{\int_0^{\chi_\gamma}{F(\chi_\pm, \chi)
+    d\chi}}}{\displaystyle{\int_0^{\chi_\pm}{F(\chi_\pm, \chi) d\chi}}}
+
+:math:`F` is the so-called synchrotron emissivity function so that
+
+.. math::
+  :label: MCF
+
+    \frac{d^2 N}{dt d\chi} = \frac{2}{3} \frac{\alpha^2}{\tau_e} F (\chi, \chi_\gamma)
+
+Inversion of  :math:`P(\chi_\pm,\chi_\gamma)=\xi'` is done after drawing
+a second random number
+:math:`\xi' \in \left[ 0,1\right]` to find :math:`\chi_\gamma`.
+
+4. The energy of the emitted photon is then computed:
+:math:`\varepsilon_\gamma = mc^2 \gamma_\gamma =
+mc^2 \gamma_\pm \chi_\gamma / \chi_\pm`.
+
+5. The particle momentum is then updated using momentum conservation
+considering forward emission (valid when :math:`\gamma_\pm \gg 1`).
+
+.. math::
+  :label: momentumUpdate
+
+    F_{rad} = - \frac{\varepsilon_\gamma}{c} \frac{\mathbf{p_\pm}}{\| \mathbf{p_\pm} \|}
+
+The radiated force is just the recoil induced by the photon emission.
+Radiation loss is therefore a discrete process.
+Note that momentum conservation does not exactly conserve energy.
+It can be shown that the error :math:`\epsilon` tends to 0 when the particle
+energy tends to infinity ([Lobet2015]_) and that the error is low when
+:math:`\varepsilon_\pm \gg 1` and :math:`\varepsilon_\gamma \ll \varepsilon_\pm`.
+Between emission events, the electron dynamics is still governed by the
+Lorentz force.
 
 V. Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -221,7 +306,6 @@ This decision has been taken in order to:
 * be consistent with the current implementation
 * easily be able to use any pusher (without making the code more complex)
 
-
 Description of the files:
 
 * Class `RadiationTable`: useful tools, parameters and the tables.
@@ -229,31 +313,120 @@ Description of the files:
   classes for each model.
 * Class `RadiationFactory`: manage the choice of the correct radiation model
   depending of the species.
-* Class `RadiationLandauLifshitz`: classical Landau-Lifshitz radiation process
-* Class `RadiationCorrLandauLifshitz`: corrected Landau-Lifshitz radiation process
-* Class `RadiationNiel`:
-* Class `RadiationMonteCarlo`:
+* Class `RadiationLandauLifshitz`: classical Landau-Lifshitz radiation process.
+* Class `RadiationCorrLandauLifshitz`: corrected Landau-Lifshitz radiation process.
+* Class `RadiationNiel`: stochastic diffusive model of [Niel2017]_.
+* Class `RadiationMonteCarlo`: Monte-Carlo model.
 
 
 Landau-Lifshitz based models
 """"""""""""""""""""""""""""""""""""""""""""
+
+The classical Landau-Lifshitz model approximated for high-:math:`\gamma`
+given by Eq. :eq:`LLFrictionForceApprox`
+has been implemented in :program:`Smilei`
+using a simple explicit scheme.
+The model is accessible in the species configuration under the name
+`Landau-Lifshitz`.
+
+For the corrected version, we use a fit of the function
+:math:`g(\chi)` given by Eq. :eq:`quantumCorrFit`.
+
 .. math::
   :label: quantumCorrFit
 
   g \left( \chi_{\pm} \right) = \left[ 1 + 4.8 \left( 1 + \chi_{\pm} \right)
   \log \left( 1 + 1.7 \chi_{\pm} \right) + 2.44 \chi_{\pm}^2 \right]^{-2/3}
 
+This fit enables to keep the vectorization of the particle loop.
+The corrected model is accessible in the species configuration under the name
+`corrected-Landau-Lifshitz`
+
 Fokker-Planck stochastic model
 """"""""""""""""""""""""""""""""""""""""""""
+
+Eq. :eq:`NielStochasticForce` is implemented in :program:`Smilei` using
+a simple explicit scheme.
+
+Eq. :eq:`Nielh` is tabulated for performance issue.
+A polynomial fit of this integral can also be obtained in log-log
+or log10-log10 domain. However, high accuracy requires high-order polynomials.
+(order 20 for an accuracy around :math:`10^{-10}` for instance)
+
+This table can be generated by :program:`Smilei` at the initialization.
+The parameters such as the :math:`\chi` range and the discretization can be
+given in the namelist :ref:`Radiations <Radiations>`.
+
+The stochastic diffusive model is accessible in the species configuration
+under the name `Niel`.
 
 Monte-Carlo quantum model
 """""""""""""""""""""""""
 
+The computation of Eq. :eq:`MCDtauDt` would be too expensive for every single
+particles. Instead, the integral of the function :math:`F` is tabulated.
+This table is referred to as `integfochi` in the code.
+
+Similarly, Eq. :eq:`CumulativeDistr` is tabulated.
+This table is referred to as `xip` in the code.
+The only difference is that we choose a minimum photon quantum parameter
+:math:`\chi_{\gamma,\min}` for the integration so that:
+
+.. math::
+  :label: chiMin
+
+    \frac{\displaystyle{\int_{0}^{\chi_{\gamma,\min}}{F(\chi_\pm, \chi)
+    d\chi}}}{\displaystyle{\int_0^{\chi_\pm}{F(\chi_\pm, \chi) d\chi}}} < \epsilon
+
+This enables to find a lower bound to the :math:`\chi_\gamma` range
+(discretization in the log domain) so that the
+remaining part is negligible in term of radiated energy.
+The parameter :math:`\epsilon` is called `xip_threshold` in the
+:ref:`Radiations <Radiations>` namelist.
+
+The tables can be generated by :program:`Smilei` at the initialization.
+The parameters such as the :math:`\chi` range and the discretization can be
+given in the namelist :ref:`Radiations <Radiations>`.
+
+The Monte-Carlo model is accessible in the species configuration
+under the name `Monte-Carlo`.
+
 V. Benchmarks
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Counter-propagating Plane Wave 1D
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+This benchmark is referred to as `tst1d_9_rad_counter_prop` in the benchmark
+folder. In this benchmark, a GeV electron bunch is initialized near the right
+domain boundary and propagates to the left boundary from which a plane
+wave is injected. The laser has an amplitude of :math:`a_0 = 270`
+corresponding to an intensity of :math:`10^{23}\ \mathrm{Wcm^{-2}}` at
+:math:`\lambda = 1\ \mathrm{\mu m}`. The maximal quantum parameter :math:`\chi`
+value reached during the simulation is around 0.5.
+
+.. _rad_counter_prop_scalar:
+
+.. figure:: _static/rad_counter_prop_scalar.png
+  :width: 15cm
+
+  Comparison of the model energy scalar diagnostics. The kinetic, radiated and total
+  energy are respectively plotted with solid, dashed and dotted lines for
+  the Monte-Carlo (**MC**, blue), Niel (**Niel**, orange),
+  corrected Landau-Lifshitz (**CLL**, green) and the Landau-Lifshitz models
+  (**LL**, red).
+
+Evolution of the kinetic, radiated and total energy is shown in
+Fig. :numref:`rad_counter_prop_scalar` for all models.
+The Monte-Carlo, the Niel and the corrected Landau-Lifshitz models exhibit close
+results in term of total radiated and kinetic energy evolution with a final
+radiation rate of 80% the initial kinetic energy. The relative error on the
+total energy is small of the order of :math:`3\times10^{-3}`.
+As expected, the Landau-Lifshitz (in red) overestimates the radiated energy
+because the interaction happens mainly in the quantum regime.
 
 VI. Performances
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The cost of the different models is summarized in table
 :numref:`radiationTimes`.
