@@ -675,7 +675,7 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 
             // Denominator of xip
             denominator = RadiationTables::compute_integfochi(chipa,
-                    0.98e-40*chipa,0.98*chipa,200,1e-13);
+                    0.99e-40*chipa,0.99*chipa,200,1e-13);
 
             k = 0;
             while(k < xip_power)
@@ -683,7 +683,7 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
                 logchiphmin -= pow(0.1,k);
                 chiph = pow(10.,logchiphmin);
                 numerator = RadiationTables::compute_integfochi(chipa,
-                    1e-40*chiph,chiph,200,1e-13);
+                    0.99e-40*chiph,0.99*chiph,200,1e-13);
 
                 if (numerator == 0)
                 {
@@ -745,14 +745,9 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
                chiph = pow(10.,ichiph*chiph_delta +
                    xip_chiphmin_table[imin_table[rank] + ichipa]);
 
-               /* std::cout << "rank: " << rank
-                         << " " << chipa
-                         << " " << chiph
-                         << " " << xip_chiphmin_table[imin_table[rank] + ichipa] << std::endl; */
-
                // Denominator of xip
                numerator = RadiationTables::compute_integfochi(chipa,
-                       1e-40*chiph,chiph,250,1e-15);
+                       0.99e-40*chiph,0.99*chiph,250,1e-15);
 
                // Update local buffer value
                buffer[ichipa*xip_chiph_dim + ichiph] = std::min(1.,numerator / denominator);
@@ -1303,16 +1298,6 @@ double RadiationTables::compute_dNphdt(double chipa,double gfpa)
         dNphdt = (integfochi_table[ichipa+1]*fabs(logchipa-logchipam) +
                 integfochi_table[ichipa]*fabs(logchipap - logchipa))*integfochi_chipa_inv_delta;
     }
-
-    /*std::cerr << "factor_dNphdt: " << factor_dNphdt << " "
-              << "dNphdt: " << dNphdt << " "
-              << "chipa: " << chipa << " "
-              << "ichipa: " << ichipa << " "
-              << "" << logchipam << " < logchipa: " << logchipa << " < " << logchipap << " "
-              << "integfochi_chipa_delta: " << integfochi_chipa_delta << " "
-              << "integfochi_table[ichipa]: " << integfochi_table[ichipa] << " "
-              << "integfochi_table[ichipa+1]: " << integfochi_table[ichipa+1] << " "
-              << std::endl;*/
 
     return factor_dNphdt*dNphdt*chipa/gfpa;
 

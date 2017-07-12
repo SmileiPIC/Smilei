@@ -113,7 +113,8 @@ with
   + \frac{2}{3} \frac{e}{E_{cr}} \left[ \left( \mathbf{u} \cdot \mathbf{E} \right) \mathbf{E} - \mathbf{B} \times \left( \mathbf{E} + \mathbf{u} \times \mathbf{B} \right) \right] \\
   - \frac{2}{3}\frac{e}{E_{cr}} \gamma^2 \left[ \left( \mathbf{E} + \mathbf{u} \times \mathbf{B} \right)^2 - \left( \mathbf{u} \cdot \mathbf{E}\right)^2 \right] \mathbf{u}
 
-where :math:`\mathbf{u} = \mathbf{p} / (\gamma m c)` is the normalized momentum,
+where :math:`\mathbf{u} = \mathbf{p} / (\gamma m c)` is the velocity,
+:math:`\mathbf{p}` the momentum,
 :math:`\tau_e = r_e / c = e^2 / 4 \pi \varepsilon_0 m c^3`
 the time for light to travel across the classical electron radius
 and :math:`E_{cr} = E_s / \alpha`
@@ -437,7 +438,7 @@ because the interaction happens mainly in the quantum regime.
 .. _rad_counter_prop_track:
 
 .. figure:: _static/rad_counter_prop_track.png
-  :width: 15cm
+  :width: 18cm
 
   Comparison of the evolution of the normalized kinetic energy
   :math:`\gamma - 1` for some selected electrons between the radiative models
@@ -465,6 +466,37 @@ This corresponds to two different scripts in the benchmark folder:
   Landau-Lifshitz and the Monte-Carlo model for an initial :math:`\chi = 1`.
 * `tst2d_9_synchrotron_chi0.1.py`: This script tests and compares the corrected
   Landau-Lifshitz and the Niel model for an initial :math:`\chi = 0.1`.
+
+In this section, we focus on the case with initial quantum parameter
+:math:`\chi = 0.1`.
+The magnetic field amplitude is :math:`B = 90 m \omega_r / e`.
+
+.. _synchrotron_scalar:
+
+.. figure:: _static/synchrotron_scalar.png
+  :width: 15cm
+
+  Comparison of the energy scalar diagnostics. The kinetic, radiated and total
+  energy are respectively plotted with solid, dashed and dotted lines for
+  the Monte-Carlo (**MC**, blue), Niel (**Niel**, orange),
+  corrected Landau-Lifshitz (**CLL**, green).
+
+.. _synchrotron_x_y_gamma:
+
+.. figure:: _static/synchrotron_x_y_gamma.png
+  :width: 18cm
+
+  Average normalized kinetic energy at simulation time :math:`25 \omega_r^{-1}`
+  for the simulations with the Monte-Carlo, the Niel
+  and the corrected Landau-Lifshitz (**CLL**) models.
+
+.. _synchrotron_t_gamma_ne:
+
+.. figure:: _static/synchrotron_t_gamma_ne.png
+  :width: 18cm
+
+  Time evolution of the electron energy distribution for the Monte-Carlo, the Niel
+  and the corrected Landau-Lifshitz (**CLL**) models.
 
 VI. Performances
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
