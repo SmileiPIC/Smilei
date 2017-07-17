@@ -235,10 +235,10 @@ occur every 150 iterations.
 .. code-block:: python
   
   LoadBalancing(
-      initial_balance = True
+      initial_balance = True,
       every = 150,
       coef_cell = 1.,
-      coef_frozen = 0.1,
+      coef_frozen = 0.1
   )
 
 .. py:data:: initial_balance
