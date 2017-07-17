@@ -353,7 +353,7 @@ namelist("")
     // Parameters for the radiation losses
     // -------------------------------------------------------
     hasMCRadiation = false ;// Default value
-    hasContinuousRadiation = false ;// Default value
+    hasLLRadiation = false ;// Default value
     hasNielRadiation = false ;// Default value
 
     // read from python namelist the number of species
@@ -372,7 +372,7 @@ namelist("")
        else if (radiation_model=="Landau-Lifshitz"
             || radiation_model=="corrected-Landau-Lifshitz")
        {
-           this->hasContinuousRadiation = true;
+           this->hasLLRadiation = true;
        }
        else if (radiation_model=="Niel")
        {

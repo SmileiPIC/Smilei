@@ -64,6 +64,11 @@ ifneq (,$(findstring gdb,$(config)))
     CXXFLAGS += -v -da -Q
 endif
 
+# With valgrind
+ifneq (,$(findstring valgrind,$(config)))
+    CXXFLAGS += -g  -O3
+endif
+
 ifneq (,$(findstring scalasca,$(config)))
     SMILEICXX = scalasca -instrument $(SMILEICXX)
 endif

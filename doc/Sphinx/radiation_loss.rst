@@ -470,6 +470,10 @@ This corresponds to two different scripts in the benchmark folder:
 In this section, we focus on the case with initial quantum parameter
 :math:`\chi = 0.1`.
 The magnetic field amplitude is :math:`B = 90 m \omega_r / e`.
+Initial electron Lorentz factor is around :math:`\gamma =450 mc`.
+
+Time evolution of the kinetic energy, the radiated energy and the total energy
+is shown in Fig. :numref:`synchrotron_scalar`.
 
 .. _synchrotron_scalar:
 

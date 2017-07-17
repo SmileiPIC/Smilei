@@ -177,7 +177,7 @@ public:
     //! True if restart requested
     bool restart;
 
-    //! frequency of exchange particles (default = 1, disabled for now, incompatible with sort) 
+    //! frequency of exchange particles (default = 1, disabled for now, incompatible with sort)
     int exchange_particles_each;
 
     //! frequency to apply shrink_to_fit on particles structure
@@ -204,7 +204,7 @@ public:
     //! Tells whether there is a species with Monte-Carlo Compton radiation
     bool hasMCRadiation;
     //! Tells whether there is a species with Continuous radiation loss.
-    bool hasContinuousRadiation;
+    bool hasLLRadiation;
     //! Tells whether there is a species with the stochastic radiation loss
     //! of Niel et al.
     bool hasNielRadiation;

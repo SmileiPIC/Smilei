@@ -72,6 +72,13 @@ class Radiation
             return radiated_energy;
         };
 
+        //! Set the total normalized radiated energy of the path
+        //! \param value value of the radiated energy to be assigned
+        void setRadiatedEnergy(double value)
+        {
+            radiated_energy = value;
+        };
+
         //! Computation of the quantum parameter for the given
         //! thread of particles
         //! \param Particles class containg the particle property arrays

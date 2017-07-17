@@ -173,7 +173,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         if ( mypatch->isXmin() && mypatch->EMfields->emBoundCond[0] )
             mypatch->EMfields->emBoundCond[0]->disableExternalFields();
 
-        mypatch->finalizeMPIenvironment();
+        mypatch->finalizeMPIenvironment(params);
         //Position new patch
         vecPatches.patches_[patch_to_be_created[my_thread][j]] = mypatch ;
         //Receive Patch if necessary

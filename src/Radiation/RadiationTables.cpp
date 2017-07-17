@@ -55,7 +55,7 @@ void RadiationTables::initParams(Params& params)
 {
 
     if (params.hasMCRadiation ||
-        params.hasContinuousRadiation ||
+        params.hasLLRadiation ||
         params.hasNielRadiation)
     {
         TITLE("Initializing Radiation loss")
@@ -133,7 +133,7 @@ void RadiationTables::initParams(Params& params)
 
     // Computation of some parameters
     if (params.hasMCRadiation ||
-        params.hasContinuousRadiation ||
+        params.hasLLRadiation ||
         params.hasNielRadiation)
     {
 
