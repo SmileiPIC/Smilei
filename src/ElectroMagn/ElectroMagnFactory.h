@@ -26,6 +26,9 @@ public:
         else if ( params.geometry == "3d3v" ) {
             EMfields = new ElectroMagn3D(params, vecSpecies, patch);
         }
+        else if ( params.geometry == "3drz" ) {
+            EMfields = new ElectroMagn3DRZ(params, vecSpecies, patch);
+        }
         else {
             ERROR( "Unknown geometry : " << params.geometry << "!" );
         }
