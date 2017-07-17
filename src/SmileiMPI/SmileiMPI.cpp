@@ -576,7 +576,7 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
     //MPI_Request request;
 
     // Count number max of comms :
-    int maxtag = tag;
+    int maxtag = 0;
 
     // For the particles
     for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++){
@@ -587,7 +587,7 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
         }
     }
 
-    maxtag += 2*patch->vecSpecies.size();
+    maxtag += 2*patch->vecSpecies.size() + 1;
 
     // For the radiated energy that needs to be kept until the diags
     if (params.hasMCRadiation ||
@@ -603,18 +603,18 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
 
                 temp = patch->vecSpecies[ispec]->Radiate->getRadiatedEnergy();
 
-                maxtag ++;
-
                 MPI_Isend(&temp,
-                1, MPI_DOUBLE, to, maxtag, SMILEI_COMM_WORLD,
+                1, MPI_DOUBLE, to, tag + maxtag, SMILEI_COMM_WORLD,
                 &patch->requests_[2*patch->vecSpecies.size()+k]);
+
+                maxtag ++;
 
                 k++;
             }
         }
     }
 
-    isend( patch->EMfields, to, maxtag, patch->requests_ , tag);
+    isend( patch->EMfields, to, maxtag, patch->requests_,tag);
 
 } // END isend( Patch )
 
@@ -647,7 +647,7 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     MPI_Datatype recvParts;
     int nbrOfPartsRecv;
 
-    // Count number max of comms :
+    // Count number max of comms :int tag
     int maxtag = tag;
 
     for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++){
@@ -668,7 +668,7 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
         }
     }
 
-    maxtag += 2*patch->vecSpecies.size();
+    maxtag += 2*patch->vecSpecies.size() + 1;
 
     // For the radiated energy that needs to be kept until the diags
     if (params.hasMCRadiation ||
@@ -684,11 +684,11 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
             if ( patch->vecSpecies[ispec]->getNbrOfParticles() > 0
                   && patch->vecSpecies[ispec]->Radiate){
 
-                maxtag ++;
-
                 MPI_Recv(&temp,1,MPI_DOUBLE,from,
                     maxtag,
                     SMILEI_COMM_WORLD,&status);
+
+                maxtag++;
 
                 patch->vecSpecies[ispec]->Radiate->setRadiatedEnergy(temp);
 
@@ -749,8 +749,9 @@ void SmileiMPI::recv(std::vector<double> *vec, int from, int tag)
 } // End recv
 
 
-void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& requests, int mpi_tag )
+void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& requests, int mpi_tag)
 {
+
     isend( EM->Ex_ , to, mpi_tag+tag, requests[tag]); tag++;
     isend( EM->Ey_ , to, mpi_tag+tag, requests[tag]); tag++;
     isend( EM->Ez_ , to, mpi_tag+tag, requests[tag]); tag++;
