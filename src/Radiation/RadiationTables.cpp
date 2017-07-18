@@ -738,7 +738,7 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 
             // Denominator of xip
             denominator = RadiationTables::compute_integfochi(chipa,
-                    1e-40*chipa,chipa,250,1e-15);
+                    1e-40*chipa,chipa,300,1e-15);
 
             // Loop in the chiph dimension
             for (int ichiph = 0 ; ichiph < xip_chiph_dim ; ichiph ++)
@@ -749,7 +749,7 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 
                // Numerator of xip
                numerator = RadiationTables::compute_integfochi(chipa,
-                       0.99e-40*chiph,0.99*chiph,250,1e-15);
+                       0.99e-40*chiph,0.99*chiph,300,1e-15);
 
                // Update local buffer value
                buffer[ichipa*xip_chiph_dim + ichiph] = std::min(1.,numerator / denominator);
@@ -762,6 +762,15 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
                        buffer[ichipa*xip_chiph_dim + i] = 1.;
                    }
                    ichiph = xip_chiph_dim;
+               }
+
+               // Artificial monotony
+               if ((ichiph > 0) &&
+                   (buffer[ichipa*xip_chiph_dim + ichiph] <
+                    buffer[ichipa*xip_chiph_dim + ichiph -1]))
+               {
+                   buffer[ichipa*xip_chiph_dim + ichiph] =
+                   buffer[ichipa*xip_chiph_dim + ichiph -1];
                }
 
                // display percentage
