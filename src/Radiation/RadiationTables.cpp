@@ -729,10 +729,13 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
         for(int ichipa = 0 ; ichipa < length_table[rank] ; ichipa++)
         {
 
-            chipa = pow(10.,(imin_table[rank] + ichipa)*xip_chipa_delta + xip_log10_chipa_min);
+            chipa = (imin_table[rank] + ichipa)*xip_chipa_delta
+                                      + xip_log10_chipa_min;
 
-            chiph_delta = (log10(chipa) - xip_chiphmin_table[imin_table[rank] + ichipa])
+            chiph_delta = (chipa - xip_chiphmin_table[imin_table[rank] + ichipa])
                         / (xip_chiph_dim - 1);
+
+            chipa = pow(10.,chipa);
 
             // Denominator of xip
             denominator = RadiationTables::compute_integfochi(chipa,
@@ -745,14 +748,14 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
                chiph = pow(10.,ichiph*chiph_delta +
                    xip_chiphmin_table[imin_table[rank] + ichipa]);
 
-               // Denominator of xip
+               // Numerator of xip
                numerator = RadiationTables::compute_integfochi(chipa,
                        0.99e-40*chiph,0.99*chiph,250,1e-15);
 
                // Update local buffer value
                buffer[ichipa*xip_chiph_dim + ichiph] = std::min(1.,numerator / denominator);
 
-               // If == 1, end of the loop
+               // If buffer == 1, end of the loop with 1
                if (buffer[ichipa*xip_chiph_dim + ichiph] == 1)
                {
                    for (int i = ichiph+1 ; i < xip_chiph_dim ; i ++)
