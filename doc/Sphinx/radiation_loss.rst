@@ -532,7 +532,7 @@ the Monte-Carlo radiation process.
 | Synchrotron 2D                      | 3.9s       | 4.2s     | 4.8s         | 9s       | 5.6s   |
 | :math:`\chi=0.5`,  :math:`B=100`    |            | - 10%    | - 30%        | - 140%   | - 50%  |
 +-------------------------------------+------------+----------+--------------+----------+--------+
-| Interaction with a carbon thin foil | 6.5s       | 6.9s     | 7.2s         | 7.8s     | 7.2s   |
+| Interaction with a carbon thin foil | 6.5s       | 6.9s     | 7.2s         | 7.4s     | 7.2s   |
 | 2D                                  |            |          |              |          |        |
 +-------------------------------------+------------+----------+--------------+----------+--------+
 
@@ -540,7 +540,7 @@ Descriptions of the cases:
 
 * **Counter-propagating Plane Wave 1D**: Collision between an electron bunch
   and a counter-propagating plane wave.
-  The case is run on a single node of Poincare with 2 MPI ranks and 8 OpenMP
+  The case is run on a single node of Jureca with 2 MPI ranks and 12 OpenMP
   threads per rank.
 
 * **Synchrotron 2D**: The domain is fulfilled with electrons having the same

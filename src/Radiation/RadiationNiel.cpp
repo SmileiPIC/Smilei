@@ -35,6 +35,7 @@ RadiationNiel::~RadiationNiel()
 // -----------------------------------------------------------------------------
 //! Overloading of the operator (): perform the corrected Landau-Lifshitz
 //! classical radiation reaction + stochastic diffusive operator.
+//! **Non-vectorized version**
 //
 //! \param particles   particle object containing the particle properties
 //! \param smpi        MPI properties
@@ -44,7 +45,7 @@ RadiationNiel::~RadiationNiel()
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
 // -----------------------------------------------------------------------------
-void RadiationNiel::operator() (Particles &particles,
+/*void RadiationNiel::operator() (Particles &particles,
         SmileiMPI* smpi,
         RadiationTables &RadiationTables,
         int istart,
@@ -152,7 +153,7 @@ void RadiationNiel::operator() (Particles &particles,
 
     }
 
-}
+}*/
 
 // -----------------------------------------------------------------------------
 //! Overloading of the operator (): perform the corrected Landau-Lifshitz
@@ -166,7 +167,7 @@ void RadiationNiel::operator() (Particles &particles,
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
 // -----------------------------------------------------------------------------
-/*void RadiationNiel::operator() (Particles &particles,
+void RadiationNiel::operator() (Particles &particles,
         SmileiMPI* smpi,
         RadiationTables &RadiationTables,
         int istart,
@@ -309,4 +310,4 @@ void RadiationNiel::operator() (Particles &particles,
     }
     radiated_energy += radiated_energy_loc;
 
-}*/
+}
