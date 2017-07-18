@@ -662,7 +662,7 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 
         // 1. - Computation of xip_chiphmin_table
         MESSAGE("            Computation of log10(chiphmin):");
-        dpct = std::max(dpct,100./length_table[rank]);
+        dpct = std::max(10.,100./length_table[rank]);
 
         // Loop for chiphmin
         for(int ichipa = 0 ; ichipa < length_table[rank] ; ichipa++)
@@ -718,14 +718,13 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 
         // 2. - Computation of the xip table
         MESSAGE("            Computation of xip:");
-        dpct = std::max(dpct,100./length_table[rank]);
 
         // Allocation of the local buffer
         buffer = new double [length_table[rank]*xip_chiph_dim];
 
         // Loop for xip in the chipa dimension
         pct = 0;
-        dpct = std::max(dpct,100./(length_table[rank]*xip_chiph_dim));
+        dpct = std::max(10.,100./(length_table[rank]*xip_chiph_dim));
         for(int ichipa = 0 ; ichipa < length_table[rank] ; ichipa++)
         {
 
@@ -1524,7 +1523,7 @@ double RadiationTables::get_h_Niel_from_fit(double chipa)
 // -----------------------------------------------------------------------------
 double RadiationTables::get_Niel_stochastic_term(double gamma,
                                                  double chipa,
-                                                 double dt)
+                                                 double sqrtdt)
 {
     // Get the value of h for the corresponding chipa
     double h,r;
@@ -1533,7 +1532,7 @@ double RadiationTables::get_Niel_stochastic_term(double gamma,
 
     // Pick a random number in the normal distribution of standard
     // deviation sqrt(dt) (variance dt)
-    r = Rand::normal(sqrt(dt));
+    r = Rand::normal(sqrtdt);
 
     /*std::random_device device;
     std::mt19937 gen(device());
