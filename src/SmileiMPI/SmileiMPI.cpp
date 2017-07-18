@@ -589,7 +589,7 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
 
     maxtag += 2*patch->vecSpecies.size() + 1;
 
-    // For the radiated energy that needs to be kept until the diags
+    // Send the cumulated radiated energy
     if (params.hasMCRadiation ||
         params.hasLLRadiation ||
         params.hasNielRadiation)
@@ -601,7 +601,8 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
             if ( patch->vecSpecies[ispec]->getNbrOfParticles() > 0
                   && patch->vecSpecies[ispec]->Radiate){
 
-                temp = patch->vecSpecies[ispec]->Radiate->getRadiatedEnergy();
+                //temp = patch->vecSpecies[ispec]->Radiate->getRadiatedEnergy();
+                temp = patch->vecSpecies[ispec]->getNrjRadiation();
 
                 MPI_Isend(&temp,
                 1, MPI_DOUBLE, to, tag + maxtag, SMILEI_COMM_WORLD,
@@ -670,7 +671,7 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
 
     maxtag += 2*patch->vecSpecies.size() + 1;
 
-    // For the radiated energy that needs to be kept until the diags
+    // Receive the cumulated radiated energy
     if (params.hasMCRadiation ||
         params.hasLLRadiation ||
         params.hasNielRadiation)
@@ -690,7 +691,8 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
 
                 maxtag++;
 
-                patch->vecSpecies[ispec]->Radiate->setRadiatedEnergy(temp);
+                //patch->vecSpecies[ispec]->Radiate->setRadiatedEnergy(temp);
+                patch->vecSpecies[ispec]->setNrjRadiation(temp);
 
                 k++;
             }

@@ -116,7 +116,7 @@ void Species::initCluster(Params& params)
     nrj_bc_lost = 0.;
     nrj_mw_lost = 0.;
     nrj_new_particles = 0.;
-    nrj_radiation_lost = 0.;
+    nrj_radiation = 0.;
 
 }//END initCluster
 
@@ -479,7 +479,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                 (*Radiate)(*particles, smpi, RadiationTables,
                          bmin[ibin], bmax[ibin], ithread );
 
-                nrj_radiation_lost += (*Radiate).getRadiatedEnergy();
+                nrj_radiation += (*Radiate).getRadiatedEnergy();
 
                 // Update the quantum parameter chi
                 (*Radiate).compute_thread_chipa(*particles,

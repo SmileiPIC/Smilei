@@ -233,7 +233,13 @@ public:
     double getLostNrjMW() const {return mass*nrj_mw_lost;}
 
     //! Get the energy radiated away by the particles multiplied by the mass
-    double getLostNrjRadiation() const {return mass*nrj_radiation_lost;}
+    double getNrjRadiation() const {return mass*nrj_radiation;}
+
+    //! Set the energy radiated away by the particles multiplied by the mass
+    void setNrjRadiation(double value) {nrj_radiation = value;}
+
+    //! Add the energy radiated away by the particles
+    void addNrjRadiation(double value) {nrj_radiation += value;}
 
     //! Get energy gained via new particles
     double getNewParticlesNRJ() const {return mass*nrj_new_particles;}
@@ -243,7 +249,7 @@ public:
         //nrj_bc_lost = 0;
         nrj_mw_lost = 0;
         nrj_new_particles = 0;
-        //nrj_radiation_lost = 0;
+        //nrj_radiation = 0;
     }
 
     inline void storeNRJlost( double nrj ) { nrj_mw_lost += nrj; };
@@ -296,7 +302,7 @@ public:
 protected:
 
     //! Accumulate nrj lost by the particle with the radiation
-    double nrj_radiation_lost;
+    double nrj_radiation;
 
 private:
     //! Number of steps for Maxwell-Juettner cumulative function integration

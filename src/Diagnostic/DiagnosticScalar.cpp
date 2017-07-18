@@ -380,7 +380,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             if (vecSpecies[ispec]->Radiate)
             {
                 *sUrad[ispec]  += cell_volume*
-                                 vecSpecies[ispec]->getLostNrjRadiation();
+                                 vecSpecies[ispec]->getNrjRadiation();
                 /*std::cerr << "Radiated energy for species " << ispec
                           << ": " << *sUrad[ispec]
                           << " / " << *sUkin[ispec]
@@ -393,7 +393,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             if (vecSpecies[ispec]->Radiate)
             {
                 Urad_ += cell_volume*
-                         vecSpecies[ispec]->getLostNrjRadiation();
+                         vecSpecies[ispec]->getNrjRadiation();
                 /*std::cerr << "Radiated energy: " << Urad_
                           << " / " << Ukin_
                 << std::endl;*/

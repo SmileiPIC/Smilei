@@ -77,6 +77,8 @@ class Radiation
         void setRadiatedEnergy(double value)
         {
             radiated_energy = value;
+            std::cerr << " setRadiatedEnergy(" << radiated_energy
+                      << ")"<< std::endl;
         };
 
         //! Computation of the quantum parameter for the given
