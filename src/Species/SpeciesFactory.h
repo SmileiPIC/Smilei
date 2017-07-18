@@ -376,6 +376,9 @@ public:
                     break;
                 }
             }
+            if (retSpecies[ispec1]->electron_species_index==-1) {
+                ERROR("For species '"<<retSpecies[ispec1]->species_type<<"' ionization_electrons named " << retSpecies[ispec1]->ionization_electrons << " could not be found");
+            }
         }
         
         return retSpecies;
