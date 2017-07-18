@@ -299,21 +299,32 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
         COM_vy = ( m12 * (p1->momentum(1,i1)) + p2->momentum(1,i2) ) * gamma12_inv;
         COM_vz = ( m12 * (p1->momentum(2,i1)) + p2->momentum(2,i2) ) * gamma12_inv;
         COM_vsquare = COM_vx*COM_vx + COM_vy*COM_vy + COM_vz*COM_vz;
-        COM_gamma = pow( 1.-COM_vsquare , -0.5);
         
         // Change the momentum to the COM frame (we work only on particle 1)
         // Quantities ending with "COM" are quantities of the particle expressed in the COM frame.
-        term1 = (COM_gamma - 1.) / COM_vsquare;
-        vcv1  = (COM_vx*(p1->momentum(0,i1)) + COM_vy*(p1->momentum(1,i1)) + COM_vz*(p1->momentum(2,i1)))/gamma1;
-        vcv2  = (COM_vx*(p2->momentum(0,i2)) + COM_vy*(p2->momentum(1,i2)) + COM_vz*(p2->momentum(2,i2)))/gamma2;
-        term2 = (term1*vcv1 - COM_gamma) * gamma1;
-        px_COM = (p1->momentum(0,i1)) + term2*COM_vx;
-        py_COM = (p1->momentum(1,i1)) + term2*COM_vy;
-        pz_COM = (p1->momentum(2,i1)) + term2*COM_vz;
+        if( COM_vsquare != 0.) {
+            COM_gamma = pow( 1.-COM_vsquare , -0.5);
+            term1 = (COM_gamma - 1.) / COM_vsquare;
+            vcv1  = (COM_vx*(p1->momentum(0,i1)) + COM_vy*(p1->momentum(1,i1)) + COM_vz*(p1->momentum(2,i1)))/gamma1;
+            vcv2  = (COM_vx*(p2->momentum(0,i2)) + COM_vy*(p2->momentum(1,i2)) + COM_vz*(p2->momentum(2,i2)))/gamma2;
+            term2 = (term1*vcv1 - COM_gamma) * gamma1;
+            px_COM = (p1->momentum(0,i1)) + term2*COM_vx;
+            py_COM = (p1->momentum(1,i1)) + term2*COM_vy;
+            pz_COM = (p1->momentum(2,i1)) + term2*COM_vz;
+            gamma1_COM = (1.-vcv1)*COM_gamma*gamma1;
+            gamma2_COM = (1.-vcv2)*COM_gamma*gamma2;
+        } else {
+            COM_gamma = 1.;
+            term1 = 0.5;
+            term2 = gamma1;
+            px_COM = (p1->momentum(0,i1));
+            py_COM = (p1->momentum(1,i1));
+            pz_COM = (p1->momentum(2,i1));
+            gamma1_COM = gamma1;
+            gamma2_COM = gamma2;
+        }
         p2_COM = px_COM*px_COM + py_COM*py_COM + pz_COM*pz_COM;
         p_COM  = sqrt(p2_COM);
-        gamma1_COM = (1.-vcv1)*COM_gamma*gamma1;
-        gamma2_COM = (1.-vcv2)*COM_gamma*gamma2;
         
         // Calculate some intermediate quantities
         term3 = COM_gamma * gamma12_inv;
