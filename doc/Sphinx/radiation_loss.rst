@@ -458,8 +458,16 @@ moment of order 3 as explained in [Niel2017]_.
 Synchrotron 2D
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-A bunch of electron evolves in a constant magnetic field orthogonal to their
-initial propagation direction.
+A bunch of electrons of initial momentum :math:`p_{-,0}`
+evolves in a constant magnetic field :math:`B` orthogonal
+to their initial propagation direction.
+In such a configuration, the electron bunch is supposed to rotate endlessly
+with the same radius :math:`R = p_{-,0} /e B` without radiation loss.
+However, the magnetic field will be so strong here that the electrons will
+radiate their energy as in a synchrotron facility.
+The initial quantum parameter is equal to
+:math:`\chi_- = \gamma_{-,0} B /m_e E_s`.
+
 This corresponds to two different scripts in the benchmark folder:
 
 * `tst2d_8_synchrotron_chi1.py`: This script tests and compares the corrected
@@ -470,10 +478,13 @@ This corresponds to two different scripts in the benchmark folder:
 In this section, we focus on the case with initial quantum parameter
 :math:`\chi = 0.1`.
 The magnetic field amplitude is :math:`B = 90 m \omega_r / e`.
-Initial electron Lorentz factor is around :math:`\gamma =450 mc`.
+Initial electron Lorentz factor is around
+:math:`\gamma_{-,0} = \varepsilon_{-,0}/mc^2 =  450`.
 
 Time evolution of the kinetic energy, the radiated energy and the total energy
-is shown in Fig. :numref:`synchrotron_scalar`.
+is shown in Fig. :numref:`synchrotron_scalar`. All radiation models provide
+similar evolution of these integrated quantities. The relative error on the
+total energy is around :math:`3 \times 10^{-9}`.
 
 .. _synchrotron_scalar:
 
@@ -484,6 +495,16 @@ is shown in Fig. :numref:`synchrotron_scalar`.
   energy are respectively plotted with solid, dashed and dotted lines for
   the Monte-Carlo (**MC**, blue), Niel (**Niel**, orange),
   corrected Landau-Lifshitz (**CLL**, green).
+
+The main difference between models can be understood by studying the
+particle trajectories and phase spaces. For this purpose, colormap of
+the normalized kinetic energy at :math:`25 \omega_r^{-1}` is shown in
+Fig. :numref:`synchrotron_x_y_gamma`. With continuous radiation loss
+(corrected Landau-Lifshitz case), the electron bunch rotates with a decreasing
+radius but the bunch keeps its original shape. The radiation only acts as a
+cooling mechanism.
+In the cases the Niel and the Monte-Carlo radiation models,
+the stochastic effects come into play and lead the bunch to diffuse.
 
 .. _synchrotron_x_y_gamma:
 
@@ -502,14 +523,49 @@ is shown in Fig. :numref:`synchrotron_scalar`.
   Time evolution of the electron energy distribution for the Monte-Carlo, the Niel
   and the corrected Landau-Lifshitz (**CLL**) models.
 
-Thin foil
+Thin foil 2D
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-.. thin_foil_scalar:
+This case is not is the list of available benchmarks but we decided to present
+these results here as an example of simulation study.
+Here, we simulates the interaction of a fully-ionized carbon thin foil
+with an extremely intense plane wave in 2D. The thin foil in located at 4
+:math:`\mu\mathrm{m}` of the left border `xmin`.
+It starts with a linear preplasma of 1 :math:`\mu\mathrm{m}` followed with
+an uniform section of 3 :math:`\mu\mathrm{m}` of density 492 :math:`n_c`.
+The target is irradiated by a Gaussian plane wave of peak intensity
+:math:`a_0 = 270` corresponding to :math:`10^{23}\ \mathrm{Wcm^{-2}}` and FWHM 50 fs.
+The domain has a discretization of 64 cells per :math:`\mu\mathrm{m}` in
+the two directions x and y with 64 particles per cell.
+There is two species: electrons and carbon ions.
+Only electrons can radiate.
+Different simulations have been performed with the different radiation models.
+
+The time evolution of the electron kinetic energy, the carbon ion
+kinetic energy, the radiated energy and the total
+absorbed energy is shown in Fig. :numref:`thin_foil_scalar`.
+
+.. _thin_foil_scalar:
 
 .. figure:: _static/thin_foil_scalar.png
   :width: 18cm
 
+  Time evolution of the electron kinetic energy (solid lines), the carbon ion
+  kinetic energy (dashed line), the radiated energy (dotted line) and the total
+  absorbed energy by particle and radiation (dotted-dashed lines). These
+  quantities are plotted for the Monte-Carlo radiation model (**MC**, blue),
+  the Niel model (**Niel**, orange), the corrected Landau-Lifshitz model (**CLL**, green),
+  the classical Landau-Lifshitz model (**LL**, purple) and without radiation (**None**, red).
+
+.. _thin_foil_x_chi_ne:
+
+.. figure:: _static/thin_foil_x_chi_ne.png
+  :width: 18cm
+
+.. _thin_foil_x_px_ne:
+
+.. figure:: _static/thin_foil_x_px_ne.png
+  :width: 18cm
 
 VI. Performances
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -565,7 +621,7 @@ Descriptions of the cases:
   with an extremely intense plane wave in 2D.
   The thin foil in located at 4 :math:`\mu\mathrm{m}` of the left border `xmin`.
   It starts with a linear preplasma of 1 :math:`\mu\mathrm{m}` followed with
-  a uniform section of 3 :math:`\mu\mathrm{m}` of density 492 :math:`n_c`.
+  an uniform section of 3 :math:`\mu\mathrm{m}` of density 492 :math:`n_c`.
   The target is irradiated by a Gaussian plane wave of peak intensity
   :math:`a_0 = 270` corresponding to :math:`10^{23}\ \mathrm{Wcm^{-2}}` and FWHM 50 fs.
   The domain has a discretization of 64 cells per :math:`\mu\mathrm{m}` in

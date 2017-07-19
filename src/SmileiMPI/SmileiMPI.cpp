@@ -587,7 +587,7 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
         }
     }
 
-    maxtag += 2*patch->vecSpecies.size() + 1;
+    maxtag += 2*patch->vecSpecies.size();
 
     // Send the cumulated radiated energy
     if (params.hasMCRadiation ||
@@ -669,7 +669,7 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
         }
     }
 
-    maxtag += 2*patch->vecSpecies.size() + 1;
+    maxtag += 2*patch->vecSpecies.size();
 
     // Receive the cumulated radiated energy
     if (params.hasMCRadiation ||
