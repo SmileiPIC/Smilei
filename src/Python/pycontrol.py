@@ -51,7 +51,8 @@ def _smilei_check():
                     my_pattern += "*"+ os.sep
                 my_pattern += "dump-*-*.h5";
                 # pick those file that match the mpi rank
-                my_files = filter(lambda a: smilei_mpi_rank==int(re.search(r'dump-[0-9]*-([0-9])*.h5$',a).groups()[-1]),glob.glob(my_pattern))
+                my_files = filter(lambda a: smilei_mpi_rank==int(re.search(r'dump-[0-9]*-([0-9]*).h5$',a).groups()[-1]),glob.glob(my_pattern))
+
 
                 if DumpRestart.restart_number:
                     # pick those file that match the restart_number
