@@ -110,6 +110,8 @@ void RadiationMonteCarlo::operator() (Particles &particles,
     for (int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass2 = (double)(charge[ipart])*one_over_mass_2;
 
+        //std::cerr << "ipart: " << ipart << std::endl;
+
         // Init local variables
         emission_time = 0;
         local_it_time = 0;
@@ -143,7 +145,7 @@ void RadiationMonteCarlo::operator() (Particles &particles,
             && (tau[ipart] <= epsilon_tau) )
             {
                 // New final optical depth to reach for emision
-                tau[ipart] = -log(Rand::uniform());
+                tau[ipart] = -log(1-Rand::uniform());
 
             }
 
