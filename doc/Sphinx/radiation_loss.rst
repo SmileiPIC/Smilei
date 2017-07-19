@@ -502,6 +502,15 @@ is shown in Fig. :numref:`synchrotron_scalar`.
   Time evolution of the electron energy distribution for the Monte-Carlo, the Niel
   and the corrected Landau-Lifshitz (**CLL**) models.
 
+Thin foil
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+.. thin_foil_scalar:
+
+.. figure:: _static/thin_foil_scalar.png
+  :width: 18cm
+
+
 VI. Performances
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -566,7 +575,10 @@ Descriptions of the cases:
   The case is run on 16 nodes of Poincare with 2 MPI ranks and 8 OpenMP
   threads per rank.
 
-For the moment, only LL and CLL can be vectorized efficiently
-as for the pushers.
-As a consequence, code performance is likely to be more impacted running on
-SIMD architecture with large vector registers such as Intel Xeon Phi.
+The LL and CLL are vectorized efficiently.
+The Niel model implementation has been spitted into several loops to
+be partially vectorized.
+
+When using the Monte-Carlo radiation model, code performance is likely to be
+more impacted running on
+SIMD architecture with large vector registers such as Intel Xeon Phi processors.

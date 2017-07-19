@@ -310,4 +310,10 @@ void RadiationNiel::operator() (Particles &particles,
     }
     radiated_energy += radiated_energy_loc;
 
+    // _______________________________________________________________
+    // Clean memory
+
+    delete [] chipa;
+    delete [] gamma;
+    delete [] diffusion;
 }
