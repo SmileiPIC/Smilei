@@ -15,34 +15,32 @@ but the process is fast and straightforward.
 Upcoming changes
 ^^^^^^^^^^^^^^^^
 
-* More OpenMP support
+* Monte Carlo QED photon emission
 * Moving window along y and z
 * Tracking particles in *Screens*
-* Better time-average for B fields
 * :doc:`Syntax changes<syntax_changes>`
 
 ----
 
 .. _latestVersion:
 
-Current release 3.1.1
-^^^^^^^^^^^^^^^^^^^^^
+Current release 3.2
+^^^^^^^^^^^^^^^^^^^
 
-**Download**: `Smilei v3.1.1 <_downloads/smilei-v3.1.1.tar.gz>`_
+**Download**: `Smilei v3.2 <_downloads/smilei-v3.2.tar.gz>`_
 
 * New pushers (Vay's and Higuera-Cary's)
 * *Numpy* used for filtering track particles
 * Fourth order in 3D
-* Bugfixes in energy computation in 3D and moving window case
-* Add some missing 3D features :
-
-  * External fields management 
-  * Non-neutral plasma initialization
+* Add some missing 3D features: external fields management, boundary conditions and non-neutral plasma initialization
+* OpenMP support in moving window
+* Tracked particles post-processing improved for large files
+* Bugfixes: energy computation in 3D or with moving window, random number seed
 
 ----
 
 Release 3.1
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^
 
 **Download**: `Smilei v3.1 <_downloads/smilei-v3.1.tar.gz>`_
 

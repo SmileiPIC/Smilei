@@ -171,8 +171,6 @@ public:
     
     //! True if restart requested
     bool restart;
-    //! Directory of restart
-    std::string restart_dir;
     
     //! frequency of exchange particles (default = 1, disabled for now, incompatible with sort) 
     int exchange_particles_each;

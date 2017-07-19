@@ -41,9 +41,9 @@ Main(
     
     EM_boundary_conditions = [ ["periodic"] ],
     
-    random_seed = 0,
-    
-    print_every = 1
+    print_every = 1,
+
+    random_seed = smilei_mpi_rank
 )
 
 

@@ -147,23 +147,21 @@ namelist("")
     
     // random seed
     unsigned int random_seed=0;
-    if (!PyTools::extract("random_seed", random_seed, "Main")) {
-        random_seed = time(NULL);
+    if (PyTools::extract("random_seed", random_seed, "Main")) {
+        Rand::gen = std::mt19937(random_seed);
     }
-    srand(random_seed);
     
     // --------------
     // Stop & Restart
     // --------------
-    
+
     restart = false;
-    restart_dir = "";
-    if( PyTools::nComponents("Checkpoints")>0 && PyTools::extract("restart_dir", restart_dir, "Checkpoints") ) {
-        restart = true;
-        if( restart_dir.at(restart_dir.length()-1)!='/' ) restart_dir+="/";
-        MESSAGE("Code running from restart in directory "<<restart_dir);
+    std::vector<std::string> _unused_restart_files;
+    if( PyTools::nComponents("Checkpoints")>0 && PyTools::extract("restart_files", _unused_restart_files, "Checkpoints")) {
+        MESSAGE(1,"Code will restart");
+        restart=true;
     }
-    
+
     // ---------------------
     // Normalisation & units
     // ---------------------

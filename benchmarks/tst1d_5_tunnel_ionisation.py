@@ -28,7 +28,7 @@ Main(
     
     reference_angular_frequency_SI = 6*math.pi*1e14,
     
-    random_seed = 0
+    random_seed = smilei_mpi_rank
 )
 
 Species(
@@ -46,6 +46,7 @@ Species(
 		["periodic", "periodic"],
 	],
 )
+
 Species(
 	name = 'carbon',
 	ionization_model = 'tunnel',
@@ -61,6 +62,7 @@ Species(
 		["periodic", "periodic"],
 	],
 )
+
 Species(
 	name = 'electron',
 	position_initialization = 'regular',

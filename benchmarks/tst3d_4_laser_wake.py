@@ -26,9 +26,10 @@ Main(
     
     EM_boundary_conditions = [ ["silver-muller"] ],
     
-    random_seed = 0,
     solve_poisson = False,
-    print_every = 100
+    print_every = 100,
+
+    random_seed = smilei_mpi_rank
 )
 
 MovingWindow(

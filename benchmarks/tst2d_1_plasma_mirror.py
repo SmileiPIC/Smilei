@@ -30,7 +30,7 @@ Main(
         ['silver-muller'],
     ],
     
-    random_seed = 0
+    random_seed = smilei_mpi_rank
 )
 
 LaserGaussian2D(

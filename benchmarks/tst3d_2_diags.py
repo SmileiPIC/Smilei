@@ -20,7 +20,9 @@ Main(
 	number_of_patches = [ 4 ]*3,
 	
 	EM_boundary_conditions = [ ["periodic"] ],
-	print_every = 10
+	print_every = 10,
+	
+	random_seed = smilei_mpi_rank
 )
 
 

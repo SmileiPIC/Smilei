@@ -29,7 +29,7 @@ Main(
         ['periodic'],
     ],
     
-    random_seed = 0
+    random_seed = smilei_mpi_rank
 )
 
 

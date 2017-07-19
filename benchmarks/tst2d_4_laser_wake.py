@@ -26,9 +26,10 @@ Main(
         ["silver-muller","silver-muller"],
     ],
     
-    random_seed = 0,
     solve_poisson = False,
-    print_every = 100
+    print_every = 100,
+
+    random_seed = smilei_mpi_rank
 )
 
 MovingWindow(

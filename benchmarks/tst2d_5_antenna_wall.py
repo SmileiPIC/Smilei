@@ -29,7 +29,7 @@ Main(
         ['silver-muller'],
     ],
     
-    random_seed = 0
+    random_seed = smilei_mpi_rank
 )
 
 globalEvery = 5
