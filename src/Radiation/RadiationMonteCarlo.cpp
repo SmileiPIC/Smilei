@@ -61,6 +61,8 @@ void RadiationMonteCarlo::operator() (Particles &particles,
     // Charge divided by the square of the mass
     double charge_over_mass2;
 
+    const double one_over_mass_2 = pow(one_over_mass_,2.);
+
     // Temporary quantum parameter
     double chipa;
 
@@ -106,7 +108,7 @@ void RadiationMonteCarlo::operator() (Particles &particles,
     // Computation
 
     for (int ipart=istart ; ipart<iend; ipart++ ) {
-        charge_over_mass2 = (double)(charge[ipart])*pow(one_over_mass_,2.);
+        charge_over_mass2 = (double)(charge[ipart])*one_over_mass_2;
 
         // Init local variables
         emission_time = 0;
@@ -133,11 +135,6 @@ void RadiationMonteCarlo::operator() (Particles &particles,
             // Update the quantum parameter in species
             // chi[ipart] = chipa;
 
-            // Debugging
-            /*std::cerr << "mc_it_nb: " << mc_it_nb << " "
-                      << "chipa: " << chipa
-                      << std::endl;*/
-
             // Discontinuous emission: New emission
             // If tau[ipart] <= 0, this is a new emission
             // We also check that chipa > chipa_threshold,
@@ -146,13 +143,7 @@ void RadiationMonteCarlo::operator() (Particles &particles,
             && (tau[ipart] <= epsilon_tau) )
             {
                 // New final optical depth to reach for emision
-                tau[ipart] = -log( -Rand::uniform() + 1.0);
-
-                /*if (ipart == 1)
-                {
-                    std::cerr << "New discontinuous emission" << std::endl;
-                    std::cerr << "Tau: " << tau[ipart] << std::endl;
-                }*/
+                tau[ipart] = -log(Rand::uniform());
 
             }
 
@@ -257,7 +248,7 @@ void RadiationMonteCarlo::operator() (Particles &particles,
                                     + momentum[0][ipart]*momentum[0][ipart]
                                     + momentum[1][ipart]*momentum[1][ipart]
                                     + momentum[2][ipart]*momentum[2][ipart]));
-                
+
                 // End for this particle
                 local_it_time = dt;
             }

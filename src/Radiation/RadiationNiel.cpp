@@ -185,13 +185,13 @@ void RadiationNiel::operator() (Particles &particles,
     double charge_over_mass2;
 
     // 1/mass^2
-    double one_over_mass_2 = pow(one_over_mass_,2.);
+    const double one_over_mass_2 = pow(one_over_mass_,2.);
 
     // Sqrt(dt), used intensively in these loops
-    double sqrtdt = sqrt(dt);
+    const double sqrtdt = sqrt(dt);
 
     // Number of particles
-    int nbparticles = iend-istart;
+    const int nbparticles = iend-istart;
 
     // Temporary quantum parameter
     double * chipa = new double[nbparticles];

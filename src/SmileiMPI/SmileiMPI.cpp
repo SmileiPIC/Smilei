@@ -1004,7 +1004,8 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
         if( scalars->necessary_Utot ) {
             double Ukin = *scalars->Ukin;
             double Uelm = *scalars->Uelm;
-            *scalars->Utot = Ukin + Uelm;
+            double Urad = *scalars->Urad;
+            *scalars->Utot = Ukin + Uelm + Urad;
         }
 
         // expected total energy

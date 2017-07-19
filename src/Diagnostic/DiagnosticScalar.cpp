@@ -138,7 +138,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     necessary_Uexp    = necessary_Ubal || allowedKey("Uexp");
     necessary_Ukin    = necessary_Utot || allowedKey("Ukin");
     necessary_Uelm    = necessary_Utot || allowedKey("Uelm");
-    necessary_Urad    = necessary_Uexp || allowedKey("Urad");
+    necessary_Urad    = necessary_Utot || allowedKey("Urad");
     necessary_Ukin_BC = necessary_Uexp || allowedKey("Ukin_bnd") || allowedKey("Ukin_out_mvw") || allowedKey("Ukin_inj_mvw");
     necessary_Uelm_BC = necessary_Uexp || allowedKey("Uelm_bnd") || allowedKey("Uelm_out_mvw") || allowedKey("Uelm_inj_mvw");
     // Species
@@ -381,10 +381,6 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             {
                 *sUrad[ispec]  += cell_volume*
                                  vecSpecies[ispec]->getNrjRadiation();
-                /*std::cerr << "Radiated energy for species " << ispec
-                          << ": " << *sUrad[ispec]
-                          << " / " << *sUkin[ispec]
-                          << std::endl;*/
             }
 
             // incremement the total kinetic energy
@@ -394,9 +390,6 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             {
                 Urad_ += cell_volume*
                          vecSpecies[ispec]->getNrjRadiation();
-                /*std::cerr << "Radiated energy: " << Urad_
-                          << " / " << Ukin_
-                << std::endl;*/
             }
         }
 
@@ -428,9 +421,6 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     }
     if( necessary_Urad ) {
         *Urad += Urad_;
-        /*std::cerr << "Radiated energy: " << *Urad
-                  << " / " << *Ukin
-        << std::endl;*/
     }
     if( necessary_Ukin_BC ) {
         *Ukin_bnd     += Ukin_bnd_     ;
