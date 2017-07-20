@@ -6,6 +6,15 @@
 .red {
 	color:red;
 }
+.purple {
+	color:#6967AB;
+}
+.green {
+	color:green;
+}
+.orange {
+	color:orange;
+}
 
 /* --------------------------------------------------------------------*/
 /* Style for the "In progress" block */
@@ -90,7 +99,7 @@ div.lablogos > div {
 }
 
 /* --------------------------------------------------------------------*/
-/* Nice blue menu on the sidebar */ 
+/* Nice blue menu on the sidebar */
 div.toctree-smilei > ul > li > a {
     font-size: 100%;
     font-weight: bold;
@@ -102,7 +111,7 @@ div.toctree-smilei > ul, div.toctree-smilei > li {
     margin: 0;
     padding: 0;
 }
-/* Adjust the sidebar color for small screens */ 
+/* Adjust the sidebar color for small screens */
 @media screen and (max-width: 875px) {
     div.sphinxsidebar {
         background: #EAF4FD;

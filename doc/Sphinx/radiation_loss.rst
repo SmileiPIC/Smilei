@@ -1,6 +1,10 @@
 Synchrotron-like radiation loss
 --------------------------------------------------------------------------------
 
+.. role:: purple
+.. role:: green
+.. role:: orange
+
 I. Introduction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -541,10 +545,10 @@ as the average behavior of the stochastic ones.
 Thin foil 2D
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-This case is not is the list of available benchmarks but we decided to present
+This case is not in the list of available benchmarks but we decided to present
 these results here as an example of simulation study.
-Here, we simulates the interaction of a fully-ionized carbon thin foil
-with an extremely intense plane wave in 2D. The thin foil in located at 4
+Here, interaction simulation of a fully-ionized carbon thin foil
+with an extremely intense plane wave in 2D is presented. The thin foil in located at 4
 :math:`\mu\mathrm{m}` of the left border `xmin`.
 It starts with a linear preplasma of 1 :math:`\mu\mathrm{m}` followed with
 an uniform section of 3 :math:`\mu\mathrm{m}` of density 492 :math:`n_c`.
@@ -553,17 +557,65 @@ The target is irradiated by a Gaussian plane wave of peak intensity
 The domain has a discretization of 64 cells per :math:`\mu\mathrm{m}` in
 the two directions x and y with 64 particles per cell.
 There is two species: electrons and carbon ions.
-Only electrons can radiate.
-Different simulations have been performed with the different radiation models.
+Only electrons radiates.
+The same Simulation has been performed with the different radiation models.
+
+Let us remind the physics behind this simulation case.
+When the laser strikes the target, electrons can be accelerated and injected in
+the target along the density gradient through the combined action of
+the transverse electric and the magnetic fields referred to as ponderomotive effects.
+In the relativistic regime in
+linear polarization, this leads to the injection of bunches of hot electrons
+every half laser period that contribute to heat the inner target.
+When these electrons reach the rear side, they start to expand in the vacuum
+and create a longitudinal charge separation field with the slow heavy ions.
+This field along the surface normal direction has two main effects:
+
+* It acts as a reflecting barrier for electrons of moderate energy that then
+  come back to the front side (refluxing electrons).
+* It accelerates ions located at the surface. This phenomenon is well-known as
+  target normal sheath acceleration (TNSA).
+
+At the front side, a charge separation cavity appears
+between the electron layer pushed forward by the ponderomotive force and ions
+left-behind that causes ions to be consequently accelerated. This
+strong ion acceleration mechanism
+is well-known as radiation pressure acceleration (RPA) or laser piston.
+
+Under the action of an extremely intense laser pulse, electrons accelerated at
+the target front radiates. It is confirmed by :numref:`thin_foil_x_chi_ne`
+showing the distribution of the quantum parameter :math:`\chi` along the x axis
+for the Monte-Carlo, the Niel and the corrected Landau-Lifshitz radiation models.
+The maximum values can be seen at the front where the electrons
+interact with the laser. Radiation occurs in the quantum regime
+:math:`\chi > 0.1`. Note that there is a second peak for :math:`\chi` at the
+rear where electrons interact with the target normal sheath field.
+The radiation loss can affect electron energy absorption and therefore the ion
+acceleration mechanisms
+
+.. _thin_foil_x_chi_ne:
+
+.. figure:: _static/thin_foil_x_chi_ne.png
+  :width: 18cm
+
+  :math:`x - \chi` electron distribution at time 47 fs for the Monte-Carlo,
+  the Niel and the corrected Landau-Lifshitz (**CLL**) model.
 
 The time evolution of the electron kinetic energy, the carbon ion
 kinetic energy, the radiated energy and the total
 absorbed energy is shown in :numref:`thin_foil_scalar`.
-The corrected-Landau-Lifshitz, the Niel and the Monte-Carlo models have very
-similar behaviors in term of kinetic and radiated energy.
+The :green:`corrected-Landau-Lifshitz`, the :orange:`Niel`
+and the :blue:`Monte-Carlo` models induces very
+similar behaviors.
 Only the absorbed electron energy is slightly lower in the Niel model.
-These difference fluctuates and depends on the random seeds.
-The classical Landau-Lifshitz model overestimate the radiated energy.
+These difference fluctuates and depends on the random seeds and the
+simulation parameters.
+The radiated energy represents around 14% of the total laser energy.
+The :purple:`classical Landau-Lifshitz` model overestimates the radiated energy.
+Absorbed energy by electrons and ions is therefore slightly lower.
+In any case, radiation strongly impacts the overall particle energy absorption
+with a difference close to 20% with the :red:`non-radiative` run.
+
 
 .. _thin_foil_scalar:
 
@@ -573,14 +625,20 @@ The classical Landau-Lifshitz model overestimate the radiated energy.
   Time evolution of the electron kinetic energy (solid lines), the carbon ion
   kinetic energy (dashed line), the radiated energy (dotted line) and the total
   absorbed energy by particle and radiation (dotted-dashed lines). These
-  quantities are plotted for the Monte-Carlo radiation model (**MC**, blue),
-  the Niel model (**Niel**, orange), the corrected Landau-Lifshitz model (**CLL**, green),
-  the classical Landau-Lifshitz model (**LL**, purple) and without radiation (**None**, red).
+  quantities are plotted for the :blue:`Monte-Carlo` radiation model (**MC**, blue),
+  the :orange:`Niel` model (**Niel**, orange),
+  the :green:`corrected Landau-Lifshitz` model (**CLL**, green),
+  the :purple:`classical Landau-Lifshitz model` (**LL**, purple)
+  and :red:`without radiation` (**None**, red).
 
-.. _thin_foil_x_chi_ne:
-
-.. figure:: _static/thin_foil_x_chi_ne.png
-  :width: 18cm
+The difference between electron :math:`p_x`-momentum distributions can be seen
+in :numref:`thin_foil_x_px_ne`. At the target front, refluxing electrons can
+travel farther in the vacuum (negative :math:`p_x`) before being injected back to the target
+without radiation loss. With radiation, these electrons are rapidly slowed down
+and newly accelerated by the ponderotive force.
+Inside the target, accelerated bunches of hot electrons correspond to
+the regular positive spikes in :math:`p_x` (oscillation at :math:`\lambda /2`).
+Maximum electron energy is almost twice higher without radiation loss.
 
 .. _thin_foil_x_px_ne:
 
