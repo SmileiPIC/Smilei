@@ -52,6 +52,8 @@ References
 
 .. [Esirkepov2001] `T. Zh. Esirkepov, Comp. Phys. Comm. 135, 144 (2001) <https://doi.org/10.1016/S0010-4655(00)00228-9>`_
 
+.. [Elkina2011] `Elkina N. V., A. M. Fedotov, I. Y. Kostyukov, M. V. Legkov, N. B. Narozhny, E. N. Nerush, and H. Ruhl (2011), Physical Review Accelerators and Beam, 14, 054401 <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.14.054401>`_
+
 .. [Forslund1975] `D. W. Forslund, J. M. Kindel, and E. L. Lindman, Phys. Fluids 18, 1002 (1975) <http://aip.scitation.org/doi/abs/10.1063/1.861248>`_
 
 .. [Frankel1979] `N. E. Frankel, K. C. Hines, and R. L. Dewar, Phys. Rev. A 20, 2120 (1979) <http://dx.doi.org/10.1143/JPSJ.67.4084>`_
@@ -90,6 +92,8 @@ References
 
 .. [Sentoku2008] `Y. Sentoku and A. J. Kemp, J. Comput. Phys. 227, 6846 (2008) <http://dx.doi.org/10.1016/j.jcp.2008.03.043>`_
 
-.. [TafloveHagness] A. Taflove and S. C. Hagness, Computation Electrodynamics: The Finite-Difference Time-Domain Method, 3rd Ed. (Artech House, Norwood, 2005)
+.. [TafloveHagness] `A. Taflove and S. C. Hagness, Computation Electrodynamics: The Finite-Difference Time-Domain Method, 3rd Ed. (Artech House, Norwood, 2005) <https://doi.org/10.1016/B978-012170960-0/50046-3>`_
+
+.. [Timokhin2010] `Timokhin A. N. (2010), Monthly Notices of the Royal Astronomical Society, 408 (4), 2092, ISSN 1365-2966 <https://doi.org/10.1111/j.1365-2966.2010.17286.x>`_
 
 .. [Vay2008] `J.-L. Vay, Phys. Plasmas 15, 056701 (2008) <https://doi.org/10.1063/1.2837054>`_

@@ -10,7 +10,7 @@ I. Introduction
 
 High-energy particles traveling in a strong electromagnetic field loss energy by
 radiation. Depending on the field strength and the particle energy, radiation
-losses occur in different regimes and can be seen as smooth or brutal with
+losses occur in different regimes and can be smooth or brutal with
 diffusive and stochastic consequences.
 This phenomenon is usually referred to as synchrotron-like radiation emission
 (in reference to the emission process occurring in synchrotron facilities
@@ -24,59 +24,63 @@ dynamics of charged particles and the overall energy balance of laser-plasma
 interaction.
 
 Different approaches have been implemented in :program:`Smilei` as summarized
-in tab :numref:`radiationRegimes` to deal with different regimes of emission.
+in :numref:`radiationRegimes` to deal with different regimes of emission.
 These regimes can be characterized via the quantum Lorentz invariant parameter
-:math:`\chi_\pm` which is an indicator of how strong is the radiation emission
+:math:`\chi` which is an indicator of how strong is the radiation emission
 process.
 
 .. math::
   :label: particleQuantumParameter
 
-  \chi_{\pm} = \frac{\gamma_{\pm}}{E_s} \left| \left( \beta \cdot \mathbf{E}
+  \chi = \frac{\gamma}{E_s} \left| \left( \beta \cdot \mathbf{E}
   \right)^2 - \left( \mathbf{E} + \mathbf{v} \times \mathbf{B} \right)^2
   \right|^{1/2}
 
-where :math:`E_s = m^2 c^3 / \hbar e \simeq 1.3 10^{18}\ \mathrm{V/m}` is
+where :math:`E_s = m^2 c^3 / \hbar e \simeq 1.3 \times 10^{18}\ \mathrm{V/m}` is
 the Schwinger field, :math:`e` is the electron charge,
 :math:`m` is the electron mass, :math:`c` the speed of light in vacuum,
 :math:`\hbar` the reduced Planck constant. :math:`\mathbf{E} = (E_x, E_y, E_z)`
 and :math:`\mathbf{B} = (B_x, B_y, B_z)` are respectively the electric and
-the magnetic field. :math:`\gamma = \varepsilon_\pm / m c^2` is the particle
+the magnetic fields. :math:`\gamma = \varepsilon / m c^2` is the particle
 Lorentz factor and also the normalized particle energy. :math:`\beta = v/c` is
-the normalized particle velocity.
+the normalized particle velocity. In :numref:`radiationRegimes`,
+:math:`\varepsilon_\gamma = \gamma_\gamma mc^2` is the photon energy.
 
 .. _radiationRegimes:
 
 +-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
 | Regime                              | :math:`\chi` value       | Description                                    | Models                    |
 +=====================================+==========================+================================================+===========================+
-| Classical radiation emission        | :math:`\chi \sim 10^{-3}`| :math:`\varepsilon_\gamma  \ll \varepsilon_\pm`| Landau-Lifshitz           |
+| Classical radiation emission        | :math:`\chi \sim 10^{-3}`| :math:`\varepsilon_\gamma  \ll \varepsilon`    | Landau-Lifshitz           |
 |                                     |                          | , radiated energy overestimated for            |                           |
 |                                     |                          | :math:`\chi > 10^{-2}`                         |                           |
 +-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
-| Semi-classical radiation emission   | :math:`\chi \sim 10^{-2}`| :math:`\varepsilon_\gamma  \ll \varepsilon_\pm`| Corrected Landau-Lifshitz |
+| Semi-classical radiation emission   | :math:`\chi \sim 10^{-2}`| :math:`\varepsilon_\gamma  \ll \varepsilon`    | Corrected Landau-Lifshitz |
 |                                     |                          | , no stochastic effects                        |                           |
 +-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
-| Weak quantum regime                 | :math:`\chi \sim 10^{-1}`| :math:`\varepsilon_\gamma  < \varepsilon_\pm`, | Stochastic model of       |
+| Weak quantum regime                 | :math:`\chi \sim 10^{-1}`| :math:`\varepsilon_\gamma  < \varepsilon`,     | Stochastic model of       |
 |                                     |                          | :math:`\varepsilon_\gamma / mc^2  \gg 1`       | Niel `et al` / Monte-Carlo|
 +-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
-| Quantum regime                      | :math:`\chi \sim 1`      | :math:`\varepsilon_\gamma \sim \varepsilon_\pm`| Monte-Carlo               |
+| Quantum regime                      | :math:`\chi \sim 1`      | :math:`\varepsilon_\gamma \sim \varepsilon`    | Monte-Carlo               |
 |                                     |                          |                                                |                           |
 +-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
 
 When QED effects are negligible in the so-called classical regime (:math:`\chi \sim 10^{-3}`),
 radiation back reaction can be treated as a
 continuous friction force acting on the particles.
-Several models have been published such as the LAD, Landau-Lifshitz ([Landau1947]_),
-the model of Sokolov and of Capdessus.
+Several models have been published such as the Lorentz-Abraham-Dirac model (LAD),
+Landau-Lifshitz ([Landau1947]_),
+the model of Sokolov and the model of Capdessus `et al.`.
 The ones used in :program:`Smilei` are
-based on the Landau-Lifshitz model approximated at high gamma factors
+based on the Landau-Lifshitz model approximated for high Lorentz factors
 (:math:`\gamma \gg 1`).
 
 In the quantum regime, photons with energies of the order of the energies of
 the emitting electron can be produced (:math:`\varepsilon_\gamma \sim \varepsilon_\pm`).
+A continuous friction force can not be used anymore.
 This is treated using a Monte-Carlo
-description of discrete high-energy photon emission.
+description of discrete high-energy photon emission ([Timokhin2010]_,
+[Elkina2011]_, [Duclous2011]_, [Lobet2013]_).
 
 In the intermediate regime (:math:`\chi \sim 1`), where the energy of the emitted photons remains
 small with respect to that of the emitting electrons, but for which the
@@ -84,13 +88,13 @@ stochastic nature of photon emission cannot be neglected, the electron dynamics
 is described by the addition of a stochastic term derived from a Fokker-Planck
 expansion ([Niel2017]_).
 
-Tab :numref:`radiationRegimes` can be used to well configure the radiation loss
+:numref:`radiationRegimes` can be used to well configure the radiation loss
 in :program:`Smilei` (see :ref:`the radiation configuration in Species <Species>`).
 
 The next sections describe in more details the models implemented
 in :program:`Smilei` to deal with the different regimes of emission.
 
-----
+--------------------------------------------------------------------------------
 
 II. Continuous radiation models
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
