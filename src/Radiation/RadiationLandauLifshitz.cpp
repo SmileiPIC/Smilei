@@ -59,6 +59,9 @@ void RadiationLandauLifshitz::operator() (Particles &particles,
     // Charge divided by the square of the mass
     double charge_over_mass2;
 
+    // 1/mass^2
+    const double one_over_mass_2 = pow(one_over_mass_,2.);
+
     // Temporary quantum parameter
     double chipa;
 
@@ -67,7 +70,6 @@ void RadiationLandauLifshitz::operator() (Particles &particles,
 
     // Temporary double parameter
     double temp;
-    double temp2;
 
     // Momentum shortcut
     double* momentum[3];
@@ -94,7 +96,7 @@ void RadiationLandauLifshitz::operator() (Particles &particles,
 
     #pragma omp simd
     for (int ipart=istart ; ipart<iend; ipart++ ) {
-        charge_over_mass2 = (double)(charge[ipart])*pow(one_over_mass_,2.);
+        charge_over_mass2 = (double)(charge[ipart])*one_over_mass_2;
 
         // Gamma
         gamma = sqrt(1.0 + momentum[0][ipart]*momentum[0][ipart]
@@ -109,12 +111,12 @@ void RadiationLandauLifshitz::operator() (Particles &particles,
                      (*Bpart)[ipart].x,(*Bpart)[ipart].y,(*Bpart)[ipart].z);
 
         // Radiated energy during the time step
-        temp2 =
+        temp =
         RadiationTables.get_classical_cont_rad_energy(chipa,dt);
 
         // Effect on the momentum
         // Temporary factor
-        temp = temp2*gamma/(gamma*gamma-1.);
+        temp *= gamma/(gamma*gamma-1.);
 
         // Update of the momentum
         momentum[0][ipart] -= temp*momentum[0][ipart];

@@ -482,7 +482,7 @@ Initial electron Lorentz factor is around
 :math:`\gamma_{-,0} = \varepsilon_{-,0}/mc^2 =  450`.
 
 Time evolution of the kinetic energy, the radiated energy and the total energy
-is shown in Fig. :numref:`synchrotron_scalar`. All radiation models provide
+is shown in :numref:`synchrotron_scalar`. All radiation models provide
 similar evolution of these integrated quantities. The relative error on the
 total energy is around :math:`3 \times 10^{-9}`.
 
@@ -497,14 +497,17 @@ total energy is around :math:`3 \times 10^{-9}`.
   corrected Landau-Lifshitz (**CLL**, green).
 
 The main difference between models can be understood by studying the
-particle trajectories and phase spaces. For this purpose, colormap of
-the normalized kinetic energy at :math:`25 \omega_r^{-1}` is shown in
-Fig. :numref:`synchrotron_x_y_gamma`. With continuous radiation loss
+particle trajectories and phase spaces. For this purpose, colormaps of
+the normalized kinetic energy at :math:`25 \omega_r^{-1}` are shown in
+:numref:`synchrotron_x_y_gamma` for the different models.
+With continuous radiation loss
 (corrected Landau-Lifshitz case), the electron bunch rotates with a decreasing
 radius but the bunch keeps its original shape. The radiation only acts as a
 cooling mechanism.
 In the cases the Niel and the Monte-Carlo radiation models,
-the stochastic effects come into play and lead the bunch to diffuse.
+the stochastic effects come into play and lead the bunch to spread spatially.
+This effect is particularly strong at the beginning when the radiation recoil
+is the most important.
 
 .. _synchrotron_x_y_gamma:
 
@@ -514,6 +517,18 @@ the stochastic effects come into play and lead the bunch to diffuse.
   Average normalized kinetic energy at simulation time :math:`25 \omega_r^{-1}`
   for the simulations with the Monte-Carlo, the Niel
   and the corrected Landau-Lifshitz (**CLL**) models.
+
+:numref:`synchrotron_t_gamma_ne` shows the time evolution of
+the electron energy distribution for different radiation models.
+At the beginning, all particles have the same energy. Stochastic effects leads
+the bunch to spread energetically as shown on the Monte-Carlo and the Niel cases.
+This effect is the strongest at the beginning when the quantum parameter is high.
+In the Monte-Carlo case, some electrons lose all their energy almost immediately.
+Then, as the particles cool down, the interaction enters the semi-classical
+regime where energy jumps are smaller. In the classical regime, radiation losses
+tighten back the electron energy and spatial distribution.
+In the Landau-Lifshitz case, there is no energy spread. This model can be seen
+as the average behavior of the stochastic ones.
 
 .. _synchrotron_t_gamma_ne:
 
@@ -543,7 +558,12 @@ Different simulations have been performed with the different radiation models.
 
 The time evolution of the electron kinetic energy, the carbon ion
 kinetic energy, the radiated energy and the total
-absorbed energy is shown in Fig. :numref:`thin_foil_scalar`.
+absorbed energy is shown in :numref:`thin_foil_scalar`.
+The corrected-Landau-Lifshitz, the Niel and the Monte-Carlo models have very
+similar behaviors in term of kinetic and radiated energy.
+Only the absorbed electron energy is slightly lower in the Niel model.
+These difference fluctuates and depends on the random seeds.
+The classical Landau-Lifshitz model overestimate the radiated energy.
 
 .. _thin_foil_scalar:
 
@@ -592,10 +612,10 @@ the Monte-Carlo radiation process.
 +-------------------------------------+------------+----------+--------------+----------+--------+
 | Radiation model:                    | None       | LL       | CLL          | Niel     | MC     |
 +=====================================+============+==========+==============+==========+========+
-| Counter-propagating Plane Wave 1D   | 0.25s      | 0.3s     | 0.36s        | 0.54s    | 0.84s  |
+| Counter-propagating Plane Wave 1D   | 0.25s      | 0.3s     | 0.36s        | 0.5s     | 0.8s   |
 +-------------------------------------+------------+----------+--------------+----------+--------+
-| Synchrotron 2D                      | 3.9s       | 4.2s     | 4.8s         | 9s       | 5.6s   |
-| :math:`\chi=0.5`,  :math:`B=100`    |            | - 10%    | - 30%        | - 140%   | - 50%  |
+| Synchrotron 2D                      | 3.9s       | 4.2s     | 4.8s         | 7.9s     | 5.6s   |
+| :math:`\chi=0.5`,  :math:`B=100`    |            | - 10%    | - 30%        | - 100%   | - 50%  |
 +-------------------------------------+------------+----------+--------------+----------+--------+
 | Interaction with a carbon thin foil | 6.5s       | 6.9s     | 7.2s         | 7.4s     | 7.2s   |
 | 2D                                  |            |          |              |          |        |
