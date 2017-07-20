@@ -3,7 +3,7 @@
 # ---------------------------------------------
 # Remember: never override the following names:
 #           SmileiComponent, Species, Laser, Collisions, DiagProbe, DiagParticleBinning,
-#           DiagScalar, DiagPhase or ExtField
+#           DiagScalar, DiagPhase or ExternalField
 
 import math as m
 

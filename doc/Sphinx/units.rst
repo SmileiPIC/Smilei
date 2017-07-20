@@ -1,7 +1,7 @@
 Units
 -----
 
-Just as any PIC code, :program:`Smilei` handles only **dimension-less variables**,
+Like many PIC codes, :program:`Smilei` handles only **dimension-less variables**,
 normalized to *reference* quantities.
 
 ----

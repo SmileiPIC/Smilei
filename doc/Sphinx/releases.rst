@@ -81,7 +81,7 @@ Release 2.3
 
 ----
 
-Release 2.0
+Release 2.2
 ^^^^^^^^^^^
 
 **Download**: `Smilei v2.2 <_downloads/smilei-v2.2.tar.gz>`_

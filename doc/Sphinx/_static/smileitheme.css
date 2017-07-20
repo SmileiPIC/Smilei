@@ -34,6 +34,10 @@ table.noborder, table.noborder td {
 	box-shadow: none;
 	vertical-align:middle;
 }
+/* Make nicer table header */
+table.docutils thead {
+	background-color: #f1f6ff;
+}
 
 /* --------------------------------------------------------------------*/
 /* Logos and icons */

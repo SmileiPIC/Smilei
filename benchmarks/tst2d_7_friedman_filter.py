@@ -5,7 +5,7 @@
 #
 # Remember: never override the following names:
 #           SmileiComponent, Species, Laser, Collisions, DiagProbe, DiagParticleBinning,
-#           DiagScalar, DiagPhase or ExtField
+#           DiagScalar, DiagPhase or ExternalField
 #
 import math as m
     #Checkpoints(
@@ -143,12 +143,12 @@ Species(
 )
 
 
-#ExtField(
+#ExternalField(
 #         field = 'Bz',
 #         profile = B
 #         )
 
-#ExtField(
+#ExternalField(
 #         field = 'Ey',
 #         profile = E
 #         )

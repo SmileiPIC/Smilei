@@ -358,7 +358,7 @@ class DiagTrackParticles(SmileiComponent):
     filter = None
 
 # external fields
-class ExtField(SmileiComponent):
+class ExternalField(SmileiComponent):
     """External Field"""
     field = None
     profile = None
@@ -390,4 +390,7 @@ class DiagParticles(object):
 class DumpRestart(object):
     def __init__(self, *args, **kwargs):
         raise Exception("Deprecated `DumpRestart()` must be replaced by `Checkpoints()`")
+class ExtField(object):
+    def __init__(self, *args, **kwargs):
+        raise Exception("Deprecated `ExtField()` must be replaced by `ExternalField()`")
 

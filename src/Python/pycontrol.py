@@ -21,7 +21,7 @@ def _smilei_check():
     """Do checks over the script"""
     # Verify classes were not overriden
     for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
-            "DiagProbe","DiagParticleBinning", "DiagScalar","DiagFields","ExtField",
+            "DiagProbe","DiagParticleBinning", "DiagScalar","DiagFields","ExternalField",
             "SmileiSingleton","Main","Checkpoints","LoadBalancing","MovingWindow"]:
         CheckClass = globals()[CheckClassName]
         try:
@@ -90,7 +90,7 @@ def _smilei_check():
         s.charge          = toSpaceProfile(s.charge          )
         s.mean_velocity   = [ toSpaceProfile(p) for p in s.mean_velocity ]
         s.temperature     = [ toSpaceProfile(p) for p in s.temperature   ]
-    for e in ExtField:
+    for e in ExternalField:
         e.profile         = toSpaceProfile(e.profile         )
     for a in Antenna:
         a.space_profile   = toSpaceProfile(a.space_profile   )

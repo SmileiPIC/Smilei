@@ -32,7 +32,7 @@ Main(
 
 
 # EXTERNAL FIELDS
-ExtField(
+ExternalField(
 	field = "Ex",
 	profile = 0.001
 )

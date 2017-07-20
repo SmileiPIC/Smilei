@@ -52,19 +52,19 @@ public:
         // -----------------
         // ExtFields properties
         // -----------------
-        unsigned int numExtFields=PyTools::nComponents("ExtField");
+        unsigned int numExtFields=PyTools::nComponents("ExternalField");
         for (unsigned int n_extfield = 0; n_extfield < numExtFields; n_extfield++) {
             ExtField extField;
             PyObject * profile;
             std::ostringstream name;
-            if( !PyTools::extract("field",extField.field,"ExtField",n_extfield)) {
-                ERROR("ExtField #"<<n_extfield<<": parameter 'field' not provided'");
+            if( !PyTools::extract("field",extField.field,"ExternalField",n_extfield)) {
+                ERROR("ExternalField #"<<n_extfield<<": parameter 'field' not provided'");
             }
             // Now import the profile
             name.str("");
-            name << "ExtField[" << n_extfield <<"].profile";
-            if (!PyTools::extract_pyProfile("profile",profile,"ExtField",n_extfield))
-                ERROR(" ExtField #"<<n_extfield<<": parameter 'profile' not understood");
+            name << "ExternalField[" << n_extfield <<"].profile";
+            if (!PyTools::extract_pyProfile("profile",profile,"ExternalField",n_extfield))
+                ERROR(" ExternalField #"<<n_extfield<<": parameter 'profile' not understood");
             extField.profile = new Profile(profile, params.nDim_field, name.str());
             
             EMfields->extFields.push_back(extField);
@@ -155,7 +155,7 @@ public:
         }
         
         // -----------------
-        // Clone ExtFields properties
+        // Clone ExternalFields properties
         // -----------------
         for (unsigned int n_extfield = 0; n_extfield < EMfields->extFields.size(); n_extfield++) {
             ExtField extField;

@@ -690,14 +690,14 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
 ----
 
-.. _ExtField:
+.. _ExternalField:
 
 External fields
 ^^^^^^^^^^^^^^^
 
-An external field can be applied using an ``ExtField`` block::
+An external field can be applied using an ``ExternalField`` block::
 
-  ExtField(
+  ExternalField(
       field = "Ex",
       profile = constant(0.01, xvacuum=0.1)
   )
@@ -776,7 +776,7 @@ profiles.
 
 * ``Species( ... , n_part_per_cell = 10., ... )`` defines a species with 10 particles per cell.
 
-* ``ExtField( field="Bx", profile=0.1 )`` defines a constant external field :math:`B_x = 0.1 B_r`.
+* ``ExternalField( field="Bx", profile=0.1 )`` defines a constant external field :math:`B_x = 0.1 B_r`.
 
 
 .. rubric:: 2. *Python* profiles
@@ -893,7 +893,7 @@ profiles.
     
     Species( ... , density = gaussian(10., xfwhm=0.3, xcenter=0.8), ... )
     
-    ExtField( ..., profile = constant(2.2), ... )
+    ExternalField( ..., profile = constant(2.2), ... )
 
 
 .. rubric:: 4. Pre-defined *temporal* profiles

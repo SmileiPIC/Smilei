@@ -1,58 +1,71 @@
 Syntax changes
 --------------
 
+A number of changes in the syntax have been brought in Smilei's version 3.?.
+Most changes only affect keywords names.
+
 ----
 
 In the namelist
 ^^^^^^^^^^^^^^^
 
-- Parameter ``maxwell_sol`` renamed :py:data:`maxwell_solver`
++--------------------------------------------+---------------------------------------------------------+
+| Old                                        | New                                                     |
++============================================+=========================================================+
+| ``maxwell_sol``                            | :py:data:`maxwell_solver`                               |
++--------------------------------------------+---------------------------------------------------------+
+| ``bc_em_type_*``                           | :py:data:`EM_boundary_conditions`                       |
++--------------------------------------------+---------------------------------------------------------+
+| ``referenceAngularFrequency_SI``           | :py:data:`reference_angular_frequency_SI`               |
++--------------------------------------------+---------------------------------------------------------+
+| ``species_type``                           | :py:data:`name`                                         |
++--------------------------------------------+---------------------------------------------------------+
+| ``initPosition_type``                      | :py:data:`position_initialization`                      |
++--------------------------------------------+---------------------------------------------------------+
+| ``initMomentum_type``                      | :py:data:`momentum_initialization`                      |
++--------------------------------------------+---------------------------------------------------------+
+| ``bc_part_type_****``                      | :py:data:`boundary_conditions`                          |
++--------------------------------------------+---------------------------------------------------------+
+| Particle boundary condition ``"none"``     | ``"periodic"``                                          |
++--------------------------------------------+---------------------------------------------------------+
+| ``thermT``                                 | :py:data:`thermal_boundary_temperature`                 |
++--------------------------------------------+---------------------------------------------------------+
+| ``thermVelocity``                          | :py:data:`thermal_boundary_velocity`                    |
++--------------------------------------------+---------------------------------------------------------+
+| ``isTest``                                 | :py:data:`is_test`                                      |
++--------------------------------------------+---------------------------------------------------------+
+| ``dynamics_type``                          | :py:data:`pusher`                                       |
++--------------------------------------------+---------------------------------------------------------+
+| ``boxSide``                                | :py:data:`box_side`                                     |
++--------------------------------------------+---------------------------------------------------------+
+| ``polarizationPhi``                        | :py:data:`polarization_phi`                             |
++--------------------------------------------+---------------------------------------------------------+
+| ``dump_file_sequence``                     | :py:data:`keep_n_dumps`                                 |
++--------------------------------------------+---------------------------------------------------------+
+| ``DumpRestart``                            | :ref:`Checkpoints <Checkpoints>`                        |
++--------------------------------------------+---------------------------------------------------------+
+| ``ExtField``                               | :ref:`ExternalField <ExternalField>`                    |
++--------------------------------------------+---------------------------------------------------------+
+| ``DiagParticles``                          | :ref:`DiagParticleBinning <DiagParticleBinning>`        |
++--------------------------------------------+---------------------------------------------------------+
+| ``track_******``                           | :ref:`DiagTrackParticles <DiagTrackParticles>` block    |
++--------------------------------------------+---------------------------------------------------------+
 
-- Parameters ``bc_em_type_*`` unified in a new parameter :py:data:`EM_boundary_conditions`
-
-- Parameter ``referenceAngularFrequency_SI`` renamed :py:data:`reference_angular_frequency_SI`
-
-- Parameter ``species_type`` renamed :py:data:`name`
-
-- Parameter ``initPosition_type`` renamed :py:data:`position_initialization`
-
-- Parameter ``initMomentum_type`` renamed :py:data:`momentum_initialization`
-
-- Parameters ``bc_part_type_****`` unified in a new parameter :py:data:`boundary_conditions`
-
-- Particle boundary conditions do not accept ``"none"`` anymore. Use ``"periodic"`` instead
-
-- Parameter ``thermT`` renamed :py:data:`thermal_boundary_temperature`
-
-- Parameter ``thermVelocity`` renamed :py:data:`thermal_boundary_velocity`
-
-- Parameter ``isTest`` renamed :py:data:`is_test`
-
-- Parameter ``dynamics_type`` renamed :py:data:`pusher`
-
-- Parameter ``boxSide`` renamed :py:data:`box_side`
-
-- Parameter ``polarizationPhi`` renamed :py:data:`polarization_phi`
-
-- Parameter ``dump_file_sequence`` renamed :py:data:`keep_n_dumps`
-
-- Block ``DumpRestart`` renamed :ref:`Checkpoints <Checkpoints>`
-
-- Diagnostic ``DiagParticles`` renamed :ref:`DiagParticleBinning <DiagParticleBinning>`
-
-- Removed parameters ``track_******``, and created the :ref:`DiagTrackParticles <DiagTrackParticles>` block
 
 ----
 
 In the post-processing module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- ``ParticleDiagnostic()`` method  renamed :py:meth:`ParticleBinning() <Smilei.ParticleBinning>`
-
-- Argument ``slice`` replaced by ``average`` or ``sum``, depending on the diagnostic
-
-- Argument ``stride`` replaced by a more complete ``subset``
-
-- In :py:meth:`Probe() <Smilei.Probe>`, the argument ``average`` requires coordinates
-  in code units instead of the indices of the bins
++----------------------------------------------------------------------------+---------------------------------------------------------+
+| Old                                                                        | New                                                     |
++============================================================================+=========================================================+
+| ``ParticleDiagnostic()``                                                   | :py:meth:`ParticleBinning() <Smilei.ParticleBinning>`   |
++----------------------------------------------------------------------------+---------------------------------------------------------+
+| ``slice`` argument                                                         | ``average`` or ``sum``, depending on the diagnostic     |
++----------------------------------------------------------------------------+---------------------------------------------------------+
+| ``stride`` argument                                                        | more complete ``subset``                                |
++----------------------------------------------------------------------------+---------------------------------------------------------+
+| ``average`` argument of :py:meth:`Probe() <Smilei.Probe>` used bins indices| now requires coordinates in code units                  |
++----------------------------------------------------------------------------+---------------------------------------------------------+
 

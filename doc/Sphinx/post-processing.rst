@@ -52,7 +52,7 @@ using the variable ``namelist``::
 
 All the variables defined in the original namelist are copied into this variable.
 
-Concerning components like :ref:`Species`, :ref:`ExtField` or :ref:`DiagProbe`, of which
+Concerning components like :ref:`Species`, :ref:`ExternalField` or :ref:`DiagProbe`, of which
 several instances may exist, you can directly iterate over them::
   
   for species in S.namelist.Species:
@@ -60,7 +60,7 @@ several instances may exist, you can directly iterate over them::
 
 You can also access to a specific component by referencing its number::
   
-  F = S.namelist.ExtField[0]  # get the first external field
+  F = S.namelist.ExternalField[0]  # get the first external field
   print "An external field "+F.field+" was applied"
 
 In the case of the species, you can also obtain a given species by its name::
