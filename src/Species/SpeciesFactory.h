@@ -45,65 +45,91 @@ public:
         if (!PyTools::extract("radiation_model", radiation_model ,"Species",ispec) )
             if ( patch->isMaster() ) WARNING("For species '" << species_type << "' radiation_model not defined: assumed = 'none'.");
 
-        // Create species object
-        Species * thisSpecies=NULL;
-        if (radiation_model == "none")
+        // Extract mass from namelist
+        double mass;
+        if (!PyTools::extract("mass", mass ,"Species",ispec) )
         {
-            if (dynamics_type=="norm"
-             || dynamics_type == "borisnr"
-             || dynamics_type == "vay"
-             || dynamics_type=="higueracary") {
-                 // Species with relativistic Boris dynamics if  =='norm'
-                 // Species with nonrelativistic Boris dynamics == 'borisnr'
-                 // Species with J.L. Vay dynamics if == "vay"
-                 // Species with Higuary Cary dynamics if == "higueracary"
-                 thisSpecies = new Species_norm(params, patch);
-            } else if (dynamics_type=="rrll") {
-                 // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
-                 ERROR("Creating a RRLL species: this is a work in progress and is still not working. Exiting");
-                 thisSpecies = new Species_rrll(params, patch);
-            } else {
-                ERROR("For species `" << species_type << "` dynamics_type must be 'norm', 'borisnr', 'vay', 'higueracary' or 'rrll'");
-            }
-        }
-        else if (radiation_model=="Monte-Carlo") {
-             // Species with MC parameters for the discontinuous radiation loss
-             // (nonlinear inverse Compton scattering)
-             thisSpecies = new Species_nlics(params, patch);
-        }
-        else if (radiation_model=="Landau-Lifshitz"
-             ||  radiation_model=="corrected-Landau-Lifshitz"
-             ||  radiation_model=="Niel")
-        {
-            // Species with specific parameters for the continuous radiation loss
-            thisSpecies = new Species_rrll(params, patch);
-        }
-        else
-        {
-            ERROR("For species `" << species_type
-                                  << " radiation_model must be 'none',"
-                                  << " 'Landau-Lifshitz',"
-                                  << " 'corrected-Landau-Lifshitz',"
-                                  << " 'Niel' or 'Monte-Carlo'");
+            if ( patch->isMaster() ) ERROR("For species '" << species_type << "` mass is not defined.");
         }
 
-        // Non compatibility
-        if (dynamics_type=="rrll"
-        && (radiation_model=="Monte-Carlo"
-        || radiation_model=="Landau-Lifshitz"
-        || radiation_model=="corrected-Landau-Lifshitz"
-        || radiation_model=="Niel"))
+        // Create species object
+        Species * thisSpecies=NULL;
+
+        // Particles of matter
+        if (mass > 0.)
         {
-            ERROR("For species `" << species_type
-                                  << "` radiation_model `"
-                                  << radiation_model
-                                  << "` is not compatible with dynamics_type "
-                                  << dynamics_type);
+            // No radiation model
+            if (radiation_model == "none")
+            {
+                if (dynamics_type=="norm"
+                 || dynamics_type == "borisnr"
+                 || dynamics_type == "vay"
+                 || dynamics_type=="higueracary") {
+                     // Species with relativistic Boris dynamics if  =='norm'
+                     // Species with nonrelativistic Boris dynamics == 'borisnr'
+                     // Species with J.L. Vay dynamics if == "vay"
+                     // Species with Higuary Cary dynamics if == "higueracary"
+                     thisSpecies = new Species_norm(params, patch);
+                } else if (dynamics_type=="rrll") {
+                     // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
+                     ERROR("Creating a RRLL species: this is a work in progress and is still not working. Exiting");
+                     thisSpecies = new Species_rrll(params, patch);
+                } else {
+                    ERROR("For species `" << species_type << "` dynamics_type must be 'norm', 'borisnr', 'vay', 'higueracary' or 'rrll'");
+                }
+            }
+            // Specific for the Monte-Carlo
+            else if (radiation_model=="Monte-Carlo") {
+                 // Species with MC parameters for the discontinuous radiation loss
+                 // (nonlinear inverse Compton scattering)
+                 thisSpecies = new Species_nlics(params, patch);
+            }
+            // For all other radiation models
+            else if (radiation_model=="Landau-Lifshitz"
+                 ||  radiation_model=="corrected-Landau-Lifshitz"
+                 ||  radiation_model=="Niel")
+            {
+                // Species with specific parameters for the continuous radiation loss
+                thisSpecies = new Species_rrll(params, patch);
+            }
+            // Wrong radiation model
+            else
+            {
+                ERROR("For species `" << species_type
+                                      << " radiation_model must be 'none',"
+                                      << " 'Landau-Lifshitz',"
+                                      << " 'corrected-Landau-Lifshitz',"
+                                      << " 'Niel' or 'Monte-Carlo'");
+            }
+
+            // Non compatibility
+            if (dynamics_type=="rrll"
+            && (radiation_model=="Monte-Carlo"
+            || radiation_model=="Landau-Lifshitz"
+            || radiation_model=="corrected-Landau-Lifshitz"
+            || radiation_model=="Niel"))
+            {
+                ERROR("For species `" << species_type
+                                      << "` radiation_model `"
+                                      << radiation_model
+                                      << "` is not compatible with dynamics_type "
+                                      << dynamics_type);
+            }
+        }
+
+        // Photons
+        if (mass == 0.)
+        {
+            // Photon can not radiate
+            radiation_model == "none";
+            dynamics_type=="norm";
+            thisSpecies = new Species_norm(params, patch);
         }
 
         thisSpecies->species_type = species_type;
         thisSpecies->dynamics_type = dynamics_type;
         thisSpecies->radiation_model = radiation_model;
+        thisSpecies->mass = mass
         thisSpecies->speciesNumber = ispec;
 
         // Extract various parameters from the namelist
@@ -128,10 +154,6 @@ public:
         }
 
         PyTools::extract("c_part_max",thisSpecies->c_part_max,"Species",ispec);
-
-        if( !PyTools::extract("mass",thisSpecies->mass ,"Species",ispec) ) {
-            ERROR("For species '" << species_type << "' mass not defined.");
-        }
 
         PyTools::extract("time_frozen",thisSpecies->time_frozen ,"Species",ispec);
         if (thisSpecies->time_frozen > 0 && thisSpecies->initMomentum_type!="cold") {

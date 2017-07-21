@@ -23,8 +23,8 @@ tracked(false)
     Position_old.resize(0);
     Momentum.resize(0);
     isTest = false;
-    isRadReaction = false;
-    isDiscRadReaction = false;
+    isQuantumParameter = false;
+    isMonteCarlo = false;
 
     double_prop.resize(0);
     short_prop.resize(0);
@@ -72,14 +72,14 @@ void Particles::initialize(unsigned int nParticles, unsigned int nDim)
 
         // Quantum parameter if radiation reaction
         // (continuous or discontinuous)
-        if (isRadReaction) {
+        if (isQuantumParameter) {
             double_prop.push_back( &Chi );
         }
 
         // If the discontinuous (Monte-Carlo) radiation reaction
         // are activated, we add addtional variables:
         // tau: incremental optical depth to emission
-        if (isDiscRadReaction)
+        if (isMonteCarlo)
         {
             double_prop.push_back( &Tau );
         }
