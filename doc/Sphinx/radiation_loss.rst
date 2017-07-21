@@ -528,8 +528,9 @@ the bunch to spread energetically as shown on the Monte-Carlo and the Niel cases
 This effect is the strongest at the beginning when the quantum parameter is high.
 In the Monte-Carlo case, some electrons lose all their energy almost immediately.
 Then, as the particles cool down, the interaction enters the semi-classical
-regime where energy jumps are smaller. In the classical regime, radiation losses
-tighten back the electron energy distribution and the spatial distribution.
+regime where energy jumps are smaller.
+In the classical regime, radiation losses reduce the electron spread
+in energy and in space
 In the Landau-Lifshitz case, there is no energy spread. This model can be seen
 as the average behavior of the stochastic ones.
 

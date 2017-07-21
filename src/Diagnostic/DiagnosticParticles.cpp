@@ -101,7 +101,7 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
     } else if (output == "chi_density" ) {
         // The requested species must be radiating
         for (unsigned int ispec=0 ; ispec < species.size() ; ispec++)
-            if( ! patch->vecSpecies[species[ispec]]->particles->isRadReaction)
+            if( ! patch->vecSpecies[species[ispec]]->particles->isQuantumParameter)
             {
                 ERROR(errorPrefix << ": for histogram preparation"
                 << " in diagParticles: "

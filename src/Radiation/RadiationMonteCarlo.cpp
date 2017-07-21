@@ -110,7 +110,7 @@ void RadiationMonteCarlo::operator() (Particles &particles,
     for (int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass2 = (double)(charge[ipart])*one_over_mass_2;
 
-        //std::cerr << "ipart: " << ipart << std::endl;
+        std::cerr << "ipart: " << ipart << std::endl;
 
         // Init local variables
         emission_time = 0;
@@ -121,6 +121,8 @@ void RadiationMonteCarlo::operator() (Particles &particles,
         while ((local_it_time < dt)
              &&(mc_it_nb < mc_it_nb_max))
         {
+
+            std::cerr << "mc_it_nb: " << mc_it_nb << std::endl;
 
             // Gamma
             gamma = sqrt(1.0 + momentum[0][ipart]*momentum[0][ipart]
@@ -145,7 +147,7 @@ void RadiationMonteCarlo::operator() (Particles &particles,
             && (tau[ipart] <= epsilon_tau) )
             {
                 // New final optical depth to reach for emision
-                tau[ipart] = -log(1-Rand::uniform());
+                tau[ipart] = -log(1.-Rand::uniform());
 
             }
 
@@ -154,12 +156,9 @@ void RadiationMonteCarlo::operator() (Particles &particles,
             if (tau[ipart] > epsilon_tau)
             {
 
-                /*if (ipart == 1)
-                {
-                    std::cerr << "Continue discontinuous emission - "
-                              << "tau: " << tau[ipart]
-                              << std::endl;
-                }*/
+                std::cerr << "Continue discontinuous emission - "
+                        << "tau: " << tau[ipart]
+                        << std::endl;
 
                 // from the cross section
                 temp = RadiationTables.compute_dNphdt(chipa,gamma);
@@ -186,10 +185,12 @@ void RadiationMonteCarlo::operator() (Particles &particles,
                 if (tau[ipart] <= epsilon_tau)
                 {
 
-                    // Emission of a photon
-                    //if (ipart == 1) {
+                    std::cerr << "Photon emission"
+                            << std::endl;
 
-                        RadiationMonteCarlo::photon_emission(chipa,gamma,
+                    // Emission of a photon
+
+                    RadiationMonteCarlo::photon_emission(chipa,gamma,
                                            momentum[0][ipart],
                                            momentum[1][ipart],
                                            momentum[2][ipart],
@@ -200,8 +201,6 @@ void RadiationMonteCarlo::operator() (Particles &particles,
                                   << "Px: " << momentum[0][ipart] << " "
                                   << "Py: " << momentum[1][ipart] << " "
                                   << std::endl;*/
-
-                    //}
 
                     // Optical depth becomes negative meaning
                     // that a new drawing is possible
@@ -226,11 +225,8 @@ void RadiationMonteCarlo::operator() (Particles &particles,
             &&  (chipa > chipa_cont_threshold))
             {
 
-                /*if (ipart == 1) {
-                    std::cerr << "Continuous - "
-                              << "chipa: " << chipa << std::endl;
-                }*/
-
+                std::cerr << "Continuous - "
+                          << "chipa: " << chipa << std::endl;
 
                 // Remaining time of the iteration
                 emission_time = dt - local_it_time;
@@ -261,6 +257,8 @@ void RadiationMonteCarlo::operator() (Particles &particles,
             }
 
         }
+
+        std::cerr << "end ipart: " << ipart << std::endl;
 
     }
 

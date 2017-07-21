@@ -1,10 +1,18 @@
+// -----------------------------------------------------------------------------
+//
+//! \file SpeciesFactory.h
+//
+//! \brief Contains the class SpeciesFactory that manages the
+//!        initialization of the species. For the moment,
+//!        only one kind of species exist.
+//
+// -----------------------------------------------------------------------------
+
 #ifndef SPECIESFACTORY_H
 #define SPECIESFACTORY_H
 
 #include "Species.h"
-#include "Species_norm.h"
-#include "Species_rrll.h"
-#include "Species_nlics.h"
+#include "SpeciesNorm.h"
 
 #include "PusherFactory.h"
 #include "IonizationFactory.h"
@@ -46,39 +54,37 @@ public:
             if ( patch->isMaster() ) WARNING("For species '" << species_type << "' radiation_model not defined: assumed = 'none'.");
 
         // Create species object
-        Species * thisSpecies=NULL;
-        if (radiation_model == "none")
-        {
-            if (dynamics_type=="norm"
-             || dynamics_type == "borisnr"
-             || dynamics_type == "vay"
-             || dynamics_type=="higueracary") {
-                 // Species with relativistic Boris dynamics if  =='norm'
-                 // Species with nonrelativistic Boris dynamics == 'borisnr'
-                 // Species with J.L. Vay dynamics if == "vay"
-                 // Species with Higuary Cary dynamics if == "higueracary"
-                 thisSpecies = new Species_norm(params, patch);
-            } else if (dynamics_type=="rrll") {
-                 // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
-                 ERROR("Creating a RRLL species: this is a work in progress and is still not working. Exiting");
-                 thisSpecies = new Species_rrll(params, patch);
-            } else {
-                ERROR("For species `" << species_type << "` dynamics_type must be 'norm', 'borisnr', 'vay', 'higueracary' or 'rrll'");
-            }
+        Species * thisSpecies = NULL;
+
+        // Dynamics of the species
+        if (dynamics_type=="norm"
+         || dynamics_type == "borisnr"
+         || dynamics_type == "vay"
+         || dynamics_type=="higueracary") {
+             // Species with relativistic Boris dynamics if  =='norm'
+             // Species with nonrelativistic Boris dynamics == 'borisnr'
+             // Species with J.L. Vay dynamics if == "vay"
+             // Species with Higuary Cary dynamics if == "higueracary"
+             thisSpecies = new SpeciesNorm(params, patch);
+        } else {
+            ERROR("For species `" << species_type << "` dynamics_type must be 'norm', 'borisnr', 'vay', 'higueracary'");
         }
-        else if (radiation_model=="Monte-Carlo") {
-             // Species with MC parameters for the discontinuous radiation loss
-             // (nonlinear inverse Compton scattering)
-             thisSpecies = new Species_nlics(params, patch);
+        thisSpecies->dynamics_type = dynamics_type;
+
+        // Radiation model of the species
+        // Species with a Monte-Carlo process for the radiation loss
+        if (radiation_model=="Monte-Carlo") {
+             thisSpecies->particles->isQuantumParameter = true;
+             thisSpecies->particles->isMonteCarlo = true;
         }
+        // Species with another radiation loss model
         else if (radiation_model=="Landau-Lifshitz"
              ||  radiation_model=="corrected-Landau-Lifshitz"
              ||  radiation_model=="Niel")
         {
-            // Species with specific parameters for the continuous radiation loss
-            thisSpecies = new Species_rrll(params, patch);
+             thisSpecies->particles->isQuantumParameter = true;
         }
-        else
+        else if (radiation_model != "none")
         {
             ERROR("For species `" << species_type
                                   << " radiation_model must be 'none',"
@@ -86,9 +92,10 @@ public:
                                   << " 'corrected-Landau-Lifshitz',"
                                   << " 'Niel' or 'Monte-Carlo'");
         }
+        thisSpecies->radiation_model = radiation_model;
 
         // Non compatibility
-        if (dynamics_type=="rrll"
+        if ((dynamics_type=="borisnr")
         && (radiation_model=="Monte-Carlo"
         || radiation_model=="Landau-Lifshitz"
         || radiation_model=="corrected-Landau-Lifshitz"
@@ -102,8 +109,6 @@ public:
         }
 
         thisSpecies->species_type = species_type;
-        thisSpecies->dynamics_type = dynamics_type;
-        thisSpecies->radiation_model = radiation_model;
         thisSpecies->speciesNumber = ispec;
 
         // Extract various parameters from the namelist
@@ -123,7 +128,7 @@ public:
         }
         if (   (thisSpecies->initMomentum_type!="cold")
                && (thisSpecies->initMomentum_type!="maxwell-juettner")
-               && (thisSpecies->initMomentum_type!="rectangular") ) {
+                && (thisSpecies->initMomentum_type!="rectangular") ) {
             ERROR("For species '" << species_type << "' unknown initMomentum_type: "<<thisSpecies->initMomentum_type);
         }
 
@@ -325,32 +330,14 @@ public:
 
         // Create new species object
         Species * newSpecies = NULL;
-        if (species->radiation_model == "none")
+
+        if (species->dynamics_type=="norm"
+        || species->dynamics_type=="higueracary"
+        || species->dynamics_type=="vay"
+        || species->dynamics_type=="borisnr")
         {
-            if (species->dynamics_type=="norm"
-            || species->dynamics_type=="higueracary"
-            || species->dynamics_type=="vay"
-            || species->dynamics_type=="borisnr") {
-                // Boris, Vay or Higuera-Cary
-                newSpecies = new Species_norm(params, patch);
-            }
-            else if (species->dynamics_type=="rrll")
-            {
-                // Boris + Radiation Reaction in the pusher
-                newSpecies = new Species_rrll(params, patch);
-            }
-        }
-        else if (species->radiation_model=="Monte-Carlo"
-             && species->dynamics_type != "rrll")
-        {
-            newSpecies = new Species_nlics(params, patch);
-        }
-        else if ((species->radiation_model=="Landau-Lifshitz"
-             ||   species->radiation_model=="corrected-Landau-Lifshitz"
-             ||   species->radiation_model=="Niel")
-             && species->dynamics_type != "rrll")
-        {
-            newSpecies = new Species_rrll(params, patch);
+            // Boris, Vay or Higuera-Cary
+            newSpecies = new SpeciesNorm(params, patch);
         }
 
         // Copy members
@@ -393,6 +380,8 @@ public:
 
         newSpecies->particles->isTest              = species->particles->isTest;
         newSpecies->particles->tracked             = species->particles->tracked;
+        newSpecies->particles->isQuantumParameter  = species->particles->isQuantumParameter;
+        newSpecies->particles->isMonteCarlo        = species->particles->isMonteCarlo;
 
         // \todo : NOT SURE HOW THIS BEHAVES WITH RESTART
         if ( (!params.restart) && (with_particles) ) {

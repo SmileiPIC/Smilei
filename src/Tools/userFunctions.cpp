@@ -487,6 +487,7 @@ int userFunctions::search_elem_in_array(double * array,
                 //std::cerr << "elem < array[imid]: " << imin << " " << imid << " " << imax << " " << elem << " < " << array[imid] << std::endl;
             }
         }
+        //std::cerr << " end userFunctions::search_elem_in_array " << std::endl;
         return imin;
     }
 }

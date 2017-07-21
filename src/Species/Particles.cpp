@@ -23,8 +23,8 @@ tracked(false)
     Position_old.resize(0);
     Momentum.resize(0);
     isTest = false;
-    isRadReaction = false;
-    isDiscRadReaction = false;
+    isQuantumParameter= false;
+    isMonteCarlo = false;
 
     double_prop.resize(0);
     short_prop.resize(0);
@@ -70,16 +70,17 @@ void Particles::initialize(unsigned int nParticles, unsigned int nDim)
             uint64_prop.push_back( &Id );
         }
 
-        // Quantum parameter if radiation reaction
-        // (continuous or discontinuous)
-        if (isRadReaction) {
+        // Quantum parameter (for QED effects):
+        // - if radiation reaction (continuous or discontinuous)
+        // - if multiphoton-Breit-Wheeler if photons
+        if (isQuantumParameter) {
             double_prop.push_back( &Chi );
         }
 
-        // If the discontinuous (Monte-Carlo) radiation reaction
-        // are activated, we add addtional variables:
-        // tau: incremental optical depth to emission
-        if (isDiscRadReaction)
+        // Optical Depth for Monte-Carlo processes:
+        // - if the discontinuous (Monte-Carlo) radiation reaction
+        // are activated, tau is the incremental optical depth to emission
+        if (isMonteCarlo)
         {
             double_prop.push_back( &Tau );
         }
@@ -97,9 +98,9 @@ void Particles::initialize(unsigned int nParticles, Particles &part)
 
     tracked=part.tracked;
 
-    isRadReaction=part.isRadReaction;
+    isQuantumParameter=part.isQuantumParameter;
 
-    isDiscRadReaction=part.isDiscRadReaction;
+    isMonteCarlo=part.isMonteCarlo;
 
     initialize(nParticles, part.Position.size());
 }
@@ -129,10 +130,10 @@ void Particles::reserve( unsigned int n_part_max, unsigned int nDim )
     if (tracked)
         Id.reserve(n_part_max);
 
-    if (isRadReaction)
+    if (isQuantumParameter)
         Chi.reserve(n_part_max);
 
-    if (isDiscRadReaction)
+    if (isMonteCarlo)
         Tau.reserve(n_part_max);
 
 }
@@ -160,11 +161,11 @@ void Particles::resize( unsigned int nParticles, unsigned int nDim )
         Id.resize(nParticles, 0);
     }
 
-    if (isRadReaction) {
+    if (isQuantumParameter) {
         Chi.resize(nParticles, 0.);
     }
 
-    if (isDiscRadReaction)
+    if (isMonteCarlo)
     {
         Tau.resize(nParticles, 0.);
     }
@@ -310,10 +311,10 @@ void Particles::print(unsigned int iPart) {
     if (tracked)
         cout << Id[iPart] << endl;
 
-    if (isRadReaction)
+    if (isQuantumParameter)
         cout << Chi[iPart] << endl;
 
-    if (isDiscRadReaction)
+    if (isMonteCarlo)
         cout << Tau[iPart] << endl;
 }
 
@@ -336,10 +337,10 @@ ostream& operator << (ostream& out, const Particles& particles) {
         if (particles.tracked)
             out << particles.Id[iPart] << endl;
 
-        if (particles.isRadReaction)
+        if (particles.isQuantumParameter)
             out << particles.Chi[iPart] << endl;
 
-        if (particles.isDiscRadReaction)
+        if (particles.isMonteCarlo)
             out << particles.Tau[iPart] << endl;
     }
 
@@ -507,7 +508,7 @@ void Particles::create_particle()
 //    if (tracked)
 //        Id.resize(nParticles+nAdditionalParticles,0);
 //
-//    if (isRadReaction)
+//    if (isQuantumParameter)
 //        Chi.resize(nParticles+nAdditionalParticles,0.);
 //
 //}
