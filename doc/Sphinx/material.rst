@@ -74,7 +74,7 @@ References
 
 .. [Nanbu1998] `K. Nanbu and S. Yonemura, J. Comput. Phys. 145, 639 (1998) <http://dx.doi.org/10.1006/jcph.1998.6049>`_
 
-.. [Niel2017] `F. Niel, C. Riconda, F. Amiranoff, R. Duclous, and M. Grech (2017)`_
+.. [Niel2017] `F. Niel, C. Riconda, F. Amiranoff, R. Duclous, and M. Grech (2017) <http://>`_
 
 .. [Nuter2011] `R. Nuter et al., Phys. of Plasmas 19, 033107 (2011) <http://dx.doi.org/10.1063/1.3559494>`_
 
