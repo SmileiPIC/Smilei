@@ -333,7 +333,6 @@ Each species has to be defined in a ``Species`` block::
       time_frozen = 0.0,
       # ionization_model = "none",
       # ionization_electrons = None,
-      # radiating = False,
       isTest = False,
       track_every = 10,
       track_flush_every = 100,
@@ -455,13 +454,6 @@ Each species has to be defined in a ``Species`` block::
   The name of the electron species that field ionization uses when creating new electrons.
 
 
-.. py:data:: radiating
-
-  :default: ``False``
-
-  :red:`to do`
-
-
 .. py:data:: isTest
 
   :default: ``False``
@@ -518,6 +510,7 @@ Each species has to be defined in a ``Species`` block::
 
   Type of pusher to be used for this species. The default value corresponds to the
   relativistic Boris pusher. Smilei has the following solvers implemented:
+  * norm: The relativistic Boris pusher
   * borisnr: The non-relativistic Boris pusher
   * vay: The relativistic pusher of J. L. Vay
   * higueracary: The relativistic pusher of A. V. Higuera and J. R. Cary
@@ -527,7 +520,7 @@ Each species has to be defined in a ``Species`` block::
   :default: ``none``
 
   Radiation model used for this species (see :doc:`radiation_loss`).
-  
+
   * ``none``: no radiation
   * ``Landau-Lifshitz``: Landau-Lifshitz model approximated for high energies
   * ``corrected-Landau-Lifshitz``: with quantum correction

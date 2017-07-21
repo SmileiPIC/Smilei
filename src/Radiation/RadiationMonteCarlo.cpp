@@ -110,7 +110,7 @@ void RadiationMonteCarlo::operator() (Particles &particles,
     for (int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass2 = (double)(charge[ipart])*one_over_mass_2;
 
-        std::cerr << "ipart: " << ipart << std::endl;
+        //std::cerr << "ipart: " << ipart << std::endl;
 
         // Init local variables
         emission_time = 0;
@@ -121,8 +121,6 @@ void RadiationMonteCarlo::operator() (Particles &particles,
         while ((local_it_time < dt)
              &&(mc_it_nb < mc_it_nb_max))
         {
-
-            std::cerr << "mc_it_nb: " << mc_it_nb << std::endl;
 
             // Gamma
             gamma = sqrt(1.0 + momentum[0][ipart]*momentum[0][ipart]
@@ -136,6 +134,22 @@ void RadiationMonteCarlo::operator() (Particles &particles,
                      (*Epart)[ipart].x,(*Epart)[ipart].y,(*Epart)[ipart].z,
                      (*Bpart)[ipart].x,(*Bpart)[ipart].y,(*Bpart)[ipart].z);
 
+             /*if (mc_it_nb > 1) {
+             std::cerr << "ipart: " << ipart
+                       << " mc_it_nb: " << mc_it_nb
+                       << " local_it_time: " << local_it_time << "/" << dt
+                       << " gamma: " << gamma
+                       << " px: " << momentum[0][ipart]
+                       << " py: " << momentum[1][ipart]
+                       << " chi: " << chipa << "(" << chipa_cont_threshold << ")"
+                       << " Tau: " << tau[ipart] << "/" << epsilon_tau
+                       << std::endl;
+                       if (std::isnan(gamma))
+                       {
+                           ERROR("stop")
+                       }
+             }*/
+
             // Update the quantum parameter in species
             // chi[ipart] = chipa;
 
@@ -147,7 +161,8 @@ void RadiationMonteCarlo::operator() (Particles &particles,
             && (tau[ipart] <= epsilon_tau) )
             {
                 // New final optical depth to reach for emision
-                tau[ipart] = -log(1.-Rand::uniform());
+                while (tau[ipart] <= epsilon_tau)
+                   tau[ipart] = -log(1.-Rand::uniform());
 
             }
 
@@ -156,9 +171,9 @@ void RadiationMonteCarlo::operator() (Particles &particles,
             if (tau[ipart] > epsilon_tau)
             {
 
-                std::cerr << "Continue discontinuous emission - "
+                /*std::cerr << "Continue discontinuous emission - "
                         << "tau: " << tau[ipart]
-                        << std::endl;
+                        << std::endl;*/
 
                 // from the cross section
                 temp = RadiationTables.compute_dNphdt(chipa,gamma);
@@ -185,8 +200,8 @@ void RadiationMonteCarlo::operator() (Particles &particles,
                 if (tau[ipart] <= epsilon_tau)
                 {
 
-                    std::cerr << "Photon emission"
-                            << std::endl;
+                    /*std::cerr << "Photon emission"
+                            << std::endl;*/
 
                     // Emission of a photon
 
@@ -225,8 +240,8 @@ void RadiationMonteCarlo::operator() (Particles &particles,
             &&  (chipa > chipa_cont_threshold))
             {
 
-                std::cerr << "Continuous - "
-                          << "chipa: " << chipa << std::endl;
+                /*std::cerr << "Continuous - "
+                          << "chipa: " << chipa << std::endl;*/
 
                 // Remaining time of the iteration
                 emission_time = dt - local_it_time;
@@ -258,7 +273,7 @@ void RadiationMonteCarlo::operator() (Particles &particles,
 
         }
 
-        std::cerr << "end ipart: " << ipart << std::endl;
+        /*std::cerr << "end ipart: " << ipart << std::endl;*/
 
     }
 
@@ -326,7 +341,7 @@ void RadiationMonteCarlo::photon_emission(double &chipa,
               << "gammapa: " << gammapa << " "
               << "gammaph: " << gammaph << " "
               << "inv_old_norm_p: " << inv_old_norm_p << " "
-              << "new_norm_p: " << new_norm_p << " "
+              //<< "new_norm_p: " << new_norm_p << " "
               << "" << sqrt(1 + px*px + py*py + pz*pz) << " "
               << std::endl;*/
 

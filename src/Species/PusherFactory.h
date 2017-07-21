@@ -36,10 +36,10 @@ public:
         {
             Push = new PusherBorisNR( params, species );
         }
-        else if ( species->dynamics_type == "rrll" )
+        /*else if ( species->dynamics_type == "rrll" )
         {
             Push = new PusherRRLL( params, species );
-        }
+        }*/
         else if ( species->dynamics_type == "vay" )
         {
             Push = new PusherVay( params, species );

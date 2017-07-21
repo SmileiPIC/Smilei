@@ -76,6 +76,7 @@ public:
         if (radiation_model=="Monte-Carlo") {
              thisSpecies->particles->isQuantumParameter = true;
              thisSpecies->particles->isMonteCarlo = true;
+             thisSpecies->radiating = true;
         }
         // Species with another radiation loss model
         else if (radiation_model=="Landau-Lifshitz"
@@ -83,6 +84,7 @@ public:
              ||  radiation_model=="Niel")
         {
              thisSpecies->particles->isQuantumParameter = true;
+             thisSpecies->radiating = true;
         }
         else if (radiation_model != "none")
         {
@@ -141,12 +143,6 @@ public:
         PyTools::extract("time_frozen",thisSpecies->time_frozen ,"Species",ispec);
         if (thisSpecies->time_frozen > 0 && thisSpecies->initMomentum_type!="cold") {
             if ( patch->isMaster() ) WARNING("For species '" << species_type << "' possible conflict between time-frozen & not cold initialization");
-        }
-
-        PyTools::extract("radiating",thisSpecies->radiating ,"Species",ispec);
-        if (thisSpecies->dynamics_type=="rrll" && (!thisSpecies->radiating)) {
-            if ( patch->isMaster() ) WARNING("For species '" << species_type << "', dynamics_type='rrll' forcing radiating=True");
-            thisSpecies->radiating=true;
         }
 
         if (!PyTools::extract("bc_part_type_xmin",thisSpecies->bc_part_type_xmin,"Species",ispec) )
