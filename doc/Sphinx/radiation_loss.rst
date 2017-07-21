@@ -176,7 +176,7 @@ can be written as:
 Conditions (i) is fulfilled when :math:`a_0 = e \| A^{\mu} \| / mc^2 \gg 1`, :math:`A^{\mu}`
 being the four-potential laser amplitude.
 conditions (ii) corresponds to :math:`\mathbf{B}^2 - \mathbf{E}^2 \ll E_s^2`
-and  :math:`\mathbf{B}\cdot \mathbf{E} \ll 1`.
+and  :math:`\mathbf{B}\cdot \mathbf{E} \ll 1` (See [Ritus1985]_ for more details).
 
 From Eq. :eq:`PhotonProdRate` can be deduced the emitted power distribution in
 term of the photon normalized energy. After integration, one obtains the

@@ -86,6 +86,8 @@ References
 
 .. [Perez2012] `F. Pérez et al., Phys. Plasmas 19, 083104 (2012) <http://dx.doi.org/10.1063/1.4742167>`_
 
+.. [Ritus1985] Ritus V. (1985), Journal of Soviet Laser Research, 6, 497, ISSN 0270-2010
+
 .. [Rohrlich1954] `F. Rohrlich and B. C. Carlson, Phys. Rev. 93, 38 (1954) <http://journals.aps.org/pr/abstract/10.1103/PhysRev.93.38>`_
 
 .. [Schnittman2013] `J. D. Schnittman and J. H. Krolik, Astrophys. J. 777, 11 (2013) <http://dx.doi.org/10.1088/0004-637X/777/1/11>`_
