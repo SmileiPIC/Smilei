@@ -19,6 +19,8 @@ In extremely intense laser fields, with intensities above
 :math:`10^{21}\ \mathrm{Wcm^{-2}}`, high-energy radiation emission strongly influences
 the dynamics of charged particles and the overall energy balance of laser-plasma
 interaction.
+In our regime of interaction, only light charge particles such as electrons
+and positrons can radiate.
 
 Different approaches have been implemented in :program:`Smilei` as summarized
 in :numref:`radiationRegimes` to deal with different regimes of emission.
@@ -181,27 +183,30 @@ expression of the radiated power in the quantum regime:
 .. math::
   :label: quantumRadPower
 
-  P_{rad} = P_{cl} g(\chi_{\pm})
+  P_{rad} = P_{cl} g(\chi)
 
 with
 
 .. math::
   :label: g
 
-  g \left( \chi_{\pm} \right) = \frac{9 \sqrt{3} }{8 \pi} \int_0^{+\infty}{d\nu
-  \left[  \frac{2\nu^2 }{\left( 2 + 3 \nu \chi_\pm \right) ^2}K_{5/3}(\nu) +
-  \frac{4 \nu \left( 3 \nu \chi_\pm\right)^2 }{\left( 2 + 3 \nu \chi_\pm \right)^4}K_{2/3}(\nu) \right]}
+  g \left( \chi \right) = \frac{9 \sqrt{3} }{8 \pi} \int_0^{+\infty}{d\nu
+  \left[  \frac{2\nu^2 }{\left( 2 + 3 \nu \chi \right) ^2}K_{5/3}(\nu) +
+  \frac{4 \nu \left( 3 \nu \chi\right)^2 }{\left( 2 + 3 \nu \chi \right)^4}K_{2/3}(\nu) \right]}
 
 The quantum instantaneous radiated power is nothing else than the classical one
-multiplied by the correction :math:`g \left( \chi_{\pm} \right)`.
+multiplied by the correction :math:`g \left( \chi \right)`.
 
-We can simply use Eq. :eq:`LLFrictionForceApprox` with this correction close to
-1 when :math:`\chi_{\pm} \ll 1` and rapidly dropping otherwise.
-This corrects the radiated energy, but does
-not take into account stochastic effects when the photon energy approaches that of
+When :math:`\chi \ll 1`, this correction is close to 1 and the corrected
+Friction force
+is therefore similar to Eq. :eq:`LLFrictionForceApprox`.
+The correction rapidly decreases otherwise when :math:`\chi > 10^{-2}`.
+
+The correction does not take into account stochastic
+effects when the photon energy approaches that of
 the emitting electron. This is the subject of the next section.
 
-----
+--------------------------------------------------------------------------------
 
 Stochastic schemes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -220,13 +225,15 @@ model with an operator that takes into account diffusive stochastic effects
   \sqrt{R\left( \chi, \gamma \right)} dW \right]
   \mathbf{u} / \left( \mathbf{u} c^2 \right)
 
-where :math:`dW` is a Wiener process of variance :math:`dt`.
+where :math:`dW` is a Wiener process of variance :math:`dt`,
 
 .. math::
   :label: NielR
 
     R\left( \chi, \gamma \right) = \frac{2}{3} \frac{\alpha^2}{\tau_e} \gamma
     h \left( \chi \right)
+
+and
 
 .. math::
   :label: Nielh
@@ -238,13 +245,13 @@ where :math:`dW` is a Wiener process of variance :math:`dt`.
 Monte-Carlo quantum model
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-The Monte-Carlo treatment of the emission, more complex process than
-the previous ones, can be divided into several steps ([Duclous2011]_,
+The Monte-Carlo treatment of the emission is more complex process than
+the previous ones and can be divided into several steps ([Duclous2011]_,
 [Lobet2013]_, [Lobet2015]_):
 
 1. An incremental optical depth :math:`\tau`, initially set to 0, is assigned to the particle.
 Emission occurs when it reaches the final optical depth :math:`\tau_f`
-sampled from :math:`\tau_f = -\log{\xi}` where :math:`\xi` is a random number between 0 and 1.
+sampled from :math:`\tau_f = -\log{\xi}` where :math:`\xi` is a random number in :math:`\left]0,1\right]`.
 
 2. The optical depth :math:`\tau` evolves according to the field and particle
 energy variations following this integral:
@@ -252,10 +259,12 @@ energy variations following this integral:
 .. math::
   :label: MCDtauDt
 
-    \frac{d\tau}{dt} = \int_0^{\chi_\pm}{ \frac{d^2N}{d\chi dt}  d\chi }
+    \frac{d\tau}{dt} = \int_0^{\chi_{\pm}}{ \frac{d^2N}{d\chi dt}  d\chi }
 
 that simply is the production rate of photons
 (integration of Eq. :eq:`PhotonProdRate`).
+Here, :math:`\chi_{\pm}` is the emitting electron (or positron) quantum parameter and
+:math:`\chi` the integration variable.
 
 3. The emitted photon's quantum parameter :math:`\chi_\gamma` is computed by
 inverting the cumulative distribution function:
@@ -271,7 +280,7 @@ where :math:`F` is the so-called synchrotron emissivity function so that
 .. math::
   :label: MCF
 
-    \frac{d^2 N}{dt d\chi} = \frac{2}{3} \frac{\alpha^2}{\tau_e} F (\chi, \chi_\gamma)
+    \frac{d^2 N}{dt d\chi_{\pm}} = \frac{2}{3} \frac{\alpha^2}{\tau_e} F (\chi_\pm, \chi_\gamma)
 
 The inversion of  :math:`P(\chi_\pm,\chi_\gamma)=\xi'` is done after drawing
 a second random number
@@ -323,7 +332,7 @@ As explained below, many functions have been tabulated because of
 the cost of their computation for each particle. This table can be generated by
 :program:`Smilei` at the initialization.
 The parameters such as the ranges and the discretization can be
-given in (see :ref:`RadiationLoss <RadiationLoss>`).
+given in the :ref:`RadiationLoss <RadiationLoss>` namelist section.
 Once generated, the table can be written on the disk and reloaded for a next run.
 Small tables coded in hdf5 are provided in the repository in the folder
 databases with the name: `radiation_tables.h5`.
@@ -374,11 +383,12 @@ Monte-Carlo quantum model
 
 The computation of Eq. :eq:`MCDtauDt` would be too expensive for every single
 particles. Instead, the integral of the function :math:`F` is tabulated.
-This table is referred to as `integfochi` in the code.
+This table is referred to as ``integfochi_table`` and related parameters
+start by ``integfochi`` in the code.
 
 Similarly, Eq. :eq:`CumulativeDistr` is tabulated (named ``xip`` in the code).
-The only difference is that we choose a minimum photon quantum parameter
-:math:`\chi_{\gamma,\min}` for the integration so that:
+The only difference is that a minimum photon quantum parameter
+:math:`\chi_{\gamma,\min}` is computed before for the integration so that:
 
 .. math::
   :label: chiMin
@@ -421,8 +431,8 @@ value reached during the simulation is around 0.5.
   :width: 15cm
 
   Kinetic, radiated and total energy plotted respectively with solid, dashed and dotted lines for
-  the Monte-Carlo (**MC**), Niel (**Niel**),
-  corrected Landau-Lifshitz (**CLL**) and the Landau-Lifshitz (**LL**) models.
+  the :blue:`Monte-Carlo` (**MC**), :orange:`Niel` (**Niel**),
+  :green:`corrected Landau-Lifshitz` (**CLL**) and the :red:`Landau-Lifshitz` (**LL**) models.
 
 :numref:`rad_counter_prop_scalar` shows that the Monte-Carlo, the Niel and
 the corrected Landau-Lifshitz models exhibit very similar
@@ -438,7 +448,7 @@ because the interaction happens mainly in the quantum regime.
   :width: 18cm
 
   Evolution of the normalized kinetic energy
-  :math:`\gamma - 1` of some selected electrons.
+  :math:`\gamma - 1` of some selected electrons as a function of their position.
 
 :numref:`rad_counter_prop_track` shows that the Monte-Carlo and the Niel models
 reproduce the stochastic nature of the trajectories as opposed to the
@@ -500,7 +510,7 @@ cooling mechanism.
 In the cases of the Niel and the Monte-Carlo radiation models,
 the stochastic effects come into play and lead the bunch to spread spatially.
 This effect is particularly strong at the beginning when the radiation recoil
-is most important.
+is the most important.
 
 .. _synchrotron_x_y_gamma:
 
@@ -513,13 +523,13 @@ is most important.
 
 :numref:`synchrotron_t_gamma_ne` shows the time evolution of
 the electron energy distribution for different radiation models.
-At the beginning, all particles have the same energy. Stochastic effects leads
+At the beginning, all particles have the same energy. Stochastic effects lead
 the bunch to spread energetically as shown on the Monte-Carlo and the Niel cases.
 This effect is the strongest at the beginning when the quantum parameter is high.
 In the Monte-Carlo case, some electrons lose all their energy almost immediately.
 Then, as the particles cool down, the interaction enters the semi-classical
 regime where energy jumps are smaller. In the classical regime, radiation losses
-tighten back the electron energy and spatial distribution.
+tighten back the electron energy distribution and the spatial distribution.
 In the Landau-Lifshitz case, there is no energy spread. This model can be seen
 as the average behavior of the stochastic ones.
 
