@@ -35,9 +35,20 @@ class TrackParticles(Diagnostic):
 		
 		# If sorting allowed, then do the sorting
 		if sort:
-			# If the first path does not contain the ordered file, we must create it
+			# If the first path does not contain the ordered file (or it is incomplete), we must create it
 			orderedfile = self._results_path[0]+self._os.sep+"TrackParticles_"+species+".h5"
+			needsOrdering = False
 			if not self._os.path.isfile(orderedfile):
+				needsOrdering = True
+			else:
+				try:
+					f = self._h5py.File(orderedfile)
+					if "finished_ordering" not in f.attrs.keys():
+						needsOrdering = True
+				except:
+					self._os.remove(orderedfile)
+					needsOrdering = True
+			if needsOrdering:
 				disorderedfiles = self._findDisorderedFiles()
 				self._orderFiles(disorderedfiles, orderedfile, chunksize)
 			# Create arrays to store h5 items
@@ -321,6 +332,9 @@ class TrackParticles(Diagnostic):
 	def _orderFiles( self, filesDisordered, fileOrdered, chunksize ):
 		print("Ordering particles ... (this could take a while)")
 		try:
+			properties = {"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
+			              "momentum/x":"px", "momentum/y":"py", "momentum/z":"pz",
+			              "charge":"q", "weight":"w"}
 			# Obtain the list of all times in all disordered files
 			time_locations = {}
 			for fileIndex, fileD in enumerate(filesDisordered):
@@ -340,18 +354,26 @@ class TrackParticles(Diagnostic):
 			total_number_of_particles = offset[-1]
 			offset = self._np.roll(offset, 1)
 			offset[0] = 0
-			# Make new (ordered) file
-			f0 = self._h5py.File(fileOrdered, "w")
-			# Make new datasets
-			properties = {"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
-			              "momentum/x":"px", "momentum/y":"py", "momentum/z":"pz",
-			              "charge":"q", "weight":"w"}
+			# If ordered file already exists, find out which timestep was done last
+			latestOrdered = -1
+			if self._os.path.isfile(fileOrdered):
+				f0 = self._h5py.File(fileOrdered, "r+")
+				try:    latestOrdered = f0.attrs["latestOrdered"]
+				except: pass
+			# otherwise, make new (ordered) file
+			else:
+				f0 = self._h5py.File(fileOrdered, "w")
+			# Make datasets if not existing already
 			for k, name in properties.items():
 				try   : f0.create_dataset(name, (len(times), total_number_of_particles), f["data"][tname]["particles"][self.species][k].dtype, fillvalue=(0 if name=="Id" else self._np.nan))
 				except: pass
 			f.close()
 			# Loop times and fill arrays
 			for it, t in enumerate(times):
+			
+				# Skip previously-ordered times
+				if it<=latestOrdered: continue
+				
 				print("    Ordering @ timestep = "+str(t))
 				file_index, tname = time_locations[t]
 				f = self._h5py.File(filesDisordered[file_index], "r")
@@ -367,7 +389,7 @@ class TrackParticles(Diagnostic):
 					for k, name in properties.items():
 						if k not in group: continue
 						disordered = group[k].value
-						ordered = self._np.empty((total_number_of_particles, ), dtype=disordered.dtype)
+						ordered = self._np.zeros((total_number_of_particles, ), dtype=disordered.dtype)
 						ordered[locs] = disordered
 						f0[name].write_direct(ordered, dest_sel=self._np.s_[it,:])
 				
@@ -407,16 +429,19 @@ class TrackParticles(Diagnostic):
 								start_in_file = int(ID[start] % 2**32 + offset[ int(ID[start])>>32 ] -1)
 								stop_in_file = start_in_file + bs
 								f0[name].write_direct( data, source_sel=self._np.s_[start:stop], dest_sel=self._np.s_[it, start_in_file:stop_in_file] )
-				
+					
+				# Indicate that this iteration was succesfully ordered
+				f0.attrs["latestOrdered"] = it
 				f.close()
 			# Create the "Times" dataset
 			f0.create_dataset("Times", data=times)
 			# Create the "unique_Ids" dataset
 			f0.create_dataset("unique_Ids", data=self._np.max(f0["Id"], axis=0))
+			# Indicate that the ordering is finished
+			f0.attrs["finished_ordering"] = True
 			# Close file
 			f0.close()
 		except:
-			self._os.remove(fileOrdered)
 			print("Error in the ordering of the tracked particles")
 			raise
 		print("Ordering succeeded")
