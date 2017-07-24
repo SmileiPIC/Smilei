@@ -7,6 +7,7 @@ compile:
   only:
     - develop
     - develop-QED-photon-emission
+    - develop-Multiphoton-Breit-Wheeler
 
   script:
     # Move in test dir
@@ -21,6 +22,7 @@ makerun1D:
   only:
     - develop
     - develop-QED-photon-emission
+    - develop-Multiphoton-Breit-Wheeler
 
   script:
     # Move in test dir
@@ -33,6 +35,7 @@ makerun2D:
   only:
     - develop
     - develop-QED-photon-emission
+    - develop-Multiphoton-Breit-Wheeler
 
   script:
     # Move in test dir
@@ -45,6 +48,7 @@ makerun3D:
   only:
     - develop
     - develop-QED-photon-emission
+    - develop-Multiphoton-Breit-Wheeler
 
   script:
     # Move in test dir
@@ -62,5 +66,3 @@ makerunCollisions:
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
     - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v
-
-

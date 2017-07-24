@@ -237,13 +237,14 @@ public:
     }
     void sortById();
 
-    //! Parameters for particles that are submitted
+    //! Quantum parameter for particles that are submitted
     //! to a radiation reaction force (CED or QED)
-    bool isRadReaction;
+    bool isQuantumParameter;
 
     //! Parameters for particles that are submitted to a
-    //! Monte-Carlo discontinuous radiation reaction force
-    bool isDiscRadReaction;
+    //! Monte-Carlo process such as:
+    //! - discontinuous radiation reaction force
+    bool isMonteCarlo;
 
     //! Method used to get the Particle chi factor
     inline double  chi(unsigned int ipart) const {

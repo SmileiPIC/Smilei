@@ -367,8 +367,8 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
     #pragma omp master
     H5Gclose( position_group );
 
-    // If the radiation losses are activated
-    if (vecPatches(0)->vecSpecies[speciesId_]->particles->isRadReaction)
+    // If the quantum parameter is available
+    if (vecPatches(0)->vecSpecies[speciesId_]->particles->isQuantumParameter)
     {
         // Chi - quantum parameter
         #pragma omp master

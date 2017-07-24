@@ -270,17 +270,27 @@ double RadiationTables::compute_chiph_emission(double chipa)
     // This method is slow but more accurate than taking the nearest point
     // --------------------------------------------------------------------
 
-    // Computation of the final chiph by interpolation
-    log10_chiphm = ichiph*chiph_xip_delta
-           + xip_chiphmin_table[ichipa];
-    log10_chiphp = log10_chiphm + chiph_xip_delta;
-
     ixip = ichipa*xip_chiph_dim + ichiph;
 
-    d = (xip - xip_table[ixip]) / (xip_table[ixip+1] - xip_table[ixip]);
+    // Computation of the final chiph by interpolation
+    if (xip_table[ixip+1] - xip_table[ixip] > 1e-15)
+    {
+        log10_chiphm = ichiph*chiph_xip_delta
+               + xip_chiphmin_table[ichipa];
+        log10_chiphp = log10_chiphm + chiph_xip_delta;
 
-    // Chiph after linear interpolation in the logarithmic scale
-    chiph = pow(10.,log10_chiphm*(1.0-d) + log10_chiphp*(d));
+        d = (xip - xip_table[ixip]) / (xip_table[ixip+1] - xip_table[ixip]);
+
+        // Chiph after linear interpolation in the logarithmic scale
+        chiph = pow(10.,log10_chiphm*(1.0-d) + log10_chiphp*(d));
+    }
+    else
+    // For integration reasons, we can have xip_table[ixip+1] = xip_table[ixip]
+    // In this case, no interpolation
+    {
+        chiph = pow(10.,ichiph*chiph_xip_delta
+               + xip_chiphmin_table[ichipa]);
+    }
 
     // ------------------------------------------------------------
     // Compute chiph
@@ -296,8 +306,8 @@ double RadiationTables::compute_chiph_emission(double chipa)
               << "" << xip_table[ichipa*xip_chiph_dim + ichiph] << " < "
               << "xip: " << xip << " "
               << " < " << xip_table[ichipa*xip_chiph_dim + ichiph+1] << " "
-              << "logchipa: " << logchipa << " "
-              << "" << pow(10,(ichipa)*xip_chipa_delta + log10(xip_chipa_min)) << " < "
+              << "logchipa: " << logchipa <<
+              << " " << pow(10,(ichipa)*xip_chipa_delta + log10(xip_chipa_min)) << " < "
               << "chipa: " << chipa << " "
               << pow(10,(ichipa+1)*xip_chipa_delta + log10(xip_chipa_min)) << " "
               << "chiph: " << chiph << " "
