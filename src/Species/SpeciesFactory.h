@@ -129,6 +129,9 @@ public:
             radiation_model == "none";
             dynamics_type=="norm";
             thisSpecies = new SpeciesNorm(params, patch);
+            MESSAGE(1,"> " <<species_type <<" is a photon species (mass==0).");
+            MESSAGE(1,"> Radiation model set to none.");
+            MESSAGE(1,"> Dynamic model set to norm.");
         }
 
         thisSpecies->species_type = species_type;
@@ -150,10 +153,25 @@ public:
         if ( (thisSpecies->initMomentum_type=="mj") || (thisSpecies->initMomentum_type=="maxj") ) {
             thisSpecies->initMomentum_type="maxwell-juettner";
         }
-        if (   (thisSpecies->initMomentum_type!="cold")
-               && (thisSpecies->initMomentum_type!="maxwell-juettner")
+        // Matter particles
+        if (thisSpecies->mass > 0) {
+            if (   (thisSpecies->initMomentum_type!="cold")
+                && (thisSpecies->initMomentum_type!="maxwell-juettner")
                 && (thisSpecies->initMomentum_type!="rectangular") ) {
-            ERROR("For species '" << species_type << "' unknown initMomentum_type: "<<thisSpecies->initMomentum_type);
+                    ERROR("For particle species '" << species_type
+                                                << "' unknown initMomentum_type: "
+                                                <<thisSpecies->initMomentum_type);
+            }
+        }
+        // Photons
+        else if (thisSpecies->mass == 0)
+        {
+            if (   (thisSpecies->initMomentum_type!="cold")
+                && (thisSpecies->initMomentum_type!="rectangular") ) {
+                    ERROR("For photon species '" << species_type
+                                                << "' unknown initMomentum_type: "
+                                                <<thisSpecies->initMomentum_type);
+            }
         }
 
         PyTools::extract("c_part_max",thisSpecies->c_part_max,"Species",ispec);
@@ -185,63 +203,94 @@ public:
         // for thermalizing BCs on particles check if thermT is correctly defined
         bool thermTisDefined=false;
         bool thermVisDefined=false;
-        if ( (thisSpecies->bc_part_type_xmin=="thermalize") || (thisSpecies->bc_part_type_xmax=="thermalize") ){
-            thermTisDefined=PyTools::extract("thermT",thisSpecies->thermT,"Species",ispec);
-            if (!thermTisDefined) ERROR("For species '" << species_type << "' thermT needs to be defined due to x-BC thermalize");
-            thermVisDefined=PyTools::extract("thermVelocity",thisSpecies->thermVelocity,"Species",ispec);
-            if (!thermVisDefined) ERROR("For species '" << species_type << "' thermVelocity needs to be defined due to x-BC thermalize");
-        }
-        if ( (params.nDim_particle==2) && (!thermTisDefined) && (!thermVisDefined) &&
-             (thisSpecies->bc_part_type_ymin=="thermalize" || thisSpecies->bc_part_type_ymax=="thermalize") ) {
-            thermTisDefined=PyTools::extract("thermT",thisSpecies->thermT,"Species",ispec);
-            if (!thermTisDefined) ERROR("For species '" << species_type << "' thermT needs to be defined due to y-BC thermalize");
-            thermVisDefined=PyTools::extract("thermVelocity",thisSpecies->thermVelocity,"Species",ispec);
-            if (!thermTisDefined) ERROR("For species '" << species_type << "' thermVelocity needs to be defined due to y-BC thermalize");
-        }
-        if (thermTisDefined) {
-            if (thisSpecies->thermT.size()==1) {
-                WARNING("For species '" << species_type << "' Using thermT[0] in all directions");
-                thisSpecies->thermT.resize(3);
-                for (unsigned int i=1; i<3;i++)
-                    thisSpecies->thermT[i]=thisSpecies->thermT[0];
+        // Matter particles
+        if (thisSpecies->mass > 0) {
+            if ( (thisSpecies->bc_part_type_xmin=="thermalize") || (thisSpecies->bc_part_type_xmax=="thermalize") ){
+                thermTisDefined=PyTools::extract("thermT",thisSpecies->thermT,"Species",ispec);
+                if (!thermTisDefined) ERROR("For species '" << species_type << "' thermT needs to be defined due to x-BC thermalize");
+                thermVisDefined=PyTools::extract("thermVelocity",thisSpecies->thermVelocity,"Species",ispec);
+                if (!thermVisDefined) ERROR("For species '" << species_type << "' thermVelocity needs to be defined due to x-BC thermalize");
             }
-        } else {
-            thisSpecies->thermT.resize(3);
-            for (unsigned int i=0; i<3;i++)
-                thisSpecies->thermT[i]=0.0;
-            thisSpecies->thermVelocity.resize(3);
-            for (unsigned int i=0; i<3;i++)
-                thisSpecies->thermVelocity[i]=0.0;
+            if ( (params.nDim_particle==2) && (!thermTisDefined) && (!thermVisDefined) &&
+                 (thisSpecies->bc_part_type_ymin=="thermalize" || thisSpecies->bc_part_type_ymax=="thermalize") ) {
+                thermTisDefined=PyTools::extract("thermT",thisSpecies->thermT,"Species",ispec);
+                if (!thermTisDefined) ERROR("For species '" << species_type << "' thermT needs to be defined due to y-BC thermalize");
+                thermVisDefined=PyTools::extract("thermVelocity",thisSpecies->thermVelocity,"Species",ispec);
+                if (!thermTisDefined) ERROR("For species '" << species_type << "' thermVelocity needs to be defined due to y-BC thermalize");
+            }
+            if (thermTisDefined) {
+                if (thisSpecies->thermT.size()==1) {
+                    WARNING("For species '" << species_type << "' Using thermT[0] in all directions");
+                    thisSpecies->thermT.resize(3);
+                    for (unsigned int i=1; i<3;i++)
+                        thisSpecies->thermT[i]=thisSpecies->thermT[0];
+                }
+            } else {
+                thisSpecies->thermT.resize(3);
+                for (unsigned int i=0; i<3;i++)
+                    thisSpecies->thermT[i]=0.0;
+                thisSpecies->thermVelocity.resize(3);
+                for (unsigned int i=0; i<3;i++)
+                    thisSpecies->thermVelocity[i]=0.0;
+            }
+
+            // Compute the thermalVelocity & Momentum for thermalizing bcs
+            thisSpecies->thermalVelocity.resize(3);
+            thisSpecies->thermalMomentum.resize(3);
+
+            for (unsigned int i=0; i<3; i++) {
+                thisSpecies->thermalVelocity[i] = sqrt(2.*thisSpecies->thermT[i]/thisSpecies->mass);
+                thisSpecies->thermalMomentum[i] = thisSpecies->thermalVelocity[i];
+                // Caution: momentum in SMILEI actually correspond to p/m
+                if (thisSpecies->thermalVelocity[i]>0.3) ERROR("For species '" << species_type << "' Thermalizing BCs require non-relativistic thermT");
+            }
+
         }
-
-        // Compute the thermalVelocity & Momentum for thermalizing bcs
-        thisSpecies->thermalVelocity.resize(3);
-        thisSpecies->thermalMomentum.resize(3);
-
-        for (unsigned int i=0; i<3; i++) {
-            thisSpecies->thermalVelocity[i] = sqrt(2.*thisSpecies->thermT[i]/thisSpecies->mass);
-            thisSpecies->thermalMomentum[i] = thisSpecies->thermalVelocity[i];
-            // Caution: momentum in SMILEI actually correspond to p/m
-            if (thisSpecies->thermalVelocity[i]>0.3) ERROR("For species '" << species_type << "' Thermalizing BCs require non-relativistic thermT");
+        // Photons
+        else if (thisSpecies->mass == 0)
+        {
+            if ( (thisSpecies->bc_part_type_xmin=="thermalize") ||
+                 (thisSpecies->bc_part_type_xmax=="thermalize") ||
+                 (thisSpecies->bc_part_type_ymin=="thermalize") ||
+                 (thisSpecies->bc_part_type_ymax=="thermalize") ||
+                 (thisSpecies->bc_part_type_zmin=="thermalize") ||
+                 (thisSpecies->bc_part_type_zmax=="thermalize"))
+            {
+                ERROR("For photon species '" << species_type
+                       << "' Thermalizing BCs are not available.");
+            }
+            if ( (thisSpecies->bc_part_type_xmin=="stop") ||
+                 (thisSpecies->bc_part_type_xmax=="stop") ||
+                 (thisSpecies->bc_part_type_ymin=="stop") ||
+                 (thisSpecies->bc_part_type_ymax=="stop") ||
+                 (thisSpecies->bc_part_type_zmin=="stop") ||
+                 (thisSpecies->bc_part_type_zmax=="stop"))
+            {
+                ERROR("For photon species '" << species_type
+                       << "' stop BCs are not physical.");
+            }
         }
 
 
 
         // Manage the ionization parameters
-        thisSpecies->atomic_number = 0;
-        PyTools::extract("atomic_number", thisSpecies->atomic_number, "Species",ispec);
+        if (thisSpecies->mass > 0)
+        {
+            thisSpecies->atomic_number = 0;
+            PyTools::extract("atomic_number", thisSpecies->atomic_number, "Species",ispec);
 
-        std::string model;
-        if( PyTools::extract("ionization_model", model, "Species",ispec) && model!="none" ) {
+            std::string model;
+            if( PyTools::extract("ionization_model", model, "Species",ispec) && model!="none" ) {
 
-            thisSpecies->ionization_model = model;
+                thisSpecies->ionization_model = model;
 
-            if( ! PyTools::extract("ionization_electrons", thisSpecies->ionization_electrons, "Species",ispec) ) {
-                ERROR("For species '" << species_type << "' undefined ionization_electrons (required for ionization)");
-            }
+                if( ! PyTools::extract("ionization_electrons", thisSpecies->ionization_electrons, "Species",ispec) ) {
+                    ERROR("For species '" << species_type << "' undefined ionization_electrons (required for ionization)");
+                }
 
-            if( thisSpecies->atomic_number==0 ) {
-                ERROR("For species '" << species_type << "' undefined atomic_number (required for ionization)");
+                if( thisSpecies->atomic_number==0 ) {
+                    ERROR("For species '" << species_type << "' undefined atomic_number (required for ionization)");
+                }
             }
         }
 
@@ -251,12 +300,27 @@ public:
         // Density
         bool ok1, ok2;
         PyObject *profile1, *profile2, *profile3;
-        ok1 = PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispec);
-        ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", ispec);
-        if(  ok1 &&  ok2 ) ERROR("For species '" << species_type << "', cannot define both `nb_density` and `charge_density`.");
-        if( !ok1 && !ok2 ) ERROR("For species '" << species_type << "', must define `nb_density` or `charge_density`.");
-        if( ok1 ) thisSpecies->densityProfileType = "nb";
-        if( ok2 ) thisSpecies->densityProfileType = "charge";
+        // Matter particles
+        if (thisSpecies->mass > 0)
+        {
+            ok1 = PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispec);
+            ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", ispec);
+            if(  ok1 &&  ok2 ) ERROR("For species '" << species_type << "', cannot define both `nb_density` and `charge_density`.");
+            if( !ok1 && !ok2 ) ERROR("For species '" << species_type << "', must define `nb_density` or `charge_density`.");
+            if( ok1 ) thisSpecies->densityProfileType = "nb";
+            if( ok2 ) thisSpecies->densityProfileType = "charge";
+        }
+        // Photons
+        else if (thisSpecies->mass == 0)
+        {
+            ok1 = PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispec);
+            ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", ispec);
+            if( !ok1 && ok2 ) ERROR("For photon species '" << species_type
+                         << "', must define `nb_density`, `charge_density has no meaning for photons`.");
+            if (!ok1) ERROR("For photon species '" << species_type
+                         << "', must define `nb_density`.");
+            if( ok1 ) thisSpecies->densityProfileType = "nb";
+        }
 
         thisSpecies->densityProfile = new Profile(profile1, params.nDim_particle, thisSpecies->densityProfileType+"_density "+species_type, true);
 
@@ -295,20 +359,22 @@ public:
                   double gamma=1.+thisSpecies->thermT[0]/thisSpecies->mass;
         */
 
-        thisSpecies->thermalVelocity.resize(3);
-        thisSpecies->thermalMomentum.resize(3);
+        // Matter particles
+        if (thisSpecies->mass > 0) {
+            thisSpecies->thermalVelocity.resize(3);
+            thisSpecies->thermalMomentum.resize(3);
 
-        if (thermTisDefined) {
-            if ( patch->isMaster() ) WARNING("\tFor species '" << species_type << "' Using thermT[0] in all directions");
-            if (thisSpecies->thermalVelocity[0]>0.3) {
-                ERROR("For species '" << species_type << "' thermalising BCs require ThermT[0]="<<thisSpecies->thermT[0]<<"<<"<<thisSpecies->mass);
-            }
-            for (unsigned int i=0; i<3; i++) {
-                thisSpecies->thermalVelocity[i] = sqrt(2.*thisSpecies->thermT[0]/thisSpecies->mass);
-                thisSpecies->thermalMomentum[i] = thisSpecies->thermalVelocity[i];
+            if (thermTisDefined) {
+                if ( patch->isMaster() ) WARNING("\tFor species '" << species_type << "' Using thermT[0] in all directions");
+                if (thisSpecies->thermalVelocity[0]>0.3) {
+                    ERROR("For species '" << species_type << "' thermalising BCs require ThermT[0]="<<thisSpecies->thermT[0]<<"<<"<<thisSpecies->mass);
+                }
+                for (unsigned int i=0; i<3; i++) {
+                    thisSpecies->thermalVelocity[i] = sqrt(2.*thisSpecies->thermT[0]/thisSpecies->mass);
+                    thisSpecies->thermalMomentum[i] = thisSpecies->thermalVelocity[i];
+                }
             }
         }
-
 
         // Extract test Species flag
         PyTools::extract("isTest", thisSpecies->particles->isTest, "Species", ispec);

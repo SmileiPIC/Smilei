@@ -67,6 +67,14 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
     if        (output == "density"        ) {
         histogram = new Histogram_density        ();
     } else if (output == "charge_density" ) {
+        // The requested species must not be a photon
+        for (unsigned int ispec=0 ; ispec < species.size() ; ispec++)
+            if( patch->vecSpecies[species[ispec]]->mass==0)
+            {
+                ERROR(errorPrefix << ": for histogram preparation"
+                << " in diagParticles: "
+                << " 'charge_density' not compatible with photon species");
+            }
         histogram = new Histogram_charge_density ();
     } else if (output == "jx_density"     ) {
         histogram = new Histogram_jx_density     ();
@@ -105,7 +113,8 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
             {
                 ERROR(errorPrefix << ": for histogram preparation"
                 << " in diagParticles: "
-                << " 'chi_density' requires all species to be 'radiating'");
+                << " 'chi_density' requires all species to be 'radiating'"
+                << " or photons to have QED effects");
             }
         histogram = new Histogram_chi_density    ();
     } else {

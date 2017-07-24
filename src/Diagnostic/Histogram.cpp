@@ -122,16 +122,28 @@ void Histogram::init( Params &params, vector<PyObject*> pyAxes, vector<unsigned 
         } else if (type == "vz" ) {
             axis = new HistogramAxis_vz();
         } else if (type == "v" ) {
+            // The requested species must not be a photon
+            for (unsigned int ispec=0 ; ispec < species.size() ; ispec++)
+                if(patch->vecSpecies[species[ispec]]->mass==0)
+                    ERROR(errorPrefix << ": axis #" << iaxis
+                    << " 'v' requires all species to be matter and not photons (since v/c=1)");
             axis = new HistogramAxis_v();
         } else if (type == "vperp2" ) {
             axis = new HistogramAxis_vperp2();
         } else if (type == "charge" ) {
+            // The requested species must not be a photon
+            for (unsigned int ispec=0 ; ispec < species.size() ; ispec++)
+                if(patch->vecSpecies[species[ispec]]->mass==0)
+                    ERROR(errorPrefix << ": axis #" << iaxis
+                    << " 'charge' requires all species to be matter and not photons");
             axis = new HistogramAxis_charge();
         } else if (type == "chi" ) {
-            // The requested species must be radiating
+            // The requested species must be radiating or have QED effects
             for (unsigned int ispec=0 ; ispec < species.size() ; ispec++)
                 if( ! patch->vecSpecies[species[ispec]]->particles->isQuantumParameter )
-                    ERROR(errorPrefix << ": axis #" << iaxis << " 'chi' requires all species to be 'radiating'");
+                    ERROR(errorPrefix << ": axis #" << iaxis
+                    << " 'chi' requires all species to be 'radiating'"
+                    << " or photons to have QED effects");
             axis = new HistogramAxis_chi();
         } else if (type == "composite") {
             ERROR(errorPrefix << ": axis type cannot be 'composite'");

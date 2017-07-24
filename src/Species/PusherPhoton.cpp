@@ -59,9 +59,8 @@ void PusherPhoton::operator() (Particles &particles, SmileiMPI* smpi,
         for ( int i = 0 ; i<nDim_ ; i++ )
             position_old[i][ipart] = position[i][ipart];
 #endif
-
-        position[0][ipart]     += dt*momentum[0][ipart]*(*invgf)[ipart];
-        position[1][ipart]     += dt*momentum[1][ipart]*(*invgf)[ipart];
-        position[2][ipart]     += dt*momentum[2][ipart]*(*invgf)[ipart];
+        for ( int i = 0 ; i<nDim_ ; i++ )
+            position[i][ipart]     += dt*momentum[i][ipart]*(*invgf)[ipart];
+            
     }
 }
