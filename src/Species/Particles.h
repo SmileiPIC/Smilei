@@ -182,6 +182,11 @@ public:
         return sqrt(1.+pow(momentum(0,ipart),2)+pow(momentum(1,ipart),2)+pow(momentum(2,ipart),2));
     }
 
+    //! Method used to get the Photon Lorentz factor (normalized energy)
+    inline double photon_lor_fac(unsigned int ipart) {
+        return sqrt(pow(momentum(0,ipart),2)+pow(momentum(1,ipart),2)+pow(momentum(2,ipart),2));
+    }
+
     //! Partiles properties, respect type order : all double, all short, all unsigned int
 
     //! array containing the particle position

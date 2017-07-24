@@ -361,15 +361,29 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             double ener_tot=0.0; // total kinetic energy of current species ispec
 
             unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles(); // number of particles
-            for (unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
 
-                density  += vecSpecies[ispec]->particles->weight(iPart);
-                charge   += vecSpecies[ispec]->particles->weight(iPart)
-                *          (double)vecSpecies[ispec]->particles->charge(iPart);
-                ener_tot += vecSpecies[ispec]->particles->weight(iPart)
-                *          (vecSpecies[ispec]->particles->lor_fac(iPart)-1.0);
+            if (vecSpecies[ispec]->mass > 0)
+            {
+
+                for (unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
+
+                    density  += vecSpecies[ispec]->particles->weight(iPart);
+                    charge   += vecSpecies[ispec]->particles->weight(iPart)
+                    *          (double)vecSpecies[ispec]->particles->charge(iPart);
+                    ener_tot += vecSpecies[ispec]->particles->weight(iPart)
+                    *          (vecSpecies[ispec]->particles->lor_fac(iPart)-1.0);
+                }
+                ener_tot *= vecSpecies[ispec]->mass;
             }
-            ener_tot *= vecSpecies[ispec]->mass;
+            else if (vecSpecies[ispec]->mass == 0)
+            {
+                for (unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
+
+                    density  += vecSpecies[ispec]->particles->weight(iPart);
+                    ener_tot += vecSpecies[ispec]->particles->weight(iPart)
+                    *          (vecSpecies[ispec]->particles->photon_lor_fac(iPart));
+                }
+            }
 
             *sNtot[ispec] += (double)nPart;
             *sDens[ispec] += cell_volume * density;
