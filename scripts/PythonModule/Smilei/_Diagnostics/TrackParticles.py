@@ -6,7 +6,7 @@ from .._Utils import *
 # -------------------------------------------------------------------
 class TrackParticles(Diagnostic):
 	# This is the constructor, which creates the object
-	def _init(self, species=None, select="", axes=[], timesteps=None, sort=True, length=None, **kwargs):
+	def _init(self, species=None, select="", axes=[], timesteps=None, sort=True, length=None, chunksize=20000000, **kwargs):
 		
 		# If argument 'species' not provided, then print available species and leave
 		if species is None:
@@ -39,7 +39,7 @@ class TrackParticles(Diagnostic):
 			orderedfile = self._results_path[0]+self._os.sep+"TrackParticles_"+species+".h5"
 			if not self._os.path.isfile(orderedfile):
 				disorderedfiles = self._findDisorderedFiles()
-				self._orderFiles(disorderedfiles, orderedfile)
+				self._orderFiles(disorderedfiles, orderedfile, chunksize)
 			# Create arrays to store h5 items
 			f = self._h5py.File(orderedfile)
 			for prop in ["Id", "x", "y", "z", "px", "py", "pz", "q", "w"]:
@@ -156,7 +156,7 @@ class TrackParticles(Diagnostic):
 					self.selectedParticles = self._np.s_[:]
 				else:
 					# Setup the chunks of particles (if too many particles)
-					chunksize = min(20000000, self.nParticles)
+					chunksize = min(chunksize, self.nParticles)
 					nchunks = int(self.nParticles / chunksize)
 					chunksize = int(self.nParticles / nchunks)
 					self.selectedParticles = self._np.array([], dtype=self._np.uint64)
@@ -318,7 +318,7 @@ class TrackParticles(Diagnostic):
 		return disorderedfiles
 	
 	# Make the particles ordered by Id in the file, in case they are not
-	def _orderFiles( self, filesDisordered, fileOrdered ):
+	def _orderFiles( self, filesDisordered, fileOrdered, chunksize ):
 		print("Ordering particles ... (this could take a while)")
 		try:
 			# Obtain the list of all times in all disordered files
@@ -360,7 +360,6 @@ class TrackParticles(Diagnostic):
 				if nparticles == 0: continue
 				
 				# If not too many particles, sort all at once
-				chunksize = 20000000
 				if nparticles < chunksize:
 					# Get the Ids and find where they should be stored in the final file
 					locs = group["id"].value % 2**32 + offset[ group["id"].value>>32 ] -1
