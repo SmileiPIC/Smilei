@@ -54,33 +54,31 @@ endif
 
 # Manage options in the "config" parameter
 ifneq (,$(findstring debug,$(config)))
-	CXXFLAGS += -g -pg -D__DEBUG -O0
-else
-	CXXFLAGS += -O3 
-endif
-
+    CXXFLAGS += -g -pg -D__DEBUG -O0
 # With gdb
-ifneq (,$(findstring gdb,$(config)))
+else ifneq (,$(findstring gdb,$(config)))
     CXXFLAGS += -v -da -Q
-endif
 
 # With valgrind
-ifneq (,$(findstring valgrind,$(config)))
+else ifneq (,$(findstring valgrind,$(config)))
     CXXFLAGS += -g  -O3
-endif
 
-ifneq (,$(findstring scalasca,$(config)))
+# Scalasca
+else ifneq (,$(findstring scalasca,$(config)))
+    CXXFLAGS += -g  -O3
     SMILEICXX = scalasca -instrument $(SMILEICXX)
-endif
 
 # With Intel Advisor
-ifneq (,$(findstring advisor,$(config)))
+else ifneq (,$(findstring advisor,$(config)))
     CXXFLAGS += -g -O3 -qopt-report5
-endif
 
 # Optimization report
-ifneq (,$(findstring opt-report,$(config)))
+else ifneq (,$(findstring opt-report,$(config)))
     CXXFLAGS += -qopt-report5
+
+# Default configuration
+else
+    CXXFLAGS += -O3 #-xHost -no-prec-div -ipo
 endif
 
 
