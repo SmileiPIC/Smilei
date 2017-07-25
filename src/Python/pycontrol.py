@@ -32,7 +32,7 @@ def _smilei_check():
     if smilei_mpi_rank == 0 and (DumpRestart.dump_step>0 or DumpRestart.dump_minutes>0.):
         checkpoint_dir = "." + os.sep + "checkpoints" + os.sep
         if DumpRestart.file_grouping :
-            ngroups = (smilei_mpi_size+1)/DumpRestart.file_grouping
+            ngroups = (smilei_mpi_size-1)/DumpRestart.file_grouping + 1
             ngroups_chars = int(math.log10(ngroups))+1
             for group in range(ngroups):
                 group_dir = checkpoint_dir + '%*s'%(ngroups_chars,group)
