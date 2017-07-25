@@ -23,6 +23,8 @@
 RadiationMonteCarlo::RadiationMonteCarlo(Params& params, Species * species)
       : Radiation(params, species)
 {
+    radiation_photon_sampling = species->radiation_photon_sampling;
+    inv_radiation_photon_sampling = 1. / radiation_photon_sampling;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -339,7 +341,10 @@ void RadiationMonteCarlo::photon_emission(int ipart,
     // Creation of macro-photons if requested
     if (photon_species)
     {
-        // Creation of the new particle in the array particles
+        /* ---------------------------------------------------------------------
+        // First method: emission of a single photon
+
+        // Creation of the new photon in the temporary array new_photons
         new_photons.create_particle();
 
         int idNew = new_photons.size() - 1;
@@ -359,6 +364,37 @@ void RadiationMonteCarlo::photon_emission(int ipart,
 
         new_photons.weight(idNew)=weight[ipart];
         new_photons.charge(idNew)=0;
+        --------------------------------------------------------------------- */
+
+        // Second method: emission of several photons for statistics following
+        // the parameter radiation_photon_sampling
+
+        // Creation of new photons in the temporary array new_photons
+        new_photons.create_particles(radiation_photon_sampling);
+
+        // Final size
+        int npart = new_photons.size();
+
+        // For all new photons...
+        for (int idNew=npart-radiation_photon_sampling; idNew<npart; idNew++)
+        {
+            for (int i=0; i<nDim_; i++) {
+                new_photons.position(i,idNew)=position[i][ipart];
+            }
+
+            inv_old_norm_p = 1./sqrt(momentum[0][ipart]*momentum[0][ipart]
+                                    + momentum[1][ipart]*momentum[1][ipart]
+                                    + momentum[2][ipart]*momentum[2][ipart]);
+
+            for (int i=0; i<3; i++) {
+                new_photons.momentum(i,idNew) =
+                gammaph*momentum[i][ipart]*inv_old_norm_p;
+            }
+
+            new_photons.weight(idNew)=weight[ipart]*inv_radiation_photon_sampling;
+            new_photons.charge(idNew)=0;
+
+        }
 
     }
     // Addition of the emitted energy in the cumulating parameter

@@ -500,10 +500,10 @@ void Particles::create_particles(int nAdditionalParticles )
         (*double_prop[iprop]).resize(nParticles+nAdditionalParticles,0.);
 
     for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ )
-        (*short_prop[iprop]).resize(nParticles+nAdditionalParticles,0.);
+        (*short_prop[iprop]).resize(nParticles+nAdditionalParticles,0);
 
     for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ )
-        (*uint64_prop[iprop]).resize(nParticles+nAdditionalParticles,0.);
+        (*uint64_prop[iprop]).resize(nParticles+nAdditionalParticles,0);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

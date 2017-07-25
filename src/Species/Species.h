@@ -194,6 +194,8 @@ public:
     //! radiation photon species for the Monte-Carlo model.
     //! Name of the species where radiated photons go
     std::string radiation_photons;
+    //! Number of photons emitted per particle and per event
+    int radiation_photon_sampling;
 
     //! Cluster width in number of cells
     unsigned int clrw; //Should divide the number of cells in X of a single MPI domain.

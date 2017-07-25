@@ -77,6 +77,12 @@ class RadiationMonteCarlo : public Radiation {
         // ________________________________________
         // General parameters
 
+        //! Number of photons emitted per event for statisctics purposes
+        int radiation_photon_sampling;
+
+        //! Inverse number of photons emitted per event for statisctics purposes
+        double inv_radiation_photon_sampling;
+
         //! Max number of Monte-Carlo iteration
         const int mc_it_nb_max = 100;
 

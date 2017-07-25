@@ -247,6 +247,7 @@ class Species(SmileiComponent):
     dynamics_type = "norm"
     radiation_model = "none"
     radiation_photons = "none"
+    radiation_photon_sampling = 1
     time_frozen = 0.0
     bc_part_type_xmin = None
     bc_part_type_xmax = None
@@ -349,7 +350,7 @@ class PartWall(SmileiComponent):
     y = None
     z = None
 
-# Radiation loss (continuous and MC algorithms)
+# Radiation loss configuration (continuous and MC algorithms)
 class RadiationLoss(SmileiComponent):
     """
     Synchrotron-like radiation loss
@@ -375,6 +376,16 @@ class RadiationLoss(SmileiComponent):
     # Threshold on chipa between the continuous and
     # the discontinuous approaches
     chipa_disc_min_threshold = 1e-2
+    # Path the tables/databases
+    table_path = "./"
+
+# MutliphotonBreitWheeler pair creation
+class MultiphotonBreitWheeler(SmileiComponent):
+    """
+    Photon decay into electron-positron pairs
+    """
+    # Output format, can be "ascii", "binary", "hdf5"
+    output_format = "hdf5"
     # Path the tables/databases
     table_path = "./"
 

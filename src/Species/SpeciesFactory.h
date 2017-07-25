@@ -154,6 +154,12 @@ public:
                 {
                     MESSAGE(2,"> radiation_photons set to the species `" << thisSpecies->radiation_photons << "`");
                 }
+                PyTools::extract("radiation_photon_sampling",
+                                 thisSpecies->radiation_photon_sampling, "Species",ispec);
+                if (thisSpecies->radiation_photon_sampling < 1)
+                {
+                    ERROR("For species '" << species_type << "' radiation_photon_sampling should be > 1");
+                }
             }
         }
 
@@ -443,6 +449,7 @@ public:
         newSpecies->dynamics_type         = species->dynamics_type;
         newSpecies->radiation_model       = species->radiation_model;
         newSpecies->radiation_photons     = species->radiation_photons;
+        newSpecies->radiation_photon_sampling     = species->radiation_photon_sampling;
         newSpecies->speciesNumber         = species->speciesNumber;
         newSpecies->initPosition_type     = species->initPosition_type;
         newSpecies->initMomentum_type     = species->initMomentum_type;
@@ -557,7 +564,10 @@ public:
                             ERROR("For species '"<<retSpecies[ispec1]->species_type<<"' radiation_photons must be a photon species with mass==0");
                         retSpecies[ispec1]->photon_species_index = ispec2;
                         retSpecies[ispec1]->photon_species = retSpecies[ispec2];
-                        retSpecies[ispec1]->Radiate->new_photons.initialize(0, params.nDim_particle );
+                        //retSpecies[ispec1]->Radiate->new_photons.initialize(retSpecies[ispec1]->getNbrOfParticles(),
+                        //                                                    params.nDim_particle );
+                        retSpecies[ispec1]->Radiate->new_photons.initialize(0,
+                                                                            params.nDim_particle );
                         retSpecies[ispec2]->particles->reserve(retSpecies[ispec1]->getNbrOfParticles(),
                                                                retSpecies[ispec2]->particles->dimension() );
                     }
@@ -593,7 +603,10 @@ public:
                 retSpecies[i]->radiation_photons = vecSpecies[i]->radiation_photons;
                 retSpecies[i]->photon_species_index = vecSpecies[i]->photon_species_index;
                 retSpecies[i]->photon_species = retSpecies[retSpecies[i]->photon_species_index];
-                retSpecies[i]->Radiate->new_photons.initialize(0, params.nDim_particle );
+                //retSpecies[i]->Radiate->new_photons.initialize(retSpecies[i]->getNbrOfParticles(),
+                //                                               params.nDim_particle );
+               retSpecies[i]->Radiate->new_photons.initialize(0,
+                                                              params.nDim_particle );
             }
         }
 

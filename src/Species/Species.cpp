@@ -519,17 +519,19 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             if (Radiate)
             {
 
+                // Radiation process
                 (*Radiate)(*particles, this->photon_species, smpi,
                          RadiationTables,
                          bmin[ibin], bmax[ibin], ithread );
 
+                // If creation of macro-photon, we add them to photon_species
                 if (photon_species)
                     photon_species->importParticles(params,
                                                     patch,
                                                     Radiate->new_photons,
                                                     localDiags);
 
-                // Update scalar variable
+                // Update scalar variable for diagnostics
                 nrj_radiation += (*Radiate).getRadiatedEnergy();
 
                 // Update the quantum parameter chi
