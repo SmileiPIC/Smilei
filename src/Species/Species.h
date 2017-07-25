@@ -232,10 +232,10 @@ public:
     //! Get energy lost with moving window (fields)
     double getLostNrjMW() const {return mass*nrj_mw_lost;}
 
-    //! Get the energy radiated away by the particles multiplied by the mass
-    double getNrjRadiation() const {return mass*nrj_radiation;}
+    //! Get the energy radiated away by the particles
+    double getNrjRadiation() const {return nrj_radiation;}
 
-    //! Set the energy radiated away by the particles multiplied by the mass
+    //! Set the energy radiated away by the particles
     void setNrjRadiation(double value) {nrj_radiation = value;}
 
     //! Add the energy radiated away by the particles
@@ -256,8 +256,16 @@ public:
 
     inline double computeNRJ() {
         double nrj(0.);
-        for ( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ )
-            nrj += (*particles).weight(iPart)*((*particles).lor_fac(iPart)-1.0);
+        if (this->mass > 0)
+        {
+            for ( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ )
+                nrj += (*particles).weight(iPart)*((*particles).lor_fac(iPart)-1.0);
+        }
+        else if (this->mass == 0)
+        {
+            for ( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ )
+                nrj += (*particles).weight(iPart)*((*particles).photon_lor_fac(iPart));
+        }
         return nrj;
     }
 

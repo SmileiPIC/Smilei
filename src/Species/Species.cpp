@@ -540,7 +540,13 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                 for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
                     double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
                     if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
-                        nrj_lost_per_thd[tid] += mass * ener_iPart;
+                        if (mass>0)
+                        {
+                            nrj_lost_per_thd[tid] += mass * ener_iPart;
+
+                        } else if (mass==0) {
+                            nrj_lost_per_thd[tid] += ener_iPart;
+                        }
                     }
                 }
             }
@@ -552,7 +558,13 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                 if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                     addPartInExchList( iPart );
                     //nrj_lost_per_thd[tid] += ener_iPart;
-                    nrj_lost_per_thd[tid] += mass * ener_iPart;
+                    if (mass>0)
+                    {
+                        nrj_lost_per_thd[tid] += mass * ener_iPart;
+
+                    } else if (mass==0) {
+                        nrj_lost_per_thd[tid] += ener_iPart;
+                    }
                 }
              }
 
@@ -935,11 +947,25 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     // Recalculate former position using the particle velocity
     // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
     if (patch->isXmax()) {
-        for (unsigned int iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++) {
-            /*897 for (int i=0; i<(int)nDim_particle; i++) {
-              particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
-              }897*/
-            nrj_new_particles += particles->weight(iPart)*(particles->lor_fac(iPart)-1.0);
+        // Matter particle case
+        if (mass > 0)
+        {
+            for (unsigned int iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++) {
+                /*897 for (int i=0; i<(int)nDim_particle; i++) {
+                  particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
+                  }897*/
+                nrj_new_particles += particles->weight(iPart)*(particles->lor_fac(iPart)-1.0);
+            }
+        }
+        // Photon case
+        else if (mass == 0)
+        {
+            for (unsigned int iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++) {
+                /*897 for (int i=0; i<(int)nDim_particle; i++) {
+                  particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
+                  }897*/
+                nrj_new_particles += particles->weight(iPart)*(particles->photon_lor_fac(iPart));
+            }
         }
     }
 
