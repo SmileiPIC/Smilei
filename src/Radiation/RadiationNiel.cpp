@@ -167,7 +167,9 @@ RadiationNiel::~RadiationNiel()
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
 // -----------------------------------------------------------------------------
-void RadiationNiel::operator() (Particles &particles,
+void RadiationNiel::operator() (
+        Particles &particles,
+        Species * photon_species,
         SmileiMPI* smpi,
         RadiationTables &RadiationTables,
         int istart,

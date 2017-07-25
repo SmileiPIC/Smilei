@@ -187,6 +187,14 @@ public:
     //! Name of the species where field-ionized electrons go
     std::string ionization_electrons;
 
+    //! Pointer to the species where radiated photon go
+    Species *photon_species;
+    //! Index of the species where radiated photons go
+    int photon_species_index;
+    //! radiation photon species for the Monte-Carlo model.
+    //! Name of the species where radiated photons go
+    std::string radiation_photons;
+
     //! Cluster width in number of cells
     unsigned int clrw; //Should divide the number of cells in X of a single MPI domain.
     //! first and last index of each particle bin

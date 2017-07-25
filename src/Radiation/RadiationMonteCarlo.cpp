@@ -37,6 +37,7 @@ RadiationMonteCarlo::~RadiationMonteCarlo()
 //! induced by the nonlinear inverse Compton scattering
 //
 //! \param particles   particle object containing the particle properties
+//! \param photon_species species that will receive emitted photons
 //! \param smpi        MPI properties
 //! \param RadiationTables Cross-section data tables and useful functions
 //                     for nonlinear inverse Compton scattering
@@ -44,7 +45,9 @@ RadiationMonteCarlo::~RadiationMonteCarlo()
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
 // ---------------------------------------------------------------------------------------------------------------------
-void RadiationMonteCarlo::operator() (Particles &particles,
+void RadiationMonteCarlo::operator() (
+        Particles &particles,
+        Species * photon_species,
         SmileiMPI* smpi,
         RadiationTables &RadiationTables,
         int istart,
@@ -88,6 +91,11 @@ void RadiationMonteCarlo::operator() (Particles &particles,
     double* momentum[3];
     for ( int i = 0 ; i<3 ; i++ )
         momentum[i] =  &( particles.momentum(i,0) );
+
+    // Position shortcut
+    double* position[3];
+    for ( int i = 0 ; i<nDim_ ; i++ )
+        position[i] =  &( particles.position(i,0) );
 
     // Charge shortcut
     short* charge = &( particles.charge(0) );
@@ -205,17 +213,13 @@ void RadiationMonteCarlo::operator() (Particles &particles,
 
                     // Emission of a photon
 
-                    RadiationMonteCarlo::photon_emission(chipa,gamma,
-                                           momentum[0][ipart],
-                                           momentum[1][ipart],
-                                           momentum[2][ipart],
-                                           weight[ipart],
+                    RadiationMonteCarlo::photon_emission(ipart,
+                                           chipa,gamma,
+                                           position,
+                                           momentum,
+                                           weight,
+                                           photon_species,
                                            RadiationTables);
-
-                        /*std::cerr << "gammapa: " << gamma << " "
-                                  << "Px: " << momentum[0][ipart] << " "
-                                  << "Py: " << momentum[1][ipart] << " "
-                                  << std::endl;*/
 
                     // Optical depth becomes negative meaning
                     // that a new drawing is possible
@@ -280,22 +284,23 @@ void RadiationMonteCarlo::operator() (Particles &particles,
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Perform the phoon emission (creation of a super-photon
+//! Perform the photon emission (creation of a super-photon
 //! and slow down of the emitting particle)
-//! \param chipa          particle quantum parameter
-//! \param gammapa          particle gamma factor
-//! \param px             particle momentum in x
-//! \param py             particle momentum in y
-//! \param pz             particle momentum in z
+//! \param ipart              particle index
+//! \param chipa              particle quantum parameter
+//! \param gammapa            particle gamma factor
+//! \param position           particle position
+//! \param momentum           particle momentum
 //! \param RadiationTables    Cross-section data tables and useful functions
 //                        for nonlinear inverse Compton scattering
 // ---------------------------------------------------------------------------------------------------------------------
-void RadiationMonteCarlo::photon_emission(double &chipa,
+void RadiationMonteCarlo::photon_emission(int ipart,
+                            double &chipa,
                             double & gammapa,
-                            double & px,
-                            double & py,
-                            double & pz,
-                            double & weight,
+                            double * position[3],
+                            double * momentum[3],
+                            double * weight,
+                            Species * photon_species,
                             RadiationTables &RadiationTables)
 {
     // ____________________________________________________
@@ -319,9 +324,9 @@ void RadiationMonteCarlo::photon_emission(double &chipa,
     // direction d'emission // direction de l'electron (1/gamma << 1)
     // With momentum conservation
     inv_old_norm_p = gammaph/sqrt(gammapa*gammapa - 1.0);
-    px -= px*inv_old_norm_p;
-    py -= py*inv_old_norm_p;
-    pz -= pz*inv_old_norm_p;
+    momentum[0][ipart] -= momentum[0][ipart]*inv_old_norm_p;
+    momentum[1][ipart] -= momentum[1][ipart]*inv_old_norm_p;
+    momentum[2][ipart] -= momentum[2][ipart]*inv_old_norm_p;
 
     // With energy conservation
     /*inv_old_norm_p = 1./sqrt(gammapa*gammapa - 1.0);
@@ -331,9 +336,41 @@ void RadiationMonteCarlo::photon_emission(double &chipa,
     py *= new_norm_p * inv_old_norm_p;
     pz *= new_norm_p * inv_old_norm_p;*/
 
+    // Creation of macro-photons if requested
+    if (photon_species)
+    {
+        // Creation of the new particle in the array particles
+        new_photons.create_particle();
+
+        int idNew = new_photons.size() - 1;
+
+        for (int i=0; i<nDim_; i++) {
+            new_photons.position(i,idNew)=position[i][ipart];
+        }
+
+        inv_old_norm_p = 1./sqrt(momentum[0][ipart]*momentum[0][ipart]
+                                + momentum[1][ipart]*momentum[1][ipart]
+                                + momentum[2][ipart]*momentum[2][ipart]);
+
+        for (unsigned int i=0; i<3; i++) {
+            new_photons.momentum(i,idNew) =
+            gammaph*momentum[i][ipart]*inv_old_norm_p;
+        }
+
+        new_photons.weight(idNew)=weight[ipart];
+        new_photons.charge(idNew)=0;
+
+    }
     // Addition of the emitted energy in the cumulating parameter
-    gammaph = gammapa - sqrt(1.0 + px*px + py*py + pz*pz);
-    radiated_energy += weight*gammaph;
+    // for the scalar diagnostics
+    else
+    {
+
+        gammaph = gammapa - sqrt(1.0 + momentum[0][ipart]*momentum[0][ipart]
+                                     + momentum[1][ipart]*momentum[1][ipart]
+                                     + momentum[2][ipart]*momentum[2][ipart]);
+        radiated_energy += weight[ipart]*gammaph;
+    }
 
     // Debugging
     /*std::cerr << "chipa: " << chipa << " "

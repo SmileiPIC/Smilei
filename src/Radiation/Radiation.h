@@ -31,7 +31,18 @@ class Radiation
         virtual ~Radiation();
 
         //! Overloading of () operator
-        virtual void operator() (Particles &particles,
+        //! \param patch       patch object containing all species
+        //! \param particles   particle object containing the particle
+        //!                    properties of the current species
+        //! \param smpi        MPI properties
+        //! \param RadiationTables Cross-section data tables and useful functions
+        //                     for nonlinear inverse Compton scattering
+        //! \param istart      Index of the first particle
+        //! \param iend        Index of the last particle
+        //! \param ithread     Thread index
+        virtual void operator() (
+                Particles &particles,
+                Species * photon_species,
                 SmileiMPI* smpi,
                 RadiationTables &RadiationTables,
                 int istart,
@@ -94,6 +105,8 @@ class Radiation
                 int iend,
                 int ithread);
 
+                // Local array of new photons
+                Particles new_photons;
 
     protected:
 

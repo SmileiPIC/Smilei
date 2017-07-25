@@ -104,7 +104,11 @@ public:
                                       << " 'corrected-Landau-Lifshitz',"
                                       << " 'Niel' or 'Monte-Carlo'");
             }
+
             thisSpecies->radiation_model = radiation_model;
+
+            if (radiation_model != "none")
+            MESSAGE(2,"> Radiating species with model: `" << radiation_model << "`");
 
             // Non compatibility
             if ((dynamics_type=="borisnr")
@@ -129,9 +133,9 @@ public:
             radiation_model == "none";
             dynamics_type=="norm";
             thisSpecies = new SpeciesNorm(params, patch);
-            MESSAGE(1,"> " <<species_type <<" is a photon species (mass==0).");
-            MESSAGE(1,"> Radiation model set to none.");
-            MESSAGE(1,"> Dynamic model set to norm.");
+            MESSAGE(2,"> " <<species_type <<" is a photon species (mass==0).");
+            MESSAGE(2,"> Radiation model set to none.");
+            MESSAGE(2,"> Dynamic model set to norm.");
         }
 
         thisSpecies->species_type = species_type;
@@ -139,6 +143,20 @@ public:
         thisSpecies->speciesNumber = ispec;
 
         // Extract various parameters from the namelist
+
+        // Radiation photon
+        if (mass > 0.)
+        {
+            if (thisSpecies->radiation_model == "Monte-Carlo")
+            {
+                PyTools::extract("radiation_photons", thisSpecies->radiation_photons, "Species",ispec);
+                if (thisSpecies->radiation_photons != "none")
+                {
+                    MESSAGE(2,"> radiation_photons set to the species `" << thisSpecies->radiation_photons << "`");
+                }
+            }
+        }
+
 
         PyTools::extract("initPosition_type",thisSpecies->initPosition_type ,"Species",ispec);
         if (thisSpecies->initPosition_type.empty()) {
@@ -424,6 +442,7 @@ public:
         newSpecies->species_type          = species->species_type;
         newSpecies->dynamics_type         = species->dynamics_type;
         newSpecies->radiation_model       = species->radiation_model;
+        newSpecies->radiation_photons     = species->radiation_photons;
         newSpecies->speciesNumber         = species->speciesNumber;
         newSpecies->initPosition_type     = species->initPosition_type;
         newSpecies->initMomentum_type     = species->initMomentum_type;
@@ -518,6 +537,34 @@ public:
             }
         }
 
+        // Loop species to find the photon species for radiation species
+        for (unsigned int ispec1 = 0; ispec1<retSpecies.size(); ispec1++) {
+            if( ! retSpecies[ispec1]->Radiate ) continue;
+            // No emission of discrete photon, only scalar diagnostics are updated
+            if( retSpecies[ispec1]->radiation_photons == "none")
+            {
+                retSpecies[ispec1]->photon_species_index = -1;
+                retSpecies[ispec1]->photon_species = NULL;
+            }
+            // Else, there will be emission of macro-photons.
+            else
+            {
+                for (unsigned int ispec2 = 0; ispec2<retSpecies.size(); ispec2++) {
+                    if( retSpecies[ispec1]->radiation_photons == retSpecies[ispec2]->species_type) {
+                        if( ispec1==ispec2 )
+                            ERROR("For species '"<<retSpecies[ispec1]->species_type<<"' radiation_photons must be a distinct photon species");
+                        if (retSpecies[ispec2]->mass!=0)
+                            ERROR("For species '"<<retSpecies[ispec1]->species_type<<"' radiation_photons must be a photon species with mass==0");
+                        retSpecies[ispec1]->photon_species_index = ispec2;
+                        retSpecies[ispec1]->photon_species = retSpecies[ispec2];
+                        retSpecies[ispec1]->Radiate->new_photons.initialize(0, params.nDim_particle );
+                        retSpecies[ispec2]->particles->reserve(retSpecies[ispec1]->getNbrOfParticles(),
+                                                               retSpecies[ispec2]->particles->dimension() );
+                    }
+                }
+            }
+        }
+
         return retSpecies;
     }
 
@@ -538,6 +585,15 @@ public:
                 retSpecies[i]->electron_species = retSpecies[retSpecies[i]->electron_species_index];
                 retSpecies[i]->Ionize->new_electrons.tracked = retSpecies[i]->electron_species->particles->tracked;
                 retSpecies[i]->Ionize->new_electrons.initialize(0, params.nDim_particle );
+            }
+        }
+
+        for (unsigned int i=0; i<retSpecies.size(); i++) {
+            if (retSpecies[i]->Radiate) {
+                retSpecies[i]->radiation_photons = vecSpecies[i]->radiation_photons;
+                retSpecies[i]->photon_species_index = vecSpecies[i]->photon_species_index;
+                retSpecies[i]->photon_species = retSpecies[retSpecies[i]->photon_species_index];
+                retSpecies[i]->Radiate->new_photons.initialize(0, params.nDim_particle );
             }
         }
 

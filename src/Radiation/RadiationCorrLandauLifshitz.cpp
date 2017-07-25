@@ -37,6 +37,7 @@ RadiationCorrLandauLifshitz::~RadiationCorrLandauLifshitz()
 //! induced by the nonlinear inverse Compton scattering
 //
 //! \param particles   particle object containing the particle properties
+//! \param photon_species species that will receive emitted photons
 //! \param smpi        MPI properties
 //! \param RadiationTables Cross-section data tables and useful functions
 //                     for nonlinear inverse Compton scattering
@@ -44,7 +45,9 @@ RadiationCorrLandauLifshitz::~RadiationCorrLandauLifshitz()
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
 // ---------------------------------------------------------------------------------------------------------------------
-void RadiationCorrLandauLifshitz::operator() (Particles &particles,
+void RadiationCorrLandauLifshitz::operator() (
+        Particles &particles,
+        Species * photon_species,
         SmileiMPI* smpi,
         RadiationTables &RadiationTables,
         int istart,

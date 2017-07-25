@@ -109,7 +109,7 @@ public:
     void create_particle();
 
     //! Create nParticles new particles
-    void create_particles(unsigned int nParticles);
+    void create_particles(int nAdditionalParticles);
 
     //! Test if ipart is in the local patch
     bool is_part_in_domain(unsigned int ipart, Patch* patch);

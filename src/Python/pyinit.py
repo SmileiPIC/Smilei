@@ -246,6 +246,7 @@ class Species(SmileiComponent):
     thermVelocity = None
     dynamics_type = "norm"
     radiation_model = "none"
+    radiation_photons = "none"
     time_frozen = 0.0
     bc_part_type_xmin = None
     bc_part_type_xmax = None

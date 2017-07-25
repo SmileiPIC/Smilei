@@ -515,12 +515,21 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             if (Ionize)
                 (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
 
-            // Radiation losses: Nonlinear inverse Compton Scattering
+            // Radiation losses
             if (Radiate)
             {
-                (*Radiate)(*particles, smpi, RadiationTables,
+
+                (*Radiate)(*particles, this->photon_species, smpi,
+                         RadiationTables,
                          bmin[ibin], bmax[ibin], ithread );
 
+                if (photon_species)
+                    photon_species->importParticles(params,
+                                                    patch,
+                                                    Radiate->new_photons,
+                                                    localDiags);
+
+                // Update scalar variable
                 nrj_radiation += (*Radiate).getRadiatedEnergy();
 
                 // Update the quantum parameter chi
@@ -531,7 +540,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                                                 ithread );
             }
 
-            // Push the particles
+            // Push the particles and the photons
             (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
             //particles->test_move( bmin[ibin], bmax[ibin], params );
 

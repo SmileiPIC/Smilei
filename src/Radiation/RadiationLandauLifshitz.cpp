@@ -42,7 +42,9 @@ RadiationLandauLifshitz::~RadiationLandauLifshitz()
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
 // -----------------------------------------------------------------------------
-void RadiationLandauLifshitz::operator() (Particles &particles,
+void RadiationLandauLifshitz::operator() (
+        Particles &particles,
+        Species * photon_species,
         SmileiMPI* smpi,
         RadiationTables &RadiationTables,
         int istart,
