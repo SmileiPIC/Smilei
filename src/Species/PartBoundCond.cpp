@@ -101,7 +101,17 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
         if (patch->isXmin()) bc_xmin = &refl_particle;
     }
     else if ( species->bc_part_type_xmin == "supp" ) {
-        if (patch->isXmin()) bc_xmin = &supp_particle;
+        if (patch->isXmin())
+        {
+            if (species->mass > 0)
+            {
+                bc_xmin = &supp_particle;
+            }
+            else if (species->mass == 0)
+            {
+                bc_xmin = &supp_photon;
+            }
+        }
     }
     else if ( species->bc_part_type_xmin == "stop" ) {
         if (patch->isXmin()) bc_xmin = &stop_particle;
@@ -121,7 +131,17 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
         if (patch->isXmax()) bc_xmax = &refl_particle;
     }
     else if ( species->bc_part_type_xmax == "supp" ) {
-        if (patch->isXmax()) bc_xmax = &supp_particle;
+        if (patch->isXmax())
+        {
+            if (species->mass > 0)
+            {
+                bc_xmax = &supp_particle;
+            }
+            else if (species->mass == 0)
+            {
+                bc_xmax = &supp_photon;
+            }
+        }
     }
     else if ( species->bc_part_type_xmax == "stop" ) {
         if (patch->isXmax()) bc_xmax = &stop_particle;
@@ -143,7 +163,17 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
             if (patch->isYmin()) bc_ymin = &refl_particle;
         }
         else if ( species->bc_part_type_ymin == "supp" ) {
-            if (patch->isYmin()) bc_ymin = &supp_particle;
+            if (patch->isYmin())
+            {
+                if (species->mass > 0)
+                {
+                    bc_ymin = &supp_particle;
+                }
+                else if (species->mass == 0)
+                {
+                    bc_ymin = &supp_photon;
+                }
+            }
         }
         else if ( species->bc_part_type_ymin == "stop" ) {
             if (patch->isYmin()) bc_ymin = &stop_particle;
@@ -163,7 +193,17 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
             if (patch->isYmax()) bc_ymax = &refl_particle;
         }
         else if ( species->bc_part_type_ymax == "supp" ) {
-            if (patch->isYmax()) bc_ymax = &supp_particle;
+            if (patch->isYmax())
+            {
+                if (species->mass > 0)
+                {
+                    bc_ymax = &supp_particle;
+                }
+                else if (species->mass == 0)
+                {
+                    bc_ymax = &supp_photon;
+                }
+            }
         }
         else if ( species->bc_part_type_ymax == "stop" ) {
             if (patch->isYmax()) bc_ymax = &stop_particle;

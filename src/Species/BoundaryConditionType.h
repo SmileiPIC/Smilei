@@ -53,7 +53,6 @@ inline int stop_particle( Particles &particles, int ipart, int direction, double
     particles.momentum(1, ipart) = 0.;
     particles.momentum(2, ipart) = 0.;
     return 1;
-
 }
 
 //!\todo (MG) at the moment the particle is thermalize whether or not there is a plasma initially at the boundary.
