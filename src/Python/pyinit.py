@@ -388,6 +388,11 @@ class MultiphotonBreitWheeler(SmileiComponent):
     output_format = "hdf5"
     # Path the tables/databases
     table_path = "./"
+    # Table T parameters
+    T_chiph_min = 1e-2
+    T_chiph_max = 1e1
+    T_dim = 128
+
 
 # Smilei-defined
 smilei_mpi_rank = 0

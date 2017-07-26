@@ -62,7 +62,9 @@ min_loc_vec(patch->getDomainLocalMin()),
 partBoundCond(NULL),
 tracking_diagnostic(10000),
 nDim_particle(params.nDim_particle),
-min_loc(patch->getDomainLocalMin(0))
+min_loc(patch->getDomainLocalMin(0)),
+radiation_photons("none"),
+photon_species_index(-1)
 {
     DEBUG(species_type);
 
@@ -525,11 +527,13 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                          bmin[ibin], bmax[ibin], ithread );
 
                 // If creation of macro-photon, we add them to photon_species
-                if (photon_species)
+                if (photon_species_index >= 0)
+                {
                     photon_species->importParticles(params,
                                                     patch,
                                                     Radiate->new_photons,
                                                     localDiags);
+                }
 
                 // Update scalar variable for diagnostics
                 nrj_radiation += (*Radiate).getRadiatedEnergy();
