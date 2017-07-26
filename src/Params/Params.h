@@ -209,6 +209,9 @@ public:
     //! of Niel et al.
     bool hasNielRadiation;
 
+    //! Tells whether there is a species with multiphoton Breit-Wheeler
+    bool hasMultiphotonBreitWheeler;
+
     //! Log2 of the number of patch in the whole simulation box in every direction.
     //! The number of patch in a given direction MUST be a power of 2 and is 2^(mi[i]).
     std::vector<unsigned int> mi;
@@ -230,6 +233,22 @@ public:
 
     //! every for the standard pic timeloop output
     unsigned int print_every;
+
+    // ---------------------------------------------
+    // Constants
+    // ---------------------------------------------
+
+    //! Fine structure constant
+    const double fine_struct_cst = 7.2973525698e-3;
+
+    //! Reduced Planck Constant (J.s)
+    const double red_planck_cst = 1.054571628E-34;
+
+    //! Electron mass
+    const double electron_mass = 9.109382616e-31;
+
+    //! Speed of light in vacuum (m/s)
+    const double c_vacuum = 299792458;
 
 private:
     //! passing named command to python

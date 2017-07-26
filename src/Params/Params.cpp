@@ -350,7 +350,7 @@ namelist("")
     if (!print_every) print_every = 1;
 
     // -------------------------------------------------------
-    // Parameters for the radiation losses
+    // Parameters for the synchrotron-like radiation losses
     // -------------------------------------------------------
     hasMCRadiation = false ;// Default value
     hasLLRadiation = false ;// Default value
@@ -380,6 +380,21 @@ namelist("")
        }
     }
 
+    // -------------------------------------------------------
+    // Parameters for the mutliphoton Breit-Wheeler pair decay
+    // -------------------------------------------------------
+    this->hasMultiphotonBreitWheeler = false ;// Default value
+
+    bool flag = false;
+    for (unsigned int ispec = 0; ispec < tot_species_number; ispec++) {
+
+        PyTools::extract("multiphoton_Breit_Wheeler", flag ,"Species",ispec);
+
+        if (flag)
+        {
+            this->hasMultiphotonBreitWheeler = true;
+        }
+    }
 
     // -------------------------------------------------------
     // Compute usefull quantities and introduce normalizations

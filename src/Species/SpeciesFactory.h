@@ -449,7 +449,8 @@ public:
         newSpecies->dynamics_type         = species->dynamics_type;
         newSpecies->radiation_model       = species->radiation_model;
         newSpecies->radiation_photons     = species->radiation_photons;
-        newSpecies->radiation_photon_sampling     = species->radiation_photon_sampling;
+        newSpecies->radiation_photon_sampling = species->radiation_photon_sampling;
+        newSpecies->photon_species        = species->photon_species;
         newSpecies->speciesNumber         = species->speciesNumber;
         newSpecies->initPosition_type     = species->initPosition_type;
         newSpecies->initMomentum_type     = species->initMomentum_type;
@@ -459,10 +460,10 @@ public:
         newSpecies->radiating             = species->radiating;
         newSpecies->bc_part_type_xmin     = species->bc_part_type_xmin;
         newSpecies->bc_part_type_xmax     = species->bc_part_type_xmax;
-        newSpecies->bc_part_type_ymin    = species->bc_part_type_ymin;
-        newSpecies->bc_part_type_ymax    = species->bc_part_type_ymax;
-        newSpecies->bc_part_type_zmin   = species->bc_part_type_zmin;
-        newSpecies->bc_part_type_zmax       = species->bc_part_type_zmax;
+        newSpecies->bc_part_type_ymin     = species->bc_part_type_ymin;
+        newSpecies->bc_part_type_ymax     = species->bc_part_type_ymax;
+        newSpecies->bc_part_type_zmin     = species->bc_part_type_zmin;
+        newSpecies->bc_part_type_zmax     = species->bc_part_type_zmax;
         newSpecies->thermT                = species->thermT;
         newSpecies->thermVelocity         = species->thermVelocity;
         newSpecies->thermalVelocity       = species->thermalVelocity;
@@ -546,7 +547,11 @@ public:
 
         // Loop species to find the photon species for radiation species
         for (unsigned int ispec1 = 0; ispec1<retSpecies.size(); ispec1++) {
-            if( ! retSpecies[ispec1]->Radiate ) continue;
+            if( ! retSpecies[ispec1]->Radiate )
+            {
+                continue;
+            }
+
             // No emission of discrete photon, only scalar diagnostics are updated
             if( retSpecies[ispec1]->radiation_photons == "none")
             {
@@ -561,7 +566,9 @@ public:
                         if( ispec1==ispec2 )
                             ERROR("For species '"<<retSpecies[ispec1]->species_type<<"' radiation_photons must be a distinct photon species");
                         if (retSpecies[ispec2]->mass!=0)
+                        {
                             ERROR("For species '"<<retSpecies[ispec1]->species_type<<"' radiation_photons must be a photon species with mass==0");
+                        }
                         retSpecies[ispec1]->photon_species_index = ispec2;
                         retSpecies[ispec1]->photon_species = retSpecies[ispec2];
                         //retSpecies[ispec1]->Radiate->new_photons.initialize(retSpecies[ispec1]->getNbrOfParticles(),
@@ -602,7 +609,14 @@ public:
             if (retSpecies[i]->Radiate) {
                 retSpecies[i]->radiation_photons = vecSpecies[i]->radiation_photons;
                 retSpecies[i]->photon_species_index = vecSpecies[i]->photon_species_index;
-                retSpecies[i]->photon_species = retSpecies[retSpecies[i]->photon_species_index];
+                if (vecSpecies[i]->photon_species)
+                {
+                    retSpecies[i]->photon_species = retSpecies[retSpecies[i]->photon_species_index];
+                }
+                else
+                {
+                    retSpecies[i]->photon_species = NULL;
+                }
                 //retSpecies[i]->Radiate->new_photons.initialize(retSpecies[i]->getNbrOfParticles(),
                 //                                               params.nDim_particle );
                retSpecies[i]->Radiate->new_photons.initialize(0,

@@ -105,7 +105,7 @@ for i,radiation in enumerate(radiation_list):
         species_type = "electron_" + species_name_list[i],
         initPosition_type = "centered",
         initMomentum_type = "cold",
-        n_part_per_cell = 10,
+        n_part_per_cell = 16,
         c_part_max = 1.0,
         mass = 1.0,
         charge = -1.0,

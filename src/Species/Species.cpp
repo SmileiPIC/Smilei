@@ -64,7 +64,8 @@ tracking_diagnostic(10000),
 nDim_particle(params.nDim_particle),
 min_loc(patch->getDomainLocalMin(0)),
 radiation_photons("none"),
-photon_species_index(-1)
+photon_species_index(-1),
+photon_species(NULL)
 {
     DEBUG(species_type);
 

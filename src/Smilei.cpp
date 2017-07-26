@@ -29,6 +29,7 @@
 #include "Diagnostic.h"
 #include "Timers.h"
 #include "RadiationTables.h"
+#include "MultiphotonBreitWheelerTables.h"
 
 using namespace std;
 
@@ -88,6 +89,12 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------
     RadiationTables RadiationTables;
 
+    // ------------------------------------------------------------------------
+    // Create MultiphotonBreitWheelerTables object for multiphoton
+    // Breit-Wheeler pair creation
+    // ------------------------------------------------------------------------
+    MultiphotonBreitWheelerTables MultiphotonBreitWheelerTables;
+
     // ---------------------------------------------------
     // Initialize patches (including particles and fields)
     // ---------------------------------------------------
@@ -109,6 +116,13 @@ int main (int argc, char* argv[])
         RadiationTables.initParams(params);
         RadiationTables.compute_tables(params,smpi);
         RadiationTables.output_tables(smpi);
+
+        // ---------------------------------------------------------------------
+        // Init and compute tables for multiphoton Breit-Wheeler pair creation
+        // ---------------------------------------------------------------------
+        MultiphotonBreitWheelerTables.initialization(params);
+        //MultiphotonBreitWheelerTables.compute_tables(params,smpi);
+        //MultiphotonBreitWheelerTables.output_tables(smpi);
 
         // time at integer time-steps (primal grid)
         time_prim = checkpoint.this_run_start_step * params.timestep;
@@ -138,6 +152,13 @@ int main (int argc, char* argv[])
         RadiationTables.initParams(params);
         RadiationTables.compute_tables(params,smpi);
         RadiationTables.output_tables(smpi);
+
+        // ---------------------------------------------------------------------
+        // Init and compute tables for multiphoton Breit-Wheeler pair decay
+        // ---------------------------------------------------------------------
+        MultiphotonBreitWheelerTables.initialization(params);
+        //MultiphotonBreitWheelerTables.compute_tables(params,smpi);
+        //MultiphotonBreitWheelerTables.output_tables(smpi);
 
         // Apply antennas
         // --------------
