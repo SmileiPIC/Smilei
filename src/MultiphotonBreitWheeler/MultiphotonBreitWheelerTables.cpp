@@ -73,6 +73,17 @@ void MultiphotonBreitWheelerTables::initialization(Params& params)
         PyTools::extract("table_path", table_path, "MultiphotonBreitWheeler");
     }
 
+    // Computation of some parameters
+    if (params.hasMultiphotonBreitWheeler)
+    {
+        // Computation of the normalized Compton wavelength
+        norm_lambda_compton = params.red_planck_cst*params.referenceAngularFrequency_SI
+                            / (params.electron_mass*params.c_vacuum*params.c_vacuum);
+
+        // Computation of the factor factor_dNBWdt
+        factor_dNBWdt = params.fine_struct_cst/(norm_lambda_compton);
+    }
+
     // Messages and checks
     if (params.hasMultiphotonBreitWheeler)
     {
@@ -87,3 +98,30 @@ void MultiphotonBreitWheelerTables::initialization(Params& params)
 
     MESSAGE("")
 }
+
+// -----------------------------------------------------------------------------
+// PHYSICAL COMPUTATION
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+//! Computation of the value T(chiph) using the approximated
+//! formula of Erber
+//! \param chiph photon quantum parameter
+//! \param nbit number of iteration for the Bessel evaluation
+//! \param eps epsilon for the Bessel evaluation
+// -----------------------------------------------------------------------------
+double MultiphotonBreitWheelerTables::computeErberT(double chiph,int nbit,
+                                                    double eps)
+{
+    // Values for Bessel results
+    double I,dI;
+    double K,dK;
+
+    userFunctions::modified_bessel_IK(1./3.,4./(3.*chiph),I,dI,K,dK,nbit,eps);
+
+    return 0.16*K*K/chiph;
+}
+
+// -----------------------------------------------------------------------------
+// TABLE COMPUTATION
+// -----------------------------------------------------------------------------

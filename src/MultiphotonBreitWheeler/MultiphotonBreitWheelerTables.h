@@ -20,6 +20,7 @@
 
 #include "Params.h"
 #include "H5.h"
+#include "userFunctions.h"
 
 //------------------------------------------------------------------------------
 //! MutliphotonBreitWheelerTables class: holds parameters, tables and
@@ -41,6 +42,18 @@ class MultiphotonBreitWheelerTables
         //! Initialization of the parmeters
         //! \param params Object Params for the parameters from the input script
         void initialization(Params& params);
+
+        // ---------------------------------------------------------------------
+        // PHYSICAL COMPUTATION
+        // ---------------------------------------------------------------------
+
+        //! Computation of the value T(chiph) using the approximated
+        //! formula of Erber
+        //! \param chiph photon quantum parameter
+        //! \param nbit number of iteration for the Bessel evaluation
+        //! \param eps epsilon for the Bessel evaluation
+        double computeErberT(double chiph,int nbit,
+                           double eps);
 
     private:
 
@@ -86,6 +99,9 @@ class MultiphotonBreitWheelerTables
 
         //! Factor for the computation of dN_{BW} / dt from T
         double factor_dNBWdt;
+
+        //! Normalized reduced Compton wavelength
+        double norm_lambda_compton;
 
 };
 

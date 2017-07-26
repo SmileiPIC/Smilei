@@ -63,9 +63,9 @@ partBoundCond(NULL),
 tracking_diagnostic(10000),
 nDim_particle(params.nDim_particle),
 min_loc(patch->getDomainLocalMin(0)),
-radiation_photons("none"),
-photon_species_index(-1),
-photon_species(NULL)
+radiation_photons("none")
+//photon_species_index(-1),
+//photon_species(NULL)
 {
     DEBUG(species_type);
 
@@ -528,7 +528,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                          bmin[ibin], bmax[ibin], ithread );
 
                 // If creation of macro-photon, we add them to photon_species
-                if (photon_species_index >= 0)
+                if (photon_species)
                 {
                     photon_species->importParticles(params,
                                                     patch,
