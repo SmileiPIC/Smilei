@@ -127,12 +127,13 @@ public:
 
         }
         // Photon species
-        else if (mass == 0.)
+        else if (mass == 0)
         {
-            // Photon can not radiate
-            radiation_model == "none";
-            dynamics_type=="norm";
             thisSpecies = new SpeciesNorm(params, patch);
+            // Photon can not radiate
+            thisSpecies->radiation_model = "none";
+            thisSpecies->dynamics_type = "norm";
+
             MESSAGE(2,"> " <<species_type <<" is a photon species (mass==0).");
             MESSAGE(2,"> Radiation model set to none.");
             MESSAGE(2,"> Dynamic model set to norm.");
@@ -163,17 +164,39 @@ public:
             }
         }
 
+        thisSpecies->particles->isQuantumParameter = true;
+        thisSpecies->particles->isMonteCarlo = true;
+
         // Multiphoton Breit-Wheeler
-        if (mass == 0.)
+        if (mass == 0)
         {
-            thisSpecies->multiphoton_Breit_Wheeler.resize(2);
             PyTools::extract("multiphoton_Breit_Wheeler", thisSpecies->multiphoton_Breit_Wheeler, "Species",ispec);
-            if (thisSpecies->multiphoton_Breit_Wheeler[0] != "none")
+            // If the first species is not empty
+            if (thisSpecies->multiphoton_Breit_Wheeler[0] == "")
             {
-                MESSAGE(2,"> Decay into pair via the multiphoton Breit-Wheeler activated");
-                MESSAGE(2,"> Generated electrons and positrons go to species:"
-                << thisSpecies->multiphoton_Breit_Wheeler[0]
-                << " & " << thisSpecies->multiphoton_Breit_Wheeler[1]);
+                ERROR("For species '" << species_type << "' multiphoton_Breit_Wheeler can not be empty, select electron and positron species.");
+            }
+            // Else If the first species is not none which means no process
+            else if (thisSpecies->multiphoton_Breit_Wheeler[0] != "none")
+            {
+                if (thisSpecies->multiphoton_Breit_Wheeler[1] == "")
+                {
+                    ERROR("For species '" << species_type << "' multiphoton_Breit_Wheeler can not be empty, select electron and positron species.");
+                }
+                else if (thisSpecies->multiphoton_Breit_Wheeler[1] != "none")
+                {
+                    // Activation of the additional variables
+
+                    MESSAGE(2,"> Decay into pair via the multiphoton Breit-Wheeler activated");
+                    MESSAGE(2,"> Generated electrons and positrons go to species: "
+                    << thisSpecies->multiphoton_Breit_Wheeler[0]
+                    << " & " << thisSpecies->multiphoton_Breit_Wheeler[1]);
+                }
+                else
+                {
+                    thisSpecies->multiphoton_Breit_Wheeler[0] = "none";
+                    WARNING("For species '" << species_type << "' Positron species is none, Multiphoton Breit-Wheeler disabled");
+                }
             }
         }
 
@@ -433,7 +456,9 @@ public:
 
         }
         else
+        {
             thisSpecies->particles->initialize( 0, params.nDim_particle );
+        }
 
         thisSpecies->initOperators(params, patch);
 
@@ -497,6 +522,8 @@ public:
         newSpecies->temperatureProfile[2] = new Profile(species->temperatureProfile[2]);
         newSpecies->max_charge            = species->max_charge;
         newSpecies->tracking_diagnostic   = species->tracking_diagnostic;
+        newSpecies->multiphoton_Breit_Wheeler[0]   = species->multiphoton_Breit_Wheeler[0];
+        newSpecies->multiphoton_Breit_Wheeler[1]   = species->multiphoton_Breit_Wheeler[1];
 
         newSpecies->particles->isTest              = species->particles->isTest;
         newSpecies->particles->tracked             = species->particles->tracked;
@@ -508,7 +535,9 @@ public:
             newSpecies->createParticles(params.n_space, params, patch, 0 );
         }
         else
+        {
             newSpecies->particles->initialize( 0, (*species->particles) );
+        }
 
         newSpecies->initOperators(params, patch);
 
@@ -584,10 +613,13 @@ public:
                         }
                         retSpecies[ispec1]->photon_species_index = ispec2;
                         retSpecies[ispec1]->photon_species = retSpecies[ispec2];
-                        //retSpecies[ispec1]->Radiate->new_photons.initialize(retSpecies[ispec1]->getNbrOfParticles(),
-                        //                                                    params.nDim_particle );
+                        retSpecies[ispec1]->Radiate->new_photons.tracked = retSpecies[ispec1]->photon_species->particles->tracked;
+                        retSpecies[ispec1]->Radiate->new_photons.isQuantumParameter = retSpecies[ispec1]->photon_species->particles->isQuantumParameter;
+                        retSpecies[ispec1]->Radiate->new_photons.isMonteCarlo = retSpecies[ispec1]->photon_species->particles->isMonteCarlo;
                         retSpecies[ispec1]->Radiate->new_photons.initialize(0,
                                                                             params.nDim_particle );
+                        //retSpecies[ispec1]->Radiate->new_photons.initialize(retSpecies[ispec1]->getNbrOfParticles(),
+                        //                                                    params.nDim_particle );
                         retSpecies[ispec2]->particles->reserve(retSpecies[ispec1]->getNbrOfParticles(),
                                                                retSpecies[ispec2]->particles->dimension() );
                     }
@@ -598,9 +630,34 @@ public:
         // Loop species to find the electron and positron
         // species for multiphoton Breit-wheeler
         for (unsigned int ispec1 = 0; ispec1<retSpecies.size(); ispec1++) {
-            if( ! retSpecies[ispec1]->MultiphotonBreitWheeler)
+            if(!retSpecies[ispec1]->Multiphoton_Breit_Wheeler_process)
             {
                 continue;
+            }
+            else
+            {
+                for (unsigned int ispec2 = 0; ispec2<retSpecies.size(); ispec2++)
+                {
+                    for (int k=0;k<2;k++)
+                    {
+                        if( retSpecies[ispec1]->multiphoton_Breit_Wheeler[k] == retSpecies[ispec2]->species_type)
+                        {
+                            if( ispec1==ispec2 )
+                            {
+                                ERROR("For species '" << retSpecies[ispec1]->species_type
+                                                      << "' pair species must be a distinct particle species");
+                            }
+                            if (retSpecies[ispec2]->mass != 1)
+                            {
+                                ERROR("For species '"<<retSpecies[ispec1]->species_type<<"' pair species must be an electron and positron species");
+                            }
+                            retSpecies[ispec1]->mBW_pair_species_index[k] = ispec2;
+                            retSpecies[ispec1]->mBW_pair_species[k] = retSpecies[ispec2];
+                            retSpecies[ispec2]->particles->reserve(retSpecies[ispec1]->getNbrOfParticles(),
+                                                                   retSpecies[ispec2]->particles->dimension() );
+                        }
+                    }
+                }
             }
         }
 
@@ -618,6 +675,7 @@ public:
             retSpecies.push_back( newSpecies );
         }
 
+        // Ionization
         for (unsigned int i=0; i<retSpecies.size(); i++) {
             if (retSpecies[i]->Ionize) {
                 retSpecies[i]->electron_species_index = vecSpecies[i]->electron_species_index;
@@ -627,6 +685,7 @@ public:
             }
         }
 
+        // Synchortron-like radiation
         for (unsigned int i=0; i<retSpecies.size(); i++) {
             if (retSpecies[i]->Radiate) {
                 retSpecies[i]->radiation_photons = vecSpecies[i]->radiation_photons;
@@ -634,15 +693,36 @@ public:
                 if (vecSpecies[i]->photon_species)
                 {
                     retSpecies[i]->photon_species = retSpecies[retSpecies[i]->photon_species_index];
+                    retSpecies[i]->Radiate->new_photons.tracked = retSpecies[i]->photon_species->particles->tracked;
+                    retSpecies[i]->Radiate->new_photons.isQuantumParameter = retSpecies[i]->photon_species->particles->isQuantumParameter;
+                    retSpecies[i]->Radiate->new_photons.isMonteCarlo = retSpecies[i]->photon_species->particles->isMonteCarlo;
+                    //retSpecies[i]->Radiate->new_photons.initialize(retSpecies[i]->getNbrOfParticles(),
+                    //                                               params.nDim_particle );
+                    retSpecies[i]->Radiate->new_photons.initialize(0,
+                                                                  params.nDim_particle );
                 }
                 else
                 {
                     retSpecies[i]->photon_species = NULL;
                 }
-                //retSpecies[i]->Radiate->new_photons.initialize(retSpecies[i]->getNbrOfParticles(),
-                //                                               params.nDim_particle );
-               retSpecies[i]->Radiate->new_photons.initialize(0,
-                                                              params.nDim_particle );
+            }
+        }
+
+        // multiphoton Breit-Wheeler
+        for (unsigned int i=0; i<retSpecies.size(); i++)
+        {
+            if (retSpecies[i]->Multiphoton_Breit_Wheeler_process) {
+                retSpecies[i]->multiphoton_Breit_Wheeler[0] = vecSpecies[i]->multiphoton_Breit_Wheeler[0];
+                retSpecies[i]->multiphoton_Breit_Wheeler[1] = vecSpecies[i]->multiphoton_Breit_Wheeler[1];
+                retSpecies[i]->mBW_pair_species_index[0] = vecSpecies[i]->mBW_pair_species_index[0];
+                retSpecies[i]->mBW_pair_species_index[1] = vecSpecies[i]->mBW_pair_species_index[1];
+                retSpecies[i]->mBW_pair_species[0] = retSpecies[retSpecies[i]->mBW_pair_species_index[0]];
+                retSpecies[i]->mBW_pair_species[1] = retSpecies[retSpecies[i]->mBW_pair_species_index[1]];
+            }
+            else
+            {
+                retSpecies[i]->mBW_pair_species[0] = NULL;
+                retSpecies[i]->mBW_pair_species[1] = NULL;
             }
         }
 

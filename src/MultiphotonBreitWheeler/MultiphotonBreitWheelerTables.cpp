@@ -104,6 +104,33 @@ void MultiphotonBreitWheelerTables::initialization(Params& params)
 // -----------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------
+//! Computation of the production rate of pairs per photon
+//! \param chiph photon quantum parameter
+//! \param gamma photon normalized energy
+// -----------------------------------------------------------------------------
+double MultiphotonBreitWheelerTables::compute_dNBWdt(double chiph, double gamma)
+{
+    // ________________________________________
+    // Parameters
+
+    // Log of the photon quantum parameter chipa
+    double logchiph;
+    double logchiphm;
+    double logchiphp;
+    // Index
+    int ichiph;
+
+    // ________________________________________
+    // Computation
+
+    logchiph = log10(chiph);
+
+    // Lower index for interpolation in the table integfochi
+    ichiph = int(floor((logchiph-T_log10_chiph_min)
+                 *T_chiph_inv_delta));
+}
+
+// -----------------------------------------------------------------------------
 //! Computation of the value T(chiph) using the approximated
 //! formula of Erber
 //! \param chiph photon quantum parameter

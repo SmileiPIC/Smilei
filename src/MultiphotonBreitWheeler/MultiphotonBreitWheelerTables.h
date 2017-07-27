@@ -47,6 +47,11 @@ class MultiphotonBreitWheelerTables
         // PHYSICAL COMPUTATION
         // ---------------------------------------------------------------------
 
+        //! Computation of the production rate of pairs per photon
+        //! \param chiph photon quantum parameter
+        //! \param gamma photon normalized energy
+        double compute_dNBWdt(double chiph, double gamma);
+
         //! Computation of the value T(chiph) using the approximated
         //! formula of Erber
         //! \param chiph photon quantum parameter

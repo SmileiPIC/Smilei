@@ -19,9 +19,9 @@
 #include "Species.h"
 #include "RadiationTables.h"
 
-//  --------------------------------------------------------------------------------------------------------------------
+//  ----------------------------------------------------------------------------
 //! Class Radiation
-//  --------------------------------------------------------------------------------------------------------------------
+//  ----------------------------------------------------------------------------
 class Radiation
 {
 
@@ -31,7 +31,6 @@ class Radiation
         virtual ~Radiation();
 
         //! Overloading of () operator
-        //! \param patch       patch object containing all species
         //! \param particles   particle object containing the particle
         //!                    properties of the current species
         //! \param smpi        MPI properties

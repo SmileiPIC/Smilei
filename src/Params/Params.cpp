@@ -397,7 +397,7 @@ namelist("")
     }
 
     // -------------------------------------------------------
-    // Compute usefull quantities and introduce normalizations
+    // Compute useful quantities and introduce normalizations
     // also defines defaults values for the species lengths
     // -------------------------------------------------------
     compute();

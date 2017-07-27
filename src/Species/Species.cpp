@@ -14,6 +14,7 @@
 #include "PusherFactory.h"
 #include "IonizationFactory.h"
 #include "RadiationFactory.h"
+#include "MultiphotonBreitWheelerFactory.h"
 #include "PartBoundCond.h"
 #include "PartWall.h"
 #include "BoundaryConditionType.h"
@@ -63,7 +64,8 @@ partBoundCond(NULL),
 tracking_diagnostic(10000),
 nDim_particle(params.nDim_particle),
 min_loc(patch->getDomainLocalMin(0)),
-radiation_photons("none")
+radiation_photons("none"),
+multiphoton_Breit_Wheeler(2,"none")
 //photon_species_index(-1),
 //photon_species(NULL)
 {
@@ -145,6 +147,12 @@ void Species::initOperators(Params& params, Patch* patch)
     Radiate = RadiationFactory::create(params, this);
     if (Radiate) {
         DEBUG("Species " << species_type << " will undergo radiation loss!");
+    }
+
+    // Create the multiphoton Breit-Wheeler model
+    Multiphoton_Breit_Wheeler_process = MultiphotonBreitWheelerFactory::create(params, this);
+    if (Multiphoton_Breit_Wheeler_process) {
+        DEBUG("Species " << species_type << " will undergo multiphoton Breit-Wheeler!");
     }
 
     // define limits for BC and functions applied and for domain decomposition
@@ -905,7 +913,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
 
     unsigned int n_existing_particles = particles->size();
     particles->initialize(n_existing_particles+npart_effective, nDim_particle);
-
 
     // Initialization of the particles properties
     // ------------------------------------------

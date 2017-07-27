@@ -78,7 +78,6 @@ void Particles::initialize(unsigned int nParticles, unsigned int nDim)
             double_prop.push_back( &Chi );
         }
 
-
         // Optical Depth for Monte-Carlo processes:
         // - if the discontinuous (Monte-Carlo) radiation reaction
         // are activated, tau is the incremental optical depth to emission

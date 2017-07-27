@@ -15,6 +15,8 @@
 #include "AsyncMPIbuffers.h"
 #include "Radiation.h"
 #include "RadiationTables.h"
+#include "MultiphotonBreitWheeler.h"
+#include "MultiphotonBreitWheelerTables.h"
 
 class ElectroMagn;
 class Pusher;
@@ -88,8 +90,7 @@ public:
     //! logical true if particles radiate
     bool radiating;
 
-    //! logical true if photon can decay into pairs via
-    //! the multiphoton Breit-Wheeler
+    //! electron and positron Species for the multiphoton Breit-Wheeler
     std::vector<std::string> multiphoton_Breit_Wheeler;
 
     //! Boundary conditions for particules
@@ -184,6 +185,9 @@ public:
     //! Radiation method (Continuous or Monte-Carlo)
     Radiation * Radiate;
 
+    //! Multiphoton Breit-wheeler
+    MultiphotonBreitWheeler * Multiphoton_Breit_Wheeler_process;
+
     //! Pointer to the species where field-ionized electrons go
     Species *electron_species;
     //! Index of the species where field-ionized electrons go
@@ -200,6 +204,13 @@ public:
     std::string radiation_photons;
     //! Number of photons emitted per particle and per event
     int radiation_photon_sampling;
+
+    //! Pointer to the species where electron-positron pairs
+    //! from the multiphoton Breit-Wheeler go
+    Species * mBW_pair_species[2];
+    //! Index of the species where electron-positron pairs
+    //! from the multiphoton Breit-Wheeler go
+    int mBW_pair_species_index[2];
 
     //! Cluster width in number of cells
     unsigned int clrw; //Should divide the number of cells in X of a single MPI domain.

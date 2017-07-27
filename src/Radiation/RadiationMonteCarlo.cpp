@@ -120,8 +120,6 @@ void RadiationMonteCarlo::operator() (
     for (int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass2 = (double)(charge[ipart])*one_over_mass_2;
 
-        //std::cerr << "ipart: " << ipart << std::endl;
-
         // Init local variables
         emission_time = 0;
         local_it_time = 0;
