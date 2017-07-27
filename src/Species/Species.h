@@ -88,6 +88,10 @@ public:
     //! logical true if particles radiate
     bool radiating;
 
+    //! logical true if photon can decay into pairs via
+    //! the multiphoton Breit-Wheeler
+    std::vector<std::string> multiphoton_Breit_Wheeler;
+
     //! Boundary conditions for particules
     std::string bc_part_type_xmin;
     std::string bc_part_type_xmax;

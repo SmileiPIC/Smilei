@@ -281,19 +281,19 @@ double userFunctions::modified_bessel_K(double n, double x,
     // Checks
     if (x <= 0.0)
     {
-        ERROR("Argument x is negative in modified_bessel_IK");
+        ERROR("Argument x is negative in modified_bessel_K");
     }
     if (n <= 0)
     {
-        ERROR("Argument n is negative in modified_bessel_IK");
+        ERROR("Argument n is negative in modified_bessel_K");
     }
     if (maxit <= 0)
     {
-        ERROR("Maximal number of iteration is null in modified_bessel_IK");
+        ERROR("Maximal number of iteration is null in modified_bessel_K");
     }
     if (eps <= 0)
     {
-        ERROR("Accuracy threshold, epsilon, <= 0 in modified_bessel_IK");
+        ERROR("Accuracy threshold, epsilon, <= 0 in modified_bessel_K");
     }
     nl=long(n+0.5);
     xmu=n-nl;
@@ -315,7 +315,7 @@ double userFunctions::modified_bessel_K(double n, double x,
         if (abs(del-1.0) <= eps) break;
     }
 
-    if (i >= maxit) ERROR("x too large in modified_bessel_IK; try asymptotic expansion");
+    if (i >= maxit) ERROR("x too large in modified_bessel_K; try asymptotic expansion");
 
     ril=fpmin;
     ripl=h*ril;
@@ -361,7 +361,7 @@ double userFunctions::modified_bessel_K(double n, double x,
             sum1 += del1;
             if (abs(del) < abs(sum)*eps) break;
         }
-        if (i > maxit) WARNING("Series failed to converge in modified_bessel_IK");
+        if (i > maxit) WARNING("Series failed to converge in modified_bessel_K");
         rkmu=sum;
         rk1=sum1*xi2;
     } else {
@@ -389,7 +389,7 @@ double userFunctions::modified_bessel_K(double n, double x,
             s += dels;
             if (abs(dels/s) <= eps) break;
         }
-        if (i >= maxit) WARNING("Failure to converge in cf2 in modified_bessel_IK");
+        if (i >= maxit) WARNING("Failure to converge in cf2 in modified_bessel_K");
         h=a1*h;
         rkmu=sqrt(M_PI/(2.0*x))*exp(-x)/s;
         rk1=rkmu*(xmu+x+0.5-h)*xi;

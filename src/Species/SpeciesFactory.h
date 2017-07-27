@@ -163,6 +163,19 @@ public:
             }
         }
 
+        // Multiphoton Breit-Wheeler
+        if (mass == 0.)
+        {
+            thisSpecies->multiphoton_Breit_Wheeler.resize(2);
+            PyTools::extract("multiphoton_Breit_Wheeler", thisSpecies->multiphoton_Breit_Wheeler, "Species",ispec);
+            if (thisSpecies->multiphoton_Breit_Wheeler[0] != "none")
+            {
+                MESSAGE(2,"> Decay into pair via the multiphoton Breit-Wheeler activated");
+                MESSAGE(2,"> Generated electrons and positrons go to species:"
+                << thisSpecies->multiphoton_Breit_Wheeler[0]
+                << " & " << thisSpecies->multiphoton_Breit_Wheeler[1]);
+            }
+        }
 
         PyTools::extract("initPosition_type",thisSpecies->initPosition_type ,"Species",ispec);
         if (thisSpecies->initPosition_type.empty()) {
@@ -579,6 +592,15 @@ public:
                                                                retSpecies[ispec2]->particles->dimension() );
                     }
                 }
+            }
+        }
+
+        // Loop species to find the electron and positron
+        // species for multiphoton Breit-wheeler
+        for (unsigned int ispec1 = 0; ispec1<retSpecies.size(); ispec1++) {
+            if( ! retSpecies[ispec1]->MultiphotonBreitWheeler)
+            {
+                continue;
             }
         }
 

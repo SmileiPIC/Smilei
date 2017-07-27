@@ -385,12 +385,12 @@ namelist("")
     // -------------------------------------------------------
     this->hasMultiphotonBreitWheeler = false ;// Default value
 
-    bool flag = false;
+    std::vector<std::string> multiphoton_Breit_Wheeler(2);
     for (unsigned int ispec = 0; ispec < tot_species_number; ispec++) {
 
-        PyTools::extract("multiphoton_Breit_Wheeler", flag ,"Species",ispec);
+        PyTools::extract("multiphoton_Breit_Wheeler", multiphoton_Breit_Wheeler ,"Species",ispec);
 
-        if (flag)
+        if (multiphoton_Breit_Wheeler[0] != "none")
         {
             this->hasMultiphotonBreitWheeler = true;
         }
