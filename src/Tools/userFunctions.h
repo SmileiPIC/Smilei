@@ -12,6 +12,9 @@ class userFunctions {
         static void modified_bessel_IK(double n, double x, double & I, double & dI,
                 double & K, double & dK, long maxit, double eps);
 
+        static double modified_bessel_K(double n, double x,
+                long maxit, double eps);
+
         //! Chebychev evaluation
         static double chebychev_eval(const double * c, const int m, const double x);
 

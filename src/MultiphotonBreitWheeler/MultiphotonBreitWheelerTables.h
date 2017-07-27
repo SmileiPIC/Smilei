@@ -52,8 +52,66 @@ class MultiphotonBreitWheelerTables
         //! \param chiph photon quantum parameter
         //! \param nbit number of iteration for the Bessel evaluation
         //! \param eps epsilon for the Bessel evaluation
-        double computeErberT(double chiph,int nbit,
+        double compute_Erber_T(double chiph,int nbit,
                            double eps);
+
+        //! Computation of the value T(chiph) using the formula of Ritus
+        //! \param chiph photon quantum parameter
+        //! \param nbit number of iteration for the Gauss-Legendre integration
+        //! \param eps epsilon for the Bessel evaluation
+        double compute_Ritus_T(double chiph,
+                               int nbit,double eps);
+
+       //! Computation of the value T(chiph) using the formula of Ritus
+       //! \param chiph photon quantum parameter
+       //! \param nbit number of iteration for the Gauss-Legendre integration
+       //! \param eps epsilon for the Bessel evaluation
+       double compute_Ritus_dTdchi(double chiph,
+                             double chipa,int nbit,double eps);
+
+        // ---------------------------------------------------------------------
+        // TABLE COMPUTATION
+        // ---------------------------------------------------------------------
+
+        //! Computation of the table T_table that is a discetization of the
+        //! T function for the multiphoton Breit-Wheeler process
+        //! \param smpi Object of class SmileiMPI containing MPI properties
+        void compute_T_table(SmileiMPI *smpi);
+
+        //! Output the computed tables so that thay can be read at the next run.
+        //! \param params list of simulation parameters
+        //! \param smpi MPI parameters
+        void compute_tables(Params& params,
+                            SmileiMPI *smpi);
+
+        // ---------------------------------------------------------------------
+        // TABLE OUTPUTS
+        // ---------------------------------------------------------------------
+
+        //! Ouput in a file of the table values of T for the
+        //! mutliphoton Breit-Wheeler process
+        void output_T_table();
+
+        //! Output the computed tables so that thay can be read at the next run.
+        //! Table output by the master MPI rank
+        //! \param smpi Object of class SmileiMPI containing MPI properties
+        void output_tables(SmileiMPI *smpi);
+
+        // ---------------------------------------------------------------------
+        // TABLE READING
+        // ---------------------------------------------------------------------
+
+        //! Read the external table T
+        //! \param smpi Object of class SmileiMPI containing MPI properties
+        bool read_T_table(SmileiMPI *smpi);
+
+        // ---------------------------------------------------------------------
+        // TABLE COMMUNICATIONS
+        // ---------------------------------------------------------------------
+
+        //! Bcast of the external table T
+        //! \param smpi Object of class SmileiMPI containing MPI properties
+        void bcast_T_table(SmileiMPI *smpi);
 
     private:
 
@@ -86,6 +144,9 @@ class MultiphotonBreitWheelerTables
 
         //! Delta chi for the table T
         double T_chiph_delta;
+
+        //! Inverse delta chi for the table h
+        double T_chiph_inv_delta;
 
         //! Dimension of the array T
         int T_dim;

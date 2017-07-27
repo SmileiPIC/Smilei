@@ -93,7 +93,7 @@ void userFunctions::modified_bessel_IK(double n, double x,
     //          << n << ", " << x << ", " << maxit << ")" << std::endl;
 
     const double xmin=2.0;
-    const double fpmin = 1.e-30;
+    const double fpmin = 1.e-100;
     double a,a1,b,c,d,del,del1,delh,dels,e,f,fact,fact2,ff,gam1,gam2;
     double gammi,gampl,h,p,pimu,q,q1,q2,qnew,ril,ril1,rimu,rip1,ripl;
     double ritemp,rk1,rkmu,rkmup,rktemp,s,sum,sum1,x2,xi,xi2,xmu,xmu2,xx;
@@ -192,7 +192,7 @@ void userFunctions::modified_bessel_IK(double n, double x,
             //MESSAGE(i << "/" << maxit << " " << abs(del) << " " << abs(sum) << " " << eps);
             if (abs(del) < abs(sum)*eps) break;
         }
-        //if (i > maxit) ERROR("Series failed to converge in modified_bessel_IK");
+        if (i > maxit) WARNING("Series failed to converge in modified_bessel_IK");
         rkmu=sum;
         rk1=sum1*xi2;
     } else {
@@ -220,7 +220,7 @@ void userFunctions::modified_bessel_IK(double n, double x,
             s += dels;
             if (abs(dels/s) <= eps) break;
         }
-        if (i >= maxit) ERROR("Failure to converge in cf2 in modified_bessel_IK");
+        if (i >= maxit) WARNING("Failure to converge in cf2 in modified_bessel_IK");
         h=a1*h;
         rkmu=sqrt(M_PI/(2.0*x))*exp(-x)/s;
         rk1=rkmu*(xmu+x+0.5-h)*xi;
@@ -236,8 +236,180 @@ void userFunctions::modified_bessel_IK(double n, double x,
     }
     K=rkmu;
     dK=n*xi*rkmu-rk1;
-    //std::cout << "leaving userFunctions::modified_bessel_IK(" << K<< ")" << std::endl;
 }
+
+
+// ----------------------------------------------------------------------------
+//! \brief Modified Bessel function of second kind K
+//
+//! \details This function computes the first and second kind Bessel function.
+//! See http://mathworld.wolfram.com/ModifiedBesselFunctionoftheSecondKind.html
+//
+//! This function is adapted from the Numerical Recipe.
+//
+//! \param n Bessel function order
+//! \param x input Bessel parameter
+//! \param maxit maximal number of iteration for convergence
+//! \param esp epsilon, accuracy threhold for convergence
+// ----------------------------------------------------------------------------
+double userFunctions::modified_bessel_K(double n, double x,
+        long maxit, double eps)
+{
+
+    //std::cout << "userFunctions::modified_bessel_K("
+    //          << n << ", " << x << ", " << maxit << ")" << std::endl;
+
+    const double xmin=2.0;
+    const double fpmin = 1.e-100;
+    double a,a1,b,c,d,del,del1,delh,dels,e,f,fact,fact2,ff,gam1,gam2;
+    double gammi,gampl,h,p,pimu,q,q1,q2,qnew,ril,ril1,rimu,rip1,ripl;
+    double ritemp,rk1,rkmu,rkmup,rktemp,s,sum,sum1,x2,xi,xi2,xmu,xmu2,xx;
+
+    long i,l,nl;
+
+    // Final result
+    double K;
+
+    // Coefficient for Chebychev
+    const double c1[7] = {-1.142022680371168e0,6.5165112670737e-3,
+        3.087090173086e-4,-3.4706269649e-6,6.9437664e-9,3.67795e-11,
+        -1.356e-13};
+    const double c2[8] = {1.843740587300905e0,-7.68528408447867e-2,
+        1.2719271366546e-3,-4.9717367042e-6,-3.31261198e-8,2.423096e-10,
+        -1.702e-13,-1.49e-15};
+
+    // Checks
+    if (x <= 0.0)
+    {
+        ERROR("Argument x is negative in modified_bessel_IK");
+    }
+    if (n <= 0)
+    {
+        ERROR("Argument n is negative in modified_bessel_IK");
+    }
+    if (maxit <= 0)
+    {
+        ERROR("Maximal number of iteration is null in modified_bessel_IK");
+    }
+    if (eps <= 0)
+    {
+        ERROR("Accuracy threshold, epsilon, <= 0 in modified_bessel_IK");
+    }
+    nl=long(n+0.5);
+    xmu=n-nl;
+    xmu2=xmu*xmu;
+    xi=1.0/x;
+    xi2=2.0*xi;
+    h=n*xi;
+    if (h < fpmin) h=fpmin;
+    b=xi2*n;
+    d=0.0;
+    c=h;
+
+    for (i=0;i<maxit;i++) {
+        b += xi2;
+        d=1.0/(b+d);
+        c=b+1.0/c;
+        del=c*d;
+        h=del*h;
+        if (abs(del-1.0) <= eps) break;
+    }
+
+    if (i >= maxit) ERROR("x too large in modified_bessel_IK; try asymptotic expansion");
+
+    ril=fpmin;
+    ripl=h*ril;
+    ril1=ril;
+    rip1=ripl;
+    fact=n*xi;
+    for (l=nl-1;l >= 0;l--) {
+        ritemp=fact*ril+ripl;
+        fact -= xi;
+        ripl=fact*ritemp+ril;
+        ril=ritemp;
+    }
+
+    f=ripl/ril;
+    if (x < xmin) {
+        x2=0.5*x;
+        pimu=M_PI*xmu;
+        fact = (abs(pimu) < eps ? 1.0 : pimu/sin(pimu));
+        d = -log(x2);
+        e=xmu*d;
+        fact2 = (abs(e) < eps ? 1.0 : sinh(e)/e);
+        xx=8.0*xmu*xmu-1.0;
+        gam1=chebychev_eval(c1,7,xx);
+        gam2=chebychev_eval(c2,8,xx);
+        gampl= gam2-xmu*gam1;
+        gammi= gam2+xmu*gam1;
+        ff=fact*(gam1*cosh(e)+gam2*fact2*d);
+        sum=ff;
+        e=exp(e);
+        p=0.5*e/gampl;
+        q=0.5/(e*gammi);
+        c=1.0;
+        d=x2*x2;
+        sum1=p;
+        for (i=1;i<=maxit;i++) {
+            ff=(i*ff+p+q)/(i*i-xmu2);
+            c *= (d/i);
+            p /= (i-xmu);
+            q /= (i+xmu);
+            del=c*ff;
+            sum += del;
+            del1=c*(p-i*ff);
+            sum1 += del1;
+            if (abs(del) < abs(sum)*eps) break;
+        }
+        if (i > maxit) WARNING("Series failed to converge in modified_bessel_IK");
+        rkmu=sum;
+        rk1=sum1*xi2;
+    } else {
+        b=2.0*(1.0+x);
+        d=1.0/b;
+        h=delh=d;
+        q1=0.0;
+        q2=1.0;
+        a1=0.25-xmu2;
+        q=c=a1;
+        a = -a1;
+        s=1.0+q*delh;
+        for (i=1;i<maxit;i++) {
+            a -= 2*i;
+            c = -a*c/(i+1.0);
+            qnew=(q1-b*q2)/a;
+            q1=q2;
+            q2=qnew;
+            q += c*qnew;
+            b += 2.0;
+            d=1.0/(b+a*d);
+            delh=(b*d-1.0)*delh;
+            h += delh;
+            dels=q*delh;
+            s += dels;
+            if (abs(dels/s) <= eps) break;
+        }
+        if (i >= maxit) WARNING("Failure to converge in cf2 in modified_bessel_IK");
+        h=a1*h;
+        rkmu=sqrt(M_PI/(2.0*x))*exp(-x)/s;
+        rk1=rkmu*(xmu+x+0.5-h)*xi;
+    }
+    //rkmup=xmu*xi*rkmu-rk1;
+    //rimu=xi/(f*rkmu-rkmup);
+    //I=(rimu*ril1)/ril;
+    //dI=(rimu*rip1)/ril;
+    for (i=1;i <= nl;i++) {
+        rktemp=(xmu+i)*xi2*rk1+rkmu;
+        rkmu=rk1;
+        rk1=rktemp;
+    }
+    K=rkmu;
+    //dK=n*xi*rkmu-rk1;
+    return K;
+}
+
+
+
 
 // ----------------------------------------------------------------------------
 //! \brief Chebychev evaluation adapted from the Numerical Recipes

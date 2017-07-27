@@ -239,7 +239,7 @@ void RadiationTables::compute_h_table(SmileiMPI *smpi)
         // Get the number of ranks
         nb_ranks = smpi->getSize();
 
-        // Allocation of the array integfochi_table
+        // Allocation of the array h_table
         h_table.resize(h_dim);
 
         // Allocation of the table for load repartition
@@ -456,7 +456,7 @@ void RadiationTables::compute_integfochi_table(SmileiMPI *smpi)
 //! considered negligible.
 //
 //! \param smpi Object of class SmileiMPI containing MPI properties
-// ---------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 {
 
@@ -697,12 +697,12 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //! Output the computed tables so that thay can be read at the next run.
 //
 //! \param params list of simulation parameters
 //! \param smpi MPI parameters
-// ---------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 void RadiationTables::compute_tables(Params& params, SmileiMPI *smpi)
 {
     // These tables are loaded only if if one species has Monte-Carlo Compton radiation
