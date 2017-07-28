@@ -7,6 +7,7 @@
 
 #include "Params.h"
 #include "Field2D.h"
+#include "cField2D.h"
 
 #include "Patch.h"
 #include <cstring>
