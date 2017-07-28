@@ -30,7 +30,7 @@ isYmax(patch->isYmax())
     initElectroMagn3DRZQuantities(params, patch);
     
     // Charge currents currents and density for each species
-    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+    for (unsigned int ispec=0; ispec<n_species*nmodes; ispec++) {
         Jx_s[ispec]  = new cField2D(("Jx_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
         Jy_s[ispec]  = new cField2D(("Jy_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
         Jz_s[ispec]  = new cField2D(("Jz_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
@@ -49,7 +49,7 @@ isYmax(patch->isYmax())
     initElectroMagn3DRZQuantities(params, patch);
     
     // Charge currents currents and density for each species
-    for (unsigned int ispec=0; ispec<n_species*2*nmodes; ispec++) {              // *2 for real and imaginary components, *nmodes for number of modes
+    for (unsigned int ispec=0; ispec<n_species*nmodes; ispec++) {
         if ( emFields->Jx_s[ispec] != NULL ) {
             if ( emFields->Jx_s[ispec]->data_ != NULL )
                 Jx_s[ispec]  = new cField2D(dimPrim, 0, false, emFields->Jx_s[ispec]->name);
@@ -86,11 +86,11 @@ void ElectroMagn3DRZ::initElectroMagn3DRZQuantities(Params &params, Patch* patch
 {
 
     // Species charge currents and density
-    Jx_s.resize(n_species*2*nmodes);
-    Jy_s.resize(n_species*2*nmodes);
-    Jz_s.resize(n_species*2*nmodes);
-    rho_s.resize(n_species*2*nmodes);
-    for (unsigned int ispec=0; ispec<n_species*2*nmodes; ispec++) {
+    Jx_s.resize(n_species*nmodes);
+    Jy_s.resize(n_species*nmodes);
+    Jz_s.resize(n_species*nmodes);
+    rho_s.resize(n_species*nmodes);
+    for (unsigned int ispec=0; ispec<n_species*nmodes; ispec++) {
         Jx_s[ispec]  = NULL;
         Jy_s[ispec]  = NULL;
         Jz_s[ispec]  = NULL;
@@ -403,70 +403,26 @@ void ElectroMagn3DRZ::centeringE( std::vector<double> E_Add )
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3DRZ::saveMagneticFields()
 {
-    // Static cast of the fields
-    cField2D* Bx2D   = static_cast<cField2D*>(Bx_);
-    cField2D* By2D   = static_cast<cField2D*>(By_);
-    cField2D* Bz2D   = static_cast<cField2D*>(Bz_);
-    cField2D* Bx2D_m = static_cast<cField2D*>(Bx_m);
-    cField2D* By2D_m = static_cast<cField2D*>(By_m);
-    cField2D* Bz2D_m = static_cast<cField2D*>(Bz_m);
+    for ( int imode=0 ; imode<nmodes ; imode++ ) {
+        // Static cast of the fields
+        cField2D* Bx3DRZ    = static_cast<cField2D*>(Bx_RZ_[imode]);
+        cField2D* By3DRZ    = static_cast<cField2D*>(By_RZ_[imode]);
+        cField2D* Bz3DRZ    = static_cast<cField2D*>(Bz_RZ_[imode]);
+        cField2D* Bx3D_RZ_m = static_cast<cField2D*>(Bx_RZ_m[imode]);
+        cField2D* By3D_RZ_m = static_cast<cField2D*>(By_RZ_m[imode]);
+        cField2D* Bz3D_RZ_m = static_cast<cField2D*>(Bz_RZ_m[imode]);
     
-    // Magnetic field Bx^(p,d,d)
-    memcpy(&((*Bx2D_m)(0,0)), &((*Bx2D)(0,0)),nx_p*ny_d*sizeof(double) );
+        // Magnetic field Bx^(p,d,d)
+        memcpy(&((*Bx3D_RZ_m)(0,0)), &((*Bx3DRZ)(0,0)),nx_p*ny_d*sizeof(complex<double>) );
     
-    // Magnetic field By^(d,p,d)
-    memcpy(&((*By2D_m)(0,0)), &((*By2D)(0,0)),nx_d*ny_p*sizeof(double) );
+        // Magnetic field By^(d,p,d)
+        memcpy(&((*By3D_RZ_m)(0,0)), &((*By3DRZ)(0,0)),nx_d*ny_p*sizeof(complex<double>) );
     
-    // Magnetic field Bz^(d,d,p)
-    memcpy(&((*Bz2D_m)(0,0)), &((*Bz2D)(0,0)),nx_d*ny_d*sizeof(double) );
+        // Magnetic field Bz^(d,d,p)
+        memcpy(&((*Bz3D_RZ_m)(0,0)), &((*Bz3DRZ)(0,0)),nx_d*ny_d*sizeof(complex<double>) );
+    }
 
 }//END saveMagneticFields
-
-
-
-//// ---------------------------------------------------------------------------------------------------------------------
-//// Solve the Maxwell-Ampere equation
-//// ---------------------------------------------------------------------------------------------------------------------
-//void ElectroMagn3DRZ::solveMaxwellAmpere()
-//{
-//    // Static-cast of the fields
-//    cField2D* Ex2D = static_cast<cField2D*>(Ex_);
-//    cField2D* Ey2D = static_cast<cField2D*>(Ey_);
-//    cField2D* Ez2D = static_cast<cField2D*>(Ez_);
-//    cField2D* Bx2D = static_cast<cField2D*>(Bx_);
-//    cField2D* By2D = static_cast<cField2D*>(By_);
-//    cField2D* Bz2D = static_cast<cField2D*>(Bz_);
-//    cField2D* Jx2D = static_cast<cField2D*>(Jx_);
-//    cField2D* Jy2D = static_cast<cField2D*>(Jy_);
-//    cField2D* Jz2D = static_cast<cField2D*>(Jz_);
-//    // Electric field Ex^(d,p,p)
-//    for (unsigned int i=0 ; i<nx_d ; i++) {
-//        for (unsigned int j=0 ; j<ny_p ; j++) {
-//            for (unsigned int k=0 ; k<nz_p ; k++) {
-//                (*Ex2D)(i,j) += -timestep*(*Jx2D)(i,j) + dt_ov_dy * ( (*Bz2D)(i,j+1) - (*Bz2D)(i,j) ) - dt_ov_dz * ( (*By2D)(i,j) - (*By2D)(i,j) );
-//            }
-//        }
-//    }
-//    
-//    // Electric field Ey^(p,d,p)
-//    for (unsigned int i=0 ; i<nx_p ; i++) {
-//        for (unsigned int j=0 ; j<ny_d ; j++) {
-//            for (unsigned int k=0 ; k<nz_p ; k++) {
-//                (*Ey2D)(i,j) += -timestep*(*Jy2D)(i,j) - dt_ov_dx * ( (*Bz2D)(i+1,j) - (*Bz2D)(i,j) ) + dt_ov_dz * ( (*Bx2D)(i,j) - (*Bx2D)(i,j) );
-//            }
-//        }
-//    }
-//    
-//    // Electric field Ez^(p,p,d)
-//    for (unsigned int i=0 ;  i<nx_p ; i++) {
-//        for (unsigned int j=0 ; j<ny_p ; j++) {
-//            for (unsigned int k=0 ; k<nz_d ; k++) {
-//                (*Ez2D)(i,j) += -timestep*(*Jz2D)(i,j) + dt_ov_dx * ( (*By2D)(i+1,j) - (*By2D)(i,j) ) - dt_ov_dy * ( (*Bx2D)(i,j+1) - (*Bx2D)(i,j) );
-//            }
-//        }
-//    }
-//
-//}//END solveMaxwellAmpere
 
 
 // Create a new field
@@ -492,35 +448,38 @@ Field * ElectroMagn3DRZ::createField(string fieldname)
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3DRZ::centerMagneticFields()
 {
-    // Static cast of the fields
-    cField2D* Bx2D   = static_cast<cField2D*>(Bx_);
-    cField2D* By2D   = static_cast<cField2D*>(By_);
-    cField2D* Bz2D   = static_cast<cField2D*>(Bz_);
-    cField2D* Bx2D_m = static_cast<cField2D*>(Bx_m);
-    cField2D* By2D_m = static_cast<cField2D*>(By_m);
-    cField2D* Bz2D_m = static_cast<cField2D*>(Bz_m);
-    
-    // Magnetic field Bx^(p,d,d)
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            (*Bx2D_m)(i,j) = ( (*Bx2D)(i,j) + (*Bx2D_m)(i,j) )*0.5;
-        }
-    }
-    
-    // Magnetic field By^(d,p,d)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*By2D_m)(i,j) = ( (*By2D)(i,j) + (*By2D_m)(i,j) )*0.5;
-        }
-    }
-    
-    // Magnetic field Bz^(d,d,p)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            (*Bz2D_m)(i,j) = ( (*Bz2D)(i,j) + (*Bz2D_m)(i,j) )*0.5;
-        } // end for j
-    } // end for i
+    for ( int imode=0 ; imode<nmodes ; imode++ ) {
 
+        // Static cast of the fields
+        cField2D* Bx3DRZ    = static_cast<cField2D*>(Bx_RZ_[imode]);
+        cField2D* By3DRZ    = static_cast<cField2D*>(By_RZ_[imode]);
+        cField2D* Bz3DRZ    = static_cast<cField2D*>(Bz_RZ_[imode]);
+        cField2D* Bx3D_RZ_m = static_cast<cField2D*>(Bx_RZ_m[imode]);
+        cField2D* By3D_RZ_m = static_cast<cField2D*>(By_RZ_m[imode]);
+        cField2D* Bz3D_RZ_m = static_cast<cField2D*>(Bz_RZ_m[imode]);
+    
+        // Magnetic field Bx^(p,d,d)
+        for (unsigned int i=0 ; i<nx_p ; i++) {
+            for (unsigned int j=0 ; j<ny_d ; j++) {
+                (*Bx3D_RZ_m)(i,j) = ( (*Bx3DRZ)(i,j) + (*Bx3D_RZ_m)(i,j) )*0.5;
+            }
+        }
+    
+        // Magnetic field By^(d,p,d)
+        for (unsigned int i=0 ; i<nx_d ; i++) {
+            for (unsigned int j=0 ; j<ny_p ; j++) {
+                (*By3D_RZ_m)(i,j) = ( (*By3DRZ)(i,j) + (*By3D_RZ_m)(i,j) )*0.5;
+            }
+        }
+    
+        // Magnetic field Bz^(d,d,p)
+        for (unsigned int i=0 ; i<nx_d ; i++) {
+            for (unsigned int j=0 ; j<ny_d ; j++) {
+                (*Bz3D_RZ_m)(i,j) = ( (*Bz3DRZ)(i,j) + (*Bz3D_RZ_m)(i,j) )*0.5;
+            } // end for j
+        } // end for i
+
+    }
     
 }//END centerMagneticFields
 
@@ -530,7 +489,7 @@ void ElectroMagn3DRZ::centerMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3DRZ::binomialCurrentFilter()
 {
-    ERROR("Binomial current filtering not yet implemented in 2D3V");
+    ERROR("Binomial current filtering not yet implemented in 3DRZ");
 }
 
 
@@ -540,45 +499,48 @@ void ElectroMagn3DRZ::binomialCurrentFilter()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3DRZ::computeTotalRhoJ()
 {
-    // static cast of the total currents and densities
-    cField2D* Jx2D    = static_cast<cField2D*>(Jx_);
-    cField2D* Jy2D    = static_cast<cField2D*>(Jy_);
-    cField2D* Jz2D    = static_cast<cField2D*>(Jz_);
-    cField2D* rho2D   = static_cast<cField2D*>(rho_);
+    for ( int imode=0 ; imode<nmodes ; imode++ ) {
+
+        // static cast of the total currents and densities
+        cField2D* Jx3DRZ    = static_cast<cField2D*>(Jx_RZ_[imode]);
+        cField2D* Jy3DRZ    = static_cast<cField2D*>(Jy_RZ_[imode]);
+        cField2D* Jz3DRZ    = static_cast<cField2D*>(Jz_RZ_[imode]);
+        cField2D* rho3DRZ   = static_cast<cField2D*>(rho_RZ_[imode]);    
     
-    
-    // -----------------------------------
-    // Species currents and charge density
-    // -----------------------------------
-    for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        if( Jx_s[ispec] ) {
-            cField2D* Jx2D_s  = static_cast<cField2D*>(Jx_s[ispec]);
-            for (unsigned int i=0 ; i<=nx_p ; i++)
-                for (unsigned int j=0 ; j<ny_p ; j++)
-                    (*Jx2D)(i,j) += (*Jx2D_s)(i,j);
-        }
-        if( Jy_s[ispec] ) {
-            cField2D* Jy2D_s  = static_cast<cField2D*>(Jy_s[ispec]);
-            for (unsigned int i=0 ; i<nx_p ; i++)
-                for (unsigned int j=0 ; j<=ny_p ; j++)
-                    (*Jy2D)(i,j) += (*Jy2D_s)(i,j);
-        }
-        if( Jz_s[ispec] ) {
-            cField2D* Jz2D_s  = static_cast<cField2D*>(Jz_s[ispec]);
-            for (unsigned int i=0 ; i<nx_p ; i++)
-                for (unsigned int j=0 ; j<ny_p ; j++)
-                    (*Jz2D)(i,j) += (*Jz2D_s)(i,j);
-        }
-        if( rho_s[ispec] ) {
-            cField2D* rho2D_s  = static_cast<cField2D*>(rho_s[ispec]);
-            for (unsigned int i=0 ; i<nx_p ; i++)
-                for (unsigned int j=0 ; j<ny_p ; j++)
-                    (*rho2D)(i,j) += (*rho2D_s)(i,j);
-        }
+        // -----------------------------------
+        // Species currents and charge density
+        // -----------------------------------
+        for (unsigned int ispec=imode*n_species; ispec<(imode*+1)*n_species; ispec++) {
+            if( Jx_s[ispec] ) {
+                cField2D* Jx2D_s  = static_cast<cField2D*>(Jx_s[ispec]);
+                for (unsigned int i=0 ; i<=nx_p ; i++)
+                    for (unsigned int j=0 ; j<ny_p ; j++)
+                        (*Jx3DRZ)(i,j) += (*Jx2D_s)(i,j);
+            }
+            if( Jy_s[ispec] ) {
+                cField2D* Jy2D_s  = static_cast<cField2D*>(Jy_s[ispec]);
+                for (unsigned int i=0 ; i<nx_p ; i++)
+                    for (unsigned int j=0 ; j<=ny_p ; j++)
+                        (*Jy3DRZ)(i,j) += (*Jy2D_s)(i,j);
+            }
+            if( Jz_s[ispec] ) {
+                cField2D* Jz2D_s  = static_cast<cField2D*>(Jz_s[ispec]);
+                for (unsigned int i=0 ; i<nx_p ; i++)
+                    for (unsigned int j=0 ; j<ny_p ; j++)
+                        (*Jz3DRZ)(i,j) += (*Jz2D_s)(i,j);
+            }
+            if( rho_s[ispec] ) {
+                cField2D* rho2D_s  = static_cast<cField2D*>(rho_s[ispec]);
+                for (unsigned int i=0 ; i<nx_p ; i++)
+                    for (unsigned int j=0 ; j<ny_p ; j++)
+                        (*rho3DRZ)(i,j) += (*rho2D_s)(i,j);
+            }
         
-    }//END loop on species ispec
-//END computeTotalRhoJ
-}
+        }//END loop on species ispec
+        
+    }//END loop on mmodes
+    
+} //END computeTotalRhoJ
 
 
 // ---------------------------------------------------------------------------------------------------------------------
