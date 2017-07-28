@@ -10,10 +10,7 @@
 #define MULTIPHOTONBREITWHEELERFACTORY_H
 
 #include "MultiphotonBreitWheeler.h"
-
 #include "Params.h"
-#include "Species.h"
-
 #include "Tools.h"
 
 //  ----------------------------------------------------------------------------

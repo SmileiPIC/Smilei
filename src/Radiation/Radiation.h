@@ -125,18 +125,6 @@ class Radiation
         // _________________________________________
         // Factors
 
-        //! Fine structure constant
-        const double fine_struct_cst = 7.2973525698e-3;
-
-        //! Reduced Planck Constant (J.s)
-        const double red_planck_cst = 1.054571628E-34;
-
-        //! Electron mass (kg)
-        const double electron_mass = 9.109382616e-31;
-
-        //! Speed of light in vacuum (m/s)
-        const double c_vacuum = 299792458;
-
         //! Normalized Schwinger Electric field
         double norm_E_Schwinger;
 

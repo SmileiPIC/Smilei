@@ -177,6 +177,7 @@ int main (int argc, char* argv[])
         }
 
         vecPatches.dynamics(params, smpi, simWindow, RadiationTables,
+                            MultiphotonBreitWheelerTables,
                             time_dual, timers, 0);
         timers.particles.reboot();
         timers.syncPart .reboot();
@@ -244,6 +245,7 @@ int main (int argc, char* argv[])
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
             vecPatches.dynamics(params, smpi, simWindow, RadiationTables,
+                                MultiphotonBreitWheelerTables,
                                 time_dual, timers, itime);
 
             // Sum densities

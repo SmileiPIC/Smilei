@@ -9,8 +9,8 @@
 //! See http://www.theses.fr/2015BORD0361
 // ----------------------------------------------------------------------------
 
-#ifndef RADIATIONNLICSMC_H
-#define RADIATIONNLICSMC_H
+#ifndef RADIATIONMONTECARLO_H
+#define RADIATIONMONTECARLO_H
 
 #include "RadiationTables.h"
 #include "Radiation.h"

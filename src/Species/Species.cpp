@@ -65,7 +65,8 @@ tracking_diagnostic(10000),
 nDim_particle(params.nDim_particle),
 min_loc(patch->getDomainLocalMin(0)),
 radiation_photons("none"),
-multiphoton_Breit_Wheeler(2,"none")
+multiphoton_Breit_Wheeler(2,"none"),
+mBW_pair_creation_sampling(2,1)
 //photon_species_index(-1),
 //photon_species(NULL)
 {
@@ -488,6 +489,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                        PartWalls* partWalls,
                        Patch* patch, SmileiMPI* smpi,
                        RadiationTables & RadiationTables,
+                       MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                        vector<Diagnostic*>& localDiags)
 {
     int ithread;
@@ -549,6 +551,30 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
                 // Update the quantum parameter chi
                 (*Radiate).compute_thread_chipa(*particles,
+                                                smpi,
+                                                bmin[ibin],
+                                                bmax[ibin],
+                                                ithread );
+            }
+
+            // Multiphoton Breit-Wheeler
+            if (Multiphoton_Breit_Wheeler_process)
+            {
+                // Radiation process
+                (*Multiphoton_Breit_Wheeler_process)(*particles,
+                         smpi,
+                         MultiphotonBreitWheelerTables,
+                         bmin[ibin], bmax[ibin], ithread );
+
+                for (int k; k<2; k++) {
+                 mBW_pair_species[k]->importParticles(params,
+                                                 patch,
+                                                 Multiphoton_Breit_Wheeler_process->new_pair[k],
+                                                 localDiags);
+                }
+
+                // Update the photon quantum parameter chi of all particles
+                (*Multiphoton_Breit_Wheeler_process).compute_thread_chiph(*particles,
                                                 smpi,
                                                 bmin[ibin],
                                                 bmax[ibin],

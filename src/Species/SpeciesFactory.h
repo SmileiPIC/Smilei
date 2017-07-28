@@ -164,28 +164,28 @@ public:
             }
         }
 
-        thisSpecies->particles->isQuantumParameter = true;
-        thisSpecies->particles->isMonteCarlo = true;
-
         // Multiphoton Breit-Wheeler
         if (mass == 0)
         {
             PyTools::extract("multiphoton_Breit_Wheeler", thisSpecies->multiphoton_Breit_Wheeler, "Species",ispec);
             // If the first species is not empty
-            if (thisSpecies->multiphoton_Breit_Wheeler[0] == "")
+            if (thisSpecies->multiphoton_Breit_Wheeler[0] == "" ||
+               (thisSpecies->multiphoton_Breit_Wheeler[1] == "" && thisSpecies->multiphoton_Breit_Wheeler[0] != "none"))
             {
                 ERROR("For species '" << species_type << "' multiphoton_Breit_Wheeler can not be empty, select electron and positron species.");
             }
             // Else If the first species is not none which means no process
             else if (thisSpecies->multiphoton_Breit_Wheeler[0] != "none")
             {
-                if (thisSpecies->multiphoton_Breit_Wheeler[1] == "")
-                {
-                    ERROR("For species '" << species_type << "' multiphoton_Breit_Wheeler can not be empty, select electron and positron species.");
-                }
-                else if (thisSpecies->multiphoton_Breit_Wheeler[1] != "none")
+                if (thisSpecies->multiphoton_Breit_Wheeler[1] != "none")
                 {
                     // Activation of the additional variables
+                    thisSpecies->particles->isQuantumParameter = true;
+                    thisSpecies->particles->isMonteCarlo = true;
+
+                    thisSpecies->mBW_pair_creation_sampling.resize(2);
+                    PyTools::extract("multiphoton_Breit_Wheeler_sampling",
+                                     thisSpecies->mBW_pair_creation_sampling, "Species",ispec);
 
                     MESSAGE(2,"> Decay into pair via the multiphoton Breit-Wheeler activated");
                     MESSAGE(2,"> Generated electrons and positrons go to species: "
@@ -522,8 +522,12 @@ public:
         newSpecies->temperatureProfile[2] = new Profile(species->temperatureProfile[2]);
         newSpecies->max_charge            = species->max_charge;
         newSpecies->tracking_diagnostic   = species->tracking_diagnostic;
-        newSpecies->multiphoton_Breit_Wheeler[0]   = species->multiphoton_Breit_Wheeler[0];
-        newSpecies->multiphoton_Breit_Wheeler[1]   = species->multiphoton_Breit_Wheeler[1];
+        if (newSpecies->mass==0) {
+            newSpecies->multiphoton_Breit_Wheeler[0]   = species->multiphoton_Breit_Wheeler[0];
+            newSpecies->multiphoton_Breit_Wheeler[1]   = species->multiphoton_Breit_Wheeler[1];
+            newSpecies->mBW_pair_creation_sampling[0] = species->mBW_pair_creation_sampling[0];
+            newSpecies->mBW_pair_creation_sampling[1] = species->mBW_pair_creation_sampling[1];
+        }
 
         newSpecies->particles->isTest              = species->particles->isTest;
         newSpecies->particles->tracked             = species->particles->tracked;
@@ -653,6 +657,11 @@ public:
                             }
                             retSpecies[ispec1]->mBW_pair_species_index[k] = ispec2;
                             retSpecies[ispec1]->mBW_pair_species[k] = retSpecies[ispec2];
+                            retSpecies[ispec1]->Multiphoton_Breit_Wheeler_process->new_pair[k].tracked = retSpecies[ispec1]->mBW_pair_species[k]->particles->tracked;
+                            retSpecies[ispec1]->Multiphoton_Breit_Wheeler_process->new_pair[k].isQuantumParameter = retSpecies[ispec1]->mBW_pair_species[k]->particles->isQuantumParameter;
+                            retSpecies[ispec1]->Multiphoton_Breit_Wheeler_process->new_pair[k].isMonteCarlo = retSpecies[ispec1]->mBW_pair_species[k]->particles->isMonteCarlo;
+                            retSpecies[ispec1]->Multiphoton_Breit_Wheeler_process->new_pair[k].initialize(0,
+                                                                                params.nDim_particle );
                             retSpecies[ispec2]->particles->reserve(retSpecies[ispec1]->getNbrOfParticles(),
                                                                    retSpecies[ispec2]->particles->dimension() );
                         }
@@ -712,12 +721,18 @@ public:
         for (unsigned int i=0; i<retSpecies.size(); i++)
         {
             if (retSpecies[i]->Multiphoton_Breit_Wheeler_process) {
-                retSpecies[i]->multiphoton_Breit_Wheeler[0] = vecSpecies[i]->multiphoton_Breit_Wheeler[0];
-                retSpecies[i]->multiphoton_Breit_Wheeler[1] = vecSpecies[i]->multiphoton_Breit_Wheeler[1];
-                retSpecies[i]->mBW_pair_species_index[0] = vecSpecies[i]->mBW_pair_species_index[0];
-                retSpecies[i]->mBW_pair_species_index[1] = vecSpecies[i]->mBW_pair_species_index[1];
-                retSpecies[i]->mBW_pair_species[0] = retSpecies[retSpecies[i]->mBW_pair_species_index[0]];
-                retSpecies[i]->mBW_pair_species[1] = retSpecies[retSpecies[i]->mBW_pair_species_index[1]];
+                // Loop on pairs
+                for (int k=0;k<2;k++)
+                {
+                    retSpecies[i]->multiphoton_Breit_Wheeler[k] = vecSpecies[i]->multiphoton_Breit_Wheeler[k];
+                    retSpecies[i]->mBW_pair_species_index[k] = vecSpecies[i]->mBW_pair_species_index[k];
+                    retSpecies[i]->mBW_pair_species[k] = retSpecies[retSpecies[i]->mBW_pair_species_index[k]];
+                    retSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair[k].tracked = retSpecies[i]->mBW_pair_species[k]->particles->tracked;
+                    retSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair[k].isQuantumParameter = retSpecies[i]->mBW_pair_species[k]->particles->isQuantumParameter;
+                    retSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair[k].isMonteCarlo = retSpecies[i]->mBW_pair_species[k]->particles->isMonteCarlo;
+                    retSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair[k].initialize(
+                                        0,params.nDim_particle );
+                }
             }
             else
             {

@@ -148,6 +148,7 @@ public:
                           Projector* proj, Params &params, bool diag_flag,
                           PartWalls* partWalls, Patch* patch, SmileiMPI* smpi,
                           RadiationTables &RadiationTables,
+                          MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                           std::vector<Diagnostic*>& localDiags);
 
     //! Method calculating the Particle charge on the grid (projection)
@@ -211,6 +212,8 @@ public:
     //! Index of the species where electron-positron pairs
     //! from the multiphoton Breit-Wheeler go
     int mBW_pair_species_index[2];
+    //! Number of created pairs per event and per photons
+    std::vector<int> mBW_pair_creation_sampling;
 
     //! Cluster width in number of cells
     unsigned int clrw; //Should divide the number of cells in X of a single MPI domain.

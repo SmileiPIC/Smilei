@@ -249,6 +249,7 @@ class Species(SmileiComponent):
     radiation_photons = "none"
     radiation_photon_sampling = 1
     multiphoton_Breit_Wheeler = ["none","none"]
+    multiphoton_Breit_Wheeler_sampling = [1,1]
     time_frozen = 0.0
     bc_part_type_xmin = None
     bc_part_type_xmax = None

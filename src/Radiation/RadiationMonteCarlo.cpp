@@ -392,6 +392,16 @@ void RadiationMonteCarlo::photon_emission(int ipart,
             new_photons.weight(idNew)=weight[ipart]*inv_radiation_photon_sampling;
             new_photons.charge(idNew)=0;
 
+            if (new_photons.isQuantumParameter)
+            {
+                new_photons.chi(idNew) = chiph;
+            }
+
+            if (new_photons.isMonteCarlo)
+            {
+                new_photons.tau(idNew) = -1.;
+            }
+
         }
 
     }

@@ -16,6 +16,7 @@
 #include <string>
 
 #include "MultiphotonBreitWheelerTables.h"
+#include "Params.h"
 
 //  ----------------------------------------------------------------------------
 //! Class Radiation
@@ -84,6 +85,26 @@ class MultiphotonBreitWheeler
                 int iend,
                 int ithread);
 
+        //! Perform the creation of pairs from a photon
+        //! \param ipart              photon index
+        //! \param chipa              photon quantum parameter
+        //! \param gammapa            photon normalized energy
+        //! \param position           photon position
+        //! \param momentum           photon momentum
+        //! \param MultiphotonBreitWheelerTables    Cross-section data tables
+        //!                       and useful functions
+        //!                       for the multiphoton Breit-Wheeler process
+        void pair_emission(int ipart,
+                           double &chiph,
+                           double & gammaph,
+                            double * position[3],
+                            double * momentum[3],
+                            double * weight,
+                            MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables);
+
+        // Local array of new pairs of electron-positron
+        Particles new_pair[2];
+
     private:
 
         // ________________________________________
@@ -94,6 +115,12 @@ class MultiphotonBreitWheeler
 
         //! Time step
         double dt;
+
+        // Number of pairs created per even
+        int mBW_pair_creation_sampling[2];
+
+        // Inverse of the number of pairs created per even
+        double mBW_pair_creation_inv_sampling[2];
 
         // _________________________________________
         // Factors

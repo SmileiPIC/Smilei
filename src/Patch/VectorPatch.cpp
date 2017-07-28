@@ -99,6 +99,7 @@ void VectorPatch::dynamics(Params& params,
                            SmileiMPI* smpi,
                            SimWindow* simWindow,
                            RadiationTables & RadiationTables,
+                           MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                            double time_dual, Timers &timers, int itime)
 {
 
@@ -117,6 +118,7 @@ void VectorPatch::dynamics(Params& params,
                                                  params, diag_flag, partwalls(ipatch),
                                                  (*this)(ipatch), smpi,
                                                  RadiationTables,
+                                                 MultiphotonBreitWheelerTables,
                                                  localDiags);
             }
         }

@@ -119,6 +119,8 @@ double MultiphotonBreitWheelerTables::compute_dNBWdt(double chiph, double gamma)
     double logchiphp;
     // Index
     int ichiph;
+    // final value
+    double dNBWdt;
 
     // ________________________________________
     // Computation
@@ -128,6 +130,32 @@ double MultiphotonBreitWheelerTables::compute_dNBWdt(double chiph, double gamma)
     // Lower index for interpolation in the table integfochi
     ichiph = int(floor((logchiph-T_log10_chiph_min)
                  *T_chiph_inv_delta));
+
+     // If chiph is below the lower bound of the table
+     // An asymptotic approximation is used
+     if (ichiph < 0)
+     {
+         ichiph = 0;
+         dNBWdt = 0.46*exp(-8./(3.*chiph));
+     }
+     // If chiph is above the upper bound of the table
+     // An asymptotic approximation is used
+     else if (ichiph >= T_dim-1)
+     {
+        ichiph = T_dim-2;
+        dNBWdt = 0.38*pow(chiph,-1./3.);
+     }
+     else
+     {
+         // Upper and lower values for linear interpolation
+         logchiphm = ichiph*T_chiph_delta + T_log10_chiph_min;
+         logchiphp = logchiphm + T_chiph_delta;
+
+         // Interpolation
+         dNBWdt = (T_table[ichiph+1]*fabs(logchiph-logchiphm) +
+                 T_table[ichiph]*fabs(logchiphp - logchiph))*T_chiph_inv_delta;
+     }
+     return factor_dNBWdt*dNBWdt*chiph/gamma;
 }
 
 // -----------------------------------------------------------------------------

@@ -261,9 +261,10 @@ double userFunctions::modified_bessel_K(double n, double x,
 
     const double xmin=2.0;
     const double fpmin = 1.e-100;
-    double a,a1,b,c,d,del,del1,delh,dels,e,f,fact,fact2,ff,gam1,gam2;
-    double gammi,gampl,h,p,pimu,q,q1,q2,qnew,ril,ril1,rimu,rip1,ripl;
-    double ritemp,rk1,rkmu,rkmup,rktemp,s,sum,sum1,x2,xi,xi2,xmu,xmu2,xx;
+    double a,a1,b,c,d,del,del1,delh,dels,e,fact,fact2,ff,gam1,gam2;
+    double gammi,gampl,h,p,pimu,q,q1,q2,qnew,ril,ripl;
+    double ritemp,rk1,rkmu,rktemp,s,sum,sum1,x2,xi,xi2,xmu,xmu2,xx;
+    // double f,ril1,rimu,rip1,rkmup;
 
     long i,l,nl;
 
@@ -319,8 +320,8 @@ double userFunctions::modified_bessel_K(double n, double x,
 
     ril=fpmin;
     ripl=h*ril;
-    ril1=ril;
-    rip1=ripl;
+    //ril1=ril;
+    //rip1=ripl;
     fact=n*xi;
     for (l=nl-1;l >= 0;l--) {
         ritemp=fact*ril+ripl;
@@ -329,7 +330,7 @@ double userFunctions::modified_bessel_K(double n, double x,
         ril=ritemp;
     }
 
-    f=ripl/ril;
+    //f=ripl/ril;
     if (x < xmin) {
         x2=0.5*x;
         pimu=M_PI*xmu;
