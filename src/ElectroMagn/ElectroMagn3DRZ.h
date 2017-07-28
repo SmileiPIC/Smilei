@@ -8,7 +8,7 @@
 class Params;
 
 //! class ElectroMagn3D containing all information on the electromagnetic fields & currents for 3d3v simulations
-class ElectroMagn3D : public ElectroMagn
+class ElectroMagn3DRZ : public ElectroMagn
 {
 public:
     //! Constructor for ElectroMagn3DRZ
@@ -37,7 +37,7 @@ public:
     double getEy_XmaxYmin() { return 0.; }
   
     //! Total number of modes in Fourier poloidal decomposition.
-    constant unsigned int nmodes = 2;
+    const unsigned int nmodes = 2;
 
 //    //! Method used to solve Maxwell-Ampere equation
 //    void solveMaxwellAmpere();

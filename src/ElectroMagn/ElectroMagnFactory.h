@@ -6,6 +6,7 @@
 #include "ElectroMagn1D.h"
 #include "ElectroMagn2D.h"
 #include "ElectroMagn3D.h"
+#include "ElectroMagn3DRZ.h"
 #include "ElectroMagnBC.h"
 
 #include "Patch.h"
