@@ -54,8 +54,8 @@ class Diagnostic(object):
 		
 		# Make or retrieve the Units object
 		self.units = kwargs.pop("units", [""])
-		if type(self.units) in [list, tuple]: self.units = Units(*self.units)
-		if type(self.units) is dict         : self.units = Units(**self.units)
+		if type(self.units) in [list, tuple]: self.units = Units(*self.units , verbose = self.Smilei._verbose)
+		if type(self.units) is dict         : self.units = Units(verbose = self.Smilei._verbose, **self.units)
 		if type(self.units) is not Units:
 			print("Could not understand the 'units' argument")
 			return
