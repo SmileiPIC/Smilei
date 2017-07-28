@@ -68,9 +68,6 @@ public:
     //! Virtual method to deallocate Field
     virtual void deallocateDims() = 0;
     
-    //! Virtual method used to make a dump of the Field data
-    virtual void dump(std::vector<unsigned int> dims) = 0;
-    
     //! Virtual method to shift field in space
     virtual void shift_x(unsigned int delta) = 0;
     

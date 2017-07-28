@@ -171,9 +171,6 @@ public:
     //! Constructor for Electromagn
     ElectroMagn( Params &params, Patch* patch );
     
-    //! Method used to dump data contained in ElectroMagn
-    void dump();
-    
     //! Method used to initialize the total charge currents and densities
     void restartRhoJ();
     //! Method used to initialize the total charge currents and densities of species

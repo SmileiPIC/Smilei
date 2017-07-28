@@ -4,6 +4,7 @@
 #include "ElectroMagn.h"
 #include "Field.h"
 #include "Field2D.h"
+#include "cField2D.h"
 
 class Params;
 
@@ -17,7 +18,21 @@ public:
 
     //! Destructor for ElectroMagn3DRZ
     ~ElectroMagn3DRZ();
-    
+
+    std::vector<cField2D*> Ex_RZ_;
+    std::vector<cField2D*> Ey_RZ_;
+    std::vector<cField2D*> Ez_RZ_;
+    std::vector<cField2D*> Bx_RZ_;
+    std::vector<cField2D*> By_RZ_;
+    std::vector<cField2D*> Bz_RZ_;
+    std::vector<cField2D*> Bx_RZ_m;
+    std::vector<cField2D*> By_RZ_m;
+    std::vector<cField2D*> Bz_RZ_m;
+    std::vector<cField2D*> Jx_RZ_;
+    std::vector<cField2D*> Jy_RZ_;
+    std::vector<cField2D*> Jz_RZ_;
+    std::vector<cField2D*> rho_RZ_;
+
     void initPoisson(Patch *patch);
     double compute_r();
     void compute_Ap(Patch *patch);
