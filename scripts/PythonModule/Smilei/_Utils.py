@@ -149,8 +149,9 @@ class Units(object):
 			from pint import UnitRegistry
 			self.UnitRegistry = UnitRegistry
 		except:
-			print("WARNING: you do not have the *pint* package, so you cannot modify units.")
-			print("       : The results will stay in code units.")
+			if self.Smilei._verbose:
+				print("WARNING: you do not have the *pint* package, so you cannot modify units.")
+				print("       : The results will stay in code units.")
 			return
 	
 	def _divide(self,units1, units2):

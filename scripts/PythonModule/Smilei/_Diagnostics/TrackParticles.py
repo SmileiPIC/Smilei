@@ -162,7 +162,7 @@ class TrackParticles(Diagnostic):
 						i+=1
 				nOperations = len(seltype)
 				# Execute the selector
-				print("Selecting particles ... (this may take a while)")
+				if self.Smilei._verbose: print("Selecting particles ... (this may take a while)")
 				if len(operation)==0.:
 					self.selectedParticles = self._np.s_[:]
 				else:
@@ -197,7 +197,7 @@ class TrackParticles(Diagnostic):
 							# Loop times
 							times = eval(timeSelector[k])
 							for time in times:
-								print("   Selecting block `"+selstr[k]+")`, at time "+str(time))
+								if self.Smilei._verbose: print("   Selecting block `"+selstr[k]+")`, at time "+str(time))
 								# Extract required properties
 								it = self._locationForTime[time]
 								for prop in requiredProps:
@@ -239,7 +239,7 @@ class TrackParticles(Diagnostic):
 			if self.nselectedParticles == 0:
 				self._error = "No particles found"
 				return
-			print("Kept "+str(self.nselectedParticles)+" particles")
+			if self.Smilei._verbose: print("Kept "+str(self.nselectedParticles)+" particles")
 		
 		# Manage axes
 		# -------------------------------------------------------------------
@@ -330,7 +330,7 @@ class TrackParticles(Diagnostic):
 	
 	# Make the particles ordered by Id in the file, in case they are not
 	def _orderFiles( self, filesDisordered, fileOrdered, chunksize ):
-		print("Ordering particles ... (this could take a while)")
+		if self.Smilei._verbose: print("Ordering particles ... (this could take a while)")
 		try:
 			properties = {"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
 			              "momentum/x":"px", "momentum/y":"py", "momentum/z":"pz",
@@ -348,7 +348,7 @@ class TrackParticles(Diagnostic):
 			last_file_index, tname = time_locations[times[-1]]
 			f = self._h5py.File(filesDisordered[last_file_index], "r")
 			number_of_particles = (f["data"][tname]["latest_IDs"].value % (2**32)).astype('uint32')
-			print("Number of particles: "+str(number_of_particles.sum()))
+			if self.Smilei._verbose: print("Number of particles: "+str(number_of_particles.sum()))
 			# Calculate the offset that each MPI needs
 			offset = self._np.cumsum(number_of_particles)
 			total_number_of_particles = offset[-1]
@@ -374,7 +374,7 @@ class TrackParticles(Diagnostic):
 				# Skip previously-ordered times
 				if it<=latestOrdered: continue
 				
-				print("    Ordering @ timestep = "+str(t))
+				if self.Smilei._verbose: print("    Ordering @ timestep = "+str(t))
 				file_index, tname = time_locations[t]
 				f = self._h5py.File(filesDisordered[file_index], "r")
 				group = f["data"][tname]["particles"][self.species]
@@ -444,7 +444,7 @@ class TrackParticles(Diagnostic):
 		except:
 			print("Error in the ordering of the tracked particles")
 			raise
-		print("Ordering succeeded")
+		if self.Smilei._verbose: print("Ordering succeeded")
 	
 	# Method to generate the raw data (only done once)
 	def _generateRawData(self, times=None):
@@ -455,7 +455,7 @@ class TrackParticles(Diagnostic):
 			if self._rawData is None:
 				self._rawData = {}
 				
-				print("Preparing data ...")
+				if self.Smilei._verbose: print("Preparing data ...")
 				# create dictionary with info on the axes
 				ntimes = len(self.times)
 				for axis in self.axes:
@@ -468,13 +468,13 @@ class TrackParticles(Diagnostic):
 					else:
 						self._rawData[axis] = self._np.empty((ntimes, self.nselectedParticles), dtype=(self._np.double))
 						self._rawData[axis].fill(self._np.nan)
-				print("Loading data ...")
+				if self.Smilei._verbose: print("Loading data ...")
 				# loop times and fill up the data
 				ID = self._np.zeros((self.nselectedParticles,), dtype=self._np.uint64)
 				data_double = self._np.zeros((self.nselectedParticles,), dtype=self._np.double)
 				data_int16  = self._np.zeros((self.nselectedParticles,), dtype=self._np.int16 )
 				for it, time in enumerate(self.times):
-					print("     iteration "+str(it+1)+"/"+str(ntimes)+"  (timestep "+str(time)+")")
+					if self.Smilei._verbose: print("     iteration "+str(it+1)+"/"+str(ntimes)+"  (timestep "+str(time)+")")
 					timeIndex = self._locationForTime[time]
 					self._h5items["Id"].read_direct(ID, source_sel=self._np.s_[timeIndex,self.selectedParticles]) # read the particle Ids
 					deadParticles = (ID==0).nonzero()
@@ -488,7 +488,7 @@ class TrackParticles(Diagnostic):
 							self._h5items[axis].read_direct(data_double, source_sel=self._np.s_[timeIndex,self.selectedParticles])
 							data_double[deadParticles]=self._np.nan
 							self._rawData[axis][it, :] = data_double.squeeze()
-				print("Process broken lines ...")
+				if self.Smilei._verbose: print("Process broken lines ...")
 				# Add the lineBreaks array which indicates where lines are broken (e.g. loop around the box)
 				self._rawData['brokenLine'] = self._np.zeros((self.nselectedParticles,), dtype=bool)
 				self._rawData['lineBreaks'] = {}
@@ -510,14 +510,14 @@ class TrackParticles(Diagnostic):
 									self._rawData['lineBreaks'][broken_particle] = broken_times
 				# Add the times array
 				self._rawData["times"] = self.times
-				print("... done")
+				if self.Smilei._verbose: print("... done")
 			
 		# If not sorted, get different kind of data
 		else:
 			if self._rawData is None:
 				self._rawData = {}
 			
-			print("Loading data ...")
+			if self.Smilei._verbose: print("Loading data ...")
 			properties = {"Id":"id", "x":"position/x", "y":"position/y", "z":"position/z",
 			              "px":"momentum/x", "py":"momentum/y", "pz":"momentum/z",
 			              "q":"charge", "w":"weight"}
@@ -530,7 +530,7 @@ class TrackParticles(Diagnostic):
 				for axis in self.axes:
 					self._rawData[time][axis] = group[properties[axis]].value
 			
-			print("... done")
+			if self.Smilei._verbose: print("... done")
 
 	# We override the get and getData methods
 	def getData(self, timestep=None):
