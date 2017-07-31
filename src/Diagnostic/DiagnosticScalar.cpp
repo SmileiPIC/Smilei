@@ -132,13 +132,14 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     // -------------------------------------------------------------------------
 
     // General scalars
-    necessary_Ubal_norm = allowedKey("Ubal_norm");
-    necessary_Ubal    = necessary_Ubal_norm || allowedKey("Ubal");
-    necessary_Utot    = necessary_Ubal || allowedKey("Utot");
-    necessary_Uexp    = necessary_Ubal || allowedKey("Uexp");
-    necessary_Ukin    = necessary_Utot || allowedKey("Ukin");
-    necessary_Uelm    = necessary_Utot || allowedKey("Uelm");
-    necessary_Urad    = necessary_Utot || allowedKey("Urad");
+    necessary_Ubal_norm  = allowedKey("Ubal_norm");
+    necessary_Ubal       = necessary_Ubal_norm || allowedKey("Ubal");
+    necessary_Utot       = necessary_Ubal || allowedKey("Utot");
+    necessary_Uexp       = necessary_Ubal || allowedKey("Uexp");
+    necessary_Ukin       = necessary_Utot || allowedKey("Ukin");
+    necessary_Uelm       = necessary_Utot || allowedKey("Uelm");
+    necessary_Urad       = necessary_Utot || allowedKey("Urad");
+    necessary_UmBWpairs  = allowedKey("UmBWpairs");
     necessary_Ukin_BC = necessary_Uexp || allowedKey("Ukin_bnd") || allowedKey("Ukin_out_mvw") || allowedKey("Ukin_inj_mvw");
     necessary_Uelm_BC = necessary_Uexp || allowedKey("Uelm_bnd") || allowedKey("Uelm_out_mvw") || allowedKey("Uelm_inj_mvw");
     // Species
@@ -152,7 +153,8 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
                                                       || allowedKey("Ntot_"+species_type)
                                                       || allowedKey("Zavg_"+species_type)
                                                       || allowedKey("Ukin_"+species_type)
-                                                      || allowedKey("Urad_"+species_type);
+                                                      || allowedKey("Urad_"+species_type)
+                                                      || allowedKey("UmBWpairs");
         }
     }
     // Fields
@@ -197,6 +199,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     Uexp         = newScalar_SUM( "Uexp"         );
     Ukin         = newScalar_SUM( "Ukin"         );
     Urad         = newScalar_SUM( "Urad"         );  // Radiated energy
+    UmBWpairs    = newScalar_SUM( "UmBWpairs"    );  // multiphoton Breit-Wheeler
     Uelm         = newScalar_SUM( "Uelm"         );
     Ukin_bnd     = newScalar_SUM( "Ukin_bnd"     );
     Ukin_out_mvw = newScalar_SUM( "Ukin_out_mvw" );
@@ -347,6 +350,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     // ------------------------
     double Ukin_=0.;             // total (kinetic) energy carried by particles (test-particles do not contribute)
     double Urad_=0.;             // total radiated energy by particles
+    double UmBWpairs_=0;         // total enegy converted into pairs via the multiphoton Breit-Wheeler
     double Ukin_bnd_=0.;         // total energy lost by particles due to boundary conditions
     double Ukin_out_mvw_=0.;     // total energy lost due to particles being suppressed by the moving-window
     double Ukin_inj_mvw_=0.;     // total energy added due to particles created by the moving-window
@@ -405,6 +409,16 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
                 Urad_ += cell_volume*
                          vecSpecies[ispec]->getNrjRadiation();
             }
+
+            // If multiphoton Breit-Wheeler activated for photons
+            // increment the total pair energy from this process
+            if (vecSpecies[ispec]->Multiphoton_Breit_Wheeler_process)
+            {
+                UmBWpairs_ += cell_volume*
+                                 vecSpecies[ispec]
+                                 ->getNrjRadiation();
+            }
+
         }
 
         if( necessary_Ukin_BC ) {
@@ -435,6 +449,9 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     }
     if( necessary_Urad ) {
         *Urad += Urad_;
+    }
+    if( necessary_UmBWpairs ) {
+        *UmBWpairs += UmBWpairs_;
     }
     if( necessary_Ukin_BC ) {
         *Ukin_bnd     += Ukin_bnd_     ;

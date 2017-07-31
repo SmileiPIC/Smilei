@@ -113,6 +113,12 @@ class MultiphotonBreitWheeler
                         int istart,
                         int iend);
 
+        //! Return the pair converted energy
+        double inline getPairEnergy(void)
+        {
+            return pair_converted_energy;
+        }
+
         // Local array of new pairs of electron-positron
         Particles new_pair[2];
 
@@ -132,6 +138,9 @@ class MultiphotonBreitWheeler
 
         // Inverse of the number of pairs created per even
         double mBW_pair_creation_inv_sampling[2];
+
+        //! Energy lost after conversion into pairs
+        double pair_converted_energy;
 
         // _________________________________________
         // Factors

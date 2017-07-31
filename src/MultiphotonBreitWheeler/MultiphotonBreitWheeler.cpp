@@ -156,6 +156,9 @@ void MultiphotonBreitWheeler::operator() (
     // Photon id
     // uint64_t * id = &( particles.id(0));
 
+    // Total energy converted into pairs for this species during this timestep
+    this->pair_converted_energy = 0;
+
     // _______________________________________________________________
     // Computation
 
@@ -291,7 +294,7 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
         // Momentum
         for (int i=0; i<3; i++) {
             new_pair[0].momentum(i,idNew) =
-            sqrt(pow(0.5*(gammaph-2),2)-1)*u[i];
+            sqrt(pow(0.5*(gammaph),2)-1)*u[i];
         }
 
         new_pair[0].weight(idNew)=weight[ipart]*mBW_pair_creation_inv_sampling[0];
@@ -331,7 +334,7 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
         // Momentum
         for (int i=0; i<3; i++) {
             new_pair[1].momentum(i,idNew) =
-            sqrt(pow(0.5*(gammaph-2),2)-1)*u[i];
+            sqrt(pow(0.5*(gammaph),2)-1)*u[i];
         }
 
         new_pair[1].weight(idNew)=weight[ipart]*mBW_pair_creation_inv_sampling[1];
@@ -348,8 +351,10 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
         }
     }
 
+    // Total energy converted into pairs during the current timestep
+    this->pair_converted_energy += weight[ipart]*gammaph;
+
     // The photon with negtive weight will be deleted latter
-    std::cerr << "Pair creation" << std::endl;
     weight[ipart] = -1;
 
 }
@@ -406,11 +411,11 @@ void MultiphotonBreitWheeler::decayed_photon_cleaning(
         }
 
         // Removal of the photons
-        if (last_photon_index+1 <= iend-1)
+        /*if (last_photon_index+1 <= iend-1)
         {
             std::cerr << "Photon cleaning: " << last_photon_index+1
                       << " " << iend-1 << std::endl;
-        }
+        }*/
         particles.erase_particle_trail(last_photon_index+1);
     }
 }

@@ -557,6 +557,10 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                          MultiphotonBreitWheelerTables,
                          bmin[ibin], bmax[ibin], ithread );
 
+                 // Update scalar variable for diagnostics
+                 // We reuse nrj_radiation for the pairs
+                 nrj_radiation += (*Multiphoton_Breit_Wheeler_process).getPairEnergy();
+
                  // Update the photon quantum parameter chi of all photons
                  (*Multiphoton_Breit_Wheeler_process).compute_thread_chiph(*particles,
                                                  smpi,
