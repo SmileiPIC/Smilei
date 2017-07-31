@@ -102,6 +102,17 @@ class MultiphotonBreitWheeler
                             double * weight,
                             MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables);
 
+        //! Clean photons that decayed into pairs (weight <= 0)
+        //! \param particles   particle object containing the particle
+        //!                    properties of the current species
+        //! \param istart      Index of the first particle
+        //! \param iend        Index of the last particle
+        //! \param ithread     Thread index
+        void decayed_photon_cleaning(
+                        Particles &particles,
+                        int istart,
+                        int iend);
+
         // Local array of new pairs of electron-positron
         Particles new_pair[2];
 

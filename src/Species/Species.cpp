@@ -537,15 +537,6 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                          RadiationTables,
                          bmin[ibin], bmax[ibin], ithread );
 
-                // If creation of macro-photon, we add them to photon_species
-                if (photon_species)
-                {
-                    photon_species->importParticles(params,
-                                                    patch,
-                                                    Radiate->new_photons,
-                                                    localDiags);
-                }
-
                 // Update scalar variable for diagnostics
                 nrj_radiation += (*Radiate).getRadiatedEnergy();
 
@@ -560,25 +551,19 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             // Multiphoton Breit-Wheeler
             if (Multiphoton_Breit_Wheeler_process)
             {
-                // Radiation process
+                // Pair generation process
                 (*Multiphoton_Breit_Wheeler_process)(*particles,
                          smpi,
                          MultiphotonBreitWheelerTables,
                          bmin[ibin], bmax[ibin], ithread );
 
-                for (int k; k<2; k++) {
-                 mBW_pair_species[k]->importParticles(params,
-                                                 patch,
-                                                 Multiphoton_Breit_Wheeler_process->new_pair[k],
-                                                 localDiags);
-                }
+                 // Update the photon quantum parameter chi of all photons
+                 (*Multiphoton_Breit_Wheeler_process).compute_thread_chiph(*particles,
+                                                 smpi,
+                                                 bmin[ibin],
+                                                 bmax[ibin],
+                                                 ithread );
 
-                // Update the photon quantum parameter chi of all particles
-                (*Multiphoton_Breit_Wheeler_process).compute_thread_chiph(*particles,
-                                                smpi,
-                                                bmin[ibin],
-                                                bmax[ibin],
-                                                ithread );
             }
 
             // Push the particles and the photons
@@ -632,6 +617,43 @@ void Species::dynamics(double time_dual, unsigned int ispec,
         // Add the ionized electrons to the electron species
         if (Ionize)
             electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags );
+
+        // Radiation losses
+        if (Radiate)
+        {
+            // If creation of macro-photon, we add them to photon_species
+            if (photon_species)
+            {
+                photon_species->importParticles(params,
+                                                patch,
+                                                Radiate->new_photons,
+                                                localDiags);
+            }
+        }
+
+        // Multiphoton Breit-Wheeler
+        if (Multiphoton_Breit_Wheeler_process)
+        {
+
+            // Addition of the electron- positron particles
+            for (int k=0; k<2; k++) {
+                mBW_pair_species[k]->importParticles(params,
+                                             patch,
+                                             Multiphoton_Breit_Wheeler_process->new_pair[k],
+                                             localDiags);
+            }
+
+            // Suppression of the decayed photons into pairs
+            for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++)
+            {
+                (*Multiphoton_Breit_Wheeler_process).decayed_photon_cleaning(
+                                *particles,
+                                bmin[ibin],
+                                bmax[ibin]);
+            }
+
+        }
+
     }
     else { // immobile particle (at the moment only project density)
         if ( diag_flag &&(!particles->isTest)){

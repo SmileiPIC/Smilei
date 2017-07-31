@@ -215,13 +215,14 @@ void MultiphotonBreitWheeler::operator() (
 
                     // Update of the position
                     // Move the photons
+/*
 #ifdef  __DEBUG
                     for ( int i = 0 ; i<nDim_ ; i++ )
                         position_old[i][ipart] = position[i][ipart];
 #endif
                     for ( int i = 0 ; i<nDim_ ; i++ )
                         position[i][ipart]     += event_time*momentum[i][ipart]/gamma;
-
+*/
                     // Generation of the pairs
                     MultiphotonBreitWheeler::pair_emission(ipart,
                                            chiph,gamma,
@@ -290,7 +291,7 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
         // Momentum
         for (int i=0; i<3; i++) {
             new_pair[0].momentum(i,idNew) =
-            sqrt(pow(0.5*gammaph,2)-1)*u[i];
+            sqrt(pow(0.5*(gammaph-2),2)-1)*u[i];
         }
 
         new_pair[0].weight(idNew)=weight[ipart]*mBW_pair_creation_inv_sampling[0];
@@ -305,6 +306,8 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
         {
             new_pair[0].tau(idNew) = -1.;
         }
+
+        //std::cerr << "electron creation" << std::endl;
 
     }
 
@@ -328,7 +331,7 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
         // Momentum
         for (int i=0; i<3; i++) {
             new_pair[1].momentum(i,idNew) =
-            sqrt(pow(0.5*gammaph,2)-1)*u[i];
+            sqrt(pow(0.5*(gammaph-2),2)-1)*u[i];
         }
 
         new_pair[1].weight(idNew)=weight[ipart]*mBW_pair_creation_inv_sampling[1];
@@ -346,6 +349,68 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
     }
 
     // The photon with negtive weight will be deleted latter
-    //weight[ipart] = -1;
+    std::cerr << "Pair creation" << std::endl;
+    weight[ipart] = -1;
 
+}
+
+// -----------------------------------------------------------------------------
+//! Clean photons that decayed into pairs (weight <= 0)
+//! \param particles   particle object containing the particle
+//!                    properties of the current species
+//! \param istart      Index of the first particle
+//! \param iend        Index of the last particle
+//! \param ithread     Thread index
+// -----------------------------------------------------------------------------
+void MultiphotonBreitWheeler::decayed_photon_cleaning(
+                Particles &particles,
+                int istart,
+                int iend)
+{
+    if (iend > istart)
+    {
+        // Weight shortcut
+        double* weight = &( particles.weight(0) );
+
+        // Index of the last existing photon (weight > 0)
+        int last_photon_index;
+        int first_photon_index;
+
+        // Backward loop over the photons to fing the first existing photon
+        last_photon_index = iend-1;
+        first_photon_index = istart;
+        while (weight[last_photon_index] <= 0)
+        {
+                last_photon_index--;
+        }
+        while (weight[first_photon_index] > 0)
+        {
+                first_photon_index++;
+        }
+        // At this level, last_photon_index is the position of the last photon
+        // that will not be erased
+
+        // Backward loop over the photons to fill holes in the photon particle array
+        for (int ipart=last_photon_index-1 ; ipart>=istart; ipart-- )
+        {
+            if (weight[ipart] <= 0)
+            {
+                if (ipart < last_photon_index)
+                {
+                    // The last existing photon comes to the position of
+                    // the deleted photon
+                    particles.overwrite_part(last_photon_index,ipart);
+                    last_photon_index --;
+                }
+            }
+        }
+
+        // Removal of the photons
+        if (last_photon_index+1 <= iend-1)
+        {
+            std::cerr << "Photon cleaning: " << last_photon_index+1
+                      << " " << iend-1 << std::endl;
+        }
+        particles.erase_particle_trail(last_photon_index+1);
+    }
 }
