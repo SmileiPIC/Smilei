@@ -142,6 +142,9 @@ class MultiphotonBreitWheeler
         //! Energy lost after conversion into pairs
         double pair_converted_energy;
 
+        //! Threshold under which pair creation is not considered
+        double chiph_threashold;
+
         // _________________________________________
         // Factors
 

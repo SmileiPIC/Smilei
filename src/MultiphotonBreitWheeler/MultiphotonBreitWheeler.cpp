@@ -38,6 +38,9 @@ MultiphotonBreitWheeler::MultiphotonBreitWheeler(Params& params, Species * speci
     mBW_pair_creation_sampling[1] = species->mBW_pair_creation_sampling[1];
     mBW_pair_creation_inv_sampling[1] = 1. / mBW_pair_creation_sampling[1];
 
+    //! Threshold under which pair creation is not considered
+    chiph_threashold = 1E-2;
+
 }
 
 // -----------------------------------------------------------------------------
@@ -180,7 +183,7 @@ void MultiphotonBreitWheeler::operator() (
         // If the photon has enough energy
         // We also check that chiph > chiph_threshold,
         // else chiph is too low to induce a decay
-        if ((gamma > 2.) && (chiph > 1E-2))
+        if ((gamma > 2.) && (chiph > chiph_threashold))
         {
             // Init local variables
             event_time = 0;

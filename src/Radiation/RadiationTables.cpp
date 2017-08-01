@@ -677,7 +677,7 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
             imin_table[i] *= xip_chiph_dim;
         }
 
-        // Communication of the xip_chiphmin table
+        // Communication of the xip table
         MPI_Allgatherv(&buffer[0], length_table[rank], MPI_DOUBLE,
                 &xip_table[0], &length_table[0], &imin_table[0],
                 MPI_DOUBLE, smpi->getGlobalComm());
@@ -1169,9 +1169,9 @@ double RadiationTables::compute_chiph_emission(double chipa)
 
     logchipa = log10(chipa);
 
-    // -------------------------------
+    // ---------------------------------------
     // index of chipa in xip_table
-    // -------------------------------
+    // ---------------------------------------
     // Use floor so that chipa corresponding to ichipa is <= given chipa
     ichipa = int(floor((logchipa-xip_log10_chipa_min)*(xip_chipa_inv_delta)));
 
@@ -1190,7 +1190,7 @@ double RadiationTables::compute_chiph_emission(double chipa)
     // Search of the index ichiph for chiph
     // ---------------------------------------
 
-    // First, we compute a random xip in [0,1]
+    // First, we compute a random xip in [0,1[
     xip = Rand::uniform();
 
     // If the randomly computed xip if below the first one of the row,

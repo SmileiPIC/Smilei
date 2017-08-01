@@ -62,10 +62,13 @@ class MultiphotonBreitWheelerTables
 
         //! Computation of the value T(chiph) using the formula of Ritus
         //! \param chiph photon quantum parameter
+        //! \param chipa particle quantum parameter for integration (=0.5*chiph for full integration)
         //! \param nbit number of iteration for the Gauss-Legendre integration
         //! \param eps epsilon for the Bessel evaluation
-        double compute_Ritus_T(double chiph,
-                               int nbit,double eps);
+        double compute_integration_Ritus_dTdchi(double chiph,
+                               double chipa,
+                               int nbit,
+                               double eps);
 
        //! Computation of the value T(chiph) using the formula of Ritus
        //! \param chiph photon quantum parameter
@@ -73,6 +76,11 @@ class MultiphotonBreitWheelerTables
        //! \param eps epsilon for the Bessel evaluation
        double compute_Ritus_dTdchi(double chiph,
                              double chipa,int nbit,double eps);
+
+        //! Computation of the electron and positron quantum parameters for
+        //! the multiphoton Breit-Wheeler pair creation
+        //! \param chiph photon quantum parameter
+        double * compute_pair_chi(double chiph);
 
         // ---------------------------------------------------------------------
         // TABLE COMPUTATION
@@ -82,6 +90,14 @@ class MultiphotonBreitWheelerTables
         //! T function for the multiphoton Breit-Wheeler process
         //! \param smpi Object of class SmileiMPI containing MPI properties
         void compute_T_table(SmileiMPI *smpi);
+
+
+        //! Computation of the minimum particle quantum parameter chipamin
+        //! for the photon xip array and computation of the photon xip array.
+        //! \details Under the minimum chipa value, the particle kinetic energy is
+        //! considered negligible. All energy goes to the other.
+        //! \param smpi Object of class SmileiMPI containing MPI properties
+        void compute_xip_table(SmileiMPI *smpi);
 
         //! Output the computed tables so that thay can be read at the next run.
         //! \param params list of simulation parameters
@@ -97,6 +113,9 @@ class MultiphotonBreitWheelerTables
         //! mutliphoton Breit-Wheeler process
         void output_T_table();
 
+        //! File output of xip_chipamin_table and xip_table
+        void output_xip_table();
+
         //! Output the computed tables so that thay can be read at the next run.
         //! Table output by the master MPI rank
         //! \param smpi Object of class SmileiMPI containing MPI properties
@@ -110,6 +129,10 @@ class MultiphotonBreitWheelerTables
         //! \param smpi Object of class SmileiMPI containing MPI properties
         bool read_T_table(SmileiMPI *smpi);
 
+        //! Read the external table xip_chipamin and xip
+        //! \param smpi Object of class SmileiMPI containing MPI properties
+        bool read_xip_table(SmileiMPI *smpi);
+
         // ---------------------------------------------------------------------
         // TABLE COMMUNICATIONS
         // ---------------------------------------------------------------------
@@ -117,6 +140,10 @@ class MultiphotonBreitWheelerTables
         //! Bcast of the external table T
         //! \param smpi Object of class SmileiMPI containing MPI properties
         void bcast_T_table(SmileiMPI *smpi);
+
+        //! Bcast of the external table xip_chipamin and xip
+        //! \param smpi Object of class SmileiMPI containing MPI properties
+        void bcast_xip_table(SmileiMPI *smpi);
 
     private:
 
@@ -158,6 +185,60 @@ class MultiphotonBreitWheelerTables
 
         //! This variable is true if the table is computed, false if read
         bool T_computed;
+
+        // ---------------------------------------------
+        // Table chipa min for xip table
+        // ---------------------------------------------
+
+        //! Table containing the chipa min values
+        //! Under this value, electron kinetic energy of the pair is
+        //! considered negligible
+        std::vector<double > xip_chipamin_table;
+
+        // ---------------------------------------------
+        // Table xip
+        // ---------------------------------------------
+
+        //! Table containing the cumulative distribution function \f$P(0 \rightarrow \chi_{e^-})\f$
+        //! that gives gives the probability for a photon to decay into pair
+        //! with an electron of energy in the range \f$[0, \chi_{e^-}]\f$
+        //! This enables to compute the energy repartition between the electron and the positron
+        std::vector<double> xip_table;
+
+        //! Minimum boundary for chiph in the table xip and xip_chipamin
+        double xip_chiph_min;
+
+        //! Logarithm of the minimum boundary for chiph in the table xip
+        //! and xip_chipamin
+        double xip_log10_chiph_min;
+
+        //! Maximum boundary for chiph in the table xip and xip_chipamin
+        double xip_chiph_max;
+
+        //! Delta for the chiph discretization in the table xip and xip_chipamin
+        double xip_chiph_delta;
+
+        //! Inverse of the delta for the chiph discretization
+        //! in the table xip and xip_chipamin
+        double xip_chiph_inv_delta;
+
+        //! Dimension of the discretized parameter chiph
+        int xip_chiph_dim;
+
+        //! Dimension of the discretized parameter chipa
+        int xip_chipa_dim;
+
+        //! 1/(xip_chipa_dim - 1)
+        double xip_inv_chipa_dim_minus_one;
+
+        //! xip power
+        double xip_power;
+
+        //! xip threshold
+        double xip_threshold;
+
+        //! This variable is true if the table is computed, false if read
+        bool xip_computed;
 
         // ---------------------------------------------
         // Factors
