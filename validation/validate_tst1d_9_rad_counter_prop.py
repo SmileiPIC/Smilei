@@ -43,7 +43,6 @@ for radiation in radiation_list:
   print ' Electron_'+radiation+':'
   print ' Final kinetic energy: ', ukin[-1]
   print ' Maximum radiated energy: ', urad.max()
-  print urad
 
   # Validation of the kinetic energy
   Validate("Kinetic energy evolution: ", ukin/ukin[0], 0.5e-1 )
