@@ -127,12 +127,8 @@ void MultiphotonBreitWheeler::operator() (
     // Parameters
     std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
-
-    // Temporary quantum parameter
-    double chiph;
-
-    // Temporary Lorentz factor
-    double gamma;
+    // We use dynamics_invgf to store gamma
+    std::vector<double> * gamma = &(smpi->dynamics_invgf[ithread]);
 
     // Temporary value
     double temp;
@@ -156,6 +152,9 @@ void MultiphotonBreitWheeler::operator() (
     // Optical depth for the Monte-Carlo process
     double* tau = &( particles.tau(0));
 
+    // Quantum parameter
+    double * chiph = &( particles.chi(0));
+
     // Photon id
     // uint64_t * id = &( particles.id(0));
 
@@ -165,25 +164,33 @@ void MultiphotonBreitWheeler::operator() (
     // _______________________________________________________________
     // Computation
 
+    // 1. Computation of gamma and chi
+    //    Can be vectorized
+    #pragma omp simd
     for (int ipart=istart ; ipart<iend; ipart++ )
     {
-
         // Gamma
-        gamma = sqrt(momentum[0][ipart]*momentum[0][ipart]
+        (*gamma)[ipart] = sqrt(momentum[0][ipart]*momentum[0][ipart]
                     + momentum[1][ipart]*momentum[1][ipart]
                     + momentum[2][ipart]*momentum[2][ipart]);
 
         // Computation of the Lorentz invariant quantum parameter
-        chiph = MultiphotonBreitWheeler::compute_chiph(
+        chiph[ipart] = MultiphotonBreitWheeler::compute_chiph(
                  momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
-                 gamma,
+                 (*gamma)[ipart],
                  (*Epart)[ipart].x,(*Epart)[ipart].y,(*Epart)[ipart].z,
                  (*Bpart)[ipart].x,(*Bpart)[ipart].y,(*Bpart)[ipart].z);
+    }
+
+    // 2. Monte-Carlo process
+    //    No vectorized
+    for (int ipart=istart ; ipart<iend; ipart++ )
+    {
 
         // If the photon has enough energy
         // We also check that chiph > chiph_threshold,
         // else chiph is too low to induce a decay
-        if ((gamma > 2.) && (chiph > chiph_threashold))
+        if (((*gamma)[ipart] > 2.) && (chiph[ipart] > chiph_threashold))
         {
             // Init local variables
             event_time = 0;
@@ -203,7 +210,7 @@ void MultiphotonBreitWheeler::operator() (
             else if (tau[ipart] > epsilon_tau)
             {
                 // from the cross section
-                temp = MultiphotonBreitWheelerTables.compute_dNBWdt(chiph,gamma);
+                temp = MultiphotonBreitWheelerTables.compute_dNBWdt(chiph[ipart],(*gamma)[ipart]);
 
                 // Time to decay
                 // If this time is above the remaining iteration time,
@@ -227,11 +234,11 @@ void MultiphotonBreitWheeler::operator() (
                         position_old[i][ipart] = position[i][ipart];
 #endif
                     for ( int i = 0 ; i<nDim_ ; i++ )
-                        position[i][ipart]     += event_time*momentum[i][ipart]/gamma;
+                        position[i][ipart]     += event_time*momentum[i][ipart]/(*gamma)[ipart];
 */
                     // Generation of the pairs
                     MultiphotonBreitWheeler::pair_emission(ipart,
-                                           chiph,gamma,
+                                           chiph[ipart],(*gamma)[ipart],
                                            position,
                                            momentum,
                                            weight,
@@ -271,6 +278,14 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
     // Parameters
     double u[3]; // propagation direction
     int nparticles; // Total number of particles in the temporary arrays
+    double * chi = new double[2];
+    double inv_chiph_gammaph;
+
+    inv_chiph_gammaph = (gammaph-2.)/chiph;
+
+    // Get the pair quantum parameters to compute the energy
+    chi = MultiphotonBreitWheelerTables.compute_pair_chi(chiph);
+    //std::cerr << chiph << " " << chi[0] << " " << chi[1] << std::endl;
 
     // pair propagation direction // direction of the photon
     for ( int i = 0 ; i<nDim_ ; i++ ) {
@@ -297,7 +312,7 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
         // Momentum
         for (int i=0; i<3; i++) {
             new_pair[0].momentum(i,idNew) =
-            sqrt(pow(0.5*(gammaph),2)-1)*u[i];
+            (1.+chi[0]*inv_chiph_gammaph)*u[i];
         }
 
         new_pair[0].weight(idNew)=weight[ipart]*mBW_pair_creation_inv_sampling[0];
@@ -305,16 +320,13 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
 
         if (new_pair[0].isQuantumParameter)
         {
-            new_pair[0].chi(idNew) = 0.5*chiph;
+            new_pair[0].chi(idNew) = chi[0];
         }
 
         if (new_pair[0].isMonteCarlo)
         {
             new_pair[0].tau(idNew) = -1.;
         }
-
-        //std::cerr << "electron creation" << std::endl;
-
     }
 
     // _______________________________________________
@@ -337,7 +349,7 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
         // Momentum
         for (int i=0; i<3; i++) {
             new_pair[1].momentum(i,idNew) =
-            sqrt(pow(0.5*(gammaph),2)-1)*u[i];
+            (1.+chi[1]*inv_chiph_gammaph)*u[i];
         }
 
         new_pair[1].weight(idNew)=weight[ipart]*mBW_pair_creation_inv_sampling[1];
@@ -345,7 +357,7 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
 
         if (new_pair[1].isQuantumParameter)
         {
-            new_pair[1].chi(idNew) = 0.5*chiph;
+            new_pair[1].chi(idNew) = chi[1];
         }
 
         if (new_pair[1].isMonteCarlo)
