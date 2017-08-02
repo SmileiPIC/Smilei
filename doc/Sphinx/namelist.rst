@@ -206,7 +206,8 @@ The block ``Main`` is **mandatory** and has the following syntax::
 .. py:data:: referenceAngularFrequency_SI
 
   The value of the reference angular frequency :math:`\omega_r` in SI units,
-  **only needed when collisions, ionization or radiation losses are requested**.
+  **only needed when collisions, ionization, radiation losses
+  or multiphoton Breit-Wheeler pair creation are requested**.
   This frequency is related to the normalization length according to :math:`L_r\omega_r = c`
   (see :doc:`units`).
 
@@ -339,6 +340,10 @@ Each species has to be defined in a ``Species`` block::
       c_part_max = 1.0,
       dynamics_type = "norm",
       radiation_model = "none",
+      radiation_photon_species = "none",
+      radiation_photon_sampling = 1,
+      # multiphoton_Breit_Wheeler = ["electron","positron"],
+      # multiphoton_Breit_Wheeler_sampling = [1,1]
   )
 
 .. py:data:: species_type
@@ -519,6 +524,8 @@ Each species has to be defined in a ``Species`` block::
 
   :default: ``none``
 
+  :red:`This parameter is an attribute of particle species only (mass>0).`
+
   Radiation model used for this species (see :doc:`radiation_loss`).
 
   * ``none``: no radiation
@@ -526,6 +533,63 @@ Each species has to be defined in a ``Species`` block::
   * ``corrected-Landau-Lifshitz``: with quantum correction
   * ``Niel``: Stochastic radiation model of [Niel2017]_.
   * ``Monte-Carlo``: Monte-Carlo radiation model
+
+.. py:data:: radiation_photon_species
+
+  :default: ``none``
+
+  :red:`This parameter is an attribute of particle species only (mass>0).`
+
+  This parameter determines whether the Monte-Carlo radiation model
+  will generate macro-photons. By default, the photon species is set to ``none``
+  meaning that no macro-photon will be created. To set the macro-photon generation,
+  a photon species (``mass = 0``) has to be created after the particle species
+  (``mass > 0``) and the parameter ``radiation_photon_species`` set to this
+  photon species name.
+
+.. py:data:: radiation_photon_sampling
+
+  :default: ``1``
+
+  :red:`This parameter is an attribute of particle species only (mass>0).`
+
+  When the macro-photon creation is activated
+  (``radiation_photon_species`` set to one of the defined photon species),
+  this parameter is the number of macro-photons generated per emission event.
+  By default, a single macro-photon is created per emission but in order to
+  improve the photon statistics, one can decide to increase this number.
+  The weight of each photon is therefore the emitting particle one divided
+  by this number.
+  Obviously, this parameter can not be below 1. Note that a large number will
+  rapidly slow down the application performance and can lead to memory
+  saturation.
+
+.. py:data:: multiphoton_Breit_Wheeler
+
+  :default: ``["none","none"]``
+
+  :red:`This parameter is an attribute of photon species only (mass=0).`
+
+  This entry is an
+  array of two strings respectively corresponding to one for the previously
+  defined electron and the positron species.
+  By default, ``none`` means that the process is not activated.
+  To activate the multiphoton Breit-Wheeler pair creation, just specify
+  a defined electron and positron species. (see :doc:`multiphoton_Breit_Wheeler`)
+
+.. py:data:: multiphoton_Breit_Wheeler_sampling
+
+  :default: ``[1,1]``
+
+  :red:`This parameter is an attribute of photon species only (mass=0).`
+
+  This entry is an array of two integers respectively corresponding to the
+  number of electrons and positrons generated per photon decay. By default,
+  a single electron and positron are created. This number can be increased
+  to improve the particle statistics. The weight of each particle is therefore
+  the photon one divided by the corresponding number. Obviously, this parameter can not be
+  below 1. Note that large numbers will rapidly slow down the application
+  performance and can lead to memory saturation. (see :doc:`multiphoton_Breit_Wheeler`)
 
 ----
 

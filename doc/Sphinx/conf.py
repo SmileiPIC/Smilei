@@ -72,7 +72,7 @@ def get_version():
         return version
     else:
         return 'X.Y'
-    
+
 version = get_version().lstrip('v').rstrip()
 # The full version, including alpha/beta/rc tags.
 release = get_version()
@@ -318,4 +318,10 @@ rst_prolog = """
    :class: blue
 .. role:: red
    :class: red
+.. role:: purple
+   :class: purple
+.. role:: green
+   :class: green
+.. role:: orange
+   :class: orange
 """

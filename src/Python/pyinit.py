@@ -246,7 +246,7 @@ class Species(SmileiComponent):
     thermVelocity = None
     dynamics_type = "norm"
     radiation_model = "none"
-    radiation_photons = "none"
+    radiation_photon_species = "none"
     radiation_photon_sampling = 1
     multiphoton_Breit_Wheeler = ["none","none"]
     multiphoton_Breit_Wheeler_sampling = [1,1]

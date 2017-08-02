@@ -150,10 +150,10 @@ public:
         {
             if (thisSpecies->radiation_model == "Monte-Carlo")
             {
-                PyTools::extract("radiation_photons", thisSpecies->radiation_photons, "Species",ispec);
-                if (thisSpecies->radiation_photons != "none")
+                PyTools::extract("radiation_photon_species", thisSpecies->radiation_photon_species, "Species",ispec);
+                if (thisSpecies->radiation_photon_species != "none")
                 {
-                    MESSAGE(2,"> radiation_photons set to the species `" << thisSpecies->radiation_photons << "`");
+                    MESSAGE(2,"> radiation_photon_species set to the species `" << thisSpecies->radiation_photon_species << "`");
                 }
                 PyTools::extract("radiation_photon_sampling",
                                  thisSpecies->radiation_photon_sampling, "Species",ispec);
@@ -486,7 +486,7 @@ public:
         newSpecies->species_type          = species->species_type;
         newSpecies->dynamics_type         = species->dynamics_type;
         newSpecies->radiation_model       = species->radiation_model;
-        newSpecies->radiation_photons     = species->radiation_photons;
+        newSpecies->radiation_photon_species     = species->radiation_photon_species;
         newSpecies->radiation_photon_sampling = species->radiation_photon_sampling;
         newSpecies->photon_species        = species->photon_species;
         newSpecies->speciesNumber         = species->speciesNumber;
@@ -599,7 +599,7 @@ public:
             }
 
             // No emission of discrete photon, only scalar diagnostics are updated
-            if( retSpecies[ispec1]->radiation_photons == "none")
+            if( retSpecies[ispec1]->radiation_photon_species == "none")
             {
                 retSpecies[ispec1]->photon_species_index = -1;
                 retSpecies[ispec1]->photon_species = NULL;
@@ -608,12 +608,12 @@ public:
             else
             {
                 for (unsigned int ispec2 = 0; ispec2<retSpecies.size(); ispec2++) {
-                    if( retSpecies[ispec1]->radiation_photons == retSpecies[ispec2]->species_type) {
+                    if( retSpecies[ispec1]->radiation_photon_species == retSpecies[ispec2]->species_type) {
                         if( ispec1==ispec2 )
-                            ERROR("For species '"<<retSpecies[ispec1]->species_type<<"' radiation_photons must be a distinct photon species");
+                            ERROR("For species '"<<retSpecies[ispec1]->species_type<<"' radiation_photon_species must be a distinct photon species");
                         if (retSpecies[ispec2]->mass!=0)
                         {
-                            ERROR("For species '"<<retSpecies[ispec1]->species_type<<"' radiation_photons must be a photon species with mass==0");
+                            ERROR("For species '"<<retSpecies[ispec1]->species_type<<"' radiation_photon_species must be a photon species with mass==0");
                         }
                         retSpecies[ispec1]->photon_species_index = ispec2;
                         retSpecies[ispec1]->photon_species = retSpecies[ispec2];
@@ -697,7 +697,7 @@ public:
         // Synchortron-like radiation
         for (unsigned int i=0; i<retSpecies.size(); i++) {
             if (retSpecies[i]->Radiate) {
-                retSpecies[i]->radiation_photons = vecSpecies[i]->radiation_photons;
+                retSpecies[i]->radiation_photon_species = vecSpecies[i]->radiation_photon_species;
                 retSpecies[i]->photon_species_index = vecSpecies[i]->photon_species_index;
                 if (vecSpecies[i]->photon_species)
                 {

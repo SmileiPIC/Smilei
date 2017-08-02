@@ -202,7 +202,7 @@ public:
     int photon_species_index;
     //! radiation photon species for the Monte-Carlo model.
     //! Name of the species where radiated photons go
-    std::string radiation_photons;
+    std::string radiation_photon_species;
     //! Number of photons emitted per particle and per event
     int radiation_photon_sampling;
 
