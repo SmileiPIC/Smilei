@@ -27,6 +27,7 @@ MultiphotonBreitWheelerTables::MultiphotonBreitWheelerTables()
     // T table
     T_table.resize(0);
     T_computed = false;
+    xip_computed = false;
 }
 
 // -----------------------------------------------------------------------------

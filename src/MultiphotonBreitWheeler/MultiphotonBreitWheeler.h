@@ -110,8 +110,8 @@ class MultiphotonBreitWheeler
         //! \param ithread     Thread index
         void decayed_photon_cleaning(
                         Particles &particles,
-                        int istart,
-                        int iend);
+                        int ibin, int nbin,
+                        int * bmin, int * bmax);
 
         //! Return the pair converted energy
         double inline getPairEnergy(void)

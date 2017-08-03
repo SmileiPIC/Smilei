@@ -346,6 +346,8 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
             new_pair[1].position(i,idNew)=position[i][ipart];
         }
 
+        //std::cerr << position[0][ipart] << " " << position[1][ipart] << std::endl;
+
         // Momentum
         for (int i=0; i<3; i++) {
             new_pair[1].momentum(i,idNew) =
@@ -384,10 +386,10 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
 // -----------------------------------------------------------------------------
 void MultiphotonBreitWheeler::decayed_photon_cleaning(
                 Particles &particles,
-                int istart,
-                int iend)
+                int ibin, int nbin,
+                int * bmin,int * bmax)
 {
-    if (iend > istart)
+    if (bmax[ibin] > bmin[ibin])
     {
         // Weight shortcut
         double* weight = &( particles.weight(0) );
@@ -395,10 +397,12 @@ void MultiphotonBreitWheeler::decayed_photon_cleaning(
         // Index of the last existing photon (weight > 0)
         int last_photon_index;
         int first_photon_index;
+        int ii;
+        int nb_deleted_photon;
 
         // Backward loop over the photons to fing the first existing photon
-        last_photon_index = iend-1;
-        first_photon_index = istart;
+        last_photon_index = bmax[ibin]-1;
+        first_photon_index = bmin[ibin];
         while (weight[last_photon_index] <= 0)
         {
                 last_photon_index--;
@@ -411,7 +415,7 @@ void MultiphotonBreitWheeler::decayed_photon_cleaning(
         // that will not be erased
 
         // Backward loop over the photons to fill holes in the photon particle array
-        for (int ipart=last_photon_index-1 ; ipart>=istart; ipart-- )
+        for (int ipart=last_photon_index-1 ; ipart>=bmin[ibin]; ipart-- )
         {
             if (weight[ipart] <= 0)
             {
@@ -426,11 +430,24 @@ void MultiphotonBreitWheeler::decayed_photon_cleaning(
         }
 
         // Removal of the photons
-        /*if (last_photon_index+1 <= iend-1)
+        /*if (last_photon_index+1 <= *iend-1)
         {
             std::cerr << "Photon cleaning: " << last_photon_index+1
-                      << " " << iend-1 << std::endl;
+                      << " " << *iend-1 << std::endl;
         }*/
-        particles.erase_particle_trail(last_photon_index+1);
+        nb_deleted_photon = bmax[ibin]-last_photon_index-1;
+        /*std::cerr << "Photon cleaning: " << last_photon_index+1
+                  << " " << bmax[ibin]
+                  << " " << nb_deleted_photon
+                  << std::endl;*/
+        if (nb_deleted_photon > 0)
+        {
+            particles.erase_particle(last_photon_index+1,nb_deleted_photon);
+            bmax[ibin] = last_photon_index+1;
+            for (ii=ibin+1; ii<nbin; ii++) {
+                bmin[ii] -= nb_deleted_photon;
+                bmax[ii] -= nb_deleted_photon;
+            }
+        }
     }
 }

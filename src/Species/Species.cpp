@@ -182,6 +182,7 @@ Species::~Species()
     delete Push;
     if (Ionize) delete Ionize;
     if (Radiate) delete Radiate;
+    if (Multiphoton_Breit_Wheeler_process) delete Multiphoton_Breit_Wheeler_process;
     if (partBoundCond) delete partBoundCond;
     if (ppcProfile) delete ppcProfile;
     if (chargeProfile) delete chargeProfile;
@@ -508,6 +509,8 @@ void Species::dynamics(double time_dual, unsigned int ispec,
     double ener_iPart(0.);
     std::vector<double> nrj_lost_per_thd(1, 0.);
 
+    //std::cerr << "Species: " << this->species_type << std::endl;
+
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
@@ -610,7 +613,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
 
              // Project currents if not a Test species and charges as well if a diag is needed.
-             if (!particles->isTest)
+             if ((!particles->isTest) && (mass > 0))
                  (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, b_dim, ispec );
 
         }// ibin
@@ -651,9 +654,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++)
             {
                 (*Multiphoton_Breit_Wheeler_process).decayed_photon_cleaning(
-                                *particles,
-                                bmin[ibin],
-                                bmax[ibin]);
+                                *particles,ibin, bmin.size(), &bmin[0], &bmax[0]);
             }
 
         }
@@ -1066,6 +1067,7 @@ void Species::importParticles( Params& params, Patch* patch, Particles& source_p
     for( unsigned int i=0; i<npart; i++ ) {
         // Copy particle to the correct bin
         ibin = source_particles.position(0,i)*inv_cell_length - ( patch->getCellStartingGlobalIndex(0) + params.oversize[0] );
+        //std::cerr << source_particles.position(0,i) << " " << ibin << " " << bmin.size() << " " <<  source_particles.weight(i) <<std::endl;
         ibin /= params.clrw;
         source_particles.cp_particle(i, *particles, bmin[ibin] );
         // Update the bin counts
