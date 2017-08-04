@@ -52,7 +52,7 @@ void IonizationTunnel::operator() (Particles* particles, unsigned int ipart_min,
         E = EC_to_au * sqrt( pow((*Epart)[ipart].x,2) 
                             +pow((*Epart)[ipart].y,2) 
                             +pow((*Epart)[ipart].z,2) );
-        if (E==0.) continue;
+        if (E<1e-10) continue;
         
         // --------------------------------
         // Start of the Monte-Carlo routine

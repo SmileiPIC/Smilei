@@ -598,6 +598,7 @@ Field * ElectroMagn3D::createField(string fieldname)
     else if(fieldname.substr(0,3)=="Rho") return new Field3D(dimPrim, fieldname );
     
     ERROR("Cannot create field "<<fieldname);
+    return NULL;
 }
 
 
