@@ -115,8 +115,7 @@ void MultiphotonBreitWheeler::compute_thread_chiph(Particles &particles,
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
 // ---------------------------------------------------------------------------------------------------------------------
-void MultiphotonBreitWheeler::operator() (
-        Particles &particles,
+void MultiphotonBreitWheeler::operator() (Particles &particles,
         SmileiMPI* smpi,
         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
         int istart,
@@ -274,6 +273,15 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
                 MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables)
 {
 
+    /*if ((position[0][ipart] > 22.2908)
+    || (position[0][ipart] < 0)
+    || (position[1][ipart] > 22.2908)
+    || (position[1][ipart] < 0))
+    {
+        ERROR(" " << ipart
+              << " " position[0][ipart] << " " << position[1][ipart])
+    }*/
+
     // _______________________________________________
     // Parameters
     double u[3]; // propagation direction
@@ -285,10 +293,9 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
 
     // Get the pair quantum parameters to compute the energy
     chi = MultiphotonBreitWheelerTables.compute_pair_chi(chiph);
-    //std::cerr << chiph << " " << chi[0] << " " << chi[1] << std::endl;
 
     // pair propagation direction // direction of the photon
-    for ( int i = 0 ; i<nDim_ ; i++ ) {
+    for ( int i = 0 ; i<3 ; i++ ) {
         u[i] = momentum[i][ipart]/gammaph;
     }
 
@@ -308,6 +315,13 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
         for (int i=0; i<nDim_; i++) {
             new_pair[0].position(i,idNew)=position[i][ipart];
         }
+
+        // Old positions
+#ifdef  __DEBUG
+        for (int i=0; i<nDim_; i++) {
+            new_pair[0].position_old(i,idNew)=position[i][ipart];
+        }
+#endif
 
         // Momentum
         for (int i=0; i<3; i++) {
@@ -346,7 +360,12 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
             new_pair[1].position(i,idNew)=position[i][ipart];
         }
 
-        //std::cerr << position[0][ipart] << " " << position[1][ipart] << std::endl;
+        // Old positions
+#ifdef  __DEBUG
+        for (int i=0; i<nDim_; i++) {
+            new_pair[1].position_old(i,idNew)=position[i][ipart];
+        }
+#endif
 
         // Momentum
         for (int i=0; i<3; i++) {

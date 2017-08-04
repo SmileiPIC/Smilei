@@ -524,6 +524,29 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
+
+            /*for (unsigned int ipart=bmin[ibin]; ipart < bmax[ibin];ipart++)
+            {
+                if ((particles->position(0,ipart) > patch->getDomainLocalMax(0))
+                || (particles->position(0,ipart) < patch->getDomainLocalMin(0))
+                || (particles->position(1,ipart) > patch->getDomainLocalMax(1))
+                || (particles->position(1,ipart) < patch->getDomainLocalMin(1)))
+                {
+                    std::cerr << " ipart: " << ipart << " bmax[ibin]: " << bmax[ibin]
+                              << " " << this->mass
+                              << " " << particles->charge(ipart)
+                              << " " << particles->weight(ipart)
+                              << " " << patch->getDomainLocalMin(0)
+                              << " < " << particles->position(0,ipart)
+                              << " < " << patch->getDomainLocalMax(0)
+                              << " " << patch->getDomainLocalMin(1)
+                              << " < " << particles->position(1,ipart)
+                              << " < " << patch->getDomainLocalMax(1)
+                          <<std::endl;
+                }
+            }*/
+
+
             // Interpolate the fields at the particle position
             (*Interp)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread );
 
@@ -535,7 +558,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             if (Radiate)
             {
 
-                for (unsigned int ipart=bmin[ibin]; ipart < bmax[ibin];ipart++)
+                /*for (unsigned int ipart=bmin[ibin]; ipart < bmax[ibin];ipart++)
                 {
                     if ((particles->position(0,ipart) > patch->getDomainLocalMax(0))
                     || (particles->position(0,ipart) < patch->getDomainLocalMin(0)))
@@ -548,7 +571,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                                   << " < " << patch->getDomainLocalMax(0)
                               <<std::endl;
                     }
-                }
+                }*/
 
                 // Radiation process
                 (*Radiate)(*particles, this->photon_species, smpi,
@@ -581,22 +604,6 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             if (Multiphoton_Breit_Wheeler_process)
             {
 
-
-                /*for (unsigned int ipart=bmin[ibin]; ipart < bmax[ibin];ipart++)
-                {
-                    if ((particles->position(0,ipart) > patch->getDomainLocalMax(0))
-                    || (particles->position(0,ipart) < patch->getDomainLocalMin(0)))
-                    {
-                        std::cerr << " " << this->mass
-                                  << " " << particles->charge(ipart)
-                                  << " " << particles->weight(ipart)
-                                  << " " << patch->getDomainLocalMin(0)
-                                  << " < " << particles->position(0,ipart)
-                                  << " < " << patch->getDomainLocalMax(0)
-                              <<std::endl;
-                    }
-                }*/
-
                 // Pair generation process
                 (*Multiphoton_Breit_Wheeler_process)(*particles,
                          smpi,
@@ -614,6 +621,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                                                  bmax[ibin],
                                                  ithread );
 
+                 // Suppression of the decayed photons into pairs
                  (*Multiphoton_Breit_Wheeler_process).decayed_photon_cleaning(
                                  *particles,ibin, bmin.size(), &bmin[0], &bmax[0]);
 
@@ -659,6 +667,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
 
              // Project currents if not a Test species and charges as well if a diag is needed.
+             // Do not project if a photon
              if ((!particles->isTest) && (mass > 0))
                  (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, b_dim, ispec );
 

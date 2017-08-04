@@ -38,8 +38,7 @@ class MultiphotonBreitWheeler
         //! \param istart      Index of the first particle
         //! \param iend        Index of the last particle
         //! \param ithread     Thread index
-        void operator() (
-                Particles &particles,
+        void operator() (Particles &particles,
                 SmileiMPI* smpi,
                 MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                 int istart,

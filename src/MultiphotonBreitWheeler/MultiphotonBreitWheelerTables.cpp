@@ -259,10 +259,13 @@ double * MultiphotonBreitWheelerTables::compute_pair_chi(double chiph)
     // Parameters
     double * chi = new double[2];
     double logchiph;
+    double log10_chipam, log10_chipap;
+    double d;
     double delta_chipa;
     double xip, xipp;
     int ichiph;
     int ichipa;
+    int ixip;
 
     // -----------------------------------------------------------
     // Computation of the index associated to the given chiph
@@ -314,7 +317,7 @@ double * MultiphotonBreitWheelerTables::compute_pair_chi(double chiph)
     }
     // Upper bound
     else if (xipp >= xip_table[(ichiph+1)*xip_chipa_dim-1]) {
-        ichipa = xip_chipa_dim-1;
+        ichipa = xip_chipa_dim-2;
     }
     else
     {
@@ -327,11 +330,19 @@ double * MultiphotonBreitWheelerTables::compute_pair_chi(double chiph)
     delta_chipa = (log10(0.5*chiph)-xip_chipamin_table[ichiph])
                 * xip_inv_chipa_dim_minus_one;
 
+    ixip = ichiph*xip_chipa_dim + ichipa;
+
+    log10_chipam = ichipa*delta_chipa + xip_chipamin_table[ichiph];
+    log10_chipap = log10_chipam + delta_chipa;
+
+    d = (xipp - xip_table[ixip]) / (xip_table[ixip+1] - xip_table[ixip]);
+
     // If xip > 0.5, the electron will bring more energy than the positron
     if (xip > 0.5)
     {
+
         // Positron quantum parameter
-        chi[1] = pow(10,ichipa*delta_chipa + xip_chipamin_table[ichiph]);
+        chi[1] = pow(10,log10_chipam*(1.0-d) + log10_chipap*(d));
 
         // Electron quantum parameter
         chi[0] = chiph - chi[1];
@@ -340,7 +351,7 @@ double * MultiphotonBreitWheelerTables::compute_pair_chi(double chiph)
     else
     {
         // Electron quantum parameter
-        chi[0] = pow(10,ichipa*delta_chipa + xip_chipamin_table[ichiph]);
+        chi[0] = pow(10,log10_chipam*(1.0-d) + log10_chipap*(d));
 
         // Positron quantum parameter
         chi[1] = chiph - chi[0];
