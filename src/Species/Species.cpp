@@ -535,6 +535,21 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             if (Radiate)
             {
 
+                for (unsigned int ipart=bmin[ibin]; ipart < bmax[ibin];ipart++)
+                {
+                    if ((particles->position(0,ipart) > patch->getDomainLocalMax(0))
+                    || (particles->position(0,ipart) < patch->getDomainLocalMin(0)))
+                    {
+                        std::cerr << " " << this->mass
+                                  << " " << particles->charge(ipart)
+                                  << " " << particles->weight(ipart)
+                                  << " " << patch->getDomainLocalMin(0)
+                                  << " < " << particles->position(0,ipart)
+                                  << " < " << patch->getDomainLocalMax(0)
+                              <<std::endl;
+                    }
+                }
+
                 // Radiation process
                 (*Radiate)(*particles, this->photon_species, smpi,
                          RadiationTables,
@@ -549,11 +564,39 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                                                 bmin[ibin],
                                                 bmax[ibin],
                                                 ithread );
+
+                /*for (unsigned int ipart=0; ipart < (*Radiate).new_photons.size();ipart++)
+                {
+                    if ((*Radiate).new_photons.position(0,ipart) > patch->getDomainLocalMax(0))
+                    {
+                        std::cerr << " " << (*Radiate).new_photons.weight(ipart)
+                                  << " " << (*Radiate).new_photons.position(0,ipart)
+                                  << " " << patch->getDomainLocalMax(0)
+                              <<std::endl;
+                    }
+                }*/
             }
 
             // Multiphoton Breit-Wheeler
             if (Multiphoton_Breit_Wheeler_process)
             {
+
+
+                /*for (unsigned int ipart=bmin[ibin]; ipart < bmax[ibin];ipart++)
+                {
+                    if ((particles->position(0,ipart) > patch->getDomainLocalMax(0))
+                    || (particles->position(0,ipart) < patch->getDomainLocalMin(0)))
+                    {
+                        std::cerr << " " << this->mass
+                                  << " " << particles->charge(ipart)
+                                  << " " << particles->weight(ipart)
+                                  << " " << patch->getDomainLocalMin(0)
+                                  << " < " << particles->position(0,ipart)
+                                  << " < " << patch->getDomainLocalMax(0)
+                              <<std::endl;
+                    }
+                }*/
+
                 // Pair generation process
                 (*Multiphoton_Breit_Wheeler_process)(*particles,
                          smpi,
@@ -570,6 +613,9 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                                                  bmin[ibin],
                                                  bmax[ibin],
                                                  ithread );
+
+                 (*Multiphoton_Breit_Wheeler_process).decayed_photon_cleaning(
+                                 *particles,ibin, bmin.size(), &bmin[0], &bmax[0]);
 
             }
 
@@ -651,11 +697,11 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             }
 
             // Suppression of the decayed photons into pairs
-            for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++)
+            /*for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++)
             {
                 (*Multiphoton_Breit_Wheeler_process).decayed_photon_cleaning(
                                 *particles,ibin, bmin.size(), &bmin[0], &bmax[0]);
-            }
+            }*/
 
         }
 
@@ -1067,7 +1113,13 @@ void Species::importParticles( Params& params, Patch* patch, Particles& source_p
     for( unsigned int i=0; i<npart; i++ ) {
         // Copy particle to the correct bin
         ibin = source_particles.position(0,i)*inv_cell_length - ( patch->getCellStartingGlobalIndex(0) + params.oversize[0] );
-        //std::cerr << source_particles.position(0,i) << " " << ibin << " " << bmin.size() << " " <<  source_particles.weight(i) <<std::endl;
+        /*std::cerr << " " << source_particles.position(0,i)
+                  << " " << ibin
+                  << " " << bmin.size()
+                  << " " <<  source_particles.weight(i)
+                  << " " << patch->getDomainLocalMin(0)
+                  << " " << patch->getDomainLocalMax(0)
+                  <<std::endl;*/
         ibin /= params.clrw;
         source_particles.cp_particle(i, *particles, bmin[ibin] );
         // Update the bin counts

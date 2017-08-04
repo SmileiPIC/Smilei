@@ -373,16 +373,17 @@ void RadiationMonteCarlo::photon_emission(int ipart,
         // Final size
         int npart = new_photons.size();
 
+        // Inverse of the momentum norm
+        inv_old_norm_p = 1./sqrt(momentum[0][ipart]*momentum[0][ipart]
+                                + momentum[1][ipart]*momentum[1][ipart]
+                                + momentum[2][ipart]*momentum[2][ipart]);
+
         // For all new photons...
         for (int idNew=npart-radiation_photon_sampling; idNew<npart; idNew++)
         {
             for (int i=0; i<nDim_; i++) {
                 new_photons.position(i,idNew)=position[i][ipart];
             }
-
-            inv_old_norm_p = 1./sqrt(momentum[0][ipart]*momentum[0][ipart]
-                                    + momentum[1][ipart]*momentum[1][ipart]
-                                    + momentum[2][ipart]*momentum[2][ipart]);
 
             for (int i=0; i<3; i++) {
                 new_photons.momentum(i,idNew) =
