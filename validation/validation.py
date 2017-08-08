@@ -102,6 +102,9 @@ POINCARE = "poincare"
 JOLLYJUMPER = "llrlsi-gw"
 HOSTNAME = socket.gethostname()
 
+# DIR VARIABLES
+WORKDIR = ""
+
 # DEFAULT VALUES FOR OPTIONS
 OMP = 4
 MPI = 4
