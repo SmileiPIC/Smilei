@@ -984,6 +984,16 @@ profiles.
 
     Creates a polynomial of the form :math:`\sum_i a_i(t-t_0)^i`.
 
+  .. py:function:: tsin2plateau( start=0., fwhm=0., plateau=None, slope1=fwhm, slope2=slope1 )
+
+    :param start: Profile is 0 before start
+    :param fwhm:  Full width half maximum of the profile
+    :param plateau: Length of the plateau
+    :param slope1: Duration of the ramp up of the profil
+    :param slope2: Duration of the ramp down of the profil
+
+    Creates a sin squared profil with a plateau in the middle if needed. If slope1 and 2 are used, fwhm is overwritten.
+
   **Example**::
 
     Antenna( ... , time_profile = tcosine(freq=0.01), ... )
