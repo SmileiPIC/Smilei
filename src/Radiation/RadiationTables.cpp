@@ -80,16 +80,16 @@ void RadiationTables::initParams(Params& params)
 
     // If the namelist for Nonlinear Inverse Compton Scattering exists
     // We read the properties
-    if( PyTools::nComponents("RadiationLoss") != 0 )
+    if( PyTools::nComponents("RadiationReaction") != 0 )
     {
 
         // If stochastic radiation loss is requested
         if (params.hasNielRadiation)
         {
             // Extraction of the parameter from the input file
-            PyTools::extract("h_chipa_min", h_chipa_min, "RadiationLoss");
-            PyTools::extract("h_chipa_max", h_chipa_max, "RadiationLoss");
-            PyTools::extract("h_dim", h_dim, "RadiationLoss");
+            PyTools::extract("h_chipa_min", h_chipa_min, "RadiationReaction");
+            PyTools::extract("h_chipa_max", h_chipa_max, "RadiationReaction");
+            PyTools::extract("h_dim", h_dim, "RadiationReaction");
 
             h_log10_chipa_min = log10(h_chipa_min);
         }
@@ -99,20 +99,20 @@ void RadiationTables::initParams(Params& params)
         {
 
             // Extraction of the parameter from the input file
-            PyTools::extract("integfochi_chipa_min", integfochi_chipa_min, "RadiationLoss");
-            PyTools::extract("integfochi_chipa_max", integfochi_chipa_max, "RadiationLoss");
-            PyTools::extract("integfochi_dim", integfochi_dim, "RadiationLoss");
+            PyTools::extract("integfochi_chipa_min", integfochi_chipa_min, "RadiationReaction");
+            PyTools::extract("integfochi_chipa_max", integfochi_chipa_max, "RadiationReaction");
+            PyTools::extract("integfochi_dim", integfochi_dim, "RadiationReaction");
 
-            PyTools::extract("xip_chipa_min", xip_chipa_min, "RadiationLoss");
-            PyTools::extract("xip_chipa_max", xip_chipa_max, "RadiationLoss");
-            PyTools::extract("xip_power", xip_power, "RadiationLoss");
-            PyTools::extract("xip_threshold", xip_threshold, "RadiationLoss");
-            PyTools::extract("xip_chipa_dim", xip_chipa_dim, "RadiationLoss");
-            PyTools::extract("xip_chiph_dim", xip_chiph_dim, "RadiationLoss");
+            PyTools::extract("xip_chipa_min", xip_chipa_min, "RadiationReaction");
+            PyTools::extract("xip_chipa_max", xip_chipa_max, "RadiationReaction");
+            PyTools::extract("xip_power", xip_power, "RadiationReaction");
+            PyTools::extract("xip_threshold", xip_threshold, "RadiationReaction");
+            PyTools::extract("xip_chipa_dim", xip_chipa_dim, "RadiationReaction");
+            PyTools::extract("xip_chiph_dim", xip_chiph_dim, "RadiationReaction");
 
             // Discontinuous minimum threshold
             PyTools::extract("chipa_disc_min_threshold",
-                             chipa_disc_min_threshold,"RadiationLoss");
+                             chipa_disc_min_threshold,"RadiationReaction");
 
             // Additional regularly used parameters
             xip_log10_chipa_min = log10(xip_chipa_min);
@@ -124,10 +124,10 @@ void RadiationTables::initParams(Params& params)
         if (params.hasNielRadiation || params.hasMCRadiation)
         {
             // Format of the tables
-            PyTools::extract("output_format", output_format, "RadiationLoss");
+            PyTools::extract("output_format", output_format, "RadiationReaction");
 
             // Path to the databases
-            PyTools::extract("table_path", table_path, "RadiationLoss");
+            PyTools::extract("table_path", table_path, "RadiationReaction");
         }
     }
 

@@ -349,7 +349,7 @@ class PartWall(SmileiComponent):
     z = None
 
 # Radiation loss (continuous and MC algorithms)
-class RadiationLoss(SmileiComponent):
+class RadiationReaction(SmileiComponent):
     """
     Synchrotron-like radiation loss
     (classical continuous, quantum correction, stochastics and MC algorithms)

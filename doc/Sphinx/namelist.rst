@@ -1106,12 +1106,12 @@ For more details about the collision scheme in :program:`Smilei`, see :doc:`coll
 
 ----
 
-.. _RadiationLoss:
+.. _RadiationReaction:
 
-Radiations loss
-^^^^^^^^^^^^^^^
+Radiation reaction
+^^^^^^^^^^^^^^^^^^^^^
 
-The block ``RadiationLoss`` enables to tune the radiation loss properties
+The block ``RadiationReaction`` enables to tune the radiation loss properties
 (see :doc:`radiation_loss`).
 Many parameters are used for the generation of the cross-section tables
 for the Monte-Carlo emission process.
@@ -1122,7 +1122,7 @@ tables.
 
 ::
 
-  RadiationLoss(
+  RadiationReaction(
      h_chipa_min = 1E-3,
      h_chipa_max = 1E1,
      h_dim = 128,
