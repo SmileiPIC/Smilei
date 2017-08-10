@@ -101,6 +101,20 @@ class MultiphotonBreitWheeler
                             double * weight,
                             MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables);
 
+        //! Perform the creation of pairs from a photon
+        //! \param ipart              photon index
+        //! \param chipa              photon quantum parameter
+        //! \param gammapa            photon normalized energy
+        //! \param position           photon position
+        //! \param momentum           photon momentum
+        //! \param MultiphotonBreitWheelerTables    Cross-section data tables
+        //!                       and useful functions
+        //!                       for the multiphoton Breit-Wheeler process
+        void pair_emission_2(int ipart,
+                           Particles & particles,
+                           double & gammaph,
+                            MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables);
+
         //! Clean photons that decayed into pairs (weight <= 0)
         //! \param particles   particle object containing the particle
         //!                    properties of the current species

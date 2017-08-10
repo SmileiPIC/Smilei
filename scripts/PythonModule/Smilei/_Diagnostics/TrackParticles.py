@@ -6,7 +6,6 @@ from .._Utils import *
 # -------------------------------------------------------------------
 class TrackParticles(Diagnostic):
 	# This is the constructor, which creates the object
-
 	def _init(self, species=None, select="", axes=[], timesteps=None, sort=True, length=None, chunksize=20000000, **kwargs):
 
 		# If argument 'species' not provided, then print available species and leave
@@ -245,7 +244,6 @@ class TrackParticles(Diagnostic):
 				self._error = "No particles found"
 				return
 			if self.Smilei._verbose: print("Kept "+str(self.nselectedParticles)+" particles")
-
 		# Manage axes
 		# -------------------------------------------------------------------
 		if type(axes) is not list:
@@ -338,13 +336,9 @@ class TrackParticles(Diagnostic):
 	def _orderFiles( self, filesDisordered, fileOrdered, chunksize ):
 		if self.Smilei._verbose: print("Ordering particles ... (this could take a while)")
 		try:
-			properties = {"id":"Id", "position/x":"x", "position/y":"y",
-						"position/z":"z",
-						"momentum/x":"px", "momentum/y":"py",
-						"momentum/z":"pz",
-						"charge":"q",
-						"weight":"w",
-						"chi":"chi"}
+			properties = {"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
+			              "momentum/x":"px", "momentum/y":"py", "momentum/z":"pz",
+			              "charge":"q", "weight":"w", "chi":"chi"}
 			# Obtain the list of all times in all disordered files
 			time_locations = {}
 			for fileIndex, fileD in enumerate(filesDisordered):
@@ -364,7 +358,6 @@ class TrackParticles(Diagnostic):
 			total_number_of_particles = offset[-1]
 			offset = self._np.roll(offset, 1)
 			offset[0] = 0
-
 			# If ordered file already exists, find out which timestep was done last
 			latestOrdered = -1
 			if self._os.path.isfile(fileOrdered):
@@ -382,9 +375,12 @@ class TrackParticles(Diagnostic):
 			f.close()
 			# Loop times and fill arrays
 			for it, t in enumerate(times):
+
 				# Skip previously-ordered times
 				if it<=latestOrdered: continue
+
 				if self.Smilei._verbose: print("    Ordering @ timestep = "+str(t))
+
 				file_index, tname = time_locations[t]
 				f = self._h5py.File(filesDisordered[file_index], "r")
 				group = f["data"][tname]["particles"][self.species]
@@ -439,10 +435,11 @@ class TrackParticles(Diagnostic):
 								start_in_file = int(ID[start] % 2**32 + offset[ int(ID[start])>>32 ] -1)
 								stop_in_file = start_in_file + bs
 								f0[name].write_direct( data, source_sel=self._np.s_[start:stop], dest_sel=self._np.s_[it, start_in_file:stop_in_file] )
+
 				# Indicate that this iteration was succesfully ordered
 				f0.attrs["latestOrdered"] = it
-				f.close()
 
+				f.close()
 			# Create the "Times" dataset
 			f0.create_dataset("Times", data=times)
 			# Create the "unique_Ids" dataset
@@ -483,7 +480,9 @@ class TrackParticles(Diagnostic):
 				data_double = self._np.zeros((self.nselectedParticles,), dtype=self._np.double)
 				data_int16  = self._np.zeros((self.nselectedParticles,), dtype=self._np.int16 )
 				for it, time in enumerate(self.times):
+
 					if self.Smilei._verbose: print("     iteration "+str(it+1)+"/"+str(ntimes)+"  (timestep "+str(time)+")")
+
 					timeIndex = self._locationForTime[time]
 					self._h5items["Id"].read_direct(ID, source_sel=self._np.s_[timeIndex,self.selectedParticles]) # read the particle Ids
 					deadParticles = (ID==0).nonzero()
@@ -520,30 +519,28 @@ class TrackParticles(Diagnostic):
 				# Add the times array
 				self._rawData["times"] = self.times
 
-				print("... done")
-
-			# If not sorted, get different kind of data
-			else:
-
-				if self._rawData is None:
-					self._rawData = {}
-
-				if self.Smilei._verbose: print("Loading data ...")
-				properties = {"Id":"id", "x":"position/x", "y":"position/y",
-                              "z":"position/z",
-				              "px":"momentum/x", "py":"momentum/y",
-                              "pz":"momentum/z",
-			                  "q":"charge",
-                              "w":"weight",
-                              "chi":"chi"}
-				if times is None: times = self.times
-				for time in times:
-					[f, timeIndex] = self._locationForTime[time]
-					group = f["data/"+"%010i"%time+"/particles/"+self.species]
-					self._rawData[time] = {}
-					for axis in self.axes:
-						self._rawData[time][axis] = group[properties[axis]].value
 				if self.Smilei._verbose: print("... done")
+
+		# If not sorted, get different kind of data
+		else:
+			if self._rawData is None:
+				self._rawData = {}
+
+			if self.Smilei._verbose: print("Loading data ...")
+			properties = {"Id":"id", "x":"position/x", "y":"position/y", "z":"position/z",
+			              "px":"momentum/x", "py":"momentum/y", "pz":"momentum/z",
+			              "q":"charge", "w":"weight","chi":"chi"}
+			if times is None: times = self.times
+			for time in times:
+				if time in self._rawData: continue
+				[f, timeIndex] = self._locationForTime[time]
+				group = f["data/"+"%010i"%time+"/particles/"+self.species]
+				self._rawData[time] = {}
+				for axis in self.axes:
+					self._rawData[time][axis] = group[properties[axis]].value
+
+			if self.Smilei._verbose: print("... done")
+
 
 	# We override the get and getData methods
 	def getData(self, timestep=None):

@@ -61,6 +61,7 @@ makerunCollisions:
   only:
     - develop
     - develop-QED-photon-emission
+    - develop-Multiphoton-Breit-Wheeler
   script:
     # Move in test dir
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation

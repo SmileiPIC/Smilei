@@ -236,12 +236,18 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
                         position[i][ipart]     += event_time*momentum[i][ipart]/(*gamma)[ipart];
 */
                     // Generation of the pairs
-                    MultiphotonBreitWheeler::pair_emission(ipart,
+                    /*MultiphotonBreitWheeler::pair_emission(ipart,
                                            chiph[ipart],(*gamma)[ipart],
                                            position,
                                            momentum,
                                            weight,
-                                           MultiphotonBreitWheelerTables);
+                                           MultiphotonBreitWheelerTables);*/
+
+                   MultiphotonBreitWheeler::pair_emission_2(ipart,
+                                          particles,
+                                          (*gamma)[ipart],
+                                          MultiphotonBreitWheelerTables);
+
 
                     // Optical depth becomes negative meaning
                     // that a new drawing is possible
@@ -273,14 +279,15 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
                 MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables)
 {
 
-    /*if ((position[0][ipart] > 22.2908)
+    if ((position[0][ipart] > 22.2908)
     || (position[0][ipart] < 0)
     || (position[1][ipart] > 22.2908)
     || (position[1][ipart] < 0))
     {
         ERROR(" " << ipart
-              << " " position[0][ipart] << " " << position[1][ipart])
-    }*/
+              << " " << position[0][ipart]
+              << " " << position[1][ipart]);
+    }
 
     // _______________________________________________
     // Parameters
@@ -288,6 +295,7 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
     int nparticles; // Total number of particles in the temporary arrays
     double * chi = new double[2];
     double inv_chiph_gammaph;
+    double p;
 
     inv_chiph_gammaph = (gammaph-2.)/chiph;
 
@@ -324,9 +332,10 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
 #endif
 
         // Momentum
+        p = sqrt(pow(1.+chi[0]*inv_chiph_gammaph,2)-1);
         for (int i=0; i<3; i++) {
             new_pair[0].momentum(i,idNew) =
-            (1.+chi[0]*inv_chiph_gammaph)*u[i];
+            p*u[i];
         }
 
         new_pair[0].weight(idNew)=weight[ipart]*mBW_pair_creation_inv_sampling[0];
@@ -368,9 +377,10 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
 #endif
 
         // Momentum
+        p = sqrt(pow(1.+chi[1]*inv_chiph_gammaph,2)-1);
         for (int i=0; i<3; i++) {
             new_pair[1].momentum(i,idNew) =
-            (1.+chi[1]*inv_chiph_gammaph)*u[i];
+            p*u[i];
         }
 
         new_pair[1].weight(idNew)=weight[ipart]*mBW_pair_creation_inv_sampling[1];
@@ -392,6 +402,109 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
 
     // The photon with negtive weight will be deleted latter
     weight[ipart] = -1;
+
+}
+
+
+// -----------------------------------------------------------------------------
+//! Perform the creation of pairs from a photon
+//! \param ipart              photon index
+//! \param chipa              photon quantum parameter
+//! \param gammapa            photon normalized energy
+//! \param position           photon position
+//! \param momentum           photon momentum
+//! \param MultiphotonBreitWheelerTables    Cross-section data tables
+//!                       and useful functions
+//!                       for the multiphoton Breit-Wheeler process
+// -----------------------------------------------------------------------------
+void MultiphotonBreitWheeler::pair_emission_2(int ipart,
+                Particles & particles,
+                double & gammaph,
+                MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables)
+{
+
+    if ((particles.position(0,ipart) > 22.2908)
+    || (particles.position(0,ipart) < 0)
+    || (particles.position(1,ipart) > 22.2908)
+    || (particles.position(1,ipart) < 0))
+    {
+        ERROR(" " << ipart
+              << " " << particles.position(0,ipart)
+              << " " << particles.position(1,ipart) );
+    }
+
+    // _______________________________________________
+    // Parameters
+    double u[3]; // propagation direction
+    int nparticles; // Total number of particles in the temporary arrays
+    double * chi = new double[2];
+    double inv_chiph_gammaph;
+    double p;
+
+    inv_chiph_gammaph = (gammaph-2.)/particles.chi(ipart);
+
+    // Get the pair quantum parameters to compute the energy
+    chi = MultiphotonBreitWheelerTables.compute_pair_chi( particles.chi(ipart));
+
+    // pair propagation direction // direction of the photon
+    for ( int i = 0 ; i<3 ; i++ ) {
+        u[i] = particles.momentum(i,ipart)/gammaph;
+    }
+
+    // _______________________________________________
+    // Electron (k=0) and positron (k=1) generation
+
+    for (int k=0 ; k < 2 ; k++)
+    {
+
+        // Creation of new electrons in the temporary array new_pair[0]
+        new_pair[k].create_particles(mBW_pair_creation_sampling[k]);
+
+        // Final size
+        nparticles = new_pair[k].size();
+
+        // For all new electrons...
+        for (int idNew=nparticles-mBW_pair_creation_sampling[k]; idNew<nparticles; idNew++)
+        {
+            // Positions
+            for (int i=0; i<nDim_; i++) {
+                new_pair[k].position(i,idNew)=particles.position(i,ipart) ;
+            }
+
+            // Old positions
+#ifdef  __DEBUG
+            for (int i=0; i<nDim_; i++) {
+                new_pair[k].position_old(i,idNew)=particles.position(i,ipart) ;
+            }
+#endif
+
+            // Momentum
+            p = sqrt(pow(1.+chi[k]*inv_chiph_gammaph,2)-1);
+            for (int i=0; i<3; i++) {
+                new_pair[k].momentum(i,idNew) =
+                p*u[i];
+            }
+
+            new_pair[k].weight(idNew)=particles.weight(ipart)*mBW_pair_creation_inv_sampling[k];
+            new_pair[k].charge(idNew)= k*2-1;
+
+            if (new_pair[k].isQuantumParameter)
+            {
+                new_pair[k].chi(idNew) = chi[k];
+            }
+
+            if (new_pair[k].isMonteCarlo)
+            {
+                new_pair[k].tau(idNew) = -1.;
+            }
+        }
+    }
+
+    // Total energy converted into pairs during the current timestep
+    this->pair_converted_energy += particles.weight(ipart)*gammaph;
+
+    // The photon with negtive weight will be deleted latter
+    particles.weight(ipart) = -1;
 
 }
 

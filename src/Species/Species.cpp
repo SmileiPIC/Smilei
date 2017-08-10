@@ -522,29 +522,31 @@ void Species::dynamics(double time_dual, unsigned int ispec,
         //Still needed for ionization
         vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
 
+
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
-
-
-            /*for (unsigned int ipart=bmin[ibin]; ipart < bmax[ibin];ipart++)
+            for (unsigned int ipart=bmin[ibin]; ipart < bmax[ibin];ipart++)
             {
                 if ((particles->position(0,ipart) > patch->getDomainLocalMax(0))
                 || (particles->position(0,ipart) < patch->getDomainLocalMin(0))
                 || (particles->position(1,ipart) > patch->getDomainLocalMax(1))
                 || (particles->position(1,ipart) < patch->getDomainLocalMin(1)))
                 {
-                    std::cerr << " ipart: " << ipart << " bmax[ibin]: " << bmax[ibin]
-                              << " " << this->mass
-                              << " " << particles->charge(ipart)
-                              << " " << particles->weight(ipart)
+                    ERROR( setprecision(12) << " ipart: " << ipart << " bmax[ibin]: " << bmax[ibin]
+                              << " mass: " << this->mass
+                              << " charge: " << particles->charge(ipart)
+                              << " weight: " << particles->weight(ipart)
                               << " " << patch->getDomainLocalMin(0)
                               << " < " << particles->position(0,ipart)
                               << " < " << patch->getDomainLocalMax(0)
                               << " " << patch->getDomainLocalMin(1)
                               << " < " << particles->position(1,ipart)
                               << " < " << patch->getDomainLocalMax(1)
-                          <<std::endl;
+                          )
                 }
-            }*/
+            }
+        }
+
+        for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
 
             // Interpolate the fields at the particle position
@@ -713,6 +715,39 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             }*/
 
         }
+
+        /*for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
+            for (unsigned int ipart=bmin[ibin]; ipart < bmax[ibin];ipart++)
+            {
+                if ((particles->position(0,ipart) > patch->getDomainLocalMax(0))
+                || (particles->position(0,ipart) < patch->getDomainLocalMin(0))
+                || (particles->position(1,ipart) > patch->getDomainLocalMax(1))
+                || (particles->position(1,ipart) < patch->getDomainLocalMin(1)))
+                {
+                    /*std::cerr << " ipart: " << ipart << " bmax[ibin]: " << bmax[ibin]
+                              << " mass: " << this->mass
+                              << " charge: " << particles->charge(ipart)
+                              << " " << particles->weight(ipart)
+                              << " " << patch->getDomainLocalMin(0)
+                              << " < " << particles->position(0,ipart)
+                              << " < " << patch->getDomainLocalMax(0)
+                              << " " << patch->getDomainLocalMin(1)
+                              << " < " << particles->position(1,ipart)
+                              << " < " << patch->getDomainLocalMax(1)
+                          <<std::endl;
+                          ERROR(" ipart: " << ipart << " bmax[ibin]: " << bmax[ibin]
+                                    << " mass: " << this->mass
+                                    << " charge: " << particles->charge(ipart)
+                                    << " " << particles->weight(ipart)
+                                    << " " << patch->getDomainLocalMin(0)
+                                    << " < " << particles->position(0,ipart)
+                                    << " < " << patch->getDomainLocalMax(0)
+                                    << " " << patch->getDomainLocalMin(1)
+                                    << " < " << particles->position(1,ipart)
+                                    << " < " << patch->getDomainLocalMax(1))
+                }
+            }
+        }*/
 
     }
     else { // immobile particle (at the moment only project density)
@@ -1122,15 +1157,47 @@ void Species::importParticles( Params& params, Patch* patch, Particles& source_p
     for( unsigned int i=0; i<npart; i++ ) {
         // Copy particle to the correct bin
         ibin = source_particles.position(0,i)*inv_cell_length - ( patch->getCellStartingGlobalIndex(0) + params.oversize[0] );
-        /*std::cerr << " " << source_particles.position(0,i)
-                  << " " << ibin
+        /*std::cerr << " x: " << source_particles.position(0,i)
+                  << " ibin: " << ibin
                   << " " << bmin.size()
                   << " " <<  source_particles.weight(i)
                   << " " << patch->getDomainLocalMin(0)
                   << " " << patch->getDomainLocalMax(0)
                   <<std::endl;*/
+        if (source_particles.position(0,i) < patch->getDomainLocalMin(0)
+         || source_particles.position(0,i) > patch->getDomainLocalMax(0)
+         || source_particles.position(1,i) < patch->getDomainLocalMin(1)
+         || source_particles.position(1,i) > patch->getDomainLocalMax(1))
+         {
+                  ERROR(" x: " << source_particles.position(0,i)
+                            << " y: " << source_particles.position(1,i)
+                            << " ibin: " << ibin
+                            << " " << bmin.size()
+                            << " " <<  source_particles.weight(i)
+                            << " " << patch->getDomainLocalMin(0)
+                            << " " << patch->getDomainLocalMax(0)
+                        )
+        }
         ibin /= params.clrw;
         source_particles.cp_particle(i, *particles, bmin[ibin] );
+
+        int n = bmax[ibin];
+
+        if (particles->position(0,n) < patch->getDomainLocalMin(0)
+         || particles->position(0,n) > patch->getDomainLocalMax(0)
+         || particles->position(1,n) < patch->getDomainLocalMin(1)
+         || particles->position(1,n) > patch->getDomainLocalMax(1))
+         {
+                  ERROR(" x: " << particles->position(0,n)
+                            << " y: " << particles->position(1,n)
+                            << " ibin: " << ibin
+                            << " n: " << n
+                            << " " << bmin.size()
+                            << " " <<  particles->weight(n)
+                            << " " << patch->getDomainLocalMin(0)
+                            << " " << patch->getDomainLocalMax(0))
+        }
+
         // Update the bin counts
         bmax[ibin]++;
         for (ii=ibin+1; ii<nbin; ii++) {
