@@ -653,17 +653,20 @@ the Monte-Carlo radiation process.
 
 .. _radiationTimes:
 
-+-------------------------------------+------------+----------+--------------+----------+--------+
-| Radiation model                     | None       | LL       | CLL          | Niel     | MC     |
-+=====================================+============+==========+==============+==========+========+
-| Counter-propagating Plane Wave 1D   | 0.25s      | 0.3s     | 0.36s        | 0.5s     | 0.8s   |
-+-------------------------------------+------------+----------+--------------+----------+--------+
-| Synchrotron 2D                      | 3.9s       | 4.2s     | 4.8s         | 7.9s     | 5.6s   |
-| :math:`\chi=0.5`,  :math:`B=100`    |            | - 10%    | - 30%        | - 100%   | - 50%  |
-+-------------------------------------+------------+----------+--------------+----------+--------+
-| Interaction with a carbon thin foil | 6.5s       | 6.9s     | 7.2s         | 7.4s     | 7.2s   |
-| 2D                                  |            |          |              |          |        |
-+-------------------------------------+------------+----------+--------------+----------+--------+
++-------------------------------------+------------+----------+--------------+----------+---------------------+
+| Radiation model                     | None       | LL       | CLL          | Niel     | MC                  |
++=====================================+============+==========+==============+==========+=====================+
+| Counter-propagating Plane Wave 1D   | 0.25s      | 0.3s     | 0.36s        | 0.5s     | 0.8s                |
++-------------------------------------+------------+----------+--------------+----------+---------------------+
+| Synchrotron 2D Haswell              | 3.9s       | 4.2s     | 4.7s         | 7.8s     | 5.6s                |
+| :math:`\chi=0.5`,  :math:`B=100`    |            | - 8%     | - 21%        | - 100%   | - :math:`\sim` 50%  |
++-------------------------------------+------------+----------+--------------+----------+---------------------+
+| Synchrotron 2D KNL                  | 11s        | 11s      | 11s          | 32s      | 17s                 |
+| :math:`\chi=0.5`,  :math:`B=100`    |            |          |              | - 200%   | - :math:`\sim` 50%  |
++-------------------------------------+------------+----------+--------------+----------+---------------------+
+| Interaction with a carbon thin foil | 6.5s       | 6.9s     | 7.2s         | 7.4s     | 7.2s                |
+| 2D                                  |            |          |              |          |                     |
++-------------------------------------+------------+----------+--------------+----------+---------------------+
 
 Descriptions of the cases:
 
@@ -673,8 +676,9 @@ Descriptions of the cases:
 * **Synchrotron 2D**: The domain has a dimension of 496x496 cells with
   16 particles per cell and 8x8 patches.
   A 4th order B-spline shape factor is used for the projection.
-  The case is run on a single node of *Jureca* with 2 MPI ranks and 12 OpenMP
-  threads per rank.
+  The first case has been run on a single Haswell node of *Jureca* with 2 MPI ranks and
+  12 OpenMP threads per rank. the second one has been run on a single KNL node of *Frioul*
+  configured in quadrant cache using 1 MPI rank and 64 OpenMP threads.
 
 * **Thin foil 2D**:
   The domain has a discretization of 64 cells per :math:`\mu\mathrm{m}` in
