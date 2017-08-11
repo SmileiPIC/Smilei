@@ -150,6 +150,7 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
             SyncVectorPatch::finalize_and_sort_parts((*this), ispec, params, smpi, timers, itime ); // Included sort_part
         }
     }
+
     if (itime%params.every_clean_particles_overhead==0) {
         #pragma omp master
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)

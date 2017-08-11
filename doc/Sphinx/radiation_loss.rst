@@ -1,3 +1,5 @@
+.. _radiationReactionPage:
+
 Synchrotron-like radiation loss
 --------------------------------------------------------------------------------
 
@@ -302,6 +304,9 @@ energy tends to infinity [Lobet2015]_ and that the error is low when
 :math:`\varepsilon_\pm \gg 1` and :math:`\varepsilon_\gamma \ll \varepsilon_\pm`.
 Between emission events, the electron dynamics is still governed by the
 Lorentz force.
+
+If the photon is emitted as a macro-photon, initial position is the same as
+for the emitting particle. The weight is also conserved.
 
 ----
 

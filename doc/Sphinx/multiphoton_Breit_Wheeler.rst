@@ -41,18 +41,18 @@ Physical model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The energy distribution of the production rate of pairs by a hard photon
-is given by
+is given by the Ritus formulae
 
 .. math::
   :label: BWEnergyDistribution
 
-  \frac{dN_{BW}}{d \chi_{\pm} dt} = \frac{\alpha_f m_e^2 c^4}{\pi \sqrt{3} \hbar \varepsilon_\gamma \chi_\gamma}
-  \int_{0}^{+\infty}{\sqrt{s} K_{1/3} \left( \frac{2}{3} s^{3/2} \right) ds - \left( 2 - \chi_\gamma x^{3/2} \right) K_{2/3} \left( \frac{2}{3} x^{3/2} \right) }
+  \frac{d^2N_{BW}}{d \chi_{\pm} dt} = \frac{\alpha_f m_e^2 c^4}{\pi \sqrt{3} \hbar \varepsilon_\gamma \chi_\gamma}
+  \int_{x}^{+\infty}{\sqrt{s} K_{1/3} \left( \frac{2}{3} s^{3/2} \right) ds - \left( 2 - \chi_\gamma x^{3/2} \right) K_{2/3} \left( \frac{2}{3} x^{3/2} \right) }
 
 where :math:`x = \left( \chi_\gamma / (\chi_{-} \chi_{+}) \right)^{2/3}`.
 The parameters :math:`\chi_{-}` and :math:`\chi_{+}` are the respective Lorentz
 invariant of the electron and the positron after pair creation.
-Furthermore, one has :math:`chi_- = \chi_\gamma - \chi_+` meaning that :math:`\chi_-`
+Furthermore, one has :math:`\chi_- = \chi_\gamma - \chi_+` meaning that :math:`\chi_-`
 and :math:`\chi_+` can be interchanged.
 
 The total production rate of pairs can be written
@@ -68,7 +68,7 @@ where
   :label: BWTfunction
 
   T \left( \chi_\gamma \right) = \frac{1}{\pi \sqrt{3} \chi_\gamma^2 }
-  \int_{0}^{+\infty}{\int_{0}^{+\infty}{\sqrt{s} K_{1/3} \left( \frac{2}{3} s^{3/2}
+  \int_{0}^{+\infty}{\int_{x}^{+\infty}{\sqrt{s} K_{1/3} \left( \frac{2}{3} s^{3/2}
   \right) ds - \left( 2 - \chi_\gamma x^{3/2} \right) K_{2/3} \left( \frac{2}{3} x^{3/2} \right) }} d\chi_-
 
 A photon of energy :math:`\varepsilon_\gamma` traveling in a constant electric field :math:`E` has a Lorentz
@@ -85,12 +85,15 @@ less than a pair after 100 picoseconds of interaction.
 Above :math:`\chi_\gamma = 10`, the production decreases slowly with
 :math:`\chi_\gamma`.
 
-The right plot in :numref:`synchrotron_pairs_dNdt` gives the probability
+The right subplot in :numref:`synchrotron_pairs_dNdt` gives the probability
 for a photon to decay into a pair as a function of the energy given to the electron
-(using approximation :math:`\chi_\gamma / \chi_- = \gamma_\gamma / \gamma_-`).
+(using approximation :math:`\chi_\gamma / \chi_- = \gamma_\gamma / \gamma_-`)
+for a field of amplitude :math:`E = 500 m_e \omega c / e`.
 It can also be seen as the pair creation energy distribution.
-Below :math:`\chi_\gamma = 10`, the distribution is symmetric with respect
-to :math:`\chi_- / \chi_\gamma = 1/2`.
+The distribution is symmetric with respect to :math:`\chi_- / \chi_\gamma = 1/2`.
+Below :math:`\chi_\gamma = 10`, The maximum probability corresponds to
+equal electron-positron energies :math:`\chi_- = \chi_+ = \chi_\gamma / 2`.
+Above this threshold, the energy dispersion increases with :math:`\chi_\gamma`.
 
 .. _synchrotron_pairs_dNdt:
 
@@ -100,8 +103,70 @@ to :math:`\chi_- / \chi_\gamma = 1/2`.
   (left) - Normalized total pair production distribution given by Eq. :eq:`BWproductionRate`.
   (right) - Normalized pair creation :math:`\chi` distribution given by Eq. :eq:`BWEnergyDistribution`.
 
+
+
 Stochastic scheme
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Multiphoton Breit-Wheeler is treated with a Monte-Carlo process similar
+to the nonlinear inverse Compton Scattering
+(see :ref:`the radiation reaction page <radiationReactionPage>`).
+It is close to what has been done in
+[Duclous2011]_, [Lobet2013]_, [Lobet2015]_.
+
+The first preliminary step consists
+on introducing the notion of macro-photon. Macro-photons are simply the equivalent of
+macro-particles (see :ref:`the macro-particle section <QuasiParticlesSection>`)
+extended to photons.
+There are defined by a charge and a mass equal to 0. The momentum is substituted
+by the photon momentum :math:`\mathbf{p}_\gamma = \hbar \mathbf{k}` where
+:math:`\mathbf{k}` is the wave vector.
+The momentum contains the photon energy so that
+:math:`\mathbf{p}_\gamma = \gamma_\gamma m_e \mathbf{c}`.
+The definition of the photon Lorentz factor is therefore also slightly different
+than particles.
+
+1. An incremental optical depth :math:`\tau`, initially set to 0, is assigned to the macro-photon.
+Decay into pairs occurs when it reaches the final optical depth :math:`\tau_f`
+sampled from :math:`\tau_f = -\log{(\xi)}` where :math:`\xi` is a random number in :math:`\left]0,1\right]`.
+
+2. The optical depth :math:`\tau` evolves according to the photon quantum parameter
+ following:
+
+.. math::
+  :label: mBW_MCDtauDt
+
+    \frac{d\tau}{dt} = \frac{dN_{BW}}{dt}\left( \chi_\gamma \right)
+
+that is also the production rate of pairs
+(integration of Eq. :eq:`BWEnergyDistribution`).
+
+3. The emitted electron's quantum parameter :math:`\chi_-` is computed by
+inverting the cumulative distribution function:
+
+.. math::
+  :label: mBW_CumulativeDistr
+
+    P(\chi_-,\chi_\gamma) = \frac{\displaystyle{\int_0^{\chi_-}{
+    \frac{d^2N_{BW}}{d \chi dt} d\chi}}}{\displaystyle{\int_0^{\chi_\gamma}{\frac{d^2N_{BW}}{d \chi dt} d\chi}}}
+
+The inversion of  :math:`P(\chi_-,\chi_\gamma)=\xi'` is done after drawing
+a second random number
+:math:`\xi' \in \left[ 0,1\right]` to find :math:`\chi_-`.
+The positron quantum parameter is :math:`\chi_+ = \chi_\gamma - \chi_-`
+
+4. The energy of the emitted electron is then computed:
+:math:`\varepsilon_- = mc^2 \gamma_- =
+mc^2 \left[ 1 + \left(\gamma_\gamma - 2\right) \chi_- / \chi_\gamma \right]`.
+If :math:`\gamma_\gamma < 2`, the pair creation is not possible since the photon
+energy is below the rest mass of the particles.
+
+5. The photon momentum is then updated.
+Propagation direction is the same as for the photon. Pairs are created at the
+same position as for the photon. The weight is conserved. It is possible to
+create more than a macro-electron or a macro-positron in order to improve
+the phenomenon statistics. In this case, the weight of each macro-particle is
+the photon weight divided by the number of emissions.
 
 Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
