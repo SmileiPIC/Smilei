@@ -679,6 +679,8 @@ Descriptions of the cases:
   The first case has been run on a single Haswell node of *Jureca* with 2 MPI ranks and
   12 OpenMP threads per rank. the second one has been run on a single KNL node of *Frioul*
   configured in quadrant cache using 1 MPI rank and 64 OpenMP threads.
+  On KNL, the `KMP_affinity` is set to fine and scatter. Only the Niel model provides 
+  better performance with a compact affinity.
 
 * **Thin foil 2D**:
   The domain has a discretization of 64 cells per :math:`\mu\mathrm{m}` in
