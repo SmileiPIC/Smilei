@@ -661,8 +661,8 @@ the Monte-Carlo radiation process.
 | Synchrotron 2D Haswell              | 3.9s       | 4.2s     | 4.7s         | 7.8s     | 5.6s                |
 | :math:`\chi=0.5`,  :math:`B=100`    |            | - 8%     | - 21%        | - 100%   | - :math:`\sim` 50%  |
 +-------------------------------------+------------+----------+--------------+----------+---------------------+
-| Synchrotron 2D KNL                  | 11s        | 11s      | 11s          | 32s      | 17s                 |
-| :math:`\chi=0.5`,  :math:`B=100`    |            |          |              | - 200%   | - :math:`\sim` 50%  |
+| Synchrotron 2D KNL                  | 3s         | 3.2s     | 3.3s         | 31s      | 10s                 |
+| :math:`\chi=0.5`,  :math:`B=100`    |            |          |              |          |                     |
 +-------------------------------------+------------+----------+--------------+----------+---------------------+
 | Interaction with a carbon thin foil | 6.5s       | 6.9s     | 7.2s         | 7.4s     | 7.2s                |
 | 2D                                  |            |          |              |          |                     |
@@ -688,7 +688,8 @@ Descriptions of the cases:
 
 The LL and CLL models are vectorized efficiently.
 The Niel model implementation is split into several loops to
-be partially vectorized.
+be partially vectorized. Surprisingly, this model have bad performance on KNL
+and further analysis are necessary to well understand why.
 
 When using the Monte-Carlo radiation model, code performance is likely to be
 more impacted running on SIMD architecture with large vector registers
