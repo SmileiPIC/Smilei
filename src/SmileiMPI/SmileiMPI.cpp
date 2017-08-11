@@ -805,7 +805,7 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
                  if (embc->Bx_val.size()) { isend(&embc->Bx_val, to, mpi_tag+tag, requests[tag]); tag++; }
                  if (embc->By_val.size()) { isend(&embc->By_val, to, mpi_tag+tag, requests[tag]); tag++; }
                  if (embc->Bz_val.size()) { isend(&embc->Bz_val, to, mpi_tag+tag, requests[tag]); tag++; }
- 
+
              }
              else if ( dynamic_cast<ElectroMagnBC3D_SM*>(EM->emBoundCond[bcId]) ) {
                 ElectroMagnBC3D_SM* embc = static_cast<ElectroMagnBC3D_SM*>(EM->emBoundCond[bcId]);
