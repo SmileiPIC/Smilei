@@ -509,8 +509,6 @@ void Species::dynamics(double time_dual, unsigned int ispec,
     double ener_iPart(0.);
     std::vector<double> nrj_lost_per_thd(1, 0.);
 
-    //std::cerr << "Species: " << this->species_type << std::endl;
-
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
@@ -699,21 +697,13 @@ void Species::dynamics(double time_dual, unsigned int ispec,
         if (Multiphoton_Breit_Wheeler_process)
         {
 
-            // Addition of the electron- positron particles
+            // Addition of the electron-positron particles
             for (int k=0; k<2; k++) {
                 mBW_pair_species[k]->importParticles(params,
                                              patch,
                                              Multiphoton_Breit_Wheeler_process->new_pair[k],
                                              localDiags);
             }
-
-            // Suppression of the decayed photons into pairs
-            /*for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++)
-            {
-                (*Multiphoton_Breit_Wheeler_process).decayed_photon_cleaning(
-                                *particles,ibin, bmin.size(), &bmin[0], &bmax[0]);
-            }*/
-
         }
 
         /*for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
@@ -773,6 +763,251 @@ void Species::dynamics(double time_dual, unsigned int ispec,
     }//END if time vs. time_frozen
 
 }//END dynamic
+
+void Species::dynamics_interp_push_proj(double time_dual, unsigned int ispec,
+                       ElectroMagn* EMfields, Interpolator* Interp,
+                       Projector* Proj, Params &params, bool diag_flag,
+                       PartWalls* partWalls,
+                       Patch* patch, SmileiMPI* smpi,
+                       RadiationTables & RadiationTables,
+                       MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
+                       vector<Diagnostic*>& localDiags)
+{
+    int ithread;
+    #ifdef _OPENMP
+        ithread = omp_get_thread_num();
+    #else
+        ithread = 0;
+    #endif
+
+    unsigned int iPart;
+
+    // -------------------------------
+    // calculate the particle dynamics
+    // -------------------------------
+    if (time_dual>time_frozen) { // moving particle
+
+        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+
+        //Point to local thread dedicated buffers
+        //Still needed for ionization
+        vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
+
+        for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
+
+
+            // Interpolate the fields at the particle position
+            (*Interp)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread );
+
+            // Ionization
+            if (Ionize)
+                (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
+
+            // Radiation losses
+            if (Radiate)
+            {
+
+                // Radiation process
+                (*Radiate)(*particles, this->photon_species, smpi,
+                         RadiationTables,
+                         bmin[ibin], bmax[ibin], ithread );
+
+                // Update scalar variable for diagnostics
+                nrj_radiation += (*Radiate).getRadiatedEnergy();
+
+                // Update the quantum parameter chi
+                (*Radiate).compute_thread_chipa(*particles,
+                                                smpi,
+                                                bmin[ibin],
+                                                bmax[ibin],
+                                                ithread );
+
+            }
+
+            // Multiphoton Breit-Wheeler
+            if (Multiphoton_Breit_Wheeler_process)
+            {
+
+                // Pair generation process
+                (*Multiphoton_Breit_Wheeler_process)(*particles,
+                         smpi,
+                         MultiphotonBreitWheelerTables,
+                         bmin[ibin], bmax[ibin], ithread );
+
+                 // Update scalar variable for diagnostics
+                 // We reuse nrj_radiation for the pairs
+                 nrj_radiation += (*Multiphoton_Breit_Wheeler_process).getPairEnergy();
+
+                 // Update the photon quantum parameter chi of all photons
+                 (*Multiphoton_Breit_Wheeler_process).compute_thread_chiph(*particles,
+                                                 smpi,
+                                                 bmin[ibin],
+                                                 bmax[ibin],
+                                                 ithread );
+
+                 // Suppression of the decayed photons into pairs
+                 (*Multiphoton_Breit_Wheeler_process).decayed_photon_cleaning(
+                                 *particles,ibin, bmin.size(), &bmin[0], &bmax[0]);
+
+            }
+
+            // Push the particles and the photons
+            (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
+            //particles->test_move( bmin[ibin], bmax[ibin], params );
+
+            // Project currents if not a Test species and charges as well if a diag is needed.
+            // Do not project if a photon
+            if ((!particles->isTest) && (mass > 0))
+                (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, b_dim, ispec );
+
+        }// ibin
+
+    }
+    else { // immobile particle (at the moment only project density)
+        if ( diag_flag &&(!particles->isTest)){
+            double* b_rho=nullptr;
+            for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
+
+                if (nDim_field==2)
+                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1) : &(*EMfields->rho_)(ibin*clrw*f_dim1) ;
+                if (nDim_field==3)
+                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1*f_dim2) : &(*EMfields->rho_)(ibin*clrw*f_dim1*f_dim2) ;
+                else if (nDim_field==1)
+                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw) : &(*EMfields->rho_)(ibin*clrw) ;
+                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                    (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
+                } //End loop on particles
+            }//End loop on bins
+
+        }
+    }//END if time vs. time_frozen
+
+}//END dynamic
+
+void Species::dynamics_import_particles(double time_dual, unsigned int ispec,
+                       Params &params,
+                       Patch* patch, SmileiMPI* smpi,
+                       RadiationTables & RadiationTables,
+                       MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
+                       vector<Diagnostic*>& localDiags)
+{
+    int ithread;
+    #ifdef _OPENMP
+        ithread = omp_get_thread_num();
+    #else
+        ithread = 0;
+    #endif
+
+    // -------------------------------
+    // calculate the particle dynamics
+    // -------------------------------
+    if (time_dual>time_frozen) { // moving particle
+
+        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+
+        // Add the ionized electrons to the electron species
+        if (Ionize)
+            electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags );
+
+        // Radiation losses
+        if (Radiate)
+        {
+            // If creation of macro-photon, we add them to photon_species
+            if (photon_species)
+            {
+                photon_species->importParticles(params,
+                                                patch,
+                                                Radiate->new_photons,
+                                                localDiags);
+            }
+        }
+
+        // Multiphoton Breit-Wheeler
+        if (Multiphoton_Breit_Wheeler_process)
+        {
+            // Addition of the electron-positron particles
+            for (int k=0; k<2; k++) {
+                mBW_pair_species[k]->importParticles(params,
+                                             patch,
+                                             Multiphoton_Breit_Wheeler_process->new_pair[k],
+                                             localDiags);
+            }
+        }
+
+
+    }
+
+}//END dynamic
+
+void Species::dynamics_bound_cond(double time_dual, unsigned int ispec,
+                       Params &params,
+                       PartWalls* partWalls,
+                       Patch* patch, SmileiMPI* smpi)
+{
+    int ithread;
+    #ifdef _OPENMP
+        ithread = omp_get_thread_num();
+    #else
+        ithread = 0;
+    #endif
+
+    unsigned int iPart;
+
+    // Reset list of particles to exchange
+    clearExchList();
+
+    int tid(0);
+    double ener_iPart(0.);
+    std::vector<double> nrj_lost_per_thd(1, 0.);
+
+    // -------------------------------
+    // calculate the particle dynamics
+    // -------------------------------
+    if (time_dual>time_frozen) { // moving particle
+
+        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+
+        for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
+
+            // Apply wall and boundary conditions
+            for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                    double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                    if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
+                        if (mass>0)
+                        {
+                            nrj_lost_per_thd[tid] += mass * ener_iPart;
+
+                        } else if (mass==0) {
+                            nrj_lost_per_thd[tid] += ener_iPart;
+                        }
+                    }
+                }
+            }
+
+            // Boundary Condition may be physical or due to domain decomposition
+            // apply returns 0 if iPart is not in the local domain anymore
+            //        if omp, create a list per thread
+            for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                    addPartInExchList( iPart );
+                    //nrj_lost_per_thd[tid] += ener_iPart;
+                    if (mass>0)
+                    {
+                        nrj_lost_per_thd[tid] += mass * ener_iPart;
+
+                    } else if (mass==0) {
+                        nrj_lost_per_thd[tid] += ener_iPart;
+                    }
+                }
+             }
+        }
+
+        for (unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
+            nrj_bc_lost += nrj_lost_per_thd[tid];
+
+    }
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -23,8 +23,9 @@
 RadiationMonteCarlo::RadiationMonteCarlo(Params& params, Species * species)
       : Radiation(params, species)
 {
-    radiation_photon_sampling = species->radiation_photon_sampling;
-    inv_radiation_photon_sampling = 1. / radiation_photon_sampling;
+    this->radiation_photon_sampling = species->radiation_photon_sampling;
+    this->radiation_photon_gamma_threshold = species->radiation_photon_gamma_threshold;
+    this->inv_radiation_photon_sampling = 1. / this->radiation_photon_sampling;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -212,7 +213,6 @@ void RadiationMonteCarlo::operator() (
                             << std::endl;*/
 
                     // Emission of a photon
-
                     RadiationMonteCarlo::photon_emission(ipart,
                                            chipa,gamma,
                                            position,
@@ -337,7 +337,9 @@ void RadiationMonteCarlo::photon_emission(int ipart,
     pz *= new_norm_p * inv_old_norm_p;*/
 
     // Creation of macro-photons if requested
-    if (photon_species)
+    // Check that the photon_species is defined and the threshold on the energy
+    if (photon_species
+        && (gammaph >= radiation_photon_gamma_threshold))
     {
         /* ---------------------------------------------------------------------
         // First method: emission of a single photon

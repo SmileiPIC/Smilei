@@ -151,6 +151,29 @@ public:
                           MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                           std::vector<Diagnostic*>& localDiags);
 
+    //! Method calculating the Particle dynamics (interpolation, pusher, projection)
+    virtual void dynamics_interp_push_proj(double time, unsigned int ispec,
+                        ElectroMagn* EMfields,
+                        Interpolator* interp,
+                        Projector* proj, Params &params, bool diag_flag,
+                        PartWalls* partWalls, Patch* patch, SmileiMPI* smpi,
+                        RadiationTables &RadiationTables,
+                        MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
+                        std::vector<Diagnostic*>& localDiags);
+
+    //! Method performing the importation of new particles
+    virtual void dynamics_import_particles(double time, unsigned int ispec,
+                        Params &params,
+                        Patch* patch, SmileiMPI* smpi,
+                        RadiationTables &RadiationTables,
+                        MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
+                        std::vector<Diagnostic*>& localDiags);
+
+    //! Method preparing the boundary conditions
+    virtual void dynamics_bound_cond(double time, unsigned int ispec,
+                          Params &params,
+                          PartWalls* partWalls, Patch* patch, SmileiMPI* smpi);
+
     //! Method calculating the Particle charge on the grid (projection)
     virtual void computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector* Proj);
 
@@ -205,6 +228,10 @@ public:
     std::string radiation_photon_species;
     //! Number of photons emitted per particle and per event
     int radiation_photon_sampling;
+    //! Threshold on the photon Lorentz factor under which the macro-photon
+    //! is not generated but directly added to the energy scalar diags
+    //! This enable to limit emission of useless low-energy photons
+    double radiation_photon_gamma_threshold;
 
     //! Pointer to the species where electron-positron pairs
     //! from the multiphoton Breit-Wheeler go

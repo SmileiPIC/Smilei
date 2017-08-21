@@ -111,7 +111,7 @@ void VectorPatch::dynamics(Params& params,
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
-        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+        /*for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 species(ipatch, ispec)->dynamics(time_dual, ispec,
                                                  emfields(ipatch), interp(ipatch), proj(ipatch),
@@ -120,6 +120,39 @@ void VectorPatch::dynamics(Params& params,
                                                  RadiationTables,
                                                  MultiphotonBreitWheelerTables,
                                                  localDiags);
+            }
+        }*/
+
+        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
+                species(ipatch, ispec)->dynamics_interp_push_proj(time_dual, ispec,
+                                                 emfields(ipatch), interp(ipatch), proj(ipatch),
+                                                 params, diag_flag, partwalls(ipatch),
+                                                 (*this)(ipatch), smpi,
+                                                 RadiationTables,
+                                                 MultiphotonBreitWheelerTables,
+                                                 localDiags);
+            }
+        }
+
+        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
+
+                species(ipatch, ispec)->dynamics_import_particles(time_dual, ispec,
+                                              params,
+                                              (*this)(ipatch), smpi,
+                                              RadiationTables,
+                                              MultiphotonBreitWheelerTables,
+                                              localDiags);
+            }
+        }
+
+        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
+
+                species(ipatch, ispec)->dynamics_bound_cond(time_dual, ispec,
+                                              params, partwalls(ipatch),
+                                              (*this)(ipatch), smpi);
             }
         }
 

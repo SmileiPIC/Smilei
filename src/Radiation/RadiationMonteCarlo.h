@@ -80,6 +80,11 @@ class RadiationMonteCarlo : public Radiation {
         //! Number of photons emitted per event for statisctics purposes
         int radiation_photon_sampling;
 
+        //! Threshold on the photon Lorentz factor under which the macro-photon
+        //! is not generated but directly added to the energy scalar diags
+        //! This enable to limit emission of useless low-energy photons
+        double radiation_photon_gamma_threshold;
+
         //! Inverse number of photons emitted per event for statisctics purposes
         double inv_radiation_photon_sampling;
 

@@ -161,6 +161,10 @@ public:
                 {
                     ERROR("For species '" << species_type << "' radiation_photon_sampling should be > 1");
                 }
+
+                PyTools::extract("radiation_photon_gamma_threshold",
+                                 thisSpecies->radiation_photon_gamma_threshold, "Species",ispec);
+
             }
         }
 
@@ -486,8 +490,9 @@ public:
         newSpecies->species_type          = species->species_type;
         newSpecies->dynamics_type         = species->dynamics_type;
         newSpecies->radiation_model       = species->radiation_model;
-        newSpecies->radiation_photon_species     = species->radiation_photon_species;
-        newSpecies->radiation_photon_sampling = species->radiation_photon_sampling;
+        newSpecies->radiation_photon_species         = species->radiation_photon_species;
+        newSpecies->radiation_photon_sampling        = species->radiation_photon_sampling;
+        newSpecies->radiation_photon_gamma_threshold = species->radiation_photon_gamma_threshold;
         newSpecies->photon_species        = species->photon_species;
         newSpecies->speciesNumber         = species->speciesNumber;
         newSpecies->initPosition_type     = species->initPosition_type;

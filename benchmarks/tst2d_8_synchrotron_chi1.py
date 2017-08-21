@@ -129,7 +129,7 @@ for i,radiation in enumerate(radiation_list):
 #        isTest = False
     )
 
-RadiationLoss(
+RadiationReaction(
     chipa_disc_min_threshold = 1e-2
 )
 

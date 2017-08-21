@@ -104,6 +104,9 @@ Above this threshold, the energy dispersion increases with :math:`\chi_\gamma`.
   (right) - Normalized pair creation :math:`\chi` distribution given by Eq. :eq:`BWEnergyDistribution`.
 
 
+--------------------------------------------------------------------------------
+
+.. _BWStochasticSchemeSection:
 
 Stochastic scheme
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -131,12 +134,12 @@ Decay into pairs occurs when it reaches the final optical depth :math:`\tau_f`
 sampled from :math:`\tau_f = -\log{(\xi)}` where :math:`\xi` is a random number in :math:`\left]0,1\right]`.
 
 2. The optical depth :math:`\tau` evolves according to the photon quantum parameter
- following:
+following:
 
 .. math::
   :label: mBW_MCDtauDt
 
-    \frac{d\tau}{dt} = \frac{dN_{BW}}{dt}\left( \chi_\gamma \right)
+  \frac{d\tau}{dt} = \frac{dN_{BW}}{dt}\left( \chi_\gamma \right)
 
 that is also the production rate of pairs
 (integration of Eq. :eq:`BWEnergyDistribution`).
@@ -147,17 +150,16 @@ inverting the cumulative distribution function:
 .. math::
   :label: mBW_CumulativeDistr
 
-    P(\chi_-,\chi_\gamma) = \frac{\displaystyle{\int_0^{\chi_-}{
-    \frac{d^2N_{BW}}{d \chi dt} d\chi}}}{\displaystyle{\int_0^{\chi_\gamma}{\frac{d^2N_{BW}}{d \chi dt} d\chi}}}
+  P(\chi_-,\chi_\gamma) = \frac{\displaystyle{\int_0^{\chi_-}{
+  \frac{d^2N_{BW}}{d \chi dt} d\chi}}}{\displaystyle{\int_0^{\chi_\gamma}{\frac{d^2N_{BW}}{d \chi dt} d\chi}}}
 
 The inversion of  :math:`P(\chi_-,\chi_\gamma)=\xi'` is done after drawing
 a second random number
 :math:`\xi' \in \left[ 0,1\right]` to find :math:`\chi_-`.
-The positron quantum parameter is :math:`\chi_+ = \chi_\gamma - \chi_-`
+The positron quantum parameter is :math:`\chi_+ = \chi_\gamma - \chi_-`.
 
 4. The energy of the emitted electron is then computed:
-:math:`\varepsilon_- = mc^2 \gamma_- =
-mc^2 \left[ 1 + \left(\gamma_\gamma - 2\right) \chi_- / \chi_\gamma \right]`.
+:math:`\varepsilon_- = mc^2 \gamma_- = mc^2 \left[ 1 + \left(\gamma_\gamma - 2\right) \chi_- / \chi_\gamma \right]`.
 If :math:`\gamma_\gamma < 2`, the pair creation is not possible since the photon
 energy is below the rest mass of the particles.
 
@@ -168,16 +170,42 @@ create more than a macro-electron or a macro-positron in order to improve
 the phenomenon statistics. In this case, the weight of each macro-particle is
 the photon weight divided by the number of emissions.
 
+--------------------------------------------------------------------------------
+
 Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+C++ classes for the multiphoton Breit-Wheeler process are located
+in the directory ``src/MultiphotonBreitWheeler``.
+In :program:`Smilei`, the multiphoton Breit-Wheeler process is not incorporated
+in the photon pusher in order to preserve vector performance of the latter one.
+
+Description of the files:
+
+* Class ``MultiphotonBreitWheelerTables``: this class contains the methods to generate the tables,
+  to output them, to read them and to broadcast them among MPI tasks.
+  It also contains methods to get values from the tables for the Monte-Carlo process.
+* Class ``MultiphotonBreitWheeler``: this class contains the methods to
+  perform the Breit-Wheeler Monte-Carlo process described in :ref:`the previous section <BWStochasticSchemeSection>`).
+* Class ``MultiphotonBreitWheelerFactory``: this class is supposed to
+  manage the different Breit-Wheeler algorithms.
+  For the moment, only one model is implemented.
+
+Formula :eq:`BWTfunction` and :eq:`mBW_CumulativeDistr` are tabulated
+at the beginning of the simulation because of the cost of their computation
+for each photon.
+The parameters such as the ranges and the discretization can be
+given in the :ref:`MultiphotonBreitWheeler <MultiphotonBreitWheeler>` namelist section.
+Once generated, the table can be written on the disk and reloaded for a next run.
+Small tables coded in hdf5 are provided in the repository in the folder
+databases with the name: `multiphoton_Breit_Wheeler_tables.h5`.
+
+--------------------------------------------------------------------------------
 
 Benchmarks
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Counter-propagating plane wave, 1D
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-Synchrotron 2D
+Synchrotron, 2D
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 In this configuration, a mono-energetic bunch of photons is initialized
@@ -212,3 +240,16 @@ initial quantum parameters:
   (right) - Time evolution of the photon (green), electron (blue)
   and positron (orange)
   normalized energy :math:`U / U_{tot}`.
+
+Counter-propagating plane wave, 1D
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+.. _counter_pair_smilei:
+
+.. figure:: _static/counter_pair_smilei.png
+  :width: 18cm
+
+  (left) - Energy balance of the simulation.
+  (middle) - Final energy spectrum of the electrons (blue), positrons (orange), and photons (green).
+  (right) - Time evolution of the number of macro-electrons (blue),
+  macro-positrons (orange) and macro-photons (green) in the simulation.

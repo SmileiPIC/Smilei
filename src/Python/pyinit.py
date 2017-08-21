@@ -248,6 +248,7 @@ class Species(SmileiComponent):
     radiation_model = "none"
     radiation_photon_species = "none"
     radiation_photon_sampling = 1
+    radiation_photon_gamma_threshold = 2
     multiphoton_Breit_Wheeler = ["none","none"]
     multiphoton_Breit_Wheeler_sampling = [1,1]
     time_frozen = 0.0
@@ -353,7 +354,7 @@ class PartWall(SmileiComponent):
     z = None
 
 # Radiation loss configuration (continuous and MC algorithms)
-class RadiationLoss(SmileiComponent):
+class RadiationReaction(SmileiComponent):
     """
     Synchrotron-like radiation loss
     (classical continuous, quantum correction, stochastics and MC algorithms)
