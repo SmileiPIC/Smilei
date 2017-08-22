@@ -768,15 +768,15 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 }//END dynamic
 
 
-// ---------------------------------------------------------------------------------------------------------------------
-// For all particles of the species
-//   - interpolate the fields at the particle position
-//   - perform ionization
-//   - perform the radiation reaction
-//   - perform the multiphoton Breit-Wheeler
-//   - calculate the new velocity
-//   - calculate the new position
-// ---------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+//! For all particles of the species
+//!   - interpolate the fields at the particle position
+//!   - perform ionization
+//!   - perform the radiation reaction
+//!   - perform the multiphoton Breit-Wheeler
+//!   - calculate the new velocity
+//!   - calculate the new position
+// -----------------------------------------------------------------------------
 void Species::dynamics_interp_push_proj(double time_dual, unsigned int ispec,
                        ElectroMagn* EMfields, Interpolator* Interp,
                        Projector* Proj, Params &params, bool diag_flag,
@@ -895,6 +895,13 @@ void Species::dynamics_interp_push_proj(double time_dual, unsigned int ispec,
 
 }
 
+// -----------------------------------------------------------------------------
+//! For all particles of the species, import the new particles generated
+//! from these different physical processes:
+//! - ionization
+//! - radiation reaction
+//! - multiphoton Breit-Wheeler
+// -----------------------------------------------------------------------------
 void Species::dynamics_import_particles(double time_dual, unsigned int ispec,
                        Params &params,
                        Patch* patch, SmileiMPI* smpi,
@@ -909,9 +916,7 @@ void Species::dynamics_import_particles(double time_dual, unsigned int ispec,
         ithread = 0;
     #endif
 
-    // -------------------------------
-    // calculate the particle dynamics
-    // -------------------------------
+    // if moving particle
     if (time_dual>time_frozen) { // moving particle
 
         // Add the ionized electrons to the electron species
@@ -942,13 +947,12 @@ void Species::dynamics_import_particles(double time_dual, unsigned int ispec,
                                              localDiags);
             }
         }
-
-
-    }
-
+    }//END if time vs. time_frozen
 }
 
-
+// -----------------------------------------------------------------------------
+//! For all particles of the species, prepare the boundary and wall conditions
+// -----------------------------------------------------------------------------
 void Species::dynamics_bound_cond(double time_dual, unsigned int ispec,
                        Params &params,
                        PartWalls* partWalls,
@@ -970,10 +974,8 @@ void Species::dynamics_bound_cond(double time_dual, unsigned int ispec,
     // Reset list of particles to exchange
     clearExchList();
 
-    // -------------------------------
-    // calculate the particle dynamics
-    // -------------------------------
-    if (time_dual>time_frozen) { // moving particle
+    // if moving particle
+    if (time_dual>time_frozen) {
 
         //smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
 
@@ -1020,8 +1022,7 @@ void Species::dynamics_bound_cond(double time_dual, unsigned int ispec,
 
         for (unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
             nrj_bc_lost += nrj_lost_per_thd[tid];
-
-    }
+    }//END if time vs. time_frozen
 }
 
 

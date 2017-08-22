@@ -339,11 +339,16 @@ Each species has to be defined in a ``Species`` block::
       track_flush_every = 100,
       c_part_max = 1.0,
       dynamics_type = "norm",
+
+      # Radiation reaction, for particles only:
       radiation_model = "none",
       radiation_photon_species = "none",
       radiation_photon_sampling = 1,
-      # multiphoton_Breit_Wheeler = ["electron","positron"],
-      # multiphoton_Breit_Wheeler_sampling = [1,1]
+      radiation_photon_gamma_threshold = 2,
+
+      # For photon species only:
+      multiphoton_Breit_Wheeler = ["electron","positron"],
+      multiphoton_Breit_Wheeler_sampling = [1,1]
   )
 
 .. py:data:: species_type
@@ -423,9 +428,22 @@ Each species has to be defined in a ``Species`` block::
              bc_part_type_xmax
              bc_part_type_ymin
              bc_part_type_ymax
+             bc_part_type_zmin
+             bc_part_type_zmax
 
-  The boundary condition for particles: ``"refl"`` for *reflecting*, ``"supp"`` for
-  *suppressing*, ``"stop"`` for *stopping*, ``"periodic"``, and ``"thermalize"``.
+  The boundary condition for particles (``mass>0``):
+
+  * ``"refl"`` for *reflecting*
+  * ``"supp"`` for *suppressing*
+  * ``"stop"`` for *stopping*
+  * ``"periodic"``
+  * ``"thermalize"``.
+
+  The boundary condition for photon species (``mass=0``):
+
+  * ``"refl"`` for *reflecting*
+  * ``"supp"`` for *suppressing*
+  * ``"periodic"``
 
 .. py:data:: thermT
 
@@ -515,10 +533,14 @@ Each species has to be defined in a ``Species`` block::
 
   Type of pusher to be used for this species. The default value corresponds to the
   relativistic Boris pusher. Smilei has the following solvers implemented:
-  * norm: The relativistic Boris pusher
-  * borisnr: The non-relativistic Boris pusher
-  * vay: The relativistic pusher of J. L. Vay
-  * higueracary: The relativistic pusher of A. V. Higuera and J. R. Cary
+
+  * ``norm``: The relativistic Boris pusher
+  * ``borisnr``: The non-relativistic Boris pusher
+  * ``vay``: The relativistic pusher of J. L. Vay
+  * ``higueracary``: The relativistic pusher of A. V. Higuera and J. R. Cary
+
+  For photon species, the only pusher available is ``norm`` and corresponds to
+  a rectilinear propagation.
 
 .. py:data:: radiation_model
 
@@ -563,6 +585,19 @@ Each species has to be defined in a ``Species`` block::
   Obviously, this parameter can not be below 1. Note that a large number will
   rapidly slow down the application performance and can lead to memory
   saturation.
+
+.. py:data:: radiation_photon_gamma_threshold
+
+  :default: ``2``
+
+  :red:`This parameter is an attribute of particle species only (mass>0).`
+
+  Threshold on the photon energy for the macro-photon emission when using the
+  radiation reaction Monte-Carlo process.
+  Under this threshold, the macro-photon from the radiation reaction Monte-Carlo
+  process is not created but taken anyway into account in the energy balance.
+  The default value corresponds to twice the electron rest mass energy that
+  is the required energy to decay into electron-positron pairs.
 
 .. py:data:: multiphoton_Breit_Wheeler
 
