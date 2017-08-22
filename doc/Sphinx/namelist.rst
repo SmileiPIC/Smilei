@@ -1310,6 +1310,111 @@ tables.
 Multiphoton Breit-Wheeler
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+The block ``MultiphotonBreitWheeler`` enables to tune parameters of the
+multiphoton Breit-Wheeler process and particularly the table generation.
+
+There are two tables used for the multiphoton Breit-Wheeler refers to as the
+T table and the xip table.
+
+::
+
+  MultiphotonBreitWheeler(
+
+    # Table output format, can be "ascii", "binary", "hdf5"
+    output_format = "hdf5",
+
+    # Path the tables
+    table_path = "../databases/"
+
+    # Table T parameters
+    T_chiph_min = 1e-2
+    T_chiph_max = 1e1
+    T_dim = 128
+
+    # Table xip parameters
+    xip_chiph_min = 1e-2
+    xip_chiph_max = 1e1
+    xip_power = 4
+    xip_threshold = 1e-3
+    xip_chipa_dim = 128
+    xip_chiph_dim = 128
+
+  )
+
+.. py:data:: table_path
+
+  :default: ``"./"``
+
+  Path to the external tables for the multiphoton Breit-Wheeler.
+  Default tables are located in ``databases``.
+
+.. py:data:: output_format
+
+  :default: ``"hdf5"``
+
+  Output format of the tables:
+    * ``"hdf5"``: ``multiphoton_Breit_Wheeler_tables.h5``
+    * ``"binary"``: ``tab_T.bin`` and ``tab_mBW_xip.bin``
+    * ``"ascii"``: ``tab_T.dat`` and ``tab_mBW_xip.dat``
+
+.. py:data:: T_chiph_min
+
+  :default: 1e-2
+
+  Minimum value of the photon quantum parameter :math:`\chi_\gamma` for the table *T*.
+
+.. py:data:: T_chiph_max
+
+  :default: 1e1
+
+  Maximum value of the photon quantum parameter :math:`\chi_\gamma` for the table *T*.
+
+.. py:data:: T_dim
+
+  :default: 128
+
+  Dimension of the table *T*.
+
+.. py:data:: xip_chiph_min
+
+  :default: 1e-2
+
+  Minimum photon quantum parameter for the computation of the *chimin*
+  and *xip* tables.
+
+.. py:data:: xip_chiph_max
+
+  :default: 1e1
+
+  Maximum photon quantum parameter for the computation of the *chimin*
+  and *xip* tables.
+
+.. py:data:: xip_power
+
+  :default: 4
+
+  Maximum decrease in order of magnitude for the search for the minimum value
+  of the photon quantum parameter. It is advised to keep this value by default.
+
+.. py:data:: xip_threshold
+
+  :default: 1e-3
+
+  Minimum value of *xip* to compute the minimum value of the photon
+  quantum parameter. It is advised to keep this value by default.
+
+.. py:data:: xip_chiph_dim
+
+  :default: 128
+
+  Discretization of the *chimin* and *xip* tables in the *chiph* direction.
+
+.. py:data:: xip_chipa_dim
+
+  :default: 128
+
+  Discretization of the *xip* tables in the *chipa* direction.
+
 --------------------------------------------------------------------------------
 
 .. _DiagScalar:

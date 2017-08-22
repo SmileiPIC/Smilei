@@ -1,3 +1,5 @@
+.. _multiphotonBreitWheelerPage:
+
 Multiphoton Breit-Wheeler pair creation
 --------------------------------------------------------------------------------
 
@@ -194,11 +196,27 @@ Description of the files:
 Formula :eq:`BWTfunction` and :eq:`mBW_CumulativeDistr` are tabulated
 at the beginning of the simulation because of the cost of their computation
 for each photon.
-The parameters such as the ranges and the discretization can be
+The parameters such as the table ranges and discretization can be
 given in the :ref:`MultiphotonBreitWheeler <MultiphotonBreitWheeler>` namelist section.
 Once generated, the table can be written on the disk and reloaded for a next run.
 Small tables coded in hdf5 are provided in the repository in the folder
 databases with the name: `multiphoton_Breit_Wheeler_tables.h5`.
+
+If the multiphoton Breit-Wheeler is activated for a photon species, the factory
+will initialize the instance ``Multiphoton_Breit_Wheeler_process`` of
+the class ``MultiphotonBreitWheeler``
+declared in the corresponding ``species`` (see ``species.cpp``).
+
+The multiphoton Breit-Wheeler Monte-Carlo process is performed in the method ``dynamics`` of ``species``.
+It is called after the particle field interpolation (field gathering),
+after ionization and radiation reaction and before the particle pusher.
+At this stage, the new particles are stored in a temporary buffer called ``new_pair``.
+This is an array of two instances of ``Particles``.
+It is declared in ``Multiphoton_Breit_Wheeler_process``.
+Particles are imported in the main species particle arrays
+(``particles`` object in ``species``) only after the current deposition
+and before the boundary conditions using the method ``importParticles``
+of the class ``Particles``.
 
 --------------------------------------------------------------------------------
 

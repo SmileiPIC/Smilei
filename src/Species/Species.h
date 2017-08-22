@@ -156,10 +156,9 @@ public:
                         ElectroMagn* EMfields,
                         Interpolator* interp,
                         Projector* proj, Params &params, bool diag_flag,
-                        PartWalls* partWalls, Patch* patch, SmileiMPI* smpi,
+                        Patch* patch, SmileiMPI* smpi,
                         RadiationTables &RadiationTables,
-                        MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
-                        std::vector<Diagnostic*>& localDiags);
+                        MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables);
 
     //! Method performing the importation of new particles
     virtual void dynamics_import_particles(double time, unsigned int ispec,
@@ -319,7 +318,7 @@ public:
         else if (this->mass == 0)
         {
             for ( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ )
-                nrj += (*particles).weight(iPart)*((*particles).photon_lor_fac(iPart));
+                nrj += (*particles).weight(iPart)*((*particles).momentum_norm(iPart));
         }
         return nrj;
     }

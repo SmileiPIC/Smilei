@@ -182,8 +182,13 @@ public:
         return sqrt(1.+pow(momentum(0,ipart),2)+pow(momentum(1,ipart),2)+pow(momentum(2,ipart),2));
     }
 
-    //! Method used to get the Photon Lorentz factor (normalized energy)
-    inline double photon_lor_fac(unsigned int ipart) {
+    //! Method used to get the inverse Particle Lorentz factor
+    inline double inv_lor_fac(unsigned int ipart) {
+        return 1./sqrt(1.+pow(momentum(0,ipart),2)+pow(momentum(1,ipart),2)+pow(momentum(2,ipart),2));
+    }
+
+    //! Method used to get the momentum norm which is also the normalized photon energy
+    inline double momentum_norm(unsigned int ipart) {
         return sqrt(pow(momentum(0,ipart),2)+pow(momentum(1,ipart),2)+pow(momentum(2,ipart),2));
     }
 

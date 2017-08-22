@@ -385,7 +385,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
 
                     density  += vecSpecies[ispec]->particles->weight(iPart);
                     ener_tot += vecSpecies[ispec]->particles->weight(iPart)
-                    *          (vecSpecies[ispec]->particles->photon_lor_fac(iPart));
+                    *          (vecSpecies[ispec]->particles->momentum_norm(iPart));
                 }
             }
 

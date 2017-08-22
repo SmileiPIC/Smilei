@@ -40,7 +40,7 @@ inline int supp_particle( Particles &particles, int ipart, int direction, double
 //! Delete photon (mass==0) at the boundary and keep the energy for diagnostics
 inline int supp_photon(Particles &particles, int ipart, int direction, double limit_pos, Species *species,
                          double &nrj_iPart) {
-    nrj_iPart = particles.weight(ipart)*(particles.photon_lor_fac(ipart)); // energy lost
+    nrj_iPart = particles.weight(ipart)*(particles.momentum_norm(ipart)); // energy lost
     particles.charge(ipart) = 0;
     return 0;
 }

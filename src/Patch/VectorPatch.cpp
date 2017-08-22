@@ -127,11 +127,10 @@ void VectorPatch::dynamics(Params& params,
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 species(ipatch, ispec)->dynamics_interp_push_proj(time_dual, ispec,
                                                  emfields(ipatch), interp(ipatch), proj(ipatch),
-                                                 params, diag_flag, partwalls(ipatch),
+                                                 params, diag_flag,
                                                  (*this)(ipatch), smpi,
                                                  RadiationTables,
-                                                 MultiphotonBreitWheelerTables,
-                                                 localDiags);
+                                                 MultiphotonBreitWheelerTables);
             }
         }
 

@@ -479,6 +479,9 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species
 //   - interpolate the fields at the particle position
+//   - perform ionization
+//   - perform the radiation reaction
+//   - perform the multiphoton Breit-Wheeler
 //   - calculate the new velocity
 //   - calculate the new position
 //   - apply the boundary conditions
@@ -764,14 +767,22 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
 }//END dynamic
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// For all particles of the species
+//   - interpolate the fields at the particle position
+//   - perform ionization
+//   - perform the radiation reaction
+//   - perform the multiphoton Breit-Wheeler
+//   - calculate the new velocity
+//   - calculate the new position
+// ---------------------------------------------------------------------------------------------------------------------
 void Species::dynamics_interp_push_proj(double time_dual, unsigned int ispec,
                        ElectroMagn* EMfields, Interpolator* Interp,
                        Projector* Proj, Params &params, bool diag_flag,
-                       PartWalls* partWalls,
                        Patch* patch, SmileiMPI* smpi,
                        RadiationTables & RadiationTables,
-                       MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
-                       vector<Diagnostic*>& localDiags)
+                       MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables)
 {
     int ithread;
     #ifdef _OPENMP
@@ -882,7 +893,7 @@ void Species::dynamics_interp_push_proj(double time_dual, unsigned int ispec,
         }
     }//END if time vs. time_frozen
 
-}//END dynamic
+}
 
 void Species::dynamics_import_particles(double time_dual, unsigned int ispec,
                        Params &params,
@@ -902,8 +913,6 @@ void Species::dynamics_import_particles(double time_dual, unsigned int ispec,
     // calculate the particle dynamics
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
-
-        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
 
         // Add the ionized electrons to the electron species
         if (Ionize)
@@ -937,7 +946,8 @@ void Species::dynamics_import_particles(double time_dual, unsigned int ispec,
 
     }
 
-}//END dynamic
+}
+
 
 void Species::dynamics_bound_cond(double time_dual, unsigned int ispec,
                        Params &params,
@@ -951,34 +961,39 @@ void Species::dynamics_bound_cond(double time_dual, unsigned int ispec,
         ithread = 0;
     #endif
 
-    unsigned int iPart;
+    unsigned int        iPart;
+    int                 tid(0);
+    double              ener_iPart(0.);
+    std::vector<double> nrj_lost_per_thd(1, 0.);
+    double              dtgf;
 
     // Reset list of particles to exchange
     clearExchList();
-
-    int tid(0);
-    double ener_iPart(0.);
-    std::vector<double> nrj_lost_per_thd(1, 0.);
 
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
 
-        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+        //smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
 
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
             // Apply wall and boundary conditions
             for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
                 for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                    double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
-                    if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
-                        if (mass>0)
+                    if (mass>0)
+                    {
+                        dtgf = params.timestep * particles->inv_lor_fac(iPart);
+                        if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart))
                         {
                             nrj_lost_per_thd[tid] += mass * ener_iPart;
+                        }
 
-                        } else if (mass==0) {
+                    } else if (mass==0) {
+                        dtgf = params.timestep / particles->momentum_norm(iPart);
+                        if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart))
+                        {
                             nrj_lost_per_thd[tid] += ener_iPart;
                         }
                     }
@@ -1368,7 +1383,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                 /*897 for (int i=0; i<(int)nDim_particle; i++) {
                   particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
                   }897*/
-                nrj_new_particles += particles->weight(iPart)*(particles->photon_lor_fac(iPart));
+                nrj_new_particles += particles->weight(iPart)*(particles->momentum_norm(iPart));
             }
         }
     }
