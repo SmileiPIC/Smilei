@@ -46,10 +46,10 @@ print ' Final number of positron: ',ntot_positron[-1]
 print ' Final number of photon: ',ntot_photon[-1]
 
 # Validation of the kinetic energy
-Validate("Electron kinetic energy evolution: ", ukin_electron/ukin_electron[0], 1e-3 )
-Validate("Positron kinetic energy evolution: ", ukin_positron/ukin_electron[0], 1e-3 )
-Validate("Photon kinetic energy evolution: ", ukin_photon/ukin_electron[0], 1e-3 )
-Validate("Radiated energy evolution: ", urad/ukin_electron[0], 1e-3 )
+Validate("Electron kinetic energy evolution: ", ukin_electron/ukin_electron[0], 5e-3 )
+Validate("Positron kinetic energy evolution: ", ukin_positron/ukin_electron[0], 5e-3 )
+Validate("Photon kinetic energy evolution: ", ukin_photon/ukin_electron[0], 5e-3 )
+Validate("Radiated energy evolution: ", urad/ukin_electron[0], 5e-3 )
 
 Validate("Evolution of the number of electrons: ", ntot_electron, 10 )
 Validate("Evolution of the number of positrons: ", ntot_positron, 10 )

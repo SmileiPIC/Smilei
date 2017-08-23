@@ -8,7 +8,7 @@
 # The laser has an intensity close to 10^23 W/cm^2
 #
 # Purpose:
-# During the interaction,the electrons will radiate high-energy photons 
+# During the interaction,the electrons will radiate high-energy photons
 # that in turn will decay onto pairs via the multiphoton Breit-Wheeler process.
 #
 # Validation:
@@ -26,9 +26,9 @@ import math
 # ----------------------------------------------------------------------------------------
 # Main parameters
 
-c = 299792458
-lambdar = 1e-6
-wr = 2*math.pi*c/lambdar
+c = 299792458                           # Speed of light
+lambdar = 1e-6                          # Wavelength for normalization
+wr = 2*math.pi*c/lambdar                # Normalization angular frequency
 
 l0 = 2.0*math.pi                        # laser wavelength
 t0 = l0                                 # optical cicle
@@ -49,15 +49,14 @@ duration = 50*t0                        # Laser duration
 center = duration*0.5                   # Laser profile center
 order = 4                               # Laser order
 
-
 gamma0 = 4000./0.511                    # Initial electron beam normalized energy (Lorentz factor)
 v0 = math.sqrt(1 - 1./gamma0**2)         # Initial velocity
 
 radiation = "Monte-Carlo"               # Radiation algorithm
 pusher = "vay"                          # dynamic type
 
-part_cond = "supp"
-field_cond = ['silver-muller']
+part_cond = "supp"                      # Particle boundary conditions
+field_cond = ['silver-muller']          # Field boundary conditions
 
 # Density profile for inital electron location
 def n0_electron(x):
@@ -79,21 +78,21 @@ def n0_photon(x):
 
 Main(
     geometry = "1d3v",
-    
+
     interpolation_order = 4 ,
-    
+
     cell_length = [dx],
     sim_length  = [Lx],
-    
+
     number_of_patches = [4],
-    
+
     timestep = dt,
     sim_time = Tsim,
-    
+
     bc_em_type_x = ['silver-muller'],
-   
+
     referenceAngularFrequency_SI = wr,
- 
+
     random_seed = 0
 
 )
@@ -197,12 +196,11 @@ DiagScalar(
     vars=['Uelm','Ukin','Utot',
           'Uexp',
           'Ubal',
-          'Urad',     
+          'Urad',
           'Ukin_electron',
           'Ukin_positron',
-          'Ukin_photon',     
+          'Ukin_photon',
           'Ntot_electron',
           'Ntot_positron',
           'Ntot_photon']
 )
-
