@@ -51,6 +51,6 @@ Validate("Positron kinetic energy evolution: ", ukin_positron/ukin_electron[0], 
 Validate("Photon kinetic energy evolution: ", ukin_photon/ukin_electron[0], 1e-2 )
 Validate("Radiated energy evolution: ", urad/ukin_electron[0], 1e-2 )
 
-Validate("Evolution of the number of electrons: ", ntot_electron, 10 )
-Validate("Evolution of the number of positrons: ", ntot_positron, 10 )
-Validate("Evolution of the number of photons: ", ntot_photon, 10 )
+Validate("Evolution of the number of electrons: ", ntot_electron, 50 )
+Validate("Evolution of the number of positrons: ", ntot_positron, 50 )
+Validate("Evolution of the number of photons: ", ntot_photon, 1000 )

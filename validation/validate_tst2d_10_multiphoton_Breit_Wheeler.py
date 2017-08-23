@@ -56,7 +56,7 @@ Validate("Maximal relative error total energy: ", max(abs(utot[:] - utot[0]))/ut
 # ______________________________________________________________________________
 # Read energy spectrum
 
-PartDiag = S.ParticleDiagnostic(diagNumber=0,timesteps = 2000)
+PartDiag = S.ParticleDiagnostic(diagNumber=0,timesteps = 1000)
 gamma = np.array(PartDiag.get()["gamma"])
 density = np.array(PartDiag.get()["data"][0])
 integral = sum(density)*(gamma[1] - gamma[0])
@@ -66,7 +66,7 @@ print ' Max from spectrum: ',max(density/integral)
 
 Validate("Electron energy spectrum: ", density/integral, 1e-5 )
 
-PartDiag = S.ParticleDiagnostic(diagNumber=1,timesteps = 2000)
+PartDiag = S.ParticleDiagnostic(diagNumber=1,timesteps = 1000)
 gamma = np.array(PartDiag.get()["gamma"])
 density = np.array(PartDiag.get()["data"][0])
 integral = sum(density)*(gamma[1] - gamma[0])

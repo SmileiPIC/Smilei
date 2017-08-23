@@ -299,6 +299,23 @@ the second case presented here.
 Counter-propagating plane wave, 1D
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
+In this test case, a bunch of electrons is initialized at the right side
+of the domain with an initial energy of 4 GeV. The bunch is made to collide head-on
+with a laser plane wave injected from the left side of the domain.
+The laser has a maximal intensity of :math:`10^{23}\ \mathrm{Wcm^{-2}}`.
+It is circularly polarized and has a temporal Gaussian profile with a
+FWHM (full width at half maximum) of 50 periods
+(approximately corresponding to 25 fs).
+A wavelength of :math:`1\ \mathrm{\mu m}` is considered.
+
+This configuration is one of the most efficient to trigger QED effects
+since it maximizes the particle and photon quantum parameters.
+
+By interacting with the laser pulse, the high-energy electron will first
+radiate high-energy gamma photons that will be generated as macro-photons by the code.
+These photons are generated in the same direction of the electrons with an energy up
+to almost the electron kinetic energy.
+
 .. _counter_pair_smilei:
 
 .. figure:: _static/counter_pair_smilei.png

@@ -146,7 +146,7 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
         position[i] =  &( particles.position(i,0) );
 
     // Weight shortcut
-    double* weight = &( particles.weight(0) );
+    // double* weight = &( particles.weight(0) );
 
     // Optical depth for the Monte-Carlo process
     double* tau = &( particles.tau(0));
@@ -540,12 +540,12 @@ void MultiphotonBreitWheeler::decayed_photon_cleaning(
         // Backward loop over the photons to fing the first existing photon
         last_photon_index = bmax[ibin]-1;
         first_photon_index = bmin[ibin];
-        while ((last_photon_index >= bmin[ibin]) 
+        while ((last_photon_index >= bmin[ibin])
            && (weight[last_photon_index] <= 0))
         {
                 last_photon_index--;
         }
-        while ((first_photon_index < bmax[ibin]) 
+        while ((first_photon_index < bmax[ibin])
            && (weight[first_photon_index] > 0))
         {
                 first_photon_index++;
@@ -574,7 +574,7 @@ void MultiphotonBreitWheeler::decayed_photon_cleaning(
         {
             std::cerr << "Photon cleaning: " << last_photon_index+1
                       << " bmin[ibin]:" << bmin[ibin]
-                      << " bmax[ibin]-1: " << bmax[ibin]-1 
+                      << " bmax[ibin]-1: " << bmax[ibin]-1
                       << " nb deleted ph: " << nb_deleted_photon
                       << std::endl;
         }*/
