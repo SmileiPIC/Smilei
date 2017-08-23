@@ -56,22 +56,24 @@ Validate("Maximal relative error total energy: ", max(abs(utot[:] - utot[0]))/ut
 # ______________________________________________________________________________
 # Read energy spectrum
 
-PartDiag = S.ParticleDiagnostic(diagNumber=0,timesteps = 1000)
-gamma = np.array(PartDiag.get()["gamma"])
-density = np.array(PartDiag.get()["data"][0])
-integral = sum(density)*(gamma[1] - gamma[0])
+if False:
 
-print ' Electron energy from spectrum: ',integral
-print ' Max from spectrum: ',max(density/integral)
+    PartDiag = S.ParticleDiagnostic(diagNumber=0,timesteps = 1000)
+    gamma = np.array(PartDiag.get()["gamma"])
+    density = np.array(PartDiag.get()["data"][0])
+    integral = sum(density)*(gamma[1] - gamma[0])
 
-Validate("Electron energy spectrum: ", density/integral, 1e-5 )
+    print ' Electron energy from spectrum: ',integral
+    print ' Max from spectrum: ',max(density/integral)
 
-PartDiag = S.ParticleDiagnostic(diagNumber=1,timesteps = 1000)
-gamma = np.array(PartDiag.get()["gamma"])
-density = np.array(PartDiag.get()["data"][0])
-integral = sum(density)*(gamma[1] - gamma[0])
+    Validate("Electron energy spectrum: ", density/integral, 1e-5 )
 
-print ' Positron energy from spectrum: ',integral
-print ' Max from spectrum: ',max(density/integral)
+    PartDiag = S.ParticleDiagnostic(diagNumber=1,timesteps = 1000)
+    gamma = np.array(PartDiag.get()["gamma"])
+    density = np.array(PartDiag.get()["data"][0])
+    integral = sum(density)*(gamma[1] - gamma[0])
+
+    print ' Positron energy from spectrum: ',integral
+    print ' Max from spectrum: ',max(density/integral)
 
 Validate("Positron energy spectrum: ", density/integral, 1e-5 )
