@@ -76,4 +76,4 @@ if False:
     print ' Positron energy from spectrum: ',integral
     print ' Max from spectrum: ',max(density/integral)
 
-Validate("Positron energy spectrum: ", density/integral, 1e-5 )
+    Validate("Positron energy spectrum: ", density/integral, 1e-5 )
