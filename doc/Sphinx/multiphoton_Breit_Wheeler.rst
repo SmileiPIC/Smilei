@@ -235,7 +235,26 @@ Two cases are simulated with different
 initial quantum parameters:
 
 * Case 1: :math:`\chi_{\gamma,0} = 1`, :math:`B = 270`, :math:`\gamma_{\gamma,0} = 1500`
-* Case 2: :math:`\chi_{\gamma,0} = 20`, :math:`B = 600`, :math:`\gamma_{\gamma,0} = 8125`
+* Case 2: :math:`\chi_{\gamma,0} = 20`, :math:`B = 1000`, :math:`\gamma_{\gamma,0} = 8125`
+
+The results of the first case are shown in
+:numref:`synchrotron_pairs_energy_spectra_chi1`. The two first figures
+represent respectively the electron (left) and the positron energy (center) spectrum at the end
+of the simulation when all photons have been converted into pairs.
+The last one on the right is the time evolution of the photon (green), electron (blue),
+positron (orange) and total (black) kinetic energy.
+The quantum parameter of all photons is initially equal to
+:math:`\chi_{\gamma,0} = 1`. According to :numref:`synchrotron_pairs_dNdt`,
+we are located in an area of the energy distribution where electrons and
+positrons are more likely to be created with almost the same energy
+(:math:`\chi_{+} = \chi_{-} =\chi_{\gamma,0} /2`).
+This is confirmed in :numref:`synchrotron_pairs_energy_spectra_chi1`.
+Electron and positron energy spectra are well similar, symmetric and centered
+at half the initial photon energy equal to :math:`\gamma = 750`.
+The energy balance (right figure) shows that positron and electron kinetic energies
+have the same behaviors and converge to half the initial photon energy
+at the end of the simulation.
+The total energy is well constant and conserved in time.
 
 .. _synchrotron_pairs_energy_spectra_chi1:
 
@@ -244,9 +263,24 @@ initial quantum parameters:
 
   (left) - Electron energy spectrum at the end of the run.
   (middle) - Positron energy spectrum at the end of the run.
-  (right) - Time evolution of the photon (green), electron (blue)
-  and positron (orange)
-  normalized energy :math:`U / U_{tot}`.
+  (right) - Time evolution of the photon (green), electron (blue), positron
+  (orange) and total (black) normalized energy :math:`U / U_{tot}`.
+
+The results of the second case are shown in
+:numref:`synchrotron_pairs_energy_spectra_chi20` as for the first case.
+Here, the quantum parameter of all photons is initially equal to
+:math:`\chi_{\gamma,0} = 20`. This means that contrary to the previous case,
+the probability to generate electrons and positrons of similar energy
+is not the most significant.
+As in :numref:`synchrotron_pairs_dNdt`, the energy spectra exhibit two maximums.
+This maximums are located approximately at 10% and 90% of the initial photon
+energy of :math:`\gamma_{\gamma,0} = 8125`.
+Electron and positron spectra are nonetheless similar and symmetric in respect
+to half the initial photon energy.
+Again, the energy balance (right figure) shows that positron and electron kinetic energies
+have the same behaviors and converge to half the initial photon energy
+at the end of the simulation.
+The total energy is well constant and conserved in time.
 
 .. _synchrotron_pairs_energy_spectra_chi20:
 
@@ -258,6 +292,9 @@ initial quantum parameters:
   (right) - Time evolution of the photon (green), electron (blue)
   and positron (orange)
   normalized energy :math:`U / U_{tot}`.
+
+The benchmark ``tst2d_10_multiphoton_Breit_Wheeler`` is very close to
+the second case presented here.
 
 Counter-propagating plane wave, 1D
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

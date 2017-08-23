@@ -51,7 +51,7 @@ dy = Rsync/res                              # space step
 dt  = 1./math.sqrt(1./(dx*dx) + 1./(dy*dy)) # timestep (CFL)
 dt *= dt_factor
 
-Tsim = 2000*dt                              # duration of the simulation
+Tsim = 1000*dt                              # duration of the simulation
 
 pusher = "norm"                             # dynamic type
 
@@ -199,7 +199,7 @@ DiagScalar(
 
 DiagParticles(
     output = "density",
-    every = 2000,
+    every = 1000,
     time_average = 1,
     species = ["electron"],
     axes = [ ["gamma",    0.,  gamma,  50] ]
@@ -207,7 +207,7 @@ DiagParticles(
 
 DiagParticles(
     output = "density",
-    every = 2000,
+    every = 1000,
     time_average = 1,
     species = ["positron"],
     axes = [ ["gamma",    0.,  gamma,  50] ]
