@@ -261,13 +261,15 @@ occur every 150 iterations.
   
   :default: 1.
   
-  :red:`to do`
+  Computational load of a single grid cell considered by the dynamic load balancing algorithm. 
+  This load is normalized to the load of a single particle.
   
 .. py:data:: coef_frozen
   
   :default: 0.1
   
-  :red:`to do`
+  Computational load of a single frozen particle considered by the dynamic load balancing algorithm. 
+  This load is normalized to the load of a single particle.
 
 
 ----
