@@ -16,7 +16,7 @@ public:
     //! Cloning Constructor for Patch
     Patch1D(Patch1D* patch, Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved, bool with_particles);
     
-    void initStep2(Params& params) override;
+    void initStep2(Params& params, Geometry* geometry) override;
     
     //! Destructor for Patch
     ~Patch1D() override final;

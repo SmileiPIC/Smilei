@@ -38,7 +38,7 @@ public:
     //! First initialization step for patches
     void initStep1(Params& params);
     //! Second initialization step for patches
-    virtual void initStep2(Params& params) = 0;
+    virtual void initStep2(Params& params, Geometry* geometry) = 0;
     //! Third initialization step for patches
     void initStep3(Params& params, SmileiMPI* smpi, unsigned int n_moved);
     //! Last creation step

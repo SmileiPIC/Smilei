@@ -19,7 +19,7 @@ using namespace std;
 Patch1D::Patch1D(Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved)
     : Patch( params, smpi, geometry, ipatch, n_moved)
 {
-    initStep2(params);
+    initStep2(params, geometry);
     initStep3(params, smpi, n_moved);
     finishCreation(params, smpi);
 } // End Patch1D::Patch1D
@@ -30,7 +30,7 @@ Patch1D::Patch1D(Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned i
 Patch1D::Patch1D(Patch1D* patch, Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
     : Patch( patch, params, smpi, geometry, ipatch, n_moved, with_particles )
 {
-    initStep2(params);
+    initStep2(params, geometry);
     initStep3(params, smpi, n_moved);
     finishCloning(patch, params, smpi, with_particles);
 } // End Patch1D::Patch1D
@@ -40,7 +40,7 @@ Patch1D::Patch1D(Patch1D* patch, Params& params, SmileiMPI* smpi, Geometry* geom
 // Patch1D second initializer :
 //   - Pcoordinates, neighbor_ resized in Patch constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch1D::initStep2(Params& params)
+void Patch1D::initStep2(Params& params, Geometry* geometry)
 {
     int xcall, ycall;
     
