@@ -1,6 +1,5 @@
 
 #include "HilbertGeometry.h"
-#include "Hilbert_functions.h"
 
 
 HilbertGeometry::HilbertGeometry( Params& params )

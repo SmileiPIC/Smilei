@@ -5,6 +5,7 @@
 #include "Patch1D.h"
 #include "Patch2D.h"
 #include "Patch3D.h"
+#include "Geometry.h"
 
 #include "Tools.h"
 
@@ -12,30 +13,30 @@ class PatchesFactory {
 public:
     
     // Create one patch from scratch
-    static Patch* create(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved=0) {
+    static Patch* create(Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved=0) {
         if (params.geometry == "1d3v")
-            return new Patch1D(params, smpi, ipatch, n_moved);
+            return new Patch1D(params, smpi, geometry, ipatch, n_moved);
         else if (params.geometry == "2d3v") 
-            return new Patch2D(params, smpi, ipatch, n_moved);
+            return new Patch2D(params, smpi, geometry, ipatch, n_moved);
         else if (params.geometry == "3d3v") 
-            return new Patch3D(params, smpi, ipatch, n_moved);
+            return new Patch3D(params, smpi, geometry, ipatch, n_moved);
         return nullptr;
     }
     
     // Clone one patch (avoid reading again the namelist)
-    static Patch* clone(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved=0, bool with_particles = true) {
+    static Patch* clone(Patch* patch, Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved=0, bool with_particles = true) {
         if (params.geometry == "1d3v")
-            return new Patch1D(static_cast<Patch1D*>(patch), params, smpi, ipatch, n_moved, with_particles);
+            return new Patch1D(static_cast<Patch1D*>(patch), params, smpi, geometry, ipatch, n_moved, with_particles);
         else if (params.geometry == "2d3v")
-            return new Patch2D(static_cast<Patch2D*>(patch), params, smpi, ipatch, n_moved, with_particles);
+            return new Patch2D(static_cast<Patch2D*>(patch), params, smpi, geometry, ipatch, n_moved, with_particles);
         else if (params.geometry == "3d3v")
-            return new Patch3D(static_cast<Patch3D*>(patch), params, smpi, ipatch, n_moved, with_particles);
+            return new Patch3D(static_cast<Patch3D*>(patch), params, smpi, geometry, ipatch, n_moved, with_particles);
         return nullptr;
     }
     
     // Create a vector of patches
     static VectorPatch createVector(Params& params, SmileiMPI* smpi, OpenPMDparams& openPMD, unsigned int itime, unsigned int n_moved=0) {
-        VectorPatch vecPatches;
+        VectorPatch vecPatches( params );
         
         vecPatches.diag_flag = (params.restart? false : true);
         vecPatches.lastIterationPatchesMoved = itime;
@@ -51,7 +52,7 @@ public:
         
         // Create patches (create patch#0 then clone it)
         vecPatches.resize(npatches);
-        vecPatches.patches_[0] = create(params, smpi, firstpatch, n_moved);
+        vecPatches.patches_[0] = create(params, smpi, vecPatches.geometry_, firstpatch, n_moved);
         
         TITLE("Initializing Patches");
         MESSAGE(1,"First patch created");
@@ -61,7 +62,7 @@ public:
                 MESSAGE(2,"Approximately "<<percent<<"% of patches created");
                 percent += 10;
             }
-            vecPatches.patches_[ipatch] = clone(vecPatches(0), params, smpi, firstpatch + ipatch, n_moved);
+            vecPatches.patches_[ipatch] = clone(vecPatches(0), params, smpi, vecPatches.geometry_, firstpatch + ipatch, n_moved);
         }
         MESSAGE(1,"All patches created");
         

@@ -2,6 +2,7 @@
 #define HILBERTGEOMETRY_H
 
 #include "Geometry.h"
+#include "Hilbert_functions.h"
 
 class HilbertGeometry : public Geometry
 {
@@ -20,6 +21,7 @@ protected:
 
 class HilbertGeometry2D : public HilbertGeometry
 {
+public:
     HilbertGeometry2D( Params& params );
     ~HilbertGeometry2D( ) override final;
 
@@ -30,6 +32,7 @@ class HilbertGeometry2D : public HilbertGeometry
 
 class HilbertGeometry3D : public HilbertGeometry
 {
+public:
     HilbertGeometry3D( Params& params );
     ~HilbertGeometry3D( ) override final;
 

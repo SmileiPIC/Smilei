@@ -13,6 +13,7 @@
 #include "Interpolator.h"
 #include "Projector.h"
 
+class Geometry;
 class Collisions;
 class Diagnostic;
 class SimWindow;
@@ -30,9 +31,9 @@ class Patch
     friend class AsyncMPIbuffers;
 public:
     //! Constructor for Patch
-    Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
+    Patch(Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved);
     //! Cloning Constructor for Patch
-    Patch(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles);
+    Patch(Patch* patch, Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved, bool with_particles);
     
     //! First initialization step for patches
     void initStep1(Params& params);

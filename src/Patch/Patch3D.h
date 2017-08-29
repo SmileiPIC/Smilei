@@ -12,9 +12,9 @@ class Patch3D : public Patch
 {
 public:
     //! Constructor for Patch
-    Patch3D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
+    Patch3D(Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved);
     //! Cloning Constructor for Patch
-    Patch3D(Patch3D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles);
+    Patch3D(Patch3D* patch, Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved, bool with_particles);
 
     void initStep2(Params& params) override final;
     

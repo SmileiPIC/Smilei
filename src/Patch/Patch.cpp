@@ -40,7 +40,7 @@ using namespace std;
 // Patch constructor :
 //   Called by PatchXD constructor which will finalize initialization
 // ---------------------------------------------------------------------------------------------------------------------
-Patch::Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
+Patch::Patch(Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved)
 {
     
     hindex = ipatch;
@@ -54,7 +54,7 @@ Patch::Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int 
 
 
 // Cloning patch constructor
-Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles = true) {
+Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved, bool with_particles = true) {
     
     hindex = ipatch;
     nDim_fields_ = patch->nDim_fields_;

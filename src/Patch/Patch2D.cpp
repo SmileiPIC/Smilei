@@ -16,8 +16,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Patch2D constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-Patch2D::Patch2D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
-  : Patch( params, smpi, ipatch, n_moved)
+Patch2D::Patch2D(Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved)
+    : Patch( params, smpi, geometry, ipatch, n_moved)
 {
     initStep2(params);
     initStep3(params, smpi, n_moved);
@@ -28,8 +28,8 @@ Patch2D::Patch2D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned 
 // ---------------------------------------------------------------------------------------------------------------------
 // Patch2D cloning constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-Patch2D::Patch2D(Patch2D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
-    : Patch( patch, params, smpi, ipatch, n_moved, with_particles )
+Patch2D::Patch2D(Patch2D* patch, Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
+    : Patch( patch, params, smpi, geometry, ipatch, n_moved, with_particles )
 {
     initStep2(params);
     initStep3(params, smpi, n_moved);

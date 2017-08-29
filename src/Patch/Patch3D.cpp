@@ -16,8 +16,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Patch3D constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-Patch3D::Patch3D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
-  : Patch( params, smpi, ipatch, n_moved)
+Patch3D::Patch3D(Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved)
+    : Patch( params, smpi, geometry, ipatch, n_moved)
 {
     initStep2(params);
     initStep3(params, smpi, n_moved);
@@ -28,8 +28,8 @@ Patch3D::Patch3D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned 
 // ---------------------------------------------------------------------------------------------------------------------
 // Patch3D cloning constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-Patch3D::Patch3D(Patch3D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
-  : Patch( patch, params, smpi, ipatch, n_moved, with_particles)
+Patch3D::Patch3D(Patch3D* patch, Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
+    : Patch( patch, params, smpi, geometry, ipatch, n_moved, with_particles)
 {
     initStep2(params);
     initStep3(params, smpi, n_moved);

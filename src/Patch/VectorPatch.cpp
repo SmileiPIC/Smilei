@@ -8,7 +8,7 @@
 //#include <string>
 
 #include "Collisions.h"
-#include "Hilbert_functions.h"
+#include "HilbertGeometry.h"
 #include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
@@ -25,12 +25,22 @@ using namespace std;
 
 VectorPatch::VectorPatch()
 {
+    geometry_ = NULL ;
+}
+
+
+VectorPatch::VectorPatch( Params& params )
+{
+    geometry_ = new HilbertGeometry2D( params );
 }
 
 
 VectorPatch::~VectorPatch()
 {
+    if ( geometry_ != NULL )
+        delete geometry_;
 }
+
 
 void VectorPatch::close(SmileiMPI * smpiData)
 {
@@ -740,7 +750,7 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
         // density profile is initializes as if t = 0 !
         // Species will be cleared when, nbr of particles will be known
         // Creation of a new patch, ready to receive its content from MPI neighbours.
-        Patch* newPatch = PatchesFactory::clone(existing_patch, params, smpi, recv_patch_id_[ipatch], n_moved, false );
+        Patch* newPatch = PatchesFactory::clone(existing_patch, params, smpi, geometry_, recv_patch_id_[ipatch], n_moved, false );
         newPatch->finalizeMPIenvironment();
         //Store pointers to newly created patch in recv_patches_.
         recv_patches_.push_back( newPatch );
