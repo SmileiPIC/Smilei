@@ -25,7 +25,7 @@ HilbertGeometry1D::~HilbertGeometry1D( )
 // generalhilbertindex
 unsigned int HilbertGeometry1D::getDomainId( std::vector<unsigned int> Coordinates )
 {
-    return Coordinates[0];
+    return generalhilbertindex( mi_[0], 0, Coordinates[0], 0);
 
 }
 

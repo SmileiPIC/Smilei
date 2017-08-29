@@ -8,7 +8,7 @@
 //#include <string>
 
 #include "Collisions.h"
-#include "HilbertGeometry.h"
+#include "GeometryFactory.h"
 #include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
@@ -31,7 +31,7 @@ VectorPatch::VectorPatch()
 
 VectorPatch::VectorPatch( Params& params )
 {
-    geometry_ = new HilbertGeometry2D( params );
+    geometry_ = GeometryFactory::create( params );
 }
 
 
