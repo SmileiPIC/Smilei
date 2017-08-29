@@ -86,7 +86,7 @@ int main (int argc, char* argv[])
     // Initialize patches (including particles and fields)
     // ---------------------------------------------------
     TITLE("Initializing particles & fields");
-    VectorPatch vecPatches;
+    VectorPatch vecPatches( params );
     
     // reading from dumped file the restart values
     if (params.restart) {
@@ -105,7 +105,7 @@ int main (int argc, char* argv[])
         
     } else {
        
-        vecPatches = PatchesFactory::createVector(params, smpi, openPMD, 0);
+        PatchesFactory::createVector(vecPatches, params, smpi, openPMD, 0);
         
         // Initialize the electromagnetic fields
         // -------------------------------------

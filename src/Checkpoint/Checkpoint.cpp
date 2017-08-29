@@ -403,7 +403,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
     vector<int> patch_count(smpi->getSize());
     H5::getVect( fid, "patch_count", patch_count );
     smpi->patch_count = patch_count;
-    vecPatches = PatchesFactory::createVector(params, smpi, openPMD, this_run_start_step+1, simWin->getNmoved());
+    PatchesFactory::createVector(vecPatches, params, smpi, openPMD, this_run_start_step+1, simWin->getNmoved());
     
     H5::getAttr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
     H5::getAttr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);

@@ -5,7 +5,7 @@
 HilbertGeometry::HilbertGeometry( Params& params )
     : Geometry( params )
 {
-    mi_.resize( params.nDim_field );
+    mi_ = params.mi;
 
 }
 
