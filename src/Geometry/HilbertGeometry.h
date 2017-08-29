@@ -19,6 +19,17 @@ protected:
 };
 
 
+class HilbertGeometry1D : public HilbertGeometry
+{
+public:
+    HilbertGeometry1D( Params& params );
+    ~HilbertGeometry1D( ) override final;
+
+    unsigned int getDomainId( std::vector<unsigned int> Coordinates ) override final;
+    std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;
+};
+
+
 class HilbertGeometry2D : public HilbertGeometry
 {
 public:

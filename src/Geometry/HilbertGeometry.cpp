@@ -5,7 +5,37 @@
 HilbertGeometry::HilbertGeometry( Params& params )
     : Geometry( params )
 {
+    ndomain_ = params.number_of_patches;
     mi_ = params.mi;
+
+}
+
+
+HilbertGeometry1D::HilbertGeometry1D( Params& params )
+    : HilbertGeometry( params )
+{
+}
+
+
+HilbertGeometry1D::~HilbertGeometry1D( )
+{
+}
+
+
+// generalhilbertindex
+unsigned int HilbertGeometry1D::getDomainId( std::vector<unsigned int> Coordinates )
+{
+    return Coordinates[0];
+
+}
+
+
+// generalhilbertindexinv
+std::vector<unsigned int> HilbertGeometry1D::getDomainCoordinates( unsigned int Id )
+{
+    std::vector<unsigned int> coords( 1, 0 );
+    coords[0] = Id;
+    return coords;
 
 }
 

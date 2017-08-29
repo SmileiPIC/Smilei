@@ -548,18 +548,21 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         double Ey_XmaxYmin = 0.0;
         
         //The YmaxXmin patch has Patch coordinates X=0, Y=2^m1-1= number_of_patches[1]-1.
-        //Its hindex is
-        int patch_YmaxXmin = generalhilbertindex(params.mi[0], params.mi[1], 0,  params.number_of_patches[1]-1);
+        std::vector<unsigned int> xcall( 2, 0 );
+        xcall[0] = 0;
+        xcall[1] = params.number_of_patches[1]-1;
+        int patch_YmaxXmin = geometry_->getDomainId( xcall );
         //The MPI rank owning it is
         int rank_XminYmax = smpi->hrank(patch_YmaxXmin);
         //The YminXmax patch has Patch coordinates X=2^m0-1= number_of_patches[0]-1, Y=0.
         //Its hindex is
-        int patch_YminXmax = generalhilbertindex(params.mi[0], params.mi[1], params.number_of_patches[0]-1, 0);
+        xcall[0] = params.number_of_patches[0]-1;
+        xcall[1] = 0;
+        int patch_YminXmax = geometry_->getDomainId( xcall );
         //The MPI rank owning it is
         int rank_XmaxYmin = smpi->hrank(patch_YminXmax);
         
         
-        //cout << params.mi[0] << " " << params.mi[1] << " " << params.number_of_patches[0] << " " << params.number_of_patches[1] << endl;
         //cout << patch_YmaxXmin << " " << rank_XminYmax << " " << patch_YminXmax << " " << rank_XmaxYmin << endl;
         
         if ( smpi->getRank() == rank_XminYmax ) {

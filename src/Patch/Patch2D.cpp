@@ -51,20 +51,25 @@ void Patch2D::initStep2(Params& params, Geometry* geometry)
     // 1st direction
     xcall[0] = Pcoordinates[0]-1;
     xcall[1] = Pcoordinates[1];
-    if (params.bc_em_type_x[0]=="periodic" && xcall[0] < 0) xcall[0] += (1<<params.mi[0]);
+    if (params.bc_em_type_x[0]=="periodic" && xcall[0] < 0)
+        xcall[0] += geometry->ndomain_[0];
     neighbor_[0][0] = geometry->getDomainId( xcall );
 
     xcall[0] = Pcoordinates[0]+1;
-    if (params.bc_em_type_x[0]=="periodic" && xcall[0] >= (1<<params.mi[0])) xcall[0] -= (1<<params.mi[0]);
+    if (params.bc_em_type_x[0]=="periodic" && xcall[0] >= geometry->ndomain_[0])
+        xcall[0] -= geometry->ndomain_[0];
     neighbor_[0][1] = geometry->getDomainId( xcall );
     
     // 2nd direction
     xcall[0] = Pcoordinates[0];
     xcall[1] = Pcoordinates[1]-1;
-    if (params.bc_em_type_y[0]=="periodic" && xcall[1] < 0) xcall[1] += (1<<params.mi[1]);
+    if (params.bc_em_type_y[0]=="periodic" && xcall[1] < 0)
+        xcall[1] += geometry->ndomain_[1];
     neighbor_[1][0] = geometry->getDomainId( xcall );
+
     xcall[1] = Pcoordinates[1]+1;
-    if (params.bc_em_type_y[0]=="periodic" && xcall[1] >= (1<<params.mi[1])) xcall[1] -= (1<<params.mi[1]);
+    if (params.bc_em_type_y[0]=="periodic" && xcall[1] >= geometry->ndomain_[1])
+        xcall[1] -=  geometry->ndomain_[1];
     neighbor_[1][1] = geometry->getDomainId( xcall );
 
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {

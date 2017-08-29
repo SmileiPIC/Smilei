@@ -50,9 +50,11 @@ int main (int argc, char* argv[])
     Params params(smpi,vector<string>(argv + 1, argv + argc));
     OpenPMDparams openPMD(params);
     
+    VectorPatch vecPatches( params );
+
     // Initialize MPI environment with simulation parameters
     TITLE("Initializing MPI");
-    smpi->init(params);
+    smpi->init(params, vecPatches.geometry_);
     
     // Create timers
     Timers timers(smpi);
@@ -86,7 +88,6 @@ int main (int argc, char* argv[])
     // Initialize patches (including particles and fields)
     // ---------------------------------------------------
     TITLE("Initializing particles & fields");
-    VectorPatch vecPatches( params );
     
     // reading from dumped file the restart values
     if (params.restart) {
