@@ -3,6 +3,7 @@
 
 #include "Geometry.h"
 #include "HilbertGeometry.h"
+#include "CartesianGeometry.h"
 
 class GeometryFactory {
 public:
@@ -13,6 +14,7 @@ public:
             geometry = new HilbertGeometry1D( params );
         else if ( ( params.geometry == "2d3v" ) ) 
             geometry = new HilbertGeometry2D( params );
+            //geometry = new CartesianGeometry2D( params );
         else if ( ( params.geometry == "3d3v" ) ) 
             geometry = new HilbertGeometry3D( params );
 

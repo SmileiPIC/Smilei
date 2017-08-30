@@ -237,11 +237,31 @@ void Patch::updateTagenv(SmileiMPI* smpi)
 }
 void Patch::updateMPIenv(SmileiMPI* smpi)
 {
+    // HARDCODED VALUE - to test cartesian decomposition
+//    vector<int> npattchpp(2,1); // NDOMAIN PER PROC - WORKS WITH 1 domain per process, ATTENTION PERIDODICITY
+//    vector<int> npatchs(2,4);   // NDOMAIN TOTAL
+//    vector<int> gCoord(2,0);
     MPI_me_ = smpi->smilei_rk;
     
     for (int iDim = 0 ; iDim < nDim_fields_ ; iDim++)
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++){
             MPI_neighbor_[iDim][iNeighbor] = smpi->hrank(neighbor_[iDim][iNeighbor]);
+
+//            gCoord[0] = ( (int)Pcoordinates[0] + (1-iDim) * ((1-iNeighbor)*(-1) + (iNeighbor)) );
+//            gCoord[1] = ( (int)Pcoordinates[1] + (iDim  ) * ((1-iNeighbor)*(-1) + (iNeighbor)) );
+//            if ( gCoord[0] < 0 )
+//                MPI_neighbor_[iDim][iNeighbor] = MPI_PROC_NULL;
+//            else if ( gCoord[0] >= npatchs[0] )
+//                MPI_neighbor_[iDim][iNeighbor] = MPI_PROC_NULL;
+//            else if ( gCoord[1] < 0 )
+//                MPI_neighbor_[iDim][iNeighbor] = MPI_PROC_NULL;
+//            else if ( gCoord[1] >= npatchs[1] )
+//                MPI_neighbor_[iDim][iNeighbor] = MPI_PROC_NULL;
+//            else {
+//                gCoord[0] = (double)( (int)Pcoordinates[0] + (1-iDim) * ((1-iNeighbor)*(-1) + (iNeighbor)) ) /(double)npattchpp[0];
+//                gCoord[1] = (double)( (int)Pcoordinates[1] + (iDim  ) * ((1-iNeighbor)*(-1) + (iNeighbor)) ) /(double)npattchpp[1];
+//                MPI_neighbor_[iDim][iNeighbor] = gCoord[0] * npatchs[1] + gCoord[1];
+//            }
         }
 
     for (int iDim=0 ; iDim< (int)neighbor_.size() ; iDim++)
