@@ -53,13 +53,13 @@ Python workflow
 ^^^^^^^^^^^^^^^
 
 *Python* is started at the beginning of the simulation (one *python* interpreter
-for each MPI node). The following steps are executed:
+for each MPI process). The following steps are executed:
 
 #. A few variables from :program:`Smilei` are passed to *python* so that they are
    available to the user:
    
-   * The rank of the current MPI node as :py:data:`smilei_mpi_rank`.
-   * The total number of MPI nodes as :py:data:`smilei_mpi_size`.
+   * The rank of the current MPI process as :py:data:`smilei_mpi_rank`.
+   * The total number of MPI processes as :py:data:`smilei_mpi_size`.
    * The maximum random integer as :py:data:`smilei_rand_max`.
 
 #. The namelist(s) is executed.
