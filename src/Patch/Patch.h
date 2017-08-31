@@ -48,7 +48,9 @@ public:
 
     //! Finalize MPI environment : especially requests array for non blocking communications
     void finalizeMPIenvironment();
-    
+
+    void set( Params& params, VectorPatch& vecPatch );
+
     //! Destructor for Patch
     virtual ~Patch();
     

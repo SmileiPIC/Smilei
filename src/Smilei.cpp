@@ -23,6 +23,7 @@
 #include "Smilei.h"
 #include "Params.h"
 #include "PatchesFactory.h"
+#include "GeometryFactory.h"
 #include "Checkpoint.h"
 #include "Solver.h"
 #include "SimWindow.h"
@@ -50,6 +51,8 @@ int main (int argc, char* argv[])
     Params params(smpi,vector<string>(argv + 1, argv + argc));
     OpenPMDparams openPMD(params);
     
+    // Need to move it here because of geometry need in smpi->init(_patch_count)
+    //     abstraction of Hilbert curve
     VectorPatch vecPatches( params );
 
     // Initialize MPI environment with simulation parameters
@@ -152,6 +155,12 @@ int main (int argc, char* argv[])
     }
     TITLE("Species creation summary");
     vecPatches.printNumberOfParticles( smpi );
+
+    Geometry* cartGeom = GeometryFactory::createGlobal( params );
+    Patch* cartPatch = PatchesFactory::create( params, smpi, cartGeom, vecPatches.refHindex_ / vecPatches.size() );
+    cartPatch->set( params, vecPatches );
+    delete cartPatch;
+    delete cartGeom;
 
     timers.global.reboot();
     

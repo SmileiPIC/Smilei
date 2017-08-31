@@ -203,6 +203,41 @@ void Patch::finalizeMPIenvironment() {
 
 }
 
+
+void Patch::set( Params& params, VectorPatch& vecPatch )
+{
+    min_local = vecPatch(0)->min_local;
+    max_local = vecPatch(0)->max_local;
+    center   .resize( nDim_fields_, 0. );
+    cell_starting_global_index.resize( nDim_fields_, 0 );
+    radius = 0.;
+
+    for (unsigned int i = 0 ; i<nDim_fields_ ; i++) {
+        
+        for ( unsigned int ipatch = 0 ; ipatch < vecPatch.size() ; ipatch++  ) {
+            if ( vecPatch(ipatch)->min_local[i] < min_local[i] )
+                min_local[i] = vecPatch(ipatch)->min_local[i];
+            if ( vecPatch(ipatch)->max_local[i] > max_local[i] )
+                max_local[i] = vecPatch(ipatch)->max_local[i];
+            if ( cell_starting_global_index[i] < vecPatch(ipatch)->cell_starting_global_index[i] )
+                cell_starting_global_index[i] = vecPatch(ipatch)->cell_starting_global_index[i];
+        }
+        
+        center[i] = (min_local[i]+max_local[i])*0.5;
+        radius += pow(max_local[i] - center[i] + params.cell_length[i], 2);
+    }
+    radius = sqrt(radius);
+
+    //cout << hindex << " " << Pcoordinates[0] << " " << Pcoordinates[1] << endl;
+    //cout << "X = " << Pcoordinates[0]  << " " << min_local[0] << " " << max_local[0] << " - Y = " << Pcoordinates[1] << " " << min_local[1] << " " << max_local[1] << endl;
+    
+    //cart_updateMPIenv(smpi);
+    // NEW ns_apce
+    
+    EMfields   = ElectroMagnFactory::create(params, vecPatch(0)->vecSpecies, this);
+}
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Delete Patch members
 // ---------------------------------------------------------------------------------------------------------------------
