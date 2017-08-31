@@ -38,7 +38,7 @@ nrj_new_fields (  0.               )
         n_space = params.n_space;
     else {
         for ( int i = 0 ; i < 2 ; i++ ) 
-            n_space[i] = params.n_space[i] * 4;// HARDCODED params.domain_decomposition_factor;
+            n_space[i] = params.n_space[i] * params.global_factor[i];
     }
     
     // take useful things from params

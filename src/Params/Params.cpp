@@ -322,7 +322,9 @@ namelist("")
     if ( tot_number_of_patches < (unsigned int)(smpi->getSize()*omp_get_max_threads()) )
         WARNING( "Resources allocated underloaded regarding the total number of patches" );
 #endif
-    
+
+    global_factor.resize( nDim_field, 0 );
+    PyTools::extract( "global_factor", global_factor, "Main" );
     
     if( PyTools::nComponents("LoadBalancing")>0 ) {
         PyTools::extract("every"      , balancing_every, "LoadBalancing");

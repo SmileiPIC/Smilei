@@ -184,6 +184,8 @@ public:
     unsigned int tot_number_of_patches;
     //! Number of patches per direction
     std::vector<unsigned int> number_of_patches;
+    std::vector<unsigned int> global_factor;
+
     //! Load balancing frequency
     int balancing_every;
     //! Load coefficient applied to a cell (default = 1)

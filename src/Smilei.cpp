@@ -156,11 +156,15 @@ int main (int argc, char* argv[])
     TITLE("Species creation summary");
     vecPatches.printNumberOfParticles( smpi );
 
-    Geometry* cartGeom = GeometryFactory::createGlobal( params );
-    Patch* cartPatch = PatchesFactory::create( params, smpi, cartGeom, vecPatches.refHindex_ / vecPatches.size() );
-    cartPatch->set( params, cartGeom, vecPatches );
-    delete cartPatch;
-    delete cartGeom;
+    Geometry* cartGeom = NULL;
+    Patch* cartPatch =  NULL;
+    if (params.global_factor[0]!=0) {
+        cartGeom = GeometryFactory::createGlobal( params );
+        cartPatch = PatchesFactory::create( params, smpi, cartGeom, vecPatches.refHindex_ / vecPatches.size() );
+        cartPatch->set( params, cartGeom, vecPatches );
+    }
+    if (cartPatch!=NULL) delete cartPatch;
+    if (cartGeom !=NULL) delete cartGeom;
 
     timers.global.reboot();
     
