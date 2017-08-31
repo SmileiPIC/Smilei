@@ -212,6 +212,11 @@ void Patch::set( Params& params, VectorPatch& vecPatch )
     cell_starting_global_index = vecPatch(0)->cell_starting_global_index;
     radius = 0.;
 
+    // Constraint to enforce 1 neighboor per side
+    double nppp_root = pow( vecPatch.size(), 1./(double)nDim_fields_ );
+    if ( fabs( (double)(int)nppp_root - nppp_root ) > 0. ) 
+        ERROR( "Bad choice of decomposition" );
+
     for (unsigned int i = 0 ; i<nDim_fields_ ; i++) {
         
         for ( unsigned int ipatch = 0 ; ipatch < vecPatch.size() ; ipatch++  ) {
