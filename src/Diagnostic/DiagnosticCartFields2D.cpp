@@ -72,7 +72,6 @@ DiagnosticCartFields2D::DiagnosticCartFields2D( Params &params, SmileiMPI* smpi,
 
         xcall = vecPatches(0)->Pcoordinates;
         
-        cout << "COORDS : \t" << xcall[0] << "\t" << xcall[1] << endl;
         if(xcall[0]<rewrite_xmin) rewrite_xmin=xcall[0];
         if(xcall[0]>rewrite_xmax) rewrite_xmax=xcall[0];
         if(xcall[1]<rewrite_ymin) rewrite_ymin=xcall[1];
@@ -86,27 +85,18 @@ DiagnosticCartFields2D::DiagnosticCartFields2D( Params &params, SmileiMPI* smpi,
     hsize_t final_array_size[2], offset2[2], block2[2], count2[2];
     final_array_size[0] = params.number_of_patches[0] * params.n_space[0] + 1;
     final_array_size[1] = params.number_of_patches[1] * params.n_space[1] + 1;
-    cout << "filespace - SIZE : " << iproc << "\t" << final_array_size[0] << "\t" << final_array_size[1] << endl;
     filespace = H5Screate_simple(2, final_array_size, NULL);
     offset2[0] = rewrite_xmin * params.n_space[0]*params.global_factor[0] + ((rewrite_xmin==0)?0:1);
     offset2[1] = rewrite_ymin * params.n_space[1]*params.global_factor[1] + ((rewrite_ymin==0)?0:1);
-    cout << "filespace - OFFS : " << iproc << "\t" << offset2[0] << "\t" << offset2[1] << endl;
     block2 [0] = rewrite_npatchx * params.n_space[0]*params.global_factor[0] + ((rewrite_xmin==0)?1:0);
     block2 [1] = rewrite_npatchy * params.n_space[1]*params.global_factor[1] + ((rewrite_ymin==0)?1:0);
-    cout << "filespace - BLOC : " << iproc << "\t" << block2[0] << "\t" << block2[1] << endl;
     count2 [0] = 1;
     count2 [1] = 1;
     H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset2, NULL, count2, block2);
     // Define space in memory for re-writing
-    //block2 [0] = params.n_space[0]*params.global_factor[0] + ((rewrite_xmin==0)?1:0);
-    //block2 [1] = params.n_space[1]*params.global_factor[1] + ((rewrite_ymin==0)?1:0);
     memspace = H5Screate_simple(2, block2, NULL);
-    cout << "memspace : " << iproc << "\t" << block2[0] << "\t" << block2[1] << endl;
-    //cout << "memspace : " << iproc << "\t" <<  params.n_space[0]*params.global_factor[0] + ((rewrite_xmin==0)?1:0) << "\t" << params.n_space[1]*params.global_factor[1] + ((rewrite_ymin==0)?1:0) << endl;
 
-    // ----------------------------------------
     data_rewrite.resize( block2[0]*block2[1] );
-    // ----------------------------------------
     
     tmp_dset_id=0;
 }
@@ -229,7 +219,7 @@ void DiagnosticCartFields2D::writeField( hid_t dset_id, int itime ) {
         for( unsigned int ix=0; ix<sx; ix++ ) {
             if (rewrite_patches_y[h]!=0) read_position ++;
             for( unsigned int iy=0; iy<sy; iy++ ) {
-                //data_rewrite[write_position] += h+1;
+                //data_rewrite[write_position] = refHindex;
                 data_rewrite[write_position] = data_reread[read_position];
                 read_position ++;
                 write_position++;
