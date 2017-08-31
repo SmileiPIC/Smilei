@@ -206,6 +206,9 @@ void Patch::finalizeMPIenvironment() {
 
 void Patch::set( Params& params, Geometry* geometry, VectorPatch& vecPatch )
 {
+    Pcoordinates.resize( params.nDim_field );
+    
+
     min_local = vecPatch(0)->min_local;
     max_local = vecPatch(0)->max_local;
     center   .resize( nDim_fields_, 0. );
@@ -223,14 +226,17 @@ void Patch::set( Params& params, Geometry* geometry, VectorPatch& vecPatch )
             if ( vecPatch(ipatch)->min_local[i] <= min_local[i] ) {
                 min_local[i] = vecPatch(ipatch)->min_local[i];
                 MPI_neighbor_[i][0] = vecPatch(ipatch)->MPI_neighbor_[i][0];
+                neighbor_[i][0] = (vecPatch(ipatch)->neighbor_[i][0] / vecPatch.size() );
             }
             if ( vecPatch(ipatch)->max_local[i] >= max_local[i] ) {
                 max_local[i] = vecPatch(ipatch)->max_local[i];
                 MPI_neighbor_[i][1] = vecPatch(ipatch)->MPI_neighbor_[i][1];
+                neighbor_[i][1] = (vecPatch(ipatch)->neighbor_[i][1] / vecPatch.size() );
             }
             if ( vecPatch(ipatch)->cell_starting_global_index[i] <= cell_starting_global_index[i] )
                 cell_starting_global_index[i] = vecPatch(ipatch)->cell_starting_global_index[i];
         }
+        Pcoordinates[i] = (cell_starting_global_index[i]+params.oversize[i]) / params.n_space[i] / params.global_factor[i];
         
         center[i] = (min_local[i]+max_local[i])*0.5;
         radius += pow(max_local[i] - center[i] + params.cell_length[i], 2);

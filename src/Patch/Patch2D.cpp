@@ -19,13 +19,24 @@ using namespace std;
 Patch2D::Patch2D(Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved)
     : Patch( params, smpi, geometry, ipatch, n_moved)
 {
-    initStep2(params, geometry);
     if (dynamic_cast<HilbertGeometry*>( geometry )) {
+        initStep2(params, geometry);
         initStep3(params, smpi, n_moved);
         finishCreation(params, smpi, geometry);
     }
     else { // Cartesian
-        // See void Patch::set( VectorPatch& vecPatch )        
+        // See void Patch::set( VectorPatch& vecPatch )
+        
+        for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+            for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
+                ntype_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+                ntype_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+                ntype_[2][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+                ntypeSum_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+                ntypeSum_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            }
+        }
+
     }
 
 } // End Patch2D::Patch2D
