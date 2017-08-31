@@ -13,6 +13,7 @@
 #include "Patch.h"
 #include "Profile.h"
 #include "SolverFactory.h"
+#include "GeometryFactory.h"
 
 using namespace std;
 
@@ -20,7 +21,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn::ElectroMagn(Params &params, vector<Species*>& vecSpecies, Patch* patch) :
+ElectroMagn::ElectroMagn(Params &params, Geometry* geometry, vector<Species*>& vecSpecies, Patch* patch) :
 timestep       ( params.timestep   ),
 cell_length    ( params.cell_length),
 n_species      ( vecSpecies.size() ),
@@ -33,7 +34,12 @@ isXmax(patch->isXmax()),
 nrj_mw_lost    (  0.               ),
 nrj_new_fields (  0.               )
 {
-    
+    if ( dynamic_cast<HilbertGeometry*>( geometry ) )
+        n_space = params.n_space;
+    else {
+        for ( int i = 0 ; i < 2 ; i++ ) 
+            n_space[i] = params.n_space[i] * 4;// HARDCODED params.domain_decomposition_factor;
+    }
     
     // take useful things from params
     for (unsigned int i=0; i<3; i++) {

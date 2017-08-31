@@ -5,7 +5,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include "Hilbert_functions.h"
+#include "GeometryFactory.h"
 #include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
@@ -20,8 +20,14 @@ Patch1D::Patch1D(Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned i
     : Patch( params, smpi, geometry, ipatch, n_moved)
 {
     initStep2(params, geometry);
-    initStep3(params, smpi, n_moved);
-    finishCreation(params, smpi);
+    if (dynamic_cast<HilbertGeometry*>( geometry )) {
+        initStep3(params, smpi, n_moved);
+        finishCreation(params, smpi, geometry);
+    }
+    else { // Cartesian
+        // See void Patch::set( VectorPatch& vecPatch )        
+    }
+
 } // End Patch1D::Patch1D
 
 // ---------------------------------------------------------------------------------------------------------------------

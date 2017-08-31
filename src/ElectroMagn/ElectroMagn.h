@@ -18,6 +18,7 @@ class ElectroMagnBC;
 class SimWindow;
 class Patch;
 class Solver;
+class Geometry;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -49,7 +50,7 @@ class ElectroMagn
 
 public:
     //! Constructor for Electromagn
-    ElectroMagn( Params &params, std::vector<Species*>& vecSpecies, Patch* patch );
+    ElectroMagn( Params &params, Geometry* geometry, std::vector<Species*>& vecSpecies, Patch* patch );
     ElectroMagn( ElectroMagn* emFields, Params &params, Patch* patch );
     void initElectroMagnQuantities();
     //! Extra initialization. Used in ElectroMagnFactory
@@ -154,7 +155,7 @@ public:
     const double cell_volume;
     
     //! n_space (from params) always 3D
-    const std::vector<unsigned int> n_space;
+    std::vector<unsigned int> n_space;
     
     //! Index of starting elements in arrays without duplicated borders
     //! By constuction 1 element is shared in primal field, 2 in dual

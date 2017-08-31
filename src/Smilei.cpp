@@ -158,7 +158,7 @@ int main (int argc, char* argv[])
 
     Geometry* cartGeom = GeometryFactory::createGlobal( params );
     Patch* cartPatch = PatchesFactory::create( params, smpi, cartGeom, vecPatches.refHindex_ / vecPatches.size() );
-    cartPatch->set( params, vecPatches );
+    cartPatch->set( params, cartGeom, vecPatches );
     delete cartPatch;
     delete cartGeom;
 

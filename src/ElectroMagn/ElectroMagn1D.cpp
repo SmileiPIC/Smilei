@@ -22,8 +22,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn1D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn1D::ElectroMagn1D(Params &params, vector<Species*>& vecSpecies, Patch* patch)
-  : ElectroMagn(params, vecSpecies, patch)
+ElectroMagn1D::ElectroMagn1D(Params &params, Geometry* geometry, vector<Species*>& vecSpecies, Patch* patch)
+  : ElectroMagn(params, geometry, vecSpecies, patch)
 {
     initElectroMagn1DQuantities(params, patch);
     

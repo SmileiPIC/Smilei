@@ -42,14 +42,14 @@ public:
     //! Third initialization step for patches
     void initStep3(Params& params, SmileiMPI* smpi, unsigned int n_moved);
     //! Last creation step
-    void finishCreation( Params& params, SmileiMPI* smpi );
+    void finishCreation( Params& params, SmileiMPI* smpi, Geometry* geometry );
     //! Last cloning step
     void finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool with_particles );
 
     //! Finalize MPI environment : especially requests array for non blocking communications
     void finalizeMPIenvironment();
 
-    void set( Params& params, VectorPatch& vecPatch );
+    void set( Params& params, Geometry* geometry, VectorPatch& vecPatch );
 
     //! Destructor for Patch
     virtual ~Patch();

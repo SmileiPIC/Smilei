@@ -120,12 +120,12 @@ void Patch::initStep3( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
 
 }
 
-void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
+void Patch::finishCreation( Params& params, SmileiMPI* smpi, Geometry* geometry ) {
     // initialize vector of Species (virtual)
     vecSpecies = SpeciesFactory::createVector(params, this);
     
     // initialize the electromagnetic fields (virtual)
-    EMfields   = ElectroMagnFactory::create(params, vecSpecies, this);
+    EMfields   = ElectroMagnFactory::create(params, geometry, vecSpecies, this);
     
     // interpolation operator (virtual)
     Interp     = InterpolatorFactory::create(params, this); // + patchId -> idx_domain_begin (now = ref smpi)
@@ -204,7 +204,7 @@ void Patch::finalizeMPIenvironment() {
 }
 
 
-void Patch::set( Params& params, VectorPatch& vecPatch )
+void Patch::set( Params& params, Geometry* geometry, VectorPatch& vecPatch )
 {
     min_local = vecPatch(0)->min_local;
     max_local = vecPatch(0)->max_local;
@@ -255,8 +255,19 @@ void Patch::set( Params& params, VectorPatch& vecPatch )
             recv_tags_[iDim][iNeighbor] = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor, 5 );
         }
 
-    // NEW n_space
-    EMfields   = ElectroMagnFactory::create(params, vecPatch(0)->vecSpecies, this);
+    EMfields   = ElectroMagnFactory::create(params, geometry, vecPatch(0)->vecSpecies, this);
+
+    vecSpecies.resize(0);
+    Interp     = NULL;
+    Proj       = NULL;
+    vecCollisions.resize(0);
+    partWalls = NULL;
+    probes.resize(0);
+    
+    if (has_an_MPI_neighbor())
+        createType(params);
+    
+
 }
 
 
@@ -270,11 +281,11 @@ Patch::~Patch() {
     for(unsigned int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
     vecCollisions.clear();
     
-    delete partWalls;
-    delete Proj;
-    delete Interp;
+    if (partWalls!=NULL) delete partWalls;
+    if (Proj     !=NULL) delete Proj;
+    if (Interp   !=NULL) delete Interp;
     
-    delete EMfields;
+    if (EMfields !=NULL) delete EMfields;
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();
     

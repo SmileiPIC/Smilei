@@ -22,7 +22,7 @@ Patch2D::Patch2D(Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned i
     initStep2(params, geometry);
     if (dynamic_cast<HilbertGeometry*>( geometry )) {
         initStep3(params, smpi, n_moved);
-        finishCreation(params, smpi);
+        finishCreation(params, smpi, geometry);
     }
     else { // Cartesian
         // See void Patch::set( VectorPatch& vecPatch )        
