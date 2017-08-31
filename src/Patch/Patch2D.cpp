@@ -87,6 +87,10 @@ void Patch2D::initStep2(Params& params, Geometry* geometry)
             ntypeSum_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
         }
     }
+    //cout << endl;
+    //cout << "Nei\t"  << "\t" << neighbor_[1][1] << endl;
+    //cout << "Nei\t"  << neighbor_[0][0] << "\t" << hindex << "\t" << neighbor_[0][1] << endl;
+    //cout << "Nei\t"  << "\t" << neighbor_[1][0] << endl;
 
 }
 

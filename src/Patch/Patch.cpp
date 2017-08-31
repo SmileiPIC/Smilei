@@ -209,17 +209,21 @@ void Patch::set( Params& params, VectorPatch& vecPatch )
     min_local = vecPatch(0)->min_local;
     max_local = vecPatch(0)->max_local;
     center   .resize( nDim_fields_, 0. );
-    cell_starting_global_index.resize( nDim_fields_, 0 );
+    cell_starting_global_index = vecPatch(0)->cell_starting_global_index;
     radius = 0.;
 
     for (unsigned int i = 0 ; i<nDim_fields_ ; i++) {
         
         for ( unsigned int ipatch = 0 ; ipatch < vecPatch.size() ; ipatch++  ) {
-            if ( vecPatch(ipatch)->min_local[i] < min_local[i] )
+            if ( vecPatch(ipatch)->min_local[i] <= min_local[i] ) {
                 min_local[i] = vecPatch(ipatch)->min_local[i];
-            if ( vecPatch(ipatch)->max_local[i] > max_local[i] )
+                MPI_neighbor_[i][0] = vecPatch(ipatch)->MPI_neighbor_[i][0];
+            }
+            if ( vecPatch(ipatch)->max_local[i] >= max_local[i] ) {
                 max_local[i] = vecPatch(ipatch)->max_local[i];
-            if ( cell_starting_global_index[i] < vecPatch(ipatch)->cell_starting_global_index[i] )
+                MPI_neighbor_[i][1] = vecPatch(ipatch)->MPI_neighbor_[i][1];
+            }
+            if ( vecPatch(ipatch)->cell_starting_global_index[i] <= cell_starting_global_index[i] )
                 cell_starting_global_index[i] = vecPatch(ipatch)->cell_starting_global_index[i];
         }
         
@@ -232,8 +236,21 @@ void Patch::set( Params& params, VectorPatch& vecPatch )
     //cout << "X = " << Pcoordinates[0]  << " " << min_local[0] << " " << max_local[0] << " - Y = " << Pcoordinates[1] << " " << min_local[1] << " " << max_local[1] << endl;
     
     //cart_updateMPIenv(smpi);
-    // NEW ns_apce
+
+    MPI_me_ = vecPatch(0)->MPI_me_;
     
+    //cout << "MPI Nei\t"  << "\t" << MPI_neighbor_[1][1] << endl;
+    //cout << "MPI Nei\t"  << MPI_neighbor_[0][0] << "\t" << MPI_me_ << "\t" << MPI_neighbor_[0][1] << endl;
+    //cout << "MPI Nei\t"  << "\t" << MPI_neighbor_[1][0] << endl;
+
+
+    for (int iDim=0 ; iDim< (int)neighbor_.size() ; iDim++)
+        for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+            send_tags_[iDim][iNeighbor] = buildtag( hindex, iDim, iNeighbor, 5 );
+            recv_tags_[iDim][iNeighbor] = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor, 5 );
+        }
+
+    // NEW n_space
     EMfields   = ElectroMagnFactory::create(params, vecPatch(0)->vecSpecies, this);
 }
 
