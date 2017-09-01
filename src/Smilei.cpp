@@ -263,14 +263,16 @@ int main (int argc, char* argv[])
 
             // call the various diagnostics
             vecPatches.runAllDiags(params, smpi, itime, timers, simWindow);
-            timers.diagsNEW.restart();
-            diagCart->theTimeIsNow = diagCart->prepare( itime );
-            if ( diagCart->theTimeIsNow ) {
-                SyncCartesianPatch::patchedToCartesian( vecPatches, cartPatch, params, smpi, timers, itime );
-                SyncCartesianPatch::cartesianToPatches( cartPatch, vecPatches, params, smpi, timers, itime );
-                diagCart->run( smpi, VecPatchCart, itime, simWindow );
+            if ( diagCart!=NULL ) {
+                timers.diagsNEW.restart();
+                diagCart->theTimeIsNow = diagCart->prepare( itime );
+                if ( diagCart->theTimeIsNow ) {
+                    SyncCartesianPatch::patchedToCartesian( vecPatches, cartPatch, params, smpi, timers, itime );
+                    //SyncCartesianPatch::cartesianToPatches( cartPatch, vecPatches, params, smpi, timers, itime );
+                    diagCart->run( smpi, VecPatchCart, itime, simWindow );
+                }
+                timers.diagsNEW.update();
             }
-            timers.diagsNEW.update();
             
             timers.movWindow.restart();
             simWindow->operate(vecPatches, smpi, params, itime, time_dual);

@@ -12,17 +12,17 @@ using namespace std;
 void SyncCartesianPatch::patchedToCartesian( VectorPatch& vecPatches, Patch* patch, Params &params, SmileiMPI* smpi, Timers &timers, int itime )
 {
     for ( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
-        //SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->rho_, patch->EMfields->rho_, params, smpi, vecPatches(ipatch), patch );
-        //SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Ex_, patch->EMfields->Ex_, params, smpi, vecPatches(ipatch), patch );
-        //SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Ey_, patch->EMfields->Ey_, params, smpi, vecPatches(ipatch), patch );
-        //SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Jx_, patch->EMfields->Jx_, params, smpi, vecPatches(ipatch), patch );
-
+        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->rho_, patch->EMfields->rho_, params, smpi, vecPatches(ipatch), patch );
         SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Ex_, patch->EMfields->Ex_, params, smpi, vecPatches(ipatch), patch );
         SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Ey_, patch->EMfields->Ey_, params, smpi, vecPatches(ipatch), patch );
-        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Ez_, patch->EMfields->Ez_, params, smpi, vecPatches(ipatch), patch );
-        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Bx_, patch->EMfields->Bx_, params, smpi, vecPatches(ipatch), patch );
-        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->By_, patch->EMfields->By_, params, smpi, vecPatches(ipatch), patch );
-        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Bz_, patch->EMfields->Bz_, params, smpi, vecPatches(ipatch), patch );
+        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Jx_, patch->EMfields->Jx_, params, smpi, vecPatches(ipatch), patch );
+
+        //SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Ex_, patch->EMfields->Ex_, params, smpi, vecPatches(ipatch), patch );
+        //SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Ey_, patch->EMfields->Ey_, params, smpi, vecPatches(ipatch), patch );
+        //SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Ez_, patch->EMfields->Ez_, params, smpi, vecPatches(ipatch), patch );
+        //SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Bx_, patch->EMfields->Bx_, params, smpi, vecPatches(ipatch), patch );
+        //SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->By_, patch->EMfields->By_, params, smpi, vecPatches(ipatch), patch );
+        //SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Bz_, patch->EMfields->Bz_, params, smpi, vecPatches(ipatch), patch );
     }
 
 }
