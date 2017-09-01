@@ -180,10 +180,10 @@ void DiagnosticCartFields2D::getField( Patch* patch, unsigned int ifield )
 void DiagnosticCartFields2D::writeField( hid_t dset_id, int itime ) {
 
     // Write the buffer in a temporary location
-    H5Dwrite( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_firstwrite, filespace_firstwrite, write_plist, &(data[0]) );
+    //H5Dwrite( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_firstwrite, filespace_firstwrite, write_plist, &(data[0]) );
    
     // Read the file with the previously defined partition
-    H5Dread( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_reread, filespace_reread, write_plist, &(data_reread[0]) );
+    //H5Dread( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_reread, filespace_reread, write_plist, &(data_reread[0]) );
     
     // Fold the data according to the Hilbert curve
     unsigned int read_position, write_position, write_skip_y, sx, sy;
@@ -220,7 +220,8 @@ void DiagnosticCartFields2D::writeField( hid_t dset_id, int itime ) {
             if (rewrite_patches_y[h]!=0) read_position ++;
             for( unsigned int iy=0; iy<sy; iy++ ) {
                 //data_rewrite[write_position] = refHindex;
-                data_rewrite[write_position] = data_reread[read_position];
+                //data_rewrite[write_position] = data_reread[read_position];
+                data_rewrite[write_position] = data[read_position];
                 read_position ++;
                 write_position++;
 

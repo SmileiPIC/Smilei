@@ -28,9 +28,9 @@ void SyncCartesianPatch::sync( Field* inField, Field* outField, Params &params, 
     int iout = inPatch->Pcoordinates[0]*params.n_space[0] - outPatch->Pcoordinates[0]*params.n_space[0]*params.global_factor[0] ;
     int jout = inPatch->Pcoordinates[1]*params.n_space[1] - outPatch->Pcoordinates[1]*params.n_space[1]*params.global_factor[1] ;
  
-    for ( unsigned int i = 0 ; i < in2D->dims_[0] ; i++ ) {
-        for ( unsigned int j = 0 ; j < in2D->dims_[1] ; j++ ) {
-            ( *out2D )( iout+i, jout+j ) = ( *in2D )( i, j );
+    for ( unsigned int i = params.oversize[0] ; i < in2D->dims_[0]-params.oversize[0] ; i++ ) {
+        for ( unsigned int j = params.oversize[1] ; j < in2D->dims_[1]-params.oversize[1] ; j++ ) {
+                ( *out2D )( iout+i, jout+j ) = ( *in2D )( i, j );
         }
     }    
 
