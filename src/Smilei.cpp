@@ -257,17 +257,20 @@ int main (int argc, char* argv[])
             // solve Maxwell's equations
             if( time_dual > params.time_fields_frozen ) {
                 vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
-                SyncCartesianPatch::patchedToCartesian( vecPatches, cartPatch, params, smpi, timers, itime );
             }
 
             vecPatches.finalize_and_sort_parts(params, smpi, simWindow, time_dual, timers, itime);
 
             // call the various diagnostics
             vecPatches.runAllDiags(params, smpi, itime, timers, simWindow);
+            timers.diagsNEW.restart();
             diagCart->theTimeIsNow = diagCart->prepare( itime );
-            if ( diagCart->theTimeIsNow )
+            if ( diagCart->theTimeIsNow ) {
+                SyncCartesianPatch::patchedToCartesian( vecPatches, cartPatch, params, smpi, timers, itime );
+                SyncCartesianPatch::cartesianToPatches( cartPatch, vecPatches, params, smpi, timers, itime );
                 diagCart->run( smpi, VecPatchCart, itime, simWindow );
-
+            }
+            timers.diagsNEW.update();
             
             timers.movWindow.restart();
             simWindow->operate(vecPatches, smpi, params, itime, time_dual);
