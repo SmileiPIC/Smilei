@@ -25,21 +25,15 @@ void SyncCartesianPatch::sync( Field* inField, Field* outField, Params &params, 
 
     std::vector<unsigned int> dual =  in2D->isDual_;
 
-
     int iout = inPatch->Pcoordinates[0]*params.n_space[0] - outPatch->Pcoordinates[0]*params.n_space[0]*params.global_factor[0] ;
-    iout += outPatch->EMfields->istart[0][dual[0]];
-
     int jout = inPatch->Pcoordinates[1]*params.n_space[1] - outPatch->Pcoordinates[1]*params.n_space[1]*params.global_factor[1] ;
-    jout += outPatch->EMfields->istart[1][dual[1]];
-
-
-    for ( unsigned int i = 0 ; i < inPatch->EMfields->bufsize[0][dual[0]] ; i++ ) {
-        for ( unsigned int j = 0 ; j < inPatch->EMfields->bufsize[1][dual[0]] ; j++ ) {
-
-            ( *out2D )( iout+i, jout+j ) = ( *in2D )( inPatch->EMfields->istart[0][dual[0]]+i, inPatch->EMfields->istart[1][dual[0]]+j );
-        
+ 
+    for ( unsigned int i = 0 ; i < in2D->dims_[0] ; i++ ) {
+        for ( unsigned int j = 0 ; j < in2D->dims_[1] ; j++ ) {
+            ( *out2D )( iout+i, jout+j ) = ( *in2D )( i, j );
         }
     }    
+
     
 }
 
