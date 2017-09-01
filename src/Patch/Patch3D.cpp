@@ -19,8 +19,8 @@ using namespace std;
 Patch3D::Patch3D(Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved)
     : Patch( params, smpi, geometry, ipatch, n_moved)
 {
-    initStep2(params, geometry);
     if (dynamic_cast<HilbertGeometry*>( geometry )) {
+        initStep2(params, geometry);
         initStep3(params, smpi, n_moved);
         finishCreation(params, smpi, geometry);
     }
@@ -49,7 +49,7 @@ Patch3D::Patch3D(Patch3D* patch, Params& params, SmileiMPI* smpi, Geometry* geom
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch3D::initStep2(Params& params, Geometry* geometry)
 {
-    std::vector<unsigned int> xcall( 3, 0 );
+    std::vector<int> xcall( 3, 0 );
 
     // define patch coordinates
     Pcoordinates.resize(3);

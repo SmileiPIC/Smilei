@@ -21,7 +21,7 @@ CartesianGeometry1D::~CartesianGeometry1D( )
 
 
 // generalhilbertindex
-unsigned int CartesianGeometry1D::getDomainId( std::vector<unsigned int> Coordinates )
+unsigned int CartesianGeometry1D::getDomainId( std::vector<int> Coordinates )
 {
     if ( Coordinates[0] < 0 )
         return MPI_PROC_NULL;
@@ -55,7 +55,7 @@ CartesianGeometry2D::~CartesianGeometry2D( )
 
 
 // generalhilbertindex
-unsigned int CartesianGeometry2D::getDomainId( std::vector<unsigned int> Coordinates )
+unsigned int CartesianGeometry2D::getDomainId( std::vector<int> Coordinates )
 {
     if ( Coordinates[0] < 0 )
         return MPI_PROC_NULL;
@@ -94,7 +94,7 @@ CartesianGeometry3D::~CartesianGeometry3D( )
 
 
 // generalhilbertindex
-unsigned int CartesianGeometry3D::getDomainId( std::vector<unsigned int> Coordinates )
+unsigned int CartesianGeometry3D::getDomainId( std::vector<int> Coordinates )
 {
     if ( Coordinates[0] < 0 )
         return MPI_PROC_NULL;

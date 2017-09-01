@@ -548,7 +548,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         double Ey_XmaxYmin = 0.0;
         
         //The YmaxXmin patch has Patch coordinates X=0, Y=2^m1-1= number_of_patches[1]-1.
-        std::vector<unsigned int> xcall( 2, 0 );
+        std::vector<int> xcall( 2, 0 );
         xcall[0] = 0;
         xcall[1] = params.number_of_patches[1]-1;
         int patch_YmaxXmin = geometry_->getDomainId( xcall );

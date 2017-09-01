@@ -10,7 +10,7 @@ public:
     HilbertGeometry( Params& params );
     virtual ~HilbertGeometry( ) {};
 
-    virtual unsigned int getDomainId( std::vector<unsigned int> Coordinates ) = 0;
+    virtual unsigned int getDomainId( std::vector<int> Coordinates ) = 0;
     virtual std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) = 0;
 
 protected:
@@ -25,7 +25,7 @@ public:
     HilbertGeometry1D( Params& params );
     ~HilbertGeometry1D( ) override final;
 
-    unsigned int getDomainId( std::vector<unsigned int> Coordinates ) override final;
+    unsigned int getDomainId( std::vector<int> Coordinates ) override final;
     std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;
 };
 
@@ -36,7 +36,7 @@ public:
     HilbertGeometry2D( Params& params );
     ~HilbertGeometry2D( ) override final;
 
-    unsigned int getDomainId( std::vector<unsigned int> Coordinates ) override final;
+    unsigned int getDomainId( std::vector<int> Coordinates ) override final;
     std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;
 };
 
@@ -47,7 +47,7 @@ public:
     HilbertGeometry3D( Params& params );
     ~HilbertGeometry3D( ) override final;
 
-    unsigned int getDomainId( std::vector<unsigned int> Coordinates ) override final;
+    unsigned int getDomainId( std::vector<int> Coordinates ) override final;
     std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;
 };
 

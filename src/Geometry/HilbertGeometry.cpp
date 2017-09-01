@@ -23,7 +23,7 @@ HilbertGeometry1D::~HilbertGeometry1D( )
 
 
 // generalhilbertindex
-unsigned int HilbertGeometry1D::getDomainId( std::vector<unsigned int> Coordinates )
+unsigned int HilbertGeometry1D::getDomainId( std::vector<int> Coordinates )
 {
     return generalhilbertindex( mi_[0], 0, Coordinates[0], 0);
 
@@ -52,7 +52,7 @@ HilbertGeometry2D::~HilbertGeometry2D( )
 
 
 // generalhilbertindex
-unsigned int HilbertGeometry2D::getDomainId( std::vector<unsigned int> Coordinates )
+unsigned int HilbertGeometry2D::getDomainId( std::vector<int> Coordinates )
 {
     return generalhilbertindex( mi_[0], mi_[1], Coordinates[0], Coordinates[1] );
 
@@ -81,7 +81,7 @@ HilbertGeometry3D::~HilbertGeometry3D( )
 
 
 // generalhilbertindex
-unsigned int HilbertGeometry3D::getDomainId( std::vector<unsigned int> Coordinates )
+unsigned int HilbertGeometry3D::getDomainId( std::vector<int> Coordinates )
 {
     return generalhilbertindex( mi_[0], mi_[1], mi_[2], Coordinates[0], Coordinates[1], Coordinates[2] );
 

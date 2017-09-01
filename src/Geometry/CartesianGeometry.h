@@ -9,7 +9,7 @@ public:
     CartesianGeometry( Params& params );
     virtual ~CartesianGeometry( ) {};
 
-    virtual unsigned int getDomainId( std::vector<unsigned int> Coordinates ) = 0;
+    virtual unsigned int getDomainId( std::vector<int> Coordinates ) = 0;
     virtual std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) = 0;
 
 protected:
@@ -24,7 +24,7 @@ public:
     CartesianGeometry1D( Params& params );
     ~CartesianGeometry1D( ) override final;
 
-    unsigned int getDomainId( std::vector<unsigned int> Coordinates ) override final;
+    unsigned int getDomainId( std::vector<int> Coordinates ) override final;
     std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;
 };
 
@@ -35,7 +35,7 @@ public:
     CartesianGeometry2D( Params& params );
     ~CartesianGeometry2D( ) override final;
 
-    unsigned int getDomainId( std::vector<unsigned int> Coordinates ) override final;
+    unsigned int getDomainId( std::vector<int> Coordinates ) override final;
     std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;
 };
 
@@ -46,7 +46,7 @@ public:
     CartesianGeometry3D( Params& params );
     ~CartesianGeometry3D( ) override final;
 
-    unsigned int getDomainId( std::vector<unsigned int> Coordinates ) override final;
+    unsigned int getDomainId( std::vector<int> Coordinates ) override final;
     std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;
 };
 

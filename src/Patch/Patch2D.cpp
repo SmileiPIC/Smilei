@@ -60,7 +60,7 @@ Patch2D::Patch2D(Patch2D* patch, Params& params, SmileiMPI* smpi, Geometry* geom
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch2D::initStep2(Params& params, Geometry* geometry)
 {
-    std::vector<unsigned int> xcall( 2, 0 );
+    std::vector<int> xcall( 2, 0 );
 
     Pcoordinates.resize(2);
     Pcoordinates = geometry->getDomainCoordinates( hindex );

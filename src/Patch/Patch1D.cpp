@@ -19,8 +19,8 @@ using namespace std;
 Patch1D::Patch1D(Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved)
     : Patch( params, smpi, geometry, ipatch, n_moved)
 {
-    initStep2(params, geometry);
     if (dynamic_cast<HilbertGeometry*>( geometry )) {
+        initStep2(params, geometry);
         initStep3(params, smpi, n_moved);
         finishCreation(params, smpi, geometry);
     }
@@ -48,7 +48,7 @@ Patch1D::Patch1D(Patch1D* patch, Params& params, SmileiMPI* smpi, Geometry* geom
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch1D::initStep2(Params& params, Geometry* geometry)
 {
-    std::vector<unsigned int> xcall( 1, 0 );
+    std::vector<int> xcall( 1, 0 );
     
     Pcoordinates[0] = hindex;
     
