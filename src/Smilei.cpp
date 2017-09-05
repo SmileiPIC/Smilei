@@ -23,6 +23,7 @@
 #include "Smilei.h"
 #include "Params.h"
 #include "PatchesFactory.h"
+#include "SyncVectorPatch.h"
 #include "GeometryFactory.h"
 #include "Checkpoint.h"
 #include "Solver.h"
@@ -167,7 +168,14 @@ int main (int argc, char* argv[])
         cartPatch = PatchesFactory::create( params, smpi, cartGeom, vecPatches.refHindex_ / vecPatches.size() );
         cartPatch->set( params, cartGeom, vecPatches );
         VecPatchCart.patches_.push_back( cartPatch );
+
         VecPatchCart.refHindex_ = vecPatches.refHindex_ / vecPatches.size();
+        VecPatchCart.update_field_list();
+
+        //VecPatchCart.update_field_list(0);
+        VecPatchCart.patches_[0]->finalizeMPIenvironment();
+        VecPatchCart.nrequests = vecPatches(0)->requests_.size();
+
         diagCart = new DiagnosticCartFields2D( params, smpi, VecPatchCart, 0, openPMD ); 
 
         for (unsigned int ifield=0 ; ifield<VecPatchCart(0)->EMfields->Jx_s.size(); ifield++) {
@@ -261,18 +269,36 @@ int main (int argc, char* argv[])
 
             vecPatches.finalize_and_sort_parts(params, smpi, simWindow, time_dual, timers, itime);
 
-            // call the various diagnostics
-            vecPatches.runAllDiags(params, smpi, itime, timers, simWindow);
             if ( diagCart!=NULL ) {
                 timers.diagsNEW.restart();
                 diagCart->theTimeIsNow = diagCart->prepare( itime );
                 if ( diagCart->theTimeIsNow ) {
+                    //SyncVectorPatch::exchangeE( vecPatches );
+                    //SyncVectorPatch::finalizeexchangeE( vecPatches );
+                    //SyncVectorPatch::exchangeB( vecPatches );
+                    //SyncVectorPatch::finalizeexchangeB( vecPatches ); 
+
                     SyncCartesianPatch::patchedToCartesian( vecPatches, cartPatch, params, smpi, timers, itime );
-                    //SyncCartesianPatch::cartesianToPatches( cartPatch, vecPatches, params, smpi, timers, itime );
+
+                    //SyncVectorPatch::exchangeE( VecPatchCart );
+                    //SyncVectorPatch::finalizeexchangeE( VecPatchCart );
+                    //SyncVectorPatch::exchangeB( VecPatchCart );
+                    //SyncVectorPatch::finalizeexchangeB( VecPatchCart );
+
+
+                    SyncCartesianPatch::cartesianToPatches( cartPatch, vecPatches, params, smpi, timers, itime );
+                    
+                    //SyncVectorPatch::exchangeE( vecPatches );
+                    //SyncVectorPatch::finalizeexchangeE( vecPatches );
+                    //SyncVectorPatch::exchangeB( vecPatches );
+                    //SyncVectorPatch::finalizeexchangeB( vecPatches ); 
+
                     diagCart->run( smpi, VecPatchCart, itime, simWindow );
                 }
                 timers.diagsNEW.update();
             }
+            // call the various diagnostics
+            vecPatches.runAllDiags(params, smpi, itime, timers, simWindow);
             
             timers.movWindow.restart();
             simWindow->operate(vecPatches, smpi, params, itime, time_dual);

@@ -225,13 +225,17 @@ void Patch::set( Params& params, Geometry* geometry, VectorPatch& vecPatch )
         for ( unsigned int ipatch = 0 ; ipatch < vecPatch.size() ; ipatch++  ) {
             if ( vecPatch(ipatch)->min_local[i] <= min_local[i] ) {
                 min_local[i] = vecPatch(ipatch)->min_local[i];
-                MPI_neighbor_[i][0] = vecPatch(ipatch)->MPI_neighbor_[i][0];
-                neighbor_[i][0] = (vecPatch(ipatch)->neighbor_[i][0] / vecPatch.size() );
+                if (vecPatch(ipatch)->MPI_neighbor_[i][0]!=MPI_PROC_NULL)
+                    MPI_neighbor_[i][0] = vecPatch(ipatch)->MPI_neighbor_[i][0];
+                if (vecPatch(ipatch)->neighbor_[i][0]!=MPI_PROC_NULL)
+                    neighbor_[i][0] = (vecPatch(ipatch)->neighbor_[i][0] / vecPatch.size() );
             }
             if ( vecPatch(ipatch)->max_local[i] >= max_local[i] ) {
                 max_local[i] = vecPatch(ipatch)->max_local[i];
-                MPI_neighbor_[i][1] = vecPatch(ipatch)->MPI_neighbor_[i][1];
-                neighbor_[i][1] = (vecPatch(ipatch)->neighbor_[i][1] / vecPatch.size() );
+                if (vecPatch(ipatch)->MPI_neighbor_[i][1]!=MPI_PROC_NULL)
+                    MPI_neighbor_[i][1] = vecPatch(ipatch)->MPI_neighbor_[i][1];
+                if (vecPatch(ipatch)->neighbor_[i][1]!=MPI_PROC_NULL)
+                    neighbor_[i][1] = (vecPatch(ipatch)->neighbor_[i][1] / vecPatch.size() );
             }
             if ( vecPatch(ipatch)->cell_starting_global_index[i] <= cell_starting_global_index[i] )
                 cell_starting_global_index[i] = vecPatch(ipatch)->cell_starting_global_index[i];
