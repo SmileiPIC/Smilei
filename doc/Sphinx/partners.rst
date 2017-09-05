@@ -29,7 +29,11 @@ Partners
   :width: 6em
   :align: middle
 
-.. |IRFU| image:: _static/labs/irfu.png 
+.. |IRAMIS| image:: _static/labs/iramis.png 
+  :width: 6em
+  :align: middle
+
+.. |IRAP| image:: _static/labs/irap.png 
   :width: 6em
   :align: middle
 
@@ -122,11 +126,22 @@ Partners
 .. rst-class:: noborder
 
 +------------+------------------------------------------------------------------------------------------------------------------+
-| |IRFU|     |                                                                                                                  |
-|            |   `Institut de Recherche sur les fois fondamentales de l'Univers  <http://www.irfu.cea.fr/>`_ (Irfu)             |
+| |IRAMIS|   |                                                                                                                  |
+|            |   `Institut Rayonnement Matière de Saclay  <http://iramis.cea.fr>`_ (Iramis)                                     |
 +------------+------------------------------------------------------------------------------------------------------------------+
 |            |                                                                                                                  |
 |            |   * `Guillaume Bouchard <guillaume.bouchard@cea.fr>`_                                                            |
+|            |                                                                                                                  |
++------------+------------------------------------------------------------------------------------------------------------------+
+
+.. rst-class:: noborder
+
++------------+------------------------------------------------------------------------------------------------------------------+
+| |IRAP|     |                                                                                                                  |
+|            |   `Institut de Recherche en Astrophysique et Planétologie  <http://www.irap.omp.eu>`_ (IRAP)                     |
++------------+------------------------------------------------------------------------------------------------------------------+
+|            |                                                                                                                  |
+|            |   * `Illya Plotnikov <Illya.Plotnikov@irap.omp.eu>`_                                                             |
 |            |                                                                                                                  |
 +------------+------------------------------------------------------------------------------------------------------------------+
 
