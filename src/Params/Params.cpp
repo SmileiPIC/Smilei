@@ -319,7 +319,7 @@ namelist("")
             ERROR("The total number of patches must be greater or equal to the number of MPI processes"); 
     }
 #ifdef _OPENMP
-    if ( tot_number_of_patches < (unsigned int)(smpi->getSize()*omp_get_max_threads()) )
+    if ( tot_number_of_patches < (unsigned int)(smpi->getSize()*smpi->getOMPMaxThreads()) )
         WARNING( "Resources allocated underloaded regarding the total number of patches" );
 #endif
     
@@ -476,13 +476,13 @@ void Params::print_init()
         MESSAGE(1,"dimension " << i << " - (res_space, sim_length) : (" << res_space[i] << ", " << sim_length[i] << ")");
         MESSAGE(1,"            - (n_space_global,  cell_length) : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
     }
-
+    
     if (balancing_every > 0){
         TITLE("Load Balancing: ");
         if (initial_balance){
-        MESSAGE(1,"Computational load is initially balanced between MPI ranks. (initial_balance = true) ");
+            MESSAGE(1,"Computational load is initially balanced between MPI ranks. (initial_balance = true) ");
         } else{
-        MESSAGE(1,"Patches are initially homogeneously distributed between MPI ranks. (initial_balance = false) ");
+            MESSAGE(1,"Patches are initially homogeneously distributed between MPI ranks. (initial_balance = false) ");
         }
         MESSAGE(1,"Load balancing every " << balancing_every << " iterations.");
         MESSAGE(1,"Cell load coefficient = " << coef_cell );

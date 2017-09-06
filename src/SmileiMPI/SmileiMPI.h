@@ -35,54 +35,55 @@ class SmileiMPI {
 
 public:
     
+    SmileiMPI() {};
     //! Create intial MPI environment
     SmileiMPI( int* argc, char*** argv );
     //! Destructor for SmileiMPI
-    ~SmileiMPI();
+    virtual ~SmileiMPI();
     
     // Broadcast a string in current communicator
-    void bcast( std::string& val );
+    virtual void bcast( std::string& val );
     // Broadcast an int in current communicator
-    void bcast( int& val );
+    virtual void bcast( int& val );
     
     //! Initialize  MPI (per process) environment
     //! \param params Parameters
-    void init( Params& params );
+    virtual void init( Params& params );
     
     // Initialize the patch_count vector. Patches are distributed in order to balance the load between MPI processes.
-    void init_patch_count( Params& params );
+    virtual void init_patch_count( Params& params );
     // Recompute the patch_count vector. Browse patches and redistribute them in order to balance the load between MPI processes.
-    void recompute_patch_count( Params& params, VectorPatch& vecpatches, double time_dual );
+    virtual void recompute_patch_count( Params& params, VectorPatch& vecpatches, double time_dual );
      // Returns the rank of the MPI process currently owning patch h.
     int hrank(int h);
     
     // Create MPI type to exchange all particles properties of particles
-    MPI_Datatype createMPIparticles( Particles* particles );
+    virtual MPI_Datatype createMPIparticles( Particles* particles );
     
     
     // PATCH SEND / RECV METHODS
     //     - during load balancing process
     //     - during moving window
     // -----------------------------------
-    void isend(Patch* patch, int to  , int hindex, Params& params);
-    void waitall(Patch* patch);
-    void recv (Patch* patch, int from, int hindex, Params& params);
+    virtual void isend(Patch* patch, int to  , int hindex, Params& params);
+    virtual void waitall(Patch* patch);
+    virtual void recv (Patch* patch, int from, int hindex, Params& params);
     
-    void isend(Particles* particles, int to   , int hindex, MPI_Datatype datatype, MPI_Request& request);
-    void recv (Particles* partictles, int from, int hindex, MPI_Datatype datatype);
-    void isend(std::vector<int>* vec, int to  , int hindex, MPI_Request& request);
-    void recv (std::vector<int> *vec, int from, int hindex);
-
-    void isend(std::vector<double>* vec, int to  , int hindex, MPI_Request& request);
-    void recv (std::vector<double> *vec, int from, int hindex);
-
-    void isend(ElectroMagn* fields, int to  , int maxtag, std::vector<MPI_Request>& requests, int mpi_tag);
-    void recv (ElectroMagn* fields, int from, int hindex);
-    void isend(Field* field, int to  , int hindex, MPI_Request& request);
-
-    void recv (Field* field, int from, int hindex);
-    void isend( ProbeParticles* probe, int to  , int hindex, unsigned int );
-    void recv ( ProbeParticles* probe, int from, int hindex, unsigned int );
+    virtual void isend(Particles* particles, int to   , int hindex, MPI_Datatype datatype, MPI_Request& request);
+    virtual void recv (Particles* partictles, int from, int hindex, MPI_Datatype datatype);
+    virtual void isend(std::vector<int>* vec, int to  , int hindex, MPI_Request& request);
+    virtual void recv (std::vector<int> *vec, int from, int hindex);
+    
+    virtual void isend(std::vector<double>* vec, int to  , int hindex, MPI_Request& request);
+    virtual void recv (std::vector<double> *vec, int from, int hindex);
+    
+    virtual void isend(ElectroMagn* fields, int to  , int maxtag, std::vector<MPI_Request>& requests, int mpi_tag);
+    virtual void recv (ElectroMagn* fields, int from, int hindex);
+    virtual void isend(Field* field, int to  , int hindex, MPI_Request& request);
+    
+    virtual void recv (Field* field, int from, int hindex);
+    virtual void isend( ProbeParticles* probe, int to  , int hindex, unsigned int );
+    virtual void recv ( ProbeParticles* probe, int from, int hindex, unsigned int );
     
     
     // DIAGS MPI SYNC 
@@ -105,7 +106,7 @@ public:
         return (smilei_rk==0);
     }
     //! Method to synchronize MPI process in the current MPI communicator
-    inline void barrier() {
+    virtual inline void barrier() {
         MPI_Barrier( SMILEI_COMM_WORLD );
     }
     //! Return MPI_Comm_rank
@@ -115,6 +116,10 @@ public:
     //! Return MPI_Comm_size
     inline int getSize() {
         return smilei_sz;
+    }
+    //! Return MPI_Comm_size
+    inline int getOMPMaxThreads() {
+        return smilei_omp_max_threads;
     }
     
     
@@ -133,7 +138,7 @@ public:
     std::vector<std::vector<double>> dynamics_deltaold;
     
     // Resize buffers for a given number of particles
-    inline void dynamics_resize(int ithread, int ndim_part, int npart ){
+    virtual inline void dynamics_resize(int ithread, int ndim_part, int npart ){
         dynamics_Epart[ithread].resize(npart);
         dynamics_Bpart[ithread].resize(npart);
         dynamics_invgf[ithread].resize(npart);
@@ -145,12 +150,13 @@ public:
     // Compute global number of particles
     //     - deprecated with patch introduction
      //! \todo{Patch managmen}
-    inline int globalNbrParticles(Species* species, int locNbrParticles) {
+    virtual inline int globalNbrParticles(Species* species, int locNbrParticles) {
         int nParticles(0);
         MPI_Reduce( &locNbrParticles, &nParticles, 1, MPI_INT, MPI_SUM, 0, SMILEI_COMM_WORLD );
         return nParticles;
     }
     
+    bool test_mode;
     
 protected:
     //! Global MPI Communicator
@@ -160,6 +166,8 @@ protected:
     int smilei_sz;
     //! MPI process Id in the current communicator
     int smilei_rk;
+    //! OMP max number of threads in one MPI
+    int smilei_omp_max_threads;
     
     // Store periodicity (0/1) per direction
     // Should move in Params : last parameters of this type in this class
@@ -169,9 +177,8 @@ protected:
     //Number of patches owned by each mpi process.
     std::vector<int>  patch_count, capabilities;
     int Tcapabilities; //Default = smilei_sz (1 per MPI rank)
-
-
 };
+
 
 #endif
 

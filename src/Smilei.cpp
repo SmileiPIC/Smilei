@@ -21,6 +21,7 @@
 #include <omp.h>
 
 #include "Smilei.h"
+#include "SmileiMPIFactory.h"
 #include "Params.h"
 #include "PatchesFactory.h"
 #include "Checkpoint.h"
@@ -43,7 +44,7 @@ int main (int argc, char* argv[])
     // ------------------------- 
     
     // Create MPI environment :
-    SmileiMPI *smpi= new SmileiMPI(&argc, &argv );
+    SmileiMPI * smpi = SmileiMPIFactory::create( &argc, &argv );
     
     // Read and print simulation parameters
     TITLE("Reading the simulation parameters");
@@ -62,7 +63,7 @@ int main (int argc, char* argv[])
     
     TITLE("Initializing the restart environment");
     Checkpoint checkpoint(params, smpi);
-
+    
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=+1/2
     // Update in "if restart" if necessary
@@ -81,6 +82,15 @@ int main (int argc, char* argv[])
     // --------------------
     TITLE("Initializing moving window");
     SimWindow* simWindow = new SimWindow(params);
+    
+    // If test mode enable, code stops here
+    if( smpi->test_mode ) {
+        delete simWindow;
+        PyTools::closePython();
+        TITLE("END TEST MODE");
+        delete smpi;
+        return 0;
+    }
     
     // ---------------------------------------------------
     // Initialize patches (including particles and fields)
