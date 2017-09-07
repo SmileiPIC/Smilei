@@ -18,6 +18,7 @@ Upcoming changes
 * Monte Carlo QED photon emission
 * Moving window along y and z
 * Tracking particles in *Screens*
+* *Test mode* to quickly check the namelist consistency
 
 ----
 
