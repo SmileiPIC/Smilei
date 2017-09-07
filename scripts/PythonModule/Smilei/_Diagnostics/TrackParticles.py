@@ -432,7 +432,7 @@ class TrackParticles(Diagnostic):
 					
 				# Indicate that this iteration was succesfully ordered
 				f0.attrs["latestOrdered"] = it
-                                f0.flush()
+				f0.flush()
 				f.close()
 			# Create the "Times" dataset
 			f0.create_dataset("Times", data=times)
