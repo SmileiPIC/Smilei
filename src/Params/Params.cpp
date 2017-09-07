@@ -316,11 +316,11 @@ namelist("")
     } else {
         one_patch_per_MPI = false;
         if (tot_number_of_patches < (unsigned int)(smpi->getSize()))
-            ERROR("The total number of patches must be greater or equal to the number of MPI processes"); 
+            ERROR("The total number of patches "<<tot_number_of_patches<<" must be greater or equal to the number of MPI processes "<<smpi->getSize()); 
     }
 #ifdef _OPENMP
     if ( tot_number_of_patches < (unsigned int)(smpi->getSize()*smpi->getOMPMaxThreads()) )
-        WARNING( "Resources allocated underloaded regarding the total number of patches" );
+        WARNING( "Resources allocated "<<(smpi->getSize()*smpi->getOMPMaxThreads())<<" underloaded regarding the total number of patches "<<tot_number_of_patches );
 #endif
     
     

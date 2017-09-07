@@ -15,7 +15,7 @@ class SmileiMPI_test : public SmileiMPI {
 public:
     
     //! Create empty MPI environment
-    SmileiMPI_test( int nMPI, int nOMP );
+    SmileiMPI_test( int nMPI, int nOMP, int* argc, char*** argv );
     //! Destructor for SmileiMPI_test
     ~SmileiMPI_test();
     

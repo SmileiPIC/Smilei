@@ -11,43 +11,31 @@ class SmileiMPIFactory {
 public:
 
     static SmileiMPI* create(int* argc, char*** argv) {
-    
-        MESSAGE("                   _            _");
-        MESSAGE(" ___           _  | |        _  \\ \\   Version : " << __VERSION);
-        MESSAGE("/ __|  _ __   (_) | |  ___  (_)  | |   ");
-        MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |");
-        MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |  ");
-        MESSAGE("                                /_/    ");
-        MESSAGE("");
-        
-        // If first argument is -T, then enter "test mode"
-        if( *argc > 1 && strcmp((*argv)[1], "-T") ) {
+        // If argument starts with -T, then enter "test mode"
+        if( *argc > 1 && strncmp((*argv)[1], "-T", 2)==0 ) {
             int nMPI=1, nOMP=1;
+            std::string MPIxOMP = (*argv)[1] + 2;
             (*argv)++;
             (*argc)--;
             // Parse the optional argument MPIxOMP
-            if( *argc > 1 ) {
-                std::string MPIxOMP = (*argv)[1];
-                (*argv)++;
-                (*argc)--;
+            if( MPIxOMP.size() > 0 ) {
                 for( unsigned int i=0; i<MPIxOMP.size(); i++ ) {
                     if( !std::isdigit(MPIxOMP[i]) && MPIxOMP[i]!='x' ) {
-                        ERROR("The option provided after the -T argument requires the format MPIxOMP where MPI and OMP are integers");
+                        ERROR("The option -T requires the format -TMPIxOMP where MPI and OMP are integers");
                     }
                 }
                 unsigned int xpos = MPIxOMP.find("x");
                 if( xpos == std::string::npos || xpos != MPIxOMP.rfind("x")) {
-                    ERROR("The option provided after the -T argument requires the format MPIxOMP where MPI and OMP are integers");
+                    ERROR("The option -T requires the format -TMPIxOMP where MPI and OMP are integers");
                 }
                 nMPI = std::stoi( MPIxOMP.substr( 0, xpos ).c_str() );
                 nOMP = std::stoi( MPIxOMP.substr( xpos+1, MPIxOMP.size()-xpos-1 ).c_str() );
                 if( nMPI<1 || nOMP<1 ) {
-                    ERROR("The option provided after the -T argument requires the format MPIxOMP where MPI and OMP are >=1");
+                    ERROR("The option -T requires the format -TMPIxOMP where MPI and OMP are >=1");
                 }
             }
-            MESSAGE("    ----- TEST MODE -----");
             // Return a test-mode SmileiMPI
-            return new SmileiMPI_test( nMPI, nOMP );
+            return new SmileiMPI_test( nMPI, nOMP, argc, argv );
         
         
         // Otherwise, return the usual SmileiMPI

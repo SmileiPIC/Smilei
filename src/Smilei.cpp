@@ -46,6 +46,14 @@ int main (int argc, char* argv[])
     // Create MPI environment :
     SmileiMPI * smpi = SmileiMPIFactory::create( &argc, &argv );
     
+    MESSAGE("                   _            _");
+    MESSAGE(" ___           _  | |        _  \\ \\   Version : " << __VERSION);
+    MESSAGE("/ __|  _ __   (_) | |  ___  (_)  | |   ");
+    MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |");
+    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |  ");
+    MESSAGE("                                /_/    ");
+    MESSAGE("");
+    
     // Read and print simulation parameters
     TITLE("Reading the simulation parameters");
     Params params(smpi,vector<string>(argv + 1, argv + argc));
@@ -82,15 +90,6 @@ int main (int argc, char* argv[])
     // --------------------
     TITLE("Initializing moving window");
     SimWindow* simWindow = new SimWindow(params);
-    
-    // If test mode enable, code stops here
-    if( smpi->test_mode ) {
-        delete simWindow;
-        PyTools::closePython();
-        TITLE("END TEST MODE");
-        delete smpi;
-        return 0;
-    }
     
     // ---------------------------------------------------
     // Initialize patches (including particles and fields)
@@ -148,20 +147,23 @@ int main (int argc, char* argv[])
        
         TITLE("Applying external fields at time t = 0");
         vecPatches.applyExternalFields();
-
+        
         vecPatches.finalize_and_sort_parts(params, smpi, simWindow, time_dual, timers, 0);
         timers.syncPart .reboot();
-
-        TITLE("Initializing diagnostics");
-        vecPatches.initAllDiags( params, smpi );
-        TITLE("Running diags at time t = 0");
-        vecPatches.runAllDiags(params, smpi, 0, timers, simWindow);
+        
+        if( ! smpi->test_mode ) {
+            TITLE("Initializing diagnostics");
+            vecPatches.initAllDiags( params, smpi );
+            TITLE("Running diags at time t = 0");
+            vecPatches.runAllDiags(params, smpi, 0, timers, simWindow);
+        }
         timers.diags.reboot();
     
     }
+    
     TITLE("Species creation summary");
     vecPatches.printNumberOfParticles( smpi );
-
+    
     timers.global.reboot();
     
     // ------------------------------------------------------------------------
@@ -176,6 +178,16 @@ int main (int argc, char* argv[])
     TITLE("Memory consumption");
     vecPatches.check_memory_consumption( smpi );
     
+    
+    // If test mode enable, code stops here
+    if( smpi->test_mode ) {
+        delete simWindow;
+        PyTools::closePython();
+        TITLE("END TEST MODE");
+        delete smpi;
+        return 0;
+    }
+    
 /*tommaso
     // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)
     unsigned int latestTimeStep=checkpoint.this_run_start_step;
@@ -186,13 +198,13 @@ int main (int argc, char* argv[])
     
     TITLE("Time-Loop started: number of time-steps n_time = " << params.n_time);
     if ( smpi->isMaster() ) params.print_timestep_headers();
-
+    
     #pragma omp parallel shared (time_dual,smpi,params, vecPatches, simWindow, checkpoint)
     {
-
+        
         unsigned int itime=checkpoint.this_run_start_step+1;
         while ( (itime <= params.n_time) && (!checkpoint.exit_asap) ) {
-
+            
             // calculate new times
             // -------------------
             #pragma omp single
@@ -200,7 +212,7 @@ int main (int argc, char* argv[])
                 time_prim += params.timestep;
                 time_dual += params.timestep;
             }
-        
+            
             // apply collisions if requested
             vecPatches.applyCollisions(params, itime, timers);
             

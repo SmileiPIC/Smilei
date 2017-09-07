@@ -14,14 +14,35 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // SmileiMPI_test constructor
 // ---------------------------------------------------------------------------------------------------------------------
-SmileiMPI_test::SmileiMPI_test( int nMPI, int nOMP )
+SmileiMPI_test::SmileiMPI_test( int nMPI, int nOMP, int* argc, char*** argv )
 {
     test_mode = true;
+    
+    int mpi_provided;
+#ifdef _OPENMP
+    MPI_Init_thread( argc, argv, MPI_THREAD_MULTIPLE, &mpi_provided );
+    if (mpi_provided != MPI_THREAD_MULTIPLE){
+        ERROR("MPI_THREAD_MULTIPLE not supported. Compile your MPI library with THREAD_MULTIPLE support.");
+    }
+    omp_set_num_threads( 1 );
+#else
+    MPI_Init( argc, argv );
+#endif
+    
+    SMILEI_COMM_WORLD = MPI_COMM_WORLD;
+    MPI_Comm_size( SMILEI_COMM_WORLD, &smilei_sz );
+    MPI_Comm_rank( SMILEI_COMM_WORLD, &smilei_rk );
+    
+    if( smilei_sz > 1 ) {
+        ERROR("Test mode cannot be run with several MPI processes. Instead, indicate the MPIxOMP intended partition after the -T argument.");
+    }
     
     smilei_sz = nMPI;
     smilei_rk = 0;
     smilei_omp_max_threads = nOMP;
-
+    
+    MESSAGE("    ----- TEST MODE WITH INTENDED PARTITION "<<nMPI<<"x"<<nOMP<<"-----");
+    
 } // END SmileiMPI_test::SmileiMPI_test
 
 
@@ -30,7 +51,7 @@ SmileiMPI_test::SmileiMPI_test( int nMPI, int nOMP )
 // ---------------------------------------------------------------------------------------------------------------------
 SmileiMPI_test::~SmileiMPI_test()
 {
-    delete[]periods_;
+    remove( "smilei.py" );
 } // END SmileiMPI_test::~SmileiMPI_test
 
 
