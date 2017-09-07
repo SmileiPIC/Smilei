@@ -49,20 +49,20 @@ TimeSelection::TimeSelection(PyObject* timeSelection, string name)
         if        ( nitems==1 ) {
             if(items[0]) period  = items[0];
         } else if ( nitems==2 ) {
-            if(items[0]) start   = (int)round(items[0]);
+            if(items[0]) start   = items[0];
             if(items[1]) period  = items[1];
         } else if ( nitems==3 ) {
-            if(items[0]) start   = (int)round(items[0]);
-            if(items[1]) end     = (int)round(items[1]);
+            if(items[0]) start   = items[0];
+            if(items[1]) end     = items[1];
             if(items[2]) period  = items[2];
         } else if ( nitems==4 ) {
-            if(items[0]) start   = (int)round(items[0]);
-            if(items[1]) end     = (int)round(items[1]);
+            if(items[0]) start   = items[0];
+            if(items[1]) end     = items[1];
             if(items[2]) period  = items[2];
             if(items[3]) repeat  = (int)round(items[3]);
         } else if ( nitems==5 ) {
-            if(items[0]) start   = (int)round(items[0]);
-            if(items[1]) end     = (int)round(items[1]);
+            if(items[0]) start   = items[0];
+            if(items[1]) end     = items[1];
             if(items[2]) period  = items[2];
             if(items[3]) repeat  = (int)round(items[3]);
             if(items[4]) spacing = items[4];
