@@ -193,8 +193,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
     }
     if ( !some_particles_are_moving  && !diag_flag )
         return;
-
-
+    
     timers.densities.restart();
     if  (diag_flag){
         #pragma omp for schedule(static)

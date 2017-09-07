@@ -116,49 +116,49 @@ int main (int argc, char* argv[])
        
         vecPatches = PatchesFactory::createVector(params, smpi, openPMD, 0);
         
-        // Initialize the electromagnetic fields
-        // -------------------------------------
-        vecPatches.computeCharge();
-        vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
-        
-        // Apply antennas
-        // --------------
-        vecPatches.applyAntennas(0.5 * params.timestep);
-        
-        // Init electric field (Ex/1D, + Ey/2D)
-        if (!vecPatches.isRhoNull(smpi) && params.solve_poisson == true) {
-            TITLE("Solving Poisson at time t = 0");
-            Timer ptimer("global");
-            ptimer.init(smpi);
-            ptimer.restart();
-            
-            vecPatches.solvePoisson( params, smpi );
-            ptimer.update();
-            MESSAGE("Time in Poisson : " << ptimer.getTime() );
-        }
-        
-        vecPatches.dynamics(params, smpi, simWindow, time_dual, timers, 0);
-        timers.particles.reboot();
-        timers.syncPart .reboot();
-        
-        vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
-        timers.densities.reboot();
-        timers.syncDens .reboot();
-       
-        TITLE("Applying external fields at time t = 0");
-        vecPatches.applyExternalFields();
-        
-        vecPatches.finalize_and_sort_parts(params, smpi, simWindow, time_dual, timers, 0);
-        timers.syncPart .reboot();
-        
         if( ! smpi->test_mode ) {
+            
+            // Initialize the electromagnetic fields
+            // -------------------------------------
+            vecPatches.computeCharge();
+                vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
+            
+            // Apply antennas
+            // --------------
+            vecPatches.applyAntennas(0.5 * params.timestep);
+            
+            // Init electric field (Ex/1D, + Ey/2D)
+            if (!vecPatches.isRhoNull(smpi) && params.solve_poisson == true) {
+                TITLE("Solving Poisson at time t = 0");
+                Timer ptimer("global");
+                ptimer.init(smpi);
+                ptimer.restart();
+                
+                vecPatches.solvePoisson( params, smpi );
+                ptimer.update();
+                MESSAGE("Time in Poisson : " << ptimer.getTime() );
+            }
+            
+            vecPatches.dynamics(params, smpi, simWindow, time_dual, timers, 0);
+            timers.particles.reboot();
+            timers.syncPart .reboot();
+            
+            vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
+            timers.densities.reboot();
+            timers.syncDens .reboot();
+            
+            TITLE("Applying external fields at time t = 0");
+            vecPatches.applyExternalFields();
+            
+            vecPatches.finalize_and_sort_parts(params, smpi, simWindow, time_dual, timers, 0);
+            timers.syncPart .reboot();
+            
             TITLE("Initializing diagnostics");
             vecPatches.initAllDiags( params, smpi );
             TITLE("Running diags at time t = 0");
             vecPatches.runAllDiags(params, smpi, 0, timers, simWindow);
+            timers.diags.reboot();
         }
-        timers.diags.reboot();
-    
     }
     
     TITLE("Species creation summary");
