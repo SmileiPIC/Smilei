@@ -271,30 +271,30 @@ int main (int argc, char* argv[])
 
             if ( diagCart!=NULL ) {
                 timers.diagsNEW.restart();
-                diagCart->theTimeIsNow = diagCart->prepare( itime );
-                if ( diagCart->theTimeIsNow ) {
-                    //SyncVectorPatch::exchangeE( vecPatches );
-                    //SyncVectorPatch::finalizeexchangeE( vecPatches );
-                    //SyncVectorPatch::exchangeB( vecPatches );
-                    //SyncVectorPatch::finalizeexchangeB( vecPatches ); 
+                //SyncVectorPatch::exchangeE( vecPatches );
+                //SyncVectorPatch::finalizeexchangeE( vecPatches );
+                //SyncVectorPatch::exchangeB( vecPatches );
+                //SyncVectorPatch::finalizeexchangeB( vecPatches ); 
 
-                    SyncCartesianPatch::patchedToCartesian( vecPatches, cartPatch, params, smpi, timers, itime );
+                SyncCartesianPatch::patchedToCartesian( vecPatches, cartPatch, params, smpi, timers, itime );
 
-                    //SyncVectorPatch::exchangeE( VecPatchCart );
-                    //SyncVectorPatch::finalizeexchangeE( VecPatchCart );
-                    //SyncVectorPatch::exchangeB( VecPatchCart );
-                    //SyncVectorPatch::finalizeexchangeB( VecPatchCart );
+                //SyncVectorPatch::exchangeE( VecPatchCart );
+                //SyncVectorPatch::finalizeexchangeE( VecPatchCart );
+                //SyncVectorPatch::exchangeB( VecPatchCart );
+                //SyncVectorPatch::finalizeexchangeB( VecPatchCart );
 
 
-                    SyncCartesianPatch::cartesianToPatches( cartPatch, vecPatches, params, smpi, timers, itime );
+                SyncCartesianPatch::cartesianToPatches( cartPatch, vecPatches, params, smpi, timers, itime );
                     
-                    //SyncVectorPatch::exchangeE( vecPatches );
-                    //SyncVectorPatch::finalizeexchangeE( vecPatches );
-                    //SyncVectorPatch::exchangeB( vecPatches );
-                    //SyncVectorPatch::finalizeexchangeB( vecPatches ); 
+                //SyncVectorPatch::exchangeE( vecPatches );
+                //SyncVectorPatch::finalizeexchangeE( vecPatches );
+                //SyncVectorPatch::exchangeB( vecPatches );
+                //SyncVectorPatch::finalizeexchangeB( vecPatches ); 
 
-                    diagCart->run( smpi, VecPatchCart, itime, simWindow );
-                }
+                //diagCart->theTimeIsNow = diagCart->prepare( itime );
+                //if ( diagCart->theTimeIsNow ) {
+                //    diagCart->run( smpi, VecPatchCart, itime, simWindow );
+                //}
                 timers.diagsNEW.update();
             }
             // call the various diagnostics
