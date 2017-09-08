@@ -315,8 +315,8 @@ namelist("")
     
     if( PyTools::nComponents("LoadBalancing")>0 ) {
         PyTools::extract("every"      , balancing_every, "LoadBalancing");
-        PyTools::extract("coef_cell"  , coef_cell      , "LoadBalancing");
-        PyTools::extract("coef_frozen", coef_frozen    , "LoadBalancing");
+        PyTools::extract("cell_load"  , cell_load      , "LoadBalancing");
+        PyTools::extract("frozen_particle_load", frozen_particle_load    , "LoadBalancing");
         PyTools::extract("initial_balance", initial_balance    , "LoadBalancing");
     } else {
         balancing_every = 0;
@@ -474,8 +474,8 @@ void Params::print_init()
         MESSAGE(1,"Patches are initially homogeneously distributed between MPI ranks. (initial_balance = false) ");
         }
         MESSAGE(1,"Load balancing every " << balancing_every << " iterations.");
-        MESSAGE(1,"Cell load coefficient = " << coef_cell );
-        MESSAGE(1,"Frozen particle load coefficient = " << coef_frozen );
+        MESSAGE(1,"Cell load coefficient = " << cell_load );
+        MESSAGE(1,"Frozen particle load coefficient = " << frozen_particle_load );
     }
 }
 

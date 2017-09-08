@@ -244,8 +244,8 @@ occur every 150 iterations.
   LoadBalancing(
       initial_balance = True,
       every = 150,
-      coef_cell = 1.,
-      coef_frozen = 0.1
+      cell_load = 1.,
+      frozen_particle_load = 0.1
   )
 
 .. py:data:: initial_balance
@@ -262,14 +262,14 @@ occur every 150 iterations.
   An integer: the number of timesteps between each load balancing (patches are
   exchanged between MPI processes to reduce load imbalance).
   
-.. py:data:: coef_cell
+.. py:data:: cell_load
   
   :default: 1.
   
   Computational load of a single grid cell considered by the dynamic load balancing algorithm. 
   This load is normalized to the load of a single particle.
   
-.. py:data:: coef_frozen
+.. py:data:: frozen_particle_load
   
   :default: 0.1
   

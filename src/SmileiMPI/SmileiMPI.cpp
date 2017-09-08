@@ -260,12 +260,12 @@ void SmileiMPI::init_patch_count( Params& params)
                 // Consider whether this species is frozen
                 double time_frozen(0.);
                 PyTools::extract("time_frozen",time_frozen ,"Species",ispecies);
-                if(time_frozen > 0.) local_load *= params.coef_frozen;
+                if(time_frozen > 0.) local_load *= params.frozen_particle_load;
                 // Add the load of the species to the current patch load
                 PatchLoad[ipatch] += local_load;
             }
             //Add grid contribution to the load.
-            PatchLoad[ipatch] += ncells_perpatch*params.coef_cell-1; //-1 to compensate the initialization to 1.
+            PatchLoad[ipatch] += ncells_perpatch*params.cell_load-1; //-1 to compensate the initialization to 1.
             total_load += PatchLoad[ipatch];
         }
     }
@@ -362,8 +362,8 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     unsigned int Npatches,ncells_perpatch, j;
     int Ncur;
     double Tload,Tload_loc,Tcur, cells_load, target, Tscan;
-    //Load of a cell = coef_cell*load of a particle.
-    //Load of a frozen particle = coef_frozen*load of a particle.
+    //Load of a cell = cell_load*load of a particle.
+    //Load of a frozen particle = frozen_particle_load*load of a particle.
     std::vector<double> Lp, Lp_left, Lp_right;
     ofstream fout;
 
@@ -379,7 +379,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         ncells_perpatch *= params.n_space[idim]+2*params.oversize[idim];
  
     unsigned int tot_species_number = vecpatches(0)->vecSpecies.size();
-    cells_load = ncells_perpatch*params.coef_cell ;
+    cells_load = ncells_perpatch*params.cell_load ;
 
     Lp.resize(patch_count[smilei_rk], cells_load);
     if (smilei_rk > 0) Lp_left.resize(patch_count[smilei_rk-1]);
@@ -391,7 +391,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     //Compute Local Loads of each Patch (Lp)
     for(unsigned int ipatch=0; ipatch < (unsigned int)patch_count[smilei_rk]; ipatch++){
         for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++) {
-            Lp[ipatch] += vecpatches(ipatch)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(params.coef_frozen-1)*(time_dual < vecpatches(ipatch)->vecSpecies[ispecies]->time_frozen)) ;
+            Lp[ipatch] += vecpatches(ipatch)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(params.frozen_particle_load-1)*(time_dual < vecpatches(ipatch)->vecSpecies[ispecies]->time_frozen)) ;
         }
         Tload_loc += Lp[ipatch];
     }

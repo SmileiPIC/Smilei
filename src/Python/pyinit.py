@@ -99,7 +99,9 @@ class SmileiComponent(object):
                 "track_flush_every":"DiagTrackParticles()",
                 "track_filter"     :"DiagTrackParticles()",
                 "species_type":"name",
-                "dynamics_type":"push",
+                "dynamics_type":"pusher",
+                "coef_cell":"cell_load",
+                "coef_frozen":"frozen_particle_load",
             }
             for key, value in kwargs.items():
                 if key in deprecated:
@@ -236,8 +238,8 @@ class LoadBalancing(SmileiSingleton):
     
     every = 150
     initial_balance = True
-    coef_cell = 1.0
-    coef_frozen = 0.1
+    cell_load = 1.0
+    frozen_particle_load = 0.1
 
 
 class MovingWindow(SmileiSingleton):

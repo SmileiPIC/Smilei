@@ -50,8 +50,8 @@ def E(x,y):
 
 LoadBalancing(
               every = 20,
-              coef_cell = 1.,
-              coef_frozen = 0.1
+              cell_load = 1.,
+              frozen_particle_load = 0.1
               )
 Main(
      #dim: Geometry of the simulation

@@ -185,9 +185,9 @@ public:
     //! Load balancing frequency
     int balancing_every;
     //! Load coefficient applied to a cell (default = 1)
-    double coef_cell;
+    double cell_load;
     //! Load coefficient applied to a frozen particle (default = 0.1)
-    double coef_frozen;
+    double frozen_particle_load;
     //! Return if number of patch = number of MPI process, to tune IO //ism
     bool one_patch_per_MPI;
     //! Compute an initially balanced patch distribution right from the start
