@@ -53,13 +53,13 @@ Python workflow
 ^^^^^^^^^^^^^^^
 
 *Python* is started at the beginning of the simulation (one *python* interpreter
-for each MPI node). The following steps are executed:
+for each MPI process). The following steps are executed:
 
 #. A few variables from :program:`Smilei` are passed to *python* so that they are
    available to the user:
    
-   * The rank of the current MPI node as :py:data:`smilei_mpi_rank`.
-   * The total number of MPI nodes as :py:data:`smilei_mpi_size`.
+   * The rank of the current MPI process as :py:data:`smilei_mpi_rank`.
+   * The total number of MPI processes as :py:data:`smilei_mpi_size`.
    * The maximum random integer as :py:data:`smilei_rand_max`.
 
 #. The namelist(s) is executed.
@@ -151,6 +151,17 @@ The block ``Main`` is **mandatory** and has the following syntax::
   Each integer must be a power of 2, and the total number of patches must be
   greater or equal than the number of MPI processes.
   See :doc:`parallelization`.
+
+
+.. py:data:: clrw
+  
+  :default: 1
+  
+  Advanced users. Integer specifying the cluster width along X direction in number of cells. 
+  The "cluster" is a sub-patch structure in which particles are sorted for cache improvement. 
+  clrw must divide the number of cells in one patch (in dimension X). 
+  The finest sorting is achieved with clrw=1 and no sorting with clrw equal to the full size of a patch along dimension X.
+  The cluster size in dimension Y and Z is always the full extent of the patch. 
 
 .. py:data:: maxwell_solver
   
@@ -255,13 +266,15 @@ occur every 150 iterations.
   
   :default: 1.
   
-  :red:`to do`
+  Computational load of a single grid cell considered by the dynamic load balancing algorithm. 
+  This load is normalized to the load of a single particle.
   
 .. py:data:: coef_frozen
   
   :default: 0.1
   
-  :red:`to do`
+  Computational load of a single frozen particle considered by the dynamic load balancing algorithm. 
+  This load is normalized to the load of a single particle.
 
 
 ----
@@ -943,6 +956,16 @@ profiles.
     
     Creates a polynomial of the form :math:`\sum_i a_i(t-t_0)^i`.
   
+  .. py:function:: tsin2plateau( start=0., fwhm=0., plateau=None, slope1=fwhm, slope2=slope1 )
+    
+    :param start: Profile is 0 before start
+    :param fwhm:  Full width half maximum of the profile
+    :param plateau: Length of the plateau 
+    :param slope1: Duration of the ramp up of the profil
+    :param slope2: Duration of the ramp down of the profil
+
+    Creates a sin squared profil with a plateau in the middle if needed. If slope1 and 2 are used, fwhm is overwritten.
+
   **Example**::
     
     Antenna( ... , time_profile = tcosine(freq=0.01), ... )

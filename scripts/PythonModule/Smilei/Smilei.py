@@ -602,7 +602,7 @@ class Smilei(object):
 			for match in self._glob(path):
 				if self._os.path.isdir(match) and self._os.path.isfile(match+self._os.sep+"smilei.py"):
 					validPaths.append(match)
-			if len(validPaths)==0:
+			if len(validPaths)==0 and self._verbose:
 				print("WARNING: `"+path+"` does not point to any valid Smilei simulation path")
 			allPaths.extend( validPaths )
 		self._results_path = allPaths

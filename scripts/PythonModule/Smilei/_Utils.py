@@ -133,18 +133,21 @@ class Units(object):
 		self.requestedX = ""
 		self.requestedY = ""
 		self.requestedV = ""
+		self.verbose = True
 		for a in args:
 			if type(a) is str:
 				self.requestedUnits.append( a )
 			else:
 				raise TypeError("Arguments of Units() should be strings")
 		for kwa, val in kwargs.items():
-			if type(val) is not str:
-				raise TypeError("Arguments of Units() should be strings")
-			if   kwa == "x": self.requestedX = val
-			elif kwa == "y": self.requestedY = val
-			elif kwa == "v": self.requestedV = val
-			else: raise TypeError("Units() got an unexpected keyword argument '"+kwa+"'")
+			if kwa == "verbose": self.verbose = val
+			else:
+				if type(val) is not str:
+					raise TypeError("Arguments of Units() should be strings")
+				if   kwa == "x": self.requestedX = val
+				elif kwa == "y": self.requestedY = val
+				elif kwa == "v": self.requestedV = val
+				else: raise TypeError("Units() got an unexpected keyword argument '"+kwa+"'")
 		
 		# We try to import the pint package
 		self.UnitRegistry = None
@@ -152,8 +155,9 @@ class Units(object):
 			from pint import UnitRegistry
 			self.UnitRegistry = UnitRegistry
 		except:
-			print("WARNING: you do not have the *pint* package, so you cannot modify units.")
-			print("       : The results will stay in code units.")
+			if self.verbose:
+				print("WARNING: you do not have the *pint* package, so you cannot modify units.")
+				print("       : The results will stay in code units.")
 			return
 	
 	def _divide(self,units1, units2):
