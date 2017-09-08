@@ -330,6 +330,7 @@ class TrackParticles(Diagnostic):
 	
 	# Make the particles ordered by Id in the file, in case they are not
 	def _orderFiles( self, filesDisordered, fileOrdered, chunksize ):
+		import math
 		if self.Smilei._verbose: print("Ordering particles ... (this could take a while)")
 		try:
 			properties = {"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
@@ -395,16 +396,15 @@ class TrackParticles(Diagnostic):
 				
 				# If too many particles, sort by chunks
 				else:
-					import math
 					nchunks = int(float(nparticles)/(chunksize+1) + 1)
-					chunksize = int(math.ceil(float(nparticles)/nchunks))
-					ID = self._np.empty((chunksize,), dtype=self._np.uint64)
-					data_double = self._np.empty((chunksize,))
-					data_int16  = self._np.empty((chunksize,), dtype=self._np.int16)
+					adjustedchunksize = int(math.ceil(float(nparticles)/nchunks))
+					ID = self._np.empty((adjustedchunksize,), dtype=self._np.uint64)
+					data_double = self._np.empty((adjustedchunksize,))
+					data_int16  = self._np.empty((adjustedchunksize,), dtype=self._np.int16)
 					# Loop chunks
 					for ichunk in range(nchunks):
-						first = ichunk * chunksize
-						last  = min( first + chunksize, nparticles )
+						first = ichunk * adjustedchunksize
+						last  = min( first + adjustedchunksize, nparticles )
 						npart = last-first
 						# Obtain IDs and find their sorting indices
 						group["id"].read_direct( ID, source_sel=self._np.s_[first:last], dest_sel=self._np.s_[:npart] )
@@ -434,10 +434,24 @@ class TrackParticles(Diagnostic):
 				f0.attrs["latestOrdered"] = it
 				f0.flush()
 				f.close()
+			print("    Finalizing the ordering process")
 			# Create the "Times" dataset
 			f0.create_dataset("Times", data=times)
 			# Create the "unique_Ids" dataset
-			f0.create_dataset("unique_Ids", data=self._np.max(f0["Id"], axis=0))
+			limitedchunksize = int(chunksize / len(times))
+			if total_number_of_particles < limitedchunksize:
+				f0.create_dataset("unique_Ids", data=self._np.max(f0["Id"], axis=0))
+			else:
+				f0.create_dataset("unique_Ids", (total_number_of_particles,), f0["Id"].dtype)
+				nchunks = int(float(total_number_of_particles)/(limitedchunksize+1) + 1)
+				limitedchunksize = int(math.ceil(float(total_number_of_particles)/nchunks))
+				ID = self._np.empty((len(times),limitedchunksize), dtype=self._np.uint64)
+				for ichunk in range(nchunks):
+					first = ichunk * limitedchunksize
+					last  = int(min( first + limitedchunksize, total_number_of_particles ))
+					npart = last-first
+					f0["Id"].read_direct( ID, source_sel=self._np.s_[:, first:last], dest_sel=self._np.s_[:,:npart] )
+					f0["unique_Ids"].write_direct( self._np.max(ID[:,:npart], axis=0), source_sel=self._np.s_[:npart], dest_sel=self._np.s_[first:last] )
 			# Indicate that the ordering is finished
 			f0.attrs["finished_ordering"] = True
 			# Close file
