@@ -323,7 +323,7 @@ namelist("")
         WARNING( "Resources allocated underloaded regarding the total number of patches" );
 #endif
 
-    global_factor.resize( nDim_field, 0 );
+    global_factor.resize( nDim_field, 1 );
     PyTools::extract( "global_factor", global_factor, "Main" );
     
     if( PyTools::nComponents("LoadBalancing")>0 ) {

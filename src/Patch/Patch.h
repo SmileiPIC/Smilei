@@ -122,6 +122,7 @@ public:
     
     // Create MPI_Datatype to exchange fields
     virtual void createType( Params& params ) = 0;
+    virtual void createType2( Params& params ) = 0;
     virtual void cleanType() = 0;
     
     // Geometrical methods

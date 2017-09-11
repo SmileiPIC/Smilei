@@ -163,7 +163,7 @@ int main (int argc, char* argv[])
     Patch* cartPatch =  NULL;
     VectorPatch VecPatchCart( params );
     Diagnostic* diagCart = NULL;
-    if (params.global_factor[0]!=0) {
+    if (params.global_factor[0]!=1) {
         cartGeom = GeometryFactory::createGlobal( params );
         cartPatch = PatchesFactory::create( params, smpi, cartGeom, vecPatches.refHindex_ / vecPatches.size() );
         cartPatch->set( params, cartGeom, vecPatches );
@@ -205,8 +205,8 @@ int main (int argc, char* argv[])
 
         diagCart->init( params, smpi, VecPatchCart );
         diagCart->theTimeIsNow = diagCart->prepare( 0 );
-        if ( diagCart->theTimeIsNow )
-            diagCart->run( smpi, VecPatchCart, 0, simWindow );
+        //if ( diagCart->theTimeIsNow )
+        //    diagCart->run( smpi, VecPatchCart, 0, simWindow );
     }
 
     timers.global.reboot();
@@ -234,7 +234,7 @@ int main (int argc, char* argv[])
     TITLE("Time-Loop started: number of time-steps n_time = " << params.n_time);
     if ( smpi->isMaster() ) params.print_timestep_headers();
 
-    #pragma omp parallel shared (time_dual,smpi,params, vecPatches, simWindow, checkpoint)
+    #pragma omp parallel shared (time_dual,smpi,params, vecPatches, VecPatchCart, simWindow, checkpoint, diagCart)
     {
 
         unsigned int itime=checkpoint.this_run_start_step+1;
@@ -263,8 +263,10 @@ int main (int argc, char* argv[])
             vecPatches.applyAntennas(time_dual);
             
             // solve Maxwell's equations
+            if ( diagCart==NULL ) {
             if( time_dual > params.time_fields_frozen ) {
                 vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
+            }
             }
 
             vecPatches.finalize_and_sort_parts(params, smpi, simWindow, time_dual, timers, itime);
@@ -283,6 +285,7 @@ int main (int argc, char* argv[])
                 //SyncVectorPatch::exchangeB( VecPatchCart );
                 //SyncVectorPatch::finalizeexchangeB( VecPatchCart );
 
+                VecPatchCart.solveMaxwell( params, simWindow, itime, time_dual, timers );
 
                 SyncCartesianPatch::cartesianToPatches( cartPatch, vecPatches, params, smpi, timers, itime );
                     

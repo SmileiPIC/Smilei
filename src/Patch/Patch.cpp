@@ -253,6 +253,17 @@ void Patch::set( Params& params, Geometry* geometry, VectorPatch& vecPatch )
     //cart_updateMPIenv(smpi);
 
     MPI_me_ = vecPatch(0)->MPI_me_;
+    for (unsigned int i = 0 ; i<nDim_fields_ ; i++) {
+        if (MPI_neighbor_[i][0]==MPI_me_)
+            MPI_neighbor_[i][0] = MPI_PROC_NULL;
+        if (MPI_neighbor_[i][1]==MPI_me_)
+            MPI_neighbor_[i][1] = MPI_PROC_NULL;
+        if (neighbor_[i][0]==MPI_me_)
+            neighbor_[i][0] = MPI_PROC_NULL;
+        if (neighbor_[i][1]==MPI_me_)
+            neighbor_[i][1] = MPI_PROC_NULL;
+    }
+            
     
     //cout << "MPI Nei\t"  << "\t" << MPI_neighbor_[1][1] << endl;
     //cout << "MPI Nei\t"  << MPI_neighbor_[0][0] << "\t" << MPI_me_ << "\t" << MPI_neighbor_[0][1] << endl;
@@ -275,7 +286,7 @@ void Patch::set( Params& params, Geometry* geometry, VectorPatch& vecPatch )
     probes.resize(0);
     
     if (has_an_MPI_neighbor())
-        createType(params);
+        createType2(params);
     
 
 }

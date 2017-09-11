@@ -18,12 +18,9 @@ void SyncCartesianPatch::patchedToCartesian( VectorPatch& vecPatches, Patch* pat
         //SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Ey_, patch->EMfields->Ey_, params, smpi, vecPatches(ipatch), patch );
         //SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Jx_, patch->EMfields->Jx_, params, smpi, vecPatches(ipatch), patch );
 
-        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Ex_, patch->EMfields->Ex_, params, smpi, vecPatches(ipatch), patch );
-        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Ey_, patch->EMfields->Ey_, params, smpi, vecPatches(ipatch), patch );
-        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Ez_, patch->EMfields->Ez_, params, smpi, vecPatches(ipatch), patch );
-        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Bx_, patch->EMfields->Bx_, params, smpi, vecPatches(ipatch), patch );
-        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->By_, patch->EMfields->By_, params, smpi, vecPatches(ipatch), patch );
-        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Bz_, patch->EMfields->Bz_, params, smpi, vecPatches(ipatch), patch );
+        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Jx_, patch->EMfields->Jx_, params, smpi, vecPatches(ipatch), patch );
+        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Jy_, patch->EMfields->Jy_, params, smpi, vecPatches(ipatch), patch );
+        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Jz_, patch->EMfields->Jz_, params, smpi, vecPatches(ipatch), patch );
     }
 
 }
@@ -40,6 +37,11 @@ void SyncCartesianPatch::cartesianToPatches( Patch* patch, VectorPatch& vecPatch
         SyncCartesianPatch::syncBack( patch->EMfields->Ex_, vecPatches(ipatch)->EMfields->Ex_, params, smpi, patch, vecPatches(ipatch) );
         SyncCartesianPatch::syncBack( patch->EMfields->Ey_, vecPatches(ipatch)->EMfields->Ey_, params, smpi, patch, vecPatches(ipatch) );
         SyncCartesianPatch::syncBack( patch->EMfields->Ez_, vecPatches(ipatch)->EMfields->Ez_, params, smpi, patch, vecPatches(ipatch) );
+        SyncCartesianPatch::syncBack( patch->EMfields->Bx_m, vecPatches(ipatch)->EMfields->Bx_m, params, smpi, patch, vecPatches(ipatch) );
+        SyncCartesianPatch::syncBack( patch->EMfields->By_m, vecPatches(ipatch)->EMfields->By_m, params, smpi, patch, vecPatches(ipatch) );
+        SyncCartesianPatch::syncBack( patch->EMfields->Bz_m, vecPatches(ipatch)->EMfields->Bz_m, params, smpi, patch, vecPatches(ipatch) );
+
+        // Diags only
         SyncCartesianPatch::syncBack( patch->EMfields->Bx_, vecPatches(ipatch)->EMfields->Bx_, params, smpi, patch, vecPatches(ipatch) );
         SyncCartesianPatch::syncBack( patch->EMfields->By_, vecPatches(ipatch)->EMfields->By_, params, smpi, patch, vecPatches(ipatch) );
         SyncCartesianPatch::syncBack( patch->EMfields->Bz_, vecPatches(ipatch)->EMfields->Bz_, params, smpi, patch, vecPatches(ipatch) );
@@ -67,7 +69,7 @@ void SyncCartesianPatch::sync( Field* inField, Field* outField, Params &params, 
             //( *out2D )( iout+i, jout+j ) += (inPatch->hindex+1);
         }
     }    
-    inField->put_to( 0. );
+    //inField->put_to( 0. );
     
 }
 

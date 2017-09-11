@@ -458,6 +458,8 @@ void Patch3D::finalizeExchange( Field* field, int iDim )
 // ---------------------------------------------------------------------------------------------------------------------
 // Create MPI_Datatypes used in initSumField and initExchange
 // ---------------------------------------------------------------------------------------------------------------------
+void Patch3D::createType2( Params& params ) {
+}
 void Patch3D::createType( Params& params )
 {
     if (ntype_[0][0][0][0] != MPI_DATATYPE_NULL)

@@ -378,6 +378,7 @@ void Patch2D::initExchange( Field* field, int iDim )
             iy =    iDim *istart;
             int tag = f2D->MPIbuff.send_tags_[iDim][iNeighbor];
             //int tag = buildtag( hindex, iDim, iNeighbor, tagp );
+            //cout << MPI_me_ << " Isend to " << MPI_neighbor_[iDim][iNeighbor] << " with tag " << tag << " \t name = " << field->name << endl;
             MPI_Isend( &((*f2D)(ix,iy)), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f2D->MPIbuff.srequest[iDim][iNeighbor]) );
 
         } // END of Send
@@ -389,6 +390,7 @@ void Patch2D::initExchange( Field* field, int iDim )
             iy =    iDim *istart;
             int tag = f2D->MPIbuff.recv_tags_[iDim][iNeighbor];
             //int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor, tagp );
+            //cout << MPI_me_  << " Irecv " << MPI_neighbor_[iDim][(iNeighbor+1)%2] << " with tag " << tag << " \t name = " << field->name << endl;
             MPI_Irecv( &((*f2D)(ix,iy)), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f2D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]));
 
         } // END of Recv
@@ -434,6 +436,63 @@ void Patch2D::createType( Params& params )
 
     int nx0 = params.n_space[0] + 1 + 2*params.oversize[0];
     int ny0 = params.n_space[1] + 1 + 2*params.oversize[1];
+    unsigned int clrw = params.clrw;
+    
+    // MPI_Datatype ntype_[nDim][primDual][primDual]
+    int nx, ny;
+    int nline, ncol;
+    
+    for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+        nx = nx0 + ix_isPrim;
+        for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
+            ny = ny0 + iy_isPrim;
+            
+            // Standard Type
+            ntype_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            MPI_Type_contiguous(params.oversize[0]*ny, MPI_DOUBLE, &(ntype_[0][ix_isPrim][iy_isPrim]));    //line
+            MPI_Type_commit( &(ntype_[0][ix_isPrim][iy_isPrim]) );
+            ntype_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            MPI_Type_vector(nx, params.oversize[1], ny, MPI_DOUBLE, &(ntype_[1][ix_isPrim][iy_isPrim])); // column
+            MPI_Type_commit( &(ntype_[1][ix_isPrim][iy_isPrim]) );
+            
+            // Still used ???
+            ntype_[2][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            MPI_Type_contiguous(ny*clrw, MPI_DOUBLE, &(ntype_[2][ix_isPrim][iy_isPrim]));   //clrw lines
+            MPI_Type_commit( &(ntype_[2][ix_isPrim][iy_isPrim]) );
+            
+            ntypeSum_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            nline = 1 + 2*params.oversize[0] + ix_isPrim;
+            //MPI_Type_contiguous(nline, ntype_[0][ix_isPrim][iy_isPrim], &(ntypeSum_[0][ix_isPrim][iy_isPrim]));    //line
+            
+            MPI_Datatype tmpType = MPI_DATATYPE_NULL;
+            MPI_Type_contiguous(ny, MPI_DOUBLE, &(tmpType));    //line
+            MPI_Type_commit( &(tmpType) );
+            
+            MPI_Type_contiguous(nline, tmpType, &(ntypeSum_[0][ix_isPrim][iy_isPrim]));    //line
+            MPI_Type_commit( &(ntypeSum_[0][ix_isPrim][iy_isPrim]) );
+            
+            MPI_Type_free( &tmpType );
+            
+            ntypeSum_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            ncol  = 1 + 2*params.oversize[1] + iy_isPrim;
+            MPI_Type_vector(nx, ncol, ny, MPI_DOUBLE, &(ntypeSum_[1][ix_isPrim][iy_isPrim])); // column
+            MPI_Type_commit( &(ntypeSum_[1][ix_isPrim][iy_isPrim]) );
+            
+        }
+    }
+    
+} //END createType
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Create MPI_Datatypes used in initSumField and initExchange
+// ---------------------------------------------------------------------------------------------------------------------
+void Patch2D::createType2( Params& params )
+{
+    if (ntype_[0][0][0] != MPI_DATATYPE_NULL)
+        return;
+
+    int nx0 = params.n_space[0]*params.global_factor[0] + 1 + 2*params.oversize[0];
+    int ny0 = params.n_space[1]*params.global_factor[1] + 1 + 2*params.oversize[1];
     unsigned int clrw = params.clrw;
     
     // MPI_Datatype ntype_[nDim][primDual][primDual]

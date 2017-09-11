@@ -44,6 +44,7 @@ public:
 
     // Create MPI_Datatype to exchange fields
     void createType( Params& params ) override final;
+    void createType2( Params& params ) override final;
     void cleanType() override final;
 
     //! MPI_Datatype to sum [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
