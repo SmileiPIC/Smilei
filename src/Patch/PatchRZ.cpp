@@ -103,7 +103,7 @@ void PatchRZ::reallyinitSumField( Field* field, int iDim )
 // ---------------------------------------------------------------------------------------------------------------------
 void PatchRZ::initSumField( Field* field, int iDim )
 {
-    if (field->MPIbuff.buf[0][0].size()==0) {
+    if (field->MPIbuff.ibuf[0][0].size()==0) {
         field->MPIbuff.allocate(2, field, oversize);
 
         int tagp(0);
@@ -157,9 +157,9 @@ void PatchRZ::initSumField( Field* field, int iDim )
         } // END of Send
             
         if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-            int tmp_elem = f3D->MPIbuff.buf[iDim][(iNeighbor+1)%2].size();
+            int tmp_elem = f3D->MPIbuff.ibuf[iDim][(iNeighbor+1)%2].size();
             int tag = f3D->MPIbuff.recv_tags_[iDim][iNeighbor];
-            MPI_Irecv( &( f3D->MPIbuff.buf[iDim][(iNeighbor+1)%2][0] ), tmp_elem, MPI_CXX_DOUBLE_COMPLEX, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, 
+            MPI_Irecv( &( f3D->MPIbuff.ibuf[iDim][(iNeighbor+1)%2][0] ), tmp_elem, MPI_CXX_DOUBLE_COMPLEX, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, 
                        MPI_COMM_WORLD, &(f3D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]) );
         } // END of Recv
             
@@ -227,7 +227,7 @@ void PatchRZ::finalizeSumField( Field* field, int iDim )
         if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
             for (unsigned int ix=0 ; ix< tmp[0] ; ix++) {
                 for (unsigned int iy=0 ; iy< tmp[1] ; iy++) {
-                    (*f3D)(ix0+ix,iy0+iy) += f3D->MPIbuff.buf[iDim][(iNeighbor+1)%2][ix*tmp[1] + iy];
+                    (*f3D)(ix0+ix,iy0+iy) += f3D->MPIbuff.ibuf[iDim][(iNeighbor+1)%2][ix*tmp[1] + iy];
                 }
             }
         } // END if
