@@ -70,6 +70,13 @@ public:
     
     virtual double norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]);
 
+    inline std::complex<double>& operator () (unsigned int i)
+    {
+        DEBUGEXEC(if (i>=globalDims_) ERROR(name << " Out of limits "<< i << " < " <<dims_[0] ));
+        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR(name << " Not finite "<< i << " = " << data_[i]));
+        return data_1D[i];
+    };
+
 private:
     //! this will present the data as a 2d matrix
     std::complex<double> **data_2D;
