@@ -23,6 +23,10 @@ public :
     static void exchangeJ( VectorPatch& vecPatches );
     static void finalizeexchangeJ( VectorPatch& vecPatches );
     static void finalizeexchangeB( VectorPatch& vecPatches );
+
+    static void exchangeB( VectorPatch& vecPatches, int imode );
+    static void finalizeexchangeB( VectorPatch& vecPatches, int imode );
+
     static void sum      ( std::vector<Field*> fields, VectorPatch& vecPatches, Timers &timers, int itime );
     static void new_sum      ( std::vector<Field*>& fields, VectorPatch& vecPatches, Timers &timers, int itime );
     static void exchange ( std::vector<Field*> fields, VectorPatch& vecPatches );

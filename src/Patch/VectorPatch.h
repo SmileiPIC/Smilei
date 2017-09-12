@@ -184,6 +184,18 @@ public :
     std::vector<Field*> listBx_;
     std::vector<Field*> listBy_;
     std::vector<Field*> listBz_;
+
+    std::vector<std::vector<Field*>> listJx_RZ_;
+    std::vector<std::vector<Field*>> listJy_RZ_;
+    std::vector<std::vector<Field*>> listJz_RZ_;
+    std::vector<std::vector<Field*>> listrho_RZ_;
+    std::vector<std::vector<Field*>> listEx_RZ_;
+    std::vector<std::vector<Field*>> listEy_RZ_;
+    std::vector<std::vector<Field*>> listEz_RZ_;
+    std::vector<std::vector<Field*>> listBx_RZ_;
+    std::vector<std::vector<Field*>> listBy_RZ_;
+    std::vector<std::vector<Field*>> listBz_RZ_;
+
     
     //! True if any antennas
     unsigned int nAntennas;

@@ -162,6 +162,24 @@ void SyncVectorPatch::finalizeexchangeB( VectorPatch& vecPatches )
 }
 
 
+void SyncVectorPatch::exchangeB( VectorPatch& vecPatches, int imode )
+{
+
+    SyncVectorPatch::exchange( vecPatches.listBx_RZ_[imode], vecPatches );
+    SyncVectorPatch::exchange( vecPatches.listBy_RZ_[imode], vecPatches );
+    SyncVectorPatch::exchange( vecPatches.listBz_RZ_[imode], vecPatches );
+}
+
+void SyncVectorPatch::finalizeexchangeB( VectorPatch& vecPatches, int imode  )
+{
+
+    SyncVectorPatch::finalizeexchange( vecPatches.listBx_RZ_[imode], vecPatches );
+    SyncVectorPatch::finalizeexchange( vecPatches.listBy_RZ_[imode], vecPatches );
+    SyncVectorPatch::finalizeexchange( vecPatches.listBz_RZ_[imode], vecPatches );
+}
+
+
+
 void SyncVectorPatch::new_sum( std::vector<Field*>& fields, VectorPatch& vecPatches, Timers &timers, int itime )
 {
     unsigned int h0, oversize[3], n_space[3];

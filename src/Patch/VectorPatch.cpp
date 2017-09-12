@@ -256,6 +256,12 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
     
     timers.syncField.restart();
     SyncVectorPatch::exchangeB( (*this) );
+
+    for (unsigned int imode = 0 ; imode < static_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields)->Ex_RZ_.size() ; imode++  ) {
+        SyncVectorPatch::exchangeB( (*this), imode );
+        SyncVectorPatch::finalizeexchangeB( (*this), imode ); // disable async, because of tags which is the same for all modes
+    }
+
     timers.syncField.update(  params.printNow( itime ) );
 
 } // END solveMaxwell
@@ -897,6 +903,53 @@ void VectorPatch::update_field_list()
         listBy_[ipatch] = patches_[ipatch]->EMfields->By_ ;
         listBz_[ipatch] = patches_[ipatch]->EMfields->Bz_ ;
     }
+
+
+    #ifdef _TODO_RZ
+    // Manage RZ & cartesian
+    #endif
+
+    int nmodes = static_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields)->Ex_RZ_.size();
+    listJx_RZ_.resize( nmodes ) ;
+    listJy_RZ_.resize( nmodes ) ;
+    listJz_RZ_.resize( nmodes ) ;
+    listrho_RZ_.resize( nmodes ) ;
+    listEx_RZ_.resize( nmodes ) ;
+    listEy_RZ_.resize( nmodes ) ;
+    listEz_RZ_.resize( nmodes ) ;
+    listBx_RZ_.resize( nmodes ) ;
+    listBy_RZ_.resize( nmodes ) ;
+    listBz_RZ_.resize( nmodes ) ;
+    
+    for (unsigned int imode=0 ; imode < nmodes ; imode++) {
+        listJx_RZ_[imode].resize( size() );
+        listJy_RZ_[imode].resize( size() );
+        listJz_RZ_[imode].resize( size() );
+        listrho_RZ_[imode].resize( size() );
+        listEx_RZ_[imode].resize( size() );
+        listEy_RZ_[imode].resize( size() );
+        listEz_RZ_[imode].resize( size() );
+        listBx_RZ_[imode].resize( size() );
+        listBy_RZ_[imode].resize( size() );
+        listBz_RZ_[imode].resize( size() );
+        for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+            listJx_RZ_[imode][ipatch] = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Jx_ ;
+            listJy_RZ_[imode][ipatch] = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Jy_ ;
+            listJz_RZ_[imode][ipatch] = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Jz_ ;
+            listrho_RZ_[imode][ipatch] =static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->rho_;
+            listEx_RZ_[imode][ipatch] = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Ex_ ;
+            listEy_RZ_[imode][ipatch] = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Ey_ ;
+            listEz_RZ_[imode][ipatch] = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Ez_ ;
+            listBx_RZ_[imode][ipatch] = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Bx_ ;
+            listBy_RZ_[imode][ipatch] = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->By_ ;
+            listBz_RZ_[imode][ipatch] = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Bz_ ;
+        }
+    }
+
+    #ifdef _TODO_RZ
+    // Manage RZ & cartesian
+    #endif
+
 
     B_localx.clear();
     B_MPIx.clear();
