@@ -5,6 +5,7 @@
 #include "Patch1D.h"
 #include "Patch2D.h"
 #include "Patch3D.h"
+#include "PatchRZ.h"
 
 #include "Tools.h"
 
@@ -19,6 +20,8 @@ public:
             return new Patch2D(params, smpi, ipatch, n_moved);
         else if (params.geometry == "3d3v") 
             return new Patch3D(params, smpi, ipatch, n_moved);
+        else if (params.geometry == "3drz") 
+            return new PatchRZ(params, smpi, ipatch, n_moved);
         return nullptr;
     }
     
