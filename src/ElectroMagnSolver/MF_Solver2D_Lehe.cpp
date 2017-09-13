@@ -9,7 +9,7 @@
 MF_Solver2D_Lehe::MF_Solver2D_Lehe(Params &params)
     : Solver2D(params)
 {
-    ERROR("Under development, not yet working");
+    //ERROR("Under development, not yet working");
     dx = params.cell_length[0];
     dy = params.cell_length[1];
     delta_x = (1./4.)*(1.-pow( sin(M_PI*dt_ov_dx/2.)/dt_ov_dx,2 ) );
@@ -59,6 +59,27 @@ void MF_Solver2D_Lehe::operator() ( ElectroMagn* fields )
             -               dt_ov_dx * (Beta_y*( (*Ey2D)(i,j) - (*Ey2D)(i-1,j) ) +beta_y*((*Ey2D)(i,j+1)- (*Ey2D)(i-1,j+1)+ (*Ey2D)(i,j-1)- (*Ey2D)(i-1,j-1)) +delta_x*( (*Ey2D)(i+1,j) - (*Ey2D)(i-2,j)));
         }
     }
+    
+    // at Xmin+dx - treat using simple discretization of the curl (will be overwritten if not at the xmin-border)
+    for (unsigned int j=0 ; j<ny_p ; j++) {
+        (*By2D)(1,j) += dt_ov_dx * ( (*Ez2D)(1,j) - (*Ez2D)(0,j) );
+    }
+    // at Xmax-dx - treat using simple discretization of the curl (will be overwritten if not at the xmax-border)
+    for (unsigned int j=0 ; j<ny_p ; j++) {
+        (*By2D)(nx_d-2,j) += dt_ov_dx * ( (*Ez2D)(nx_d-2,j) - (*Ez2D)(nx_d-3,j) );
+    }
+    
+    // at Xmin+dx - treat using simple discretization of the curl (will be overwritten if not at the xmin-border)
+    for (unsigned int j=2 ; j<ny_d-2 ; j++) {
+        (*Bz2D)(1,j) += dt_ov_dx * ( (*Ey2D)(0,j) - (*Ey2D)(1,j)   )
+        +               dt_ov_dy * ( (*Ex2D)(1,j) - (*Ex2D)(1,j-1) );
+    }
+    // at Xmax-dx - treat using simple discretization of the curl (will be overwritten if not at the xmax-border)
+    for (unsigned int j=2 ; j<ny_d-2 ; j++) {
+        (*Bz2D)(nx_d-2,j) += dt_ov_dx * ( (*Ey2D)(nx_d-3,j) - (*Ey2D)(nx_d-2,j)   )
+        +                    dt_ov_dy * ( (*Ex2D)(nx_d-2,j) - (*Ex2D)(nx_d-2,j-1) );
+    }
+    
 //}// end parallel
 }//END solveMaxwellFaraday
 
