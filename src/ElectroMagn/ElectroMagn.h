@@ -53,7 +53,7 @@ public:
     ElectroMagn( ElectroMagn* emFields, Params &params, Patch* patch );
     void initElectroMagnQuantities();
     //! Extra initialization. Used in ElectroMagnFactory
-    void finishInitialization(int nspecies, Patch* patch);
+    virtual void finishInitialization(int nspecies, Patch* patch);
     
     //! Destructor for Electromagn
     virtual ~ElectroMagn();

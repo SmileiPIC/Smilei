@@ -31,6 +31,9 @@ isYmax(patch->isYmax())
     
     // Charge currents currents and density for each species
     for (unsigned int ispec=0; ispec<n_species*nmodes; ispec++) {
+        #ifdef _TODO_RZ
+        // Add mmode in name
+        #endif
         Jx_s[ispec]  = new cField2D(("Jx_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
         Jy_s[ispec]  = new cField2D(("Jy_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
         Jz_s[ispec]  = new cField2D(("Jz_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
@@ -153,6 +156,9 @@ void ElectroMagn3DRZ::initElectroMagn3DRZQuantities(Params &params, Patch* patch
     rho_RZ_.resize(nmodes);
     
     for ( int imode=0 ; imode<nmodes ; imode++ ) {
+        #ifdef _TODO_RZ
+        // Add mmode in name
+        #endif
         Ex_RZ_[imode]  = new cField2D(dimPrim, 0, false, "Ex");
         Ey_RZ_[imode]  = new cField2D(dimPrim, 1, false, "Ey");
         Ez_RZ_[imode]  = new cField2D(dimPrim, 2, false, "Ez");
@@ -223,6 +229,36 @@ void ElectroMagn3DRZ::initElectroMagn3DRZQuantities(Params &params, Patch* patch
         } // for (int isDual=0 ; isDual
     } // for (unsigned int i=0 ; i<nDim_field
 }
+
+
+void ElectroMagn3DRZ::finishInitialization(int nspecies, Patch* patch)
+{
+    // Fill allfields
+    for ( int imode=0 ; imode<nmodes ; imode++ ) {
+        allFields.push_back( Ex_RZ_[imode] );
+        allFields.push_back( Ey_RZ_[imode] );
+        allFields.push_back( Ez_RZ_[imode] );
+        allFields.push_back( Bx_RZ_[imode] );
+        allFields.push_back( By_RZ_[imode] );
+        allFields.push_back( Bz_RZ_[imode] );
+        allFields.push_back( Bx_RZ_m[imode] );
+        allFields.push_back( By_RZ_m[imode] );
+        allFields.push_back( Bz_RZ_m[imode] );
+        allFields.push_back( Jx_RZ_[imode] );
+        allFields.push_back( Jy_RZ_[imode] );
+        allFields.push_back( Jz_RZ_[imode] );
+        allFields.push_back( rho_RZ_[imode] );
+    }
+
+    for (int ispec=0; ispec<nspecies*nmodes; ispec++) {
+        allFields.push_back(Jx_s[ispec] );
+        allFields.push_back(Jy_s[ispec] );
+        allFields.push_back(Jz_s[ispec] );
+        allFields.push_back(rho_s[ispec]);
+    }
+
+}
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Destructor for Electromagn3DRZ

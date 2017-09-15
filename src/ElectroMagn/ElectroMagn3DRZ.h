@@ -124,6 +124,9 @@ private:
     
     //! Initialize quantities needed in the creators of ElectroMagn3DRZ
     void initElectroMagn3DRZQuantities(Params &params, Patch* patch);
+
+    void finishInitialization(int nspecies, Patch* patch) override final;
+
 };
 
 #endif
