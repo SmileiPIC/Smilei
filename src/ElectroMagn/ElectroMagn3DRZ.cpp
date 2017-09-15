@@ -30,14 +30,15 @@ isYmax(patch->isYmax())
     initElectroMagn3DRZQuantities(params, patch);
     
     // Charge currents currents and density for each species
-    for (unsigned int ispec=0; ispec<n_species*nmodes; ispec++) {
-        #ifdef _TODO_RZ
-        // Add mmode in name
-        #endif
-        Jx_s[ispec]  = new cField2D(("Jx_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
-        Jy_s[ispec]  = new cField2D(("Jy_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
-        Jz_s[ispec]  = new cField2D(("Jz_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
-        rho_s[ispec] = new cField2D(("Rho_"+vecSpecies[ispec]->species_type).c_str(), dimPrim);
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+        for (unsigned int imode=0; imode<nmodes; imode++) {
+            ostringstream species_mode_name("");
+            species_mode_name << vecSpecies[ispec]->species_type << "_mode_" << imode;
+            Jx_s[ispec]  = new cField2D(("Jx_" + species_mode_name.str()).c_str(), dimPrim);
+            Jy_s[ispec]  = new cField2D(("Jy_" + species_mode_name.str()).c_str(), dimPrim);
+            Jz_s[ispec]  = new cField2D(("Jz_" + species_mode_name.str()).c_str(), dimPrim);
+            rho_s[ispec] = new cField2D(("Rho_"+ species_mode_name.str()).c_str(), dimPrim);
+        }
     }
     
 }//END constructor Electromagn3D
@@ -156,24 +157,24 @@ void ElectroMagn3DRZ::initElectroMagn3DRZQuantities(Params &params, Patch* patch
     rho_RZ_.resize(nmodes);
     
     for ( int imode=0 ; imode<nmodes ; imode++ ) {
-        #ifdef _TODO_RZ
-        // Add mmode in name
-        #endif
-        Ex_RZ_[imode]  = new cField2D(dimPrim, 0, false, "Ex");
-        Ey_RZ_[imode]  = new cField2D(dimPrim, 1, false, "Ey");
-        Ez_RZ_[imode]  = new cField2D(dimPrim, 2, false, "Ez");
-        Bx_RZ_[imode]  = new cField2D(dimPrim, 0, true,  "Bx");
-        By_RZ_[imode]  = new cField2D(dimPrim, 1, true,  "By");
-        Bz_RZ_[imode]  = new cField2D(dimPrim, 2, true,  "Bz");
-        Bx_RZ_m[imode] = new cField2D(dimPrim, 0, true,  "Bx_m");
-        By_RZ_m[imode] = new cField2D(dimPrim, 1, true,  "By_m");
-        Bz_RZ_m[imode] = new cField2D(dimPrim, 2, true,  "Bz_m");
+        ostringstream mode_id("");
+        mode_id << "_mode_" << imode;
+
+        Ex_RZ_[imode]  = new cField2D(dimPrim, 0, false, ("Ex"+mode_id.str()).c_str() );
+        Ey_RZ_[imode]  = new cField2D(dimPrim, 1, false, ("Ey"+mode_id.str()).c_str() );
+        Ez_RZ_[imode]  = new cField2D(dimPrim, 2, false, ("Ez"+mode_id.str()).c_str() );
+        Bx_RZ_[imode]  = new cField2D(dimPrim, 0, true,  ("Bx"+mode_id.str()).c_str() );
+        By_RZ_[imode]  = new cField2D(dimPrim, 1, true,  ("By"+mode_id.str()).c_str() );
+        Bz_RZ_[imode]  = new cField2D(dimPrim, 2, true,  ("Bz"+mode_id.str()).c_str() );
+        Bx_RZ_m[imode] = new cField2D(dimPrim, 0, true,  ("Bx_m"+mode_id.str()).c_str() );
+        By_RZ_m[imode] = new cField2D(dimPrim, 1, true,  ("By_m"+mode_id.str()).c_str() );
+        Bz_RZ_m[imode] = new cField2D(dimPrim, 2, true,  ("Bz_m"+mode_id.str()).c_str() );
     
         // Total charge currents and densities
-        Jx_RZ_[imode]   = new cField2D(dimPrim, 0, false, "Jx");
-        Jy_RZ_[imode]   = new cField2D(dimPrim, 1, false, "Jy");
-        Jz_RZ_[imode]   = new cField2D(dimPrim, 2, false, "Jz");
-        rho_RZ_[imode]  = new cField2D(dimPrim, "Rho" );
+        Jx_RZ_[imode]   = new cField2D(dimPrim, 0, false, ("Jx"+mode_id.str()).c_str() );
+        Jy_RZ_[imode]   = new cField2D(dimPrim, 1, false, ("Jy"+mode_id.str()).c_str() );
+        Jz_RZ_[imode]   = new cField2D(dimPrim, 2, false, ("Jz"+mode_id.str()).c_str() );
+        rho_RZ_[imode]  = new cField2D(dimPrim, ("Rho"+mode_id.str()).c_str() );
     }
     
     // ----------------------------------------------------------------
