@@ -24,6 +24,7 @@ public :
     static void finalizeexchangeJ( VectorPatch& vecPatches );
     static void finalizeexchangeB( VectorPatch& vecPatches );
 
+    static void sumRhoJ  ( VectorPatch& vecPatches, int imode, Timers &timers, int itime );
     static void exchangeB( VectorPatch& vecPatches, int imode );
     static void finalizeexchangeB( VectorPatch& vecPatches, int imode );
 

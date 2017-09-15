@@ -77,16 +77,22 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
         vecPatches(ipatch)->vecSpecies[ispec]->sort_part();
 }
 
-
 void SyncVectorPatch::sumRhoJ(VectorPatch& vecPatches, Timers &timers, int itime)
 {
     SyncVectorPatch::new_sum( vecPatches.densities , vecPatches, timers, itime );
     if(vecPatches.diag_flag) SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, itime );
 }
 
+void SyncVectorPatch::sumRhoJ(VectorPatch& vecPatches, int imode, Timers &timers, int itime)
+{
+    SyncVectorPatch::sum( vecPatches.listJx_RZ_[imode], vecPatches, timers, itime  );
+    SyncVectorPatch::sum( vecPatches.listJy_RZ_[imode], vecPatches, timers, itime  );
+    SyncVectorPatch::sum( vecPatches.listJz_RZ_[imode], vecPatches, timers, itime  );
+    if(vecPatches.diag_flag) SyncVectorPatch::sum( vecPatches.listrho_RZ_[imode], vecPatches, timers, itime );
+}
+
 void SyncVectorPatch::sumRhoJs(VectorPatch& vecPatches, int ispec , Timers &timers, int itime)
 {
-
     if(vecPatches.listJxs_ .size()>0) SyncVectorPatch::sum( vecPatches.listJxs_ , vecPatches, timers, itime  );
     if(vecPatches.listJys_ .size()>0) SyncVectorPatch::sum( vecPatches.listJys_ , vecPatches, timers, itime  );
     if(vecPatches.listJzs_ .size()>0) SyncVectorPatch::sum( vecPatches.listJzs_ , vecPatches, timers, itime  );

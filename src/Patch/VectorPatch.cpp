@@ -207,7 +207,10 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
     
     timers.syncDens.restart();
     SyncVectorPatch::sumRhoJ( (*this), timers, itime ); // MPI
-    
+    for (unsigned int imode = 0 ; imode < static_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields)->Jx_RZ_.size() ; imode++  ) {
+        SyncVectorPatch::sumRhoJ( (*this), imode, timers, itime );
+    }
+
     if(diag_flag){
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
             if( ! (*this)(0)->vecSpecies[ispec]->particles->isTest ) {
