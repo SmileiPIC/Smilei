@@ -4,7 +4,7 @@ Install
 Before installing :program:`Smilei`, you need to install a few dependencies:
 
 * A C++11 compiler, optionally implementing openMP
-* MPI libraries (**openmpi** recommended), supporting ``MPI_THREAD_MULTIPLE``
+* MPI libraries supporting ``MPI_THREAD_MULTIPLE``
 * HDF5 libraries compatible with your versions of C++ and MPI
 * Python 2.7 (with header files)
 * ``make``
@@ -286,6 +286,4 @@ There are several ways to load this module in python.
   You may add the following command in your own python script::
   
     execfile("/path/to/Smilei/scripts/Diagnostics.py")
-
-
 
