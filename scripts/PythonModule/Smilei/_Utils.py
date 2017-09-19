@@ -421,7 +421,7 @@ def multiPlot(*Diags, **kwargs):
 			Diag.options.plot.update({ "color":c[i%len(c)] })
 		Diag._prepare()
 	# Static plot
-	if sameAxes and len(Diags[0]._shape)==0:
+	if sameAxes and Diags[0].dim==0:
 		for Diag in Diags:
 			Diag._artist = Diag._animateOnAxes(Diag._ax, Diag.times[-1])
 			plt.draw()
@@ -443,14 +443,15 @@ def multiPlot(*Diags, **kwargs):
 					Diag._artist = Diag._animateOnAxes(Diag._ax, t, cax_id = Diag._cax_id)
 					if sameAxes:
 						Diag._ax.set_xlim(xmin,xmax)
-						color = Diag._artist.get_color()
-						Diag._ax.yaxis.label.set_color(color)
-						Diag._ax.tick_params(axis='y', colors=color)
-						if Diag.options.side == "right":
-							Diag._ax.spines['right'].set_color(color)
-							Diag._ax.spines['left'].set_color((1.,1.,1.,0.))
-						else:
-							Diag._ax.spines['left'].set_color(color)
+						if Diag.dim<2:
+							color = Diag._artist.get_color()
+							Diag._ax.yaxis.label.set_color(color)
+							Diag._ax.tick_params(axis='y', colors=color)
+							if Diag.options.side == "right":
+								Diag._ax.spines['right'].set_color(color)
+								Diag._ax.spines['left'].set_color((1.,1.,1.,0.))
+							else:
+								Diag._ax.spines['left'].set_color(color)
 					try: Diag._ax.set_position(Diag._ax.twin.get_position())
 					except: pass
 			plt.draw()

@@ -53,13 +53,14 @@ Python workflow
 ^^^^^^^^^^^^^^^
 
 *Python* is started at the beginning of the simulation (one *python* interpreter
-for each MPI node). The following steps are executed:
+for each MPI process). The following steps are executed:
 
 #. A few variables from :program:`Smilei` are passed to *python* so that they are
    available to the user:
 
-   * The rank of the current MPI node as :py:data:`smilei_mpi_rank`.
-   * The total number of MPI nodes as :py:data:`smilei_mpi_size`.
+   * The rank of the current MPI process as :py:data:`smilei_mpi_rank`.
+   * The total number of MPI processes as :py:data:`smilei_mpi_size`.
+
    * The maximum random integer as :py:data:`smilei_rand_max`.
 
 #. The namelist(s) is executed.
@@ -151,12 +152,23 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 
 .. py:data:: clrw
+<<<<<<< HEAD
 
   :default: 0.
 
   Cluster width.
   :red:`to do`
 
+=======
+
+  :default: 1
+
+  Advanced users. Integer specifying the cluster width along X direction in number of cells.
+  The "cluster" is a sub-patch structure in which particles are sorted for cache improvement.
+  clrw must divide the number of cells in one patch (in dimension X).
+  The finest sorting is achieved with clrw=1 and no sorting with clrw equal to the full size of a patch along dimension X.
+  The cluster size in dimension Y and Z is always the full extent of the patch.
+>>>>>>> develop
 
 .. py:data:: maxwell_sol
 
@@ -258,14 +270,27 @@ occur every 150 iterations.
 .. py:data:: coef_cell
 
   :default: 1.
+<<<<<<< HEAD
 
   :red:`to do`
 
+=======
+
+  Computational load of a single grid cell considered by the dynamic load balancing algorithm.
+  This load is normalized to the load of a single particle.
+
+>>>>>>> develop
 .. py:data:: coef_frozen
 
   :default: 0.1
+<<<<<<< HEAD
 
   :red:`to do`
+=======
+
+  Computational load of a single frozen particle considered by the dynamic load balancing algorithm.
+  This load is normalized to the load of a single particle.
+>>>>>>> develop
 
 
 ----

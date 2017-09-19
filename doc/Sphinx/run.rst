@@ -31,13 +31,23 @@ add an additional instruction ``print_every=10``:
   
   ./smilei  my_namelist.py  "print_every=10"
 
-Note that, in addition, you will generally use the ``mpiexec`` or ``mpirun`` command
-to run :program:`Smilei` on several processors:
+Note that, in addition, you will generally use the ``mpirun`` or ``mpiexec`` command
+to run :program:`Smilei` on several MPI processes:
 
 .. code-block:: bash
   
-  mpiexec -np 4 ./smilei  my_namelist.py  "print_every=10"
+  mpirun -n 4 ./smilei  my_namelist.py  "print_every=10"
 
+If you want to run several openMP threads per MPI processes, you usually have to set
+the following environment variable to the desired number of threads before running
+``mpirun``:
+
+.. code-block:: bash
+  
+  export OMP_NUM_THREADS=4
+
+When running :program:`Smilei`, the output log will remind you how many MPI processes and openMP threads
+your simulation is using.
 
 ----
 
@@ -56,7 +66,7 @@ it is recommended to create a new directory to store these results. For instance
   $ mkdir ~/my_simulation                     # New directory to store results
   $ cp ~/my_namelist.py ~/my_simulation       # Copies the namelist there
   $ cd ~/my_simulation                        # Goes there
-  $ mpiexec -np 4 ~/Smilei/smilei my_namelist # Run with 4 processors
+  $ mpirun -n 4 ~/Smilei/smilei my_namelist   # Run with 4 processors
 
 ----
 
@@ -70,7 +80,7 @@ the `Smilei` directory. You only have to run
   
   $ ./smilei.sh 4 my_namelist.py
 
-where the number 4 says that the code will run on 4 processors. A directory will all
+where the number 4 says that the code will run 4 MPI processes. A directory with all
 the results will automatically be created next to your namelist.
 
 ----
@@ -102,6 +112,19 @@ In debug mode, these C++ macros are activated:
 
 * ``DEBUG("some text" [<< other streamable])``
 * ``HEREIAM("some text" [<< other streamable])``
+
+
+----
+
+Known issues
+^^^^^^^^^
+
+* When running with ``openmpi 2.1``, it appears that the so called ``vader`` protocol interferes with :program:`Smilei`'s
+  memory management and comunications. We therefore recommend to disable this protocol when running ``mpirun`` as follows:
+
+  .. code-block:: bash
+  
+    $ mpirun --mca btl ^vader -n 4 ~/Smilei/smilei my_namelist   # Disable vader
 
 
 ----
