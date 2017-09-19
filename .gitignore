@@ -6,6 +6,7 @@ build/*
 .depend
 validation/workdir*
 src/smilei
+src/smilei_test
 src/smilei.*
 *smilei
 *.aux
@@ -22,4 +23,3 @@ doc/html
 */*.pyc
 */*/*.pyc
 */*/*/*.pyc
-

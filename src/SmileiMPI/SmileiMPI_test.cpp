@@ -11,12 +11,35 @@
 
 using namespace std;
 
+
+// Obtain an integer argument (next in the argument list)
+int get_integer_argument(int* argc, char*** argv) {
+    if( *argc < 2 ) return -1;
+    std::string s = (*argv)[1];
+    for( unsigned int i=0; i<s.size(); i++ )
+        if( !std::isdigit(s[i]) )
+            return -1;
+    (*argv)++;
+    (*argc)--;
+    return std::stoi( s.c_str() );
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // SmileiMPI_test constructor
 // ---------------------------------------------------------------------------------------------------------------------
-SmileiMPI_test::SmileiMPI_test( int nMPI, int nOMP, int* argc, char*** argv )
+SmileiMPI_test::SmileiMPI_test( int* argc, char*** argv )
 {
     test_mode = true;
+    
+    // If first argument is a number, interpret as the number of MPIs
+    int nMPI = get_integer_argument(argc, argv);
+    if( nMPI < 0 ) nMPI = 1;
+    if( nMPI == 0 ) ERROR("The first argument in test mode (number of MPIs) cannot be zero");
+    // If first argument is a number, interpret as the number of OMPs
+    int nOMP = get_integer_argument(argc, argv);
+    if( nOMP < 0 ) nOMP = 1;
+    if( nOMP == 0 ) ERROR("The second argument in test mode (number of OMPs) cannot be zero");
+    // Return a test-mode SmileiMPI
     
     int mpi_provided;
 #ifdef _OPENMP

@@ -54,31 +54,33 @@ the following environment variable to the desired number of threads before runni
 When running :program:`Smilei`, the output log will remind you how many MPI processes and openMP threads
 your simulation is using.
 
+----
+
 Running in *test mode*
 ^^^^^^^^^^^^^^^^^^^^^^
 
-A ``-T`` option may be provided to the ``smilei`` executable to run in the *test mode*.
-It must be *the first argument* provided:
+A second executable ``smilei_test`` is available (after the usual compilation)
+to run in the *test mode*:
 
 .. code-block:: bash
   
-  ./smilei -T my_namelist.py
+  ./smilei_test my_namelist.py
 
 This *test mode* does the same initialization as the normal mode,
 except it only loads the first patch of the full simulation. After initialization,
 the test mode exits so that the PIC loop is *not* computed.
 
-This test mode may be used to check the consistency of the namelist, and to make sure
+This mode may be used to check the consistency of the namelist, and to make sure
 simple errors will not occur. It does not check all possible errors, but it runs fast.
 
 Running in **test mode requires to run on 1 MPI process only**. However, it is possible
 to indicate what is the partition of MPI processes and OpenMP threads intended for the
-simulation. For instance, to test your namelist that is intended to run on 1024 MPI
+actual simulation. For instance, to test your namelist that is intended to run on 1024 MPI
 processes, each hosting 12 OpenMP threads, use the following syntax:
 
 .. code-block:: bash
   
-  ./smilei -T1024x12 my_namelist.py
+  ./smilei_test 1024 12 my_namelist.py
 
 ----
 
@@ -148,7 +150,7 @@ In debug mode, these C++ macros are activated:
 ----
 
 Known issues
-^^^^^^^^^
+^^^^^^^^^^^^
 
 * When running with ``openmpi 2.1``, it appears that the so called ``vader`` protocol interferes with :program:`Smilei`'s
   memory management and comunications. We therefore recommend to disable this protocol when running ``mpirun`` as follows:

@@ -18,10 +18,11 @@
 #include <unistd.h>
 #include <iostream>
 #include <iomanip>
+#include <string>
 #include <omp.h>
 
 #include "Smilei.h"
-#include "SmileiMPIFactory.h"
+#include "SmileiMPI_test.h"
 #include "Params.h"
 #include "PatchesFactory.h"
 #include "Checkpoint.h"
@@ -44,7 +45,11 @@ int main (int argc, char* argv[])
     // ------------------------- 
     
     // Create MPI environment :
-    SmileiMPI * smpi = SmileiMPIFactory::create( &argc, &argv );
+#ifdef SMILEI_TESTMODE
+    SmileiMPI_test * smpi = new SmileiMPI_test( &argc, &argv );
+#else
+    SmileiMPI * smpi = new SmileiMPI( &argc, &argv );
+#endif
     
     MESSAGE("                   _            _");
     MESSAGE(" ___           _  | |        _  \\ \\   Version : " << __VERSION);
