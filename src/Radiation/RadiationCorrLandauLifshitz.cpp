@@ -88,7 +88,7 @@ void RadiationCorrLandauLifshitz::operator() (Particles &particles,
     // double* chi = &( particles.chi(0));
 
     // Local vector to store the radiated energy
-    std::vector <double> rad_norm_energy (iend-istart);
+    std::vector <double> rad_norm_energy (iend-istart,0);
 
     // Reinitialize the cumulative radiated energy for the current thread
     this->radiated_energy = 0.;
@@ -112,26 +112,30 @@ void RadiationCorrLandauLifshitz::operator() (Particles &particles,
                      (*Epart)[ipart].x,(*Epart)[ipart].y,(*Epart)[ipart].z,
                      (*Bpart)[ipart].x,(*Bpart)[ipart].y,(*Bpart)[ipart].z);
 
-        // Update the quantum parameter in species
-        // chi[ipart] = chipa;
-
-        // Radiated energy during the time step
-        temp =
-        RadiationTables.get_corrected_cont_rad_energy_Ridgers(chipa,dt);
-
         // Effect on the momentum
-        // Temporary factor
-        temp *= gamma/(gamma*gamma - 1);
-        // Update of the momentum
-        momentum[0][ipart] -= temp*momentum[0][ipart];
-        momentum[1][ipart] -= temp*momentum[1][ipart];
-        momentum[2][ipart] -= temp*momentum[2][ipart];
+        // (Should be vectorized with masked instructions)
+        if (chipa >= RadiationTables.get_chipa_cont_threshold())
+        {
 
-        // Exact energy loss due to the radiation
-        rad_norm_energy[ipart - istart] = gamma - sqrt(1.0
-                                     + momentum[0][ipart]*momentum[0][ipart]
-                                     + momentum[1][ipart]*momentum[1][ipart]
-                                     + momentum[2][ipart]*momentum[2][ipart]);
+            // Radiated energy during the time step
+            temp =
+            RadiationTables.get_corrected_cont_rad_energy_Ridgers(chipa,dt);
+
+            // Temporary factor
+            temp *= gamma/(gamma*gamma - 1);
+
+            // Update of the momentum
+            momentum[0][ipart] -= temp*momentum[0][ipart];
+            momentum[1][ipart] -= temp*momentum[1][ipart];
+            momentum[2][ipart] -= temp*momentum[2][ipart];
+
+            // Exact energy loss due to the radiation
+            rad_norm_energy[ipart - istart] = gamma - sqrt(1.0
+                                         + momentum[0][ipart]*momentum[0][ipart]
+                                         + momentum[1][ipart]*momentum[1][ipart]
+                                         + momentum[2][ipart]*momentum[2][ipart]);
+
+        }
     }
 
     // _______________________________________________________________
@@ -143,9 +147,6 @@ void RadiationCorrLandauLifshitz::operator() (Particles &particles,
     for (int ipart=0 ; ipart<iend-istart; ipart++ )
     {
         radiated_energy_loc += weight[ipart]*rad_norm_energy[ipart] ;
-        /*std::cerr << weight[ipart]
-                  << " " << rad_norm_energy[ipart - istart]
-                  << std::endl;*/
     }
     radiated_energy += radiated_energy_loc;
 }

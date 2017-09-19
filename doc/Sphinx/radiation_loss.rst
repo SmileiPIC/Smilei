@@ -134,7 +134,7 @@ friction force reduces to a single term:
 .. math::
   :label: LLFrictionForceApprox
 
-  \mathbf{F}_{rad} = - P_{cl} \mathbf{u} / \left( \mathbf{u} c^2 \right)
+  \mathbf{F}_{rad} = - P_{cl} \mathbf{u} / \left( \mathbf{u}^2 c \right)
 
 where :math:`P_{cl} = \frac{2}{3} \frac{\alpha^2 mc^2}{\tau_e} \chi^2`.
 
@@ -679,7 +679,7 @@ Descriptions of the cases:
   The first case has been run on a single Haswell node of *Jureca* with 2 MPI ranks and
   12 OpenMP threads per rank. the second one has been run on a single KNL node of *Frioul*
   configured in quadrant cache using 1 MPI rank and 64 OpenMP threads.
-  On KNL, the `KMP_affinity` is set to fine and scatter. Only the Niel model provides 
+  On KNL, the `KMP_affinity` is set to fine and scatter. Only the Niel model provides
   better performance with a compact affinity.
 
 * **Thin foil 2D**:

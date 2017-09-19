@@ -86,7 +86,7 @@ void RadiationLandauLifshitz::operator() (Particles &particles,
     // double* chi = &( particles.chi(0));
 
     // Local vector to store the radiated energy
-    std::vector <double> rad_norm_energy (iend-istart);
+    std::vector <double> rad_norm_energy (iend-istart,0);
 
     // Reinitialize the cumulative radiated energy for the current thread
     this->radiated_energy = 0.;
@@ -110,24 +110,29 @@ void RadiationLandauLifshitz::operator() (Particles &particles,
                      (*Epart)[ipart].x,(*Epart)[ipart].y,(*Epart)[ipart].z,
                      (*Bpart)[ipart].x,(*Bpart)[ipart].y,(*Bpart)[ipart].z);
 
-        // Radiated energy during the time step
-        temp =
-        RadiationTables.get_classical_cont_rad_energy(chipa,dt);
-
         // Effect on the momentum
-        // Temporary factor
-        temp *= gamma/(gamma*gamma-1.);
+        if (chipa >= RadiationTables.get_chipa_cont_threshold())
+        {
 
-        // Update of the momentum
-        momentum[0][ipart] -= temp*momentum[0][ipart];
-        momentum[1][ipart] -= temp*momentum[1][ipart];
-        momentum[2][ipart] -= temp*momentum[2][ipart];
+            // Radiated energy during the time step
+            temp =
+            RadiationTables.get_classical_cont_rad_energy(chipa,dt);
 
-        // Exact energy loss due to the radiation
-        rad_norm_energy[ipart - istart] = gamma - sqrt(1.0
-                                     + momentum[0][ipart]*momentum[0][ipart]
-                                     + momentum[1][ipart]*momentum[1][ipart]
-                                     + momentum[2][ipart]*momentum[2][ipart]);
+            // Effect on the momentum
+            // Temporary factor
+            temp *= gamma/(gamma*gamma-1.);
+
+            // Update of the momentum
+            momentum[0][ipart] -= temp*momentum[0][ipart];
+            momentum[1][ipart] -= temp*momentum[1][ipart];
+            momentum[2][ipart] -= temp*momentum[2][ipart];
+
+            // Exact energy loss due to the radiation
+            rad_norm_energy[ipart - istart] = gamma - sqrt(1.0
+                                         + momentum[0][ipart]*momentum[0][ipart]
+                                         + momentum[1][ipart]*momentum[1][ipart]
+                                         + momentum[2][ipart]*momentum[2][ipart]);
+        }
     }
 
     // _______________________________________________________________

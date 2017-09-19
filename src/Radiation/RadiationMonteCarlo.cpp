@@ -237,7 +237,7 @@ void RadiationMonteCarlo::operator() (Particles &particles,
             // tau[ipart] <= epsilon_tau
             else if ((chipa <= RadiationTables.get_chipa_disc_min_threshold())
             &&  (tau[ipart] <= epsilon_tau)
-            &&  (chipa > chipa_cont_threshold))
+            &&  (chipa > RadiationTables.get_chipa_cont_threshold()))
             {
 
                 /*std::cerr << "Continuous - "
@@ -266,7 +266,7 @@ void RadiationMonteCarlo::operator() (Particles &particles,
                 local_it_time = dt;
             }
             // No emission since chipa is too low
-            else if (chipa < chipa_cont_threshold)
+            else if (chipa < RadiationTables.get_chipa_cont_threshold())
             {
                 local_it_time = dt;
             }

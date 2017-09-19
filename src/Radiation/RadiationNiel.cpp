@@ -257,8 +257,8 @@ void RadiationNiel::operator() (Particles &particles,
 
     for (int i=0 ; i < nbparticles; i++ )
     {
-        // Below chipa = 1E-3, radiation losses are negligible
-        if (chipa[i] > 1E-3)
+        // Below chipa = chipa_cont_threshold, radiation losses are negligible
+        if (chipa[i] > RadiationTables.get_chipa_cont_threshold())
         {
 
             // Diffusive stochastic component during dt
@@ -277,21 +277,26 @@ void RadiationNiel::operator() (Particles &particles,
     #pragma omp simd
     for (int i=0 ; i < nbparticles; i++ ) {
 
-        // Particle number
-        ipart = istart + i;
+        if (chipa[i] > RadiationTables.get_chipa_cont_threshold())
+        {
 
-        // Radiated energy during the time step
-        rad_energy =
-        RadiationTables.get_corrected_cont_rad_energy_Ridgers(chipa[i],dt);
+            // Particle number
+            ipart = istart + i;
 
-        // Effect on the momentum
-        // Temporary factor
-        temp = (rad_energy - diffusion[i])*gamma[i]/(gamma[i]*gamma[i]-1.);
+            // Radiated energy during the time step
+            rad_energy =
+            RadiationTables.get_corrected_cont_rad_energy_Ridgers(chipa[i],dt);
 
-        // Update of the momentum
-        momentum[0][ipart] -= temp*momentum[0][ipart];
-        momentum[1][ipart] -= temp*momentum[1][ipart];
-        momentum[2][ipart] -= temp*momentum[2][ipart];
+            // Effect on the momentum
+            // Temporary factor
+            temp = (rad_energy - diffusion[i])*gamma[i]/(gamma[i]*gamma[i]-1.);
+
+            // Update of the momentum
+            momentum[0][ipart] -= temp*momentum[0][ipart];
+            momentum[1][ipart] -= temp*momentum[1][ipart];
+            momentum[2][ipart] -= temp*momentum[2][ipart];
+
+        }
 
     }
 

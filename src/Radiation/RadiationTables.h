@@ -118,10 +118,18 @@ class RadiationTables
             return dt*chipa*chipa*factor_cla_rad_power;
         };
 
-        //! Return the get_chipa_disc_min_threshold value
+        //! Return the chipa_disc_min_threshold value
+        //! Under this value, no discontinuous radiation reaction
         double inline get_chipa_disc_min_threshold()
         {
             return chipa_disc_min_threshold;
+        }
+
+        //! Return the chipa_cont_threshold value
+        //! Under this value, no radiation reaction
+        double inline get_chipa_cont_threshold()
+        {
+            return chipa_cont_threshold;
         }
 
         //! Computation of the function g of Erber using the Ridgers
@@ -221,6 +229,9 @@ class RadiationTables
         //! Minimum threshold above which the Monte-Carlo algorithm is working
         //! This avoids using the Monte-Carlo algorithm when chipa is too low
         double chipa_disc_min_threshold;
+
+        //! Under this value, no radiation loss
+        const double chipa_cont_threshold = 1e-3;
 
         // ---------------------------------------------
         // Table h for the
