@@ -257,8 +257,8 @@ void RadiationNiel::operator() (Particles &particles,
 
     for (int i=0 ; i < nbparticles; i++ )
     {
-        // Below chipa = chipa_cont_threshold, radiation losses are negligible
-        if (chipa[i] > RadiationTables.get_chipa_cont_threshold())
+        // Below chipa = chipa_radiation_threshold, radiation losses are negligible
+        if (chipa[i] > RadiationTables.get_chipa_radiation_threshold())
         {
 
             // Diffusive stochastic component during dt
@@ -277,7 +277,7 @@ void RadiationNiel::operator() (Particles &particles,
     #pragma omp simd
     for (int i=0 ; i < nbparticles; i++ ) {
 
-        if (chipa[i] > RadiationTables.get_chipa_cont_threshold())
+        if (chipa[i] > RadiationTables.get_chipa_radiation_threshold())
         {
 
             // Particle number

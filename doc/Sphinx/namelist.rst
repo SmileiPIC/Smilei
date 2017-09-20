@@ -1160,6 +1160,7 @@ tables.
      xip_threshold = 1e-3,
      chipa_xip_dim = 128,
      chiph_xip_dim = 128,
+     chipa_radiation_threshold = 1e-3,
      chipa_disc_min_threshold = 1e-2,
      table_path = "../databases/"
   )
@@ -1249,6 +1250,14 @@ tables.
   :default: ``"hdf5"``
 
   Output format of the tables: ``"hdf5"``, ``"binary"`` or ``"ascii"``.
+
+.. py:data:: chipa_radiation_threshold
+
+  :default: 1e-3
+
+  Threshold on the particle quantum parameter *chipa*. When a particle has a
+  quantum parameter below this threshold, radiation reaction is not taken
+  into account.
 
 .. py:data:: chipa_disc_min_threshold
 

@@ -114,7 +114,7 @@ void RadiationCorrLandauLifshitz::operator() (Particles &particles,
 
         // Effect on the momentum
         // (Should be vectorized with masked instructions)
-        if (chipa >= RadiationTables.get_chipa_cont_threshold())
+        if (chipa >= RadiationTables.get_chipa_radiation_threshold())
         {
 
             // Radiated energy during the time step

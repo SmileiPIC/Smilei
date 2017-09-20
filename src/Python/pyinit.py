@@ -374,6 +374,8 @@ class RadiationReaction(SmileiComponent):
     # Threshold on chipa between the continuous and
     # the discontinuous approaches
     chipa_disc_min_threshold = 1e-2
+    # Threshold on chipa: if chipa < 1E-3 no radiation reaction
+    chipa_radiation_threshold = 1e-3
     # Path the tables/databases
     table_path = "./"
 

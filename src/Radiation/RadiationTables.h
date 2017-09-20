@@ -125,11 +125,11 @@ class RadiationTables
             return chipa_disc_min_threshold;
         }
 
-        //! Return the chipa_cont_threshold value
+        //! Return the chipa_radiation_threshold value
         //! Under this value, no radiation reaction
-        double inline get_chipa_cont_threshold()
+        double inline get_chipa_radiation_threshold()
         {
-            return chipa_cont_threshold;
+            return chipa_radiation_threshold;
         }
 
         //! Computation of the function g of Erber using the Ridgers
@@ -231,7 +231,7 @@ class RadiationTables
         double chipa_disc_min_threshold;
 
         //! Under this value, no radiation loss
-        const double chipa_cont_threshold = 1e-3;
+        double chipa_radiation_threshold;
 
         // ---------------------------------------------
         // Table h for the

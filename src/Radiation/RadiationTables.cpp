@@ -35,6 +35,9 @@ RadiationTables::RadiationTables()
     h_computed = false;
     integfochi_computed = false;
     xip_computed = false;
+
+    chipa_radiation_threshold = 1e-3;
+    chipa_disc_min_threshold = 1e-2;
 }
 
 // -----------------------------------------------------------------------------
@@ -128,6 +131,11 @@ void RadiationTables::initParams(Params& params)
 
             // Path to the databases
             PyTools::extract("table_path", table_path, "RadiationReaction");
+
+            // Radiation threshold on the quantum parameter chipa
+            PyTools::extract("chipa_radiation_threshold",
+                          chipa_radiation_threshold,"RadiationReaction");
+
         }
     }
 
@@ -152,9 +160,10 @@ void RadiationTables::initParams(Params& params)
     }
 
     // Messages...
+    MESSAGE( "        threshold on the quantum parameter for radiation: " << chipa_radiation_threshold);
     if (params.hasMCRadiation)
     {
-        MESSAGE( "        chipa_disc_min_threshold: " << chipa_disc_min_threshold);
+        MESSAGE( "        threshold on the quantum parameter for discontinuous radiation: " << chipa_disc_min_threshold);
     }
     if (params.hasMCRadiation ||
         params.hasNielRadiation)
@@ -363,6 +372,14 @@ void RadiationTables::compute_h_table(SmileiMPI *smpi)
         double * buffer;
         int nb_ranks; // Number of ranks
         //int err;  // error MPI
+
+        // checks
+        if (chipa_radiation_threshold < h_chipa_min)
+        {
+            ERROR("Parameter `chipa_radiation_threshold` is below `h_chipa_min`,"
+            << "the lower bound of the h table should be equal or below"
+            << "the radiation threshold on chi.")
+        }
 
         // Get the number of ranks
         nb_ranks = smpi->getSize();
@@ -1669,6 +1686,14 @@ bool RadiationTables::read_h_table(SmileiMPI *smpi)
     // If the table exists, they have been read...
     if (table_exists)
     {
+
+        // checks
+        if (chipa_radiation_threshold < h_chipa_min)
+        {
+            ERROR("Parameter `chipa_radiation_threshold` is below `h_chipa_min`,"
+            << "the lower bound of the h table should be equal or below"
+            << "the radiation threshold on chi.")
+        }
 
         MESSAGE("            Reading of the external database");
         MESSAGE("            Dimension quantum parameter: "
