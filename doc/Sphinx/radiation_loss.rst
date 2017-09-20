@@ -656,7 +656,7 @@ the Monte-Carlo radiation process.
 +-------------------------------------+------------+----------+--------------+----------+---------------------+
 | Radiation model                     | None       | LL       | CLL          | Niel     | MC                  |
 +=====================================+============+==========+==============+==========+=====================+
-| Counter-propagating Plane Wave 1D   | 0.25s      | 0.3s     | 0.36s        | 0.5s     | 0.8s                |
+| Counter-propagating Plane Wave 1D   | 0.25s      | 0.3s     | 0.32s        | 0.63s    | 0.63s               |
 +-------------------------------------+------------+----------+--------------+----------+---------------------+
 | Synchrotron 2D Haswell              | 3.9s       | 4.2s     | 4.7s         | 7.8s     | 5.6s                |
 | :math:`\chi=0.5`,  :math:`B=100`    |            | - 8%     | - 21%        | - 100%   | - :math:`\sim` 50%  |
@@ -664,7 +664,7 @@ the Monte-Carlo radiation process.
 | Synchrotron 2D KNL                  | 3s         | 3.2s     | 3.3s         | 31s      | 10s                 |
 | :math:`\chi=0.5`,  :math:`B=100`    |            |          |              |          |                     |
 +-------------------------------------+------------+----------+--------------+----------+---------------------+
-| Interaction with a carbon thin foil | 6.5s       | 6.9s     | 7.2s         | 7.4s     | 7.2s                |
+| Interaction with a carbon thin foil | 6.5s       | 6.5s     | 6.6s         | 6.9s     | 6.8s                |
 | 2D                                  |            |          |              |          |                     |
 +-------------------------------------+------------+----------+--------------+----------+---------------------+
 
@@ -689,6 +689,9 @@ Descriptions of the cases:
   threads per rank.
 
 The LL and CLL models are vectorized efficiently.
+These radiation reaction models represents a small overhead
+to the particle pusher.
+
 The Niel model implementation is split into several loops to
 be partially vectorized. Surprisingly, this model have bad performance on KNL
 and further analysis are necessary to well understand why.
