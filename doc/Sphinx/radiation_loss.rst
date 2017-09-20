@@ -689,7 +689,7 @@ Descriptions of the cases:
   threads per rank.
 
 The LL and CLL models are vectorized efficiently.
-These radiation reaction models represents a small overhead
+These radiation reaction models represent a small overhead
 to the particle pusher.
 
 The Niel model implementation is split into several loops to
