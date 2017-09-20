@@ -94,9 +94,6 @@ class RadiationMonteCarlo : public Radiation {
         //! Espilon to check when tau is near 0
         const double epsilon_tau = 1e-100;
 
-        //! Under this value, no radiation loss
-        const double chipa_cont_threshold = 1e-5;
-
     private:
 
 };

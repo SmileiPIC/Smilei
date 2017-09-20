@@ -53,13 +53,14 @@ Python workflow
 ^^^^^^^^^^^^^^^
 
 *Python* is started at the beginning of the simulation (one *python* interpreter
-for each MPI node). The following steps are executed:
+for each MPI process). The following steps are executed:
 
 #. A few variables from :program:`Smilei` are passed to *python* so that they are
    available to the user:
 
-   * The rank of the current MPI node as :py:data:`smilei_mpi_rank`.
-   * The total number of MPI nodes as :py:data:`smilei_mpi_size`.
+   * The rank of the current MPI process as :py:data:`smilei_mpi_rank`.
+   * The total number of MPI processes as :py:data:`smilei_mpi_size`.
+
    * The maximum random integer as :py:data:`smilei_rand_max`.
 
 #. The namelist(s) is executed.
@@ -262,10 +263,8 @@ occur every 150 iterations.
 
   :default: 1.
 
-
   Computational load of a single grid cell considered by the dynamic load balancing algorithm.
   This load is normalized to the load of a single particle.
-
 
 .. py:data:: coef_frozen
 
@@ -273,6 +272,7 @@ occur every 150 iterations.
 
   Computational load of a single frozen particle considered by the dynamic load balancing algorithm.
   This load is normalized to the load of a single particle.
+
 
 ----
 
@@ -1239,6 +1239,7 @@ tables.
      xip_threshold = 1e-3,
      chipa_xip_dim = 128,
      chiph_xip_dim = 128,
+     chipa_radiation_threshold = 1e-3,
      chipa_disc_min_threshold = 1e-2,
      table_path = "../databases/"
   )
@@ -1328,6 +1329,14 @@ tables.
   :default: ``"hdf5"``
 
   Output format of the tables: ``"hdf5"``, ``"binary"`` or ``"ascii"``.
+
+.. py:data:: chipa_radiation_threshold
+
+  :default: 1e-3
+
+  Threshold on the particle quantum parameter *chipa*. When a particle has a
+  quantum parameter below this threshold, radiation reaction is not taken
+  into account.
 
 .. py:data:: chipa_disc_min_threshold
 

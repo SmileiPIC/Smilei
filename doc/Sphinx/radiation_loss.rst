@@ -1,6 +1,7 @@
 .. _radiationReactionPage:
 
-Synchrotron-like radiation loss
+Synchrotron-like radiation reaction
+
 --------------------------------------------------------------------------------
 
 
@@ -64,7 +65,7 @@ the normalized particle velocity. In :numref:`radiationRegimes`,
 
 
 When quantum electrodynamics (QED) effects are negligible (classical regime),
-the radiation losses can be treated as a
+the radiation reaction can be treated as a
 continuous friction force acting on the particles.
 Several models have been published (e.g. LAD, Landau-Lifshitz ([Landau1947]_), Sokolov, Capdessus).
 The ones used in :program:`Smilei` are
@@ -84,7 +85,8 @@ stochastic nature of photon emission cannot be neglected, the electron dynamics
 is described by the addition of a stochastic term derived from a Fokker-Planck
 expansion ([Niel2017]_).
 
-Use :numref:`radiationRegimes` to configure properly the radiation losses
+Use :numref:`radiationRegimes` to choose properly
+the most appropriate radiation reaction model
 in :program:`Smilei` (see :ref:`the radiation configuration in Species <Species>`).
 
 The next sections describe in more details the models implemented
@@ -131,7 +133,7 @@ friction force reduces to a single term:
 .. math::
   :label: LLFrictionForceApprox
 
-  \mathbf{F}_{rad} = - P_{cl} \mathbf{u} / \left( \mathbf{u} c^2 \right)
+  \mathbf{F}_{rad} = - P_{cl} \mathbf{u} / \left( \mathbf{u}^2 c \right)
 
 where :math:`P_{cl} = \frac{2}{3} \frac{\alpha^2 mc^2}{\tau_e} \chi^2`.
 
@@ -297,7 +299,7 @@ considering forward emission (valid when :math:`\gamma_\pm \gg 1`).
     F_{rad} = - \frac{\varepsilon_\gamma}{c} \frac{\mathbf{p_\pm}}{\| \mathbf{p_\pm} \|}
 
 The radiated force is the recoil induced by the photon emission.
-Radiation loss is therefore a discrete process.
+Radiation reaction is therefore a discrete process.
 Note that momentum conservation does not exactly conserve energy.
 It can be shown that the error :math:`\epsilon` tends to 0 when the particle
 energy tends to infinity [Lobet2015]_ and that the error is low when
@@ -468,7 +470,7 @@ A bunch of electrons of initial momentum :math:`p_{-,0}`
 evolves in a constant magnetic field :math:`B` orthogonal
 to their initial propagation direction.
 In such a configuration, the electron bunch is supposed to rotate endlessly
-with the same radius :math:`R = p_{-,0} /e B` without radiation loss.
+with the same radius :math:`R = p_{-,0} /e B` without radiation energy loss.
 Here, the magnetic field is so strong that the electrons
 radiate their energy as in a synchrotron facility.
 The initial quantum parameter is equal to
@@ -504,7 +506,7 @@ The main difference between models can be understood by studying the
 particle trajectories and phase spaces. For this purpose, colormaps of
 the normalized kinetic energy at :math:`25 \omega_r^{-1}` are shown in
 :numref:`synchrotron_x_y_gamma` for the different models.
-With continuous radiation loss
+With continuous radiation energy loss
 (corrected Landau-Lifshitz case), the electron bunch rotates with a decreasing
 radius but the bunch keeps its original shape. The radiation only acts as a
 cooling mechanism.
@@ -530,7 +532,7 @@ This effect is the strongest at the beginning when the quantum parameter is high
 In the Monte-Carlo case, some electrons lose all their energy almost immediately.
 Then, as the particles cool down, the interaction enters the semi-classical
 regime where energy jumps are smaller.
-In the classical regime, radiation losses reduce the electron spread
+In the classical regime, radiation energy loss reduces the electron spread
 in energy and in space
 In the Landau-Lifshitz case, there is no energy spread. This model can be seen
 as the average behavior of the stochastic ones.
@@ -586,7 +588,7 @@ The maximum values can be seen at the front where the electrons
 interact with the laser. Radiation occurs in the quantum regime
 :math:`\chi > 0.1`. Note that there is a second peak for :math:`\chi` at the
 rear where electrons interact with the target normal sheath field.
-The radiation loss can affect electron energy absorption and therefore the ion
+The radiation reaction can affect electron energy absorption and therefore the ion
 acceleration mechanisms.
 
 .. _thin_foil_x_chi_ne:
@@ -609,7 +611,7 @@ simulation parameters.
 The radiated energy represents around 14% of the total laser energy.
 The :purple:`classical Landau-Lifshitz` model overestimates the radiated energy;
 the energy absorbed by electrons and ions is therefore slightly lower.
-In all cases, radiation losses strongly impact the overall particle energy absorption
+In all cases, radiation reaction strongly impacts the overall particle energy absorption
 showing a difference close to 20% with the :red:`non-radiative` run.
 
 
@@ -623,14 +625,14 @@ showing a difference close to 20% with the :red:`non-radiative` run.
   absorbed energy by particle and radiation (dotted-dashed lines), for various models.
 
 The differences between electron :math:`p_x` distributions are shown
-in :numref:`thin_foil_x_px_ne`. Without radiation losses, electrons refluxing
+in :numref:`thin_foil_x_px_ne`. Without radiation reaction, electrons refluxing
 at the target front can travel farther in vacuum (negative :math:`p_x`)
 before being injected back to the target.
-With radiation losses, these electrons are rapidly slowed down
+With radiation reaction, these electrons are rapidly slowed down
 and newly accelerated by the ponderotive force.
 Inside the target, accelerated bunches of hot electrons correspond to
 the regular positive spikes in :math:`p_x` (oscillation at :math:`\lambda /2`).
-The maximum electron energy is almost twice lower with radiation loss.
+The maximum electron energy is almost twice lower with radiation reaction.
 
 .. _thin_foil_x_px_ne:
 
@@ -644,7 +646,7 @@ Performances
 
 The cost of the different models is summarized in :numref:`radiationTimes`.
 Reported times are for the field projection, the particle pusher and
-the radiation losses together. Percentages correspond to the overhead induced by
+the radiation reaction together. Percentages correspond to the overhead induced by
 the radiation module in comparison to the standard PIC pusher.
 
 All presented numbers are not generalizable and are only indicated to give
@@ -653,17 +655,20 @@ the Monte-Carlo radiation process.
 
 .. _radiationTimes:
 
-+-------------------------------------+------------+----------+--------------+----------+--------+
-| Radiation model                     | None       | LL       | CLL          | Niel     | MC     |
-+=====================================+============+==========+==============+==========+========+
-| Counter-propagating Plane Wave 1D   | 0.25s      | 0.3s     | 0.36s        | 0.5s     | 0.8s   |
-+-------------------------------------+------------+----------+--------------+----------+--------+
-| Synchrotron 2D                      | 3.9s       | 4.2s     | 4.8s         | 7.9s     | 5.6s   |
-| :math:`\chi=0.5`,  :math:`B=100`    |            | - 10%    | - 30%        | - 100%   | - 50%  |
-+-------------------------------------+------------+----------+--------------+----------+--------+
-| Interaction with a carbon thin foil | 6.5s       | 6.9s     | 7.2s         | 7.4s     | 7.2s   |
-| 2D                                  |            |          |              |          |        |
-+-------------------------------------+------------+----------+--------------+----------+--------+
++-------------------------------------+------------+----------+--------------+----------+---------------------+
+| Radiation model                     | None       | LL       | CLL          | Niel     | MC                  |
++=====================================+============+==========+==============+==========+=====================+
+| Counter-propagating Plane Wave 1D   | 0.25s      | 0.3s     | 0.32s        | 0.63s    | 0.63s               |
++-------------------------------------+------------+----------+--------------+----------+---------------------+
+| Synchrotron 2D Haswell              | 3.9s       | 4.2s     | 4.7s         | 7.8s     | 5.6s                |
+| :math:`\chi=0.5`,  :math:`B=100`    |            | - 8%     | - 21%        | - 100%   | - :math:`\sim` 50%  |
++-------------------------------------+------------+----------+--------------+----------+---------------------+
+| Synchrotron 2D KNL                  | 3s         | 3.2s     | 3.3s         | 31s      | 10s                 |
+| :math:`\chi=0.5`,  :math:`B=100`    |            |          |              |          |                     |
++-------------------------------------+------------+----------+--------------+----------+---------------------+
+| Interaction with a carbon thin foil | 6.5s       | 6.5s     | 6.6s         | 6.9s     | 6.8s                |
+| 2D                                  |            |          |              |          |                     |
++-------------------------------------+------------+----------+--------------+----------+---------------------+
 
 Descriptions of the cases:
 
@@ -673,8 +678,11 @@ Descriptions of the cases:
 * **Synchrotron 2D**: The domain has a dimension of 496x496 cells with
   16 particles per cell and 8x8 patches.
   A 4th order B-spline shape factor is used for the projection.
-  The case is run on a single node of *Jureca* with 2 MPI ranks and 12 OpenMP
-  threads per rank.
+  The first case has been run on a single Haswell node of *Jureca* with 2 MPI ranks and
+  12 OpenMP threads per rank. the second one has been run on a single KNL node of *Frioul*
+  configured in quadrant cache using 1 MPI rank and 64 OpenMP threads.
+  On KNL, the `KMP_affinity` is set to fine and scatter. Only the Niel model provides
+  better performance with a compact affinity.
 
 * **Thin foil 2D**:
   The domain has a discretization of 64 cells per :math:`\mu\mathrm{m}` in
@@ -683,8 +691,12 @@ Descriptions of the cases:
   threads per rank.
 
 The LL and CLL models are vectorized efficiently.
+These radiation reaction models represent a small overhead
+to the particle pusher.
+
 The Niel model implementation is split into several loops to
-be partially vectorized.
+be partially vectorized. Surprisingly, this model have bad performance on KNL
+and further analysis are necessary to well understand why.
 
 When using the Monte-Carlo radiation model, code performance is likely to be
 more impacted running on SIMD architecture with large vector registers

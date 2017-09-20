@@ -203,7 +203,7 @@ void RadiationNiel::operator() (
     int ipart;
 
     // Temporary index
-    int ipart0;
+    int i;
 
     // Radiated energy
     double rad_energy;
@@ -225,9 +225,6 @@ void RadiationNiel::operator() (
     // Quantum parameter
     double * chipa = &( particles.chi(0));
 
-    // Optical depth for the Monte-Carlo process
-    // double* chi = &( particles.chi(0));
-
     // Reinitialize the cumulative radiated energy for the current thread
     this->radiated_energy = 0.;
 
@@ -235,7 +232,7 @@ void RadiationNiel::operator() (
     // Computation
 
     #pragma omp simd
-    for (int ipart=istart ; ipart<iend; ipart++ )
+    for (ipart=istart ; ipart<iend; ipart++ )
     {
 
         charge_over_mass2 = (double)(charge[ipart])*one_over_mass_2;
@@ -256,13 +253,14 @@ void RadiationNiel::operator() (
     // _______________________________________________________________
     // Computation of the diffusion coefficients
 
-    for (int i=0 ; i < nbparticles; i++ )
+    for (i=0 ; i < nbparticles; i++ )
     {
+
         // Particle number
         ipart = istart + i;
 
-        // Below chipa = 1E-3, radiation losses are negligible
-        if (chipa[ipart] > 1E-3)
+        // Below chipa = chipa_radiation_threshold, radiation losses are negligible
+        if (chipa[ipart] > RadiationTables.get_chipa_radiation_threshold())
         {
 
             // Diffusive stochastic component during dt
@@ -279,24 +277,30 @@ void RadiationNiel::operator() (
     // Update of the momentum
 
     #pragma omp simd
-    for (int ipart=istart ; ipart<iend; ipart++ )
+    for (ipart=istart ; ipart<iend; ipart++ )
     {
-        // Particle number
-        ipart0 = ipart - istart;
+        // Below chipa = chipa_radiation_threshold, radiation losses are negligible
+        if (chipa[ipart] > RadiationTables.get_chipa_radiation_threshold())
+        {
 
-        // Radiated energy during the time step
-        rad_energy =
-        RadiationTables.get_corrected_cont_rad_energy_Ridgers(chipa[ipart],dt);
+            // Particle number
+            i = ipart - istart;
 
-        // Effect on the momentum
-        // Temporary factor
-        temp = (rad_energy - diffusion[ipart0])*(*gamma)[ipart]/((*gamma)[ipart]*(*gamma)[ipart]-1.);
+            // Radiated energy during the time step
+            rad_energy =
+            RadiationTables.get_corrected_cont_rad_energy_Ridgers(chipa[ipart],dt);
 
-        // Update of the momentum
-        momentum[0][ipart] -= temp*momentum[0][ipart];
-        momentum[1][ipart] -= temp*momentum[1][ipart];
-        momentum[2][ipart] -= temp*momentum[2][ipart];
+            // Effect on the momentum
+            // Temporary factor
+            temp = (rad_energy - diffusion[i])
+                 * (*gamma)[ipart]/((*gamma)[ipart]*(*gamma)[ipart]-1.);
 
+            // Update of the momentum
+            momentum[0][ipart] -= temp*momentum[0][ipart];
+            momentum[1][ipart] -= temp*momentum[1][ipart];
+            momentum[2][ipart] -= temp*momentum[2][ipart];
+
+        }
     }
 
     // _______________________________________________________________
