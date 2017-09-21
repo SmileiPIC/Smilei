@@ -403,6 +403,11 @@ bool VectorPatch::isRhoNull( SmileiMPI* smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 {
+    Timer ptimer("global");
+    ptimer.init(smpi);
+    ptimer.restart();
+
+    
     unsigned int iteration_max = params.poisson_iter_max;
     double           error_max = params.poisson_error_max;
     unsigned int iteration=0;
@@ -641,6 +646,9 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     //!\todo Reduce to find global max
     if (smpi->isMaster())
         MESSAGE(1,"Poisson equation solved. Maximum err = " << deltaPoisson_max << " at i= " << i_deltaPoisson_max);
+
+    ptimer.update();
+    MESSAGE("Time in Poisson : " << ptimer.getTime() );
 
 } // END solvePoisson
 

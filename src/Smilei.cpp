@@ -110,8 +110,11 @@ int main (int argc, char* argv[])
     // reading from dumped file the restart values
     if (params.restart) {
         
-        // smpi.patch_count recomputed in restartAll
-        // vecPatches allocated in restartAll according to patch_count saved
+        // smpi.patch_count recomputed in readPatchDistribution
+        checkpoint.readPatchDistribution( &smpi, simWindow );
+        // allocate patches according to smpi.patch_count
+        vecPatches = PatchesFactory::createVector(params, &smpi, openPMD, checkpoint.this_run_start_step+1, simWindow->getNmoved());
+        // vecPatches data read in restartAll according to smpi.patch_count
         checkpoint.restartAll( vecPatches, &smpi, simWindow, params, openPMD);
         
         // time at integer time-steps (primal grid)
@@ -138,40 +141,28 @@ int main (int argc, char* argv[])
         // Init electric field (Ex/1D, + Ey/2D)
         if (!vecPatches.isRhoNull(&smpi) && params.solve_poisson == true) {
             TITLE("Solving Poisson at time t = 0");
-            Timer ptimer("global");
-            ptimer.init(&smpi);
-            ptimer.restart();
-                
             vecPatches.solvePoisson( params, &smpi );
-            ptimer.update();
-            MESSAGE("Time in Poisson : " << ptimer.getTime() );
         }
             
         vecPatches.dynamics(params, &smpi, simWindow, time_dual, timers, 0);
-        timers.particles.reboot();
-        timers.syncPart .reboot();
             
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
-        timers.densities.reboot();
-        timers.syncDens .reboot();
             
         TITLE("Applying external fields at time t = 0");
         vecPatches.applyExternalFields();
             
         vecPatches.finalize_and_sort_parts(params, &smpi, simWindow, time_dual, timers, 0);
-        timers.syncPart .reboot();
             
         TITLE("Initializing diagnostics");
         vecPatches.initAllDiags( params, &smpi );
         TITLE("Running diags at time t = 0");
         vecPatches.runAllDiags(params, &smpi, 0, timers, simWindow);
-        timers.diags.reboot();
     }
     
     TITLE("Species creation summary");
     vecPatches.printNumberOfParticles( &smpi );
     
-    timers.global.reboot();
+    timers.reboot();
     
     // ------------------------------------------------------------------------
     // check here if we can close the python interpreter
@@ -307,10 +298,19 @@ int main (int argc, char* argv[])
 
 int execute_test_mode( VectorPatch &vecPatches, SmileiMPI* smpi, SimWindow* simWindow, Params &params, Checkpoint &checkpoint, OpenPMDparams& openPMD )
 {
+    int itime = 0;
+    int moving_window_movement = 0;
+        
+    if (params.restart) {
+        checkpoint.readPatchDistribution( smpi, simWindow );
+        itime = checkpoint.this_run_start_step+1;
+        moving_window_movement = simWindow->getNmoved();
+    }
+    
+    vecPatches = PatchesFactory::createVector(params, smpi, openPMD, itime, moving_window_movement );
+        
     if (params.restart)
         checkpoint.restartAll( vecPatches, smpi, simWindow, params, openPMD);
-    else
-        vecPatches = PatchesFactory::createVector(params, smpi, openPMD, 0);
         
     // If test mode enable, code stops here
     params.cleanup(smpi);
