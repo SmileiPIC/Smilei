@@ -635,37 +635,49 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             //particles->test_move( bmin[ibin], bmax[ibin], params );
 
             // Apply wall and boundary conditions
-            for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
-                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                    double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
-                    if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
-                        if (mass>0)
-                        {
+            if (mass>0)
+            {
+                for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+                    for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                        double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                        if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
                             nrj_lost_per_thd[tid] += mass * ener_iPart;
-
-                        } else if (mass==0) {
-                            nrj_lost_per_thd[tid] += ener_iPart;
                         }
                     }
                 }
-            }
 
-            // Boundary Condition may be physical or due to domain decomposition
-            // apply returns 0 if iPart is not in the local domain anymore
-            //        if omp, create a list per thread
-            for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
-                    addPartInExchList( iPart );
-                    //nrj_lost_per_thd[tid] += ener_iPart;
-                    if (mass>0)
-                    {
+                // Boundary Condition may be physical or due to domain decomposition
+                // apply returns 0 if iPart is not in the local domain anymore
+                //        if omp, create a list per thread
+                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                    if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                        addPartInExchList( iPart );
                         nrj_lost_per_thd[tid] += mass * ener_iPart;
+                    }
+                 }
 
-                    } else if (mass==0) {
-                        nrj_lost_per_thd[tid] += ener_iPart;
+
+            } else if (mass==0) {
+                for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+                    for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                        double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                        if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
+                                nrj_lost_per_thd[tid] += ener_iPart;
+                        }
                     }
                 }
-             }
+
+                // Boundary Condition may be physical or due to domain decomposition
+                // apply returns 0 if iPart is not in the local domain anymore
+                //        if omp, create a list per thread
+                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                    if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                        addPartInExchList( iPart );
+                        nrj_lost_per_thd[tid] += ener_iPart;
+                    }
+                 }
+
+            }
 
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
 
@@ -979,20 +991,41 @@ void Species::dynamics_bound_cond(double time_dual, unsigned int ispec,
 
         //smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
 
-        for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
+        if (mass>0)
+        {
 
-            // Apply wall and boundary conditions
-            for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
-                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                    if (mass>0)
-                    {
+            for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
+
+                // Apply wall and boundary conditions
+                for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+                    for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
                         dtgf = params.timestep * particles->inv_lor_fac(iPart);
                         if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart))
                         {
                             nrj_lost_per_thd[tid] += mass * ener_iPart;
                         }
+                    }
+                }
 
-                    } else if (mass==0) {
+                // Boundary Condition may be physical or due to domain decomposition
+                // apply returns 0 if iPart is not in the local domain anymore
+                //        if omp, create a list per thread
+                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                    if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                        addPartInExchList( iPart );
+                        nrj_lost_per_thd[tid] += mass * ener_iPart;
+                    }
+                 }
+            }
+
+        }
+        else if (mass==0)
+        {
+            for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
+
+                // Apply wall and boundary conditions
+                for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+                    for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
                         dtgf = params.timestep / particles->momentum_norm(iPart);
                         if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart))
                         {
@@ -1000,24 +1033,17 @@ void Species::dynamics_bound_cond(double time_dual, unsigned int ispec,
                         }
                     }
                 }
-            }
 
-            // Boundary Condition may be physical or due to domain decomposition
-            // apply returns 0 if iPart is not in the local domain anymore
-            //        if omp, create a list per thread
-            for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
-                    addPartInExchList( iPart );
-                    //nrj_lost_per_thd[tid] += ener_iPart;
-                    if (mass>0)
-                    {
-                        nrj_lost_per_thd[tid] += mass * ener_iPart;
-
-                    } else if (mass==0) {
+                // Boundary Condition may be physical or due to domain decomposition
+                // apply returns 0 if iPart is not in the local domain anymore
+                //        if omp, create a list per thread
+                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                    if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                        addPartInExchList( iPart );
                         nrj_lost_per_thd[tid] += ener_iPart;
                     }
-                }
-             }
+                 }
+            }
         }
 
         for (unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
