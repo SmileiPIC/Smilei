@@ -101,6 +101,11 @@ int main (int argc, char* argv[])
     // ---------------------------------------------------
     TITLE("Initializing particles & fields");
     VectorPatch vecPatches;
+
+    if( smpi.test_mode ) {
+        execute_test_mode( vecPatches, &smpi, simWindow, params, checkpoint, openPMD );
+        return 0;
+    }
     
     // reading from dumped file the restart values
     if (params.restart) {
@@ -121,49 +126,46 @@ int main (int argc, char* argv[])
        
         vecPatches = PatchesFactory::createVector(params, &smpi, openPMD, 0);
         
-        if( ! smpi.test_mode ) {
+        // Initialize the electromagnetic fields
+        // -------------------------------------
+        vecPatches.computeCharge();
+        vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
             
-            // Initialize the electromagnetic fields
-            // -------------------------------------
-            vecPatches.computeCharge();
-                vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
+        // Apply antennas
+        // --------------
+        vecPatches.applyAntennas(0.5 * params.timestep);
             
-            // Apply antennas
-            // --------------
-            vecPatches.applyAntennas(0.5 * params.timestep);
-            
-            // Init electric field (Ex/1D, + Ey/2D)
-            if (!vecPatches.isRhoNull(&smpi) && params.solve_poisson == true) {
-                TITLE("Solving Poisson at time t = 0");
-                Timer ptimer("global");
-                ptimer.init(&smpi);
-                ptimer.restart();
+        // Init electric field (Ex/1D, + Ey/2D)
+        if (!vecPatches.isRhoNull(&smpi) && params.solve_poisson == true) {
+            TITLE("Solving Poisson at time t = 0");
+            Timer ptimer("global");
+            ptimer.init(&smpi);
+            ptimer.restart();
                 
-                vecPatches.solvePoisson( params, &smpi );
-                ptimer.update();
-                MESSAGE("Time in Poisson : " << ptimer.getTime() );
-            }
-            
-            vecPatches.dynamics(params, &smpi, simWindow, time_dual, timers, 0);
-            timers.particles.reboot();
-            timers.syncPart .reboot();
-            
-            vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
-            timers.densities.reboot();
-            timers.syncDens .reboot();
-            
-            TITLE("Applying external fields at time t = 0");
-            vecPatches.applyExternalFields();
-            
-            vecPatches.finalize_and_sort_parts(params, &smpi, simWindow, time_dual, timers, 0);
-            timers.syncPart .reboot();
-            
-            TITLE("Initializing diagnostics");
-            vecPatches.initAllDiags( params, &smpi );
-            TITLE("Running diags at time t = 0");
-            vecPatches.runAllDiags(params, &smpi, 0, timers, simWindow);
-            timers.diags.reboot();
+            vecPatches.solvePoisson( params, &smpi );
+            ptimer.update();
+            MESSAGE("Time in Poisson : " << ptimer.getTime() );
         }
+            
+        vecPatches.dynamics(params, &smpi, simWindow, time_dual, timers, 0);
+        timers.particles.reboot();
+        timers.syncPart .reboot();
+            
+        vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
+        timers.densities.reboot();
+        timers.syncDens .reboot();
+            
+        TITLE("Applying external fields at time t = 0");
+        vecPatches.applyExternalFields();
+            
+        vecPatches.finalize_and_sort_parts(params, &smpi, simWindow, time_dual, timers, 0);
+        timers.syncPart .reboot();
+            
+        TITLE("Initializing diagnostics");
+        vecPatches.initAllDiags( params, &smpi );
+        TITLE("Running diags at time t = 0");
+        vecPatches.runAllDiags(params, &smpi, 0, timers, simWindow);
+        timers.diags.reboot();
     }
     
     TITLE("Species creation summary");
@@ -182,16 +184,7 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------
     TITLE("Memory consumption");
     vecPatches.check_memory_consumption( &smpi );
-    
-    
-    // If test mode enable, code stops here
-    if( smpi.test_mode ) {
-        delete simWindow;
-        PyTools::closePython();
-        TITLE("END TEST MODE");
-        return 0;
-    }
-    
+        
 /*tommaso
     // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)
     unsigned int latestTimeStep=checkpoint.this_run_start_step;
@@ -310,3 +303,20 @@ int main (int argc, char* argv[])
 // ---------------------------------------------------------------------------------------------------------------------
 //                                               END MAIN CODE
 // ---------------------------------------------------------------------------------------------------------------------
+
+
+int execute_test_mode( VectorPatch &vecPatches, SmileiMPI* smpi, SimWindow* simWindow, Params &params, Checkpoint &checkpoint, OpenPMDparams& openPMD )
+{
+    if (params.restart)
+        checkpoint.restartAll( vecPatches, smpi, simWindow, params, openPMD);
+    else
+        vecPatches = PatchesFactory::createVector(params, smpi, openPMD, 0);
+        
+    // If test mode enable, code stops here
+    params.cleanup(smpi);
+    delete simWindow;
+    PyTools::closePython();
+    TITLE("END TEST MODE");
+    
+    return 0;
+}
