@@ -73,7 +73,7 @@ def n0_(x,y):
 # Namelists
 
 Main(
-    geometry = "2d3v",
+    geometry = "2Dcartesian",
 
     interpolation_order = 4,
 
@@ -118,7 +118,6 @@ for i,radiation in enumerate(radiation_list):
         pusher = pusher,
         radiation_model = radiation,
         boundary_conditions = [
-            ["periodic", "periodic"],
             ["periodic", "periodic"],
             ["periodic", "periodic"],
         ],

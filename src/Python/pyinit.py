@@ -185,8 +185,8 @@ class Main(SmileiSingleton):
         super(Main, self).__init__(**kwargs)
         
         # Deprecation error for the "geometry" argument
-        if geometry in ["1d3v", "2d3v", "3d3v"]:
-            raise Exception("Deprecated geometry = \""+geometry+"\". Use \""+geometry[0]+"Dcartesian\" instead")
+        if Main.geometry in ["1d3v", "2d3v", "3d3v"]:
+            raise Exception("Deprecated geometry = \""+Main.geometry+"\". Use \""+Main.geometry[0]+"Dcartesian\" instead")
         
         # Initialize timestep if not defined based on timestep_over_CFL
         if Main.timestep is None:

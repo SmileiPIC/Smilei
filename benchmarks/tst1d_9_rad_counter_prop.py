@@ -64,7 +64,7 @@ def n0_(x):
 # Namelists
 
 Main(
-    geometry = "1d3v",
+    geometry = "1Dcartesian",
 
     interpolation_order = 4 ,
 
@@ -76,7 +76,7 @@ Main(
     timestep = dt,
     sim_time = Tsim,
 
-    EM_boundary_conditions = ['silver-muller'],
+    EM_boundary_conditions = [['silver-muller']],
 
     reference_angular_frequency_SI = wr,
 
@@ -116,8 +116,6 @@ for i,radiation in enumerate(radiation_list):
         radiation_model = radiation,
         time_frozen = 29*t0,
         boundary_conditions = [
-            ["periodic", "periodic"],
-            ["periodic", "periodic"],
             ["periodic", "periodic"],
         ],
     )
