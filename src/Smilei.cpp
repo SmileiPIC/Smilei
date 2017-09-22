@@ -30,6 +30,7 @@
 #include "SimWindow.h"
 #include "Diagnostic.h"
 #include "Timers.h"
+#include "RadiationTables.h"
 
 using namespace std;
 
@@ -39,12 +40,13 @@ using namespace std;
 int main (int argc, char* argv[])
 {
     cout.setf( ios::fixed,  ios::floatfield ); // floatfield set to fixed
-    
+
     // -------------------------
     // Simulation Initialization
-    // ------------------------- 
-    
+    // -------------------------
+
     // Create MPI environment :
+
 #ifdef SMILEI_TESTMODE
     SmileiMPI_test smpi( &argc, &argv );
 #else
@@ -63,7 +65,7 @@ int main (int argc, char* argv[])
     TITLE("Reading the simulation parameters");
     Params params(&smpi,vector<string>(argv + 1, argv + argc));
     OpenPMDparams openPMD(params);
-    
+
     // Initialize MPI environment with simulation parameters
     TITLE("Initializing MPI");
     smpi.init(params);
@@ -81,12 +83,12 @@ int main (int argc, char* argv[])
     // Initialize the simulation times time_prim at n=0 and time_dual at n=+1/2
     // Update in "if restart" if necessary
     // ------------------------------------------------------------------------
-    
+
     // time at integer time-steps (primal grid)
     double time_prim = 0;
     // time at half-integer time-steps (dual grid)
     double time_dual = 0.5 * params.timestep;
-    
+
     // -------------------------------------------
     // Declaration of the main objects & operators
     // -------------------------------------------
@@ -95,7 +97,12 @@ int main (int argc, char* argv[])
     // --------------------
     TITLE("Initializing moving window");
     SimWindow* simWindow = new SimWindow(params);
-    
+
+    // ------------------------------------------------------------------------
+    // Init nonlinear inverse Compton scattering
+    // ------------------------------------------------------------------------
+    RadiationTables RadiationTables;
+
     // ---------------------------------------------------
     // Initialize patches (including particles and fields)
     // ---------------------------------------------------
@@ -116,11 +123,19 @@ int main (int argc, char* argv[])
         vecPatches = PatchesFactory::createVector(params, &smpi, openPMD, checkpoint.this_run_start_step+1, simWindow->getNmoved());
         // vecPatches data read in restartAll according to smpi.patch_count
         checkpoint.restartAll( vecPatches, &smpi, simWindow, params, openPMD);
-        
+
         // time at integer time-steps (primal grid)
         time_prim = checkpoint.this_run_start_step * params.timestep;
         // time at half-integer time-steps (dual grid)
         time_dual = (checkpoint.this_run_start_step +0.5) * params.timestep;
+
+        // ---------------------------------------------------------------------
+        // Init and compute tables for radiation effects
+        // (nonlinear inverse Compton scattering)
+        // ---------------------------------------------------------------------
+        RadiationTables.initParams(params);
+        RadiationTables.compute_tables(params,&smpi);
+        RadiationTables.output_tables(&smpi);
         
         TITLE("Initializing diagnostics");
         vecPatches.initAllDiags( params, &smpi );
@@ -133,23 +148,32 @@ int main (int argc, char* argv[])
         // -------------------------------------
         vecPatches.computeCharge();
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
-            
+
+        TITLE("Applying external fields at time t = 0");
+        vecPatches.applyExternalFields();
+
+        // ---------------------------------------------------------------------
+        // Init and compute tables for radiation effects
+        // (nonlinear inverse Compton scattering)
+        // ---------------------------------------------------------------------
+        RadiationTables.initParams(params);
+        RadiationTables.compute_tables(params,&smpi);
+        RadiationTables.output_tables(&smpi);
+
         // Apply antennas
         // --------------
         vecPatches.applyAntennas(0.5 * params.timestep);
-            
+
         // Init electric field (Ex/1D, + Ey/2D)
         if (!vecPatches.isRhoNull(&smpi) && params.solve_poisson == true) {
             TITLE("Solving Poisson at time t = 0");
             vecPatches.solvePoisson( params, &smpi );
         }
             
-        vecPatches.dynamics(params, &smpi, simWindow, time_dual, timers, 0);
-            
+        vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
+                            time_dual, timers, 0);
+
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
-            
-        TITLE("Applying external fields at time t = 0");
-        vecPatches.applyExternalFields();
             
         vecPatches.finalize_and_sort_parts(params, &smpi, simWindow, time_dual, timers, 0);
             
@@ -183,7 +207,7 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------
-    
+
     TITLE("Time-Loop started: number of time-steps n_time = " << params.n_time);
     if ( smpi.isMaster() ) params.print_timestep_headers();
     
@@ -200,21 +224,22 @@ int main (int argc, char* argv[])
                 time_prim += params.timestep;
                 time_dual += params.timestep;
             }
-            
             // apply collisions if requested
             vecPatches.applyCollisions(params, itime, timers);
-            
+
             // (1) interpolate the fields at the particle position
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
-            vecPatches.dynamics(params, &smpi, simWindow, time_dual, timers, itime);
+            vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
+                                time_dual, timers, itime);
+
             
             // Sum densities
             vecPatches.sumDensities(params, time_dual, timers, itime, simWindow );
-            
+
             // apply currents from antennas
             vecPatches.applyAntennas(time_dual);
-            
+
             // solve Maxwell's equations
             if( time_dual > params.time_fields_frozen )
                 vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
@@ -227,7 +252,7 @@ int main (int argc, char* argv[])
             timers.movWindow.restart();
             simWindow->operate(vecPatches, &smpi, params, itime, time_dual);
             timers.movWindow.update();
-            
+
             // ----------------------------------------------------------------------
             // Validate restart  : to do
             // Restart patched moving window : to do
@@ -245,18 +270,17 @@ int main (int argc, char* argv[])
                     timers.loadBal.update( params.printNow( itime ) );
                 }
             }
-        
+
             // print message at given time-steps
             // --------------------------------
             if ( smpi.isMaster() &&  params.printNow( itime ) )
                 params.print_timestep(itime, time_dual, timers.global); //contain a timer.update !!!
 
             itime++;
-            
+
         }//END of the time loop
 
     } //End omp parallel region
-
     
     smpi.barrier();
     
@@ -265,7 +289,7 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     TITLE("End time loop, time dual = " << time_dual);
     timers.global.update();
-    
+
     TITLE("Time profiling : (print time > 0.001%)");
     timers.profile(&smpi);
     
@@ -273,11 +297,11 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     //                      Temporary validation diagnostics
     // ------------------------------------------------------------------
-    
+
     if (latestTimeStep==params.n_time)
         vecPatches.runAllDiags(params, smpi, &diag_flag, params.n_time, timer, simWindow);
 */
-    
+
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
@@ -288,7 +312,7 @@ int main (int argc, char* argv[])
     TITLE("END");
     
     return 0;
-    
+
 }//END MAIN
 
 // ---------------------------------------------------------------------------------------------------------------------

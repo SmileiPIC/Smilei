@@ -10,15 +10,15 @@ Main(
     geometry = "2Dcartesian",
     
     interpolation_order = 2,
-    
+
     timestep = dt,
     sim_time = int(2*Lx/dt)*dt,
-    
+
     cell_length  = [dx, 3.],
     sim_length = [ Lx,  120.],
-    
+
     number_of_patches = [npatch_x, 4],
-    
+
     clrw = nx/npatch_x,
     
     EM_boundary_conditions = [
@@ -96,7 +96,7 @@ DiagProbe(
 )
 
 DiagScalar(
-    every = 10, 
+    every = 10,
     vars=[
         'Uelm','Ukin_electron',
         'ExMax','ExMaxCell','EyMax','EyMaxCell','RhoMin','RhoMinCell',
@@ -113,4 +113,3 @@ DiagParticleBinning(
         ["px", -1, 4., 100]
     ]
 )
-

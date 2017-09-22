@@ -21,6 +21,7 @@ Particle::Particle(Particles& parts, int iPart)
     Charge = parts.charge(iPart);
 
     if (parts.Chi.size()) Chi = parts.chi(iPart);
+    if (parts.Tau.size()) Tau = parts.tau(iPart);
     if (parts.Id.size())  Id  = parts.id(iPart);
 };
 
@@ -36,10 +37,9 @@ ostream& operator << (ostream& out, const Particle& particle)
 
     out << particle.Weight << " ";
     out << particle.Charge << " ";
-        
+
     if (0) out << particle.Id << " " ;
     if (0) out << particle.Chi << " " ;
-
+    if (0) out << particle.Tau << " " ;
     return (out);
 }
-

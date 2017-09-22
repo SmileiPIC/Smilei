@@ -10,7 +10,7 @@ Open a simulation
 ^^^^^^^^^^^^^^^^^^^
 
 In a *python* command line (or script), invoke the following class to open
-your :program:`Smilei` simulation. Note that several simulations can be opened at once, 
+your :program:`Smilei` simulation. Note that several simulations can be opened at once,
 as long as they correspond to several :ref:`restarts <Checkpoints>` of the same simulation.
 
 .. py:class:: Smilei(results_path=".", show=True, reference_angular_frequency_SI=None, verbose=True)
@@ -18,9 +18,9 @@ as long as they correspond to several :ref:`restarts <Checkpoints>` of the same 
   * ``results_path``: path or list of paths to the directory-ies
     where the results of the simulation-s are stored. It can also contain wildcards,
     such as ``*`` and ``?`` in order to include several simulations at once.
-  
+
   * ``show``: if True, figures will actually plot on screen. If False, make sure that
-    you have not loaded another simulation or the matplotlib package. You may need to 
+    you have not loaded another simulation or the matplotlib package. You may need to
     restart python.
   
   * ``reference_angular_frequency_SI``: overrides the value of the simulation parameter
@@ -45,7 +45,7 @@ Extract namelist information
 
 Once a simulation is opened as shown above, you can access the content of the namelist
 using the variable ``namelist``::
-  
+
   S = Smilei("path/to/my/results") # Open a simulation
   print S.namelist.Main.timestep   # print the timestep
   print S.namelist.Main.geometry   # print the simulation dimensions
@@ -54,7 +54,7 @@ All the variables defined in the original namelist are copied into this variable
 
 Concerning components like :ref:`Species`, :ref:`ExternalField` or :ref:`DiagProbe`, of which
 several instances may exist, you can directly iterate over them::
-  
+
   for species in S.namelist.Species:
       print "species "+species.name+" has mass "+str(species.mass)
 
@@ -75,7 +75,7 @@ Open a Scalar diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. py:method:: Smilei.Scalar(scalar=None, timesteps=None, units=[""], data_log=False, **kwargs)
-  
+
   * ``scalar``: The name of the scalar.
      | If not given, then a list of available scalars is printed.
   * ``timesteps``: The requested timestep(s).
@@ -88,7 +88,7 @@ Open a Scalar diagnostic
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
 **Example**::
-  
+
   S = Smilei("path/to/my/results")
   Diag = S.Scalar("Utot")
 
@@ -126,7 +126,7 @@ Open a Field diagnostic
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
 **Example**::
-  
+
   S = Smilei("path/to/my/results")
   Diag = S.Field(0, "Ex", average = {"x":[4,5]})
 
@@ -149,7 +149,7 @@ Open a Probe diagnostic
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
 **Example**::
-  
+
   S = Smilei("path/to/my/results")
   Diag = S.Probe(0, "Ex")
 
@@ -186,7 +186,7 @@ Open a ParticleBinning diagnostic
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
 **Example**::
-  
+
   S = Smilei("path/to/my/results")
   Diag = S.ParticleBinning(1)
 
@@ -208,7 +208,7 @@ Open a Screen diagnostic
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
 **Example**::
-  
+
   S = Smilei("path/to/my/results")
   Diag = S.Screen(0)
 
@@ -220,17 +220,17 @@ Open a Track diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 .. py:method:: Smilei.TrackParticles(species=None, select="", axes=[], timesteps=None, sort=True, length=None, units=[""], **kwargs)
-  
+
   * ``timesteps``, ``units``: same as before.
   * ``species``: the name of a tracked-particle species.
      | If omitted, a list of available tracked-particle species is printed.
   * ``select``: Instructions for selecting particles among those available.
     A detailed explanation is provided below
   * ``axes``: A list of axes for plotting the trajectories.
-     Each axis is ``"x"``, ``"y"``, ``"z"``, ``"px"``, ``"py"``, ``"pz"``, ``"q"`` (the charge) or ``"w"`` (the statistical weight).
-     
-     | **Example:** ``axes = ["x"]`` corresponds to :math:`x` versus time. 
-     | **Example:** ``axes = ["x","y"]`` correspond to 2-D trajectories. 
+     | Each axis is ``"x"``, ``"y"``, ``"z"``, ``"px"``, ``"py"``, ``"pz"``, ``"chi"`` (the quantum parameter), ``"q"`` (the charge) or ``"w"`` (the statistical weight).
+     | ``"chi"`` available only if the particle radiates.
+     | **Example:** ``axes = ["x"]`` corresponds to :math:`x` versus time.
+     | **Example:** ``axes = ["x","y"]`` correspond to 2-D trajectories.
      | **Example:** ``axes = ["x","px"]`` correspond to phase-space trajectories.
   * ``sort``: If ``False``, the particles are not sorted by ID. This can save significant
     time, but prevents plotting, exporting to VTK, and the ``select`` argument. Only
@@ -239,7 +239,7 @@ Open a Track diagnostic
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
 **Example**::
-  
+
   S = Smilei("path/to/my/results")
   Diag = S.TrackParticles("electrons", axes=["px","py"])
 
@@ -281,17 +281,17 @@ To change the units, all the methods :py:meth:`Scalar() <Smilei.Scalar>`, :py:me
 It has three different syntaxes:
 
 1. **A list**, for example ``units = ["um/ns", "feet", "W/cm^2"]``
-   
+
    In this case, any quantity found to be of the same dimension as one of these units
    will be converted.
 
 2. **A dictionary**, for example ``units = {"x":"um", "y":"um", "v":"Joule"}``
-   
+
    In this case, we specify the units separately for axes ``x`` and ``y``, and for the
    data values ``v``.
 
 3. **A** ``Units`` **object**, for example ``units = Units("um/ns", "feet", x="um")``
-   
+
    This version combines the two previous ones.
 
 .. rubric:: Requirements for changing units
@@ -318,15 +318,15 @@ Obtain the data
   In the case of ``TrackParticles``, this method returns a dictionary containing one
   entry for each axis, and if ``sort==True``, these entries are included inside an entry
   for each timestep.
-  
+
   All these methods have the following syntax.
 
   .. py:function:: getData( timestep=None )
-  
+
   where ``timestep``, if specified, is the only timestep number that is read and returned.
-  
+
   **Example**::
-  
+
       S = Smilei("path/to/results") # Open the simulation
       Diag = S.Field(0, "Ex")       # Open Ex in the first Field diag
       result = Diag.getData()       # Get list of Ex arrays (one for each time)
@@ -338,37 +338,37 @@ Obtain the data
                Smilei.ParticleBinning.get(...)
                Smilei.Screen.get(...)
                Smilei.TrackParticles.get(...)
-  
+
   Same syntax as :py:meth:`getData`, but returns a python dictionary containing various information:
   
   * ``get()["data"]`` is the same as ``getData()``.
   * ``get()["times"]`` is a list of the requested timesteps.
   * ``get()[myaxis]`` gives the locations of the axis bins. For instance ``get()["x"]``.
-  
+
   Exception: ``TrackParticles`` has no difference between ``get()`` and ``getData()``.
-  
+
   **Example**::
-    
+
       S = Smilei("path/to/results")  # Open the simulation
       Diag = S.ParticleBinning(3) # Open fourth particle diag
       result = Diag.get()            # Get the data
       result["data"] # This has the same value as Diag.getData()
       result["x"]    # This has the locations of the diag's bins along x
-    
+
 
 .. py:method:: Smilei.TrackParticles.iterParticles(timestep, chunksize=1)
-  
+
   This method, specific to the tracked particles, provides a fast iterator on chunks of particles
   for a given timestep. The argument ``chunksize`` is the number of particles in each chunk.
   Note that the data is *not ordered* by particle ID, meaning that particles are not ordered
   the same way from one timestep to another.
-  
+
   The returned quantity for each iteration is a python dictionary containing key/value
-  pairs ``axis:array``, where ``axis`` is the name of the particle characteristic (``"x"``, 
+  pairs ``axis:array``, where ``axis`` is the name of the particle characteristic (``"x"``,
   ``"px"``, etc.) and ``array`` contains the corresponding particle values.
-  
+
   **Example**::
-     
+
       S = Smilei("path/to/my/results")        # Open the simulation
       Diag = S.TrackParticles("my_particles") # Open the tracked particles
       npart = 0
@@ -394,24 +394,24 @@ at one given timestep.
                Smilei.ParticleBinning.plot(...)
                Smilei.TrackParticles.plot(...)
                Smilei.Screen.plot(...)
-  
+
   All these methods have the same arguments described below.
 
 .. py:function:: plot(timestep=None, saveAs=None, axes=None, **kwargs)
-  
+
   | If the data is 1D, it is plotted as a **curve**.
   | If the data is 2D, it is plotted as a **map**.
   | If the data is 0D, it is plotted as a **curve** as function of time.
-  
+
   * ``timestep``: The iteration number at which to plot the data.
   * ``saveAs``: name of a directory where to save each frame as figures.
     You can even specify a filename such as ``mydir/prefix.png`` and it will automatically
     make successive files showing the timestep: ``mydir/prefix0.png``, ``mydir/prefix1.png``,
     etc.
   * ``axes``: Matplotlib's axes handle on which to plot. If None, make new axes.
-  
+
   Other keyword-arguments (``kwargs``) include:
-  
+
   * ``figure``: The figure number that is passed to matplotlib.
   * ``vmin``, ``vmax``: data value limits.
   * ``xmin``, ``xmax``, ``ymin``, ``ymax``: axes limits.
@@ -419,9 +419,9 @@ at one given timestep.
   * ``side``: ``"left"`` (by default) or ``"right"`` puts the y-axis on the left- or the right-hand-side.
   * ``transparent``: ``None`` (by default), ``"over"``, ``"under"`` or ``"both"`` makes the colormap transparent outside the requested boundary.
   * Many Matplotlib arguments listed in :ref:`advancedOptions`.
-    
+
 **Example**::
-    
+
     S = Smilei("path/to/my/results")
     S.ParticleBinning(1).plot(timestep=40, vmin=0, vmax=1e14)
 
@@ -439,15 +439,15 @@ are streaked to produce a 2D image where the second axis is time.
                Smilei.ParticleBinning.streak(...)
                Smilei.TrackParticles.streak(...)
                Smilei.Screen.streak(...)
-  
+
   All these methods have the same arguments described below.
 
 .. py:function:: streak(saveAs=None, axes=None, **kwargs)
-  
+
   All arguments are identical to those of ``plot``, with the exception of ``timestep``.
 
 **Example**::
-    
+
     S = Smilei("path/to/my/results")
     S.ParticleBinning(1).streak()
 
@@ -464,20 +464,20 @@ This third plotting method animates the data over time.
                Smilei.ParticleBinning.animate(...)
                Smilei.TrackParticles.animate(...)
                Smilei.Screen.animate(...)
-  
+
   All these methods have the same arguments described below.
 
 .. py:function:: animate(movie="", fps=15, dpi=200, saveAs=None, axes=None)
-  
+
   All arguments are identical to those of ``streak``, with the addition of:
-  
+
   * ``movie``: name of a file to create a movie, such as ``"movie.avi"`` or  ``"movie.gif"``.
     If ``movie=""`` no movie is created.
   * ``fps``: number of frames per second (only if movie requested).
   * ``dpi``: number of dots per inch (only if movie requested).
 
 **Example**::
-    
+
     S = Smilei("path/to/my/results")
     S.ParticleBinning(1).animate()
 
@@ -487,15 +487,15 @@ Simultaneous plotting of multiple diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. py:function:: multiPlot(diag1, diag2, ... , **kwargs)
-  
+
   Makes an animated figure containing several plots (one for each diagnostic).
   If all diagnostics are of similar type, they may be overlayed on only one plot.
-  
+
   * ``diag1``, ``diag2``, etc.
      | Diagnostics prepared by ``Scalar()``, ``Field()``, ``Probe()``, etc.
-  
+
   Keyword-arguments ``kwargs`` are:
-  
+
   * ``figure``: The figure number that is passed to matplotlib (default is 1).
   * ``shape``: The arrangement of plots inside the figure. For instance, ``[2, 1]``
     makes two plots stacked vertically, and ``[1, 2]`` makes two plots stacked horizontally.
@@ -508,9 +508,9 @@ Simultaneous plotting of multiple diagnostics
     make successive files showing the timestep: ``mydir/prefix0.png``, ``mydir/prefix1.png``, etc.
   * ``skipAnimation`` : if True, plots only the last frame.
   * ``timesteps``: same as the ``timesteps`` argument of the :py:func:`plot` method.
-  
+
 **Example**::
-    
+
     S = Smilei("path/to/my/results")
     A = S.Probe(probeNumber=0, field="Ex")
     B = S.ParticleBinning(diagNumber=1)
@@ -562,7 +562,7 @@ Options for the tick labels: ``style_x``, ``scilimits_x``, ``useOffset_x``, ``st
 **Example**:
 
   To choose a gray colormap of the image, use ``cmap="gray"``::
-    
+
     S = Smilei("path/to/my/results")
     S.ParticleBinning(0, figure=1, cmap="gray") .plot()
 
@@ -581,10 +581,10 @@ Update the plotting options
                Smilei.Probe.set(*args)
                Smilei.ParticleBinning.set(*args)
                Smilei.Screen.set(*args)
-  
-  
+
+
   **Example**::
-    
+
     S = Smilei("path/to/my/results")
     A = ParticleBinning(diagNumber=0, figure=1, vmax=1)
     A.plot( figure=2 )
@@ -628,7 +628,7 @@ Open the simulation using::
   >>> from Smilei import *
   >>> S=Smilei("benchmarks/tst1d_6_diagnostics")
   Loaded simulation 'benchmarks/tst1d_6_diagnostics'
-  
+
 Print the list of available species using::
 
   >>> for species in S.namelist.Species: print species.name
@@ -637,7 +637,7 @@ Print the list of available species using::
   electron1
 
 Print the list of available ``Scalar`` diagnostics::
-  
+
   >>> S.Scalar()
   Diagnostic is invalid
   Printing available scalars:
@@ -661,17 +661,17 @@ Print the list of available ``ParticleBinning``::
   ------------------------------------------------
   Diag#0 - density of species # 1 
       Averaging over 2 timesteps
-      x from 0.0 to 6.28319 in 100 steps 
-      vx from -0.1 to 0.1 in 100 steps 
-  Diag#1 - density of species # 0 
-      x from 0.0 to 6.28319 in 100 steps 
-      vx from -0.001 to 0.001 in 100 steps 
-  Diag#2 - px_density of species # 1 
+      x from 0.0 to 6.28319 in 100 steps
+      vx from -0.1 to 0.1 in 100 steps
+  Diag#1 - density of species # 0
+      x from 0.0 to 6.28319 in 100 steps
+      vx from -0.001 to 0.001 in 100 steps
+  Diag#2 - px_density of species # 1
       Averaging over 2 timesteps
-      x from 0.0 to 6.28319 in 100 steps 
-      vx from -0.1 to 0.1 in 100 steps 
-  Diag#3 - density of species # 1 
-      ekin from 0.0001 to 0.1 in 100 steps  [ LOG SCALE ]  [ INCLUDING EDGES ] 
+      x from 0.0 to 6.28319 in 100 steps
+      vx from -0.1 to 0.1 in 100 steps
+  Diag#3 - density of species # 1
+      ekin from 0.0001 to 0.1 in 100 steps  [ LOG SCALE ]  [ INCLUDING EDGES ]
 
 
 .. rubric:: 3. Plot a scalar as a function of time
@@ -683,7 +683,7 @@ It is plotted as a function of time using::
 
 .. figure:: _static/Tutorial1.png
   :width: 10cm
-  
+
   Kinetic energy as a function of time
 
 A window appears showing an oscillation. This is due to the initial non-zero drift velocity
@@ -695,7 +695,7 @@ If you have the ``Pint`` package installed, you may also choose units for the pl
 
 .. figure:: _static/Tutorial2.png
   :width: 10cm
-  
+
   Kinetic energy as a function of time (displaying units)
 
 .. rubric:: 4. Plot a ParticleBinning diagnostic result at :math:`t=0`
@@ -709,7 +709,7 @@ in the initial conditions, using::
 
 .. figure:: _static/Tutorial3.png
   :width: 10cm
-  
+
   Phase-space of electrons at :math:`t=0`.
 
 A window appears. We can see that the electrons have indeed
@@ -722,7 +722,7 @@ To obtain the equivalent plot for the ions, use the ParticleBinning #1::
 
 .. figure:: _static/Tutorial4.png
   :width: 10cm
-  
+
   Phase-space of ions at :math:`t=0`.
 
 The ions clearly have a zero average velocity.
@@ -740,7 +740,7 @@ This is achieved by the argument ``sum``::
 
 .. figure:: _static/Tutorial5.png
   :width: 10cm
-  
+
   :math:`v_x` -distribution of electrons contained between :math:`x=3` and 4, at :math:`t=0`.
 
 We can see, again, that the peak is located at :math:`v_x=0.05c`.
@@ -751,7 +751,7 @@ Now, let us do the sum on :math:`v_x` instead of :math:`x`::
 
 .. figure:: _static/Tutorial6.png
   :width: 10cm
-  
+
   :math:`x` -distribution of electrons contained between :math:`v_x=-0.1` and :math:`0.1`, at :math:`t=0`.
 
 
@@ -786,7 +786,7 @@ on the same figure::
 
 .. figure:: _static/Tutorial7.png
   :width: 12cm
-  
+
   Two plots on the same figure.
 
 If the two plots are 1D, and are both of the same type, then they will
@@ -799,7 +799,7 @@ in the previous section::
 
 .. figure:: _static/Tutorial8.png
   :width: 10cm
-  
+
   Two curves in the same axes.
 
 
@@ -815,7 +815,7 @@ To do this operation, we need to indicate ``"#2/#0"`` instead of the diagnostic 
 
 .. figure:: _static/Tutorial9.png
   :width: 10cm
-  
+
   :math:`\left<p_x\right>` as a function of time.
 
 Note that we summed both axis to average the result over all particles.

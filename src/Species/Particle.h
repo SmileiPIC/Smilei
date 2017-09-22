@@ -13,7 +13,7 @@ public:
     Particle(Particles& parts, int iPart);
 
     ~Particle() {};
-    
+
     friend std::ostream& operator<<(std::ostream& os, const Particle& part);
 
 private:
@@ -25,12 +25,14 @@ private:
     std::vector<double>  Momentum;
     //! containing the particle weight: equivalent to a charge density
     double Weight;
-    //! containing the particle weight: equivalent to a charge density
+    //! containing the particle quantum parameter
     double Chi;
+    //! containing the particle optical depth    
+    double Tau;
     //! charge state of the particle (multiples of e>0)
     short Charge;
     //! Id of the particle
-    uint64_t Id;    
+    uint64_t Id;
 };
 
 #endif

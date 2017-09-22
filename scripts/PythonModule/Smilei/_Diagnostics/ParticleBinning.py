@@ -15,7 +15,7 @@ class ParticleBinning(Diagnostic):
 			if len(diags)==0:
 				self._error += "      No particle binning diagnostics found"
 			return
-		
+
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------
 		# Check the requested diags are ok
@@ -29,7 +29,7 @@ class ParticleBinning(Diagnostic):
 		else:
 			self._error = "Argument 'diagNumber' must be and integer or a string."
 			return
-		
+
 		# Get list of requested diags
 		self._myinfo = {}
 		self._diags = sorted(set([ int(d[1:]) for d in self._re.findall('#\d+',self.operation) ]))
@@ -63,7 +63,7 @@ class ParticleBinning(Diagnostic):
 					self._error = "In operation '"+self.operation+"', diagnostics #"+str(d)+" and #"\
 						+str(self._diags[0])+" must have the same shape."
 					return
-		
+
 		self._axes  = self._axes [self._diags[0]]
 		self._naxes = self._naxes[self._diags[0]]
 		
@@ -81,7 +81,7 @@ class ParticleBinning(Diagnostic):
 		
 		# Put data_log as object's variable
 		self._data_log = data_log
-		
+
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
 		# Get available timesteps
@@ -119,7 +119,7 @@ class ParticleBinning(Diagnostic):
 		# Now we need to keep only one array of timesteps because they should be all the same
 		self.times  = self.times [self._diags[0]]
 		self._times = self._times[self._diags[0]]
-		
+
 		# Need at least one timestep
 		if self.times.size < 1:
 			self._error = "Timesteps not found"
@@ -154,7 +154,7 @@ class ParticleBinning(Diagnostic):
 				centers = centers[:-1]
 			axis.update({ "edges"   : edges   })
 			axis.update({ "centers" : centers })
-			
+
 			# Find some quantities depending on the axis type
 			overall_min = "-inf"; overall_max = "inf"
 			axis_units = ""
@@ -180,6 +180,8 @@ class ParticleBinning(Diagnostic):
 				overall_min = "0"
 			elif axistype == "charge":
 				axis_units = "Q_r"
+				overall_min = "0"
+			elif axis["type"] == "chi":
 				overall_min = "0"
 			else:
 				self._error = "axis type "+axistype+" not implemented"
@@ -261,12 +263,12 @@ class ParticleBinning(Diagnostic):
 		for d in self._diags:
 			self._vunits = self._vunits.replace("#"+str(d), "( "+units[d]+" )")
 			self._title  = self._title .replace("#"+str(d), titles[d])
-		
+
 		# If any spatial dimension did not appear, then count it for calculating the correct density
 		if self._ndim>=1 and not spatialaxes["x"]: coeff /= self._ncels[0]*self._cell_length[0]
 		if self._ndim>=2 and not spatialaxes["y"]: coeff /= self._ncels[1]*self._cell_length[1]
 		if self._ndim==3 and not spatialaxes["z"]: coeff /= self._ncels[2]*self._cell_length[2]
-		
+
 		# Calculate the array that represents the bins sizes in order to get units right.
 		# This array will be the same size as the plotted array
 		if len(plot_diff)==0:
@@ -279,11 +281,11 @@ class ParticleBinning(Diagnostic):
 		self._bsize = cell_volume / self._bsize
 		if not hasComposite: self._bsize *= coeff
 		self._bsize = self._np.squeeze(self._bsize)
-		
+
 		# Set the directory in case of exporting
 		self._exportPrefix = "ParticleDiag_"+"-".join([str(d) for d in self._diags])
 		self._exportDir = self._setExportDir(self._exportPrefix)
-		
+
 		# Finish constructor
 		self.valid = True
 		return kwargs
@@ -331,24 +333,24 @@ class ParticleBinning(Diagnostic):
 					print("Particle binning diagnostic #"+str(diagNumber)+" in path '"+path+"' is incompatible with the other ones")
 					return False
 		return info
-	
-	
+
+
 	# Prints the info obtained by the function "getInfo"
 	@staticmethod
 	def _printInfo(info):
 		if not info:
 			return "Error while reading file(s)"
-		
+
 		# 1 - diag number, type and list of species
 		species = ""
 		for i in range(len(info["species"])): species += str(info["species"][i])+" " # reconstitute species string
 		printedInfo = "Diag#"+str(info["#"])+" - "+info["output"]+" of species # "+species+"\n"
-		
+
 		# 2 - period and time-averaging
 		tavg = "no time-averaging"
 		if (info["tavg"] > 1):
 			printedInfo += "    Averaging over "+str(info["tavg"])+" timesteps\n"
-		
+
 		# 3 - axes
 		for i in range(len(info["axes"])):
 			axis = info["axes"][i];
@@ -357,7 +359,7 @@ class ParticleBinning(Diagnostic):
 			printedInfo += "    "+axis["type"]+" from "+str(axis["min"])+" to "+str(axis["max"]) \
 				   +" in "+str(axis["size"])+" steps "+logscale+edges+"\n"
 		return printedInfo
-		
+
 	# Method to print info on all included diags
 	def _info(self):
 		info = ""
@@ -368,7 +370,7 @@ class ParticleBinning(Diagnostic):
 			if "sumInfo" in ax: info += ax["sumInfo"]+"\n"
 			if "subsetInfo" in ax: info += ax["subsetInfo"]+"\n"
 		return info
-	
+
 	def getDiags(self):
 		allDiags = []
 		for path in self._results_path:
@@ -379,7 +381,7 @@ class ParticleBinning(Diagnostic):
 			else:
 				allDiags = diags
 		return allDiags
-	
+
 	# get all available timesteps for a given diagnostic
 	def getAvailableTimesteps(self, diagNumber=None):
 		# if argument "diagNumber" not provided, return the times calculated in __init__
@@ -399,7 +401,7 @@ class ParticleBinning(Diagnostic):
 				f.close()
 			times = [int(t.strip("timestep")) for t in times]
 			return self._np.array(times)
-	
+
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):
 		if not self._validate(): return
@@ -409,7 +411,7 @@ class ParticleBinning(Diagnostic):
 			# find the index of the array corresponding to the requested timestep
 			try:
 				index = self._indexOfTime[d][t]
-			except: 
+			except:
 				print("Timestep "+str(t)+" not found in this diagnostic")
 				return []
 			# get data

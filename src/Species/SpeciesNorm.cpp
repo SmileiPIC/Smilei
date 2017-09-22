@@ -1,4 +1,4 @@
-#include "Species_norm.h"
+#include "SpeciesNorm.h"
 
 #include <iostream>
 
@@ -10,9 +10,9 @@
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Creator for Species_norm
+// Creator for SpeciesNorm
 // ---------------------------------------------------------------------------------------------------------------------
-Species_norm::Species_norm( Params& params, Patch* patch )
+SpeciesNorm::SpeciesNorm( Params& params, Patch* patch )
   : Species( params, patch )
 {
     DEBUG("Species is being created as norm");
@@ -20,9 +20,9 @@ Species_norm::Species_norm( Params& params, Patch* patch )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Destructor for Species_norm
+// Destructor for SpeciesNorm
 // ---------------------------------------------------------------------------------------------------------------------
-Species_norm::~Species_norm()
+SpeciesNorm::~SpeciesNorm()
 {
     DEBUG("Species norm deleted ");
 }

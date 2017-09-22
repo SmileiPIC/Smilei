@@ -21,14 +21,14 @@ def _add_metaclass(metaclass):
 
 class SmileiComponentType(type):
     """Metaclass to all Smilei components"""
-    
+
     # Constructor of classes
     def __init__(self, name, bases, attrs):
         self._list = []
         self._verify = True
         # Run standard metaclass init
         super(SmileiComponentType, self).__init__(name, bases, attrs)
-    
+
     # Functions to define the iterator
     def __iter__(self):
         self.current = 0
@@ -49,11 +49,11 @@ class SmileiComponentType(type):
                     return obj
         else:
             return self._list[key]
-    
+
     # Function to return the number of instances, for example len(Species)
     def __len__(self):
         return len(self._list)
-    
+
     # Function to display the list of instances
     def __repr__(self):
         if len(self._list)==0:
@@ -66,7 +66,7 @@ class SmileiComponentType(type):
 @_add_metaclass(SmileiComponentType)
 class SmileiComponent(object):
     """Smilei component generic class"""
-    
+
     # Function to initialize new components
     def _fillObjectAndAddToList(self, cls, obj, **kwargs):
         # add all kwargs as internal class variables
@@ -117,31 +117,31 @@ class SmileiComponent(object):
                     setattr(obj, key, value)
         # add the new component to the "_list"
         cls._list.append(obj)
-    
+
     # Constructor for all SmileiComponents
     def __init__(self, **kwargs):
         self._fillObjectAndAddToList(type(self), self, **kwargs)
-    
+
     def __repr__(self):
         return "<Smilei "+type(self).__name__+">"
 
 
 class SmileiSingletonType(SmileiComponentType):
     """Metaclass to all Smilei singletons"""
-    
+
     def __repr__(self):
         return "<Smilei "+str(self.__name__)+">"
 
 @_add_metaclass(SmileiSingletonType)
 class SmileiSingleton(SmileiComponent):
     """Smilei singleton generic class"""
-    
+
     # Prevent having two instances
     def __new__(cls, **kwargs):
         if len(cls._list) >= 1:
             raise Exception("ERROR in the namelist: cannot define block "+cls.__name__+"() twice")
         return super(SmileiSingleton, cls).__new__(cls)
-    
+
     # Constructor for all SmileiSingletons
     def __init__(self, **kwargs):
         self._fillObjectAndAddToList(type(self), type(self), **kwargs)
@@ -149,7 +149,7 @@ class SmileiSingleton(SmileiComponent):
 
 class Main(SmileiSingleton):
     """Main parameters"""
-    
+
     # Default geometry info
     geometry = None
     cell_length = []
@@ -164,12 +164,12 @@ class Main(SmileiSingleton):
     every_clean_particles_overhead = 100
     timestep = None
     timestep_over_CFL = None
-    
+
     # Poisson tuning
     solve_poisson = True
     poisson_iter_max = 50000
     poisson_error_max = 1.e-14
-    
+
     # Default fields
     maxwell_solver = 'Yee'
     EM_boundary_conditions = [["periodic"]]
@@ -179,7 +179,7 @@ class Main(SmileiSingleton):
     reference_angular_frequency_SI = 0.
     print_every = None
     random_seed = None
-    
+
     def __init__(self, **kwargs):
         # Load all arguments to Main()
         super(Main, self).__init__(**kwargs)
@@ -195,28 +195,28 @@ class Main(SmileiSingleton):
             else:
                 if Main.cell_length is None:
                     raise Exception("Need cell_length to calculate timestep")
-                
+
                 # Yee solver
                 if Main.maxwell_solver == 'Yee':
                     dim = int(Main.geometry[0])
                     if dim<1 or dim>3:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
                     Main.timestep = Main.timestep_over_CFL / math.sqrt(sum([1./l**2 for l in Main.cell_length]))
-                
+
                 # Grassi
                 elif Main.maxwell_solver == 'Grassi':
                     if Main.geometry == '2Dcartesian':
                         Main.timestep = Main.timestep_over_CFL * 0.7071067811*Main.cell_length[0];
                     else:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
-                        
+
                 # GrassiSpL
                 elif Main.maxwell_solver == 'GrassiSpL':
                     if Main.geometry == '2Dcartesian':
                         Main.timestep = Main.timestep_over_CFL * 0.6471948469*Main.cell_length[0];
                     else:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
-                
+
                 # None recognized solver
                 else:
                     raise Exception("timestep: maxwell_solver not implemented "+Main.maxwell_solver)
@@ -239,7 +239,7 @@ class Main(SmileiSingleton):
 
 class LoadBalancing(SmileiSingleton):
     """Load balancing parameters"""
-    
+
     every = 150
     initial_balance = True
     cell_load = 1.0
@@ -248,7 +248,7 @@ class LoadBalancing(SmileiSingleton):
 
 class MovingWindow(SmileiSingleton):
     """Moving window parameters"""
-    
+
     time_start = 0.
     velocity_x = 1.
 
@@ -292,8 +292,8 @@ class Species(SmileiComponent):
     thermal_boundary_temperature = []
     thermal_boundary_velocity = []
     pusher = "boris"
+    radiation_model = "none"
     time_frozen = 0.0
-    radiating = False
     boundary_conditions = [["periodic"]]
     ionization_model = "none"
     ionization_electrons = None
@@ -392,6 +392,37 @@ class PartWall(SmileiComponent):
     x = None
     y = None
     z = None
+
+# Radiation loss (continuous and MC algorithms)
+class RadiationReaction(SmileiComponent):
+    """
+    Fine-tuning of synchrotron-like radiation loss
+    (classical continuous, quantum correction, stochastics and MC algorithms)
+    """
+    # Table h parameters
+    h_chipa_min = 1e-3
+    h_chipa_max = 1e1
+    h_dim = 128
+    # Table integfochi parameters
+    integfochi_chipa_min = 1e-3
+    integfochi_chipa_max = 1e1
+    integfochi_dim = 128
+    # Table xip_chiphmin and xip parameters
+    xip_chipa_min = 1e-3
+    xip_chipa_max = 1e1
+    xip_power = 4
+    xip_threshold = 1e-3
+    xip_chipa_dim = 128
+    xip_chiph_dim = 128
+    # Output format, can be "ascii", "binary", "hdf5"
+    output_format = "hdf5"
+    # Threshold on chipa between the continuous and
+    # the discontinuous approaches
+    chipa_disc_min_threshold = 1e-2
+    # Threshold on chipa: if chipa < 1E-3 no radiation reaction
+    chipa_radiation_threshold = 1e-3
+    # Path the tables/databases
+    table_path = "./"
 
 # Smilei-defined
 smilei_mpi_rank = 0

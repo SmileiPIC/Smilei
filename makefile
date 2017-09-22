@@ -54,14 +54,33 @@ endif
 
 # Manage options in the "config" parameter
 ifneq (,$(findstring debug,$(config)))
-	CXXFLAGS += -g -pg -D__DEBUG -O0
+    CXXFLAGS += -g -pg -D__DEBUG -O0
+# With gdb
+else ifneq (,$(findstring gdb,$(config)))
+    CXXFLAGS += -v -da -Q
+
+# With valgrind
+else ifneq (,$(findstring valgrind,$(config)))
+    CXXFLAGS += -g  -O3
+
+# Scalasca
+else ifneq (,$(findstring scalasca,$(config)))
+    CXXFLAGS += -g  -O3
+    SMILEICXX = scalasca -instrument $(SMILEICXX)
+
+# With Intel Advisor
+else ifneq (,$(findstring advisor,$(config)))
+    CXXFLAGS += -g -O3 -qopt-report5
+
+# Optimization report
+else ifneq (,$(findstring opt-report,$(config)))
+    CXXFLAGS += -qopt-report5
+
+# Default configuration
 else
-	CXXFLAGS += -O3 
+    CXXFLAGS += -O3 #-xHost -no-prec-div -ipo
 endif
 
-ifneq (,$(findstring scalasca,$(config)))
-    SMILEICXX = scalasca -instrument $(SMILEICXX)
-endif
 
 ifeq (,$(findstring noopenmp,$(config)))
     OPENMP_FLAG ?= -fopenmp 

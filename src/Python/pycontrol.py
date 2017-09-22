@@ -22,7 +22,8 @@ def _smilei_check():
     # Verify classes were not overriden
     for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
             "DiagProbe","DiagParticleBinning", "DiagScalar","DiagFields","ExternalField",
-            "SmileiSingleton","Main","Checkpoints","LoadBalancing","MovingWindow"]:
+            "SmileiSingleton","Main","Checkpoints","LoadBalancing","MovingWindow",
+            "RadiationReaction"]:
         CheckClass = globals()[CheckClassName]
         try:
             if not CheckClass._verify: raise Exception("")
@@ -68,7 +69,7 @@ def _smilei_check():
         else :
             if Checkpoints.restart_dir:
                 raise Exception("restart_dir and restart_files are both not empty")
-            
+
 
 
     # Verify that constant() and tconstant() were not redefined
@@ -125,6 +126,3 @@ def _noNewComponents(cls, *args, **kwargs):
     print("Please do not create a new "+cls.__name__)
     return None
 SmileiComponent.__new__ = staticmethod(_noNewComponents)
-
-
-

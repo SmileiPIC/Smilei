@@ -1,9 +1,18 @@
+// -----------------------------------------------------------------------------
+//
+//! \file SpeciesFactory.h
+//
+//! \brief Contains the class SpeciesFactory that manages the
+//!        initialization of the species. For the moment,
+//!        only one kind of species exist.
+//
+// -----------------------------------------------------------------------------
+
 #ifndef SPECIESFACTORY_H
 #define SPECIESFACTORY_H
 
 #include "Species.h"
-#include "Species_norm.h"
-#include "Species_rrll.h"
+#include "SpeciesNorm.h"
 
 #include "PusherFactory.h"
 #include "IonizationFactory.h"
@@ -31,34 +40,79 @@ public:
             species_name=name.str();
             if (patch->isMaster() ) MESSAGE("For species #" << ispec << ", name will be " << species_name);
         }
-        
+
         // Extract type of species dynamics from namelist
         std::string pusher = "boris"; // default value
         if (!PyTools::extract("pusher", pusher ,"Species",ispec) )
             if ( patch->isMaster() ) WARNING("For species '" << species_name << "' pusher not defined: assumed = 'boris'.");
         
+        
+        // Extract type of species radiation from namelist
+        std::string radiation_model = "none"; // default value
+        if (!PyTools::extract("radiation_model", radiation_model ,"Species",ispec) )
+            if ( patch->isMaster() )
+                WARNING("For species '" << species_name << "' radiation_model not defined: assumed = 'none'.");
+        
         // Create species object
-        Species * thisSpecies=NULL;
-        if (pusher=="boris" || pusher == "borisnr") {
-             // Species with Boris (relativistic =='boris', nonrelativistic=='borisnr') dynamics
-             thisSpecies = new Species_norm(params, patch);
-        } else if (pusher=="vay") {
-             // Species with J.L. Vay dynamics
-             thisSpecies = new Species_norm(params, patch);
-        } else if (pusher=="higueracary") {
-             // Species with Higuary Cary dynamics
-             thisSpecies = new Species_norm(params, patch);
-        } else if (pusher=="rrll") {
-             // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
-             thisSpecies = new Species_rrll(params, patch);
+        Species * thisSpecies = NULL;
+
+        // Dynamics of the species
+        if (pusher =="boris"
+         || pusher == "borisnr"
+         || pusher == "vay"
+         || pusher =="higueracary") {
+             // Species with relativistic Boris pusher if  =='boris'
+             // Species with nonrelativistic Boris pusher == 'borisnr'
+             // Species with J.L. Vay pusher if == "vay"
+             // Species with Higuary Cary pusher if == "higueracary"
+             thisSpecies = new SpeciesNorm(params, patch);
         } else {
-            ERROR("For species `" << species_name << " pusher must be 'boris', 'borisnr', 'vay', 'higueracary' or 'rrll'")
+            ERROR("For species `" << species_name << "` pusher must be 'boris', 'borisnr', 'vay', 'higueracary'");
         }
-        
+        thisSpecies-> pusher = pusher;
+
+        // Radiation model of the species
+        // Species with a Monte-Carlo process for the radiation loss
+        if (radiation_model=="Monte-Carlo") {
+             thisSpecies->particles->isQuantumParameter = true;
+             thisSpecies->particles->isMonteCarlo = true;
+             thisSpecies->radiating = true;
+        }
+        // Species with another radiation loss model
+        else if (radiation_model=="Landau-Lifshitz"
+             ||  radiation_model=="corrected-Landau-Lifshitz"
+             ||  radiation_model=="Niel")
+        {
+             thisSpecies->particles->isQuantumParameter = true;
+             thisSpecies->radiating = true;
+        }
+        else if (radiation_model != "none")
+        {
+            ERROR("For species `" << species_name
+                                  << " radiation_model must be 'none',"
+                                  << " 'Landau-Lifshitz',"
+                                  << " 'corrected-Landau-Lifshitz',"
+                                  << " 'Niel' or 'Monte-Carlo'");
+        }
+        thisSpecies->radiation_model = radiation_model;
+
+        // Non compatibility
+        if ((pusher =="borisnr")
+        && (radiation_model=="Monte-Carlo"
+        || radiation_model=="Landau-Lifshitz"
+        || radiation_model=="corrected-Landau-Lifshitz"
+        || radiation_model=="Niel"))
+        {
+            ERROR("For species `" << species_name
+                                  << "` radiation_model `"
+                                  << radiation_model
+                                  << "` is not compatible with pusher "
+                                  << pusher);
+        }
+
         thisSpecies->name = species_name;
-        thisSpecies->pusher = pusher;
         thisSpecies->speciesNumber = ispec;
-        
+
         // Extract various parameters from the namelist
         
         PyTools::extract("position_initialization",thisSpecies->position_initialization ,"Species",ispec);
@@ -79,24 +133,18 @@ public:
                && (thisSpecies->momentum_initialization!="rectangular") ) {
             ERROR("For species '" << species_name << "' unknown momentum_initialization: "<<thisSpecies->momentum_initialization);
         }
-        
+
         PyTools::extract("c_part_max",thisSpecies->c_part_max,"Species",ispec);
-        
+
         if( !PyTools::extract("mass",thisSpecies->mass ,"Species",ispec) ) {
             ERROR("For species '" << species_name << "' mass not defined.");
         }
-        
+
         PyTools::extract("time_frozen",thisSpecies->time_frozen ,"Species",ispec);
         if (thisSpecies->time_frozen > 0 && thisSpecies->momentum_initialization!="cold") {
             if ( patch->isMaster() ) WARNING("For species '" << species_name << "' possible conflict between time-frozen & not cold initialization");
         }
-        
-        PyTools::extract("radiating",thisSpecies->radiating ,"Species",ispec);
-        if (thisSpecies->pusher=="rrll" && (!thisSpecies->radiating)) {
-            if ( patch->isMaster() ) WARNING("For species '" << species_name << "', pusher='rrll' forcing radiating=True");
-            thisSpecies->radiating=true;
-        }
-        
+                
         if( !PyTools::extract("boundary_conditions", thisSpecies->boundary_conditions, "Species", ispec)  )
             ERROR("For species '" << species_name << "', boundary_conditions not defined" );
         
@@ -151,24 +199,24 @@ public:
         // Manage the ionization parameters
         thisSpecies->atomic_number = 0;
         PyTools::extract("atomic_number", thisSpecies->atomic_number, "Species",ispec);
-        
+
         std::string model;
         if( PyTools::extract("ionization_model", model, "Species",ispec) && model!="none" ) {
-        
+
             thisSpecies->ionization_model = model;
-            
+
             if( ! PyTools::extract("ionization_electrons", thisSpecies->ionization_electrons, "Species",ispec) ) {
                 ERROR("For species '" << species_name << "' undefined ionization_electrons (required for ionization)");
             }
-            
+
             if( thisSpecies->atomic_number==0 ) {
                 ERROR("For species '" << species_name << "' undefined atomic_number (required for ionization)");
             }
         }
-        
+
         // Species geometry
         // ----------------
-        
+
         // Density
         bool ok1, ok2;
         PyObject *profile1, *profile2, *profile3;
@@ -228,33 +276,37 @@ public:
             // does a loop over all cells in the simulation
             // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
             thisSpecies->createParticles(params.n_space, params, patch, 0 );
-            
+
         }
         else
             thisSpecies->particles->initialize( 0, params.nDim_particle );
-        
+
         thisSpecies->initOperators(params, patch);
-        
+
         return thisSpecies;
     } // End Species* create()
 
-    
+
     // Method to clone a species from an existing one
     // Note that this must be only called from cloneVector, because additional init is needed
     static Species* clone(Species* species, Params &params, Patch* patch, bool with_particles = true) {
+
         // Create new species object
         Species * newSpecies = NULL;
-        if (species->pusher=="boris" 
-           || species->pusher=="higueracary"
-           || species->pusher=="vay"
-           || species->pusher=="borisnr") {
-            newSpecies = new Species_norm(params, patch); // Boris
-        } else if (species->pusher=="rrll") {
-            newSpecies = new Species_rrll(params, patch); // Boris + Radiation Reaction
+
+        if (species->pusher =="boris"
+        || species->pusher =="higueracary"
+        || species->pusher =="vay"
+        || species->pusher =="borisnr")
+        {
+            // Boris, Vay or Higuera-Cary
+            newSpecies = new SpeciesNorm(params, patch);
         }
+
         // Copy members
         newSpecies->name          = species->name;
         newSpecies->pusher         = species->pusher;
+        newSpecies->radiation_model       = species->radiation_model;
         newSpecies->speciesNumber         = species->speciesNumber;
         newSpecies->position_initialization     = species->position_initialization;
         newSpecies->momentum_initialization     = species->momentum_initialization;
@@ -286,6 +338,8 @@ public:
         
         newSpecies->particles->is_test    = species->particles->is_test;
         newSpecies->particles->tracked    = species->particles->tracked;
+        newSpecies->particles->isQuantumParameter  = species->particles->isQuantumParameter;
+        newSpecies->particles->isMonteCarlo        = species->particles->isMonteCarlo;
         
         // \todo : NOT SURE HOW THIS BEHAVES WITH RESTART
         if ( (!params.restart) && (with_particles) ) {
@@ -295,30 +349,30 @@ public:
             newSpecies->particles->initialize( 0, (*species->particles) );
 
         newSpecies->initOperators(params, patch);
-        
+
         return newSpecies;
     } // End Species* clone()
-    
-    
+
+
     static std::vector<Species*> createVector(Params& params, Patch* patch) {
         // this will be returned
         std::vector<Species*> retSpecies;
         retSpecies.resize(0);
-        
+
         // read from python namelist
         unsigned int tot_species_number = PyTools::nComponents("Species");
         for (unsigned int ispec = 0; ispec < tot_species_number; ispec++) {
             Species* thisSpecies = SpeciesFactory::create(params, ispec, patch);
-            
+
             // Put the newly created species in the vector of species
             retSpecies.push_back(thisSpecies);
-            
+
         }
-        
+
         // Loop species to find the electron species for ionizable species
         for (unsigned int ispec1 = 0; ispec1<retSpecies.size(); ispec1++) {
             if( ! retSpecies[ispec1]->Ionize ) continue;
-            
+
             // Loop all other species
             for (unsigned int ispec2 = 0; ispec2<retSpecies.size(); ispec2++) {
                 if( retSpecies[ispec1]->ionization_electrons == retSpecies[ispec2]->name) {
@@ -341,21 +395,21 @@ public:
                 ERROR("For species '"<<retSpecies[ispec1]->name<<"' ionization_electrons named " << retSpecies[ispec1]->ionization_electrons << " could not be found");
             }
         }
-        
+
         return retSpecies;
     }
-    
+
     // Method to clone the whole vector of species
     static std::vector<Species*> cloneVector(std::vector<Species*> vecSpecies, Params& params, Patch* patch, bool with_particles = true)
     {
         std::vector<Species*> retSpecies;
         retSpecies.resize(0);
-        
+
         for (unsigned int ispec = 0; ispec < vecSpecies.size(); ispec++) {
             Species* newSpecies = SpeciesFactory::clone(vecSpecies[ispec], params, patch, with_particles);
             retSpecies.push_back( newSpecies );
         }
-        
+
         for (unsigned int i=0; i<retSpecies.size(); i++) {
             if (retSpecies[i]->Ionize) {
                 retSpecies[i]->electron_species_index = vecSpecies[i]->electron_species_index;
@@ -364,7 +418,7 @@ public:
                 retSpecies[i]->Ionize->new_electrons.initialize(0, params.nDim_particle );
             }
         }
-        
+
         return retSpecies;
     }
 

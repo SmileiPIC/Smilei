@@ -28,7 +28,7 @@ public:
         Pusher* Push = NULL;
 
         // assign the correct Pusher to Push
-        if ( species->pusher == "boris" )
+        if ( species->pusher == "boris" || species->pusher == "nlics")
         {
             Push = new PusherBoris( params, species );
         }
@@ -36,10 +36,10 @@ public:
         {
             Push = new PusherBorisNR( params, species );
         }
-        else if ( species->pusher == "rrll" )
+        /*else if ( species->pusher == "rrll" )
         {
             Push = new PusherRRLL( params, species );
-        }
+        }*/
         else if ( species->pusher == "vay" )
         {
             Push = new PusherVay( params, species );

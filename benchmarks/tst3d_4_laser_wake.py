@@ -13,15 +13,15 @@ Main(
     geometry = "3Dcartesian",
     
     interpolation_order = 2,
-    
+
     timestep = dt,
     sim_time = int(2*Lx/dt)*dt,
-    
+
     cell_length  = [dx, dtrans, dtrans],
     sim_length = [ Lx,  Ltrans, Ltrans],
-    
+
     number_of_patches = [npatch_x, 4, 4],
-    
+
     clrw = nx/npatch_x,
     
     EM_boundary_conditions = [ ["silver-muller"] ],
@@ -118,4 +118,3 @@ DiagParticleBinning(
 		["px", -1, 2., 100]
 	]
 )
-
