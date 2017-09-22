@@ -23,11 +23,8 @@ doc/html
 */*.pyc
 */*/*.pyc
 */*/*/*.pyc
-<<<<<<< HEAD
 *.swo
 */*.swo
 */*/*.swo
 */*/*/*.swo
 
-=======
->>>>>>> develop
