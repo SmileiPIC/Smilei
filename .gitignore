@@ -5,10 +5,9 @@ build/*
 *~
 .depend
 validation/workdir*
-src/smilei
-src/smilei_test
+smilei
+smilei_test
 src/smilei.*
-*smilei
 *.aux
 *.dvi
 *.log

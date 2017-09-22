@@ -9,7 +9,7 @@ or *pull requests* for your changes to become part of the official releases.
 
 Note that most of the development of the code is currently hosted in
 a `different repository <https://llrgit.in2p3.fr/smilei/smilei>`_
-reserved for the :doc:`contact us <partners>`. It is regularly synchronized with
+reserved for the :doc:`partners`. It is regularly synchronized with
 the GitHub page.
 
 ----
