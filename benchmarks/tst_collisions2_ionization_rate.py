@@ -24,7 +24,7 @@ Main(
 	
 	EM_boundary_conditions = [ ["periodic"] ],
 	
-	referenceAngularFrequency_SI = L0 * 3e8 /1.e-6,
+	reference_angular_frequency_SI = L0 * 3e8 /1.e-6,
 
 	random_seed = smilei_mpi_rank	
 )

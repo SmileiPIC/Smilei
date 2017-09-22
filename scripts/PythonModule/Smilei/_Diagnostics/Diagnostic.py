@@ -62,10 +62,10 @@ class Diagnostic(object):
 		
 		# DEPRECATION ERRORS
 		if "slice" in kwargs:
-			self._error = "Argument `slice` is deprecated: use `average` instead."
+			self._error = "Argument `slice` is deprecated: use `subset` instead."
 			return
 		if "stride" in kwargs:
-			self._error = "Argument `stride` is deprecated: use `average` instead."
+			self._error = "Argument `stride` is deprecated: use `average` or `sum` instead."
 			return
 		
 		# Call the '_init' function of the child class

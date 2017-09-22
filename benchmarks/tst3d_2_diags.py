@@ -128,7 +128,7 @@ axes = [
 ]
 
 for axis in axes:
-	DiagParticles(
+	DiagParticleBinning(
 		output = "density",
 		every = 10,
 		species = ["test0"],
@@ -156,7 +156,7 @@ outputs = [
 ]
 
 for output in outputs:
-	DiagParticles(
+	DiagParticleBinning(
 		output = output,
 		every = 10,
 		species = ["test0"],

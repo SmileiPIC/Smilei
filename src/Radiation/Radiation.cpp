@@ -27,7 +27,7 @@ Radiation::Radiation(Params& params, Species * species)
 
     // Normalized Schwinger Electric Field
     norm_E_Schwinger = electron_mass*c_vacuum*c_vacuum
-                     / (red_planck_cst*params.referenceAngularFrequency_SI);
+                     / (red_planck_cst*params.reference_angular_frequency_SI);
 
     // Inverse of norm_E_Schwinger
     inv_norm_E_Schwinger = 1./norm_E_Schwinger;

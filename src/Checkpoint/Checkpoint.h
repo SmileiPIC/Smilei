@@ -115,7 +115,7 @@ private:
     //! exit once dump done
     bool exit_after_dump;
     
-    //! keep the last dump_file_sequence dump files
+    //! keep the last keep_n_dumps dump files
     unsigned int keep_n_dumps;    
     const unsigned int keep_n_dumps_max;
     

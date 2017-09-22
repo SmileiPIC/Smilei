@@ -64,8 +64,8 @@ void RadiationTables::initParams(Params& params)
         TITLE("Initializing Radiation loss")
 
         // Preliminary checks
-        if (params.referenceAngularFrequency_SI <= 0.)
-            ERROR("The parameter `referenceAngularFrequency_SI` needs "
+        if (params.reference_angular_frequency_SI <= 0.)
+            ERROR("The parameter `reference_angular_frequency_SI` needs "
                   << "to be defined and positive to compute radiation losses");
 
     }
@@ -146,7 +146,7 @@ void RadiationTables::initParams(Params& params)
     {
 
         // Computation of the normalized Compton wavelength
-        norm_lambda_compton = red_planck_cst*params.referenceAngularFrequency_SI
+        norm_lambda_compton = red_planck_cst*params.reference_angular_frequency_SI
                             / (electron_mass*c_vacuum*c_vacuum);
 
         // Computation of the factor factor_dNphdt

@@ -87,16 +87,15 @@ Main(
     timestep = dt,
     sim_time = Tsim,
 
-    bc_em_type_x = ['periodic'],
-    bc_em_type_y = ['periodic'],
+    EM_boundary_conditions = [['periodic'],['periodic']],
 
     random_seed = 0,
 
-    referenceAngularFrequency_SI = wr
+    reference_angular_frequency_SI = wr
 
 )
 
-ExtField(
+ExternalField(
     field = "Bz",
     profile = constant(B)
 )
@@ -106,9 +105,9 @@ ExtField(
 for i,radiation in enumerate(radiation_list):
 
     Species(
-        species_type = "electron_" + species_name_list[i],
-        initPosition_type = "centered",
-        initMomentum_type = "cold",
+        name = "electron_" + species_name_list[i],
+        position_initialization = "centered",
+        momentum_initialization = "cold",
         n_part_per_cell = 10,
         c_part_max = 1.0,
         mass = 1.0,
@@ -116,17 +115,13 @@ for i,radiation in enumerate(radiation_list):
         charge_density = n0_,
         mean_velocity = [0.0 ,v, 0.0],
         temperature = [0.],
-        dynamics_type = pusher,
+        pusher = pusher,
         radiation_model = radiation,
-        bc_part_type_xmin  = "none",
-        bc_part_type_xmax  = "none",
-        bc_part_type_ymin = "none",
-        bc_part_type_ymax = "none",
-        bc_part_type_zmin = "none",
-        bc_part_type_zmax = "none",
-#        track_every = 1,
-#        track_flush_every = 1000,
-#        isTest = False
+        boundary_conditions = [
+            ["periodic", "periodic"],
+            ["periodic", "periodic"],
+            ["periodic", "periodic"],
+        ],
     )
 
 RadiationReaction(
