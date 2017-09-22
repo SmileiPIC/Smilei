@@ -35,29 +35,25 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 SmileiMPI::SmileiMPI( int* argc, char*** argv )
 {
+    test_mode = false;
+    
     // Send information on current simulation
     int mpi_provided;
-
+    
 #ifdef _OPENMP
     MPI_Init_thread( argc, argv, MPI_THREAD_MULTIPLE, &mpi_provided );
     if (mpi_provided != MPI_THREAD_MULTIPLE){
-        ERROR("MPI_THREAD_MULTIPLE not supported. Compile your MPI ibrary with THREAD_MULTIPLE support.");
+        ERROR("MPI_THREAD_MULTIPLE not supported. Compile your MPI library with THREAD_MULTIPLE support.");
     }
+    smilei_omp_max_threads = omp_get_max_threads();
 #else
     MPI_Init( argc, argv );
+    smilei_omp_max_threads = 1;
 #endif
 
     SMILEI_COMM_WORLD = MPI_COMM_WORLD;
     MPI_Comm_size( SMILEI_COMM_WORLD, &smilei_sz );
     MPI_Comm_rank( SMILEI_COMM_WORLD, &smilei_rk );
-
-    MESSAGE("                   _            _");
-    MESSAGE(" ___           _  | |        _  \\ \\   Version : " << __VERSION);
-    MESSAGE("/ __|  _ __   (_) | |  ___  (_)  | |   ");
-    MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |");
-    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |  ");
-    MESSAGE("                                /_/    ");
-    MESSAGE("");
 
 } // END SmileiMPI::SmileiMPI
 

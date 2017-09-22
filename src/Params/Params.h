@@ -220,11 +220,6 @@ public:
     //! check if python can be closed (e.g. there is no laser python profile)
     //! by calling the _keep_python_running python function (part of pycontrol.pyh)
     void cleanup(SmileiMPI*);
-
-    //! close Python
-    static void closePython();
-
-
     //! Method to find the numbers of requested species, sorted, and duplicates removed
     static std::vector<unsigned int> FindSpecies(std::vector<Species*>&, std::vector<std::string>);
 

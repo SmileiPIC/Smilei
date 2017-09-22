@@ -6,7 +6,7 @@ Run
 Before you launch :program:`Smilei`, :doc:`write a namelist file<namelist>`
 containing all the information of your simulation (grid shape, particles, lasers, diagnostics, etc.).
 
-You can also start by picking up one simulation from the ``benchmarks`` directory.
+You can also start from an example provided in the ``benchmarks`` directory.
 
 ----
 
@@ -24,19 +24,24 @@ The command-line arguments ``arg1``, ``arg2``, ``arg3`` (etc.) can be:
 * the path to a namelist
 * any *python* instruction that you want to execute during the namelist reading.
 
-For example, you can run your namelist ``my_namelist.py`` and 
-add an additional instruction ``print_every=10``:
+The simplest example, to run your namelist ``my_namelist.py``, is
 
 .. code-block:: bash
   
-  ./smilei  my_namelist.py  "print_every=10"
+  ./smilei  my_namelist.py
+
+You may also add an additional instruction to be appended at the end of the namelist:
+
+.. code-block:: bash
+  
+  ./smilei  my_namelist.py  "Main.print_every=10"
 
 Note that, in addition, you will generally use the ``mpirun`` or ``mpiexec`` command
 to run :program:`Smilei` on several MPI processes:
 
 .. code-block:: bash
   
-  mpirun -n 4 ./smilei  my_namelist.py  "print_every=10"
+  mpirun -n 4 ./smilei  my_namelist.py  "Main.print_every=10"
 
 If you want to run several openMP threads per MPI processes, you usually have to set
 the following environment variable to the desired number of threads before running
@@ -48,6 +53,34 @@ the following environment variable to the desired number of threads before runni
 
 When running :program:`Smilei`, the output log will remind you how many MPI processes and openMP threads
 your simulation is using.
+
+----
+
+Running in *test mode*
+^^^^^^^^^^^^^^^^^^^^^^
+
+A second executable ``smilei_test`` is available (after the usual compilation)
+to run in the *test mode*:
+
+.. code-block:: bash
+  
+  ./smilei_test my_namelist.py
+
+This *test mode* does the same initialization as the normal mode,
+except it only loads the first patch of the full simulation. After initialization,
+the test mode exits so that the PIC loop is *not* computed.
+
+This mode may be used to check the consistency of the namelist, and to make sure
+simple errors will not occur. It does not check all possible errors, but it runs fast.
+
+Running in **test mode requires to run on 1 MPI process only**. However, it is possible
+to indicate what is the partition of MPI processes and OpenMP threads intended for the
+actual simulation. For instance, to test your namelist that is intended to run on 1024 MPI
+processes, each hosting 12 OpenMP threads, use the following syntax:
+
+.. code-block:: bash
+  
+  ./smilei_test 1024 12 my_namelist.py
 
 ----
 
@@ -117,7 +150,7 @@ In debug mode, these C++ macros are activated:
 ----
 
 Known issues
-^^^^^^^^^
+^^^^^^^^^^^^
 
 * When running with ``openmpi 2.1``, it appears that the so called ``vader`` protocol interferes with :program:`Smilei`'s
   memory management and comunications. We therefore recommend to disable this protocol when running ``mpirun`` as follows:
@@ -132,4 +165,4 @@ Known issues
 Reporting bugs
 ^^^^^^^^^^^^^^
 
-To report bugs, please create an issues on the `github page <https://github.com/SmileiPIC/Smilei/issues/new>`_ .
+To report bugs, please create an issue on the `github page <https://github.com/SmileiPIC/Smilei/issues/new>`_ .
