@@ -312,6 +312,63 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
   The :ref:`particle binning diagnostics <DiagParticleBinning>` accept an "axis" called ``moving_x``
   corresponding to the `x` coordinate corrected by the moving window's current movement.
   
+
+----
+
+.. _CurrentFilter:
+
+Current filtering
+^^^^^^^^^^^^^^^^^
+
+The present version of :program:`Smilei` provides one method for current filtering,
+which parameters are controlled in the following block::
+
+  CurrentFilter(
+      model = "binomial",
+      passes = 0,
+  )
+
+.. py:data:: model
+  
+  :default: ``"binomial"``
+  
+  The model for current filtering. Presently, only ``"binomial"`` current filtering is available.
+
+.. py:data:: passes
+  
+  :default: ``0``
+  
+  The number of passes in the filter at each timestep.
+
+
+----
+
+.. _FieldFilter:
+
+Field filtering
+^^^^^^^^^^^^^^^^^
+
+The present version of :program:`Smilei` provides one method for field filtering,
+which parameters are controlled in the following block::
+
+  FieldFilter(
+      model = "Friedman",
+      theta = 0.,
+  )
+
+.. py:data:: model
+  
+  :default: ``"Friedman"``
+  
+  The model for field filtering. Presently, only ``"Friedman"`` field filtering is available.
+
+.. py:data:: theta
+  
+  :default: ``0.``
+  
+  The :math:`\theta` parameter (between 0 and 1) of Friedman's method.
+
+
 ----
 
 .. _Species:

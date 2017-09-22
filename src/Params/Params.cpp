@@ -256,16 +256,30 @@ namelist("")
     // Maxwell Solver
     PyTools::extract("maxwell_solver", maxwell_sol, "Main");
     
-    // Filtering Method Parameters
-    PyTools::extract("currentFilter_int", currentFilter_int, "Main"); // nb of passes for binomial filering (default=0)
-    PyTools::extract("Friedman_filter",Friedman_filter, "Main");      // is Friedman filter applied (default=False)
-    PyTools::extract("Friedman_theta",Friedman_theta, "Main");        // Friedman filtering parameter (default=0)
-    if ( (!Friedman_filter) && (Friedman_theta!=0.) )
-        WARNING("Friedman filter is not applied even though parameter theta = "<<Friedman_theta);
-    if ( Friedman_filter && (Friedman_theta==0.) )
-        WARNING("Friedman filter is applied but parameter theta is set to zero");
-    if ( (Friedman_theta<0.) || (Friedman_theta>1.) )
-        ERROR("Friedman filter = " << Friedman_theta << " needs to be in between 0 and 1");
+    // Current filter properties
+    int nCurrentFilter = PyTools::nComponents("CurrentFilter");
+    for (int ifilt = 0; ifilt < nCurrentFilter; ifilt++) {
+        string model;
+        PyTools::extract("model", model, "CurrentFilter", ifilt);
+        if( model != "binomial" )
+            ERROR("Currently, only the `binomial` model is available in CurrentFilter()");
+        PyTools::extract("passes", currentFilter_passes, "CurrentFilter", ifilt);
+    }
+    
+    // Field filter properties
+    int nFieldFilter = PyTools::nComponents("FieldFilter");
+    for (int ifilt = 0; ifilt < nFieldFilter; ifilt++) {
+        string model;
+        PyTools::extract("model", model, "FieldFilter", ifilt);
+        if( model != "Friedman" )
+            ERROR("Currently, only the `Friedman` model is available in FieldFilter()");
+        Friedman_filter = true;
+        PyTools::extract("theta", Friedman_theta, "FieldFilter", ifilt);
+        if ( Friedman_filter && (Friedman_theta==0.) )
+            WARNING("Friedman filter is applied but parameter theta is set to zero");
+        if ( (Friedman_theta<0.) || (Friedman_theta>1.) )
+            ERROR("Friedman filter theta = " << Friedman_theta << " must be between 0 and 1");
+    }
     
     
     // testing the CFL condition
@@ -452,8 +466,6 @@ void Params::setDimensions()
 // ---------------------------------------------------------------------------------------------------------------------
 void Params::print_init()
 {
-    // Numerical parameters
-    // ---------------------
     TITLE("Geometry: " << geometry);
     MESSAGE(1,"(nDim_particle, nDim_field) : (" << nDim_particle << ", "<< nDim_field << ")");
     MESSAGE(1,"Interpolation_order : " <<  interpolation_order);
@@ -465,6 +477,11 @@ void Params::print_init()
         MESSAGE(1,"dimension " << i << " - (res_space, sim_length) : (" << res_space[i] << ", " << sim_length[i] << ")");
         MESSAGE(1,"            - (n_space_global,  cell_length) : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
     }
+    
+    if( currentFilter_passes > 0 )
+        MESSAGE(1, "Binomial current filtering : "<< currentFilter_passes << " passes");
+    if( Friedman_filter )
+        MESSAGE(1, "Friedman field filtering : theta = " << Friedman_theta);
     
     if (balancing_every > 0){
         TITLE("Load Balancing: ");

@@ -95,13 +95,16 @@ class SmileiComponent(object):
                 "pos_first" :"corners or vectors",
                 "pos_second":"corners or vectors",
                 "pos_third" :"corners or vectors",
-                "track_every"      :"DiagTrackParticles()",
-                "track_flush_every":"DiagTrackParticles()",
-                "track_filter"     :"DiagTrackParticles()",
-                "species_type":"name",
-                "dynamics_type":"pusher",
-                "coef_cell":"cell_load",
-                "coef_frozen":"frozen_particle_load",
+                "track_every"      :"the block DiagTrackParticles()",
+                "track_flush_every":"the block DiagTrackParticles()",
+                "track_filter"     :"the block DiagTrackParticles()",
+                "species_type"     :"name",
+                "dynamics_type"    :"pusher",
+                "coef_cell"        :"cell_load",
+                "coef_frozen"      :"frozen_particle_load",
+                "currentFilter_int":"the block CurrentFilter()",
+                "Friedman_filter"  :"the block FieldFilter()",
+                "Friedman_theta"   :"the block FieldFilter()",
             }
             for key, value in kwargs.items():
                 if key in deprecated:
@@ -171,9 +174,6 @@ class Main(SmileiSingleton):
     maxwell_solver = 'Yee'
     EM_boundary_conditions = [["periodic"]]
     time_fields_frozen = 0.
-    currentFilter_int = 0
-    Friedman_filter = False
-    Friedman_theta = 0.
     
     # Default Misc
     reference_angular_frequency_SI = 0.
@@ -262,6 +262,15 @@ class Checkpoints(SmileiSingleton):
     file_grouping = None
     restart_files = []
 
+class CurrentFilter(SmileiSingleton):
+    """Current filtering parameters"""
+    model = "binomial"
+    passes = 0
+
+class FieldFilter(SmileiSingleton):
+    """Fields filtering parameters"""
+    model = "Friedman"
+    theta = 0.
 
 class Species(SmileiComponent):
     """Species parameters"""
