@@ -22,10 +22,10 @@ public:
     double dx;
     double dy;
     double delta_x;
-    double beta_x;
-    double beta_y;
-    double Beta_x;
-    double Beta_y;
+    double beta_xy;
+    double beta_yx;
+    double alpha_x;
+    double alpha_y;
 
 protected:
 

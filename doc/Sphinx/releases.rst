@@ -15,10 +15,11 @@ but the process is fast and straightforward.
 Upcoming changes
 ^^^^^^^^^^^^^^^^
 
+* :doc:`Syntax changes<syntax_changes>` in the namelist
 * Monte Carlo QED photon emission
 * Moving window along y and z
 * Tracking particles in *Screens*
-* :doc:`Syntax changes<syntax_changes>`
+* *Test mode* to quickly check the namelist consistency
 
 ----
 

@@ -153,8 +153,12 @@ class Diagnostic(object):
 		return data
 	
 	# Method to obtain the data and the axes
-	def get(self):
+	def get(self, timestep=None):
 		"""Obtains the data from the diagnostic and some additional information.
+		
+		Parameters:
+		-----------
+		timestep: int (default: None, which means all available timesteps)
 		
 		Returns:
 		--------
@@ -163,7 +167,7 @@ class Diagnostic(object):
 		"""
 		if not self._validate(): return
 		# obtain the data arrays
-		data = self.getData()
+		data = self.getData(timestep=timestep)
 		# format the results into a dictionary
 		result = {"data":data, "times":self.times}
 		for i in range(len(self._type)):

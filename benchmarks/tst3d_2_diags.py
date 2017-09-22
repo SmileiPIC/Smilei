@@ -109,3 +109,57 @@ DiagProbe(
     fields = []
 )
 
+axes = [
+	["x"        , 0., Main.sim_length[0], 10],
+	["y"        , 0., Main.sim_length[1], 10],
+	["z"        , 0., Main.sim_length[2], 10],
+	["px"       , -0.0001, 0.0001, 30],
+	["py"       , -0.0001, 0.0001, 30],
+	["pz"       , -0.0001, 0.0001, 30],
+	["p"        , 0., 0.0001, 30],
+	["gamma"    , 1., 1.+1e-5, 30], # precision insufficient
+	["ekin"     , 0., 1e-9, 30],
+	["vx"       , -0.0001, 0.0001, 30],
+	["vy"       , -0.0001, 0.0001, 30],
+	["vz"       , -0.0001, 0.0001, 30],
+	["v"        , 0., 0.0001, 30],
+	["vperp2"   , 0., 1e-9, 30],
+	["charge"   , -5., 5., 10],
+]
+
+for axis in axes:
+	DiagParticles(
+		output = "density",
+		every = 10,
+		species = ["test0"],
+		axes = [axis]
+	)
+
+outputs = [
+	"density"        ,
+	"charge_density" ,
+	"jx_density"     ,
+	"jy_density"     ,
+	"jz_density"     ,
+	"ekin_density"   ,
+	"p_density"      ,
+	"px_density"     ,
+	"py_density"     ,
+	"pz_density"     ,
+	"pressure_xx"    ,
+	"pressure_yy"    ,
+	"pressure_zz"    ,
+	"pressure_xy"    ,
+	"pressure_xz"    ,
+	"pressure_yz"    ,
+	"ekin_vx_density",
+]
+
+for output in outputs:
+	DiagParticles(
+		output = output,
+		every = 10,
+		species = ["test0"],
+		axes = [["x" , 0., Main.sim_length[0], 10]]
+	)
+

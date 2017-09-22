@@ -91,7 +91,7 @@ endif
 
 EXEC = smilei
 
-default: $(EXEC)
+default: $(EXEC) $(EXEC)_test
 
 clean:
 	@echo "Cleaning $(BUILD_DIR)"
@@ -101,7 +101,7 @@ clean:
 	$(Q) rm -rf doc/html
 
 distclean: clean uninstall_python
-	$(Q) rm -f $(EXEC)
+	$(Q) rm -f $(EXEC) $(EXEC)_test
 # Deprecated rules
 obsolete:
 	@echo "[WARNING] Please consider using make config=\"$(MAKECMDGOALS)\""
@@ -124,13 +124,26 @@ $(BUILD_DIR)/%.d: %.cpp
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
 	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MG -MM -MP -MT"$@ $(@:.d=.o)" $<
 
+# Compile cpps
 $(BUILD_DIR)/%.o : %.cpp
 	@echo "Compiling $<"
 	$(Q) $(SMILEICXX) $(CXXFLAGS) -c $< -o $@
 
+# Link the main program
 $(EXEC): $(OBJS)
 	@echo "Linking $@"
 	$(Q) $(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS) 
+	$(Q) cp $(BUILD_DIR)/$@ $@
+
+# Compile the the main program again for test mode
+$(BUILD_DIR)/src/Smilei_test.o: src/Smilei.cpp $(EXEC)
+	@echo "Compiling src/Smilei.cpp for test mode"
+	$(Q) $(SMILEICXX) $(CXXFLAGS) -DSMILEI_TESTMODE -c src/Smilei.cpp -o $@
+
+# Link the main program for test mode
+$(EXEC)_test : $(OBJS:Smilei.o=Smilei_test.o)
+	@echo "Linking $@ for test mode"
+	$(Q) $(SMILEICXX) $(OBJS:Smilei.o=Smilei_test.o) -o $(BUILD_DIR)/$@ $(LDFLAGS)
 	$(Q) cp $(BUILD_DIR)/$@ $@
 
 # Avoid to check dependencies and to create .pyh if not necessary

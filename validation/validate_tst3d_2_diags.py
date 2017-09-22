@@ -30,3 +30,11 @@ fields     = ["Ex", "Ey", "Ez", "Bx", "By", "Bz", "Jx", "Jy", "Jz", "Rho"]
 precisions = [0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01 , 0.3  ]
 for field, precision in zip(fields, precisions):
 	Validate("Probe field "+field, S.Probe(0, field).getData()[-1], precision)
+
+# PARTICLE BINNING DIAGNOSTICS
+precision = [0.01, 0.01, 0.01, 100., 100., 100., 100., 1., 5e7, 100., 100., 100., 100., 5e7, 2e-3]
+for i, axis in enumerate(S.namelist.axes):
+	Validate("Particle binning axis "+axis[0], S.ParticleDiagnostic(i, timesteps=40).getData()[-1], precision[i])
+precision = [2e-3, 0.01, 0.01, 1e-7, 1e-7, 1e-7, 2e-12, 2e-7, 1e-7, 1e-7, 1e-7, 1e-12, 1e-12, 1e-12, 1e-12, 1e-12, 1e-12]
+for j, output in enumerate(S.namelist.outputs):
+	Validate("Particle binning output "+output, S.ParticleDiagnostic(i+j, timesteps=40).getData()[-1], precision[j])

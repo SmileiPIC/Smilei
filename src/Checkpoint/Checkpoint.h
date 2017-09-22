@@ -38,6 +38,7 @@ public:
     unsigned int nDim_particle;
     
     //! restart everything to file per processor
+    void readPatchDistribution( SmileiMPI* smpi, SimWindow* simWin );
     void restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindow* simWin, Params &params, OpenPMDparams& openPMD);
     void restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecSpecies, Params& params, hid_t patch_gid );
     

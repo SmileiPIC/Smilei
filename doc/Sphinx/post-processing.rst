@@ -332,14 +332,14 @@ Obtain the data
       result = Diag.getData()       # Get list of Ex arrays (one for each time)
 
 
-.. py:method:: Smilei.Scalar.get()
-               Smilei.Field.get()
-               Smilei.Probe.get()
-               Smilei.ParticleBinning.get()
-               Smilei.Screen.get()
-               Smilei.TrackParticles.get()
+.. py:method:: Smilei.Scalar.get(...)
+               Smilei.Field.get(...)
+               Smilei.Probe.get(...)
+               Smilei.ParticleBinning.get(...)
+               Smilei.Screen.get(...)
+               Smilei.TrackParticles.get(...)
   
-  Similar to :py:meth:`getData`, but returns a python dictionary containing various information:
+  Same syntax as :py:meth:`getData`, but returns a python dictionary containing various information:
   
   * ``get()["data"]`` is the same as ``getData()``.
   * ``get()["times"]`` is a list of the requested timesteps.
@@ -518,7 +518,7 @@ Simultaneous plotting of multiple diagnostics
 
 ..
 
-  This plots a Probe and a ParticleBinning diagnostic on the same figure, and makes an animation for all available timesteps.
+  This plots a Probe and a ParticleBinning on the same figure, and makes an animation for all available timesteps.
 
 
 ----

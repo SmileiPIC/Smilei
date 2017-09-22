@@ -378,10 +378,8 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
 };
 
 
-void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindow* simWin, Params &params, OpenPMDparams& openPMD )
+void Checkpoint::readPatchDistribution( SmileiMPI* smpi, SimWindow* simWin )
 {
-    MESSAGE(1, "READING fields and particles for restart");
-        
     hid_t fid = H5Fopen( restart_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
     if (fid < 0) ERROR(restart_file << " is not a valid HDF5 file");    
     
@@ -396,14 +394,24 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
         WARNING ("The code version that dumped the file is " << dump_version);
         WARNING ("                while running version is " << string(__VERSION));
     }
-    
-    // load window status
-    restartMovingWindow(fid, simWin);
-    
+
     vector<int> patch_count(smpi->getSize());
     H5::getVect( fid, "patch_count", patch_count );
     smpi->patch_count = patch_count;
-    vecPatches = PatchesFactory::createVector(params, smpi, openPMD, this_run_start_step+1, simWin->getNmoved());
+
+    // load window status : required to know the patch movement
+    restartMovingWindow(fid, simWin);
+
+    H5Fclose( fid );
+}
+
+
+void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindow* simWin, Params &params, OpenPMDparams& openPMD )
+{
+    MESSAGE(1, "READING fields and particles for restart");
+    
+    hid_t fid = H5Fopen( restart_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+    if (fid < 0) ERROR(restart_file << " is not a valid HDF5 file");    
     
     H5::getAttr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
     H5::getAttr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
