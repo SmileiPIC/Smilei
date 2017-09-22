@@ -5,7 +5,7 @@ stages:
 compile:
   stage: compile
   only:
-    - develop_fred
+    - develop
   script:
     # Move in test dir
     - mkdir -p /sps2/gitlab-runner/$CI_PIPELINE_ID
@@ -17,7 +17,7 @@ compile:
 makerun1D:
   stage: makerun
   only:
-    - develop_fred
+    - develop
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -27,7 +27,7 @@ makerun1D:
 makerun2D:
   stage: makerun
   only:
-    - develop_fred
+    - develop
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -37,7 +37,7 @@ makerun2D:
 makerun3D:
   stage: makerun
   only:
-    - develop_fred
+    - develop
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -47,7 +47,7 @@ makerun3D:
 makerunCollisions:
   stage: makerun
   only:
-    - develop_fred
+    - develop
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
