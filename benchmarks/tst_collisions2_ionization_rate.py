@@ -7,7 +7,7 @@ L0 = 2.*math.pi # conversion from normalization length to wavelength
 
 
 Main(
-	geometry = "1d3v",
+	geometry = "1Dcartesian",
 	
 	number_of_patches = [ 4 ],
 	

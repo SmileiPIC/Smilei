@@ -25,7 +25,7 @@ dt   = 0.95*dx/m.sqrt(1.)
 
 # MAIN SMILEI INPUT
 Main(
-     geometry = '1d3v',
+     geometry = '1Dcartesian',
      interpolation_order = 2,
      cell_length = [dx],
      sim_length  = [Lx],

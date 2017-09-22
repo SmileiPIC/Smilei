@@ -27,7 +27,7 @@ def n0_(x,y,z):
 
 
 Main(
-    geometry = "3d3v",
+    geometry = "3Dcartesian",
     
     interpolation_order = 2,
     

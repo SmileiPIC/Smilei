@@ -7,7 +7,7 @@ npatch_x = 128
 laser_fwhm = 19.80
 
 Main(
-    geometry = "2d3v",
+    geometry = "2Dcartesian",
     
     interpolation_order = 2,
     

@@ -201,14 +201,14 @@ class Main(SmileiSingleton):
                 
                 # Grassi
                 elif Main.maxwell_solver == 'Grassi':
-                    if Main.geometry == '2d3v':
+                    if Main.geometry == '2Dcartesian':
                         Main.timestep = Main.timestep_over_CFL * 0.7071067811*Main.cell_length[0];
                     else:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
                         
                 # GrassiSpL
                 elif Main.maxwell_solver == 'GrassiSpL':
-                    if Main.geometry == '2d3v':
+                    if Main.geometry == '2Dcartesian':
                         Main.timestep = Main.timestep_over_CFL * 0.6471948469*Main.cell_length[0];
                     else:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)

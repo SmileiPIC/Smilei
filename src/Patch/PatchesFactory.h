@@ -13,22 +13,22 @@ public:
     
     // Create one patch from scratch
     static Patch* create(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved=0) {
-        if (params.geometry == "1d3v")
+        if (params.geometry == "1Dcartesian")
             return new Patch1D(params, smpi, ipatch, n_moved);
-        else if (params.geometry == "2d3v") 
+        else if (params.geometry == "2Dcartesian") 
             return new Patch2D(params, smpi, ipatch, n_moved);
-        else if (params.geometry == "3d3v") 
+        else if (params.geometry == "3Dcartesian") 
             return new Patch3D(params, smpi, ipatch, n_moved);
         return nullptr;
     }
     
     // Clone one patch (avoid reading again the namelist)
     static Patch* clone(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved=0, bool with_particles = true) {
-        if (params.geometry == "1d3v")
+        if (params.geometry == "1Dcartesian")
             return new Patch1D(static_cast<Patch1D*>(patch), params, smpi, ipatch, n_moved, with_particles);
-        else if (params.geometry == "2d3v")
+        else if (params.geometry == "2Dcartesian")
             return new Patch2D(static_cast<Patch2D*>(patch), params, smpi, ipatch, n_moved, with_particles);
-        else if (params.geometry == "3d3v")
+        else if (params.geometry == "3Dcartesian")
             return new Patch3D(static_cast<Patch3D*>(patch), params, smpi, ipatch, n_moved, with_particles);
         return nullptr;
     }

@@ -69,7 +69,7 @@ void Patch::initStep1(Params& params)
     //Pcoordinates.resize(nDim_fields_);
     Pcoordinates.resize( 2 );
     
-    // else if ( params.geometry == "2d3v" ) {
+    // else if ( params.geometry == "2Dcartesian" ) {
     //     Pcoordinates.resize(3);
     //     generalhilbertindexinv(params.mi[0], params.mi[1], params.mi[2], &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
     // }

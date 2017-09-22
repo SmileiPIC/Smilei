@@ -10,7 +10,7 @@ rest = 110.0
 L = 2.0*math.pi
 
 Main(
-    geometry = "1d3v",
+    geometry = "1Dcartesian",
     interpolation_order = 2,
     
     cell_length = [L/resx],

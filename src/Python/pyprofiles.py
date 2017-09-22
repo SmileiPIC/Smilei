@@ -4,12 +4,12 @@ def constant(value, xvacuum=-float("inf"), yvacuum=-float("inf"), zvacuum=-float
     global Main
     if len(Main)==0:
         raise Exception("constant profile has been defined before `Main()`")
-    if Main.geometry == "1d3v":
+    if Main.geometry == "1Dcartesian":
         f = lambda x  : value if x>=xvacuum else 0.
-    if Main.geometry == "2d3v":
+    if Main.geometry == "2Dcartesian":
         f = lambda x,y: value if (x>=xvacuum and y>=yvacuum) else 0.
         f.yvacuum = yvacuum
-    if Main.geometry == "3d3v":
+    if Main.geometry == "3Dcartesian":
         f = lambda x,y,z: value if (x>=xvacuum and y>=yvacuum and z>=zvacuum) else 0.
         f.yvacuum = yvacuum
         f.zvacuum = zvacuum
@@ -43,9 +43,9 @@ def trapezoidal(max,
             # beyond the plasma
             else: return 0.0
         return f
-    if   Main.geometry == "1d3v": dim = 1
-    elif Main.geometry == "2d3v": dim = 2
-    elif Main.geometry == "3d3v": dim = 3
+    if   Main.geometry == "1Dcartesian": dim = 1
+    elif Main.geometry == "2Dcartesian": dim = 2
+    elif Main.geometry == "3Dcartesian": dim = 3
     fx = trapeze(max, xvacuum, xplateau, xslope1, xslope2)
     f = fx
     if dim > 1:
@@ -102,9 +102,9 @@ def gaussian(max,
             # beyond
             else: return 0.0
         return f
-    if Main.geometry == "1d3v": dim = 1
-    if Main.geometry == "2d3v": dim = 2
-    if Main.geometry == "3d3v": dim = 3
+    if Main.geometry == "1Dcartesian": dim = 1
+    if Main.geometry == "2Dcartesian": dim = 2
+    if Main.geometry == "3Dcartesian": dim = 3
     xsigma = (0.5*xfwhm)**xorder/math.log(2.0)
     fx = gauss(max, xvacuum, xlength, xsigma, xcenter, xorder)
     f = fx
@@ -188,9 +188,9 @@ def cosine(base,
             # beyond
             else: return 0.
         return f
-    if Main.geometry == "1d3v": dim = 1
-    if Main.geometry == "2d3v": dim = 2
-    if Main.geometry == "3d3v": dim = 3
+    if Main.geometry == "1Dcartesian": dim = 1
+    if Main.geometry == "2Dcartesian": dim = 2
+    if Main.geometry == "3Dcartesian": dim = 3
     fx = cos(base, xamplitude, xvacuum, xlength, xphi, xnumber)
     f = fx
     if dim > 1:
@@ -239,16 +239,16 @@ def polynomial(**kwargs):
             if type(a) is not list: a = [a]
             order = int(k[5:])
             coeffs[ order ] = a
-            if Main.geometry=="1d3v":
+            if Main.geometry=="1Dcartesian":
                 if len(a)!=1:
                     raise Exception("1D polynomial profile must have one coefficient at order "+str(order))
-            elif Main.geometry=="2d3v":
+            elif Main.geometry=="2Dcartesian":
                 if len(a)!=order+1:
                     raise Exception("2D polynomial profile must have "+str(order+1)+" coefficients at order "+str(order))
-            elif Main.geometry=="3d3v":
+            elif Main.geometry=="3Dcartesian":
                 if len(a)!=(order+1)*(order+2)/2:
                     raise Exception("3D polynomial profile must have "+str((order+1)*(order+2)/2)+" coefficients at order "+str(order))
-    if Main.geometry=="1d3v":
+    if Main.geometry=="1Dcartesian":
         def f(x):
             r = 0.
             xx0 = x-x0
@@ -260,7 +260,7 @@ def polynomial(**kwargs):
                     xx *= xx0
                 r += c[0] * xx
             return r
-    elif Main.geometry=="2d3v":
+    elif Main.geometry=="2Dcartesian":
         def f(x,y):
             r = 0.
             xx0 = x-x0
@@ -274,7 +274,7 @@ def polynomial(**kwargs):
                     xx = [ xxx * xx0 for xxx in xx ] + [yy]
                 for i in range(order+1): r += c[i]*xx[i]
             return r
-    elif Main.geometry=="3d3v":
+    elif Main.geometry=="3Dcartesian":
         def f(x,y,z):
             r = 0.
             xx0 = x-x0

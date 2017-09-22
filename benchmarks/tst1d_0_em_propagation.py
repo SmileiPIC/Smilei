@@ -5,7 +5,7 @@ rest = 102.0      # nb of timestep in 1 optical cycle
 resx = 100.0      # nb cells in 1 wavelength
 
 Main(
-    geometry = "1d3v",
+    geometry = "1Dcartesian",
     interpolation_order = 2,
     
     cell_length = [l0/resx],

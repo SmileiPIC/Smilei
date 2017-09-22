@@ -18,7 +18,7 @@ Uion = mi*cs*cs          # mean energy used to compute the ion spectrum
 
 
 Main(
-    geometry = "1d3v",
+    geometry = "1Dcartesian",
     
     interpolation_order = 2,
     

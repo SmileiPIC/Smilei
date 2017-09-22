@@ -27,9 +27,9 @@ public:
         emBoundCond.resize(2*params.nDim_field, NULL);
         
         // -----------------
-        // For 1d3v Geometry
+        // For 1Dcartesian Geometry
         // -----------------
-        if ( params.geometry == "1d3v" ) {
+        if ( params.geometry == "1Dcartesian" ) {
             
             
             // AT X = XMIN,XMAX
@@ -49,13 +49,13 @@ public:
                 }
             }
             
-        }//1d3v
+        }//1Dcartesian
         
         
         // -----------------
-        // For 2d3v Geometry
+        // For 2Dcartesian Geometry
         // -----------------
-        else if ( params.geometry == "2d3v" ) {
+        else if ( params.geometry == "2Dcartesian" ) {
             
             for (unsigned int ii=0;ii<2;ii++) {
                 // X DIRECTION
@@ -87,12 +87,12 @@ public:
                 }
             }
             
-        }//2d3v
+        }//2Dcartesian
         
         // -----------------
-        // For 3d3v Geometry
+        // For 3Dcartesian Geometry
         // -----------------
-        else if ( params.geometry == "3d3v" ) {
+        else if ( params.geometry == "3Dcartesian" ) {
             
             for (unsigned int ii=0;ii<2;ii++) {
                 // X DIRECTION
@@ -126,7 +126,7 @@ public:
                 }
             }
             
-        }//3d3v       
+        }//3Dcartesian       
 
 
         // OTHER GEOMETRIES ARE NOT DEFINED ---

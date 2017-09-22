@@ -82,7 +82,7 @@ Main variables
 The block ``Main`` is **mandatory** and has the following syntax::
   
   Main(
-      geometry = "1d3v",
+      geometry = "1Dcartesian",
       interpolation_order = 2,
       sim_length  = [16. ],
       cell_length = [0.01],
@@ -104,10 +104,8 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: geometry
   
-  The geometry of the simulation: ``"1d3v"`` or ``"2d3v"``.
-  
-  ``1d`` or ``2d`` correspond to the number of spatial dimensions.
-  ``3v`` indicates the number of dimensions for velocities.
+  The geometry of the simulation: ``"1Dcartesian"``, ``"2Dcartesian"``, or ``"3Dcartesian"``.
+
 
 .. py:data:: interpolation_order
   

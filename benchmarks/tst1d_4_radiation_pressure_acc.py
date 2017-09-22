@@ -19,7 +19,7 @@ def f(x):
         return 0.0
 
 Main(
-    geometry = "1d3v",
+    geometry = "1Dcartesian",
     
     interpolation_order = 2 ,
     

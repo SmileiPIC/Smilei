@@ -44,7 +44,7 @@ def n0_(x):
 # Namelists
 
 Main(
-    geometry = "1d3v",
+    geometry = "1Dcartesian",
     
     interpolation_order = 2 ,
     

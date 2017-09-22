@@ -8,7 +8,7 @@ dn = 0.001			# amplitude of the perturbation
 
 
 Main(
-    geometry = "1d3v",
+    geometry = "1Dcartesian",
      
     interpolation_order = 2,
      

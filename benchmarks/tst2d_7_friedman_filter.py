@@ -56,11 +56,7 @@ LoadBalancing(
 
 Main(
     #dim: Geometry of the simulation
-    #      1d3v = cartesian grid with 1d in space + 3d in velocity
-    #      2d3v = cartesian grid with 2d in space + 3d in velocity
-    #      3d3v = cartesian grid with 3d in space + 3d in velocity
-    #      2drz = cylindrical (r,z) grid with 3d3v particles
-    geometry = '2d3v',
+    geometry = '2Dcartesian',
     
     # order of interpolation
     interpolation_order = 2,

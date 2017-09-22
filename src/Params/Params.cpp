@@ -178,7 +178,7 @@ namelist("")
     geometry = "";
     if( !PyTools::extract("geometry", geometry, "Main") )
         ERROR("Parameter Main.geometry is required");
-    if (geometry!="1d3v" && geometry!="2d3v" && geometry!="3d3v" && geometry!="3drz") {
+    if (geometry!="1Dcartesian" && geometry!="2Dcartesian" && geometry!="3Dcartesian" && geometry!="3drz") {
         ERROR("Main.geometry `" << geometry << "` invalid");
     }
     setDimensions();
@@ -442,13 +442,13 @@ void Params::compute()
 // ---------------------------------------------------------------------------------------------------------------------
 void Params::setDimensions()
 {
-    if (geometry=="1d3v") {
+    if (geometry=="1Dcartesian") {
         nDim_particle=1;
         nDim_field=1;
-    } else if (geometry=="2d3v") {
+    } else if (geometry=="2Dcartesian") {
         nDim_particle=2;
         nDim_field=2;
-    } else if (geometry=="3d3v") {
+    } else if (geometry=="3Dcartesian") {
         nDim_particle=3;
         nDim_field=3;
     } else if (geometry=="3drz") {

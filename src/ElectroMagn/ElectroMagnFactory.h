@@ -17,13 +17,13 @@ class ElectroMagnFactory {
 public:
     static ElectroMagn* create(Params& params, std::vector<Species*>& vecSpecies,  Patch* patch) {
         ElectroMagn* EMfields = NULL;
-        if ( params.geometry == "1d3v" ) {
+        if ( params.geometry == "1Dcartesian" ) {
             EMfields = new ElectroMagn1D(params, vecSpecies, patch);
         }
-        else if ( params.geometry == "2d3v" ) {
+        else if ( params.geometry == "2Dcartesian" ) {
             EMfields = new ElectroMagn2D(params, vecSpecies, patch);
         }
-        else if ( params.geometry == "3d3v" ) {
+        else if ( params.geometry == "3Dcartesian" ) {
             EMfields = new ElectroMagn3D(params, vecSpecies, patch);
         }
         else {
@@ -112,11 +112,11 @@ public:
     static ElectroMagn* clone(ElectroMagn* EMfields, Params& params, std::vector<Species*>& vecSpecies,  Patch* patch)
     {
         ElectroMagn* newEMfields = NULL;
-        if ( params.geometry == "1d3v" ) {
+        if ( params.geometry == "1Dcartesian" ) {
             newEMfields = new ElectroMagn1D(static_cast<ElectroMagn1D*>(EMfields), params, patch);
-        } else if ( params.geometry == "2d3v" ) {
+        } else if ( params.geometry == "2Dcartesian" ) {
             newEMfields = new ElectroMagn2D(static_cast<ElectroMagn2D*>(EMfields), params, patch);
-        } else if ( params.geometry == "3d3v" ) {
+        } else if ( params.geometry == "3Dcartesian" ) {
             newEMfields = new ElectroMagn3D(static_cast<ElectroMagn3D*>(EMfields), params, patch);
         }
         

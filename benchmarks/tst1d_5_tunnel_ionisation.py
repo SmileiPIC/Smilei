@@ -12,7 +12,7 @@ Tsim = 0.2*t0		# duration of the simulation
 
 
 Main(
-    geometry = "1d3v",
+    geometry = "1Dcartesian",
      
     interpolation_order = 2,
      

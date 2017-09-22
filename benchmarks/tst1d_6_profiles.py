@@ -3,7 +3,7 @@ import math
 L0 = 2.*math.pi # Wavelength in PIC units
 
 Main(
-	geometry = "1d3v",
+	geometry = "1Dcartesian",
 	
 	interpolation_order = 2,
 	

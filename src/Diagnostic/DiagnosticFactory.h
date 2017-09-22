@@ -22,13 +22,13 @@ class DiagnosticFieldsFactory {
 public:
     static Diagnostic* create(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, unsigned int idiag, OpenPMDparams& openPMD) {
         Diagnostic* diag = NULL;
-        if ( params.geometry == "1d3v" ) {
+        if ( params.geometry == "1Dcartesian" ) {
             diag = new DiagnosticFields1D(params, smpi, vecPatches, idiag, openPMD);
         }
-        else if ( params.geometry == "2d3v" ) {
+        else if ( params.geometry == "2Dcartesian" ) {
             diag = new DiagnosticFields2D(params, smpi, vecPatches, idiag, openPMD);
         }
-        else if ( params.geometry == "3d3v" ) {
+        else if ( params.geometry == "3Dcartesian" ) {
             diag = new DiagnosticFields3D(params, smpi, vecPatches, idiag, openPMD);
         }
         else {

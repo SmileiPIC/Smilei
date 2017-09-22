@@ -12,7 +12,7 @@ resx = 28.              # nb of cells in on laser wavelength
 rest = 40.              # time of timestep in one optical cycle 
 
 Main(
-    geometry = "2d3v",
+    geometry = "2Dcartesian",
     
     interpolation_order = 2 ,
     

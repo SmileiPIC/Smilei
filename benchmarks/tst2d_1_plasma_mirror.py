@@ -13,7 +13,7 @@ rest = 30.				# time of timestep in one optical cycle
 
 
 Main(
-    geometry = "2d3v",
+    geometry = "2Dcartesian",
     
     interpolation_order = 2 ,
     
