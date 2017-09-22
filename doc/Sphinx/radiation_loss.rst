@@ -68,7 +68,8 @@ the normalized particle velocity. In :numref:`radiationRegimes`,
 When quantum electrodynamics (QED) effects are negligible (classical regime),
 the radiation reaction can be treated as a
 continuous friction force acting on the particles.
-Several models have been published (e.g. LAD, Landau-Lifshitz ([Landau1947]_), Sokolov, Capdessus).
+Several models have been published (e.g. LAD,
+[Landau1947]_, Sokolov, Capdessus).
 The ones used in :program:`Smilei` are
 based on the Landau-Lifshitz model approximated for high Lorentz factors
 (:math:`\gamma \gg 1`).
@@ -77,8 +78,8 @@ In the quantum regime, photons with energies of the order of the energies of
 the emitting electron can be produced (:math:`\varepsilon_\gamma \sim \varepsilon_\pm`).
 A continuous friction force can not be used anymore.
 This is treated using a Monte-Carlo
-description of discrete high-energy photon emissions ([Timokhin2010]_,
-[Elkina2011]_, [Duclous2011]_, [Lobet2013]_).
+description of discrete high-energy photon emissions
+(see [Timokhin2010]_, [Elkina2011]_, [Duclous2011]_, and [Lobet2013]_).
 
 In the intermediate regime (:math:`\chi \sim 1`), where the energy of the emitted photons remains
 small with respect to that of the emitting electrons, but for which the
@@ -102,7 +103,8 @@ Approximated Landau-Lifshitz classical model
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 The classical radiation friction force acting on an ultra-relativistic electron
-has been derived in [Landau1947]_. The equation of momentum evolution implemented in
+has been derived by [Landau1947]_.
+The equation of momentum evolution implemented in
 PIC codes is composed of both the classical Lorentz force :math:`F_L`
 and the radiation friction term :math:`F_{rad}` so that:
 
@@ -175,7 +177,8 @@ Condition (i) is fulfilled when :math:`a_0 = e \| A^{\mu} \| / mc^2 \gg 1`, :mat
 being the four-potential laser amplitude.
 
 conditions (ii) corresponds to :math:`\mathbf{B}^2 - \mathbf{E}^2 \ll E_s^2`
-and  :math:`\mathbf{B}\cdot \mathbf{E} \ll 1` (See [Ritus1985]_ for more details).
+and  :math:`\mathbf{B}\cdot \mathbf{E} \ll 1`
+(see [Ritus1985]_ for more details).
 
 The emitted power distribution can be deduced from Eq. :eq:`PhotonProdRate` in
 terms of the photon normalized energy. After integration, one obtains the
@@ -699,3 +702,22 @@ and further analysis are necessary to well understand why.
 When using the Monte-Carlo radiation model, code performance is likely to be
 more impacted running on SIMD architecture with large vector registers
 such as Intel Xeon Phi processors.
+
+----
+
+References
+^^^^^^^^^^
+
+.. [Duclous2011] `R. Duclous, J. G. Kirk, and A. R. Bell (2011), Plasma Physics and Controlled Fusion, 53 (1), 015009 <http://stacks.iop.org/0741-3335/53/i=1/a=015009>`_
+
+.. [Elkina2011] `Elkina N. V., A. M. Fedotov, I. Y. Kostyukov, M. V. Legkov, N. B. Narozhny, E. N. Nerush, and H. Ruhl (2011), Physical Review Accelerators and Beam, 14, 054401 <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.14.054401>`_
+
+.. [Landau1947] `L. D. Landau and E. M. Lifshitz, The classical theory of fields. Butterworth-Heinemann (1947) <https://archive.org/details/TheClassicalTheoryOfFields>`_
+
+.. [Lobet2013] `Lobet et al., J. Phys.: Conf. Ser. 688, 012058 (2016) <http://iopscience.iop.org/article/10.1088/1742-6596/688/1/012058>`_
+
+.. [Lobet2015] `M. Lobet, Effets radiatifs et d'électrodynamique quantique dans l'interaction laser-matière ultra-relativiste (2015) <http://www.theses.fr/2015BORD0361#>`_
+
+.. [Ritus1985] `Ritus V. (1985), Journal of Soviet Laser Research, 6, 497, ISSN 0270-2010 <https://doi.org/10.1007/BF01120220>`_
+
+.. [Timokhin2010] `Timokhin A. N. (2010), Monthly Notices of the Royal Astronomical Society, 408 (4), 2092, ISSN 1365-2966 <https://doi.org/10.1111/j.1365-2966.2010.17286.x>`_
