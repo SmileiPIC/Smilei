@@ -1,7 +1,8 @@
 Sampling a Maxwell-Jüttner distribution
 ---------------------------------------
 
-We base our method on that described in the Appendix B of [Schnittman2013]_.
+We base our method on that described in the Appendix B of
+an `article by Schnittman and Krolik <http://dx.doi.org/10.1088/0004-637X/777/1/11>`_.
 
 The Maxwell-Jüttner distribution, as a function of the Lorentz factor :math:`\gamma`, reads
 
