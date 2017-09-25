@@ -107,9 +107,10 @@ where :math:`r_s = q_s/m_s` is the charge-over-mass ratio (for species :math:`s`
 Time and space discretization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Maxwell's equations are solved here using the so-called Finite Difference Time Domain (FDTD)
-approach [TafloveHagness]_ as well as refined methods based on this algorithm
-(for a review of these methods see [Nuter2014]_). In these methods, the electromagnetic
+Maxwell's equations are solved here using
+the `Finite Difference Time Domain (FDTD) approach <https://doi.org/10.1016/B978-012170960-0/50046-3>`_
+as well as `refined methods based on this algorithm <https://doi.org/10.1140/epjd/e2014-50162-y>`_.
+In these methods, the electromagnetic
 fields are discretized onto a staggered grid, the so-called Yee-grid that allows for
 spatial-centering of the discretized curl operators in Maxwell's equations.
 The followingfigure summarizes at which points of the Yee-grid are defined the
@@ -231,9 +232,11 @@ Particle push
 
 Knowing, for each quasi-particle, the electromagnetic fields at its position, the new
 particle momentum and position are computed using a (second order) leap-frog integrator.
-In :program:`Smilei`, different schemes have been implemented: the well-known Boris
-pusher [Boris1970]_ both in the classical and relativistic form, the pusher developed 
-by J.-L. Vay [Vay2008]_, the pusher of Higuera and Cary [Higuera2017]_. 
+In :program:`Smilei`, different schemes have been implemented:
+the well-known `Boris pusher <https://archive.org/stream/DTIC_ADA023511#page/n7/mode/2up>`_
+both in the classical and relativistic form,
+the `pusher developed by J.-L. Vay <https://doi.org/10.1063/1.2837054>`_,
+and the `pusher of Higuera and Cary <https://arxiv.org/abs/1701.05605>`_.
 All schemes compute the new particle momentum and position according to
 
 .. math::
@@ -251,7 +254,8 @@ Current deposition
 """"""""""""""""""
 
 Charge deposition (i.e. charge and current density projection onto the grid) is then
-performed using the charge-conserving algorithm proposed by Esirkepov [Esirkepov2001]_.
+performed using the charge-conserving algorithm
+`proposed by Esirkepov <https://doi.org/10.1016/S0010-4655(00)00228-9>`_.
 The current densities along the dimensions of the grid
 (i.e., the :math:`x`-direction for 1D3V simulations,
 both :math:`x`- and :math:`y`-directions for 2D3V simulations,

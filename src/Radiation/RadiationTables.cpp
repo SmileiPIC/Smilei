@@ -1464,6 +1464,7 @@ double RadiationTables::compute_sync_emissivity_ritus(double chipa,
         ERROR("In compute_sync_emissivity_ritus: chipa " << chipa
                                                          << " < chiph "
                                                          << chiph);
+        return -1.;
     }
 }
 

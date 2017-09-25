@@ -311,7 +311,7 @@ class H5 {
             if (resizeVect) {
                 vect.resize(dim[0]);
             } else {
-                ERROR("Reading vector " << vect_name << " mismatch " << vect.size() << " != " << dim);
+                ERROR("Reading vector " << vect_name << " mismatch " << vect.size() << " != " << dim[0]);
             }
         }
         H5Sclose(sid);
