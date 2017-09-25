@@ -789,7 +789,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 //!   - calculate the new velocity
 //!   - calculate the new position
 // -----------------------------------------------------------------------------
-void Species::dynamics_interp_push_proj(double time_dual, unsigned int ispec,
+void Species::dynamics_interp_and_push(double time_dual, unsigned int ispec,
                        ElectroMagn* EMfields, Interpolator* Interp,
                        Projector* Proj, Params &params, bool diag_flag,
                        Patch* patch, SmileiMPI* smpi,
@@ -880,10 +880,77 @@ void Species::dynamics_interp_push_proj(double time_dual, unsigned int ispec,
 
             // Project currents if not a Test species and charges as well if a diag is needed.
             // Do not project if a photon
+
             if ((!particles->isTest) && (mass > 0))
                 (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, b_dim, ispec );
 
+
         }// ibin
+
+    }
+
+    else { // immobile particle (at the moment only project density)
+        if ( diag_flag &&(!particles->isTest)){
+            double* b_rho=nullptr;
+            for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
+
+                if (nDim_field==2)
+                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1) : &(*EMfields->rho_)(ibin*clrw*f_dim1) ;
+                if (nDim_field==3)
+                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1*f_dim2) : &(*EMfields->rho_)(ibin*clrw*f_dim1*f_dim2) ;
+                else if (nDim_field==1)
+                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw) : &(*EMfields->rho_)(ibin*clrw) ;
+                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                    (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
+                } //End loop on particles
+            }//End loop on bins
+
+        }
+    }//END if time vs. time_frozen
+
+
+}
+
+// -----------------------------------------------------------------------------
+//! For all particles of the species
+//   - increment the currents (projection)
+// -----------------------------------------------------------------------------
+void Species::dynamics_projection(double time_dual, unsigned int ispec,
+                       ElectroMagn* EMfields,
+                       Projector* Proj, Params &params, bool diag_flag,
+                       Patch* patch, SmileiMPI* smpi)
+{
+    int ithread;
+    #ifdef _OPENMP
+        ithread = omp_get_thread_num();
+    #else
+        ithread = 0;
+    #endif
+
+    unsigned int iPart;
+
+    // -------------------------------
+    // calculate the particle dynamics
+    // -------------------------------
+    if (time_dual>time_frozen) { // moving particle
+
+        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+
+        // Project currents if not a Test species and charges as well if a diag is needed.
+        // Do not project if a photon
+        if ((!particles->isTest) && (mass > 0)) {
+
+            for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
+
+                // The gamma factor is computed again
+                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                    smpi->dynamics_invgf[ithread][iPart] = particles->inv_lor_fac(iPart);
+                }
+
+                (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, b_dim, ispec );
+
+            }// ibin
+        }
 
     }
     else { // immobile particle (at the moment only project density)

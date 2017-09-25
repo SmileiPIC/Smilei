@@ -151,14 +151,21 @@ public:
                           MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                           std::vector<Diagnostic*>& localDiags);
 
-    //! Method calculating the Particle dynamics (interpolation, pusher, projection)
-    virtual void dynamics_interp_push_proj(double time, unsigned int ispec,
+    //! Method calculating a part of the particle dynamics:
+    //! interpolation, ionization, radiation, QED, pusher
+    virtual void dynamics_interp_and_push(double time, unsigned int ispec,
                         ElectroMagn* EMfields,
                         Interpolator* interp,
                         Projector* proj, Params &params, bool diag_flag,
                         Patch* patch, SmileiMPI* smpi,
                         RadiationTables &RadiationTables,
                         MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables);
+
+    //! Method calculating a part of the particle dynamics: projections
+    virtual void dynamics_projection(double time, unsigned int ispec,
+                        ElectroMagn* EMfields,
+                        Projector* proj, Params &params, bool diag_flag,
+                        Patch* patch, SmileiMPI* smpi);
 
     //! Method performing the importation of new particles
     virtual void dynamics_import_particles(double time, unsigned int ispec,

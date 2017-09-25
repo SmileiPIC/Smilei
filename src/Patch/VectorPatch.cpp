@@ -123,9 +123,10 @@ void VectorPatch::dynamics(Params& params,
             }
         }*/
 
+        // Interpolation, physical modules and pusher for all species
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
-                species(ipatch, ispec)->dynamics_interp_push_proj(time_dual, ispec,
+                species(ipatch, ispec)->dynamics_interp_and_push(time_dual, ispec,
                                                  emfields(ipatch), interp(ipatch), proj(ipatch),
                                                  params, diag_flag,
                                                  (*this)(ipatch), smpi,
@@ -134,6 +135,7 @@ void VectorPatch::dynamics(Params& params,
             }
         }
 
+        // Particle importation for all species
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
 
@@ -146,6 +148,7 @@ void VectorPatch::dynamics(Params& params,
             }
         }
 
+        // Boundary conditions for all species
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
 
@@ -154,6 +157,16 @@ void VectorPatch::dynamics(Params& params,
                                               (*this)(ipatch), smpi);
             }
         }
+
+        // Current projection for all species
+        /*for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
+                species(ipatch, ispec)->dynamics_projection(time_dual, ispec,
+                                                 emfields(ipatch), proj(ipatch),
+                                                 params, diag_flag,
+                                                 (*this)(ipatch), smpi);
+            }
+        }*/
 
     }
     timers.particles.update( params.printNow( itime ) );
