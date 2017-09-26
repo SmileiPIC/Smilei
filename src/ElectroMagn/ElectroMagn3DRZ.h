@@ -20,14 +20,14 @@ public:
     ~ElectroMagn3DRZ();
 
     std::vector<cField2D*> Ex_RZ_;
-    std::vector<cField2D*> Ey_RZ_;
-    std::vector<cField2D*> Ez_RZ_;
+    std::vector<cField2D*> Er_RZ_;
+    std::vector<cField2D*> Et_RZ_;
     std::vector<cField2D*> Bx_RZ_;
-    std::vector<cField2D*> By_RZ_;
-    std::vector<cField2D*> Bz_RZ_;
+    std::vector<cField2D*> Br_RZ_;
+    std::vector<cField2D*> Bt_RZ_;
     std::vector<cField2D*> Bx_RZ_m;
-    std::vector<cField2D*> By_RZ_m;
-    std::vector<cField2D*> Bz_RZ_m;
+    std::vector<cField2D*> Br_RZ_m;
+    std::vector<cField2D*> Bt_RZ_m;
     std::vector<cField2D*> Jx_RZ_;
     std::vector<cField2D*> Jy_RZ_;
     std::vector<cField2D*> Jz_RZ_;
