@@ -35,7 +35,7 @@ Species(
 	name = "electron1",
 	position_initialization = "regular",
 	momentum_initialization = "rectangular",
-	n_part_per_cell= 20000,
+	particles_per_cell= 20000,
 	mass = 1.0,
 	charge = -1.0,
 	charge_density = 10.,

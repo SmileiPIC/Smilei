@@ -54,7 +54,7 @@ for name, profile in profiles.items():
 		name = name,
 		position_initialization = "regular",
 		momentum_initialization = "maxwell-juettner",
-		n_part_per_cell= 8,
+		particles_per_cell= 8,
 		mass = 1.0,
 		charge = 1.0,
 		nb_density = profile,

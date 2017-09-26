@@ -32,7 +32,7 @@ Species(
 	name = "charges",
 	position_initialization = "random",
 	momentum_initialization = "cold",
-	n_part_per_cell = 100,
+	particles_per_cell = 100,
 	mass = 1836.0,
 	charge = 1.0,
 	nb_density = trapezoidal(1., xvacuum=L, xplateau=L),

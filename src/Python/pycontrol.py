@@ -87,7 +87,7 @@ def _smilei_check():
     for s in Species:
         s.nb_density      = toSpaceProfile(s.nb_density      )
         s.charge_density  = toSpaceProfile(s.charge_density  )
-        s.n_part_per_cell = toSpaceProfile(s.n_part_per_cell )
+        s.particles_per_cell = toSpaceProfile(s.particles_per_cell )
         s.charge          = toSpaceProfile(s.charge          )
         s.mean_velocity   = [ toSpaceProfile(p) for p in s.mean_velocity ]
         s.temperature     = [ toSpaceProfile(p) for p in s.temperature   ]
@@ -111,7 +111,7 @@ def _keep_python_running():
     profiles += [ant.time_profile for ant in Antenna]
     if len(MovingWindow)>0 or len(LoadBalancing)>0:
         for s in Species:
-            profiles += [s.nb_density, s.charge_density, s.n_part_per_cell, s.charge] + s.mean_velocity + s.temperature
+            profiles += [s.nb_density, s.charge_density, s.particles_per_cell, s.charge] + s.mean_velocity + s.temperature
     for prof in profiles:
         if callable(prof) and not hasattr(prof,"profileName"):
             return True

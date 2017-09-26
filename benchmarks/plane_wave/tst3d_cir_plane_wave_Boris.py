@@ -88,7 +88,7 @@ Species(
     name = "electron",
     position_initialization = "centered",
     momentum_initialization = "cold",
-    n_part_per_cell = 10,
+    particles_per_cell = 10,
     c_part_max = 1.0,
     mass = 1.0,
     charge = -1.0,

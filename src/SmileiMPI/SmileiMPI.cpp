@@ -209,8 +209,8 @@ void SmileiMPI::init_patch_count( Params& params)
         if( ok1 ) densityProfileType = "nb";
         if( ok2 ) densityProfileType = "charge";
         densityProfiles.push_back(new Profile(profile1, params.nDim_particle, densityProfileType+"_density "+species_name));
-        PyTools::extract_pyProfile("n_part_per_cell", profile1, "Species", ispecies);
-        ppcProfiles.push_back(new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_name));
+        PyTools::extract_pyProfile("particles_per_cell", profile1, "Species", ispecies);
+        ppcProfiles.push_back(new Profile(profile1, params.nDim_particle, "particles_per_cell "+species_name));
     }
 
     // Third, loop over local patches to obtain their approximate load

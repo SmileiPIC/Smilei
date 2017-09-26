@@ -105,6 +105,7 @@ class SmileiComponent(object):
                 "currentFilter_int":"the block CurrentFilter()",
                 "Friedman_filter"  :"the block FieldFilter()",
                 "Friedman_theta"   :"the block FieldFilter()",
+                "n_part_per_cell"  :"particles_per_cell",
             }
             for key, value in kwargs.items():
                 if key in deprecated:
@@ -281,7 +282,7 @@ class Species(SmileiComponent):
     name = None
     position_initialization = None
     momentum_initialization = ""
-    n_part_per_cell = None
+    particles_per_cell = None
     c_part_max = 1.0
     mass = None
     charge = None

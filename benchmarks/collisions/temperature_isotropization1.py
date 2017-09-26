@@ -36,7 +36,7 @@ Species(
 	name = "electron1",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
-	n_part_per_cell= 5000,
+	particles_per_cell= 5000,
 	mass = 1.0,
 	charge = -1.0,
 	charge_density = 10.,

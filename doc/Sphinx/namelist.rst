@@ -378,7 +378,7 @@ Each species has to be defined in a ``Species`` block::
       name      = "electrons1",
       position_initialization = "random",
       momentum_initialization = "maxwell-juettner",
-      n_part_per_cell = 100,
+      particles_per_cell = 100,
       mass = 1.,
       atomic_number = None,
       nb_density = 10.,
@@ -425,7 +425,7 @@ Each species has to be defined in a ``Species`` block::
 
   The first 2 distributions depend on the parameter :py:data:`temperature` explained below.
 
-.. py:data:: n_part_per_cell
+.. py:data:: particles_per_cell
 
   :type: float or *python* function (see section :ref:`profiles`)
 
@@ -844,7 +844,7 @@ profiles.
   a species with a Maxwell-Jüttner distribution of temperature :math:`T = 10^{-5}\,m_ec^2` over the whole box.
   Note that the temperature may be anisotropic: ``temperature=[1e-5, 2e-5, 2e-5]``.
 
-* ``Species( ... , n_part_per_cell = 10., ... )`` defines a species with 10 particles per cell.
+* ``Species( ... , particles_per_cell = 10., ... )`` defines a species with 10 particles per cell.
 
 * ``ExternalField( field="Bx", profile=0.1 )`` defines a constant external field :math:`B_x = 0.1 B_r`.
 

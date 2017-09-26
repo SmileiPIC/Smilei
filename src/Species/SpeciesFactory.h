@@ -230,9 +230,9 @@ public:
         thisSpecies->densityProfile = new Profile(profile1, params.nDim_particle, thisSpecies->densityProfileType+"_density "+species_name, true);
         
         // Number of particles per cell
-        if( !PyTools::extract_pyProfile("n_part_per_cell", profile1, "Species", ispec))
-            ERROR("For species '" << species_name << "', n_part_per_cell not found or not understood");
-        thisSpecies->ppcProfile = new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_name, true);
+        if( !PyTools::extract_pyProfile("particles_per_cell", profile1, "Species", ispec))
+            ERROR("For species '" << species_name << "', particles_per_cell not found or not understood");
+        thisSpecies->ppcProfile = new Profile(profile1, params.nDim_particle, "particles_per_cell "+species_name, true);
         
         // Charge
         if( !PyTools::extract_pyProfile("charge", profile1, "Species", ispec))
