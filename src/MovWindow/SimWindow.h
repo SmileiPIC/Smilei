@@ -64,7 +64,7 @@ class SimWindow {
     //! Keep track of patches to create
     std::vector< std::vector<unsigned int>> patch_to_be_created;
     //! Max number of threads
-    int max_threads;
+    unsigned int max_threads;
 
 };
 

@@ -162,7 +162,7 @@ void ElectroMagn3DRZ::initElectroMagn3DRZQuantities(Params &params, Patch* patch
     Jt_.resize(nmodes);
     rho_.resize(nmodes);
     
-    for ( int imode=0 ; imode<nmodes ; imode++ ) {
+    for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
         ostringstream mode_id("");
         mode_id << "_mode_" << imode;
 
@@ -241,7 +241,7 @@ void ElectroMagn3DRZ::initElectroMagn3DRZQuantities(Params &params, Patch* patch
 void ElectroMagn3DRZ::finishInitialization(int nspecies, Patch* patch)
 {
     // Fill allfields
-    for ( int imode=0 ; imode<nmodes ; imode++ ) {
+    for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
         allFields.push_back( Ex_[imode] );
         allFields.push_back( Er_[imode] );
         allFields.push_back( Et_[imode] );
@@ -257,7 +257,7 @@ void ElectroMagn3DRZ::finishInitialization(int nspecies, Patch* patch)
         allFields.push_back( rho_[imode] );
     }
 
-    for (int ispec=0; ispec<nspecies*nmodes; ispec++) {
+    for (unsigned int ispec=0; ispec<nspecies*nmodes; ispec++) {
         allFields.push_back(Jx_s[ispec] );
         allFields.push_back(Jr_s[ispec] );
         allFields.push_back(Jt_s[ispec] );
@@ -491,7 +491,7 @@ Field * ElectroMagn3DRZ::createField(string fieldname)
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3DRZ::centerMagneticFields()
 {
-    for ( int imode=0 ; imode<nmodes ; imode++ ) {
+    for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
 
         // Static cast of the fields
         cField2D* Bx3DRZ    = static_cast<cField2D*>(Bx_[imode]);
@@ -542,7 +542,7 @@ void ElectroMagn3DRZ::binomialCurrentFilter()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3DRZ::computeTotalRhoJ()
 {
-    for ( int imode=0 ; imode<nmodes ; imode++ ) {
+    for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
 
         // static cast of the total currents and densities
         cField2D* Jx3DRZ    = static_cast<cField2D*>(Jx_[imode]);
