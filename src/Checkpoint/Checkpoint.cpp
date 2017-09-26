@@ -158,7 +158,7 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* s
     }
     
     if (signal_received!=0 ||
-        (dump_step != 0 && (itime % dump_step == 0)) ||
+        (dump_step != 0 && ( (itime-this_run_start_step) % dump_step == 0)) ||
         (time_dump_step!=0 && itime==time_dump_step)) {
         dumpAll( vecPatches, itime,  smpi, simWindow, params);
         if (exit_after_dump || ((signal_received!=0) && (signal_received != SIGUSR2))) {
@@ -484,18 +484,26 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
         restartFieldsPerProc(patch_gid, EMfields->Byfilter[i]);
     for (unsigned int i=0; i<EMfields->Bzfilter.size(); i++)
         restartFieldsPerProc(patch_gid, EMfields->Bzfilter[i]);
-    
+
     // Fields required for DiagFields
     for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++ ) {
         ostringstream group_name("");
         group_name << "FieldsForDiag" << idiag;
-        hid_t diag_gid = H5Gopen(patch_gid, group_name.str().c_str(),H5P_DEFAULT);
+        htri_t status = H5Lexists(patch_gid, group_name.str().c_str(), H5P_DEFAULT);
+        if( status > 0 ) {
+            hid_t diag_gid = H5Gopen(patch_gid, group_name.str().c_str(),H5P_DEFAULT);
+            
+            for( unsigned int ifield=0; ifield<EMfields->allFields_avg[idiag].size(); ifield++ )
+                restartFieldsPerProc( diag_gid, EMfields->allFields_avg[idiag][ifield] );
+            
+            H5Gclose(diag_gid);
         
-        for( unsigned int ifield=0; ifield<EMfields->allFields_avg[idiag].size(); ifield++ )
-            restartFieldsPerProc( diag_gid, EMfields->allFields_avg[idiag][ifield] );
-        
-        H5Gclose(diag_gid);
-    }
+        } else if( EMfields->allFields_avg[idiag].size() > 0 ) {
+            // When the restart occurs in the middle of an average, and the field diag is new,
+            // there is missing data that will cause wrong results on the first output after restart
+            WARNING("New average Field diag "<<idiag<<" may produce wrong first output after restart");
+        }
+    } 
     
     if ( EMfields->extFields.size()>0 ) {
         for (unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {

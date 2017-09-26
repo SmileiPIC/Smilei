@@ -26,6 +26,12 @@
 	border: 1px solid #0672BA;
 }
 
+/* Style for an emphasized link */
+.emphlink {
+	text-align:center;
+	font-size:1.3em;
+}
+
 /* --------------------------------------------------------------------*/
 /* Prevent tables to wrap lines */
 table.nowrap {

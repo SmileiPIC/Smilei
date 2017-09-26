@@ -355,7 +355,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
 {
 
     //cout << "Start recompute" << endl;
-    unsigned int Npatches,ncells_perpatch, j;
+    unsigned int ncells_perpatch, j;
     int Ncur;
     double Tload,Tload_loc,Tcur, cells_load, target, Tscan;
     //Load of a cell = cell_load*load of a particle.
@@ -433,7 +433,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         } else {
         //  Check if some of my patches should be given to my left neighbour.
             j = 0;
-            while (abs(Tcur-target) > abs(Tcur+Lp[j]-target) && j < patch_count[smilei_rk]-1){ //Keep at least 1 patch
+            while ( (abs(Tcur-target) > abs(Tcur+Lp[j]-target)) && (j < (unsigned int)patch_count[smilei_rk]-1) ){ //Keep at least 1 patch
                 Tcur += Lp[j];
                 j++;
                 Ncur --;
@@ -449,7 +449,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         //Check if my rank should start with additional patches from right neighbour ...
         if (Tcur < target){
             unsigned int j = 0;
-            while (abs(Tcur-target) > abs(Tcur+Lp_right[j] - target) && j<patch_count[smilei_rk+1] - 1 ){ //Keep at least 1 patch
+            while ( (abs(Tcur-target) > abs(Tcur+Lp_right[j] - target)) && (j<(unsigned int)patch_count[smilei_rk+1] - 1) ){ //Keep at least 1 patch
                 Tcur += Lp_right[j];
                 j++;
                 Ncur++;

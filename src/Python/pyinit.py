@@ -160,7 +160,7 @@ class Main(SmileiSingleton):
     number_of_timesteps = None
     interpolation_order = 2
     number_of_patches = None
-    clrw = 1
+    clrw = -1
     every_clean_particles_overhead = 100
     timestep = None
     timestep_over_CFL = None

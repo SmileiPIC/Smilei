@@ -467,6 +467,34 @@ void Params::compute()
     // compute number of cells per patch
     n_cell_per_patch = n_space[0] * n_space[1] * n_space[2];
 
+    // Set clrw if not set by the user
+    if ( clrw == -1 ) {
+
+        // default value
+        clrw = n_space[0];
+
+        // check cache issue for interpolation/projection
+        int cache_threshold( 3200 ); // sizeof( L2, Sandy Bridge-HASWELL ) / ( 10 * sizeof(double) ) 
+        // Compute the "transversal bin size"
+        int bin_size(1);
+        for ( unsigned int idim = 1 ; idim < nDim_field ; idim++ )
+            bin_size *= ( n_space[idim]+1+2*oversize[idim] );
+
+        // IF Ionize r pair generation : clrw = n_space_x_pp ?
+        if ( ( clrw+1+2*oversize[0]) * bin_size > cache_threshold ) {
+            int clrw_max = cache_threshold / bin_size - 1 - 2*oversize[0];
+            if ( clrw_max > 0 ) {
+                for ( clrw=clrw_max ; clrw > 0 ; clrw-- )
+                    if ( ( ( clrw+1+2*oversize[0]) * bin_size <= cache_threshold ) && (n_space[0]%clrw==0) ) {
+                        break;
+                    }
+            }
+            else
+                clrw = 1;
+            WARNING( "Particles cluster width set to : " << clrw );
+        }
+    }
+
     // Verify that clrw divides n_space[0]
     if( n_space[0]%clrw != 0 )
         ERROR("The parameter clrw must divide the number of cells in one patch (in dimension x)");
