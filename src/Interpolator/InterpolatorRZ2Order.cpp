@@ -132,10 +132,10 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
 
     int imode = 0;
     // Static cast of the electromagnetic fields
-    cField2D* JxRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jx_[imode]; 
-    cField2D* JyRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jy_[imode]; 
-    cField2D* JzRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jz_[imode]; 
-    cField2D* RhoRZ= (static_cast<ElectroMagn3DRZ*>(EMfields))->rho_[imode];
+    cField2D* JxRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jx_RZ_[imode]; 
+    cField2D* JyRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jy_RZ_[imode]; 
+    cField2D* JzRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jz_RZ_[imode]; 
+    cField2D* RhoRZ= (static_cast<ElectroMagn3DRZ*>(EMfields))->rho_RZ_[imode];
     
     
     // -------------------------
