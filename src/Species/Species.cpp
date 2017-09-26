@@ -882,7 +882,9 @@ void Species::dynamics_interp_and_push(double time_dual, unsigned int ispec,
             // Do not project if a photon
 
             if ((!particles->isTest) && (mass > 0))
+            {
                 (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, b_dim, ispec );
+            }
 
 
         }// ibin

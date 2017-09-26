@@ -111,7 +111,7 @@ void VectorPatch::dynamics(Params& params,
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
-        /*for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 species(ipatch, ispec)->dynamics(time_dual, ispec,
                                                  emfields(ipatch), interp(ipatch), proj(ipatch),
@@ -121,8 +121,9 @@ void VectorPatch::dynamics(Params& params,
                                                  MultiphotonBreitWheelerTables,
                                                  localDiags);
             }
-        }*/
+        }
 
+        /*
         // Interpolation, physical modules and pusher for all species
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
@@ -156,9 +157,10 @@ void VectorPatch::dynamics(Params& params,
                                               params, partwalls(ipatch),
                                               (*this)(ipatch), smpi);
             }
-        }
+        }*/
 
         // Current projection for all species
+        // Does not work because dynamics_iold and dynamics_deltaold from interp are needed
         /*for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 species(ipatch, ispec)->dynamics_projection(time_dual, ispec,
