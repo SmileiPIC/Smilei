@@ -186,7 +186,9 @@ int main (int argc, char* argv[])
         timers.densities.reboot();
         timers.syncDens .reboot();
 
-        vecPatches.finalize_and_sort_parts(params, smpi, simWindow, time_dual, timers, 0);
+        vecPatches.finalize_and_sort_parts(params, smpi, simWindow, RadiationTables,
+                                           MultiphotonBreitWheelerTables,
+                                           time_dual, timers, 0);
         timers.syncPart .reboot();
 
         TITLE("Initializing diagnostics");
@@ -258,7 +260,9 @@ int main (int argc, char* argv[])
             if( time_dual > params.time_fields_frozen )
                 vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
 
-            vecPatches.finalize_and_sort_parts(params, smpi, simWindow, time_dual, timers, itime);
+            vecPatches.finalize_and_sort_parts(params, smpi, simWindow, RadiationTables,
+                                               MultiphotonBreitWheelerTables,
+                                               time_dual, timers, itime);
 
             // call the various diagnostics
             vecPatches.runAllDiags(params, smpi, itime, timers, simWindow);
