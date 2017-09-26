@@ -19,19 +19,19 @@ public:
     //! Destructor for ElectroMagn3DRZ
     ~ElectroMagn3DRZ();
 
-    std::vector<cField2D*> Ex_RZ_;
-    std::vector<cField2D*> Ey_RZ_;
-    std::vector<cField2D*> Ez_RZ_;
-    std::vector<cField2D*> Bx_RZ_;
-    std::vector<cField2D*> By_RZ_;
-    std::vector<cField2D*> Bz_RZ_;
-    std::vector<cField2D*> Bx_RZ_m;
-    std::vector<cField2D*> By_RZ_m;
-    std::vector<cField2D*> Bz_RZ_m;
-    std::vector<cField2D*> Jx_RZ_;
-    std::vector<cField2D*> Jy_RZ_;
-    std::vector<cField2D*> Jz_RZ_;
-    std::vector<cField2D*> rho_RZ_;
+    std::vector<cField2D*> Ex_;
+    std::vector<cField2D*> Er_;
+    std::vector<cField2D*> Et_;
+    std::vector<cField2D*> Bx_;
+    std::vector<cField2D*> Br_;
+    std::vector<cField2D*> Bt_;
+    std::vector<cField2D*> Bx_m;
+    std::vector<cField2D*> Br_m;
+    std::vector<cField2D*> Bt_m;
+    std::vector<cField2D*> Jx_;
+    std::vector<cField2D*> Jr_;
+    std::vector<cField2D*> Jt_;
+    std::vector<cField2D*> rho_;
 
     void initPoisson(Patch *patch);
     double compute_r();

@@ -23,38 +23,38 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
     int imode = 0;
 
     // Static-cast of the fields
-    cField2D* ExRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Ex_RZ_[imode];
-    cField2D* EyRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Ey_RZ_[imode];
-    cField2D* EzRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Ez_RZ_[imode];
-    cField2D* BxRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Bx_RZ_m[imode];
-    cField2D* ByRZ = (static_cast<ElectroMagn3DRZ*>(fields))->By_RZ_m[imode];
-    cField2D* BzRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Bz_RZ_m[imode];
-    cField2D* JxRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Jx_RZ_[imode];
-    cField2D* JyRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Jy_RZ_[imode];
-    cField2D* JzRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Jz_RZ_[imode];
+    cField2D* ExRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Ex_[imode];
+    cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Er_[imode];
+    cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Et_[imode];
+    cField2D* BxRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Bx_m[imode];
+    cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Br_m[imode];
+    cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Bt_m[imode];
+    cField2D* JxRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Jx_[imode];
+    cField2D* JyRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Jy_[imode];
+    cField2D* JzRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Jz_[imode];
 
 
-    // Electric field Ex^(d,p,p)
+    // Electric field Ex^(d,p)
     for (unsigned int i=0 ; i<nx_d ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*ExRZ)(i,j) += -dt*(*JxRZ)(i,j)
-                +                 dt_ov_dy * ( (*BzRZ)(i,j+1) - (*BzRZ)(i,j) );
+                +                 dt_ov_dy * ( (*BtRZ)(i,j+1) - (*BtRZ)(i,j) );
                 }
     }
     
-    // Electric field Ey^(p,d,p)
+    // Electric field Er^(p,d)
     for (unsigned int i=0 ; i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_d ; j++) {
-            (*EyRZ)(i,j) += -dt*(*JyRZ)(i,j)
-                -                  dt_ov_dx * ( (*BzRZ)(i+1,j) - (*BzRZ)(i,j) );
+            (*ErRZ)(i,j) += -dt*(*JyRZ)(i,j)
+                -                  dt_ov_dx * ( (*BtRZ)(i+1,j) - (*BtRZ)(i,j) );
         }
     }
     
-    // Electric field Ez^(p,p,d)
+    // Electric field Et^(p,p)
     for (unsigned int i=0 ;  i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*EzRZ)(i,j) += -dt*(*JzRZ)(i,j)
-                +                  dt_ov_dx * ( (*ByRZ)(i+1,j) - (*ByRZ)(i,j) )
+            (*EtRZ)(i,j) += -dt*(*JzRZ)(i,j)
+                +                  dt_ov_dx * ( (*BrRZ)(i+1,j) - (*BrRZ)(i,j) )
                 -                  dt_ov_dy * ( (*BxRZ)(i,j+1) - (*BxRZ)(i,j) );
         }
     }
