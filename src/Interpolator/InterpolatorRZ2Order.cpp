@@ -133,28 +133,28 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
     int imode = 0;
     // Static cast of the electromagnetic fields
     cField2D* JxRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jx_[imode]; 
-    cField2D* JrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jr_[imode]; 
-    cField2D* JtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jt_[imode]; 
+    cField2D* JyRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jy_[imode]; 
+    cField2D* JzRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jz_[imode]; 
     cField2D* RhoRZ= (static_cast<ElectroMagn3DRZ*>(EMfields))->rho_[imode];
     
     
     // -------------------------
-    // Interpolation of Jx^(d,p)
+    // Interpolation of Jx^(d,p,p)
     // -------------------------
     (*JLoc).x = compute( &coeffxd_[1], &coeffyp_[1], JxRZ, id_, jp_);
     
     // -------------------------
-    // Interpolation of Jr^(p,d)
+    // Interpolation of Jy^(p,d,p)
     // -------------------------
-    (*JLoc).y = compute( &coeffxp_[1], &coeffyd_[1], JrRZ, ip_, jd_);
+    (*JLoc).y = compute( &coeffxp_[1], &coeffyd_[1], JyRZ, ip_, jd_);
     
     // -------------------------
-    // Interpolation of Jt^(p,p)
+    // Interpolation of Jz^(p,p,d)
     // -------------------------
-    (*JLoc).z = compute( &coeffxp_[1], &coeffyp_[1], JtRZ, ip_, jp_);
+    (*JLoc).z = compute( &coeffxp_[1], &coeffyp_[1], JzRZ, ip_, jp_);
     
     // -------------------------
-    // Interpolation of Rho^(p,p)
+    // Interpolation of Rho^(p,p,p)
     // -------------------------
     (*RhoLoc) = compute( &coeffxp_[1], &coeffyp_[1], RhoRZ, ip_, jp_);
 
