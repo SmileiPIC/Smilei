@@ -96,7 +96,10 @@ public :
                   double time_dual,
                   Timers &timers, int itime);
 
-    void finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWindow* simWindow, double time_dual,
+    void finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWindow* simWindow, 
+                  RadiationTables & RadiationTables,
+                  MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
+                  double time_dual,
                   Timers &timers, int itime);
 
     void computeCharge();

@@ -691,35 +691,35 @@ void Species::dynamics(double time_dual, unsigned int ispec,
         for (unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
             nrj_bc_lost += nrj_lost_per_thd[tid];
 
-        // Add the ionized electrons to the electron species
-        if (Ionize)
-            electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags );
-
-        // Radiation losses
-        if (Radiate)
-        {
-            // If creation of macro-photon, we add them to photon_species
-            if (photon_species)
-            {
-                photon_species->importParticles(params,
-                                                patch,
-                                                Radiate->new_photons,
-                                                localDiags);
-            }
-        }
-
-        // Multiphoton Breit-Wheeler
-        if (Multiphoton_Breit_Wheeler_process)
-        {
-
-            // Addition of the electron-positron particles
-            for (int k=0; k<2; k++) {
-                mBW_pair_species[k]->importParticles(params,
-                                             patch,
-                                             Multiphoton_Breit_Wheeler_process->new_pair[k],
-                                             localDiags);
-            }
-        }
+//        // Add the ionized electrons to the electron species
+//        if (Ionize)
+//            electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags );
+//
+//        // Radiation losses
+//        if (Radiate)
+//        {
+//            // If creation of macro-photon, we add them to photon_species
+//            if (photon_species)
+//            {
+//                photon_species->importParticles(params,
+//                                                patch,
+//                                                Radiate->new_photons,
+//                                                localDiags);
+//            }
+//        }
+//
+//        // Multiphoton Breit-Wheeler
+//        if (Multiphoton_Breit_Wheeler_process)
+//        {
+//
+//            // Addition of the electron-positron particles
+//            for (int k=0; k<2; k++) {
+//                mBW_pair_species[k]->importParticles(params,
+//                                             patch,
+//                                             Multiphoton_Breit_Wheeler_process->new_pair[k],
+//                                             localDiags);
+//            }
+//        }
 
         /*for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
             for (unsigned int ipart=bmin[ibin]; ipart < bmax[ibin];ipart++)
