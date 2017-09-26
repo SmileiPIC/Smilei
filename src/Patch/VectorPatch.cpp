@@ -912,7 +912,7 @@ void VectorPatch::update_field_list()
     // Manage RZ & cartesian
     #endif
 
-    int nmodes = static_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields)->Ex_RZ_.size();
+    unsigned int nmodes = static_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields)->Ex_RZ_.size();
     listJx_RZ_.resize( nmodes ) ;
     listJy_RZ_.resize( nmodes ) ;
     listJz_RZ_.resize( nmodes ) ;
