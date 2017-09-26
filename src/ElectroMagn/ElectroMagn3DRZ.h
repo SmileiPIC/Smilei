@@ -33,10 +33,6 @@ public:
     std::vector<cField2D*> Jt_;
     std::vector<cField2D*> rho_;
 
-    //! Vector of charge density and currents for each species which were not already defined in Electromagn.h
-    std::vector<Field*> Jr_s;
-    std::vector<Field*> Jt_s;
-
     void initPoisson(Patch *patch);
     double compute_r();
     void compute_Ap(Patch *patch);

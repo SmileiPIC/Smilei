@@ -33,12 +33,12 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
 
     int imode = 0;
     // Static cast of the electromagnetic fields
-    cField2D* ExRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Ex_[imode];
-    cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Er_[imode];
-    cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Et_[imode];
-    cField2D* BxRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bx_m[imode];
-    cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_m[imode];
-    cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_m[imode];
+    cField2D* ExRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Ex_RZ_[imode];
+    cField2D* EyRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Ey_RZ_[imode];
+    cField2D* EzRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Ez_RZ_[imode];
+    cField2D* BxRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bx_RZ_m[imode];
+    cField2D* ByRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->By_RZ_m[imode];
+    cField2D* BzRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bz_RZ_m[imode];
 
 
     // Normalized particle position
@@ -89,34 +89,34 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
 
 
     // -------------------------
-    // Interpolation of Ex^(d,p)
+    // Interpolation of Ex^(d,p,p)
     // -------------------------
     (*ELoc).x = compute( &coeffxd_[1], &coeffyp_[1], ExRZ, id_, jp_);
 
     // -------------------------
-    // Interpolation of Er^(p,d)
+    // Interpolation of Ey^(p,d,p)
     // -------------------------
-    (*ELoc).y = compute( &coeffxp_[1], &coeffyd_[1], ErRZ, ip_, jd_);
+    (*ELoc).y = compute( &coeffxp_[1], &coeffyd_[1], EyRZ, ip_, jd_);
 
     // -------------------------
-    // Interpolation of Et^(p,p)
+    // Interpolation of Ez^(p,p,d)
     // -------------------------
-    (*ELoc).z = compute( &coeffxp_[1], &coeffyp_[1], EtRZ, ip_, jp_);
+    (*ELoc).z = compute( &coeffxp_[1], &coeffyp_[1], EzRZ, ip_, jp_);
 
     // -------------------------
-    // Interpolation of Bx^(p,d)
+    // Interpolation of Bx^(p,d,d)
     // -------------------------
     (*BLoc).x = compute( &coeffxp_[1], &coeffyd_[1], BxRZ, ip_, jd_);
 
     // -------------------------
-    // Interpolation of Br^(d,p)
+    // Interpolation of By^(d,p,d)
     // -------------------------
-    (*BLoc).y = compute( &coeffxd_[1], &coeffyp_[1], BrRZ, id_, jp_);
+    (*BLoc).y = compute( &coeffxd_[1], &coeffyp_[1], ByRZ, id_, jp_);
 
     // -------------------------
-    // Interpolation of Bt^(d,d)
+    // Interpolation of Bz^(d,d,p)
     // -------------------------
-    (*BLoc).z = compute( &coeffxd_[1], &coeffyd_[1], BtRZ, id_, jd_);
+    (*BLoc).z = compute( &coeffxd_[1], &coeffyd_[1], BzRZ, id_, jd_);
 
 } // END InterpolatorRZ2Order
 
