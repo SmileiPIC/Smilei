@@ -273,7 +273,6 @@ occur every 150 iterations.
   Computational load of a single frozen particle considered by the dynamic load balancing algorithm.
   This load is normalized to the load of a single particle.
 
-
 ----
 
 .. _movingWindow:
@@ -558,7 +557,7 @@ Each species has to be defined in a ``Species`` block::
   * ``none``: no radiation
   * ``Landau-Lifshitz``: Landau-Lifshitz model approximated for high energies
   * ``corrected-Landau-Lifshitz``: with quantum correction
-  * ``Niel``: Stochastic radiation model of [Niel2017]_.
+  * ``Niel``: a `stochastic radiation model <https://arxiv.org/abs/1707.02618>`_.
   * ``Monte-Carlo``: Monte-Carlo radiation model
 
 .. py:data:: radiation_photon_species

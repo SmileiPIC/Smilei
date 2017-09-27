@@ -318,11 +318,11 @@ namelist("")
     } else {
         one_patch_per_MPI = false;
         if (tot_number_of_patches < (unsigned int)(smpi->getSize()))
-            ERROR("The total number of patches must be greater or equal to the number of MPI processes");
+            ERROR("The total number of patches "<<tot_number_of_patches<<" must be greater or equal to the number of MPI processes "<<smpi->getSize()); 
     }
 #ifdef _OPENMP
-    if ( tot_number_of_patches < (unsigned int)(smpi->getSize()*omp_get_max_threads()) )
-        WARNING( "Resources allocated underloaded regarding the total number of patches" );
+    if ( tot_number_of_patches < (unsigned int)(smpi->getSize()*smpi->getOMPMaxThreads()) )
+        WARNING( "Resources allocated "<<(smpi->getSize()*smpi->getOMPMaxThreads())<<" underloaded regarding the total number of patches "<<tot_number_of_patches );
 #endif
 
 
@@ -500,6 +500,34 @@ void Params::compute()
     // compute number of cells per patch
     n_cell_per_patch = n_space[0] * n_space[1] * n_space[2];
 
+    // Set clrw if not set by the user
+    if ( clrw == -1 ) {
+
+        // default value
+        clrw = n_space[0];
+
+        // check cache issue for interpolation/projection
+        int cache_threshold( 3200 ); // sizeof( L2, Sandy Bridge-HASWELL ) / ( 10 * sizeof(double) ) 
+        // Compute the "transversal bin size"
+        int bin_size(1);
+        for ( unsigned int idim = 1 ; idim < nDim_field ; idim++ )
+            bin_size *= ( n_space[idim]+1+2*oversize[idim] );
+
+        // IF Ionize r pair generation : clrw = n_space_x_pp ?
+        if ( ( clrw+1+2*oversize[0]) * bin_size > cache_threshold ) {
+            int clrw_max = cache_threshold / bin_size - 1 - 2*oversize[0];
+            if ( clrw_max > 0 ) {
+                for ( clrw=clrw_max ; clrw > 0 ; clrw-- )
+                    if ( ( ( clrw+1+2*oversize[0]) * bin_size <= cache_threshold ) && (n_space[0]%clrw==0) ) {
+                        break;
+                    }
+            }
+            else
+                clrw = 1;
+            WARNING( "Particles cluster width set to : " << clrw );
+        }
+    }
+
     // Verify that clrw divides n_space[0]
     if( n_space[0]%clrw != 0 )
         ERROR("The parameter clrw must divide the number of cells in one patch (in dimension x)");
@@ -549,13 +577,13 @@ void Params::print_init()
         MESSAGE(1,"dimension " << i << " - (res_space, sim_length) : (" << res_space[i] << ", " << sim_length[i] << ")");
         MESSAGE(1,"            - (n_space_global,  cell_length) : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
     }
-
+    
     if (balancing_every > 0){
         TITLE("Load Balancing: ");
         if (initial_balance){
-        MESSAGE(1,"Computational load is initially balanced between MPI ranks. (initial_balance = true) ");
+            MESSAGE(1,"Computational load is initially balanced between MPI ranks. (initial_balance = true) ");
         } else{
-        MESSAGE(1,"Patches are initially homogeneously distributed between MPI ranks. (initial_balance = false) ");
+            MESSAGE(1,"Patches are initially homogeneously distributed between MPI ranks. (initial_balance = false) ");
         }
         MESSAGE(1,"Load balancing every " << balancing_every << " iterations.");
         MESSAGE(1,"Cell load coefficient = " << coef_cell );

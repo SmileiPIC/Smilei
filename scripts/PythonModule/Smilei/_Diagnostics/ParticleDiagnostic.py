@@ -234,6 +234,8 @@ class ParticleDiagnostic(Diagnostic):
 		# Build units
 		titles = {}
 		units = {}
+		axes_units = [unit or "1" for unit in self._units if (hasComposite or unit!="L_r")]
+		axes_units = (" / ( " + " * ".join(axes_units) + " )") if axes_units else ""
 		for d in self._diags:
 			titles.update({ d:"??" })
 			units.update({ d:"??" })
@@ -257,9 +259,7 @@ class ParticleDiagnostic(Diagnostic):
 			elif output[:8]=="pressure":
 				titles[d] = "Pressure "+output[-2] + (" x Volume" if hasComposite else "")
 				val_units = "K_r" if hasComposite else "N_r * K_r"
-			axes_units = [unit for unit in self._units if (hasComposite or unit!="L_r")]
-			units[d] = val_units
-			if len(axes_units)>0: units[d] += " / ( " + " * ".join(axes_units) + " )"
+			units[d] = val_units + axes_units
 		# Make total units and title
 		self._vunits = self.operation
 		self._title  = self.operation

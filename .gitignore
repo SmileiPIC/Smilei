@@ -5,9 +5,9 @@ build/*
 *~
 .depend
 validation/workdir*
-src/smilei
+smilei
+smilei_test
 src/smilei.*
-*smilei
 *.aux
 *.dvi
 *.log
@@ -26,4 +26,3 @@ doc/html
 */*.swo
 */*/*.swo
 */*/*/*.swo
-

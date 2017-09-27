@@ -4,11 +4,13 @@ Releases
 Major releases are available here as well as on the
 `GitHub page <https://github.com/SmileiPIC/Smilei>`_.
 We greatly appreciate external users trying this code and giving feedback.
+You can submit *issues* when experiencing difficulties,
+or *pull requests* for your changes to become part of the official releases.
 
-You can :doc:`contact us <partners>` to become a developer of the official releases:
-the `developer's Gitlab repository <https://llrgit.in2p3.fr/smilei/smilei>`_ is used
-for development, and you will need to ask for a password first,
-but the process is fast and straightforward.
+Note that most of the development of the code is currently hosted in
+a `different repository <https://llrgit.in2p3.fr/smilei/smilei>`_
+reserved for the :doc:`partners`. It is regularly synchronized with
+the GitHub page.
 
 ----
 
@@ -18,6 +20,7 @@ Upcoming changes
 * Monte Carlo QED photon emission
 * Moving window along y and z
 * Tracking particles in *Screens*
+* *Test mode* to quickly check the namelist consistency
 
 ----
 

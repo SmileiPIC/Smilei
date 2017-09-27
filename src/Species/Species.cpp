@@ -47,10 +47,10 @@ using namespace std;
 Species::Species(Params& params, Patch* patch) :
 c_part_max(1),
 dynamics_type("norm"),
+radiation_model("none"),
 time_frozen(0),
 radiating(false),
 ionization_model("none"),
-radiation_model("none"),
 velocityProfile(3,NULL),
 temperatureProfile(3,NULL),
 particles(&particles_sorted[0]),

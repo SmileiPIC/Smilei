@@ -42,6 +42,12 @@ Timers::~Timers()
 {
 }
 
+void Timers::reboot()
+{
+    for( unsigned int i=0; i<timers.size(); i++)
+        timers[i]->reboot();
+}
+    
 void Timers::profile(SmileiMPI * smpi)
 {
     std::vector<Timer*> avg_timers = consolidate(smpi);

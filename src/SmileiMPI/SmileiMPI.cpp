@@ -35,29 +35,25 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 SmileiMPI::SmileiMPI( int* argc, char*** argv )
 {
+    test_mode = false;
+    
     // Send information on current simulation
     int mpi_provided;
-
+    
 #ifdef _OPENMP
     MPI_Init_thread( argc, argv, MPI_THREAD_MULTIPLE, &mpi_provided );
     if (mpi_provided != MPI_THREAD_MULTIPLE){
-        ERROR("MPI_THREAD_MULTIPLE not supported. Compile your MPI ibrary with THREAD_MULTIPLE support.");
+        ERROR("MPI_THREAD_MULTIPLE not supported. Compile your MPI library with THREAD_MULTIPLE support.");
     }
+    smilei_omp_max_threads = omp_get_max_threads();
 #else
     MPI_Init( argc, argv );
+    smilei_omp_max_threads = 1;
 #endif
 
     SMILEI_COMM_WORLD = MPI_COMM_WORLD;
     MPI_Comm_size( SMILEI_COMM_WORLD, &smilei_sz );
     MPI_Comm_rank( SMILEI_COMM_WORLD, &smilei_rk );
-
-    MESSAGE("                   _            _");
-    MESSAGE(" ___           _  | |        _  \\ \\   Version : " << __VERSION);
-    MESSAGE("/ __|  _ __   (_) | |  ___  (_)  | |   ");
-    MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |");
-    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |  ");
-    MESSAGE("                                /_/    ");
-    MESSAGE("");
 
 } // END SmileiMPI::SmileiMPI
 
@@ -372,7 +368,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
 {
 
     //cout << "Start recompute" << endl;
-    unsigned int Npatches,ncells_perpatch, j;
+    unsigned int ncells_perpatch, j;
     int Ncur;
     double Tload,Tload_loc,Tcur, cells_load, target, Tscan;
     //Load of a cell = coef_cell*load of a particle.
@@ -450,7 +446,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         } else {
         //  Check if some of my patches should be given to my left neighbour.
             j = 0;
-            while (abs(Tcur-target) > abs(Tcur+Lp[j]-target) && j < patch_count[smilei_rk]-1){ //Keep at least 1 patch
+            while ( (abs(Tcur-target) > abs(Tcur+Lp[j]-target)) && (j < (unsigned int)patch_count[smilei_rk]-1) ){ //Keep at least 1 patch
                 Tcur += Lp[j];
                 j++;
                 Ncur --;
@@ -466,7 +462,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         //Check if my rank should start with additional patches from right neighbour ...
         if (Tcur < target){
             unsigned int j = 0;
-            while (abs(Tcur-target) > abs(Tcur+Lp_right[j] - target) && j<patch_count[smilei_rk+1] - 1 ){ //Keep at least 1 patch
+            while ( (abs(Tcur-target) > abs(Tcur+Lp_right[j] - target)) && (j<(unsigned int)patch_count[smilei_rk+1] - 1) ){ //Keep at least 1 patch
                 Tcur += Lp_right[j];
                 j++;
                 Ncur++;

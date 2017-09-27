@@ -34,12 +34,12 @@ class SmileiMPI {
     friend class VectorPatch;
 
 public:
-
+    SmileiMPI() {};
     //! Create intial MPI environment
     SmileiMPI( int* argc, char*** argv );
     //! Destructor for SmileiMPI
-    ~SmileiMPI();
-
+    virtual ~SmileiMPI();
+    
     // Broadcast a string in current communicator
     void bcast( std::string& val );
     // Broadcast an int in current communicator
@@ -47,10 +47,10 @@ public:
 
     //! Initialize  MPI (per process) environment
     //! \param params Parameters
-    void init( Params& params );
-
+    virtual void init( Params& params );
+    
     // Initialize the patch_count vector. Patches are distributed in order to balance the load between MPI processes.
-    void init_patch_count( Params& params );
+    virtual void init_patch_count( Params& params );
     // Recompute the patch_count vector. Browse patches and redistribute them in order to balance the load between MPI processes.
     void recompute_patch_count( Params& params, VectorPatch& vecpatches, double time_dual );
      // Returns the rank of the MPI process currently owning patch h.
@@ -72,14 +72,14 @@ public:
     void recv (Particles* partictles, int from, int hindex, MPI_Datatype datatype);
     void isend(std::vector<int>* vec, int to  , int hindex, MPI_Request& request);
     void recv (std::vector<int> *vec, int from, int hindex);
-
+    
     void isend(std::vector<double>* vec, int to  , int hindex, MPI_Request& request);
     void recv (std::vector<double> *vec, int from, int hindex);
-
+    
     void isend(ElectroMagn* fields, int to  , int maxtag, std::vector<MPI_Request>& requests, int mpi_tag);
     void recv (ElectroMagn* fields, int from, int hindex);
     void isend(Field* field, int to  , int hindex, MPI_Request& request);
-
+    
     void recv (Field* field, int from, int hindex);
     void isend( ProbeParticles* probe, int to  , int hindex, unsigned int );
     void recv ( ProbeParticles* probe, int from, int hindex, unsigned int );
@@ -122,6 +122,12 @@ public:
         return SMILEI_COMM_WORLD;
     }
 
+    //! Return MPI_Comm_size
+    inline int getOMPMaxThreads() {
+        return smilei_omp_max_threads;
+    }
+    
+    
     // Global buffers for vectorization of Species::dynamics
     // -----------------------------------------------------
 
@@ -154,8 +160,9 @@ public:
         MPI_Reduce( &locNbrParticles, &nParticles, 1, MPI_INT, MPI_SUM, 0, SMILEI_COMM_WORLD );
         return nParticles;
     }
-
-
+    
+    bool test_mode;
+    
 protected:
     //! Global MPI Communicator
     MPI_Comm SMILEI_COMM_WORLD;
@@ -164,7 +171,9 @@ protected:
     int smilei_sz;
     //! MPI process Id in the current communicator
     int smilei_rk;
-
+    //! OMP max number of threads in one MPI
+    int smilei_omp_max_threads;
+    
     // Store periodicity (0/1) per direction
     // Should move in Params : last parameters of this type in this class
     int* periods_;
@@ -173,8 +182,7 @@ protected:
     //Number of patches owned by each mpi process.
     std::vector<int>  patch_count, capabilities;
     int Tcapabilities; //Default = smilei_sz (1 per MPI rank)
-
-
 };
+
 
 #endif

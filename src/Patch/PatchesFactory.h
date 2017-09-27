@@ -48,13 +48,17 @@ public:
             firstpatch += smpi->patch_count[impi];
         }
         DEBUG( smpi->getRank() << ", nPatch = " << npatches << " - starting at " << firstpatch );
-
+        
+        // If test mode, only 1 patch created
+        if( smpi->test_mode ) npatches = 1;
+        
         // Create patches (create patch#0 then clone it)
         vecPatches.resize(npatches);
         vecPatches.patches_[0] = create(params, smpi, firstpatch, n_moved);
-
         TITLE("Initializing Patches");
         MESSAGE(1,"First patch created");
+        
+        // If normal mode (not test mode) clone the first patch to create the others
         unsigned int percent=10;
         for (unsigned int ipatch = 1 ; ipatch < npatches ; ipatch++) {
             if( (100*ipatch)/npatches > percent ) {
@@ -81,7 +85,7 @@ public:
         vecPatches.nAntennas = vecPatches(0)->EMfields->antennas.size();
         vecPatches.initExternals( params );
 
-        MESSAGE(1,"Done initializing diagnostics");
+        MESSAGE(1,"Done initializing diagnostics, antennas, and external fields");
         return vecPatches;
     }
 
