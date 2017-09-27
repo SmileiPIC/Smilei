@@ -22,7 +22,8 @@ def _smilei_check():
     # Verify classes were not overriden
     for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
             "DiagProbe","DiagParticles", "DiagScalar","DiagFields","ExtField",
-            "SmileiSingleton","Main","DumpRestart","LoadBalancing","MovingWindow"]:
+            "SmileiSingleton","Main","DumpRestart","LoadBalancing","MovingWindow",
+            "RadiationReaction"]:
         CheckClass = globals()[CheckClassName]
         try:
             if not CheckClass._verify: raise Exception("")
@@ -32,7 +33,7 @@ def _smilei_check():
     if smilei_mpi_rank == 0 and (DumpRestart.dump_step>0 or DumpRestart.dump_minutes>0.):
         checkpoint_dir = "." + os.sep + "checkpoints" + os.sep
         if DumpRestart.file_grouping :
-            ngroups = (smilei_mpi_size+1)/DumpRestart.file_grouping
+            ngroups = (smilei_mpi_size-1)/DumpRestart.file_grouping + 1
             ngroups_chars = int(math.log10(ngroups))+1
             for group in range(ngroups):
                 group_dir = checkpoint_dir + '%*s'%(ngroups_chars,group)
@@ -58,18 +59,18 @@ def _smilei_check():
                     my_files = filter(lambda a: DumpRestart.restart_number==int(re.search(r'dump-([0-9]*)-[0-9]*.h5$',a).groups()[-1]),my_files)
 
                 DumpRestart.restart_files = my_files
-        
+
                 if not len(DumpRestart.restart_files):
                     raise Exception(
-                    "ERROR in the namelist: cannot find valid restart files for processor "+str(smilei_mpi_rank) + 
-                    "\n\t\trestart_dir = '" + DumpRestart.restart_dir + 
-                    "'\n\t\trestart_number = " + str(DumpRestart.restart_number) + 
+                    "ERROR in the namelist: cannot find valid restart files for processor "+str(smilei_mpi_rank) +
+                    "\n\t\trestart_dir = '" + DumpRestart.restart_dir +
+                    "'\n\t\trestart_number = " + str(DumpRestart.restart_number) +
                     "\n\t\tmatching pattern: '" + my_pattern + "'" )
 
         else :
             if DumpRestart.restart_dir:
                 raise Exception("restart_dir and restart_files are both not empty")
-            
+
 
 
     # Verify that constant() and tconstant() were not redefined
@@ -126,6 +127,3 @@ def _noNewComponents(cls, *args, **kwargs):
     print("Please do not create a new "+cls.__name__)
     return None
 SmileiComponent.__new__ = staticmethod(_noNewComponents)
-
-
-

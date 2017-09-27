@@ -11,23 +11,23 @@ laser_fwhm = 19.80
 
 Main(
     geometry = "3d3v",
-    
+
     interpolation_order = 2,
-    
+
     timestep = dt,
     sim_time = int(2*Lx/dt)*dt,
-    
+
     cell_length  = [dx, dtrans, dtrans],
     sim_length = [ Lx,  Ltrans, Ltrans],
-    
+
     number_of_patches = [npatch_x, 4, 4],
-    
+
     clrw = nx/npatch_x,
-    
+
     bc_em_type_x = ["silver-muller","silver-muller"],
     bc_em_type_y = ["silver-muller","silver-muller"],
     bc_em_type_z = ["silver-muller","silver-muller"],
-    
+
     solve_poisson = False,
     print_every = 100,
 
@@ -46,7 +46,7 @@ LoadBalancing(
     coef_frozen = 0.1
 )
 
-Species( 
+Species(
     species_type = "electron",
     initPosition_type = "regular",
     initMomentum_type = "cold",
@@ -57,9 +57,8 @@ Species(
     charge_density = 0.000494,
     mean_velocity = [0.0, 0.0, 0.0],
     temperature = [0.0],
-    dynamics_type = "norm",    
+    dynamics_type = "norm",
     time_frozen = 0.0,
-    radiating = False,
     bc_part_type_xmin = "supp",
     bc_part_type_xmax = "supp",
     bc_part_type_ymin ="supp",
@@ -117,4 +116,3 @@ DiagParticles(
 		["px", -1, 2., 100]
 	]
 )
-

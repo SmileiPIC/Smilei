@@ -439,12 +439,12 @@ def tsin2plateau(start=0., fwhm=0., plateau=None, slope1=None, slope2=None):
     def f(t):
         if t < start:
             return 0.
-        elif (t < start+fwhm) and (fwhm!=0.):
-            return math.pow( math.sin(0.5*math.pi*(t-start)/fwhm) , 2 )
-        elif t < start+fwhm+plateau:
+        elif (t < start+slope1) and (slope1!=0.):
+            return math.pow( math.sin(0.5*math.pi*(t-start)/slope1) , 2 )
+        elif t < start+slope1+plateau:
             return 1.
-        elif t < start+fwhm+plateau+slope2 and (slope2!=0.):
-            return math.pow(  math.cos(0.5*math.pi*(t-start-fwhm-plateau)/slope2) , 2 )
+        elif t < start+slope1+plateau+slope2 and (slope2!=0.):
+            return math.pow(  math.cos(0.5*math.pi*(t-start-slope1-plateau)/slope2) , 2 )
         else:
             return 0.
     f.profileName = "tsin2plateau"

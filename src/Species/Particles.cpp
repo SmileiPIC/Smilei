@@ -23,7 +23,8 @@ tracked(false)
     Position_old.resize(0);
     Momentum.resize(0);
     isTest = false;
-    isRadReaction = false;
+    isQuantumParameter= false;
+    isMonteCarlo = false;
 
     double_prop.resize(0);
     short_prop.resize(0);
@@ -44,48 +45,63 @@ void Particles::initialize(unsigned int nParticles, unsigned int nDim)
         //float c_part_max = params.species_param[0].c_part_max;
         reserve( round( c_part_max * nParticles ), nDim );
     }
-    
+
     resize(nParticles, nDim);
-    
-    if ( double_prop.empty() ) { // do this just once 
-        
+
+    if ( double_prop.empty() ) { // do this just once
+
         Position.resize(nDim);
         for (unsigned int i=0 ; i< nDim ; i++)
             double_prop.push_back( &(Position[i]) );
-        
+
         for (unsigned int i=0 ; i< 3 ; i++)
             double_prop.push_back( &(Momentum[i]) );
-        
+
         double_prop.push_back( &Weight );
-        
+
 #ifdef  __DEBUG
         Position_old.resize(nDim);
         for (unsigned int i=0 ; i< nDim ; i++)
             double_prop.push_back( &(Position_old[i]) );
 #endif
-        
+
         short_prop.push_back( &Charge );
         if (tracked) {
             uint64_prop.push_back( &Id );
         }
-        
-        if (isRadReaction) {
+
+        // Quantum parameter (for QED effects):
+        // - if radiation reaction (continuous or discontinuous)
+        // - if multiphoton-Breit-Wheeler if photons
+        if (isQuantumParameter) {
             double_prop.push_back( &Chi );
         }
-        
+
+        // Optical Depth for Monte-Carlo processes:
+        // - if the discontinuous (Monte-Carlo) radiation reaction
+        // are activated, tau is the incremental optical depth to emission
+        if (isMonteCarlo)
+        {
+            double_prop.push_back( &Tau );
+        }
+
     }
-    
+
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
 // copy properties from another Particles
+// ---------------------------------------------------------------------------------------------------------------------
 void Particles::initialize(unsigned int nParticles, Particles &part)
 {
     isTest=part.isTest;
-    
+
     tracked=part.tracked;
-    
-    isRadReaction=part.isRadReaction;
-    
+
+    isQuantumParameter=part.isQuantumParameter;
+
+    isMonteCarlo=part.isMonteCarlo;
+
     initialize(nParticles, part.Position.size());
 }
 
@@ -110,12 +126,15 @@ void Particles::reserve( unsigned int n_part_max, unsigned int nDim )
     }
     Weight.reserve(n_part_max);
     Charge.reserve(n_part_max);
-    
+
     if (tracked)
         Id.reserve(n_part_max);
-    
-    if (isRadReaction)
+
+    if (isQuantumParameter)
         Chi.reserve(n_part_max);
+
+    if (isMonteCarlo)
+        Tau.reserve(n_part_max);
 
 }
 
@@ -129,34 +148,40 @@ void Particles::resize( unsigned int nParticles, unsigned int nDim )
     for (unsigned int i=0 ; i<nDim ; i++)
         Position_old[i].resize(nParticles, 0.);
 #endif
-    
+
     Momentum.resize(3);
     for (unsigned int i=0 ; i< 3 ; i++) {
         Momentum[i].resize(nParticles, 0.);
     }
-    
+
     Weight.resize(nParticles, 0.);
     Charge.resize(nParticles, 0);
-    
+
     if (tracked) {
         Id.resize(nParticles, 0);
     }
-    
-    if (isRadReaction) {
+
+    if (isQuantumParameter) {
         Chi.resize(nParticles, 0.);
     }
+
+    if (isMonteCarlo)
+    {
+        Tau.resize(nParticles, 0.);
+    }
+
 }
 
 void Particles::shrink_to_fit( unsigned int nDim )
 {
 
-    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) 
+    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ )
         std::vector<double>( *double_prop[iprop] ).swap( *double_prop[iprop] );
-        
-    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) 
+
+    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ )
         std::vector<short>( *short_prop[iprop] ).swap( *short_prop[iprop] );
 
-    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) 
+    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ )
         std::vector<uint64_t>( *uint64_prop[iprop] ).swap( *uint64_prop[iprop] );
 }
 
@@ -166,13 +191,13 @@ void Particles::shrink_to_fit( unsigned int nDim )
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::clear()
 {
-    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) 
+    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ )
         double_prop[iprop]->clear();
-        
-    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) 
+
+    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ )
         short_prop[iprop]->clear();
 
-    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) 
+    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ )
         uint64_prop[iprop]->clear();
 }
 
@@ -181,13 +206,13 @@ void Particles::clear()
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::cp_particle(unsigned int ipart, Particles &dest_parts )
 {
-    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) 
+    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ )
         dest_parts.double_prop[iprop]->push_back( (*double_prop[iprop])[ipart] );
-        
-    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) 
+
+    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ )
         dest_parts.short_prop[iprop]->push_back( (*short_prop[iprop])[ipart] );
 
-    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) 
+    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ )
         dest_parts.uint64_prop[iprop]->push_back( (*uint64_prop[iprop])[ipart] );
 }
 
@@ -196,14 +221,14 @@ void Particles::cp_particle(unsigned int ipart, Particles &dest_parts )
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::cp_particle(unsigned int ipart, Particles &dest_parts, int dest_id )
 {
-    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) 
+    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ )
         dest_parts.double_prop[iprop]->insert( dest_parts.double_prop[iprop]->begin() + dest_id, (*double_prop[iprop])[ipart] );
-        
-    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) 
-        dest_parts.short_prop[iprop]->insert( dest_parts.short_prop[iprop]->begin() + dest_id, (*short_prop[iprop])[ipart] );    
 
-    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) 
-        dest_parts.uint64_prop[iprop]->insert( dest_parts.uint64_prop[iprop]->begin() + dest_id, (*uint64_prop[iprop])[ipart] );    
+    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ )
+        dest_parts.short_prop[iprop]->insert( dest_parts.short_prop[iprop]->begin() + dest_id, (*short_prop[iprop])[ipart] );
+
+    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ )
+        dest_parts.uint64_prop[iprop]->insert( dest_parts.uint64_prop[iprop]->begin() + dest_id, (*uint64_prop[iprop])[ipart] );
 
 }
 
@@ -212,13 +237,13 @@ void Particles::cp_particle(unsigned int ipart, Particles &dest_parts, int dest_
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::cp_particles(unsigned int iPart, unsigned int nPart, Particles &dest_parts, int dest_id )
 {
-    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) 
+    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ )
         dest_parts.double_prop[iprop]->insert( dest_parts.double_prop[iprop]->begin() + dest_id, double_prop[iprop]->begin()+iPart, double_prop[iprop]->begin()+iPart+nPart );
-        
-    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) 
+
+    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ )
         dest_parts.short_prop[iprop]->insert( dest_parts.short_prop[iprop]->begin() + dest_id, short_prop[iprop]->begin()+iPart, short_prop[iprop]->begin()+iPart+nPart );
- 
-    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) 
+
+    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ )
         dest_parts.uint64_prop[iprop]->insert( dest_parts.uint64_prop[iprop]->begin() + dest_id, uint64_prop[iprop]->begin()+iPart, uint64_prop[iprop]->begin()+iPart+nPart );
 
 }
@@ -228,46 +253,46 @@ void Particles::cp_particles(unsigned int iPart, unsigned int nPart, Particles &
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::erase_particle(unsigned int ipart )
 {
-    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) 
+    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ )
         (*double_prop[iprop]).erase( (*double_prop[iprop]).begin()+ipart );
-            
-    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) 
+
+    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ )
         (*short_prop[iprop]).erase( (*short_prop[iprop]).begin()+ipart );
 
-    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) 
+    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ )
         (*uint64_prop[iprop]).erase( (*uint64_prop[iprop]).begin()+ipart );
 
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Suppress all particles from iPart to the end of particle array  
+// Suppress all particles from iPart to the end of particle array
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::erase_particle_trail(unsigned int ipart)
 {
-    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) 
+    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ )
         (*double_prop[iprop]).erase( (*double_prop[iprop]).begin()+ipart, (*double_prop[iprop]).end() );
-            
-    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) 
+
+    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ )
         (*short_prop[iprop]).erase( (*short_prop[iprop]).begin()+ipart, (*short_prop[iprop]).end() );
 
-    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) 
+    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ )
         (*uint64_prop[iprop]).erase( (*uint64_prop[iprop]).begin()+ipart, (*uint64_prop[iprop]).end() );
 
 }
 // ---------------------------------------------------------------------------------------------------------------------
-// Suppress npart particles from ipart  
+// Suppress npart particles from ipart
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::erase_particle(unsigned int ipart, unsigned int npart)
 {
-    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) 
+    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ )
         (*double_prop[iprop]).erase( (*double_prop[iprop]).begin()+ipart, (*double_prop[iprop]).begin()+ipart+npart );
-            
-    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) 
+
+    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ )
         (*short_prop[iprop]).erase( (*short_prop[iprop]).begin()+ipart, (*short_prop[iprop]).begin()+ipart+npart );
 
-    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) 
+    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ )
         (*uint64_prop[iprop]).erase( (*uint64_prop[iprop]).begin()+ipart, (*uint64_prop[iprop]).begin()+ipart+npart );
-    
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -282,12 +307,15 @@ void Particles::print(unsigned int iPart) {
         cout << Momentum[i][iPart] << " ";
     cout << Weight[iPart] << " ";
     cout << Charge[iPart] << endl;;
-    
+
     if (tracked)
         cout << Id[iPart] << endl;
-    
-    if (isRadReaction)
+
+    if (isQuantumParameter)
         cout << Chi[iPart] << endl;
+
+    if (isMonteCarlo)
+        cout << Tau[iPart] << endl;
 }
 
 
@@ -296,7 +324,7 @@ void Particles::print(unsigned int iPart) {
 // ---------------------------------------------------------------------------------------------------------------------
 ostream& operator << (ostream& out, const Particles& particles) {
     for (unsigned int iPart=0;iPart<particles.Weight.size();iPart++) {
-        
+
         for (unsigned int i=0; i<particles.Position.size(); i++) {
             out << particles.Position[i][iPart] << " ";
             //out << particles.Position_old[i][iPart] << " ";
@@ -305,14 +333,17 @@ ostream& operator << (ostream& out, const Particles& particles) {
             out << particles.Momentum[i][iPart] << " ";
         out << particles.Weight[iPart] << " ";
         out << particles.Charge[iPart] << endl;;
-        
+
         if (particles.tracked)
             out << particles.Id[iPart] << endl;
-        
-        if (particles.isRadReaction)
+
+        if (particles.isQuantumParameter)
             out << particles.Chi[iPart] << endl;
+
+        if (particles.isMonteCarlo)
+            out << particles.Tau[iPart] << endl;
     }
-    
+
     return (out);
 }
 
@@ -322,7 +353,7 @@ ostream& operator << (ostream& out, const Particles& particles) {
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::swap_part(unsigned int part1, unsigned int part2)
 {
-    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) 
+    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ )
         std::swap( (*double_prop[iprop])[part1], (*double_prop[iprop])[part2] );
 
     for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ )
@@ -339,7 +370,7 @@ void Particles::overwrite_part(unsigned int part1, unsigned int part2)
 {
     for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ )
         (*double_prop[iprop])[part2] = (*double_prop[iprop])[part1];
-    
+
     for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ )
         (*short_prop[iprop])[part2] = (*short_prop[iprop])[part1];
 
@@ -362,7 +393,7 @@ void Particles::overwrite_part(unsigned int part1, unsigned int part2, unsigned 
 
     for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ )
         memcpy(& (*short_prop[iprop])[part2] ,  &(*short_prop[iprop])[part1] , sizecharge);
-    
+
     for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ )
         memcpy(& (*uint64_prop[iprop])[part2]  ,  &(*uint64_prop[iprop])[part1]  , sizeid);
 }
@@ -372,13 +403,13 @@ void Particles::overwrite_part(unsigned int part1, unsigned int part2, unsigned 
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::overwrite_part(unsigned int part1, Particles &dest_parts, unsigned int part2)
 {
-    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) 
+    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ )
         (*dest_parts.double_prop[iprop])[part2] = (*double_prop[iprop])[part1];
-        
-    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) 
+
+    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ )
         (*dest_parts.short_prop[iprop])[part2] = (*short_prop[iprop])[part1];
-        
-    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) 
+
+    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ )
         (*dest_parts.uint64_prop[iprop])[part2] = (*uint64_prop[iprop])[part1];
 }
 
@@ -396,10 +427,10 @@ void Particles::overwrite_part(unsigned int part1, Particles &dest_parts, unsign
 
     for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ )
         memcpy(& (*dest_parts.short_prop[iprop])[part2] ,  &(*short_prop[iprop])[part1] , sizecharge);
-    
+
     for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ )
         memcpy(& (*dest_parts.uint64_prop[iprop])[part2]  ,  &(*uint64_prop[iprop])[part1]  , sizeid);
-    
+
 }
 
 
@@ -409,11 +440,11 @@ void Particles::overwrite_part(unsigned int part1, Particles &dest_parts, unsign
 void Particles::swap_part(unsigned int part1, unsigned int part2, unsigned int N)
 {
     double* buffer[N];
-    
+
     unsigned int sizepart = N*sizeof(Position[0][0]);
     unsigned int sizecharge = N*sizeof(Charge[0]);
     unsigned int sizeid = N*sizeof(Id[0]);
-    
+
     for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
         memcpy(buffer,&((*double_prop[iprop])[part1]), sizepart);
         memcpy(&((*double_prop[iprop])[part1]), &((*double_prop[iprop])[part2]), sizepart);
@@ -425,13 +456,13 @@ void Particles::swap_part(unsigned int part1, unsigned int part2, unsigned int N
         memcpy(&((*short_prop[iprop])[part1]), &((*short_prop[iprop])[part2]), sizecharge);
         memcpy(&((*short_prop[iprop])[part2]), buffer, sizecharge);
     }
-    
+
     for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
         memcpy(buffer,&((*uint64_prop[iprop])[part1]), sizeid);
         memcpy(&((*uint64_prop[iprop])[part1]), &((*uint64_prop[iprop])[part2]), sizeid);
         memcpy(&((*uint64_prop[iprop])[part2]), buffer, sizeid);
     }
-    
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -449,7 +480,7 @@ void Particles::create_particle()
 {
     for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ )
         (*double_prop[iprop]).push_back(0.);
-    
+
     for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ )
         (*short_prop[iprop]).push_back(0);
 
@@ -467,17 +498,17 @@ void Particles::create_particle()
 //        Position[i].resize(nParticles+nAdditionalParticles,0.);
 //        Position_old[i].resize(nParticles+nAdditionalParticles,0.);
 //    }
-//    
+//
 //    for (unsigned int i=0; i<3; i++) {
 //        Momentum[i].resize(nParticles+nAdditionalParticles,0.);
 //    }
 //    Weight.resize(nParticles+nAdditionalParticles,0.);
 //    Charge.resize(nParticles+nAdditionalParticles,0);
-//    
+//
 //    if (tracked)
 //        Id.resize(nParticles+nAdditionalParticles,0);
-//    
-//    if (isRadReaction)
+//
+//    if (isQuantumParameter)
 //        Chi.resize(nParticles+nAdditionalParticles,0.);
 //
 //}
@@ -501,7 +532,7 @@ void Particles::sortById() {
         return;
     }
     int nParticles(Weight.size());
-    
+
     bool stop;
     int jPart(0);
     do {
@@ -514,7 +545,7 @@ void Particles::sortById() {
         }
         jPart++;
     } while(!stop);
-    
+
 }
 
 //bool Particles::test_move( int iPartStart, int iPartEnd, Params& params )

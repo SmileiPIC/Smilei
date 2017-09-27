@@ -130,18 +130,21 @@ class Units(object):
 		self.requestedX = ""
 		self.requestedY = ""
 		self.requestedV = ""
+		self.verbose = True
 		for a in args:
 			if type(a) is str:
 				self.requestedUnits.append( a )
 			else:
 				raise TypeError("Arguments of Units() should be strings")
 		for kwa, val in kwargs.items():
-			if type(val) is not str:
-				raise TypeError("Arguments of Units() should be strings")
-			if   kwa == "x": self.requestedX = val
-			elif kwa == "y": self.requestedY = val
-			elif kwa == "v": self.requestedV = val
-			else: raise TypeError("Units() got an unexpected keyword argument '"+kwa+"'")
+			if kwa == "verbose": self.verbose = val
+			else:
+				if type(val) is not str:
+					raise TypeError("Arguments of Units() should be strings")
+				if   kwa == "x": self.requestedX = val
+				elif kwa == "y": self.requestedY = val
+				elif kwa == "v": self.requestedV = val
+				else: raise TypeError("Units() got an unexpected keyword argument '"+kwa+"'")
 		
 		# We try to import the pint package
 		self.UnitRegistry = None
@@ -149,8 +152,9 @@ class Units(object):
 			from pint import UnitRegistry
 			self.UnitRegistry = UnitRegistry
 		except:
-			print("WARNING: you do not have the *pint* package, so you cannot modify units.")
-			print("       : The results will stay in code units.")
+			if self.verbose:
+				print("WARNING: you do not have the *pint* package, so you cannot modify units.")
+				print("       : The results will stay in code units.")
 			return
 	
 	def _divide(self,units1, units2):
@@ -417,7 +421,7 @@ def multiPlot(*Diags, **kwargs):
 			Diag.options.plot.update({ "color":c[i%len(c)] })
 		Diag._prepare()
 	# Static plot
-	if sameAxes and len(Diags[0]._shape)==0:
+	if sameAxes and Diags[0].dim==0:
 		for Diag in Diags:
 			Diag._artist = Diag._animateOnAxes(Diag._ax, Diag.times[-1])
 			plt.draw()
@@ -439,14 +443,15 @@ def multiPlot(*Diags, **kwargs):
 					Diag._artist = Diag._animateOnAxes(Diag._ax, t, cax_id = Diag._cax_id)
 					if sameAxes:
 						Diag._ax.set_xlim(xmin,xmax)
-						color = Diag._artist.get_color()
-						Diag._ax.yaxis.label.set_color(color)
-						Diag._ax.tick_params(axis='y', colors=color)
-						if Diag.options.side == "right":
-							Diag._ax.spines['right'].set_color(color)
-							Diag._ax.spines['left'].set_color((1.,1.,1.,0.))
-						else:
-							Diag._ax.spines['left'].set_color(color)
+						if Diag.dim<2:
+							color = Diag._artist.get_color()
+							Diag._ax.yaxis.label.set_color(color)
+							Diag._ax.tick_params(axis='y', colors=color)
+							if Diag.options.side == "right":
+								Diag._ax.spines['right'].set_color(color)
+								Diag._ax.spines['left'].set_color((1.,1.,1.,0.))
+							else:
+								Diag._ax.spines['left'].set_color(color)
 					try: Diag._ax.set_position(Diag._ax.twin.get_position())
 					except: pass
 			plt.draw()

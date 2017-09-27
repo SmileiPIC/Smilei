@@ -39,14 +39,14 @@ void VectorPatch::close(SmileiMPI * smpiData)
     for (unsigned int idiag=0 ; idiag<localDiags.size(); idiag++)
         delete localDiags[idiag];
     localDiags.clear();
-    
+
     for (unsigned int idiag=0 ; idiag<globalDiags.size(); idiag++)
         delete globalDiags[idiag];
     globalDiags.clear();
-    
+
     for (unsigned int ipatch=0 ; ipatch<size(); ipatch++)
         delete patches_[ipatch];
-    
+
     patches_.clear();
 }
 
@@ -54,7 +54,7 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
 {
     globalDiags = DiagnosticFactory::createGlobalDiagnostics(params, smpi, *this );
     localDiags  = DiagnosticFactory::createLocalDiagnostics (params, smpi, *this, openPMD );
-    
+
     // Delete all unused fields
     for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++) {
         for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Jx_s.size(); ifield++) {
@@ -95,12 +95,16 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, double time_dual, Timers &timers, int itime)
+void VectorPatch::dynamics(Params& params,
+                           SmileiMPI* smpi,
+                           SimWindow* simWindow,
+                           RadiationTables & RadiationTables,
+                           double time_dual, Timers &timers, int itime)
 {
-    
+
     #pragma omp single
     diag_flag = needsRhoJsNow(itime);
-    
+
     timers.particles.restart();
     ostringstream t;
     #pragma omp for schedule(runtime)
@@ -111,17 +115,19 @@ void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow
                 species(ipatch, ispec)->dynamics(time_dual, ispec,
                                                  emfields(ipatch), interp(ipatch), proj(ipatch),
                                                  params, diag_flag, partwalls(ipatch),
-                                                 (*this)(ipatch), smpi, localDiags);
+                                                 (*this)(ipatch), smpi,
+                                                 RadiationTables,
+                                                 localDiags);
             }
         }
-    
+
     }
     timers.particles.update( params.printNow( itime ) );
 
 //    timers.syncField.restart();
 //    SyncVectorPatch::finalizeexchangeB( (*this) );
 //    timers.syncField.update(  params.printNow( itime ) );
-    
+
     timers.syncPart.restart();
     for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
         if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
@@ -143,7 +149,7 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
         }
     }
     if (itime%params.every_clean_particles_overhead==0) {
-        #pragma omp master 
+        #pragma omp master
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
             (*this)(ipatch)->cleanParticlesOverhead(params);
         #pragma omp barrier
@@ -193,8 +199,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
     }
     if ( !some_particles_are_moving  && !diag_flag )
         return;
-
-
+    
     timers.densities.restart();
     if  (diag_flag){
         #pragma omp for schedule(static)
@@ -204,7 +209,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
         }
     }
     timers.densities.update();
-    
+
     timers.syncDens.restart();
     SyncVectorPatch::sumRhoJ( (*this), timers, itime ); // MPI
     for (unsigned int imode = 0 ; imode < static_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields)->Jx_RZ_.size() ; imode++  ) {
@@ -220,7 +225,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
         }
     }
     timers.syncDens.update( params.printNow( itime ) );
-    
+
 } // End sumDensities
 
 
@@ -230,7 +235,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
 void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers)
 {
     timers.maxwell.restart();
-    
+
     for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_int ; ipassfilter++){
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
@@ -240,7 +245,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         SyncVectorPatch::exchangeJ( (*this) );
         SyncVectorPatch::finalizeexchangeJ( (*this) );
     }
-    
+
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
         // Saving magnetic fields (to compute centered fields used in the particle pusher)
@@ -253,10 +258,10 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         //for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*(*this)(ipatch)->EMfields->MaxwellFaradaySolver_)((*this)(ipatch)->EMfields);
     }
-    
+
     //Synchronize B fields between patches.
     timers.maxwell.update( params.printNow( itime ) );
-    
+
     timers.syncField.restart();
     SyncVectorPatch::exchangeB( (*this) );
 
@@ -288,7 +293,7 @@ void VectorPatch::initExternals(Params& params)
         for (unsigned int ilaser = 0; ilaser < nlaser; ilaser++)
              (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser[ilaser]->initFields(params, (*this)(ipatch));
     }
-    
+
     // Init all antennas
     for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
         (*this)(ipatch)->EMfields->initAntennas((*this)(ipatch));
@@ -305,11 +310,11 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
         if( smpi->isMaster() )
             globalDiags[idiag]->openFile( params, smpi, true );
     }
-    
+
     // Local diags : fields, probes, tracks
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
         localDiags[idiag]->init(params, smpi, *this);
-    
+
 } // END initAllDiags
 
 
@@ -319,7 +324,7 @@ void VectorPatch::closeAllDiags(SmileiMPI* smpi)
     if ( smpi->isMaster() )
         for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++)
             globalDiags[idiag]->closeFile();
-    
+
     // All MPI close local diags
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
         localDiags[idiag]->closeFile();
@@ -332,7 +337,7 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
     if ( smpi->isMaster() )
         for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++)
             globalDiags[idiag]->openFile( params, smpi, false );
-    
+
     // All MPI open local diags
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
         localDiags[idiag]->openFile( params, smpi, false );
@@ -346,7 +351,7 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itime, Timers & timers, SimWindow* simWindow)
 {
-    
+
     // Global diags: scalars + particles
     timers.diags.restart();
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
@@ -366,7 +371,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itim
             globalDiags[idiag]->write( itime , smpi );
         }
     }
-    
+
     // Local diags : fields, probes, tracks
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
         #pragma omp single
@@ -376,7 +381,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itim
         if( localDiags[idiag]->theTimeIsNow )
             localDiags[idiag]->run( smpi, *this, itime, simWindow );
     }
-    
+
     // Manage the "diag_flag" parameter, which indicates whether Rho and Js were used
     if( diag_flag ) {
         #pragma omp barrier
@@ -400,35 +405,40 @@ bool VectorPatch::isRhoNull( SmileiMPI* smpi )
     double locnorm2(0.);
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
         locnorm2 += (*this)(ipatch)->EMfields->computeRhoNorm2();
-    
+
     MPI_Allreduce(&locnorm2, &norm2, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    
+
     return (norm2<=0.);
 } // END isRhoNull
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Solve Poisson to initialize E
-//   - all steps are done locally, sync per patch, sync per MPI process 
+//   - all steps are done locally, sync per patch, sync per MPI process
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 {
+    Timer ptimer("global");
+    ptimer.init(smpi);
+    ptimer.restart();
+
+    
     unsigned int iteration_max = params.poisson_iter_max;
     double           error_max = params.poisson_error_max;
     unsigned int iteration=0;
-    
+
     // Init & Store internal data (phi, r, p, Ap) per patch
     double rnew_dot_rnew_local(0.);
-    double rnew_dot_rnew(0.);    
+    double rnew_dot_rnew(0.);
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         (*this)(ipatch)->EMfields->initPoisson( (*this)(ipatch) );
         rnew_dot_rnew_local += (*this)(ipatch)->EMfields->compute_r();
     }
     MPI_Allreduce(&rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    
+
     std::vector<Field*> Ex_;
     std::vector<Field*> Ap_;
-    
+
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         Ex_.push_back( (*this)(ipatch)->EMfields->Ex_ );
         Ap_.push_back( (*this)(ipatch)->EMfields->Ap_ );
@@ -441,10 +451,10 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
             nx_p2_global *= (params.n_space_global[2]+1);
         }
     }
-        
+
     // compute control parameter
     double ctrl = rnew_dot_rnew / (double)(nx_p2_global);
-    
+
     // ---------------------------------------------------------
     // Starting iterative loop for the conjugate gradient method
     // ---------------------------------------------------------
@@ -452,17 +462,17 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     while ( (ctrl > error_max) && (iteration<iteration_max) ) {
         iteration++;
         if (smpi->isMaster()) DEBUG("iteration " << iteration << " started with control parameter ctrl = " << ctrl*1.e14 << " x 1e-14");
-        
+
         // scalar product of the residual
         double r_dot_r = rnew_dot_rnew;
-        
-        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) 
+
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
             (*this)(ipatch)->EMfields->compute_Ap( (*this)(ipatch) );
-        
+
         // Exchange Ap_ (intra & extra MPI)
         SyncVectorPatch::exchange( Ap_, *this );
         SyncVectorPatch::finalizeexchange( Ap_, *this );
-        
+
        // scalar product p.Ap
         double p_dot_Ap       = 0.0;
         double p_dot_Ap_local = 0.0;
@@ -470,13 +480,13 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
             p_dot_Ap_local += (*this)(ipatch)->EMfields->compute_pAp();
         }
         MPI_Allreduce(&p_dot_Ap_local, &p_dot_Ap, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-        
-        
+
+
         // compute new potential and residual
         for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
             (*this)(ipatch)->EMfields->update_pand_r( r_dot_r, p_dot_Ap );
         }
-        
+
         // compute new residual norm
         rnew_dot_rnew       = 0.0;
         rnew_dot_rnew_local = 0.0;
@@ -485,19 +495,19 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         }
         MPI_Allreduce(&rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
         if (smpi->isMaster()) DEBUG("new residual norm: rnew_dot_rnew = " << rnew_dot_rnew);
-        
+
         // compute new directio
         for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
             (*this)(ipatch)->EMfields->update_p( rnew_dot_rnew, r_dot_r );
         }
-        
+
         // compute control parameter
         ctrl = rnew_dot_rnew / (double)(nx_p2_global);
         if (smpi->isMaster()) DEBUG("iteration " << iteration << " done, exiting with control parameter ctrl = " << ctrl);
-    
+
     }//End of the iterative loop
-    
-    
+
+
     // --------------------------------
     // Status of the solver convergence
     // --------------------------------
@@ -507,19 +517,19 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
                     << ", relative err is ctrl = " << 1.0e14*ctrl << " x 1e-14");
     }
     else {
-        if (smpi->isMaster()) 
+        if (smpi->isMaster())
             MESSAGE(1,"Poisson solver converged at iteration: " << iteration
                     << ", relative err is ctrl = " << 1.0e14*ctrl << " x 1e-14");
     }
-    
+
     // ------------------------------------------
     // Compute the electrostatic fields Ex and Ey
     // ------------------------------------------
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
         (*this)(ipatch)->EMfields->initE( (*this)(ipatch) );
 
-    SyncVectorPatch::exchangeE( *this );    
-    SyncVectorPatch::finalizeexchangeE( *this );    
+    SyncVectorPatch::exchangeE( *this );
+    SyncVectorPatch::finalizeexchangeE( *this );
 
     // Centering of the electrostatic fields
     // -------------------------------------
@@ -531,11 +541,11 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
             Ey_avg_local += (*this)(ipatch)->EMfields->computeEySum();
             Ez_avg_local += (*this)(ipatch)->EMfields->computeEzSum();
         }
-        
+
         MPI_Allreduce(&Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
         MPI_Allreduce(&Ey_avg_local, &Ey_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
         MPI_Allreduce(&Ez_avg_local, &Ez_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-        
+
         E_Add[0] = -Ex_avg/((params.n_space[0]+2)*(params.n_space[1]+1)*(params.n_space[2]+1));
         E_Add[1] = -Ey_avg/((params.n_space[0]+1)*(params.n_space[1]+2)*(params.n_space[2]+1));;
         E_Add[2] = -Ez_avg/((params.n_space[0]+1)*(params.n_space[1]+1)*(params.n_space[2]+2));;
@@ -545,7 +555,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         double Ey_XminYmax = 0.0;
         double Ex_XmaxYmin = 0.0;
         double Ey_XmaxYmin = 0.0;
-        
+
         //The YmaxXmin patch has Patch coordinates X=0, Y=2^m1-1= number_of_patches[1]-1.
         //Its hindex is
         int patch_YmaxXmin = generalhilbertindex(params.mi[0], params.mi[1], 0,  params.number_of_patches[1]-1);
@@ -556,28 +566,28 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         int patch_YminXmax = generalhilbertindex(params.mi[0], params.mi[1], params.number_of_patches[0]-1, 0);
         //The MPI rank owning it is
         int rank_XmaxYmin = smpi->hrank(patch_YminXmax);
-        
-        
+
+
         //cout << params.mi[0] << " " << params.mi[1] << " " << params.number_of_patches[0] << " " << params.number_of_patches[1] << endl;
         //cout << patch_YmaxXmin << " " << rank_XminYmax << " " << patch_YminXmax << " " << rank_XmaxYmin << endl;
-        
+
         if ( smpi->getRank() == rank_XminYmax ) {
             Ex_XminYmax = (*this)(patch_YmaxXmin-((*this).refHindex_))->EMfields->getEx_XminYmax();
             Ey_XminYmax = (*this)(patch_YmaxXmin-((*this).refHindex_))->EMfields->getEy_XminYmax();
         }
-        
+
         // Xmax-Ymin corner
         if ( smpi->getRank() == rank_XmaxYmin ) {
             Ex_XmaxYmin = (*this)(patch_YminXmax-((*this).refHindex_))->EMfields->getEx_XmaxYmin();
             Ey_XmaxYmin = (*this)(patch_YminXmax-((*this).refHindex_))->EMfields->getEy_XmaxYmin();
         }
-        
+
         MPI_Bcast(&Ex_XminYmax, 1, MPI_DOUBLE, rank_XminYmax, MPI_COMM_WORLD);
         MPI_Bcast(&Ey_XminYmax, 1, MPI_DOUBLE, rank_XminYmax, MPI_COMM_WORLD);
-        
+
         MPI_Bcast(&Ex_XmaxYmin, 1, MPI_DOUBLE, rank_XmaxYmin, MPI_COMM_WORLD);
         MPI_Bcast(&Ey_XmaxYmin, 1, MPI_DOUBLE, rank_XmaxYmin, MPI_COMM_WORLD);
-        
+
         //This correction is always done, independantly of the periodicity. Is this correct ?
         E_Add[0] = -0.5*(Ex_XminYmax+Ex_XmaxYmin);
         E_Add[1] = -0.5*(Ey_XminYmax+Ey_XmaxYmin);
@@ -588,10 +598,10 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
             Ex_avg_local += (*this)(ipatch)->EMfields->computeExSum();
             Ey_avg_local += (*this)(ipatch)->EMfields->computeEySum();
         }
-        
+
         MPI_Allreduce(&Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
         MPI_Allreduce(&Ey_avg_local, &Ey_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-        
+
         E_Add[0] = -Ex_avg/((params.n_space[0]+2)*(params.n_space[1]+1));
         E_Add[1] = -Ey_avg/((params.n_space[0]+1)*(params.n_space[1]+2));;
 #endif
@@ -600,14 +610,14 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     else if( Ex_[0]->dims_.size()==1 ) {
         double Ex_Xmin = 0.0;
         double Ex_Xmax = 0.0;
-        
+
         unsigned int rankXmin = 0;
         if ( smpi->getRank() == 0 ) {
             //Ex_Xmin = (*Ex1D)(index_bc_min[0]);
             Ex_Xmin = (*this)( (0)-((*this).refHindex_))->EMfields->getEx_Xmin();
         }
         MPI_Bcast(&Ex_Xmin, 1, MPI_DOUBLE, rankXmin, MPI_COMM_WORLD);
-        
+
         unsigned int rankXmax = smpi->getSize()-1;
         if ( smpi->getRank() == smpi->getSize()-1 ) {
             //Ex_Xmax = (*Ex1D)(index_bc_max[0]);
@@ -615,29 +625,29 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         }
         MPI_Bcast(&Ex_Xmax, 1, MPI_DOUBLE, rankXmax, MPI_COMM_WORLD);
         E_Add[0] = -0.5*(Ex_Xmin+Ex_Xmax);
-        
+
 #ifdef _3D_LIKE_CENTERING
         double Ex_avg_local(0.), Ex_avg(0.);
         for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
             Ex_avg_local += (*this)(ipatch)->EMfields->computeExSum();
         }
-        
+
         MPI_Allreduce(&Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-        
+
         E_Add[0] = -Ex_avg/((params.n_space[0]+2));
 #endif
 
     }
-    
+
     // Centering electrostatic fields
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
         (*this)(ipatch)->EMfields->centeringE( E_Add );
-    
-    
+
+
     // Compute error on the Poisson equation
     double deltaPoisson_max = 0.0;
     int i_deltaPoisson_max  = -1;
-    
+
 #ifdef _A_FINALISER
     for (unsigned int i=0; i<nx_p; i++) {
         double deltaPoisson = abs( ((*Ex1D)(i+1)-(*Ex1D)(i))/dx - (*rho1D)(i) );
@@ -647,10 +657,13 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         }
     }
 #endif
-    
+
     //!\todo Reduce to find global max
     if (smpi->isMaster())
         MESSAGE(1,"Poisson equation solved. Maximum err = " << deltaPoisson_max << " at i= " << i_deltaPoisson_max);
+
+    ptimer.update();
+    MESSAGE("Time in Poisson : " << ptimer.getTime() );
 
 } // END solvePoisson
 
@@ -667,13 +680,13 @@ void VectorPatch::load_balance(Params& params, double time_dual, SmileiMPI* smpi
 
     // Compute new patch distribution
     smpi->recompute_patch_count( params, *this, time_dual );
-            
+
     // Create empty patches according to this new distribution
     this->createPatches(params, smpi, simWindow);
 
     // Proceed to patch exchange, and delete patch which moved
     this->exchangePatches(smpi, params);
-    
+
     // Tell that the patches moved this iteration (needed for probes)
     lastIterationPatchesMoved = itime;
 
@@ -690,18 +703,18 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
 {
     unsigned int n_moved(0);
     recv_patches_.resize(0);
-    
+
     // Set Index of the 1st patch of the vector yet on current MPI rank
     // Is this really necessary ? It should be done already ...
     refHindex_ = (*this)(0)->Hindex();
 
     // Current number of patch
     int nPatches_now = this->size() ;
-    
+
     // When going to openMP, these two vectors must be stored by patch and not by vectorPatch.
     recv_patch_id_.clear();
     send_patch_id_.clear();
-    
+
     // istart = Index of the futur 1st patch
     int istart( 0 );
     for (int irk=0 ; irk<smpi->getRank() ; irk++) istart += smpi->patch_count[irk];
@@ -710,17 +723,17 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
     for (int ipatch=0 ; ipatch<smpi->patch_count[smpi->getRank()] ; ipatch++)
         recv_patch_id_.push_back( istart+ipatch );
 
-    
+
     // Loop on current patches to define patch to send
     for (int ipatch=0 ; ipatch < nPatches_now ; ipatch++) {
         //if  current hindex     <  future refHindex   OR      current hindex > future last hindex...
         if ( ( refHindex_+ipatch < recv_patch_id_[0] ) || ( refHindex_+ipatch > recv_patch_id_.back() ) ) {
-            // Put this patch in the send list. 
+            // Put this patch in the send list.
             send_patch_id_.push_back( ipatch );
         }
     }
 
-    
+
     // Backward loop on future patches to define suppress patch in receive list
     // before this loop, recv_patch_id_ stores all patches index define in SmileiMPI::patch_count
     int existing_patch_id = -1;
@@ -734,15 +747,15 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
         }
     }
 
-    
+
     // Get an existing patch that will be used for cloning
     if( existing_patch_id<0 )
         ERROR("No patch to clone. This should never happen!");
     Patch * existing_patch = (*this)(existing_patch_id-refHindex_);
 
 
-    // Create new Patches 
-    n_moved = simWindow->getNmoved(); 
+    // Create new Patches
+    n_moved = simWindow->getNmoved();
     // Store in local vector future patches
     // Loop on the patches I have to receive and do not already own.
     for (unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++) {
@@ -750,7 +763,7 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
         // Species will be cleared when, nbr of particles will be known
         // Creation of a new patch, ready to receive its content from MPI neighbours.
         Patch* newPatch = PatchesFactory::clone(existing_patch, params, smpi, recv_patch_id_[ipatch], n_moved, false );
-        newPatch->finalizeMPIenvironment();
+        newPatch->finalizeMPIenvironment(params);
         //Store pointers to newly created patch in recv_patches_.
         recv_patches_.push_back( newPatch );
     }
@@ -765,7 +778,7 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
 {
-    
+
     //int newMPIrankbis, oldMPIrankbis, tmp;
     int newMPIrank = smpi->getRank() -1;
     int oldMPIrank = smpi->getRank() -1;
@@ -780,14 +793,14 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
         // locate rank which will own send_patch_id_[ipatch]
         // We assume patches are only exchanged with neighbours.
         // Once all patches supposed to be sent to the left are done, we send the rest to the right.
-        // if hindex of patch to be sent      >  future hindex of the first patch owned by this process 
+        // if hindex of patch to be sent      >  future hindex of the first patch owned by this process
         if (send_patch_id_[ipatch]+refHindex_ > istart ) newMPIrank = smpi->getRank() + 1;
 
         smpi->isend( (*this)(send_patch_id_[ipatch]), newMPIrank, (refHindex_+send_patch_id_[ipatch])*nmessage, params );
     }
-    
+
     for (unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++) {
-        //if  hindex of patch to be received > first hindex actually owned, that means it comes from the next MPI process and not from the previous anymore. 
+        //if  hindex of patch to be received > first hindex actually owned, that means it comes from the next MPI process and not from the previous anymore.
         if(recv_patch_id_[ipatch] > refHindex_ ) oldMPIrank = smpi->getRank() + 1;
 
         smpi->recv( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch]*nmessage, params );
@@ -796,7 +809,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
 
     for (unsigned int ipatch=0 ; ipatch < send_patch_id_.size() ; ipatch++)
         smpi->waitall( (*this)(send_patch_id_[ipatch]) );
-    
+
     smpi->barrier();
     //Delete sent patches
     int nPatchSend(send_patch_id_.size());
@@ -805,7 +818,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
         delete (*this)(send_patch_id_[ipatch]);
         patches_[ send_patch_id_[ipatch] ] = NULL;
         patches_.erase( patches_.begin() + send_patch_id_[ipatch] );
-        
+
     }
 
 
@@ -818,8 +831,8 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     }
     recv_patches_.clear();
 
-    
-    for (unsigned int ipatch=0 ; ipatch<patches_.size() ; ipatch++ ) { 
+
+    for (unsigned int ipatch=0 ; ipatch<patches_.size() ; ipatch++ ) {
         (*this)(ipatch)->updateMPIenv(smpi);
         if ((*this)(ipatch)->has_an_MPI_neighbor())
             (*this)(ipatch)->createType(params);
@@ -827,7 +840,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
             (*this)(ipatch)->cleanType();
     }
     (*this).set_refHindex() ;
-    update_field_list() ;    
+    update_field_list() ;
 
 } // END exchangePatches
 
@@ -849,11 +862,11 @@ void VectorPatch::output_exchanges(SmileiMPI* smpi)
     for (int irk=0 ; irk<smpi->getRank() ; irk++) istart += smpi->patch_count[irk];
     for (unsigned int ipatch=0 ; ipatch < send_patch_id_.size() ; ipatch++) {
         if(send_patch_id_[ipatch]+refHindex_ > istart ) newMPIrank = smpi->getRank() + 1;
-        output_file << "Rank " << smpi->getRank() << " sending patch " << send_patch_id_[ipatch]+refHindex_ << " to " << newMPIrank << endl; 
+        output_file << "Rank " << smpi->getRank() << " sending patch " << send_patch_id_[ipatch]+refHindex_ << " to " << newMPIrank << endl;
     }
     for (unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++) {
         if(recv_patch_id_[ipatch] > refHindex_ ) oldMPIrank = smpi->getRank() + 1;
-        output_file << "Rank " << smpi->getRank() << " receiving patch " << recv_patch_id_[ipatch] << " from " << oldMPIrank << endl; 
+        output_file << "Rank " << smpi->getRank() << " receiving patch " << recv_patch_id_[ipatch] << " from " << oldMPIrank << endl;
     }
     output_file << "NEXT" << endl;
     output_file.close();
@@ -893,7 +906,7 @@ void VectorPatch::update_field_list()
     listBx_.resize( size() ) ;
     listBy_.resize( size() ) ;
     listBz_.resize( size() ) ;
-    
+
     for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
         listJx_[ipatch] = patches_[ipatch]->EMfields->Jx_ ;
         listJy_[ipatch] = patches_[ipatch]->EMfields->Jy_ ;
@@ -972,14 +985,14 @@ void VectorPatch::update_field_list()
         Bs0[ipatch+size()] = patches_[ipatch]->EMfields->Bz_ ;
 
         // TO DO , B size depend of nDim
-        // Pas grave, au pire inutil 
+        // Pas grave, au pire inutil
         Bs1[ipatch       ] = patches_[ipatch]->EMfields->Bx_ ;
         Bs1[ipatch+size()] = patches_[ipatch]->EMfields->Bz_ ;
 
         // TO DO , B size depend of nDim
-        // Pas grave, au pire inutil 
+        // Pas grave, au pire inutil
         Bs2[ipatch       ] = patches_[ipatch]->EMfields->Bx_ ;
-        Bs2[ipatch+size()] = patches_[ipatch]->EMfields->By_ ;        
+        Bs2[ipatch+size()] = patches_[ipatch]->EMfields->By_ ;
     }
 
     for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
@@ -1127,7 +1140,7 @@ void VectorPatch::update_field_list(int ispec)
         else
             listrhos_.clear();
     }
-    
+
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
         if(patches_[ipatch]->EMfields->Jx_s [ispec]) {
@@ -1148,7 +1161,7 @@ void VectorPatch::update_field_list(int ispec)
         }
     }
 
-    
+
 
 
 }
@@ -1162,20 +1175,20 @@ void VectorPatch::applyAntennas(double time)
         TITLE("Applying antennas at time t = " << time);
     }
 #endif
-    
+
     // Loop antennas
     for(unsigned int iAntenna=0; iAntenna<nAntennas; iAntenna++) {
-    
+
         // Get intensity from antenna of the first patch
         #pragma omp single
         antenna_intensity = patches_[0]->EMfields->antennas[iAntenna].time_profile->valueAt(time);
-        
+
         // Loop patches to apply
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++) {
             patches_[ipatch]->EMfields->applyAntenna(iAntenna, antenna_intensity);
         }
-        
+
     }
 }
 
@@ -1183,24 +1196,24 @@ void VectorPatch::applyAntennas(double time)
 void VectorPatch::applyCollisions(Params& params, int itime, Timers & timers)
 {
     timers.collisions.restart();
-    
+
     if (Collisions::debye_length_required)
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
             Collisions::calculate_debye_length(params,patches_[ipatch]);
-    
+
     unsigned int ncoll = patches_[0]->vecCollisions.size();
-    
+
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
         for (unsigned int icoll=0 ; icoll<ncoll; icoll++)
             patches_[ipatch]->vecCollisions[icoll]->collide(params,patches_[ipatch],itime, localDiags);
-    
+
     #pragma omp single
     for (unsigned int icoll=0 ; icoll<ncoll; icoll++)
         Collisions::debug(params, itime, icoll, *this);
     #pragma omp barrier
-    
+
     timers.collisions.update();
 }
 
@@ -1221,40 +1234,40 @@ void VectorPatch::check_memory_consumption(SmileiMPI* smpi)
         for (unsigned int ispec=0 ; ispec<patches_[ipatch]->vecSpecies.size(); ispec++)
             particlesMem += patches_[ipatch]->vecSpecies[ispec]->getMemFootPrint();
     MESSAGE( 1, "(Master) Species part = " << (int)( (double)particlesMem / 1024./1024.) << " MB" );
-    
+
     long double dParticlesMem = (double)particlesMem / 1024./1024./1024.;
     MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dParticlesMem, &dParticlesMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
     MESSAGE( 1, setprecision(3) << "Global Species part = " << dParticlesMem << " GB" );
-    
+
     MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&particlesMem, &particlesMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
     MESSAGE( 1, "Max Species part = " << (int)( (double)particlesMem / 1024./1024.) << " MB" );
-    
+
     // fieldsMem contains field per species and average fields
     long int fieldsMem(0);
     for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
         fieldsMem += patches_[ipatch]->EMfields->getMemFootPrint();
     MESSAGE( 1, "(Master) Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " MB" );
-    
+
     long double dFieldsMem = (double)fieldsMem / 1024./1024./1024.;
     MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dFieldsMem, &dFieldsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
     MESSAGE( 1, setprecision(3) << "Global Fields part = " << dFieldsMem << " GB" );
-    
+
     MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&fieldsMem, &fieldsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
     MESSAGE( 1, "Max Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " MB" );
 
-    
+
     for (unsigned int idiags=0 ; idiags<globalDiags.size() ; idiags++) {
         // fieldsMem contains field per species
         long int diagsMem(0);
         diagsMem += globalDiags[idiags]->getMemFootPrint();
-    
+
         long double dDiagsMem = (double)diagsMem / 1024./1024./1024.;
         MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dDiagsMem, &dDiagsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
         if (dDiagsMem>0.) {
             MESSAGE( 1, "(Master) " <<  globalDiags[idiags]->filename << "  = " << (int)( (double)diagsMem / 1024./1024.) << " MB" );
             MESSAGE( 1, setprecision(3) << "Global " <<  globalDiags[idiags]->filename << " = " << dDiagsMem << " GB" );
         }
-    
+
         MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&diagsMem, &diagsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
         if (dDiagsMem>0.)
             MESSAGE( 1, "Max " <<  globalDiags[idiags]->filename << " = " << (int)( (double)diagsMem / 1024./1024.) << " MB" );
@@ -1264,14 +1277,14 @@ void VectorPatch::check_memory_consumption(SmileiMPI* smpi)
         // fieldsMem contains field per species
         long int diagsMem(0);
         diagsMem += localDiags[idiags]->getMemFootPrint();
-    
+
         long double dDiagsMem = (double)diagsMem / 1024./1024./1024.;
         MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dDiagsMem, &dDiagsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
         if (dDiagsMem>0.) {
             MESSAGE( 1, "(Master) " <<  localDiags[idiags]->filename << "  = " << (int)( (double)diagsMem / 1024./1024.) << " MB" );
             MESSAGE( 1, setprecision(3) << "Global " <<  localDiags[idiags]->filename << " = " << dDiagsMem << " GB" );
         }
-    
+
         MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&diagsMem, &diagsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
         if (dDiagsMem>0.)
             MESSAGE( 1, "Max " <<  localDiags[idiags]->filename << " = " << (int)( (double)diagsMem / 1024./1024.) << " MB" );

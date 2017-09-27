@@ -9,15 +9,16 @@ between various Maxwell solvers, particle pushers, interpolators, projectors, et
 
 Maxwell's equations are solved on the so-called Yee-mesh with centered electric
 and magnetic fields using the finite-difference time-domain (FDTD) method
-or related methods [Nuter2014]_. Moreover, charge deposition is computed
-following a charge-conservation scheme [Esirkepov2001]_. 
+or related methods. Moreover, charge deposition is computed
+following a charge-conservation scheme.
 
 :doc:`Binary collisions <collisions>` have been implemented and
 Monte-Carlo routines are currently under development to account for
 high-energy (gamma) photon emission and its back-reaction on the electron 
 dynamics, as well as electron-positron pair creation. These developments are
-undertaken in collaboration with the team that has introduced similar routines
-in the PIC code :program:`Calder` (see [Lobet2013]_). Such routines will be of
+undertaken in collaboration with the team that introduced
+`similar routines <http://iopscience.iop.org/article/10.1088/1742-6596/688/1/012058>`_
+in the PIC code :program:`Calder`. Such routines will be of
 particular importance for the modelling of strongly relativistic astrophysical scenarii.
 
 On the performance side, :program:`Smilei` benefits from a state-of-the-art

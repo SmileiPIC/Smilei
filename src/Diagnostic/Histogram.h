@@ -10,30 +10,30 @@ class HistogramAxis {
 public:
     HistogramAxis() {};
     ~HistogramAxis() {};
-    
+
     void init(std::string, double, double, int, bool, bool, std::vector<double>);
-    
+
     //! Function that goes through the particles and find where they should go in the axis
     virtual void digitize(Species *, std::vector<double>&, std::vector<int>&, unsigned int, SimWindow*) {};
-    
+
     //! quantity of the axis (e.g. 'x', 'px', ...)
     std::string type;
-    
+
     //! starting/ending point for the axis binning
     double min, max;
     //! starting/ending point for the axis binning, accounting for logscale
     double actual_min, actual_max;
     //! number of bins for the axis binning
     int nbins;
-    
+
     //! determines whether linear scale or log scale
     bool logscale;
-    
+
     //! determines whether particles beyond min and max are counted in the first and last bin
     bool edge_inclusive;
-    
+
     double coeff;
-    
+
     //! List of coefficients (a,b,c) for a "composite" type of the form "ax+by+cz"
     std::vector<double> coefficients;
 };
@@ -44,16 +44,16 @@ class Histogram {
 public:
     Histogram() {};
     ~Histogram() {};
-    
+
     void init(Params&, std::vector<PyObject*>, std::vector<unsigned int>, std::string, Patch*, std::vector<std::string>);
-    
+
     //! Compute the index of each particle in the final histogram
     void digitize(Species *, std::vector<double>&, std::vector<int>&, SimWindow*);
     //! Calculate the quantity of each particle to be summed in the histogram
     virtual void valuate(Species*, std::vector<double>&, std::vector<int>&) {};
     //! Add the contribution of each particle in the histogram
     void distribute(std::vector<double>&, std::vector<int>&, std::vector<double>&);
-    
+
     std::vector<HistogramAxis*> axes;
 };
 
@@ -351,6 +351,18 @@ class Histogram_ekin_density : public Histogram {
         }
     };
 };
+//! Children class of Histogram: for the quantum parameter
+//! of the radiating particles
+class Histogram_chi_density : public Histogram {
+    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+        unsigned int npart = array.size();
+        for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
+            if( index[ipart]<0 ) continue;
+            array[ipart] = s->mass * s->particles->Weight[ipart]
+                                   * s->particles->Chi[ipart];
+        }
+    };
+};
 class Histogram_p_density : public Histogram {
     void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
         unsigned int npart = array.size();
@@ -487,4 +499,3 @@ class Histogram_ekin_vx_density : public Histogram {
 
 
 #endif
-

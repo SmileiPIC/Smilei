@@ -28,7 +28,7 @@ public:
         Pusher* Push = NULL;
 
         // assign the correct Pusher to Push
-        if ( species->dynamics_type == "norm" )
+        if ( species->dynamics_type == "norm" || species->dynamics_type == "nlics")
         {
             Push = new PusherBoris( params, species );
         }
@@ -36,10 +36,10 @@ public:
         {
             Push = new PusherBorisNR( params, species );
         }
-        else if ( species->dynamics_type == "rrll" )
+        /*else if ( species->dynamics_type == "rrll" )
         {
             Push = new PusherRRLL( params, species );
-        }
+        }*/
         else if ( species->dynamics_type == "vay" )
         {
             Push = new PusherVay( params, species );

@@ -4,46 +4,45 @@ Releases
 Major releases are available here as well as on the
 `GitHub page <https://github.com/SmileiPIC/Smilei>`_.
 We greatly appreciate external users trying this code and giving feedback.
+You can submit *issues* when experiencing difficulties,
+or *pull requests* for your changes to become part of the official releases.
 
-You can :doc:`contact us <partners>` to become a developer of the official releases:
-the `developer's Gitlab repository <https://llrgit.in2p3.fr/smilei/smilei>`_ is used
-for development, and you will need to ask for a password first,
-but the process is fast and straightforward.
+Note that most of the development of the code is currently hosted in
+a `different repository <https://llrgit.in2p3.fr/smilei/smilei>`_
+reserved for the :doc:`partners`. It is regularly synchronized with
+the GitHub page.
 
 ----
 
 Upcoming changes
 ^^^^^^^^^^^^^^^^
 
+* Monte Carlo QED photon emission
 * Moving window along y and z
 * Tracking particles in *Screens*
-* Better time-average for B fields
+* *Test mode* to quickly check the namelist consistency
 
 ----
 
 .. _latestVersion:
 
 Current release 3.2
-^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
 
 **Download**: `Smilei v3.2 <_downloads/smilei-v3.2.tar.gz>`_
 
 * New pushers (Vay's and Higuera-Cary's)
 * *Numpy* used for filtering track particles
 * Fourth order in 3D
-* Bugfixes in energy computation in 3D and moving window case
-* Add some missing 3D features :
-
-  * External fields management 
-  * Non-neutral plasma initialization
-
+* Add some missing 3D features: external fields management, boundary conditions and non-neutral plasma initialization
 * OpenMP support in moving window
-* Bugfix in non-periodic boundary conditions
+* Tracked particles post-processing improved for large files
+* Bugfixes: energy computation in 3D or with moving window, random number seed
 
 ----
 
 Release 3.1
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^
 
 **Download**: `Smilei v3.1 <_downloads/smilei-v3.1.tar.gz>`_
 

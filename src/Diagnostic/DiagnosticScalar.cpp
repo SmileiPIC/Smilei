@@ -12,23 +12,23 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patc
 latest_timestep(-1)
 {
     // patch  == NULL else error
-    
+
     if (PyTools::nComponents("DiagScalar") > 1) {
         ERROR("Only one DiagScalar can be specified");
     }
-    
+
     if (PyTools::nComponents("DiagScalar") > 0 ) {
-        
+
         // get parameter "every" which describes a timestep selection
         timeSelection = new TimeSelection(
             PyTools::extract_py("every", "DiagScalar", 0),
             "Scalars"
         );
-        
+
         precision=10;
         PyTools::extract("precision",precision,"DiagScalar");
         PyTools::extract("vars",vars,"DiagScalar");
-        
+
         // copy from params remaining stuff
         res_time       = params.res_time;
         dt             = params.timestep;
@@ -38,7 +38,7 @@ latest_timestep(-1)
     } else {
         timeSelection = new TimeSelection();
     }
-    
+
 } // END DiagnosticScalar::DiagnosticScalar
 
 
@@ -52,18 +52,18 @@ DiagnosticScalar::~DiagnosticScalar()
 void DiagnosticScalar::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
     if (!smpi->isMaster()) return;
-    
+
     if (fout.is_open()) return;
-    
+
     //open file scalars.txt
     if ( newfile )
         fout.open("scalars.txt");
     else
         fout.open("scalars.txt", std::ofstream::app);
-    
+
     if (!fout.is_open())
         ERROR("Can't open scalar file");
-        
+
 } // END openFile
 
 
@@ -113,7 +113,7 @@ Scalar_value_location* DiagnosticScalar::newScalar_MAXLOC( string name )
 
 void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches)
 {
-    
+
     // Make the list of fields
     ElectroMagn* EMfields = vecPatches(0)->EMfields;
     vector<string> fields;
@@ -127,10 +127,10 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     fields.push_back(EMfields->Jy_ ->name);
     fields.push_back(EMfields->Jz_ ->name);
     fields.push_back(EMfields->rho_->name);
-    
+
     // 1 - Prepare the booleans that tell which scalars are necessary to compute
     // -------------------------------------------------------------------------
-    
+
     // General scalars
     necessary_Ubal_norm = allowedKey("Ubal_norm");
     necessary_Ubal    = necessary_Ubal_norm || allowedKey("Ubal");
@@ -138,6 +138,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     necessary_Uexp    = necessary_Ubal || allowedKey("Uexp");
     necessary_Ukin    = necessary_Utot || allowedKey("Ukin");
     necessary_Uelm    = necessary_Utot || allowedKey("Uelm");
+    necessary_Urad    = necessary_Utot || allowedKey("Urad");
     necessary_Ukin_BC = necessary_Uexp || allowedKey("Ukin_bnd") || allowedKey("Ukin_out_mvw") || allowedKey("Ukin_inj_mvw");
     necessary_Uelm_BC = necessary_Uexp || allowedKey("Uelm_bnd") || allowedKey("Uelm_out_mvw") || allowedKey("Uelm_inj_mvw");
     // Species
@@ -147,7 +148,11 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         if (! vecPatches(0)->vecSpecies[ispec]->particles->isTest) {
             species_type = vecPatches(0)->vecSpecies[ispec]->species_type;
-            necessary_species[ispec] = necessary_Ukin || allowedKey("Dens_"+species_type) ||  allowedKey("Ntot_"+species_type) ||  allowedKey("Zavg_"+species_type) || allowedKey("Ukin_"+species_type);
+            necessary_species[ispec] = necessary_Ukin || allowedKey("Dens_"+species_type)
+                                                      || allowedKey("Ntot_"+species_type)
+                                                      || allowedKey("Zavg_"+species_type)
+                                                      || allowedKey("Ukin_"+species_type)
+                                                      || allowedKey("Urad_"+species_type);
         }
     }
     // Fields
@@ -177,20 +182,21 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
             k++;
         }
     }
-    
+
     // 2 - Prepare the Scalar* objects that will contain the data
     // ----------------------------------------------------------
-    
-    values_SUM   .reserve( 12 + nspec*4 + 6 + 2*npoy);
+
+    values_SUM   .reserve( 13 + nspec*5 + 6 + 2*npoy);
     values_MINLOC.reserve( 10 );
     values_MAXLOC.reserve( 10 );
-    
+
     // General scalars
     Ubal_norm    = newScalar_SUM( "Ubal_norm"    );
     Ubal         = newScalar_SUM( "Ubal"         );
     Utot         = newScalar_SUM( "Utot"         );
     Uexp         = newScalar_SUM( "Uexp"         );
     Ukin         = newScalar_SUM( "Ukin"         );
+    Urad         = newScalar_SUM( "Urad"         );  // Radiated energy
     Uelm         = newScalar_SUM( "Uelm"         );
     Ukin_bnd     = newScalar_SUM( "Ukin_bnd"     );
     Ukin_out_mvw = newScalar_SUM( "Ukin_out_mvw" );
@@ -198,12 +204,13 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     Uelm_bnd     = newScalar_SUM( "Uelm_bnd"     );
     Uelm_out_mvw = newScalar_SUM( "Uelm_out_mvw" );
     Uelm_inj_mvw = newScalar_SUM( "Uelm_inj_mvw" );
-    
+
     // Scalars related to species
     sDens.resize(nspec, NULL);
     sNtot.resize(nspec, NULL);
     sZavg.resize(nspec, NULL);
     sUkin.resize(nspec, NULL);
+    sUrad.resize(nspec, NULL);
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         if (! vecPatches(0)->vecSpecies[ispec]->particles->isTest) {
             species_type = vecPatches(0)->vecSpecies[ispec]->species_type;
@@ -211,15 +218,16 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
             sNtot[ispec] = newScalar_SUM( "Ntot_"+species_type );
             sZavg[ispec] = newScalar_SUM( "Zavg_"+species_type );
             sUkin[ispec] = newScalar_SUM( "Ukin_"+species_type );
+            sUrad[ispec] = newScalar_SUM( "Urad_"+species_type );
         }
     }
-    
+
     // Scalars related to field's electromagnetic energy
     nfield = 6;
     fieldUelm.resize(nfield, NULL);
     for( unsigned int ifield=0; ifield<nfield; ifield++ )
         fieldUelm[ifield] = newScalar_SUM( "Uelm_"+fields[ifield] );
-    
+
     // Scalars related to fields min and max
     nfield = fields.size();
     fieldMin.resize(nfield, NULL);
@@ -230,7 +238,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
             fieldMax[ifield] = newScalar_MAXLOC( fields[ifield]+"Max" );
         }
     }
-    
+
     // Scalars related to the Poynting flux
     poy    .resize(2*npoy, NULL);
     poyInst.resize(2*npoy, NULL);
@@ -255,7 +263,7 @@ bool DiagnosticScalar::prepare( int timestep )
     if ( timeSelection->theTimeIsNow(timestep) )
         for (unsigned int iscalar=0 ; iscalar<allScalars.size() ; iscalar++)
             allScalars[iscalar]->reset();
-    
+
     // Scalars always run even if they don't dump
     return true;
 } // END prepare
@@ -264,8 +272,8 @@ bool DiagnosticScalar::prepare( int timestep )
 void DiagnosticScalar::run( Patch* patch, int timestep, SimWindow* simWindow )
 {
     // Must keep track of Poynting flux even without diag
-    patch->EMfields->computePoynting(); 
-    
+    patch->EMfields->computePoynting();
+
     // Compute all scalars when needed
     if ( timeSelection->theTimeIsNow(timestep) && timestep>latest_timestep )
         compute( patch, timestep );
@@ -276,11 +284,11 @@ void DiagnosticScalar::run( Patch* patch, int timestep, SimWindow* simWindow )
 void DiagnosticScalar::write(int itime, SmileiMPI* smpi)
 {
     if ( smpi->isMaster() ) {
-        
+
         if ( timeSelection->theTimeIsNow(itime) && itime>latest_timestep  ) {
-            
+
             unsigned int j, k, s = allScalars.size();
-            
+
             fout << std::scientific << setprecision(precision);
             // At the beginning of the file, we write some headers
             if (fout.tellp()==ifstream::pos_type(0)) { // file beginning
@@ -318,42 +326,43 @@ void DiagnosticScalar::write(int itime, SmileiMPI* smpi)
                 }
             }
             fout << endl;
-        
+
         }
-        
+
     } // if smpi->isMaster
-    
+
     latest_timestep = itime;
-    
+
 } // END write
 
 
-
+//! Compute the various scalars when requested
 void DiagnosticScalar::compute( Patch* patch, int timestep )
 {
     ElectroMagn* EMfields = patch->EMfields;
     std::vector<Species*>& vecSpecies = patch->vecSpecies;
-    
+
     // ------------------------
     // SPECIES-related energies
     // ------------------------
     double Ukin_=0.;             // total (kinetic) energy carried by particles (test-particles do not contribute)
+    double Urad_=0.;             // total radiated energy by particles
     double Ukin_bnd_=0.;         // total energy lost by particles due to boundary conditions
     double Ukin_out_mvw_=0.;     // total energy lost due to particles being suppressed by the moving-window
     double Ukin_inj_mvw_=0.;     // total energy added due to particles created by the moving-window
-    
+
     // Compute scalars for each species
     for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
         if (vecSpecies[ispec]->particles->isTest) continue;    // No scalar diagnostic for test particles
-        
+
         if( necessary_species[ispec] ) {
             double density=0.0;  // sum of weights of current species ispec
             double charge=0.0;   // sum of charges of current species ispec
             double ener_tot=0.0; // total kinetic energy of current species ispec
-            
+
             unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles(); // number of particles
             for (unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
-                
+
                 density  += vecSpecies[ispec]->particles->weight(iPart);
                 charge   += vecSpecies[ispec]->particles->weight(iPart)
                 *          (double)vecSpecies[ispec]->particles->charge(iPart);
@@ -361,67 +370,83 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
                 *          (vecSpecies[ispec]->particles->lor_fac(iPart)-1.0);
             }
             ener_tot *= vecSpecies[ispec]->mass;
-            
+
             *sNtot[ispec] += (double)nPart;
             *sDens[ispec] += cell_volume * density;
             *sZavg[ispec] += cell_volume * charge;
             *sUkin[ispec] += cell_volume * ener_tot;
-            
+
+            // If radiation activated
+            if (vecSpecies[ispec]->Radiate)
+            {
+                *sUrad[ispec]  += cell_volume*
+                                 vecSpecies[ispec]->getNrjRadiation();
+            }
+
             // incremement the total kinetic energy
             Ukin_ += cell_volume * ener_tot;
+            // increment the total radiated energy
+            if (vecSpecies[ispec]->Radiate)
+            {
+                Urad_ += cell_volume*
+                         vecSpecies[ispec]->getNrjRadiation();
+            }
         }
-        
+
         if( necessary_Ukin_BC ) {
             // particle energy lost due to boundary conditions
             double ener_lost_bcs=0.0;
             ener_lost_bcs = vecSpecies[ispec]->getLostNrjBC();
-            
+
             // particle energy lost due to moving window
             double ener_lost_mvw=0.0;
             ener_lost_mvw = vecSpecies[ispec]->getLostNrjMW();
-            
+
             // particle energy added due to moving window
             double ener_added_mvw=0.0;
             ener_added_mvw = vecSpecies[ispec]->getNewParticlesNRJ();
-            
+
             // increment all energy loss & energy input
             Ukin_bnd_        += cell_volume * ener_lost_bcs;
             Ukin_out_mvw_    += cell_volume * ener_lost_mvw;
             Ukin_inj_mvw_    += cell_volume * ener_added_mvw;
         }
-        
+
         vecSpecies[ispec]->reinitDiags();
     } // for ispec
-    
+
     // Add the calculated energies to the data arrays
     if( necessary_Ukin ) {
         *Ukin += Ukin_;
+    }
+    if( necessary_Urad ) {
+        *Urad += Urad_;
     }
     if( necessary_Ukin_BC ) {
         *Ukin_bnd     += Ukin_bnd_     ;
         *Ukin_out_mvw += Ukin_out_mvw_ ;
         *Ukin_inj_mvw += Ukin_inj_mvw_ ;
     }
-    
+
     // --------------------------------
     // ELECTROMAGNETIC-related energies
     // --------------------------------
-    
+
     vector<Field*> fields;
-    
+
     fields.push_back(EMfields->Ex_);
     fields.push_back(EMfields->Ey_);
     fields.push_back(EMfields->Ez_);
     fields.push_back(EMfields->Bx_m);
     fields.push_back(EMfields->By_m);
     fields.push_back(EMfields->Bz_m);
-    
+
     double Uelm_=0.0; // total electromagnetic energy in the fields
-    
+
     // loop on all electromagnetic fields
     unsigned int nfield = fields.size();
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
-        
+
         if( necessary_fieldUelm[ifield] ) {
             double Utot_crtField=0.0; // total energy in current field
             Field * field = fields[ifield];
@@ -432,7 +457,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
                 iFieldEnd[i]        = iFieldStart[i] + EMfields->bufsize[i][field->isDual(i)];
                 iFieldGlobalSize[i] = field->dims_[i];
             }
-            
+
             // loop on all (none-ghost) cells & add-up the squared-field to the energy density
             for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
                 for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
@@ -444,68 +469,68 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             }
             // Utot = Dx^N/2 * Field^2
             Utot_crtField *= 0.5*cell_volume;
-            
+
             *fieldUelm[ifield] += Utot_crtField;
             Uelm_+=Utot_crtField;
         }
     }
-    
+
     // Total elm energy
     if( necessary_Uelm ) {
         *Uelm += Uelm_;
     }
-    
+
     // Lost/added elm energies through the moving window
     if( necessary_Uelm_BC ) {
         // nrj lost with moving window (fields)
         double Uelm_out_mvw_ = EMfields->getLostNrjMW();
         Uelm_out_mvw_ *= 0.5*cell_volume;
-        
+
         // nrj added due to moving window (fields)
         double Uelm_inj_mvw_=EMfields->getNewFieldsNRJ();
         Uelm_inj_mvw_ *= 0.5*cell_volume;
-        
+
         *Uelm_out_mvw += Uelm_out_mvw_;
         *Uelm_inj_mvw += Uelm_inj_mvw_ ;
     }
-    
+
     EMfields->reinitDiags();
-    
-    
+
+
     // ---------------------------
     // ELECTROMAGNETIC MIN and MAX
     // ---------------------------
-    
+
     // add currents and density to fields
     fields.push_back(EMfields->Jx_);
     fields.push_back(EMfields->Jy_);
     fields.push_back(EMfields->Jz_);
     fields.push_back(EMfields->rho_);
-    
+
     double fieldval;
     unsigned int i_min, j_min, k_min;
     unsigned int i_max, j_max, k_max;
     val_index minloc, maxloc;
-    
+
     nfield = fields.size();
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
-        
+
         if( necessary_fieldMinMax[ifield] ) {
-            
+
             Field * field = fields[ifield];
-            
+
             vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
             for (unsigned int i=0 ; i<field->isDual_.size() ; i++ ) {
                 iFieldStart[i] = EMfields->istart[i][field->isDual(i)];
                 iFieldEnd [i] = iFieldStart[i] + EMfields->bufsize[i][field->isDual(i)];
                 iFieldGlobalSize [i] = field->dims_[i];
             }
-            
+
             unsigned int ii= iFieldStart[2] + iFieldStart[1]*iFieldGlobalSize[2] +iFieldStart[0]*iFieldGlobalSize[1]*iFieldGlobalSize[2];
             minloc.val = maxloc.val = (*field)(ii);
             i_min = iFieldStart[0]; j_min = iFieldStart[1]; k_min = iFieldStart[2];
             i_max = iFieldStart[0]; j_max = iFieldStart[1]; k_max = iFieldStart[2];
-            
+
             for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
                 for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
                     for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
@@ -522,7 +547,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
                     }
                 }
             }
-            
+
             i_min += patch->Pcoordinates[0]*n_space[0] - iFieldStart[0];
             j_min += patch->Pcoordinates[1]*n_space[1] - iFieldStart[1];
             k_min += patch->Pcoordinates[2]*n_space[2] - iFieldStart[2];
@@ -531,7 +556,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             j_max += patch->Pcoordinates[1]*n_space[1] - iFieldStart[1];
             k_max += patch->Pcoordinates[2]*n_space[2] - iFieldStart[2];
             maxloc.index = (int) (i_max*n_space_global[1]*n_space_global[2] + j_max*n_space_global[2] + k_max);
-            
+
             #pragma omp critical
             {
                 if( minloc.val < (double)*fieldMin[ifield] ) *fieldMin[ifield] = minloc;
@@ -539,11 +564,11 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             }
         }
     }
-    
+
     // ------------------------
     // POYNTING-related scalars
     // ------------------------
-    
+
     // electromagnetic energy injected in the simulation (calculated from Poynting fluxes)
     double Uelm_bnd_=0.0;
     unsigned int k=0;
@@ -554,15 +579,15 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
                 *poyInst[k] += EMfields->poynting_inst[j][i];
                 k++;
             }
-            
+
             Uelm_bnd_ += EMfields->poynting[j][i];
         }// i
     }// j
-    
+
     if( necessary_Uelm_BC ) {
         *Uelm_bnd += Uelm_bnd_;
     }
-    
+
 } // END compute
 
 

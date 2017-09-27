@@ -35,17 +35,6 @@ to astrophysical plasmas. It is co-developed by both physicists and HPC experts.
 
 .. raw:: html
   
-  <a href="https://llrgit.in2p3.fr/smilei/smilei" class="icon">
-
-.. image:: _static/gitlab-logo.svg
-
-.. raw:: html
-  
-  Gitlab (dev)</a>
-
-
-.. raw:: html
-  
   <a href="partners.html" class="icon">
 
 .. image:: _static/people.svg
@@ -63,7 +52,7 @@ to astrophysical plasmas. It is co-developed by both physicists and HPC experts.
 
 .. raw:: html
   
-  Material</a>
+  Publications</a>
 
 
 Overview
@@ -89,7 +78,7 @@ Understand :program:`Smilei`
    parallelization
    collisions
    field_ionization
-
+   radiation_loss
 
 Install, run, analyze
 =====================

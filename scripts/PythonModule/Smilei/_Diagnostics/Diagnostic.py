@@ -54,8 +54,8 @@ class Diagnostic(object):
 		
 		# Make or retrieve the Units object
 		self.units = kwargs.pop("units", [""])
-		if type(self.units) in [list, tuple]: self.units = Units(*self.units)
-		if type(self.units) is dict         : self.units = Units(**self.units)
+		if type(self.units) in [list, tuple]: self.units = Units(*self.units , verbose = self.Smilei._verbose)
+		if type(self.units) is dict         : self.units = Units(verbose = self.Smilei._verbose, **self.units)
 		if type(self.units) is not Units:
 			print("Could not understand the 'units' argument")
 			return
@@ -111,7 +111,7 @@ class Diagnostic(object):
 	def info(self):
 		if not self._validate():
 			print(self._error)
-		else:
+		elif self.Smilei._verbose:
 			print(self._info())
 	
 	# Method to get only the arrays of data
@@ -141,8 +141,12 @@ class Diagnostic(object):
 		return data
 	
 	# Method to obtain the data and the axes
-	def get(self):
+	def get(self, timestep=None):
 		"""Obtains the data from the diagnostic and some additional information.
+		
+		Parameters:
+		-----------
+		timestep: int (default: None, which means all available timesteps)
 		
 		Returns:
 		--------
@@ -151,7 +155,7 @@ class Diagnostic(object):
 		"""
 		if not self._validate(): return
 		# obtain the data arrays
-		data = self.getData()
+		data = self.getData(timestep=timestep)
 		# format the results into a dictionary
 		result = {"data":data, "times":self.times}
 		for i in range(len(self._type)):
@@ -344,7 +348,7 @@ class Diagnostic(object):
 		save = SaveAs(saveAs, fig, self._plt)
 		# Loop times for animation
 		for time in self.times:
-			print("timestep "+str(time))
+			if self.Smilei._verbose: print("timestep "+str(time))
 			# plot
 			ax.cla()
 			if self._animateOnAxes(ax, time) is None: return
@@ -504,12 +508,12 @@ class Diagnostic(object):
 		try:
 			if len(self.options.xtick)>0: ax.ticklabel_format(axis="x",**self.options.xtick)
 		except:
-			print("Cannot format x ticks (typically happens with log-scale)")
+			if self.Smilei._verbose: print("Cannot format x ticks (typically happens with log-scale)")
 			self.xtickkwargs = []
 		try:
 			if len(self.options.ytick)>0: ax.ticklabel_format(axis="y",**self.options.ytick)
 		except:
-			print("Cannot format y ticks (typically happens with log-scale)")
+			if self.Smilei._verbose: print("Cannot format y ticks (typically happens with log-scale)")
 			self.xtickkwargs = []
 	
 	# Define and output directory in case of exporting
@@ -563,7 +567,7 @@ class Diagnostic(object):
 				extent += [0, ntimes-1]
 				origin += [self.times[0]]
 				vtk.WriteImage(arr, origin, extent, spacings, fileprefix+".pvti", numberOfPieces)
-				print("Successfully exported regular streak plot to VTK, folder='"+self._exportDir)
+				if self.Smilei._verbose: print("Successfully exported regular streak plot to VTK, folder='"+self._exportDir)
 			
 			# If timesteps are irregular, make an irregular grid
 			else:
@@ -575,7 +579,7 @@ class Diagnostic(object):
 					arr,
 					fileprefix+".vtk"
 				)
-				print("Successfully exported irregular streak plot to VTK, folder='"+self._exportDir)
+				if self.Smilei._verbose: print("Successfully exported irregular streak plot to VTK, folder='"+self._exportDir)
 		
 		# If 3D data, then do a 3D plot
 		elif self.dim == 3:
@@ -583,5 +587,5 @@ class Diagnostic(object):
 				data = self._np.ascontiguousarray(self._getDataAtTime(self.times[itime]).flatten(order='F'), dtype='float32')
 				arr = vtk.Array(data, self._title)
 				vtk.WriteImage(arr, origin, extent, spacings, fileprefix+"_"+str(itime)+".pvti", numberOfPieces)
-			print("Successfully exported 3D plot to VTK, folder='"+self._exportDir)
+			if self.Smilei._verbose: print("Successfully exported 3D plot to VTK, folder='"+self._exportDir)
 

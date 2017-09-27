@@ -27,6 +27,8 @@
 
 #include <iostream>
 
+#include <fstream>
+
 #include <mpi.h>
 
 #ifdef _OMP
@@ -103,6 +105,11 @@ if (__i==__rk) {std::cout << "Proc [" << __i << "] " <<__txt << std::endl;} MPI_
 class Tools {
  public:
   static void printMemFootPrint(std::string tag);
+
+  //! This function returns true/flase whether the file exists or not
+  //! \param file file name to test
+  static bool file_exists(const std::string & filename) ;
+
 };
 
 
