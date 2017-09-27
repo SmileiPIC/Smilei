@@ -35,7 +35,7 @@ Species(
 	particles_per_cell = 100,
 	mass = 1836.0,
 	charge = 1.0,
-	nb_density = trapezoidal(1., xvacuum=L, xplateau=L),
+	number_density = trapezoidal(1., xvacuum=L, xplateau=L),
 	boundary_conditions = [
 		["stop", "stop"],
 	],

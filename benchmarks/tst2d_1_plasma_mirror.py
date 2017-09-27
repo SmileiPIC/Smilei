@@ -51,7 +51,7 @@ Species(
 	c_part_max = 1.0,
 	mass = 1836.0,
 	charge = 1.0,
-	nb_density = trapezoidal(2.0,xvacuum=10.*l0,xplateau=4.*l0),
+	number_density = trapezoidal(2.0,xvacuum=10.*l0,xplateau=4.*l0),
 	time_frozen = Tsim,
 	boundary_conditions = [
 	    ["refl", "refl"],
@@ -68,7 +68,7 @@ Species(
 	c_part_max = 1.0,
 	mass = 1.0,
 	charge = -1.0,
-	nb_density = trapezoidal(2.0,xvacuum=10.*l0,xplateau=4.*l0),
+	number_density = trapezoidal(2.0,xvacuum=10.*l0,xplateau=4.*l0),
 	time_frozen = 0.,
 	boundary_conditions = [
 	    ["refl", "refl"],

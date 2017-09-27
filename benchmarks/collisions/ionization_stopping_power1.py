@@ -72,7 +72,7 @@ Species(
 	particles_per_cell= 100,
 	mass = 1836.0*27.,
 	charge = 0,
-	nb_density = 1.,
+	number_density = 1.,
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.00000001]*3,
 	time_frozen = 100000000.0,

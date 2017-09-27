@@ -41,7 +41,7 @@ Species(
 	particles_per_cell = 2,
 	mass = 1.0,
 	charge = -1.0,
-	nb_density = trapezoidal(1.0,xvacuum=1.*l0,xplateau=4.*l0,yvacuum=5.*l0,yplateau=10.*l0),
+	number_density = trapezoidal(1.0,xvacuum=1.*l0,xplateau=4.*l0,yvacuum=5.*l0,yplateau=10.*l0),
 	boundary_conditions = [
 		["refl", "refl"],
 		["periodic", "periodic"],
@@ -55,7 +55,7 @@ Species(
 	particles_per_cell = 2,
 	mass = 1.0,
 	charge = 1.0,
-	nb_density = trapezoidal(1.0,xvacuum=1.*l0,xplateau=4.*l0,yvacuum=5.*l0,yplateau=10.*l0),
+	number_density = trapezoidal(1.0,xvacuum=1.*l0,xplateau=4.*l0,yvacuum=5.*l0,yplateau=10.*l0),
 	boundary_conditions = [
 		["refl", "refl"],
 		["periodic", "periodic"],

@@ -414,8 +414,8 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     ptimer.restart();
 
     
-    unsigned int iteration_max = params.poisson_iter_max;
-    double           error_max = params.poisson_error_max;
+    unsigned int iteration_max = params.poisson_max_iteration;
+    double           error_max = params.poisson_max_error;
     unsigned int iteration=0;
 
     // Init & Store internal data (phi, r, p, Ap) per patch

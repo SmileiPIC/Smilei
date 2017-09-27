@@ -9,7 +9,7 @@ for path in ["beam_relaxation1","beam_relaxation2","beam_relaxation3"]:
 	sim = Smilei(path)
 	mass_ion             = np.double(sim.namelist.Species["ion1"].mass)
 	charge_ion           = np.double(sim.namelist.Species["ion1"].charge)
-	density_ion          = np.double(sim.namelist.Species["ion1"].nb_density)
+	density_ion          = np.double(sim.namelist.Species["ion1"].number_density)
 	temperature_ion      = np.double(sim.namelist.Species["ion1"].temperature)
 	velocity_electron    = np.double(sim.namelist.Species["electron1"].mean_velocity)[0]
 	temperature_electron = np.double(sim.namelist.Species["electron1"].temperature)

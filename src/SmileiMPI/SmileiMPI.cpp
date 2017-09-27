@@ -204,7 +204,7 @@ void SmileiMPI::init_patch_count( Params& params)
         PyTools::extract("name",species_name,"Species",ispecies);
         PyObject *profile1=nullptr;
         std::string densityProfileType("");
-        bool ok1 = PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispecies);
+        bool ok1 = PyTools::extract_pyProfile("number_density"    , profile1, "Species", ispecies);
         bool ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", ispecies);
         if( ok1 ) densityProfileType = "nb";
         if( ok2 ) densityProfileType = "charge";

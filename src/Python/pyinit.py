@@ -106,6 +106,9 @@ class SmileiComponent(object):
                 "Friedman_filter"  :"the block FieldFilter()",
                 "Friedman_theta"   :"the block FieldFilter()",
                 "n_part_per_cell"  :"particles_per_cell",
+                "poisson_iter_max" :"poisson_max_iteration",
+                "poisson_error_max":"poisson_max_error",
+                "nb_density"       :"number_density",
             }
             for key, value in kwargs.items():
                 if key in deprecated:
@@ -168,8 +171,8 @@ class Main(SmileiSingleton):
 
     # Poisson tuning
     solve_poisson = True
-    poisson_iter_max = 50000
-    poisson_error_max = 1.e-14
+    poisson_max_iteration = 50000
+    poisson_max_error = 1.e-14
 
     # Default fields
     maxwell_solver = 'Yee'
@@ -287,7 +290,7 @@ class Species(SmileiComponent):
     mass = None
     charge = None
     charge_density = None
-    nb_density = None
+    number_density = None
     mean_velocity = [0.]
     temperature = [1e-10]
     thermal_boundary_temperature = []

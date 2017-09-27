@@ -120,9 +120,9 @@ public:
     //! Do we solve poisson
     bool solve_poisson;
     //! Maxium number of poisson iteration
-    unsigned int poisson_iter_max;
+    unsigned int poisson_max_iteration;
     //! Maxium poisson error tolerated
-    double poisson_error_max;
+    double poisson_max_error;
 
     //! Maxwell Solver (default='Yee')
     std::string maxwell_sol;

@@ -17,7 +17,7 @@ the GitHub page.
 Upcoming changes
 ^^^^^^^^^^^^^^^^
 
-* :doc:`Syntax changes<syntax_changes>` in the namelist
+* **Major** :doc:`syntax changes<syntax_changes>` in the namelist
 * Monte Carlo QED photon emission
 * Moving window along y and z
 * Tracking particles in *Screens*

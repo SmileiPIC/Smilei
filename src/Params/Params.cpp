@@ -253,8 +253,8 @@ namelist("")
 
     // Poisson Solver
     PyTools::extract("solve_poisson", solve_poisson, "Main");
-    PyTools::extract("poisson_iter_max", poisson_iter_max, "Main");
-    PyTools::extract("poisson_error_max", poisson_error_max, "Main");
+    PyTools::extract("poisson_max_iteration", poisson_max_iteration, "Main");
+    PyTools::extract("poisson_max_error", poisson_max_error, "Main");
 
     // Maxwell Solver
     PyTools::extract("maxwell_solver", maxwell_sol, "Main");

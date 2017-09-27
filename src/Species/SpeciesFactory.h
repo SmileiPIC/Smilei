@@ -220,10 +220,10 @@ public:
         // Density
         bool ok1, ok2;
         PyObject *profile1, *profile2, *profile3;
-        ok1 = PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispec);
+        ok1 = PyTools::extract_pyProfile("number_density"    , profile1, "Species", ispec);
         ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", ispec);
-        if(  ok1 &&  ok2 ) ERROR("For species '" << species_name << "', cannot define both `nb_density` and `charge_density`.");
-        if( !ok1 && !ok2 ) ERROR("For species '" << species_name << "', must define `nb_density` or `charge_density`.");
+        if(  ok1 &&  ok2 ) ERROR("For species '" << species_name << "', cannot define both `number_density` and `charge_density`.");
+        if( !ok1 && !ok2 ) ERROR("For species '" << species_name << "', must define `number_density` or `charge_density`.");
         if( ok1 ) thisSpecies->densityProfileType = "nb";
         if( ok2 ) thisSpecies->densityProfileType = "charge";
         

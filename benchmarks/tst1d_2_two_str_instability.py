@@ -33,7 +33,7 @@ Species(
 	particles_per_cell = 10,
 	mass = 1836.0,
 	charge = 1.0,
-	nb_density = 1.,
+	number_density = 1.,
 	#time_frozen = 10000.0,
 	boundary_conditions = [
 		["periodic", "periodic"],
@@ -47,7 +47,7 @@ Species(
 	particles_per_cell = 10,
 	mass = 1.0,
 	charge = -1.0,
-	nb_density = cosine(0.5,xamplitude=dn,xlength=L, xnumber=1),
+	number_density = cosine(0.5,xamplitude=dn,xlength=L, xnumber=1),
 	mean_velocity = [-0.1,0.0,0.0],
 	boundary_conditions = [
 		["periodic", "periodic"],
@@ -60,7 +60,7 @@ Species(
 	particles_per_cell = 10,
 	mass = 1.0,
 	charge = -1.0,
-	nb_density = cosine(0.5,xamplitude=dn,xlength=L, xnumber=1),
+	number_density = cosine(0.5,xamplitude=dn,xlength=L, xnumber=1),
 	mean_velocity = [0.1,0.0,0.0],
 	boundary_conditions = [
 		["periodic", "periodic"],

@@ -173,13 +173,13 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
    Decides if Poisson correction must be applied or not initially.
 
-.. py:data:: poisson_iter_max
+.. py:data:: poisson_max_iteration
 
   :default: 50000
 
   Maximum number of iteration for the Poisson solver.
 
-.. py:data:: poisson_error_max
+.. py:data:: poisson_max_error
 
   :default: 1e-14
 
@@ -381,7 +381,7 @@ Each species has to be defined in a ``Species`` block::
       particles_per_cell = 100,
       mass = 1.,
       atomic_number = None,
-      nb_density = 10.,
+      number_density = 10.,
       # charge_density = None,
       charge = -1.,
       mean_velocity = [0.],
@@ -445,7 +445,7 @@ Each species has to be defined in a ``Species`` block::
   It must be lower than 101.
 
 
-.. py:data:: nb_density
+.. py:data:: number_density
              charge_density
 
   :type: float or *python* function (see section :ref:`profiles`)
@@ -834,8 +834,8 @@ profiles.
 
 * ``Species( ... , charge = -3., ... )`` defines a species with charge :math:`Z^\star=3`.
 
-* ``Species( ... , nb_density = 10., ... )`` defines a species with density :math:`10\,N_r`.
-  You can choose ``nb_density`` (*number density*) or ``charge_density``
+* ``Species( ... , number_density = 10., ... )`` defines a species with density :math:`10\,N_r`.
+  You can choose ``number_density`` or ``charge_density``
 
 * ``Species( ... , mean_velocity = [0.05, 0., 0.], ... )`` defines a species
   with drift velocity :math:`v_x = 0.05\,c` over the whole box.

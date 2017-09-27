@@ -43,7 +43,7 @@ for sim in sims:
 	S=Smilei("ionization_stopping_power"+sim)
 	
 	Zi = np.double(S.namelist.Species["ion1"].atomic_number)
-	ni = np.double(S.namelist.Species["ion1"].nb_density) * 1.11e21 # cm^-3
+	ni = np.double(S.namelist.Species["ion1"].number_density) * 1.11e21 # cm^-3
 	Ee = S.namelist.E * 511. # electron energy in keV
 	vel = S.namelist.vel * 3e10 # electron velocity in cm/s
 	dt = 1e-15 * S.namelist.Main.timestep*4. # in s
@@ -77,7 +77,7 @@ reference_angular_frequency_SI = np.double(S.namelist.Main.reference_angular_fre
 timestep = np.double(S.namelist.Main.timestep)
 
 # get ion stuff
-ni = np.double(S.namelist.Species["ion1"].nb_density)
+ni = np.double(S.namelist.Species["ion1"].number_density)
 mass = np.double(S.namelist.Species["ion1"].mass)*9.11e-28 # g
 rho = mass*ni*1.1e21 # g/cm^3
 Zi = np.double(S.namelist.Species["ion1"].atomic_number)

@@ -41,7 +41,7 @@ Species(
 	particles_per_cell = 10,
 	mass = 1836.0*1000.,
 	charge = 0.0,
-	nb_density = 0.1,
+	number_density = 0.1,
 	boundary_conditions = [
 		["periodic", "periodic"],
 	],
@@ -57,7 +57,7 @@ Species(
 	particles_per_cell = 10,
 	mass = 1836.0*1000.,
 	charge = 0.0,
-	nb_density = 0.1,
+	number_density = 0.1,
 	boundary_conditions = [
 		["periodic", "periodic"],
 	],

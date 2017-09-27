@@ -57,7 +57,7 @@ for name, profile in profiles.items():
 		particles_per_cell= 8,
 		mass = 1.0,
 		charge = 1.0,
-		nb_density = profile,
+		number_density = profile,
 		time_frozen = 10000.0,
 		boundary_conditions = [
 			["periodic", "periodic"],

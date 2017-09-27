@@ -84,7 +84,7 @@ for i in range(npoints):
 		particles_per_cell= 1000,
 		mass = 1836.0*A,
 		charge = Zstar,
-		nb_density = 10.,
+		number_density = 10.,
 		mean_velocity = [0., 0., 0.],
 		temperature = [T]*3,
 		time_frozen = 100000000.0,

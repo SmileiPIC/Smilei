@@ -28,7 +28,7 @@ for i in range(3):
 	
 #	# NRL relaxation
 #	ion_charge      = S.namelist.Species[ion].charge
-#	ion_density     = S.namelist.Species[ion].nb_density
+#	ion_density     = S.namelist.Species[ion].number_density
 #	eon_velocity    = S.namelist.Species[eon].mean_velocity[0]
 #	eon_temperature = S.namelist.Species[eon].temperature[0]
 #	coulomb_log     = S.namelist.Collisions[i].coulomb_log

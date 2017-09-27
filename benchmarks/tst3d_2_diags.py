@@ -61,7 +61,7 @@ Species(
 	c_part_max = 1.0,
 	mass = 1.0,
 	charge = -1.0,
-	nb_density = lambda x,y,z : poly3(x,y,z) * math.exp(-(y-0.5*L0)**2) * math.exp(-(z-0.5*L0)**2),
+	number_density = lambda x,y,z : poly3(x,y,z) * math.exp(-(y-0.5*L0)**2) * math.exp(-(z-0.5*L0)**2),
 	mean_velocity = [0.00001, 0.00001, 0.00001],
 	pusher = "boris",
 	time_frozen = 1.30, # Move only after timestep 40
@@ -81,7 +81,7 @@ Species(
 	c_part_max = 1.0,
 	mass = 1.0,
 	charge = 1.0,
-	nb_density = lambda x,y,z : poly4(x,y,z) * math.exp(-(y-0.5*L0)**2) * math.exp(-(z-0.5*L0)**2),
+	number_density = lambda x,y,z : poly4(x,y,z) * math.exp(-(y-0.5*L0)**2) * math.exp(-(z-0.5*L0)**2),
 	mean_velocity = [0.00001, 0.00001, 0.00001],
 	pusher = "boris",
 	time_frozen = 1000000.0,

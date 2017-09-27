@@ -47,7 +47,7 @@ Species(
 	particles_per_cell = nppc,
 	mass = 1.0,
 	charge = 1.0,
-	nb_density = 1.,
+	number_density = 1.,
 	mean_velocity=[0.,0.,v0],
 	boundary_conditions = [["periodic"]],
 )
@@ -59,7 +59,7 @@ Species(
 	particles_per_cell = nppc,
 	mass = 1.0,
 	charge = -1.0,
-	nb_density = 1.,
+	number_density = 1.,
 	mean_velocity=[0.,0.,v0],
 	boundary_conditions = [["periodic"]],
 )

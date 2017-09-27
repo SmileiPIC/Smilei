@@ -47,7 +47,7 @@ for name, profile in profiles.items():
 		particles_per_cell= 1000,
 		mass = 1.0,
 		charge = 1.0,
-		nb_density = profile,
+		number_density = profile,
 		time_frozen = 10000.0,
 		boundary_conditions = [
 			["periodic", "periodic"],
@@ -98,7 +98,7 @@ for eon in mj_species:
 		particles_per_cell = 100000,
 		mass = 1.0,
 		charge = -1.0,
-		nb_density = 1.,
+		number_density = 1.,
 		mean_velocity=vmean,
 		time_frozen = 10000.,
 		boundary_conditions = [["periodic"]],
