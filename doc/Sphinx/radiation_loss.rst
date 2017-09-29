@@ -227,7 +227,7 @@ model with an operator that takes into account diffusive stochastic effects
 
   F_{rad} dt = \left[ -P_{cl} g \left( \chi \right) dt + mc^2
   \sqrt{R\left( \chi, \gamma \right)} dW \right]
-  \mathbf{u} / \left( \mathbf{u} c^2 \right)
+  \mathbf{u} / \left( \mathbf{u}^2 c \right)
 
 where :math:`dW` is a Wiener process of variance :math:`dt`,
 
