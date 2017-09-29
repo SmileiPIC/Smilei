@@ -14,9 +14,10 @@ class Timers;
 class Domain
 {
 public:
-    Domain( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, OpenPMDparams& openPMD );
+    Domain( Params& params );
     ~Domain();
 
+    void build( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, OpenPMDparams& openPMD );
     void solveMaxwell( Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers );
     void clean();
     

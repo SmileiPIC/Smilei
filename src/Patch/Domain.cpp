@@ -11,8 +11,12 @@
 #include "Timers.h"
 #include "SyncCartesianPatch.h"
 
-Domain::Domain( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, OpenPMDparams& openPMD ) :
+Domain::Domain( Params &params ) :
     VecPatchCart( params ) 
+{
+}
+
+void Domain::build( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, OpenPMDparams& openPMD )
 {
     cartGeom = GeometryFactory::createGlobal( params );
     cartPatch = PatchesFactory::create( params, smpi, cartGeom, vecPatches.refHindex_ / vecPatches.size() );

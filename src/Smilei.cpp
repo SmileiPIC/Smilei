@@ -161,9 +161,10 @@ int main (int argc, char* argv[])
     vecPatches.printNumberOfParticles( smpi );
 
 
-    Domain domain( params, smpi, vecPatches, openPMD ); 
-//    if (params.global_factor[0]!=1) {
-//    }
+    Domain domain( params ); 
+    if (params.global_factor[0]!=1) {
+        domain.build( params, smpi, vecPatches, openPMD );
+    }
 
     timers.global.reboot();
     
