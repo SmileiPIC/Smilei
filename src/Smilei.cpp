@@ -30,6 +30,7 @@
 #include "SimWindow.h"
 #include "Diagnostic.h"
 #include "DiagnosticCartFields2D.h"
+#include "Domain.h"
 #include "SyncCartesianPatch.h"
 #include "Timers.h"
 
@@ -159,55 +160,10 @@ int main (int argc, char* argv[])
     TITLE("Species creation summary");
     vecPatches.printNumberOfParticles( smpi );
 
-    Geometry* cartGeom = NULL;
-    Patch* cartPatch =  NULL;
-    VectorPatch VecPatchCart( params );
-    Diagnostic* diagCart = NULL;
-    if (params.global_factor[0]!=1) {
-        cartGeom = GeometryFactory::createGlobal( params );
-        cartPatch = PatchesFactory::create( params, smpi, cartGeom, vecPatches.refHindex_ / vecPatches.size() );
-        cartPatch->set( params, cartGeom, vecPatches );
-        VecPatchCart.patches_.push_back( cartPatch );
 
-        VecPatchCart.refHindex_ = vecPatches.refHindex_ / vecPatches.size();
-        VecPatchCart.update_field_list();
-
-        //VecPatchCart.update_field_list(0);
-        VecPatchCart.patches_[0]->finalizeMPIenvironment();
-        VecPatchCart.nrequests = vecPatches(0)->requests_.size();
-
-        diagCart = new DiagnosticCartFields2D( params, smpi, VecPatchCart, 0, openPMD ); 
-
-        for (unsigned int ifield=0 ; ifield<VecPatchCart(0)->EMfields->Jx_s.size(); ifield++) {
-            if( VecPatchCart(0)->EMfields->Jx_s[ifield]->data_ == NULL ){
-                delete VecPatchCart(0)->EMfields->Jx_s[ifield];
-                VecPatchCart(0)->EMfields->Jx_s[ifield]=NULL;
-            }
-        }
-        for (unsigned int ifield=0 ; ifield<VecPatchCart(0)->EMfields->Jy_s.size(); ifield++) {
-            if( VecPatchCart(0)->EMfields->Jy_s[ifield]->data_ == NULL ){
-                delete VecPatchCart(0)->EMfields->Jy_s[ifield];
-                VecPatchCart(0)->EMfields->Jy_s[ifield]=NULL;
-            }
-        }
-        for (unsigned int ifield=0 ; ifield<VecPatchCart(0)->EMfields->Jz_s.size(); ifield++) {
-            if( VecPatchCart(0)->EMfields->Jz_s[ifield]->data_ == NULL ){
-                delete VecPatchCart(0)->EMfields->Jz_s[ifield];
-                VecPatchCart(0)->EMfields->Jz_s[ifield]=NULL;
-            }
-        }
-        for (unsigned int ifield=0 ; ifield<VecPatchCart(0)->EMfields->rho_s.size(); ifield++) {
-            if( VecPatchCart(0)->EMfields->rho_s[ifield]->data_ == NULL ){
-                delete VecPatchCart(0)->EMfields->rho_s[ifield];
-                VecPatchCart(0)->EMfields->rho_s[ifield]=NULL;
-            }
-        }
-
-        diagCart->init( params, smpi, VecPatchCart );
-        diagCart->theTimeIsNow = diagCart->prepare( 0 );
-        //if ( diagCart->theTimeIsNow )
-        //    diagCart->run( smpi, VecPatchCart, 0, simWindow );
-    }
+    Domain domain( params, smpi, vecPatches, openPMD ); 
+//    if (params.global_factor[0]!=1) {
+//    }
 
     timers.global.reboot();
     
@@ -234,7 +190,7 @@ int main (int argc, char* argv[])
     TITLE("Time-Loop started: number of time-steps n_time = " << params.n_time);
     if ( smpi->isMaster() ) params.print_timestep_headers();
 
-    #pragma omp parallel shared (time_dual,smpi,params, vecPatches, VecPatchCart, simWindow, checkpoint, diagCart)
+    #pragma omp parallel shared (time_dual,smpi,params, vecPatches, domain, simWindow, checkpoint)
     {
 
         unsigned int itime=checkpoint.this_run_start_step+1;
@@ -263,43 +219,22 @@ int main (int argc, char* argv[])
             vecPatches.applyAntennas(time_dual);
             
             // solve Maxwell's equations
-            if ( diagCart==NULL ) {
-            if( time_dual > params.time_fields_frozen ) {
-                vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
-            }
+            if ( params.global_factor[0]==1 ) {
+                if( time_dual > params.time_fields_frozen ) {
+                    vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
+                }
             }
 
             vecPatches.finalize_and_sort_parts(params, smpi, simWindow, time_dual, timers, itime);
-
-            if ( diagCart!=NULL ) {
+            
+            if ( params.global_factor[0]!=1 ) {
                 timers.diagsNEW.restart();
-                //SyncVectorPatch::exchangeE( vecPatches );
-                //SyncVectorPatch::finalizeexchangeE( vecPatches );
-                //SyncVectorPatch::exchangeB( vecPatches );
-                //SyncVectorPatch::finalizeexchangeB( vecPatches ); 
-
-                SyncCartesianPatch::patchedToCartesian( vecPatches, cartPatch, params, smpi, timers, itime );
-
-                //SyncVectorPatch::exchangeE( VecPatchCart );
-                //SyncVectorPatch::finalizeexchangeE( VecPatchCart );
-                //SyncVectorPatch::exchangeB( VecPatchCart );
-                //SyncVectorPatch::finalizeexchangeB( VecPatchCart );
-
-                VecPatchCart.solveMaxwell( params, simWindow, itime, time_dual, timers );
-
-                SyncCartesianPatch::cartesianToPatches( cartPatch, vecPatches, params, smpi, timers, itime );
-                    
-                //SyncVectorPatch::exchangeE( vecPatches );
-                //SyncVectorPatch::finalizeexchangeE( vecPatches );
-                //SyncVectorPatch::exchangeB( vecPatches );
-                //SyncVectorPatch::finalizeexchangeB( vecPatches ); 
-
-                //diagCart->theTimeIsNow = diagCart->prepare( itime );
-                //if ( diagCart->theTimeIsNow ) {
-                //    diagCart->run( smpi, VecPatchCart, itime, simWindow );
-                //}
+                SyncCartesianPatch::patchedToCartesian( vecPatches, domain, params, smpi, timers, itime );
+                domain.solveMaxwell( params, simWindow, itime, time_dual, timers );
+                SyncCartesianPatch::cartesianToPatches( domain, vecPatches, params, smpi, timers, itime );
                 timers.diagsNEW.update();
             }
+
             // call the various diagnostics
             vecPatches.runAllDiags(params, smpi, itime, timers, simWindow);
             
@@ -357,16 +292,10 @@ int main (int argc, char* argv[])
         vecPatches.runAllDiags(params, smpi, &diag_flag, params.n_time, timer, simWindow);
 */
     
-    if (diagCart !=NULL) {
-        diagCart->closeFile();
-        delete diagCart;
-    }
-    if (cartPatch!=NULL) delete cartPatch;
-    if (cartGeom !=NULL) delete cartGeom;
-
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
+    domain.clean();
     vecPatches.close( smpi );
     smpi->barrier(); // Don't know why but sync needed by HDF5 Phasespace managment
     delete simWindow;

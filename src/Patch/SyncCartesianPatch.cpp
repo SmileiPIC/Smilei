@@ -3,13 +3,14 @@
 
 #include <vector>
 
+#include "Domain.h"
 #include "VectorPatch.h"
 #include "Params.h"
 #include "SmileiMPI.h"
 
 using namespace std;
 
-void SyncCartesianPatch::patchedToCartesian( VectorPatch& vecPatches, Patch* patch, Params &params, SmileiMPI* smpi, Timers &timers, int itime )
+void SyncCartesianPatch::patchedToCartesian( VectorPatch& vecPatches, Domain& domain, Params &params, SmileiMPI* smpi, Timers &timers, int itime )
 {
     //patch->EMfields->rho_->put_to( 0. );
     for ( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
@@ -18,15 +19,15 @@ void SyncCartesianPatch::patchedToCartesian( VectorPatch& vecPatches, Patch* pat
         //SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Ey_, patch->EMfields->Ey_, params, smpi, vecPatches(ipatch), patch );
         //SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Jx_, patch->EMfields->Jx_, params, smpi, vecPatches(ipatch), patch );
 
-        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Jx_, patch->EMfields->Jx_, params, smpi, vecPatches(ipatch), patch );
-        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Jy_, patch->EMfields->Jy_, params, smpi, vecPatches(ipatch), patch );
-        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Jz_, patch->EMfields->Jz_, params, smpi, vecPatches(ipatch), patch );
+        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Jx_, domain.cartPatch->EMfields->Jx_, params, smpi, vecPatches(ipatch), domain.cartPatch );
+        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Jy_, domain.cartPatch->EMfields->Jy_, params, smpi, vecPatches(ipatch), domain.cartPatch );
+        SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Jz_, domain.cartPatch->EMfields->Jz_, params, smpi, vecPatches(ipatch), domain.cartPatch );
     }
 
 }
 
 
-void SyncCartesianPatch::cartesianToPatches( Patch* patch, VectorPatch& vecPatches, Params &params, SmileiMPI* smpi, Timers &timers, int itime )
+void SyncCartesianPatch::cartesianToPatches( Domain& domain, VectorPatch& vecPatches, Params &params, SmileiMPI* smpi, Timers &timers, int itime )
 {
     for ( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
         //SyncCartesianPatch::syncBack( patch->EMfields->rho_, vecPatches(ipatch)->EMfields->rho_, params, smpi, patch, vecPatches(ipatch) );
@@ -34,17 +35,17 @@ void SyncCartesianPatch::cartesianToPatches( Patch* patch, VectorPatch& vecPatch
         //SyncCartesianPatch::syncBack( patch->EMfields->Ey_, vecPatches(ipatch)->EMfields->Ey_, params, smpi, patch, vecPatches(ipatch) );
         //SyncCartesianPatch::syncBack( patch->EMfields->Jx_, vecPatches(ipatch)->EMfields->Jx_, params, smpi, patch, vecPatches(ipatch) );
 
-        SyncCartesianPatch::syncBack( patch->EMfields->Ex_, vecPatches(ipatch)->EMfields->Ex_, params, smpi, patch, vecPatches(ipatch) );
-        SyncCartesianPatch::syncBack( patch->EMfields->Ey_, vecPatches(ipatch)->EMfields->Ey_, params, smpi, patch, vecPatches(ipatch) );
-        SyncCartesianPatch::syncBack( patch->EMfields->Ez_, vecPatches(ipatch)->EMfields->Ez_, params, smpi, patch, vecPatches(ipatch) );
-        SyncCartesianPatch::syncBack( patch->EMfields->Bx_m, vecPatches(ipatch)->EMfields->Bx_m, params, smpi, patch, vecPatches(ipatch) );
-        SyncCartesianPatch::syncBack( patch->EMfields->By_m, vecPatches(ipatch)->EMfields->By_m, params, smpi, patch, vecPatches(ipatch) );
-        SyncCartesianPatch::syncBack( patch->EMfields->Bz_m, vecPatches(ipatch)->EMfields->Bz_m, params, smpi, patch, vecPatches(ipatch) );
+        SyncCartesianPatch::syncBack( domain.cartPatch->EMfields->Ex_, vecPatches(ipatch)->EMfields->Ex_, params, smpi, domain.cartPatch, vecPatches(ipatch) );
+        SyncCartesianPatch::syncBack( domain.cartPatch->EMfields->Ey_, vecPatches(ipatch)->EMfields->Ey_, params, smpi, domain.cartPatch, vecPatches(ipatch) );
+        SyncCartesianPatch::syncBack( domain.cartPatch->EMfields->Ez_, vecPatches(ipatch)->EMfields->Ez_, params, smpi, domain.cartPatch, vecPatches(ipatch) );
+        SyncCartesianPatch::syncBack( domain.cartPatch->EMfields->Bx_m, vecPatches(ipatch)->EMfields->Bx_m, params, smpi, domain.cartPatch, vecPatches(ipatch) );
+        SyncCartesianPatch::syncBack( domain.cartPatch->EMfields->By_m, vecPatches(ipatch)->EMfields->By_m, params, smpi, domain.cartPatch, vecPatches(ipatch) );
+        SyncCartesianPatch::syncBack( domain.cartPatch->EMfields->Bz_m, vecPatches(ipatch)->EMfields->Bz_m, params, smpi, domain.cartPatch, vecPatches(ipatch) );
 
         // Diags only
-        SyncCartesianPatch::syncBack( patch->EMfields->Bx_, vecPatches(ipatch)->EMfields->Bx_, params, smpi, patch, vecPatches(ipatch) );
-        SyncCartesianPatch::syncBack( patch->EMfields->By_, vecPatches(ipatch)->EMfields->By_, params, smpi, patch, vecPatches(ipatch) );
-        SyncCartesianPatch::syncBack( patch->EMfields->Bz_, vecPatches(ipatch)->EMfields->Bz_, params, smpi, patch, vecPatches(ipatch) );
+        SyncCartesianPatch::syncBack( domain.cartPatch->EMfields->Bx_, vecPatches(ipatch)->EMfields->Bx_, params, smpi, domain.cartPatch, vecPatches(ipatch) );
+        SyncCartesianPatch::syncBack( domain.cartPatch->EMfields->By_, vecPatches(ipatch)->EMfields->By_, params, smpi, domain.cartPatch, vecPatches(ipatch) );
+        SyncCartesianPatch::syncBack( domain.cartPatch->EMfields->Bz_, vecPatches(ipatch)->EMfields->Bz_, params, smpi, domain.cartPatch, vecPatches(ipatch) );
         
     }
 
