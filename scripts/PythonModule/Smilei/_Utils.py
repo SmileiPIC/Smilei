@@ -310,8 +310,8 @@ class SaveAs:
 	
 	def frame(self, id=None):
 		if self.prefix:
-			if id: self.figure.savefig(self.prefix + "%010d"%int(id) + self.suffix)
-			else : self.figure.savefig(self.prefix + self.suffix)
+			file = self.prefix + ("" if id is None else "%010d"%int(id)) + self.suffix
+			self.figure.savefig(file)
 
 
 
