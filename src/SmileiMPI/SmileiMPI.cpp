@@ -107,7 +107,7 @@ void SmileiMPI::bcast( int& val )
 // ---------------------------------------------------------------------------------------------------------------------
 // Initialize MPI (per process) environment
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI::init( Params& params, DomainDecomposition* geometry )
+void SmileiMPI::init( Params& params, DomainDecomposition* domain_decomposition )
 {
     // Initialize patch environment 
     patch_count.resize(smilei_sz, 0);
@@ -116,7 +116,7 @@ void SmileiMPI::init( Params& params, DomainDecomposition* geometry )
 
     if (smilei_rk == 0)remove( "patch_load.txt" ) ;
     // Initialize patch distribution
-    if (!params.restart) init_patch_count(params, geometry);
+    if (!params.restart) init_patch_count(params, domain_decomposition);
 
     // Initialize buffers for particles push vectorization
     //     - 1 thread push particles for a unique patch at a given time
@@ -163,7 +163,7 @@ void SmileiMPI::init( Params& params, DomainDecomposition* geometry )
 // ---------------------------------------------------------------------------------------------------------------------
 //  Initialize patch distribution
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI::init_patch_count( Params& params, DomainDecomposition* geometry )
+void SmileiMPI::init_patch_count( Params& params, DomainDecomposition* domain_decomposition )
 {
 
 //#ifndef _NOTBALANCED
@@ -239,7 +239,7 @@ void SmileiMPI::init_patch_count( Params& params, DomainDecomposition* geometry 
         for(unsigned int ipatch=0; ipatch<Npatches_local; ipatch++){
             // Get patch coordinates
             unsigned int hindex = FirstPatch_local + ipatch;
-            Pcoordinates = geometry->getDomainCoordinates( hindex );
+            Pcoordinates = domain_decomposition->getDomainCoordinates( hindex );
             for (unsigned int i=0 ; i<params.nDim_field ; i++) {
                 Pcoordinates[i] *= params.n_space[i];
                 if (params.cell_length[i]!=0.) {

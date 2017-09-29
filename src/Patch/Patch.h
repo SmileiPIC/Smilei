@@ -31,25 +31,25 @@ class Patch
     friend class AsyncMPIbuffers;
 public:
     //! Constructor for Patch
-    Patch(Params& params, SmileiMPI* smpi, DomainDecomposition* geometry, unsigned int ipatch, unsigned int n_moved);
+    Patch(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved);
     //! Cloning Constructor for Patch
-    Patch(Patch* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* geometry, unsigned int ipatch, unsigned int n_moved, bool with_particles);
+    Patch(Patch* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles);
     
     //! First initialization step for patches
     void initStep1(Params& params);
     //! Second initialization step for patches
-    virtual void initStep2(Params& params, DomainDecomposition* geometry) = 0;
+    virtual void initStep2(Params& params, DomainDecomposition* domain_decomposition) = 0;
     //! Third initialization step for patches
     void initStep3(Params& params, SmileiMPI* smpi, unsigned int n_moved);
     //! Last creation step
-    void finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition* geometry );
+    void finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition );
     //! Last cloning step
     void finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool with_particles );
 
     //! Finalize MPI environment : especially requests array for non blocking communications
     void finalizeMPIenvironment();
 
-    void set( Params& params, DomainDecomposition* geometry, VectorPatch& vecPatch );
+    void set( Params& params, DomainDecomposition* domain_decomposition, VectorPatch& vecPatch );
 
     //! Destructor for Patch
     virtual ~Patch();

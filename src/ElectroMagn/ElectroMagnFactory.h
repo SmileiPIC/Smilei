@@ -15,16 +15,16 @@
 
 class ElectroMagnFactory {
 public:
-    static ElectroMagn* create(Params& params, DomainDecomposition* geometry, std::vector<Species*>& vecSpecies,  Patch* patch) {
+    static ElectroMagn* create(Params& params, DomainDecomposition* domain_decomposition, std::vector<Species*>& vecSpecies,  Patch* patch) {
         ElectroMagn* EMfields = NULL;
         if ( params.geometry == "1d3v" ) {
-            EMfields = new ElectroMagn1D(params, geometry, vecSpecies, patch);
+            EMfields = new ElectroMagn1D(params, domain_decomposition, vecSpecies, patch);
         }
         else if ( params.geometry == "2d3v" ) {
-            EMfields = new ElectroMagn2D(params, geometry, vecSpecies, patch);
+            EMfields = new ElectroMagn2D(params, domain_decomposition, vecSpecies, patch);
         }
         else if ( params.geometry == "3d3v" ) {
-            EMfields = new ElectroMagn3D(params, geometry, vecSpecies, patch);
+            EMfields = new ElectroMagn3D(params, domain_decomposition, vecSpecies, patch);
         }
         else {
             ERROR( "Unknown geometry : " << params.geometry << "!" );

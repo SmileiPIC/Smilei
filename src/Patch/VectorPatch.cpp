@@ -25,20 +25,20 @@ using namespace std;
 
 VectorPatch::VectorPatch()
 {
-    geometry_ = NULL ;
+    domain_decomposition_ = NULL ;
 }
 
 
 VectorPatch::VectorPatch( Params& params )
 {
-    geometry_ = DomainDecompositionFactory::create( params );
+    domain_decomposition_ = DomainDecompositionFactory::create( params );
 }
 
 
 VectorPatch::~VectorPatch()
 {
-    if ( geometry_ != NULL )
-        delete geometry_;
+    if ( domain_decomposition_ != NULL )
+        delete domain_decomposition_;
 }
 
 
@@ -566,14 +566,14 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         std::vector<int> xcall( 2, 0 );
         xcall[0] = 0;
         xcall[1] = params.number_of_patches[1]-1;
-        int patch_YmaxXmin = geometry_->getDomainId( xcall );
+        int patch_YmaxXmin = domain_decomposition_->getDomainId( xcall );
         //The MPI rank owning it is
         int rank_XminYmax = smpi->hrank(patch_YmaxXmin);
         //The YminXmax patch has Patch coordinates X=2^m0-1= number_of_patches[0]-1, Y=0.
         //Its hindex is
         xcall[0] = params.number_of_patches[0]-1;
         xcall[1] = 0;
-        int patch_YminXmax = geometry_->getDomainId( xcall );
+        int patch_YminXmax = domain_decomposition_->getDomainId( xcall );
         //The MPI rank owning it is
         int rank_XmaxYmin = smpi->hrank(patch_YminXmax);
         
@@ -768,7 +768,7 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
         // density profile is initializes as if t = 0 !
         // Species will be cleared when, nbr of particles will be known
         // Creation of a new patch, ready to receive its content from MPI neighbours.
-        Patch* newPatch = PatchesFactory::clone(existing_patch, params, smpi, geometry_, recv_patch_id_[ipatch], n_moved, false );
+        Patch* newPatch = PatchesFactory::clone(existing_patch, params, smpi, domain_decomposition_, recv_patch_id_[ipatch], n_moved, false );
         newPatch->finalizeMPIenvironment();
         //Store pointers to newly created patch in recv_patches_.
         recv_patches_.push_back( newPatch );

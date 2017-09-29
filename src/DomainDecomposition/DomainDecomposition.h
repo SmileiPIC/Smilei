@@ -1,5 +1,5 @@
-#ifndef GEOMETRY_H
-#define GEOMETRY_H
+#ifndef DOMAINDECOMPOSITION_H
+#define DOMAINDECOMPOSITION_H
 
 #include <vector>
 

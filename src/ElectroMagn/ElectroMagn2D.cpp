@@ -20,8 +20,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn2D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn2D::ElectroMagn2D(Params &params, DomainDecomposition* geometry, vector<Species*>& vecSpecies, Patch* patch) : 
-  ElectroMagn(params, geometry, vecSpecies, patch),
+ElectroMagn2D::ElectroMagn2D(Params &params, DomainDecomposition* domain_decomposition, vector<Species*>& vecSpecies, Patch* patch) : 
+  ElectroMagn(params, domain_decomposition, vecSpecies, patch),
 isYmin(patch->isYmin()),
 isYmax(patch->isYmax())
 {    

@@ -69,7 +69,7 @@ DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI* smpi, VectorP
     unsigned int rewrite_xmax=0, rewrite_ymax=0;
     for( unsigned int h=0; h<rewrite_npatch; h++) {
         std::vector<unsigned int> xcall( 2, 0 );
-        xcall = vecPatches.geometry_->getDomainCoordinates( first_patch_of_this_proc+h );
+        xcall = vecPatches.domain_decomposition_->getDomainCoordinates( first_patch_of_this_proc+h );
         if(xcall[0]<rewrite_xmin) rewrite_xmin=xcall[0];
         if(xcall[0]>rewrite_xmax) rewrite_xmax=xcall[0];
         if(xcall[1]<rewrite_ymin) rewrite_ymin=xcall[1];

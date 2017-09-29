@@ -12,11 +12,11 @@ class Patch1D : public Patch
 {
 public:
     //! Constructor for Patch
-    Patch1D(Params& params, SmileiMPI* smpi, DomainDecomposition* geometry, unsigned int ipatch, unsigned int n_moved);
+    Patch1D(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved);
     //! Cloning Constructor for Patch
-    Patch1D(Patch1D* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* geometry, unsigned int ipatch, unsigned int n_moved, bool with_particles);
+    Patch1D(Patch1D* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles);
     
-    void initStep2(Params& params, DomainDecomposition* geometry) override;
+    void initStep2(Params& params, DomainDecomposition* domain_decomposition) override;
     
     //! Destructor for Patch
     ~Patch1D() override final;

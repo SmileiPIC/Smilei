@@ -21,7 +21,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn::ElectroMagn(Params &params, DomainDecomposition* geometry, vector<Species*>& vecSpecies, Patch* patch) :
+ElectroMagn::ElectroMagn(Params &params, DomainDecomposition* domain_decomposition, vector<Species*>& vecSpecies, Patch* patch) :
 timestep       ( params.timestep   ),
 cell_length    ( params.cell_length),
 n_species      ( vecSpecies.size() ),
@@ -34,7 +34,7 @@ isXmax(patch->isXmax()),
 nrj_mw_lost    (  0.               ),
 nrj_new_fields (  0.               )
 {
-    if ( dynamic_cast<HilbertDomainDecomposition*>( geometry ) )
+    if ( dynamic_cast<HilbertDomainDecomposition*>( domain_decomposition ) )
         n_space = params.n_space;
     else {
         for ( int i = 0 ; i < 2 ; i++ ) 

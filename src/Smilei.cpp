@@ -53,13 +53,13 @@ int main (int argc, char* argv[])
     Params params(smpi,vector<string>(argv + 1, argv + argc));
     OpenPMDparams openPMD(params);
     
-    // Need to move it here because of geometry need in smpi->init(_patch_count)
+    // Need to move it here because of domain decomposition need in smpi->init(_patch_count)
     //     abstraction of Hilbert curve
     VectorPatch vecPatches( params );
 
     // Initialize MPI environment with simulation parameters
     TITLE("Initializing MPI");
-    smpi->init(params, vecPatches.geometry_);
+    smpi->init(params, vecPatches.domain_decomposition_);
     
     // Create timers
     Timers timers(smpi);

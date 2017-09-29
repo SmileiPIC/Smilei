@@ -1,5 +1,5 @@
-#ifndef GEOMETRYFACTORY_H
-#define GEOMETRYFACTORY_H
+#ifndef DOMAINDECOMPOSITIONFACTORY_H
+#define DOMAINDECOMPOSITIONFACTORY_H
 
 #include "DomainDecomposition.h"
 #include "HilbertDomainDecomposition.h"
@@ -8,29 +8,29 @@
 class DomainDecompositionFactory {
 public:
     static DomainDecomposition* create(Params& params) {
-        DomainDecomposition* geometry = NULL;
+        DomainDecomposition* domain_decomposition = NULL;
 
         if ( ( params.geometry == "1d3v" ) )
-            geometry = new HilbertDomainDecomposition1D( params );
+            domain_decomposition = new HilbertDomainDecomposition1D( params );
         else if ( ( params.geometry == "2d3v" ) ) 
-            geometry = new HilbertDomainDecomposition2D( params );
+            domain_decomposition = new HilbertDomainDecomposition2D( params );
         else if ( ( params.geometry == "3d3v" ) ) 
-            geometry = new HilbertDomainDecomposition3D( params );
+            domain_decomposition = new HilbertDomainDecomposition3D( params );
 
-        return geometry;
+        return domain_decomposition;
     }
 
     static DomainDecomposition* createGlobal(Params& params) {
-        DomainDecomposition* geometry = NULL;
+        DomainDecomposition* domain_decomposition = NULL;
 
         if ( ( params.geometry == "1d3v" ) )
-            geometry = new CartesianDomainDecomposition1D( params );
+            domain_decomposition = new CartesianDomainDecomposition1D( params );
         else if ( ( params.geometry == "2d3v" ) ) 
-            geometry = new CartesianDomainDecomposition2D( params );
+            domain_decomposition = new CartesianDomainDecomposition2D( params );
         else if ( ( params.geometry == "3d3v" ) ) 
-            geometry = new CartesianDomainDecomposition3D( params );
+            domain_decomposition = new CartesianDomainDecomposition3D( params );
 
-        return geometry;
+        return domain_decomposition;
     }
 
 

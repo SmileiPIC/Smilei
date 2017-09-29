@@ -12,7 +12,7 @@ class ElectroMagn3D : public ElectroMagn
 {
 public:
     //! Constructor for ElectroMagn3D
-    ElectroMagn3D(Params &params, DomainDecomposition* geometry, std::vector<Species*>& vecSpecies, Patch* patch);
+    ElectroMagn3D(Params &params, DomainDecomposition* domain_decomposition, std::vector<Species*>& vecSpecies, Patch* patch);
     ElectroMagn3D( ElectroMagn3D* emFields, Params &params, Patch* patch );
 
     //! Destructor for ElectroMagn3D

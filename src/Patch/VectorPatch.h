@@ -219,7 +219,7 @@ public :
     //! Tells which iteration was last time the patches moved (by moving window or load balancing)
     unsigned int lastIterationPatchesMoved;
 
-    DomainDecomposition* geometry_;
+    DomainDecomposition* domain_decomposition_;
     
     
  private :

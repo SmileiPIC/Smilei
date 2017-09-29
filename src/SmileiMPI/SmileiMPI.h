@@ -48,10 +48,10 @@ public:
     
     //! Initialize  MPI (per process) environment
     //! \param params Parameters
-    void init( Params& params, DomainDecomposition* geometry );
+    void init( Params& params, DomainDecomposition* domain_decomposition );
     
     // Initialize the patch_count vector. Patches are distributed in order to balance the load between MPI processes.
-    void init_patch_count( Params& params, DomainDecomposition* geometry );
+    void init_patch_count( Params& params, DomainDecomposition* domain_decomposition );
     // Recompute the patch_count vector. Browse patches and redistribute them in order to balance the load between MPI processes.
     void recompute_patch_count( Params& params, VectorPatch& vecpatches, double time_dual );
      // Returns the rank of the MPI process currently owning patch h.

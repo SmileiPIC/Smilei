@@ -1,5 +1,5 @@
-#ifndef HILBERTGEOMETRY_H
-#define HILBERTGEOMETRY_H
+#ifndef HILBERTDOMAINDECOMPOSITION_H
+#define HILBERTDOMAINDECOMPOSITION_H
 
 #include "DomainDecomposition.h"
 #include "Hilbert_functions.h"

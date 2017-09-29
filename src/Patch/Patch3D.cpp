@@ -16,13 +16,13 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Patch3D constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-Patch3D::Patch3D(Params& params, SmileiMPI* smpi, DomainDecomposition* geometry, unsigned int ipatch, unsigned int n_moved)
-    : Patch( params, smpi, geometry, ipatch, n_moved)
+Patch3D::Patch3D(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved)
+    : Patch( params, smpi, domain_decomposition, ipatch, n_moved)
 {
-    if (dynamic_cast<HilbertDomainDecomposition*>( geometry )) {
-        initStep2(params, geometry);
+    if (dynamic_cast<HilbertDomainDecomposition*>( domain_decomposition )) {
+        initStep2(params, domain_decomposition);
         initStep3(params, smpi, n_moved);
-        finishCreation(params, smpi, geometry);
+        finishCreation(params, smpi, domain_decomposition);
     }
     else { // Cartesian
         // See void Patch::set( VectorPatch& vecPatch )        
@@ -34,10 +34,10 @@ Patch3D::Patch3D(Params& params, SmileiMPI* smpi, DomainDecomposition* geometry,
 // ---------------------------------------------------------------------------------------------------------------------
 // Patch3D cloning constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-Patch3D::Patch3D(Patch3D* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* geometry, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
-    : Patch( patch, params, smpi, geometry, ipatch, n_moved, with_particles)
+Patch3D::Patch3D(Patch3D* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
+    : Patch( patch, params, smpi, domain_decomposition, ipatch, n_moved, with_particles)
 {
-    initStep2(params, geometry);
+    initStep2(params, domain_decomposition);
     initStep3(params, smpi, n_moved);
     finishCloning(patch, params, smpi, with_particles);
 } // End Patch3D::Patch3D
@@ -47,13 +47,13 @@ Patch3D::Patch3D(Patch3D* patch, Params& params, SmileiMPI* smpi, DomainDecompos
 // Patch3D second initializer :
 //   - Pcoordinates, neighbor_ resized in Patch constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch3D::initStep2(Params& params, DomainDecomposition* geometry)
+void Patch3D::initStep2(Params& params, DomainDecomposition* domain_decomposition)
 {
     std::vector<int> xcall( 3, 0 );
 
     // define patch coordinates
     Pcoordinates.resize(3);
-    Pcoordinates = geometry->getDomainCoordinates( hindex );
+    Pcoordinates = domain_decomposition->getDomainCoordinates( hindex );
 #ifdef _DEBUG
     cout << "\tPatch coords : ";
     for (int iDim=0; iDim<3;iDim++)
@@ -67,36 +67,36 @@ void Patch3D::initStep2(Params& params, DomainDecomposition* geometry)
     xcall[1] = Pcoordinates[1];
     xcall[2] = Pcoordinates[2];
     if (params.bc_em_type_x[0]=="periodic" && xcall[0] < 0)
-        xcall[0] += geometry->ndomain_[0];
-    neighbor_[0][0] = geometry->getDomainId( xcall );
+        xcall[0] += domain_decomposition->ndomain_[0];
+    neighbor_[0][0] = domain_decomposition->getDomainId( xcall );
     xcall[0] = Pcoordinates[0]+1;
-    if (params.bc_em_type_x[0]=="periodic" && xcall[0] >= geometry->ndomain_[0])
-        xcall[0] -= geometry->ndomain_[0];
-    neighbor_[0][1] = geometry->getDomainId( xcall );
+    if (params.bc_em_type_x[0]=="periodic" && xcall[0] >= domain_decomposition->ndomain_[0])
+        xcall[0] -= domain_decomposition->ndomain_[0];
+    neighbor_[0][1] = domain_decomposition->getDomainId( xcall );
 
     // 2st direction
     xcall[0] = Pcoordinates[0];
     xcall[1] = Pcoordinates[1]-1;
     xcall[2] = Pcoordinates[2];
     if (params.bc_em_type_y[0]=="periodic" && xcall[1] < 0)
-        xcall[1] += geometry->ndomain_[1];
-    neighbor_[1][0] =  geometry->getDomainId( xcall );
+        xcall[1] += domain_decomposition->ndomain_[1];
+    neighbor_[1][0] =  domain_decomposition->getDomainId( xcall );
     xcall[1] = Pcoordinates[1]+1;
-    if (params.bc_em_type_y[0]=="periodic" && xcall[1] >= geometry->ndomain_[1])
-        xcall[1] -= geometry->ndomain_[1];
-    neighbor_[1][1] =  geometry->getDomainId( xcall );
+    if (params.bc_em_type_y[0]=="periodic" && xcall[1] >= domain_decomposition->ndomain_[1])
+        xcall[1] -= domain_decomposition->ndomain_[1];
+    neighbor_[1][1] =  domain_decomposition->getDomainId( xcall );
 
     // 3st direction
     xcall[0] = Pcoordinates[0];
     xcall[1] = Pcoordinates[1];
     xcall[2] = Pcoordinates[2]-1;
     if (params.bc_em_type_z[0]=="periodic" && xcall[2] < 0)
-        xcall[2] += geometry->ndomain_[2];
-    neighbor_[2][0] =  geometry->getDomainId( xcall );
+        xcall[2] += domain_decomposition->ndomain_[2];
+    neighbor_[2][0] =  domain_decomposition->getDomainId( xcall );
     xcall[2] = Pcoordinates[2]+1;
-    if (params.bc_em_type_z[0]=="periodic" && xcall[2] >= geometry->ndomain_[2])
-        xcall[2] -= geometry->ndomain_[2];
-    neighbor_[2][1] =  geometry->getDomainId( xcall );
+    if (params.bc_em_type_z[0]=="periodic" && xcall[2] >= domain_decomposition->ndomain_[2])
+        xcall[2] -= domain_decomposition->ndomain_[2];
+    neighbor_[2][1] =  domain_decomposition->getDomainId( xcall );
 
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
         for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {

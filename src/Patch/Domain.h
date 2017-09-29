@@ -21,10 +21,10 @@ public:
     void solveMaxwell( Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers );
     void clean();
     
-    DomainDecomposition* cartGeom_;
-    Patch* cartPatch_;
-    VectorPatch VecPatchCart_;
-    Diagnostic* diagCart_; 
+    DomainDecomposition* decomposition_;
+    Patch* patch_;
+    VectorPatch vecPatch_;
+    Diagnostic* diag_; 
    
 };
 

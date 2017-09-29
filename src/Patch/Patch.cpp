@@ -40,7 +40,7 @@ using namespace std;
 // Patch constructor :
 //   Called by PatchXD constructor which will finalize initialization
 // ---------------------------------------------------------------------------------------------------------------------
-Patch::Patch(Params& params, SmileiMPI* smpi, DomainDecomposition* geometry, unsigned int ipatch, unsigned int n_moved)
+Patch::Patch(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved)
 {
     
     hindex = ipatch;
@@ -54,7 +54,7 @@ Patch::Patch(Params& params, SmileiMPI* smpi, DomainDecomposition* geometry, uns
 
 
 // Cloning patch constructor
-Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* geometry, unsigned int ipatch, unsigned int n_moved, bool with_particles = true) {
+Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles = true) {
     
     hindex = ipatch;
     nDim_fields_ = patch->nDim_fields_;
@@ -120,12 +120,12 @@ void Patch::initStep3( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
 
 }
 
-void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition* geometry ) {
+void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition ) {
     // initialize vector of Species (virtual)
     vecSpecies = SpeciesFactory::createVector(params, this);
     
     // initialize the electromagnetic fields (virtual)
-    EMfields   = ElectroMagnFactory::create(params, geometry, vecSpecies, this);
+    EMfields   = ElectroMagnFactory::create(params, domain_decomposition, vecSpecies, this);
     
     // interpolation operator (virtual)
     Interp     = InterpolatorFactory::create(params, this); // + patchId -> idx_domain_begin (now = ref smpi)
@@ -204,7 +204,7 @@ void Patch::finalizeMPIenvironment() {
 }
 
 
-void Patch::set( Params& params, DomainDecomposition* geometry, VectorPatch& vecPatch )
+void Patch::set( Params& params, DomainDecomposition* domain_decomposition, VectorPatch& vecPatch )
 {
     Pcoordinates.resize( params.nDim_field );
     
@@ -276,7 +276,7 @@ void Patch::set( Params& params, DomainDecomposition* geometry, VectorPatch& vec
             recv_tags_[iDim][iNeighbor] = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor, 5 );
         }
 
-    EMfields   = ElectroMagnFactory::create(params, geometry, vecPatch(0)->vecSpecies, this);
+    EMfields   = ElectroMagnFactory::create(params, domain_decomposition, vecPatch(0)->vecSpecies, this);
 
     vecSpecies.resize(0);
     Interp     = NULL;
