@@ -1,13 +1,13 @@
 #ifndef CARTESIANGEOMETRY_H
 #define CARTESIANGEOMETRY_H
 
-#include "Geometry.h"
+#include "DomainDecomposition.h"
 
-class CartesianGeometry : public Geometry
+class CartesianDomainDecomposition : public DomainDecomposition
 {
 public:
-    CartesianGeometry( Params& params );
-    virtual ~CartesianGeometry( ) {};
+    CartesianDomainDecomposition( Params& params );
+    virtual ~CartesianDomainDecomposition( ) {};
 
     virtual unsigned int getDomainId( std::vector<int> Coordinates ) = 0;
     virtual std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) = 0;
@@ -18,33 +18,33 @@ protected:
 };
 
 
-class CartesianGeometry1D : public CartesianGeometry
+class CartesianDomainDecomposition1D : public CartesianDomainDecomposition
 {
 public:
-    CartesianGeometry1D( Params& params );
-    ~CartesianGeometry1D( ) override final;
+    CartesianDomainDecomposition1D( Params& params );
+    ~CartesianDomainDecomposition1D( ) override final;
 
     unsigned int getDomainId( std::vector<int> Coordinates ) override final;
     std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;
 };
 
 
-class CartesianGeometry2D : public CartesianGeometry
+class CartesianDomainDecomposition2D : public CartesianDomainDecomposition
 {
 public:
-    CartesianGeometry2D( Params& params );
-    ~CartesianGeometry2D( ) override final;
+    CartesianDomainDecomposition2D( Params& params );
+    ~CartesianDomainDecomposition2D( ) override final;
 
     unsigned int getDomainId( std::vector<int> Coordinates ) override final;
     std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;
 };
 
 
-class CartesianGeometry3D : public CartesianGeometry
+class CartesianDomainDecomposition3D : public CartesianDomainDecomposition
 {
 public:
-    CartesianGeometry3D( Params& params );
-    ~CartesianGeometry3D( ) override final;
+    CartesianDomainDecomposition3D( Params& params );
+    ~CartesianDomainDecomposition3D( ) override final;
 
     unsigned int getDomainId( std::vector<int> Coordinates ) override final;
     std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;

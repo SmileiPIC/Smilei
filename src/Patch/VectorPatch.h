@@ -21,7 +21,7 @@
 class Field;
 class Timer;
 class SimWindow; 
-class Geometry;
+class DomainDecomposition;
 
 //! Class Patch : sub MPI domain 
 //!     Collection of patch = MPI domain
@@ -219,7 +219,7 @@ public :
     //! Tells which iteration was last time the patches moved (by moving window or load balancing)
     unsigned int lastIterationPatchesMoved;
 
-    Geometry* geometry_;
+    DomainDecomposition* geometry_;
     
     
  private :

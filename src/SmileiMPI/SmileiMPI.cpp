@@ -19,7 +19,7 @@
 #include "Species.h"
 #include "Hilbert_functions.h"
 #include "VectorPatch.h"
-#include "Geometry.h"
+#include "DomainDecomposition.h"
 
 #include "Diagnostic.h"
 #include "DiagnosticScalar.h"
@@ -107,7 +107,7 @@ void SmileiMPI::bcast( int& val )
 // ---------------------------------------------------------------------------------------------------------------------
 // Initialize MPI (per process) environment
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI::init( Params& params, Geometry* geometry )
+void SmileiMPI::init( Params& params, DomainDecomposition* geometry )
 {
     // Initialize patch environment 
     patch_count.resize(smilei_sz, 0);
@@ -163,7 +163,7 @@ void SmileiMPI::init( Params& params, Geometry* geometry )
 // ---------------------------------------------------------------------------------------------------------------------
 //  Initialize patch distribution
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI::init_patch_count( Params& params, Geometry* geometry )
+void SmileiMPI::init_patch_count( Params& params, DomainDecomposition* geometry )
 {
 
 //#ifndef _NOTBALANCED

@@ -5,7 +5,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include "GeometryFactory.h"
+#include "DomainDecompositionFactory.h"
 #include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
@@ -16,10 +16,10 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Patch3D constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-Patch3D::Patch3D(Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved)
+Patch3D::Patch3D(Params& params, SmileiMPI* smpi, DomainDecomposition* geometry, unsigned int ipatch, unsigned int n_moved)
     : Patch( params, smpi, geometry, ipatch, n_moved)
 {
-    if (dynamic_cast<HilbertGeometry*>( geometry )) {
+    if (dynamic_cast<HilbertDomainDecomposition*>( geometry )) {
         initStep2(params, geometry);
         initStep3(params, smpi, n_moved);
         finishCreation(params, smpi, geometry);
@@ -34,7 +34,7 @@ Patch3D::Patch3D(Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned i
 // ---------------------------------------------------------------------------------------------------------------------
 // Patch3D cloning constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-Patch3D::Patch3D(Patch3D* patch, Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
+Patch3D::Patch3D(Patch3D* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* geometry, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
     : Patch( patch, params, smpi, geometry, ipatch, n_moved, with_particles)
 {
     initStep2(params, geometry);
@@ -47,7 +47,7 @@ Patch3D::Patch3D(Patch3D* patch, Params& params, SmileiMPI* smpi, Geometry* geom
 // Patch3D second initializer :
 //   - Pcoordinates, neighbor_ resized in Patch constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch3D::initStep2(Params& params, Geometry* geometry)
+void Patch3D::initStep2(Params& params, DomainDecomposition* geometry)
 {
     std::vector<int> xcall( 3, 0 );
 

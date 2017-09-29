@@ -2,7 +2,7 @@
 #include "Domain.h"
 
 #include "PatchesFactory.h"
-#include "GeometryFactory.h"
+#include "DomainDecompositionFactory.h"
 #include "DiagnosticCartFields2D.h"
 
 #include "Params.h"
@@ -18,7 +18,7 @@ Domain::Domain( Params &params ) :
 
 void Domain::build( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, OpenPMDparams& openPMD )
 {
-    cartGeom_ = GeometryFactory::createGlobal( params );
+    cartGeom_ = DomainDecompositionFactory::createGlobal( params );
     cartPatch_ = PatchesFactory::create( params, smpi, cartGeom_, vecPatches.refHindex_ / vecPatches.size() );
     cartPatch_->set( params, cartGeom_, vecPatches );
     VecPatchCart_.patches_.push_back( cartPatch_ );

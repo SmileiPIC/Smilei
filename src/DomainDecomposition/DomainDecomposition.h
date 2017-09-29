@@ -5,11 +5,11 @@
 
 #include "Params.h"
 
-class Geometry
+class DomainDecomposition
 {
 public:
-    Geometry( Params& params ) {};
-    virtual ~Geometry( ) {};
+    DomainDecomposition( Params& params ) {};
+    virtual ~DomainDecomposition( ) {};
 
     std::vector<unsigned int> ndomain_;
 

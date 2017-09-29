@@ -20,7 +20,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn3D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn3D::ElectroMagn3D(Params &params, Geometry* geometry, vector<Species*>& vecSpecies, Patch* patch) : 
+ElectroMagn3D::ElectroMagn3D(Params &params, DomainDecomposition* geometry, vector<Species*>& vecSpecies, Patch* patch) : 
   ElectroMagn(params, geometry, vecSpecies, patch),
 isYmin(patch->isYmin()),
 isYmax(patch->isYmax()),

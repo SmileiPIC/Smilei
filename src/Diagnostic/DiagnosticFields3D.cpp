@@ -9,7 +9,7 @@
 #include "Patch.h"
 #include "Field3D.h"
 #include "VectorPatch.h"
-#include "Geometry.h"
+#include "DomainDecomposition.h"
 #include "Hilbert_functions.h"
 
 using namespace std;

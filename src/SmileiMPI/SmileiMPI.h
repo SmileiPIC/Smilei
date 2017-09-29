@@ -13,7 +13,7 @@
 class Params;
 class Species;
 class VectorPatch;
-class Geometry;
+class DomainDecomposition;
 
 class ElectroMagn;
 class ProbeParticles;
@@ -48,10 +48,10 @@ public:
     
     //! Initialize  MPI (per process) environment
     //! \param params Parameters
-    void init( Params& params, Geometry* geometry );
+    void init( Params& params, DomainDecomposition* geometry );
     
     // Initialize the patch_count vector. Patches are distributed in order to balance the load between MPI processes.
-    void init_patch_count( Params& params, Geometry* geometry );
+    void init_patch_count( Params& params, DomainDecomposition* geometry );
     // Recompute the patch_count vector. Browse patches and redistribute them in order to balance the load between MPI processes.
     void recompute_patch_count( Params& params, VectorPatch& vecpatches, double time_dual );
      // Returns the rank of the MPI process currently owning patch h.

@@ -3,7 +3,7 @@
 
 #include "VectorPatch.h" 
 
-class Geometry;
+class DomainDecomposition;
 class Patch;
 class Diagnostic;
 
@@ -21,7 +21,7 @@ public:
     void solveMaxwell( Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers );
     void clean();
     
-    Geometry* cartGeom_;
+    DomainDecomposition* cartGeom_;
     Patch* cartPatch_;
     VectorPatch VecPatchCart_;
     Diagnostic* diagCart_; 

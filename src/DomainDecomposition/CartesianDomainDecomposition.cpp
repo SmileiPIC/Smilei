@@ -1,27 +1,27 @@
-#include "CartesianGeometry.h"
+#include "CartesianDomainDecomposition.h"
 
 
-CartesianGeometry::CartesianGeometry( Params& params )
-    : Geometry( params )
+CartesianDomainDecomposition::CartesianDomainDecomposition( Params& params )
+    : DomainDecomposition( params )
 {
     ndomain_ = params.number_of_patches;
     block_size_.resize( ndomain_.size(), 2 );
 }
 
 
-CartesianGeometry1D::CartesianGeometry1D( Params& params )
-    : CartesianGeometry( params )
+CartesianDomainDecomposition1D::CartesianDomainDecomposition1D( Params& params )
+    : CartesianDomainDecomposition( params )
 {
 }
 
 
-CartesianGeometry1D::~CartesianGeometry1D( )
+CartesianDomainDecomposition1D::~CartesianDomainDecomposition1D( )
 {
 }
 
 
 // generalhilbertindex
-unsigned int CartesianGeometry1D::getDomainId( std::vector<int> Coordinates )
+unsigned int CartesianDomainDecomposition1D::getDomainId( std::vector<int> Coordinates )
 {
     if ( Coordinates[0] < 0 )
         return MPI_PROC_NULL;
@@ -34,7 +34,7 @@ unsigned int CartesianGeometry1D::getDomainId( std::vector<int> Coordinates )
 
 
 // generalhilbertindexinv
-std::vector<unsigned int> CartesianGeometry1D::getDomainCoordinates( unsigned int Id )
+std::vector<unsigned int> CartesianDomainDecomposition1D::getDomainCoordinates( unsigned int Id )
 {
     std::vector<unsigned int> coords( 1, 0 );
     coords[0] = Id;
@@ -43,19 +43,19 @@ std::vector<unsigned int> CartesianGeometry1D::getDomainCoordinates( unsigned in
 }
 
 
-CartesianGeometry2D::CartesianGeometry2D( Params& params )
-    : CartesianGeometry( params )
+CartesianDomainDecomposition2D::CartesianDomainDecomposition2D( Params& params )
+    : CartesianDomainDecomposition( params )
 {
 }
 
 
-CartesianGeometry2D::~CartesianGeometry2D( )
+CartesianDomainDecomposition2D::~CartesianDomainDecomposition2D( )
 {
 }
 
 
 // generalhilbertindex
-unsigned int CartesianGeometry2D::getDomainId( std::vector<int> Coordinates )
+unsigned int CartesianDomainDecomposition2D::getDomainId( std::vector<int> Coordinates )
 {
     if ( Coordinates[0] < 0 )
         return MPI_PROC_NULL;
@@ -72,7 +72,7 @@ unsigned int CartesianGeometry2D::getDomainId( std::vector<int> Coordinates )
 
 
 // generalhilbertindexinv
-std::vector<unsigned int> CartesianGeometry2D::getDomainCoordinates( unsigned int Id )
+std::vector<unsigned int> CartesianDomainDecomposition2D::getDomainCoordinates( unsigned int Id )
 {
     std::vector<unsigned int> coords( 2, 0 );
     coords[0] = (double)Id/(double)ndomain_[1];
@@ -82,19 +82,19 @@ std::vector<unsigned int> CartesianGeometry2D::getDomainCoordinates( unsigned in
 }
 
 
-CartesianGeometry3D::CartesianGeometry3D( Params& params )
-    : CartesianGeometry( params )
+CartesianDomainDecomposition3D::CartesianDomainDecomposition3D( Params& params )
+    : CartesianDomainDecomposition( params )
 {
 }
 
 
-CartesianGeometry3D::~CartesianGeometry3D( )
+CartesianDomainDecomposition3D::~CartesianDomainDecomposition3D( )
 {
 }
 
 
 // generalhilbertindex
-unsigned int CartesianGeometry3D::getDomainId( std::vector<int> Coordinates )
+unsigned int CartesianDomainDecomposition3D::getDomainId( std::vector<int> Coordinates )
 {
     if ( Coordinates[0] < 0 )
         return MPI_PROC_NULL;
@@ -115,7 +115,7 @@ unsigned int CartesianGeometry3D::getDomainId( std::vector<int> Coordinates )
 
 
 // generalhilbertindexinv
-std::vector<unsigned int> CartesianGeometry3D::getDomainCoordinates( unsigned int Id )
+std::vector<unsigned int> CartesianDomainDecomposition3D::getDomainCoordinates( unsigned int Id )
 {
     std::vector<unsigned int> coords( 3, 0 );
     coords[0] = (double)Id/(double)ndomain_[1]/(double)ndomain_[2];

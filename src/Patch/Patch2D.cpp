@@ -5,7 +5,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include "GeometryFactory.h"
+#include "DomainDecompositionFactory.h"
 #include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
@@ -16,10 +16,10 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Patch2D constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-Patch2D::Patch2D(Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved)
+Patch2D::Patch2D(Params& params, SmileiMPI* smpi, DomainDecomposition* geometry, unsigned int ipatch, unsigned int n_moved)
     : Patch( params, smpi, geometry, ipatch, n_moved)
 {
-    if (dynamic_cast<HilbertGeometry*>( geometry )) {
+    if (dynamic_cast<HilbertDomainDecomposition*>( geometry )) {
         initStep2(params, geometry);
         initStep3(params, smpi, n_moved);
         finishCreation(params, smpi, geometry);
@@ -45,7 +45,7 @@ Patch2D::Patch2D(Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned i
 // ---------------------------------------------------------------------------------------------------------------------
 // Patch2D cloning constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-Patch2D::Patch2D(Patch2D* patch, Params& params, SmileiMPI* smpi, Geometry* geometry, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
+Patch2D::Patch2D(Patch2D* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* geometry, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
     : Patch( patch, params, smpi, geometry, ipatch, n_moved, with_particles )
 {
     initStep2(params, geometry);
@@ -58,7 +58,7 @@ Patch2D::Patch2D(Patch2D* patch, Params& params, SmileiMPI* smpi, Geometry* geom
 // Patch2D second initializer :
 //   - Pcoordinates, neighbor_ resized in Patch constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch2D::initStep2(Params& params, Geometry* geometry)
+void Patch2D::initStep2(Params& params, DomainDecomposition* geometry)
 {
     std::vector<int> xcall( 2, 0 );
 

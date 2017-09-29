@@ -18,7 +18,7 @@ class ElectroMagnBC;
 class SimWindow;
 class Patch;
 class Solver;
-class Geometry;
+class DomainDecomposition;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -50,7 +50,7 @@ class ElectroMagn
 
 public:
     //! Constructor for Electromagn
-    ElectroMagn( Params &params, Geometry* geometry, std::vector<Species*>& vecSpecies, Patch* patch );
+    ElectroMagn( Params &params, DomainDecomposition* geometry, std::vector<Species*>& vecSpecies, Patch* patch );
     ElectroMagn( ElectroMagn* emFields, Params &params, Patch* patch );
     void initElectroMagnQuantities();
     //! Extra initialization. Used in ElectroMagnFactory
