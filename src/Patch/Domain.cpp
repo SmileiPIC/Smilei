@@ -32,6 +32,7 @@ void Domain::build( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, Op
     //vecPatch_.update_field_list(0);
     vecPatch_.patches_[0]->finalizeMPIenvironment();
     vecPatch_.nrequests = vecPatches(0)->requests_.size();
+    vecPatch_.nAntennas = vecPatch_(0)->EMfields->antennas.size();
     vecPatch_.initExternals( params );
 
     diag_ = new DiagnosticCartFields2D( params, smpi, vecPatch_, 0, openPMD ); 
