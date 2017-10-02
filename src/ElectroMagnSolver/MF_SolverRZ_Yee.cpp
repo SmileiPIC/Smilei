@@ -29,16 +29,16 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
     cField2D* ExRZ;
     cField2D* ErRZ;
     //if (!isEFilterApplied) {
-        ExRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Ex_RZ_[imode];
-        ErRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Er_RZ_[imode];
+        ExRZ = (static_cast<ElectroMagn3DRZ*>(fields))->El_[imode];
+        ErRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Er_[imode];
     //} else {
     //    ExRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Exfilter[0];
     //    ErRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Erfilter[0];
     //}
-    cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Et_RZ_[imode];
-    cField2D* BxRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Bx_RZ_[imode];
-    cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Br_RZ_[imode];
-    cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Bt_RZ_[imode];
+    cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Et_[imode];
+    cField2D* BxRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Bl_[imode];
+    cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Br_[imode];
+    cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Bt_[imode];
     
     // Magnetic field Bx^(p,d)
     //cout << "nx_p,nx_d-1" << nx_p << " " << nx_d-1 ;

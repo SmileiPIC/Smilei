@@ -33,12 +33,12 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
 
     int imode = 0;
     // Static cast of the electromagnetic fields
-    cField2D* ExRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Ex_RZ_[imode];
-    cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Er_RZ_[imode];
-    cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Et_RZ_[imode];
-    cField2D* BxRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bx_RZ_m[imode];
-    cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_RZ_m[imode];
-    cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_RZ_m[imode];
+    cField2D* ExRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->El_[imode];
+    cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Er_[imode];
+    cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Et_[imode];
+    cField2D* BxRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_m[imode];
+    cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_m[imode];
+    cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_m[imode];
 
 
     // Normalized particle position
@@ -132,9 +132,9 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
 
     int imode = 0;
     // Static cast of the electromagnetic fields
-    cField2D* JxRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jx_RZ_[imode]; 
-    cField2D* JyRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jy_RZ_[imode]; 
-    cField2D* JzRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jz_RZ_[imode]; 
+    cField2D* JxRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jl_[imode]; 
+    cField2D* JyRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jr_[imode]; 
+    cField2D* JzRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jt_[imode]; 
     cField2D* RhoRZ= (static_cast<ElectroMagn3DRZ*>(EMfields))->rho_RZ_[imode];
     
     

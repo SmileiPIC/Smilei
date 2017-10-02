@@ -142,9 +142,9 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
         #endif
         int imode = 0;
 
-        complex<double>* b_Jx =  &(*emRZ->Jx_RZ_[imode] )(ibin*clrw* dim1   * dim2   );
-        complex<double>* b_Jy =  &(*emRZ->Jy_RZ_[imode] )(ibin*clrw*(dim1+1)* dim2   );
-        complex<double>* b_Jz =  &(*emRZ->Jz_RZ_[imode] )(ibin*clrw* dim1   *(dim2+1));
+        complex<double>* b_Jx =  &(*emRZ->Jl_[imode] )(ibin*clrw* dim1   * dim2   );
+        complex<double>* b_Jy =  &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1)* dim2   );
+        complex<double>* b_Jz =  &(*emRZ->Jt_[imode] )(ibin*clrw* dim1   *(dim2+1));
         for ( int ipart=istart ; ipart<iend; ipart++ )
             (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart]);
             
@@ -155,9 +155,9 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
         #endif
         int imode = 0;
 
-        complex<double>* b_Jx  = emRZ->Jx_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jx_s [ispec]) )(ibin*clrw* dim1   *dim2) : &(*emRZ->Jx_RZ_[imode] )(ibin*clrw* dim1   *dim2) ;
-        complex<double>* b_Jy  = emRZ->Jy_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jy_s [ispec]) )(ibin*clrw*(dim1+1)*dim2) : &(*emRZ->Jy_RZ_[imode] )(ibin*clrw*(dim1+1)*dim2) ;
-        complex<double>* b_Jz  = emRZ->Jz_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jz_s [ispec]) )(ibin*clrw*dim1*(dim2+1)) : &(*emRZ->Jz_RZ_[imode] )(ibin*clrw*dim1*(dim2+1)) ;
+        complex<double>* b_Jx  = emRZ->Jx_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jx_s [ispec]) )(ibin*clrw* dim1   *dim2) : &(*emRZ->Jl_[imode] )(ibin*clrw* dim1   *dim2) ;
+        complex<double>* b_Jy  = emRZ->Jy_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jy_s [ispec]) )(ibin*clrw*(dim1+1)*dim2) : &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1)*dim2) ;
+        complex<double>* b_Jz  = emRZ->Jz_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jz_s [ispec]) )(ibin*clrw*dim1*(dim2+1)) : &(*emRZ->Jt_[imode] )(ibin*clrw*dim1*(dim2+1)) ;
         complex<double>* b_rho = emRZ->rho_s[ispec] ? &(* static_cast<cField2D*>(emRZ->rho_s[ispec]) )(ibin*clrw* dim1   *dim2) : &(*emRZ->rho_RZ_[imode])(ibin*clrw* dim1   *dim2) ;
         for ( int ipart=istart ; ipart<iend; ipart++ )
             (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart]);

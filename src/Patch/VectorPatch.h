@@ -190,16 +190,16 @@ public :
     std::vector<Field*> listBy_;
     std::vector<Field*> listBz_;
 
-    std::vector<std::vector<Field*>> listJx_RZ_;
-    std::vector<std::vector<Field*>> listJy_RZ_;
-    std::vector<std::vector<Field*>> listJz_RZ_;
-    std::vector<std::vector<Field*>> listrho_RZ_;
-    std::vector<std::vector<Field*>> listEx_RZ_;
-    std::vector<std::vector<Field*>> listEy_RZ_;
-    std::vector<std::vector<Field*>> listEz_RZ_;
-    std::vector<std::vector<Field*>> listBx_RZ_;
-    std::vector<std::vector<Field*>> listBy_RZ_;
-    std::vector<std::vector<Field*>> listBz_RZ_;
+    std::vector<std::vector< Field *>> listJl_;
+    std::vector<std::vector< Field *>> listJr_;
+    std::vector<std::vector< Field *>> listJt_;
+    std::vector<std::vector< Field *>> listrho_RZ_;
+    std::vector<std::vector< Field *>> listEl_;
+    std::vector<std::vector< Field *>> listEr_;
+    std::vector<std::vector< Field *>> listEt_;
+    std::vector<std::vector< Field *>> listBl_;
+    std::vector<std::vector< Field *>> listBr_;
+    std::vector<std::vector< Field *>> listBt_;
 
     
     //! True if any antennas

@@ -85,9 +85,9 @@ void SyncVectorPatch::sumRhoJ(VectorPatch& vecPatches, Timers &timers, int itime
 
 void SyncVectorPatch::sumRhoJ(VectorPatch& vecPatches, int imode, Timers &timers, int itime)
 {
-    SyncVectorPatch::sum( vecPatches.listJx_RZ_[imode], vecPatches, timers, itime  );
-    SyncVectorPatch::sum( vecPatches.listJy_RZ_[imode], vecPatches, timers, itime  );
-    SyncVectorPatch::sum( vecPatches.listJz_RZ_[imode], vecPatches, timers, itime  );
+    SyncVectorPatch::sum( vecPatches.listJl_[imode], vecPatches, timers, itime  );
+    SyncVectorPatch::sum( vecPatches.listJr_[imode], vecPatches, timers, itime  );
+    SyncVectorPatch::sum( vecPatches.listJt_[imode], vecPatches, timers, itime  );
     if(vecPatches.diag_flag) SyncVectorPatch::sum( vecPatches.listrho_RZ_[imode], vecPatches, timers, itime );
 }
 
@@ -171,17 +171,17 @@ void SyncVectorPatch::finalizeexchangeB( VectorPatch& vecPatches )
 void SyncVectorPatch::exchangeB( VectorPatch& vecPatches, int imode )
 {
 
-    SyncVectorPatch::exchange( vecPatches.listBx_RZ_[imode], vecPatches );
-    SyncVectorPatch::exchange( vecPatches.listBy_RZ_[imode], vecPatches );
-    SyncVectorPatch::exchange( vecPatches.listBz_RZ_[imode], vecPatches );
+    SyncVectorPatch::exchange( vecPatches.listBl_[imode], vecPatches );
+    SyncVectorPatch::exchange( vecPatches.listBr_[imode], vecPatches );
+    SyncVectorPatch::exchange( vecPatches.listBt_[imode], vecPatches );
 }
 
 void SyncVectorPatch::finalizeexchangeB( VectorPatch& vecPatches, int imode  )
 {
 
-    SyncVectorPatch::finalizeexchange( vecPatches.listBx_RZ_[imode], vecPatches );
-    SyncVectorPatch::finalizeexchange( vecPatches.listBy_RZ_[imode], vecPatches );
-    SyncVectorPatch::finalizeexchange( vecPatches.listBz_RZ_[imode], vecPatches );
+    SyncVectorPatch::finalizeexchange( vecPatches.listBl_[imode], vecPatches );
+    SyncVectorPatch::finalizeexchange( vecPatches.listBr_[imode], vecPatches );
+    SyncVectorPatch::finalizeexchange( vecPatches.listBt_[imode], vecPatches );
 }
 
 
