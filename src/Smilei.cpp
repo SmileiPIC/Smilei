@@ -294,7 +294,8 @@ int main (int argc, char* argv[])
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
-    domain.clean();
+    if (params.global_factor[0]!=1) 
+        domain.clean();
     vecPatches.close( smpi );
     smpi->barrier(); // Don't know why but sync needed by HDF5 Phasespace managment
     delete simWindow;

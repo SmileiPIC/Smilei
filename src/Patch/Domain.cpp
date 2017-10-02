@@ -12,7 +12,10 @@
 #include "SyncCartesianPatch.h"
 
 Domain::Domain( Params &params ) :
-    vecPatch_( params ) 
+    vecPatch_( params ),
+    decomposition_(NULL),
+    patch_(NULL),
+    diag_(NULL)
 {
 }
 
