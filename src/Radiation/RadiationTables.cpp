@@ -155,20 +155,26 @@ void RadiationTables::initParams(Params& params)
         // Computation of the factor for the classical radiated power
         factor_cla_rad_power = 2.*fine_struct_cst/(3.*norm_lambda_compton);
 
-        MESSAGE( "        factor_cla_rad_power: " << factor_cla_rad_power)
+        MESSAGE( "        Factor classical raidated power: " << factor_cla_rad_power)
 
     }
 
     // Messages...
-    MESSAGE( "        threshold on the quantum parameter for radiation: " << chipa_radiation_threshold);
+    // Computation of some parameters
+    if (params.hasMCRadiation ||
+        params.hasLLRadiation ||
+        params.hasNielRadiation)
+    {
+        MESSAGE( "        Threshold on the quantum parameter for radiation: " << chipa_radiation_threshold);
+    }
     if (params.hasMCRadiation)
     {
-        MESSAGE( "        threshold on the quantum parameter for discontinuous radiation: " << chipa_disc_min_threshold);
+        MESSAGE( "        Threshold on the quantum parameter for discontinuous radiation: " << chipa_disc_min_threshold);
     }
     if (params.hasMCRadiation ||
         params.hasNielRadiation)
     {
-        MESSAGE( "        table path: " << table_path);
+        MESSAGE( "        Table path: " << table_path);
     }
 
     MESSAGE("")

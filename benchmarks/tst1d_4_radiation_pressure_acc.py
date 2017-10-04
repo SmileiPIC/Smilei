@@ -33,7 +33,8 @@ Main(
      
     bc_em_type_x = ['silver-muller'],
      
-    random_seed = smilei_mpi_rank
+    random_seed = smilei_mpi_rank,
+    clrw = 1
 )
 
 Species(
