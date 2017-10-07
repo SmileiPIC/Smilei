@@ -6,12 +6,6 @@
 #include "VectorPatch.h"
 #include "Params.h"
 
-
-#ifdef SMILEI_USE_NUMPY
-#include <numpy/arrayobject.h>
-#endif
-
-
 using namespace std;
 
 DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, unsigned int iDiagTrackParticles, unsigned int idiag, OpenPMDparams& oPMD ) :
@@ -54,6 +48,7 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& 
     has_filter = (filter != Py_None);
     if( has_filter ) {
 #ifdef SMILEI_USE_NUMPY
+        setIteration( 0 );
         // Check if filter is callable
         if( ! PyCallable_Check(filter) )
             ERROR("Tracked species '" << species_name << "' has a filter that is not callable");
@@ -69,17 +64,30 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& 
             ERROR("Tracked species '" << species_name << "' has a filter that does not look like a normal python function");
         }
         // Verify the number of arguments of the filter function
-        if( n_arg != nDim_particle+3 )
-            ERROR("Tracked species '" << species_name << "' has a filter function with "<<n_arg<<" arguments while requiring "<<nDim_particle+3);
+        if( n_arg != 1 )
+            ERROR("Tracked species '" << species_name << "' has a filter function with "<<n_arg<<" arguments while requiring 1");
+        // Make a new object of python class "Particles"
+        ParticleData particleData( 2 );
+        // Add parameters to this object
+        vector<double> test_value = {1.2, 1.4};
+        vector<uint64_t> test_id = {3, 4};
+        vector<short> test_charge = {3, 4};
+        particleData.setVectorAttr( test_value, "x" );
+        if( nDim_particle > 1 ) {
+            particleData.setVectorAttr( test_value, "y" );
+            if( nDim_particle > 2 )
+                particleData.setVectorAttr( test_value, "z" );
+        }
+        particleData.setVectorAttr( test_value, "px" );
+        particleData.setVectorAttr( test_value, "py" );
+        particleData.setVectorAttr( test_value, "pz" );
+        particleData.setVectorAttr( test_value, "weight" );
+        particleData.setVectorAttr( test_charge, "charge" );
+        particleData.setVectorAttr( test_id, "id" );
         // Verify the return value of the function
-        double test_value[2] = {1.2, 1.4};
-        npy_intp dims[1] = {2};
         PyObject *ret(nullptr);
-        PyArrayObject *a = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, &test_value);
-        if     ( nDim_particle == 1 ) ret = PyObject_CallFunctionObjArgs(filter, a,a,a,a, NULL);
-        else if( nDim_particle == 2 ) ret = PyObject_CallFunctionObjArgs(filter, a,a,a,a,a, NULL);
-        else if( nDim_particle == 3 ) ret = PyObject_CallFunctionObjArgs(filter, a,a,a,a,a,a, NULL);
-        Py_DECREF(a);
+        ret = PyObject_CallFunctionObjArgs(filter, particleData.get(), NULL);
+        particleData.clear();
         if( !PyArray_Check(ret) )
             ERROR("Tracked particles filter must return a numpy array");
         if( !PyArray_ISBOOL((PyArrayObject *)ret) )
@@ -177,48 +185,45 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
     uint32_t nParticles_local = 0;
     uint64_t nParticles_global = 0;
     string xyz = "xyz";
-
+    
     hid_t momentum_group=0, position_group=0, iteration_group=0, particles_group=0, species_group=0;
     hid_t plist=0, file_space=0, mem_space=0;
     #pragma omp master
     {
-
+        
         // Obtain the particle partition of all the patches in this MPI
         patch_start.resize( vecPatches.size() );
-
+        
         if( has_filter ) {
-
+        
 #ifdef SMILEI_USE_NUMPY
+            // Set a python variable "Main.iteration" to itime so that it can be accessed in the filter
+            setIteration( itime );
+            
             patch_selection.resize( vecPatches.size() );
-            PyArrayObject *x,*y,*z,*px,*py,*pz,*ret;
-            npy_intp dims[1];
+            PyArrayObject *ret;
+            ParticleData particleData(0);
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-                // Expose particle data as numpy arrays, then run the filter function
                 Particles * p = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
                 unsigned int npart = p->size();
-                dims[0] = (npy_intp) npart;
-                px = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Momentum[0].data()));
-                py = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Momentum[1].data()));
-                pz = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Momentum[2].data()));
-                x  = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Position[0].data()));
+                // Expose particle data as numpy arrays
+                particleData.resize( npart );
+                particleData.setVectorAttr( p->Position[0], "x" );
                 if( nDim_particle>1 ) {
-                    y = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Position[1].data()));
-                    if( nDim_particle>2 ) {
-                        z = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Position[2].data()));
-                        ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(filter, x,y,z,px,py,pz, NULL);
-                        Py_DECREF(z);
-                    } else {
-                        ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(filter, x,y,px,py,pz, NULL);
-                    }
-                    Py_DECREF(y);
-                } else {
-                    ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(filter, x,px,py,pz, NULL);
+                    particleData.setVectorAttr( p->Position[1], "y" );
+                    if( nDim_particle>2 )
+                        particleData.setVectorAttr( p->Position[2], "z" );
                 }
-                Py_DECREF(x);
-                Py_DECREF(px);
-                Py_DECREF(py);
-                Py_DECREF(pz);
-
+                particleData.setVectorAttr( p->Momentum[0], "px" );
+                particleData.setVectorAttr( p->Momentum[1], "py" );
+                particleData.setVectorAttr( p->Momentum[2], "pz" );
+                particleData.setVectorAttr( p->Weight, "weight" );
+                particleData.setVectorAttr( p->Charge, "charge" );
+                particleData.setVectorAttr( p->Id, "id" );
+                // run the filter function
+                ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(filter, particleData.get(), NULL);
+                particleData.clear();
+                
                 // Loop the return value and store the particle IDs
                 bool* arr = (bool*) PyArray_GETPTR1( ret, 0 );
                 patch_selection[ipatch].resize(0);
@@ -231,29 +236,29 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
                 }
                 patch_start[ipatch] = nParticles_local;
                 nParticles_local += patch_selection[ipatch].size();
-
+                
                 Py_DECREF(ret);
             }
 #endif
-
+        
         } else {
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
                 patch_start[ipatch] = nParticles_local;
                 nParticles_local += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
             }
         }
-
+        
         // Specify the memory dataspace (the size of the local buffer)
         hsize_t count_[1] = {(hsize_t)nParticles_local};
         mem_space = H5Screate_simple(1, count_, NULL);
-
+        
         // Get the number of offset for this MPI rank
         uint64_t np_local = nParticles_local, offset;
         MPI_Scan( &np_local, &offset, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD );
         nParticles_global = offset;
         offset -= np_local;
         MPI_Bcast( &nParticles_global, 1, MPI_UNSIGNED_LONG_LONG, smpi->getSize()-1, MPI_COMM_WORLD );
-
+        
         // Make a new group for this iteration
         ostringstream t("");
         t << setfill('0') << setw(10) << itime;

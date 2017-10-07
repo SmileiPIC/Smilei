@@ -150,6 +150,9 @@ class SmileiSingleton(SmileiComponent):
     def __init__(self, **kwargs):
         self._fillObjectAndAddToList(type(self), type(self), **kwargs)
 
+class Particles(object):
+    """Tracked particles run-time data"""
+    pass
 
 class Main(SmileiSingleton):
     """Main parameters"""

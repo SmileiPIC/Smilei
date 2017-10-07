@@ -526,7 +526,9 @@ class ShowDiffWithReference(object):
 		# Manage array plotting
 		if data_float is not None:
 			if expected_data is not None and data_float.shape != expected_data_float.shape:
-				print "\tReference and new data do not have the same shape"
+				print "\tReference and new data do not have the same shape: "+str(expected_data_float.shape)+" vs. "+str(data_float.shape)
+			if expected_data is not None and data_float.ndim != expected_data_float.ndim:
+				print "\tReference and new data do not have the same dimension: "+str(expected_data_float.ndim)+" vs. "+str(data_float.ndim)
 				print_data = True
 			elif data_float.size == 0:
 				print "\t0D quantity cannot be plotted"

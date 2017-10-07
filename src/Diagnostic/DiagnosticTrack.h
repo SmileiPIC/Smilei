@@ -83,5 +83,80 @@ private :
     std::vector<uint64_t> data_uint64;
 };
 
+
+
+#ifdef SMILEI_USE_NUMPY
+#include <numpy/arrayobject.h>
+
+// class for exposing Particles to numpy
+class ParticleData {
+public:
+    ParticleData(unsigned int nparticles) {
+       // Use the empty python class "Particles" to store data
+       PyObject* particlesClass = PyObject_GetAttrString(PyImport_AddModule("__main__"),"Particles");
+       particles = PyObject_CallObject(particlesClass, NULL);
+       Py_DECREF(particlesClass);
+       
+       dims[0] = nparticles;
+    };
+    ~ParticleData() {
+        clear();
+    };
+    
+    inline void resize(unsigned int nparticles) {
+        dims[0] = nparticles;
+    };
+    
+    // Expose a vector to numpy
+    inline PyArrayObject* vector2numpy( std::vector<double> &vec ) {
+        return (PyArrayObject*) PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(vec.data()));
+    };
+    inline PyArrayObject* vector2numpy( std::vector<uint64_t> &vec ) {
+        return (PyArrayObject*) PyArray_SimpleNewFromData(1, dims, NPY_UINT64, (uint64_t*)(vec.data()));
+    };
+    inline PyArrayObject* vector2numpy( std::vector<short> &vec ) {
+        return (PyArrayObject*) PyArray_SimpleNewFromData(1, dims, NPY_SHORT, (short*)(vec.data()));
+    };
+    
+    // Add a C++ vector as an attribute, but exposed as a numpy array
+    template <typename T>
+    inline void setVectorAttr( std::vector<T> &vec, std::string name ) {
+        PyArrayObject* numpy_vector = vector2numpy( vec );
+        PyObject_SetAttrString(particles, name.c_str(), (PyObject*)numpy_vector);
+        attrs.push_back( numpy_vector );
+    };
+    
+    // Remove python references of all attributes
+    inline void clear() {
+        unsigned int nattr = attrs.size();
+        for( unsigned int i=0; i<nattr; i++) Py_DECREF(attrs[i]);
+        attrs.resize(0);
+    };
+    
+    inline PyObject* get() {
+        return particles;
+    };
+    
+private:
+    PyObject* particles;
+    std::vector<PyArrayObject*> attrs;
+    npy_intp dims[1];
+};
+
+
+// Set a python variable to itime so that it can be accessed in the filter
+inline void setIteration( int itime ) {
+    PyObject* Main = PyObject_GetAttrString(PyImport_AddModule("__main__"),"Main");
+    PyObject* iteration = PyInt_FromLong(itime);
+    PyObject_SetAttrString(Main, "iteration", iteration);
+    Py_DECREF(iteration);
+    Py_DECREF(Main);
+}
+
+
+#endif
+
+
+
 #endif
 

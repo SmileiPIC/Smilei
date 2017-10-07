@@ -1888,17 +1888,27 @@ for instance::
   To use this option, the `numpy package <http://www.numpy.org/>`_ must
   be available in your python installation.
   
-  The function must have the arguments 
-  ``x``, ``y`` (if 2D or above), ``z`` (if 3D), ``px``, ``py`` and ``pz``. Each of these variables
-  are provided as **numpy** arrays of *doubles*. Each element corresponds to one particle.
+  The function must have one argument, that you may call, for instance, ``particles``.
+  This object has several attributes ``x``, ``y``, ``z``, ``px``, ``py``, ``pz``, ``charge``,
+  ``weight`` and ``id``. Each of these attributes
+  are provided as **numpy** arrays where each cell corresponds to one particle.
   The function must return a boolean **numpy** array of the same shape, containing ``True``
-  where the particle should be tracked, and ``False`` in other locations.
+  for particles that should be tracked, and ``False`` otherwise.
   
-  The following 2D example selects all the particles that verify :math:`-1<p_x<1`
+  The following example selects all the particles that verify :math:`-1<p_x<1`
   or :math:`p_z>3`::
   
-    def my_filter(x, y, px, py, pz):
-        return (px>-1.)*(px<1.) + (pz>3.)
+    def my_filter(particles):
+        return (particles.px>-1.)*(particles.px<1.) + (particles.pz>3.)
+  
+.. Note:: The ``id`` attribute contains the particles identification number.
+  This number is set to 0 at the beginning of the simulation. Only after particles have
+  passed the filter, they acquire a positive ``id``.
+
+.. Note:: For advanced filtration, Smilei provides the quantity ``Main.iteration``,
+  accessible within the ``filter`` function. Its value is always equal to the current
+  iteration number of the PIC loop. The current time of the simulation is thus
+  ``Main.iteration * Main.timestep``.
 
 
 
@@ -1956,16 +1966,17 @@ For more clarity, this graph illustrates the five syntaxes for time selections:
 Checkpoints
 ^^^^^^^^^^^
 
-The simulation can be *dumped* at given points (*checkpoints*) in order to be *restarted*
-at that point.
+The simulation state can be saved (*dumped*) at given times (*checkpoints*)
+in order to be later *restarted* at that point.
 
 A few things are important to know when you need dumps and restarts.
 
 * Do not restart the simulation in the same directory as the previous one. Files will be
   overwritten, and errors may occur. Create a new directory for your restarted simulation.
-* Manage your memory: each process dumps one file, and the total can be significant.
-* each MPI process will write its own hdf5 checkpoint file which will have the format `dump-XXXXX-YYYYYYYYYY.h5`
-  where `XXXXX` is the sequence file (see below) and `YYYYYYYYYY` is the mpi rank.
+* Manage your memory: each MPI process dumps one file, and the total can be significant.
+* The file written by a particular MPI process has the format
+  ``dump-XXXXX-YYYYYYYYYY.h5`` where ``XXXXX`` is the *dump number* that can be chosen
+  using :py:data:`restart_number` and ``YYYYYYYYYY`` is the MPI process number.
 
 ::
 
@@ -1982,10 +1993,19 @@ A few things are important to know when you need dumps and restarts.
 
   :default: None
 
-  This tells :program:`Smilei` where to find dump files for restart.
-  If not defined, it does not restart from a previous dump.
+  The directory of a previous simulation from which :program:`Smilei` should restart.
+  If not defined, it does not restart from a previous simulation.
+  
+  **WARNING:** this path must either absolute or be relative to the current directory.
 
-  **WARNING:** this path must either absolute or be relative to the simulation directory
+.. py:data:: restart_number
+
+  :default: None
+  
+  The number of the dump (from the previous run in :py:data:`restart_dir`)
+  that should be used for the restart. 
+  Note that the dump number is reset to 0 for each new run. In a given run, the first dump has
+  number 0, the second dump number 1, etc.
 
 .. py:data:: dump_step
 
@@ -1998,7 +2018,8 @@ A few things are important to know when you need dumps and restarts.
 
   :default: 0.
 
-  The number of minutes between each dump of the full simulation (combines with ``dump_step``).
+  The number of minutes between each dump of the full simulation (combines with
+  :py:data:`dump_step`).
   If ``0.``, no dump is done.
 
 .. py:data:: dump_deflate
@@ -2009,7 +2030,7 @@ A few things are important to know when you need dumps and restarts.
 
   :default: ``True``
 
-  If ``True``, the code stops after the dump.
+  If ``True``, the code stops after the first dump.
 
 .. py:data:: keep_n_dumps
 
@@ -2023,14 +2044,8 @@ A few things are important to know when you need dumps and restarts.
   :default: None
 
   The maximum number of checkpoint files that can be stored in one directory.
-  New subdirectories are created according to the total number of files.
+  Subdirectories are created to accomodate for all files.
   This is useful on filesystem with a limited number of files per directory.
-
-.. py:data:: restart_number
-
-  :default: None
-
-  If provided, the code will restart from that checkpoint, otherwise it uses the most recent one.
 
 ----
 
