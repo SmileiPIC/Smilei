@@ -41,6 +41,7 @@ public:
     inline int apply( Particles &particles, int ipart, Species *species, double &nrj_iPart ) {//, bool &contribute ) {
         
         int keep_part = 1;
+        // iDim = 0
         if ( particles.position(0, ipart) <  x_min ) {
             if (bc_xmin==NULL) keep_part = 0;
             else {
@@ -53,38 +54,55 @@ public:
                 keep_part = (*bc_xmax)( particles, ipart, 0, 2.*x_max, species,nrj_iPart );
             }
         }
-        if (nDim_particle >= 2) {
+        if (!isRZ) {
+            // iDim = 1
+            if (nDim_particle >= 2) {
             
-            if ( particles.position(1, ipart) <  y_min ) {
+                if ( particles.position(1, ipart) <  y_min ) {
+                    if (bc_ymin==NULL) keep_part = 0;
+                    else {
+                        keep_part *= (*bc_ymin)( particles, ipart, 1, 2.*y_min, species,nrj_iPart );
+                    }
+                }
+                else if ( particles.position(1, ipart) >= y_max ) {
+                    if (bc_ymax==NULL) keep_part = 0;
+                    else {
+                        keep_part *= (*bc_ymax)( particles, ipart, 1, 2.*y_max, species,nrj_iPart );
+                    }
+                }
+                // iDim = 2
+                if (nDim_particle == 3) {
+                
+                    if ( particles.position(2, ipart) <  z_min ) {
+                        if (bc_zmin==NULL) keep_part = 0;
+                        else {
+                            keep_part *= (*bc_zmin)( particles, ipart, 2, 2.*z_min, species,nrj_iPart );
+                        }
+                    }
+                    else if ( particles.position(2, ipart) >= z_max ) {
+                        if (bc_zmax==NULL) keep_part = 0;
+                        else {
+                            keep_part *= (*bc_zmax)( particles, ipart, 2, 2.*z_max, species,nrj_iPart );
+                        }
+                    }
+                } // end if (nDim_particle == 3)
+            } // end if (nDim_particle >= 2)
+        }
+        // iDim = 1 & 2
+        else {
+            if ( particles.distance2_to_axis(ipart) <  y_min ) {
                 if (bc_ymin==NULL) keep_part = 0;
                 else {
-                    keep_part *= (*bc_ymin)( particles, ipart, 1, 2.*y_min, species,nrj_iPart );
+                    keep_part *= (*bc_ymin)( particles, ipart, -1, 2.*y_min, species,nrj_iPart );
                 }
             }
-            else if ( particles.position(1, ipart) >= y_max ) {
+            else if ( particles.distance2_to_axis(ipart) >= y_max ) {
                 if (bc_ymax==NULL) keep_part = 0;
                 else {
-                    keep_part *= (*bc_ymax)( particles, ipart, 1, 2.*y_max, species,nrj_iPart );
+                    keep_part *= (*bc_ymax)( particles, ipart, -1, 2.*y_max, species,nrj_iPart );
                 }
             }
-            
-            if (nDim_particle == 3) {
-                
-                if ( particles.position(2, ipart) <  z_min ) {
-                    if (bc_zmin==NULL) keep_part = 0;
-                    else {
-                        keep_part *= (*bc_zmin)( particles, ipart, 2, 2.*z_min, species,nrj_iPart );
-                    }
-                }
-                else if ( particles.position(2, ipart) >= z_max ) {
-                    if (bc_zmax==NULL) keep_part = 0;
-                    else {
-                        keep_part *= (*bc_zmax)( particles, ipart, 2, 2.*z_max, species,nrj_iPart );
-                    }
-                }
-            } // end if (nDim_particle == 3)
-        } // end if (nDim_particle >= 2)
-
+        }
 
         return keep_part;
     };
@@ -110,6 +128,7 @@ private:
 
     //! Space dimension of a particle
     int nDim_particle;
+    bool isRZ;
     
 };
 

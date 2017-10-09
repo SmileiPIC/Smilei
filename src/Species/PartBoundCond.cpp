@@ -14,7 +14,8 @@
 
 using namespace std;
 
-PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
+PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
+    isRZ( params.geometry == "3drz" )
 {
     // number of dimensions for the particle
     //!\todo (MG to JD) isn't it always 3?
@@ -57,7 +58,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
             y_max = min( y_max_global, patch->getDomainLocalMax(1) );
         }
         
-        if ( nDim_particle > 2 ) {
+        if ( ( nDim_particle > 2 ) && (!isRZ) ) {
             if (params.bc_em_type_z[0]=="periodic") {
                 z_min = patch->getDomainLocalMin(2);
                 z_max = patch->getDomainLocalMax(2);
@@ -137,7 +138,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     }
     
     
-    if ( nDim_particle > 1 ) {
+    if ( ( nDim_particle > 1 ) && (!isRZ) ) {
         // Ymin
         if ( species->bc_part_type_ymin == "refl" ) {
             if (patch->isYmin()) bc_ymin = &refl_particle;
@@ -203,6 +204,45 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
         }//nDim_particle>2
         
     }//nDim_particle>1
+    else if (isRZ) {
+        #ifdef _TODO_RZ
+        // rmin !!!
+        §§ none !!!
+        #endif
+        // Ymin
+        if ( species->bc_part_type_ymin == "refl" ) {
+            if (patch->isYmin()) bc_ymin = &refl_particle_rz;
+        }
+        else if ( species->bc_part_type_ymin == "supp" ) {
+            if (patch->isYmin()) bc_ymin = &supp_particle;
+        }
+        else if ( species->bc_part_type_ymin == "stop" ) {
+            if (patch->isYmin()) bc_ymin = &stop_particle_rz;
+        }
+        else if ( species->bc_part_type_ymin == "none" ) {
+            if (patch->isMaster()) MESSAGE(2,"Ymin boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+        }
+        else {
+            ERROR( "Ymin boundary condition undefined : " << species->bc_part_type_ymin  );
+        }
+        
+        // Ymax
+        if ( species->bc_part_type_ymax == "refl" ) {
+            if (patch->isYmax()) bc_ymax = &refl_particle_rz;
+        }
+        else if ( species->bc_part_type_ymax == "supp" ) {
+            if (patch->isYmax()) bc_ymax = &supp_particle;
+        }
+        else if ( species->bc_part_type_ymax == "stop" ) {
+            if (patch->isYmax()) bc_ymax = &stop_particle_rz;
+        }
+        else if ( species->bc_part_type_ymax == "none" ) {
+            if (patch->isMaster()) MESSAGE(2,"Ymax boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+        }
+        else {
+            ERROR( "Ymax boundary condition undefined : " << species->bc_part_type_ymax  );
+        }
+    }
     
     
 }
