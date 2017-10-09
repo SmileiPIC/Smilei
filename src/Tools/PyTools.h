@@ -466,6 +466,15 @@ public:
         return str;
     }
     
+    // Set a python variable to itime so that it can be accessed at run-time
+    inline static void setIteration( int itime ) {
+        PyObject* Main = PyObject_GetAttrString(PyImport_AddModule("__main__"),"Main");
+        PyObject* iteration = PyInt_FromLong(itime);
+        PyObject_SetAttrString(Main, "iteration", iteration);
+        Py_DECREF(iteration);
+        Py_DECREF(Main);
+    }
+    
 };
 
 #endif

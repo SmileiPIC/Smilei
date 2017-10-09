@@ -1,7 +1,9 @@
+#include "PyTools.h"
 
 #include <string>
 #include <sstream>
 
+#include "ParticleData.h"
 #include "DiagnosticTrack.h"
 #include "VectorPatch.h"
 #include "Params.h"
@@ -48,7 +50,7 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& 
     has_filter = (filter != Py_None);
     if( has_filter ) {
 #ifdef SMILEI_USE_NUMPY
-        setIteration( 0 );
+        PyTools::setIteration( 0 );
         // Check if filter is callable
         if( ! PyCallable_Check(filter) )
             ERROR("Tracked species '" << species_name << "' has a filter that is not callable");
@@ -198,7 +200,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         
 #ifdef SMILEI_USE_NUMPY
             // Set a python variable "Main.iteration" to itime so that it can be accessed in the filter
-            setIteration( itime );
+            PyTools::setIteration( itime );
             
             patch_selection.resize( vecPatches.size() );
             PyArrayObject *ret;
