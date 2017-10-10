@@ -171,14 +171,20 @@ class Units(object):
 				try:
 					return self._divide(knownUnits,requestedUnits)
 				except:
-					print("WARNING: cannot convert units to <"+requestedUnits+">")
-					print("       : Conversion discarded.")
+					if self.verbose:
+						print("WARNING: cannot convert units to <"+requestedUnits+">")
+						print("       : Conversion discarded.")
 			else:
 				for units in self.requestedUnits:
 					try   : return self._divide(knownUnits,units)
 					except: pass
-			val = self.ureg(knownUnits)
-			return 1., u"{0.units:P}".format(val)
+			try:
+				val = self.ureg(knownUnits)
+				return 1., u"{0.units:P}".format(val)
+			except:
+				if self.verbose:
+					print("WARNING: units unknown")
+				return 1., ""
 		return 1., ""
 	
 	def prepare(self, reference_angular_frequency_SI=None, xunits="", yunits="", vunits="", tunits=""):

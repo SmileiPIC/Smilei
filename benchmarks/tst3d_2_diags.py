@@ -153,6 +153,7 @@ outputs = [
 	"pressure_xz"    ,
 	"pressure_yz"    ,
 	"ekin_vx_density",
+	lambda particles: particles.weight
 ]
 
 for output in outputs:

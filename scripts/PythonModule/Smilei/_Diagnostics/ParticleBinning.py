@@ -15,7 +15,7 @@ class ParticleBinning(Diagnostic):
 			if len(diags)==0:
 				self._error += "      No particle binning diagnostics found"
 			return
-
+		
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------
 		# Check the requested diags are ok
@@ -29,7 +29,7 @@ class ParticleBinning(Diagnostic):
 		else:
 			self._error = "Argument 'diagNumber' must be and integer or a string."
 			return
-
+		
 		# Get list of requested diags
 		self._myinfo = {}
 		self._diags = sorted(set([ int(d[1:]) for d in self._re.findall('#\d+',self.operation) ]))
@@ -263,12 +263,12 @@ class ParticleBinning(Diagnostic):
 		for d in self._diags:
 			self._vunits = self._vunits.replace("#"+str(d), "( "+units[d]+" )")
 			self._title  = self._title .replace("#"+str(d), titles[d])
-
+		
 		# If any spatial dimension did not appear, then count it for calculating the correct density
 		if self._ndim>=1 and not spatialaxes["x"]: coeff /= self._ncels[0]*self._cell_length[0]
 		if self._ndim>=2 and not spatialaxes["y"]: coeff /= self._ncels[1]*self._cell_length[1]
 		if self._ndim==3 and not spatialaxes["z"]: coeff /= self._ncels[2]*self._cell_length[2]
-
+		
 		# Calculate the array that represents the bins sizes in order to get units right.
 		# This array will be the same size as the plotted array
 		if len(plot_diff)==0:
@@ -305,7 +305,11 @@ class ParticleBinning(Diagnostic):
 			axes = []
 			# Parse each attribute
 			for name, value in attrs:
-				if (name == "output"): output = bytes.decode(value)
+				if (name == "output"):
+					try:
+						output = bytes.decode(value)
+					except:
+						output = "user_function"
 				if (name == "time_average"): time_average = int(value)
 				if (name == "species"):
 					species = bytes.decode(value.strip()).split() # get all species numbers

@@ -1596,8 +1596,8 @@ for instance::
 
 .. py:data:: output
 
-  determines the data that is summed in each cell of the grid:
-
+  The type of data that is summed in each cell of the grid:
+  
   * with ``"density"``, the weights are summed.
   * with ``"charge_density"``, the weights :math:`\times` charge are summed.
   * with ``"jx_density"``, the weights :math:`\times` charge :math:`\times\; v_x` are summed (same with :math:`y` and :math:`z`).
@@ -1605,7 +1605,22 @@ for instance::
   * with ``"ekin_density"``, the weights :math:`\times mc^2\; (\gamma-1)` are summed.
   * with ``"pressure_xx"``, the weights :math:`\times\; v_x p_x` are summed (same with yy, zz, xy, yz and xz).
   * with ``"chi_density"``, the weights :math:`\times\; \chi` (quantum parameter)
-         are summed (only for species with radiation losses).
+    are summed (only for species with radiation losses).
+  * with a user-defined python function, an arbitrary output can be calculated (the *numpy*
+    module is necessary). This function should take one argument, for instance
+    ``particles``, which contains the attributes ``x``, ``y``, ``z``, ``px``, ``py``,
+    ``pz``, ``charge``, ``weight`` and ``id``. Each of these attributes is a *numpy* array
+    containing the data of all particles in one patch. The function must return a *numpy*
+    array of the same shape, containing the desired output of each particle. For example, 
+    providing ``output=myfunction``, the following function will sum the weights
+    :math:`\times\; p_x`::
+      
+      def myfunction(particles):
+          return particles.weight * particles.px
+    
+    You may also pass directly an implicit (*lambda*) function using::
+    
+      output = lambda p: p.weight * p.px
 
 
 .. py:data:: every
@@ -1834,10 +1849,9 @@ for instance::
   A list of "axes" that define the grid of the histogram.
   It is identical to that of :ref:`particle binning diagnostics <DiagParticleBinning>`, with the
   addition of four types of axes:
-  ``"a"`` and ``"b"`` are the axes perpendicular to the ``vector``, when the screen
-  shape is a ``"plane"``.
-  ``"theta"`` and ``"phi"`` are the angles with respect to the ``vector``, when the screen
-  shape is a ``"sphere"``.
+  
+  * If ``shape="plane"``, then ``"a"`` and ``"b"`` are the axes perpendicular to the ``vector``.
+  * If ``shape="sphere"``, then ``"theta"`` and ``"phi"`` are the angles with respect to the ``vector``.
 
 ----
 

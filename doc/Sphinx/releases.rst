@@ -12,6 +12,11 @@ a `different repository <https://llrgit.in2p3.fr/smilei/smilei>`_
 reserved for the :doc:`partners`. It is regularly synchronized with
 the GitHub page.
 
+.. warning::
+  
+  In the last version, significant changes have been made to the input syntax.
+  Please :doc:`review these changes<syntax_changes>`.
+
 ----
 
 Upcoming changes
