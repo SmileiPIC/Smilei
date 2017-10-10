@@ -1,5 +1,7 @@
+#include "PyTools.h"
 
 #include "DiagnosticScreen.h"
+#include "HistogramFactory.h"
 
 #include <iomanip>
 
@@ -84,8 +86,8 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patc
         ERROR(errorPrefix << ": parameter `direction` not understood");
     
     // get parameter "output" that determines the quantity to sum in the output array
-    if (!PyTools::extract("output",output,"DiagScreen",screen_id))
-        ERROR(errorPrefix << ": parameter `output` required");
+    PyObject* output_object = PyTools::extract_py("output", "DiagScreen", screen_id);
+    PyTools::checkPyError();
     
     // get parameter "every" which describes a timestep selection
     timeSelection = new TimeSelection(
@@ -111,55 +113,16 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patc
     //      requested quantity, min value, max value ,number of bins, log (optional), edge_inclusive (optional)
     vector<PyObject*> pyAxes=PyTools::extract_pyVec("axes","DiagScreen",screen_id);
     
-    vector<string> excluded_types(0);
+    // Create the Histogram object based on the extracted parameters above
+    vector<string> excluded_axes(0);
     if( screen_shape == "plane" ) {
-        excluded_types.push_back( "theta_yx" );
-        excluded_types.push_back( "theta_zx" );
+        excluded_axes.push_back( "theta_yx" );
+        excluded_axes.push_back( "theta_zx" );
     } else {
-        excluded_types.push_back( "a" );
-        excluded_types.push_back( "b" );
+        excluded_axes.push_back( "a" );
+        excluded_axes.push_back( "b" );
     }
-    
-    // Create the Histogram object
-    if        (output == "density"        ) {
-        histogram = new Histogram_density        ();
-    } else if (output == "charge_density" ) {
-        histogram = new Histogram_charge_density ();
-    } else if (output == "jx_density"     ) {
-        histogram = new Histogram_jx_density     ();
-    } else if (output == "jy_density"     ) {
-        histogram = new Histogram_jy_density     ();
-    } else if (output == "jz_density"     ) {
-        histogram = new Histogram_jz_density     ();
-    } else if (output == "ekin_density"   ) {
-        histogram = new Histogram_ekin_density   ();
-    } else if (output == "p_density"      ) {
-        histogram = new Histogram_p_density      ();
-    } else if (output == "px_density"     ) {
-        histogram = new Histogram_px_density     ();
-    } else if (output == "py_density"     ) {
-        histogram = new Histogram_py_density     ();
-    } else if (output == "pz_density"     ) {
-        histogram = new Histogram_pz_density     ();
-    } else if (output == "pressure_xx"    ) {
-        histogram = new Histogram_pressure_xx    ();
-    } else if (output == "pressure_yy"    ) {
-        histogram = new Histogram_pressure_yy    ();
-    } else if (output == "pressure_zz"    ) {
-        histogram = new Histogram_pressure_zz    ();
-    } else if (output == "pressure_xy"    ) {
-        histogram = new Histogram_pressure_xy    ();
-    } else if (output == "pressure_xz"    ) {
-        histogram = new Histogram_pressure_xz    ();
-    } else if (output == "pressure_yz"    ) {
-        histogram = new Histogram_pressure_yz    ();
-    } else if (output == "ekin_vx_density") {
-        histogram = new Histogram_ekin_vx_density();
-    } else {
-        ERROR(errorPrefix << ": parameter `output = "<< output <<"` not understood");
-    }
-    
-    histogram->init(params, pyAxes, species, errorPrefix, patch, excluded_types);
+    histogram = HistogramFactory::create(params, output_object, pyAxes, species, patch, excluded_axes, errorPrefix);
     
     // If axes are "a", "b", "theta" or "phi", they need some coefficients
     unsigned int idim;
@@ -254,7 +217,7 @@ void DiagnosticScreen::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         // write all parameters as HDF5 attributes
         H5::attr(fileId_, "Version", string(__VERSION));
-        H5::attr(fileId_, "output" , output);
+        H5::attr(fileId_, "output" , histogram->output);
         // write all species
         ostringstream mystream("");
         mystream.str(""); // clear

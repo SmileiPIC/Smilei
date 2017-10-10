@@ -51,55 +51,12 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& 
     if( has_filter ) {
 #ifdef SMILEI_USE_NUMPY
         PyTools::setIteration( 0 );
-        // Check if filter is callable
-        if( ! PyCallable_Check(filter) )
-            ERROR("Tracked species '" << species_name << "' has a filter that is not callable");
-        unsigned int n_arg;
-        // Try to get the number of arguments of the filter function
-        try {
-            PyObject* code = PyObject_GetAttrString( filter, "__code__" );
-            PyObject* argcount = PyObject_GetAttrString( code, "co_argcount" );
-            n_arg = PyInt_AsLong( argcount );
-            Py_DECREF(argcount);
-            Py_DECREF(code);
-        } catch (...) {
-            ERROR("Tracked species '" << species_name << "' has a filter that does not look like a normal python function");
-        }
-        // Verify the number of arguments of the filter function
-        if( n_arg != 1 )
-            ERROR("Tracked species '" << species_name << "' has a filter function with "<<n_arg<<" arguments while requiring 1");
-        // Make a new object of python class "Particles"
-        ParticleData particleData( 2 );
-        // Add parameters to this object
-        vector<double> test_value = {1.2, 1.4};
-        vector<uint64_t> test_id = {3, 4};
-        vector<short> test_charge = {3, 4};
-        particleData.setVectorAttr( test_value, "x" );
-        if( nDim_particle > 1 ) {
-            particleData.setVectorAttr( test_value, "y" );
-            if( nDim_particle > 2 )
-                particleData.setVectorAttr( test_value, "z" );
-        }
-        particleData.setVectorAttr( test_value, "px" );
-        particleData.setVectorAttr( test_value, "py" );
-        particleData.setVectorAttr( test_value, "pz" );
-        particleData.setVectorAttr( test_value, "weight" );
-        particleData.setVectorAttr( test_charge, "charge" );
-        particleData.setVectorAttr( test_id, "id" );
-        // Verify the return value of the function
-        PyObject *ret(nullptr);
-        ret = PyObject_CallFunctionObjArgs(filter, particleData.get(), NULL);
-        particleData.clear();
-        if( !PyArray_Check(ret) )
-            ERROR("Tracked particles filter must return a numpy array");
-        if( !PyArray_ISBOOL((PyArrayObject *)ret) )
-            ERROR("Tracked particles filter must return an array of booleans");
-        unsigned int s = PyArray_SIZE((PyArrayObject *)ret);
-        if( s != 2 )
-            ERROR("Tracked particles filter must not change the arrays sizes");
-        Py_DECREF(ret);
+        // Test the filter with temporary, "fake" particles
+        name << " filter:";
+        bool * dummy = NULL;
+        ParticleData test( nDim_particle, filter, name.str(), dummy );
 #else
-        ERROR("Tracking species '" << species_name << "' with a filter requires the numpy package");
+        ERROR(name << " with a filter requires the numpy package");
 #endif
     }
 

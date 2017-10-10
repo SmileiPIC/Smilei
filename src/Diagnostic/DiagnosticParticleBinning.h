@@ -46,9 +46,6 @@ private :
     //! list of the species that will be accounted for
     std::vector<unsigned int> species;
     
-    //! quantity to be summed into the output array
-    std::string output;
-    
     //! vector for saving the output array for time-averaging
     std::vector<double> data_sum;
     

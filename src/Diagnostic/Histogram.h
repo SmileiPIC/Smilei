@@ -1,9 +1,12 @@
 #ifndef HISTOGRAM_H
 #define HISTOGRAM_H
 
+#include "PyTools.h"
 #include "Species.h"
+#include "ParticleData.h"
+#include "Patch.h"
 #include "SimWindow.h"
-
+#include <algorithm>
 
 // Class for each axis of the particle diags
 class HistogramAxis {
@@ -44,16 +47,16 @@ class Histogram {
 public:
     Histogram() {};
     ~Histogram() {};
-
-    void init(Params&, std::vector<PyObject*>, std::vector<unsigned int>, std::string, Patch*, std::vector<std::string>);
-
+    
     //! Compute the index of each particle in the final histogram
     void digitize(Species *, std::vector<double>&, std::vector<int>&, SimWindow*);
     //! Calculate the quantity of each particle to be summed in the histogram
     virtual void valuate(Species*, std::vector<double>&, std::vector<int>&) {};
     //! Add the contribution of each particle in the histogram
     void distribute(std::vector<double>&, std::vector<int>&, std::vector<double>&);
-
+    
+    std::string output;
+    
     std::vector<HistogramAxis*> axes;
 };
 
@@ -354,6 +357,16 @@ class Histogram_ekin_density : public Histogram {
 //! Children class of Histogram: for the quantum parameter
 //! of the radiating particles
 class Histogram_chi_density : public Histogram {
+public:
+    Histogram_chi_density(Patch* patch, std::vector<unsigned int> &species, std::string errorPrefix)
+      : Histogram()
+    {
+        // The requested species must be radiating
+        for (unsigned int ispec=0 ; ispec < species.size() ; ispec++)
+            if( ! patch->vecSpecies[species[ispec]]->particles->isQuantumParameter)
+                ERROR(errorPrefix << ": 'chi_density' requires all species to be radiating");
+    };
+private:
     void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
         unsigned int npart = array.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
@@ -497,5 +510,48 @@ class Histogram_ekin_vx_density : public Histogram {
     };
 };
 
+#ifdef SMILEI_USE_NUMPY
+class Histogram_user_function : public Histogram {
+public:
+    Histogram_user_function( PyObject* output_object ) :
+        Histogram(),
+        function(output_object),
+        particleData(0)
+    {};
+private:
+    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+        unsigned int npart = array.size();
+        Particles * p = s->particles;
+        unsigned int nDim_particle = p->Position.size();
+        // Expose particle data as numpy arrays
+        particleData.resize( npart );
+        particleData.setVectorAttr( p->Position[0], "x" );
+        if( nDim_particle>1 ) {
+            particleData.setVectorAttr( p->Position[1], "y" );
+            if( nDim_particle>2 )
+                particleData.setVectorAttr( p->Position[2], "z" );
+        }
+        particleData.setVectorAttr( p->Momentum[0], "px" );
+        particleData.setVectorAttr( p->Momentum[1], "py" );
+        particleData.setVectorAttr( p->Momentum[2], "pz" );
+        particleData.setVectorAttr( p->Weight, "weight" );
+        particleData.setVectorAttr( p->Charge, "charge" );
+        particleData.setVectorAttr( p->Id, "id" );
+        // run the function
+        PyArrayObject* ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(function, particleData.get(), NULL);
+        particleData.clear();
+        // Copy the result to "array"
+        double* arr = (double*) PyArray_GETPTR1( ret, 0 );
+        for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
+            if( index[ipart]<0 ) continue;
+            array[ipart] = arr[ipart];
+        }
+        Py_DECREF(ret);
+    };
+    
+    PyObject* function;
+    ParticleData particleData;
+};
+#endif
 
 #endif

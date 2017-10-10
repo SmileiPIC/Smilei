@@ -475,6 +475,29 @@ public:
         Py_DECREF(Main);
     }
     
+    // Test whether a python object is a function
+    // Return the number of arguments, or -1 if failure
+    static int function_nargs(PyObject* obj) {
+        if( ! PyCallable_Check(obj) )
+            return -1;
+        // Try to get the number of arguments of the function
+        unsigned int n_arg = -1;
+        PyObject *code=NULL, *argcount=NULL;
+        try {
+            code = PyObject_GetAttrString( obj, "__code__" );
+            argcount = PyObject_GetAttrString( code, "co_argcount" );
+            n_arg = PyInt_AsLong( argcount );
+            Py_DECREF(argcount);
+            argcount = NULL;
+            Py_DECREF(code);
+            code = NULL;
+        } catch (...) {
+            if( argcount ) Py_DECREF(argcount);
+            if( code     ) Py_DECREF(code);
+            return -1;
+        }
+        return n_arg;
+    }
 };
 
 #endif

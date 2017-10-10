@@ -53,9 +53,6 @@ private :
     //! list of the species that will be accounted for
     std::vector<unsigned int> species;
     
-    //! quantity to be summed into the output array
-    std::string output;
-    
     //! Histogram object
     Histogram * histogram;
     
