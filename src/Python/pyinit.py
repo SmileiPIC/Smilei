@@ -152,7 +152,7 @@ class SmileiSingleton(SmileiComponent):
 
 class ParticleData(object):
     """Container for particle data at run-time (for exposing particles in numpy)"""
-    pass
+    _verify = True
 
 class Main(SmileiSingleton):
     """Main parameters"""

@@ -18,7 +18,8 @@ public:
         Patch* patch,
         std::vector<std::string> &excluded_axes,
         std::string errorPrefix
-    ) {
+    )
+    {
         
         Histogram * histogram;
         std::string output = "";
@@ -113,11 +114,26 @@ public:
                 ERROR(errorPrefix << ": axis #" << iaxis << " contain at least 4 arguments");
             
             // Try to extract first element: type
-            if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 0), type))
-                ERROR(errorPrefix << ", axis #" << iaxis << ": First item must be a string (axis type)");
-            for( unsigned int i=0; i<excluded_axes.size(); i++ )
-                if( type == excluded_axes[i] )
+            PyObject * type_object = PySequence_Fast_GET_ITEM(seq, 0);
+            if ( PyTools::convert(type_object, type) ) {
+                if ( type == "user_function" )
                     ERROR(errorPrefix << ", axis #" << iaxis << ": type " << type << " unknown");
+                for( unsigned int i=0; i<excluded_axes.size(); i++ )
+                    if( type == excluded_axes[i] )
+                        ERROR(errorPrefix << ", axis #" << iaxis << ": type " << type << " unknown");
+            // If numpy supported, also accept type = any function
+            } else {
+                std::ostringstream typePrefix("");
+                typePrefix << errorPrefix << ", axis #" << iaxis << ": type";
+#ifdef SMILEI_USE_NUMPY
+                // Test the function with temporary, "fake" particles
+                double * dummy = NULL;
+                ParticleData test( params.nDim_particle, type_object, typePrefix.str(), dummy );
+                type = "user_function";
+#else
+                ERROR(errorPrefix << ", axis #" << iaxis << ": First item must be a string (axis type)");
+#endif
+            }
             
             // Try to extract second element: axis min
             if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 1), min)) {
@@ -216,6 +232,8 @@ public:
                 axis = new HistogramAxis_chi();
             } else if (type == "composite") {
                 ERROR(errorPrefix << ": axis type cannot be 'composite'");
+            } else if (type == "user_function") {
+                axis = new HistogramAxis_user_function( type_object );
             
             } else {
                 // If not "usual" type, try to find composite type

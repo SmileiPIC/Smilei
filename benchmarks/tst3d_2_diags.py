@@ -125,6 +125,7 @@ axes = [
 	["v"        , 0., 0.0001, 30],
 	["vperp2"   , 0., 1e-9, 30],
 	["charge"   , -5., 5., 10],
+	[lambda particles: particles.x, 0., Main.sim_length[0], 10],
 ]
 
 for axis in axes:

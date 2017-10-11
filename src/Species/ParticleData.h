@@ -97,6 +97,23 @@ public:
         attrs.resize(0);
     };
     
+    // Set all attributes from an existing species
+    inline void set( Particles * p ) {
+        unsigned int nDim_particle = p->Position.size();
+        setVectorAttr( p->Position[0], "x" );
+        if( nDim_particle>1 ) {
+            setVectorAttr( p->Position[1], "y" );
+            if( nDim_particle>2 )
+                setVectorAttr( p->Position[2], "z" );
+        }
+        setVectorAttr( p->Momentum[0], "px" );
+        setVectorAttr( p->Momentum[1], "py" );
+        setVectorAttr( p->Momentum[2], "pz" );
+        setVectorAttr( p->Weight, "weight" );
+        setVectorAttr( p->Charge, "charge" );
+        setVectorAttr( p->Id, "id" );
+    };
+    
     inline PyObject* get() {
         return particles;
     };

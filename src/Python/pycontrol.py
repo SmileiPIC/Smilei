@@ -23,7 +23,7 @@ def _smilei_check():
     for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
             "DiagProbe","DiagParticleBinning", "DiagScalar","DiagFields","ExternalField",
             "SmileiSingleton","Main","Checkpoints","LoadBalancing","MovingWindow",
-            "RadiationReaction"]:
+            "RadiationReaction", "ParticleData"]:
         CheckClass = globals()[CheckClassName]
         try:
             if not CheckClass._verify: raise Exception("")
@@ -40,7 +40,7 @@ def _smilei_check():
                 _mkdir("checkpoint", group_dir)
         else:
             _mkdir("checkpoint", checkpoint_dir)
-
+    
     # Checkpoint: Verify the restart_dir and find possible restart file for each rank
     if len(Checkpoints)==1:
         if len(Checkpoints.restart_files) == 0 :
@@ -56,7 +56,7 @@ def _smilei_check():
                 if Checkpoints.restart_number:
                     # pick those file that match the restart_number
                     my_files = filter(lambda a: Checkpoints.restart_number==int(re.search(r'dump-([0-9]*)-[0-9]*.h5$',a).groups()[-1]),my_files)
-
+                
                 Checkpoints.restart_files = my_files
                 
                 if not len(Checkpoints.restart_files):
@@ -65,13 +65,11 @@ def _smilei_check():
                     "\n\t\trestart_dir = '" + Checkpoints.restart_dir + 
                     "'\n\t\trestart_number = " + str(Checkpoints.restart_number) + 
                     "\n\t\tmatching pattern: '" + my_pattern + "'" )
-
+        
         else :
             if Checkpoints.restart_dir:
                 raise Exception("restart_dir and restart_files are both not empty")
-
-
-
+    
     # Verify that constant() and tconstant() were not redefined
     if not hasattr(constant, "_reserved") or not hasattr(tconstant, "_reserved"):
         raise Exception("Names `constant` and `tconstant` cannot be overriden")
@@ -119,6 +117,13 @@ def _keep_python_running():
     for d in DiagTrackParticles:
         if d.filter is not None:
             return True
+    # Verify the particle binning having a function for output or axis type
+    for d in DiagParticleBinning:
+        if type(d.output) is not str:
+            return True
+        for ax in d.axes:
+            if type(ax[0]) is not str:
+                return True
     return False
 
 # Prevent creating new components (by mistake)

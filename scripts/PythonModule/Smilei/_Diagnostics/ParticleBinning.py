@@ -181,11 +181,8 @@ class ParticleBinning(Diagnostic):
 			elif axistype == "charge":
 				axis_units = "Q_r"
 				overall_min = "0"
-			elif axis["type"] == "chi":
+			elif axistype == "chi":
 				overall_min = "0"
-			else:
-				self._error = "axis type "+axistype+" not implemented"
-				return None
 			
 			# if this axis has to be summed, then select the bounds
 			if axistype in sum:

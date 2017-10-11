@@ -196,9 +196,8 @@ class Screen(Diagnostic):
 			elif axistype == "charge":
 				axis_units = "Q_r"
 				overall_min = "0"
-			else:
-				self._error = "axis type "+axistype+" not implemented"
-				return None
+			elif axistype == "chi":
+				overall_min = "0"
 			
 			# if this axis has to be summed, then select the bounds
 			if axistype in sum:
@@ -321,7 +320,11 @@ class Screen(Diagnostic):
 			axes = []
 			# Parse each attribute
 			for name, value in attrs:
-				if (name == "output"): output = bytes.decode(value)
+				if (name == "output"):
+					try:
+						output = bytes.decode(value)
+					except:
+						output = "user_function"
 				if (name == "species"):
 					species = bytes.decode(value.strip()).split() # get all species numbers
 					species = [int(s) for s in species]

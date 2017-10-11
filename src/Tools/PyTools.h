@@ -311,21 +311,22 @@ public:
             WARNING("asking for [" << name << "] [" << component << "] : it has whitespace inside: please fix the code");
         }
         if (!Py_IsInitialized()) ERROR("Python not initialized: this should not happen");
-        PyObject *py_obj=PyImport_AddModule("__main__");
+        PyObject * py_obj = PyImport_AddModule("__main__");
         // If component requested
         if (!component.empty()) {
             // Get the selected component (e.g. "Species" or "Laser")
-            py_obj = PyObject_GetAttrString(py_obj,component.c_str());
+            PyObject * py_component = PyObject_GetAttrString(py_obj, component.c_str());
             PyTools::checkPyError();
             // Error if not found
-            if (!py_obj) ERROR("Component "<<component<<" not found in namelist");
+            if (!py_component) ERROR("Component "<<component<<" not found in namelist");
             // If successfully found
-            int len = PyObject_Length(py_obj);
+            int len = PyObject_Length(py_component);
             if (len > nComponent) {
-                py_obj = PySequence_GetItem(py_obj, nComponent);
+                py_obj = PySequence_GetItem(py_component, nComponent);
             } else {
                 ERROR("Requested " << component << " #" <<nComponent<< ", but only "<<len<<" available");
             }
+            Py_DECREF(py_component);
         }
         PyObject *py_return=PyObject_GetAttrString(py_obj,name.c_str());
         PyTools::checkPyError();

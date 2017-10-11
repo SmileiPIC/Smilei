@@ -167,18 +167,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
                 unsigned int npart = p->size();
                 // Expose particle data as numpy arrays
                 particleData.resize( npart );
-                particleData.setVectorAttr( p->Position[0], "x" );
-                if( nDim_particle>1 ) {
-                    particleData.setVectorAttr( p->Position[1], "y" );
-                    if( nDim_particle>2 )
-                        particleData.setVectorAttr( p->Position[2], "z" );
-                }
-                particleData.setVectorAttr( p->Momentum[0], "px" );
-                particleData.setVectorAttr( p->Momentum[1], "py" );
-                particleData.setVectorAttr( p->Momentum[2], "pz" );
-                particleData.setVectorAttr( p->Weight, "weight" );
-                particleData.setVectorAttr( p->Charge, "charge" );
-                particleData.setVectorAttr( p->Id, "id" );
+                particleData.set( p );
                 // run the filter function
                 ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(filter, particleData.get(), NULL);
                 particleData.clear();

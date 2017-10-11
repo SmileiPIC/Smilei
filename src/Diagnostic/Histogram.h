@@ -282,7 +282,43 @@ class HistogramAxis_composite : public HistogramAxis {
         }
     };
 };
-
+#ifdef SMILEI_USE_NUMPY
+class HistogramAxis_user_function : public HistogramAxis {
+public:
+    HistogramAxis_user_function( PyObject * type_object ) :
+        HistogramAxis(),
+        function( type_object ),
+        particleData(0)
+    {
+    };
+    ~HistogramAxis_user_function()
+    {
+        Py_DECREF( function );
+    };
+private:
+    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
+        #pragma omp critical
+        {
+            // Expose particle data as numpy arrays
+            particleData.resize( npart );
+            particleData.set( s->particles );
+            // run the function
+            PyArrayObject* ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(function, particleData.get(), NULL);
+            particleData.clear();
+            // Copy the result to "array"
+            double* arr = (double*) PyArray_GETPTR1( ret, 0 );
+            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
+                if( index[ipart]<0 ) continue;
+                array[ipart] = arr[ipart];
+            }
+            Py_DECREF(ret);
+        }
+    };
+    
+    PyObject* function;
+    ParticleData particleData;
+};
+#endif
 
 //! Children classes, for various manners to fill the histogram
 class Histogram_density : public Histogram {
@@ -518,27 +554,18 @@ public:
         function(output_object),
         particleData(0)
     {};
+    ~Histogram_user_function()
+    {
+        Py_DECREF( function );
+    };
 private:
     void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
         unsigned int npart = array.size();
-        Particles * p = s->particles;
-        unsigned int nDim_particle = p->Position.size();
         #pragma omp critical
         {
             // Expose particle data as numpy arrays
             particleData.resize( npart );
-            particleData.setVectorAttr( p->Position[0], "x" );
-            if( nDim_particle>1 ) {
-                particleData.setVectorAttr( p->Position[1], "y" );
-                if( nDim_particle>2 )
-                    particleData.setVectorAttr( p->Position[2], "z" );
-            }
-            particleData.setVectorAttr( p->Momentum[0], "px" );
-            particleData.setVectorAttr( p->Momentum[1], "py" );
-            particleData.setVectorAttr( p->Momentum[2], "pz" );
-            particleData.setVectorAttr( p->Weight, "weight" );
-            particleData.setVectorAttr( p->Charge, "charge" );
-            particleData.setVectorAttr( p->Id, "id" );
+            particleData.set( s->particles );
             // run the function
             PyArrayObject* ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(function, particleData.get(), NULL);
             particleData.clear();
