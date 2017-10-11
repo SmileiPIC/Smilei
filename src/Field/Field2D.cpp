@@ -6,6 +6,9 @@
 
 using namespace std;
 
+#include "Params.h"
+#include "SmileiMPI.h"
+#include "Patch.h"
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -180,4 +183,46 @@ double Field2D::norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]) {
     }
     
     return nrj;
+}
+
+
+void Field2D::push( Field* outField, Params &params, SmileiMPI* smpi, Patch* thisPatch, Patch* outPatch )
+{
+    Field2D* out2D = static_cast<Field2D*>( outField );
+
+    std::vector<unsigned int> dual =  this->isDual_;
+
+    int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - outPatch->Pcoordinates[0]*params.n_space[0]*params.global_factor[0] ;
+    int jout = thisPatch->Pcoordinates[1]*params.n_space[1] - outPatch->Pcoordinates[1]*params.n_space[1]*params.global_factor[1] ;
+ 
+    //for ( unsigned int i = params.oversize[0] ; i < this->dims_[0]-params.oversize[0] ; i++ ) {
+    //    for ( unsigned int j = params.oversize[1] ; j < this->dims_[1]-params.oversize[1] ; j++ ) {
+    for ( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
+        for ( unsigned int j = 0 ; j < this->dims_[1] ; j++ ) {
+            ( *out2D )( iout+i, jout+j ) = ( *this )( i, j );
+            //( *out2D )( iout+i, jout+j ) += (thisPatch->hindex+1);
+        }
+    }    
+   
+}
+
+
+void Field2D::pull( Field* inField, Params &params, SmileiMPI* smpi, Patch* inPatch, Patch* thisPatch )
+{
+    Field2D* in2D  = static_cast<Field2D*>( inField  );
+
+    std::vector<unsigned int> dual =  in2D->isDual_;
+
+    int iin = thisPatch->Pcoordinates[0]*params.n_space[0] - inPatch->Pcoordinates[0]*params.n_space[0]*params.global_factor[0] ;
+    int jin = thisPatch->Pcoordinates[1]*params.n_space[1] - inPatch->Pcoordinates[1]*params.n_space[1]*params.global_factor[1] ;
+ 
+    //for ( unsigned int i = params.oversize[0] ; i < out2D->dims_[0]-params.oversize[0] ; i++ ) {
+    //    for ( unsigned int j = params.oversize[1] ; j < out2D->dims_[1]-params.oversize[1] ; j++ ) {
+    for ( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
+        for ( unsigned int j = 0 ; j < this->dims_[1] ; j++ ) {
+            ( *this )( i, j ) = ( *in2D )( iin+i, jin+j );
+            //( *out2D )( i, j ) = in2D->hindex;
+        }
+    }    
+   
 }
