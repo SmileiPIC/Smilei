@@ -1658,10 +1658,12 @@ for instance::
 
   * ``type`` is one of ``"x"``, ``"y"``, ``"z"``, ``"px"``, ``"py"``, ``"pz"``, ``"p"``,
     ``"gamma"``, ``"ekin"``, ``"vx"``, ``"vy"``, ``"vz"``, ``"v"``, ``"chi"``
-    or ``"charge"``.
+    or ``"charge"``.  
     There is one additional type, specific for simulations that include a
     :ref:`moving window<movingWindow>`\ : the x-coordinate corrected by the window
-    current movement ``moving_x``.
+    current movement ``moving_x``.  
+    The ``type`` can also be a python function, with the same syntax as the ``output``
+    attribute.
   * The axis is discretized for ``type`` from ``min`` to ``max`` in ``nsteps`` bins.
   * The optional keyword ``logscale`` sets the axis scale to logarithmic instead of linear.
   * The optional keyword ``edge_inclusive`` includes the particles outside the range

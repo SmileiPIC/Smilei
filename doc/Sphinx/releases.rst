@@ -22,11 +22,19 @@ the GitHub page.
 Upcoming changes
 ^^^^^^^^^^^^^^^^
 
+3.3:
+
 * **Major** :doc:`syntax changes<syntax_changes>` in the namelist
-* Monte Carlo QED photon emission
+* QED radiation reaction
+* *Test mode* to quickly check the namelist consistency
+* *ParticleBinning* and *Screen* diagnostics accept a python function as their ``output`` and ``axis``.
+* Bugfixes: 4th order, field ionization
+
+3.4:
+
+* Monte-Carlo QED photon emission
 * Moving window along y and z
 * Tracking particles in *Screens*
-* *Test mode* to quickly check the namelist consistency
 
 ----
 
