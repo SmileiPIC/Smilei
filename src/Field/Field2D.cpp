@@ -4,11 +4,11 @@
 #include <vector>
 #include <cstring>
 
-using namespace std;
-
 #include "Params.h"
 #include "SmileiMPI.h"
 #include "Patch.h"
+
+using namespace std;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
