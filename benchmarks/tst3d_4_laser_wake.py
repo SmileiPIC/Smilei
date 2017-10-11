@@ -99,8 +99,8 @@ DiagProbe(
 DiagProbe(
 	every = 10,
 	pos = [0., Main.sim_length[1]/4., Main.sim_length[2]/2.],
-	pos_first = [0., 3*Main.sim_length[1]/4., Main.sim_length[2]/2.],
-	pos_second = [Main.sim_length[0], Main.sim_length[1]/4., Main.sim_length[2]/2.],
+	pos_first = [Main.sim_length[0], Main.sim_length[1]/4., Main.sim_length[2]/2.],
+	pos_second = [0., 3*Main.sim_length[1]/4., Main.sim_length[2]/2.],
 	number = [nx, ntrans],
 	fields = ['Ex','Ey','Rho','Jx']
 )
