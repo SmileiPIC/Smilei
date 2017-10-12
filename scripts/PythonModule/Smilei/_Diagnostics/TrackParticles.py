@@ -373,21 +373,25 @@ class TrackParticles(Diagnostic):
 			f.close()
 			# Loop times and fill arrays
 			for it, t in enumerate(times):
-
+				
 				# Skip previously-ordered times
 				if it<=latestOrdered: continue
-
+				
 				if self.Smilei._verbose: print("    Ordering @ timestep = "+str(t))
 				file_index, tname = time_locations[t]
 				f = self._h5py.File(filesDisordered[file_index], "r")
 				group = f["data"][tname]["particles"][self.species]
 				nparticles = group["id"].size
 				if nparticles == 0: continue
-
+				
 				# If not too many particles, sort all at once
 				if nparticles < chunksize:
 					# Get the Ids and find where they should be stored in the final file
-					locs = group["id"].value % 2**32 + offset[ group["id"].value>>32 ] -1
+					locs = (
+						group["id"].value.astype("uint32") # takes the second hald of id (meaning particle number)
+						+ offset[ (group["id"].value>>32).astype("uint32") & 16777215 ]# 0b111111111111111111111111
+						-1
+					)
 					# Loop datasets and order them
 					for k, name in properties.items():
 						if k not in group: continue
@@ -395,7 +399,7 @@ class TrackParticles(Diagnostic):
 						ordered = self._np.zeros((total_number_of_particles, ), dtype=disordered.dtype)
 						ordered[locs] = disordered
 						f0[name].write_direct(ordered, dest_sel=self._np.s_[it,:])
-
+				
 				# If too many particles, sort by chunks
 				else:
 					nchunks = int(float(nparticles)/(chunksize+1) + 1)
@@ -428,10 +432,14 @@ class TrackParticles(Diagnostic):
 								bs = int(batchsize[ibatch])
 								start = stop
 								stop = start + bs
-								start_in_file = int(ID[start] % 2**32 + offset[ int(ID[start])>>32 ] -1)
+								start_in_file = int(
+									(ID[start].astype("uint32"))
+									+ offset[ (int(ID[start])>>32).astype("uint32") & 16777215 ]
+									-1
+								)
 								stop_in_file = start_in_file + bs
 								f0[name].write_direct( data, source_sel=self._np.s_[start:stop], dest_sel=self._np.s_[it, start_in_file:stop_in_file] )
-
+				
 				# Indicate that this iteration was succesfully ordered
 				f0.attrs["latestOrdered"] = it
 				f0.flush()
