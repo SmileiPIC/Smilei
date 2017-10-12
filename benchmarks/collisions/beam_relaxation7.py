@@ -14,13 +14,13 @@ Main(
     interpolation_order = 2,
 
     timestep = 0.0002 * L0,
-    sim_time = 0.02 * L0,
+    simulation_time = 0.02 * L0,
 
 
     time_fields_frozen = 100000000000.,
 
     cell_length = [2.*L0],
-    sim_length = [112.*L0],
+    grid_length = [112.*L0],
 
     EM_boundary_conditions = [ ["periodic"] ],
 
@@ -90,7 +90,7 @@ DiagParticleBinning(
 	time_average = 1,
 	species = ["electron1"],
 	axes = [
-		 ["x",    0*L0,    Main.sim_length[0],   10],
+		 ["x",    0*L0,    Main.grid_length[0],   10],
 		 ["vx",  -0.1,  0.1,    1000]
 	]
 )
@@ -101,7 +101,7 @@ DiagParticleBinning(
 	time_average = 1,
 	species = ["electron1"],
 	axes = [
-		 ["x",    0*L0,    Main.sim_length[0],   10],
+		 ["x",    0*L0,    Main.grid_length[0],   10],
 		 ["vperp2",  0,  0.0002,  4000]
 	]
 )
@@ -112,7 +112,7 @@ DiagParticleBinning(
 	time_average = 1,
 	species = ["ion1"],
 	axes = [
-		 ["x",    0*L0,    Main.sim_length[0],   10],
+		 ["x",    0*L0,    Main.grid_length[0],   10],
 		 ["vx",  -0.1,  0.1,  100]
 	]
 )

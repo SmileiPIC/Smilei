@@ -28,11 +28,11 @@ Main(
      geometry = '1Dcartesian',
      interpolation_order = 2,
      cell_length = [dx],
-     sim_length  = [Lx],
+     grid_length  = [Lx],
      number_of_patches=[1],
      clrw=1,
      timestep = dt,
-     sim_time = 0.,
+     simulation_time = 0.,
      EM_boundary_conditions = [ ['periodic'] ],
      random_seed = smilei_mpi_rank,
      print_every = int(t_sim/dt/100.)

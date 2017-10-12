@@ -23,10 +23,10 @@ Main(
     interpolation_order = 2,
     
     timestep = 0.95*dx,
-    sim_time = tsim,
+    simulation_time = tsim,
     
     cell_length = [dx],
-    sim_length  = [Lsim],
+    grid_length  = [Lsim],
     
     number_of_patches = [ 16 ],
     

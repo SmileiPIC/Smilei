@@ -47,12 +47,12 @@ Main(
     interpolation_order = 2 ,
     
     cell_length = [dx,dx,dx],
-    sim_length  = [Lx,Ly,Lz],
+    grid_length  = [Lx,Ly,Lz],
     
     number_of_patches = [ 4,4,4 ],
     
     timestep = dt,
-    sim_time = Tsim,
+    simulation_time = Tsim,
     
     EM_boundary_conditions = [
         ['silver-muller'],

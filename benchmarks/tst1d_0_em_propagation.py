@@ -9,12 +9,12 @@ Main(
     interpolation_order = 2,
     
     cell_length = [l0/resx],
-    sim_length  = [4.0*l0],
+    grid_length  = [4.0*l0],
     
     number_of_patches = [ 4 ],
     
     timestep = t0/rest,
-    sim_time = 4.0*t0,
+    simulation_time = 4.0*t0,
     
     EM_boundary_conditions = [ ['silver-muller'] ],
     
@@ -41,12 +41,12 @@ DiagFields(
 
 DiagProbe(
     every = 5, 
-    origin = [Main.sim_length[0]*0.2]   
+    origin = [Main.grid_length[0]*0.2]   
 )
 
 DiagProbe(
     every = 5,
     origin = [0.0],
-    corners = [Main.sim_length],
+    corners = [Main.grid_length],
     number = [1000]
 )

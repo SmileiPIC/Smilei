@@ -12,10 +12,10 @@ Main(
 	interpolation_order = 2,
 	
 	timestep = 0.005 * L0,
-	sim_time  = .24 * L0,
+	simulation_time  = .24 * L0,
 	
 	cell_length = [0.01 * L0]*3,
-	sim_length  = [1. * L0]*3,
+	grid_length  = [1. * L0]*3,
 	
 	number_of_patches = [ 4 ]*3,
 	
@@ -27,7 +27,7 @@ Main(
 
 
 nportion = 5
-portion_width = Main.sim_length[0]/nportion
+portion_width = Main.grid_length[0]/nportion
 
 iportion = 0
 poly0 = polygonal( xpoints=[(iportion+i/3.)*portion_width for i in range(4)], xvalues=[0., 2., -1, 0.] )
@@ -110,9 +110,9 @@ DiagProbe(
 )
 
 axes = [
-	["x"        , 0., Main.sim_length[0], 10],
-	["y"        , 0., Main.sim_length[1], 10],
-	["z"        , 0., Main.sim_length[2], 10],
+	["x"        , 0., Main.grid_length[0], 10],
+	["y"        , 0., Main.grid_length[1], 10],
+	["z"        , 0., Main.grid_length[2], 10],
 	["px"       , -0.0001, 0.0001, 30],
 	["py"       , -0.0001, 0.0001, 30],
 	["pz"       , -0.0001, 0.0001, 30],
@@ -125,7 +125,7 @@ axes = [
 	["v"        , 0., 0.0001, 30],
 	["vperp2"   , 0., 1e-9, 30],
 	["charge"   , -5., 5., 10],
-	[lambda particles: particles.x, 0., Main.sim_length[0], 10],
+	[lambda particles: particles.x, 0., Main.grid_length[0], 10],
 ]
 
 for axis in axes:
@@ -162,6 +162,6 @@ for output in outputs:
 		output = output,
 		every = 10,
 		species = ["test0"],
-		axes = [["x" , 0., Main.sim_length[0], 10]]
+		axes = [["x" , 0., Main.grid_length[0], 10]]
 	)
 

@@ -8,10 +8,10 @@ Main(
 	interpolation_order = 2,
 	
 	timestep = 0.005 * L0,
-	sim_time  = 0.01 * L0,
+	simulation_time  = 0.01 * L0,
 	
 	cell_length = [0.01 * L0]*2,
-	sim_length  = [1. * L0]*2,
+	grid_length  = [1. * L0]*2,
 	
 	number_of_patches = [ 4 ]*2,
 	

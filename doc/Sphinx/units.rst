@@ -89,7 +89,7 @@ lengths by :math:`2\pi`::
   import math
   lambda_ = 2. * math.pi
   cell_length = [0.05 * lambda_]
-  sim_length  = [100. * lambda_]
+  grid_length  = [100. * lambda_]
 
 
 ----

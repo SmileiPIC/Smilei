@@ -14,13 +14,13 @@ Main(
     interpolation_order = 2,
 
     timestep = 0.2 * L0,
-    sim_time = 400 * L0,
+    simulation_time = 400 * L0,
 
 
     time_fields_frozen = 100000000000.,
 
     cell_length = [5.*L0],
-    sim_length = [160.*L0],
+    grid_length = [160.*L0],
 
     EM_boundary_conditions = [ ["periodic"] ],
 
@@ -108,25 +108,25 @@ for i in range(npoints):
 		output = "ekin_density",
 		every = 10,
 		species = [eon],
-		axes = [ ["x", 0, Main.sim_length[0], 1] ]
+		axes = [ ["x", 0, Main.grid_length[0], 1] ]
 	)
 	DiagParticleBinning(
 		output = "density",
 		every = 10,
 		species = [eon],
-		axes = [ ["x", 0, Main.sim_length[0], 1] ]
+		axes = [ ["x", 0, Main.grid_length[0], 1] ]
 	)
 	DiagParticleBinning(
 		output = "charge_density",
 		every = 10,
 		species = [ion],
-		axes = [ ["x", 0, Main.sim_length[0], 1] ]
+		axes = [ ["x", 0, Main.grid_length[0], 1] ]
 	)
 	DiagParticleBinning(
 		output = "density",
 		every = 10,
 		species = [ion],
-		axes = [ ["x", 0, Main.sim_length[0], 1] ]
+		axes = [ ["x", 0, Main.grid_length[0], 1] ]
 	)
 	#DiagParticleBinning(
 	#	output = "density",

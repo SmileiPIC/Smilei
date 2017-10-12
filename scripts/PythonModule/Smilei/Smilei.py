@@ -564,15 +564,15 @@ class Smilei(object):
 			ndim = int(namelist.Main.geometry[0])
 			if ndim not in [1,2,3]: raise
 			# get box size
-			error = "Error extracting 'sim_length' from the input file"
-			sim_length = self._np.atleast_1d(self._np.double(namelist.Main.sim_length))
-			if sim_length.size != ndim: raise
+			error = "Error extracting 'grid_length' from the input file"
+			grid_length = self._np.atleast_1d(self._np.double(namelist.Main.grid_length))
+			if grid_length.size != ndim: raise
 			# get cell size
 			error = "Error extracting 'cell_length' from the input file"
 			cell_length = self._np.atleast_1d(self._np.double(namelist.Main.cell_length))
 			if cell_length.size != ndim: raise
 			# calculate number of cells in each dimension
-			ncels = sim_length/cell_length
+			ncels = grid_length/cell_length
 			# extract time-step
 			error = "Error extracting 'timestep' from the input file"
 			timestep = self._np.double(namelist.Main.timestep)

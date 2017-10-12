@@ -32,10 +32,10 @@ Main(
     interpolation_order = 2,
     
     timestep = dt,
-    sim_time = Tsim,
+    simulation_time = Tsim,
     
     cell_length  = [dx,dy,dz],
-    sim_length = [Lx,Ly,Lz],
+    grid_length = [Lx,Ly,Lz],
     
     number_of_patches = [4,4,4],
     

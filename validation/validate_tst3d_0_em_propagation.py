@@ -4,7 +4,7 @@ from Smilei import *
 S = Smilei(".", verbose=False)
 
 # COMPARE THE Ey FIELD
-Ey = S.Field.Field0.Ey(average={"z":S.namelist.Main.sim_length[2]*0.3}, timesteps=240).getData()[0]
+Ey = S.Field.Field0.Ey(average={"z":S.namelist.Main.grid_length[2]*0.3}, timesteps=240).getData()[0]
 Validate("Ey field at iteration 240", Ey, 0.01)
 
 # 0-D PROBE IN 3D

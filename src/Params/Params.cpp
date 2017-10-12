@@ -217,11 +217,11 @@ namelist("")
 
 
     // simulation duration & length
-    PyTools::extract("sim_time", sim_time, "Main");
+    PyTools::extract("simulation_time", simulation_time, "Main");
 
-    PyTools::extract("sim_length",sim_length, "Main");
-    if (sim_length.size()!=nDim_field) {
-        ERROR("Dimension of sim_length ("<< sim_length.size() << ") != " << nDim_field << " for geometry " << geometry);
+    PyTools::extract("grid_length",grid_length, "Main");
+    if (grid_length.size()!=nDim_field) {
+        ERROR("Dimension of grid_length ("<< grid_length.size() << ") != " << nDim_field << " for geometry " << geometry);
     }
 
 
@@ -349,7 +349,7 @@ namelist("")
     }
 
     // Read the "print_every" parameter
-    print_every = (int)(sim_time/timestep)/10;
+    print_every = (int)(simulation_time/timestep)/10;
     PyTools::extract("print_every", print_every, "Main");
     if (!print_every) print_every = 1;
 
@@ -410,15 +410,15 @@ void Params::compute()
     // -----------------------
 
     // number of time-steps
-    n_time   = (int)(sim_time/timestep);
+    n_time   = (int)(simulation_time/timestep);
 
     // simulation time & time-step value
-    double entered_sim_time = sim_time;
-    sim_time = (double)(n_time) * timestep;
-    if (sim_time!=entered_sim_time)
-        WARNING("sim_time has been redefined from " << entered_sim_time
-        << " to " << sim_time << " to match nxtimestep ("
-        << scientific << setprecision(4) << sim_time - entered_sim_time<< ")" );
+    double entered_simulation_time = simulation_time;
+    simulation_time = (double)(n_time) * timestep;
+    if (simulation_time!=entered_simulation_time)
+        WARNING("simulation_time has been redefined from " << entered_simulation_time
+        << " to " << simulation_time << " to match nxtimestep ("
+        << scientific << setprecision(4) << simulation_time - entered_simulation_time<< ")" );
 
 
     // grid/cell-related parameters
@@ -426,16 +426,16 @@ void Params::compute()
     n_space.resize(3);
     cell_length.resize(3);
     cell_volume=1.0;
-    if (nDim_field==res_space.size() && nDim_field==sim_length.size()) {
+    if (nDim_field==res_space.size() && nDim_field==grid_length.size()) {
 
         // compute number of cells & normalized lengths
         for (unsigned int i=0; i<nDim_field; i++) {
-            n_space[i]         = round(sim_length[i]/cell_length[i]);
+            n_space[i]         = round(grid_length[i]/cell_length[i]);
 
-            double entered_sim_length = sim_length[i];
-            sim_length[i]      = (double)(n_space[i])*cell_length[i]; // ensure that nspace = sim_length/cell_length
-            if (sim_length[i]!=entered_sim_length)
-                WARNING("sim_length[" << i << "] has been redefined from " << entered_sim_length << " to " << sim_length[i] << " to match n x cell_length (" << scientific << setprecision(4) << sim_length[i]-entered_sim_length <<")");
+            double entered_grid_length = grid_length[i];
+            grid_length[i]      = (double)(n_space[i])*cell_length[i]; // ensure that nspace = grid_length/cell_length
+            if (grid_length[i]!=entered_grid_length)
+                WARNING("grid_length[" << i << "] has been redefined from " << entered_grid_length << " to " << grid_length[i] << " to match n x cell_length (" << scientific << setprecision(4) << grid_length[i]-entered_grid_length <<")");
             cell_volume   *= cell_length[i];
         }
         // create a 3d equivalent of n_space & cell_length
@@ -534,12 +534,12 @@ void Params::print_init()
     TITLE("Geometry: " << geometry);
     MESSAGE(1,"(nDim_particle, nDim_field) : (" << nDim_particle << ", "<< nDim_field << ")");
     MESSAGE(1,"Interpolation_order : " <<  interpolation_order);
-    MESSAGE(1,"(res_time, sim_time) : (" << res_time << ", " << sim_time << ")");
+    MESSAGE(1,"(res_time, simulation_time) : (" << res_time << ", " << simulation_time << ")");
     MESSAGE(1,"(n_time,   timestep) : (" << n_time << ", " << timestep << ")");
     MESSAGE(1,"           timestep  = " << timestep/dtCFL << " * CFL");
 
-    for ( unsigned int i=0 ; i<sim_length.size() ; i++ ){
-        MESSAGE(1,"dimension " << i << " - (res_space, sim_length) : (" << res_space[i] << ", " << sim_length[i] << ")");
+    for ( unsigned int i=0 ; i<grid_length.size() ; i++ ){
+        MESSAGE(1,"dimension " << i << " - (res_space, grid_length) : (" << res_space[i] << ", " << grid_length[i] << ")");
         MESSAGE(1,"            - (n_space_global,  cell_length) : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
     }
     

@@ -8,10 +8,10 @@ Main(
 	interpolation_order = 2,
 	
 	timestep = 0.005 * L0,
-	sim_time  = 1. * L0,
+	simulation_time  = 1. * L0,
 	
 	cell_length = [0.01 * L0],
-	sim_length  = [1. * L0],
+	grid_length  = [1. * L0],
 	
 	number_of_patches = [ 4 ],
 	
@@ -68,7 +68,7 @@ tprofiles = [
 ["tpolynomial" ,tpolynomial (t0=0.4*L0, order0=-1., order1=-1./L0, order2=(3./L0)**2)],
 ["tcustom"     ,tcustom]
 ]
-antenna_width = Main.sim_length[0]/len(tprofiles)
+antenna_width = Main.grid_length[0]/len(tprofiles)
 for i, (name, tprofile) in enumerate(tprofiles):
 	Antenna(
 		field = "Jz",

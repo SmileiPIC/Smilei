@@ -13,12 +13,12 @@ Main(
     interpolation_order = 2 ,
     
     cell_length = [l0/resx,l0/resx,l0/resx],
-    sim_length  = Lsim,
+    grid_length  = Lsim,
     
     number_of_patches = [ 4,4,4 ],
     
     timestep = t0/rest,
-    sim_time = Tsim,
+    simulation_time = Tsim,
     
     EM_boundary_conditions = [ ['silver-muller'] ],
     

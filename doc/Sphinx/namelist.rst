@@ -18,7 +18,7 @@ General rules
     Main(
         # ...
         timestep = 0.01,         # defines the timestep value
-        sim_length = [10., 20.], # defines the 2D box dimensions
+        grid_length = [10., 20.], # defines the 2D box dimensions
         # ...
     )
 
@@ -84,9 +84,9 @@ The block ``Main`` is **mandatory** and has the following syntax::
   Main(
       geometry = "1Dcartesian",
       interpolation_order = 2,
-      sim_length  = [16. ],
+      grid_length  = [16. ],
       cell_length = [0.01],
-      sim_time    = 15.,
+      simulation_time    = 15.,
       timestep    = 0.005,
       number_of_patches = [64],
       clrw = 5,
@@ -114,11 +114,11 @@ The block ``Main`` is **mandatory** and has the following syntax::
   Interpolation order. To this day, only ``2`` is available.
 
 
-.. py:data:: sim_length
+.. py:data:: grid_length
              number_of_cells
 
-  A list of floats: size of the simulation box for each dimension of the simulation.
-   * Either ``sim_length``, the simulation length in each direction in units of :math:`L_r`,
+  A list of numbers: size of the simulation box for each dimension of the simulation.
+   * Either ``grid_length``, the simulation length in each direction in units of :math:`L_r`,
    * or ``number_of_cells``, the number of cells in each direction.
 
 
@@ -127,11 +127,11 @@ The block ``Main`` is **mandatory** and has the following syntax::
   A list of floats: sizes of one cell in each direction in units of :math:`L_r`.
 
 
-.. py:data:: sim_time
+.. py:data:: simulation_time
              number_of_timesteps
 
   Duration of the simulation.
-    * Either ``sim_time``, the simulation duration in units of :math:`T_r`,
+    * Either ``simulation_time``, the simulation duration in units of :math:`T_r`,
     * or ``number_of_timesteps``, the total number of timesteps.
 
 
@@ -902,7 +902,7 @@ profiles.
 
     :param max: maximum value
     :param xvacuum: empty length before the ramp up
-    :param xplateau: length of the plateau (default is :py:data:`sim_length` :math:`-` ``xvacuum``)
+    :param xplateau: length of the plateau (default is :py:data:`grid_length` :math:`-` ``xvacuum``)
     :param xslope1: length of the ramp up
     :param xslope2: length of the ramp down
 
@@ -912,7 +912,7 @@ profiles.
 
     :param max: maximum value
     :param xvacuum: empty length before starting the profile
-    :param xlength:  length of the profile (default is :py:data:`sim_length` :math:`-` ``xvacuum``)
+    :param xlength:  length of the profile (default is :py:data:`grid_length` :math:`-` ``xvacuum``)
     :param xfwhm: gaussian FWHM (default is ``xlength/3.``)
     :param xcenter: gaussian center position (default is in the middle of ``xlength``)
     :param xorder: order of the gaussian.
@@ -929,7 +929,7 @@ profiles.
     :param base: offset of the profile value
     :param amplitude: amplitude of the cosine
     :param xvacuum: empty length before starting the profile
-    :param xlength: length of the profile (default is :py:data:`sim_length` :math:`-` ``xvacuum``)
+    :param xlength: length of the profile (default is :py:data:`grid_length` :math:`-` ``xvacuum``)
     :param xphi: phase offset
     :param xnumber: number of periods within ``xlength``
 
@@ -977,14 +977,14 @@ profiles.
   .. py:function:: ttrapezoidal(start=0., plateau=None, slope1=0., slope2=0.)
 
     :param start: starting time
-    :param plateau: duration of the plateau (default is :py:data:`sim_time` :math:`-` ``start``)
+    :param plateau: duration of the plateau (default is :py:data:`simulation_time` :math:`-` ``start``)
     :param slope1: duration of the ramp up
     :param slope2: duration of the ramp down
 
   .. py:function:: tgaussian(start=0., duration=None, fwhm=None, center=None, order=2)
 
     :param start: starting time
-    :param duration: duration of the profile (default is :py:data:`sim_time` :math:`-` ``start``)
+    :param duration: duration of the profile (default is :py:data:`simulation_time` :math:`-` ``start``)
     :param fwhm: gaussian FWHM (default is ``duration/3.``)
     :param center: gaussian center time (default is in the middle of ``duration``)
     :param order: order of the gaussian
@@ -999,7 +999,7 @@ profiles.
     :param base: offset of the profile value
     :param amplitude: amplitude of the cosine
     :param start: starting time
-    :param duration: duration of the profile (default is :py:data:`sim_time` :math:`-` ``start``)
+    :param duration: duration of the profile (default is :py:data:`simulation_time` :math:`-` ``start``)
     :param phi: phase offset
     :param freq: frequency
 

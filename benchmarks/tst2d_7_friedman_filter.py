@@ -63,9 +63,9 @@ Main(
     
     # SIMULATION BOX : for all space directions (use vector)
     # cell_length: length of the cell
-    # sim_length: length of the simulation in units of the normalization wavelength
+    # grid_length: length of the simulation in units of the normalization wavelength
     cell_length = [dx,dx],
-    sim_length  = [Lx,Ly],
+    grid_length  = [Lx,Ly],
     maxwell_solver = 'Yee',
     
     number_of_patches = [16,16],
@@ -73,9 +73,9 @@ Main(
     
     # SIMULATION TIME
     # timestep: duration of the timestep
-    # sim_time: duration of the simulation in units of the normalization period
+    # simulation_time: duration of the simulation in units of the normalization period
     timestep = dt,
-    sim_time = t_sim,
+    simulation_time = t_sim,
     
     # ELECTROMAGNETIC BOUNDARY CONDITIONS
     #  periodic = periodic BC (using MPI topology)

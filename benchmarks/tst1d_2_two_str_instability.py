@@ -13,12 +13,12 @@ Main(
     interpolation_order = 2,
      
     cell_length = [0.01],
-    sim_length  = [L],
+    grid_length  = [L],
     
     number_of_patches = [ 16 ],
     
     timestep = 0.0095,
-    sim_time = 50.,
+    simulation_time = 50.,
      
     EM_boundary_conditions = [ ['periodic'] ],
      

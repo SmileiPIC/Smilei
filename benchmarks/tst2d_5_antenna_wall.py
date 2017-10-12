@@ -17,12 +17,12 @@ Main(
     interpolation_order = 2 ,
     
     cell_length = [l0/resx,l0/resx],
-    sim_length  = Lsim,
+    grid_length  = Lsim,
     
     number_of_patches = [ 4, 4  ],
     
     timestep = t0/rest,
-    sim_time = Tsim,
+    simulation_time = Tsim,
      
     EM_boundary_conditions = [
         ['silver-muller'],
@@ -66,7 +66,7 @@ Species(
 Antenna(
     field='Jz',
     time_profile= lambda t: math.sin(2.*t/t0),
-    space_profile=gaussian(0.2, xfwhm=l0, yfwhm=l0, xcenter=Main.sim_length[0]*0.6, ycenter=Main.sim_length[1]*0.5)
+    space_profile=gaussian(0.2, xfwhm=l0, yfwhm=l0, xcenter=Main.grid_length[0]*0.6, ycenter=Main.grid_length[1]*0.5)
 )
 
 PartWall (

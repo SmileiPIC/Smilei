@@ -51,7 +51,7 @@ DiagnosticParticleBinning::DiagnosticParticleBinning( Params &params, SmileiMPI*
     
     // Temporarily set the spatial min and max to the simulation box size
     spatial_min.resize( params.nDim_particle, 0. );
-    spatial_max = params.sim_length;
+    spatial_max = params.grid_length;
     
     // get parameter "axes" that adds axes to the diagnostic
     // Each axis should contain several items:

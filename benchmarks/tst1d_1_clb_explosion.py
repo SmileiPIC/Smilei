@@ -14,12 +14,12 @@ Main(
     interpolation_order = 2,
     
     cell_length = [L/resx],
-    sim_length  = [3.0*L],
+    grid_length  = [3.0*L],
     
     number_of_patches = [ 4 ],
     
     timestep = L/rest,
-    sim_time = 10.0 * math.pi,
+    simulation_time = 10.0 * math.pi,
     
     clrw = 1,
     

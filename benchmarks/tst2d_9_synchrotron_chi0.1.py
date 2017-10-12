@@ -78,14 +78,14 @@ Main(
     interpolation_order = 4,
 
     cell_length = [dx,dy],
-    sim_length  = [Lx,Ly],
+    grid_length  = [Lx,Ly],
 
     number_of_patches = [4,4],
 
     time_fields_frozen = Tsim,
 
     timestep = dt,
-    sim_time = Tsim,
+    simulation_time = Tsim,
 
     EM_boundary_conditions = [['periodic'],['periodic']],
 

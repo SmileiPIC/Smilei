@@ -26,9 +26,9 @@ def trapezoidal(max,
     global Main
     if len(Main)==0:
         raise Exception("trapezoidal profile has been defined before `Main()`")
-    if len(Main.sim_length)>0 and xplateau is None: xplateau = Main.sim_length[0]-xvacuum
-    if len(Main.sim_length)>1 and yplateau is None: yplateau = Main.sim_length[1]-yvacuum
-    if len(Main.sim_length)>2 and zplateau is None: zplateau = Main.sim_length[2]-zvacuum
+    if len(Main.grid_length)>0 and xplateau is None: xplateau = Main.grid_length[0]-xvacuum
+    if len(Main.grid_length)>1 and yplateau is None: yplateau = Main.grid_length[1]-yvacuum
+    if len(Main.grid_length)>2 and zplateau is None: zplateau = Main.grid_length[2]-zvacuum
     def trapeze(max, vacuum, plateau, slope1, slope2):
         def f(position):
             # vacuum region
@@ -80,18 +80,18 @@ def gaussian(max,
     global Main
     if len(Main)==0:
         raise Exception("gaussian profile has been defined before `Main()`")
-    if len(Main.sim_length)>0:
-        if xlength is None: xlength = Main.sim_length[0]-xvacuum
-        if xfwhm   is None: xfwhm   = (Main.sim_length[0]-xvacuum)/3.
-        if xcenter is None: xcenter = xvacuum + (Main.sim_length[0]-xvacuum)/2.
-    if len(Main.sim_length)>1: 
-        if ylength is None: ylength = Main.sim_length[1]-yvacuum
-        if yfwhm   is None: yfwhm   = (Main.sim_length[1]-yvacuum)/3.
-        if ycenter is None: ycenter = yvacuum + (Main.sim_length[1]-yvacuum)/2.
-    if len(Main.sim_length)>2: 
-        if zlength is None: zlength = Main.sim_length[2]-zvacuum
-        if zfwhm   is None: zfwhm   = (Main.sim_length[2]-zvacuum)/3.
-        if zcenter is None: zcenter = zvacuum + (Main.sim_length[2]-zvacuum)/2.
+    if len(Main.grid_length)>0:
+        if xlength is None: xlength = Main.grid_length[0]-xvacuum
+        if xfwhm   is None: xfwhm   = (Main.grid_length[0]-xvacuum)/3.
+        if xcenter is None: xcenter = xvacuum + (Main.grid_length[0]-xvacuum)/2.
+    if len(Main.grid_length)>1: 
+        if ylength is None: ylength = Main.grid_length[1]-yvacuum
+        if yfwhm   is None: yfwhm   = (Main.grid_length[1]-yvacuum)/3.
+        if ycenter is None: ycenter = yvacuum + (Main.grid_length[1]-yvacuum)/2.
+    if len(Main.grid_length)>2: 
+        if zlength is None: zlength = Main.grid_length[2]-zvacuum
+        if zfwhm   is None: zfwhm   = (Main.grid_length[2]-zvacuum)/3.
+        if zcenter is None: zcenter = zvacuum + (Main.grid_length[2]-zvacuum)/2.
     def gauss(max, vacuum, length, sigma, center, order):
         def f(position):
             if order == 0: return max
@@ -144,8 +144,8 @@ def polygonal(xpoints=[], xvalues=[]):
         raise Exception("polygonal profile has been defined before `Main()`")
     if len(xpoints)!=len(xvalues):
         raise Exception("polygonal profile requires as many points as values")
-    if len(Main.sim_length)>0 and len(xpoints)==0:
-        xpoints = [0., Main.sim_length[0]]
+    if len(Main.grid_length)>0 and len(xpoints)==0:
+        xpoints = [0., Main.grid_length[0]]
         xvalues = [1., 1.]
     N = len(xpoints)
     xpoints = [float(x) for x in xpoints]
@@ -174,9 +174,9 @@ def cosine(base,
     if len(Main)==0:
         raise Exception("cosine profile has been defined before `Main()`")
     
-    if len(Main.sim_length)>0 and xlength is None: xlength = Main.sim_length[0]-xvacuum
-    if len(Main.sim_length)>1 and ylength is None: ylength = Main.sim_length[1]-yvacuum
-    if len(Main.sim_length)>2 and zlength is None: zlength = Main.sim_length[2]-zvacuum
+    if len(Main.grid_length)>0 and xlength is None: xlength = Main.grid_length[0]-xvacuum
+    if len(Main.grid_length)>1 and ylength is None: ylength = Main.grid_length[1]-yvacuum
+    if len(Main.grid_length)>2 and zlength is None: zlength = Main.grid_length[2]-zvacuum
     
     def cos(base, amplitude, vacuum, length, phi, number):
         def f(position):
@@ -317,7 +317,7 @@ def ttrapezoidal(start=0., plateau=None, slope1=0., slope2=0.):
     global Main
     if len(Main)==0:
         raise Exception("ttrapezoidal profile has been defined before `Main()`")
-    if plateau is None: plateau = Main.sim_time - start
+    if plateau is None: plateau = Main.simulation_time - start
     def f(t):
         if t < start: return 0.
         elif t < start+slope1: return (t-start) / slope1
@@ -337,9 +337,9 @@ def tgaussian(start=0., duration=None, fwhm=None, center=None, order=2):
     global Main
     if len(Main)==0:
         raise Exception("tgaussian profile has been defined before `Main()`")
-    if duration is None: duration = Main.sim_time-start
-    if fwhm     is None: fwhm     = (Main.sim_time-start)/3.
-    if center   is None: center   = start + (Main.sim_time-start)/2.
+    if duration is None: duration = Main.simulation_time-start
+    if fwhm     is None: fwhm     = (Main.simulation_time-start)/3.
+    if center   is None: center   = start + (Main.simulation_time-start)/2.
     sigma = (0.5*fwhm)**order/math.log(2.0)
     def f(t):
         if t < start: return 0.
@@ -358,7 +358,7 @@ def tpolygonal(points=[], values=[]):
     if len(Main)==0:
         raise Exception("tpolygonal profile has been defined before `Main()`")
     if len(points)==0:
-        points = [0., Main.sim_time]
+        points = [0., Main.simulation_time]
         values = [1., 1.]
     N = len(points)
     points = [float(x) for x in points]
@@ -383,7 +383,7 @@ def tcosine(base=0., amplitude=1., start=0., duration=None, phi=0., freq=1.):
     global Main
     if len(Main)==0:
         raise Exception("tcosine profile has been defined before `Main()`")
-    if duration is None: duration = Main.sim_time-start
+    if duration is None: duration = Main.simulation_time-start
     def f(t):
         if t < start: return 0.
         elif t < start+duration:

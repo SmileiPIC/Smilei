@@ -36,7 +36,7 @@ for i in range(3):
 #	r_e = 2.8179403267e-15 # meters
 #	c = 3e8
 #	coeff = W_r**2*r_e/c * ion_charge * ion_density * coulomb_log
-#	t = np.linspace(0., S.namelist.Main.sim_time, 1000)
+#	t = np.linspace(0., S.namelist.Main.simulation_time, 1000)
 #	dt = np.diff(t).mean() / W_r
 #	S_times = times * S.namelist.Main.timestep
 #	vi = np.interp(t, S_times, ion_mean_vx)

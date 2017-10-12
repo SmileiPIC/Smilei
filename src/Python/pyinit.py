@@ -109,6 +109,8 @@ class SmileiComponent(object):
                 "poisson_iter_max" :"poisson_max_iteration",
                 "poisson_error_max":"poisson_max_error",
                 "nb_density"       :"number_density",
+                "sim_length"       :"grid_length",
+                "sim_time"         :"simulation_time",
             }
             for key, value in kwargs.items():
                 if key in deprecated:
@@ -160,10 +162,10 @@ class Main(SmileiSingleton):
     # Default geometry info
     geometry = None
     cell_length = []
-    sim_length = []
+    grid_length = []
     number_of_cells = []
     timestep = None
-    sim_time = None
+    simulation_time = None
     number_of_timesteps = None
     interpolation_order = 2
     number_of_patches = None
@@ -228,21 +230,21 @@ class Main(SmileiSingleton):
                 else:
                     raise Exception("timestep: maxwell_solver not implemented "+Main.maxwell_solver)
                 
-        #initialize sim_length if not defined based on number_of_cells and cell_length
-        if len(Main.sim_length) is 0:
+        #initialize grid_length if not defined based on number_of_cells and cell_length
+        if len(Main.grid_length) is 0:
             if len(Main.number_of_cells) is 0:
-                raise Exception("sim_length and number_of_cells not defined")
+                raise Exception("grid_length and number_of_cells not defined")
             elif len(Main.number_of_cells) != len(Main.cell_length):
-                raise Exception("sim_length and number_of_cells not defined")
+                raise Exception("grid_length and number_of_cells not defined")
             else :
-                Main.sim_length = [a*b for a,b in zip(Main.number_of_cells, Main.cell_length)]
+                Main.grid_length = [a*b for a,b in zip(Main.number_of_cells, Main.cell_length)]
 
-        #initialize sim_time if not defined based on number_of_timesteps and timestep
-        if Main.sim_time is None:
+        #initialize simulation_time if not defined based on number_of_timesteps and timestep
+        if Main.simulation_time is None:
             if Main.number_of_timesteps is None:
-                raise Exception("sim_time and number_of_timesteps not defined")
+                raise Exception("simulation_time and number_of_timesteps not defined")
             else:
-                Main.sim_time = Main.number_of_timesteps * Main.timestep
+                Main.simulation_time = Main.number_of_timesteps * Main.timestep
 
 class LoadBalancing(SmileiSingleton):
     """Load balancing parameters"""

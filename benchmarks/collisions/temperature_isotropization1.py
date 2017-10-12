@@ -14,13 +14,13 @@ Main(
     interpolation_order = 2,
 
     timestep = 0.1 * L0,
-    sim_time = 20 * L0,
+    simulation_time = 20 * L0,
 
 
     time_fields_frozen = 100000000000.,
 
     cell_length = [10.*L0],
-    sim_length = [1000.*L0],
+    grid_length = [1000.*L0],
 
     EM_boundary_conditions = [ ["periodic"] ],
 

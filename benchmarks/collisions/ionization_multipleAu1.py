@@ -14,13 +14,13 @@ Main(
     number_of_patches = [ 4 ],
 
     timestep = 0.1 * L0,
-    sim_time = 2000 * L0,
+    simulation_time = 2000 * L0,
 
 
     time_fields_frozen = 100000000000.,
 
     cell_length = [5.*L0],
-    sim_length = [160.*L0],
+    grid_length = [160.*L0],
 
     EM_boundary_conditions = [ ["periodic"] ],
 

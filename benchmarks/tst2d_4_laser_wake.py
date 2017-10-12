@@ -12,10 +12,10 @@ Main(
     interpolation_order = 2,
 
     timestep = dt,
-    sim_time = int(2*Lx/dt)*dt,
+    simulation_time = int(2*Lx/dt)*dt,
 
     cell_length  = [dx, 3.],
-    sim_length = [ Lx,  120.],
+    grid_length = [ Lx,  120.],
 
     number_of_patches = [npatch_x, 4],
 
@@ -33,7 +33,7 @@ Main(
 )
 
 MovingWindow(
-    time_start = Main.sim_length[0]*0.98,
+    time_start = Main.grid_length[0]*0.98,
     velocity_x = 0.9997
 )
 
@@ -67,7 +67,7 @@ Species(
 LaserGaussian2D(
     box_side         = "xmin",
     a0              = 2.,
-    focus           = [0., Main.sim_length[1]/2.],
+    focus           = [0., Main.grid_length[1]/2.],
     waist           = 26.16,
     time_envelope   = tgaussian(center=2**0.5*laser_fwhm, fwhm=laser_fwhm)
 )
@@ -87,9 +87,9 @@ DiagFields(
 
 DiagProbe(
     every = 10,
-    origin = [0., Main.sim_length[1]/2.],
+    origin = [0., Main.grid_length[1]/2.],
     corners = [
-        [Main.sim_length[0], Main.sim_length[1]/2.],
+        [Main.grid_length[0], Main.grid_length[1]/2.],
     ],
     number = [nx],
     fields = ['Ex','Ey','Rho','Jx']

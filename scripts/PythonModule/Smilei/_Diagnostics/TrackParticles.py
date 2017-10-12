@@ -264,7 +264,7 @@ class TrackParticles(Diagnostic):
 				self._centers.append( [0, self._h5items[axis][0,-1]] )
 			elif axis in ["x" , "y" , "z" ]:
 				axisunits = "L_r"
-				self._centers.append( [0., self.namelist.Main.sim_length[{"x":0,"y":1,"z":2}[axis]]] )
+				self._centers.append( [0., self.namelist.Main.grid_length[{"x":0,"y":1,"z":2}[axis]]] )
 			elif axis in ["px", "py", "pz"]:
 				axisunits = "P_r"
 				self._centers.append( [-1., 1.] )

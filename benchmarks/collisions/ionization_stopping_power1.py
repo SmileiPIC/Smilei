@@ -14,13 +14,13 @@ Main(
     interpolation_order = 2,
 
     timestep = 0.01 * L0,
-    sim_time = 10 * L0,
+    simulation_time = 10 * L0,
 
 
     time_fields_frozen = 100000000000.,
 
     cell_length = [20.*L0],
-    sim_length = [1600.*L0],
+    grid_length = [1600.*L0],
 
     EM_boundary_conditions = [ ["periodic"] ],
 
@@ -113,7 +113,7 @@ for i in range(npoints):
 		every = 20,
 		species = [electrons[i]],
 		axes = [
-			 ["x",    0.,    Main.sim_length[0],   1]
+			 ["x",    0.,    Main.grid_length[0],   1]
 		]
 	)
 	DiagParticleBinning(
@@ -121,7 +121,7 @@ for i in range(npoints):
 		every = 20,
 		species = [electrons[i]],
 		axes = [
-			 ["x",    0.,    Main.sim_length[0],   1]
+			 ["x",    0.,    Main.grid_length[0],   1]
 		]
 	)
 

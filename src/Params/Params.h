@@ -100,7 +100,7 @@ public:
     double res_time;
 
     //! simulation exit time in units of \f$ 2\pi/\omega_N \f$
-    double sim_time;
+    double simulation_time;
 
     /*! \brief Space resolution
      Number of cells in every direction in \f$ 2\pi/k_N \f$ where \f$ k_N=\omega_N/c \f$ is the normalization wavenumber
@@ -108,7 +108,7 @@ public:
     std::vector<double> res_space;
 
     //! local simulation box size in \f$2\pi/k_N \f$
-    std::vector<double> sim_length;
+    std::vector<double> grid_length;
 
     //! time during which the Maxwell's equations are not solved
     double time_fields_frozen;

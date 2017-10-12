@@ -14,13 +14,13 @@ Main(
 	interpolation_order = 2,
 	
 	timestep = 0.05 * L0,
-	sim_time = 100 * L0,
+	simulation_time = 100 * L0,
 	
 	
 	time_fields_frozen = 100000000000.,
 	
 	cell_length = [20.*L0],
-	sim_length = [1600.*L0],
+	grid_length = [1600.*L0],
 	
 	EM_boundary_conditions = [ ["periodic"] ],
 	
@@ -82,7 +82,7 @@ for ion_nppc, eon_nppc in [[100, 100], [100, 10], [10, 100]]:
 		every = 20,
 		species = [ion],
 		axes = [
-			 ["x",    0,    Main.sim_length[0],   1]
+			 ["x",    0,    Main.grid_length[0],   1]
 		]
 	)
 	
@@ -91,7 +91,7 @@ for ion_nppc, eon_nppc in [[100, 100], [100, 10], [10, 100]]:
 		every = 20,
 		species = [ion],
 		axes = [
-			 ["x",    0,    Main.sim_length[0],   1]
+			 ["x",    0,    Main.grid_length[0],   1]
 		]
 	)
 	
