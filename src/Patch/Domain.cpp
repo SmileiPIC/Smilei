@@ -65,8 +65,10 @@ void Domain::build( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, Op
     diag_->init( params, smpi, vecPatch_ );
     diag_->theTimeIsNow = diag_->prepare( 0 );
     //if ( diag_->theTimeIsNow )
-    //    diag_->run( smpi, vecPatch_, 0, simWindow );
-
+    //    diag_->run( smpi, vecPatch_, 0, simWindow );  
+    if(params.is_spectral == true){
+        init_pxr(params);
+    }
 
 }
 
