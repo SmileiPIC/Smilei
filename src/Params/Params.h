@@ -221,7 +221,11 @@ public:
     
     //! every for the standard pic timeloop output
     unsigned int print_every;
-
+    bool  is_spectral = true;
+    bool  is_pxr = true;
+    int   norderx = 2; 
+    int   nordery = 2; 
+    int   norderz = 2;
 private:    
     //! passing named command to python
     void runScript(std::string command, std::string name=std::string(""));

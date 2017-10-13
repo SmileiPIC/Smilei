@@ -52,6 +52,16 @@ ifneq ($(strip $(PYTHONHOME)),)
     LDFLAGS += -L$(PYTHONHOME)/lib
 endif 
 
+FFTW3_LIB= $(FFTW_LIB_DIR)
+FFTW3_INCLUDE=$(FFTW_INC_DIR)
+LIBPXR = /gpfshome/mds/staff/hkallala/develop/picsar_group/picsar/lib 
+LDFLAGS += -L$(LIBPXR) -lpxr
+LDFLAGS += -I$(FFTW3_INCLUDE)
+LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi
+LDFLAGS += -L$(FFTW3_LIB) -lfftw3_threads
+LDFLAGS += -L$(FFTW3_LIB) -lfftw3
+LDFLAGS += -lgfortran
+
 # Manage options in the "config" parameter
 ifneq (,$(findstring debug,$(config)))
 	CXXFLAGS += -g -pg -D__DEBUG -O0

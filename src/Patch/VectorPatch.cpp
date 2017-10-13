@@ -19,7 +19,7 @@
 #include "SyncVectorPatch.h"
 
 #include "Timers.h"
-
+#include "interface.h"
 using namespace std;
 
 
@@ -285,6 +285,51 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 
 } // END solveMaxwell
 
+void VectorPatch::solveMaxwell_Spectral(Params& params,SimWindow* simWindow, int itime, double time_dual,Timers &timers){
+
+    timers.maxwell.restart();
+    
+    for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_int ; ipassfilter++){
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+            // Current spatial filtering
+            (*this)(ipatch)->EMfields->binomialCurrentFilter();
+        }
+        SyncVectorPatch::exchangeJ( (*this) );
+        SyncVectorPatch::finalizeexchangeJ( (*this) );
+    }
+    
+    #pragma omp for schedule(static)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+        // Saving magnetic fields (to compute centered fields used in the particle pusher)
+        // Stores B at time n in B_m.
+        duplicate_field_into_pxr((*this)(ipatch)->EMfields);
+	push_psatd_ebfield_3d_();
+	duplicate_field_into_smilei((*this)(ipatch)->EMfields);
+        (*this)(ipatch)->EMfields->saveMagneticFields(); //in order to avoid recentering B
+    }
+    
+    //Synchronize B fields between patches.
+    timers.maxwell.update( params.printNow( itime ) );
+    
+    timers.syncField.restart();
+    SyncVectorPatch::exchangeB( (*this) );
+    timers.syncField.update(  params.printNow( itime ) );
+
+    if ( (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
+        timers.syncField.restart();
+        SyncVectorPatch::finalizeexchangeB( (*this) );
+        timers.syncField.update(  params.printNow( itime ) );
+
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+            // Applies boundary conditions on B
+            (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
+            // Computes B at time n using B and B_m.
+            (*this)(ipatch)->EMfields->centerMagneticFields();
+        }
+    }
+}
 
 void VectorPatch::initExternals(Params& params)
 {

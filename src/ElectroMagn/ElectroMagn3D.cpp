@@ -150,7 +150,19 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
     Jy_   = new Field3D(dimPrim, 1, false, "Jy");
     Jz_   = new Field3D(dimPrim, 2, false, "Jz");
     rho_  = new Field3D(dimPrim, "Rho" );
-    
+    if(params.is_pxr == true) {
+        Ex_pxr  = new Field3D(dimDual);
+        Ey_pxr  = new Field3D(dimDual);
+        Ez_pxr  = new Field3D(dimDual);
+        Bx_pxr  = new Field3D(dimDual);
+        By_pxr  = new Field3D(dimDual);
+        Bz_pxr  = new Field3D(dimDual);
+        Jx_pxr  = new Field3D(dimDual);
+        Jy_pxr  = new Field3D(dimDual);
+        Jz_pxr  = new Field3D(dimDual);
+        rho_pxr = new Field3D(dimDual);
+        rhoold_pxr  = new Field3D(dimDual);
+    } 
     
     // ----------------------------------------------------------------
     // Definition of the min and max index according to chosen oversize

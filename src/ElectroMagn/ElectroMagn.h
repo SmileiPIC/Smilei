@@ -115,6 +115,20 @@ public:
     
     //! Total charge density
     Field* rho_;
+    Field* rhoold_;
+    //PXR quantities:
+    Field* Ex_pxr;
+    Field* Ey_pxr;
+    Field* Ez_pxr;
+    Field* Bx_pxr;
+    Field* By_pxr;
+    Field* Bz_pxr;
+    Field* Jx_pxr;
+    Field* Jy_pxr;
+    Field* Jz_pxr;
+    Field* rho_pxr;
+    Field* rhoold_pxr;
+
     
     //! Vector of electric fields used when a filter is applied
     std::vector<Field*> Exfilter;

@@ -87,35 +87,56 @@ void Domain::clean()
 
 void Domain::solveMaxwell( Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers )
 {
-    //if ( diag_!=NULL ) {
-    //timers.diagsNEW.restart();
-    //SyncVectorPatch::exchangeE( vecPatches );
-    //SyncVectorPatch::finalizeexchangeE( vecPatches );
-    //SyncVectorPatch::exchangeB( vecPatches );
-    //SyncVectorPatch::finalizeexchangeB( vecPatches ); 
-
-    //SyncCartesianPatch::patchedToCartesian( vecPatches, patch_, params, smpi, timers, itime );
-
-    //SyncVectorPatch::exchangeE( vecPatch_ );
-    //SyncVectorPatch::finalizeexchangeE( vecPatch_ );
-    //SyncVectorPatch::exchangeB( vecPatch_ );
-    //SyncVectorPatch::finalizeexchangeB( vecPatch_ );
-
+    if(params.is_spectral == false) {
     vecPatch_.solveMaxwell( params, simWindow, itime, time_dual, timers );
-
-    //SyncCartesianPatch::cartesianToPatches( patch_, vecPatches, params, smpi, timers, itime );
-                    
-    //SyncVectorPatch::exchangeE( vecPatches );
-    //SyncVectorPatch::finalizeexchangeE( vecPatches );
-    //SyncVectorPatch::exchangeB( vecPatches );
-    //SyncVectorPatch::finalizeexchangeB( vecPatches ); 
-
-    //diag_->theTimeIsNow = diag_->prepare( itime );
-    //if ( diag_->theTimeIsNow ) {
-    //    diag_->run( smpi, vecPatch_, itime, simWindow );
-    //}
-    //timers.diagsNEW.update();
-    //}
+    }
+    else{
+    vecPatch_.solveMaxwell_Spectral(params,simWindow,itime,time_dual,timers);
+    }
 
 }
+void Domain::init_pxr(Params &params)
+{
+// unable to convert unsigned int to an iso_c_binding supported type 
+int n0,n1,n2;
+int ov0,ov1,ov2;
 
+n0=(int) params.n_space[2];
+n1=(int) params.n_space[1];
+n2=(int) params.n_space[0];
+
+ov0=(int) params.oversize[2];
+ov1=(int) params.oversize[1];
+ov2=(int) params.oversize[0];
+
+Field3D* Ex3D_pxr = static_cast<Field3D*>(this->vecPatch_(0)->EMfields->Ex_pxr);
+Field3D* Ey3D_pxr = static_cast<Field3D*>(this->vecPatch_(0)->EMfields->Ey_pxr);
+Field3D* Ez3D_pxr = static_cast<Field3D*>(this->vecPatch_(0)->EMfields->Ez_pxr);
+Field3D* Bx3D_pxr = static_cast<Field3D*>(this->vecPatch_(0)->EMfields->Bx_pxr);
+Field3D* By3D_pxr = static_cast<Field3D*>(this->vecPatch_(0)->EMfields->By_pxr);
+Field3D* Bz3D_pxr = static_cast<Field3D*>(this->vecPatch_(0)->EMfields->Bz_pxr);
+Field3D* Jx3D_pxr = static_cast<Field3D*>(this->vecPatch_(0)->EMfields->Jx_pxr);
+Field3D* Jy3D_pxr = static_cast<Field3D*>(this->vecPatch_(0)->EMfields->Jy_pxr);
+Field3D* Jz3D_pxr = static_cast<Field3D*>(this->vecPatch_(0)->EMfields->Jz_pxr);
+Field3D* rho3D_pxr = static_cast<Field3D*>(this->vecPatch_(0)->EMfields->rho_pxr);
+Field3D* rhoold3D_pxr = static_cast<Field3D*>(this->vecPatch_(0)->EMfields->rhoold_pxr);
+//call of extern init routine (defined in picsar)
+  init_params_picsar(&n0,&n1,&n2,
+    &params.cell_length[2],&params.cell_length[1],&params.cell_length[0],&params.timestep,
+    &ov0,&ov1,&ov2,
+    &params.norderz,&params.nordery,&params.norderx,
+    &params.is_spectral,
+    &(Ex3D_pxr->data_[0]),
+    &(Ey3D_pxr->data_[0]),
+    &(Ez3D_pxr->data_[0]),
+    &(Bx3D_pxr->data_[0]),
+    &(By3D_pxr->data_[0]),
+    &(Bz3D_pxr->data_[0]),
+    &(Jx3D_pxr->data_[0]),
+    &(Jy3D_pxr->data_[0]),
+    &(Jz3D_pxr->data_[0]),
+    &(rho3D_pxr->data_[0]),
+    &(rhoold3D_pxr->data_[0]));
+
+
+}
