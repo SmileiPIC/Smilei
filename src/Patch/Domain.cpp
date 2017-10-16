@@ -3,7 +3,9 @@
 
 #include "PatchesFactory.h"
 #include "DomainDecompositionFactory.h"
+#include "DiagnosticFields1D.h"
 #include "DiagnosticCartFields2D.h"
+#include "DiagnosticCartFields3D.h"
 
 #include "Params.h"
 #include "OpenPMDparams.h"
@@ -35,12 +37,12 @@ void Domain::build( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, Op
     vecPatch_.nAntennas = vecPatch_(0)->EMfields->antennas.size();
     vecPatch_.initExternals( params );
 
-    // 1D
-    //diag_ = new DiagnosticFields1D( params, smpi, vecPatch_, 0, openPMD ); 
-    // 2D
-    diag_ = new DiagnosticCartFields2D( params, smpi, vecPatch_, 0, openPMD ); 
-    // 3D
-    diag_ = new DiagnosticCartFields3D( params, smpi, vecPatch_, 0, openPMD );
+    if ( params.nDim_field == 1 )
+        diag_ = new DiagnosticFields1D( params, smpi, vecPatch_, 0, openPMD ); 
+    else if ( params.nDim_field == 2 )
+        diag_ = new DiagnosticCartFields2D( params, smpi, vecPatch_, 0, openPMD ); 
+    else if ( params.nDim_field == 3 )
+        diag_ = new DiagnosticCartFields3D( params, smpi, vecPatch_, 0, openPMD );
 
     for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->Jx_s.size(); ifield++) {
         if( vecPatch_(0)->EMfields->Jx_s[ifield]->data_ == NULL ){
