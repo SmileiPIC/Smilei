@@ -211,8 +211,8 @@ public:
         }
     }
     
-    virtual void push( Field* outField, Params &params, SmileiMPI* smpi, Patch* thisPatch, Patch*  outPatch ) = 0;
-    virtual void pull( Field*  inField, Params &params, SmileiMPI* smpi, Patch*   inPatch, Patch* thisPatch ) = 0;
+    virtual void put( Field* outField, Params &params, SmileiMPI* smpi, Patch* thisPatch, Patch*  outPatch ) = 0;
+    virtual void get( Field*  inField, Params &params, SmileiMPI* smpi, Patch*   inPatch, Patch* thisPatch ) = 0;
 
 
 protected:
