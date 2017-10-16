@@ -35,35 +35,35 @@ void Domain::build( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, Op
     vecPatch_.nAntennas = vecPatch_(0)->EMfields->antennas.size();
     vecPatch_.initExternals( params );
 
-    diag_ = new DiagnosticCartFields2D( params, smpi, vecPatch_, 0, openPMD ); 
-
-    for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->Jx_s.size(); ifield++) {
-        if( vecPatch_(0)->EMfields->Jx_s[ifield]->data_ == NULL ){
-            delete vecPatch_(0)->EMfields->Jx_s[ifield];
-            vecPatch_(0)->EMfields->Jx_s[ifield]=NULL;
-        }
-    }
-    for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->Jy_s.size(); ifield++) {
-        if( vecPatch_(0)->EMfields->Jy_s[ifield]->data_ == NULL ){
-            delete vecPatch_(0)->EMfields->Jy_s[ifield];
-            vecPatch_(0)->EMfields->Jy_s[ifield]=NULL;
-        }
-    }
-    for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->Jz_s.size(); ifield++) {
-        if( vecPatch_(0)->EMfields->Jz_s[ifield]->data_ == NULL ){
-            delete vecPatch_(0)->EMfields->Jz_s[ifield];
-            vecPatch_(0)->EMfields->Jz_s[ifield]=NULL;
-        }
-    }
-    for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->rho_s.size(); ifield++) {
-        if( vecPatch_(0)->EMfields->rho_s[ifield]->data_ == NULL ){
-            delete vecPatch_(0)->EMfields->rho_s[ifield];
-            vecPatch_(0)->EMfields->rho_s[ifield]=NULL;
-        }
-    }
-
-    diag_->init( params, smpi, vecPatch_ );
-    diag_->theTimeIsNow = diag_->prepare( 0 );
+//    diag_ = new DiagnosticCartFields2D( params, smpi, vecPatch_, 0, openPMD ); 
+//
+//    for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->Jx_s.size(); ifield++) {
+//        if( vecPatch_(0)->EMfields->Jx_s[ifield]->data_ == NULL ){
+//            delete vecPatch_(0)->EMfields->Jx_s[ifield];
+//            vecPatch_(0)->EMfields->Jx_s[ifield]=NULL;
+//        }
+//    }
+//    for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->Jy_s.size(); ifield++) {
+//        if( vecPatch_(0)->EMfields->Jy_s[ifield]->data_ == NULL ){
+//            delete vecPatch_(0)->EMfields->Jy_s[ifield];
+//            vecPatch_(0)->EMfields->Jy_s[ifield]=NULL;
+//        }
+//    }
+//    for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->Jz_s.size(); ifield++) {
+//        if( vecPatch_(0)->EMfields->Jz_s[ifield]->data_ == NULL ){
+//            delete vecPatch_(0)->EMfields->Jz_s[ifield];
+//            vecPatch_(0)->EMfields->Jz_s[ifield]=NULL;
+//        }
+//    }
+//    for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->rho_s.size(); ifield++) {
+//        if( vecPatch_(0)->EMfields->rho_s[ifield]->data_ == NULL ){
+//            delete vecPatch_(0)->EMfields->rho_s[ifield];
+//            vecPatch_(0)->EMfields->rho_s[ifield]=NULL;
+//        }
+//    }
+//
+//    diag_->init( params, smpi, vecPatch_ );
+//    diag_->theTimeIsNow = diag_->prepare( 0 );
     //if ( diag_->theTimeIsNow )
     //    diag_->run( smpi, vecPatch_, 0, simWindow );  
     if(params.is_spectral == true){

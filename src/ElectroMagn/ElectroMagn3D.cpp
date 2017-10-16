@@ -151,6 +151,8 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
     Jz_   = new Field3D(dimPrim, 2, false, "Jz");
     rho_  = new Field3D(dimPrim, "Rho" );
     if(params.is_pxr == true) {
+        rhoold_ = new Field3D(dimPrim,"Rho");
+
         Ex_pxr  = new Field3D(dimDual);
         Ey_pxr  = new Field3D(dimDual);
         Ez_pxr  = new Field3D(dimDual);

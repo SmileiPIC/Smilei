@@ -18,10 +18,22 @@ void SyncCartesianPatch::patchedToCartesian( VectorPatch& vecPatches, Domain& do
         //SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Ex_, patch->EMfields->Ex_, params, smpi, vecPatches(ipatch), patch );
         //SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Ey_, patch->EMfields->Ey_, params, smpi, vecPatches(ipatch), patch );
         //SyncCartesianPatch::sync( vecPatches(ipatch)->EMfields->Jx_, patch->EMfields->Jx_, params, smpi, vecPatches(ipatch), patch );
+        vecPatches(ipatch)->EMfields->Ex_->push( domain.patch_->EMfields->Ex_, params, smpi, vecPatches(ipatch), domain.patch_ );
+        vecPatches(ipatch)->EMfields->Ey_->push( domain.patch_->EMfields->Ey_, params, smpi, vecPatches(ipatch), domain.patch_ );
+        vecPatches(ipatch)->EMfields->Ez_->push( domain.patch_->EMfields->Ez_, params, smpi, vecPatches(ipatch), domain.patch_ );
+
+        vecPatches(ipatch)->EMfields->Bx_->push( domain.patch_->EMfields->Bx_, params, smpi, vecPatches(ipatch), domain.patch_ );
+        vecPatches(ipatch)->EMfields->By_->push( domain.patch_->EMfields->By_, params, smpi, vecPatches(ipatch), domain.patch_ );
+        vecPatches(ipatch)->EMfields->Bz_->push( domain.patch_->EMfields->Bz_, params, smpi, vecPatches(ipatch), domain.patch_ );
 
         vecPatches(ipatch)->EMfields->Jx_->push( domain.patch_->EMfields->Jx_, params, smpi, vecPatches(ipatch), domain.patch_ );
         vecPatches(ipatch)->EMfields->Jy_->push( domain.patch_->EMfields->Jy_, params, smpi, vecPatches(ipatch), domain.patch_ );
         vecPatches(ipatch)->EMfields->Jz_->push( domain.patch_->EMfields->Jz_, params, smpi, vecPatches(ipatch), domain.patch_ );
+
+        vecPatches(ipatch)->EMfields->rho_->push( domain.patch_->EMfields->rho_, params, smpi, vecPatches(ipatch), domain.patch_ );
+        vecPatches(ipatch)->EMfields->rhoold_->push( domain.patch_->EMfields->rhoold_, params, smpi, vecPatches(ipatch), domain.patch_ );
+
+
     }
 
 }
@@ -38,14 +50,18 @@ void SyncCartesianPatch::cartesianToPatches( Domain& domain, VectorPatch& vecPat
         vecPatches(ipatch)->EMfields->Ex_->pull( domain.patch_->EMfields->Ex_, params, smpi, domain.patch_, vecPatches(ipatch) );
         vecPatches(ipatch)->EMfields->Ey_->pull( domain.patch_->EMfields->Ey_, params, smpi, domain.patch_, vecPatches(ipatch) );
         vecPatches(ipatch)->EMfields->Ez_->pull( domain.patch_->EMfields->Ez_, params, smpi, domain.patch_, vecPatches(ipatch) );
-        vecPatches(ipatch)->EMfields->Bx_m->pull( domain.patch_->EMfields->Bx_m, params, smpi, domain.patch_, vecPatches(ipatch) );
-        vecPatches(ipatch)->EMfields->By_m->pull( domain.patch_->EMfields->By_m, params, smpi, domain.patch_, vecPatches(ipatch) );
-        vecPatches(ipatch)->EMfields->Bz_m->pull( domain.patch_->EMfields->Bz_m, params, smpi, domain.patch_, vecPatches(ipatch) );
-
         // Diags only
         vecPatches(ipatch)->EMfields->Bx_->pull( domain.patch_->EMfields->Bx_, params, smpi, domain.patch_, vecPatches(ipatch) );
         vecPatches(ipatch)->EMfields->By_->pull( domain.patch_->EMfields->By_, params, smpi, domain.patch_, vecPatches(ipatch) );
         vecPatches(ipatch)->EMfields->Bz_->pull( domain.patch_->EMfields->Bz_, params, smpi, domain.patch_, vecPatches(ipatch) );
+  
+        vecPatches(ipatch)->EMfields->Jx_->pull( domain.patch_->EMfields->Jx_, params, smpi, domain.patch_, vecPatches(ipatch) );
+        vecPatches(ipatch)->EMfields->Jy_->pull( domain.patch_->EMfields->Jy_, params, smpi, domain.patch_, vecPatches(ipatch) );
+        vecPatches(ipatch)->EMfields->Jz_->pull( domain.patch_->EMfields->Jz_, params, smpi, domain.patch_, vecPatches(ipatch) );
+
+        vecPatches(ipatch)->EMfields->rho_->pull( domain.patch_->EMfields->rho_, params, smpi, domain.patch_, vecPatches(ipatch) );
+        vecPatches(ipatch)->EMfields->rhoold_->pull( domain.patch_->EMfields->rhoold_, params, smpi, domain.patch_, vecPatches(ipatch) );
+
         
     }
 
