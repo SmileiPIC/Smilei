@@ -263,7 +263,9 @@ namelist("")
     PyTools::extract("solve_poisson", solve_poisson, "Main");
     PyTools::extract("poisson_iter_max", poisson_iter_max, "Main");
     PyTools::extract("poisson_error_max", poisson_error_max, "Main");
-    
+    PyTools::extract("is_spectral", is_spectral, "Main");
+    PyTools::extract("is_pxr", is_pxr, "Main");
+
     // Maxwell Solver
     PyTools::extract("maxwell_sol", maxwell_sol, "Main");
     
@@ -325,7 +327,13 @@ namelist("")
 
     global_factor.resize( nDim_field, 1 );
     PyTools::extract( "global_factor", global_factor, "Main" );
-    
+    norder.resize(nDim_field,1);
+    PyTools::extract( "norder", norder, "Main" ); 
+    norderx=norder[0];
+    nordery=norder[1];
+    norderz=norder[2];
+
+
     if( PyTools::nComponents("LoadBalancing")>0 ) {
         PyTools::extract("every"      , balancing_every, "LoadBalancing");
         PyTools::extract("coef_cell"  , coef_cell      , "LoadBalancing");

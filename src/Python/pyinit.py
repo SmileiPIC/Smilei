@@ -125,12 +125,15 @@ class Main(SmileiSingleton):
     number_of_patches = None
     clrw = 1
     global_factor = []
+    norder = []
     every_clean_particles_overhead = 100
     timestep = None
     timestep_over_CFL = None
     
     # Poisson tuning
     solve_poisson = True
+    is_spectral = False
+    is_pxr = False
     poisson_iter_max = 50000
     poisson_error_max = 1.e-14
     
