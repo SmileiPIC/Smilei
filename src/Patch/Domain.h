@@ -18,7 +18,7 @@ public:
     ~Domain();
 
     void build( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, OpenPMDparams& openPMD );
-    void solveMaxwell( Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers );
+    void solveMaxwell(SmileiMPI*, Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers );
     void clean();
     void init_pxr(Params& params);  
     DomainDecomposition* decomposition_;

@@ -239,7 +239,7 @@ void Field3D::extract_slice_xy(unsigned int iz, Field2D *slice)
 }
 
 
-void Field3D::push( Field* outField, Params &params, SmileiMPI* smpi, Patch* thisPatch, Patch* outPatch )
+void Field3D::put( Field* outField, Params &params, SmileiMPI* smpi, Patch* thisPatch, Patch* outPatch )
 {
     Field3D* out3D = static_cast<Field3D*>( outField );
 
@@ -260,7 +260,7 @@ void Field3D::push( Field* outField, Params &params, SmileiMPI* smpi, Patch* thi
 }
 
 
-void Field3D::pull( Field* inField, Params &params, SmileiMPI* smpi, Patch* inPatch, Patch* thisPatch )
+void Field3D::get( Field* inField, Params &params, SmileiMPI* smpi, Patch* inPatch, Patch* thisPatch )
 {
     Field3D* in3D  = static_cast<Field3D*>( inField  );
 

@@ -3,7 +3,9 @@
 
 #include "PatchesFactory.h"
 #include "DomainDecompositionFactory.h"
+#include "DiagnosticFields1D.h"
 #include "DiagnosticCartFields2D.h"
+#include "DiagnosticCartFields3D.h"
 
 #include "Params.h"
 #include "OpenPMDparams.h"
@@ -64,6 +66,40 @@ void Domain::build( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, Op
 //
 //    diag_->init( params, smpi, vecPatch_ );
 //    diag_->theTimeIsNow = diag_->prepare( 0 );
+    if ( params.nDim_field == 1 )
+        diag_ = new DiagnosticFields1D( params, smpi, vecPatch_, 0, openPMD ); 
+    else if ( params.nDim_field == 2 )
+        diag_ = new DiagnosticCartFields2D( params, smpi, vecPatch_, 0, openPMD ); 
+    else if ( params.nDim_field == 3 )
+        diag_ = new DiagnosticCartFields3D( params, smpi, vecPatch_, 0, openPMD );
+
+    for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->Jx_s.size(); ifield++) {
+        if( vecPatch_(0)->EMfields->Jx_s[ifield]->data_ == NULL ){
+            delete vecPatch_(0)->EMfields->Jx_s[ifield];
+            vecPatch_(0)->EMfields->Jx_s[ifield]=NULL;
+        }
+    }
+    for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->Jy_s.size(); ifield++) {
+        if( vecPatch_(0)->EMfields->Jy_s[ifield]->data_ == NULL ){
+            delete vecPatch_(0)->EMfields->Jy_s[ifield];
+            vecPatch_(0)->EMfields->Jy_s[ifield]=NULL;
+        }
+    }
+    for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->Jz_s.size(); ifield++) {
+        if( vecPatch_(0)->EMfields->Jz_s[ifield]->data_ == NULL ){
+            delete vecPatch_(0)->EMfields->Jz_s[ifield];
+            vecPatch_(0)->EMfields->Jz_s[ifield]=NULL;
+        }
+    }
+    for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->rho_s.size(); ifield++) {
+        if( vecPatch_(0)->EMfields->rho_s[ifield]->data_ == NULL ){
+            delete vecPatch_(0)->EMfields->rho_s[ifield];
+            vecPatch_(0)->EMfields->rho_s[ifield]=NULL;
+        }
+    }
+
+    diag_->init( params, smpi, vecPatch_ );
+    diag_->theTimeIsNow = diag_->prepare( 0 );
     //if ( diag_->theTimeIsNow )
     //    diag_->run( smpi, vecPatch_, 0, simWindow );  
     if(params.is_spectral == true){
@@ -87,13 +123,13 @@ void Domain::clean()
 
 }
 
-void Domain::solveMaxwell( Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers )
+void Domain::solveMaxwell(SmileiMPI*  smpi, Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers )
 {
     if(params.is_spectral == false) {
     vecPatch_.solveMaxwell( params, simWindow, itime, time_dual, timers );
     }
     else{
-    vecPatch_.solveMaxwell_Spectral(params,simWindow,itime,time_dual,timers);
+    vecPatch_.solveMaxwell_Spectral(smpi,params,simWindow,itime,time_dual,timers);
     }
 
 }
@@ -103,9 +139,9 @@ void Domain::init_pxr(Params &params)
 int n0,n1,n2;
 int ov0,ov1,ov2;
 
-n0=(int) params.n_space[2];
-n1=(int) params.n_space[1];
-n2=(int) params.n_space[0];
+n0=(int) ( 1 + params.n_space[2]*params.global_factor[2]);
+n1=(int) ( 1 + params.n_space[1]*params.global_factor[1]);
+n2=(int) ( 1 + params.n_space[0]*params.global_factor[0]);
 
 ov0=(int) params.oversize[2];
 ov1=(int) params.oversize[1];

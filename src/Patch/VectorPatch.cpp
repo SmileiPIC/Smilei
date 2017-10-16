@@ -285,7 +285,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 
 } // END solveMaxwell
 
-void VectorPatch::solveMaxwell_Spectral(Params& params,SimWindow* simWindow, int itime, double time_dual,Timers &timers){
+void VectorPatch::solveMaxwell_Spectral( SmileiMPI* smpi,Params& params,SimWindow* simWindow, int itime, double time_dual,Timers &timers){
     timers.maxwell.restart();
     int n; 
     for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_int ; ipassfilter++){
@@ -297,7 +297,6 @@ void VectorPatch::solveMaxwell_Spectral(Params& params,SimWindow* simWindow, int
         SyncVectorPatch::exchangeJ( (*this) );
         SyncVectorPatch::finalizeexchangeJ( (*this) );
     }
-   std::cout<<"arrive la\n"; 
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
         // Saving magnetic fields (to compute centered fields used in the particle pusher)
@@ -306,18 +305,17 @@ void VectorPatch::solveMaxwell_Spectral(Params& params,SimWindow* simWindow, int
 
         std::memcpy((*this)(ipatch)->EMfields->rhoold_->data_,(*this)(ipatch)->EMfields->rho_->data_,sizeof(double)*n);
         duplicate_field_into_pxr((*this)(ipatch)->EMfields);
-std::cout<<(*this)(ipatch)->EMfields->rhoold_->dims_[0]<<"  "<<(*this)(ipatch)->EMfields->rhoold_->dims_[1]<<"  "<<(*this)(ipatch)->EMfields->rhoold_->dims_[2]<<"\n";
 	push_psatd_ebfield_3d_();
-
 	duplicate_field_into_smilei((*this)(ipatch)->EMfields);
         (*this)(ipatch)->EMfields->saveMagneticFields(); //in order to avoid recentering B
     }
-    
+
     //Synchronize B fields between patches.
     timers.maxwell.update( params.printNow( itime ) );
     
     timers.syncField.restart();
     SyncVectorPatch::exchangeB( (*this) );
+
     timers.syncField.update(  params.printNow( itime ) );
 
     if ( (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {

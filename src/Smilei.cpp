@@ -160,7 +160,10 @@ int main (int argc, char* argv[])
 
 
     Domain domain( params ); 
-    if (params.global_factor[0]!=1) {
+    unsigned int global_factor(1);
+    for ( unsigned int iDim = 0 ; iDim < params.nDim_field ; iDim++ )
+        global_factor *= params.global_factor[iDim];
+    if (global_factor!=1) {
         domain.build( params, smpi, vecPatches, openPMD );
     }
 
@@ -218,7 +221,7 @@ int main (int argc, char* argv[])
             vecPatches.applyAntennas(time_dual);
             
             // solve Maxwell's equations
-            if ( params.global_factor[0]==1 ) {
+            if ( global_factor==1 ) {
                 if( time_dual > params.time_fields_frozen ) {
                     vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
                 }
@@ -226,10 +229,10 @@ int main (int argc, char* argv[])
 
             vecPatches.finalize_and_sort_parts(params, smpi, simWindow, time_dual, timers, itime);
             
-            if ( params.global_factor[0]!=1 ) {
+            if ( global_factor!=1 ) {
                 timers.diagsNEW.restart();
                 SyncCartesianPatch::patchedToCartesian( vecPatches, domain, params, smpi, timers, itime );
-                domain.solveMaxwell( params, simWindow, itime, time_dual, timers );
+                domain.solveMaxwell(smpi, params, simWindow, itime, time_dual, timers );
                 SyncCartesianPatch::cartesianToPatches( domain, vecPatches, params, smpi, timers, itime );
                 timers.diagsNEW.update();
             }
@@ -294,7 +297,7 @@ int main (int argc, char* argv[])
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
-    if (params.global_factor[0]!=1) 
+    if (global_factor!=1) 
         domain.clean();
     vecPatches.close( smpi );
     smpi->barrier(); // Don't know why but sync needed by HDF5 Phasespace managment
