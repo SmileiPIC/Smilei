@@ -26,6 +26,13 @@ Patch1D::Patch1D(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_de
     }
     else { // Cartesian
         // See void Patch::set( VectorPatch& vecPatch )        
+
+        for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+            MPI_Type_free( &(ntype_[0][ix_isPrim]) );
+            MPI_Type_free( &(ntype_[1][ix_isPrim]) );
+            MPI_Type_free( &(ntypeSum_[0][ix_isPrim]) );
+        }
+
     }
 
 } // End Patch1D::Patch1D

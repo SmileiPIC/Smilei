@@ -26,6 +26,20 @@ Patch3D::Patch3D(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_de
     }
     else { // Cartesian
         // See void Patch::set( VectorPatch& vecPatch )        
+
+        for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+            for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
+                for (int iz_isPrim=0 ; iz_isPrim<2 ; iz_isPrim++) {
+                    MPI_Type_free( &(ntype_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
+                    MPI_Type_free( &(ntype_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );
+                    MPI_Type_free( &(ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
+                    MPI_Type_free( &(ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
+                    MPI_Type_free( &(ntypeSum_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );    
+                    MPI_Type_free( &(ntypeSum_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );    
+                }        
+            }
+        }
+
     }
 
 } // End Patch3D::Patch3D
