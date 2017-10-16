@@ -37,7 +37,7 @@ nrj_new_fields (  0.               )
     if ( dynamic_cast<HilbertDomainDecomposition*>( domain_decomposition ) )
         n_space = params.n_space;
     else {
-        for ( int i = 0 ; i < 2 ; i++ ) 
+        for ( int i = 0 ; i < nDim_field ; i++ ) 
             n_space[i] = params.n_space[i] * params.global_factor[i];
     }
     
