@@ -30,12 +30,12 @@ Patch3D::Patch3D(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_de
         for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
             for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
                 for (int iz_isPrim=0 ; iz_isPrim<2 ; iz_isPrim++) {
-                    MPI_Type_free( &(ntype_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
-                    MPI_Type_free( &(ntype_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );
-                    MPI_Type_free( &(ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
-                    MPI_Type_free( &(ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
-                    MPI_Type_free( &(ntypeSum_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );    
-                    MPI_Type_free( &(ntypeSum_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );    
+                    ntype_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                    ntype_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                    ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                    ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                    ntypeSum_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;    
+                    ntypeSum_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;    
                 }        
             }
         }
@@ -473,7 +473,66 @@ void Patch3D::finalizeExchange( Field* field, int iDim )
 // Create MPI_Datatypes used in initSumField and initExchange
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch3D::createType2( Params& params ) {
+    if (ntype_[0][0][0][0] != MPI_DATATYPE_NULL)
+        return;
+
+    int nx0 = params.n_space[0]*params.global_factor[0] + 1 + 2*params.oversize[0];
+    int ny0 = params.n_space[1]*params.global_factor[1] + 1 + 2*params.oversize[1];
+    int nz0 = params.n_space[2]*params.global_factor[2] + 1 + 2*params.oversize[2];
+    
+    // MPI_Datatype ntype_[nDim][primDual][primDual]
+    int nx, ny, nz;
+    int nx_sum, ny_sum, nz_sum;
+    
+    for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+        nx = nx0 + ix_isPrim;
+        for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
+            ny = ny0 + iy_isPrim;
+            for (int iz_isPrim=0 ; iz_isPrim<2 ; iz_isPrim++) {
+                nz = nz0 + iz_isPrim;
+            
+                // Standard Type
+                ntype_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                MPI_Type_contiguous(params.oversize[0]*ny*nz, 
+                                    MPI_DOUBLE, &(ntype_[0][ix_isPrim][iy_isPrim][iz_isPrim]));
+                MPI_Type_commit( &(ntype_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
+
+                ntype_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                MPI_Type_vector(nx, params.oversize[1]*nz, ny*nz, 
+                                MPI_DOUBLE, &(ntype_[1][ix_isPrim][iy_isPrim][iz_isPrim]));
+                MPI_Type_commit( &(ntype_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );
+
+                ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                MPI_Type_vector(nx*ny, params.oversize[2], nz, 
+                                MPI_DOUBLE, &(ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim]));
+                MPI_Type_commit( &(ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
+            
+
+                nx_sum = 1 + 2*params.oversize[0] + ix_isPrim;
+                ny_sum = 1 + 2*params.oversize[1] + iy_isPrim;
+                nz_sum = 1 + 2*params.oversize[2] + iz_isPrim;
+
+                ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                MPI_Type_contiguous(nx_sum*ny*nz, 
+                                    MPI_DOUBLE, &(ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim]));
+                MPI_Type_commit( &(ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
+            
+                ntypeSum_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                MPI_Type_vector(nx, ny_sum*nz, ny*nz, 
+                                MPI_DOUBLE, &(ntypeSum_[1][ix_isPrim][iy_isPrim][iz_isPrim]));
+                MPI_Type_commit( &(ntypeSum_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );
+
+                ntypeSum_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                MPI_Type_vector(nx*ny, nz_sum, nz, 
+                                MPI_DOUBLE, &(ntypeSum_[2][ix_isPrim][iy_isPrim][iz_isPrim]));
+                MPI_Type_commit( &(ntypeSum_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
+            
+            }
+        }
+    }
+    
 }
+
 void Patch3D::createType( Params& params )
 {
     if (ntype_[0][0][0][0] != MPI_DATATYPE_NULL)
