@@ -90,7 +90,7 @@ class Options(object):
 		for kwa, val in kwargs.items():
 			if kwa in ["figsize"]:
 				self.figure0[kwa] = val
-			elif kwa in ["dpi","facecolor","edgecolor"]:
+			elif kwa in ["facecolor","edgecolor"]:
 				self.figure1[kwa] = val
 			elif kwa in ["aspect","axis_bgcolor",
 					   "frame_on","position","title","visible","xlabel","xscale","xticklabels",
