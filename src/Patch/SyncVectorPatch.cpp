@@ -111,6 +111,7 @@ void SyncVectorPatch::finalizeexchangeE( VectorPatch& vecPatches )
 
 void SyncVectorPatch::exchangeB( VectorPatch& vecPatches )
 {
+
     if (vecPatches.listBx_[0]->dims_.size()==1) {
         SyncVectorPatch::new_exchange0( vecPatches.Bs0, vecPatches );
     }

@@ -17,9 +17,9 @@
 #include "DiagnosticFactory.h"
 
 #include "SyncVectorPatch.h"
-
-#include "Timers.h"
 #include "interface.h"
+#include "Timers.h"
+
 using namespace std;
 
 
@@ -285,7 +285,8 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 
 } // END solveMaxwell
 
-void VectorPatch::solveMaxwell_Spectral( SmileiMPI* smpi,Params& params,SimWindow* simWindow, int itime, double time_dual,Timers &timers){
+
+void VectorPatch::solveMaxwell_Spectral( Params& params,SimWindow* simWindow, int itime, double time_dual,Timers &timers){
     timers.maxwell.restart();
     int n; 
     for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_int ; ipassfilter++){
@@ -332,7 +333,6 @@ void VectorPatch::solveMaxwell_Spectral( SmileiMPI* smpi,Params& params,SimWindo
         }
     }
 }
-
 void VectorPatch::initExternals(Params& params)
 {
     // Init all lasers

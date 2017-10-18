@@ -221,8 +221,8 @@ public:
     
     //! every for the standard pic timeloop output
     unsigned int print_every;
-    bool  is_spectral ;
-    bool  is_pxr ;
+    bool  is_spectral=false ;
+    bool  is_pxr=false ;
     int   norderx = 2; 
     int   nordery = 2; 
     int   norderz = 2;

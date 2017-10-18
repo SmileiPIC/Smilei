@@ -232,7 +232,7 @@ int main (int argc, char* argv[])
             if ( global_factor!=1 ) {
                 timers.diagsNEW.restart();
                 SyncCartesianPatch::patchedToCartesian( vecPatches, domain, params, smpi, timers, itime );
-                domain.solveMaxwell(smpi, params, simWindow, itime, time_dual, timers );
+                domain.solveMaxwell( params, simWindow, itime, time_dual, timers );
                 SyncCartesianPatch::cartesianToPatches( domain, vecPatches, params, smpi, timers, itime );
                 timers.diagsNEW.update();
             }
