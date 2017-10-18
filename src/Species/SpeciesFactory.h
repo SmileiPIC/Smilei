@@ -420,7 +420,8 @@ public:
         // Create new species object
         Species * newSpecies = NULL;
 
-        if (species->pusher =="boris"
+        if (species->pusher =="norm"
+        || species->pusher =="boris"
         || species->pusher =="higueracary"
         || species->pusher =="vay"
         || species->pusher =="borisnr")
@@ -430,9 +431,9 @@ public:
         }
 
         // Copy members
-        newSpecies->name                  = species->name;
-        newSpecies->pusher                = species->pusher;
-        newSpecies->radiation_model       = species->radiation_model;
+        newSpecies->name                             = species->name;
+        newSpecies->pusher                           = species->pusher;
+        newSpecies->radiation_model                  = species->radiation_model;
         newSpecies->radiation_photon_species         = species->radiation_photon_species;
         newSpecies->radiation_photon_sampling        = species->radiation_photon_sampling;
         newSpecies->radiation_photon_gamma_threshold = species->radiation_photon_gamma_threshold;
@@ -440,31 +441,31 @@ public:
         newSpecies->speciesNumber                    = species->speciesNumber;
         newSpecies->position_initialization          = species->position_initialization;
         newSpecies->momentum_initialization          = species->momentum_initialization;
-        newSpecies->c_part_max            = species->c_part_max;
-        newSpecies->mass                  = species->mass;
-        newSpecies->time_frozen           = species->time_frozen;
-        newSpecies->radiating             = species->radiating;
-        newSpecies->boundary_conditions           = species->boundary_conditions;
-        newSpecies->thermal_boundary_temperature  = species->thermal_boundary_temperature;
-        newSpecies->thermal_boundary_velocity     = species->thermal_boundary_velocity;
-        newSpecies->thermalVelocity       = species->thermalVelocity;
-        newSpecies->thermalMomentum       = species->thermalMomentum;
-        newSpecies->atomic_number         = species->atomic_number;
-        newSpecies->ionization_model      = species->ionization_model;
-        newSpecies->densityProfileType    = species->densityProfileType;
-        newSpecies->densityProfile        = new Profile(species->densityProfile);
-        newSpecies->ppcProfile            = new Profile(species->ppcProfile);
-        newSpecies->chargeProfile         = new Profile(species->chargeProfile);
+        newSpecies->c_part_max                       = species->c_part_max;
+        newSpecies->mass                             = species->mass;
+        newSpecies->time_frozen                      = species->time_frozen;
+        newSpecies->radiating                        = species->radiating;
+        newSpecies->boundary_conditions              = species->boundary_conditions;
+        newSpecies->thermal_boundary_temperature     = species->thermal_boundary_temperature;
+        newSpecies->thermal_boundary_velocity        = species->thermal_boundary_velocity;
+        newSpecies->thermalVelocity                  = species->thermalVelocity;
+        newSpecies->thermalMomentum                  = species->thermalMomentum;
+        newSpecies->atomic_number                    = species->atomic_number;
+        newSpecies->ionization_model                 = species->ionization_model;
+        newSpecies->densityProfileType               = species->densityProfileType;
+        newSpecies->densityProfile                   = new Profile(species->densityProfile);
+        newSpecies->ppcProfile                       = new Profile(species->ppcProfile);
+        newSpecies->chargeProfile                    = new Profile(species->chargeProfile);
         newSpecies->velocityProfile.resize(3);
-        newSpecies->velocityProfile[0]    = new Profile(species->velocityProfile[0]);
-        newSpecies->velocityProfile[1]    = new Profile(species->velocityProfile[1]);
-        newSpecies->velocityProfile[2]    = new Profile(species->velocityProfile[2]);
+        newSpecies->velocityProfile[0]               = new Profile(species->velocityProfile[0]);
+        newSpecies->velocityProfile[1]               = new Profile(species->velocityProfile[1]);
+        newSpecies->velocityProfile[2]               = new Profile(species->velocityProfile[2]);
         newSpecies->temperatureProfile.resize(3);
-        newSpecies->temperatureProfile[0] = new Profile(species->temperatureProfile[0]);
-        newSpecies->temperatureProfile[1] = new Profile(species->temperatureProfile[1]);
-        newSpecies->temperatureProfile[2] = new Profile(species->temperatureProfile[2]);
-        newSpecies->max_charge            = species->max_charge;
-        newSpecies->tracking_diagnostic   = species->tracking_diagnostic;
+        newSpecies->temperatureProfile[0]            = new Profile(species->temperatureProfile[0]);
+        newSpecies->temperatureProfile[1]            = new Profile(species->temperatureProfile[1]);
+        newSpecies->temperatureProfile[2]            = new Profile(species->temperatureProfile[2]);
+        newSpecies->max_charge                       = species->max_charge;
+        newSpecies->tracking_diagnostic              = species->tracking_diagnostic;
         if (newSpecies->mass==0) {
             newSpecies->multiphoton_Breit_Wheeler[0]  = species->multiphoton_Breit_Wheeler[0];
             newSpecies->multiphoton_Breit_Wheeler[1]  = species->multiphoton_Breit_Wheeler[1];
