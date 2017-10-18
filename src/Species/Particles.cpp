@@ -23,7 +23,7 @@ tracked(false)
     Position_old.resize(0);
     Momentum.resize(0);
     is_test = false;
-    isQuantumParameter= false;
+    isQuantumParameter = false;
     isMonteCarlo = false;
 
     double_prop.resize(0);
@@ -486,6 +486,22 @@ void Particles::create_particle()
 
     for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ )
         (*uint64_prop[iprop]).push_back(0);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Create nParticles new particles at the end of vectors
+// ---------------------------------------------------------------------------------------------------------------------
+void Particles::create_particles(int nAdditionalParticles )
+{
+    int nParticles = size();
+    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ )
+        (*double_prop[iprop]).resize(nParticles+nAdditionalParticles,0.);
+
+    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ )
+        (*short_prop[iprop]).resize(nParticles+nAdditionalParticles,0);
+
+    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ )
+        (*uint64_prop[iprop]).resize(nParticles+nAdditionalParticles,0);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -100,8 +100,8 @@ DiagProbe(
 	every = 10,
 	origin = [0., Main.grid_length[1]/4., Main.grid_length[2]/2.],
 	corners = [
+	    [Main.grid_length[0], Main.grid_length[1]/4., Main.grid_length[2]/2.],
 	    [0., 3*Main.grid_length[1]/4., Main.grid_length[2]/2.],
-	    [Main.grid_length[0], Main.grid_length[1]/4., Main.grid_length[2]/2.]
 	],
 	number = [nx, ntrans],
 	fields = ['Ex','Ey','Rho','Jx']

@@ -21,14 +21,14 @@ The distribution :math:`f_s` satisfies Vlasov's equation:
 
 .. math::
   :label: Vlasov
-  
+
   \left(\partial_t + \frac{\mathbf{p}}{m_s \gamma} \cdot \nabla + \mathbf{F}_L \cdot \nabla_{\mathbf{p}} \right) f_s = 0\,,
 
 where :math:`\gamma = \sqrt{1+\mathbf{p}^2/m_s^2}` is the (relativistic) Lorentz factor,
 
 .. math::
   :label: LorentzForce
-  
+
   \mathbf{F}_L = q_s\,(\mathbf{E} + \mathbf{v} \times \mathbf{B})
 
 is the Lorentz force acting on the particles.
@@ -38,7 +38,7 @@ fields satisfying Maxwell's equations:
 
 .. math::
   :label: Maxwell
-  
+
   \begin{eqnarray}
   \nabla \cdot \mathbf{B} &=& 0 \,,\\
   \nabla \cdot \mathbf{E} &=& \rho \,,\\
@@ -53,7 +53,7 @@ current densities:
 
 .. math::
   :label: rhoJ
-  
+
   \begin{eqnarray}
   \rho(t,\mathbf{x}) &=& \sum_s q_s\int\!d^3\!p f_s(t,\mathbf{x},\mathbf{p})\,,\\
   \mathbf{J}(t,\mathbf{x}) &=& \sum_s q_s\int\! d^3\!p\,\mathbf{v} f_s(t,\mathbf{x},\mathbf{p})\,,
@@ -64,6 +64,8 @@ where we have introduced the velocity :math:`\mathbf{v} = \mathbf{p}/(m_s\,\gamm
 
 ----
 
+.. _QuasiParticlesSection:
+
 Quasi-particles
 ^^^^^^^^^^^^^^^
 
@@ -73,7 +75,7 @@ function :math:`f_s` as a sum of :math:`N_s` *quasi-particles* (also referred to
 
 .. math::
   :label: fs_discretized
-  
+
   f_s(t,\mathbf{x},\mathbf{p}) =
     \sum_{p=1}^{N_s}\,w_p\,\,S\big(\mathbf{x}-\mathbf{x}_p(t)\big)\,\delta\big(\mathbf{p}-\mathbf{p}_p(t)\big)\,,
 
@@ -91,12 +93,12 @@ the quasi-particles, leads to the relativistic equations of motion of individual
 quasi-particles:
 
 .. math::
-  
+
   \begin{eqnarray}
   \frac{d\mathbf{x}_p}{dt} &=& \frac{\mathbf{u}_p}{\gamma_p}\,\\
   \frac{d\mathbf{u}_p}{dt} &=& r_s \, \left( \mathbf{E}_p + \frac{\mathbf{u}_p}{\gamma_p} \times \mathbf{B}_p \right),
   \end{eqnarray}
-  
+
 where :math:`r_s = q_s/m_s` is the charge-over-mass ratio (for species :math:`s`),
 :math:`\mathbf{u}_p = \mathbf{p}_p/m_s` is the reduced momentum and
 :math:`\gamma_p=\sqrt{1+\mathbf{u}_p^2}` is the Lorentz factor.
@@ -149,8 +151,8 @@ directly copied from a file generated at the end of a previous simulation), or f
 user-defined input file. In that case, the user defines the initial conditions of the
 particle, charge and current densities as well as the initial electromagnetic fields
 over the whole simulation domain.
- 
-In particular, the number density :math:`n_s(\mathbf{x})`, mean velocity 
+
+In particular, the number density :math:`n_s(\mathbf{x})`, mean velocity
 :math:`\mathbf{v}_s(\mathbf{x})` and temperature :math:`T_s(\mathbf{x})` of all species
 :math:`s` in a given cell (located at position :math:`\mathbf{x}`) at time :math:`t=0`
 have to be prescribed. The particle loading then consists in creating, in each cell,
@@ -164,9 +166,9 @@ In :program:`Smilei`, a weight is assigned to each particle depending on the den
 to the cell it originates from:
 
 .. math::
-  
+
   w_p = \frac{n_s\big(\mathbf{x}_p(t=0)\big)}{N_s}\,.
-  
+
 This variable weighting is particularly beneficial when considering initially
 highly-inhomogeneous density distributions.
 
@@ -175,7 +177,7 @@ current densities :math:`\rho(t=0,\mathbf{x})` and :math:`\mathbf{J}(t=0,\mathbf
 are computed on the grid using a simple projection technique:
 
 .. math::
-  
+
   \rho(t=0,\mathbf{x}) = \sum_s\,q_s\,\sum_p\,w_p\,S\big(\mathbf{x}-\mathbf{x}_p(t=0)\big)\,.
 
 Then, the initial electric fields are computed from :math:`\rho(t=0,\mathbf{x})`
@@ -186,7 +188,7 @@ local information exchange between adjacent processes.
 
 External (divergence-free) electric and/or magnetic fields can then be added to the
 resulting electrostatic fields, provided they fullfill Maxwell's equations :eq:`Maxwell`,
-and in particular Gauss' and Poisson's. 
+and in particular Gauss' and Poisson's.
 
 ----
 
@@ -196,7 +198,7 @@ The PIC loop
 At the end of the initialization stage [time-step :math:`(n=0)`], all quasi-particles
 in the simulation have been loaded and the electromagnetic fields have been computed
 over the whole simulation grid. The PIC loop is then started over :math:`N` time-steps
-each consisting in 
+each consisting in
 
 #. interpolating the electromagnetic fields at the particle positions,
 #. computing the new particle velocities and positions,
@@ -216,12 +218,12 @@ at time-step :math:`(n-\tfrac{1}{2})` and :math:`(n)`, respectively. For each pa
 particle position using a simple interpolation technique:
 
 .. math::
-  
+
   \begin{eqnarray}
   \mathbf{E}_p^{(n)} = V_c^{-1} \int d\mathbf{x}\, S\left(\mathbf{x}-\mathbf{x}_p^{(n)}\right) \mathbf{E}^{(n)}(\mathbf{x})\,,\\
   \mathbf{B}_p^{(n)} = V_c^{-1} \int d\mathbf{x}\, S\left(\mathbf{x}-\mathbf{x}_p^{(n)}\right) \mathbf{B}^{(n)}(\mathbf{x})\,,
   \end{eqnarray}
-  
+
 where we have used the time-centered magnetic fields
 :math:`\mathbf{B}^{(n)}=\tfrac{1}{2}[\mathbf{B}^{(n+1/2) } + \mathbf{B}^{(n-1/2)}]`,
 and :math:`V_c` denotes the volume of a cell.
@@ -232,19 +234,21 @@ Particle push
 
 Knowing, for each quasi-particle, the electromagnetic fields at its position, the new
 particle momentum and position are computed using a (second order) leap-frog integrator.
+
 In :program:`Smilei`, different schemes have been implemented:
 the well-known `Boris pusher <https://archive.org/stream/DTIC_ADA023511#page/n7/mode/2up>`_
 both in the classical and relativistic form,
 the `pusher developed by J.-L. Vay <https://doi.org/10.1063/1.2837054>`_,
 and the `pusher of Higuera and Cary <https://arxiv.org/abs/1701.05605>`_.
+
 All schemes compute the new particle momentum and position according to
 
 .. math::
-  
+
   \mathbf{u}_p^{n+\tfrac{1}{2}}=\mathbf{v}_p^{n-\tfrac{1}{2}} + r_s \Delta t \, \left[ E_p^{(n)} + \frac{\mathbf{v}_p^{(n+\tfrac{1}{2})}+\mathbf{v}_p^{(n-\tfrac{1}{2})}}{2} \times B_p^{(n)}\right],
 
 .. math::
-  
+
   \mathbf{x}_p^{n+1}=\mathbf{x}_p^{n} + \Delta t \, \frac{\mathbf{u}_p^{n+\tfrac{1}{2}}}{\gamma_p},
 
 where :math:`\Delta t` denotes the duration of a time-step.
@@ -274,7 +278,7 @@ with charge :math:`q` are computed as:
   (J_x)_{i+\tfrac{1}{2},j}^{(n+\tfrac{1}{2})} = (J_x)_{i-\tfrac{1}{2},j}^{(n+\tfrac{1}{2})} + q\,w_p\,\frac{\Delta x}{\Delta t}\,(W_x)_{i+\tfrac{1}{2},j}^{(n+\tfrac{1}{2})}\,\\
   (J_y)_{i,j+\tfrac{1}{2}}^{(n+\tfrac{1}{2})} = (J_y)_{i,j-\tfrac{1}{2}}^{(n+\tfrac{1}{2})} + q\,w_p\,\frac{\Delta y}{\Delta t}\,(W_y)_{j,i+\tfrac{1}{2}}^{(n+\tfrac{1}{2})}\,
   \end{eqnarray}
-  
+
 where :math:`(W_x)^{(n+\tfrac{1}{2})}` and :math:`(W_y)^{(n+\tfrac{1}{2})}` are computed
 from the particle current and former positions :math:`x_p^{(n+1)}` and :math:`x_p^{(n)}`,
 respectively, using the method developed by Esirkepov.
@@ -290,7 +294,7 @@ In all cases, the charge density deposited by the particle is obtained using the
 projection:
 
 .. math::
-  
+
   (\rho)_{i,j}^{(n+1)} = q\,w_p\,S(\mathbf{x}_{i,j}-\mathbf{x}_p^{(n+1)})\,.
 
 The total charge and current densities henceforth gather the contributions of all
@@ -308,13 +312,13 @@ fields can be advanced solving Maxwell's equations :eq:`Maxwell`.
 First, Maxwell-Ampère is solved, giving the advanced electric fields
 
 .. math::
-  
+
   \mathbf{E}^{(n+1)} = \mathbf{E}^{(n)} + \Delta t\, \left[\left(\nabla \times \mathbf{B}\right)^{(n+\tfrac{1}{2})} - \mathbf{J}^{(n+\tfrac{1}{2})} \right]\,.
 
 Then, Maxwell-Faraday is computed, leading to the advanced magnetic fields
 
 .. math::
-  
+
   \mathbf{B}^{(n+\tfrac{3}{2})} = \mathbf{B}^{(n+\tfrac{1}{2})} - \Delta t\, \left(\nabla \times \mathbf{E}\right)^{(n+1)}\,.
 
 The discretization of the curl-operator is not detailed here.
@@ -328,7 +332,7 @@ at time :math:`t=0`, if the charge deposition algorithm fulfills the charge cons
 equation:
 
 .. math::
-  
+
   \partial_t \rho + \nabla \cdot \mathbf{J} = 0
 
 (this motivated the use of Esirkepov's projection scheme discussed in the previous paragraph).
@@ -351,7 +355,7 @@ reflected (momentum and position follow specular reflection rules)
 or thermalized.
 In the latter case, the quasi-particle is set back inside the simulation box,
 and its new momentum is randomly sampled in a Maxwellian distribution
-with a given temperature and drift velocity, both specified by the user. 
+with a given temperature and drift velocity, both specified by the user.
 
 BCs are applied to the electromagnetic fields after Maxwell's equations have been solved.
 Each boundary of the simulation box can feature a different BC.
@@ -359,11 +363,5 @@ First, injecting/absorbing BCs inspired from the Silver-Müller BC
 are able to inject an electromagnetic wave (e.g. a laser) and/or
 to absorb outgoing electromagnetic waves.
 In contrast, the reflective electromagnetic BC will reflect any outgoing
-electromagnetic wave reaching the simulation boundary. 
-Lastly, periodic BCs correspond to applying the fields from the opposite boundary. 
-
-
-
-
-
-
+electromagnetic wave reaching the simulation boundary.
+Lastly, periodic BCs correspond to applying the fields from the opposite boundary.

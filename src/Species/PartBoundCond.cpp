@@ -19,7 +19,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     // number of dimensions for the particle
     //!\todo (MG to JD) isn't it always 3?
     nDim_particle = params.nDim_particle;
-    
+
     // Absolute global values
     double x_min_global = 0;
     double x_max_global = params.cell_length[0]*(params.n_space_global[0]);
@@ -27,7 +27,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     double y_max_global = params.cell_length[1]*(params.n_space_global[1]);
     double z_min_global = 0;
     double z_max_global = params.cell_length[2]*(params.n_space_global[2]);
-    
+
     // by default apply no bcs
     bc_xmin  = NULL;
     bc_xmax  = NULL;
@@ -35,7 +35,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     bc_ymax  = NULL;
     bc_zmin  = NULL;
     bc_zmax  = NULL;
-    
+
     // -----------------------------
     // Define limits of local domain
     if (params.EM_BCs[0][0]=="periodic" || params.hasWindow) {
@@ -46,7 +46,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
         x_min = max( x_min_global, patch->getDomainLocalMin(0) );
         x_max = min( x_max_global, patch->getDomainLocalMax(0) );
     }
-    
+
     if ( nDim_particle > 1 ) {
         if (params.EM_BCs[1][0]=="periodic") {
             y_min = patch->getDomainLocalMin(1);
@@ -56,7 +56,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
             y_min = max( y_min_global, patch->getDomainLocalMin(1) );
             y_max = min( y_max_global, patch->getDomainLocalMax(1) );
         }
-        
+
         if ( nDim_particle > 2 ) {
             if (params.EM_BCs[2][0]=="periodic") {
                 z_min = patch->getDomainLocalMin(2);
@@ -70,7 +70,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     }
 
 
-    // Can be done after parsing 
+    // Can be done after parsing
 
     // Check for inconsistencies between EM and particle BCs
     if (! species->particles->tracked) {
@@ -86,12 +86,19 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     // Define the kind of applied boundary conditions
     // ----------------------------------------------
     
+    int (*supp)  ( Particles &, int , int , double , Species *, double &);
+    if( species->mass == 0 ) {
+        supp = &supp_photon;
+    } else {
+        supp = &supp_particle;
+    }
+    
     // Xmin
     if ( species->boundary_conditions[0][0] == "refl" ) {
         if (patch->isXmin()) bc_xmin = &refl_particle;
     }
     else if ( species->boundary_conditions[0][0] == "supp" ) {
-        if (patch->isXmin()) bc_xmin = &supp_particle;
+        if (patch->isXmin()) bc_xmin = supp;
     }
     else if ( species->boundary_conditions[0][0] == "stop" ) {
         if (patch->isXmin()) bc_xmin = &stop_particle;
@@ -110,7 +117,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
         if (patch->isXmax()) bc_xmax = &refl_particle;
     }
     else if ( species->boundary_conditions[0][1] == "supp" ) {
-        if (patch->isXmax()) bc_xmax = &supp_particle;
+        if (patch->isXmax()) bc_xmax = supp;
     }
     else if ( species->boundary_conditions[0][1] == "stop" ) {
         if (patch->isXmax()) bc_xmax = &stop_particle;
@@ -131,7 +138,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
             if (patch->isYmin()) bc_ymin = &refl_particle;
         }
         else if ( species->boundary_conditions[1][0] == "supp" ) {
-            if (patch->isYmin()) bc_ymin = &supp_particle;
+            if (patch->isYmin()) bc_ymin = supp;
         }
         else if ( species->boundary_conditions[1][0] == "stop" ) {
             if (patch->isYmin()) bc_ymin = &stop_particle;
@@ -144,13 +151,13 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
         else {
             ERROR( "Ymin boundary condition `"<< species->boundary_conditions[1][0] << "` unknown"  );
         }
-        
+
         // Ymax
         if ( species->boundary_conditions[1][1] == "refl" ) {
             if (patch->isYmax()) bc_ymax = &refl_particle;
         }
         else if ( species->boundary_conditions[1][1] == "supp" ) {
-            if (patch->isYmax()) bc_ymax = &supp_particle;
+            if (patch->isYmax()) bc_ymax = supp;
         }
         else if ( species->boundary_conditions[1][1] == "stop" ) {
             if (patch->isYmax()) bc_ymax = &stop_particle;
@@ -170,20 +177,30 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
                 if (patch->isZmin()) bc_zmin = &refl_particle;
             }
             else if ( species->boundary_conditions[2][0] == "supp" ) {
-                if (patch->isZmin()) bc_zmin = &supp_particle;
+                if (patch->isZmin()) bc_zmin = supp;
             }
             else if ( species->boundary_conditions[2][0] == "stop" ) {
                 if (patch->isZmin()) bc_zmin = &stop_particle;
+            }
+            else if ( species->boundary_conditions[2][0] == "periodic" ) {
+            }
+            else {
+                ERROR( "Zmin boundary condition `"<< species->boundary_conditions[2][0] << "` unknown"  );
             }
             
             if ( species->boundary_conditions[2][1] == "refl" ) {
                 if (patch->isZmax()) bc_zmax = &refl_particle;
             }
             else if ( species->boundary_conditions[2][1] == "supp" )  {
-                if (patch->isZmax()) bc_zmax = &supp_particle;
+                if (patch->isZmax()) bc_zmax = supp;
             }
             else if ( species->boundary_conditions[2][1] == "stop" ) {
                 if (patch->isZmax()) bc_zmax = &stop_particle;
+            }
+            else if ( species->boundary_conditions[2][1] == "periodic" ) {
+            }
+            else {
+                ERROR( "Zmax boundary condition `"<< species->boundary_conditions[2][1] << "` unknown"  );
             }
             
         }//nDim_particle>2

@@ -36,10 +36,22 @@ public:
     //! If the MPI process is not a border process, particles will be flagged as an exchange particle returning 0
     //! Conditions along X are applied first, then Y, then Z.
     //! The decision whether the particle is added or not on the Exchange Particle List is defined by the final
-    //! value of keep_part. 
-    //! Be careful, once an a BC along a given dimension set keep_part to 0, it will remain to 0. 
+    //! value of keep_part.
+    //! Be careful, once an a BC along a given dimension set keep_part to 0, it will remain to 0.
     inline int apply( Particles &particles, int ipart, Species *species, double &nrj_iPart ) {//, bool &contribute ) {
-        
+
+        /*if ((particles.position(0, ipart) > x_max)
+        || (particles.position(0, ipart) < x_min)
+        || (particles.position(1, ipart) > y_max)
+        || (particles.position(1, ipart) < y_min))
+        {
+            std::cerr << species->species_type
+                  << " " << particles.position(0, ipart)
+                  << " " << particles.position(1, ipart)
+                  << " " << bc_xmin
+                  << std::endl;
+        }*/
+
         int keep_part = 1;
         if ( particles.position(0, ipart) <  x_min ) {
             if (bc_xmin==NULL) keep_part = 0;
@@ -54,7 +66,7 @@ public:
             }
         }
         if (nDim_particle >= 2) {
-            
+
             if ( particles.position(1, ipart) <  y_min ) {
                 if (bc_ymin==NULL) keep_part = 0;
                 else {
@@ -67,9 +79,9 @@ public:
                     keep_part *= (*bc_ymax)( particles, ipart, 1, 2.*y_max, species,nrj_iPart );
                 }
             }
-            
+
             if (nDim_particle == 3) {
-                
+
                 if ( particles.position(2, ipart) <  z_min ) {
                     if (bc_zmin==NULL) keep_part = 0;
                     else {
@@ -110,8 +122,7 @@ private:
 
     //! Space dimension of a particle
     int nDim_particle;
-    
+
 };
 
 #endif
-

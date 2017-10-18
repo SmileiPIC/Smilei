@@ -354,16 +354,38 @@ namelist("")
     if (!print_every) print_every = 1;
 
     // -------------------------------------------------------
-    // Parameters for the radiation losses
+    // Checking species order
+    // -------------------------------------------------------
+    // read from python namelist the number of species
+    unsigned int tot_species_number = PyTools::nComponents("Species");
+
+    double mass, mass2=0;
+
+    for (unsigned int ispec = 0; ispec < tot_species_number; ispec++)
+    {
+        PyTools::extract("mass", mass ,"Species",ispec);
+        if (mass == 0)
+        {
+            for (unsigned int ispec2 = ispec+1; ispec2 < tot_species_number; ispec2++)
+            {
+                PyTools::extract("mass", mass2 ,"Species",ispec2);
+                if (mass2 > 0)
+                {
+                    ERROR("the photon species (mass==0) should be defined after the particle species (mass>0)");
+                }
+            }
+        }
+    }
+
+    // -------------------------------------------------------
+    // Parameters for the synchrotron-like radiation losses
     // -------------------------------------------------------
     hasMCRadiation = false ;// Default value
     hasLLRadiation = false ;// Default value
     hasNielRadiation = false ;// Default value
 
-    // read from python namelist the number of species
-    unsigned int tot_species_number = PyTools::nComponents("Species");
-    // Loop over all species to check if the radiation losses are activated
 
+    // Loop over all species to check if the radiation losses are activated
     std::string radiation_model = "none";
     for (unsigned int ispec = 0; ispec < tot_species_number; ispec++) {
 
@@ -384,9 +406,24 @@ namelist("")
        }
     }
 
+    // -------------------------------------------------------
+    // Parameters for the mutliphoton Breit-Wheeler pair decay
+    // -------------------------------------------------------
+    this->hasMultiphotonBreitWheeler = false ;// Default value
+
+    std::vector<std::string> multiphoton_Breit_Wheeler(2);
+    for (unsigned int ispec = 0; ispec < tot_species_number; ispec++) {
+
+        PyTools::extract("multiphoton_Breit_Wheeler", multiphoton_Breit_Wheeler ,"Species",ispec);
+
+        if (multiphoton_Breit_Wheeler[0] != "none")
+        {
+            this->hasMultiphotonBreitWheeler = true;
+        }
+    }
 
     // -------------------------------------------------------
-    // Compute usefull quantities and introduce normalizations
+    // Compute useful quantities and introduce normalizations
     // also defines defaults values for the species lengths
     // -------------------------------------------------------
     compute();

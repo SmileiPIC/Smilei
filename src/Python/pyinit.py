@@ -303,6 +303,11 @@ class Species(SmileiComponent):
     thermal_boundary_velocity = []
     pusher = "boris"
     radiation_model = "none"
+    radiation_photon_species = "none"
+    radiation_photon_sampling = 1
+    radiation_photon_gamma_threshold = 2
+    multiphoton_Breit_Wheeler = ["none","none"]
+    multiphoton_Breit_Wheeler_sampling = [1,1]
     time_frozen = 0.0
     boundary_conditions = [["periodic"]]
     ionization_model = "none"
@@ -403,7 +408,8 @@ class PartWall(SmileiComponent):
     y = None
     z = None
 
-# Radiation loss (continuous and MC algorithms)
+
+# Radiation reaction configuration (continuous and MC algorithms)
 class RadiationReaction(SmileiComponent):
     """
     Fine-tuning of synchrotron-like radiation loss
@@ -433,6 +439,27 @@ class RadiationReaction(SmileiComponent):
     chipa_radiation_threshold = 1e-3
     # Path the tables/databases
     table_path = "./"
+
+# MutliphotonBreitWheeler pair creation
+class MultiphotonBreitWheeler(SmileiComponent):
+    """
+    Photon decay into electron-positron pairs
+    """
+    # Output format, can be "ascii", "binary", "hdf5"
+    output_format = "hdf5"
+    # Path the tables/databases
+    table_path = "./"
+    # Table T parameters
+    T_chiph_min = 1e-2
+    T_chiph_max = 1e1
+    T_dim = 128
+    # Table xip parameters
+    xip_chiph_min = 1e-2
+    xip_chiph_max = 1e1
+    xip_power = 4
+    xip_threshold = 1e-3
+    xip_chipa_dim = 128
+    xip_chiph_dim = 128
 
 # Smilei-defined
 smilei_mpi_rank = 0

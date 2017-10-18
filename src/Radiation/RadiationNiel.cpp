@@ -167,7 +167,9 @@ RadiationNiel::~RadiationNiel()
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
 // -----------------------------------------------------------------------------
-void RadiationNiel::operator() (Particles &particles,
+void RadiationNiel::operator() (
+        Particles &particles,
+        Species * photon_species,
         SmileiMPI* smpi,
         RadiationTables &RadiationTables,
         int istart,
@@ -179,7 +181,8 @@ void RadiationNiel::operator() (Particles &particles,
     // Parameters
     std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
-    //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
+    // Used to store gamma directly
+    std::vector<double> *gamma = &(smpi->dynamics_invgf[ithread]);
 
     // Charge divided by the square of the mass
     double charge_over_mass2;
@@ -193,17 +196,14 @@ void RadiationNiel::operator() (Particles &particles,
     // Number of particles
     const int nbparticles = iend-istart;
 
-    // Temporary quantum parameter
-    double * chipa = new double[nbparticles];
-
-    // Temporary Lorentz factor
-    double * gamma = new double[nbparticles];
-
     // Temporary double parameter
     double temp;
 
     // Particle id
     int ipart;
+
+    // Temporary index
+    int i;
 
     // Radiated energy
     double rad_energy;
@@ -222,8 +222,8 @@ void RadiationNiel::operator() (Particles &particles,
     // Weight shortcut
     double* weight = &( particles.weight(0) );
 
-    // Optical depth for the Monte-Carlo process
-    // double* chi = &( particles.chi(0));
+    // Quantum parameter
+    double * chipa = &( particles.chi(0));
 
     // Reinitialize the cumulative radiated energy for the current thread
     this->radiated_energy = 0.;
@@ -232,22 +232,20 @@ void RadiationNiel::operator() (Particles &particles,
     // Computation
 
     #pragma omp simd
-    for (int i=0 ; i < nbparticles; i++ ) {
-
-        // Particle number
-        ipart = istart + i;
+    for (ipart=istart ; ipart<iend; ipart++ )
+    {
 
         charge_over_mass2 = (double)(charge[ipart])*one_over_mass_2;
 
         // Gamma
-        gamma[i] = sqrt(1.0 + momentum[0][ipart]*momentum[0][ipart]
+        (*gamma)[ipart] = sqrt(1.0 + momentum[0][ipart]*momentum[0][ipart]
                              + momentum[1][ipart]*momentum[1][ipart]
                              + momentum[2][ipart]*momentum[2][ipart]);
 
         // Computation of the Lorentz invariant quantum parameter
-        chipa[i] = Radiation::compute_chipa(charge_over_mass2,
+        chipa[ipart] = Radiation::compute_chipa(charge_over_mass2,
                      momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
-                     gamma[i],
+                     (*gamma)[ipart],
                      (*Epart)[ipart].x,(*Epart)[ipart].y,(*Epart)[ipart].z,
                      (*Bpart)[ipart].x,(*Bpart)[ipart].y,(*Bpart)[ipart].z);
     }
@@ -255,15 +253,19 @@ void RadiationNiel::operator() (Particles &particles,
     // _______________________________________________________________
     // Computation of the diffusion coefficients
 
-    for (int i=0 ; i < nbparticles; i++ )
+    for (i=0 ; i < nbparticles; i++ )
     {
+
+        // Particle number
+        ipart = istart + i;
+
         // Below chipa = chipa_radiation_threshold, radiation losses are negligible
-        if (chipa[i] > RadiationTables.get_chipa_radiation_threshold())
+        if (chipa[ipart] > RadiationTables.get_chipa_radiation_threshold())
         {
 
             // Diffusive stochastic component during dt
-            diffusion[i] = RadiationTables.get_Niel_stochastic_term(gamma[i],
-                                                            chipa[i],sqrtdt);
+            diffusion[i] = RadiationTables.get_Niel_stochastic_term((*gamma)[ipart],
+                                                        chipa[ipart],sqrtdt);
         }
         else
         {
@@ -275,21 +277,23 @@ void RadiationNiel::operator() (Particles &particles,
     // Update of the momentum
 
     #pragma omp simd
-    for (int i=0 ; i < nbparticles; i++ ) {
-
-        if (chipa[i] > RadiationTables.get_chipa_radiation_threshold())
+    for (ipart=istart ; ipart<iend; ipart++ )
+    {
+        // Below chipa = chipa_radiation_threshold, radiation losses are negligible
+        if (chipa[ipart] > RadiationTables.get_chipa_radiation_threshold())
         {
 
             // Particle number
-            ipart = istart + i;
+            i = ipart - istart;
 
             // Radiated energy during the time step
             rad_energy =
-            RadiationTables.get_corrected_cont_rad_energy_Ridgers(chipa[i],dt);
+            RadiationTables.get_corrected_cont_rad_energy_Ridgers(chipa[ipart],dt);
 
             // Effect on the momentum
             // Temporary factor
-            temp = (rad_energy - diffusion[i])*gamma[i]/(gamma[i]*gamma[i]-1.);
+            temp = (rad_energy - diffusion[i])
+                 * (*gamma)[ipart]/((*gamma)[ipart]*(*gamma)[ipart]-1.);
 
             // Update of the momentum
             momentum[0][ipart] -= temp*momentum[0][ipart];
@@ -297,7 +301,6 @@ void RadiationNiel::operator() (Particles &particles,
             momentum[2][ipart] -= temp*momentum[2][ipart];
 
         }
-
     }
 
     // _______________________________________________________________
@@ -308,7 +311,7 @@ void RadiationNiel::operator() (Particles &particles,
     #pragma omp simd reduction(+:radiated_energy_loc)
     for (int ipart=istart ; ipart<iend; ipart++ )
     {
-        radiated_energy_loc += weight[ipart]*(gamma[ipart-istart] - sqrt(1.0
+        radiated_energy_loc += weight[ipart]*((*gamma)[ipart] - sqrt(1.0
                             + momentum[0][ipart]*momentum[0][ipart]
                             + momentum[1][ipart]*momentum[1][ipart]
                             + momentum[2][ipart]*momentum[2][ipart]));
@@ -318,7 +321,5 @@ void RadiationNiel::operator() (Particles &particles,
     // _______________________________________________________________
     // Clean memory
 
-    delete [] chipa;
-    delete [] gamma;
     delete [] diffusion;
 }

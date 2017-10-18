@@ -453,7 +453,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     #pragma omp master
     {
         // If the patches have been moved (moving window or load balancing) we must re-compute the probes positions
-        if( !positions_written || last_iteration_points_calculated < vecPatches.lastIterationPatchesMoved ) {
+        if( !positions_written || last_iteration_points_calculated <= vecPatches.lastIterationPatchesMoved ) {
             double x_moved = simWindow ? simWindow->getXmoved() : 0.;
             createPoints(smpi, vecPatches, false, x_moved);
             last_iteration_points_calculated = timestep;

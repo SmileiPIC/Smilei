@@ -1,9 +1,7 @@
+.. _radiationReactionPage:
+
 Synchrotron-like radiation reaction
 --------------------------------------------------------------------------------
-
-.. role:: purple
-.. role:: green
-.. role:: orange
 
 
 High-energy particles traveling in a strong electromagnetic field lose energy by
@@ -311,7 +309,10 @@ energy tends to infinity [Lobet2015]_ and that the error is low when
 Between emission events, the electron dynamics is still governed by the
 Lorentz force.
 
-----
+If the photon is emitted as a macro-photon, initial position is the same as
+for the emitting particle. The weight is also conserved.
+
+--------------------------------------------------------------------------------
 
 Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

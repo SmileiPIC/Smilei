@@ -23,7 +23,7 @@ def _smilei_check():
     for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
             "DiagProbe","DiagParticleBinning", "DiagScalar","DiagFields","ExternalField",
             "SmileiSingleton","Main","Checkpoints","LoadBalancing","MovingWindow",
-            "RadiationReaction", "ParticleData"]:
+            "RadiationReaction", "ParticleData", "MultiphotonBreitWheeler"]:
         CheckClass = globals()[CheckClassName]
         try:
             if not CheckClass._verify: raise Exception("")

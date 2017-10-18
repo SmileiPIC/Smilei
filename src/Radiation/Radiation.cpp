@@ -2,7 +2,7 @@
 //! \file Radiation.cpp
 //
 //! \brief This file contains the class functions for the generic class
-//  Radiation for the particle radiation losses.
+//!  Radiation for the particle radiation losses.
 //
 // ----------------------------------------------------------------------------
 
@@ -26,8 +26,8 @@ Radiation::Radiation(Params& params, Species * species)
     one_over_mass_ = 1./species->mass;
 
     // Normalized Schwinger Electric Field
-    norm_E_Schwinger = electron_mass*c_vacuum*c_vacuum
-                     / (red_planck_cst*params.reference_angular_frequency_SI);
+    norm_E_Schwinger = params.electron_mass*params.c_vacuum*params.c_vacuum
+                     / (params.red_planck_cst* params.reference_angular_frequency_SI);
 
     // Inverse of norm_E_Schwinger
     inv_norm_E_Schwinger = 1./norm_E_Schwinger;
@@ -80,7 +80,7 @@ void Radiation::compute_thread_chipa(Particles &particles,
     // Charge shortcut
     short* charge = &( particles.charge(0) );
 
-    // Optical depth for the Monte-Carlo process
+    // Quantum parameter
     double* chi = &( particles.chi(0));
 
     // _______________________________________________________________

@@ -91,10 +91,15 @@ public :
     void dynamics(Params& params,
                   SmileiMPI* smpi,
                   SimWindow* simWindow,
-                  RadiationTables & RadiationTables,double time_dual,
+                  RadiationTables & RadiationTables,
+                  MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
+                  double time_dual,
                   Timers &timers, int itime);
 
-    void finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWindow* simWindow, double time_dual,
+    void finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWindow* simWindow, 
+                  RadiationTables & RadiationTables,
+                  MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
+                  double time_dual,
                   Timers &timers, int itime);
 
     void computeCharge();

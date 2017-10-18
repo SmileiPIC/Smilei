@@ -211,7 +211,8 @@ The block ``Main`` is **mandatory** and has the following syntax::
 .. py:data:: reference_angular_frequency_SI
   
   The value of the reference angular frequency :math:`\omega_r` in SI units,
-  **only needed when collisions, ionization or radiation losses are requested**.
+  **only needed when collisions, ionization, radiation losses
+  or multiphoton Breit-Wheeler pair creation are requested**.
   This frequency is related to the normalization length according to :math:`L_r\omega_r = c`
   (see :doc:`units`).
 
@@ -399,7 +400,16 @@ Each species has to be defined in a ``Species`` block::
       is_test = False,
       c_part_max = 1.0,
       pusher = "boris",
+      
+      # Radiation reaction, for particles only:
       radiation_model = "none",
+      radiation_photon_species = "none",
+      radiation_photon_sampling = 1,
+      radiation_photon_gamma_threshold = 2,
+
+      # For photon species only:
+      multiphoton_Breit_Wheeler = ["electron","positron"],
+      multiphoton_Breit_Wheeler_sampling = [1,1]
   )
 
 .. py:data:: name
@@ -482,9 +492,10 @@ Each species has to be defined in a ``Species`` block::
   
   The boundary conditions for the particles of this species.
   Each boundary may have one of the following conditions:
-  ``"refl"`` for *reflecting*, ``"supp"`` for *suppressing*,
-  ``"stop"`` for *stopping*, ``"periodic"``, and ``"thermalize"``.
-  
+  ``"periodic"``, ``"refl"`` for *reflecting*, ``"supp"`` for *suppressing*,
+  ``"stop"`` for *stopping*, and ``"thermalize"``.
+  For photon species (``mass=0``), the last two are not available.
+    
   | **Syntax 1:** ``[[bc_all]]``, identical for all boundaries.
   | **Syntax 2:** ``[[bc_X], [bc_Y], ...]``, different depending on x, y or z.
   | **Syntax 3:** ``[[bc_Xmin, bc_Xmax], ...]``,  different on each boundary.
@@ -540,21 +551,100 @@ Each species has to be defined in a ``Species`` block::
   
   Type of pusher to be used for this species. The default value corresponds to the 
   relativistic Boris pusher. Smilei has the following solvers implemented:
+
+  * ``"boris"``: The relativistic Boris pusher
   * ``"borisnr"``: The non-relativistic Boris pusher
   * ``"vay"``: The relativistic pusher of J. L. Vay
   * ``"higueracary"``: The relativistic pusher of A. V. Higuera and J. R. Cary
+
+  For photon species, the only pusher available is ``"norm"`` and corresponds to
+  a rectilinear propagation.
 
 .. py:data:: radiation_model
 
   :default: ``"none"``
 
-  Radiation model used for this species (see :doc:`radiation_loss`).
+  Radiation reaction model used for this species (see :doc:`radiation_loss`).
+  No radiation is actually emitted, unless you use the ``"Monte-Carlo"`` model
+  and you define :py:data:`radiation_photon_species`.
 
   * ``"none"``: no radiation
   * ``"Landau-Lifshitz"``: Landau-Lifshitz model approximated for high energies
   * ``"corrected-Landau-Lifshitz"``: with quantum correction
-  * ``"Niel"``: a `stochastic radiation model <https://arxiv.org/abs/1707.02618>`_
-  * ``"Monte-Carlo"``: Monte-Carlo radiation model
+  * ``""Niel"``: a `stochastic radiation model <https://arxiv.org/abs/1707.02618>`_ based on the work of Niel `et al.`.
+  * ``"Monte-Carlo"``: Monte-Carlo radiation model. This model can be configured to generate macro-photons with :py:data:`radiation_photon_species`.
+  
+  :red:`This parameter cannot be assigned to photons (mass=0).`
+
+.. py:data:: radiation_photon_species
+
+  :default: ``"none"``
+
+  This parameter determines whether the Monte-Carlo :py:data:`radiation model`
+  will generate macro-photons. By default, the photon species is set to ``"none"``
+  meaning that no macro-photon will be created. To set the macro-photon generation,
+  a photon species (``mass = 0``) has to be created after the particle species
+  (``mass > 0``) and the parameter ``radiation_photon_species`` set to this
+  photon species name.
+  
+  :red:`This parameter cannot be assigned to photons (mass=0).`
+
+.. py:data:: radiation_photon_sampling
+
+  :default: ``1``
+
+  When the macro-photon creation is activated
+  (:py:data:`radiation_photon_species` set to one of the defined photon species),
+  this parameter is the number of macro-photons generated per emission event.
+  By default, a single macro-photon is created per emission but in order to
+  improve the photon statistics, one can decide to increase this number.
+  The weight of each photon is therefore the emitting particle one divided
+  by this number.
+  Obviously, this parameter can not be below 1. Note that a large number will
+  rapidly slow down the application performance and can lead to memory
+  saturation.
+  
+  :red:`This parameter cannot be assigned to photons (mass=0).`
+
+.. py:data:: radiation_photon_gamma_threshold
+
+  :default: ``2``
+
+  Threshold on the photon energy for the macro-photon emission when using the
+  radiation reaction Monte-Carlo process.
+  Under this threshold, the macro-photon from the radiation reaction Monte-Carlo
+  process is not created but taken anyway into account in the energy balance.
+  The default value corresponds to twice the electron rest mass energy that
+  is the required energy to decay into electron-positron pairs.
+  
+  :red:`This parameter cannot be assigned to photons (mass=0).`
+
+.. py:data:: multiphoton_Breit_Wheeler
+
+  :default: ``["none","none"]``
+  
+  This entry is an
+  array of two strings respectively corresponding to one for the previously
+  defined electron and the positron species.
+  By default, ``"none"`` means that the process is not activated.
+  To activate the multiphoton Breit-Wheeler pair creation, just specify
+  a defined electron and positron species. (see :doc:`multiphoton_Breit_Wheeler`)
+  
+  :red:`This parameter is an attribute of photon species only (mass=0).`
+
+.. py:data:: multiphoton_Breit_Wheeler_sampling
+
+  :default: ``[1,1]``
+
+  This entry is an array of two integers respectively corresponding to the
+  number of electrons and positrons generated per photon decay. By default,
+  a single electron and positron are created. This number can be increased
+  to improve the particle statistics. The weight of each particle is therefore
+  the photon one divided by the corresponding number. Obviously, this parameter can not be
+  below 1. Note that large numbers will rapidly slow down the application
+  performance and can lead to memory saturation. (see :doc:`multiphoton_Breit_Wheeler`)
+  
+  :red:`This parameter is an attribute of photon species only (mass=0).`
 
 ----
 
@@ -1133,12 +1223,12 @@ To have binary collisions in :program:`Smilei`, add one or several ``Collisions`
 For more details about the collision scheme in :program:`Smilei`, see :doc:`collisions`
 
 
-----
+--------------------------------------------------------------------------------
 
 .. _RadiationReaction:
 
-Radiation reaction
-^^^^^^^^^^^^^^^^^^^^^
+Radiations reaction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The block ``RadiationReaction()`` enables to tune the radiation loss properties
 (see :doc:`radiation_loss`).
@@ -1277,7 +1367,119 @@ tables.
   Path to the external tables for the radiation losses.
   Default tables are located in ``databases``.
 
-----
+--------------------------------------------------------------------------------
+
+.. _MultiphotonBreitWheeler:
+
+Multiphoton Breit-Wheeler
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The block ``MultiphotonBreitWheeler`` enables to tune parameters of the
+multiphoton Breit-Wheeler process and particularly the table generation.
+
+There are two tables used for the multiphoton Breit-Wheeler refers to as the
+*T* table and the *xip* table.
+
+::
+
+  MultiphotonBreitWheeler(
+
+    # Table output format, can be "ascii", "binary", "hdf5"
+    output_format = "hdf5",
+
+    # Path the tables
+    table_path = "../databases/"
+
+    # Table T parameters
+    T_chiph_min = 1e-2
+    T_chiph_max = 1e1
+    T_dim = 128
+
+    # Table xip parameters
+    xip_chiph_min = 1e-2
+    xip_chiph_max = 1e1
+    xip_power = 4
+    xip_threshold = 1e-3
+    xip_chipa_dim = 128
+    xip_chiph_dim = 128
+
+  )
+
+.. py:data:: table_path
+
+  :default: ``"./"``
+
+  Path to the external tables for the multiphoton Breit-Wheeler.
+  Default tables are located in ``databases``.
+
+.. py:data:: output_format
+
+  :default: ``"hdf5"``
+
+  Output format of the tables:
+    * ``"hdf5"``: ``multiphoton_Breit_Wheeler_tables.h5``
+    * ``"binary"``: ``tab_T.bin`` and ``tab_mBW_xip.bin``
+    * ``"ascii"``: ``tab_T.dat`` and ``tab_mBW_xip.dat``
+
+.. py:data:: T_chiph_min
+
+  :default: 1e-2
+
+  Minimum value of the photon quantum parameter :math:`\chi_\gamma` for the table *T*.
+
+.. py:data:: T_chiph_max
+
+  :default: 1e1
+
+  Maximum value of the photon quantum parameter :math:`\chi_\gamma` for the table *T*.
+
+.. py:data:: T_dim
+
+  :default: 128
+
+  Dimension of the table *T*.
+
+.. py:data:: xip_chiph_min
+
+  :default: 1e-2
+
+  Minimum photon quantum parameter for the computation of the *chimin*
+  and *xip* tables.
+
+.. py:data:: xip_chiph_max
+
+  :default: 1e1
+
+  Maximum photon quantum parameter for the computation of the *chimin*
+  and *xip* tables.
+
+.. py:data:: xip_power
+
+  :default: 4
+
+  Maximum decrease in order of magnitude for the search for the minimum value
+  of the photon quantum parameter. It is advised to keep this value by default.
+
+.. py:data:: xip_threshold
+
+  :default: 1e-3
+
+  Minimum value of *xip* to compute the minimum value of the photon
+  quantum parameter. It is advised to keep this value by default.
+
+.. py:data:: xip_chiph_dim
+
+  :default: 128
+
+  Discretization of the *chimin* and *xip* tables in the *chiph* direction.
+
+.. py:data:: xip_chipa_dim
+
+  :default: 128
+
+  Discretization of the *xip* tables in the *chipa* direction.
+
+--------------------------------------------------------------------------------
 
 .. _DiagScalar:
 

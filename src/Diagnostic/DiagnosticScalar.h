@@ -174,9 +174,11 @@ private :
     Scalar_value *Ukin_out_mvw, *Ukin_inj_mvw, *Uelm_out_mvw, *Uelm_inj_mvw;
     // For the radiated energy
     Scalar_value *Urad;
+    // Energy of the pairs created via the multiphoton Breit-Wheeler process
+    Scalar_value *UmBWpairs;
 
     std::vector<Scalar_value *> sDens, sNtot, sZavg, sUkin, fieldUelm;
-    // For the radiated energy
+    // For the radiated energy per species
     std::vector<Scalar_value *> sUrad;
     std::vector<Scalar_value_location *> fieldMin, fieldMax;
     std::vector<Scalar_value *> poy, poyInst;
@@ -187,6 +189,8 @@ private :
     bool necessary_Uelm, necessary_Uelm_BC;
     // For the radiated energy
     bool necessary_Urad;
+    // For the pair generation via the multiphoton Breit-Wheeler
+    bool necessary_UmBWpairs;
     bool necessary_fieldMinMax_any;
     std::vector<bool> necessary_species, necessary_fieldUelm, necessary_fieldMinMax, necessary_poy;
 

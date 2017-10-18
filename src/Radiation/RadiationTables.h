@@ -357,18 +357,6 @@ class RadiationTables
         //! Factor Classical radiated power
         double factor_cla_rad_power;
 
-        //! Fine structure constant
-        const double fine_struct_cst = 7.2973525698e-3;
-
-        //! Reduced Planck Constant (J.s)
-        const double red_planck_cst = 1.054571628E-34;
-
-        //! Electron mass
-        const double electron_mass = 9.109382616e-31;
-
-        //! Speed of light in vacuum (m/s)
-        const double c_vacuum = 299792458;
-
         //! Normalized reduced Compton wavelength
         double norm_lambda_compton;
 
