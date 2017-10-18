@@ -25,7 +25,7 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 	sim = Smilei(path)
 
 	ncases = 0
-	while sim.namelist.DiagParticleBinning[ncases].output == "jx_density":
+	while sim.namelist.DiagParticleBinning[ncases].deposited_quantity == "weight_charge_vx":
 		ncases += 1
 	if ncases == 0: continue
 

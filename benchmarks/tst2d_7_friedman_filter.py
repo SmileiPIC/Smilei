@@ -160,7 +160,7 @@ DiagFields(
 )
 
 DiagParticleBinning(
-    output = "density",
+    deposited_quantity = "weight",
     every = globalEvery,
     time_average = 1,
     species = ["eon"],
@@ -171,7 +171,7 @@ DiagParticleBinning(
 )
 
 DiagParticleBinning(
-    output = "density",
+    deposited_quantity = "weight",
     every = globalEvery,
     time_average = 1,
     species = ["eon"],

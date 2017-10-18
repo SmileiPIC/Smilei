@@ -27,7 +27,7 @@ Upcoming changes
 * **Major** :doc:`syntax changes<syntax_changes>` in the namelist
 * QED radiation reaction
 * *Test mode* to quickly check the namelist consistency
-* *ParticleBinning* and *Screen* diagnostics accept a python function as their ``output`` and ``axis``.
+* *ParticleBinning* and *Screen* diagnostics accept a python function as their ``deposited_quantity`` and ``axis``.
 * Bugfixes: 4th order, field ionization
 
 3.4:

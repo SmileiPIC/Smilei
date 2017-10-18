@@ -85,7 +85,7 @@ DiagScalar(
 
 
 DiagParticleBinning(
-	output = "density",
+	deposited_quantity = "weight",
 	every = 2,
 	time_average = 1,
 	species = ["electron1"],
@@ -96,7 +96,7 @@ DiagParticleBinning(
 )
 
 DiagParticleBinning(
-	output = "density",
+	deposited_quantity = "weight",
 	every = 2,
 	time_average = 1,
 	species = ["electron1"],
@@ -107,7 +107,7 @@ DiagParticleBinning(
 )
 
 DiagParticleBinning(
-	output = "density",
+	deposited_quantity = "weight",
 	every = 2,
 	time_average = 1,
 	species = ["ion1"],
@@ -118,7 +118,7 @@ DiagParticleBinning(
 )
 
 DiagParticleBinning(
-	output = "density",
+	deposited_quantity = "weight",
 	every = 10,
 	time_average = 1,
 	species = ["electron1"],

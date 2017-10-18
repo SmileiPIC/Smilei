@@ -806,8 +806,8 @@ in the previous section::
 .. rubric:: 8. Make an operation between diagnostics
 
 Let us now consider the ParticleBinning #2, which is very similar to #0 as it has
-the same axes :math:`x` and :math:`v_x`, but it has ``ouput="px_density"`` instead
-of ``ouput="density"``. Consequently, if we divide #2 by #0, we will obtain the
+the same axes :math:`x` and :math:`v_x`, but it has ``deposited_density="weight_px"`` instead
+of ``deposited_quantity="weight"``. Consequently, if we divide #2 by #0, we will obtain the
 average value :math:`\left<p_x\right>` as a function of :math:`x` and :math:`v_x`.
 To do this operation, we need to indicate ``"#2/#0"`` instead of the diagnostic number::
 

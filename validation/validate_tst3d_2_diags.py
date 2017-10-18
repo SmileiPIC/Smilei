@@ -34,9 +34,9 @@ for field, precision in zip(fields, precisions):
 # PARTICLE BINNING DIAGNOSTICS
 precision = [0.01, 0.01, 0.01, 100., 100., 100., 100., 1., 5e7, 100., 100., 100., 100., 5e7, 2e-3, 0.01, 0.01]
 for i, axis in enumerate(S.namelist.axes):
-	name = axis[0] if type(axis[0]) is str else "axis_user_function"
+	name = axis[0] if type(axis[0]) is str else "user_function"
 	Validate("Particle binning axis "+name, S.ParticleBinning(i, timesteps=40).getData()[-1], precision[i])
 precision = [2e-3, 0.01, 0.01, 1e-7, 1e-7, 1e-7, 2e-12, 2e-7, 1e-7, 1e-7, 1e-7, 1e-12, 1e-12, 1e-12, 1e-12, 1e-12, 1e-12, 0.01]
-for j, output in enumerate(S.namelist.outputs):
-	name = output if type(output) is str else "output_user_function"
-	Validate("Particle binning output "+name, S.ParticleBinning(i+j+1, timesteps=40).getData()[-1], precision[j])
+for j, deposited_quantity in enumerate(S.namelist.quantities):
+	name = deposited_quantity if type(deposited_quantity) is str else "user_function"
+	Validate("Particle binning deposited_quantity "+name, S.ParticleBinning(i+j+1, timesteps=40).getData()[-1], precision[j])

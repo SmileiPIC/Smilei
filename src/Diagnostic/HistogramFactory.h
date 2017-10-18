@@ -12,7 +12,7 @@ class HistogramFactory {
 public:
     static Histogram* create(
         Params &params,
-        PyObject* output_object,
+        PyObject* deposited_quantity_object,
         std::vector<PyObject*> &pyAxes,
         std::vector<unsigned int> &species,
         Patch* patch,
@@ -22,71 +22,71 @@ public:
     {
         
         Histogram * histogram;
-        std::string output = "";
-        std::ostringstream outputName( "" );
-        outputName << errorPrefix << ": parameter `output`";
-        std::string outputPrefix = outputName.str();
+        std::string deposited_quantity = "";
+        std::ostringstream deposited_quantityName( "" );
+        deposited_quantityName << errorPrefix << ": parameter `deposited_quantity`";
+        std::string deposited_quantityPrefix = deposited_quantityName.str();
         
-        // By default, output=None, but should not
-        if( output_object == Py_None ) {
-            ERROR(outputPrefix << " required");
+        // By default, deposited_quantity=None, but should not
+        if( deposited_quantity_object == Py_None ) {
+            ERROR(deposited_quantityPrefix << " required");
             
         // If string, then ok
-        } else if( PyTools::convert(output_object, output) ) {
+        } else if( PyTools::convert(deposited_quantity_object, deposited_quantity) ) {
             
-            if ( output == "user_function" ) {
-                ERROR(outputPrefix << " = " << output <<" not understood");
-            } else if (output == "density"        ) {
+            if ( deposited_quantity == "user_function" ) {
+                ERROR(deposited_quantityPrefix << " = " << deposited_quantity <<" not understood");
+            } else if (deposited_quantity == "weight"        ) {
                 histogram = new Histogram_density        ();
-            } else if (output == "charge_density" ) {
+            } else if (deposited_quantity == "weight_charge" ) {
                 histogram = new Histogram_charge_density ();
-            } else if (output == "jx_density"     ) {
+            } else if (deposited_quantity == "weight_charge_vx" ) {
                 histogram = new Histogram_jx_density     ();
-            } else if (output == "jy_density"     ) {
+            } else if (deposited_quantity == "weight_charge_vy" ) {
                 histogram = new Histogram_jy_density     ();
-            } else if (output == "jz_density"     ) {
+            } else if (deposited_quantity == "weight_charge_vz" ) {
                 histogram = new Histogram_jz_density     ();
-            } else if (output == "ekin_density"   ) {
+            } else if (deposited_quantity == "weight_ekin"   ) {
                 histogram = new Histogram_ekin_density   ();
-            } else if (output == "p_density"      ) {
+            } else if (deposited_quantity == "weight_p"      ) {
                 histogram = new Histogram_p_density      ();
-            } else if (output == "px_density"     ) {
+            } else if (deposited_quantity == "weight_px"     ) {
                 histogram = new Histogram_px_density     ();
-            } else if (output == "py_density"     ) {
+            } else if (deposited_quantity == "weight_py"     ) {
                 histogram = new Histogram_py_density     ();
-            } else if (output == "pz_density"     ) {
+            } else if (deposited_quantity == "weight_pz"     ) {
                 histogram = new Histogram_pz_density     ();
-            } else if (output == "pressure_xx"    ) {
+            } else if (deposited_quantity == "weight_vx_px"    ) {
                 histogram = new Histogram_pressure_xx    ();
-            } else if (output == "pressure_yy"    ) {
+            } else if (deposited_quantity == "weight_vy_py"    ) {
                 histogram = new Histogram_pressure_yy    ();
-            } else if (output == "pressure_zz"    ) {
+            } else if (deposited_quantity == "weight_vz_pz"    ) {
                 histogram = new Histogram_pressure_zz    ();
-            } else if (output == "pressure_xy"    ) {
+            } else if (deposited_quantity == "weight_vx_py"    ) {
                 histogram = new Histogram_pressure_xy    ();
-            } else if (output == "pressure_xz"    ) {
+            } else if (deposited_quantity == "weight_vx_pz"    ) {
                 histogram = new Histogram_pressure_xz    ();
-            } else if (output == "pressure_yz"    ) {
+            } else if (deposited_quantity == "weight_vy_pz"    ) {
                 histogram = new Histogram_pressure_yz    ();
-            } else if (output == "ekin_vx_density") {
+            } else if (deposited_quantity == "weight_ekin_vx") {
                 histogram = new Histogram_ekin_vx_density();
-            } else if (output == "chi_density" ) {
+            } else if (deposited_quantity == "weight_chi" ) {
                 histogram = new Histogram_chi_density    (patch, species, errorPrefix);
             } else {
-                ERROR(outputPrefix << " not understood");
+                ERROR(deposited_quantityPrefix << " not understood");
             }
-            histogram->output = output;
+            histogram->deposited_quantity = deposited_quantity;
             
-        // If numpy supported, also accept output = any function
+        // If numpy supported, also accept deposited_quantity = any function
         } else {
 #ifdef SMILEI_USE_NUMPY
             // Test the function with temporary, "fake" particles
             double * dummy = NULL;
-            ParticleData test( params.nDim_particle, output_object, outputPrefix, dummy );
-            histogram = new Histogram_user_function(output_object);
-            histogram->output = "user_function";
+            ParticleData test( params.nDim_particle, deposited_quantity_object, deposited_quantityPrefix, dummy );
+            histogram = new Histogram_user_function(deposited_quantity_object);
+            histogram->deposited_quantity = "user_function";
 #else
-            ERROR(outputPrefix << " should be a string");
+            ERROR(deposited_quantityPrefix << " should be a string");
 #endif
         }
         

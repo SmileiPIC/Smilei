@@ -81,7 +81,7 @@ DiagFields(
 )
 
 DiagParticleBinning(
-    output = "density",
+    deposited_quantity = "weight",
     every = every,
     species = ["ion"],
     axes = [
@@ -91,7 +91,7 @@ DiagParticleBinning(
 )
 
 DiagParticleBinning(
-    output = "density",
+    deposited_quantity = "weight",
     every = every,
     time_average = 1,
     species = ["ion"],
@@ -102,7 +102,7 @@ DiagParticleBinning(
 
 
 DiagParticleBinning(
-    output = "density",
+    deposited_quantity = "weight",
     every = 10,
     time_average = 1,
     species = ["eon"],

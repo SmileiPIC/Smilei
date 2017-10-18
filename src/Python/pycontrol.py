@@ -117,9 +117,9 @@ def _keep_python_running():
     for d in DiagTrackParticles:
         if d.filter is not None:
             return True
-    # Verify the particle binning having a function for output or axis type
+    # Verify the particle binning having a function for deposited_quantity or axis type
     for d in DiagParticleBinning:
-        if type(d.output) is not str:
+        if type(d.deposited_quantity) is not str:
             return True
         for ax in d.axes:
             if type(ax[0]) is not str:

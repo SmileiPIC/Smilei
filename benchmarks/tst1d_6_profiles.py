@@ -106,7 +106,7 @@ for eon in mj_species:
 	)
 	
 	DiagParticleBinning(
-	 	output = "density",
+	 	deposited_quantity = "weight",
 	 	every = 1000.,
 	 	species = [eon],
 	 	axes = [

@@ -83,7 +83,7 @@ DiagFields(
 DiagScalar(every=every)
 
 DiagParticleBinning(
-	output = "density",
+	deposited_quantity = "weight",
 	every = every,
 	species = ["ion"],
 	axes = [
@@ -93,7 +93,7 @@ DiagParticleBinning(
 )
 
 DiagParticleBinning(
-	output = "density",
+	deposited_quantity = "weight",
 	every = every,
 	species = ["ion"],
 	axes = [
@@ -108,7 +108,7 @@ for direction in ["forward", "backward", "both", "canceling"]:
 	    point = [0.],
 	    vector = [Lsim/3.],
 	    direction = direction,
-	    output = "density",
+	    deposited_quantity = "weight",
 	    species = ["eon"],
 	    axes = [["ekin", 0., 0.4, 10],],
 	    every = 3000
@@ -118,7 +118,7 @@ for direction in ["forward", "backward", "both", "canceling"]:
 	    point = [Lsim/3.],
 	    vector = [1.],
 	    direction = direction,
-	    output = "density",
+	    deposited_quantity = "weight",
 	    species = ["eon"],
 	    axes = [["ekin", 0., 0.4, 10],],
 	    every = 3000

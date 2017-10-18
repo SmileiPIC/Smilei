@@ -250,24 +250,27 @@ class Screen(Diagnostic):
 			titles.update({ d:"??" })
 			units.update({ d:"??" })
 			val_units = "??"
-			output = self._myinfo[d]["output"]
-			if   output == "density":
+			deposited_quantity = self._myinfo[d]["deposited_quantity"]
+			if   deposited_quantity == "weight":
 				titles[d] = "Number" + ("" if hasComposite else " density")
 				val_units = "1" if hasComposite else "N_r"
-			elif output == "charge_density":
+			elif deposited_quantity == "weight_charge":
 				titles[d] = "Charge" + ("" if hasComposite else " density")
 				val_units = "Q_r" if hasComposite else "N_r * Q_r"
-			elif output=="ekin_density":
+			elif deposited_quantity == "weight_ekin":
 				titles[d] = "Energy" + ("" if hasComposite else " density")
 				val_units = "K_r" if hasComposite else "N_r * K_r"
-			elif output[0] == "j":
-				titles[d] = "J"+output[1] + (" x Volume" if hasComposite else "")
+			elif deposited_quantity[:15] == "weight_charge_v":
+				titles[d] = "J"+deposited_quantity[-1] + (" x Volume" if hasComposite else "")
 				val_units = "J_r/N_r" if hasComposite else "J_r"
-			elif output[0]=="p" and output[-8:] == "_density":
-				titles[d] = "P"+output[1].strip("_") + ("" if hasComposite else " density")
+			elif deposited_quantity[:8] == "weight_p":
+				titles[d] = "P"+deposited_quantity[8:] + ("" if hasComposite else " density")
 				val_units = "P_r" if hasComposite else "N_r * P_r"
-			elif output[:8]=="pressure":
-				titles[d] = "Pressure "+output[-2] + (" x Volume" if hasComposite else "")
+			elif deposited_quantity[:8] == "weight_v":
+				titles[d] = "Pressure "+deposited_quantity[8]+deposited_quantity[11] + (" x Volume" if hasComposite else "")
+				val_units = "K_r" if hasComposite else "N_r * K_r"
+			elif deposited_quantity[:13] == "weight_ekin_v":
+				titles[d] = "Energy ("+deposited_quantity[-1]+") flux" + (" x Volume" if hasComposite else " density")
 				val_units = "K_r" if hasComposite else "N_r * K_r"
 			axes_units = [unit for unit in self._units if (hasComposite or unit!="L_r")]
 			units[d] = val_units
@@ -320,11 +323,11 @@ class Screen(Diagnostic):
 			axes = []
 			# Parse each attribute
 			for name, value in attrs:
-				if (name == "output"):
+				if (name == "deposited_quantity"):
 					try:
-						output = bytes.decode(value)
+						deposited_quantity = bytes.decode(value)
 					except:
-						output = "user_function"
+						deposited_quantity = "user_function"
 				if (name == "species"):
 					species = bytes.decode(value.strip()).split() # get all species numbers
 					species = [int(s) for s in species]
@@ -345,9 +348,9 @@ class Screen(Diagnostic):
 			f.close()
 			# Verify that the info corresponds to the diag in the other paths
 			if info == {}:
-				info = {"#":diagNumber, "output":output, "species":species, "axes":axes}
+				info = {"#":diagNumber, "deposited_quantity":deposited_quantity, "species":species, "axes":axes}
 			else:
-				if output!=info["output"] or axes!=info["axes"]:
+				if deposited_quantity!=info["deposited_quantity"] or axes!=info["axes"]:
 					print("Screen #"+str(diagNumber)+" in path '"+path+"' is incompatible with the other ones")
 					return False
 		return info
@@ -359,7 +362,7 @@ class Screen(Diagnostic):
 		# 1 - diag number, type and list of species
 		species = ""
 		for i in range(len(info["species"])): species += str(info["species"][i])+" " # reconstitute species string
-		printedInfo = "Screen#"+str(info["#"])+" - "+info["output"]+" of species # "+species+"\n"
+		printedInfo = "Screen#"+str(info["#"])+" - "+info["deposited_quantity"]+" of species # "+species+"\n"
 		
 		# 3 - axes
 		for i in range(len(info["axes"])):

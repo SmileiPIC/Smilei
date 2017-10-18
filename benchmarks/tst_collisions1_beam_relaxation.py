@@ -76,7 +76,7 @@ for ion_nppc, eon_nppc in [[1000, 1000], [1000, 100], [100, 1000]]:
 	)
 	
 	DiagParticleBinning(
-		output = "density",
+		deposited_quantity = "weight",
 		every = 4,
 		time_average = 1,
 		species = [eon],
@@ -87,7 +87,7 @@ for ion_nppc, eon_nppc in [[1000, 1000], [1000, 100], [100, 1000]]:
 	)
 	
 	DiagParticleBinning(
-		output = "density",
+		deposited_quantity = "weight",
 		every = 4,
 		time_average = 1,
 		species = [eon],
@@ -98,7 +98,7 @@ for ion_nppc, eon_nppc in [[1000, 1000], [1000, 100], [100, 1000]]:
 	)
 	
 	DiagParticleBinning(
-		output = "density",
+		deposited_quantity = "weight",
 		every = 4,
 		time_average = 1,
 		species = [ion],

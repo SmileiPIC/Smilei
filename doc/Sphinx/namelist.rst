@@ -1584,7 +1584,7 @@ You can add a particle binning diagnostic by including a block ``DiagParticleBin
 for instance::
   
   DiagParticleBinning(
-      output = "density",
+      deposited_quantity = "weight",
       every = 5,
       time_average = 1,
       species = ["electrons1", "electrons2"],
@@ -1594,33 +1594,34 @@ for instance::
       ]
   )
 
-.. py:data:: output
+.. py:data:: deposited_quantity
 
   The type of data that is summed in each cell of the grid:
   
-  * with ``"density"``, the weights are summed.
-  * with ``"charge_density"``, the weights :math:`\times` charge are summed.
-  * with ``"jx_density"``, the weights :math:`\times` charge :math:`\times\; v_x` are summed (same with :math:`y` and :math:`z`).
-  * with ``"p_density"``, the weights :math:`\times\; p` are summed (same with :math:`p_x`, :math:`p_y` and :math:`p_z`).
-  * with ``"ekin_density"``, the weights :math:`\times mc^2\; (\gamma-1)` are summed.
-  * with ``"pressure_xx"``, the weights :math:`\times\; v_x p_x` are summed (same with yy, zz, xy, yz and xz).
-  * with ``"chi_density"``, the weights :math:`\times\; \chi` (quantum parameter)
-    are summed (only for species with radiation losses).
-  * with a user-defined python function, an arbitrary output can be calculated (the *numpy*
+  * ``"weight"`` results in a number density.
+  * ``"weight_charge"`` results in a charge density.
+  * ``"weight_charge_vx"`` results in the :math:`j_x` current density (same with :math:`y` and :math:`z`).
+  * ``"weight_p"`` results in the momentum density (same with :math:`p_x`, :math:`p_y` and :math:`p_z`).
+  * ``"weight_ekin"`` results in the energy density.
+  * ``"weight_vx_px"`` results in the ``xx`` pressure (same with yy, zz, xy, yz and xz).
+  * ``"weight_chi"`` results in the quantum parameter density (only for species with radiation losses).
+  * with a user-defined python function, an arbitrary quantity can be calculated (the *numpy*
     module is necessary). This function should take one argument, for instance
     ``particles``, which contains the attributes ``x``, ``y``, ``z``, ``px``, ``py``,
     ``pz``, ``charge``, ``weight`` and ``id``. Each of these attributes is a *numpy* array
     containing the data of all particles in one patch. The function must return a *numpy*
-    array of the same shape, containing the desired output of each particle. For example, 
-    providing ``output=myfunction``, the following function will sum the weights
-    :math:`\times\; p_x`::
+    array of the same shape, containing the desired deposition of each particle. For example, 
+    defining the following function::
       
       def myfunction(particles):
           return particles.weight * particles.px
     
+    and indicating ``deposited_quantity=myfunction``, the diagnostic will sum the weights
+    :math:`\times\; p_x`.
+    
     You may also pass directly an implicit (*lambda*) function using::
     
-      output = lambda p: p.weight * p.px
+      deposited_quantity = lambda p: p.weight * p.px
 
 
 .. py:data:: every
@@ -1662,7 +1663,7 @@ for instance::
     There is one additional type, specific for simulations that include a
     :ref:`moving window<movingWindow>`\ : the x-coordinate corrected by the window
     current movement ``moving_x``.  
-    The ``type`` can also be a python function, with the same syntax as the ``output``
+    The ``type`` can also be a python function, with the same syntax as the ``deposited_quantity``
     attribute.
   * The axis is discretized for ``type`` from ``min`` to ``max`` in ``nsteps`` bins.
   * The optional keyword ``logscale`` sets the axis scale to logarithmic instead of linear.
@@ -1688,7 +1689,7 @@ for instance::
   ::
     
     DiagParticleBinning(
-    	output = "density",
+    	deposited_quantity = "weight",
     	every = 5,
     	time_average = 1,
     	species = ["electron1"],
@@ -1699,7 +1700,7 @@ for instance::
   ::
     
     DiagParticleBinning(
-    	output = "density",
+    	deposited_quantity = "weight",
     	every = 5,
     	time_average = 1,
     	species = ["electron1"],
@@ -1711,7 +1712,7 @@ for instance::
   ::
     
     DiagParticleBinning(
-    	output = "density",
+    	deposited_quantity = "weight",
     	every = 5,
     	time_average = 1,
     	species = ["electron1"],
@@ -1722,7 +1723,7 @@ for instance::
   ::
     
     DiagParticleBinning(
-    	output = "density",
+    	deposited_quantity = "weight",
     	every = 5,
     	time_average = 1,
     	species = ["electron1"],
@@ -1735,7 +1736,7 @@ for instance::
   ::
     
     DiagParticleBinning(
-    	output = "density",
+    	deposited_quantity = "weight",
     	every = 5,
     	time_average = 1,
     	species = ["electron1"],
@@ -1747,7 +1748,7 @@ for instance::
   ::
     
     DiagParticleBinning(
-    	output = "density",
+    	deposited_quantity = "weight",
     	every = 5,
     	time_average = 1,
     	species = ["electron1"],
@@ -1760,7 +1761,7 @@ for instance::
   ::
     
     DiagParticleBinning(
-    	output = "density",
+    	deposited_quantity = "weight",
     	every = 5,
     	time_average = 1,
     	species = ["electron1"],
@@ -1788,7 +1789,7 @@ for instance::
       point = [5., 10.],
       vector = [1., 0.],
       direction = "canceling",
-      output = "density",
+      deposited_quantity = "weight",
       species = ["electron"],
       axes = [["a", -10.*l0, 10.*l0, 40],
               ["px", 0., 3., 30]],
@@ -1824,9 +1825,9 @@ for instance::
    * ``"backward"`` for only the ones in the opposite direction.
    * ``"canceling"`` to count negatively the ones in the opposite direction.
 
-.. py:data:: output
+.. py:data:: deposited_quantity
 
-   Identical to the ``output`` of :ref:`particle binning diagnostics <DiagParticleBinning>`.
+   Identical to the ``deposited_quantity`` of :ref:`particle binning diagnostics <DiagParticleBinning>`.
 
 .. py:data:: every
 

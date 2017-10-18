@@ -80,7 +80,7 @@ DiagFields(
 )
 
 DiagParticleBinning(
-	output = "density",
+	deposited_quantity = "weight",
 	every = every,
 	species = ["eon1","eon2"],
 	axes = [

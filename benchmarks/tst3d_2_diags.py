@@ -130,36 +130,36 @@ axes = [
 
 for axis in axes:
 	DiagParticleBinning(
-		output = "density",
+		deposited_quantity = "weight",
 		every = 10,
 		species = ["test0"],
 		axes = [axis]
 	)
 
-outputs = [
-	"density"        ,
-	"charge_density" ,
-	"jx_density"     ,
-	"jy_density"     ,
-	"jz_density"     ,
-	"ekin_density"   ,
-	"p_density"      ,
-	"px_density"     ,
-	"py_density"     ,
-	"pz_density"     ,
-	"pressure_xx"    ,
-	"pressure_yy"    ,
-	"pressure_zz"    ,
-	"pressure_xy"    ,
-	"pressure_xz"    ,
-	"pressure_yz"    ,
-	"ekin_vx_density",
+quantities = [
+	"weight"          ,
+	"weight_charge"   ,
+	"weight_charge_vx",
+	"weight_charge_vy",
+	"weight_charge_vz",
+	"weight_ekin"     ,
+	"weight_p"        ,
+	"weight_px"       ,
+	"weight_py"       ,
+	"weight_pz"       ,
+	"weight_vx_px"    ,
+	"weight_vy_py"    ,
+	"weight_vz_pz"    ,
+	"weight_vx_py"    ,
+	"weight_vx_pz"    ,
+	"weight_vy_pz"    ,
+	"weight_ekin_vx"  ,
 	lambda particles: particles.weight
 ]
 
-for output in outputs:
+for quantity in quantities:
 	DiagParticleBinning(
-		output = output,
+		deposited_quantity = quantity,
 		every = 10,
 		species = ["test0"],
 		axes = [["x" , 0., Main.grid_length[0], 10]]

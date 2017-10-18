@@ -109,7 +109,7 @@ for direction in ["forward", "backward", "both", "canceling"]:
 	    point = [0., Ly/2., Lz/2.],
 	    vector = [Lx*0.9, 0.1, 0.1],
 	    direction = direction,
-	    output = "density",
+	    deposited_quantity = "weight",
 	    species = ["electron"],
 	    axes = [
 	    	["theta", 0, math.pi, 10],
@@ -123,7 +123,7 @@ for direction in ["forward", "backward", "both", "canceling"]:
 	    point = [Lx*0.9, Ly/2., Lz/2.],
 	    vector = [1., 0.1, 0.1],
 	    direction = direction,
-	    output = "density",
+	    deposited_quantity = "weight",
 	    species = ["electron"],
 	    axes = [
 	    	["a", -Ly/2., Ly/2., 10],

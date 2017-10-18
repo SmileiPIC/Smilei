@@ -105,31 +105,31 @@ for i in range(npoints):
 	)
 	
 	DiagParticleBinning(
-		output = "ekin_density",
+		deposited_quantity = "weight_ekin",
 		every = 10,
 		species = [eon],
 		axes = [ ["x", 0, Main.grid_length[0], 1] ]
 	)
 	DiagParticleBinning(
-		output = "density",
+		deposited_quantity = "weight",
 		every = 10,
 		species = [eon],
 		axes = [ ["x", 0, Main.grid_length[0], 1] ]
 	)
 	DiagParticleBinning(
-		output = "charge_density",
+		deposited_quantity = "weight_charge",
 		every = 10,
 		species = [ion],
 		axes = [ ["x", 0, Main.grid_length[0], 1] ]
 	)
 	DiagParticleBinning(
-		output = "density",
+		deposited_quantity = "weight",
 		every = 10,
 		species = [ion],
 		axes = [ ["x", 0, Main.grid_length[0], 1] ]
 	)
 	#DiagParticleBinning(
-	#	output = "density",
+	#	deposited_quantity = "weight",
 	#	every = 50,
 	#	species = [ion],
 	#	axes = [ ["charge", -0.5, Z+0.5, Z+1] ]

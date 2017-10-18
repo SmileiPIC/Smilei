@@ -85,8 +85,8 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patc
     else
         ERROR(errorPrefix << ": parameter `direction` not understood");
     
-    // get parameter "output" that determines the quantity to sum in the output array
-    PyObject* output_object = PyTools::extract_py("output", "DiagScreen", screen_id);
+    // get parameter "deposited_quantity" that determines the quantity to sum in the output array
+    PyObject* deposited_quantity_object = PyTools::extract_py("deposited_quantity", "DiagScreen", screen_id);
     PyTools::checkPyError();
     
     // get parameter "every" which describes a timestep selection
@@ -122,7 +122,7 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patc
         excluded_axes.push_back( "a" );
         excluded_axes.push_back( "b" );
     }
-    histogram = HistogramFactory::create(params, output_object, pyAxes, species, patch, excluded_axes, errorPrefix);
+    histogram = HistogramFactory::create(params, deposited_quantity_object, pyAxes, species, patch, excluded_axes, errorPrefix);
     
     // If axes are "a", "b", "theta" or "phi", they need some coefficients
     unsigned int idim;
@@ -217,7 +217,7 @@ void DiagnosticScreen::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         // write all parameters as HDF5 attributes
         H5::attr(fileId_, "Version", string(__VERSION));
-        H5::attr(fileId_, "output" , histogram->output);
+        H5::attr(fileId_, "deposited_quantity" , histogram->deposited_quantity);
         // write all species
         ostringstream mystream("");
         mystream.str(""); // clear

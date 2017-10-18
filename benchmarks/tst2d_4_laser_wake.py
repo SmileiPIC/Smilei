@@ -57,7 +57,6 @@ Species(
     temperature = [0.000001],
     pusher = "boris",    
     time_frozen = 0.0,
-    radiating = False,
     boundary_conditions = [
         ["supp", "supp"],
         ["supp", "supp"],
@@ -105,7 +104,7 @@ DiagScalar(
 )
 
 DiagParticleBinning(
-    output = "charge_density",
+    deposited_quantity = "weight_charge",
     every = 50,
     species = ["electron"],
     axes = [

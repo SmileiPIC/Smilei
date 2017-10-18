@@ -55,7 +55,7 @@ public:
     //! Add the contribution of each particle in the histogram
     void distribute(std::vector<double>&, std::vector<int>&, std::vector<double>&);
     
-    std::string output;
+    std::string deposited_quantity;
     
     std::vector<HistogramAxis*> axes;
 };
@@ -549,9 +549,9 @@ class Histogram_ekin_vx_density : public Histogram {
 #ifdef SMILEI_USE_NUMPY
 class Histogram_user_function : public Histogram {
 public:
-    Histogram_user_function( PyObject* output_object ) :
+    Histogram_user_function( PyObject* deposited_quantity_object ) :
         Histogram(),
-        function(output_object),
+        function(deposited_quantity_object),
         particleData(0)
     {};
     ~Histogram_user_function()

@@ -89,7 +89,7 @@ for direction in ["forward", "backward", "both", "canceling"]:
 	    point = [0., Lsim[1]/2.],
 	    vector = [Lsim[0]/2., 0.1],
 	    direction = direction,
-	    output = "density",
+	    deposited_quantity = "weight",
 	    species = ["eon"],
 	    axes = [["theta", -math.pi, math.pi, 10],],
 	    every = 350
@@ -99,7 +99,7 @@ for direction in ["forward", "backward", "both", "canceling"]:
 	    point = [Lsim[0]/2., Lsim[1]/2.],
 	    vector = [1., 0.1],
 	    direction = direction,
-	    output = "density",
+	    deposited_quantity = "weight",
 	    species = ["eon"],
 	    axes = [["a", -Lsim[1]/2., Lsim[1]/2., 10],],
 	    every = 350

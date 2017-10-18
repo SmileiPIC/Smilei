@@ -95,7 +95,7 @@ DiagScalar(
 
 
 DiagParticleBinning(
-	output = "charge_density",
+	deposited_quantity = "weight_charge",
 	every = 20,
 	species = ["ion1"],
 	axes = [
@@ -104,7 +104,7 @@ DiagParticleBinning(
 )
 
 DiagParticleBinning(
-	output = "density",
+	deposited_quantity = "weight",
 	every = 20,
 	species = ["ion1"],
 	axes = [
@@ -114,7 +114,7 @@ DiagParticleBinning(
 
 
 DiagParticleBinning(
-	output = "density",
+	deposited_quantity = "weight",
 	every = 20,
 	species = ["electron1"],
 	axes = [

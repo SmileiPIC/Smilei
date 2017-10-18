@@ -111,6 +111,7 @@ class SmileiComponent(object):
                 "nb_density"       :"number_density",
                 "sim_length"       :"grid_length",
                 "sim_time"         :"simulation_time",
+                "output"           :"deposited_quantity",
             }
             for key, value in kwargs.items():
                 if key in deprecated:
@@ -341,7 +342,7 @@ class DiagProbe(SmileiComponent):
 
 class DiagParticleBinning(SmileiComponent):
     """Particle Binning diagnostic"""
-    output = None
+    deposited_quantity = None
     time_average = 1
     species = None
     axes = []
@@ -354,7 +355,7 @@ class DiagScreen(SmileiComponent):
     point = None
     vector = None
     direction = "both"
-    output = None
+    deposited_quantity = None
     species = None
     axes = []
     time_average = 1

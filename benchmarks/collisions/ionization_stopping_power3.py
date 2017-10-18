@@ -102,7 +102,7 @@ DiagScalar(
 
 
 DiagParticleBinning(
-	output = "px_density",
+	deposited_quantity = "weight_px",
 	every = 100,
 	species = [el],
 	axes = [
@@ -110,7 +110,7 @@ DiagParticleBinning(
 	]
 )
 DiagParticleBinning(
-	output = "density",
+	deposited_quantity = "weight",
 	every = 100,
 	species = [el],
 	axes = [

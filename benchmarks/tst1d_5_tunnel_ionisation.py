@@ -93,7 +93,7 @@ DiagFields(
 )
 
 DiagParticleBinning(
-	output = "density",
+	deposited_quantity = "weight",
 	every = 20,
 	species = ["hydrogen"],
 	axes = [
@@ -102,7 +102,7 @@ DiagParticleBinning(
 )
 
 DiagParticleBinning(
-	output = "density",
+	deposited_quantity = "weight",
 	every = 20,
 	species = ["carbon"],
 	axes = [

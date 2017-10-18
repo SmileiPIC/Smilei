@@ -127,7 +127,7 @@ DiagScalar(
 
 
 DiagParticleBinning(
-	output = "jx_density",
+	deposited_quantity = "weight_charge_vx",
 	every = 5,
 	time_average = 4,
 	species = ["electron1"],
@@ -136,7 +136,7 @@ DiagParticleBinning(
 	]
 )
 DiagParticleBinning(
-	output = "jx_density",
+	deposited_quantity = "weight_charge_vx",
 	every = 5,
 	time_average = 4,
 	species = ["electron2"],
@@ -147,7 +147,7 @@ DiagParticleBinning(
 
 
 DiagParticleBinning(
-	output = "density",
+	deposited_quantity = "weight",
 	every = 5,
 	time_average = 4,
 	species = ["electron1"],
@@ -156,7 +156,7 @@ DiagParticleBinning(
 	]
 )
 DiagParticleBinning(
-	output = "density",
+	deposited_quantity = "weight",
 	every = 5,
 	time_average = 4,
 	species = ["electron2"],

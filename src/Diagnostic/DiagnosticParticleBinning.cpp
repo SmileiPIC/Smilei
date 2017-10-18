@@ -19,8 +19,8 @@ DiagnosticParticleBinning::DiagnosticParticleBinning( Params &params, SmileiMPI*
     name << "Diagnotic Particles #" << n_diag_particles;
     string errorPrefix = name.str();
     
-    // get parameter "output" that determines the quantity to sum in the output array
-    PyObject* output_object = PyTools::extract_py("output", "DiagParticleBinning", n_diag_particles);
+    // get parameter "deposited_quantity" that determines the quantity to sum in the output array
+    PyObject* deposited_quantity_object = PyTools::extract_py("deposited_quantity", "DiagParticleBinning", n_diag_particles);
     PyTools::checkPyError();
     
     // get parameter "every" which describes a timestep selection
@@ -64,7 +64,7 @@ DiagnosticParticleBinning::DiagnosticParticleBinning( Params &params, SmileiMPI*
     excluded_axes.push_back( "b" );
     excluded_axes.push_back( "theta" );
     excluded_axes.push_back( "phi" );
-    histogram = HistogramFactory::create(params, output_object, pyAxes, species, patch, excluded_axes, errorPrefix);
+    histogram = HistogramFactory::create(params, deposited_quantity_object, pyAxes, species, patch, excluded_axes, errorPrefix);
     
     // Get info on the spatial extent
     for( unsigned int i=0; i<histogram->axes.size(); i++ ) {
@@ -144,7 +144,7 @@ void DiagnosticParticleBinning::openFile( Params& params, SmileiMPI* smpi, bool 
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         // write all parameters as HDF5 attributes
         H5::attr(fileId_, "Version", string(__VERSION));
-        H5::attr(fileId_, "output" , histogram->output);
+        H5::attr(fileId_, "deposited_quantity" , histogram->deposited_quantity);
         H5::attr(fileId_, "time_average"  , time_average);
         // write all species
         ostringstream mystream("");
