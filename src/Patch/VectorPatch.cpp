@@ -302,9 +302,6 @@ void VectorPatch::solveMaxwell_Spectral( Params& params,SimWindow* simWindow, in
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
         // Saving magnetic fields (to compute centered fields used in the particle pusher)
         // Stores B at time n in B_m.
-         n = (*this)(ipatch)->EMfields->rhoold_->dims_[0]*(*this)(ipatch)->EMfields->rhoold_->dims_[1]*(*this)(ipatch)->EMfields->rhoold_->dims_[2];
-
-        std::memcpy((*this)(ipatch)->EMfields->rhoold_->data_,(*this)(ipatch)->EMfields->rho_->data_,sizeof(double)*n);
         duplicate_field_into_pxr((*this)(ipatch)->EMfields);
 	push_psatd_ebfield_3d_();
 	duplicate_field_into_smilei((*this)(ipatch)->EMfields);
@@ -1299,3 +1296,13 @@ void VectorPatch::check_memory_consumption(SmileiMPI* smpi)
     // Read value in /proc/pid/status
     //Tools::printMemFootPrint( "End Initialization" );
 }
+void VectorPatch::save_old_rho()
+{
+        int n=0;
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+        n =  (*this)(ipatch)->EMfields->rhoold_->dims_[0]*(*this)(ipatch)->EMfields->rhoold_->dims_[1]*(*this)(ipatch)->EMfields->rhoold_->dims_[2];
+                std::memcpy((*this)(ipatch)->EMfields->rhoold_->data_,(*this)(ipatch)->EMfields->rho_->data_,sizeof(double)*n);
+        }
+}
+        

@@ -32,7 +32,7 @@ public :
     VectorPatch();
     VectorPatch( Params &params );
     ~VectorPatch();
-    
+    void save_old_rho(); 
     void close(SmileiMPI*);
     
     //! VectorPatch = 
