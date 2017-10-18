@@ -26,6 +26,13 @@ Patch1D::Patch1D(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_de
     }
     else { // Cartesian
         // See void Patch::set( VectorPatch& vecPatch )        
+
+        for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+            ntype_[0][ix_isPrim] = MPI_DATATYPE_NULL;
+            ntype_[1][ix_isPrim] = MPI_DATATYPE_NULL;
+            ntypeSum_[0][ix_isPrim] = MPI_DATATYPE_NULL;
+        }
+
     }
 
 } // End Patch1D::Patch1D
@@ -339,6 +346,40 @@ void Patch1D::finalizeExchange( Field* field, int iDim )
 // Create MPI_Datatypes used in initSumField and initExchange
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch1D::createType2( Params& params ) {
+    if (ntype_[0][0] != MPI_DATATYPE_NULL)
+        return;
+
+    unsigned int clrw = params.clrw;
+    
+    // MPI_Datatype ntype_[nDim][primDual]
+    int ny = oversize[0];
+    int nline;
+
+    for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+
+        // Standard Type
+        ntype_[0][ix_isPrim] = MPI_DATATYPE_NULL;
+        MPI_Type_contiguous(ny, MPI_DOUBLE, &(ntype_[0][ix_isPrim]));    //line
+        MPI_Type_commit( &(ntype_[0][ix_isPrim]) );
+
+        ntype_[1][ix_isPrim] = MPI_DATATYPE_NULL;
+        MPI_Type_contiguous(clrw, MPI_DOUBLE, &(ntype_[1][ix_isPrim]));   //clrw lines
+        MPI_Type_commit( &(ntype_[1][ix_isPrim]) );
+
+        ntypeSum_[0][ix_isPrim] = MPI_DATATYPE_NULL;
+
+        MPI_Datatype tmpType = MPI_DATATYPE_NULL;
+        MPI_Type_contiguous(1, MPI_DOUBLE, &(tmpType));    //line
+        MPI_Type_commit( &(tmpType) );
+
+
+        nline = 1 + 2*params.oversize[0] + ix_isPrim;
+        MPI_Type_contiguous(nline, tmpType, &(ntypeSum_[0][ix_isPrim]));    //line
+        MPI_Type_commit( &(ntypeSum_[0][ix_isPrim]) );
+
+        MPI_Type_free( &tmpType );
+            
+    }
 }
 
 void Patch1D::createType( Params& params )
