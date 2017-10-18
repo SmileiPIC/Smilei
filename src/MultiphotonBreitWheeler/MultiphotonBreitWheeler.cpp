@@ -230,7 +230,7 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
 
 #ifdef  __DEBUG
                     for ( int i = 0 ; i<nDim_ ; i++ )
-                        position_old[i][ipart] = position[i][ipart];
+                        particles.position_old(i,ipart) = position[i][ipart];
 #endif
                     for ( int i = 0 ; i<nDim_ ; i++ )
                         position[i][ipart]     += event_time*momentum[i][ipart]/(*gamma)[ipart];
