@@ -75,7 +75,7 @@ void Domain::build( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, Op
     //    diag_->run( smpi, vecPatch_, 0, simWindow );
 
 */
-    if(params.is_spectral == true){
+    if(params.is_pxr == true){
         init_pxr(params);
     }
 
@@ -99,7 +99,8 @@ void Domain::clean()
 void Domain::solveMaxwell( Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers )
 {
     if(params.is_spectral == false) {
-    vecPatch_.solveMaxwell( params, simWindow, itime, time_dual, timers );
+    if(params.is_pxr == false) vecPatch_.solveMaxwell( params, simWindow, itime, time_dual, timers );
+    if(params.is_pxr == true) vecPatch_.solveMaxwell_fdtd_pxr(params,simWindow,itime,time_dual,timers);
     }
     else{
     vecPatch_.solveMaxwell_Spectral(params,simWindow,itime,time_dual,timers);
@@ -113,14 +114,14 @@ int n0,n1,n2;
 int ov0,ov1,ov2;
 // unable to convert unsigned int to an iso_c_binding supported type 
 
-n0=(int) ( 1 + params.n_space[0]*params.global_factor[0]);
-n1=(int) ( 1 + params.n_space[1]*params.global_factor[1]);
-n2=(int) ( 1 + params.n_space[2]*params.global_factor[2]);
+n0=(int) (1 +  params.n_space[0]*params.global_factor[0]);
+n1=(int) (1 +  params.n_space[1]*params.global_factor[1]);
+n2=(int) (1 +  params.n_space[2]*params.global_factor[2]);
 
 ov0=(int) params.oversize[0];
 ov1=(int) params.oversize[1];
 ov2=(int) params.oversize[2];
-
+std::cout<<ov0*2+n0+1<<"  aaa"<<std::endl;
 Field3D* Ex3D_pxr = static_cast<Field3D*>(this->vecPatch_(0)->EMfields->Ex_pxr);
 Field3D* Ey3D_pxr = static_cast<Field3D*>(this->vecPatch_(0)->EMfields->Ey_pxr);
 Field3D* Ez3D_pxr = static_cast<Field3D*>(this->vecPatch_(0)->EMfields->Ez_pxr);

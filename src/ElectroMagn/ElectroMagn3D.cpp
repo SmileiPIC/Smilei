@@ -163,6 +163,8 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
         Jz_pxr  = new Field3D(dimDual);
         rho_pxr = new Field3D(dimDual);
         rhoold_pxr  = new Field3D(dimDual);
+	std::cout<<"dimdual"<<dimDual[0]<<" "<<dimDual[1]<<" "<<dimDual[2]<<std::endl;
+
     } 
     
     // ----------------------------------------------------------------

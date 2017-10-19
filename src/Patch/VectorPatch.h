@@ -105,6 +105,7 @@ public :
                       Timers & timers);
     void solveMaxwell_Spectral(Params& params, SimWindow* simWindow, int itime, double time_dual,
                       Timers & timers);
+    void solveMaxwell_fdtd_pxr(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers);
 
     
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
