@@ -304,8 +304,8 @@ of the domain with an initial energy of 4 GeV. The bunch is made to collide head
 with a laser plane wave injected from the left side of the domain.
 The laser has a maximal intensity of :math:`10^{23}\ \mathrm{Wcm^{-2}}`.
 It is circularly polarized and has a temporal Gaussian profile with a
-FWHM (full width at half maximum) of 50 periods
-(approximately corresponding to 25 fs).
+FWHM (full width at half maximum) of 10 periods
+(approximately corresponding to 33 fs).
 A wavelength of :math:`1\ \mathrm{\mu m}` is considered.
 
 This configuration is one of the most efficient to trigger QED effects
@@ -366,3 +366,5 @@ This is the consequence of two main facts:
 Electron and positron spectra are very similar ranging from 20 MeV
 to mainly 200 MeV.
 Few particles have an energy above this threshold up to 1 GeV.
+
+This corresponds to the benchmark ``benchmark/tst1d_10_pair_electron_laser_collision.py``.
