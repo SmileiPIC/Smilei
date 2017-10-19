@@ -50,7 +50,8 @@ class Diagnostic(object):
 		self.timestep      = self.Smilei._timestep
 		
 		# Make the Options object
-		self.options = Options(**kwargs)
+		self.options = Options()
+		kwargs = self.options.set(**kwargs)
 		
 		# Make or retrieve the Units object
 		self.units = kwargs.pop("units", [""])
@@ -447,11 +448,11 @@ class Diagnostic(object):
 				raise
 			elif indices.size == 1:
 				info = operation+" at "+axisname+" = "+str(meshpoints[indices])+" "+axisunits
-				selection = self._np.s_[indices[0]]
+				selection = slice(indices[0],indices[0]+1)
 				finalShape = 1
 			else:
 				info = operation+" for "+axisname+" from "+str(meshpoints[indices[0]])+" to "+str(meshpoints[indices[-1]])+" "+axisunits
-				selection = self._np.s_[indices[0]:indices[-1]]
+				selection = slice(indices[0],indices[-1])
 				finalShape = indices[-1] - indices[0]
 		return info, selection, finalShape
 	

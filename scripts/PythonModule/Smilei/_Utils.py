@@ -62,14 +62,12 @@ class Options(object):
 		self.figure1 = {"facecolor":"w"}
 		self.axes = {}
 		self.plot = {}
-		self.image = {"interpolation":"nearest", "aspect":"auto"}
+		self.image = {"cmap":"smilei", "interpolation":"nearest", "aspect":"auto"}
 		self.colorbar = {}
 		self.xtick = {"useOffset":False}
 		self.ytick = {"useOffset":False}
-		if "cmap" not in kwargs.keys(): kwargs["cmap"] = "smilei"
 		self.side = "left"
 		self.transparent = None
-		self.set(**kwargs)
 	
 	# Method to set optional plotting arguments
 	def set(self, **kwargs):
@@ -119,6 +117,7 @@ class Options(object):
 			self.colorbar["aspect"] = kwargs.pop("cbaspect")
 		if self.side=="right" and "pad" not in self.colorbar:
 			self.colorbar["pad"] = 0.15
+		return kwargs
 
 
 class Units(object):
@@ -392,7 +391,8 @@ def multiPlot(*Diags, **kwargs):
 		return
 	# Make the figure
 	if "facecolor" not in kwargs: kwargs.update({ "facecolor":"w" })
-	options = Options(**kwargs)
+	options = Options()
+	options.set(**kwargs)
 	fig = plt.figure(**options.figure0)
 	fig.set(**options.figure1) # Apply figure kwargs
 	fig.clf()
