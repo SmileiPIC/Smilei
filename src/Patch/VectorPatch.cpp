@@ -358,7 +358,7 @@ void VectorPatch::solveMaxwell_Spectral( Params& params,SimWindow* simWindow, in
         duplicate_field_into_pxr((*this)(ipatch)->EMfields,params);
 	push_psatd_ebfield_3d();
 	duplicate_field_into_smilei((*this)(ipatch)->EMfields,params);
-        (*this)(ipatch)->EMfields->saveMagneticFields(); //in order to avoid recentering B
+        //(*this)(ipatch)->EMfields->saveMagneticFields(); //in order to avoid recentering B
     }
 
     //Synchronize B fields between patches.
@@ -380,7 +380,8 @@ void VectorPatch::solveMaxwell_Spectral( Params& params,SimWindow* simWindow, in
             // Applies boundary conditions on B
             (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
             // Computes B at time n using B and B_m.
-            (*this)(ipatch)->EMfields->centerMagneticFields();
+            (*this)(ipatch)->EMfields->saveMagneticFields();
+           // (*this)(ipatch)->EMfields->centerMagneticFields();
         }
     }
 }

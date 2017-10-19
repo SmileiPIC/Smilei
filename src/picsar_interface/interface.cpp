@@ -8,13 +8,13 @@ void copy_field(Field3D* out, Field3D * in)
         n1 = ((in->dims_[0]) < (out->dims_[0]) ? (in->dims_[0]) : (out->dims_[0]));
         n2 = ((in->dims_[1]) < (out->dims_[1]) ? (in->dims_[1]) : (out->dims_[1]));
         n3 = ((in->dims_[2]) < (out->dims_[2]) ? (in->dims_[2]) : (out->dims_[2]));
-	for(unsigned int i =0;i<(out->dims_[0]);i++){
-	for(unsigned int j =0;j<(out->dims_[1]);j++){
-	for(unsigned int k =0;k<(out->dims_[2]);k++)	
-		(*out)(i,j,k) = 0.0;
-		}
-
-	}
+//	for(unsigned int i =0;i<(out->dims_[0]);i++){
+//	for(unsigned int j =0;j<(out->dims_[1]);j++){
+//	for(unsigned int k =0;k<(out->dims_[2]);k++)	
+//		(*out)(i,j,k) = 0.0;
+//		}
+//
+//	}
         for(unsigned int i=0;i<n1;i++){
                 for(unsigned int j=0;j<n2;j++){
                         for(unsigned int k=0;k<n3;k++){
