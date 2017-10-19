@@ -260,6 +260,7 @@ namelist("")
     PyTools::extract("maxwell_solver", maxwell_sol, "Main");
     
     // Current filter properties
+    currentFilter_passes = 0;
     int nCurrentFilter = PyTools::nComponents("CurrentFilter");
     for (int ifilt = 0; ifilt < nCurrentFilter; ifilt++) {
         string model;
