@@ -300,7 +300,6 @@ void VectorPatch::solveMaxwell_fdtd_pxr(Params& params, SimWindow* simWindow, in
         SyncVectorPatch::exchangeJ( (*this) );
         SyncVectorPatch::finalizeexchangeJ( (*this) );
     }
-    
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
         // Saving magnetic fields (to compute centered fields used in the particle pusher)
@@ -340,8 +339,8 @@ void VectorPatch::solveMaxwell_fdtd_pxr(Params& params, SimWindow* simWindow, in
 
 
 void VectorPatch::solveMaxwell_Spectral( Params& params,SimWindow* simWindow, int itime, double time_dual,Timers &timers){
+  //  this->sumDensities(params,time_dual, timers,itime,simWindow);
     timers.maxwell.restart();
-    int n; 
     for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_int ; ipassfilter++){
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
