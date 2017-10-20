@@ -10,14 +10,14 @@ dist: trusty
 
 before_install:
   - sudo apt-get -qq update
+  - git fetch -t
   - sudo apt-get install -y python-dev sphinx-common python-pip
-  - pip install --user alabaster
-  - pip install --user travis-sphinx
+  - pip install alabaster
+  - pip install travis-sphinx
   - export PATH=$HOME/.local/bin:$PATH
 
 script:
-  - git fetch -t
-  - travis-sphinx -n --source=doc/Sphinx build
+  - travis-sphinx --nowarn --source=doc/Sphinx build
 
 after_success:
   - travis-sphinx deploy
