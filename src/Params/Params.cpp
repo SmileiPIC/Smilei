@@ -271,6 +271,8 @@ namelist("")
     }
     
     // Field filter properties
+    Friedman_filter = false;
+    Friedman_theta = 0;
     int nFieldFilter = PyTools::nComponents("FieldFilter");
     for (int ifilt = 0; ifilt < nFieldFilter; ifilt++) {
         string model;
