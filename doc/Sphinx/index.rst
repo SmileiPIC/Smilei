@@ -5,10 +5,10 @@
 
   .. image:: ../smileiLogo/smileiLogo-horizontal2.svg
 
-**Smilei is an open-source, particle-in-cell code.**
-It is designed for high performances on super-computers and applied to a wide range
-of physics-related studies: from relativistic laser-plasma interaction
-to astrophysical plasmas. It is co-developed by both physicists and HPC experts.
+**Smilei** is a collaborative Particle-In-Cell code for plasma simulation.
+Open-source, user-friendly and designed for high performances on super-computers,
+it is applied to a wide range of physics studies: from relativistic laser-plasma
+interaction to astrophysics.
 
 
 .. raw:: html
