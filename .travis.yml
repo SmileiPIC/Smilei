@@ -12,7 +12,7 @@ before_install:
   - sudo apt-get -qq update
   - git fetch -t
   - sudo apt-get install -y python-pip
-  - pip install --user sphinx-rtd-theme==0.1.9 travis-sphinx Sphinx==1.3.2 alabaster 
+  - pip install --user travis-sphinx Sphinx alabaster 
   - export PATH=$HOME/.local/bin:$PATH
 
 script:
