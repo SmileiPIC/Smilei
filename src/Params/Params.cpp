@@ -328,6 +328,7 @@ namelist("")
     global_factor.resize( nDim_field, 1 );
     PyTools::extract( "global_factor", global_factor, "Main" );
     norder.resize(nDim_field,1);
+    norder.resize(nDim_field,1);
     PyTools::extract( "norder", norder, "Main" ); 
     norderx=norder[0];
     nordery=norder[1];

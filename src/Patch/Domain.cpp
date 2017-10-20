@@ -121,7 +121,6 @@ n2=(int) (1 +  params.n_space[2]*params.global_factor[2]);
 ov0=(int) params.oversize[0];
 ov1=(int) params.oversize[1];
 ov2=(int) params.oversize[2];
-std::cout<<ov0*2+n0+1<<"  aaa"<<std::endl;
 Field3D* Ex3D_pxr = static_cast<Field3D*>(this->vecPatch_(0)->EMfields->Ex_pxr);
 Field3D* Ey3D_pxr = static_cast<Field3D*>(this->vecPatch_(0)->EMfields->Ey_pxr);
 Field3D* Ez3D_pxr = static_cast<Field3D*>(this->vecPatch_(0)->EMfields->Ez_pxr);
