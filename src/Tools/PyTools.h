@@ -482,7 +482,7 @@ public:
         if( ! PyCallable_Check(obj) )
             return -1;
         // Try to get the number of arguments of the function
-        unsigned int n_arg = -1;
+        int n_arg = -1;
         PyObject *code=NULL, *argcount=NULL;
         try {
             code = PyObject_GetAttrString( obj, "__code__" );

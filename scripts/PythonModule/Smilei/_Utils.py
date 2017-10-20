@@ -400,10 +400,16 @@ def multiPlot(*Diags, **kwargs):
 	ax = []
 	xmin =  float("inf")
 	xmax = -float("inf")
+	option_xmin = []
+	option_xmax = []
+	option_ymin = []
+	option_ymax = []
 	c = plt.matplotlib.rcParams['axes.color_cycle']
 	for i in range(nplots):
 		ax.append( fig.add_subplot(shape[0], shape[1], i+1) )
-	allright = all([d.options.side=="right" for d in Diags])
+	rightside = [d.options.side=="right" for d in Diags]
+	allright  = all(rightside)
+	bothsides = any(rightside) and any(not rightside)
 	for i, Diag in enumerate(Diags):
 		Diag._cax_id = 0
 		if sameAxes:
@@ -420,6 +426,10 @@ def multiPlot(*Diags, **kwargs):
 				Diag._ax.yaxis.tick_right()
 				Diag._ax.yaxis.set_label_position("right")
 		Diag._artist = None
+		if Diag.options.xmin is not None: option_xmin += [Diag.options.xmin]
+		if Diag.options.xmax is not None: option_xmax += [Diag.options.xmax]
+		if Diag.options.ymin is not None: option_ymin += [Diag.options.ymin]
+		if Diag.options.ymax is not None: option_ymax += [Diag.options.ymax]
 		try:
 			l = Diag.limits()[0]
 			xmin = min(xmin,l[0])
@@ -429,6 +439,11 @@ def multiPlot(*Diags, **kwargs):
 		if "color" not in Diag.options.plot:
 			Diag.options.plot.update({ "color":c[i%len(c)] })
 		Diag._prepare()
+	# Find min max
+	if option_xmin: xmin = min(option_xmin)
+	if option_xmax: xmax = max(option_xmax)
+	if option_ymin: ymin = min(option_ymin)
+	if option_ymax: ymax = max(option_ymax)
 	# Static plot
 	if sameAxes and Diags[0].dim==0:
 		for Diag in Diags:
@@ -452,7 +467,7 @@ def multiPlot(*Diags, **kwargs):
 					Diag._artist = Diag._animateOnAxes(Diag._ax, t, cax_id = Diag._cax_id)
 					if sameAxes:
 						Diag._ax.set_xlim(xmin,xmax)
-						if Diag.dim<2:
+						if Diag.dim<2 and bothsides:
 							color = Diag._artist.get_color()
 							Diag._ax.yaxis.label.set_color(color)
 							Diag._ax.tick_params(axis='y', colors=color)
@@ -463,6 +478,7 @@ def multiPlot(*Diags, **kwargs):
 								Diag._ax.spines['left'].set_color(color)
 					try: Diag._ax.set_position(Diag._ax.twin.get_position())
 					except: pass
+			plt.legend()
 			plt.draw()
 			plt.pause(0.00001)
 			mov.grab_frame()
