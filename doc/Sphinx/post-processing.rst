@@ -569,18 +569,18 @@ Options for the tick labels: ``style_x``, ``scilimits_x``, ``useOffset_x``, ``st
 ..
 
   Many colormaps are available from the *matplotlib* package. With ``cmap=""``, you will get a list of available colormaps.
-  Smilei's default colormap should have the names: ``smilei``, ``smilei_r``, ``smileiD`` and ``smileiD_r``.
+  Smilei's default colormaps are: ``smilei``, ``smilei_r``, ``smileiD`` and ``smileiD_r``.
 
 ----
 
 Update the plotting options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.Scalar.set(*args)
-               Smilei.Field.set(*args)
-               Smilei.Probe.set(*args)
-               Smilei.ParticleBinning.set(*args)
-               Smilei.Screen.set(*args)
+.. py:method:: Smilei.Scalar.set(...)
+               Smilei.Field.set(...)
+               Smilei.Probe.set(...)
+               Smilei.ParticleBinning.set(...)
+               Smilei.Screen.set(...)
 
 
   **Example**::

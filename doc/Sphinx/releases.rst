@@ -14,24 +14,12 @@ the GitHub page.
 
 .. warning::
   
-  In the last version, significant changes have been made to the input syntax.
-  Please :doc:`review these changes<syntax_changes>`.
+  In v3.3, :doc:`significant changes<syntax_changes>` have been made to the input syntax.
 
 ----
 
 Upcoming changes
 ^^^^^^^^^^^^^^^^
-
-3.3:
-
-* **Major** :doc:`syntax changes<syntax_changes>` in the namelist
-* QED radiation reaction
-* Monte-Carlo QED photon emission
-* *Test mode* to quickly check the namelist consistency
-* *ParticleBinning* and *Screen* diagnostics accept a python function as their ``deposited_quantity`` and ``axis``.
-* Bugfixes: 4th order, field ionization
-
-3.4:
 
 * Moving window along y and z
 * Tracking particles in *Screens*
@@ -40,8 +28,22 @@ Upcoming changes
 
 .. _latestVersion:
 
-Current release 3.2
+Current release 3.3
 ^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v3.3 <_downloads/smilei-v3.3.tar.gz>`_
+
+* **Major** :doc:`syntax changes<syntax_changes>` in the namelist
+* QED radiation reaction
+* Monte-Carlo QED photon emission
+* *Test mode* to quickly check the namelist consistency
+* *ParticleBinning* and *Screen* diagnostics accept a python function as their ``deposited_quantity`` and ``axis``.
+* Bugfixes: 4th order, field ionization
+
+----
+
+Release 3.2
+^^^^^^^^^^^
 
 **Download**: `Smilei v3.2 <_downloads/smilei-v3.2.tar.gz>`_
 
