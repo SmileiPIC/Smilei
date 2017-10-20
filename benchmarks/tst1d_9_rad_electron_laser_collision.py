@@ -10,8 +10,10 @@
 # profile of wavelength \lambda.
 #
 # Validation:
-# - Discontinuous radiation loss
-# - Continuous radiation loss
+# - Continuous radiation reaction model: Landau-Lifshitz
+#   with and without quantum corrections
+# - Niel stochastic radiation reaction model
+# - Monte-Carlo radiation reaction model without photon creation
 # ______________________________________________________________________________
 
 import math
@@ -35,7 +37,7 @@ Tsim = 50.*t0                 # duration of the simulation
 resx = 128.                   # nb of cells in one laser wavelength
 
 dx = l0/resx                            # space step
-dt  = 0.95 * dx                 		# timestep (0.95 x CFL)
+dt  = 0.95 * dx                         # timestep (0.95 x CFL)
 
 start = 0                               # Laser start
 fwhm = 10*t0                            # Gaussian time fwhm

@@ -617,8 +617,8 @@ for BENCH in SMILEI_BENCH_LIST :
 	# For the cases that need a database
 	if BENCH in ["tst2d_8_synchrotron_chi1.py",
                  "tst2d_9_synchrotron_chi0.1.py",
-                 "tst1d_9_rad_counter_prop.py",
-                 "tst1d_10_pair_counter_prop.py",
+                 "tst1d_9_rad_electron_laser_collision.py",
+                 "tst1d_10_pair_electron_laser_collision.py",
                  "tst2d_10_multiphoton_Breit_Wheeler.py"]:
 		try :
 			# Copy the database
