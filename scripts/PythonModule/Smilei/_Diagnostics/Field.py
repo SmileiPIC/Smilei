@@ -225,8 +225,13 @@ class Field(Diagnostic):
 		C = {}
 		h5item = self._h5items[index]
 		for field in self._fieldname: # for each field in operation
-			B = self._np.squeeze(self._np.empty(self._finalShape))
-			h5item[field].read_direct(B, source_sel=self._selection) # get array
+			B = self._np.empty(self._finalShape)
+			try:
+				h5item[field].read_direct(B, source_sel=self._selection) # get array
+			except:
+				B = self._np.squeeze(B)
+				h5item[field].read_direct(B, source_sel=self._selection) # get array
+				B = self._np.reshape(B, self._finalShape)
 			C.update({ field:B })
 		# Calculate the operation
 		A = eval(self._operation)
