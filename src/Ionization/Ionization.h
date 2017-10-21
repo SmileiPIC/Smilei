@@ -39,7 +39,7 @@ protected:
     unsigned int nDim_field;
     unsigned int nDim_particle;
     unsigned int atomic_number_;
-    unsigned int ionized_species_invmass;
+    double ionized_species_invmass;
 
 private:
 
