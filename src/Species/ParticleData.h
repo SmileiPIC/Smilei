@@ -52,7 +52,8 @@ public:
         // Verify the return value of the function
         PyObject *ret(nullptr);
         ret = PyObject_CallFunctionObjArgs(function, particles, NULL);
-        if( !PyArray_Check(ret) )
+        PyTools::checkPyError();
+        if( !ret || !PyArray_Check(ret) )
             ERROR(errorPrefix << " must return a numpy array");
         checkType( ret, errorPrefix, dummy );
         unsigned int s = PyArray_SIZE((PyArrayObject *)ret);

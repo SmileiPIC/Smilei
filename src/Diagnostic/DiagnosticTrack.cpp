@@ -170,8 +170,10 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
                 particleData.set( p );
                 // run the filter function
                 ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(filter, particleData.get(), NULL);
+                PyTools::checkPyError();
                 particleData.clear();
-                
+                if( ret == NULL )
+                    ERROR("A DiagTrackParticles filter has not provided a correct result");
                 // Loop the return value and store the particle IDs
                 bool* arr = (bool*) PyArray_GETPTR1( ret, 0 );
                 patch_selection[ipatch].resize(0);
