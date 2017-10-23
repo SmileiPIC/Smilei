@@ -123,53 +123,6 @@ void VectorPatch::dynamics(Params& params,
             }
         }
 
-        /*
-        // Interpolation, physical modules and pusher for all species
-        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
-            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
-                species(ipatch, ispec)->dynamics_interp_and_push(time_dual, ispec,
-                                                 emfields(ipatch), interp(ipatch), proj(ipatch),
-                                                 params, diag_flag,
-                                                 (*this)(ipatch), smpi,
-                                                 RadiationTables,
-                                                 MultiphotonBreitWheelerTables);
-            }
-        }
-
-        // Particle importation for all species
-        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
-            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
-
-                species(ipatch, ispec)->dynamics_import_particles(time_dual, ispec,
-                                              params,
-                                              (*this)(ipatch), smpi,
-                                              RadiationTables,
-                                              MultiphotonBreitWheelerTables,
-                                              localDiags);
-            }
-        }
-
-        // Boundary conditions for all species
-        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
-            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
-
-                species(ipatch, ispec)->dynamics_bound_cond(time_dual, ispec,
-                                              params, partwalls(ipatch),
-                                              (*this)(ipatch), smpi);
-            }
-        }*/
-
-        // Current projection for all species
-        // Does not work because dynamics_iold and dynamics_deltaold from interp are needed
-        /*for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
-            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
-                species(ipatch, ispec)->dynamics_projection(time_dual, ispec,
-                                                 emfields(ipatch), proj(ipatch),
-                                                 params, diag_flag,
-                                                 (*this)(ipatch), smpi);
-            }
-        }*/
-
     }
     timers.particles.update( params.printNow( itime ) );
 
@@ -267,7 +220,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
     }
     if ( !some_particles_are_moving  && !diag_flag )
         return;
-    
+
     timers.densities.restart();
     if  (diag_flag){
         #pragma omp for schedule(static)
@@ -300,7 +253,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
 void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers)
 {
     timers.maxwell.restart();
-    
+
     for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_passes ; ipassfilter++){
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
@@ -481,7 +434,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     ptimer.init(smpi);
     ptimer.restart();
 
-    
+
     unsigned int iteration_max = params.poisson_max_iteration;
     double           error_max = params.poisson_max_error;
     unsigned int iteration=0;

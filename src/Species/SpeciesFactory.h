@@ -171,7 +171,8 @@ public:
                     {
                         if (thisSpecies->radiation_photon_sampling < 1)
                         {
-                            ERROR("For species '" << species_type << "' radiation_photon_sampling should be > 1");
+                            ERROR("For species '" << species_name
+                            << "' radiation_photon_sampling should be > 1");
                         }
                     }
                     else
@@ -207,7 +208,9 @@ public:
                 // If one of the species is empty
                 if (thisSpecies->multiphoton_Breit_Wheeler[1].empty() || thisSpecies->multiphoton_Breit_Wheeler[0].empty())
                 {
-                    ERROR("For species '" << species_type << "' multiphoton_Breit_Wheeler can not be empty, select electron and positron species.");
+                    ERROR("For species '" << species_name
+                    << "' multiphoton_Breit_Wheeler can not be empty,"
+                    << " select electron and positron species.");
                 }
                 else
                 {
@@ -584,7 +587,7 @@ public:
             {
                 unsigned int ispec2 = 0;
                 for (ispec2 = 0;ispec2<retSpecies.size();ispec2++) {
-                    if( retSpecies[ispec1]->radiation_photon_species == retSpecies[ispec2]->species_type) {
+                    if( retSpecies[ispec1]->radiation_photon_species == retSpecies[ispec2]->name) {
                         if( ispec1==ispec2 )
                             ERROR("For species '"<<retSpecies[ispec1]->name<<"' radiation_photon_species must be a distinct photon species");
                         if (retSpecies[ispec2]->mass!=0)
