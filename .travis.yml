@@ -20,7 +20,7 @@ before_install:
 
 script:
   - travis-sphinx --nowarn --source=doc/Sphinx build
-  - find build
+  - find .
 
 after_success:
   - travis-sphinx deploy
