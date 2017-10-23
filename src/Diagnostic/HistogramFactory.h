@@ -232,10 +232,14 @@ public:
                 axis = new HistogramAxis_chi();
             } else if (type == "composite") {
                 ERROR(errorPrefix << ": axis type cannot be 'composite'");
-            } else if (type == "user_function") {
+            }
+#ifdef SMILEI_USE_NUMPY
+            else if (type == "user_function") {
                 axis = new HistogramAxis_user_function( type_object );
             
-            } else {
+            }
+#endif
+            else {
                 // If not "usual" type, try to find composite type
                 for( unsigned int i=1; i<=type.length(); i++ )
                     if( type.substr(i,1) == " " )
