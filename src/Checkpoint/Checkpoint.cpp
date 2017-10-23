@@ -420,7 +420,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
                 if (attr_size == (int) screen->data_sum.size()) {
                     H5::getAttr(fid, diagName.str(), screen->data_sum);
                 } else {
-                    WARNING("Restart: DiagScreen[" << idiag << "] size mismatch. Previous data discarded");
+                    WARNING("Restart: DiagScreen[" << screen->screen_id << "] size mismatch. Previous data discarded");
                 }
             }
         }
