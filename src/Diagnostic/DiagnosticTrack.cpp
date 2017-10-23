@@ -56,7 +56,7 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& 
         bool * dummy = NULL;
         ParticleData test( nDim_particle, filter, name.str(), dummy );
 #else
-        ERROR(name << " with a filter requires the numpy package");
+        ERROR(name.str() << " with a filter requires the numpy package");
 #endif
     }
 
