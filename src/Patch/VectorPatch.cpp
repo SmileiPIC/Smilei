@@ -283,7 +283,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
 
     if(diag_flag){
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
-            if( ! (*this)(0)->vecSpecies[ispec]->particles->isTest ) {
+            if( ! (*this)(0)->vecSpecies[ispec]->particles->is_test ) {
                 update_field_list(ispec);
                 SyncVectorPatch::sumRhoJs( (*this), ispec, timers, itime ); // MPI
             }
@@ -300,8 +300,8 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
 void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers)
 {
     timers.maxwell.restart();
-
-    for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_int ; ipassfilter++){
+    
+    for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_passes ; ipassfilter++){
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
             // Current spatial filtering
@@ -482,8 +482,8 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     ptimer.restart();
 
     
-    unsigned int iteration_max = params.poisson_iter_max;
-    double           error_max = params.poisson_error_max;
+    unsigned int iteration_max = params.poisson_max_iteration;
+    double           error_max = params.poisson_max_error;
     unsigned int iteration=0;
 
     // Init & Store internal data (phi, r, p, Ap) per patch

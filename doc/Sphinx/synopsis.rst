@@ -1,29 +1,36 @@
 Synopsis
 --------
 
-To face the diverse needs of the teams involved in its development, :program:`Smilei`
-is developed in C++, based on an object-oriented architecture.
-Its modularity allows to run simulations in various dimensions, geometries, to chose
-between various Maxwell solvers, particle pushers, interpolators, projectors, etc.
-:program:`Smilei` works now in 3D cartesian geometry.
+Smilei is a collaborative project providing the scientific community with an open-source,
+user-friendly, high-performance and multi-purpose Particle-In-Cell (PIC) code
+for plasma simulation.
 
-Maxwell's equations are solved on the so-called Yee-mesh with centered electric
-and magnetic fields using the finite-difference time-domain (FDTD) method
-or related methods. Moreover, charge deposition is computed
-following a charge-conservation scheme.
+To face the diverse needs of the Smilei community, the code is developed in C++,
+based on an object-oriented architecture. Its modularity and user-friendly Python
+interface allows to run simulations in various dimensions (Cartesian 1D, 2D, 3D),
+to chose between various Maxwell solvers, particle pushers, interpolators, projectors, etc.
+A whole set of run-time diagnostics (based on HDF5) and user-friendly (Python)
+:doc:`post-processing <post-processing>` tools complements the code.
 
-:doc:`Binary collisions <collisions>` have been implemented and
-Monte-Carlo routines are currently under development to account for
-high-energy (gamma) photon emission and its back-reaction on the electron 
-dynamics, as well as electron-positron pair creation. These developments are
-undertaken in collaboration with the team that introduced
-`similar routines <http://iopscience.iop.org/article/10.1088/1742-6596/688/1/012058>`_
-in the PIC code :program:`Calder`. Such routines will be of
-particular importance for the modelling of strongly relativistic astrophysical scenarii.
+Co-developed by HPC specialists and physicists, Smilei is designed for high performances
+on massively-parallel super-computers. It benefits from a state-of-the-art hybrid
+MPI/OpenMP parallelization, dynamic load balancing and vectorization is under development.
+It has been successfully tested on various architectures among which the most recent
+Intel Skylake (SKL) & Knigths Landing (KNL).
 
-On the performance side, :program:`Smilei` benefits from a state-of-the-art
-hybrid **MPI/OpenMP parallelization**, an original particle sorting algorithm,
-and innovative dynamic load balancing.
-:program:`Smilei` is therefore designed to run on massively parallel machines,
-and its flexibility should allow one to benefit from the newest and futures HPC architectures.
+In Smilei, Maxwell’s equations are solved on the so-called Yee-mesh with centered
+electric and magnetic fields using the finite-difference time-domain (FDTD)
+method or related methods. Moreover, charge deposition is computed following
+a charge-conservation scheme.
 
+A multi-purpose code, Smilei is applied to a wide range of physics-related studies:
+from relativistic laser-plasma interaction to astrophysics. Smilei thus benefits from
+various additional physics modules among which :doc:`field ionization <field_ionization>`,
+:doc:`binary collisions and impact ionization <collisions>`. QED processes such as
+high-energy photon emission and its :doc:`back-reaction <radiation_loss>`
+on the electron dynamics, as well as
+:doc:`pair production <multiphoton_Breit_Wheeler>` through the Breit-Wheeler
+process are also included.
+
+A detailed account of Smilei's capabilities is given in 
+`this article <https://doi.org/10.1016/j.cpc.2017.09.024>`_.

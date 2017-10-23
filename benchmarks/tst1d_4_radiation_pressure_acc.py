@@ -19,51 +19,53 @@ def f(x):
         return 0.0
 
 Main(
-    geometry = "1d3v",
+    geometry = "1Dcartesian",
     
     interpolation_order = 2 ,
     
     cell_length = [l0/resx],
-    sim_length  = [Lsim],
+    grid_length  = [Lsim],
     
     number_of_patches = [ 8 ],
     
     timestep = t0/rest,
-    sim_time = Tsim,
+    simulation_time = Tsim,
      
-    bc_em_type_x = ['silver-muller'],
+    EM_boundary_conditions = [ ['silver-muller'] ],
      
     random_seed = smilei_mpi_rank,
     clrw = 1
 )
 
 Species(
-	species_type = 'ion',
-	initPosition_type = 'regular',
-	initMomentum_type = 'cold',
-	n_part_per_cell = 10,
+	name = 'ion',
+	position_initialization = 'regular',
+	momentum_initialization = 'cold',
+	particles_per_cell = 10,
 	mass = 1836.0,
 	charge = 1.0,
-	nb_density = trapezoidal(10.,xvacuum=l0,xplateau=l0),
+	number_density = trapezoidal(10.,xvacuum=l0,xplateau=l0),
 	temperature = [0.],
-	bc_part_type_xmin = 'refl',
-	bc_part_type_xmax = 'refl'
+	boundary_conditions = [
+		["refl", "refl"],
+	],
 )
 Species(
-	species_type = 'eon',
-	initPosition_type = 'regular',
-	initMomentum_type = 'cold',
-	n_part_per_cell = 10,
+	name = 'eon',
+	position_initialization = 'regular',
+	momentum_initialization = 'cold',
+	particles_per_cell = 10,
 	mass = 1.0,
 	charge = -1.0,
-	nb_density = trapezoidal(10.,xvacuum=l0,xplateau=l0),
+	number_density = trapezoidal(10.,xvacuum=l0,xplateau=l0),
 	temperature = [0.],
-	bc_part_type_xmin = 'refl',
-	bc_part_type_xmax = 'refl'
+	boundary_conditions = [
+		["refl", "refl"],
+	],
 )
 
 LaserPlanar1D(
-	boxSide = 'xmin',
+	box_side = 'xmin',
 	a0 = 10.,
     omega = 1.,
     ellipticity = 1.,
@@ -80,8 +82,8 @@ DiagFields(
 
 DiagScalar(every=every)
 
-DiagParticles(
-	output = "density",
+DiagParticleBinning(
+	deposited_quantity = "weight",
 	every = every,
 	species = ["ion"],
 	axes = [
@@ -90,8 +92,8 @@ DiagParticles(
 	]
 )
 
-DiagParticles(
-	output = "density",
+DiagParticleBinning(
+	deposited_quantity = "weight",
 	every = every,
 	species = ["ion"],
 	axes = [
@@ -106,7 +108,7 @@ for direction in ["forward", "backward", "both", "canceling"]:
 	    point = [0.],
 	    vector = [Lsim/3.],
 	    direction = direction,
-	    output = "density",
+	    deposited_quantity = "weight",
 	    species = ["eon"],
 	    axes = [["ekin", 0., 0.4, 10],],
 	    every = 3000
@@ -116,7 +118,7 @@ for direction in ["forward", "backward", "both", "canceling"]:
 	    point = [Lsim/3.],
 	    vector = [1.],
 	    direction = direction,
-	    output = "density",
+	    deposited_quantity = "weight",
 	    species = ["eon"],
 	    axes = [["ekin", 0., 0.4, 10],],
 	    every = 3000

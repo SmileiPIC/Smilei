@@ -62,14 +62,12 @@ class Options(object):
 		self.figure1 = {"facecolor":"w"}
 		self.axes = {}
 		self.plot = {}
-		self.image = {"interpolation":"nearest", "aspect":"auto"}
+		self.image = {"cmap":"smilei", "interpolation":"nearest", "aspect":"auto"}
 		self.colorbar = {}
 		self.xtick = {"useOffset":False}
 		self.ytick = {"useOffset":False}
-		if "cmap" not in kwargs.keys(): kwargs["cmap"] = "smilei"
 		self.side = "left"
 		self.transparent = None
-		self.set(**kwargs)
 	
 	# Method to set optional plotting arguments
 	def set(self, **kwargs):
@@ -90,32 +88,36 @@ class Options(object):
 		for kwa, val in kwargs.items():
 			if kwa in ["figsize"]:
 				self.figure0[kwa] = val
-			if kwa in ["dpi","facecolor","edgecolor"]:
+			elif kwa in ["facecolor","edgecolor"]:
 				self.figure1[kwa] = val
-			if kwa in ["aspect","axis_bgcolor",
+			elif kwa in ["aspect","axis_bgcolor",
 					   "frame_on","position","title","visible","xlabel","xscale","xticklabels",
 					   "xticks","ylabel","yscale","yticklabels","yticks","zorder"]:
 				self.axes[kwa] = val
-			if kwa in ["color","dashes","drawstyle","fillstyle","label","linestyle",
+			elif kwa in ["color","dashes","drawstyle","fillstyle","label","linestyle",
 					   "linewidth","marker","markeredgecolor","markeredgewidth",
 					   "markerfacecolor","markerfacecoloralt","markersize","markevery",
 					   "visible","zorder"]:
 				self.plot[kwa] = val
-			if kwa in ["cmap","aspect","interpolation"]:
+			elif kwa in ["cmap","aspect","interpolation"]:
 				self.image[kwa] = val
-			if kwa in ["orientation","fraction","pad","shrink","anchor","panchor",
+			elif kwa in ["orientation","fraction","pad","shrink","anchor","panchor",
 					   "extend","extendfrac","extendrect","spacing","ticks","format",
 					   "drawedges"]:
 				self.colorbar[kwa] = val
-			if kwa in ["style_x","scilimits_x","useOffset_x"]:
+			elif kwa in ["style_x","scilimits_x","useOffset_x"]:
 				self.xtick[kwa] = val
-			if kwa in ["style_y","scilimits_y","useOffset_y"]:
+			elif kwa in ["style_y","scilimits_y","useOffset_y"]:
 				self.ytick[kwa] = val
+			else:
+				continue
+			kwargs.pop(kwa)
 		# special case: "aspect" is ambiguous because it exists for both imshow and colorbar
 		if "cbaspect" in kwargs:
-			self.colorbar["aspect"] = kwargs["cbaspect"]
+			self.colorbar["aspect"] = kwargs.pop("cbaspect")
 		if self.side=="right" and "pad" not in self.colorbar:
 			self.colorbar["pad"] = 0.15
+		return kwargs
 
 
 class Units(object):
@@ -168,24 +170,30 @@ class Units(object):
 				try:
 					return self._divide(knownUnits,requestedUnits)
 				except:
-					print("WARNING: cannot convert units to <"+requestedUnits+">")
-					print("       : Conversion discarded.")
+					if self.verbose:
+						print("WARNING: cannot convert units to <"+requestedUnits+">")
+						print("       : Conversion discarded.")
 			else:
 				for units in self.requestedUnits:
 					try   : return self._divide(knownUnits,units)
 					except: pass
-			val = self.ureg(knownUnits)
-			return 1., u"{0.units:P}".format(val)
+			try:
+				val = self.ureg(knownUnits)
+				return 1., u"{0.units:P}".format(val)
+			except:
+				if self.verbose:
+					print("WARNING: units unknown")
+				return 1., ""
 		return 1., ""
 	
-	def prepare(self, referenceAngularFrequency_SI=None, xunits="", yunits="", vunits="", tunits=""):
+	def prepare(self, reference_angular_frequency_SI=None, xunits="", yunits="", vunits="", tunits=""):
 		if self.UnitRegistry:
-			if referenceAngularFrequency_SI:
+			if reference_angular_frequency_SI:
 				# Load pint's default unit registry
 				self.ureg = self.UnitRegistry()
 				# Define code units
 				self.ureg.define("V_r = speed_of_light"                   ) # velocity
-				self.ureg.define("W_r = "+str(referenceAngularFrequency_SI)+"*hertz") # frequency
+				self.ureg.define("W_r = "+str(reference_angular_frequency_SI)+"*hertz") # frequency
 				self.ureg.define("M_r = electron_mass"                    ) # mass
 				self.ureg.define("Q_r = 1.602176565e-19 * coulomb"        ) # charge
 			else:
@@ -326,7 +334,7 @@ def multiPlot(*Diags, **kwargs):
 	
 	Parameters:
 	-----------
-	Diag1, Diag2, ... : Several objects of classes 'Scalar', 'Field', 'Probe' or 'ParticleDiagnostic'
+	Diag1, Diag2, ... : Several objects of classes 'Scalar', 'Field', 'Probe' or 'ParticleBinning'
 	shape : 2-element list giving the number of figures in x and y.
 	movie : filename to create a movie, e.g. "my/path/mov.avi" or "my/path/mov.gif"
 	fps : frames per second for the movie.
@@ -383,7 +391,8 @@ def multiPlot(*Diags, **kwargs):
 		return
 	# Make the figure
 	if "facecolor" not in kwargs: kwargs.update({ "facecolor":"w" })
-	options = Options(**kwargs)
+	options = Options()
+	options.set(**kwargs)
 	fig = plt.figure(**options.figure0)
 	fig.set(**options.figure1) # Apply figure kwargs
 	fig.clf()
@@ -391,10 +400,16 @@ def multiPlot(*Diags, **kwargs):
 	ax = []
 	xmin =  float("inf")
 	xmax = -float("inf")
+	option_xmin = []
+	option_xmax = []
+	option_ymin = []
+	option_ymax = []
 	c = plt.matplotlib.rcParams['axes.color_cycle']
 	for i in range(nplots):
 		ax.append( fig.add_subplot(shape[0], shape[1], i+1) )
-	allright = all([d.options.side=="right" for d in Diags])
+	rightside = [d.options.side=="right" for d in Diags]
+	allright  = all(rightside)
+	bothsides = any(rightside) and any(not rightside)
 	for i, Diag in enumerate(Diags):
 		Diag._cax_id = 0
 		if sameAxes:
@@ -411,6 +426,10 @@ def multiPlot(*Diags, **kwargs):
 				Diag._ax.yaxis.tick_right()
 				Diag._ax.yaxis.set_label_position("right")
 		Diag._artist = None
+		if Diag.options.xmin is not None: option_xmin += [Diag.options.xmin]
+		if Diag.options.xmax is not None: option_xmax += [Diag.options.xmax]
+		if Diag.options.ymin is not None: option_ymin += [Diag.options.ymin]
+		if Diag.options.ymax is not None: option_ymax += [Diag.options.ymax]
 		try:
 			l = Diag.limits()[0]
 			xmin = min(xmin,l[0])
@@ -420,6 +439,11 @@ def multiPlot(*Diags, **kwargs):
 		if "color" not in Diag.options.plot:
 			Diag.options.plot.update({ "color":c[i%len(c)] })
 		Diag._prepare()
+	# Find min max
+	if option_xmin: xmin = min(option_xmin)
+	if option_xmax: xmax = max(option_xmax)
+	if option_ymin: ymin = min(option_ymin)
+	if option_ymax: ymax = max(option_ymax)
 	# Static plot
 	if sameAxes and Diags[0].dim==0:
 		for Diag in Diags:
@@ -443,7 +467,7 @@ def multiPlot(*Diags, **kwargs):
 					Diag._artist = Diag._animateOnAxes(Diag._ax, t, cax_id = Diag._cax_id)
 					if sameAxes:
 						Diag._ax.set_xlim(xmin,xmax)
-						if Diag.dim<2:
+						if Diag.dim<2 and bothsides:
 							color = Diag._artist.get_color()
 							Diag._ax.yaxis.label.set_color(color)
 							Diag._ax.tick_params(axis='y', colors=color)
@@ -454,6 +478,7 @@ def multiPlot(*Diags, **kwargs):
 								Diag._ax.spines['left'].set_color(color)
 					try: Diag._ax.set_position(Diag._ax.twin.get_position())
 					except: pass
+			plt.legend()
 			plt.draw()
 			plt.pause(0.00001)
 			mov.grab_frame()

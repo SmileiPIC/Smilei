@@ -38,7 +38,7 @@ class Diagnostic(object):
 		# Reload the simulation, in case it has been updated
 		self.Smilei.reload()
 		if not self.Smilei.valid:
-			print("Invalid Smilei simulation")
+			self._error = "Invalid Smilei simulation"
 			return
 		
 		# Copy some parameters from the simulation
@@ -50,18 +50,31 @@ class Diagnostic(object):
 		self.timestep      = self.Smilei._timestep
 		
 		# Make the Options object
-		self.options = Options(**kwargs)
+		self.options = Options()
+		kwargs = self.options.set(**kwargs)
 		
 		# Make or retrieve the Units object
 		self.units = kwargs.pop("units", [""])
 		if type(self.units) in [list, tuple]: self.units = Units(*self.units , verbose = self.Smilei._verbose)
 		if type(self.units) is dict         : self.units = Units(verbose = self.Smilei._verbose, **self.units)
 		if type(self.units) is not Units:
-			print("Could not understand the 'units' argument")
+			self._error = "Could not understand the 'units' argument"
+			return
+		
+		# DEPRECATION ERRORS
+		if "slice" in kwargs:
+			self._error = "Argument `slice` is deprecated: use `subset` instead."
+			return
+		if "stride" in kwargs:
+			self._error = "Argument `stride` is deprecated: use `average` or `sum` instead."
 			return
 		
 		# Call the '_init' function of the child class
-		self._init(*args, **kwargs)
+		remaining_kwargs = self._init(*args, **kwargs)
+		if remaining_kwargs is not None and len(remaining_kwargs) > 0:
+			self.valid = False
+			self._error = "The following keyword-arguments are unknown: "+", ".join(remaining_kwargs.keys())
+			return
 		
 		# Prepare units
 		self.dim = len(self._shape)
@@ -70,7 +83,7 @@ class Diagnostic(object):
 			yunits = None
 			if self.dim > 0: xunits = self._units[0]
 			if self.dim > 1: yunits = self._units[1]
-			self.units.prepare(self.Smilei._referenceAngularFrequency_SI, xunits, yunits, self._vunits)
+			self.units.prepare(self.Smilei._reference_angular_frequency_SI, xunits, yunits, self._vunits)
 	
 	# When no action is performed on the object, this is what appears
 	def __repr__(self):
@@ -103,8 +116,9 @@ class Diagnostic(object):
 		A list of [min, max] for each axis.
 		"""
 		l = []
+		factor = [self.xfactor, self.yfactor]
 		for i in range(self.dim):
-			l.append([min(self._centers[i]), max(self._centers[i])])
+			l.append([min(self._centers[i])*factor[i], max(self._centers[i])*factor[i]])
 		return l
 	
 	# Method to print info on this diag
@@ -201,7 +215,7 @@ class Diagnostic(object):
 		Example:
 		--------
 			S = Smilei("path/to/my/results")
-			S.ParticleDiagnostic(1).plot(vmin=0, vmax=1e14)
+			S.ParticleBinning(1).plot(vmin=0, vmax=1e14)
 		"""
 		if not self._validate(): return
 		if not self._prepare(): return
@@ -247,7 +261,7 @@ class Diagnostic(object):
 		Example:
 		--------
 			S = Smilei("path/to/my/results")
-			S.ParticleDiagnostic(1).streak(vmin=0, vmax=1e14)
+			S.ParticleBinning(1).streak(vmin=0, vmax=1e14)
 		"""
 		if not self._validate(): return
 		if not self._prepare(): return
@@ -331,9 +345,9 @@ class Diagnostic(object):
 		Example:
 		--------
 			S = Smilei("path/to/my/results")
-			S.ParticleDiagnostic(1).animate(vmin=0, vmax=1e14)
+			S.ParticleBinning(1).animate(vmin=0, vmax=1e14)
 			
-			This takes the particle diagnostic #1 and plots the resulting array in figure 1 from 0 to 3e14.
+			This takes the particle binning diagnostic #1 and plots the resulting array in figure 1 from 0 to 3e14.
 		"""
 		if not self._validate(): return
 		if not self._prepare(): return
@@ -371,6 +385,77 @@ class Diagnostic(object):
 		else:
 			raise
 		return times
+	
+	# Method to select portion of a mesh based on a slice
+	def _selectSubset(self, portion, meshpoints, axisname, axisunits, operation):
+		try:
+			s = self._np.double(portion)
+			if s.size>3 or s.size<1: raise
+		except:
+			self._error = "`"+operation+"` along axis "+axisname+" should be a list of 1 to 3 floats"
+			raise
+		step = 1
+		if s.size==1:
+			indices = self._np.array([(self._np.abs(meshpoints-s)).argmin()])
+		else:
+			indices = self._np.nonzero( (meshpoints>=s[0]) * (meshpoints<=s[1]) )[0]
+			if indices.size == 0:
+				indices = self._np.array([(self._np.abs(meshpoints-s[:2].mean())).argmin()])
+			if s.size==3:
+				try:
+					step = int(s[2])
+					if step - s[2] != 0: raise
+				except:
+					self._error = "`"+operation+"` along axis "+axisname+": third number must be an integer"
+					raise
+				indices = indices[::step]
+		if indices.size == 0:
+			self._error = "`"+operation+"` along "+axisname+" is out of range"
+			raise
+		elif indices.size == 1:
+			info = operation+" at "+axisname+" = "+str(meshpoints[indices])+" "+axisunits
+			selection = self._np.s_[indices[0]]
+			finalShape = 1
+		else:
+			info = operation+" for "+axisname+" from "+str(meshpoints[indices[0]])+" to "+str(meshpoints[indices[-1]])+" "+axisunits
+			if step > 1: info += " every "+str(step)+" cells"
+			selection = self._np.s_[indices[0]:indices[-1]+1:step]
+			finalShape = len(indices)
+		return info, selection, finalShape
+	
+	# Method to select portion of a mesh based on a range
+	def _selectRange(self, portion, meshpoints, axisname, axisunits, operation):
+		# if portion is "all", then select all the axis
+		if portion == "all":
+			info = operation+" for all "+axisname
+			selection = self._np.s_[:]
+			finalShape = meshpoints.size
+		# Otherwise, parse the portion
+		else:
+			try:
+				s = self._np.double(portion)
+				if s.size>2 or s.size<1: raise
+			except:
+				self._error = "`"+operation+"` along axis "+axisname+" should be one or two floats"
+				raise
+			if s.size==1:
+				indices = self._np.array([(self._np.abs(meshpoints-s)).argmin()])
+			elif s.size==2:
+				indices = self._np.nonzero( (meshpoints>=s[0]) * (meshpoints<=s[1]) )[0]
+				if indices.size == 0:
+					indices = self._np.array([(self._np.abs(meshpoints-s.mean())).argmin()])
+			if indices.size == 0:
+				self._error = "`"+operation+"` along "+axisname+" is out of range"
+				raise
+			elif indices.size == 1:
+				info = operation+" at "+axisname+" = "+str(meshpoints[indices])+" "+axisunits
+				selection = slice(indices[0],indices[0]+1)
+				finalShape = 1
+			else:
+				info = operation+" for "+axisname+" from "+str(meshpoints[indices[0]])+" to "+str(meshpoints[indices[-1]])+" "+axisunits
+				selection = slice(indices[0],indices[-1])
+				finalShape = indices[-1] - indices[0]
+		return info, selection, finalShape
 	
 	# Method to prepare some data before plotting
 	def _prepare(self):

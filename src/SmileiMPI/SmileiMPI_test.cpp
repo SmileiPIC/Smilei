@@ -101,24 +101,11 @@ void SmileiMPI_test::init( Params& params )
     
     // Set periodicity of the simulated problem
     periods_  = new int[params.nDim_field];
-    for (unsigned int i=0 ; i<params.nDim_field ; i++) periods_[i] = 0;
-    // Geometry periodic in x
-    if (params.bc_em_type_x[0]=="periodic") {
-        periods_[0] = 1;
-        MESSAGE(1,"applied topology for periodic BCs in x-direction");
-    }
-    if (params.nDim_field>1) {
-        // Geometry periodic in y
-        if (params.bc_em_type_y[0]=="periodic") {
-            periods_[1] = 1;
-            MESSAGE(2,"applied topology for periodic BCs in y-direction");
-        }
-    }
-    if (params.nDim_field>2) {
-        // Geometry periodic in y
-        if (params.bc_em_type_z[0]=="periodic") {
-            periods_[2] = 1;
-            MESSAGE(2,"applied topology for periodic BCs in z-direction");
+    for (unsigned int i=0 ; i<params.nDim_field ; i++) {
+        periods_[i] = 0;
+        if (params.EM_BCs[i][0]=="periodic") {
+            periods_[i] = 1;
+            MESSAGE(1,"applied topology for periodic BCs in "<<"xyz"[i]<<"-direction");
         }
     }
 } // END init

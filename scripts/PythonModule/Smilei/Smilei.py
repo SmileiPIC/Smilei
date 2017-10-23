@@ -1,5 +1,5 @@
 from ._Utils import *
-from ._Diagnostics import Scalar, Field, Probe, ParticleDiagnostic, Screen, TrackParticles
+from ._Diagnostics import Scalar, Field, Probe, ParticleBinning, Screen, TrackParticles
 
 
 class ScalarFactory(object):
@@ -63,17 +63,21 @@ class FieldFactory(object):
 		If omitted, all timesteps are used.
 		If one number  given, the nearest timestep available is used.
 		If two numbers given, all the timesteps in between are used.
-	slice : a python dictionary of the form { axis:range, ... } (optional)
+	subset: a python dictionary of the form { axis:range, ... } (optional)
+		`axis` must be "x", "y" or "z".
+		`range` must be a list of 1 to 3 floats such as [start, stop, step]
+		WARNING: THE VALUE OF `step` IS A NUMBER OF CELLS.
+		Only the data within the chosen axes' selections is extracted.
+		Example: subset = {"y":[10, 80, 4]}
+	average : a python dictionary of the form { axis:range, ... } (optional)
 		`axis` may be "x", "y" or "z".
 		`range` may be "all", a float, or [float, float].
-		For instance, slice={"x":"all", "y":[2,3]}.
-		The average of all values within the 'slice' is computed.
+		For instance, average={"x":"all", "y":[2,3]}.
+		The average of all values within the bounds is computed.
 	units : a units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
-	stride : int (default: 1)
-		Step size for sampling the grid.
-
+	
 	Usage:
 	------
 		S = Smilei("path/to/simulation") # Load the simulation
@@ -154,11 +158,17 @@ class ProbeFactory(object):
 		If omitted, all timesteps are used.
 		If one number  given, the nearest timestep available is used.
 		If two numbers given, all the timesteps in between are used.
-	slice : a python dictionary of the form { axis:range, ... } (optional)
+	subset: a python dictionary of the form { axis:range, ... } (optional)
+		`axis` must be "axis1", "axis2" or "axis3".
+		`range` must be a list of 1 to 3 floats such as [start, stop, step]
+		WARNING: THE VALUE OF `step` IS A NUMBER OF PROBE POINTS.
+		Only the data within the chosen axes' selections is extracted.
+		Example: subset = {"axis2":[10, 80, 4]}
+	average : a python dictionary of the form { axis:range, ... } (optional)
 		`axis` may be "axis1" or "axis2" (the probe axes).
 		`range` may be "all", a float, or [float, float].
-		For instance, slice={"axis1":"all", "axis2":[2,3]}.
-		The average of all values within the 'slice' is computed.
+		For instance, average={"axis1":"all", "axis2":[2,3]}.
+		The average of all values within the bounds is computed.
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
@@ -220,33 +230,37 @@ class ProbeFactory(object):
 		pass
 
 
-class ParticleDiagnosticFactory(object):
-	"""Import and analyze a particle diagnostic from a Smilei simulation
-
+class ParticleBinningFactory(object):
+	"""Import and analyze a ParticleBinning diagnostic from a Smilei simulation
+	
 	Parameters:
 	-----------
 	diagNumber : int (optional)
-		Index of an available particle diagnostic.
+		Index of an available ParticleBinning diagnostic.
 		To get a list of available diags, simply omit this argument.
 	timesteps : int or [int, int] (optional)
 		If omitted, all timesteps are used.
 		If one number  given, the nearest timestep available is used.
 		If two numbers given, all the timesteps in between are used.
-	slice : a python dictionary of the form { axis:range, ... } (optional)
+	subset: a python dictionary of the form { axis:range, ... } (optional)
+		`axis` may be "x", "y", "z", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
+		`range` must be a list of 1 to 3 floats such as [start, stop, step]
+		WARNING: THE VALUE OF `step` IS A NUMBER OF BINS.
+		Only the data within the chosen axes' selections is extracted.
+		Example: subset = {"y":[10, 80, 4]}
+	sum : a python dictionary of the form { axis:range, ... } (optional)
 		`axis` may be "x", "y", "z", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
 		`range` may be "all", a float, or [float, float].
-		For instance, slice={"x":"all", "y":[2,3]}.
-		The SUM of all values within the 'slice' is computed.
+		For instance, sum={"x":"all", "y":[2,3]}.
+		The sum of all values within the bounds is computed.
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
-	stride : int (default: 1)
-		Step size for sampling the grid.
-
+	
 	Usage:
 	------
 		S = Smilei("path/to/simulation") # Load the simulation
-		part = S.ParticleDiagnostic(...) # Load the particle diagnostic
+		part = S.ParticleBinning(...) # Load the particle binning diagnostic
 		part.get()                       # Obtain the data
 	"""
 
@@ -256,35 +270,35 @@ class ParticleDiagnosticFactory(object):
 
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
-			# Create a temporary, empty particle diagnostic
-			tmpDiag = ParticleDiagnostic.ParticleDiagnostic(simulation)
+			# Create a temporary, empty particle binning diagnostic
+			tmpDiag = ParticleBinning.ParticleBinning(simulation)
 			# Get a list of diags
 			diags = tmpDiag.getDiags()
 			# Create diags shortcuts
 			for diag in diags:
-				setattr(self, 'Diag'+str(diag), ParticleDiagnosticFactory(simulation, diag))
-
+				setattr(self, 'Diag'+str(diag), ParticleBinningFactory(simulation, diag))
+		
 		else:
 			# the diag is saved for generating the object in __call__
 			self._additionalArgs += (diagNumber, )
 
 			## If not a specific timestep, build a list of timesteps shortcuts
 			#if timestep is None:
-			#	# Create a temporary, empty particle diagnostic
-			#	tmpDiag = ParticleDiagnostic.ParticleDiagnostic(simulation, diagNumber)
+			#	# Create a temporary, empty particle binning diagnostic
+			#	tmpDiag = ParticleBinning.ParticleBinning(simulation, diagNumber)
 			#	# Get a list of timesteps
 			#	timesteps = tmpDiag.getAvailableTimesteps()
 			#	# Create timesteps shortcuts
 			#	for timestep in timesteps:
-			#		setattr(self, 't%0.10i'%timestep, ParticleDiagnosticFactory(simulation, diagNumber, timestep))
+			#		setattr(self, 't%0.10i'%timestep, ParticleBinningFactory(simulation, diagNumber, timestep))
 			#
 			#else:
 			#	# the timestep is saved for generating the object in __call__
 			#	self._additionalArgs += (timestep, )
 
 	def __call__(self, *args, **kwargs):
-		return ParticleDiagnostic.ParticleDiagnostic(self._simulation, *(self._additionalArgs+args), **kwargs)
-
+		return ParticleBinning.ParticleBinning(self._simulation, *(self._additionalArgs+args), **kwargs)
+	
 	def toXDMF(self):
 		pass
 
@@ -301,21 +315,25 @@ class ScreenFactory(object):
 		If omitted, all timesteps are used.
 		If one number  given, the nearest timestep available is used.
 		If two numbers given, all the timesteps in between are used.
-	slice : a python dictionary of the form { axis:range, ... } (optional)
+	subset: a python dictionary of the form { axis:range, ... } (optional)
+		`axis` may be "x", "y", "z", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
+		`range` must be a list of 1 to 3 floats such as [start, stop, step]
+		WARNING: THE VALUE OF `step` IS A NUMBER OF BINS.
+		Only the data within the chosen axes' selections is extracted.
+		Example: subset = {"y":[10, 80, 4]}
+	sum : a python dictionary of the form { axis:range, ... } (optional)
 		`axis` may be "x", "y", "z", "a", "b", "theta", "phi", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
 		`range` may be "all", a float, or [float, float].
-		For instance, slice={"x":"all", "y":[2,3]}.
-		The SUM of all values within the 'slice' is computed.
+		For instance, sum={"x":"all", "y":[2,3]}.
+		The sum of all values within the bounds is computed.
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
-	stride : int (default: 1)
-		Step size for sampling the grid.
-
+	
 	Usage:
 	------
 		S = Smilei("path/to/simulation") # Load the simulation
-		screen = S.Screen(...) # Load the particle diagnostic
+		screen = S.Screen(...) # Load the Screen diagnostic
 		screen.get()                       # Obtain the data
 	"""
 
@@ -475,19 +493,19 @@ class Smilei(object):
 	namelist :
 		An object that holds the information of the original user namelist.
 	Scalar :
-		A callable object to access the `DiagScalar` diagnostic.
+		A method to access the `DiagScalar` diagnostic.
 	Field :
-		A callable object to access the `DiagField` diagnostic.
+		A method to access the `DiagField` diagnostic.
 	Probe :
-		A callable object to access the `DiagProbe` diagnostic.
-	ParticleDiagnostic :
-		A callable object to access the `DiagParticle` diagnostic.
+		A method to access the `DiagProbe` diagnostic.
+	ParticleBinning :
+		A method to access the `DiagParticleBinning` diagnostic.
 	TrackParticles :
-		A callable object to access the tracked particles diagnostic.
-
+		A method to access the tracked particles diagnostic.
+		
 	"""
-
-	def __init__(self, results_path=".", show=True, referenceAngularFrequency_SI=None, verbose=True):
+	
+	def __init__(self, results_path=".", show=True, reference_angular_frequency_SI=None, verbose=True):
 		self.valid = False
 		# Import packages
 		import h5py
@@ -508,8 +526,8 @@ class Smilei(object):
 		self._plt = matplotlib.pyplot
 		self._mtime = 0
 		self._verbose = verbose
-		self._referenceAngularFrequency_SI = referenceAngularFrequency_SI
-
+		self._reference_angular_frequency_SI = reference_angular_frequency_SI
+		
 		# Load the simulation (verify the path, get the namelist)
 		self.reload()
 
@@ -521,8 +539,8 @@ class Smilei(object):
 			self.Field = FieldFactory(self)
 			if self._verbose: print("Scanning for Probe diagnostics")
 			self.Probe = ProbeFactory(self)
-			if self._verbose: print("Scanning for Particle diagnostics")
-			self.ParticleDiagnostic = ParticleDiagnosticFactory(self)
+			if self._verbose: print("Scanning for ParticleBinning diagnostics")
+			self.ParticleBinning = ParticleBinningFactory(self)
 			if self._verbose: print("Scanning for Screen diagnostics")
 			self.Screen = ScreenFactory(self)
 			if self._verbose: print("Scanning for Tracked particle diagnostics")
@@ -546,15 +564,15 @@ class Smilei(object):
 			ndim = int(namelist.Main.geometry[0])
 			if ndim not in [1,2,3]: raise
 			# get box size
-			error = "Error extracting 'sim_length' from the input file"
-			sim_length = self._np.atleast_1d(self._np.double(namelist.Main.sim_length))
-			if sim_length.size != ndim: raise
+			error = "Error extracting 'grid_length' from the input file"
+			grid_length = self._np.atleast_1d(self._np.double(namelist.Main.grid_length))
+			if grid_length.size != ndim: raise
 			# get cell size
 			error = "Error extracting 'cell_length' from the input file"
 			cell_length = self._np.atleast_1d(self._np.double(namelist.Main.cell_length))
 			if cell_length.size != ndim: raise
 			# calculate number of cells in each dimension
-			ncels = sim_length/cell_length
+			ncels = grid_length/cell_length
 			# extract time-step
 			error = "Error extracting 'timestep' from the input file"
 			timestep = self._np.double(namelist.Main.timestep)
@@ -563,11 +581,11 @@ class Smilei(object):
 			print(error)
 			return
 		try:
-			referenceAngularFrequency_SI = namelist.Main.referenceAngularFrequency_SI
+			reference_angular_frequency_SI = namelist.Main.reference_angular_frequency_SI
 		except:
-			referenceAngularFrequency_SI = None
-		return namelist, ndim, cell_length, ncels, timestep, referenceAngularFrequency_SI
-
+			reference_angular_frequency_SI = None
+		return namelist, ndim, cell_length, ncels, timestep, reference_angular_frequency_SI
+	
 	def reload(self):
 		"""Reloads the simulation, if it has been updated"""
 		self.valid = False
@@ -604,7 +622,7 @@ class Smilei(object):
 		# Reload if necessary
 		if lastmodif > self._mtime:
 			# Get the previous simulation parameters
-			try:    prevArgs = (self._ndim, self._cell_length, self._ncels, self._timestep, self._referenceAngularFrequency_SI)
+			try:    prevArgs = (self._ndim, self._cell_length, self._ncels, self._timestep, self._reference_angular_frequency_SI)
 			except: prevArgs = ()
 			# Loop paths and verify the namelist is compatible
 			for path in newPaths:
@@ -616,9 +634,9 @@ class Smilei(object):
 					return
 				if self._verbose: print("Loaded simulation '"+path+"'")
 			# Update the simulation parameters
-			self._ndim, self._cell_length, self._ncels, self._timestep, referenceAngularFrequency_SI = args[1:]
-			if self._referenceAngularFrequency_SI is None:
-				self._referenceAngularFrequency_SI = referenceAngularFrequency_SI
+			self._ndim, self._cell_length, self._ncels, self._timestep, reference_angular_frequency_SI = args[1:]
+			if self._reference_angular_frequency_SI is None:
+				self._reference_angular_frequency_SI = reference_angular_frequency_SI
 			self.namelist = args[0]
 
 		self._mtime = lastmodif
@@ -634,10 +652,12 @@ class Smilei(object):
 
 	def toXDMF(self):
 		if not self.valid: return
+		
+		self.Scalar         .toXDMF()
+		self.Field          .toXDMF()
+		self.Probe          .toXDMF()
+		self.ParticleBinning.toXDMF()
+		self.Screen         .toXDMF()
+		self.TrackParticles .toXDMF()
 
-		self.Scalar            .toXDMF()
-		self.Field             .toXDMF()
-		self.Probe             .toXDMF()
-		self.ParticleDiagnostic.toXDMF()
-		self.Screen            .toXDMF()
-		self.TrackParticles    .toXDMF()
+

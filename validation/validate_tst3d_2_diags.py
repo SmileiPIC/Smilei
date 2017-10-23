@@ -23,7 +23,7 @@ for field in ["Ex", "Ey", "Ez", "Bx_m", "By_m", "Bz_m", "Jx", "Jy", "Jz", "Rho"]
 fields     = ["Ex","Ey" ,"Ez" ,"Bx" ,"By" ,"Bz" ,"Bx_m","By_m","Bz_m","Jx" ,"Jy" ,"Jz" ,"Rho","Jx_test0","Jy_test0","Jz_test0","Rho_test0"]
 precisions = [ 0.1, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01 , 0.01 , 0.01 , 0.01, 0.01, 0.01, 0.1 , 3e-5     , 2e-5     , 0.001    , 0.1       ]
 for field, precision in zip(fields, precisions) :
-	Validate("Field "+field, S.Field.Field0(field, slice={"z":"all"}, timesteps=40, stride=4).getData()[-1], precision)
+	Validate("Field "+field, S.Field.Field0(field, average={"z":"all"}, timesteps=40, subset={"x":[0,10,4], "y":[0,10,4]}).getData()[-1], precision)
 
 # PROBE DIAGNOSTICS
 fields     = ["Ex", "Ey", "Ez", "Bx", "By", "Bz", "Jx", "Jy", "Jz", "Rho"]
@@ -32,9 +32,11 @@ for field, precision in zip(fields, precisions):
 	Validate("Probe field "+field, S.Probe(0, field).getData()[-1], precision)
 
 # PARTICLE BINNING DIAGNOSTICS
-precision = [0.01, 0.01, 0.01, 100., 100., 100., 100., 1., 5e7, 100., 100., 100., 100., 5e7, 2e-3]
+precision = [0.01, 0.01, 0.01, 100., 100., 100., 100., 1., 5e7, 100., 100., 100., 100., 5e7, 2e-3, 0.01, 0.01]
 for i, axis in enumerate(S.namelist.axes):
-	Validate("Particle binning axis "+axis[0], S.ParticleDiagnostic(i, timesteps=40).getData()[-1], precision[i])
-precision = [2e-3, 0.01, 0.01, 1e-7, 1e-7, 1e-7, 2e-12, 2e-7, 1e-7, 1e-7, 1e-7, 1e-12, 1e-12, 1e-12, 1e-12, 1e-12, 1e-12]
-for j, output in enumerate(S.namelist.outputs):
-	Validate("Particle binning output "+output, S.ParticleDiagnostic(i+j, timesteps=40).getData()[-1], precision[j])
+	name = axis[0] if type(axis[0]) is str else "user_function"
+	Validate("Particle binning axis "+name, S.ParticleBinning(i, timesteps=40).getData()[-1], precision[i])
+precision = [2e-3, 0.01, 0.01, 1e-7, 1e-7, 1e-7, 2e-12, 2e-7, 1e-7, 1e-7, 1e-7, 1e-12, 1e-12, 1e-12, 1e-12, 1e-12, 1e-12, 0.01]
+for j, deposited_quantity in enumerate(S.namelist.quantities):
+	name = deposited_quantity if type(deposited_quantity) is str else "user_function"
+	Validate("Particle binning deposited_quantity "+name, S.ParticleBinning(i+j+1, timesteps=40).getData()[-1], precision[j])

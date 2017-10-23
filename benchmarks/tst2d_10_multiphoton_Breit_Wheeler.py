@@ -53,9 +53,9 @@ dt *= dt_factor
 
 Tsim = 1000*dt                              # duration of the simulation
 
-pusher = "norm"                             # dynamic type
+pusher = "boris"                             # dynamic type
 
-part_cond = "none"                          # Particle and photon boundary conditions
+part_cond = "periodic"                          # Particle and photon boundary conditions
 field_cond = ['periodic','periodic']        # Field boundary conditions
 
 # Density profile for inital location of the photons
@@ -77,32 +77,31 @@ def n0_positron(x,y):
 # Main parameters
 
 Main(
-    geometry = "2d3v",
+    geometry = "2Dcartesian",
 
     interpolation_order = 4 ,
 
     cell_length = [dx,dy],
-    sim_length  = [Lx,Ly],
+    grid_length  = [Lx,Ly],
 
     number_of_patches = [4,4],
 
     time_fields_frozen = Tsim,
 
     timestep = dt,
-    sim_time = Tsim,
+    simulation_time = Tsim,
 
-    bc_em_type_x = field_cond,
-    bc_em_type_y = field_cond,
+    EM_boundary_conditions = [field_cond, field_cond],
 
     random_seed = 0,
 
-    referenceAngularFrequency_SI = wr
+    reference_angular_frequency_SI = wr
 )
 
 # ----------------------------------------------------------------------------------------
 # External field
 
-ExtField(
+ExternalField(
     field = "Bz",
     profile = constant(B)
 )
@@ -111,62 +110,50 @@ ExtField(
 # List of species
 
 Species(
-    species_type = "electron",
-    initPosition_type = "random",
-    initMomentum_type = "rectangular",
-    n_part_per_cell = 0,
+    name = "electron",
+    position_initialization = "random",
+    momentum_initialization = "rectangular",
+    particles_per_cell = 0,
     c_part_max = 1.0,
     mass = 1.0,
     charge = -1.0,
     charge_density = n0_electron,
     mean_velocity = [0.0 ,0.0, 0.0],
     temperature = [0.],
-    dynamics_type = pusher,
-    bc_part_type_xmin  = part_cond,
-    bc_part_type_xmax  = part_cond,
-    bc_part_type_ymin = part_cond,
-    bc_part_type_ymax = part_cond,
-    isTest = False
+    pusher = pusher,
+    boundary_conditions = [[part_cond], [part_cond]],
 )
 
 Species(
-    species_type = "positron",
-    initPosition_type = "random",
-    initMomentum_type = "cold",
-    n_part_per_cell = 0,
+    name = "positron",
+    position_initialization = "random",
+    momentum_initialization = "cold",
+    particles_per_cell = 0,
     c_part_max = 1.0,
     mass = 1.0,
     charge = 1.0,
     charge_density = n0_positron,
     mean_velocity = [0.0 ,0.0, 0.0],
     temperature = [0.],
-    dynamics_type = pusher,
-    bc_part_type_xmin  = part_cond,
-    bc_part_type_xmax  = part_cond,
-    bc_part_type_ymin = part_cond,
-    bc_part_type_ymax = part_cond,
-    isTest = False
+    pusher = pusher,
+    boundary_conditions = [[part_cond], [part_cond]],
 )
 
 Species(
-    species_type = "photon",
-    initPosition_type = "random",
-    initMomentum_type = "cold",
-    n_part_per_cell = 128,
+    name = "photon",
+    position_initialization = "random",
+    momentum_initialization = "cold",
+    particles_per_cell = 128,
     c_part_max = 1.0,
     mass = 0,
     charge = 0.,
-    nb_density = n0_photon,
+    number_density = n0_photon,
     mean_velocity = [0.0 ,-gamma, 0.0],
     temperature = [0.],
-    dynamics_type = "norm",
+    pusher = "norm",
     multiphoton_Breit_Wheeler = ["electron","positron"],
     multiphoton_Breit_Wheeler_sampling = [1,1],
-    bc_part_type_xmin  = part_cond,
-    bc_part_type_xmax  = part_cond,
-    bc_part_type_ymin = part_cond,
-    bc_part_type_ymax = part_cond,
-    isTest = False
+    boundary_conditions = [[part_cond], [part_cond]],
 )
 
 # ----------------------------------------------------------------------------------------
@@ -197,16 +184,16 @@ DiagScalar(
           'Ntot_positron']
 )
 
-DiagParticles(
-    output = "density",
+DiagParticleBinning(
+    deposited_quantity = "weight",
     every = 1000,
     time_average = 1,
     species = ["electron"],
     axes = [ ["gamma",    0.,  gamma,  50] ]
 )
 
-DiagParticles(
-    output = "density",
+DiagParticleBinning(
+    deposited_quantity = "weight",
     every = 1000,
     time_average = 1,
     species = ["positron"],

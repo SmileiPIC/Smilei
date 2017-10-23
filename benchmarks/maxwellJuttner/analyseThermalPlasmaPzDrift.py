@@ -23,8 +23,8 @@ v0 = S.namelist.v0
 g0 = 1./m.sqrt(1.-v0**2)
 
 # read p-distribution fct
-fp  = np.array(S.ParticleDiagnostic(1).getData())[0]
-p   = np.array(S.ParticleDiagnostic(1).get()['pz'])
+fp  = np.array(S.ParticleBinning(1).getData())[0]
+p   = np.array(S.ParticleBinning(1).get()['pz'])
 print 'int over all pz:', (p[1]-p[0])*np.sum(fp)
 
 

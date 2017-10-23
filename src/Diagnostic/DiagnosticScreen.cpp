@@ -1,5 +1,7 @@
+#include "PyTools.h"
 
 #include "DiagnosticScreen.h"
+#include "HistogramFactory.h"
 
 #include <iomanip>
 
@@ -10,14 +12,14 @@ using namespace std;
 DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
 {
     fileId_ = 0;
-
+    
     screen_id = diagId;
     dt = params.timestep;
-
+    
     ostringstream name("");
     name << "Diagnotic Screen #" << screen_id;
     string errorPrefix = name.str();
-
+    
     // get parameter "shape" that determines if the screen is a plane or a sphere
     if (!PyTools::extract("shape",screen_shape,"DiagScreen",screen_id))
         ERROR(errorPrefix << ": parameter `shape` required");
@@ -27,13 +29,13 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patc
         screen_type = 1;
     else
         ERROR(errorPrefix << ": parameter `shape` must be 'plane' or 'sphere'");
-
+    
     // get parameter "point" that determines the plane reference point, or the sphere center
     if (!PyTools::extract("point",screen_point,"DiagScreen",screen_id))
         ERROR(errorPrefix << ": parameter `point` required");
     if( screen_point.size() != params.nDim_particle )
         ERROR(errorPrefix << ": parameter `point` must have "<<params.nDim_particle<<" elements in "<<params.nDim_particle<<"D");
-
+    
     // get parameter "vector" that determines the plane normal, or the sphere radius
     if (!PyTools::extract("vector",screen_vector,"DiagScreen",screen_id)) {
         if( params.nDim_particle == 1 ) {
@@ -72,7 +74,7 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patc
         screen_vector_b[1] = screen_unitvector[2]*screen_vector_a[0] - screen_unitvector[0]*screen_vector_a[2];
         screen_vector_b[2] = screen_unitvector[0]*screen_vector_a[1] - screen_unitvector[1]*screen_vector_a[0];
     }
-
+    
     // get parameter "oriented", true if particles coming from the other side count negatively
     if (!PyTools::extract("direction",direction,"DiagScreen",screen_id))
         ERROR(errorPrefix << ": parameter `direction` not understood");
@@ -82,104 +84,46 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patc
     else if( direction=="backward"  ) direction_type = 3;
     else
         ERROR(errorPrefix << ": parameter `direction` not understood");
-
-    // get parameter "output" that determines the quantity to sum in the output array
-    if (!PyTools::extract("output",output,"DiagScreen",screen_id))
-        ERROR(errorPrefix << ": parameter `output` required");
-
+    
+    // get parameter "deposited_quantity" that determines the quantity to sum in the output array
+    PyObject* deposited_quantity_object = PyTools::extract_py("deposited_quantity", "DiagScreen", screen_id);
+    PyTools::checkPyError();
+    
     // get parameter "every" which describes a timestep selection
     timeSelection = new TimeSelection(
         PyTools::extract_py("every", "DiagScreen", screen_id),
         name.str()
     );
-
+    
     // get parameter "flush_every" which describes a timestep selection for flushing the file
     flush_timeSelection = new TimeSelection(
         PyTools::extract_py("flush_every", "DiagScreen", screen_id),
         name.str()
     );
-
+    
     // get parameter "species" that determines the species to use (can be a list of species)
     vector<string> species_names;
     if (!PyTools::extract("species",species_names,"DiagScreen",screen_id))
         ERROR(errorPrefix << ": parameter `species` required");
     // verify that the species exist, remove duplicates and sort by number
     species = params.FindSpecies(patch->vecSpecies, species_names);
-
+    
     // get parameter "axes" that adds axes to the diagnostic
     // Each axis should contain several items:
     //      requested quantity, min value, max value ,number of bins, log (optional), edge_inclusive (optional)
     vector<PyObject*> pyAxes=PyTools::extract_pyVec("axes","DiagScreen",screen_id);
-
-    vector<string> excluded_types(0);
+    
+    // Create the Histogram object based on the extracted parameters above
+    vector<string> excluded_axes(0);
     if( screen_shape == "plane" ) {
-        excluded_types.push_back( "theta_yx" );
-        excluded_types.push_back( "theta_zx" );
+        excluded_axes.push_back( "theta_yx" );
+        excluded_axes.push_back( "theta_zx" );
     } else {
-        excluded_types.push_back( "a" );
-        excluded_types.push_back( "b" );
+        excluded_axes.push_back( "a" );
+        excluded_axes.push_back( "b" );
     }
-
-    // Create the Histogram object
-    if        (output == "density"        ) {
-        histogram = new Histogram_density        ();
-    } else if (output == "charge_density" ) {
-        // The requested species must not be a photon
-        for (unsigned int ispec=0 ; ispec < species.size() ; ispec++)
-            if( patch->vecSpecies[species[ispec]]->mass==0)
-            {
-                ERROR(errorPrefix << ": for histogram preparation"
-                << " in diagParticles: "
-                << " 'charge_density' not compatible with photon species");
-            }
-        histogram = new Histogram_charge_density ();
-    } else if (output == "jx_density"     ) {
-        histogram = new Histogram_jx_density     ();
-    } else if (output == "jy_density"     ) {
-        histogram = new Histogram_jy_density     ();
-    } else if (output == "jz_density"     ) {
-        histogram = new Histogram_jz_density     ();
-    } else if (output == "ekin_density"   ) {
-        histogram = new Histogram_ekin_density   ();
-    } else if (output == "p_density"      ) {
-        histogram = new Histogram_p_density      ();
-    } else if (output == "px_density"     ) {
-        histogram = new Histogram_px_density     ();
-    } else if (output == "py_density"     ) {
-        histogram = new Histogram_py_density     ();
-    } else if (output == "pz_density"     ) {
-        histogram = new Histogram_pz_density     ();
-    } else if (output == "pressure_xx"    ) {
-        histogram = new Histogram_pressure_xx    ();
-    } else if (output == "pressure_yy"    ) {
-        histogram = new Histogram_pressure_yy    ();
-    } else if (output == "pressure_zz"    ) {
-        histogram = new Histogram_pressure_zz    ();
-    } else if (output == "pressure_xy"    ) {
-        histogram = new Histogram_pressure_xy    ();
-    } else if (output == "pressure_xz"    ) {
-        histogram = new Histogram_pressure_xz    ();
-    } else if (output == "pressure_yz"    ) {
-        histogram = new Histogram_pressure_yz    ();
-    } else if (output == "ekin_vx_density") {
-        histogram = new Histogram_ekin_vx_density();
-    } else if (output == "chi_density" ) {
-        // The requested species must be radiating
-        for (unsigned int ispec=0 ; ispec < species.size() ; ispec++)
-            if( ! patch->vecSpecies[species[ispec]]->particles->isQuantumParameter)
-            {
-                ERROR(errorPrefix << ": for histogram preparation"
-                << " in diagParticles: "
-                << " 'chi_density' requires all species to be 'radiating'"
-                << " or photons to have QED effects");
-            }
-        histogram = new Histogram_chi_density    ();
-    } else {
-        ERROR(errorPrefix << ": parameter `output = "<< output <<"` not understood");
-    }
-
-    histogram->init(params, pyAxes, species, errorPrefix, patch, excluded_types);
-
+    histogram = HistogramFactory::create(params, deposited_quantity_object, pyAxes, species, patch, excluded_axes, errorPrefix);
+    
     // If axes are "a", "b", "theta" or "phi", they need some coefficients
     unsigned int idim;
     for( unsigned int i=0; i<histogram->axes.size(); i++ ) {
@@ -207,13 +151,13 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patc
             histogram->axes[i]->coefficients = coefficients;
         }
     }
-
+    
     // Calculate the size of the output array
     output_size = 1;
     for( unsigned int i=0; i<histogram->axes.size(); i++ )
         output_size *= histogram->axes[i]->nbins;
     data_sum.resize( output_size, 0. );
-
+    
     // Output info on diagnostics
     if ( smpi->isMaster() ) {
         ostringstream mystream("");
@@ -245,7 +189,7 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patc
             if( axis->edge_inclusive ) mystream << " [EDGE INCLUSIVE]";
             MESSAGE(2,mystream.str());
         }
-
+        
         // init HDF files (by master, only if it doesn't yet exist)
         mystream.str(""); // clear
         mystream << "Screen" << screen_id << ".h5";
@@ -266,14 +210,14 @@ DiagnosticScreen::~DiagnosticScreen()
 void DiagnosticScreen::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
     if (!smpi->isMaster()) return;
-
+    
     if( fileId_>0 ) return;
-
+    
     if ( newfile ) {
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         // write all parameters as HDF5 attributes
         H5::attr(fileId_, "Version", string(__VERSION));
-        H5::attr(fileId_, "output" , output);
+        H5::attr(fileId_, "deposited_quantity" , histogram->deposited_quantity);
         // write all species
         ostringstream mystream("");
         mystream.str(""); // clear
@@ -316,23 +260,23 @@ void DiagnosticScreen::closeFile()
 
 bool DiagnosticScreen::prepare( int timestep )
 {
-
+    
     // This diag always runs, but the output is not done at every timestep
     return true;
-
+    
 } // END prepare
 
 
 // run one screen diagnostic
 void DiagnosticScreen::run( Patch* patch, int timestep, SimWindow* simWindow )
 {
-
+    
     vector<int> int_buffer;
     vector<double> double_buffer;
     vector<bool> opposite;
     unsigned int npart, ndim = screen_point.size(), ipart, idim, nuseful;
     double side, side_old, dtg;
-
+    
     // Verify that this patch is in a useful region for this diag
     if( screen_type == 0 ) { // plane
         double distance_to_plane = 0.;
@@ -346,17 +290,17 @@ void DiagnosticScreen::run( Patch* patch, int timestep, SimWindow* simWindow )
         distance_to_center = sqrt(distance_to_center);
         if( abs(screen_vectornorm - distance_to_center) > patch->radius ) return;
     }
-
+    
     // loop species
     for (unsigned int ispec=0 ; ispec < species.size() ; ispec++) {
-
+        
         Species * s = patch->vecSpecies[species[ispec]];
         npart = s->particles->size();
         nuseful = 0;
         int_buffer   .resize(npart);
         double_buffer.resize(npart);
         opposite     .resize(npart, false);
-
+        
         // Fill the int_buffer with -1 (not crossing screen) and 0 (crossing screen)
         if( screen_type == 0 ) { // plane
             for( ipart=0; ipart<npart; ipart++ ) {
@@ -401,12 +345,12 @@ void DiagnosticScreen::run( Patch* patch, int timestep, SimWindow* simWindow )
                 }
             }
         }
-
+        
         if( nuseful == 0 ) continue;
-
+        
         histogram->digitize  ( s, double_buffer, int_buffer, simWindow );
         histogram->valuate   ( s, double_buffer, int_buffer );
-
+        
         if( direction_type == 1 ) { // canceling
             for( ipart=0; ipart<npart; ipart++ )
                 if( opposite[ipart] ) double_buffer[ipart] = -double_buffer[ipart];
@@ -417,11 +361,11 @@ void DiagnosticScreen::run( Patch* patch, int timestep, SimWindow* simWindow )
             for( ipart=0; ipart<npart; ipart++ )
                 if( int_buffer[ipart]>=0 && !opposite[ipart] ) double_buffer[ipart] = 0.;
         }
-
+        
         histogram->distribute( double_buffer, int_buffer, data_sum );
-
+        
     }
-
+    
 } // END run
 
 
@@ -429,14 +373,14 @@ void DiagnosticScreen::run( Patch* patch, int timestep, SimWindow* simWindow )
 void DiagnosticScreen::write(int timestep, SmileiMPI* smpi)
 {
     if ( !smpi->isMaster() ) return;
-
+    
     if (!timeSelection->theTimeIsNow(timestep) ) return;
-
+    
     // make name of the array
     ostringstream mystream("");
     mystream.str("");
     mystream << "timestep" << setw(8) << setfill('0') << timestep;
-
+    
     // write the array if it does not exist already
     if (! H5Lexists( fileId_, mystream.str().c_str(), H5P_DEFAULT ) ) {
         // Prepare array dimensions
@@ -455,7 +399,7 @@ void DiagnosticScreen::write(int timestep, SmileiMPI* smpi)
         H5Pclose(pid);
         H5Sclose(sid);
     }
-
+    
     if( flush_timeSelection->theTimeIsNow(timestep) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
 } // END write
 

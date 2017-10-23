@@ -66,21 +66,21 @@ def n0_(x):
 # Namelists
 
 Main(
-    geometry = "1d3v",
+    geometry = "1Dcartesian",
 
     interpolation_order = 4 ,
 
     cell_length = [dx],
-    sim_length  = [Lx],
+    grid_length  = [Lx],
 
     number_of_patches = [16],
 
     timestep = dt,
-    sim_time = Tsim,
+    simulation_time = Tsim,
 
-    bc_em_type_x = ['silver-muller'],
+    EM_boundary_conditions = [['silver-muller']],
 
-    referenceAngularFrequency_SI = wr,
+    reference_angular_frequency_SI = wr,
 
     random_seed = 0
 
@@ -88,10 +88,10 @@ Main(
 
 
 LaserPlanar1D(
-    boxSide         = "xmin",
+    box_side         = "xmin",
     a0              = 100.,
     omega           = 1.,
-    polarizationPhi = 0.,
+    polarization_phi = 0.,
     ellipticity     = 1,
     time_envelope  = tgaussian(start=start,duration=duration,
                                fwhm=fwhm,
@@ -104,28 +104,22 @@ LaserPlanar1D(
 for i,radiation in enumerate(radiation_list):
 
     Species(
-        species_type = "electron_" + species_name_list[i],
-        initPosition_type = "centered",
-        initMomentum_type = "cold",
-        n_part_per_cell = 16,
+        name = "electron_" + species_name_list[i],
+        position_initialization = "centered",
+        momentum_initialization = "cold",
+        particles_per_cell = 16,
         c_part_max = 1.0,
         mass = 1.0,
         charge = -1.0,
         charge_density = n0_,
         mean_velocity = [-v, 0.0, 0.0],
         temperature = [0.],
-        dynamics_type = pusher,
+        pusher = pusher,
         radiation_model = radiation,
         time_frozen = 29*t0,
-        bc_part_type_xmin  = "none",
-        bc_part_type_xmax  = "none",
-        bc_part_type_ymin = "none",
-        bc_part_type_ymax = "none",
-        bc_part_type_zmin = "none",
-        bc_part_type_zmax = "none",
-#        track_every = 2,
-#        track_flush_every = 100,
-#        isTest = False
+        boundary_conditions = [
+            ["periodic", "periodic"],
+        ],
     )
 
 RadiationReaction(

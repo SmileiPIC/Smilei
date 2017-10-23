@@ -2,7 +2,7 @@ from .Diagnostic import Diagnostic
 from .._Utils import *
 
 class Scalar(Diagnostic):
-	"""Class for loading a scalar diagnostic"""
+	"""Class for loading a Scalar diagnostic"""
 	
 	def _init(self, scalar=None, timesteps=None, data_log=False, **kwargs):
 		# Get available scalars
@@ -62,7 +62,7 @@ class Scalar(Diagnostic):
 					times_values[ int( self._np.round(float(line[0]) / float(self.timestep)) ) ] = float(line[scalarindex])
 		self._times  = self._np.array(sorted(times_values.keys()))
 		self._values = self._np.array([times_values[k] for k in self._times])
-		self.times = self._times[:]
+		self.times = self._np.copy(self._times)
 		
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
@@ -98,6 +98,7 @@ class Scalar(Diagnostic):
 		
 		# Finish constructor
 		self.valid = True
+		return kwargs
 	
 	# Method to print info on included scalars
 	def _info(self):

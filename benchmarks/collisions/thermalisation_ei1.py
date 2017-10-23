@@ -7,59 +7,61 @@ L0 = 2.*math.pi # conversion from normalization length to wavelength
 
 
 Main(
-    geometry = "1d3v",
+    geometry = "1Dcartesian",
 
     number_of_patches = [ 4 ],
 
     interpolation_order = 2,
 
     timestep = 0.5 * L0,
-    sim_time = 100 * L0,
+    simulation_time = 100 * L0,
 
 
     time_fields_frozen = 100000000000.,
 
     cell_length = [10.*L0],
-    sim_length = [1000.*L0],
+    grid_length = [1000.*L0],
 
-    bc_em_type_x = ["periodic"],
+    EM_boundary_conditions = [ ["periodic"] ],
 
     random_seed = 0,
 
-	referenceAngularFrequency_SI = L0 * 3e8 /1.e-6,
+	reference_angular_frequency_SI = L0 * 3e8 /1.e-6,
     print_every = 10,
 )
 
 
 Species(
-	species_type = "ion1",
-	initPosition_type = "regular",
-	initMomentum_type = "maxwell-juettner",
+	name = "ion1",
+	position_initialization = "regular",
+	momentum_initialization = "maxwell-juettner",
 	ionization_model = "none",
-	n_part_per_cell = 5000,
+	particles_per_cell = 5000,
 	mass = 10., #1836.0,
 	charge = 1.0,
 	charge_density = 10.,
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.00015],
 	time_frozen = 100000000.0,
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 )
 
 Species(
-	species_type = "electron1",
-	initPosition_type = "regular",
-	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell= 5000,
+	name = "electron1",
+	position_initialization = "regular",
+	momentum_initialization = "maxwell-juettner",
+	particles_per_cell= 5000,
 	mass = 1.0,
 	charge = -1.0,
 	charge_density = 10.,
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.0002],
 	time_frozen = 100000000.0,
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 )
 
 Collisions(
@@ -92,8 +94,8 @@ DiagScalar(
 
 
 
-DiagParticles(
-	output = "density",
+DiagParticleBinning(
+	deposited_quantity = "weight",
 	every = 5,
 	species = ["electron1"],
 	axes = [
@@ -101,8 +103,8 @@ DiagParticles(
 		 ["vx",  -0.2,  0.2,    1000]
 	]
 )
-DiagParticles(
-	output = "density",
+DiagParticleBinning(
+	deposited_quantity = "weight",
 	every = 5,
 	species = ["electron1"],
 	axes = [
@@ -110,8 +112,8 @@ DiagParticles(
 		 ["vy",  -0.2,  0.2,    1000]
 	]
 )
-DiagParticles(
-	output = "density",
+DiagParticleBinning(
+	deposited_quantity = "weight",
 	every = 5,
 	species = ["electron1"],
 	axes = [
@@ -121,8 +123,8 @@ DiagParticles(
 )
 
 
-DiagParticles(
-	output = "density",
+DiagParticleBinning(
+	deposited_quantity = "weight",
 	every = 5,
 	species = ["ion1"],
 	axes = [
@@ -130,8 +132,8 @@ DiagParticles(
 		 ["vx",  -0.05,  0.05,    1000]
 	]
 )
-DiagParticles(
-	output = "density",
+DiagParticleBinning(
+	deposited_quantity = "weight",
 	every = 5,
 	species = ["ion1"],
 	axes = [
@@ -139,8 +141,8 @@ DiagParticles(
 		 ["vy",  -0.05,  0.05,    1000]
 	]
 )
-DiagParticles(
-	output = "density",
+DiagParticleBinning(
+	deposited_quantity = "weight",
 	every = 5,
 	species = ["ion1"],
 	axes = [

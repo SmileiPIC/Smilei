@@ -22,7 +22,7 @@ tracked(false)
     Position.resize(0);
     Position_old.resize(0);
     Momentum.resize(0);
-    isTest = false;
+    is_test = false;
     isQuantumParameter = false;
     isMonteCarlo = false;
 
@@ -70,7 +70,6 @@ void Particles::initialize(unsigned int nParticles, unsigned int nDim)
             uint64_prop.push_back( &Id );
         }
 
-
         // Quantum parameter (for QED effects):
         // - if radiation reaction (continuous or discontinuous)
         // - if multiphoton-Breit-Wheeler if photons
@@ -95,8 +94,8 @@ void Particles::initialize(unsigned int nParticles, unsigned int nDim)
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::initialize(unsigned int nParticles, Particles &part)
 {
-    isTest=part.isTest;
-
+    is_test=part.is_test;
+    
     tracked=part.tracked;
 
     isQuantumParameter=part.isQuantumParameter;

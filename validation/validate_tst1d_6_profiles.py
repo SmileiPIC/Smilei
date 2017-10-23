@@ -46,7 +46,7 @@ i = -1
 drift = ["no","px","py","pz"]
 for eon in S.namelist.mj_species:
 	i+=1
-	p = S.ParticleDiagnostic(i).get()
+	p = S.ParticleBinning(i).get()
 	p_distr = p["data"][0]
 	p = p[drift[i]] if i>0 else p["px"]
 #	# theory

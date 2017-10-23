@@ -19,7 +19,7 @@ const double CollisionalIonization::a1 = 510998.9 ; // = me*c^2/Emin
 const double CollisionalIonization::a2 = 6.142165 ; // = (npoints-1) / ln( Emax/Emin )
 
 // Constructor
-CollisionalIonization::CollisionalIonization(int Z, int nDim_, double referenceAngularFrequency_SI, bool tracked_electrons)
+CollisionalIonization::CollisionalIonization(int Z, int nDim_, double reference_angular_frequency_SI, bool tracked_electrons)
 {
     nDim = nDim_;
     atomic_number = Z;
@@ -30,7 +30,7 @@ CollisionalIonization::CollisionalIonization(int Z, int nDim_, double referenceA
     new_electrons.initialize(0, nDim); // to be removed if bins removed
     
     if( Z>0 ) {
-        dataBaseIndex = createDatabase(referenceAngularFrequency_SI);
+        dataBaseIndex = createDatabase(reference_angular_frequency_SI);
         assignDatabase(dataBaseIndex);
     }
 }
@@ -58,7 +58,7 @@ vector<vector<vector<double> > > CollisionalIonization::DB_transferredEnergy;
 vector<vector<vector<double> > > CollisionalIonization::DB_lostEnergy;
 
 // Initializes the databases (by patch master only)
-unsigned int CollisionalIonization::createDatabase(double referenceAngularFrequency_SI)
+unsigned int CollisionalIonization::createDatabase(double reference_angular_frequency_SI)
 {
     // Leave if the database already exists with same atomic number
     for( unsigned int i=0; i<DB_Z.size(); i++ ) {
@@ -76,7 +76,7 @@ unsigned int CollisionalIonization::createDatabase(double referenceAngularFreque
     le.resize(atomic_number);
     double e, ep, bp, up, ep2, betae2, betab2, betau2, s0, A1, A2, A3, sk, wk, ek;
     int N; // occupation number
-    double coeff = 2.81794e-15 * referenceAngularFrequency_SI / (2.*299792458.); // r_e omega / 2c
+    double coeff = 2.81794e-15 * reference_angular_frequency_SI / (2.*299792458.); // r_e omega / 2c
     for( int Zstar=0; Zstar<atomic_number; Zstar++ ) { // For each ionization state
         cs[Zstar].resize(npoints, 0.);
         te[Zstar].resize(npoints, 0.);

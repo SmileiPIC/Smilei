@@ -55,7 +55,7 @@ v0 = math.sqrt(1 - 1./gamma0**2)         # Initial velocity
 radiation = "Monte-Carlo"               # Radiation algorithm
 pusher = "vay"                          # dynamic type
 
-part_cond = "supp"                      # Particle boundary conditions
+part_cond = ["supp"]                      # Particle boundary conditions
 field_cond = ['silver-muller']          # Field boundary conditions
 
 # Density profile for inital electron location
@@ -77,21 +77,21 @@ def n0_photon(x):
 # Main parameters
 
 Main(
-    geometry = "1d3v",
+    geometry = "1Dcartesian",
 
     interpolation_order = 4 ,
 
     cell_length = [dx],
-    sim_length  = [Lx],
+    grid_length  = [Lx],
 
     number_of_patches = [4],
 
     timestep = dt,
-    sim_time = Tsim,
+    simulation_time = Tsim,
 
-    bc_em_type_x = ['silver-muller'],
+    EM_boundary_conditions = [field_cond],
 
-    referenceAngularFrequency_SI = wr,
+    reference_angular_frequency_SI = wr,
 
     random_seed = 0
 
@@ -101,10 +101,10 @@ Main(
 # Laser profile
 
 LaserPlanar1D(
-    boxSide         = "xmin",
+    box_side         = "xmin",
     a0              = 270.,
     omega           = 1.,
-    polarizationPhi = 0.,
+    polarization_phi = 0.,
     ellipticity     = 1,
     time_envelope  = tgaussian(start=start,duration=duration,
                                fwhm=fwhm,
@@ -116,66 +116,60 @@ LaserPlanar1D(
 # List of species
 
 Species(
-    species_type = "electron",
-    initPosition_type = "regular",
-    initMomentum_type = "cold",
-    n_part_per_cell = 32,
+    name = "electron",
+    position_initialization = "regular",
+    momentum_initialization = "cold",
+    particles_per_cell = 32,
     c_part_max = 1.,
     mass = 1.0,
     charge = -1.0,
     charge_density = n0_electron,
     mean_velocity = [-v0, 0.0, 0.0],
     temperature = [0.],
-    dynamics_type = pusher,
+    pusher = pusher,
     radiation_model = radiation,
     radiation_photon_species = "photon",
     radiation_photon_sampling = 1,
     radiation_photon_gamma_threshold = 2,
     time_frozen = 29*t0,
-    bc_part_type_xmin  = part_cond,
-    bc_part_type_xmax  = part_cond,
-    isTest = False
+    boundary_conditions = [part_cond],
 )
 
 Species(
-    species_type = "positron",
-    initPosition_type = "random",
-    initMomentum_type = "cold",
-    n_part_per_cell = 0,
+    name = "positron",
+    position_initialization = "random",
+    momentum_initialization = "cold",
+    particles_per_cell = 0,
     c_part_max = 1.0,
     mass = 1.0,
     charge = -1.0,
     charge_density = n0_positron,
     mean_velocity = [0.0, 0.0, 0.0],
     temperature = [0.],
-    dynamics_type = pusher,
+    pusher = pusher,
     radiation_model = radiation,
     radiation_photon_species = "photon",
     radiation_photon_sampling = 1,
     radiation_photon_gamma_threshold = 2,
     time_frozen = 29*t0,
-    bc_part_type_xmin  = part_cond,
-    bc_part_type_xmax  = part_cond,
-    isTest = False
+    boundary_conditions = [part_cond],
 )
 
 Species(
-    species_type = "photon",
-    initPosition_type = "random",
-    initMomentum_type = "cold",
-    n_part_per_cell = 0,
+    name = "photon",
+    position_initialization = "random",
+    momentum_initialization = "cold",
+    particles_per_cell = 0,
     c_part_max = 20.0,
     mass = 0,
     charge = 0.,
-    nb_density = n0_photon,
+    number_density = n0_photon,
     mean_velocity = [0.0 ,0.0, 0.0],
     temperature = [0.],
-    dynamics_type = "norm",
+    pusher = "norm",
     multiphoton_Breit_Wheeler = ["electron","positron"],
     multiphoton_Breit_Wheeler_sampling = [1,1],
-    bc_part_type_xmin  = part_cond,
-    bc_part_type_xmax  = part_cond,
-    isTest = False
+    boundary_conditions = [part_cond],
 )
 
 # ----------------------------------------------------------------------------------------

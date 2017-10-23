@@ -372,7 +372,7 @@ if JOLLYJUMPER in HOSTNAME :
 	COMPILE_COMMAND = 'make -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'unset MODULEPATH;module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles; module load compilers/icc/16.0.109 mpi/openmpi/1.6.5-ib-icc python/2.7.10 hdf5 compilers/gcc/4.8.2 > /dev/null 2>&1;make clean > /dev/null 2>&1'
 	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
-	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x $OMP_NUM_THREADS -x $OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
+	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 --map-by ppr:4:node -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
 	RUN = RUN_JOLLYJUMPER
 elif POINCARE in HOSTNAME :
 	#COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
@@ -529,7 +529,9 @@ class ShowDiffWithReference(object):
 		# Manage array plotting
 		if data_float is not None:
 			if expected_data is not None and data_float.shape != expected_data_float.shape:
-				print "\tReference and new data do not have the same shape"
+				print "\tReference and new data do not have the same shape: "+str(expected_data_float.shape)+" vs. "+str(data_float.shape)
+			if expected_data is not None and data_float.ndim != expected_data_float.ndim:
+				print "\tReference and new data do not have the same dimension: "+str(expected_data_float.ndim)+" vs. "+str(data_float.ndim)
 				print_data = True
 			elif data_float.size == 0:
 				print "\t0D quantity cannot be plotted"

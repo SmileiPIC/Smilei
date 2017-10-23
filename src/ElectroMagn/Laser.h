@@ -64,7 +64,7 @@ public:
     };
     
     //! Side (xmin/xmax) from which the laser enters the box
-    std::string boxSide;
+    std::string box_side;
     
     //! Disables the laser
     void disable();

@@ -1,12 +1,10 @@
 from .Diagnostic import Diagnostic
 from .._Utils import *
 
-# -------------------------------------------------------------------
-# Class for screen diagnostics
-# -------------------------------------------------------------------
 class Screen(Diagnostic):
-	# This is the constructor, which creates the object
-	def _init(self, diagNumber=None, timesteps=None, slice=None, data_log=False, stride=1, **kwargs):
+	"""Class for loading a Screen diagnostic"""
+	
+	def _init(self, diagNumber=None, timesteps=None, subset=None, sum=None, data_log=False, **kwargs):
 		
 		if diagNumber is None:
 			self._error += "Printing available screens:\n"
@@ -69,12 +67,17 @@ class Screen(Diagnostic):
 		self._axes  = self._axes [self._diags[0]]
 		self._naxes = self._naxes[self._diags[0]]
 		
-		# Check slice is a dict
-		if slice is not None  and  type(slice) is not dict:
-			self._error = "Argument 'slice' must be a dictionary"
+		# Check subset
+		if subset is None: subset = {}
+		elif type(subset) is not dict:
+			self._error = "Argument `subset` must be a dictionary"
 			return
-		# Make slice a dictionary
-		if slice is None: slice = {}
+		
+		# Check sum
+		if sum is None: sum = {}
+		elif type(sum) is not dict:
+			self._error = "Argument 'sum' must be a dictionary"
+			return
 		
 		# Put data_log as object's variable
 		self._data_log = data_log
@@ -95,7 +98,7 @@ class Screen(Diagnostic):
 			items = sorted(items.items())
 			self._h5items[d] = [it[1] for it in items]
 			self.times[d] = self._np.array([ int(it[0].strip("timestep")) for it in items ])
-			self._times[d] = self.times[d][:]
+			self._times[d] = self._np.copy(self.times[d])
 			# fill the "_indexOfTime" dictionary with indices to the data arrays
 			self._indexOfTime.update({ d:{} })
 			for i,t in enumerate(self.times[d]):
@@ -120,7 +123,7 @@ class Screen(Diagnostic):
 		# Need at least one timestep
 		if self.times.size < 1:
 			self._error = "Timesteps not found"
-			return None
+			return
 		
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
@@ -130,12 +133,15 @@ class Screen(Diagnostic):
 		coeff = 1.
 		unitsa = [0,0,0,0]
 		spatialaxes = {"x":False, "y":False, "z":False}
-		self._finalShape = []
-		self._slices = []
-		self._selection = ()
+		self._finalShape = [[]]*self._naxes
+		self._sums = [False]*self._naxes
+		self._selection = [self._np.s_[:]]*self._naxes
 		hasComposite = False
 		
-		for axis in self._axes:
+		for iaxis in range(self._naxes):
+			axis = self._axes[iaxis]
+			axistype = axis["type"]
+			
 			# Find the vector of values along the axis
 			if axis["log"]:
 				edges = self._np.linspace(self._np.log10(axis["min"]), self._np.log10(axis["max"]), axis["size"]+1)
@@ -152,100 +158,90 @@ class Screen(Diagnostic):
 			# Find some quantities depending on the axis type
 			overall_min = "-inf"; overall_max = "inf"
 			axis_units = ""
-			if   axis["type"] in ["x","y","z", "moving_x"]:
+			if   axistype in ["x","y","z","moving_x"]:
 				axis_units = "L_r"
-				spatialaxes[axis["type"][-1]] = True
-			elif axis["type"] in ["a","b"]:
+				spatialaxes[axistype[-1]] = True
+			elif axistype in ["a","b"]:
 				axis_units = "L_r"
 				hasComposite = True
-			elif axis["type"] == "theta" and self._ndim==2:
+			elif axistype == "theta" and self._ndim==2:
 				axis_units = "rad"
 				overall_min = "-3.141592653589793"
 				overall_max = "3.141592653589793"
-			elif axis["type"] == "theta" and self._ndim==3:
+			elif axistype == "theta" and self._ndim==3:
 				axis_units = "rad"
 				overall_min = "0"
 				overall_max = "3.141592653589793"
-			elif axis["type"] == "phi":
+			elif axistype == "phi":
 				axis_units = "rad"
 				overall_min = "-3.141592653589793"
 				overall_max = " 3.141592653589793"
-			elif axis["type"][:9] == "composite":
+			elif axistype[:9] == "composite":
 				axis_units = "L_r"
 				hasComposite = True
-				axis["type"] = axis["type"][10:]
-			elif axis["type"] in ["px","py","pz","p"]:
+				axistype = axistype[10:]
+				axis["type"] = axistype
+			elif axistype in ["px","py","pz","p"]:
 				axis_units = "P_r"
-			elif axis["type"] in ["vx","vy","vz","v"]:
+			elif axistype in ["vx","vy","vz","v"]:
 				axis_units = "V_r"
-			elif axis["type"] in ["vperp2"]:
+			elif axistype in ["vperp2"]:
 				axis_units = "V_r**2"
 				overall_min = "0"
-			elif axis["type"] == "gamma":
+			elif axistype == "gamma":
 				overall_min = "1"
-			elif axis["type"] == "ekin":
+			elif axistype == "ekin":
 				axis_units = "K_r"
 				overall_min = "0"
-			elif axis["type"] == "charge":
+			elif axistype == "charge":
 				axis_units = "Q_r"
 				overall_min = "0"
+			elif axistype == "chi":
+				overall_min = "0"
+			
+			# if this axis has to be summed, then select the bounds
+			if axistype in sum:
+				if axistype in subset:
+					self._error = "`subset` not possible on the same axes as `sum`"
+					return
+				
+				self._sums[iaxis] = True
+				
+				try:
+					axis["sumInfo"], self._selection[iaxis], self._finalShape[iaxis] \
+						= self._selectRange(sum[axistype], centers, axistype, axis_units, "sum")
+				except:
+					return
+				
+				if axistype in ["x","y","z","moving_x"]:
+					first_edge = edges[self._selection[iaxis].start or 0]
+					last_edge  = edges[(self._selection[iaxis].stop or len(centers))]
+					coeff /= last_edge - first_edge
+			
+			# if not summed
 			else:
-				self._error = "axis type "+axis["type"]+" not implemented"
-				return None
-			
-			# if this axis has to be sliced, then select the slice
-			if axis["type"] in slice:
-			
-				self._slices.append(True)
-				
-				# if slice is "all", then all the axis has to be summed
-				if slice[axis["type"]] == "all":
-					axis.update({ "sliceInfo" : "      Slicing for all "+axis["type"] })
-					self._selection += ( self._np.s_[:], )
-					self._finalShape.append( axis["size"] )
-					slice_size = edges[-1] - edges[0]
-				
-				# Otherwise, get the slice from the argument `slice`
-				else:
+				# If taking a subset of this axis
+				if axistype in subset:
 					try:
-						s = self._np.double(slice[axis["type"]])
-						if s.size>2 or s.size<1: raise
+						axis["subsetInfo"], self._selection[iaxis], self._finalShape[iaxis] \
+							= self._selectSubset(subset[axistype], centers, axistype, axis_units, "subset")
 					except:
-						self._error = "Slice along axis "+axis["type"]+" should be one or two floats"
 						return
-					# convert the slice into a range of indices
-					if s.size == 1:
-						indices = self._np.array([(self._np.abs(centers-s)).argmin()])
-					else :
-						indices = self._np.nonzero( (centers>=s[0]) * (centers<=s[1]) )[0]
-					if indices.size == 1:
-						axis.update({ "sliceInfo" : "      Slicing at "+axis["type"]+" = "+str(centers[indices][0]) })
-						self._selection += ( self._np.s_[indices[0]], )
-						self._finalShape.append( 1 )
+				# If subset has more than 1 point (or no subset), use this axis in the plot
+				if type(self._selection[iaxis]) is slice:
+					self._type   .append(axistype)
+					self._shape  .append(axis["size"])
+					self._centers.append(centers[self._selection[iaxis]])
+					self._log    .append(axis["log"])
+					self._label  .append(axistype)
+					self._units  .append(axis_units)
+					if axistype == "theta" and self._ndim==3:
+						plot_diff.append(self._np.diff(self._np.cos(edges))[self._selection[iaxis]])
 					else:
-						axis.update({ "sliceInfo" : "      Slicing "+axis["type"]+" from "+str(edges[indices[0]])+" to "+str(edges[indices[-1]+1]) })
-						self._selection += ( self._np.s_[indices[0]:indices[-1]], )
-						self._finalShape.append( indices[-1] - indices[0] )
-					# calculate the size of the slice
-					slice_size = edges[indices[-1]+1] - edges[indices[0]]
-				
-				if axis["type"] in ["x","y","z","moving_x"]: coeff /= slice_size
-			
-			# if not sliced, then add this axis to the overall plot
-			else:
-				self._selection += ( self._np.s_[::stride], )
-				self._slices .append(False)
-				self._type   .append(axis["type"])
-				self._shape  .append(axis["size"])
-				self._centers.append(centers[::stride])
-				self._finalShape.append( len(self._centers[-1]) )
-				self._log    .append(axis["log"])
-				self._label  .append(axis["type"])
-				self._units  .append(axis_units)
-				if axis["type"] == "theta" and self._ndim==3:
-					plot_diff.append(self._np.diff(self._np.cos(edges))[::stride])
-				else:
-					plot_diff.append(self._np.diff(edges)[::stride])
+						plot_diff.append(self._np.diff(edges)[self._selection[iaxis]])
+					self._finalShape[iaxis] = len(self._centers[-1])
+		
+		self._selection = tuple(self._selection)
 		
 		# Build units
 		titles = {}
@@ -254,24 +250,27 @@ class Screen(Diagnostic):
 			titles.update({ d:"??" })
 			units.update({ d:"??" })
 			val_units = "??"
-			output = self._myinfo[d]["output"]
-			if   output == "density":
+			deposited_quantity = self._myinfo[d]["deposited_quantity"]
+			if   deposited_quantity == "weight":
 				titles[d] = "Number" + ("" if hasComposite else " density")
 				val_units = "1" if hasComposite else "N_r"
-			elif output == "charge_density":
+			elif deposited_quantity == "weight_charge":
 				titles[d] = "Charge" + ("" if hasComposite else " density")
 				val_units = "Q_r" if hasComposite else "N_r * Q_r"
-			elif output=="ekin_density":
+			elif deposited_quantity == "weight_ekin":
 				titles[d] = "Energy" + ("" if hasComposite else " density")
 				val_units = "K_r" if hasComposite else "N_r * K_r"
-			elif output[0] == "j":
-				titles[d] = "J"+output[1] + (" x Volume" if hasComposite else "")
+			elif deposited_quantity[:15] == "weight_charge_v":
+				titles[d] = "J"+deposited_quantity[-1] + (" x Volume" if hasComposite else "")
 				val_units = "J_r/N_r" if hasComposite else "J_r"
-			elif output[0]=="p" and output[-8:] == "_density":
-				titles[d] = "P"+output[1].strip("_") + ("" if hasComposite else " density")
+			elif deposited_quantity[:8] == "weight_p":
+				titles[d] = "P"+deposited_quantity[8:] + ("" if hasComposite else " density")
 				val_units = "P_r" if hasComposite else "N_r * P_r"
-			elif output[:8]=="pressure":
-				titles[d] = "Pressure "+output[-2] + (" x Volume" if hasComposite else "")
+			elif deposited_quantity[:8] == "weight_v":
+				titles[d] = "Pressure "+deposited_quantity[8]+deposited_quantity[11] + (" x Volume" if hasComposite else "")
+				val_units = "K_r" if hasComposite else "N_r * K_r"
+			elif deposited_quantity[:13] == "weight_ekin_v":
+				titles[d] = "Energy ("+deposited_quantity[-1]+") flux" + (" x Volume" if hasComposite else " density")
 				val_units = "K_r" if hasComposite else "N_r * K_r"
 			axes_units = [unit for unit in self._units if (hasComposite or unit!="L_r")]
 			units[d] = val_units
@@ -307,6 +306,7 @@ class Screen(Diagnostic):
 		
 		# Finish constructor
 		self.valid = True
+		return kwargs
 	
 	# Gets info about diagnostic number "diagNumber"
 	def _getInfo(self,diagNumber):
@@ -323,7 +323,11 @@ class Screen(Diagnostic):
 			axes = []
 			# Parse each attribute
 			for name, value in attrs:
-				if (name == "output"): output = bytes.decode(value)
+				if (name == "deposited_quantity"):
+					try:
+						deposited_quantity = bytes.decode(value)
+					except:
+						deposited_quantity = "user_function"
 				if (name == "species"):
 					species = bytes.decode(value.strip()).split() # get all species numbers
 					species = [int(s) for s in species]
@@ -344,9 +348,9 @@ class Screen(Diagnostic):
 			f.close()
 			# Verify that the info corresponds to the diag in the other paths
 			if info == {}:
-				info = {"#":diagNumber, "output":output, "species":species, "axes":axes}
+				info = {"#":diagNumber, "deposited_quantity":deposited_quantity, "species":species, "axes":axes}
 			else:
-				if output!=info["output"] or axes!=info["axes"]:
+				if deposited_quantity!=info["deposited_quantity"] or axes!=info["axes"]:
 					print("Screen #"+str(diagNumber)+" in path '"+path+"' is incompatible with the other ones")
 					return False
 		return info
@@ -358,7 +362,7 @@ class Screen(Diagnostic):
 		# 1 - diag number, type and list of species
 		species = ""
 		for i in range(len(info["species"])): species += str(info["species"][i])+" " # reconstitute species string
-		printedInfo = "Screen#"+str(info["#"])+" - "+info["output"]+" of species # "+species+"\n"
+		printedInfo = "Screen#"+str(info["#"])+" - "+info["deposited_quantity"]+" of species # "+species+"\n"
 		
 		# 3 - axes
 		for i in range(len(info["axes"])):
@@ -376,7 +380,8 @@ class Screen(Diagnostic):
 			info += self._printInfo(self._myinfo[d])+"\n"
 		if len(self.operation)>2: info += "Operation : "+self.operation+"\n"
 		for ax in self._axes:
-			if "sliceInfo" in ax: info += ax["sliceInfo"]+"\n"
+			if "sumInfo" in ax: info += ax["sumInfo"]+"\n"
+			if "subsetInfo" in ax: info += ax["subsetInfo"]+"\n"
 		return info
 	
 	def getDiags(self):
@@ -423,7 +428,7 @@ class Screen(Diagnostic):
 				print("Timestep "+str(t)+" not found in this screen")
 				return []
 			# get data
-			B = self._np.zeros(self._finalShape)
+			B = self._np.empty(self._finalShape)
 			try:
 				self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
 			except:
@@ -431,11 +436,11 @@ class Screen(Diagnostic):
 				self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
 				B = self._np.reshape(B, self._finalShape)
 			B[self._np.isnan(B)] = 0.
-			# Apply the slicing
+			# Apply the summing
 			for iaxis in range(self._naxes):
-				if self._slices[iaxis]:
-					B = self._np.sum(B, axis=iaxis, keepdims=True) # sum over the slice
-			# remove sliced axes
+				if self._sums[iaxis]:
+					B = self._np.sum(B, axis=iaxis, keepdims=True)
+			# remove summed axes
 			B = self._np.squeeze(B)
 			# Divide by the bins size
 			B *= self._bsize

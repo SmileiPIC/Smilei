@@ -15,12 +15,12 @@ wavelength = 1e-6 # meters
 c = 3e8
 coeff = (2.*np.pi/wavelength)**2*re_*c / (2.*np.sqrt(np.pi))
 
-times = sim.ParticleDiagnostic(diagNumber=0).getAvailableTimesteps()
-electrons0 = sim.ParticleDiagnostic(0,slice={"x":"all"}).get()
+times = sim.ParticleBinning(diagNumber=0).getAvailableTimesteps()
+electrons0 = sim.ParticleBinning(0, sum={"x":"all"}).get()
 vx = electrons0["vx"]
-electrons1 = sim.ParticleDiagnostic(1, slice={"x":"all"}).get()
+electrons1 = sim.ParticleBinning(1, sum={"x":"all"}).get()
 vy = electrons1["vy"]
-electrons2 = sim.ParticleDiagnostic(2, slice={"x":"all"}).get()
+electrons2 = sim.ParticleBinning(2, sum={"x":"all"}).get()
 vz = electrons2["vz"]
 
 e_Tpar  = np.zeros(len(times))

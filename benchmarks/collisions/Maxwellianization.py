@@ -16,8 +16,8 @@ re_ = 2.8179403267e-15 # meters
 wavelength = 1e-6 # meters
 c = 3e8
 
-times = sim.ParticleDiagnostic(0).getAvailableTimesteps()
-electrons = sim.ParticleDiagnostic(0, slice={"x":"all"}).get()
+times = sim.ParticleBinning(0).getAvailableTimesteps()
+electrons = sim.ParticleBinning(0, sum={"x":"all"}).get()
 vx = electrons["vx"]
 
 fig = None

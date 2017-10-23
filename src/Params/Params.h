@@ -100,7 +100,7 @@ public:
     double res_time;
 
     //! simulation exit time in units of \f$ 2\pi/\omega_N \f$
-    double sim_time;
+    double simulation_time;
 
     /*! \brief Space resolution
      Number of cells in every direction in \f$ 2\pi/k_N \f$ where \f$ k_N=\omega_N/c \f$ is the normalization wavenumber
@@ -108,30 +108,28 @@ public:
     std::vector<double> res_space;
 
     //! local simulation box size in \f$2\pi/k_N \f$
-    std::vector<double> sim_length;
+    std::vector<double> grid_length;
 
     //! time during which the Maxwell's equations are not solved
     double time_fields_frozen;
 
     //! Boundary conditions for ElectroMagnetic Fields
-    std::vector<std::string> bc_em_type_x;
-    std::vector<std::string> bc_em_type_y;
-    std::vector<std::string> bc_em_type_z;
-
+    std::vector< std::vector<std::string> > EM_BCs;
+    
     //Poisson solver
     //! Do we solve poisson
     bool solve_poisson;
     //! Maxium number of poisson iteration
-    unsigned int poisson_iter_max;
+    unsigned int poisson_max_iteration;
     //! Maxium poisson error tolerated
-    double poisson_error_max;
+    double poisson_max_error;
 
     //! Maxwell Solver (default='Yee')
     std::string maxwell_sol;
-
-    //! Current spatial filter parameter: number of binomial pass
-    unsigned int currentFilter_int;
-
+    
+    //! Current spatial filter: number of binomial passes
+    unsigned int currentFilter_passes;
+    
     //! is Friedman filter applied [Greenwood et al., J. Comp. Phys. 201, 665 (2004)]
     bool Friedman_filter;
 
@@ -169,8 +167,8 @@ public:
     double cell_volume;
 
     //! wavelength (in SI units)
-    double referenceAngularFrequency_SI;
-
+    double reference_angular_frequency_SI;
+    
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;
 
@@ -179,7 +177,7 @@ public:
 
     //! frequency of exchange particles (default = 1, disabled for now, incompatible with sort)
     int exchange_particles_each;
-
+    
     //! frequency to apply shrink_to_fit on particles structure
     int every_clean_particles_overhead;
 
@@ -190,9 +188,9 @@ public:
     //! Load balancing frequency
     int balancing_every;
     //! Load coefficient applied to a cell (default = 1)
-    double coef_cell;
+    double cell_load;
     //! Load coefficient applied to a frozen particle (default = 0.1)
-    double coef_frozen;
+    double frozen_particle_load;
     //! Return if number of patch = number of MPI process, to tune IO //ism
     bool one_patch_per_MPI;
     //! Compute an initially balanced patch distribution right from the start
@@ -223,6 +221,7 @@ public:
     //! check if python can be closed (e.g. there is no laser python profile)
     //! by calling the _keep_python_running python function (part of pycontrol.pyh)
     void cleanup(SmileiMPI*);
+    
     //! Method to find the numbers of requested species, sorted, and duplicates removed
     static std::vector<unsigned int> FindSpecies(std::vector<Species*>&, std::vector<std::string>);
 

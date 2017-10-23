@@ -6,7 +6,7 @@
 # input : input file, must be located in tests directory, default: tst3_thermal_expansion.in
 # clrw : cluster width (default 1)
 #
-# * Compute n_space with value of res_space and sim_length in the input file
+# * Compute n_space with value of res_space and grid_length in the input file
 # * Read CLRW (cluster width) from stdout while CLRW does not divide n_space
 # * Put CLRW into the input file
 # * Submit the job perf.ll:
@@ -39,7 +39,7 @@ JOB_perf_temp=${ROOT}/scripts/perf_temp.ll
 #
 # Compute n_space with value of res_space
 set -x
-N_SPACE=`awk -v n_space=1 -F "=" '$1 == "res_space" {n_space=n_space*$2} $1 == "sim_length" {n_space=n_space*$2} END {print n_space}'   ${INPUT_PATH} `
+N_SPACE=`awk -v n_space=1 -F "=" '$1 == "res_space" {n_space=n_space*$2} $1 == "grid_length" {n_space=n_space*$2} END {print n_space}'   ${INPUT_PATH} `
 #
 # Read CLRW from stdout while CLRW does not divide n_space
 cp ${INPUT_PATH} ${INPUT_PATH_CLRW}

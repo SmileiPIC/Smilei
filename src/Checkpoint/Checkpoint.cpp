@@ -40,45 +40,45 @@ time_dump_step(0),
 dump_step(0),
 dump_minutes(0.0),
 exit_after_dump(true),
-dump_file_sequence(2),
-dump_file_sequence_max(10000),
+keep_n_dumps(2),
+keep_n_dumps_max(10000),
 dump_deflate(0),
 dump_request(smpi->getSize()),
 file_grouping(0)
 {
     
-    if( PyTools::nComponents("DumpRestart") > 0 ) {
+    if( PyTools::nComponents("Checkpoints") > 0 ) {
         
-        if (PyTools::extract("dump_step", dump_step, "DumpRestart")) {
+        if (PyTools::extract("dump_step", dump_step, "Checkpoints")) {
             if (dump_step)
                 MESSAGE(1,"Code will dump after " << dump_step << " steps");
         }
         
-        if (PyTools::extract("dump_minutes", dump_minutes, "DumpRestart")) {
+        if (PyTools::extract("dump_minutes", dump_minutes, "Checkpoints")) {
             if (dump_minutes>0)
                 MESSAGE(1,"Code will stop after " << dump_minutes << " minutes");
         }
         
-        PyTools::extract("dump_file_sequence", dump_file_sequence, "DumpRestart");
-        if(dump_file_sequence<1) dump_file_sequence=1;
+        PyTools::extract("keep_n_dumps", keep_n_dumps, "Checkpoints");
+        if(keep_n_dumps<1) keep_n_dumps=1;
         
-        if(dump_file_sequence>dump_file_sequence_max) {
-            WARNING("Smilei supports a maximum of dump_file_sequence of "<< dump_file_sequence_max);
-            dump_file_sequence=dump_file_sequence_max;
+        if(keep_n_dumps > keep_n_dumps_max) {
+            WARNING("Smilei supports a maximum of keep_n_dumps of "<< keep_n_dumps_max);
+            keep_n_dumps = keep_n_dumps_max;
         }
         
-        PyTools::extract("exit_after_dump", exit_after_dump, "DumpRestart");
+        PyTools::extract("exit_after_dump", exit_after_dump, "Checkpoints");
         
-        PyTools::extract("dump_deflate", dump_deflate, "DumpRestart");
+        PyTools::extract("dump_deflate", dump_deflate, "Checkpoints");
         
-        if (PyTools::extract("file_grouping", file_grouping, "DumpRestart") && file_grouping > 0) {
+        if (PyTools::extract("file_grouping", file_grouping, "Checkpoints") && file_grouping > 0) {
             if( file_grouping > (unsigned int)(smpi->getSize()) ) file_grouping = smpi->getSize();
             MESSAGE(1,"Code will group checkpoint files by "<< file_grouping);
         }
 
         if( params.restart ) {
             std::vector<std::string> restart_files;
-            PyTools::extract("restart_files", restart_files, "DumpRestart");
+            PyTools::extract("restart_files", restart_files, "Checkpoints");
 
             // This will open all dumps and pick the last one
             for (unsigned int num_dump=0;num_dump<restart_files.size(); num_dump++) {
@@ -117,7 +117,7 @@ file_grouping(0)
             message << "Code will dump";
             if( dump_step>0 ) message << " every "<< dump_step << " steps,";
             if( dump_minutes>0. ) message << " every "<<dump_minutes<< " min,";
-            message << " keeping "<< dump_file_sequence << " dumps at maximum";
+            message << " keeping "<< keep_n_dumps << " dumps at maximum";
             MESSAGE(1,message.str());
         }
     }
@@ -171,7 +171,7 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* s
 
 void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI* smpi, SimWindow* simWin,  Params &params )
 {
-    unsigned int num_dump=dump_number%dump_file_sequence;
+    unsigned int num_dump=dump_number % keep_n_dumps;
 
     ostringstream nameDumpTmp("");
     nameDumpTmp << "checkpoints" << PATH_SEPARATOR;
@@ -239,7 +239,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ ) {
         if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) ) {
             ostringstream n("");
-            n<< "latest_ID_" << vecPatches(0)->vecSpecies[track->speciesId_]->species_type;
+            n<< "latest_ID_" << vecPatches(0)->vecSpecies[track->speciesId_]->name;
             H5::attr(fid, n.str().c_str(), track->latest_Id, H5T_NATIVE_UINT64);
         }
     }
@@ -339,7 +339,7 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
         ostringstream name("");
         name << setfill('0') << setw(2) << ispec;
-        string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->species_type;
+        string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->name;
         hid_t gid = H5::group(patch_gid, groupName);
         
         H5::attr(gid, "partCapacity", vecSpecies[ispec]->particles->capacity());
@@ -448,7 +448,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
     for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ ) {
         if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) ) {
             ostringstream n("");
-            n<< "latest_ID_" << vecPatches(0)->vecSpecies[track->speciesId_]->species_type;
+            n<< "latest_ID_" << vecPatches(0)->vecSpecies[track->speciesId_]->name;
             H5::getAttr(fid, n.str().c_str(), track->latest_Id, H5T_NATIVE_UINT64);
         }
     }
@@ -556,7 +556,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
         ostringstream name("");
         name << setfill('0') << setw(2) << ispec;
-        string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->species_type;
+        string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->name;
         hid_t gid = H5Gopen(patch_gid, groupName.c_str(),H5P_DEFAULT);
         
         unsigned int partCapacity=0;

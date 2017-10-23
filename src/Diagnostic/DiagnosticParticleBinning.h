@@ -1,21 +1,21 @@
-#ifndef DIAGNOSTICPARTICLES_H
-#define DIAGNOSTICPARTICLES_H
+#ifndef DIAGNOSTICPARTICLEBINNING_H
+#define DIAGNOSTICPARTICLEBINNING_H
 
 #include "Diagnostic.h"
 
 #include "Histogram.h"
 
-class DiagnosticParticles : public Diagnostic {
+class DiagnosticParticleBinning : public Diagnostic {
     friend class SmileiMPI;
 
 public :
     
     //! Default constructor
-    DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+    DiagnosticParticleBinning( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
     //! Cloning constructor
-    DiagnosticParticles( DiagnosticParticles* );
+    DiagnosticParticleBinning( DiagnosticParticleBinning* );
     //! Default destructor
-    ~DiagnosticParticles() override;
+    ~DiagnosticParticleBinning() override;
     
     void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     
@@ -45,9 +45,6 @@ private :
     
     //! list of the species that will be accounted for
     std::vector<unsigned int> species;
-    
-    //! quantity to be summed into the output array
-    std::string output;
     
     //! vector for saving the output array for time-averaging
     std::vector<double> data_sum;

@@ -18,50 +18,52 @@ Uion = mi*cs*cs          # mean energy used to compute the ion spectrum
 
 
 Main(
-    geometry = "1d3v",
+    geometry = "1Dcartesian",
     
     interpolation_order = 2,
     
     timestep = 0.95*dx,
-    sim_time = tsim,
+    simulation_time = tsim,
     
     cell_length = [dx],
-    sim_length  = [Lsim],
+    grid_length  = [Lsim],
     
     number_of_patches = [ 16 ],
     
-    bc_em_type_x = ['silver-muller','silver-muller'] ,
+    EM_boundary_conditions = [ ['silver-muller','silver-muller'] ] ,
     
     random_seed = smilei_mpi_rank
 )
 
 Species(
-    species_type = 'ion',
-    initPosition_type = 'regular',
-    initMomentum_type = 'mj',
-    n_part_per_cell = 10,
+    name = 'ion',
+    position_initialization = 'regular',
+    momentum_initialization = 'mj',
+    particles_per_cell = 10,
     mass = mi, 
     charge = 1.0,
-    nb_density = trapezoidal(1., xplateau=20.*Ld),
+    number_density = trapezoidal(1., xplateau=20.*Ld),
     temperature = [1.e-6],
-    thermT = [1.e-6],
-    thermVelocity = [0.,0.,0.],
-    bc_part_type_xmin = 'thermalize',
-    bc_part_type_xmax = 'refl'
+    thermal_boundary_temperature = [1.e-6],
+    thermal_boundary_velocity = [0.,0.,0.],
+    boundary_conditions = [
+    	["thermalize", "refl"],
+    ],
 )
 Species(
-    species_type = 'eon',
-    initPosition_type = 'regular',
-    initMomentum_type = 'maxwell-juettner',
-    n_part_per_cell = 100,
+    name = 'eon',
+    position_initialization = 'regular',
+    momentum_initialization = 'maxwell-juettner',
+    particles_per_cell = 100,
     mass = 1.0,
     charge = -1.0,
-    nb_density = trapezoidal(1., xplateau=20.*Ld),
+    number_density = trapezoidal(1., xplateau=20.*Ld),
     temperature = [Te],
-    thermT = [Te],
-    thermVelocity = [0.,0.,0.],
-    bc_part_type_xmin = 'thermalize',
-    bc_part_type_xmax = 'refl'
+    thermal_boundary_temperature = [Te],
+    thermal_boundary_velocity = [0.,0.,0.],
+    boundary_conditions = [
+    	["thermalize", "refl"],
+    ],
 )
 
 LoadBalancing(
@@ -78,8 +80,8 @@ DiagFields(
     fields = ['Ex','Rho_ion','Rho_eon']
 )
 
-DiagParticles(
-    output = "density",
+DiagParticleBinning(
+    deposited_quantity = "weight",
     every = every,
     species = ["ion"],
     axes = [
@@ -88,8 +90,8 @@ DiagParticles(
     ]
 )
 
-DiagParticles(
-    output = "density",
+DiagParticleBinning(
+    deposited_quantity = "weight",
     every = every,
     time_average = 1,
     species = ["ion"],
@@ -99,8 +101,8 @@ DiagParticles(
 )
 
 
-DiagParticles(
-    output = "density",
+DiagParticleBinning(
+    deposited_quantity = "weight",
     every = 10,
     time_average = 1,
     species = ["eon"],

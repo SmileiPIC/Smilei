@@ -51,9 +51,9 @@ void MultiphotonBreitWheelerTables::initialization(Params& params)
         TITLE("Initializing mutliphoton Breit-Wheeler")
 
         // Preliminary checks
-        if (params.referenceAngularFrequency_SI <= 0.)
+        if (params.reference_angular_frequency_SI <= 0.)
         {
-            ERROR("The parameter `referenceAngularFrequency_SI` needs "
+            ERROR("The parameter `reference_angular_frequency_SI` needs "
                   << "to be defined and positive to compute radiation losses");
         }
 
@@ -94,7 +94,7 @@ void MultiphotonBreitWheelerTables::initialization(Params& params)
     if (params.hasMultiphotonBreitWheeler)
     {
         // Computation of the normalized Compton wavelength
-        norm_lambda_compton = params.red_planck_cst*params.referenceAngularFrequency_SI
+        norm_lambda_compton = params.red_planck_cst*params.reference_angular_frequency_SI
                             / (params.electron_mass*params.c_vacuum*params.c_vacuum);
 
         // Computation of the factor factor_dNBWdt

@@ -8,7 +8,7 @@ for path in ["beam_relaxation4","beam_relaxation5","beam_relaxation6"]:
 	sim = Smilei(path)
 	mass_ion             = np.double(sim.namelist.Species["ion1"].mass)
 	charge_ion           = np.double(sim.namelist.Species["ion1"].charge)
-	density_ion          = np.double(sim.namelist.Species["ion1"].nb_density)
+	density_ion          = np.double(sim.namelist.Species["ion1"].number_density)
 	temperature_ion      = np.double(sim.namelist.Species["ion1"].temperature)
 	velocity_electron    = np.double(sim.namelist.Species["electron1"].mean_velocity)[0]
 	temperature_electron = np.double(sim.namelist.Species["electron1"].temperature)
@@ -20,7 +20,7 @@ for path in ["beam_relaxation4","beam_relaxation5","beam_relaxation6"]:
 	c = 3e8
 	coeff = (2.*np.pi/wavelength)**2*re*c
 	
-	times = sim.ParticleDiagnostic(diagNumber=0).getAvailableTimesteps()
+	times = sim.ParticleBinning(diagNumber=0).getAvailableTimesteps()
 	
 	e_vx_mean = np.zeros(len(times))
 	e_vperp2  = np.zeros(len(times))
@@ -28,9 +28,9 @@ for path in ["beam_relaxation4","beam_relaxation5","beam_relaxation6"]:
 	Ti        = np.zeros(len(times))
 	
 	
-	electrons0 = sim.ParticleDiagnostic(0, slice={"x":"all"}).get()
-	electrons1 = sim.ParticleDiagnostic(1, slice={"x":"all"}).get()
-	ions       = sim.ParticleDiagnostic(2, slice={"x":"all"}).get()
+	electrons0 = sim.ParticleBinning(0, sum={"x":"all"}).get()
+	electrons1 = sim.ParticleBinning(1, sum={"x":"all"}).get()
+	ions       = sim.ParticleBinning(2, sum={"x":"all"}).get()
 	
 	fig = None
 	#fig = plt.figure(1)

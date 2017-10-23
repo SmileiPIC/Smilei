@@ -16,7 +16,7 @@ S = Smilei(".", verbose=False)
 step = 2
 
 # List of relativistic pushers
-pusher_list = ["norm","vay","higueracary"]
+pusher_list = ["boris","vay","higueracary"]
 
 # We load successively the particle track associated to each pusher
 for pusher in pusher_list:

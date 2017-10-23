@@ -10,24 +10,22 @@ npatch_x = 128
 laser_fwhm = 19.80
 
 Main(
-    geometry = "3d3v",
-
+    geometry = "3Dcartesian",
+    
     interpolation_order = 2,
 
     timestep = dt,
-    sim_time = int(2*Lx/dt)*dt,
+    simulation_time = int(2*Lx/dt)*dt,
 
     cell_length  = [dx, dtrans, dtrans],
-    sim_length = [ Lx,  Ltrans, Ltrans],
+    grid_length = [ Lx,  Ltrans, Ltrans],
 
     number_of_patches = [npatch_x, 4, 4],
 
     clrw = nx/npatch_x,
-
-    bc_em_type_x = ["silver-muller","silver-muller"],
-    bc_em_type_y = ["silver-muller","silver-muller"],
-    bc_em_type_z = ["silver-muller","silver-muller"],
-
+    
+    EM_boundary_conditions = [ ["silver-muller"] ],
+    
     solve_poisson = False,
     print_every = 100,
 
@@ -35,47 +33,47 @@ Main(
 )
 
 MovingWindow(
-    time_start = Main.sim_length[0],
+    time_start = Main.grid_length[0],
     velocity_x = 0.9997
 )
 
 LoadBalancing(
     initial_balance = False,
     every = 20,
-    coef_cell = 1.,
-    coef_frozen = 0.1
+    cell_load = 1.,
+    frozen_particle_load = 0.1
 )
 
-Species(
-    species_type = "electron",
-    initPosition_type = "regular",
-    initMomentum_type = "cold",
-    n_part_per_cell = 8,
+Species( 
+    name = "electron",
+    position_initialization = "regular",
+    momentum_initialization = "cold",
+    particles_per_cell = 8,
     c_part_max = 1.0,
     mass = 1.0,
     charge = -1.0,
     charge_density = 0.000494,
     mean_velocity = [0.0, 0.0, 0.0],
     temperature = [0.0],
-    dynamics_type = "norm",
+    pusher = "boris",    
     time_frozen = 0.0,
-    bc_part_type_xmin = "supp",
-    bc_part_type_xmax = "supp",
-    bc_part_type_ymin ="supp",
-    bc_part_type_ymax ="supp",
-    bc_part_type_zmin ="supp",
-    bc_part_type_zmax ="supp"
+    radiating = False,
+    boundary_conditions = [
+    	["supp", "supp"],
+    	["supp", "supp"],
+    	["supp", "supp"],
+    ],
 )
 
 LaserGaussian3D(
-    boxSide         = "xmin",
+    box_side         = "xmin",
     a0              = 2.,
-    focus           = [0., Main.sim_length[1]/2., Main.sim_length[2]/2.],
+    focus           = [0., Main.grid_length[1]/2., Main.grid_length[2]/2.],
     waist           = 26.16,
     time_envelope   = tgaussian(center=2**0.5*laser_fwhm, fwhm=laser_fwhm)
 )
 
-DumpRestart(
+Checkpoints(
     dump_step = 0,
     dump_minutes = 0.0,
     exit_after_dump = False,
@@ -90,29 +88,33 @@ DiagFields(
 
 DiagProbe(
 	every = 10,
-	pos = [0., Main.sim_length[1]/2., Main.sim_length[2]/2.],
-	pos_first = [Main.sim_length[0], Main.sim_length[1]/2., Main.sim_length[2]/2.],
+	origin = [0., Main.grid_length[1]/2., Main.grid_length[2]/2.],
+	corners = [
+	    [Main.grid_length[0], Main.grid_length[1]/2., Main.grid_length[2]/2.]
+	],
 	number = [nx],
 	fields = ['Ex','Ey','Rho','Jx']
 )
 
 DiagProbe(
 	every = 10,
-	pos = [0., Main.sim_length[1]/4., Main.sim_length[2]/2.],
-	pos_first = [Main.sim_length[0], Main.sim_length[1]/4., Main.sim_length[2]/2.],
-	pos_second = [0., 3*Main.sim_length[1]/4., Main.sim_length[2]/2.],
+	origin = [0., Main.grid_length[1]/4., Main.grid_length[2]/2.],
+	corners = [
+	    [Main.grid_length[0], Main.grid_length[1]/4., Main.grid_length[2]/2.],
+	    [0., 3*Main.grid_length[1]/4., Main.grid_length[2]/2.],
+	],
 	number = [nx, ntrans],
 	fields = ['Ex','Ey','Rho','Jx']
 )
 
 DiagScalar(every = 10, vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMin', 'RhoMinCell'])
 
-DiagParticles(
-	output = "charge_density",
+DiagParticleBinning(
+	deposited_quantity = "weight_charge",
 	every = 50,
 	species = ["electron"],
 	axes = [
-		["moving_x", 0, Main.sim_length[0], nx],
+		["moving_x", 0, Main.grid_length[0], nx],
 		["px", -1, 2., 100]
 	]
 )

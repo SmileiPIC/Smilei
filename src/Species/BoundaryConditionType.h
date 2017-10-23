@@ -56,7 +56,7 @@ inline int stop_particle( Particles &particles, int ipart, int direction, double
 }
 
 //!\todo (MG) at the moment the particle is thermalize whether or not there is a plasma initially at the boundary.
-// ATTENTION: here the thermalization assumes a Maxwellian distribution, maybe we should add some checks on thermT (MG)!
+// ATTENTION: here the thermalization assumes a Maxwellian distribution, maybe we should add some checks on thermal_boundary_temperature (MG)!
 inline int thermalize_particle( Particles &particles, int ipart, int direction, double limit_pos,
                                Species *species, double &nrj_iPart) {
 
@@ -96,9 +96,9 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
         // Adding the mean velocity (using relativistic composition)
         double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, gp, px, py, pz;
         // mean-velocity
-        vx  = -species->thermVelocity[0];
-        vy  = -species->thermVelocity[1];
-        vz  = -species->thermVelocity[2];
+        vx  = -species->thermal_boundary_velocity[0];
+        vy  = -species->thermal_boundary_velocity[1];
+        vz  = -species->thermal_boundary_velocity[2];
         v2  = vx*vx + vy*vy + vz*vz;
         if ( v2>0. ){
 

@@ -9,7 +9,7 @@ Ey = S.Field.Field0.Ey(timesteps=1000).getData()[0]
 Validate("Ey field at iteration 1000", Ey, 0.005)
 
 # VERIFY THE IONIZATION RATE Vs THEORY
-w_r = S.namelist.Main.referenceAngularFrequency_SI
+w_r = S.namelist.Main.reference_angular_frequency_SI
 au_to_w0 = 4.134137172e+16 / w_r;
 Ec_to_au = 3.314742578e-15 * w_r;
 a0 = S.namelist.Laser[0].space_envelope[1]
@@ -50,7 +50,7 @@ def calculate_ionization(Ip, l):
 	return times, Zstar
 
 # hydrogen
-charge = S.ParticleDiagnostic.Diag0().get()
+charge = S.ParticleBinning.Diag0().get()
 charge_distribution = np.array( charge["data"] )
 charge_distribution /= charge_distribution[0,:].sum()
 n1, n2 = charge_distribution.shape
@@ -64,7 +64,7 @@ mean_charge = (charge_distribution * np.outer(np.ones((n1,)), np.arange(n2))).su
 Validate("Hydrogen mean charge vs time", mean_charge, 0.1)
 
 # carbon (does not work yet)
-charge = S.ParticleDiagnostic.Diag1().get()
+charge = S.ParticleBinning.Diag1().get()
 charge_distribution = np.array( charge["data"] )
 charge_distribution /= charge_distribution[0,:].sum()
 n1, n2 = charge_distribution.shape

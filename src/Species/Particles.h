@@ -222,9 +222,9 @@ public:
     std::vector<double> Tau;
 
     // TEST PARTICLE PARAMETERS
-    bool isTest;
-
-    //! True if tracking the particles (activates one DiagTrack)
+    bool is_test;
+    
+    //! True if tracking the particles
     bool tracked;
 
     void resetIds() {

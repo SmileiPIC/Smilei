@@ -42,7 +42,7 @@ OpenPMDparams::OpenPMDparams(Params& p):
     // Units
     unitDimension.resize( SMILEI_NUNITS );
     unitSI.resize( SMILEI_NUNITS );
-    double Wr = params->referenceAngularFrequency_SI;
+    double Wr = params->reference_angular_frequency_SI;
     if( Wr==0. ) Wr=1.;
     for( unsigned int unit_type=0; unit_type<SMILEI_NUNITS; unit_type++ ) {
         unitDimension[unit_type].resize(7, 0.);
@@ -82,41 +82,32 @@ OpenPMDparams::OpenPMDparams(Params& p):
     }
     
     // Boundary conditions
-    vector<string> bc_em_type;
-    bc_em_type.push_back(params->bc_em_type_x[0]);
-    bc_em_type.push_back(params->bc_em_type_x[1]);
-    if( params->nDim_field > 1 ) {
-        bc_em_type.push_back(params->bc_em_type_y[0]);
-        bc_em_type.push_back(params->bc_em_type_y[1]);
-        if( params->nDim_field > 2 ) {
-            bc_em_type.push_back(params->bc_em_type_z[0]);
-            bc_em_type.push_back(params->bc_em_type_z[1]);
+    for( unsigned int i=0; i<params->EM_BCs.size(); i++ ) {
+        for( unsigned int j=0; j<2; j++ ) {
+            if( params->EM_BCs[i][j] == "periodic" ) {
+                fieldBoundary          .addString( "periodic" );
+                fieldBoundaryParameters.addString( "periodic" );
+            } else if( params->EM_BCs[i][j] == "reflective" ) {
+                fieldBoundary          .addString( "reflecting" );
+                fieldBoundaryParameters.addString( "reflecting" );
+            } else if( params->EM_BCs[i][j] == "silver-muller" ) {
+                fieldBoundary          .addString( "open" );
+                fieldBoundaryParameters.addString( "silver-muller");
+            } else {
+                ERROR(" impossible boundary condition ");
+            }
+            particleBoundary          .addString( "" );
+            particleBoundaryParameters.addString( "" );
         }
-    }
-    for( unsigned int i=0; i<bc_em_type.size(); i++ ) {
-        if( bc_em_type[i] == "periodic" ) {
-            fieldBoundary          .addString( "periodic" );
-            fieldBoundaryParameters.addString( "periodic" );
-        } else if( bc_em_type[i] == "reflective" ) {
-            fieldBoundary          .addString( "reflecting" );
-            fieldBoundaryParameters.addString( "reflecting" );
-        } else if( bc_em_type[i] == "silver-muller" ) {
-            fieldBoundary          .addString( "open" );
-            fieldBoundaryParameters.addString( "silver-muller");
-        } else {
-            ERROR(" impossible boundary condition ");
-        }
-        particleBoundary          .addString( "" );
-        particleBoundaryParameters.addString( "" );
     }
     
     // Other parameters
     currentSmoothing = "none";
     currentSmoothingParameters = "";
-    if( params->currentFilter_int > 0 ) {
+    if( params->currentFilter_passes > 0 ) {
         currentSmoothing = "Binomial";
         ostringstream t("");
-        t << "numPasses="<<params->currentFilter_int;
+        t << "numPasses="<<params->currentFilter_passes;
         currentSmoothingParameters = t.str();
     }
 }

@@ -161,7 +161,7 @@ namelist("")
 
     restart = false;
     std::vector<std::string> _unused_restart_files;
-    if( PyTools::nComponents("DumpRestart")>0 && PyTools::extract("restart_files", _unused_restart_files, "DumpRestart")) {
+    if( PyTools::nComponents("Checkpoints")>0 && PyTools::extract("restart_files", _unused_restart_files, "Checkpoints")) {
         MESSAGE(1,"Code will restart");
         restart=true;
     }
@@ -170,8 +170,9 @@ namelist("")
     // Normalisation & units
     // ---------------------
 
-    referenceAngularFrequency_SI = 0.;
-    PyTools::extract("referenceAngularFrequency_SI",referenceAngularFrequency_SI, "Main");
+    reference_angular_frequency_SI = 0.;
+    PyTools::extract("reference_angular_frequency_SI",reference_angular_frequency_SI, "Main");
+
 
     // -------------------
     // Simulation box info
@@ -181,7 +182,7 @@ namelist("")
     geometry = "";
     if( !PyTools::extract("geometry", geometry, "Main") )
         ERROR("Parameter Main.geometry is required");
-    if (geometry!="1d3v" && geometry!="2d3v" && geometry!="3d3v" && geometry!="3drz") {
+    if (geometry!="1Dcartesian" && geometry!="2Dcartesian" && geometry!="3Dcartesian" && geometry!="3drz") {
         ERROR("Main.geometry `" << geometry << "` invalid");
     }
     setDimensions();
@@ -216,43 +217,32 @@ namelist("")
 
 
     // simulation duration & length
-    PyTools::extract("sim_time", sim_time, "Main");
+    PyTools::extract("simulation_time", simulation_time, "Main");
 
-    PyTools::extract("sim_length",sim_length, "Main");
-    if (sim_length.size()!=nDim_field) {
-        ERROR("Dimension of sim_length ("<< sim_length.size() << ") != " << nDim_field << " for geometry " << geometry);
+    PyTools::extract("grid_length",grid_length, "Main");
+    if (grid_length.size()!=nDim_field) {
+        ERROR("Dimension of grid_length ("<< grid_length.size() << ") != " << nDim_field << " for geometry " << geometry);
     }
 
 
     //! Boundary conditions for ElectroMagnetic Fields
-    if ( !PyTools::extract("bc_em_type_x", bc_em_type_x, "Main")  ) {
-        ERROR("Electromagnetic boundary condition type (bc_em_type_x) not defined" );
-    }
-    if (bc_em_type_x.size()==1) { // if just one type is specified, then take the same bc type in a given dimension
-        bc_em_type_x.resize(2); bc_em_type_x[1]=bc_em_type_x[0];
-    }
-    if ( (bc_em_type_x[0] != bc_em_type_x[1]) &&  (bc_em_type_x[0] == "periodic" || bc_em_type_x[1] == "periodic") )
-        ERROR("Electromagnetic boundary conditions type (bc_em_type_x) must be periodic at both xmin and xmax sides." );
+    if( !PyTools::extract("EM_boundary_conditions", EM_BCs, "Main")  )
+        ERROR("Electromagnetic boundary conditions (EM_boundary_conditions) not defined" );
 
-    if ( geometry == "2d3v" || geometry == "3d3v" ) {
-        if ( !PyTools::extract("bc_em_type_y", bc_em_type_y, "Main") )
-            ERROR("Electromagnetic boundary condition type (bc_em_type_y) not defined" );
-        if (bc_em_type_y.size()==1) { // if just one type is specified, then take the same bc type in a given dimension
-            bc_em_type_y.resize(2); bc_em_type_y[1]=bc_em_type_y[0];
-        }
-        if ( (bc_em_type_y[0] != bc_em_type_y[1]) &&  (bc_em_type_y[0] == "periodic" || bc_em_type_y[1] == "periodic") )
-            ERROR("Electromagnetic boundary conditions type (bc_em_type_y) must be periodic at both ymin and ymax sides." );
-    }
-    if ( geometry == "3d3v" ) {
-        if ( !PyTools::extract("bc_em_type_z", bc_em_type_z, "Main") )
-            ERROR("Electromagnetic boundary condition type (bc_em_type_z) not defined" );
-        if (bc_em_type_z.size()==1) { // if just one type is specified, then take the same bc type in a given dimension
-            bc_em_type_z.resize(2); bc_em_type_z[1]=bc_em_type_z[0];
-        }
-        if ( (bc_em_type_z[0] != bc_em_type_z[1]) &&  (bc_em_type_z[0] == "periodic" || bc_em_type_z[1] == "periodic") )
-            ERROR("Electromagnetic boundary conditions type (bc_em_type_z) must be periodic at both zmin and zmax sides." );
+    if( EM_BCs.size() == 0 ) {
+        ERROR("EM_boundary_conditions cannot be empty");
+    } else if( EM_BCs.size() == 1 ) {
+        while( EM_BCs.size() < nDim_field ) EM_BCs.push_back( EM_BCs[0] );
+    } else if( EM_BCs.size() != nDim_field ) {
+        ERROR("EM_boundary_conditions must be the same size as the number of dimensions");
     }
 
+    for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
+        if( EM_BCs[iDim].size() == 1 ) // if just one type is specified, then take the same bc type in a given dimension
+            EM_BCs[iDim].push_back( EM_BCs[iDim][0] );
+        else if ( (EM_BCs[iDim][0] != EM_BCs[iDim][1]) &&  (EM_BCs[iDim][0] == "periodic" || EM_BCs[iDim][1] == "periodic") )
+            ERROR("EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
+    }
 
     // -----------------------------------
     // MAXWELL SOLVERS & FILTERING OPTIONS
@@ -263,22 +253,39 @@ namelist("")
 
     // Poisson Solver
     PyTools::extract("solve_poisson", solve_poisson, "Main");
-    PyTools::extract("poisson_iter_max", poisson_iter_max, "Main");
-    PyTools::extract("poisson_error_max", poisson_error_max, "Main");
+    PyTools::extract("poisson_max_iteration", poisson_max_iteration, "Main");
+    PyTools::extract("poisson_max_error", poisson_max_error, "Main");
 
     // Maxwell Solver
-    PyTools::extract("maxwell_sol", maxwell_sol, "Main");
+    PyTools::extract("maxwell_solver", maxwell_sol, "Main");
 
-    // Filtering Method Parameters
-    PyTools::extract("currentFilter_int", currentFilter_int, "Main"); // nb of passes for binomial filering (default=0)
-    PyTools::extract("Friedman_filter",Friedman_filter, "Main");      // is Friedman filter applied (default=False)
-    PyTools::extract("Friedman_theta",Friedman_theta, "Main");        // Friedman filtering parameter (default=0)
-    if ( (!Friedman_filter) && (Friedman_theta!=0.) )
-        WARNING("Friedman filter is not applied even though parameter theta = "<<Friedman_theta);
-    if ( Friedman_filter && (Friedman_theta==0.) )
-        WARNING("Friedman filter is applied but parameter theta is set to zero");
-    if ( (Friedman_theta<0.) || (Friedman_theta>1.) )
-        ERROR("Friedman filter = " << Friedman_theta << " needs to be in between 0 and 1");
+    // Current filter properties
+    currentFilter_passes = 0;
+    int nCurrentFilter = PyTools::nComponents("CurrentFilter");
+    for (int ifilt = 0; ifilt < nCurrentFilter; ifilt++) {
+        string model;
+        PyTools::extract("model", model, "CurrentFilter", ifilt);
+        if( model != "binomial" )
+            ERROR("Currently, only the `binomial` model is available in CurrentFilter()");
+        PyTools::extract("passes", currentFilter_passes, "CurrentFilter", ifilt);
+    }
+
+    // Field filter properties
+    Friedman_filter = false;
+    Friedman_theta = 0;
+    int nFieldFilter = PyTools::nComponents("FieldFilter");
+    for (int ifilt = 0; ifilt < nFieldFilter; ifilt++) {
+        string model;
+        PyTools::extract("model", model, "FieldFilter", ifilt);
+        if( model != "Friedman" )
+            ERROR("Currently, only the `Friedman` model is available in FieldFilter()");
+        Friedman_filter = true;
+        PyTools::extract("theta", Friedman_theta, "FieldFilter", ifilt);
+        if ( Friedman_filter && (Friedman_theta==0.) )
+            WARNING("Friedman filter is applied but parameter theta is set to zero");
+        if ( (Friedman_theta<0.) || (Friedman_theta>1.) )
+            ERROR("Friedman filter theta = " << Friedman_theta << " must be between 0 and 1");
+    }
 
 
     // testing the CFL condition
@@ -328,8 +335,8 @@ namelist("")
 
     if( PyTools::nComponents("LoadBalancing")>0 ) {
         PyTools::extract("every"      , balancing_every, "LoadBalancing");
-        PyTools::extract("coef_cell"  , coef_cell      , "LoadBalancing");
-        PyTools::extract("coef_frozen", coef_frozen    , "LoadBalancing");
+        PyTools::extract("cell_load"  , cell_load      , "LoadBalancing");
+        PyTools::extract("frozen_particle_load", frozen_particle_load    , "LoadBalancing");
         PyTools::extract("initial_balance", initial_balance    , "LoadBalancing");
     } else {
         balancing_every = 0;
@@ -345,7 +352,7 @@ namelist("")
     }
 
     // Read the "print_every" parameter
-    print_every = (int)(sim_time/timestep)/10;
+    print_every = (int)(simulation_time/timestep)/10;
     PyTools::extract("print_every", print_every, "Main");
     if (!print_every) print_every = 1;
 
@@ -355,7 +362,7 @@ namelist("")
     // read from python namelist the number of species
     unsigned int tot_species_number = PyTools::nComponents("Species");
 
-    double mass, mass2;
+    double mass, mass2=0;
 
     for (unsigned int ispec = 0; ispec < tot_species_number; ispec++)
     {
@@ -441,15 +448,15 @@ void Params::compute()
     // -----------------------
 
     // number of time-steps
-    n_time   = (int)(sim_time/timestep);
+    n_time   = (int)(simulation_time/timestep);
 
     // simulation time & time-step value
-    double entered_sim_time = sim_time;
-    sim_time = (double)(n_time) * timestep;
-    if (sim_time!=entered_sim_time)
-        WARNING("sim_time has been redefined from " << entered_sim_time
-        << " to " << sim_time << " to match nxtimestep ("
-        << scientific << setprecision(4) << sim_time - entered_sim_time<< ")" );
+    double entered_simulation_time = simulation_time;
+    simulation_time = (double)(n_time) * timestep;
+    if (simulation_time!=entered_simulation_time)
+        WARNING("simulation_time has been redefined from " << entered_simulation_time
+        << " to " << simulation_time << " to match nxtimestep ("
+        << scientific << setprecision(4) << simulation_time - entered_simulation_time<< ")" );
 
 
     // grid/cell-related parameters
@@ -457,16 +464,16 @@ void Params::compute()
     n_space.resize(3);
     cell_length.resize(3);
     cell_volume=1.0;
-    if (nDim_field==res_space.size() && nDim_field==sim_length.size()) {
+    if (nDim_field==res_space.size() && nDim_field==grid_length.size()) {
 
         // compute number of cells & normalized lengths
         for (unsigned int i=0; i<nDim_field; i++) {
-            n_space[i]         = round(sim_length[i]/cell_length[i]);
+            n_space[i]         = round(grid_length[i]/cell_length[i]);
 
-            double entered_sim_length = sim_length[i];
-            sim_length[i]      = (double)(n_space[i])*cell_length[i]; // ensure that nspace = sim_length/cell_length
-            if (sim_length[i]!=entered_sim_length)
-                WARNING("sim_length[" << i << "] has been redefined from " << entered_sim_length << " to " << sim_length[i] << " to match n x cell_length (" << scientific << setprecision(4) << sim_length[i]-entered_sim_length <<")");
+            double entered_grid_length = grid_length[i];
+            grid_length[i]      = (double)(n_space[i])*cell_length[i]; // ensure that nspace = grid_length/cell_length
+            if (grid_length[i]!=entered_grid_length)
+                WARNING("grid_length[" << i << "] has been redefined from " << entered_grid_length << " to " << grid_length[i] << " to match n x cell_length (" << scientific << setprecision(4) << grid_length[i]-entered_grid_length <<")");
             cell_volume   *= cell_length[i];
         }
         // create a 3d equivalent of n_space & cell_length
@@ -538,13 +545,13 @@ void Params::compute()
 // ---------------------------------------------------------------------------------------------------------------------
 void Params::setDimensions()
 {
-    if (geometry=="1d3v") {
+    if (geometry=="1Dcartesian") {
         nDim_particle=1;
         nDim_field=1;
-    } else if (geometry=="2d3v") {
+    } else if (geometry=="2Dcartesian") {
         nDim_particle=2;
         nDim_field=2;
-    } else if (geometry=="3d3v") {
+    } else if (geometry=="3Dcartesian") {
         nDim_particle=3;
         nDim_field=3;
     } else if (geometry=="3drz") {
@@ -562,19 +569,22 @@ void Params::setDimensions()
 // ---------------------------------------------------------------------------------------------------------------------
 void Params::print_init()
 {
-    // Numerical parameters
-    // ---------------------
     TITLE("Geometry: " << geometry);
     MESSAGE(1,"(nDim_particle, nDim_field) : (" << nDim_particle << ", "<< nDim_field << ")");
     MESSAGE(1,"Interpolation_order : " <<  interpolation_order);
-    MESSAGE(1,"(res_time, sim_time) : (" << res_time << ", " << sim_time << ")");
+    MESSAGE(1,"(res_time, simulation_time) : (" << res_time << ", " << simulation_time << ")");
     MESSAGE(1,"(n_time,   timestep) : (" << n_time << ", " << timestep << ")");
     MESSAGE(1,"           timestep  = " << timestep/dtCFL << " * CFL");
 
-    for ( unsigned int i=0 ; i<sim_length.size() ; i++ ){
-        MESSAGE(1,"dimension " << i << " - (res_space, sim_length) : (" << res_space[i] << ", " << sim_length[i] << ")");
+    for ( unsigned int i=0 ; i<grid_length.size() ; i++ ){
+        MESSAGE(1,"dimension " << i << " - (res_space, grid_length) : (" << res_space[i] << ", " << grid_length[i] << ")");
         MESSAGE(1,"            - (n_space_global,  cell_length) : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
     }
+
+    if( currentFilter_passes > 0 )
+        MESSAGE(1, "Binomial current filtering : "<< currentFilter_passes << " passes");
+    if( Friedman_filter )
+        MESSAGE(1, "Friedman field filtering : theta = " << Friedman_theta);
 
     if (balancing_every > 0){
         TITLE("Load Balancing: ");
@@ -584,8 +594,8 @@ void Params::print_init()
             MESSAGE(1,"Patches are initially homogeneously distributed between MPI ranks. (initial_balance = false) ");
         }
         MESSAGE(1,"Load balancing every " << balancing_every << " iterations.");
-        MESSAGE(1,"Cell load coefficient = " << coef_cell );
-        MESSAGE(1,"Frozen particle load coefficient = " << coef_frozen );
+        MESSAGE(1,"Cell load coefficient = " << cell_load );
+        MESSAGE(1,"Frozen particle load coefficient = " << frozen_particle_load );
     }
 }
 
@@ -668,7 +678,7 @@ vector<unsigned int> Params::FindSpecies(vector<Species*>& vecSpecies, vector<st
     // Make an array of the existing species names
     existing_species.resize(0);
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
-        existing_species.push_back( vecSpecies[ispec]->species_type );
+        existing_species.push_back( vecSpecies[ispec]->name );
     }
 
     // Loop over group of requested species
