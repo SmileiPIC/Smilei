@@ -52,10 +52,10 @@ public :
     //! Last ID assigned to a particle by this MPI domain
     uint64_t latest_Id;
     
-private :
-    
     //! Flag to test whether IDs have been set already
     bool IDs_done;
+    
+private :
     
     //! HDF5 objects
     hid_t data_group_id, transfer;
