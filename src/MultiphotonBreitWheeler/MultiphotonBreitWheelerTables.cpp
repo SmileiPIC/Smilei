@@ -727,14 +727,6 @@ void MultiphotonBreitWheelerTables::compute_xip_table(SmileiMPI *smpi)
                // buffer[ichiph*xip_chipa_dim + ichipa] = std::min(1.,numerator / 2*denominator);
                buffer[ichiph*xip_chipa_dim + ichipa] = numerator / (2*denominator);
 
-               /*std::cerr << std::setprecision(12)
-                         << " " << chiph
-                         << " " << chipa
-                         << " " << numerator
-                         << " " << denominator
-                         << " " << buffer[ichiph*xip_chipa_dim + ichipa]
-                         << std::endl;*/
-
                // If buffer == 1, end of the loop with 1
                /*if (buffer[ichiph*xip_chipa_dim + ichipa] == 1)
                {

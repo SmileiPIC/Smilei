@@ -446,16 +446,6 @@ void RadiationTables::compute_integfochi_table(SmileiMPI *smpi)
                 &integfochi_table[0], &length_table[0], &imin_table[0],
                 MPI_DOUBLE, smpi->getGlobalComm());
 
-        // Print array after communications
-        /*
-           if (rank==1) {
-           for (int i=0 ; i< integfochi_dim ; i++)
-           {
-           std::cout << integfochi_table[i] << std::endl;
-           }
-           }
-         */
-
         // flag computed at true
         integfochi_computed = true;
 
@@ -1280,18 +1270,6 @@ double RadiationTables::compute_chiph_emission(double chipa)
     /*chiph = pow(10.,ichiph*chiph_xip_delta
            + xip_chiphmin_table[ichipa]);*/
 
-    // Debugging
-    /*std::cerr << "ichiph: " << ichiph << " "
-              << "ichipa: " << ichipa << " "
-              << "" << xip_table[ichipa*xip_chiph_dim + ichiph] << " < "
-              << "xip: " << xip << " "
-              << " < " << xip_table[ichipa*xip_chiph_dim + ichiph+1] << " "
-              << "logchipa: " << logchipa <<
-              << " " << pow(10,(ichipa)*xip_chipa_delta + log10(xip_chipa_min)) << " < "
-              << "chipa: " << chipa << " "
-              << pow(10,(ichipa+1)*xip_chipa_delta + log10(xip_chipa_min)) << " "
-              << "chiph: " << chiph << " "
-              << std::endl;*/
 
     return chiph;
 }
@@ -1581,9 +1559,6 @@ double RadiationTables::get_Niel_stochastic_term(double gamma,
     std::mt19937 gen(device());
     std::normal_distribution<double> normal_distribution(0., sqrt(dt));
     r = normal_distribution(gen);*/
-
-    // Debugging
-    //std::cerr << h << " " << r << std::endl;
 
     return sqrt(factor_dNphdt*gamma*h)*r;
 }

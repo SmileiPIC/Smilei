@@ -158,6 +158,7 @@ RadiationNiel::~RadiationNiel()
 // -----------------------------------------------------------------------------
 //! Overloading of the operator (): perform the corrected Landau-Lifshitz
 //! classical radiation reaction + stochastic diffusive operator.
+//! **Vectorized version** But needs to be improved
 //
 //! \param particles   particle object containing the particle properties
 //! \param smpi        MPI properties

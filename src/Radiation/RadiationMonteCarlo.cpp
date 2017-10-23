@@ -143,22 +143,6 @@ void RadiationMonteCarlo::operator() (
                      (*Epart)[ipart].x,(*Epart)[ipart].y,(*Epart)[ipart].z,
                      (*Bpart)[ipart].x,(*Bpart)[ipart].y,(*Bpart)[ipart].z);
 
-             /*if (mc_it_nb > 1) {
-             std::cerr << "ipart: " << ipart
-                       << " mc_it_nb: " << mc_it_nb
-                       << " local_it_time: " << local_it_time << "/" << dt
-                       << " gamma: " << gamma
-                       << " px: " << momentum[0][ipart]
-                       << " py: " << momentum[1][ipart]
-                       << " chi: " << chipa << "(" << chipa_radiation_threshold << ")"
-                       << " Tau: " << tau[ipart] << "/" << epsilon_tau
-                       << std::endl;
-                       if (std::isnan(gamma))
-                       {
-                           ERROR("stop")
-                       }
-             }*/
-
             // Update the quantum parameter in species
             // chi[ipart] = chipa;
 
@@ -180,10 +164,6 @@ void RadiationMonteCarlo::operator() (
             if (tau[ipart] > epsilon_tau)
             {
 
-                /*std::cerr << "Continue discontinuous emission - "
-                        << "tau: " << tau[ipart]
-                        << std::endl;*/
-
                 // from the cross section
                 temp = RadiationTables.compute_dNphdt(chipa,gamma);
 
@@ -195,22 +175,9 @@ void RadiationMonteCarlo::operator() (
                 // Update of the optical depth
                 tau[ipart] -= temp*emission_time;
 
-                /*if (ipart == 1)
-                {
-                    std::cerr << "tau: " << tau[ipart] << " "
-                              << "temp: " << temp << " "
-                              << "tau[ipart]/temp: " << tau[ipart]/temp << " "
-                              << "emission_time: " << emission_time << " "
-                              << "dt - local_it_time: " << dt - local_it_time << " "
-                              << std::endl;
-                }*/
-
                 // If the final optical depth is reached
                 if (tau[ipart] <= epsilon_tau)
                 {
-
-                    /*std::cerr << "Photon emission"
-                            << std::endl;*/
 
                     // Emission of a photon
                     RadiationMonteCarlo::photon_emission(ipart,
@@ -244,9 +211,6 @@ void RadiationMonteCarlo::operator() (
             &&  (chipa > RadiationTables.get_chipa_radiation_threshold()))
             {
 
-                /*std::cerr << "Continuous - "
-                          << "chipa: " << chipa << std::endl;*/
-
                 // Remaining time of the iteration
                 emission_time = dt - local_it_time;
 
@@ -276,8 +240,6 @@ void RadiationMonteCarlo::operator() (
             }
 
         }
-
-        /*std::cerr << "end ipart: " << ipart << std::endl;*/
 
     }
 
@@ -418,15 +380,4 @@ void RadiationMonteCarlo::photon_emission(int ipart,
                                      + momentum[2][ipart]*momentum[2][ipart]);
         radiated_energy += weight[ipart]*gammaph;
     }
-
-    // Debugging
-    /*std::cerr << "chipa: " << chipa << " "
-              << "chiph: " << chiph << " "
-              << "gammapa: " << gammapa << " "
-              << "gammaph: " << gammaph << " "
-              << "inv_old_norm_p: " << inv_old_norm_p << " "
-              //<< "new_norm_p: " << new_norm_p << " "
-              << "" << sqrt(1 + px*px + py*py + pz*pz) << " "
-              << std::endl;*/
-
 }

@@ -84,24 +84,6 @@ class MultiphotonBreitWheeler
                 int iend,
                 int ithread);
 
-        //! Perform the creation of pairs from a photon
-        //! \param ipart              photon index
-        //! \param chipa              photon quantum parameter
-        //! \param gammapa            photon normalized energy
-        //! \param position           photon position
-        //! \param momentum           photon momentum
-        //! \param MultiphotonBreitWheelerTables    Cross-section data tables
-        //!                       and useful functions
-        //!                       for the multiphoton Breit-Wheeler process
-        void pair_emission(int ipart,
-                           double &chiph,
-                           double & gammaph,
-                           double * position[3],
-                           double * momentum[3],
-                           double * weight,
-                           double remaining_dt,
-                           MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables);
-
         //! Second version of pair_emission:
         //! Perform the creation of pairs from a photon with particles as an argument
         //! \param ipart              photon index
@@ -111,7 +93,7 @@ class MultiphotonBreitWheeler
         //! \param MultiphotonBreitWheelerTables    Cross-section data tables
         //!                       and useful functions
         //!                       for the multiphoton Breit-Wheeler process
-        void pair_emission_2(int ipart,
+        void pair_emission(int ipart,
                            Particles & particles,
                            double & gammaph,
                            double remaining_dt,
