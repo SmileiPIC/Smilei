@@ -346,7 +346,7 @@ Each species has to be defined in a ``Species`` block::
 
       # Radiation reaction, for particles only:
       radiation_model = "none",
-      radiation_photon_species = "none",
+      radiation_photon_species = "photon",
       radiation_photon_sampling = 1,
       radiation_photon_gamma_threshold = 2,
 
@@ -564,7 +564,7 @@ Each species has to be defined in a ``Species`` block::
 
 .. py:data:: radiation_photon_species
 
-  :default: ``none``
+  :default: ``None``
 
   :red:`This parameter is an attribute of particle species only (mass>0).`
 
@@ -607,7 +607,7 @@ Each species has to be defined in a ``Species`` block::
 
 .. py:data:: multiphoton_Breit_Wheeler
 
-  :default: ``["none","none"]``
+  :default: ``[None,None]``
 
   :red:`This parameter is an attribute of photon species only (mass=0).`
 

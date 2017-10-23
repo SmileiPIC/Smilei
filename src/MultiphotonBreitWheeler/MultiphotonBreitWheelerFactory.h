@@ -32,8 +32,8 @@ class MultiphotonBreitWheelerFactory {
                                                Species * species) {
             MultiphotonBreitWheeler* Multiphoton_Breit_Wheeler_process = NULL;
 
-            // assign the correct Radiation model to Radiate
-            if ( species->multiphoton_Breit_Wheeler[0] != "none" )
+            // Assign the correct Radiation model to Radiate
+            if ( !species->multiphoton_Breit_Wheeler[0].empty()  )
             {
                 Multiphoton_Breit_Wheeler_process = new MultiphotonBreitWheeler( params, species );
             }

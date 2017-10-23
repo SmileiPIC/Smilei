@@ -318,7 +318,7 @@ namelist("")
     } else {
         one_patch_per_MPI = false;
         if (tot_number_of_patches < (unsigned int)(smpi->getSize()))
-            ERROR("The total number of patches "<<tot_number_of_patches<<" must be greater or equal to the number of MPI processes "<<smpi->getSize()); 
+            ERROR("The total number of patches "<<tot_number_of_patches<<" must be greater or equal to the number of MPI processes "<<smpi->getSize());
     }
 #ifdef _OPENMP
     if ( tot_number_of_patches < (unsigned int)(smpi->getSize()*smpi->getOMPMaxThreads()) )
@@ -410,9 +410,7 @@ namelist("")
     std::vector<std::string> multiphoton_Breit_Wheeler(2);
     for (unsigned int ispec = 0; ispec < tot_species_number; ispec++) {
 
-        PyTools::extract("multiphoton_Breit_Wheeler", multiphoton_Breit_Wheeler ,"Species",ispec);
-
-        if (multiphoton_Breit_Wheeler[0] != "none")
+        if (PyTools::extract("multiphoton_Breit_Wheeler", multiphoton_Breit_Wheeler ,"Species",ispec))
         {
             this->hasMultiphotonBreitWheeler = true;
         }
@@ -507,7 +505,7 @@ void Params::compute()
         clrw = n_space[0];
 
         // check cache issue for interpolation/projection
-        int cache_threshold( 3200 ); // sizeof( L2, Sandy Bridge-HASWELL ) / ( 10 * sizeof(double) ) 
+        int cache_threshold( 3200 ); // sizeof( L2, Sandy Bridge-HASWELL ) / ( 10 * sizeof(double) )
         // Compute the "transversal bin size"
         int bin_size(1);
         for ( unsigned int idim = 1 ; idim < nDim_field ; idim++ )
@@ -577,7 +575,7 @@ void Params::print_init()
         MESSAGE(1,"dimension " << i << " - (res_space, sim_length) : (" << res_space[i] << ", " << sim_length[i] << ")");
         MESSAGE(1,"            - (n_space_global,  cell_length) : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
     }
-    
+
     if (balancing_every > 0){
         TITLE("Load Balancing: ");
         if (initial_balance){

@@ -145,25 +145,53 @@ public:
 
         // Extract various parameters from the namelist
 
-        // Radiation photon
+        // Monte-Carlo Photon emission properties
         if (mass > 0.)
         {
             if (thisSpecies->radiation_model == "Monte-Carlo")
             {
-                PyTools::extract("radiation_photon_species", thisSpecies->radiation_photon_species, "Species",ispec);
-                if (thisSpecies->radiation_photon_species != "none")
+                if (PyTools::extract("radiation_photon_species", thisSpecies->radiation_photon_species, "Species",ispec))
                 {
-                    MESSAGE(2,"> radiation_photon_species set to the species `" << thisSpecies->radiation_photon_species << "`");
-                }
-                PyTools::extract("radiation_photon_sampling",
-                                 thisSpecies->radiation_photon_sampling, "Species",ispec);
-                if (thisSpecies->radiation_photon_sampling < 1)
-                {
-                    ERROR("For species '" << species_type << "' radiation_photon_sampling should be > 1");
-                }
 
-                PyTools::extract("radiation_photon_gamma_threshold",
-                                 thisSpecies->radiation_photon_gamma_threshold, "Species",ispec);
+                    MESSAGE(2,"> Macro-photon emission activated");
+
+                    // Species that will receive the emitted photons
+                    if (!thisSpecies->radiation_photon_species.empty())
+                    {
+                        MESSAGE(2,"> Emitted photon species set to `" << thisSpecies->radiation_photon_species << "`");
+                    }
+                    else
+                    {
+                        ERROR(" The radiation photon species is not specified.")
+                    }
+
+                    // Number of photons emitted per Monte-Carlo event
+                    if (PyTools::extract("radiation_photon_sampling",
+                                     thisSpecies->radiation_photon_sampling, "Species",ispec))
+                    {
+                        if (thisSpecies->radiation_photon_sampling < 1)
+                        {
+                            ERROR("For species '" << species_type << "' radiation_photon_sampling should be > 1");
+                        }
+                    }
+                    else
+                    {
+                        thisSpecies->radiation_photon_sampling = 1;
+                    }
+                    MESSAGE(2,"> Number of macro-photons emitted per MC event: " << thisSpecies->radiation_photon_sampling);
+
+                    // Photon energy threshold
+                    if (!PyTools::extract("radiation_photon_gamma_threshold",
+                                     thisSpecies->radiation_photon_gamma_threshold, "Species",ispec))
+                    {
+                        thisSpecies->radiation_photon_gamma_threshold = 2.;
+                    }
+                    MESSAGE(2,"> Photon energy threshold for macro-photon emission: " << thisSpecies->radiation_photon_gamma_threshold);
+                }
+                else
+                {
+                    MESSAGE(2,"> Macro-photon emission not activated");
+                }
 
             }
         }
@@ -171,35 +199,37 @@ public:
         // Multiphoton Breit-Wheeler
         if (mass == 0)
         {
-            PyTools::extract("multiphoton_Breit_Wheeler", thisSpecies->multiphoton_Breit_Wheeler, "Species",ispec);
-            // If the first species is not empty
-            if (thisSpecies->multiphoton_Breit_Wheeler[0] == "" ||
-               (thisSpecies->multiphoton_Breit_Wheeler[1] == "" && thisSpecies->multiphoton_Breit_Wheeler[0] != "none"))
+            // If thisSpecies->multiphoton_Breit_Wheeler
+            if (PyTools::extract("multiphoton_Breit_Wheeler", thisSpecies->multiphoton_Breit_Wheeler, "Species",ispec))
             {
-                ERROR("For species '" << species_type << "' multiphoton_Breit_Wheeler can not be empty, select electron and positron species.");
-            }
-            // Else If the first species is not none which means no process
-            else if (thisSpecies->multiphoton_Breit_Wheeler[0] != "none")
-            {
-                if (thisSpecies->multiphoton_Breit_Wheeler[1] != "none")
+                // If one of the species is empty
+                if (thisSpecies->multiphoton_Breit_Wheeler[1].empty() || thisSpecies->multiphoton_Breit_Wheeler[0].empty())
+                {
+                    ERROR("For species '" << species_type << "' multiphoton_Breit_Wheeler can not be empty, select electron and positron species.");
+                }
+                else
                 {
                     // Activation of the additional variables
                     thisSpecies->particles->isQuantumParameter = true;
                     thisSpecies->particles->isMonteCarlo = true;
 
-                    thisSpecies->mBW_pair_creation_sampling.resize(2);
-                    PyTools::extract("multiphoton_Breit_Wheeler_sampling",
-                                     thisSpecies->mBW_pair_creation_sampling, "Species",ispec);
-
                     MESSAGE(2,"> Decay into pair via the multiphoton Breit-Wheeler activated");
                     MESSAGE(2,"> Generated electrons and positrons go to species: "
                     << thisSpecies->multiphoton_Breit_Wheeler[0]
                     << " & " << thisSpecies->multiphoton_Breit_Wheeler[1]);
-                }
-                else
-                {
-                    thisSpecies->multiphoton_Breit_Wheeler[0] = "none";
-                    WARNING("For species '" << species_type << "' Positron species is none, Multiphoton Breit-Wheeler disabled");
+
+                    // Number of emitted particles per MC event
+                    thisSpecies->mBW_pair_creation_sampling.resize(2);
+                    if(!PyTools::extract("multiphoton_Breit_Wheeler_sampling",
+                                     thisSpecies->mBW_pair_creation_sampling, "Species",ispec))
+                    {
+                        thisSpecies->mBW_pair_creation_sampling[0] = 1;
+                        thisSpecies->mBW_pair_creation_sampling[1] = 1;
+                    }
+                    MESSAGE(2,"> Number of emitted macro-particles per MC event: "
+                    << thisSpecies->mBW_pair_creation_sampling[0]
+                    << " & " << thisSpecies->mBW_pair_creation_sampling[1]);
+
                 }
             }
         }
@@ -604,7 +634,7 @@ public:
             }
 
             // No emission of discrete photon, only scalar diagnostics are updated
-            if( retSpecies[ispec1]->radiation_photon_species == "none")
+            if(retSpecies[ispec1]->radiation_photon_species.empty())
             {
                 retSpecies[ispec1]->photon_species_index = -1;
                 retSpecies[ispec1]->photon_species = NULL;
@@ -612,7 +642,8 @@ public:
             // Else, there will be emission of macro-photons.
             else
             {
-                for (unsigned int ispec2 = 0; ispec2<retSpecies.size(); ispec2++) {
+                unsigned int ispec2 = 0;
+                for (ispec2 = 0;ispec2<retSpecies.size();ispec2++) {
                     if( retSpecies[ispec1]->radiation_photon_species == retSpecies[ispec2]->species_type) {
                         if( ispec1==ispec2 )
                             ERROR("For species '"<<retSpecies[ispec1]->species_type<<"' radiation_photon_species must be a distinct photon species");
@@ -631,7 +662,12 @@ public:
                         //                                                    params.nDim_particle );
                         retSpecies[ispec2]->particles->reserve(retSpecies[ispec1]->getNbrOfParticles(),
                                                                retSpecies[ispec2]->particles->dimension() );
+                        break;
                     }
+                }
+                if (ispec2 == retSpecies.size())
+                {
+                    ERROR("Species '" << retSpecies[ispec1]->radiation_photon_species << "' does not exist.")
                 }
             }
         }
