@@ -12,7 +12,7 @@ before_install:
   - sudo apt-get -qq update
   - git fetch -t
   - sudo apt-get install -y python-pip
-  - pip install --user travis-sphinx Sphinx alabaster 
+  - pip install --user travis-sphinx Sphinx alabaster pint
   - export PATH=$HOME/.local/bin:$PATH
 
 script:
