@@ -8,6 +8,9 @@ sudo: required
 
 dist: trusty
 
+git:
+  depth: 9999999
+
 before_install:
   - sudo apt-get -qq update
   - git fetch -t
@@ -17,6 +20,7 @@ before_install:
 
 script:
   - travis-sphinx --nowarn --source=doc/Sphinx build
+  - find build
 
 after_success:
   - travis-sphinx deploy
