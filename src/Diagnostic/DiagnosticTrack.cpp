@@ -163,31 +163,32 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
             PyArrayObject *ret;
             ParticleData particleData(0);
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+                patch_selection[ipatch].resize(0);
                 Particles * p = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
                 unsigned int npart = p->size();
-                // Expose particle data as numpy arrays
-                particleData.resize( npart );
-                particleData.set( p );
-                // run the filter function
-                ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(filter, particleData.get(), NULL);
-                PyTools::checkPyError();
-                particleData.clear();
-                if( ret == NULL )
-                    ERROR("A DiagTrackParticles filter has not provided a correct result");
-                // Loop the return value and store the particle IDs
-                bool* arr = (bool*) PyArray_GETPTR1( ret, 0 );
-                patch_selection[ipatch].resize(0);
-                for(unsigned int i=0; i<npart; i++) {
-                    if( arr[i] ) {
-                        patch_selection[ipatch].push_back( i );
-                        // If particle not tracked before (ID==0), then set its ID
-                        if( p->id(i) == 0 ) p->id(i) = ++latest_Id;
+                if( npart > 0 ) {
+                    // Expose particle data as numpy arrays
+                    particleData.resize( npart );
+                    particleData.set( p );
+                    // run the filter function
+                    ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(filter, particleData.get(), NULL);
+                    PyTools::checkPyError();
+                    particleData.clear();
+                    if( ret == NULL )
+                        ERROR("A DiagTrackParticles filter has not provided a correct result");
+                    // Loop the return value and store the particle IDs
+                    bool* arr = (bool*) PyArray_GETPTR1( ret, 0 );
+                    for(unsigned int i=0; i<npart; i++) {
+                        if( arr[i] ) {
+                            patch_selection[ipatch].push_back( i );
+                            // If particle not tracked before (ID==0), then set its ID
+                            if( p->id(i) == 0 ) p->id(i) = ++latest_Id;
+                        }
                     }
+                    Py_DECREF(ret);
                 }
                 patch_start[ipatch] = nParticles_local;
                 nParticles_local += patch_selection[ipatch].size();
-                
-                Py_DECREF(ret);
             }
 #endif
         
