@@ -152,11 +152,13 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: clrw
   
-  :default: 0.
+  :default: 1
   
-  Cluster width.
-  :red:`to do`
-
+  Advanced users. Integer specifying the cluster width along X direction in number of cells. 
+  The "cluster" is a sub-patch structure in which particles are sorted for cache improvement. 
+  clrw must divide the number of cells in one patch (in dimension X). 
+  The finest sorting is achieved with clrw=1 and no sorting with clrw equal to the full size of a patch along dimension X.
+  The cluster size in dimension Y and Z is always the full extent of the patch. 
 
 .. py:data:: maxwell_sol
   
@@ -259,13 +261,15 @@ occur every 150 iterations.
   
   :default: 1.
   
-  :red:`to do`
+  Computational load of a single grid cell considered by the dynamic load balancing algorithm. 
+  This load is normalized to the load of a single particle.
   
 .. py:data:: coef_frozen
   
   :default: 0.1
   
-  :red:`to do`
+  Computational load of a single frozen particle considered by the dynamic load balancing algorithm. 
+  This load is normalized to the load of a single particle.
 
 
 ----

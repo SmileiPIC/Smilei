@@ -8,9 +8,9 @@ compile:
     - develop
   script:
     # Move in test dir
-    - mkdir -p /sps/gitlab-runner/$CI_PIPELINE_ID
-    - cp -r $CI_PROJECT_DIR /sps/gitlab-runner/$CI_PIPELINE_ID
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - mkdir -p /sps2/gitlab-runner/$CI_PIPELINE_ID
+    - cp -r $CI_PROJECT_DIR /sps2/gitlab-runner/$CI_PIPELINE_ID
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
     - python validation.py -c  -v
 
@@ -20,7 +20,7 @@ makerun1D:
     - develop
   script:
     # Move in test dir
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
     - python validation.py -b "tst1d_*_*.py" -m 4 -o 4 -v
 
@@ -30,7 +30,7 @@ makerun2D:
     - develop
   script:
     # Move in test dir
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
     - python validation.py -b "tst2d_*_*.py" -m 4 -o 4  -v
 
@@ -40,7 +40,7 @@ makerun3D:
     - develop
   script:
     # Move in test dir
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
     - python validation.py -b "tst3d_*_*.py" -m 4 -o 4 -v
 
@@ -50,7 +50,7 @@ makerunCollisions:
     - develop
   script:
     # Move in test dir
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
     - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v
 
