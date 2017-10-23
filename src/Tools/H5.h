@@ -142,6 +142,11 @@ class H5 {
         H5Sclose(sid);
     }
     
+    //Check if attribute exists
+    static bool hasAttr(hid_t locationId, std::string attribute_name) {
+        return H5Aexists(locationId,attribute_name.c_str())>0 ;
+    }
+
     //READ ATTRIBUTES
     
     //! retrieve a double attribute
@@ -202,6 +207,19 @@ class H5 {
         getAttr(locationId, attribute_name, attribute_value, H5T_NATIVE_DOUBLE);
     }
     
+    static int getAttrSize(hid_t locationId, std::string attribute_name) {
+        if (H5Aexists(locationId,attribute_name.c_str())>0) {
+            hid_t aid = H5Aopen(locationId, attribute_name.c_str(), H5P_DEFAULT);
+            hid_t sid = H5Aget_space(aid);
+            hssize_t npoints = H5Sget_simple_extent_npoints( sid );
+            H5Sclose( sid );
+            H5Aclose(aid);
+            return npoints;
+        } else {
+            return -1;
+        }
+    }
+
     //! retrieve a vector<anything> as an attribute
     template<class T>
     static void getAttr(hid_t locationId, std::string attribute_name, std::vector<T>& attribute_value, hid_t type) {
