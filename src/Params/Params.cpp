@@ -519,11 +519,11 @@ void Params::compute()
             bin_size *= ( n_space[idim]+1+2*oversize[idim] );
 
         // IF Ionize r pair generation : clrw = n_space_x_pp ?
-        if ( ( clrw+1+2*oversize[0]) * bin_size > cache_threshold ) {
+        if ( ( clrw+1+2*oversize[0]) * bin_size > (unsigned int) cache_threshold ) {
             int clrw_max = cache_threshold / bin_size - 1 - 2*oversize[0];
             if ( clrw_max > 0 ) {
                 for ( clrw=clrw_max ; clrw > 0 ; clrw-- )
-                    if ( ( ( clrw+1+2*oversize[0]) * bin_size <= cache_threshold ) && (n_space[0]%clrw==0) ) {
+                    if ( ( ( clrw+1+2*oversize[0]) * bin_size <= (unsigned int) cache_threshold ) && (n_space[0]%clrw==0) ) {
                         break;
                     }
             }

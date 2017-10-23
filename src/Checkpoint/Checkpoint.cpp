@@ -419,15 +419,19 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
     
     // Read the diags screen data
     ostringstream diagName("");
-    string attr;
     if( smpi->isMaster() ) {
-        for( unsigned int idiag=0; idiag<vecPatches.globalDiags.size(); idiag++ )
+        for( unsigned int idiag=0; idiag<vecPatches.globalDiags.size(); idiag++ ) {
             if( DiagnosticScreen* screen = dynamic_cast<DiagnosticScreen*>(vecPatches.globalDiags[idiag]) ) {
                 diagName.str("");
                 diagName << "DiagScreen" << screen->screen_id;
-                attr = diagName.str();
-                H5::getAttr(fid, attr, screen->data_sum);
+                int attr_size=H5::getAttrSize(fid, diagName.str());
+                if (attr_size == (int) screen->data_sum.size()) {
+                    H5::getAttr(fid, diagName.str(), screen->data_sum);
+                } else {
+                    WARNING("Restart: DiagScreen[" << idiag << "] size mismatch. Previous data discarded");
+                }
             }
+        }
     }
     
     // Read all the patch data
@@ -449,7 +453,11 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
         if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) ) {
             ostringstream n("");
             n<< "latest_ID_" << vecPatches(0)->vecSpecies[track->speciesId_]->name;
-            H5::getAttr(fid, n.str().c_str(), track->latest_Id, H5T_NATIVE_UINT64);
+            if (H5::hasAttr(fid, n.str())) {
+                H5::getAttr(fid, n.str(), track->latest_Id, H5T_NATIVE_UINT64);
+            } else {
+                track->IDs_done=false;
+            }
         }
     }
     
@@ -611,12 +619,9 @@ void Checkpoint::dumpFieldsPerProc(hid_t fid, Field* field)
 
 void Checkpoint::restartFieldsPerProc(hid_t fid, Field* field)
 {
-    hsize_t dims[1]={field->globalDims_};
-    hid_t sid = H5Screate_simple (1, dims, NULL);
     hid_t did = H5Dopen (fid, field->name.c_str(),H5P_DEFAULT);
     H5Dread(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &field->data_[0]);
     H5Dclose (did);
-    H5Sclose(sid);
 }
 
 void Checkpoint::dumpMovingWindow(hid_t fid, SimWindow* simWin)
