@@ -178,7 +178,8 @@ public:
                     {
                         thisSpecies->radiation_photon_sampling = 1;
                     }
-                    MESSAGE(2,"> Number of macro-photons emitted per MC event: " << thisSpecies->radiation_photon_sampling);
+                    MESSAGE(2,"> Number of macro-photons emitted per MC event: "
+                            << thisSpecies->radiation_photon_sampling);
 
                     // Photon energy threshold
                     if (!PyTools::extract("radiation_photon_gamma_threshold",
@@ -186,7 +187,8 @@ public:
                     {
                         thisSpecies->radiation_photon_gamma_threshold = 2.;
                     }
-                    MESSAGE(2,"> Photon energy threshold for macro-photon emission: " << thisSpecies->radiation_photon_gamma_threshold);
+                    MESSAGE(2,"> Photon energy threshold for macro-photon emission: "
+                            << thisSpecies->radiation_photon_gamma_threshold);
                 }
                 else
                 {
