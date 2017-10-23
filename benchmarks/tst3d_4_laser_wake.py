@@ -57,7 +57,6 @@ Species(
     temperature = [0.0],
     pusher = "boris",    
     time_frozen = 0.0,
-    radiating = False,
     boundary_conditions = [
     	["supp", "supp"],
     	["supp", "supp"],
