@@ -4,7 +4,7 @@ from Smilei import *
 S = Smilei(".", verbose=False)
 
 # COMPARE THE Ey FIELD
-Ey = S.Field.Field0.Ey(timesteps=1500, stride=8).getData()[0]
+Ey = S.Field.Field0.Ey(timesteps=1500, subset={"x":[0,10000,8], "y":[0,10000,8]}).getData()[0]
 Validate("Ey field at iteration 1500", Ey, 0.01)
 
 # 2-D probe in 2D

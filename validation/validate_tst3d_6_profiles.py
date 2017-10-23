@@ -21,7 +21,7 @@ for name, profile in S.namelist.profiles.items():
 #	fig.clf()
 #	ax1=fig.add_subplot(3,1,1)
 #	print "Rho_"+name
-#	A=S.Field.Field0("Rho_"+name, slice={"z":3.})
+#	A=S.Field.Field0("Rho_"+name, average={"z":3.})
 #	z0 = A.getData()[0]
 #	plt.colorbar( ax1.imshow(z0) )
 #	y,x = np.meshgrid( A.get()["x"], A.get()["y"] )

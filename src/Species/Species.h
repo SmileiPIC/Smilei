@@ -13,6 +13,10 @@
 #include "ElectroMagn.h"
 #include "Profile.h"
 #include "AsyncMPIbuffers.h"
+#include "Radiation.h"
+#include "RadiationTables.h"
+#include "MultiphotonBreitWheeler.h"
+#include "MultiphotonBreitWheelerTables.h"
 
 class ElectroMagn;
 class Pusher;
@@ -23,6 +27,7 @@ class PartWalls;
 class Field3D;
 class Patch;
 class SimWindow;
+class Radiation;
 
 
 //! class Species
@@ -46,13 +51,13 @@ public:
     unsigned int speciesNumber;
     
     //! kind/name of species
-    std::string species_type;
+    std::string name;
     
     //! position initialization type, possible values: "regular" or "random"
-    std::string initPosition_type;
+    std::string position_initialization;
     
     //! momentum initialization type, possible values: "cold" or "maxwell-juettner"
-    std::string initMomentum_type;
+    std::string momentum_initialization;
     
     //! coefficient on the maximum number of particles for the species
     double c_part_max;
@@ -64,17 +69,20 @@ public:
     unsigned int atomic_number;
     
     //! thermalizing temperature for thermalizing BCs [\f$m_e c^2\f$]
-    std::vector<double> thermT;
+    std::vector<double> thermal_boundary_temperature;
     //! mean velocity used when thermalizing BCs are used [\f$c\f$]
-    std::vector<double> thermVelocity;
+    std::vector<double> thermal_boundary_velocity;
     
     //! thermal velocity [\f$c\f$]
     std::vector<double> thermalVelocity;
     //! thermal momentum [\f$m_e c\f$]
     std::vector<double> thermalMomentum;
     
-    //! dynamics type. Possible values: "Norm" "Radiation Reaction"
-    std::string dynamics_type;
+    //! pusher name
+    std::string pusher;
+    
+    //! radiation model
+    std::string radiation_model;
     
     //! Time for which the species is frozen
     double time_frozen;
@@ -82,13 +90,11 @@ public:
     //! logical true if particles radiate
     bool radiating;
     
+    //! electron and positron Species for the multiphoton Breit-Wheeler
+    std::vector<std::string> multiphoton_Breit_Wheeler;
+    
     //! Boundary conditions for particules
-    std::string bc_part_type_xmin;
-    std::string bc_part_type_xmax;
-    std::string bc_part_type_ymin;
-    std::string bc_part_type_ymax;
-    std::string bc_part_type_zmin;
-    std::string bc_part_type_zmax;
+    std::vector<std::vector<std::string> > boundary_conditions;
     
     //! Ionization model per Specie (tunnel)
     std::string ionization_model;
@@ -131,9 +137,43 @@ public:
     }
     
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
-    virtual void dynamics(double time, unsigned int ispec, ElectroMagn* EMfields, Interpolator* interp,
+    virtual void dynamics(double time, unsigned int ispec,
+                          ElectroMagn* EMfields,
+                          Interpolator* interp,
                           Projector* proj, Params &params, bool diag_flag,
-                          PartWalls* partWalls, Patch* patch, SmileiMPI* smpi, std::vector<Diagnostic*>& localDiags);
+                          PartWalls* partWalls, Patch* patch, SmileiMPI* smpi,
+                          RadiationTables &RadiationTables,
+                          MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
+                          std::vector<Diagnostic*>& localDiags);
+    
+    //! Method calculating a part of the particle dynamics:
+    //! interpolation, ionization, radiation, QED, pusher
+    virtual void dynamics_interp_and_push(double time, unsigned int ispec,
+                        ElectroMagn* EMfields,
+                        Interpolator* interp,
+                        Projector* proj, Params &params, bool diag_flag,
+                        Patch* patch, SmileiMPI* smpi,
+                        RadiationTables &RadiationTables,
+                        MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables);
+    
+    //! Method calculating a part of the particle dynamics: projections
+    virtual void dynamics_projection(double time, unsigned int ispec,
+                        ElectroMagn* EMfields,
+                        Projector* proj, Params &params, bool diag_flag,
+                        Patch* patch, SmileiMPI* smpi);
+    
+    //! Method performing the importation of new particles
+    virtual void dynamics_import_particles(double time, unsigned int ispec,
+                        Params &params,
+                        Patch* patch, SmileiMPI* smpi,
+                        RadiationTables &RadiationTables,
+                        MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
+                        std::vector<Diagnostic*>& localDiags);
+    
+    //! Method preparing the boundary conditions
+    virtual void dynamics_bound_cond(double time, unsigned int ispec,
+                          Params &params,
+                          PartWalls* partWalls, Patch* patch, SmileiMPI* smpi);
     
     //! Method calculating the Particle charge on the grid (projection)
     virtual void computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector* Proj);
@@ -167,6 +207,12 @@ public:
     //! Ionization method
     Ionization* Ionize;
     
+    //! Radiation method (Continuous or Monte-Carlo)
+    Radiation * Radiate;
+    
+    //! Multiphoton Breit-wheeler
+    MultiphotonBreitWheeler * Multiphoton_Breit_Wheeler_process;
+    
     //! Pointer to the species where field-ionized electrons go
     Species *electron_species;
     //! Index of the species where field-ionized electrons go
@@ -174,8 +220,31 @@ public:
     //! Name of the species where field-ionized electrons go
     std::string ionization_electrons;
     
+    //! Pointer to the species where radiated photon go
+    Species *photon_species;
+    //! Index of the species where radiated photons go
+    int photon_species_index;
+    //! radiation photon species for the Monte-Carlo model.
+    //! Name of the species where radiated photons go
+    std::string radiation_photon_species;
+    //! Number of photons emitted per particle and per event
+    int radiation_photon_sampling;
+    //! Threshold on the photon Lorentz factor under which the macro-photon
+    //! is not generated but directly added to the energy scalar diags
+    //! This enable to limit emission of useless low-energy photons
+    double radiation_photon_gamma_threshold;
+    
+    //! Pointer to the species where electron-positron pairs
+    //! from the multiphoton Breit-Wheeler go
+    Species * mBW_pair_species[2];
+    //! Index of the species where electron-positron pairs
+    //! from the multiphoton Breit-Wheeler go
+    int mBW_pair_species_index[2];
+    //! Number of created pairs per event and per photons
+    std::vector<int> mBW_pair_creation_sampling;
+    
     //! Cluster width in number of cells
-    unsigned int clrw; //Should divide the number of cells in X of a single MPI domain. 
+    unsigned int clrw; //Should divide the number of cells in X of a single MPI domain.
     //! first and last index of each particle bin
     std::vector<int> bmin, bmax;
     //! sub dimensions of buffers for dim > 1
@@ -188,7 +257,7 @@ public:
     std::vector<MPI_Datatype> typePartSend ;
     std::vector<MPI_Datatype> typePartRecv ;
     MPI_Datatype exchangePatch;
-
+    
     //! Cell_length (copy from Params)
     std::vector<double> cell_length;
     //! min_loc_vec (copy from picparams)
@@ -213,27 +282,52 @@ public:
     //! Method to know if we have to project this species or not.
     bool  isProj(double time_dual, SimWindow* simWindow);
     
+    //! Get the energy lost in the boundary conditions
     double getLostNrjBC() const {return mass*nrj_bc_lost;}
+    
+    //! Get energy lost with moving window (fields)
     double getLostNrjMW() const {return mass*nrj_mw_lost;}
     
+    //! Get the energy radiated away by the particles
+    double getNrjRadiation() const {return nrj_radiation;}
+    
+    //! Set the energy radiated away by the particles
+    void setNrjRadiation(double value) {nrj_radiation = value;}
+    
+    //! Add the energy radiated away by the particles
+    void addNrjRadiation(double value) {nrj_radiation += value;}
+    
+    //! Get energy gained via new particles
     double getNewParticlesNRJ() const {return mass*nrj_new_particles;}
-    void reinitDiags() { 
+    
+    //! Reinitialize the scalar diagnostics buffer
+    void reinitDiags() {
         //nrj_bc_lost = 0;
         nrj_mw_lost = 0;
         nrj_new_particles = 0;
+        //nrj_radiation = 0;
     }
+    
     inline void storeNRJlost( double nrj ) { nrj_mw_lost += nrj; };
     
     inline double computeNRJ() {
         double nrj(0.);
-        for ( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ )
-            nrj += (*particles).weight(iPart)*((*particles).lor_fac(iPart)-1.0);
+        if (this->mass > 0)
+        {
+            for ( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ )
+                nrj += (*particles).weight(iPart)*((*particles).lor_fac(iPart)-1.0);
+        }
+        else if (this->mass == 0)
+        {
+            for ( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ )
+                nrj += (*particles).weight(iPart)*((*particles).momentum_norm(iPart));
+        }
         return nrj;
     }
     
     inline int getMemFootPrint() {
         /*int speciesSize  = ( 2*nDim_particle + 3 + 1 )*sizeof(double) + sizeof(short);
-        if ( particles->isTest )
+        if ( particles->is_test )
             speciesSize += sizeof ( unsigned int );*/
         //speciesSize *= getNbrOfParticles();
         int speciesSize(0);
@@ -269,9 +363,15 @@ public:
     //! Number of the associated tracking diagnostic
     unsigned int tracking_diagnostic;
     
+protected:
+    
+    //! Accumulate nrj lost by the particle with the radiation
+    double nrj_radiation;
+    
 private:
     //! Number of steps for Maxwell-Juettner cumulative function integration
     //! \todo{Put in a code constant class}
+    
 //    unsigned int nE;
     
     //! Parameter used when defining the Maxwell-Juettner function (corresponds to a Maximum energy)

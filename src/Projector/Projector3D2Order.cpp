@@ -157,7 +157,7 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     jpo -= 2;
     kpo -= 2;
     
-    int iloc, jloc, kloc, linindex, linindex_x, linindex_y;
+    int linindex, linindex_x, linindex_y;
     double tmp, tmp2;
     double vtmp[5];
 

@@ -1,10 +1,10 @@
 from ._Utils import *
-from ._Diagnostics import Scalar, Field, Probe, ParticleDiagnostic, Screen, TrackParticles
+from ._Diagnostics import Scalar, Field, Probe, ParticleBinning, Screen, TrackParticles
 
 
 class ScalarFactory(object):
 	"""Import and analyze a scalar diagnostic from a Smilei simulation
-	
+
 	Parameters:
 	-----------
 	scalar : string (optional)
@@ -17,18 +17,18 @@ class ScalarFactory(object):
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
-	
+
 	Usage:
 	------
 		S = Smilei("path/to/simulation") # Load the simulation
 		scalar = S.Scalar(...)           # Load the scalar diagnostic
 		scalar.get()                     # Obtain the data
 	"""
-	
+
 	def __init__(self, simulation, scalar=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
-		
+
 		# If not a specific scalar (root level), build a list of scalar shortcuts
 		if scalar is None:
 			# Create a temporary, empty scalar diagnostic
@@ -38,21 +38,21 @@ class ScalarFactory(object):
 			# Create scalars shortcuts
 			for scalar in scalars:
 				setattr(self, scalar, ScalarFactory(simulation, scalar))
-		
+
 		else:
 			# the scalar is saved for generating the object in __call__
 			self._additionalArgs += (scalar, )
-	
+
 	def __call__(self, *args, **kwargs):
 		return Scalar.Scalar(self._simulation, *(self._additionalArgs+args), **kwargs)
-	
+
 	def toXDMF(self):
 		pass
-	
-	
+
+
 class FieldFactory(object):
 	"""Import and analyze a Field diagnostic from a Smilei simulation
-	
+
 	Parameters:
 	-----------
 	field : string (optional)
@@ -63,16 +63,20 @@ class FieldFactory(object):
 		If omitted, all timesteps are used.
 		If one number  given, the nearest timestep available is used.
 		If two numbers given, all the timesteps in between are used.
-	slice : a python dictionary of the form { axis:range, ... } (optional)
+	subset: a python dictionary of the form { axis:range, ... } (optional)
+		`axis` must be "x", "y" or "z".
+		`range` must be a list of 1 to 3 floats such as [start, stop, step]
+		WARNING: THE VALUE OF `step` IS A NUMBER OF CELLS.
+		Only the data within the chosen axes' selections is extracted.
+		Example: subset = {"y":[10, 80, 4]}
+	average : a python dictionary of the form { axis:range, ... } (optional)
 		`axis` may be "x", "y" or "z".
 		`range` may be "all", a float, or [float, float].
-		For instance, slice={"x":"all", "y":[2,3]}.
-		The average of all values within the 'slice' is computed.
+		For instance, average={"x":"all", "y":[2,3]}.
+		The average of all values within the bounds is computed.
 	units : a units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
-	stride : int (default: 1)
-		Step size for sampling the grid.
 	
 	Usage:
 	------
@@ -80,12 +84,12 @@ class FieldFactory(object):
 		field = S.Field(...)             # Load the field diagnostic
 		field.get()                      # Obtain the data
 	"""
-	
+
 	def __init__(self, simulation, diagNumber=None, field=None, timestep=None, availableTimesteps=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
 		self._children = []
-		
+
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
 			# Create a temporary, empty field diagnostic
@@ -97,11 +101,11 @@ class FieldFactory(object):
 				child = FieldFactory(simulation, diag)
 				setattr(self, "Field"+str(diag), child)
 				self._children += [child]
-		
+
 		else:
 			# the diag is saved for generating the object in __call__
 			self._additionalArgs += (diagNumber, )
-			
+
 			# If not a specific field, build a list of field shortcuts
 			if field is None:
 				# Create a temporary, empty field diagnostic
@@ -114,23 +118,23 @@ class FieldFactory(object):
 				for field in fields:
 					child = FieldFactory(simulation, diagNumber, field, availableTimesteps=timesteps)
 					setattr(self, field, child)
-			
+
 			else:
 				# the field is saved for generating the object in __call__
 				self._additionalArgs += (field, )
-				
+
 				# If not a specific timestep, build a list of timesteps shortcuts
 				if timestep is None:
 					for timestep in availableTimesteps:
 						setattr(self, 't%0.10i'%timestep, FieldFactory(simulation, diagNumber, field, timestep))
-				
+
 				else:
 					# the timestep is saved for generating the object in __call__
 					self._additionalArgs += (timestep, )
-	
+
 	def __call__(self, *args, **kwargs):
 		return Field.Field(self._simulation, *(self._additionalArgs+args), **kwargs)
-	
+
 	def toXDMF(self):
 		if len(self._children) > 0:
 			for child in self._children:
@@ -141,7 +145,7 @@ class FieldFactory(object):
 
 class ProbeFactory(object):
 	"""Import and analyze a probe diagnostic from a Smilei simulation
-	
+
 	Parameters:
 	-----------
 	probeNumber : int (optional)
@@ -154,26 +158,32 @@ class ProbeFactory(object):
 		If omitted, all timesteps are used.
 		If one number  given, the nearest timestep available is used.
 		If two numbers given, all the timesteps in between are used.
-	slice : a python dictionary of the form { axis:range, ... } (optional)
+	subset: a python dictionary of the form { axis:range, ... } (optional)
+		`axis` must be "axis1", "axis2" or "axis3".
+		`range` must be a list of 1 to 3 floats such as [start, stop, step]
+		WARNING: THE VALUE OF `step` IS A NUMBER OF PROBE POINTS.
+		Only the data within the chosen axes' selections is extracted.
+		Example: subset = {"axis2":[10, 80, 4]}
+	average : a python dictionary of the form { axis:range, ... } (optional)
 		`axis` may be "axis1" or "axis2" (the probe axes).
 		`range` may be "all", a float, or [float, float].
-		For instance, slice={"axis1":"all", "axis2":[2,3]}.
-		The average of all values within the 'slice' is computed.
+		For instance, average={"axis1":"all", "axis2":[2,3]}.
+		The average of all values within the bounds is computed.
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
-	
+
 	Usage:
 	------
 		S = Smilei("path/to/simulation") # Load the simulation
 		probe = S.Probe(...)             # Load the probe diagnostic
 		probe.get()                      # Obtain the data
 	"""
-	
+
 	def __init__(self, simulation, probeNumber=None, field=None, timestep=None, availableTimesteps=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
-		
+
 		# If not a specific probe, build a list of probe shortcuts
 		if probeNumber is None:
 			# Create a temporary, empty probe diagnostic
@@ -183,11 +193,11 @@ class ProbeFactory(object):
 			# Create probe shortcuts
 			for probe in probes:
 				setattr(self, 'Probe'+str(probe), ProbeFactory(simulation, probe))
-		
+
 		else:
 			# the probe is saved for generating the object in __call__
 			self._additionalArgs += (probeNumber,)
-			
+
 			# If not a specific field, build a list of field shortcuts
 			if field is None:
 				# Create a temporary, empty probe diagnostic
@@ -199,91 +209,95 @@ class ProbeFactory(object):
 				# Create fields shortcuts
 				for field in fields:
 					setattr(self, field, ProbeFactory(simulation, probeNumber, field, availableTimesteps=timesteps))
-			
+
 			else:
 				# the field is saved for generating the object in __call__
 				self._additionalArgs += (field, )
-				
+
 				# If not a specific timestep, build a list of timesteps shortcuts
 				if timestep is None:
 					for timestep in availableTimesteps:
 						setattr(self, 't%0.10i'%timestep, ProbeFactory(simulation, probeNumber, field, timestep))
-				
+
 				else:
 					# the timestep is saved for generating the object in __call__
 					self._additionalArgs += (timestep, )
-	
+
 	def __call__(self, *args, **kwargs):
 		return Probe.Probe(self._simulation, *(self._additionalArgs+args), **kwargs)
-	
+
 	def toXDMF(self):
 		pass
 
 
-class ParticleDiagnosticFactory(object):
-	"""Import and analyze a particle diagnostic from a Smilei simulation
+class ParticleBinningFactory(object):
+	"""Import and analyze a ParticleBinning diagnostic from a Smilei simulation
 	
 	Parameters:
 	-----------
 	diagNumber : int (optional)
-		Index of an available particle diagnostic.
+		Index of an available ParticleBinning diagnostic.
 		To get a list of available diags, simply omit this argument.
 	timesteps : int or [int, int] (optional)
 		If omitted, all timesteps are used.
 		If one number  given, the nearest timestep available is used.
 		If two numbers given, all the timesteps in between are used.
-	slice : a python dictionary of the form { axis:range, ... } (optional)
+	subset: a python dictionary of the form { axis:range, ... } (optional)
+		`axis` may be "x", "y", "z", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
+		`range` must be a list of 1 to 3 floats such as [start, stop, step]
+		WARNING: THE VALUE OF `step` IS A NUMBER OF BINS.
+		Only the data within the chosen axes' selections is extracted.
+		Example: subset = {"y":[10, 80, 4]}
+	sum : a python dictionary of the form { axis:range, ... } (optional)
 		`axis` may be "x", "y", "z", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
 		`range` may be "all", a float, or [float, float].
-		For instance, slice={"x":"all", "y":[2,3]}.
-		The SUM of all values within the 'slice' is computed.
+		For instance, sum={"x":"all", "y":[2,3]}.
+		The sum of all values within the bounds is computed.
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
-	stride : int (default: 1)
-		Step size for sampling the grid.
 	
 	Usage:
 	------
 		S = Smilei("path/to/simulation") # Load the simulation
-		part = S.ParticleDiagnostic(...) # Load the particle diagnostic
+		part = S.ParticleBinning(...) # Load the particle binning diagnostic
 		part.get()                       # Obtain the data
 	"""
-	
+
 	def __init__(self, simulation, diagNumber=None, timestep=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
-		
+
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
-			# Create a temporary, empty particle diagnostic
-			tmpDiag = ParticleDiagnostic.ParticleDiagnostic(simulation)
+			# Create a temporary, empty particle binning diagnostic
+			tmpDiag = ParticleBinning.ParticleBinning(simulation)
 			# Get a list of diags
 			diags = tmpDiag.getDiags()
 			# Create diags shortcuts
 			for diag in diags:
-				setattr(self, 'Diag'+str(diag), ParticleDiagnosticFactory(simulation, diag))
+				setattr(self, 'Diag'+str(diag), ParticleBinningFactory(simulation, diag))
 		
 		else:
 			# the diag is saved for generating the object in __call__
 			self._additionalArgs += (diagNumber, )
-			
+
 			## If not a specific timestep, build a list of timesteps shortcuts
 			#if timestep is None:
-			#	# Create a temporary, empty particle diagnostic
-			#	tmpDiag = ParticleDiagnostic.ParticleDiagnostic(simulation, diagNumber)
+			#	# Create a temporary, empty particle binning diagnostic
+			#	tmpDiag = ParticleBinning.ParticleBinning(simulation, diagNumber)
 			#	# Get a list of timesteps
 			#	timesteps = tmpDiag.getAvailableTimesteps()
 			#	# Create timesteps shortcuts
 			#	for timestep in timesteps:
-			#		setattr(self, 't%0.10i'%timestep, ParticleDiagnosticFactory(simulation, diagNumber, timestep))
+			#		setattr(self, 't%0.10i'%timestep, ParticleBinningFactory(simulation, diagNumber, timestep))
 			#
 			#else:
 			#	# the timestep is saved for generating the object in __call__
 			#	self._additionalArgs += (timestep, )
-	
+
 	def __call__(self, *args, **kwargs):
-		return ParticleDiagnostic.ParticleDiagnostic(self._simulation, *(self._additionalArgs+args), **kwargs)
+		return ParticleBinning.ParticleBinning(self._simulation, *(self._additionalArgs+args), **kwargs)
 	
 	def toXDMF(self):
 		pass
@@ -291,7 +305,7 @@ class ParticleDiagnosticFactory(object):
 
 class ScreenFactory(object):
 	"""Import and analyze a screen diagnostic from a Smilei simulation
-	
+
 	Parameters:
 	-----------
 	diagNumber : int (optional)
@@ -301,28 +315,32 @@ class ScreenFactory(object):
 		If omitted, all timesteps are used.
 		If one number  given, the nearest timestep available is used.
 		If two numbers given, all the timesteps in between are used.
-	slice : a python dictionary of the form { axis:range, ... } (optional)
+	subset: a python dictionary of the form { axis:range, ... } (optional)
+		`axis` may be "x", "y", "z", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
+		`range` must be a list of 1 to 3 floats such as [start, stop, step]
+		WARNING: THE VALUE OF `step` IS A NUMBER OF BINS.
+		Only the data within the chosen axes' selections is extracted.
+		Example: subset = {"y":[10, 80, 4]}
+	sum : a python dictionary of the form { axis:range, ... } (optional)
 		`axis` may be "x", "y", "z", "a", "b", "theta", "phi", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
 		`range` may be "all", a float, or [float, float].
-		For instance, slice={"x":"all", "y":[2,3]}.
-		The SUM of all values within the 'slice' is computed.
+		For instance, sum={"x":"all", "y":[2,3]}.
+		The sum of all values within the bounds is computed.
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
-	stride : int (default: 1)
-		Step size for sampling the grid.
 	
 	Usage:
 	------
 		S = Smilei("path/to/simulation") # Load the simulation
-		screen = S.Screen(...) # Load the particle diagnostic
+		screen = S.Screen(...) # Load the Screen diagnostic
 		screen.get()                       # Obtain the data
 	"""
-	
+
 	def __init__(self, simulation, diagNumber=None, timestep=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
-		
+
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
 			# Create a temporary, empty Screen diagnostic
@@ -332,11 +350,11 @@ class ScreenFactory(object):
 			# Create diags shortcuts
 			for diag in diags:
 				setattr(self, 'Screen'+str(diag), ScreenFactory(simulation, diag))
-		
+
 		else:
 			# the diag is saved for generating the object in __call__
 			self._additionalArgs += (diagNumber, )
-			
+
 			## If not a specific timestep, build a list of timesteps shortcuts
 			#if timestep is None:
 			#	# Create a temporary, empty Screen diagnostic
@@ -350,17 +368,17 @@ class ScreenFactory(object):
 			#else:
 			#	# the timestep is saved for generating the object in __call__
 			#	self._additionalArgs += (timestep, )
-	
+
 	def __call__(self, *args, **kwargs):
 		return Screen.Screen(self._simulation, *(self._additionalArgs+args), **kwargs)
-	
+
 	def toXDMF(self):
 		pass
 
 
 class TrackParticlesFactory(object):
 	"""Import and analyze tracked particles from a Smilei simulation
-	
+
 	Parameters:
 	-----------
 	species : string (optional)
@@ -386,25 +404,25 @@ class TrackParticlesFactory(object):
 		The length of each plotted trajectory, in number of timesteps.
 	units : A units specification such as ["m","second"]
 	axes: A list of axes for plotting the trajectories.
-		Each axis is "x", "y", "z", "px", "py" or "pz".
+		Each axis is "x", "y", "z", "px", "py" or "pz", "chi".
 		Example: axes = ["x"] corresponds to x versus time.
 		Example: axes = ["x","y"] correspond to 2-D trajectories.
 		Example: axes = ["x","px"] correspond to phase-space trajectories.
 	skipAnimation: bool (default: False)
 		When True, the plot() will directly show the full trajectory.
-	
+
 	Usage:
 	------
 		S = Smilei("path/to/simulation") # Load the simulation
 		track = S.TrackParticles(...)    # Load the tracked-particle diagnostic
 		track.get()                      # Obtain the data
 	"""
-	
+
 	def __init__(self, simulation, species=None, timestep=None):
 		self._simulation = simulation
 		self._additionalKwargs = dict()
 		self._children = []
-		
+
 		# If not a specific species (root level), build a list of species shortcuts
 		if species is None:
 			# Create a temporary, empty tracked-particle diagnostic
@@ -416,15 +434,15 @@ class TrackParticlesFactory(object):
 				child = TrackParticlesFactory(simulation, spec)
 				setattr(self, spec, child)
 				self._children += [child]
-		
+
 		else:
 			# the species is saved for generating the object in __call__
 			self._additionalKwargs.update( {"species":species} )
-			
+
 			# For now, the following block is de-activated
-			# It is not possible to have pre-loaded timesteps because the file ordering 
+			# It is not possible to have pre-loaded timesteps because the file ordering
 			# would take place, and it takes a long time
-			
+
 			## If not a specific timestep, build a list of timesteps shortcuts
 			#if timestep is None:
 			#	# Create a temporary, empty tracked-particle diagnostic
@@ -438,11 +456,11 @@ class TrackParticlesFactory(object):
 			#else:
 			#	# the timestep is saved for generating the object in __call__
 			#	self._additionalKwargs.update( {"timesteps":timestep} )
-	
+
 	def __call__(self, *args, **kwargs):
 		kwargs.update(self._additionalKwargs)
 		return TrackParticles.TrackParticles(self._simulation, *args, **kwargs)
-	
+
 	def toXDMF(self):
 		if len(self._children) > 0:
 			for child in self._children:
@@ -456,38 +474,38 @@ class TrackParticlesFactory(object):
 
 class Smilei(object):
 	""" Import a Smilei simulation
-	
+
 	Parameters:
 	-----------
 	results_path : string or list of strings (default '.').
 		Directory containing simulation results, or list of directories.
 		Omit this argument if you are already in the results directory.
-	
+
 	show : bool (default True)
 		Can be set to False to prevent figures to actually appear on screen.
-	
+
 	Returns:
 	--------
 	A Smilei object, i.e. a container that holds information about a simulation.
-	
+
 	Attributes:
 	-----------
 	namelist :
 		An object that holds the information of the original user namelist.
 	Scalar :
-		A callable object to access the `DiagScalar` diagnostic.
+		A method to access the `DiagScalar` diagnostic.
 	Field :
-		A callable object to access the `DiagField` diagnostic.
+		A method to access the `DiagField` diagnostic.
 	Probe :
-		A callable object to access the `DiagProbe` diagnostic.
-	ParticleDiagnostic :
-		A callable object to access the `DiagParticle` diagnostic.
+		A method to access the `DiagProbe` diagnostic.
+	ParticleBinning :
+		A method to access the `DiagParticleBinning` diagnostic.
 	TrackParticles :
-		A callable object to access the tracked particles diagnostic.
+		A method to access the tracked particles diagnostic.
 		
 	"""
 	
-	def __init__(self, results_path=".", show=True, referenceAngularFrequency_SI=None, verbose=True):
+	def __init__(self, results_path=".", show=True, reference_angular_frequency_SI=None, verbose=True):
 		self.valid = False
 		# Import packages
 		import h5py
@@ -508,11 +526,11 @@ class Smilei(object):
 		self._plt = matplotlib.pyplot
 		self._mtime = 0
 		self._verbose = verbose
-		self._referenceAngularFrequency_SI = referenceAngularFrequency_SI
+		self._reference_angular_frequency_SI = reference_angular_frequency_SI
 		
 		# Load the simulation (verify the path, get the namelist)
 		self.reload()
-		
+
 		# Load diagnostics factories
 		if self.valid:
 			if self._verbose: print("Scanning for Scalar diagnostics")
@@ -521,14 +539,14 @@ class Smilei(object):
 			self.Field = FieldFactory(self)
 			if self._verbose: print("Scanning for Probe diagnostics")
 			self.Probe = ProbeFactory(self)
-			if self._verbose: print("Scanning for Particle diagnostics")
-			self.ParticleDiagnostic = ParticleDiagnosticFactory(self)
+			if self._verbose: print("Scanning for ParticleBinning diagnostics")
+			self.ParticleBinning = ParticleBinningFactory(self)
 			if self._verbose: print("Scanning for Screen diagnostics")
 			self.Screen = ScreenFactory(self)
 			if self._verbose: print("Scanning for Tracked particle diagnostics")
 			self.TrackParticles = TrackParticlesFactory(self)
-	
-	
+
+
 	def _openNamelist(self, path):
 		# Fetch the python namelist
 		namespace={}
@@ -538,7 +556,7 @@ class Smilei(object):
 		for key, value in namespace.items(): # transfer all variables to this object
 			if key[0]=="_": continue # skip builtins
 			setattr(namelist, key, value)
-		
+
 		# Get some info on the simulation
 		try:
 			# get number of dimensions
@@ -546,15 +564,15 @@ class Smilei(object):
 			ndim = int(namelist.Main.geometry[0])
 			if ndim not in [1,2,3]: raise
 			# get box size
-			error = "Error extracting 'sim_length' from the input file"
-			sim_length = self._np.atleast_1d(self._np.double(namelist.Main.sim_length))
-			if sim_length.size != ndim: raise
+			error = "Error extracting 'grid_length' from the input file"
+			grid_length = self._np.atleast_1d(self._np.double(namelist.Main.grid_length))
+			if grid_length.size != ndim: raise
 			# get cell size
 			error = "Error extracting 'cell_length' from the input file"
 			cell_length = self._np.atleast_1d(self._np.double(namelist.Main.cell_length))
 			if cell_length.size != ndim: raise
 			# calculate number of cells in each dimension
-			ncels = sim_length/cell_length
+			ncels = grid_length/cell_length
 			# extract time-step
 			error = "Error extracting 'timestep' from the input file"
 			timestep = self._np.double(namelist.Main.timestep)
@@ -563,15 +581,15 @@ class Smilei(object):
 			print(error)
 			return
 		try:
-			referenceAngularFrequency_SI = namelist.Main.referenceAngularFrequency_SI
+			reference_angular_frequency_SI = namelist.Main.reference_angular_frequency_SI
 		except:
-			referenceAngularFrequency_SI = None
-		return namelist, ndim, cell_length, ncels, timestep, referenceAngularFrequency_SI
+			reference_angular_frequency_SI = None
+		return namelist, ndim, cell_length, ncels, timestep, reference_angular_frequency_SI
 	
 	def reload(self):
 		"""Reloads the simulation, if it has been updated"""
 		self.valid = False
-		
+
 		# Obtain the path(s) to the simulation(s) results
 		if type(self._results_path) is not list:
 			self._results_path = [self._results_path]
@@ -584,15 +602,15 @@ class Smilei(object):
 			for match in self._glob(path):
 				if self._os.path.isdir(match) and self._os.path.isfile(match+self._os.sep+"smilei.py"):
 					validPaths.append(match)
-			if len(validPaths)==0:
+			if len(validPaths)==0 and self._verbose:
 				print("WARNING: `"+path+"` does not point to any valid Smilei simulation path")
 			allPaths.extend( validPaths )
 		self._results_path = allPaths
-		
+
 		if len(self._results_path)==0:
 			print("No valid paths to Smilei simulation results have been provided")
 			return
-		
+
 		# Check the last modification date and get paths which are newer
 		lastmodif = 0
 		newPaths = []
@@ -600,11 +618,11 @@ class Smilei(object):
 			thismtime = self._os.path.getmtime(path+self._os.sep+"/smilei.py")
 			if thismtime > self._mtime: newPaths.append(path)
 			lastmodif = max(lastmodif, thismtime)
-		
+
 		# Reload if necessary
 		if lastmodif > self._mtime:
 			# Get the previous simulation parameters
-			try:    prevArgs = (self._ndim, self._cell_length, self._ncels, self._timestep, self._referenceAngularFrequency_SI)
+			try:    prevArgs = (self._ndim, self._cell_length, self._ncels, self._timestep, self._reference_angular_frequency_SI)
 			except: prevArgs = ()
 			# Loop paths and verify the namelist is compatible
 			for path in newPaths:
@@ -616,14 +634,14 @@ class Smilei(object):
 					return
 				if self._verbose: print("Loaded simulation '"+path+"'")
 			# Update the simulation parameters
-			self._ndim, self._cell_length, self._ncels, self._timestep, referenceAngularFrequency_SI = args[1:]
-			if self._referenceAngularFrequency_SI is None:
-				self._referenceAngularFrequency_SI = referenceAngularFrequency_SI
+			self._ndim, self._cell_length, self._ncels, self._timestep, reference_angular_frequency_SI = args[1:]
+			if self._reference_angular_frequency_SI is None:
+				self._reference_angular_frequency_SI = reference_angular_frequency_SI
 			self.namelist = args[0]
-		
+
 		self._mtime = lastmodif
 		self.valid = True
-	
+
 	def __repr__(self):
 		if not self.valid:
 			return "Invalid Smilei simulation"
@@ -631,15 +649,15 @@ class Smilei(object):
 			files = [self._glob(path+self._os.sep+"smilei.py")[0] for path in self._results_path]
 			files = "\n\t".join(files)
 			return "Smilei simulation with input file(s) located at:\n\t"+files
-	
+
 	def toXDMF(self):
 		if not self.valid: return
 		
-		self.Scalar            .toXDMF()
-		self.Field             .toXDMF()
-		self.Probe             .toXDMF()
-		self.ParticleDiagnostic.toXDMF()
-		self.Screen            .toXDMF()
-		self.TrackParticles    .toXDMF()
+		self.Scalar         .toXDMF()
+		self.Field          .toXDMF()
+		self.Probe          .toXDMF()
+		self.ParticleBinning.toXDMF()
+		self.Screen         .toXDMF()
+		self.TrackParticles .toXDMF()
 
 

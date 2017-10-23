@@ -1,12 +1,10 @@
 from .Diagnostic import Diagnostic
 from .._Utils import *
 
-# -------------------------------------------------------------------
-# Class for probe diagnostics
-# -------------------------------------------------------------------
 class Probe(Diagnostic):
-	# This is the constructor, which creates the object
-	def _init(self, probeNumber=None, field=None, timesteps=None, slice=None, data_log=False, **kwargs):
+	"""Class for loading a Probe diagnostic"""
+	
+	def _init(self, probeNumber=None, field=None, timesteps=None, subset=None, average=None, data_log=False, **kwargs):
 		
 		self._h5probe = []
 		self._times = []
@@ -92,12 +90,17 @@ class Probe(Diagnostic):
 		self._fieldn = list(set(self._fieldn))
 		self._fieldname = [ fields[i] for i in self._fieldn ] # names of the requested fields
 		
-		# Check slice is a dict
-		if slice is not None  and  type(slice) is not dict:
-			self._error += "Argument `slice` must be a dictionary"
+		# Check subset
+		if subset is None: subset = {}
+		elif type(subset) is not dict:
+			self._error = "Argument `subset` must be a dictionary"
 			return
-		# Make slice a dictionary
-		if slice is None: slice = {}
+		
+		# Check average
+		if average is None: average = {}
+		elif type(average) is not dict:
+			self._error = "Argument `average` must be a dictionary"
+			return
 		
 		# Put data_log as object's variable
 		self._data_log = data_log
@@ -124,18 +127,17 @@ class Probe(Diagnostic):
 			self._error = "Timesteps not found"
 			return
 		
-		
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
 		# Fabricate all axes values
 		self._naxes = self._initialShape.size
-		self._finalShape = []
-		self._sliceinfo = {}
-		self._slices = []
-		self._selection = ()
+		self._subsetinfo = {}
+		self._finalShape = self._np.copy(self._initialShape)
+		self._averages = [False]*self._naxes
+		self._selection = [self._np.s_[:]]*self._naxes
 		p = []
 		for iaxis in range(self._naxes):
-		
+			
 			# calculate grid points locations
 			p0 = self._myinfo["p0"            ] # reference point
 			pi = self._myinfo["p"+str(iaxis+1)] # end point of this axis
@@ -147,49 +149,40 @@ class Probe(Diagnostic):
 			label = {0:"axis1", 1:"axis2", 2:"axis3"}[iaxis]
 			axisunits = "L_r"
 			
-			if label in slice:
+			# If averaging over this axis
+			if label in average:
+				if label in subset:
+					self._error = "`subset` not possible on the same axes as `average`"
+					return
 				
-				self._slices.append(True)
+				self._averages[iaxis] = True
 				
-				# if slice is "all", then all the axis has to be summed
-				if slice[label] == "all":
-					self._selection += ( self._np.s_[:], )
-					self._finalShape .append( self._initialShape[iaxis] )
-				
-				# Otherwise, get the slice from the argument `slice`
-				else:
-					try:
-						s = self._np.double(slice[label])
-						if s.size>2 or s.size<1: raise
-					except:
-						self._error += "Slice along axis "+label+" should be one or two floats"
-						return
-					indices = self._np.arange(self._initialShape[iaxis])
-					if s.size==1:
-						indices = self._np.array([(self._np.abs(indices-s)).argmin()])
-					elif s.size==2:
-						indices = self._np.nonzero( (indices>=s[0]) * (indices<=s[1]) )[0]
-					if indices.size == 0:
-						self._error += "Slice along "+label+" is out of range"
-						return
-					if indices.size == 1:
-						self._sliceinfo.update({ label:"Sliced at "+label+" = "+str(indices[0]) })
-						self._selection += ( self._np.s_[indices[0]], )
-						self._finalShape .append( 1 )
-					else:
-						self._sliceinfo.update({ label:"Sliced for "+label+" from "+str(indices[0])+" to "+str(indices[-1]) })
-						self._selection += ( self._np.s_[indices[0]:indices[-1]], )
-						self._finalShape.append( indices[-1] - indices[0] )
+				distances = self._np.sqrt(self._np.sum((centers-centers[0])**2,axis=1))
+				try:
+					self._averageinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
+						= self._selectRange(average[label], distances, label, axisunits, "average")
+				except:
+					return
+			# Otherwise
 			else:
-				self._selection += ( self._np.s_[:], )
-				self._finalShape.append( self._initialShape[iaxis] )
-				self._slices .append(False)
-				self._type   .append(label)
-				self._shape  .append(self._initialShape[iaxis])
-				self._centers.append(centers)
-				self._label  .append(label)
-				self._units  .append(axisunits)
-				self._log    .append(False)
+				# If taking a subset of this axis
+				if label in subset:
+					distances = self._np.sqrt(self._np.sum((centers-centers[0])**2,axis=1))
+					try:
+						self._subsetinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
+							= self._selectSubset(subset[label], distances, label, axisunits, "subset")
+					except:
+						return
+				# If subset has more than 1 point (or no subset), use this axis in the plot
+				if type(self._selection[iaxis]) is slice:
+					self._type   .append(label)
+					self._shape  .append(self._initialShape[iaxis])
+					self._centers.append(centers[self._selection[iaxis],:])
+					self._label  .append(label)
+					self._units  .append(axisunits)
+					self._log    .append(False)
+		
+		self._selection = tuple(self._selection)
 		
 		# Special case in 1D: we convert the point locations to scalar distances
 		if len(self._centers) == 1:
@@ -276,6 +269,7 @@ class Probe(Diagnostic):
 		
 		# Finish constructor
 		self.valid = True
+		return kwargs
 	
 	# destructor
 	def __del__(self):
@@ -353,11 +347,11 @@ class Probe(Diagnostic):
 		A = self._np.reshape(A, self._initialShape)
 		# Extract the selection
 		A = self._np.reshape(A[self._selection], self._finalShape)
-		# Apply the slicing
+		# Apply the averaging
 		for iaxis in range(self._naxes):
-			if self._slices[iaxis]:
-				A = self._np.mean(A, axis=iaxis, keepdims=True) # average over the slice
-		A = self._np.squeeze(A) # remove sliced axes
+			if self._averages[iaxis]:
+				A = self._np.mean(A, axis=iaxis, keepdims=True)
+		A = self._np.squeeze(A) # remove averaged axes
 		# log scale if requested
 		if self._data_log: A = self._np.log10(A)
 		return A

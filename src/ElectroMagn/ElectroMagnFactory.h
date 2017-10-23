@@ -17,13 +17,13 @@ class ElectroMagnFactory {
 public:
     static ElectroMagn* create(Params& params, std::vector<Species*>& vecSpecies,  Patch* patch) {
         ElectroMagn* EMfields = NULL;
-        if ( params.geometry == "1d3v" ) {
+        if ( params.geometry == "1Dcartesian" ) {
             EMfields = new ElectroMagn1D(params, vecSpecies, patch);
         }
-        else if ( params.geometry == "2d3v" ) {
+        else if ( params.geometry == "2Dcartesian" ) {
             EMfields = new ElectroMagn2D(params, vecSpecies, patch);
         }
-        else if ( params.geometry == "3d3v" ) {
+        else if ( params.geometry == "3Dcartesian" ) {
             EMfields = new ElectroMagn3D(params, vecSpecies, patch);
         }
         else {
@@ -37,11 +37,11 @@ public:
         int nlaser = PyTools::nComponents("Laser");
         for (int ilaser = 0; ilaser < nlaser; ilaser++) {
             Laser * laser = new Laser(params, ilaser, patch);
-            if     ( laser->boxSide == "xmin" && EMfields->emBoundCond[0]) {
+            if     ( laser->box_side == "xmin" && EMfields->emBoundCond[0]) {
                 if( patch->isXmin() ) laser->createFields(params, patch);
                 EMfields->emBoundCond[0]->vecLaser.push_back( laser );
             }
-            else if( laser->boxSide == "xmax" && EMfields->emBoundCond[1]) {
+            else if( laser->box_side == "xmax" && EMfields->emBoundCond[1]) {
                 if( patch->isXmax() ) laser->createFields(params, patch);
                 EMfields->emBoundCond[1]->vecLaser.push_back( laser );
             }
@@ -52,19 +52,19 @@ public:
         // -----------------
         // ExtFields properties
         // -----------------
-        unsigned int numExtFields=PyTools::nComponents("ExtField");
+        unsigned int numExtFields=PyTools::nComponents("ExternalField");
         for (unsigned int n_extfield = 0; n_extfield < numExtFields; n_extfield++) {
             ExtField extField;
             PyObject * profile;
             std::ostringstream name;
-            if( !PyTools::extract("field",extField.field,"ExtField",n_extfield)) {
-                ERROR("ExtField #"<<n_extfield<<": parameter 'field' not provided'");
+            if( !PyTools::extract("field",extField.field,"ExternalField",n_extfield)) {
+                ERROR("ExternalField #"<<n_extfield<<": parameter 'field' not provided'");
             }
             // Now import the profile
             name.str("");
-            name << "ExtField[" << n_extfield <<"].profile";
-            if (!PyTools::extract_pyProfile("profile",profile,"ExtField",n_extfield))
-                ERROR(" ExtField #"<<n_extfield<<": parameter 'profile' not understood");
+            name << "ExternalField[" << n_extfield <<"].profile";
+            if (!PyTools::extract_pyProfile("profile",profile,"ExternalField",n_extfield))
+                ERROR(" ExternalField #"<<n_extfield<<": parameter 'profile' not understood");
             extField.profile = new Profile(profile, params.nDim_field, name.str());
             
             EMfields->extFields.push_back(extField);
@@ -112,11 +112,11 @@ public:
     static ElectroMagn* clone(ElectroMagn* EMfields, Params& params, std::vector<Species*>& vecSpecies,  Patch* patch)
     {
         ElectroMagn* newEMfields = NULL;
-        if ( params.geometry == "1d3v" ) {
+        if ( params.geometry == "1Dcartesian" ) {
             newEMfields = new ElectroMagn1D(static_cast<ElectroMagn1D*>(EMfields), params, patch);
-        } else if ( params.geometry == "2d3v" ) {
+        } else if ( params.geometry == "2Dcartesian" ) {
             newEMfields = new ElectroMagn2D(static_cast<ElectroMagn2D*>(EMfields), params, patch);
-        } else if ( params.geometry == "3d3v" ) {
+        } else if ( params.geometry == "3Dcartesian" ) {
             newEMfields = new ElectroMagn3D(static_cast<ElectroMagn3D*>(EMfields), params, patch);
         }
         
@@ -155,7 +155,7 @@ public:
         }
         
         // -----------------
-        // Clone ExtFields properties
+        // Clone ExternalFields properties
         // -----------------
         for (unsigned int n_extfield = 0; n_extfield < EMfields->extFields.size(); n_extfield++) {
             ExtField extField;

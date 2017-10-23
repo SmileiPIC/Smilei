@@ -25,7 +25,7 @@ sims = ["2","3","4"]
 for sim in sims:
 	S=Smilei("ionization_stopping_power"+sim)
 	
-	D.append(S.ParticleDiagnostic("#0/#1",slice={"x":"all"},units=["fs"],
+	D.append(S.ParticleBinning("#0/#1",sum={"x":"all"},units=["fs"],
 		linestyle="None", marker='o', markersize=4, markeredgewidth=0., skipAnimation=True))
 multiPlot(*D)
 fig = plt.gcf()
@@ -43,7 +43,7 @@ for sim in sims:
 	S=Smilei("ionization_stopping_power"+sim)
 	
 	Zi = np.double(S.namelist.Species["ion1"].atomic_number)
-	ni = np.double(S.namelist.Species["ion1"].nb_density) * 1.11e21 # cm^-3
+	ni = np.double(S.namelist.Species["ion1"].number_density) * 1.11e21 # cm^-3
 	Ee = S.namelist.E * 511. # electron energy in keV
 	vel = S.namelist.vel * 3e10 # electron velocity in cm/s
 	dt = 1e-15 * S.namelist.Main.timestep*4. # in s
@@ -73,11 +73,11 @@ ax.set_title("")
 #########################################################
 S=Smilei("ionization_stopping_power1")
 
-referenceAngularFrequency_SI = np.double(S.namelist.Main.referenceAngularFrequency_SI)
+reference_angular_frequency_SI = np.double(S.namelist.Main.reference_angular_frequency_SI)
 timestep = np.double(S.namelist.Main.timestep)
 
 # get ion stuff
-ni = np.double(S.namelist.Species["ion1"].nb_density)
+ni = np.double(S.namelist.Species["ion1"].number_density)
 mass = np.double(S.namelist.Species["ion1"].mass)*9.11e-28 # g
 rho = mass*ni*1.1e21 # g/cm^3
 Zi = np.double(S.namelist.Species["ion1"].atomic_number)
@@ -95,10 +95,10 @@ for i in range(npoints):
 	energy.append(Ee)
 	
 	# Get data
-	D = S.ParticleDiagnostic("#"+str(2*i)+"/#"+str(2*i+1)+"",slice={"x":"all"})
+	D = S.ParticleBinning("#"+str(2*i)+"/#"+str(2*i+1)+"",sum={"x":"all"})
 	P = np.array(D.getData()) # momentum
 	# stopping power in MeV/cm
-	diffP = -(P[-1]-P[0])/(D.times[-1]-D.times[0]) * (0.511*1e-2*referenceAngularFrequency_SI/3e8/timestep)
+	diffP = -(P[-1]-P[0])/(D.times[-1]-D.times[0]) * (0.511*1e-2*reference_angular_frequency_SI/3e8/timestep)
 	# stopping power in MeV*cm2/g
 	Qsmilei.append( diffP/rho )
 	

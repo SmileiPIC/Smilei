@@ -12,20 +12,22 @@ resx = 10.				# nb of cells in on laser wavelength
 rest = 16.				# time of timestep in one optical cycle 
 
 Main(
-    geometry = "2d3v",
+    geometry = "2Dcartesian",
     
     interpolation_order = 2 ,
     
     cell_length = [l0/resx,l0/resx],
-    sim_length  = Lsim,
+    grid_length  = Lsim,
     
     number_of_patches = [ 4, 4  ],
     
     timestep = t0/rest,
-    sim_time = Tsim,
+    simulation_time = Tsim,
      
-    bc_em_type_x = ['silver-muller'],
-    bc_em_type_y = ['silver-muller'],
+    EM_boundary_conditions = [
+        ['silver-muller'],
+        ['silver-muller'],
+    ],
     
     random_seed = smilei_mpi_rank
 )
@@ -33,38 +35,38 @@ Main(
 globalEvery = 5
 
 Species(
-    species_type = "electron",
-	initPosition_type = 'random',
-	initMomentum_type = 'cold',
-	n_part_per_cell = 2,
+    name = "electron",
+	position_initialization = 'random',
+	momentum_initialization = 'cold',
+	particles_per_cell = 2,
 	mass = 1.0,
 	charge = -1.0,
-	nb_density = trapezoidal(1.0,xvacuum=1.*l0,xplateau=4.*l0,yvacuum=5.*l0,yplateau=10.*l0),
-	bc_part_type_xmin  = 'refl',
-	bc_part_type_xmax  = 'refl',
-	bc_part_type_ymin = 'none',
-	bc_part_type_ymax = 'none',
+	number_density = trapezoidal(1.0,xvacuum=1.*l0,xplateau=4.*l0,yvacuum=5.*l0,yplateau=10.*l0),
+	boundary_conditions = [
+		["refl", "refl"],
+		["periodic", "periodic"],
+	],
 	mean_velocity=[0.9,0.01,0]
 )
 
 Species(
-	initPosition_type = 'random',
-	initMomentum_type = 'cold',
-	n_part_per_cell = 2,
+	position_initialization = 'random',
+	momentum_initialization = 'cold',
+	particles_per_cell = 2,
 	mass = 1.0,
 	charge = 1.0,
-	nb_density = trapezoidal(1.0,xvacuum=1.*l0,xplateau=4.*l0,yvacuum=5.*l0,yplateau=10.*l0),
-	bc_part_type_xmin  = 'refl',
-	bc_part_type_xmax  = 'refl',
-	bc_part_type_ymin = 'none',
-	bc_part_type_ymax = 'none',
+	number_density = trapezoidal(1.0,xvacuum=1.*l0,xplateau=4.*l0,yvacuum=5.*l0,yplateau=10.*l0),
+	boundary_conditions = [
+		["refl", "refl"],
+		["periodic", "periodic"],
+	],
 	mean_velocity=[0.9,0.01,0]
 )
 
 Antenna(
     field='Jz',
     time_profile= lambda t: math.sin(2.*t/t0),
-    space_profile=gaussian(0.2, xfwhm=l0, yfwhm=l0, xcenter=Main.sim_length[0]*0.6, ycenter=Main.sim_length[1]*0.5)
+    space_profile=gaussian(0.2, xfwhm=l0, yfwhm=l0, xcenter=Main.grid_length[0]*0.6, ycenter=Main.grid_length[1]*0.5)
 )
 
 PartWall (
@@ -84,7 +86,7 @@ DiagScreen(
     point = [13.*l0, 10.*l0],
     vector = [1., 0.],
     direction = "canceling",
-    output = "density",
+    deposited_quantity = "weight",
     species = ["electron"],
     axes = [["a", -10.*l0, 10.*l0, 40],
             ["p", 0., 3., 30]],
@@ -96,7 +98,7 @@ DiagScreen(
     point = [5.*l0, 10.*l0],
     vector = [5.*l0, 0.],
     direction = "both",
-    output = "density",
+    deposited_quantity = "weight",
     species = ["electron"],
     axes = [["theta", -math.pi, math.pi, 40],
             ["p", 0., 3., 30]],

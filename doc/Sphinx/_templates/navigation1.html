@@ -16,7 +16,7 @@
     {% set el = element.split("%") %}
     {% set url = el[0] | trim | safe %}
     {% set entry = el[1] | trim | safe %}
-    {% if entry in ["Units", "Install", "Material"] %}
+    {% if entry in ["Units", "Install", "Publications"] %}
     <hr />
     {% endif %}
     {% if entry == title %}

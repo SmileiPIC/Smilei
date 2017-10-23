@@ -4,12 +4,12 @@ def constant(value, xvacuum=-float("inf"), yvacuum=-float("inf"), zvacuum=-float
     global Main
     if len(Main)==0:
         raise Exception("constant profile has been defined before `Main()`")
-    if Main.geometry == "1d3v":
+    if Main.geometry == "1Dcartesian":
         f = lambda x  : value if x>=xvacuum else 0.
-    if Main.geometry == "2d3v":
+    if Main.geometry == "2Dcartesian":
         f = lambda x,y: value if (x>=xvacuum and y>=yvacuum) else 0.
         f.yvacuum = yvacuum
-    if Main.geometry == "3d3v":
+    if Main.geometry == "3Dcartesian":
         f = lambda x,y,z: value if (x>=xvacuum and y>=yvacuum and z>=zvacuum) else 0.
         f.yvacuum = yvacuum
         f.zvacuum = zvacuum
@@ -26,9 +26,9 @@ def trapezoidal(max,
     global Main
     if len(Main)==0:
         raise Exception("trapezoidal profile has been defined before `Main()`")
-    if len(Main.sim_length)>0 and xplateau is None: xplateau = Main.sim_length[0]-xvacuum
-    if len(Main.sim_length)>1 and yplateau is None: yplateau = Main.sim_length[1]-yvacuum
-    if len(Main.sim_length)>2 and zplateau is None: zplateau = Main.sim_length[2]-zvacuum
+    if len(Main.grid_length)>0 and xplateau is None: xplateau = Main.grid_length[0]-xvacuum
+    if len(Main.grid_length)>1 and yplateau is None: yplateau = Main.grid_length[1]-yvacuum
+    if len(Main.grid_length)>2 and zplateau is None: zplateau = Main.grid_length[2]-zvacuum
     def trapeze(max, vacuum, plateau, slope1, slope2):
         def f(position):
             # vacuum region
@@ -43,9 +43,9 @@ def trapezoidal(max,
             # beyond the plasma
             else: return 0.0
         return f
-    if   Main.geometry == "1d3v": dim = 1
-    elif Main.geometry == "2d3v": dim = 2
-    elif Main.geometry == "3d3v": dim = 3
+    if   Main.geometry == "1Dcartesian": dim = 1
+    elif Main.geometry == "2Dcartesian": dim = 2
+    elif Main.geometry == "3Dcartesian": dim = 3
     fx = trapeze(max, xvacuum, xplateau, xslope1, xslope2)
     f = fx
     if dim > 1:
@@ -80,18 +80,18 @@ def gaussian(max,
     global Main
     if len(Main)==0:
         raise Exception("gaussian profile has been defined before `Main()`")
-    if len(Main.sim_length)>0:
-        if xlength is None: xlength = Main.sim_length[0]-xvacuum
-        if xfwhm   is None: xfwhm   = (Main.sim_length[0]-xvacuum)/3.
-        if xcenter is None: xcenter = xvacuum + (Main.sim_length[0]-xvacuum)/2.
-    if len(Main.sim_length)>1: 
-        if ylength is None: ylength = Main.sim_length[1]-yvacuum
-        if yfwhm   is None: yfwhm   = (Main.sim_length[1]-yvacuum)/3.
-        if ycenter is None: ycenter = yvacuum + (Main.sim_length[1]-yvacuum)/2.
-    if len(Main.sim_length)>2: 
-        if zlength is None: zlength = Main.sim_length[2]-zvacuum
-        if zfwhm   is None: zfwhm   = (Main.sim_length[2]-zvacuum)/3.
-        if zcenter is None: zcenter = zvacuum + (Main.sim_length[2]-zvacuum)/2.
+    if len(Main.grid_length)>0:
+        if xlength is None: xlength = Main.grid_length[0]-xvacuum
+        if xfwhm   is None: xfwhm   = (Main.grid_length[0]-xvacuum)/3.
+        if xcenter is None: xcenter = xvacuum + (Main.grid_length[0]-xvacuum)/2.
+    if len(Main.grid_length)>1: 
+        if ylength is None: ylength = Main.grid_length[1]-yvacuum
+        if yfwhm   is None: yfwhm   = (Main.grid_length[1]-yvacuum)/3.
+        if ycenter is None: ycenter = yvacuum + (Main.grid_length[1]-yvacuum)/2.
+    if len(Main.grid_length)>2: 
+        if zlength is None: zlength = Main.grid_length[2]-zvacuum
+        if zfwhm   is None: zfwhm   = (Main.grid_length[2]-zvacuum)/3.
+        if zcenter is None: zcenter = zvacuum + (Main.grid_length[2]-zvacuum)/2.
     def gauss(max, vacuum, length, sigma, center, order):
         def f(position):
             if order == 0: return max
@@ -102,9 +102,9 @@ def gaussian(max,
             # beyond
             else: return 0.0
         return f
-    if Main.geometry == "1d3v": dim = 1
-    if Main.geometry == "2d3v": dim = 2
-    if Main.geometry == "3d3v": dim = 3
+    if Main.geometry == "1Dcartesian": dim = 1
+    if Main.geometry == "2Dcartesian": dim = 2
+    if Main.geometry == "3Dcartesian": dim = 3
     xsigma = (0.5*xfwhm)**xorder/math.log(2.0)
     fx = gauss(max, xvacuum, xlength, xsigma, xcenter, xorder)
     f = fx
@@ -144,8 +144,8 @@ def polygonal(xpoints=[], xvalues=[]):
         raise Exception("polygonal profile has been defined before `Main()`")
     if len(xpoints)!=len(xvalues):
         raise Exception("polygonal profile requires as many points as values")
-    if len(Main.sim_length)>0 and len(xpoints)==0:
-        xpoints = [0., Main.sim_length[0]]
+    if len(Main.grid_length)>0 and len(xpoints)==0:
+        xpoints = [0., Main.grid_length[0]]
         xvalues = [1., 1.]
     N = len(xpoints)
     xpoints = [float(x) for x in xpoints]
@@ -174,9 +174,9 @@ def cosine(base,
     if len(Main)==0:
         raise Exception("cosine profile has been defined before `Main()`")
     
-    if len(Main.sim_length)>0 and xlength is None: xlength = Main.sim_length[0]-xvacuum
-    if len(Main.sim_length)>1 and ylength is None: ylength = Main.sim_length[1]-yvacuum
-    if len(Main.sim_length)>2 and zlength is None: zlength = Main.sim_length[2]-zvacuum
+    if len(Main.grid_length)>0 and xlength is None: xlength = Main.grid_length[0]-xvacuum
+    if len(Main.grid_length)>1 and ylength is None: ylength = Main.grid_length[1]-yvacuum
+    if len(Main.grid_length)>2 and zlength is None: zlength = Main.grid_length[2]-zvacuum
     
     def cos(base, amplitude, vacuum, length, phi, number):
         def f(position):
@@ -188,9 +188,9 @@ def cosine(base,
             # beyond
             else: return 0.
         return f
-    if Main.geometry == "1d3v": dim = 1
-    if Main.geometry == "2d3v": dim = 2
-    if Main.geometry == "3d3v": dim = 3
+    if Main.geometry == "1Dcartesian": dim = 1
+    if Main.geometry == "2Dcartesian": dim = 2
+    if Main.geometry == "3Dcartesian": dim = 3
     fx = cos(base, xamplitude, xvacuum, xlength, xphi, xnumber)
     f = fx
     if dim > 1:
@@ -239,16 +239,16 @@ def polynomial(**kwargs):
             if type(a) is not list: a = [a]
             order = int(k[5:])
             coeffs[ order ] = a
-            if Main.geometry=="1d3v":
+            if Main.geometry=="1Dcartesian":
                 if len(a)!=1:
                     raise Exception("1D polynomial profile must have one coefficient at order "+str(order))
-            elif Main.geometry=="2d3v":
+            elif Main.geometry=="2Dcartesian":
                 if len(a)!=order+1:
                     raise Exception("2D polynomial profile must have "+str(order+1)+" coefficients at order "+str(order))
-            elif Main.geometry=="3d3v":
+            elif Main.geometry=="3Dcartesian":
                 if len(a)!=(order+1)*(order+2)/2:
                     raise Exception("3D polynomial profile must have "+str((order+1)*(order+2)/2)+" coefficients at order "+str(order))
-    if Main.geometry=="1d3v":
+    if Main.geometry=="1Dcartesian":
         def f(x):
             r = 0.
             xx0 = x-x0
@@ -260,7 +260,7 @@ def polynomial(**kwargs):
                     xx *= xx0
                 r += c[0] * xx
             return r
-    elif Main.geometry=="2d3v":
+    elif Main.geometry=="2Dcartesian":
         def f(x,y):
             r = 0.
             xx0 = x-x0
@@ -274,7 +274,7 @@ def polynomial(**kwargs):
                     xx = [ xxx * xx0 for xxx in xx ] + [yy]
                 for i in range(order+1): r += c[i]*xx[i]
             return r
-    elif Main.geometry=="3d3v":
+    elif Main.geometry=="3Dcartesian":
         def f(x,y,z):
             r = 0.
             xx0 = x-x0
@@ -317,7 +317,7 @@ def ttrapezoidal(start=0., plateau=None, slope1=0., slope2=0.):
     global Main
     if len(Main)==0:
         raise Exception("ttrapezoidal profile has been defined before `Main()`")
-    if plateau is None: plateau = Main.sim_time - start
+    if plateau is None: plateau = Main.simulation_time - start
     def f(t):
         if t < start: return 0.
         elif t < start+slope1: return (t-start) / slope1
@@ -337,9 +337,9 @@ def tgaussian(start=0., duration=None, fwhm=None, center=None, order=2):
     global Main
     if len(Main)==0:
         raise Exception("tgaussian profile has been defined before `Main()`")
-    if duration is None: duration = Main.sim_time-start
-    if fwhm     is None: fwhm     = (Main.sim_time-start)/3.
-    if center   is None: center   = start + (Main.sim_time-start)/2.
+    if duration is None: duration = Main.simulation_time-start
+    if fwhm     is None: fwhm     = (Main.simulation_time-start)/3.
+    if center   is None: center   = start + (Main.simulation_time-start)/2.
     sigma = (0.5*fwhm)**order/math.log(2.0)
     def f(t):
         if t < start: return 0.
@@ -358,7 +358,7 @@ def tpolygonal(points=[], values=[]):
     if len(Main)==0:
         raise Exception("tpolygonal profile has been defined before `Main()`")
     if len(points)==0:
-        points = [0., Main.sim_time]
+        points = [0., Main.simulation_time]
         values = [1., 1.]
     N = len(points)
     points = [float(x) for x in points]
@@ -383,7 +383,7 @@ def tcosine(base=0., amplitude=1., start=0., duration=None, phi=0., freq=1.):
     global Main
     if len(Main)==0:
         raise Exception("tcosine profile has been defined before `Main()`")
-    if duration is None: duration = Main.sim_time-start
+    if duration is None: duration = Main.simulation_time-start
     def f(t):
         if t < start: return 0.
         elif t < start+duration:
@@ -439,12 +439,12 @@ def tsin2plateau(start=0., fwhm=0., plateau=None, slope1=None, slope2=None):
     def f(t):
         if t < start:
             return 0.
-        elif (t < start+fwhm) and (fwhm!=0.):
-            return math.pow( math.sin(0.5*math.pi*(t-start)/fwhm) , 2 )
-        elif t < start+fwhm+plateau:
+        elif (t < start+slope1) and (slope1!=0.):
+            return math.pow( math.sin(0.5*math.pi*(t-start)/slope1) , 2 )
+        elif t < start+slope1+plateau:
             return 1.
-        elif t < start+fwhm+plateau+slope2 and (slope2!=0.):
-            return math.pow(  math.cos(0.5*math.pi*(t-start-fwhm-plateau)/slope2) , 2 )
+        elif t < start+slope1+plateau+slope2 and (slope2!=0.):
+            return math.pow(  math.cos(0.5*math.pi*(t-start-slope1-plateau)/slope2) , 2 )
         else:
             return 0.
     f.profileName = "tsin2plateau"
@@ -456,33 +456,33 @@ def tsin2plateau(start=0., fwhm=0., plateau=None, slope1=None, slope2=None):
     return f
 
 
-def transformPolarization(polarizationPhi, ellipticity):
+def transformPolarization(polarization_phi, ellipticity):
     import math
-    p = (1.-ellipticity**2)*math.sin(2.*polarizationPhi)/2.
+    p = (1.-ellipticity**2)*math.sin(2.*polarization_phi)/2.
     if abs(p) < 1e-10:
-        if abs(ellipticity**2-1.)<1e-10: polarizationPhi=0.
+        if abs(ellipticity**2-1.)<1e-10: polarization_phi=0.
         dephasing = math.pi/2.
         amplitude = math.sqrt(1./(1.+ellipticity**2))
-        amplitudeY = amplitude * (math.cos(polarizationPhi)+math.sin(polarizationPhi)*ellipticity)
-        amplitudeZ = amplitude * (math.sin(polarizationPhi)+math.cos(polarizationPhi)*ellipticity)
+        amplitudeY = amplitude * (math.cos(polarization_phi)+math.sin(polarization_phi)*ellipticity)
+        amplitudeZ = amplitude * (math.sin(polarization_phi)+math.cos(polarization_phi)*ellipticity)
     else:
         dephasing = math.atan(ellipticity/p)
-        theta = 0.5 * math.atan( math.tan(2.*polarizationPhi) / math.cos(dephasing) )
+        theta = 0.5 * math.atan( math.tan(2.*polarization_phi) / math.cos(dephasing) )
         while theta<0.: theta += math.pi/2.
         amplitudeY = math.sqrt(2.) * math.cos(theta)
         amplitudeZ = math.sqrt(2.) * math.sin(theta)
     return [dephasing, amplitudeY, amplitudeZ]
 
-def LaserPlanar1D( boxSide="xmin", a0=1., omega=1.,
-        polarizationPhi=0., ellipticity=0., time_envelope=tconstant(),phaseZero=0.):
+def LaserPlanar1D( box_side="xmin", a0=1., omega=1.,
+        polarization_phi=0., ellipticity=0., time_envelope=tconstant(),phaseZero=0.):
     import math
     # Polarization and amplitude
-    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarizationPhi, ellipticity)
+    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
     amplitudeY *= a0
     amplitudeZ *= a0
     # Create Laser
     Laser(
-        boxSide        = boxSide,
+        box_side        = box_side,
         omega          = omega,
         chirp_profile  = tconstant(),
         time_envelope  = time_envelope,
@@ -491,11 +491,11 @@ def LaserPlanar1D( boxSide="xmin", a0=1., omega=1.,
     )
 
 
-def LaserGaussian2D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=0.,
-        polarizationPhi=0., ellipticity=0., time_envelope=tconstant(), phaseZero=0.):
+def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=0.,
+        polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phaseZero=0.):
     import math
     # Polarization and amplitude
-    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarizationPhi, ellipticity)
+    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
     amplitudeY *= a0
     amplitudeZ *= a0
     # Space and phase envelopes
@@ -526,7 +526,7 @@ def LaserGaussian2D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., inci
         phaseZero += phase(Y2)
     # Create Laser
     Laser(
-        boxSide        = boxSide,
+        box_side        = box_side,
         omega          = omega,
         chirp_profile  = tconstant(),
         time_envelope  = time_envelope,
@@ -534,11 +534,11 @@ def LaserGaussian2D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., inci
         phase          = [ lambda y:phase(y)-phaseZero+dephasing, lambda y:phase(y)-phaseZero ],
     )
 
-def LaserGaussian3D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=[0.,0.],
-        polarizationPhi=0., ellipticity=0., time_envelope=tconstant(), phaseZero=0.):
+def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=[0.,0.],
+        polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phaseZero=0.):
     import math
     # Polarization and amplitude
-    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarizationPhi, ellipticity)
+    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
     amplitudeY *= a0
     amplitudeZ *= a0
     # Space and phase envelopes
@@ -573,7 +573,7 @@ def LaserGaussian3D( boxSide="xmin", a0=1., omega=1., focus=None, waist=3., inci
         
     # Create Laser
     Laser(
-        boxSide        = boxSide,
+        box_side        = box_side,
         omega          = omega,
         chirp_profile  = tconstant(),
         time_envelope  = time_envelope,

@@ -1,13 +1,15 @@
-
-#include "DiagnosticParticles.h"
-
+#include "PyTools.h"
 #include <iomanip>
+
+#include "DiagnosticParticleBinning.h"
+#include "HistogramFactory.h"
+
 
 using namespace std;
 
 
 // Constructor
-DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
+DiagnosticParticleBinning::DiagnosticParticleBinning( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
 {
     fileId_ = 0;
     
@@ -17,92 +19,52 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
     name << "Diagnotic Particles #" << n_diag_particles;
     string errorPrefix = name.str();
     
-    // get parameter "output" that determines the quantity to sum in the output array
-    output = "";
-    if (!PyTools::extract("output",output,"DiagParticles",n_diag_particles))
-        ERROR(errorPrefix << ": parameter `output` required");
+    // get parameter "deposited_quantity" that determines the quantity to sum in the output array
+    PyObject* deposited_quantity_object = PyTools::extract_py("deposited_quantity", "DiagParticleBinning", n_diag_particles);
+    PyTools::checkPyError();
     
     // get parameter "every" which describes a timestep selection
     timeSelection = new TimeSelection(
-        PyTools::extract_py("every", "DiagParticles", n_diag_particles),
+        PyTools::extract_py("every", "DiagParticleBinning", n_diag_particles),
         name.str()
     );
     
     // get parameter "flush_every" which describes a timestep selection for flushing the file
     flush_timeSelection = new TimeSelection(
-        PyTools::extract_py("flush_every", "DiagParticles", n_diag_particles),
+        PyTools::extract_py("flush_every", "DiagParticleBinning", n_diag_particles),
         name.str()
     );
     
     // get parameter "time_average" that determines the number of timestep to average the outputs
     time_average = 1;
-    PyTools::extract("time_average",time_average,"DiagParticles",n_diag_particles);
+    PyTools::extract("time_average",time_average,"DiagParticleBinning",n_diag_particles);
     if ( time_average < 1 ) time_average=1;
     if ( time_average > timeSelection->smallestInterval() )
         ERROR(errorPrefix << ": `time_average` is incompatible with `every`");
     
     // get parameter "species" that determines the species to use (can be a list of species)
     vector<string> species_names;
-    if (!PyTools::extract("species",species_names,"DiagParticles",n_diag_particles))
+    if (!PyTools::extract("species",species_names,"DiagParticleBinning",n_diag_particles))
         ERROR(errorPrefix << ": parameter `species` required");
     // verify that the species exist, remove duplicates and sort by number
     species = params.FindSpecies(patch->vecSpecies, species_names);
     
     // Temporarily set the spatial min and max to the simulation box size
     spatial_min.resize( params.nDim_particle, 0. );
-    spatial_max = params.sim_length;
+    spatial_max = params.grid_length;
     
     // get parameter "axes" that adds axes to the diagnostic
     // Each axis should contain several items:
     //      requested quantity, min value, max value ,number of bins, log (optional), edge_inclusive (optional)
-    vector<PyObject*> pyAxes=PyTools::extract_pyVec("axes","DiagParticles",n_diag_particles);
+    vector<PyObject*> pyAxes=PyTools::extract_pyVec("axes","DiagParticleBinning",n_diag_particles);
     
-    vector<string> excluded_types(0);
-    excluded_types.push_back( "a" );
-    excluded_types.push_back( "b" );
-    excluded_types.push_back( "theta" );
-    excluded_types.push_back( "phi" );
-    
-    // Create the Histogram object
-    if        (output == "density"        ) {
-        histogram = new Histogram_density        ();
-    } else if (output == "charge_density" ) {
-        histogram = new Histogram_charge_density ();
-    } else if (output == "jx_density"     ) {
-        histogram = new Histogram_jx_density     ();
-    } else if (output == "jy_density"     ) {
-        histogram = new Histogram_jy_density     ();
-    } else if (output == "jz_density"     ) {
-        histogram = new Histogram_jz_density     ();
-    } else if (output == "ekin_density"   ) {
-        histogram = new Histogram_ekin_density   ();
-    } else if (output == "p_density"      ) {
-        histogram = new Histogram_p_density      ();
-    } else if (output == "px_density"     ) {
-        histogram = new Histogram_px_density     ();
-    } else if (output == "py_density"     ) {
-        histogram = new Histogram_py_density     ();
-    } else if (output == "pz_density"     ) {
-        histogram = new Histogram_pz_density     ();
-    } else if (output == "pressure_xx"    ) {
-        histogram = new Histogram_pressure_xx    ();
-    } else if (output == "pressure_yy"    ) {
-        histogram = new Histogram_pressure_yy    ();
-    } else if (output == "pressure_zz"    ) {
-        histogram = new Histogram_pressure_zz    ();
-    } else if (output == "pressure_xy"    ) {
-        histogram = new Histogram_pressure_xy    ();
-    } else if (output == "pressure_xz"    ) {
-        histogram = new Histogram_pressure_xz    ();
-    } else if (output == "pressure_yz"    ) {
-        histogram = new Histogram_pressure_yz    ();
-    } else if (output == "ekin_vx_density") {
-        histogram = new Histogram_ekin_vx_density();
-    } else {
-        ERROR(errorPrefix << ": parameter `output = "<< output <<"` not understood");
-    }
-    
-    histogram->init(params, pyAxes, species, errorPrefix, patch, excluded_types);
+    // Create the Histogram object based on the extracted parameters above
+    vector<string> excluded_axes(0);
+    excluded_axes.push_back( "a" );
+    excluded_axes.push_back( "b" );
+    excluded_axes.push_back( "theta" );
+    excluded_axes.push_back( "phi" );
+    histogram = HistogramFactory::create(params, deposited_quantity_object, pyAxes, species, patch, excluded_axes, errorPrefix);
     
     // Get info on the spatial extent
     for( unsigned int i=0; i<histogram->axes.size(); i++ ) {
@@ -130,7 +92,7 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
         mystream << species_names[0];
         for(unsigned int i=1; i<species_names.size(); i++)
             mystream << "," << species_names[i];
-        MESSAGE(1,"Created particle diagnostic #" << n_diag_particles << ": species " << mystream.str());
+        MESSAGE(1,"Created ParticleBinning diagnostic #" << n_diag_particles << ": species " << mystream.str());
         for(unsigned int i=0; i<histogram->axes.size(); i++) {
             HistogramAxis * axis = histogram->axes[i];
             mystream.str("");
@@ -157,22 +119,22 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
         
         // init HDF files (by master, only if it doesn't yet exist)
         mystream.str(""); // clear
-        mystream << "ParticleDiagnostic" << n_diag_particles << ".h5";
+        mystream << "ParticleBinning" << n_diag_particles << ".h5";
         filename = mystream.str();
     }
 
-} // END DiagnosticParticles::DiagnosticParticles
+} // END DiagnosticParticleBinning::DiagnosticParticleBinning
 
 
-DiagnosticParticles::~DiagnosticParticles()
+DiagnosticParticleBinning::~DiagnosticParticleBinning()
 {
     delete timeSelection;
     delete flush_timeSelection;
-} // END DiagnosticParticles::~DiagnosticParticles
+} // END DiagnosticParticleBinning::~DiagnosticParticleBinning
 
 
 // Called only by patch master of process master
-void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, bool newfile )
+void DiagnosticParticleBinning::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
     if (!smpi->isMaster()) return;
     
@@ -182,7 +144,7 @@ void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, bool newfil
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         // write all parameters as HDF5 attributes
         H5::attr(fileId_, "Version", string(__VERSION));
-        H5::attr(fileId_, "output" , output);
+        H5::attr(fileId_, "deposited_quantity" , histogram->deposited_quantity);
         H5::attr(fileId_, "time_average"  , time_average);
         // write all species
         ostringstream mystream("");
@@ -214,7 +176,7 @@ void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, bool newfil
 }
 
 
-void DiagnosticParticles::closeFile()
+void DiagnosticParticleBinning::closeFile()
 {
     if (fileId_!=0) {
         H5Fclose(fileId_);
@@ -224,7 +186,7 @@ void DiagnosticParticles::closeFile()
 } // END closeFile
 
 
-bool DiagnosticParticles::prepare( int timestep )
+bool DiagnosticParticleBinning::prepare( int timestep )
 {
     // Get the previous timestep of the time selection
     int previousTime = timeSelection->previousTime(timestep);
@@ -240,14 +202,14 @@ bool DiagnosticParticles::prepare( int timestep )
         fill(data_sum.begin(), data_sum.end(), 0.);
     
     return true;
-    
+
 } // END prepare
 
 
-// run one particle diagnostic
-void DiagnosticParticles::run( Patch* patch, int timestep, SimWindow* simWindow )
+// run one particle binning diagnostic
+void DiagnosticParticleBinning::run( Patch* patch, int timestep, SimWindow* simWindow )
 {
-    
+
     vector<int> int_buffer;
     vector<double> double_buffer;
     unsigned int npart, ndim = spatial_min.size();
@@ -281,13 +243,13 @@ void DiagnosticParticles::run( Patch* patch, int timestep, SimWindow* simWindow 
         histogram->distribute( double_buffer, int_buffer, data_sum );
         
     }
-    
+
 } // END run
 
 
 // Now the data_sum has been filled
 // if needed now, store result to hdf file
-void DiagnosticParticles::write(int timestep, SmileiMPI* smpi)
+void DiagnosticParticleBinning::write(int timestep, SmileiMPI* smpi)
 {
     if ( !smpi->isMaster() ) return;
     
@@ -334,7 +296,7 @@ void DiagnosticParticles::write(int timestep, SmileiMPI* smpi)
 
 
 //! Clear the array
-void DiagnosticParticles::clear() {
+void DiagnosticParticleBinning::clear() {
     data_sum.resize(0);
     vector<double>().swap( data_sum );
 }

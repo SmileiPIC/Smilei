@@ -42,7 +42,7 @@ step = 2
 
 if False:
 
-  Ey = res_Boris.Field(0, "Ey", timesteps=1300,slice = {"z":[5.]}).get()
+  Ey = res_Boris.Field(0, "Ey", timesteps=1300, average = {"z":[5.]}).get()
  
   Ey["data"] = np.array(Ey["data"][0].T)
  

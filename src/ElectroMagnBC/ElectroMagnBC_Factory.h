@@ -27,106 +27,106 @@ public:
         emBoundCond.resize(2*params.nDim_field, NULL);
         
         // -----------------
-        // For 1d3v Geometry
+        // For 1Dcartesian Geometry
         // -----------------
-        if ( params.geometry == "1d3v" ) {
+        if ( params.geometry == "1Dcartesian" ) {
             
             
             // AT X = XMIN,XMAX
             // ----------------
             for (unsigned int ii=0;ii<2;ii++) {
                 // silver-muller (injecting/absorbing bcs)
-                if ( params.bc_em_type_x[ii] == "silver-muller" ) {
+                if ( params.EM_BCs[0][ii] == "silver-muller" ) {
                     emBoundCond[ii] = new ElectroMagnBC1D_SM(params, patch, ii);
                 }
                 // reflective bcs
-                else if ( params.bc_em_type_x[ii] == "reflective" ) {
+                else if ( params.EM_BCs[0][ii] == "reflective" ) {
                     emBoundCond[ii] = new ElectroMagnBC1D_refl(params, patch, ii);
                 }
                 // else: error
-                else if ( params.bc_em_type_x[ii] != "periodic" ) {
-                    ERROR( "Unknown boundary bc_em_type_x[" << ii << "]");
+                else if ( params.EM_BCs[0][ii] != "periodic" ) {
+                    ERROR( "Unknown EM x-boundary condition `" << params.EM_BCs[0][ii] << "`");
                 }
             }
             
-        }//1d3v
+        }//1Dcartesian
         
         
         // -----------------
-        // For 2d3v Geometry
+        // For 2Dcartesian Geometry
         // -----------------
-        else if ( params.geometry == "2d3v" ) {
+        else if ( params.geometry == "2Dcartesian" ) {
             
             for (unsigned int ii=0;ii<2;ii++) {
                 // X DIRECTION
                 // silver-muller (injecting/absorbing bcs)
-                if ( params.bc_em_type_x[ii] == "silver-muller" ) {
+                if ( params.EM_BCs[0][ii] == "silver-muller" ) {
                     emBoundCond[ii] = new ElectroMagnBC2D_SM(params, patch, ii);
                 }
                 // reflective bcs
-                else if ( params.bc_em_type_x[ii] == "reflective" ) {
+                else if ( params.EM_BCs[0][ii] == "reflective" ) {
                     emBoundCond[ii] = new ElectroMagnBC2D_refl(params, patch, ii);
                 }
                 // else: error
-                else if ( params.bc_em_type_x[ii] != "periodic" ) {
-                    ERROR( "Unknown boundary bc_em_type_x[" << ii << "]");
+                else if ( params.EM_BCs[0][ii] != "periodic" ) {
+                    ERROR( "Unknown EM x-boundary condition `" << params.EM_BCs[0][ii] << "`");
                 }
                 
                 // Y DIRECTION
                 // silver-muller bcs (injecting/absorbin)
-                if ( params.bc_em_type_y[ii] == "silver-muller" ) {
+                if ( params.EM_BCs[1][ii] == "silver-muller" ) {
                     emBoundCond[ii+2] = new ElectroMagnBC2D_SM(params, patch, ii+2);
                 }
                 // reflective bcs
-                else if ( params.bc_em_type_y[ii] == "reflective" ) {
+                else if ( params.EM_BCs[1][ii] == "reflective" ) {
                     emBoundCond[ii+2] = new ElectroMagnBC2D_refl(params, patch, ii+2);
                 }
                 // else: error
-                else if ( params.bc_em_type_y[ii] != "periodic" ) {
-                    ERROR( "Unknown boundary bc_em_type_y[" << ii << "]");
+                else if ( params.EM_BCs[1][ii] != "periodic" ) {
+                    ERROR( "Unknown EM y-boundary condition `" << params.EM_BCs[1][ii] << "`");
                 }
             }
             
-        }//2d3v
+        }//2Dcartesian
         
         // -----------------
-        // For 3d3v Geometry
+        // For 3Dcartesian Geometry
         // -----------------
-        else if ( params.geometry == "3d3v" ) {
+        else if ( params.geometry == "3Dcartesian" ) {
             
             for (unsigned int ii=0;ii<2;ii++) {
                 // X DIRECTION
                 // silver-muller (injecting/absorbing bcs)
-                if ( params.bc_em_type_x[ii] == "silver-muller" ) {
+                if ( params.EM_BCs[0][ii] == "silver-muller" ) {
                     emBoundCond[ii] = new ElectroMagnBC3D_SM(params, patch, ii);
                 }
                 // else: error
-                else if ( params.bc_em_type_x[ii] != "periodic" ) {
-                    ERROR( "Unknown boundary bc_em_type_x[" << ii << "]");
+                else if ( params.EM_BCs[0][ii] != "periodic" ) {
+                    ERROR( "Unknown EM x-boundary condition `" << params.EM_BCs[0][ii] << "`");
                 }
                 
                 // Y DIRECTION
                 // silver-muller bcs (injecting/absorbin)
-                if ( params.bc_em_type_y[ii] == "silver-muller" ) {
+                if ( params.EM_BCs[1][ii] == "silver-muller" ) {
                     emBoundCond[ii+2] = new ElectroMagnBC3D_SM(params, patch, ii+2);
                 }
                 // else: error
-                else if ( params.bc_em_type_y[ii] != "periodic" ) {
-                    ERROR( "Unknown boundary bc_em_type_y[" << ii << "]");
+                else if ( params.EM_BCs[1][ii] != "periodic" ) {
+                    ERROR( "Unknown EM y-boundary condition `" << params.EM_BCs[1][ii] << "`");
                 }
 
                 // Z DIRECTION
                 // silver-muller bcs (injecting/absorbin)
-                if ( params.bc_em_type_z[ii] == "silver-muller" ) {
+                if ( params.EM_BCs[2][ii] == "silver-muller" ) {
                     emBoundCond[ii+4] = new ElectroMagnBC3D_SM(params, patch, ii+4);
                 }
                 // else: error
-                else if ( params.bc_em_type_z[ii] != "periodic" ) {
-                    ERROR( "Unknown boundary bc_em_type_y[" << ii << "]");
+                else if ( params.EM_BCs[2][ii] != "periodic" ) {
+                    ERROR( "Unknown EM z-boundary condition `" << params.EM_BCs[2][ii] << "`");
                 }
             }
             
-        }//3d3v       
+        }//3Dcartesian       
 
 
         // OTHER GEOMETRIES ARE NOT DEFINED ---

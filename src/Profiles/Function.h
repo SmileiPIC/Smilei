@@ -1,9 +1,9 @@
 #ifndef Function_H
 #define Function_H
 
+#include "PyTools.h"
 #include <vector>
 #include <string>
-#include "PyTools.h"
 
 class Function
 {

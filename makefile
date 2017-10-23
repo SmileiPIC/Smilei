@@ -54,14 +54,33 @@ endif
 
 # Manage options in the "config" parameter
 ifneq (,$(findstring debug,$(config)))
-	CXXFLAGS += -g -pg -D__DEBUG -O0
+    CXXFLAGS += -g -pg -D__DEBUG -O0
+# With gdb
+else ifneq (,$(findstring gdb,$(config)))
+    CXXFLAGS += -v -da -Q
+
+# With valgrind
+else ifneq (,$(findstring valgrind,$(config)))
+    CXXFLAGS += -g  -O3
+
+# Scalasca
+else ifneq (,$(findstring scalasca,$(config)))
+    CXXFLAGS += -g  -O3
+    SMILEICXX = scalasca -instrument $(SMILEICXX)
+
+# With Intel Advisor
+else ifneq (,$(findstring advisor,$(config)))
+    CXXFLAGS += -g -O3 -qopt-report5
+
+# Optimization report
+else ifneq (,$(findstring opt-report,$(config)))
+    CXXFLAGS += -qopt-report5
+
+# Default configuration
 else
-	CXXFLAGS += -O3 
+    CXXFLAGS += -O3 #-xHost -no-prec-div -ipo
 endif
 
-ifneq (,$(findstring scalasca,$(config)))
-    SMILEICXX = scalasca -instrument $(SMILEICXX)
-endif
 
 ifeq (,$(findstring noopenmp,$(config)))
     OPENMP_FLAG ?= -fopenmp 
@@ -91,7 +110,7 @@ endif
 
 EXEC = smilei
 
-default: $(EXEC)
+default: $(EXEC) $(EXEC)_test
 
 clean:
 	@echo "Cleaning $(BUILD_DIR)"
@@ -101,7 +120,7 @@ clean:
 	$(Q) rm -rf doc/html
 
 distclean: clean uninstall_python
-	$(Q) rm -f $(EXEC)
+	$(Q) rm -f $(EXEC) $(EXEC)_test
 # Deprecated rules
 obsolete:
 	@echo "[WARNING] Please consider using make config=\"$(MAKECMDGOALS)\""
@@ -122,15 +141,28 @@ $(BUILD_DIR)/%.pyh: %.py
 $(BUILD_DIR)/%.d: %.cpp
 	@echo "Checking dependencies for $<"
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MG -MM -MP -MT"$@ $(@:.d=.o)" $<
+	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
 
+# Compile cpps
 $(BUILD_DIR)/%.o : %.cpp
 	@echo "Compiling $<"
 	$(Q) $(SMILEICXX) $(CXXFLAGS) -c $< -o $@
 
+# Link the main program
 $(EXEC): $(OBJS)
 	@echo "Linking $@"
 	$(Q) $(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS) 
+	$(Q) cp $(BUILD_DIR)/$@ $@
+
+# Compile the the main program again for test mode
+$(BUILD_DIR)/src/Smilei_test.o: src/Smilei.cpp $(EXEC)
+	@echo "Compiling src/Smilei.cpp for test mode"
+	$(Q) $(SMILEICXX) $(CXXFLAGS) -DSMILEI_TESTMODE -c src/Smilei.cpp -o $@
+
+# Link the main program for test mode
+$(EXEC)_test : $(OBJS:Smilei.o=Smilei_test.o)
+	@echo "Linking $@ for test mode"
+	$(Q) $(SMILEICXX) $(OBJS:Smilei.o=Smilei_test.o) -o $(BUILD_DIR)/$@ $(LDFLAGS)
 	$(Q) cp $(BUILD_DIR)/$@ $@
 
 # Avoid to check dependencies and to create .pyh if not necessary

@@ -38,6 +38,7 @@ public:
     unsigned int nDim_particle;
     
     //! restart everything to file per processor
+    void readPatchDistribution( SmileiMPI* smpi, SimWindow* simWin );
     void restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindow* simWin, Params &params, OpenPMDparams& openPMD);
     void restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecSpecies, Params& params, hid_t patch_gid );
     
@@ -114,9 +115,9 @@ private:
     //! exit once dump done
     bool exit_after_dump;
     
-    //! keep the last dump_file_sequence dump files
-    unsigned int dump_file_sequence;    
-    const unsigned int dump_file_sequence_max;
+    //! keep the last keep_n_dumps dump files
+    unsigned int keep_n_dumps;    
+    const unsigned int keep_n_dumps_max;
     
     //! write dump drectory
     std::string dump_dir;

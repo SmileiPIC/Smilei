@@ -6,7 +6,7 @@
 
 #include "Field1D.h"
 //  --------------------------------------------------------------------------------------------------------------------
-//! Class for 2nd order interpolator for 1d3v simulations
+//! Class for 2nd order interpolator for 1Dcartesian simulations
 //  --------------------------------------------------------------------------------------------------------------------
 class Interpolator1D2Order : public Interpolator1D
 {

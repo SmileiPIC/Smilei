@@ -21,7 +21,7 @@ for i in range(3):
 	ion = "ion"+str(i)
 	eon = "eon"+str(i)
 	
-	ion_mean_charge = S.ParticleDiagnostic("#"+str(2*i)+"/#"+str(2*i+1),slice={"x":"all"}).get()
+	ion_mean_charge = S.ParticleBinning("#"+str(2*i)+"/#"+str(2*i+1),sum={"x":"all"}).get()
 	times = ion_mean_charge["times"] * S.namelist.Main.timestep
 	ion_mean_charge = np.array(ion_mean_charge["data"])
 	
@@ -31,7 +31,7 @@ for i in range(3):
 #	eon_velocity = S.namelist.Species[eon].mean_velocity[0]
 #	eon_energy   = ((1.-eon_velocity**2)**-.5-1.)*511. # energy in keV
 #	eon_cs       = np.interp(np.log(eon_energy), np.log(cs[:,0]), cs[:,1]) # interpolate cross section
-#	t = np.linspace(0., S.namelist.Main.sim_time, 1000)
+#	t = np.linspace(0., S.namelist.Main.simulation_time, 1000)
 #	q = ion_charge + 1. - np.exp(-eon_velocity*eon_density*eon_cs*t)
 #	plt.plot(t,q,'--k')
 #	plt.plot(times, ion_mean_charge)
