@@ -23,6 +23,7 @@ Upcoming changes
 
 * Moving window along y and z
 * Tracking particles in *Screens*
+* Vectorization
 
 ----
 
