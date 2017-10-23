@@ -50,25 +50,26 @@ pusher("boris"),
 radiation_model("none"),
 time_frozen(0),
 radiating(false),
+multiphoton_Breit_Wheeler(2,""),
 ionization_model("none"),
 velocityProfile(3,NULL),
 temperatureProfile(3,NULL),
 particles(&particles_sorted[0]),
 electron_species(NULL),
 electron_species_index(-1),
+photon_species(NULL),
+//photon_species_index(-1),
+radiation_photon_species(""),
+mBW_pair_creation_sampling(2,1),
 clrw(params.clrw),
 oversize(params.oversize),
 cell_length(params.cell_length),
 min_loc_vec(patch->getDomainLocalMin()),
-partBoundCond(NULL),
 tracking_diagnostic(10000),
+partBoundCond(NULL),
 nDim_particle(params.nDim_particle),
-radiation_photon_species(""),
-photon_species(NULL),
-//photon_species_index(-1),
-multiphoton_Breit_Wheeler(2,""),
-mBW_pair_creation_sampling(2,1),
 min_loc(patch->getDomainLocalMin(0))
+
 {
     DEBUG(name);
 
@@ -1181,7 +1182,7 @@ void Species::disableXmax() {
 }
 
 void Species::setXminBoundaryCondition() {
-    partBoundCond->bc_xmin   = &supp_particle;
+    partBoundCond->bc_xmin   = &remove_particle;
 }
 
 // Provides a Maxwell-Juttner distribution of energies

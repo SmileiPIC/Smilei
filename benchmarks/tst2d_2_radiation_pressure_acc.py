@@ -51,7 +51,7 @@ Species(
     charge = 1.0,
     number_density = trapezoidal(100.0,xvacuum=l0,xplateau=0.44*l0),
     boundary_conditions = [
-        ["refl", "refl"],
+        ["reflective", "reflective"],
         ["periodic", "periodic"],
     ],
 )
@@ -65,7 +65,7 @@ Species(
     number_density = trapezoidal(100.0,xvacuum=l0,xplateau=0.44*l0),
     temperature = [0.001],
     boundary_conditions = [
-        ["refl", "refl"],
+        ["reflective", "reflective"],
         ["periodic", "periodic"],
     ], 
     time_frozen = 0.1

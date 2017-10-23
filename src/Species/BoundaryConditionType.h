@@ -22,7 +22,7 @@
 //!         1 otherwise
 //!
 
-inline int refl_particle( Particles &particles, int ipart, int direction, double limit_pos, Species *species,
+inline int reflect_particle( Particles &particles, int ipart, int direction, double limit_pos, Species *species,
                          double &nrj_iPart) {
     nrj_iPart = 0.;     // no energy loss during reflection
     particles.position(direction, ipart) = limit_pos - particles.position(direction, ipart);
@@ -30,7 +30,7 @@ inline int refl_particle( Particles &particles, int ipart, int direction, double
     return 1;
 }
 
-inline int supp_particle( Particles &particles, int ipart, int direction, double limit_pos, Species *species,
+inline int remove_particle( Particles &particles, int ipart, int direction, double limit_pos, Species *species,
                          double &nrj_iPart) {
     nrj_iPart = particles.weight(ipart)*(particles.lor_fac(ipart)-1.0); // energy lost
     particles.charge(ipart) = 0;
@@ -38,7 +38,7 @@ inline int supp_particle( Particles &particles, int ipart, int direction, double
 }
 
 //! Delete photon (mass==0) at the boundary and keep the energy for diagnostics
-inline int supp_photon(Particles &particles, int ipart, int direction, double limit_pos, Species *species,
+inline int remove_photon(Particles &particles, int ipart, int direction, double limit_pos, Species *species,
                          double &nrj_iPart) {
     nrj_iPart = particles.weight(ipart)*(particles.momentum_norm(ipart)); // energy lost
     particles.charge(ipart) = 0;

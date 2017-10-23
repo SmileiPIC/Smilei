@@ -47,7 +47,7 @@ Species(
 	number_density = trapezoidal(10.,xvacuum=l0,xplateau=l0),
 	temperature = [0.],
 	boundary_conditions = [
-		["refl", "refl"],
+		["reflective", "reflective"],
 	],
 )
 Species(
@@ -60,7 +60,7 @@ Species(
 	number_density = trapezoidal(10.,xvacuum=l0,xplateau=l0),
 	temperature = [0.],
 	boundary_conditions = [
-		["refl", "refl"],
+		["reflective", "reflective"],
 	],
 )
 

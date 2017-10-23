@@ -315,10 +315,11 @@ public:
         bool has_velocity    = PyTools::extract("thermal_boundary_velocity",thisSpecies->thermal_boundary_velocity,"Species",ispec);
         if ( has_thermalize ) {
             if (!has_temperature)
-                ERROR("For species '" << species_name << "' thermal_boundary_temperature needs to be defined due to thermalizing BC");
+                ERROR("For species '" << species_name << "' thermal_boundary_temperature (thermalizing BC) should be a list of floats");
             if (!has_velocity)
-                ERROR("For species '" << species_name << "' thermal_boundary_velocity needs to be defined due to thermalizing BC");
-
+                ERROR("For species '" << species_name << "' thermal_boundary_velocity (thermalizing BC) should be a list of floats");
+            if (thisSpecies->thermal_boundary_velocity.size()!=3)
+                ERROR("For species '" << species_name << "' thermal_boundary_velocity (thermalizing BC) should have 3 components");
             if (thisSpecies->thermal_boundary_temperature.size()==1) {
                 WARNING("For species '" << species_name << "' Using thermal_boundary_temperature[0] in all directions");
                 thisSpecies->thermal_boundary_temperature.resize(3);

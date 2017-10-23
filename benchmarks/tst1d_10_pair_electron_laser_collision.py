@@ -55,7 +55,7 @@ v0 = math.sqrt(1 - 1./gamma0**2)         # Initial velocity
 radiation = "Monte-Carlo"               # Radiation algorithm
 pusher = "vay"                          # dynamic type
 
-part_cond = ["supp"]                      # Particle boundary conditions
+part_cond = ["remove"]                      # Particle boundary conditions
 field_cond = ['silver-muller']          # Field boundary conditions
 
 # Density profile for inital electron location

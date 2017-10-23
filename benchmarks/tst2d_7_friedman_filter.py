@@ -118,7 +118,7 @@ Species(
     thermal_boundary_temperature = [0.],
     thermal_boundary_velocity = [0.,0.,0.],
     time_frozen = 0.,
-    boundary_conditions = [["refl"], ["periodic"]],
+    boundary_conditions = [["reflective"], ["periodic"]],
 )
 
 Species(
@@ -136,7 +136,7 @@ Species(
     thermal_boundary_temperature = [0.],
     thermal_boundary_velocity = [0.,0.,0.],
     time_frozen = 0,
-    boundary_conditions = [["refl"], ["periodic"]],
+    boundary_conditions = [["reflective"], ["periodic"]],
 )
 
 #ExternalField(

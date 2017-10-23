@@ -21,10 +21,10 @@ PartWall::PartWall(double pos, unsigned short dir, string kind) :
     direction(dir)
 {
     // Define the "wall" function pointer
-    if (kind == "refl" ) {
-        wall = &refl_particle;
-    } else if (kind == "supp" ) {
-        wall = &supp_particle;
+    if (kind == "reflective" ) {
+        wall = &reflect_particle;
+    } else if (kind == "remove" ) {
+        wall = &remove_particle;
     } else if (kind == "stop" ) {
         wall = &stop_particle;
     } else if (kind == "thermalize" ) {
@@ -88,8 +88,8 @@ PartWalls::PartWalls(Params& params, Patch* patch)
         
         // Ewtract the kind of wall
         PyTools::extract("kind",kind[iwall],"PartWall",iwall);
-        if (kind[iwall].empty() || (kind[iwall]!="refl" && kind[iwall]!="supp" && kind[iwall]!="stop" && kind[iwall]!="thermalize")) {
-            ERROR("For PartWall #" << iwall << ", `kind` must be one of refl, supp, stop, thermalize");
+        if (kind[iwall].empty() || (kind[iwall]!="reflective" && kind[iwall]!="remove" && kind[iwall]!="stop" && kind[iwall]!="thermalize")) {
+            ERROR("For PartWall #" << iwall << ", `kind` must be one of reflective, remove, stop, thermalize");
         }
         
         // Find out wether this proc has the wall or not

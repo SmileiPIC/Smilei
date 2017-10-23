@@ -47,7 +47,7 @@ Species(
     thermal_boundary_temperature = [1.e-6],
     thermal_boundary_velocity = [0.,0.,0.],
     boundary_conditions = [
-    	["thermalize", "refl"],
+    	["thermalize", "reflective"],
     ],
 )
 Species(
@@ -62,7 +62,7 @@ Species(
     thermal_boundary_temperature = [Te],
     thermal_boundary_velocity = [0.,0.,0.],
     boundary_conditions = [
-    	["thermalize", "refl"],
+    	["thermalize", "reflective"],
     ],
 )
 

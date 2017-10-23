@@ -300,7 +300,7 @@ class Species(SmileiComponent):
     mean_velocity = [0.]
     temperature = [1e-10]
     thermal_boundary_temperature = []
-    thermal_boundary_velocity = []
+    thermal_boundary_velocity = [0.,0.,0.]
     pusher = "boris"
     radiation_model = "none"
     radiation_photon_species = None

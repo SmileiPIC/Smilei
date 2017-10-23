@@ -86,19 +86,19 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     // Define the kind of applied boundary conditions
     // ----------------------------------------------
     
-    int (*supp)  ( Particles &, int , int , double , Species *, double &);
+    int (*remove)  ( Particles &, int , int , double , Species *, double &);
     if( species->mass == 0 ) {
-        supp = &supp_photon;
+        remove = &remove_photon;
     } else {
-        supp = &supp_particle;
+        remove = &remove_particle;
     }
     
     // Xmin
-    if ( species->boundary_conditions[0][0] == "refl" ) {
-        if (patch->isXmin()) bc_xmin = &refl_particle;
+    if ( species->boundary_conditions[0][0] == "reflective" ) {
+        if (patch->isXmin()) bc_xmin = &reflect_particle;
     }
-    else if ( species->boundary_conditions[0][0] == "supp" ) {
-        if (patch->isXmin()) bc_xmin = supp;
+    else if ( species->boundary_conditions[0][0] == "remove" ) {
+        if (patch->isXmin()) bc_xmin = remove;
     }
     else if ( species->boundary_conditions[0][0] == "stop" ) {
         if (patch->isXmin()) bc_xmin = &stop_particle;
@@ -113,11 +113,11 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     }
     
     // Xmax
-    if ( species->boundary_conditions[0][1] == "refl" ) {
-        if (patch->isXmax()) bc_xmax = &refl_particle;
+    if ( species->boundary_conditions[0][1] == "reflective" ) {
+        if (patch->isXmax()) bc_xmax = &reflect_particle;
     }
-    else if ( species->boundary_conditions[0][1] == "supp" ) {
-        if (patch->isXmax()) bc_xmax = supp;
+    else if ( species->boundary_conditions[0][1] == "remove" ) {
+        if (patch->isXmax()) bc_xmax = remove;
     }
     else if ( species->boundary_conditions[0][1] == "stop" ) {
         if (patch->isXmax()) bc_xmax = &stop_particle;
@@ -134,11 +134,11 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     
     if ( nDim_particle > 1 ) {
         // Ymin
-        if ( species->boundary_conditions[1][0] == "refl" ) {
-            if (patch->isYmin()) bc_ymin = &refl_particle;
+        if ( species->boundary_conditions[1][0] == "reflective" ) {
+            if (patch->isYmin()) bc_ymin = &reflect_particle;
         }
-        else if ( species->boundary_conditions[1][0] == "supp" ) {
-            if (patch->isYmin()) bc_ymin = supp;
+        else if ( species->boundary_conditions[1][0] == "remove" ) {
+            if (patch->isYmin()) bc_ymin = remove;
         }
         else if ( species->boundary_conditions[1][0] == "stop" ) {
             if (patch->isYmin()) bc_ymin = &stop_particle;
@@ -153,11 +153,11 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
         }
 
         // Ymax
-        if ( species->boundary_conditions[1][1] == "refl" ) {
-            if (patch->isYmax()) bc_ymax = &refl_particle;
+        if ( species->boundary_conditions[1][1] == "reflective" ) {
+            if (patch->isYmax()) bc_ymax = &reflect_particle;
         }
-        else if ( species->boundary_conditions[1][1] == "supp" ) {
-            if (patch->isYmax()) bc_ymax = supp;
+        else if ( species->boundary_conditions[1][1] == "remove" ) {
+            if (patch->isYmax()) bc_ymax = remove;
         }
         else if ( species->boundary_conditions[1][1] == "stop" ) {
             if (patch->isYmax()) bc_ymax = &stop_particle;
@@ -173,11 +173,11 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
         
         
         if ( nDim_particle > 2 ) {
-            if ( species->boundary_conditions[2][0] == "refl" ) {
-                if (patch->isZmin()) bc_zmin = &refl_particle;
+            if ( species->boundary_conditions[2][0] == "reflective" ) {
+                if (patch->isZmin()) bc_zmin = &reflect_particle;
             }
-            else if ( species->boundary_conditions[2][0] == "supp" ) {
-                if (patch->isZmin()) bc_zmin = supp;
+            else if ( species->boundary_conditions[2][0] == "remove" ) {
+                if (patch->isZmin()) bc_zmin = remove;
             }
             else if ( species->boundary_conditions[2][0] == "stop" ) {
                 if (patch->isZmin()) bc_zmin = &stop_particle;
@@ -188,11 +188,11 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
                 ERROR( "Zmin boundary condition `"<< species->boundary_conditions[2][0] << "` unknown"  );
             }
             
-            if ( species->boundary_conditions[2][1] == "refl" ) {
-                if (patch->isZmax()) bc_zmax = &refl_particle;
+            if ( species->boundary_conditions[2][1] == "reflective" ) {
+                if (patch->isZmax()) bc_zmax = &reflect_particle;
             }
-            else if ( species->boundary_conditions[2][1] == "supp" )  {
-                if (patch->isZmax()) bc_zmax = supp;
+            else if ( species->boundary_conditions[2][1] == "remove" )  {
+                if (patch->isZmax()) bc_zmax = remove;
             }
             else if ( species->boundary_conditions[2][1] == "stop" ) {
                 if (patch->isZmax()) bc_zmax = &stop_particle;

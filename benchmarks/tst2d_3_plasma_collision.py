@@ -50,7 +50,7 @@ Species(
 	temperature = [0.001],
 	time_frozen = 100000000.0,
 	boundary_conditions = [
-		["stop", "refl"],
+		["stop", "reflective"],
 		["periodic", "periodic"],
 	],
 )
@@ -68,7 +68,7 @@ Species(
 	temperature = [0.001],
 	time_frozen = 0.0,
 	boundary_conditions = [
-		["stop", "refl"],
+		["stop", "reflective"],
 		["periodic", "periodic"],
 	],
 )
@@ -86,7 +86,7 @@ Species(
 	temperature = [0.001],
 	time_frozen = 0.0,
 	boundary_conditions = [
-		["stop", "refl"],
+		["stop", "reflective"],
 		["periodic", "periodic"],
 	],
 )
@@ -104,7 +104,7 @@ Species(
 	temperature = [0.001],
 	time_frozen = 0.0,
 	boundary_conditions = [
-		["stop", "refl"],
+		["stop", "reflective"],
 		["periodic", "periodic"],
 	],
 )

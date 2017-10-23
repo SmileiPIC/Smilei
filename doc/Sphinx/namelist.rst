@@ -388,7 +388,7 @@ Each species has to be defined in a ``Species`` block::
       mean_velocity = [0.],
       temperature = [1e-10],
       boundary_conditions = [
-          ["refl", "refl"],
+          ["reflective", "reflective"],
       #    ["periodic", "periodic"],
       #    ["periodic", "periodic"],
       ],
@@ -492,9 +492,9 @@ Each species has to be defined in a ``Species`` block::
 
   The boundary conditions for the particles of this species.
   Each boundary may have one of the following conditions:
-  ``"periodic"``, ``"refl"`` for *reflecting*, ``"supp"`` for *suppressing*,
-  ``"stop"`` for *stopping*, and ``"thermalize"``.
-  For photon species (``mass=0``), the last two are not available.
+  ``"periodic"``, ``"reflective"``, ``"remove"`` (particles are deleted),
+  ``"stop"`` (particle momenta are set to 0), and ``"thermalize"``.
+  For photon species (``mass=0``), the last two options are not available.
 
   | **Syntax 1:** ``[[bc_all]]``, identical for all boundaries.
   | **Syntax 2:** ``[[bc_X], [bc_Y], ...]``, different depending on x, y or z.
@@ -504,14 +504,17 @@ Each species has to be defined in a ``Species`` block::
 
   :default: None
 
-  :red:`to do`
+  A list of floats representing the temperature of the thermal boundaries (those set to
+  ``"thermalize"`` in  :py:data:`boundary_conditions`) for each spatial coordinate.
+  Currently, only the first coordinate (x) is taken into account.
 
 .. py:data:: thermal_boundary_velocity
 
-  :default: None
+  :default: []
 
-  :red:`to do`
-
+  A list of floats representing the components of the drift velocity of
+  the thermal boundaries (those set to ``"thermalize"`` in :py:data:`boundary_conditions`).
+  
 .. py:data:: time_frozen
 
   :default: 0.
@@ -1138,15 +1141,13 @@ A wall can be introduced using a ``PartWall`` block in order to
 reflect, stop, thermalize or kill particles which reach it::
 
   PartWall(
-      kind = "refl",
+      kind = "reflective",
       x = 20.
   )
 
 .. py:data:: kind
 
-  The kind of wall: ``"refl"``, ``"stop"``, ``"thermalize"`` or ``"supp"``;
-  corresponding to a *reflective*, *stopping*, *thermalizing* or *suppressing* wall,
-  respectively.
+  The kind of wall: ``"reflective"``, ``"stop"``, ``"thermalize"`` or ``"remove"``.
 
 .. py:data:: x
              y

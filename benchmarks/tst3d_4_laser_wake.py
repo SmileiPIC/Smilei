@@ -58,9 +58,9 @@ Species(
     pusher = "boris",    
     time_frozen = 0.0,
     boundary_conditions = [
-    	["supp", "supp"],
-    	["supp", "supp"],
-    	["supp", "supp"],
+    	["remove", "remove"],
+    	["remove", "remove"],
+    	["remove", "remove"],
     ],
 )
 
