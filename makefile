@@ -83,6 +83,16 @@ else
     LDFLAGS += -mt_mpi
 endif
 
+
+LIBPXR = picsar/lib
+LDFLAGS += -L$(LIBPXR) -lpxr
+
+LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi
+LDFLAGS += -L$(FFTW3_LIB) -lfftw3_threads
+LDFLAGS += -L$(FFTW3_LIB) -lfftw3
+LDFLAGS += -lgfortran
+
+
 #-----------------------------------------------------
 # check whether to use a machine specific definitions
 ifneq ($(machine),)

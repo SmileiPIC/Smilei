@@ -1,12 +1,17 @@
 INSTRUCTIONS FOR COMPILING SMILEI WITH PICSAR 
 
 1)clone Picsar
-git clone https://kallalahaythem@bitbucket.org/berkeleylab/picsar.git
+git clone git@bitbucket.org:berkeleylab/picsar.git
 
 2)Move to gpstd_group branch
 git fetch && git checkout gpstd_group
 
-3)set prod=library into the Makefile
+3)set MODE=library into the Makefile
+
+  set COMP=intel
+  set FARGS= -g -check bound -O3 -fopenmp -module ./
+  set FFTW3_LIB=$($FFTW_LIB_DIR)
+  set FFTW3_INCLUDE=$(FFTW_INC_DIR)
 
 4) Launch:
 
