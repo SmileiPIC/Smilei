@@ -72,27 +72,27 @@ div.sphinxsidebarwrapper p.logo {
 	}
 }
 .icon {
-    display:inline-block;
-    text-align:center;
-    margin:0.3em;
-    width:100px;
+	display:inline-block;
+	text-align:center;
+	margin:0.3em;
+	width:100px;
 }
 .icon * {
-    margin:0 auto;
-    display:block;
+	margin:0 auto;
+	display:block;
 }
 .icon img {
 	height:3em;
 }
 .icon, .icon:hover {
-    text-decoration:none;
-    color:#333;
+	text-decoration:none;
+	color:#333;
 }
 .icon:hover {
-    background-color:#EAF4FD;
+	background-color:#EAF4FD;
 }
 .icon:active {
-    background-color:#BBDDFA;
+	background-color:#BBDDFA;
 }
 
 /* --------------------------------------------------------------------*/
@@ -111,29 +111,29 @@ div.lablogos > div {
 /* --------------------------------------------------------------------*/
 /* Nice blue menu on the sidebar */
 div.toctree-smilei > ul > li > a {
-    font-size: 100%;
-    font-weight: bold;
-    text-decoration: none;
-    color: #0672ba;
-    border:0;
+	font-size: 100%;
+	font-weight: bold;
+	text-decoration: none;
+	color: #0672ba;
+	border:0;
 }
 div.toctree-smilei > ul, div.toctree-smilei > li {
-    margin: 0;
-    padding: 0;
+	margin: 0;
+	padding: 0;
 }
 /* Adjust the sidebar color for small screens */
 @media screen and (max-width: 875px) {
-    div.sphinxsidebar {
-        background: #EAF4FD;
-        padding: 10px 30px;
-        width: 100%;
-    }
-    div.sphinxsidebar h3, div.sphinxsidebar h4, div.sphinxsidebar p, div.sphinxsidebar h3 a {
-    	color: #444;
-    }
-    div.sphinxsidebar a {
-    	color: #444;
-    }
+	div.sphinxsidebar {
+		background: #EAF4FD;
+		padding: 10px 30px;
+		width: 100%;
+	}
+	div.sphinxsidebar h3, div.sphinxsidebar h4, div.sphinxsidebar p, div.sphinxsidebar h3 a {
+		color: #444;
+	}
+	div.sphinxsidebar a {
+		color: #444;
+	}
 }
 
 /* --------------------------------------------------------------------*/
@@ -154,16 +154,16 @@ table.citation td.label + td ol {
 /* Remove the back-reference link when there is one back-reference */
 table.citation td.label a {
 	pointer-events: none;
-    cursor: default;
-    text-decoration: none;
-    color: inherit;
+	cursor: default;
+	text-decoration: none;
+	color: inherit;
 }
 /* Make a "bigcitation" class for citations with several lines */
 table.bigcitation td.label {
-    max-width: 3px;
+	max-width: 3px;
 }
 table.bigcitation td.label + td {
-    padding-top: 25px;
+	padding-top: 25px;
 }
 
 /* --------------------------------------------------------------------*/
@@ -234,5 +234,48 @@ div.admonition p {
 
 
 div.related {
-    display: none;
+	display: none;
+}
+
+/* --------------------------------------------------------------------*/
+/* Back to top box */
+
+#backToTopContainer {
+	position:fixed;
+	bottom:0;
+	left:50%;
+}
+#backToTopDiv {
+	position:relative;
+	left:-255px;
+	bottom:5px;
+	padding:5px;
+	text-decoration:none;
+	background-color:#EEE;
+	cursor:pointer;
+}
+#backToTopDiv img {
+	height:1em;
+}
+#backToTopDiv:hover {
+	text-decoration:none;
+}
+#backToTopDiv:hover {
+	background-color:#EAF4FD;
+}
+#backToTopDiv:active {
+	background-color:#BBDDFA;
+}
+
+@media screen and (max-width: 875px) {
+	#backToTopContainer {
+		left:0;
+	}
+	#backToTopDiv {
+		left:5px;
+	}
+}
+@media print
+{
+	#backToTopDiv { display: none !important; }
 }
