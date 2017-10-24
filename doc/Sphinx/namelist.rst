@@ -514,7 +514,7 @@ Each species has to be defined in a ``Species`` block::
 
   A list of floats representing the components of the drift velocity of
   the thermal boundaries (those set to ``"thermalize"`` in :py:data:`boundary_conditions`).
-  
+
 .. py:data:: time_frozen
 
   :default: 0.
@@ -1247,18 +1247,26 @@ tables.
 ::
 
   RadiationReaction(
+
+     # Parameters to generate the table h used by Niel et al.
      h_chipa_min = 1E-3,
      h_chipa_max = 1E1,
      h_dim = 128,
+
+     # Parameter to generate the table integfochi used by the Monte-Carlo model
      integfochi_chipa_min = 1e-4,
      integfochi_chipa_max = 1e1,
      integfochi_dim = 128,
+
+     # Parameter to generate the table xip used by the Monte-Carlo model
      xip_chipa_min = 1e-4,
      xip_chipa_max = 1e1,
      xip_power = 4,
      xip_threshold = 1e-3,
      chipa_xip_dim = 128,
      chiph_xip_dim = 128,
+
+     # Radiation parameters
      chipa_radiation_threshold = 1e-3,
      chipa_disc_min_threshold = 1e-2,
      table_path = "../databases/"
