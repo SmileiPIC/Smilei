@@ -428,7 +428,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
                 if (attr_size == (int) screen->data_sum.size()) {
                     H5::getAttr(fid, diagName.str(), screen->data_sum);
                 } else {
-                    WARNING("Restart: DiagScreen[" << idiag << "] size mismatch. Previous data discarded");
+                    WARNING("Restart: DiagScreen[" << screen->screen_id << "] size mismatch. Previous data discarded");
                 }
             }
         }
@@ -505,7 +505,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
                 restartFieldsPerProc( diag_gid, EMfields->allFields_avg[idiag][ifield] );
             
             H5Gclose(diag_gid);
-        
+
         } else if( EMfields->allFields_avg[idiag].size() > 0 ) {
             // When the restart occurs in the middle of an average, and the field diag is new,
             // there is missing data that will cause wrong results on the first output after restart
