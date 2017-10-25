@@ -117,7 +117,7 @@ clean:
 	$(Q) rm -rf $(BUILD_DIR) 
 	$(Q) rm -rf $(EXEC)-$(VERSION).tgz
 
-distclean: clean uninstall_python
+distclean: clean uninstall_happi
 	$(Q) rm -f $(EXEC) $(EXEC)_test
 # Deprecated rules
 obsolete:
@@ -165,7 +165,7 @@ $(EXEC)_test : $(OBJS:Smilei.o=Smilei_test.o)
 
 # Avoid to check dependencies and to create .pyh if not necessary
 ifeq ($(filter-out $(wildcard print-*),$(MAKECMDGOALS)),) 
-    FILTER_RULES=clean distclean help env obsolete debug scalasca doc doxygen sphinx tar install_python uninstall_python
+    FILTER_RULES=clean distclean help env obsolete debug scalasca doc doxygen sphinx tar install_python uninstall_python happi uninstall_happi
     ifeq ($(filter $(FILTER_RULES),$(MAKECMDGOALS)),) 
         # Let's try to make the next lines clear: we include $(DEPS) and pygenerator
         -include $(DEPS) pygenerator
@@ -175,7 +175,7 @@ ifeq ($(filter-out $(wildcard print-*),$(MAKECMDGOALS)),)
 endif
 
 # these are not file-related rules
-.PHONY: pygenerator $(FILTER_RULES)
+.PHONY: pygenerator happi $(FILTER_RULES)
 
 #-----------------------------------------------------
 # Doc rules
@@ -206,11 +206,17 @@ tar:
 
 # Install the python module in the user python path
 install_python:
-	@echo "Installing $(SITEDIR)/smilei.pth"
-	$(Q) mkdir -p "$(SITEDIR)"
-	$(Q) echo "$(PWD)/scripts/PythonModule" > "$(SITEDIR)/smilei.pth"
+	@echo "This command is not available anymore. Use 'make happi' instead."
 
 uninstall_python:
+	@echo "This command is not available anymore. Use 'make uninstall_happi' instead."
+
+happi:
+	@echo "Installing $(SITEDIR)/smilei.pth"
+	$(Q) mkdir -p "$(SITEDIR)"
+	$(Q) echo "$(PWD)" > "$(SITEDIR)/smilei.pth"
+
+uninstall_happi:
 	@echo "Uninstalling $(SITEDIR)/smilei.pth"
 	$(Q) rm -f "$(SITEDIR)/smilei.pth"
 
@@ -256,8 +262,8 @@ help:
 	@echo '  make doxygen          : builds the `doxygen` documentation only (for developers)'
 	@echo '  make tar              : creates an archive of the sources'
 	@echo '  make clean            : cleans the build directory'
-	@echo "  make install_python   : install Smilei's python module"
-	@echo "  make uninstall_python : remove Smilei's python module"
+	@echo "  make happi            : install Smilei's python module"
+	@echo "  make uninstall_happi  : remove Smilei's python module"
 	@echo '  make env              : print important internal makefile variables'
 	@echo '  make print-XXX        : print internal makefile variable XXX'
 	@echo ''

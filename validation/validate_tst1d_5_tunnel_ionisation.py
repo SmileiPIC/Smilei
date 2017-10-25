@@ -1,6 +1,6 @@
 import os, re, numpy as np, math
 from scipy.interpolate import interp1d as interp
-from Smilei import *
+from happi import *
 
 S = Smilei(".", verbose=False)
 

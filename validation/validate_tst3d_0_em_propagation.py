@@ -1,5 +1,5 @@
 import os, re, numpy as np, math, h5py
-from Smilei import *
+from happi import *
 
 S = Smilei(".", verbose=False)
 

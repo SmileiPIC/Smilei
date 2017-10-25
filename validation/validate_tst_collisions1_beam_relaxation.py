@@ -1,6 +1,6 @@
 import os, re, numpy as np
 from scipy.special import erf
-from Smilei import *
+from happi import *
 
 S = Smilei(".", verbose=False)
 

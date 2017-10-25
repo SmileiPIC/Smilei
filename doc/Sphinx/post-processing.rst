@@ -1,8 +1,15 @@
 Post-process
 ------------
 
-This page describes the usage of the python module ``Smilei`` for extracting, viewing
-and post-processing simulation data. First, you need to :ref:`install this module <installModule>`.
+This page describes the usage of the python module ``happi`` for extracting, viewing
+and post-processing simulation data. First, you need to :ref:`install happi <installModule>`.
+
+The module can be imported directly in *python*::
+
+  from happi import *                 # this imports all contents of the module
+  from happi import Smilei, multiPlot # this imports specific parts of the module
+
+
 
 ----
 
@@ -625,7 +632,7 @@ From the same terminal, launch *python* using the command::
 You are now in the *python* prompt.
 Open the simulation using::
 
-  >>> from Smilei import *
+  >>> from happi import *
   >>> S=Smilei("benchmarks/tst1d_6_diagnostics")
   Loaded simulation 'benchmarks/tst1d_6_diagnostics'
 

@@ -1,4 +1,4 @@
-from Smilei import *
+from happi import *
 import math as m
 import numpy as np
 import matplotlib as mpl

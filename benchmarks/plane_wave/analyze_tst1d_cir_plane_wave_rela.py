@@ -5,7 +5,7 @@
 #
 # _____________________________________________________
 
-from Smilei import *
+from happi import *
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib as mpl

@@ -159,4 +159,4 @@ Multi nodes :
 
        [training01@poincareint02:~/Smilei] $ make install_python
        [training01@poincareint02:~/Smilei] $ ipython
-       In [1]: from Smilei import *
+       In [1]: from happi import *

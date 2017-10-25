@@ -1,4 +1,4 @@
-from Smilei import *
+from happi import *
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import kv

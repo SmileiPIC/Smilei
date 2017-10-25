@@ -257,31 +257,32 @@ They can be compiled with the following commands:
 
 .. _installModule:
 
-Install the Smilei python module
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Install the happi module
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-A python module is provided to view, extract and post-process data from all the diagnostics.
+A python module, ``happi``, is provided to view, extract and post-process data from
+all the diagnostics.
 There are several ways to load this module in python.
 
-1. Recommended: Install Smilei's module
+1. Recommended:
   
   .. code-block:: bash
     
-    make install_python
+    make happi
   
   This has to be done only once, unless you move the smilei directory elsewhere.
-  This command creates a small file in the Python `user-site` directory that tells python
+  This command creates a small file in the Python *user-site* directory that tells python
   where to find the module.
-  To remove it use the command ``make uninstall_python``.
+  To remove it use the command ``make uninstall_happi``.
   
-  The module is called ``Smilei`` and will directly be accessible from *python*::
+  The module will directly be accessible from *python*::
     
-    from Smilei import *
+    from happi import Smilei
 
 2. Alternative: Execute the ``Diagnostics.py`` script from python 
   
   Adding a new *python* module is not always possible.
-  Instead, we provide the script ``Diagnostics.py`` which is able to find the ``Smilei``
+  Instead, we provide the script ``Diagnostics.py`` which is able to find the ``happi``
   module and import it into *python*.
   
   You may add the following command in your own python script::

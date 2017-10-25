@@ -17,7 +17,7 @@
 # ______________________________________________________________________________
 
 import os, re, numpy as np, h5py
-from Smilei import *
+from happi import *
 
 S = Smilei(".", verbose=False)
 

@@ -1,5 +1,5 @@
 import os, re, numpy as np
-from Smilei import *
+from happi import *
 from scipy.signal import butter, filtfilt
 b, a = butter(5, 0.2, btype='low', analog=False)
 

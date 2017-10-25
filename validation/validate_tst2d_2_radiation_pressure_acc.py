@@ -1,6 +1,6 @@
 import os, re, numpy as np, math
 from scipy.ndimage import gaussian_filter as gfilt
-from Smilei import *
+from happi import *
 
 S = Smilei(".", verbose=False)
 
