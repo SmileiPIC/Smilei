@@ -1,7 +1,7 @@
 import os, re, numpy as np, math 
-from happi import *
+import happi
 
-S = Smilei(".", verbose=False)
+S = happi.Open(".", verbose=False)
 
 # 3D SCREEN DIAGS
 precision = [0.02, 0.06, 0.01, 0.06, 0.03, 0.1, 0.02, 0.1]

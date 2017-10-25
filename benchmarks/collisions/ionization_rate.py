@@ -1,4 +1,4 @@
-from happi import *
+import happi
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -34,9 +34,9 @@ cs=np.array([[0.001000,0.000000], [0.001177,0.000000], [0.001385,0.000000],
 	[10000.016685,0.002096]])
 
  
-S1=Smilei("ionization_rate1")
-S2=Smilei("ionization_rate2")
-S3=Smilei("ionization_rate3")
+S1=happi.Open("ionization_rate1")
+S2=happi.Open("ionization_rate2")
+S3=happi.Open("ionization_rate3")
 
 # get electron velocity
 ve = np.double(S1.namelist.Species["electron1"].mean_velocity[0])
@@ -54,7 +54,7 @@ D1 = S1.ParticleBinning("#0/#1",sum={"x":"all"}, linestyle="None", marker=".", l
 D2 = S2.ParticleBinning("#0/#1",sum={"x":"all"}, linestyle="None", marker=".", label="We=10. Wi")
 D3 = S3.ParticleBinning("#0/#1",sum={"x":"all"}, linestyle="None", marker=".", label="We=0.1 Wi")
 
-multiPlot(D1, D2, D3, vmin=q0,skipAnimation=True)
+happi.multiPlot(D1, D2, D3, vmin=q0,skipAnimation=True)
 
 # Plot theory
 tmax = np.double(S1.namelist.Main.simulation_time)

@@ -1,7 +1,7 @@
 import os, re, numpy as np, math, h5py
-from happi import *
+import happi
 
-S = Smilei(".", verbose=False)
+S = happi.Open(".", verbose=False)
 
 # COMPARE THE Ey FIELD
 Ey = S.Field.Field0.Ey(timesteps=1500, subset={"x":[0,10000,8], "y":[0,10000,8]}).getData()[0]

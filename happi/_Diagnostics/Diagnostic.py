@@ -2,13 +2,13 @@ from .._Utils import *
 
 class Diagnostic(object):
 	"""Mother class for all Diagnostics.
-	To create a diagnostic, refer to the doc of the Smilei class.
-	Once a Smilei object is created, you may get help on its diagnostics.
+	To create a diagnostic, refer to the doc of the SmileiSimulation class.
+	Once such object is created, you may get help on its diagnostics.
 	
 	Example:
-		S = Smilei("path/to/simulation") # Load a simulation
-		help( S )                        # General help on the simulation's diagnostics
-		help( S.Field )                  # Help on loading a Field diagnostic
+		S = happi.Open("path/to/simulation") # Load a simulation
+		help( S )                            # General help on the simulation's diagnostics
+		help( S.Field )                      # Help on loading a Field diagnostic
 	"""
 	
 	def __init__(self, simulation, *args, **kwargs):
@@ -24,30 +24,31 @@ class Diagnostic(object):
 		self._data_log = False
 		self._error = ""
 		
-		# The 'simulation' is a Smilei object. It is passed as an instance attribute
-		self.Smilei = simulation
+		# The 'simulation' is a SmileiSimulation object. It is passed as an instance attribute
+		self.simulation = simulation
 		
 		# Transfer the simulation's packages to the diagnostic
-		self._h5py = self.Smilei._h5py
-		self._np   = self.Smilei._np
-		self._os   = self.Smilei._os
-		self._glob = self.Smilei._glob
-		self._re   = self.Smilei._re
-		self._plt  = self.Smilei._plt
+		self._h5py    = self.simulation._h5py
+		self._np      = self.simulation._np
+		self._os      = self.simulation._os
+		self._glob    = self.simulation._glob
+		self._re      = self.simulation._re
+		self._plt     = self.simulation._plt
+		self._verbose = self.simulation._verbose
 		
 		# Reload the simulation, in case it has been updated
-		self.Smilei.reload()
-		if not self.Smilei.valid:
+		self.simulation.reload()
+		if not self.simulation.valid:
 			self._error = "Invalid Smilei simulation"
 			return
 		
 		# Copy some parameters from the simulation
-		self._results_path = self.Smilei._results_path
-		self.namelist      = self.Smilei.namelist
-		self._ndim         = self.Smilei._ndim
-		self._cell_length  = self.Smilei._cell_length
-		self._ncels        = self.Smilei._ncels
-		self.timestep      = self.Smilei._timestep
+		self._results_path = self.simulation._results_path
+		self.namelist      = self.simulation.namelist
+		self._ndim         = self.simulation._ndim
+		self._cell_length  = self.simulation._cell_length
+		self._ncels        = self.simulation._ncels
+		self.timestep      = self.simulation._timestep
 		
 		# Make the Options object
 		self.options = Options()
@@ -55,8 +56,8 @@ class Diagnostic(object):
 		
 		# Make or retrieve the Units object
 		self.units = kwargs.pop("units", [""])
-		if type(self.units) in [list, tuple]: self.units = Units(*self.units , verbose = self.Smilei._verbose)
-		if type(self.units) is dict         : self.units = Units(verbose = self.Smilei._verbose, **self.units)
+		if type(self.units) in [list, tuple]: self.units = Units(*self.units , verbose = self._verbose)
+		if type(self.units) is dict         : self.units = Units(verbose = self._verbose, **self.units)
 		if type(self.units) is not Units:
 			self._error = "Could not understand the 'units' argument"
 			return
@@ -83,7 +84,7 @@ class Diagnostic(object):
 			yunits = None
 			if self.dim > 0: xunits = self._units[0]
 			if self.dim > 1: yunits = self._units[1]
-			self.units.prepare(self.Smilei._reference_angular_frequency_SI, xunits, yunits, self._vunits)
+			self.units.prepare(self.simulation._reference_angular_frequency_SI, xunits, yunits, self._vunits)
 	
 	# When no action is performed on the object, this is what appears
 	def __repr__(self):
@@ -93,11 +94,11 @@ class Diagnostic(object):
 	# Method to verify everything was ok during initialization
 	def _validate(self):
 		try:
-			self.Smilei.valid
+			self.simulation.valid
 		except:
 			print("No valid Smilei simulation selected")
 			return False
-		if not self.Smilei.valid or not self.valid:
+		if not self.simulation.valid or not self.valid:
 			print("Diagnostic is invalid")
 			return False
 		return True
@@ -125,7 +126,7 @@ class Diagnostic(object):
 	def info(self):
 		if not self._validate():
 			print(self._error)
-		elif self.Smilei._verbose:
+		elif self._verbose:
 			print(self._info())
 	
 	# Method to get only the arrays of data
@@ -214,7 +215,7 @@ class Diagnostic(object):
 		
 		Example:
 		--------
-			S = Smilei("path/to/my/results")
+			S = happi.Open("path/to/my/results")
 			S.ParticleBinning(1).plot(vmin=0, vmax=1e14)
 		"""
 		if not self._validate(): return
@@ -260,7 +261,7 @@ class Diagnostic(object):
 		
 		Example:
 		--------
-			S = Smilei("path/to/my/results")
+			S = happi.Open("path/to/my/results")
 			S.ParticleBinning(1).streak(vmin=0, vmax=1e14)
 		"""
 		if not self._validate(): return
@@ -344,7 +345,7 @@ class Diagnostic(object):
 		
 		Example:
 		--------
-			S = Smilei("path/to/my/results")
+			S = happi.Open("path/to/my/results")
 			S.ParticleBinning(1).animate(vmin=0, vmax=1e14)
 			
 			This takes the particle binning diagnostic #1 and plots the resulting array in figure 1 from 0 to 3e14.
@@ -362,7 +363,7 @@ class Diagnostic(object):
 		save = SaveAs(saveAs, fig, self._plt)
 		# Loop times for animation
 		for time in self.times:
-			if self.Smilei._verbose: print("timestep "+str(time))
+			if self._verbose: print("timestep "+str(time))
 			# plot
 			ax.cla()
 			if self._animateOnAxes(ax, time) is None: return
@@ -593,12 +594,12 @@ class Diagnostic(object):
 		try:
 			if len(self.options.xtick)>0: ax.ticklabel_format(axis="x",**self.options.xtick)
 		except:
-			if self.Smilei._verbose: print("Cannot format x ticks (typically happens with log-scale)")
+			if self._verbose: print("Cannot format x ticks (typically happens with log-scale)")
 			self.xtickkwargs = []
 		try:
 			if len(self.options.ytick)>0: ax.ticklabel_format(axis="y",**self.options.ytick)
 		except:
-			if self.Smilei._verbose: print("Cannot format y ticks (typically happens with log-scale)")
+			if self._verbose: print("Cannot format y ticks (typically happens with log-scale)")
 			self.xtickkwargs = []
 	
 	# Define and output directory in case of exporting
@@ -652,7 +653,7 @@ class Diagnostic(object):
 				extent += [0, ntimes-1]
 				origin += [self.times[0]]
 				vtk.WriteImage(arr, origin, extent, spacings, fileprefix+".pvti", numberOfPieces)
-				if self.Smilei._verbose: print("Successfully exported regular streak plot to VTK, folder='"+self._exportDir)
+				if self._verbose: print("Successfully exported regular streak plot to VTK, folder='"+self._exportDir)
 			
 			# If timesteps are irregular, make an irregular grid
 			else:
@@ -664,7 +665,7 @@ class Diagnostic(object):
 					arr,
 					fileprefix+".vtk"
 				)
-				if self.Smilei._verbose: print("Successfully exported irregular streak plot to VTK, folder='"+self._exportDir)
+				if self._verbose: print("Successfully exported irregular streak plot to VTK, folder='"+self._exportDir)
 		
 		# If 3D data, then do a 3D plot
 		elif self.dim == 3:
@@ -672,5 +673,5 @@ class Diagnostic(object):
 				data = self._np.ascontiguousarray(self._getDataAtTime(self.times[itime]).flatten(order='F'), dtype='float32')
 				arr = vtk.Array(data, self._title)
 				vtk.WriteImage(arr, origin, extent, spacings, fileprefix+"_"+str(itime)+".pvti", numberOfPieces)
-			if self.Smilei._verbose: print("Successfully exported 3D plot to VTK, folder='"+self._exportDir)
+			if self._verbose: print("Successfully exported 3D plot to VTK, folder='"+self._exportDir)
 

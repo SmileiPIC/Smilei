@@ -7,9 +7,9 @@
 
 
 import os, re, numpy as np, h5py
-from happi import *
+import happi
 
-S = Smilei(".", verbose=False)
+S = happi.Open(".", verbose=False)
 
 # Step represents the step between trajectory points what we consider
 # This enables to reduce the size of the array

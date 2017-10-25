@@ -1,4 +1,4 @@
-from happi import *
+import happi
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import kv
@@ -55,7 +55,7 @@ def FrankelStoppingPower(E0,T):
 
 for path in ["Stopping_power1","Stopping_power2","Stopping_power3"]:
 
-	sim = Smilei(path)
+	sim = happi.Open(path)
 	temperature_electron = np.double(sim.namelist.Species["backgroundelectron"].temperature)
 	density_electron     = np.double(sim.namelist.Species["backgroundelectron"].charge_density)
 	coulomb_log          = np.double(sim.namelist.Collisions[0].coulomb_log)

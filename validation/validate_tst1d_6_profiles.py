@@ -1,8 +1,8 @@
 import os, re, numpy as np
 from scipy.signal import butter, filtfilt
-from happi import *
+import happi
 
-S = Smilei(".", verbose=False)
+S = happi.Open(".", verbose=False)
 
 c = ["b","r","g","c","m","y"]
 

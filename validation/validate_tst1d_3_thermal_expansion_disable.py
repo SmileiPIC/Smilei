@@ -1,10 +1,10 @@
 import os, re, numpy as np
-from happi import *
+import happi
 from scipy.signal import butter, filtfilt
 b, a = butter(5, 0.2, btype='low', analog=False)
 
 
-S = Smilei(".", verbose=False)
+S = happi.Open(".", verbose=False)
 
 eon_spectrum = S.ParticleBinning.Diag2().get()
 ekin = eon_spectrum["ekin"]

@@ -1,11 +1,11 @@
-from happi import *
+import happi
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import erf as erf
 
 path = "temperature_isotropization1"
 
-sim = Smilei(path)
+sim = happi.Open(path)
 density_electron     = np.double(sim.namelist.Species["electron1"].charge_density)
 coulomb_log          = np.double(sim.namelist.Collisions[0].coulomb_log)
 dt                   = np.double(sim.namelist.Main.timestep)/(2*np.pi)

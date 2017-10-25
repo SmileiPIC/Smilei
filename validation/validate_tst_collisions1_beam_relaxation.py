@@ -1,8 +1,8 @@
 import os, re, numpy as np
 from scipy.special import erf
-from happi import *
+import happi
 
-S = Smilei(".", verbose=False)
+S = happi.Open(".", verbose=False)
 
 for i in range(3):
 	ion = "ion"+str(i)

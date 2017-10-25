@@ -19,9 +19,9 @@
 # ______________________________________________________________________________
 
 import os, re, numpy as np, h5py
-from happi import *
+import happi
 
-S = Smilei(".", verbose=False)
+S = happi.Open(".", verbose=False)
 
 # ______________________________________________________________________________
 # Read scalar diagnostics

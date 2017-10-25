@@ -1,7 +1,7 @@
 import os, re, numpy as np
-from happi import *
+import happi
 
-S = Smilei(".", verbose=False)
+S = happi.Open(".", verbose=False)
 
 Ntot_charges = S.Scalar.Ntot_charges(timesteps=0).getData()[0]
 Validate("Initial number of particles", Ntot_charges )

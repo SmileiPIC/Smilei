@@ -1,5 +1,5 @@
 
-from happi import *
+import happi
 execfile("resparis.py")
 import numpy as np
 import matplotlib.pyplot as plt
@@ -22,7 +22,7 @@ density = []
 
 for path in ["conductivity1","conductivity2","conductivity3"]:
 
-	sim = Smilei(path)
+	sim = happi.Open(path)
 
 	ncases = 0
 	while sim.namelist.DiagParticleBinning[ncases].deposited_quantity == "weight_charge_vx":

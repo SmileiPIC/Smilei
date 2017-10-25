@@ -1,7 +1,7 @@
 import os, re, numpy as np, math 
-from happi import *
+import happi
 
-S = Smilei(".", verbose=False)
+S = happi.Open(".", verbose=False)
 
 # MINIMAL VALIDATION
 Validate("Number of timesteps", len( S.Scalar.Ubal_norm().getData()), 1)

@@ -13,9 +13,9 @@
 
 
 import os, re, numpy as np, h5py
-from happi import *
+import happi
 
-S = Smilei(".", verbose=False)
+S = happi.Open(".", verbose=False)
 
 # List of relativistic pushers
 radiation_list = ["Niel","Landau_Lifshitz"]

@@ -17,9 +17,9 @@
 # ______________________________________________________________________________
 
 import os, re, numpy as np, h5py
-from happi import *
+import happi
 
-S = Smilei(".", verbose=False)
+S = happi.Open(".", verbose=False)
 
 dt = S.namelist.Main.timestep
 dx = S.namelist.Main.cell_length[0]

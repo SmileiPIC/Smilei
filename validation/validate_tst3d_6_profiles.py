@@ -1,7 +1,7 @@
 import os, re, numpy as np
-from happi import *
+import happi
 
-S = Smilei(".", verbose=False)
+S = happi.Open(".", verbose=False)
 
 for name, profile in S.namelist.profiles.items():
 	A = S.Field.Field0("Rho_"+name)

@@ -1,4 +1,4 @@
-from happi import *
+import happi
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,8 +8,8 @@ plt.ion()
 D = []
 colors = ["k", "r", "g", "b", "m"]
 for elm in ["C", "Al", "Zn", "Sn", "Au"]:
-	S1=Smilei("ionization_multiple"+elm+"1")
-	S2=Smilei("ionization_multiple"+elm+"2")
+	S1=happi.Open("ionization_multiple"+elm+"1")
+	S2=happi.Open("ionization_multiple"+elm+"2")
 	
 	color = colors.pop()
 	
@@ -25,7 +25,7 @@ for elm in ["C", "Al", "Zn", "Sn", "Au"]:
 
 # Plot simulation result
 plt.figure(1, figsize=(6,3.5))
-multiPlot(*D)
+happi.multiPlot(*D)
 fig =plt.gcf()
 ax = plt.gca()
 # Make nicer plot

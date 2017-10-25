@@ -20,9 +20,9 @@ class ScalarFactory(object):
 
 	Usage:
 	------
-		S = Smilei("path/to/simulation") # Load the simulation
-		scalar = S.Scalar(...)           # Load the scalar diagnostic
-		scalar.get()                     # Obtain the data
+		S = happi.Open("path/to/simulation") # Load the simulation
+		scalar = S.Scalar(...)               # Load the scalar diagnostic
+		scalar.get()                         # Obtain the data
 	"""
 
 	def __init__(self, simulation, scalar=None):
@@ -80,9 +80,9 @@ class FieldFactory(object):
 	
 	Usage:
 	------
-		S = Smilei("path/to/simulation") # Load the simulation
-		field = S.Field(...)             # Load the field diagnostic
-		field.get()                      # Obtain the data
+		S = happi.Open("path/to/simulation") # Load the simulation
+		field = S.Field(...)                 # Load the field diagnostic
+		field.get()                          # Obtain the data
 	"""
 
 	def __init__(self, simulation, diagNumber=None, field=None, timestep=None, availableTimesteps=None):
@@ -175,9 +175,9 @@ class ProbeFactory(object):
 
 	Usage:
 	------
-		S = Smilei("path/to/simulation") # Load the simulation
-		probe = S.Probe(...)             # Load the probe diagnostic
-		probe.get()                      # Obtain the data
+		S = happi.Open("path/to/simulation") # Load the simulation
+		probe = S.Probe(...)                 # Load the probe diagnostic
+		probe.get()                          # Obtain the data
 	"""
 
 	def __init__(self, simulation, probeNumber=None, field=None, timestep=None, availableTimesteps=None):
@@ -259,9 +259,9 @@ class ParticleBinningFactory(object):
 	
 	Usage:
 	------
-		S = Smilei("path/to/simulation") # Load the simulation
-		part = S.ParticleBinning(...) # Load the particle binning diagnostic
-		part.get()                       # Obtain the data
+		S = happi.Open("path/to/simulation") # Load the simulation
+		part = S.ParticleBinning(...)        # Load the particle binning diagnostic
+		part.get()                           # Obtain the data
 	"""
 
 	def __init__(self, simulation, diagNumber=None, timestep=None):
@@ -332,9 +332,9 @@ class ScreenFactory(object):
 	
 	Usage:
 	------
-		S = Smilei("path/to/simulation") # Load the simulation
-		screen = S.Screen(...) # Load the Screen diagnostic
-		screen.get()                       # Obtain the data
+		S = happi.Open("path/to/simulation") # Load the simulation
+		screen = S.Screen(...)               # Load the Screen diagnostic
+		screen.get()                         # Obtain the data
 	"""
 
 	def __init__(self, simulation, diagNumber=None, timestep=None):
@@ -413,9 +413,9 @@ class TrackParticlesFactory(object):
 
 	Usage:
 	------
-		S = Smilei("path/to/simulation") # Load the simulation
-		track = S.TrackParticles(...)    # Load the tracked-particle diagnostic
-		track.get()                      # Obtain the data
+		S = happi.Open("path/to/simulation") # Load the simulation
+		track = S.TrackParticles(...)        # Load the tracked-particle diagnostic
+		track.get()                          # Obtain the data
 	"""
 
 	def __init__(self, simulation, species=None, timestep=None):
@@ -470,24 +470,51 @@ class TrackParticlesFactory(object):
 
 
 
-
-
-class Smilei(object):
+def Open(*args, **kwargs):
 	""" Import a Smilei simulation
-
+	
 	Parameters:
 	-----------
 	results_path : string or list of strings (default '.').
 		Directory containing simulation results, or list of directories.
 		Omit this argument if you are already in the results directory.
-
+	
 	show : bool (default True)
 		Can be set to False to prevent figures to actually appear on screen.
-
+	
+	reference_angular_frequency_SI : float (default None)
+		Sets or change the value of reference_angular_frequency_SI, which may
+		be defined in the block Main() of any Smilei namelist.
+	
+	verbose : bool (default True)
+		If False, no warnings or information are printed.
+	
 	Returns:
 	--------
-	A Smilei object, i.e. a container that holds information about a simulation.
+	A SmileiSimulation object, i.e. a container that holds information about a simulation.
+	
+	Attributes of the returned object:
+	----------------------------------
+	namelist :
+		An object that holds the information of the original user namelist.
+	Scalar :
+		A method to access the `DiagScalar` diagnostic.
+	Field :
+		A method to access the `DiagField` diagnostic.
+	Probe :
+		A method to access the `DiagProbe` diagnostic.
+	ParticleBinning :
+		A method to access the `DiagParticleBinning` diagnostic.
+	TrackParticles :
+		A method to access the tracked particles diagnostic.
+		
+	"""
+	return SmileiSimulation(*args, **kwargs)
 
+
+class SmileiSimulation(object):
+	"""Object for handling the outputs of a Smilei simulation
+	
 	Attributes:
 	-----------
 	namelist :
@@ -545,8 +572,8 @@ class Smilei(object):
 			self.Screen = ScreenFactory(self)
 			if self._verbose: print("Scanning for Tracked particle diagnostics")
 			self.TrackParticles = TrackParticlesFactory(self)
-
-
+	
+	
 	def _openNamelist(self, path):
 		# Fetch the python namelist
 		namespace={}
@@ -556,7 +583,7 @@ class Smilei(object):
 		for key, value in namespace.items(): # transfer all variables to this object
 			if key[0]=="_": continue # skip builtins
 			setattr(namelist, key, value)
-
+	
 		# Get some info on the simulation
 		try:
 			# get number of dimensions

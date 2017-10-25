@@ -6,9 +6,7 @@ and post-processing simulation data. First, you need to :ref:`install happi <ins
 
 The module can be imported directly in *python*::
 
-  from happi import *                 # this imports all contents of the module
-  from happi import Smilei, multiPlot # this imports specific parts of the module
-
+  import happi
 
 
 ----
@@ -20,7 +18,7 @@ In a *python* command line (or script), invoke the following class to open
 your :program:`Smilei` simulation. Note that several simulations can be opened at once,
 as long as they correspond to several :ref:`restarts <Checkpoints>` of the same simulation.
 
-.. py:class:: Smilei(results_path=".", show=True, reference_angular_frequency_SI=None, verbose=True)
+.. py:class:: happi.Open(results_path=".", show=True, reference_angular_frequency_SI=None, verbose=True)
 
   * ``results_path``: path or list of paths to the directory-ies
     where the results of the simulation-s are stored. It can also contain wildcards,
@@ -35,9 +33,12 @@ as long as they correspond to several :ref:`restarts <Checkpoints>` of the same 
   
   * ``verbose``: if True, more information is displayed while post-processing.
 
+**Returns:** An object containing various methods to extract and manipulate the simulation
+  outputs, as described below.
+
 **Example**::
 
-  S = Smilei("path/to/my/results")
+  S = happi.Open("path/to/my/results")
 
 
 Once a simulation is opened, several methods are available to find information on the
@@ -51,9 +52,9 @@ Extract namelist information
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Once a simulation is opened as shown above, you can access the content of the namelist
-using the variable ``namelist``::
+using the attribute ``namelist``::
 
-  S = Smilei("path/to/my/results") # Open a simulation
+  S = happi.Open("path/to/my/results") # Open a simulation
   print S.namelist.Main.timestep   # print the timestep
   print S.namelist.Main.geometry   # print the simulation dimensions
 
@@ -81,7 +82,7 @@ In the case of the species, you can also obtain a given species by its name::
 Open a Scalar diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.Scalar(scalar=None, timesteps=None, units=[""], data_log=False, **kwargs)
+.. py:method:: Scalar(scalar=None, timesteps=None, units=[""], data_log=False, **kwargs)
 
   * ``scalar``: The name of the scalar.
      | If not given, then a list of available scalars is printed.
@@ -96,7 +97,7 @@ Open a Scalar diagnostic
 
 **Example**::
 
-  S = Smilei("path/to/my/results")
+  S = happi.Open("path/to/my/results")
   Diag = S.Scalar("Utot")
 
 ----
@@ -104,7 +105,7 @@ Open a Scalar diagnostic
 Open a Field diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.Field(diagNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, **kwargs)
+.. py:method:: Field(diagNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: The number of the fields diagnostic
@@ -134,7 +135,7 @@ Open a Field diagnostic
 
 **Example**::
 
-  S = Smilei("path/to/my/results")
+  S = happi.Open("path/to/my/results")
   Diag = S.Field(0, "Ex", average = {"x":[4,5]})
 
 
@@ -143,7 +144,7 @@ Open a Field diagnostic
 Open a Probe diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.Probe(probeNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, **kwargs)
+.. py:method:: Probe(probeNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``probeNumber``: number of the probe (the first one has number 0).
@@ -157,7 +158,7 @@ Open a Probe diagnostic
 
 **Example**::
 
-  S = Smilei("path/to/my/results")
+  S = happi.Open("path/to/my/results")
   Diag = S.Probe(0, "Ex")
 
 
@@ -166,7 +167,7 @@ Open a Probe diagnostic
 Open a ParticleBinning diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.ParticleBinning(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
+.. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: number of the particle binning diagnostic (starts at 0).
@@ -194,7 +195,7 @@ Open a ParticleBinning diagnostic
 
 **Example**::
 
-  S = Smilei("path/to/my/results")
+  S = happi.Open("path/to/my/results")
   Diag = S.ParticleBinning(1)
 
 
@@ -204,7 +205,7 @@ Open a ParticleBinning diagnostic
 Open a Screen diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.Screen(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
+.. py:method:: Screen(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: number of the screen diagnostic (the first one has number 0).
@@ -216,7 +217,7 @@ Open a Screen diagnostic
 
 **Example**::
 
-  S = Smilei("path/to/my/results")
+  S = happi.Open("path/to/my/results")
   Diag = S.Screen(0)
 
 
@@ -226,7 +227,7 @@ Open a Screen diagnostic
 Open a Track diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.TrackParticles(species=None, select="", axes=[], timesteps=None, sort=True, length=None, units=[""], **kwargs)
+.. py:method:: TrackParticles(species=None, select="", axes=[], timesteps=None, sort=True, length=None, units=[""], **kwargs)
 
   * ``timesteps``, ``units``: same as before.
   * ``species``: the name of a tracked-particle species.
@@ -247,7 +248,7 @@ Open a Track diagnostic
 
 **Example**::
 
-  S = Smilei("path/to/my/results")
+  S = happi.Open("path/to/my/results")
   Diag = S.TrackParticles("electrons", axes=["px","py"])
 
 
@@ -283,8 +284,10 @@ Specifying units
 
 By default, all the diagnostics data is in code units (see :doc:`units`).
 
-To change the units, all the methods :py:meth:`Scalar() <Smilei.Scalar>`, :py:meth:`Field() <Smilei.Field>`, :py:meth:`Probe() <Smilei.Probe>`,
-:py:meth:`ParticleBinning() <Smilei.ParticleBinning>` and :py:meth:`TrackParticles() <Smilei.TrackParticles>` support a ``units`` argument.
+To change the units, all the methods :py:meth:`Scalar() <Scalar>`,
+:py:meth:`Field() <Field>`, :py:meth:`Probe() <Probe>`,
+:py:meth:`ParticleBinning() <ParticleBinning>` and
+:py:meth:`TrackParticles() <TrackParticles>` support a ``units`` argument.
 It has three different syntaxes:
 
 1. **A list**, for example ``units = ["um/ns", "feet", "W/cm^2"]``
@@ -297,7 +300,7 @@ It has three different syntaxes:
    In this case, we specify the units separately for axes ``x`` and ``y``, and for the
    data values ``v``.
 
-3. **A** ``Units`` **object**, for example ``units = Units("um/ns", "feet", x="um")``
+3. **A** ``Units`` **object**, for example ``units = happi.Units("um/ns", "feet", x="um")``
 
    This version combines the two previous ones.
 
@@ -307,19 +310,19 @@ It has three different syntaxes:
 * To obtain units in a non-normalized system (e.g. SI), the simulation must have the 
   parameter :py:data:`reference_angular_frequency_SI` set to a finite value. 
   Otherwise, this parameter can be set during post-processing as an argument to the 
-  :py:class:`Smilei` class.
+  :py:meth:`Open` function.
 
 ----
 
 Obtain the data
 ^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.Scalar.getData(...)
-               Smilei.Field.getData(...)
-               Smilei.Probe.getData(...)
-               Smilei.ParticleBinning.getData(...)
-               Smilei.Screen.getData(...)
-               Smilei.TrackParticles.getData(...)
+.. py:method:: Scalar.getData(...)
+               Field.getData(...)
+               Probe.getData(...)
+               ParticleBinning.getData(...)
+               Screen.getData(...)
+               TrackParticles.getData(...)
 
   Returns a list of the data arrays (one element for each timestep requested).
   In the case of ``TrackParticles``, this method returns a dictionary containing one
@@ -334,17 +337,17 @@ Obtain the data
 
   **Example**::
 
-      S = Smilei("path/to/results") # Open the simulation
+      S = happi.Open("path/to/results") # Open the simulation
       Diag = S.Field(0, "Ex")       # Open Ex in the first Field diag
       result = Diag.getData()       # Get list of Ex arrays (one for each time)
 
 
-.. py:method:: Smilei.Scalar.get(...)
-               Smilei.Field.get(...)
-               Smilei.Probe.get(...)
-               Smilei.ParticleBinning.get(...)
-               Smilei.Screen.get(...)
-               Smilei.TrackParticles.get(...)
+.. py:method:: Scalar.get(...)
+               Field.get(...)
+               Probe.get(...)
+               ParticleBinning.get(...)
+               Screen.get(...)
+               TrackParticles.get(...)
 
   Same syntax as :py:meth:`getData`, but returns a python dictionary containing various information:
   
@@ -356,14 +359,14 @@ Obtain the data
 
   **Example**::
 
-      S = Smilei("path/to/results")  # Open the simulation
+      S = happi.Open("path/to/results")  # Open the simulation
       Diag = S.ParticleBinning(3) # Open fourth particle diag
       result = Diag.get()            # Get the data
       result["data"] # This has the same value as Diag.getData()
       result["x"]    # This has the locations of the diag's bins along x
 
 
-.. py:method:: Smilei.TrackParticles.iterParticles(timestep, chunksize=1)
+.. py:method:: TrackParticles.iterParticles(timestep, chunksize=1)
 
   This method, specific to the tracked particles, provides a fast iterator on chunks of particles
   for a given timestep. The argument ``chunksize`` is the number of particles in each chunk.
@@ -376,7 +379,7 @@ Obtain the data
 
   **Example**::
 
-      S = Smilei("path/to/my/results")        # Open the simulation
+      S = happi.Open("path/to/my/results")        # Open the simulation
       Diag = S.TrackParticles("my_particles") # Open the tracked particles
       npart = 0
       sum_px = 0.
@@ -395,12 +398,12 @@ Plot the data at one timestep
 This is the first method to plot the data. It produces a static image of the data
 at one given timestep.
 
-.. py:method:: Smilei.Scalar.plot(...)
-               Smilei.Field.plot(...)
-               Smilei.Probe.plot(...)
-               Smilei.ParticleBinning.plot(...)
-               Smilei.TrackParticles.plot(...)
-               Smilei.Screen.plot(...)
+.. py:method:: Scalar.plot(...)
+               Field.plot(...)
+               Probe.plot(...)
+               ParticleBinning.plot(...)
+               TrackParticles.plot(...)
+               Screen.plot(...)
 
   All these methods have the same arguments described below.
 
@@ -429,7 +432,7 @@ at one given timestep.
 
 **Example**::
 
-    S = Smilei("path/to/my/results")
+    S = happi.Open("path/to/my/results")
     S.ParticleBinning(1).plot(timestep=40, vmin=0, vmax=1e14)
 
 ----
@@ -440,12 +443,12 @@ Plot the data streaked over time
 This second type of plot works only for 1D data. All available timesteps
 are streaked to produce a 2D image where the second axis is time.
 
-.. py:method:: Smilei.Scalar.streak(...)
-               Smilei.Field.streak(...)
-               Smilei.Probe.streak(...)
-               Smilei.ParticleBinning.streak(...)
-               Smilei.TrackParticles.streak(...)
-               Smilei.Screen.streak(...)
+.. py:method:: Scalar.streak(...)
+               Field.streak(...)
+               Probe.streak(...)
+               ParticleBinning.streak(...)
+               TrackParticles.streak(...)
+               Screen.streak(...)
 
   All these methods have the same arguments described below.
 
@@ -455,7 +458,7 @@ are streaked to produce a 2D image where the second axis is time.
 
 **Example**::
 
-    S = Smilei("path/to/my/results")
+    S = happi.Open("path/to/my/results")
     S.ParticleBinning(1).streak()
 
 ----
@@ -465,12 +468,12 @@ Animated plot
 
 This third plotting method animates the data over time.
 
-.. py:method:: Smilei.Scalar.animate(...)
-               Smilei.Field.animate(...)
-               Smilei.Probe.animate(...)
-               Smilei.ParticleBinning.animate(...)
-               Smilei.TrackParticles.animate(...)
-               Smilei.Screen.animate(...)
+.. py:method:: Scalar.animate(...)
+               Field.animate(...)
+               Probe.animate(...)
+               ParticleBinning.animate(...)
+               TrackParticles.animate(...)
+               Screen.animate(...)
 
   All these methods have the same arguments described below.
 
@@ -485,7 +488,7 @@ This third plotting method animates the data over time.
 
 **Example**::
 
-    S = Smilei("path/to/my/results")
+    S = happi.Open("path/to/my/results")
     S.ParticleBinning(1).animate()
 
 ----
@@ -493,7 +496,7 @@ This third plotting method animates the data over time.
 Simultaneous plotting of multiple diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: multiPlot(diag1, diag2, ... , **kwargs)
+.. py:function:: happi.multiPlot(diag1, diag2, ... , **kwargs)
 
   Makes an animated figure containing several plots (one for each diagnostic).
   If all diagnostics are of similar type, they may be overlayed on only one plot.
@@ -518,10 +521,10 @@ Simultaneous plotting of multiple diagnostics
 
 **Example**::
 
-    S = Smilei("path/to/my/results")
+    S = happi.Open("path/to/my/results")
     A = S.Probe(probeNumber=0, field="Ex")
     B = S.ParticleBinning(diagNumber=1)
-    multiPlot( A, B, figure=1 )
+    happi.multiPlot( A, B, figure=1 )
 
 ..
 
@@ -570,7 +573,7 @@ Options for the tick labels: ``style_x``, ``scilimits_x``, ``useOffset_x``, ``st
 
   To choose a gray colormap of the image, use ``cmap="gray"``::
 
-    S = Smilei("path/to/my/results")
+    S = happi.Open("path/to/my/results")
     S.ParticleBinning(0, figure=1, cmap="gray") .plot()
 
 ..
@@ -583,17 +586,17 @@ Options for the tick labels: ``style_x``, ``scilimits_x``, ``useOffset_x``, ``st
 Update the plotting options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Smilei.Scalar.set(...)
-               Smilei.Field.set(...)
-               Smilei.Probe.set(...)
-               Smilei.ParticleBinning.set(...)
-               Smilei.Screen.set(...)
+.. py:method:: Scalar.set(...)
+               Field.set(...)
+               Probe.set(...)
+               ParticleBinning.set(...)
+               Screen.set(...)
 
 
   **Example**::
 
-    S = Smilei("path/to/my/results")
-    A = ParticleBinning(diagNumber=0, figure=1, vmax=1)
+    S = happi.Open("path/to/my/results")
+    A = S.ParticleBinning(diagNumber=0, figure=1, vmax=1)
     A.plot( figure=2 )
     A.set( vmax=2 )
     A.plot()
@@ -632,8 +635,8 @@ From the same terminal, launch *python* using the command::
 You are now in the *python* prompt.
 Open the simulation using::
 
-  >>> from happi import *
-  >>> S=Smilei("benchmarks/tst1d_6_diagnostics")
+  >>> import happi
+  >>> S = happi.Open("benchmarks/tst1d_6_diagnostics")
   Loaded simulation 'benchmarks/tst1d_6_diagnostics'
 
 Print the list of available species using::
@@ -789,7 +792,7 @@ on the same figure::
   
   >>> A = S.ParticleBinning( 0, units=["um","c"] )
   >>> B = S.ParticleBinning( 1, units=["um","c"] )
-  >>> multiPlot(A, B, shape=[1,2])
+  >>> happi.multiPlot(A, B, shape=[1,2])
 
 .. figure:: _static/Tutorial7.png
   :width: 12cm
@@ -802,7 +805,7 @@ in the previous section::
   
   >>> A = S.ParticleBinning(0, sum={"x":"all"}, units=["c"])
   >>> B = S.ParticleBinning(1, sum={"x":"all"}, units=["c"], vmax=10000)
-  >>> multiPlot(A, B)
+  >>> happi.multiPlot(A, B)
 
 .. figure:: _static/Tutorial8.png
   :width: 10cm

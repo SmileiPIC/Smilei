@@ -1,2 +1,2 @@
-from .Smilei import Smilei
+from ._core import Open
 from ._Utils import multiPlot, Units

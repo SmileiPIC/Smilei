@@ -1,7 +1,7 @@
 import os, re, numpy as np, math 
-from happi import *
+import happi
 
-S = Smilei(".", verbose=False)
+S = happi.Open(".", verbose=False)
 
 ncel = [int(i) for i in S._ncels]
 

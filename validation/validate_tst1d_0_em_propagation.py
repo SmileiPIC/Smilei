@@ -1,7 +1,7 @@
 import os, re, numpy as np, h5py
-from happi import *
+import happi
 
-S = Smilei(".", verbose=False)
+S = happi.Open(".", verbose=False)
 
 # FIELD DIAG
 Validate("List of fields in Field0", S.Field.Field0().getFields() )

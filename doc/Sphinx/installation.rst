@@ -237,11 +237,12 @@ with developpers so that it can be included in the next release of :program:`Smi
 Compile the documentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The `Sphinx` documentation can compiled with the following command:
+The `Sphinx` documentation (which you are currently reading)
+can compiled with:
 
 .. code-block:: bash
 
-   make doc     # Compiles all the documentation
+   make doc
 
 
 ----
@@ -268,7 +269,7 @@ There are several ways to load this module in python.
   
   The module will directly be accessible from *python*::
     
-    from happi import Smilei
+    >>> import happi
 
 2. Alternative: Execute the ``Diagnostics.py`` script from python 
   
@@ -278,5 +279,5 @@ There are several ways to load this module in python.
   
   You may add the following command in your own python script::
   
-    execfile("/path/to/Smilei/scripts/Diagnostics.py")
+    >>> execfile("/path/to/Smilei/scripts/Diagnostics.py")
 

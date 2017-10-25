@@ -1,8 +1,8 @@
 import os, re, numpy as np, math
 from scipy.ndimage import gaussian_filter as gfilt
-from happi import *
+import happi
 
-S = Smilei(".", verbose=False)
+S = happi.Open(".", verbose=False)
 
 # COMPARE THE TOTAL NUMBER OF CREATED IONS
 nion = S.Scalar.Ntot_ion(timesteps=0).getData()[0]

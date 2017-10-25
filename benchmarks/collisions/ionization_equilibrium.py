@@ -1,4 +1,4 @@
-from happi import *
+import happi
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -52,7 +52,7 @@ fig = plt.figure(3, figsize=(6,3.5))
 for element in ["H", "Al", "Zn", "Au"]:
 	print "Analyzing "+element
 	
-	S=Smilei("ionization_equilibrium"+element)
+	S=happi.Open("ionization_equilibrium"+element)
 	
 	npoints = S.namelist.npoints
 	every = S.namelist.DiagParticleBinning[0].every
@@ -73,9 +73,9 @@ for element in ["H", "Al", "Zn", "Au"]:
 		
 		
 	
-	#multiPlot(*Z, figure=1, skipAnimation=True)
+	#happi.multiPlot(*Z, figure=1, skipAnimation=True)
 	
-	#multiPlot(*T, figure=2, skipAnimation=True)
+	#happi.multiPlot(*T, figure=2, skipAnimation=True)
 	
 	color = colors.pop()
 	

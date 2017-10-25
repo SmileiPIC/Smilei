@@ -1,4 +1,4 @@
-from happi import *
+import happi
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -23,11 +23,11 @@ plt.figure(1,figsize=(8,3.5))
 D = []
 sims = ["2","3","4"]
 for sim in sims:
-	S=Smilei("ionization_stopping_power"+sim)
+	S=happi.Open("ionization_stopping_power"+sim)
 	
 	D.append(S.ParticleBinning("#0/#1",sum={"x":"all"},units=["fs"],
 		linestyle="None", marker='o', markersize=4, markeredgewidth=0., skipAnimation=True))
-multiPlot(*D)
+happi.multiPlot(*D)
 fig = plt.gcf()
 ax = plt.gca()
 ax.xaxis.labelpad = 0
@@ -40,7 +40,7 @@ ax.set_position([0.1, 0.19, 0.35,  0.77])
 
 # Theory
 for sim in sims:
-	S=Smilei("ionization_stopping_power"+sim)
+	S=happi.Open("ionization_stopping_power"+sim)
 	
 	Zi = np.double(S.namelist.Species["ion1"].atomic_number)
 	ni = np.double(S.namelist.Species["ion1"].number_density) * 1.11e21 # cm^-3
@@ -71,7 +71,7 @@ ax.set_title("")
 
 ## Second, stopping power as a function of initial energy
 #########################################################
-S=Smilei("ionization_stopping_power1")
+S=happi.Open("ionization_stopping_power1")
 
 reference_angular_frequency_SI = np.double(S.namelist.Main.reference_angular_frequency_SI)
 timestep = np.double(S.namelist.Main.timestep)

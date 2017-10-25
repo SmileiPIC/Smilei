@@ -1,4 +1,4 @@
-from happi import *
+import happi
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib as mpl
@@ -20,9 +20,9 @@ mpl.rcParams['figure.facecolor'] = 'white'
 # ________________________________________________
 # Open results
 
-res_Boris = Smilei("./tst3d_cir_plane_wave_Boris")
-res_Vay = Smilei("./tst3d_cir_plane_wave_Vay")
-res_HC = Smilei("./tst3d_cir_plane_wave_HC")
+res_Boris = happi.Open("./tst3d_cir_plane_wave_Boris")
+res_Vay = happi.Open("./tst3d_cir_plane_wave_Vay")
+res_HC = happi.Open("./tst3d_cir_plane_wave_HC")
 
 # ________________________________________________
 # Parameters

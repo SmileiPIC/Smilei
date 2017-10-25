@@ -1,7 +1,7 @@
 import os, re, numpy as np
-from happi import *
+import happi
 
-S = Smilei(".", verbose=False)
+S = happi.Open(".", verbose=False)
 
 
 # PHYSICS OF ION ACCELERATION
