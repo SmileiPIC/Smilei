@@ -13,9 +13,7 @@ PYTHONCONFIG := python scripts/CompileTools/python-config.py
 
 #-----------------------------------------------------
 # Git information
-DESCRIBE:=$(shell git describe 2>/dev/null || cat .version || echo '??')
-BRANCH:=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
-VERSION="$(DESCRIBE)$(BRANCH)"
+VERSION:=$(shell python scripts/CompileTools/get-version.py )
 
 #-----------------------------------------------------
 # Directories and files
