@@ -212,7 +212,13 @@ class ParticleBinning(Diagnostic):
 							= self._selectSubset(subset[axistype], centers, axistype, axis_units, "subset")
 					except:
 						return
-				# If subset has more than 1 point (or no subset), use this axis in the plot
+					# If selection is not a slice (meaning only one element) then axis removed from plot
+					if type(self._selection[iaxis]) is not slice and axistype in ["x","y","z","moving_x"]:
+						first_edge = edges[self._selection[iaxis]]
+						last_edge  = edges[self._selection[iaxis]+1]
+						coeff /= last_edge - first_edge
+				
+				# If no subset, or subset has more than 1 point, use this axis in the plot
 				if type(self._selection[iaxis]) is slice:
 					self._type   .append(axistype)
 					self._shape  .append(axis["size"])
