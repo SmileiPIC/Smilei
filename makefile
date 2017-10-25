@@ -13,9 +13,9 @@ PYTHONCONFIG := python scripts/CompileTools/python-config.py
 
 #-----------------------------------------------------
 # Git information
-DESCRIBE:=$(shell git describe 2>/dev/null || echo '??')
-BRANCH:=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '??')
-VERSION="$(DESCRIBE)-$(BRANCH)"
+DESCRIBE:=$(shell git describe 2>/dev/null || cat .version || echo '??')
+BRANCH:=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
+VERSION="$(DESCRIBE)$(BRANCH)"
 
 #-----------------------------------------------------
 # Directories and files
@@ -199,6 +199,9 @@ doxygen:
 tar:
 	@echo "Creating archive $(EXEC)-$(VERSION).tgz"
 	$(Q) git archive -o $(EXEC)-$(VERSION).tgz --prefix $(EXEC)-$(VERSION)/ HEAD
+	$(Q) tar -zxf $(EXEC)-$(VERSION).tgz
+	$(Q) echo $(VERSION) > $(EXEC)-$(VERSION)/.version
+	$(Q) tar -czf $(EXEC)-$(VERSION).tgz $(EXEC)-$(VERSION) && rm -R $(EXEC)-$(VERSION)
 
 
 #-----------------------------------------------------
