@@ -163,9 +163,11 @@ int main (int argc, char* argv[])
     unsigned int global_factor(1);
     for ( unsigned int iDim = 0 ; iDim < params.nDim_field ; iDim++ )
         global_factor *= params.global_factor[iDim];
-    if (global_factor!=1) {
+    // Force temporary usage of double grids, even if global_factor = 1
+    //    especially to compare solvers
+    //if (global_factor!=1) {
         domain.build( params, smpi, vecPatches, openPMD );
-    }
+    //}
 
     timers.global.reboot();
     
@@ -222,21 +224,25 @@ int main (int argc, char* argv[])
             vecPatches.applyAntennas(time_dual);
             
             // solve Maxwell's equations
-            if ( global_factor==1 ) {
-                if( time_dual > params.time_fields_frozen ) {
-                    vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
-                }
-            }
+            // Force temporary usage of double grids, even if global_factor = 1
+            //    especially to compare solvers           
+            //if ( global_factor==1 ) {
+            //    if( time_dual > params.time_fields_frozen ) {
+            //        vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
+            //    }
+            //}
 
             vecPatches.finalize_and_sort_parts(params, smpi, simWindow, time_dual, timers, itime);
-            
-            if ( global_factor!=1 ) {
+
+            // Force temporary usage of double grids, even if global_factor = 1
+            //    especially to compare solvers           
+            //if ( global_factor!=1 ) {
                 timers.diagsNEW.restart();
                 SyncCartesianPatch::patchedToCartesian( vecPatches, domain, params, smpi, timers, itime );
                 domain.solveMaxwell( params, simWindow, itime, time_dual, timers );
                 SyncCartesianPatch::cartesianToPatches( domain, vecPatches, params, smpi, timers, itime );
                 timers.diagsNEW.update();
-            }
+            //}
 
             // call the various diagnostics
             vecPatches.runAllDiags(params, smpi, itime, timers, simWindow);
