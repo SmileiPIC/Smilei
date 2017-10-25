@@ -489,11 +489,20 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
     for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++ ) {
         ostringstream group_name("");
         group_name << "FieldsForDiag" << idiag;
-        hid_t diag_gid = H5Gopen(patch_gid, group_name.str().c_str(),H5P_DEFAULT);
-        for( unsigned int ifield=0; ifield<EMfields->allFields_avg[idiag].size(); ifield++ )
-            restartFieldsPerProc( diag_gid, EMfields->allFields_avg[idiag][ifield] );
-        
-        H5Gclose(diag_gid);
+        htri_t status = H5Lexists(patch_gid, group_name.str().c_str(), H5P_DEFAULT);
+        if( status > 0 ) {
+            hid_t diag_gid = H5Gopen(patch_gid, group_name.str().c_str(),H5P_DEFAULT);
+            
+            for( unsigned int ifield=0; ifield<EMfields->allFields_avg[idiag].size(); ifield++ )
+                restartFieldsPerProc( diag_gid, EMfields->allFields_avg[idiag][ifield] );
+            
+            H5Gclose(diag_gid);
+            
+        } else if( EMfields->allFields_avg[idiag].size() > 0 ) {
+            // When the restart occurs in the middle of an average, and the field diag is new,
+            // there is missing data that will cause wrong results on the first output after restart
+            WARNING("New average Field diag "<<idiag<<" may produce wrong first output after restart");
+        }
     }
     
     if ( EMfields->extFields.size()>0 ) {
