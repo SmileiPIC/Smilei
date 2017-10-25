@@ -12,7 +12,6 @@ Before installing :program:`Smilei`, you need to install a few dependencies:
 Optional dependencies are:
 
 * Git
-* Doxygen
 * Python modules: sphinx, h5py, numpy, matplotlib, pylab, pint
 * ffmpeg
 
@@ -79,7 +78,6 @@ that you can install following `these instructions <https://www.macports.org/ins
      sudo port install py27-h5py    # mandatory for opening any HDF5 file
      sudo port install py27-pint    # only for auto unit conversion
      sudo port install py27-sphinx  # only for building the doc
-     sudo port install doxygen      # only for building the reference C++ doc
 
 
 Via HomeBrew
@@ -239,18 +237,11 @@ with developpers so that it can be included in the next release of :program:`Smi
 Compile the documentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-There are two types of documentation:
-
-#. `Doxygen`, only useful for developers
-#. `Sphinx`, for users: the one you are currently reading
-
-They can be compiled with the following commands:
+The `Sphinx` documentation can compiled with the following command:
 
 .. code-block:: bash
 
    make doc     # Compiles all the documentation
-   make doxygen # Compiles only the `doxygen` doc
-   make sphinx  # Compiles only the `sphinx` doc
 
 
 ----
