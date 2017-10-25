@@ -87,13 +87,13 @@ Via HomeBrew
 
 This installation procedure has been tested on OS X 10.12
 
-#. `HomeBrew <http://brew.sh>`_ does not need administrator privileges and can easily installed via:
+#. `HomeBrew <http://brew.sh>`_ can easily installed via:
 
    .. code-block:: bash
 
      ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
-#. install the following packages using :program:`brew` to be able to compile and run :program:`smilei`
+#. Once installed, you need these packages:
 
    .. code-block:: bash
 
@@ -102,73 +102,74 @@ This installation procedure has been tested on OS X 10.12
      brew install openmpi --with-mpi-thread-multiple
      brew install hdf5 --with-mpi     
      brew install python numpy
+     export LC_ALL=en_US.UTF-8
+     export LANG=en_US.UTF-8
+     pip2 install ipython h5py pint sphinx matplotlib pylab
 
-#. Now you need to set the ``OMPI_CXX`` to the homebrew ``g++`` (``g++-7`` or similar):
+#. To be able to use the gcc with openmpi, you need to set the ``OMPI_CXX`` variable :
      
    .. code-block:: bash
 
-     export OMPI_CXX=g++-7
+     export OMPI_CXX=g++-7 # the number version might vary
 
-#. Alternatively you can put this line variable in a shell rc file (e.g. ``.bash_profile``) 
+#. You can put the above line in a shell rc file (e.g. ``.bash_profile``) 
    or you can just add it before the ``make`` command (``OMPI_CXX=g++-7 make`` ...)
 
-#. now you can compile :program:`smilei` (see :ref:`compile`)
-
-#. install the following extra packages (in order of importance)
-
-   .. code-block:: bash
-
-     export LC_ALL=en_US.UTF-8
-     export LANG=en_US.UTF-8
-     pip install ipython h5py pint sphinx matplotlib pylab
-
+#. now you can compile :program:`smilei` (see :ref:`compile` for other options)
 
 
 ----
 
-Install dependencies on Ubuntu
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Install dependencies on Linux
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     
-On Ubuntu 16.04
-"""""""""""""""
-
-Install the following packages from terminal:
-
-  .. code-block:: bash
-  
-    sudo apt-get install git openmpi-bin libhdf5-openmpi-dev build-essential python-dev
-
-On older release
-""""""""""""""""
-
 A manual installation is required :
 
-1. Download `OpenMPI <https://www.open-mpi.org/software/ompi>`_
+1. Choose a path whet to install dependencies by setting the environment variable ``INSTALL_DIR``. e.g. :
+
+  .. code-block:: bash
+
+  	$ export INSTALL_DIR=/usr/local
+
+
+2. Download `OpenMPI <https://www.open-mpi.org/software/ompi>`_
 
   .. code-block:: bash
   
-    $ taz zxvf openmpi-1.10.2.tar.gz
+    $ taz zxvf openmpi-1.10.2.tar.gz # the number version might vary
     $ cd openmpi-1.10.2
-    $ ./configure --prefix=${INSTALL_DIR}/openmpi-1.10.2 --enable-mpi-thread-multiple --enable-mpirun-prefix-by-default
+    $ ./configure --prefix=${INSTALL_DIR}/openmpi --enable-mpi-thread-multiple --enable-mpirun-prefix-by-default
     $ make
     $ make install
-    $ export PATH=${INSTALL_DIR}/openmpi-1.10.2/bin:${PATH}
-    $ export LD_LIBRARY_PATH=${INSTALL_DIR}/openmpi-1.10.2/lib:${LD_LIBRARY_PATH}
+    $ export PATH=${INSTALL_DIR}/openmpi/bin:${PATH}
+    $ export LD_LIBRARY_PATH=${INSTALL_DIR}/openmpi/lib:${LD_LIBRARY_PATH}
 
 
-2. Download `HDF5 <https://support.hdfgroup.org/HDF5>`_
+3. Download `HDF5 <https://support.hdfgroup.org/HDF5>`_ 
+	
+	the version number might change (here 1.8.16):
 
   .. code-block:: bash
   
-    $ tar zxvf hdf5-1.8.16.tar.gz
+    $ tar zxvf hdf5-1.8.16.tar.gz # the number version might vary
     $ cd hdf5-1.8.16
-    $ ./configure --prefix=${INSTALL_DIR}/hdf5-1.8.16 --enable-parallel --with-pic --enable-linux-lfs --enable-shared --enable-production=yes --disable-sharedlib-rpath --enable-static CC=mpicc FC=mpif90
+    $ ./configure --prefix=${INSTALL_DIR}/hdf5 --enable-parallel --with-pic --enable-linux-lfs --enable-shared --enable-production=yes --disable-sharedlib-rpath --enable-static CC=mpicc FC=mpif90
     $ make
     $ make install
-    $ export PATH=${INSTALL_DIR}/hdf5-1.8.16/bin:${PATH}
-    $ export LD_LIBRARY_PATH ${INSTALL_DIR}/hdf5-1.8.16/lib:${LD_LIBRARY_PATH}
+    $ export PATH=${INSTALL_DIR}/hdf5/bin:${PATH}
+    $ export LD_LIBRARY_PATH ${INSTALL_DIR}/hdf5/lib:${LD_LIBRARY_PATH}
     $ # set HDF5 variable used in SMILEI makefile
-    $ export HDF5_ROOT_DIR=${INSTALL_DIR}/hdf5-1.8.16
+    $ export HDF5_ROOT_DIR=${INSTALL_DIR}/hdf5
+
+
+4. It might be wise to put the ``export`` lines above in a shell rc script (e.g. ``~/.bash_profile``) :
+
+  .. code-block:: bash
+	
+    INSTALL_DIR=/usr/local
+    export HDF5_ROOT_DIR=${INSTALL_DIR}/hdf5
+    export PATH=${INSTALL_DIR}/openmpi/bin:${PATH}
+    export LD_LIBRARY_PATH=${INSTALL_DIR}/openmpi/lib:${INSTALL_DIR}/hdf5/lib:${LD_LIBRARY_PATH}
 
 
 ----

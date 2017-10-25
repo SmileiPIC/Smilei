@@ -116,8 +116,6 @@ clean:
 	@echo "Cleaning $(BUILD_DIR)"
 	$(Q) rm -rf $(BUILD_DIR) 
 	$(Q) rm -rf $(EXEC)-$(VERSION).tgz
-	@echo "Cleaning doc/html"
-	$(Q) rm -rf doc/html
 
 distclean: clean uninstall_python
 	$(Q) rm -f $(EXEC) $(EXEC)_test
@@ -185,19 +183,17 @@ endif
 doc: sphinx doxygen
 
 sphinx:
-	@echo "Compiling sphinx documentation in doc/html/Sphinx/html"
 	$(Q) if type "sphinx-build" >/dev/null 2>&1; then\
-		make -C doc/Sphinx BUILDDIR=../html/Sphinx html;\
+		make -C doc/Sphinx BUILDDIR=../../$(BUILD_DIR) html;\
+		echo "Sphinx documentation in $(BUILD_DIR)/html/index.html";\
 	else \
 		echo "Cannot build Sphinx doc because Sphinx is not installed";\
 	fi
 	
 doxygen:
-	@echo "Compiling doxygen documentation in doc/html/Doxygen/html"
 	$(Q) if type "doxygen" >/dev/null 2>&1; then\
 		mkdir -p doc/html/Doxygen; (echo "PROJECT_NUMBER=${VERSION}\nOUTPUT_DIRECTORY=doc/html/Doxygen"; cat doc/Doxygen/smilei.dox) | doxygen - ;\
-	else \
-		echo "Cannot build doxygen doc because doxygen is not installed";\
+		echo "Compiling doxygen documentation in doc/html/Doxygen/html";\
 	fi	
 
 tar:
