@@ -440,10 +440,10 @@ def multiPlot(*Diags, **kwargs):
 			Diag.options.plot.update({ "color":c[i%len(c)] })
 		Diag._prepare()
 	# Find min max
-	if option_xmin: xmin = min(option_xmin)
-	if option_xmax: xmax = max(option_xmax)
-	if option_ymin: ymin = min(option_ymin)
-	if option_ymax: ymax = max(option_ymax)
+	if option_xmin: xmin = min([xmin]+option_xmin)
+	if option_xmax: xmax = max([xmax]+option_xmax)
+	if option_ymin: ymin = min([ymin]+option_ymin)
+	if option_ymax: ymax = max([ymax]+option_ymax)
 	# Static plot
 	if sameAxes and Diags[0].dim==0:
 		for Diag in Diags:
