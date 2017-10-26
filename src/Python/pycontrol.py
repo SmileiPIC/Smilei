@@ -17,6 +17,19 @@ def _mkdir(role, path):
     elif not os.path.isdir(path):
         raise Exception("ERROR in the namelist: "+role+" "+path+" exists but is not a directory")
 
+def _prepare_checkpoint_dir():
+    # Checkpoint: prepare dir tree
+    if smilei_mpi_rank == 0 and (Checkpoints.dump_step>0 or Checkpoints.dump_minutes>0.):
+        checkpoint_dir = "." + os.sep + "checkpoints" + os.sep
+        if Checkpoints.file_grouping :
+            ngroups = (smilei_mpi_size-1)/Checkpoints.file_grouping + 1
+            ngroups_chars = int(math.log10(ngroups))+1
+            for group in range(ngroups):
+                group_dir = checkpoint_dir + '%*s'%(ngroups_chars,group)
+                _mkdir("checkpoint", group_dir)
+        else:
+            _mkdir("checkpoint", checkpoint_dir)
+
 def _smilei_check():
     """Do checks over the script"""
     # Verify classes were not overriden
@@ -29,17 +42,6 @@ def _smilei_check():
             if not CheckClass._verify: raise Exception("")
         except:
             raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
-    # Checkpoint: prepare dir tree
-    if smilei_mpi_rank == 0 and (Checkpoints.dump_step>0 or Checkpoints.dump_minutes>0.):
-        checkpoint_dir = "." + os.sep + "checkpoints" + os.sep
-        if Checkpoints.file_grouping :
-            ngroups = (smilei_mpi_size-1)/Checkpoints.file_grouping + 1
-            ngroups_chars = int(math.log10(ngroups))+1
-            for group in range(ngroups):
-                group_dir = checkpoint_dir + '%*s'%(ngroups_chars,group)
-                _mkdir("checkpoint", group_dir)
-        else:
-            _mkdir("checkpoint", checkpoint_dir)
     
     # Checkpoint: Verify the restart_dir and find possible restart file for each rank
     if len(Checkpoints)==1:
