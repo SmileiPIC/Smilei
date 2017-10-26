@@ -207,14 +207,12 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     
     // Write the diags screen data
     ostringstream diagName("");
-    string attr;
     if( smpi->isMaster() ) {
         for( unsigned int idiag=0; idiag<vecPatches.globalDiags.size(); idiag++ ) {
             if( DiagnosticScreen* screen = dynamic_cast<DiagnosticScreen*>(vecPatches.globalDiags[idiag]) ) {
                 diagName.str("");
                 diagName << "DiagScreen" << screen->screen_id;
-                attr = diagName.str();
-                H5::attr(fid, attr, screen->data_sum);
+                H5::vect(fid, diagName.str(), screen->data_sum);
             }
         }
     }
@@ -416,8 +414,12 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
             if( DiagnosticScreen* screen = dynamic_cast<DiagnosticScreen*>(vecPatches.globalDiags[idiag]) ) {
                 diagName.str("");
                 diagName << "DiagScreen" << screen->screen_id;
-                int attr_size=H5::getAttrSize(fid, diagName.str());
-                if (attr_size == (int) screen->data_sum.size()) {
+                int target_size = screen->data_sum.size();
+                int vect_size = H5::getVectSize(fid, diagName.str());
+                int attr_size = H5::getAttrSize(fid, diagName.str());
+                if( vect_size == target_size ) {
+                    H5::getVect(fid, diagName.str(), screen->data_sum);
+                } else if( attr_size == target_size ) {
                     H5::getAttr(fid, diagName.str(), screen->data_sum);
                 } else {
                     WARNING("Restart: DiagScreen[" << screen->screen_id << "] size mismatch. Previous data discarded");
