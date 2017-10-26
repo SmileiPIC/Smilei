@@ -206,19 +206,6 @@ class H5 {
     static void getAttr(hid_t locationId, std::string attribute_name, std::vector<T>& attribute_value) {
         getAttr(locationId, attribute_name, attribute_value, H5T_NATIVE_DOUBLE);
     }
-    
-    static int getAttrSize(hid_t locationId, std::string attribute_name) {
-        if (H5Aexists(locationId,attribute_name.c_str())>0) {
-            hid_t aid = H5Aopen(locationId, attribute_name.c_str(), H5P_DEFAULT);
-            hid_t sid = H5Aget_space(aid);
-            hssize_t npoints = H5Sget_simple_extent_npoints( sid );
-            H5Sclose( sid );
-            H5Aclose(aid);
-            return npoints;
-        } else {
-            return -1;
-        }
-    }
 
     //! retrieve a vector<anything> as an attribute
     template<class T>
@@ -236,6 +223,18 @@ class H5 {
         }
     }
     
+    static int getAttrSize(hid_t locationId, std::string attribute_name) {
+        if (H5Aexists(locationId,attribute_name.c_str())>0) {
+            hid_t aid = H5Aopen(locationId, attribute_name.c_str(), H5P_DEFAULT);
+            hid_t sid = H5Aget_space(aid);
+            hssize_t npoints = H5Sget_simple_extent_npoints( sid );
+            H5Sclose( sid );
+            H5Aclose(aid);
+            return npoints;
+        } else {
+            return -1;
+        }
+    }
     
     //! write a vector of unsigned ints
     //! v is the vector
@@ -337,6 +336,23 @@ class H5 {
         H5Dclose(did);
     }
     
+    static int getVectSize(hid_t locationId, std::string vect_name) {
+        if( H5Lexists(locationId, vect_name.c_str(), H5P_DEFAULT) >0 ) {
+            hid_t did = H5Dopen(locationId, vect_name.c_str(), H5P_DEFAULT);
+            hid_t sid = H5Aget_space(did);
+            int sdim = H5Sget_simple_extent_ndims(sid);
+            if (sdim!=1) {
+                ERROR("Reading vector " << vect_name << " is not 1D but " <<sdim << "D");
+            }
+            hsize_t dim[1];
+            H5Sget_simple_extent_dims(sid,dim,NULL);
+            H5Sclose( sid );
+            H5Dclose(did);
+            return (int)dim[0];
+        } else {
+            return -1;
+        }
+    }
 };
 
 #endif
