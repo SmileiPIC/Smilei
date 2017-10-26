@@ -226,6 +226,7 @@ class H5 {
     static int getAttrSize(hid_t locationId, std::string attribute_name) {
         if (H5Aexists(locationId,attribute_name.c_str())>0) {
             hid_t aid = H5Aopen(locationId, attribute_name.c_str(), H5P_DEFAULT);
+            if( aid < 0 ) return -1;
             hid_t sid = H5Aget_space(aid);
             hssize_t npoints = H5Sget_simple_extent_npoints( sid );
             H5Sclose( sid );
@@ -339,7 +340,8 @@ class H5 {
     static int getVectSize(hid_t locationId, std::string vect_name) {
         if( H5Lexists(locationId, vect_name.c_str(), H5P_DEFAULT) >0 ) {
             hid_t did = H5Dopen(locationId, vect_name.c_str(), H5P_DEFAULT);
-            hid_t sid = H5Aget_space(did);
+            if( did < 0 ) return -1;
+            hid_t sid = H5Dget_space(did);
             int sdim = H5Sget_simple_extent_ndims(sid);
             if (sdim!=1) {
                 ERROR("Reading vector " << vect_name << " is not 1D but " <<sdim << "D");
