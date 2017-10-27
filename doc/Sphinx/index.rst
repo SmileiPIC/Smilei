@@ -13,7 +13,7 @@ interaction to astrophysics.
 
 .. raw:: html
 
-  <a href="releases.html#current-release-3-2" class="icon">
+  <a href="releases.html#current-release-3-3" class="icon">
 
 .. image:: _static/download.svg
 
