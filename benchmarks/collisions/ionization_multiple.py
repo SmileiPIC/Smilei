@@ -11,16 +11,19 @@ for elm in ["C", "Al", "Zn", "Sn", "Au"]:
 	S1=happi.Open("ionization_multiple"+elm+"1")
 	S2=happi.Open("ionization_multiple"+elm+"2")
 	
-	color = colors.pop()
-	
-	timestep1 = np.round(np.double(S1.namelist.Main.timestep), decimals=1)
-	D.append( S1.ParticleBinning(0,sum={"ekin":[0,1]},
-		linestyle="-", color=color,
-		label=elm) )
-	
-	timestep2 = int(np.double(S2.namelist.Main.timestep))
-	D.append( S2.ParticleBinning(0,sum={"ekin":[0,1]},
-		linestyle="", marker=".", color=color ) )
+	if S1.valid and S2.valid:
+		
+		color = colors.pop()
+		
+		timestep1 = np.round(np.double(S1.namelist.Main.timestep), decimals=1)
+		D += [
+			S1.ParticleBinning(0,sum={"ekin":[0,1]}, linestyle="-", color=color, label=elm)
+		]
+		
+		timestep2 = int(np.double(S2.namelist.Main.timestep))
+		D += [
+			S2.ParticleBinning(0,sum={"ekin":[0,1]}, linestyle="", marker=".", color=color )
+		]
 
 
 # Plot simulation result

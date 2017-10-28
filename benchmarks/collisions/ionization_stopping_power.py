@@ -26,8 +26,8 @@ for sim in sims:
 	S=happi.Open("ionization_stopping_power"+sim)
 	
 	D.append(S.ParticleBinning("#0/#1",sum={"x":"all"},units=["fs"],
-		linestyle="None", marker='o', markersize=4, markeredgewidth=0., skipAnimation=True))
-happi.multiPlot(*D)
+		linestyle="None", marker='o', markersize=4, markeredgewidth=0.))
+happi.multiPlot(*D, skipAnimation=True)
 fig = plt.gcf()
 ax = plt.gca()
 ax.xaxis.labelpad = 0

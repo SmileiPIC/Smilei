@@ -21,7 +21,7 @@ for path in ["thermalisation_ei1","thermalisation_ei2","thermalisation_ei3"]:
 	c = 3e8
 	coeff = (2.*np.pi/wavelength)**2*re_*c / 8.
 	
-	times = sim.ParticleBinning(diagNumber=0).getAvailableTimesteps()
+	times = np.double(sim.ParticleBinning(diagNumber=0).getAvailableTimesteps())
 	
 	electrons0 = sim.ParticleBinning(0, sum={"x":"all"}).get()
 	evx = electrons0["vx"]

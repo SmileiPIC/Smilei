@@ -7,27 +7,26 @@ L0 = 2.*math.pi # conversion from normalization length to wavelength
 
 
 Main(
-    geometry = "1Dcartesian",
-
-    number_of_patches = [ 16 ],
-
-    interpolation_order = 2,
-
-    timestep = 0.002 * L0,
-    simulation_time = 0.5 * L0,
-
-    time_fields_frozen = 100000000000.,
-
-    cell_length = [20.*L0],
-    grid_length = [1600.*L0],
-
-    EM_boundary_conditions = [ ["periodic"] ],
-
-
-    random_seed = 0,
-
+	geometry = "1Dcartesian",
+	
+	number_of_patches = [ 8 ],
+	
+	interpolation_order = 2,
+	
+	timestep = 0.002 * L0,
+	simulation_time = 0.5 * L0,
+	
+	time_fields_frozen = 100000000000.,
+	
+	cell_length = [20.*L0],
+	grid_length = [1600.*L0],
+	
+	EM_boundary_conditions = [ ["periodic"] ],
+	
+	random_seed = 0,
+	
 	reference_angular_frequency_SI = L0 * 3e8 /1.e-6,
-    print_every = 10,
+	print_every = 10,
 )
 
 

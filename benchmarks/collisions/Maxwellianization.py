@@ -8,9 +8,8 @@ plt.ion()
 path = "Maxwellianization1"
 
 sim = happi.Open(path)
-coulomb_log          = np.double(sim.namelist.Collisions[0].coulomb_log)
-dt                   = np.double(sim.namelist.Main.timestep)/(2*np.pi)
-
+coulomb_log = np.double(sim.namelist.Collisions[0].coulomb_log)
+dt          = np.double(sim.namelist.Main.timestep)/(2*np.pi)
 
 re_ = 2.8179403267e-15 # meters
 wavelength = 1e-6 # meters

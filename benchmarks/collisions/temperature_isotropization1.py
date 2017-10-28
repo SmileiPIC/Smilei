@@ -46,9 +46,6 @@ Species(
 	boundary_conditions = [
 		["periodic", "periodic"],
 	],
-	boundary_conditions = [
-		["periodic", "periodic"],
-	],
 )
 
 Collisions(
