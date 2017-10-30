@@ -120,8 +120,20 @@ This installation procedure has been tested on OS X 10.12
 
 Install dependencies on Linux
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    
-A manual installation is required :
+
+Fedora
+""""""
+
+   .. code-block:: bash
+
+	 dnf install -y gcc-c++ hdf5-openmpi hdf5-openmpi-devel openmpi-devel git which findutils python python-devel
+     dnf install -y h5py ipython python2-pint sphinx python2-matplotlib
+
+
+
+Debian (Ubuntu, Mint etc...)
+""""""""""""""""""""""""""""
+Since the system ``openmpi`` is not compiled with ``--enable-mpi-thread-multiple``, a manual installation is required :
 
 1. Choose a path whet to install dependencies by setting the environment variable ``INSTALL_DIR``. e.g. :
 

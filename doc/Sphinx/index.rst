@@ -3,7 +3,7 @@
 
 .. rst-class:: horizontallogo
 
-  .. image:: ../smileiLogo/smileiLogo-horizontal2.svg
+  .. image:: ../logo/smileiLogo-horizontal2.svg
 
 **Smilei** is a collaborative Particle-In-Cell code for plasma simulation.
 Open-source, user-friendly and designed for high performances on super-computers,
