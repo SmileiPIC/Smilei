@@ -160,7 +160,7 @@ ifeq ($(filter-out $(wildcard print-*),$(MAKECMDGOALS)),)
         # Let's try to make the next lines clear: we include $(DEPS) and pygenerator
         -include $(DEPS) pygenerator
         # and pygenerator will create all the $(PYHEADERS) (which are files)
-        pygenerator : machine_help $(PYHEADERS)
+        pygenerator : $(PYHEADERS)
     endif
 endif
 
