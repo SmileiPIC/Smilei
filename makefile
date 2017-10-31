@@ -160,7 +160,7 @@ ifeq ($(filter-out $(wildcard print-*),$(MAKECMDGOALS)),)
         # Let's try to make the next lines clear: we include $(DEPS) and pygenerator
         -include $(DEPS) pygenerator
         # and pygenerator will create all the $(PYHEADERS) (which are files)
-        pygenerator : $(PYHEADERS)
+        pygenerator : machine_help $(PYHEADERS)
     endif
 endif
 
@@ -208,13 +208,13 @@ uninstall_happi:
 print-% :
 	$(info $* : $($*)) @true
 
-env: print-SMILEICXX print-MPIVERSION print-VERSION print-OPENMP_FLAG print-HDF5_ROOT_DIR print-SITEDIR print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS
+env: print-SMILEICXX print-MPIVERSION print-VERSION print-OPENMP_FLAG print-HDF5_ROOT_DIR print-SITEDIR print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS	
 
 
 #-----------------------------------------------------
 # help
 
-help: 
+help:
 	@echo 'TO BUILD SMILEI:'
 	@echo '----------------'
 	@echo 'Usage:'
@@ -235,7 +235,8 @@ help:
 	@echo '  make config="debug noopenmp"'
 	@echo
 	@echo 'Machine options:'
-	@echo '  make machine=XXX : include machine file in scripts/CompileTools/machine/XXX'
+	@echo '  make machine=XXX      : include machine file in scripts/CompileTools/machine/XXX'
+	@echo '  make machine=XXX help : print help for machine'
 	@echo
 	@echo 'OTHER PURPOSES:'
 	@echo '---------------'
@@ -255,4 +256,6 @@ help:
 	@echo 
 	@echo 'http://www.maisondelasimulation.fr/smilei'
 	@echo 'https://github.com/SmileiPIC/Smilei'
+	@echo
+	@if [ -f  scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine); fi
 
