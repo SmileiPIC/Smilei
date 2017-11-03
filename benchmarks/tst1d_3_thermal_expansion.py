@@ -2,7 +2,7 @@
 #                     SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
 # ----------------------------------------------------------------------------------------
 
-import math
+import math, random
 
 Te_keV = 1.              # electron temperature in keV
 Te  = Te_keV/511.        # Te normalised in mec^2 (code units)
@@ -32,12 +32,12 @@ Main(
     
     EM_boundary_conditions = [ ['silver-muller','silver-muller'] ] ,
     
-    random_seed = smilei_mpi_rank
+    random_seed = int(random.getrandbits(32))+smilei_mpi_rank
 )
 
 Species(
     name = 'ion',
-    position_initialization = 'regular',
+    position_initialization = 'random',
     momentum_initialization = 'mj',
     particles_per_cell = 10,
     mass = mi, 
@@ -52,9 +52,9 @@ Species(
 )
 Species(
     name = 'eon',
-    position_initialization = 'regular',
+    position_initialization = 'random',
     momentum_initialization = 'maxwell-juettner',
-    particles_per_cell = 100,
+    particles_per_cell = 400,
     mass = 1.0,
     charge = -1.0,
     number_density = trapezoidal(1., xplateau=20.*Ld),
@@ -104,9 +104,9 @@ DiagParticleBinning(
 DiagParticleBinning(
     deposited_quantity = "weight",
     every = 10,
-    time_average = 1,
+    time_average = 10,
     species = ["eon"],
     axes = [
-        ["ekin", 0.1*Te, 20*Te, 30, "logscale"]
+        ["ekin", 0.1*Te, 20*Te, 30, "logscale", "edge_inclusive"]
     ]
 )
