@@ -6,6 +6,7 @@ compile:
   stage: compile
   only:
     - develop
+    - develop_fred
 
   script:
     # Move in test dir
@@ -19,6 +20,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
+    - develop_fred
 
   script:
     # Move in test dir
