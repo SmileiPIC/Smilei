@@ -430,20 +430,21 @@ def multiPlot(*Diags, **kwargs):
 		if Diag.options.xmax is not None: option_xmax += [Diag.options.xmax]
 		if Diag.options.ymin is not None: option_ymin += [Diag.options.ymin]
 		if Diag.options.ymax is not None: option_ymax += [Diag.options.ymax]
+		if "color" not in Diag.options.plot:
+			Diag.options.plot.update({ "color":c[i%len(c)] })
+		Diag._prepare()
 		try:
 			l = Diag.limits()[0]
 			xmin = min(xmin,l[0])
 			xmax = max(xmax,l[1])
 		except:
 			pass
-		if "color" not in Diag.options.plot:
-			Diag.options.plot.update({ "color":c[i%len(c)] })
-		Diag._prepare()
 	# Find min max
 	if option_xmin: xmin = min([xmin]+option_xmin)
 	if option_xmax: xmax = max([xmax]+option_xmax)
 	if option_ymin: ymin = min([ymin]+option_ymin)
 	if option_ymax: ymax = max([ymax]+option_ymax)
+	print xmin, xmax
 	# Static plot
 	if sameAxes and Diags[0].dim==0:
 		for Diag in Diags:
