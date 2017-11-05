@@ -583,7 +583,7 @@ class SmileiSimulation(object):
 		for key, value in namespace.items(): # transfer all variables to this object
 			if key[0]=="_": continue # skip builtins
 			setattr(namelist, key, value)
-	
+		
 		# Get some info on the simulation
 		try:
 			# get number of dimensions

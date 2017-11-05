@@ -2,7 +2,9 @@ import os, re, numpy as np, math
 from scipy.interpolate import interp1d as interp
 import happi
 
-S = happi.Open(".", verbose=False)
+S = happi.Open(["./restart*"], verbose=False)
+
+
 
 # COMPARE THE Ez FIELD
 Ey = S.Field.Field0.Ey(timesteps=1000).getData()[0]

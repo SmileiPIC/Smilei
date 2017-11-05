@@ -8,7 +8,7 @@ This script can do three things:
 
 Usage
 #######
-python validation.py [-c] [-h] [-v] [-b <bench_case> [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s]]
+python validation.py [-c] [-h] [-v] [-b <bench_case>] [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s] [-r <nb_restarts>]
 
 For help on options, try 'python validation.py -h'
 
@@ -72,7 +72,10 @@ This script may run anywhere: you can define a SMILEI_ROOT environment variable
 import sys, os, re, glob, time, math
 import shutil, getopt, inspect, socket, pickle
 from subprocess import check_call,CalledProcessError,call
+import happi
 s = os.sep
+
+INITIAL_DIRECTORY = os.getcwd()
 
 # SMILEI PATH VARIABLES
 if "SMILEI_ROOT" in os.environ :
@@ -114,17 +117,18 @@ BENCH=""
 COMPILE_ONLY = False
 GENERATE = False
 SHOWDIFF = False
+nb_restarts = 0
 
 # TO PRINT USAGE
 def usage():
-	print 'Usage: validation.py [-c] [-h] [-v] [-b <bench_case> [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s]]'
+	print 'Usage: validation.py [-c] [-h] [-v] [-b <bench_case>] [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s] [-r <nb_restarts>]'
 
 # GET COMMAND-LINE OPTIONS
 try:
 	options, remainder = getopt.getopt(
 		sys.argv[1:],
-		'o:m:b:gshvc',
-		['OMP=', 'MPI=', 'BENCH=', 'COMPILE_ONLY=', 'GENERATE=', 'HELP=', 'VERBOSE='])
+		'o:m:b:gshvcr:',
+		['OMP=', 'MPI=', 'BENCH=', 'COMPILE_ONLY=', 'GENERATE=', 'HELP=', 'VERBOSE=', 'RESTARTS='])
 except getopt.GetoptError as err:
 	usage()
 	sys.exit(4)
@@ -156,20 +160,31 @@ for opt, arg in options:
 		print "       <nb_MPIProcs> : number of MPI processes used for the execution"
 		print "     DEFAULT : 4"
 		print "-g"
-		print "     Generation of references only"
+		print "     Generates the references"
 		print "-s"
-		print "     Plot differences with references only"
+		print "     Plot differences with references (python -i option required to keep figures on screen)"
+		print "-r"
+		print "     -r <nb_restarts>"
+		print "       <nb_restarts> : number of restarts to run, as long as the simulations provide them."
+		print "     DEFAULT : 0 (meaning no restarts, only one simulation)"
 		print "-c"
 		print "     Compilation only"
 		print "-v"
-		print "     Verbose"
-		exit()
+		print "     Verbose mode"
+		sys.exit(0)
 	elif opt in ('-g', '--GENERATE'):
 		GENERATE = True
 	elif opt in ('-s', '--SHOW'):
 		SHOWDIFF = True
 	elif opt in ('-v', '--VERBOSE'):
 		VERBOSE = True
+	elif opt in ('-r', '--RESTARTS'):
+		try:
+			nb_restarts = int(arg)
+			if nb_restarts < 0: raise
+		except:
+			print("Error: the number of restarts (option -r) must be a positive integer")
+			sys.exit(4)
 
 if GENERATE and SHOWDIFF:
 	usage()
@@ -591,71 +606,120 @@ class ShowDiffWithReference(object):
 # RUN THE BENCHMARKS
 
 for BENCH in SMILEI_BENCH_LIST :
-
+	
 	SMILEI_BENCH = SMILEI_BENCHS + BENCH
-
-	# CREATE THE WORKDIR CORRESPONDING TO THE INPUT FILE AND GO INTO
+	
+	# CREATE THE WORKDIR CORRESPONDING TO THE INPUT FILE
 	WORKDIR = WORKDIR_BASE+s+'wd_'+os.path.basename(os.path.splitext(BENCH)[0])
 	if not os.path.exists(WORKDIR):
 		os.mkdir(WORKDIR)
-	os.chdir(WORKDIR)
-
+	
 	WORKDIR += s+str(MPI)
 	if not os.path.exists(WORKDIR):
 		os.mkdir(WORKDIR)
-
+	
 	WORKDIR += s+str(OMP)
-	EXECUTION = True
 	if not os.path.exists(WORKDIR):
 		os.mkdir(WORKDIR)
-	elif GENERATE:
-		EXECUTION = False
-
-	os.chdir(WORKDIR)
-
-	# Copy of the databases
-	# For the cases that need a database
-	if BENCH in ["tst2d_8_synchrotron_chi1.py",
-                 "tst2d_9_synchrotron_chi0.1.py",
-                 "tst1d_9_rad_electron_laser_collision.py",
-                 "tst1d_10_pair_electron_laser_collision.py",
-                 "tst2d_10_multiphoton_Breit_Wheeler.py"]:
-		try :
-			# Copy the database
-			check_call(['cp '+SMILEI_DATABASE+'/*.h5 '+WORKDIR], shell=True)
-		except CalledProcessError,e:
-			if VERBOSE :
-				print  "Execution failed for copy databases in ",DATABASE
+	
+	# If there are restarts, prepare a Checkpoints block to the namelist
+	RESTART_INFO = ""
+	if nb_restarts > 0:
+		# Load the namelist 
+		namelist = happi.openNamelist(SMILEI_BENCH)
+		# Find out the optimal dump_step
+		niter = namelist.Main.simulation_time / namelist.Main.timestep
+		dump_step = int( (niter+3.) / (nb_restarts+1) )
+		# Prepare block
+		if len(namelist.Checkpoints) > 0:
+			RESTART_INFO = (" \""
+				+ "Checkpoints.keep_n_dumps="+str(nb_restarts)+";"
+				+ "Checkpoints.dump_minutes=0.;"
+				+ "Checkpoints.dump_step="+str(dump_step)+";"
+				+ "Checkpoints.exit_after_dump=True;"
+				+ "Checkpoints.restart_dir=%s;"
+				+ "\""
+			)
+		else:
+			RESTART_INFO = (" \"Checkpoints("
+				+ "keep_n_dumps="+str(nb_restarts)+","
+				+ "dump_minutes=0.,"
+				+ "dump_step="+str(dump_step)+","
+				+ "exit_after_dump=True,"
+				+ "restart_dir=%s,"
+				+ ")\""
+			)
+		del namelist
+	
+	# Loop restarts
+	for irestart in range(nb_restarts+1):
+		
+		RESTART_WORKDIR = WORKDIR + s + "restart%03d"%irestart
+		
+		EXECUTION = True
+		if not os.path.exists(RESTART_WORKDIR):
+			os.mkdir(RESTART_WORKDIR)
+		elif GENERATE:
+			EXECUTION = False
+		
+		os.chdir(RESTART_WORKDIR)
+		
+		# Copy of the databases
+		# For the cases that need a database
+		if BENCH in [
+				"tst2d_8_synchrotron_chi1.py",
+				"tst2d_9_synchrotron_chi0.1.py",
+				"tst1d_9_rad_electron_laser_collision.py",
+				"tst1d_10_pair_electron_laser_collision.py",
+				"tst2d_10_multiphoton_Breit_Wheeler.py"
+			]:
+			try :
+				# Copy the database
+				check_call(['cp '+SMILEI_DATABASE+'/*.h5 '+RESTART_WORKDIR], shell=True)
+			except CalledProcessError,e:
+				if VERBOSE :
+					print  "Execution failed for copy databases in ",RESTART_WORKDIR
+				sys.exit(2)
+		
+		# If there are restarts, adds the Checkpoints block
+		SMILEI_NAMELISTS = SMILEI_BENCH
+		if nb_restarts > 0:
+			if irestart == 0:
+				RESTART_DIR = "None"
+			else:
+				RESTART_DIR = "'"+WORKDIR+s+("restart%03d"%(irestart-1))+s+"'"
+			SMILEI_NAMELISTS += RESTART_INFO % RESTART_DIR
+		
+		# RUN smilei IF EXECUTION IS TRUE
+		if EXECUTION :
+			if VERBOSE:
+				print 'Running '+BENCH+' on '+HOSTNAME+' with '+str(OMP)+'x'+str(MPI)+' OMPxMPI' + ((", restart #"+str(irestart)) if irestart>0 else "")
+			RUN( RUN_COMMAND % SMILEI_NAMELISTS, RESTART_WORKDIR)
+		
+		# CHECK THE OUTPUT FOR ERRORS
+		errors = []
+		search_error = re.compile('error', re.IGNORECASE)
+		with open(SMILEI_EXE_OUT,"r") as fout:
+			for line in fout:
+				if search_error.search(line):
+					errors += [line]
+		if errors:
+			print ""
+			print("Errors appeared while running the simulation:")
+			print("---------------------------------------------")
+			for error in errors:
+				print(error)
 			sys.exit(2)
-
-	# RUN smilei IF EXECUTION IS TRUE
-	if EXECUTION :
-		if VERBOSE:
-			print 'Running '+BENCH+' on '+HOSTNAME+' with '+str(OMP)+'x'+str(MPI)+' OMPxMPI'
-		RUN( RUN_COMMAND % SMILEI_BENCH, WORKDIR)
-
-	# CHECK THE OUTPUT FOR ERRORS
-	errors = []
-	search_error = re.compile('error', re.IGNORECASE)
-	with open(SMILEI_EXE_OUT,"r") as fout:
-		for line in fout:
-			if search_error.search(line):
-				errors += [line]
-	if errors:
-		print ""
-		print("Errors appeared while running the simulation:")
-		print("---------------------------------------------")
-		for error in errors:
-			print(error)
-		sys.exit(2)
-
+	
+	os.chdir(WORKDIR)
+	
 	# FIND THE VALIDATION SCRIPT FOR THIS BENCH
 	validation_script = SMILEI_VALIDATION + "analyses" + s + "validate_"+BENCH
 	if VERBOSE: print ""
 	if not os.path.exists(validation_script):
 		print "Unable to find the validation script "+validation_script
 		sys.exit(1)
-
+	
 	# IF REQUIRED, GENERATE THE REFERENCES
 	if GENERATE:
 		if VERBOSE:
@@ -663,25 +727,26 @@ for BENCH in SMILEI_BENCH_LIST :
 		Validate = CreateReference(BENCH)
 		execfile(validation_script)
 		Validate.write()
-
+	
 	# OR PLOT DIFFERENCES WITH RESPECT TO EXISTING REFERENCES
 	elif SHOWDIFF:
 		if VERBOSE:
 			print 'Viewing differences for '+BENCH
 		Validate = ShowDiffWithReference(BENCH)
 		execfile(validation_script)
-
+	
 	# OTHERWISE, COMPARE TO THE EXISTING REFERENCES
 	else:
 		if VERBOSE:
 			print 'Validating '+BENCH
 		Validate = CompareToReference(BENCH)
 		execfile(validation_script)
-
-        # CLEAN WORKDIRS, GOES HERE ONLY IF SUCCEED
+	
+	# CLEAN WORKDIRS, GOES HERE ONLY IF SUCCEED
 	os.chdir(WORKDIR_BASE)
-        shutil.rmtree( WORKDIR_BASE+s+'wd_'+os.path.basename(os.path.splitext(BENCH)[0]), True )
-
+	shutil.rmtree( WORKDIR_BASE+s+'wd_'+os.path.basename(os.path.splitext(BENCH)[0]), True )
+	
 	if VERBOSE: print ""
 
 print "Everything passed"
+os.chdir(INITIAL_DIRECTORY)

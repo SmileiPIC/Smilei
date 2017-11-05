@@ -2,7 +2,9 @@ import os, re, numpy as np, math
 from scipy.ndimage import gaussian_filter as gfilt
 import happi
 
-S = happi.Open(".", verbose=False)
+S = happi.Open(["./restart*"], verbose=False)
+
+
 
 # COMPARE THE INITIAL POSITIONS OF ELECTRONS
 particles = S.TrackParticles.eon(axes=["x","y"], select="any(t==0, (x<7)*(y<0.5))").getData()

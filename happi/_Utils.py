@@ -44,6 +44,37 @@ def updateMatplotLibColormaps():
 		})
 
 
+def openNamelist(namelist):
+	"""
+	Function to execute a namelist and store all its content in the returned object.
+	
+	Example:
+		namelist = happi.openNamelist("path/no/my/namelist.py")
+		print namelist.Main.timestep
+	"""
+	
+	from . import happi_directory
+	from os import sep
+	from os.path import isdir, exists
+	smilei_python_directory = happi_directory + sep + ".." + sep + "src" + sep + "Python"
+	if not isdir(smilei_python_directory):
+		raise Exception("Cannot find the Smilei/src directory")
+	for file in ["pyinit.py", "pycontrol.py", "pyprofiles.py"]:
+		if not exists(smilei_python_directory + sep + file):
+			raise Exception("Cannot find the Smilei/src/Python/"+file+" file")
+	namespace={}
+	exec(open(smilei_python_directory+sep+"pyinit.py").read(), namespace)
+	exec(open(smilei_python_directory+sep+"pyprofiles.py").read(), namespace)
+	exec(open(namelist).read(), namespace) # execute the namelist
+	exec(open(smilei_python_directory+sep+"pycontrol.py").read(), namespace)
+	class Namelist: pass # empty class to store the namelist variables
+	namelist = Namelist() # create new empty object
+	for key, value in namespace.items(): # transfer all variables to this object
+		if key[0]=="_": continue # skip builtins
+		setattr(namelist, key, value)
+	return namelist
+
+
 class Options(object):
 	""" Class to contain matplotlib plotting options """
 	

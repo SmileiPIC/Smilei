@@ -1,7 +1,9 @@
 import os, re, numpy as np, math, h5py
 import happi
 
-S = happi.Open(".", verbose=False)
+S = happi.Open(["./restart*"], verbose=False)
+
+
 
 # COMPARE THE Ey FIELD
 Ey = S.Field.Field0.Ey(timesteps=1500, subset={"x":[0,10000,8], "y":[0,10000,8]}).getData()[0]
@@ -20,7 +22,7 @@ max_ubal_norm = np.max( np.abs(S.Scalar.Ubal_norm().getData()) )
 Validate("Max Ubal_norm is below 10%", max_ubal_norm<0.1 )
 
 # TEST THE GRID PARAMETERS
-with h5py.File("Fields0.h5") as f:
+with h5py.File("./restart000/Fields0.h5") as f:
 	dt = f["data/0000000000"].attrs["dt"]
 	dx = f["data/0000000000/Ex"].attrs["gridSpacing"]
 	patchSize = f["data/0000000000"].attrs["patchSize"]

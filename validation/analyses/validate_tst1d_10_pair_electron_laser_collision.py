@@ -21,7 +21,9 @@
 import os, re, numpy as np, h5py
 import happi
 
-S = happi.Open(".", verbose=False)
+S = happi.Open(["./restart*"], verbose=False)
+
+
 
 # ______________________________________________________________________________
 # Read scalar diagnostics

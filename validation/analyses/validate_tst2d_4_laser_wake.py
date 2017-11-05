@@ -1,7 +1,9 @@
 import os, re, numpy as np, math 
 import happi
 
-S = happi.Open(".", verbose=False)
+S = happi.Open(["./restart*"], verbose=False)
+
+
 
 # COMPARE THE Ey FIELD
 Ey = S.Field.Field0.Ey(timesteps=1600).getData()[0][::10,:]

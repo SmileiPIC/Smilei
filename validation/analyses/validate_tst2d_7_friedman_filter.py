@@ -1,7 +1,9 @@
 import os, re, numpy as np, math 
 import happi
 
-S = happi.Open(".", verbose=False)
+S = happi.Open(["./restart*"], verbose=False)
+
+
 
 # MINIMAL VALIDATION
 Validate("Number of timesteps", len( S.Scalar.Ubal_norm().getData()), 1)
