@@ -17,7 +17,7 @@ Here are listed the files used in the validation process:
 #########################################################
 The "validation" directory which contains:
   - the "references" directory with one file for each benchmark
-  - validation files (prefixed with "validate_") for each benchmark
+  - the "analyses" directory with one validation file for each benchmark
   - a "workdirs" directory, created during the validation process
   - archived "workdirs" for previous versions of smilei
 
@@ -177,7 +177,7 @@ if GENERATE and SHOWDIFF:
 
 # Build the list of the requested input files
 list_bench = [os.path.basename(b) for b in glob.glob(SMILEI_BENCHS+"tst*py")]
-list_validation = [os.path.basename(b) for b in glob.glob(SMILEI_VALIDATION+"validate_tst*py")]
+list_validation = [os.path.basename(b) for b in glob.glob(SMILEI_VALIDATION+"analyses"+s+"validate_tst*py")]
 list_bench = [b for b in list_bench if "validate_"+b in list_validation]
 if BENCH == "":
 	SMILEI_BENCH_LIST = list_bench
@@ -650,7 +650,7 @@ for BENCH in SMILEI_BENCH_LIST :
 		sys.exit(2)
 
 	# FIND THE VALIDATION SCRIPT FOR THIS BENCH
-	validation_script = SMILEI_VALIDATION + "validate_"+BENCH
+	validation_script = SMILEI_VALIDATION + "analyses" + s + "validate_"+BENCH
 	if VERBOSE: print ""
 	if not os.path.exists(validation_script):
 		print "Unable to find the validation script "+validation_script
