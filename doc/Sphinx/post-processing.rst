@@ -14,11 +14,11 @@ The module can be imported directly in *python*::
 Open a simulation
 ^^^^^^^^^^^^^^^^^^^
 
-In a *python* command line (or script), invoke the following class to open
+In a *python* command line (or script), call the following function to open
 your :program:`Smilei` simulation. Note that several simulations can be opened at once,
 as long as they correspond to several :ref:`restarts <Checkpoints>` of the same simulation.
 
-.. py:class:: happi.Open(results_path=".", show=True, reference_angular_frequency_SI=None, verbose=True)
+.. py:method:: happi.Open(results_path=".", show=True, reference_angular_frequency_SI=None, verbose=True)
 
   * ``results_path``: path or list of paths to the directory-ies
     where the results of the simulation-s are stored. It can also contain wildcards,

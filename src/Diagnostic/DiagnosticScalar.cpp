@@ -177,9 +177,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     unsigned int k = 0;
     for (unsigned int j=0; j<2;j++) {
         for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {
-            if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
-            else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
-            else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
+            poy_name = string("Poy") + "XYZ"[i] + (j==0?"min":"max");
             necessary_poy[k] = necessary_Uelm_BC || allowedKey(poy_name) || allowedKey(poy_name+"Inst");
             k++;
         }
@@ -248,9 +246,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     k = 0;
     for (unsigned int j=0; j<2;j++) {
         for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {
-            if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
-            else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
-            else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
+            poy_name = string("Poy") + "XYZ"[i] + (j==0?"min":"max");
             poy    [k] = newScalar_SUM( poy_name        );
             poyInst[k] = newScalar_SUM( poy_name+"Inst" );
             k++;

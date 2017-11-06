@@ -201,9 +201,23 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     
     H5::vect( fid, "patch_count", smpi->patch_count );
     
-    H5::attr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
-    H5::attr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
-    H5::attr(fid, "latest_timestep",   static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->latest_timestep  );
+    // Write diags scalar data
+    DiagnosticScalar* scalars = static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0]);
+    H5::attr(fid, "Energy_time_zero",  scalars->Energy_time_zero );
+    H5::attr(fid, "EnergyUsedForNorm", scalars->EnergyUsedForNorm);
+    H5::attr(fid, "latest_timestep",   scalars->latest_timestep  );
+    if( smpi->isMaster() ) {
+        unsigned int k=0;
+        for (unsigned int j=0; j<2; j++) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+            for (unsigned int i=0; i<params.nDim_field; i++) { //axis 0=x, 1=y, 2=z
+                if( scalars->necessary_poy[k] ) {
+                    string poy_name = string("Poy") + "XYZ"[i] + (j==0?"min":"max");
+                    H5::attr(fid, poy_name, (double)*(scalars->poy[k]));
+                    k++;
+                }
+            }
+        }
+    }
     
     // Write the diags screen data
     ostringstream diagName("");
@@ -411,9 +425,21 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
     hid_t fid = H5Fopen( restart_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
     if (fid < 0) ERROR(restart_file << " is not a valid HDF5 file");    
     
-    H5::getAttr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
-    H5::getAttr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
-    H5::getAttr(fid, "latest_timestep",   static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->latest_timestep  );
+    // Write diags scalar data
+    DiagnosticScalar* scalars = static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0]);
+    H5::getAttr(fid, "Energy_time_zero",  scalars->Energy_time_zero );
+    H5::getAttr(fid, "EnergyUsedForNorm", scalars->EnergyUsedForNorm);
+    H5::getAttr(fid, "latest_timestep",   scalars->latest_timestep  );
+    if( smpi->isMaster() ) {
+        unsigned int k=0;
+        for (unsigned int j=0; j<2; j++) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+            for (unsigned int i=0; i<params.nDim_field; i++) { //axis 0=x, 1=y, 2=z
+                string poy_name = string("Poy") + "XYZ"[i] + (j==0?"min":"max");
+                if(H5Aexists(fid, poy_name.c_str())>0) H5::getAttr(fid, poy_name, vecPatches(0)->EMfields->poynting[j][i]);
+                k++;
+            }
+        }
+    }
     
     // Read the diags screen data
     ostringstream diagName("");
