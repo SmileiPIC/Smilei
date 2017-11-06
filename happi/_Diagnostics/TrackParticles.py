@@ -444,7 +444,7 @@ class TrackParticles(Diagnostic):
 				f0.attrs["latestOrdered"] = it
 				f0.flush()
 				f.close()
-			print("    Finalizing the ordering process")
+			if self._verbose: print("    Finalizing the ordering process")
 			# Create the "Times" dataset
 			f0.create_dataset("Times", data=times)
 			# Create the "unique_Ids" dataset
