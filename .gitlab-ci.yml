@@ -11,6 +11,8 @@ compile:
     # Move in test dir
     - mkdir -p /sps2/gitlab-runner/$CI_PIPELINE_ID
     - cp -r $CI_PROJECT_DIR /sps2/gitlab-runner/$CI_PIPELINE_ID
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
+    - make happi
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
     - python validation.py -c  -v
