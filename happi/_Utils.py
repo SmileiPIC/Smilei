@@ -440,7 +440,7 @@ def multiPlot(*Diags, **kwargs):
 		ax.append( fig.add_subplot(shape[0], shape[1], i+1) )
 	rightside = [d.options.side=="right" for d in Diags]
 	allright  = all(rightside)
-	bothsides = any(rightside) and any(not rightside)
+	bothsides = any(rightside) and not allright
 	for i, Diag in enumerate(Diags):
 		Diag._cax_id = 0
 		if sameAxes:
