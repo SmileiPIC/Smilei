@@ -4,7 +4,7 @@ from scipy.signal import butter, filtfilt
 b, a = butter(5, 0.2, btype='low', analog=False)
 
 
-S = happi.Open(".", verbose=False)
+S = happi.Open("./restart*", verbose=False)
 
 eon_spectrum = S.ParticleBinning.Diag2().get()
 ekin = eon_spectrum["ekin"]
