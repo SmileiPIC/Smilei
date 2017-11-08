@@ -317,23 +317,19 @@ It has three different syntaxes:
 Obtain the data
 ^^^^^^^^^^^^^^^
 
-.. py:method:: Scalar.getData(...)
-               Field.getData(...)
-               Probe.getData(...)
-               ParticleBinning.getData(...)
-               Screen.getData(...)
-               TrackParticles.getData(...)
+.. py:method:: Scalar.getData( timestep=None )
+               Field.getData( timestep=None )
+               Probe.getData( timestep=None )
+               ParticleBinning.getData( timestep=None )
+               Screen.getData( timestep=None )
+               TrackParticles.getData( timestep=None )
 
   Returns a list of the data arrays (one element for each timestep requested).
   In the case of ``TrackParticles``, this method returns a dictionary containing one
   entry for each axis, and if ``sort==True``, these entries are included inside an entry
   for each timestep.
 
-  All these methods have the following syntax.
-
-  .. py:function:: getData( timestep=None )
-
-  where ``timestep``, if specified, is the only timestep number that is read and returned.
+  * ``timestep``, if specified, is the only timestep number that is read and returned.
 
   **Example**::
 
@@ -342,28 +338,40 @@ Obtain the data
       result = Diag.getData()       # Get list of Ex arrays (one for each time)
 
 
-.. py:method:: Scalar.get(...)
-               Field.get(...)
-               Probe.get(...)
-               ParticleBinning.get(...)
-               Screen.get(...)
-               TrackParticles.get(...)
+.. py:method:: Scalar.getTimesteps()
+               Field.getTimesteps()
+               Probe.getTimesteps()
+               ParticleBinning.getTimesteps()
+               Screen.getTimesteps()
+               TrackParticles.getTimesteps()
 
-  Same syntax as :py:meth:`getData`, but returns a python dictionary containing various information:
+  Returns a list of the timesteps requested.
+
+
+.. py:method:: Scalar.getTimes()
+               Field.getTimes()
+               Probe.getTimes()
+               ParticleBinning.getTimes()
+               Screen.getTimes()
+               TrackParticles.getTimes()
+
+  Returns the list of the times requested.
+  By default, times are in the code's units, but are converted to the diagnostic's
+  units defined by the ``units`` argument, if provided.
+
+
+.. py:method:: Scalar.getAxis( axis )
+               Field.getAxis( axis )
+               Probe.getAxis( axis )
+               ParticleBinning.getAxis( axis )
+               Screen.getAxis( axis )
+
+  Returns the list of positions of the diagnostic data along the requested axis.
+  If the axis is not available, returns an empty list.
+  By default, axis positions are in the code's units, but are converted to 
+  the diagnostic's units defined by the ``units`` argument, if provided.
   
-  * ``get()["data"]`` is the same as ``getData()``.
-  * ``get()["times"]`` is a list of the requested timesteps.
-  * ``get()[myaxis]`` gives the locations of the axis bins. For instance ``get()["x"]``.
-
-  Exception: ``TrackParticles`` has no difference between ``get()`` and ``getData()``.
-
-  **Example**::
-
-      S = happi.Open("path/to/results")  # Open the simulation
-      Diag = S.ParticleBinning(3) # Open fourth particle diag
-      result = Diag.get()            # Get the data
-      result["data"] # This has the same value as Diag.getData()
-      result["x"]    # This has the locations of the diag's bins along x
+  * ``axis``: the name of the requested axis.
 
 
 .. py:method:: TrackParticles.iterParticles(timestep, chunksize=1)
@@ -601,3 +609,18 @@ Update the plotting options
     A.set( vmax=2 )
     A.plot()
 
+----
+
+Other tools in ``happi``
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:method:: happi.openNamelist(namelist)
+
+  Reads a namelist and stores all its content in the returned object.
+  
+  * ``namelist``: the path to the namelist.
+  
+**Example**::
+  
+  namelist = happi.openNamelist("path/no/my/namelist.py")
+  print namelist.Main.timestep

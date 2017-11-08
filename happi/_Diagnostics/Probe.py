@@ -7,7 +7,7 @@ class Probe(Diagnostic):
 	def _init(self, probeNumber=None, field=None, timesteps=None, subset=None, average=None, data_log=False, **kwargs):
 		
 		self._h5probe = []
-		self._times = []
+		self._alltimesteps = []
 		
 		# Get the available probes
 		for path in self._results_path:
@@ -57,8 +57,8 @@ class Probe(Diagnostic):
 			for key, val in file.items():
 				try   : self._dataForTime[int(key)] = val
 				except: break
-		self._times = self._np.double(sorted(self._dataForTime.keys()))
-		if self._times.size == 0:
+		self._alltimesteps = self._np.double(sorted(self._dataForTime.keys()))
+		if self._alltimesteps.size == 0:
 			self._error = "No timesteps found"
 			return
 		
@@ -114,16 +114,16 @@ class Probe(Diagnostic):
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
 		# If timesteps is None, then keep all timesteps otherwise, select timesteps
-		self.times = self._times
+		self._timesteps = self._alltimesteps
 		if timesteps is not None:
 			try:
-				self.times = self._selectTimesteps(timesteps, self.times)
+				self._timesteps = self._selectTimesteps(timesteps, self._timesteps)
 			except:
 				self._error = "Argument `timesteps` must be one or two non-negative integers"
 				return
 		
 		# Need at least one timestep
-		if self.times.size < 1:
+		if self._timesteps.size < 1:
 			self._error = "Timesteps not found"
 			return
 		
@@ -322,13 +322,13 @@ class Probe(Diagnostic):
 	
 	# get all available timesteps
 	def getAvailableTimesteps(self):
-		return self._times
+		return self._alltimesteps
 	
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):
 		if not self._validate(): return
 		# Verify that the timestep is valid
-		if t not in self.times:
+		if t not in self._timesteps:
 			print("Timestep "+t+" not found in this diagnostic")
 			return []
 		# Get arrays from requested field

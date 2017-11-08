@@ -675,20 +675,21 @@ the Monte-Carlo radiation process.
 | 2D                                  |            |          |              |                     |
 +-------------------------------------+------------+----------+--------------+---------------------+
 
-.. +-------------------------------------+------------+----------+--------------+----------+---------------------+
-.. | Radiation model                     | None       | LL       | CLL          | Niel     | MC                  |
-.. +=====================================+============+==========+==============+==========+=====================+
-.. | Counter-propagating Plane Wave 1D   | 0.25s      | 0.3s     | 0.32s        | 0.63s    | 0.63s               |
-.. +-------------------------------------+------------+----------+--------------+----------+---------------------+
-.. | Synchrotron 2D Haswell              | 3.9s       | 4.2s     | 4.7s         | 7.8s     | 5.6s                |
-.. | :math:`\chi=0.5`,  :math:`B=100`    |            | - 8%     | - 21%        | - 100%   | - :math:`\sim` 50%  |
-.. +-------------------------------------+------------+----------+--------------+----------+---------------------+
-.. | Synchrotron 2D KNL                  | 3s         | 3.2s     | 3.3s         | 31s      | 10s                 |
-.. | :math:`\chi=0.5`,  :math:`B=100`    |            |          |              |          |                     |
-.. +-------------------------------------+------------+----------+--------------+----------+---------------------+
-.. | Interaction with a carbon thin foil | 6.5s       | 6.5s     | 6.6s         | 6.9s     | 6.8s                |
-.. | 2D                                  |            |          |              |          |                     |
-.. +-------------------------------------+------------+----------+--------------+----------+---------------------+
+..
+  +-------------------------------------+------------+----------+--------------+----------+---------------------+
+  | Radiation model                     | None       | LL       | CLL          | Niel     | MC                  |
+  +=====================================+============+==========+==============+==========+=====================+
+  | Counter-propagating Plane Wave 1D   | 0.25s      | 0.3s     | 0.32s        | 0.63s    | 0.63s               |
+  +-------------------------------------+------------+----------+--------------+----------+---------------------+
+  | Synchrotron 2D Haswell              | 3.9s       | 4.2s     | 4.7s         | 7.8s     | 5.6s                |
+  | :math:`\chi=0.5`,  :math:`B=100`    |            | - 8%     | - 21%        | - 100%   | - :math:`\sim` 50%  |
+  +-------------------------------------+------------+----------+--------------+----------+---------------------+
+  | Synchrotron 2D KNL                  | 3s         | 3.2s     | 3.3s         | 31s      | 10s                 |
+  | :math:`\chi=0.5`,  :math:`B=100`    |            |          |              |          |                     |
+  +-------------------------------------+------------+----------+--------------+----------+---------------------+
+  | Interaction with a carbon thin foil | 6.5s       | 6.5s     | 6.6s         | 6.9s     | 6.8s                |
+  | 2D                                  |            |          |              |          |                     |
+  +-------------------------------------+------------+----------+--------------+----------+---------------------+
 
 
 Descriptions of the cases:
@@ -703,7 +704,9 @@ Descriptions of the cases:
   12 OpenMP threads per rank. the second one has been run on a single KNL node of *Frioul*
   configured in quadrant cache using 1 MPI rank and 64 OpenMP threads.
   On KNL, the ``KMP_AFFINITY`` is set to ``fine`` and ``scatter``.
-.. Only the Niel model provides better performance with a ``compact`` affinity.
+  
+  ..
+    Only the Niel model provides better performance with a ``compact`` affinity.
 
 * **Thin foil 2D**:
   The domain has a discretization of 64 cells per :math:`\mu\mathrm{m}` in
@@ -715,9 +718,10 @@ The LL and CLL models are vectorized efficiently.
 These radiation reaction models represent a small overhead
 to the particle pusher.
 
-.. The Niel model implementation is split into several loops to
-.. be partially vectorized. Surprisingly, this model have bad performance on KNL
-.. and further analysis are necessary to well understand why.
+..
+  The Niel model implementation is split into several loops to
+  be partially vectorized. Surprisingly, this model have bad performance on KNL
+  and further analysis are necessary to well understand why.
 
 The Monte-Carlo pusher is not vectorized because the Monte-Carlo loop has
 not predictable end and contains many if-statements.

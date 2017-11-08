@@ -394,7 +394,7 @@ def multiPlot(*Diags, **kwargs):
 	# Gather all times
 	alltimes = []
 	for Diag in Diags:
-		diagtimes = Diag.times
+		diagtimes = Diag.getTimesteps()
 		if timesteps is not None:
 			diagtimes = Diag._selectTimesteps(timesteps, diagtimes)
 		diagtimes = list( diagtimes*Diag.timestep )
@@ -479,7 +479,7 @@ def multiPlot(*Diags, **kwargs):
 	# Static plot
 	if sameAxes and Diags[0].dim==0:
 		for Diag in Diags:
-			Diag._artist = Diag._animateOnAxes(Diag._ax, Diag.times[-1])
+			Diag._artist = Diag._animateOnAxes(Diag._ax, Diag.getTimesteps()[-1])
 			plt.draw()
 			plt.pause(0.00001)
 	# Animated plot
@@ -491,7 +491,7 @@ def multiPlot(*Diags, **kwargs):
 			t = None
 			for Diag in Diags:
 				t = np.round(time/Diag.timestep) # convert time to timestep
-				if t in Diag.times:
+				if t in Diag.getTimesteps():
 					if sameAxes:
 						if Diag._artist is not None: Diag._artist.remove()
 					else:

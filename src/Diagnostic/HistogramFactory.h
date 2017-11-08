@@ -116,7 +116,7 @@ public:
             // Try to extract first element: type
             PyObject * type_object = PySequence_Fast_GET_ITEM(seq, 0);
             if ( PyTools::convert(type_object, type) ) {
-                if ( type == "user_function" )
+                if ( type.substr(0, 13) == "user_function" )
                     ERROR(errorPrefix << ", axis #" << iaxis << ": type " << type << " unknown");
                 for( unsigned int i=0; i<excluded_axes.size(); i++ )
                     if( type == excluded_axes[i] )
@@ -129,7 +129,9 @@ public:
                 // Test the function with temporary, "fake" particles
                 double * dummy = NULL;
                 ParticleData test( params.nDim_particle, type_object, typePrefix.str(), dummy );
-                type = "user_function";
+                std::ostringstream t("");
+                t << "user_function" << iaxis;
+                type = t.str();
 #else
                 ERROR(errorPrefix << ", axis #" << iaxis << ": First item must be a string (axis type)");
 #endif
@@ -234,7 +236,7 @@ public:
                 ERROR(errorPrefix << ": axis type cannot be 'composite'");
             }
 #ifdef SMILEI_USE_NUMPY
-            else if (type == "user_function") {
+            else if (type.substr(0,13) == "user_function") {
                 axis = new HistogramAxis_user_function( type_object );
             
             }
