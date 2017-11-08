@@ -117,7 +117,7 @@ class Diagnostic(object):
 		A list of [min, max] for each axis.
 		"""
 		l = []
-		factor = [self.xfactor, self.yfactor]
+		factor = [self._xfactor, self._yfactor]
 		for i in range(self.dim):
 			l.append([min(self._centers[i])*factor[i], max(self._centers[i])*factor[i]])
 		return l

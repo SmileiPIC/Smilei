@@ -44,6 +44,37 @@ def updateMatplotLibColormaps():
 		})
 
 
+def openNamelist(namelist):
+	"""
+	Function to execute a namelist and store all its content in the returned object.
+	
+	Example:
+		namelist = happi.openNamelist("path/no/my/namelist.py")
+		print namelist.Main.timestep
+	"""
+	
+	from . import happi_directory
+	from os import sep
+	from os.path import isdir, exists
+	smilei_python_directory = happi_directory + sep + ".." + sep + "src" + sep + "Python"
+	if not isdir(smilei_python_directory):
+		raise Exception("Cannot find the Smilei/src directory")
+	for file in ["pyinit.py", "pycontrol.py", "pyprofiles.py"]:
+		if not exists(smilei_python_directory + sep + file):
+			raise Exception("Cannot find the Smilei/src/Python/"+file+" file")
+	namespace={}
+	exec(open(smilei_python_directory+sep+"pyinit.py").read(), namespace)
+	exec(open(smilei_python_directory+sep+"pyprofiles.py").read(), namespace)
+	exec(open(namelist).read(), namespace) # execute the namelist
+	exec(open(smilei_python_directory+sep+"pycontrol.py").read(), namespace)
+	class Namelist: pass # empty class to store the namelist variables
+	namelist = Namelist() # create new empty object
+	for key, value in namespace.items(): # transfer all variables to this object
+		if key[0]=="_": continue # skip builtins
+		setattr(namelist, key, value)
+	return namelist
+
+
 class Options(object):
 	""" Class to contain matplotlib plotting options """
 	
@@ -409,7 +440,7 @@ def multiPlot(*Diags, **kwargs):
 		ax.append( fig.add_subplot(shape[0], shape[1], i+1) )
 	rightside = [d.options.side=="right" for d in Diags]
 	allright  = all(rightside)
-	bothsides = any(rightside) and any(not rightside)
+	bothsides = any(rightside) and not allright
 	for i, Diag in enumerate(Diags):
 		Diag._cax_id = 0
 		if sameAxes:
@@ -430,20 +461,21 @@ def multiPlot(*Diags, **kwargs):
 		if Diag.options.xmax is not None: option_xmax += [Diag.options.xmax]
 		if Diag.options.ymin is not None: option_ymin += [Diag.options.ymin]
 		if Diag.options.ymax is not None: option_ymax += [Diag.options.ymax]
+		if "color" not in Diag.options.plot:
+			Diag.options.plot.update({ "color":c[i%len(c)] })
+		Diag._prepare()
 		try:
 			l = Diag.limits()[0]
 			xmin = min(xmin,l[0])
 			xmax = max(xmax,l[1])
 		except:
 			pass
-		if "color" not in Diag.options.plot:
-			Diag.options.plot.update({ "color":c[i%len(c)] })
-		Diag._prepare()
 	# Find min max
 	if option_xmin: xmin = min([xmin]+option_xmin)
 	if option_xmax: xmax = max([xmax]+option_xmax)
 	if option_ymin: ymin = min([ymin]+option_ymin)
 	if option_ymax: ymax = max([ymax]+option_ymax)
+	print xmin, xmax
 	# Static plot
 	if sameAxes and Diags[0].dim==0:
 		for Diag in Diags:
