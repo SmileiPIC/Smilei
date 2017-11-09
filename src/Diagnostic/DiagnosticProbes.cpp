@@ -587,7 +587,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         hid_t transfer = H5Pcreate(H5P_DATASET_XFER);
         H5Pset_dxpl_mpio(transfer, H5FD_MPIO_INDEPENDENT);
         // Write
-        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &((*probesArray)(0,0)) );
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, probesArray->data_ );
         H5Dclose(dset_id);
         H5Pclose( transfer );
         H5Sclose(filespace);
