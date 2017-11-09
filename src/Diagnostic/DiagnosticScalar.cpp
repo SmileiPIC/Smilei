@@ -12,7 +12,8 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patc
 latest_timestep(-1)
 {
     // patch  == NULL else error
-
+    filename = "scalars.txt";
+    
     if (PyTools::nComponents("DiagScalar") > 1) {
         ERROR("Only one DiagScalar can be specified");
     }
@@ -649,4 +650,85 @@ bool DiagnosticScalar::allowedKey(string key) {
 
 bool DiagnosticScalar::needsRhoJs(int timestep) {
     return timeSelection->theTimeIsNow(timestep);
+}
+
+// SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
+uint64_t DiagnosticScalar::getDiskFootPrint(int istart, int istop, Patch* patch)
+{
+    uint64_t footprint = 0;
+    
+    // Calculate the number of dumps between istart and istop
+    uint64_t ndumps = timeSelection->howManyTimesBefore(istop) - timeSelection->howManyTimesBefore(istart);
+    
+    // Calculate the number of scalars
+    // 1 - general scalars
+    vector<string> scalars = {"Ubal_norm", "Ubal", "Utot", "Uexp", "Ukin", "Urad", "UmBWpairs", "Uelm", "Ukin_bnd", "Ukin_out_mvw", "Ukin_inj_mvw", "Uelm_bnd", "Uelm_out_mvw", "Uelm_inj_mvw"};
+    // 2 - species scalars
+    unsigned int nspec = patch->vecSpecies.size();
+    for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
+        if (! patch->vecSpecies[ispec]->particles->is_test) {
+            string species_name = patch->vecSpecies[ispec]->name;
+            scalars.push_back( "Dens_"+species_name );
+            scalars.push_back( "Ntot_"+species_name );
+            scalars.push_back( "Zavg_"+species_name );
+            scalars.push_back( "Ukin_"+species_name );
+            scalars.push_back( "Urad_"+species_name );
+        }
+    }
+    // 3 - Field scalars
+    scalars.push_back( "Uelm_"+patch->EMfields->Ex_ ->name );
+    scalars.push_back( "Uelm_"+patch->EMfields->Ey_ ->name );
+    scalars.push_back( "Uelm_"+patch->EMfields->Ez_ ->name );
+    scalars.push_back( "Uelm_"+patch->EMfields->Bx_m->name );
+    scalars.push_back( "Uelm_"+patch->EMfields->By_m->name );
+    scalars.push_back( "Uelm_"+patch->EMfields->Bz_m->name );
+    // 4 - Scalars related to fields min and max
+    for( unsigned int i=0; i<2; i++ ) {
+        string minmax = (i==0) ? "Min" : "Max";
+        for( unsigned int j=0; j<2; j++ ) {
+            string cell = (j==0) ? "" : "Cell";
+            scalars.push_back( patch->EMfields->Ex_ ->name + minmax + cell);
+            scalars.push_back( patch->EMfields->Ey_ ->name + minmax + cell);
+            scalars.push_back( patch->EMfields->Ez_ ->name + minmax + cell);
+            scalars.push_back( patch->EMfields->Bx_m->name + minmax + cell);
+            scalars.push_back( patch->EMfields->By_m->name + minmax + cell);
+            scalars.push_back( patch->EMfields->Bz_m->name + minmax + cell);
+            scalars.push_back( patch->EMfields->Jx_ ->name + minmax + cell);
+            scalars.push_back( patch->EMfields->Jy_ ->name + minmax + cell);
+            scalars.push_back( patch->EMfields->Jz_ ->name + minmax + cell);
+            scalars.push_back( patch->EMfields->rho_->name + minmax + cell);
+        }
+    }
+    // 5 - Scalars related to the Poynting flux
+    unsigned int k = 0;
+    string poy_name;
+    for (unsigned int j=0; j<2;j++) {
+        for (unsigned int i=0; i<patch->EMfields->poynting[j].size();i++) {
+            if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
+            else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
+            else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
+            //poy_name = string("Poy") + "XYZ"[i] + (j==0?"min":"max");
+            scalars.push_back( poy_name        );
+            scalars.push_back( poy_name+"Inst" );
+            k++;
+        }
+    }
+    // Finally, count allowed scalars
+    int nscalars = 1;
+    for( unsigned int k=0; k<scalars.size(); k++){
+        if( allowedKey( scalars[k] ) )
+            nscalars ++;
+    }
+    
+    // Calculate the size of one line
+    string s = "";
+    uint64_t linesize = nscalars * calculateWidth( s );
+    
+    // Add necessary global headers approximately
+    footprint += (uint64_t)(nscalars * 10 + linesize);
+    
+    // Add size of each line
+    footprint += ndumps * linesize;
+    
+    return footprint;
 }

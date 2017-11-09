@@ -120,6 +120,9 @@ public :
         return 0;
     }
     
+    //! Get disk footprint of current diagnostic
+    uint64_t getDiskFootPrint(int istart, int istop, Patch* patch) override;
+    
 private :
 
     //! Calculate the length of a string when output to the file

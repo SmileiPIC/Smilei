@@ -300,3 +300,25 @@ void DiagnosticParticleBinning::clear() {
     data_sum.resize(0);
     vector<double>().swap( data_sum );
 }
+
+
+// SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
+uint64_t DiagnosticParticleBinning::getDiskFootPrint(int istart, int istop, Patch* patch)
+{
+    uint64_t footprint = 0;
+    
+    // Calculate the number of dumps between istart and istop
+    uint64_t ndumps = timeSelection->howManyTimesBefore(istop) - timeSelection->howManyTimesBefore(istart);
+    
+    // Add necessary global headers approximately
+    footprint += 1500;
+    
+    // Add necessary timestep headers approximately
+    footprint += ndumps * 640;
+    
+    // Add size of each dump
+    footprint += ndumps * (uint64_t)(output_size * 8);
+    
+    return footprint;
+}
+

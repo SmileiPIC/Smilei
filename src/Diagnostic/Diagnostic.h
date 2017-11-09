@@ -49,7 +49,10 @@ public :
     
     //! Get memory footprint of current diagnostic
     virtual int getMemFootPrint() = 0;
-
+    
+    //! Get disk footprint of current diagnostic
+    virtual uint64_t getDiskFootPrint(int istart, int istop, Patch* patch) {return 0.;};
+    
     //! this is the file name
     std::string filename;
     

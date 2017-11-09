@@ -38,6 +38,9 @@ public :
         return size;
     };
     
+    //! Get disk footprint of current diagnostic
+    uint64_t getDiskFootPrint(int istart, int istop, Patch* patch) override;
+    
 private :
 
     //! number of timesteps during which outputs are averaged

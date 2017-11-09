@@ -13,8 +13,16 @@ using namespace std;
 DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, unsigned int iDiagTrackParticles, unsigned int idiag, OpenPMDparams& oPMD ) :
     Diagnostic(oPMD),
     IDs_done( params.restart ),
-    nDim_particle(params.nDim_particle)
+    nDim_particle(params.nDim_particle),
+    number_of_patches(params.number_of_patches)
 {
+    patch_dimensions.resize(nDim_particle);
+    ncells_perpatch = 1;
+    for( unsigned int i=0; i<nDim_particle; i++ ) {
+        patch_dimensions[i] = params.n_space[i] * params.cell_length[i];
+        ncells_perpatch *= params.n_space[i];
+    }
+    
     // Extract the species
     string species_name;
     if( !PyTools::extract("species",species_name,"DiagTrackParticles",iDiagTrackParticles) )
@@ -467,4 +475,72 @@ void DiagnosticTrack::write_component( hid_t location, string name, T& buffer, h
     if( npart_global>0 ) H5Dwrite( did, dtype, mem_space , file_space , transfer, &buffer );
     openPMD->writeComponentAttributes( did, unit_type );
     H5Dclose(did);
+}
+
+
+
+// SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
+uint64_t DiagnosticTrack::getDiskFootPrint(int istart, int istop, Patch* patch)
+{
+    uint64_t footprint = 0;
+    
+    // Calculate the number of dumps between istart and istop
+    uint64_t ndumps = timeSelection->howManyTimesBefore(istop) - timeSelection->howManyTimesBefore(istart);
+    
+    // Calculate the number of written parameters
+    int nparams = 6 + nDim_particle;
+    
+    // Obtain the profiles of the tracked species
+    std::string species_name("");
+    PyTools::extract("name",species_name,"Species",speciesId_);
+    PyObject *profile1=nullptr;
+    std::string densityProfileType("");
+    bool ok1 = PyTools::extract_pyProfile("number_density", profile1, "Species", speciesId_);
+    bool ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", speciesId_);
+    if( ok1 ) densityProfileType = "nb";
+    if( ok2 ) densityProfileType = "charge";
+    Profile* densityProfile = new Profile(profile1, nDim_particle, densityProfileType+"_density "+species_name);
+    PyTools::extract_pyProfile("particles_per_cell", profile1, "Species", speciesId_);
+    Profile* ppcProfile = new Profile(profile1, nDim_particle, "particles_per_cell "+species_name);
+    // Loop over the box to obtain an approximate number of particles
+    unsigned int tot_number_of_patches = 1;
+    vector<unsigned int> i_cell( nDim_particle, 0 );
+    vector<double> x_cell( nDim_particle, 0. );
+    for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
+        tot_number_of_patches *= number_of_patches[idim];
+        i_cell[idim] = 0;
+        x_cell[idim] = patch_dimensions[idim] / 2.;
+    }
+    // Loop patches
+    double npart_total = 0.;
+    for( unsigned int k=0; k<tot_number_of_patches; k++ ) {
+        // Find the approximate number of particles in this patch
+        double n_part_in_cell = floor(ppcProfile->valueAt(x_cell));
+        if( n_part_in_cell && densityProfile->valueAt(x_cell)!=0.)
+            npart_total += n_part_in_cell * ncells_perpatch;
+        // Find next patch position
+        for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
+            if( i_cell[idim] < number_of_patches[idim]-1 ) {
+                i_cell[idim]++;
+                x_cell[idim] += patch_dimensions[idim];
+                break;
+            } else if( idim < nDim_particle-1 ) {
+                i_cell[idim] = 0;
+                x_cell[idim] = patch_dimensions[idim] / 2.;
+            }
+        }
+    }
+    delete densityProfile;
+    delete ppcProfile;
+    
+    // Add necessary global headers approximately
+    footprint += 2500;
+    
+    // Add necessary timestep headers approximately
+    footprint += ndumps * 11250;
+    
+    // Add size of each parameter
+    footprint += ndumps * (uint64_t)(nparams * npart_total * 8);
+    
+    return footprint;
 }

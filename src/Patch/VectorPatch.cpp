@@ -1258,3 +1258,43 @@ void VectorPatch::check_memory_consumption(SmileiMPI* smpi)
     // Read value in /proc/pid/status
     //Tools::printMemFootPrint( "End Initialization" );
 }
+
+
+// Print information on the memory consumption
+void VectorPatch::check_expected_disk_usage( SmileiMPI* smpi, Params& params, Checkpoint& checkpoint)
+{
+    if( smpi->isMaster() ){
+        
+        // Find the initial and final timesteps for this simulation
+        int istart = 0, istop = params.n_time;
+        // If restarting simulation define the starting point
+        if( params.restart ) {
+            istart = checkpoint.this_run_start_step+1;
+        }
+        // If leaving the simulation after dump, define the stopping point
+        if( checkpoint.dump_step > 0 && checkpoint.exit_after_dump ) {
+            int ncheckpoint = (istart/(int)checkpoint.dump_step) + 1;
+            int nextdumptime = ncheckpoint * (int)checkpoint.dump_step;
+            if( nextdumptime < istop ) istop = nextdumptime;
+        }
+        
+        MESSAGE(1, "Diagnostics expected disk usage:" );
+        // Calculate the footprint from local then global diagnostics
+        uint64_t total_footprint = 0;
+        for (unsigned int idiags=0 ; idiags<localDiags.size() ; idiags++) {
+            uint64_t footprint = localDiags[idiags]->getDiskFootPrint(istart, istop, patches_[0]);
+            total_footprint += footprint;
+            MESSAGE(2, "File " << localDiags[idiags]->filename << ": " << Tools::printBytes(footprint));
+        }
+        for (unsigned int idiags=0 ; idiags<globalDiags.size() ; idiags++) {
+            uint64_t footprint = globalDiags[idiags]->getDiskFootPrint(istart, istop, patches_[0]);
+            total_footprint += footprint;
+            MESSAGE(2, "File " << globalDiags[idiags]->filename << ": " << Tools::printBytes(footprint));
+        }
+        
+        MESSAGE(1, "Total disk usage: " << Tools::printBytes(total_footprint) );
+        
+    }
+}
+
+

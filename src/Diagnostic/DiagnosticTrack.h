@@ -31,6 +31,9 @@ public :
         return 0;
     }
     
+    //! Get disk footprint of current diagnostic
+    uint64_t getDiskFootPrint(int istart, int istop, Patch* patch) override;
+    
     //! Fills a buffer with the required particle property
     template<typename T> void fill_buffer(VectorPatch& vecPatches, unsigned int iprop, std::vector<T>& buffer);
     
@@ -62,6 +65,15 @@ private :
      
     //! Number of spatial dimensions
     unsigned int nDim_particle;
+    
+    //! Number of patches in each direction
+    std::vector<unsigned int> number_of_patches;
+    
+    //! Number of cells per patch
+    int ncells_perpatch;
+    
+    //! Size of a patch in each direction
+    std::vector<double> patch_dimensions;
     
     //! Current particle partition among the patches own by current MPI
     std::vector<unsigned int> patch_start;

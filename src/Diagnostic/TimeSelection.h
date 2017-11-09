@@ -48,6 +48,9 @@ public:
     //! Get the smallest interval between two selected timesteps
     inline int smallestInterval() { return SmallestInterval; };
     
+    //! Get the number of occurrences before the given timestep
+    int howManyTimesBefore(int timestep);
+    
     //! Tell whether the timestep is between start and end
     inline bool inProgress(int timestep) { return timestep>=start && timestep<=end; };
     

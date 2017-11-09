@@ -42,6 +42,9 @@ public :
         return size;
     };
     
+    //! Get disk footprint of current diagnostic
+    uint64_t getDiskFootPrint(int istart, int istop, Patch* patch) override;
+    
     //! vector for saving the output array
     std::vector<double> data_sum;
     

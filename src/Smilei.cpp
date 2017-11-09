@@ -212,16 +212,19 @@ int main (int argc, char* argv[])
     timers.reboot();
 
     // ------------------------------------------------------------------------
+    // Check memory consumption & expected disk usage
+    // ------------------------------------------------------------------------
+    TITLE("Memory consumption");
+    vecPatches.check_memory_consumption( &smpi );
+    
+    TITLE("Expected disk usage (approximate)");
+    vecPatches.check_expected_disk_usage( &smpi, params, checkpoint );
+    
+    // ------------------------------------------------------------------------
     // check here if we can close the python interpreter
     // ------------------------------------------------------------------------
     TITLE("Cleaning up python runtime environement");
     params.cleanup(&smpi);
-
-    // ------------------------------------------------------------------------
-    // Check memory consumption
-    // ------------------------------------------------------------------------
-    TITLE("Memory consumption");
-    vecPatches.check_memory_consumption( &smpi );
 
 /*tommaso
     // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)
@@ -363,7 +366,12 @@ int execute_test_mode( VectorPatch &vecPatches, SmileiMPI* smpi, SimWindow* simW
     if (params.restart)
         checkpoint.restartAll( vecPatches, smpi, simWindow, params, openPMD);
 
+    
+    TITLE("Expected disk usage (approximate)");
+    vecPatches.check_expected_disk_usage( smpi, params, checkpoint );
+    
     // If test mode enable, code stops here
+    TITLE("Cleaning up python runtime environement");
     params.cleanup(smpi);
     delete simWindow;
     PyTools::closePython();
