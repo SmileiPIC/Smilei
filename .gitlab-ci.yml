@@ -16,6 +16,8 @@ compile:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make happi
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - env > env.log
+    - module list > module.log 2> module.err
     # Run checking script
     - python validation.py -c  -v
 
