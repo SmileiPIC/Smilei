@@ -8,6 +8,8 @@ compile:
     - develop
 
   script:
+    # Force workdir cleaning in case of retried
+    - rm -rf /sps2/gitlab-runner/$CI_PIPELINE_ID
     # Move in test dir
     - mkdir -p /sps2/gitlab-runner/$CI_PIPELINE_ID
     - cp -r $CI_PROJECT_DIR /sps2/gitlab-runner/$CI_PIPELINE_ID
