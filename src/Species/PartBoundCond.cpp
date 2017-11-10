@@ -213,37 +213,37 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
         §§ none !!!
         #endif
         // Ymin
-        if ( species->bc_part_type_ymin == "reflective" ) {
+        if ( species->boundary_conditions[1][0] == "reflective" ) {
             if (patch->isYmin()) bc_ymin = &refl_particle_rz;
         }
-        else if ( species->bc_part_type_ymin == "remove" ) {
+        else if ( species->boundary_conditions[1][0] == "remove" ) {
             if (patch->isYmin()) bc_ymin = &remove_particle;
         }
-        else if ( species->bc_part_type_ymin == "stop" ) {
+        else if ( species->boundary_conditions[1][0] == "stop" ) {
             if (patch->isYmin()) bc_ymin = &stop_particle_rz;
         }
-        else if ( species->bc_part_type_ymin == "none" ) {
-            if (patch->isMaster()) MESSAGE(2,"Ymin boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+        else if ( species->boundary_conditions[1][0] == "none" ) {
+            if (patch->isMaster()) MESSAGE(2,"Ymin boundary condition for species " << species->name << " is 'none', which means the same as fields");
         }
         else {
-            ERROR( "Ymin boundary condition undefined : " << species->bc_part_type_ymin  );
+            ERROR( "Ymin boundary condition undefined : " << species->boundary_conditions[1][0]  );
         }
         
         // Ymax
-        if ( species->bc_part_type_ymax == "reflective" ) {
+        if ( species->boundary_conditions[1][1] == "reflective" ) {
             if (patch->isYmax()) bc_ymax = &refl_particle_rz;
         }
-        else if ( species->bc_part_type_ymax == "remove" ) {
+        else if ( species->boundary_conditions[1][1] == "remove" ) {
             if (patch->isYmax()) bc_ymax = &remove_particle;
         }
-        else if ( species->bc_part_type_ymax == "stop" ) {
+        else if ( species->boundary_conditions[1][1] == "stop" ) {
             if (patch->isYmax()) bc_ymax = &stop_particle_rz;
         }
-        else if ( species->bc_part_type_ymax == "none" ) {
-            if (patch->isMaster()) MESSAGE(2,"Ymax boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+        else if ( species->boundary_conditions[1][1] == "none" ) {
+            if (patch->isMaster()) MESSAGE(2,"Ymax boundary condition for species " << species->name << " is 'none', which means the same as fields");
         }
         else {
-            ERROR( "Ymax boundary condition undefined : " << species->bc_part_type_ymax  );
+            ERROR( "Ymax boundary condition undefined : " << species->boundary_conditions[1][1]  );
         }
     }
     
