@@ -213,11 +213,11 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
         §§ none !!!
         #endif
         // Ymin
-        if ( species->bc_part_type_ymin == "refl" ) {
+        if ( species->bc_part_type_ymin == "reflective" ) {
             if (patch->isYmin()) bc_ymin = &refl_particle_rz;
         }
-        else if ( species->bc_part_type_ymin == "supp" ) {
-            if (patch->isYmin()) bc_ymin = &supp_particle;
+        else if ( species->bc_part_type_ymin == "remove" ) {
+            if (patch->isYmin()) bc_ymin = &remove_particle;
         }
         else if ( species->bc_part_type_ymin == "stop" ) {
             if (patch->isYmin()) bc_ymin = &stop_particle_rz;
@@ -230,11 +230,11 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
         }
         
         // Ymax
-        if ( species->bc_part_type_ymax == "refl" ) {
+        if ( species->bc_part_type_ymax == "reflective" ) {
             if (patch->isYmax()) bc_ymax = &refl_particle_rz;
         }
-        else if ( species->bc_part_type_ymax == "supp" ) {
-            if (patch->isYmax()) bc_ymax = &supp_particle;
+        else if ( species->bc_part_type_ymax == "remove" ) {
+            if (patch->isYmax()) bc_ymax = &remove_particle;
         }
         else if ( species->bc_part_type_ymax == "stop" ) {
             if (patch->isYmax()) bc_ymax = &stop_particle_rz;

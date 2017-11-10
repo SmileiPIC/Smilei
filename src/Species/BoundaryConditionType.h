@@ -52,7 +52,7 @@ inline int refl_particle_rz( Particles &particles, int ipart, int direction, dou
     return 1;
 }
 
-inline int supp_particle( Particles &particles, int ipart, int direction, double limit_pos, Species *species,
+inline int remove_particle( Particles &particles, int ipart, int direction, double limit_pos, Species *species,
                          double &nrj_iPart) {
     nrj_iPart = particles.weight(ipart)*(particles.lor_fac(ipart)-1.0); // energy lost
     particles.charge(ipart) = 0;
