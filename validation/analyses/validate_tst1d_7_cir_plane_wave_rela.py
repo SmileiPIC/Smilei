@@ -24,7 +24,7 @@ pusher_list = ["boris","vay","higueracary"]
 for pusher in pusher_list:
   
   # Data from the Track diagnostic
-  Track = S.TrackParticles("electron_" + pusher, axes=["x","px","py","pz"]).get()
+  Track = S.TrackParticles("electron_" + pusher, axes=["x","px","py","pz"], timesteps=[0,6000]).get()
 
   # We extract x,px,py,pz from the first particle
   x = np.array(Track['x'][::step,0])
@@ -42,3 +42,7 @@ for pusher in pusher_list:
   Validate("Electron gamma for pusher: " + pusher, gamma, 1e-7 )
 
 
+# Ey laser field after reflection on the rhs boundary
+Ey = S.Field.Field0("Ey").getData(timestep=10000)[0]
+Ey_energy = (Ey**2).sum()
+Validate("Final Ey field energy: ", Ey_energy, 50.)
