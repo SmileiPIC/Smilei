@@ -12,26 +12,28 @@ resx = 100.            # nb of cells in on laser wavelength
 rest = 150.            # time of timestep in one optical cycle 
 
 Main(
-    geometry = "2d3v",
+    geometry = "2Dcartesian",
     
     interpolation_order = 2 ,
     
     cell_length = [l0/resx,l0/resx],
-    sim_length  = Lsim,
+    grid_length  = Lsim,
     
     number_of_patches = [ 8, 8 ],
     
     timestep = t0/rest,
-    sim_time = Tsim,
+    simulation_time = Tsim,
      
-    bc_em_type_x = ['silver-muller'],
-    bc_em_type_y = ['periodic'],
+    EM_boundary_conditions = [
+        ['silver-muller'],
+        ['periodic'],
+    ],
     
     random_seed = smilei_mpi_rank
 )
 
 LaserGaussian2D(
-    boxSide         = "xmin",
+    box_side         = "xmin",
     a0              = 150.,
     focus           = [10.*l0, 5.*l0],
     waist           = 2.0*l0,
@@ -41,32 +43,31 @@ LaserGaussian2D(
 
 
 Species(
-    species_type = 'ion',
-    initPosition_type = 'regular',
-    initMomentum_type = 'cold',
-    n_part_per_cell = 4,
+    name = 'ion',
+    position_initialization = 'regular',
+    momentum_initialization = 'cold',
+    particles_per_cell = 4,
     mass = 1836.0,
     charge = 1.0,
-    nb_density = trapezoidal(100.0,xvacuum=l0,xplateau=0.44*l0),
-    bc_part_type_xmin = 'refl',
-    bc_part_type_xmax = 'refl',
-    bc_part_type_ymin = 'none',
-    bc_part_type_ymax = 'none'
+    number_density = trapezoidal(100.0,xvacuum=l0,xplateau=0.44*l0),
+    boundary_conditions = [
+        ["reflective", "reflective"],
+        ["periodic", "periodic"],
+    ],
 )
 Species(
-    species_type = 'eon',
-    initPosition_type = 'regular',
-    initMomentum_type = 'mj',
-    n_part_per_cell = 4,
+    name = 'eon',
+    position_initialization = 'regular',
+    momentum_initialization = 'mj',
+    particles_per_cell = 4,
     mass = 1.0,
     charge = -1.0,
-    nb_density = trapezoidal(100.0,xvacuum=l0,xplateau=0.44*l0),
+    number_density = trapezoidal(100.0,xvacuum=l0,xplateau=0.44*l0),
     temperature = [0.001],
-    bc_part_type_xmin = 'refl',
-    bc_part_type_xmax = 'refl',
-    bc_part_type_ymin = 'none',
-    bc_part_type_ymax = 'none', 
-    track_every = 500, 
+    boundary_conditions = [
+        ["reflective", "reflective"],
+        ["periodic", "periodic"],
+    ], 
     time_frozen = 0.1
 )
 
@@ -88,7 +89,7 @@ for direction in ["forward", "backward", "both", "canceling"]:
 	    point = [0., Lsim[1]/2.],
 	    vector = [Lsim[0]/2., 0.1],
 	    direction = direction,
-	    output = "density",
+	    deposited_quantity = "weight",
 	    species = ["eon"],
 	    axes = [["theta", -math.pi, math.pi, 10],],
 	    every = 350
@@ -98,10 +99,14 @@ for direction in ["forward", "backward", "both", "canceling"]:
 	    point = [Lsim[0]/2., Lsim[1]/2.],
 	    vector = [1., 0.1],
 	    direction = direction,
-	    output = "density",
+	    deposited_quantity = "weight",
 	    species = ["eon"],
 	    axes = [["a", -Lsim[1]/2., Lsim[1]/2., 10],],
 	    every = 350
 	)
 
+DiagTrackParticles(
+    species = "eon",
+    every = 500,
+)
 

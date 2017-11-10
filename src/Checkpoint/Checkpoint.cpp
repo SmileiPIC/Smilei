@@ -35,50 +35,50 @@ Checkpoint::Checkpoint( Params& params, SmileiMPI* smpi ) :
 dump_number(0),
 this_run_start_step(0),
 exit_asap(false),
-time_reference(MPI_Wtime()),
-time_dump_step(0),
 dump_step(0),
 dump_minutes(0.0),
 exit_after_dump(true),
-dump_file_sequence(2),
-dump_file_sequence_max(10000),
+time_reference(MPI_Wtime()),
+time_dump_step(0),
+keep_n_dumps(2),
+keep_n_dumps_max(10000),
 dump_deflate(0),
 dump_request(smpi->getSize()),
 file_grouping(0)
 {
     
-    if( PyTools::nComponents("DumpRestart") > 0 ) {
+    if( PyTools::nComponents("Checkpoints") > 0 ) {
         
-        if (PyTools::extract("dump_step", dump_step, "DumpRestart")) {
+        if (PyTools::extract("dump_step", dump_step, "Checkpoints")) {
             if (dump_step)
                 MESSAGE(1,"Code will dump after " << dump_step << " steps");
         }
         
-        if (PyTools::extract("dump_minutes", dump_minutes, "DumpRestart")) {
+        if (PyTools::extract("dump_minutes", dump_minutes, "Checkpoints")) {
             if (dump_minutes>0)
                 MESSAGE(1,"Code will stop after " << dump_minutes << " minutes");
         }
         
-        PyTools::extract("dump_file_sequence", dump_file_sequence, "DumpRestart");
-        if(dump_file_sequence<1) dump_file_sequence=1;
+        PyTools::extract("keep_n_dumps", keep_n_dumps, "Checkpoints");
+        if(keep_n_dumps<1) keep_n_dumps=1;
         
-        if(dump_file_sequence>dump_file_sequence_max) {
-            WARNING("Smilei supports a maximum of dump_file_sequence of "<< dump_file_sequence_max);
-            dump_file_sequence=dump_file_sequence_max;
+        if(keep_n_dumps > keep_n_dumps_max) {
+            WARNING("Smilei supports a maximum of keep_n_dumps of "<< keep_n_dumps_max);
+            keep_n_dumps = keep_n_dumps_max;
         }
         
-        PyTools::extract("exit_after_dump", exit_after_dump, "DumpRestart");
+        PyTools::extract("exit_after_dump", exit_after_dump, "Checkpoints");
         
-        PyTools::extract("dump_deflate", dump_deflate, "DumpRestart");
+        PyTools::extract("dump_deflate", dump_deflate, "Checkpoints");
         
-        if (PyTools::extract("file_grouping", file_grouping, "DumpRestart") && file_grouping > 0) {
+        if (PyTools::extract("file_grouping", file_grouping, "Checkpoints") && file_grouping > 0) {
             if( file_grouping > (unsigned int)(smpi->getSize()) ) file_grouping = smpi->getSize();
             MESSAGE(1,"Code will group checkpoint files by "<< file_grouping);
         }
 
         if( params.restart ) {
             std::vector<std::string> restart_files;
-            PyTools::extract("restart_files", restart_files, "DumpRestart");
+            PyTools::extract("restart_files", restart_files, "Checkpoints");
 
             // This will open all dumps and pick the last one
             for (unsigned int num_dump=0;num_dump<restart_files.size(); num_dump++) {
@@ -117,7 +117,7 @@ file_grouping(0)
             message << "Code will dump";
             if( dump_step>0 ) message << " every "<< dump_step << " steps,";
             if( dump_minutes>0. ) message << " every "<<dump_minutes<< " min,";
-            message << " keeping "<< dump_file_sequence << " dumps at maximum";
+            message << " keeping "<< keep_n_dumps << " dumps at maximum";
             MESSAGE(1,message.str());
         }
     }
@@ -171,7 +171,7 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* s
 
 void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI* smpi, SimWindow* simWin,  Params &params )
 {
-    unsigned int num_dump=dump_number%dump_file_sequence;
+    unsigned int num_dump=dump_number % keep_n_dumps;
 
     ostringstream nameDumpTmp("");
     nameDumpTmp << "checkpoints" << PATH_SEPARATOR;
@@ -201,20 +201,32 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     
     H5::vect( fid, "patch_count", smpi->patch_count );
     
-    H5::attr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
-    H5::attr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
-    H5::attr(fid, "latest_timestep",   static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->latest_timestep  );
+    // Write diags scalar data
+    DiagnosticScalar* scalars = static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0]);
+    H5::attr(fid, "Energy_time_zero",  scalars->Energy_time_zero );
+    H5::attr(fid, "EnergyUsedForNorm", scalars->EnergyUsedForNorm);
+    H5::attr(fid, "latest_timestep",   scalars->latest_timestep  );
+    if( smpi->isMaster() ) {
+        unsigned int k=0;
+        for (unsigned int j=0; j<2; j++) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+            for (unsigned int i=0; i<params.nDim_field; i++) { //axis 0=x, 1=y, 2=z
+                if( scalars->necessary_poy[k] ) {
+                    string poy_name = string("Poy") + "XYZ"[i] + (j==0?"min":"max");
+                    H5::attr(fid, poy_name, (double)*(scalars->poy[k]));
+                    k++;
+                }
+            }
+        }
+    }
     
     // Write the diags screen data
     ostringstream diagName("");
-    string attr;
     if( smpi->isMaster() ) {
         for( unsigned int idiag=0; idiag<vecPatches.globalDiags.size(); idiag++ ) {
             if( DiagnosticScreen* screen = dynamic_cast<DiagnosticScreen*>(vecPatches.globalDiags[idiag]) ) {
                 diagName.str("");
                 diagName << "DiagScreen" << screen->screen_id;
-                attr = diagName.str();
-                H5::attr(fid, attr, screen->data_sum);
+                H5::vect(fid, diagName.str(), screen->data_sum);
             }
         }
     }
@@ -239,7 +251,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ ) {
         if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) ) {
             ostringstream n("");
-            n<< "latest_ID_" << vecPatches(0)->vecSpecies[track->speciesId_]->species_type;
+            n<< "latest_ID_" << vecPatches(0)->vecSpecies[track->speciesId_]->name;
             H5::attr(fid, n.str().c_str(), track->latest_Id, H5T_NATIVE_UINT64);
         }
     }
@@ -339,7 +351,7 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
         ostringstream name("");
         name << setfill('0') << setw(2) << ispec;
-        string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->species_type;
+        string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->name;
         hid_t gid = H5::group(patch_gid, groupName);
         
         H5::attr(gid, "partCapacity", vecSpecies[ispec]->particles->capacity());
@@ -413,21 +425,41 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
     hid_t fid = H5Fopen( restart_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
     if (fid < 0) ERROR(restart_file << " is not a valid HDF5 file");    
     
-    H5::getAttr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
-    H5::getAttr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
-    H5::getAttr(fid, "latest_timestep",   static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->latest_timestep  );
+    // Write diags scalar data
+    DiagnosticScalar* scalars = static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0]);
+    H5::getAttr(fid, "Energy_time_zero",  scalars->Energy_time_zero );
+    H5::getAttr(fid, "EnergyUsedForNorm", scalars->EnergyUsedForNorm);
+    H5::getAttr(fid, "latest_timestep",   scalars->latest_timestep  );
+    if( smpi->isMaster() ) {
+        unsigned int k=0;
+        for (unsigned int j=0; j<2; j++) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+            for (unsigned int i=0; i<params.nDim_field; i++) { //axis 0=x, 1=y, 2=z
+                string poy_name = string("Poy") + "XYZ"[i] + (j==0?"min":"max");
+                if(H5Aexists(fid, poy_name.c_str())>0) H5::getAttr(fid, poy_name, vecPatches(0)->EMfields->poynting[j][i]);
+                k++;
+            }
+        }
+    }
     
     // Read the diags screen data
     ostringstream diagName("");
-    string attr;
     if( smpi->isMaster() ) {
-        for( unsigned int idiag=0; idiag<vecPatches.globalDiags.size(); idiag++ )
+        for( unsigned int idiag=0; idiag<vecPatches.globalDiags.size(); idiag++ ) {
             if( DiagnosticScreen* screen = dynamic_cast<DiagnosticScreen*>(vecPatches.globalDiags[idiag]) ) {
                 diagName.str("");
                 diagName << "DiagScreen" << screen->screen_id;
-                attr = diagName.str();
-                H5::getAttr(fid, attr, screen->data_sum);
+                int target_size = screen->data_sum.size();
+                int vect_size = H5::getVectSize(fid, diagName.str());
+                int attr_size = H5::getAttrSize(fid, diagName.str());
+                if( vect_size == target_size ) {
+                    H5::getVect(fid, diagName.str(), screen->data_sum);
+                } else if( attr_size == target_size ) {
+                    H5::getAttr(fid, diagName.str(), screen->data_sum);
+                } else {
+                    WARNING("Restart: DiagScreen[" << screen->screen_id << "] size mismatch. Previous data discarded");
+                }
             }
+        }
     }
     
     // Read all the patch data
@@ -448,8 +480,12 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
     for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ ) {
         if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) ) {
             ostringstream n("");
-            n<< "latest_ID_" << vecPatches(0)->vecSpecies[track->speciesId_]->species_type;
-            H5::getAttr(fid, n.str().c_str(), track->latest_Id, H5T_NATIVE_UINT64);
+            n<< "latest_ID_" << vecPatches(0)->vecSpecies[track->speciesId_]->name;
+            if (H5::hasAttr(fid, n.str())) {
+                H5::getAttr(fid, n.str(), track->latest_Id, H5T_NATIVE_UINT64);
+            } else {
+                track->IDs_done=false;
+            }
         }
     }
     
@@ -497,7 +533,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
                 restartFieldsPerProc( diag_gid, EMfields->allFields_avg[idiag][ifield] );
             
             H5Gclose(diag_gid);
-        
+
         } else if( EMfields->allFields_avg[idiag].size() > 0 ) {
             // When the restart occurs in the middle of an average, and the field diag is new,
             // there is missing data that will cause wrong results on the first output after restart
@@ -556,7 +592,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
         ostringstream name("");
         name << setfill('0') << setw(2) << ispec;
-        string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->species_type;
+        string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->name;
         hid_t gid = H5Gopen(patch_gid, groupName.c_str(),H5P_DEFAULT);
         
         unsigned int partCapacity=0;
@@ -611,12 +647,9 @@ void Checkpoint::dumpFieldsPerProc(hid_t fid, Field* field)
 
 void Checkpoint::restartFieldsPerProc(hid_t fid, Field* field)
 {
-    hsize_t dims[1]={field->globalDims_};
-    hid_t sid = H5Screate_simple (1, dims, NULL);
     hid_t did = H5Dopen (fid, field->name.c_str(),H5P_DEFAULT);
     H5Dread(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &field->data_[0]);
     H5Dclose (did);
-    H5Sclose(sid);
 }
 
 void Checkpoint::dumpMovingWindow(hid_t fid, SimWindow* simWin)

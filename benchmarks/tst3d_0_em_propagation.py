@@ -8,21 +8,19 @@ resx = 16.                    # nb of cells in one laser wavelength
 rest = 30.                    # nb of timesteps in one optical cycle 
 
 Main(
-    geometry = "3d3v",
+    geometry = "3Dcartesian",
     
     interpolation_order = 2 ,
     
     cell_length = [l0/resx,l0/resx,l0/resx],
-    sim_length  = Lsim,
+    grid_length  = Lsim,
     
     number_of_patches = [ 4,4,4 ],
     
     timestep = t0/rest,
-    sim_time = Tsim,
+    simulation_time = Tsim,
     
-    bc_em_type_x = ['silver-muller'],
-    bc_em_type_y = ['silver-muller'],
-    bc_em_type_z = ['silver-muller'],
+    EM_boundary_conditions = [ ['silver-muller'] ],
     
     random_seed = smilei_mpi_rank
 )
@@ -50,33 +48,37 @@ DiagFields(
 
 DiagProbe(
     every = 10,
-    pos = [0.1*Lsim[0], 0.5*Lsim[1], 0.5*Lsim[2]],
+    origin = [0.1*Lsim[0], 0.5*Lsim[1], 0.5*Lsim[2]],
     fields = []
 )
 
 DiagProbe(
     every = 100,
     number = [30],
-    pos = [0.1*Lsim[0], 0.5*Lsim[1], 0.5*Lsim[2]],
-    pos_first = [0.9*Lsim[0], 0.5*Lsim[1], 0.5*Lsim[2]],
+    origin = [0.1*Lsim[0], 0.5*Lsim[1], 0.5*Lsim[2]],
+    corners = [[0.9*Lsim[0], 0.5*Lsim[1], 0.5*Lsim[2]]],
     fields = []
 )
 
 DiagProbe(
     every = 100,
     number = [10, 10],
-    pos = [0.1*Lsim[0], 0.*Lsim[1], 0.5*Lsim[2]],
-    pos_first  = [0.9*Lsim[0], 0. *Lsim[1], 0.5*Lsim[2]],
-    pos_second = [0.1*Lsim[0], 0.9*Lsim[1], 0.5*Lsim[2]],
+    origin = [0.1*Lsim[0], 0.*Lsim[1], 0.5*Lsim[2]],
+    corners = [
+        [0.9*Lsim[0], 0. *Lsim[1], 0.5*Lsim[2]],
+        [0.1*Lsim[0], 0.9*Lsim[1], 0.5*Lsim[2]],
+    ],
     fields = []
 )
 
 DiagProbe(
     every = 100,
     number = [4, 4, 4],
-    pos = [0.1*Lsim[0], 0.*Lsim[1], 0.5*Lsim[2]],
-    pos_first  = [0.9*Lsim[0], 0. *Lsim[1], 0.5*Lsim[2]],
-    pos_second = [0.1*Lsim[0], 0.9*Lsim[1], 0.5*Lsim[2]],
-    pos_third  = [0.1*Lsim[0], 0. *Lsim[1], 0.9*Lsim[2]],
+    origin = [0.1*Lsim[0], 0.*Lsim[1], 0.5*Lsim[2]],
+    corners = [
+        [0.9*Lsim[0], 0. *Lsim[1], 0.5*Lsim[2]],
+        [0.1*Lsim[0], 0.9*Lsim[1], 0.5*Lsim[2]],
+        [0.1*Lsim[0], 0. *Lsim[1], 0.9*Lsim[2]],
+    ],
     fields = []
 )

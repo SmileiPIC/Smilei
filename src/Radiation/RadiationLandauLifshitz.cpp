@@ -42,7 +42,9 @@ RadiationLandauLifshitz::~RadiationLandauLifshitz()
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
 // -----------------------------------------------------------------------------
-void RadiationLandauLifshitz::operator() (Particles &particles,
+void RadiationLandauLifshitz::operator() (
+        Particles &particles,
+        Species * photon_species,
         SmileiMPI* smpi,
         RadiationTables &RadiationTables,
         int istart,
@@ -144,9 +146,6 @@ void RadiationLandauLifshitz::operator() (Particles &particles,
     for (int ipart=istart ; ipart<iend; ipart++ )
     {
         radiated_energy_loc += weight[ipart]*rad_norm_energy[ipart - istart] ;
-        /*std::cerr << weight[ipart]
-                  << " " << rad_norm_energy[ipart - istart]
-                  << std::endl;*/
     }
     radiated_energy += radiated_energy_loc;
 }

@@ -48,6 +48,7 @@ public:
     Function_Python1D(PyObject *pp) : py_profile(pp) {};
     Function_Python1D(Function_Python1D *f) : py_profile(f->py_profile) {};
     double valueAt(double); // time
+    double valueAt(std::vector<double>, double); // time (space discarded)
     double valueAt(std::vector<double>); // space
 #ifdef SMILEI_USE_NUMPY
     PyArrayObject* valueAt(std::vector<PyArrayObject*>); // numpy

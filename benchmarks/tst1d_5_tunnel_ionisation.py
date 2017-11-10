@@ -12,73 +12,75 @@ Tsim = 0.2*t0		# duration of the simulation
 
 
 Main(
-    geometry = "1d3v",
+    geometry = "1Dcartesian",
      
     interpolation_order = 2,
      
     cell_length = [l0/resx],
-    sim_length  = [Lsim],
+    grid_length  = [Lsim],
     
     number_of_patches = [ 4 ],
     
     timestep = t0/rest,
-    sim_time = Tsim,
+    simulation_time = Tsim,
      
-    bc_em_type_x = ['silver-muller'],
+    EM_boundary_conditions = [ ['silver-muller'] ],
     
-    referenceAngularFrequency_SI = 6*math.pi*1e14,
+    reference_angular_frequency_SI = 6*math.pi*1e14,
     
     random_seed = smilei_mpi_rank
 )
 
 Species(
-	species_type = 'hydrogen',
+	name = 'hydrogen',
 	ionization_model = 'tunnel',
 	ionization_electrons = 'electron',
 	atomic_number = 1,
-	initPosition_type = 'regular',
-	initMomentum_type = 'cold',
-	n_part_per_cell = 10,
+	position_initialization = 'regular',
+	momentum_initialization = 'cold',
+	particles_per_cell = 10,
 	mass = 1836.0*1000.,
 	charge = 0.0,
-	nb_density = 0.1,
-	bc_part_type_xmin = 'none',
-	bc_part_type_xmax = 'none'
+	number_density = 0.1,
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 )
 
 Species(
-	species_type = 'carbon',
+	name = 'carbon',
 	ionization_model = 'tunnel',
 	ionization_electrons = 'electron',
 	atomic_number = 6,
-	initPosition_type = 'regular',
-	initMomentum_type = 'cold',
-	n_part_per_cell = 10,
+	position_initialization = 'regular',
+	momentum_initialization = 'cold',
+	particles_per_cell = 10,
 	mass = 1836.0*1000.,
 	charge = 0.0,
-	nb_density = 0.1,
-	bc_part_type_xmin = 'none',
-	bc_part_type_xmax = 'none'
+	number_density = 0.1,
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 )
 
 Species(
-	species_type = 'electron',
-	initPosition_type = 'regular',
-	initMomentum_type = 'cold',
-	n_part_per_cell = 0,
+	name = 'electron',
+	position_initialization = 'regular',
+	momentum_initialization = 'cold',
+	particles_per_cell = 0,
 	mass = 1.0,
 	charge = -1.0,
 	charge_density = 0.0,
-	bc_part_type_xmin = 'none',
-	bc_part_type_xmax = 'none',
-	track_every = 30
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 )
 
 LaserPlanar1D(
-	boxSide = 'xmin',
+	box_side = 'xmin',
 	a0 = 0.1,
     omega = 1.,
-    polarizationPhi = 0.,
+    polarization_phi = 0.,
     time_envelope = tconstant(),
 )
 
@@ -90,8 +92,8 @@ DiagFields(
     fields = ["Ex", "Ey", "Ez"]
 )
 
-DiagParticles(
-	output = "density",
+DiagParticleBinning(
+	deposited_quantity = "weight",
 	every = 20,
 	species = ["hydrogen"],
 	axes = [
@@ -99,11 +101,16 @@ DiagParticles(
 	]
 )
 
-DiagParticles(
-	output = "density",
+DiagParticleBinning(
+	deposited_quantity = "weight",
 	every = 20,
 	species = ["carbon"],
 	axes = [
 		["charge",  -0.5, 6.5, 7]
 	]
+)
+
+DiagTrackParticles(
+	species = "electron",
+	every = 30
 )

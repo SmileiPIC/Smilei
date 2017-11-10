@@ -115,25 +115,31 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
         nPart_total *= vecNumber[iDimProbe];
     }
     
-    // Extract "pos", "pos_first", "pos_second" and "pos_third"
+    // Extract origin and corners
     // (positions of the vertices of the grid)
-    allPos.resize(0);
-    vector<string> keys(4);
-    keys[0] = "pos";
-    keys[1] = "pos_first";
-    keys[2] = "pos_second";
-    keys[3] = "pos_third";
-    for( unsigned int i=0; i<nDim_particle+1; i++) {
-        vector<double> pos;
-        if (PyTools::extract(keys[i],pos,"DiagProbe",n_probe)) {
-            if (pos.size()!=nDim_particle)
-                ERROR("Probe #"<<n_probe<<": "<<keys[i]<<" size(" << pos.size() << ") != ndim(" << nDim_particle<< ")");
-            allPos.push_back(pos);
-        }
-    }
+    if( ! PyTools::extract("origin",origin,"DiagProbe",n_probe) )
+        ERROR("Probe #"<<n_probe<<": origin missing");
     
-    if( allPos.size() != dimProbe+1 )
-        ERROR("Probe #"<<n_probe<<": `number` has length "<<dimProbe<<" but "<<allPos.size()<<" points have been defined");
+    if( origin.size() !=nDim_particle )
+        ERROR("Probe #"<<n_probe<<": origin size(" << origin.size() << ") != ndim(" << nDim_particle<< ")");
+    
+    corners.resize(0);
+    bool has_corners = PyTools::extract("corners",corners,"DiagProbe",n_probe);
+    bool has_vectors = PyTools::extract("vectors",corners,"DiagProbe",n_probe);
+    if( has_corners && has_vectors )
+        ERROR("Probe #"<<n_probe<<": cannot define both `corners` and `vectors`");
+    string point_type = has_vectors ? "vectors" : "corners";
+    
+    if( corners.size() != dimProbe )
+        ERROR("Probe #"<<n_probe<<": needs as many "<<point_type<<" as the size of `number`");
+    
+    for (unsigned int iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) {
+        if( corners[iDimProbe].size() != nDim_particle )
+            ERROR("Probe #"<<n_probe<<": "<<point_type<<"["<<iDimProbe<<"] should have "<<nDim_particle<<" elements");
+        if( has_vectors )
+            for( unsigned int j=0; j<nDim_particle; j++)
+                corners[iDimProbe][j] += origin[j];
+    }
     
     // calculate the coordinate system (base vectors)
     axes.resize(nDim_particle*nDim_particle, 0.);
@@ -145,7 +151,7 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
         max = 0.;
         min = numeric_limits<double>::max();
         for( unsigned int j=0; j<nDim_particle; j++) {
-            axes[j+nDim_particle*i] = allPos[i+1][j] - allPos[0][j];
+            axes[j+nDim_particle*i] = corners[i][j] - origin[j];
             val = abs(axes[j+nDim_particle*i]);
             if( val<min ) { min=val; jmin=j; }
             if( val>max ) { max=val; jmax=j; }
@@ -223,10 +229,15 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
     if( dimProbe>1 ) t << " (total = "<<nPart_total<<")";
     MESSAGE(2, t.str());
     
-    for( unsigned int i=0; i<allPos.size(); i++) {
+    t.str("");
+    t << "origin : "<<origin[0];
+    for( unsigned int k=1; k<nDim_particle; k++) t<<", "<<origin[k];
+    MESSAGE(2, t.str());
+    
+    for( unsigned int i=0; i<corners.size(); i++) {
         t.str("");
-        t << "corner "<<i<<" : "<<allPos[i][0];
-        for( unsigned int k=1; k<nDim_particle; k++) t<<", "<<allPos[i][k];
+        t << "corner "<<i<<" : "<<corners[i][0];
+        for( unsigned int k=1; k<nDim_particle; k++) t<<", "<<corners[i][k];
         MESSAGE(2, t.str());
     }
     
@@ -257,11 +268,12 @@ void DiagnosticProbes::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         H5::attr(fileId_, "dimension", dimProbe);
         
         // Add arrays "p0", "p1", ...
+        H5::vect(fileId_, "p0", origin);
         ostringstream pk;
-        for (unsigned int iDimProbe=0; iDimProbe<=dimProbe; iDimProbe++) {
+        for (unsigned int iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) {
             pk.str("");
-            pk << "p" << iDimProbe;
-            H5::vect(fileId_, pk.str(), allPos[iDimProbe]);
+            pk << "p" << (iDimProbe+1);
+            H5::vect(fileId_, pk.str(), corners[iDimProbe]);
         }
         
         // Add array "number"
@@ -330,7 +342,7 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
         for( i=0; i<numCorners; i++ ) {
             // Get coordinates of the current corner in terms of x,y,...
             for( k=0; k<nDim_particle; k++ )
-                point[k] = ( (((i>>k)&1)==0) ? patchMin[k] : patchMax[k] ) - allPos[0][k];
+                point[k] = ( (((i>>k)&1)==0) ? patchMin[k] : patchMax[k] ) - origin[k];
             // Get position of the current corner in the probe's coordinate system
             point = matrixTimesVector( axesInverse, point );
             // Store mins and maxs
@@ -380,7 +392,7 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
             // Check if point is in patch
             is_in_domain = true;
             for( i=0; i<nDim_particle; i++ ) {
-                point[i] += allPos[0][i];
+                point[i] += origin[i];
                 if (point[i] < patchMin[i] || point[i] >= patchMax[i] ) {
                     is_in_domain = false;
                     break;
@@ -441,7 +453,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     #pragma omp master
     {
         // If the patches have been moved (moving window or load balancing) we must re-compute the probes positions
-        if( !positions_written || last_iteration_points_calculated < vecPatches.lastIterationPatchesMoved ) {
+        if( !positions_written || last_iteration_points_calculated <= vecPatches.lastIterationPatchesMoved ) {
             double x_moved = simWindow ? simWindow->getXmoved() : 0.;
             createPoints(smpi, vecPatches, false, x_moved);
             last_iteration_points_calculated = timestep;
@@ -575,7 +587,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         hid_t transfer = H5Pcreate(H5P_DATASET_XFER);
         H5Pset_dxpl_mpio(transfer, H5FD_MPIO_INDEPENDENT);
         // Write
-        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &((*probesArray)(0,0)) );
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, probesArray->data_ );
         H5Dclose(dset_id);
         H5Pclose( transfer );
         H5Sclose(filespace);
@@ -588,8 +600,28 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     #pragma omp barrier
 }
 
-
 bool DiagnosticProbes::needsRhoJs(int timestep) {
     return hasRhoJs && timeSelection->theTimeIsNow(timestep);
 }
 
+// SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
+uint64_t DiagnosticProbes::getDiskFootPrint(int istart, int istop, Patch* patch)
+{
+    uint64_t footprint = 0;
+    
+    // Calculate the number of dumps between istart and istop
+    uint64_t ndumps = timeSelection->howManyTimesBefore(istop) - timeSelection->howManyTimesBefore(istart);
+    
+    // Add necessary global headers approximately
+    footprint += 2200;
+    if( dimProbe>0 ) footprint += 2400;
+    if( ndumps>0 ) footprint += (uint64_t)(nDim_particle * nPart_total * 8);
+    
+    // Add local headers
+    footprint += ndumps * (uint64_t)(480 + nFields * 6);
+    
+    // Add size of each field
+    footprint += ndumps * (uint64_t)(nFields * nPart_total) * 8;
+    
+    return footprint;
+}

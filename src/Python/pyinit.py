@@ -39,13 +39,13 @@ class SmileiComponentType(type):
         self.current += 1
         return self._list[self.current - 1]
     __next__ = next #python3
-
-    # Function to return one given instance, for example DiagParticles[0]
+    
+    # Function to return one given instance, for example DiagParticleBinning[0]
     # Special case: species can also be indexed by their name: Species["ion1"]
     def __getitem__(self, key):
         if self.__name__ == "Species" and type(key) is str:
             for obj in self._list:
-                if obj.species_type == key:
+                if obj.name == key:
                     return obj
         else:
             return self._list[key]
@@ -71,7 +71,51 @@ class SmileiComponent(object):
     def _fillObjectAndAddToList(self, cls, obj, **kwargs):
         # add all kwargs as internal class variables
         if kwargs is not None:
+            deprecated = {
+                "maxwell_sol":"maxwell_solver",
+                "referenceAngularFrequency_SI":"reference_angular_frequency_SI",
+                "initPosition_type":"position_initialization",
+                "initMomentum_type":"momentum_initialization",
+                "thermT":"thermal_boundary_temperature",
+                "thermVelocity":"thermal_boundary_velocity",
+                "isTest":"is_test",
+                "boxSide":"box_side",
+                "polarizationPhi":"polarization_phi",
+                "dump_file_sequence":"keep_n_dumps",
+                "bc_em_type_x":"EM_boundary_conditions",
+                "bc_em_type_y":"EM_boundary_conditions",
+                "bc_em_type_z":"EM_boundary_conditions",
+                "bc_part_type_xmin":"boundary_conditions",
+                "bc_part_type_xmax":"boundary_conditions",
+                "bc_part_type_ymin":"boundary_conditions",
+                "bc_part_type_ymax":"boundary_conditions",
+                "bc_part_type_zmin":"boundary_conditions",
+                "bc_part_type_zmax":"boundary_conditions",
+                "pos"       :"origin",
+                "pos_first" :"corners or vectors",
+                "pos_second":"corners or vectors",
+                "pos_third" :"corners or vectors",
+                "track_every"      :"the block DiagTrackParticles()",
+                "track_flush_every":"the block DiagTrackParticles()",
+                "track_filter"     :"the block DiagTrackParticles()",
+                "species_type"     :"name",
+                "dynamics_type"    :"pusher",
+                "coef_cell"        :"cell_load",
+                "coef_frozen"      :"frozen_particle_load",
+                "currentFilter_int":"the block CurrentFilter()",
+                "Friedman_filter"  :"the block FieldFilter()",
+                "Friedman_theta"   :"the block FieldFilter()",
+                "n_part_per_cell"  :"particles_per_cell",
+                "poisson_iter_max" :"poisson_max_iteration",
+                "poisson_error_max":"poisson_max_error",
+                "nb_density"       :"number_density",
+                "sim_length"       :"grid_length",
+                "sim_time"         :"simulation_time",
+                "output"           :"deposited_quantity",
+            }
             for key, value in kwargs.items():
+                if key in deprecated:
+                    raise Exception("Deprecated `"+key+"` parameter should be replaced by `"+deprecated[key]+"`")
                 if key=="_list":
                     print("Python warning: in "+cls.__name__+": cannot have argument named '_list'. Discarding.")
                 elif not hasattr(cls, key):
@@ -109,6 +153,9 @@ class SmileiSingleton(SmileiComponent):
     def __init__(self, **kwargs):
         self._fillObjectAndAddToList(type(self), type(self), **kwargs)
 
+class ParticleData(object):
+    """Container for particle data at run-time (for exposing particles in numpy)"""
+    _verify = True
 
 class Main(SmileiSingleton):
     """Main parameters"""
@@ -116,10 +163,10 @@ class Main(SmileiSingleton):
     # Default geometry info
     geometry = None
     cell_length = []
-    sim_length = []
+    grid_length = []
     number_of_cells = []
     timestep = None
-    sim_time = None
+    simulation_time = None
     number_of_timesteps = None
     interpolation_order = 2
     number_of_patches = None
@@ -130,27 +177,28 @@ class Main(SmileiSingleton):
 
     # Poisson tuning
     solve_poisson = True
-    poisson_iter_max = 50000
-    poisson_error_max = 1.e-14
+    poisson_max_iteration = 50000
+    poisson_max_error = 1.e-14
 
     # Default fields
-    maxwell_sol = 'Yee'
-    bc_em_type_x = []
-    bc_em_type_y = []
-    bc_em_type_z = []
+    maxwell_solver = 'Yee'
+    EM_boundary_conditions = [["periodic"]]
     time_fields_frozen = 0.
-    currentFilter_int = 0
-    Friedman_filter = False
-    Friedman_theta = 0.
-
+    
     # Default Misc
-    referenceAngularFrequency_SI = 0.
+    reference_angular_frequency_SI = 0.
     print_every = None
     random_seed = None
 
     def __init__(self, **kwargs):
+        # Load all arguments to Main()
         super(Main, self).__init__(**kwargs)
-        #initialize timestep if not defined based on timestep_over_CFL
+        
+        # Deprecation error for the "geometry" argument
+        if Main.geometry in ["1d3v", "2d3v", "3d3v"]:
+            raise Exception("Deprecated geometry = \""+Main.geometry+"\". Use \""+Main.geometry[0]+"Dcartesian\" instead")
+        
+        # Initialize timestep if not defined based on timestep_over_CFL
         if Main.timestep is None:
             if Main.timestep_over_CFL is None:
                 raise Exception("timestep and timestep_over_CFL not defined")
@@ -159,53 +207,53 @@ class Main(SmileiSingleton):
                     raise Exception("Need cell_length to calculate timestep")
 
                 # Yee solver
-                if Main.maxwell_sol == 'Yee':
+                if Main.maxwell_solver == 'Yee':
                     dim = int(Main.geometry[0])
                     if dim<1 or dim>3:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
                     Main.timestep = Main.timestep_over_CFL / math.sqrt(sum([1./l**2 for l in Main.cell_length]))
 
                 # Grassi
-                elif Main.maxwell_sol == 'Grassi':
-                    if Main.geometry == '2d3v':
+                elif Main.maxwell_solver == 'Grassi':
+                    if Main.geometry == '2Dcartesian':
                         Main.timestep = Main.timestep_over_CFL * 0.7071067811*Main.cell_length[0];
                     else:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
 
                 # GrassiSpL
-                elif Main.maxwell_sol == 'GrassiSpL':
-                    if Main.geometry == '2d3v':
+                elif Main.maxwell_solver == 'GrassiSpL':
+                    if Main.geometry == '2Dcartesian':
                         Main.timestep = Main.timestep_over_CFL * 0.6471948469*Main.cell_length[0];
                     else:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
 
                 # None recognized solver
                 else:
-                    raise Exception("timestep: maxwell_sol not implemented "+Main.maxwell_sol)
-
-        #initialize sim_length if not defined based on number_of_cells and cell_length
-        if len(Main.sim_length) is 0:
+                    raise Exception("timestep: maxwell_solver not implemented "+Main.maxwell_solver)
+                
+        #initialize grid_length if not defined based on number_of_cells and cell_length
+        if len(Main.grid_length) is 0:
             if len(Main.number_of_cells) is 0:
-                raise Exception("sim_length and number_of_cells not defined")
+                raise Exception("grid_length and number_of_cells not defined")
             elif len(Main.number_of_cells) != len(Main.cell_length):
-                raise Exception("sim_length and number_of_cells not defined")
+                raise Exception("grid_length and number_of_cells not defined")
             else :
-                Main.sim_length = [a*b for a,b in zip(Main.number_of_cells, Main.cell_length)]
+                Main.grid_length = [a*b for a,b in zip(Main.number_of_cells, Main.cell_length)]
 
-        #initialize sim_time if not defined based on number_of_timesteps and timestep
-        if Main.sim_time is None:
+        #initialize simulation_time if not defined based on number_of_timesteps and timestep
+        if Main.simulation_time is None:
             if Main.number_of_timesteps is None:
-                raise Exception("sim_time and number_of_timesteps not defined")
+                raise Exception("simulation_time and number_of_timesteps not defined")
             else:
-                Main.sim_time = Main.number_of_timesteps * Main.timestep
+                Main.simulation_time = Main.number_of_timesteps * Main.timestep
 
 class LoadBalancing(SmileiSingleton):
     """Load balancing parameters"""
 
     every = 150
     initial_balance = True
-    coef_cell = 1.0
-    coef_frozen = 0.1
+    cell_load = 1.0
+    frozen_particle_load = 0.1
 
 
 class MovingWindow(SmileiSingleton):
@@ -215,55 +263,61 @@ class MovingWindow(SmileiSingleton):
     velocity_x = 1.
 
 
-class DumpRestart(SmileiSingleton):
-    """Dump and restart parameters"""
-
+class Checkpoints(SmileiSingleton):
+    """Checkpoints parameters"""
+    
     restart_dir = None
     restart_number = None
     dump_step = 0
     dump_minutes = 0.
-    dump_file_sequence = 2
+    keep_n_dumps = 2
     dump_deflate = 0
     exit_after_dump = True
     file_grouping = None
     restart_files = []
 
+class CurrentFilter(SmileiSingleton):
+    """Current filtering parameters"""
+    model = "binomial"
+    passes = 0
+
+class FieldFilter(SmileiSingleton):
+    """Fields filtering parameters"""
+    model = "Friedman"
+    theta = 0.
 
 class Species(SmileiComponent):
     """Species parameters"""
-    species_type = None
-    initPosition_type = None
-    initMomentum_type = ""
-    n_part_per_cell = None
+    name = None
+    position_initialization = None
+    momentum_initialization = ""
+    particles_per_cell = None
     c_part_max = 1.0
     mass = None
     charge = None
     charge_density = None
-    nb_density = None
+    number_density = None
     mean_velocity = [0.]
     temperature = [1e-10]
-    thermT = None
-    thermVelocity = None
-    dynamics_type = "norm"
+    thermal_boundary_temperature = []
+    thermal_boundary_velocity = [0.,0.,0.]
+    pusher = "boris"
     radiation_model = "none"
+    radiation_photon_species = None
+    radiation_photon_sampling = 1
+    radiation_photon_gamma_threshold = 2
+    multiphoton_Breit_Wheeler = [None,None]
+    multiphoton_Breit_Wheeler_sampling = [1,1]
     time_frozen = 0.0
-    bc_part_type_xmin = None
-    bc_part_type_xmax = None
-    bc_part_type_ymax = None
-    bc_part_type_ymin = None
-    bc_part_type_zmin = None
-    bc_part_type_zmax = None
+    boundary_conditions = [["periodic"]]
     ionization_model = "none"
     ionization_electrons = None
     atomic_number = None
-    isTest = False
-    track_every = 0
-    track_flush_every = 1
-    track_filter = None
+    is_test = False
 
 class Laser(SmileiComponent):
     """Laser parameters"""
-    boxSide = "xmin"
+    box_side = "xmin"
     omega = 1.
     chirp_profile = 1.
     time_envelope = 1.
@@ -282,19 +336,18 @@ class Collisions(SmileiComponent):
 
 #diagnostics
 class DiagProbe(SmileiComponent):
-    """Diagnostic probe"""
+    """Probe diagnostic"""
     every = None
     number = []
-    pos = []
-    pos_first = []
-    pos_second = []
-    pos_third = []
+    origin = []
+    corners = []
+    vectors = []
     fields = []
     flush_every = 1
 
-class DiagParticles(SmileiComponent):
-    """Diagnostic particles"""
-    output = None
+class DiagParticleBinning(SmileiComponent):
+    """Particle Binning diagnostic"""
+    deposited_quantity = None
     time_average = 1
     species = None
     axes = []
@@ -302,12 +355,12 @@ class DiagParticles(SmileiComponent):
     flush_every = 1
 
 class DiagScreen(SmileiComponent):
-    """Diagnostic particles"""
+    """Screen diagnostic"""
     shape = None
     point = None
     vector = None
     direction = "both"
-    output = None
+    deposited_quantity = None
     species = None
     axes = []
     time_average = 1
@@ -315,20 +368,27 @@ class DiagScreen(SmileiComponent):
     flush_every = 1
 
 class DiagScalar(SmileiComponent):
-    """Diagnostic scalar"""
+    """Scalar diagnostic"""
     every = None
     precision = 10
     vars = []
 
 class DiagFields(SmileiComponent):
-    """Diagnostic Fields"""
+    """Field diagnostic"""
     every = None
     fields = []
     time_average = 1
     flush_every = 1
 
+class DiagTrackParticles(SmileiComponent):
+    """Track diagnostic"""
+    species = None
+    every = 0
+    flush_every = 1
+    filter = None
+
 # external fields
-class ExtField(SmileiComponent):
+class ExternalField(SmileiComponent):
     """External Field"""
     field = None
     profile = None
@@ -348,10 +408,11 @@ class PartWall(SmileiComponent):
     y = None
     z = None
 
-# Radiation loss (continuous and MC algorithms)
+
+# Radiation reaction configuration (continuous and MC algorithms)
 class RadiationReaction(SmileiComponent):
     """
-    Synchrotron-like radiation loss
+    Fine-tuning of synchrotron-like radiation loss
     (classical continuous, quantum correction, stochastics and MC algorithms)
     """
     # Table h parameters
@@ -379,7 +440,40 @@ class RadiationReaction(SmileiComponent):
     # Path the tables/databases
     table_path = "./"
 
+# MutliphotonBreitWheeler pair creation
+class MultiphotonBreitWheeler(SmileiComponent):
+    """
+    Photon decay into electron-positron pairs
+    """
+    # Output format, can be "ascii", "binary", "hdf5"
+    output_format = "hdf5"
+    # Path the tables/databases
+    table_path = "./"
+    # Table T parameters
+    T_chiph_min = 1e-2
+    T_chiph_max = 1e1
+    T_dim = 128
+    # Table xip parameters
+    xip_chiph_min = 1e-2
+    xip_chiph_max = 1e1
+    xip_power = 4
+    xip_threshold = 1e-3
+    xip_chipa_dim = 128
+    xip_chiph_dim = 128
+
 # Smilei-defined
 smilei_mpi_rank = 0
 smilei_mpi_size = 1
 smilei_rand_max = 2**31-1
+
+# DEPRECATION ERRORS
+class DiagParticles(object):
+    def __init__(self, *args, **kwargs):
+        raise Exception("Deprecated `DiagParticles()` must be replaced by `DiagParticleBinning()`")
+class DumpRestart(object):
+    def __init__(self, *args, **kwargs):
+        raise Exception("Deprecated `DumpRestart()` must be replaced by `Checkpoints()`")
+class ExtField(object):
+    def __init__(self, *args, **kwargs):
+        raise Exception("Deprecated `ExtField()` must be replaced by `ExternalField()`")
+

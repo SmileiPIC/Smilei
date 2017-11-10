@@ -105,7 +105,10 @@ if (__i==__rk) {std::cout << "Proc [" << __i << "] " <<__txt << std::endl;} MPI_
 class Tools {
  public:
   static void printMemFootPrint(std::string tag);
-
+  
+  //! Converts a number of Bytes in a readable string in KiB, MiB, GiB or TiB
+  static std::string printBytes(uint64_t nbytes);
+  
   //! This function returns true/flase whether the file exists or not
   //! \param file file name to test
   static bool file_exists(const std::string & filename) ;

@@ -286,6 +286,32 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime,
     }
 }
 
-bool DiagnosticFields::needsRhoJs(int itime) {
+bool DiagnosticFields::needsRhoJs(int itime)
+{
     return hasRhoJs && timeSelection->theTimeIsNow(itime);
 }
+
+// SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
+uint64_t DiagnosticFields::getDiskFootPrint(int istart, int istop, Patch* patch)
+{
+    uint64_t footprint = 0;
+    uint64_t nfields = fields_indexes.size();
+    
+    // Calculate the number of dumps between istart and istop
+    uint64_t ndumps = timeSelection->howManyTimesBefore(istop) - timeSelection->howManyTimesBefore(istart);
+    
+    // Add necessary global headers approximately
+    footprint += 2500;
+    
+    // Add necessary timestep headers approximately
+    footprint += ndumps * 2200;
+    
+    // Add necessary field headers approximately
+    footprint += ndumps * nfields * 1200;
+    
+    // Add size of each field
+    footprint += ndumps * nfields * (uint64_t)(total_patch_size * tot_number_of_patches * 8);
+    
+    return footprint;
+}
+

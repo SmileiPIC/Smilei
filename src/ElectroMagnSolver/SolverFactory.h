@@ -28,15 +28,15 @@ public:
         Solver* solver = NULL;
         DEBUG(params.maxwell_sol);
         
-        if ( params.geometry == "1d3v" ) {
+        if ( params.geometry == "1Dcartesian" ) {
             solver = new MA_Solver1D_norm(params);
-        } else if ( params.geometry == "2d3v" ) {
+        } else if ( params.geometry == "2Dcartesian" ) {
             if (params.Friedman_filter) {
                 solver = new MA_Solver2D_Friedman(params);
             } else {
                 solver = new MA_Solver2D_norm(params);
             }
-        } else if ( params.geometry == "3d3v" ) {
+        } else if ( params.geometry == "3Dcartesian" ) {
             solver = new MA_Solver3D_norm(params);
         } else if ( params.geometry == "3drz" ) {
             solver = new MA_SolverRZ_norm(params);
@@ -56,11 +56,11 @@ public:
         
         // Create the required solver for Faraday's Equation
         // -------------------------------------------------
-        if ( params.geometry == "1d3v" ) {
+        if ( params.geometry == "1Dcartesian" ) {
             if (params.maxwell_sol == "Yee") {
                 solver = new MF_Solver1D_Yee(params);
             }
-        } else if ( params.geometry == "2d3v" ) {
+        } else if ( params.geometry == "2Dcartesian" ) {
             if (params.maxwell_sol == "Yee") {
                 solver = new MF_Solver2D_Yee(params);
             } else if (params.maxwell_sol == "Grassi") {
@@ -73,7 +73,7 @@ public:
                 solver = new MF_Solver2D_Lehe(params);
             }
             
-        } else if ( params.geometry == "3d3v" ) {
+        } else if ( params.geometry == "3Dcartesian" ) {
             if (params.maxwell_sol == "Yee") {
                 solver = new MF_Solver3D_Yee(params);
             }

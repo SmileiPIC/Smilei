@@ -13,9 +13,7 @@ PYTHONCONFIG := python scripts/CompileTools/python-config.py
 
 #-----------------------------------------------------
 # Git information
-DESCRIBE:=$(shell git describe 2>/dev/null || echo '??')
-BRANCH:=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '??')
-VERSION="$(DESCRIBE)-$(BRANCH)"
+VERSION:=$(shell python scripts/CompileTools/get-version.py )
 
 #-----------------------------------------------------
 # Directories and files
@@ -116,20 +114,10 @@ clean:
 	@echo "Cleaning $(BUILD_DIR)"
 	$(Q) rm -rf $(BUILD_DIR) 
 	$(Q) rm -rf $(EXEC)-$(VERSION).tgz
-	@echo "Cleaning doc/html"
-	$(Q) rm -rf doc/html
 
-distclean: clean uninstall_python
+distclean: clean uninstall_happi
 	$(Q) rm -f $(EXEC) $(EXEC)_test
-# Deprecated rules
-obsolete:
-	@echo "[WARNING] Please consider using make config=\"$(MAKECMDGOALS)\""
-
-debug: obsolete
-	make config=debug
-
-scalasca: obsolete
-	make config=scalasca
+	
 
 # Create python header files
 $(BUILD_DIR)/%.pyh: %.py
@@ -166,8 +154,8 @@ $(EXEC)_test : $(OBJS:Smilei.o=Smilei_test.o)
 	$(Q) cp $(BUILD_DIR)/$@ $@
 
 # Avoid to check dependencies and to create .pyh if not necessary
+FILTER_RULES=clean distclean help env debug doc tar happi uninstall_happi
 ifeq ($(filter-out $(wildcard print-*),$(MAKECMDGOALS)),) 
-    FILTER_RULES=clean distclean help env obsolete debug scalasca doc doxygen sphinx tar install_python uninstall_python
     ifeq ($(filter $(FILTER_RULES),$(MAKECMDGOALS)),) 
         # Let's try to make the next lines clear: we include $(DEPS) and pygenerator
         -include $(DEPS) pygenerator
@@ -182,39 +170,35 @@ endif
 #-----------------------------------------------------
 # Doc rules
 
-doc: sphinx doxygen
-
-sphinx:
-	@echo "Compiling sphinx documentation in doc/html/Sphinx/html"
+doc:
 	$(Q) if type "sphinx-build" >/dev/null 2>&1; then\
-		make -C doc/Sphinx BUILDDIR=../html/Sphinx html;\
+		make -C doc/Sphinx BUILDDIR=../../$(BUILD_DIR) html;\
+		echo "Sphinx documentation in $(BUILD_DIR)/html/index.html";\
 	else \
 		echo "Cannot build Sphinx doc because Sphinx is not installed";\
 	fi
 	
-doxygen:
-	@echo "Compiling doxygen documentation in doc/html/Doxygen/html"
-	$(Q) if type "doxygen" >/dev/null 2>&1; then\
-		mkdir -p doc/html/Doxygen; (echo "PROJECT_NUMBER=${VERSION}\nOUTPUT_DIRECTORY=doc/html/Doxygen"; cat doc/Doxygen/smilei.dox) | doxygen - ;\
-	else \
-		echo "Cannot build doxygen doc because doxygen is not installed";\
-	fi	
+#-----------------------------------------------------
+# Archive in tgz file
 
 tar:
 	@echo "Creating archive $(EXEC)-$(VERSION).tgz"
 	$(Q) git archive -o $(EXEC)-$(VERSION).tgz --prefix $(EXEC)-$(VERSION)/ HEAD
+	$(Q) tar -zxf $(EXEC)-$(VERSION).tgz
+	$(Q) echo $(VERSION) > $(EXEC)-$(VERSION)/.version
+	$(Q) tar -czf $(EXEC)-$(VERSION).tgz $(EXEC)-$(VERSION) && rm -R $(EXEC)-$(VERSION)
 
 
 #-----------------------------------------------------
 # Python module rules
 
 # Install the python module in the user python path
-install_python:
+happi:
 	@echo "Installing $(SITEDIR)/smilei.pth"
 	$(Q) mkdir -p "$(SITEDIR)"
-	$(Q) echo "$(PWD)/scripts/PythonModule" > "$(SITEDIR)/smilei.pth"
+	$(Q) echo "$(PWD)" > "$(SITEDIR)/smilei.pth"
 
-uninstall_python:
+uninstall_happi:
 	@echo "Uninstalling $(SITEDIR)/smilei.pth"
 	$(Q) rm -f "$(SITEDIR)/smilei.pth"
 
@@ -224,13 +208,13 @@ uninstall_python:
 print-% :
 	$(info $* : $($*)) @true
 
-env: print-SMILEICXX print-MPIVERSION print-VERSION print-OPENMP_FLAG print-HDF5_ROOT_DIR print-SITEDIR print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS
+env: print-SMILEICXX print-MPIVERSION print-VERSION print-OPENMP_FLAG print-HDF5_ROOT_DIR print-SITEDIR print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS	
 
 
 #-----------------------------------------------------
 # help
 
-help: 
+help:
 	@echo 'TO BUILD SMILEI:'
 	@echo '----------------'
 	@echo 'Usage:'
@@ -251,17 +235,16 @@ help:
 	@echo '  make config="debug noopenmp"'
 	@echo
 	@echo 'Machine options:'
-	@echo '  make machine=XXX : include machine file in scripts/CompileTools/machine/XXX'
+	@echo '  make machine=XXX      : include machine file in scripts/CompileTools/machine/XXX'
+	@echo '  make machine=XXX help : print help for machine'
 	@echo
 	@echo 'OTHER PURPOSES:'
 	@echo '---------------'
-	@echo '  make doc              : builds all the documentation'
-	@echo '  make sphinx           : builds the `sphinx` documentation only (for users)'
-	@echo '  make doxygen          : builds the `doxygen` documentation only (for developers)'
+	@echo '  make doc              : builds the documentation'
 	@echo '  make tar              : creates an archive of the sources'
 	@echo '  make clean            : cleans the build directory'
-	@echo "  make install_python   : install Smilei's python module"
-	@echo "  make uninstall_python : remove Smilei's python module"
+	@echo "  make happi            : install Smilei's python module"
+	@echo "  make uninstall_happi  : remove Smilei's python module"
 	@echo '  make env              : print important internal makefile variables'
 	@echo '  make print-XXX        : print internal makefile variable XXX'
 	@echo ''
@@ -273,4 +256,6 @@ help:
 	@echo 
 	@echo 'http://www.maisondelasimulation.fr/smilei'
 	@echo 'https://github.com/SmileiPIC/Smilei'
+	@echo
+	@if [ -f  scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine); fi
 

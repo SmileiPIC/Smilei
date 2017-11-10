@@ -33,13 +33,13 @@ protected:
     double EC_to_au;
     double au_to_w0;
     
-    double referenceAngularFrequency_SI;
+    double reference_angular_frequency_SI;
     double dt;
     double invdt;
     unsigned int nDim_field;
     unsigned int nDim_particle;
     unsigned int atomic_number_;
-    unsigned int ionized_species_invmass;
+    double ionized_species_invmass;
 
 private:
 

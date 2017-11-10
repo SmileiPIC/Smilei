@@ -82,6 +82,15 @@ public:
     //! checkpoint asks to politely quit from simulation
     bool exit_asap;
     
+    //! Timestep to dump everything
+    unsigned int dump_step;
+    
+    //! Human minutes to dump everything
+    double dump_minutes;
+    
+    //! exit once dump done
+    bool exit_after_dump;
+    
 private:
     
     //! initialize the time zero of the simulation 
@@ -103,21 +112,12 @@ private:
     //! time of the constructor
     double time_reference;
     
-    //! vector containing the step at which perform a dump in case time_dump returns true
+    //! step at which perform a dump in case time_dump returns true
     unsigned int time_dump_step;
     
-    //! Timestep to dump everything
-    unsigned int dump_step;
-    
-    //! Human minutes to dump everything
-    double dump_minutes;
-    
-    //! exit once dump done
-    bool exit_after_dump;
-    
-    //! keep the last dump_file_sequence dump files
-    unsigned int dump_file_sequence;    
-    const unsigned int dump_file_sequence_max;
+    //! keep the last keep_n_dumps dump files
+    unsigned int keep_n_dumps;    
+    const unsigned int keep_n_dumps_max;
     
     //! write dump drectory
     std::string dump_dir;

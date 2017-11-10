@@ -33,7 +33,7 @@ isYmax(patch->isYmax())
     for (unsigned int imode=0; imode<nmodes; imode++) {
         for (unsigned int ispec=0; ispec<n_species; ispec++) {
             ostringstream species_mode_name("");
-            species_mode_name << vecSpecies[ispec]->species_type << "_mode_" << imode;
+            species_mode_name << vecSpecies[ispec]->name << "_mode_" << imode;
             Jx_s[imode*n_species+ispec]  = new cField2D(("Jx_" + species_mode_name.str()).c_str(), dimPrim);
             Jy_s[imode*n_species+ispec]  = new cField2D(("Jy_" + species_mode_name.str()).c_str(), dimPrim);
             Jz_s[imode*n_species+ispec]  = new cField2D(("Jz_" + species_mode_name.str()).c_str(), dimPrim);

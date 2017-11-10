@@ -12,7 +12,8 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patc
 latest_timestep(-1)
 {
     // patch  == NULL else error
-
+    filename = "scalars.txt";
+    
     if (PyTools::nComponents("DiagScalar") > 1) {
         ERROR("Only one DiagScalar can be specified");
     }
@@ -132,27 +133,29 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     // -------------------------------------------------------------------------
 
     // General scalars
-    necessary_Ubal_norm = allowedKey("Ubal_norm");
-    necessary_Ubal    = necessary_Ubal_norm || allowedKey("Ubal");
-    necessary_Utot    = necessary_Ubal || allowedKey("Utot");
-    necessary_Uexp    = necessary_Ubal || allowedKey("Uexp");
-    necessary_Ukin    = necessary_Utot || allowedKey("Ukin");
-    necessary_Uelm    = necessary_Utot || allowedKey("Uelm");
-    necessary_Urad    = necessary_Utot || allowedKey("Urad");
+    necessary_Ubal_norm  = allowedKey("Ubal_norm");
+    necessary_Ubal       = necessary_Ubal_norm || allowedKey("Ubal");
+    necessary_Utot       = necessary_Ubal || allowedKey("Utot");
+    necessary_Uexp       = necessary_Ubal || allowedKey("Uexp");
+    necessary_Ukin       = necessary_Utot || allowedKey("Ukin");
+    necessary_Uelm       = necessary_Utot || allowedKey("Uelm");
+    necessary_Urad       = necessary_Utot || allowedKey("Urad");
+    necessary_UmBWpairs  = allowedKey("UmBWpairs");
     necessary_Ukin_BC = necessary_Uexp || allowedKey("Ukin_bnd") || allowedKey("Ukin_out_mvw") || allowedKey("Ukin_inj_mvw");
     necessary_Uelm_BC = necessary_Uexp || allowedKey("Uelm_bnd") || allowedKey("Uelm_out_mvw") || allowedKey("Uelm_inj_mvw");
     // Species
     unsigned int nspec = vecPatches(0)->vecSpecies.size();
     necessary_species.resize(nspec, false);
-    string species_type;
+    string species_name;
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
-        if (! vecPatches(0)->vecSpecies[ispec]->particles->isTest) {
-            species_type = vecPatches(0)->vecSpecies[ispec]->species_type;
-            necessary_species[ispec] = necessary_Ukin || allowedKey("Dens_"+species_type)
-                                                      || allowedKey("Ntot_"+species_type)
-                                                      || allowedKey("Zavg_"+species_type)
-                                                      || allowedKey("Ukin_"+species_type)
-                                                      || allowedKey("Urad_"+species_type);
+        if (! vecPatches(0)->vecSpecies[ispec]->particles->is_test) {
+            species_name = vecPatches(0)->vecSpecies[ispec]->name;
+            necessary_species[ispec] = necessary_Ukin || allowedKey("Dens_"+species_name)
+                                                      || allowedKey("Ntot_"+species_name)
+                                                      || allowedKey("Zavg_"+species_name)
+                                                      || allowedKey("Ukin_"+species_name)
+                                                      || allowedKey("Urad_"+species_name)
+                                                      || allowedKey("UmBWpairs");
         }
     }
     // Fields
@@ -178,6 +181,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
             if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
             else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
             else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
+            //poy_name = string("Poy") + "XYZ"[i] + (j==0?"min":"max");
             necessary_poy[k] = necessary_Uelm_BC || allowedKey(poy_name) || allowedKey(poy_name+"Inst");
             k++;
         }
@@ -197,6 +201,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     Uexp         = newScalar_SUM( "Uexp"         );
     Ukin         = newScalar_SUM( "Ukin"         );
     Urad         = newScalar_SUM( "Urad"         );  // Radiated energy
+    UmBWpairs    = newScalar_SUM( "UmBWpairs"    );  // multiphoton Breit-Wheeler
     Uelm         = newScalar_SUM( "Uelm"         );
     Ukin_bnd     = newScalar_SUM( "Ukin_bnd"     );
     Ukin_out_mvw = newScalar_SUM( "Ukin_out_mvw" );
@@ -212,13 +217,13 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     sUkin.resize(nspec, NULL);
     sUrad.resize(nspec, NULL);
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
-        if (! vecPatches(0)->vecSpecies[ispec]->particles->isTest) {
-            species_type = vecPatches(0)->vecSpecies[ispec]->species_type;
-            sDens[ispec] = newScalar_SUM( "Dens_"+species_type );
-            sNtot[ispec] = newScalar_SUM( "Ntot_"+species_type );
-            sZavg[ispec] = newScalar_SUM( "Zavg_"+species_type );
-            sUkin[ispec] = newScalar_SUM( "Ukin_"+species_type );
-            sUrad[ispec] = newScalar_SUM( "Urad_"+species_type );
+        if (! vecPatches(0)->vecSpecies[ispec]->particles->is_test) {
+            species_name = vecPatches(0)->vecSpecies[ispec]->name;
+            sDens[ispec] = newScalar_SUM( "Dens_"+species_name );
+            sNtot[ispec] = newScalar_SUM( "Ntot_"+species_name );
+            sZavg[ispec] = newScalar_SUM( "Zavg_"+species_name );
+            sUkin[ispec] = newScalar_SUM( "Ukin_"+species_name );
+            sUrad[ispec] = newScalar_SUM( "Urad_"+species_name );
         }
     }
 
@@ -248,6 +253,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
             if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
             else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
             else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
+            //poy_name = string("Poy") + "XYZ"[i] + (j==0?"min":"max");
             poy    [k] = newScalar_SUM( poy_name        );
             poyInst[k] = newScalar_SUM( poy_name+"Inst" );
             k++;
@@ -347,29 +353,44 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     // ------------------------
     double Ukin_=0.;             // total (kinetic) energy carried by particles (test-particles do not contribute)
     double Urad_=0.;             // total radiated energy by particles
+    double UmBWpairs_=0;         // total enegy converted into pairs via the multiphoton Breit-Wheeler
     double Ukin_bnd_=0.;         // total energy lost by particles due to boundary conditions
     double Ukin_out_mvw_=0.;     // total energy lost due to particles being suppressed by the moving-window
     double Ukin_inj_mvw_=0.;     // total energy added due to particles created by the moving-window
 
     // Compute scalars for each species
     for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
-        if (vecSpecies[ispec]->particles->isTest) continue;    // No scalar diagnostic for test particles
-
+        if (vecSpecies[ispec]->particles->is_test) continue;    // No scalar diagnostic for test particles
+        
         if( necessary_species[ispec] ) {
             double density=0.0;  // sum of weights of current species ispec
             double charge=0.0;   // sum of charges of current species ispec
             double ener_tot=0.0; // total kinetic energy of current species ispec
 
             unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles(); // number of particles
-            for (unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
 
-                density  += vecSpecies[ispec]->particles->weight(iPart);
-                charge   += vecSpecies[ispec]->particles->weight(iPart)
-                *          (double)vecSpecies[ispec]->particles->charge(iPart);
-                ener_tot += vecSpecies[ispec]->particles->weight(iPart)
-                *          (vecSpecies[ispec]->particles->lor_fac(iPart)-1.0);
+            if (vecSpecies[ispec]->mass > 0)
+            {
+
+                for (unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
+
+                    density  += vecSpecies[ispec]->particles->weight(iPart);
+                    charge   += vecSpecies[ispec]->particles->weight(iPart)
+                    *          (double)vecSpecies[ispec]->particles->charge(iPart);
+                    ener_tot += vecSpecies[ispec]->particles->weight(iPart)
+                    *          (vecSpecies[ispec]->particles->lor_fac(iPart)-1.0);
+                }
+                ener_tot *= vecSpecies[ispec]->mass;
             }
-            ener_tot *= vecSpecies[ispec]->mass;
+            else if (vecSpecies[ispec]->mass == 0)
+            {
+                for (unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
+
+                    density  += vecSpecies[ispec]->particles->weight(iPart);
+                    ener_tot += vecSpecies[ispec]->particles->weight(iPart)
+                    *          (vecSpecies[ispec]->particles->momentum_norm(iPart));
+                }
+            }
 
             *sNtot[ispec] += (double)nPart;
             *sDens[ispec] += cell_volume * density;
@@ -391,6 +412,16 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
                 Urad_ += cell_volume*
                          vecSpecies[ispec]->getNrjRadiation();
             }
+
+            // If multiphoton Breit-Wheeler activated for photons
+            // increment the total pair energy from this process
+            if (vecSpecies[ispec]->Multiphoton_Breit_Wheeler_process)
+            {
+                UmBWpairs_ += cell_volume*
+                                 vecSpecies[ispec]
+                                 ->getNrjRadiation();
+            }
+
         }
 
         if( necessary_Ukin_BC ) {
@@ -421,6 +452,9 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     }
     if( necessary_Urad ) {
         *Urad += Urad_;
+    }
+    if( necessary_UmBWpairs ) {
+        *UmBWpairs += UmBWpairs_;
     }
     if( necessary_Ukin_BC ) {
         *Ukin_bnd     += Ukin_bnd_     ;
@@ -616,4 +650,87 @@ bool DiagnosticScalar::allowedKey(string key) {
 
 bool DiagnosticScalar::needsRhoJs(int timestep) {
     return timeSelection->theTimeIsNow(timestep);
+}
+
+// SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
+uint64_t DiagnosticScalar::getDiskFootPrint(int istart, int istop, Patch* patch)
+{
+    uint64_t footprint = 0;
+    
+    // Calculate the number of dumps between istart and istop
+    uint64_t ndumps = timeSelection->howManyTimesBefore(istop) - timeSelection->howManyTimesBefore(istart);
+    
+    // Calculate the number of scalars
+    // 1 - general scalars
+    vector<string> scalars = {"Ubal_norm", "Ubal", "Utot", "Uexp", "Ukin", "Urad", "UmBWpairs", "Uelm", "Ukin_bnd", "Ukin_out_mvw", "Ukin_inj_mvw", "Uelm_bnd", "Uelm_out_mvw", "Uelm_inj_mvw"};
+    // 2 - species scalars
+    unsigned int nspec = patch->vecSpecies.size();
+    for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
+        if (! patch->vecSpecies[ispec]->particles->is_test) {
+            string species_name = patch->vecSpecies[ispec]->name;
+            scalars.push_back( "Dens_"+species_name );
+            scalars.push_back( "Ntot_"+species_name );
+            scalars.push_back( "Zavg_"+species_name );
+            scalars.push_back( "Ukin_"+species_name );
+            scalars.push_back( "Urad_"+species_name );
+        }
+    }
+    // 3 - Field scalars
+    scalars.push_back( "Uelm_"+patch->EMfields->Ex_ ->name );
+    scalars.push_back( "Uelm_"+patch->EMfields->Ey_ ->name );
+    scalars.push_back( "Uelm_"+patch->EMfields->Ez_ ->name );
+    scalars.push_back( "Uelm_"+patch->EMfields->Bx_m->name );
+    scalars.push_back( "Uelm_"+patch->EMfields->By_m->name );
+    scalars.push_back( "Uelm_"+patch->EMfields->Bz_m->name );
+#ifdef _DISABLE
+    // 4 - Scalars related to fields min and max
+    for( unsigned int i=0; i<2; i++ ) {
+        string minmax = (i==0) ? "Min" : "Max";
+        for( unsigned int j=0; j<2; j++ ) {
+            string cell = (j==0) ? "" : "Cell";
+            scalars.push_back( patch->EMfields->Ex_ ->name + minmax + cell);
+            scalars.push_back( patch->EMfields->Ey_ ->name + minmax + cell);
+            scalars.push_back( patch->EMfields->Ez_ ->name + minmax + cell);
+            scalars.push_back( patch->EMfields->Bx_m->name + minmax + cell);
+            scalars.push_back( patch->EMfields->By_m->name + minmax + cell);
+            scalars.push_back( patch->EMfields->Bz_m->name + minmax + cell);
+            scalars.push_back( patch->EMfields->Jx_ ->name + minmax + cell);
+            scalars.push_back( patch->EMfields->Jy_ ->name + minmax + cell);
+            scalars.push_back( patch->EMfields->Jz_ ->name + minmax + cell);
+            scalars.push_back( patch->EMfields->rho_->name + minmax + cell);
+        }
+    }
+#endif
+    // 5 - Scalars related to the Poynting flux
+    unsigned int k = 0;
+    string poy_name;
+    for (unsigned int j=0; j<2;j++) {
+        for (unsigned int i=0; i<patch->EMfields->poynting[j].size();i++) {
+            if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
+            else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
+            else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
+            //poy_name = string("Poy") + "XYZ"[i] + (j==0?"min":"max");
+            scalars.push_back( poy_name        );
+            scalars.push_back( poy_name+"Inst" );
+            k++;
+        }
+    }
+    // Finally, count allowed scalars
+    int nscalars = 1;
+    for( unsigned int k=0; k<scalars.size(); k++){
+        if( allowedKey( scalars[k] ) )
+            nscalars ++;
+    }
+    
+    // Calculate the size of one line
+    string s = "";
+    uint64_t linesize = nscalars * calculateWidth( s );
+    
+    // Add necessary global headers approximately
+    footprint += (uint64_t)(nscalars * 10 + linesize);
+    
+    // Add size of each line
+    footprint += ndumps * linesize;
+    
+    return footprint;
 }

@@ -19,9 +19,9 @@
 #include "Species.h"
 #include "RadiationTables.h"
 
-//  --------------------------------------------------------------------------------------------------------------------
+//  ----------------------------------------------------------------------------
 //! Class Radiation
-//  --------------------------------------------------------------------------------------------------------------------
+//  ----------------------------------------------------------------------------
 class Radiation
 {
 
@@ -31,7 +31,17 @@ class Radiation
         virtual ~Radiation();
 
         //! Overloading of () operator
-        virtual void operator() (Particles &particles,
+        //! \param particles   particle object containing the particle
+        //!                    properties of the current species
+        //! \param smpi        MPI properties
+        //! \param RadiationTables Cross-section data tables and useful functions
+        //                     for nonlinear inverse Compton scattering
+        //! \param istart      Index of the first particle
+        //! \param iend        Index of the last particle
+        //! \param ithread     Thread index
+        virtual void operator() (
+                Particles &particles,
+                Species * photon_species,
                 SmileiMPI* smpi,
                 RadiationTables &RadiationTables,
                 int istart,
@@ -77,8 +87,6 @@ class Radiation
         void setRadiatedEnergy(double value)
         {
             radiated_energy = value;
-            std::cerr << " setRadiatedEnergy(" << radiated_energy
-                      << ")"<< std::endl;
         };
 
         //! Computation of the quantum parameter for the given
@@ -94,6 +102,8 @@ class Radiation
                 int iend,
                 int ithread);
 
+        // Local array of new photons
+        Particles new_photons;
 
     protected:
 
@@ -114,18 +124,6 @@ class Radiation
 
         // _________________________________________
         // Factors
-
-        //! Fine structure constant
-        const double fine_struct_cst = 7.2973525698e-3;
-
-        //! Reduced Planck Constant (J.s)
-        const double red_planck_cst = 1.054571628E-34;
-
-        //! Electron mass (kg)
-        const double electron_mass = 9.109382616e-31;
-
-        //! Speed of light in vacuum (m/s)
-        const double c_vacuum = 299792458;
 
         //! Normalized Schwinger Electric field
         double norm_E_Schwinger;

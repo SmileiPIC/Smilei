@@ -22,7 +22,7 @@
 
 #include "Diagnostic.h"
 #include "DiagnosticScalar.h"
-#include "DiagnosticParticles.h"
+#include "DiagnosticParticleBinning.h"
 #include "DiagnosticScreen.h"
 #include "DiagnosticProbes.h"
 
@@ -132,24 +132,11 @@ void SmileiMPI::init( Params& params )
 
     // Set periodicity of the simulated problem
     periods_  = new int[params.nDim_field];
-    for (unsigned int i=0 ; i<params.nDim_field ; i++) periods_[i] = 0;
-    // Geometry periodic in x
-    if (params.bc_em_type_x[0]=="periodic") {
-        periods_[0] = 1;
-        MESSAGE(1,"applied topology for periodic BCs in x-direction");
-    }
-    if (params.nDim_field>1) {
-        // Geometry periodic in y
-        if (params.bc_em_type_y[0]=="periodic") {
-            periods_[1] = 1;
-            MESSAGE(2,"applied topology for periodic BCs in y-direction");
-        }
-    }
-    if (params.nDim_field>2) {
-        // Geometry periodic in y
-        if (params.bc_em_type_z[0]=="periodic") {
-            periods_[2] = 1;
-            MESSAGE(2,"applied topology for periodic BCs in z-direction");
+    for (unsigned int i=0 ; i<params.nDim_field ; i++) {
+        periods_[i] = 0;
+        if (params.EM_BCs[i][0]=="periodic") {
+            periods_[i] = 1;
+            MESSAGE(1,"applied topology for periodic BCs in "<<"xyz"[i]<<"-direction");
         }
     }
 } // END init
@@ -213,17 +200,17 @@ void SmileiMPI::init_patch_count( Params& params)
     // Second, prepare the profiles for each species
     vector<Profile*> densityProfiles(0), ppcProfiles(0);
     for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++){
-        std::string species_type("");
-        PyTools::extract("species_type",species_type,"Species",ispecies);
+        std::string species_name("");
+        PyTools::extract("name",species_name,"Species",ispecies);
         PyObject *profile1=nullptr;
         std::string densityProfileType("");
-        bool ok1 = PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispecies);
+        bool ok1 = PyTools::extract_pyProfile("number_density"    , profile1, "Species", ispecies);
         bool ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", ispecies);
         if( ok1 ) densityProfileType = "nb";
         if( ok2 ) densityProfileType = "charge";
-        densityProfiles.push_back(new Profile(profile1, params.nDim_particle, densityProfileType+"_density "+species_type));
-        PyTools::extract_pyProfile("n_part_per_cell", profile1, "Species", ispecies);
-        ppcProfiles.push_back(new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_type));
+        densityProfiles.push_back(new Profile(profile1, params.nDim_particle, densityProfileType+"_density "+species_name));
+        PyTools::extract_pyProfile("particles_per_cell", profile1, "Species", ispecies);
+        ppcProfiles.push_back(new Profile(profile1, params.nDim_particle, "particles_per_cell "+species_name));
     }
 
     // Third, loop over local patches to obtain their approximate load
@@ -269,12 +256,12 @@ void SmileiMPI::init_patch_count( Params& params)
                 // Consider whether this species is frozen
                 double time_frozen(0.);
                 PyTools::extract("time_frozen",time_frozen ,"Species",ispecies);
-                if(time_frozen > 0.) local_load *= params.coef_frozen;
+                if(time_frozen > 0.) local_load *= params.frozen_particle_load;
                 // Add the load of the species to the current patch load
                 PatchLoad[ipatch] += local_load;
             }
             //Add grid contribution to the load.
-            PatchLoad[ipatch] += ncells_perpatch*params.coef_cell-1; //-1 to compensate the initialization to 1.
+            PatchLoad[ipatch] += ncells_perpatch*params.cell_load-1; //-1 to compensate the initialization to 1.
             total_load += PatchLoad[ipatch];
         }
     }
@@ -371,8 +358,8 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     unsigned int ncells_perpatch, j;
     int Ncur;
     double Tload,Tload_loc,Tcur, cells_load, target, Tscan;
-    //Load of a cell = coef_cell*load of a particle.
-    //Load of a frozen particle = coef_frozen*load of a particle.
+    //Load of a cell = cell_load*load of a particle.
+    //Load of a frozen particle = frozen_particle_load*load of a particle.
     std::vector<double> Lp, Lp_left, Lp_right;
     ofstream fout;
 
@@ -388,7 +375,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         ncells_perpatch *= params.n_space[idim]+2*params.oversize[idim];
 
     unsigned int tot_species_number = vecpatches(0)->vecSpecies.size();
-    cells_load = ncells_perpatch*params.coef_cell ;
+    cells_load = ncells_perpatch*params.cell_load ;
 
     Lp.resize(patch_count[smilei_rk], cells_load);
     if (smilei_rk > 0) Lp_left.resize(patch_count[smilei_rk-1]);
@@ -400,7 +387,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     //Compute Local Loads of each Patch (Lp)
     for(unsigned int ipatch=0; ipatch < (unsigned int)patch_count[smilei_rk]; ipatch++){
         for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++) {
-            Lp[ipatch] += vecpatches(ipatch)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(params.coef_frozen-1)*(time_dual < vecpatches(ipatch)->vecSpecies[ispecies]->time_frozen)) ;
+            Lp[ipatch] += vecpatches(ipatch)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(params.frozen_particle_load-1)*(time_dual < vecpatches(ipatch)->vecSpecies[ispecies]->time_frozen)) ;
         }
         Tload_loc += Lp[ipatch];
     }
@@ -797,9 +784,11 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
              else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]) ) {
                  // BCs at the x-border
                  ElectroMagnBC2D_SM* embc = static_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]);
+
                  if (embc->Bx_val.size()) { isend(&embc->Bx_val, to, mpi_tag+tag, requests[tag]); tag++; }
                  if (embc->By_val.size()) { isend(&embc->By_val, to, mpi_tag+tag, requests[tag]); tag++; }
                  if (embc->Bz_val.size()) { isend(&embc->Bz_val, to, mpi_tag+tag, requests[tag]); tag++; }
+
              }
              else if ( dynamic_cast<ElectroMagnBC3D_SM*>(EM->emBoundCond[bcId]) ) {
                 ElectroMagnBC3D_SM* embc = static_cast<ElectroMagnBC3D_SM*>(EM->emBoundCond[bcId]);
@@ -866,9 +855,11 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
             else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]) ) {
                 // BCs at the x-border
                 ElectroMagnBC2D_SM* embc = static_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]);
+
                 if (embc->Bx_val.size()) { recv(&embc->Bx_val, from, tag); tag++; }
                 if (embc->By_val.size()) { recv(&embc->By_val, from, tag); tag++; }
                 if (embc->Bz_val.size()) { recv(&embc->Bz_val, from, tag); tag++; }
+
             }
              else if ( dynamic_cast<ElectroMagnBC3D_SM*>(EM->emBoundCond[bcId]) ) {
                 ElectroMagnBC3D_SM* embc = static_cast<ElectroMagnBC3D_SM*>(EM->emBoundCond[bcId]);
@@ -952,7 +943,7 @@ void SmileiMPI::computeGlobalDiags(Diagnostic* diag, int timestep)
 {
     if ( DiagnosticScalar* scalar = dynamic_cast<DiagnosticScalar*>( diag ) ) {
         computeGlobalDiags(scalar, timestep);
-    } else if (DiagnosticParticles* particles = dynamic_cast<DiagnosticParticles*>( diag )) {
+    } else if (DiagnosticParticleBinning* particles = dynamic_cast<DiagnosticParticleBinning*>( diag )) {
         computeGlobalDiags(particles, timestep);
     } else if (DiagnosticScreen* screen = dynamic_cast<DiagnosticScreen*>( diag )) {
         computeGlobalDiags(screen, timestep);
@@ -1044,16 +1035,16 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// MPI synchronization of diags particles
+// MPI synchronization of diags particle binning
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI::computeGlobalDiags(DiagnosticParticles* diagParticles, int timestep)
+void SmileiMPI::computeGlobalDiags(DiagnosticParticleBinning* diagParticles, int timestep)
 {
     if (timestep - diagParticles->timeSelection->previousTime() == diagParticles->time_average-1) {
         MPI_Reduce(diagParticles->filename.size()?MPI_IN_PLACE:&diagParticles->data_sum[0], &diagParticles->data_sum[0], diagParticles->output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
         if( !isMaster() ) diagParticles->clear();
     }
-} // END computeGlobalDiags(DiagnosticParticles* diagParticles ...)
+} // END computeGlobalDiags(DiagnosticParticleBinning* diagParticles ...)
 
 // ---------------------------------------------------------------------------------------------------------------------
 // MPI synchronization of diags screen

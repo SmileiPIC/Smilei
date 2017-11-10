@@ -99,6 +99,7 @@ void VectorPatch::dynamics(Params& params,
                            SmileiMPI* smpi,
                            SimWindow* simWindow,
                            RadiationTables & RadiationTables,
+                           MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                            double time_dual, Timers &timers, int itime)
 {
 
@@ -117,6 +118,7 @@ void VectorPatch::dynamics(Params& params,
                                                  params, diag_flag, partwalls(ipatch),
                                                  (*this)(ipatch), smpi,
                                                  RadiationTables,
+                                                 MultiphotonBreitWheelerTables,
                                                  localDiags);
             }
         }
@@ -136,6 +138,8 @@ void VectorPatch::dynamics(Params& params,
 
 
 void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWindow* simWindow,
+                           RadiationTables & RadiationTables,
+                           MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                            double time_dual, Timers &timers, int itime)
 {
     timers.syncPart.restart();
@@ -144,6 +148,23 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
             SyncVectorPatch::finalize_and_sort_parts((*this), ispec, params, smpi, timers, itime ); // Included sort_part
         }
     }
+
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        // Particle importation for all species
+        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
+
+                species(ipatch, ispec)->dynamics_import_particles(time_dual, ispec,
+                                                                  params,
+                                                                  (*this)(ipatch), smpi,
+                                                                  RadiationTables,
+                                                                  MultiphotonBreitWheelerTables,
+                                                                  localDiags);
+            }
+        }
+    }
+
     if (itime%params.every_clean_particles_overhead==0) {
         #pragma omp master
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
@@ -199,7 +220,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
     }
     if ( !some_particles_are_moving  && !diag_flag )
         return;
-    
+
     timers.densities.restart();
     if  (diag_flag){
         #pragma omp for schedule(static)
@@ -223,7 +244,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
 
     if(diag_flag){
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
-            if( ! (*this)(0)->vecSpecies[ispec]->particles->isTest ) {
+            if( ! (*this)(0)->vecSpecies[ispec]->particles->is_test ) {
                 update_field_list(ispec);
                 SyncVectorPatch::sumRhoJs( (*this), ispec, timers, itime ); // MPI
             }
@@ -241,7 +262,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 {
     timers.maxwell.restart();
 
-    for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_int ; ipassfilter++){
+    for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_passes ; ipassfilter++){
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
             // Current spatial filtering
@@ -430,9 +451,9 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     ptimer.init(smpi);
     ptimer.restart();
 
-    
-    unsigned int iteration_max = params.poisson_iter_max;
-    double           error_max = params.poisson_error_max;
+
+    unsigned int iteration_max = params.poisson_max_iteration;
+    double           error_max = params.poisson_max_error;
     unsigned int iteration=0;
 
     // Init & Store internal data (phi, r, p, Ap) per patch
@@ -1302,3 +1323,43 @@ void VectorPatch::check_memory_consumption(SmileiMPI* smpi)
     // Read value in /proc/pid/status
     //Tools::printMemFootPrint( "End Initialization" );
 }
+
+
+// Print information on the memory consumption
+void VectorPatch::check_expected_disk_usage( SmileiMPI* smpi, Params& params, Checkpoint& checkpoint)
+{
+    if( smpi->isMaster() ){
+        
+        // Find the initial and final timesteps for this simulation
+        int istart = 0, istop = params.n_time;
+        // If restarting simulation define the starting point
+        if( params.restart ) {
+            istart = checkpoint.this_run_start_step+1;
+        }
+        // If leaving the simulation after dump, define the stopping point
+        if( checkpoint.dump_step > 0 && checkpoint.exit_after_dump ) {
+            int ncheckpoint = (istart/(int)checkpoint.dump_step) + 1;
+            int nextdumptime = ncheckpoint * (int)checkpoint.dump_step;
+            if( nextdumptime < istop ) istop = nextdumptime;
+        }
+        
+        MESSAGE(1, "Diagnostics expected disk usage:" );
+        // Calculate the footprint from local then global diagnostics
+        uint64_t total_footprint = 0;
+        for (unsigned int idiags=0 ; idiags<localDiags.size() ; idiags++) {
+            uint64_t footprint = localDiags[idiags]->getDiskFootPrint(istart, istop, patches_[0]);
+            total_footprint += footprint;
+            MESSAGE(2, "File " << localDiags[idiags]->filename << ": " << Tools::printBytes(footprint));
+        }
+        for (unsigned int idiags=0 ; idiags<globalDiags.size() ; idiags++) {
+            uint64_t footprint = globalDiags[idiags]->getDiskFootPrint(istart, istop, patches_[0]);
+            total_footprint += footprint;
+            MESSAGE(2, "File " << globalDiags[idiags]->filename << ": " << Tools::printBytes(footprint));
+        }
+        
+        MESSAGE(1, "Total disk usage: " << Tools::printBytes(total_footprint) );
+        
+    }
+}
+
+

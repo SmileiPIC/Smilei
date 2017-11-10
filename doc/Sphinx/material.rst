@@ -9,8 +9,9 @@ Publications
 
 .. [Derouillat]
    
-   J. Derouillat, A. Beck, T. Vinci, F. Pérez, M. Chiaramello, A. Grassi, G. Bouchard, N. Aunai, J. Dargent, C. Riconda and M. Grech,  
-   `SMILEI: a collaborative, open-source, multi-purpose particle-in-cell code for plasma simulation`, 
+   J. Derouillat, A. Beck, F. Pérez, T. Vinci, M. Chiaramello, A. Grassi, M. Flé, G. Bouchard, I. Plotnikov, N. Aunai, J. Dargent, C. Riconda, M. Grech,
+   `SMILEI: a collaborative, open-source, multi-purpose particle-in-cell code for plasma simulation`,
+   `Comput. Phys. Commun., in press (2017) <https://doi.org/10.1016/j.cpc.2017.09.024>`_, 
    `arXiv:1702.05128 <https://arxiv.org/abs/1702.05128>`_
 
 .. rst-class:: bigcitation
@@ -19,7 +20,8 @@ Publications
 
    A. Grassi, M. Grech, F. Amiranoff, A. Macchi and C. Riconda,
    `Radiation-pressure-driven ion Weibel instability and collisionless shocks`,
-   accepted in Phys. Rev. E, available on `arXiv:1705.05402 <https://arxiv.org/abs/1705.05402>`_
+   `Phys. Rev. E 96, 033204 (2017) <https://doi.org/10.1103/PhysRevE.96.033204>`_,
+   `arXiv:1705.05402 <https://arxiv.org/abs/1705.05402>`_
 
 .. rst-class:: bigcitation
 
@@ -35,7 +37,7 @@ Publications
 
    L. Fedeli, A. Formenti, L. Cialfi, A. Sgattoni, G. Cantono and M. Passoni,
    `Structured targets for advanced laser-driven sources`,
-   `accepted for publication in Phys. Plasmas Control. Fusion <http://iopscience.iop.org/article/10.1088/1361-6587/aa8a54/pdf>`_
+   `accepted for publication in Plasma Phys. Control. Fusion <https://doi.org/10.1088/1361-6587/aa8a54>`_
    
 .. rst-class:: bigcitation
 

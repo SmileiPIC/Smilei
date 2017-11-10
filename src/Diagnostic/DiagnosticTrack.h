@@ -12,7 +12,7 @@ class DiagnosticTrack : public Diagnostic {
 
 public :
     //! Default constructor
-    DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, unsigned int, OpenPMDparams& );
+    DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, unsigned int, unsigned int, OpenPMDparams& );
     //! Default destructor
     ~DiagnosticTrack() override;
     
@@ -30,6 +30,9 @@ public :
     int getMemFootPrint() override {
         return 0;
     }
+    
+    //! Get disk footprint of current diagnostic
+    uint64_t getDiskFootPrint(int istart, int istop, Patch* patch) override;
     
     //! Fills a buffer with the required particle property
     template<typename T> void fill_buffer(VectorPatch& vecPatches, unsigned int iprop, std::vector<T>& buffer);
@@ -52,16 +55,25 @@ public :
     //! Last ID assigned to a particle by this MPI domain
     uint64_t latest_Id;
     
-private :
-    
     //! Flag to test whether IDs have been set already
     bool IDs_done;
+    
+private :
     
     //! HDF5 objects
     hid_t data_group_id, transfer;
      
     //! Number of spatial dimensions
     unsigned int nDim_particle;
+    
+    //! Number of patches in each direction
+    std::vector<unsigned int> number_of_patches;
+    
+    //! Number of cells per patch
+    int ncells_perpatch;
+    
+    //! Size of a patch in each direction
+    std::vector<double> patch_dimensions;
     
     //! Current particle partition among the patches own by current MPI
     std::vector<unsigned int> patch_start;

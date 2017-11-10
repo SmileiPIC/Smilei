@@ -1,9 +1,7 @@
+.. _radiationReactionPage:
+
 Synchrotron-like radiation reaction
 --------------------------------------------------------------------------------
-
-.. role:: purple
-.. role:: green
-.. role:: orange
 
 
 High-energy particles traveling in a strong electromagnetic field lose energy by
@@ -311,7 +309,10 @@ energy tends to infinity [Lobet2015]_ and that the error is low when
 Between emission events, the electron dynamics is still governed by the
 Lorentz force.
 
-----
+If the photon is emitted as a macro-photon, initial position is the same as
+for the emitting particle. The weight is also conserved.
+
+--------------------------------------------------------------------------------
 
 Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -364,7 +365,7 @@ This fit enables to keep the vectorization of the particle loop.
 The corrected model is accessible in the species configuration under the name
 ``corrected-Landau-Lifshitz``.
 
-Fokker-Planck stochastic model
+Fokker-Planck stochastic model of Niel *et al*.
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Eq. :eq:`NielStochasticForce` is implemented in :program:`Smilei` using
@@ -421,12 +422,15 @@ Benchmarks
 Counter-propagating plane wave, 1D
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-In the benchmark ``benchmark/tst1d_9_rad_counter_prop.py``,
+In the benchmark ``benchmark/tst1d_9_rad_electron_laser_collision.py``,
 a GeV electron bunch is initialized near the right
 domain boundary and propagates towards the left boundary from which a plane
 wave is injected. The laser has an amplitude of :math:`a_0 = 270`
 corresponding to an intensity of :math:`10^{23}\ \mathrm{Wcm^{-2}}` at
-:math:`\lambda = 1\ \mathrm{\mu m}`. The maximal quantum parameter :math:`\chi`
+:math:`\lambda = 1\ \mathrm{\mu m}`.
+The laser has a Gaussian profile of full-with at half maxium of
+:math:`20 \pi \omega_r^{-1}` (10 laser periods).
+The maximal quantum parameter :math:`\chi`
 value reached during the simulation is around 0.5.
 
 .. _rad_counter_prop_scalar:
@@ -656,20 +660,37 @@ the Monte-Carlo radiation process.
 
 .. _radiationTimes:
 
-+-------------------------------------+------------+----------+--------------+----------+---------------------+
-| Radiation model                     | None       | LL       | CLL          | Niel     | MC                  |
-+=====================================+============+==========+==============+==========+=====================+
-| Counter-propagating Plane Wave 1D   | 0.25s      | 0.3s     | 0.32s        | 0.63s    | 0.63s               |
-+-------------------------------------+------------+----------+--------------+----------+---------------------+
-| Synchrotron 2D Haswell              | 3.9s       | 4.2s     | 4.7s         | 7.8s     | 5.6s                |
-| :math:`\chi=0.5`,  :math:`B=100`    |            | - 8%     | - 21%        | - 100%   | - :math:`\sim` 50%  |
-+-------------------------------------+------------+----------+--------------+----------+---------------------+
-| Synchrotron 2D KNL                  | 3s         | 3.2s     | 3.3s         | 31s      | 10s                 |
-| :math:`\chi=0.5`,  :math:`B=100`    |            |          |              |          |                     |
-+-------------------------------------+------------+----------+--------------+----------+---------------------+
-| Interaction with a carbon thin foil | 6.5s       | 6.5s     | 6.6s         | 6.9s     | 6.8s                |
-| 2D                                  |            |          |              |          |                     |
-+-------------------------------------+------------+----------+--------------+----------+---------------------+
++-------------------------------------+------------+----------+--------------+---------------------+
+| Radiation model                     | None       | LL       | CLL          | MC                  |
++=====================================+============+==========+==============+=====================+
+| Counter-propagating Plane Wave 1D   | 0.25s      | 0.3s     | 0.32s        | 0.63s               |
++-------------------------------------+------------+----------+--------------+---------------------+
+| Synchrotron 2D Haswell              | 3.9s       | 4.2s     | 4.7s         | 5.6s                |
+| :math:`\chi=0.5`,  :math:`B=100`    |            | - 8%     | - 21%        | - :math:`\sim` 50%  |
++-------------------------------------+------------+----------+--------------+---------------------+
+| Synchrotron 2D KNL                  | 3s         | 3.2s     | 3.3s         | 10s                 |
+| :math:`\chi=0.5`,  :math:`B=100`    |            |          |              |                     |
++-------------------------------------+------------+----------+--------------+---------------------+
+| Interaction with a carbon thin foil | 6.5s       | 6.5s     | 6.6s         | 6.8s                |
+| 2D                                  |            |          |              |                     |
++-------------------------------------+------------+----------+--------------+---------------------+
+
+..
+  +-------------------------------------+------------+----------+--------------+----------+---------------------+
+  | Radiation model                     | None       | LL       | CLL          | Niel     | MC                  |
+  +=====================================+============+==========+==============+==========+=====================+
+  | Counter-propagating Plane Wave 1D   | 0.25s      | 0.3s     | 0.32s        | 0.63s    | 0.63s               |
+  +-------------------------------------+------------+----------+--------------+----------+---------------------+
+  | Synchrotron 2D Haswell              | 3.9s       | 4.2s     | 4.7s         | 7.8s     | 5.6s                |
+  | :math:`\chi=0.5`,  :math:`B=100`    |            | - 8%     | - 21%        | - 100%   | - :math:`\sim` 50%  |
+  +-------------------------------------+------------+----------+--------------+----------+---------------------+
+  | Synchrotron 2D KNL                  | 3s         | 3.2s     | 3.3s         | 31s      | 10s                 |
+  | :math:`\chi=0.5`,  :math:`B=100`    |            |          |              |          |                     |
+  +-------------------------------------+------------+----------+--------------+----------+---------------------+
+  | Interaction with a carbon thin foil | 6.5s       | 6.5s     | 6.6s         | 6.9s     | 6.8s                |
+  | 2D                                  |            |          |              |          |                     |
+  +-------------------------------------+------------+----------+--------------+----------+---------------------+
+
 
 Descriptions of the cases:
 
@@ -682,8 +703,10 @@ Descriptions of the cases:
   The first case has been run on a single Haswell node of *Jureca* with 2 MPI ranks and
   12 OpenMP threads per rank. the second one has been run on a single KNL node of *Frioul*
   configured in quadrant cache using 1 MPI rank and 64 OpenMP threads.
-  On KNL, the `KMP_affinity` is set to fine and scatter. Only the Niel model provides
-  better performance with a compact affinity.
+  On KNL, the ``KMP_AFFINITY`` is set to ``fine`` and ``scatter``.
+  
+  ..
+    Only the Niel model provides better performance with a ``compact`` affinity.
 
 * **Thin foil 2D**:
   The domain has a discretization of 64 cells per :math:`\mu\mathrm{m}` in
@@ -695,10 +718,13 @@ The LL and CLL models are vectorized efficiently.
 These radiation reaction models represent a small overhead
 to the particle pusher.
 
-The Niel model implementation is split into several loops to
-be partially vectorized. Surprisingly, this model have bad performance on KNL
-and further analysis are necessary to well understand why.
+..
+  The Niel model implementation is split into several loops to
+  be partially vectorized. Surprisingly, this model have bad performance on KNL
+  and further analysis are necessary to well understand why.
 
+The Monte-Carlo pusher is not vectorized because the Monte-Carlo loop has
+not predictable end and contains many if-statements.
 When using the Monte-Carlo radiation model, code performance is likely to be
 more impacted running on SIMD architecture with large vector registers
 such as Intel Xeon Phi processors.
@@ -717,6 +743,8 @@ References
 .. [Lobet2013] `Lobet et al., J. Phys.: Conf. Ser. 688, 012058 (2016) <http://iopscience.iop.org/article/10.1088/1742-6596/688/1/012058>`_
 
 .. [Lobet2015] `M. Lobet, Effets radiatifs et d'électrodynamique quantique dans l'interaction laser-matière ultra-relativiste (2015) <http://www.theses.fr/2015BORD0361#>`_
+
+.. [Niel2017] `Niel et al., Arxiv, ArXiv Preprint 1707.02618  (2017) <https://arxiv.org/abs/1707.02618>`_
 
 .. [Ritus1985] `Ritus V. (1985), Journal of Soviet Laser Research, 6, 497, ISSN 0270-2010 <https://doi.org/10.1007/BF01120220>`_
 

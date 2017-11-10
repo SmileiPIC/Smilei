@@ -13,7 +13,6 @@
   {{ super() }}
 {% endblock %}
 
-
 {%- block footer %}
     <div class="footer">
       {%- if last_updated %}
@@ -30,6 +29,15 @@
           rel="nofollow">{{ _('Page source') }}</a></li>
       {%- endif %}
     </div>
+{%- endblock %}
+
+{%- block sidebar1 %}
+    <div id="backToTopContainer">
+        <div id="backToTopDiv" alt="Back to top">
+            <a href="#"><img src="top.svg" /></a>
+        </div>
+    </div>
+    {{ super() }}
 {%- endblock %}
 
 {%- macro smileirelbar() %}

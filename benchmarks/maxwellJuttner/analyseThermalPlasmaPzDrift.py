@@ -1,4 +1,4 @@
-from Smilei import *
+import happi
 import math as m
 import numpy as np
 import matplotlib as mpl
@@ -15,7 +15,7 @@ mpl.rcParams['xtick.minor.size'] = 5
 mpl.rcParams['ytick.minor.size'] = 5
 
 
-S  = Smilei('/Users/mica/RESULTS/SMILEI/thermalPlasmaPzDrift/')
+S  = happi.Open('/Users/mica/RESULTS/SMILEI/thermalPlasmaPzDrift/')
 T  = S.namelist.Te
 mu = 1./T
 print mu
@@ -23,8 +23,8 @@ v0 = S.namelist.v0
 g0 = 1./m.sqrt(1.-v0**2)
 
 # read p-distribution fct
-fp  = np.array(S.ParticleDiagnostic(1).getData())[0]
-p   = np.array(S.ParticleDiagnostic(1).get()['pz'])
+fp  = np.array(S.ParticleBinning(1).getData())[0]
+p   = np.array(S.ParticleBinning(1).get()['pz'])
 print 'int over all pz:', (p[1]-p[0])*np.sum(fp)
 
 

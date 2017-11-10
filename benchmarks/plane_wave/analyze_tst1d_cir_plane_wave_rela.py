@@ -5,7 +5,7 @@
 #
 # _____________________________________________________
 
-from Smilei import *
+import happi
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib as mpl
@@ -27,7 +27,7 @@ mpl.rcParams['figure.facecolor'] = 'white'
 # ________________________________________________
 # Open results
 
-res = Smilei("./tst1d_cir_plane_wave_rela",verbose=False)
+res = happi.Open("./tst1d_cir_plane_wave_rela",verbose=False)
 
 # ________________________________________________
 # Parameters
@@ -41,7 +41,7 @@ step = 10
 
 if False:
 
-  Ey = res_Boris.Field(0, "Ey", timesteps=1300,slice = {"z":[5.]}).get()
+  Ey = res_Boris.Field(0, "Ey", timesteps=1300, average = {"z":[5.]}).get()
  
   Ey["data"] = np.array(Ey["data"][0].T)
  

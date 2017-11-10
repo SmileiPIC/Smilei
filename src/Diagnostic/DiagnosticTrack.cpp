@@ -1,86 +1,76 @@
+#include "PyTools.h"
 
 #include <string>
 #include <sstream>
 
+#include "ParticleData.h"
 #include "DiagnosticTrack.h"
 #include "VectorPatch.h"
-
-
-#ifdef SMILEI_USE_NUMPY
-#include <numpy/arrayobject.h>
-#endif
-
+#include "Params.h"
 
 using namespace std;
 
-DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, unsigned int speciesId, OpenPMDparams& oPMD ) :
+DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, unsigned int iDiagTrackParticles, unsigned int idiag, OpenPMDparams& oPMD ) :
     Diagnostic(oPMD),
     IDs_done( params.restart ),
-    nDim_particle(params.nDim_particle)
+    nDim_particle(params.nDim_particle),
+    number_of_patches(params.number_of_patches)
 {
-    speciesId_ = speciesId;
-    Species* species = patch->vecSpecies[speciesId_];
-
+    patch_dimensions.resize(nDim_particle);
+    ncells_perpatch = 1;
+    for( unsigned int i=0; i<nDim_particle; i++ ) {
+        patch_dimensions[i] = params.n_space[i] * params.cell_length[i];
+        ncells_perpatch *= params.n_space[i];
+    }
+    
+    // Extract the species
+    string species_name;
+    if( !PyTools::extract("species",species_name,"DiagTrackParticles",iDiagTrackParticles) )
+        ERROR("DiagTrackParticles #" << iDiagTrackParticles << " requires an argument `species`");
+    vector<string> species_names = {species_name};
+    vector<unsigned int> species_ids = Params::FindSpecies(vecPatches(0)->vecSpecies, species_names);
+    if( species_ids.size() > 1 )
+        ERROR("DiagTrackParticles #" << iDiagTrackParticles << " corresponds to more than 1 species");
+    if( species_ids.size() < 1 )
+        ERROR("DiagTrackParticles #" << iDiagTrackParticles << " does not correspond to any existing species");
+    speciesId_ = species_ids[0];
+    
     // Define the transfer type (collective is faster than independent)
     transfer = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio( transfer, H5FD_MPIO_COLLECTIVE);
 
     ostringstream name("");
-    name << "Tracking species '" << species->species_type << "'";
-
-    // Get parameter "track_every" which describes an iteration selection
-    timeSelection = new TimeSelection( PyTools::extract_py("track_every", "Species", speciesId_), name.str() );
-
-    // Get parameter "track_flush_every" which decides the file flushing time selection
-    flush_timeSelection = new TimeSelection( PyTools::extract_py("track_flush_every", "Species", speciesId_), name.str() );
-
+    name << "Tracking species '" << species_name << "'";
+    
+    // Get parameter "every" which describes an iteration selection
+    timeSelection = new TimeSelection( PyTools::extract_py("every", "DiagTrackParticles", iDiagTrackParticles), name.str() );
+    
+    // Get parameter "flush_every" which decides the file flushing time selection
+    flush_timeSelection = new TimeSelection( PyTools::extract_py("flush_every", "DiagTrackParticles", iDiagTrackParticles), name.str() );
+    
+    // Inform each patch about this diag
+    for( unsigned int ipatch=0; ipatch<vecPatches.size(); ipatch++ ) {
+        vecPatches(ipatch)->vecSpecies[speciesId_]->tracking_diagnostic = idiag;
+    }
+    
     // Get parameter "filter" which gives a python function to select particles
-    filter = PyTools::extract_py("track_filter", "Species", speciesId_);
+    filter = PyTools::extract_py("filter", "DiagTrackParticles", iDiagTrackParticles);
     has_filter = (filter != Py_None);
     if( has_filter ) {
 #ifdef SMILEI_USE_NUMPY
-        // Check if filter is callable
-        if( ! PyCallable_Check(filter) )
-            ERROR("Tracked species '" << species->species_type << "' has a filter that is not callable");
-        unsigned int n_arg;
-        // Try to get the number of arguments of the filter function
-        try {
-            PyObject* code = PyObject_GetAttrString( filter, "__code__" );
-            PyObject* argcount = PyObject_GetAttrString( code, "co_argcount" );
-            n_arg = PyInt_AsLong( argcount );
-            Py_DECREF(argcount);
-            Py_DECREF(code);
-        } catch (...) {
-            ERROR("Tracked species '" << species->species_type << "' has a filter that does not look like a normal python function");
-        }
-        // Verify the number of arguments of the filter function
-        if( n_arg != nDim_particle+3 )
-            ERROR("Tracked species '" << species->species_type << "' has a filter function with "<<n_arg<<" arguments while requiring "<<nDim_particle+3);
-        // Verify the return value of the function
-        double test_value[2] = {1.2, 1.4};
-        npy_intp dims[1] = {2};
-        PyObject *ret(nullptr);
-        PyArrayObject *a = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, &test_value);
-        if     ( nDim_particle == 1 ) ret = PyObject_CallFunctionObjArgs(filter, a,a,a,a, NULL);
-        else if( nDim_particle == 2 ) ret = PyObject_CallFunctionObjArgs(filter, a,a,a,a,a, NULL);
-        else if( nDim_particle == 3 ) ret = PyObject_CallFunctionObjArgs(filter, a,a,a,a,a,a, NULL);
-        Py_DECREF(a);
-        if( !PyArray_Check(ret) )
-            ERROR("Tracked particles filter must return a numpy array");
-        if( !PyArray_ISBOOL((PyArrayObject *)ret) )
-            ERROR("Tracked particles filter must return an array of booleans");
-        unsigned int s = PyArray_SIZE((PyArrayObject *)ret);
-        if( s != 2 )
-            ERROR("Tracked particles filter must not change the arrays sizes");
-        Py_DECREF(ret);
+        PyTools::setIteration( 0 );
+        // Test the filter with temporary, "fake" particles
+        name << " filter:";
+        bool * dummy = NULL;
+        ParticleData test( nDim_particle, filter, name.str(), dummy );
 #else
-        ERROR("Tracking species '" << species->species_type << "' with a filter requires the numpy package");
+        ERROR(name.str() << " with a filter requires the numpy package");
 #endif
     }
 
     // Create the filename
     ostringstream hdf_filename("");
-    hdf_filename << "TrackParticlesDisordered_" << species->species_type  << ".h5" ;
+    hdf_filename << "TrackParticlesDisordered_" << species_name  << ".h5" ;
     filename = hdf_filename.str();
 
 }
@@ -162,90 +152,79 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
     uint32_t nParticles_local = 0;
     uint64_t nParticles_global = 0;
     string xyz = "xyz";
-
+    
     hid_t momentum_group=0, position_group=0, iteration_group=0, particles_group=0, species_group=0;
     hid_t plist=0, file_space=0, mem_space=0;
     #pragma omp master
     {
-
+        
         // Obtain the particle partition of all the patches in this MPI
         patch_start.resize( vecPatches.size() );
-
+        
         if( has_filter ) {
-
+        
 #ifdef SMILEI_USE_NUMPY
+            // Set a python variable "Main.iteration" to itime so that it can be accessed in the filter
+            PyTools::setIteration( itime );
+            
             patch_selection.resize( vecPatches.size() );
-            PyArrayObject *x,*y,*z,*px,*py,*pz,*ret;
-            npy_intp dims[1];
+            PyArrayObject *ret;
+            ParticleData particleData(0);
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-                // Expose particle data as numpy arrays, then run the filter function
+                patch_selection[ipatch].resize(0);
                 Particles * p = vecPatches(ipatch)->vecSpecies[speciesId_]->particles;
                 unsigned int npart = p->size();
-                dims[0] = (npy_intp) npart;
-                px = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Momentum[0].data()));
-                py = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Momentum[1].data()));
-                pz = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Momentum[2].data()));
-                x  = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Position[0].data()));
-                if( nDim_particle>1 ) {
-                    y = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Position[1].data()));
-                    if( nDim_particle>2 ) {
-                        z = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(p->Position[2].data()));
-                        ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(filter, x,y,z,px,py,pz, NULL);
-                        Py_DECREF(z);
-                    } else {
-                        ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(filter, x,y,px,py,pz, NULL);
+                if( npart > 0 ) {
+                    // Expose particle data as numpy arrays
+                    particleData.resize( npart );
+                    particleData.set( p );
+                    // run the filter function
+                    ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(filter, particleData.get(), NULL);
+                    PyTools::checkPyError();
+                    particleData.clear();
+                    if( ret == NULL )
+                        ERROR("A DiagTrackParticles filter has not provided a correct result");
+                    // Loop the return value and store the particle IDs
+                    bool* arr = (bool*) PyArray_GETPTR1( ret, 0 );
+                    for(unsigned int i=0; i<npart; i++) {
+                        if( arr[i] ) {
+                            patch_selection[ipatch].push_back( i );
+                            // If particle not tracked before (ID==0), then set its ID
+                            if( p->id(i) == 0 ) p->id(i) = ++latest_Id;
+                        }
                     }
-                    Py_DECREF(y);
-                } else {
-                    ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(filter, x,px,py,pz, NULL);
-                }
-                Py_DECREF(x);
-                Py_DECREF(px);
-                Py_DECREF(py);
-                Py_DECREF(pz);
-
-                // Loop the return value and store the particle IDs
-                bool* arr = (bool*) PyArray_GETPTR1( ret, 0 );
-                patch_selection[ipatch].resize(0);
-                for(unsigned int i=0; i<npart; i++) {
-                    if( arr[i] ) {
-                        patch_selection[ipatch].push_back( i );
-                        // If particle not tracked before (ID==0), then set its ID
-                        if( p->id(i) == 0 ) p->id(i) = ++latest_Id;
-                    }
+                    Py_DECREF(ret);
                 }
                 patch_start[ipatch] = nParticles_local;
                 nParticles_local += patch_selection[ipatch].size();
-
-                Py_DECREF(ret);
             }
 #endif
-
+        
         } else {
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
                 patch_start[ipatch] = nParticles_local;
                 nParticles_local += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
             }
         }
-
+        
         // Specify the memory dataspace (the size of the local buffer)
         hsize_t count_[1] = {(hsize_t)nParticles_local};
         mem_space = H5Screate_simple(1, count_, NULL);
-
+        
         // Get the number of offset for this MPI rank
         uint64_t np_local = nParticles_local, offset;
         MPI_Scan( &np_local, &offset, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD );
         nParticles_global = offset;
         offset -= np_local;
         MPI_Bcast( &nParticles_global, 1, MPI_UNSIGNED_LONG_LONG, smpi->getSize()-1, MPI_COMM_WORLD );
-
+        
         // Make a new group for this iteration
         ostringstream t("");
         t << setfill('0') << setw(10) << itime;
         iteration_group = H5::group( data_group_id, t.str().c_str() );
         particles_group = H5::group( iteration_group, "particles" );
-        species_group = H5::group( particles_group, vecPatches(0)->vecSpecies[speciesId_]->species_type.c_str() );
-
+        species_group = H5::group( particles_group, vecPatches(0)->vecSpecies[speciesId_]->name.c_str() );
+        
         // Add openPMD attributes ( "basePath" )
         openPMD->writeBasePathAttributes( iteration_group, itime );
         // Add openPMD attributes ( "particles" )
@@ -496,4 +475,72 @@ void DiagnosticTrack::write_component( hid_t location, string name, T& buffer, h
     if( npart_global>0 ) H5Dwrite( did, dtype, mem_space , file_space , transfer, &buffer );
     openPMD->writeComponentAttributes( did, unit_type );
     H5Dclose(did);
+}
+
+
+
+// SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
+uint64_t DiagnosticTrack::getDiskFootPrint(int istart, int istop, Patch* patch)
+{
+    uint64_t footprint = 0;
+    
+    // Calculate the number of dumps between istart and istop
+    uint64_t ndumps = timeSelection->howManyTimesBefore(istop) - timeSelection->howManyTimesBefore(istart);
+    
+    // Calculate the number of written parameters
+    int nparams = 6 + nDim_particle;
+    
+    // Obtain the profiles of the tracked species
+    std::string species_name("");
+    PyTools::extract("name",species_name,"Species",speciesId_);
+    PyObject *profile1=nullptr;
+    std::string densityProfileType("");
+    bool ok1 = PyTools::extract_pyProfile("number_density", profile1, "Species", speciesId_);
+    bool ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", speciesId_);
+    if( ok1 ) densityProfileType = "nb";
+    if( ok2 ) densityProfileType = "charge";
+    Profile* densityProfile = new Profile(profile1, nDim_particle, densityProfileType+"_density "+species_name);
+    PyTools::extract_pyProfile("particles_per_cell", profile1, "Species", speciesId_);
+    Profile* ppcProfile = new Profile(profile1, nDim_particle, "particles_per_cell "+species_name);
+    // Loop over the box to obtain an approximate number of particles
+    unsigned int tot_number_of_patches = 1;
+    vector<unsigned int> i_cell( nDim_particle, 0 );
+    vector<double> x_cell( nDim_particle, 0. );
+    for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
+        tot_number_of_patches *= number_of_patches[idim];
+        i_cell[idim] = 0;
+        x_cell[idim] = patch_dimensions[idim] / 2.;
+    }
+    // Loop patches
+    double npart_total = 0.;
+    for( unsigned int k=0; k<tot_number_of_patches; k++ ) {
+        // Find the approximate number of particles in this patch
+        double n_part_in_cell = floor(ppcProfile->valueAt(x_cell));
+        if( n_part_in_cell && densityProfile->valueAt(x_cell)!=0.)
+            npart_total += n_part_in_cell * ncells_perpatch;
+        // Find next patch position
+        for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
+            if( i_cell[idim] < number_of_patches[idim]-1 ) {
+                i_cell[idim]++;
+                x_cell[idim] += patch_dimensions[idim];
+                break;
+            } else if( idim < nDim_particle-1 ) {
+                i_cell[idim] = 0;
+                x_cell[idim] = patch_dimensions[idim] / 2.;
+            }
+        }
+    }
+    delete densityProfile;
+    delete ppcProfile;
+    
+    // Add necessary global headers approximately
+    footprint += 2500;
+    
+    // Add necessary timestep headers approximately
+    footprint += ndumps * 11250;
+    
+    // Add size of each parameter
+    footprint += ndumps * (uint64_t)(nparams * npart_total * 8);
+    
+    return footprint;
 }
