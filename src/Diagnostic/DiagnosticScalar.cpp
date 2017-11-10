@@ -682,6 +682,7 @@ uint64_t DiagnosticScalar::getDiskFootPrint(int istart, int istop, Patch* patch)
     scalars.push_back( "Uelm_"+patch->EMfields->Bx_m->name );
     scalars.push_back( "Uelm_"+patch->EMfields->By_m->name );
     scalars.push_back( "Uelm_"+patch->EMfields->Bz_m->name );
+#ifdef _DISABLE
     // 4 - Scalars related to fields min and max
     for( unsigned int i=0; i<2; i++ ) {
         string minmax = (i==0) ? "Min" : "Max";
@@ -699,6 +700,7 @@ uint64_t DiagnosticScalar::getDiskFootPrint(int istart, int istop, Patch* patch)
             scalars.push_back( patch->EMfields->rho_->name + minmax + cell);
         }
     }
+#endif
     // 5 - Scalars related to the Poynting flux
     unsigned int k = 0;
     string poy_name;
