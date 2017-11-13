@@ -189,6 +189,7 @@ class Main(SmileiSingleton):
     reference_angular_frequency_SI = 0.
     print_every = None
     random_seed = None
+    print_expected_disk_usage = True
 
     def __init__(self, **kwargs):
         # Load all arguments to Main()

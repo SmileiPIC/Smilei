@@ -159,10 +159,13 @@ public:
 
     //! number of cells in every direction of the global domain
     std::vector<unsigned int> n_space_global;
-
+    
     //! spatial step (cell dimension in every direction)
     std::vector<double> cell_length;
-
+    
+    //! Size of a patch in each direction
+    std::vector<double> patch_dimensions;
+    
     //! volume of cell (this will be removed by untructured mesh!)
     double cell_volume;
 
@@ -227,7 +230,10 @@ public:
 
     //! every for the standard pic timeloop output
     unsigned int print_every;
-
+    
+    //! Boolean for printing the expected disk usage or not
+    bool print_expected_disk_usage;
+    
     // ---------------------------------------------
     // Constants
     // ---------------------------------------------

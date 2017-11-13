@@ -17,6 +17,7 @@
 #include "Field.h"
 
 #include "Species.h"
+#include "PeekAtSpecies.h"
 #include "Hilbert_functions.h"
 #include "VectorPatch.h"
 
@@ -160,7 +161,7 @@ void SmileiMPI::init_patch_count( Params& params)
 //    }
 //#endif
 
-    unsigned int Npatches, r, Ncur, Pcoordinates[3], ncells_perpatch;
+    unsigned int Npatches, r, Ncur, Pcoordinates[3], tot_ncells_perpatch;
     double Tload,Tcur, Lcur, total_load=0, local_load, above_target, below_target;
 
     unsigned int tot_species_number = PyTools::nComponents("Species");
@@ -176,13 +177,11 @@ void SmileiMPI::init_patch_count( Params& params)
 
     // Some initialization of the box parameters
     Npatches = params.tot_number_of_patches;
-    ncells_perpatch = 1;
-    vector<double> cell_xmin(3,0.), cell_xmax(3,1.), cell_dx(3,2.), x_cell(3,0);
-    for (unsigned int i = 0; i < params.nDim_field; i++) {
-        ncells_perpatch *= params.n_space[i]+2*params.oversize[i];
-        if (params.cell_length[i]!=0.) cell_dx[i] = params.cell_length[i];
-    }
-
+    tot_ncells_perpatch = 1;
+    vector<double> x_cell(3,0.);
+    for (unsigned int i = 0; i < params.nDim_field; i++)
+        tot_ncells_perpatch *= params.n_space[i]+2*params.oversize[i];
+    
     // First, distribute all patches evenly
     unsigned int Npatches_local = Npatches / smilei_sz, FirstPatch_local;
     int remainder = Npatches % smilei_sz;
@@ -198,21 +197,12 @@ void SmileiMPI::init_patch_count( Params& params)
 //    if( tot != Npatches ) ERROR("Npatches should be "<<Npatches<<" but it is "<<tot);
 
     // Second, prepare the profiles for each species
-    vector<Profile*> densityProfiles(0), ppcProfiles(0);
+    vector<PeekAtSpecies*> peek;
+    peek.reserve( tot_species_number );
     for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++){
-        std::string species_name("");
-        PyTools::extract("name",species_name,"Species",ispecies);
-        PyObject *profile1=nullptr;
-        std::string densityProfileType("");
-        bool ok1 = PyTools::extract_pyProfile("number_density"    , profile1, "Species", ispecies);
-        bool ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", ispecies);
-        if( ok1 ) densityProfileType = "nb";
-        if( ok2 ) densityProfileType = "charge";
-        densityProfiles.push_back(new Profile(profile1, params.nDim_particle, densityProfileType+"_density "+species_name));
-        PyTools::extract_pyProfile("particles_per_cell", profile1, "Species", ispecies);
-        ppcProfiles.push_back(new Profile(profile1, params.nDim_particle, "particles_per_cell "+species_name));
+        peek.push_back( new PeekAtSpecies(params, ispecies) );
     }
-
+    
     // Third, loop over local patches to obtain their approximate load
     vector<double> PatchLoad (Npatches_local, 1.);
     if (params.balancing_every <= 0 || !(params.initial_balance) ){
@@ -223,36 +213,11 @@ void SmileiMPI::init_patch_count( Params& params)
             unsigned int hindex = FirstPatch_local + ipatch;
             generalhilbertindexinv(params.mi[0], params.mi[1], params.mi[2], &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
             for (unsigned int i=0 ; i<params.nDim_field ; i++) {
-                Pcoordinates[i] *= params.n_space[i];
-                if (params.cell_length[i]!=0.) {
-                    cell_xmin[i] = (Pcoordinates[i]+0.5)*params.cell_length[i];
-                    cell_xmax[i] = (Pcoordinates[i]+0.5+params.n_space[i])*params.cell_length[i];
-                }
+                x_cell[i] = (Pcoordinates[i]+0.5)*params.patch_dimensions[i];
             }
             //Accumulate particles load of the current patch
             for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++){
-                local_load = 0.;
-
-                // This commented block loops through all cells of the current patch to calculate the load
-                //for (x_cell[0]=cell_xmin[0]; x_cell[0]<cell_xmax[0]; x_cell[0]+=cell_dx[0]) {
-                //    for (x_cell[1]=cell_xmin[1]; x_cell[1]<cell_xmax[1]; x_cell[1]+=cell_dx[1]) {
-                //        for (x_cell[2]=cell_xmin[2]; x_cell[2]<cell_xmax[2]; x_cell[2]+=cell_dx[2]) {
-                //            double n_part_in_cell = floor(ppcProfiles[ispecies]->valueAt(x_cell));
-                //            if( n_part_in_cell<=0. ) continue;
-                //            else if( densityProfiles[ispecies]->valueAt(x_cell)==0. ) continue;
-                //            local_load += n_part_in_cell;
-                //        }
-                //    }
-                //}
-                // Instead of looping all cells, the following takes only the central point (much faster)
-                for (unsigned int i=0 ; i<params.nDim_field ; i++) {
-                    if (params.cell_length[i]==0.) x_cell[i] = 0.;
-                    else x_cell[i] = 0.5*(cell_xmin[i]+cell_xmax[i]);
-                }
-                double n_part_in_cell = floor(ppcProfiles[ispecies]->valueAt(x_cell));
-                if( n_part_in_cell && densityProfiles[ispecies]->valueAt(x_cell)!=0.)
-                    local_load += n_part_in_cell * ncells_perpatch;
-
+                local_load = peek[ispecies]->numberOfParticlesInPatch(x_cell);
                 // Consider whether this species is frozen
                 double time_frozen(0.);
                 PyTools::extract("time_frozen",time_frozen ,"Species",ispecies);
@@ -261,17 +226,15 @@ void SmileiMPI::init_patch_count( Params& params)
                 PatchLoad[ipatch] += local_load;
             }
             //Add grid contribution to the load.
-            PatchLoad[ipatch] += ncells_perpatch*params.cell_load-1; //-1 to compensate the initialization to 1.
+            PatchLoad[ipatch] += tot_ncells_perpatch*params.cell_load-1; //-1 to compensate the initialization to 1.
             total_load += PatchLoad[ipatch];
         }
     }
-    for (unsigned int i=0 ; i< densityProfiles.size() ; i++)
-        delete densityProfiles[i];
-    for (unsigned int i=0 ; i< ppcProfiles.size() ; i++)
-        delete ppcProfiles[i];
-    densityProfiles.resize(0); densityProfiles.clear();
-    ppcProfiles.resize(0); ppcProfiles.clear();
-
+    // Clean the temporary species profiles
+    for (unsigned int i=0 ; i<tot_species_number ; i++)
+        delete peek[i];
+    peek.clear();
+    
     // Fourth, the arrangement of patches is balanced
 
     // Initialize loads

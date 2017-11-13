@@ -12,6 +12,7 @@
 #include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
+#include "PeekAtSpecies.h"
 #include "SimWindow.h"
 #include "SolverFactory.h"
 #include "DiagnosticFactory.h"
@@ -1265,6 +1266,10 @@ void VectorPatch::check_expected_disk_usage( SmileiMPI* smpi, Params& params, Ch
 {
     if( smpi->isMaster() ){
         
+        MESSAGE(1, "WARNING: disk usage by non-uniform particles maybe strongly underestimated," );
+        MESSAGE(1, "   especially when particles are created at runtime (ionization, pair generation, etc.)" );
+        MESSAGE(1, "" );
+        
         // Find the initial and final timesteps for this simulation
         int istart = 0, istop = params.n_time;
         // If restarting simulation define the starting point
@@ -1278,21 +1283,80 @@ void VectorPatch::check_expected_disk_usage( SmileiMPI* smpi, Params& params, Ch
             if( nextdumptime < istop ) istop = nextdumptime;
         }
         
-        MESSAGE(1, "Diagnostics expected disk usage:" );
+        MESSAGE(1, "Expected disk usage for diagnostics:" );
         // Calculate the footprint from local then global diagnostics
-        uint64_t total_footprint = 0;
+        uint64_t diagnostics_footprint = 0;
         for (unsigned int idiags=0 ; idiags<localDiags.size() ; idiags++) {
             uint64_t footprint = localDiags[idiags]->getDiskFootPrint(istart, istop, patches_[0]);
-            total_footprint += footprint;
+            diagnostics_footprint += footprint;
             MESSAGE(2, "File " << localDiags[idiags]->filename << ": " << Tools::printBytes(footprint));
         }
         for (unsigned int idiags=0 ; idiags<globalDiags.size() ; idiags++) {
             uint64_t footprint = globalDiags[idiags]->getDiskFootPrint(istart, istop, patches_[0]);
-            total_footprint += footprint;
+            diagnostics_footprint += footprint;
             MESSAGE(2, "File " << globalDiags[idiags]->filename << ": " << Tools::printBytes(footprint));
         }
+        MESSAGE(1, "Total disk usage for diagnostics: " << Tools::printBytes(diagnostics_footprint) );
+        MESSAGE(1, "" );
         
-        MESSAGE(1, "Total disk usage: " << Tools::printBytes(total_footprint) );
+        // If checkpoints to be written, estimate their size
+        if( checkpoint.dump_step > 0 || checkpoint.dump_minutes > 0 ) {
+            MESSAGE(1, "Expected disk usage for each checkpoint:");
+            
+            // - Contribution from the grid
+            ElectroMagn* EM = patches_[0]->EMfields;
+            //     * Calculate first the number of grid points in total
+            uint64_t n_grid_points = 1;
+            for (unsigned int i=0; i<params.nDim_field; i++)
+                n_grid_points *= (params.n_space[i] + 2*params.oversize[i]+1);
+            n_grid_points *= params.tot_number_of_patches;
+            //     * Now calculate the total number of fields
+            unsigned int n_fields = 9
+              + EM->Exfilter.size() + EM->Eyfilter.size() + EM->Ezfilter.size()
+              + EM->Bxfilter.size() + EM->Byfilter.size() + EM->Bzfilter.size();
+            for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++ )
+                n_fields += EM->allFields_avg[idiag].size();
+            //     * Conclude the total field disk footprint
+            uint64_t checkpoint_fields_footprint = n_grid_points * (uint64_t)(n_fields * sizeof(double));
+            MESSAGE(2, "For fields: " << Tools::printBytes(checkpoint_fields_footprint));
+            
+            // - Contribution from particles
+            uint64_t checkpoint_particles_footprint = 0;
+            for (unsigned int ispec=0 ; ispec<patches_[0]->vecSpecies.size() ; ispec++) {
+                Species *s = patches_[0]->vecSpecies[ispec];
+                Particles *p = s->particles;
+            //     * Calculate the size of particles' individual parameters
+                uint64_t one_particle_size = 0;
+                one_particle_size += (p->Position.size() + p->Momentum.size() + 1) * sizeof(double);
+                one_particle_size += 1 * sizeof(short);
+                if (p->tracked)
+                    one_particle_size += 1 * sizeof(uint64_t);
+            //     * Calculate an approximate number of particles
+                PeekAtSpecies peek(params, ispec);
+                uint64_t number_of_particles = peek.totalNumberofParticles();
+            //     * Calculate the size of the bmin and bmax arrays
+                uint64_t b_size = (s->bmin.size() + s->bmax.size()) * params.tot_number_of_patches * sizeof(int);
+            //     * Conclude the disk footprint of this species
+                checkpoint_particles_footprint += one_particle_size*number_of_particles + b_size;
+            }
+            MESSAGE(2, "For particles: " << Tools::printBytes(checkpoint_particles_footprint));
+            
+            // - Contribution from diagnostics
+            uint64_t checkpoint_diags_footprint = 0;
+            //     * Averaged field diagnostics
+            n_fields = 0;
+            for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++ )
+                n_fields += EM->allFields_avg[idiag].size();
+            checkpoint_diags_footprint += n_grid_points * (uint64_t)(n_fields * sizeof(double));
+            //     * Screen diagnostics
+            for( unsigned int idiag=0; idiag<globalDiags.size(); idiag++ )
+                if( DiagnosticScreen* screen = dynamic_cast<DiagnosticScreen*>(globalDiags[idiag]) )
+                    checkpoint_diags_footprint += screen->data_sum.size() * sizeof(double);
+            MESSAGE(2, "For diagnostics: " << Tools::printBytes(checkpoint_diags_footprint));
+            
+            uint64_t checkpoint_footprint = checkpoint_fields_footprint + checkpoint_particles_footprint + checkpoint_diags_footprint;
+            MESSAGE(1, "Total disk usage for one checkpoint: " << Tools::printBytes(checkpoint_footprint) );
+        }
         
     }
 }

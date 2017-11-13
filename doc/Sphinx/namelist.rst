@@ -223,6 +223,15 @@ The block ``Main`` is **mandatory** and has the following syntax::
   simulation.
 
 
+.. py:data:: print_expected_disk_usage
+
+  :default: `True`
+
+  If `False`, the calculation of the expected disk usage, that is usually printed in the
+  standard output, is skipped. This might be useful in rare cases where this calculation
+  is costly.
+
+
 .. py:data:: random_seed
 
   :default: the machine clock

@@ -66,15 +66,6 @@ private :
     //! Number of spatial dimensions
     unsigned int nDim_particle;
     
-    //! Number of patches in each direction
-    std::vector<unsigned int> number_of_patches;
-    
-    //! Number of cells per patch
-    int ncells_perpatch;
-    
-    //! Size of a patch in each direction
-    std::vector<double> patch_dimensions;
-    
     //! Current particle partition among the patches own by current MPI
     std::vector<unsigned int> patch_start;
     
@@ -93,6 +84,9 @@ private :
     std::vector<short> data_short;
     //! Buffer for the output of uint64 array
     std::vector<uint64_t> data_uint64;
+    
+    //! Approximate total number of particles
+    double npart_total;
 };
 
 #endif

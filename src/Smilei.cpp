@@ -354,21 +354,22 @@ int execute_test_mode( VectorPatch &vecPatches, SmileiMPI* smpi, SimWindow* simW
 {
     int itime = 0;
     int moving_window_movement = 0;
-
+    
     if (params.restart) {
         checkpoint.readPatchDistribution( smpi, simWindow );
         itime = checkpoint.this_run_start_step+1;
         moving_window_movement = simWindow->getNmoved();
     }
-
+    
     vecPatches = PatchesFactory::createVector(params, smpi, openPMD, itime, moving_window_movement );
-
+    
     if (params.restart)
         checkpoint.restartAll( vecPatches, smpi, simWindow, params, openPMD);
-
     
-    TITLE("Expected disk usage (approximate)");
-    vecPatches.check_expected_disk_usage( smpi, params, checkpoint );
+    if( params.print_expected_disk_usage ) {
+        TITLE("Expected disk usage (approximate)");
+        vecPatches.check_expected_disk_usage( smpi, params, checkpoint );
+    }
     
     // If test mode enable, code stops here
     TITLE("Cleaning up python runtime environement");

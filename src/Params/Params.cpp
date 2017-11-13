@@ -285,6 +285,8 @@ namelist("")
         PyTools::extract("model", model, "FieldFilter", ifilt);
         if( model != "Friedman" )
             ERROR("Currently, only the `Friedman` model is available in FieldFilter()");
+        if( geometry != "2Dcartesian" )
+            ERROR("Currently, the `Friedman` field filter is only availble in `2Dcartesian` geometry");
         Friedman_filter = true;
         PyTools::extract("theta", Friedman_theta, "FieldFilter", ifilt);
         if ( Friedman_filter && (Friedman_theta==0.) )
@@ -361,6 +363,11 @@ namelist("")
     print_every = (int)(simulation_time/timestep)/10;
     PyTools::extract("print_every", print_every, "Main");
     if (!print_every) print_every = 1;
+    
+    // Read the "print_expected_disk_usage" parameter
+    if( ! PyTools::extract("print_expected_disk_usage", print_expected_disk_usage, "Main") ) {
+        ERROR("The parameter `Main.print_expected_disk_usage` must be True or False");
+    }
     
     // -------------------------------------------------------
     // Checking species order
@@ -495,22 +502,22 @@ void Params::compute()
     //!\todo (MG to JD) Are these 2 lines really necessary ? It seems to me it has just been done before
     n_space.resize(3, 1);
     cell_length.resize(3, 0.);            //! \todo{3 but not real size !!! Pbs in Species::Species}
-
     n_space_global.resize(3, 1);        //! \todo{3 but not real size !!! Pbs in Species::Species}
     oversize.resize(3, 0);
-
+    patch_dimensions.resize(3, 0.);
+    
     //n_space_global.resize(nDim_field, 0);
+    n_cell_per_patch = 1;
     for (unsigned int i=0; i<nDim_field; i++){
         oversize[i]  = interpolation_order + (exchange_particles_each-1);;
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];
         if(n_space_global[i]%number_of_patches[i] !=0) ERROR("ERROR in dimension " << i <<". Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i]);
         if ( n_space[i] <= 2*oversize[i]+1 ) ERROR ( "ERROR in dimension " << i <<". Patches length = "<<n_space[i] << " cells must be at least " << 2*oversize[i] +2 << " cells long. Increase number of cells or reduce number of patches in this direction. " );
+        patch_dimensions[i] = n_space[i] * cell_length[i];
+        n_cell_per_patch *= n_space[i];
     }
-
-    // compute number of cells per patch
-    n_cell_per_patch = n_space[0] * n_space[1] * n_space[2];
-
+    
     // Set clrw if not set by the user
     if ( clrw == -1 ) {
 
