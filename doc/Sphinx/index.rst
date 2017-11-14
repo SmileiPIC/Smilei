@@ -113,4 +113,4 @@ More information
    
    material
    partners
-   `Smilei tutorial <https://smileipic.github.io/workshop/>`_
+   Smilei tutorials <https://smileipic.github.io/workshop/>
