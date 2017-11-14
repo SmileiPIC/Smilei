@@ -632,4 +632,4 @@ Tutorials
 ^^^^^^^^^
 
 A dedicated page for learning how to run and analyse Smilei simulations
-is `available here <https://smileipic.github.io/workshop/>`_.
+is `available here <https://smileipic.github.io/tutorials>`_.

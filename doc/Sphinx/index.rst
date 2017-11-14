@@ -58,7 +58,7 @@ interaction to astrophysics.
 
 .. raw:: html
 
-  <a href="https://smileipic.github.io/workshop" class="icon">
+  <a href="https://smileipic.github.io/tutorials" class="icon">
 
 .. image:: _static/smileiIconRed.svg
 
@@ -113,4 +113,4 @@ More information
    
    material
    partners
-   Smilei tutorials <https://smileipic.github.io/workshop/>
+   Smilei tutorials <https://smileipic.github.io/tutorials>
