@@ -624,3 +624,12 @@ Other tools in ``happi``
   
   namelist = happi.openNamelist("path/no/my/namelist.py")
   print namelist.Main.timestep
+
+
+----
+
+Tutorials
+^^^^^^^^^
+
+A dedicated page for learning how to run and analyse Smilei simulations
+is `available here <https://smileipic.github.io/workshop/>`_.
