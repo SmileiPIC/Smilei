@@ -1560,7 +1560,7 @@ double RadiationTables::get_Niel_stochastic_term(double gamma,
     std::normal_distribution<double> normal_distribution(0., sqrt(dt));
     r = normal_distribution(gen);*/
 
-    return sqrt(factor_dNphdt*gamma*h)*r;
+    return sqrt(factor_cla_rad_power*gamma*h)*r;
 }
 
 // -----------------------------------------------------------------------------
