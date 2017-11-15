@@ -96,9 +96,6 @@ public:
         int nbins;
         bool logscale, edge_inclusive;
         
-        if (pyAxes.size() == 0)
-            ERROR(errorPrefix << ": axes must contain something");
-        
         // Loop axes and extract their format
         for (unsigned int iaxis=0; iaxis<pyAxes.size(); iaxis++ ) {
             PyObject *pyAxis=pyAxes[iaxis];
