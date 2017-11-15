@@ -1837,15 +1837,15 @@ for instance::
     containing the data of all particles in one patch. The function must return a *numpy*
     array of the same shape, containing the desired deposition of each particle. For example,
     defining the following function::
-
-      def myfunction(particles):
+      
+      def stuff(particles):
           return particles.weight * particles.px
-
-    and indicating ``deposited_quantity=myfunction``, the diagnostic will sum the weights
+    
+    passed as ``deposited_quantity=stuff``, the diagnostic will sum the weights
     :math:`\times\; p_x`.
-
+    
     You may also pass directly an implicit (*lambda*) function using::
-
+    
       deposited_quantity = lambda p: p.weight * p.px
 
 
@@ -1879,10 +1879,11 @@ for instance::
 
 .. py:data:: axes
 
-  A list of "axes" that define the grid (there may be zero axes).
-
+  A list of "axes" that define the grid.
+  There may be as many axes as wanted (there may be zero axes).
+  
   Syntax of one axis: ``[type, min, max, nsteps, "logscale", "edge_inclusive"]``
-
+  
   * ``type`` is one of:
   
     * ``"x"``, ``"y"``, ``"z"``: spatial coordinates (``"moving_x"`` with a :ref:`moving window<movingWindow>`)
@@ -1903,18 +1904,6 @@ for instance::
   * The optional keyword ``logscale`` sets the axis scale to logarithmic instead of linear.
   * The optional keyword ``edge_inclusive`` includes the particles outside the range
     [``min``, ``max``] into the extrema bins.
-
-  There may be as many axes as wanted in one ``DiagParticleBinning( ... )`` block.
-
-.. note::
-
-  As an experimental capability, we created the "composite" axes ``type``.
-  You may write the axis type as ``"ax+by+cz"``, where ``a``, ``b`` and ``c`` are numbers.
-  This syntax does NOT accept characters other than numbers and the characters ``xyz+-``.
-  For instance, it does not accept divisions ``/`` or whitespace.
-  The resulting axis is along the vector of coordinates :math:`(a,b,c)`.
-  For instance, in 2D, ``"x+2y"`` makes an axis oriented along the vector :math:`(1,2)`.
-
 
 **Examples of particle binning diagnostics**
 
