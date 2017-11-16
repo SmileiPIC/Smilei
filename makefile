@@ -35,7 +35,7 @@ CXXFLAGS += -std=c++11 -Wall
 # HDF5 library
 ifneq ($(strip $(HDF5_ROOT_DIR)),)
 CXXFLAGS += -I${HDF5_ROOT_DIR}/include 
-LDFLAGS += -L${HDF5_ROOT_DIR}/lib 
+LDFLAGS := -L${HDF5_ROOT_DIR}/lib $(LDFLAGS)
 endif
 LDFLAGS += -lhdf5 
 # Include subdirs

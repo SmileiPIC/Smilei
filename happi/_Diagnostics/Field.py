@@ -39,9 +39,9 @@ class Field(Diagnostic):
 			if len(values)==0:
 				self._fields = []
 			elif len(self._fields)==0:
-				self._fields = values[0].keys()
+				self._fields = list(next(iter(values)).keys())
 			else:
-				self._fields = [f for f in values[0].keys() if f in self._fields]
+				self._fields = [f for f in next(iter(values)).keys() if f in self._fields]
 		# Remove "tmp" dataset
 		if "tmp" in self._h5items: del self._h5items["tmp"]
 		# Converted to ordered list
@@ -98,7 +98,7 @@ class Field(Diagnostic):
 		self._data_log = data_log
 		
 		# Get the shape of fields
-		fields = list(self._h5items[0].values());
+		fields = [f for f in self._h5items[0].values() if f];
 		self._initialShape = fields[0].shape;
 		for fd in fields:
 			self._initialShape = self._np.min((self._initialShape, fd.shape), axis=0)

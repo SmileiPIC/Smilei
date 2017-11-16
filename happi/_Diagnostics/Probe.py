@@ -71,7 +71,7 @@ class Probe(Diagnostic):
 		if field is None:
 			self._error += "Printing available fields for probe #"+str(probeNumber)+":\n"
 			self._error += "----------------------------------------\n"
-			self._error += ", ".join(fields)+"\n"
+			self._error += str(", ".join(fields))+"\n"
 			return
 		
 		# 1 - verifications, initialization
@@ -279,7 +279,7 @@ class Probe(Diagnostic):
 	# Method to print info previously obtained with getInfo
 	def _info(self, info=None):
 		if info is None: info = self._getMyInfo()
-		printedInfo = "Probe #"+str(info["probeNumber"])+": "+str(info["dimension"])+"-dimensional,"+" with fields "+str(info["fields"])+"\n"
+		printedInfo = "Probe #"+str(info["probeNumber"])+": "+str(info["dimension"])+"-dimensional,"+" with fields "+bytes.decode(info["fields"])+"\n"
 		i = 0
 		while "p"+str(i) in info:
 			printedInfo += "p"+str(i)+" = "+" ".join(info["p"+str(i)].astype(str).tolist())+"\n"
@@ -315,7 +315,7 @@ class Probe(Diagnostic):
 	# get all available fields
 	def getFields(self):
 		for file in self._h5probe:
-			fields_here = str(file.attrs["fields"]).split(",")
+			fields_here = bytes.decode(file.attrs["fields"]).split(",")
 			try   : fields = [f for f in fields_here if f in fields]
 			except: fields = fields_here
 		return fields

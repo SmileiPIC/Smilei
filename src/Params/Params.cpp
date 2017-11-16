@@ -43,6 +43,21 @@ namespace Rand
     }
 }
 
+#define DO_EXPAND(VAL)  VAL ## 1
+#define EXPAND(VAL)     DO_EXPAND(VAL)
+#ifdef SMILEI_USE_NUMPY
+#if !defined(NUMPY_IMPORT_ARRAY_RETVAL) || (EXPAND(NUMPY_IMPORT_ARRAY_RETVAL) == 1)
+    void smilei_import_array() { // python 2
+        import_array();
+    }
+#else
+    void* smilei_import_array() { // hack for python3
+        import_array();
+        return NULL;
+    }
+#endif
+#endif
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Params : open & parse the input data file, test that parameters are coherent
@@ -71,7 +86,7 @@ namelist("")
     //init Python
     PyTools::openPython();
 #ifdef SMILEI_USE_NUMPY
-    import_array();
+    smilei_import_array();
 #endif
     
     // Print python version

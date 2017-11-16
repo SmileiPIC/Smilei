@@ -7,10 +7,10 @@ proc2 = subprocess.Popen(["git rev-parse --abbrev-ref HEAD"], stdout=subprocess.
 if err1 or err2:
 	if os.path.isfile(".version"):
 		sys.stderr.write("Version from .version file\n")
-		print open('.version', 'r').read()
+		print(open('.version', 'r').read())
 	else:
 		sys.stderr.write("Unknown smilei version\n")
-		print "??-??"
+		print("??-??")
 else:
-	print out1.strip()+"-"+out2.strip()
+	print(str(out1.strip())+"-"+str(out2.strip()))
 
