@@ -9,11 +9,13 @@
 SMILEICXX ?= mpicxx
 HDF5_ROOT_DIR ?= 
 BUILD_DIR ?= build
-PYTHONCONFIG := python scripts/CompileTools/python-config.py
+PYTHONEXE ?= python
+
+PYTHONCONFIG := $(PYTHONEXE) scripts/CompileTools/python-config.py
 
 #-----------------------------------------------------
 # Git information
-VERSION:=$(shell python scripts/CompileTools/get-version.py )
+VERSION:=$(shell $(PYTHONEXE) scripts/CompileTools/get-version.py )
 
 #-----------------------------------------------------
 # Directories and files
@@ -21,7 +23,7 @@ DIRS := $(shell find src -type d)
 SRCS := $(shell find src/* -name \*.cpp)
 OBJS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.o))
 DEPS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.d))
-SITEDIR = $(shell python -c 'import site; site._script()' --user-site)
+SITEDIR = $(shell $(PYTHONEXE) -c 'import site; site._script()' --user-site)
 
 #-----------------------------------------------------
 # Flags 
@@ -123,7 +125,7 @@ distclean: clean uninstall_happi
 $(BUILD_DIR)/%.pyh: %.py
 	@echo "Creating binary char for $<"
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-	$(Q) python scripts/CompileTools/hexdump.py "$<" "$@"
+	$(Q) $(PYTHONEXE) scripts/CompileTools/hexdump.py "$<" "$@"
 
 # Calculate dependencies
 $(BUILD_DIR)/%.d: %.cpp
@@ -208,7 +210,7 @@ uninstall_happi:
 print-% :
 	$(info $* : $($*)) @true
 
-env: print-SMILEICXX print-MPIVERSION print-VERSION print-OPENMP_FLAG print-HDF5_ROOT_DIR print-SITEDIR print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS	
+env: print-SMILEICXX print-PYTHONEXE print-MPIVERSION print-VERSION print-OPENMP_FLAG print-HDF5_ROOT_DIR print-SITEDIR print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS	
 
 
 #-----------------------------------------------------
@@ -224,10 +226,10 @@ help:
 	@echo
 	@echo 'Config options:'
 	@echo '  make config="[ verbose ] [ debug ] [ scalasca ] [ noopenmp ]"'
-	@echo '    verbose    : to print compile command lines'
-	@echo '    debug      : to compile in debug mode (code runs really slow)'
-	@echo '    scalasca   : to compile using scalasca'
-	@echo '    noopenmp   : to compile without openmp'
+	@echo '    verbose              : to print compile command lines'
+	@echo '    debug                : to compile in debug mode (code runs really slow)'
+	@echo '    scalasca             : to compile using scalasca'
+	@echo '    noopenmp             : to compile without openmp'
 	@echo
 	@echo 'Examples:'
 	@echo '  make config=verbose'
@@ -249,10 +251,11 @@ help:
 	@echo '  make print-XXX        : print internal makefile variable XXX'
 	@echo ''
 	@echo 'Environment variables :'
-	@echo '  SMILEICXX     : mpi c++ compiler'
-	@echo '  HDF5_ROOT_DIR : HDF5 dir'
-	@echo '  BUILD_DIR     : directory used to store build files [$(BUILD_DIR)]'
-	@echo '  OPENMP_FLAG   : flag to use openmp [$(OPENMP_FLAG)]'
+	@echo '  SMILEICXX             : mpi c++ compiler [$(SMILEICXX)]'
+	@echo '  HDF5_ROOT_DIR         : HDF5 dir [$(HDF5_ROOT_DIR)]'
+	@echo '  BUILD_DIR             : directory used to store build files [$(BUILD_DIR)]'
+	@echo '  OPENMP_FLAG           : openmp flag [$(OPENMP_FLAG)]'
+	@echo '  PYTHONEXE             : python executable [$(PYTHONEXE)]'	
 	@echo 
 	@echo 'http://www.maisondelasimulation.fr/smilei'
 	@echo 'https://github.com/SmileiPIC/Smilei'
