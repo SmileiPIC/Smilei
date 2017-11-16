@@ -176,11 +176,6 @@ class Screen(Diagnostic):
 				axis_units = "rad"
 				overall_min = "-3.141592653589793"
 				overall_max = " 3.141592653589793"
-			elif axistype[:9] == "composite":
-				axis_units = "L_r"
-				hasComposite = True
-				axistype = axistype[10:]
-				axis["type"] = axistype
 			elif axistype in ["px","py","pz","p"]:
 				axis_units = "P_r"
 			elif axistype in ["vx","vy","vz","v"]:

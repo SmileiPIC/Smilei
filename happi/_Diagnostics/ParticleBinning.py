@@ -136,7 +136,6 @@ class ParticleBinning(Diagnostic):
 		self._finalShape = [[]]*self._naxes
 		self._sums = [False]*self._naxes
 		self._selection = [self._np.s_[:]]*self._naxes
-		hasComposite = False
 		
 		for iaxis in range(self._naxes):
 			axis = self._axes[iaxis]
@@ -161,11 +160,6 @@ class ParticleBinning(Diagnostic):
 			if   axistype in ["x","y","z","moving_x"]:
 				axis_units = "L_r"
 				spatialaxes[axistype[-1]] = True
-			elif axistype[:9] == "composite":
-				axis_units = "L_r"
-				hasComposite = True
-				axistype = axistype[10:]
-				axis["type"] = axistype
 			elif axistype in ["px","py","pz","p"]:
 				axis_units = "P_r"
 			elif axistype in ["vx","vy","vz","v"]:
@@ -234,7 +228,7 @@ class ParticleBinning(Diagnostic):
 		# Build units
 		titles = {}
 		units = {}
-		axes_units = [unit or "1" for unit in self._units if (hasComposite or unit!="L_r")]
+		axes_units = [unit or "1" for unit in self._units if unit!="L_r"]
 		axes_units = (" / ( " + " * ".join(axes_units) + " )") if axes_units else ""
 		for d in self._diags:
 			titles.update({ d:"??" })
@@ -242,26 +236,26 @@ class ParticleBinning(Diagnostic):
 			val_units = "??"
 			deposited_quantity = self._myinfo[d]["deposited_quantity"]
 			if   deposited_quantity == "weight":
-				titles[d] = "Number" + ("" if hasComposite else " density")
-				val_units = "1" if hasComposite else "N_r"
+				titles[d] = "Number density"
+				val_units = "N_r"
 			elif deposited_quantity == "weight_charge":
-				titles[d] = "Charge" + ("" if hasComposite else " density")
-				val_units = "Q_r" if hasComposite else "N_r * Q_r"
+				titles[d] = "Charge density"
+				val_units = "N_r * Q_r"
 			elif deposited_quantity == "weight_ekin":
-				titles[d] = "Energy" + ("" if hasComposite else " density")
-				val_units = "K_r" if hasComposite else "N_r * K_r"
+				titles[d] = "Energy density"
+				val_units = "N_r * K_r"
 			elif deposited_quantity[:15] == "weight_charge_v":
-				titles[d] = "J"+deposited_quantity[-1] + (" x Volume" if hasComposite else "")
-				val_units = "J_r/N_r" if hasComposite else "J_r"
+				titles[d] = "J"+deposited_quantity[-1]
+				val_units = "J_r"
 			elif deposited_quantity[:8] == "weight_p":
-				titles[d] = "P"+deposited_quantity[8:] + ("" if hasComposite else " density")
-				val_units = "P_r" if hasComposite else "N_r * P_r"
+				titles[d] = "P"+deposited_quantity[8:] + " density"
+				val_units = "N_r * P_r"
 			elif deposited_quantity[:8] == "weight_v":
-				titles[d] = "Pressure "+deposited_quantity[8]+deposited_quantity[11] + (" x Volume" if hasComposite else "")
-				val_units = "K_r" if hasComposite else "N_r * K_r"
+				titles[d] = "Pressure "+deposited_quantity[8]+deposited_quantity[11]
+				val_units = "N_r * K_r"
 			elif deposited_quantity[:13] == "weight_ekin_v":
-				titles[d] = "Energy ("+deposited_quantity[-1]+") flux" + (" x Volume" if hasComposite else " density")
-				val_units = "K_r" if hasComposite else "N_r * K_r"
+				titles[d] = "Energy ("+deposited_quantity[-1]+") flux density"
+				val_units = "N_r * K_r"
 			units[d] = val_units + axes_units
 		# Make total units and title
 		self._vunits = self.operation
@@ -285,7 +279,7 @@ class ParticleBinning(Diagnostic):
 			self._bsize = self._np.prod( self._np.array( self._np.meshgrid( *plot_diff ) ), axis=0)
 			self._bsize = self._bsize.transpose([1,0]+range(2,len(plot_diff)))
 		self._bsize = cell_volume / self._bsize
-		if not hasComposite: self._bsize *= coeff
+		self._bsize *= coeff
 		self._bsize = self._np.squeeze(self._bsize)
 
 		# Set the directory in case of exporting

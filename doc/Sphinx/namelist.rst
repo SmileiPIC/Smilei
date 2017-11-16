@@ -1801,6 +1801,7 @@ Examples:
 * 1-dimensional grid along the kinetic energy :math:`E_\mathrm{kin}` (gives the energy distribution)
 * 3-dimensional grid along :math:`x`, :math:`y` and :math:`E_\mathrm{kin}` (gives the density map for several energies)
 * 1-dimensional grid along the charge :math:`Z^\star` (gives the charge distribution)
+* 0-dimensional grid (simply gives the total integrated particle density)
 
 Each dimension of the grid is called "axis".
 
@@ -1836,15 +1837,15 @@ for instance::
     containing the data of all particles in one patch. The function must return a *numpy*
     array of the same shape, containing the desired deposition of each particle. For example,
     defining the following function::
-
-      def myfunction(particles):
+      
+      def stuff(particles):
           return particles.weight * particles.px
-
-    and indicating ``deposited_quantity=myfunction``, the diagnostic will sum the weights
+    
+    passed as ``deposited_quantity=stuff``, the diagnostic will sum the weights
     :math:`\times\; p_x`.
-
+    
     You may also pass directly an implicit (*lambda*) function using::
-
+    
       deposited_quantity = lambda p: p.weight * p.px
 
 
@@ -1873,38 +1874,36 @@ for instance::
 .. py:data:: species
 
   A list of one or several species' :py:data:`name`.
+  All these species are combined into the same diagnostic.
 
 
 .. py:data:: axes
 
   A list of "axes" that define the grid.
-
+  There may be as many axes as wanted (there may be zero axes).
+  
   Syntax of one axis: ``[type, min, max, nsteps, "logscale", "edge_inclusive"]``
-
-  * ``type`` is one of ``"x"``, ``"y"``, ``"z"``, ``"px"``, ``"py"``, ``"pz"``, ``"p"``,
-    ``"gamma"``, ``"ekin"``, ``"vx"``, ``"vy"``, ``"vz"``, ``"v"``, ``"chi"``
-    or ``"charge"``.
-    There is one additional type, specific for simulations that include a
-    :ref:`moving window<movingWindow>`\ : the x-coordinate corrected by the window
-    current movement ``moving_x``.
-    The ``type`` can also be a python function, with the same syntax as the ``deposited_quantity``
-    attribute.
+  
+  * ``type`` is one of:
+  
+    * ``"x"``, ``"y"``, ``"z"``: spatial coordinates (``"moving_x"`` with a :ref:`moving window<movingWindow>`)
+    * ``"px"``, ``"py"``, ``"pz"``, ``"p"``: momenta
+    * ``"vx"``, ``"vy"``, ``"vz"``, ``"v"``: velocities
+    * ``"gamma"``, ``"ekin"``: energies
+    * ``"chi"``: quantum parameter
+    * ``"charge"``: the particles' electric charge
+    * or a *python function* with the same syntax as the ``deposited_quantity``.
+      Namely, this function must accept one argument only, for instance ``particles``, 
+      which holds the attributes ``x``, ``y``, ``z``, ``px``, ``py``, ``pz``, ``charge``,
+      ``weight`` and ``id``. Each of these attributes is a *numpy* array containing the
+      data of all particles in one patch. The function must return a *numpy* array of
+      the same shape, containing the desired quantity of each particle that will decide
+      its location in the histogram binning.
+      
   * The axis is discretized for ``type`` from ``min`` to ``max`` in ``nsteps`` bins.
   * The optional keyword ``logscale`` sets the axis scale to logarithmic instead of linear.
   * The optional keyword ``edge_inclusive`` includes the particles outside the range
     [``min``, ``max``] into the extrema bins.
-
-  There may be as many axes as wanted in one ``DiagParticleBinning( ... )`` block.
-
-.. note::
-
-  As an experimental capability, we created the "composite" axes ``type``.
-  You may write the axis type as ``"ax+by+cz"``, where ``a``, ``b`` and ``c`` are numbers.
-  This syntax does NOT accept characters other than numbers and the characters ``xyz+-``.
-  For instance, it does not accept divisions ``/`` or whitespace.
-  The resulting axis is along the vector of coordinates :math:`(a,b,c)`.
-  For instance, in 2D, ``"x+2y"`` makes an axis oriented along the vector :math:`(1,2)`.
-
 
 **Examples of particle binning diagnostics**
 
@@ -2070,6 +2069,7 @@ for instance::
 .. py:data:: species
 
   A list of one or several species' :py:data:`name`.
+  All these species are combined into the same diagnostic.
 
 .. py:data:: axes
 
