@@ -58,7 +58,7 @@ public:
     inline bool isEmpty() { return period>0. ? false : true; };
     
     //! Obtain some information about the time selection
-    std::string info();
+    //std::string info();
     
 private:
     //! Starting timestep
