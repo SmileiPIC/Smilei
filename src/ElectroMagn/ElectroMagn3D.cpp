@@ -32,10 +32,10 @@ isZmin(patch->isZmin())
     
     // Charge currents currents and density for each species
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Jx_s[ispec]  = new Field3D(("Jx_" +vecSpecies[ispec]->name).c_str(), dimPrim);
-        Jy_s[ispec]  = new Field3D(("Jy_" +vecSpecies[ispec]->name).c_str(), dimPrim);
-        Jz_s[ispec]  = new Field3D(("Jz_" +vecSpecies[ispec]->name).c_str(), dimPrim);
-        rho_s[ispec] = new Field3D(("Rho_"+vecSpecies[ispec]->name).c_str(), dimPrim);
+        Jx_s[ispec]  = new Field3D(Tools::merge("Jx_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
+        Jy_s[ispec]  = new Field3D(Tools::merge("Jy_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
+        Jz_s[ispec]  = new Field3D(Tools::merge("Jz_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
+        rho_s[ispec] = new Field3D(Tools::merge("Rho_",vecSpecies[ispec]->name).c_str(), dimPrim);
     }
     
 }//END constructor Electromagn3D

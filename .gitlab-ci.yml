@@ -22,7 +22,6 @@ compile:
     - module load hdf5/1.8.12-icc
     - module load mpi/openmpi/1.6.5-ib-icc
     - module load python/2.7.10
-    - module load compilers/gcc/4.8.2
     - module list 2> module.log
     # Run validation script
     - python validation.py -c  -v

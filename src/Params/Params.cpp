@@ -101,7 +101,7 @@ namelist("")
     // Running pyinit.py
     runScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py");
     
-    runScript("smilei_version='"+string(__VERSION)+"'\n", string(__VERSION));
+    runScript(Tools::merge("smilei_version='",string(__VERSION),"'\n"), string(__VERSION));
     
     // Running pyprofiles.py
     runScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py");
@@ -133,7 +133,7 @@ namelist("")
                 if( s>1 && command.substr(0,1)=="\"" && command.substr(s-1,1)=="\"" )
                     command = command.substr(1, s - 2);
                 // Add to namelist
-                strNamelist = "# Smilei:) From command line:\n" + command;
+                strNamelist = Tools::merge("# Smilei:) From command line:\n" , command);
             }
             strNamelist +="\n";
         }
