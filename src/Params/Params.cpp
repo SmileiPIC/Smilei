@@ -357,13 +357,17 @@ namelist("")
     
     
     if( PyTools::nComponents("LoadBalancing")>0 ) {
-        PyTools::extract("every"      , balancing_every, "LoadBalancing");
+        // get parameter "every" which describes a timestep selection
+        load_balancing_time_selection = new TimeSelection(
+            PyTools::extract_py("every", "LoadBalancing"), "Load balancing"
+        );
         PyTools::extract("cell_load"  , cell_load      , "LoadBalancing");
         PyTools::extract("frozen_particle_load", frozen_particle_load    , "LoadBalancing");
         PyTools::extract("initial_balance", initial_balance    , "LoadBalancing");
     } else {
-        balancing_every = 0;
+        load_balancing_time_selection = new TimeSelection();
     }
+    has_load_balancing = (smpi->getSize()>1)  && (! load_balancing_time_selection->isEmpty());
     
     //mi.resize(nDim_field, 0);
     mi.resize(3, 0);
@@ -464,6 +468,7 @@ namelist("")
 }
 
 Params::~Params() {
+    if( load_balancing_time_selection ) delete load_balancing_time_selection;
     PyTools::closePython();
 }
 
@@ -614,14 +619,14 @@ void Params::print_init()
     if( Friedman_filter )
         MESSAGE(1, "Friedman field filtering : theta = " << Friedman_theta);
 
-    if (balancing_every > 0){
+    if (has_load_balancing){
         TITLE("Load Balancing: ");
         if (initial_balance){
             MESSAGE(1,"Computational load is initially balanced between MPI ranks. (initial_balance = true) ");
         } else{
             MESSAGE(1,"Patches are initially homogeneously distributed between MPI ranks. (initial_balance = false) ");
         }
-        MESSAGE(1,"Load balancing every " << balancing_every << " iterations.");
+        MESSAGE(1,"Happens: " << load_balancing_time_selection->info());
         MESSAGE(1,"Cell load coefficient = " << cell_load );
         MESSAGE(1,"Frozen particle load coefficient = " << frozen_particle_load );
     }
@@ -673,7 +678,7 @@ void Params::print_parallelism_params(SmileiMPI* smpi)
         for (unsigned int iDim=0 ; iDim<nDim_field ; iDim++)
             MESSAGE(2, "dimension " << iDim << " - n_space : " << n_space[iDim] << " cells.");
 
-        MESSAGE(1, "Dynamic load balancing frequency: every " << balancing_every << " iterations." );
+        MESSAGE(1, "Dynamic load balancing: " << load_balancing_time_selection->info() );
     }
 
     if (smpi->isMaster()) {

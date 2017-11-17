@@ -292,8 +292,8 @@ int main (int argc, char* argv[])
             // ----------------------------------------------------------------------
 
 
-            if ((params.balancing_every > 0) && (smpi.getSize()!=1) ) {
-                if (( itime%params.balancing_every == 0 )) {
+            if( params.has_load_balancing ) {
+                if( params.load_balancing_time_selection->theTimeIsNow(itime) ) {
                     timers.loadBal.restart();
                     #pragma omp single
                     vecPatches.load_balance( params, time_dual, &smpi, simWindow, itime );

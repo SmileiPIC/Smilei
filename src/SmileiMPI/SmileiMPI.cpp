@@ -205,7 +205,7 @@ void SmileiMPI::init_patch_count( Params& params)
     
     // Third, loop over local patches to obtain their approximate load
     vector<double> PatchLoad (Npatches_local, 1.);
-    if (params.balancing_every <= 0 || !(params.initial_balance) ){
+    if( ! (params.has_load_balancing && params.initial_balance) ){
         total_load = Npatches_local; //We don't balance the simulation, all patches have a load of 1.
     } else {
         for(unsigned int ipatch=0; ipatch<Npatches_local; ipatch++){

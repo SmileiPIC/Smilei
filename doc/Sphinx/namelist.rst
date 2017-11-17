@@ -244,6 +244,9 @@ The block ``Main`` is **mandatory** and has the following syntax::
 Load Balancing
 ^^^^^^^^^^^^^^
 
+Load balancing (explained :ref:`here <LoadBalancingExplanation>`) consists in exchanging
+patches (domains of the simulation box) between MPI processes to reduce the 
+computational load imbalance.
 The block ``LoadBalancing`` is optional. If you do not define it, load balancing will
 occur every 150 iterations.
 
@@ -267,8 +270,8 @@ occur every 150 iterations.
 
   :default: 150
 
-  An integer: the number of timesteps between each load balancing (patches are
-  exchanged between MPI processes to reduce load imbalance).
+  Number of timesteps between each load balancing **or** a :ref:`time selection <TimeSelections>`.
+  The value ``0`` suppresses all load balancing.
 
 .. py:data:: cell_load
 

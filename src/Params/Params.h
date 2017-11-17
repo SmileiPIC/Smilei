@@ -188,8 +188,10 @@ public:
     unsigned int tot_number_of_patches;
     //! Number of patches per direction
     std::vector<unsigned int> number_of_patches;
-    //! Load balancing frequency
-    int balancing_every;
+    //! Time selection for load balancing
+    TimeSelection * load_balancing_time_selection;
+    //! True if must balance at some point
+    bool has_load_balancing;
     //! Load coefficient applied to a cell (default = 1)
     double cell_load;
     //! Load coefficient applied to a frozen particle (default = 0.1)
