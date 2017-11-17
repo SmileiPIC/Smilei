@@ -108,6 +108,16 @@ class Diagnostic(object):
 		self.options.set(**kwargs)
 		return self
 	
+	# Method to set optional plotting arguments, but also checks all are known
+	def _setAndCheck(self, **kwargs):
+		kwargs = self.options.set(**kwargs)
+		if len(kwargs)>0:
+			unknown_kwargs = ", ".join(kwargs.keys())
+			print("Error: The following arguments are unknown: "+unknown_kwargs)
+			return False
+		else:
+			return True
+	
 	# Method to obtain the plot limits
 	def limits(self):
 		"""Gets the overall limits of the diagnostic along its axes
@@ -210,7 +220,7 @@ class Diagnostic(object):
 			result.update({ self._type[i]:self._centers[i] })
 		return result
 	
-	def _make_axes(self, axes, **kwargs):
+	def _make_axes(self, axes):
 		if axes is None:
 			fig = self._plt.figure(**self.options.figure0)
 			fig.set(**self.options.figure1)
@@ -253,9 +263,9 @@ class Diagnostic(object):
 		"""
 		if not self._validate(): return
 		if not self._prepare(): return
-		self.set(**kwargs)
+		if not self._setAndCheck(**kwargs): return
 		self.info()
-		ax = self._make_axes(axes, **kwargs)
+		ax = self._make_axes(axes)
 		fig = ax.figure
 		
 		if timestep is None:
@@ -299,9 +309,9 @@ class Diagnostic(object):
 		"""
 		if not self._validate(): return
 		if not self._prepare(): return
-		self.set(**kwargs)
+		if not self._setAndCheck(**kwargs): return
 		self.info()
-		ax = self._make_axes(axes, **kwargs)
+		ax = self._make_axes(axes)
 		fig = ax.figure
 		
 		if len(self._timesteps) < 2:
@@ -385,9 +395,9 @@ class Diagnostic(object):
 		"""
 		if not self._validate(): return
 		if not self._prepare(): return
-		self.set(**kwargs)
+		if not self._setAndCheck(**kwargs): return
 		self.info()
-		ax = self._make_axes(axes, **kwargs)
+		ax = self._make_axes(axes)
 		fig = ax.figure
 		
 		# Movie requested ?
