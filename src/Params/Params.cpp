@@ -626,7 +626,7 @@ void Params::print_init()
         } else{
             MESSAGE(1,"Patches are initially homogeneously distributed between MPI ranks. (initial_balance = false) ");
         }
-        //MESSAGE(1,"Happens: " << load_balancing_time_selection->info());
+        MESSAGE(1,"Happens: " << load_balancing_time_selection->info());
         MESSAGE(1,"Cell load coefficient = " << cell_load );
         MESSAGE(1,"Frozen particle load coefficient = " << frozen_particle_load );
     }
@@ -678,7 +678,7 @@ void Params::print_parallelism_params(SmileiMPI* smpi)
         for (unsigned int iDim=0 ; iDim<nDim_field ; iDim++)
             MESSAGE(2, "dimension " << iDim << " - n_space : " << n_space[iDim] << " cells.");
 
-        //MESSAGE(1, "Dynamic load balancing: " << load_balancing_time_selection->info() );
+        MESSAGE(1, "Dynamic load balancing: " << load_balancing_time_selection->info() );
     }
 
     if (smpi->isMaster()) {

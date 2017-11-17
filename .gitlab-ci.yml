@@ -14,6 +14,7 @@ compile:
     - mkdir -p /sps2/gitlab-runner/$CI_PIPELINE_ID
     - cp -r $CI_PROJECT_DIR /sps2/gitlab-runner/$CI_PIPELINE_ID
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
+    # Set the environment
     - make happi
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     - module purge
@@ -21,8 +22,9 @@ compile:
     - module load hdf5/1.8.12-icc
     - module load mpi/openmpi/1.6.5-ib-icc
     - module load python/2.7.10
-    - module list 2> module.log 
-    # Run checking script
+    - compilers/gcc/4.8.2
+    - module list 2> module.log
+    # Run validation script
     - python validation.py -c  -v
 
 makerun1D:
@@ -33,7 +35,7 @@ makerun1D:
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    # Run checking script
+    # Run validation script
     - python validation.py -b "tst1d_*_*.py" -m 4 -o 4 -v
 
 makerun2D:
@@ -44,7 +46,7 @@ makerun2D:
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    # Run checking script
+    # Run validation script
     - python validation.py -b "tst2d_*_*.py" -m 4 -o 4  -v
 
 makerun3D:
@@ -55,7 +57,7 @@ makerun3D:
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    # Run checking script
+    # Run validation script
     - python validation.py -b "tst3d_*_*.py" -m 4 -o 4 -v
 
 makerunCollisions:
