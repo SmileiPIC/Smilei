@@ -330,9 +330,9 @@ namelist("")
     norder.resize(nDim_field,1);
     norder.resize(nDim_field,1);
     PyTools::extract( "norder", norder, "Main" ); 
-    norderx=norder[0];
-    nordery=norder[1];
-    norderz=norder[2];
+    //norderx=norder[0];
+    //nordery=norder[1];
+    //norderz=norder[2];
 
 
     if( PyTools::nComponents("LoadBalancing")>0 ) {

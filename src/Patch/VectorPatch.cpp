@@ -355,8 +355,14 @@ void VectorPatch::solveMaxwell_Spectral( Params& params,SimWindow* simWindow, in
         // Saving magnetic fields (to compute centered fields used in the particle pusher)
         // Stores B at time n in B_m.
         duplicate_field_into_pxr((*this)(ipatch)->EMfields,params);
-	push_psatd_ebfield_3d_();
-	duplicate_field_into_smilei((*this)(ipatch)->EMfields,params);
+        if(params.nDim_field == 3){   
+          push_psatd_ebfield_3d_();
+        }
+        if(params.nDim_field == 2){
+          push_psatd_ebfield_2d_();
+        }
+        duplicate_field_into_smilei((*this)(ipatch)->EMfields,params);
+
         //(*this)(ipatch)->EMfields->saveMagneticFields(); //in order to avoid recentering B
     }
 
