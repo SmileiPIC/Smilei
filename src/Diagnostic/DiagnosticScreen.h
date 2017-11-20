@@ -59,7 +59,7 @@ private :
     //! Histogram object
     Histogram * histogram;
     
-    int output_size;
+    unsigned int output_size;
     
     std::string screen_shape;
     //! Relates to the shape of the screen (plane=0, sphere=1)
