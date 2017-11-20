@@ -6,6 +6,7 @@ compile:
   stage: compile
   only:
     - develop
+    - patch_Niel_radiation_model
 
   script:
     # Move in test dir
@@ -21,6 +22,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
+    - patch_Niel_radiation_model
 
   script:
     # Move in test dir
@@ -32,6 +34,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
+    - patch_Niel_radiation_model
 
   script:
     # Move in test dir
@@ -43,6 +46,7 @@ makerun3D:
   stage: makerun
   only:
     - develop
+    - patch_Niel_radiation_model
 
   script:
     # Move in test dir
@@ -54,10 +58,9 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
+    - patch_Niel_radiation_model
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
     - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v
-
-

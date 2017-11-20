@@ -478,10 +478,17 @@ In such a configuration, the electron bunch is supposed to rotate endlessly
 with the same radius :math:`R = p_{-,0} /e B` without radiation energy loss.
 Here, the magnetic field is so strong that the electrons
 radiate their energy as in a synchrotron facility.
-The initial quantum parameter is equal to
-:math:`\chi_- = \gamma_{-,0} B /m_e E_s`.
+In this setup, each electron quantum parameter depends on their Lorentz
+factors :math:`\gamma_{-}` according to
+:math:`\chi_{-} = \gamma_{-} B /m_e E_s`.
+The quantum parameter is maximum at the beginning of the interaction.
+The strongest radiation loss are therefore observed at the beginning too.
+As energy decreases, radiation loss becomes less and less important so that
+the emission regime progressively move from the quantum to the classical regime.
 
-This corresponds to two different namelists in the benchmark folder:
+
+Similar simulation configuration can be found in the benchmarks.
+It corresponds to two different input files in the benchmark folder:
 
 * ``tst2d_8_synchrotron_chi1.py``: tests and compares the corrected
   Landau-Lifshitz and the Monte-Carlo model for an initial :math:`\chi = 1`.
@@ -493,11 +500,13 @@ In this section, we focus on the case with initial quantum parameter
 The magnetic field amplitude is :math:`B = 90 m \omega_r / e`.
 The initial electron Lorentz factor is
 :math:`\gamma_{-,0} = \varepsilon_{-,0}/mc^2 =  450`.
+Electrons are initialized with a Maxwell-Juttner distribution of temperature
+:math:`0.1 m_e c^2`.
 
 :numref:`synchrotron_scalar` shows the time evolution of the particle kinetic energy,
 the radiated energy and the total energy. All radiation models provide
 similar evolution of these integrated quantities. The relative error on the
-total energy is around :math:`3 \times 10^{-9}`.
+total energy is between :math:`2 \times 10^{-9}` and :math:`3 \times 10^{-9}`.
 
 .. _synchrotron_scalar:
 
@@ -508,17 +517,23 @@ total energy is around :math:`3 \times 10^{-9}`.
   lines for various models.
 
 The main difference between models can be understood by studying the
-particle trajectories and phase spaces. For this purpose, colormaps of
-the normalized kinetic energy at :math:`25 \omega_r^{-1}` are shown in
+particle trajectories and phase spaces. For this purpose, the local kinetic energy spatial-distribution
+at :math:`25 \omega_r^{-1}` is shown in
 :numref:`synchrotron_x_y_gamma` for the different models.
 With continuous radiation energy loss
-(corrected Landau-Lifshitz case), the electron bunch rotates with a decreasing
-radius but the bunch keeps its original shape. The radiation only acts as a
-cooling mechanism.
+(corrected Landau-Lifshitz case), each electron of the bunch rotates with a decreasing
+radius but the bunch.
+Each electron of similar initial energies have the same trajectories.
+In the case of a cold bunch (null initial temperature),
+the bunch would have kept its original shape.
+The radiation with this model only acts as a cooling mechanism.
 In the cases of the Niel and the Monte-Carlo radiation models,
-the stochastic effects come into play and lead the bunch to spread spatially.
-This effect is particularly strong at the beginning when the radiation recoil
-is the most important.
+stochastic effects come into play and lead the bunch to spread spatially.
+Each individual electron of the bunch, even with similar initial energies,
+have different trajectories depending on their emission history.
+Stochastic effects are particularly strong at the beginning  with the highest
+:math:`\chi` values when the radiation
+recoil is the most important.
 
 .. _synchrotron_x_y_gamma:
 
@@ -530,17 +545,34 @@ is the most important.
   and the corrected Landau-Lifshitz (**CLL**) models.
 
 :numref:`synchrotron_t_gamma_ne` shows the time evolution of
-the electron energy distribution for different radiation models.
-At the beginning, all particles have the same energy. Stochastic effects lead
-the bunch to spread energetically as shown on the Monte-Carlo and the Niel cases.
-This effect is the strongest at the beginning when the quantum parameter is high.
-In the Monte-Carlo case, some electrons lose all their energy almost immediately.
+the electron Lorentz factor distribution (normalized energy) for different
+radiation models.
+At the beginning, the distribution is extremely broad due to the Maxwell-Juttner parameters.
+The average energy is well around :math:`\gamma_{-,0} = \varepsilon_{-,0}/mc^2 =  450`
+with maximal energies above :math:`\gamma_{-} =  450`.
+
+In the case of a initially-cold electron beam,
+stochastic effects would have lead the bunch to spread energetically
+with the Monte-Carlo and the Niel stochastic models at the beginning of the simulation.
+This effect is hidden since electron energy is already highly spread at the
+beginning of the interaction.
+This effect is the strongest when the quantum parameter is high in the quantum regime.
+
+In the Monte-Carlo case, some electrons have lost all their energy almost immediately
+as shown by the lower part of the distribution below :math:`\gamma_{-} =  50`
+after comparison with the Niel model.
+
 Then, as the particles cool down, the interaction enters the semi-classical
 regime where energy jumps are smaller.
-In the classical regime, radiation energy loss reduces the electron spread
-in energy and in space
-In the Landau-Lifshitz case, there is no energy spread. This model can be seen
-as the average behavior of the stochastic ones.
+In the classical regime, radiation loss acts oppositely to the quantum regime.
+It reduces the spread in energy and space.
+In the Landau-Lifshitz case, this effect starts at the beginning even
+in the quantum regime due to the nature of the model.
+For a initially-cold electron bunch, there would not have been
+energy spread at the beginning of the simulation. All electron would have lost
+their energy in a similar fashion (superimposed behavior).
+This model can be seen as the average behavior of the stochastic ones of
+electron groups having the same initial energy.
 
 .. _synchrotron_t_gamma_ne:
 
