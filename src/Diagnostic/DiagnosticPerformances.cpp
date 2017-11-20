@@ -1,0 +1,196 @@
+#include "PyTools.h"
+#include <iomanip>
+
+#include "DiagnosticPerformances.h"
+
+
+using namespace std;
+
+
+// Constructor
+DiagnosticPerformances::DiagnosticPerformances( SmileiMPI* smpi )
+{
+    fileId_ = 0;
+    
+    ostringstream name("");
+    name << "Diagnostic performances";
+    string errorPrefix = name.str();
+    
+    // get parameter "every" which describes a timestep selection
+    timeSelection = new TimeSelection(
+        PyTools::extract_py("every", "DiagPerformances"),
+        name.str()
+    );
+    
+    // get parameter "flush_every" which describes a timestep selection for flushing the file
+    flush_timeSelection = new TimeSelection(
+        PyTools::extract_py("flush_every", "DiagPerformances"),
+        name.str()
+    );
+    
+    // Output info on diagnostics
+    if ( smpi->isMaster() ) {
+        MESSAGE(1,"Created performances diagnostic");
+    }
+    filename = "Performances.h5";
+    
+    mpi_size = smpi->getSize();
+    hsize_t one = 1;
+    
+    filespace = H5Screate_simple(1, &mpi_size, NULL);
+    memspace  = H5Screate_simple(1, &one, NULL );
+    hsize_t start=smpi->getRank(), count=1, block=1;
+    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &start, NULL, &count, &block );
+    
+    // Prepare the property list for HDF5 output
+    write_plist = H5Pcreate(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
+    
+    
+} // END DiagnosticPerformances::DiagnosticPerformances
+
+
+DiagnosticPerformances::~DiagnosticPerformances()
+{
+    H5Pclose( write_plist );
+    delete timeSelection;
+    delete flush_timeSelection;
+} // END DiagnosticPerformances::~DiagnosticPerformances
+
+
+// Called only by patch master of process master
+void DiagnosticPerformances::openFile( Params& params, SmileiMPI* smpi, bool newfile )
+{
+    if( fileId_>0 ) return;
+    
+    if ( newfile ) {
+        hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
+        H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
+        fileId_  = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
+        H5Pclose(pid);
+        
+        // write all parameters as HDF5 attributes
+        //H5::attr(fileId_, "Version", string(__VERSION));
+    }
+    else {
+        // Open the existing file
+        hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
+        H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
+        fileId_ = H5Fopen( filename.c_str(), H5F_ACC_RDWR, pid );
+        H5Pclose(pid);
+    }
+}
+
+
+void DiagnosticPerformances::closeFile()
+{
+    if ( filespace>0 ) H5Sclose( filespace );
+    if ( memspace >0 ) H5Sclose( memspace );
+    if ( fileId_  >0 ) H5Fclose( fileId_ );
+    fileId_ = 0;
+} // END closeFile
+
+
+
+void DiagnosticPerformances::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches)
+{
+    // create the file
+    openFile( params, smpi, true );
+    H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+}
+
+
+bool DiagnosticPerformances::prepare( int timestep )
+{
+    if( timeSelection->theTimeIsNow(timestep) ) {
+        return true;
+    } else {
+        return false;
+    }
+} // END prepare
+
+
+void DiagnosticPerformances::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow, Timers & timers )
+{
+    
+    #pragma omp master
+    {
+        // Create group for this iteration
+        ostringstream name_t;
+        name_t.str("");
+        name_t << setfill('0') << setw(10) << itime;
+        status = H5Lexists(fileId_, name_t.str().c_str(), H5P_DEFAULT);
+        if( status==0 )
+           iteration_group_id = H5::group(fileId_, name_t.str().c_str());
+        // Warning if file unreachable
+        if( status < 0 ) WARNING("Performances diagnostic could not write");
+    }
+    #pragma omp barrier
+    
+    // Do not output diag if this iteration has already been written or if problem with file
+    if( status != 0 ) return;
+    
+    #pragma omp master
+    {
+        hid_t plist_id = H5Pcreate( H5P_DATASET_CREATE );
+        
+        writeQuantity( vecPatches(0)->Hindex(), "hindex", iteration_group_id, plist_id);
+        writeQuantity( timers.global    .getTime(), "timer_global"    , iteration_group_id, plist_id);
+        writeQuantity( timers.particles .getTime(), "timer_particles" , iteration_group_id, plist_id);
+        writeQuantity( timers.maxwell   .getTime(), "timer_maxwell"   , iteration_group_id, plist_id);
+        writeQuantity( timers.densities .getTime(), "timer_densities" , iteration_group_id, plist_id);
+        writeQuantity( timers.collisions.getTime(), "timer_collisions", iteration_group_id, plist_id);
+        writeQuantity( timers.movWindow .getTime(), "timer_movWindow" , iteration_group_id, plist_id);
+        writeQuantity( timers.loadBal   .getTime(), "timer_loadBal"   , iteration_group_id, plist_id);
+        writeQuantity( timers.syncPart  .getTime(), "timer_syncPart"  , iteration_group_id, plist_id);
+        writeQuantity( timers.syncField .getTime(), "timer_syncField" , iteration_group_id, plist_id);
+        writeQuantity( timers.syncDens  .getTime(), "timer_syncDens"  , iteration_group_id, plist_id);
+        // Specific for diags because we are within a diag
+        double timer_diags = MPI_Wtime() - timers.diags.last_start_ + timers.diags.time_acc_;
+        writeQuantity( timer_diags, "timer_diags", iteration_group_id, plist_id);
+        
+        H5Pclose(plist_id);
+        H5Gclose(iteration_group_id);
+        
+        if( flush_timeSelection->theTimeIsNow(itime) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+    }
+    
+} // END run
+
+
+void DiagnosticPerformances::writeQuantity( double quantity, const char* name, hid_t gid, hid_t create_plist )
+{
+    hid_t dset_id  = H5Dcreate( gid, name, H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, create_plist, H5P_DEFAULT);
+    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &quantity );
+    H5Dclose( dset_id );
+}
+void DiagnosticPerformances::writeQuantity( unsigned int quantity, const char* name, hid_t gid, hid_t create_plist )
+{
+    hid_t dset_id  = H5Dcreate( gid, name, H5T_NATIVE_UINT, filespace, H5P_DEFAULT, create_plist, H5P_DEFAULT);
+    H5Dwrite( dset_id, H5T_NATIVE_UINT, memspace, filespace, write_plist, &quantity );
+    H5Dclose( dset_id );
+}
+
+
+
+// SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
+uint64_t DiagnosticPerformances::getDiskFootPrint(int istart, int istop, Patch* patch)
+{
+    uint64_t footprint = 0;
+    
+    // Calculate the number of dumps between istart and istop
+    uint64_t ndumps = timeSelection->howManyTimesBefore(istop) - timeSelection->howManyTimesBefore(istart);
+    
+    // Add necessary global headers approximately
+    footprint += 1000;
+    
+    // Add necessary timestep headers approximately
+    footprint += ndumps * 500;
+    
+    // Add size of each dump
+    unsigned int ntimers = 11;
+    footprint += ndumps * (uint64_t)(mpi_size) * (uint64_t)(ntimers * sizeof(double) + sizeof(int));
+    
+    return footprint;
+}
+
