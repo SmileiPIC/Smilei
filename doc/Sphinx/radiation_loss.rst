@@ -620,7 +620,7 @@ is known as the radiation pressure acceleration (RPA) or laser piston.
 Under the action of an extremely intense laser pulse, electrons accelerated at
 the target front radiate. It is confirmed in :numref:`thin_foil_x_chi_ne`
 showing the distribution of the quantum parameter :math:`\chi` along the x axis
-for the Monte-Carlo, the Niel and the corrected Landau-Lifshitz radiation models.
+for the Monte-Carlo, the Niel and the corrected Landau-Lifshitz (**CLL**) radiation models.
 The maximum values can be seen at the front where the electrons
 interact with the laser. Radiation occurs in the quantum regime
 :math:`\chi > 0.1`. Note that there is a second peak for :math:`\chi` at the
@@ -676,7 +676,11 @@ The maximum electron energy is almost twice lower with radiation reaction.
 .. figure:: _static/thin_foil_x_px_ne.png
   :width: 18cm
 
-----
+  :math:`x - p_x` electron distribution at time 47 fs for the Monte-Carlo,
+  the Niel, the corrected Landau-Lifshitz (**CLL**) model and
+  without radiation loss (**none**).
+
+--------------------------------------------------------------------------------
 
 Performances
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
