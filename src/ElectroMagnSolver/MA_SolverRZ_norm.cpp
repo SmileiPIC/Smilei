@@ -58,13 +58,37 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
     }
     
     // Electric field Et^(p,p)
-    for (unsigned int i=0 ;  i<nx_p ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
+    for (unsigned int i=0 ;  i<nl_p ; i++) {
+        for (unsigned int j=0 ; j<nr_p ; j++) {
             (*EtRZ)(i,j) += -dt*(*JtRZ)(i,j)
                 +                  dt_ov_dl * ( (*BrRZ)(i+1,j) - (*BrRZ)(i,j) )
                 -                  dt_ov_dr * ( (*BlRZ)(i,j+1) - (*BlRZ)(i,j) );
         }
     }
+	if (Ymin){
+		if (imode==0){
+			for (unsigned int i=0 ; i<nl_p ; i++) {
+				(*EtRZ)(i,0)=0;
+			}
+			for (unsigned int i=0 ; i<nl_p ; i++) {
+				(*ErRZ)(i,0)= -(*ErRZ)(i,1);
+			}
+			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
+				(*ElRZ)(i,0)+= 4*dt_ov_dr*(*BtRZ)(i,1)+dt*(*JtRZ)(i,0);
+			}
+		}
+		if (imode==1){
+			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
+				(*ElRZ)(i,0)= 0;
+			}
+			for (unsigned int i=0 ; i<nl_p ; i++) {
+				(*ErRZ)(i,0)= (*ErRZ)(i,1);
+			}
+			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
+				(*EtRZ)(i,0)= (*EtRZ)(i,1);
+			}	
+		}
+	}
     }
 
 }
