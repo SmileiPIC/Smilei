@@ -54,7 +54,7 @@ endif
 
 FFTW3_LIB= $(FFTW_LIB_DIR)
 FFTW3_INCLUDE=$(FFTW_INC_DIR)
-LIBPXR = /gpfshome/mds/staff/hkallala/develop/picsar_group/picsar/lib 
+LIBPXR = /gpfsdata/jderouillat/SMILEI/MergeRequest_4
 LDFLAGS += -L$(LIBPXR) -lpxr
 LDFLAGS += -I$(FFTW3_INCLUDE)
 LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi
