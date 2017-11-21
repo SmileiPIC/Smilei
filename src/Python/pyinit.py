@@ -39,7 +39,7 @@ class SmileiComponentType(type):
         self.current += 1
         return self._list[self.current - 1]
     __next__ = next #python3
-    
+
     # Function to return one given instance, for example DiagParticleBinning[0]
     # Special case: species can also be indexed by their name: Species["ion1"]
     def __getitem__(self, key):
@@ -185,7 +185,7 @@ class Main(SmileiSingleton):
     EM_boundary_conditions = [["periodic"]]
     time_fields_frozen = 0.
     ponderomotive_force = False
-    
+
     # Default Misc
     reference_angular_frequency_SI = 0.
     print_every = None
@@ -195,11 +195,11 @@ class Main(SmileiSingleton):
     def __init__(self, **kwargs):
         # Load all arguments to Main()
         super(Main, self).__init__(**kwargs)
-        
+
         # Deprecation error for the "geometry" argument
         if Main.geometry in ["1d3v", "2d3v", "3d3v"]:
             raise Exception("Deprecated geometry = \""+Main.geometry+"\". Use \""+Main.geometry[0]+"Dcartesian\" instead")
-        
+
         # Initialize timestep if not defined based on timestep_over_CFL
         if Main.timestep is None:
             if Main.timestep_over_CFL is None:
@@ -232,7 +232,7 @@ class Main(SmileiSingleton):
                 # None recognized solver
                 else:
                     raise Exception("timestep: maxwell_solver not implemented "+Main.maxwell_solver)
-                
+
         #initialize grid_length if not defined based on number_of_cells and cell_length
         if len(Main.grid_length) is 0:
             if len(Main.number_of_cells) is 0:
@@ -267,7 +267,7 @@ class MovingWindow(SmileiSingleton):
 
 class Checkpoints(SmileiSingleton):
     """Checkpoints parameters"""
-    
+
     restart_dir = None
     restart_number = None
     dump_step = 0
@@ -326,6 +326,13 @@ class Laser(SmileiComponent):
     space_envelope = [1., 0.]
     phase = [0., 0.]
     space_time_profile = None
+
+class EnvelopeLaser(SmileiComponent):
+    """Laser Envelope parameters"""
+    omega = 1.
+    space_envelope = [1., 0.]
+    envelope_solver = "explicit"
+
 
 class Collisions(SmileiComponent):
     """Collisions parameters"""
@@ -478,4 +485,3 @@ class DumpRestart(object):
 class ExtField(object):
     def __init__(self, *args, **kwargs):
         raise Exception("Deprecated `ExtField()` must be replaced by `ExternalField()`")
-
