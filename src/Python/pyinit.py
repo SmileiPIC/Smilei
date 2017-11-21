@@ -184,6 +184,7 @@ class Main(SmileiSingleton):
     maxwell_solver = 'Yee'
     EM_boundary_conditions = [["periodic"]]
     time_fields_frozen = 0.
+    ponderomotive_force = False
     
     # Default Misc
     reference_angular_frequency_SI = 0.

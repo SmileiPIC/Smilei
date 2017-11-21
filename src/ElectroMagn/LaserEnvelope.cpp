@@ -1,12 +1,18 @@
         
 #include "LaserEnvelope.h"
 
+#include "Params.h"
 #include "cField3D.h"
 #include "Field3D.h"
 #include "ElectroMagn.h"
 using namespace std;
 
-LaserEnvelope::LaserEnvelope(vector<unsigned int> dimPrim)
+LaserEnvelope::LaserEnvelope( Params& params )
+{
+}
+
+
+LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope )
 {
 }
 
@@ -16,11 +22,33 @@ LaserEnvelope::~LaserEnvelope()
 }
 
 
-LaserEnvelope3D::LaserEnvelope3D(vector<unsigned int> dimPrim)
-    : LaserEnvelope(dimPrim)
+LaserEnvelope3D::LaserEnvelope3D( Params& params )
+    : LaserEnvelope(params)
 {
+    std::vector<unsigned int>  dimPrim( params.nDim_field );
+    // Dimension of the primal and dual grids
+    for (size_t i=0 ; i<params.nDim_field ; i++) {
+        // Standard scheme
+        dimPrim[i] = params.n_space[i]+1;
+        // + Ghost domain
+        dimPrim[i] += 2*params.oversize[i];
+    }
+
+    
     A_  = new cField3D( dimPrim );
     A0_ = new cField3D( dimPrim );
+
+    // see Python !!!
+    cField3D* A3D = static_cast<cField3D*>(A_);
+    //(*A3D)(i,j,k) = 
+}
+
+
+LaserEnvelope3D::LaserEnvelope3D( LaserEnvelope *envelope )
+    : LaserEnvelope(envelope)
+{
+    A_  = new cField3D( envelope->A_->dims_  );
+    A0_ = new cField3D( envelope->A0_->dims_ );
 
     // see Python !!!
     cField3D* A3D = static_cast<cField3D*>(A_);

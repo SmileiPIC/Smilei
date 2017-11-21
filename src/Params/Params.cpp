@@ -249,6 +249,11 @@ namelist("")
         else if ( (EM_BCs[iDim][0] != EM_BCs[iDim][1]) &&  (EM_BCs[iDim][0] == "periodic" || EM_BCs[iDim][1] == "periodic") )
             ERROR("EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
     }
+
+    //! Ponderomotive force
+    PyTools::extract("ponderomotive_force", ponderomotive_force, "Main");
+    if ( ponderomotive_force && ( geometry != "3Dcartesian" ) )
+        ERROR( "Ponderomotive force only available in 3D3V" );
     
     // -----------------------------------
     // MAXWELL SOLVERS & FILTERING OPTIONS
@@ -518,7 +523,7 @@ void Params::compute()
         n_cell_per_patch *= n_space[i];
     }
     
-    // Set clrw if not set by the user
+    // Set clrw$ if not set by the user
     if ( clrw == -1 ) {
 
         // default value
