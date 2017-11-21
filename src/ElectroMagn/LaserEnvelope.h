@@ -3,11 +3,14 @@
 #define LaserENVELOPE_H
 
 #include <vector>
-class Params;
-class Patch;
+
+#include "Params.h"
+#include "Patch.h"
+
 class Field;
 class ElectroMagn;
 class Profile;
+
 
 // Class for envelope
 class LaserEnvelope {
@@ -25,6 +28,7 @@ public:
     Field* A0_;
 };
 
+
 // Class for envelope
 class LaserEnvelope3D : public LaserEnvelope {
 public:
@@ -34,7 +38,5 @@ public:
     ~LaserEnvelope3D();
      void compute(ElectroMagn* EMfields) override final;
 };
-
-
 
 #endif

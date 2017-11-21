@@ -33,7 +33,7 @@
 #include "ProjectorFactory.h"
 #include "DiagnosticFactory.h"
 #include "CollisionsFactory.h"
-#include "LaserEnvelope.h"
+#include "EnvelopeFactory.h"
 
 using namespace std;
 
@@ -135,9 +135,7 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
 
     // initialize the envelope if used
     if ( params.ponderomotive_force )
-        envelope = new LaserEnvelope3D(params, this);
-    else
-        envelope = NULL;
+        envelope = EnvelopeFactory::create(params, this);
 
     // interpolation operator (virtual)
     Interp     = InterpolatorFactory::create(params, this); // + patchId -> idx_domain_begin (now = ref smpi)
@@ -167,9 +165,7 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
     EMfields   = ElectroMagnFactory::clone(patch->EMfields, params, vecSpecies, this);
     // initialize the envelope if used
     if ( params.ponderomotive_force )
-        envelope = new LaserEnvelope3D(patch->envelope, this);
-    else
-        envelope = NULL;
+        envelope = EnvelopeFactory::clone(patch->envelope, this);
 
     // interpolation operator (virtual)
     Interp     = InterpolatorFactory::create(params, this);
