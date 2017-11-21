@@ -120,6 +120,8 @@ void ElectroMagn3DRZ::initElectroMagn3DRZQuantities(Params &params, Patch* patch
     dy       = cell_length[1];
     dt_ov_dy = timestep/dy;
     dy_ov_dt = 1.0/dt_ov_dy;
+    j_glob_ = patch->getCellStartingGlobalIndex(1);
+
     
     // ----------------------
     // Electromagnetic fields
