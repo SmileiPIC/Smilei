@@ -135,7 +135,7 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
 
     // initialize the envelope if used
     if ( params.ponderomotive_force )
-        envelope = new LaserEnvelope3D(params);
+        envelope = new LaserEnvelope3D(params, this);
     else
         envelope = NULL;
 
@@ -167,7 +167,7 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
     EMfields   = ElectroMagnFactory::clone(patch->EMfields, params, vecSpecies, this);
     // initialize the envelope if used
     if ( params.ponderomotive_force )
-        envelope = new LaserEnvelope3D(patch->envelope);
+        envelope = new LaserEnvelope3D(patch->envelope, this);
     else
         envelope = NULL;
 
@@ -248,6 +248,8 @@ Patch::~Patch() {
     delete Proj;
     delete Interp;
 
+    if (envelope)
+        delete envelope;   
     delete EMfields;
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();
