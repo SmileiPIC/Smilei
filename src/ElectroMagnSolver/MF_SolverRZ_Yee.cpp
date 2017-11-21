@@ -68,6 +68,9 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
     for (unsigned int i=1 ; i<nx_d-1 ; i++) {
         #pragma omp simd
         for (unsigned int j=1 ; j<nr_d-1 ; j++) {
+			if (j==1)&&(imode==1){
+			(*BtRZ_old)(i)=(*BtRZ)(i,j);
+			}
             (*BtRZ)(i,j) += dt_ov_dr * ( (*ElRZ)(i,j) - (*ElRZ)(i,j-1) )
             -               dt_ov_dl * ( (*ErRZ)(i,j) - (*ErRZ)(i-1,j) );
         }
@@ -90,11 +93,12 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
 				(*BlRZ)(i,0)= -(*BlRZ)(i,1);
 			}
 			for (unsigned int i=1 ; i<nx_d-1 ; i++) {
-				(*BrRZ)(i,0)= (*BrRZ)(i,1)+ Icpx*dt_ov_dr*(*ElRZ)(0,i)
+				(*BrRZ)(i,0)+= (*BrRZ)(i,1)+ Icpx*dt_ov_dr*(*ElRZ)(0,i)
 				+			dt_ov_dl*((*EtRZ)(i,0)-(*EtRZ(i+1,0)));
 			}
 			for (unsigned int i=1 ; i<nx_d-1 ; i++) {
-				(*)
+				(*BtRZ)(i,0)+= -dt_ov_dl*((*ErRZ)(i+1,0)-(*ErRZ)(i,0)+(*ErRZ)(i+1,1)-(*ErRZ)(i,1))
+				+				2*dt_ov_dr*(*ElRZ)(k+1,1) - (*BtRZ_old)(i)+ (*BtRZ)(i,1);
 			}	
 		}
 	}
