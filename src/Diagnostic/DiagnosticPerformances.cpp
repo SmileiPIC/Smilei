@@ -8,9 +8,10 @@ using namespace std;
 
 
 // Constructor
-DiagnosticPerformances::DiagnosticPerformances( SmileiMPI* smpi )
+DiagnosticPerformances::DiagnosticPerformances( Params & params, SmileiMPI* smpi )
 {
     fileId_ = 0;
+    timestep = params.timestep;
     
     ostringstream name("");
     name << "Diagnostic performances";
@@ -34,18 +35,20 @@ DiagnosticPerformances::DiagnosticPerformances( SmileiMPI* smpi )
     }
     filename = "Performances.h5";
     
+    // Initialize stuff for the handling of HDF5 dump
     mpi_size = smpi->getSize();
     hsize_t one = 1;
-    
     filespace = H5Screate_simple(1, &mpi_size, NULL);
     memspace  = H5Screate_simple(1, &one, NULL );
     hsize_t start=smpi->getRank(), count=1, block=1;
     H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &start, NULL, &count, &block );
-    
-    // Prepare the property list for HDF5 output
     write_plist = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
     
+    // Calculate the number of cells per patch
+    ncells_per_patch = 1;
+    for (unsigned int idim = 0; idim < params.nDim_field; idim++)
+        ncells_per_patch *= params.n_space[idim]+2*params.oversize[idim];
     
 } // END DiagnosticPerformances::DiagnosticPerformances
 
@@ -100,9 +103,9 @@ void DiagnosticPerformances::init(Params& params, SmileiMPI* smpi, VectorPatch& 
 }
 
 
-bool DiagnosticPerformances::prepare( int timestep )
+bool DiagnosticPerformances::prepare( int itime )
 {
-    if( timeSelection->theTimeIsNow(timestep) ) {
+    if( timeSelection->theTimeIsNow(itime) ) {
         return true;
     } else {
         return false;
@@ -132,23 +135,42 @@ void DiagnosticPerformances::run( SmileiMPI* smpi, VectorPatch& vecPatches, int 
     
     #pragma omp master
     {
-        hid_t plist_id = H5Pcreate( H5P_DATASET_CREATE );
+        // Calculate the loads
+        unsigned int number_of_patches = vecPatches.size();
+        unsigned int number_of_cells = ncells_per_patch * number_of_patches;
+        unsigned int number_of_species = vecPatches(0)->vecSpecies.size();
+        unsigned int number_of_particles=0, number_of_frozen_particles=0;
+        double time = itime * timestep;
+        for(unsigned int ipatch=0; ipatch < number_of_patches; ipatch++){
+            for (unsigned int ispecies = 0; ispecies < number_of_species; ispecies++) {
+                if( time < vecPatches(ipatch)->vecSpecies[ispecies]->time_frozen ) {
+                    number_of_frozen_particles += vecPatches(ipatch)->vecSpecies[ispecies]->getNbrOfParticles();
+                } else {
+                    number_of_particles += vecPatches(ipatch)->vecSpecies[ispecies]->getNbrOfParticles();
+                }
+            }
+        }
         
-        writeQuantity( vecPatches(0)->Hindex(), "hindex", iteration_group_id, plist_id);
-        writeQuantity( timers.global    .getTime(), "timer_global"    , iteration_group_id, plist_id);
-        writeQuantity( timers.particles .getTime(), "timer_particles" , iteration_group_id, plist_id);
-        writeQuantity( timers.maxwell   .getTime(), "timer_maxwell"   , iteration_group_id, plist_id);
-        writeQuantity( timers.densities .getTime(), "timer_densities" , iteration_group_id, plist_id);
-        writeQuantity( timers.collisions.getTime(), "timer_collisions", iteration_group_id, plist_id);
-        writeQuantity( timers.movWindow .getTime(), "timer_movWindow" , iteration_group_id, plist_id);
-        writeQuantity( timers.loadBal   .getTime(), "timer_loadBal"   , iteration_group_id, plist_id);
-        writeQuantity( timers.syncPart  .getTime(), "timer_syncPart"  , iteration_group_id, plist_id);
-        writeQuantity( timers.syncField .getTime(), "timer_syncField" , iteration_group_id, plist_id);
-        writeQuantity( timers.syncDens  .getTime(), "timer_syncDens"  , iteration_group_id, plist_id);
-        // Specific for diags because we are within a diag
+        // Write all quantities to file
+        hid_t plist_id = H5Pcreate( H5P_DATASET_CREATE );
+        writeQuantity( vecPatches(0)->Hindex()    , "hindex"                    , iteration_group_id, plist_id);
+        writeQuantity( number_of_cells            , "number_of_cells"           , iteration_group_id, plist_id);
+        writeQuantity( number_of_particles        , "number_of_particles"       , iteration_group_id, plist_id);
+        writeQuantity( number_of_frozen_particles , "number_of_frozen_particles", iteration_group_id, plist_id);
+        writeQuantity( timers.global    .getTime(), "timer_global"              , iteration_group_id, plist_id);
+        writeQuantity( timers.particles .getTime(), "timer_particles"           , iteration_group_id, plist_id);
+        writeQuantity( timers.maxwell   .getTime(), "timer_maxwell"             , iteration_group_id, plist_id);
+        writeQuantity( timers.densities .getTime(), "timer_densities"           , iteration_group_id, plist_id);
+        writeQuantity( timers.collisions.getTime(), "timer_collisions"          , iteration_group_id, plist_id);
+        writeQuantity( timers.movWindow .getTime(), "timer_movWindow"           , iteration_group_id, plist_id);
+        writeQuantity( timers.loadBal   .getTime(), "timer_loadBal"             , iteration_group_id, plist_id);
+        writeQuantity( timers.syncPart  .getTime(), "timer_syncPart"            , iteration_group_id, plist_id);
+        writeQuantity( timers.syncField .getTime(), "timer_syncField"           , iteration_group_id, plist_id);
+        writeQuantity( timers.syncDens  .getTime(), "timer_syncDens"            , iteration_group_id, plist_id);
+        // Specific for diags timer because we are within a diag
         double timer_diags = MPI_Wtime() - timers.diags.last_start_ + timers.diags.time_acc_;
         writeQuantity( timer_diags, "timer_diags", iteration_group_id, plist_id);
-        
+        //
         H5Pclose(plist_id);
         H5Gclose(iteration_group_id);
         
@@ -189,7 +211,7 @@ uint64_t DiagnosticPerformances::getDiskFootPrint(int istart, int istop, Patch* 
     
     // Add size of each dump
     unsigned int ntimers = 11;
-    footprint += ndumps * (uint64_t)(mpi_size) * (uint64_t)(ntimers * sizeof(double) + sizeof(int));
+    footprint += ndumps * (uint64_t)(mpi_size) * (uint64_t)(ntimers * sizeof(double) + sizeof(unsigned int));
     
     return footprint;
 }

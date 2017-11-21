@@ -10,7 +10,7 @@ class DiagnosticPerformances : public Diagnostic {
 public :
     
     //! Default constructor
-    DiagnosticPerformances( SmileiMPI* smpi );
+    DiagnosticPerformances( Params & params, SmileiMPI* smpi );
     //! Default destructor
     ~DiagnosticPerformances() override;
     
@@ -20,7 +20,7 @@ public :
     
     void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
     
-    bool prepare( int timestep ) override;
+    bool prepare( int itime ) override;
     
     void run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow, Timers & timers ) override;
     
@@ -47,6 +47,9 @@ private :
     
     hsize_t mpi_size;
     
+    unsigned int ncells_per_patch;
+    
+    double timestep;
 };
 
 #endif

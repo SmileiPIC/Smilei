@@ -75,7 +75,9 @@ public:
             vecDiagnostics.push_back( new DiagnosticTrack(params, smpi, vecPatches, n_diag_track, vecDiagnostics.size(), openPMD) );
         }
         
-        vecDiagnostics.push_back( new DiagnosticPerformances(smpi) );
+        if( PyTools::nComponents("DiagPerformances") > 0 ) {
+            vecDiagnostics.push_back( new DiagnosticPerformances(params, smpi) );
+        }
         
         return vecDiagnostics;
     } // END createLocalDiagnostics
