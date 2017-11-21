@@ -78,25 +78,25 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
 	
 	if (Ymin){
 		if (imode==0){
-			for (unsigned int i=1 ; i<nx_d-1 ; i++) {
+			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
 				(*BrRZ)(i,0)=0;
 			}
-			for (unsigned int i=1 ; i<nx_d-1 ; i++) {
+			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
 				(*BtRZ)(i,0)= -(*BtRZ)(i,1);
 			}
-			for (unsigned int i=1 ; i<nx_d-1 ; i++) {
+			for (unsigned int i=0 ; i<nl_p ; i++) {
 				(*BlRZ)(i,0)+= -(*BlRZ)(i,1)+(*BlRZ_old)(i)-4*dt_ov_dr*(*EtRZ)(i,1);
 			}
 		}
 		if (imode==1){
-			for (unsigned int i=1 ; i<nx_d-1 ; i++) {
+			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
 				(*BlRZ)(i,0)= -(*BlRZ)(i,1);
 			}
-			for (unsigned int i=1 ; i<nx_d-1 ; i++) {
+			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
 				(*BrRZ)(i,0)+= (*BrRZ)(i,1)+ Icpx*dt_ov_dr*(*ElRZ)(0,i)
 				+			dt_ov_dl*((*EtRZ)(i,0)-(*EtRZ(i+1,0)));
 			}
-			for (unsigned int i=1 ; i<nx_d-1 ; i++) {
+			for (unsigned int i=0 ; i<nl_p ; i++) {
 				(*BtRZ)(i,0)+= -dt_ov_dl*((*ErRZ)(i+1,0)-(*ErRZ)(i,0)+(*ErRZ)(i+1,1)-(*ErRZ)(i,1))
 				+				2*dt_ov_dr*(*ElRZ)(k+1,1) - (*BtRZ_old)(i)+ (*BtRZ)(i,1);
 			}	
