@@ -214,7 +214,7 @@ int main (int argc, char* argv[])
             // (1) interpolate the fields at the particle position
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
-            if(params.is_pxr) vecPatches.save_old_rho();
+            if(params.is_pxr) vecPatches.save_old_rho(params);
             vecPatches.dynamics(params, smpi, simWindow, time_dual, timers, itime);
             
             // Sum densities
