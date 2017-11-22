@@ -13,13 +13,12 @@ MF_Solver3D_Lehe::MF_Solver3D_Lehe(Params &params)
     dy = params.cell_length[1];
     dz = params.cell_length[2];
     
-    beta_yx = 1./8.;
+    beta_yx = 1./8.; // = beta_zx as well but we define and use only 1 variable
     beta_xy = pow(dx/dy,2)/8.;
     beta_xz = pow(dx/dz,2)/8.;
     delta_x = (1./4.)*(1.-pow( sin(M_PI*dt_ov_dx/2.)/dt_ov_dx,2 ) );
    
-    alpha_z =  1. - 2*beta_yx;
-    alpha_y =  1. - 2*beta_yx;
+    alpha_y =  1. - 2*beta_yx; // = alpha_z as well but we define and use only 1 variable
     alpha_x =  1. - 2.*beta_xy - 2.*beta_xz - 3.*delta_x ;
 }
 
@@ -47,10 +46,8 @@ void MF_Solver3D_Lehe::operator() ( ElectroMagn* fields )
                                                + beta_yx * ( (*Ez3D)(i+1,j,k)  - (*Ez3D)(i+1,j-1,k) + (*Ez3D)(i-1,j,k)-(*Ez3D)(i-1,j-1,k))
                                               )
                                   +dt_ov_dz * ( 
-                                                  alpha_z * (1.)
-                                                + delta_x * (1.)
-                                                + beta_xz * (1.)
-                                                + beta_xy * (1.)
+                                                  alpha_y * (1.)
+                                                + beta_zx * (1.)
                                               );
             }
         }
@@ -60,9 +57,12 @@ void MF_Solver3D_Lehe::operator() ( ElectroMagn* fields )
     for (unsigned int i=2 ; i<nx_d-2 ; i++) {
         for (unsigned int j=1 ; j<ny_p-1 ; j++) {
             for (unsigned int k=1 ; j<nz_d-1 ; k++) {
-                (*By3D)(i,j,k) += dt_ov_dx * (  alpha_x * ((*Ez3D)(i,j,k) - (*Ez3D)(i-1,j,k))
-                              + beta_xy * ( (*Ez3D)(i,j+1,k)-(*Ez3D)(i-1,j+1,k) + (*Ez3D)(i,j-1,k)-(*Ez3D)(i-1,j-1,k) )
-                              + delta_x * ( (*Ez3D)(i+1,j,k) - (*Ez3D)(i-2,j,k)));
+                (*By3D)(i,j,k) += dt_ov_dx * (  alpha_x * ( (*Ez3D)(i,j,k) - (*Ez3D)(i-1,j,k))
+                                              + beta_xy * ( (*Ez3D)(i,j+1,k)-(*Ez3D)(i-1,j+1,k) + (*Ez3D)(i,j-1,k)-(*Ez3D)(i-1,j-1,k) )
+                                              + delta_x * ( (*Ez3D)(i+1,j,k) - (*Ez3D)(i-2,j,k)))
+                                 -dt_ov_dz * (  alpha_y * ()
+                                              + beta_zx * ()
+                                             ); 
             }
         }
     
@@ -70,11 +70,11 @@ void MF_Solver3D_Lehe::operator() ( ElectroMagn* fields )
     // Magnetic field Bz^(d,d,p)
         for (unsigned int j=1 ; j<ny_d-1 ; j++) {
             for (unsigned int k=1 ; j<nz_p-1 ; k++) {
-                (*Bz3D)(i,j,k) += dt_ov_dy * (  alpha_y * ((*Ex3D)(i,j,k)-(*Ex3D)(i,j-1,k))
-                              + beta_yx * ( (*Ex3D)(i+1,j,k)-(*Ex3D)(i+1,j-1,k) + (*Ex3D)(i-1,j,k)-(*Ex3D)(i-1,j-1,k))  )
-                              - dt_ov_dx * (  alpha_x * ((*Ey3D)(i,j,k)-(*Ey3D)(i-1,j,k))
-                              + beta_xy * ( (*Ey3D)(i,j+1,k)-(*Ey3D)(i-1,j+1,k) + (*Ey3D)(i,j-1,k)-(*Ey3D)(i-1,j-1,k) )
-                              + delta_x * ( (*Ey3D)(i+1,j,k)-(*Ey3D)(i-2,j,k) ) );
+                (*Bz3D)(i,j,k) += dt_ov_dy * (  alpha_y * ( (*Ex3D)(i  ,j  ,k)-(*Ex3D)(i  ,j-1,k))
+                                              + beta_yx * ( (*Ex3D)(i+1,j  ,k)-(*Ex3D)(i+1,j-1,k) + (*Ex3D)(i-1,j  ,k)-(*Ex3D)(i-1,j-1,k))  )
+                                - dt_ov_dx * (  alpha_x * ( (*Ey3D)(i  ,j  ,k)-(*Ey3D)(i-1,j  ,k))
+                                              + beta_xy * ( (*Ey3D)(i  ,j+1,k)-(*Ey3D)(i-1,j+1,k) + (*Ey3D)(i  ,j-1,k)-(*Ey3D)(i-1,j-1,k))
+                                              + delta_x * ( (*Ey3D)(i+1,j  ,k)-(*Ey3D)(i-2,j  ,k) ) );
             }
         }
     }

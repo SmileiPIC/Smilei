@@ -24,11 +24,10 @@ public:
     double dz;
     double delta_x;
     double beta_xy;
-    double beta_yx;
     double beta_xz;
+    double beta_yx;
     double alpha_x;
     double alpha_y;
-    double alpha_z;
 
 protected:
 
