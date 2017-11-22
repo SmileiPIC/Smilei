@@ -12,6 +12,7 @@
 #include "MF_Solver2D_GrassiSpL.h"
 #include "MF_Solver2D_Cowan.h"
 #include "MF_Solver2D_Lehe.h"
+#include "MF_Solver3D_Lehe.h"
 
 #include "Params.h"
 
@@ -72,7 +73,10 @@ public:
         } else if ( params.geometry == "3Dcartesian" ) {
             if (params.maxwell_sol == "Yee") {
                 solver = new MF_Solver3D_Yee(params);
+            } else if(params.maxwell_sol == "Lehe" ){
+                solver = new MF_Solver3D_Lehe(params);
             }
+
         }
         
         if (!solver)
