@@ -18,7 +18,7 @@ import happi
 S = happi.Open(["./restart*"], verbose=False)
 
 # List of relativistic pushers
-radiation_list = ["cont","disc"]
+radiation_list = ["disc","cont"]
 
 ukin_dict = {}
 urad_dict = {}
@@ -68,23 +68,47 @@ Validate("Relative error on the radiative energy / urad max " , urad_rel_err.max
 # ______________________________________________________________________________
 # Checking of the particle binning
 
-# Loop over the timesteps
-for timestep in range(0,5000,500):
+print("")
+print(" Checking of the particle binning diagnostics")
 
-    print("Timestep: {}".format(timestep))
+chi_max = np.zeros([10,len(radiation_list)])
+chi_ave = np.zeros([10,len(radiation_list)])
+
+# Loop over the timesteps
+for itimestep,timestep in enumerate(range(0,5000,500)):
 
     # Loop over the species/radiation models
     for i,radiation in enumerate(radiation_list):
-        print("Species {}:".format(radiation))
         # Weight
         weight_diag = S.ParticleBinning(diagNumber=i,timesteps=timestep).get()
-        weight = np.array(weight_diag["data"])
+        weight = np.array(weight_diag["data"][0])
         # Weight x chi
         weight_chi_diag = S.ParticleBinning(diagNumber=i+len(radiation_list),timesteps=timestep).get()
-        weight_chi = np.array(weight_chi_diag["data"])
+        weight_chi = np.array(weight_chi_diag["data"][0])
+        # Chi distribution
+        chi_dist = S.ParticleBinning(diagNumber=i+2*len(radiation_list),timesteps=timestep).get()
         # Local average chi
         chi = weight_chi[weight>0] / weight[weight>0]
         # Maximal chi value
-        chi_max = chi.max()
+        chi_max[itimestep,i] = chi.max()
+        chi_ave[itimestep,i] = np.sum(chi)/sum(list(np.shape(chi)))
 
-        print(" - Maximal chi value: {}".format(chi_max))
+print(" ---------------------------------------------------")
+print(" Maximal quantum parameter")
+print("                  | {0:<7} | {1:<7} |".format(radiation_list[0],radiation_list[1]))
+print(" ---------------------------------------------------")
+# Loop over the timesteps
+for itimestep,timestep in enumerate(range(0,5000,500)):
+	print(" Iteration {0:5d}  | {1:.5f} | {2:.5f} |".format(timestep,chi_max[itimestep,0],chi_max[itimestep,1]))
+
+print(" ---------------------------------------------------")
+print(" Average quantum parameter")
+print("                  | {0:<7} | {1:<7} |".format(radiation_list[0],radiation_list[1]))
+print(" ---------------------------------------------------")
+# Loop over the timesteps
+for itimestep,timestep in enumerate(range(0,5000,500)):
+	print(" Iteration {0:5d}  | {1:.5f} | {2:.5f} |".format(timestep,chi_ave[itimestep,0],chi_ave[itimestep,1]))
+
+Validate("Maximal quantum parameter",chi_max,0.05)
+Validate("Average quantum parameter",chi_ave,0.05)
+

@@ -49,6 +49,7 @@ dx = Rsync/res                                    # space step
 dy = Rsync/res                                    # space step
 dt  = 1./math.sqrt(1./(dx*dx) + 1./(dy*dy))       # timestep given by the CFL
 
+dt_factor = 0.9                                   # factor on dt
 dt *= dt_factor                                   # timestep used for the simulation
 Tsim = 5000*dt/dt_factor                          # duration of the simulation
 
@@ -160,6 +161,8 @@ for i,radiation in enumerate(radiation_list):
         ]
     )
 
+
+for i,radiation in enumerate(radiation_list):
     # Weight x chi spatial-distribution
     DiagParticleBinning(
         deposited_quantity = "weight_chi",
@@ -172,6 +175,8 @@ for i,radiation in enumerate(radiation_list):
         ]
     )
 
+
+for i,radiation in enumerate(radiation_list):
     # Chi-distribution
     DiagParticleBinning(
         deposited_quantity = "weight",
