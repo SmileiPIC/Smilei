@@ -8,6 +8,8 @@
 #include "ElectroMagnBC2D_SM.h"
 #include "ElectroMagnBC2D_refl.h"
 #include "ElectroMagnBC3D_SM.h"
+#include "ElectroMagnBCRZ_SM.h"
+#include "ElectroMagnBCRZ_Axis.h"
 
 #include "Params.h"
 
@@ -128,6 +130,35 @@ public:
             
         }//3Dcartesian       
 
+        // -----------------
+        // For theta mode Geometry
+        // -----------------
+        else if ( params.geometry == "3drz" ) {
+
+            for (unsigned int ii=0;ii<2;ii++) {
+
+                // X DIRECTION
+                // silver-muller (injecting/absorbing bcs)
+                if ( params.EM_BCs[0][ii] == "silver-muller" ) {
+                    emBoundCond[ii] = new ElectroMagnBCRZ_SM(params, patch, ii);
+                }
+                else if ( params.EM_BCs[0][ii] != "periodic" ) {
+                    ERROR( "Unknown EM x-boundary condition `" << params.EM_BCs[0][ii] << "`");
+                }
+            }
+                
+            // R DIRECTION
+            emBoundCond[2] = new ElectroMagnBCRZ_Axis(params, patch, 2);
+            // silver-muller bcs (injecting/absorbin)
+            if ( params.EM_BCs[1][1] == "silver-muller" ) {
+                emBoundCond[3] = new ElectroMagnBCRZ_SM(params, patch, 3);
+            }
+            // else: error
+            else if ( params.EM_BCs[1][1] != "periodic" ) {
+                ERROR( "Unknown EM y-boundary condition `" << params.EM_BCs[1][1] << "`");
+            }
+            
+        }//3drz       
 
         // OTHER GEOMETRIES ARE NOT DEFINED ---
         else {
