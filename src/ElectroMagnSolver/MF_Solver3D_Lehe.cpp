@@ -40,7 +40,7 @@ void MF_Solver3D_Lehe::operator() ( ElectroMagn* fields )
     // Magnetic field Bx^(p,d,d)
     for (unsigned int i=1 ; i<nx_p-1;  i++) {
         for (unsigned int j=1 ; j<ny_d-1 ; j++) {
-            for (unsigned int k=1 ; j<nz_d-1 ; k++) {
+            for (unsigned int k=1 ; k<nz_d-1 ; k++) {
                 (*Bx3D)(i,j,k) += -dt_ov_dy * (  alpha_y * ( (*Ez3D)(i,  j,k)  - (*Ez3D)(i,  j-1,k)                                      )
                                                + beta_yx * ( (*Ez3D)(i+1,j,k)  - (*Ez3D)(i+1,j-1,k) + (*Ez3D)(i-1,j,k)-(*Ez3D)(i-1,j-1,k))
                                               )
@@ -54,7 +54,7 @@ void MF_Solver3D_Lehe::operator() ( ElectroMagn* fields )
     // Magnetic field By^(d,p,d)
     for (unsigned int i=2 ; i<nx_d-2 ; i++) {
         for (unsigned int j=1 ; j<ny_p-1 ; j++) {
-            for (unsigned int k=1 ; j<nz_d-1 ; k++) {
+            for (unsigned int k=1 ; k<nz_d-1 ; k++) {
                 (*By3D)(i,j,k) += dt_ov_dx * (  alpha_x * ( (*Ez3D)(i,  j  ,k  ) - (*Ez3D)(i-1,j  ,k  ))
                                               + beta_xy * ( (*Ez3D)(i,  j+1,k  ) - (*Ez3D)(i-1,j+1,k  ) + (*Ez3D)(i  ,j-1,k  )-(*Ez3D)(i-1,j-1,k) )
                                               + beta_xz * ( (*Ez3D)(i  ,j  ,k+1) - (*Ez3D)(i-1,j  ,k+1) + (*Ez3D)(i  ,j  ,k-1)-(*Ez3D)(i-1,j  ,k-1))
@@ -70,7 +70,7 @@ void MF_Solver3D_Lehe::operator() ( ElectroMagn* fields )
     // Magnetic field Bz^(d,d,p)
     for (unsigned int i=2 ; i<nx_d-2 ; i++) {
         for (unsigned int j=1 ; j<ny_d-1 ; j++) {
-            for (unsigned int k=1 ; j<nz_p-1 ; k++) {
+            for (unsigned int k=1 ; k<nz_p-1 ; k++) {
                 (*Bz3D)(i,j,k) += dt_ov_dy * (  alpha_y * ( (*Ex3D)(i  ,j  ,k  )-(*Ex3D)(i    ,j-1,k))
                                               + beta_yx * ( (*Ex3D)(i+1,j  ,k  )-(*Ex3D)(i+1  ,j-1,k)   + (*Ex3D)(i-1,j  ,k  )-(*Ex3D)(i-1,j-1,k  )))
                                 - dt_ov_dx * (  alpha_x * ( (*Ey3D)(i  ,j  ,k  )-(*Ey3D)(i-1  ,j  ,k))
@@ -83,29 +83,31 @@ void MF_Solver3D_Lehe::operator() ( ElectroMagn* fields )
     
     // at Xmin+dx - treat using simple discretization of the curl (will be overwritten if not at the xmin-border)
     for (unsigned int j=0 ; j<ny_p ; j++) {
-        for (unsigned int k=1 ; j<nz_d-1 ; k++) {
-            (*By3D)(1,j,k) += dt_ov_dx * ( (*Ez3D)(1,j,k) - (*Ez3D)(0,j,k) );
+        for (unsigned int k=2 ; j<nz_d-2 ; k++) {
+            (*By3D)(1,j,k) += dt_ov_dx * ( (*Ez3D)(1,j,k) - (*Ez3D)(0,j,k  ))
+                             -dt_ov_dz * ( (*Ex3D)(1,j,k) - (*Ex3D)(1,j,k-1));
         }
     }
     // at Xmax-dx - treat using simple discretization of the curl (will be overwritten if not at the xmax-border)
     for (unsigned int j=0 ; j<ny_p ; j++) {
-        for (unsigned int k=1 ; j<nz_d-1 ; k++) {
-            (*By3D)(nx_d-2,j,k) += dt_ov_dx * ( (*Ez3D)(nx_d-2,j,k) - (*Ez3D)(nx_d-3,j,k) );
+        for (unsigned int k=2 ; j<nz_d-2 ; k++) {
+            (*By3D)(nx_d-2,j,k) += dt_ov_dx * ( (*Ez3D)(nx_d-2,j,k) - (*Ez3D)(nx_d-3,j,k  ))
+                                  -dt_ov_dz * ( (*Ex3D)(nx_d-2,j,k) - (*Ex3D)(nx_d-2,j,k-1));
         }
     }
     
     // at Xmin+dx - treat using simple discretization of the curl (will be overwritten if not at the xmin-border)
     for (unsigned int j=2 ; j<ny_d-2 ; j++) {
-        for (unsigned int k=1 ; j<nz_p-1 ; k++) {
-            (*Bz3D)(1,j,k) += dt_ov_dx * ( (*Ey3D)(0,j,k) - (*Ey3D)(1,j,k)   )
-            +               dt_ov_dy * ( (*Ex3D)(1,j,k) - (*Ex3D)(1,j-1,k) );
+        for (unsigned int k=0 ; j<nz_p ; k++) {
+            (*Bz3D)(1,j,k) += dt_ov_dx * ( (*Ey3D)(0,j,k) - (*Ey3D)(1,j  ,k) )
+                           +  dt_ov_dy * ( (*Ex3D)(1,j,k) - (*Ex3D)(1,j-1,k) );
         }
     }
     // at Xmax-dx - treat using simple discretization of the curl (will be overwritten if not at the xmax-border)
     for (unsigned int j=2 ; j<ny_d-2 ; j++) {
-        for (unsigned int k=1 ; j<nz_p-1 ; k++) {
-            (*Bz3D)(nx_d-2,j,k) += dt_ov_dx * ( (*Ey3D)(nx_d-3,j,k) - (*Ey3D)(nx_d-2,j,k)   )
-            +                    dt_ov_dy * ( (*Ex3D)(nx_d-2,j,k) - (*Ex3D)(nx_d-2,j-1,k) );
+        for (unsigned int k=0 ; j<nz_p ; k++) {
+            (*Bz3D)(nx_d-2,j,k) += dt_ov_dx * ( (*Ey3D)(nx_d-3,j,k) - (*Ey3D)(nx_d-2,j  ,k) )
+            +                      dt_ov_dy * ( (*Ex3D)(nx_d-2,j,k) - (*Ex3D)(nx_d-2,j-1,k) );
         }
     }
     
