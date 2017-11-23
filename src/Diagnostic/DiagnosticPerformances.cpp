@@ -12,6 +12,8 @@ DiagnosticPerformances::DiagnosticPerformances( Params & params, SmileiMPI* smpi
 {
     fileId_ = 0;
     timestep = params.timestep;
+    cell_load = params.cell_load;
+    frozen_particle_load = params.frozen_particle_load;
     
     ostringstream name("");
     name << "Diagnostic performances";
@@ -150,6 +152,10 @@ void DiagnosticPerformances::run( SmileiMPI* smpi, VectorPatch& vecPatches, int 
                 }
             }
         }
+        double total_load =
+            ((double)number_of_particles)
+            + ((double)number_of_frozen_particles) * frozen_particle_load
+            + ((double)number_of_cells) * cell_load;
         
         // Write all quantities to file
         hid_t plist_id = H5Pcreate( H5P_DATASET_CREATE );
@@ -157,6 +163,7 @@ void DiagnosticPerformances::run( SmileiMPI* smpi, VectorPatch& vecPatches, int 
         writeQuantity( number_of_cells            , "number_of_cells"           , iteration_group_id, plist_id);
         writeQuantity( number_of_particles        , "number_of_particles"       , iteration_group_id, plist_id);
         writeQuantity( number_of_frozen_particles , "number_of_frozen_particles", iteration_group_id, plist_id);
+        writeQuantity( total_load                 , "total_load"                , iteration_group_id, plist_id);
         writeQuantity( timers.global    .getTime(), "timer_global"              , iteration_group_id, plist_id);
         writeQuantity( timers.particles .getTime(), "timer_particles"           , iteration_group_id, plist_id);
         writeQuantity( timers.maxwell   .getTime(), "timer_maxwell"             , iteration_group_id, plist_id);
@@ -167,9 +174,22 @@ void DiagnosticPerformances::run( SmileiMPI* smpi, VectorPatch& vecPatches, int 
         writeQuantity( timers.syncPart  .getTime(), "timer_syncPart"            , iteration_group_id, plist_id);
         writeQuantity( timers.syncField .getTime(), "timer_syncField"           , iteration_group_id, plist_id);
         writeQuantity( timers.syncDens  .getTime(), "timer_syncDens"            , iteration_group_id, plist_id);
+        double timer_total =
+              timers.particles .getTime()
+            + timers.maxwell   .getTime()
+            + timers.densities .getTime()
+            + timers.collisions.getTime()
+            + timers.movWindow .getTime()
+            + timers.loadBal   .getTime()
+            + timers.syncPart  .getTime()
+            + timers.syncField .getTime()
+            + timers.syncDens  .getTime();
         // Specific for diags timer because we are within a diag
         double timer_diags = MPI_Wtime() - timers.diags.last_start_ + timers.diags.time_acc_;
         writeQuantity( timer_diags, "timer_diags", iteration_group_id, plist_id);
+        // Now add the total timer
+        timer_total += timer_diags;
+        writeQuantity( timer_total, "timer_total", iteration_group_id, plist_id);
         
         H5Pclose(plist_id);
         H5Gclose(iteration_group_id);
@@ -199,8 +219,8 @@ void DiagnosticPerformances::writeQuantity( unsigned int quantity, const char* n
 uint64_t DiagnosticPerformances::getDiskFootPrint(int istart, int istop, Patch* patch)
 {
     uint64_t footprint = 0;
-    unsigned int ntimers = 11;
-    unsigned int nother = 4;
+    unsigned int n_double = 13;
+    unsigned int n_uint = 4;
     
     // Calculate the number of dumps between istart and istop
     uint64_t ndumps = timeSelection->howManyTimesBefore(istop) - timeSelection->howManyTimesBefore(istart);
@@ -212,10 +232,10 @@ uint64_t DiagnosticPerformances::getDiskFootPrint(int istart, int istop, Patch* 
     footprint += ndumps * 800;
     
     // Add necessary dataset headers approximately
-    footprint += ndumps * (ntimers + nother) * 350;
+    footprint += ndumps * (n_double + n_uint) * 350;
     
     // Add size of each dump
-    footprint += ndumps * (uint64_t)(mpi_size) * (uint64_t)(ntimers * sizeof(double) + nother * sizeof(unsigned int));
+    footprint += ndumps * (uint64_t)(mpi_size) * (uint64_t)(n_double * sizeof(double) + n_uint * sizeof(unsigned int));
     
     return footprint;
 }

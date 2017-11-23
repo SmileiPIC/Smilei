@@ -327,6 +327,7 @@ class PerformancesFactory(object):
 	number_of_cells            : the number of cells in each proc
 	number_of_particles        : the number of particles in each proc (except frozen ones)
 	number_of_frozen_particles : the number of frozen particles in each proc
+	total_load                 : the `load` of each proc (number of particles and cells with cell_load coefficient)
 	timer_global               : global simulation time (only available for proc 0)
 	timer_particles            : time spent computing particles by each proc
 	timer_maxwell              : time spent solving maxwell by each proc
@@ -337,6 +338,7 @@ class PerformancesFactory(object):
 	timer_syncPart             : time spent synchronzing particles by each proc
 	timer_syncField            : time spent synchronzing fields by each proc
 	timer_syncDens             : time spent synchronzing densities by each proc
+	timer_total                : the sum of all timers above (except timer_global)
 	
 	Usage:
 	------

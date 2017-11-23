@@ -49,7 +49,7 @@ private :
     
     unsigned int ncells_per_patch;
     
-    double timestep;
+    double timestep, cell_load, frozen_particle_load;
 };
 
 #endif
