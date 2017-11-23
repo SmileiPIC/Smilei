@@ -622,8 +622,9 @@ class Diagnostic(object):
 	
 	# Special case: 2D plot
 	# This is overloaded by class "Probe" because it requires to replace imshow
+	# Also overloaded by class "Performances" to add a line plot
 	def _animateOnAxes_2D_(self, ax, A):
-		im = ax.imshow( self._np.flipud(A.transpose()),
+		im = ax.imshow( self._np.rot90(A),
 			vmin = self.options.vmin, vmax = self.options.vmax, extent=self._extent, **self.options.image)
 		return im
 	

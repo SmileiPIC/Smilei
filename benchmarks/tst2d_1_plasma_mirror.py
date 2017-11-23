@@ -20,7 +20,7 @@ Main(
 	cell_length = [l0/resx,l0/resx],
 	grid_length  = Lsim,
 	
-	number_of_patches = [ 8, 16 ],
+	number_of_patches = [ 16, 16 ],
 	
 	timestep = t0/rest,
 	simulation_time = Tsim,
@@ -31,6 +31,11 @@ Main(
 	],
 	
 	random_seed = smilei_mpi_rank
+)
+
+LoadBalancing(
+	every = 10,
+	cell_load = 0.001
 )
 
 LaserGaussian2D(
@@ -51,7 +56,7 @@ Species(
 	c_part_max = 1.0,
 	mass = 1836.0,
 	charge = 1.0,
-	number_density = trapezoidal(2.0,xvacuum=11.*l0,xplateau=2.*l0),
+	number_density = trapezoidal(2.0,xvacuum=11.*l0,xplateau=2.*l0, yvacuum=3*l0),
 	time_frozen = Tsim,
 	boundary_conditions = [
 		["reflective", "reflective"],
@@ -68,7 +73,7 @@ Species(
 	c_part_max = 1.0,
 	mass = 1.0,
 	charge = -1.0,
-	number_density = trapezoidal(2.0,xvacuum=11.*l0,xplateau=2.*l0),
+	number_density = trapezoidal(2.0,xvacuum=11.*l0,xplateau=2.*l0, yvacuum=3*l0),
 	time_frozen = 0.,
 	boundary_conditions = [
 		["reflective", "reflective"],
@@ -85,3 +90,6 @@ DiagFields(
 	fields = ['Ex','Ey','Rho_eon']
 )
 
+DiagPerformances(
+    every = 30,
+)

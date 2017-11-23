@@ -94,3 +94,7 @@ DiagTrackParticles(
 	every = 1000,
 	filter = lambda particles: (particles.x<0.02), 
 )
+
+DiagPerformances(
+    every = 300,
+)

@@ -211,7 +211,8 @@ uint64_t DiagnosticPerformances::getDiskFootPrint(int istart, int istop, Patch* 
     
     // Add size of each dump
     unsigned int ntimers = 11;
-    footprint += ndumps * (uint64_t)(mpi_size) * (uint64_t)(ntimers * sizeof(double) + sizeof(unsigned int));
+    unsigned int nother = 4;
+    footprint += ndumps * (uint64_t)(mpi_size) * (uint64_t)(ntimers * sizeof(double) + nother * sizeof(unsigned int));
     
     return footprint;
 }
