@@ -1,6 +1,6 @@
 
 #include "MA_SolverRZ_norm.h"
-#include "patch.h"
+#include "Patch.h"
 #include "ElectroMagn3DRZ.h"
 #include "cField2D.h"
 #include <complex>
