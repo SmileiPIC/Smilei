@@ -76,12 +76,12 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
         }
     }
 	
-	if (Ymin){
+	if (min_max==2 && patch->isMin()){
 		if (imode==0){
-			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
+			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*BrRZ)(i,0)=0;
 			}
-			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
+			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*BtRZ)(i,0)= -(*BtRZ)(i,1);
 			}
 			for (unsigned int i=0 ; i<nl_p ; i++) {
@@ -89,10 +89,10 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
 			}
 		}
 		if (imode==1){
-			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
+			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*BlRZ)(i,0)= -(*BlRZ)(i,1);
 			}
-			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
+			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*BrRZ)(i,0)+= (*BrRZ)(i,1)+ Icpx*dt_ov_dr*(*ElRZ)(0,i)
 				+			dt_ov_dl*((*EtRZ)(i,0)-(*EtRZ(i+1,0)));
 			}
