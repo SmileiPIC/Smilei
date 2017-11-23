@@ -20,7 +20,8 @@ MF_SolverRZ_Yee::~MF_SolverRZ_Yee()
 
 void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
 {
-
+	std::vector<complex<double> > BlRZ_old(nl_p+1);
+	std::vector<complex<double> > BtRZ_old(nl_p+1);
     #ifdef _TODO_RZ
     #endif
     // Loop on modes ?
