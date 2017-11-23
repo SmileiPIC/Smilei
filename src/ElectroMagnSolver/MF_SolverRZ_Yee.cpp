@@ -77,7 +77,7 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
         }
     }
 	
-	if (min_max==2 && patch->isMin()){
+	if (min_max==2 && patch->isYmin()){
 		if (imode==0){
 			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*BrRZ)(i,0)=0;
