@@ -1,6 +1,6 @@
 
 #include "MF_SolverRZ_Yee.h"
-
+#include "patch.h"
 #include "ElectroMagn3DRZ.h"
 #include "cField2D.h"
 #include <complex>
@@ -66,7 +66,7 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
         }
         
         // Magnetic field Bt^(d,d)
-    for (unsigned int i=1 ; i<nx_d-1 ; i++) {
+    for (unsigned int i=1 ; i<nl_d-1 ; i++) {
         #pragma omp simd
         for (unsigned int j=1 ; j<nr_d-1 ; j++) {
 			if (j==1)&&(imode==1){
