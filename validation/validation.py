@@ -404,14 +404,14 @@ else:
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
 	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
 
-    # Mpich
-    if "mpich" in MPI_DISTRIBUTION :
-    	RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+"mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
-    # OpenMPI
-    else:
-    	RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; mpirun -mca btl tcp,sm,self -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
+        # Mpich
+        if "mpich" in MPI_DISTRIBUTION:
+    	    RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+"mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
+        # OpenMPI
+        else:
+    	   RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; mpirun -mca btl tcp,sm,self -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
 
-    RUN = RUN_OTHER
+        RUN = RUN_OTHER
 
 # CLEAN
 # If the workdir does not contains a smilei bin, or it contains one older than the the smilei bin in directory smilei, force the compilation in order to generate the compilation_output

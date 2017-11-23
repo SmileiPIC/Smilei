@@ -164,6 +164,8 @@ for i,radiation in enumerate(radiation_list):
         ]
     )
 
+
+for i,radiation in enumerate(radiation_list):
     # Weight x chi spatial-distribution
     DiagParticleBinning(
         deposited_quantity = "weight_chi",
@@ -176,6 +178,8 @@ for i,radiation in enumerate(radiation_list):
         ]
     )
 
+
+for i,radiation in enumerate(radiation_list):
     # Chi-distribution
     DiagParticleBinning(
         deposited_quantity = "weight",
