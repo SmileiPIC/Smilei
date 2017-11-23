@@ -159,6 +159,7 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patc
     if( total_size > 4294967296 ) // 2^32
         ERROR(errorPrefix << ": too many points (" << total_size << " > 2^32)");
     output_size = (unsigned int) total_size;
+    data_sum.resize( output_size, 0. );
     
     // Output info on diagnostics
     if ( smpi->isMaster() ) {
