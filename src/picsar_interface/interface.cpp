@@ -30,9 +30,10 @@ void copy_field_2d(Field2D* out, Field2D * in)
 }
 
 
-void duplicate_field_into_pxr(ElectroMagn * fields,Params& params)
+void duplicate_field_into_pxr(ElectroMagn * fields)
 {
-if(params.nDim_field == 3) {
+    int nDim_field = fields->Ex_->dims_.size();
+if(nDim_field == 3) {
   Field3D* Ex3D_pxr = static_cast<Field3D*>(fields->Ex_pxr);
   Field3D* Ey3D_pxr = static_cast<Field3D*>(fields->Ey_pxr);
   Field3D* Ez3D_pxr = static_cast<Field3D*>(fields->Ez_pxr);
@@ -68,7 +69,7 @@ if(params.nDim_field == 3) {
   copy_field_3d(rho3D_pxr,rho3D);
   copy_field_3d(rhoold3D_pxr,rhoold3D);
 }
-if(params.nDim_field ==2) {
+if(nDim_field ==2) {
   Field2D* Ex2D_pxr = static_cast<Field2D*>(fields->Ex_pxr);
   Field2D* Ey2D_pxr = static_cast<Field2D*>(fields->Ey_pxr);
   Field2D* Ez2D_pxr = static_cast<Field2D*>(fields->Ez_pxr);
@@ -106,9 +107,10 @@ if(params.nDim_field ==2) {
  }
 }
 
-void duplicate_field_into_smilei(ElectroMagn * fields,Params& params)
+void duplicate_field_into_smilei(ElectroMagn * fields)
 {
-if(params.nDim_field ==3){
+    int nDim_field = fields->Ex_->dims_.size();
+if(nDim_field ==3){
   Field3D* Ex3D_pxr = static_cast<Field3D*>(fields->Ex_pxr);
   Field3D* Ey3D_pxr = static_cast<Field3D*>(fields->Ey_pxr);
   Field3D* Ez3D_pxr = static_cast<Field3D*>(fields->Ez_pxr);
@@ -133,7 +135,7 @@ if(params.nDim_field ==3){
   copy_field_3d(Bz3D,Bz3D_pxr);
   
 }
-if(params.nDim_field ==2){
+if(nDim_field ==2){
   Field2D* Ex2D_pxr = static_cast<Field2D*>(fields->Ex_pxr);
   Field2D* Ey2D_pxr = static_cast<Field2D*>(fields->Ey_pxr);
   Field2D* Ez2D_pxr = static_cast<Field2D*>(fields->Ez_pxr);

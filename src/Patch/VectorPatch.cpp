@@ -335,9 +335,9 @@ void VectorPatch::solveMaxwell_fdtd_pxr(Params& params, SimWindow* simWindow, in
         (*this)(ipatch)->EMfields->saveMagneticFields();
         // Computes Ex_, Ey_, Ez_ on all points.
         // E is already synchronized because J has been synchronized before.
-        duplicate_field_into_pxr((*this)(ipatch)->EMfields,params);
+        duplicate_field_into_pxr((*this)(ipatch)->EMfields);
 	solve_maxwell_fdtd_pxr();
-        duplicate_field_into_smilei((*this)(ipatch)->EMfields,params);
+        duplicate_field_into_smilei((*this)(ipatch)->EMfields);
     }
     
     //Synchronize B fields between patches.
@@ -384,14 +384,14 @@ void VectorPatch::solveMaxwell_Spectral( Params& params,SimWindow* simWindow, in
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
         // Saving magnetic fields (to compute centered fields used in the particle pusher)
         // Stores B at time n in B_m.
-        duplicate_field_into_pxr((*this)(ipatch)->EMfields,params);
+        duplicate_field_into_pxr((*this)(ipatch)->EMfields);
         if(params.nDim_field == 3){   
           push_psatd_ebfield_3d_();
         }
         if(params.nDim_field == 2){
           push_psatd_ebfield_2d_();
         }
-        duplicate_field_into_smilei((*this)(ipatch)->EMfields,params);
+        duplicate_field_into_smilei((*this)(ipatch)->EMfields);
 
         //(*this)(ipatch)->EMfields->saveMagneticFields(); //in order to avoid recentering B
     }
