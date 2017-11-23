@@ -153,9 +153,12 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patc
     }
     
     // Calculate the size of the output array
-    output_size = 1;
+    uint64_t total_size = 1;
     for( unsigned int i=0; i<histogram->axes.size(); i++ )
-        output_size *= histogram->axes[i]->nbins;
+        total_size *= histogram->axes[i]->nbins;
+    if( total_size > 4294967296 ) // 2^32
+        ERROR(errorPrefix << ": too many points (" << total_size << " > 2^32)");
+    output_size = (unsigned int) total_size;
     data_sum.resize( output_size, 0. );
     
     // Output info on diagnostics
@@ -410,7 +413,7 @@ uint64_t DiagnosticScreen::getDiskFootPrint(int istart, int istop, Patch* patch)
     footprint += ndumps * 640;
     
     // Add size of each dump
-    footprint += ndumps * (uint64_t)(output_size * 8);
+    footprint += ndumps * (uint64_t)(output_size) * 8;
     
     return footprint;
 }
