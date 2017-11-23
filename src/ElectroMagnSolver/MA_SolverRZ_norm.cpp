@@ -65,7 +65,7 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
                 -                  dt_ov_dr * ( (*BlRZ)(i,j+1) - (*BlRZ)(i,j) );
         }
     }
-	if (min_max==2 && patch->isMin()){
+	if (min_max==2 && patch->isYmin()){
 		if (imode==0){
 			for (unsigned int i=0 ; i<nl_p ; i++) {
 				(*EtRZ)(i,0)=0;
