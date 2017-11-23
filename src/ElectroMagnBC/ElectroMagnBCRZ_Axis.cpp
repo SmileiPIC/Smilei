@@ -13,7 +13,7 @@
 
 using namespace std;
 
-ElectroMagnBCRZ_axis::ElectroMagnBCRZ_axis( Params &params, Patch* patch, unsigned int _min_max )
+ElectroMagnBCRZ_Axis::ElectroMagnBCRZ_Axis( Params &params, Patch* patch, unsigned int _min_max )
 : ElectroMagnBC( params, patch, _min_max )
 {
     // conversion factor from degree to radian
@@ -44,12 +44,12 @@ ElectroMagnBCRZ_axis::ElectroMagnBCRZ_axis( Params &params, Patch* patch, unsign
 }
 
 
-void ElectroMagnBCRZ_axis::save_fields(Field* my_field, Patch* patch)
+void ElectroMagnBCRZ_Axis::save_fields(Field* my_field, Patch* patch)
 {
     ERROR( "Impossible" );
 }
 
-void ElectroMagnBCRZ_axis::disableExternalFields()
+void ElectroMagnBCRZ_Axis::disableExternalFields()
 {
     ERROR( "Impossible" );
 }
@@ -58,7 +58,7 @@ void ElectroMagnBCRZ_axis::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBCRZ_axis::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
+void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
     // Loop on imode 
     int imode = 0;

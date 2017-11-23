@@ -112,14 +112,14 @@ void ElectroMagn3DRZ::initElectroMagn3DRZQuantities(Params &params, Patch* patch
     // --------------------------------------------------
     
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the x-direction)
-    dx       = cell_length[0];
-    dt_ov_dx = timestep/dx;
-    dx_ov_dt = 1.0/dt_ov_dx;
+    dl       = cell_length[0];
+    dt_ov_dl = timestep/dl;
+    dl_ov_dt = 1.0/dt_ov_dl;
     
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the y-direction)
-    dy       = cell_length[1];
-    dt_ov_dy = timestep/dy;
-    dy_ov_dt = 1.0/dt_ov_dy;
+    dr       = cell_length[1];
+    dt_ov_dr = timestep/dr;
+    dr_ov_dt = 1.0/dt_ov_dr;
     j_glob_ = patch->getCellStartingGlobalIndex(1);
 
     
@@ -140,11 +140,11 @@ void ElectroMagn3DRZ::initElectroMagn3DRZQuantities(Params &params, Patch* patch
         dimDual[i] += 2*oversize[i];
     }
     // number of nodes of the primal and dual grid in the x-direction
-    nx_p = n_space[0]+1+2*oversize[0];
-    nx_d = n_space[0]+2+2*oversize[0];
+    nl_p = n_space[0]+1+2*oversize[0];
+    nl_d = n_space[0]+2+2*oversize[0];
     // number of nodes of the primal and dual grid in the y-direction
-    ny_p = n_space[1]+1+2*oversize[1];
-    ny_d = n_space[1]+2+2*oversize[1];
+    nr_p = n_space[1]+1+2*oversize[1];
+    nr_d = n_space[1]+2+2*oversize[1];
     
     // Allocation of the EM fields
 
@@ -195,8 +195,8 @@ void ElectroMagn3DRZ::initElectroMagn3DRZQuantities(Params &params, Patch* patch
         index_bc_max[i] = dimDual[i]-oversize[i]-1;
     }
     /*
-     MESSAGE("index_bc_min / index_bc_max / nx_p / nx_d" << index_bc_min[0]
-     << " " << index_bc_max[0] << " " << nx_p<< " " << nx_d);
+     MESSAGE("index_bc_min / index_bc_max / nl_p / nl_d" << index_bc_min[0]
+     << " " << index_bc_max[0] << " " << nl_p<< " " << nl_d);
      */
     
     
@@ -325,13 +325,13 @@ void ElectroMagn3DRZ::initPoisson(Patch *patch)
     
     index_min_p_[0] = oversize[0];
     index_min_p_[1] = oversize[1];
-    index_max_p_[0] = nx_p - 2 - oversize[0];
-    index_max_p_[1] = ny_p - 2 - oversize[1];
+    index_max_p_[0] = nl_p - 2 - oversize[0];
+    index_max_p_[1] = nr_p - 2 - oversize[1];
     if (patch->isXmin()) {
         index_min_p_[0] = 0;
     }
     if (patch->isXmax()) {
-        index_max_p_[0] = nx_p-1;
+        index_max_p_[0] = nl_p-1;
     }
 
     phi_ = new cField2D(dimPrim);    // scalar potential
@@ -340,8 +340,8 @@ void ElectroMagn3DRZ::initPoisson(Patch *patch)
     Ap_  = new cField2D(dimPrim);    // A*p vector
 
     
-    for (unsigned int i=0; i<nx_p; i++) {
-        for (unsigned int j=0; j<ny_p; j++) {
+    for (unsigned int i=0; i<nl_p; i++) {
+        for (unsigned int j=0; j<nr_p; j++) {
             (*phi_)(i,j)   = 0.0;
             (*r_)(i,j)     = -(*rho2D)(i,j);
             (*p_)(i,j)     = (*r_)(i,j);
@@ -379,8 +379,8 @@ double ElectroMagn3DRZ::compute_pAp()
 void ElectroMagn3DRZ::update_pand_r(double r_dot_r, double p_dot_Ap)
 {
     double alpha_k = r_dot_r/p_dot_Ap;
-    for(unsigned int i=0; i<nx_p; i++) {
-        for(unsigned int j=0; j<ny_p; j++) {
+    for(unsigned int i=0; i<nl_p; i++) {
+        for(unsigned int j=0; j<nr_p; j++) {
             (*phi_)(i,j) += alpha_k * (*p_)(i,j);
             (*r_)(i,j)   -= alpha_k * (*Ap_)(i,j);
         }
@@ -391,8 +391,8 @@ void ElectroMagn3DRZ::update_pand_r(double r_dot_r, double p_dot_Ap)
 void ElectroMagn3DRZ::update_p(double rnew_dot_rnew, double r_dot_r)
 {
     double beta_k = rnew_dot_rnew/r_dot_r;
-    for (unsigned int i=0; i<nx_p; i++) {
-        for(unsigned int j=0; j<ny_p; j++) {
+    for (unsigned int i=0; i<nl_p; i++) {
+        for(unsigned int j=0; j<nr_p; j++) {
             (*p_)(i,j) = (*r_)(i,j) + beta_k * (*p_)(i,j);
         }
     }
@@ -418,18 +418,18 @@ void ElectroMagn3DRZ::centeringE( std::vector<double> E_Add )
     cField2D* Ez2D  = static_cast<cField2D*>(Ez_);
 
     // Centering electrostatic fields
-    for (unsigned int i=0; i<nx_d; i++) {
-        for (unsigned int j=0; j<ny_p; j++) {
+    for (unsigned int i=0; i<nl_d; i++) {
+        for (unsigned int j=0; j<nr_p; j++) {
             (*Ex2D)(i,j) += E_Add[0];
         }
     }
-    for (unsigned int i=0; i<nx_p; i++) {
-        for (unsigned int j=0; j<ny_d; j++) {
+    for (unsigned int i=0; i<nl_p; i++) {
+        for (unsigned int j=0; j<nr_d; j++) {
             (*Ey2D)(i,j) += E_Add[1];
         }
     }
-    for (unsigned int i=0; i<nx_p; i++) {
-        for (unsigned int j=0; j<ny_p; j++) {
+    for (unsigned int i=0; i<nl_p; i++) {
+        for (unsigned int j=0; j<nr_p; j++) {
             (*Ez2D)(i,j) += E_Add[2];
         }
     }
@@ -458,13 +458,13 @@ void ElectroMagn3DRZ::saveMagneticFields()
         cField2D* Bt3D_RZ_m = static_cast<cField2D*>(Bt_m[imode]);
     
         // Magnetic field Bx^(p,d)
-        memcpy(&((*Bx3D_RZ_m)(0,0)), &((*Bx3DRZ)(0,0)),nx_p*ny_d*sizeof(complex<double>) );
+        memcpy(&((*Bx3D_RZ_m)(0,0)), &((*Bx3DRZ)(0,0)),nl_p*nr_d*sizeof(complex<double>) );
     
         // Magnetic field Br^(d,p)
-        memcpy(&((*Br3D_RZ_m)(0,0)), &((*Br3DRZ)(0,0)),nx_d*ny_p*sizeof(complex<double>) );
+        memcpy(&((*Br3D_RZ_m)(0,0)), &((*Br3DRZ)(0,0)),nl_d*nr_p*sizeof(complex<double>) );
     
         // Magnetic field Bt^(d,d)
-        memcpy(&((*Bt3D_RZ_m)(0,0)), &((*Bt3DRZ)(0,0)),nx_d*ny_d*sizeof(complex<double>) );
+        memcpy(&((*Bt3D_RZ_m)(0,0)), &((*Bt3DRZ)(0,0)),nl_d*nr_d*sizeof(complex<double>) );
     }
 
 }//END saveMagneticFields
@@ -504,22 +504,22 @@ void ElectroMagn3DRZ::centerMagneticFields()
         cField2D* Bt3D_RZ_m = static_cast<cField2D*>(Bt_m[imode]);
     
         // Magnetic field Bx^(p,d,d)
-        for (unsigned int i=0 ; i<nx_p ; i++) {
-            for (unsigned int j=0 ; j<ny_d ; j++) {
+        for (unsigned int i=0 ; i<nl_p ; i++) {
+            for (unsigned int j=0 ; j<nr_d ; j++) {
                 (*Bx3D_RZ_m)(i,j) = ( (*Bx3DRZ)(i,j) + (*Bx3D_RZ_m)(i,j) )*0.5;
             }
         }
     
         // Magnetic field Br^(d,p,d)
-        for (unsigned int i=0 ; i<nx_d ; i++) {
-            for (unsigned int j=0 ; j<ny_p ; j++) {
+        for (unsigned int i=0 ; i<nl_d ; i++) {
+            for (unsigned int j=0 ; j<nr_p ; j++) {
                 (*Br3D_RZ_m)(i,j) = ( (*Br3DRZ)(i,j) + (*Br3D_RZ_m)(i,j) )*0.5;
             }
         }
     
         // Magnetic field Bt^(d,d,p)
-        for (unsigned int i=0 ; i<nx_d ; i++) {
-            for (unsigned int j=0 ; j<ny_d ; j++) {
+        for (unsigned int i=0 ; i<nl_d ; i++) {
+            for (unsigned int j=0 ; j<nr_d ; j++) {
                 (*Bt3D_RZ_m)(i,j) = ( (*Bt3DRZ)(i,j) + (*Bt3D_RZ_m)(i,j) )*0.5;
             } // end for j
         } // end for i
@@ -561,26 +561,26 @@ void ElectroMagn3DRZ::computeTotalRhoJ()
 
             if( Jx_s[ifield] ) {
                 cField2D* Jx2D_s  = static_cast<cField2D*>(Jx_s[ifield]);
-                for (unsigned int i=0 ; i<=nx_p ; i++)
-                    for (unsigned int j=0 ; j<ny_p ; j++)
+                for (unsigned int i=0 ; i<=nl_p ; i++)
+                    for (unsigned int j=0 ; j<nr_p ; j++)
                         (*Jx3DRZ)(i,j) += (*Jx2D_s)(i,j);
             }
             if( Jy_s[ifield] ) {
                 cField2D* Jy2D_s  = static_cast<cField2D*>(Jy_s[ifield]);
-                for (unsigned int i=0 ; i<nx_p ; i++)
-                    for (unsigned int j=0 ; j<=ny_p ; j++)
+                for (unsigned int i=0 ; i<nl_p ; i++)
+                    for (unsigned int j=0 ; j<=nr_p ; j++)
                         (*Jy3DRZ)(i,j) += (*Jy2D_s)(i,j);
             }
             if( Jz_s[ifield] ) {
                 cField2D* Jz2D_s  = static_cast<cField2D*>(Jz_s[ifield]);
-                for (unsigned int i=0 ; i<nx_p ; i++)
-                    for (unsigned int j=0 ; j<ny_p ; j++)
+                for (unsigned int i=0 ; i<nl_p ; i++)
+                    for (unsigned int j=0 ; j<nr_p ; j++)
                         (*Jz3DRZ)(i,j) += (*Jz2D_s)(i,j);
             }
             if( rho_s[ifield] ) {
                 cField2D* rho2D_s  = static_cast<cField2D*>(rho_s[ifield]);
-                for (unsigned int i=0 ; i<nx_p ; i++)
-                    for (unsigned int j=0 ; j<ny_p ; j++)
+                for (unsigned int i=0 ; i<nl_p ; i++)
+                    for (unsigned int j=0 ; j<nr_p ; j++)
                         (*rho3DRZ)(i,j) += (*rho2D_s)(i,j);
             }
         
@@ -622,7 +622,7 @@ void ElectroMagn3DRZ::computePoynting() {
             double Ez__ = (*Ez2D)(iEz,jEz+j);
             double By__ = 0.5*((*By2D_m)(iBy,jBy+j) + (*By2D_m)(iBy+1, jBy+j));
 
-            poynting_inst[0][0] = dy*timestep*(Ey__*Bz__ - Ez__*By__);
+            poynting_inst[0][0] = dr*timestep*(Ey__*Bz__ - Ez__*By__);
             #endif
             poynting[0][0]+= poynting_inst[0][0];
 
@@ -651,7 +651,7 @@ void ElectroMagn3DRZ::computePoynting() {
             double Ez__ = (*Ez2D)(iEz,jEz+j);
             double By__ = 0.5*((*By2D_m)(iBy,jBy+j) + (*By2D_m)(iBy+1, jBy+j));
             
-            poynting_inst[1][0] = dy*timestep*(Ey__*Bz__ - Ez__*By__);
+            poynting_inst[1][0] = dr*timestep*(Ey__*Bz__ - Ez__*By__);
             #endif
             poynting[1][0]+= poynting_inst[1][0];
 
@@ -678,7 +678,7 @@ void ElectroMagn3DRZ::computePoynting() {
             double Ex__ = 0.5*((*Ex2D)(iEx+i,jEx) + (*Ex2D)(iEx+i+1, jEx));
             double Bz__ = 0.25*((*Bz2D_m)(iBz+i,jBz)+(*Bz2D_m)(iBz+i+1,jBz)+(*Bz2D_m)(iBz+i,jBz+1)+(*Bz2D_m)(iBz+i+1,jBz+1));
             
-            poynting_inst[0][1] = dx*timestep*(Ez__*Bx__ - Ex__*Bz__);
+            poynting_inst[0][1] = dl*timestep*(Ez__*Bx__ - Ex__*Bz__);
             #endif
             poynting[0][1] += poynting_inst[0][1];
         }
@@ -704,7 +704,7 @@ void ElectroMagn3DRZ::computePoynting() {
             double Ex__ = 0.5*((*Ex2D)(iEx+i,jEx) + (*Ex2D)(iEx+i+1, jEx));
             double Bz__ = 0.25*((*Bz2D_m)(iBz+i,jBz)+(*Bz2D_m)(iBz+i+1,jBz)+(*Bz2D_m)(iBz+i,jBz+1)+(*Bz2D_m)(iBz+i+1,jBz+1));
             
-            poynting_inst[1][1] = dx*timestep*(Ez__*Bx__ - Ex__*Bz__);
+            poynting_inst[1][1] = dl*timestep*(Ez__*Bx__ - Ex__*Bz__);
             #endif
             poynting[1][1] += poynting_inst[1][1];
         }
@@ -718,8 +718,8 @@ void ElectroMagn3DRZ::applyExternalField(Field* my_field,  Profile *profile, Pat
     cField2D* field2D=static_cast<cField2D*>(my_field);
     
     vector<double> pos(2);
-    pos[0]      = dx*((double)(patch->getCellStartingGlobalIndex(0))+(field2D->isDual(0)?-0.5:0.));
-    double pos1 = dy*((double)(patch->getCellStartingGlobalIndex(1))+(field2D->isDual(1)?-0.5:0.));
+    pos[0]      = dl*((double)(patch->getCellStartingGlobalIndex(0))+(field2D->isDual(0)?-0.5:0.));
+    double pos1 = dr*((double)(patch->getCellStartingGlobalIndex(1))+(field2D->isDual(1)?-0.5:0.));
     int N0 = (int)field2D->dims()[0];
     int N1 = (int)field2D->dims()[1];
     
@@ -728,9 +728,9 @@ void ElectroMagn3DRZ::applyExternalField(Field* my_field,  Profile *profile, Pat
         pos[1] = pos1;
         for (int j=0 ; j<N1 ; j++) {
             (*field2D)(i,j) += profile->valueAt(pos);
-            pos[1] += dy;
+            pos[1] += dr;
         }
-        pos[0] += dx;
+        pos[0] += dl;
     }
     
     for (auto& embc: emBoundCond) {

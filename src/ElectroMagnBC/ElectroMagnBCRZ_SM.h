@@ -4,6 +4,7 @@
 
 
 #include <vector>
+#include <complex>
 #include "Tools.h"
 #include "ElectroMagnBC.h"
 #include "ElectroMagn3DRZ.h"
@@ -26,7 +27,7 @@ public:
     void disableExternalFields() override;
 
     //! Save external fields for silver muller EM Boundary condition
-    std::vector< complex<double> > Bl_val,  Br_val,  Bt_val;
+    std::vector< std::complex<double> > Bl_val,  Br_val,  Bt_val;
     
 private:
     

@@ -14,11 +14,11 @@ class Params;
 class ElectroMagn;
 class Field;
 
-class ElectroMagnBCRZ_axis : public ElectroMagnBC {
+class ElectroMagnBCRZ_Axis : public ElectroMagnBC {
 public:
     
-    ElectroMagnBCRZ_axis( Params &params, Patch* patch, unsigned int _min_max );
-    ~ElectroMagnBCRZ_axis() {};
+    ElectroMagnBCRZ_Axis( Params &params, Patch* patch, unsigned int _min_max );
+    ~ElectroMagnBCRZ_Axis() {};
     
     virtual void apply(ElectroMagn* EMfields, double time_dual, Patch* patch) override;
     

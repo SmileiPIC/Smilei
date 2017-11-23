@@ -88,22 +88,22 @@ public:
     //! Number of nodes on the dual grid in the y-direction
     unsigned int nr_d;
 
-    //! Spatial step dx for 3D3V cartesian simulations
+    //! Spatial step dl for 3D3V cartesian simulations
     double dl;
 
-    //! Spatial step dy for 3D3V cartesian simulations
+    //! Spatial step dr for 3D3V cartesian simulations
     double dr;
 
-    //! Ratio of the time-step by the spatial-step dt/dx for 3D3V cartesian simulations
+    //! Ratio of the time-step by the spatial-step dt/dl for 3D3V cartesian simulations
     double dt_ov_dl;
 
-    //! Ratio of the time-step by the spatial-step dt/dy for 3D3V cartesian simulations
+    //! Ratio of the time-step by the spatial-step dt/dr for 3D3V cartesian simulations
     double dt_ov_dr;
 
-    //! Ratio of the spatial-step by the time-step dx/dt for 3D3V cartesian simulations
+    //! Ratio of the spatial-step by the time-step dl/dt for 3D3V cartesian simulations
     double dl_ov_dt;
 
-    //! Ratio of the spatial-step by the time-step dy/dt for 3D3V cartesian simulations
+    //! Ratio of the spatial-step by the time-step dr/dt for 3D3V cartesian simulations
     double dr_ov_dt;
     //! Minimum radius in the current patch
     int j_glob_;

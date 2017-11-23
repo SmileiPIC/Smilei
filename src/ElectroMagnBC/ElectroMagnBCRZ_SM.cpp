@@ -101,7 +101,7 @@ ElectroMagnBCRZ_SM::ElectroMagnBCRZ_SM( Params &params, Patch* patch, unsigned i
 
 
 void ElectroMagnBCRZ_SM::save_fields(Field* my_field, Patch* patch) {
-    Field2D* cfield2D=static_cast<cField2D*>(my_field);
+    cField2D* field2D=static_cast<cField2D*>(my_field);
     
     if (min_max == 0 && patch->isXmin() ) {
         if (field2D->name=="Bl"){
