@@ -1,6 +1,6 @@
 
 #include "MF_SolverRZ_Yee.h"
-#include "patch.h"
+#include "Patch.h"
 #include "ElectroMagn3DRZ.h"
 #include "cField2D.h"
 #include <complex>
