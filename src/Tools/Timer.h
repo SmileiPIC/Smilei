@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-class SmileiMPI;
+#include "SmileiMPI.h"
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class Timer

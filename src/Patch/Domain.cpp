@@ -32,7 +32,7 @@ void Domain::build( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, Op
     vecPatch_.update_field_list();
 
     //vecPatch_.update_field_list(0);
-    vecPatch_.patches_[0]->finalizeMPIenvironment();
+    vecPatch_.patches_[0]->finalizeMPIenvironment(params);
     vecPatch_.nrequests = vecPatches(0)->requests_.size();
     vecPatch_.nAntennas = vecPatch_(0)->EMfields->antennas.size();
     vecPatch_.initExternals( params );
@@ -117,8 +117,8 @@ void Domain::solveMaxwell( Params& params, SimWindow* simWindow, int itime, doub
 void Domain::init_pxr(Params &params)
 {
     int cdim;
-    if(params.geometry == "3d3v") cdim=3;
-    if(params.geometry == "2d3v") cdim=2;
+    if(params.geometry == "3Dcartesian") cdim=3;
+    if(params.geometry == "2Dcartesian") cdim=2;
     if(cdim ==3) {
       int n0,n1,n2;
       int ov0,ov1,ov2;

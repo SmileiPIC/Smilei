@@ -17,22 +17,12 @@ def _mkdir(role, path):
     elif not os.path.isdir(path):
         raise Exception("ERROR in the namelist: "+role+" "+path+" exists but is not a directory")
 
-def _smilei_check():
-    """Do checks over the script"""
-    # Verify classes were not overriden
-    for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
-            "DiagProbe","DiagParticles", "DiagScalar","DiagFields","ExtField",
-            "SmileiSingleton","Main","DumpRestart","LoadBalancing","MovingWindow"]:
-        CheckClass = globals()[CheckClassName]
-        try:
-            if not CheckClass._verify: raise Exception("")
-        except:
-            raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
+def _prepare_checkpoint_dir():
     # Checkpoint: prepare dir tree
-    if smilei_mpi_rank == 0 and (DumpRestart.dump_step>0 or DumpRestart.dump_minutes>0.):
+    if smilei_mpi_rank == 0 and (Checkpoints.dump_step>0 or Checkpoints.dump_minutes>0.):
         checkpoint_dir = "." + os.sep + "checkpoints" + os.sep
-        if DumpRestart.file_grouping :
-            ngroups = (smilei_mpi_size-1)/DumpRestart.file_grouping + 1
+        if Checkpoints.file_grouping :
+            ngroups = (smilei_mpi_size-1)/Checkpoints.file_grouping + 1
             ngroups_chars = int(math.log10(ngroups))+1
             for group in range(ngroups):
                 group_dir = checkpoint_dir + '%*s'%(ngroups_chars,group)
@@ -40,38 +30,48 @@ def _smilei_check():
         else:
             _mkdir("checkpoint", checkpoint_dir)
 
+def _smilei_check():
+    """Do checks over the script"""
+    # Verify classes were not overriden
+    for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
+            "DiagProbe","DiagParticleBinning", "DiagScalar","DiagFields","ExternalField",
+            "SmileiSingleton","Main","Checkpoints","LoadBalancing","MovingWindow",
+            "RadiationReaction", "ParticleData", "MultiphotonBreitWheeler"]:
+        CheckClass = globals()[CheckClassName]
+        try:
+            if not CheckClass._verify: raise Exception("")
+        except:
+            raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
+    
     # Checkpoint: Verify the restart_dir and find possible restart file for each rank
-    if len(DumpRestart)==1:
-        if len(DumpRestart.restart_files) == 0 :
-            if DumpRestart.restart_dir:
-                DumpRestart.restart=True
-                my_pattern=DumpRestart.restart_dir + os.sep + "checkpoints" + os.sep
-                if DumpRestart.file_grouping :
+    if len(Checkpoints)==1:
+        if len(Checkpoints.restart_files) == 0 :
+            if Checkpoints.restart_dir:
+                Checkpoints.restart=True
+                my_pattern=Checkpoints.restart_dir + os.sep + "checkpoints" + os.sep
+                if Checkpoints.file_grouping :
                     my_pattern += "*"+ os.sep
                 my_pattern += "dump-*-*.h5";
                 # pick those file that match the mpi rank
                 my_files = filter(lambda a: smilei_mpi_rank==int(re.search(r'dump-[0-9]*-([0-9]*).h5$',a).groups()[-1]),glob.glob(my_pattern))
-
-
-                if DumpRestart.restart_number:
+                
+                if Checkpoints.restart_number:
                     # pick those file that match the restart_number
-                    my_files = filter(lambda a: DumpRestart.restart_number==int(re.search(r'dump-([0-9]*)-[0-9]*.h5$',a).groups()[-1]),my_files)
-
-                DumpRestart.restart_files = my_files
-        
-                if not len(DumpRestart.restart_files):
+                    my_files = filter(lambda a: Checkpoints.restart_number==int(re.search(r'dump-([0-9]*)-[0-9]*.h5$',a).groups()[-1]),my_files)
+                
+                Checkpoints.restart_files = my_files
+                
+                if not len(Checkpoints.restart_files):
                     raise Exception(
                     "ERROR in the namelist: cannot find valid restart files for processor "+str(smilei_mpi_rank) + 
-                    "\n\t\trestart_dir = '" + DumpRestart.restart_dir + 
-                    "'\n\t\trestart_number = " + str(DumpRestart.restart_number) + 
+                    "\n\t\trestart_dir = '" + Checkpoints.restart_dir + 
+                    "'\n\t\trestart_number = " + str(Checkpoints.restart_number) + 
                     "\n\t\tmatching pattern: '" + my_pattern + "'" )
-
+        
         else :
-            if DumpRestart.restart_dir:
+            if Checkpoints.restart_dir:
                 raise Exception("restart_dir and restart_files are both not empty")
-            
-
-
+    
     # Verify that constant() and tconstant() were not redefined
     if not hasattr(constant, "_reserved") or not hasattr(tconstant, "_reserved"):
         raise Exception("Names `constant` and `tconstant` cannot be overriden")
@@ -85,13 +85,13 @@ def _smilei_check():
             return tconstant()
         except: return input
     for s in Species:
-        s.nb_density      = toSpaceProfile(s.nb_density      )
+        s.number_density      = toSpaceProfile(s.number_density      )
         s.charge_density  = toSpaceProfile(s.charge_density  )
-        s.n_part_per_cell = toSpaceProfile(s.n_part_per_cell )
+        s.particles_per_cell = toSpaceProfile(s.particles_per_cell )
         s.charge          = toSpaceProfile(s.charge          )
         s.mean_velocity   = [ toSpaceProfile(p) for p in s.mean_velocity ]
         s.temperature     = [ toSpaceProfile(p) for p in s.temperature   ]
-    for e in ExtField:
+    for e in ExternalField:
         e.profile         = toSpaceProfile(e.profile         )
     for a in Antenna:
         a.space_profile   = toSpaceProfile(a.space_profile   )
@@ -106,19 +106,30 @@ def _smilei_check():
 # if it returns false, the code will call a Py_Finalize();
 def _keep_python_running():
     # Verify all temporal profiles, and all profiles that depend on the moving window or on the load balancing
-    profiles = [las.time_envelope for las in Laser]
-    profiles += [las.chirp_profile for las in Laser]
+    profiles = []
+    for las in Laser:
+        profiles += [las.time_envelope]
+        profiles += [las.chirp_profile]
+        if type(las.space_time_profile) is list:
+            profiles += las.space_time_profile
     profiles += [ant.time_profile for ant in Antenna]
     if len(MovingWindow)>0 or len(LoadBalancing)>0:
         for s in Species:
-            profiles += [s.nb_density, s.charge_density, s.n_part_per_cell, s.charge] + s.mean_velocity + s.temperature
+            profiles += [s.number_density, s.charge_density, s.particles_per_cell, s.charge] + s.mean_velocity + s.temperature
     for prof in profiles:
         if callable(prof) and not hasattr(prof,"profileName"):
             return True
     # Verify the tracked species that require a particle selection
-    for s in Species:
-        if s.track_every!=0 and s.track_filter is not None:
+    for d in DiagTrackParticles:
+        if d.filter is not None:
             return True
+    # Verify the particle binning having a function for deposited_quantity or axis type
+    for d in DiagParticleBinning._list + DiagScreen._list:
+        if type(d.deposited_quantity) is not str:
+            return True
+        for ax in d.axes:
+            if type(ax[0]) is not str:
+                return True
     return False
 
 # Prevent creating new components (by mistake)
@@ -126,6 +137,3 @@ def _noNewComponents(cls, *args, **kwargs):
     print("Please do not create a new "+cls.__name__)
     return None
 SmileiComponent.__new__ = staticmethod(_noNewComponents)
-
-
-

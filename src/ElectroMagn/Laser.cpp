@@ -17,9 +17,9 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
     ostringstream info("");
     
     // side from which the laser enters the simulation box (only xmin/xmax at the moment)
-    PyTools::extract("boxSide",boxSide,"Laser",ilaser);
-    if ( boxSide!="xmin" && boxSide!="xmax" ) {
-        ERROR(errorPrefix << ": boxSide must be `xmin` or `xmax`");
+    PyTools::extract("box_side",box_side,"Laser",ilaser);
+    if ( box_side!="xmin" && box_side!="xmax" ) {
+        ERROR(errorPrefix << ": box_side must be `xmin` or `xmax`");
     }
     
     // Profiles
@@ -94,7 +94,7 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
         
         info << "\t\t" << errorPrefix << ": custom profile" << endl;
         
-        unsigned int space_dims = (params.geometry=="3d3v" ? 2 : 1);
+        unsigned int space_dims = (params.geometry=="3Dcartesian" ? 2 : 1);
  
         // omega
         info << "\t\t\tomega              : " << omega_value << endl;
@@ -153,7 +153,7 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
 // Cloning constructor
 Laser::Laser(Laser* laser, Params& params)
 {
-    boxSide   = laser->boxSide;
+    box_side   = laser->box_side;
     spacetime = laser->spacetime;
     profiles.resize(0);
     if( spacetime[0] || spacetime[1] ) {
@@ -235,15 +235,15 @@ void LaserProfileSeparable::createFields(Params& params, Patch* patch)
     dim[0] = 1;
     dim[1] = 1;
     
-    if( params.geometry!="1d3v" && params.geometry!="2d3v" && params.geometry!="3d3v" )
+    if( params.geometry!="1Dcartesian" && params.geometry!="2Dcartesian" && params.geometry!="3Dcartesian" )
         ERROR("Unknown geometry in laser");
     
-    if( params.geometry!="1d3v" ) {
+    if( params.geometry!="1Dcartesian" ) {
         unsigned int ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
         unsigned int ny_d = ny_p+1;
         dim[0] = primal ? ny_p : ny_d;
         
-        if( params.geometry!="2d3v" ) {
+        if( params.geometry!="2Dcartesian2d3vw" ) {
             unsigned int nz_p = params.n_space[2]*params.global_factor[2]+1+2*params.oversize[2];
             unsigned int nz_d = nz_p+1;
             dim[1] = primal ? nz_d : nz_p;
@@ -256,7 +256,7 @@ void LaserProfileSeparable::createFields(Params& params, Patch* patch)
 
 void LaserProfileSeparable::initFields(Params& params, Patch* patch)
 {
-    if( params.geometry=="1d3v" ) {
+    if( params.geometry=="1Dcartesian" ) {
         
         // Assign profile (only one point in 1D)
         vector<double> pos(1);
@@ -264,7 +264,7 @@ void LaserProfileSeparable::initFields(Params& params, Patch* patch)
         (*space_envelope)(0,0) = spaceProfile->valueAt(pos);
         (*phase         )(0,0) = phaseProfile->valueAt(pos);
         
-    } else if( params.geometry=="2d3v" ) {
+    } else if( params.geometry=="2Dcartesian" ) {
         
         unsigned int ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
         unsigned int ny_d = ny_p+1;
@@ -281,7 +281,7 @@ void LaserProfileSeparable::initFields(Params& params, Patch* patch)
             (*phase         )(j,0) = phaseProfile->valueAt(pos);
         }
         
-    } else if( params.geometry=="3d3v" ) {
+    } else if( params.geometry=="3Dcartesian" ) {
         
         unsigned int ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
         unsigned int ny_d = ny_p+1;

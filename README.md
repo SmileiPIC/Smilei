@@ -1,9 +1,9 @@
-[![Build Status](https://travis-ci.org/SmileiPIC/Smilei.svg?branch=master)](https://travis-ci.org/SmileiPIC/Smilei)
+**Smilei is a collaborative Particle-In-Cell code for plasma simulation.**
 
-**Smilei is an open-source, particle-in-cell code.** 
+Open-source, user-friendly and designed for high performances on super-computers, it is applied to a wide range of physics studies: from relativistic laser-plasma interaction to astrophysics.
 
-As a multi-purpose code, it is designed for and applied to a wide range of physics-related studies: from relativistic laser-plasma interaction to astrophysical plasmas. It is co-developed by both physicists and HPC experts. 
-
-For more information, checkout our website:
+For more information, check out our website:
 
 http://www.maisondelasimulation.fr/smilei
+
+Documentation: [![Build Status](https://travis-ci.org/SmileiPIC/Smilei.svg?branch=master)](https://travis-ci.org/SmileiPIC/Smilei)

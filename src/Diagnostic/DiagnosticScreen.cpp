@@ -1,5 +1,7 @@
+#include "PyTools.h"
 
 #include "DiagnosticScreen.h"
+#include "HistogramFactory.h"
 
 #include <iomanip>
 
@@ -83,9 +85,9 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patc
     else
         ERROR(errorPrefix << ": parameter `direction` not understood");
     
-    // get parameter "output" that determines the quantity to sum in the output array
-    if (!PyTools::extract("output",output,"DiagScreen",screen_id))
-        ERROR(errorPrefix << ": parameter `output` required");
+    // get parameter "deposited_quantity" that determines the quantity to sum in the output array
+    PyObject* deposited_quantity_object = PyTools::extract_py("deposited_quantity", "DiagScreen", screen_id);
+    PyTools::checkPyError();
     
     // get parameter "every" which describes a timestep selection
     timeSelection = new TimeSelection(
@@ -111,55 +113,16 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patc
     //      requested quantity, min value, max value ,number of bins, log (optional), edge_inclusive (optional)
     vector<PyObject*> pyAxes=PyTools::extract_pyVec("axes","DiagScreen",screen_id);
     
-    vector<string> excluded_types(0);
+    // Create the Histogram object based on the extracted parameters above
+    vector<string> excluded_axes(0);
     if( screen_shape == "plane" ) {
-        excluded_types.push_back( "theta_yx" );
-        excluded_types.push_back( "theta_zx" );
+        excluded_axes.push_back( "theta_yx" );
+        excluded_axes.push_back( "theta_zx" );
     } else {
-        excluded_types.push_back( "a" );
-        excluded_types.push_back( "b" );
+        excluded_axes.push_back( "a" );
+        excluded_axes.push_back( "b" );
     }
-    
-    // Create the Histogram object
-    if        (output == "density"        ) {
-        histogram = new Histogram_density        ();
-    } else if (output == "charge_density" ) {
-        histogram = new Histogram_charge_density ();
-    } else if (output == "jx_density"     ) {
-        histogram = new Histogram_jx_density     ();
-    } else if (output == "jy_density"     ) {
-        histogram = new Histogram_jy_density     ();
-    } else if (output == "jz_density"     ) {
-        histogram = new Histogram_jz_density     ();
-    } else if (output == "ekin_density"   ) {
-        histogram = new Histogram_ekin_density   ();
-    } else if (output == "p_density"      ) {
-        histogram = new Histogram_p_density      ();
-    } else if (output == "px_density"     ) {
-        histogram = new Histogram_px_density     ();
-    } else if (output == "py_density"     ) {
-        histogram = new Histogram_py_density     ();
-    } else if (output == "pz_density"     ) {
-        histogram = new Histogram_pz_density     ();
-    } else if (output == "pressure_xx"    ) {
-        histogram = new Histogram_pressure_xx    ();
-    } else if (output == "pressure_yy"    ) {
-        histogram = new Histogram_pressure_yy    ();
-    } else if (output == "pressure_zz"    ) {
-        histogram = new Histogram_pressure_zz    ();
-    } else if (output == "pressure_xy"    ) {
-        histogram = new Histogram_pressure_xy    ();
-    } else if (output == "pressure_xz"    ) {
-        histogram = new Histogram_pressure_xz    ();
-    } else if (output == "pressure_yz"    ) {
-        histogram = new Histogram_pressure_yz    ();
-    } else if (output == "ekin_vx_density") {
-        histogram = new Histogram_ekin_vx_density();
-    } else {
-        ERROR(errorPrefix << ": parameter `output = "<< output <<"` not understood");
-    }
-    
-    histogram->init(params, pyAxes, species, errorPrefix, patch, excluded_types);
+    histogram = HistogramFactory::create(params, deposited_quantity_object, pyAxes, species, patch, excluded_axes, errorPrefix);
     
     // If axes are "a", "b", "theta" or "phi", they need some coefficients
     unsigned int idim;
@@ -190,11 +153,14 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patc
     }
     
     // Calculate the size of the output array
-    output_size = 1;
+    uint64_t total_size = 1;
     for( unsigned int i=0; i<histogram->axes.size(); i++ )
-        output_size *= histogram->axes[i]->nbins;
+        total_size *= histogram->axes[i]->nbins;
+    if( total_size > 4294967296 ) // 2^32
+        ERROR(errorPrefix << ": too many points (" << total_size << " > 2^32)");
+    output_size = (unsigned int) total_size;
     data_sum.resize( output_size, 0. );
-    
+   
     // Output info on diagnostics
     if ( smpi->isMaster() ) {
         ostringstream mystream("");
@@ -206,22 +172,7 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patc
         for(unsigned int i=0; i<histogram->axes.size(); i++) {
             HistogramAxis * axis = histogram->axes[i];
             mystream.str("");
-            mystream << "Axis ";
-            if( axis->type.substr(0,9) == "composite" ) {
-                bool first = true;
-                for( unsigned int idim=0; idim<axis->coefficients.size(); idim++ ) {
-                    if( axis->coefficients[idim]==0. ) continue;
-                    bool negative = axis->coefficients[idim]<0.;
-                    double coeff = (negative?-1.:1.)*axis->coefficients[idim];
-                    mystream << (negative?"-":(first?"":"+"));
-                    if( coeff!=1. ) mystream << coeff;
-                    mystream << (idim==0?"x":(idim==1?"y":"z"));
-                    first = false;
-                }
-            } else {
-                mystream << axis->type;
-            }
-            mystream << " from " << axis->min << " to " << axis->max << " in " << axis->nbins << " steps";
+            mystream << "Axis " << axis->type << " from " << axis->min << " to " << axis->max << " in " << axis->nbins << " steps";
             if( axis->logscale       ) mystream << " [LOGSCALE] ";
             if( axis->edge_inclusive ) mystream << " [EDGE INCLUSIVE]";
             MESSAGE(2,mystream.str());
@@ -254,7 +205,7 @@ void DiagnosticScreen::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         // write all parameters as HDF5 attributes
         H5::attr(fileId_, "Version", string(__VERSION));
-        H5::attr(fileId_, "output" , output);
+        H5::attr(fileId_, "deposited_quantity" , histogram->deposited_quantity);
         // write all species
         ostringstream mystream("");
         mystream.str(""); // clear
@@ -444,4 +395,25 @@ void DiagnosticScreen::write(int timestep, SmileiMPI* smpi)
 //! Zero the array
 void DiagnosticScreen::clear() {
     fill( data_sum.begin(), data_sum.end(), 0. );
+}
+
+
+// SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
+uint64_t DiagnosticScreen::getDiskFootPrint(int istart, int istop, Patch* patch)
+{
+    uint64_t footprint = 0;
+    
+    // Calculate the number of dumps between istart and istop
+    uint64_t ndumps = timeSelection->howManyTimesBefore(istop) - timeSelection->howManyTimesBefore(istart);
+    
+    // Add necessary global headers approximately
+    footprint += 1500;
+    
+    // Add necessary timestep headers approximately
+    footprint += ndumps * 640;
+    
+    // Add size of each dump
+    footprint += ndumps * (uint64_t)(output_size) * 8;
+    
+    return footprint;
 }

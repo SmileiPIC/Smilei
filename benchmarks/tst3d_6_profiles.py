@@ -3,23 +3,21 @@ import math
 L0 = 2.*math.pi # Wavelength in PIC units
 
 Main(
-	geometry = "3d3v",
+	geometry = "3Dcartesian",
 	
 	interpolation_order = 2,
 	
 	timestep = 0.005 * L0,
-	sim_time  = 0.01 * L0,
+	simulation_time  = 0.01 * L0,
 	
 	cell_length = [0.01 * L0]*3,
-	sim_length  = [1. * L0]*3,
+	grid_length  = [1. * L0]*3,
 	
 	number_of_patches = [ 4 ]*3,
 	
 	time_fields_frozen = 10000000.,
 	
-	bc_em_type_x = ["periodic"],
-	bc_em_type_y = ["periodic"],
-	bc_em_type_z = ["periodic"],
+	EM_boundary_conditions = [ ["periodic"] ],
 	print_every = 10,
 	
 	random_seed = smilei_mpi_rank
@@ -53,20 +51,19 @@ profiles = {
 
 for name, profile in profiles.items():
 	Species(
-		species_type = name,
-		initPosition_type = "regular",
-		initMomentum_type = "maxwell-juettner",
-		n_part_per_cell= 8,
+		name = name,
+		position_initialization = "regular",
+		momentum_initialization = "maxwell-juettner",
+		particles_per_cell= 8,
 		mass = 1.0,
 		charge = 1.0,
-		nb_density = profile,
+		number_density = profile,
 		time_frozen = 10000.0,
-		bc_part_type_xmin = "none",
-		bc_part_type_xmax = "none",
-		bc_part_type_ymin = "none",
-		bc_part_type_ymax = "none",
-		bc_part_type_zmin = "none",
-		bc_part_type_zmax = "none"
+		boundary_conditions = [
+			["periodic", "periodic"],
+			["periodic", "periodic"],
+			["periodic", "periodic"],
+		],
 	)
 
 

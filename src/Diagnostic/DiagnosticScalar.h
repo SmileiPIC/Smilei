@@ -10,10 +10,10 @@ class Params;
 class SmileiMPI;
 
 
-//! double-int structure to communicate min/max and location trough MPI 
+//! double-int structure to communicate min/max and location trough MPI
 struct val_index
 {
-    //! min/max 
+    //! min/max
     double val;
     //! cell location index
     int index;
@@ -78,11 +78,11 @@ public:
 //! Class for the diagnostic of scalars
 class DiagnosticScalar : public Diagnostic {
     friend class SmileiMPI;
-
+    friend class Checkpoint;
 public :
     //! Default constructor
     DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch );
-
+    
     //! Default destructor
     ~DiagnosticScalar() override;
     
@@ -114,14 +114,17 @@ public :
     
     //! Latest timestep dumped
     int latest_timestep;
-
+    
     //! Get memory footprint of current diagnostic
     int getMemFootPrint() override {
         return 0;
     }
-
-private :
     
+    //! Get disk footprint of current diagnostic
+    uint64_t getDiskFootPrint(int istart, int istop, Patch* patch) override;
+    
+private :
+
     //! Calculate the length of a string when output to the file
     unsigned int calculateWidth( std::string key);
     
@@ -172,7 +175,14 @@ private :
     Scalar_value *Utot, *Uexp, *Ubal, *Ubal_norm;
     Scalar_value *Uelm, *Ukin, *Uelm_bnd, *Ukin_bnd;
     Scalar_value *Ukin_out_mvw, *Ukin_inj_mvw, *Uelm_out_mvw, *Uelm_inj_mvw;
+    // For the radiated energy
+    Scalar_value *Urad;
+    // Energy of the pairs created via the multiphoton Breit-Wheeler process
+    Scalar_value *UmBWpairs;
+    
     std::vector<Scalar_value *> sDens, sNtot, sZavg, sUkin, fieldUelm;
+    // For the radiated energy per species
+    std::vector<Scalar_value *> sUrad;
     std::vector<Scalar_value_location *> fieldMin, fieldMax;
     std::vector<Scalar_value *> poy, poyInst;
     
@@ -180,10 +190,12 @@ private :
     bool necessary_Ubal_norm, necessary_Ubal, necessary_Utot, necessary_Uexp;
     bool necessary_Ukin, necessary_Ukin_BC;
     bool necessary_Uelm, necessary_Uelm_BC;
+    // For the radiated energy
+    bool necessary_Urad;
+    // For the pair generation via the multiphoton Breit-Wheeler
+    bool necessary_UmBWpairs;
     bool necessary_fieldMinMax_any;
     std::vector<bool> necessary_species, necessary_fieldUelm, necessary_fieldMinMax, necessary_poy;
-
 };
 
 #endif
-

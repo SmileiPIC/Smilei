@@ -1,3 +1,11 @@
+// --------------------------------------------------------------------------------------------------------------------
+//
+//! \file PusherFactory.h
+//
+//! \brief Class PusherFactory that manage the pusher association to the species.
+//
+// --------------------------------------------------------------------------------------------------------------------
+
 #ifndef PUSHERFACTORY_H
 #define PUSHERFACTORY_H
 
@@ -7,6 +15,7 @@
 #include "PusherBorisNR.h"
 #include "PusherRRLL.h"
 #include "PusherHigueraCary.h"
+#include "PusherPhoton.h"
 
 #include "Params.h"
 #include "Species.h"
@@ -15,7 +24,8 @@
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class PusherFactory
-
+//
+//! \brief Class PusherFactory that manage the pusher association to the species.
 //  --------------------------------------------------------------------------------------------------------------------
 class PusherFactory {
 public:
@@ -27,29 +37,47 @@ public:
     static Pusher* create(Params& params, Species * species) {
         Pusher* Push = NULL;
 
-        // assign the correct Pusher to Push
-        if ( species->dynamics_type == "norm" )
-        {
-            Push = new PusherBoris( params, species );
+        // Particle of matter
+        if (species->mass > 0) {
+            // assign the correct Pusher to Push
+            if ( species->pusher == "boris")
+            {
+                Push = new PusherBoris( params, species );
+            }
+            else if ( species->pusher == "borisnr" )
+            {
+                Push = new PusherBorisNR( params, species );
+            }
+            /*else if ( species->pusher == "rrll" )
+            {
+                Push = new PusherRRLL( params, species );
+            }*/
+            else if ( species->pusher == "vay" )
+            {
+                Push = new PusherVay( params, species );
+            }
+            else if ( species->pusher == "higueracary" )
+            {
+                Push = new PusherHigueraCary( params, species );
+            }
+            else {
+                ERROR( "For species " << species->name
+                                      << ": unknown pusher `"
+                                      << species->pusher << "`");
+            }
         }
-        else if ( species->dynamics_type == "borisnr" )
+        // Photon
+        else if (species->mass == 0)
         {
-            Push = new PusherBorisNR( params, species );
-        }
-        else if ( species->dynamics_type == "rrll" )
-        {
-            Push = new PusherRRLL( params, species );
-        }
-        else if ( species->dynamics_type == "vay" )
-        {
-            Push = new PusherVay( params, species );
-        }
-        else if ( species->dynamics_type == "higueracary" )
-        {
-            Push = new PusherHigueraCary( params, species );
-        }
-        else {
-            ERROR( "For species " << species->species_type << ": unknown dynamics_type `" << species->dynamics_type << "`");
+            if ( species->pusher == "norm")
+            {
+                Push = new PusherPhoton( params, species );
+            }
+            else {
+                ERROR( "For photon species " << species->name
+                                      << ": unknown pusher `"
+                                      << species->pusher << "`");
+            }
         }
 
         return Push;

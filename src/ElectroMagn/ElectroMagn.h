@@ -157,11 +157,6 @@ public:
     //! Creates a new field with the right characteristics, depending on the name
     virtual Field * createField(std::string fieldname) = 0;
     
-    //! Number of bins
-    unsigned int nbin;
-    //! Cluster width
-    unsigned int clrw;
-    
     //! nDim_field (from params)
     const unsigned int nDim_field;
     

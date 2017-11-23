@@ -33,6 +33,7 @@ public:
 
     void profile(SmileiMPI * smpi);
     std::vector<Timer*> consolidate(SmileiMPI * smpi);
+    void reboot();
     
 private:
     std::vector<Timer*> timers;

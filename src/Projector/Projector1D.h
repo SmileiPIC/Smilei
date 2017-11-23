@@ -7,7 +7,7 @@
 
 
 //----------------------------------------------------------------------------------------------------------------------
-//! class Projector1D: defines a virtual method for projection in 1d3v simulations
+//! class Projector1D: defines a virtual method for projection in 1Dcartesian simulations
 //----------------------------------------------------------------------------------------------------------------------
 class Projector1D : public Projector
 {

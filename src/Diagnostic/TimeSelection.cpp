@@ -1,6 +1,8 @@
-#include "TimeSelection.h"
 #include "PyTools.h"
+#include "TimeSelection.h"
 #include <math.h>
+#include <sstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -49,20 +51,20 @@ TimeSelection::TimeSelection(PyObject* timeSelection, string name)
         if        ( nitems==1 ) {
             if(items[0]) period  = items[0];
         } else if ( nitems==2 ) {
-            if(items[0]) start   = (int)round(items[0]);
+            if(items[0]) start   = items[0];
             if(items[1]) period  = items[1];
         } else if ( nitems==3 ) {
-            if(items[0]) start   = (int)round(items[0]);
-            if(items[1]) end     = (int)round(items[1]);
+            if(items[0]) start   = items[0];
+            if(items[1]) end     = items[1];
             if(items[2]) period  = items[2];
         } else if ( nitems==4 ) {
-            if(items[0]) start   = (int)round(items[0]);
-            if(items[1]) end     = (int)round(items[1]);
+            if(items[0]) start   = items[0];
+            if(items[1]) end     = items[1];
             if(items[2]) period  = items[2];
             if(items[3]) repeat  = (int)round(items[3]);
         } else if ( nitems==5 ) {
-            if(items[0]) start   = (int)round(items[0]);
-            if(items[1]) end     = (int)round(items[1]);
+            if(items[0]) start   = items[0];
+            if(items[1]) end     = items[1];
             if(items[2]) period  = items[2];
             if(items[3]) repeat  = (int)round(items[3]);
             if(items[4]) spacing = items[4];
@@ -99,7 +101,7 @@ TimeSelection::TimeSelection()
 {
     start   = std::numeric_limits<double>::max();
     end     = std::numeric_limits<double>::max();
-    period  = 1.;
+    period  = 0.;
     repeat  = 1;
     spacing = 1.;
     groupWidth   = 0.;
@@ -128,9 +130,9 @@ bool TimeSelection::theTimeIsNow(int timestep)
 {
     TheTimeIsNow = false;
     // In selection if inside the start/end bounds
-    if( timestep>=start && timestep<=end ) {
+    if( timestep>=round(start) && timestep<=round(end) ) {
         // Calculate the number of timesteps since the start
-        double t = (double)timestep - start + 0.5;
+        double t = (double)timestep - start + 0.4999;
         // Calculate the time from the previous period
         t -= floor(t/period)*period;
         // If within group, calculate the time to the previous repeat
@@ -146,12 +148,12 @@ bool TimeSelection::theTimeIsNow(int timestep)
 // Returns the same timestep if already within the selection
 int TimeSelection::nextTime(int timestep)
 {
-    if( timestep<=start ) { 
+    if( timestep<=round(start) ) { 
         NextTime = start;
-    } else if( timestep>end ) { 
+    } else if( timestep>round(end) ) { 
         NextTime = std::numeric_limits<int>::max();
     } else {
-        double t = (double)(timestep)-start + 0.5; // number of timesteps since the start
+        double t = (double)(timestep)-start + 0.4999; // number of timesteps since the start
         double p = floor(t/period)*period; // previous period
         double T = t - p; // time to the previous period
         
@@ -159,10 +161,10 @@ int TimeSelection::nextTime(int timestep)
         if( T < groupWidth ) {
             double r = floor(T/spacing)*spacing; // previous repeat
             if( T-r < 1. ) { NextTime = timestep; } // return current timestep if good
-            else { NextTime = (int) (start + round(p + r + spacing)); } // otherwise, return next repeat
+            else { NextTime = (int) round(start + p + r + spacing); } // otherwise, return next repeat
         // If after group, return next group's beginning
         } else {
-            NextTime = (int) (start + round(p+period));
+            NextTime = (int) round(start + p+period);
         }
     }
     return NextTime;
@@ -173,23 +175,92 @@ int TimeSelection::nextTime(int timestep)
 // Returns the same timestep if already within the selection
 int TimeSelection::previousTime(int timestep)
 {
-    if( timestep<start ) {
+    if( timestep<round(start) ) {
         PreviousTime = std::numeric_limits<int>::min();
-    } else if( timestep>=end ) {
+    } else if( timestep>=round(end) ) {
         PreviousTime = end;
     } else {
-        double t = (double)(timestep)-start + 0.5; // number of timesteps since the start
+        double t = (double)(timestep)-start + 0.4999; // number of timesteps since the start
         double p = floor(t/period)*period; // previous period
         double T = t - p; // time to the previous period
         
         // If within group
         if( T < groupWidth ) {
-            PreviousTime = (int) (start + round(p + floor(T/spacing)*spacing)); // return previous good timestep
+            PreviousTime = (int) round(start + p + floor(T/spacing)*spacing); // return previous good timestep
         // If after group, return end of that group
         } else {
-            PreviousTime = (int) (start + round(p + groupWidth - 1));
+            PreviousTime = (int) round(start + p + groupWidth - 1);
         }
     }
     return PreviousTime;
 }
 
+
+// Tell how many selected timesteps have occured before the timestep requested
+int TimeSelection::howManyTimesBefore(int timestep)
+{
+    int nt = 0;
+    if( timestep>=round(start) ) {
+        if( timestep>=round(end) ) {
+            timestep = round(end);
+        }
+        double t = (double)(timestep)-start + 0.4999; // number of timesteps since the start
+        double p = floor(t/period); // previous period number
+        nt = p * repeat; // number of occurences before this period
+        double T = t - p*period; // time to the previous period
+        
+        // If within group
+        if( T < groupWidth ) {
+            nt += (int) floor(T/spacing); // add number of repeats to account for
+        // If after group
+        } else {
+            nt += repeat; // add all repeats
+        }
+    }
+    return nt;
+}
+
+//! Obtain some information about the time selection
+std::string TimeSelection::info()
+{
+    ostringstream t("");
+    if( period == 0. ) {
+        t << "never";
+    } else {
+        if( round(period) == period ) {
+            t << "every " <<  (int) period << " iterations";
+        } else {
+            t << "every " << fixed << setprecision(1) << period << " iterations";
+        }
+        
+        if( repeat > 1 ) {
+            t << " (" << repeat << " repeats each";
+            if( spacing > 1. ) {
+                if( round(spacing) == spacing ) {
+                    t << ", spaced by " <<  (int) spacing;
+                } else {
+                    t << ", spaced by " << fixed << setprecision(1) << spacing;
+                }
+            }
+            t << ")";
+        }
+        
+        if( start > 0. ) {
+            if( round(start) == start ) {
+                t << " from " <<  (int) start;
+            } else {
+                t << " from " << fixed << setprecision(1) << start;
+            }
+        }
+        
+        if( end < std::numeric_limits<double>::max() ) {
+            if( round(end) == end ) {
+                t << " until " <<  (int) end;
+            } else {
+                t << " until " << fixed << setprecision(1) << end;
+            }
+        }
+    }
+    
+    return t.str();
+}

@@ -1,11 +1,11 @@
-from Smilei import *
+import happi
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import erf as erf
 
 for path in ["beam_relaxation7","beam_relaxation8","beam_relaxation9"]:
 
-	sim = Smilei(path)
+	sim = happi.Open(path)
 	mass_ion             = np.double(sim.namelist.Species["ion1"].mass)
 	charge_ion           = np.double(sim.namelist.Species["ion1"].charge)
 	density_ion          = np.double(sim.namelist.Species["ion1"].charge_density)
@@ -20,16 +20,16 @@ for path in ["beam_relaxation7","beam_relaxation8","beam_relaxation9"]:
 	c = 3e8
 	coeff = (2.*np.pi/wavelength)**2*re*c
 	
-	times = sim.ParticleDiagnostic(diagNumber=0).getAvailableTimesteps()
+	times = sim.ParticleBinning(diagNumber=0).getAvailableTimesteps()
 	
 	e_vx_mean = np.zeros(len(times))
 	e_vperp2  = np.zeros(len(times))
 	i_vx_mean = np.zeros(len(times))
 	Ti        = np.zeros(len(times))
 	
-	electrons0 = sim.ParticleDiagnostic(0, slice={"x":"all"}).get()
-	electrons1 = sim.ParticleDiagnostic(1, slice={"x":"all"}).get()
-	ions       = sim.ParticleDiagnostic(2, slice={"x":"all"}).get()
+	electrons0 = sim.ParticleBinning(0, sum={"x":"all"}).get()
+	electrons1 = sim.ParticleBinning(1, sum={"x":"all"}).get()
+	ions       = sim.ParticleBinning(2, sum={"x":"all"}).get()
 	
 	fig = None
 	#fig = plt.figure(1)

@@ -7,43 +7,43 @@ L0 = 2.*math.pi # conversion from normalization length to wavelength
 
 
 Main(
-    geometry = "1d3v",
-
-    number_of_patches = [ 16 ],
-
-    interpolation_order = 2,
-
-    timestep = 0.002 * L0,
-    sim_time = 0.5 * L0,
-
-    time_fields_frozen = 100000000000.,
-
-    cell_length = [20.*L0],
-    sim_length = [1600.*L0],
-
-    bc_em_type_x = ["periodic"],
-
-
-    random_seed = 0,
-
-	referenceAngularFrequency_SI = L0 * 3e8 /1.e-6,
-    print_every = 10,
+	geometry = "1Dcartesian",
+	
+	number_of_patches = [ 8 ],
+	
+	interpolation_order = 2,
+	
+	timestep = 0.002 * L0,
+	simulation_time = 0.5 * L0,
+	
+	time_fields_frozen = 100000000000.,
+	
+	cell_length = [20.*L0],
+	grid_length = [1600.*L0],
+	
+	EM_boundary_conditions = [ ["periodic"] ],
+	
+	random_seed = 0,
+	
+	reference_angular_frequency_SI = L0 * 3e8 /1.e-6,
+	print_every = 10,
 )
 
 
 Species(
-	species_type = "electron1",
-	initPosition_type = "regular",
-	initMomentum_type = "rectangular",
-	n_part_per_cell= 20000,
+	name = "electron1",
+	position_initialization = "regular",
+	momentum_initialization = "rectangular",
+	particles_per_cell= 20000,
 	mass = 1.0,
 	charge = -1.0,
 	charge_density = 10.,
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.0002, 0.0, 0.0],
 	time_frozen = 100000000.0,
-	bc_part_type_xmin = "none",
-	bc_part_type_xmax = "none"
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
 )
 
 Collisions(
@@ -66,30 +66,30 @@ DiagScalar(
 )
 
 
-DiagParticles(
-	output = "density",
+DiagParticleBinning(
+	deposited_quantity = "weight",
 	every = 5,
 	species = ["electron1"],
 	axes = [
-		 ["x",    0*L0,    Main.sim_length[0],   10],
+		 ["x",    0*L0,    Main.grid_length[0],   10],
 		 ["vx",  -0.02,  0.02,    1000]
 	]
 )
-DiagParticles(
-	output = "density",
+DiagParticleBinning(
+	deposited_quantity = "weight",
 	every = 5,
 	species = ["electron1"],
 	axes = [
-		 ["x",    0*L0,    Main.sim_length[0],   10],
+		 ["x",    0*L0,    Main.grid_length[0],   10],
 		 ["vy",  -0.02,  0.02,    1000]
 	]
 )
-DiagParticles(
-	output = "density",
+DiagParticleBinning(
+	deposited_quantity = "weight",
 	every = 5,
 	species = ["electron1"],
 	axes = [
-		 ["x",    0*L0,    Main.sim_length[0],   10],
+		 ["x",    0*L0,    Main.grid_length[0],   10],
 		 ["vz",  -0.02,  0.02,    1000]
 	]
 )

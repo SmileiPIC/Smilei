@@ -12,20 +12,22 @@ resx = 28.              # nb of cells in on laser wavelength
 rest = 40.              # time of timestep in one optical cycle 
 
 Main(
-    geometry = "2d3v",
+    geometry = "2Dcartesian",
     
     interpolation_order = 2 ,
     
     cell_length = [l0/resx,l0/resx],
-    sim_length  = Lsim,
+    grid_length  = Lsim,
     
     number_of_patches = [ 8, 4 ],
     
     timestep = t0/rest,
-    sim_time = Tsim,
+    simulation_time = Tsim,
      
-    bc_em_type_x = ['silver-muller'],
-    bc_em_type_y = ['silver-muller'],
+    EM_boundary_conditions = [
+        ['silver-muller'],
+        ['silver-muller'],
+    ],
     
     random_seed = smilei_mpi_rank
 )
@@ -52,15 +54,17 @@ DiagFields(
 DiagProbe(
     every = 100,
     number = [100, 100],
-    pos = [0., 10.*l0],
-    pos_first = [20.*l0, 0.*l0],
-    pos_second = [3.*l0 , 40.*l0],
+    origin = [0., 10.*l0],
+    corners = [
+        [20.*l0, 0.*l0],
+        [3.*l0 , 40.*l0],
+    ],
     fields = []
 )
 
 DiagProbe(
     every = 10,
-    pos = [0.1*Lsim[0], 0.5*Lsim[1]],
+    origin = [0.1*Lsim[0], 0.5*Lsim[1]],
     fields = []
 )
 

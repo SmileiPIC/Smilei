@@ -61,11 +61,11 @@ void Patch1D::initStep2(Params& params, DomainDecomposition* domain_decompositio
     
     // 1st direction
     xcall[0] = Pcoordinates[0]-1;
-    if (params.bc_em_type_x[0]=="periodic" && xcall[0] < 0)
+    if (params.EM_BCs[0][0]=="periodic" && xcall[0] < 0)
         xcall[0] += domain_decomposition->ndomain_[0];
     neighbor_[0][0] = domain_decomposition->getDomainId( xcall );
     xcall[0] = Pcoordinates[0]+1;
-    if (params.bc_em_type_x[0]=="periodic" && xcall[0] >= domain_decomposition->ndomain_[0])
+    if (params.EM_BCs[0][0]=="periodic" && xcall[0] >= domain_decomposition->ndomain_[0])
         xcall[0] -= domain_decomposition->ndomain_[0];
     neighbor_[0][1] = domain_decomposition->getDomainId( xcall );
     

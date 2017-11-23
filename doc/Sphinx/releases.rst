@@ -4,27 +4,47 @@ Releases
 Major releases are available here as well as on the
 `GitHub page <https://github.com/SmileiPIC/Smilei>`_.
 We greatly appreciate external users trying this code and giving feedback.
+You can submit *issues* when experiencing difficulties,
+or *pull requests* for your changes to become part of the official releases.
 
-You can :doc:`contact us <partners>` to become a developer of the official releases:
-the `developer's Gitlab repository <https://llrgit.in2p3.fr/smilei/smilei>`_ is used
-for development, and you will need to ask for a password first,
-but the process is fast and straightforward.
+Note that most of the development of the code is currently hosted in
+a `different repository <https://llrgit.in2p3.fr/smilei/smilei>`_
+reserved for the :doc:`partners`. It is regularly synchronized with
+the GitHub page.
+
+.. warning::
+  
+  In v3.3, :doc:`significant changes<syntax_changes>` have been made to the input syntax.
 
 ----
 
 Upcoming changes
 ^^^^^^^^^^^^^^^^
 
-* Monte Carlo QED photon emission
 * Moving window along y and z
 * Tracking particles in *Screens*
+* Vectorization
 
 ----
 
 .. _latestVersion:
 
-Current release 3.2
+Current release 3.3
 ^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v3.3 <_downloads/smilei-v3.3.tar.gz>`_
+
+* **Major** :doc:`syntax changes<syntax_changes>` in the namelist
+* QED radiation reaction
+* Monte-Carlo QED photon emission
+* *Test mode* to quickly check the namelist consistency
+* *ParticleBinning* and *Screen* diagnostics accept a python function as their ``deposited_quantity`` and ``axis``.
+* Bugfixes: 4th order, field ionization
+
+----
+
+Release 3.2
+^^^^^^^^^^^
 
 **Download**: `Smilei v3.2 <_downloads/smilei-v3.2.tar.gz>`_
 
@@ -80,7 +100,7 @@ Release 2.3
 
 ----
 
-Release 2.0
+Release 2.2
 ^^^^^^^^^^^
 
 **Download**: `Smilei v2.2 <_downloads/smilei-v2.2.tar.gz>`_

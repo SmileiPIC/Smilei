@@ -1,0 +1,2 @@
+CXXFLAGS += -xMIC-AVX512 -qopt-report=5
+

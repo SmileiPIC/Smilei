@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <iomanip>
 #include <unistd.h>
+#include <sstream>
 
 void Tools::printMemFootPrint(std::string tag) {
 
@@ -38,3 +39,38 @@ void Tools::printMemFootPrint(std::string tag) {
 
 }
 
+
+std::string Tools::printBytes(uint64_t nbytes) {
+    std::ostringstream t("");
+    if( nbytes < 1024 ) {
+        t << nbytes << " bytes";
+    } else {
+        double nb = nbytes;
+        if( nbytes < 1048576 ) {
+            t << std::fixed << std::setprecision(2) << (nb/1024.) << " K";
+        } else if( nbytes < 1073741824 ) {
+            t << std::fixed << std::setprecision(2) << (nb/1048576.) << " M";
+        } else if( nbytes < 1099511627776 ) {
+            t << std::fixed << std::setprecision(2) << (nb/1073741824.) << " G";
+        } else {
+            t << std::fixed << std::setprecision(2) << (nb/1099511627776.) << " T";
+        }
+    }
+    return t.str();
+}
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! This function returns true/flase whether the file exists or not
+//! \param file file name to test
+// ---------------------------------------------------------------------------------------------------------------------
+bool Tools::file_exists( const std::string & filename )  
+{  
+    std::ifstream file( filename.c_str() );  
+    return !file.fail();  
+}
+
+
+
+
+std::string Tools::xyz = "XYZ";

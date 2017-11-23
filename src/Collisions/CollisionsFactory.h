@@ -161,7 +161,7 @@ public:
                 ionizing,
                 tracked_electrons,
                 params.nDim_particle,
-                params.referenceAngularFrequency_SI,
+                params.reference_angular_frequency_SI,
                 filename
         );
     }
@@ -173,11 +173,11 @@ public:
         std::vector<Collisions*> vecCollisions;
         bool debye_length_required = false;
         
-        // Needs referenceAngularFrequency_SI to be defined
+        // Needs reference_angular_frequency_SI to be defined
         unsigned int numcollisions=PyTools::nComponents("Collisions");
         if (numcollisions > 0)
-            if (params.referenceAngularFrequency_SI <= 0.)
-                ERROR("The parameter `referenceAngularFrequency_SI` needs to be defined and positive to compute collisions");
+            if (params.reference_angular_frequency_SI <= 0.)
+                ERROR("The parameter `reference_angular_frequency_SI` needs to be defined and positive to compute collisions");
         
         // Loop over each binary collisions group and parse info
         for (unsigned int n_collisions = 0; n_collisions < numcollisions; n_collisions++) {

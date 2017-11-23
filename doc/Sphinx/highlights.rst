@@ -114,9 +114,11 @@ Brillouin amplification
 
 Coupling, in a plasma, a long energetic "pump" pulse of moderate intensity to
 a short counter-propagating "seed" pulse of initially low intensity can transfer energy
-from the pump to the seed thanks to the excitation of a plasma wave [Forslund1975]_.
-Here, we look specifically at the stimulated Brillouin scattering (SBS) amplification,
-where the excited waves are ion-acoustic waves.
+from the pump to the seed thanks to the excitation of a plasma or ion-acoustic wave.
+
+Here, we look specifically at
+the `stimulated Brillouin scattering <http://aip.scitation.org/doi/abs/10.1063/1.861248>`_
+(SBS) amplification, where the excited waves are ion-acoustic waves.
 
 A pump with intensity :math:`10^{15}` W/cm² (wavelength 1 µm)
 correspond to the "strong-coupling" regime, particularly robust with respect to
@@ -151,8 +153,9 @@ momentum and energy from the solar wind to the internal magnetosphere.
 The solar wind plasma temperature is typically one tenth that of the magnetospheric plasma,
 but its density is about ten times larger, and its magnetic field 2-3 times smaller.
 This asymmetry makes the reconnection dynamics vastly more complex than in symmetric
-environments, and has only been studied for a decade via numerical simulations and
-spacecraft observations [Hesse2013]_.
+environments, and has only been studied for a decade
+via `numerical simulations <http://dx.doi.org/10.1063/1.4811467>`_
+and spacecraft observations.
 
 Studying the impact of a plasmaspheric plume on magnetopause reconnection
 via kinetic numerical simulation is difficult. The simulation first needs

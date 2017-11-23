@@ -40,6 +40,9 @@ public :
             + 10*sizeof(double)
         );
     }
+    
+    //! Get disk footprint of current diagnostic
+    uint64_t getDiskFootPrint(int istart, int istop, Patch* patch) override;
 
 private :
     
@@ -55,8 +58,11 @@ private :
     //! Number of points in each dimension
     std::vector<unsigned int> vecNumber; 
     
-    //! List of the coordinates of the probe vertices
-    std::vector< std::vector<double> > allPos;
+    //! Coordinates of the probe grid origin
+    std::vector<double> origin;
+    
+    //! List of the coordinates of the probe corners
+    std::vector< std::vector<double> > corners;
     
     //! Matrix containing the probe's coordinate system
     std::vector<double> axes;

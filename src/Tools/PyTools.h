@@ -280,7 +280,7 @@ public:
         return PyTools::convert(py_val,val);
     }
     
-    //! extract vectors
+    //! extract vector
     template< typename T>
     static bool extract(std::string name, std::vector<T> &val, std::string component=std::string(""), int nComponent=0) {
         std::vector<PyObject*> py_val = extract_pyVec(name,component,nComponent);
@@ -289,27 +289,44 @@ public:
         return false;
     }
     
+    //! extract vector of vectors
+    template< typename T>
+    static bool extract(std::string name, std::vector<std::vector<T> > &val, std::string component=std::string(""), int nComponent=0) {
+        std::vector<PyObject*> py_val = extract_pyVec(name,component,nComponent);
+        if( py_val.size() == 0 )
+            return false;
+        val.resize(0);
+        for( unsigned int i=0; i<py_val.size(); i++ ) {
+            std::vector<T> vec;
+            if( ! convert(py_val[i], vec) )
+                ERROR( name << " should be a list of lists");
+            val.push_back( vec );
+        }
+        return true;
+    }
+    
     //! retrieve python object
     static PyObject* extract_py(std::string name, std::string component=std::string(""), int nComponent=0) {
         if (name.find(" ")!= std::string::npos || component.find(" ")!= std::string::npos) {
             WARNING("asking for [" << name << "] [" << component << "] : it has whitespace inside: please fix the code");
         }
         if (!Py_IsInitialized()) ERROR("Python not initialized: this should not happen");
-        PyObject *py_obj=PyImport_AddModule("__main__");
+        PyObject * py_obj = PyImport_AddModule("__main__");
         // If component requested
         if (!component.empty()) {
             // Get the selected component (e.g. "Species" or "Laser")
-            py_obj = PyObject_GetAttrString(py_obj,component.c_str());
+            PyObject * py_component = PyObject_GetAttrString(py_obj, component.c_str());
             PyTools::checkPyError();
             // Error if not found
-            if (!py_obj) ERROR("Component "<<component<<" not found in namelist");
+            if (!py_component) ERROR("Component "<<component<<" not found in namelist");
             // If successfully found
-            int len = PyObject_Length(py_obj);
+            int len = PyObject_Length(py_component);
             if (len > nComponent) {
-                py_obj = PySequence_GetItem(py_obj, nComponent);
+                py_obj = PySequence_GetItem(py_component, nComponent);
             } else {
                 ERROR("Requested " << component << " #" <<nComponent<< ", but only "<<len<<" available");
             }
+            Py_DECREF(py_component);
         }
         PyObject *py_return=PyObject_GetAttrString(py_obj,name.c_str());
         PyTools::checkPyError();
@@ -450,6 +467,38 @@ public:
         return str;
     }
     
+    // Set a python variable to itime so that it can be accessed at run-time
+    inline static void setIteration( int itime ) {
+        PyObject* Main = PyObject_GetAttrString(PyImport_AddModule("__main__"),"Main");
+        PyObject* iteration = PyLong_FromLong(itime);
+        PyObject_SetAttrString(Main, "iteration", iteration);
+        Py_DECREF(iteration);
+        Py_DECREF(Main);
+    }
+    
+    // Test whether a python object is a function
+    // Return the number of arguments, or -1 if failure
+    static int function_nargs(PyObject* obj) {
+        if( ! PyCallable_Check(obj) )
+            return -1;
+        // Try to get the number of arguments of the function
+        int n_arg = -1;
+        PyObject *code=NULL, *argcount=NULL;
+        try {
+            code = PyObject_GetAttrString( obj, "__code__" );
+            argcount = PyObject_GetAttrString( code, "co_argcount" );
+            n_arg = PyLong_AsLong( argcount );
+            Py_DECREF(argcount);
+            argcount = NULL;
+            Py_DECREF(code);
+            code = NULL;
+        } catch (...) {
+            if( argcount ) Py_DECREF(argcount);
+            if( code     ) Py_DECREF(code);
+            return -1;
+        }
+        return n_arg;
+    }
 };
 
 #endif

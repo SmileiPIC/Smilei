@@ -27,21 +27,19 @@ def n0_(x,y,z):
 
 
 Main(
-    geometry = "3d3v",
+    geometry = "3Dcartesian",
     
     interpolation_order = 2,
     
     timestep = dt,
-    sim_time = Tsim,
+    simulation_time = Tsim,
     
     cell_length  = [dx,dy,dz],
-    sim_length = [Lx,Ly,Lz],
+    grid_length = [Lx,Ly,Lz],
     
     number_of_patches = [4,4,4],
     
-    bc_em_type_x = ["periodic"],
-    bc_em_type_y = ["periodic"],
-    bc_em_type_z = ["periodic"],
+    EM_boundary_conditions = [ ["periodic"] ],
     
     print_every = 1,
 
@@ -51,51 +49,49 @@ Main(
 
 LoadBalancing(
     every = 20,
-    coef_cell = 1.,
-    coef_frozen = 0.1
+    cell_load = 1.,
+    frozen_particle_load = 0.1
 )
 
 
 Species(
-    species_type = "proton",
-    initPosition_type = "regular",
-    initMomentum_type = "mj",
-    n_part_per_cell = 8, 
+    name = "proton",
+    position_initialization = "regular",
+    momentum_initialization = "mj",
+    particles_per_cell = 8, 
     c_part_max = 1.0,
     mass = 1836.0,
     charge = 1.0,
     charge_density = n0_,
     mean_velocity = [0., 0.0, 0.0],
     temperature = [T],
-    dynamics_type = "norm",
-    bc_part_type_xmin  = "none",
-    bc_part_type_xmax  = "none",
-    bc_part_type_ymin = "none",
-    bc_part_type_ymax = "none",
-    bc_part_type_zmin = "none",
-    bc_part_type_zmax = "none"
+    pusher = "boris",
+    boundary_conditions = [
+    	["periodic", "periodic"],
+    	["periodic", "periodic"],
+    	["periodic", "periodic"],
+    ],
 )
 Species(
-    species_type = "electron",
-    initPosition_type = "regular",
-    initMomentum_type = "mj",
-    n_part_per_cell = 8, 
+    name = "electron",
+    position_initialization = "regular",
+    momentum_initialization = "mj",
+    particles_per_cell = 8, 
     c_part_max = 1.0,
     mass = 1.0,
     charge = -1.0,
     charge_density = n0_,
     mean_velocity = [0., 0.0, 0.0],
     temperature = [T],
-    dynamics_type = "norm",
-    bc_part_type_xmin  = "none",
-    bc_part_type_xmax  = "none",
-    bc_part_type_ymin = "none",
-    bc_part_type_ymax = "none",
-    bc_part_type_zmin = "none",
-    bc_part_type_zmax = "none"
+    pusher = "boris",
+    boundary_conditions = [
+    	["periodic", "periodic"],
+    	["periodic", "periodic"],
+    	["periodic", "periodic"],
+    ],
 )
 
-DumpRestart(
+Checkpoints(
     dump_step = 0,
     dump_minutes = 0.0,
     exit_after_dump = False,
@@ -113,7 +109,7 @@ for direction in ["forward", "backward", "both", "canceling"]:
 	    point = [0., Ly/2., Lz/2.],
 	    vector = [Lx*0.9, 0.1, 0.1],
 	    direction = direction,
-	    output = "density",
+	    deposited_quantity = "weight",
 	    species = ["electron"],
 	    axes = [
 	    	["theta", 0, math.pi, 10],
@@ -127,7 +123,7 @@ for direction in ["forward", "backward", "both", "canceling"]:
 	    point = [Lx*0.9, Ly/2., Lz/2.],
 	    vector = [1., 0.1, 0.1],
 	    direction = direction,
-	    output = "density",
+	    deposited_quantity = "weight",
 	    species = ["electron"],
 	    axes = [
 	    	["a", -Ly/2., Ly/2., 10],
