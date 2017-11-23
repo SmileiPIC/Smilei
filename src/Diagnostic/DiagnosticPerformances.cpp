@@ -170,7 +170,7 @@ void DiagnosticPerformances::run( SmileiMPI* smpi, VectorPatch& vecPatches, int 
         // Specific for diags timer because we are within a diag
         double timer_diags = MPI_Wtime() - timers.diags.last_start_ + timers.diags.time_acc_;
         writeQuantity( timer_diags, "timer_diags", iteration_group_id, plist_id);
-        //
+        
         H5Pclose(plist_id);
         H5Gclose(iteration_group_id);
         
@@ -199,6 +199,8 @@ void DiagnosticPerformances::writeQuantity( unsigned int quantity, const char* n
 uint64_t DiagnosticPerformances::getDiskFootPrint(int istart, int istop, Patch* patch)
 {
     uint64_t footprint = 0;
+    unsigned int ntimers = 11;
+    unsigned int nother = 4;
     
     // Calculate the number of dumps between istart and istop
     uint64_t ndumps = timeSelection->howManyTimesBefore(istop) - timeSelection->howManyTimesBefore(istart);
@@ -207,11 +209,12 @@ uint64_t DiagnosticPerformances::getDiskFootPrint(int istart, int istop, Patch* 
     footprint += 1000;
     
     // Add necessary timestep headers approximately
-    footprint += ndumps * 500;
+    footprint += ndumps * 800;
+    
+    // Add necessary dataset headers approximately
+    footprint += ndumps * (ntimers + nother) * 350;
     
     // Add size of each dump
-    unsigned int ntimers = 11;
-    unsigned int nother = 4;
     footprint += ndumps * (uint64_t)(mpi_size) * (uint64_t)(ntimers * sizeof(double) + nother * sizeof(unsigned int));
     
     return footprint;
