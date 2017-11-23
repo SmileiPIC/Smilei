@@ -689,7 +689,7 @@ void Params::print_parallelism_params(SmileiMPI* smpi)
 //    {
 //        nthds = omp_get_num_threads();
 //    }
-        MESSAGE(1,"Number of thread per MPI process : " << omp_get_max_threads() );
+        MESSAGE(1,"Number of thread per MPI process : " << smpi->getOMPMaxThreads() );
 #else
         MESSAGE("Disabled");
 #endif
