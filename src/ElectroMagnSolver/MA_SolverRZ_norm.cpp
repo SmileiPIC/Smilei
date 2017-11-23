@@ -65,7 +65,7 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
                 -                  dt_ov_dr * ( (*BlRZ)(i,j+1) - (*BlRZ)(i,j) );
         }
     }
-	if (Ymin){
+	if (min_max==2 && patch->isMin()){
 		if (imode==0){
 			for (unsigned int i=0 ; i<nl_p ; i++) {
 				(*EtRZ)(i,0)=0;
@@ -73,18 +73,18 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
 			for (unsigned int i=0 ; i<nl_p ; i++) {
 				(*ErRZ)(i,0)= -(*ErRZ)(i,1);
 			}
-			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
+			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*ElRZ)(i,0)+= 4*dt_ov_dr*(*BtRZ)(i,1)+dt*(*JtRZ)(i,0);
 			}
 		}
 		if (imode==1){
-			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
+			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*ElRZ)(i,0)= 0;
 			}
 			for (unsigned int i=0 ; i<nl_p ; i++) {
 				(*ErRZ)(i,0)= (*ErRZ)(i,1);
 			}
-			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
+			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*EtRZ)(i,0)= (*EtRZ)(i,1);
 			}	
 		}
