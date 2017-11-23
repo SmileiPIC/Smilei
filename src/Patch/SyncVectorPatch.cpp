@@ -151,9 +151,12 @@ void SyncVectorPatch::exchangeB( VectorPatch& vecPatches )
         SyncVectorPatch::new_exchange1( vecPatches.Bs1, vecPatches );
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==3 ) {
-        SyncVectorPatch::new_exchange0( vecPatches.Bs0, vecPatches );
-        SyncVectorPatch::new_exchange1( vecPatches.Bs1, vecPatches );
-        SyncVectorPatch::new_exchange2( vecPatches.Bs2, vecPatches );
+        //SyncVectorPatch::new_exchange0( vecPatches.Bs0, vecPatches );
+        //SyncVectorPatch::new_exchange1( vecPatches.Bs1, vecPatches );
+        //SyncVectorPatch::new_exchange2( vecPatches.Bs2, vecPatches );
+        SyncVectorPatch::exchange( vecPatches.listBx_, vecPatches );
+        SyncVectorPatch::exchange( vecPatches.listBy_, vecPatches );
+        SyncVectorPatch::exchange( vecPatches.listBz_, vecPatches );
     }
 
 }
@@ -185,9 +188,12 @@ void SyncVectorPatch::finalizeexchangeB( VectorPatch& vecPatches )
         SyncVectorPatch::new_finalizeexchange1( vecPatches.Bs1, vecPatches );
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==3 ) {
-        SyncVectorPatch::new_finalizeexchange0( vecPatches.Bs0, vecPatches );
-        SyncVectorPatch::new_finalizeexchange1( vecPatches.Bs1, vecPatches );
-        SyncVectorPatch::new_finalizeexchange2( vecPatches.Bs2, vecPatches );
+        //SyncVectorPatch::new_finalizeexchange0( vecPatches.Bs0, vecPatches );
+        //SyncVectorPatch::new_finalizeexchange1( vecPatches.Bs1, vecPatches );
+        //SyncVectorPatch::new_finalizeexchange2( vecPatches.Bs2, vecPatches );
+        SyncVectorPatch::finalizeexchange( vecPatches.listBx_, vecPatches );
+        SyncVectorPatch::finalizeexchange( vecPatches.listBy_, vecPatches );
+        SyncVectorPatch::finalizeexchange( vecPatches.listBz_, vecPatches );
     }
 
 }
