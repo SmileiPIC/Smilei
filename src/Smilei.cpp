@@ -275,7 +275,6 @@ int main (int argc, char* argv[])
             // (1) interpolate the fields at the particle position
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
-            if(params.is_pxr) vecPatches.save_old_rho(params);
             vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
                                 MultiphotonBreitWheelerTables,
                                 time_dual, timers, itime);
@@ -310,6 +309,7 @@ int main (int argc, char* argv[])
             //}
 
             // call the various diagnostics
+            if(params.is_spectral) vecPatches.save_old_rho(params);
             vecPatches.runAllDiags(params, &smpi, itime, timers, simWindow);
 
             timers.movWindow.restart();
