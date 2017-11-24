@@ -6,6 +6,8 @@
 #include "DiagnosticFields1D.h"
 #include "DiagnosticCartFields2D.h"
 #include "DiagnosticCartFields3D.h"
+#include "ElectroMagn.h"
+#include "Solver.h"
 
 #include "Params.h"
 #include "OpenPMDparams.h"
@@ -75,12 +77,14 @@ void Domain::build( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, Op
     //    diag_->run( smpi, vecPatch_, 0, simWindow );
 
 */
-std::cout<<"aarrive ici \n";
+/*std::cout<<"aarrive ici \n";
     if(params.is_pxr == true){
 	std::cout<<"coco \n";
         init_pxr(params);
     }
-
+*/
+    if (params.is_pxr)
+        vecPatch_(0)->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatch_(0)->EMfields ); 
 }
 
 Domain::~Domain()
@@ -105,11 +109,13 @@ void Domain::solveMaxwell( Params& params, SimWindow* simWindow, int itime, doub
             vecPatch_.solveMaxwell( params, simWindow, itime, time_dual, timers );
         }
         if(params.is_pxr == true) {
-            vecPatch_.solveMaxwell_fdtd_pxr(params,simWindow,itime,time_dual,timers);
+            //vecPatch_.solveMaxwell_fdtd_pxr(params,simWindow,itime,time_dual,timers);
+            vecPatch_.solveMaxwell( params, simWindow, itime, time_dual, timers );
         }
     }
     else{
-        vecPatch_.solveMaxwell_Spectral(params,simWindow,itime,time_dual,timers);
+        //vecPatch_.solveMaxwell_Spectral(params,simWindow,itime,time_dual,timers);
+        vecPatch_.solveMaxwell( params, simWindow, itime, time_dual, timers );
     }
 
 }
