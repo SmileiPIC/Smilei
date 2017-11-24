@@ -5,7 +5,7 @@ stages:
 compile:
   stage: compile
   only:
-    - develop_fred
+    - develop
 
   script:
     # Force workdir cleaning in case of retried
@@ -29,7 +29,7 @@ compile:
 makerun1D:
   stage: makerun
   only:
-    - develop_fred
+    - develop
 
   script:
     # Move in test dir
@@ -40,7 +40,7 @@ makerun1D:
 makerun2D:
   stage: makerun
   only:
-    - develop_fred
+    - develop
 
   script:
     # Move in test dir
@@ -51,7 +51,7 @@ makerun2D:
 makerun3D:
   stage: makerun
   only:
-    - develop_fred
+    - develop
 
   script:
     # Move in test dir
@@ -62,7 +62,7 @@ makerun3D:
 makerunCollisions:
   stage: makerun
   only:
-    - develop_fred
+    - develop
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
