@@ -110,5 +110,5 @@ print(" ---------------------------------------------------")
 for itimestep,timestep in enumerate(range(0,5000,500)):
 	print(" Iteration {0:5d}  | {1:.5f} | {2:.5f} |".format(timestep,chi_ave[itimestep,0],chi_ave[itimestep,1]))
 
-Validate("Maximal quantum parameter",chi_max,0.05)
-Validate("Average quantum parameter",chi_ave,0.05)
+Validate("Maximal quantum parameter",chi_max,0.08)
+Validate("Average quantum parameter",chi_ave,0.08)
