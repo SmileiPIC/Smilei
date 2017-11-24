@@ -38,8 +38,8 @@ VectorPatch::VectorPatch( Params& params )
 
 VectorPatch::~VectorPatch()
 {
-    if ( domain_decomposition_ != NULL )
-        delete domain_decomposition_;
+    //if ( domain_decomposition_ != NULL )
+    //    delete domain_decomposition_;
 }
 
 
