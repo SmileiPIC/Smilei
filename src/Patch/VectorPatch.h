@@ -115,10 +115,6 @@ public :
     //! For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
     void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual,
                       Timers & timers);
-    void solveMaxwell_Spectral(Params& params, SimWindow* simWindow, int itime, double time_dual,
-                      Timers & timers);
-    void solveMaxwell_fdtd_pxr(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers);
-
     
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
     void runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itime, Timers & timers, SimWindow* simWindow);

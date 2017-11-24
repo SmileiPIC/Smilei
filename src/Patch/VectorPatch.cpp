@@ -277,9 +277,11 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-        // Saving magnetic fields (to compute centered fields used in the particle pusher)
-        // Stores B at time n in B_m.
-        (*this)(ipatch)->EMfields->saveMagneticFields();
+        if (!params.is_spectral) {
+            // Saving magnetic fields (to compute centered fields used in the particle pusher)
+            // Stores B at time n in B_m.
+            (*this)(ipatch)->EMfields->saveMagneticFields();
+        }
         // Computes Ex_, Ey_, Ez_ on all points.
         // E is already synchronized because J has been synchronized before.
         (*(*this)(ipatch)->EMfields->MaxwellAmpereSolver_)((*this)(ipatch)->EMfields);
@@ -292,11 +294,15 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
     timers.maxwell.update( params.printNow( itime ) );
 
     timers.syncField.restart();
+    if (params.is_spectral)
+        SyncVectorPatch::exchangeE( (*this) );
     SyncVectorPatch::exchangeB( (*this) );
     timers.syncField.update(  params.printNow( itime ) );
 
     if ( (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
         timers.syncField.restart();
+        if (params.is_spectral)
+            SyncVectorPatch::finalizeexchangeE( (*this) );
         SyncVectorPatch::finalizeexchangeB( (*this) );
         timers.syncField.update(  params.printNow( itime ) );
 
@@ -305,7 +311,10 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
             // Applies boundary conditions on B
             (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
             // Computes B at time n using B and B_m.
-            (*this)(ipatch)->EMfields->centerMagneticFields();
+            if (!params.is_spectral)
+                (*this)(ipatch)->EMfields->centerMagneticFields();
+            else
+                (*this)(ipatch)->EMfields->saveMagneticFields();
         }
     }
 
@@ -313,113 +322,6 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 } // END solveMaxwell
 
 
-
-void VectorPatch::solveMaxwell_fdtd_pxr(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers)
-{
-    timers.maxwell.restart();
-    
-    for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_passes ; ipassfilter++){
-        #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-            // Current spatial filtering
-            (*this)(ipatch)->EMfields->binomialCurrentFilter();
-        }
-        SyncVectorPatch::exchangeJ( (*this) );
-        SyncVectorPatch::finalizeexchangeJ( (*this) );
-    }
-
-    #pragma omp for schedule(static)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-        // Saving magnetic fields (to compute centered fields used in the particle pusher)
-        // Stores B at time n in B_m.
-        (*this)(ipatch)->EMfields->saveMagneticFields();
-        // Computes Ex_, Ey_, Ez_ on all points.
-        // E is already synchronized because J has been synchronized before.
-        duplicate_field_into_pxr((*this)(ipatch)->EMfields);
-	solve_maxwell_fdtd_pxr();
-        duplicate_field_into_smilei((*this)(ipatch)->EMfields);
-    }
-    
-    //Synchronize B fields between patches.
-    timers.maxwell.update( params.printNow( itime ) );
-    
-    timers.syncField.restart();
-    SyncVectorPatch::exchangeB( (*this) );
-    timers.syncField.update(  params.printNow( itime ) );
-
-    if ( (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
-        timers.syncField.restart();
-        SyncVectorPatch::finalizeexchangeB( (*this) );
-        timers.syncField.update(  params.printNow( itime ) );
-
-        #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-            // Applies boundary conditions on B
-            (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
-            // Computes B at time n using B and B_m.
-            (*this)(ipatch)->EMfields->centerMagneticFields();
-        }
-    }
-
-
-} // END solveMaxwell
-
-
-
-void VectorPatch::solveMaxwell_Spectral( Params& params,SimWindow* simWindow, int itime, double time_dual,Timers &timers){
-  //  this->sumDensities(params,time_dual, timers,itime,simWindow);
-    timers.maxwell.restart();
-
-    for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_passes ; ipassfilter++){
-        #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-            // Current spatial filtering
-            (*this)(ipatch)->EMfields->binomialCurrentFilter();
-        }
-        SyncVectorPatch::exchangeJ( (*this) );
-        SyncVectorPatch::finalizeexchangeJ( (*this) );
-    }
-
-    #pragma omp for schedule(static)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-        // Saving magnetic fields (to compute centered fields used in the particle pusher)
-        // Stores B at time n in B_m.
-        duplicate_field_into_pxr((*this)(ipatch)->EMfields);
-        if(params.nDim_field == 3){   
-          push_psatd_ebfield_3d_();
-        }
-        if(params.nDim_field == 2){
-          push_psatd_ebfield_2d_();
-        }
-        duplicate_field_into_smilei((*this)(ipatch)->EMfields);
-
-        //(*this)(ipatch)->EMfields->saveMagneticFields(); //in order to avoid recentering B
-    }
-
-    //Synchronize B fields between patches.
-    timers.maxwell.update( params.printNow( itime ) );
-    
-    timers.syncField.restart();
-    SyncVectorPatch::exchangeB( (*this) );
-    SyncVectorPatch::exchangeE((*this));
-    timers.syncField.update(  params.printNow( itime ) );
-
-    if ( (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
-        timers.syncField.restart();
-        SyncVectorPatch::finalizeexchangeB( (*this) );
-	SyncVectorPatch::finalizeexchangeE((*this));
-        timers.syncField.update(  params.printNow( itime ) );
-
-        #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-            // Applies boundary conditions on B
-            (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
-            // Computes B at time n using B and B_m.
-            (*this)(ipatch)->EMfields->saveMagneticFields();
-           // (*this)(ipatch)->EMfields->centerMagneticFields();
-        }
-    }
-}
 void VectorPatch::initExternals(Params& params)
 {
     // Init all lasers
