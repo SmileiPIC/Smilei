@@ -51,7 +51,11 @@ nrj_new_fields (  0.               )
     emBoundCond = ElectroMagnBC_Factory::create(params, patch);
     
     MaxwellAmpereSolver_  = SolverFactory::createMA(params);
+    if (params.is_pxr)
+       MaxwellAmpereSolver_->coupling( params, patch->EMfields ); 
     MaxwellFaradaySolver_ = SolverFactory::createMF(params);
+    if (params.is_pxr)
+       MaxwellFaradaySolver_->coupling( params, patch->EMfields ); 
     
 }
 
@@ -77,7 +81,11 @@ nrj_new_fields ( 0. )
     emBoundCond = ElectroMagnBC_Factory::create(params, patch);
     
     MaxwellAmpereSolver_  = SolverFactory::createMA(params);
+    if (params.is_pxr)
+       MaxwellAmpereSolver_->coupling( params, patch->EMfields ); 
     MaxwellFaradaySolver_ = SolverFactory::createMF(params);
+    if (params.is_pxr)
+       MaxwellFaradaySolver_->coupling( params, patch->EMfields ); 
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

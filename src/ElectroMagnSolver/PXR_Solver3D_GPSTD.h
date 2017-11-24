@@ -14,6 +14,7 @@ public:
     PXR_Solver3D_GPSTD(Params &params);
     virtual ~PXR_Solver3D_GPSTD();
 
+    void coupling( Params &params, ElectroMagn* EMfields ) override;
     //! Overloading of () operator
     virtual void operator()( ElectroMagn* fields);
 

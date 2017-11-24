@@ -16,6 +16,7 @@ public:
     Solver(Params &params) {};
     virtual ~Solver() {};
 
+    virtual void coupling( Params &params, ElectroMagn* EMfields ) {};
     //! Overloading of () operator
     virtual void operator()( ElectroMagn* fields) = 0;
 
