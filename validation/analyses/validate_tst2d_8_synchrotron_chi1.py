@@ -52,18 +52,18 @@ for radiation in radiation_list:
   urad_dict[radiation] = urad
 
 # ______________________________________________________________________________
-# Comparision continuous and discontinuous methods
+# Comparison continuous and discontinuous methods
 
 urad_rel_err = abs(urad_dict["disc"] - urad_dict["cont"]) / urad_dict["cont"].max()
 ukin_rel_err = abs(ukin_dict["disc"] - ukin_dict["cont"]) / ukin_dict["cont"][0]
 
-print(' Comparision continuous/discontinuous methods')
+print(' Comparison continuous/discontinuous methods')
 print(' Maximum relative error kinetic energy: {}'.format(ukin_rel_err.max()))
 print(' Maximum relative error radiative energy: {}'.format(urad_rel_err.max()))
 
 # Validation difference between continuous and discontinuous methods
-Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err.max(), 0.02 )
-Validate("Relative error on the radiative energy / urad max " , urad_rel_err.max(), 0.02 )
+Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err.max(), 0.022 )
+Validate("Relative error on the radiative energy / urad max " , urad_rel_err.max(), 0.022 )
 
 # ______________________________________________________________________________
 # Checking of the particle binning
@@ -111,4 +111,3 @@ for itimestep,timestep in enumerate(range(0,5000,500)):
 
 Validate("Maximal quantum parameter",chi_max,0.05)
 Validate("Average quantum parameter",chi_ave,0.05)
-

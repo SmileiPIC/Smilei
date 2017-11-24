@@ -104,7 +104,7 @@ execfile(SMILEI_SCRIPTS+"Diagnostics.py")
 POINCARE = "poincare"
 JOLLYJUMPER = "llrlsi-gw"
 HOSTNAME = socket.gethostname()
-MPI_DISTRIBUTION = "openmpi"
+MPI_DISTRIBUTION = "default"
 
 # DIR VARIABLES
 WORKDIR = ""
@@ -128,8 +128,8 @@ def usage():
 try:
 	options, remainder = getopt.getopt(
 		sys.argv[1:],
-		'o:m:b:gshvcr:',
-		['OMP=', 'MPI=', 'BENCH=', 'COMPILE_ONLY=', 'GENERATE=', 'HELP=', 'VERBOSE=', 'RESTARTS='])
+		'o:m:b:gshvcrd:',
+		['OMP=', 'MPI=', 'BENCH=', 'COMPILE_ONLY=', 'GENERATE=', 'HELP=', 'VERBOSE=', 'RESTARTS=','MPI_DISTRIBUTION='])
 except getopt.GetoptError as err:
 	usage()
 	sys.exit(4)
@@ -144,6 +144,8 @@ for opt, arg in options:
 		MPI = int(arg)
 	elif opt in ('-b', '--BENCH'):
 		BENCH = arg
+	elif opt in ('-d', '--MPI_DISTRIBUTION'):
+		MPI_DISTRIBUTION = arg
 	elif opt in ('-c', '--COMPILEONLY'):
 		COMPILE_ONLY=True
 	elif opt in ('-h', '--HELP'):
@@ -170,6 +172,13 @@ for opt, arg in options:
 		print "     DEFAULT : 0 (meaning no restarts, only one simulation)"
 		print "-c"
 		print "     Compilation only"
+		print "-d"
+		print "     -d <mpi_distribution>"
+		print "      <mpi_distribution> is the name of the MPI distribution used for compilation and execution:"
+		print "      - default: mpirun -np"
+		print "      - openmpi: mpirun -mca btl tcp,sm,self -np"
+		print "      It enables to tune execution parameters."
+		print "     DEFAULT : default"
 		print "-v"
 		print "     Verbose mode"
 		sys.exit(0)
@@ -404,13 +413,12 @@ else:
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
 	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
 
-        # Mpich
-        if "mpich" in MPI_DISTRIBUTION:
-    	    RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+"mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
+        # OpenMPI
+        if "openmpi" in MPI_DISTRIBUTION:
+            RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; mpirun -mca btl tcp,sm,self -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
         # OpenMPI
         else:
-    	   RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; mpirun -mca btl tcp,sm,self -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
-
+    	    RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+"mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
         RUN = RUN_OTHER
 
 # CLEAN

@@ -53,12 +53,12 @@ for radiation in radiation_list:
   urad_dict[radiation] = urad
 
 # ______________________________________________________________________________
-# Comparision continuous and Niel model
+# Comparison continuous and Niel model
 
 urad_rel_err = abs(urad_dict["Niel"] - urad_dict["Landau_Lifshitz"]) / urad_dict["Landau_Lifshitz"].max()
 ukin_rel_err = abs(ukin_dict["Niel"] - ukin_dict["Landau_Lifshitz"]) / ukin_dict["Landau_Lifshitz"][0]
 
-print ' Comparision Laudau-Lifshitz/Niel methods'
+print ' Comparison Laudau-Lifshitz/Niel methods'
 print ' Maximum relative error kinetic energy',ukin_rel_err.max()
 print ' Maximum relative error radiative energy',urad_rel_err.max()
 
@@ -112,5 +112,3 @@ for itimestep,timestep in enumerate(range(0,5000,500)):
 
 Validate("Maximal quantum parameter",chi_max,0.05)
 Validate("Average quantum parameter",chi_ave,0.05)
-
-
