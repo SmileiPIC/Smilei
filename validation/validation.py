@@ -644,8 +644,14 @@ for BENCH in SMILEI_BENCH_LIST :
 	if nb_restarts > 0:
 		# Load the namelist 
 		namelist = happi.openNamelist(SMILEI_BENCH)
-		# Find out the optimal dump_step
 		niter = namelist.Main.simulation_time / namelist.Main.timestep
+		# If the simulation does not have enough timesteps, change the number of restarts
+		if nb_restarts > niter - 4:
+			nb_restarts = max(0, niter - 4)
+			if VERBOSE :
+				print("Not enough timesteps for restarts. Changed to "+str(nb_restarts)+" restarts")
+	if nb_restarts > 0:
+		# Find out the optimal dump_step
 		dump_step = int( (niter+3.) / (nb_restarts+1) )
 		# Prepare block
 		if len(namelist.Checkpoints) > 0:
@@ -721,11 +727,12 @@ for BENCH in SMILEI_BENCH_LIST :
 				if search_error.search(line):
 					errors += [line]
 		if errors:
-			print( "")
-			print("Errors appeared while running the simulation:")
-			print("---------------------------------------------")
-			for error in errors:
-				print(error)
+			if VERBOSE :
+				print( "")
+				print("Errors appeared while running the simulation:")
+				print("---------------------------------------------")
+				for error in errors:
+					print(error)
 			sys.exit(2)
 	
 	os.chdir(WORKDIR)
