@@ -52,15 +52,20 @@ ifneq ($(strip $(PYTHONHOME)),)
     LDFLAGS += -L$(PYTHONHOME)/lib
 endif 
 
-FFTW3_LIB= $(FFTW_LIB_DIR)
-FFTW3_INCLUDE=$(FFTW_INC_DIR)
-LIBPXR = /gpfsdata/jderouillat/SMILEI/MergeRequest_4
-LDFLAGS += -L$(LIBPXR) -lpxr
-LDFLAGS += -I$(FFTW3_INCLUDE)
-LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi
-LDFLAGS += -L$(FFTW3_LIB) -lfftw3_threads
-LDFLAGS += -L$(FFTW3_LIB) -lfftw3
-LDFLAGS += -lgfortran
+
+PICSAR=TRUE
+ifeq ($(PICSAR),TRUE)
+	CXXFLAGS += -D_PICSAR
+	FFTW3_LIB= $(FFTW_LIB_DIR)
+	#FFTW3_INCLUDE=$(FFTW_INC_DIR)
+	LIBPXR = /gpfsdata/jderouillat/SMILEI/MergeRequest_4
+	LDFLAGS += -L$(LIBPXR) -lpxr
+	#LDFLAGS += -I$(FFTW3_INCLUDE)
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_threads
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3
+	LDFLAGS += -lgfortran
+endif
 
 # Manage options in the "config" parameter
 ifneq (,$(findstring debug,$(config)))
@@ -103,14 +108,15 @@ else
 endif
 
 
-LIBPXR = picsar/lib
-LDFLAGS += -L$(LIBPXR) -lpxr
-
-LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi
-LDFLAGS += -L$(FFTW3_LIB) -lfftw3_threads
-LDFLAGS += -L$(FFTW3_LIB) -lfftw3
-LDFLAGS += -lgfortran
-
+ifeq ($(PICSAR),TRUE)
+	LIBPXR = picsar/lib
+	LDFLAGS += -L$(LIBPXR) -lpxr
+	
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_threads
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3
+	LDFLAGS += -lgfortran
+endif
 
 #-----------------------------------------------------
 # check whether to use a machine specific definitions

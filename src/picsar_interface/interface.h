@@ -23,11 +23,13 @@ extern  "C"
         void push_psatd_ebfield_2d_();
         void solve_maxwell_fdtd_pxr();
 };
+
+}        
+
 void copy_field_3d(Field3D* out, Field3D * in);
 void copy_field_2d(Field2D* out, Field2D * in);
 void duplicate_field_into_pxr(ElectroMagn*);
 void duplicate_field_into_smilei(ElectroMagn*);
 
-}        
 
 #endif

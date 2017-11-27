@@ -46,7 +46,7 @@ void PXR_Solver3D_FDTD::coupling( Params &params, ElectroMagn* EMfields )
     Field3D* rhoold3D_pxr = static_cast<Field3D*>( EMfields->rhoold_pxr);
 
     //call of extern init routine (defined in picsar)
-
+#ifdef _PICSAR
     picsar::init_params_picsar(&n0,&n1,&n2,
                        &params.cell_length[2],&params.cell_length[1],&params.cell_length[0],&params.timestep,
                        &ov0,&ov1,&ov2,
@@ -63,14 +63,23 @@ void PXR_Solver3D_FDTD::coupling( Params &params, ElectroMagn* EMfields )
                        &(Jz3D_pxr->data_[0]),
                        &(rho3D_pxr->data_[0]),
                        &(rhoold3D_pxr->data_[0]),&cdim);
+#else
+    ERROR( "Smilei not linked with picsar" );
+#endif
 
 }
 
 void PXR_Solver3D_FDTD::operator() ( ElectroMagn* fields )
 {
-    picsar::duplicate_field_into_pxr( fields );
+    duplicate_field_into_pxr( fields );
+
+#ifdef _PICSAR
     picsar::solve_maxwell_fdtd_pxr();
-    picsar::duplicate_field_into_smilei( fields );
+#else
+    ERROR( "Smilei not linked with picsar" );
+#endif
+
+    duplicate_field_into_smilei( fields );
 
 }
 
