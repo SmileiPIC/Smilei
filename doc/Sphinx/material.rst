@@ -11,7 +11,7 @@ Publications
    
    J. Derouillat, A. Beck, F. Pérez, T. Vinci, M. Chiaramello, A. Grassi, M. Flé, G. Bouchard, I. Plotnikov, N. Aunai, J. Dargent, C. Riconda, M. Grech,
    `SMILEI: a collaborative, open-source, multi-purpose particle-in-cell code for plasma simulation`,
-   `Comput. Phys. Commun., in press (2017) <https://doi.org/10.1016/j.cpc.2017.09.024>`_, 
+   `Comput. Phys. Commun. 222, 351-373 (2018) <https://doi.org/10.1016/j.cpc.2017.09.024>`_, 
    `arXiv:1702.05128 <https://arxiv.org/abs/1702.05128>`_
 
 .. rst-class:: bigcitation
