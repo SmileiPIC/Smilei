@@ -1,4 +1,4 @@
-        
+
 #include "LaserEnvelope.h"
 
 #include "Params.h"
@@ -18,6 +18,24 @@ cell_length    ( params.cell_length)
         MESSAGE("No envelope profile set !");
     profile_ = new Profile(profile, params.nDim_field, "envelope");
 
+    ostringstream name("");
+    name << "Laser Envelope #" << ienvlaser;
+    ostringstream info("");
+
+    bool  envelope_solver_read;
+    // Read laser envelope parameters
+    envelope_solver_read          = false; // default value
+    std:: string envelope_solver  = "explicit"; // default value
+    envelope_solver_read          = PyTools::extract("envelope_solver",envelope_solver,"LaserEnvelope",ienvlaser);
+
+    // envelope model
+    info << "\t\t\tenvelope solver    : " << envelope_solver << endl;
+
+    // Display info
+    if( patch->isMaster() ) {
+        MESSAGE( info.str() );
+      }
+
 }
 
 
@@ -31,7 +49,7 @@ cell_length    ( envelope->cell_length )
 LaserEnvelope::~LaserEnvelope()
 {
     delete profile_;
-    
+
     delete A0_;
     delete A_;
 }
@@ -49,7 +67,7 @@ LaserEnvelope3D::LaserEnvelope3D( Params& params, Patch* patch )
         dimPrim[i] += 2*params.oversize[i];
     }
 
-    
+
     A_  = new cField3D( dimPrim );
     A0_ = new cField3D( dimPrim );
 
@@ -86,7 +104,7 @@ void LaserEnvelope3D::initEnvelope( Patch* patch )
             pos[1] += cell_length[1];
         }
         pos[0] += cell_length[0];
-    }   
+    }
 }
 
 
@@ -102,13 +120,13 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
     cField3D* A3D = static_cast<cField3D*>(A_);
     cField3D* A03D = static_cast<cField3D*>(A0_);
 
-    // find e_idx in all species  
+    // find e_idx in all species
     int e_idx = 0;
     Field3D* rho_e = static_cast<Field3D*>(EMfields->rho_s[e_idx]);
-    
+
     for (unsigned int i=0 ; i <A_->dims_[0]; i++)
         for (unsigned int j=0 ; j < A_->dims_[1] ; j++)
             for (unsigned int k=0 ; k < A_->dims_[2]; k++)
                 (*A3D)(i,j,k) = (*A03D)(i,j,k);
-           
+
 }

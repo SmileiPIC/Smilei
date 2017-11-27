@@ -581,7 +581,7 @@ def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         phase          = [ lambda y,z:phase(y,z)-phaseZero+dephasing, lambda y,z:phase(y,z)-phaseZero ],
     )
 
-def EnvelopeLaserGaussian3D( a0=1., omega=1., focus=None, waist=3.,
+def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3.,
         envelope_solver = "explicit"):
     import math
 
