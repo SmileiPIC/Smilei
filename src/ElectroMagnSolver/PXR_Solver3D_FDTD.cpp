@@ -47,7 +47,7 @@ void PXR_Solver3D_FDTD::coupling( Params &params, ElectroMagn* EMfields )
 
     //call of extern init routine (defined in picsar)
 
-    init_params_picsar(&n0,&n1,&n2,
+    picsar::init_params_picsar(&n0,&n1,&n2,
                        &params.cell_length[2],&params.cell_length[1],&params.cell_length[0],&params.timestep,
                        &ov0,&ov1,&ov2,
                        &params.norderz,&params.nordery,&params.norderx,
@@ -68,9 +68,9 @@ void PXR_Solver3D_FDTD::coupling( Params &params, ElectroMagn* EMfields )
 
 void PXR_Solver3D_FDTD::operator() ( ElectroMagn* fields )
 {
-    duplicate_field_into_pxr( fields );
-    solve_maxwell_fdtd_pxr();
-    duplicate_field_into_smilei( fields );
+    picsar::duplicate_field_into_pxr( fields );
+    picsar::solve_maxwell_fdtd_pxr();
+    picsar::duplicate_field_into_smilei( fields );
 
 }
 

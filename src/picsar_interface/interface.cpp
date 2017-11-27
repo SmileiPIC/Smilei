@@ -1,6 +1,7 @@
 #include "interface.h"
 
 
+namespace picsar {
 
 void copy_field_3d(Field3D* out, Field3D * in)
 {
@@ -163,3 +164,4 @@ void duplicate_field_into_smilei(ElectroMagn * fields)
     }
 }
 
+}

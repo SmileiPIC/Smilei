@@ -45,7 +45,7 @@ void PXR_Solver2D_GPSTD::coupling( Params &params, ElectroMagn* EMfields )
     Field2D* rho2D_pxr = static_cast<Field2D*>( EMfields->rho_pxr);
     Field2D* rhoold2D_pxr = static_cast<Field2D*>( EMfields->rhoold_pxr);
 
-    init_params_picsar(&n0,&n1,&n2,
+    picsar::init_params_picsar(&n0,&n1,&n2,
                        &params.cell_length[2],&dyy,&params.cell_length[0],&params.timestep,
                        &ov0,&ov1,&ov2,
                        &params.norderz,&ordery,&params.norderx,
@@ -66,9 +66,9 @@ void PXR_Solver2D_GPSTD::coupling( Params &params, ElectroMagn* EMfields )
 
 void PXR_Solver2D_GPSTD::operator() ( ElectroMagn* fields )
 {
-    duplicate_field_into_pxr( fields );
-    push_psatd_ebfield_3d_();
-    duplicate_field_into_smilei( fields );
+    picsar::duplicate_field_into_pxr( fields );
+    picsar::push_psatd_ebfield_3d_();
+    picsar::duplicate_field_into_smilei( fields );
 
 }
 
