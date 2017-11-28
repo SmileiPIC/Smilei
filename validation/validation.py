@@ -136,7 +136,7 @@ def usage():
 try:
 	options, remainder = getopt.getopt(
 		sys.argv[1:],
-		'o:m:b:gshvcrd:',
+		'o:m:b:r:gshvcd:',
 		['OMP=', 'MPI=', 'BENCH=', 'COMPILE_ONLY=', 'GENERATE=', 'HELP=', 'VERBOSE=', 'RESTARTS=','MPI_DISTRIBUTION='])
 except getopt.GetoptError as err:
 	usage()
