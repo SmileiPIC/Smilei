@@ -593,7 +593,7 @@ def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelop
     # Create Laser Envelope
     LaserEnvelope(
         omega               = omega,
-        time_envelope       = time_envelope
+        time_envelope       = time_envelope,
         space_envelope      = [ lambda y,z:a0*spatial(y,z), lambda y,z:a0*spatial(y,z) ],
         envelope_solver     = "explicit",
     )

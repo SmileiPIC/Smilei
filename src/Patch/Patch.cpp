@@ -69,7 +69,7 @@ void Patch::initStep1(Params& params)
     // for nDim_fields = 1 : bug if Pcoordinates.size = 1 !!
     //Pcoordinates.resize(nDim_fields_);
     Pcoordinates.resize( 2 );
-    
+
     // else if ( params.geometry == "2Dcartesian" ) {
     //     Pcoordinates.resize(3);
     //     generalhilbertindexinv(params.mi[0], params.mi[1], params.mi[2], &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
@@ -134,8 +134,11 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
     EMfields   = ElectroMagnFactory::create(params, vecSpecies, this);
 
     // initialize the envelope if used
-    if ( params.ponderomotive_force )
+    int n_envlaser = PyTools::nComponents("LaserEnvelope");
+    if ( n_envlaser ==1 ) // for the moment it works only with one envelope
         envelope = EnvelopeFactory::create(params, this);
+    //if ( params.ponderomotive_force )
+    //    envelope = EnvelopeFactory::create(params, this);
 
     // interpolation operator (virtual)
     Interp     = InterpolatorFactory::create(params, this); // + patchId -> idx_domain_begin (now = ref smpi)
@@ -245,7 +248,7 @@ Patch::~Patch() {
     delete Interp;
 
     if (envelope)
-        delete envelope;   
+        delete envelope;
     delete EMfields;
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();

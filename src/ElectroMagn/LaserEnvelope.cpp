@@ -13,22 +13,34 @@ using namespace std;
 LaserEnvelope::LaserEnvelope( Params& params, Patch* patch ) :
 cell_length    ( params.cell_length)
 {
-    PyObject * profile;
-    if (!PyTools::extract_pyProfile("envelope_profile",profile,"Main"))
-        MESSAGE("No envelope profile set !");
-    profile_ = new Profile(profile, params.nDim_field, "envelope");
+    //PyObject * profile;
+    //if (!PyTools::extract_pyProfile("envelope_profile",profile,"LaserEnvelope"))
+    //    MESSAGE("No envelope profile set !");
+    //profile_ = new Profile(profile, params.nDim_field, "envelope");
 
+    int ienvlaser = 0;
     ostringstream name("");
-    name << "Laser Envelope #" << ienvlaser;
+    name << "Laser Envelope " << endl;
     ostringstream info("");
 
     bool  envelope_solver_read;
     // Read laser envelope parameters
     envelope_solver_read          = false; // default value
     std:: string envelope_solver  = "explicit"; // default value
-    envelope_solver_read          = PyTools::extract("envelope_solver",envelope_solver,"LaserEnvelope",ienvlaser);
+    envelope_solver_read          = PyTools::extract("envelope_solver",envelope_solver,"LaserEnvelope");
 
-    // envelope model
+    PyObject *time_profile=nullptr;
+    vector<PyObject*>  space_profile;
+    bool time, space, omega;
+    double omega_value(0);
+
+    omega      = PyTools::extract("omega",omega_value,"LaserEnvelope",ienvlaser);
+    time       = PyTools::extract_pyProfile("time_envelope" , time_profile , "LaserEnvelope",ienvlaser);
+    space      = PyTools::extract2Profiles ("space_envelope", ienvlaser, space_profile     );
+
+    // omega
+    info << "\t\t\tomega              : " << omega_value << endl;
+    // envelope solver
     info << "\t\t\tenvelope solver    : " << envelope_solver << endl;
 
     // Display info
