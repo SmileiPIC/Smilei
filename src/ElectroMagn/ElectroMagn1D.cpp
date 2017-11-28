@@ -29,10 +29,10 @@ ElectroMagn1D::ElectroMagn1D(Params &params, vector<Species*>& vecSpecies, Patch
     
     // Charge and current densities for each species
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Jx_s[ispec]  = new Field1D(("Jx_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
-        Jy_s[ispec]  = new Field1D(("Jy_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
-        Jz_s[ispec]  = new Field1D(("Jz_" +vecSpecies[ispec]->species_type).c_str(), dimPrim);
-        rho_s[ispec] = new Field1D(("Rho_"+vecSpecies[ispec]->species_type).c_str(), dimPrim);
+        Jx_s[ispec]  = new Field1D(("Jx_" +vecSpecies[ispec]->name).c_str(), dimPrim);
+        Jy_s[ispec]  = new Field1D(("Jy_" +vecSpecies[ispec]->name).c_str(), dimPrim);
+        Jz_s[ispec]  = new Field1D(("Jz_" +vecSpecies[ispec]->name).c_str(), dimPrim);
+        rho_s[ispec] = new Field1D(("Rho_"+vecSpecies[ispec]->name).c_str(), dimPrim);
     }
     
 }//END constructor Electromagn1D

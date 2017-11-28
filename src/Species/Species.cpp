@@ -14,6 +14,7 @@
 #include "PusherFactory.h"
 #include "IonizationFactory.h"
 #include "RadiationFactory.h"
+#include "MultiphotonBreitWheelerFactory.h"
 #include "PartBoundCond.h"
 #include "PartWall.h"
 #include "BoundaryConditionType.h"
@@ -45,26 +46,33 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 Species::Species(Params& params, Patch* patch) :
 c_part_max(1),
-dynamics_type("norm"),
+pusher("boris"),
 radiation_model("none"),
 time_frozen(0),
 radiating(false),
+multiphoton_Breit_Wheeler(2,""),
 ionization_model("none"),
 velocityProfile(3,NULL),
 temperatureProfile(3,NULL),
+max_charge(0.),
 particles(&particles_sorted[0]),
 electron_species(NULL),
 electron_species_index(-1),
+photon_species(NULL),
+//photon_species_index(-1),
+radiation_photon_species(""),
+mBW_pair_creation_sampling(2,1),
 clrw(params.clrw),
 oversize(params.oversize),
 cell_length(params.cell_length),
 min_loc_vec(patch->getDomainLocalMin()),
-partBoundCond(NULL),
 tracking_diagnostic(10000),
+partBoundCond(NULL),
 nDim_particle(params.nDim_particle),
 min_loc(patch->getDomainLocalMin(0))
+
 {
-    DEBUG(species_type);
+    DEBUG(name);
 
     PI2 = 2.0 * M_PI;
     PI_ov_2 = 0.5*M_PI;
@@ -135,13 +143,19 @@ void Species::initOperators(Params& params, Patch* patch)
     // \todo pay attention to restart
     Ionize = IonizationFactory::create(params, this);
     if (Ionize) {
-        DEBUG("Species " << species_type << " can be ionized!");
+        DEBUG("Species " << name << " can be ionized!");
     }
 
     // Create the radiation model
     Radiate = RadiationFactory::create(params, this);
     if (Radiate) {
-        DEBUG("Species " << species_type << " will undergo radiation loss!");
+        DEBUG("Species " << name << " will undergo radiation loss!");
+    }
+
+    // Create the multiphoton Breit-Wheeler model
+    Multiphoton_Breit_Wheeler_process = MultiphotonBreitWheelerFactory::create(params, this);
+    if (Multiphoton_Breit_Wheeler_process) {
+        DEBUG("Species " << name << " will undergo multiphoton Breit-Wheeler!");
     }
 
     // define limits for BC and functions applied and for domain decomposition
@@ -170,6 +184,7 @@ Species::~Species()
     delete Push;
     if (Ionize) delete Ionize;
     if (Radiate) delete Radiate;
+    if (Multiphoton_Breit_Wheeler_process) delete Multiphoton_Breit_Wheeler_process;
     if (partBoundCond) delete partBoundCond;
     if (ppcProfile) delete ppcProfile;
     if (chargeProfile) delete chargeProfile;
@@ -227,7 +242,7 @@ void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
         }
         diff = q - ((double)tot)/((double)nPart); // missing charge
         if (diff != 0.) {
-            WARNING("Could not match exactly charge="<<q<<" for species "<< species_type <<" (difference of "<<diff<<"). Try to add particles.");
+            WARNING("Could not match exactly charge="<<q<<" for species "<< name <<" (difference of "<<diff<<"). Try to add particles.");
         }
     }
 }
@@ -236,16 +251,16 @@ void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all (np) particles in a mesh initialize their position
-//   - either using regular distribution in the mesh (initPosition_type = regular)
-//   - or using uniform random distribution (initPosition_type = random)
+//   - either using regular distribution in the mesh (position_initialization = regular)
+//   - or using uniform random distribution (position_initialization = random)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::initPosition(unsigned int nPart, unsigned int iPart, double *indexes)
 {
-    if (initPosition_type == "regular") {
+    if (position_initialization == "regular") {
 
         double coeff = pow((double)nPart,inv_nDim_field);
         if( nPart != (unsigned int) pow(round(coeff), (double)nDim_field) )
-            ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `initPosition_type = 'random'`");
+            ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `position_initialization = 'random'`");
 
         int coeff_ = coeff;
         coeff = 1./coeff;
@@ -257,7 +272,7 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
             }
         }
 
-    } else if (initPosition_type == "random") {
+    } else if (position_initialization == "random") {
 
         for (unsigned int p= iPart; p<iPart+nPart; p++) {
             for (unsigned int i=0; i<nDim_particle ; i++) {
@@ -265,7 +280,7 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
             }
         }
 
-    } else if (initPosition_type == "centered") {
+    } else if (position_initialization == "centered") {
 
         for (unsigned int p=iPart; p<iPart+nPart; p++)
             for (unsigned int i=0; i<nDim_particle ; i++)
@@ -284,140 +299,176 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
 void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp, double *vel)
 {
 
-    // average mean-momentum (used to center the distribution)
-    double pMean[3]= {0.0,0.0,0.0};
+    // -------------------------------------------------------------------------
+    // Particles
+    // -------------------------------------------------------------------------
+    if (mass > 0)
+    {
 
-    // Cold distribution
-    if (initMomentum_type == "cold") {
+        // average mean-momentum (used to center the distribution)
+        double pMean[3]= {0.0,0.0,0.0};
 
-        for (unsigned int p=iPart; p<iPart+nPart; p++) {
-            particles->momentum(0,p) = 0.0;
-            particles->momentum(1,p) = 0.0;
-            particles->momentum(2,p) = 0.0;
-        }
+        // Cold distribution
+        if (momentum_initialization == "cold") {
 
-    // Maxwell-Juttner distribution
-    } else if (initMomentum_type == "maxwell-juettner") {
+            for (unsigned int p=iPart; p<iPart+nPart; p++) {
+                particles->momentum(0,p) = 0.0;
+                particles->momentum(1,p) = 0.0;
+                particles->momentum(2,p) = 0.0;
+            }
 
-        // Sample the enerrgies in the MJ distribution
-        vector<double> energies = maxwellJuttner(nPart, temp[0]/mass);
+        // Maxwell-Juttner distribution
+        } else if (momentum_initialization == "maxwell-juettner") {
 
-        // Sample angles randomly and calculate the momentum
-        for (unsigned int p=iPart; p<iPart+nPart; p++) {
-            double phi   = acos(-Rand::uniform2());
-            double theta = 2.0*M_PI*Rand::uniform();
-            double psm = sqrt(pow(1.0+energies[p-iPart],2)-1.0);
+            // Sample the energies in the MJ distribution
+            vector<double> energies = maxwellJuttner(nPart, temp[0]/mass);
 
-            particles->momentum(0,p) = psm*cos(theta)*sin(phi);
-            particles->momentum(1,p) = psm*sin(theta)*sin(phi);
-            particles->momentum(2,p) = psm*cos(phi);
+            // Sample angles randomly and calculate the momentum
+            for (unsigned int p=iPart; p<iPart+nPart; p++) {
+                double phi   = acos(-Rand::uniform2());
+                double theta = 2.0*M_PI*Rand::uniform();
+                double psm = sqrt(pow(1.0+energies[p-iPart],2)-1.0);
 
-            // Calculate the mean momentum
-            pMean[0] += particles->momentum(0,p);
-            pMean[1] += particles->momentum(1,p);
-            pMean[2] += particles->momentum(2,p);
-        }
+                particles->momentum(0,p) = psm*cos(theta)*sin(phi);
+                particles->momentum(1,p) = psm*sin(theta)*sin(phi);
+                particles->momentum(2,p) = psm*cos(phi);
 
-        pMean[0] /= nPart;
-        pMean[1] /= nPart;
-        pMean[2] /= nPart;
+                // Calculate the mean momentum
+                pMean[0] += particles->momentum(0,p);
+                pMean[1] += particles->momentum(1,p);
+                pMean[2] += particles->momentum(2,p);
+            }
 
-        // center the distribution function around pMean
-        for (unsigned int p=iPart; p<iPart+nPart; p++) {
-            particles->momentum(0,p) -= pMean[0];
-            particles->momentum(1,p) -= pMean[1];
-            particles->momentum(2,p) -= pMean[2];
-        }
+            pMean[0] /= nPart;
+            pMean[1] /= nPart;
+            pMean[2] /= nPart;
 
-        // Trick to have non-isotropic distribution (not good)
-        double t1 = sqrt(temp[1]/temp[0]), t2 = sqrt(temp[2]/temp[0]);
-        if( t1!=1. || t2 !=1. ) {
+            // center the distribution function around pMean
+            for (unsigned int p=iPart; p<iPart+nPart; p++) {
+                particles->momentum(0,p) -= pMean[0];
+                particles->momentum(1,p) -= pMean[1];
+                particles->momentum(2,p) -= pMean[2];
+            }
+
+            // Trick to have non-isotropic distribution (not good)
+            double t1 = sqrt(temp[1]/temp[0]), t2 = sqrt(temp[2]/temp[0]);
+            if( t1!=1. || t2 !=1. ) {
+                for (unsigned int p= iPart; p<iPart+nPart; p++) {
+                    particles->momentum(1,p) *= t1;
+                    particles->momentum(2,p) *= t2;
+                }
+            }
+
+        // Rectangular distribution
+        } else if (momentum_initialization == "rectangular") {
+
+            double t0 = sqrt(temp[0]/mass), t1 = sqrt(temp[1]/mass), t2 = sqrt(temp[2]/mass);
             for (unsigned int p= iPart; p<iPart+nPart; p++) {
-                particles->momentum(1,p) *= t1;
-                particles->momentum(2,p) *= t2;
+                particles->momentum(0,p) = Rand::uniform2() * t0;
+                particles->momentum(1,p) = Rand::uniform2() * t1;
+                particles->momentum(2,p) = Rand::uniform2() * t2;
             }
         }
 
-    // Rectangular distribution
-    } else if (initMomentum_type == "rectangular") {
+        // Adding the mean velocity (using relativistic composition)
+        // Also relies on the method proposed in Zenitani, Phys. Plasmas 22, 042116 (2015)
+        // to ensure the correct properties of a boosted distribution function
+        // -------------------------------------------------------------------------------
+        double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, gp, px, py, pz;
+        // mean-velocity
+        vx  = -vel[0];
+        vy  = -vel[1];
+        vz  = -vel[2];
+        v2  = vx*vx + vy*vy + vz*vz;
+        if ( v2>0. ){
 
-        double t0 = sqrt(temp[0]/mass), t1 = sqrt(temp[1]/mass), t2 = sqrt(temp[2]/mass);
-        for (unsigned int p= iPart; p<iPart+nPart; p++) {
-            particles->momentum(0,p) = Rand::uniform2() * t0;
-            particles->momentum(1,p) = Rand::uniform2() * t1;
-            particles->momentum(2,p) = Rand::uniform2() * t2;
+            g   = 1.0/sqrt(1.0-v2);
+            gm1 = g - 1.0;
+
+            // compute the different component of the Matrix block of the Lorentz transformation
+            Lxx = 1.0 + gm1 * vx*vx/v2;
+            Lyy = 1.0 + gm1 * vy*vy/v2;
+            Lzz = 1.0 + gm1 * vz*vz/v2;
+            Lxy = gm1 * vx*vy/v2;
+            Lxz = gm1 * vx*vz/v2;
+            Lyz = gm1 * vy*vz/v2;
+
+            // Volume transformation method (here is the correction by Zenitani)
+            double Volume_Acc;
+            double CheckVelocity;
+
+            // Lorentz transformation of the momentum
+            for (unsigned int p=iPart; p<iPart+nPart; p++)
+            {
+                gp = sqrt(1.0 + pow(particles->momentum(0,p), 2)
+                              + pow(particles->momentum(1,p), 2)
+                              + pow(particles->momentum(2,p), 2) );
+
+                CheckVelocity = ( vx*particles->momentum(0,p) + vy*particles->momentum(1,p) + vz*particles->momentum(2,p) ) / gp;
+                Volume_Acc = Rand::uniform();
+                if (CheckVelocity > Volume_Acc){
+
+                    double Phi , Theta , vfl ,vflx , vfly, vflz, vpx , vpy , vpz ;
+                    Phi = atan2(sqrt(vx*vx +vy*vy), vz);
+                    Theta = atan2(vy, vx);
+
+                    vpx = particles->momentum(0,p)/gp ;
+                    vpy = particles->momentum(1,p)/gp ;
+                    vpz = particles->momentum(2,p)/gp ;
+                    vfl = vpx*cos(Theta)*sin(Phi) +vpy*sin(Theta)*sin(Phi) + vpz*cos(Phi) ;
+                    vflx = vfl*cos(Theta)*sin(Phi) ;
+                    vfly = vfl*sin(Theta)*sin(Phi) ;
+                    vflz = vfl*cos(Phi) ;
+                    vpx -= 2.*vflx ;
+                    vpy -= 2.*vfly ;
+                    vpz -= 2.*vflz ;
+                    gp = 1./sqrt(1.0 - vpx*vpx - vpy*vpy - vpz*vpz);
+                    particles->momentum(0,p) = vpx*gp ;
+                    particles->momentum(1,p) = vpy*gp ;
+                    particles->momentum(2,p) = vpz*gp ;
+
+                }//here ends the corrections by Zenitani
+
+                px = -gp*g*vx + Lxx * particles->momentum(0,p) + Lxy * particles->momentum(1,p) + Lxz * particles->momentum(2,p);
+                py = -gp*g*vy + Lxy * particles->momentum(0,p) + Lyy * particles->momentum(1,p) + Lyz * particles->momentum(2,p);
+                pz = -gp*g*vz + Lxz * particles->momentum(0,p) + Lyz * particles->momentum(1,p) + Lzz * particles->momentum(2,p);
+
+                particles->momentum(0,p) = px;
+                particles->momentum(1,p) = py;
+                particles->momentum(2,p) = pz;
+            }
+
+        }//ENDif vel != 0
+
+    }
+    // -------------------------------------------------------------------------
+    // Photons
+    // -------------------------------------------------------------------------
+    else if (mass == 0)
+    {
+        // Cold distribution
+        if (momentum_initialization == "cold") {
+
+            //double gamma =sqrt(vel[0]*vel[0] + vel[1]*vel[1] + vel[2]*vel[2]);
+            for (unsigned int p=iPart; p<iPart+nPart; p++) {
+                particles->momentum(0,p) = vel[0];
+                particles->momentum(1,p) = vel[1];
+                particles->momentum(2,p) = vel[2];
+            }
+
+        // Rectangular distribution
+        } else if (momentum_initialization == "rectangular") {
+
+            //double gamma =sqrt(temp[0]*temp[0] + temp[1]*temp[1] + temp[2]*temp[2]);
+            for (unsigned int p= iPart; p<iPart+nPart; p++) {
+                particles->momentum(0,p) = Rand::uniform2()*temp[0];
+                particles->momentum(1,p) = Rand::uniform2()*temp[1];
+                particles->momentum(2,p) = Rand::uniform2()*temp[2];
+            }
+
         }
     }
 
-    // Adding the mean velocity (using relativistic composition)
-    // Also relies on the method proposed in Zenitani, Phys. Plasmas 22, 042116 (2015)
-    // to ensure the correct properties of a boosted distribution function
-    // -------------------------------------------------------------------------------
-    double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, gp, px, py, pz;
-    // mean-velocity
-    vx  = -vel[0];
-    vy  = -vel[1];
-    vz  = -vel[2];
-    v2  = vx*vx + vy*vy + vz*vz;
-    if ( v2>0. ){
-
-        g   = 1.0/sqrt(1.0-v2);
-        gm1 = g - 1.0;
-
-        // compute the different component of the Matrix block of the Lorentz transformation
-        Lxx = 1.0 + gm1 * vx*vx/v2;
-        Lyy = 1.0 + gm1 * vy*vy/v2;
-        Lzz = 1.0 + gm1 * vz*vz/v2;
-        Lxy = gm1 * vx*vy/v2;
-        Lxz = gm1 * vx*vz/v2;
-        Lyz = gm1 * vy*vz/v2;
-
-        // Volume transformation method (here is the correction by Zenitani)
-        double Volume_Acc;
-        double CheckVelocity;
-
-        // Lorentz transformation of the momentum
-        for (unsigned int p=iPart; p<iPart+nPart; p++)
-        {
-            gp = sqrt(1.0 + pow(particles->momentum(0,p), 2)
-                          + pow(particles->momentum(1,p), 2)
-                          + pow(particles->momentum(2,p), 2) );
-
-            CheckVelocity = ( vx*particles->momentum(0,p) + vy*particles->momentum(1,p) + vz*particles->momentum(2,p) ) / gp;
-            Volume_Acc = Rand::uniform();
-            if (CheckVelocity > Volume_Acc){
-
-                double Phi , Theta , vfl ,vflx , vfly, vflz, vpx , vpy , vpz ;
-                Phi = atan2(sqrt(vx*vx +vy*vy), vz);
-                Theta = atan2(vy, vx);
-
-                vpx = particles->momentum(0,p)/gp ;
-                vpy = particles->momentum(1,p)/gp ;
-                vpz = particles->momentum(2,p)/gp ;
-                vfl = vpx*cos(Theta)*sin(Phi) +vpy*sin(Theta)*sin(Phi) + vpz*cos(Phi) ;
-                vflx = vfl*cos(Theta)*sin(Phi) ;
-                vfly = vfl*sin(Theta)*sin(Phi) ;
-                vflz = vfl*cos(Phi) ;
-                vpx -= 2.*vflx ;
-                vpy -= 2.*vfly ;
-                vpz -= 2.*vflz ;
-                gp = 1./sqrt(1.0 - vpx*vpx - vpy*vpy - vpz*vpz);
-                particles->momentum(0,p) = vpx*gp ;
-                particles->momentum(1,p) = vpy*gp ;
-                particles->momentum(2,p) = vpz*gp ;
-
-            }//here ends the corrections by Zenitani
-
-            px = -gp*g*vx + Lxx * particles->momentum(0,p) + Lxy * particles->momentum(1,p) + Lxz * particles->momentum(2,p);
-            py = -gp*g*vy + Lxy * particles->momentum(0,p) + Lyy * particles->momentum(1,p) + Lyz * particles->momentum(2,p);
-            pz = -gp*g*vz + Lxz * particles->momentum(0,p) + Lyz * particles->momentum(1,p) + Lzz * particles->momentum(2,p);
-
-            particles->momentum(0,p) = px;
-            particles->momentum(1,p) = py;
-            particles->momentum(2,p) = pz;
-        }
-
-    }//ENDif vel != 0
 
 }//END initMomentum
 
@@ -425,6 +476,9 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species
 //   - interpolate the fields at the particle position
+//   - perform ionization
+//   - perform the radiation reaction
+//   - perform the multiphoton Breit-Wheeler
 //   - calculate the new velocity
 //   - calculate the new position
 //   - apply the boundary conditions
@@ -436,6 +490,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                        PartWalls* partWalls,
                        Patch* patch, SmileiMPI* smpi,
                        RadiationTables & RadiationTables,
+                       MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                        vector<Diagnostic*>& localDiags)
 {
     int ithread;
@@ -467,6 +522,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
+
             // Interpolate the fields at the particle position
             (*Interp)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread );
 
@@ -474,12 +530,16 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             if (Ionize)
                 (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
 
-            // Radiation losses: Nonlinear inverse Compton Scattering
+            // Radiation losses
             if (Radiate)
             {
-                (*Radiate)(*particles, smpi, RadiationTables,
+
+                // Radiation process
+                (*Radiate)(*particles, this->photon_species, smpi,
+                         RadiationTables,
                          bmin[ibin], bmax[ibin], ithread );
 
+                // Update scalar variable for diagnostics
                 nrj_radiation += (*Radiate).getRadiatedEnergy();
 
                 // Update the quantum parameter chi
@@ -490,35 +550,87 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                                                 ithread );
             }
 
-            // Push the particles
+            // Multiphoton Breit-Wheeler
+            if (Multiphoton_Breit_Wheeler_process)
+            {
+
+                // Pair generation process
+                (*Multiphoton_Breit_Wheeler_process)(*particles,
+                         smpi,
+                         MultiphotonBreitWheelerTables,
+                         bmin[ibin], bmax[ibin], ithread );
+
+                 // Update scalar variable for diagnostics
+                 // We reuse nrj_radiation for the pairs
+                 nrj_radiation += (*Multiphoton_Breit_Wheeler_process).getPairEnergy();
+
+                 // Update the photon quantum parameter chi of all photons
+                 (*Multiphoton_Breit_Wheeler_process).compute_thread_chiph(*particles,
+                                                 smpi,
+                                                 bmin[ibin],
+                                                 bmax[ibin],
+                                                 ithread );
+
+                 // Suppression of the decayed photons into pairs
+                 (*Multiphoton_Breit_Wheeler_process).decayed_photon_cleaning(
+                                 *particles,ibin, bmin.size(), &bmin[0], &bmax[0]);
+
+            }
+
+            // Push the particles and the photons
             (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
             //particles->test_move( bmin[ibin], bmax[ibin], params );
 
             // Apply wall and boundary conditions
-            for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
-                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                    double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
-                    if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
-                        nrj_lost_per_thd[tid] += mass * ener_iPart;
+            if (mass>0)
+            {
+                for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+                    for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                        double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                        if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
+                            nrj_lost_per_thd[tid] += mass * ener_iPart;
+                        }
                     }
                 }
-            }
 
-            // Boundary Condition may be physical or due to domain decomposition
-            // apply returns 0 if iPart is not in the local domain anymore
-            //        if omp, create a list per thread
-            for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
-                    addPartInExchList( iPart );
-                    //nrj_lost_per_thd[tid] += ener_iPart;
-                    nrj_lost_per_thd[tid] += mass * ener_iPart;
+                // Boundary Condition may be physical or due to domain decomposition
+                // apply returns 0 if iPart is not in the local domain anymore
+                //        if omp, create a list per thread
+                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                    if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                        addPartInExchList( iPart );
+                        nrj_lost_per_thd[tid] += mass * ener_iPart;
+                    }
+                 }
+
+
+            } else if (mass==0) {
+                for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+                    for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                        double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                        if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
+                                nrj_lost_per_thd[tid] += ener_iPart;
+                        }
+                    }
                 }
-             }
+
+                // Boundary Condition may be physical or due to domain decomposition
+                // apply returns 0 if iPart is not in the local domain anymore
+                //        if omp, create a list per thread
+                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                    if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                        addPartInExchList( iPart );
+                        nrj_lost_per_thd[tid] += ener_iPart;
+                    }
+                 }
+
+            }
 
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
 
              // Project currents if not a Test species and charges as well if a diag is needed.
-             if (!particles->isTest)
+             // Do not project if a photon
+             if ((!particles->is_test) && (mass > 0))
                  (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, b_dim, ispec );
 
         }// ibin
@@ -526,12 +638,39 @@ void Species::dynamics(double time_dual, unsigned int ispec,
         for (unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
             nrj_bc_lost += nrj_lost_per_thd[tid];
 
-        // Add the ionized electrons to the electron species
-        if (Ionize)
-            electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags );
+//        // Add the ionized electrons to the electron species
+//        if (Ionize)
+//            electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags );
+//
+//        // Radiation losses
+//        if (Radiate)
+//        {
+//            // If creation of macro-photon, we add them to photon_species
+//            if (photon_species)
+//            {
+//                photon_species->importParticles(params,
+//                                                patch,
+//                                                Radiate->new_photons,
+//                                                localDiags);
+//            }
+//        }
+//
+//        // Multiphoton Breit-Wheeler
+//        if (Multiphoton_Breit_Wheeler_process)
+//        {
+//
+//            // Addition of the electron-positron particles
+//            for (int k=0; k<2; k++) {
+//                mBW_pair_species[k]->importParticles(params,
+//                                             patch,
+//                                             Multiphoton_Breit_Wheeler_process->new_pair[k],
+//                                             localDiags);
+//            }
+//        }
+
     }
     else { // immobile particle (at the moment only project density)
-        if ( diag_flag &&(!particles->isTest)){
+        if ( diag_flag &&(!particles->is_test)){
             double* b_rho=nullptr;
             for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
 
@@ -552,6 +691,56 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 }//END dynamic
 
 
+
+// -----------------------------------------------------------------------------
+//! For all particles of the species, import the new particles generated
+//! from these different physical processes:
+//! - ionization
+//! - radiation reaction
+//! - multiphoton Breit-Wheeler
+// -----------------------------------------------------------------------------
+void Species::dynamics_import_particles(double time_dual, unsigned int ispec,
+                       Params &params,
+                       Patch* patch, SmileiMPI* smpi,
+                       RadiationTables & RadiationTables,
+                       MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
+                       vector<Diagnostic*>& localDiags)
+{
+    // if moving particle
+    if (time_dual>time_frozen) { // moving particle
+
+        // Add the ionized electrons to the electron species
+        if (Ionize)
+            electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags );
+
+        // Radiation losses
+        if (Radiate)
+        {
+            // If creation of macro-photon, we add them to photon_species
+            if (photon_species)
+            {
+                photon_species->importParticles(params,
+                                                patch,
+                                                Radiate->new_photons,
+                                                localDiags);
+            }
+        }
+
+        // Multiphoton Breit-Wheeler
+        if (Multiphoton_Breit_Wheeler_process)
+        {
+            // Addition of the electron-positron particles
+            for (int k=0; k<2; k++) {
+                mBW_pair_species[k]->importParticles(params,
+                                             patch,
+                                             Multiphoton_Breit_Wheeler_process->new_pair[k],
+                                             localDiags);
+            }
+        }
+    }//END if time vs. time_frozen
+}
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species
 //   - increment the charge (projection)
@@ -562,7 +751,7 @@ void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector
     // -------------------------------
     // calculate the particle charge
     // -------------------------------
-    if ( (!particles->isTest) ) {
+    if ( (!particles->is_test) ) {
         double* b_rho=nullptr;
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
             unsigned int bin_start = ibin*clrw*f_dim1*f_dim2;
@@ -778,7 +967,10 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     // Evaluate profiles
     ppcProfile    ->valuesAt(xyz, n_part_in_cell);
     densityProfile->valuesAt(xyz, density       );
-    chargeProfile ->valuesAt(xyz, charge        );
+    if (this->mass > 0)
+    {
+        chargeProfile ->valuesAt(xyz, charge        );
+    }
     for (unsigned int m=0; m<3; m++) {
         temperatureProfile[m]->valuesAt(xyz, temperature[m]);
         velocityProfile[m]   ->valuesAt(xyz, velocity   [m]);
@@ -806,7 +998,10 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                 }
 
                 // assign charge its correct value in the cell
-                if( charge(i,j,k)>max_charge ) max_charge=charge(i,j,k);
+                if (this->mass > 0)
+                {
+                    if( charge(i,j,k)>max_charge ) max_charge=charge(i,j,k);
+                }
 
                 // If zero or less, zero particles
                 if( n_part_in_cell(i,j,k)<=0. || density(i,j,k)==0. ) {
@@ -843,7 +1038,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
 
     unsigned int n_existing_particles = particles->size();
     particles->initialize(n_existing_particles+npart_effective, nDim_particle);
-
 
     // Initialization of the particles properties
     // ------------------------------------------
@@ -901,11 +1095,25 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     // Recalculate former position using the particle velocity
     // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
     if (patch->isXmax()) {
-        for (unsigned int iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++) {
-            /*897 for (int i=0; i<(int)nDim_particle; i++) {
-              particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
-              }897*/
-            nrj_new_particles += particles->weight(iPart)*(particles->lor_fac(iPart)-1.0);
+        // Matter particle case
+        if (mass > 0)
+        {
+            for (unsigned int iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++) {
+                /*897 for (int i=0; i<(int)nDim_particle; i++) {
+                  particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
+                  }897*/
+                nrj_new_particles += particles->weight(iPart)*(particles->lor_fac(iPart)-1.0);
+            }
+        }
+        // Photon case
+        else if (mass == 0)
+        {
+            for (unsigned int iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++) {
+                /*897 for (int i=0; i<(int)nDim_particle; i++) {
+                  particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
+                  }897*/
+                nrj_new_particles += particles->weight(iPart)*(particles->momentum_norm(iPart));
+            }
         }
     }
 
@@ -931,8 +1139,10 @@ void Species::importParticles( Params& params, Patch* patch, Particles& source_p
     for( unsigned int i=0; i<npart; i++ ) {
         // Copy particle to the correct bin
         ibin = source_particles.position(0,i)*inv_cell_length - ( patch->getCellStartingGlobalIndex(0) + params.oversize[0] );
+
         ibin /= params.clrw;
         source_particles.cp_particle(i, *particles, bmin[ibin] );
+
         // Update the bin counts
         bmax[ibin]++;
         for (ii=ibin+1; ii<nbin; ii++) {
@@ -986,7 +1196,7 @@ void Species::disableXmax() {
 }
 
 void Species::setXminBoundaryCondition() {
-    partBoundCond->bc_xmin   = &supp_particle;
+    partBoundCond->bc_xmin   = &remove_particle;
 }
 
 // Provides a Maxwell-Juttner distribution of energies

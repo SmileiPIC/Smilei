@@ -1,12 +1,12 @@
 
-from Smilei import *
+import happi
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import erf as erf
 
 for path in ["thermalisation_ei1","thermalisation_ei2","thermalisation_ei3"]:
 
-	sim = Smilei(path)
+	sim = happi.Open(path)
 	mass_ion             = np.double(sim.namelist.Species["ion1"].mass)
 	charge_ion           = np.double(sim.namelist.Species["ion1"].charge)
 	density_ion          = np.double(sim.namelist.Species["ion1"].charge_density)/charge_ion
@@ -21,19 +21,19 @@ for path in ["thermalisation_ei1","thermalisation_ei2","thermalisation_ei3"]:
 	c = 3e8
 	coeff = (2.*np.pi/wavelength)**2*re_*c / 8.
 	
-	times = sim.ParticleDiagnostic(diagNumber=0).getAvailableTimesteps()
+	times = np.double(sim.ParticleBinning(diagNumber=0).getAvailableTimesteps())
 	
-	electrons0 = sim.ParticleDiagnostic(0,slice={"x":"all"}).get()
+	electrons0 = sim.ParticleBinning(0, sum={"x":"all"}).get()
 	evx = electrons0["vx"]
-	electrons1 = sim.ParticleDiagnostic(1,slice={"x":"all"}).get()
+	electrons1 = sim.ParticleBinning(1, sum={"x":"all"}).get()
 	evy = electrons1["vy"]
-	electrons2 = sim.ParticleDiagnostic(2,slice={"x":"all"}).get()
+	electrons2 = sim.ParticleBinning(2, sum={"x":"all"}).get()
 	evz = electrons2["vz"]
-	ions0 = sim.ParticleDiagnostic(3, slice={"x":"all"}).get()
+	ions0 = sim.ParticleBinning(3, sum={"x":"all"}).get()
 	ivx = ions0["vx"]
-	ions1 = sim.ParticleDiagnostic(4, slice={"x":"all"}).get()
+	ions1 = sim.ParticleBinning(4, sum={"x":"all"}).get()
 	ivy = ions1["vy"]
-	ions2 = sim.ParticleDiagnostic(5, slice={"x":"all"}).get()
+	ions2 = sim.ParticleBinning(5, sum={"x":"all"}).get()
 	ivz = ions2["vz"]
 	
 	e_T_mean = np.zeros(len(times))

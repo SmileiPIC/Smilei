@@ -1,4 +1,4 @@
-from Smilei import *
+import happi
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import kv
@@ -55,7 +55,7 @@ def FrankelStoppingPower(E0,T):
 
 for path in ["Stopping_power1","Stopping_power2","Stopping_power3"]:
 
-	sim = Smilei(path)
+	sim = happi.Open(path)
 	temperature_electron = np.double(sim.namelist.Species["backgroundelectron"].temperature)
 	density_electron     = np.double(sim.namelist.Species["backgroundelectron"].charge_density)
 	coulomb_log          = np.double(sim.namelist.Collisions[0].coulomb_log)
@@ -65,11 +65,11 @@ for path in ["Stopping_power1","Stopping_power2","Stopping_power3"]:
 	wavelength = 1e-6 # meters
 	c = 3e8
 	
-	times = sim.ParticleDiagnostic(diagNumber=0).getAvailableTimesteps()
-	nx = sim.ParticleDiagnostic(diagNumber=0,timesteps=0).get()["x"].size
+	times = np.double(sim.ParticleBinning(diagNumber=0).getAvailableTimesteps())
+	nx = sim.ParticleBinning(diagNumber=0,timesteps=0).get()["x"].size
 	
 	Ekin = np.zeros((nx,len(times)))
-	electrons = sim.ParticleDiagnostic(0).get()
+	electrons = sim.ParticleBinning(0).get()
 	ekin = electrons["ekin"]*0.511
 	dekin = np.diff(ekin)
 	dekin = np.hstack((dekin, dekin[-1]))

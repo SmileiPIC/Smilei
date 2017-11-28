@@ -111,21 +111,21 @@ void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     delta2  = deltaz*deltaz;
     delta3  = delta2*deltaz;
     delta4  = delta3*deltaz;
-    coeffzd_[0] = dble_1_ov_384   - dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    coeffzd_[1] = dble_19_ov_96   - dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    coeffzd_[0] = dble_1_ov_384   - dble_1_ov_48  * deltaz  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+    coeffzd_[1] = dble_19_ov_96   - dble_11_ov_24 * deltaz  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
     coeffzd_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    coeffzd_[3] = dble_19_ov_96   + dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffzd_[4] = dble_1_ov_384   + dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+    coeffzd_[3] = dble_19_ov_96   + dble_11_ov_24 * deltaz  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    coeffzd_[4] = dble_1_ov_384   + dble_1_ov_48  * deltaz  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
 
     deltaz   = zpn - (double)kp_;
     delta2  = deltaz*deltaz;
     delta3  = delta2*deltaz;
     delta4  = delta3*deltaz;
-    coeffzp_[0] = dble_1_ov_384   - dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    coeffzp_[1] = dble_19_ov_96   - dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    coeffzp_[0] = dble_1_ov_384   - dble_1_ov_48  * deltaz  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+    coeffzp_[1] = dble_19_ov_96   - dble_11_ov_24 * deltaz  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
     coeffzp_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    coeffzp_[3] = dble_19_ov_96   + dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffzp_[4] = dble_1_ov_384   + dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+    coeffzp_[3] = dble_19_ov_96   + dble_11_ov_24 * deltaz  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    coeffzp_[4] = dble_1_ov_384   + dble_1_ov_48  * deltaz  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
 
 
     //!\todo CHECK if this is correct for both primal & dual grids !!!

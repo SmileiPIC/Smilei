@@ -10,34 +10,35 @@ rest = 110.0
 L = 2.0*math.pi
 
 Main(
-    geometry = "1d3v",
+    geometry = "1Dcartesian",
     interpolation_order = 2,
     
     cell_length = [L/resx],
-    sim_length  = [3.0*L],
+    grid_length  = [3.0*L],
     
     number_of_patches = [ 4 ],
     
     timestep = L/rest,
-    sim_time = 10.0 * math.pi,
+    simulation_time = 10.0 * math.pi,
     
     clrw = 1,
     
-    bc_em_type_x = ['silver-muller'],
+    EM_boundary_conditions = [ ['silver-muller'] ],
     
     random_seed = smilei_mpi_rank
 )
 
 Species(
-	species_type = "charges",
-	initPosition_type = "random",
-	initMomentum_type = "cold",
-	n_part_per_cell = 100,
+	name = "charges",
+	position_initialization = "random",
+	momentum_initialization = "cold",
+	particles_per_cell = 100,
 	mass = 1836.0,
 	charge = 1.0,
-	nb_density = trapezoidal(1., xvacuum=L, xplateau=L),
-	bc_part_type_xmin = "stop",
-	bc_part_type_xmax = "stop"
+	number_density = trapezoidal(1., xvacuum=L, xplateau=L),
+	boundary_conditions = [
+		["stop", "stop"],
+	],
 )
 
 DiagFields(
@@ -50,8 +51,8 @@ DiagScalar(
 )
 
 
-DiagParticles(
-	output = "density",
+DiagParticleBinning(
+	deposited_quantity = "weight",
 	every = 50,
 	species = ["charges"],
 	axes = [

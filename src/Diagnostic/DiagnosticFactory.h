@@ -3,7 +3,7 @@
 
 #include "VectorPatch.h"
 
-#include "DiagnosticParticles.h"
+#include "DiagnosticParticleBinning.h"
 #include "DiagnosticScreen.h"
 #include "DiagnosticProbes.h"
 #include "DiagnosticScalar.h"
@@ -23,13 +23,13 @@ class DiagnosticFieldsFactory {
 public:
     static Diagnostic* create(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, unsigned int idiag, OpenPMDparams& openPMD) {
         Diagnostic* diag = NULL;
-        if ( params.geometry == "1d3v" ) {
+        if ( params.geometry == "1Dcartesian" ) {
             diag = new DiagnosticFields1D(params, smpi, vecPatches, idiag, openPMD);
         }
-        else if ( params.geometry == "2d3v" ) {
+        else if ( params.geometry == "2Dcartesian" ) {
             diag = new DiagnosticFields2D(params, smpi, vecPatches, idiag, openPMD);
         }
-        else if ( params.geometry == "3d3v" ) {
+        else if ( params.geometry == "3Dcartesian" ) {
             diag = new DiagnosticFields3D(params, smpi, vecPatches, idiag, openPMD);
         }
         else if ( params.geometry == "3drz" ) {
@@ -50,8 +50,8 @@ public:
         std::vector<Diagnostic*> vecDiagnostics;
         vecDiagnostics.push_back( new DiagnosticScalar(params, smpi, vecPatches(0)) );
         
-        for (unsigned int n_diag_particles = 0; n_diag_particles < PyTools::nComponents("DiagParticles"); n_diag_particles++) {
-            vecDiagnostics.push_back( new DiagnosticParticles(params, smpi, vecPatches(0), n_diag_particles) );
+        for (unsigned int n_diag_particles = 0; n_diag_particles < PyTools::nComponents("DiagParticleBinning"); n_diag_particles++) {
+            vecDiagnostics.push_back( new DiagnosticParticleBinning(params, smpi, vecPatches(0), n_diag_particles) );
         }
         
         for (unsigned int n_diag_screen = 0; n_diag_screen < PyTools::nComponents("DiagScreen"); n_diag_screen++) {
@@ -75,12 +75,8 @@ public:
             vecDiagnostics.push_back( new DiagnosticProbes(params, smpi, n_diag_probe) );
         }
         
-        for (unsigned int n_species = 0; n_species < vecPatches(0)->vecSpecies.size(); n_species++) {
-            if ( vecPatches(0)->vecSpecies[n_species]->particles->tracked ) {
-                for( unsigned int ipatch=0; ipatch<vecPatches.size(); ipatch++ )
-                    vecPatches(ipatch)->vecSpecies[n_species]->tracking_diagnostic = vecDiagnostics.size();
-                vecDiagnostics.push_back( new DiagnosticTrack(params, smpi, vecPatches(0), n_species, openPMD) );
-            }
+        for (unsigned int n_diag_track = 0; n_diag_track < PyTools::nComponents("DiagTrackParticles"); n_diag_track++) {
+            vecDiagnostics.push_back( new DiagnosticTrack(params, smpi, vecPatches, n_diag_track, vecDiagnostics.size(), openPMD) );
         }
         
         return vecDiagnostics;

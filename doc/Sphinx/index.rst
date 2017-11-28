@@ -2,57 +2,58 @@
 
 
 .. rst-class:: horizontallogo
-  
-  .. image:: ../smileiLogo/smileiLogo-horizontal2.svg
 
-**Smilei is an open-source, particle-in-cell code.** 
-It is designed for high performances on super-computers and applied to a wide range
-of physics-related studies: from relativistic laser-plasma interaction
-to astrophysical plasmas. It is co-developed by both physicists and HPC experts. 
+  .. image:: ../logo/smileiLogo-horizontal2.svg
+
+**Smilei** is a collaborative Particle-In-Cell code for plasma simulation.
+Open-source, user-friendly and designed for high performances on super-computers,
+it is applied to a wide range of physics studies: from relativistic laser-plasma
+interaction to astrophysics.
 
 
 .. raw:: html
-  
-  <a href="releases.html#current-release-3-2" class="icon">
+
+  <a href="releases.html#current-release-3-3" class="icon">
 
 .. image:: _static/download.svg
 
 .. raw:: html
-  
+
   Download</a>
 
 
 .. raw:: html
-  
+
   <a href="https://github.com/SmileiPIC/Smilei" class="icon">
 
 .. image:: _static/github-logo.svg
 
 .. raw:: html
-  
+
   GitHub</a>
 
 
 .. raw:: html
-  
+
   <a href="partners.html" class="icon">
 
 .. image:: _static/people.svg
 
 .. raw:: html
-  
+
   Partners</a>
 
 
 .. raw:: html
-  
+
   <a href="material.html" class="icon">
 
 .. image:: _static/paper.svg
 
 .. raw:: html
-  
+
   Publications</a>
+
 
 
 Overview
@@ -60,32 +61,33 @@ Overview
 
 .. toctree::
    :maxdepth: 1
-   
+
    licence
    synopsis
    highlights
    releases
 
 
-Understand :program:`Smilei` 
+Understand :program:`Smilei`
 ============================
 
 .. toctree::
    :maxdepth: 1
-   
+
    units
    algorithms
    parallelization
    collisions
    field_ionization
    radiation_loss
+   multiphoton_Breit_Wheeler
 
 Install, run, analyze
 =====================
 
 .. toctree::
    :maxdepth: 1
-   
+
    installation
    namelist
    run
@@ -97,8 +99,6 @@ More information
 
 .. toctree::
    :maxdepth: 1
-   
+
    material
    partners
-
-

@@ -5,18 +5,18 @@ rest = 102.0      # nb of timestep in 1 optical cycle
 resx = 100.0      # nb cells in 1 wavelength
 
 Main(
-    geometry = "1d3v",
+    geometry = "1Dcartesian",
     interpolation_order = 2,
     
     cell_length = [l0/resx],
-    sim_length  = [4.0*l0],
+    grid_length  = [4.0*l0],
     
     number_of_patches = [ 4 ],
     
     timestep = t0/rest,
-    sim_time = 4.0*t0,
+    simulation_time = 4.0*t0,
     
-    bc_em_type_x = ['silver-muller'],
+    EM_boundary_conditions = [ ['silver-muller'] ],
     
     random_seed = smilei_mpi_rank,
     
@@ -41,12 +41,12 @@ DiagFields(
 
 DiagProbe(
     every = 5, 
-    pos = [Main.sim_length[0]*0.2]   
+    origin = [Main.grid_length[0]*0.2]   
 )
 
 DiagProbe(
     every = 5,
-    pos = [0.0],
-    pos_first = Main.sim_length,
+    origin = [0.0],
+    corners = [Main.grid_length],
     number = [1000]
 )

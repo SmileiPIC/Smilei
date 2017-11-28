@@ -7,7 +7,7 @@
 
 
 //  --------------------------------------------------------------------------------------------------------------------
-//! Class for 4th order interpolator for 1d3v simulations
+//! Class for 4th order interpolator for 1Dcartesian simulations
 //  --------------------------------------------------------------------------------------------------------------------
 class Interpolator1D4Order : public Interpolator1D
 {

@@ -57,7 +57,7 @@ public:
         }
         else if ( species->radiation_model != "none" )
         {
-            ERROR( "For species " << species->species_type
+            ERROR( "For species " << species->name
                                   << ": unknown radiation_model `"
                                   << species->radiation_model << "`");
         }

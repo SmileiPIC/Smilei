@@ -1,4 +1,4 @@
-from Smilei import *
+import happi
 import math as m
 import numpy as np
 import matplotlib as mpl
@@ -14,15 +14,15 @@ mpl.rcParams['ytick.major.size'] = 10
 mpl.rcParams['xtick.minor.size'] = 5
 mpl.rcParams['ytick.minor.size'] = 5
 
-S  = Smilei('/Users/mica/RESULTS/SMILEI/thermalPlasmaNoDrift/')
+S  = happi.Open('/Users/mica/RESULTS/SMILEI/thermalPlasmaNoDrift/')
 T  = S.namelist.Te
 mu = 1./T
 v0 = S.namelist.v0
 g0 = 1./m.sqrt(1.-v0**2)
 
 # read gamma-distribution fct
-fg  = np.array(S.ParticleDiagnostic(0).getData())[0]
-g   = np.array(S.ParticleDiagnostic(0).get()['gamma'])
+fg  = np.array(S.ParticleBinning(0).getData())[0]
+g   = np.array(S.ParticleBinning(0).get()['gamma'])
 print 'int over all g:', (g[1]-g[0])*np.sum(fg)
 
 
@@ -33,8 +33,8 @@ itg = (g[1]-g[0])*np.sum(fth)
 fth = fth/itg
 
 # read p-distribution fct
-fp  = np.array(S.ParticleDiagnostic(1).getData())[0]
-p   = np.array(S.ParticleDiagnostic(1).get()['px'])
+fp  = np.array(S.ParticleBinning(1).getData())[0]
+p   = np.array(S.ParticleBinning(1).get()['px'])
 print 'int over all px:', (p[1]-p[0])*np.sum(fp)
 
 

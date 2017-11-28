@@ -29,7 +29,7 @@ fwhm = 10*t0                            # Gaussian time fwhm
 duration = 90*t0                        # Laser duration
 center = duration*0.5                   # Laser profile center
 
-pusher = "norm"                         # dynamic type
+pusher = "boris"                         # dynamic type
 
 # Density profile for inital location of the particles
 def n0_(x,y,z):
@@ -42,27 +42,29 @@ def n0_(x,y,z):
 # Namelists
 
 Main(
-    geometry = "3d3v",
+    geometry = "3Dcartesian",
     
     interpolation_order = 2 ,
     
     cell_length = [dx,dx,dx],
-    sim_length  = [Lx,Ly,Lz],
+    grid_length  = [Lx,Ly,Lz],
     
     number_of_patches = [ 4,4,4 ],
     
     timestep = dt,
-    sim_time = Tsim,
+    simulation_time = Tsim,
     
-    bc_em_type_x = ['silver-muller'],
-    bc_em_type_y = ['periodic'],
-    bc_em_type_z = ['periodic'],
+    EM_boundary_conditions = [
+        ['silver-muller'],
+        ['periodic'],
+        ['periodic'],
+    ],
     
     random_seed = 0
 )
 
 #Laser(
-#    boxSide        = "xmin",
+#    box_side        = "xmin",
 #    omega          = 1.,
 #    chirp_profile  = tconstant(),
 #    time_envelope  = tgaussian(start=0,duration=90*t0,fwhm=30*t0,center=45*t0,order=2),
@@ -71,38 +73,35 @@ Main(
 #)
 
 LaserGaussian3D(
-    boxSide         = "xmin",
+    box_side         = "xmin",
     a0              = 2.,
     omega           = 1.,
     focus           = [0., 0.5*Ly, 0.5*Lz],
     waist           = 1e9,
     incidence_angle = [0., 0.],
-    polarizationPhi = 0.,
+    polarization_phi = 0.,
     ellipticity     = 1,
     time_envelope  = tgaussian(start=start,duration=duration,fwhm=fwhm,center=center,order=2)
 )
 
 Species(
-    species_type = "electron",
-    initPosition_type = "centered",
-    initMomentum_type = "cold",
-    n_part_per_cell = 10,
+    name = "electron",
+    position_initialization = "centered",
+    momentum_initialization = "cold",
+    particles_per_cell = 10,
     c_part_max = 1.0,
     mass = 1.0,
     charge = -1.0,
     charge_density = n0_,
     mean_velocity = [0., 0.0, 0.0],
     temperature = [0.],
-    dynamics_type = pusher,
-    bc_part_type_xmin  = "none",
-    bc_part_type_xmax  = "none",
-    bc_part_type_ymin = "none",
-    bc_part_type_ymax = "none",
-    bc_part_type_zmin = "none",
-    bc_part_type_zmax = "none",
-    track_every = 2,
-    track_flush_every = 100,
-    isTest = False
+    pusher = pusher,
+    boundary_conditions = [
+    	["periodic", "periodic"],
+    	["periodic", "periodic"],
+    	["periodic", "periodic"],
+    ],
+    is_test = False
 )
 
 DiagScalar(
@@ -115,4 +114,8 @@ DiagFields(
     fields = ['Ex','Ey','Ez','By','Bz']
 )
 
-
+DiagTrackParticles(
+    species = "electron",
+    every = 2,
+    flush_every = 100,
+)

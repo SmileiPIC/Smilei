@@ -51,7 +51,9 @@ class RadiationNiel : public Radiation {
         //! \param iend        Index of the last particle
         //! \param ithread     Thread index
         // ---------------------------------------------------------------------
-        virtual void operator() (Particles &particles,
+        virtual void operator() (
+                Particles &particles,
+                Species * photon_species,
                 SmileiMPI* smpi,
                 RadiationTables &RadiationTables,
                 int istart,

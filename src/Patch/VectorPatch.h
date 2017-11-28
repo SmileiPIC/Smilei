@@ -13,6 +13,7 @@
 
 #include "DiagnosticScalar.h"
 
+#include "Checkpoint.h"
 #include "OpenPMDparams.h"
 #include "SmileiMPI.h"
 #include "SimWindow.h"
@@ -91,10 +92,15 @@ public :
     void dynamics(Params& params,
                   SmileiMPI* smpi,
                   SimWindow* simWindow,
-                  RadiationTables & RadiationTables,double time_dual,
+                  RadiationTables & RadiationTables,
+                  MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
+                  double time_dual,
                   Timers &timers, int itime);
 
-    void finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWindow* simWindow, double time_dual,
+    void finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWindow* simWindow, 
+                  RadiationTables & RadiationTables,
+                  MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
+                  double time_dual,
                   Timers &timers, int itime);
 
     void computeCharge();
@@ -220,11 +226,13 @@ public :
         for (unsigned int ispec = 0 ; ispec < nSpecies ; ispec++ ) {
             uint64_t tmp(0);
             MPI_Reduce( &(nParticles[ispec]), &tmp, 1, MPI_UINT64_T , MPI_SUM, 0, smpi->SMILEI_COMM_WORLD );
-            MESSAGE(2, "Species " << ispec << " (" << (*this)(0)->vecSpecies[ispec]->species_type << ") created with " << tmp << " particles" );
+            MESSAGE(2, "Species " << ispec << " (" << (*this)(0)->vecSpecies[ispec]->name << ") created with " << tmp << " particles" );
         }
     }
 
     void check_memory_consumption(SmileiMPI* smpi);
+    
+    void check_expected_disk_usage( SmileiMPI* smpi, Params& params, Checkpoint& checkpoint);
 
     // Keep track if we need the needsRhoJsNow
     int diag_flag;

@@ -109,7 +109,7 @@ public:
     void create_particle();
 
     //! Create nParticles new particles
-    void create_particles(unsigned int nParticles);
+    void create_particles(int nAdditionalParticles);
 
     //! Test if ipart is in the local patch
     bool is_part_in_domain(unsigned int ipart, Patch* patch);
@@ -187,6 +187,16 @@ public:
         return sqrt(1.+pow(momentum(0,ipart),2)+pow(momentum(1,ipart),2)+pow(momentum(2,ipart),2));
     }
 
+    //! Method used to get the inverse Particle Lorentz factor
+    inline double inv_lor_fac(unsigned int ipart) {
+        return 1./sqrt(1.+pow(momentum(0,ipart),2)+pow(momentum(1,ipart),2)+pow(momentum(2,ipart),2));
+    }
+
+    //! Method used to get the momentum norm which is also the normalized photon energy
+    inline double momentum_norm(unsigned int ipart) {
+        return sqrt(pow(momentum(0,ipart),2)+pow(momentum(1,ipart),2)+pow(momentum(2,ipart),2));
+    }
+
     //! Partiles properties, respect type order : all double, all short, all unsigned int
 
     //! array containing the particle position
@@ -217,9 +227,9 @@ public:
     std::vector<double> Tau;
 
     // TEST PARTICLE PARAMETERS
-    bool isTest;
-
-    //! True if tracking the particles (activates one DiagTrack)
+    bool is_test;
+    
+    //! True if tracking the particles
     bool tracked;
 
     void resetIds() {

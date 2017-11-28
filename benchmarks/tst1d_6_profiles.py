@@ -3,21 +3,21 @@ import math
 L0 = 2.*math.pi # Wavelength in PIC units
 
 Main(
-	geometry = "1d3v",
+	geometry = "1Dcartesian",
 	
 	interpolation_order = 2,
 	
 	timestep = 0.005 * L0,
-	sim_time  = 1. * L0,
+	simulation_time  = 1. * L0,
 	
 	cell_length = [0.01 * L0],
-	sim_length  = [1. * L0],
+	grid_length  = [1. * L0],
 	
 	number_of_patches = [ 4 ],
 	
 	time_fields_frozen = 10000000.,
 	
-	bc_em_type_x  = ["periodic"],
+	EM_boundary_conditions = [ ["periodic"] ],
 	
 	print_every = 10,
 	
@@ -41,16 +41,17 @@ profiles = {
 }
 for name, profile in profiles.items():
 	Species(
-		species_type = name,
-		initPosition_type = "regular",
-		initMomentum_type = "maxwell-juettner",
-		n_part_per_cell= 1000,
+		name = name,
+		position_initialization = "regular",
+		momentum_initialization = "maxwell-juettner",
+		particles_per_cell= 1000,
 		mass = 1.0,
 		charge = 1.0,
-		nb_density = profile,
+		number_density = profile,
 		time_frozen = 10000.0,
-		bc_part_type_xmin = "none",
-		bc_part_type_xmax = "none",
+		boundary_conditions = [
+			["periodic", "periodic"],
+		],
 		temperature = [0.1]
 	)
 
@@ -67,7 +68,7 @@ tprofiles = [
 ["tpolynomial" ,tpolynomial (t0=0.4*L0, order0=-1., order1=-1./L0, order2=(3./L0)**2)],
 ["tcustom"     ,tcustom]
 ]
-antenna_width = Main.sim_length[0]/len(tprofiles)
+antenna_width = Main.grid_length[0]/len(tprofiles)
 for i, (name, tprofile) in enumerate(tprofiles):
 	Antenna(
 		field = "Jz",
@@ -90,23 +91,22 @@ for eon in mj_species:
 		pmax = 10.
 	
 	Species(
-		species_type = eon,
-		initPosition_type = 'random',
-		initMomentum_type = 'mj',
+		name = eon,
+		position_initialization = 'random',
+		momentum_initialization = 'mj',
 		temperature = [Te,Te,Te],
-		n_part_per_cell = 100000,
+		particles_per_cell = 100000,
 		mass = 1.0,
 		charge = -1.0,
-		nb_density = 1.,
+		number_density = 1.,
 		mean_velocity=vmean,
 		time_frozen = 10000.,
-		bc_part_type_xmin  = 'none',
-		bc_part_type_xmax  = 'none',
-		isTest = True
+		boundary_conditions = [["periodic"]],
+		is_test = True
 	)
 	
-	DiagParticles(
-	 	output = "density",
+	DiagParticleBinning(
+	 	deposited_quantity = "weight",
 	 	every = 1000.,
 	 	species = [eon],
 	 	axes = [
