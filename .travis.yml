@@ -19,7 +19,7 @@ before_install:
   - export PATH=$HOME/.local/bin:$PATH
 
 script:
-  - travis-sphinx --nowarn --source=doc/Sphinx build
+  - travis-sphinx build -n -s doc/Sphinx
   - mkdir -p target/doc/build/_downloads
   - for v in `git tag | grep '^v'`; do  git archive -o target/doc/build/_downloads/smilei-${v}.tar.gz $v; done
 
