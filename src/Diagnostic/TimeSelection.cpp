@@ -1,6 +1,8 @@
-#include "TimeSelection.h"
 #include "PyTools.h"
+#include "TimeSelection.h"
 #include <math.h>
+#include <sstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -99,7 +101,7 @@ TimeSelection::TimeSelection()
 {
     start   = std::numeric_limits<double>::max();
     end     = std::numeric_limits<double>::max();
-    period  = 1.;
+    period  = 0.;
     repeat  = 1;
     spacing = 1.;
     groupWidth   = 0.;
@@ -193,3 +195,72 @@ int TimeSelection::previousTime(int timestep)
     return PreviousTime;
 }
 
+
+// Tell how many selected timesteps have occured before the timestep requested
+int TimeSelection::howManyTimesBefore(int timestep)
+{
+    int nt = 0;
+    if( timestep>=round(start) ) {
+        if( timestep>=round(end) ) {
+            timestep = round(end);
+        }
+        double t = (double)(timestep)-start + 0.4999; // number of timesteps since the start
+        double p = floor(t/period); // previous period number
+        nt = p * repeat; // number of occurences before this period
+        double T = t - p*period; // time to the previous period
+        
+        // If within group
+        if( T < groupWidth ) {
+            nt += (int) floor(T/spacing); // add number of repeats to account for
+        // If after group
+        } else {
+            nt += repeat; // add all repeats
+        }
+    }
+    return nt;
+}
+
+//! Obtain some information about the time selection
+std::string TimeSelection::info()
+{
+    ostringstream t("");
+    if( period == 0. ) {
+        t << "never";
+    } else {
+        if( round(period) == period ) {
+            t << "every " <<  (int) period << " iterations";
+        } else {
+            t << "every " << fixed << setprecision(1) << period << " iterations";
+        }
+        
+        if( repeat > 1 ) {
+            t << " (" << repeat << " repeats each";
+            if( spacing > 1. ) {
+                if( round(spacing) == spacing ) {
+                    t << ", spaced by " <<  (int) spacing;
+                } else {
+                    t << ", spaced by " << fixed << setprecision(1) << spacing;
+                }
+            }
+            t << ")";
+        }
+        
+        if( start > 0. ) {
+            if( round(start) == start ) {
+                t << " from " <<  (int) start;
+            } else {
+                t << " from " << fixed << setprecision(1) << start;
+            }
+        }
+        
+        if( end < std::numeric_limits<double>::max() ) {
+            if( round(end) == end ) {
+                t << " until " <<  (int) end;
+            } else {
+                t << " until " << fixed << setprecision(1) << end;
+            }
+        }
+    }
+    
+    return t.str();
+}

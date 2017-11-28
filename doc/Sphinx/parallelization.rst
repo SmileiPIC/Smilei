@@ -126,6 +126,8 @@ This is a form of **local load balancing**.
 
 ----
 
+.. _LoadBalancingExplanation:
+
 Load balancing between MPI regions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

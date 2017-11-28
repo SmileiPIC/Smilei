@@ -96,9 +96,6 @@ public:
         int nbins;
         bool logscale, edge_inclusive;
         
-        if (pyAxes.size() == 0)
-            ERROR(errorPrefix << ": axes must contain something");
-        
         // Loop axes and extract their format
         for (unsigned int iaxis=0; iaxis<pyAxes.size(); iaxis++ ) {
             PyObject *pyAxis=pyAxes[iaxis];
@@ -116,7 +113,7 @@ public:
             // Try to extract first element: type
             PyObject * type_object = PySequence_Fast_GET_ITEM(seq, 0);
             if ( PyTools::convert(type_object, type) ) {
-                if ( type == "user_function" )
+                if ( type.substr(0, 13) == "user_function" )
                     ERROR(errorPrefix << ", axis #" << iaxis << ": type " << type << " unknown");
                 for( unsigned int i=0; i<excluded_axes.size(); i++ )
                     if( type == excluded_axes[i] )
@@ -129,7 +126,9 @@ public:
                 // Test the function with temporary, "fake" particles
                 double * dummy = NULL;
                 ParticleData test( params.nDim_particle, type_object, typePrefix.str(), dummy );
-                type = "user_function";
+                std::ostringstream t("");
+                t << "user_function" << iaxis;
+                type = t.str();
 #else
                 ERROR(errorPrefix << ", axis #" << iaxis << ": First item must be a string (axis type)");
 #endif
@@ -230,64 +229,15 @@ public:
                     if( ! patch->vecSpecies[species[ispec]]->particles->isQuantumParameter )
                         ERROR(errorPrefix << ": axis #" << iaxis << " 'chi' requires all species to be 'radiating'");
                 axis = new HistogramAxis_chi();
-            } else if (type == "composite") {
-                ERROR(errorPrefix << ": axis type cannot be 'composite'");
             }
 #ifdef SMILEI_USE_NUMPY
-            else if (type == "user_function") {
+            else if (type.substr(0,13) == "user_function") {
                 axis = new HistogramAxis_user_function( type_object );
             
             }
 #endif
             else {
-                // If not "usual" type, try to find composite type
-                for( unsigned int i=1; i<=type.length(); i++ )
-                    if( type.substr(i,1) == " " )
-                        ERROR(errorPrefix << ": axis #" << iaxis << " type cannot contain whitespace");
-                if( type.length()<2 )
-                    ERROR(errorPrefix << ": axis #" << iaxis << " type not understood");
-                
-                // Analyse character by character
-                coefficients.resize( params.nDim_particle , 0. );
-                unsigned int previ=0;
-                double sign=1.;
-                type += "+";
-                for( unsigned int i=1; i<=type.length(); i++ ) {
-                    // Split string at "+" or "-" location
-                    if( type.substr(i,1) == "+" || type.substr(i,1) == "-" ) {
-                        // Get one segment of the split string
-                        std::string segment = type.substr(previ,i-previ);
-                        // Get the last character, which should be one of x, y, or z
-                        unsigned int j = segment.length();
-                        std::string direction = j>0 ? segment.substr(j-1,1) : "";
-                        unsigned int direction_index;
-                        if     ( direction == "x" ) direction_index = 0;
-                        else if( direction == "y" ) direction_index = 1;
-                        else if( direction == "z" ) direction_index = 2;
-                        else { ERROR(errorPrefix << ": axis #" << iaxis << " type not understood"); }
-                        if( direction_index >= params.nDim_particle )
-                            ERROR(errorPrefix << ": axis #" << iaxis << " type " << direction << " cannot exist in " << params.nDim_particle << "D");
-                        if( coefficients[direction_index] != 0. )
-                            ERROR(errorPrefix << ": axis #" << iaxis << " type " << direction << " appears twice");
-                        // Get the remaining characters, which should be a number
-                        coefficients[direction_index] = 1.;
-                        if( j>1 ) {
-                            std::stringstream number("");
-                            number << segment.substr(0,j-1);
-                            number >> coefficients[direction_index];
-                            if( ! coefficients[direction_index] )
-                                ERROR(errorPrefix << ": axis #" << iaxis << " type not understood");
-                        }
-                        coefficients[direction_index] = j>1 ? ::atof(segment.substr(0,j-1).c_str()) : 1.;
-                        coefficients[direction_index] *= sign;
-                        // Save sign and position for next segment
-                        sign = type.substr(i,1) == "+" ? 1. : -1;
-                        previ = i+1;
-                    }
-                }
-            
-                type = "composite:"+type.substr(0,type.length()-1);
-                axis = new HistogramAxis_composite();
+                ERROR(errorPrefix << ": axis #" << iaxis << " `" << type << "` unknown");
             }
             
             Py_DECREF(seq);

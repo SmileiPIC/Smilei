@@ -1,7 +1,9 @@
 import os, re, numpy as np
 import happi
 
-S = happi.Open(".", verbose=False)
+S = happi.Open(["./restart*"], verbose=False)
+
+
 
 some_particles_x = S.TrackParticles.ion(axes=["x"]).getData()["x"][0]
 Validate("Regularly spaced particles", some_particles_x, 1e-7)

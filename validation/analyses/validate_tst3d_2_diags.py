@@ -1,7 +1,9 @@
 import os, re, numpy as np, math 
 import happi
 
-S = happi.Open(".", verbose=False)
+S = happi.Open(["./restart*"], verbose=False)
+
+
 
 ncel = [int(i) for i in S._ncels]
 

@@ -1,7 +1,9 @@
 import os, re, numpy as np
 import happi
 
-S = happi.Open(".", verbose=False)
+S = happi.Open(["./restart*"], verbose=False)
+
+
 
 for name, profile in S.namelist.profiles.items():
 	A = S.Field.Field0("Rho_"+name)

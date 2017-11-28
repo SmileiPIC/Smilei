@@ -1,15 +1,20 @@
-import os, re, numpy as np, math 
+import os, re, numpy as np, math, glob 
 import happi
 
-S = happi.Open(".", verbose=False)
+S = happi.Open(["./restart*"], verbose=False)
+
+
 
 # COMPARE THE Ey FIELD
 Ey = S.Field.Field0.Ey(timesteps=1600).getData()[0][::10,:]
 Validate("Ey field at iteration 1600", Ey, 0.1)
 
 # CHECK THE LOAD BALANCING
-with open("patch_load.txt") as f:
-	txt = f.read()
+txt = ""
+restarts = glob.glob("restart*")
+for folder in restarts:
+	with open(folder+"/patch_load.txt") as f:
+		txt += f.read()
 patch_count0 = re.findall(r"patch_count\[0\] = (\d+)",txt)
 patch_count1 = re.findall(r"patch_count\[1\] = (\d+)",txt)
 initial_balance = [int(patch_count0[0] ), int(patch_count1[0] )]

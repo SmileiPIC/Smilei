@@ -1,7 +1,9 @@
 import os, re, numpy as np, math
 import happi
 
-S = happi.Open(".", verbose=False)
+S = happi.Open(["./restart*"], verbose=False)
+
+
 
 # COMPARE THE Ez FIELD
 Ez = S.Field.Field0.Ez(timesteps=55).getData()[0]

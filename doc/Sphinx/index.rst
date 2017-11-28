@@ -56,6 +56,18 @@ interaction to astrophysics.
 
 
 
+.. raw:: html
+
+  <a href="https://smileipic.github.io/tutorials" class="icon">
+
+.. image:: _static/smileiIconRed.svg
+
+.. raw:: html
+
+  Practicals</a>
+
+
+
 Overview
 ========
 
@@ -93,12 +105,12 @@ Install, run, analyze
    run
    post-processing
 
-
 More information
 ================
 
 .. toctree::
    :maxdepth: 1
-
+   
    material
    partners
+   Smilei tutorials <https://smileipic.github.io/tutorials>

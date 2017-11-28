@@ -587,7 +587,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         hid_t transfer = H5Pcreate(H5P_DATASET_XFER);
         H5Pset_dxpl_mpio(transfer, H5FD_MPIO_INDEPENDENT);
         // Write
-        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &((*probesArray)(0,0)) );
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, probesArray->data_ );
         H5Dclose(dset_id);
         H5Pclose( transfer );
         H5Sclose(filespace);
@@ -600,8 +600,28 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     #pragma omp barrier
 }
 
-
 bool DiagnosticProbes::needsRhoJs(int timestep) {
     return hasRhoJs && timeSelection->theTimeIsNow(timestep);
 }
 
+// SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
+uint64_t DiagnosticProbes::getDiskFootPrint(int istart, int istop, Patch* patch)
+{
+    uint64_t footprint = 0;
+    
+    // Calculate the number of dumps between istart and istop
+    uint64_t ndumps = timeSelection->howManyTimesBefore(istop) - timeSelection->howManyTimesBefore(istart);
+    
+    // Add necessary global headers approximately
+    footprint += 2200;
+    if( dimProbe>0 ) footprint += 2400;
+    if( ndumps>0 ) footprint += (uint64_t)(nDim_particle * nPart_total * 8);
+    
+    // Add local headers
+    footprint += ndumps * (uint64_t)(480 + nFields * 6);
+    
+    // Add size of each field
+    footprint += ndumps * (uint64_t)(nFields * nPart_total) * 8;
+    
+    return footprint;
+}

@@ -31,6 +31,9 @@ public :
         return 0;
     }
     
+    //! Get disk footprint of current diagnostic
+    uint64_t getDiskFootPrint(int istart, int istop, Patch* patch) override;
+    
     //! Fills a buffer with the required particle property
     template<typename T> void fill_buffer(VectorPatch& vecPatches, unsigned int iprop, std::vector<T>& buffer);
     
@@ -81,6 +84,9 @@ private :
     std::vector<short> data_short;
     //! Buffer for the output of uint64 array
     std::vector<uint64_t> data_uint64;
+    
+    //! Approximate total number of particles
+    double npart_total;
 };
 
 #endif

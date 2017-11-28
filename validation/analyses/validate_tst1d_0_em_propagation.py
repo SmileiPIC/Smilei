@@ -1,7 +1,8 @@
 import os, re, numpy as np, h5py
 import happi
 
-S = happi.Open(".", verbose=False)
+S = happi.Open(["./restart*"], verbose=False)
+
 
 # FIELD DIAG
 Validate("List of fields in Field0", S.Field.Field0().getFields() )
@@ -30,7 +31,7 @@ max_ubal = np.max( np.abs(S.Scalar.Ubal().getData()) )
 Validate("Max Ubal is below 2%", max_ubal<0.02 )
 
 # TEST THE GRID PARAMETERS
-with h5py.File("Fields0.h5") as f:
+with h5py.File("./restart000/Fields0.h5") as f:
 	dt = f["data/0000000000"].attrs["dt"]
 	dx = f["data/0000000000/Ex"].attrs["gridSpacing"]
 	patchSize = f["data/0000000000"].attrs["patchSize"]

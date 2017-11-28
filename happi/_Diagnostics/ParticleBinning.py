@@ -63,7 +63,7 @@ class ParticleBinning(Diagnostic):
 					self._error = "In operation '"+self.operation+"', diagnostics #"+str(d)+" and #"\
 						+str(self._diags[0])+" must have the same shape."
 					return
-
+		
 		self._axes  = self._axes [self._diags[0]]
 		self._naxes = self._naxes[self._diags[0]]
 		
@@ -81,12 +81,12 @@ class ParticleBinning(Diagnostic):
 		
 		# Put data_log as object's variable
 		self._data_log = data_log
-
+		
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
 		# Get available timesteps
-		self.times = {}
-		self._times = {}
+		self._timesteps = {}
+		self._alltimesteps = {}
 		self._indexOfTime  = {}
 		self._h5items = {}
 		for d in self._diags:
@@ -97,31 +97,31 @@ class ParticleBinning(Diagnostic):
 				items.update( dict(f) )
 			items = sorted(items.items())
 			self._h5items[d] = [it[1] for it in items]
-			self.times[d] = self._np.array([ int(it[0].strip("timestep")) for it in items ])
-			self._times[d] = self._np.copy(self.times[d])
+			self._timesteps[d] = self._np.array([ int(it[0].strip("timestep")) for it in items ])
+			self._alltimesteps[d] = self._np.copy(self._timesteps[d])
 			# fill the "_indexOfTime" dictionary with indices to the data arrays
 			self._indexOfTime.update({ d:{} })
-			for i,t in enumerate(self.times[d]):
+			for i,t in enumerate(self._timesteps[d]):
 				self._indexOfTime[d].update({ t : i })
 			# If timesteps is None, then keep all timesteps, otherwise, select timesteps
 			if timesteps is not None:
 				try:
-					self.times[d] = self._selectTimesteps(timesteps, self.times[d])
+					self._timesteps[d] = self._selectTimesteps(timesteps, self._timesteps[d])
 				except:
 					self._error = "Argument 'timesteps' must be one or two non-negative integers"
 					return
 			# Verify that timesteps are the same for all diagnostics
-			if (self.times[d] != self.times[self._diags[0]]).any() :
+			if (self._timesteps[d] != self._timesteps[self._diags[0]]).any() :
 				self._error = "All diagnostics in operation '"+self.operation+"' must have the same timesteps."\
-					+" Diagnotic #"+str(d)+" has "+str(len(self.times[d]))+ " timesteps and #"\
-					+str(self._diags[0])+" has "+str(len(self.times[self._diags[0]]))+ " timesteps"
+					+" Diagnotic #"+str(d)+" has "+str(len(self._timesteps[d]))+ " timesteps and #"\
+					+str(self._diags[0])+" has "+str(len(self._timesteps[self._diags[0]]))+ " timesteps"
 				return
 		# Now we need to keep only one array of timesteps because they should be all the same
-		self.times  = self.times [self._diags[0]]
-		self._times = self._times[self._diags[0]]
-
+		self._timesteps  = self._timesteps [self._diags[0]]
+		self._alltimesteps = self._alltimesteps[self._diags[0]]
+		
 		# Need at least one timestep
-		if self.times.size < 1:
+		if self._timesteps.size < 1:
 			self._error = "Timesteps not found"
 			return
 		
@@ -136,7 +136,7 @@ class ParticleBinning(Diagnostic):
 		self._finalShape = [[]]*self._naxes
 		self._sums = [False]*self._naxes
 		self._selection = [self._np.s_[:]]*self._naxes
-		hasComposite = False
+		uniform = True
 		
 		for iaxis in range(self._naxes):
 			axis = self._axes[iaxis]
@@ -154,18 +154,13 @@ class ParticleBinning(Diagnostic):
 				centers = centers[:-1]
 			axis.update({ "edges"   : edges   })
 			axis.update({ "centers" : centers })
-
+			
 			# Find some quantities depending on the axis type
 			overall_min = "-inf"; overall_max = "inf"
 			axis_units = ""
 			if   axistype in ["x","y","z","moving_x"]:
 				axis_units = "L_r"
 				spatialaxes[axistype[-1]] = True
-			elif axistype[:9] == "composite":
-				axis_units = "L_r"
-				hasComposite = True
-				axistype = axistype[10:]
-				axis["type"] = axistype
 			elif axistype in ["px","py","pz","p"]:
 				axis_units = "P_r"
 			elif axistype in ["vx","vy","vz","v"]:
@@ -228,13 +223,16 @@ class ParticleBinning(Diagnostic):
 					self._units  .append(axis_units)
 					plot_diff.append(self._np.diff(edges)[self._selection[iaxis]])
 					self._finalShape[iaxis] = len(self._centers[-1])
+					if axis["log"]:
+						uniform = False
+		
 		
 		self._selection = tuple(self._selection)
 		
 		# Build units
 		titles = {}
 		units = {}
-		axes_units = [unit or "1" for unit in self._units if (hasComposite or unit!="L_r")]
+		axes_units = [unit or "1" for unit in self._units if unit!="L_r"]
 		axes_units = (" / ( " + " * ".join(axes_units) + " )") if axes_units else ""
 		for d in self._diags:
 			titles.update({ d:"??" })
@@ -242,26 +240,26 @@ class ParticleBinning(Diagnostic):
 			val_units = "??"
 			deposited_quantity = self._myinfo[d]["deposited_quantity"]
 			if   deposited_quantity == "weight":
-				titles[d] = "Number" + ("" if hasComposite else " density")
-				val_units = "1" if hasComposite else "N_r"
+				titles[d] = "Number density"
+				val_units = "N_r"
 			elif deposited_quantity == "weight_charge":
-				titles[d] = "Charge" + ("" if hasComposite else " density")
-				val_units = "Q_r" if hasComposite else "N_r * Q_r"
+				titles[d] = "Charge density"
+				val_units = "N_r * Q_r"
 			elif deposited_quantity == "weight_ekin":
-				titles[d] = "Energy" + ("" if hasComposite else " density")
-				val_units = "K_r" if hasComposite else "N_r * K_r"
+				titles[d] = "Energy density"
+				val_units = "N_r * K_r"
 			elif deposited_quantity[:15] == "weight_charge_v":
-				titles[d] = "J"+deposited_quantity[-1] + (" x Volume" if hasComposite else "")
-				val_units = "J_r/N_r" if hasComposite else "J_r"
+				titles[d] = "J"+deposited_quantity[-1]
+				val_units = "J_r"
 			elif deposited_quantity[:8] == "weight_p":
-				titles[d] = "P"+deposited_quantity[8:] + ("" if hasComposite else " density")
-				val_units = "P_r" if hasComposite else "N_r * P_r"
+				titles[d] = "P"+deposited_quantity[8:] + " density"
+				val_units = "N_r * P_r"
 			elif deposited_quantity[:8] == "weight_v":
-				titles[d] = "Pressure "+deposited_quantity[8]+deposited_quantity[11] + (" x Volume" if hasComposite else "")
-				val_units = "K_r" if hasComposite else "N_r * K_r"
+				titles[d] = "Pressure "+deposited_quantity[8]+deposited_quantity[11]
+				val_units = "N_r * K_r"
 			elif deposited_quantity[:13] == "weight_ekin_v":
-				titles[d] = "Energy ("+deposited_quantity[-1]+") flux" + (" x Volume" if hasComposite else " density")
-				val_units = "K_r" if hasComposite else "N_r * K_r"
+				titles[d] = "Energy ("+deposited_quantity[-1]+") flux density"
+				val_units = "N_r * K_r"
 			units[d] = val_units + axes_units
 		# Make total units and title
 		self._vunits = self.operation
@@ -277,21 +275,26 @@ class ParticleBinning(Diagnostic):
 		
 		# Calculate the array that represents the bins sizes in order to get units right.
 		# This array will be the same size as the plotted array
-		if len(plot_diff)==0:
+		if uniform:
 			self._bsize = 1.
-		elif len(plot_diff)==1:
-			self._bsize = plot_diff[0]
+			for d in plot_diff:
+				self._bsize *= d[0]
 		else:
-			self._bsize = self._np.prod( self._np.array( self._np.meshgrid( *plot_diff ) ), axis=0)
-			self._bsize = self._bsize.transpose([1,0]+range(2,len(plot_diff)))
+			if len(plot_diff)==0:
+				self._bsize = 1.
+			elif len(plot_diff)==1:
+				self._bsize = plot_diff[0]
+			else:
+				self._bsize = self._np.prod( self._np.array( self._np.meshgrid( *plot_diff ) ), axis=0)
+				self._bsize = self._bsize.transpose([1,0]+list(range(2,len(plot_diff))))
 		self._bsize = cell_volume / self._bsize
-		if not hasComposite: self._bsize *= coeff
+		self._bsize *= coeff
 		self._bsize = self._np.squeeze(self._bsize)
-
+		
 		# Set the directory in case of exporting
 		self._exportPrefix = "ParticleDiag_"+"-".join([str(d) for d in self._diags])
 		self._exportDir = self._setExportDir(self._exportPrefix)
-
+		
 		# Finish constructor
 		self.valid = True
 		return kwargs
@@ -343,24 +346,24 @@ class ParticleBinning(Diagnostic):
 					print("Particle binning diagnostic #"+str(diagNumber)+" in path '"+path+"' is incompatible with the other ones")
 					return False
 		return info
-
-
+	
+	
 	# Prints the info obtained by the function "getInfo"
 	@staticmethod
 	def _printInfo(info):
 		if not info:
 			return "Error while reading file(s)"
-
+		
 		# 1 - diag number, type and list of species
 		species = ""
 		for i in range(len(info["species"])): species += str(info["species"][i])+" " # reconstitute species string
 		printedInfo = "Diag#"+str(info["#"])+" - "+info["deposited_quantity"]+" of species # "+species+"\n"
-
+		
 		# 2 - period and time-averaging
 		tavg = "no time-averaging"
 		if (info["tavg"] > 1):
 			printedInfo += "    Averaging over "+str(info["tavg"])+" timesteps\n"
-
+		
 		# 3 - axes
 		for i in range(len(info["axes"])):
 			axis = info["axes"][i];
@@ -369,7 +372,7 @@ class ParticleBinning(Diagnostic):
 			printedInfo += "    "+axis["type"]+" from "+str(axis["min"])+" to "+str(axis["max"]) \
 				   +" in "+str(axis["size"])+" steps "+logscale+edges+"\n"
 		return printedInfo
-
+	
 	# Method to print info on all included diags
 	def _info(self):
 		info = ""
@@ -391,12 +394,12 @@ class ParticleBinning(Diagnostic):
 			else:
 				allDiags = diags
 		return allDiags
-
+	
 	# get all available timesteps for a given diagnostic
 	def getAvailableTimesteps(self, diagNumber=None):
 		# if argument "diagNumber" not provided, return the times calculated in __init__
 		if diagNumber is None:
-			return self._times
+			return self._alltimesteps
 		# Otherwise, get the timesteps specifically available for the single requested diagnostic
 		else:
 			times = set()
@@ -411,7 +414,7 @@ class ParticleBinning(Diagnostic):
 				f.close()
 			times = [int(t.strip("timestep")) for t in times]
 			return self._np.array(times)
-
+	
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):
 		if not self._validate(): return

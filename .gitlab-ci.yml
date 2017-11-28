@@ -8,11 +8,22 @@ compile:
     - develop
 
   script:
+    # Force workdir cleaning in case of retried
+    - if [ -d /sps2/gitlab-runner/$CI_PIPELINE_ID ] ; then rm -rf /sps2/gitlab-runner/$CI_PIPELINE_ID ; fi
     # Move in test dir
     - mkdir -p /sps2/gitlab-runner/$CI_PIPELINE_ID
     - cp -r $CI_PROJECT_DIR /sps2/gitlab-runner/$CI_PIPELINE_ID
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
+    # Set the environment
+    - make happi
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    # Run checking script
+    - module purge
+    - module load compilers/icc/17.3.191
+    - module load hdf5/1.8.12-icc
+    - module load mpi/openmpi/1.6.5-ib-icc
+    - module load python/2.7.10
+    - module list 2> module.log
+    # Run validation script
     - python validation.py -c  -v
 
 makerun1D:
@@ -23,8 +34,8 @@ makerun1D:
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    # Run checking script
-    - python validation.py -b "tst1d_*_*.py" -m 4 -o 4 -v
+    # Run validation script
+    - python validation.py -b "tst1d_*_*.py" -m 4 -o 4 -v -r 1
 
 makerun2D:
   stage: makerun
@@ -34,8 +45,8 @@ makerun2D:
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    # Run checking script
-    - python validation.py -b "tst2d_*_*.py" -m 4 -o 4  -v
+    # Run validation script
+    - python validation.py -b "tst2d_*_*.py" -m 4 -o 4  -v -r 1
 
 makerun3D:
   stage: makerun
@@ -45,8 +56,8 @@ makerun3D:
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    # Run checking script
-    - python validation.py -b "tst3d_*_*.py" -m 4 -o 4 -v
+    # Run validation script
+    - python validation.py -b "tst3d_*_*.py" -m 4 -o 4 -v -r 1
 
 makerunCollisions:
   stage: makerun
@@ -56,6 +67,6 @@ makerunCollisions:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
-    - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v
+    - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v -r 1
 
 

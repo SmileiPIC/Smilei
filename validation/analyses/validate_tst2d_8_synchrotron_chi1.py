@@ -15,10 +15,12 @@
 import os, re, numpy as np, h5py
 import happi
 
-S = happi.Open(".", verbose=False)
+S = happi.Open(["./restart*"], verbose=False)
+
+
 
 # List of relativistic pushers
-radiation_list = ["Niel","Landau_Lifshitz"]
+radiation_list = ["cont","disc"]
 
 ukin_dict = {}
 urad_dict = {}
@@ -51,15 +53,15 @@ for radiation in radiation_list:
   urad_dict[radiation] = urad
 
 # ______________________________________________________________________________
-# Comparision continuous and Niel model
+# Comparision continuous and discontinuous methods
 
-urad_rel_err = abs(urad_dict["Niel"] - urad_dict["Landau_Lifshitz"]) / urad_dict["Landau_Lifshitz"].max()
-ukin_rel_err = abs(ukin_dict["Niel"] - ukin_dict["Landau_Lifshitz"]) / ukin_dict["Landau_Lifshitz"][0]
+urad_rel_err = abs(urad_dict["disc"] - urad_dict["cont"]) / urad_dict["cont"].max()
+ukin_rel_err = abs(ukin_dict["disc"] - ukin_dict["cont"]) / ukin_dict["cont"][0]
 
-print ' Comparision Laudau-Lifshitz/Niel methods'
+print ' Comparision continuous/discontinuous methods'
 print ' Maximum relative error kinetic energy',ukin_rel_err.max()
 print ' Maximum relative error radiative energy',urad_rel_err.max()
 
 # Validation difference between continuous and discontinuous methods
-Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err.max(), 0.01 )
-Validate("Relative error on the radiative energy / urad max " , urad_rel_err.max(), 0.01 )
+Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err.max(), 0.02 )
+Validate("Relative error on the radiative energy / urad max " , urad_rel_err.max(), 0.02 )

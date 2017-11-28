@@ -106,8 +106,12 @@ def _smilei_check():
 # if it returns false, the code will call a Py_Finalize();
 def _keep_python_running():
     # Verify all temporal profiles, and all profiles that depend on the moving window or on the load balancing
-    profiles = [las.time_envelope for las in Laser]
-    profiles += [las.chirp_profile for las in Laser]
+    profiles = []
+    for las in Laser:
+        profiles += [las.time_envelope]
+        profiles += [las.chirp_profile]
+        if type(las.space_time_profile) is list:
+            profiles += las.space_time_profile
     profiles += [ant.time_profile for ant in Antenna]
     if len(MovingWindow)>0 or len(LoadBalancing)>0:
         for s in Species:
@@ -120,7 +124,7 @@ def _keep_python_running():
         if d.filter is not None:
             return True
     # Verify the particle binning having a function for deposited_quantity or axis type
-    for d in DiagParticleBinning:
+    for d in DiagParticleBinning._list + DiagScreen._list:
         if type(d.deposited_quantity) is not str:
             return True
         for ax in d.axes:

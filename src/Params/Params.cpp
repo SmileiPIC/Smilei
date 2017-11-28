@@ -43,6 +43,21 @@ namespace Rand
     }
 }
 
+#define DO_EXPAND(VAL)  VAL ## 1
+#define EXPAND(VAL)     DO_EXPAND(VAL)
+#ifdef SMILEI_USE_NUMPY
+#if !defined(NUMPY_IMPORT_ARRAY_RETVAL) || (EXPAND(NUMPY_IMPORT_ARRAY_RETVAL) == 1)
+    void smilei_import_array() { // python 2
+        import_array();
+    }
+#else
+    void* smilei_import_array() { // hack for python3
+        import_array();
+        return NULL;
+    }
+#endif
+#endif
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Params : open & parse the input data file, test that parameters are coherent
@@ -71,7 +86,7 @@ namelist("")
     //init Python
     PyTools::openPython();
 #ifdef SMILEI_USE_NUMPY
-    import_array();
+    smilei_import_array();
 #endif
     
     // Print python version
@@ -86,7 +101,7 @@ namelist("")
     // Running pyinit.py
     runScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py");
     
-    runScript("smilei_version='"+string(__VERSION)+"'\n", string(__VERSION));
+    runScript(Tools::merge("smilei_version='",string(__VERSION),"'\n"), string(__VERSION));
     
     // Running pyprofiles.py
     runScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py");
@@ -118,7 +133,7 @@ namelist("")
                 if( s>1 && command.substr(0,1)=="\"" && command.substr(s-1,1)=="\"" )
                     command = command.substr(1, s - 2);
                 // Add to namelist
-                strNamelist = "# Smilei:) From command line:\n" + command;
+                strNamelist = Tools::merge("# Smilei:) From command line:\n" , command);
             }
             strNamelist +="\n";
         }
@@ -285,6 +300,8 @@ namelist("")
         PyTools::extract("model", model, "FieldFilter", ifilt);
         if( model != "Friedman" )
             ERROR("Currently, only the `Friedman` model is available in FieldFilter()");
+        if( geometry != "2Dcartesian" )
+            ERROR("Currently, the `Friedman` field filter is only availble in `2Dcartesian` geometry");
         Friedman_filter = true;
         PyTools::extract("theta", Friedman_theta, "FieldFilter", ifilt);
         if ( Friedman_filter && (Friedman_theta==0.) )
@@ -340,13 +357,17 @@ namelist("")
     
     
     if( PyTools::nComponents("LoadBalancing")>0 ) {
-        PyTools::extract("every"      , balancing_every, "LoadBalancing");
+        // get parameter "every" which describes a timestep selection
+        load_balancing_time_selection = new TimeSelection(
+            PyTools::extract_py("every", "LoadBalancing"), "Load balancing"
+        );
         PyTools::extract("cell_load"  , cell_load      , "LoadBalancing");
         PyTools::extract("frozen_particle_load", frozen_particle_load    , "LoadBalancing");
         PyTools::extract("initial_balance", initial_balance    , "LoadBalancing");
     } else {
-        balancing_every = 0;
+        load_balancing_time_selection = new TimeSelection();
     }
+    has_load_balancing = (smpi->getSize()>1)  && (! load_balancing_time_selection->isEmpty());
     
     //mi.resize(nDim_field, 0);
     mi.resize(3, 0);
@@ -361,6 +382,11 @@ namelist("")
     print_every = (int)(simulation_time/timestep)/10;
     PyTools::extract("print_every", print_every, "Main");
     if (!print_every) print_every = 1;
+    
+    // Read the "print_expected_disk_usage" parameter
+    if( ! PyTools::extract("print_expected_disk_usage", print_expected_disk_usage, "Main") ) {
+        ERROR("The parameter `Main.print_expected_disk_usage` must be True or False");
+    }
     
     // -------------------------------------------------------
     // Checking species order
@@ -442,6 +468,7 @@ namelist("")
 }
 
 Params::~Params() {
+    if( load_balancing_time_selection ) delete load_balancing_time_selection;
     PyTools::closePython();
 }
 
@@ -495,22 +522,22 @@ void Params::compute()
     //!\todo (MG to JD) Are these 2 lines really necessary ? It seems to me it has just been done before
     n_space.resize(3, 1);
     cell_length.resize(3, 0.);            //! \todo{3 but not real size !!! Pbs in Species::Species}
-
     n_space_global.resize(3, 1);        //! \todo{3 but not real size !!! Pbs in Species::Species}
     oversize.resize(3, 0);
-
+    patch_dimensions.resize(3, 0.);
+    
     //n_space_global.resize(nDim_field, 0);
+    n_cell_per_patch = 1;
     for (unsigned int i=0; i<nDim_field; i++){
         oversize[i]  = interpolation_order + (exchange_particles_each-1);;
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];
         if(n_space_global[i]%number_of_patches[i] !=0) ERROR("ERROR in dimension " << i <<". Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i]);
         if ( n_space[i] <= 2*oversize[i]+1 ) ERROR ( "ERROR in dimension " << i <<". Patches length = "<<n_space[i] << " cells must be at least " << 2*oversize[i] +2 << " cells long. Increase number of cells or reduce number of patches in this direction. " );
+        patch_dimensions[i] = n_space[i] * cell_length[i];
+        n_cell_per_patch *= n_space[i];
     }
-
-    // compute number of cells per patch
-    n_cell_per_patch = n_space[0] * n_space[1] * n_space[2];
-
+    
     // Set clrw if not set by the user
     if ( clrw == -1 ) {
 
@@ -592,14 +619,14 @@ void Params::print_init()
     if( Friedman_filter )
         MESSAGE(1, "Friedman field filtering : theta = " << Friedman_theta);
 
-    if (balancing_every > 0){
+    if (has_load_balancing){
         TITLE("Load Balancing: ");
         if (initial_balance){
             MESSAGE(1,"Computational load is initially balanced between MPI ranks. (initial_balance = true) ");
         } else{
             MESSAGE(1,"Patches are initially homogeneously distributed between MPI ranks. (initial_balance = false) ");
         }
-        MESSAGE(1,"Load balancing every " << balancing_every << " iterations.");
+        MESSAGE(1,"Happens: " << load_balancing_time_selection->info());
         MESSAGE(1,"Cell load coefficient = " << cell_load );
         MESSAGE(1,"Frozen particle load coefficient = " << frozen_particle_load );
     }
@@ -651,7 +678,7 @@ void Params::print_parallelism_params(SmileiMPI* smpi)
         for (unsigned int iDim=0 ; iDim<nDim_field ; iDim++)
             MESSAGE(2, "dimension " << iDim << " - n_space : " << n_space[iDim] << " cells.");
 
-        MESSAGE(1, "Dynamic load balancing frequency: every " << balancing_every << " iterations." );
+        MESSAGE(1, "Dynamic load balancing: " << load_balancing_time_selection->info() );
     }
 
     if (smpi->isMaster()) {
@@ -662,7 +689,7 @@ void Params::print_parallelism_params(SmileiMPI* smpi)
 //    {
 //        nthds = omp_get_num_threads();
 //    }
-        MESSAGE(1,"Number of thread per MPI process : " << omp_get_max_threads() );
+        MESSAGE(1,"Number of thread per MPI process : " << smpi->getOMPMaxThreads() );
 #else
         MESSAGE("Disabled");
 #endif

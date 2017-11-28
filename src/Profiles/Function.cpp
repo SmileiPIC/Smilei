@@ -8,6 +8,9 @@ using namespace std;
 double Function_Python1D::valueAt(double time) {
     return PyTools::runPyFunction(py_profile, time);
 }
+double Function_Python1D::valueAt(vector<double> x_cell, double time) {
+    return PyTools::runPyFunction(py_profile, time);
+}
 double Function_Python1D::valueAt(vector<double> x_cell) {
     return PyTools::runPyFunction(py_profile, x_cell[0]);
 }

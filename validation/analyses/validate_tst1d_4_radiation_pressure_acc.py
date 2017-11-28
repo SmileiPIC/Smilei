@@ -1,7 +1,9 @@
 import os, re, numpy as np
 import happi
 
-S = happi.Open(".", verbose=False)
+S = happi.Open(["./restart*"], verbose=False)
+
+
 
 
 # PHYSICS OF ION ACCELERATION

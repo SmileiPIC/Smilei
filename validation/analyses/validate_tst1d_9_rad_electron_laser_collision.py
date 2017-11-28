@@ -18,7 +18,9 @@
 import os, re, numpy as np, h5py
 import happi
 
-S = happi.Open(".", verbose=False)
+S = happi.Open(["./restart*"], verbose=False)
+
+
 
 # List of relativistic pushers
 radiation_list = ["cont","disc","Niel"]

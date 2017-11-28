@@ -19,7 +19,9 @@
 import os, re, numpy as np, h5py
 import happi
 
-S = happi.Open(".", verbose=False)
+S = happi.Open(["./restart*"], verbose=False)
+
+
 
 dt = S.namelist.Main.timestep
 dx = S.namelist.Main.cell_length[0]

@@ -153,9 +153,12 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patc
     }
     
     // Calculate the size of the output array
-    output_size = 1;
+    uint64_t total_size = 1;
     for( unsigned int i=0; i<histogram->axes.size(); i++ )
-        output_size *= histogram->axes[i]->nbins;
+        total_size *= histogram->axes[i]->nbins;
+    if( total_size > 4294967296 ) // 2^32
+        ERROR(errorPrefix << ": too many points (" << total_size << " > 2^32)");
+    output_size = (unsigned int) total_size;
     data_sum.resize( output_size, 0. );
     
     // Output info on diagnostics
@@ -169,22 +172,7 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI* smpi, Patch* patc
         for(unsigned int i=0; i<histogram->axes.size(); i++) {
             HistogramAxis * axis = histogram->axes[i];
             mystream.str("");
-            mystream << "Axis ";
-            if( axis->type.substr(0,9) == "composite" ) {
-                bool first = true;
-                for( unsigned int idim=0; idim<axis->coefficients.size(); idim++ ) {
-                    if( axis->coefficients[idim]==0. ) continue;
-                    bool negative = axis->coefficients[idim]<0.;
-                    double coeff = (negative?-1.:1.)*axis->coefficients[idim];
-                    mystream << (negative?"-":(first?"":"+"));
-                    if( coeff!=1. ) mystream << coeff;
-                    mystream << (idim==0?"x":(idim==1?"y":"z"));
-                    first = false;
-                }
-            } else {
-                mystream << axis->type;
-            }
-            mystream << " from " << axis->min << " to " << axis->max << " in " << axis->nbins << " steps";
+            mystream << "Axis " << axis->type << " from " << axis->min << " to " << axis->max << " in " << axis->nbins << " steps";
             if( axis->logscale       ) mystream << " [LOGSCALE] ";
             if( axis->edge_inclusive ) mystream << " [EDGE INCLUSIVE]";
             MESSAGE(2,mystream.str());
@@ -407,4 +395,25 @@ void DiagnosticScreen::write(int timestep, SmileiMPI* smpi)
 //! Zero the array
 void DiagnosticScreen::clear() {
     fill( data_sum.begin(), data_sum.end(), 0. );
+}
+
+
+// SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
+uint64_t DiagnosticScreen::getDiskFootPrint(int istart, int istop, Patch* patch)
+{
+    uint64_t footprint = 0;
+    
+    // Calculate the number of dumps between istart and istop
+    uint64_t ndumps = timeSelection->howManyTimesBefore(istop) - timeSelection->howManyTimesBefore(istart);
+    
+    // Add necessary global headers approximately
+    footprint += 1500;
+    
+    // Add necessary timestep headers approximately
+    footprint += ndumps * 640;
+    
+    // Add size of each dump
+    footprint += ndumps * (uint64_t)(output_size) * 8;
+    
+    return footprint;
 }

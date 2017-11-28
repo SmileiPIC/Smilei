@@ -212,16 +212,19 @@ int main (int argc, char* argv[])
     timers.reboot();
 
     // ------------------------------------------------------------------------
+    // Check memory consumption & expected disk usage
+    // ------------------------------------------------------------------------
+    TITLE("Memory consumption");
+    vecPatches.check_memory_consumption( &smpi );
+    
+    TITLE("Expected disk usage (approximate)");
+    vecPatches.check_expected_disk_usage( &smpi, params, checkpoint );
+    
+    // ------------------------------------------------------------------------
     // check here if we can close the python interpreter
     // ------------------------------------------------------------------------
     TITLE("Cleaning up python runtime environement");
     params.cleanup(&smpi);
-
-    // ------------------------------------------------------------------------
-    // Check memory consumption
-    // ------------------------------------------------------------------------
-    TITLE("Memory consumption");
-    vecPatches.check_memory_consumption( &smpi );
 
 /*tommaso
     // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)
@@ -289,8 +292,8 @@ int main (int argc, char* argv[])
             // ----------------------------------------------------------------------
 
 
-            if ((params.balancing_every > 0) && (smpi.getSize()!=1) ) {
-                if (( itime%params.balancing_every == 0 )) {
+            if( params.has_load_balancing ) {
+                if( params.load_balancing_time_selection->theTimeIsNow(itime) ) {
                     timers.loadBal.restart();
                     #pragma omp single
                     vecPatches.load_balance( params, time_dual, &smpi, simWindow, itime );
@@ -351,19 +354,25 @@ int execute_test_mode( VectorPatch &vecPatches, SmileiMPI* smpi, SimWindow* simW
 {
     int itime = 0;
     int moving_window_movement = 0;
-
+    
     if (params.restart) {
         checkpoint.readPatchDistribution( smpi, simWindow );
         itime = checkpoint.this_run_start_step+1;
         moving_window_movement = simWindow->getNmoved();
     }
-
+    
     vecPatches = PatchesFactory::createVector(params, smpi, openPMD, itime, moving_window_movement );
-
+    
     if (params.restart)
         checkpoint.restartAll( vecPatches, smpi, simWindow, params, openPMD);
-
+    
+    if( params.print_expected_disk_usage ) {
+        TITLE("Expected disk usage (approximate)");
+        vecPatches.check_expected_disk_usage( smpi, params, checkpoint );
+    }
+    
     // If test mode enable, code stops here
+    TITLE("Cleaning up python runtime environement");
     params.cleanup(smpi);
     delete simWindow;
     PyTools::closePython();

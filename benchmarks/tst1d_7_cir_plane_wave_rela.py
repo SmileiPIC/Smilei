@@ -14,11 +14,11 @@ import math
 
 l0 = 2.0*math.pi              # laser wavelength
 t0 = l0                       # optical cicle
-Lx = 50*l0
+Lx = 80*l0
 
 n0 = 1e-8                     # particle density
 
-Tsim = 120.*t0                 # duration of the simulation
+Tsim = 150.*t0                 # duration of the simulation
 resx = 64.                    # nb of cells in one laser wavelength
 
 dx = l0/resx                            # space step
@@ -55,18 +55,18 @@ Main(
     timestep = dt,
     simulation_time = Tsim,
     
-    EM_boundary_conditions = [ ['silver-muller'] ],
+    EM_boundary_conditions = [ ['silver-muller', 'reflective'] ],
     
     random_seed = smilei_mpi_rank
 )
 
 LaserPlanar1D(
     box_side         = "xmin",
-    a0              = a0,
-    omega           = 1.,
+    a0               = a0,
+    omega            = 1.,
     polarization_phi = 0.,
-    ellipticity     = 1,
-    time_envelope  = tgaussian(start=start,duration=duration,fwhm=fwhm,center=center,order=2)
+    ellipticity      = 1.,
+    time_envelope    = tgaussian(start=start,duration=duration,fwhm=fwhm,center=center,order=2)
 )
 
 for pusher in pusher_list:
@@ -92,3 +92,4 @@ for pusher in pusher_list:
         flush_every = 100,
     )
 
+DiagFields( every = 1000 )

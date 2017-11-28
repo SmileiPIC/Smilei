@@ -2,7 +2,9 @@ import os, re, numpy as np
 from scipy.special import erf
 import happi
 
-S = happi.Open(".", verbose=False)
+S = happi.Open(["./restart*"], verbose=False)
+
+
 
 for i in range(3):
 	ion = "ion"+str(i)

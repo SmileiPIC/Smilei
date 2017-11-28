@@ -1,7 +1,9 @@
 import os, re, numpy as np
 import happi
 
-S = happi.Open(".", verbose=False)
+S = happi.Open(["./restart*"], verbose=False)
+
+
 
 ## Ionization cross section (code units) for Al3+ vs energy (keV)
 #cs=np.array([

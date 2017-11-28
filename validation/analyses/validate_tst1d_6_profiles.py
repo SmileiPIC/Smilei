@@ -2,7 +2,9 @@ import os, re, numpy as np
 from scipy.signal import butter, filtfilt
 import happi
 
-S = happi.Open(".", verbose=False)
+S = happi.Open(["./restart*"], verbose=False)
+
+
 
 c = ["b","r","g","c","m","y"]
 

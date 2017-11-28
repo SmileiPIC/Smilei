@@ -108,7 +108,7 @@ public:
     LaserProfileNonSeparable(Profile * spaceAndTimeProfile)
      : spaceAndTimeProfile(spaceAndTimeProfile) {};
     LaserProfileNonSeparable(LaserProfileNonSeparable* lp)
-     : spaceAndTimeProfile(lp->spaceAndTimeProfile) {};
+     : spaceAndTimeProfile( new Profile(lp->spaceAndTimeProfile) ) {};
     ~LaserProfileNonSeparable();
     inline double getAmplitude(std::vector<double> pos, double t, int j, int k) {
         double amp;

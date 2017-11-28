@@ -1,7 +1,9 @@
 import os, re, numpy as np
 import happi
 
-S = happi.Open(".", verbose=False)
+S = happi.Open(["./restart*"], verbose=False)
+
+
 
 Ntot_charges = S.Scalar.Ntot_charges(timesteps=0).getData()[0]
 Validate("Initial number of particles", Ntot_charges )

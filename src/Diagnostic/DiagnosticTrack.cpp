@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "ParticleData.h"
+#include "PeekAtSpecies.h"
 #include "DiagnosticTrack.h"
 #include "VectorPatch.h"
 #include "Params.h"
@@ -15,6 +16,7 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& 
     IDs_done( params.restart ),
     nDim_particle(params.nDim_particle)
 {
+    
     // Extract the species
     string species_name;
     if( !PyTools::extract("species",species_name,"DiagTrackParticles",iDiagTrackParticles) )
@@ -64,7 +66,14 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& 
     ostringstream hdf_filename("");
     hdf_filename << "TrackParticlesDisordered_" << species_name  << ".h5" ;
     filename = hdf_filename.str();
-
+    
+    // Obtain the approximate number of particles in the species
+    if( params.print_expected_disk_usage ) {
+        PeekAtSpecies peek(params, speciesId_);
+        npart_total = peek.totalNumberofParticles();
+    } else {
+        npart_total = 0;
+    }
 }
 
 DiagnosticTrack::~DiagnosticTrack()
@@ -467,4 +476,29 @@ void DiagnosticTrack::write_component( hid_t location, string name, T& buffer, h
     if( npart_global>0 ) H5Dwrite( did, dtype, mem_space , file_space , transfer, &buffer );
     openPMD->writeComponentAttributes( did, unit_type );
     H5Dclose(did);
+}
+
+
+
+// SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
+uint64_t DiagnosticTrack::getDiskFootPrint(int istart, int istop, Patch* patch)
+{
+    uint64_t footprint = 0;
+    
+    // Calculate the number of dumps between istart and istop
+    uint64_t ndumps = timeSelection->howManyTimesBefore(istop) - timeSelection->howManyTimesBefore(istart);
+    
+    // Calculate the number of written parameters
+    int nparams = 6 + nDim_particle;
+    
+    // Add necessary global headers approximately
+    footprint += 2500;
+    
+    // Add necessary timestep headers approximately
+    footprint += ndumps * 11250;
+    
+    // Add size of each parameter
+    footprint += ndumps * (uint64_t)(nparams * npart_total * 8);
+    
+    return footprint;
 }
