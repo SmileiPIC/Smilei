@@ -220,7 +220,8 @@ namelist("")
     for (unsigned int i=0;i<nDim_field;i++){
         res_space[i] = 1.0/cell_length[i];
     }
-    
+    // Number of modes
+    PyTools::extract("Nmode", Nmode, "Main");
     
     // simulation duration & length
     PyTools::extract("simulation_time", simulation_time, "Main");
