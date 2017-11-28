@@ -159,7 +159,7 @@ void PatchRZ::initSumField( Field* field, int iDim )
         if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
             int tmp_elem = f3D->MPIbuff.ibuf[iDim][(iNeighbor+1)%2].size();
             int tag = f3D->MPIbuff.recv_tags_[iDim][iNeighbor];
-            MPI_Irecv( &( f3D->MPIbuff.ibuf[iDim][(iNeighbor+1)%2][0] ), tmp_elem, MPI_CXX_DOUBLE_COMPLEX, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, 
+            MPI_Irecv( &( f3D->MPIbuff.ibuf[iDim][(iNeighbor+1)%2][0] ), 2*tmp_elem, MPI_DOUBLE, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, 
                        MPI_COMM_WORLD, &(f3D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]) );
         } // END of Recv
             
@@ -435,13 +435,13 @@ void PatchRZ::createType( Params& params )
             
             // Standard Type
             ntype_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous(params.oversize[0]*ny, 
-                                MPI_CXX_DOUBLE_COMPLEX, &(ntype_[0][ix_isPrim][iy_isPrim]));
+            MPI_Type_contiguous(2*params.oversize[0]*ny, 
+                                MPI_DOUBLE, &(ntype_[0][ix_isPrim][iy_isPrim]));
             MPI_Type_commit( &(ntype_[0][ix_isPrim][iy_isPrim]) );
 
             ntype_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_vector(nx, params.oversize[1], ny, 
-                            MPI_CXX_DOUBLE_COMPLEX, &(ntype_[1][ix_isPrim][iy_isPrim]));
+            MPI_Type_vector(2*nx, params.oversize[1], ny, 
+                            MPI_DOUBLE, &(ntype_[1][ix_isPrim][iy_isPrim]));
             MPI_Type_commit( &(ntype_[1][ix_isPrim][iy_isPrim]) );
 
 
@@ -449,13 +449,13 @@ void PatchRZ::createType( Params& params )
             ny_sum = 1 + 2*params.oversize[1] + iy_isPrim;
 
             ntypeSum_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous(nx_sum*ny, 
-                                MPI_CXX_DOUBLE_COMPLEX, &(ntypeSum_[0][ix_isPrim][iy_isPrim]));
+            MPI_Type_contiguous(2*nx_sum*ny, 
+                                MPI_DOUBLE, &(ntypeSum_[0][ix_isPrim][iy_isPrim]));
             MPI_Type_commit( &(ntypeSum_[0][ix_isPrim][iy_isPrim]) );
             
             ntypeSum_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_vector(nx, ny_sum, ny, 
-                            MPI_CXX_DOUBLE_COMPLEX, &(ntypeSum_[1][ix_isPrim][iy_isPrim]));
+            MPI_Type_vector(2*nx, ny_sum, ny, 
+                            MPI_DOUBLE, &(ntypeSum_[1][ix_isPrim][iy_isPrim]));
             MPI_Type_commit( &(ntypeSum_[1][ix_isPrim][iy_isPrim]) );
 
         }
