@@ -1,6 +1,6 @@
 # ____________________________________________________________________________
 #
-# This script validates the relativist pushers in 1d by analyzing 
+# This script validates the relativist pushers in 1d by analyzing
 # the trajectory of a particle in a circular Gaussian plane wave.
 #
 # _____________________________________________________________________________
@@ -11,8 +11,6 @@ import happi
 
 S = happi.Open(["./restart*"], verbose=False)
 
-
-
 # Step represents the step between trajectory points what we consider
 # This enables to reduce the size of the array
 step = 2
@@ -22,7 +20,7 @@ pusher_list = ["borisnr","boris","vay","higueracary"]
 
 # We load successively the particle track associated to each pusher
 for pusher in pusher_list:
-  
+
   # Data from the Track diagnostic
   Track = S.TrackParticles("electron_" + pusher, axes=["x","px","py","pz"]).get()
 
@@ -40,5 +38,3 @@ for pusher in pusher_list:
   Validate("Electron p_perp for pusher: " + pusher, p_perp, 1e-7 )
   Validate("Electron p_x for pusher: " + pusher, px, 1e-7 )
   Validate("Electron gamma for pusher: " + pusher, gamma, 1e-7 )
-
-
