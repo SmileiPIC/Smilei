@@ -248,11 +248,12 @@ class Main(SmileiSingleton):
 
         if len(Main.number_of_cells) == 0:
             Main.number_of_cells = [int(round(float(a)/float(b))) for a,b in zip(Main.grid_length, Main.cell_length)]
-            old_grid_length=Main.grid_length
+            old_grid_length = Main.grid_length
             Main.grid_length = [a*b for a,b in zip(Main.number_of_cells, Main.cell_length)]
-            difference = [a-b for a,b in zip(Main.grid_length, old_grid_length)]
-            if smilei_mpi_rank == 0 and not all(v == 0 for v in difference):
-                print("\t[Python WARNING] Main.grid_length="+str(Main.grid_length)+" (was "+str(old_grid_length)+") difference:"+str(difference))
+            if smilei_mpi_rank == 0:
+                different = [abs((a-b)/(a+b))>1e-10 for a,b in zip(Main.grid_length, old_grid_length)]
+                if any(different):
+                    print("\t[Python WARNING] Main.grid_length="+str(Main.grid_length)+" (was "+str(old_grid_length)+")")
 
 class LoadBalancing(SmileiSingleton):
     """Load balancing parameters"""
