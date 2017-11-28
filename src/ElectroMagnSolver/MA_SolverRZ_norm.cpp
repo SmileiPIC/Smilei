@@ -1,6 +1,6 @@
 
 #include "MA_SolverRZ_norm.h"
-#include "Patch.h"
+
 #include "ElectroMagn3DRZ.h"
 #include "cField2D.h"
 #include <complex>
@@ -17,7 +17,6 @@ MA_SolverRZ_norm::~MA_SolverRZ_norm()
 
 void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
 {
-
     #ifdef _TODO_RZ
 	#endif
     // Loop on modes ?
@@ -65,30 +64,7 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
                 -                  dt_ov_dr * ( (*BlRZ)(i,j+1) - (*BlRZ)(i,j) );
         }
     }
-	if (min_max==2 && patch->isYmin()){
-		if (imode==0){
-			for (unsigned int i=0 ; i<nl_p ; i++) {
-				(*EtRZ)(i,0)=0;
-			}
-			for (unsigned int i=0 ; i<nl_p ; i++) {
-				(*ErRZ)(i,0)= -(*ErRZ)(i,1);
-			}
-			for (unsigned int i=0 ; i<nl_d ; i++) {
-				(*ElRZ)(i,0)+= 4*dt_ov_dr*(*BtRZ)(i,1)+dt*(*JtRZ)(i,0);
-			}
-		}
-		if (imode==1){
-			for (unsigned int i=0 ; i<nl_d ; i++) {
-				(*ElRZ)(i,0)= 0;
-			}
-			for (unsigned int i=0 ; i<nl_p ; i++) {
-				(*ErRZ)(i,0)= (*ErRZ)(i,1);
-			}
-			for (unsigned int i=0 ; i<nl_d ; i++) {
-				(*EtRZ)(i,0)= (*EtRZ)(i,1);
-			}	
-		}
-	}
+
     }
 
 }
