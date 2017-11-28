@@ -57,12 +57,6 @@ class Performances(Diagnostic):
 	
 	def _init(self, raw=None, map=None, histogram=None, timesteps=None, data_log=False, **kwargs):
 		
-		nargs = (raw is not None) + (map is not None) + (histogram is not None)
-		
-		if nargs>1:
-			self._error += "Diagnostic not loaded: choose only one of `raw`, `map` or `histogram`"
-			return
-		
 		# Open the file(s) and load the data
 		self._h5items = {}
 		self._quantities = []
@@ -84,6 +78,13 @@ class Performances(Diagnostic):
 				self._quantities = [f for f in next(iter(values)).keys() if f in self._quantities]
 		# Converted to ordered list
 		self._h5items = sorted(self._h5items.values(), key=lambda x:int(x.name[1:]))
+		self._availableQuantities = list(self._quantities)
+		
+		nargs = (raw is not None) + (map is not None) + (histogram is not None)
+		
+		if nargs>1:
+			self._error += "Diagnostic not loaded: choose only one of `raw`, `map` or `histogram`"
+			return
 		
 		if nargs == 0:
 			self._error += "Diagnostic not loaded: must define raw='quantity', map='quantity' or histogram=['quantity',min,max,nsteps]\n"
@@ -245,6 +246,10 @@ class Performances(Diagnostic):
 		try:    times = [float(a.name[1:]) for a in self._h5items]
 		except: times = []
 		return self._np.double(times)
+	
+	# get all available quantities
+	def getAvailableQuantities(self):
+		return self._availableQuantities
 	
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):

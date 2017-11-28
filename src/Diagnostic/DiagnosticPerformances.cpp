@@ -75,7 +75,7 @@ void DiagnosticPerformances::openFile( Params& params, SmileiMPI* smpi, bool new
         H5Pclose(pid);
         
         // write all parameters as HDF5 attributes
-        //H5::attr(fileId_, "Version", string(__VERSION));
+        H5::attr(fileId_, "MPI_SIZE", smpi->getSize());
     }
     else {
         // Open the existing file
