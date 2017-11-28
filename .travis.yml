@@ -22,6 +22,7 @@ script:
   - travis-sphinx build -n -s doc/Sphinx
   - mkdir -p target/doc/build/_downloads
   - for v in `git tag | grep '^v'`; do  git archive -o target/doc/build/_downloads/smilei-${v}.tar.gz $v; done
+  - find .
 
 after_success:
   - travis-sphinx deploy
