@@ -84,11 +84,6 @@ class RadiationTables
         //! \param chipa particle quantum parameter
         double get_h_Niel_from_table(double chipa);
 
-        //! Return the value of the function h(chipa) of Niel et al.
-        //! from a numerical fit
-        //! \param chipa particle quantum parameter
-        double get_h_Niel_from_fit(double chipa);
-
         //! Return the stochastic diffusive component of the pusher
         //! of Niel et al.
         //! \param gamma particle Lorentz factor
@@ -141,6 +136,36 @@ class RadiationTables
             return pow(1. + 4.8*(1.+chipa)*log(1. + 1.7*chipa)
                           + 2.44*chipa*chipa,-2./3.);
         };
+
+        // -----------------------------------------------------------------------------
+        //! Return the value of the function h(chipa) of Niel et al.
+        //! from a numerical fit
+        //! \param chipa particle quantum parameter
+        // -----------------------------------------------------------------------------
+        double inline get_h_Niel_from_fit(double chipa)
+        {
+            // Max relative error ~2E-4
+            return exp(-3.231764974833856e-08 * pow(log(chipa),10)
+                -7.574417415366786e-07 * pow(log(chipa),9)
+                -5.437005218419013e-06 * pow(log(chipa),8)
+                -4.359062260446135e-06 * pow(log(chipa),7)
+                + 5.417842511821415e-05 * pow(log(chipa),6)
+                -1.263905701127627e-04 * pow(log(chipa),5)
+                + 9.899812622393002e-04 * pow(log(chipa),4)
+                + 1.076648497464146e-02 * pow(log(chipa),3)
+                -1.624860613422593e-01 * pow(log(chipa),2)
+                + 1.496340836237785e+00 * log(chipa)
+                -2.756744141581370e+00);
+        }
+
+        // -----------------------------------------------------------------------------
+        //! Return the classical power factor factor_cla_rad_power.
+        // -----------------------------------------------------------------------------
+        double inline get_factor_cla_rad_power()
+        {
+          return factor_cla_rad_power;
+        }
+
 
         // ---------------------------------------------------------------------
         // TABLE COMPUTATION

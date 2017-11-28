@@ -254,7 +254,8 @@ void RadiationNiel::operator() (
     // _______________________________________________________________
     // Computation of the diffusion coefficients
 
-    for (i=0 ; i < nbparticles; i++ )
+    // Use of the external table
+    /*for (i=0 ; i < nbparticles; i++ )
     {
 
         // Particle number
@@ -267,6 +268,41 @@ void RadiationNiel::operator() (
             // Diffusive stochastic component during dt
             diffusion[i] = RadiationTables.get_Niel_stochastic_term((*gamma)[ipart],
                                                         chipa[ipart],sqrtdt);
+        }
+        else
+        {
+            diffusion[i] = 0.;
+        }
+    }*/
+
+    double h,r;
+    double chipa_radiation_threshold = RadiationTables.get_chipa_radiation_threshold();
+    double factor_cla_rad_power = RadiationTables.get_factor_cla_rad_power();
+
+    // Use of the fit
+    #pragma omp simd
+    for (i=0 ; i < nbparticles; i++ )
+    {
+
+        // Particle number
+        ipart = istart + i;
+
+        // Below chipa = chipa_radiation_threshold, radiation losses are negligible
+        if (chipa[ipart] > chipa_radiation_threshold)
+        {
+
+          h = RadiationTables.get_h_Niel_from_fit(chipa[ipart]);
+
+          // Pick a random number in the normal distribution of standard
+          // deviation sqrt(dt) (variance dt)
+          r = Rand::normal(sqrtdt);
+
+          /*std::random_device device;
+          std::mt19937 gen(device());
+          std::normal_distribution<double> normal_distribution(0., sqrt(dt));
+          r = normal_distribution(gen);*/
+
+          diffusion[i] = sqrt(factor_cla_rad_power*(*gamma)[ipart]*h)*r;
         }
         else
         {
