@@ -53,7 +53,7 @@ ifneq ($(strip $(PYTHONHOME)),)
 endif 
 
 
-PICSAR=TRUE
+PICSAR=FALSE
 ifeq ($(PICSAR),TRUE)
 	CXXFLAGS += -D_PICSAR
 	FFTW3_LIB= $(FFTW_LIB_DIR)

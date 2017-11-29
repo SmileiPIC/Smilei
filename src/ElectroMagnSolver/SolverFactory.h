@@ -34,6 +34,8 @@ public:
             solver = new MA_Solver1D_norm(params);
         } else if ( params.geometry == "2Dcartesian" ) {
             if ( params.is_pxr == false ) {
+                if (params.is_spectral)
+                    WARNING( "PS solveur are not available without Picsar" );
                 if (params.Friedman_filter) {
                     solver = new MA_Solver2D_Friedman(params);
                 } else {
@@ -44,8 +46,11 @@ public:
                 solver = new PXR_Solver2D_GPSTD(params);
             
         } else if ( params.geometry == "3Dcartesian" ) {
-            if ( params.is_pxr == false )
+            if ( params.is_pxr == false ) {
+                if (params.is_spectral)
+                    WARNING( "PS solveur are not available without Picsar" );
                 solver = new MA_Solver3D_norm(params);
+            }
             else if ( ( params.is_pxr == true ) && ( params.is_spectral == false ) )
                 solver = new PXR_Solver3D_FDTD(params);
             else if ( ( params.is_pxr == true ) && ( params.is_spectral == true ) )

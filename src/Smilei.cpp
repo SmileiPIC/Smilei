@@ -295,22 +295,23 @@ int main (int argc, char* argv[])
                     vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
                 }
             }
+            #else
+            // Force temporary usage of double grids, even if global_factor = 1
+            //    especially to compare solvers           
+            //if ( global_factor!=1 )
+            {
+                if( time_dual > params.time_fields_frozen ) {
+                    SyncCartesianPatch::patchedToCartesian( vecPatches, domain, params, &smpi, timers, itime );
+                    domain.solveMaxwell( params, simWindow, itime, time_dual, timers );
+                    SyncCartesianPatch::cartesianToPatches( domain, vecPatches, params, &smpi, timers, itime );
+                }
+            }
             #endif
 
             vecPatches.finalize_and_sort_parts(params, &smpi, simWindow, RadiationTables,
                                                MultiphotonBreitWheelerTables,
                                                time_dual, timers, itime);
 
-            // Force temporary usage of double grids, even if global_factor = 1
-            //    especially to compare solvers           
-            #ifdef _PICSAR
-            //if ( global_factor!=1 )
-            {
-                SyncCartesianPatch::patchedToCartesian( vecPatches, domain, params, &smpi, timers, itime );
-                domain.solveMaxwell( params, simWindow, itime, time_dual, timers );
-                SyncCartesianPatch::cartesianToPatches( domain, vecPatches, params, &smpi, timers, itime );
-            }
-            #endif
 
             // call the various diagnostics
             vecPatches.runAllDiags(params, &smpi, itime, timers, simWindow);

@@ -188,19 +188,21 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
     }
     timers.syncPart.update( params.printNow( itime ) );
 
-//    if ( (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
-//        timers.syncField.restart();
-//        SyncVectorPatch::finalizeexchangeB( (*this) );
-//        timers.syncField.update(  params.printNow( itime ) );
-//
-//        #pragma omp for schedule(static)
-//        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-//            // Applies boundary conditions on B
-//            (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
-//            // Computes B at time n using B and B_m.
-//            (*this)(ipatch)->EMfields->centerMagneticFields();
-//        }
-//    }
+    #ifndef _PICSAR
+    if ( (!params.is_spectral) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
+        timers.syncField.restart();
+        SyncVectorPatch::finalizeexchangeB( (*this) );
+        timers.syncField.update(  params.printNow( itime ) );
+
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+            // Applies boundary conditions on B
+            (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
+            // Computes B at time n using B and B_m.
+            (*this)(ipatch)->EMfields->centerMagneticFields();
+        }
+    }
+    #endif
 
 } // END dynamics
 
@@ -299,7 +301,8 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
     SyncVectorPatch::exchangeB( (*this) );
     timers.syncField.update(  params.printNow( itime ) );
 
-    if ( (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
+    #ifdef _PICSAR
+    if ( (params.is_spectral) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
         timers.syncField.restart();
         if (params.is_spectral)
             SyncVectorPatch::finalizeexchangeE( (*this) );
@@ -319,6 +322,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         if (params.is_spectral)
             save_old_rho( params );
     }
+    #endif
 
 
 } // END solveMaxwell
