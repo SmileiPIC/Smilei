@@ -24,9 +24,6 @@ public :
     
     void run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow, Timers & timers ) override;
     
-    void writeQuantity( double       quantity, const char* name, hid_t gid, hid_t create_plist );
-    void writeQuantity( unsigned int quantity, const char* name, hid_t gid, hid_t create_plist );
-    
     //! Get memory footprint of current diagnostic
     int getMemFootPrint() override {
         return 0;
@@ -35,9 +32,17 @@ public :
     //! Get disk footprint of current diagnostic
     uint64_t getDiskFootPrint(int istart, int istop, Patch* patch) override;
     
+    //! Set the hdf5 spaces for 2D arrays with one column selected per proc
+    void setHDF5spaces(hid_t &filespace, hid_t &memspace, unsigned int height, unsigned int width, unsigned int column);
+    
 private :
     
-    hid_t iteration_group_id, filespace, memspace;
+    //! HDF5 link to the group corresponding to one iteration
+    hid_t iteration_group_id;
+    
+    //! HDF5 shapes of datasets
+    hid_t filespace_double, memspace_double;
+    hid_t filespace_uint  , memspace_uint  ;
     
     //! Property list for collective dataset write, set for // IO.
     hid_t write_plist;

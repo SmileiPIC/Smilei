@@ -20,7 +20,7 @@ Validate("Final electron momentum distribution", px, 0.1)
 
 # CONSISTENCY OF DIAGPERFORMANCES
 #   check available quantities
-Validate("Performances available quantities", S.Performances().getAvailableQuantities())
+Validate("Performances available quantities", sorted(S.Performances().getAvailableQuantities()))
 #   check number of MPI processes
 with h5py.File("./restart000/Performances.h5") as f:
 	MPI_SIZE = f.attrs["MPI_SIZE"]

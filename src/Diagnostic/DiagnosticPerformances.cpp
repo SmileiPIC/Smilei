@@ -6,6 +6,8 @@
 
 using namespace std;
 
+const unsigned int n_quantities_double = 13;
+const unsigned int n_quantities_uint   = 4;
 
 // Constructor
 DiagnosticPerformances::DiagnosticPerformances( Params & params, SmileiMPI* smpi )
@@ -37,13 +39,13 @@ DiagnosticPerformances::DiagnosticPerformances( Params & params, SmileiMPI* smpi
     }
     filename = "Performances.h5";
     
-    // Initialize stuff for the handling of HDF5 dump
     mpi_size = smpi->getSize();
-    hsize_t one = 1;
-    filespace = H5Screate_simple(1, &mpi_size, NULL);
-    memspace  = H5Screate_simple(1, &one, NULL );
-    hsize_t start=smpi->getRank(), count=1, block=1;
-    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &start, NULL, &count, &block );
+    
+    // Define the HDF5 file and memory spaces
+    setHDF5spaces(filespace_double, memspace_double, n_quantities_double, mpi_size, smpi->getRank());
+    setHDF5spaces(filespace_uint  , memspace_uint  , n_quantities_uint  , mpi_size, smpi->getRank());
+    
+    // Define HDF5 file access
     write_plist = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
     
@@ -76,6 +78,30 @@ void DiagnosticPerformances::openFile( Params& params, SmileiMPI* smpi, bool new
         
         // write all parameters as HDF5 attributes
         H5::attr(fileId_, "MPI_SIZE", smpi->getSize());
+        
+        vector<string> quantities_uint(n_quantities_uint);
+        quantities_uint[0] = "hindex"                    ;
+        quantities_uint[1] = "number_of_cells"           ;
+        quantities_uint[2] = "number_of_particles"       ;
+        quantities_uint[3] = "number_of_frozen_particles";
+        H5::attr(fileId_, "quantities_uint", quantities_uint);
+        
+        vector<string> quantities_double(n_quantities_double);
+        quantities_double[ 0] = "total_load"      ;
+        quantities_double[ 1] = "timer_global"    ;
+        quantities_double[ 2] = "timer_particles" ;
+        quantities_double[ 3] = "timer_maxwell"   ;
+        quantities_double[ 4] = "timer_densities" ;
+        quantities_double[ 5] = "timer_collisions";
+        quantities_double[ 6] = "timer_movWindow" ;
+        quantities_double[ 7] = "timer_loadBal"   ;
+        quantities_double[ 8] = "timer_syncPart"  ;
+        quantities_double[ 9] = "timer_syncField" ;
+        quantities_double[10] = "timer_syncDens"  ;
+        quantities_double[11] = "timer_diags"     ;
+        quantities_double[12] = "timer_total"     ;
+        H5::attr(fileId_, "quantities_double", quantities_double);
+        
     }
     else {
         // Open the existing file
@@ -89,8 +115,10 @@ void DiagnosticPerformances::openFile( Params& params, SmileiMPI* smpi, bool new
 
 void DiagnosticPerformances::closeFile()
 {
-    if ( filespace>0 ) H5Sclose( filespace );
-    if ( memspace >0 ) H5Sclose( memspace );
+    if ( filespace_uint>0 ) H5Sclose( filespace_uint );
+    if ( memspace_uint >0 ) H5Sclose( memspace_uint  );
+    if ( filespace_double>0 ) H5Sclose( filespace_double );
+    if ( memspace_double >0 ) H5Sclose( memspace_double  );
     if ( fileId_  >0 ) H5Fclose( fileId_ );
     fileId_ = 0;
 } // END closeFile
@@ -157,70 +185,62 @@ void DiagnosticPerformances::run( SmileiMPI* smpi, VectorPatch& vecPatches, int 
             + ((double)number_of_frozen_particles) * frozen_particle_load
             + ((double)number_of_cells) * cell_load;
         
-        // Write all quantities to file
-        hid_t plist_id = H5Pcreate( H5P_DATASET_CREATE );
-        writeQuantity( vecPatches(0)->Hindex()    , "hindex"                    , iteration_group_id, plist_id);
-        writeQuantity( number_of_cells            , "number_of_cells"           , iteration_group_id, plist_id);
-        writeQuantity( number_of_particles        , "number_of_particles"       , iteration_group_id, plist_id);
-        writeQuantity( number_of_frozen_particles , "number_of_frozen_particles", iteration_group_id, plist_id);
-        writeQuantity( total_load                 , "total_load"                , iteration_group_id, plist_id);
-        writeQuantity( timers.global    .getTime(), "timer_global"              , iteration_group_id, plist_id);
-        writeQuantity( timers.particles .getTime(), "timer_particles"           , iteration_group_id, plist_id);
-        writeQuantity( timers.maxwell   .getTime(), "timer_maxwell"             , iteration_group_id, plist_id);
-        writeQuantity( timers.densities .getTime(), "timer_densities"           , iteration_group_id, plist_id);
-        writeQuantity( timers.collisions.getTime(), "timer_collisions"          , iteration_group_id, plist_id);
-        writeQuantity( timers.movWindow .getTime(), "timer_movWindow"           , iteration_group_id, plist_id);
-        writeQuantity( timers.loadBal   .getTime(), "timer_loadBal"             , iteration_group_id, plist_id);
-        writeQuantity( timers.syncPart  .getTime(), "timer_syncPart"            , iteration_group_id, plist_id);
-        writeQuantity( timers.syncField .getTime(), "timer_syncField"           , iteration_group_id, plist_id);
-        writeQuantity( timers.syncDens  .getTime(), "timer_syncDens"            , iteration_group_id, plist_id);
-        double timer_total =
-              timers.particles .getTime()
-            + timers.maxwell   .getTime()
-            + timers.densities .getTime()
-            + timers.collisions.getTime()
-            + timers.movWindow .getTime()
-            + timers.loadBal   .getTime()
-            + timers.syncPart  .getTime()
-            + timers.syncField .getTime()
-            + timers.syncDens  .getTime();
+        hid_t create_plist = H5Pcreate( H5P_DATASET_CREATE );
+        
+        // Fill the vector for uint quantities
+        vector<unsigned int> quantities_uint(n_quantities_uint);
+        quantities_uint[0] = vecPatches(0)->Hindex()   ;
+        quantities_uint[1] = number_of_cells           ;
+        quantities_uint[2] = number_of_particles       ;
+        quantities_uint[3] = number_of_frozen_particles;
+        
+        // Write uints to file
+        hid_t dset_uint  = H5Dcreate( iteration_group_id, "quantities_uint", H5T_NATIVE_UINT, filespace_uint, H5P_DEFAULT, create_plist, H5P_DEFAULT);
+        H5Dwrite( dset_uint, H5T_NATIVE_UINT, memspace_uint, filespace_uint, write_plist, &quantities_uint[0] );
+        H5Dclose( dset_uint );
+        
+        // Fill the vector for double quantities
+        vector<double> quantities_double(n_quantities_double);
+        quantities_double[ 0] = total_load                 ;
+        quantities_double[ 1] = timers.global    .getTime();
+        quantities_double[ 2] = timers.particles .getTime();
+        quantities_double[ 3] = timers.maxwell   .getTime();
+        quantities_double[ 4] = timers.densities .getTime();
+        quantities_double[ 5] = timers.collisions.getTime();
+        quantities_double[ 6] = timers.movWindow .getTime();
+        quantities_double[ 7] = timers.loadBal   .getTime();
+        quantities_double[ 8] = timers.syncPart  .getTime();
+        quantities_double[ 9] = timers.syncField .getTime();
+        quantities_double[10] = timers.syncDens  .getTime();
         // Specific for diags timer because we are within a diag
         double timer_diags = MPI_Wtime() - timers.diags.last_start_ + timers.diags.time_acc_;
-        writeQuantity( timer_diags, "timer_diags", iteration_group_id, plist_id);
-        // Now add the total timer
-        timer_total += timer_diags;
-        writeQuantity( timer_total, "timer_total", iteration_group_id, plist_id);
+        quantities_double[11] = timer_diags;
+        // All timers are summed in timer_total
+        double timer_total =
+              quantities_double[ 2] + quantities_double[3] + quantities_double[ 4]
+            + quantities_double[ 5] + quantities_double[6] + quantities_double[ 7]
+            + quantities_double[ 8] + quantities_double[9] + quantities_double[10]
+            + quantities_double[11];
+        quantities_double[12] = timer_total;
         
-        H5Pclose(plist_id);
+        // Write doubles to file
+        hid_t dset_double  = H5Dcreate( iteration_group_id, "quantities_double", H5T_NATIVE_DOUBLE, filespace_double, H5P_DEFAULT, create_plist, H5P_DEFAULT);
+        H5Dwrite( dset_double, H5T_NATIVE_DOUBLE, memspace_double, filespace_double, write_plist, &quantities_double[0] );
+        H5Dclose( dset_double );
+        
+        // Close and flush
+        H5Pclose(create_plist);
         H5Gclose(iteration_group_id);
-        
         if( flush_timeSelection->theTimeIsNow(itime) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     }
     
 } // END run
 
 
-void DiagnosticPerformances::writeQuantity( double quantity, const char* name, hid_t gid, hid_t create_plist )
-{
-    hid_t dset_id  = H5Dcreate( gid, name, H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, create_plist, H5P_DEFAULT);
-    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &quantity );
-    H5Dclose( dset_id );
-}
-void DiagnosticPerformances::writeQuantity( unsigned int quantity, const char* name, hid_t gid, hid_t create_plist )
-{
-    hid_t dset_id  = H5Dcreate( gid, name, H5T_NATIVE_UINT, filespace, H5P_DEFAULT, create_plist, H5P_DEFAULT);
-    H5Dwrite( dset_id, H5T_NATIVE_UINT, memspace, filespace, write_plist, &quantity );
-    H5Dclose( dset_id );
-}
-
-
-
 // SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
 uint64_t DiagnosticPerformances::getDiskFootPrint(int istart, int istop, Patch* patch)
 {
     uint64_t footprint = 0;
-    unsigned int n_double = 13;
-    unsigned int n_uint = 4;
     
     // Calculate the number of dumps between istart and istop
     uint64_t ndumps = timeSelection->howManyTimesBefore(istop) - timeSelection->howManyTimesBefore(istart);
@@ -232,11 +252,23 @@ uint64_t DiagnosticPerformances::getDiskFootPrint(int istart, int istop, Patch* 
     footprint += ndumps * 800;
     
     // Add necessary dataset headers approximately
-    footprint += ndumps * (n_double + n_uint) * 350;
+    footprint += ndumps * (n_quantities_double + n_quantities_uint) * 350;
     
     // Add size of each dump
-    footprint += ndumps * (uint64_t)(mpi_size) * (uint64_t)(n_double * sizeof(double) + n_uint * sizeof(unsigned int));
+    footprint += ndumps * (uint64_t)(mpi_size) * (uint64_t)(n_quantities_double * sizeof(double) + n_quantities_uint * sizeof(unsigned int));
     
     return footprint;
+}
+
+void DiagnosticPerformances::setHDF5spaces(hid_t &filespace, hid_t &memspace, unsigned int height, unsigned int width, unsigned int column)
+{
+    hsize_t matrix [2] = {height, width};
+    hsize_t portion[2] = {height, 1};
+    filespace = H5Screate_simple(2, &matrix [0], NULL);
+    memspace  = H5Screate_simple(2, &portion[0], NULL );
+    hsize_t start[2] = {0, column};
+    hsize_t count[2] = {1, 1};
+    hsize_t block[2] = {height, 1};
+    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &start[0], NULL, &count[0], &block[0] );
 }
 

@@ -59,7 +59,8 @@ class Performances(Diagnostic):
 		
 		# Open the file(s) and load the data
 		self._h5items = {}
-		self._quantities = []
+		self._availableQuantities_uint   = []
+		self._availableQuantities_double = []
 		for path in self._results_path:
 			file = path+self._os.sep+'Performances.h5'
 			try:
@@ -68,17 +69,19 @@ class Performances(Diagnostic):
 				self._error = "Diagnostic not loaded: Could not open '"+file+"'"
 				return
 			self._h5items.update( dict(f) )
-			# Select only the fields that are common to all simulations
-			values = f.values()
-			if len(values)==0:
-				self._quantities = []
-			elif len(self._quantities)==0:
-				self._quantities = list(next(iter(values)).keys())
-			else:
-				self._quantities = [f for f in next(iter(values)).keys() if f in self._quantities]
+			# Verify all simulations have all quantities
+			try:
+				quantities_uint   = list(f.attrs["quantities_uint"  ])
+				quantities_double = list(f.attrs["quantities_double"])
+				if self._availableQuantities_uint   and self._availableQuantities_uint  !=quantities_uint  : raise
+				if self._availableQuantities_double and self._availableQuantities_double!=quantities_double: raise
+				self._availableQuantities_uint   = quantities_uint
+				self._availableQuantities_double = quantities_double
+			except:
+				self._error = "Diagnostic not loaded: file '"+file+"' does not seem to contain correct data"
+				return
 		# Converted to ordered list
 		self._h5items = sorted(self._h5items.values(), key=lambda x:int(x.name[1:]))
-		self._availableQuantities = list(self._quantities)
 		
 		nargs = (raw is not None) + (map is not None) + (histogram is not None)
 		
@@ -88,7 +91,7 @@ class Performances(Diagnostic):
 		
 		if nargs == 0:
 			self._error += "Diagnostic not loaded: must define raw='quantity', map='quantity' or histogram=['quantity',min,max,nsteps]\n"
-			self._error += "Available quantities: "+", ".join([str(q) for q in self._quantities])
+			self._error += "Available quantities: "+", ".join([str(q) for q in self.getAvailableQuantities()])
 			return
 		
 		# Get available times
@@ -97,14 +100,12 @@ class Performances(Diagnostic):
 			self._error = "Diagnostic not loaded: No fields found"
 			return
 		
-		# Get available quantities
-		sortedquantities = reversed(sorted(self._quantities, key = len))
-		
 		# Get the number of procs of the data
-		self._nprocs = self._h5items[0]["hindex"].shape[0]
+		self._nprocs = self._h5items[0]["quantities_uint"].shape[1]
 		for item in self._h5items:
-			if item["hindex"].shape[0] != self._nprocs:
+			if item["quantities_uint"].shape[1] != self._nprocs:
 				self._error = "Diagnostic not loaded: incompatible simulations"
+				return
 		
 		# Get the shape of patches
 		self._number_of_patches = self.simulation.namelist.Main.number_of_patches
@@ -126,6 +127,7 @@ class Performances(Diagnostic):
 				return
 			if self._ndim > 2:
 				self._error += "Diagnostic not loaded: argument `map` not available in "+str(self._ndim)+"D"
+				return
 			self.operation = map
 			self._mode = 1
 			self._m = [int(self._np.log2(n)) for n in self._number_of_patches]
@@ -149,20 +151,27 @@ class Performances(Diagnostic):
 		
 		# Parse the operation
 		self._operation = self.operation
-		self._quantities = []
-		for q in sortedquantities:
-			if self._re.search(r"\b"+q+r"\b",self._operation):
-				self._operation = self._re.sub(r"\b"+q+r"\b","C['"+q+"']",self._operation)
-				self._quantities.append(q)
-		
-		# Build units
-		units = {}
-		for q in self._quantities:
-			units.update({ q:{"t":"seconds", "h":"1", "n":"1"}[q[0]] })
-		# Make total units and title
 		self._operationunits = self.operation
-		for q in self._quantities:
-			self._operationunits = self._operationunits.replace(q, units[q])
+		index_in_output = 0
+		self._quantities_uint = []
+		used_quantities = []
+		for index_in_file, q in enumerate(self._availableQuantities_uint):
+			if self._re.search(r"\b"+q+r"\b",self._operation):
+				self._operation = self._re.sub(r"\b"+q+r"\b","C["+str(index_in_output)+"]",self._operation)
+				units = {"t":"seconds", "h":"1", "n":"1"}[q[0]]
+				self._operationunits = self._operationunits.replace(q, units)
+				self._quantities_uint.append(index_in_file)
+				used_quantities.append( q )
+				index_in_output += 1
+		self._quantities_double = []
+		for index_in_file, q in enumerate(self._availableQuantities_double):
+			if self._re.search(r"\b"+q+r"\b",self._operation):
+				self._operation = self._re.sub(r"\b"+q+r"\b","C["+str(index_in_output)+"]",self._operation)
+				units = {"t":"seconds", "h":"1", "n":"1"}[q[0]]
+				self._operationunits = self._operationunits.replace(q, units)
+				self._quantities_double.append(index_in_file)
+				used_quantities.append( q )
+				index_in_output += 1
 		
 		# Put data_log as object's variable
 		self._data_log = data_log
@@ -228,9 +237,8 @@ class Performances(Diagnostic):
 			self._vunits = "1"
 			self._title  = "number of processes"
 		
-		
 		# Set the directory in case of exporting
-		self._exportPrefix = "Performances_"+"".join(self._quantities)
+		self._exportPrefix = "Performances_"+"".join(used_quantities)
 		self._exportDir = self._setExportDir(self._exportPrefix)
 		
 		# Finish constructor
@@ -249,7 +257,7 @@ class Performances(Diagnostic):
 	
 	# get all available quantities
 	def getAvailableQuantities(self):
-		return self._availableQuantities
+		return self._availableQuantities_uint + self._availableQuantities_double
 	
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):
@@ -261,10 +269,17 @@ class Performances(Diagnostic):
 		# Get arrays from requested field
 		# get data
 		index = self._data[t]
-		C = {}
-		h5item = self._h5items[index]
-		for q in self._quantities:
-			C.update({ q : h5item[q].value })
+		C = []
+		h5item = self._h5items[index]["quantities_uint"]
+		for index_in_file in self._quantities_uint:
+			B = self._np.empty((self._nprocs,), dtype="uint")
+			h5item.read_direct( B, source_sel=self._np.s_[index_in_file,:] )
+			C.append( B )
+		h5item = self._h5items[index]["quantities_double"]
+		for index_in_file in self._quantities_double:
+			B = self._np.empty((self._nprocs,), dtype="double")
+			h5item.read_direct( B, source_sel=self._np.s_[index_in_file,:] )
+			C.append( B )
 		# Calculate the operation
 		A = eval(self._operation)
 		# log scale if requested
@@ -276,15 +291,22 @@ class Performances(Diagnostic):
 		
 		# If map requested
 		elif self._mode == 1:
+			
+			# Extract the array "hindex"
+			hindices = self._np.empty((self._nprocs,), dtype="uint")
+			h5item = self._h5items[index]["quantities_uint"]
+			index_in_file = quantities_uint.index("hindex")
+			h5item.read_direct( hindices, source_sel=self._np.s_[index_in_file,:] )
+			
 			if self._ndim == 1:
 				# Make a matrix with MPI ranks at each patch location
 				ranks = self._np.empty((self._number_of_patches[0],), dtype=self._np.uint32)
-				hindices = iter(h5item["hindex"])
-				previous_h = next(hindices)
+				previous_h = 0
 				rank = 0
 				for h in hindices:
 					ranks[previous_h:h] = rank
 					rank += 1
+					previous_h = h
 				ranks[h:] = rank
 				
 				# For each patch, associate the data of corresponding MPI rank
@@ -296,7 +318,7 @@ class Performances(Diagnostic):
 					self._hilbert = HilbertCurveMatrix2D(self._m[0], self._m[1], oversize=1)
 				
 				# Make a matrix with MPI ranks at each patch location
-				self._ranks = PartitionMatrix( self._hilbert, h5item["hindex"], oversize=1 )
+				self._ranks = PartitionMatrix( self._hilbert, hindices, oversize=1 )
 				
 				# For each patch, associate the data of corresponding MPI rank
 				return A[self._ranks[1:-1,1:-1]]
