@@ -18,8 +18,17 @@ MF_Solver3D_Lehe::MF_Solver3D_Lehe(Params &params)
     beta_xz = pow(dx/dz,2)/8.;
     delta_x = (1./4.)*(1.-pow( sin(M_PI*dt_ov_dx/2.)/dt_ov_dx,2 ) );
    
-    alpha_y =  1. - 2*beta_yx; // = alpha_z as well but we define and use only 1 variable
+    alpha_y =  1. - 2.*beta_yx; // = alpha_z as well but we define and use only 1 variable
     alpha_x =  1. - 2.*beta_xy - 2.*beta_xz - 3.*delta_x ;
+
+    //recovers normal yee
+    //alpha_y = 1.;
+    //alpha_x = 1.;
+    //beta_yx = 0.;
+    //beta_xy = 0.;
+    //beta_xz = 0.;
+    //delta_x = 0.;
+
 }
 
 MF_Solver3D_Lehe::~MF_Solver3D_Lehe()
@@ -80,31 +89,47 @@ void MF_Solver3D_Lehe::operator() ( ElectroMagn* fields )
             }
         }
     }
+
+    //Additional boundaries treatment
+
+    // Magnetic field Bx^(p,d,d)
+    // at Xmin+dx - treat using simple discretization of the curl (will be overwritten if not at the xmin-border)
+        for (unsigned int j=1 ; j<ny_d-1 ; j++) {
+            for (unsigned int k=1 ; k<nz_d-1 ; k++) {
+                (*Bx3D)(0,j,k) += -dt_ov_dy * ( (*Ez3D)(0,j,k) - (*Ez3D)(0,j-1,k) ) + dt_ov_dz * ( (*Ey3D)(0,j,k) - (*Ey3D)(0,j,k-1) );
+            }
+        }
+    // at Xmax-dx - treat using simple discretization of the curl (will be overwritten if not at the xmax-border)
+        for (unsigned int j=1 ; j<ny_d-1 ; j++) {
+            for (unsigned int k=1 ; k<nz_d-1 ; k++) {
+                (*Bx3D)(nx_p-1,j,k) += -dt_ov_dy * ( (*Ez3D)(nx_p-1,j,k) - (*Ez3D)(nx_p-1,j-1,k) ) + dt_ov_dz * ( (*Ey3D)(nx_p-1,j,k) - (*Ey3D)(nx_p-1,j,k-1) );
+            }
+        }
     
     // at Xmin+dx - treat using simple discretization of the curl (will be overwritten if not at the xmin-border)
     for (unsigned int j=0 ; j<ny_p ; j++) {
-        for (unsigned int k=1 ; k<nz_d-1 ; k++) {
+        for (unsigned int k=2 ; k<nz_d-2 ; k++) {
             (*By3D)(1,j,k) += dt_ov_dx * ( (*Ez3D)(1,j,k) - (*Ez3D)(0,j,k  ))
                              -dt_ov_dz * ( (*Ex3D)(1,j,k) - (*Ex3D)(1,j,k-1));
         }
     }
     // at Xmax-dx - treat using simple discretization of the curl (will be overwritten if not at the xmax-border)
     for (unsigned int j=0 ; j<ny_p ; j++) {
-        for (unsigned int k=1 ; k<nz_d-1 ; k++) {
+        for (unsigned int k=2 ; k<nz_d-2 ; k++) {
             (*By3D)(nx_d-2,j,k) += dt_ov_dx * ( (*Ez3D)(nx_d-2,j,k) - (*Ez3D)(nx_d-3,j,k  ))
                                   -dt_ov_dz * ( (*Ex3D)(nx_d-2,j,k) - (*Ex3D)(nx_d-2,j,k-1));
         }
     }
     
     // at Xmin+dx - treat using simple discretization of the curl (will be overwritten if not at the xmin-border)
-    for (unsigned int j=1 ; j<ny_d-1 ; j++) {
+    for (unsigned int j=2 ; j<ny_d-2 ; j++) {
         for (unsigned int k=0 ; k<nz_p ; k++) {
             (*Bz3D)(1,j,k) += dt_ov_dx * ( (*Ey3D)(0,j,k) - (*Ey3D)(1,j  ,k) )
                            +  dt_ov_dy * ( (*Ex3D)(1,j,k) - (*Ex3D)(1,j-1,k) );
         }
     }
     // at Xmax-dx - treat using simple discretization of the curl (will be overwritten if not at the xmax-border)
-    for (unsigned int j=1 ; j<ny_d-1 ; j++) {
+    for (unsigned int j=2 ; j<ny_d-2 ; j++) {
         for (unsigned int k=0 ; k<nz_p ; k++) {
             (*Bz3D)(nx_d-2,j,k) += dt_ov_dx * ( (*Ey3D)(nx_d-3,j,k) - (*Ey3D)(nx_d-2,j  ,k) )
                                 +  dt_ov_dy * ( (*Ex3D)(nx_d-2,j,k) - (*Ex3D)(nx_d-2,j-1,k) );
