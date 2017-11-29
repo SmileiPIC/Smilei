@@ -705,8 +705,10 @@ void SyncVectorPatch::exchange_per_direction( std::vector<Field*> fields, Vector
         if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[2][0]){
             pt1 = &(*fields[vecPatches(ipatch)->neighbor_[2][0]-h0])(n_space[2]);
             pt2 = &(*fields[ipatch])(0);
-            for (unsigned int i = 0 ; i < nx_*ny_*nz_ ; i += ny_*nz_){
-                for (unsigned int j = 0 ; j < ny_*nz_ ; j += nz_){
+            for (unsigned int in = oversize[0] ; in < nx_-oversize[0]; in ++){
+                unsigned int i = in * ny_*nz_;
+                for (unsigned int jn = oversize[1] ; jn < ny_-oversize[1] ; jn ++){
+                    unsigned int j = jn *nz_;
                     for (unsigned int k = 0 ; k < oversize[2] ; k++ ){
                         pt2[i+j+k] = pt1[i+j+k] ;
                         pt1[i+j+k+gsp[2]] = pt2[i+j+k+gsp[2]] ;
@@ -734,7 +736,9 @@ void SyncVectorPatch::exchange_per_direction( std::vector<Field*> fields, Vector
         if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[1][0]){
             pt1 = &(*fields[vecPatches(ipatch)->neighbor_[1][0]-h0])(n_space[1]*nz_);
             pt2 = &(*fields[ipatch])(0);
-            for (unsigned int i = 0 ; i < nx_*ny_*nz_ ; i += ny_*nz_){
+            for (unsigned int in = 0 ; in < nx_ ; in ++){
+            //for (unsigned int in = oversize[0] ; in < nx_-oversize[0] ; in ++){ // <== This doesn't work. Why ??
+                unsigned int i = in * ny_*nz_;
                 for (unsigned int j = 0 ; j < oversize[1]*nz_ ; j++ ){
                     // Rewrite with memcpy ?
                     pt2[i+j] = pt1[i+j] ;
