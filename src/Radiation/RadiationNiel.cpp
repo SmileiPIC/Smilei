@@ -180,10 +180,10 @@ void RadiationNiel::operator() (
 
     // _______________________________________________________________
     // Parameters
-    std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
-    std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
+    LocalFields *Epart = &(smpi->dynamics_Epart[ithread][istart]);
+    LocalFields *Bpart = &(smpi->dynamics_Bpart[ithread][istart]);
     // Used to store gamma directly
-    std::vector<double> *gamma = &(smpi->dynamics_invgf[ithread]);
+    double *gamma = &(smpi->dynamics_invgf[ithread][istart]);
 
     // Charge divided by the square of the mass
     double charge_over_mass2;
@@ -203,17 +203,14 @@ void RadiationNiel::operator() (
     // Particle id
     int ipart;
 
-    // Temporary index
-    int i;
-
     // Radiated energy
     double rad_energy;
 
     // Stochastic diffusive term fo Niel et al.
-    double * diffusion = new double[nbparticles];
+    double diffusion[nbparticles];
 
     // Random Number
-    double * random_numbers = new double[nbparticles];
+    double random_numbers[nbparticles];
 
     // Momentum shortcut
     double* momentum[3];
@@ -238,6 +235,8 @@ void RadiationNiel::operator() (
     // _______________________________________________________________
     // Computation
 
+    //double t0 = MPI_Wtime();
+
     #pragma omp simd
     for (ipart=0 ; ipart< nbparticles; ipart++ )
     {
@@ -245,17 +244,19 @@ void RadiationNiel::operator() (
         charge_over_mass2 = (double)(charge[ipart])*one_over_mass_2;
 
         // Gamma
-        (*gamma)[ipart] = sqrt(1.0 + momentum[0][ipart]*momentum[0][ipart]
+        gamma[ipart] = sqrt(1.0 + momentum[0][ipart]*momentum[0][ipart]
                              + momentum[1][ipart]*momentum[1][ipart]
                              + momentum[2][ipart]*momentum[2][ipart]);
 
         // Computation of the Lorentz invariant quantum parameter
         chipa[ipart] = Radiation::compute_chipa(charge_over_mass2,
                      momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
-                     (*gamma)[ipart],
-                     (*Epart)[ipart].x,(*Epart)[ipart].y,(*Epart)[ipart].z,
-                     (*Bpart)[ipart].x,(*Bpart)[ipart].y,(*Bpart)[ipart].z);
+                     gamma[ipart],
+                     Epart[ipart].x,Epart[ipart].y,Epart[ipart].z,
+                     Bpart[ipart].x,Bpart[ipart].y,Bpart[ipart].z);
     }
+
+    //double t1 = MPI_Wtime();
 
     // Non-vectorized
     for (ipart=0 ; ipart < nbparticles; ipart++ )
@@ -270,6 +271,8 @@ void RadiationNiel::operator() (
           random_numbers[ipart] = Rand::normal(sqrtdt);
         }
     }
+
+    //double t2 = MPI_Wtime();
 
     // _______________________________________________________________
     // Computation of the diffusion coefficients
@@ -306,16 +309,19 @@ void RadiationNiel::operator() (
         if (chipa[ipart] > chipa_radiation_threshold)
         {
 
-          h = RadiationTables.get_h_Niel_from_fit(chipa[ipart]);
+          //h = RadiationTables.get_h_Niel_from_fit(chipa[ipart]);
+          h = RadiationTables.get_h_Niel_from_table(chipa[ipart]);
 
           /*std::random_device device;
           std::mt19937 gen(device());
           std::normal_distribution<double> normal_distribution(0., sqrt(dt));
           r = normal_distribution(gen);*/
 
-          diffusion[ipart] = sqrt(factor_cla_rad_power*(*gamma)[ipart]*h)*random_numbers[ipart];
+          diffusion[ipart] = sqrt(factor_cla_rad_power*gamma[ipart]*h)*random_numbers[ipart];
         }
     }
+
+    //double t3 = MPI_Wtime();
 
     // _______________________________________________________________
     // Update of the momentum
@@ -334,7 +340,7 @@ void RadiationNiel::operator() (
             // Effect on the momentum
             // Temporary factor
             temp = (rad_energy - diffusion[ipart])
-                 * (*gamma)[ipart]/((*gamma)[ipart]*(*gamma)[ipart]-1.);
+                 * gamma[ipart]/(gamma[ipart]*gamma[ipart]-1.);
 
             // Update of the momentum
             momentum[0][ipart] -= temp*momentum[0][ipart];
@@ -344,6 +350,8 @@ void RadiationNiel::operator() (
         }
     }
 
+    //double t4 = MPI_Wtime();
+
     // _______________________________________________________________
     // Computation of the thread radiated energy
 
@@ -352,15 +360,20 @@ void RadiationNiel::operator() (
     #pragma omp simd reduction(+:radiated_energy_loc)
     for (int ipart=0 ; ipart<nbparticles; ipart++ )
     {
-        radiated_energy_loc += weight[ipart]*((*gamma)[ipart] - sqrt(1.0
+        radiated_energy_loc += weight[ipart]*(gamma[ipart] - sqrt(1.0
                             + momentum[0][ipart]*momentum[0][ipart]
                             + momentum[1][ipart]*momentum[1][ipart]
                             + momentum[2][ipart]*momentum[2][ipart]));
     }
     radiated_energy += radiated_energy_loc;
 
-    // _______________________________________________________________
-    // Clean memory
+    //double t5 = MPI_Wtime();
 
-    delete [] diffusion;
+    //std::cerr << "" << std::endl;
+    //std::cerr << "" << istart << " " << nbparticles << " " << ithread << std::endl;
+    //std::cerr << "Computation of chi: " << t1 - t0 << std::endl;
+    //std::cerr << "Computation of random numbers: " << t2 - t1 << std::endl;
+    //std::cerr << "Computation of the diffusion: " << t3 - t2 << std::endl;
+    //std::cerr << "Computation of the momentum: " << t4 - t3 << std::endl;
+    //std::cerr << "Computation of the radiated energy: " << t5 - t4 << std::endl;
 }
