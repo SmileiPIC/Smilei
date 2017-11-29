@@ -212,28 +212,34 @@ void RadiationNiel::operator() (
     // Stochastic diffusive term fo Niel et al.
     double * diffusion = new double[nbparticles];
 
+    // Random Number
+    double * random_numbers = new double[nbparticles];
+
     // Momentum shortcut
     double* momentum[3];
     for ( int i = 0 ; i<3 ; i++ )
-        momentum[i] =  &( particles.momentum(i,0) );
+        momentum[i] =  &( particles.momentum(i,istart) );
 
     // Charge shortcut
-    short* charge = &( particles.charge(0) );
+    short* charge = &( particles.charge(istart) );
 
     // Weight shortcut
-    double* weight = &( particles.weight(0) );
+    double* weight = &( particles.weight(istart) );
 
     // Quantum parameter
-    double * chipa = &( particles.chi(0));
+    double * chipa = &( particles.chi(istart));
 
     // Reinitialize the cumulative radiated energy for the current thread
     this->radiated_energy = 0.;
+
+    const double chipa_radiation_threshold = RadiationTables.get_chipa_radiation_threshold();
+    const double factor_cla_rad_power = RadiationTables.get_factor_cla_rad_power();
 
     // _______________________________________________________________
     // Computation
 
     #pragma omp simd
-    for (ipart=istart ; ipart<iend; ipart++ )
+    for (ipart=0 ; ipart< nbparticles; ipart++ )
     {
 
         charge_over_mass2 = (double)(charge[ipart])*one_over_mass_2;
@@ -249,6 +255,20 @@ void RadiationNiel::operator() (
                      (*gamma)[ipart],
                      (*Epart)[ipart].x,(*Epart)[ipart].y,(*Epart)[ipart].z,
                      (*Bpart)[ipart].x,(*Bpart)[ipart].y,(*Bpart)[ipart].z);
+    }
+
+    // Non-vectorized
+    for (ipart=0 ; ipart < nbparticles; ipart++ )
+    {
+
+        // Below chipa = chipa_radiation_threshold, radiation losses are negligible
+        if (chipa[ipart] > chipa_radiation_threshold)
+        {
+
+          // Pick a random number in the normal distribution of standard
+          // deviation sqrt(dt) (variance dt)
+          random_numbers[ipart] = Rand::normal(sqrtdt);
+        }
     }
 
     // _______________________________________________________________
@@ -275,17 +295,12 @@ void RadiationNiel::operator() (
         }
     }*/
 
-    double h,r;
-    double chipa_radiation_threshold = RadiationTables.get_chipa_radiation_threshold();
-    double factor_cla_rad_power = RadiationTables.get_factor_cla_rad_power();
+    double h;
 
     // Use of the fit
     #pragma omp simd
-    for (i=0 ; i < nbparticles; i++ )
+    for (ipart=0 ; ipart < nbparticles; ipart++ )
     {
-
-        // Particle number
-        ipart = istart + i;
 
         // Below chipa = chipa_radiation_threshold, radiation losses are negligible
         if (chipa[ipart] > chipa_radiation_threshold)
@@ -293,20 +308,12 @@ void RadiationNiel::operator() (
 
           h = RadiationTables.get_h_Niel_from_fit(chipa[ipart]);
 
-          // Pick a random number in the normal distribution of standard
-          // deviation sqrt(dt) (variance dt)
-          r = Rand::normal(sqrtdt);
-
           /*std::random_device device;
           std::mt19937 gen(device());
           std::normal_distribution<double> normal_distribution(0., sqrt(dt));
           r = normal_distribution(gen);*/
 
-          diffusion[i] = sqrt(factor_cla_rad_power*(*gamma)[ipart]*h)*r;
-        }
-        else
-        {
-            diffusion[i] = 0.;
+          diffusion[ipart] = sqrt(factor_cla_rad_power*(*gamma)[ipart]*h)*random_numbers[ipart];
         }
     }
 
@@ -314,14 +321,11 @@ void RadiationNiel::operator() (
     // Update of the momentum
 
     #pragma omp simd
-    for (ipart=istart ; ipart<iend; ipart++ )
+    for (ipart=0 ; ipart<nbparticles; ipart++ )
     {
         // Below chipa = chipa_radiation_threshold, radiation losses are negligible
-        if (chipa[ipart] > RadiationTables.get_chipa_radiation_threshold())
+        if (chipa[ipart] > chipa_radiation_threshold)
         {
-
-            // Particle number
-            i = ipart - istart;
 
             // Radiated energy during the time step
             rad_energy =
@@ -329,7 +333,7 @@ void RadiationNiel::operator() (
 
             // Effect on the momentum
             // Temporary factor
-            temp = (rad_energy - diffusion[i])
+            temp = (rad_energy - diffusion[ipart])
                  * (*gamma)[ipart]/((*gamma)[ipart]*(*gamma)[ipart]-1.);
 
             // Update of the momentum
@@ -346,7 +350,7 @@ void RadiationNiel::operator() (
     double radiated_energy_loc = 0;
 
     #pragma omp simd reduction(+:radiated_energy_loc)
-    for (int ipart=istart ; ipart<iend; ipart++ )
+    for (int ipart=0 ; ipart<nbparticles; ipart++ )
     {
         radiated_energy_loc += weight[ipart]*((*gamma)[ipart] - sqrt(1.0
                             + momentum[0][ipart]*momentum[0][ipart]
