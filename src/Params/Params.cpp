@@ -50,9 +50,9 @@ namespace Rand
 Params::Params(SmileiMPI* smpi, std::vector<std::string> namelistsFiles) :
 namelist("")
 {
-    
+
     MESSAGE("HDF5 version "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
-    
+
     if((((H5_VERS_MAJOR==1) && (H5_VERS_MINOR==8) && (H5_VERS_RELEASE>16)) || \
         ((H5_VERS_MAJOR==1) && (H5_VERS_MINOR>8)) || \
         (H5_VERS_MAJOR>1))) {
@@ -60,46 +60,46 @@ namelist("")
         WARNING("Newer version are not tested and may cause the code to behave incorrectly");
         WARNING("See http://hdf-forum.184993.n3.nabble.com/Segmentation-fault-using-H5Dset-extent-in-parallel-td4029082.html");
     }
-    
-    
+
+
     if (namelistsFiles.size()==0) ERROR("No namelists given!");
-    
+
     //string commandLineStr("");
     //for (unsigned int i=0;i<namelistsFiles.size();i++) commandLineStr+="\""+namelistsFiles[i]+"\" ";
     //MESSAGE(1,commandLineStr);
-    
+
     //init Python
     PyTools::openPython();
 #ifdef SMILEI_USE_NUMPY
     import_array();
 #endif
-    
+
     // Print python version
     MESSAGE(1, "Python version "<<PyTools::python_version());
-    
+
     // First, we tell python to filter the ctrl-C kill command (or it would prevent to kill the code execution).
     // This is done separately from other scripts because we don't want it in the concatenated python namelist.
     PyTools::checkPyError();
     string command = "import signal\nsignal.signal(signal.SIGINT, signal.SIG_DFL)";
     if( !PyRun_SimpleString(command.c_str()) ) PyTools::checkPyError();
-    
+
     // Running pyinit.py
     runScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py");
-    
+
     runScript("smilei_version='"+string(__VERSION)+"'\n", string(__VERSION));
-    
+
     // Running pyprofiles.py
     runScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py");
-    
+
     // here we add the rank, in case some script need it
     PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
-    
+
     // here we add the MPI size, in case some script need it
     PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_size", smpi->getSize());
-    
+
     // here we add the larget int, important to get a valid seed for randomization
     PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_rand_max", RAND_MAX);
-    
+
     // Running the namelists
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
         string strNamelist="";
@@ -127,23 +127,23 @@ namelist("")
     }
     // Running pycontrol.py
     runScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py");
-    
+
     smpi->barrier();
-    
+
     // Error if no block Main() exists
     if( PyTools::nComponents("Main") == 0 )
         ERROR("Block Main() not defined");
-    
+
     // CHECK namelist on python side
     PyTools::runPyFunction("_smilei_check");
     smpi->barrier();
-    
+
     // Python makes the checkpoint dir tree
     if( ! smpi->test_mode ) {
         PyTools::runPyFunction("_prepare_checkpoint_dir");
         smpi->barrier();
     }
-    
+
     // Now the string "namelist" contains all the python files concatenated
     // It is written as a file: smilei.py
     if (smpi->isMaster()) {
@@ -154,36 +154,36 @@ namelist("")
             out_namelist.close();
         }
     }
-    
+
     // random seed
     unsigned int random_seed=0;
     if (PyTools::extract("random_seed", random_seed, "Main")) {
         Rand::gen = std::mt19937(random_seed);
     }
-    
+
     // --------------
     // Stop & Restart
     // --------------
-    
+
     restart = false;
     std::vector<std::string> _unused_restart_files;
     if( PyTools::nComponents("Checkpoints")>0 && PyTools::extract("restart_files", _unused_restart_files, "Checkpoints")) {
         MESSAGE(1,"Code will restart");
         restart=true;
     }
-    
+
     // ---------------------
     // Normalisation & units
     // ---------------------
-    
+
     reference_angular_frequency_SI = 0.;
     PyTools::extract("reference_angular_frequency_SI",reference_angular_frequency_SI, "Main");
-    
-    
+
+
     // -------------------
     // Simulation box info
     // -------------------
-    
+
     // geometry of the simulation
     geometry = "";
     if( !PyTools::extract("geometry", geometry, "Main") )
@@ -192,26 +192,26 @@ namelist("")
         ERROR("Main.geometry `" << geometry << "` invalid");
     }
     setDimensions();
-    
+
     // interpolation order
     PyTools::extract("interpolation_order", interpolation_order, "Main");
     if (interpolation_order!=2 && interpolation_order!=4) {
         ERROR("Main.interpolation_order " << interpolation_order << " not defined");
     }
-    
+
     //!\todo (MG to JD) Please check if this parameter should still appear here
     // Disabled, not compatible for now with particles sort
     // if ( !PyTools::extract("exchange_particles_each", exchange_particles_each) )
     exchange_particles_each = 1;
-    
+
     PyTools::extract("every_clean_particles_overhead", every_clean_particles_overhead, "Main");
-    
+
     // TIME & SPACE RESOLUTION/TIME-STEPS
-    
+
     // reads timestep & cell_length
     PyTools::extract("timestep", timestep, "Main");
     res_time = 1.0/timestep;
-    
+
     PyTools::extract("cell_length",cell_length, "Main");
     if (cell_length.size()!=nDim_field) {
         ERROR("Dimension of cell_length ("<< cell_length.size() << ") != " << nDim_field << " for geometry " << geometry);
@@ -220,21 +220,21 @@ namelist("")
     for (unsigned int i=0;i<nDim_field;i++){
         res_space[i] = 1.0/cell_length[i];
     }
-    
-    
+
+
     // simulation duration & length
     PyTools::extract("simulation_time", simulation_time, "Main");
-    
+
     PyTools::extract("grid_length",grid_length, "Main");
     if (grid_length.size()!=nDim_field) {
         ERROR("Dimension of grid_length ("<< grid_length.size() << ") != " << nDim_field << " for geometry " << geometry);
     }
-    
-    
+
+
     //! Boundary conditions for ElectroMagnetic Fields
     if( !PyTools::extract("EM_boundary_conditions", EM_BCs, "Main")  )
         ERROR("Electromagnetic boundary conditions (EM_boundary_conditions) not defined" );
-    
+
     if( EM_BCs.size() == 0 ) {
         ERROR("EM_boundary_conditions cannot be empty");
     } else if( EM_BCs.size() == 1 ) {
@@ -242,7 +242,7 @@ namelist("")
     } else if( EM_BCs.size() != nDim_field ) {
         ERROR("EM_boundary_conditions must be the same size as the number of dimensions");
     }
-    
+
     for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
         if( EM_BCs[iDim].size() == 1 ) // if just one type is specified, then take the same bc type in a given dimension
             EM_BCs[iDim].push_back( EM_BCs[iDim][0] );
@@ -251,25 +251,25 @@ namelist("")
     }
 
     //! Ponderomotive force
-    PyTools::extract("ponderomotive_force", ponderomotive_force, "Main");
-    if ( ponderomotive_force && ( geometry != "3Dcartesian" ) )
-        ERROR( "Ponderomotive force only available in 3D3V" );
-    
+    //PyTools::extract("ponderomotive_force", ponderomotive_force, "Main");
+    //if ( ponderomotive_force && ( geometry != "3Dcartesian" ) )
+    //    ERROR( "Ponderomotive force only available in 3D3V" );
+
     // -----------------------------------
     // MAXWELL SOLVERS & FILTERING OPTIONS
     // -----------------------------------
-    
+
     time_fields_frozen=0.0;
     PyTools::extract("time_fields_frozen", time_fields_frozen, "Main");
-    
+
     // Poisson Solver
     PyTools::extract("solve_poisson", solve_poisson, "Main");
     PyTools::extract("poisson_max_iteration", poisson_max_iteration, "Main");
     PyTools::extract("poisson_max_error", poisson_max_error, "Main");
-    
+
     // Maxwell Solver
     PyTools::extract("maxwell_solver", maxwell_sol, "Main");
-    
+
     // Current filter properties
     currentFilter_passes = 0;
     int nCurrentFilter = PyTools::nComponents("CurrentFilter");
@@ -280,7 +280,7 @@ namelist("")
             ERROR("Currently, only the `binomial` model is available in CurrentFilter()");
         PyTools::extract("passes", currentFilter_passes, "CurrentFilter", ifilt);
     }
-    
+
     // Field filter properties
     Friedman_filter = false;
     Friedman_theta = 0;
@@ -299,8 +299,8 @@ namelist("")
         if ( (Friedman_theta<0.) || (Friedman_theta>1.) )
             ERROR("Friedman filter theta = " << Friedman_theta << " must be between 0 and 1");
     }
-    
-    
+
+
     // testing the CFL condition
     //!\todo (MG) CFL cond. depends on the Maxwell solv. ==> HERE JUST DONE FOR YEE!!!
     double res_space2=0;
@@ -311,14 +311,14 @@ namelist("")
     if ( timestep>dtCFL ) {
         WARNING("CFL problem: timestep=" << timestep << " should be smaller than " << dtCFL);
     }
-    
-    
-    
+
+
+
     // clrw
     PyTools::extract("clrw",clrw, "Main");
-    
-    
-    
+
+
+
     // --------------------
     // Number of patches
     // --------------------
@@ -328,11 +328,11 @@ namelist("")
     for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ )
         if( (number_of_patches[iDim] & (number_of_patches[iDim]-1)) != 0)
             ERROR("Number of patches in each direction must be a power of 2");
-    
+
     tot_number_of_patches = 1;
     for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ )
         tot_number_of_patches *= number_of_patches[iDim];
-    
+
     if ( tot_number_of_patches == (unsigned int)(smpi->getSize()) ){
         one_patch_per_MPI = true;
     } else {
@@ -344,8 +344,8 @@ namelist("")
     if ( tot_number_of_patches < (unsigned int)(smpi->getSize()*smpi->getOMPMaxThreads()) )
         WARNING( "Resources allocated "<<(smpi->getSize()*smpi->getOMPMaxThreads())<<" underloaded regarding the total number of patches "<<tot_number_of_patches );
 #endif
-    
-    
+
+
     if( PyTools::nComponents("LoadBalancing")>0 ) {
         PyTools::extract("every"      , balancing_every, "LoadBalancing");
         PyTools::extract("cell_load"  , cell_load      , "LoadBalancing");
@@ -354,7 +354,7 @@ namelist("")
     } else {
         balancing_every = 0;
     }
-    
+
     //mi.resize(nDim_field, 0);
     mi.resize(3, 0);
     while ((number_of_patches[0] >> mi[0]) >1) mi[0]++ ;
@@ -363,25 +363,25 @@ namelist("")
         if (number_of_patches.size()>2)
             while ((number_of_patches[2] >> mi[2]) >1) mi[2]++ ;
     }
-    
+
     // Read the "print_every" parameter
     print_every = (int)(simulation_time/timestep)/10;
     PyTools::extract("print_every", print_every, "Main");
     if (!print_every) print_every = 1;
-    
+
     // Read the "print_expected_disk_usage" parameter
     if( ! PyTools::extract("print_expected_disk_usage", print_expected_disk_usage, "Main") ) {
         ERROR("The parameter `Main.print_expected_disk_usage` must be True or False");
     }
-    
+
     // -------------------------------------------------------
     // Checking species order
     // -------------------------------------------------------
     // read from python namelist the number of species
     unsigned int tot_species_number = PyTools::nComponents("Species");
-    
+
     double mass, mass2=0;
-    
+
     for (unsigned int ispec = 0; ispec < tot_species_number; ispec++)
     {
         PyTools::extract("mass", mass ,"Species",ispec);
@@ -397,21 +397,21 @@ namelist("")
             }
         }
     }
-    
+
     // -------------------------------------------------------
     // Parameters for the synchrotron-like radiation losses
     // -------------------------------------------------------
     hasMCRadiation = false ;// Default value
     hasLLRadiation = false ;// Default value
     hasNielRadiation = false ;// Default value
-    
-    
+
+
     // Loop over all species to check if the radiation losses are activated
     std::string radiation_model = "none";
     for (unsigned int ispec = 0; ispec < tot_species_number; ispec++) {
-    
+
        PyTools::extract("radiation_model", radiation_model ,"Species",ispec);
-    
+
        if (radiation_model=="Monte-Carlo")
        {
            this->hasMCRadiation = true;
@@ -426,27 +426,27 @@ namelist("")
            this->hasNielRadiation = true;
        }
     }
-    
+
     // -------------------------------------------------------
     // Parameters for the mutliphoton Breit-Wheeler pair decay
     // -------------------------------------------------------
     this->hasMultiphotonBreitWheeler = false ;// Default value
-    
+
     std::vector<std::string> multiphoton_Breit_Wheeler(2);
     for (unsigned int ispec = 0; ispec < tot_species_number; ispec++) {
-    
+
         if (PyTools::extract("multiphoton_Breit_Wheeler", multiphoton_Breit_Wheeler ,"Species",ispec))
         {
             this->hasMultiphotonBreitWheeler = true;
         }
     }
-    
+
     // -------------------------------------------------------
     // Compute useful quantities and introduce normalizations
     // also defines defaults values for the species lengths
     // -------------------------------------------------------
     compute();
-    
+
     // Print
     smpi->barrier();
     if ( smpi->isMaster() ) print_init();
@@ -510,7 +510,7 @@ void Params::compute()
     n_space_global.resize(3, 1);        //! \todo{3 but not real size !!! Pbs in Species::Species}
     oversize.resize(3, 0);
     patch_dimensions.resize(3, 0.);
-    
+
     //n_space_global.resize(nDim_field, 0);
     n_cell_per_patch = 1;
     for (unsigned int i=0; i<nDim_field; i++){
@@ -522,7 +522,7 @@ void Params::compute()
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
     }
-    
+
     // Set clrw$ if not set by the user
     if ( clrw == -1 ) {
 

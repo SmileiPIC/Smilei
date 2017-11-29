@@ -29,7 +29,7 @@ public:
         else {
             ERROR( "Unknown geometry : " << params.geometry << "!" );
         }
-        
+
         // -----------------
         // Lasers properties
         // -----------------
@@ -48,7 +48,7 @@ public:
             else
                 delete laser;
         }
-        
+
         // -----------------
         // ExtFields properties
         // -----------------
@@ -66,11 +66,11 @@ public:
             if (!PyTools::extract_pyProfile("profile",profile,"ExternalField",n_extfield))
                 ERROR(" ExternalField #"<<n_extfield<<": parameter 'profile' not understood");
             extField.profile = new Profile(profile, params.nDim_field, name.str());
-            
+
             EMfields->extFields.push_back(extField);
         }
-        
-        
+
+
         // -----------------
         // Antenna properties
         // -----------------
@@ -84,31 +84,31 @@ public:
                 ERROR("Antenna #"<<n_antenna<<": parameter 'field' not provided'");
             if (antenna.fieldName != "Jx" && antenna.fieldName != "Jy" && antenna.fieldName != "Jz")
                 ERROR("Antenna #"<<n_antenna<<": parameter 'field' must be one of Jx, Jy, Jz");
-            
+
             // Extract the space profile
             name.str("");
             name << "Antenna[" << n_antenna <<"].space_profile";
             if (!PyTools::extract_pyProfile("space_profile",profile,"Antenna",n_antenna))
                 ERROR(" Antenna #"<<n_antenna<<": parameter 'space_profile' not understood");
             antenna.space_profile = new Profile(profile, params.nDim_field, name.str());
-            
+
             // Extract the time profile
             name.str("");
             name << "Antenna[" << n_antenna <<"].time_profile";
             if (!PyTools::extract_pyProfile("time_profile" ,profile,"Antenna",n_antenna))
                 ERROR(" Antenna #"<<n_antenna<<": parameter 'time_profile' not understood");
             antenna.time_profile =  new Profile(profile, 1, name.str());
-            
+
             EMfields->antennas.push_back(antenna);
         }
-        
-        
+
+
         EMfields->finishInitialization(vecSpecies.size(), patch);
-        
+
         return EMfields;
     }
-    
-    
+
+
     static ElectroMagn* clone(ElectroMagn* EMfields, Params& params, std::vector<Species*>& vecSpecies,  Patch* patch)
     {
         ElectroMagn* newEMfields = NULL;
@@ -119,8 +119,8 @@ public:
         } else if ( params.geometry == "3Dcartesian" ) {
             newEMfields = new ElectroMagn3D(static_cast<ElectroMagn3D*>(EMfields), params, patch);
         }
-        
-        
+
+
         // -----------------
         // Clone time-average fields
         // -----------------
@@ -131,14 +131,14 @@ public:
                     newEMfields->createField( EMfields->allFields_avg[idiag][ifield]->name )
                 );
         }
-        
+
         // -----------------
         // Clone Lasers properties
         // -----------------
         int nlaser;
         for( int iBC=0; iBC<2; iBC++ ) { // xmax and xmin
             if(! newEMfields->emBoundCond[iBC]) continue;
-            
+
             newEMfields->emBoundCond[iBC]->vecLaser.resize(0);
             nlaser = EMfields->emBoundCond[iBC]->vecLaser.size();
             // Create lasers one by one
@@ -153,7 +153,7 @@ public:
                 newEMfields->emBoundCond[iBC]->vecLaser.push_back( laser );
             }
         }
-        
+
         // -----------------
         // Clone ExternalFields properties
         // -----------------
@@ -163,7 +163,7 @@ public:
             extField.profile = EMfields->extFields[n_extfield].profile;
             newEMfields->extFields.push_back(extField);
         }
-        
+
         // -----------------
         // Clone Antenna properties
         // -----------------
@@ -175,13 +175,13 @@ public:
             antenna.time_profile  = EMfields->antennas[n_antenna].time_profile ;
             newEMfields->antennas.push_back(antenna);
         }
-        
-        
+
+
         newEMfields->finishInitialization(vecSpecies.size(), patch);
-        
+
         return newEMfields;
     }
-    
+
 };
 
 #endif

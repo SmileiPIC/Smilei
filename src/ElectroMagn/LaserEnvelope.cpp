@@ -36,8 +36,9 @@ cell_length    ( params.cell_length)
 
     omega      = PyTools::extract("omega",omega_value,"LaserEnvelope",ienvlaser);
     time       = PyTools::extract_pyProfile("time_envelope" , time_profile , "LaserEnvelope",ienvlaser);
-    space      = PyTools::extract2Profiles ("space_envelope", ienvlaser, space_profile     );
+    space      = PyTools::extract2EnvelopeProfiles ("space_envelope", ienvlaser, space_profile     );
 
+    info << "\t Laser Envelope parameters: "<< endl;
     // omega
     info << "\t\t\tomega              : " << omega_value << endl;
     // envelope solver
