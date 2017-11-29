@@ -220,6 +220,7 @@ int main (int argc, char* argv[])
 
     Domain domain( params ); 
     unsigned int global_factor(1);
+    #ifdef _PICSAR
     for ( unsigned int iDim = 0 ; iDim < params.nDim_field ; iDim++ )
         global_factor *= params.global_factor[iDim];
     // Force temporary usage of double grids, even if global_factor = 1
@@ -227,6 +228,7 @@ int main (int argc, char* argv[])
     //if (global_factor!=1) {
         domain.build( params, &smpi, vecPatches, openPMD );
     //}
+    #endif
 
     timers.global.reboot();
     
