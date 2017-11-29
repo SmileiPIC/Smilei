@@ -321,7 +321,7 @@ void Projector1D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &
 
 } // END Project global current densities (ionize)
 
-void Projector1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool is_spectral, bool diag_flag, std::vector<unsigned int> &b_dim, int ispec)
+void Projector1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec)
 {
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
