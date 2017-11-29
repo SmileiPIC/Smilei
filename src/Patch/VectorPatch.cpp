@@ -243,7 +243,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
     timers.densities.update();
 
     timers.syncDens.restart();
-    SyncVectorPatch::sumRhoJ( (*this), timers, itime ); // MPI
+    SyncVectorPatch::sumRhoJ( (*this), timers, itime, params ); // MPI
 
     if(diag_flag){
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {

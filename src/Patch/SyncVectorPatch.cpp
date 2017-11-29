@@ -109,10 +109,10 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
 }
 
 
-void SyncVectorPatch::sumRhoJ(VectorPatch& vecPatches, Timers &timers, int itime)
+void SyncVectorPatch::sumRhoJ(VectorPatch& vecPatches, Timers &timers, int itime, Params& params)
 {
     SyncVectorPatch::new_sum( vecPatches.densities , vecPatches, timers, itime );
-    if(vecPatches.diag_flag) SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, itime );
+    if( (vecPatches.diag_flag) || (params.is_spectral) )SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, itime );
 }
 
 void SyncVectorPatch::sumRhoJs(VectorPatch& vecPatches, int ispec , Timers &timers, int itime)

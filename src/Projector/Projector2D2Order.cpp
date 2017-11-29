@@ -452,7 +452,7 @@ void Projector2D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, std::vector<unsigned int> &b_dim, int ispec)
+void Projector2D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec)
 {
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
@@ -462,12 +462,21 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
     
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if (!diag_flag){ 
-        double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw*dim1);
-        double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1));
-        double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw*dim1);
-        for (int ipart=istart ; ipart<iend; ipart++ )
-            (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
-            
+        if (!is_spectral) {
+            double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw*dim1);
+            double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1));
+            double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw*dim1);
+            for (int ipart=istart ; ipart<iend; ipart++ )
+                (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
+        }
+        else {
+            double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw* dim1   );
+            double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1));
+            double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw* dim1   );
+            double* b_rho=  &(*EMfields->rho_)(ibin*clrw* dim1   );
+            for ( int ipart=istart ; ipart<iend; ipart++ )
+                (*this)(b_Jx , b_Jy , b_Jz , b_rho , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart]);
+        }         
     // Otherwise, the projection may apply to the species-specific arrays
     } else {
         double* b_Jx  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(ibin*clrw* dim1   ) : &(*EMfields->Jx_ )(ibin*clrw* dim1   ) ;
