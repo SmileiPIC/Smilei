@@ -455,7 +455,7 @@ void Projector2D4Order::operator() (ElectroMagn* EMfields, Particles &particles,
             double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw* dim1   );
             double* b_rho=  &(*EMfields->rho_)(ibin*clrw* dim1   );
             for ( int ipart=istart ; ipart<iend; ipart++ )
-                (*this)(b_Jx , b_Jy , b_Jz , b_rho , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart]);
+                (*this)(b_Jx , b_Jy , b_Jz , b_rho , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
         }
     // Otherwise, the projection may apply to the species-specific arrays
     } else {
