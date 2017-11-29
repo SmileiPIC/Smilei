@@ -286,13 +286,16 @@ int main (int argc, char* argv[])
             vecPatches.applyAntennas(time_dual);
 
             // solve Maxwell's equations
+            #ifndef _PICSAR
             // Force temporary usage of double grids, even if global_factor = 1
             //    especially to compare solvers           
-            //if ( global_factor==1 ) {
-            //    if( time_dual > params.time_fields_frozen ) {
-            //        vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
-            //    }
-            //}
+            //if ( global_factor==1 )
+            {
+                if( time_dual > params.time_fields_frozen ) {
+                    vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
+                }
+            }
+            #endif
 
             vecPatches.finalize_and_sort_parts(params, &smpi, simWindow, RadiationTables,
                                                MultiphotonBreitWheelerTables,
@@ -300,13 +303,14 @@ int main (int argc, char* argv[])
 
             // Force temporary usage of double grids, even if global_factor = 1
             //    especially to compare solvers           
-            //if ( global_factor!=1 ) {
-                timers.diagsNEW.restart();
+            #ifdef _PICSAR
+            //if ( global_factor!=1 )
+            {
                 SyncCartesianPatch::patchedToCartesian( vecPatches, domain, params, &smpi, timers, itime );
                 domain.solveMaxwell( params, simWindow, itime, time_dual, timers );
                 SyncCartesianPatch::cartesianToPatches( domain, vecPatches, params, &smpi, timers, itime );
-                timers.diagsNEW.update();
-            //}
+            }
+            #endif
 
             // call the various diagnostics
             vecPatches.runAllDiags(params, &smpi, itime, timers, simWindow);
