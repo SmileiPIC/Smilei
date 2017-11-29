@@ -665,16 +665,10 @@ void SyncVectorPatch::exchange( std::vector<Field*> fields, VectorPatch& vecPatc
 }
 
 
-
+//Proceed to the synchronization of field including corner ghost cells.
+//This is done by exchanging one dimension at a time
 void SyncVectorPatch::exchange_per_direction( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
-    #pragma omp for schedule(static)
-    for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
-        vecPatches(ipatch)->initExchange( fields[ipatch], 0 );
-
-    #pragma omp for schedule(static)
-    for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
-        vecPatches(ipatch)->finalizeExchange( fields[ipatch], 0 );
 
     unsigned int nx_, ny_(1), nz_(1), h0, oversize[3], n_space[3], gsp[3];
     double *pt1,*pt2;
@@ -695,21 +689,36 @@ void SyncVectorPatch::exchange_per_direction( std::vector<Field*> fields, Vector
             nz_ = fields[0]->dims_[2];
     }
 
+// Dimension 2
+    #pragma omp for schedule(static)
+    for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
+        vecPatches(ipatch)->initExchange( fields[ipatch], 2 );
 
-    gsp[0] = ( oversize[0] + 1 + fields[0]->isDual_[0] ); //Ghost size primal
+    #pragma omp for schedule(static)
+    for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
+        vecPatches(ipatch)->finalizeExchange( fields[ipatch], 2 );
 
     #pragma omp for schedule(static) private(pt1,pt2)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
 
-        if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[0][0]){
-            pt1 = &(*fields[vecPatches(ipatch)->neighbor_[0][0]-h0])((n_space[0])*ny_*nz_);
+        gsp[2] = ( oversize[2] + 1 + fields[0]->isDual_[2] ); //Ghost size primal
+        if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[2][0]){
+            pt1 = &(*fields[vecPatches(ipatch)->neighbor_[2][0]-h0])(n_space[2]);
             pt2 = &(*fields[ipatch])(0);
-            memcpy( pt2, pt1, oversize[0]*ny_*nz_*sizeof(double));
-            memcpy( pt1+gsp[0]*ny_*nz_, pt2+gsp[0]*ny_*nz_, oversize[0]*ny_*nz_*sizeof(double));
-        } // End if ( MPI_me_ == MPI_neighbor_[0][0] )
+            for (unsigned int i = 0 ; i < nx_*ny_*nz_ ; i += ny_*nz_){
+                for (unsigned int j = 0 ; j < ny_*nz_ ; j += nz_){
+                    for (unsigned int k = 0 ; k < oversize[2] ; k++ ){
+                        pt2[i+j+k] = pt1[i+j+k] ;
+                        pt1[i+j+k+gsp[2]] = pt2[i+j+k+gsp[2]] ;
+                    }
+                }
+            }
+        }// End if ( MPI_me_ == MPI_neighbor_[2][0] )
 
     } // End for( ipatch )
 
+
+// Dimension 1
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
         vecPatches(ipatch)->initExchange( fields[ipatch], 1 );
@@ -736,30 +745,28 @@ void SyncVectorPatch::exchange_per_direction( std::vector<Field*> fields, Vector
 
     } // End for( ipatch )
 
+// Dimension 0
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
-        vecPatches(ipatch)->initExchange( fields[ipatch], 2 );
+        vecPatches(ipatch)->initExchange( fields[ipatch], 0 );
 
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
-        vecPatches(ipatch)->finalizeExchange( fields[ipatch], 2 );
+        vecPatches(ipatch)->finalizeExchange( fields[ipatch], 0 );
+
+
+
+    gsp[0] = ( oversize[0] + 1 + fields[0]->isDual_[0] ); //Ghost size primal
 
     #pragma omp for schedule(static) private(pt1,pt2)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
 
-        gsp[2] = ( oversize[2] + 1 + fields[0]->isDual_[2] ); //Ghost size primal
-        if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[2][0]){
-            pt1 = &(*fields[vecPatches(ipatch)->neighbor_[2][0]-h0])(n_space[2]);
+        if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[0][0]){
+            pt1 = &(*fields[vecPatches(ipatch)->neighbor_[0][0]-h0])((n_space[0])*ny_*nz_);
             pt2 = &(*fields[ipatch])(0);
-            for (unsigned int i = 0 ; i < nx_*ny_*nz_ ; i += ny_*nz_){
-                for (unsigned int j = 0 ; j < ny_*nz_ ; j += nz_){
-                    for (unsigned int k = 0 ; k < oversize[2] ; k++ ){
-                        pt2[i+j+k] = pt1[i+j+k] ;
-                        pt1[i+j+k+gsp[2]] = pt2[i+j+k+gsp[2]] ;
-                    }
-                }
-            }
-        }// End if ( MPI_me_ == MPI_neighbor_[2][0] )
+            memcpy( pt2, pt1, oversize[0]*ny_*nz_*sizeof(double));
+            memcpy( pt1+gsp[0]*ny_*nz_, pt2+gsp[0]*ny_*nz_, oversize[0]*ny_*nz_*sizeof(double));
+        } // End if ( MPI_me_ == MPI_neighbor_[0][0] )
 
     } // End for( ipatch )
 
