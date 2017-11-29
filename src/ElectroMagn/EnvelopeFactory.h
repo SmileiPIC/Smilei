@@ -9,7 +9,7 @@
 class EnvelopeFactory {
 public:
     static LaserEnvelope* create( Params& params, Patch* patch ) {
-        if ( params.geometry == "3Dcartesian" ) {MESSAGE("Hello0");
+        if ( params.geometry == "3Dcartesian" ) {
             return new LaserEnvelope3D( params, patch );
         }
         else
