@@ -243,7 +243,7 @@ void LaserProfileSeparable::createFields(Params& params, Patch* patch)
         unsigned int ny_d = ny_p+1;
         dim[0] = primal ? ny_p : ny_d;
         
-        if( params.geometry!="2Dcartesian2d3vw" ) {
+        if( params.geometry!="2Dcartesian" ) {
             unsigned int nz_p = params.n_space[2]*params.global_factor[2]+1+2*params.oversize[2];
             unsigned int nz_d = nz_p+1;
             dim[1] = primal ? nz_d : nz_p;
