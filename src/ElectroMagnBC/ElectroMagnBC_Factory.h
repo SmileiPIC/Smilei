@@ -8,6 +8,7 @@
 #include "ElectroMagnBC2D_SM.h"
 #include "ElectroMagnBC2D_refl.h"
 #include "ElectroMagnBC3D_SM.h"
+#include "ElectroMagnBC3D_SM_Lehe.h"
 
 #include "Params.h"
 
@@ -97,7 +98,10 @@ public:
             for (unsigned int ii=0;ii<2;ii++) {
                 // X DIRECTION
                 // silver-muller (injecting/absorbing bcs)
-                if ( params.EM_BCs[0][ii] == "silver-muller" ) {
+                if ( params.EM_BCs[0][ii] == "silver-muller" && params.maxwell_sol == "Lehe" ) {
+                    emBoundCond[ii] = new ElectroMagnBC3D_SM_Lehe(params, patch, ii);
+                }
+                else if ( params.EM_BCs[0][ii] == "silver-muller" ) {
                     emBoundCond[ii] = new ElectroMagnBC3D_SM(params, patch, ii);
                 }
                 // else: error
@@ -107,7 +111,10 @@ public:
                 
                 // Y DIRECTION
                 // silver-muller bcs (injecting/absorbin)
-                if ( params.EM_BCs[1][ii] == "silver-muller" ) {
+                if ( params.EM_BCs[1][ii] == "silver-muller" && params.maxwell_sol == "Lehe" ) {
+                    emBoundCond[ii+2] = new ElectroMagnBC3D_SM_Lehe(params, patch, ii+2);
+                }
+                else if ( params.EM_BCs[1][ii] == "silver-muller" ) {
                     emBoundCond[ii+2] = new ElectroMagnBC3D_SM(params, patch, ii+2);
                 }
                 // else: error
@@ -117,7 +124,10 @@ public:
 
                 // Z DIRECTION
                 // silver-muller bcs (injecting/absorbin)
-                if ( params.EM_BCs[2][ii] == "silver-muller" ) {
+                if ( params.EM_BCs[2][ii] == "silver-muller" && params.maxwell_sol == "Lehe" ) {
+                    emBoundCond[ii+4] = new ElectroMagnBC3D_SM_Lehe(params, patch, ii+4);
+                }
+                else if ( params.EM_BCs[2][ii] == "silver-muller" ) {
                     emBoundCond[ii+4] = new ElectroMagnBC3D_SM(params, patch, ii+4);
                 }
                 // else: error
