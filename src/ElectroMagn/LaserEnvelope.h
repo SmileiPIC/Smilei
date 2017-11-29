@@ -21,9 +21,9 @@ public:
     virtual ~LaserEnvelope();
     virtual void compute(ElectroMagn* EMfields) = 0;
 
-    Profile *profile_;
+    //Profile *profile_;
     const std::vector<double> cell_length;
-        
+
     Field* A_;
     Field* A0_;
 };

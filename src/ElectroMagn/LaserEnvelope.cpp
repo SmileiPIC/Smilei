@@ -55,13 +55,13 @@ cell_length    ( params.cell_length)
 LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch* patch ) :
 cell_length    ( envelope->cell_length )
 {
-    profile_ = envelope->profile_;
+    //profile_ = envelope->profile_;
 }
 
 
 LaserEnvelope::~LaserEnvelope()
 {
-    delete profile_;
+    //delete profile_;
 
     delete A0_;
     delete A_;
@@ -111,7 +111,7 @@ void LaserEnvelope3D::initEnvelope( Patch* patch )
         for (int j=0 ; j<A_->dims_[1] ; j++) {
             pos[2] = pos2;
             for (int k=0 ; k<A_->dims_[2] ; k++) {
-                (*A3D)(i,j,k) += profile_->valueAt(pos);
+                //(*A3D)(i,j,k) += profile_->valueAt(pos);
                 pos[2] += cell_length[2];
             }
             pos[1] += cell_length[1];

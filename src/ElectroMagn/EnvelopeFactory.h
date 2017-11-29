@@ -9,7 +9,7 @@
 class EnvelopeFactory {
 public:
     static LaserEnvelope* create( Params& params, Patch* patch ) {
-        if ( params.geometry == "3Dcartesian" ) {
+        if ( params.geometry == "3Dcartesian" ) {MESSAGE("Hello0");
             return new LaserEnvelope3D( params, patch );
         }
         else
@@ -18,7 +18,7 @@ public:
     static LaserEnvelope* clone( LaserEnvelope *envelope, Patch* patch ) {
         if  (patch->envelope == NULL)
             return NULL;
-        
+
         if ( dynamic_cast<LaserEnvelope3D*>( patch->envelope ) ) {
             return new LaserEnvelope3D( envelope, patch );
         }
