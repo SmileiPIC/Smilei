@@ -316,6 +316,8 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
             else
                 (*this)(ipatch)->EMfields->saveMagneticFields();
         }
+        if (params.is_spectral)
+            save_old_rho( params );
     }
 
 

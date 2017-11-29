@@ -309,7 +309,6 @@ int main (int argc, char* argv[])
             //}
 
             // call the various diagnostics
-            if(params.is_spectral) vecPatches.save_old_rho(params);
             vecPatches.runAllDiags(params, &smpi, itime, timers, simWindow);
 
             timers.movWindow.restart();
