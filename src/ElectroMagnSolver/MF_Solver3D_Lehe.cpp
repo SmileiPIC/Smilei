@@ -21,14 +21,6 @@ MF_Solver3D_Lehe::MF_Solver3D_Lehe(Params &params)
     alpha_y =  1. - 2.*beta_yx; // = alpha_z as well but we define and use only 1 variable
     alpha_x =  1. - 2.*beta_xy - 2.*beta_xz - 3.*delta_x ;
 
-    //recovers normal yee
-    //alpha_y = 1.;
-    //alpha_x = 1.;
-    //beta_yx = 0.;
-    //beta_xy = 0.;
-    //beta_xz = 0.;
-    //delta_x = 0.;
-
 }
 
 MF_Solver3D_Lehe::~MF_Solver3D_Lehe()
@@ -94,11 +86,11 @@ void MF_Solver3D_Lehe::operator() ( ElectroMagn* fields )
 
     // Magnetic field Bx^(p,d,d)
     // at Xmin+dx - treat using simple discretization of the curl (will be overwritten if not at the xmin-border)
-        for (unsigned int j=1 ; j<ny_d-1 ; j++) {
-            for (unsigned int k=1 ; k<nz_d-1 ; k++) {
-                (*Bx3D)(0,j,k) += -dt_ov_dy * ( (*Ez3D)(0,j,k) - (*Ez3D)(0,j-1,k) ) + dt_ov_dz * ( (*Ey3D)(0,j,k) - (*Ey3D)(0,j,k-1) );
-            }
-        }
+        //for (unsigned int j=1 ; j<ny_d-1 ; j++) {
+        //    for (unsigned int k=1 ; k<nz_d-1 ; k++) {
+        //        (*Bx3D)(0,j,k) += -dt_ov_dy * ( (*Ez3D)(0,j,k) - (*Ez3D)(0,j-1,k) ) + dt_ov_dz * ( (*Ey3D)(0,j,k) - (*Ey3D)(0,j,k-1) );
+        //    }
+        //}
     // at Xmax-dx - treat using simple discretization of the curl (will be overwritten if not at the xmax-border)
         for (unsigned int j=1 ; j<ny_d-1 ; j++) {
             for (unsigned int k=1 ; k<nz_d-1 ; k++) {

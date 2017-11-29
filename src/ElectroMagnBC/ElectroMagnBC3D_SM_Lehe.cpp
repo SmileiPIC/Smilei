@@ -282,7 +282,7 @@ void ElectroMagnBC3D_SM_Lehe::apply(ElectroMagn* EMfields, double time_dual, Pat
     if ( min_max==0 && patch->isXmin() ) {
         
         // Static cast of the fields
-        //Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
+        Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
         Field3D* Ey3D = static_cast<Field3D*>(EMfields->Ey_);
         Field3D* Ez3D = static_cast<Field3D*>(EMfields->Ez_);
         Field3D* Bx3D = static_cast<Field3D*>(EMfields->Bx_);
@@ -290,6 +290,24 @@ void ElectroMagnBC3D_SM_Lehe::apply(ElectroMagn* EMfields, double time_dual, Pat
         Field3D* Bz3D = static_cast<Field3D*>(EMfields->Bz_);
         
         vector<double> pos(2);
+       //In addition to standard Silver-Muller, some terms have to be computed with a standard Yee stencil on xmin and xmax sides
+        for (unsigned int j=1 ; j<ny_d-1 ; j++) {
+            for (unsigned int k=1 ; k<nz_d-1 ; k++) {
+                (*Bx3D)(0,j,k) += -dt_ov_dy * ( (*Ez3D)(0,j,k) - (*Ez3D)(0,j-1,k) ) + dt_ov_dz * ( (*Ey3D)(0,j,k) - (*Ey3D)(0,j,k-1) );
+            }
+        }
+       // for (unsigned int j=0 ; j<ny_p ; j++) {
+       //     for (unsigned int k=2 ; k<nz_d-2 ; k++) {
+       //         (*By3D)(1,j,k) += dt_ov_dx * ( (*Ez3D)(1,j,k) - (*Ez3D)(0,j,k  ))
+       //                          -dt_ov_dz * ( (*Ex3D)(1,j,k) - (*Ex3D)(1,j,k-1));
+       //     }
+       // }
+       // for (unsigned int j=2 ; j<ny_d-2 ; j++) {
+       //     for (unsigned int k=0 ; k<nz_p ; k++) {
+       //         (*Bz3D)(1,j,k) += dt_ov_dx * ( (*Ey3D)(0,j,k) - (*Ey3D)(1,j  ,k) )
+       //                        +  dt_ov_dy * ( (*Ex3D)(1,j,k) - (*Ex3D)(1,j-1,k) );
+       //     }
+       // }
         
         // for By^(d,p,d)
         pos[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy;
@@ -335,6 +353,8 @@ void ElectroMagnBC3D_SM_Lehe::apply(ElectroMagn* EMfields, double time_dual, Pat
                 
             }// k  ---end compute Bz
         }//j  ---end compute Bz
+
+    
     }
     else if (min_max==1 && patch->isXmax() ) {
         

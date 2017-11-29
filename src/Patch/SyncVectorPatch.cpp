@@ -705,9 +705,11 @@ void SyncVectorPatch::exchange_per_direction( std::vector<Field*> fields, Vector
         if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[2][0]){
             pt1 = &(*fields[vecPatches(ipatch)->neighbor_[2][0]-h0])(n_space[2]);
             pt2 = &(*fields[ipatch])(0);
-            for (unsigned int in = oversize[0] ; in < nx_-oversize[0]; in ++){
+            //for (unsigned int in = oversize[0] ; in < nx_-oversize[0]; in ++){
+            for (unsigned int in = 0 ; in < nx_ ; in ++){
                 unsigned int i = in * ny_*nz_;
-                for (unsigned int jn = oversize[1] ; jn < ny_-oversize[1] ; jn ++){
+                //for (unsigned int jn = oversize[1] ; jn < ny_-oversize[1] ; jn ++){
+                for (unsigned int jn = 0 ; jn < ny_ ; jn ++){
                     unsigned int j = jn *nz_;
                     for (unsigned int k = 0 ; k < oversize[2] ; k++ ){
                         pt2[i+j+k] = pt1[i+j+k] ;
