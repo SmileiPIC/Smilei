@@ -330,9 +330,10 @@ class Laser(SmileiComponent):
 class LaserEnvelope(SmileiComponent):
     """Laser Envelope parameters"""
     omega = 1.
-    time_envelope = 1.
-    space_envelope = [1., 0.]
+    #time_envelope = 1.
+    #space_envelope = [1., 0.]
     envelope_solver = "explicit"
+    envelope_profile = [0., 0., 0.]
 
 
 class Collisions(SmileiComponent):

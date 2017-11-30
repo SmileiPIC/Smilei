@@ -13,10 +13,10 @@ using namespace std;
 LaserEnvelope::LaserEnvelope( Params& params, Patch* patch ) :
 cell_length    ( params.cell_length)
 {
-    //PyObject * profile;
-    //if (!PyTools::extract_pyProfile("envelope_profile",profile,"LaserEnvelope"))
-    //    MESSAGE("No envelope profile set !");
-    //profile_ = new Profile(profile, params.nDim_field, "envelope");
+    PyObject * profile;
+    if (!PyTools::extract_pyProfile("envelope_profile",profile,"LaserEnvelope"))
+        MESSAGE("No envelope profile set !");
+    profile_ = new Profile(profile, params.nDim_field, "envelope");
 
     int ienvlaser = 0;
     ostringstream name("");
@@ -29,14 +29,10 @@ cell_length    ( params.cell_length)
     std:: string envelope_solver  = "explicit"; // default value
     envelope_solver_read          = PyTools::extract("envelope_solver",envelope_solver,"LaserEnvelope");
 
-    PyObject *time_profile=nullptr;
-    vector<PyObject*>  space_profile;
-    bool time, space, omega;
+    bool omega;
     double omega_value(0);
 
     omega      = PyTools::extract("omega",omega_value,"LaserEnvelope",ienvlaser);
-    time       = PyTools::extract_pyProfile("time_envelope" , time_profile , "LaserEnvelope",ienvlaser);
-    space      = PyTools::extract2EnvelopeProfiles ("space_envelope", ienvlaser, space_profile     );
 
     info << "\t Laser Envelope parameters: "<< endl;
     // omega
@@ -55,13 +51,13 @@ cell_length    ( params.cell_length)
 LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch* patch ) :
 cell_length    ( envelope->cell_length )
 {
-    //profile_ = envelope->profile_;
+    profile_ = envelope->profile_;
 }
 
 
 LaserEnvelope::~LaserEnvelope()
 {
-    //delete profile_;
+    delete profile_;
 
     delete A0_;
     delete A_;
@@ -111,7 +107,7 @@ void LaserEnvelope3D::initEnvelope( Patch* patch )
         for (int j=0 ; j<A_->dims_[1] ; j++) {
             pos[2] = pos2;
             for (int k=0 ; k<A_->dims_[2] ; k++) {
-                //(*A3D)(i,j,k) += profile_->valueAt(pos);
+                (*A3D)(i,j,k) += profile_->valueAt(pos);
                 pos[2] += cell_length[2];
             }
             pos[1] += cell_length[1];
