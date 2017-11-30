@@ -1,4 +1,6 @@
-# _____________________________________________________________________________
+# ----------------------------------------------------------------------------------------
+# 					SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
+# ----------------------------------------------------------------------------------------
 #
 # Synchrotron: radiation loss of electrons rotating in a constant
 #              magnetic field
@@ -12,54 +14,51 @@
 # - Landau-Lifshitz radiation loss with quantum correction
 # - Species scalar diagnostics
 # - External fields
-# _____________________________________________________________________________
+# ----------------------------------------------------------------------------------------
 
 import math
 
-# _____________________________________________________________________________
+# ----------------------------------------------------------------------------------------
 # Main parameters
 
 c = 299792458
 electron_mass = 9.10938356e-31
 electron_charge = 1.60217662e-19
-lambdar = 1e-6                # Normalization wavelength
-wr = 2*math.pi*c/lambdar      # Normalization frequency
+lambdar = 1e-6                                    # Normalization wavelength
+wr = 2*math.pi*c/lambdar                          # Normalization frequency
 
-Schwinger_E_field= 1.3E18     # Schwinger electric field
+Schwinger_E_field= 1.3E18                         # Schwinger electric field
 Enorm = electron_mass*wr*c/electron_charge        # Normalization electric field at lambda = 1e-6
 
-l0 = 2.0*math.pi              # laser wavelength
+l0 = 2.0*math.pi                                  # laser wavelength
 
-chi = 1.                      # Initial quantum parameter
-B = 270.                      # Magnetic field strength
-gamma = chi* Schwinger_E_field/(Enorm*B) # Initial gamma factor
-Rsync = math.sqrt(gamma**2 - 1.)/B            # Synchrotron radius without radiation
-v = math.sqrt(1.-1./gamma**2)                 # Initial particle velocity
+chi = 1.                                          # Initial quantum parameter
+B = 270.                                          # Magnetic field strength
+gamma = chi* Schwinger_E_field/(Enorm*B)          # Initial gamma factor
+Rsync = math.sqrt(gamma**2 - 1.)/B                # Synchrotron radius without radiation
+v = math.sqrt(1.-1./gamma**2)                     # Initial particle velocity
 
 Lx = 4.*Rsync
 Ly = 4.*Rsync
 
-n0 = 1e-5                              # particle density
+n0 = 1e-5                                         # particle density
 
-res = 128.                             # nb of cells in one synchrotron radius
+res = 128.                                        # nb of cells in one synchrotron radius
 
-dx = Rsync/res                            # space step
-dy = Rsync/res                            # space step
-dt  = 1./math.sqrt(1./(dx*dx) + 1./(dy*dy)) # timestep (0.95 x CFL)
+dx = Rsync/res                                    # space step
+dy = Rsync/res                                    # space step
+dt  = 1./math.sqrt(1./(dx*dx) + 1./(dy*dy))       # timestep given by the CFL
 
-dt_factor = 0.9                           # factor on dt
-dx = Rsync/res                            # space step
-dy = Rsync/res                            # space step
-dt  = 1./math.sqrt(1./(dx*dx) + 1./(dy*dy)) # timestep (CFL)
-dt *= dt_factor
+dt_factor = 0.9                                   # factor on dt
+dt *= dt_factor                                   # timestep used for the simulation
+Tsim = 5000*dt/dt_factor                          # duration of the simulation
 
-Tsim = 5000*dt/dt_factor                 # duration of the simulation
+pusher = "vay"                                    # type of pusher
+radiation_list = ["Monte-Carlo",
+                  "corrected-Landau-Lifshitz"]    # List of radiation models for species
+species_name_list = ["disc","cont"]               # List of names for species
 
-pusher = "vay"                         # dynamic type
-radiation_list = ["Monte-Carlo","corrected-Landau-Lifshitz"]
-species_name_list = ["disc","cont"]
-
-# ______________________________________________________________________________
+# ----------------------------------------------------------------------------------------
 # Functions
 
 # Density profile for inital location of the particles
@@ -69,7 +68,7 @@ def n0_(x,y):
         else:
                 return 0.
 
-# ______________________________________________________________________________
+# ----------------------------------------------------------------------------------------
 # Namelists
 
 Main(
@@ -95,11 +94,15 @@ Main(
 
 )
 
+# ----------------------------------------------------------------------------------------
+# Initialization of the constant external field
+
 ExternalField(
     field = "Bz",
     profile = constant(B)
 )
 
+# ----------------------------------------------------------------------------------------
 # Loop to create all the species
 # One species per radiation implementations
 for i,radiation in enumerate(radiation_list):
@@ -123,10 +126,14 @@ for i,radiation in enumerate(radiation_list):
         ],
     )
 
+# ----------------------------------------------------------------------------------------
+# Global parameters for the radiation reaction models
 RadiationReaction(
-    chipa_disc_min_threshold = 1e-2
+    chipa_disc_min_threshold = 1e-3
 )
 
+# ----------------------------------------------------------------------------------------
+# Scalar diagnostics
 DiagScalar(
     every = 100,
     vars=['Ukin_electron_disc',
@@ -134,3 +141,49 @@ DiagScalar(
           'Urad_electron_disc',
           'Urad_electron_cont']
 )
+
+# ----------------------------------------------------------------------------------------
+# Particle Binning
+
+# Loop to create all the species particle binning diagnostics
+# One species per radiation implementations
+for i,radiation in enumerate(radiation_list):
+
+    # Weight spatial-distribution
+    DiagParticleBinning(
+        deposited_quantity = "weight",
+        every = 500,
+        time_average = 1,
+        species = ["electron_" + species_name_list[i]],
+        axes = [
+            ["x", 0., Lx, 200],
+            ["y", 0., Ly, 200],
+        ]
+    )
+
+
+for i,radiation in enumerate(radiation_list):
+    # Weight x chi spatial-distribution
+    DiagParticleBinning(
+        deposited_quantity = "weight_chi",
+        every = 500,
+        time_average = 1,
+        species = ["electron_" + species_name_list[i]],
+        axes = [
+            ["x", 0., Lx, 200],
+            ["y", 0., Ly, 200],
+        ]
+    )
+
+
+for i,radiation in enumerate(radiation_list):
+    # Chi-distribution
+    DiagParticleBinning(
+        deposited_quantity = "weight",
+        every = 500,
+        time_average = 1,
+        species = ["electron_" + species_name_list[i]],
+        axes = [
+            ["chi", 1e-3, 1., 1000,"logscale"],
+        ]
+    )
