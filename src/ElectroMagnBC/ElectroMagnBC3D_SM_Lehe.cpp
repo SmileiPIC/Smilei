@@ -296,12 +296,12 @@ void ElectroMagnBC3D_SM_Lehe::apply(ElectroMagn* EMfields, double time_dual, Pat
                 (*Bx3D)(0,j,k) += -dt_ov_dy * ( (*Ez3D)(0,j,k) - (*Ez3D)(0,j-1,k) ) + dt_ov_dz * ( (*Ey3D)(0,j,k) - (*Ey3D)(0,j,k-1) );
             }
         }
-       // for (unsigned int j=0 ; j<ny_p ; j++) {
-       //     for (unsigned int k=2 ; k<nz_d-2 ; k++) {
-       //         (*By3D)(1,j,k) += dt_ov_dx * ( (*Ez3D)(1,j,k) - (*Ez3D)(0,j,k  ))
-       //                          -dt_ov_dz * ( (*Ex3D)(1,j,k) - (*Ex3D)(1,j,k-1));
-       //     }
-       // }
+        //for (unsigned int j=0 ; j<ny_p ; j++) {
+        //    for (unsigned int k=2 ; k<nz_d-2 ; k++) {
+        //        (*By3D)(1,j,k) += dt_ov_dx * ( (*Ez3D)(1,j,k) - (*Ez3D)(0,j,k  ))
+        //                         -dt_ov_dz * ( (*Ex3D)(1,j,k) - (*Ex3D)(1,j,k-1));
+        //    }
+        //}
        // for (unsigned int j=2 ; j<ny_d-2 ; j++) {
        //     for (unsigned int k=0 ; k<nz_p ; k++) {
        //         (*Bz3D)(1,j,k) += dt_ov_dx * ( (*Ey3D)(0,j,k) - (*Ey3D)(1,j  ,k) )
