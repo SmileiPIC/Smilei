@@ -252,7 +252,7 @@ uint64_t DiagnosticPerformances::getDiskFootPrint(int istart, int istop, Patch* 
     footprint += ndumps * 800;
     
     // Add necessary dataset headers approximately
-    footprint += ndumps * (n_quantities_double + n_quantities_uint) * 350;
+    footprint += ndumps * 2 * 600;
     
     // Add size of each dump
     footprint += ndumps * (uint64_t)(mpi_size) * (uint64_t)(n_quantities_double * sizeof(double) + n_quantities_uint * sizeof(unsigned int));
