@@ -86,11 +86,11 @@ void MF_Solver3D_Lehe::operator() ( ElectroMagn* fields )
 
     // Magnetic field Bx^(p,d,d)
     // At Xmin
-        //for (unsigned int j=1 ; j<ny_d-1 ; j++) {
-        //    for (unsigned int k=1 ; k<nz_d-1 ; k++) {
-        //        (*Bx3D)(0,j,k) += -dt_ov_dy * ( (*Ez3D)(0,j,k) - (*Ez3D)(0,j-1,k) ) + dt_ov_dz * ( (*Ey3D)(0,j,k) - (*Ey3D)(0,j,k-1) );
-        //    }
-        //}
+        for (unsigned int j=1 ; j<ny_d-1 ; j++) {
+            for (unsigned int k=1 ; k<nz_d-1 ; k++) {
+                (*Bx3D)(0,j,k) += -dt_ov_dy * ( (*Ez3D)(0,j,k) - (*Ez3D)(0,j-1,k) ) + dt_ov_dz * ( (*Ey3D)(0,j,k) - (*Ey3D)(0,j,k-1) );
+            }
+        }
 
     // At Xmax
         for (unsigned int j=1 ; j<ny_d-1 ; j++) {
@@ -167,7 +167,6 @@ void MF_Solver3D_Lehe::operator() ( ElectroMagn* fields )
         }
     }
     
-//}// end parallel
 }//END solveMaxwellFaraday
 
 
