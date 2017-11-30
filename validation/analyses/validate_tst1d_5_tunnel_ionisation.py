@@ -6,9 +6,13 @@ S = happi.Open(["./restart*"], verbose=False)
 
 
 
-# COMPARE THE Ez FIELD
+# COMPARE THE Ey FIELD
 Ey = S.Field.Field0.Ey(timesteps=1000).getData()[0]
-Validate("Ey field at iteration 1000", Ey, 0.005)
+Validate("Ey field at iteration 1000", Ey, 0.001)
+
+# COMPARE THE Ez FIELD
+Ez = S.Field.Field0.Ez(timesteps=1000).getData()[0]
+Validate("Ez field at iteration 1000", Ez, 1e-9)
 
 # VERIFY THE IONIZATION RATE Vs THEORY
 w_r = S.namelist.Main.reference_angular_frequency_SI

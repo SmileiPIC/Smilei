@@ -151,7 +151,12 @@ class SmileiSingleton(SmileiComponent):
 
     # Constructor for all SmileiSingletons
     def __init__(self, **kwargs):
-        self._fillObjectAndAddToList(type(self), type(self), **kwargs)
+        cls = type(self)
+        self._fillObjectAndAddToList(cls, cls, **kwargs)
+        # Change all methods to static
+        for k,v in cls.__dict__.items():
+            if k[0]!='_' and hasattr(v,"__get__"):
+                setattr(cls, k, staticmethod(v))
 
 class ParticleData(object):
     """Container for particle data at run-time (for exposing particles in numpy)"""
