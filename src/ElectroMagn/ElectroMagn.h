@@ -303,12 +303,14 @@ public:
     //! Vector of boundary-condition per side for the fields
     std::vector<ElectroMagnBC*> emBoundCond;
     
-protected :
     //! from smpi is xmin
     bool isXmin;
-    
+
     //! from smpi is xmax
     bool isXmax;
+
+protected :
+    
     
 private:
     
