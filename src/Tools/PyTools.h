@@ -400,28 +400,28 @@ public:
     }
 
     // extract 2 envelope profiles from namelist (used for laser profile)
-    static bool extract2EnvelopeProfiles(std::string varname, int ienvlaser, std::vector<PyObject*> &profiles )
-    {
-        PyObject* py_obj = extract_py(varname,"LaserEnvelope",ienvlaser);
-        // Return false if None
-        if( py_obj==Py_None ) return false;
-
-        // Error if not list
-        if( ! convert(py_obj, profiles) )
-            ERROR("For laser envelope #" << ienvlaser << ": " << varname << " must be a list of 2 profiles");
-
-        // Error if wrong size
-        if( profiles.size()!=2 )
-            ERROR("For Laser Envelope #" << ienvlaser << ": "<<varname<<" needs 2 profiles.");
-
-        // Error if not callable
-        for( int i=0; i<2; i++) {
-            if ( !PyCallable_Check(profiles[i]) )
-                ERROR("For Laser Envelope #" << ienvlaser << ": "<<varname<<"["<<i<<"] not understood");
-        }
-
-        return true;
-    }
+    // static bool extract2EnvelopeProfiles(std::string varname, int ienvlaser, std::vector<PyObject*> &profiles )
+    // {
+    //     PyObject* py_obj = extract_py(varname,"LaserEnvelope",ienvlaser);
+    //     // Return false if None
+    //     if( py_obj==Py_None ) return false;
+    //
+    //     // Error if not list
+    //     if( ! convert(py_obj, profiles) )
+    //         ERROR("For laser envelope #" << ienvlaser << ": " << varname << " must be a list of 2 profiles");
+    //
+    //     // Error if wrong size
+    //     if( profiles.size()!=2 )
+    //         ERROR("For Laser Envelope #" << ienvlaser << ": "<<varname<<" needs 2 profiles.");
+    //
+    //     // Error if not callable
+    //     for( int i=0; i<2; i++) {
+    //         if ( !PyCallable_Check(profiles[i]) )
+    //             ERROR("For Laser Envelope #" << ienvlaser << ": "<<varname<<"["<<i<<"] not understood");
+    //     }
+    //
+    //     return true;
+    // }
 
     //! return the number of components (see pyinit.py)
     static unsigned int nComponents(std::string componentName) {

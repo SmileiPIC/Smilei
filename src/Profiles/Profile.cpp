@@ -16,21 +16,21 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
 {
     ostringstream info_("");
     info_ << nvariables << "D";
-    
+
     if (!PyCallable_Check(py_profile)) {
         ERROR("Profile `"<<name<<"`: not a function");
     }
-    
+
     // In case the function was created in "pyprofiles.py", then we transform it
     //  in a "hard-coded" function
     if( PyObject_HasAttrString(py_profile, "profileName") ) {
-        
+
         PyTools::getAttr(py_profile, "profileName", profileName );
-        
+
         info_ << " built-in profile `" << profileName << "`" ;
-        
+
         if( profileName == "constant" ) {
-        
+
             if     ( nvariables == 1 )
                 function = new Function_Constant1D(py_profile);
             else if( nvariables == 2 )
@@ -39,9 +39,9 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
                 function = new Function_Constant3D(py_profile);
             else
               ERROR("Profile `"<<name<<"`: constant() profile defined only in 1D, 2D or 3D");
-        
+
         } else if( profileName == "trapezoidal" ){
-        
+
             if     ( nvariables == 1 )
                 function = new Function_Trapezoidal1D(py_profile);
             else if( nvariables == 2 )
@@ -50,9 +50,9 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
                 function = new Function_Trapezoidal3D(py_profile);
             else
               ERROR("Profile `"<<name<<"`: trapezoidal() profile defined only in 1D, 2D or 3D");
-        
+
         } else if( profileName == "gaussian" ){
-        
+
             if     ( nvariables == 1 )
                 function = new Function_Gaussian1D(py_profile);
             else if( nvariables == 2 )
@@ -61,9 +61,9 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
                 function = new Function_Gaussian3D(py_profile);
             else
                 ERROR("Profile `"<<name<<"`: gaussian() profile defined only in 1D, 2D or 3D");
-        
+
         } else if( profileName == "polygonal" ){
-        
+
             if     ( nvariables == 1 )
                 function = new Function_Polygonal1D(py_profile);
             else if( nvariables == 2 )
@@ -72,9 +72,9 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
                 function = new Function_Polygonal3D(py_profile);
             else
                 ERROR("Profile `"<<name<<"`: polygonal() profile defined only in 1D, 2D or 3D");
-                
+
         } else if( profileName == "cosine" ){
-        
+
             if     ( nvariables == 1 )
                 function = new Function_Cosine1D(py_profile);
             else if( nvariables == 2 )
@@ -83,9 +83,9 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
                 function = new Function_Cosine3D(py_profile);
             else
                 ERROR("Profile `"<<name<<"`: cosine() profile defined only in 1D, 2D or 3D");
-                
+
         } else if( profileName == "polynomial" ){
-        
+
             if     ( nvariables == 1 )
                 function = new Function_Polynomial1D(py_profile);
             else if( nvariables == 2 )
@@ -94,49 +94,49 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
                 function = new Function_Polynomial3D(py_profile);
             else
                 ERROR("Profile `"<<name<<"`: polynomial() profile defined only in 1D, 2D or 3D");
-            
+
         } else if( profileName == "tconstant" ){
-        
+
             if( nvariables == 1 )
                 function = new Function_TimeConstant(py_profile);
             else
                 ERROR("Profile `"<<name<<"`: tconstant() profile is only for time");
-            
+
         } else if( profileName == "ttrapezoidal" ){
-        
+
             if( nvariables == 1 )
                 function = new Function_TimeTrapezoidal(py_profile);
             else
                 ERROR("Profile `"<<name<<"`: ttrapezoidal() profile is only for time");
-            
+
         } else if( profileName == "tgaussian" ){
-        
+
             if( nvariables == 1 )
                 function = new Function_TimeGaussian(py_profile);
             else
                 ERROR("Profile `"<<name<<"`: tgaussian() profile is only for time");
-            
+
         } else if( profileName == "tpolygonal" ){
-        
+
             if( nvariables == 1 )
                 function = new Function_TimePolygonal(py_profile);
             else
                 ERROR("Profile `"<<name<<"`: tpolygonal() profile is only for time");
-            
+
         } else if( profileName == "tcosine" ){
-        
+
             if( nvariables == 1 )
                 function = new Function_TimeCosine(py_profile);
             else
                 ERROR("Profile `"<<name<<"`: tcosine() profile is only for time");
-            
+
         } else if( profileName == "tpolynomial" ){
-        
+
             if( nvariables == 1 )
                 function = new Function_TimePolynomial(py_profile);
             else
                 ERROR("Profile `"<<name<<"`: tpolynomial() profile is only for time");
-            
+
         } else if( profileName == "tsin2plateau" ){
 
           if( nvariables == 1 )
@@ -146,24 +146,24 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
         }
 
     }
-    
+
     // Otherwise (if the python profile cannot be hard-coded) ....
     else {
         string message;
-        
+
 #ifdef  __DEBUG
         // Check how the profile looks like
         PyObject* repr = PyObject_Repr(py_profile);
         PyTools::convert(repr, message);
         MESSAGE(message);
         Py_XDECREF(repr);
-        
+
         repr = PyObject_Str(py_profile);
         PyTools::convert(repr, message);
         MESSAGE(message);
         Py_XDECREF(repr);
 #endif
-        
+
         // Verify that the profile has the right number of arguments
         PyObject* inspect=PyImport_ImportModule("inspect");
         PyTools::checkPyError();
@@ -185,8 +185,8 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
         Py_XDECREF(inspect);
         if( nvariables<1 || nvariables>3 )
             ERROR("Profile `"<<name<<"`: defined with unsupported number of variables");
-        
-        
+
+
         // Verify that the profile transforms a float in a float
 #ifdef SMILEI_USE_NUMPY
         if( try_numpy ) {
@@ -224,15 +224,15 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
                 ERROR("Profile `"<<name<<"`: does not seem to return a correct value");
             if(ret) Py_DECREF(ret);
         }
-        
+
         // Assign the evaluating function, which depends on the number of arguments
         if      ( nvariables == 1 ) function = new Function_Python1D(py_profile);
         else if ( nvariables == 2 ) function = new Function_Python2D(py_profile);
         else if ( nvariables == 3 ) function = new Function_Python3D(py_profile);
-        
+
         info_ << " user-defined function";
     }
-    
+
     info = info_.str();
 }
 
@@ -314,6 +314,3 @@ Profile::~Profile()
 {
   delete function;
 }
-
-
-
