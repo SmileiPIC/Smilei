@@ -9,12 +9,12 @@ Main(
     interpolation_order = 2,
     
     cell_length = [l0/resx],
-    grid_length  = [4.0*l0],
+    grid_length  = [6.0*l0],
     
-    number_of_patches = [ 4 ],
+    number_of_patches = [ 8 ],
     
     timestep = t0/rest,
-    simulation_time = 4.0*t0,
+    simulation_time = 16.0*t0,
     
     EM_boundary_conditions = [ ['silver-muller'] ],
     
@@ -23,10 +23,15 @@ Main(
     print_every = int(rest/2.0)
 )
 
+MovingWindow(
+    time_start = 12.*t0,
+    velocity_x = 0.9997
+)
+
 Laser(
     omega          = 1.,
-    chirp_profile  = tpolynomial(order2=0.005),
-    time_envelope  = tgaussian(),
+    chirp_profile  = tpolynomial(order3=5e-6),
+    time_envelope  = tgaussian(fwhm=1.*t0),
     space_envelope = [1., 0.],
 )
 

@@ -12,23 +12,23 @@ Tsim = 0.2*t0		# duration of the simulation
 
 
 Main(
-    geometry = "1Dcartesian",
-     
-    interpolation_order = 2,
-     
-    cell_length = [l0/resx],
-    grid_length  = [Lsim],
-    
-    number_of_patches = [ 4 ],
-    
-    timestep = t0/rest,
-    simulation_time = Tsim,
-     
-    EM_boundary_conditions = [ ['silver-muller'] ],
-    
-    reference_angular_frequency_SI = 6*math.pi*1e14,
-    
-    random_seed = smilei_mpi_rank
+	geometry = "1Dcartesian",
+	 
+	interpolation_order = 2,
+	 
+	cell_length = [l0/resx],
+	grid_length  = [Lsim],
+	
+	number_of_patches = [ 4 ],
+	
+	timestep = t0/rest,
+	simulation_time = Tsim,
+	 
+	EM_boundary_conditions = [ ['silver-muller'] ],
+	
+	reference_angular_frequency_SI = 6*math.pi*1e14,
+	
+	random_seed = smilei_mpi_rank
 )
 
 Species(
@@ -38,7 +38,7 @@ Species(
 	atomic_number = 1,
 	position_initialization = 'regular',
 	momentum_initialization = 'cold',
-	particles_per_cell = 10,
+	particles_per_cell = 40,
 	mass = 1836.0*1000.,
 	charge = 0.0,
 	number_density = 0.1,
@@ -54,7 +54,7 @@ Species(
 	atomic_number = 6,
 	position_initialization = 'regular',
 	momentum_initialization = 'cold',
-	particles_per_cell = 10,
+	particles_per_cell = 40,
 	mass = 1836.0*1000.,
 	charge = 0.0,
 	number_density = 0.1,
@@ -76,20 +76,22 @@ Species(
 	],
 )
 
-LaserPlanar1D(
-	box_side = 'xmin',
-	a0 = 0.1,
-    omega = 1.,
-    polarization_phi = 0.,
-    time_envelope = tconstant(),
+def By(t):
+	return 1e-7 * math.sin(t)
+def Bz(t):
+	return 0.1 * math.sin(t)
+
+Laser(
+	box_side = "xmin",
+	space_time_profile = [By, Bz],
 )
 
 DiagScalar(every = 20)
 
 DiagFields(
-    every = 20,
-    time_average = 1,
-    fields = ["Ex", "Ey", "Ez"]
+	every = 20,
+	time_average = 1,
+	fields = ["Ex", "Ey", "Ez"]
 )
 
 DiagParticleBinning(
