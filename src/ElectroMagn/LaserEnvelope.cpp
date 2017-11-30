@@ -32,7 +32,7 @@ cell_length    ( params.cell_length)
     bool omega;
     double omega_value(0);
 
-    omega      = PyTools::extract("omega",omega_value,"LaserEnvelope",ienvlaser);
+    omega      = PyTools::extract("omega",omega_value,"LaserEnvelope");
 
     info << "\t Laser Envelope parameters: "<< endl;
     // omega

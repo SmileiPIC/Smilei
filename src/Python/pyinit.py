@@ -327,7 +327,7 @@ class Laser(SmileiComponent):
     phase = [0., 0.]
     space_time_profile = None
 
-class LaserEnvelope(SmileiComponent):
+class LaserEnvelope(SmileiSingleton):
     """Laser Envelope parameters"""
     omega = 1.
     #time_envelope = 1.
