@@ -114,8 +114,13 @@ for eon in mj_species:
 	 	]
 	)
 
+for field in ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
+	ExternalField(
+		field = field,
+		profile = gaussian(0.1)
+	)
 
 DiagFields(
 	every = 2,
-	fields = ["Ez", "Jz"] + ["Rho_"+name for name in profiles.keys()],
+	fields = ["Ex", "Ey", "Ez", "Bx", "By", "Bz", "Jz"] + ["Rho_"+name for name in profiles.keys()],
 )
