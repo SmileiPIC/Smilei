@@ -295,7 +295,7 @@ class Performances(Diagnostic):
 			# Extract the array "hindex"
 			hindices = self._np.empty((self._nprocs,), dtype="uint")
 			h5item = self._h5items[index]["quantities_uint"]
-			index_in_file = quantities_uint.index("hindex")
+			index_in_file = self._availableQuantities_uint.index("hindex")
 			h5item.read_direct( hindices, source_sel=self._np.s_[index_in_file,:] )
 			
 			if self._ndim == 1:
