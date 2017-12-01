@@ -3,8 +3,7 @@ INSTRUCTIONS FOR COMPILING SMILEI WITH PICSAR
 1)clone Picsar
 git clone git@bitbucket.org:berkeleylab/picsar.git
 
-2)Move to gpstd_group branch
-git fetch && git checkout gpstd_group
+2)Move to master branch of picsar 
 
 3)set MODE=library into the Makefile
 
@@ -19,6 +18,7 @@ make lib
 Now the libpxr.so and libpxr.a are in the lib/ file
 
 5)Link Smilei with libpxr.so
+Set PICSAR=TRUE in SMILEI makefile
 LIBPXR = ~/picsar/lib
 LDFLAGS += -L$(LIBPXR) -lpxr
 
