@@ -77,6 +77,14 @@ Species(
 	is_test = True
 )
 
+
+for field in ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
+	ExternalField(
+		field = field,
+		profile = gaussian(0.1)
+	)
+
+
 DiagParticleBinning(
  	deposited_quantity = "weight",
  	every = 1000.,

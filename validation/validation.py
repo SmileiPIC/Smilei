@@ -112,6 +112,7 @@ import happi
 POINCARE = "poincare"
 JOLLYJUMPER = "llrlsi-gw"
 HOSTNAME = socket.gethostname()
+MPI_DISTRIBUTION = "default"
 
 # DIR VARIABLES
 WORKDIR = ""
@@ -135,8 +136,8 @@ def usage():
 try:
 	options, remainder = getopt.getopt(
 		sys.argv[1:],
-		'o:m:b:gshvcr:',
-		['OMP=', 'MPI=', 'BENCH=', 'COMPILE_ONLY=', 'GENERATE=', 'HELP=', 'VERBOSE=', 'RESTARTS='])
+		'o:m:b:r:gshvcd:',
+		['OMP=', 'MPI=', 'BENCH=', 'COMPILE_ONLY=', 'GENERATE=', 'HELP=', 'VERBOSE=', 'RESTARTS=','MPI_DISTRIBUTION='])
 except getopt.GetoptError as err:
 	usage()
 	sys.exit(4)
@@ -151,6 +152,8 @@ for opt, arg in options:
 		MPI = int(arg)
 	elif opt in ('-b', '--BENCH'):
 		BENCH = arg
+	elif opt in ('-d', '--MPI_DISTRIBUTION'):
+		MPI_DISTRIBUTION = arg
 	elif opt in ('-c', '--COMPILEONLY'):
 		COMPILE_ONLY=True
 	elif opt in ('-h', '--HELP'):
@@ -177,6 +180,13 @@ for opt, arg in options:
 		print( "     DEFAULT : 0 (meaning no restarts, only one simulation)")
 		print( "-c")
 		print( "     Compilation only")
+		print( "-d")
+		print( "     -d <mpi_distribution>")
+		print( "      <mpi_distribution> is the name of the MPI distribution used for compilation and execution:")
+		print( "      - default: mpirun -np")
+		print( "      - openmpi: mpirun -mca btl tcp,sm,self -np")
+		print( "      It enables to tune execution parameters.")
+		print( "     DEFAULT : default")
 		print( "-v")
 		print( "     Verbose mode")
 		sys.exit(0)
@@ -395,7 +405,7 @@ if JOLLYJUMPER in HOSTNAME :
 	COMPILE_COMMAND = 'make -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'unset MODULEPATH;module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles; module load compilers/icc/16.0.109 mpi/openmpi/1.6.5-ib-icc python/2.7.10 hdf5 compilers/gcc/4.8.2 > /dev/null 2>&1;make clean > /dev/null 2>&1'
 	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
-	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x $OMP_NUM_THREADS -x $OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
+	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
 	RUN = RUN_JOLLYJUMPER
 elif POINCARE in HOSTNAME :
 	#COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
@@ -405,18 +415,19 @@ elif POINCARE in HOSTNAME :
 	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
 	RUN_COMMAND = "mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
 	RUN = RUN_POINCARE
-elif "mdlslx" in HOSTNAME :
-	COMPILE_COMMAND = 'make -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
-	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
-	RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+"mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
-	RUN = RUN_OTHER
+# Local computers
 else:
 	COMPILE_COMMAND = 'make -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
 	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
-	RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; mpirun -mca btl tcp,sm,self -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
-	RUN = RUN_OTHER
+
+        # OpenMPI
+        if "openmpi" in MPI_DISTRIBUTION:
+            RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; mpirun -mca btl tcp,sm,self -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
+        # OpenMPI
+        else:
+    	    RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+"mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
+        RUN = RUN_OTHER
 
 # CLEAN
 # If the workdir does not contains a smilei bin, or it contains one older than the the smilei bin in directory smilei, force the compilation in order to generate the compilation_output
@@ -623,29 +634,35 @@ class ShowDiffWithReference(object):
 # RUN THE BENCHMARKS
 
 for BENCH in SMILEI_BENCH_LIST :
-	
+
 	SMILEI_BENCH = SMILEI_BENCHS + BENCH
-	
+
 	# CREATE THE WORKDIR CORRESPONDING TO THE INPUT FILE
 	WORKDIR = WORKDIR_BASE+s+'wd_'+os.path.basename(os.path.splitext(BENCH)[0])
 	if not os.path.exists(WORKDIR):
 		os.mkdir(WORKDIR)
-	
+
 	WORKDIR += s+str(MPI)
 	if not os.path.exists(WORKDIR):
 		os.mkdir(WORKDIR)
-	
+
 	WORKDIR += s+str(OMP)
 	if not os.path.exists(WORKDIR):
 		os.mkdir(WORKDIR)
-	
+
 	# If there are restarts, prepare a Checkpoints block to the namelist
 	RESTART_INFO = ""
 	if nb_restarts > 0:
-		# Load the namelist 
+		# Load the namelist
 		namelist = happi.openNamelist(SMILEI_BENCH)
-		# Find out the optimal dump_step
 		niter = namelist.Main.simulation_time / namelist.Main.timestep
+		# If the simulation does not have enough timesteps, change the number of restarts
+		if nb_restarts > niter - 4:
+			nb_restarts = max(0, niter - 4)
+			if VERBOSE :
+				print("Not enough timesteps for restarts. Changed to "+str(nb_restarts)+" restarts")
+	if nb_restarts > 0:
+		# Find out the optimal dump_step
 		dump_step = int( (niter+3.) / (nb_restarts+1) )
 		# Prepare block
 		if len(namelist.Checkpoints) > 0:
@@ -667,20 +684,20 @@ for BENCH in SMILEI_BENCH_LIST :
 				+ ")\""
 			)
 		del namelist
-	
+
 	# Loop restarts
 	for irestart in range(nb_restarts+1):
-		
+
 		RESTART_WORKDIR = WORKDIR + s + "restart%03d"%irestart
-		
+
 		EXECUTION = True
 		if not os.path.exists(RESTART_WORKDIR):
 			os.mkdir(RESTART_WORKDIR)
 		elif GENERATE:
 			EXECUTION = False
-		
+
 		os.chdir(RESTART_WORKDIR)
-		
+
 		# Copy of the databases
 		# For the cases that need a database
 		if BENCH in [
@@ -697,7 +714,7 @@ for BENCH in SMILEI_BENCH_LIST :
 				if VERBOSE :
 					print(  "Execution failed for copy databases in ",RESTART_WORKDIR)
 				sys.exit(2)
-		
+
 		# If there are restarts, adds the Checkpoints block
 		SMILEI_NAMELISTS = SMILEI_BENCH
 		if nb_restarts > 0:
@@ -706,13 +723,13 @@ for BENCH in SMILEI_BENCH_LIST :
 			else:
 				RESTART_DIR = "'"+WORKDIR+s+("restart%03d"%(irestart-1))+s+"'"
 			SMILEI_NAMELISTS += RESTART_INFO % RESTART_DIR
-		
+
 		# RUN smilei IF EXECUTION IS TRUE
 		if EXECUTION :
 			if VERBOSE:
 				print( 'Running '+BENCH+' on '+HOSTNAME+' with '+str(OMP)+'x'+str(MPI)+' OMPxMPI' + ((", restart #"+str(irestart)) if irestart>0 else ""))
 			RUN( RUN_COMMAND % SMILEI_NAMELISTS, RESTART_WORKDIR)
-		
+
 		# CHECK THE OUTPUT FOR ERRORS
 		errors = []
 		search_error = re.compile('error', re.IGNORECASE)
@@ -721,22 +738,23 @@ for BENCH in SMILEI_BENCH_LIST :
 				if search_error.search(line):
 					errors += [line]
 		if errors:
-			print( "")
-			print("Errors appeared while running the simulation:")
-			print("---------------------------------------------")
-			for error in errors:
-				print(error)
+			if VERBOSE :
+				print( "")
+				print("Errors appeared while running the simulation:")
+				print("---------------------------------------------")
+				for error in errors:
+					print(error)
 			sys.exit(2)
-	
+
 	os.chdir(WORKDIR)
-	
+
 	# FIND THE VALIDATION SCRIPT FOR THIS BENCH
 	validation_script = SMILEI_VALIDATION + "analyses" + s + "validate_"+BENCH
 	if VERBOSE: print( "")
 	if not os.path.exists(validation_script):
 		print( "Unable to find the validation script "+validation_script)
 		sys.exit(1)
-	
+
 	# IF REQUIRED, GENERATE THE REFERENCES
 	if GENERATE:
 		if VERBOSE:
@@ -744,21 +762,21 @@ for BENCH in SMILEI_BENCH_LIST :
 		Validate = CreateReference(BENCH)
 		execfile(validation_script)
 		Validate.write()
-	
+
 	# OR PLOT DIFFERENCES WITH RESPECT TO EXISTING REFERENCES
 	elif SHOWDIFF:
 		if VERBOSE:
 			print( 'Viewing differences for '+BENCH)
 		Validate = ShowDiffWithReference(BENCH)
 		execfile(validation_script)
-	
+
 	# OTHERWISE, COMPARE TO THE EXISTING REFERENCES
 	else:
 		if VERBOSE:
 			print( 'Validating '+BENCH)
 		Validate = CompareToReference(BENCH)
 		execfile(validation_script)
-	
+
 	# CLEAN WORKDIRS, GOES HERE ONLY IF SUCCEED
 	os.chdir(WORKDIR_BASE)
 	shutil.rmtree( WORKDIR_BASE+s+'wd_'+os.path.basename(os.path.splitext(BENCH)[0]), True )

@@ -67,6 +67,13 @@ for name, profile in profiles.items():
 	)
 
 
+for field in ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
+	ExternalField(
+		field = field,
+		profile = gaussian(10.)
+	)
+
+
 DiagFields(
 	every = 5,
 )

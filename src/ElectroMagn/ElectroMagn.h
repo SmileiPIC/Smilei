@@ -28,6 +28,8 @@ struct ExtField {
     std::string field;
     
     Profile * profile;
+    
+    unsigned int index;
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -41,6 +43,8 @@ struct Antenna {
     Profile *space_profile;
     
     Field* field;
+    
+    unsigned int index;
 };
 
 //! class ElectroMagn: generic class containing all information on the electromagnetic fields and currents
