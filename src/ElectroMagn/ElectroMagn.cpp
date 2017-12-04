@@ -33,24 +33,24 @@ isXmax(patch->isXmax()),
 nrj_mw_lost    (  0.               ),
 nrj_new_fields (  0.               )
 {
-    
-    
+
+
     // take useful things from params
     for (unsigned int i=0; i<3; i++) {
         DEBUG("____________________ OVERSIZE: " <<i << " " << oversize[i]);
     }
-    
+
     initElectroMagnQuantities();
-    
+
     emBoundCond = ElectroMagnBC_Factory::create(params, patch);
-    
+
     MaxwellAmpereSolver_  = SolverFactory::createMA(params);
     MaxwellFaradaySolver_ = SolverFactory::createMF(params);
-    
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// ElectroMagn constructor for patches 
+// ElectroMagn constructor for patches
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn::ElectroMagn( ElectroMagn* emFields, Params &params, Patch* patch ) :
 timestep       ( emFields->timestep    ),
@@ -67,9 +67,9 @@ nrj_new_fields ( 0. )
 {
 
     initElectroMagnQuantities();
-    
+
     emBoundCond = ElectroMagnBC_Factory::create(params, patch);
-    
+
     MaxwellAmpereSolver_  = SolverFactory::createMA(params);
     MaxwellFaradaySolver_ = SolverFactory::createMF(params);
 }
@@ -84,9 +84,9 @@ void ElectroMagn::initElectroMagnQuantities()
     poynting[1].resize(nDim_field,0.0);
     poynting_inst[0].resize(nDim_field,0.0);
     poynting_inst[1].resize(nDim_field,0.0);
-    
+
     if (n_space.size() != 3) ERROR("this should not happen");
-    
+
     Ex_=NULL;
     Ey_=NULL;
     Ez_=NULL;
@@ -100,8 +100,9 @@ void ElectroMagn::initElectroMagnQuantities()
     Jy_=NULL;
     Jz_=NULL;
     rho_=NULL;
-    
-    
+    Env_Ar_=NULL;
+    Env_Ai_=NULL;
+
     // Species charge currents and density
     Jx_s.resize(n_species);
     Jy_s.resize(n_species);
@@ -113,7 +114,7 @@ void ElectroMagn::initElectroMagnQuantities()
         Jz_s[ispec]  = NULL;
         rho_s[ispec] = NULL;
     }
-    
+
     for (unsigned int i=0; i<3; i++) {
         for (unsigned int j=0; j<2; j++) {
             istart[i][j]=0;
@@ -140,6 +141,8 @@ void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
     allFields.push_back(Jy_ );
     allFields.push_back(Jz_ );
     allFields.push_back(rho_);
+    allFields.push_back(Env_Ar_);
+    allFields.push_back(Env_Ai_);
 
     for (int ispec=0; ispec<nspecies; ispec++) {
         allFields.push_back(Jx_s[ispec] );
@@ -147,7 +150,7 @@ void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
         allFields.push_back(Jz_s[ispec] );
         allFields.push_back(rho_s[ispec]);
     }
-    
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -168,18 +171,18 @@ ElectroMagn::~ElectroMagn()
     delete Jy_;
     delete Jz_;
     delete rho_;
-    
+
     for( unsigned int idiag=0; idiag<allFields_avg.size(); idiag++ )
         for( unsigned int ifield=0; ifield<allFields_avg[idiag].size(); ifield++ )
             delete allFields_avg[idiag][ifield];
-    
+
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
         if( Jx_s [ispec] ) delete Jx_s [ispec];
         if( Jy_s [ispec] ) delete Jy_s [ispec];
         if( Jz_s [ispec] ) delete Jz_s [ispec];
         if( rho_s[ispec] ) delete rho_s[ispec];
     }
-    
+
     for (unsigned int i=0; i<Exfilter.size(); i++)
         delete Exfilter[i];
     for (unsigned int i=0; i<Eyfilter.size(); i++)
@@ -192,20 +195,20 @@ ElectroMagn::~ElectroMagn()
         delete Byfilter[i];
     for (unsigned int i=0; i<Bzfilter.size(); i++)
         delete Bzfilter[i];
-    
+
     int nBC = emBoundCond.size();
     for ( int i=0 ; i<nBC ;i++ )
         if (emBoundCond[i]!=NULL) delete emBoundCond[i];
-    
+
     delete MaxwellAmpereSolver_;
     delete MaxwellFaradaySolver_;
-    
+
     //antenna cleanup
     for (vector<Antenna>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
         delete antenna->field;
         antenna->field=NULL;
     }
-    
+
     /*for ( unsigned int iExt = 0 ; iExt < extFields.size() ; iExt++ ) {
         if (extFields[iExt].profile!=NULL) {
             delete extFields[iExt].profile;
@@ -225,18 +228,18 @@ void ElectroMagn::updateGridSize(Params &params, Patch* patch)
     {
         for (int isDual=0 ; isDual<2 ; isDual++)
             bufsize[i][isDual] = n_space[i] + 1;
-        
+
         for (int isDual=0 ; isDual<2 ; isDual++) {
             bufsize[i][isDual] += isDual;
             if ( params.number_of_patches[i]!=1 ) {
-                
+
                 if ( ( !isDual ) )
                     bufsize[i][isDual]--;
                 else if  (isDual) {
                     bufsize[i][isDual]--;
                     bufsize[i][isDual]--;
                 }
-                
+
             } // if ( params.number_of_patches[i]!=1 )
         } // for (int isDual=0 ; isDual
     } // for (unsigned int i=0)
@@ -246,7 +249,7 @@ void ElectroMagn::updateGridSize(Params &params, Patch* patch)
 // ---------------------------------------------------------------------------------------------------------------------
 // Maxwell solver using the FDTD scheme
 // ---------------------------------------------------------------------------------------------------------------------
-// In the main program 
+// In the main program
 //     - saveMagneticFields
 //     - solveMaxwellAmpere
 //     - solveMaxwellFaraday
@@ -286,14 +289,14 @@ void ElectroMagn::boundaryConditions(int itime, double time_dual, Patch* patch, 
 void ElectroMagn::dump()
 {
     //!\todo Check for none-cartesian grid & for generic grid (neither all dual or all primal) (MG & JD)
-    
+
     vector<unsigned int> dimPrim;
     dimPrim.resize(1);
     dimPrim[0] = n_space[0]+2*oversize[0]+1;
     vector<unsigned int> dimDual;
     dimDual.resize(1);
     dimDual[0] = n_space[0]+2*oversize[0]+2;
-    
+
     // dump of the electromagnetic fields
     Ex_->dump(dimDual);
     Ey_->dump(dimPrim);
@@ -330,7 +333,7 @@ void ElectroMagn::restartRhoJs()
         if( Jz_s [ispec] ) Jz_s [ispec]->put_to(0.);
         if( rho_s[ispec] ) rho_s[ispec]->put_to(0.);
     }
-    
+
     Jx_ ->put_to(0.);
     Jy_ ->put_to(0.);
     Jz_ ->put_to(0.);
@@ -375,7 +378,7 @@ string LowerCase(string in){
 }
 
 
-void ElectroMagn::applyExternalFields(Patch* patch) {    
+void ElectroMagn::applyExternalFields(Patch* patch) {
     Field * field;
     for (vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
         string name = LowerCase(extfield->field);
@@ -386,7 +389,7 @@ void ElectroMagn::applyExternalFields(Patch* patch) {
         else if ( By_ && name==LowerCase(By_->name) ) field = By_;
         else if ( Bz_ && name==LowerCase(Bz_->name) ) field = Bz_;
         else field = NULL;
-        
+
         if( field ) {
             applyExternalField( field, extfield->profile, patch );
         }
@@ -401,15 +404,14 @@ void ElectroMagn::applyAntenna(unsigned int iAntenna, double intensity) {
     Field *field=nullptr;
     Field *antennaField = antennas[iAntenna].field;
     if (antennaField) {
-        
+
         if     ( antennaField->name == "Jx" ) field = Jx_;
         else if( antennaField->name == "Jy" ) field = Jy_;
         else if( antennaField->name == "Jz" ) field = Jz_;
         else ERROR("Antenna applied to field " << antennaField->name << " unknown. This should not happend, please contact developers");
-        
+
         for (unsigned int i=0; i< field->globalDims_ ; i++)
             (*field)(i) += intensity * (*antennaField)(i);
-        
+
     }
 }
-
