@@ -51,14 +51,14 @@ void PXR_Solver2D_GPSTD::coupling( Params &params, ElectroMagn* EMfields )
                        &params.norderx,&params.norderz,&params.nordery,
                        &params.is_spectral,
                        &(Ex2D_pxr->data_[0]),
-                       &(Ey2D_pxr->data_[0]),
                        &(Ez2D_pxr->data_[0]),
+                       &(Ey2D_pxr->data_[0]),
                        &(Bx2D_pxr->data_[0]),
-                       &(By2D_pxr->data_[0]),
                        &(Bz2D_pxr->data_[0]),
+                       &(By2D_pxr->data_[0]),
                        &(Jx2D_pxr->data_[0]),
-                       &(Jy2D_pxr->data_[0]),
                        &(Jz2D_pxr->data_[0]),
+                       &(Jy2D_pxr->data_[0]),
                        &(rho2D_pxr->data_[0]),
                        &(rhoold2D_pxr->data_[0]),&cdim);
 #else
