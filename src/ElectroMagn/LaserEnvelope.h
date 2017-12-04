@@ -15,9 +15,9 @@ class Profile;
 // Class for envelope
 class LaserEnvelope {
 public:
-    LaserEnvelope( Params& params, Patch* patch );
-    LaserEnvelope( LaserEnvelope *envelope, Patch* patch );
-    virtual void initEnvelope( Patch* patch ) = 0;
+    LaserEnvelope( Params& params, Patch* patch, ElectroMagn* EMfields );
+    LaserEnvelope( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields );
+    virtual void initEnvelope( Patch* patch , ElectroMagn* EMfields) = 0;
     virtual ~LaserEnvelope();
     virtual void compute(ElectroMagn* EMfields) = 0;
 
@@ -32,9 +32,9 @@ public:
 // Class for envelope
 class LaserEnvelope3D : public LaserEnvelope {
 public:
-    LaserEnvelope3D( Params& params, Patch* patch );
-    LaserEnvelope3D( LaserEnvelope *envelope, Patch* patch );
-    void initEnvelope( Patch* patch ) override final;
+    LaserEnvelope3D( Params& params, Patch* patch, ElectroMagn* EMfields );
+    LaserEnvelope3D( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields );
+    void initEnvelope( Patch* patch,ElectroMagn* EMfields ) override final;
     ~LaserEnvelope3D();
      void compute(ElectroMagn* EMfields) override final;
 };

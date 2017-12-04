@@ -136,7 +136,7 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
     // initialize the envelope if used
     int n_envlaser = PyTools::nComponents("LaserEnvelope");
     if ( n_envlaser ==1 ) // for the moment it works only with one envelope
-        envelope = EnvelopeFactory::create(params, this);
+        envelope = EnvelopeFactory::create(params, this, EMfields);
     //if ( params.ponderomotive_force )
     //    envelope = EnvelopeFactory::create(params, this);
 
@@ -168,7 +168,7 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
     EMfields   = ElectroMagnFactory::clone(patch->EMfields, params, vecSpecies, this);
     // initialize the envelope if used
     if ( params.ponderomotive_force )
-        envelope = EnvelopeFactory::clone(patch->envelope, this);
+        envelope = EnvelopeFactory::clone(patch->envelope, this,EMfields);
 
     // interpolation operator (virtual)
     Interp     = InterpolatorFactory::create(params, this);

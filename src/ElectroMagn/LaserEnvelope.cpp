@@ -7,10 +7,12 @@
 #include "Field3D.h"
 #include "ElectroMagn.h"
 #include "Profile.h"
+#include "ElectroMagnFactory.h"
+#include <complex>  
 
 using namespace std;
 
-LaserEnvelope::LaserEnvelope( Params& params, Patch* patch ) :
+LaserEnvelope::LaserEnvelope( Params& params, Patch* patch, ElectroMagn* EMfields ) :
 cell_length    ( params.cell_length)
 {
     PyObject * profile;
@@ -48,7 +50,7 @@ cell_length    ( params.cell_length)
 }
 
 
-LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch* patch ) :
+LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields ) :
 cell_length    ( envelope->cell_length )
 {
     profile_ = envelope->profile_;
@@ -64,8 +66,8 @@ LaserEnvelope::~LaserEnvelope()
 }
 
 
-LaserEnvelope3D::LaserEnvelope3D( Params& params, Patch* patch )
-    : LaserEnvelope(params, patch)
+LaserEnvelope3D::LaserEnvelope3D( Params& params, Patch* patch, ElectroMagn* EMfields )
+    : LaserEnvelope(params, patch, EMfields)
 {
     std::vector<unsigned int>  dimPrim( params.nDim_field );
     // Dimension of the primal and dual grids
@@ -80,23 +82,25 @@ LaserEnvelope3D::LaserEnvelope3D( Params& params, Patch* patch )
     A_  = new cField3D( dimPrim );
     A0_ = new cField3D( dimPrim );
 
-    initEnvelope( patch );
+    initEnvelope( patch,EMfields );
 }
 
 
-LaserEnvelope3D::LaserEnvelope3D( LaserEnvelope *envelope, Patch* patch )
-    : LaserEnvelope(envelope, patch)
+LaserEnvelope3D::LaserEnvelope3D( LaserEnvelope *envelope, Patch* patch,ElectroMagn* EMfields )
+    : LaserEnvelope(envelope, patch,EMfields)
 {
     A_  = new cField3D( envelope->A_->dims_  );
     A0_ = new cField3D( envelope->A0_->dims_ );
 
-    initEnvelope( patch );
+    initEnvelope( patch,EMfields );
 }
 
 
-void LaserEnvelope3D::initEnvelope( Patch* patch )
+void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
 {
     cField3D* A3D = static_cast<cField3D*>(A_);
+    Field3D* Env_Ar3D = static_cast<Field3D*>(EMfields->Env_Ar_);
+    Field3D* Env_Ai3D = static_cast<Field3D*>(EMfields->Env_Ai_);
     vector<double> pos(3,0);
     pos[0]      = cell_length[0]*((double)(patch->getCellStartingGlobalIndex(0))+(A3D->isDual(0)?-0.5:0.));
     double pos1 = cell_length[1]*((double)(patch->getCellStartingGlobalIndex(1))+(A3D->isDual(1)?-0.5:0.));
@@ -108,6 +112,7 @@ void LaserEnvelope3D::initEnvelope( Patch* patch )
             pos[2] = pos2;
             for (int k=0 ; k<A_->dims_[2] ; k++) {
                 (*A3D)(i,j,k) += profile_->valueAt(pos);
+                (*Env_Ar3D)(i,j,k)=std::real((*A3D)(i,j,k));
                 pos[2] += cell_length[2];
             }
             pos[1] += cell_length[1];
