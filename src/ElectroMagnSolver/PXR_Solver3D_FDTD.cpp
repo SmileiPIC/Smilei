@@ -16,7 +16,7 @@ PXR_Solver3D_FDTD::~PXR_Solver3D_FDTD()
 
 void PXR_Solver3D_FDTD::coupling( Params &params, ElectroMagn* EMfields )
 {
-    int cdim(3);
+    int cdim=3;
     int n0,n1,n2;
     int ov0,ov1,ov2;
     // unable to convert unsigned int to an iso_c_binding supported type 
