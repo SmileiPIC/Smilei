@@ -16,7 +16,7 @@ PXR_Solver2D_GPSTD::~PXR_Solver2D_GPSTD()
 
 void PXR_Solver2D_GPSTD::coupling( Params &params, ElectroMagn* EMfields )
 {
-    int cdim(2);
+    int cdim=2;
     int n0,n1,n2;
     int ov0,ov1,ov2;
     // unable to convert unsigned int to an iso_c_binding supported type 
