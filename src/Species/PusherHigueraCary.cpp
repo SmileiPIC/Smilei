@@ -34,6 +34,15 @@ void PusherHigueraCary::operator() (Particles &particles, SmileiMPI* smpi, int i
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
+
+    int nparts = particles.size();
+    double* Ex = &( (*Epart)[0*nparts] );
+    double* Ey = &( (*Epart)[1*nparts] );
+    double* Ez = &( (*Epart)[2*nparts] );
+    double* Bx = &( (*Bpart)[0*nparts] );
+    double* By = &( (*Bpart)[1*nparts] );
+    double* Bz = &( (*Bpart)[2*nparts] );
+
     std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
 
     double charge_over_mass_dts2;
