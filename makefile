@@ -53,14 +53,14 @@ ifneq ($(strip $(PYTHONHOME)),)
 endif 
 
 
-PICSAR=TRUE
+PICSAR=FALSE
 ifeq ($(PICSAR),TRUE)
+        # New environment variable
+	FFTW3_LIB ?= $(FFTW_LIB_DIR)
+	LIBPXR ?= picsar/lib
+	# Set Picsar link environment
 	CXXFLAGS += -D_PICSAR
-	FFTW3_LIB= $(FFTW_LIB_DIR)
-	#FFTW3_INCLUDE=$(FFTW_INC_DIR)
-	LIBPXR = /gpfshome/mds/staff/hkallala/develop/pxr2d_new/picsar/lib 
 	LDFLAGS += -L$(LIBPXR) -lpxr
-	#LDFLAGS += -I$(FFTW3_INCLUDE)
 	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi
 	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_threads
 	LDFLAGS += -L$(FFTW3_LIB) -lfftw3
@@ -274,6 +274,8 @@ help:
 	@echo '  BUILD_DIR             : directory used to store build files [$(BUILD_DIR)]'
 	@echo '  OPENMP_FLAG           : openmp flag [$(OPENMP_FLAG)]'
 	@echo '  PYTHONEXE             : python executable [$(PYTHONEXE)]'	
+	@echo '  FFTW3_LIB             : FFTW3 libraries directory [$(FFTW3_LIB)]'
+	@echo '  LIB PXR               : Picsar library directory [$(LIBPXR)]'
 	@echo 
 	@echo 'http://www.maisondelasimulation.fr/smilei'
 	@echo 'https://github.com/SmileiPIC/Smilei'
