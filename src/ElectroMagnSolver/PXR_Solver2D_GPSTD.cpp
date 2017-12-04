@@ -27,11 +27,10 @@ void PXR_Solver2D_GPSTD::coupling( Params &params, ElectroMagn* EMfields )
     ov0=(int) params.oversize[0];
     ov1=(int) params.oversize[1];
     ov2=0;
-    double dyy = std::numeric_limits<double>::infinity() ;
-    int ordery = 0;
+    double dzz = std::numeric_limits<double>::infinity() ;
     params.norderx = params.norder[0];
-    params.norderz = params.norder[1];
-
+    params.nordery = params.norder[1];
+    params.norderz = 2;
 
     Field2D* Ex2D_pxr = static_cast<Field2D*>( EMfields->Ex_pxr);
     Field2D* Ey2D_pxr = static_cast<Field2D*>( EMfields->Ey_pxr);
@@ -46,10 +45,10 @@ void PXR_Solver2D_GPSTD::coupling( Params &params, ElectroMagn* EMfields )
     Field2D* rhoold2D_pxr = static_cast<Field2D*>( EMfields->rhoold_pxr);
 
 #ifdef _PICSAR
-    picsar::init_params_picsar(&n0,&n1,&n2,
-                       &params.cell_length[2],&dyy,&params.cell_length[0],&params.timestep,
-                       &ov0,&ov1,&ov2,
-                       &params.norderz,&ordery,&params.norderx,
+    picsar::init_params_picsar(&n0,&n2,&n1,
+                       &params.cell_length[0],&dzz,&params.cell_length[1],&params.timestep,
+                       &ov0,&ov2,&ov1,
+                       &params.norderx,&params.norderz,&params.nordery,
                        &params.is_spectral,
                        &(Ex2D_pxr->data_[0]),
                        &(Ey2D_pxr->data_[0]),

@@ -48,9 +48,9 @@ void PXR_Solver3D_GPSTD::coupling( Params &params, ElectroMagn* EMfields )
     //call of extern init routine (defined in picsar)
 #ifdef _PICSAR
     picsar::init_params_picsar(&n0,&n1,&n2,
-                       &params.cell_length[2],&params.cell_length[1],&params.cell_length[0],&params.timestep,
+                       &params.cell_length[0],&params.cell_length[1],&params.cell_length[2],&params.timestep,
                        &ov0,&ov1,&ov2,
-                       &params.norderz,&params.nordery,&params.norderx,
+                       &params.norderx,&params.nordery,&params.norderz,
                        &params.is_spectral,
                        &(Ex3D_pxr->data_[0]),
                        &(Ey3D_pxr->data_[0]),
