@@ -112,3 +112,7 @@ DiagParticleBinning(
         ["px", -1, 4., 100]
     ]
 )
+
+DiagPerformances(
+    every = 100,
+)

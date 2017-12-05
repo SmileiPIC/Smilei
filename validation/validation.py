@@ -426,7 +426,7 @@ else:
             RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; mpirun -mca btl tcp,sm,self -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
         # OpenMPI
         else:
-    	    RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+"mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
+    	    RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
         RUN = RUN_OTHER
 
 # CLEAN

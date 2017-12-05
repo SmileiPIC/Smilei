@@ -212,11 +212,12 @@ class Units(object):
 					try   : return self._divide(knownUnits,units)
 					except: pass
 			try:
+				if knownUnits=="1": knownUnits=""
 				val = self.ureg(knownUnits)
 				return 1., u"{0.units:P}".format(val)
 			except:
 				if self.verbose:
-					print("WARNING: units unknown")
+					print("WARNING: units unknown: "+str(knownUnits))
 				return 1., ""
 		return 1., ""
 	

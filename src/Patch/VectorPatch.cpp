@@ -323,7 +323,7 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
         if( smpi->isMaster() )
             globalDiags[idiag]->openFile( params, smpi, true );
     }
-
+    
     // Local diags : fields, probes, tracks
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
         localDiags[idiag]->init(params, smpi, *this);
@@ -337,7 +337,7 @@ void VectorPatch::closeAllDiags(SmileiMPI* smpi)
     if ( smpi->isMaster() )
         for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++)
             globalDiags[idiag]->closeFile();
-
+    
     // All MPI close local diags
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
         localDiags[idiag]->closeFile();
@@ -350,7 +350,7 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
     if ( smpi->isMaster() )
         for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++)
             globalDiags[idiag]->openFile( params, smpi, false );
-
+    
     // All MPI open local diags
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
         localDiags[idiag]->openFile( params, smpi, false );
@@ -384,7 +384,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itim
             globalDiags[idiag]->write( itime , smpi );
         }
     }
-
+    
     // Local diags : fields, probes, tracks
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
         #pragma omp single
@@ -392,9 +392,9 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itim
         #pragma omp barrier
         // All MPI run their stuff and write out
         if( localDiags[idiag]->theTimeIsNow )
-            localDiags[idiag]->run( smpi, *this, itime, simWindow );
+            localDiags[idiag]->run( smpi, *this, itime, simWindow, timers );
     }
-
+    
     // Manage the "diag_flag" parameter, which indicates whether Rho and Js were used
     if( diag_flag ) {
         #pragma omp barrier
