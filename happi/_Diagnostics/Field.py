@@ -98,8 +98,8 @@ class Field(Diagnostic):
 		self._data_log = data_log
 		
 		# Get the shape of fields
-		fields = [f for f in self._h5items[0].values() if f];
-		self._initialShape = fields[0].shape;
+		fields = [f for f in self._h5items[0].values() if f]
+		self._initialShape = fields[0].shape
 		for fd in fields:
 			self._initialShape = self._np.min((self._initialShape, fd.shape), axis=0)
 		
@@ -131,7 +131,7 @@ class Field(Diagnostic):
 		self._selection = [self._np.s_[:]]*self._ndim
 		for iaxis in range(self._naxes):
 			centers = self._np.linspace(0., (self._initialShape[iaxis]-1)*self._cell_length[iaxis], self._initialShape[iaxis])
-			label = {0:"x", 1:"y", 2:"z"}[iaxis]
+			label = "xyz"[iaxis]
 			axisunits = "L_r"
 			
 			# If averaging over this axis

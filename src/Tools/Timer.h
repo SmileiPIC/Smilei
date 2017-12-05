@@ -10,6 +10,7 @@
 //! Class Timer
 //  --------------------------------------------------------------------------------------------------------------------
 class Timer {
+friend class DiagnosticPerformances;
 public:
     //! Timer creator, (default no MPI set)
     Timer( std::string name );
