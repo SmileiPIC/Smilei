@@ -64,7 +64,7 @@ interaction to astrophysics.
 
 .. raw:: html
 
-  Practicals</a>
+  Tutorials</a>
 
 
 

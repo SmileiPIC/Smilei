@@ -93,4 +93,6 @@ DiagTrackParticles(
 	species = "ion", 
 	every = 1000,
 	filter = lambda particles: (particles.x<0.02), 
+	attributes = ["x", "px", "Ex"]
 )
+
