@@ -14,4 +14,4 @@ Validate("Number of ions at iteration 0", nion)
 Ey = S.Field.Field0.Ey(timesteps=800).getData()[0]
 Ey = gfilt(Ey, 6) # smoothing
 Ey = Ey[50:200:4, 300::4] # zoom on the reflected laser
-Validate("Ey field at iteration 800", Ey, 0.01)
+Validate("Ey field at iteration 800", Ey, 0.02)

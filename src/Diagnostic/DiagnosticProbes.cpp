@@ -434,7 +434,7 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
 
 
 
-void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep, SimWindow* simWindow )
+void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep, SimWindow* simWindow, Timers & timers )
 {
     ostringstream name_t;
     

@@ -87,6 +87,19 @@ namelist("")
     PyTools::openPython();
 #ifdef SMILEI_USE_NUMPY
     smilei_import_array();
+    // Workaround some numpy multithreading bug
+    // https://github.com/numpy/numpy/issues/5856
+    // We basically call the command numpy.seterr(all="ignore")
+    PyObject* numpy = PyImport_ImportModule("numpy");
+    PyObject* seterr = PyObject_GetAttrString(numpy, "seterr");
+    PyObject* args = PyTuple_New(0);
+    PyObject* kwargs = Py_BuildValue("{s:s}", "all", "ignore");
+    PyObject* ret = PyObject_Call(seterr, args, kwargs);
+    Py_DECREF(ret);
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
+    Py_DECREF(seterr);
+    Py_DECREF(numpy);
 #endif
     
     // Print python version

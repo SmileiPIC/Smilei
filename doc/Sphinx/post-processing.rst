@@ -44,7 +44,9 @@ as long as they correspond to several :ref:`restarts <Checkpoints>` of the same 
 Once a simulation is opened, several methods are available to find information on the
 namelist or open various diagnostics. Checkout the namelist documentation to find out
 which diagnostics are included in Smilei: :ref:`scalars <DiagScalar>`,
-:ref:`fields <DiagFields>`, :ref:`probes <DiagProbe>` and :ref:`particle binning <DiagParticleBinning>`.
+:ref:`fields <DiagFields>`, :ref:`probes <DiagProbe>`,
+:ref:`particle binning <DiagParticleBinning>`, :ref:`trajectories <DiagTrackParticles>`
+and :ref:`performances <DiagPerformances>`.
 
 ----
 
@@ -224,8 +226,8 @@ Open a Screen diagnostic
 
 ----
 
-Open a Track diagnostic
-^^^^^^^^^^^^^^^^^^^^^^^
+Open a TrackParticles diagnostic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. py:method:: TrackParticles(species=None, select="", axes=[], timesteps=None, sort=True, length=None, units=[""], **kwargs)
 
@@ -272,6 +274,52 @@ Open a Track diagnostic
   | For example, ``select="any((t>30)*(t<60), px>1) + all(t>0, (x>1)*(x<2))"``
 
 
+
+----
+
+Open a Performances diagnostic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The post-processing of the *performances* diagnostic may be achieved in three different
+modes: ``raw``, ``map``, or ``histogram``, described further below. You must choose one
+and only one mode between those three.
+
+.. py:method:: Performances(raw=None, map=None, histogram=None, timesteps=None, units=[""], data_log=False, **kwargs)
+
+  * ``timesteps``, ``units``, ``data_log``: same as before.
+  * ``raw`` : The name of a quantity, or an operation between them (see quantities below).
+    The requested quantity is listed for each process.
+  * ``map`` : The name of a quantity, or an operation between them (see quantities below).
+    The requested quantity is mapped vs. space coordinates.
+  * ``histogram`` : the list ``["quantity", min, max, nsteps]``.
+    Makes a histogram of the requested quantity between ``min`` an ``max``, with ``nsteps`` bins.
+    The ``"quantity"`` may be an operation between the quantities listed further below.
+  * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
+
+**Available quantities**:
+
+  * ``hindex``                     : the starting index of each proc in the hilbert curve
+  * ``number_of_cells``            : the number of cells in each proc
+  * ``number_of_particles``        : the number of particles in each proc (except frozen ones)
+  * ``number_of_frozen_particles`` : the number of frozen particles in each proc
+  * ``total_load``                 : the `load` of each proc (number of particles and cells with cell_load coefficient)
+  * ``timer_global``               : global simulation time (only available for proc 0)
+  * ``timer_particles``            : time spent computing particles by each proc
+  * ``timer_maxwell``              : time spent solving maxwell by each proc
+  * ``timer_densities``            : time spent projecting densities by each proc
+  * ``timer_collisions``           : time spent computing collisions by each proc
+  * ``timer_movWindow``            : time spent handling the moving window by each proc
+  * ``timer_loadBal``              : time spent balancing the load by each proc
+  * ``timer_syncPart``             : time spent synchronzing particles by each proc
+  * ``timer_syncField``            : time spent synchronzing fields by each proc
+  * ``timer_syncDens``             : time spent synchronzing densities by each proc
+  * ``timer_total``                : the sum of all timers above (except timer_global)
+
+
+**Example**::
+
+  S = happi.Open("path/to/my/results")
+  Diag = S.Performances(map="total_load")
 
 
 

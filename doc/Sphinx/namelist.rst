@@ -2156,6 +2156,38 @@ for instance::
   ``Main.iteration * Main.timestep``.
 
 
+----
+
+.. _DiagPerformances:
+
+*Performances* diagnostics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The *performances* diagnostic records information on the computational load and timers
+for each MPI process in the simulation.
+
+Only one block ``DiagPerformances()`` may be added in the namelist, for instance::
+
+  DiagPerformances(
+      every = 100,
+  #    flush_every = 100,
+  )
+
+.. py:data:: every
+
+  :default: 0
+
+  Number of timesteps between each output, **or** a :ref:`time selection <TimeSelections>`.
+
+.. py:data:: flush_every
+
+  :default: 1
+
+  Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
+
+  When ``flush_every`` coincides with ``every``, the output file is actually written
+  ("flushed" from the buffer). Flushing too often might *dramatically* slow down the simulation.
+
 
 ----
 
