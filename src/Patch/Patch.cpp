@@ -169,7 +169,7 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
     // initialize the envelope if used
     int n_envlaser = PyTools::nComponents("LaserEnvelope");
     if ( n_envlaser ==1 ) // for the moment it works only with one envelope
-        envelope = EnvelopeFactory::clone(patch->envelope, this,patch->EMfields);
+        envelope = EnvelopeFactory::clone(patch->envelope, this,EMfields);
 
     // interpolation operator (virtual)
     Interp     = InterpolatorFactory::create(params, this);
