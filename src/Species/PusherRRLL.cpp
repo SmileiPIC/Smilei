@@ -128,7 +128,7 @@ void PusherRRLL::operator() (Particles &particles, SmileiMPI* smpi, int istart, 
         upz = (      2.0*(TzTx+Ty)* umx  +      2.0*(TyTz-Tx)* umy  +  (1.0-Tx2-Ty2+Tz2)* umz  )*inv_det_T;
 
         // Half-acceleration in the electric field
-        pxsm = upx + charge_over_mass_*(*(Ey+ipart))*dts2;
+        pxsm = upx + charge_over_mass_*(*(Ex+ipart))*dts2;
         pysm = upy + charge_over_mass_*(*(Ey+ipart))*dts2;
         pzsm = upz + charge_over_mass_*(*(Ez+ipart))*dts2;
         (*invgf)[ipart] = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );

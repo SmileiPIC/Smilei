@@ -98,7 +98,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position(0, ipart) * dx_inv_;
     int ip = round(xpn);
-    int ipo = iold[1*nparts];
+    int ipo = iold[0*nparts];
     int ip_m_ipo = ip-ipo-i_domain_begin;
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
