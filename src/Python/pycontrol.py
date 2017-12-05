@@ -34,7 +34,8 @@ def _smilei_check():
     """Do checks over the script"""
     # Verify classes were not overriden
     for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
-            "DiagProbe","DiagParticleBinning", "DiagScalar","DiagFields","ExternalField",
+            "DiagProbe","DiagParticleBinning", "DiagScalar","DiagFields",
+            "DiagTrackParticles","DiagPerformances","ExternalField",
             "SmileiSingleton","Main","Checkpoints","LoadBalancing","MovingWindow",
             "RadiationReaction", "ParticleData", "MultiphotonBreitWheeler"]:
         CheckClass = globals()[CheckClassName]

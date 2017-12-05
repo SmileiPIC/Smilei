@@ -96,3 +96,6 @@ DiagTrackParticles(
 	attributes = ["x", "px", "Ex"]
 )
 
+DiagPerformances(
+    every = 300,
+)
