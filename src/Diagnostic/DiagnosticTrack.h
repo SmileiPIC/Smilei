@@ -84,8 +84,6 @@ private :
     std::vector<short> data_short;
     //! Buffer for the output of uint64 array
     std::vector<uint64_t> data_uint64;
-    //! Special buffer for interpolated fields
-    std::vector<std::vector<double> > data_fields;
     
     //! Approximate total number of particles
     double npart_total;

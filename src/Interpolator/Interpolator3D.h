@@ -14,6 +14,7 @@ public:
 
     virtual ~Interpolator3D() override {} ;
 
+    virtual void operator()  (ElectroMagn* EMfields, Particles &particles, int ipart, double* ELoc, double* BLoc) override = 0;
     virtual void operator()  (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread) override = 0  ;
     virtual void operator()  (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc) override = 0;
 

@@ -105,8 +105,6 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& 
     write_any_B = write_B[0] || write_B[1] || write_B[2];
     if( write_chi && ! vecPatches(0)->vecSpecies[speciesId_]->particles->isQuantumParameter )
         ERROR("DiagTrackParticles #" << iDiagTrackParticles << ": attribute `chi` not available for this species");
-    if( interpolate )
-        data_fields.resize(6);
     
     // Create the filename
     ostringstream hdf_filename("");
@@ -431,26 +429,13 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         }
     }
     
-    #pragma omp master
-    data_double.resize(0);
-    
     // If field interpolation necessary
     if( interpolate ) {
-    
         #pragma omp master
-        {
-            data_fields[0].resize( nParticles_local );
-            data_fields[1].resize( nParticles_local );
-            data_fields[2].resize( nParticles_local );
-            data_fields[3].resize( nParticles_local );
-            data_fields[4].resize( nParticles_local );
-            data_fields[5].resize( nParticles_local );
-        }
+        data_double.resize( nParticles_local*6 );
         
         // Do the interpolation
-        unsigned int patch_nParticles, j, nPatches=vecPatches.size();
-        LocalFields Eloc, Bloc, Jloc;
-        double Rloc;
+        unsigned int patch_nParticles, j, nPatches=vecPatches.size(), B_offset=nParticles_local*3;
         #pragma omp barrier
         
         if( has_filter ) {
@@ -465,14 +450,8 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
                         vecPatches.emfields(ipatch),
                         *(vecPatches.species(ipatch,speciesId_)->particles),
                         (int) patch_selection[ipatch][i],
-                        &Eloc, &Bloc, &Jloc, &Rloc
+                        &data_double[j], &data_double[B_offset+j]
                     );
-                    data_fields[0][j] = Eloc.x;
-                    data_fields[1][j] = Eloc.y;
-                    data_fields[2][j] = Eloc.z;
-                    data_fields[3][j] = Bloc.x;
-                    data_fields[4][j] = Bloc.y;
-                    data_fields[5][j] = Bloc.z;
                     j++;
                 }
             }
@@ -488,14 +467,8 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
                         vecPatches.emfields(ipatch),
                         *(vecPatches.species(ipatch,speciesId_)->particles),
                         (int) i,
-                        &Eloc, &Bloc, &Jloc, &Rloc
+                        &data_double[j], &data_double[B_offset+j]
                     );
-                    data_fields[0][j] = Eloc.x;
-                    data_fields[1][j] = Eloc.y;
-                    data_fields[2][j] = Eloc.z;
-                    data_fields[3][j] = Bloc.x;
-                    data_fields[4][j] = Bloc.y;
-                    data_fields[5][j] = Bloc.z;
                     j++;
                 }
             }
@@ -510,7 +483,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
                 openPMD->writeRecordAttributes( Efield_group, SMILEI_UNIT_EFIELD );
                 for( unsigned int idim=0; idim<3; idim++ ) {
                     if( write_E[idim] ) {
-                        write_component( Efield_group, xyz.substr(idim,1).c_str(), data_fields[idim][0], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, SMILEI_UNIT_EFIELD, nParticles_global );
+                        write_component( Efield_group, xyz.substr(idim,1).c_str(), data_double[idim*nParticles_local], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, SMILEI_UNIT_EFIELD, nParticles_global );
                     }
                 }
                 H5Gclose( Efield_group );
@@ -521,24 +494,18 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
                 openPMD->writeRecordAttributes( Bfield_group, SMILEI_UNIT_BFIELD );
                 for( unsigned int idim=0; idim<3; idim++ ) {
                     if( write_B[idim] ) {
-                        write_component( Bfield_group, xyz.substr(idim,1).c_str(), data_fields[3+idim][0], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, SMILEI_UNIT_BFIELD, nParticles_global );
+                        write_component( Bfield_group, xyz.substr(idim,1).c_str(), data_double[(3+idim)*nParticles_local], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, SMILEI_UNIT_BFIELD, nParticles_global );
                     }
                 }
                 H5Gclose( Bfield_group );
             }
-            
-            data_fields[0].resize( 0 );
-            data_fields[1].resize( 0 );
-            data_fields[2].resize( 0 );
-            data_fields[3].resize( 0 );
-            data_fields[4].resize( 0 );
-            data_fields[5].resize( 0 );
         }
     } // END if interpolate
     
     #pragma omp master
     {
-    
+        data_double.resize(0);
+        
         // PositionOffset (for OpenPMD)
         hid_t positionoffset_group = H5::group(species_group, "positionOffset");
         openPMD->writeRecordAttributes( positionoffset_group, SMILEI_UNIT_POSITION );
