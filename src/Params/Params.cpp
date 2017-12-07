@@ -616,15 +616,15 @@ void Params::setDimensions()
 void Params::print_init()
 {
     TITLE("Geometry: " << geometry);
-    MESSAGE(1,"(nDim_particle, nDim_field) : (" << nDim_particle << ", "<< nDim_field << ")");
-    MESSAGE(1,"Interpolation_order : " <<  interpolation_order);
-    MESSAGE(1,"(res_time, simulation_time) : (" << res_time << ", " << simulation_time << ")");
-    MESSAGE(1,"(n_time,   timestep) : (" << n_time << ", " << timestep << ")");
+    MESSAGE(1,"Interpolation order : " <<  interpolation_order);
+    MESSAGE(1,"Maxwell solver : " <<  maxwell_sol);
+    MESSAGE(1,"(Time resolution, Total simulation time) : (" << res_time << ", " << simulation_time << ")");
+    MESSAGE(1,"(Total number of iterations,   timestep) : (" << n_time << ", " << timestep << ")");
     MESSAGE(1,"           timestep  = " << timestep/dtCFL << " * CFL");
 
     for ( unsigned int i=0 ; i<grid_length.size() ; i++ ){
-        MESSAGE(1,"dimension " << i << " - (res_space, grid_length) : (" << res_space[i] << ", " << grid_length[i] << ")");
-        MESSAGE(1,"            - (n_space_global,  cell_length) : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
+        MESSAGE(1,"dimension " << i << " - (Spatial resolution, Grid length) : (" << res_space[i] << ", " << grid_length[i] << ")");
+        MESSAGE(1,"            - (Number of cells,    Cell length) : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
     }
 
     if( currentFilter_passes > 0 )
