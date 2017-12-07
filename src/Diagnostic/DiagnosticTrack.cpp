@@ -32,7 +32,7 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& 
     // Define the transfer type (collective is faster than independent)
     transfer = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio( transfer, H5FD_MPIO_COLLECTIVE);
-
+    
     ostringstream name("");
     name << "Tracking species '" << species_name << "'";
     
@@ -320,6 +320,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &offset_, NULL, &count, NULL);
         // Create dataset
         hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
+        H5Pset_alloc_time(plist_id, H5D_ALLOC_TIME_EARLY);
         hid_t dset_id  = H5Dcreate( iteration_group, "latest_IDs", H5T_NATIVE_UINT64, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
         // Create memory space
         hsize_t size_in_memory = 1;
@@ -409,12 +410,9 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         H5Gclose( position_group );
     }
     
-    // If the quantum parameter is available
+    // Chi - quantum parameter
     if( write_chi )
     {
-        // Chi - quantum parameter
-        #pragma omp master
-        data_double.resize( nParticles_local, 0 );
         #pragma omp barrier
 // Position old exists in this case
 #ifdef  __DEBUG
@@ -424,13 +422,15 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         fill_buffer(vecPatches, nDim_particle+3+1, data_double);
 #endif
         #pragma omp master
-        {
-            write_scalar( species_group, "chi", data_double[0], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, SMILEI_UNIT_NONE, nParticles_global );
-        }
+        write_scalar( species_group, "chi", data_double[0], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, SMILEI_UNIT_NONE, nParticles_global );
     }
+    
+    #pragma omp barrier
     
     // If field interpolation necessary
     if( interpolate ) {
+        
+        
         #pragma omp master
         data_double.resize( nParticles_local*6 );
         
@@ -459,7 +459,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
             // OMP loop on patches
             #pragma omp for schedule(runtime)
             for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
-                patch_nParticles = patch_selection[ipatch].size();
+                patch_nParticles = vecPatches.species(ipatch,speciesId_)->particles->size();
                 // Interpolate each particle
                 j=patch_start[ipatch];
                 for (unsigned int i=0; i<patch_nParticles; i++) {             
