@@ -6,11 +6,7 @@ compile:
   stage: compile
   only:
     - develop
-<<<<<<< HEAD
     - couplage_picsar_smilei
-=======
-    - Lehe3D
->>>>>>> develop
 
   script:
     # Force workdir cleaning in case of retried
@@ -35,11 +31,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
-<<<<<<< HEAD
     - couplage_picsar_smilei
-=======
-    - Lehe3D
->>>>>>> develop
 
   script:
     # Move in test dir
@@ -51,11 +43,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
-<<<<<<< HEAD
     - couplage_picsar_smilei
-=======
-    - Lehe3D
->>>>>>> develop
 
   script:
     # Move in test dir
@@ -67,11 +55,7 @@ makerun3D:
   stage: makerun
   only:
     - develop
-<<<<<<< HEAD
     - couplage_picsar_smilei
-=======
-    - Lehe3D
->>>>>>> develop
 
   script:
     # Move in test dir
@@ -83,11 +67,7 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-<<<<<<< HEAD
     - couplage_picsar_smilei
-=======
-    - Lehe3D
->>>>>>> develop
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
