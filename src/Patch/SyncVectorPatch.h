@@ -27,6 +27,9 @@ public :
     static void new_sum      ( std::vector<Field*>& fields, VectorPatch& vecPatches, Timers &timers, int itime );
     static void exchange ( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void finalizeexchange( std::vector<Field*> fields, VectorPatch& vecPatches );
+
+    static void exchange_per_direction ( std::vector<Field*> fields, VectorPatch& vecPatches );
+
     static void exchange0( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void new_exchange0( std::vector<Field*>& fields, VectorPatch& vecPatches );
     static void finalizeexchange0( std::vector<Field*> fields, VectorPatch& vecPatches );
