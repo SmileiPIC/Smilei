@@ -586,7 +586,7 @@ def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelop
     import math
     c_vacuum = 1. #299792458
     # Space envelope
-    invWaist2 = (1./2./waist)**2
+    invWaist2 = 1./2./(waist/2.)**2
     def spatial(y,z):
         return math.exp( -invWaist2*((y-focus[1])**2 + (z-focus[2])**2 )  )
     # Space envelope times temporal envelope
