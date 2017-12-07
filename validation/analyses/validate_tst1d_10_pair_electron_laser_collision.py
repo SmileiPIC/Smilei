@@ -55,4 +55,4 @@ Validate("Radiated energy evolution: ", urad/ukin_electron[0], 3e-2 )
 
 Validate("Evolution of the number of electrons: ", ntot_electron, 50 )
 Validate("Evolution of the number of positrons: ", ntot_positron, 50 )
-Validate("Evolution of the number of photons: ", ntot_photon, 1000 )
+Validate("Evolution of the number of photons: ", ntot_photon, 3000 )

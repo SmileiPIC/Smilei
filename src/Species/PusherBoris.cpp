@@ -24,8 +24,8 @@ PusherBoris::~PusherBoris()
 
 void PusherBoris::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
 {
-    std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
-    std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
+    std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
+    std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
     std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
 
     double charge_over_mass_dts2;
@@ -48,14 +48,22 @@ void PusherBoris::operator() (Particles &particles, SmileiMPI* smpi, int istart,
 #endif
     short* charge = &( particles.charge(0) );
 
+    int nparts = particles.size();
+    double* Ex = &( (*Epart)[0*nparts] );
+    double* Ey = &( (*Epart)[1*nparts] );
+    double* Ez = &( (*Epart)[2*nparts] );
+    double* Bx = &( (*Bpart)[0*nparts] );
+    double* By = &( (*Bpart)[1*nparts] );
+    double* Bz = &( (*Bpart)[2*nparts] );
+
     #pragma omp simd
     for (int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass_dts2 = (double)(charge[ipart])*one_over_mass_*dts2;
 
         // init Half-acceleration in the electric field
-        pxsm = charge_over_mass_dts2*(*Epart)[ipart].x;
-        pysm = charge_over_mass_dts2*(*Epart)[ipart].y;
-        pzsm = charge_over_mass_dts2*(*Epart)[ipart].z;
+        pxsm = charge_over_mass_dts2*(*(Ex+ipart));
+        pysm = charge_over_mass_dts2*(*(Ey+ipart));
+        pzsm = charge_over_mass_dts2*(*(Ez+ipart));
 
         //(*this)(particles, ipart, (*Epart)[ipart], (*Bpart)[ipart] , (*invgf)[ipart]);
         umx = momentum[0][ipart] + pxsm;
@@ -65,9 +73,9 @@ void PusherBoris::operator() (Particles &particles, SmileiMPI* smpi, int istart,
 
         // Rotation in the magnetic field
         alpha = charge_over_mass_dts2*local_invgf;
-        Tx    = alpha * (*Bpart)[ipart].x;
-        Ty    = alpha * (*Bpart)[ipart].y;
-        Tz    = alpha * (*Bpart)[ipart].z;
+        Tx    = alpha * (*(Bx+ipart));
+        Ty    = alpha * (*(By+ipart));
+        Tz    = alpha * (*(Bz+ipart));
         Tx2   = Tx*Tx;
         Ty2   = Ty*Ty;
         Tz2   = Tz*Tz;
