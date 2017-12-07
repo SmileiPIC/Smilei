@@ -22,7 +22,7 @@
 import math
 
 # ----------------------------------------------------------------------------------------
-# Main parameters
+# User defined parameters
 
 c = 299792458                              # Speed of light
 lambdar = 1e-6                             # Wavelength for normalization
@@ -53,10 +53,13 @@ dt *= dt_factor
 
 Tsim = 1000*dt                              # duration of the simulation
 
-pusher = "boris"                             # dynamic type
+pusher = "boris"                            # dynamic type
 
-part_cond = "periodic"                          # Particle and photon boundary conditions
+part_cond = "periodic"                      # Particle and photon boundary conditions
 field_cond = ['periodic','periodic']        # Field boundary conditions
+
+# ----------------------------------------------------------------------------------------
+# User-defined functions
 
 # Density profile for inital location of the photons
 def n0_photon(x,y):
@@ -160,7 +163,7 @@ Species(
 # QED parameters
 
 RadiationReaction(
-    chipa_disc_min_threshold = 1e-2,
+    chipa_disc_min_threshold = 1e-3,
     table_path = "./"
 )
 

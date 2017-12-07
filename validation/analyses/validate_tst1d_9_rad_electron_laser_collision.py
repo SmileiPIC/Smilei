@@ -60,7 +60,7 @@ for radiation in radiation_list:
   urad_dict[radiation] = urad
 
 # ______________________________________________________________________________
-# Comparision continuous and discontinuous methods
+# Comparison continuous and discontinuous methods
 
 urad_rel_err_MC = abs(urad_dict["disc"] - urad_dict["cont"]) / urad_dict["cont"].max()
 ukin_rel_err_MC = abs(ukin_dict["disc"] - ukin_dict["cont"]) / ukin_dict["cont"][0]
@@ -68,12 +68,12 @@ ukin_rel_err_MC = abs(ukin_dict["disc"] - ukin_dict["cont"]) / ukin_dict["cont"]
 urad_rel_err_Niel = abs(urad_dict["Niel"] - urad_dict["cont"]) / urad_dict["cont"].max()
 ukin_rel_err_Niel = abs(ukin_dict["Niel"] - ukin_dict["cont"]) / ukin_dict["cont"][0]
 
-print ' Comparision Landau-Lifshitz/Monte-Carlo radiation model'
+print ' Comparison Landau-Lifshitz/Monte-Carlo radiation model'
 print ' Maximum relative error kinetic energy',ukin_rel_err_MC.max()
 print ' Maximum relative error radiative energy',urad_rel_err_MC.max()
 
 print
-print ' Comparision Landau-Lifshitz/Niel radiation model'
+print ' Comparison Landau-Lifshitz/Niel radiation model'
 print ' Maximum relative error kinetic energy',ukin_rel_err_Niel.max()
 print ' Maximum relative error radiative energy',urad_rel_err_Niel.max()
 
