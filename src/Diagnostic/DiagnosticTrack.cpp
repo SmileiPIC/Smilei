@@ -144,13 +144,13 @@ void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
         H5Pclose(pid);
-
+        
         // Attributes for openPMD
         openPMD->writeRootAttributes( fileId_, "no_meshes", "particles/" );
-
+        
         // Create "data" group for openPMD compatibility
         data_group_id = H5::group(fileId_, "data");
-
+        
     }
     else {
         // Open the file
@@ -320,7 +320,6 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &offset_, NULL, &count, NULL);
         // Create dataset
         hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
-        H5Pset_alloc_time(plist_id, H5D_ALLOC_TIME_EARLY);
         hid_t dset_id  = H5Dcreate( iteration_group, "latest_IDs", H5T_NATIVE_UINT64, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
         // Create memory space
         hsize_t size_in_memory = 1;
@@ -432,7 +431,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         
         
         #pragma omp master
-        data_double.resize( nParticles_local*6 );
+        data_double.resize( nParticles_local*6, 0. );
         
         // Do the interpolation
         unsigned int patch_nParticles, j, nPatches=vecPatches.size(), B_offset=nParticles_local*3;
@@ -440,7 +439,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         
         if( has_filter ) {
             // OMP loop on patches
-            #pragma omp for schedule(runtime)
+            #pragma omp for schedule(static)
             for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
                 patch_nParticles = patch_selection[ipatch].size();
                 // Interpolate each particle
@@ -457,7 +456,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
             }
         } else {
             // OMP loop on patches
-            #pragma omp for schedule(runtime)
+            #pragma omp for schedule(static)
             for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
                 patch_nParticles = vecPatches.species(ipatch,speciesId_)->particles->size();
                 // Interpolate each particle
