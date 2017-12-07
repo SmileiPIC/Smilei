@@ -23,7 +23,7 @@ Interpolator1D3Order::Interpolator1D3Order(Params &params, Patch* patch) : Inter
     with size nstp_x and space step stp_x_inv at the position
     xj and return the value fxj
 ***********************************************************************/
-void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, double* ELoc, double* BLoc)
+void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc)
 {
     double xjn, xi2, xi3;
     
@@ -54,8 +54,6 @@ void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particl
     coeffd_[3]  = xi3*dble_1ov6;
     
     id_ -= index_domain_begin;
-    
-    int nparts( particles.size() );
     
     *(ELoc+0*nparts) = compute(coeffd_, Ex1D,   id_);  
     *(BLoc+1*nparts) = compute(coeffd_, By1D_m, id_);  
@@ -166,13 +164,35 @@ void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particl
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
     
     //Loop on bin particles
+    int npart_tot = particles.size();
     for (int ipart=istart ; ipart<iend; ipart++ ) {
         //Interpolation on current particle
-        (*this)(EMfields, particles, ipart, &(*Epart)[ipart], &(*Bpart)[ipart]);
+        (*this)(EMfields, particles, ipart, npart_tot, &(*Epart)[ipart], &(*Bpart)[ipart]);
         //Buffering of iol and delta
         (*iold)[ipart] = ip_;
         (*delta)[ipart] = xi;
     }
     
 }
+
+// Interpolator specific to tracked particles. A selection of particles may be provided
+void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
+{
+    if( selection ) {
+        
+        int nsel_tot = selection->size();
+        for (int isel=0 ; isel<nsel_tot; isel++ ) {
+            (*this)(EMfields, particles, (*selection)[isel], offset, buffer+isel, buffer+isel+3*offset);
+        }
+        
+    } else {
+        
+        int npart_tot = particles.size();
+        for (int ipart=0 ; ipart<npart_tot; ipart++ ) {
+            (*this)(EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset);
+        }
+        
+    }
+}
+
 

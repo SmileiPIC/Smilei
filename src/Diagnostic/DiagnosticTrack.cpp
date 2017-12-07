@@ -431,45 +431,33 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         
         
         #pragma omp master
-        data_double.resize( nParticles_local*6, 0. );
+        data_double.resize( nParticles_local*6 );
         
         // Do the interpolation
-        unsigned int patch_nParticles, j, nPatches=vecPatches.size(), B_offset=nParticles_local*3;
+        unsigned int nPatches=vecPatches.size();
         #pragma omp barrier
         
         if( has_filter ) {
-            // OMP loop on patches
             #pragma omp for schedule(static)
             for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
-                patch_nParticles = patch_selection[ipatch].size();
-                // Interpolate each particle
-                j=patch_start[ipatch];
-                for (unsigned int i=0; i<patch_nParticles; i++) { 
-                    (*(vecPatches.interp(ipatch))) (
-                        vecPatches.emfields(ipatch),
-                        *(vecPatches.species(ipatch,speciesId_)->particles),
-                        (int) patch_selection[ipatch][i],
-                        &data_double[j], &data_double[B_offset+j]
-                    );
-                    j++;
-                }
+                (*(vecPatches.interp(ipatch))) (
+                    vecPatches.emfields(ipatch),
+                    *(vecPatches.species(ipatch,speciesId_)->particles),
+                    &data_double[patch_start[ipatch]],
+                    (int) nParticles_local,
+                    &patch_selection[ipatch]
+                );
             }
         } else {
-            // OMP loop on patches
             #pragma omp for schedule(static)
             for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
-                patch_nParticles = vecPatches.species(ipatch,speciesId_)->particles->size();
-                // Interpolate each particle
-                j=patch_start[ipatch];
-                for (unsigned int i=0; i<patch_nParticles; i++) {             
-                    (*(vecPatches.interp(ipatch))) (
-                        vecPatches.emfields(ipatch),
-                        *(vecPatches.species(ipatch,speciesId_)->particles),
-                        (int) i,
-                        &data_double[j], &data_double[B_offset+j]
-                    );
-                    j++;
-                }
+                (*(vecPatches.interp(ipatch))) (
+                    vecPatches.emfields(ipatch),
+                    *(vecPatches.species(ipatch,speciesId_)->particles),
+                    &data_double[patch_start[ipatch]],
+                    (int) nParticles_local,
+                    NULL
+                );
             }
         }
         #pragma omp barrier
