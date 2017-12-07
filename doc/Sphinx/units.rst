@@ -112,3 +112,25 @@ but not in the main PIC algorithms.
   
   The outputs of the code are not converted to SI.
   They are all kept in the reference units listed above.
+
+
+----
+
+.. _Weights:
+
+Macro-particle weights
+^^^^^^^^^^^^^^^^^^^^^^
+
+Macro-particles are assigned a *statistical weight* which represents
+their contribution to the plasma distribution function. 
+In :program:`Smilei`, this weight is defined at the beginning of the simulation
+for each particle and is never modified afterwards. Its definition reads:
+
+.. math::
+  
+  \textrm{macro-particle weight} = \frac
+      {\textrm{species density in the cell}}
+      {\textrm{number of particles of this species in the cell}}
+
+As a consequence, the sum of all weights of the particles in one cell is equal to
+the density of the species in this cell, in units of :math:`N_r`.

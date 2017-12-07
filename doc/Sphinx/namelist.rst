@@ -1824,7 +1824,8 @@ for instance::
 
 .. py:data:: deposited_quantity
 
-  The type of data that is summed in each cell of the grid:
+  The type of data that is summed in each cell of the grid.
+  Consider reading :ref:`this <Weights>` to understand the meaning of the ``weight``.
 
   * ``"weight"`` results in a number density.
   * ``"weight_charge"`` results in a charge density.
