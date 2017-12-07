@@ -199,8 +199,7 @@ bool DiagnosticCartFields::prepare( int itime )
     return true;
 }
 
-
-void DiagnosticCartFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow )
+void DiagnosticCartFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow, Timers & timers )
 {
     // If time-averaging, increment the average
     if( time_average>1 ) {

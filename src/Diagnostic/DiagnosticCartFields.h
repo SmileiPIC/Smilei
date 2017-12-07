@@ -20,7 +20,7 @@ public :
     
     virtual void setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches ) = 0;
     
-    virtual void run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow ) override;
+    virtual void run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow, Timers & timers ) override;
     
     virtual void writeField(hid_t, int) = 0;
     
