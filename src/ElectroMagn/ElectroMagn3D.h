@@ -113,9 +113,7 @@ public:
     void applyExternalField(Field*, Profile*, Patch*);
     
     void initAntennas(Patch* patch);
-        
-private:
-    
+
     //! from smpi is ymax
     const bool isYmin;
     
@@ -127,6 +125,9 @@ private:
     
     //! from smpi is zmin
     const bool isZmin;
+        
+private:
+    
     
     //! Initialize quantities needed in the creators of ElectroMagn3D
     void initElectroMagn3DQuantities(Params &params, Patch* patch);

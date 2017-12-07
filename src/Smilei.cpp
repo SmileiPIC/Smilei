@@ -260,10 +260,10 @@ int main (int argc, char* argv[])
 
     #pragma omp parallel shared (time_dual,smpi,params, vecPatches, domain, simWindow, checkpoint)
     {
-
+        
         unsigned int itime=checkpoint.this_run_start_step+1;
         while ( (itime <= params.n_time) && (!checkpoint.exit_asap) ) {
-
+            
             // calculate new times
             // -------------------
             #pragma omp single
@@ -273,7 +273,7 @@ int main (int argc, char* argv[])
             }
             // apply collisions if requested
             vecPatches.applyCollisions(params, itime, timers);
-
+            
             // (1) interpolate the fields at the particle position
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
@@ -283,10 +283,10 @@ int main (int argc, char* argv[])
             
             // Sum densities
             vecPatches.sumDensities(params, time_dual, timers, itime, simWindow );
-
+            
             // apply currents from antennas
             vecPatches.applyAntennas(time_dual);
-
+            
             // solve Maxwell's equations
             #ifndef _PICSAR
             // Force temporary usage of double grids, even if global_factor = 1
@@ -317,11 +317,11 @@ int main (int argc, char* argv[])
 
             // call the various diagnostics
             vecPatches.runAllDiags(params, &smpi, itime, timers, simWindow);
-
+            
             timers.movWindow.restart();
             simWindow->operate(vecPatches, &smpi, params, itime, time_dual);
             timers.movWindow.update();
-
+            
             // ----------------------------------------------------------------------
             // Validate restart  : to do
             // Restart patched moving window : to do
@@ -329,8 +329,8 @@ int main (int argc, char* argv[])
             checkpoint.dump(vecPatches, itime, &smpi, simWindow, params);
             #pragma omp barrier
             // ----------------------------------------------------------------------
-
-
+            
+            
             if( params.has_load_balancing ) {
                 if( params.load_balancing_time_selection->theTimeIsNow(itime) ) {
                     timers.loadBal.restart();
@@ -339,7 +339,7 @@ int main (int argc, char* argv[])
                     timers.loadBal.update( params.printNow( itime ) );
                 }
             }
-
+            
             // print message at given time-steps
             // --------------------------------
             if ( smpi.isMaster() &&  params.printNow( itime ) )
@@ -352,7 +352,7 @@ int main (int argc, char* argv[])
             }
 
             itime++;
-
+            
         }//END of the time loop
 
     } //End omp parallel region

@@ -20,7 +20,7 @@ Main(
 	cell_length = [l0/resx,l0/resx],
 	grid_length  = Lsim,
 	
-	number_of_patches = [ 8, 16 ],
+	number_of_patches = [ 16, 16 ],
 	
 	timestep = t0/rest,
 	simulation_time = Tsim,
@@ -31,6 +31,11 @@ Main(
 	],
 	
 	random_seed = smilei_mpi_rank
+)
+
+LoadBalancing(
+	every = 10,
+	cell_load = 0.001
 )
 
 LaserGaussian2D(
@@ -47,7 +52,7 @@ Species(
 	position_initialization = 'random',
 	momentum_initialization = 'cold',
 	ionization_model = 'none',
-	particles_per_cell = 10,
+	particles_per_cell = 40,
 	c_part_max = 1.0,
 	mass = 1836.0,
 	charge = 1.0,
@@ -64,7 +69,7 @@ Species(
 	position_initialization = 'random',
 	momentum_initialization = 'cold',
 	ionization_model = 'none',
-	particles_per_cell = 10,
+	particles_per_cell = 40,
 	c_part_max = 1.0,
 	mass = 1.0,
 	charge = -1.0,
@@ -85,3 +90,6 @@ DiagFields(
 	fields = ['Ex','Ey','Rho_eon']
 )
 
+DiagPerformances(
+    every = 30,
+)

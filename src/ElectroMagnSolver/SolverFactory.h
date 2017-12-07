@@ -12,6 +12,7 @@
 #include "MF_Solver2D_GrassiSpL.h"
 #include "MF_Solver2D_Cowan.h"
 #include "MF_Solver2D_Lehe.h"
+#include "MF_Solver3D_Lehe.h"
 
 #include "PXR_Solver2D_GPSTD.h"
 #include "PXR_Solver3D_FDTD.h"
@@ -97,6 +98,9 @@ public:
             if ( params.is_pxr == false ) {
                 if (params.maxwell_sol == "Yee") {
                     solver = new MF_Solver3D_Yee(params);
+                }
+                else if(params.maxwell_sol == "Lehe" ){
+                    solver = new MF_Solver3D_Lehe(params);
                 }
             }
             else

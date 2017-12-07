@@ -148,7 +148,7 @@ bool DiagnosticTrack::prepare( int itime )
 }
 
 
-void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow )
+void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow, Timers & timers )
 {
     uint32_t nParticles_local = 0;
     uint64_t nParticles_global = 0;
@@ -238,8 +238,6 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         H5Pset_alloc_time(plist, H5D_ALLOC_TIME_EARLY); // necessary for collective dump
 
         if( nParticles_global>0 ){
-            H5Pset_layout(plist, H5D_CHUNKED);
-
             // Set the chunk size
             unsigned int maximum_chunk_size = 100000000;
             unsigned int number_of_chunks = nParticles_global/maximum_chunk_size;
@@ -248,7 +246,10 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
             unsigned int chunk_size = nParticles_global/number_of_chunks;
             if( nParticles_global%number_of_chunks != 0 ) chunk_size++;
             hsize_t chunk_dims = chunk_size;
-            H5Pset_chunk(plist, 1, &chunk_dims);
+            if( number_of_chunks > 1 ) {
+                H5Pset_layout(plist, H5D_CHUNKED);
+                H5Pset_chunk(plist, 1, &chunk_dims);
+            }
         }
 
         // Define maximum size

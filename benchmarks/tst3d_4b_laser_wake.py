@@ -13,7 +13,7 @@ Main(
     geometry = "3Dcartesian",
     
     interpolation_order = 2,
-
+    maxwell_solver = "Lehe",
     timestep = dt,
     simulation_time = int(2*Lx/dt)*dt,
 

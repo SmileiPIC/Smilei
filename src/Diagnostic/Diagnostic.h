@@ -3,6 +3,7 @@
 
 #include "H5.h"
 #include "Patch.h"
+#include "Timers.h"
 
 class Params;
 class OpenPMDparams;
@@ -33,7 +34,7 @@ public :
     virtual void run( Patch* patch, int timestep, SimWindow* simWindow ) {};
     
     //! Runs the diag for all patches for local diags.
-    virtual void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep, SimWindow* simWindow ) {};
+    virtual void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep, SimWindow* simWindow, Timers & timers ) {};
     
     //! Writes out a global diag diag.
     virtual void write(int timestep, SmileiMPI* smpi) {};

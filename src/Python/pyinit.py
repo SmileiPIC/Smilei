@@ -151,7 +151,12 @@ class SmileiSingleton(SmileiComponent):
 
     # Constructor for all SmileiSingletons
     def __init__(self, **kwargs):
-        self._fillObjectAndAddToList(type(self), type(self), **kwargs)
+        cls = type(self)
+        self._fillObjectAndAddToList(cls, cls, **kwargs)
+        # Change all methods to static
+        for k,v in cls.__dict__.items():
+            if k[0]!='_' and hasattr(v,"__get__"):
+                setattr(cls, k, staticmethod(v))
 
 class ParticleData(object):
     """Container for particle data at run-time (for exposing particles in numpy)"""
@@ -159,7 +164,7 @@ class ParticleData(object):
 
 class Main(SmileiSingleton):
     """Main parameters"""
-
+    
     # Default geometry info
     geometry = None
     cell_length = []
@@ -185,7 +190,7 @@ class Main(SmileiSingleton):
     solve_poisson = True
     poisson_max_iteration = 50000
     poisson_max_error = 1.e-14
-
+    
     # Default fields
     maxwell_solver = 'Yee'
     EM_boundary_conditions = [["periodic"]]
@@ -196,7 +201,7 @@ class Main(SmileiSingleton):
     print_every = None
     random_seed = None
     print_expected_disk_usage = True
-
+    
     def __init__(self, **kwargs):
         # Load all arguments to Main()
         super(Main, self).__init__(**kwargs)
@@ -212,28 +217,28 @@ class Main(SmileiSingleton):
             else:
                 if Main.cell_length is None:
                     raise Exception("Need cell_length to calculate timestep")
-
+                
                 # Yee solver
                 if Main.maxwell_solver == 'Yee':
                     dim = int(Main.geometry[0])
                     if dim<1 or dim>3:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
                     Main.timestep = Main.timestep_over_CFL / math.sqrt(sum([1./l**2 for l in Main.cell_length]))
-
+                
                 # Grassi
                 elif Main.maxwell_solver == 'Grassi':
                     if Main.geometry == '2Dcartesian':
                         Main.timestep = Main.timestep_over_CFL * 0.7071067811*Main.cell_length[0];
                     else:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
-
+                
                 # GrassiSpL
                 elif Main.maxwell_solver == 'GrassiSpL':
                     if Main.geometry == '2Dcartesian':
                         Main.timestep = Main.timestep_over_CFL * 0.6471948469*Main.cell_length[0];
                     else:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
-
+                
                 # None recognized solver
                 else:
                     raise Exception("timestep: maxwell_solver not implemented "+Main.maxwell_solver)
@@ -263,7 +268,7 @@ class Main(SmileiSingleton):
 
 class LoadBalancing(SmileiSingleton):
     """Load balancing parameters"""
-
+    
     every = 150
     initial_balance = True
     cell_load = 1.0
@@ -272,7 +277,7 @@ class LoadBalancing(SmileiSingleton):
 
 class MovingWindow(SmileiSingleton):
     """Moving window parameters"""
-
+    
     time_start = 0.
     velocity_x = 1.
 
@@ -400,6 +405,11 @@ class DiagTrackParticles(SmileiComponent):
     every = 0
     flush_every = 1
     filter = None
+
+class DiagPerformances(SmileiSingleton):
+    """Performances diagnostic"""
+    every = 0
+    flush_every = 1
 
 # external fields
 class ExternalField(SmileiComponent):

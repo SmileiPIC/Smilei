@@ -165,7 +165,8 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   :default: 'Yee'
 
-  The solver for Maxwell's equations. Only ``"Yee"`` is available at the moment.
+  The solver for Maxwell's equations. Only ``"Yee"`` is available for all geometries at the moment. ``"Cowan"``, ``"Grassi"`` and ``"Lehe"``
+  are available for 2DCartesian and ``"Lehe"`` is available for 3DCartesian. Lehe solver is described in this `paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_  
 
 .. py:data:: solve_poisson
 
@@ -1824,7 +1825,8 @@ for instance::
 
 .. py:data:: deposited_quantity
 
-  The type of data that is summed in each cell of the grid:
+  The type of data that is summed in each cell of the grid.
+  Consider reading :ref:`this <Weights>` to understand the meaning of the ``weight``.
 
   * ``"weight"`` results in a number density.
   * ``"weight_charge"`` results in a charge density.
@@ -2154,6 +2156,38 @@ for instance::
   iteration number of the PIC loop. The current time of the simulation is thus
   ``Main.iteration * Main.timestep``.
 
+
+----
+
+.. _DiagPerformances:
+
+*Performances* diagnostics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The *performances* diagnostic records information on the computational load and timers
+for each MPI process in the simulation.
+
+Only one block ``DiagPerformances()`` may be added in the namelist, for instance::
+
+  DiagPerformances(
+      every = 100,
+  #    flush_every = 100,
+  )
+
+.. py:data:: every
+
+  :default: 0
+
+  Number of timesteps between each output, **or** a :ref:`time selection <TimeSelections>`.
+
+.. py:data:: flush_every
+
+  :default: 1
+
+  Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
+
+  When ``flush_every`` coincides with ``every``, the output file is actually written
+  ("flushed" from the buffer). Flushing too often might *dramatically* slow down the simulation.
 
 
 ----

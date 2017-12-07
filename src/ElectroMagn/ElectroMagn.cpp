@@ -374,27 +374,10 @@ double ElectroMagn::computeNRJ() {
     return nrj;
 }
 
-string LowerCase(string in){
-    string out=in;
-    std::transform(out.begin(), out.end(), out.begin(), ::tolower);
-    return out;
-}
-
-
 void ElectroMagn::applyExternalFields(Patch* patch) {    
-    Field * field;
     for (vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
-        string name = LowerCase(extfield->field);
-        if      ( Ex_ && name==LowerCase(Ex_->name) ) field = Ex_;
-        else if ( Ey_ && name==LowerCase(Ey_->name) ) field = Ey_;
-        else if ( Ez_ && name==LowerCase(Ez_->name) ) field = Ez_;
-        else if ( Bx_ && name==LowerCase(Bx_->name) ) field = Bx_;
-        else if ( By_ && name==LowerCase(By_->name) ) field = By_;
-        else if ( Bz_ && name==LowerCase(Bz_->name) ) field = Bz_;
-        else field = NULL;
-        
-        if( field ) {
-            applyExternalField( field, extfield->profile, patch );
+        if( extfield->index < allFields.size() ) {
+            applyExternalField( allFields[extfield->index], extfield->profile, patch );
         }
     }
     Bx_m->copyFrom(Bx_);
@@ -406,12 +389,10 @@ void ElectroMagn::applyExternalFields(Patch* patch) {
 void ElectroMagn::applyAntenna(unsigned int iAntenna, double intensity) {
     Field *field=nullptr;
     Field *antennaField = antennas[iAntenna].field;
-    if (antennaField) {
+    
+    if (antennaField && antennas[iAntenna].index<allFields.size()) {
         
-        if     ( antennaField->name == "Jx" ) field = Jx_;
-        else if( antennaField->name == "Jy" ) field = Jy_;
-        else if( antennaField->name == "Jz" ) field = Jz_;
-        else ERROR("Antenna applied to field " << antennaField->name << " unknown. This should not happend, please contact developers");
+        field = allFields[antennas[iAntenna].index];
         
         for (unsigned int i=0; i< field->globalDims_ ; i++)
             (*field)(i) += intensity * (*antennaField)(i);

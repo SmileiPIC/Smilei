@@ -28,7 +28,7 @@ Validate("Last Ez profile in Probe1", Ez, 1e-7 )
 
 # UBAL SCALAR
 max_ubal = np.max( np.abs(S.Scalar.Ubal().getData()) )
-Validate("Max Ubal is below 2%", max_ubal<0.02 )
+Validate("Max Ubal is below 3%", max_ubal<0.03 )
 
 # TEST THE GRID PARAMETERS
 with h5py.File("./restart000/Fields0.h5") as f:

@@ -32,14 +32,42 @@ Main(
     random_seed = smilei_mpi_rank
 )
 
-LaserGaussian2D(
-    box_side         = "xmin",
-    a0              = 150.,
-    focus           = [10.*l0, 5.*l0],
-    waist           = 2.0*l0,
-    ellipticity     = 1.,
-    time_envelope   = ttrapezoidal(slope1=t0)
+
+# We build a gaussian laser from scratch instead of using LaserGaussian2D
+# The goal is to test the space_time_profile attribute
+omega = 1.
+a0 = 150.
+waist = 2.0*l0
+Zr = omega * waist**2/2.
+focus = [10.*l0, 5.*l0]
+
+amplitude = a0 / math.sqrt(2)
+w  = math.sqrt(1./(1.+(focus[0]/Zr)**2))
+invWaist2 = (w/waist)**2
+coeff = -omega * focus[0] * w**2 / (2.*Zr**2)
+def By(y,t):
+    B = amplitude * w * math.exp( -invWaist2*(y-focus[1])**2 ) \
+        * math.sin(omega*t - coeff*(y-focus[1])**2 + math.pi*0.5)
+    if t < t0: return t/t0 * B
+    else     : return B
+def Bz(y,t):
+    B = amplitude * w * math.exp( -invWaist2*(y-focus[1])**2 ) \
+        * math.sin(omega*t - coeff*(y-focus[1])**2)
+    if t < t0: return t/t0 * B
+    else     : return B
+Laser(
+    box_side           = "xmin",
+    space_time_profile = [By, Bz]
 )
+
+#LaserGaussian2D(
+#    box_side         = "xmin",
+#    a0              = 150.,
+#    focus           = [10.*l0, 5.*l0],
+#    waist           = 2.0*l0,
+#    ellipticity     = 1.,
+#    time_envelope   = ttrapezoidal(slope1=t0)
+#)
 
 
 Species(

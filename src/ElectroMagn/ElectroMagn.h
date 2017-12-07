@@ -29,6 +29,8 @@ struct ExtField {
     std::string field;
     
     Profile * profile;
+    
+    unsigned int index;
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -42,6 +44,8 @@ struct Antenna {
     Profile *space_profile;
     
     Field* field;
+    
+    unsigned int index;
 };
 
 //! class ElectroMagn: generic class containing all information on the electromagnetic fields and currents
@@ -318,12 +322,14 @@ public:
     //! Vector of boundary-condition per side for the fields
     std::vector<ElectroMagnBC*> emBoundCond;
     
-protected :
     //! from smpi is xmin
     bool isXmin;
-    
+
     //! from smpi is xmax
     bool isXmax;
+
+protected :
+    
     
 private:
     

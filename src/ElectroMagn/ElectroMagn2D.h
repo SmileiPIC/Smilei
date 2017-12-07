@@ -105,14 +105,15 @@ public:
     void applyExternalField(Field*, Profile*, Patch*);
     
     void initAntennas(Patch* patch);
-    
-private:
-    
-    //! from smpi is ymax
+
+     //! from smpi is ymax
     const bool isYmin;
     
     //! from smpi is ymin
     const bool isYmax;
+   
+private:
+    
     
     //! Initialize quantities needed in the creators of ElectroMagn2D
     void initElectroMagn2DQuantities(Params &params, Patch* patch);

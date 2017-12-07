@@ -518,7 +518,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
         //Point to local thread dedicated buffers
         //Still needed for ionization
-        vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
+        vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
 
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 

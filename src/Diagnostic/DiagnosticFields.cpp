@@ -202,7 +202,7 @@ bool DiagnosticFields::prepare( int itime )
 }
 
 
-void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow )
+void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow, Timers & timers )
 {
     // If time-averaging, increment the average
     if( time_average>1 ) {
