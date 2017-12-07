@@ -103,7 +103,6 @@ def _smilei_check():
         l.phase           = [ toSpaceProfile(p) for p in l.phase          ]
     for l in LaserEnvelope:
         l.envelope_profile = toSpaceProfile(l.envelope_profile)
-
 # this function will be called after initialising the simulation, just before entering the time loop
 # if it returns false, the code will call a Py_Finalize();
 def _keep_python_running():

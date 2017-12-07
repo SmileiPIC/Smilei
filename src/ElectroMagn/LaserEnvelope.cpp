@@ -112,7 +112,7 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
             pos[2] = pos2;
             for (int k=0 ; k<A_->dims_[2] ; k++) {
                 (*A3D)(i,j,k) += profile_->valueAt(pos);
-                //(*Env_Ar3D)(i,j,k)=std::real((*A3D)(i,j,k));
+                (*Env_Ar3D)(i,j,k)=std::real((*A3D)(i,j,k));
                 pos[2] += cell_length[2];
             }
             pos[1] += cell_length[1];

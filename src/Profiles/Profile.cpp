@@ -219,6 +219,7 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
             if      ( nvariables == 1 ) ret = PyObject_CallFunctionObjArgs(py_profile, z, NULL);
             else if ( nvariables == 2 ) ret = PyObject_CallFunctionObjArgs(py_profile, z,z, NULL);
             else if ( nvariables == 3 ) ret = PyObject_CallFunctionObjArgs(py_profile, z,z,z, NULL);
+            PyTools::checkPyError();
             Py_DECREF(z);
             if( !ret || !PyNumber_Check(ret) )
                 ERROR("Profile `"<<name<<"`: does not seem to return a correct value");

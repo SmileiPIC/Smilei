@@ -156,7 +156,8 @@ class SmileiSingleton(SmileiComponent):
         # Change all methods to static
         for k,v in cls.__dict__.items():
             if k[0]!='_' and hasattr(v,"__get__"):
-                setattr(cls, k, staticmethod(v))
+               print(k+" "+str(v)) 
+               setattr(cls, k, staticmethod(v))
 
 class ParticleData(object):
     """Container for particle data at run-time (for exposing particles in numpy)"""
@@ -332,7 +333,7 @@ class Laser(SmileiComponent):
     phase = [0., 0.]
     space_time_profile = None
 
-class LaserEnvelope(SmileiSingleton):
+class LaserEnvelope(SmileiComponent):
     """Laser Envelope parameters"""
     omega = 1.
     #time_envelope = 1.
