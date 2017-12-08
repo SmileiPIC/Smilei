@@ -657,37 +657,136 @@ void ElectroMagn3D::binomialCurrentFilter()
     Field3D* Jz3D = static_cast<Field3D*>(Jz_);
     
     // applying a single pass of the binomial filter
-    // 9-point filter: (4*point itself + 2*(4*direct neighbors) + 1*(4*cross neghbors))/16
-    
-    // on Jx^(d,p) -- external points are treated by exchange
-    Field3D *tmp   = new Field3D(dimPrim, 0, false);
-    tmp->copyFrom(Jx3D);
+    // on Jx^(d,p) -- external points are treated by exchange. Boundary points not concerned by exchange are treated with a lower order filter.
+    for (unsigned int i=0; i<nx_d-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+            (*Jx3D)(i,j,k) = ((*Jx3D)(i,j,k) + (*Jx3D)(i+1,j,k))*0.5;            
+            }
+        }
+    }
     for (unsigned int i=1; i<nx_d-1; i++) {
         for (unsigned int j=1; j<ny_p-1; j++) {
-            (*Jx3D)(i,j) = ((*tmp)(i+1,j-1) + 2.*(*tmp)(i+1,j) + (*tmp)(i+1,j+1) + 2.*(*tmp)(i,j-1) + 4.*(*tmp)(i,j) + 2.*(*tmp)(i,j+1) + (*tmp)(i-1,j-1) + 2.*(*tmp)(i-1,j) + (*tmp)(i-1,j+1))/16.;
+            for (unsigned int k=1; k<nz_p-1; k++) {
+            (*Jx3D)(i,j,k) = ((*Jx3D)(i,j,k) + (*Jx3D)(i-1,j,k))*0.5;            
+            }
         }
     }
-    delete tmp;
-    
-    // on Jy^(p,d) -- external points are treated by exchange
-    tmp   = new Field3D(dimPrim, 1, false);
-    tmp->copyFrom(Jy3D);
+    for (unsigned int i=1; i<nx_d-1; i++) {
+        for (unsigned int j=0; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+            (*Jx3D)(i,j,k) = ((*Jx3D)(i,j,k) + (*Jx3D)(i,j+1,k))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_d-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+            (*Jx3D)(i,j,k) = ((*Jx3D)(i,j,k) + (*Jx3D)(i,j-1,k))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_d-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=0; k<nz_p-1; k++) {
+            (*Jx3D)(i,j,k) = ((*Jx3D)(i,j,k) + (*Jx3D)(i,j,k+1))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_d-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+            (*Jx3D)(i,j,k) = ((*Jx3D)(i,j,k) + (*Jx3D)(i,j,k-1))*0.5;            
+            }
+        }
+    }
+    // Jy
+    for (unsigned int i=0; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_d-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+            (*Jy3D)(i,j,k) = ((*Jy3D)(i,j,k) + (*Jy3D)(i+1,j,k))*0.5;            
+            }
+        }
+    }
     for (unsigned int i=1; i<nx_p-1; i++) {
         for (unsigned int j=1; j<ny_d-1; j++) {
-            (*Jy3D)(i,j) = ((*tmp)(i+1,j-1) + 2.*(*tmp)(i+1,j) + (*tmp)(i+1,j+1) + 2.*(*tmp)(i,j-1) + 4.*(*tmp)(i,j) + 2.*(*tmp)(i,j+1) + (*tmp)(i-1,j-1) + 2.*(*tmp)(i-1,j) + (*tmp)(i-1,j+1))/16.;
+            for (unsigned int k=1; k<nz_p-1; k++) {
+            (*Jy3D)(i,j,k) = ((*Jy3D)(i,j,k) + (*Jy3D)(i-1,j,k))*0.5;            
+            }
         }
     }
-    delete tmp;
-    
-    // on Jz^(p,p) -- external points are treated by exchange
-    tmp   = new Field3D(dimPrim, 2, false);
-    tmp->copyFrom(Jz3D);
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=0; j<ny_d-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+            (*Jy3D)(i,j,k) = ((*Jy3D)(i,j,k) + (*Jy3D)(i,j+1,k))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_d-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+            (*Jy3D)(i,j,k) = ((*Jy3D)(i,j,k) + (*Jy3D)(i,j-1,k))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_d-1; j++) {
+            for (unsigned int k=0; k<nz_p-1; k++) {
+            (*Jy3D)(i,j,k) = ((*Jy3D)(i,j,k) + (*Jy3D)(i,j,k+1))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_d-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+            (*Jy3D)(i,j,k) = ((*Jy3D)(i,j,k) + (*Jy3D)(i,j,k-1))*0.5;            
+            }
+        }
+    }
+    // Jz
+    for (unsigned int i=0; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_d-1; k++) {
+            (*Jz3D)(i,j,k) = ((*Jz3D)(i,j,k) + (*Jz3D)(i+1,j,k))*0.5;            
+            }
+        }
+    }
     for (unsigned int i=1; i<nx_p-1; i++) {
         for (unsigned int j=1; j<ny_p-1; j++) {
-            (*Jz3D)(i,j) = ((*tmp)(i+1,j-1) + 2.*(*tmp)(i+1,j) + (*tmp)(i+1,j+1) + 2.*(*tmp)(i,j-1) + 4.*(*tmp)(i,j) + 2.*(*tmp)(i,j+1) + (*tmp)(i-1,j-1) + 2.*(*tmp)(i-1,j) + (*tmp)(i-1,j+1))/16.;
+            for (unsigned int k=1; k<nz_d-1; k++) {
+            (*Jz3D)(i,j,k) = ((*Jz3D)(i,j,k) + (*Jz3D)(i-1,j,k))*0.5;            
+            }
         }
     }
-    delete tmp;
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=0; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_d-1; k++) {
+            (*Jz3D)(i,j,k) = ((*Jz3D)(i,j,k) + (*Jz3D)(i,j+1,k))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_d-1; k++) {
+            (*Jz3D)(i,j,k) = ((*Jz3D)(i,j,k) + (*Jz3D)(i,j-1,k))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=0; k<nz_d-1; k++) {
+            (*Jz3D)(i,j,k) = ((*Jz3D)(i,j,k) + (*Jz3D)(i,j,k+1))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_d-1; k++) {
+            (*Jz3D)(i,j,k) = ((*Jz3D)(i,j,k) + (*Jz3D)(i,j,k-1))*0.5;            
+            }
+        }
+    }
+    
 
 }
 
