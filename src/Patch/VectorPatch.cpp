@@ -16,6 +16,7 @@
 #include "SimWindow.h"
 #include "SolverFactory.h"
 #include "DiagnosticFactory.h"
+#include "LaserEnvelope.h"
 
 #include "SyncVectorPatch.h"
 
@@ -287,6 +288,35 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 
 } // END solveMaxwell
 
+void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers)
+{
+    // timers.maxwell.restart();
+
+    // for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_passes ; ipassfilter++){
+    //     #pragma omp for schedule(static)
+    //     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+    //         // Current spatial filtering
+    //         (*this)(ipatch)->EMfields->binomialCurrentFilter();
+    //     }
+    //     SyncVectorPatch::exchangeJ( (*this) );
+    //     SyncVectorPatch::finalizeexchangeJ( (*this) );
+    // }
+
+    #pragma omp for schedule(static)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+        // Computes A in all points
+        (*this)(ipatch)->envelope->compute(  (*this)(ipatch)->EMfields );
+        
+    }
+
+    // //Synchronize B fields between patches.
+    // timers.maxwell.update( params.printNow( itime ) );
+    // 
+    // timers.syncField.restart();
+    // SyncVectorPatch::exchangeB( (*this) );
+    // timers.syncField.update(  params.printNow( itime ) );
+
+} // END solveEnvelope
 
 void VectorPatch::initExternals(Params& params)
 {

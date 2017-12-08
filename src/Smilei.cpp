@@ -268,6 +268,11 @@ int main (int argc, char* argv[])
             // apply currents from antennas
             vecPatches.applyAntennas(time_dual);
 
+            // solve envelope equation
+            //int n_envlaser = PyTools::nComponents("LaserEnvelope");
+            //if ( n_envlaser ==1 ) // for the moment it works only with one envelope
+            vecPatches.solveEnvelope( params, simWindow, itime, time_dual, timers );
+
             // solve Maxwell's equations
             if( time_dual > params.time_fields_frozen )
                 vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );

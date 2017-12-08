@@ -106,11 +106,11 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
     double pos1 = cell_length[1]*((double)(patch->getCellStartingGlobalIndex(1))+(A3D->isDual(1)?-0.5:0.));
     double pos2 = cell_length[2]*((double)(patch->getCellStartingGlobalIndex(2))+(A3D->isDual(2)?-0.5:0.));
     // UNSIGNED INT LEADS TO PB IN PERIODIC BCs
-    for (int i=0 ; i<A_->dims_[0] ; i++) {
+    for (unsigned int i=0 ; i<A_->dims_[0] ; i++) {
         pos[1] = pos1;
-        for (int j=0 ; j<A_->dims_[1] ; j++) {
+        for (unsigned int j=0 ; j<A_->dims_[1] ; j++) {
             pos[2] = pos2;
-            for (int k=0 ; k<A_->dims_[2] ; k++) {
+            for (unsigned int k=0 ; k<A_->dims_[2] ; k++) {
                 (*A3D)(i,j,k) += profile_->valueAt(pos);
                 (*Env_Ar3D)(i,j,k)=std::real((*A3D)(i,j,k));
                 pos[2] += cell_length[2];
@@ -133,14 +133,19 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
     //->rho_e- ???;
     cField3D* A3D = static_cast<cField3D*>(A_);
     cField3D* A03D = static_cast<cField3D*>(A0_);
-
+    Field3D* Env_Ar3D = static_cast<Field3D*>(EMfields->Env_Ar_);
+    Field3D* Env_Ai3D = static_cast<Field3D*>(EMfields->Env_Ai_);
     // find e_idx in all species
     int e_idx = 0;
     Field3D* rho_e = static_cast<Field3D*>(EMfields->rho_s[e_idx]);
 
-    for (unsigned int i=0 ; i <A_->dims_[0]; i++)
-        for (unsigned int j=0 ; j < A_->dims_[1] ; j++)
-            for (unsigned int k=0 ; k < A_->dims_[2]; k++)
-                (*A3D)(i,j,k) = (*A03D)(i,j,k);
-
+    for (unsigned int i=0 ; i <A_->dims_[0]; i++){
+        for (unsigned int j=0 ; j < A_->dims_[1] ; j++){
+            for (unsigned int k=0 ; k < A_->dims_[2]; k++){
+                (*A3D)(i,j,k) = (*A3D)(i,j,k);
+                //(*A3D)(i,j,k) = (*A03D)(i,j,k);
+                (*Env_Ar3D)(i,j,k) =std::real((*A3D)(i,j,k));
+            }
+        }
+    }
 }
