@@ -302,7 +302,8 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
     timers.syncField.update(  params.printNow( itime ) );
 
     #ifdef _PICSAR
-    if ( (params.is_spectral) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
+    //if ( (params.is_spectral) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
+    if (                           (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
         timers.syncField.restart();
         if (params.is_spectral)
             SyncVectorPatch::finalizeexchangeE( params, (*this) );
