@@ -4,12 +4,14 @@
 void copy_field_3d(Field3D* out, Field3D * in)
 {
         unsigned int n1,n2,n3;
+	unsigned int i,j,k;
         n1 = ((in->dims_[0]) < (out->dims_[0]) ? (in->dims_[0]) : (out->dims_[0]));
         n2 = ((in->dims_[1]) < (out->dims_[1]) ? (in->dims_[1]) : (out->dims_[1]));
         n3 = ((in->dims_[2]) < (out->dims_[2]) ? (in->dims_[2]) : (out->dims_[2]));
-        for(unsigned int i=0;i<n1;i++){
-                for(unsigned int j=0;j<n2;j++){
-                        for(unsigned int k=0;k<n3;k++){
+	#pragma omp parallel for collapse(3) private(i ,j ,k) schedule(runtime)
+        for(i=0;i<n1;i++){
+                for(j=0;j<n2;j++){
+                        for(k=0;k<n3;k++){
                                 (*out)(i,j,k) =  (*in)(i,j,k);
                         }
                 }
@@ -19,10 +21,12 @@ void copy_field_3d(Field3D* out, Field3D * in)
 void copy_field_2d(Field2D* out, Field2D * in)
 {
         unsigned int n1,n2;
+	unsigned int i,j;
         n1 = ((in->dims_[0]) < (out->dims_[0]) ? (in->dims_[0]) : (out->dims_[0]));
         n2 = ((in->dims_[1]) < (out->dims_[1]) ? (in->dims_[1]) : (out->dims_[1]));
-        for(unsigned int i=0;i<n1;i++){
-                for(unsigned int j=0;j<n2;j++){
+	#pragma omp parallel for collapse(2) private(i , j )  schedule(runtime)
+        for(int i=0;i<n1;i++){
+                for(int j=0;j<n2;j++){
                                 (*out)(i,j) =  (*in)(i,j);
                         }
                 }
