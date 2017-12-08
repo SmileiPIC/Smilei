@@ -47,7 +47,7 @@ public:
 //    void solveMaxwellAmpere();
     
     //! Method used to save the Magnetic fields (used to center them)
-    void saveMagneticFields();
+    void saveMagneticFields(bool);
     
     //! Method used to center the Magnetic fields (used to push the particles)
     void centerMagneticFields();

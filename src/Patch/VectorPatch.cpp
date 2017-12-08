@@ -282,7 +282,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         if (!params.is_spectral) {
             // Saving magnetic fields (to compute centered fields used in the particle pusher)
             // Stores B at time n in B_m.
-            (*this)(ipatch)->EMfields->saveMagneticFields();
+            (*this)(ipatch)->EMfields->saveMagneticFields(params.is_spectral);
         }
         // Computes Ex_, Ey_, Ez_ on all points.
         // E is already synchronized because J has been synchronized before.
@@ -318,7 +318,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
             if (!params.is_spectral)
                 (*this)(ipatch)->EMfields->centerMagneticFields();
             else
-                (*this)(ipatch)->EMfields->saveMagneticFields();
+                (*this)(ipatch)->EMfields->saveMagneticFields(params.is_spectral);
         }
         if (params.is_spectral)
             save_old_rho( params );

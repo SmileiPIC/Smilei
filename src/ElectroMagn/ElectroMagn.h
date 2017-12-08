@@ -228,7 +228,7 @@ public:
     Solver* MaxwellAmpereSolver_;
     //! Maxwell Faraday Solver
     Solver* MaxwellFaradaySolver_;
-    virtual void saveMagneticFields() = 0;
+    virtual void saveMagneticFields(bool) = 0;
     virtual void centerMagneticFields() = 0;
     virtual void binomialCurrentFilter() = 0;
     

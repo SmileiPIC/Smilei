@@ -313,24 +313,31 @@ void ElectroMagn1D::centeringE( std::vector<double> E_Add )
 // ---------------------------------------------------------------------------------------------------------------------
 // Save the former Magnetic-Fields (used to center them)
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::saveMagneticFields()
+void ElectroMagn1D::saveMagneticFields(bool is_spectral)
 {
     // Static cast of the fields
-    Field1D* Bx1D   = static_cast<Field1D*>(Bx_);
-    Field1D* By1D   = static_cast<Field1D*>(By_);
-    Field1D* Bz1D   = static_cast<Field1D*>(Bz_);
-    Field1D* Bx1D_m = static_cast<Field1D*>(Bx_m);
-    Field1D* By1D_m = static_cast<Field1D*>(By_m);
-    Field1D* Bz1D_m = static_cast<Field1D*>(Bz_m);
-    
-    // for Bx^(p)
-    for (unsigned int i=0 ; i<dimPrim[0] ; i++) {
-        (*Bx1D_m)(i)=(*Bx1D)(i);
-    }
-    //for By^(d) & Bz^(d)
-    for (unsigned int i=0 ; i<dimDual[0] ; i++) {
-        (*By1D_m)(i) = (*By1D)(i);
-        (*Bz1D_m)(i) = (*Bz1D)(i);
+    if(!is_spectral){
+   	 Field1D* Bx1D   = static_cast<Field1D*>(Bx_);
+   	 Field1D* By1D   = static_cast<Field1D*>(By_);
+   	 Field1D* Bz1D   = static_cast<Field1D*>(Bz_);
+   	 Field1D* Bx1D_m = static_cast<Field1D*>(Bx_m);
+   	 Field1D* By1D_m = static_cast<Field1D*>(By_m);
+   	 Field1D* Bz1D_m = static_cast<Field1D*>(Bz_m);
+   	 
+   	 // for Bx^(p)
+   	 for (unsigned int i=0 ; i<dimPrim[0] ; i++) {
+   	     (*Bx1D_m)(i)=(*Bx1D)(i);
+   	 }
+   	 //for By^(d) & Bz^(d)
+   	 for (unsigned int i=0 ; i<dimDual[0] ; i++) {
+   	     (*By1D_m)(i) = (*By1D)(i);
+   	     (*Bz1D_m)(i) = (*Bz1D)(i);
+   	 }
+   	 }
+    else{
+   	 Field1D* Bx1D_m = static_cast<Field1D*>(Bx_);
+   	 Field1D* By1D_m = static_cast<Field1D*>(By_);
+   	 Field1D* Bz1D_m = static_cast<Field1D*>(Bz_);
     }
     
 }//END saveMagneticFields
