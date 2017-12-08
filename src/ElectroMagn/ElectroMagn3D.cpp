@@ -291,7 +291,7 @@ void ElectroMagn3D::compute_Ap(Patch* patch)
     double one_ov_dx_sq       = 1.0/(dx*dx);
     double one_ov_dy_sq       = 1.0/(dy*dy);
     double one_ov_dz_sq       = 1.0/(dz*dz);
-    double three_ov_dx2dy2dz2 = 3.0*(1.0/(dx*dx)+1.0/(dy*dy)+1.0/(dz*dz));
+    double three_ov_dx3Dy3Dz2 = 3.0*(1.0/(dx*dx)+1.0/(dy*dy)+1.0/(dz*dz));
     
     // vector product Ap = A*p
     for (unsigned int i=1; i<nx_p-1; i++) {
@@ -300,7 +300,7 @@ void ElectroMagn3D::compute_Ap(Patch* patch)
                 (*Ap_)(i,j,k) = one_ov_dx_sq*((*p_)(i-1,j,k)+(*p_)(i+1,j,k))
                     + one_ov_dy_sq*((*p_)(i,j-1,k)+(*p_)(i,j+1,k))
                     + one_ov_dz_sq*((*p_)(i,j,k-1)+(*p_)(i,j,k+1))
-                    - three_ov_dx2dy2dz2*(*p_)(i,j,k);
+                    - three_ov_dx3Dy3Dz2*(*p_)(i,j,k);
             }//k
         }//j
     }//i
@@ -313,26 +313,26 @@ void ElectroMagn3D::compute_Ap(Patch* patch)
                 (*Ap_)(0,j,k)      = one_ov_dx_sq*((*p_)(1,j,k))
                     +              one_ov_dy_sq*((*p_)(0,j-1,k)+(*p_)(0,j+1,k))
                     +              one_ov_dz_sq*((*p_)(0,j,k-1)+(*p_)(0,j,k+1))
-                    -              three_ov_dx2dy2dz2*(*p_)(0,j,k);
+                    -              three_ov_dx3Dy3Dz2*(*p_)(0,j,k);
             }
         }
         // at corners
         (*Ap_)(0,0,0)           = one_ov_dx_sq*((*p_)(1,0,0))         // Xmin/Ymin/Zmin
             +                   one_ov_dy_sq*((*p_)(0,1,0))
             +                   one_ov_dz_sq*((*p_)(0,0,1))
-            -                   three_ov_dx2dy2dz2*(*p_)(0,0,0);
+            -                   three_ov_dx3Dy3Dz2*(*p_)(0,0,0);
         (*Ap_)(0,ny_p-1,0)      = one_ov_dx_sq*((*p_)(1,ny_p-1,0))     // Xmin/Ymax/Zmin
             +                   one_ov_dy_sq*((*p_)(0,ny_p-2,0))
             +                   one_ov_dz_sq*((*p_)(0,ny_p-1,1))
-            -                   three_ov_dx2dy2dz2*(*p_)(0,ny_p-1,0);
+            -                   three_ov_dx3Dy3Dz2*(*p_)(0,ny_p-1,0);
         (*Ap_)(0,0,nz_p-1)      = one_ov_dx_sq*((*p_)(1,0,nz_p-1))          // Xmin/Ymin/Zmin
             +                   one_ov_dy_sq*((*p_)(0,1,nz_p-1))
             +                   one_ov_dz_sq*((*p_)(0,0,nz_p-2))
-            -                   three_ov_dx2dy2dz2*(*p_)(0,0,nz_p-1);
+            -                   three_ov_dx3Dy3Dz2*(*p_)(0,0,nz_p-1);
         (*Ap_)(0,ny_p-1,nz_p-1) = one_ov_dx_sq*((*p_)(1,ny_p-1,nz_p-1))     // Xmin/Ymax/Zmin
             +                   one_ov_dy_sq*((*p_)(0,ny_p-2,nz_p-1))
             +                   one_ov_dz_sq*((*p_)(0,ny_p-1,nz_p-2))
-            -                   three_ov_dx2dy2dz2*(*p_)(0,ny_p-1,nz_p-1);
+            -                   three_ov_dx3Dy3Dz2*(*p_)(0,ny_p-1,nz_p-1);
     }
         
     // Xmax BC
@@ -343,26 +343,26 @@ void ElectroMagn3D::compute_Ap(Patch* patch)
                 (*Ap_)(nx_p-1,j,k) = one_ov_dx_sq*((*p_)(nx_p-2,j,k))
                     +              one_ov_dy_sq*((*p_)(nx_p-1,j-1,k)+(*p_)(nx_p-1,j+1,k))
                     +              one_ov_dz_sq*((*p_)(nx_p-1,j,k-1)+(*p_)(nx_p-1,j,k+1))
-                    -              three_ov_dx2dy2dz2*(*p_)(nx_p-1,j,k);
+                    -              three_ov_dx3Dy3Dz2*(*p_)(nx_p-1,j,k);
             }
         }
         // at corners
         (*Ap_)(nx_p-1,0,0)      = one_ov_dx_sq*((*p_)(nx_p-2,0,0))            // Xmax/Ymin/Zmin
             +                   one_ov_dy_sq*((*p_)(nx_p-1,1,0))
             +                   one_ov_dz_sq*((*p_)(nx_p-1,0,1))
-            -                   three_ov_dx2dy2dz2*(*p_)(nx_p-1,0,0);
+            -                   three_ov_dx3Dy3Dz2*(*p_)(nx_p-1,0,0);
         (*Ap_)(nx_p-1,ny_p-1,0) = one_ov_dx_sq*((*p_)(nx_p-2,ny_p-1,0))       // Xmax/Ymax/Zmin
             +                   one_ov_dy_sq*((*p_)(nx_p-1,ny_p-2,0))
             +                   one_ov_dz_sq*((*p_)(nx_p-1,ny_p-1,1))
-            -                   three_ov_dx2dy2dz2*(*p_)(nx_p-1,ny_p-1,0);
+            -                   three_ov_dx3Dy3Dz2*(*p_)(nx_p-1,ny_p-1,0);
         (*Ap_)(nx_p-1,0,nz_p-1)      = one_ov_dx_sq*((*p_)(nx_p-2,0,0))             // Xmax/Ymin/Zmax
             +                   one_ov_dy_sq*((*p_)(nx_p-1,1,nz_p-1))
             +                   one_ov_dz_sq*((*p_)(nx_p-1,0,nz_p-2))
-            -                   three_ov_dx2dy2dz2*(*p_)(nx_p-1,0,nz_p-1);
+            -                   three_ov_dx3Dy3Dz2*(*p_)(nx_p-1,0,nz_p-1);
         (*Ap_)(nx_p-1,ny_p-1,nz_p-1) = one_ov_dx_sq*((*p_)(nx_p-2,ny_p-1,nz_p-1))       // Xmax/Ymax/Zmax
             +                   one_ov_dy_sq*((*p_)(nx_p-1,ny_p-2,nz_p-1))
             +                   one_ov_dz_sq*((*p_)(nx_p-1,ny_p-1,nz_p-2))
-            -                   three_ov_dx2dy2dz2*(*p_)(nx_p-1,ny_p-1,nz_p-1);
+            -                   three_ov_dx3Dy3Dz2*(*p_)(nx_p-1,ny_p-1,nz_p-1);
     }
         
 } // compute_pAp
@@ -652,39 +652,39 @@ void ElectroMagn3D::centerMagneticFields()
 void ElectroMagn3D::binomialCurrentFilter()
 {
     // Static-cast of the currents
-    Field2D* Jx2D = static_cast<Field2D*>(Jx_);
-    Field2D* Jy2D = static_cast<Field2D*>(Jy_);
-    Field2D* Jz2D = static_cast<Field2D*>(Jz_);
+    Field3D* Jx3D = static_cast<Field3D*>(Jx_);
+    Field3D* Jy3D = static_cast<Field3D*>(Jy_);
+    Field3D* Jz3D = static_cast<Field3D*>(Jz_);
     
     // applying a single pass of the binomial filter
     // 9-point filter: (4*point itself + 2*(4*direct neighbors) + 1*(4*cross neghbors))/16
     
     // on Jx^(d,p) -- external points are treated by exchange
-    Field2D *tmp   = new Field2D(dimPrim, 0, false);
-    tmp->copyFrom(Jx2D);
+    Field3D *tmp   = new Field3D(dimPrim, 0, false);
+    tmp->copyFrom(Jx3D);
     for (unsigned int i=1; i<nx_d-1; i++) {
         for (unsigned int j=1; j<ny_p-1; j++) {
-            (*Jx2D)(i,j) = ((*tmp)(i+1,j-1) + 2.*(*tmp)(i+1,j) + (*tmp)(i+1,j+1) + 2.*(*tmp)(i,j-1) + 4.*(*tmp)(i,j) + 2.*(*tmp)(i,j+1) + (*tmp)(i-1,j-1) + 2.*(*tmp)(i-1,j) + (*tmp)(i-1,j+1))/16.;
+            (*Jx3D)(i,j) = ((*tmp)(i+1,j-1) + 2.*(*tmp)(i+1,j) + (*tmp)(i+1,j+1) + 2.*(*tmp)(i,j-1) + 4.*(*tmp)(i,j) + 2.*(*tmp)(i,j+1) + (*tmp)(i-1,j-1) + 2.*(*tmp)(i-1,j) + (*tmp)(i-1,j+1))/16.;
         }
     }
     delete tmp;
     
     // on Jy^(p,d) -- external points are treated by exchange
-    tmp   = new Field2D(dimPrim, 1, false);
-    tmp->copyFrom(Jy2D);
+    tmp   = new Field3D(dimPrim, 1, false);
+    tmp->copyFrom(Jy3D);
     for (unsigned int i=1; i<nx_p-1; i++) {
         for (unsigned int j=1; j<ny_d-1; j++) {
-            (*Jy2D)(i,j) = ((*tmp)(i+1,j-1) + 2.*(*tmp)(i+1,j) + (*tmp)(i+1,j+1) + 2.*(*tmp)(i,j-1) + 4.*(*tmp)(i,j) + 2.*(*tmp)(i,j+1) + (*tmp)(i-1,j-1) + 2.*(*tmp)(i-1,j) + (*tmp)(i-1,j+1))/16.;
+            (*Jy3D)(i,j) = ((*tmp)(i+1,j-1) + 2.*(*tmp)(i+1,j) + (*tmp)(i+1,j+1) + 2.*(*tmp)(i,j-1) + 4.*(*tmp)(i,j) + 2.*(*tmp)(i,j+1) + (*tmp)(i-1,j-1) + 2.*(*tmp)(i-1,j) + (*tmp)(i-1,j+1))/16.;
         }
     }
     delete tmp;
     
     // on Jz^(p,p) -- external points are treated by exchange
-    tmp   = new Field2D(dimPrim, 2, false);
-    tmp->copyFrom(Jz2D);
+    tmp   = new Field3D(dimPrim, 2, false);
+    tmp->copyFrom(Jz3D);
     for (unsigned int i=1; i<nx_p-1; i++) {
         for (unsigned int j=1; j<ny_p-1; j++) {
-            (*Jz2D)(i,j) = ((*tmp)(i+1,j-1) + 2.*(*tmp)(i+1,j) + (*tmp)(i+1,j+1) + 2.*(*tmp)(i,j-1) + 4.*(*tmp)(i,j) + 2.*(*tmp)(i,j+1) + (*tmp)(i-1,j-1) + 2.*(*tmp)(i-1,j) + (*tmp)(i-1,j+1))/16.;
+            (*Jz3D)(i,j) = ((*tmp)(i+1,j-1) + 2.*(*tmp)(i+1,j) + (*tmp)(i+1,j+1) + 2.*(*tmp)(i,j-1) + 4.*(*tmp)(i,j) + 2.*(*tmp)(i,j+1) + (*tmp)(i-1,j-1) + 2.*(*tmp)(i-1,j) + (*tmp)(i-1,j+1))/16.;
         }
     }
     delete tmp;
