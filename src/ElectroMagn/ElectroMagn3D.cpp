@@ -651,7 +651,44 @@ void ElectroMagn3D::centerMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3D::binomialCurrentFilter()
 {
-    ERROR("Binomial current filtering not yet implemented in 3D3V");
+    // Static-cast of the currents
+    Field2D* Jx2D = static_cast<Field2D*>(Jx_);
+    Field2D* Jy2D = static_cast<Field2D*>(Jy_);
+    Field2D* Jz2D = static_cast<Field2D*>(Jz_);
+    
+    // applying a single pass of the binomial filter
+    // 9-point filter: (4*point itself + 2*(4*direct neighbors) + 1*(4*cross neghbors))/16
+    
+    // on Jx^(d,p) -- external points are treated by exchange
+    Field2D *tmp   = new Field2D(dimPrim, 0, false);
+    tmp->copyFrom(Jx2D);
+    for (unsigned int i=1; i<nx_d-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            (*Jx2D)(i,j) = ((*tmp)(i+1,j-1) + 2.*(*tmp)(i+1,j) + (*tmp)(i+1,j+1) + 2.*(*tmp)(i,j-1) + 4.*(*tmp)(i,j) + 2.*(*tmp)(i,j+1) + (*tmp)(i-1,j-1) + 2.*(*tmp)(i-1,j) + (*tmp)(i-1,j+1))/16.;
+        }
+    }
+    delete tmp;
+    
+    // on Jy^(p,d) -- external points are treated by exchange
+    tmp   = new Field2D(dimPrim, 1, false);
+    tmp->copyFrom(Jy2D);
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_d-1; j++) {
+            (*Jy2D)(i,j) = ((*tmp)(i+1,j-1) + 2.*(*tmp)(i+1,j) + (*tmp)(i+1,j+1) + 2.*(*tmp)(i,j-1) + 4.*(*tmp)(i,j) + 2.*(*tmp)(i,j+1) + (*tmp)(i-1,j-1) + 2.*(*tmp)(i-1,j) + (*tmp)(i-1,j+1))/16.;
+        }
+    }
+    delete tmp;
+    
+    // on Jz^(p,p) -- external points are treated by exchange
+    tmp   = new Field2D(dimPrim, 2, false);
+    tmp->copyFrom(Jz2D);
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            (*Jz2D)(i,j) = ((*tmp)(i+1,j-1) + 2.*(*tmp)(i+1,j) + (*tmp)(i+1,j+1) + 2.*(*tmp)(i,j-1) + 4.*(*tmp)(i,j) + 2.*(*tmp)(i,j+1) + (*tmp)(i-1,j-1) + 2.*(*tmp)(i-1,j) + (*tmp)(i-1,j+1))/16.;
+        }
+    }
+    delete tmp;
+
 }
 
 
