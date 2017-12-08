@@ -109,13 +109,13 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
 }
 
 
-void SyncVectorPatch::sumRhoJ(VectorPatch& vecPatches, Timers &timers, int itime, Params& params)
+void SyncVectorPatch::sumRhoJ(Params& params, VectorPatch& vecPatches, Timers &timers, int itime)
 {
     SyncVectorPatch::new_sum( vecPatches.densities , vecPatches, timers, itime );
     if( (vecPatches.diag_flag) || (params.is_spectral) )SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, itime );
 }
 
-void SyncVectorPatch::sumRhoJs(VectorPatch& vecPatches, int ispec , Timers &timers, int itime)
+void SyncVectorPatch::sumRhoJs(Params& params, VectorPatch& vecPatches, int ispec , Timers &timers, int itime)
 {
 
     if(vecPatches.listJxs_ .size()>0) SyncVectorPatch::sum( vecPatches.listJxs_ , vecPatches, timers, itime  );
@@ -124,7 +124,7 @@ void SyncVectorPatch::sumRhoJs(VectorPatch& vecPatches, int ispec , Timers &time
     if(vecPatches.listrhos_.size()>0) SyncVectorPatch::sum( vecPatches.listrhos_, vecPatches, timers, itime  );
 }
 
-void SyncVectorPatch::exchangeE( VectorPatch& vecPatches )
+void SyncVectorPatch::exchangeE( Params& params, VectorPatch& vecPatches )
 {
 
     SyncVectorPatch::exchange( vecPatches.listEx_, vecPatches );
@@ -132,7 +132,7 @@ void SyncVectorPatch::exchangeE( VectorPatch& vecPatches )
     SyncVectorPatch::exchange( vecPatches.listEz_, vecPatches );
 }
 
-void SyncVectorPatch::finalizeexchangeE( VectorPatch& vecPatches )
+void SyncVectorPatch::finalizeexchangeE( Params& params, VectorPatch& vecPatches )
 {
 
     SyncVectorPatch::finalizeexchange( vecPatches.listEx_, vecPatches );
@@ -140,7 +140,7 @@ void SyncVectorPatch::finalizeexchangeE( VectorPatch& vecPatches )
     SyncVectorPatch::finalizeexchange( vecPatches.listEz_, vecPatches );
 }
 
-void SyncVectorPatch::exchangeB( VectorPatch& vecPatches )
+void SyncVectorPatch::exchangeB( Params& params, VectorPatch& vecPatches )
 {
 
     if (vecPatches.listBx_[0]->dims_.size()==1) {
@@ -151,17 +151,21 @@ void SyncVectorPatch::exchangeB( VectorPatch& vecPatches )
         SyncVectorPatch::new_exchange1( vecPatches.Bs1, vecPatches );
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==3 ) {
-        //SyncVectorPatch::new_exchange0( vecPatches.Bs0, vecPatches );
-        //SyncVectorPatch::new_exchange1( vecPatches.Bs1, vecPatches );
-        //SyncVectorPatch::new_exchange2( vecPatches.Bs2, vecPatches );
-        SyncVectorPatch::exchange_per_direction( vecPatches.listBx_, vecPatches );
-        SyncVectorPatch::exchange_per_direction( vecPatches.listBy_, vecPatches );
-        SyncVectorPatch::exchange_per_direction( vecPatches.listBz_, vecPatches );
+        if (params.maxwell_sol != "Lehe") {
+            SyncVectorPatch::new_exchange0( vecPatches.Bs0, vecPatches );
+            SyncVectorPatch::new_exchange1( vecPatches.Bs1, vecPatches );
+            SyncVectorPatch::new_exchange2( vecPatches.Bs2, vecPatches );
+        }
+        else {
+            SyncVectorPatch::exchange_per_direction( vecPatches.listBx_, vecPatches );
+            SyncVectorPatch::exchange_per_direction( vecPatches.listBy_, vecPatches );
+            SyncVectorPatch::exchange_per_direction( vecPatches.listBz_, vecPatches );
+        }
     }
 
 }
 
-void SyncVectorPatch::exchangeJ( VectorPatch& vecPatches )
+void SyncVectorPatch::exchangeJ( Params& params, VectorPatch& vecPatches )
 {
 
     SyncVectorPatch::exchange( vecPatches.listJx_, vecPatches );
@@ -169,7 +173,7 @@ void SyncVectorPatch::exchangeJ( VectorPatch& vecPatches )
     SyncVectorPatch::exchange( vecPatches.listJz_, vecPatches );
 }
 
-void SyncVectorPatch::finalizeexchangeJ( VectorPatch& vecPatches )
+void SyncVectorPatch::finalizeexchangeJ( Params& params, VectorPatch& vecPatches )
 {
 
     SyncVectorPatch::finalizeexchange( vecPatches.listJx_, vecPatches );
@@ -178,7 +182,7 @@ void SyncVectorPatch::finalizeexchangeJ( VectorPatch& vecPatches )
 }
 
 
-void SyncVectorPatch::finalizeexchangeB( VectorPatch& vecPatches )
+void SyncVectorPatch::finalizeexchangeB( Params& params, VectorPatch& vecPatches )
 {
     if (vecPatches.listBx_[0]->dims_.size()==1) {
         SyncVectorPatch::new_finalizeexchange0( vecPatches.Bs0, vecPatches );
@@ -188,13 +192,11 @@ void SyncVectorPatch::finalizeexchangeB( VectorPatch& vecPatches )
         SyncVectorPatch::new_finalizeexchange1( vecPatches.Bs1, vecPatches );
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==3 ) {
-        //SyncVectorPatch::new_finalizeexchange0( vecPatches.Bs0, vecPatches );
-        //SyncVectorPatch::new_finalizeexchange1( vecPatches.Bs1, vecPatches );
-        //SyncVectorPatch::new_finalizeexchange2( vecPatches.Bs2, vecPatches );
-
-        //SyncVectorPatch::finalizeexchange( vecPatches.listBx_, vecPatches );
-        //SyncVectorPatch::finalizeexchange( vecPatches.listBy_, vecPatches );
-        //SyncVectorPatch::finalizeexchange( vecPatches.listBz_, vecPatches );
+        if (params.maxwell_sol != "Lehe") {
+            SyncVectorPatch::new_finalizeexchange0( vecPatches.Bs0, vecPatches );
+            SyncVectorPatch::new_finalizeexchange1( vecPatches.Bs1, vecPatches );
+            SyncVectorPatch::new_finalizeexchange2( vecPatches.Bs2, vecPatches );
+        }
     }
 
 }
