@@ -305,8 +305,8 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
     if ( (params.is_spectral) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
         timers.syncField.restart();
         if (params.is_spectral)
-            SyncVectorPatch::finalizeexchangeE( (*this) );
-        SyncVectorPatch::finalizeexchangeB( (*this) );
+            SyncVectorPatch::finalizeexchangeE( params, (*this) );
+        SyncVectorPatch::finalizeexchangeB( params, (*this) );
         timers.syncField.update(  params.printNow( itime ) );
 
         #pragma omp for schedule(static)
