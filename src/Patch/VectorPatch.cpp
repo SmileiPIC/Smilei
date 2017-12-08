@@ -180,7 +180,7 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
 
     if ( (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
         timers.syncField.restart();
-        SyncVectorPatch::finalizeexchangeB( (*this) );
+        SyncVectorPatch::finalizeexchangeB( params, (*this) );
         timers.syncField.update(  params.printNow( itime ) );
 
         #pragma omp for schedule(static)
@@ -233,13 +233,13 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
     timers.densities.update();
 
     timers.syncDens.restart();
-    SyncVectorPatch::sumRhoJ( (*this), timers, itime ); // MPI
+    SyncVectorPatch::sumRhoJ( params, (*this), timers, itime ); // MPI
 
     if(diag_flag){
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
             if( ! (*this)(0)->vecSpecies[ispec]->particles->is_test ) {
                 update_field_list(ispec);
-                SyncVectorPatch::sumRhoJs( (*this), ispec, timers, itime ); // MPI
+                SyncVectorPatch::sumRhoJs( params, (*this), ispec, timers, itime ); // MPI
             }
         }
     }
@@ -261,8 +261,8 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
             // Current spatial filtering
             (*this)(ipatch)->EMfields->binomialCurrentFilter();
         }
-        SyncVectorPatch::exchangeJ( (*this) );
-        SyncVectorPatch::finalizeexchangeJ( (*this) );
+        SyncVectorPatch::exchangeJ( params, (*this) );
+        SyncVectorPatch::finalizeexchangeJ( params, (*this) );
     }
 
     #pragma omp for schedule(static)
@@ -282,7 +282,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
     timers.maxwell.update( params.printNow( itime ) );
 
     timers.syncField.restart();
-    SyncVectorPatch::exchangeB( (*this) );
+    SyncVectorPatch::exchangeB( params, (*this) );
     timers.syncField.update(  params.printNow( itime ) );
 
 } // END solveMaxwell
@@ -541,8 +541,8 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
         (*this)(ipatch)->EMfields->initE( (*this)(ipatch) );
 
-    SyncVectorPatch::exchangeE( *this );
-    SyncVectorPatch::finalizeexchangeE( *this );
+    SyncVectorPatch::exchangeE( params, *this );
+    SyncVectorPatch::finalizeexchangeE( params, *this );
 
     // Centering of the electrostatic fields
     // -------------------------------------
