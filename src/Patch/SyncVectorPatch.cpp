@@ -74,7 +74,7 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
 
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-        vecPatches(ipatch)->vecSpecies[ispec]->sort_part();
+        vecPatches(ipatch)->vecSpecies[ispec]->sort_part(params);
 
     /*
     // Debugging

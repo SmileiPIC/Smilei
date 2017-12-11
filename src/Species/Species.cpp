@@ -77,9 +77,9 @@ min_loc(patch->getDomainLocalMin(0))
     PI2 = 2.0 * M_PI;
     PI_ov_2 = 0.5*M_PI;
 
-    dx_inv_ = 1./cell_length[0];
-    dy_inv_ = 1./cell_length[1];
-    dz_inv_ = 1./cell_length[2];
+    dx_inv_[0] = 1./cell_length[0];
+    dx_inv_[1] = 1./cell_length[1];
+    dx_inv_[2] = 1./cell_length[2];
 
     initCluster(params);
     nDim_field = params.nDim_field;
@@ -773,7 +773,7 @@ void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::sort_part()
+void Species::sort_part(Params& param)
 {
     //The width of one bin is cell_length[0] * clrw.
 
@@ -857,8 +857,8 @@ void Species::count_sort_part(Params &params)
             x = particles->position(0,ip)-min_loc;
             y = particles->position(1,ip)-min_loc_vec[1];
 
-            ix = floor(x * dx_inv_) ;
-            iy = floor(y * dy_inv_) ;
+            ix = floor(x * dx_inv_[0]) ;
+            iy = floor(y * dx_inv_[1]) ;
 
             ixy = iy + ix*params.n_space[1];
 
@@ -890,8 +890,8 @@ void Species::count_sort_part(Params &params)
         x = particles->position(0,ip)-min_loc;
         y = particles->position(1,ip)-min_loc_vec[1];
 
-        ix = floor(x * dx_inv_) ;
-        iy = floor(y * dy_inv_) ;
+        ix = floor(x * dx_inv_[1]) ;
+        iy = floor(y * dx_inv_[2]) ;
 
         ixy = iy + ix*params.n_space[1];
 
