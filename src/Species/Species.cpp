@@ -773,8 +773,153 @@ void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::sort_part(Params& param)
+void Species::sort_part(Params& params)
 {
+    int ndim = params.nDim_field;
+    int idim, check;
+    //cleanup_sent_particles(ispec, indexes_of_particles_to_exchange);
+
+    //We have stored in indexes_of_particles_to_exchange the list of all particles that needs to be removed.
+    /********************************************************************************/
+    // Delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
+    /********************************************************************************/
+    int ii, iPart;
+
+
+    // Push lost particles at the end of bins
+    for (unsigned int ibin = 0 ; ibin < bmax.size() ; ibin++ ) {
+        ii = indexes_of_particles_to_exchange.size()-1;
+        if (ii >= 0) { // Push lost particles to the end of the bin
+            iPart = indexes_of_particles_to_exchange[ii];
+            while (iPart >= bmax[ibin] && ii > 0) {
+                ii--;
+                iPart = indexes_of_particles_to_exchange[ii];
+            }
+            while (iPart == bmax[ibin]-1 && iPart >= bmin[ibin] && ii > 0) {
+                bmax[ibin]--;
+                ii--;
+                iPart = indexes_of_particles_to_exchange[ii];
+            }
+            while (iPart >= bmin[ibin] && ii > 0) {
+                particles->overwrite_part(bmax[ibin]-1, iPart );
+                bmax[ibin]--;
+                ii--;
+                iPart = indexes_of_particles_to_exchange[ii];
+            }
+            if (iPart >= bmin[ibin] && iPart < bmax[ibin]) { //On traite la dernière particule (qui peut aussi etre la premiere)
+                particles->overwrite_part(bmax[ibin]-1, iPart );
+                bmax[ibin]--;
+            }
+        }
+    }
+
+
+    //Shift the bins in memory
+    //Warning: this loop must be executed sequentially. Do not use openMP here.
+    for (int unsigned ibin = 1 ; ibin < bmax.size() ; ibin++ ) { //First bin don't need to be shifted
+        ii = bmin[ibin]-bmax[ibin-1]; // Shift the bin in memory by ii slots.
+        iPart = min(ii,bmax[ibin]-bmin[ibin]); // Number of particles we have to shift = min (Nshift, Nparticle in the bin)
+        if(iPart > 0) particles->overwrite_part(bmax[ibin]-iPart,bmax[ibin-1],iPart);
+        bmax[ibin] -= ii;
+        bmin[ibin] = bmax[ibin-1];
+    }
+
+
+
+    int nmove,lmove; // local, OK
+    int shift[bmax.size()+1];//how much we need to shift each bin in order to leave room for the new particle
+    double dbin;
+
+    dbin = params.cell_length[0]*params.clrw; //width of a bin.
+    for (unsigned int j=0; j<bmax.size()+1 ;j++){
+        shift[j]=0;
+    }
+
+
+    int nbNeighbors_ = 2;
+    int n_part_recv;
+
+    indexes_of_particles_to_exchange.clear();
+    particles->erase_particle_trail(bmax.back());
+
+    //Evaluation of the necessary shift of all bins.2
+    for (unsigned int j=0; j<bmax.size()+1 ;j++){
+        shift[j]=0;
+    }
+
+    //idim=0
+    shift[1] += MPIbuff.part_index_recv_sz[0][0];//Particles coming from ymin all go to bin 0 and shift all the other bins.
+    shift[bmax.size()] += MPIbuff.part_index_recv_sz[0][1];//Used only to count the total number of particles arrived.
+    //idim>0
+    for (idim = 1; idim < ndim; idim++){
+        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+            n_part_recv = MPIbuff.part_index_recv_sz[idim][iNeighbor];
+            for (unsigned int j=0; j<(unsigned int)n_part_recv ;j++){
+                //We first evaluate how many particles arrive in each bin.
+                ii = int((MPIbuff.partRecv[idim][iNeighbor].position(0,j)-min_loc)/dbin);//bin in which the particle goes.
+                shift[ii+1]++; // It makes the next bins shift.
+            }
+        }
+    }
+
+
+    //Must be done sequentially
+    for (unsigned int j=1; j<bmax.size()+1;j++){ //bin 0 is not shifted.Last element of shift stores total number of arriving particles.
+        shift[j]+=shift[j-1];
+    }
+    //Make room for new particles
+    if (shift[bmax.size()]) {
+        //! vecor::resize of Charge crashed ! Temporay solution : push_back / Particle
+        //particles->initialize( particles->size()+shift[bmax.size()], particles->Position.size() );
+        for (int inewpart=0 ; inewpart<shift[bmax.size()] ; inewpart++) particles->create_particle();
+    }
+
+    //Shift bins, must be done sequentially
+    for (unsigned int j=bmax.size()-1; j>=1; j--){
+        int n_particles = bmax[j]-bmin[j]; //Nbr of particle in this bin
+        nmove = min(n_particles,shift[j]); //Nbr of particles to move
+        lmove = max(n_particles,shift[j]); //How far particles must be shifted
+        if (nmove>0) particles->overwrite_part(bmin[j], bmin[j]+lmove, nmove);
+        bmin[j] += shift[j];
+        bmax[j] += shift[j];
+    }
+
+    //Space has been made now to write the arriving particles into the correct bins
+    //idim == 0  is the easy case, when particles arrive either in first or last bin.
+    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+        n_part_recv = MPIbuff.part_index_recv_sz[0][iNeighbor];
+        //if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
+        if (                                               (n_part_recv!=0) ) {
+            ii = iNeighbor*(bmax.size()-1);//0 if iNeighbor=0(particles coming from Xmin) and bmax.size()-1 otherwise.
+            MPIbuff.partRecv[0][iNeighbor].overwrite_part(0, *particles,bmax[ii],n_part_recv);
+            bmax[ii] += n_part_recv ;
+        }
+    }
+    //idim > 0; this is the difficult case, when particles can arrive in any bin.
+    for (idim = 1; idim < ndim; idim++){
+        //if (idim!=iDim) continue;
+        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+            n_part_recv = MPIbuff.part_index_recv_sz[idim][iNeighbor];
+            //if ( (neighbor_[idim][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
+            if (                                                  (n_part_recv!=0) ) {
+                for(unsigned int j=0; j<(unsigned int)n_part_recv; j++){
+                    ii = int((MPIbuff.partRecv[idim][iNeighbor].position(0,j)-min_loc)/dbin);//bin in which the particle goes.
+                    MPIbuff.partRecv[idim][iNeighbor].overwrite_part(j, *particles,bmax[ii]);
+                    bmax[ii] ++ ;
+                }
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+
+
     //The width of one bin is cell_length[0] * clrw.
 
     int p1,p2,bmin_init;
