@@ -625,6 +625,8 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
             }
         }
 
+        vecSpecies[ispec]->sort_part(params);
+
     }//End Recv_buffers ==> particles
 
 
