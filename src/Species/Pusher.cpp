@@ -2,8 +2,16 @@
 #include "Params.h"
 #include "Species.h"
 
-Pusher::Pusher(Params& params, Species *species)
+Pusher::Pusher(Params& params, Species *species) :
+    min_loc_vec(species->min_loc_vec) 
 {
+    for (unsigned int ipos=0; ipos < params.nDim_particle ; ipos++) 
+        dx_inv_[ipos] = species->dx_inv_[ipos];
+
+    nspace[0] = 0;
+    nspace[1] = params.n_space[1]+1;
+    nspace[2] = params.n_space[2]+1;
+
     mass_          = species->mass;
     if (mass_ > 0.)
     {
