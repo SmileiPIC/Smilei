@@ -201,6 +201,9 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
         (*Push)(*particles, smpi, 0, bmax[bmax.size()-1], ithread );
         //particles->test_move( bmin[ibin], bmax[ibin], params );
 
+        //Prepare for sorting
+        for (unsigned int i=0; i<species_loc_bmax.size(); i++)
+            species_loc_bmax[i] = 0;
 
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
             // Apply wall and boundary conditions
@@ -244,7 +247,12 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
                         addPartInExchList( iPart );
                         nrj_lost_per_thd[tid] += ener_iPart;
                     }
-                 }
+                    else {
+                        //First reduction of the count sort algorithm. Lost particles are not included.
+                        species_loc_bmax[(*particles).cell_keys[iPart]] ++; //First reduction of the count sort algorithm. Lost particles are not included.
+
+                    }
+                }
 
             }
         }
