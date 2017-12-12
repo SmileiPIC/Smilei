@@ -63,7 +63,7 @@ species_name_list = ["disc","cont"]               # List of names for species
 
 # Density profile for inital location of the particles
 def n0_(x,y):
-        if ((x-0.75*Lx)**2 + (y-0.5*Ly)**2 <= 0.25*dx):
+        if ((x-0.75*Lx)**2 + (y-0.5*Ly)**2 <= 0.5*dx):
                 return n0
         else:
                 return 0.
@@ -109,9 +109,9 @@ for i,radiation in enumerate(radiation_list):
 
     Species(
         name = "electron_" + species_name_list[i],
-        position_initialization = "centered",
+        position_initialization = "regular",
         momentum_initialization = "cold",
-        particles_per_cell = 10,
+        particles_per_cell = 16,
         c_part_max = 1.0,
         mass = 1.0,
         charge = -1.0,
