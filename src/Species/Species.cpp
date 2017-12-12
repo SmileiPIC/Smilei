@@ -304,52 +304,33 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
     // -------------------------------------------------------------------------
     if (mass > 0)
     {
-
-        // average mean-momentum (used to center the distribution)
-        double pMean[3]= {0.0,0.0,0.0};
-
+        
         // Cold distribution
         if (momentum_initialization == "cold") {
-
+            
             for (unsigned int p=iPart; p<iPart+nPart; p++) {
                 particles->momentum(0,p) = 0.0;
                 particles->momentum(1,p) = 0.0;
                 particles->momentum(2,p) = 0.0;
             }
-
+            
         // Maxwell-Juttner distribution
         } else if (momentum_initialization == "maxwell-juettner") {
-
+            
             // Sample the energies in the MJ distribution
             vector<double> energies = maxwellJuttner(nPart, temp[0]/mass);
-
+            
             // Sample angles randomly and calculate the momentum
             for (unsigned int p=iPart; p<iPart+nPart; p++) {
                 double phi   = acos(-Rand::uniform2());
                 double theta = 2.0*M_PI*Rand::uniform();
                 double psm = sqrt(pow(1.0+energies[p-iPart],2)-1.0);
-
+                
                 particles->momentum(0,p) = psm*cos(theta)*sin(phi);
                 particles->momentum(1,p) = psm*sin(theta)*sin(phi);
                 particles->momentum(2,p) = psm*cos(phi);
-
-                // Calculate the mean momentum
-                pMean[0] += particles->momentum(0,p);
-                pMean[1] += particles->momentum(1,p);
-                pMean[2] += particles->momentum(2,p);
             }
-
-            pMean[0] /= nPart;
-            pMean[1] /= nPart;
-            pMean[2] /= nPart;
-
-            // center the distribution function around pMean
-            for (unsigned int p=iPart; p<iPart+nPart; p++) {
-                particles->momentum(0,p) -= pMean[0];
-                particles->momentum(1,p) -= pMean[1];
-                particles->momentum(2,p) -= pMean[2];
-            }
-
+            
             // Trick to have non-isotropic distribution (not good)
             double t1 = sqrt(temp[1]/temp[0]), t2 = sqrt(temp[2]/temp[0]);
             if( t1!=1. || t2 !=1. ) {
@@ -358,10 +339,10 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
                     particles->momentum(2,p) *= t2;
                 }
             }
-
+            
         // Rectangular distribution
         } else if (momentum_initialization == "rectangular") {
-
+            
             double t0 = sqrt(temp[0]/mass), t1 = sqrt(temp[1]/mass), t2 = sqrt(temp[2]/mass);
             for (unsigned int p= iPart; p<iPart+nPart; p++) {
                 particles->momentum(0,p) = Rand::uniform2() * t0;
@@ -369,7 +350,7 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
                 particles->momentum(2,p) = Rand::uniform2() * t2;
             }
         }
-
+        
         // Adding the mean velocity (using relativistic composition)
         // Also relies on the method proposed in Zenitani, Phys. Plasmas 22, 042116 (2015)
         // to ensure the correct properties of a boosted distribution function
@@ -381,10 +362,10 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
         vz  = -vel[2];
         v2  = vx*vx + vy*vy + vz*vz;
         if ( v2>0. ){
-
+            
             g   = 1.0/sqrt(1.0-v2);
             gm1 = g - 1.0;
-
+            
             // compute the different component of the Matrix block of the Lorentz transformation
             Lxx = 1.0 + gm1 * vx*vx/v2;
             Lyy = 1.0 + gm1 * vy*vy/v2;
@@ -392,26 +373,26 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
             Lxy = gm1 * vx*vy/v2;
             Lxz = gm1 * vx*vz/v2;
             Lyz = gm1 * vy*vz/v2;
-
+            
             // Volume transformation method (here is the correction by Zenitani)
             double Volume_Acc;
             double CheckVelocity;
-
+            
             // Lorentz transformation of the momentum
             for (unsigned int p=iPart; p<iPart+nPart; p++)
             {
                 gp = sqrt(1.0 + pow(particles->momentum(0,p), 2)
                               + pow(particles->momentum(1,p), 2)
                               + pow(particles->momentum(2,p), 2) );
-
+                
                 CheckVelocity = ( vx*particles->momentum(0,p) + vy*particles->momentum(1,p) + vz*particles->momentum(2,p) ) / gp;
                 Volume_Acc = Rand::uniform();
                 if (CheckVelocity > Volume_Acc){
-
+                    
                     double Phi , Theta , vfl ,vflx , vfly, vflz, vpx , vpy , vpz ;
                     Phi = atan2(sqrt(vx*vx +vy*vy), vz);
                     Theta = atan2(vy, vx);
-
+                    
                     vpx = particles->momentum(0,p)/gp ;
                     vpy = particles->momentum(1,p)/gp ;
                     vpz = particles->momentum(2,p)/gp ;
@@ -426,20 +407,20 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
                     particles->momentum(0,p) = vpx*gp ;
                     particles->momentum(1,p) = vpy*gp ;
                     particles->momentum(2,p) = vpz*gp ;
-
+                    
                 }//here ends the corrections by Zenitani
-
+                
                 px = -gp*g*vx + Lxx * particles->momentum(0,p) + Lxy * particles->momentum(1,p) + Lxz * particles->momentum(2,p);
                 py = -gp*g*vy + Lxy * particles->momentum(0,p) + Lyy * particles->momentum(1,p) + Lyz * particles->momentum(2,p);
                 pz = -gp*g*vz + Lxz * particles->momentum(0,p) + Lyz * particles->momentum(1,p) + Lzz * particles->momentum(2,p);
-
+                
                 particles->momentum(0,p) = px;
                 particles->momentum(1,p) = py;
                 particles->momentum(2,p) = pz;
             }
-
+        
         }//ENDif vel != 0
-
+    
     }
     // -------------------------------------------------------------------------
     // Photons
