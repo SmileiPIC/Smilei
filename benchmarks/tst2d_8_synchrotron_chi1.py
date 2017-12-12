@@ -17,6 +17,7 @@
 # ----------------------------------------------------------------------------------------
 
 import math
+import datetime
 
 # ----------------------------------------------------------------------------------------
 # Main parameters
@@ -58,6 +59,9 @@ radiation_list = ["Monte-Carlo",
                   "corrected-Landau-Lifshitz"]    # List of radiation models for species
 species_name_list = ["disc","cont"]               # List of names for species
 
+datetime = datetime.datetime.now()
+random_seed = datetime.microsecond
+
 # ----------------------------------------------------------------------------------------
 # Functions
 
@@ -88,7 +92,7 @@ Main(
 
     EM_boundary_conditions = [['periodic'],['periodic']],
 
-    random_seed = 0,
+    random_seed = random_seed,
 
     reference_angular_frequency_SI = wr
 

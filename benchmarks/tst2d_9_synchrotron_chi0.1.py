@@ -63,7 +63,6 @@ species_name_list = ["Niel",
                      "Landau_Lifshitz"]           # List of names for species
 
 datetime = datetime.datetime.now()
-
 random_seed = datetime.microsecond
 
 # ----------------------------------------------------------------------------------------
