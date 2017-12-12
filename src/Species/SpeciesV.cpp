@@ -44,6 +44,8 @@ using namespace std;
 SpeciesV::SpeciesV(Params& params, Patch* patch) :
     SpeciesNorm(params, patch)
 {
+    initCluster( params );
+
 }//END SpeciesV creator
 
 // ---------------------------------------------------------------------------------------------------------------------
