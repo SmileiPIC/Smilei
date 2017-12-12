@@ -1,5 +1,5 @@
-#ifndef INTERPOLATOR2D2ORDER_H
-#define INTERPOLATOR2D2ORDER_H
+#ifndef INTERPOLATOR2D2ORDERV_H
+#define INTERPOLATOR2D2ORDERV_H
 
 
 #include "Interpolator2D.h"
@@ -7,17 +7,19 @@
 
 
 //  --------------------------------------------------------------------------------------------------------------------
-//! Class for 2nd order interpolator for 1Dcartesian simulations
+//! Class for 2nd order interpolator for 1d3v simulations
 //  --------------------------------------------------------------------------------------------------------------------
-class Interpolator2D2Order : public Interpolator2D
+class Interpolator2D2OrderV : public Interpolator2D
 {
 
 public:
-    Interpolator2D2Order(Params&, Patch*);
-    ~Interpolator2D2Order() override final {};
+    Interpolator2D2OrderV(Params&, Patch*);
+    ~Interpolator2D2OrderV() override final {};
 
     inline void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, double* ELoc, double* BLoc);
-    void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread) override final ;
+    // Sorting
+    void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread) override final;
+    // Probes
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc) override final ;
 
     inline double compute( double* coeffx, double* coeffy, Field2D* f, int idx, int idy) {
@@ -32,16 +34,6 @@ public:
     };  
 
 private:
-    // Last prim index computed
-    int ip_, jp_;
-    // Last dual index computed
-    int id_, jd_;
-    // Last delta computed
-    double deltax, deltay;
-    // Interpolation coefficient on Prim grid
-    double coeffxp_[3], coeffyp_[3];
-    // Interpolation coefficient on Dual grid
-    double coeffxd_[3], coeffyd_[3];
 
 
 };//END class

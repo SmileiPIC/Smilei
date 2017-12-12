@@ -10,6 +10,9 @@
 #include "Interpolator3D2Order.h"
 #include "Interpolator3D4Order.h"
 
+#include "Interpolator2D2OrderV.h"
+#include "Interpolator3D2OrderV.h"
+
 #include "Params.h"
 #include "Patch.h"
 
@@ -32,7 +35,10 @@ public:
         // 2Dcartesian simulation
         // ---------------
         else if ( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
-            Interp = new Interpolator2D2Order(params, patch);
+            if (!params.vecto)
+                Interp = new Interpolator2D2Order(params, patch);
+            else
+                Interp = new Interpolator2D2OrderV(params, patch);
         }
         else if ( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == 4 ) ) {
             Interp = new Interpolator2D4Order(params, patch);
@@ -41,7 +47,10 @@ public:
         // 3Dcartesian simulation
         // ---------------
         else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
-            Interp = new Interpolator3D2Order(params, patch);
+            if (!params.vecto)
+                Interp = new Interpolator3D2Order(params, patch);
+            else
+                Interp = new Interpolator3D2OrderV(params, patch);
         }
         else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == 4 ) ) {
             Interp = new Interpolator3D4Order(params, patch);

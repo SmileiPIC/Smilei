@@ -283,7 +283,7 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     (*RhoLoc) = compute( &coeffxp_[2], &coeffyp_[2], Rho2D, ip_, jp_);
 
 }
-void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
+void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
@@ -292,7 +292,7 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
 
     //Loop on bin particles
     int nparts( particles.size() );
-    for (int ipart=istart ; ipart<iend; ipart++ ) {
+    for (int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
         (*this)(EMfields, particles, ipart, &(*Epart)[ipart], &(*Bpart)[ipart]);
         //Buffering of iol and delta
