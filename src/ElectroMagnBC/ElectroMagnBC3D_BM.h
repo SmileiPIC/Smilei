@@ -25,7 +25,7 @@ public:
     void save_fields(Field*, Patch* patch) override;
     void disableExternalFields() override;
 
-    //! Save external fields for silver muller EM Boundary condition
+    //! Save external fields for Buneman EM Boundary condition
     Field2D *Bx_val, *By_val, *Bz_val;
     
 private:
@@ -80,121 +80,60 @@ private:
 
 
 
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Alpha_BM_W;
+    //! Constant used for the Buneman boundary conditions (Xmin)
+    double Alpha_BM_xmin;
     
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Beta_BM_W;
+    //! Constant used for the Buneman boundary conditions (Xmin)
+    double Beta_BM_xmin;
     
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Gamma_BM_W;
+    //! Constant used for the Buneman boundary conditions (Xmin)
+    double Gamma_BM_xmin;
     
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Delta_BM_W;
+    //! Constant used for the Buneman boundary conditions (Xmax)
+    double Alpha_BM_xmax;
     
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Epsilon_BM_W;
+    //! Constant used for the Buneman boundary conditions (Xmax)
+    double Beta_BM_xmax;
     
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Zeta_BM_W;
+    //! Constant used for the Buneman boundary conditions (Xmax)
+    double Gamma_BM_xmax;
+    
 
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Eta_BM_W;
+    //! Constant used for the Buneman boundary conditions (Transverse Y)
+    double Alpha_BM_ymin;
+    
+    //! Constant used for the Buneman boundary conditions (Transverse Y)
+    double Beta_BM_ymin;
+    
+    //! Constant used for the Buneman boundary conditions (Transverse Y)
+    double Gamma_BM_ymin;
 
-    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Alpha_BM_E;
+    //! Constant used for the Buneman boundary conditions (Transverse Y)
+    double Alpha_BM_ymax;
     
-    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Beta_BM_E;
+    //! Constant used for the Buneman boundary conditions (Transverse Y)
+    double Beta_BM_ymax;
     
-    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Gamma_BM_E;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Delta_BM_E;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Epsilon_BM_E;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Zeta_BM_E;
+    //! Constant used for the Buneman boundary conditions (Trnsverse Y)
+    double Gamma_BM_ymax;
 
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Eta_BM_E;
+     //! Constant used for the Buneman boundary conditions (Transverse Z)
+    double Alpha_BM_zmin;
+    
+    //! Constant used for the Buneman boundary conditions (Transverse Z)
+    double Beta_BM_zmin;
+    
+    //! Constant used for the Buneman boundary conditions (Trnsverse Z)
+    double Gamma_BM_zmin;
 
-
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
-    double Alpha_BM_S;
+    //! Constant used for the Buneman boundary conditions (Transverse Z)
+    double Alpha_BM_zmax;
     
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
-    double Beta_BM_S;
+    //! Constant used for the Buneman boundary conditions (Transverse Z)
+    double Beta_BM_zmax;
     
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
-    double Delta_BM_S;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
-    double Epsilon_BM_S;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Zeta_BM_S;
-
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Eta_BM_S;
-
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
-    double Alpha_BM_N;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
-    double Beta_BM_N;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
-    double Delta_BM_N;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
-    double Epsilon_BM_N;
-
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Zeta_BM_N;
-
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Eta_BM_N;
-
-
-     //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
-    double Alpha_BM_B;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
-    double Beta_BM_B;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
-    double Delta_BM_B;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
-    double Epsilon_BM_B;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Zeta_BM_B;
-
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Eta_BM_B;
-
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
-    double Alpha_BM_T;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
-    double Beta_BM_T;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
-    double Delta_BM_T;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
-    double Epsilon_BM_T;
-   
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Zeta_BM_T;
-
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Eta_BM_T;
+    //! Constant used for the Buneman boundary conditions (Trnsverse Z)
+    double Gamma_BM_zmax;
 
 };
 

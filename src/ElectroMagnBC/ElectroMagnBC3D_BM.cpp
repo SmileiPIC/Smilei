@@ -110,69 +110,46 @@ ElectroMagnBC3D_BM::ElectroMagnBC3D_BM( Params &params, Patch* patch, unsigned i
     // Parameters for the Silver-Mueller boundary conditions
     // -----------------------------------------------------
     
-    //! \todo (MG) Check optimal angle for Silver-Muller BCs
+    //! \todo (AB) Check optimal angle for buneman BC
     
     // Xmin boundary
     double theta  = 0.0*conv_deg2rad; //0.0;
+    double phi    = 0.0*conv_deg2rad; //0.0;
     double factor = 1.0 / (cos(theta) + dt_ov_dx);
-    Alpha_BM_W    = 2.0                     * factor;
-    Beta_BM_W     = - (cos(theta)-dt_ov_dx) * factor;
-    Gamma_BM_W    = 4.0 * cos(theta)        * factor;
-    Delta_BM_W    = - (sin(theta)+dt_ov_dy) * factor;
-    Epsilon_BM_W  = - (sin(theta)-dt_ov_dy) * factor;
-    Zeta_BM_W     = - dt_ov_dz              * factor;
-    Eta_BM_W      =   dt_ov_dz              * factor;
+    Alpha_BM_xmin    = 2.0                     * factor;
+    Beta_BM_xmin     = - (cos(theta)-dt_ov_dx) * factor;
+    Gamma_BM_xmin    = 4.0 * cos(theta)        * factor;
     
     // Xmax boundary
     theta         = M_PI;
     factor        = 1.0 / (cos(theta) - dt_ov_dx);
-    Alpha_BM_E    = 2.0                      * factor;
-    Beta_BM_E     = - (cos(theta)+dt_ov_dx)  * factor;
-    Gamma_BM_E    = 4.0 * cos(theta)         * factor;
-    Delta_BM_E    = - (sin(theta)+dt_ov_dy)  * factor;
-    Epsilon_BM_E  = - (sin(theta)-dt_ov_dy)  * factor;
-    Zeta_BM_E     = - dt_ov_dz              * factor;
-    Eta_BM_E      =   dt_ov_dz              * factor;
-    
+    Alpha_BM_xmax    = 2.0                      * factor;
+    Beta_BM_xmax     = - (cos(theta)+dt_ov_dx)  * factor;
+    Gamma_BM_xmax    = 4.0 * cos(theta)         * factor;
+     
     // Ymin boundary
     theta  = 0.0;
     factor = 1.0 / (cos(theta) + dt_ov_dy );
-    Alpha_BM_S    = 2.0                     * factor;
-    Beta_BM_S     = - (cos(theta)-dt_ov_dy) * factor;
-    Delta_BM_S    = - (sin(theta)+dt_ov_dz) * factor;
-    Epsilon_BM_S  = - (sin(theta)-dt_ov_dz) * factor;
-    Zeta_BM_S     = - dt_ov_dx              * factor;
-    Eta_BM_S      =   dt_ov_dx              * factor;
+    Alpha_BM_ymin    = 2.0                     * factor;
+    Beta_BM_ymin     = - (cos(theta)-dt_ov_dy) * factor;
     
     // Ymax boundary
     theta  = M_PI;
     factor = 1.0 / (cos(theta) - dt_ov_dy);
-    Alpha_BM_N    = 2.0                     * factor;
-    Beta_BM_N     = - (cos(theta)+dt_ov_dy) * factor;
-    Delta_BM_N    = - (sin(theta)+dt_ov_dz) * factor;
-    Epsilon_BM_N  = - (sin(theta)-dt_ov_dz) * factor;
-    Zeta_BM_N     = - dt_ov_dx              * factor;
-    Eta_BM_N      =   dt_ov_dx              * factor;
+    Alpha_BM_ymax    = 2.0                     * factor;
+    Beta_BM_ymax     = - (cos(theta)+dt_ov_dy) * factor;
     
     // Zmin boundary
     theta  = 0.0;
     factor = 1.0 / (cos(theta) + dt_ov_dz);
-    Alpha_BM_B    = 2.0                     * factor;
-    Beta_BM_B     = - (cos(theta)-dt_ov_dz) * factor;
-    Delta_BM_B    = - (sin(theta)+dt_ov_dx) * factor;
-    Epsilon_BM_B  = - (sin(theta)-dt_ov_dx) * factor;
-    Zeta_BM_B     = - dt_ov_dy              * factor;
-    Eta_BM_B      =   dt_ov_dy              * factor;
+    Alpha_BM_zmin    = 2.0                     * factor;
+    Beta_BM_zmin     = - (cos(theta)-dt_ov_dz) * factor;
     
     // Zmax boundary
     theta         = M_PI;
     factor        = 1.0 / (cos(theta) - dt_ov_dz);
-    Alpha_BM_T    = 2.0                      * factor;
-    Beta_BM_T     = - (cos(theta)+dt_ov_dz)  * factor;
-    Delta_BM_T    = - (sin(theta)+dt_ov_dx)  * factor;
-    Epsilon_BM_T  = - (sin(theta)-dt_ov_dx)  * factor;
-    Zeta_BM_T     = - dt_ov_dy              * factor;
-    Eta_BM_T      =   dt_ov_dy              * factor;
+    Alpha_BM_zmax    = 2.0                      * factor;
+    Beta_BM_zmax     = - (cos(theta)+dt_ov_dz)  * factor;
     
 }
 
@@ -304,11 +281,9 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
                     byW += vecLaser[ilaser]->getAmplitude0(pos, time_dual, j, k);
                 }
                 
-                (*By3D)(0,j,k) = Alpha_BM_W   * (*Ez3D)(0,j,k)
-                +              Beta_BM_W    *( (*By3D)(1,j,k)-(*By_val)(j,k))
-                +              Gamma_BM_W   * byW
-                +              Delta_BM_W   *( (*Bx3D)(0,j+1,k)-(*Bx_val)(j+1,k) )
-                +              Epsilon_BM_W *( (*Bx3D)(0,j,k)-(*Bx_val)(j,k) )
+                (*By3D)(0,j,k) = Alpha_BM_xmin   * (*Ez3D)(0,j,k)
+                +              Beta_BM_xmin    *( (*By3D)(1,j,k)-(*By_val)(j,k))
+                +              Gamma_BM_xmin   * byW
                 +              (*By_val)(j,k);
             }// k  ---end compute By
         }//j  ---end compute By
@@ -326,11 +301,9 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
                     bzW += vecLaser[ilaser]->getAmplitude1(pos, time_dual, j, k);
                 }
                 
-                (*Bz3D)(0,j,k) = - Alpha_BM_W   * (*Ey3D)(0,j,k)
-                +              Beta_BM_W    *( (*Bz3D)(1,j,k)-(*Bz_val)(j,k))
-                +              Gamma_BM_W   * bzW
-                +              Zeta_BM_W   *( (*Bx3D)(0,j,k+1)-(*Bx_val)(j,k+1) )
-                +              Eta_BM_W *( (*Bx3D)(0,j,k)-(*Bx_val)(j,k) )
+                (*Bz3D)(0,j,k) = - Alpha_BM_xmin   * (*Ey3D)(0,j,k)
+                +              Beta_BM_xmin    *( (*Bz3D)(1,j,k)-(*Bz_val)(j,k))
+                +              Gamma_BM_xmin   * bzW
                 +              (*Bz_val)(j,k);
                 
             }// k  ---end compute Bz
@@ -361,11 +334,9 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
                     byE += vecLaser[ilaser]->getAmplitude0(pos, time_dual, j, k);
                 }
                 
-                (*By3D)(nx_d-1,j,k) = Alpha_BM_E   * (*Ez3D)(nx_p-1,j,k)
-                +                   Beta_BM_E    *( (*By3D)(nx_d-2,j,k) -(*By_val)(j,k))
-                +                   Gamma_BM_E   * byE
-                +                   Delta_BM_E   *( (*Bx3D)(nx_p-1,j+1,k) -(*Bx_val)(j+1,k))// Check x-index
-                +                   Epsilon_BM_E *( (*Bx3D)(nx_p-1,j,k) -(*Bx_val)(j,k))
+                (*By3D)(nx_d-1,j,k) = Alpha_BM_xmax   * (*Ez3D)(nx_p-1,j,k)
+                +                   Beta_BM_xmax    *( (*By3D)(nx_d-2,j,k) -(*By_val)(j,k))
+                +                   Gamma_BM_xmax   * byE
                 +                   (*By_val)(j,k);
                 
             }//k  ---end compute By
@@ -384,11 +355,9 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
                     bzE += vecLaser[ilaser]->getAmplitude1(pos, time_dual, j, k);
                 }
                 
-                (*Bz3D)(nx_d-1,j,k) = -Alpha_BM_E * (*Ey3D)(nx_p-1,j,k)
-                +                    Beta_BM_E  *( (*Bz3D)(nx_d-2,j,k) -(*Bz_val)(j,k))
-                +                    Gamma_BM_E * bzE
-                +                    Zeta_BM_E   *( (*Bx3D)(nx_p-1,j,k+1)-(*Bx_val)(j,k+1) )
-                +                    Eta_BM_E *( (*Bx3D)(nx_p-1,j,k)-(*Bx_val)(j,k) )
+                (*Bz3D)(nx_d-1,j,k) = -Alpha_BM_xmax * (*Ey3D)(nx_p-1,j,k)
+                +                    Beta_BM_xmax  *( (*Bz3D)(nx_d-2,j,k) -(*Bz_val)(j,k))
+                +                    Gamma_BM_xmax * bzE
                 +                    (*Bz_val)(j,k);
             }//k  ---end compute Bz
         }//j  ---end compute Bz
@@ -406,10 +375,8 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         // for Bx^(p,d,d)
         for (unsigned int i=0 ; i<nx_p ; i++) {
             for (unsigned int k=0 ; k<nz_d ; k++) {
-                (*Bx3D)(i,0,k) = - Alpha_BM_S   * (*Ez3D)(i,0,k)
-                +              Beta_BM_S    *( (*Bx3D)(i,1,k)-(*Bx_val)(i,k))
-                +              Zeta_BM_S   *( (*By3D)(i+1,0,k)-(*By_val)(i+1,k) )
-                +              Eta_BM_S *( (*By3D)(i,0,k)-(*By_val)(i,k) )
+                (*Bx3D)(i,0,k) = - Alpha_BM_ymin   * (*Ez3D)(i,0,k)
+                +              Beta_BM_ymin    *( (*Bx3D)(i,1,k)-(*Bx_val)(i,k))
                 +              (*Bx_val)(i,k);
             }// k  ---end compute Bx
         }//i  ---end compute Bx
@@ -417,10 +384,8 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         // for Bz^(d,d,p)
         for (unsigned int i=0 ; i<nx_d ; i++) {
             for (unsigned int k=0 ; k<nz_p ; k++) {
-                (*Bz3D)(i,0,k) = Alpha_BM_S   * (*Ex3D)(i,0,k)
-                +              Beta_BM_S    *( (*Bz3D)(i,1,k)-(*Bz_val)(i,k))
-                +              Delta_BM_S   *( (*By3D)(i,0,k+1)-(*By_val)(i,k+1) )
-                +              Epsilon_BM_S *( (*By3D)(i,0,k)-(*By_val)(i,k) )
+                (*Bz3D)(i,0,k) = Alpha_BM_ymin   * (*Ex3D)(i,0,k)
+                +              Beta_BM_ymin    *( (*Bz3D)(i,1,k)-(*Bz_val)(i,k))
                 +              (*Bz_val)(i,k);
             }// k  ---end compute Bz
         }//i  ---end compute Bz
@@ -440,10 +405,8 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         for (unsigned int i=0 ; i<nx_p ; i++) {
             for (unsigned int k=0 ; k<nz_d ; k++) {
                 
-                (*Bx3D)(i,ny_d-1,k) = -Alpha_BM_N * (*Ez3D)(i,ny_p-1,k)
-                +                    Beta_BM_N  *( (*Bx3D)(i,ny_d-2,k) -(*Bx_val)(i,k))
-                +                    Zeta_BM_N   *( (*By3D)(i+1,ny_p-1,k)-(*By_val)(i+1,k) )
-                +                    Eta_BM_N *( (*By3D)(i,ny_p-1,k)-(*By_val)(i,k) )
+                (*Bx3D)(i,ny_d-1,k) = -Alpha_BM_ymax * (*Ez3D)(i,ny_p-1,k)
+                +                    Beta_BM_ymax  *( (*Bx3D)(i,ny_d-2,k) -(*Bx_val)(i,k))
                 +                    (*Bx_val)(i,k);
                 
             }//k  ---end compute Bz
@@ -453,10 +416,8 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         for (unsigned int i=0 ; i<nx_d ; i++) {
             for (unsigned int k=0 ; k<nz_p ; k++) {
                 
-                (*Bz3D)(i,ny_d-1,k) = Alpha_BM_N   * (*Ex3D)(i,ny_p-1,k)
-                +                   Beta_BM_N    *( (*Bz3D)(i,ny_d-2,k) -(*Bz_val)(i,k))
-                +                   Delta_BM_N   *( (*By3D)(i,ny_p-1,k+1) -(*By_val)(i,k+1))
-                +                   Epsilon_BM_N *( (*By3D)(i,ny_p-1,k) -(*By_val)(i,k))
+                (*Bz3D)(i,ny_d-1,k) = Alpha_BM_ymax   * (*Ex3D)(i,ny_p-1,k)
+                +                   Beta_BM_ymax    *( (*Bz3D)(i,ny_d-2,k) -(*Bz_val)(i,k))
                 +                   (*Bz_val)(i,k);
                 
             }//k  ---end compute Bz
@@ -476,10 +437,8 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         for (unsigned int i=0 ; i<nx_p ; i++) {
             for (unsigned int j=0 ; j<ny_d ; j++) {
                 
-                (*Bx3D)(i,j,0) = Alpha_BM_B   * (*Ey3D)(i,j,0)
-                +              Beta_BM_B    *( (*Bx3D)(i,j,1)-(*Bx_val)(i,j))
-                +              Delta_BM_B   *( (*Bz3D)(i+1,j,0)-(*Bz_val)(i+1,j) )
-                +              Epsilon_BM_B *( (*Bz3D)(i,j,0)-(*Bz_val)(i,j) )
+                (*Bx3D)(i,j,0) = Alpha_BM_zmin   * (*Ey3D)(i,j,0)
+                +              Beta_BM_zmin    *( (*Bx3D)(i,j,1)-(*Bx_val)(i,j))
                 +              (*Bx_val)(i,j);
             }// j  ---end compute Bx
         }//i  ---end compute Bx
@@ -488,10 +447,8 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         for (unsigned int i=0 ; i<nx_d ; i++) {
             for (unsigned int j=0 ; j<ny_p ; j++) {
                 
-                (*By3D)(i,j,0) = - Alpha_BM_B   * (*Ex3D)(i,j,0)
-                +              Beta_BM_B    *( (*By3D)(i,j,1)-(*By_val)(i,j))
-                +              Zeta_BM_B   *( (*Bz3D)(i,j+1,0)-(*Bz_val)(i,j+1) )
-                +              Eta_BM_B *( (*Bz3D)(i,j,0)-(*Bz_val)(i,j) )
+                (*By3D)(i,j,0) = - Alpha_BM_zmin   * (*Ex3D)(i,j,0)
+                +              Beta_BM_zmin    *( (*By3D)(i,j,1)-(*By_val)(i,j))
                 +              (*By_val)(i,j);
                 
             }// j  ---end compute By
@@ -512,10 +469,8 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         for (unsigned int i=0 ; i<nx_p ; i++) {
             for (unsigned int j=0 ; j<ny_d ; j++) {
                 
-                (*Bx3D)(i,j,nz_d-1) = Alpha_BM_T   * (*Ey3D)(i,j,nz_p-1)
-                +                   Beta_BM_T    *( (*Bx3D)(i,j,nz_d-2) -(*Bx_val)(i,j))
-                +                   Delta_BM_T   *( (*Bz3D)(i+1,j,nz_p-1) -(*Bz_val)(i+1,j))
-                +                   Epsilon_BM_T *( (*Bz3D)(i,j,nz_p-1) -(*Bz_val)(i,j))
+                (*Bx3D)(i,j,nz_d-1) = Alpha_BM_zmax   * (*Ey3D)(i,j,nz_p-1)
+                +                   Beta_BM_zmax    *( (*Bx3D)(i,j,nz_d-2) -(*Bx_val)(i,j))
                 +                   (*Bx_val)(i,j);
                 
             }//j  ---end compute Bx
@@ -526,10 +481,8 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         for (unsigned int i=0 ; i<nx_d ; i++) {
             for (unsigned int j=0 ; j<ny_p ; j++) {
                 
-                (*By3D)(i,j,nz_d-1) = -Alpha_BM_T * (*Ex3D)(i,j,nz_p-1)
-                +                    Beta_BM_T  *( (*By3D)(i,j,nz_d-2) -(*By_val)(i,j))
-                +                    Zeta_BM_T   *( (*Bz3D)(i,j+1,nz_p-1)-(*Bz_val)(i,j+1) )
-                +                    Eta_BM_T *( (*Bz3D)(i,j,nz_p-1)-(*Bz_val)(i,j) )
+                (*By3D)(i,j,nz_d-1) = -Alpha_BM_zmax * (*Ex3D)(i,j,nz_p-1)
+                +                    Beta_BM_zmax  *( (*By3D)(i,j,nz_d-2) -(*By_val)(i,j))
                 +                    (*By_val)(i,j);
                 
             }//j  ---end compute By
