@@ -192,6 +192,9 @@ public:
     //! Number of spatial dimension for the particles
     unsigned int nDim_particle;
 
+    //! Number of spatial dimension for the fields
+    unsigned int nDim_field;
+
     //! sub primal dimensions of fields
     unsigned int f_dim0, f_dim1, f_dim2;
 
@@ -387,9 +390,6 @@ private:
 
     //! Parameter used when defining the Maxwell-Juettner function (corresponds to a discretization step in energy)
 //    double dE;
-
-    //! Number of spatial dimension for the fields
-    unsigned int nDim_field;
 
     //! Inverse of the number of spatial dimension for the fields
     double inv_nDim_field;

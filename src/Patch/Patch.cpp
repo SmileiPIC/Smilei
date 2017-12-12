@@ -520,8 +520,8 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                                 (vecSpecies[ispec]->MPIbuff.partRecv[iDim][(iNeighbor+1)%2]).cp_particle(iPart, cuParticles);
                                 //...adjust bmax ...
                                 #ifndef AGERER
-                                (*cubmax)[(*cubmax).size()-1]++;
-                                //vecSpecies[ispec]->particles->cell_keys.push_back(-1);
+                                //(*cubmax)[(*cubmax).size()-1]++;
+                                vecSpecies[ispec]->particles->cell_keys.push_back(-1);
                                 #endif
                                 //... and add its index to the particles to be sent later...
                                 vecSpecies[ispec]->MPIbuff.part_index_send[idim][0].push_back( cuParticles.size()-1 );
@@ -538,8 +538,8 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                             if (neighbor_[idim][1]!=MPI_PROC_NULL){ //if neighbour exists
                                 (vecSpecies[ispec]->MPIbuff.partRecv[iDim][(iNeighbor+1)%2]).cp_particle(iPart, cuParticles);
                                 #ifndef AGERER
-                                (*cubmax)[(*cubmax).size()-1]++;
-                                //vecSpecies[ispec]->particles->cell_keys.push_back(-1);
+                                //(*cubmax)[(*cubmax).size()-1]++;
+                                vecSpecies[ispec]->particles->cell_keys.push_back(-1);
                                 #endif
                                 vecSpecies[ispec]->MPIbuff.part_index_send[idim][1].push_back( cuParticles.size()-1 );
                                 vecSpecies[ispec]->addPartInExchList(cuParticles.size()-1);

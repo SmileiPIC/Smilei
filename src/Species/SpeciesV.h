@@ -32,6 +32,17 @@ class SpeciesV : public SpeciesNorm
 //                      Projector* proj, Params &params, bool diag_flag,
 //                      PartWalls* partWalls, Patch* patch, SmileiMPI* smpi) override;
 //
+
+    //! Method calculating the Particle dynamics (interpolation, pusher, projection)
+    void dynamics(double time, unsigned int ispec,
+                          ElectroMagn* EMfields,
+                          Interpolator* interp,
+                          Projector* proj, Params &params, bool diag_flag,
+                          PartWalls* partWalls, Patch* patch, SmileiMPI* smpi,
+                          RadiationTables &RadiationTables,
+                          MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
+                          std::vector<Diagnostic*>& localDiags) override;
+
     //! Method used to sort particles
     void sort_part(Params& params) override;
     //void count_sort_part(Params& param);

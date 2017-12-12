@@ -14,6 +14,8 @@
 #include "Species.h"
 #include "SpeciesNorm.h"
 
+#include "SpeciesV.h"
+
 #include "PusherFactory.h"
 #include "IonizationFactory.h"
 #include "PartBoundCond.h"
@@ -75,7 +77,10 @@ public:
                  // Species with nonrelativistic Boris pusher == 'borisnr'
                  // Species with J.L. Vay pusher if == "vay"
                  // Species with Higuary Cary pusher if == "higueracary"
-                 thisSpecies = new SpeciesNorm(params, patch);
+                if ( (params.vecto) && (pusher == "boris") )
+                    thisSpecies = new SpeciesV(params, patch);
+                else
+                    thisSpecies = new SpeciesNorm(params, patch);
             } else {
                 ERROR("For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary'");
             }
@@ -129,7 +134,10 @@ public:
         // Photon species
         else if (mass == 0)
         {
-            thisSpecies = new SpeciesNorm(params, patch);
+            if ( (params.vecto) && (pusher == "boris") )
+                thisSpecies = new SpeciesV(params, patch);
+            else
+                thisSpecies = new SpeciesNorm(params, patch);
             // Photon can not radiate
             thisSpecies->radiation_model = "none";
             thisSpecies-> pusher = "norm";
