@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 
-#include "SpeciesNorm.h"
+#include "Species.h"
 
 class ElectroMagn;
 class Pusher;
@@ -18,7 +18,7 @@ class SimWindow;
 
 
 //! class Species
-class SpeciesV : public SpeciesNorm
+class SpeciesV : public Species
 {
  public:
     //! Species creator

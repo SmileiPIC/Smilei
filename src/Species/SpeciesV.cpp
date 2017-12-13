@@ -42,7 +42,7 @@ using namespace std;
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
 SpeciesV::SpeciesV(Params& params, Patch* patch) :
-    SpeciesNorm(params, patch)
+    Species(params, patch)
 {
     initCluster( params );
 
@@ -226,6 +226,10 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
                         addPartInExchList( iPart );
                         nrj_lost_per_thd[tid] += mass * ener_iPart;
                     }
+                    else {
+                        //First reduction of the count sort algorithm. Lost particles are not included.
+                        species_loc_bmax[(*particles).cell_keys[iPart]] ++; //First reduction of the count sort algorithm. Lost particles are not included.
+                    }
                  }
 
 
@@ -387,7 +391,7 @@ void SpeciesV::sort_part(Params &params)
             bmax[ic-1]= indices[ic];
         }
     bmax[ncell-1] = bmax[ncell-2] + species_loc_bmax.back() ; //New total number of particles is stored as last element of bmax
-    bmax[0] = bmax.back();           //For legacy, total number of particle is also stored in bmax[0], assuming a single cluster per patch. 
+    //bmax[0] = bmax.back();           //For legacy, total number of particle is also stored in bmax[0], assuming a single cluster per patch. 
 
 
 
