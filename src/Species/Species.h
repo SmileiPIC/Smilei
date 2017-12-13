@@ -130,9 +130,9 @@ public:
     //std::vector<int> index_of_particles_to_exchange;
     
     //! Boolean to know if we initialize particles one specie on another specie
-    bool position_initialization_on_specie;
+    bool position_initialization_on_species;
     //! Index of the specie where position initialization is made
-    int position_initialization_on_specie_index;
+    int position_initialization_on_species_index;
 
     //! Pointer to the species where field-ionized electrons go
     Species *electron_species;
