@@ -112,10 +112,10 @@ ElectroMagnBC3D_BM::ElectroMagnBC3D_BM( Params &params, Patch* patch, unsigned i
     
     //! \todo (AB) Check optimal angle for buneman BC
     
-    const double theta  = 0.0*conv_deg2rad; //0.0;
-    const double phi    = 0.0*conv_deg2rad; //0.0;
-    const double cb =  cos(theta) * cos(phi) / (1.0 + cos(theta)*cos(phi));
-    const double ce =  1 - cb ;
+     double theta  = 45.0*conv_deg2rad; //0.0;
+     double phi    = 0.0*conv_deg2rad; //0.0;
+     cb =  cos(theta) * cos(phi) / (1.0 + cos(theta)*cos(phi));
+     ce =  1 - cb ;
 
 
     // X boundary
@@ -366,6 +366,7 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
                 +                 Alpha_BM_y    * ( (*Bx3D)(i,j,k  ) - (*Bx3D_old)(i,j+1,k) ) 
                 +                 cb*Beta_BM_y  * ( (*By3D)(i+1,j,k) - (*By3D    )(i,j,k)  + (*By3D_old)(i+1,j,k) - (*By3D_old)(i,j,k)  )
                 +                 ce*Gamma_BM_y * ( (*Ey3D)(i,j,k)   - (*Ey3D    )(i,j,k-1)+ (*Ey3D)(i,j+1,k)       - (*Ey3D    )(i,j+1,k-1)) ;
+                if ((*Bx3D)(i,j+1,k) > 1.) cout << "Bx > 1 i= " << i << " k= " << k << " " <<  (*Bx3D_old)(i,j,k) << " " << (*Bx3D)(i,j,k  ) << " " << (*Bx3D_old)(i,j+1,k) << " "  << (*By3D)(i+1,j,k) << " " <<  (*By3D    )(i,j,k) << " " << (*By3D_old)(i+1,j,k) << " " << (*By3D_old)(i,j,k) << " E= " << (*Ey3D)(i,j,k) << " " << (*Ey3D    )(i,j,k-1) << " " << (*Ey3D)(i,j+1,k) << " " << (*Ey3D    )(i,j+1,k-1) << " alpha = " <<  Alpha_BM_y << " beta = " << Beta_BM_y << " gamma = " << Gamma_BM_y << " cb = " << cb << " ce = " << ce << endl;
             }// k  ---end compute Bx
         }//i  ---end compute Bx
         
