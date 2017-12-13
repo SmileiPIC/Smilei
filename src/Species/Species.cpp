@@ -1061,8 +1061,9 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                             indexes[2]=k*cell_length[2]+cell_position[2];
                         }
                     }
-
-                    initPosition(nPart, iPart, indexes);
+                    if (position_initialization_on_specie==false){
+                        initPosition(nPart, iPart, indexes);
+                    }
                     initMomentum(nPart,iPart, temp, vel);
                     initWeight(nPart, iPart, density(i,j,k));
                     initCharge(nPart, iPart, charge(i,j,k));
