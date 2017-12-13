@@ -253,7 +253,7 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         // for By^(d,p,d)
         for (unsigned int j=0 ; j<ny_p ; j++) {
-            for (unsigned int k=0 ; k<nz_d ; k++) {
+            for (unsigned int k=1 ; k<nz_d-1 ; k++) { //Undefined for extreme k
                 (*By3D)(i,j,k) =  (*By3D_old)(i+1,j,k)
                 +                 Alpha_BM_x    * ( (*By3D)(i+1,j,k  ) - (*By3D_old)(i,j,k) ) 
                 -                 cb*Beta_BM_x  * ( (*Bx3D)(i,j+1,k) - (*Bx3D    )(i,j,k)  + (*Bx3D_old)(i,j+1,k) - (*Bx3D_old)(i,j,k)  )
@@ -262,9 +262,8 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         }//j  ---end compute By
         
         // for Bz^(d,d,p)
-        for (unsigned int j=0 ; j<ny_d ; j++) {
+        for (unsigned int j=1 ; j<ny_d-1 ; j++) { //Undefined for extreme j
             for (unsigned int k=0 ; k<nz_p ; k++) {
-                                
                 (*Bz3D)(i,j,k) =  (*Bz3D_old)(i+1,j,k)
                 +                 Alpha_BM_x    * ( (*Bz3D)(i+1,j,k  ) - (*Bz3D_old)(i,j,k) ) 
                 -                 cb*Gamma_BM_x  * ( (*Bx3D)(i,j,k+1) - (*Bx3D    )(i,j,k)  + (*Bx3D_old)(i,j,k+1) - (*Bx3D_old)(i,j,k)  )
@@ -290,7 +289,7 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         // for By^(d,p,d)
         for (unsigned int j=0 ; j<ny_p ; j++) {
-            for (unsigned int k=0 ; k<nz_d ; k++) {
+            for (unsigned int k=1 ; k<nz_d-1 ; k++) { //Undefined for extreme k
                 (*By3D)(i+1,j,k) =  (*By3D_old)(i,j,k)
                 +                 Alpha_BM_x    * ( (*By3D)(i,j,k  ) - (*By3D_old)(i+1,j,k) ) 
                 +                 cb*Beta_BM_x  * ( (*Bx3D)(i,j+1,k) - (*Bx3D    )(i,j,k)  + (*Bx3D_old)(i,j+1,k) - (*Bx3D_old)(i,j,k)  )
@@ -300,9 +299,8 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         }//j  ---end compute By
         
         // for Bz^(d,d,p)
-        for (unsigned int j=0 ; j<ny_d ; j++) {
+        for (unsigned int j=1 ; j<ny_d-1 ; j++) {  //Undefined for extreme j
             for (unsigned int k=0 ; k<nz_p ; k++) {
-                
                 (*Bz3D)(i+1,j,k) =  (*Bz3D_old)(i,j,k)
                 +                 Alpha_BM_x    * ( (*Bz3D)(i,j,k  ) - (*Bz3D_old)(i+1,j,k) ) 
                 +                 cb*Gamma_BM_x * ( (*Bx3D)(i,j,k+1) - (*Bx3D    )(i,j,k)  + (*Bx3D_old)(i,j,k+1) - (*Bx3D_old)(i,j,k)  )
@@ -327,7 +325,7 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
  
         // for Bx^(p,d,d)
         for (unsigned int i=0 ; i<nx_p ; i++) {
-            for (unsigned int k=0 ; k<nz_d ; k++) {
+            for (unsigned int k=1 ; k<nz_d-1 ; k++) {  // undefined for k=0 and k = nz_d-1 !!
                 (*Bx3D)(i,j,k) =  (*Bx3D_old)(i,j+1,k)
                 +                 Alpha_BM_y    * ( (*Bx3D)(i,j+1,k  ) - (*Bx3D_old)(i,j,k) ) 
                 -                 cb*Beta_BM_y  * ( (*By3D)(i+1,j,k) - (*By3D    )(i,j,k)  + (*By3D_old)(i+1,j,k) - (*By3D_old)(i,j,k)  )
@@ -336,7 +334,7 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         }//i  ---end compute Bx
         
         // for Bz^(d,d,p)
-        for (unsigned int i=0 ; i<nx_d ; i++) {
+        for (unsigned int i=1 ; i<nx_d-1 ; i++) {     // undefined for i=0 and i = nx_d-1 !!
             for (unsigned int k=0 ; k<nz_p ; k++) {
                 (*Bz3D)(i,j,k) =  (*Bz3D_old)(i,j+1,k)
                 +                 Alpha_BM_y    * ( (*Bz3D)(i,j+1,k  ) - (*Bz3D_old)(i,j,k) ) 
@@ -363,7 +361,7 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 
         // for Bx^(p,d,d)
         for (unsigned int i=0 ; i<nx_p ; i++) {
-            for (unsigned int k=0 ; k<nz_d ; k++) {
+            for (unsigned int k=1 ; k<nz_d-1 ; k++) { // undefined for k=0 and k = nz_d-1 !!
                 (*Bx3D)(i,j+1,k) =  (*Bx3D_old)(i,j,k)
                 +                 Alpha_BM_y    * ( (*Bx3D)(i,j,k  ) - (*Bx3D_old)(i,j+1,k) ) 
                 +                 cb*Beta_BM_y  * ( (*By3D)(i+1,j,k) - (*By3D    )(i,j,k)  + (*By3D_old)(i+1,j,k) - (*By3D_old)(i,j,k)  )
@@ -372,7 +370,7 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         }//i  ---end compute Bx
         
         // for Bz^(d,d,p)
-        for (unsigned int i=0 ; i<nx_d ; i++) {
+        for (unsigned int i=1 ; i<nx_d-1 ; i++) { // undefined for i=0 and i = nx_d-1 !!
             for (unsigned int k=0 ; k<nz_p ; k++) {
                 (*Bz3D)(i,j+1,k) =  (*Bz3D_old)(i,j,k)
                 +                 Alpha_BM_y    * ( (*Bz3D)(i,j,k  ) - (*Bz3D_old)(i,j+1,k) ) 
