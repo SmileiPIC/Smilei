@@ -78,7 +78,8 @@ private:
     //! Ratio of the spatial-step by the time-step dz/dt for 3D3V cartesian simulations
     double dz_ov_dt;
 
-
+    //! Constants used for the Buneman boundary conditions depending on theta and phi.
+    double cb, ce;
 
     //! Constant used for the Buneman boundary conditions (Xmin)
     double Alpha_BM_xmin;
