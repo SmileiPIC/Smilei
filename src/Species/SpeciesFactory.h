@@ -463,7 +463,9 @@ public:
         // Create new species object
         Species * newSpecies = NULL;
 
-        if (species->pusher =="norm"
+        if ( (params.vecto) && (species->pusher == "boris") )
+            newSpecies = new SpeciesV(params, patch);
+        else if (species->pusher =="norm"
         || species->pusher =="boris"
         || species->pusher =="higueracary"
         || species->pusher =="vay"
