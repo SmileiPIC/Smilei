@@ -23,9 +23,11 @@ public:
 
     Profile *profile_;
     const std::vector<double> cell_length;
-
+    const double timestep;
+    
     Field* A_;
     Field* A0_;
+  
 };
 
 

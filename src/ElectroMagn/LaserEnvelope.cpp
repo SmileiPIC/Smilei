@@ -13,8 +13,9 @@
 using namespace std;
 
 LaserEnvelope::LaserEnvelope( Params& params, Patch* patch, ElectroMagn* EMfields ) :
-cell_length    ( params.cell_length)
+cell_length    ( params.cell_length) ,timestep( params.timestep)
 {
+    
     PyObject * profile;
     if (!PyTools::extract_pyProfile("envelope_profile",profile,"LaserEnvelope"))
         MESSAGE("No envelope profile set !");
@@ -41,17 +42,16 @@ cell_length    ( params.cell_length)
     info << "\t\t\tomega              : " << omega_value << endl;
     // envelope solver
     info << "\t\t\tenvelope solver    : " << envelope_solver << endl;
-
+  
     // Display info
     if( patch->isMaster() ) {
         MESSAGE( info.str() );
       }
-
 }
 
 
 LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields ) :
-cell_length    ( envelope->cell_length )
+cell_length    ( envelope->cell_length ), timestep( envelope->timestep)
 {
     profile_ = envelope->profile_;
 }
@@ -87,7 +87,7 @@ LaserEnvelope3D::LaserEnvelope3D( Params& params, Patch* patch, ElectroMagn* EMf
 
 
 LaserEnvelope3D::LaserEnvelope3D( LaserEnvelope *envelope, Patch* patch,ElectroMagn* EMfields )
-    : LaserEnvelope(envelope, patch,EMfields)
+    : LaserEnvelope(envelope,patch,EMfields)
 {
     A_  = new cField3D( envelope->A_->dims_  );
     A0_ = new cField3D( envelope->A0_->dims_ );
@@ -130,6 +130,20 @@ LaserEnvelope3D::~LaserEnvelope3D()
 
 void LaserEnvelope3D::compute(ElectroMagn* EMfields)
 {
+    //! laser wavenumber, i.e. omega0/c
+    double k0=1.;
+    //! laser wavenumber times the temporal step, i.e. omega0/c * dt
+    double k0_dt=1.*timestep;
+    //! 1/dt^2, where dt is the temporal step
+    double dt_sq = timestep*timestep; 
+    // imaginary unit
+    complex<double> i1=std::complex<double>(0., 1);
+  
+    //! 1/dx^2, 1/dy^2, 1/dz^2, where dx,dy,dz are the spatial step dx for 3D3V cartesian simulations
+    double one_ov_dx_sq=1./cell_length[0]/cell_length[0];
+    double one_ov_dy_sq=1./cell_length[1]/cell_length[1];
+    double one_ov_dz_sq=1./cell_length[2]/cell_length[2];
+  
     //->rho_e- ???;
     cField3D* A3D = static_cast<cField3D*>(A_);
     cField3D* A03D = static_cast<cField3D*>(A0_);
