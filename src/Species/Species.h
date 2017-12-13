@@ -286,7 +286,11 @@ public:
     //! Method used to sort particles
     virtual void sort_part(Params& param);
     void count_sort_part(Params& param);
-    
+
+    //! 
+    virtual void add_space_for_a_particle() {
+        bmax[bmax.size()-1]++;
+    }
     
     //inline void clearExchList(int tid) {
     //        indexes_of_particles_to_exchange_per_thd[tid].clear();

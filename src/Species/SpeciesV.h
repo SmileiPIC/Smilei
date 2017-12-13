@@ -50,6 +50,11 @@ class SpeciesV : public Species
     void sort_part(Params& params) override;
     //void count_sort_part(Params& param);
     void compute_part_cell_keys(Params &params);
+    
+    //! 
+    void add_space_for_a_particle() override {
+        particles->cell_keys.push_back(-1);
+    }
 
  private:
 

@@ -518,11 +518,8 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                             if (neighbor_[idim][0]!=MPI_PROC_NULL){ //if neighbour exists
                                 //... copy it at the back of the local particle vector ...
                                 (vecSpecies[ispec]->MPIbuff.partRecv[iDim][(iNeighbor+1)%2]).cp_particle(iPart, cuParticles);
-                                //...adjust bmax ...
-                                #ifndef AGERER
-                                //(*cubmax)[(*cubmax).size()-1]++;
-                                vecSpecies[ispec]->particles->cell_keys.push_back(-1);
-                                #endif
+                                //...adjust bmax or cell_keys ...
+                                vecSpecies[ispec]->add_space_for_a_particle();
                                 //... and add its index to the particles to be sent later...
                                 vecSpecies[ispec]->MPIbuff.part_index_send[idim][0].push_back( cuParticles.size()-1 );
                                 //..without forgeting to add it to the list of particles to clean.
@@ -537,10 +534,8 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                         else if ( (vecSpecies[ispec]->MPIbuff.partRecv[iDim][(iNeighbor+1)%2]).position(idim,iPart) >= max_local[idim]) {
                             if (neighbor_[idim][1]!=MPI_PROC_NULL){ //if neighbour exists
                                 (vecSpecies[ispec]->MPIbuff.partRecv[iDim][(iNeighbor+1)%2]).cp_particle(iPart, cuParticles);
-                                #ifndef AGERER
-                                //(*cubmax)[(*cubmax).size()-1]++;
-                                vecSpecies[ispec]->particles->cell_keys.push_back(-1);
-                                #endif
+                                //...adjust bmax or cell_keys ...
+                                vecSpecies[ispec]->add_space_for_a_particle();
                                 vecSpecies[ispec]->MPIbuff.part_index_send[idim][1].push_back( cuParticles.size()-1 );
                                 vecSpecies[ispec]->addPartInExchList(cuParticles.size()-1);
                             }
