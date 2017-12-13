@@ -225,6 +225,7 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
                     if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                         addPartInExchList( iPart );
                         nrj_lost_per_thd[tid] += mass * ener_iPart;
+                        (*particles).cell_keys[iPart] = -1;
                     }
                     else {
                         //First reduction of the count sort algorithm. Lost particles are not included.
@@ -250,6 +251,7 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
                     if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                         addPartInExchList( iPart );
                         nrj_lost_per_thd[tid] += ener_iPart;
+                        (*particles).cell_keys[iPart] = -1;
                     }
                     else {
                         //First reduction of the count sort algorithm. Lost particles are not included.
