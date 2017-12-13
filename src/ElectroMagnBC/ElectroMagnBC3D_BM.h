@@ -82,59 +82,31 @@ private:
     double cb, ce;
 
     //! Constant used for the Buneman boundary conditions (Xmin)
-    double Alpha_BM_xmin;
+    double Alpha_BM_x;
     
     //! Constant used for the Buneman boundary conditions (Xmin)
-    double Beta_BM_xmin;
+    double Beta_BM_x;
     
     //! Constant used for the Buneman boundary conditions (Xmin)
-    double Gamma_BM_xmin;
-    
-    //! Constant used for the Buneman boundary conditions (Xmax)
-    double Alpha_BM_xmax;
-    
-    //! Constant used for the Buneman boundary conditions (Xmax)
-    double Beta_BM_xmax;
-    
-    //! Constant used for the Buneman boundary conditions (Xmax)
-    double Gamma_BM_xmax;
-    
+    double Gamma_BM_x;
 
     //! Constant used for the Buneman boundary conditions (Transverse Y)
-    double Alpha_BM_ymin;
+    double Alpha_BM_y;
     
     //! Constant used for the Buneman boundary conditions (Transverse Y)
-    double Beta_BM_ymin;
+    double Beta_BM_y;
     
     //! Constant used for the Buneman boundary conditions (Transverse Y)
-    double Gamma_BM_ymin;
-
-    //! Constant used for the Buneman boundary conditions (Transverse Y)
-    double Alpha_BM_ymax;
-    
-    //! Constant used for the Buneman boundary conditions (Transverse Y)
-    double Beta_BM_ymax;
-    
-    //! Constant used for the Buneman boundary conditions (Trnsverse Y)
-    double Gamma_BM_ymax;
+    double Gamma_BM_y;
 
      //! Constant used for the Buneman boundary conditions (Transverse Z)
-    double Alpha_BM_zmin;
+    double Alpha_BM_z;
     
     //! Constant used for the Buneman boundary conditions (Transverse Z)
-    double Beta_BM_zmin;
+    double Beta_BM_z;
     
     //! Constant used for the Buneman boundary conditions (Trnsverse Z)
-    double Gamma_BM_zmin;
-
-    //! Constant used for the Buneman boundary conditions (Transverse Z)
-    double Alpha_BM_zmax;
-    
-    //! Constant used for the Buneman boundary conditions (Transverse Z)
-    double Beta_BM_zmax;
-    
-    //! Constant used for the Buneman boundary conditions (Trnsverse Z)
-    double Gamma_BM_zmax;
+    double Gamma_BM_z;
 
 };
 
