@@ -329,6 +329,27 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
 
 
 // ---------------------------------------------------------------------------------------------------------------------
+// For all particles of the species
+//   - increment the charge (projection)
+//   - used at initialisation for Poisson (and diags if required, not for now dynamics )
+// ---------------------------------------------------------------------------------------------------------------------
+void SpeciesV::computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector* Proj)
+{
+    // -------------------------------
+    // calculate the particle charge
+    // -------------------------------
+    if ( (!particles->is_test) ) {
+        double* b_rho=&(*EMfields->rho_)(0);
+
+        for (unsigned int iPart=bmin[0] ; (int)iPart<bmax[bmax.size()-1]; iPart++ )
+            (*Proj)(b_rho, (*particles), iPart, 0, b_dim);
+
+    }
+
+}//END computeCharge
+
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
 void SpeciesV::sort_part(Params &params)

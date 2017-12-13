@@ -43,6 +43,9 @@ class SpeciesV : public Species
                           MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                           std::vector<Diagnostic*>& localDiags) override;
 
+    //! Method calculating the Particle charge on the grid (projection)
+    void computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector* Proj) override;
+
     //! Method used to sort particles
     void sort_part(Params& params) override;
     //void count_sort_part(Params& param);

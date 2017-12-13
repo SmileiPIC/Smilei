@@ -160,9 +160,7 @@ int main (int argc, char* argv[])
 
         // Initialize the electromagnetic fields
         // -------------------------------------
-        #ifdef _AGERER
         vecPatches.computeCharge();
-        #endif
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
 
         TITLE("Applying external fields at time t = 0");
