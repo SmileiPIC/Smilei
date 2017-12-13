@@ -130,6 +130,11 @@ LaserEnvelope3D::~LaserEnvelope3D()
 
 void LaserEnvelope3D::compute(ElectroMagn* EMfields)
 {
+    //// solves envelope equation in lab frame:
+    //full_laplacian(a)+2ik0*(da/dz+(1/c)*da/dt)-d^2a/dt^2*(1/c^2)=kp^2 n/n0 a/gamma
+    // where kp^2 n/n0 a/gamma is gathered in charge deposition
+    
+    //// auxiliary quantities
     //! laser wavenumber, i.e. omega0/c
     double k0=1.;
     //! laser wavenumber times the temporal step, i.e. omega0/c * dt
@@ -143,20 +148,42 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
     double one_ov_dx_sq=1./cell_length[0]/cell_length[0];
     double one_ov_dy_sq=1./cell_length[1]/cell_length[1];
     double one_ov_dz_sq=1./cell_length[2]/cell_length[2];
+    
+    //! 1/dx, where dx is the spatial step dx for 3D3V cartesian simulations
+    double one_ov_2dx=1./2./cell_length[0];
   
     //->rho_e- ???;
-    cField3D* A3D = static_cast<cField3D*>(A_);
-    cField3D* A03D = static_cast<cField3D*>(A0_);
+    cField3D* A3D = static_cast<cField3D*>(A_);   // the envelope at timestep n
+    cField3D* A03D = static_cast<cField3D*>(A0_); // the envelope at timestep n-1
     Field3D* Env_Ar3D = static_cast<Field3D*>(EMfields->Env_Ar_);
     Field3D* Env_Ai3D = static_cast<Field3D*>(EMfields->Env_Ai_);
+    complex<double> A3Dnew;
+    
     // find e_idx in all species
     int e_idx = 0;
     Field3D* rho_e = static_cast<Field3D*>(EMfields->rho_s[e_idx]);
 
+    //// explicit solver 
     for (unsigned int i=0 ; i <A_->dims_[0]; i++){
         for (unsigned int j=0 ; j < A_->dims_[1] ; j++){
             for (unsigned int k=0 ; k < A_->dims_[2]; k++){
-                (*A3D)(i,j,k) = (*A3D)(i,j,k);
+                //(*A3D)(i,j,k) = (*A3D)(i,j,k);
+                A3Dnew = 0.; // subtract here source term from plasma
+                // A3Dnew = laplacian - source term
+                A3Dnew += ((*A3D)(i-1,j,k)-2.*(*A3D)(i,j,k)+(*A3D)(i+1,j,k))*one_ov_dx_sq; // x part
+                A3Dnew += ((*A3D)(i,j-1,k)-2.*(*A3D)(i,j,k)+(*A3D)(i,j+1,k))*one_ov_dy_sq; // y part
+                A3Dnew += ((*A3D)(i,j,k-1)-2.*(*A3D)(i,j,k)+(*A3D)(i,j,k+1))*one_ov_dz_sq; // z part
+                // A3Dnew = A3Dnew+2ik0*dA/dx
+                A3Dnew += 2.*i1*k0*((*A3D)(i+1,j,k)-(*A3D)(i-1,j,k))*one_ov_2dx;
+                // A3Dnew = A3Dnew*dt^2
+                A3Dnew  = A3Dnew*dt_sq;
+                // A3Dnew = A3Dnew + 2/c^2 A3D + (1+ik0cdt)A03D/c^2
+                A3Dnew += 2.*(*A3D)(i,j,k)-(1.+k0_dt)*(*A03D)(i+1,j,k);
+                // A3Dnew = A3Dnew * (1+ik0dct)/(1+k0^2c^2dt^2)
+                A3Dnew  = A3Dnew* (1.+i1*k0_dt)/(1.+k0_dt*k0_dt);
+                // final substitution
+                (*A3D)(i,j,k)  = A3Dnew;
+                (*A03D)(i,j,k) = (*A3D)(i,j,k);
                 //(*A3D)(i,j,k) = (*A03D)(i,j,k);
                 (*Env_Ar3D)(i,j,k) =std::real((*A3D)(i,j,k));
             }
