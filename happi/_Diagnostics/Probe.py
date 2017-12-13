@@ -261,8 +261,6 @@ class Probe(Diagnostic):
 			self._title  = self._title .replace("#"+str(n), titles    [n])
 			self._vunits = self._vunits.replace("#"+str(n), fieldunits[n])
 		
-		self._buffer = self._np.zeros((self.numpoints,), dtype="double")
-		
 		# Set the directory in case of exporting
 		self._exportPrefix = "Probe"+str(probeNumber)+"_"+"".join(self._fieldname)
 		self._exportDir = self._setExportDir(self._exportPrefix)
@@ -336,8 +334,9 @@ class Probe(Diagnostic):
 		C = {}
 		op = self.operation
 		for n in reversed(self._fieldn): # for each field in operation
-			self._dataForTime[t].read_direct(self._buffer, source_sel=self._np.s_[n,:])
-			C.update({ n:self._buffer })
+			buffer = self._np.empty((self.numpoints,), dtype="double")
+			self._dataForTime[t].read_direct(buffer, source_sel=self._np.s_[n,:])
+			C.update({ n:buffer })
 			op = op.replace("#"+str(n), "C["+str(n)+"]")
 		# Calculate the operation
 		A = eval(op)
