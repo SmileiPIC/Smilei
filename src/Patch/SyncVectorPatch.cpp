@@ -72,10 +72,6 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
 //        vecPatches(ipatch)->injectParticles(smpi, ispec, params, params.nDim_particle-1, &vecPatches); // wait
 
 
-    #pragma omp for schedule(runtime)
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-        vecPatches(ipatch)->vecSpecies[ispec]->sort_part();
-
     /*
     // Debugging
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
