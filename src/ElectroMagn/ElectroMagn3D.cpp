@@ -20,8 +20,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn3D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn3D::ElectroMagn3D(Params &params, vector<Species*>& vecSpecies, Patch* patch) : 
-  ElectroMagn(params, vecSpecies, patch),
+ElectroMagn3D::ElectroMagn3D(Params &params, DomainDecomposition* domain_decomposition, vector<Species*>& vecSpecies, Patch* patch) : 
+  ElectroMagn(params, domain_decomposition, vecSpecies, patch),
 isYmin(patch->isYmin()),
 isYmax(patch->isYmax()),
 isZmax(patch->isZmax()),
@@ -150,7 +150,21 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
     Jy_   = new Field3D(dimPrim, 1, false, "Jy");
     Jz_   = new Field3D(dimPrim, 2, false, "Jz");
     rho_  = new Field3D(dimPrim, "Rho" );
-    
+    if(params.is_pxr == true) {
+        rhoold_ = new Field3D(dimPrim,"Rho");
+        Ex_pxr  = new Field3D(dimDual);
+        Ey_pxr  = new Field3D(dimDual);
+        Ez_pxr  = new Field3D(dimDual);
+        Bx_pxr  = new Field3D(dimDual);
+        By_pxr  = new Field3D(dimDual);
+        Bz_pxr  = new Field3D(dimDual);
+        Jx_pxr  = new Field3D(dimDual);
+        Jy_pxr  = new Field3D(dimDual);
+        Jz_pxr  = new Field3D(dimDual);
+        rho_pxr = new Field3D(dimDual);
+        rhoold_pxr  = new Field3D(dimDual);
+
+    } 
     
     // ----------------------------------------------------------------
     // Definition of the min and max index according to chosen oversize
@@ -515,25 +529,32 @@ void ElectroMagn3D::centeringE( std::vector<double> E_Add )
 // ---------------------------------------------------------------------------------------------------------------------
 // Save the former Magnetic-Fields (used to center them)
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn3D::saveMagneticFields()
+void ElectroMagn3D::saveMagneticFields(bool is_spectral)
 {
     // Static cast of the fields
-    Field3D* Bx3D   = static_cast<Field3D*>(Bx_);
-    Field3D* By3D   = static_cast<Field3D*>(By_);
-    Field3D* Bz3D   = static_cast<Field3D*>(Bz_);
-    Field3D* Bx3D_m = static_cast<Field3D*>(Bx_m);
-    Field3D* By3D_m = static_cast<Field3D*>(By_m);
-    Field3D* Bz3D_m = static_cast<Field3D*>(Bz_m);
-    
-    // Magnetic field Bx^(p,d,d)
-    memcpy(&((*Bx3D_m)(0,0,0)), &((*Bx3D)(0,0,0)),nx_p*ny_d*nz_d*sizeof(double) );
-    
-    // Magnetic field By^(d,p,d)
-    memcpy(&((*By3D_m)(0,0,0)), &((*By3D)(0,0,0)),nx_d*ny_p*nz_d*sizeof(double) );
-    
-    // Magnetic field Bz^(d,d,p)
-    memcpy(&((*Bz3D_m)(0,0,0)), &((*Bz3D)(0,0,0)),nx_d*ny_d*nz_p*sizeof(double) );
-    
+    if(!is_spectral){
+	    Field3D* Bx3D   = static_cast<Field3D*>(Bx_);
+	    Field3D* By3D   = static_cast<Field3D*>(By_);
+	    Field3D* Bz3D   = static_cast<Field3D*>(Bz_);
+	    Field3D* Bx3D_m = static_cast<Field3D*>(Bx_m);
+	    Field3D* By3D_m = static_cast<Field3D*>(By_m);
+	    Field3D* Bz3D_m = static_cast<Field3D*>(Bz_m);
+	    
+	    // Magnetic field Bx^(p,d,d)
+	    memcpy(&((*Bx3D_m)(0,0,0)), &((*Bx3D)(0,0,0)),nx_p*ny_d*nz_d*sizeof(double) );
+	    
+	    // Magnetic field By^(d,p,d)
+	    memcpy(&((*By3D_m)(0,0,0)), &((*By3D)(0,0,0)),nx_d*ny_p*nz_d*sizeof(double) );
+	    
+	    // Magnetic field Bz^(d,d,p)
+	    memcpy(&((*Bz3D_m)(0,0,0)), &((*Bz3D)(0,0,0)),nx_d*ny_d*nz_p*sizeof(double) );
+    }
+    else{
+            Bx_m = Bx_;
+            By_m = By_;
+            Bz_m = Bz_;
+
+    }
 }//END saveMagneticFields
 
 

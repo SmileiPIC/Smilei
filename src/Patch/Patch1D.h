@@ -12,11 +12,11 @@ class Patch1D : public Patch
 {
 public:
     //! Constructor for Patch
-    Patch1D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
+    Patch1D(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved);
     //! Cloning Constructor for Patch
-    Patch1D(Patch1D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles);
+    Patch1D(Patch1D* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles);
     
-    void initStep2(Params& params) override;
+    void initStep2(Params& params, DomainDecomposition* domain_decomposition) override;
     
     //! Destructor for Patch
     ~Patch1D() override final;
@@ -43,6 +43,7 @@ public:
 
     // Create MPI_Datatype to exchange fields
     void createType( Params& params ) override final;
+    void createType2( Params& params ) override final;
     void cleanType() override final;
 
     //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial]

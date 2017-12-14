@@ -179,7 +179,13 @@ class Main(SmileiSingleton):
     every_clean_particles_overhead = 100
     timestep = None
     timestep_over_CFL = None
-    
+
+    # PXR tuning
+    global_factor = []
+    norder = []
+    is_spectral = False
+    is_pxr = False
+
     # Poisson tuning
     solve_poisson = True
     poisson_max_iteration = 50000

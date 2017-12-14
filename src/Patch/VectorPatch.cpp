@@ -8,7 +8,7 @@
 //#include <string>
 
 #include "Collisions.h"
-#include "Hilbert_functions.h"
+#include "DomainDecompositionFactory.h"
 #include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
@@ -18,7 +18,7 @@
 #include "DiagnosticFactory.h"
 
 #include "SyncVectorPatch.h"
-
+#include "interface.h"
 #include "Timers.h"
 
 using namespace std;
@@ -26,12 +26,22 @@ using namespace std;
 
 VectorPatch::VectorPatch()
 {
+    domain_decomposition_ = NULL ;
+}
+
+
+VectorPatch::VectorPatch( Params& params )
+{
+    domain_decomposition_ = DomainDecompositionFactory::create( params );
 }
 
 
 VectorPatch::~VectorPatch()
 {
+    //if ( domain_decomposition_ != NULL )
+    //    delete domain_decomposition_;
 }
+
 
 void VectorPatch::close(SmileiMPI * smpiData)
 {
@@ -178,7 +188,8 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
     }
     timers.syncPart.update( params.printNow( itime ) );
 
-    if ( (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
+    #ifndef _PICSAR
+    if ( (!params.is_spectral) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
         timers.syncField.restart();
         SyncVectorPatch::finalizeexchangeB( params, (*this) );
         timers.syncField.update(  params.printNow( itime ) );
@@ -191,6 +202,7 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
             (*this)(ipatch)->EMfields->centerMagneticFields();
         }
     }
+    #endif
 
 } // END dynamics
 
@@ -267,9 +279,11 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-        // Saving magnetic fields (to compute centered fields used in the particle pusher)
-        // Stores B at time n in B_m.
-        (*this)(ipatch)->EMfields->saveMagneticFields();
+        if (!params.is_spectral) {
+            // Saving magnetic fields (to compute centered fields used in the particle pusher)
+            // Stores B at time n in B_m.
+            (*this)(ipatch)->EMfields->saveMagneticFields(params.is_spectral);
+        }
         // Computes Ex_, Ey_, Ez_ on all points.
         // E is already synchronized because J has been synchronized before.
         (*(*this)(ipatch)->EMfields->MaxwellAmpereSolver_)((*this)(ipatch)->EMfields);
@@ -282,8 +296,35 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
     timers.maxwell.update( params.printNow( itime ) );
 
     timers.syncField.restart();
+    if (params.is_spectral)
+        SyncVectorPatch::exchangeE( params, (*this) );
     SyncVectorPatch::exchangeB( params, (*this) );
     timers.syncField.update(  params.printNow( itime ) );
+
+    #ifdef _PICSAR
+    //if ( (params.is_spectral) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
+    if (                           (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
+        timers.syncField.restart();
+        if (params.is_spectral)
+            SyncVectorPatch::finalizeexchangeE( params, (*this) );
+        SyncVectorPatch::finalizeexchangeB( params, (*this) );
+        timers.syncField.update(  params.printNow( itime ) );
+
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+            // Applies boundary conditions on B
+            (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
+            // Computes B at time n using B and B_m.
+            if (!params.is_spectral)
+                (*this)(ipatch)->EMfields->centerMagneticFields();
+            else
+                (*this)(ipatch)->EMfields->saveMagneticFields(params.is_spectral);
+        }
+        if (params.is_spectral)
+            save_old_rho( params );
+    }
+    #endif
+
 
 } // END solveMaxwell
 
@@ -293,7 +334,7 @@ void VectorPatch::initExternals(Params& params)
     // Init all lasers
     for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
         // check if patch is on the border
-        int iBC;
+        int iBC(-1);
         if     ( (*this)(ipatch)->isXmin() ) {
             iBC = 0;
         }
@@ -302,7 +343,9 @@ void VectorPatch::initExternals(Params& params)
         }
         else continue;
         // If patch is on border, then fill the fields arrays
-        unsigned int nlaser = (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser.size();
+        unsigned int nlaser = 0;
+        if ( (iBC!=-1) && ( (*this)(ipatch)->EMfields->emBoundCond[iBC] != NULL ) )
+            nlaser = (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser.size();
         for (unsigned int ilaser = 0; ilaser < nlaser; ilaser++)
              (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser[ilaser]->initFields(params, (*this)(ipatch));
     }
@@ -570,18 +613,21 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         double Ey_XmaxYmin = 0.0;
 
         //The YmaxXmin patch has Patch coordinates X=0, Y=2^m1-1= number_of_patches[1]-1.
-        //Its hindex is
-        int patch_YmaxXmin = generalhilbertindex(params.mi[0], params.mi[1], 0,  params.number_of_patches[1]-1);
+        std::vector<int> xcall( 2, 0 );
+        xcall[0] = 0;
+        xcall[1] = params.number_of_patches[1]-1;
+        int patch_YmaxXmin = domain_decomposition_->getDomainId( xcall );
         //The MPI rank owning it is
         int rank_XminYmax = smpi->hrank(patch_YmaxXmin);
         //The YminXmax patch has Patch coordinates X=2^m0-1= number_of_patches[0]-1, Y=0.
         //Its hindex is
-        int patch_YminXmax = generalhilbertindex(params.mi[0], params.mi[1], params.number_of_patches[0]-1, 0);
+        xcall[0] = params.number_of_patches[0]-1;
+        xcall[1] = 0;
+        int patch_YminXmax = domain_decomposition_->getDomainId( xcall );
         //The MPI rank owning it is
         int rank_XmaxYmin = smpi->hrank(patch_YminXmax);
 
 
-        //cout << params.mi[0] << " " << params.mi[1] << " " << params.number_of_patches[0] << " " << params.number_of_patches[1] << endl;
         //cout << patch_YmaxXmin << " " << rank_XminYmax << " " << patch_YminXmax << " " << rank_XmaxYmin << endl;
 
         if ( smpi->getRank() == rank_XminYmax ) {
@@ -775,7 +821,7 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
         // density profile is initializes as if t = 0 !
         // Species will be cleared when, nbr of particles will be known
         // Creation of a new patch, ready to receive its content from MPI neighbours.
-        Patch* newPatch = PatchesFactory::clone(existing_patch, params, smpi, recv_patch_id_[ipatch], n_moved, false );
+        Patch* newPatch = PatchesFactory::clone(existing_patch, params, smpi, domain_decomposition_, recv_patch_id_[ipatch], n_moved, false );
         newPatch->finalizeMPIenvironment(params);
         //Store pointers to newly created patch in recv_patches_.
         recv_patches_.push_back( newPatch );
@@ -1259,6 +1305,19 @@ void VectorPatch::check_memory_consumption(SmileiMPI* smpi)
     // Read value in /proc/pid/status
     //Tools::printMemFootPrint( "End Initialization" );
 }
+
+
+void VectorPatch::save_old_rho(Params &params)
+{
+        int n=0;
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+        n =  (*this)(ipatch)->EMfields->rhoold_->dims_[0]*(*this)(ipatch)->EMfields->rhoold_->dims_[1];//*(*this)(ipatch)->EMfields->rhoold_->dims_[2];
+        if(params.nDim_field ==3) n*=(*this)(ipatch)->EMfields->rhoold_->dims_[2];
+                std::memcpy((*this)(ipatch)->EMfields->rhoold_->data_,(*this)(ipatch)->EMfields->rho_->data_,sizeof(double)*n);
+        }
+}
+        
 
 
 // Print information on the memory consumption

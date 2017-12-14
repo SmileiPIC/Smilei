@@ -22,7 +22,8 @@
 
 class Field;
 class Timer;
-class SimWindow;
+class SimWindow; 
+class DomainDecomposition;
 
 //! Class Patch : sub MPI domain
 //!     Collection of patch = MPI domain
@@ -31,7 +32,9 @@ class VectorPatch {
 public :
 
     VectorPatch();
+    VectorPatch( Params &params );
     ~VectorPatch();
+    void save_old_rho(Params &params); 
 
     void close(SmileiMPI*);
 
@@ -112,7 +115,7 @@ public :
     //! For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
     void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual,
                       Timers & timers);
-
+    
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
     void runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itime, Timers & timers, SimWindow* simWindow);
     void initAllDiags(Params& params, SmileiMPI* smpi);
@@ -230,6 +233,8 @@ public :
     //! Tells which iteration was last time the patches moved (by moving window or load balancing)
     unsigned int lastIterationPatchesMoved;
 
+    DomainDecomposition* domain_decomposition_;
+        
 
     //! Methods to access readably to patch PIC operators.
     //!   - patches_ should not be access outsied of VectorPatch
@@ -265,8 +270,7 @@ private :
 
     //! Current intensity of antennas
     double antenna_intensity;
-
-
+    
 };
 
 

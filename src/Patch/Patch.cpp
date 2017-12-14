@@ -40,7 +40,7 @@ using namespace std;
 // Patch constructor :
 //   Called by PatchXD constructor which will finalize initialization
 // ---------------------------------------------------------------------------------------------------------------------
-Patch::Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
+Patch::Patch(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved)
 {
 
     hindex = ipatch;
@@ -54,8 +54,8 @@ Patch::Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int 
 
 
 // Cloning patch constructor
-Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles = true) {
-
+Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles = true) {
+    
     hindex = ipatch;
     nDim_fields_ = patch->nDim_fields_;
 
@@ -69,11 +69,6 @@ void Patch::initStep1(Params& params)
     //Pcoordinates.resize(nDim_fields_);
     Pcoordinates.resize( 2 );
     
-    // else if ( params.geometry == "2Dcartesian" ) {
-    //     Pcoordinates.resize(3);
-    //     generalhilbertindexinv(params.mi[0], params.mi[1], params.mi[2], &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
-    // }
-
     nbNeighbors_ = 2;
     neighbor_.resize(nDim_fields_);
     tmp_neighbor_.resize(nDim_fields_);
@@ -125,13 +120,13 @@ void Patch::initStep3( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
 
 }
 
-void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
+void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition ) {
     // initialize vector of Species (virtual)
     vecSpecies = SpeciesFactory::createVector(params, this);
 
     // initialize the electromagnetic fields (virtual)
-    EMfields   = ElectroMagnFactory::create(params, vecSpecies, this);
-
+    EMfields   = ElectroMagnFactory::create(params, domain_decomposition, vecSpecies, this);
+    
     // interpolation operator (virtual)
     Interp     = InterpolatorFactory::create(params, this); // + patchId -> idx_domain_begin (now = ref smpi)
     // projection operator (virtual)
@@ -222,6 +217,95 @@ void Patch::finalizeMPIenvironment(Params& params) {
 
 }
 
+
+void Patch::set( Params& params, DomainDecomposition* domain_decomposition, VectorPatch& vecPatch )
+{
+    Pcoordinates.resize( params.nDim_field );
+    
+
+    min_local = vecPatch(0)->min_local;
+    max_local = vecPatch(0)->max_local;
+    center   .resize( nDim_fields_, 0. );
+    cell_starting_global_index = vecPatch(0)->cell_starting_global_index;
+    radius = 0.;
+
+    // Constraint to enforce 1 neighboor per side
+    double nppp_root = pow( vecPatch.size(), 1./(double)nDim_fields_ );
+    if ( fabs( (double)(int)nppp_root - nppp_root ) > 0. ) 
+        ERROR( "Bad choice of decomposition" );
+
+    for (unsigned int i = 0 ; i<nDim_fields_ ; i++) {
+        
+        for ( unsigned int ipatch = 0 ; ipatch < vecPatch.size() ; ipatch++  ) {
+            if ( vecPatch(ipatch)->min_local[i] <= min_local[i] ) {
+                min_local[i] = vecPatch(ipatch)->min_local[i];
+                if (vecPatch(ipatch)->MPI_neighbor_[i][0]!=MPI_PROC_NULL)
+                    MPI_neighbor_[i][0] = vecPatch(ipatch)->MPI_neighbor_[i][0];
+                if (vecPatch(ipatch)->neighbor_[i][0]!=MPI_PROC_NULL)
+                    neighbor_[i][0] = (vecPatch(ipatch)->neighbor_[i][0] / vecPatch.size() );
+            }
+            if ( vecPatch(ipatch)->max_local[i] >= max_local[i] ) {
+                max_local[i] = vecPatch(ipatch)->max_local[i];
+                if (vecPatch(ipatch)->MPI_neighbor_[i][1]!=MPI_PROC_NULL)
+                    MPI_neighbor_[i][1] = vecPatch(ipatch)->MPI_neighbor_[i][1];
+                if (vecPatch(ipatch)->neighbor_[i][1]!=MPI_PROC_NULL)
+                    neighbor_[i][1] = (vecPatch(ipatch)->neighbor_[i][1] / vecPatch.size() );
+            }
+            if ( vecPatch(ipatch)->cell_starting_global_index[i] <= cell_starting_global_index[i] )
+                cell_starting_global_index[i] = vecPatch(ipatch)->cell_starting_global_index[i];
+        }
+        Pcoordinates[i] = (cell_starting_global_index[i]+params.oversize[i]) / params.n_space[i] / params.global_factor[i];
+        
+        center[i] = (min_local[i]+max_local[i])*0.5;
+        radius += pow(max_local[i] - center[i] + params.cell_length[i], 2);
+    }
+    radius = sqrt(radius);
+
+    //cout << hindex << " " << Pcoordinates[0] << " " << Pcoordinates[1] << endl;
+    //cout << "X = " << Pcoordinates[0]  << " " << min_local[0] << " " << max_local[0] << " - Y = " << Pcoordinates[1] << " " << min_local[1] << " " << max_local[1] << endl;
+    
+    //cart_updateMPIenv(smpi);
+
+    MPI_me_ = vecPatch(0)->MPI_me_;
+    for (unsigned int i = 0 ; i<nDim_fields_ ; i++) {
+        if ((MPI_neighbor_[i][0]==MPI_me_) && (params.EM_BCs[i][0]!="periodic"))
+            MPI_neighbor_[i][0] = MPI_PROC_NULL;
+        if ((MPI_neighbor_[i][1]==MPI_me_) && (params.EM_BCs[i][0]!="periodic"))
+            MPI_neighbor_[i][1] = MPI_PROC_NULL;
+        if ((neighbor_[i][0]==MPI_me_) && (params.EM_BCs[i][0]!="periodic"))
+            neighbor_[i][0] = MPI_PROC_NULL;
+        if ((neighbor_[i][1]==MPI_me_) && (params.EM_BCs[i][0]!="periodic"))
+            neighbor_[i][1] = MPI_PROC_NULL;
+    }
+            
+    
+    //cout << "MPI Nei\t"  << "\t" << MPI_neighbor_[1][1] << endl;
+    //cout << "MPI Nei\t"  << MPI_neighbor_[0][0] << "\t" << MPI_me_ << "\t" << MPI_neighbor_[0][1] << endl;
+    //cout << "MPI Nei\t"  << "\t" << MPI_neighbor_[1][0] << endl;
+
+
+    for (int iDim=0 ; iDim< (int)neighbor_.size() ; iDim++)
+        for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+            send_tags_[iDim][iNeighbor] = buildtag( hindex, iDim, iNeighbor, 5 );
+            recv_tags_[iDim][iNeighbor] = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor, 5 );
+        }
+
+    EMfields   = ElectroMagnFactory::create(params, domain_decomposition, vecPatch(0)->vecSpecies, this);
+
+    vecSpecies.resize(0);
+    Interp     = NULL;
+    Proj       = NULL;
+    vecCollisions.resize(0);
+    partWalls = NULL;
+    probes.resize(0);
+    
+    if (has_an_MPI_neighbor())
+        createType2(params);
+    
+
+}
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Delete Patch members
 // ---------------------------------------------------------------------------------------------------------------------
@@ -231,12 +315,13 @@ Patch::~Patch() {
 
     for(unsigned int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
     vecCollisions.clear();
+    
+    if (partWalls!=NULL) delete partWalls;
+    if (Proj     !=NULL) delete Proj;
+    if (Interp   !=NULL) delete Interp;
+    
+    if (EMfields !=NULL) delete EMfields;
 
-    delete partWalls;
-    delete Proj;
-    delete Interp;
-
-    delete EMfields;
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();
 
@@ -256,11 +341,31 @@ void Patch::updateTagenv(SmileiMPI* smpi)
 }
 void Patch::updateMPIenv(SmileiMPI* smpi)
 {
+    // HARDCODED VALUE - to test cartesian decomposition
+//    vector<int> npattchpp(2,1); // NDOMAIN PER PROC - WORKS WITH 1 domain per process, ATTENTION PERIDODICITY
+//    vector<int> npatchs(2,4);   // NDOMAIN TOTAL
+//    vector<int> gCoord(2,0);
     MPI_me_ = smpi->smilei_rk;
 
     for (int iDim = 0 ; iDim < nDim_fields_ ; iDim++)
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++){
             MPI_neighbor_[iDim][iNeighbor] = smpi->hrank(neighbor_[iDim][iNeighbor]);
+
+//            gCoord[0] = ( (int)Pcoordinates[0] + (1-iDim) * ((1-iNeighbor)*(-1) + (iNeighbor)) );
+//            gCoord[1] = ( (int)Pcoordinates[1] + (iDim  ) * ((1-iNeighbor)*(-1) + (iNeighbor)) );
+//            if ( gCoord[0] < 0 )
+//                MPI_neighbor_[iDim][iNeighbor] = MPI_PROC_NULL;
+//            else if ( gCoord[0] >= npatchs[0] )
+//                MPI_neighbor_[iDim][iNeighbor] = MPI_PROC_NULL;
+//            else if ( gCoord[1] < 0 )
+//                MPI_neighbor_[iDim][iNeighbor] = MPI_PROC_NULL;
+//            else if ( gCoord[1] >= npatchs[1] )
+//                MPI_neighbor_[iDim][iNeighbor] = MPI_PROC_NULL;
+//            else {
+//                gCoord[0] = (double)( (int)Pcoordinates[0] + (1-iDim) * ((1-iNeighbor)*(-1) + (iNeighbor)) ) /(double)npattchpp[0];
+//                gCoord[1] = (double)( (int)Pcoordinates[1] + (iDim  ) * ((1-iNeighbor)*(-1) + (iNeighbor)) ) /(double)npattchpp[1];
+//                MPI_neighbor_[iDim][iNeighbor] = gCoord[0] * npatchs[1] + gCoord[1];
+//            }
         }
 
     for (int iDim=0 ; iDim< (int)neighbor_.size() ; iDim++)
