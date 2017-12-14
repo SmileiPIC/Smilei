@@ -115,7 +115,7 @@ ElectroMagnBC3D_BM::ElectroMagnBC3D_BM( Params &params, Patch* patch, unsigned i
      double theta  = 45.0*conv_deg2rad; //0.0;
      double phi    = 0.0*conv_deg2rad; //0.0;
      cb =  cos(theta) * cos(phi) / (1.0 + cos(theta)*cos(phi));
-     ce =  1 - cb ;
+     ce =  1. - cb ;
 
 
     // X boundary
@@ -431,7 +431,7 @@ void ElectroMagnBC3D_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         Field3D* By3D_old = static_cast<Field3D*>(EMfields->By_m);
         Field3D* Bz3D = static_cast<Field3D*>(EMfields->Bz_);
         Field3D* Bz3D_old = static_cast<Field3D*>(EMfields->Bz_m);
-        
+       
         unsigned const int k = nz_d-2 ;
         
             // for By^(d,p,d)

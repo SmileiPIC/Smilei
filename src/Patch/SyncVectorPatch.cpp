@@ -151,7 +151,7 @@ void SyncVectorPatch::exchangeB( Params& params, VectorPatch& vecPatches )
         SyncVectorPatch::new_exchange1( vecPatches.Bs1, vecPatches );
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==3 ) {
-        if (params.maxwell_sol != "Lehe") {
+        if (!params.full_B_exchange) {
             SyncVectorPatch::new_exchange0( vecPatches.Bs0, vecPatches );
             SyncVectorPatch::new_exchange1( vecPatches.Bs1, vecPatches );
             SyncVectorPatch::new_exchange2( vecPatches.Bs2, vecPatches );
@@ -192,7 +192,7 @@ void SyncVectorPatch::finalizeexchangeB( Params& params, VectorPatch& vecPatches
         SyncVectorPatch::new_finalizeexchange1( vecPatches.Bs1, vecPatches );
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==3 ) {
-        if (params.maxwell_sol != "Lehe") {
+        if ( !params.full_B_exchange) {
             SyncVectorPatch::new_finalizeexchange0( vecPatches.Bs0, vecPatches );
             SyncVectorPatch::new_finalizeexchange1( vecPatches.Bs1, vecPatches );
             SyncVectorPatch::new_finalizeexchange2( vecPatches.Bs2, vecPatches );
