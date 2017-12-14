@@ -444,22 +444,12 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
     double charge_weight[8] __attribute__((aligned(64)));
 
     // Closest multiple of 8 higher or equal than npart = iend-istart.
+ 
     int cell_nparts( (int)iend-(int)istart );
-    int nbVec = ( iend-istart+(cell_nparts-1)-((iend-istart-1)&(cell_nparts-1)) ) / vecSize;
-    if (nbVec*vecSize != cell_nparts)
-        nbVec++;
 
-    for (int iivect=0 ; iivect<nbVec; iivect++ ){
-        int ivect = vecSize*iivect;
+    for (int ivect=0 ; ivect < cell_nparts; ivect += vecSize ){
 
-        int np_computed(0);
-        if (cell_nparts > vecSize ) {
-            np_computed = vecSize;
-            cell_nparts -= vecSize;
-        }       
-        else
-            np_computed = cell_nparts;
-
+        int np_computed(min(cell_nparts-ivect,vecSize));
 
         //#pragma omp simd
         //for (unsigned int i=0; i<200; i++)
