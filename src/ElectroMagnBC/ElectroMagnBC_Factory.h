@@ -101,6 +101,10 @@ public:
                 if ( params.EM_BCs[0][ii] == "silver-muller" ) {
                     emBoundCond[ii] = new ElectroMagnBC3D_SM(params, patch, ii);
                 }
+                // Buneman bcs (absorbing)
+                else if ( params.EM_BCs[0][ii] == "buneman" ) {
+                    emBoundCond[ii] = new ElectroMagnBC3D_BM(params, patch, ii);
+                }
                 // else: error
                 else if ( params.EM_BCs[0][ii] != "periodic" ) {
                     ERROR( "Unknown EM x-boundary condition `" << params.EM_BCs[0][ii] << "`");
