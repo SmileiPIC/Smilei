@@ -447,7 +447,6 @@ void Projector3D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector3D4Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim)
 {
-    int nparts = particles.size();
     //Warning : this function is used for frozen species only. It is assumed that position = position_old !!!
 
     // -------------------------------------

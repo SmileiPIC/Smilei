@@ -518,8 +518,8 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                             if (neighbor_[idim][0]!=MPI_PROC_NULL){ //if neighbour exists
                                 //... copy it at the back of the local particle vector ...
                                 (vecSpecies[ispec]->MPIbuff.partRecv[iDim][(iNeighbor+1)%2]).cp_particle(iPart, cuParticles);
-                                //...adjust bmax ...
-                                (*cubmax)[(*cubmax).size()-1]++;
+                                //...adjust bmax or cell_keys ...
+                                vecSpecies[ispec]->add_space_for_a_particle();
                                 //... and add its index to the particles to be sent later...
                                 vecSpecies[ispec]->MPIbuff.part_index_send[idim][0].push_back( cuParticles.size()-1 );
                                 //..without forgeting to add it to the list of particles to clean.
@@ -534,7 +534,8 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                         else if ( (vecSpecies[ispec]->MPIbuff.partRecv[iDim][(iNeighbor+1)%2]).position(idim,iPart) >= max_local[idim]) {
                             if (neighbor_[idim][1]!=MPI_PROC_NULL){ //if neighbour exists
                                 (vecSpecies[ispec]->MPIbuff.partRecv[iDim][(iNeighbor+1)%2]).cp_particle(iPart, cuParticles);
-                                (*cubmax)[(*cubmax).size()-1]++;
+                                //...adjust bmax or cell_keys ...
+                                vecSpecies[ispec]->add_space_for_a_particle();
                                 vecSpecies[ispec]->MPIbuff.part_index_send[idim][1].push_back( cuParticles.size()-1 );
                                 vecSpecies[ispec]->addPartInExchList(cuParticles.size()-1);
                             }
@@ -553,77 +554,8 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
     //La recopie finale doit se faire au traitement de la dernière dimension seulement !!
     if (iDim == ndim-1){
 
-        //We have stored in indexes_of_particles_to_exchange the list of all particles that needs to be removed.
-        cleanup_sent_particles(ispec, indexes_of_particles_to_exchange);
-        (*indexes_of_particles_to_exchange).clear();
-        cuParticles.erase_particle_trail((*cubmax).back());
 
-        //Evaluation of the necessary shift of all bins.
-        for (unsigned int j=0; j<(*cubmax).size()+1 ;j++){
-            shift[j]=0;
-        }
-
-        //idim=0
-        shift[1] += vecSpecies[ispec]->MPIbuff.part_index_recv_sz[0][0];//Particles coming from ymin all go to bin 0 and shift all the other bins.
-        shift[(*cubmax).size()] += vecSpecies[ispec]->MPIbuff.part_index_recv_sz[0][1];//Used only to count the total number of particles arrived.
-        //idim>0
-        for (idim = 1; idim < ndim; idim++){
-            for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-                n_part_recv = vecSpecies[ispec]->MPIbuff.part_index_recv_sz[idim][iNeighbor];
-                for (unsigned int j=0; j<(unsigned int)n_part_recv ;j++){
-                    //We first evaluate how many particles arrive in each bin.
-                        ii = int((vecSpecies[ispec]->MPIbuff.partRecv[idim][iNeighbor].position(0,j)-min_local[0])/dbin);//bin in which the particle goes.
-                    shift[ii+1]++; // It makes the next bins shift.
-                }
-            }
-        }
-
-
-        //Must be done sequentially
-        for (unsigned int j=1; j<(*cubmax).size()+1;j++){ //bin 0 is not shifted.Last element of shift stores total number of arriving particles.
-            shift[j]+=shift[j-1];
-        }
-        //Make room for new particles
-        if (shift[(*cubmax).size()]) {
-          //! vecor::resize of Charge crashed ! Temporay solution : push_back / Particle
-          //cuParticles.initialize( cuParticles.size()+shift[(*cubmax).size()], cuParticles.Position.size() );
-          for (int inewpart=0 ; inewpart<shift[(*cubmax).size()] ; inewpart++) cuParticles.create_particle();
-        }
-
-        //Shift bins, must be done sequentially
-        for (unsigned int j=(*cubmax).size()-1; j>=1; j--){
-            n_particles = (*cubmax)[j]-(*cubmin)[j]; //Nbr of particle in this bin
-            nmove = min(n_particles,shift[j]); //Nbr of particles to move
-            lmove = max(n_particles,shift[j]); //How far particles must be shifted
-            if (nmove>0) cuParticles.overwrite_part((*cubmin)[j], (*cubmin)[j]+lmove, nmove);
-            (*cubmin)[j] += shift[j];
-            (*cubmax)[j] += shift[j];
-        }
-
-        //Space has been made now to write the arriving particles into the correct bins
-        //idim == 0  is the easy case, when particles arrive either in first or last bin.
-        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-            n_part_recv = vecSpecies[ispec]->MPIbuff.part_index_recv_sz[0][iNeighbor];
-            if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
-                ii = iNeighbor*((*cubmax).size()-1);//0 if iNeighbor=0(particles coming from Xmin) and (*cubmax).size()-1 otherwise.
-                vecSpecies[ispec]->MPIbuff.partRecv[0][iNeighbor].overwrite_part(0, cuParticles,(*cubmax)[ii],n_part_recv);
-                (*cubmax)[ii] += n_part_recv ;
-            }
-        }
-        //idim > 0; this is the difficult case, when particles can arrive in any bin.
-        for (idim = 1; idim < ndim; idim++){
-            //if (idim!=iDim) continue;
-            for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-                n_part_recv = vecSpecies[ispec]->MPIbuff.part_index_recv_sz[idim][iNeighbor];
-                if ( (neighbor_[idim][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
-                        for(unsigned int j=0; j<(unsigned int)n_part_recv; j++){
-                            ii = int((vecSpecies[ispec]->MPIbuff.partRecv[idim][iNeighbor].position(0,j)-min_local[0])/dbin);//bin in which the particle goes.
-                            vecSpecies[ispec]->MPIbuff.partRecv[idim][iNeighbor].overwrite_part(j, cuParticles,(*cubmax)[ii]);
-                            (*cubmax)[ii] ++ ;
-                        }
-                }
-            }
-        }
+        vecSpecies[ispec]->sort_part(params);
 
     }//End Recv_buffers ==> particles
 

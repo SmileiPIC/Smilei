@@ -1825,7 +1825,8 @@ for instance::
 
 .. py:data:: deposited_quantity
 
-  The type of data that is summed in each cell of the grid:
+  The type of data that is summed in each cell of the grid.
+  Consider reading :ref:`this <Weights>` to understand the meaning of the ``weight``.
 
   * ``"weight"`` results in a number density.
   * ``"weight_charge"`` results in a charge density.
@@ -2102,6 +2103,7 @@ for instance::
       every = 10,
   #    flush_every = 100,
   #    filter = my_filter,
+  #    attributes = ["x", "px", "py", "Ex", "Ey", "Bz"]
   )
 
 .. py:data:: species
@@ -2155,6 +2157,16 @@ for instance::
   iteration number of the PIC loop. The current time of the simulation is thus
   ``Main.iteration * Main.timestep``.
 
+.. py:data:: attributes
+
+  :default: ``["x","y","z","px","py","pz"]``
+  
+  A list of strings indicating the particle attributes to be written in the output.
+  The attributes may be the particles' spatial coordinates (``"x"``, ``"y"``, ``"z"``),
+  their momenta (``"px"``, ``"py"``, ``"pz"``), their electrical charge (``"q"``), 
+  their statistical weight (``"w"``), their quantum parameter
+  (``"chi"``, only for species with radiation losses) or the fields interpolated
+  at their  positions (``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``).
 
 ----
 

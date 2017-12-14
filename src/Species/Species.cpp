@@ -77,9 +77,9 @@ min_loc(patch->getDomainLocalMin(0))
     PI2 = 2.0 * M_PI;
     PI_ov_2 = 0.5*M_PI;
 
-    dx_inv_ = 1./cell_length[0];
-    dy_inv_ = 1./cell_length[1];
-    dz_inv_ = 1./cell_length[2];
+    dx_inv_[0] = 1./cell_length[0];
+    dx_inv_[1] = 1./cell_length[1];
+    dx_inv_[2] = 1./cell_length[2];
 
     initCluster(params);
     nDim_field = params.nDim_field;
@@ -304,52 +304,33 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
     // -------------------------------------------------------------------------
     if (mass > 0)
     {
-
-        // average mean-momentum (used to center the distribution)
-        double pMean[3]= {0.0,0.0,0.0};
-
+        
         // Cold distribution
         if (momentum_initialization == "cold") {
-
+            
             for (unsigned int p=iPart; p<iPart+nPart; p++) {
                 particles->momentum(0,p) = 0.0;
                 particles->momentum(1,p) = 0.0;
                 particles->momentum(2,p) = 0.0;
             }
-
+            
         // Maxwell-Juttner distribution
         } else if (momentum_initialization == "maxwell-juettner") {
-
+            
             // Sample the energies in the MJ distribution
             vector<double> energies = maxwellJuttner(nPart, temp[0]/mass);
-
+            
             // Sample angles randomly and calculate the momentum
             for (unsigned int p=iPart; p<iPart+nPart; p++) {
                 double phi   = acos(-Rand::uniform2());
                 double theta = 2.0*M_PI*Rand::uniform();
                 double psm = sqrt(pow(1.0+energies[p-iPart],2)-1.0);
-
+                
                 particles->momentum(0,p) = psm*cos(theta)*sin(phi);
                 particles->momentum(1,p) = psm*sin(theta)*sin(phi);
                 particles->momentum(2,p) = psm*cos(phi);
-
-                // Calculate the mean momentum
-                pMean[0] += particles->momentum(0,p);
-                pMean[1] += particles->momentum(1,p);
-                pMean[2] += particles->momentum(2,p);
             }
-
-            pMean[0] /= nPart;
-            pMean[1] /= nPart;
-            pMean[2] /= nPart;
-
-            // center the distribution function around pMean
-            for (unsigned int p=iPart; p<iPart+nPart; p++) {
-                particles->momentum(0,p) -= pMean[0];
-                particles->momentum(1,p) -= pMean[1];
-                particles->momentum(2,p) -= pMean[2];
-            }
-
+            
             // Trick to have non-isotropic distribution (not good)
             double t1 = sqrt(temp[1]/temp[0]), t2 = sqrt(temp[2]/temp[0]);
             if( t1!=1. || t2 !=1. ) {
@@ -358,10 +339,10 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
                     particles->momentum(2,p) *= t2;
                 }
             }
-
+            
         // Rectangular distribution
         } else if (momentum_initialization == "rectangular") {
-
+            
             double t0 = sqrt(temp[0]/mass), t1 = sqrt(temp[1]/mass), t2 = sqrt(temp[2]/mass);
             for (unsigned int p= iPart; p<iPart+nPart; p++) {
                 particles->momentum(0,p) = Rand::uniform2() * t0;
@@ -369,7 +350,7 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
                 particles->momentum(2,p) = Rand::uniform2() * t2;
             }
         }
-
+        
         // Adding the mean velocity (using relativistic composition)
         // Also relies on the method proposed in Zenitani, Phys. Plasmas 22, 042116 (2015)
         // to ensure the correct properties of a boosted distribution function
@@ -381,10 +362,10 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
         vz  = -vel[2];
         v2  = vx*vx + vy*vy + vz*vz;
         if ( v2>0. ){
-
+            
             g   = 1.0/sqrt(1.0-v2);
             gm1 = g - 1.0;
-
+            
             // compute the different component of the Matrix block of the Lorentz transformation
             Lxx = 1.0 + gm1 * vx*vx/v2;
             Lyy = 1.0 + gm1 * vy*vy/v2;
@@ -392,26 +373,26 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
             Lxy = gm1 * vx*vy/v2;
             Lxz = gm1 * vx*vz/v2;
             Lyz = gm1 * vy*vz/v2;
-
+            
             // Volume transformation method (here is the correction by Zenitani)
             double Volume_Acc;
             double CheckVelocity;
-
+            
             // Lorentz transformation of the momentum
             for (unsigned int p=iPart; p<iPart+nPart; p++)
             {
                 gp = sqrt(1.0 + pow(particles->momentum(0,p), 2)
                               + pow(particles->momentum(1,p), 2)
                               + pow(particles->momentum(2,p), 2) );
-
+                
                 CheckVelocity = ( vx*particles->momentum(0,p) + vy*particles->momentum(1,p) + vz*particles->momentum(2,p) ) / gp;
                 Volume_Acc = Rand::uniform();
                 if (CheckVelocity > Volume_Acc){
-
+                    
                     double Phi , Theta , vfl ,vflx , vfly, vflz, vpx , vpy , vpz ;
                     Phi = atan2(sqrt(vx*vx +vy*vy), vz);
                     Theta = atan2(vy, vx);
-
+                    
                     vpx = particles->momentum(0,p)/gp ;
                     vpy = particles->momentum(1,p)/gp ;
                     vpz = particles->momentum(2,p)/gp ;
@@ -426,20 +407,20 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
                     particles->momentum(0,p) = vpx*gp ;
                     particles->momentum(1,p) = vpy*gp ;
                     particles->momentum(2,p) = vpz*gp ;
-
+                    
                 }//here ends the corrections by Zenitani
-
+                
                 px = -gp*g*vx + Lxx * particles->momentum(0,p) + Lxy * particles->momentum(1,p) + Lxz * particles->momentum(2,p);
                 py = -gp*g*vy + Lxy * particles->momentum(0,p) + Lyy * particles->momentum(1,p) + Lyz * particles->momentum(2,p);
                 pz = -gp*g*vz + Lxz * particles->momentum(0,p) + Lyz * particles->momentum(1,p) + Lzz * particles->momentum(2,p);
-
+                
                 particles->momentum(0,p) = px;
                 particles->momentum(1,p) = py;
                 particles->momentum(2,p) = pz;
             }
-
+        
         }//ENDif vel != 0
-
+    
     }
     // -------------------------------------------------------------------------
     // Photons
@@ -524,7 +505,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
 
             // Interpolate the fields at the particle position
-            (*Interp)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread );
+            (*Interp)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
 
             // Ionization
             if (Ionize)
@@ -773,8 +754,153 @@ void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::sort_part()
+void Species::sort_part(Params& params)
 {
+    int ndim = params.nDim_field;
+    int idim, check;
+    //cleanup_sent_particles(ispec, indexes_of_particles_to_exchange);
+
+    //We have stored in indexes_of_particles_to_exchange the list of all particles that needs to be removed.
+    /********************************************************************************/
+    // Delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
+    /********************************************************************************/
+    int ii, iPart;
+
+
+    // Push lost particles at the end of bins
+    for (unsigned int ibin = 0 ; ibin < bmax.size() ; ibin++ ) {
+        ii = indexes_of_particles_to_exchange.size()-1;
+        if (ii >= 0) { // Push lost particles to the end of the bin
+            iPart = indexes_of_particles_to_exchange[ii];
+            while (iPart >= bmax[ibin] && ii > 0) {
+                ii--;
+                iPart = indexes_of_particles_to_exchange[ii];
+            }
+            while (iPart == bmax[ibin]-1 && iPart >= bmin[ibin] && ii > 0) {
+                bmax[ibin]--;
+                ii--;
+                iPart = indexes_of_particles_to_exchange[ii];
+            }
+            while (iPart >= bmin[ibin] && ii > 0) {
+                particles->overwrite_part(bmax[ibin]-1, iPart );
+                bmax[ibin]--;
+                ii--;
+                iPart = indexes_of_particles_to_exchange[ii];
+            }
+            if (iPart >= bmin[ibin] && iPart < bmax[ibin]) { //On traite la dernière particule (qui peut aussi etre la premiere)
+                particles->overwrite_part(bmax[ibin]-1, iPart );
+                bmax[ibin]--;
+            }
+        }
+    }
+
+
+    //Shift the bins in memory
+    //Warning: this loop must be executed sequentially. Do not use openMP here.
+    for (int unsigned ibin = 1 ; ibin < bmax.size() ; ibin++ ) { //First bin don't need to be shifted
+        ii = bmin[ibin]-bmax[ibin-1]; // Shift the bin in memory by ii slots.
+        iPart = min(ii,bmax[ibin]-bmin[ibin]); // Number of particles we have to shift = min (Nshift, Nparticle in the bin)
+        if(iPart > 0) particles->overwrite_part(bmax[ibin]-iPart,bmax[ibin-1],iPart);
+        bmax[ibin] -= ii;
+        bmin[ibin] = bmax[ibin-1];
+    }
+
+
+
+    int nmove,lmove; // local, OK
+    int shift[bmax.size()+1];//how much we need to shift each bin in order to leave room for the new particle
+    double dbin;
+
+    dbin = params.cell_length[0]*params.clrw; //width of a bin.
+    for (unsigned int j=0; j<bmax.size()+1 ;j++){
+        shift[j]=0;
+    }
+
+
+    int nbNeighbors_ = 2;
+    int n_part_recv;
+
+    indexes_of_particles_to_exchange.clear();
+    particles->erase_particle_trail(bmax.back());
+
+    //Evaluation of the necessary shift of all bins.2
+    for (unsigned int j=0; j<bmax.size()+1 ;j++){
+        shift[j]=0;
+    }
+
+    //idim=0
+    shift[1] += MPIbuff.part_index_recv_sz[0][0];//Particles coming from ymin all go to bin 0 and shift all the other bins.
+    shift[bmax.size()] += MPIbuff.part_index_recv_sz[0][1];//Used only to count the total number of particles arrived.
+    //idim>0
+    for (idim = 1; idim < ndim; idim++){
+        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+            n_part_recv = MPIbuff.part_index_recv_sz[idim][iNeighbor];
+            for (unsigned int j=0; j<(unsigned int)n_part_recv ;j++){
+                //We first evaluate how many particles arrive in each bin.
+                ii = int((MPIbuff.partRecv[idim][iNeighbor].position(0,j)-min_loc)/dbin);//bin in which the particle goes.
+                shift[ii+1]++; // It makes the next bins shift.
+            }
+        }
+    }
+
+
+    //Must be done sequentially
+    for (unsigned int j=1; j<bmax.size()+1;j++){ //bin 0 is not shifted.Last element of shift stores total number of arriving particles.
+        shift[j]+=shift[j-1];
+    }
+    //Make room for new particles
+    if (shift[bmax.size()]) {
+        //! vecor::resize of Charge crashed ! Temporay solution : push_back / Particle
+        //particles->initialize( particles->size()+shift[bmax.size()], particles->Position.size() );
+        for (int inewpart=0 ; inewpart<shift[bmax.size()] ; inewpart++) particles->create_particle();
+    }
+
+    //Shift bins, must be done sequentially
+    for (unsigned int j=bmax.size()-1; j>=1; j--){
+        int n_particles = bmax[j]-bmin[j]; //Nbr of particle in this bin
+        nmove = min(n_particles,shift[j]); //Nbr of particles to move
+        lmove = max(n_particles,shift[j]); //How far particles must be shifted
+        if (nmove>0) particles->overwrite_part(bmin[j], bmin[j]+lmove, nmove);
+        bmin[j] += shift[j];
+        bmax[j] += shift[j];
+    }
+
+    //Space has been made now to write the arriving particles into the correct bins
+    //idim == 0  is the easy case, when particles arrive either in first or last bin.
+    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+        n_part_recv = MPIbuff.part_index_recv_sz[0][iNeighbor];
+        //if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
+        if (                                               (n_part_recv!=0) ) {
+            ii = iNeighbor*(bmax.size()-1);//0 if iNeighbor=0(particles coming from Xmin) and bmax.size()-1 otherwise.
+            MPIbuff.partRecv[0][iNeighbor].overwrite_part(0, *particles,bmax[ii],n_part_recv);
+            bmax[ii] += n_part_recv ;
+        }
+    }
+    //idim > 0; this is the difficult case, when particles can arrive in any bin.
+    for (idim = 1; idim < ndim; idim++){
+        //if (idim!=iDim) continue;
+        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+            n_part_recv = MPIbuff.part_index_recv_sz[idim][iNeighbor];
+            //if ( (neighbor_[idim][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
+            if (                                                  (n_part_recv!=0) ) {
+                for(unsigned int j=0; j<(unsigned int)n_part_recv; j++){
+                    ii = int((MPIbuff.partRecv[idim][iNeighbor].position(0,j)-min_loc)/dbin);//bin in which the particle goes.
+                    MPIbuff.partRecv[idim][iNeighbor].overwrite_part(j, *particles,bmax[ii]);
+                    bmax[ii] ++ ;
+                }
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+
+
     //The width of one bin is cell_length[0] * clrw.
 
     int p1,p2,bmin_init;
@@ -857,8 +983,8 @@ void Species::count_sort_part(Params &params)
             x = particles->position(0,ip)-min_loc;
             y = particles->position(1,ip)-min_loc_vec[1];
 
-            ix = floor(x * dx_inv_) ;
-            iy = floor(y * dy_inv_) ;
+            ix = floor(x * dx_inv_[0]) ;
+            iy = floor(y * dx_inv_[1]) ;
 
             ixy = iy + ix*params.n_space[1];
 
@@ -890,8 +1016,8 @@ void Species::count_sort_part(Params &params)
         x = particles->position(0,ip)-min_loc;
         y = particles->position(1,ip)-min_loc_vec[1];
 
-        ix = floor(x * dx_inv_) ;
-        iy = floor(y * dy_inv_) ;
+        ix = floor(x * dx_inv_[1]) ;
+        iy = floor(y * dx_inv_[2]) ;
 
         ixy = iy + ix*params.n_space[1];
 

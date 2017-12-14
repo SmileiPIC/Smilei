@@ -230,7 +230,6 @@ public :
     //! Tells which iteration was last time the patches moved (by moving window or load balancing)
     unsigned int lastIterationPatchesMoved;
 
- private :
 
     //! Methods to access readably to patch PIC operators.
     //!   - patches_ should not be access outsied of VectorPatch
@@ -255,6 +254,8 @@ public :
         return (*this)(ipatch)->partWalls;
     }
 
+private :
+    
     //  Internal balancing members
     // ---------------------------
     std::vector<Patch*> recv_patches_;

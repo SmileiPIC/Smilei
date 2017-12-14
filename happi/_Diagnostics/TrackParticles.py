@@ -52,7 +52,8 @@ class TrackParticles(Diagnostic):
 				self._orderFiles(disorderedfiles, orderedfile, chunksize)
 			# Create arrays to store h5 items
 			f = self._h5py.File(orderedfile)
-			for prop in ["Id", "x", "y", "z", "px", "py", "pz", "q", "w", "chi"]:
+			for prop in ["Id", "x", "y", "z", "px", "py", "pz", "q", "w", "chi",
+			             "Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
 				if prop in f:
 					self._h5items[prop] = f[prop]
 			# Memorize the locations of timesteps in the files
@@ -255,7 +256,7 @@ class TrackParticles(Diagnostic):
 					return
 		# otherwise use default
 		else:
-			self.axes = ["x","y","z"][:self._ndim] + ["px", "py", "pz", "w", "q"]
+			self.axes = list(self._h5items.keys())
 		# Then figure out axis units
 		self._type = self.axes
 		for axis in self.axes:
@@ -274,9 +275,15 @@ class TrackParticles(Diagnostic):
 			elif axis == "q":
 				axisunits = "Q_r"
 				self._centers.append( [-10., 10.] )
-			if axis == "chi":
-				axisunits = "\chi"
+			elif axis == "chi":
+				axisunits = "1"
 				self._centers.append( [0., 2.] )
+			elif axis[0] == "E":
+				axisunits = "E_r"
+				self._centers.append( [-1., 1.] )
+			elif axis[0] == "B":
+				axisunits = "B_r"
+				self._centers.append( [-1., 1.] )
 			self._log.append( False )
 			self._label.append( axis )
 			self._units.append( axisunits )
@@ -337,7 +344,9 @@ class TrackParticles(Diagnostic):
 		try:
 			properties = {"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
 			              "momentum/x":"px", "momentum/y":"py", "momentum/z":"pz",
-			              "charge":"q", "weight":"w", "chi":"chi"}
+			              "charge":"q", "weight":"w", "chi":"chi",
+			              "E/x":"Ex", "E/y":"Ey", "E/z":"Ez",
+			              "B/x":"Bx", "B/y":"By", "B/z":"Bz"}
 			# Obtain the list of all times in all disordered files
 			time_locations = {}
 			for fileIndex, fileD in enumerate(filesDisordered):
@@ -545,7 +554,9 @@ class TrackParticles(Diagnostic):
 			if self._verbose: print("Loading data ...")
 			properties = {"Id":"id", "x":"position/x", "y":"position/y", "z":"position/z",
 			              "px":"momentum/x", "py":"momentum/y", "pz":"momentum/z",
-			              "q":"charge", "w":"weight","chi":"chi"}
+			              "q":"charge", "w":"weight","chi":"chi",
+			              "Ex":"E/x", "Ey":"E/y", "Ez":"E/z",
+			              "Bx":"B/x", "By":"B/y", "Bz":"B/z"}
 			if times is None: times = self._timesteps
 			for time in times:
 				if time in self._rawData: continue
@@ -607,12 +618,11 @@ class TrackParticles(Diagnostic):
 			print("ERROR: timestep "+str(timestep)+" not available")
 			return
 		
-		properties = {"Id":"id", "x":"position/x", "y":"position/y",
-						"z":"position/z",
-						"px":"momentum/x", "py":"momentum/y", "pz":"momentum/z",
-						"q":"charge",
-						"w":"weight",
-						"chi":"chi"}
+		properties = {"Id":"id", "x":"position/x", "y":"position/y", "z":"position/z",
+		              "px":"momentum/x", "py":"momentum/y", "pz":"momentum/z",
+		              "q":"charge", "w":"weight","chi":"chi",
+		              "Ex":"E/x", "Ey":"E/y", "Ez":"E/z",
+		              "Bx":"B/x", "By":"B/y", "Bz":"B/z"}
 		
 		disorderedfiles = self._findDisorderedFiles()
 		for file in disorderedfiles:

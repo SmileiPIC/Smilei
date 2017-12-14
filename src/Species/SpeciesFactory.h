@@ -14,6 +14,10 @@
 #include "Species.h"
 #include "SpeciesNorm.h"
 
+#ifdef _VECTO
+#include "SpeciesV.h"
+#endif
+
 #include "PusherFactory.h"
 #include "IonizationFactory.h"
 #include "PartBoundCond.h"
@@ -75,7 +79,12 @@ public:
                  // Species with nonrelativistic Boris pusher == 'borisnr'
                  // Species with J.L. Vay pusher if == "vay"
                  // Species with Higuary Cary pusher if == "higueracary"
-                 thisSpecies = new SpeciesNorm(params, patch);
+                if ( (!params.vecto) || (pusher != "boris") )
+                    thisSpecies = new SpeciesNorm(params, patch);
+#ifdef _VECTO
+                else
+                    thisSpecies = new SpeciesV(params, patch);
+#endif
             } else {
                 ERROR("For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary'");
             }
@@ -464,7 +473,12 @@ public:
         || species->pusher =="borisnr")
         {
             // Boris, Vay or Higuera-Cary
-            newSpecies = new SpeciesNorm(params, patch);
+            if ( (!params.vecto) || (species->pusher != "boris") )
+                newSpecies = new SpeciesNorm(params, patch);
+#ifdef _VECTO
+            else
+                newSpecies = new SpeciesV(params, patch);
+#endif
         }
 
         // Copy members
