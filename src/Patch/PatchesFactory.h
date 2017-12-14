@@ -8,6 +8,10 @@
 
 #include "Tools.h"
 
+#ifdef _VECTO
+#include "SpeciesV.h"
+#endif
+
 class PatchesFactory {
 public:
 
@@ -67,6 +71,21 @@ public:
             }
             vecPatches.patches_[ipatch] = clone(vecPatches(0), params, smpi, firstpatch + ipatch, n_moved);
         }
+
+#ifdef _VECTO
+        if (params.vecto) {
+            //Need to sort because particles are not well sorted at creation
+            for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
+                for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
+                    if ( dynamic_cast<SpeciesV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec]) )
+                        dynamic_cast<SpeciesV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
+                    vecPatches.patches_[ipatch]->vecSpecies[ispec]->sort_part(params);
+                }
+            }
+        }
+#endif
+
+
         MESSAGE(1,"All patches created");
 
         vecPatches.set_refHindex();

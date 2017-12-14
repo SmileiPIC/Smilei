@@ -18,6 +18,7 @@
 # ----------------------------------------------------------------------------------------
 
 import math
+import datetime
 
 # ----------------------------------------------------------------------------------------
 # User defined parameters
@@ -61,12 +62,15 @@ radiation_list = ["Niel",
 species_name_list = ["Niel",
                      "Landau_Lifshitz"]           # List of names for species
 
+datetime = datetime.datetime.now()
+random_seed = datetime.microsecond
+
 # ----------------------------------------------------------------------------------------
 # User-defined functions
 
 # Density profile for inital location of the particles
 def n0_(x,y):
-        if ((x-0.75*Lx)**2 + (y-0.5*Ly)**2 <= 0.25*dx):
+        if ((x-0.75*Lx)**2 + (y-0.5*Ly)**2 <= 0.5*dx):
                 return n0
         else:
                 return 0.
@@ -91,7 +95,7 @@ Main(
 
     EM_boundary_conditions = [['periodic'],['periodic']],
 
-    random_seed = 0,
+    random_seed = random_seed,
 
     reference_angular_frequency_SI = wr
 
@@ -111,9 +115,9 @@ for i,radiation in enumerate(radiation_list):
 
     Species(
         name = "electron_" + species_name_list[i],
-        position_initialization = "centered",
+        position_initialization = "regular",
         momentum_initialization = "cold",
-        particles_per_cell = 10,
+        particles_per_cell = 16,
         c_part_max = 1.0,
         mass = 1.0,
         charge = -1.0,

@@ -201,6 +201,8 @@ public:
     //! Compute an initially balanced patch distribution right from the start
     bool initial_balance;
 
+    bool vecto;
+
     //! Tells whether there is a moving window
     bool hasWindow;
 

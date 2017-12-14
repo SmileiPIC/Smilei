@@ -163,6 +163,8 @@ public:
     unsigned int clrw; //Should divide the number of cells in X of a single MPI domain.
     //! first and last index of each particle bin
     std::vector<int> bmin, bmax;
+    //!
+    std::vector<int> species_loc_bmax;
     //! sub dimensions of buffers for dim > 1
     std::vector<unsigned int> b_dim;
     
@@ -182,10 +184,26 @@ public:
     //! 2 times pi
     double PI2;
     double PI_ov_2;
-    double dx_inv_, dy_inv_, dz_inv_;
+    double dx_inv_[3];
     
     //! Number of the associated tracking diagnostic
     unsigned int tracking_diagnostic;
+    
+    //! Number of spatial dimension for the particles
+    unsigned int nDim_particle;
+
+    //! Number of spatial dimension for the fields
+    unsigned int nDim_field;
+
+    //! sub primal dimensions of fields
+    unsigned int f_dim0, f_dim1, f_dim2;
+
+    //! Accumulate nrj lost with bc
+    double nrj_bc_lost;
+    //! Accumulate nrj lost with moving window
+    double nrj_mw_lost;
+    //! Accumulate nrj added with new particles
+    double nrj_new_particles;
     
     // -----------------------------------------------------------------------------
     //  4. Operators
@@ -209,7 +227,7 @@ public:
     // -----------------------------------------------------------------------------
     //  5. Methods
     
-    void initCluster(Params&);
+    virtual void initCluster(Params&);
     
     //! Initialize operators (must be separate from parameters init, because of cloning)
     void initOperators(Params&, Patch*);
@@ -266,9 +284,13 @@ public:
     void initCharge(unsigned int, unsigned int, double);
     
     //! Method used to sort particles
-    void sort_part();
+    virtual void sort_part(Params& param);
     void count_sort_part(Params& param);
-    
+
+    //! 
+    virtual void add_space_for_a_particle() {
+        bmax[bmax.size()-1]++;
+    }
     
     //inline void clearExchList(int tid) {
     //        indexes_of_particles_to_exchange_per_thd[tid].clear();
@@ -373,27 +395,11 @@ private:
     //! Parameter used when defining the Maxwell-Juettner function (corresponds to a discretization step in energy)
 //    double dE;
 
-    //! Number of spatial dimension for the particles
-    unsigned int nDim_particle;
-
-    //! Number of spatial dimension for the fields
-    unsigned int nDim_field;
-
     //! Inverse of the number of spatial dimension for the fields
     double inv_nDim_field;
 
     //! Local minimum of MPI domain
     double min_loc;
-
-    //! sub primal dimensions of fields
-    unsigned int f_dim0, f_dim1, f_dim2;
-
-    //! Accumulate nrj lost with bc
-    double nrj_bc_lost;
-    //! Accumulate nrj lost with moving window
-    double nrj_mw_lost;
-    //! Accumulate nrj added with new particles
-    double nrj_new_particles;
 
     //! Samples npoints values of energies in a Maxwell-Juttner distribution
     std::vector<double> maxwellJuttner(unsigned int npoints, double temperature);

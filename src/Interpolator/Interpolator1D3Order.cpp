@@ -156,7 +156,7 @@ void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particl
     (*JLoc).x = compute(coeffd_, Jx1D,  id_);  
     
 }
-void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
+void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
@@ -165,7 +165,7 @@ void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particl
     
     //Loop on bin particles
     int npart_tot = particles.size();
-    for (int ipart=istart ; ipart<iend; ipart++ ) {
+    for (int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
         (*this)(EMfields, particles, ipart, npart_tot, &(*Epart)[ipart], &(*Bpart)[ipart]);
         //Buffering of iol and delta
