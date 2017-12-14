@@ -133,6 +133,10 @@ $(BUILD_DIR)/%.d: %.cpp
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
 	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
 
+$(BUILD_DIR)/src/Diagnostic/DiagnosticScalar.o : src/Diagnostic/DiagnosticScalar.cpp
+	@echo "SPECIAL COMPILATION FOR $<"
+	$(Q) $(SMILEICXX) $(CXXFLAGS) -O2 -c $< -o $@
+
 # Compile cpps
 $(BUILD_DIR)/%.o : %.cpp
 	@echo "Compiling $<"
