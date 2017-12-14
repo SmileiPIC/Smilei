@@ -39,9 +39,9 @@ that you can install following `these instructions <https://www.macports.org/ins
      
    .. code-block:: bash
 
-     sudo port install openmpi-gcc5 +threads
-     sudo port select --set mpi openmpi-gcc5-fortran
-     sudo port install hdf5 +openmpi+gcc5+threads
+     sudo port install openmpi-gcc7 +threads
+     sudo port select --set mpi openmpi-gcc7-fortran
+     sudo port install hdf5-18 +openmpi+gcc7+threads
      
 #. Edit your ``.bash_profile`` hidden file located in your home folder:
    
@@ -54,9 +54,7 @@ that you can install following `these instructions <https://www.macports.org/ins
    .. code-block:: bash
 
      export SMILEICXX=mpicxx
-     export HDF5_ROOT_DIR=/opt/local
-     
-   Depending on your system, you might need to use ``mpic++`` instead of ``mpicxx``.
+     export HDF5_ROOT_DIR=/opt/local/hdf5-18/lib/
 
 #. Python should be already installed by default, but in case you need
    a specific version, run:

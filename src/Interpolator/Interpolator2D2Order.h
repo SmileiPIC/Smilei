@@ -16,9 +16,10 @@ public:
     Interpolator2D2Order(Params&, Patch*);
     ~Interpolator2D2Order() override final {};
 
-    inline void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, double* ELoc, double* BLoc);
+    inline void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc);
     void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread) override final ;
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc) override final ;
+    void operator() (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, std::vector<unsigned int> * selection) override final;
 
     inline double compute( double* coeffx, double* coeffy, Field2D* f, int idx, int idy) {
         double interp_res(0.);

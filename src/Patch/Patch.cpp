@@ -268,13 +268,13 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
 
     MPI_me_ = vecPatch(0)->MPI_me_;
     for (unsigned int i = 0 ; i<nDim_fields_ ; i++) {
-        if (MPI_neighbor_[i][0]==MPI_me_)
+        if ((MPI_neighbor_[i][0]==MPI_me_) && (params.EM_BCs[i][0]!="periodic"))
             MPI_neighbor_[i][0] = MPI_PROC_NULL;
-        if (MPI_neighbor_[i][1]==MPI_me_)
+        if ((MPI_neighbor_[i][1]==MPI_me_) && (params.EM_BCs[i][0]!="periodic"))
             MPI_neighbor_[i][1] = MPI_PROC_NULL;
-        if (neighbor_[i][0]==MPI_me_)
+        if ((neighbor_[i][0]==MPI_me_) && (params.EM_BCs[i][0]!="periodic"))
             neighbor_[i][0] = MPI_PROC_NULL;
-        if (neighbor_[i][1]==MPI_me_)
+        if ((neighbor_[i][1]==MPI_me_) && (params.EM_BCs[i][0]!="periodic"))
             neighbor_[i][1] = MPI_PROC_NULL;
     }
             
