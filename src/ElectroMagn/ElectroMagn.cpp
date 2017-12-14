@@ -161,19 +161,20 @@ void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn::~ElectroMagn()
 {
-    delete Ex_;
-    delete Ey_;
-    delete Ez_;
-    delete Bx_;
-    delete By_;
-    delete Bz_;
-    delete Bx_m;
-    delete By_m;
-    delete Bz_m;
-    delete Jx_;
-    delete Jy_;
-    delete Jz_;
-    delete rho_;
+
+   if(Ex_ != NULL) delete Ex_;
+   if(Ey_ != NULL) delete Ey_;
+   if(Ez_ != NULL) delete Ez_;
+   if(Bx_ != NULL) delete Bx_;
+   if(By_ != NULL) delete By_;
+   if(Bz_ != NULL) delete Bz_;
+//   if(Bx_m != NULL) delete Bx_m;
+//   if(By_m != NULL) delete By_m;
+//   if(Bz_m != NULL) delete Bz_m;
+   if(Jx_ != NULL) delete Jx_;
+   if(Jy_ != NULL) delete Jy_;
+   if(Jz_ != NULL) delete Jz_;
+   if(rho_ != NULL) delete rho_;
     
     for( unsigned int idiag=0; idiag<allFields_avg.size(); idiag++ )
         for( unsigned int ifield=0; ifield<allFields_avg[idiag].size(); ifield++ )

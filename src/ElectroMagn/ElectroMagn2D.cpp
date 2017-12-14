@@ -472,7 +472,7 @@ void ElectroMagn2D::centeringE( std::vector<double> E_Add )
 void ElectroMagn2D::saveMagneticFields(bool is_spectral)
 {
     // Static cast of the fields
-    if(!is_spectral){
+    if(!is_spectral  ){
    	 Field2D* Bx2D   = static_cast<Field2D*>(Bx_);
    	 Field2D* By2D   = static_cast<Field2D*>(By_);
    	 Field2D* Bz2D   = static_cast<Field2D*>(Bz_);
@@ -509,9 +509,9 @@ void ElectroMagn2D::saveMagneticFields(bool is_spectral)
    	     //}
     }
     else{
-    	Field2D* Bx2D_m = static_cast<Field2D*>(Bx_);
-    	Field2D* By2D_m = static_cast<Field2D*>(By_);
-    	Field2D* Bz2D_m = static_cast<Field2D*>(Bz_);
+        Bx_m = Bx_;
+        By_m = By_;
+        Bz_m = Bz_;
     }   
 }//END saveMagneticFields
 

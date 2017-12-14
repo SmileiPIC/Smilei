@@ -335,9 +335,10 @@ void ElectroMagn1D::saveMagneticFields(bool is_spectral)
    	 }
    	 }
     else{
-   	 Field1D* Bx1D_m = static_cast<Field1D*>(Bx_);
-   	 Field1D* By1D_m = static_cast<Field1D*>(By_);
-   	 Field1D* Bz1D_m = static_cast<Field1D*>(Bz_);
+          Bx_m = Bx_;
+          By_m = By_;
+          Bz_m = Bz_;
+
     }
     
 }//END saveMagneticFields

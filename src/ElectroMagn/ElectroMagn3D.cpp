@@ -550,9 +550,10 @@ void ElectroMagn3D::saveMagneticFields(bool is_spectral)
 	    memcpy(&((*Bz3D_m)(0,0,0)), &((*Bz3D)(0,0,0)),nx_d*ny_d*nz_p*sizeof(double) );
     }
     else{
-	    Field3D* Bx3D_m = static_cast<Field3D*>(Bx_);
-	    Field3D* By3D_m = static_cast<Field3D*>(By_);
-	    Field3D* Bz3D_m = static_cast<Field3D*>(Bz_);
+            Bx_m = Bx_;
+            By_m = By_;
+            Bz_m = Bz_;
+
     }
 }//END saveMagneticFields
 
