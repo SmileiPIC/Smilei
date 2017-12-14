@@ -403,6 +403,8 @@ namelist("")
         if (number_of_patches.size()>2)
             while ((number_of_patches[2] >> mi[2]) >1) mi[2]++ ;
     }
+
+    vecto = false;
     
     // Read the "print_every" parameter
     print_every = (int)(simulation_time/timestep)/10;

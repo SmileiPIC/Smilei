@@ -83,13 +83,13 @@ else ifneq (,$(findstring scalasca,$(config)))
     CXXFLAGS += -g  -O3
     SMILEICXX = scalasca -instrument $(SMILEICXX)
 
-# With Intel Advisor
+# With Intel Advisor / Vtune
 else ifneq (,$(findstring advisor,$(config)))
-    CXXFLAGS += -g -O3 -qopt-report5
+    CXXFLAGS += -g -O3 -debug inline-debug-info -shared-intel -parallel-source-info=2
 
 # Optimization report
 else ifneq (,$(findstring opt-report,$(config)))
-    CXXFLAGS += -qopt-report5
+    CXXFLAGS += -O3 -qopt-report5
 
 # Default configuration
 else

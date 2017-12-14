@@ -72,11 +72,15 @@ Validate("Relative error on the radiative energy / urad max " , urad_rel_err.max
 print("")
 print(" Checking of the particle binning diagnostics")
 
-chi_max = np.zeros([10,len(radiation_list)])
-chi_ave = np.zeros([10,len(radiation_list)])
+maximal_iteration = 5500
+period = 500
+number_of_files = maximal_iteration/period
+
+chi_max = np.zeros([number_of_files,len(radiation_list)])
+chi_ave = np.zeros([number_of_files,len(radiation_list)])
 
 # Loop over the timesteps
-for itimestep,timestep in enumerate(range(0,5000,500)):
+for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
 
     # Loop over the species/radiation models
     for i,radiation in enumerate(radiation_list):
@@ -99,16 +103,20 @@ print(" Maximal quantum parameter")
 print("                  | {0:<7} | {1:<7} |".format(radiation_list[0],radiation_list[1]))
 print(" ---------------------------------------------------")
 # Loop over the timesteps
-for itimestep,timestep in enumerate(range(0,5000,500)):
-	print(" Iteration {0:5d}  | {1:.5f} | {2:.5f} |".format(timestep,chi_max[itimestep,0],chi_max[itimestep,1]))
+for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
+    print(" Iteration {0:5d}  | {1:.5f} | {2:.5f} |".format(timestep,chi_max[itimestep,0],chi_max[itimestep,1]))
+    # Validation with 50% error
+    # The maximal quantum parameter can vary importantly
+    for k,model in enumerate(radiation_list):
+        Validate("Maximal quantum parameter for the {} model at iteration {}".format(model,timestep),chi_max[itimestep,k],chi_max[itimestep,k]*0.5)
 
 print(" ---------------------------------------------------")
 print(" Average quantum parameter")
 print("                  | {0:<7} | {1:<7} |".format(radiation_list[0],radiation_list[1]))
 print(" ---------------------------------------------------")
 # Loop over the timesteps
-for itimestep,timestep in enumerate(range(0,5000,500)):
-	print(" Iteration {0:5d}  | {1:.5f} | {2:.5f} |".format(timestep,chi_ave[itimestep,0],chi_ave[itimestep,1]))
-
-Validate("Maximal quantum parameter",chi_max,0.08)
-Validate("Average quantum parameter",chi_ave,0.08)
+for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
+    print(" Iteration {0:5d}  | {1:.5f} | {2:.5f} |".format(timestep,chi_ave[itimestep,0],chi_ave[itimestep,1]))
+    # Validation with 10% error
+    for k,model in enumerate(radiation_list):
+        Validate("Average quantum parameter for the {} model at iteration {}".format(model,timestep),chi_ave[itimestep,k],chi_ave[itimestep,k]*0.1)

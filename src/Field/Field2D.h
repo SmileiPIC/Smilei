@@ -89,7 +89,6 @@ public:
     void put( Field* outField, Params &params, SmileiMPI* smpi, Patch* thisPatch, Patch* outPatch  ) override;
     void get( Field*  inField, Params &params, SmileiMPI* smpi, Patch*   inPatch, Patch* thisPatch ) override;
 
-private:
     //!\todo{Comment what are these stuffs (MG for JD)}
     //double *data_2D;
     //! this will present the data as a 2d matrix

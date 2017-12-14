@@ -28,7 +28,10 @@ protected:
     double mass_;
     double one_over_mass_;
     int nDim_;
-
+    //! min_loc_vec (copy from picparams)
+    std::vector<double> min_loc_vec;
+    double dx_inv_[3];
+    unsigned int nspace[3];
 };//END class
 
 #endif
