@@ -6,7 +6,7 @@ compile:
   stage: compile
   only:
     - develop
-    - trackfields
+    - init_on_specie_guillaume
 
   script:
     # Force workdir cleaning in case of retried
@@ -31,7 +31,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - trackfields
+    - init_on_specie_guillaume
 
   script:
     # Move in test dir
@@ -43,7 +43,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - trackfields
+    - init_on_specie_guillaume
 
   script:
     # Move in test dir
@@ -55,7 +55,7 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    - trackfields
+    - init_on_specie_guillaume
 
   script:
     # Move in test dir
@@ -67,7 +67,7 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - trackfields
+    - init_on_specie_guillaume
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
