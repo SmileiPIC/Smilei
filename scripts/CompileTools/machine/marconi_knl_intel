@@ -1,0 +1,4 @@
+HDF5_ROOT_DIR=${HDF5_HOME}
+CXXFLAGS += -cxx=icpc -xMIC-AVX512 -ip 
+#-qopt-report=5 
+

@@ -449,7 +449,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
 
     for (int ivect=0 ; ivect < cell_nparts; ivect += vecSize ){
 
-        int np_computed(min(cell_nparts-ivect,vecSize));
+        int np_computed = min(cell_nparts-ivect,vecSize);
 
         //#pragma omp simd
         //for (unsigned int i=0; i<200; i++)

@@ -391,7 +391,8 @@ namelist("")
             while ((number_of_patches[2] >> mi[2]) >1) mi[2]++ ;
     }
 
-    vecto = false;
+    // Activation of the vectorized subroutines
+    vecto = true;
     
     // Read the "print_every" parameter
     print_every = (int)(simulation_time/timestep)/10;
