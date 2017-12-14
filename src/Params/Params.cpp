@@ -391,9 +391,7 @@ namelist("")
             while ((number_of_patches[2] >> mi[2]) >1) mi[2]++ ;
     }
 
-#ifdef _VECTO
     vecto = false;
-#endif
     
     // Read the "print_every" parameter
     print_every = (int)(simulation_time/timestep)/10;
