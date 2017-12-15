@@ -188,7 +188,10 @@ namelist("")
     if (PyTools::extract("random_seed", random_seed, "Main")) {
         Rand::gen = std::mt19937(random_seed);
     }
-    
+   
+    // communication pattern initialized as partial B exchange
+    full_B_exchange = false;
+ 
     // --------------
     // Stop & Restart
     // --------------
@@ -278,6 +281,10 @@ namelist("")
             ERROR("EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
     }
     
+    for (unsigned int iDim = 0 ; iDim < nDim_field; iDim++){
+        if (EM_BCs[iDim][0] == "buneman" || EM_BCs[iDim][1] == "buneman")
+            full_B_exchange = true; 
+    }
     // -----------------------------------
     // MAXWELL SOLVERS & FILTERING OPTIONS
     // -----------------------------------
@@ -292,10 +299,14 @@ namelist("")
     
     // PXR parameters
     PyTools::extract("is_spectral", is_spectral, "Main");
+    if (is_spectral)
+        full_B_exchange=true;
     PyTools::extract("is_pxr", is_pxr, "Main");
     
     // Maxwell Solver
     PyTools::extract("maxwell_solver", maxwell_sol, "Main");
+    if (maxwell_sol == "Lehe")
+        full_B_exchange=true;
     
     // Current filter properties
     currentFilter_passes = 0;
@@ -639,13 +650,16 @@ void Params::print_init()
 
     for ( unsigned int i=0 ; i<grid_length.size() ; i++ ){
         MESSAGE(1,"dimension " << i << " - (Spatial resolution, Grid length) : (" << res_space[i] << ", " << grid_length[i] << ")");
-        MESSAGE(1,"            - (Number of cells,    Cell length) : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
+        MESSAGE(1,"            - (Number of cells,    Cell length)  : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
+        MESSAGE(1,"            - Electromagnetic boundary conditions: " << "(" << EM_BCs[i][0] << ", " << EM_BCs[i][1] << ")");
     }
 
     if( currentFilter_passes > 0 )
         MESSAGE(1, "Binomial current filtering : "<< currentFilter_passes << " passes");
     if( Friedman_filter )
         MESSAGE(1, "Friedman field filtering : theta = " << Friedman_theta);
+    if (full_B_exchange)
+        MESSAGE(1, "All components of B are exchanged at synchronization");
 
     if (has_load_balancing){
         TITLE("Load Balancing: ");

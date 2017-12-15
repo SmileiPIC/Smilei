@@ -124,6 +124,9 @@ public:
     //! Maxium poisson error tolerated
     double poisson_max_error;
 
+    //! Do we need to exchange full B (default=0 <=> only 2 components are exchanged by dimension)
+    bool full_B_exchange;
+
     //! Maxwell Solver (default='Yee')
     std::string maxwell_sol;
     

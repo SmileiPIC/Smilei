@@ -122,7 +122,7 @@ void SyncVectorPatch::sumRhoJs(Params& params, VectorPatch& vecPatches, int ispe
 
 void SyncVectorPatch::exchangeE( Params& params, VectorPatch& vecPatches )
 {
-    if ( (params.maxwell_sol != "Lehe") && (!params.is_spectral) ) {
+    if (!params.full_B_exchange) {
         SyncVectorPatch::exchange( vecPatches.listEx_, vecPatches );
         SyncVectorPatch::exchange( vecPatches.listEy_, vecPatches );
         SyncVectorPatch::exchange( vecPatches.listEz_, vecPatches );
@@ -137,7 +137,7 @@ void SyncVectorPatch::exchangeE( Params& params, VectorPatch& vecPatches )
 void SyncVectorPatch::finalizeexchangeE( Params& params, VectorPatch& vecPatches )
 {
 
-    if ( (params.maxwell_sol != "Lehe") && (!params.is_spectral) ) {
+    if (!params.full_B_exchange) {
         SyncVectorPatch::finalizeexchange( vecPatches.listEx_, vecPatches );
         SyncVectorPatch::finalizeexchange( vecPatches.listEy_, vecPatches );
         SyncVectorPatch::finalizeexchange( vecPatches.listEz_, vecPatches );
@@ -151,7 +151,7 @@ void SyncVectorPatch::exchangeB( Params& params, VectorPatch& vecPatches )
         SyncVectorPatch::new_exchange0( vecPatches.Bs0, vecPatches );
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==2 ) {
-        if ( (params.maxwell_sol != "Lehe") && (!params.is_spectral) ) {
+        if (!params.full_B_exchange) {
             SyncVectorPatch::new_exchange0( vecPatches.Bs0, vecPatches );
             SyncVectorPatch::new_exchange1( vecPatches.Bs1, vecPatches );
         }
@@ -162,7 +162,7 @@ void SyncVectorPatch::exchangeB( Params& params, VectorPatch& vecPatches )
         }
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==3 ) {
-        if ( (params.maxwell_sol != "Lehe") && (!params.is_spectral) ) {
+        if (!params.full_B_exchange) {
             SyncVectorPatch::new_exchange0( vecPatches.Bs0, vecPatches );
             SyncVectorPatch::new_exchange1( vecPatches.Bs1, vecPatches );
             SyncVectorPatch::new_exchange2( vecPatches.Bs2, vecPatches );
@@ -199,13 +199,13 @@ void SyncVectorPatch::finalizeexchangeB( Params& params, VectorPatch& vecPatches
         SyncVectorPatch::new_finalizeexchange0( vecPatches.Bs0, vecPatches );
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==2 ) {
-        if ( (params.maxwell_sol != "Lehe") && (!params.is_spectral) ) {
+        if ( !params.full_B_exchange) {
             SyncVectorPatch::new_finalizeexchange0( vecPatches.Bs0, vecPatches );
             SyncVectorPatch::new_finalizeexchange1( vecPatches.Bs1, vecPatches );
         }
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==3 ) {
-        if ( (params.maxwell_sol != "Lehe") && (!params.is_spectral) ) {
+        if ( !params.full_B_exchange) {
             SyncVectorPatch::new_finalizeexchange0( vecPatches.Bs0, vecPatches );
             SyncVectorPatch::new_finalizeexchange1( vecPatches.Bs1, vecPatches );
             SyncVectorPatch::new_finalizeexchange2( vecPatches.Bs2, vecPatches );

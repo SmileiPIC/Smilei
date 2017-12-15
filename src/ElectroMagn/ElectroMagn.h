@@ -328,6 +328,9 @@ public:
     //! from smpi is xmax
     bool isXmax;
 
+    //! Corners coefficient for BC
+    std::vector<std::vector<double>> alpha_edge, beta_edge, S_edge;
+
 protected :
     
     
@@ -338,6 +341,7 @@ private:
     
     //! Accumulate nrj added with new fields
     double nrj_new_fields;
+
     
 };
 
