@@ -437,6 +437,23 @@ Each species has to be defined in a ``Species`` block::
    * ``"random"`` for randomly distributed
    * ``"centered"`` for centered in each cell
 
+   You can also decide to initialize species particles on another species particles ("targeted species"). In this case, replace one of the previous option by the name of the "targeted" species. For example, you want initialize position "electron" on randomly distributed "ion" ::
+
+    Species(
+        name = "ion",
+        position_initialization = "random",
+        ...
+    )
+
+    Species(
+        name = "electron",
+        position_initialization = "ion",
+        ...
+    )
+
+  :red:`Warning` Target species have to be initialize with "random","centered" or "regular"
+
+  :red:`Warning` The number of first species particles have to be the same of the second species particles
 
 .. py:data:: momentum_initialization
 
