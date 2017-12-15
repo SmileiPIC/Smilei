@@ -451,9 +451,11 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
 
         int np_computed = min(cell_nparts-ivect,vecSize);
 
-        //#pragma omp simd
-        //for (unsigned int i=0; i<200; i++)
-        //    bJx[i] = 0.;
+        if (np_computed != 8) {
+            #pragma omp simd
+            for (unsigned int i=0; i<200; i++)
+                bJx[i] = 0.;
+        }
 
         #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ){
@@ -687,7 +689,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
 
 
         iloc = iloc0+ipom2*b_dim[2];
-        if (np_computed==8) {
+        //if (np_computed==8) {
             for (unsigned int i=0 ; i<5 ; i++) {
                 for (unsigned int j=1 ; j<5 ; j++) {
                     #pragma omp simd
@@ -703,8 +705,8 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
                 }
                 iloc += (b_dim[1]+1)*b_dim[2];
             }
-        }
-        else {
+        //}
+        /*else {
             for (unsigned int i=0 ; i<5 ; i++) {
                 for (unsigned int j=1 ; j<5 ; j++) {
                     #pragma omp simd
@@ -719,7 +721,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
                 }
                 iloc += (b_dim[1]+1)*b_dim[2];
             }
-        }
+        }*/
 
 
         // Jz^(p,p,d)
