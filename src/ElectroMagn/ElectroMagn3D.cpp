@@ -150,7 +150,14 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
     Jy_   = new Field3D(dimPrim, 1, false, "Jy");
     Jz_   = new Field3D(dimPrim, 2, false, "Jz");
     rho_  = new Field3D(dimPrim, "Rho" );
-    
+  
+    //Edge coeffs are organized as follow and do not account for corner points
+    //xmin/ymin - xmin/ymax - xmin/zmin - xmin/zmax - xmax/ymin - xmax/ymax - xmax/zmin - xmax/zmax 
+    //ymin/xmin - ymin/xmax - ymin/zmin - ymin/zmax - ymax/xmin - ymax/xmax - ymax/zmin - ymax/zmax 
+    //zmin/xmin - zmin/xmax - zmin/ymin - zmin/ymax - zmaz/xmin - zmaz/xmax - zmax/ymin - zmax/ymax 
+    alpha_edge.resize(24);
+    beta_edge.resize(24);
+    S_edge.resize(24);
     
     // ----------------------------------------------------------------
     // Definition of the min and max index according to chosen oversize
