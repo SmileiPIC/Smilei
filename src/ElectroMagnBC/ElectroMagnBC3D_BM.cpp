@@ -107,7 +107,7 @@ ElectroMagnBC3D_BM::ElectroMagnBC3D_BM( Params &params, Patch* patch, unsigned i
     
     
     // -----------------------------------------------------
-    // Parameters for the Silver-Mueller boundary conditions
+    // Parameters for the Buneman boundary conditions
     // -----------------------------------------------------
     
     //! \todo (AB) Check optimal angle for buneman BC
