@@ -179,7 +179,13 @@ class Main(SmileiSingleton):
     every_clean_particles_overhead = 100
     timestep = None
     timestep_over_CFL = None
-    
+
+    # PXR tuning
+    global_factor = []
+    norder = []
+    is_spectral = False
+    is_pxr = False
+
     # Poisson tuning
     solve_poisson = True
     poisson_max_iteration = 50000
@@ -399,6 +405,7 @@ class DiagTrackParticles(SmileiComponent):
     every = 0
     flush_every = 1
     filter = None
+    attributes = ["x", "y", "z", "px", "py", "pz"]
 
 class DiagPerformances(SmileiSingleton):
     """Performances diagnostic"""

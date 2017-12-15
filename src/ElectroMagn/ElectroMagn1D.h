@@ -10,7 +10,7 @@ class ElectroMagn1D : public ElectroMagn
 {
 public:
     //! Constructor for ElectroMagn1D
-    ElectroMagn1D(Params &params, std::vector<Species*>& vecSpecies, Patch* patch);
+    ElectroMagn1D(Params &params, DomainDecomposition* domain_decomposition, std::vector<Species*>& vecSpecies, Patch* patch);
     ElectroMagn1D( ElectroMagn1D* emFields, Params &params, Patch* patch );
     //! Destructor for ElectroMagn1D
     ~ElectroMagn1D();
@@ -47,7 +47,7 @@ public:
 //    void solveMaxwellAmpere();
     
     //! Method used to save the Magnetic fields (used to center them)
-    void saveMagneticFields();
+    void saveMagneticFields(bool);
     
     //! Method used to center the Magnetic fields (used to push the particles)
     void centerMagneticFields();

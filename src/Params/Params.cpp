@@ -297,6 +297,12 @@ namelist("")
     PyTools::extract("poisson_max_iteration", poisson_max_iteration, "Main");
     PyTools::extract("poisson_max_error", poisson_max_error, "Main");
     
+    // PXR parameters
+    PyTools::extract("is_spectral", is_spectral, "Main");
+    if (is_spectral)
+        full_B_exchange=true;
+    PyTools::extract("is_pxr", is_pxr, "Main");
+    
     // Maxwell Solver
     PyTools::extract("maxwell_solver", maxwell_sol, "Main");
     if (maxwell_sol == "Lehe")
@@ -376,8 +382,17 @@ namelist("")
     if ( tot_number_of_patches < (unsigned int)(smpi->getSize()*smpi->getOMPMaxThreads()) )
         WARNING( "Resources allocated "<<(smpi->getSize()*smpi->getOMPMaxThreads())<<" underloaded regarding the total number of patches "<<tot_number_of_patches );
 #endif
-    
-    
+
+    global_factor.resize( nDim_field, 1 );
+    PyTools::extract( "global_factor", global_factor, "Main" );
+    norder.resize(nDim_field,1);
+    norder.resize(nDim_field,1);
+    PyTools::extract( "norder", norder, "Main" ); 
+    //norderx=norder[0];
+    //nordery=norder[1];
+    //norderz=norder[2];
+
+
     if( PyTools::nComponents("LoadBalancing")>0 ) {
         // get parameter "every" which describes a timestep selection
         load_balancing_time_selection = new TimeSelection(
@@ -399,6 +414,8 @@ namelist("")
         if (number_of_patches.size()>2)
             while ((number_of_patches[2] >> mi[2]) >1) mi[2]++ ;
     }
+
+    vecto = false;
     
     // Read the "print_every" parameter
     print_every = (int)(simulation_time/timestep)/10;
@@ -551,7 +568,7 @@ void Params::compute()
     //n_space_global.resize(nDim_field, 0);
     n_cell_per_patch = 1;
     for (unsigned int i=0; i<nDim_field; i++){
-        oversize[i]  = interpolation_order + (exchange_particles_each-1);;
+        oversize[i]  = max(interpolation_order,(unsigned int)(norder[i]/2+1)) + (exchange_particles_each-1);;
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];
         if(n_space_global[i]%number_of_patches[i] !=0) ERROR("ERROR in dimension " << i <<". Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i]);

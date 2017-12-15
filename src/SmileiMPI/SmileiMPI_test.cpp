@@ -81,7 +81,7 @@ SmileiMPI_test::~SmileiMPI_test()
 // ---------------------------------------------------------------------------------------------------------------------
 // Initialize MPI (per process) environment
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI_test::init( Params& params )
+void SmileiMPI_test::init( Params& params, DomainDecomposition* domain_decomposition )
 {
     // Initialize patch environment 
     patch_count.resize(smilei_sz, 0);
@@ -90,7 +90,7 @@ void SmileiMPI_test::init( Params& params )
     remove( "patch_load.txt" );
     
     // Initialize patch distribution
-    if (!params.restart) init_patch_count(params);
+    if (!params.restart) init_patch_count(params, domain_decomposition);
     
     // Initialize buffers for particles push vectorization
     dynamics_Epart.resize(1);
@@ -114,7 +114,7 @@ void SmileiMPI_test::init( Params& params )
 // ---------------------------------------------------------------------------------------------------------------------
 //  Initialize patch distribution
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI_test::init_patch_count( Params& params)
+void SmileiMPI_test::init_patch_count( Params& params, DomainDecomposition* domain_decomposition )
 {
 
     unsigned int Npatches, ncells_perpatch;

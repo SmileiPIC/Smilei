@@ -24,7 +24,7 @@ Interpolator2D2Order::Interpolator2D2Order(Params &params, Patch *patch) : Inter
 // ---------------------------------------------------------------------------------------------------------------------
 // 2nd Order Interpolation of the fields at a the particle position (3 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
-void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, double* ELoc, double* BLoc)
+void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc)
 {
     // Static cast of the electromagnetic fields
     Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
@@ -82,9 +82,6 @@ void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     jp_ = jp_ - j_domain_begin;
     jd_ = jd_ - j_domain_begin;
     
-    
-    int nparts( particles.size() );    
-
     // -------------------------
     // Interpolation of Ex^(d,p)
     // -------------------------
@@ -237,7 +234,7 @@ void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particl
 
 }
 
-void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
+void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
@@ -246,9 +243,9 @@ void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     
     //Loop on bin particles
     int nparts( particles.size() );
-    for (int ipart=istart ; ipart<iend; ipart++ ) {
+    for (int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
-        (*this)(EMfields, particles, ipart, &(*Epart)[ipart], &(*Bpart)[ipart]);
+        (*this)(EMfields, particles, ipart, nparts, &(*Epart)[ipart], &(*Bpart)[ipart]);
         //Buffering of iol and delta
         (*iold)[ipart+0*nparts]  = ip_;
         (*iold)[ipart+1*nparts]  = jp_;
@@ -257,3 +254,25 @@ void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     }
 
 }
+
+// Interpolator specific to tracked particles. A selection of particles may be provided
+void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
+{
+    if( selection ) {
+        
+        int nsel_tot = selection->size();
+        for (int isel=0 ; isel<nsel_tot; isel++ ) {
+            (*this)(EMfields, particles, (*selection)[isel], offset, buffer+isel, buffer+isel+3*offset);
+        }
+        
+    } else {
+        
+        int npart_tot = particles.size();
+        for (int ipart=0 ; ipart<npart_tot; ipart++ ) {
+            (*this)(EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset);
+        }
+        
+    }
+}
+
+

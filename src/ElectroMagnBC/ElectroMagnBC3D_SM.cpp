@@ -21,13 +21,13 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     conv_deg2rad = M_PI/180.0;
     
     // number of nodes of the primal and dual grid in the x-direction
-    nx_p = params.n_space[0]+1+2*params.oversize[0];
+    nx_p = params.n_space[0]*params.global_factor[0]+1+2*params.oversize[0];
     nx_d = nx_p+1;
     // number of nodes of the primal and dual grid in the y-direction
-    ny_p = params.n_space[1]+1+2*params.oversize[1];
+    ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
     ny_d = ny_p+1;
     // number of nodes of the primal and dual grid in the z-direction
-    nz_p = params.n_space[2]+1+2*params.oversize[2];
+    nz_p = params.n_space[2]*params.global_factor[2]+1+2*params.oversize[2];
     nz_d = nz_p+1;
     
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the x-direction)

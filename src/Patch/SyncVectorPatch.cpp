@@ -72,10 +72,6 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
 //        vecPatches(ipatch)->injectParticles(smpi, ispec, params, params.nDim_particle-1, &vecPatches); // wait
 
 
-    #pragma omp for schedule(runtime)
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-        vecPatches(ipatch)->vecSpecies[ispec]->sort_part();
-
     /*
     // Debugging
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
@@ -112,7 +108,7 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
 void SyncVectorPatch::sumRhoJ(Params& params, VectorPatch& vecPatches, Timers &timers, int itime)
 {
     SyncVectorPatch::new_sum( vecPatches.densities , vecPatches, timers, itime );
-    if(vecPatches.diag_flag) SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, itime );
+    if( (vecPatches.diag_flag) || (params.is_spectral) )SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, itime );
 }
 
 void SyncVectorPatch::sumRhoJs(Params& params, VectorPatch& vecPatches, int ispec , Timers &timers, int itime)
@@ -126,18 +122,26 @@ void SyncVectorPatch::sumRhoJs(Params& params, VectorPatch& vecPatches, int ispe
 
 void SyncVectorPatch::exchangeE( Params& params, VectorPatch& vecPatches )
 {
-
-    SyncVectorPatch::exchange( vecPatches.listEx_, vecPatches );
-    SyncVectorPatch::exchange( vecPatches.listEy_, vecPatches );
-    SyncVectorPatch::exchange( vecPatches.listEz_, vecPatches );
+    if (!params.full_B_exchange) {
+        SyncVectorPatch::exchange( vecPatches.listEx_, vecPatches );
+        SyncVectorPatch::exchange( vecPatches.listEy_, vecPatches );
+        SyncVectorPatch::exchange( vecPatches.listEz_, vecPatches );
+    }
+    else {
+        SyncVectorPatch::exchange_per_direction( vecPatches.listEx_, vecPatches );
+        SyncVectorPatch::exchange_per_direction( vecPatches.listEy_, vecPatches );
+        SyncVectorPatch::exchange_per_direction( vecPatches.listEz_, vecPatches );
+    }
 }
 
 void SyncVectorPatch::finalizeexchangeE( Params& params, VectorPatch& vecPatches )
 {
 
-    SyncVectorPatch::finalizeexchange( vecPatches.listEx_, vecPatches );
-    SyncVectorPatch::finalizeexchange( vecPatches.listEy_, vecPatches );
-    SyncVectorPatch::finalizeexchange( vecPatches.listEz_, vecPatches );
+    if (!params.full_B_exchange) {
+        SyncVectorPatch::finalizeexchange( vecPatches.listEx_, vecPatches );
+        SyncVectorPatch::finalizeexchange( vecPatches.listEy_, vecPatches );
+        SyncVectorPatch::finalizeexchange( vecPatches.listEz_, vecPatches );
+    }
 }
 
 void SyncVectorPatch::exchangeB( Params& params, VectorPatch& vecPatches )
@@ -147,8 +151,15 @@ void SyncVectorPatch::exchangeB( Params& params, VectorPatch& vecPatches )
         SyncVectorPatch::new_exchange0( vecPatches.Bs0, vecPatches );
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==2 ) {
-        SyncVectorPatch::new_exchange0( vecPatches.Bs0, vecPatches );
-        SyncVectorPatch::new_exchange1( vecPatches.Bs1, vecPatches );
+        if (!params.full_B_exchange) {
+            SyncVectorPatch::new_exchange0( vecPatches.Bs0, vecPatches );
+            SyncVectorPatch::new_exchange1( vecPatches.Bs1, vecPatches );
+        }
+        else {
+            SyncVectorPatch::exchange_per_direction( vecPatches.listBx_, vecPatches );
+            SyncVectorPatch::exchange_per_direction( vecPatches.listBy_, vecPatches );
+            SyncVectorPatch::exchange_per_direction( vecPatches.listBz_, vecPatches );
+        }
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==3 ) {
         if (!params.full_B_exchange) {
@@ -188,8 +199,10 @@ void SyncVectorPatch::finalizeexchangeB( Params& params, VectorPatch& vecPatches
         SyncVectorPatch::new_finalizeexchange0( vecPatches.Bs0, vecPatches );
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==2 ) {
-        SyncVectorPatch::new_finalizeexchange0( vecPatches.Bs0, vecPatches );
-        SyncVectorPatch::new_finalizeexchange1( vecPatches.Bs1, vecPatches );
+        if ( !params.full_B_exchange) {
+            SyncVectorPatch::new_finalizeexchange0( vecPatches.Bs0, vecPatches );
+            SyncVectorPatch::new_finalizeexchange1( vecPatches.Bs1, vecPatches );
+        }
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==3 ) {
         if ( !params.full_B_exchange) {
@@ -691,6 +704,8 @@ void SyncVectorPatch::exchange_per_direction( std::vector<Field*> fields, Vector
             nz_ = fields[0]->dims_[2];
     }
 
+    if (fields[0]->dims_.size()>2) {
+
 // Dimension 2
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
@@ -722,7 +737,7 @@ void SyncVectorPatch::exchange_per_direction( std::vector<Field*> fields, Vector
         }// End if ( MPI_me_ == MPI_neighbor_[2][0] )
 
     } // End for( ipatch )
-
+    }
 
 // Dimension 1
     #pragma omp for schedule(static)

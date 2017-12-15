@@ -198,7 +198,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Smaller admonition box */
 div.admonition {
 	padding:7px !important;
-	margin:0px 30px !important;
+	margin:-5px 0px 15px 30px !important;
 	background-color: #EAF4FD;
 	border: 1px solid #0672BA;
 	overflow: hidden;
@@ -231,7 +231,9 @@ div.admonition p {
 .image-reference, table.noborder td:first-child > .reference {
 	border-bottom:0 !important;
 }
-
+.image-reference img {
+	margin-bottom:10px
+}
 
 div.related {
 	display: none;

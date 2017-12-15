@@ -12,11 +12,11 @@ class Patch2D : public Patch
 {
 public:
     //! Constructor for Patch
-    Patch2D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
+    Patch2D(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved);
     //! Cloning Constructor for Patch
-    Patch2D(Patch2D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles);
+    Patch2D(Patch2D* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles);
 
-    void initStep2(Params& params) override final;
+    void initStep2(Params& params, DomainDecomposition* domain_decomposition) override final;
     
     //! Destructor for Patch
     ~Patch2D() override  final;
@@ -44,6 +44,7 @@ public:
 
     // Create MPI_Datatype to exchange fields
     void createType( Params& params ) override final;
+    void createType2( Params& params ) override final;
     void cleanType () override final;
 
     //! MPI_Datatype to sum [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]

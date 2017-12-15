@@ -5,7 +5,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include "Hilbert_functions.h"
+#include "DomainDecompositionFactory.h"
 #include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
@@ -16,22 +16,42 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Patch3D constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-Patch3D::Patch3D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
-  : Patch( params, smpi, ipatch, n_moved)
+Patch3D::Patch3D(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved)
+    : Patch( params, smpi, domain_decomposition, ipatch, n_moved)
 {
-    initStep2(params);
-    initStep3(params, smpi, n_moved);
-    finishCreation(params, smpi);
+    if (dynamic_cast<HilbertDomainDecomposition3D*>( domain_decomposition )) {
+        initStep2(params, domain_decomposition);
+        initStep3(params, smpi, n_moved);
+        finishCreation(params, smpi, domain_decomposition);
+    }
+    else { // Cartesian
+        // See void Patch::set( VectorPatch& vecPatch )        
+
+        for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+            for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
+                for (int iz_isPrim=0 ; iz_isPrim<2 ; iz_isPrim++) {
+                    ntype_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                    ntype_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                    ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                    ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                    ntypeSum_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;    
+                    ntypeSum_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;    
+                }        
+            }
+        }
+
+    }
+
 } // End Patch3D::Patch3D
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Patch3D cloning constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-Patch3D::Patch3D(Patch3D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
-  : Patch( patch, params, smpi, ipatch, n_moved, with_particles)
+Patch3D::Patch3D(Patch3D* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
+    : Patch( patch, params, smpi, domain_decomposition, ipatch, n_moved, with_particles)
 {
-    initStep2(params);
+    initStep2(params, domain_decomposition);
     initStep3(params, smpi, n_moved);
     finishCloning(patch, params, smpi, with_particles);
 } // End Patch3D::Patch3D
@@ -41,13 +61,13 @@ Patch3D::Patch3D(Patch3D* patch, Params& params, SmileiMPI* smpi, unsigned int i
 // Patch3D second initializer :
 //   - Pcoordinates, neighbor_ resized in Patch constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch3D::initStep2(Params& params)
+void Patch3D::initStep2(Params& params, DomainDecomposition* domain_decomposition)
 {
-    int xcall, ycall, zcall;
-    
+    std::vector<int> xcall( 3, 0 );
+
     // define patch coordinates
     Pcoordinates.resize(3);
-    generalhilbertindexinv(params.mi[0], params.mi[1], params.mi[2], &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
+    Pcoordinates = domain_decomposition->getDomainCoordinates( hindex );
 #ifdef _DEBUG
     cout << "\tPatch coords : ";
     for (int iDim=0; iDim<3;iDim++)
@@ -57,34 +77,40 @@ void Patch3D::initStep2(Params& params)
     
 
     // 1st direction
-    xcall = Pcoordinates[0]-1;
-    ycall = Pcoordinates[1];
-    zcall = Pcoordinates[2];
-    if (params.EM_BCs[0][0]=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
-    neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], params.mi[2], xcall, ycall, zcall);
-    xcall = Pcoordinates[0]+1;
-    if (params.EM_BCs[0][0]=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
-    neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], params.mi[2], xcall, ycall, zcall);
+    xcall[0] = Pcoordinates[0]-1;
+    xcall[1] = Pcoordinates[1];
+    xcall[2] = Pcoordinates[2];
+    if (params.EM_BCs[0][0]=="periodic" && xcall[0] < 0)
+        xcall[0] += domain_decomposition->ndomain_[0];
+    neighbor_[0][0] = domain_decomposition->getDomainId( xcall );
+    xcall[0] = Pcoordinates[0]+1;
+    if (params.EM_BCs[0][0]=="periodic" && xcall[0] >= domain_decomposition->ndomain_[0])
+        xcall[0] -= domain_decomposition->ndomain_[0];
+    neighbor_[0][1] = domain_decomposition->getDomainId( xcall );
 
     // 2st direction
-    xcall = Pcoordinates[0];
-    ycall = Pcoordinates[1]-1;
-    zcall = Pcoordinates[2];
-    if (params.EM_BCs[1][0]=="periodic" && ycall < 0) ycall += (1<<params.mi[1]);
-    neighbor_[1][0] =  generalhilbertindex( params.mi[0], params.mi[1], params.mi[2], xcall, ycall, zcall);
-    ycall = Pcoordinates[1]+1;
-    if (params.EM_BCs[1][0]=="periodic" && ycall >= (1<<params.mi[1])) ycall -= (1<<params.mi[1]);
-    neighbor_[1][1] =  generalhilbertindex( params.mi[0], params.mi[1], params.mi[2], xcall, ycall, zcall);
+    xcall[0] = Pcoordinates[0];
+    xcall[1] = Pcoordinates[1]-1;
+    xcall[2] = Pcoordinates[2];
+    if (params.EM_BCs[1][0]=="periodic" && xcall[1] < 0)
+        xcall[1] += domain_decomposition->ndomain_[1];
+    neighbor_[1][0] =  domain_decomposition->getDomainId( xcall );
+    xcall[1] = Pcoordinates[1]+1;
+    if (params.EM_BCs[1][0]=="periodic" && xcall[1] >= domain_decomposition->ndomain_[1])
+        xcall[1] -= domain_decomposition->ndomain_[1];
+    neighbor_[1][1] =  domain_decomposition->getDomainId( xcall );
 
     // 3st direction
-    xcall = Pcoordinates[0];
-    ycall = Pcoordinates[1];
-    zcall = Pcoordinates[2]-1;
-    if (params.EM_BCs[2][0]=="periodic" && zcall < 0) zcall += (1<<params.mi[2]);
-    neighbor_[2][0] =  generalhilbertindex( params.mi[0], params.mi[1], params.mi[2], xcall, ycall, zcall);
-    zcall = Pcoordinates[2]+1;
-    if (params.EM_BCs[2][0]=="periodic" && zcall >= (1<<params.mi[2])) zcall -= (1<<params.mi[2]);
-    neighbor_[2][1] =  generalhilbertindex( params.mi[0], params.mi[1], params.mi[2], xcall, ycall, zcall);
+    xcall[0] = Pcoordinates[0];
+    xcall[1] = Pcoordinates[1];
+    xcall[2] = Pcoordinates[2]-1;
+    if (params.EM_BCs[2][0]=="periodic" && xcall[2] < 0)
+        xcall[2] += domain_decomposition->ndomain_[2];
+    neighbor_[2][0] =  domain_decomposition->getDomainId( xcall );
+    xcall[2] = Pcoordinates[2]+1;
+    if (params.EM_BCs[2][0]=="periodic" && xcall[2] >= domain_decomposition->ndomain_[2])
+        xcall[2] -= domain_decomposition->ndomain_[2];
+    neighbor_[2][1] =  domain_decomposition->getDomainId( xcall );
 
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
         for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
@@ -446,6 +472,67 @@ void Patch3D::finalizeExchange( Field* field, int iDim )
 // ---------------------------------------------------------------------------------------------------------------------
 // Create MPI_Datatypes used in initSumField and initExchange
 // ---------------------------------------------------------------------------------------------------------------------
+void Patch3D::createType2( Params& params ) {
+    if (ntype_[0][0][0][0] != MPI_DATATYPE_NULL)
+        return;
+
+    int nx0 = params.n_space[0]*params.global_factor[0] + 1 + 2*params.oversize[0];
+    int ny0 = params.n_space[1]*params.global_factor[1] + 1 + 2*params.oversize[1];
+    int nz0 = params.n_space[2]*params.global_factor[2] + 1 + 2*params.oversize[2];
+    
+    // MPI_Datatype ntype_[nDim][primDual][primDual]
+    int nx, ny, nz;
+    int nx_sum, ny_sum, nz_sum;
+    
+    for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+        nx = nx0 + ix_isPrim;
+        for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
+            ny = ny0 + iy_isPrim;
+            for (int iz_isPrim=0 ; iz_isPrim<2 ; iz_isPrim++) {
+                nz = nz0 + iz_isPrim;
+            
+                // Standard Type
+                ntype_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                MPI_Type_contiguous(params.oversize[0]*ny*nz, 
+                                    MPI_DOUBLE, &(ntype_[0][ix_isPrim][iy_isPrim][iz_isPrim]));
+                MPI_Type_commit( &(ntype_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
+
+                ntype_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                MPI_Type_vector(nx, params.oversize[1]*nz, ny*nz, 
+                                MPI_DOUBLE, &(ntype_[1][ix_isPrim][iy_isPrim][iz_isPrim]));
+                MPI_Type_commit( &(ntype_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );
+
+                ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                MPI_Type_vector(nx*ny, params.oversize[2], nz, 
+                                MPI_DOUBLE, &(ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim]));
+                MPI_Type_commit( &(ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
+            
+
+                nx_sum = 1 + 2*params.oversize[0] + ix_isPrim;
+                ny_sum = 1 + 2*params.oversize[1] + iy_isPrim;
+                nz_sum = 1 + 2*params.oversize[2] + iz_isPrim;
+
+                ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                MPI_Type_contiguous(nx_sum*ny*nz, 
+                                    MPI_DOUBLE, &(ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim]));
+                MPI_Type_commit( &(ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
+            
+                ntypeSum_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                MPI_Type_vector(nx, ny_sum*nz, ny*nz, 
+                                MPI_DOUBLE, &(ntypeSum_[1][ix_isPrim][iy_isPrim][iz_isPrim]));
+                MPI_Type_commit( &(ntypeSum_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );
+
+                ntypeSum_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                MPI_Type_vector(nx*ny, nz_sum, nz, 
+                                MPI_DOUBLE, &(ntypeSum_[2][ix_isPrim][iy_isPrim][iz_isPrim]));
+                MPI_Type_commit( &(ntypeSum_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
+            
+            }
+        }
+    }
+    
+}
+
 void Patch3D::createType( Params& params )
 {
     if (ntype_[0][0][0][0] != MPI_DATATYPE_NULL)
