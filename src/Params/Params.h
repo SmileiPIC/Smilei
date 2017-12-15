@@ -115,6 +115,9 @@ public:
 
     //! Boundary conditions for ElectroMagnetic Fields
     std::vector< std::vector<std::string> > EM_BCs;
+    
+    //! Boundary conditions for Envelope Field
+    std::vector< std::vector<std::string> > Env_BCs;
 
     //! Define if the ponderomotive force is computed (default = false)
     bool ponderomotive_force;

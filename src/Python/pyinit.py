@@ -188,6 +188,7 @@ class Main(SmileiSingleton):
     # Default fields
     maxwell_solver = 'Yee'
     EM_boundary_conditions = [["periodic"]]
+    Envelope_boundary_conditions = [["reflective"]]
     time_fields_frozen = 0.
     ponderomotive_force = False
 
