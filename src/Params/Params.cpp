@@ -188,7 +188,10 @@ namelist("")
     if (PyTools::extract("random_seed", random_seed, "Main")) {
         Rand::gen = std::mt19937(random_seed);
     }
-    
+   
+    // communication pattern initialized as partial B exchange
+    full_B_exchange = false;
+ 
     // --------------
     // Stop & Restart
     // --------------
@@ -278,6 +281,10 @@ namelist("")
             ERROR("EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
     }
     
+    for (unsigned int iDim = 0 ; iDim < nDim_field; iDim++){
+        if (EM_BCs[iDim][0] == "buneman" || EM_BCs[iDim][1] == "buneman")
+            full_B_exchange = true; 
+    }
     // -----------------------------------
     // MAXWELL SOLVERS & FILTERING OPTIONS
     // -----------------------------------
@@ -290,8 +297,16 @@ namelist("")
     PyTools::extract("poisson_max_iteration", poisson_max_iteration, "Main");
     PyTools::extract("poisson_max_error", poisson_max_error, "Main");
     
+    // PXR parameters
+    PyTools::extract("is_spectral", is_spectral, "Main");
+    if (is_spectral)
+        full_B_exchange=true;
+    PyTools::extract("is_pxr", is_pxr, "Main");
+    
     // Maxwell Solver
     PyTools::extract("maxwell_solver", maxwell_sol, "Main");
+    if (maxwell_sol == "Lehe")
+        full_B_exchange=true;
     
     // Current filter properties
     currentFilter_passes = 0;
@@ -367,8 +382,17 @@ namelist("")
     if ( tot_number_of_patches < (unsigned int)(smpi->getSize()*smpi->getOMPMaxThreads()) )
         WARNING( "Resources allocated "<<(smpi->getSize()*smpi->getOMPMaxThreads())<<" underloaded regarding the total number of patches "<<tot_number_of_patches );
 #endif
-    
-    
+
+    global_factor.resize( nDim_field, 1 );
+    PyTools::extract( "global_factor", global_factor, "Main" );
+    norder.resize(nDim_field,1);
+    norder.resize(nDim_field,1);
+    PyTools::extract( "norder", norder, "Main" ); 
+    //norderx=norder[0];
+    //nordery=norder[1];
+    //norderz=norder[2];
+
+
     if( PyTools::nComponents("LoadBalancing")>0 ) {
         // get parameter "every" which describes a timestep selection
         load_balancing_time_selection = new TimeSelection(
@@ -544,7 +568,7 @@ void Params::compute()
     //n_space_global.resize(nDim_field, 0);
     n_cell_per_patch = 1;
     for (unsigned int i=0; i<nDim_field; i++){
-        oversize[i]  = interpolation_order + (exchange_particles_each-1);;
+        oversize[i]  = max(interpolation_order,(unsigned int)(norder[i]/2+1)) + (exchange_particles_each-1);;
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];
         if(n_space_global[i]%number_of_patches[i] !=0) ERROR("ERROR in dimension " << i <<". Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i]);
@@ -626,13 +650,16 @@ void Params::print_init()
 
     for ( unsigned int i=0 ; i<grid_length.size() ; i++ ){
         MESSAGE(1,"dimension " << i << " - (Spatial resolution, Grid length) : (" << res_space[i] << ", " << grid_length[i] << ")");
-        MESSAGE(1,"            - (Number of cells,    Cell length) : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
+        MESSAGE(1,"            - (Number of cells,    Cell length)  : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
+        MESSAGE(1,"            - Electromagnetic boundary conditions: " << "(" << EM_BCs[i][0] << ", " << EM_BCs[i][1] << ")");
     }
 
     if( currentFilter_passes > 0 )
         MESSAGE(1, "Binomial current filtering : "<< currentFilter_passes << " passes");
     if( Friedman_filter )
         MESSAGE(1, "Friedman field filtering : theta = " << Friedman_theta);
+    if (full_B_exchange)
+        MESSAGE(1, "All components of B are exchanged at synchronization");
 
     if (has_load_balancing){
         TITLE("Load Balancing: ");

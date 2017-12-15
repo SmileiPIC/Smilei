@@ -124,6 +124,9 @@ public:
     //! Maxium poisson error tolerated
     double poisson_max_error;
 
+    //! Do we need to exchange full B (default=0 <=> only 2 components are exchanged by dimension)
+    bool full_B_exchange;
+
     //! Maxwell Solver (default='Yee')
     std::string maxwell_sol;
     
@@ -188,6 +191,7 @@ public:
     unsigned int tot_number_of_patches;
     //! Number of patches per direction
     std::vector<unsigned int> number_of_patches;
+
     //! Time selection for load balancing
     TimeSelection * load_balancing_time_selection;
     //! True if must balance at some point
@@ -234,6 +238,15 @@ public:
 
     //! every for the standard pic timeloop output
     unsigned int print_every;
+
+    // PXR parameters
+    std::vector<unsigned int> global_factor;
+    bool  is_spectral=false ;
+    bool  is_pxr=false ;
+    int   norderx = 2; 
+    int   nordery = 2; 
+    int   norderz = 2;
+    std::vector<int> norder;
     
     //! Boolean for printing the expected disk usage or not
     bool print_expected_disk_usage;
@@ -254,7 +267,6 @@ public:
     //! Speed of light in vacuum (m/s)
     const double c_vacuum = 299792458;
 
-private:
     //! passing named command to python
     void runScript(std::string command, std::string name=std::string(""));
 

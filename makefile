@@ -52,6 +52,21 @@ ifneq ($(strip $(PYTHONHOME)),)
     LDFLAGS += -L$(PYTHONHOME)/lib
 endif 
 
+
+PICSAR=FALSE
+ifeq ($(PICSAR),TRUE)
+        # New environment variable
+	FFTW3_LIB ?= $(FFTW_LIB_DIR)
+	LIBPXR ?= picsar/lib
+	# Set Picsar link environment
+	CXXFLAGS += -D_PICSAR
+	LDFLAGS += -L$(LIBPXR) -lpxr
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_threads
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3
+	LDFLAGS += -lgfortran
+endif
+
 # Manage options in the "config" parameter
 ifneq (,$(findstring debug,$(config)))
     CXXFLAGS += -g -pg -D__DEBUG -O0
@@ -88,7 +103,10 @@ ifeq (,$(findstring noopenmp,$(config)))
     OPENMP_FLAG += -D_OMP
     LDFLAGS += $(OPENMP_FLAG)
     CXXFLAGS += $(OPENMP_FLAG)
+else
+    LDFLAGS += -mt_mpi
 endif
+
 
 #-----------------------------------------------------
 # check whether to use a machine specific definitions
@@ -260,6 +278,8 @@ help:
 	@echo '  BUILD_DIR             : directory used to store build files [$(BUILD_DIR)]'
 	@echo '  OPENMP_FLAG           : openmp flag [$(OPENMP_FLAG)]'
 	@echo '  PYTHONEXE             : python executable [$(PYTHONEXE)]'	
+	@echo '  FFTW3_LIB             : FFTW3 libraries directory [$(FFTW3_LIB)]'
+	@echo '  LIB PXR               : Picsar library directory [$(LIBPXR)]'
 	@echo 
 	@echo 'http://www.maisondelasimulation.fr/smilei'
 	@echo 'https://github.com/SmileiPIC/Smilei'
