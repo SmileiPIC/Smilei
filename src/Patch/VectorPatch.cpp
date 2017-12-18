@@ -190,6 +190,11 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
             (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
             // Computes B at time n using B and B_m.
             (*this)(ipatch)->EMfields->centerMagneticFields();
+            // Applies boundary conditions on EnvelopeBC
+            if ((*this)(ipatch)->envelope != NULL )
+              {
+              (*this)(ipatch)->envelope->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
+              }
         }
     }
 

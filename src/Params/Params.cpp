@@ -262,12 +262,12 @@ namelist("")
         ERROR("Envelope_boundary_conditions must be the same size as the number of dimensions");
     }
 
-    //for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
-    //    if( Env_BCs[iDim].size() == 1 ) // if just one type is specified, then take the same bc type in a given dimension
-    //        Env_BCs[iDim].push_back( Env_BCs[iDim][0] );
+    for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
+        if( Env_BCs[iDim].size() == 1 ) // if just one type is specified, then take the same bc type in a given dimension
+            Env_BCs[iDim].push_back( Env_BCs[iDim][0] );
     //    else if ( (Env_BCs[iDim][0] != Env_BCs[iDim][1]) &&  (Env_BCs[iDim][0] == "periodic" || Env_BCs[iDim][1] == "periodic") )
     //        ERROR("Envelope_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
-    //}
+    }
 
     //! Ponderomotive force
     //PyTools::extract("ponderomotive_force", ponderomotive_force, "Main");

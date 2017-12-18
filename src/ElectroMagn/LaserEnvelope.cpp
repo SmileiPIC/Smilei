@@ -69,6 +69,10 @@ LaserEnvelope::~LaserEnvelope()
 
     delete A0_;
     delete A_;
+  
+    int nBC = EnvBoundCond.size();
+    for ( int i=0 ; i<nBC ;i++ )
+        if (EnvBoundCond[i]!=NULL) delete EnvBoundCond[i];
 }
 
 
