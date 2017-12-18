@@ -195,6 +195,9 @@ class Main(SmileiSingleton):
     print_every = None
     random_seed = None
     print_expected_disk_usage = True
+
+    # Vectorization flag
+    vecto = False
     
     def __init__(self, **kwargs):
         # Load all arguments to Main()
