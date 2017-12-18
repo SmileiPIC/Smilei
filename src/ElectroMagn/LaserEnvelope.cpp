@@ -183,9 +183,9 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
     Field3D* rho_e = static_cast<Field3D*>(EMfields->rho_s[e_idx]);
 
     //// explicit solver 
-    for (unsigned int i=0 ; i <A_->dims_[0]; i++){
-        for (unsigned int j=0 ; j < A_->dims_[1] ; j++){
-            for (unsigned int k=0 ; k < A_->dims_[2]; k++){
+    for (unsigned int i=1 ; i <A_->dims_[0]-1; i++){
+        for (unsigned int j=1 ; j < A_->dims_[1]-1 ; j++){
+            for (unsigned int k=1 ; k < A_->dims_[2]-1; k++){
                 //(*A3D)(i,j,k) = (*A3D)(i,j,k);
                 A3Dnew = 0.; // subtract here source term from plasma
                 // A3Dnew = laplacian - source term
