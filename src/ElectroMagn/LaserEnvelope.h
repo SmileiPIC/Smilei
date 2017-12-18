@@ -10,7 +10,8 @@
 class Field;
 class ElectroMagn;
 class Profile;
-
+class EnvelopeBC;
+class SimWindow;
 
 // Class for envelope
 class LaserEnvelope {
@@ -20,12 +21,16 @@ public:
     virtual void initEnvelope( Patch* patch , ElectroMagn* EMfields) = 0;
     virtual ~LaserEnvelope();
     virtual void compute(ElectroMagn* EMfields) = 0;
-
+    void boundaryConditions(int itime, double time_dual, Patch* patch, Params &params, SimWindow* simWindow);
     Profile *profile_;
     const std::vector<double> cell_length;
-
+    const double timestep;
+    
     Field* A_;
     Field* A0_;
+    //! Vector of boundary-condition per side for the envelope field
+    std::vector<EnvelopeBC*> EnvBoundCond;
+    //EnvBoundCond = EnvelopeBC_Factory::create(params, patch);
 };
 
 

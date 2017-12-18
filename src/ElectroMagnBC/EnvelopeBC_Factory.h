@@ -66,7 +66,7 @@ public:
             ERROR( "Unknown geometry : " << params.geometry );
         }
         
-        return emBoundCond;
+        return EnvBoundCond;
     }
     
 };
