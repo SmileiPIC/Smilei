@@ -62,7 +62,7 @@ void ElectroMagnBCRZ_Axis::disableExternalFields()
 void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
     // Loop on imode 
-    int imode = 0;
+    for (unsigned int imode=0 ; imode<Nmode ; imode++){
 
     // Static cast of the fields
     cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->El_[imode];
@@ -100,13 +100,13 @@ void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch*
 				(*ElRZ)(i,0)+= 4*dt_ov_dr*(*BtRZ)(i,1)-dt*(*JlRZ)(i,0);
 			}
 		}
-		if (imode==1){
+		else if (imode==1){
 			//MF
 			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*BlRZ)(i,0)= -(*BlRZ)(i,1);
 			}
 			for (unsigned int i=0 ; i<nl_d ; i++) {
-				(*BrRZ)(i,0)+= (*BrRZ)(i,1)+ Icpx*dt_ov_dr*(*ElRZ)(0,i)
+				(*BrRZ)(i,0)+= (*BrRZ)(i,1)+ Icpx*dt_ov_dr*(*ElRZ)(1,i)
 				+			dt_ov_dl*((*EtRZ)(i,0)-(*EtRZ)(i+1,0));
 			}
 			for (unsigned int i=0 ; i<nl_p ; i++) {
@@ -125,6 +125,27 @@ void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch*
 			}	
 
 		}
-
+		else {
+			for (unsigned int i=0 ; i<nl_d ; i++) {
+				(*BlRZ)(i,0)= -(*BlRZ)(i,1);
+			}
+			for (unsigned int i=0 ; i<nl_d ; i++) {
+				(*BrRZ)(i,0)= 0;
+			}
+			for (unsigned int i=0 ; i<nl_p ; i++) {
+				(*BtRZ)(i,0)= - (*BtRZ)(i,1);
+			}	
+			//MA
+			for (unsigned int i=0 ; i<nl_d ; i++) {
+				(*ElRZ)(i,0)= 0;
+			}
+			for (unsigned int i=0 ; i<nl_p ; i++) {
+				(*ErRZ)(i,0)= -(*ErRZ)(i,1);
+			}
+			for (unsigned int i=0 ; i<nl_d ; i++) {
+				(*EtRZ)(i,0)= 0;
+			}
+		}
 	}    
+	}
 }
