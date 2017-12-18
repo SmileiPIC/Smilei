@@ -12,6 +12,7 @@
 #include "Tools.h"
 #include <complex>
 #include "dcomplex.h"
+#include "SolverRZ.h"
 using namespace std;
 
 ElectroMagnBCRZ_Axis::ElectroMagnBCRZ_Axis( Params &params, Patch* patch, unsigned int _min_max )
@@ -62,7 +63,7 @@ void ElectroMagnBCRZ_Axis::disableExternalFields()
 void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
     // Loop on imode 
-    for (unsigned int imode=0 ; imode<Nmode ; imode++){
+    for (unsigned int imode=0 ; imode< Nmode ; imode++){
 
     // Static cast of the fields
     cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->El_[imode];
