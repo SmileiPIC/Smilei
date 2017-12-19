@@ -57,9 +57,9 @@ cell_length    ( params.cell_length) ,timestep( params.timestep)
 
 
 LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields ) :
-cell_length    ( envelope->cell_length ), timestep( envelope->timestep)
+cell_length    ( envelope->cell_length ), timestep( envelope->timestep), EnvBoundCond (envelope->EnvBoundCond)
 {
-    profile_ = envelope->profile_;
+    profile_ = envelope->profile_;  
 }
 
 
@@ -213,7 +213,7 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
 
 void LaserEnvelope::boundaryConditions(int itime, double time_dual, Patch* patch, Params &params, SimWindow* simWindow)
 {
-    // Compute EM Bcs
+    // Compute Envelope Bcs
     if ( ! (simWindow && simWindow->isMoving(time_dual)) ) {
         if (EnvBoundCond[0]!=NULL) { // <=> if !periodic
             EnvBoundCond[0]->apply(this, time_dual, patch);

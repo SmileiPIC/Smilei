@@ -28,7 +28,7 @@ public:
             
             for (unsigned int ii=0;ii<2;ii++) {
                 // X DIRECTION
-                // absorbing bcs
+                // reflective bcs
                 if ( params.Env_BCs[0][ii] == "reflective" ) {
                     EnvBoundCond[ii] = new EnvelopeBC3D_refl(params, patch, ii);
                 }
@@ -38,7 +38,7 @@ public:
                 }
                 
                 // Y DIRECTION
-                // absorbing bcs
+                // reflective bcs
                 if ( params.Env_BCs[1][ii] == "reflective" ) {
                     EnvBoundCond[ii+2] = new EnvelopeBC3D_refl(params, patch, ii+2);
                 }
@@ -48,7 +48,7 @@ public:
                 }
 
                 // Z DIRECTION
-                // silver-muller bcs (injecting/absorbin)
+                // reflective bcs 
                 if ( params.Env_BCs[2][ii] == "reflective" ) {
                     EnvBoundCond[ii+4] = new EnvelopeBC3D_refl(params, patch, ii+4);
                 }

@@ -78,7 +78,7 @@ void EnvelopeBC3D_refl::apply(LaserEnvelope* envelope, double time_dual, Patch* 
         
         for (unsigned int i=0; i<nx_p; i++) {
             for (unsigned int j=oversize_ ; j>0 ; j--) {
-                for (unsigned int k=0; i<nz_p; k++) {
+                for (unsigned int k=0; k<nz_p; k++) {
                   (*A3D)(i,j-1,k) = (*A3D)(i,j,k);
                 }//k
             }//j
@@ -90,8 +90,8 @@ void EnvelopeBC3D_refl::apply(LaserEnvelope* envelope, double time_dual, Patch* 
         // FORCE CONSTANT ENVELOPE FIELD
         
         for (unsigned int i=0; i<nx_p; i++) {
-            for (unsigned int j=ny_p-oversize_; j<ny_d ; j++) {
-                for (unsigned int k=0; i<nz_p; k++) {
+            for (unsigned int j=ny_p-oversize_; j<ny_p ; j++) {
+                for (unsigned int k=0; k<nz_p; k++) {
                   (*A3D)(i,j,k) = (*A3D)(i,j-1,k);
                 }//k
             }//j
