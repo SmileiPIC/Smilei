@@ -55,7 +55,8 @@ Main(
      maxwell_solver = 'Yee',
      EM_boundary_conditions = [ ['periodic'] ],
      random_seed = smilei_mpi_rank,
-     print_every = int(t_sim/dt/100.)
+     print_every = int(t_sim/dt/100.),
+     vecto = True
 )
 
 LoadBalancing(

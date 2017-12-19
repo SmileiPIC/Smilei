@@ -394,6 +394,8 @@ namelist("")
     // Activation of the vectorized subroutines
     vecto = false;
     PyTools::extract("vecto", vecto, "Main");
+    if (vecto)
+        MESSAGE( "Apply vectorization" );
     
     // Read the "print_every" parameter
     print_every = (int)(simulation_time/timestep)/10;
