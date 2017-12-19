@@ -111,22 +111,26 @@ namelist("")
     string command = "import signal\nsignal.signal(signal.SIGINT, signal.SIG_DFL)";
     if( !PyRun_SimpleString(command.c_str()) ) PyTools::checkPyError();
     
-    // Running pyinit.py
-    runScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py");
     
-    runScript(Tools::merge("smilei_version='",string(__VERSION),"'\n"), string(__VERSION));
+    PyObject* Py_main = PyImport_AddModule("__main__");
+    PyObject* globals = PyModule_GetDict(Py_main);
+    
+    // Running pyinit.py
+    runScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py", globals);
+    
+    runScript(Tools::merge("smilei_version='",string(__VERSION),"'\n"), string(__VERSION), globals);
     
     // Running pyprofiles.py
-    runScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py");
+    runScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py", globals);
     
     // here we add the rank, in case some script need it
-    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
+    PyModule_AddIntConstant(Py_main, "smilei_mpi_rank", smpi->getRank());
     
     // here we add the MPI size, in case some script need it
-    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_size", smpi->getSize());
+    PyModule_AddIntConstant(Py_main, "smilei_mpi_size", smpi->getSize());
     
     // here we add the larget int, important to get a valid seed for randomization
-    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_rand_max", RAND_MAX);
+    PyModule_AddIntConstant(Py_main, "smilei_rand_max", RAND_MAX);
     
     // Running the namelists
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
@@ -151,10 +155,10 @@ namelist("")
             strNamelist +="\n";
         }
         smpi->bcast(strNamelist);
-        runScript(strNamelist,(*it));
+        runScript(strNamelist,(*it), globals);
     }
     // Running pycontrol.py
-    runScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py");
+    runScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py", globals);
     
     smpi->barrier();
     
@@ -784,15 +788,16 @@ vector<unsigned int> Params::FindSpecies(vector<Species*>& vecSpecies, vector<st
 
 
 //! Run string as python script and add to namelist
-void Params::runScript(string command, string name) {
+void Params::runScript(string command, string name, PyObject * scope) {
     PyTools::checkPyError();
     namelist+=command;
     if (name.size()>0)  MESSAGE(1,"Parsing " << name);
-    int retval=PyRun_SimpleString(command.c_str());
-    if (retval==-1) {
+    PyObject* result = PyRun_String(command.c_str(), Py_file_input, scope, scope);
+    PyTools::checkPyError();
+    if (!result) {
         ERROR("error parsing "<< name);
-        PyTools::checkPyError();
     }
+    Py_DECREF(result);
 }
 
 //! run the python functions cleanup (user defined) and _keep_python_running (in pycontrol.py)

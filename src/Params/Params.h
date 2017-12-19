@@ -268,7 +268,7 @@ public:
     const double c_vacuum = 299792458;
 
     //! passing named command to python
-    void runScript(std::string command, std::string name=std::string(""));
+    void runScript(std::string command, std::string name, PyObject*);
 
     //! Characters width for timestep output
     unsigned int timestep_width;
