@@ -192,13 +192,17 @@ class Probe(Diagnostic):
 		# Special case in 2D: we have to prepare for pcolormesh instead of imshow
 		elif len(self._centers) == 2:
 			p1 = self._centers[0] # locations of grid points along first dimension
-			d = self._np.diff(p1, axis=0) # separation between the points
-			p1 = self._np.vstack((p1, p1[-1,:])) # add last edges at the end of box
-			p1[1:-1,:] -= d/2. # move points by one half
+			d = (p1[1,:] - p1[0,:])/2. # half separation between the points
+			p1[0,:] += d
+			p1 = self._np.vstack((p1, p1[-1,:]+d)) # add last edges at the end of box
+			offset = p1[0,:]
+			p1 = self._np.apply_along_axis(lambda x: x-offset, 1, p1) # move points
 			p2 = self._centers[1] # locations of grid points along second dimension
-			d = self._np.diff(p2, axis=0) # separation between the points
-			p2 = self._np.vstack((p2, p2[-1,:])) # add last edges at the end of box
-			p2[1:-1,:] -= d/2. # move points by one half
+			d = (p2[1,:] - p2[0,:])/2. # half separation between the points
+			p2[0,:] += d
+			p2 = self._np.vstack((p2, p2[-1,:]+d)) # add last edges at the end of box
+			offset = p2[0,:]
+			p2 = self._np.apply_along_axis(lambda x: x-offset, 1, p2) # move points
 			# Trick in a 3D simulation (the probe has to be projected)
 			if self._ndim==3:
 				# unit vectors in the two dimensions + perpendicular
@@ -224,7 +228,7 @@ class Probe(Diagnostic):
 			Y = self._np.maximum( Y, 0.)
 			Y = self._np.minimum( Y, self._ncels[1]*self._cell_length[1])
 			self._edges = [X, Y]
-			self._label = ["axis1", "axis2"]
+			self._label = ["axis1", ""]
 			self._units = [axisunits, axisunits]
 		
 		# Prepare the reordering of the points for patches disorder
