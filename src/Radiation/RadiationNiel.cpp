@@ -192,7 +192,7 @@ void RadiationNiel::operator() (
     double* Bz = &( (*Bpart)[2*nparts] );
 
     // Used to store gamma directly
-    double *gamma = &(smpi->dynamics_invgf[ithread][istart]);
+    double *gamma = &(smpi->dynamics_invgf[ithread][0]);
 
     // Charge divided by the square of the mass
     double charge_over_mass2;
@@ -246,6 +246,7 @@ void RadiationNiel::operator() (
 
     //double t0 = MPI_Wtime();
 
+    // Vectorized computation of gamma and the particle quantum parameter
     #pragma omp simd
     for (ipart=0 ; ipart< nbparticles; ipart++ )
     {
@@ -260,15 +261,15 @@ void RadiationNiel::operator() (
         // Computation of the Lorentz invariant quantum parameter
         chipa[ipart] = Radiation::compute_chipa(charge_over_mass2,
                      momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
-                     (*gamma)[ipart],
+                     gamma[ipart],
                      (*(Ex+ipart)),(*(Ey+ipart)),(*(Ez+ipart)),
                      (*(Bx+ipart)),(*(By+ipart)),(*(Bz+ipart)) );
     }
 
     //double t1 = MPI_Wtime();
 
-    // Non-vectorized
-    for (ipart=0 ; ipart < nbparticles; ipart++ )
+    // Non-vectorized computation of the random number
+    /*for (ipart=0 ; ipart < nbparticles; ipart++ )
     {
 
         // Below chipa = chipa_radiation_threshold, radiation losses are negligible
@@ -279,14 +280,26 @@ void RadiationNiel::operator() (
           // deviation sqrt(dt) (variance dt)
           random_numbers[ipart] = Rand::normal(sqrtdt);
         }
+    }*/
+
+    // Vectorized computation of the random number in a normal distribution
+    for (ipart=0 ; ipart < nbparticles; ipart++ )
+    {
+
+        // Below chipa = chipa_radiation_threshold, radiation losses are negligible
+        if (chipa[ipart] > chipa_radiation_threshold)
+        {
+
+          // Pick a random number in the normal distribution of standard
+          // deviation sqrt(dt) (variance dt)
+          random_numbers[ipart] = 2.*Rand::uniform() -1.;
+          random_numbers[ipart] = userFunctions::erfinv2(random_numbers[ipart])*sqrtdt*sqrt(2.);
+        }
     }
 
     //double t2 = MPI_Wtime();
 
-    // _______________________________________________________________
-    // Computation of the diffusion coefficients
-
-    // Use of the external table
+    // Computation of the diffusion coefficients using of the external table
     /*for (i=0 ; i < nbparticles; i++ )
     {
 
@@ -309,7 +322,7 @@ void RadiationNiel::operator() (
 
     double h;
 
-    // Use of the fit
+    // Computation of the diffusion coefficients using the fit
     #pragma omp simd
     for (ipart=0 ; ipart < nbparticles; ipart++ )
     {
@@ -332,9 +345,7 @@ void RadiationNiel::operator() (
 
     //double t3 = MPI_Wtime();
 
-    // _______________________________________________________________
     // Update of the momentum
-
     #pragma omp simd
     for (ipart=0 ; ipart<nbparticles; ipart++ )
     {
@@ -361,9 +372,7 @@ void RadiationNiel::operator() (
 
     //double t4 = MPI_Wtime();
 
-    // _______________________________________________________________
-    // Computation of the thread radiated energy
-
+    // Vectorized computation of the thread radiated energy
     double radiated_energy_loc = 0;
 
     #pragma omp simd reduction(+:radiated_energy_loc)
