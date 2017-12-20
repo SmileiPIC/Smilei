@@ -55,8 +55,8 @@ RadiationNiel::~RadiationNiel()
 
     // _______________________________________________________________
     // Parameters
-    std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
-    std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
+    std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
+    std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
     //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
 
     // Charge divided by the square of the mass
@@ -180,8 +180,17 @@ void RadiationNiel::operator() (
 
     // _______________________________________________________________
     // Parameters
-    LocalFields *Epart = &(smpi->dynamics_Epart[ithread][istart]);
-    LocalFields *Bpart = &(smpi->dynamics_Bpart[ithread][istart]);
+    std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
+    std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
+
+    int nparts = particles.size();
+    double* Ex = &( (*Epart)[0*nparts] );
+    double* Ey = &( (*Epart)[1*nparts] );
+    double* Ez = &( (*Epart)[2*nparts] );
+    double* Bx = &( (*Bpart)[0*nparts] );
+    double* By = &( (*Bpart)[1*nparts] );
+    double* Bz = &( (*Bpart)[2*nparts] );
+
     // Used to store gamma directly
     double *gamma = &(smpi->dynamics_invgf[ithread][istart]);
 
@@ -251,9 +260,9 @@ void RadiationNiel::operator() (
         // Computation of the Lorentz invariant quantum parameter
         chipa[ipart] = Radiation::compute_chipa(charge_over_mass2,
                      momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
-                     gamma[ipart],
-                     Epart[ipart].x,Epart[ipart].y,Epart[ipart].z,
-                     Bpart[ipart].x,Bpart[ipart].y,Bpart[ipart].z);
+                     (*gamma)[ipart],
+                     (*(Ex+ipart)),(*(Ey+ipart)),(*(Ez+ipart)),
+                     (*(Bx+ipart)),(*(By+ipart)),(*(Bz+ipart)) );
     }
 
     //double t1 = MPI_Wtime();
@@ -288,7 +297,7 @@ void RadiationNiel::operator() (
         if (chipa[ipart] > RadiationTables.get_chipa_radiation_threshold())
         {
 
-            // Diffusive stochastic component during dt
+            // Diffusive stochastic component during dtNiel_performance
             diffusion[i] = RadiationTables.get_Niel_stochastic_term((*gamma)[ipart],
                                                         chipa[ipart],sqrtdt);
         }

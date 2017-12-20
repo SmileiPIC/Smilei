@@ -87,6 +87,19 @@ namelist("")
     PyTools::openPython();
 #ifdef SMILEI_USE_NUMPY
     smilei_import_array();
+    // Workaround some numpy multithreading bug
+    // https://github.com/numpy/numpy/issues/5856
+    // We basically call the command numpy.seterr(all="ignore")
+    PyObject* numpy = PyImport_ImportModule("numpy");
+    PyObject* seterr = PyObject_GetAttrString(numpy, "seterr");
+    PyObject* args = PyTuple_New(0);
+    PyObject* kwargs = Py_BuildValue("{s:s}", "all", "ignore");
+    PyObject* ret = PyObject_Call(seterr, args, kwargs);
+    Py_DECREF(ret);
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
+    Py_DECREF(seterr);
+    Py_DECREF(numpy);
 #endif
     
     // Print python version
@@ -98,22 +111,26 @@ namelist("")
     string command = "import signal\nsignal.signal(signal.SIGINT, signal.SIG_DFL)";
     if( !PyRun_SimpleString(command.c_str()) ) PyTools::checkPyError();
     
-    // Running pyinit.py
-    runScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py");
     
-    runScript(Tools::merge("smilei_version='",string(__VERSION),"'\n"), string(__VERSION));
+    PyObject* Py_main = PyImport_AddModule("__main__");
+    PyObject* globals = PyModule_GetDict(Py_main);
+    
+    // Running pyinit.py
+    runScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py", globals);
+    
+    runScript(Tools::merge("smilei_version='",string(__VERSION),"'\n"), string(__VERSION), globals);
     
     // Running pyprofiles.py
-    runScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py");
+    runScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py", globals);
     
     // here we add the rank, in case some script need it
-    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
+    PyModule_AddIntConstant(Py_main, "smilei_mpi_rank", smpi->getRank());
     
     // here we add the MPI size, in case some script need it
-    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_size", smpi->getSize());
+    PyModule_AddIntConstant(Py_main, "smilei_mpi_size", smpi->getSize());
     
     // here we add the larget int, important to get a valid seed for randomization
-    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_rand_max", RAND_MAX);
+    PyModule_AddIntConstant(Py_main, "smilei_rand_max", RAND_MAX);
     
     // Running the namelists
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
@@ -138,10 +155,10 @@ namelist("")
             strNamelist +="\n";
         }
         smpi->bcast(strNamelist);
-        runScript(strNamelist,(*it));
+        runScript(strNamelist,(*it), globals);
     }
     // Running pycontrol.py
-    runScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py");
+    runScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py", globals);
     
     smpi->barrier();
     
@@ -175,7 +192,10 @@ namelist("")
     if (PyTools::extract("random_seed", random_seed, "Main")) {
         Rand::gen = std::mt19937(random_seed);
     }
-    
+   
+    // communication pattern initialized as partial B exchange
+    full_B_exchange = false;
+ 
     // --------------
     // Stop & Restart
     // --------------
@@ -265,6 +285,10 @@ namelist("")
             ERROR("EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
     }
     
+    for (unsigned int iDim = 0 ; iDim < nDim_field; iDim++){
+        if (EM_BCs[iDim][0] == "buneman" || EM_BCs[iDim][1] == "buneman")
+            full_B_exchange = true; 
+    }
     // -----------------------------------
     // MAXWELL SOLVERS & FILTERING OPTIONS
     // -----------------------------------
@@ -277,8 +301,16 @@ namelist("")
     PyTools::extract("poisson_max_iteration", poisson_max_iteration, "Main");
     PyTools::extract("poisson_max_error", poisson_max_error, "Main");
     
+    // PXR parameters
+    PyTools::extract("is_spectral", is_spectral, "Main");
+    if (is_spectral)
+        full_B_exchange=true;
+    PyTools::extract("is_pxr", is_pxr, "Main");
+    
     // Maxwell Solver
     PyTools::extract("maxwell_solver", maxwell_sol, "Main");
+    if (maxwell_sol == "Lehe")
+        full_B_exchange=true;
     
     // Current filter properties
     currentFilter_passes = 0;
@@ -354,8 +386,17 @@ namelist("")
     if ( tot_number_of_patches < (unsigned int)(smpi->getSize()*smpi->getOMPMaxThreads()) )
         WARNING( "Resources allocated "<<(smpi->getSize()*smpi->getOMPMaxThreads())<<" underloaded regarding the total number of patches "<<tot_number_of_patches );
 #endif
-    
-    
+
+    global_factor.resize( nDim_field, 1 );
+    PyTools::extract( "global_factor", global_factor, "Main" );
+    norder.resize(nDim_field,1);
+    norder.resize(nDim_field,1);
+    PyTools::extract( "norder", norder, "Main" ); 
+    //norderx=norder[0];
+    //nordery=norder[1];
+    //norderz=norder[2];
+
+
     if( PyTools::nComponents("LoadBalancing")>0 ) {
         // get parameter "every" which describes a timestep selection
         load_balancing_time_selection = new TimeSelection(
@@ -377,6 +418,8 @@ namelist("")
         if (number_of_patches.size()>2)
             while ((number_of_patches[2] >> mi[2]) >1) mi[2]++ ;
     }
+
+    vecto = false;
     
     // Read the "print_every" parameter
     print_every = (int)(simulation_time/timestep)/10;
@@ -529,7 +572,7 @@ void Params::compute()
     //n_space_global.resize(nDim_field, 0);
     n_cell_per_patch = 1;
     for (unsigned int i=0; i<nDim_field; i++){
-        oversize[i]  = interpolation_order + (exchange_particles_each-1);;
+        oversize[i]  = max(interpolation_order,(unsigned int)(norder[i]/2+1)) + (exchange_particles_each-1);;
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];
         if(n_space_global[i]%number_of_patches[i] !=0) ERROR("ERROR in dimension " << i <<". Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i]);
@@ -603,21 +646,24 @@ void Params::setDimensions()
 void Params::print_init()
 {
     TITLE("Geometry: " << geometry);
-    MESSAGE(1,"(nDim_particle, nDim_field) : (" << nDim_particle << ", "<< nDim_field << ")");
-    MESSAGE(1,"Interpolation_order : " <<  interpolation_order);
-    MESSAGE(1,"(res_time, simulation_time) : (" << res_time << ", " << simulation_time << ")");
-    MESSAGE(1,"(n_time,   timestep) : (" << n_time << ", " << timestep << ")");
+    MESSAGE(1,"Interpolation order : " <<  interpolation_order);
+    MESSAGE(1,"Maxwell solver : " <<  maxwell_sol);
+    MESSAGE(1,"(Time resolution, Total simulation time) : (" << res_time << ", " << simulation_time << ")");
+    MESSAGE(1,"(Total number of iterations,   timestep) : (" << n_time << ", " << timestep << ")");
     MESSAGE(1,"           timestep  = " << timestep/dtCFL << " * CFL");
 
     for ( unsigned int i=0 ; i<grid_length.size() ; i++ ){
-        MESSAGE(1,"dimension " << i << " - (res_space, grid_length) : (" << res_space[i] << ", " << grid_length[i] << ")");
-        MESSAGE(1,"            - (n_space_global,  cell_length) : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
+        MESSAGE(1,"dimension " << i << " - (Spatial resolution, Grid length) : (" << res_space[i] << ", " << grid_length[i] << ")");
+        MESSAGE(1,"            - (Number of cells,    Cell length)  : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
+        MESSAGE(1,"            - Electromagnetic boundary conditions: " << "(" << EM_BCs[i][0] << ", " << EM_BCs[i][1] << ")");
     }
 
     if( currentFilter_passes > 0 )
         MESSAGE(1, "Binomial current filtering : "<< currentFilter_passes << " passes");
     if( Friedman_filter )
         MESSAGE(1, "Friedman field filtering : theta = " << Friedman_theta);
+    if (full_B_exchange)
+        MESSAGE(1, "All components of B are exchanged at synchronization");
 
     if (has_load_balancing){
         TITLE("Load Balancing: ");
@@ -742,15 +788,16 @@ vector<unsigned int> Params::FindSpecies(vector<Species*>& vecSpecies, vector<st
 
 
 //! Run string as python script and add to namelist
-void Params::runScript(string command, string name) {
+void Params::runScript(string command, string name, PyObject * scope) {
     PyTools::checkPyError();
     namelist+=command;
     if (name.size()>0)  MESSAGE(1,"Parsing " << name);
-    int retval=PyRun_SimpleString(command.c_str());
-    if (retval==-1) {
+    PyObject* result = PyRun_String(command.c_str(), Py_file_input, scope, scope);
+    PyTools::checkPyError();
+    if (!result) {
         ERROR("error parsing "<< name);
-        PyTools::checkPyError();
     }
+    Py_DECREF(result);
 }
 
 //! run the python functions cleanup (user defined) and _keep_python_running (in pycontrol.py)

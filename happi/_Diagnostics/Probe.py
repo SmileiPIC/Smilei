@@ -192,26 +192,43 @@ class Probe(Diagnostic):
 		# Special case in 2D: we have to prepare for pcolormesh instead of imshow
 		elif len(self._centers) == 2:
 			p1 = self._centers[0] # locations of grid points along first dimension
-			d = self._np.diff(p1, axis=0) # separation between the points
-			p1 = self._np.vstack((p1, p1[-1,:])) # add last edges at the end of box
-			p1[1:-1] -= d/2 # move points by one half
+			d = (p1[1,:] - p1[0,:])/2. # half separation between the points
+			p1[0,:] += d
+			p1 = self._np.vstack((p1, p1[-1,:]+d)) # add last edges at the end of box
+			offset = p1[0,:]
+			p1 = self._np.apply_along_axis(lambda x: x-offset, 1, p1) # move points
 			p2 = self._centers[1] # locations of grid points along second dimension
-			d = self._np.diff(p2, axis=0) # separation between the points
-			p2 = self._np.vstack((p2, p2[-1,:])) # add last edges at the end of box
-			p2[1:-1] -= d/2 # move points by one half
+			d = (p2[1,:] - p2[0,:])/2. # half separation between the points
+			p2[0,:] += d
+			p2 = self._np.vstack((p2, p2[-1,:]+d)) # add last edges at the end of box
+			offset = p2[0,:]
+			p2 = self._np.apply_along_axis(lambda x: x-offset, 1, p2) # move points
+			# Trick in a 3D simulation (the probe has to be projected)
+			if self._ndim==3:
+				# unit vectors in the two dimensions + perpendicular
+				u1 = p[0] / self._np.linalg.norm(p[0])
+				u2 = p[1] / self._np.linalg.norm(p[1])
+				# Distances along first direction
+				p1[:,0] = self._np.dot(p1, u1)
+				p1[:,1:] = 0.
+				# Distances along second direction
+				p2x = self._np.dot(p2, u1)
+				p2[:,1] = self._np.dot(p2, u2)
+				p2[:,0] = p2x
+				p2[:,2:] = 0.
 			# Now p1 and p2 contain edges grid points along the 2 dimensions
 			# We have to convert into X and Y 2D arrays (similar to meshgrid)
 			X = self._np.zeros((p1.shape[0], p2.shape[0]))
 			Y = self._np.zeros((p1.shape[0], p2.shape[0]))
 			for i in range(p2.shape[0]):
-				X[:,i] = p1[:,0] + p2[i,0]-p2[0,0]
-				Y[:,i] = p1[:,1] + p2[i,1]-p2[0,1]
+				X[:,i] = p1[:,0] + (p2[i,0]-p2[0,0])
+				Y[:,i] = p1[:,1] + (p2[i,1]-p2[0,1])
 			X = self._np.maximum( X, 0.)
 			X = self._np.minimum( X, self._ncels[0]*self._cell_length[0])
 			Y = self._np.maximum( Y, 0.)
 			Y = self._np.minimum( Y, self._ncels[1]*self._cell_length[1])
 			self._edges = [X, Y]
-			self._label = ["x", "y"]
+			self._label = ["axis1", ""]
 			self._units = [axisunits, axisunits]
 		
 		# Prepare the reordering of the points for patches disorder
@@ -260,8 +277,6 @@ class Probe(Diagnostic):
 		for n in self._fieldn:
 			self._title  = self._title .replace("#"+str(n), titles    [n])
 			self._vunits = self._vunits.replace("#"+str(n), fieldunits[n])
-		
-		self._buffer = self._np.zeros((self.numpoints,), dtype="double")
 		
 		# Set the directory in case of exporting
 		self._exportPrefix = "Probe"+str(probeNumber)+"_"+"".join(self._fieldname)
@@ -336,8 +351,9 @@ class Probe(Diagnostic):
 		C = {}
 		op = self.operation
 		for n in reversed(self._fieldn): # for each field in operation
-			self._dataForTime[t].read_direct(self._buffer, source_sel=self._np.s_[n,:])
-			C.update({ n:self._buffer })
+			buffer = self._np.empty((self.numpoints,), dtype="double")
+			self._dataForTime[t].read_direct(buffer, source_sel=self._np.s_[n,:])
+			C.update({ n:buffer })
 			op = op.replace("#"+str(n), "C["+str(n)+"]")
 		# Calculate the operation
 		A = eval(op)

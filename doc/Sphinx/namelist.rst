@@ -165,7 +165,8 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   :default: 'Yee'
 
-  The solver for Maxwell's equations. Only ``"Yee"`` is available at the moment.
+  The solver for Maxwell's equations. Only ``"Yee"`` is available for all geometries at the moment. ``"Cowan"``, ``"Grassi"`` and ``"Lehe"``
+  are available for 2DCartesian and ``"Lehe"`` is available for 3DCartesian. Lehe solver is described in this `paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_  
 
 .. py:data:: solve_poisson
 
@@ -436,6 +437,23 @@ Each species has to be defined in a ``Species`` block::
    * ``"random"`` for randomly distributed
    * ``"centered"`` for centered in each cell
 
+   You can also decide to initialize species particles on another species particles ("targeted species"). In this case, replace one of the previous option by the name of the "targeted" species. For example, you want initialize position "electron" on randomly distributed "ion" ::
+
+    Species(
+        name = "ion",
+        position_initialization = "random",
+        ...
+    )
+
+    Species(
+        name = "electron",
+        position_initialization = "ion",
+        ...
+    )
+
+  :red:`Warning` Target species have to be initialize with "random","centered" or "regular"
+
+  :red:`Warning` The number of first species particles have to be the same of the second species particles
 
 .. py:data:: momentum_initialization
 
@@ -1824,7 +1842,8 @@ for instance::
 
 .. py:data:: deposited_quantity
 
-  The type of data that is summed in each cell of the grid:
+  The type of data that is summed in each cell of the grid.
+  Consider reading :ref:`this <Weights>` to understand the meaning of the ``weight``.
 
   * ``"weight"`` results in a number density.
   * ``"weight_charge"`` results in a charge density.
@@ -2101,6 +2120,7 @@ for instance::
       every = 10,
   #    flush_every = 100,
   #    filter = my_filter,
+  #    attributes = ["x", "px", "py", "Ex", "Ey", "Bz"]
   )
 
 .. py:data:: species
@@ -2154,6 +2174,48 @@ for instance::
   iteration number of the PIC loop. The current time of the simulation is thus
   ``Main.iteration * Main.timestep``.
 
+.. py:data:: attributes
+
+  :default: ``["x","y","z","px","py","pz"]``
+  
+  A list of strings indicating the particle attributes to be written in the output.
+  The attributes may be the particles' spatial coordinates (``"x"``, ``"y"``, ``"z"``),
+  their momenta (``"px"``, ``"py"``, ``"pz"``), their electrical charge (``"q"``), 
+  their statistical weight (``"w"``), their quantum parameter
+  (``"chi"``, only for species with radiation losses) or the fields interpolated
+  at their  positions (``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``).
+
+----
+
+.. _DiagPerformances:
+
+*Performances* diagnostics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The *performances* diagnostic records information on the computational load and timers
+for each MPI process in the simulation.
+
+Only one block ``DiagPerformances()`` may be added in the namelist, for instance::
+
+  DiagPerformances(
+      every = 100,
+  #    flush_every = 100,
+  )
+
+.. py:data:: every
+
+  :default: 0
+
+  Number of timesteps between each output, **or** a :ref:`time selection <TimeSelections>`.
+
+.. py:data:: flush_every
+
+  :default: 1
+
+  Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
+
+  When ``flush_every`` coincides with ``every``, the output file is actually written
+  ("flushed" from the buffer). Flushing too often might *dramatically* slow down the simulation.
 
 
 ----

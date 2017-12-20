@@ -20,8 +20,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn3D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn3D::ElectroMagn3D(Params &params, vector<Species*>& vecSpecies, Patch* patch) : 
-  ElectroMagn(params, vecSpecies, patch),
+ElectroMagn3D::ElectroMagn3D(Params &params, DomainDecomposition* domain_decomposition, vector<Species*>& vecSpecies, Patch* patch) : 
+  ElectroMagn(params, domain_decomposition, vecSpecies, patch),
 isYmin(patch->isYmin()),
 isYmax(patch->isYmax()),
 isZmax(patch->isZmax()),
@@ -150,7 +150,30 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
     Jy_   = new Field3D(dimPrim, 1, false, "Jy");
     Jz_   = new Field3D(dimPrim, 2, false, "Jz");
     rho_  = new Field3D(dimPrim, "Rho" );
-    
+  
+    //Edge coeffs are organized as follow and do not account for corner points
+    //xmin/ymin - xmin/ymax - xmin/zmin - xmin/zmax - xmax/ymin - xmax/ymax - xmax/zmin - xmax/zmax 
+    //ymin/xmin - ymin/xmax - ymin/zmin - ymin/zmax - ymax/xmin - ymax/xmax - ymax/zmin - ymax/zmax 
+    //zmin/xmin - zmin/xmax - zmin/ymin - zmin/ymax - zmaz/xmin - zmaz/xmax - zmax/ymin - zmax/ymax 
+    alpha_edge.resize(24);
+    beta_edge.resize(24);
+    S_edge.resize(24);
+
+    if(params.is_pxr == true) {
+        rhoold_ = new Field3D(dimPrim,"Rho");
+        Ex_pxr  = new Field3D(dimDual);
+        Ey_pxr  = new Field3D(dimDual);
+        Ez_pxr  = new Field3D(dimDual);
+        Bx_pxr  = new Field3D(dimDual);
+        By_pxr  = new Field3D(dimDual);
+        Bz_pxr  = new Field3D(dimDual);
+        Jx_pxr  = new Field3D(dimDual);
+        Jy_pxr  = new Field3D(dimDual);
+        Jz_pxr  = new Field3D(dimDual);
+        rho_pxr = new Field3D(dimDual);
+        rhoold_pxr  = new Field3D(dimDual);
+
+    } 
     
     // ----------------------------------------------------------------
     // Definition of the min and max index according to chosen oversize
@@ -291,7 +314,7 @@ void ElectroMagn3D::compute_Ap(Patch* patch)
     double one_ov_dx_sq       = 1.0/(dx*dx);
     double one_ov_dy_sq       = 1.0/(dy*dy);
     double one_ov_dz_sq       = 1.0/(dz*dz);
-    double three_ov_dx2dy2dz2 = 3.0*(1.0/(dx*dx)+1.0/(dy*dy)+1.0/(dz*dz));
+    double three_ov_dx3Dy3Dz2 = 3.0*(1.0/(dx*dx)+1.0/(dy*dy)+1.0/(dz*dz));
     
     // vector product Ap = A*p
     for (unsigned int i=1; i<nx_p-1; i++) {
@@ -300,7 +323,7 @@ void ElectroMagn3D::compute_Ap(Patch* patch)
                 (*Ap_)(i,j,k) = one_ov_dx_sq*((*p_)(i-1,j,k)+(*p_)(i+1,j,k))
                     + one_ov_dy_sq*((*p_)(i,j-1,k)+(*p_)(i,j+1,k))
                     + one_ov_dz_sq*((*p_)(i,j,k-1)+(*p_)(i,j,k+1))
-                    - three_ov_dx2dy2dz2*(*p_)(i,j,k);
+                    - three_ov_dx3Dy3Dz2*(*p_)(i,j,k);
             }//k
         }//j
     }//i
@@ -313,26 +336,26 @@ void ElectroMagn3D::compute_Ap(Patch* patch)
                 (*Ap_)(0,j,k)      = one_ov_dx_sq*((*p_)(1,j,k))
                     +              one_ov_dy_sq*((*p_)(0,j-1,k)+(*p_)(0,j+1,k))
                     +              one_ov_dz_sq*((*p_)(0,j,k-1)+(*p_)(0,j,k+1))
-                    -              three_ov_dx2dy2dz2*(*p_)(0,j,k);
+                    -              three_ov_dx3Dy3Dz2*(*p_)(0,j,k);
             }
         }
         // at corners
         (*Ap_)(0,0,0)           = one_ov_dx_sq*((*p_)(1,0,0))         // Xmin/Ymin/Zmin
             +                   one_ov_dy_sq*((*p_)(0,1,0))
             +                   one_ov_dz_sq*((*p_)(0,0,1))
-            -                   three_ov_dx2dy2dz2*(*p_)(0,0,0);
+            -                   three_ov_dx3Dy3Dz2*(*p_)(0,0,0);
         (*Ap_)(0,ny_p-1,0)      = one_ov_dx_sq*((*p_)(1,ny_p-1,0))     // Xmin/Ymax/Zmin
             +                   one_ov_dy_sq*((*p_)(0,ny_p-2,0))
             +                   one_ov_dz_sq*((*p_)(0,ny_p-1,1))
-            -                   three_ov_dx2dy2dz2*(*p_)(0,ny_p-1,0);
+            -                   three_ov_dx3Dy3Dz2*(*p_)(0,ny_p-1,0);
         (*Ap_)(0,0,nz_p-1)      = one_ov_dx_sq*((*p_)(1,0,nz_p-1))          // Xmin/Ymin/Zmin
             +                   one_ov_dy_sq*((*p_)(0,1,nz_p-1))
             +                   one_ov_dz_sq*((*p_)(0,0,nz_p-2))
-            -                   three_ov_dx2dy2dz2*(*p_)(0,0,nz_p-1);
+            -                   three_ov_dx3Dy3Dz2*(*p_)(0,0,nz_p-1);
         (*Ap_)(0,ny_p-1,nz_p-1) = one_ov_dx_sq*((*p_)(1,ny_p-1,nz_p-1))     // Xmin/Ymax/Zmin
             +                   one_ov_dy_sq*((*p_)(0,ny_p-2,nz_p-1))
             +                   one_ov_dz_sq*((*p_)(0,ny_p-1,nz_p-2))
-            -                   three_ov_dx2dy2dz2*(*p_)(0,ny_p-1,nz_p-1);
+            -                   three_ov_dx3Dy3Dz2*(*p_)(0,ny_p-1,nz_p-1);
     }
         
     // Xmax BC
@@ -343,26 +366,26 @@ void ElectroMagn3D::compute_Ap(Patch* patch)
                 (*Ap_)(nx_p-1,j,k) = one_ov_dx_sq*((*p_)(nx_p-2,j,k))
                     +              one_ov_dy_sq*((*p_)(nx_p-1,j-1,k)+(*p_)(nx_p-1,j+1,k))
                     +              one_ov_dz_sq*((*p_)(nx_p-1,j,k-1)+(*p_)(nx_p-1,j,k+1))
-                    -              three_ov_dx2dy2dz2*(*p_)(nx_p-1,j,k);
+                    -              three_ov_dx3Dy3Dz2*(*p_)(nx_p-1,j,k);
             }
         }
         // at corners
         (*Ap_)(nx_p-1,0,0)      = one_ov_dx_sq*((*p_)(nx_p-2,0,0))            // Xmax/Ymin/Zmin
             +                   one_ov_dy_sq*((*p_)(nx_p-1,1,0))
             +                   one_ov_dz_sq*((*p_)(nx_p-1,0,1))
-            -                   three_ov_dx2dy2dz2*(*p_)(nx_p-1,0,0);
+            -                   three_ov_dx3Dy3Dz2*(*p_)(nx_p-1,0,0);
         (*Ap_)(nx_p-1,ny_p-1,0) = one_ov_dx_sq*((*p_)(nx_p-2,ny_p-1,0))       // Xmax/Ymax/Zmin
             +                   one_ov_dy_sq*((*p_)(nx_p-1,ny_p-2,0))
             +                   one_ov_dz_sq*((*p_)(nx_p-1,ny_p-1,1))
-            -                   three_ov_dx2dy2dz2*(*p_)(nx_p-1,ny_p-1,0);
+            -                   three_ov_dx3Dy3Dz2*(*p_)(nx_p-1,ny_p-1,0);
         (*Ap_)(nx_p-1,0,nz_p-1)      = one_ov_dx_sq*((*p_)(nx_p-2,0,0))             // Xmax/Ymin/Zmax
             +                   one_ov_dy_sq*((*p_)(nx_p-1,1,nz_p-1))
             +                   one_ov_dz_sq*((*p_)(nx_p-1,0,nz_p-2))
-            -                   three_ov_dx2dy2dz2*(*p_)(nx_p-1,0,nz_p-1);
+            -                   three_ov_dx3Dy3Dz2*(*p_)(nx_p-1,0,nz_p-1);
         (*Ap_)(nx_p-1,ny_p-1,nz_p-1) = one_ov_dx_sq*((*p_)(nx_p-2,ny_p-1,nz_p-1))       // Xmax/Ymax/Zmax
             +                   one_ov_dy_sq*((*p_)(nx_p-1,ny_p-2,nz_p-1))
             +                   one_ov_dz_sq*((*p_)(nx_p-1,ny_p-1,nz_p-2))
-            -                   three_ov_dx2dy2dz2*(*p_)(nx_p-1,ny_p-1,nz_p-1);
+            -                   three_ov_dx3Dy3Dz2*(*p_)(nx_p-1,ny_p-1,nz_p-1);
     }
         
 } // compute_pAp
@@ -515,25 +538,32 @@ void ElectroMagn3D::centeringE( std::vector<double> E_Add )
 // ---------------------------------------------------------------------------------------------------------------------
 // Save the former Magnetic-Fields (used to center them)
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn3D::saveMagneticFields()
+void ElectroMagn3D::saveMagneticFields(bool is_spectral)
 {
     // Static cast of the fields
-    Field3D* Bx3D   = static_cast<Field3D*>(Bx_);
-    Field3D* By3D   = static_cast<Field3D*>(By_);
-    Field3D* Bz3D   = static_cast<Field3D*>(Bz_);
-    Field3D* Bx3D_m = static_cast<Field3D*>(Bx_m);
-    Field3D* By3D_m = static_cast<Field3D*>(By_m);
-    Field3D* Bz3D_m = static_cast<Field3D*>(Bz_m);
-    
-    // Magnetic field Bx^(p,d,d)
-    memcpy(&((*Bx3D_m)(0,0,0)), &((*Bx3D)(0,0,0)),nx_p*ny_d*nz_d*sizeof(double) );
-    
-    // Magnetic field By^(d,p,d)
-    memcpy(&((*By3D_m)(0,0,0)), &((*By3D)(0,0,0)),nx_d*ny_p*nz_d*sizeof(double) );
-    
-    // Magnetic field Bz^(d,d,p)
-    memcpy(&((*Bz3D_m)(0,0,0)), &((*Bz3D)(0,0,0)),nx_d*ny_d*nz_p*sizeof(double) );
-    
+    if(!is_spectral){
+	    Field3D* Bx3D   = static_cast<Field3D*>(Bx_);
+	    Field3D* By3D   = static_cast<Field3D*>(By_);
+	    Field3D* Bz3D   = static_cast<Field3D*>(Bz_);
+	    Field3D* Bx3D_m = static_cast<Field3D*>(Bx_m);
+	    Field3D* By3D_m = static_cast<Field3D*>(By_m);
+	    Field3D* Bz3D_m = static_cast<Field3D*>(Bz_m);
+	    
+	    // Magnetic field Bx^(p,d,d)
+	    memcpy(&((*Bx3D_m)(0,0,0)), &((*Bx3D)(0,0,0)),nx_p*ny_d*nz_d*sizeof(double) );
+	    
+	    // Magnetic field By^(d,p,d)
+	    memcpy(&((*By3D_m)(0,0,0)), &((*By3D)(0,0,0)),nx_d*ny_p*nz_d*sizeof(double) );
+	    
+	    // Magnetic field Bz^(d,d,p)
+	    memcpy(&((*Bz3D_m)(0,0,0)), &((*Bz3D)(0,0,0)),nx_d*ny_d*nz_p*sizeof(double) );
+    }
+    else{
+            Bx_m = Bx_;
+            By_m = By_;
+            Bz_m = Bz_;
+
+    }
 }//END saveMagneticFields
 
 
@@ -651,7 +681,143 @@ void ElectroMagn3D::centerMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3D::binomialCurrentFilter()
 {
-    ERROR("Binomial current filtering not yet implemented in 3D3V");
+    // Static-cast of the currents
+    Field3D* Jx3D = static_cast<Field3D*>(Jx_);
+    Field3D* Jy3D = static_cast<Field3D*>(Jy_);
+    Field3D* Jz3D = static_cast<Field3D*>(Jz_);
+    
+    // applying a single pass of the binomial filter
+    // on Jx^(d,p) -- external points are treated by exchange. Boundary points not concerned by exchange are treated with a lower order filter.
+    for (unsigned int i=0; i<nx_d-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+            (*Jx3D)(i,j,k) = ((*Jx3D)(i,j,k) + (*Jx3D)(i+1,j,k))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_d-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+            (*Jx3D)(i,j,k) = ((*Jx3D)(i,j,k) + (*Jx3D)(i-1,j,k))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_d-1; i++) {
+        for (unsigned int j=0; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+            (*Jx3D)(i,j,k) = ((*Jx3D)(i,j,k) + (*Jx3D)(i,j+1,k))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_d-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+            (*Jx3D)(i,j,k) = ((*Jx3D)(i,j,k) + (*Jx3D)(i,j-1,k))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_d-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=0; k<nz_p-1; k++) {
+            (*Jx3D)(i,j,k) = ((*Jx3D)(i,j,k) + (*Jx3D)(i,j,k+1))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_d-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+            (*Jx3D)(i,j,k) = ((*Jx3D)(i,j,k) + (*Jx3D)(i,j,k-1))*0.5;            
+            }
+        }
+    }
+    // Jy
+    for (unsigned int i=0; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_d-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+            (*Jy3D)(i,j,k) = ((*Jy3D)(i,j,k) + (*Jy3D)(i+1,j,k))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_d-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+            (*Jy3D)(i,j,k) = ((*Jy3D)(i,j,k) + (*Jy3D)(i-1,j,k))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=0; j<ny_d-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+            (*Jy3D)(i,j,k) = ((*Jy3D)(i,j,k) + (*Jy3D)(i,j+1,k))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_d-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+            (*Jy3D)(i,j,k) = ((*Jy3D)(i,j,k) + (*Jy3D)(i,j-1,k))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_d-1; j++) {
+            for (unsigned int k=0; k<nz_p-1; k++) {
+            (*Jy3D)(i,j,k) = ((*Jy3D)(i,j,k) + (*Jy3D)(i,j,k+1))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_d-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+            (*Jy3D)(i,j,k) = ((*Jy3D)(i,j,k) + (*Jy3D)(i,j,k-1))*0.5;            
+            }
+        }
+    }
+    // Jz
+    for (unsigned int i=0; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_d-1; k++) {
+            (*Jz3D)(i,j,k) = ((*Jz3D)(i,j,k) + (*Jz3D)(i+1,j,k))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_d-1; k++) {
+            (*Jz3D)(i,j,k) = ((*Jz3D)(i,j,k) + (*Jz3D)(i-1,j,k))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=0; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_d-1; k++) {
+            (*Jz3D)(i,j,k) = ((*Jz3D)(i,j,k) + (*Jz3D)(i,j+1,k))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_d-1; k++) {
+            (*Jz3D)(i,j,k) = ((*Jz3D)(i,j,k) + (*Jz3D)(i,j-1,k))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=0; k<nz_d-1; k++) {
+            (*Jz3D)(i,j,k) = ((*Jz3D)(i,j,k) + (*Jz3D)(i,j,k+1))*0.5;            
+            }
+        }
+    }
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_d-1; k++) {
+            (*Jz3D)(i,j,k) = ((*Jz3D)(i,j,k) + (*Jz3D)(i,j,k-1))*0.5;            
+            }
+        }
+    }
+    
+
 }
 
 

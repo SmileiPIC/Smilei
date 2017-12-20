@@ -98,6 +98,6 @@ for namelist in "${namelist_files[@]}"; do
     cp $namelist $outdir
 done
 cd $outdir
-$MPIEXEC -mca btl tcp,sm,self -np $proc $smilei "${namelists[@]}"
+$MPIEXEC -np $proc $smilei "${namelists[@]}"
 cd $H
 

@@ -20,10 +20,10 @@ public:
     ~SmileiMPI_test();
     
     //! Fake initialize  MPI (per process) environment
-    void init( Params& params ) override;
+    void init( Params& params, DomainDecomposition* domain_decomposition ) override;
     
     // Initialize the patch_count vector. Patches are distributed in order to balance the load between MPI processes.
-    void init_patch_count( Params& params ) override;
+    void init_patch_count( Params& params, DomainDecomposition* domain_decomposition ) override;
     // Recompute the patch_count vector. Browse patches and redistribute them in order to balance the load between MPI processes.
 
 };

@@ -15,7 +15,7 @@ for name, profile in S.namelist.profiles.items():
 #	for i in range(x.shape[0]):
 #		for j in range(x.shape[1]):
 #			v[i,j] = profile(x[i,j],y[i,j], z0)
-	Validate("Profile "+name, values[::6,::6,::6], 0.01 )
+	Validate("Profile "+name, values[::10,::10,::10], 0.01 )
 
 
 #fig=plt.figure(1)
@@ -39,3 +39,12 @@ for name, profile in S.namelist.profiles.items():
 #	plt.waitforbuttonpress()
 #	print "--------"
 #
+
+
+# Verify external fields
+Lz = S.namelist.Main.grid_length[2]
+#for field in ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
+for field in ["Bx", "By", "Bz"]:
+	F = S.Field.Field0(field, timesteps=0, subset={"z":Lz/2.}).getData()[0][::10,::10]
+	Validate(field+" field", F, 0.01)
+

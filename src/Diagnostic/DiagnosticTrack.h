@@ -24,7 +24,7 @@ public :
     
     bool prepare( int itime ) override;
     
-    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow ) override;
+    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow, Timers & timers ) override;
     
     //! Get memory footprint of current diagnostic
     int getMemFootPrint() override {
@@ -87,6 +87,21 @@ private :
     
     //! Approximate total number of particles
     double npart_total;
+    
+    //! Booleans to determine which attributes to write out
+    std::vector<bool> write_position;
+    std::vector<bool> write_momentum;
+    bool write_charge;
+    bool write_weight;
+    bool write_chi   ;
+    std::vector<bool> write_E;
+    std::vector<bool> write_B;
+    bool interpolate;
+    bool write_any_position;
+    bool write_any_momentum;
+    bool write_any_E;
+    bool write_any_B;
+
 };
 
 #endif

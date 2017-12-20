@@ -22,8 +22,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn1D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn1D::ElectroMagn1D(Params &params, vector<Species*>& vecSpecies, Patch* patch)
-  : ElectroMagn(params, vecSpecies, patch)
+ElectroMagn1D::ElectroMagn1D(Params &params, DomainDecomposition* domain_decomposition, vector<Species*>& vecSpecies, Patch* patch)
+  : ElectroMagn(params, domain_decomposition, vecSpecies, patch)
 {
     initElectroMagn1DQuantities(params, patch);
     
@@ -313,24 +313,32 @@ void ElectroMagn1D::centeringE( std::vector<double> E_Add )
 // ---------------------------------------------------------------------------------------------------------------------
 // Save the former Magnetic-Fields (used to center them)
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::saveMagneticFields()
+void ElectroMagn1D::saveMagneticFields(bool is_spectral)
 {
     // Static cast of the fields
-    Field1D* Bx1D   = static_cast<Field1D*>(Bx_);
-    Field1D* By1D   = static_cast<Field1D*>(By_);
-    Field1D* Bz1D   = static_cast<Field1D*>(Bz_);
-    Field1D* Bx1D_m = static_cast<Field1D*>(Bx_m);
-    Field1D* By1D_m = static_cast<Field1D*>(By_m);
-    Field1D* Bz1D_m = static_cast<Field1D*>(Bz_m);
-    
-    // for Bx^(p)
-    for (unsigned int i=0 ; i<dimPrim[0] ; i++) {
-        (*Bx1D_m)(i)=(*Bx1D)(i);
-    }
-    //for By^(d) & Bz^(d)
-    for (unsigned int i=0 ; i<dimDual[0] ; i++) {
-        (*By1D_m)(i) = (*By1D)(i);
-        (*Bz1D_m)(i) = (*Bz1D)(i);
+    if(!is_spectral){
+   	 Field1D* Bx1D   = static_cast<Field1D*>(Bx_);
+   	 Field1D* By1D   = static_cast<Field1D*>(By_);
+   	 Field1D* Bz1D   = static_cast<Field1D*>(Bz_);
+   	 Field1D* Bx1D_m = static_cast<Field1D*>(Bx_m);
+   	 Field1D* By1D_m = static_cast<Field1D*>(By_m);
+   	 Field1D* Bz1D_m = static_cast<Field1D*>(Bz_m);
+   	 
+   	 // for Bx^(p)
+   	 for (unsigned int i=0 ; i<dimPrim[0] ; i++) {
+   	     (*Bx1D_m)(i)=(*Bx1D)(i);
+   	 }
+   	 //for By^(d) & Bz^(d)
+   	 for (unsigned int i=0 ; i<dimDual[0] ; i++) {
+   	     (*By1D_m)(i) = (*By1D)(i);
+   	     (*Bz1D_m)(i) = (*Bz1D)(i);
+   	 }
+   	 }
+    else{
+          Bx_m = Bx_;
+          By_m = By_;
+          Bz_m = Bz_;
+
     }
     
 }//END saveMagneticFields
@@ -410,28 +418,50 @@ void ElectroMagn1D::binomialCurrentFilter()
     // Apply a single pass of the binomial filter on currents
     
     // on Jx^(d) -- external points are treated by exchange
-    Field1D *tmp   = new Field1D(dimPrim, 0, false);
-    tmp->copyFrom(Jx1D);
+    double temp0, tempN;
+    //Field1D *tmp   = new Field1D(dimPrim, 0, false);
+    //tmp->copyFrom(Jx1D);
+    temp0 = (*Jx1D)(0);
+    tempN = (*Jx1D)(dimDual[0]-1);
+    for (unsigned int ix=0 ; ix<dimDual[0]-1 ; ix++) {
+        (*Jx1D)(ix)  = ((*Jx1D)(ix) + (*Jx1D)(ix+1)) * 0.5 ;
+    }
     for (unsigned int ix=1 ; ix<dimDual[0]-1 ; ix++) {
-        (*Jx1D)(ix) = 0.25 * ((*tmp)(ix-1) + 2.*(*tmp)(ix) + (*tmp)(ix+1));
+        (*Jx1D)(ix)  = ((*Jx1D)(ix-1) + (*Jx1D)(ix)) * 0.5 ;
     }
-    delete tmp;
+    (*Jx1D)(0) = temp0;
+    (*Jx1D)(dimDual[0]-1) = tempN;
     
+    temp0 = (*Jy1D)(0);
+    tempN = (*Jy1D)(dimPrim[0]-1);
     // on Jy^(p) -- external points are treated by exchange
-    tmp   = new Field1D(dimPrim, 1, false);
-    tmp->copyFrom(Jy1D);
-    for (unsigned int ix=1 ; ix<dimPrim[0]-1 ; ix++) {
-        (*Jy1D)(ix) = 0.25 * ((*tmp)(ix-1) + 2.*(*tmp)(ix) + (*tmp)(ix+1));
+    //tmp   = new Field1D(dimPrim, 1, false);
+    //tmp->copyFrom(Jy1D);
+    for (unsigned int ix=0 ; ix<dimPrim[0]-1 ; ix++) {
+        (*Jy1D)(ix)  = ((*Jy1D)(ix) + (*Jy1D)(ix+1)) * 0.5 ;
     }
-    delete tmp;
+    for (unsigned int ix=1 ; ix<dimPrim[0]-1 ; ix++) {
+        (*Jy1D)(ix)  = ((*Jy1D)(ix) + (*Jy1D)(ix+1)) * 0.5 ;
+    }
+    //delete tmp;
     
+    (*Jy1D)(0) = temp0;
+    (*Jy1D)(dimPrim[0]-1) = tempN;
+    
+    temp0 = (*Jz1D)(0);
+    tempN = (*Jz1D)(dimPrim[0]-1);
     // on Jz^(p) -- external points are treated by exchange
-    tmp   = new Field1D(dimPrim, 2, false);
-    tmp->copyFrom(Jz1D);
-    for (unsigned int ix=1 ; ix<dimPrim[0]-1 ; ix++) {
-        (*Jz1D)(ix) = 0.25 * ((*tmp)(ix-1) + 2.*(*tmp)(ix) + (*tmp)(ix+1));
+    //tmp   = new Field1D(dimPrim, 2, false);
+    //tmp->copyFrom(Jz1D);
+    for (unsigned int ix=0 ; ix<dimPrim[0]-1 ; ix++) {
+        (*Jz1D)(ix)  = ((*Jz1D)(ix) + (*Jz1D)(ix+1)) * 0.5 ;
     }
-    delete tmp;
+    for (unsigned int ix=1 ; ix<dimPrim[0]-1 ; ix++) {
+        (*Jz1D)(ix)  = ((*Jz1D)(ix) + (*Jz1D)(ix+1)) * 0.5 ;
+    }
+    //delete tmp;
+    (*Jz1D)(0) = temp0;
+    (*Jz1D)(dimPrim[0]-1) = tempN;
     
 }
 

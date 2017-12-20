@@ -1,12 +1,12 @@
 
-dx = 0.125
+dx = 0.2
 dtrans = 3.
-dt = 0.124
-nx = 896
+dt = 0.19
+nx = 512
 ntrans = 40
 Lx = nx * dx
 Ltrans = ntrans*dtrans
-npatch_x = 128
+npatch_x = 64
 laser_fwhm = 19.80
 
 Main(
@@ -48,7 +48,7 @@ Species(
     name = "electron",
     position_initialization = "regular",
     momentum_initialization = "cold",
-    particles_per_cell = 8,
+    particles_per_cell = 1,
     c_part_max = 1.0,
     mass = 1.0,
     charge = -1.0,
@@ -64,13 +64,39 @@ Species(
     ],
 )
 
-LaserGaussian3D(
-    box_side         = "xmin",
-    a0              = 2.,
-    focus           = [0., Main.grid_length[1]/2., Main.grid_length[2]/2.],
-    waist           = 26.16,
-    time_envelope   = tgaussian(center=2**0.5*laser_fwhm, fwhm=laser_fwhm)
+
+# We build a gaussian laser from scratch instead of using LaserGaussian3D
+# The goal is to test the space_time_profile attribute
+omega = 1.
+a0 = 2.
+focus = [0., Main.grid_length[1]/2., Main.grid_length[2]/2.]
+waist = 10.
+time_envelope = tgaussian(center=2**0.5*laser_fwhm, fwhm=laser_fwhm)
+
+Zr = omega * waist**2/2.
+w  = math.sqrt(1./(1.+(focus[0]/Zr)**2))
+invWaist2 = (w/waist)**2
+coeff = -omega * focus[0] * w**2 / (2.*Zr**2)
+def By(y,z,t):
+    return 0.
+def Bz(y,z,t):
+    r2 = (y-focus[1])**2 + (z-focus[2])**2
+    omegat = omega*t - coeff*r2
+    return a0 * w * math.exp( -invWaist2*r2  ) * time_envelope( omegat/omega ) * math.sin( omegat )
+Laser(
+    box_side = "xmin",
+    space_time_profile = [By, Bz]
 )
+
+#LaserGaussian3D(
+#    box_side         = "xmin",
+#    a0              = 2.,
+#    focus           = [0., Main.grid_length[1]/2., Main.grid_length[2]/2.],
+#    waist           = 10.,
+#    time_envelope   = tgaussian(center=2**0.5*laser_fwhm, fwhm=laser_fwhm)
+#)
+
+
 
 Checkpoints(
     dump_step = 0,
@@ -80,10 +106,10 @@ Checkpoints(
 
 list_fields = ['Ex','Ey','Rho','Jx']
 
-DiagFields(
-    every = 100,
-    fields = list_fields
-)
+#DiagFields(
+#    every = 100,
+#    fields = list_fields
+#)
 
 DiagProbe(
 	every = 10,
@@ -92,18 +118,18 @@ DiagProbe(
 	    [Main.grid_length[0], Main.grid_length[1]/2., Main.grid_length[2]/2.]
 	],
 	number = [nx],
-	fields = ['Ex','Ey','Rho','Jx']
+	fields = list_fields
 )
 
 DiagProbe(
-	every = 10,
+	every = 40,
 	origin = [0., Main.grid_length[1]/4., Main.grid_length[2]/2.],
 	corners = [
 	    [Main.grid_length[0], Main.grid_length[1]/4., Main.grid_length[2]/2.],
 	    [0., 3*Main.grid_length[1]/4., Main.grid_length[2]/2.],
 	],
 	number = [nx, ntrans],
-	fields = ['Ex','Ey','Rho','Jx']
+	fields = list_fields
 )
 
 DiagScalar(every = 10, vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMin', 'RhoMinCell'])

@@ -6,14 +6,14 @@ Before installing :program:`Smilei`, you need to install a few dependencies:
 * A C++11 compiler, optionally implementing openMP
 * MPI libraries supporting ``MPI_THREAD_MULTIPLE``
 * HDF5 libraries compatible with your versions of C++ and MPI
-* Python 2.7 (with header files)
-* ``make``
+* Python 2.7 of Python 3 (with header files)
 
 Optional dependencies are:
 
 * Git
 * Python modules: sphinx, h5py, numpy, matplotlib, pylab, pint
 * ffmpeg
+* picsar PIC library and FFTW
 
 On a large cluster, refer to the administrator to install these requirements.
 If you want to install :program:`Smilei` on your personal computer, refer to the following sections.
@@ -40,9 +40,9 @@ that you can install following `these instructions <https://www.macports.org/ins
      
    .. code-block:: bash
 
-     sudo port install openmpi-gcc5 +threads
-     sudo port select --set mpi openmpi-gcc5-fortran
-     sudo port install hdf5 +openmpi+gcc5+threads
+     sudo port install openmpi-gcc7 +threads
+     sudo port select --set mpi openmpi-gcc7-fortran
+     sudo port install hdf5-18 +openmpi+gcc7+threads
      
 #. Edit your ``.bash_profile`` hidden file located in your home folder:
    
@@ -55,9 +55,7 @@ that you can install following `these instructions <https://www.macports.org/ins
    .. code-block:: bash
 
      export SMILEICXX=mpicxx
-     export HDF5_ROOT_DIR=/opt/local
-     
-   Depending on your system, you might need to use ``mpic++`` instead of ``mpicxx``.
+     export HDF5_ROOT_DIR=/opt/local/hdf5-18/lib/
 
 #. Python should be already installed by default, but in case you need
    a specific version, run:
@@ -184,6 +182,62 @@ Since the system ``openmpi`` is not compiled with ``--enable-mpi-thread-multiple
 
 ----
 
+
+Install Picsar Module 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Pseudo-Spectral Analytical Time Domain solver(PSATD) for Maxwell equations is called from `PICSAR <http://picsar.net>`_ PIC library 
+To use this tool you need to install `PICSAR <http:/picsar.net>`_ and its dependecies
+PSATD is an FFT based high order Maxwell equations Solver.
+PICSAR uses `FFTW <http://www.fftw.org>`_ library for high performance FFT computations.
+
+Install FFTW
+""""""""""""
+1. Download and install the latest version of FFTW library `here <http://www.fftw.org/>`_
+
+  .. code-block:: bash
+
+    $ tar zxvf fftw-3.3.7.tar.gz
+    $ cd fftw-3.3.7
+    $ configure --prefix INSTALL_DIR --enable-shared --enable-threads --with-openmp --enable-mpi
+    $ make 
+    $ make install
+    $ export FFTW_LIB_DIR=INSTALL_DIR/lib
+    $ export FFTW_INC_DIR=INSTALL_DIR/include
+    $ export LD_LIBRARY_PATH=${INSTALL_DIR}/lib:${LD_LIBRARY_PATH} 
+
+
+Install PICSAR as a library
+"""""""""""""""""""""""""""
+
+1. Download the latest version of  :program:`picsar` from  `Bitbucket <git@bitbucket.org:berkeleylab/picsar.git>`_
+
+  .. code-block:: bash  
+
+    $ git clone git@bitbucket.org:berkeleylab/picsar.git
+    $ cd picsar/
+2. Set library flag to compile picsar as a library
+
+  .. code-block:: bash  
+
+    $ sed -i 's/MODE=prod/MODE=library/g' Makefile 
+    $ sed -i 's/COMP=gnu/COMP=intel/g' Makefile # - if using intel compiler
+3. Link fftw library to picsar
+
+  .. code-block:: bash  
+
+    $ sed -i  's/FFTW3_LIB=\/usr\/lib\/x86_64-linux-gnu/FFTW3_LIB=$(FFTW_LIB_DIR)/g' Makefile
+    $ sed -i  's/FFTW3_INCLUDE=\/usr\/include/FFTW3_INCLUDE=$(FFTW_INC_DIR)/g' Makefile
+4. Install picsar as a library
+
+  .. code-block:: bash  
+
+    $ make lib
+    $ export LIBPXR=$PWD/lib
+    $ export LD_LIBRARY_PATH=${LIBPXR}:{LD_LIBRARY_PATH}
+
+
+----
+
 Install dependencies on other systems
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -227,6 +281,7 @@ Several ``make`` options are available:
   make print-XXX               # Prints the value of makefile variable XXX
   make env                     # Prints the values of all makefile variables
   make help                    # Gets some help on compilation
+  sed -i 's/PICSAR=FALSE/PICSAR=TRUE/g' makefile; make -j4 #To enable calls for PSATD solver from picsar 
 
 
 Each machine may require a specific configuration (environment variables, modules, etc.).
