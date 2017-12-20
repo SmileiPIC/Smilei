@@ -70,7 +70,7 @@ else ifneq (,$(findstring scalasca,$(config)))
 
 # With Intel Advisor
 else ifneq (,$(findstring advisor,$(config)))
-    CXXFLAGS += -g -O3 -qopt-report5
+    CXXFLAGS += -g -O3 -shared-intel -debug inline-debug-info -qopenmp-link dynamic -parallel-source-info=2
 
 # Optimization report
 else ifneq (,$(findstring opt-report,$(config)))
