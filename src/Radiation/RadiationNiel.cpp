@@ -282,7 +282,10 @@ void RadiationNiel::operator() (
         }
     }*/
 
-    // Vectorized computation of the random number in a normal distribution
+    double p,w;
+
+    // Vectorized computation of the random number in a uniform distribution
+    #pragma omp simd
     for (ipart=0 ; ipart < nbparticles; ipart++ )
     {
 
@@ -292,8 +295,48 @@ void RadiationNiel::operator() (
 
           // Pick a random number in the normal distribution of standard
           // deviation sqrt(dt) (variance dt)
-          random_numbers[ipart] = 2.*Rand::uniform() -1.;
-          random_numbers[ipart] = userFunctions::erfinv2(random_numbers[ipart])*sqrtdt*sqrt(2.);
+          //random_numbers[ipart] = 2.*Rand::uniform() -1.;
+          random_numbers[ipart] = 2.*drand48() -1.;
+        }
+    }
+
+    // Vectorized computation of the random number in a normal distribution
+    //#pragma omp simd private(p,w)
+    for (ipart=0 ; ipart < nbparticles; ipart++ )
+    {
+        // Below chipa = chipa_radiation_threshold, radiation losses are negligible
+        if (chipa[ipart] > chipa_radiation_threshold)
+        {
+            w = -log((1.0-random_numbers[ipart])*(1.0+random_numbers[ipart]));
+
+            if ( w < 5.000000 ) {
+               
+                w = w - 2.500000;
+                p = +2.81022636000e-08      ;
+		p = +3.43273939000e-07 + p*w;
+		p = -3.52338770000e-06 + p*w;
+		p = -4.39150654000e-06 + p*w;
+		p = +0.00021858087e+00 + p*w;
+		p = -0.00125372503e+00 + p*w;
+		p = -0.00417768164e+00 + p*w;
+		p = +0.24664072700e+00 + p*w;
+		p = +1.50140941000e+00 + p*w;
+	    } else {
+		w = sqrt(w) - 3.000000;
+		p = -0.000200214257      ;
+		p = +0.000100950558 + p*w;
+		p = +0.001349343220 + p*w;
+		p = -0.003673428440 + p*w;
+		p = +0.005739507730 + p*w;
+		p = -0.007622461300 + p*w;
+		p = +0.009438870470 + p*w;
+		p = +1.001674060000 + p*w;
+		p = +2.832976820000 + p*w;
+	    }
+
+	    random_numbers[ipart] *= p*sqrtdt*sqrt(2.);
+
+            //random_numbers[ipart] = userFunctions::erfinv2(random_numbers[ipart])*sqrtdt*sqrt(2.);
         }
     }
 
@@ -323,7 +366,7 @@ void RadiationNiel::operator() (
     double h;
 
     // Computation of the diffusion coefficients using the fit
-    #pragma omp simd
+    // #pragma omp simd
     for (ipart=0 ; ipart < nbparticles; ipart++ )
     {
 
