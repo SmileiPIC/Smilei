@@ -174,10 +174,11 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
     //->rho_e- ???;
     cField3D* A3D = static_cast<cField3D*>(A_);   // the envelope at timestep n
     cField3D* A03D = static_cast<cField3D*>(A0_); // the envelope at timestep n-1
-    Field3D* Env_Ar3D = static_cast<Field3D*>(EMfields->Env_Ar_);
-    Field3D* Env_Ai3D = static_cast<Field3D*>(EMfields->Env_Ai_);
-    complex<double> A3Dnew;
-    
+    Field3D* Env_Ar3D = static_cast<Field3D*>(EMfields->Env_Ar_); // field for temporary diagnostic
+    Field3D* Env_Ai3D = static_cast<Field3D*>(EMfields->Env_Ai_); // field for temporary diagnostic
+    //cField3D A3Dnew; // temporary variable for updated envelope
+    cField3D* A3Dnew;
+    A3Dnew  = new cField3D( A_->dims_  );
     // find e_idx in all species
     int e_idx = 0;
     Field3D* rho_e = static_cast<Field3D*>(EMfields->rho_s[e_idx]);
@@ -187,27 +188,36 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
         for (unsigned int j=1 ; j < A_->dims_[1]-1 ; j++){
             for (unsigned int k=1 ; k < A_->dims_[2]-1; k++){
                 //(*A3D)(i,j,k) = (*A3D)(i,j,k);
-                A3Dnew = 0.; // subtract here source term from plasma
+                (*A3Dnew)(i,j,k) = 0.; // subtract here source term from plasma
                 // A3Dnew = laplacian - source term
-                A3Dnew += ((*A3D)(i-1,j,k)-2.*(*A3D)(i,j,k)+(*A3D)(i+1,j,k))*one_ov_dx_sq; // x part
-                A3Dnew += ((*A3D)(i,j-1,k)-2.*(*A3D)(i,j,k)+(*A3D)(i,j+1,k))*one_ov_dy_sq; // y part
-                A3Dnew += ((*A3D)(i,j,k-1)-2.*(*A3D)(i,j,k)+(*A3D)(i,j,k+1))*one_ov_dz_sq; // z part
+                (*A3Dnew)(i,j,k) += ((*A3D)(i-1,j,k)-2.*(*A3D)(i,j,k)+(*A3D)(i+1,j,k))*one_ov_dx_sq; // x part
+                (*A3Dnew)(i,j,k) += ((*A3D)(i,j-1,k)-2.*(*A3D)(i,j,k)+(*A3D)(i,j+1,k))*one_ov_dy_sq; // y part
+                (*A3Dnew)(i,j,k) += ((*A3D)(i,j,k-1)-2.*(*A3D)(i,j,k)+(*A3D)(i,j,k+1))*one_ov_dz_sq; // z part
                 // A3Dnew = A3Dnew+2ik0*dA/dx
-                A3Dnew += 2.*i1*k0*((*A3D)(i+1,j,k)-(*A3D)(i-1,j,k))*one_ov_2dx;
+                (*A3Dnew)(i,j,k) += 2.*i1*k0*((*A3D)(i+1,j,k)-(*A3D)(i-1,j,k))*one_ov_2dx;
                 // A3Dnew = A3Dnew*dt^2
-                A3Dnew  = A3Dnew*dt_sq;
-                // A3Dnew = A3Dnew + 2/c^2 A3D + (1+ik0cdt)A03D/c^2
-                A3Dnew += 2.*(*A3D)(i,j,k)-(1.+k0_dt)*(*A03D)(i+1,j,k);
+                (*A3Dnew)(i,j,k)  = (*A3Dnew)(i,j,k)*dt_sq;
+                // A3Dnew = A3Dnew + 2/c^2 A3D - (1+ik0cdt)A03D/c^2
+                (*A3Dnew)(i,j,k) += 2.*(*A3D)(i,j,k)-(1.+i1*k0_dt)*(*A03D)(i,j,k);
                 // A3Dnew = A3Dnew * (1+ik0dct)/(1+k0^2c^2dt^2)
-                A3Dnew  = A3Dnew* (1.+i1*k0_dt)/(1.+k0_dt*k0_dt);
-                // final substitution
-                (*A3D)(i,j,k)  = A3Dnew;
-                (*A03D)(i,j,k) = (*A3D)(i,j,k);
-                //(*A3D)(i,j,k) = (*A03D)(i,j,k);
-                (*Env_Ar3D)(i,j,k) =std::real((*A3D)(i,j,k));
+                (*A3Dnew)(i,j,k)  = (*A3Dnew)(i,j,k)*(1.+i1*k0_dt)/(1.+k0_dt*k0_dt);
             }
         }
     }
+
+    for (unsigned int i=1 ; i <A_->dims_[0]-1; i++){
+        for (unsigned int j=1 ; j < A_->dims_[1]-1 ; j++){
+            for (unsigned int k=1 ; k < A_->dims_[2]-1; k++){
+             // final back-substitution
+             (*A03D)(i,j,k) = (*A3D)(i,j,k);
+             (*A3D)(i,j,k)  = (*A3Dnew)(i,j,k);
+             //(*A3D)(i,j,k) = (*A03D)(i,j,k);
+             (*Env_Ar3D)(i,j,k) =std::abs((*A3D)(i,j,k));
+            }
+        }
+    }
+
+    delete A3Dnew;
 }
 
 
