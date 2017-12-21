@@ -1,5 +1,6 @@
 #include <cmath>
 #include "Function.h"
+#include <complex>
 
 using namespace std;
 
@@ -30,6 +31,10 @@ double Function_Python3D::valueAt(vector<double> x_cell) {
 }
 // 4D
 double Function_Python4D::valueAt(vector<double> x_cell, double time) {
+    return PyTools::runPyFunction(py_profile, x_cell[0], x_cell[1], x_cell[2], time);
+}
+// 4D complex
+std::complex<double> Function_Python4D_Complex::valueAtComplex(vector<double> x_cell, double time) {
     return PyTools::runPyFunction(py_profile, x_cell[0], x_cell[1], x_cell[2], time);
 }
 

@@ -112,31 +112,33 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
     cField3D* A03D = static_cast<cField3D*>(A0_);
     Field3D* Env_Ar3D = static_cast<Field3D*>(EMfields->Env_Ar_);
     Field3D* Env_Ai3D = static_cast<Field3D*>(EMfields->Env_Ai_);
-    vector<double> pos(3,0);
-    vector<double> pos_previous_timestep(3,0);
-    pos[0]      = cell_length[0]*((double)(patch->getCellStartingGlobalIndex(0))+(A3D->isDual(0)?-0.5:0.));
-    pos_previous_timestep[0]      = pos[0]-timestep;
+    vector<double> position(3,0);
+    double t;
+    double t_previous_timestep;
+    // position_time[0]: x coordinate
+    // position_time[1]: y coordinate
+    // position_time[2]: z coordinate
+    // t: time coordinate --> x/c for the envelope initialization
+
+    position[0]           = cell_length[0]*((double)(patch->getCellStartingGlobalIndex(0))+(A3D->isDual(0)?-0.5:0.));
+    t                     = position[0];
+    t_previous_timestep   = position[0]-timestep;
     double pos1 = cell_length[1]*((double)(patch->getCellStartingGlobalIndex(1))+(A3D->isDual(1)?-0.5:0.));
     double pos2 = cell_length[2]*((double)(patch->getCellStartingGlobalIndex(2))+(A3D->isDual(2)?-0.5:0.));
     // UNSIGNED INT LEADS TO PB IN PERIODIC BCs
     for (unsigned int i=0 ; i<A_->dims_[0] ; i++) {
-        pos[1] = pos1;
-        pos_previous_timestep[1] = pos1;
+        position[1] = pos1;
         for (unsigned int j=0 ; j<A_->dims_[1] ; j++) {
-            pos[2] = pos2;
-            pos_previous_timestep[2] = pos2;
+            position[2] = pos2;
             for (unsigned int k=0 ; k<A_->dims_[2] ; k++) {
-                (*A3D)(i,j,k) += profile_->valueAt(pos);
-                (*A03D)(i,j,k) += profile_->valueAt(pos_previous_timestep);
-                (*Env_Ar3D)(i,j,k)=std::real((*A3D)(i,j,k));
-                pos[2] += cell_length[2];
-                pos_previous_timestep[2] += cell_length[2];
+                (*A3D)(i,j,k) += profile_->valueAtComplex(position,t);
+                (*A03D)(i,j,k) += profile_->valueAtComplex(position,t_previous_timestep);
+                (*Env_Ar3D)(i,j,k)=std::abs((*A3D)(i,j,k));
+                position[2] += cell_length[2];
             }
-            pos[1] += cell_length[1];
-            pos_previous_timestep[1] += cell_length[1];
+            position[1] += cell_length[1];
         }
-        pos[0] += cell_length[0];
-        pos_previous_timestep[0] += cell_length[0];
+        position[0] += cell_length[0];
     }
 }
 
@@ -176,7 +178,7 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
     cField3D* A03D = static_cast<cField3D*>(A0_); // the envelope at timestep n-1
     Field3D* Env_Ar3D = static_cast<Field3D*>(EMfields->Env_Ar_); // field for temporary diagnostic
     Field3D* Env_Ai3D = static_cast<Field3D*>(EMfields->Env_Ai_); // field for temporary diagnostic
-    //cField3D A3Dnew; // temporary variable for updated envelope
+    // temporary variable for updated envelope
     cField3D* A3Dnew;
     A3Dnew  = new cField3D( A_->dims_  );
     // find e_idx in all species

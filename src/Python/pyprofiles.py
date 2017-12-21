@@ -584,20 +584,47 @@ def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
 def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelope=tconstant(),
         envelope_solver = "explicit"):
     import math
+    import cmath
     c_vacuum = 1. #299792458
-    # Space envelope
-    invWaist2 = 1./2./(waist/2.)**2
-    def spatial(y,z):
-        return math.exp( -invWaist2*((y-focus[1])**2 + (z-focus[2])**2 )  )
-    # Space envelope times temporal envelope
-    def space_time_envelope(x,y,z):
-        return spatial(y,z)*time_envelope(x/c_vacuum)
+
+    Zr = omega * waist**2/2.
+    def w(x):
+        w  = math.sqrt(1./(1.+   ( (x-focus[0])/Zr  )**2 ) )
+        return w
+    def coeff(x):
+        coeff = omega * (x-focus[0]) * w(x)**2 / (2.*Zr**2)
+        return coeff
+    def spatial(x,y,z):
+        invWaist2 = (w(x)/waist)**2
+        return w(x) * math.exp( -invWaist2*(  (y-focus[1])**2 + (z-focus[2])**2 )  )
+    def phase(x,y,z):
+        return coeff(x) * ( (y-focus[1])**2 + (z-focus[2])**2 )
+
+    def space_time_envelope(x,y,z,t):
+        return spatial(x,y,z)*time_envelope(t)*cmath.exp(-1j*phase(x,y,z))
+
     # Create Laser Envelope
     LaserEnvelope(
         omega               = omega,
-        envelope_profile    = lambda x,y,z:a0*space_time_envelope(x,y,z),
+        envelope_profile    = lambda x,y,z,t:a0*space_time_envelope(x,y,z,t),
         envelope_solver     = "explicit",
     )
+
+
+
+    # # Space envelope
+    # invWaist2 = 1./2./(waist/2.)**2
+    # def spatial(y,z):
+    #     return math.exp( -invWaist2*((y-focus[1])**2 + (z-focus[2])**2 )  )
+    # # Space envelope times temporal envelope
+    # def space_time_envelope(x,y,z):
+    #     return spatial(y,z)*time_envelope(x/c_vacuum)
+    # # Create Laser Envelope
+    # LaserEnvelope(
+    #     omega               = omega,
+    #     envelope_profile    = lambda x,y,z:a0*space_time_envelope(x,y,z),
+    #     envelope_solver     = "explicit",
+    # )
 
 """
 -----------------------------------------------------------------------
