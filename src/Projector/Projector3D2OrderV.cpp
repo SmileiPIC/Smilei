@@ -452,21 +452,10 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
     #pragma omp simd
     for (unsigned int j=0; j<1000; j++)
         bJx[j] = 0.;
-    for (int iivect=0 ; iivect<nbVec; iivect++ ){
-        int ivect = vecSize*iivect;
 
-        int np_computed(0);
-        if (cell_nparts > vecSize ) {
-            np_computed = vecSize;
-            cell_nparts -= vecSize;
-        }       
-        else
-            np_computed = cell_nparts;
-
-
-        //#pragma omp simd
-        //for (unsigned int i=0; i<200; i++)
-        //    bJx[i] = 0.;
+    for (int ivect=0 ; ivect < cell_nparts; ivect += vecSize ){
+        
+        int np_computed(min(cell_nparts-ivect,vecSize));
 
         #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ){
@@ -639,17 +628,9 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
 
 
     cell_nparts = (int)iend-(int)istart;
-    for (int iivect=0 ; iivect<nbVec; iivect++ ){
-        int ivect = vecSize*iivect;
-
-        int np_computed(0);
-        if (cell_nparts > vecSize ) {
-            np_computed = vecSize;
-            cell_nparts -= vecSize;
-        }       
-        else
-            np_computed = cell_nparts;
-
+    for (int ivect=0 ; ivect < cell_nparts; ivect += vecSize ){
+        
+        int np_computed(min(cell_nparts-ivect,vecSize));
 
         //#pragma omp simd
         //for (unsigned int i=0; i<200; i++)
@@ -819,17 +800,9 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
         //    for (unsigned int i=0; i<8; i++)
         //        bJx[j+i] = 0.;
 
-    for (int iivect=0 ; iivect<nbVec; iivect++ ){
-        int ivect = vecSize*iivect;
+    for (int ivect=0 ; ivect < cell_nparts; ivect += vecSize ){
 
-        int np_computed(0);
-        if (cell_nparts > vecSize ) {
-            np_computed = vecSize;
-            cell_nparts -= vecSize;
-        }       
-        else
-            np_computed = cell_nparts;
-
+        int np_computed(min(cell_nparts-ivect,vecSize));
 
         //#pragma omp simd
         //for (unsigned int i=0; i<200; i++)
