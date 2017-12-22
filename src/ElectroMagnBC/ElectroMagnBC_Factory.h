@@ -10,7 +10,7 @@
 #include "ElectroMagnBC3D_SM.h"
 #include "ElectroMagnBCRZ_SM.h"
 #include "ElectroMagnBCRZ_Axis.h"
-
+#include "ElectroMagnBCRZ_BM.h"
 #include "Params.h"
 
 
@@ -150,8 +150,8 @@ public:
             // R DIRECTION
             emBoundCond[2] = new ElectroMagnBCRZ_Axis(params, patch, 2);
             // silver-muller bcs (injecting/absorbin)
-            if ( params.EM_BCs[1][1] == "silver-muller" ) {
-                emBoundCond[3] = new ElectroMagnBCRZ_SM(params, patch, 3);
+            if ( params.EM_BCs[1][1] == "Buneman" ) {
+                emBoundCond[3] = new ElectroMagnBCRZ_BM(params, patch, 3);
             }
             // else: error
             else if ( params.EM_BCs[1][1] != "periodic" ) {
