@@ -1,6 +1,6 @@
 
-#ifndef ELECTROMAGNBCRZ_SM_H
-#define ELECTROMAGNBCRZ_SM_H
+#ifndef ELECTROMAGNBCRZ_BM_H
+#define ELECTROMAGNBCRZ_BM_H
 
 
 #include <vector>
@@ -74,7 +74,12 @@ private:
     
     //! Constant used for the Buneman boundary conditions (+R)
     double Gamma_BM_Rmax;
-    
+    //! Constant used for the Buneman boundary conditions (+R)
+    double CB_BM;
+    //! Constant used for the Buneman boundary conditions (+R)
+    double CE_BM;
+	//! Number of modes
+	unsigned int Nmode;
     
 };
 
