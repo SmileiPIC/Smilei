@@ -1,4 +1,4 @@
-#include "ElectroMagnBCRZ_SM.h"
+#include "ElectroMagnBCRZ_BM.h"
 
 #include <cstdlib>
 
@@ -179,51 +179,51 @@ void ElectroMagnBCRZ_BM::disableExternalFields()
 void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
     // Loop on imode 
-    int imode = 0;
+    for (unsigned int imode=0 ; imode<Nmode ; imode++) {
 
-    // Static cast of the fields
-    cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->El_[imode];
-    cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Er_[imode];
-    cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Et_[imode];
-    cField2D* BlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_[imode];
-    cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_[imode];
-    cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_[imode];
-	cField2D* BtRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_[imode]; 
-	cField2D* BlRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_[imode];
-	cField2D* BrRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_[imode];
+		// Static cast of the fields
+		cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->El_[imode];
+		cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Er_[imode];
+		cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Et_[imode];
+		cField2D* BlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_[imode];
+		cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_[imode];
+		cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_[imode];
+		cField2D* BtRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_[imode]; 
+		cField2D* BlRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_[imode];
+		cField2D* BrRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_[imode];
+		int     j_glob = (static_cast<ElectroMagn3DRZ*>(EMfields))->j_glob_;
 
+		if (min_max == 3 && patch->isYmax() ) {
+		    
+		    // for Bl^(p,d)
+			unsigned int j= nr_d-2;
+		    for (unsigned int i=0 ; i<nl_p ; i++) {
+		        /*(*Bl2D)(i,nr_d-1) = -Alpha_SM_N   * (*Et2D)(i,nr_p-1)
+		         +                    Beta_SM_N    * (*Bl2D)(i,nr_d-2)
+		         +                    Delta_SM_N   * (*Br2D)(i+1,nr_p-1)
+		         +                    Epsilon_SM_N * (*Br2D)(i,nr_p-1);*/
+		        (*BlRZ)(i,j+1) = (*BlRZ_old)(i,j) - Alpha_BM_Rmax   * ((*BlRZ)(i,j)-(*BlRZ_old)(i,j+1))
+		        -                   Gamma_BM_Rmax*CB_BM    *( (*BrRZ)(i+1,j) + (*BrRZ_old)(i+1,j) - (*BrRZ)(i,j) - (*BrRZ_old)(i,j))
+		        -                   Beta_BM_Rmax*Icpx*imode*CE_BM/((j_glob+j-0.5)*dr) *( (*ErRZ)(i,j+1)+(*ErRZ)(i,j))
+		        -                   2.*CE_BM*dt/((j_glob+j-0.5)*dr)*(*EtRZ)(i,j);
+		    }//i  ---end Bl
+		    
+		    
+		    // for Bt^(d,d)
+		    for (unsigned int i=0 ; i<nl_d ; j++) {
+		        /*(*Bt2D)(i,nr_d-1) = Alpha_SM_N * (*El2D)(i,nr_p-1)
+		         +                   Beta_SM_N  * (*Bt2D)(i,nr_d-2);*/
+		        (*BtRZ)(i,j+1) = (*BtRZ_old)(i,j)- Alpha_BM_Rmax * ((*BtRZ)(i,j) - (*BtRZ_old)(i,j+1))
+		        -                   Icpx*imode*CB_BM*Beta_BM_Rmax/((j_glob+j-0.5)*dr)  *((*BrRZ)(i,j) - (*BrRZ_old)(i,j) )
+		        -                   CE_BM*Gamma_BM_Rmax*((*ErRZ)(i+1,j+1)+(*ErRZ)(i+1,j)-(*ErRZ)(i,j) -(*ErRZ)(i,j-1) )
+				-                   CB_BM* Beta_BM_Rmax/((j_glob+j-0.5)*dr +(j_glob+j+0.5)*dr)*((*BtRZ)(i,j+1) + (*BtRZ_old)(i,j+1) +(*BtRZ)(i,j) + (*BtRZ_old)(i,j)) ;
+		    }//i  ---end Bt
+		    
+		    
+		}
 
-    if (min_max == 3 && patch->isYmax() ) {
-        
-        // for Bl^(p,d)
-        for (unsigned int i=0 ; i<nl_p ; i++) {
-            /*(*Bl2D)(i,nr_d-1) = -Alpha_SM_N   * (*Et2D)(i,nr_p-1)
-             +                    Beta_SM_N    * (*Bl2D)(i,nr_d-2)
-             +                    Delta_SM_N   * (*Br2D)(i+1,nr_p-1)
-             +                    Epsilon_SM_N * (*Br2D)(i,nr_p-1);*/
-            (*Bl2D)(i,nr_d-1) = -Alpha_SM_N   * (*Et2D)(i,nr_p-1)
-            +                   Beta_SM_N    *( (*Bl2D)(i,nr_d-2) -Bl_val[i])
-            +                   Delta_SM_N   *( (*Br2D)(i+1,nr_p-1) -Br_val[i+1])
-            +                   Epsilon_SM_N *( (*Br2D)(i,nr_p-1) -Br_val[i])
-            +                   Bl_val[i];
-        }//j  ---end Bl
-        
-        
-        // for Bt^(d,d)
-		j= nr_d-2
-        for (unsigned int i=0 ; i<nl_d ; j++) {
-            /*(*Bt2D)(i,nr_d-1) = Alpha_SM_N * (*El2D)(i,nr_p-1)
-             +                   Beta_SM_N  * (*Bt2D)(i,nr_d-2);*/
-            (*BtRZ)(i,j+1) = (*BtRZ_old)(i,j)- Alpha_BM_Rmax * ((*BtRZ)(i,j) - (*BtRZ_old)(i,j+1))
-            -                   Icpx*m*CB_BM*Beta_BM_Rmax/((j_glob+j-0.5)*dr)  *((*BrRZ)(i,j) - (*BrRZ_old)(i,j) )
-            -                   CE_BM*Gamma_BM_Rmax*((*ErRZ)(i+1,j+1)+(*ErRZ)(i+1,j)-(*ErRZ)(i,j) -(*ErRZ)(i,j-1) )
-			-                   CB_BM* Beta_BM_Rmax/((j_glob+j-0.5)*dr +(j_glob+j+0.5)*dr)* ;
-        }//j  ---end Bl
-        
-        
-    }
-
-    else  {
-        ERROR( "No Buneman along the axis" );
-    }
+		else  {
+		    ERROR( "No Buneman along the axis" );
+		}
+	}
 }
