@@ -226,13 +226,12 @@ div.body h5,
 div.body h6 {
     font-family: {{ theme_head_font_family }};
     font-weight: bold;
-    margin: 30px 0px 10px 0px;
+    margin: 30px 0px 30px 0px;
     padding: 0;
 }
 
 div.body h1 { 
     font-size: 240%;
-    margin-top: 0.3em;
     margin-right: 3em;
     padding: 0.1em 0.3em 0.1em 1em;
 	background-color:{{ theme_main_color_pale }};
@@ -920,7 +919,7 @@ div.lablogos > div {
 }
 
 /* --------------------------------------------------------------------*/
-/* Nice blue menu on the sidebar */
+/* table of contents */
 div.toctree-smilei {
 	background-color: {{ theme_main_color_pale }};
 	font-weight:normal;
@@ -1020,10 +1019,14 @@ hr {
 }
 
 /* --------------------------------------------------------------------*/
-/* Color for titles */
+/* titles */
 h1, h2, h3, h4, h5, h6 {
 	color: {{ theme_main_color_bold }};
 	font-weight:bold !important;
+}
+.section {
+    padding-top:{{ theme_head_height | float * 0.5 }}em;
+    margin-top:-{{ theme_head_height }}em;
 }
 
 /* --------------------------------------------------------------------*/
