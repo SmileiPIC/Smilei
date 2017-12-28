@@ -1,0 +1,277 @@
+{%- extends "basic/layout.html" %}
+
+{# Extract the toctree and remove html #}
+{% set theTocTree = toctree(includehidden=True)
+    | replace("</a>", "")
+    | replace(" href=\"", "></a>")
+    | replace("</li>", "</li>;")
+    | striptags
+    | replace("\">", "%") %}
+{% set theTocTree = theTocTree.split(";") %}
+
+
+{%- block extrahead %}
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      scale: 95,
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+  
+  {{ super() }}
+{% endblock %}
+
+{%- block sidebarlogo %}
+{%- endblock %}
+
+{%- block header %}
+
+<div id="smallScreenMenu" class="off">
+
+    {# Loop through toctree #}
+    <div class="toctree-smilei">
+        <ul>
+    {% set imenu = 0 %}
+    {% set this_imenu = [] %}
+    {% for element in theTocTree %}
+        {% set el = element.split("%") %}
+        {% set url = el[0] | trim | safe %}
+        {% set entry = el[1] | trim | safe %}
+        {% if entry in menu_start_with %}
+            {% if imenu > 0 %}
+        </ul>
+        <hr />
+        <ul>
+            {% endif %}
+            {% set imenu = imenu + 1 %}
+        {% endif %}
+        {% if entry == title %}
+            {% set _ = this_imenu.append(imenu-1) %}
+        </ul>
+            {{ toc }}
+        <ul>
+        {% elif entry != "" %}
+          <li class="outer">
+              <a href="{{ url }}">{{ entry }}</a>
+          </li>
+        {% endif %}
+    {% endfor %}
+        </ul>
+    </div>
+
+</div>
+<div id="hcontainer">
+    <div id="nav_positioner">
+        <div id="nav">
+            <div id="nav_button" onclick="toggleNav()">
+                <svg
+                   xmlns:svg="http://www.w3.org/2000/svg"
+                   xmlns="http://www.w3.org/2000/svg"
+                   viewBox="0 0 370 430">
+                  <path
+                     style="fill:#444444;fill-opacity:1;stroke:#dadada;stroke-width:5;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+                     id="path4208"
+                     d="M 181.63123,278.16914 85.568437,183.09305 c 0,0 -16.912257,-14.27819 0,-31.69203 16.912253,-17.41385 32.020923,0 32.020923,0 l 64.04187,63.38406 64.04187,-63.38406 c 0,0 15.9446,-16.24885 32.02092,0 16.07632,16.24885 0,31.69203 0,31.69203 z" />
+                </svg>
+            </div>
+            <div id="nav_list" class="toctree-smilei">
+                <div id="nav_title">{{ title }}</div>
+                {{ toc }}
+            </div>
+        </div>
+    </div>
+    
+    <div class="headercolor">
+    </div>
+    <div class="hpositioner">
+        <div class="header">
+        <div class="logo">
+            <a href="{{ pathto(master_doc) }}">
+                <img class="logo" src="{{ pathto('_static/' ~ logo, 1) }}" alt="Logo" />
+            </a>
+        </div>
+        
+    {# Loop through toctree #}
+    {% set imenu = 0 %}
+    {% for element in theTocTree %}
+        {% set el = element.split("%") %}
+        {% set url = el[0] | trim | safe %}
+        {% set entry = el[1] | trim | safe %}
+        {% if entry in menu_start_with %}
+            {% if imenu > 0 %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+            {% endif %}
+        
+        <div class="menu" id="menu{{ imenu }}"{% if imenu == this_imenu[0] %} style="font-weight:bold"{% endif %}}>
+            <div class="menuButton" onclick="toggleMenu('menu{{ imenu }}')" onmousedown="event.preventDefault()">
+                <span>{{ menu_name[imenu] }}</span>
+            </div>
+            <div class="off">
+                <div class="toctree-smilei">
+                    <ul>
+            {% set imenu = imenu + 1 %}
+        {% endif %}
+        {% if entry != "" %}
+            {% if entry == title %}
+                        <li >
+            {% else %}
+                        <li class="outer">
+            {% endif %}
+                            <a href="{{ url }}">{{ entry }}</a>
+                        </li>
+        {% endif %}
+    {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div id="smallScreenMenuButton" onclick="toggleSmallScreenMenu()">
+            <svg
+               xmlns:svg="http://www.w3.org/2000/svg"
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 370 430"
+               id="svg4204">
+              <path
+                 style="fill:#ffffff;fill-opacity:1;stroke:#dadada;stroke-width:5;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+                 id="path4208"
+                 d="M 181.63123,278.16914 85.568437,183.09305 c 0,0 -16.912257,-14.27819 0,-31.69203 16.912253,-17.41385 32.020923,0 32.020923,0 l 64.04187,63.38406 64.04187,-63.38406 c 0,0 15.9446,-16.24885 32.02092,0 16.07632,16.24885 0,31.69203 0,31.69203 z" />
+            </svg>
+        </div>
+        
+    </div>
+    
+</div>
+</div>
+
+{%- endblock %}
+
+
+
+{%- block footer %}
+    <div class="footer">
+      {%- if last_updated %}
+        {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}{% endtrans %}
+      {%- endif %}
+      {% if theme_show_powered_by|lower == 'true' %}
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx {{ sphinx_version }}</a>
+      {% endif %}
+      {%- if show_source and has_source and sourcename %}
+      |
+      <a href="{{ pathto('_sources/' + sourcename, true)|e }}"
+          rel="nofollow">{{ _('Page source') }}</a></li>
+      {%- endif %}
+    </div>
+    
+    <script type="text/javascript">
+        
+        var nav_list = document.getElementById("nav_list");
+        var nav_button = document.getElementById("nav_button");
+        var smallScreenMenu = document.getElementById("smallScreenMenu");
+        var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var menus = document.getElementsByClassName("menu");
+        for( var i=0; i<menus.length; i++ )
+            menus[i].active = false;
+        
+        
+        var ul = nav_list.getElementsByTagName("ul")[0], li;
+        var keep_nav = false;
+        if( ul ) {
+            li = ul.firstElementChild;
+            if( li ) {
+                if( li.getElementsByTagName("ul").length > 0 ) keep_nav = true;
+            }
+        }
+        if( keep_nav ) {
+            li.removeChild( li.firstElementChild );
+        } else {
+            document.getElementById("nav_positioner").removeChild( document.getElementById("nav") );
+        }
+        
+        function navOff() {
+            nav_list.style.display = "none";
+            nav_button.className = "";
+        }
+        
+        function toggleNav() {
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+            if( nav_list.style.display != "inline-block" ) {
+                nav_list.style.display = "inline-block";
+                nav_button.className = "pushed";
+            } else {
+                navOff();
+            }
+        }
+        
+        function toggleSmallScreenMenu() {
+            if( smallScreenMenu.className != "on" ) {
+                smallScreenMenu.className = "on";
+                smallScreenMenuButton.className = "pushed";
+            } else {
+                smallScreenMenu.className = "off";
+                smallScreenMenuButton.className = "";
+            }
+        }
+        
+        function menuOn( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            if(nav_list) navOff();
+            divs[1].className = "on";
+            divs[0].className = "menuButton pushed";
+            menu.active = true;
+        }
+        function menuOff( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            divs[1].className = "off";
+            divs[0].className = "menuButton";
+            menu.active = false;
+        }
+        
+        function toggleMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            if( menu.active ) {
+                menuOff( menu );
+            } else {
+                for( var i=0; i<menus.length; i++ )
+                    if( i!=menu_id )
+                        menuOff( menus[i] );
+                menuOn( menu );
+            }
+        }
+        
+        var documentDiv = document.getElementsByClassName("documentwrapper")[0];
+        documentDiv.addEventListener('click', function (event) {
+            console.log("here");
+            if(nav_list) navOff();
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+        });
+    </script>
+
+{%- endblock %}
+
+{%- block sidebar1 %}
+    <div id="backToTopContainer">
+        <div id="backToTopDiv" alt="Back to top">
+            <a href="#">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 364 444">
+                <g style="fill-opacity:1;stroke:none;" transform="translate(-189.49223,-102.75591)">
+                  <path d="M 372.04724,113.38583 212.59843,272.83465 c 0,0 -28.07163,23.94545 0,53.1496 28.07163,29.20415 53.1496,0 53.1496,0 L 372.04724,219.68504 478.34646,325.98425 c 0,0 26.46549,27.25038 53.1496,0 26.68411,-27.25038 0,-53.1496 0,-53.1496 z" />
+                  <path d="M 372.04724,310.80316 212.59843,470.25198 c 0,0 -28.07163,23.94545 0,53.1496 28.07163,29.20415 53.1496,0 53.1496,0 L 372.04724,417.10237 478.34646,523.40158 c 0,0 26.46549,27.25038 53.1496,0 26.68411,-27.25038 0,-53.1496 0,-53.1496 z" />
+                </g>
+              </svg>
+            </a>
+        </div>
+    </div>
+    {{ super() }}
+{%- endblock %}
+
+{%- block sidebar2 %}
+{%- endblock %}
