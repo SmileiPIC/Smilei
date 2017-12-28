@@ -93,14 +93,19 @@ div.body {
 
 div.footer {
     max-width: {{ page_width }}em;
-    margin: 20px auto 30px auto;
+    margin: 1.5em auto;
     font-size: 14px;
     color: {{ theme_footer_text }};
-    text-align: right;
+    text-align: center;
 }
 
 div.footer a {
     color: {{ theme_footer_text }};
+}
+
+div.footer > div {
+    margin: 0.3em;
+    display: inline-block;
 }
 
 div.related {
@@ -494,10 +499,6 @@ a:hover tt, a:hover code {
     	margin: 0;
     }
 
-    .footer {
-    	width: auto;
-    }
-
     .github {
         display: none;
     }
@@ -542,10 +543,6 @@ a:hover tt, a:hover code {
         padding: 0;
     }
 
-    div.footer {
-        display: none;
-    }
-
     div.bodywrapper {
         margin: 0;
     }
@@ -560,10 +557,6 @@ a:hover tt, a:hover code {
     }
 
     .document {
-        width: auto;
-    }
-
-    .footer {
         width: auto;
     }
 
@@ -690,12 +683,6 @@ div.header > * {
     background-color: transparent;
 	border:0;
 }
-#nav_button.pushed svg path {
-    transform: scale(1,-1) translate(0,-400px);
-}
-#smallScreenMenuButton.pushed svg path {
-    transform: scale(1,-1) translate(0,-400px);
-}
 #nav_list {
     display:none;
     background-color: transparent;
@@ -785,8 +772,7 @@ div.header > * {
     background-color: {{ theme_main_color_pale }};
 }
 
-#smallScreenMenuButton.pushed svg path {
-    transform: scale(1,-1) translate(0,-400px);
+#smallScreenMenuButton.pushed svg g {
     fill:{{ theme_main_color_bold }} !important;
 }
 
@@ -1123,4 +1109,16 @@ div.related {
 
 .c1 {
     color: #aab8c1 !important;
+}
+
+/* --------------------------------------------------------------------*/
+/* Index */
+
+.siteindex {
+    width:100%;
+    text-align:center;
+}
+.siteindex > div {
+    display:inline-block;
+    text-align:left;
 }
