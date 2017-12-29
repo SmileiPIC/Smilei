@@ -35,129 +35,6 @@ RadiationNiel::~RadiationNiel()
 // -----------------------------------------------------------------------------
 //! Overloading of the operator (): perform the corrected Landau-Lifshitz
 //! classical radiation reaction + stochastic diffusive operator.
-//! **Non-vectorized version**
-//
-//! \param particles   particle object containing the particle properties
-//! \param smpi        MPI properties
-//! \param RadiationTables Cross-section data tables and useful functions
-//                     for nonlinear inverse Compton scattering
-//! \param istart      Index of the first particle
-//! \param iend        Index of the last particle
-//! \param ithread     Thread index
-// -----------------------------------------------------------------------------
-/*void RadiationNiel::operator() (Particles &particles,
-        SmileiMPI* smpi,
-        RadiationTables &RadiationTables,
-        int istart,
-        int iend,
-        int ithread)
-{
-
-    // _______________________________________________________________
-    // Parameters
-    std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
-    std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
-    //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
-
-    // Charge divided by the square of the mass
-    double charge_over_mass2;
-
-    // 1/mass^2
-    double one_over_mass_2 = pow(one_over_mass_,2.);
-
-    // Sqrt(dt), used intensively in these loops
-    double sqrtdt = sqrt(dt);
-
-    // Temporary quantum parameter
-    double chipa;
-
-    // Temporary Lorentz factor
-    double gamma;
-
-    // Temporary double parameter
-    double temp;
-
-    // Radiated energy
-    double rad_energy;
-
-    // Stochastic diffusive term fo Niel et al.
-    double diffusion;
-
-    // Momentum shortcut
-    double* momentum[3];
-    for ( int i = 0 ; i<3 ; i++ )
-        momentum[i] =  &( particles.momentum(i,0) );
-
-    // Charge shortcut
-    short* charge = &( particles.charge(0) );
-
-    // Weight shortcut
-    double* weight = &( particles.weight(0) );
-
-    // Optical depth for the Monte-Carlo process
-    // double* chi = &( particles.chi(0));
-
-    // Reinitialize the cumulative radiated energy for the current thread
-    this->radiated_energy = 0.;
-
-    // _______________________________________________________________
-    // Computation
-
-    //#pragma omp simd
-    for (int ipart=istart ; ipart<iend; ipart++ ) {
-        charge_over_mass2 = (double)(charge[ipart])*one_over_mass_2;
-
-        // Gamma
-        gamma = sqrt(1.0 + momentum[0][ipart]*momentum[0][ipart]
-                             + momentum[1][ipart]*momentum[1][ipart]
-                             + momentum[2][ipart]*momentum[2][ipart]);
-
-        // Computation of the Lorentz invariant quantum parameter
-        chipa = Radiation::compute_chipa(charge_over_mass2,
-                     momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
-                     gamma,
-                     (*Epart)[ipart].x,(*Epart)[ipart].y,(*Epart)[ipart].z,
-                     (*Bpart)[ipart].x,(*Bpart)[ipart].y,(*Bpart)[ipart].z);
-
-         // Radiated energy during the time step
-         rad_energy =
-         RadiationTables.get_corrected_cont_rad_energy_Ridgers(chipa,dt);
-
-        // Below chipa = 1E-3, radiation losses are negligible
-        if (chipa > 1E-3)
-        {
-
-            // Diffusive stochastic component during dt
-            diffusion = RadiationTables.get_Niel_stochastic_term(gamma,
-                                                                 chipa,sqrtdt);
-        }
-        else
-        {
-            diffusion = 0;
-        }
-
-        // Effect on the momentum
-        // Temporary factor
-        temp = (rad_energy - diffusion)*gamma/(gamma*gamma-1.);
-
-        // Update of the momentum
-        momentum[0][ipart] -= temp*momentum[0][ipart];
-        momentum[1][ipart] -= temp*momentum[1][ipart];
-        momentum[2][ipart] -= temp*momentum[2][ipart];
-
-        // Incrementation of the radiated energy cumulative parameter
-        radiated_energy += weight[ipart]*(gamma - sqrt(1.0
-                            + momentum[0][ipart]*momentum[0][ipart]
-                            + momentum[1][ipart]*momentum[1][ipart]
-                            + momentum[2][ipart]*momentum[2][ipart]));
-
-    }
-
-}*/
-
-// -----------------------------------------------------------------------------
-//! Overloading of the operator (): perform the corrected Landau-Lifshitz
-//! classical radiation reaction + stochastic diffusive operator.
 //! **Vectorized version** But needs to be improved
 //
 //! \param particles   particle object containing the particle properties
@@ -282,8 +159,6 @@ void RadiationNiel::operator() (
         }
     }*/
 
-    double p,w;
-
     // Vectorized computation of the random number in a uniform distribution
     #pragma omp simd
     for (ipart=0 ; ipart < nbparticles; ipart++ )
@@ -301,69 +176,46 @@ void RadiationNiel::operator() (
     }
 
     // Vectorized computation of the random number in a normal distribution
-    //#pragma omp simd private(p,w)
+    double p;
+    #pragma omp simd private(p,temp)
     for (ipart=0 ; ipart < nbparticles; ipart++ )
     {
         // Below chipa = chipa_radiation_threshold, radiation losses are negligible
         if (chipa[ipart] > chipa_radiation_threshold)
         {
-            w = -log((1.0-random_numbers[ipart])*(1.0+random_numbers[ipart]));
+            temp = -log((1.0-random_numbers[ipart])*(1.0+random_numbers[ipart]));
 
-            if ( w < 5.000000 ) {
-               
-                w = w - 2.500000;
+            if ( temp < 5.000000 ) {
+                temp = temp - 2.500000;
                 p = +2.81022636000e-08      ;
-		p = +3.43273939000e-07 + p*w;
-		p = -3.52338770000e-06 + p*w;
-		p = -4.39150654000e-06 + p*w;
-		p = +0.00021858087e+00 + p*w;
-		p = -0.00125372503e+00 + p*w;
-		p = -0.00417768164e+00 + p*w;
-		p = +0.24664072700e+00 + p*w;
-		p = +1.50140941000e+00 + p*w;
-	    } else {
-		w = sqrt(w) - 3.000000;
-		p = -0.000200214257      ;
-		p = +0.000100950558 + p*w;
-		p = +0.001349343220 + p*w;
-		p = -0.003673428440 + p*w;
-		p = +0.005739507730 + p*w;
-		p = -0.007622461300 + p*w;
-		p = +0.009438870470 + p*w;
-		p = +1.001674060000 + p*w;
-		p = +2.832976820000 + p*w;
-	    }
+                p = +3.43273939000e-07 + p*temp;
+                p = -3.52338770000e-06 + p*temp;
+                p = -4.39150654000e-06 + p*temp;
+                p = +0.00021858087e+00 + p*temp;
+                p = -0.00125372503e+00 + p*temp;
+                p = -0.00417768164e+00 + p*temp;
+                p = +0.24664072700e+00 + p*temp;
+                p = +1.50140941000e+00 + p*temp;
+            } else {
+                temp = sqrt(temp) - 3.000000;
+                p = -0.000200214257      ;
+                p = +0.000100950558 + p*temp;
+                p = +0.001349343220 + p*temp;
+                p = -0.003673428440 + p*temp;
+                p = +0.005739507730 + p*temp;
+                p = -0.007622461300 + p*temp;
+                p = +0.009438870470 + p*temp;
+                p = +1.001674060000 + p*temp;
+                p = +2.832976820000 + p*temp;
+	        }
 
-	    random_numbers[ipart] *= p*sqrtdt*sqrt(2.);
+	        random_numbers[ipart] *= p*sqrtdt*sqrt(2.);
 
             //random_numbers[ipart] = userFunctions::erfinv2(random_numbers[ipart])*sqrtdt*sqrt(2.);
         }
     }
 
     //double t2 = MPI_Wtime();
-
-    // Computation of the diffusion coefficients using of the external table
-    /*for (i=0 ; i < nbparticles; i++ )
-    {
-
-        // Particle number
-        ipart = istart + i;
-
-        // Below chipa = chipa_radiation_threshold, radiation losses are negligible
-        if (chipa[ipart] > RadiationTables.get_chipa_radiation_threshold())
-        {
-
-            // Diffusive stochastic component during dtNiel_performance
-            diffusion[i] = RadiationTables.get_Niel_stochastic_term((*gamma)[ipart],
-                                                        chipa[ipart],sqrtdt);
-        }
-        else
-        {
-            diffusion[i] = 0.;
-        }
-    }*/
-
-    double h;
 
     // Computation of the diffusion coefficients using the fit
     // #pragma omp simd
@@ -375,21 +227,21 @@ void RadiationNiel::operator() (
         {
 
           //h = RadiationTables.get_h_Niel_from_fit(chipa[ipart]);
-          h = RadiationTables.get_h_Niel_from_table(chipa[ipart]);
+          temp = RadiationTables.get_h_Niel_from_table(chipa[ipart]);
 
           /*std::random_device device;
           std::mt19937 gen(device());
           std::normal_distribution<double> normal_distribution(0., sqrt(dt));
           r = normal_distribution(gen);*/
 
-          diffusion[ipart] = sqrt(factor_cla_rad_power*gamma[ipart]*h)*random_numbers[ipart];
+          diffusion[ipart] = sqrt(factor_cla_rad_power*gamma[ipart]*temp)*random_numbers[ipart];
         }
     }
 
     //double t3 = MPI_Wtime();
 
-    // Update of the momentum
-    #pragma omp simd
+    // Vectorized update of the momentum
+    #pragma omp simd private(temp,rad_energy)
     for (ipart=0 ; ipart<nbparticles; ipart++ )
     {
         // Below chipa = chipa_radiation_threshold, radiation losses are negligible
