@@ -137,12 +137,18 @@ class RadiationTables
                           + 2.44*chipa*chipa,-2./3.);
         };
 
+        std::string inline get_h_computation_method()
+        {
+            return this->h_computation_method;
+        }
+
         // -----------------------------------------------------------------------------
         //! Return the value of the function h(chipa) of Niel et al.
-        //! from a numerical fit
+        //! from a polynomial numerical fit at order 10
+        //! Valid between chipa in 1E-3 and 1E1
         //! \param chipa particle quantum parameter
         // -----------------------------------------------------------------------------
-        double inline get_h_Niel_from_fit(double chipa)
+        double inline get_h_Niel_from_fit_order10(double chipa)
         {
             // Max relative error ~2E-4
             return exp(-3.231764974833856e-08 * pow(log(chipa),10)
@@ -156,6 +162,23 @@ class RadiationTables
                 -1.624860613422593e-01 * pow(log(chipa),2)
                 + 1.496340836237785e+00 * log(chipa)
                 -2.756744141581370e+00);
+        }
+
+        // -----------------------------------------------------------------------------
+        //! Return the value of the function h(chipa) of Niel et al.
+        //! from a polynomial numerical fit at order 5
+        //! Valid between chipa in 1E-3 and 1E1
+        //! \param chipa particle quantum parameter
+        // -----------------------------------------------------------------------------
+        double inline get_h_Niel_from_fit_order5(double chipa)
+        {
+            // Max relative error ~0.02
+            return exp(1.399937206900322e-04 * pow(log(chipa),5)
+            + 3.123718241260330e-03 * pow(log(chipa),4)
+            + 1.096559086628964e-02 * pow(log(chipa),3)
+            -1.733977278199592e-01 * pow(log(chipa),2)
+            + 1.492675770100125e+00 * log(chipa)
+            -2.748991631516466e+00 );
         }
 
         // -----------------------------------------------------------------------------
@@ -287,6 +310,9 @@ class RadiationTables
 
         //! This variable is true if the table is computed, false if read
         bool h_computed;
+
+        //! Method to be used to get the h values (table, fit5, fit10)
+        std::string h_computation_method;
 
         // ---------------------------------------------
         // Table integfochi

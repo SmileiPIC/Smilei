@@ -39,7 +39,7 @@ class SmileiComponentType(type):
         self.current += 1
         return self._list[self.current - 1]
     __next__ = next #python3
-    
+
     # Function to return one given instance, for example DiagParticleBinning[0]
     # Special case: species can also be indexed by their name: Species["ion1"]
     def __getitem__(self, key):
@@ -164,7 +164,7 @@ class ParticleData(object):
 
 class Main(SmileiSingleton):
     """Main parameters"""
-    
+
     # Default geometry info
     geometry = None
     cell_length = []
@@ -190,26 +190,26 @@ class Main(SmileiSingleton):
     solve_poisson = True
     poisson_max_iteration = 50000
     poisson_max_error = 1.e-14
-    
+
     # Default fields
     maxwell_solver = 'Yee'
     EM_boundary_conditions = [["periodic"]]
     time_fields_frozen = 0.
-    
+
     # Default Misc
     reference_angular_frequency_SI = 0.
     print_every = None
     random_seed = None
     print_expected_disk_usage = True
-    
+
     def __init__(self, **kwargs):
         # Load all arguments to Main()
         super(Main, self).__init__(**kwargs)
-        
+
         # Deprecation error for the "geometry" argument
         if Main.geometry in ["1d3v", "2d3v", "3d3v"]:
             raise Exception("Deprecated geometry = \""+Main.geometry+"\". Use \""+Main.geometry[0]+"Dcartesian\" instead")
-        
+
         # Initialize timestep if not defined based on timestep_over_CFL
         if Main.timestep is None:
             if Main.timestep_over_CFL is None:
@@ -217,37 +217,37 @@ class Main(SmileiSingleton):
             else:
                 if Main.cell_length is None:
                     raise Exception("Need cell_length to calculate timestep")
-                
+
                 # Yee solver
                 if Main.maxwell_solver == 'Yee':
                     dim = int(Main.geometry[0])
                     if dim<1 or dim>3:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
                     Main.timestep = Main.timestep_over_CFL / math.sqrt(sum([1./l**2 for l in Main.cell_length]))
-                
+
                 # Grassi
                 elif Main.maxwell_solver == 'Grassi':
                     if Main.geometry == '2Dcartesian':
                         Main.timestep = Main.timestep_over_CFL * 0.7071067811*Main.cell_length[0];
                     else:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
-                
+
                 # GrassiSpL
                 elif Main.maxwell_solver == 'GrassiSpL':
                     if Main.geometry == '2Dcartesian':
                         Main.timestep = Main.timestep_over_CFL * 0.6471948469*Main.cell_length[0];
                     else:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
-                
+
                 # None recognized solver
                 else:
                     raise Exception("timestep: maxwell_solver not implemented "+Main.maxwell_solver)
-                
+
         # Initialize grid_length if not defined based on number_of_cells and cell_length
-        if (    len(Main.grid_length + Main.number_of_cells) == 0 
-             or len(Main.grid_length + Main.cell_length) == 0 
-             or len(Main.number_of_cells + Main.cell_length) == 0  
-             or len(Main.number_of_cells) * len(Main.grid_length) * len(Main.cell_length) != 0 
+        if (    len(Main.grid_length + Main.number_of_cells) == 0
+             or len(Main.grid_length + Main.cell_length) == 0
+             or len(Main.number_of_cells + Main.cell_length) == 0
+             or len(Main.number_of_cells) * len(Main.grid_length) * len(Main.cell_length) != 0
            ):
                 raise Exception("Main: you must define two (and only two) between grid_length, number_of_cells and cell_length")
 
@@ -268,7 +268,7 @@ class Main(SmileiSingleton):
 
 class LoadBalancing(SmileiSingleton):
     """Load balancing parameters"""
-    
+
     every = 150
     initial_balance = True
     cell_load = 1.0
@@ -277,14 +277,14 @@ class LoadBalancing(SmileiSingleton):
 
 class MovingWindow(SmileiSingleton):
     """Moving window parameters"""
-    
+
     time_start = 0.
     velocity_x = 1.
 
 
 class Checkpoints(SmileiSingleton):
     """Checkpoints parameters"""
-    
+
     restart_dir = None
     restart_number = None
     dump_step = 0
@@ -437,13 +437,14 @@ class PartWall(SmileiComponent):
 # Radiation reaction configuration (continuous and MC algorithms)
 class RadiationReaction(SmileiComponent):
     """
-    Fine-tuning of synchrotron-like radiation loss
+    Fine-tuning of synchrotron-like radiation reaction
     (classical continuous, quantum correction, stochastics and MC algorithms)
     """
     # Table h parameters
     h_chipa_min = 1e-3
     h_chipa_max = 1e1
     h_dim = 128
+    h_computation_method = "table"
     # Table integfochi parameters
     integfochi_chipa_min = 1e-3
     integfochi_chipa_max = 1e1
@@ -501,4 +502,3 @@ class DumpRestart(object):
 class ExtField(object):
     def __init__(self, *args, **kwargs):
         raise Exception("Deprecated `ExtField()` must be replaced by `ExternalField()`")
-

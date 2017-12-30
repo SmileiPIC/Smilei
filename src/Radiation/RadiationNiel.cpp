@@ -116,7 +116,8 @@ void RadiationNiel::operator() (
     this->radiated_energy = 0.;
 
     const double chipa_radiation_threshold = RadiationTables.get_chipa_radiation_threshold();
-    const double factor_cla_rad_power = RadiationTables.get_factor_cla_rad_power();
+    const double factor_cla_rad_power      = RadiationTables.get_factor_cla_rad_power();
+    const std::string h_computation_method = RadiationTables.get_h_computation_method();
 
     // _______________________________________________________________
     // Computation
@@ -217,27 +218,60 @@ void RadiationNiel::operator() (
 
     //double t2 = MPI_Wtime();
 
-    // Computation of the diffusion coefficients using the fit
-    // #pragma omp simd
-    for (ipart=0 ; ipart < nbparticles; ipart++ )
+    // Computation of the diffusion coefficients
+    // Using the table (non-vectorized)
+    if (h_computation_method=="table")
     {
-
-        // Below chipa = chipa_radiation_threshold, radiation losses are negligible
-        if (chipa[ipart] > chipa_radiation_threshold)
+        // #pragma omp simd
+        for (ipart=0 ; ipart < nbparticles; ipart++ )
         {
 
-          //h = RadiationTables.get_h_Niel_from_fit(chipa[ipart]);
-          temp = RadiationTables.get_h_Niel_from_table(chipa[ipart]);
+            // Below chipa = chipa_radiation_threshold, radiation losses are negligible
+            if (chipa[ipart] > chipa_radiation_threshold)
+            {
 
-          /*std::random_device device;
-          std::mt19937 gen(device());
-          std::normal_distribution<double> normal_distribution(0., sqrt(dt));
-          r = normal_distribution(gen);*/
+              //h = RadiationTables.get_h_Niel_from_fit_order10(chipa[ipart]);
+              //h = RadiationTables.get_h_Niel_from_fit_order5(chipa[ipart]);
+              temp = RadiationTables.get_h_Niel_from_table(chipa[ipart]);
 
-          diffusion[ipart] = sqrt(factor_cla_rad_power*gamma[ipart]*temp)*random_numbers[ipart];
+              diffusion[ipart] = sqrt(factor_cla_rad_power*gamma[ipart]*temp)*random_numbers[ipart];
+            }
         }
     }
+    // Using the fit at order 5 (vectorized)
+    else if (h_computation_method=="fit5")
+    {
+        #pragma omp simd private(temp)
+        for (ipart=0 ; ipart < nbparticles; ipart++ )
+        {
 
+            // Below chipa = chipa_radiation_threshold, radiation losses are negligible
+            if (chipa[ipart] > chipa_radiation_threshold)
+            {
+
+              temp = RadiationTables.get_h_Niel_from_fit_order5(chipa[ipart]);
+
+              diffusion[ipart] = sqrt(factor_cla_rad_power*gamma[ipart]*temp)*random_numbers[ipart];
+            }
+        }
+    }
+    // Using the fit at order 10 (vectorized)
+    else if (h_computation_method=="fit10")
+    {
+        #pragma omp simd private(temp)
+        for (ipart=0 ; ipart < nbparticles; ipart++ )
+        {
+
+            // Below chipa = chipa_radiation_threshold, radiation losses are negligible
+            if (chipa[ipart] > chipa_radiation_threshold)
+            {
+
+              temp = RadiationTables.get_h_Niel_from_fit_order10(chipa[ipart]);
+
+              diffusion[ipart] = sqrt(factor_cla_rad_power*gamma[ipart]*temp)*random_numbers[ipart];
+            }
+        }
+    }
     //double t3 = MPI_Wtime();
 
     // Vectorized update of the momentum

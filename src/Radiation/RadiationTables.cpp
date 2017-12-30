@@ -93,6 +93,7 @@ void RadiationTables::initParams(Params& params)
             PyTools::extract("h_chipa_min", h_chipa_min, "RadiationReaction");
             PyTools::extract("h_chipa_max", h_chipa_max, "RadiationReaction");
             PyTools::extract("h_dim", h_dim, "RadiationReaction");
+            PyTools::extract("h_computation_method", h_computation_method, "RadiationReaction");
 
             h_log10_chipa_min = log10(h_chipa_min);
         }
@@ -155,7 +156,7 @@ void RadiationTables::initParams(Params& params)
         // Computation of the factor for the classical radiated power
         factor_cla_rad_power = 2.*params.fine_struct_cst/(3.*norm_lambda_compton);
 
-        MESSAGE( "        Factor classical raidated power: " << factor_cla_rad_power)
+        MESSAGE( "        Factor classical radiated power: " << factor_cla_rad_power)
 
     }
 
@@ -175,6 +176,10 @@ void RadiationTables::initParams(Params& params)
         params.hasNielRadiation)
     {
         MESSAGE( "        Table path: " << table_path);
+    }
+    if (params.hasNielRadiation)
+    {
+        MESSAGE( "        Niel h function computation method: " << h_computation_method)
     }
 
     MESSAGE("")
