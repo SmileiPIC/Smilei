@@ -724,7 +724,8 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 void RadiationTables::compute_tables(Params& params, SmileiMPI *smpi)
 {
     // These tables are loaded only if if one species has Monte-Carlo Compton radiation
-    if (params.hasNielRadiation)
+    // And if the h values are not computed from a numerical fit
+    if (params.hasNielRadiation && this->h_computation_method == "table")
     {
         RadiationTables::compute_h_table(smpi);
     }
