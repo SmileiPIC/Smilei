@@ -67,14 +67,12 @@ body {
 }
 
 div.document {
-    max-width: {{ page_width }}em;
-    margin: 0 auto 0 auto;
+    width:100%;
 }
 
 div.documentwrapper {
-    float: left;
-    width: 100%;
-    margin-top:{{ theme_head_height }}em;
+    max-width: {{ page_width }}em;
+    margin: {{ theme_head_height }}em auto 0 auto;
 }
 
 div.bodywrapper {
@@ -104,7 +102,7 @@ div.footer a {
 }
 
 div.footer > div {
-    margin: 0.3em;
+    margin: 0.8em;
     display: inline-block;
 }
 
@@ -461,25 +459,10 @@ a:hover tt, a:hover code {
 }
 
 
-@media screen and (max-width: 50.3em) {
+@media screen and (max-width:  {{ page_width | float * 1.01 }}em) {
 
-    div.document {
-       width: 100%;
-
-    }
-
-    div.documentwrapper {
-    	margin-left: 0;
-    	margin-top: 0;
-    	margin-right: 0;
-    	margin-bottom: 0;
-    }
-
-    div.bodywrapper {
-    	margin-top: 0;
-    	margin-right: 0;
-    	margin-bottom: 0;
-    	margin-left: 0;
+    body, div.documentwrapper, .bodywrapper {
+    	margin:0;
     }
 
     ul {
@@ -487,33 +470,17 @@ a:hover tt, a:hover code {
     }
 
     .document {
-    	width: auto;
+    	width: auto !important;
     }
 
     .footer {
     	width: auto;
     }
 
-    .bodywrapper {
-    	margin: 0;
-    }
-
-    .github {
+    .github, .rtd_doc_footer {
         display: none;
     }
-
-
-
-}
-
-
-
-@media screen and (max-width:  50.2em) {
-
-    body {
-        margin: 0;
-    }
-
+    
     div.documentwrapper {
         float: none;
         background: white;
@@ -525,9 +492,8 @@ a:hover tt, a:hover code {
     }
 
     div.document {
-        width: auto;
         margin: {{ theme_head_height }}em 0 0 0;
-        padding: 0px 30px 20px 30px;
+        padding: 0 1em 1em 1em;
     }
 
     div.related {
@@ -542,30 +508,11 @@ a:hover tt, a:hover code {
         padding: 0;
     }
 
-    div.bodywrapper {
-        margin: 0;
-    }
-
     div.body {
         min-height: 0;
         padding: 0;
     }
 
-    .rtd_doc_footer {
-        display: none;
-    }
-
-    .document {
-        width: auto;
-    }
-
-    .footer {
-        width: auto;
-    }
-
-    .github {
-        display: none;
-    }
 }
 
 
@@ -605,6 +552,7 @@ table.docutils.citation, table.docutils.citation td, table.docutils.citation th 
 	margin:0;
 	padding:0;
     text-align: center;
+    z-index: 10;
 }
 
 div.headercolor {
@@ -680,7 +628,8 @@ div.header > * {
 }
 #nav_button.pushed {
     background-color: transparent;
-	border:0;
+	border: 0;
+	border-right:1px solid transparent;
 }
 #nav_list {
     display:none;

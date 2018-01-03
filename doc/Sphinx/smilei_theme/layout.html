@@ -315,9 +315,8 @@
             }
         }
         
-        var documentDiv = document.getElementsByClassName("documentwrapper")[0];
+        var documentDiv = document.getElementsByClassName("document")[0];
         documentDiv.addEventListener('click', function (event) {
-            console.log("here");
             if(nav_list) navOff();
             for( var i=0; i<menus.length; i++ )
                 menuOff( menus[i] );
