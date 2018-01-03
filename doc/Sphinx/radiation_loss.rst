@@ -385,10 +385,10 @@ The parameters such as the :math:`\chi` range and the discretization can be
 given in :ref:`RadiationReaction <RadiationReaction>`.
 
 Polynomial fits of this integral can be obtained in log-log
-or log10-log10 domain. However, high accuracy requires high-order polynomials.
+or log10-log10 domain. However, high accuracy requires high-order polynomials
 (order 20 for an accuracy around :math:`10^{-10}` for instance).
 In :program:`Smilei`, an order 5 and 10 polynomial fits are implemented.
-They are valid for quantum parameters :math:`\chi` between 1e-3 and 10.
+They are valid for quantum parameters :math:`\chi` between :math:`10^{-3}` and 10.
 
 The stochastic diffusive model is accessible in the species configuration
 under the name ``Niel``.
