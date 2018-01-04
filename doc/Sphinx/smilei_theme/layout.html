@@ -9,7 +9,6 @@
     | replace("\">", "%") %}
 {% set theTocTree = theTocTree.split(";") %}
 
-
 {%- block extrahead %}
   <script type="text/x-mathjax-config">
   MathJax.Hub.Config({
@@ -33,22 +32,22 @@
     {# Loop through toctree #}
     <div class="toctree-smilei">
         <ul>
-    {% set imenu = 0 %}
-    {%- set this_imenu = [] %}
-    {% for element in theTocTree %}
+    {%- set menu_start = cycler(*menu_start_with) %}
+    {%- set this_menu = [] %}
+    {%- for element in theTocTree %}
         {%- set el = element.split("%") %}
         {%- set url = el[0] | trim | safe %}
         {%- set entry = el[1] | trim | safe %}
-        {%- if entry in menu_start_with %}
-            {% if imenu > 0 %}
+        {%- if entry == menu_start.current %}
+            {%- if entry != menu_start_with[0] %}
         </ul>
         <hr />
         <ul>
             {%- endif %}
-            {%- set imenu = imenu + 1 %}
+            {%- set _ = menu_start.next() %}
         {%- endif %}
         {%- if entry == title %}
-            {%- set _ = this_imenu.append(imenu-1) %}
+            {%- set _ = this_menu.append(menu_start.current) %}
         </ul>
             {{ toc }}
         <ul>
@@ -57,7 +56,7 @@
               <a href="{{ url }}">{{ entry }}</a>
           </li>
         {%- endif %}
-    {% endfor %}
+    {%- endfor %}
         </ul>
     </div>
 
@@ -106,27 +105,30 @@
         </div>
         
     {# Loop through toctree #}
-    {%- set imenu = 0 %}
-    {% for element in theTocTree %}
+    {%- set menu_start = cycler(*menu_start_with) %}
+    {%- set menu_title = cycler(*menu_name) %}
+    {%- for element in theTocTree %}
         {%- set el = element.split("%") %}
         {%- set url = el[0] | trim | safe %}
         {%- set entry = el[1] | trim | safe %}
-        {%- if entry in menu_start_with %}
-            {%- if imenu > 0 %}
+        {%- if entry == menu_start.current %}
+            {% if entry != menu_start_with[0] %}
                     </ul>
                 </div>
             </div>
         </div>
             {%- endif %}
+            
+            {%- set menu_here = menu_start.current %}
+            {%- set _ = menu_start.next() %}
         
-        <div class="menu" id="menu{{ imenu }}"{% if imenu == this_imenu[0] %} style="font-weight:bold"{% endif %}>
-            <div class="menuButton" onclick="toggleMenu('menu{{ imenu }}')" onmousedown="event.preventDefault()">
-                <span>{{ menu_name[imenu] }}</span>
+        <div class="menu" id="menu_{{ menu_here }}"{% if menu_start.current == this_menu[0] %} style="font-weight:bold"{% endif %}>
+            <div class="menuButton" onclick="toggleMenu('menu_{{ menu_here }}')" onmousedown="event.preventDefault()">
+                <span>{{ menu_title.next() }}</span>
             </div>
             <div class="off">
                 <div class="toctree-smilei">
                     <ul>
-            {% set imenu = imenu + 1 %}
         {%- endif %}
         {%- if entry != "" %}
             {%- if entry == title %}
@@ -137,7 +139,7 @@
                             <a href="{{ url }}">{{ entry }}</a>
                         </li>
         {%- endif %}
-    {% endfor %}
+    {%- endfor %}
                     </ul>
                 </div>
             </div>
@@ -184,18 +186,19 @@
           {% block body %} {% endblock %}
           {%- if title | lower == "index" %}
             <div class="siteindex"><div>
-              {%- set imenu = 0 %}
+              {%- set menu_start = cycler(*menu_start_with) %}
+              {%- set menu_title = cycler(*menu_name) %}
               {%- for element in theTocTree %}
                   {%- set el = element.split("%") %}
                   {%- set url = el[0] | trim | safe %}
                   {%- set entry = el[1] | trim | safe %}
-                  {%- if entry in menu_start_with %}
-                    {%- if imenu > 0 %}
+                  {%- if entry == menu_start.current %}
+                    {%- if entry != menu_start_with[0] %}
               </ul>
                     {%- endif %}
-              <h2>{{ menu_name[imenu] }}</h2>
+              <h2>{{ menu_title.next() }}</h2>
               <ul>
-                      {%- set imenu = imenu + 1 %}
+                    {%- set _ = menu_start.next() %}
                   {%- endif %}
                   {%- if entry != "" %}
                     <li>
