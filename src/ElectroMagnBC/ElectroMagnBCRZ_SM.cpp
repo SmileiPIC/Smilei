@@ -11,6 +11,8 @@
 #include "cField2D.h"
 #include "Tools.h"
 #include "Laser.h"
+#include <complex>
+#include "dcomplex.h"
 
 using namespace std;
 
@@ -73,29 +75,22 @@ ElectroMagnBCRZ_SM::ElectroMagnBCRZ_SM( Params &params, Patch* patch, unsigned i
     #ifdef _TODO_RZ
     // Xmin boundary
     double theta  = 0.0*conv_deg2rad; //0.0;
-    double factor = 1.0 / (cos(theta) + dt_ov_dl);
-    Alpha_SM_W    = 2.0                     * factor;
-    Beta_SM_W     = - (cos(theta)-dt_ov_dl) * factor;
-    Gamma_SM_W    = 4.0 * cos(theta)        * factor;
-    Delta_SM_W    = - (sin(theta)+dt_ov_dr) * factor;
-    Epsilon_SM_W  = - (sin(theta)-dt_ov_dr) * factor;
-    
+    double factor = 1.0 / (1.0 + dt_ov_dl);
+    Alpha_SM_Xmin    = 2.0                     * factor;
+    Beta_SM_Xmin     = - (1-dt_ov_dl) * factor;
+    Gamma_SM_Xmin    = 4.0         * factor;
+    Delta_SM_Xmin    = - dt_ov_dr * factor;
+    Epsilon_SM_Xmin  = -Icpx / (1.0 + dt_ov_dl);
     // Xmax boundary
     theta         = M_PI;
-    factor        = 1.0 / (cos(theta) - dt_ov_dl);
-    Alpha_SM_E    = 2.0                      * factor;
-    Beta_SM_E     = - (cos(theta)+dt_ov_dl)  * factor;
-    Gamma_SM_E    = 4.0 * cos(theta)         * factor;
-    Delta_SM_E    = - (sin(theta)+dt_ov_dr)  * factor;
-    Epsilon_SM_E  = - (sin(theta)-dt_ov_dr)  * factor;
+    factor        = 1.0 / (1.0 + dt_ov_dl);
+    Alpha_SM_Xmax    = 2.0                      * factor;
+    Beta_SM_Xmax     = - (1.0 -dt_ov_dl)  * factor;
+    Gamma_SM_Xmax    = 4.0         * factor;
+    Delta_SM_Xmax    = - dt_ov_dr  * factor;
+    Epsilon_SM_Xmax  = - -Icpx / (1.0 + dt_ov_dl)  * factor;
     
-    // Ymax boundary
-    theta  = M_PI;
-    factor = 1.0 / (cos(theta) - dt_ov_dr);
-    Alpha_SM_N    = 2.0                     * factor;
-    Beta_SM_N     = - (cos(theta)+dt_ov_dr) * factor;
-    Delta_SM_N    = - (sin(theta)+dt_ov_dl) * factor;
-    Epsilon_SM_N  = - (sin(theta)-dt_ov_dl) * factor;
+
     #endif
 }
 
@@ -196,146 +191,111 @@ void ElectroMagnBCRZ_SM::disableExternalFields()
 void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
     // Loop on imode 
-    int imode = 0;
+    for (unsigned int imode=0 ; imode<Nmode ; imode++) {
+		// Static cast of the fields
+		cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->El_[imode];
+		cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Er_[imode];
+		cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Et_[imode];
+		cField2D* BlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_[imode];
+		cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_[imode];
+		cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_[imode];
 
-    // Static cast of the fields
-    cField2D* El2D = (static_cast<ElectroMagn3DRZ*>(EMfields))->El_[imode];
-    cField2D* Er2D = (static_cast<ElectroMagn3DRZ*>(EMfields))->Er_[imode];
-    cField2D* Et2D = (static_cast<ElectroMagn3DRZ*>(EMfields))->Et_[imode];
-    cField2D* Bl2D = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_[imode];
-    cField2D* Br2D = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_[imode];
-    cField2D* Bt2D = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_[imode];
- 
-    if (min_max == 0 && patch->isXmin() ) {
-        
-        // for Br^(d,p)
-        vector<double> yp(1);
-        yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dr;
-        for (unsigned int j=0 ; j<nr_p ; j++) {
-            
-            double byW = 0.;
-            yp[0] += dr;
-            
-            // Lasers
-            for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-                byW += vecLaser[ilaser]->getAmplitude0(yp, time_dual, j, 0);
-            }
-            
-            (*Br2D)(0,j) = Alpha_SM_W   * (*Et2D)(0,j)
-            +              Beta_SM_W    *( (*Br2D)(1,j)-Br_val[j])
-            +              Gamma_SM_W   * byW
-            +              Delta_SM_W   *( (*Bl2D)(0,j+1)-Bl_val[j+1] )
-            +              Epsilon_SM_W *( (*Bl2D)(0,j)-Bl_val[j] )
-            +              Br_val[j];
-            
-        }//j  ---end compute Br
-        
-        
-        // for Bt^(d,d)
-        vector<double> yd(1);
-        yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dr;
-        for (unsigned int j=0 ; j<nr_d ; j++) {
-            
-            double bzW = 0.;
-            yd[0] += dr;
-            
-            // Lasers
-            for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-                bzW += vecLaser[ilaser]->getAmplitude1(yd, time_dual, j, 0);
-            }
-            
-            /*(*Bt2D)(0,j) = -Alpha_SM_W * (*Er2D)(0,j)
-             +               Beta_SM_W  * (*Bt2D)(1,j)
-             +               Gamma_SM_W * bzW;*/
-            (*Bt2D)(0,j) = -Alpha_SM_W * (*Er2D)(0,j)
-            +               Beta_SM_W  *( (*Bt2D)(1,j)- Bt_val[j])
-            +               Gamma_SM_W * bzW
-            +               Bt_val[j];
-            
-        }//j  ---end compute Bt
-        
-    }
-    else if (min_max == 1 && patch->isXmax() ) {
-        
-        // for Br^(d,p)
-        vector<double> yp(1);
-        yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dr;
-        for (unsigned int j=0 ; j<nr_p ; j++) {
-            
-            double byE = 0.;
-            yp[0] += dr;
-            
-            // Lasers
-            for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-                byE += vecLaser[ilaser]->getAmplitude0(yp, time_dual, j, 0);
-            }
-            
-            /*(*Br2D)(nl_d-1,j) = Alpha_SM_E   * (*Et2D)(nl_p-1,j)
-             +                   Beta_SM_E    * (*Br2D)(nl_d-2,j)
-             +                   Gamma_SM_E   * byE
-             +                   Delta_SM_E   * (*Bl2D)(nl_p-1,j+1) // Check x-index
-             +                   Epsilon_SM_E * (*Bl2D)(nl_p-1,j);*/
-            (*Br2D)(nl_d-1,j) = Alpha_SM_E   * (*Et2D)(nl_p-1,j)
-            +                   Beta_SM_E    *( (*Br2D)(nl_d-2,j) -Br_val[j])
-            +                   Gamma_SM_E   * byE
-            +                   Delta_SM_E   *( (*Bl2D)(nl_p-1,j+1) -Bl_val[j+1])// Check x-index
-            +                   Epsilon_SM_E *( (*Bl2D)(nl_p-1,j) -Bl_val[j])
-            +                   Br_val[j];
-            
-        }//j  ---end compute Br
-        
-        
-        // for Bt^(d,d)
-        vector<double> yd(1);
-        yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dr;
-        for (unsigned int j=0 ; j<nr_d ; j++) {
-            
-            double bzE = 0.;
-            yd[0] += dr;
-            
-            // Lasers
-            for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-                bzE += vecLaser[ilaser]->getAmplitude1(yd, time_dual, j, 0);
-            }
-            
-            /*(*Bt2D)(nl_d-1,j) = -Alpha_SM_E * (*Er2D)(nl_p-1,j)
-             +                    Beta_SM_E  * (*Bt2D)(nl_d-2,j)
-             +                    Gamma_SM_E * bzE;*/
-            (*Bt2D)(nl_d-1,j) = -Alpha_SM_E * (*Er2D)(nl_p-1,j)
-            +                    Beta_SM_E  *( (*Bt2D)(nl_d-2,j) -Bt_val[j])
-            +                    Gamma_SM_E * bzE
-            +                    Bt_val[j];
-            
-        }//j  ---end compute Bt
-    }
-    else if (min_max == 2 && patch->isYmin() ) {
-        ERROR( "No Silver Muller along the axis" );
-    }
-    else if (min_max == 3 && patch->isYmax() ) {
-        
-        // for Bl^(p,d)
-        for (unsigned int j=0 ; j<nl_p ; j++) {
-            /*(*Bl2D)(j,nr_d-1) = -Alpha_SM_N   * (*Et2D)(j,nr_p-1)
-             +                    Beta_SM_N    * (*Bl2D)(j,nr_d-2)
-             +                    Delta_SM_N   * (*Br2D)(j+1,nr_p-1)
-             +                    Epsilon_SM_N * (*Br2D)(j,nr_p-1);*/
-            (*Bl2D)(j,nr_d-1) = -Alpha_SM_N   * (*Et2D)(j,nr_p-1)
-            +                   Beta_SM_N    *( (*Bl2D)(j,nr_d-2) -Bl_val[j])
-            +                   Delta_SM_N   *( (*Br2D)(j+1,nr_p-1) -Br_val[j+1])
-            +                   Epsilon_SM_N *( (*Br2D)(j,nr_p-1) -Br_val[j])
-            +                   Bl_val[j];
-        }//j  ---end Bl
-        
-        
-        // for Bt^(d,d)
-        for (unsigned int j=0 ; j<nl_d ; j++) {
-            /*(*Bt2D)(j,nr_d-1) = Alpha_SM_N * (*El2D)(j,nr_p-1)
-             +                   Beta_SM_N  * (*Bt2D)(j,nr_d-2);*/
-            (*Bt2D)(j,nr_d-1) = Alpha_SM_N * (*El2D)(j,nr_p-1)
-            +                   Beta_SM_N  *( (*Bt2D)(j,nr_d-2)- Bt_val[j])
-            +                   Bt_val[j];
-        }//j  ---end Bl
-        
-        
-    }
+		int     j_glob = (static_cast<ElectroMagn3DRZ*>(EMfields))->j_glob_;
+	 
+		if (min_max == 0 && patch->isXmin() ) {
+		    
+		    // for Br^(d,p)
+		    vector<double> yp(1);
+		    yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dr;
+		    for (unsigned int j=0 ; j<nr_p ; j++) {
+		        
+		        double byW = 0.;
+		        yp[0] += dr;
+		        
+		        // Lasers
+		        for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
+		            byW += vecLaser[ilaser]->getAmplitude0(yp, time_dual, j, 0);
+		        }
+		        //x= Xmin
+				unsigned int i=0;
+		        (*BrRZ)(i,j) = Alpha_SM_Xmin   * (*EtRZ)(i,j)
+		        +              Beta_SM_Xmin    *( (*BrRZ)(i+1,j))
+		        +              Gamma_SM_Xmin   * byW
+		        +              Delta_SM_Xmin   *( (*BlRZ)(i,j+1)- (*BlRZ)(i,j));
+		        
+		    }//j  ---end compute Br
+		    
+		    
+		    // for Bt^(d,d)
+		    vector<double> yd(1);
+		    yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dr;
+		    for (unsigned int j=0 ; j<nr_d ; j++) {
+		        
+		        double bzW = 0.;
+		        yd[0] += dr;
+		        
+		        // Lasers
+		        for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
+		            bzW += vecLaser[ilaser]->getAmplitude1(yd, time_dual, j, 0);
+		        }
+		        //x=Xmin
+				unsigned int i=0;
+		        (*BtRZ)(i,j) = -Alpha_SM_Xmin * (*ErRZ)(i,j+1)
+		        +               Beta_SM_Xmin  *( (*BtRZ)(i+1,j+1))
+		        +               Gamma_SM_Xmin * bzW
+				+               Epsilon_SM_Xmin *imode/((j_glob+j-0.5)*dr)*(*BlRZ)(i,j+1) ;
+		        
+		    }//j  ---end compute Bt
+		    
+		}
+		else if (min_max == 1 && patch->isXmax() ) {
+		    
+		    // for Br^(d,p)
+		    vector<double> yp(1);
+		    yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dr;
+		    for (unsigned int j=0 ; j<nr_p ; j++) {
+		        
+		        double byE = 0.;
+		        yp[0] += dr;
+		        
+		        // Lasers
+		        for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
+		            byE += vecLaser[ilaser]->getAmplitude0(yp, time_dual, j, 0);
+		        }
+				unsigned int i= nl_d-1;
+		        (*BrRZ)(i,j) = - Alpha_SM_Xmax   * (*EtRZ)(i-1,j)
+		         +                   Beta_SM_Xmax    * (*BrRZ)(i-1,j)
+		         +                   Gamma_SM_Xmax   * byE
+		         +                   Delta_SM_Xmax   * ((*BlRZ)(i-1,j+1)- (*BlRZ)(i-1,j)); // Check x-index
+		    
+		        
+		    }//j  ---end compute Br
+		    
+		    
+		    // for Bt^(d,d)
+		    vector<double> yd(1);
+		    yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dr;
+		    for (unsigned int j=0 ; j<nr_d ; j++) {
+		        
+		        double bzE = 0.;
+		        yd[0] += dr;
+		        unsigned int i= nl_d-1;
+		        // Lasers
+		        for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
+		            bzE += vecLaser[ilaser]->getAmplitude1(yd, time_dual, j, 0);
+		        }
+		        
+		        (*BtRZ)(i,j) = Alpha_SM_Xmax * (*ErRZ)(i-1,j)
+		         +                    Beta_SM_Xmax  * (*BtRZ)(i-1,j)
+		         +                    Gamma_SM_Xmax * bzE
+				 +					  Epsilon_SM_Xmax * imode /((j_glob+j-0.5)*dr)* (*BlRZ)(i-1,j)	;
+
+		        
+		    }//j  ---end compute Bt
+		}
+		else {
+		    ERROR( "No Silver Muller along the axis" );
+		}
+
+	}
 }
