@@ -66,46 +66,36 @@ private:
     double dl_ov_dt;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Alpha_SM_W;
+    double Alpha_SM_Xmin;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Beta_SM_W;
+    double Beta_SM_Xmin;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Gamma_SM_W;
+    double Gamma_SM_Xmin;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Delta_SM_W;
+    double Delta_SM_Xmin;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Epsilon_SM_W;
+    double Epsilon_SM_Xmin;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Alpha_SM_E;
+    double Alpha_SM_Xmax;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Beta_SM_E;
+    double Beta_SM_Xmax;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Gamma_SM_E;
+    double Gamma_SM_Xmax;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Delta_SM_E;
+    double Delta_SM_Xmax;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Epsilon_SM_E;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse)
-    double Alpha_SM_N;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse)
-    double Beta_SM_N;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse)
-    double Delta_SM_N;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse)
-    double Epsilon_SM_N;
+    double Epsilon_SM_Xmax;	
+	//! Number of modes
+	unsigned int Nmode;
     
 };
 
