@@ -65,30 +65,10 @@
     <div id="nav_positioner">
         <div id="nav">
             <div id="nav_button" onclick="toggleNav()">
-                <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
-                   viewBox="-20 -20 140 140">
-                  <g  style="fill:#555555;stroke:none;">
-                    <circle cx="15" cy="20" r="5" />
-                    <circle cx="35" cy="20" r="5" />
-                    <circle cx="85" cy="20" r="5" />
-                    <rect width="50" height="10" x="35" y="15" rx="0" ry="0" />
-                    <circle cx="15" cy="40" r="5" />
-                    <circle cx="35" cy="40" r="5" />
-                    <circle cx="85" cy="40" r="5" />
-                    <rect width="50" height="10" x="35" y="35" rx="0" ry="0" />
-                    <circle cx="15" cy="60" r="5" />
-                    <circle cx="35" cy="60" r="5" />
-                    <circle cx="85" cy="60" r="5" />
-                    <rect width="50" height="10" x="35" y="55" rx="0" ry="0" />
-                    <circle cx="15" cy="80" r="5" />
-                    <circle cx="35" cy="80" r="5" />
-                    <circle cx="85" cy="80" r="5" />
-                    <rect width="50" height="10" x="35" y="75" rx="0" ry="0" />
-                  </g>
-                </svg>
+                Sections
             </div>
             <div id="nav_list" class="toctree-smilei">
-                <div id="nav_title">{{ title }}</div>
+                <div id="nav_title"><a href="#">{{ title }}</a></div>
                 {{ toc }}
             </div>
         </div>
@@ -143,6 +123,50 @@
                     </ul>
                 </div>
             </div>
+        </div>
+        
+        <div id="searchbox" role="search" style="display:none">
+            <form class="search" action="{{ pathto('search') }}" method="get">
+              <input type="text" name="q" placeholder="Search" id="searchinput" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+        
+        <div id="searchicon" onclick="openSearch()" style="display:block">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g transform="translate(0,-932.36216)" >
+                <circle
+                   r="25" cy="977.51044" cx="38.078663"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                <rect
+                   transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
+                   rx="4.9996676" ry="7.4995141"
+                   y="316.16959" x="947.6142"
+                   height="14.117695" width="46.476151"
+                   style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:none;" />
+                <path
+                   d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+              </g>
+            </svg>
+        </div>
+        <div id="closesearchicon" onclick="closeSearch()" style="display:none">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g
+                 transform="translate(0,-932.36216)">
+                <path
+                   d="m 10,962.36216 60,60.00004"
+                   style="fill:none;stroke:#ffffff;stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" />
+                <path
+                   d="M 70,962.36216 10,1022.3622"
+                   style="fill:none;stroke:#ffffff;stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" />
+              </g>
+            </svg>
         </div>
         
         <div id="smallScreenMenuButton" onclick="toggleSmallScreenMenu()">
@@ -247,6 +271,9 @@
         var nav_button = document.getElementById("nav_button");
         var smallScreenMenu = document.getElementById("smallScreenMenu");
         var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var searchicon = document.getElementById("searchicon");
+        var searchbox  = document.getElementById("searchbox");
+        var searchinput= document.getElementById("searchinput");
         var menus = document.getElementsByClassName("menu");
         for( var i=0; i<menus.length; i++ )
             menus[i].active = false;
@@ -318,6 +345,25 @@
             }
         }
         
+        function openSearch() {
+            for( var i=0; i<menus.length; i++ ) {
+                menuOff( menus[i] );
+                menus[i].style.zIndex = "-1";
+            }
+            searchicon.style.display = "none";
+            closesearchicon.style.display = "block";
+            searchbox.style.display = "block";
+            searchinput.focus();
+        }
+        
+        function closeSearch() {
+            searchicon.style.display = "block";
+            closesearchicon.style.display = "none";
+            searchbox .style.display = "none";
+            for( var i=0; i<menus.length; i++ )
+                menus[i].style.zIndex = "0";
+        }
+        
         var documentDiv = document.getElementsByClassName("document")[0];
         documentDiv.addEventListener('click', function (event) {
             if(nav_list) navOff();
@@ -326,22 +372,6 @@
         });
     </script>
 
-{%- endblock %}
-
-{%- block sidebar1 %}
-    <div id="backToTopContainer">
-        <div id="backToTopDiv" alt="Back to top">
-            <a href="#">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 364 444">
-                <g style="fill-opacity:1;stroke:none;" transform="translate(-189.49223,-102.75591)">
-                  <path d="M 372.04724,113.38583 212.59843,272.83465 c 0,0 -28.07163,23.94545 0,53.1496 28.07163,29.20415 53.1496,0 53.1496,0 L 372.04724,219.68504 478.34646,325.98425 c 0,0 26.46549,27.25038 53.1496,0 26.68411,-27.25038 0,-53.1496 0,-53.1496 z" />
-                  <path d="M 372.04724,310.80316 212.59843,470.25198 c 0,0 -28.07163,23.94545 0,53.1496 28.07163,29.20415 53.1496,0 53.1496,0 L 372.04724,417.10237 478.34646,523.40158 c 0,0 26.46549,27.25038 53.1496,0 26.68411,-27.25038 0,-53.1496 0,-53.1496 z" />
-                </g>
-              </svg>
-            </a>
-        </div>
-    </div>
-    {{ super() }}
 {%- endblock %}
 
 {%- block sidebar2 %}

@@ -130,7 +130,7 @@ div.logo {
     padding-right: 3vw;
     margin: 0;
     text-align: left;
-    height:100%;
+    height:{{ theme_head_height }}em;
 }
 
 div.sphinxsidebarwrapper h1.logo {
@@ -224,7 +224,7 @@ div.body h5,
 div.body h6 {
     font-family: {{ theme_head_font_family }};
     font-weight: bold;
-    margin: 30px 0px 30px 0px;
+    margin: 30px 0px 10px 0px;
     padding: 0;
 }
 
@@ -458,64 +458,6 @@ a:hover tt, a:hover code {
     background: #EEE;
 }
 
-
-@media screen and (max-width:  {{ page_width | float * 1.01 }}em) {
-
-    body, div.documentwrapper, .bodywrapper {
-    	margin:0;
-    }
-
-    ul {
-    	margin-left: 0;
-    }
-
-    .document {
-    	width: auto !important;
-    }
-
-    .footer {
-    	width: auto;
-    }
-
-    .github, .rtd_doc_footer {
-        display: none;
-    }
-    
-    div.documentwrapper {
-        float: none;
-        background: white;
-    }
-
-    div.sphinxsidebar h3, div.sphinxsidebar h4, div.sphinxsidebar p,
-    div.sphinxsidebar h3 a {
-        color: white;
-    }
-
-    div.document {
-        margin: {{ theme_head_height }}em 0 0 0;
-        padding: 0 1em 1em 1em;
-    }
-
-    div.related {
-        display: block;
-        margin: 0;
-        padding: 10px 0 20px 0;
-    }
-
-    div.related ul,
-    div.related ul li {
-        margin: 0;
-        padding: 0;
-    }
-
-    div.body {
-        min-height: 0;
-        padding: 0;
-    }
-
-}
-
-
 /* misc. */
 
 .revsys-inline {
@@ -608,13 +550,12 @@ div.header > * {
     overflow-y: auto;
     max-height:100%;
     min-height:{{ theme_head_height }}em;
-    min-width :{{ theme_head_height }}em;
+    min-width :6em;
 	padding: {{ theme_head_height }}em 12px {{ theme_head_height }}em  5px;
 }
 #nav_button {
     position:absolute;
     right:0;
-	height:{{ theme_head_height }}em;
 	cursor:pointer;
 	text-align: center;
     background-color: #eee;
@@ -624,19 +565,19 @@ div.header > * {
     border-bottom-left-radius: 4px;
     border-bottom-right-radius: 4px;
     margin-right:12px;
+    padding:0.2em 1em;
+    font-size:80%;
     z-index:10;
 }
 #nav_button.pushed {
-    background-color: transparent;
-	border: 0;
-	border-right:1px solid transparent;
+    display:none;
 }
 #nav_list {
     display:none;
     background-color: transparent;
     position: relative;
 }
-#nav_list a {
+#nav_list > ul a {
     padding:0.3em 1em;
 }
 #nav_title {
@@ -644,11 +585,13 @@ div.header > * {
     border-left: 1px solid #aaa;
     border-right: 1px solid #aaa;
     background-color: #eee;
-    padding: 0 {{ theme_head_height }}em 0 1em;
+    padding: 0 1em;
     font-weight: bold;
     font-size:120%;
-    color: #444;
     position: relative;
+}
+#nav_title > a {
+    color: #444;
 }
 #nav_list > ul {
     position: relative;
@@ -748,27 +691,6 @@ div.header > * {
 .off {
     display:none;
 }
-
-/* Adjust the sidebar color for small screens */
-@media screen and (max-width: {{ page_width }}em) {
-    div.header {
-       display:block;
-    }
-    #smallScreenMenuButton {
-        display: block !important;
-    }
-    .menu, #nav {
-        display: none;
-    }
-}
-
-@media screen and (min-width: {{ page_width }}em) {
-    #smallScreenMenu {
-        display: none !important;
-    }
-}
-
-
 
 /* --------------------------------------------------------------------*/
 /* Color styles that are used in tags :red: or :blue: */
@@ -1016,49 +938,6 @@ div.admonition p {
 	border-bottom:0 !important;
 }
 
-
-div.related {
-	display: none;
-}
-
-/* --------------------------------------------------------------------*/
-/* Back to top box */
-
-#backToTopContainer {
-	position:fixed;
-	bottom:0;
-	left:0;
-}
-#backToTopDiv {
-	position:relative;
-	left:5px;
-	bottom:5px;
-	padding:5px;
-	text-decoration:none;
-	background-color:#EEE;
-	cursor:pointer;
-}
-#backToTopDiv svg {
-	height:1em;
-}
-#backToTopDiv g {
-    fill: {{ theme_main_color_bold }}
-}
-#backToTopDiv:hover {
-	text-decoration:none;
-}
-#backToTopDiv:hover {
-	background-color:{{ theme_main_color_pale }};
-}
-#backToTopDiv:active {
-	background-color:{{ theme_main_color_med }};
-}
-@media print
-{
-	#backToTopDiv, #hcontainer { display: none !important; }
-}
-
-
 .c1 {
     color: #aab8c1 !important;
 }
@@ -1074,3 +953,112 @@ div.related {
     display:inline-block;
     text-align:left;
 }
+
+@media print
+{
+	#hcontainer { display: none !important; }
+}
+
+/* --------------------------------------------------------------------*/
+/* Search box */
+
+#searchicon, #closesearchicon {
+	width:{{ theme_head_height }}em;
+	text-align: center;
+	cursor:pointer;
+}
+#searchicon > svg, #closesearchicon > svg {
+	height:{{ theme_head_height }}em;
+}
+#searchbox {
+	position: absolute;
+	right:{{ theme_head_height }}em;
+	height:{{ theme_head_height }}em;
+}
+#searchinput {
+	height:{{ theme_head_height|float - 1.4 }}em;
+	width: 20em;
+	font-size: 1em;
+	padding:0.3em 0.6em;
+	margin:0.3em 0;
+	border-radius:0.5em;
+	border:0.1em solid #bbb;
+}
+#search-results {
+	padding-top: 5px;
+}
+
+
+
+@media screen and (max-width:  {{ page_width | float * 1.01 }}em) {
+
+	body, div.documentwrapper, .bodywrapper {
+		margin:0;
+	}
+	
+	ul {
+		margin-left: 0;
+	}
+	
+	.document {
+		width: auto !important;
+	}
+	
+	.footer {
+		width: auto;
+	}
+	
+	.github, .rtd_doc_footer {
+	    display: none;
+	}
+	
+	div.documentwrapper {
+	    float: none;
+	    background: white;
+	}
+	
+	div.sphinxsidebar h3, div.sphinxsidebar h4, div.sphinxsidebar p,
+	div.sphinxsidebar h3 a {
+	    color: white;
+	}
+	
+	div.document {
+	    margin: {{ theme_head_height }}em 0 0 0;
+	    padding: 0 1em 1em 1em;
+	}
+	
+	div.body {
+	    min-height: 0;
+	    padding: 0;
+	}
+	
+	div.header {
+	   display:block;
+	}
+	#smallScreenMenuButton {
+	    display: block !important;
+	}
+	.menu, #nav {
+	    display: none;
+	}
+	#searchicon, #closesearchicon {
+		display:none !important;
+	}
+	#searchbox {
+		display:block !important;
+		left:{{ theme_head_height|float * 2.5 + 0.7 }}em;
+		right:{{ theme_head_height|float * 1.5 + 0.7 }}em;
+	}
+	#searchinput {
+		display:block !important;
+		width:100%;
+	}
+}
+
+
+@media screen and (min-width: {{ page_width | float * 1.01 }}em) {
+	#smallScreenMenu {
+	    display: none !important;
+	}
+}
+
