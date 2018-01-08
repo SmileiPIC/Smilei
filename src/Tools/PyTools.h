@@ -20,6 +20,7 @@
 #include <Python.h>
 #include <vector>
 #include <sstream>
+#include <complex> 
 #include "Tools.h"
 
 #ifdef SMILEI_USE_NUMPY
@@ -69,6 +70,16 @@ private:
         return false;
     }
 
+    //! convert Python object to complex
+    static bool pyconvert(PyObject* py_val, std::complex<double> &val) {
+        if (py_val && PyComplex_Check(py_val)) {
+            val.real( PyComplex_RealAsDouble(py_val) );
+            val.imag( PyComplex_ImagAsDouble(py_val) );
+            return true;
+        }
+        return false;
+    }
+
     //! convert Python object to string
     static bool pyconvert(PyObject* py_val, std::string &val) {
         if (py_val) {
@@ -93,6 +104,21 @@ private:
                 PyObject *ptype, *pvalue, *ptraceback;
                 PyErr_Fetch(&ptype, &pvalue, &ptraceback);
                 ERROR("function does not return float but " << pyresult->ob_type->tp_name);
+            }
+        } else {
+            // we should never reach this point... something is weird
+            ERROR("Function does not return a valid Python object");
+        }
+        return cppresult;
+    }
+    static std::complex<double> get_py_result_complex(PyObject* pyresult) {
+        checkPyError();
+        std::complex<double> cppresult=0;
+        if (pyresult) {
+            if(!convert(pyresult,cppresult)) {
+                PyObject *ptype, *pvalue, *ptraceback;
+                PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+                ERROR("function does not return complex but " << pyresult->ob_type->tp_name);
             }
         } else {
             // we should never reach this point... something is weird
@@ -265,6 +291,13 @@ public:
     static T runPyFunction(PyObject *pyFunction, double x1, double x2, double x3, double x4) {
         PyObject *pyresult = PyObject_CallFunction(pyFunction, const_cast<char *>("dddd"), x1, x2, x3, x4);
         T retval = (T) get_py_result(pyresult);
+        Py_XDECREF(pyresult);
+        return retval;
+    }
+
+    static std::complex<double> runPyFunction_complex(PyObject *pyFunction, double x1, double x2, double x3, double x4) {
+        PyObject *pyresult = PyObject_CallFunction(pyFunction, const_cast<char *>("dddd"), x1, x2, x3, x4);
+        std::complex<double> retval = get_py_result_complex(pyresult);
         Py_XDECREF(pyresult);
         return retval;
     }

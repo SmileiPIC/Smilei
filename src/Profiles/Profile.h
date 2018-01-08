@@ -33,8 +33,8 @@ public:
         return function->valueAt(coordinates, time);
     };
     //! Get the complex value of the profile at some location (spatio-temporal)
-    inline std::complex<double> valueAtComplex(std::vector<double> coordinates, double time) {
-        return function->valueAtComplex(coordinates, time);
+    inline std::complex<double> complexValueAt(std::vector<double> coordinates, double time) {
+        return function->complexValueAt(coordinates, time);
     };
     
     //! Get the value of the profile at several locations (spatial)

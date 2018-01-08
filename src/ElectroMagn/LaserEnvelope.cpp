@@ -131,10 +131,11 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
         for (unsigned int j=0 ; j<A_->dims_[1] ; j++) {
             position[2] = pos2;
             for (unsigned int k=0 ; k<A_->dims_[2] ; k++) {
-                (*A3D)(i,j,k) += profile_->valueAtComplex(position,t);
-                (*A03D)(i,j,k) += profile_->valueAtComplex(position,t_previous_timestep);
+                (*A3D)(i,j,k) += profile_->complexValueAt(position,t);
+                (*A03D)(i,j,k) += profile_->complexValueAt(position,t_previous_timestep);
                 (*Env_Ar3D)(i,j,k)=std::abs((*A3D)(i,j,k));
                 position[2] += cell_length[2];
+		MESSAGE(i<<" "<<j<<" "<<k);
             }
             position[1] += cell_length[1];
         }

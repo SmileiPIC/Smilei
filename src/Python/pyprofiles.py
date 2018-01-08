@@ -594,19 +594,19 @@ def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelop
     def coeff(x):
         coeff = omega * (x-focus[0]) * w(x)**2 / (2.*Zr**2)
         return coeff
-    def spatial(x,y,z):
+    def spatial_amplitude(x,y,z):
         invWaist2 = (w(x)/waist)**2
         return w(x) * math.exp( -invWaist2*(  (y-focus[1])**2 + (z-focus[2])**2 )  )
     def phase(x,y,z):
         return coeff(x) * ( (y-focus[1])**2 + (z-focus[2])**2 )
 
     def space_time_envelope(x,y,z,t):
-        return spatial(x,y,z)*time_envelope(t)*cmath.exp(-1j*phase(x,y,z))
+        return a0*spatial_amplitude(x,y,z)*time_envelope(t)*cmath.exp(1j*phase(x,y,z))
 
     # Create Laser Envelope
     LaserEnvelope(
         omega               = omega,
-        envelope_profile    = lambda x,y,z,t:a0*space_time_envelope(x,y,z,t),
+        envelope_profile    = space_time_envelope,
         envelope_solver     = "explicit",
     )
 

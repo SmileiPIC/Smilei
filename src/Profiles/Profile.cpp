@@ -241,7 +241,7 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
         if      ( nvariables == 1 ) function = new Function_Python1D(py_profile);
         else if ( nvariables == 2 ) function = new Function_Python2D(py_profile);
         else if ( nvariables == 3 ) function = new Function_Python3D(py_profile);
-        else if ( nvariables == 4 ) function = new Function_Python4D_Complex(py_profile);
+        else if ( nvariables == 4 ) function = new Function_Python4D(py_profile);
         
         info_ << " user-defined function";
     }
@@ -318,7 +318,7 @@ Profile::Profile(Profile *p){
     if      ( nvariables == 1 ) function = new Function_Python1D(static_cast<Function_Python1D*>(p->function));
     else if ( nvariables == 2 ) function = new Function_Python2D(static_cast<Function_Python2D*>(p->function));
     else if ( nvariables == 3 ) function = new Function_Python3D(static_cast<Function_Python3D*>(p->function));
-    else if ( nvariables == 4 ) function = new Function_Python4D_Complex(static_cast<Function_Python4D_Complex*>(p->function));
+    else if ( nvariables == 4 ) function = new Function_Python4D(static_cast<Function_Python4D*>(p->function));
   }
 }
 

@@ -33,7 +33,7 @@ public:
     };
 
   //! Gets the complex value of a N-D function from both a vector and a double. The double is the last argument.
-    virtual std::complex<double> valueAtComplex(std::vector<double>, double ) {
+    virtual std::complex<double> complexValueAt(std::vector<double>, double ) {
         return 0.; // virtual => will be redefined
     };
 
@@ -100,6 +100,7 @@ public:
     Function_Python4D(PyObject *pp) : py_profile(pp) {};
     Function_Python4D(Function_Python4D *f) : py_profile(f->py_profile) {};
     double valueAt(std::vector<double>, double); // space + time
+    std::complex<double> complexValueAt(std::vector<double>, double); // space + time
 private:
     PyObject *py_profile;
 };

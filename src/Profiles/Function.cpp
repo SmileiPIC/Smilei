@@ -34,8 +34,8 @@ double Function_Python4D::valueAt(vector<double> x_cell, double time) {
     return PyTools::runPyFunction(py_profile, x_cell[0], x_cell[1], x_cell[2], time);
 }
 // 4D complex
-std::complex<double> Function_Python4D_Complex::valueAtComplex(vector<double> x_cell, double time) {
-    return PyTools::runPyFunction(py_profile, x_cell[0], x_cell[1], x_cell[2], time);
+std::complex<double> Function_Python4D::complexValueAt(vector<double> x_cell, double time) {
+    return PyTools::runPyFunction_complex(py_profile, x_cell[0], x_cell[1], x_cell[2], time);
 }
 
 // Special cases for locations specified in numpy arrays
