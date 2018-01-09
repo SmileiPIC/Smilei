@@ -375,7 +375,7 @@ proportional to the macro-particle statistical weights, as stated by their
 :py:data:`deposited_quantity` argument. These weights :ref:`are defined as <Weights>`
 the species density divided by the number of macro-particles of this species in the
 cell where the particle is born. Consequently, weights are in units of the number
-density :math:`N_r` (see :doc:`Units`), and the sum of all macro-particle weights in
+density :math:`N_r` (see :doc:`units`), and the sum of all macro-particle weights in
 one cell corresponds to the local species density.
 
 However, the ``DiagParticleBinning`` and ``DiagScreen`` diagnostics do not necessarily
