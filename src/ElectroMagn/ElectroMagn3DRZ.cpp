@@ -744,8 +744,8 @@ void ElectroMagn3DRZ::applyExternalFields(Patch* patch) {
             applyExternalField( field, extfield->profile, patch );
         }
     }
-    Bl_m[imode]->copyFrom(Br_[imode]);
-    Br_m[imode]->copyFrom(Bl_[imode]);
+    Bl_m[imode]->copyFrom(Bl_[imode]);
+    Br_m[imode]->copyFrom(Br_[imode]);
     Bt_m[imode]->copyFrom(Bt_[imode]);
 }
 
