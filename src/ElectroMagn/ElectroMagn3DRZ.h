@@ -114,6 +114,8 @@ public:
     void computePoynting();
 
     //! Method used to impose external fields
+    void applyExternalFields(Patch* patch) override;
+    //
     void applyExternalField(Field*, Profile*, Patch*);
     
     void initAntennas(Patch* patch);

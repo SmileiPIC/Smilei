@@ -20,6 +20,13 @@ class Patch;
 class Solver;
 
 
+inline std::string LowerCase(std::string in){
+    std::string out=in;
+    std::transform(out.begin(), out.end(), out.begin(), ::tolower);
+    return out;
+}
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each ExtField
 // ---------------------------------------------------------------------------------------------------------------------
@@ -250,7 +257,7 @@ public:
     std::vector<ExtField> extFields;
     
     //! Method used to impose external fields (apply to all Fields)
-    void applyExternalFields(Patch*);
+    virtual void applyExternalFields(Patch*);
     
     //! Method used to impose external fields (apply to a given Field)
     virtual void applyExternalField(Field*, Profile*, Patch*) = 0 ;

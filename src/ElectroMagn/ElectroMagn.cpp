@@ -340,12 +340,6 @@ double ElectroMagn::computeNRJ() {
     return nrj;
 }
 
-string LowerCase(string in){
-    string out=in;
-    std::transform(out.begin(), out.end(), out.begin(), ::tolower);
-    return out;
-}
-
 
 void ElectroMagn::applyExternalFields(Patch* patch) {    
     Field * field;

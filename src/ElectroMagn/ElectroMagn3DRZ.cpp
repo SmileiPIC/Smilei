@@ -723,6 +723,34 @@ void ElectroMagn3DRZ::computePoynting() {
 
 }
 
+
+void ElectroMagn3DRZ::applyExternalFields(Patch* patch) {    
+    #ifdef _TODO_RZ            
+    #endif
+    int imode = 0;
+    
+    Field * field;
+    for (vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
+        string name = LowerCase(extfield->field);
+        if      ( El_[imode] && name==LowerCase(El_[imode]->name) ) field = El_[imode];
+        else if ( Er_[imode] && name==LowerCase(Er_[imode]->name) ) field = Er_[imode];
+        else if ( Et_[imode] && name==LowerCase(Et_[imode]->name) ) field = Et_[imode];
+        else if ( Bl_[imode] && name==LowerCase(Bl_[imode]->name) ) field = Bl_[imode];
+        else if ( Br_[imode] && name==LowerCase(Br_[imode]->name) ) field = Br_[imode];
+        else if ( Bt_[imode] && name==LowerCase(Bt_[imode]->name) ) field = Bt_[imode];
+        else field = NULL;
+        
+        if( field ) {
+            applyExternalField( field, extfield->profile, patch );
+        }
+    }
+    Bl_m[imode]->copyFrom(Br_[imode]);
+    Br_m[imode]->copyFrom(Bl_[imode]);
+    Bt_m[imode]->copyFrom(Bt_[imode]);
+}
+
+
+
 void ElectroMagn3DRZ::applyExternalField(Field* my_field,  Profile *profile, Patch* patch) {
     
     cField2D* field2D=static_cast<cField2D*>(my_field);
@@ -747,7 +775,6 @@ void ElectroMagn3DRZ::applyExternalField(Field* my_field,  Profile *profile, Pat
         if (embc) embc->save_fields(my_field, patch);
     }
 }
-
 
 
 void ElectroMagn3DRZ::initAntennas(Patch* patch)
