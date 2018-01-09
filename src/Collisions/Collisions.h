@@ -46,6 +46,9 @@ public:
     //! Deflection angle calculation
     static double cos_chi(double);
     
+    //! CollisionalIonization object, created if ionization required
+    CollisionalIonization * Ionization;
+    
 private:
     
     //! Identification number of the Collisions object
@@ -62,9 +65,6 @@ private:
     
     //! Number of timesteps between each dump of collisions debugging
     int debug_every;
-    
-    //! CollisionalIonization object, created if ionization required
-    CollisionalIonization * Ionization;
     
     //! Species atomic number, in case of ionization
     int atomic_number;

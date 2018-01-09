@@ -289,7 +289,7 @@ and only one mode between those three.
   * ``raw`` : The name of a quantity, or an operation between them (see quantities below).
     The requested quantity is listed for each process.
   * ``map`` : The name of a quantity, or an operation between them (see quantities below).
-    The requested quantity is mapped vs. space coordinates.
+    The requested quantity is mapped vs. space coordinates (1D and 2D only).
   * ``histogram`` : the list ``["quantity", min, max, nsteps]``.
     Makes a histogram of the requested quantity between ``min`` an ``max``, with ``nsteps`` bins.
     The ``"quantity"`` may be an operation between the quantities listed further below.
@@ -312,8 +312,13 @@ and only one mode between those three.
   * ``timer_syncPart``             : time spent synchronzing particles by each proc
   * ``timer_syncField``            : time spent synchronzing fields by each proc
   * ``timer_syncDens``             : time spent synchronzing densities by each proc
+  * ``timer_diags``                : time spent by each proc calculating and writing diagnostics
   * ``timer_total``                : the sum of all timers above (except timer_global)
 
+  **WARNING**: The timers ``loadBal`` and ``diags`` span parts of the code where *global*
+  communications take place. This means they will include time spent doing no calculations,
+  waiting for  other processes. The timers ``syncPart``, ``syncField`` and ``syncDens``
+  contain *proc-to-proc* communications, which also represents some waiting time.
 
 **Example**::
 
@@ -403,7 +408,11 @@ has to be divided by the number of cells *relevant* to each bin.
   
     * If the axis is included in a ``subset`` or a ``sum``: do nothing.
     * Otherwise, divide by the length of each bin.
-  
+
+As a final note, remember that the :py:data:`axes` of a diagnostic may be a *python function*.
+In this case, if the function represents some spatial axis, then happi cannot know how to
+apply the correction. The user has to figure it out.
+
 
 ----
 
