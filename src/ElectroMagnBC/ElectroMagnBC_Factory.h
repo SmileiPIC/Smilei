@@ -154,7 +154,7 @@ public:
                 emBoundCond[3] = new ElectroMagnBCRZ_BM(params, patch, 3);
             }
             // else: error
-            else if ( params.EM_BCs[1][1] != "periodic" ) {
+            else  {
                 ERROR( "Unknown EM y-boundary condition `" << params.EM_BCs[1][1] << "`");
             }
             
