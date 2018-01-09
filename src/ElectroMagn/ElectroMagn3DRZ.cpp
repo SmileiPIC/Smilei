@@ -613,113 +613,113 @@ void ElectroMagn3DRZ::computePoynting() {
     cField2D* By2D_m   = static_cast<cField2D*>(By_m);
     cField2D* Bz2D_m   = static_cast<cField2D*>(Bz_m);
 
-    if (isXmin) {
-        unsigned int iEy=istart[0][Ey2D->isDual(0)];
-        unsigned int iBz=istart[0][Bz2D_m->isDual(0)];
-        unsigned int iEz=istart[0][Ez2D->isDual(0)];
-        unsigned int iBy=istart[0][By2D_m->isDual(0)];
-        
-        unsigned int jEy=istart[1][Ey2D->isDual(1)];
-        unsigned int jBz=istart[1][Bz2D_m->isDual(1)];
-        unsigned int jEz=istart[1][Ez2D->isDual(1)];
-        unsigned int jBy=istart[1][By2D_m->isDual(1)];
-        
+    //if (isXmin) {
+    //    unsigned int iEy=istart[0][Ey2D->isDual(0)];
+    //    unsigned int iBz=istart[0][Bz2D_m->isDual(0)];
+    //    unsigned int iEz=istart[0][Ez2D->isDual(0)];
+    //    unsigned int iBy=istart[0][By2D_m->isDual(0)];
+    //    
+    //    unsigned int jEy=istart[1][Ey2D->isDual(1)];
+    //    unsigned int jBz=istart[1][Bz2D_m->isDual(1)];
+    //    unsigned int jEz=istart[1][Ez2D->isDual(1)];
+    //    unsigned int jBy=istart[1][By2D_m->isDual(1)];
+    //    
 
-        for (unsigned int j=0; j<=bufsize[1][Ez2D->isDual(1)]; j++) {
-            #ifdef _TODO_RZ            
-            double Ey__ = 0.5*((*Ey2D)(iEr,jEy+j) + (*Ey2D)(iEy, jEy+j+1));
-            double Bz__ = 0.25*((*Bz2D_m)(iBz,jBz+j)+(*Bz2D_m)(iBz+1,jBz+j)+(*Bz2D_m)(iBz,jBz+j+1)+(*Bz2D_m)(iBz+1,jBz+j+1));
-            double Ez__ = (*Ez2D)(iEz,jEz+j);
-            double By__ = 0.5*((*By2D_m)(iBy,jBy+j) + (*By2D_m)(iBy+1, jBy+j));
+    //    for (unsigned int j=0; j<=bufsize[1][Ez2D->isDual(1)]; j++) {
+    //        #ifdef _TODO_RZ            
+    //        double Ey__ = 0.5*((*Ey2D)(iEr,jEy+j) + (*Ey2D)(iEy, jEy+j+1));
+    //        double Bz__ = 0.25*((*Bz2D_m)(iBz,jBz+j)+(*Bz2D_m)(iBz+1,jBz+j)+(*Bz2D_m)(iBz,jBz+j+1)+(*Bz2D_m)(iBz+1,jBz+j+1));
+    //        double Ez__ = (*Ez2D)(iEz,jEz+j);
+    //        double By__ = 0.5*((*By2D_m)(iBy,jBy+j) + (*By2D_m)(iBy+1, jBy+j));
 
-            poynting_inst[0][0] = dr*timestep*(Ey__*Bz__ - Ez__*By__);
-            #endif
-            poynting[0][0]+= poynting_inst[0][0];
+    //        poynting_inst[0][0] = dr*timestep*(Ey__*Bz__ - Ez__*By__);
+    //        #endif
+    //        poynting[0][0]+= poynting_inst[0][0];
 
-        }
-        
-    }//if Xmin
-    
-    
-    if (isXmax) {
-        
-        unsigned int iEy=istart[0][Ey2D->isDual(0)]  + bufsize[0][Ey2D->isDual(0)] -1;
-        unsigned int iBz=istart[0][Bz2D_m->isDual(0)] + bufsize[0][Bz2D_m->isDual(0)]-1;
-        unsigned int iEz=istart[0][Ez2D->isDual(0)]  + bufsize[0][Ez2D->isDual(0)] -1;
-        unsigned int iBy=istart[0][By2D_m->isDual(0)] + bufsize[0][By2D_m->isDual(0)]-1;
-        
-        unsigned int jEy=istart[1][Ey2D->isDual(1)];
-        unsigned int jBz=istart[1][Bz2D_m->isDual(1)];
-        unsigned int jEz=istart[1][Ez2D->isDual(1)];
-        unsigned int jBy=istart[1][By2D_m->isDual(1)];
-        
-        for (unsigned int j=0; j<=bufsize[1][Ez2D->isDual(1)]; j++) {
-            #ifdef _TODO_RZ            
-          
-            double Ey__ = 0.5*((*Ey2D)(iEy,jEy+j) + (*Ey2D)(iEr, jEy+j+1));
-            double Bz__ = 0.25*((*Bz2D_m)(iBz,jBz+j)+(*Bz2D_m)(iBz+1,jBz+j)+(*Bz2D_m)(iBz,jBz+j+1)+(*Bz2D_m)(iBz+1,jBz+j+1));
-            double Ez__ = (*Ez2D)(iEz,jEz+j);
-            double By__ = 0.5*((*By2D_m)(iBy,jBy+j) + (*By2D_m)(iBy+1, jBy+j));
-            
-            poynting_inst[1][0] = dr*timestep*(Ey__*Bz__ - Ez__*By__);
-            #endif
-            poynting[1][0]+= poynting_inst[1][0];
+    //    }
+    //    
+    //}//if Xmin
+    //
+    //
+    //if (isXmax) {
+    //    
+    //    unsigned int iEy=istart[0][Ey2D->isDual(0)]  + bufsize[0][Ey2D->isDual(0)] -1;
+    //    unsigned int iBz=istart[0][Bz2D_m->isDual(0)] + bufsize[0][Bz2D_m->isDual(0)]-1;
+    //    unsigned int iEz=istart[0][Ez2D->isDual(0)]  + bufsize[0][Ez2D->isDual(0)] -1;
+    //    unsigned int iBy=istart[0][By2D_m->isDual(0)] + bufsize[0][By2D_m->isDual(0)]-1;
+    //    
+    //    unsigned int jEy=istart[1][Ey2D->isDual(1)];
+    //    unsigned int jBz=istart[1][Bz2D_m->isDual(1)];
+    //    unsigned int jEz=istart[1][Ez2D->isDual(1)];
+    //    unsigned int jBy=istart[1][By2D_m->isDual(1)];
+    //    
+    //    for (unsigned int j=0; j<=bufsize[1][Ez2D->isDual(1)]; j++) {
+    //        #ifdef _TODO_RZ            
+    //      
+    //        double Ey__ = 0.5*((*Ey2D)(iEy,jEy+j) + (*Ey2D)(iEr, jEy+j+1));
+    //        double Bz__ = 0.25*((*Bz2D_m)(iBz,jBz+j)+(*Bz2D_m)(iBz+1,jBz+j)+(*Bz2D_m)(iBz,jBz+j+1)+(*Bz2D_m)(iBz+1,jBz+j+1));
+    //        double Ez__ = (*Ez2D)(iEz,jEz+j);
+    //        double By__ = 0.5*((*By2D_m)(iBy,jBy+j) + (*By2D_m)(iBy+1, jBy+j));
+    //        
+    //        poynting_inst[1][0] = dr*timestep*(Ey__*Bz__ - Ez__*By__);
+    //        #endif
+    //        poynting[1][0]+= poynting_inst[1][0];
 
-        }
-        
-    }//if Xmax
-    
-    if (isYmin) {
-        
-        unsigned int iEz=istart[0][Ez_->isDual(0)];
-        unsigned int iBx=istart[0][Bx_m->isDual(0)]; 
-        unsigned int iEx=istart[0][Ex_->isDual(0)];
-        unsigned int iBz=istart[0][Bz_m->isDual(0)]; 
-        
-        unsigned int jEz=istart[1][Ez_->isDual(1)];
-        unsigned int jBx=istart[1][Bx_m->isDual(1)];
-        unsigned int jEx=istart[1][Ex_->isDual(1)];
-        unsigned int jBz=istart[1][Bz_m->isDual(1)];
+    //    }
+    //    
+    //}//if Xmax
+    //
+    //if (isYmin) {
+    //    
+    //    unsigned int iEz=istart[0][Ez_->isDual(0)];
+    //    unsigned int iBx=istart[0][Bx_m->isDual(0)]; 
+    //    unsigned int iEx=istart[0][Ex_->isDual(0)];
+    //    unsigned int iBz=istart[0][Bz_m->isDual(0)]; 
+    //    
+    //    unsigned int jEz=istart[1][Ez_->isDual(1)];
+    //    unsigned int jBx=istart[1][Bx_m->isDual(1)];
+    //    unsigned int jEx=istart[1][Ex_->isDual(1)];
+    //    unsigned int jBz=istart[1][Bz_m->isDual(1)];
 
-        for (unsigned int i=0; i<=bufsize[0][Ez2D->isDual(0)]; i++) {
-            #ifdef _TODO_RZ            
-            double Ez__ = (*Ez2D)(iEz+i,jEz);
-            double Bx__ = 0.5*((*Bx2D_m)(iBx+i,jBx) + (*Bx2D_m)(iBx+i, jBx+1));
-            double Ex__ = 0.5*((*Ex2D)(iEx+i,jEx) + (*Ex2D)(iEx+i+1, jEx));
-            double Bz__ = 0.25*((*Bz2D_m)(iBz+i,jBz)+(*Bz2D_m)(iBz+i+1,jBz)+(*Bz2D_m)(iBz+i,jBz+1)+(*Bz2D_m)(iBz+i+1,jBz+1));
-            
-            poynting_inst[0][1] = dl*timestep*(Ez__*Bx__ - Ex__*Bz__);
-            #endif
-            poynting[0][1] += poynting_inst[0][1];
-        }
+    //    for (unsigned int i=0; i<=bufsize[0][Ez2D->isDual(0)]; i++) {
+    //        #ifdef _TODO_RZ            
+    //        double Ez__ = (*Ez2D)(iEz+i,jEz);
+    //        double Bx__ = 0.5*((*Bx2D_m)(iBx+i,jBx) + (*Bx2D_m)(iBx+i, jBx+1));
+    //        double Ex__ = 0.5*((*Ex2D)(iEx+i,jEx) + (*Ex2D)(iEx+i+1, jEx));
+    //        double Bz__ = 0.25*((*Bz2D_m)(iBz+i,jBz)+(*Bz2D_m)(iBz+i+1,jBz)+(*Bz2D_m)(iBz+i,jBz+1)+(*Bz2D_m)(iBz+i+1,jBz+1));
+    //        
+    //        poynting_inst[0][1] = dl*timestep*(Ez__*Bx__ - Ex__*Bz__);
+    //        #endif
+    //        poynting[0][1] += poynting_inst[0][1];
+    //    }
 
-    }// if Ymin
-    
-    if (isYmax) {
+    //}// if Ymin
+    //
+    //if (isYmax) {
 
-        unsigned int iEz=istart[0][Ez2D->isDual(0)];
-        unsigned int iBx=istart[0][Bx2D_m->isDual(0)];
-        unsigned int iEx=istart[0][Ex2D->isDual(0)];
-        unsigned int iBz=istart[0][Bz2D_m->isDual(0)];
-        
-        unsigned int jEz=istart[1][Ez2D->isDual(1)]  + bufsize[1][Ez2D->isDual(1)] -1;
-        unsigned int jBx=istart[1][Bx2D_m->isDual(1)] + bufsize[1][Bx2D_m->isDual(1)]-1;
-        unsigned int jEx=istart[1][Ex2D->isDual(1)]  + bufsize[1][Ex2D->isDual(1)] -1;
-        unsigned int jBz=istart[1][Bz2D_m->isDual(1)] + bufsize[1][Bz2D_m->isDual(1)]-1;
-        
-        for (unsigned int i=0; i<=bufsize[0][Ez2D->isDual(0)]; i++) {
-            #ifdef _TODO_RZ            
-            double Ez__ = (*Ez2D)(iEz+i,jEz);
-            double Bx__ = 0.5*((*Bx2D_m)(iBx+i,jBx) + (*Bx2D_m)(iBx+i, jBx+1));
-            double Ex__ = 0.5*((*Ex2D)(iEx+i,jEx) + (*Ex2D)(iEx+i+1, jEx));
-            double Bz__ = 0.25*((*Bz2D_m)(iBz+i,jBz)+(*Bz2D_m)(iBz+i+1,jBz)+(*Bz2D_m)(iBz+i,jBz+1)+(*Bz2D_m)(iBz+i+1,jBz+1));
-            
-            poynting_inst[1][1] = dl*timestep*(Ez__*Bx__ - Ex__*Bz__);
-            #endif
-            poynting[1][1] += poynting_inst[1][1];
-        }
+    //    unsigned int iEz=istart[0][Ez2D->isDual(0)];
+    //    unsigned int iBx=istart[0][Bx2D_m->isDual(0)];
+    //    unsigned int iEx=istart[0][Ex2D->isDual(0)];
+    //    unsigned int iBz=istart[0][Bz2D_m->isDual(0)];
+    //    
+    //    unsigned int jEz=istart[1][Ez2D->isDual(1)]  + bufsize[1][Ez2D->isDual(1)] -1;
+    //    unsigned int jBx=istart[1][Bx2D_m->isDual(1)] + bufsize[1][Bx2D_m->isDual(1)]-1;
+    //    unsigned int jEx=istart[1][Ex2D->isDual(1)]  + bufsize[1][Ex2D->isDual(1)] -1;
+    //    unsigned int jBz=istart[1][Bz2D_m->isDual(1)] + bufsize[1][Bz2D_m->isDual(1)]-1;
+    //    
+    //    for (unsigned int i=0; i<=bufsize[0][Ez2D->isDual(0)]; i++) {
+    //        #ifdef _TODO_RZ            
+    //        double Ez__ = (*Ez2D)(iEz+i,jEz);
+    //        double Bx__ = 0.5*((*Bx2D_m)(iBx+i,jBx) + (*Bx2D_m)(iBx+i, jBx+1));
+    //        double Ex__ = 0.5*((*Ex2D)(iEx+i,jEx) + (*Ex2D)(iEx+i+1, jEx));
+    //        double Bz__ = 0.25*((*Bz2D_m)(iBz+i,jBz)+(*Bz2D_m)(iBz+i+1,jBz)+(*Bz2D_m)(iBz+i,jBz+1)+(*Bz2D_m)(iBz+i+1,jBz+1));
+    //        
+    //        poynting_inst[1][1] = dl*timestep*(Ez__*Bx__ - Ex__*Bz__);
+    //        #endif
+    //        poynting[1][1] += poynting_inst[1][1];
+    //    }
 
-    }//if Ymax
+    //}//if Ymax
 
 }
 
