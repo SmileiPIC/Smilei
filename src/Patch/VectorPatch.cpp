@@ -904,7 +904,11 @@ void VectorPatch::output_exchanges(SmileiMPI* smpi)
 //! Resize vector of field*
 void VectorPatch::update_field_list()
 {
-    int nDim = patches_[0]->EMfields->Ex_->dims_.size();
+    int nDim(0);
+    if ( !dynamic_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields) )
+        nDim = patches_[0]->EMfields->Ex_->dims_.size();
+    else
+        nDim = static_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields)->El_[0]->dims_.size();
     densities.resize( 3*size() ) ; // Jx + Jy + Jz
 
     //                          1D  2D  3D
