@@ -88,7 +88,7 @@ ElectroMagnBCRZ_SM::ElectroMagnBCRZ_SM( Params &params, Patch* patch, unsigned i
     Beta_SM_Xmax     = - (1.0 -dt_ov_dl)  * factor;
     Gamma_SM_Xmax    = 4.0         * factor;
     Delta_SM_Xmax    = - dt_ov_dr  * factor;
-    Epsilon_SM_Xmax  = - -Icpx / (1.0 + dt_ov_dl)  * factor;
+    Epsilon_SM_Xmax  = -Icpx / (1.0 + dt_ov_dl)  * factor;
     
 
     #endif
