@@ -768,16 +768,19 @@ The LL and CLL models are vectorized efficiently.
 These radiation reaction models represent a small overhead
 to the particle pusher.
 
-..
-  The Niel model implementation is split into several loops to
-  be partially vectorized. Surprisingly, this model have bad performance on KNL
-  and further analysis are necessary to well understand why.
+The Niel model implementation is split into several loops to
+be partially vectorized. The table lookup is the only phase that
+can not be vectorized. Using a fit function enables to have a fully
+vectorized process. The gain depends on the order of the fit.
+The radiation process with the Niel model is dominated
+by the normal distribution random draw.
 
 The Monte-Carlo pusher is not vectorized because the Monte-Carlo loop has
 not predictable end and contains many if-statements.
 When using the Monte-Carlo radiation model, code performance is likely to be
 more impacted running on SIMD architecture with large vector registers
-such as Intel Xeon Phi processors.
+such as Intel Xeon Phi processors. This can be seen in :numref:`radiationTimes`
+in the synchrotron case run on KNL.
 
 ----
 
