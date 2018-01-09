@@ -93,6 +93,9 @@ OpenPMDparams::OpenPMDparams(Params& p):
             } else if( params->EM_BCs[i][j] == "silver-muller" ) {
                 fieldBoundary          .addString( "open" );
                 fieldBoundaryParameters.addString( "silver-muller");
+            } else if( params->EM_BCs[i][j] == "Buneman" ) {
+                fieldBoundary          .addString( "Buneman" );
+                fieldBoundaryParameters.addString( "Buneman");
             } else {
                 ERROR(" impossible boundary condition ");
             }
