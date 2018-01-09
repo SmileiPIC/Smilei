@@ -33,6 +33,8 @@ public:
     std::vector<cField2D*> Jt_;
     std::vector<cField2D*> rho_RZ_;
 
+    void restartRhoJ() override;
+
     void initPoisson(Patch *patch);
     double compute_r();
     void compute_Ap(Patch *patch);

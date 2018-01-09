@@ -167,7 +167,7 @@ public:
     ElectroMagn( Params &params, Patch* patch );
     
     //! Method used to initialize the total charge currents and densities
-    void restartRhoJ();
+    virtual void restartRhoJ();
     //! Method used to initialize the total charge currents and densities of species
     void restartRhoJs();
     
