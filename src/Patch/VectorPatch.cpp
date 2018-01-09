@@ -1142,15 +1142,32 @@ void VectorPatch::update_field_list()
 
     }
 
-    for ( unsigned int ifields = 0 ; ifields < listBx_.size() ; ifields++ ) {
-        listJx_[ifields]->MPIbuff.defineTags( patches_[ifields], 1 );
-        listJy_[ifields]->MPIbuff.defineTags( patches_[ifields], 2 );
-        listJz_[ifields]->MPIbuff.defineTags( patches_[ifields], 3 );
-        listBx_[ifields]->MPIbuff.defineTags( patches_[ifields], 6 );
-        listBy_[ifields]->MPIbuff.defineTags( patches_[ifields], 7 );
-        listBz_[ifields]->MPIbuff.defineTags( patches_[ifields], 8 );
+    if ( !dynamic_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields) ) {
+        for ( unsigned int ifields = 0 ; ifields < listBx_.size() ; ifields++ ) {
+            listJx_[ifields]->MPIbuff.defineTags( patches_[ifields], 1 );
+            listJy_[ifields]->MPIbuff.defineTags( patches_[ifields], 2 );
+            listJz_[ifields]->MPIbuff.defineTags( patches_[ifields], 3 );
+            listBx_[ifields]->MPIbuff.defineTags( patches_[ifields], 6 );
+            listBy_[ifields]->MPIbuff.defineTags( patches_[ifields], 7 );
+            listBz_[ifields]->MPIbuff.defineTags( patches_[ifields], 8 );
 
-        listrho_[ifields]->MPIbuff.defineTags( patches_[ifields], 4 );
+            listrho_[ifields]->MPIbuff.defineTags( patches_[ifields], 4 );
+        }
+    }
+    else {
+        unsigned int nmodes = static_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields)->El_.size();
+        for (unsigned int imode=0 ; imode < nmodes ; imode++) {
+            for ( unsigned int ifields = 0 ; ifields < listBl_[imode].size() ; ifields++ ) {
+                listJl_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 1 );
+                listJr_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 2 );
+                listJr_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 3 );
+                listBl_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 6 );
+                listBr_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 7 );
+                listBt_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 8 );
+
+                listrho_RZ_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 4 );
+            }
+        }
     }
 }
 
