@@ -6,7 +6,7 @@ import math
 
 l0 = 2.0*math.pi        # laser wavelength
 t0 = l0                 # optical cycle
-Lsim = [20.*l0,50.*l0]  # length of the simulation
+Lsim = [20.,50.]  # length of the simulation
 Tsim = 50.*t0           # duration of the simulation
 resx = 28.              # nb of cells in on laser wavelength
 rest = 40.              # time of timestep in one optical cycle 
@@ -15,7 +15,7 @@ Main(
     geometry = "3drz",
     Nmode = 2,
     interpolation_order = 2 ,
-    
+    solve_poisson = False,
     cell_length = [l0/resx,l0/resx],
     grid_length  = Lsim,
     
@@ -41,13 +41,14 @@ LaserGaussian2D(
 )
 
 
-globalEvery = int(rest)
+globalEvery = int(1)
+
 
 #DiagScalar(every=globalEvery)
-#
+
 #DiagFields(
 #    every = globalEvery,
-#    fields = ['Ex','Ey','Ez']
+#    fields = ['Ex','Er','Et']
 #)
 
 #DiagProbe(
