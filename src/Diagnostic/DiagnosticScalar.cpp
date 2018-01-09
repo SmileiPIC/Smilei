@@ -676,12 +676,26 @@ uint64_t DiagnosticScalar::getDiskFootPrint(int istart, int istop, Patch* patch)
         }
     }
     // 3 - Field scalars
-    scalars.push_back( "Uelm_"+patch->EMfields->Ex_ ->name );
-    scalars.push_back( "Uelm_"+patch->EMfields->Ey_ ->name );
-    scalars.push_back( "Uelm_"+patch->EMfields->Ez_ ->name );
-    scalars.push_back( "Uelm_"+patch->EMfields->Bx_m->name );
-    scalars.push_back( "Uelm_"+patch->EMfields->By_m->name );
-    scalars.push_back( "Uelm_"+patch->EMfields->Bz_m->name );
+    if (!dynamic_cast<ElectroMagn3DRZ*>(patch->EMfields)) {
+        scalars.push_back( "Uelm_"+patch->EMfields->Ex_ ->name );
+        scalars.push_back( "Uelm_"+patch->EMfields->Ey_ ->name );
+        scalars.push_back( "Uelm_"+patch->EMfields->Ez_ ->name );
+        scalars.push_back( "Uelm_"+patch->EMfields->Bx_m->name );
+        scalars.push_back( "Uelm_"+patch->EMfields->By_m->name );
+        scalars.push_back( "Uelm_"+patch->EMfields->Bz_m->name );
+    }
+    else {
+        ElectroMagn3DRZ* emfields = static_cast<ElectroMagn3DRZ*>(patch->EMfields);
+        unsigned int nmodes = emfields->El_.size();
+        for (unsigned int imode=0 ; imode < nmodes ; imode++) {
+            scalars.push_back( "Uelm_"+emfields->El_[imode] ->name );
+            scalars.push_back( "Uelm_"+emfields->Er_[imode] ->name );
+            scalars.push_back( "Uelm_"+emfields->Et_[imode] ->name );
+            scalars.push_back( "Uelm_"+emfields->Bl_m[imode]->name );
+            scalars.push_back( "Uelm_"+emfields->Br_m[imode]->name );
+            scalars.push_back( "Uelm_"+emfields->Bt_m[imode]->name );
+        }
+    }
 #ifdef _DISABLE
     // 4 - Scalars related to fields min and max
     for( unsigned int i=0; i<2; i++ ) {
