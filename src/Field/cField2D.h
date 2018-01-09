@@ -77,6 +77,15 @@ public:
         return data_1D[i];
     };
 
+    //! method used to put all entry of a field at a given value val
+    void put_to(double val) override
+    {
+        if (data_1D)
+            for (unsigned int i=0; i<globalDims_; i++) {
+                data_1D[i] = val;
+            }
+    }
+
 private:
     //! this will present the data as a 2d matrix
     std::complex<double> **data_2D;
