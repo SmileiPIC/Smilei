@@ -12,8 +12,8 @@ resx = 28.              # nb of cells in on laser wavelength
 rest = 40.              # time of timestep in one optical cycle 
 
 Main(
-    geometry = "3dXR",
-    
+    geometry = "3drz",
+    Nmode = 2,
     interpolation_order = 2 ,
     
     cell_length = [l0/resx,l0/resx],
@@ -24,8 +24,10 @@ Main(
     timestep = t0/rest,
     sim_time = Tsim,
      
-    bc_em_type_x = ['silver-muller'],
-    bc_em_type_y = ['silver-muller'],
+    EM_boundary_conditions = [
+        ["silver-muller"],
+        ["Buneman"],
+    ],
     
     random_seed = smilei_mpi_rank
 )
