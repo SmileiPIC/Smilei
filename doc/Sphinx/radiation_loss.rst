@@ -721,7 +721,7 @@ the Monte-Carlo radiation process.
 | Synchrotron 2D KNL (Frioul)         | 21s        | 23s      | 23s          | 73s      | 47s                 |
 | :math:`\chi=0.5`,  :math:`B=100`    |            |          |              |          |                     |
 +-------------------------------------+------------+----------+--------------+----------+---------------------+
-| Interaction with a carbon thin foil | 6.5s       | 6.5s     | 6.6s         |          | 6.8s                |
+| Interaction with a carbon thin foil | 6.5s       | 6.5s     | 6.6s         | 6.8s     | 6.8s                |
 | 2D Sandy Bridge (Poincare)          |            |          |              |          |                     |
 +-------------------------------------+------------+----------+--------------+----------+---------------------+
 

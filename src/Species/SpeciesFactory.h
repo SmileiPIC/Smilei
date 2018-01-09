@@ -128,8 +128,26 @@ public:
 
             thisSpecies->radiation_model = radiation_model;
 
-            if (radiation_model != "none")
-            MESSAGE(2,"> Radiating species with model: `" << radiation_model << "`");
+            if (radiation_model == "ll")
+            {
+                MESSAGE(2,"> Radiating species with the classical Landau-Lifshitz radiating model");
+            }
+            else if (radiation_model != "cll")
+            {
+                MESSAGE(2,"> Radiating species with the quantum corrected Landau-Lifshitz radiating model");
+            }
+            else if (radiation_model != "niel")
+            {
+                MESSAGE(2,"> Radiating species with the stochastic model of Niel et al.");
+            }
+            else if (radiation_model != "mc")
+            {
+                MESSAGE(2,"> Radiating species with the stochastic Monte-Carlo model");
+            }
+            else if (radiation_model != "none")
+            {
+                MESSAGE(2,"> Radiating species with model: `" << radiation_model << "`");
+            }
 
             // Non compatibility
             if ((pusher=="borisnr")
