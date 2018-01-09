@@ -235,7 +235,7 @@ void LaserProfileSeparable::createFields(Params& params, Patch* patch)
     dim[0] = 1;
     dim[1] = 1;
     
-    if( params.geometry!="1Dcartesian" && params.geometry!="2Dcartesian" && params.geometry!="3Dcartesian" )
+    if( params.geometry!="1Dcartesian" && params.geometry!="2Dcartesian" && params.geometry!="3Dcartesian" && params.geometry!="3drz")
         ERROR("Unknown geometry in laser");
     
     if( params.geometry!="1Dcartesian" ) {
@@ -243,7 +243,7 @@ void LaserProfileSeparable::createFields(Params& params, Patch* patch)
         unsigned int ny_d = ny_p+1;
         dim[0] = primal ? ny_p : ny_d;
         
-        if( params.geometry!="2Dcartesian" ) {
+        if( params.geometry=="3Dcartesian" ) {
             unsigned int nz_p = params.n_space[2]+1+2*params.oversize[2];
             unsigned int nz_d = nz_p+1;
             dim[1] = primal ? nz_d : nz_p;
