@@ -1,0 +1,35 @@
+
+
+{# Extract the toctree and remove html #}
+{% set theTocTree = toctree(includehidden=True)
+    | replace("</a>", "")
+    | replace(" href=\"", "></a>")
+    | replace("</li>", "</li>;")
+    | striptags
+    | replace("\">", "%") %}
+{% set theTocTree = theTocTree.split(";") %}
+
+
+{# Loop through toctree #}
+<div class="toctree-smilei">
+{% for element in theTocTree %}
+    {% set el = element.split("%") %}
+    {% set url = el[0] | trim | safe %}
+    {% set entry = el[1] | trim | safe %}
+    {% if entry in ["Units", "Install", "Publications"] %}
+    <hr />
+    {% endif %}
+    {% if entry == title %}
+        {{ toc }}
+    {% else %}
+      <ul>
+      <li>
+        <a href="{{ url }}">{{ entry }}</a>
+      </li>
+      </ul>
+    {% endif %}
+{% endfor %}
+</div>
+
+
+<br />

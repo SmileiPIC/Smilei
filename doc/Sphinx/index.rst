@@ -1,17 +1,18 @@
 .. title:: Home
 
 
-.. image:: _static/smileiLogo.svg
+.. rst-class:: horizontallogo
 
-**Smilei** is a Particle-In-Cell code for plasma simulation.
-Open-source, collaborative, user-friendly and designed for high performances on super-computers,
+  .. image:: ../logo/smileiLogo-horizontal2.svg
+
+**Smilei** is a collaborative Particle-In-Cell code for plasma simulation.
+Open-source, user-friendly and designed for high performances on super-computers,
 it is applied to a wide range of physics studies: from relativistic laser-plasma
 interaction to astrophysics.
 
 
 .. raw:: html
-  
-  <div style="width:100%; text-align:center; margin-bottom:8em;">
+
   <a href="releases.html#current-release-3-3" class="icon">
 
 .. image:: _static/download.svg
@@ -64,19 +65,27 @@ interaction to astrophysics.
 .. raw:: html
 
   Tutorials</a>
-  
-  </div>
 
+
+
+Overview
+========
 
 .. toctree::
    :maxdepth: 1
-   :hidden:
 
    licence
    synopsis
    highlights
    releases
-   
+
+
+Understand :program:`Smilei`
+============================
+
+.. toctree::
+   :maxdepth: 1
+
    units
    algorithms
    parallelization
@@ -85,11 +94,23 @@ interaction to astrophysics.
    radiation_loss
    multiphoton_Breit_Wheeler
 
+Install, run, analyze
+=====================
+
+.. toctree::
+   :maxdepth: 1
+
    installation
    namelist
    run
    post-processing
 
+More information
+================
+
+.. toctree::
+   :maxdepth: 1
+   
    material
    partners
    Smilei tutorials <https://smileipic.github.io/tutorials>
