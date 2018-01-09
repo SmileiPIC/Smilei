@@ -294,6 +294,16 @@ ElectroMagn3DRZ::~ElectroMagn3DRZ()
 }//END ElectroMagn3DRZ
 
 
+void ElectroMagn3DRZ::restartRhoJ()
+{
+    for ( int imode=0 ; imode<nmodes ; imode++ ) {
+        Jl_[imode] ->put_to(0.);
+        Jr_[imode] ->put_to(0.);
+        Jt_[imode] ->put_to(0.);
+        rho_RZ_[imode]->put_to(0.);
+    }
+}
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Begin of Solve Poisson methods
