@@ -32,8 +32,17 @@ PusherHigueraCary::~PusherHigueraCary()
 
 void PusherHigueraCary::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
 {
-    std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
-    std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
+    std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
+    std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
+
+    int nparts = particles.size();
+    double* Ex = &( (*Epart)[0*nparts] );
+    double* Ey = &( (*Epart)[1*nparts] );
+    double* Ez = &( (*Epart)[2*nparts] );
+    double* Bx = &( (*Bpart)[0*nparts] );
+    double* By = &( (*Bpart)[1*nparts] );
+    double* Bz = &( (*Bpart)[2*nparts] );
+
     std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
 
     double charge_over_mass_dts2;
@@ -61,9 +70,9 @@ void PusherHigueraCary::operator() (Particles &particles, SmileiMPI* smpi, int i
         charge_over_mass_dts2 = (double)(charge[ipart])*one_over_mass_*dts2;
 
         // init Half-acceleration in the electric field
-        pxsm = charge_over_mass_dts2*(*Epart)[ipart].x;
-        pysm = charge_over_mass_dts2*(*Epart)[ipart].y;
-        pzsm = charge_over_mass_dts2*(*Epart)[ipart].z;
+        pxsm = charge_over_mass_dts2*(*(Ex+ipart));
+        pysm = charge_over_mass_dts2*(*(Ey+ipart));
+        pzsm = charge_over_mass_dts2*(*(Ez+ipart));
 
         //(*this)(particles, ipart, (*Epart)[ipart], (*Bpart)[ipart] , (*invgf)[ipart]);
         umx = momentum[0][ipart] + pxsm;
@@ -75,9 +84,9 @@ void PusherHigueraCary::operator() (Particles &particles, SmileiMPI* smpi, int i
         gfm2 = ( 1.0 + umx*umx + umy*umy + umz*umz );
 
         // Equivalent of betax,betay,betaz in the paper
-        Tx    = charge_over_mass_dts2 * (*Bpart)[ipart].x;
-        Ty    = charge_over_mass_dts2 * (*Bpart)[ipart].y;
-        Tz    = charge_over_mass_dts2 * (*Bpart)[ipart].z;
+        Tx    = charge_over_mass_dts2 * (*(Bx+ipart));
+        Ty    = charge_over_mass_dts2 * (*(By+ipart));
+        Tz    = charge_over_mass_dts2 * (*(Bz+ipart));
 
         // beta**2
         beta2 = Tx*Tx + Ty*Ty + Tz*Tz;        

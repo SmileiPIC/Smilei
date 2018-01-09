@@ -108,7 +108,7 @@ public:
             // Axis must have 4 elements or more
             unsigned int lenAxisArgs=PySequence_Size(seq);
             if (lenAxisArgs<4)
-                ERROR(errorPrefix << ": axis #" << iaxis << " contain at least 4 arguments");
+                ERROR(errorPrefix << ": axis #" << iaxis << " must contain at least 4 arguments (contains only " << lenAxisArgs << ")");
             
             // Try to extract first element: type
             PyObject * type_object = PySequence_Fast_GET_ITEM(seq, 0);

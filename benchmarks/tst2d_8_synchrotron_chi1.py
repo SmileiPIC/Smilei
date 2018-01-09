@@ -10,13 +10,16 @@
 # is computed so that the initial quantum parameter is equal to 1.
 #
 # Validation:
-# - Monte-Carlo radiation loss
 # - Landau-Lifshitz radiation loss with quantum correction
+# - Niel radiation model
+# - Monte-Carlo radiation loss
 # - Species scalar diagnostics
 # - External fields
+# - Particle binning with the quantum parameter
 # ----------------------------------------------------------------------------------------
 
 import math
+import datetime
 
 # ----------------------------------------------------------------------------------------
 # Main parameters
@@ -54,16 +57,18 @@ dt *= dt_factor                                   # timestep used for the simula
 Tsim = 5000*dt/dt_factor                          # duration of the simulation
 
 pusher = "vay"                                    # type of pusher
-radiation_list = ["Monte-Carlo",
-                  "corrected-Landau-Lifshitz"]    # List of radiation models for species
-species_name_list = ["disc","cont"]               # List of names for species
+radiation_list = ["corrected-Landau-Lifshitz","Niel","Monte-Carlo",]    # List of radiation models for species
+species_name_list = ["CLL","Niel","MC"]               # List of names for species
+
+datetime = datetime.datetime.now()
+random_seed = datetime.microsecond
 
 # ----------------------------------------------------------------------------------------
 # Functions
 
 # Density profile for inital location of the particles
 def n0_(x,y):
-        if ((x-0.75*Lx)**2 + (y-0.5*Ly)**2 <= 0.25*dx):
+        if ((x-0.75*Lx)**2 + (y-0.5*Ly)**2 <= 0.5*dx):
                 return n0
         else:
                 return 0.
@@ -88,7 +93,7 @@ Main(
 
     EM_boundary_conditions = [['periodic'],['periodic']],
 
-    random_seed = 0,
+    random_seed = random_seed,
 
     reference_angular_frequency_SI = wr
 
@@ -109,9 +114,9 @@ for i,radiation in enumerate(radiation_list):
 
     Species(
         name = "electron_" + species_name_list[i],
-        position_initialization = "centered",
+        position_initialization = "regular",
         momentum_initialization = "cold",
-        particles_per_cell = 10,
+        particles_per_cell = 16,
         c_part_max = 1.0,
         mass = 1.0,
         charge = -1.0,
@@ -136,10 +141,6 @@ RadiationReaction(
 # Scalar diagnostics
 DiagScalar(
     every = 100,
-    vars=['Ukin_electron_disc',
-          'Ukin_electron_cont',
-          'Urad_electron_disc',
-          'Urad_electron_cont']
 )
 
 # ----------------------------------------------------------------------------------------

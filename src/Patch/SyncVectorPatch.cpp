@@ -72,10 +72,6 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
 //        vecPatches(ipatch)->injectParticles(smpi, ispec, params, params.nDim_particle-1, &vecPatches); // wait
 
 
-    #pragma omp for schedule(runtime)
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-        vecPatches(ipatch)->vecSpecies[ispec]->sort_part();
-
     /*
     // Debugging
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
@@ -109,13 +105,13 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
 }
 
 
-void SyncVectorPatch::sumRhoJ(VectorPatch& vecPatches, Timers &timers, int itime)
+void SyncVectorPatch::sumRhoJ(Params& params, VectorPatch& vecPatches, Timers &timers, int itime)
 {
     SyncVectorPatch::new_sum( vecPatches.densities , vecPatches, timers, itime );
-    if(vecPatches.diag_flag) SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, itime );
+    if( (vecPatches.diag_flag) || (params.is_spectral) )SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, itime );
 }
 
-void SyncVectorPatch::sumRhoJs(VectorPatch& vecPatches, int ispec , Timers &timers, int itime)
+void SyncVectorPatch::sumRhoJs(Params& params, VectorPatch& vecPatches, int ispec , Timers &timers, int itime)
 {
 
     if(vecPatches.listJxs_ .size()>0) SyncVectorPatch::sum( vecPatches.listJxs_ , vecPatches, timers, itime  );
@@ -124,41 +120,63 @@ void SyncVectorPatch::sumRhoJs(VectorPatch& vecPatches, int ispec , Timers &time
     if(vecPatches.listrhos_.size()>0) SyncVectorPatch::sum( vecPatches.listrhos_, vecPatches, timers, itime  );
 }
 
-void SyncVectorPatch::exchangeE( VectorPatch& vecPatches )
+void SyncVectorPatch::exchangeE( Params& params, VectorPatch& vecPatches )
 {
-
-    SyncVectorPatch::exchange( vecPatches.listEx_, vecPatches );
-    SyncVectorPatch::exchange( vecPatches.listEy_, vecPatches );
-    SyncVectorPatch::exchange( vecPatches.listEz_, vecPatches );
+    if (!params.full_B_exchange) {
+        SyncVectorPatch::exchange( vecPatches.listEx_, vecPatches );
+        SyncVectorPatch::exchange( vecPatches.listEy_, vecPatches );
+        SyncVectorPatch::exchange( vecPatches.listEz_, vecPatches );
+    }
+    else {
+        SyncVectorPatch::exchange_per_direction( vecPatches.listEx_, vecPatches );
+        SyncVectorPatch::exchange_per_direction( vecPatches.listEy_, vecPatches );
+        SyncVectorPatch::exchange_per_direction( vecPatches.listEz_, vecPatches );
+    }
 }
 
-void SyncVectorPatch::finalizeexchangeE( VectorPatch& vecPatches )
+void SyncVectorPatch::finalizeexchangeE( Params& params, VectorPatch& vecPatches )
 {
 
-    SyncVectorPatch::finalizeexchange( vecPatches.listEx_, vecPatches );
-    SyncVectorPatch::finalizeexchange( vecPatches.listEy_, vecPatches );
-    SyncVectorPatch::finalizeexchange( vecPatches.listEz_, vecPatches );
+    if (!params.full_B_exchange) {
+        SyncVectorPatch::finalizeexchange( vecPatches.listEx_, vecPatches );
+        SyncVectorPatch::finalizeexchange( vecPatches.listEy_, vecPatches );
+        SyncVectorPatch::finalizeexchange( vecPatches.listEz_, vecPatches );
+    }
 }
 
-void SyncVectorPatch::exchangeB( VectorPatch& vecPatches )
+void SyncVectorPatch::exchangeB( Params& params, VectorPatch& vecPatches )
 {
 
     if (vecPatches.listBx_[0]->dims_.size()==1) {
         SyncVectorPatch::new_exchange0( vecPatches.Bs0, vecPatches );
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==2 ) {
-        SyncVectorPatch::new_exchange0( vecPatches.Bs0, vecPatches );
-        SyncVectorPatch::new_exchange1( vecPatches.Bs1, vecPatches );
+        if (!params.full_B_exchange) {
+            SyncVectorPatch::new_exchange0( vecPatches.Bs0, vecPatches );
+            SyncVectorPatch::new_exchange1( vecPatches.Bs1, vecPatches );
+        }
+        else {
+            SyncVectorPatch::exchange_per_direction( vecPatches.listBx_, vecPatches );
+            SyncVectorPatch::exchange_per_direction( vecPatches.listBy_, vecPatches );
+            SyncVectorPatch::exchange_per_direction( vecPatches.listBz_, vecPatches );
+        }
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==3 ) {
-        SyncVectorPatch::new_exchange0( vecPatches.Bs0, vecPatches );
-        SyncVectorPatch::new_exchange1( vecPatches.Bs1, vecPatches );
-        SyncVectorPatch::new_exchange2( vecPatches.Bs2, vecPatches );
+        if (!params.full_B_exchange) {
+            SyncVectorPatch::new_exchange0( vecPatches.Bs0, vecPatches );
+            SyncVectorPatch::new_exchange1( vecPatches.Bs1, vecPatches );
+            SyncVectorPatch::new_exchange2( vecPatches.Bs2, vecPatches );
+        }
+        else {
+            SyncVectorPatch::exchange_per_direction( vecPatches.listBx_, vecPatches );
+            SyncVectorPatch::exchange_per_direction( vecPatches.listBy_, vecPatches );
+            SyncVectorPatch::exchange_per_direction( vecPatches.listBz_, vecPatches );
+        }
     }
 
 }
 
-void SyncVectorPatch::exchangeJ( VectorPatch& vecPatches )
+void SyncVectorPatch::exchangeJ( Params& params, VectorPatch& vecPatches )
 {
 
     SyncVectorPatch::exchange( vecPatches.listJx_, vecPatches );
@@ -166,7 +184,7 @@ void SyncVectorPatch::exchangeJ( VectorPatch& vecPatches )
     SyncVectorPatch::exchange( vecPatches.listJz_, vecPatches );
 }
 
-void SyncVectorPatch::finalizeexchangeJ( VectorPatch& vecPatches )
+void SyncVectorPatch::finalizeexchangeJ( Params& params, VectorPatch& vecPatches )
 {
 
     SyncVectorPatch::finalizeexchange( vecPatches.listJx_, vecPatches );
@@ -175,19 +193,23 @@ void SyncVectorPatch::finalizeexchangeJ( VectorPatch& vecPatches )
 }
 
 
-void SyncVectorPatch::finalizeexchangeB( VectorPatch& vecPatches )
+void SyncVectorPatch::finalizeexchangeB( Params& params, VectorPatch& vecPatches )
 {
     if (vecPatches.listBx_[0]->dims_.size()==1) {
         SyncVectorPatch::new_finalizeexchange0( vecPatches.Bs0, vecPatches );
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==2 ) {
-        SyncVectorPatch::new_finalizeexchange0( vecPatches.Bs0, vecPatches );
-        SyncVectorPatch::new_finalizeexchange1( vecPatches.Bs1, vecPatches );
+        if ( !params.full_B_exchange) {
+            SyncVectorPatch::new_finalizeexchange0( vecPatches.Bs0, vecPatches );
+            SyncVectorPatch::new_finalizeexchange1( vecPatches.Bs1, vecPatches );
+        }
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==3 ) {
-        SyncVectorPatch::new_finalizeexchange0( vecPatches.Bs0, vecPatches );
-        SyncVectorPatch::new_finalizeexchange1( vecPatches.Bs1, vecPatches );
-        SyncVectorPatch::new_finalizeexchange2( vecPatches.Bs2, vecPatches );
+        if ( !params.full_B_exchange) {
+            SyncVectorPatch::new_finalizeexchange0( vecPatches.Bs0, vecPatches );
+            SyncVectorPatch::new_finalizeexchange1( vecPatches.Bs1, vecPatches );
+            SyncVectorPatch::new_finalizeexchange2( vecPatches.Bs2, vecPatches );
+        }
     }
 
 }
@@ -653,6 +675,122 @@ void SyncVectorPatch::exchange( std::vector<Field*> fields, VectorPatch& vecPatc
                 }// End if ( MPI_me_ == MPI_neighbor_[2][0] )
             }// End if dims_.size()>2
         } // End if dims_.size()>1
+    } // End for( ipatch )
+
+}
+
+
+//Proceed to the synchronization of field including corner ghost cells.
+//This is done by exchanging one dimension at a time
+void SyncVectorPatch::exchange_per_direction( std::vector<Field*> fields, VectorPatch& vecPatches )
+{
+
+    unsigned int nx_, ny_(1), nz_(1), h0, oversize[3], n_space[3], gsp[3];
+    double *pt1,*pt2;
+    h0 = vecPatches(0)->hindex;
+
+    oversize[0] = vecPatches(0)->EMfields->oversize[0];
+    oversize[1] = vecPatches(0)->EMfields->oversize[1];
+    oversize[2] = vecPatches(0)->EMfields->oversize[2];
+
+    n_space[0] = vecPatches(0)->EMfields->n_space[0];
+    n_space[1] = vecPatches(0)->EMfields->n_space[1];
+    n_space[2] = vecPatches(0)->EMfields->n_space[2];
+
+    nx_ = fields[0]->dims_[0];
+    if (fields[0]->dims_.size()>1) {
+        ny_ = fields[0]->dims_[1];
+        if (fields[0]->dims_.size()>2)
+            nz_ = fields[0]->dims_[2];
+    }
+
+    if (fields[0]->dims_.size()>2) {
+
+// Dimension 2
+    #pragma omp for schedule(static)
+    for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
+        vecPatches(ipatch)->initExchange( fields[ipatch], 2 );
+
+    #pragma omp for schedule(static)
+    for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
+        vecPatches(ipatch)->finalizeExchange( fields[ipatch], 2 );
+
+    #pragma omp for schedule(static) private(pt1,pt2)
+    for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
+
+        gsp[2] = ( oversize[2] + 1 + fields[0]->isDual_[2] ); //Ghost size primal
+        if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[2][0]){
+            pt1 = &(*fields[vecPatches(ipatch)->neighbor_[2][0]-h0])(n_space[2]);
+            pt2 = &(*fields[ipatch])(0);
+            //for (unsigned int in = oversize[0] ; in < nx_-oversize[0]; in ++){
+            for (unsigned int in = 0 ; in < nx_ ; in ++){
+                unsigned int i = in * ny_*nz_;
+                //for (unsigned int jn = oversize[1] ; jn < ny_-oversize[1] ; jn ++){
+                for (unsigned int jn = 0 ; jn < ny_ ; jn ++){
+                    unsigned int j = jn *nz_;
+                    for (unsigned int k = 0 ; k < oversize[2] ; k++ ){
+                        pt2[i+j+k] = pt1[i+j+k] ;
+                        pt1[i+j+k+gsp[2]] = pt2[i+j+k+gsp[2]] ;
+                    }
+                }
+            }
+        }// End if ( MPI_me_ == MPI_neighbor_[2][0] )
+
+    } // End for( ipatch )
+    }
+
+// Dimension 1
+    #pragma omp for schedule(static)
+    for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
+        vecPatches(ipatch)->initExchange( fields[ipatch], 1 );
+
+    #pragma omp for schedule(static)
+    for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
+        vecPatches(ipatch)->finalizeExchange( fields[ipatch], 1 );
+
+    #pragma omp for schedule(static) private(pt1,pt2)
+    for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
+
+        gsp[1] = ( oversize[1] + 1 + fields[0]->isDual_[1] ); //Ghost size primal
+        if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[1][0]){
+            pt1 = &(*fields[vecPatches(ipatch)->neighbor_[1][0]-h0])(n_space[1]*nz_);
+            pt2 = &(*fields[ipatch])(0);
+            for (unsigned int in = 0 ; in < nx_ ; in ++){
+            //for (unsigned int in = oversize[0] ; in < nx_-oversize[0] ; in ++){ // <== This doesn't work. Why ??
+                unsigned int i = in * ny_*nz_;
+                for (unsigned int j = 0 ; j < oversize[1]*nz_ ; j++ ){
+                    // Rewrite with memcpy ?
+                    pt2[i+j] = pt1[i+j] ;
+                    pt1[i+j+gsp[1]*nz_] = pt2[i+j+gsp[1]*nz_] ;
+                }
+            }
+        } // End if ( MPI_me_ == MPI_neighbor_[1][0] )
+
+    } // End for( ipatch )
+
+// Dimension 0
+    #pragma omp for schedule(static)
+    for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
+        vecPatches(ipatch)->initExchange( fields[ipatch], 0 );
+
+    #pragma omp for schedule(static)
+    for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
+        vecPatches(ipatch)->finalizeExchange( fields[ipatch], 0 );
+
+
+
+    gsp[0] = ( oversize[0] + 1 + fields[0]->isDual_[0] ); //Ghost size primal
+
+    #pragma omp for schedule(static) private(pt1,pt2)
+    for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
+
+        if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[0][0]){
+            pt1 = &(*fields[vecPatches(ipatch)->neighbor_[0][0]-h0])((n_space[0])*ny_*nz_);
+            pt2 = &(*fields[ipatch])(0);
+            memcpy( pt2, pt1, oversize[0]*ny_*nz_*sizeof(double));
+            memcpy( pt1+gsp[0]*ny_*nz_, pt2+gsp[0]*ny_*nz_, oversize[0]*ny_*nz_*sizeof(double));
+        } // End if ( MPI_me_ == MPI_neighbor_[0][0] )
+
     } // End for( ipatch )
 
 }

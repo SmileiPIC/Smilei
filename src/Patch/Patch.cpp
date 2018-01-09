@@ -41,7 +41,7 @@ using namespace std;
 // Patch constructor :
 //   Called by PatchXD constructor which will finalize initialization
 // ---------------------------------------------------------------------------------------------------------------------
-Patch::Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
+Patch::Patch(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved)
 {
 
     hindex = ipatch;
@@ -55,8 +55,8 @@ Patch::Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int 
 
 
 // Cloning patch constructor
-Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles = true) {
-
+Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles = true) {
+    
     hindex = ipatch;
     nDim_fields_ = patch->nDim_fields_;
 
@@ -126,20 +126,18 @@ void Patch::initStep3( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
 
 }
 
-void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
+void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition ) {
     // initialize vector of Species (virtual)
     vecSpecies = SpeciesFactory::createVector(params, this);
-
-    // initialize the electromagnetic fields (virtual)
-    EMfields   = ElectroMagnFactory::create(params, vecSpecies, this);
 
     // initialize the envelope if used
     int n_envlaser = PyTools::nComponents("LaserEnvelope");
     if ( n_envlaser ==1 ) // for the moment it works only with one envelope
         envelope = EnvelopeFactory::create(params, this, EMfields);
-    //if ( params.ponderomotive_force )
-    //    envelope = EnvelopeFactory::create(params, this);
 
+    // initialize the electromagnetic fields (virtual)
+    EMfields   = ElectroMagnFactory::create(params, domain_decomposition, vecSpecies, this);
+    
     // interpolation operator (virtual)
     Interp     = InterpolatorFactory::create(params, this); // + patchId -> idx_domain_begin (now = ref smpi)
     // projection operator (virtual)
@@ -234,6 +232,95 @@ void Patch::finalizeMPIenvironment(Params& params) {
 
 }
 
+
+void Patch::set( Params& params, DomainDecomposition* domain_decomposition, VectorPatch& vecPatch )
+{
+    Pcoordinates.resize( params.nDim_field );
+    
+
+    min_local = vecPatch(0)->min_local;
+    max_local = vecPatch(0)->max_local;
+    center   .resize( nDim_fields_, 0. );
+    cell_starting_global_index = vecPatch(0)->cell_starting_global_index;
+    radius = 0.;
+
+    // Constraint to enforce 1 neighboor per side
+    double nppp_root = pow( vecPatch.size(), 1./(double)nDim_fields_ );
+    if ( fabs( (double)(int)nppp_root - nppp_root ) > 0. ) 
+        ERROR( "Bad choice of decomposition" );
+
+    for (unsigned int i = 0 ; i<nDim_fields_ ; i++) {
+        
+        for ( unsigned int ipatch = 0 ; ipatch < vecPatch.size() ; ipatch++  ) {
+            if ( vecPatch(ipatch)->min_local[i] <= min_local[i] ) {
+                min_local[i] = vecPatch(ipatch)->min_local[i];
+                if (vecPatch(ipatch)->MPI_neighbor_[i][0]!=MPI_PROC_NULL)
+                    MPI_neighbor_[i][0] = vecPatch(ipatch)->MPI_neighbor_[i][0];
+                if (vecPatch(ipatch)->neighbor_[i][0]!=MPI_PROC_NULL)
+                    neighbor_[i][0] = (vecPatch(ipatch)->neighbor_[i][0] / vecPatch.size() );
+            }
+            if ( vecPatch(ipatch)->max_local[i] >= max_local[i] ) {
+                max_local[i] = vecPatch(ipatch)->max_local[i];
+                if (vecPatch(ipatch)->MPI_neighbor_[i][1]!=MPI_PROC_NULL)
+                    MPI_neighbor_[i][1] = vecPatch(ipatch)->MPI_neighbor_[i][1];
+                if (vecPatch(ipatch)->neighbor_[i][1]!=MPI_PROC_NULL)
+                    neighbor_[i][1] = (vecPatch(ipatch)->neighbor_[i][1] / vecPatch.size() );
+            }
+            if ( vecPatch(ipatch)->cell_starting_global_index[i] <= cell_starting_global_index[i] )
+                cell_starting_global_index[i] = vecPatch(ipatch)->cell_starting_global_index[i];
+        }
+        Pcoordinates[i] = (cell_starting_global_index[i]+params.oversize[i]) / params.n_space[i] / params.global_factor[i];
+        
+        center[i] = (min_local[i]+max_local[i])*0.5;
+        radius += pow(max_local[i] - center[i] + params.cell_length[i], 2);
+    }
+    radius = sqrt(radius);
+
+    //cout << hindex << " " << Pcoordinates[0] << " " << Pcoordinates[1] << endl;
+    //cout << "X = " << Pcoordinates[0]  << " " << min_local[0] << " " << max_local[0] << " - Y = " << Pcoordinates[1] << " " << min_local[1] << " " << max_local[1] << endl;
+    
+    //cart_updateMPIenv(smpi);
+
+    MPI_me_ = vecPatch(0)->MPI_me_;
+    for (unsigned int i = 0 ; i<nDim_fields_ ; i++) {
+        if ((MPI_neighbor_[i][0]==MPI_me_) && (params.EM_BCs[i][0]!="periodic"))
+            MPI_neighbor_[i][0] = MPI_PROC_NULL;
+        if ((MPI_neighbor_[i][1]==MPI_me_) && (params.EM_BCs[i][0]!="periodic"))
+            MPI_neighbor_[i][1] = MPI_PROC_NULL;
+        if ((neighbor_[i][0]==MPI_me_) && (params.EM_BCs[i][0]!="periodic"))
+            neighbor_[i][0] = MPI_PROC_NULL;
+        if ((neighbor_[i][1]==MPI_me_) && (params.EM_BCs[i][0]!="periodic"))
+            neighbor_[i][1] = MPI_PROC_NULL;
+    }
+            
+    
+    //cout << "MPI Nei\t"  << "\t" << MPI_neighbor_[1][1] << endl;
+    //cout << "MPI Nei\t"  << MPI_neighbor_[0][0] << "\t" << MPI_me_ << "\t" << MPI_neighbor_[0][1] << endl;
+    //cout << "MPI Nei\t"  << "\t" << MPI_neighbor_[1][0] << endl;
+
+
+    for (int iDim=0 ; iDim< (int)neighbor_.size() ; iDim++)
+        for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+            send_tags_[iDim][iNeighbor] = buildtag( hindex, iDim, iNeighbor, 5 );
+            recv_tags_[iDim][iNeighbor] = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor, 5 );
+        }
+
+    EMfields   = ElectroMagnFactory::create(params, domain_decomposition, vecPatch(0)->vecSpecies, this);
+
+    vecSpecies.resize(0);
+    Interp     = NULL;
+    Proj       = NULL;
+    vecCollisions.resize(0);
+    partWalls = NULL;
+    probes.resize(0);
+    
+    if (has_an_MPI_neighbor())
+        createType2(params);
+    
+
+}
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Delete Patch members
 // ---------------------------------------------------------------------------------------------------------------------
@@ -243,6 +330,12 @@ Patch::~Patch() {
 
     for(unsigned int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
     vecCollisions.clear();
+    
+    if (partWalls!=NULL) delete partWalls;
+    if (Proj     !=NULL) delete Proj;
+    if (Interp   !=NULL) delete Interp;
+    
+    if (EMfields !=NULL) delete EMfields;
 
     delete partWalls;
     delete Proj;
@@ -251,6 +344,7 @@ Patch::~Patch() {
     if (envelope)
         delete envelope;
     delete EMfields;
+
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();
 
@@ -270,11 +364,31 @@ void Patch::updateTagenv(SmileiMPI* smpi)
 }
 void Patch::updateMPIenv(SmileiMPI* smpi)
 {
+    // HARDCODED VALUE - to test cartesian decomposition
+//    vector<int> npattchpp(2,1); // NDOMAIN PER PROC - WORKS WITH 1 domain per process, ATTENTION PERIDODICITY
+//    vector<int> npatchs(2,4);   // NDOMAIN TOTAL
+//    vector<int> gCoord(2,0);
     MPI_me_ = smpi->smilei_rk;
 
     for (int iDim = 0 ; iDim < nDim_fields_ ; iDim++)
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++){
             MPI_neighbor_[iDim][iNeighbor] = smpi->hrank(neighbor_[iDim][iNeighbor]);
+
+//            gCoord[0] = ( (int)Pcoordinates[0] + (1-iDim) * ((1-iNeighbor)*(-1) + (iNeighbor)) );
+//            gCoord[1] = ( (int)Pcoordinates[1] + (iDim  ) * ((1-iNeighbor)*(-1) + (iNeighbor)) );
+//            if ( gCoord[0] < 0 )
+//                MPI_neighbor_[iDim][iNeighbor] = MPI_PROC_NULL;
+//            else if ( gCoord[0] >= npatchs[0] )
+//                MPI_neighbor_[iDim][iNeighbor] = MPI_PROC_NULL;
+//            else if ( gCoord[1] < 0 )
+//                MPI_neighbor_[iDim][iNeighbor] = MPI_PROC_NULL;
+//            else if ( gCoord[1] >= npatchs[1] )
+//                MPI_neighbor_[iDim][iNeighbor] = MPI_PROC_NULL;
+//            else {
+//                gCoord[0] = (double)( (int)Pcoordinates[0] + (1-iDim) * ((1-iNeighbor)*(-1) + (iNeighbor)) ) /(double)npattchpp[0];
+//                gCoord[1] = (double)( (int)Pcoordinates[1] + (iDim  ) * ((1-iNeighbor)*(-1) + (iNeighbor)) ) /(double)npattchpp[1];
+//                MPI_neighbor_[iDim][iNeighbor] = gCoord[0] * npatchs[1] + gCoord[1];
+//            }
         }
 
     for (int iDim=0 ; iDim< (int)neighbor_.size() ; iDim++)
@@ -532,8 +646,8 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                             if (neighbor_[idim][0]!=MPI_PROC_NULL){ //if neighbour exists
                                 //... copy it at the back of the local particle vector ...
                                 (vecSpecies[ispec]->MPIbuff.partRecv[iDim][(iNeighbor+1)%2]).cp_particle(iPart, cuParticles);
-                                //...adjust bmax ...
-                                (*cubmax)[(*cubmax).size()-1]++;
+                                //...adjust bmax or cell_keys ...
+                                vecSpecies[ispec]->add_space_for_a_particle();
                                 //... and add its index to the particles to be sent later...
                                 vecSpecies[ispec]->MPIbuff.part_index_send[idim][0].push_back( cuParticles.size()-1 );
                                 //..without forgeting to add it to the list of particles to clean.
@@ -548,7 +662,8 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                         else if ( (vecSpecies[ispec]->MPIbuff.partRecv[iDim][(iNeighbor+1)%2]).position(idim,iPart) >= max_local[idim]) {
                             if (neighbor_[idim][1]!=MPI_PROC_NULL){ //if neighbour exists
                                 (vecSpecies[ispec]->MPIbuff.partRecv[iDim][(iNeighbor+1)%2]).cp_particle(iPart, cuParticles);
-                                (*cubmax)[(*cubmax).size()-1]++;
+                                //...adjust bmax or cell_keys ...
+                                vecSpecies[ispec]->add_space_for_a_particle();
                                 vecSpecies[ispec]->MPIbuff.part_index_send[idim][1].push_back( cuParticles.size()-1 );
                                 vecSpecies[ispec]->addPartInExchList(cuParticles.size()-1);
                             }
@@ -567,77 +682,8 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
     //La recopie finale doit se faire au traitement de la dernière dimension seulement !!
     if (iDim == ndim-1){
 
-        //We have stored in indexes_of_particles_to_exchange the list of all particles that needs to be removed.
-        cleanup_sent_particles(ispec, indexes_of_particles_to_exchange);
-        (*indexes_of_particles_to_exchange).clear();
-        cuParticles.erase_particle_trail((*cubmax).back());
 
-        //Evaluation of the necessary shift of all bins.
-        for (unsigned int j=0; j<(*cubmax).size()+1 ;j++){
-            shift[j]=0;
-        }
-
-        //idim=0
-        shift[1] += vecSpecies[ispec]->MPIbuff.part_index_recv_sz[0][0];//Particles coming from ymin all go to bin 0 and shift all the other bins.
-        shift[(*cubmax).size()] += vecSpecies[ispec]->MPIbuff.part_index_recv_sz[0][1];//Used only to count the total number of particles arrived.
-        //idim>0
-        for (idim = 1; idim < ndim; idim++){
-            for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-                n_part_recv = vecSpecies[ispec]->MPIbuff.part_index_recv_sz[idim][iNeighbor];
-                for (unsigned int j=0; j<(unsigned int)n_part_recv ;j++){
-                    //We first evaluate how many particles arrive in each bin.
-                        ii = int((vecSpecies[ispec]->MPIbuff.partRecv[idim][iNeighbor].position(0,j)-min_local[0])/dbin);//bin in which the particle goes.
-                    shift[ii+1]++; // It makes the next bins shift.
-                }
-            }
-        }
-
-
-        //Must be done sequentially
-        for (unsigned int j=1; j<(*cubmax).size()+1;j++){ //bin 0 is not shifted.Last element of shift stores total number of arriving particles.
-            shift[j]+=shift[j-1];
-        }
-        //Make room for new particles
-        if (shift[(*cubmax).size()]) {
-          //! vecor::resize of Charge crashed ! Temporay solution : push_back / Particle
-          //cuParticles.initialize( cuParticles.size()+shift[(*cubmax).size()], cuParticles.Position.size() );
-          for (int inewpart=0 ; inewpart<shift[(*cubmax).size()] ; inewpart++) cuParticles.create_particle();
-        }
-
-        //Shift bins, must be done sequentially
-        for (unsigned int j=(*cubmax).size()-1; j>=1; j--){
-            n_particles = (*cubmax)[j]-(*cubmin)[j]; //Nbr of particle in this bin
-            nmove = min(n_particles,shift[j]); //Nbr of particles to move
-            lmove = max(n_particles,shift[j]); //How far particles must be shifted
-            if (nmove>0) cuParticles.overwrite_part((*cubmin)[j], (*cubmin)[j]+lmove, nmove);
-            (*cubmin)[j] += shift[j];
-            (*cubmax)[j] += shift[j];
-        }
-
-        //Space has been made now to write the arriving particles into the correct bins
-        //idim == 0  is the easy case, when particles arrive either in first or last bin.
-        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-            n_part_recv = vecSpecies[ispec]->MPIbuff.part_index_recv_sz[0][iNeighbor];
-            if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
-                ii = iNeighbor*((*cubmax).size()-1);//0 if iNeighbor=0(particles coming from Xmin) and (*cubmax).size()-1 otherwise.
-                vecSpecies[ispec]->MPIbuff.partRecv[0][iNeighbor].overwrite_part(0, cuParticles,(*cubmax)[ii],n_part_recv);
-                (*cubmax)[ii] += n_part_recv ;
-            }
-        }
-        //idim > 0; this is the difficult case, when particles can arrive in any bin.
-        for (idim = 1; idim < ndim; idim++){
-            //if (idim!=iDim) continue;
-            for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-                n_part_recv = vecSpecies[ispec]->MPIbuff.part_index_recv_sz[idim][iNeighbor];
-                if ( (neighbor_[idim][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
-                        for(unsigned int j=0; j<(unsigned int)n_part_recv; j++){
-                            ii = int((vecSpecies[ispec]->MPIbuff.partRecv[idim][iNeighbor].position(0,j)-min_local[0])/dbin);//bin in which the particle goes.
-                            vecSpecies[ispec]->MPIbuff.partRecv[idim][iNeighbor].overwrite_part(j, cuParticles,(*cubmax)[ii]);
-                            (*cubmax)[ii] ++ ;
-                        }
-                }
-            }
-        }
+        vecSpecies[ispec]->sort_part(params);
 
     }//End Recv_buffers ==> particles
 

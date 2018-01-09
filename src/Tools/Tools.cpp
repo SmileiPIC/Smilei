@@ -70,3 +70,7 @@ bool Tools::file_exists( const std::string & filename )
     return !file.fail();  
 }
 
+
+
+
+std::string Tools::xyz = "XYZ";

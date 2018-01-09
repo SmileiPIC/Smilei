@@ -13,6 +13,7 @@
 #include "Patch.h"
 #include "Profile.h"
 #include "SolverFactory.h"
+#include "DomainDecompositionFactory.h"
 
 using namespace std;
 
@@ -20,7 +21,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn::ElectroMagn(Params &params, vector<Species*>& vecSpecies, Patch* patch) :
+ElectroMagn::ElectroMagn(Params &params, DomainDecomposition* domain_decomposition, vector<Species*>& vecSpecies, Patch* patch) :
 timestep       ( params.timestep   ),
 cell_length    ( params.cell_length),
 n_species      ( vecSpecies.size() ),
@@ -33,7 +34,12 @@ isXmax(patch->isXmax()),
 nrj_mw_lost    (  0.               ),
 nrj_new_fields (  0.               )
 {
-    
+    if ( dynamic_cast<HilbertDomainDecomposition*>( domain_decomposition ) )
+        n_space = params.n_space;
+    else {
+        for ( int i = 0 ; i < nDim_field ; i++ ) 
+            n_space[i] = params.n_space[i] * params.global_factor[i];
+    }
     
     // take useful things from params
     for (unsigned int i=0; i<3; i++) {
@@ -159,19 +165,20 @@ void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn::~ElectroMagn()
 {
-    delete Ex_;
-    delete Ey_;
-    delete Ez_;
-    delete Bx_;
-    delete By_;
-    delete Bz_;
-    delete Bx_m;
-    delete By_m;
-    delete Bz_m;
-    delete Jx_;
-    delete Jy_;
-    delete Jz_;
-    delete rho_;
+
+   if(Ex_ != NULL) delete Ex_;
+   if(Ey_ != NULL) delete Ey_;
+   if(Ez_ != NULL) delete Ez_;
+   if(Bx_ != NULL) delete Bx_;
+   if(By_ != NULL) delete By_;
+   if(Bz_ != NULL) delete Bz_;
+//   if(Bx_m != NULL) delete Bx_m;
+//   if(By_m != NULL) delete By_m;
+//   if(Bz_m != NULL) delete Bz_m;
+   if(Jx_ != NULL) delete Jx_;
+   if(Jy_ != NULL) delete Jy_;
+   if(Jz_ != NULL) delete Jz_;
+   if(rho_ != NULL) delete rho_;
     
     for( unsigned int idiag=0; idiag<allFields_avg.size(); idiag++ )
         for( unsigned int ifield=0; ifield<allFields_avg[idiag].size(); ifield++ )
@@ -372,27 +379,10 @@ double ElectroMagn::computeNRJ() {
     return nrj;
 }
 
-string LowerCase(string in){
-    string out=in;
-    std::transform(out.begin(), out.end(), out.begin(), ::tolower);
-    return out;
-}
-
-
 void ElectroMagn::applyExternalFields(Patch* patch) {    
-    Field * field;
     for (vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
-        string name = LowerCase(extfield->field);
-        if      ( Ex_ && name==LowerCase(Ex_->name) ) field = Ex_;
-        else if ( Ey_ && name==LowerCase(Ey_->name) ) field = Ey_;
-        else if ( Ez_ && name==LowerCase(Ez_->name) ) field = Ez_;
-        else if ( Bx_ && name==LowerCase(Bx_->name) ) field = Bx_;
-        else if ( By_ && name==LowerCase(By_->name) ) field = By_;
-        else if ( Bz_ && name==LowerCase(Bz_->name) ) field = Bz_;
-        else field = NULL;
-        
-        if( field ) {
-            applyExternalField( field, extfield->profile, patch );
+        if( extfield->index < allFields.size() ) {
+            applyExternalField( allFields[extfield->index], extfield->profile, patch );
         }
     }
     Bx_m->copyFrom(Bx_);
@@ -404,12 +394,10 @@ void ElectroMagn::applyExternalFields(Patch* patch) {
 void ElectroMagn::applyAntenna(unsigned int iAntenna, double intensity) {
     Field *field=nullptr;
     Field *antennaField = antennas[iAntenna].field;
-    if (antennaField) {
+    
+    if (antennaField && antennas[iAntenna].index<allFields.size()) {
         
-        if     ( antennaField->name == "Jx" ) field = Jx_;
-        else if( antennaField->name == "Jy" ) field = Jy_;
-        else if( antennaField->name == "Jz" ) field = Jz_;
-        else ERROR("Antenna applied to field " << antennaField->name << " unknown. This should not happend, please contact developers");
+        field = allFields[antennas[iAntenna].index];
         
         for (unsigned int i=0; i< field->globalDims_ ; i++)
             (*field)(i) += intensity * (*antennaField)(i);

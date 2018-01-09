@@ -17,6 +17,10 @@
 #include "PusherHigueraCary.h"
 #include "PusherPhoton.h"
 
+#ifdef _VECTO
+#include "PusherBorisV.h"
+#endif
+
 #include "Params.h"
 #include "Species.h"
 
@@ -42,7 +46,12 @@ public:
             // assign the correct Pusher to Push
             if ( species->pusher == "boris")
             {
-                Push = new PusherBoris( params, species );
+                if (!params.vecto)
+                    Push = new PusherBoris( params, species );
+#ifdef _VECTO
+                else
+                    Push = new PusherBorisV( params, species );
+#endif
             }
             else if ( species->pusher == "borisnr" )
             {

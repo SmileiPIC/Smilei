@@ -137,6 +137,7 @@ class Screen(Diagnostic):
 		self._sums = [False]*self._naxes
 		self._selection = [self._np.s_[:]]*self._naxes
 		hasComposite = False
+		uniform = True
 		
 		for iaxis in range(self._naxes):
 			axis = self._axes[iaxis]
@@ -237,10 +238,13 @@ class Screen(Diagnostic):
 					self._label  .append(axistype)
 					self._units  .append(axis_units)
 					if axistype == "theta" and self._ndim==3:
+						uniform = False
 						plot_diff.append(self._np.diff(self._np.cos(edges))[self._selection[iaxis]])
 					else:
 						plot_diff.append(self._np.diff(edges)[self._selection[iaxis]])
 					self._finalShape[iaxis] = len(self._centers[-1])
+					if axis["log"]:
+						uniform = False
 		
 		self._selection = tuple(self._selection)
 		
@@ -290,13 +294,18 @@ class Screen(Diagnostic):
 		
 		# Calculate the array that represents the bins sizes in order to get units right.
 		# This array will be the same size as the plotted array
-		if len(plot_diff)==0:
+		if uniform:
 			self._bsize = 1.
-		elif len(plot_diff)==1:
-			self._bsize = plot_diff[0]
+			for d in plot_diff:
+				self._bsize *= d[0]
 		else:
-			self._bsize = self._np.prod( self._np.array( self._np.meshgrid( *plot_diff ) ), axis=0)
-			self._bsize = self._bsize.transpose([1,0]+range(2,len(plot_diff)))
+			if len(plot_diff)==0:
+				self._bsize = 1.
+			elif len(plot_diff)==1:
+				self._bsize = plot_diff[0]
+			else:
+				self._bsize = self._np.prod( self._np.array( self._np.meshgrid( *plot_diff ) ), axis=0)
+				self._bsize = self._bsize.transpose([1,0]+list(range(2,len(plot_diff))))
 		self._bsize = cell_volume / self._bsize
 		if not hasComposite: self._bsize *= coeff
 		self._bsize = self._np.squeeze(self._bsize)

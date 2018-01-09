@@ -13,23 +13,26 @@
 #include "Laser.h"
 #include "Tools.h"
 
+
 class ElectroMagnFactory {
 public:
-    static ElectroMagn* create(Params& params, std::vector<Species*>& vecSpecies,  Patch* patch) {
+    static ElectroMagn* create(Params& params, DomainDecomposition* domain_decomposition, std::vector<Species*>& vecSpecies,  Patch* patch) {
         ElectroMagn* EMfields = NULL;
         if ( params.geometry == "1Dcartesian" ) {
-            EMfields = new ElectroMagn1D(params, vecSpecies, patch);
+            EMfields = new ElectroMagn1D(params, domain_decomposition, vecSpecies, patch);
         }
         else if ( params.geometry == "2Dcartesian" ) {
-            EMfields = new ElectroMagn2D(params, vecSpecies, patch);
+            EMfields = new ElectroMagn2D(params, domain_decomposition, vecSpecies, patch);
         }
         else if ( params.geometry == "3Dcartesian" ) {
-            EMfields = new ElectroMagn3D(params, vecSpecies, patch);
+            EMfields = new ElectroMagn3D(params, domain_decomposition, vecSpecies, patch);
         }
         else {
             ERROR( "Unknown geometry : " << params.geometry << "!" );
         }
-
+        
+        EMfields->finishInitialization(vecSpecies.size(), patch);
+        
         // -----------------
         // Lasers properties
         // -----------------
@@ -56,16 +59,29 @@ public:
         for (unsigned int n_extfield = 0; n_extfield < numExtFields; n_extfield++) {
             ExtField extField;
             PyObject * profile;
-            std::ostringstream name;
             if( !PyTools::extract("field",extField.field,"ExternalField",n_extfield)) {
                 ERROR("ExternalField #"<<n_extfield<<": parameter 'field' not provided'");
             }
             // Now import the profile
-            name.str("");
+            std::ostringstream name("");
             name << "ExternalField[" << n_extfield <<"].profile";
             if (!PyTools::extract_pyProfile("profile",profile,"ExternalField",n_extfield))
-                ERROR(" ExternalField #"<<n_extfield<<": parameter 'profile' not understood");
+                ERROR("ExternalField #"<<n_extfield<<": parameter 'profile' not understood");
             extField.profile = new Profile(profile, params.nDim_field, name.str());
+
+            // Find which index the field is in the allFields vector
+            extField.index = 1000;
+            for( unsigned int ifield=0; ifield<EMfields->allFields.size(); ifield++ ) {
+                if( EMfields->allFields[ifield] 
+                 && extField.field==EMfields->allFields[ifield]->name ) {
+                    extField.index = ifield;
+                    break;
+                }
+            }
+            if( extField.index > EMfields->allFields.size()-1 ) {
+                ERROR("ExternalField #"<<n_extfield<<": field "<<extField.field<<" not found");
+            }
+            
 
             EMfields->extFields.push_back(extField);
         }
@@ -98,12 +114,23 @@ public:
             if (!PyTools::extract_pyProfile("time_profile" ,profile,"Antenna",n_antenna))
                 ERROR(" Antenna #"<<n_antenna<<": parameter 'time_profile' not understood");
             antenna.time_profile =  new Profile(profile, 1, name.str());
-
+            
+            // Find the index of the field in allFields
+            antenna.index = 1000;
+            for( unsigned int ifield=0; ifield<EMfields->allFields.size(); ifield++ ) {
+                if( EMfields->allFields[ifield]
+                 && antenna.fieldName==EMfields->allFields[ifield]->name ) {
+                    antenna.index = ifield;
+                    break;
+                }
+            }
+            if( antenna.index > EMfields->allFields.size()-1 ) {
+                ERROR("Antenna #"<<n_antenna<<": field "<<antenna.fieldName<<" not found");
+            }
+            
             EMfields->antennas.push_back(antenna);
         }
-
-
-        EMfields->finishInitialization(vecSpecies.size(), patch);
+        
 
         return EMfields;
     }
@@ -119,8 +146,9 @@ public:
         } else if ( params.geometry == "3Dcartesian" ) {
             newEMfields = new ElectroMagn3D(static_cast<ElectroMagn3D*>(EMfields), params, patch);
         }
-
-
+        
+        newEMfields->finishInitialization(vecSpecies.size(), patch);
+        
         // -----------------
         // Clone time-average fields
         // -----------------
@@ -159,8 +187,9 @@ public:
         // -----------------
         for (unsigned int n_extfield = 0; n_extfield < EMfields->extFields.size(); n_extfield++) {
             ExtField extField;
-            extField.field  = EMfields->extFields[n_extfield].field;
+            extField.field   = EMfields->extFields[n_extfield].field;
             extField.profile = EMfields->extFields[n_extfield].profile;
+            extField.index   = EMfields->extFields[n_extfield].index;
             newEMfields->extFields.push_back(extField);
         }
 
@@ -173,9 +202,9 @@ public:
             antenna.fieldName     = EMfields->antennas[n_antenna].fieldName    ;
             antenna.space_profile = EMfields->antennas[n_antenna].space_profile;
             antenna.time_profile  = EMfields->antennas[n_antenna].time_profile ;
+            antenna.index         = EMfields->antennas[n_antenna].index        ;
             newEMfields->antennas.push_back(antenna);
         }
-
 
         newEMfields->finishInitialization(vecSpecies.size(), patch);
 

@@ -73,9 +73,16 @@ import sys, os, re, glob, time, math
 import shutil, getopt, inspect, socket, pickle
 from subprocess import check_call,CalledProcessError,call
 import happi
+import numpy as np
 s = os.sep
-
 INITIAL_DIRECTORY = os.getcwd()
+
+# DEFINE THE execfile function for python3
+try:
+	execfile
+except:
+	def execfile(file):
+		exec(compile(open(file).read(), file, 'exec'))
 
 # SMILEI PATH VARIABLES
 if "SMILEI_ROOT" in os.environ :
@@ -97,8 +104,9 @@ EXEC_SCRIPT = 'exec_script.sh'
 EXEC_SCRIPT_OUT = 'exec_script.out'
 SMILEI_EXE_OUT = 'smilei_exe.out'
 
-# Load the Smilei module
-execfile(SMILEI_SCRIPTS+"Diagnostics.py")
+# Load the happi module
+sys.path.insert(0, SMILEI_ROOT)
+import happi
 
 # OTHER VARIABLES
 POINCARE = "poincare"
@@ -122,13 +130,13 @@ nb_restarts = 0
 
 # TO PRINT USAGE
 def usage():
-	print 'Usage: validation.py [-c] [-h] [-v] [-b <bench_case>] [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s] [-r <nb_restarts>]'
+	print( 'Usage: validation.py [-c] [-h] [-v] [-b <bench_case>] [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s] [-r <nb_restarts>]' )
 
 # GET COMMAND-LINE OPTIONS
 try:
 	options, remainder = getopt.getopt(
 		sys.argv[1:],
-		'o:m:b:gshvcrd:',
+		'o:m:b:r:gshvcd:',
 		['OMP=', 'MPI=', 'BENCH=', 'COMPILE_ONLY=', 'GENERATE=', 'HELP=', 'VERBOSE=', 'RESTARTS=','MPI_DISTRIBUTION='])
 except getopt.GetoptError as err:
 	usage()
@@ -149,38 +157,38 @@ for opt, arg in options:
 	elif opt in ('-c', '--COMPILEONLY'):
 		COMPILE_ONLY=True
 	elif opt in ('-h', '--HELP'):
-		print "-b"
-		print "     -b <bench_case>"
-		print "       <bench_case> : benchmark(s) to validate. Accepts wildcards."
-		print "       <bench_case>=? : ask input for a benchmark"
-		print "     DEFAULT : All benchmarks are validated."
-		print "-o"
-		print "     -o <nb_OMPThreads>"
-		print "       <nb_OMPThreads> : number of OpenMP threads used for the execution"
-		print "     DEFAULT : 4"
-		print "-m"
-		print "     -m <nb_MPIProcs>"
-		print "       <nb_MPIProcs> : number of MPI processes used for the execution"
-		print "     DEFAULT : 4"
-		print "-g"
-		print "     Generates the references"
-		print "-s"
-		print "     Plot differences with references (python -i option required to keep figures on screen)"
-		print "-r"
-		print "     -r <nb_restarts>"
-		print "       <nb_restarts> : number of restarts to run, as long as the simulations provide them."
-		print "     DEFAULT : 0 (meaning no restarts, only one simulation)"
-		print "-c"
-		print "     Compilation only"
-		print "-d"
-		print "     -d <mpi_distribution>"
-		print "      <mpi_distribution> is the name of the MPI distribution used for compilation and execution:"
-		print "      - default: mpirun -np"
-		print "      - openmpi: mpirun -mca btl tcp,sm,self -np"
-		print "      It enables to tune execution parameters."
-		print "     DEFAULT : default"
-		print "-v"
-		print "     Verbose mode"
+		print( "-b")
+		print( "     -b <bench_case>")
+		print( "       <bench_case> : benchmark(s) to validate. Accepts wildcards.")
+		print( "       <bench_case>=? : ask input for a benchmark")
+		print( "     DEFAULT : All benchmarks are validated.")
+		print( "-o")
+		print( "     -o <nb_OMPThreads>")
+		print( "       <nb_OMPThreads> : number of OpenMP threads used for the execution")
+		print( "     DEFAULT : 4")
+		print( "-m")
+		print( "     -m <nb_MPIProcs>")
+		print( "       <nb_MPIProcs> : number of MPI processes used for the execution")
+		print( "     DEFAULT : 4")
+		print( "-g")
+		print( "     Generates the references")
+		print( "-s")
+		print( "     Plot differences with references (python -i option required to keep figures on screen)")
+		print( "-r")
+		print( "     -r <nb_restarts>")
+		print( "       <nb_restarts> : number of restarts to run, as long as the simulations provide them.")
+		print( "     DEFAULT : 0 (meaning no restarts, only one simulation)")
+		print( "-c")
+		print( "     Compilation only")
+		print( "-d")
+		print( "     -d <mpi_distribution>")
+		print( "      <mpi_distribution> is the name of the MPI distribution used for compilation and execution:")
+		print( "      - default: mpirun -np")
+		print( "      - openmpi: mpirun -mca btl tcp,sm,self -np")
+		print( "      It enables to tune execution parameters.")
+		print( "     DEFAULT : default")
+		print( "-v")
+		print( "     Verbose mode")
 		sys.exit(0)
 	elif opt in ('-g', '--GENERATE'):
 		GENERATE = True
@@ -210,13 +218,13 @@ elif BENCH == "?":
 	VERBOSE = True
 	os.chdir(SMILEI_SCRIPTS)
 	#- Propose the list of all the input files
-	print '\n'.join(list_bench)
+	print( '\n'.join(list_bench))
 	#- Choose an input file name in the list
-	print 'Enter an input file from the list above:'
+	print( 'Enter an input file from the list above:')
 	BENCH = raw_input()
 	SMILEI_BENCH_LIST = [ BENCH ]
 	while BENCH not in list_bench:
-		print "Input file "+BENCH+" invalid. Try again."
+		print( "Input file "+BENCH+" invalid. Try again.")
 		BENCH = raw_input()
 		SMILEI_BENCH_LIST = [ BENCH ]
 elif BENCH in list_bench:
@@ -227,7 +235,7 @@ elif glob.glob( SMILEI_BENCHS+BENCH ):
 	for b in BENCH:
 		if b not in list_all:
 			if VERBOSE:
-				print "Input file "+b+" invalid."
+				print( "Input file "+b+" invalid.")
 			sys.exit(4)
 		SMILEI_BENCH_LIST= []
 		for b in BENCH:
@@ -236,13 +244,13 @@ elif glob.glob( SMILEI_BENCHS+BENCH ):
 		BENCH = SMILEI_BENCH_LIST
 else:
 	if VERBOSE:
-		print "Input file "+BENCH+" invalid."
+		print( "Input file "+BENCH+" invalid.")
 	sys.exit(4)
 
 if VERBOSE :
-	print ""
-	print "The list of input files to be validated is:\n\t"+"\n\t".join(SMILEI_BENCH_LIST)
-	print ""
+	print( "")
+	print( "The list of input files to be validated is:\n\t"+"\n\t".join(SMILEI_BENCH_LIST))
+	print( "")
 
 # GENERIC FUNCTION FOR WORKDIR ORGANIZATION
 
@@ -264,7 +272,7 @@ def workdir_archiv(BIN_NAME) :
 def RUN_POINCARE(command, dir):
 	# Create script
 	with open(EXEC_SCRIPT, 'w') as exec_script_desc:
-		print "ON POINCARE NOW"
+		print( "ON POINCARE NOW")
 		exec_script_desc.write(
 			"# environnement \n"
 			+"module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu 2>&1 > /dev/null\n"
@@ -280,15 +288,15 @@ def RUN_POINCARE(command, dir):
 	COMMAND = "/bin/bash "+EXEC_SCRIPT+" > "+EXEC_SCRIPT_OUT+" 2>&1"
 	try:
 		check_call(COMMAND, shell=True)
-	except CalledProcessError,e:
+	except CalledProcessError:
 		# if execution fails, exit with exit status 2
 		if VERBOSE :
-			print  "Execution failed for command `"+command+"`"
+			print(  "Execution failed for command `"+command+"`")
 			COMMAND = "/bin/bash cat "+WORKDIR+s+SMILEI_EXE_OUT
 			try :
 				check_call(COMMAND, shell=True)
-			except CalledProcessError,e:
-				print  "cat command failed"
+			except CalledProcessError:
+				print(  "cat command failed")
 				sys.exit(2)
 		if dir==WORKDIR:
 			os.chdir(WORKDIR_BASE)
@@ -328,29 +336,29 @@ def RUN_JOLLYJUMPER(command, dir):
 	COMMAND = "PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub  "+EXEC_SCRIPT
 	try:
 		check_call(COMMAND, shell=True)
-	except CalledProcessError,e:
+	except CalledProcessError:
 		# if command qsub fails, exit with exit status 2
 		exit_status_fd.close()
 		if dir==WORKDIR:
 			os.chdir(WORKDIR_BASE)
 			shutil.rmtree(WORKDIR)
 		if VERBOSE :
-			print  "qsub command failed: `"+COMMAND+"`"
+			print(  "qsub command failed: `"+COMMAND+"`")
 			sys.exit(2)
 	if VERBOSE:
-		print "Submitted job with command `"+command+"`"
+		print( "Submitted job with command `"+command+"`")
 	while ( EXIT_STATUS == "100" ) :
 		time.sleep(5)
 		EXIT_STATUS = exit_status_fd.readline()
 		exit_status_fd.seek(0)
 	if ( int(EXIT_STATUS) != 0 )  :
 		if VERBOSE :
-			print  "Execution failed for command `"+command+"`"
+			print(  "Execution failed for command `"+command+"`")
 			COMMAND = "cat "+WORKDIR+s+SMILEI_EXE_OUT
 			try :
 				check_call(COMMAND, shell=True)
-			except CalledProcessError,e:
-				print  "cat command failed"
+			except CalledProcessError:
+				print(  "cat command failed")
 				sys.exit(2)
 		exit_status_fd.close()
 		sys.exit(2)
@@ -365,15 +373,15 @@ def RUN_OTHER(command, dir):
 	"""
 	try :
 		check_call(command, shell=True)
-	except CalledProcessError,e:
+	except CalledProcessError:
 		if VERBOSE :
-			print  "Execution failed for command `"+command+"`"
+			print(  "Execution failed for command `"+command+"`")
 		sys.exit(2)
 
 
 # SET DIRECTORIES
 if VERBOSE :
-  print "Compiling Smilei"
+  print( "Compiling Smilei")
 
 os.chdir(SMILEI_ROOT)
 WORKDIR_BASE = SMILEI_ROOT+"validation"+s+"workdirs"
@@ -390,14 +398,14 @@ COMPILE_OUT_TMP=WORKDIR_BASE+s+'compilation_out_temp'
 # Find commands according to the host
 if JOLLYJUMPER in HOSTNAME :
 	if 12 % OMP != 0:
-		print  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME
+		print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME)
 		sys.exit(4)
 	NODES=((int(MPI)*int(OMP)-1)/24)+1
 	NPERSOCKET = int(math.ceil(MPI/NODES/2.))
 	COMPILE_COMMAND = 'make -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'unset MODULEPATH;module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles; module load compilers/icc/16.0.109 mpi/openmpi/1.6.5-ib-icc python/2.7.10 hdf5 compilers/gcc/4.8.2 > /dev/null 2>&1;make clean > /dev/null 2>&1'
 	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
-	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x $OMP_NUM_THREADS -x $OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
+	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
 	RUN = RUN_JOLLYJUMPER
 elif POINCARE in HOSTNAME :
 	#COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
@@ -418,7 +426,7 @@ else:
             RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; mpirun -mca btl tcp,sm,self -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
         # OpenMPI
         else:
-    	    RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+"mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
+    	    RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
         RUN = RUN_OTHER
 
 # CLEAN
@@ -443,21 +451,21 @@ try :
 		shutil.copy2(SMILEI_R,SMILEI_W)
 		if COMPILE_ONLY:
 			if VERBOSE:
-				print  "Smilei validation succeed."
+				print(  "Smilei validation succeed.")
 			exit(0)
 	else:
 		if COMPILE_ONLY :
 			if VERBOSE:
-				print  "Smilei validation not needed."
+				print(  "Smilei validation not needed.")
 			exit(0)
-except CalledProcessError,e:
+except CalledProcessError as e:
 	# if compiling errors, archive the workdir (if it contains a smilei bin), create a new one with compilation_errors inside and exit with error code
 	workdir_archiv(SMILEI_W)
 	os.rename(COMPILE_ERRORS,WORKDIR_BASE+s+COMPILE_ERRORS)
 	if VERBOSE:
-		print "Smilei validation cannot be done : compilation failed." ,e.returncode
+		print( "Smilei validation cannot be done : compilation failed. " + str(e.returncode))
 	sys.exit(3)
-if VERBOSE: print ""
+if VERBOSE: print( "")
 
 
 # DEFINE A CLASS TO CREATE A REFERENCE
@@ -470,30 +478,34 @@ class CreateReference(object):
 		self.data[data_name] = data
 
 	def write(self):
-		with open(self.reference_file, "w") as f:
-			pickle.dump(self.data, f)
+		with open(self.reference_file, "wb") as f:
+			pickle.dump(self.data, f, protocol=2)
 		size = os.path.getsize(self.reference_file)
 		if size > 1000000:
-			print "Reference file is too large ("+str(size)+"B) - suppressing ..."
+			print( "Reference file is too large ("+str(size)+"B) - suppressing ...")
 			os.remove(self.reference_file)
 			sys.exit(2)
 		if VERBOSE:
-			print "Created reference file "+self.reference_file
+			print( "Created reference file "+self.reference_file)
 
 # DEFINE A CLASS TO COMPARE A SIMULATION TO A REFERENCE
 class CompareToReference(object):
 	def __init__(self, bench_name):
 		try:
-			with open(SMILEI_REFERENCES+s+bench_name+".txt", 'r') as f:
-				self.data = pickle.load(f)
+			try:
+				with open(SMILEI_REFERENCES+s+bench_name+".txt", 'rb') as f:
+					self.data = pickle.load(f, fix_imports=True, encoding='latin1')
+			except:
+				with open(SMILEI_REFERENCES+s+bench_name+".txt", 'r') as f:
+					self.data = pickle.load(f)
 		except:
-			print "Unable to find the reference data for "+bench_name
+			print( "Unable to find the reference data for "+bench_name)
 			sys.exit(1)
-
+	
 	def __call__(self, data_name, data, precision=None):
 		# verify the name is in the reference
 		if data_name not in self.data.keys():
-			print "Reference quantity '"+data_name+"' not found"
+			print( "Reference quantity '"+data_name+"' not found")
 			sys.exit(1)
 		expected_data = self.data[data_name]
 		# ok if exactly equal (including strings or lists of strings)
@@ -508,37 +520,42 @@ class CompareToReference(object):
 				max_error_location = np.unravel_index(np.argmax(error), error.shape)
 				max_error = error[max_error_location]
 				if max_error < precision: return
-				print "Reference quantity '"+data_name+"' does not match the data (required precision "+str(precision)+")"
-				print "Max error = "+str(max_error)+" at index "+str(max_error_location)
+				print( "Reference quantity '"+data_name+"' does not match the data (required precision "+str(precision)+")")
+				print( "Max error = "+str(max_error)+" at index "+str(max_error_location))
 			else:
 				if np.all(double_data == np.double(expected_data)): return
-				print "Reference quantity '"+data_name+"' does not match the data"
-		except:
-			print "Reference quantity '"+data_name+"': unable to compare to data"
-		print "Reference data:"
-		print expected_data
-		print "New data:"
-		print data
+				print( "Reference quantity '"+data_name+"' does not match the data")
+		except Exception as e:
+			print( "Reference quantity '"+data_name+"': unable to compare to data")
+			print( e )
+		print( "Reference data:")
+		print( expected_data)
+		print( "New data:")
+		print( data)
 		sys.exit(1)
 
 # DEFINE A CLASS TO VIEW DIFFERENCES BETWEEN A SIMULATION AND A REFERENCE
 class ShowDiffWithReference(object):
 	def __init__(self, bench_name):
 		try:
-			with open(SMILEI_REFERENCES+s+bench_name+".txt", 'r') as f:
-				self.data = pickle.load(f)
+			try:
+				with open(SMILEI_REFERENCES+s+bench_name+".txt", 'rb') as f:
+					self.data = pickle.load(f, fix_imports=True, encoding='latin1')
+			except:
+				with open(SMILEI_REFERENCES+s+bench_name+".txt", 'r') as f:
+					self.data = pickle.load(f)
 		except:
-			print "Unable to find the reference data for "+bench_name
+			print( "Unable to find the reference data for "+bench_name)
 			sys.exit(1)
 
 	def __call__(self, data_name, data, precision=None):
 		import matplotlib.pyplot as plt
 		plt.ion()
-		print "Showing differences about '"+data_name+"'"
-		print "--------------------------"
+		print( "Showing differences about '"+data_name+"'")
+		print( "--------------------------")
 		# verify the name is in the reference
 		if data_name not in self.data.keys():
-			print "\tReference quantity not found"
+			print( "\tReference quantity not found")
 			expected_data = None
 		else:
 			expected_data = self.data[data_name]
@@ -549,18 +566,18 @@ class ShowDiffWithReference(object):
 			expected_data_float = np.array(expected_data, dtype=float)
 		# Otherwise, simply print the result
 		except:
-			print "\tQuantity cannot be plotted"
+			print( "\tQuantity cannot be plotted")
 			print_data = True
 			data_float = None
 		# Manage array plotting
 		if data_float is not None:
 			if expected_data is not None and data_float.shape != expected_data_float.shape:
-				print "\tReference and new data do not have the same shape: "+str(expected_data_float.shape)+" vs. "+str(data_float.shape)
+				print( "\tReference and new data do not have the same shape: "+str(expected_data_float.shape)+" vs. "+str(data_float.shape))
 			if expected_data is not None and data_float.ndim != expected_data_float.ndim:
-				print "\tReference and new data do not have the same dimension: "+str(expected_data_float.ndim)+" vs. "+str(data_float.ndim)
+				print( "\tReference and new data do not have the same dimension: "+str(expected_data_float.ndim)+" vs. "+str(data_float.ndim))
 				print_data = True
 			elif data_float.size == 0:
-				print "\t0D quantity cannot be plotted"
+				print( "\t0D quantity cannot be plotted")
 				print_data = True
 			elif data_float.ndim == 1:
 				nplots = 2
@@ -568,7 +585,7 @@ class ShowDiffWithReference(object):
 					nplots = 1
 				fig = plt.figure()
 				fig.suptitle(data_name)
-				print "\tPlotting in figure "+str(fig.number)
+				print( "\tPlotting in figure "+str(fig.number))
 				ax1 = fig.add_subplot(nplots,1,1)
 				ax1.plot( data_float, label="new data" )
 				ax1.plot( expected_data_float, label="reference data" )
@@ -585,7 +602,7 @@ class ShowDiffWithReference(object):
 					nplots = 2
 				fig = plt.figure()
 				fig.suptitle(data_name)
-				print "\tPlotting in figure "+str(fig.number)
+				print( "\tPlotting in figure "+str(fig.number))
 				ax1 = fig.add_subplot(1,nplots,1)
 				im = ax1.imshow( data_float )
 				ax1.set_title("new data")
@@ -603,15 +620,15 @@ class ShowDiffWithReference(object):
 				plt.draw()
 				plt.show()
 			else:
-				print "\t"+str(data_float.ndim)+"D quantity cannot be plotted"
+				print( "\t"+str(data_float.ndim)+"D quantity cannot be plotted")
 				print_data = True
 		# Print data if necessary
 		if print_data:
 			if expected_data is not None:
-				print "\tReference data:"
-				print expected_data
-			print "\tNew data:"
-			print data
+				print( "\tReference data:")
+				print( expected_data)
+			print( "\tNew data:")
+			print( data)
 
 
 # RUN THE BENCHMARKS
@@ -638,8 +655,14 @@ for BENCH in SMILEI_BENCH_LIST :
 	if nb_restarts > 0:
 		# Load the namelist
 		namelist = happi.openNamelist(SMILEI_BENCH)
-		# Find out the optimal dump_step
 		niter = namelist.Main.simulation_time / namelist.Main.timestep
+		# If the simulation does not have enough timesteps, change the number of restarts
+		if nb_restarts > niter - 4:
+			nb_restarts = max(0, niter - 4)
+			if VERBOSE :
+				print("Not enough timesteps for restarts. Changed to "+str(nb_restarts)+" restarts")
+	if nb_restarts > 0:
+		# Find out the optimal dump_step
 		dump_step = int( (niter+3.) / (nb_restarts+1) )
 		# Prepare block
 		if len(namelist.Checkpoints) > 0:
@@ -687,9 +710,9 @@ for BENCH in SMILEI_BENCH_LIST :
 			try :
 				# Copy the database
 				check_call(['cp '+SMILEI_DATABASE+'/*.h5 '+RESTART_WORKDIR], shell=True)
-			except CalledProcessError,e:
+			except CalledProcessError:
 				if VERBOSE :
-					print  "Execution failed for copy databases in ",RESTART_WORKDIR
+					print(  "Execution failed for copy databases in ",RESTART_WORKDIR)
 				sys.exit(2)
 
 		# If there are restarts, adds the Checkpoints block
@@ -704,7 +727,7 @@ for BENCH in SMILEI_BENCH_LIST :
 		# RUN smilei IF EXECUTION IS TRUE
 		if EXECUTION :
 			if VERBOSE:
-				print 'Running '+BENCH+' on '+HOSTNAME+' with '+str(OMP)+'x'+str(MPI)+' OMPxMPI' + ((", restart #"+str(irestart)) if irestart>0 else "")
+				print( 'Running '+BENCH+' on '+HOSTNAME+' with '+str(OMP)+'x'+str(MPI)+' OMPxMPI' + ((", restart #"+str(irestart)) if irestart>0 else ""))
 			RUN( RUN_COMMAND % SMILEI_NAMELISTS, RESTART_WORKDIR)
 
 		# CHECK THE OUTPUT FOR ERRORS
@@ -715,26 +738,27 @@ for BENCH in SMILEI_BENCH_LIST :
 				if search_error.search(line):
 					errors += [line]
 		if errors:
-			print ""
-			print("Errors appeared while running the simulation:")
-			print("---------------------------------------------")
-			for error in errors:
-				print(error)
+			if VERBOSE :
+				print( "")
+				print("Errors appeared while running the simulation:")
+				print("---------------------------------------------")
+				for error in errors:
+					print(error)
 			sys.exit(2)
 
 	os.chdir(WORKDIR)
 
 	# FIND THE VALIDATION SCRIPT FOR THIS BENCH
 	validation_script = SMILEI_VALIDATION + "analyses" + s + "validate_"+BENCH
-	if VERBOSE: print ""
+	if VERBOSE: print( "")
 	if not os.path.exists(validation_script):
-		print "Unable to find the validation script "+validation_script
+		print( "Unable to find the validation script "+validation_script)
 		sys.exit(1)
 
 	# IF REQUIRED, GENERATE THE REFERENCES
 	if GENERATE:
 		if VERBOSE:
-			print 'Generating reference for '+BENCH
+			print( 'Generating reference for '+BENCH)
 		Validate = CreateReference(BENCH)
 		execfile(validation_script)
 		Validate.write()
@@ -742,22 +766,22 @@ for BENCH in SMILEI_BENCH_LIST :
 	# OR PLOT DIFFERENCES WITH RESPECT TO EXISTING REFERENCES
 	elif SHOWDIFF:
 		if VERBOSE:
-			print 'Viewing differences for '+BENCH
+			print( 'Viewing differences for '+BENCH)
 		Validate = ShowDiffWithReference(BENCH)
 		execfile(validation_script)
 
 	# OTHERWISE, COMPARE TO THE EXISTING REFERENCES
 	else:
 		if VERBOSE:
-			print 'Validating '+BENCH
+			print( 'Validating '+BENCH)
 		Validate = CompareToReference(BENCH)
 		execfile(validation_script)
 
 	# CLEAN WORKDIRS, GOES HERE ONLY IF SUCCEED
 	os.chdir(WORKDIR_BASE)
 	shutil.rmtree( WORKDIR_BASE+s+'wd_'+os.path.basename(os.path.splitext(BENCH)[0]), True )
+	
+	if VERBOSE: print( "")
 
-	if VERBOSE: print ""
-
-print "Everything passed"
+print( "Everything passed")
 os.chdir(INITIAL_DIRECTORY)

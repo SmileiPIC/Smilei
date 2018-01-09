@@ -14,6 +14,10 @@
 #include "Species.h"
 #include "SpeciesNorm.h"
 
+#ifdef _VECTO
+#include "SpeciesV.h"
+#endif
+
 #include "PusherFactory.h"
 #include "IonizationFactory.h"
 #include "PartBoundCond.h"
@@ -75,7 +79,12 @@ public:
                  // Species with nonrelativistic Boris pusher == 'borisnr'
                  // Species with J.L. Vay pusher if == "vay"
                  // Species with Higuary Cary pusher if == "higueracary"
-                 thisSpecies = new SpeciesNorm(params, patch);
+                if ( (!params.vecto) || (pusher != "boris") )
+                    thisSpecies = new SpeciesNorm(params, patch);
+#ifdef _VECTO
+                else
+                    thisSpecies = new SpeciesV(params, patch);
+#endif
             } else {
                 ERROR("For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary'");
             }
@@ -239,12 +248,14 @@ public:
         }
 
         PyTools::extract("position_initialization",thisSpecies->position_initialization ,"Species",ispec);
+        thisSpecies->position_initialization_on_species=false;
+        thisSpecies->position_initialization_on_species_index=-1;
         if (thisSpecies->position_initialization.empty()) {
             ERROR("For species '" << species_name << "' empty position_initialization");
-        } else if ( (thisSpecies->position_initialization!="regular" )
-                  &&(thisSpecies->position_initialization!="random"  )
-                  &&(thisSpecies->position_initialization!="centered") ) {
-            ERROR("For species '" << species_name << "' unknown position_initialization: " << thisSpecies->position_initialization);
+        } else if ( (thisSpecies->position_initialization!="regular"  )
+                  &&(thisSpecies->position_initialization!="random"   )
+                  &&(thisSpecies->position_initialization!="centered" )) {
+              thisSpecies->position_initialization_on_species=true;
         }
 
         PyTools::extract("momentum_initialization",thisSpecies->momentum_initialization ,"Species",ispec);
@@ -386,29 +397,29 @@ public:
             thisSpecies->densityProfileType = "nb";
         }
 
-        thisSpecies->densityProfile = new Profile(profile1, params.nDim_particle, thisSpecies->densityProfileType+"_density "+species_name, true);
+        thisSpecies->densityProfile = new Profile(profile1, params.nDim_particle, Tools::merge(thisSpecies->densityProfileType,"_density ",species_name), true);
 
         // Number of particles per cell
         if( !PyTools::extract_pyProfile("particles_per_cell", profile1, "Species", ispec))
             ERROR("For species '" << species_name << "', particles_per_cell not found or not understood");
-        thisSpecies->ppcProfile = new Profile(profile1, params.nDim_particle, "particles_per_cell "+species_name, true);
+        thisSpecies->ppcProfile = new Profile(profile1, params.nDim_particle, Tools::merge("particles_per_cell ",species_name), true);
 
         // Charge
         if( !PyTools::extract_pyProfile("charge", profile1, "Species", ispec))
             ERROR("For species '" << species_name << "', charge not found or not understood");
-        thisSpecies->chargeProfile = new Profile(profile1, params.nDim_particle, "charge "+species_name, true);
+        thisSpecies->chargeProfile = new Profile(profile1, params.nDim_particle, Tools::merge("charge ",species_name), true);
 
         // Mean velocity
         PyTools::extract3Profiles("mean_velocity", ispec, profile1, profile2, profile3);
-        thisSpecies->velocityProfile[0] = new Profile(profile1, params.nDim_particle, "mean_velocity[0] "+species_name, true);
-        thisSpecies->velocityProfile[1] = new Profile(profile2, params.nDim_particle, "mean_velocity[1] "+species_name, true);
-        thisSpecies->velocityProfile[2] = new Profile(profile3, params.nDim_particle, "mean_velocity[2] "+species_name, true);
+        thisSpecies->velocityProfile[0] = new Profile(profile1, params.nDim_particle, Tools::merge("mean_velocity[0] ",species_name), true);
+        thisSpecies->velocityProfile[1] = new Profile(profile2, params.nDim_particle, Tools::merge("mean_velocity[1] ",species_name), true);
+        thisSpecies->velocityProfile[2] = new Profile(profile3, params.nDim_particle, Tools::merge("mean_velocity[2] ",species_name), true);
 
         // Temperature
         PyTools::extract3Profiles("temperature", ispec, profile1, profile2, profile3);
-        thisSpecies->temperatureProfile[0] = new Profile(profile1, params.nDim_particle, "temperature[0] "+species_name, true);
-        thisSpecies->temperatureProfile[1] = new Profile(profile2, params.nDim_particle, "temperature[1] "+species_name, true);
-        thisSpecies->temperatureProfile[2] = new Profile(profile3, params.nDim_particle, "temperature[2] "+species_name, true);
+        thisSpecies->temperatureProfile[0] = new Profile(profile1, params.nDim_particle, Tools::merge("temperature[0] ",species_name), true);
+        thisSpecies->temperatureProfile[1] = new Profile(profile2, params.nDim_particle, Tools::merge("temperature[1] ",species_name), true);
+        thisSpecies->temperatureProfile[2] = new Profile(profile3, params.nDim_particle, Tools::merge("temperature[2] ",species_name), true);
 
         // Get info about tracking
         unsigned int ntrack = PyTools::nComponents("DiagTrackParticles");
@@ -462,56 +473,63 @@ public:
         || species->pusher =="borisnr")
         {
             // Boris, Vay or Higuera-Cary
-            newSpecies = new SpeciesNorm(params, patch);
+            if ( (!params.vecto) || (species->pusher != "boris") )
+                newSpecies = new SpeciesNorm(params, patch);
+#ifdef _VECTO
+            else
+                newSpecies = new SpeciesV(params, patch);
+#endif
         }
 
         // Copy members
-        newSpecies->name                             = species->name;
-        newSpecies->pusher                           = species->pusher;
-        newSpecies->radiation_model                  = species->radiation_model;
-        newSpecies->radiation_photon_species         = species->radiation_photon_species;
-        newSpecies->radiation_photon_sampling        = species->radiation_photon_sampling;
-        newSpecies->radiation_photon_gamma_threshold = species->radiation_photon_gamma_threshold;
-        newSpecies->photon_species                   = species->photon_species;
-        newSpecies->speciesNumber                    = species->speciesNumber;
-        newSpecies->position_initialization          = species->position_initialization;
-        newSpecies->momentum_initialization          = species->momentum_initialization;
-        newSpecies->c_part_max                       = species->c_part_max;
-        newSpecies->mass                             = species->mass;
-        newSpecies->time_frozen                      = species->time_frozen;
-        newSpecies->radiating                        = species->radiating;
-        newSpecies->boundary_conditions              = species->boundary_conditions;
-        newSpecies->thermal_boundary_temperature     = species->thermal_boundary_temperature;
-        newSpecies->thermal_boundary_velocity        = species->thermal_boundary_velocity;
-        newSpecies->thermalVelocity                  = species->thermalVelocity;
-        newSpecies->thermalMomentum                  = species->thermalMomentum;
-        newSpecies->atomic_number                    = species->atomic_number;
-        newSpecies->ionization_model                 = species->ionization_model;
-        newSpecies->densityProfileType               = species->densityProfileType;
-        newSpecies->densityProfile                   = new Profile(species->densityProfile);
-        newSpecies->ppcProfile                       = new Profile(species->ppcProfile);
-        newSpecies->chargeProfile                    = new Profile(species->chargeProfile);
+        newSpecies->name                                     = species->name;
+        newSpecies->pusher                                   = species->pusher;
+        newSpecies->radiation_model                          = species->radiation_model;
+        newSpecies->radiation_photon_species                 = species->radiation_photon_species;
+        newSpecies->radiation_photon_sampling                = species->radiation_photon_sampling;
+        newSpecies->radiation_photon_gamma_threshold         = species->radiation_photon_gamma_threshold;
+        newSpecies->photon_species                           = species->photon_species;
+        newSpecies->speciesNumber                            = species->speciesNumber;
+        newSpecies->position_initialization_on_species       = species->position_initialization_on_species;
+        newSpecies->position_initialization_on_species_index = species->position_initialization_on_species_index;
+        newSpecies->position_initialization                  = species->position_initialization;
+        newSpecies->momentum_initialization                  = species->momentum_initialization;
+        newSpecies->c_part_max                               = species->c_part_max;
+        newSpecies->mass                                     = species->mass;
+        newSpecies->time_frozen                              = species->time_frozen;
+        newSpecies->radiating                                = species->radiating;
+        newSpecies->boundary_conditions                      = species->boundary_conditions;
+        newSpecies->thermal_boundary_temperature             = species->thermal_boundary_temperature;
+        newSpecies->thermal_boundary_velocity                = species->thermal_boundary_velocity;
+        newSpecies->thermalVelocity                          = species->thermalVelocity;
+        newSpecies->thermalMomentum                          = species->thermalMomentum;
+        newSpecies->atomic_number                            = species->atomic_number;
+        newSpecies->ionization_model                         = species->ionization_model;
+        newSpecies->densityProfileType                       = species->densityProfileType;
+        newSpecies->densityProfile                           = new Profile(species->densityProfile);
+        newSpecies->ppcProfile                               = new Profile(species->ppcProfile);
+        newSpecies->chargeProfile                            = new Profile(species->chargeProfile);
         newSpecies->velocityProfile.resize(3);
-        newSpecies->velocityProfile[0]               = new Profile(species->velocityProfile[0]);
-        newSpecies->velocityProfile[1]               = new Profile(species->velocityProfile[1]);
-        newSpecies->velocityProfile[2]               = new Profile(species->velocityProfile[2]);
+        newSpecies->velocityProfile[0]                       = new Profile(species->velocityProfile[0]);
+        newSpecies->velocityProfile[1]                       = new Profile(species->velocityProfile[1]);
+        newSpecies->velocityProfile[2]                       = new Profile(species->velocityProfile[2]);
         newSpecies->temperatureProfile.resize(3);
-        newSpecies->temperatureProfile[0]            = new Profile(species->temperatureProfile[0]);
-        newSpecies->temperatureProfile[1]            = new Profile(species->temperatureProfile[1]);
-        newSpecies->temperatureProfile[2]            = new Profile(species->temperatureProfile[2]);
-        newSpecies->max_charge                       = species->max_charge;
-        newSpecies->tracking_diagnostic              = species->tracking_diagnostic;
+        newSpecies->temperatureProfile[0]                    = new Profile(species->temperatureProfile[0]);
+        newSpecies->temperatureProfile[1]                    = new Profile(species->temperatureProfile[1]);
+        newSpecies->temperatureProfile[2]                    = new Profile(species->temperatureProfile[2]);
+        newSpecies->max_charge                               = species->max_charge;
+        newSpecies->tracking_diagnostic                      = species->tracking_diagnostic;
         if (newSpecies->mass==0) {
-            newSpecies->multiphoton_Breit_Wheeler[0]  = species->multiphoton_Breit_Wheeler[0];
-            newSpecies->multiphoton_Breit_Wheeler[1]  = species->multiphoton_Breit_Wheeler[1];
-            newSpecies->mBW_pair_creation_sampling[0] = species->mBW_pair_creation_sampling[0];
-            newSpecies->mBW_pair_creation_sampling[1] = species->mBW_pair_creation_sampling[1];
+            newSpecies->multiphoton_Breit_Wheeler[0]         = species->multiphoton_Breit_Wheeler[0];
+            newSpecies->multiphoton_Breit_Wheeler[1]         = species->multiphoton_Breit_Wheeler[1];
+            newSpecies->mBW_pair_creation_sampling[0]        = species->mBW_pair_creation_sampling[0];
+            newSpecies->mBW_pair_creation_sampling[1]        = species->mBW_pair_creation_sampling[1];
         }
 
-        newSpecies->particles->is_test             = species->particles->is_test;
-        newSpecies->particles->tracked             = species->particles->tracked;
-        newSpecies->particles->isQuantumParameter  = species->particles->isQuantumParameter;
-        newSpecies->particles->isMonteCarlo        = species->particles->isMonteCarlo;
+        newSpecies->particles->is_test                       = species->particles->is_test;
+        newSpecies->particles->tracked                       = species->particles->tracked;
+        newSpecies->particles->isQuantumParameter            = species->particles->isQuantumParameter;
+        newSpecies->particles->isMonteCarlo                  = species->particles->isMonteCarlo;
 
         // \todo : NOT SURE HOW THIS BEHAVES WITH RESTART
         if ( (!params.restart) && (with_particles) ) {
@@ -541,6 +559,40 @@ public:
             // Put the newly created species in the vector of species
             retSpecies.push_back(thisSpecies);
 
+        }
+
+        // Loop species to find species which their particles positions is on another species
+        for (unsigned int ispec1 = 0; ispec1<retSpecies.size(); ispec1++) {
+            if( retSpecies[ispec1]->position_initialization_on_species==true ) {
+                // If true then position_initialization of spec1 is not 'centered', 'regular' or 'random'
+                // So we have to check if :
+                // - 'position_initialization' of spec1 is another already created specie name;
+                // - 'position_initialization' of spec1 is not the spec1 name;
+                // - 'position_initialization' of spec2 is centered,regular,random;
+                // - The number of particle of spec1 is equal to spec2
+
+                // Loop all other species
+                for (unsigned int ispec2 = 0; ispec2<retSpecies.size(); ispec2++) {
+                    if( retSpecies[ispec1]->position_initialization == retSpecies[ispec2]->name ) {
+                        if ( retSpecies[ispec1]->position_initialization==retSpecies[ispec1]->name ) {
+                            ERROR("For species '"<<retSpecies[ispec1]->name<<"' position_initialization must be different from '"<<retSpecies[ispec1]->name<<"'.");
+                        }
+                        if ( retSpecies[ispec2]->position_initialization_on_species==true ) {
+                            ERROR("For species '"<<retSpecies[ispec2]->name<<"' position_initialization must be 'centered', 'regular' or 'random' (pre-defined position) in order to attach '"<<retSpecies[ispec1]->name<<"' to its initial position.");
+                        }
+                        if ( retSpecies[ispec1]->getNbrOfParticles() != retSpecies[ispec2]->getNbrOfParticles() ) {
+                            ERROR("Number of particles in species '"<<retSpecies[ispec1]->name<<"' is not equal to the number of particles in species '"<<retSpecies[ispec2]->name<<"'.");
+                        }
+                        // We copy ispec2 which is the index of the species, already created, on which initialize particle of the new created species
+                        retSpecies[ispec1]->position_initialization_on_species_index=ispec2;
+                        // We copy position of species 2 (index ispec2), for position on species 1 (index ispec1)
+                        retSpecies[ispec1]->particles->Position=retSpecies[ispec2]->particles->Position;
+                    }
+                }
+                if (retSpecies[ispec1]->position_initialization_on_species_index==-1) {
+                    ERROR("Specie '"<<retSpecies[ispec1]->position_initialization<<"' doesn't exist. We can't initialize position on this species. Choose an already created specie or 'centered', 'regular', 'random'.")
+                }
+            }
         }
 
         // Loop species to find the electron species for ionizable species
@@ -667,6 +719,18 @@ public:
         for (unsigned int ispec = 0; ispec < vecSpecies.size(); ispec++) {
             Species* newSpecies = SpeciesFactory::clone(vecSpecies[ispec], params, patch, with_particles);
             retSpecies.push_back( newSpecies );
+        }
+
+        // Init position on another specie
+        for (unsigned int i=0; i<retSpecies.size(); i++) {
+            if ( retSpecies[i]->position_initialization_on_species==true ) {
+                unsigned int pos_init_index = retSpecies[i]->position_initialization_on_species_index;
+                if ( retSpecies[i]->getNbrOfParticles() != retSpecies[pos_init_index]->getNbrOfParticles() ){
+                    ERROR("Number of particles in species '"<<retSpecies[i]->name<<"' is not equal to the number of particles in species '"<<retSpecies[pos_init_index]->name<<"'.");
+                }
+                // We copy ispec2 which is the index of the species, already created, on which initialize particles of the new created species
+                retSpecies[i]->particles->Position=retSpecies[pos_init_index]->particles->Position;
+            }
         }
 
         // Ionization

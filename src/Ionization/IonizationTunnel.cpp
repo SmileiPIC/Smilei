@@ -32,13 +32,18 @@ IonizationTunnel::IonizationTunnel(Params& params, Species * species) : Ionizati
 
 
 
-void IonizationTunnel::operator() (Particles* particles, unsigned int ipart_min, unsigned int ipart_max, vector<LocalFields> *Epart, ElectroMagn* EMfields, Projector* Proj) {
+void IonizationTunnel::operator() (Particles* particles, unsigned int ipart_min, unsigned int ipart_max, vector<double> *Epart, ElectroMagn* EMfields, Projector* Proj) {
     
     unsigned int Z, Zp1, newZ, k_times;
     double TotalIonizPot, E, invE, factorJion, delta, ran_p, Mult, D_sum, P_sum, Pint_tunnel;
     vector<double> IonizRate_tunnel(atomic_number_), Dnom_tunnel(atomic_number_);
     LocalFields Jion;
     double factorJion_0 = au_to_mec2 * EC_to_au*EC_to_au * invdt;
+    
+    int nparts = particles->size();
+    double* Ex = &( (*Epart)[0*nparts] );
+    double* Ey = &( (*Epart)[1*nparts] );
+    double* Ez = &( (*Epart)[2*nparts] );
     
     for( unsigned int ipart=ipart_min ; ipart<ipart_max; ipart++ ) {
         
@@ -49,9 +54,9 @@ void IonizationTunnel::operator() (Particles* particles, unsigned int ipart_min,
         if (Z==atomic_number_) continue;
         
         // Absolute value of the electric field normalized in atomic units
-        E = EC_to_au * sqrt( pow((*Epart)[ipart].x,2) 
-                            +pow((*Epart)[ipart].y,2) 
-                            +pow((*Epart)[ipart].z,2) );
+        E = EC_to_au * sqrt( pow(*(Ex+ipart),2)
+                            +pow(*(Ey+ipart),2) 
+                            +pow(*(Ez+ipart),2) );
         if (E<1e-10) continue;
         
         // --------------------------------
@@ -120,9 +125,9 @@ void IonizationTunnel::operator() (Particles* particles, unsigned int ipart_min,
         
         // Compute ionization current
         factorJion *= TotalIonizPot;
-        Jion.x = factorJion * (*Epart)[ipart].x;
-        Jion.y = factorJion * (*Epart)[ipart].y;
-        Jion.z = factorJion * (*Epart)[ipart].z;
+        Jion.x = factorJion * *(Ex+ipart);
+        Jion.y = factorJion * *(Ey+ipart);
+        Jion.z = factorJion * *(Ez+ipart);
         
         (*Proj)(EMfields->Jx_, EMfields->Jy_, EMfields->Jz_, *particles, ipart, Jion);
         

@@ -16,9 +16,9 @@ PeekAtSpecies::PeekAtSpecies(Params& p, unsigned int species_id) :
     bool ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", species_id);
     if( ok1 ) densityProfileType = "nb";
     if( ok2 ) densityProfileType = "charge";
-    densityProfile = new Profile(profile1, params->nDim_field, densityProfileType+"_density "+species_name);
+    densityProfile = new Profile(profile1, params->nDim_field, Tools::merge(densityProfileType,"_density ",species_name));
     PyTools::extract_pyProfile("particles_per_cell", profile1, "Species", species_id);
-    ppcProfile = new Profile(profile1, params->nDim_field, "particles_per_cell "+species_name);
+    ppcProfile = new Profile(profile1, params->nDim_field, Tools::merge("particles_per_cell ",species_name));
 }
 
 

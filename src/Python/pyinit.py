@@ -180,6 +180,12 @@ class Main(SmileiSingleton):
     timestep = None
     timestep_over_CFL = None
 
+    # PXR tuning
+    global_factor = []
+    norder = []
+    is_spectral = False
+    is_pxr = False
+
     # Poisson tuning
     solve_poisson = True
     poisson_max_iteration = 50000
@@ -239,21 +245,28 @@ class Main(SmileiSingleton):
                 else:
                     raise Exception("timestep: maxwell_solver not implemented "+Main.maxwell_solver)
 
-        #initialize grid_length if not defined based on number_of_cells and cell_length
-        if len(Main.grid_length) is 0:
-            if len(Main.number_of_cells) is 0:
-                raise Exception("grid_length and number_of_cells not defined")
-            elif len(Main.number_of_cells) != len(Main.cell_length):
-                raise Exception("grid_length and number_of_cells not defined")
-            else :
-                Main.grid_length = [a*b for a,b in zip(Main.number_of_cells, Main.cell_length)]
+        # Initialize grid_length if not defined based on number_of_cells and cell_length
+        if (    len(Main.grid_length + Main.number_of_cells) == 0
+             or len(Main.grid_length + Main.cell_length) == 0
+             or len(Main.number_of_cells + Main.cell_length) == 0
+             or len(Main.number_of_cells) * len(Main.grid_length) * len(Main.cell_length) != 0
+           ):
+                raise Exception("Main: you must define two (and only two) between grid_length, number_of_cells and cell_length")
 
-        #initialize simulation_time if not defined based on number_of_timesteps and timestep
-        if Main.simulation_time is None:
-            if Main.number_of_timesteps is None:
-                raise Exception("simulation_time and number_of_timesteps not defined")
-            else:
-                Main.simulation_time = Main.number_of_timesteps * Main.timestep
+        if len(Main.grid_length) == 0:
+            Main.grid_length = [a*b for a,b in zip(Main.number_of_cells, Main.cell_length)]
+
+        if len(Main.cell_length) == 0:
+            Main.cell_length = [a/b for a,b in zip(Main.grid_length, Main.number_of_cells)]
+
+        if len(Main.number_of_cells) == 0:
+            Main.number_of_cells = [int(round(float(a)/float(b))) for a,b in zip(Main.grid_length, Main.cell_length)]
+            old_grid_length = Main.grid_length
+            Main.grid_length = [a*b for a,b in zip(Main.number_of_cells, Main.cell_length)]
+            if smilei_mpi_rank == 0:
+                different = [abs((a-b)/(a+b))>1e-10 for a,b in zip(Main.grid_length, old_grid_length)]
+                if any(different):
+                    print("\t[Python WARNING] Main.grid_length="+str(Main.grid_length)+" (was "+str(old_grid_length)+")")
 
 class LoadBalancing(SmileiSingleton):
     """Load balancing parameters"""
@@ -403,6 +416,12 @@ class DiagTrackParticles(SmileiComponent):
     every = 0
     flush_every = 1
     filter = None
+    attributes = ["x", "y", "z", "px", "py", "pz"]
+
+class DiagPerformances(SmileiSingleton):
+    """Performances diagnostic"""
+    every = 0
+    flush_every = 1
 
 # external fields
 class ExternalField(SmileiComponent):
@@ -429,13 +448,14 @@ class PartWall(SmileiComponent):
 # Radiation reaction configuration (continuous and MC algorithms)
 class RadiationReaction(SmileiComponent):
     """
-    Fine-tuning of synchrotron-like radiation loss
+    Fine-tuning of synchrotron-like radiation reaction
     (classical continuous, quantum correction, stochastics and MC algorithms)
     """
     # Table h parameters
     h_chipa_min = 1e-3
     h_chipa_max = 1e1
     h_dim = 128
+    h_computation_method = "table"
     # Table integfochi parameters
     integfochi_chipa_min = 1e-3
     integfochi_chipa_max = 1e1

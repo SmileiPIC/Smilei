@@ -1,6 +1,7 @@
-
+#include "PyTools.h"
 #include "DiagnosticScalar.h"
 #include "VectorPatch.h"
+#include "Tools.h"
 
 #include <iomanip>
 #include <algorithm>
@@ -8,14 +9,6 @@
 
 using namespace std;
 
-// Concatenate several strings
-template<class T1, class T2, class T3=string>
-string merge(T1 s1, T2 s2, T3 s3="")
-{
-    ostringstream tot("");
-    tot << s1 << s2 << s3;
-    return tot.str();
-}
 
 DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch = NULL ):
 latest_timestep(-1)
@@ -159,11 +152,11 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         if (! vecPatches(0)->vecSpecies[ispec]->particles->is_test) {
             species_name = vecPatches(0)->vecSpecies[ispec]->name;
-            necessary_species[ispec] = necessary_Ukin || allowedKey(merge("Dens_",species_name))
-                                                      || allowedKey(merge("Ntot_",species_name))
-                                                      || allowedKey(merge("Zavg_",species_name))
-                                                      || allowedKey(merge("Ukin_",species_name))
-                                                      || allowedKey(merge("Urad_",species_name))
+            necessary_species[ispec] = necessary_Ukin || allowedKey(Tools::merge("Dens_",species_name))
+                                                      || allowedKey(Tools::merge("Ntot_",species_name))
+                                                      || allowedKey(Tools::merge("Zavg_",species_name))
+                                                      || allowedKey(Tools::merge("Ukin_",species_name))
+                                                      || allowedKey(Tools::merge("Urad_",species_name))
                                                       || allowedKey("UmBWpairs");
         }
     }
@@ -171,17 +164,17 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     unsigned int nfield = 6;
     necessary_fieldUelm.resize(nfield, false);
     for( unsigned int ifield=0; ifield<nfield; ifield++ )
-        necessary_fieldUelm[ifield] = necessary_Uelm || allowedKey("Uelm_"+fields[ifield]);
+        necessary_fieldUelm[ifield] = necessary_Uelm || allowedKey(Tools::merge("Uelm_",fields[ifield]));
     // Fields min/max
     nfield = fields.size();
     necessary_fieldMinMax.resize(nfield, false);
     necessary_fieldMinMax_any = false;
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
         necessary_fieldMinMax[ifield] =
-            allowedKey( merge(fields[ifield], "Min"    ) )
-         || allowedKey( merge(fields[ifield], "MinCell") )
-         || allowedKey( merge(fields[ifield], "Max"    ) )
-         || allowedKey( merge(fields[ifield], "MaxCell") );
+            allowedKey( Tools::merge(fields[ifield], "Min"    ) )
+         || allowedKey( Tools::merge(fields[ifield], "MinCell") )
+         || allowedKey( Tools::merge(fields[ifield], "Max"    ) )
+         || allowedKey( Tools::merge(fields[ifield], "MaxCell") );
         if( necessary_fieldMinMax[ifield] ) necessary_fieldMinMax_any = true;
     }
     // Poynting flux
@@ -194,7 +187,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
             //if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
             //else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
             //else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
-            poy_name = merge("Poy", "XYZ"[i], j==0?"min":"max");
+            poy_name = Tools::merge("Poy", Tools::xyz[i], j==0?"min":"max");
             necessary_poy[k] = necessary_Uelm_BC || allowedKey(poy_name) || allowedKey(poy_name+"Inst");
             k++;
         }
@@ -232,11 +225,11 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         if (! vecPatches(0)->vecSpecies[ispec]->particles->is_test) {
             species_name = vecPatches(0)->vecSpecies[ispec]->name;
-            sDens[ispec] = newScalar_SUM( merge("Dens_", species_name) );
-            sNtot[ispec] = newScalar_SUM( merge("Ntot_", species_name) );
-            sZavg[ispec] = newScalar_SUM( merge("Zavg_", species_name) );
-            sUkin[ispec] = newScalar_SUM( merge("Ukin_", species_name) );
-            sUrad[ispec] = newScalar_SUM( merge("Urad_", species_name) );
+            sDens[ispec] = newScalar_SUM( Tools::merge("Dens_", species_name) );
+            sNtot[ispec] = newScalar_SUM( Tools::merge("Ntot_", species_name) );
+            sZavg[ispec] = newScalar_SUM( Tools::merge("Zavg_", species_name) );
+            sUkin[ispec] = newScalar_SUM( Tools::merge("Ukin_", species_name) );
+            sUrad[ispec] = newScalar_SUM( Tools::merge("Urad_", species_name) );
         }
     }
 
@@ -244,7 +237,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     nfield = 6;
     fieldUelm.resize(nfield, NULL);
     for( unsigned int ifield=0; ifield<nfield; ifield++ )
-        fieldUelm[ifield] = newScalar_SUM( merge("Uelm_", fields[ifield]) );
+        fieldUelm[ifield] = newScalar_SUM( Tools::merge("Uelm_", fields[ifield]) );
 
     // Scalars related to fields min and max
     nfield = fields.size();
@@ -252,8 +245,8 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     fieldMax.resize(nfield, NULL);
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
         if( necessary_fieldMinMax[ifield] ) {
-            fieldMin[ifield] = newScalar_MINLOC( merge(fields[ifield], "Min") );
-            fieldMax[ifield] = newScalar_MAXLOC( merge(fields[ifield], "Max") );
+            fieldMin[ifield] = newScalar_MINLOC( Tools::merge(fields[ifield], "Min") );
+            fieldMax[ifield] = newScalar_MAXLOC( Tools::merge(fields[ifield], "Max") );
         }
     }
 
@@ -266,9 +259,9 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
             //if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
             //else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
             //else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
-            poy_name = merge("Poy", "XYZ"[i], j==0?"min":"max");
+            poy_name = Tools::merge("Poy", Tools::xyz[i], j==0?"min":"max");
             poy    [k] = newScalar_SUM(       poy_name          );
-            poyInst[k] = newScalar_SUM( merge(poy_name, "Inst") );
+            poyInst[k] = newScalar_SUM( Tools::merge(poy_name, "Inst") );
             k++;
         }
     }
@@ -681,35 +674,35 @@ uint64_t DiagnosticScalar::getDiskFootPrint(int istart, int istop, Patch* patch)
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         if (! patch->vecSpecies[ispec]->particles->is_test) {
             string species_name = patch->vecSpecies[ispec]->name;
-            scalars.push_back( merge("Dens_", species_name) );
-            scalars.push_back( merge("Ntot_", species_name) );
-            scalars.push_back( merge("Zavg_", species_name) );
-            scalars.push_back( merge("Ukin_", species_name) );
-            scalars.push_back( merge("Urad_", species_name) );
+            scalars.push_back( Tools::merge("Dens_", species_name) );
+            scalars.push_back( Tools::merge("Ntot_", species_name) );
+            scalars.push_back( Tools::merge("Zavg_", species_name) );
+            scalars.push_back( Tools::merge("Ukin_", species_name) );
+            scalars.push_back( Tools::merge("Urad_", species_name) );
         }
     }
     // 3 - Field scalars
-    scalars.push_back( merge("Uelm_", patch->EMfields->Ex_ ->name) );
-    scalars.push_back( merge("Uelm_", patch->EMfields->Ey_ ->name) );
-    scalars.push_back( merge("Uelm_", patch->EMfields->Ez_ ->name) );
-    scalars.push_back( merge("Uelm_", patch->EMfields->Bx_m->name) );
-    scalars.push_back( merge("Uelm_", patch->EMfields->By_m->name) );
-    scalars.push_back( merge("Uelm_", patch->EMfields->Bz_m->name) );
+    scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Ex_ ->name) );
+    scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Ey_ ->name) );
+    scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Ez_ ->name) );
+    scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Bx_m->name) );
+    scalars.push_back( Tools::merge("Uelm_", patch->EMfields->By_m->name) );
+    scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Bz_m->name) );
     // 4 - Scalars related to fields min and max
     for( unsigned int i=0; i<2; i++ ) {
         string minmax = (i==0) ? "Min" : "Max";
         for( unsigned int j=0; j<2; j++ ) {
             string cell = (j==0) ? "" : "Cell";
-            scalars.push_back( merge(patch->EMfields->Ex_ ->name, minmax, cell) );
-            scalars.push_back( merge(patch->EMfields->Ey_ ->name, minmax, cell) );
-            scalars.push_back( merge(patch->EMfields->Ez_ ->name, minmax, cell) );
-            scalars.push_back( merge(patch->EMfields->Bx_m->name, minmax, cell) );
-            scalars.push_back( merge(patch->EMfields->By_m->name, minmax, cell) );
-            scalars.push_back( merge(patch->EMfields->Bz_m->name, minmax, cell) );
-            scalars.push_back( merge(patch->EMfields->Jx_ ->name, minmax, cell) );
-            scalars.push_back( merge(patch->EMfields->Jy_ ->name, minmax, cell) );
-            scalars.push_back( merge(patch->EMfields->Jz_ ->name, minmax, cell) );
-            scalars.push_back( merge(patch->EMfields->rho_->name, minmax, cell) );
+            scalars.push_back( Tools::merge(patch->EMfields->Ex_ ->name, minmax, cell) );
+            scalars.push_back( Tools::merge(patch->EMfields->Ey_ ->name, minmax, cell) );
+            scalars.push_back( Tools::merge(patch->EMfields->Ez_ ->name, minmax, cell) );
+            scalars.push_back( Tools::merge(patch->EMfields->Bx_m->name, minmax, cell) );
+            scalars.push_back( Tools::merge(patch->EMfields->By_m->name, minmax, cell) );
+            scalars.push_back( Tools::merge(patch->EMfields->Bz_m->name, minmax, cell) );
+            scalars.push_back( Tools::merge(patch->EMfields->Jx_ ->name, minmax, cell) );
+            scalars.push_back( Tools::merge(patch->EMfields->Jy_ ->name, minmax, cell) );
+            scalars.push_back( Tools::merge(patch->EMfields->Jz_ ->name, minmax, cell) );
+            scalars.push_back( Tools::merge(patch->EMfields->rho_->name, minmax, cell) );
         }
     }
     // 5 - Scalars related to the Poynting flux
@@ -720,9 +713,9 @@ uint64_t DiagnosticScalar::getDiskFootPrint(int istart, int istop, Patch* patch)
             //if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
             //else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
             //else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
-            poy_name = merge("Poy", "XYZ"[i], j==0?"min":"max");
+            poy_name = Tools::merge("Poy", Tools::xyz[i], j==0?"min":"max");
             scalars.push_back(       poy_name          );
-            scalars.push_back( merge(poy_name, "Inst") );
+            scalars.push_back( Tools::merge(poy_name, "Inst") );
             k++;
         }
     }

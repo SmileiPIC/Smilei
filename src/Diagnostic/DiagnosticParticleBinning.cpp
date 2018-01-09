@@ -81,9 +81,12 @@ DiagnosticParticleBinning::DiagnosticParticleBinning( Params &params, SmileiMPI*
     }
     
     // Calculate the size of the output array
-    output_size = 1;
+    uint64_t total_size = 1;
     for( unsigned int i=0; i<histogram->axes.size(); i++ )
-        output_size *= histogram->axes[i]->nbins;
+        total_size *= histogram->axes[i]->nbins;
+    if( total_size > 4294967296 ) // 2^32
+        ERROR(errorPrefix << ": too many points (" << total_size << " > 2^32)");
+    output_size = (unsigned int) total_size;
     
     // Output info on diagnostics
     if ( smpi->isMaster() ) {
@@ -244,7 +247,7 @@ void DiagnosticParticleBinning::write(int timestep, SmileiMPI* smpi)
     // if time_average, then we need to divide by the number of timesteps
     if (time_average > 1) {
         coeff = 1./((double)time_average);
-        for (int i=0; i<output_size; i++)
+        for (unsigned int i=0; i<output_size; i++)
             data_sum[i] *= coeff;
     }
     
@@ -302,7 +305,7 @@ uint64_t DiagnosticParticleBinning::getDiskFootPrint(int istart, int istop, Patc
     footprint += ndumps * 640;
     
     // Add size of each dump
-    footprint += ndumps * (uint64_t)(output_size * 8);
+    footprint += ndumps * (uint64_t)(output_size) * 8;
     
     return footprint;
 }
