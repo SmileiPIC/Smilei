@@ -471,21 +471,26 @@ namelist("")
     std::string radiation_model = "none";
     for (unsigned int ispec = 0; ispec < tot_species_number; ispec++) {
 
-       PyTools::extract("radiation_model", radiation_model ,"Species",ispec);
+        PyTools::extract("radiation_model", radiation_model ,"Species",ispec);
 
-       if (radiation_model=="Monte-Carlo")
-       {
+        // Cancelation of the letter case for `radiation_model`
+        std::transform(radiation_model.begin(), radiation_model.end(), radiation_model.begin(), ::tolower);
+
+        if (radiation_model=="monte-carlo" || radiation_model=="mc")
+        {
            this->hasMCRadiation = true;
-       }
-       else if (radiation_model=="Landau-Lifshitz"
-            || radiation_model=="corrected-Landau-Lifshitz")
-       {
+        }
+        else if (radiation_model=="landau-lifshitz"
+            || radiation_model=="ll"
+            || radiation_model=="corrected-landau-lifshitz"
+            || radiation_model=="cll")
+        {
            this->hasLLRadiation = true;
-       }
-       else if (radiation_model=="Niel")
-       {
+        }
+        else if (radiation_model=="niel")
+        {
            this->hasNielRadiation = true;
-       }
+        }
     }
 
     // -------------------------------------------------------

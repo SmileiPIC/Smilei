@@ -54,8 +54,20 @@ public:
         // Extract type of species radiation from namelist
         std::string radiation_model = "none"; // default value
         if (!PyTools::extract("radiation_model", radiation_model ,"Species",ispec) )
+        {
             if ( patch->isMaster() )
                 WARNING("For species '" << species_name << "', radiation_model not defined: assumed = 'none'.");
+        }
+        else
+        {
+            // Cancelation of the letter case for `radiation_model`
+            std::transform(radiation_model.begin(), radiation_model.end(), radiation_model.begin(), tolower);
+
+            // Name simplification
+            if (radiation_model=="monte-carlo") radiation_model="mc";
+            if (radiation_model=="landau-lifshitz") radiation_model="ll";
+            if (radiation_model=="corrected-landau-lifshitz") radiation_model="cll";
+        }
 
         // Extract mass from namelist
         double mass;
@@ -92,15 +104,15 @@ public:
 
             // Radiation model of the species
             // Species with a Monte-Carlo process for the radiation loss
-            if (radiation_model=="Monte-Carlo") {
-                 thisSpecies->particles->isQuantumParameter = true;
-                 thisSpecies->particles->isMonteCarlo = true;
-                 thisSpecies->radiating = true;
+            if (radiation_model=="mc") {
+                thisSpecies->particles->isQuantumParameter = true;
+                thisSpecies->particles->isMonteCarlo = true;
+                thisSpecies->radiating = true;
             }
             // Species with another radiation loss model
-            else if (radiation_model=="Landau-Lifshitz"
-                 ||  radiation_model=="corrected-Landau-Lifshitz"
-                 ||  radiation_model=="Niel")
+            else if ((radiation_model=="ll")
+                 ||  (radiation_model=="cll")
+                 ||  (radiation_model=="niel"))
             {
                  thisSpecies->particles->isQuantumParameter = true;
                  thisSpecies->radiating = true;
@@ -121,10 +133,10 @@ public:
 
             // Non compatibility
             if ((pusher=="borisnr")
-            && (radiation_model=="Monte-Carlo"
-             || radiation_model=="Landau-Lifshitz"
-             || radiation_model=="corrected-Landau-Lifshitz"
-             || radiation_model=="Niel"))
+            && (radiation_model=="mc"
+             || radiation_model=="ll"
+             || radiation_model=="cll"
+             || radiation_model=="niel"))
             {
                 ERROR("For species `" << species_name
                                        << "` radiation_model `"
@@ -157,7 +169,7 @@ public:
         // Monte-Carlo Photon emission properties
         if (mass > 0.)
         {
-            if (thisSpecies->radiation_model == "Monte-Carlo")
+            if (thisSpecies->radiation_model == "mc")
             {
                 if (PyTools::extract("radiation_photon_species", thisSpecies->radiation_photon_species, "Species",ispec))
                 {
