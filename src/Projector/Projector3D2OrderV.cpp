@@ -55,175 +55,659 @@ Projector3D2OrderV::~Projector3D2OrderV()
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
+//void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
+void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int* iold, double *deltaold)
 {
+
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
-    
-    // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
-    double crx_p = charge_weight*dx_ov_dt;
-    double cry_p = charge_weight*dy_ov_dt;
-    double crz_p = charge_weight*dz_ov_dt;
-    
-    // variable declaration
-    double xpn, ypn, zpn;
-    double delta, delta2;
-    // arrays used for the Esirkepov projection method
-    double Sx0[5], Sx1[5], Sy0[5], Sy1[5], Sz0[5], Sz1[5], DSx[5], DSy[5], DSz[5];
-    double tmpJx[5][5], tmpJy[5][5], tmpJz[5][5];
-    
-    for (unsigned int i=0; i<5; i++) {
-        Sx1[i] = 0.;
-        Sy1[i] = 0.;
-        Sz1[i] = 0.;
-    }
-    
-    for (unsigned int j=0; j<5; j++)
-        for (unsigned int k=0; k<5; k++)
-            tmpJx[j][k] = 0.;
-    for (unsigned int i=0; i<5; i++)
-        for (unsigned int k=0; k<5; k++)
-            tmpJy[i][k] = 0.;
-    for (unsigned int i=0; i<5; i++)
-        for (unsigned int j=0; j<5; j++)
-            tmpJz[i][j] = 0.;
 
-    int nparts = particles.size();
-    // --------------------------------------------------------
-    // Locate particles & Calculate Esirkepov coef. S, DS and W
-    // --------------------------------------------------------
-    
-    // locate the particle on the primal grid at former time-step & calculate coeff. S0
-    delta = *deltaold;
-    delta2 = delta*delta;
-    Sx0[0] = 0.;
-    Sx0[1] = 0.5 * (delta2-delta+0.25);
-    Sx0[2] = 0.75-delta2;
-    Sx0[3] = 0.5 * (delta2+delta+0.25);
-    Sx0[4] = 0.;
-    
-    delta = *(deltaold+nparts);
-    delta2 = delta*delta;
-    Sy0[0] = 0.;
-    Sy0[1] = 0.5 * (delta2-delta+0.25);
-    Sy0[2] = 0.75-delta2;
-    Sy0[3] = 0.5 * (delta2+delta+0.25);
-    Sy0[4] = 0.;
-    
-    delta = *(deltaold+2*nparts);
-    delta2 = delta*delta;
-    Sz0[0] = 0.;
-    Sz0[1] = 0.5 * (delta2-delta+0.25);
-    Sz0[2] = 0.75-delta2;
-    Sz0[3] = 0.5 * (delta2+delta+0.25);
-    Sz0[4] = 0.;
-    
-    // locate the particle on the primal grid at current time-step & calculate coeff. S1
-    xpn = particles.position(0, ipart) * dx_inv_;
-    int ip = round(xpn);
+    int npart_total = particles.size();
     int ipo = iold[0];
-    int ip_m_ipo = ip-ipo-i_domain_begin;
-    delta  = xpn - (double)ip;
-    delta2 = delta*delta;
-    Sx1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
-    Sx1[ip_m_ipo+2] = 0.75-delta2;
-    Sx1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
-    
-    ypn = particles.position(1, ipart) * dy_inv_;
-    int jp = round(ypn);
     int jpo = iold[1];
-    int jp_m_jpo = jp-jpo-j_domain_begin;
-    delta  = ypn - (double)jp;
-    delta2 = delta*delta;
-    Sy1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);
-    Sy1[jp_m_jpo+2] = 0.75-delta2;
-    Sy1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
-    
-    zpn = particles.position(2, ipart) * dz_inv_;
-    int kp = round(zpn);
     int kpo = iold[2];
-    int kp_m_kpo = kp-kpo-k_domain_begin;
-    delta  = zpn - (double)kp;
-    delta2 = delta*delta;
-    Sz1[kp_m_kpo+1] = 0.5 * (delta2-delta+0.25);
-    Sz1[kp_m_kpo+2] = 0.75-delta2;
-    Sz1[kp_m_kpo+3] = 0.5 * (delta2+delta+0.25);
-    
-    // computes Esirkepov coefficients
-    for (unsigned int i=0; i < 5; i++) {
-        DSx[i] = Sx1[i] - Sx0[i];
-        DSy[i] = Sy1[i] - Sy0[i];
-        DSz[i] = Sz1[i] - Sz0[i];
+    int ipom2 = ipo-2;
+    int jpom2 = jpo-2;
+    int kpom2 = kpo-2;
+
+    int vecSize = 8;
+    int bsize = 5*5*5*vecSize;
+
+    double bJx[bsize] __attribute__((aligned(64)));
+
+    double Sx0_buff_vect[32] __attribute__((aligned(64)));
+    double Sy0_buff_vect[32] __attribute__((aligned(64)));
+    double Sz0_buff_vect[32] __attribute__((aligned(64)));
+    double DSx[40] __attribute__((aligned(64)));
+    double DSy[40] __attribute__((aligned(64)));
+    double DSz[40] __attribute__((aligned(64)));
+    double charge_weight[8] __attribute__((aligned(64)));
+
+    // Closest multiple of 8 higher or equal than npart = iend-istart.
+    int cell_nparts( (int)iend-(int)istart );
+    int nbVec = ( iend-istart+(cell_nparts-1)-((iend-istart-1)&(cell_nparts-1)) ) / vecSize;
+    if (nbVec*vecSize != cell_nparts)
+        nbVec++;
+
+    #pragma omp simd
+    for (unsigned int j=0; j<1000; j++)
+        bJx[j] = 0.;
+
+    for (int ivect=0 ; ivect < cell_nparts; ivect += vecSize ){
+        
+        int np_computed(min(cell_nparts-ivect,vecSize));
+
+        #pragma omp simd
+        for (int ipart=0 ; ipart<np_computed; ipart++ ){
+
+            // locate the particle on the primal grid at former time-step & calculate coeff. S0
+            //                            X                                 //
+            double delta = deltaold[ivect+ipart+istart];
+            double delta2 = delta*delta;
+
+            Sx0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
+            Sx0_buff_vect[  vecSize+ipart] = 0.75-delta2;
+            Sx0_buff_vect[2*vecSize+ipart] = 0.5 * (delta2+delta+0.25);
+            Sx0_buff_vect[3*vecSize+ipart] = 0.;
+
+            //                            Y                                 //
+            delta = deltaold[ivect+ipart+istart+npart_total];
+            delta2 = delta*delta;
+
+            Sy0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
+            Sy0_buff_vect[  vecSize+ipart] = 0.75-delta2;
+            Sy0_buff_vect[2*vecSize+ipart] = 0.5 * (delta2+delta+0.25);
+            Sy0_buff_vect[3*vecSize+ipart] = 0.;
+
+            //                            Z                                 //
+            delta = deltaold[ivect+ipart+istart+2*npart_total];
+            delta2 = delta*delta;
+
+            Sz0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
+            Sz0_buff_vect[  vecSize+ipart] = 0.75-delta2;
+            Sz0_buff_vect[2*vecSize+ipart] = 0.5 * (delta2+delta+0.25);
+            Sz0_buff_vect[3*vecSize+ipart] = 0.;
+
+
+            // locate the particle on the primal grid at current time-step & calculate coeff. S1
+            //                            X                                 //
+            double pos = particles.position(0, ivect+ipart+istart) * dx_inv_;
+            int cell = round(pos);
+            int cell_shift = cell-ipo-i_domain_begin;
+            delta  = pos - (double)cell;
+            delta2 = delta*delta;
+            double deltam =  0.5 * (delta2-delta+0.25);
+            double deltap =  0.5 * (delta2+delta+0.25);
+            delta2 = 0.75 - delta2;
+            double m1 = (cell_shift == -1);
+            double c0 = (cell_shift ==  0);
+            double p1 = (cell_shift ==  1);
+            DSx [          ipart] = m1 * deltam                             ;
+            DSx [  vecSize+ipart] = c0 * deltam + m1 * delta2               -  Sx0_buff_vect[          ipart];
+            DSx [2*vecSize+ipart] = p1 * deltam + c0 * delta2 + m1* deltap  -  Sx0_buff_vect[  vecSize+ipart];
+            DSx [3*vecSize+ipart] =               p1 * delta2 + c0* deltap  -  Sx0_buff_vect[2*vecSize+ipart];
+            DSx [4*vecSize+ipart] =                             p1* deltap  ;
+            //                            Y                                 //
+            pos = particles.position(1, ivect+ipart+istart) * dy_inv_;
+            cell = round(pos);
+            cell_shift = cell-jpo-j_domain_begin;
+            delta  = pos - (double)cell;
+            delta2 = delta*delta;
+            deltam =  0.5 * (delta2-delta+0.25);
+            deltap =  0.5 * (delta2+delta+0.25);
+	    delta2 = 0.75 - delta2;
+            m1 = (cell_shift == -1);
+            c0 = (cell_shift ==  0);
+            p1 = (cell_shift ==  1);
+            DSy [          ipart] = m1 * deltam                            ;
+            DSy [  vecSize+ipart] = c0 * deltam + m1 * delta2              -  Sy0_buff_vect[          ipart]                 ;
+            DSy [2*vecSize+ipart] = p1 * deltam + c0 * delta2 + m1* deltap -  Sy0_buff_vect[  vecSize+ipart] ;
+            DSy [3*vecSize+ipart] =               p1 * delta2 + c0* deltap -  Sy0_buff_vect[2*vecSize+ipart] ;
+            DSy [4*vecSize+ipart] =                             p1* deltap  ;
+            //                            Z                                 //
+            pos = particles.position(2, ivect+ipart+istart) * dz_inv_;
+            cell = round(pos);
+            cell_shift = cell-kpo-k_domain_begin;
+            delta  = pos - (double)cell;
+            delta2 = delta*delta;
+            deltam =  0.5 * (delta2-delta+0.25);
+            deltap =  0.5 * (delta2+delta+0.25);
+	    delta2 = 0.75 - delta2;
+            m1 = (cell_shift == -1);
+            c0 = (cell_shift ==  0);
+            p1 = (cell_shift ==  1);
+            DSz [          ipart] = m1 * deltam                                                            ;
+            DSz [  vecSize+ipart] = c0 * deltam + m1 * delta2              -  Sz0_buff_vect[          ipart]                 ;
+            DSz [2*vecSize+ipart] = p1 * deltam + c0 * delta2 + m1* deltap -  Sz0_buff_vect[  vecSize+ipart] ;
+            DSz [3*vecSize+ipart] =               p1 * delta2 + c0* deltap -  Sz0_buff_vect[2*vecSize+ipart] ;
+            DSz [4*vecSize+ipart] =                             p1* deltap  ;
+
+
+            charge_weight[ipart] = (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
+        }
+
+            // Jx^(d,p,p)
+        #pragma omp simd
+        for (int ipart=0 ; ipart<np_computed; ipart++ ){
+
+            //optrpt complains about the following loop but not unrolling it actually seems to give better result.
+            double crx_p = charge_weight[ipart]*dx_ov_dt;
+
+            double sum[5];
+            sum[0] = 0.;
+            for (unsigned int k=1 ; k<5 ; k++) {
+                sum[k] = sum[k-1]-DSx[(k-1)*vecSize+ipart];
+            }
+
+            double tmp(  crx_p * ( one_third*DSy[ipart]*DSz[ipart] ) );
+            for (unsigned int i=1 ; i<5 ; i++) {
+                bJx [ ( (i)*25 )*vecSize+ipart] += sum[i]*tmp;
+            }
+
+            for (unsigned int k=1 ; k<5 ; k++) {
+                double tmp( crx_p * ( 0.5*DSy[ipart]*Sz0_buff_vect[(k-1)*vecSize+ipart] + one_third*DSy[ipart]*DSz[k*vecSize+ipart] ) );
+                int index( ( k )*vecSize+ipart );
+                for (unsigned int i=1 ; i<5 ; i++) {
+                    bJx [ index+25*(i)*vecSize ] += sum[i]*tmp;
+               }
+                
+            }
+            for (unsigned int j=1 ; j<5 ; j++) {
+                double tmp( crx_p * ( 0.5*DSz[ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart] + one_third*DSy[j*vecSize+ipart]*DSz[ipart] ) );
+                int index( ( j*5 )*vecSize+ipart );
+                for (unsigned int i=1 ; i<5 ; i++) {
+                    bJx [ index+25*(i)*vecSize ] += sum[i]*tmp;
+                }
+            }//i
+            for ( int j=1 ; j<5 ; j++) {
+                for ( int k=1 ; k<5 ; k++) {
+                    double tmp( crx_p * ( Sy0_buff_vect[(j-1)*vecSize+ipart]*Sz0_buff_vect[(k-1)*vecSize+ipart] 
+                                          + 0.5*DSy[j*vecSize+ipart]*Sz0_buff_vect[(k-1)*vecSize+ipart] 
+                                          + 0.5*DSz[k*vecSize+ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart] 
+                                          + one_third*DSy[j*vecSize+ipart]*DSz[k*vecSize+ipart] ) );
+                    int index( ( j*5 + k )*vecSize+ipart );
+                    for ( int i=1 ; i<5 ; i++) {
+                        bJx [ index+25*(i)*vecSize ] += sum[i]*tmp;
+                   }
+                }
+            }//i
+
+
+        } // END ipart (compute coeffs)
+
+    } // END ivect
+
+
+    int iloc0 = ipom2*b_dim[1]*b_dim[2]+jpom2*b_dim[2]+kpom2;
+
+
+    int iloc  = iloc0;
+    for (unsigned int i=1 ; i<5 ; i++) {
+        iloc += b_dim[1]*b_dim[2];
+        for (unsigned int j=0 ; j<5 ; j++) {
+            #pragma omp simd
+            for (unsigned int k=0 ; k<5 ; k++) {
+                double tmpJx = 0.;
+                int ilocal = ((i)*25+j*5+k)*vecSize;
+                #pragma unroll(8)
+                for (int ipart=0 ; ipart<8; ipart++ ){
+                    tmpJx += bJx [ilocal+ipart];
+                }
+                Jx[iloc+j*b_dim[2]+k]         += tmpJx;
+            }
+        }
+    }
+
+
+
+        // Jy^(p,d,p)
+
+    #pragma omp simd
+    for (unsigned int j=0; j<1000; j++)
+        bJx[j] = 0.;
+
+
+    cell_nparts = (int)iend-(int)istart;
+    for (int ivect=0 ; ivect < cell_nparts; ivect += vecSize ){
+        
+        int np_computed(min(cell_nparts-ivect,vecSize));
+
+        //#pragma omp simd
+        //for (unsigned int i=0; i<200; i++)
+        //    bJx[i] = 0.;
+
+        #pragma omp simd
+        for (int ipart=0 ; ipart<np_computed; ipart++ ){
+
+            // locate the particle on the primal grid at former time-step & calculate coeff. S0
+            //                            X                                 //
+            double delta = deltaold[ivect+ipart+istart];
+            double delta2 = delta*delta;
+
+            Sx0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
+            Sx0_buff_vect[  vecSize+ipart] = 0.75-delta2;
+            Sx0_buff_vect[2*vecSize+ipart] = 0.5 * (delta2+delta+0.25);
+            Sx0_buff_vect[3*vecSize+ipart] = 0.;
+
+            //                            Y                                 //
+            delta = deltaold[ivect+ipart+istart+npart_total];
+            delta2 = delta*delta;
+
+            Sy0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
+            Sy0_buff_vect[  vecSize+ipart] = 0.75-delta2;
+            Sy0_buff_vect[2*vecSize+ipart] = 0.5 * (delta2+delta+0.25);
+            Sy0_buff_vect[3*vecSize+ipart] = 0.;
+
+            //                            Z                                 //
+            delta = deltaold[ivect+ipart+istart+2*npart_total];
+            delta2 = delta*delta;
+
+            Sz0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
+            Sz0_buff_vect[  vecSize+ipart] = 0.75-delta2;
+            Sz0_buff_vect[2*vecSize+ipart] = 0.5 * (delta2+delta+0.25);
+            Sz0_buff_vect[3*vecSize+ipart] = 0.;
+
+
+            // locate the particle on the primal grid at current time-step & calculate coeff. S1
+            //                            X                                 //
+            double pos = particles.position(0, ivect+ipart+istart) * dx_inv_;
+            int cell = round(pos);
+            int cell_shift = cell-ipo-i_domain_begin;
+            delta  = pos - (double)cell;
+            delta2 = delta*delta;
+            double deltam =  0.5 * (delta2-delta+0.25);
+            double deltap =  0.5 * (delta2+delta+0.25);
+            delta2 = 0.75 - delta2;
+            double m1 = (cell_shift == -1);
+            double c0 = (cell_shift ==  0);
+            double p1 = (cell_shift ==  1);
+            DSx [          ipart] = m1 * deltam                             ;
+            DSx [  vecSize+ipart] = c0 * deltam + m1 * delta2               -  Sx0_buff_vect[          ipart];
+            DSx [2*vecSize+ipart] = p1 * deltam + c0 * delta2 + m1* deltap  -  Sx0_buff_vect[  vecSize+ipart];
+            DSx [3*vecSize+ipart] =               p1 * delta2 + c0* deltap  -  Sx0_buff_vect[2*vecSize+ipart];
+            DSx [4*vecSize+ipart] =                             p1* deltap  ;
+            //                            Y                                 //
+            pos = particles.position(1, ivect+ipart+istart) * dy_inv_;
+            cell = round(pos);
+            cell_shift = cell-jpo-j_domain_begin;
+            delta  = pos - (double)cell;
+            delta2 = delta*delta;
+            deltam =  0.5 * (delta2-delta+0.25);
+            deltap =  0.5 * (delta2+delta+0.25);
+	    delta2 = 0.75 - delta2;
+            m1 = (cell_shift == -1);
+            c0 = (cell_shift ==  0);
+            p1 = (cell_shift ==  1);
+            DSy [          ipart] = m1 * deltam                            ;
+            DSy [  vecSize+ipart] = c0 * deltam + m1 * delta2              -  Sy0_buff_vect[          ipart]                 ;
+            DSy [2*vecSize+ipart] = p1 * deltam + c0 * delta2 + m1* deltap -  Sy0_buff_vect[  vecSize+ipart] ;
+            DSy [3*vecSize+ipart] =               p1 * delta2 + c0* deltap -  Sy0_buff_vect[2*vecSize+ipart] ;
+            DSy [4*vecSize+ipart] =                             p1* deltap  ;
+            //                            Z                                 //
+            pos = particles.position(2, ivect+ipart+istart) * dz_inv_;
+            cell = round(pos);
+            cell_shift = cell-kpo-k_domain_begin;
+            delta  = pos - (double)cell;
+            delta2 = delta*delta;
+            deltam =  0.5 * (delta2-delta+0.25);
+            deltap =  0.5 * (delta2+delta+0.25);
+	    delta2 = 0.75 - delta2;
+            m1 = (cell_shift == -1);
+            c0 = (cell_shift ==  0);
+            p1 = (cell_shift ==  1);
+            DSz [          ipart] = m1 * deltam                                                            ;
+            DSz [  vecSize+ipart] = c0 * deltam + m1 * delta2              -  Sz0_buff_vect[          ipart]                 ;
+            DSz [2*vecSize+ipart] = p1 * deltam + c0 * delta2 + m1* deltap -  Sz0_buff_vect[  vecSize+ipart] ;
+            DSz [3*vecSize+ipart] =               p1 * delta2 + c0* deltap -  Sz0_buff_vect[2*vecSize+ipart] ;
+            DSz [4*vecSize+ipart] =                             p1* deltap  ;
+
+
+            charge_weight[ipart] = (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
+        }
+
+        #pragma omp simd
+        for (int ipart=0 ; ipart<np_computed; ipart++ ){
+            //optrpt complains about the following loop but not unrolling it actually seems to give better result.
+            double cry_p = charge_weight[ipart]*dy_ov_dt;
+
+            double sum[5];
+            sum[0] = 0.;
+            for (unsigned int k=1 ; k<5 ; k++) {
+                sum[k] = sum[k-1]-DSy[(k-1)*vecSize+ipart];
+            }
+
+            double tmp( cry_p *one_third*DSz[ipart]*DSx[ipart] );
+            for (unsigned int j=1 ; j<5 ; j++) {
+                bJx [((j)*5)*vecSize+ipart] += sum[j]*tmp;
+            }
+            for (unsigned int k=1 ; k<5 ; k++) {
+                double tmp( cry_p * (0.5*DSx[0]*Sz0_buff_vect[(k-1)*vecSize+ipart] + one_third*DSz[k*vecSize+ipart]*DSx[ipart]) );
+                int index( ( k )*vecSize+ipart );
+                for (unsigned int j=1 ; j<5 ; j++) {
+                    bJx [ index+5*j*vecSize ] += sum[j]*tmp;
+                }
+            }
+            for (unsigned int i=1 ; i<5 ; i++) {
+                double tmp( cry_p * (0.5*DSz[ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart] + one_third*DSz[0]*DSx[i*vecSize+ipart]) );
+                int index( ( i*25 )*vecSize+ipart );
+                for (unsigned int j=1 ; j<5 ; j++) {
+                    bJx [ index+5*j*vecSize ] += sum[j]*tmp;
+                }
+            }//i
+            for (unsigned int i=1 ; i<5 ; i++) {
+                for (unsigned int k=1 ; k<5 ; k++) {
+                    double tmp( cry_p * (Sz0_buff_vect[(k-1)*vecSize+ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart]
+                                         + 0.5*DSz[k*vecSize+ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart]
+                                         + 0.5*DSx[i*vecSize+ipart]*Sz0_buff_vect[(k-1)*vecSize+ipart]
+                                         + one_third*DSz[k*vecSize+ipart]*DSx[i*vecSize+ipart]) );
+                    int index( ( i*25 + k )*vecSize+ipart );
+                    for (unsigned int j=1 ; j<5 ; j++) {
+                        bJx [ index+5*j*vecSize ] += sum[j]*tmp;
+                   }
+                }
+            }//i
+     
+
+        } // END ipart (compute coeffs)
+    }
+
+
+    iloc = iloc0+ipom2*b_dim[2];
+    for (unsigned int i=0 ; i<5 ; i++) {
+        for (unsigned int j=1 ; j<5 ; j++) {
+            #pragma omp simd
+            for (unsigned int k=0 ; k<5 ; k++) {
+                double tmpJy = 0.;
+                int ilocal = ((i)*25+j*5+k)*vecSize;
+                #pragma unroll(8)
+                for (int ipart=0 ; ipart<8; ipart++ ){
+                    tmpJy += bJx [ilocal+ipart];                  
+                }
+                Jy[iloc+j*b_dim[2]+k] += tmpJy;
+            }
+        }
+        iloc += (b_dim[1]+1)*b_dim[2];
+    }
+
+    cell_nparts = (int)iend-(int)istart;
+    #pragma omp simd
+    for (unsigned int j=0; j<1000; j++)
+        bJx[j] = 0.;
+
+        // Jz^(p,p,d)
+        //for (unsigned int j=0; j<1000; j=j+40)
+        //    #pragma omp simd
+        //    for (unsigned int i=0; i<8; i++)
+        //        bJx[j+i] = 0.;
+
+    for (int ivect=0 ; ivect < cell_nparts; ivect += vecSize ){
+
+        int np_computed(min(cell_nparts-ivect,vecSize));
+
+        //#pragma omp simd
+        //for (unsigned int i=0; i<200; i++)
+        //    bJx[i] = 0.;
+
+        #pragma omp simd
+        for (int ipart=0 ; ipart<np_computed; ipart++ ){
+
+            // locate the particle on the primal grid at former time-step & calculate coeff. S0
+            //                            X                                 //
+            double delta = deltaold[ivect+ipart+istart];
+            double delta2 = delta*delta;
+
+            Sx0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
+            Sx0_buff_vect[  vecSize+ipart] = 0.75-delta2;
+            Sx0_buff_vect[2*vecSize+ipart] = 0.5 * (delta2+delta+0.25);
+            Sx0_buff_vect[3*vecSize+ipart] = 0.;
+
+            //                            Y                                 //
+            delta = deltaold[ivect+ipart+istart+npart_total];
+            delta2 = delta*delta;
+
+            Sy0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
+            Sy0_buff_vect[  vecSize+ipart] = 0.75-delta2;
+            Sy0_buff_vect[2*vecSize+ipart] = 0.5 * (delta2+delta+0.25);
+            Sy0_buff_vect[3*vecSize+ipart] = 0.;
+
+            //                            Z                                 //
+            delta = deltaold[ivect+ipart+istart+2*npart_total];
+            delta2 = delta*delta;
+
+            Sz0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
+            Sz0_buff_vect[  vecSize+ipart] = 0.75-delta2;
+            Sz0_buff_vect[2*vecSize+ipart] = 0.5 * (delta2+delta+0.25);
+            Sz0_buff_vect[3*vecSize+ipart] = 0.;
+
+
+            // locate the particle on the primal grid at current time-step & calculate coeff. S1
+            //                            X                                 //
+            double pos = particles.position(0, ivect+ipart+istart) * dx_inv_;
+            int cell = round(pos);
+            int cell_shift = cell-ipo-i_domain_begin;
+            delta  = pos - (double)cell;
+            delta2 = delta*delta;
+            double deltam =  0.5 * (delta2-delta+0.25);
+            double deltap =  0.5 * (delta2+delta+0.25);
+            delta2 = 0.75 - delta2;
+            double m1 = (cell_shift == -1);
+            double c0 = (cell_shift ==  0);
+            double p1 = (cell_shift ==  1);
+            DSx [          ipart] = m1 * deltam                             ;
+            DSx [  vecSize+ipart] = c0 * deltam + m1 * delta2               -  Sx0_buff_vect[          ipart];
+            DSx [2*vecSize+ipart] = p1 * deltam + c0 * delta2 + m1* deltap  -  Sx0_buff_vect[  vecSize+ipart];
+            DSx [3*vecSize+ipart] =               p1 * delta2 + c0* deltap  -  Sx0_buff_vect[2*vecSize+ipart];
+            DSx [4*vecSize+ipart] =                             p1* deltap  ;
+            //                            Y                                 //
+            pos = particles.position(1, ivect+ipart+istart) * dy_inv_;
+            cell = round(pos);
+            cell_shift = cell-jpo-j_domain_begin;
+            delta  = pos - (double)cell;
+            delta2 = delta*delta;
+            deltam =  0.5 * (delta2-delta+0.25);
+            deltap =  0.5 * (delta2+delta+0.25);
+	    delta2 = 0.75 - delta2;
+            m1 = (cell_shift == -1);
+            c0 = (cell_shift ==  0);
+            p1 = (cell_shift ==  1);
+            DSy [          ipart] = m1 * deltam                            ;
+            DSy [  vecSize+ipart] = c0 * deltam + m1 * delta2              -  Sy0_buff_vect[          ipart]                 ;
+            DSy [2*vecSize+ipart] = p1 * deltam + c0 * delta2 + m1* deltap -  Sy0_buff_vect[  vecSize+ipart] ;
+            DSy [3*vecSize+ipart] =               p1 * delta2 + c0* deltap -  Sy0_buff_vect[2*vecSize+ipart] ;
+            DSy [4*vecSize+ipart] =                             p1* deltap  ;
+            //                            Z                                 //
+            pos = particles.position(2, ivect+ipart+istart) * dz_inv_;
+            cell = round(pos);
+            cell_shift = cell-kpo-k_domain_begin;
+            delta  = pos - (double)cell;
+            delta2 = delta*delta;
+            deltam =  0.5 * (delta2-delta+0.25);
+            deltap =  0.5 * (delta2+delta+0.25);
+	    delta2 = 0.75 - delta2;
+            m1 = (cell_shift == -1);
+            c0 = (cell_shift ==  0);
+            p1 = (cell_shift ==  1);
+            DSz [          ipart] = m1 * deltam                                                            ;
+            DSz [  vecSize+ipart] = c0 * deltam + m1 * delta2              -  Sz0_buff_vect[          ipart]                 ;
+            DSz [2*vecSize+ipart] = p1 * deltam + c0 * delta2 + m1* deltap -  Sz0_buff_vect[  vecSize+ipart] ;
+            DSz [3*vecSize+ipart] =               p1 * delta2 + c0* deltap -  Sz0_buff_vect[2*vecSize+ipart] ;
+            DSz [4*vecSize+ipart] =                             p1* deltap  ;
+
+
+            charge_weight[ipart] = (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
+        }
+
+        #pragma omp simd
+        for (int ipart=0 ; ipart<np_computed; ipart++ ){
+            //optrpt complains about the following loop but not unrolling it actually seems to give better result.
+            double crz_p = charge_weight[ipart]*dz_ov_dt;
+
+            double sum[5];
+            sum[0] = 0.;
+            for (unsigned int k=1 ; k<5 ; k++) {
+                sum[k] = sum[k-1]-DSz[(k-1)*vecSize+ipart];
+            }
+
+            double tmp( crz_p *one_third*DSx[ipart]*DSy[ipart] );
+            for (unsigned int k=1 ; k<5 ; k++) {
+                bJx[( k )*vecSize+ipart] += sum[k]*tmp;
+            }
+            for (unsigned int j=1 ; j<5 ; j++) {
+                double tmp( crz_p * (0.5*DSx[ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart] + one_third*DSx[ipart]*DSy[j*vecSize+ipart]) );
+                int index( ( j*5 )*vecSize+ipart );
+                for (unsigned int k=1 ; k<5 ; k++) {
+                    bJx [ index+k*vecSize ] += sum[k]*tmp;
+                }
+            }
+            for (unsigned int i=1 ; i<5 ; i++) {
+                double tmp( crz_p * (0.5*DSy[ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart] + one_third*DSx[i*vecSize+ipart]*DSy[ipart]) );
+                int index( ( i*25 )*vecSize+ipart );
+                for (unsigned int k=1 ; k<5 ; k++) {
+                    bJx [ index+k*vecSize ] += sum[k]*tmp;
+                }
+            }//i
+            for (unsigned int i=1 ; i<5 ; i++) {
+                for (unsigned int j=1 ; j<5 ; j++) {
+                    double tmp( crz_p * (Sx0_buff_vect[(i-1)*vecSize+ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart]
+                                         + 0.5*DSx[i*vecSize+ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart]
+                                         + 0.5*DSy[j*vecSize+ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart]
+                                         + one_third*DSx[i*vecSize+ipart]*DSy[j*vecSize+ipart]) );
+                    int index( ( i*25 + j*5 )*vecSize+ipart );
+                    for (unsigned int k=1 ; k<5 ; k++) {
+                        bJx [ index+k*vecSize ] += sum[k]*tmp;
+                    }
+                }
+            }//i
+
+
+        } // END ipart (compute coeffs)
+
+    }
+
+    iloc = iloc0  + jpom2 +ipom2*b_dim[1];
+    for (unsigned int i=0 ; i<5 ; i++) {
+        for (unsigned int j=0 ; j<5 ; j++) {
+            #pragma omp simd
+            for (unsigned int k=1 ; k<5 ; k++) {
+                double tmpJz = 0.;
+                int ilocal = ((i)*25+j*5+k)*vecSize;
+                #pragma unroll(8)
+                for (int ipart=0 ; ipart<8; ipart++ ){
+                    tmpJz +=  bJx[ilocal+ipart];
+                }
+                Jz [iloc + (j)*(b_dim[2]+1) + k] +=  tmpJz;
+            }
+        }
+        iloc += b_dim[1]*(b_dim[2]+1);
     }
         
-    // ---------------------------
-    // Calculate the total current
-    // ---------------------------
+    // rho^(p,p,d)
 
-    ipo -= bin+2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
-                    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
-    jpo -= 2;
-    kpo -= 2;
-    
-    int iloc, jloc, kloc, linindex;
-    
-    // Jx^(d,p,p)
-    for (unsigned int i=1 ; i<5 ; i++) {
-        iloc = i+ipo;
-        for (unsigned int j=0 ; j<5 ; j++) {
-            jloc = j+jpo;
-            for (unsigned int k=0 ; k<5 ; k++) {
-                tmpJx[j][k] -= crx_p * DSx[i-1] * (Sy0[j]*Sz0[k] + 0.5*DSy[j]*Sz0[k] + 0.5*DSz[k]*Sy0[j] + one_third*DSy[j]*DSz[k]);
-                kloc = k+kpo;
-                linindex = iloc*b_dim[2]*b_dim[1]+jloc*b_dim[2]+kloc;
-                Jx [linindex] += tmpJx[j][k]; // iloc = (i+ipo)*b_dim[1];
-            }
-        }
-    }//i
-    
-    // Jy^(p,d,p)
-    for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo;
-        for (unsigned int j=1 ; j<5 ; j++) {
-            jloc = j+jpo;
-            for (unsigned int k=0 ; k<5 ; k++) {
-                tmpJy[i][k] -= cry_p * DSy[j-1] * (Sz0[k]*Sx0[i] + 0.5*DSz[k]*Sx0[i] + 0.5*DSx[i]*Sz0[k] + one_third*DSz[k]*DSx[i]);
-                kloc = k+kpo;
-                linindex = iloc*b_dim[2]*(b_dim[1]+1)+jloc*b_dim[2]+kloc;
-                Jy [linindex] += tmpJy[i][k]; //
-            }
-        }
-    }//i
-    
-    // Jz^(p,p,d)
-    for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo;
-        for (unsigned int j=0 ; j<5 ; j++) {
-            jloc = j+jpo;
-            for (unsigned int k=1 ; k<5 ; k++) {
-                tmpJz[i][j] -= crz_p * DSz[k-1] * (Sx0[i]*Sy0[j] + 0.5*DSx[i]*Sy0[j] + 0.5*DSy[j]*Sx0[i] + one_third*DSx[i]*DSy[j]);
-                kloc = k+kpo;
-                linindex = iloc*(b_dim[2]+1)*b_dim[1]+jloc*(b_dim[2]+1)+kloc;
-                Jz [linindex] += tmpJz[i][j]; //
-            }
-        }
-    }//i
+    cell_nparts = (int)iend-(int)istart;
+    #pragma omp simd
+    for (unsigned int j=0; j<1000; j++)
+        bJx[j] = 0.;
 
-    // Rho^(p,p,p)
+    for (int ivect=0 ; ivect < cell_nparts; ivect += vecSize ){
+
+        int np_computed(min(cell_nparts-ivect,vecSize));
+
+        #pragma omp simd
+        for (int ipart=0 ; ipart<np_computed; ipart++ ){
+
+            // locate the particle on the primal grid at current time-step & calculate coeff. S1
+            //                            X                                 //
+            double pos = particles.position(0, ivect+ipart+istart) * dx_inv_;
+            int cell = round(pos);
+            int cell_shift = cell-ipo-i_domain_begin;
+            double delta  = pos - (double)cell;
+            double delta2 = delta*delta;
+            double deltam =  0.5 * (delta2-delta+0.25);
+            double deltap =  0.5 * (delta2+delta+0.25);
+            delta2 = 0.75 - delta2;
+            double m1 = (cell_shift == -1);
+            double c0 = (cell_shift ==  0);
+            double p1 = (cell_shift ==  1);
+            DSx [          ipart] = m1 * deltam                             ;
+            DSx [  vecSize+ipart] = c0 * deltam + m1 * delta2               ;
+            DSx [2*vecSize+ipart] = p1 * deltam + c0 * delta2 + m1* deltap  ;
+            DSx [3*vecSize+ipart] =               p1 * delta2 + c0* deltap  ;
+            DSx [4*vecSize+ipart] =                             p1* deltap  ;
+            //                            Y                                 //
+            pos = particles.position(1, ivect+ipart+istart) * dy_inv_;
+            cell = round(pos);
+            cell_shift = cell-jpo-j_domain_begin;
+            delta  = pos - (double)cell;
+            delta2 = delta*delta;
+            deltam =  0.5 * (delta2-delta+0.25);
+            deltap =  0.5 * (delta2+delta+0.25);
+	    delta2 = 0.75 - delta2;
+            m1 = (cell_shift == -1);
+            c0 = (cell_shift ==  0);
+            p1 = (cell_shift ==  1);
+            DSy [          ipart] = m1 * deltam                            ;
+            DSy [  vecSize+ipart] = c0 * deltam + m1 * delta2              ;
+            DSy [2*vecSize+ipart] = p1 * deltam + c0 * delta2 + m1* deltap ;
+            DSy [3*vecSize+ipart] =               p1 * delta2 + c0* deltap ;
+            DSy [4*vecSize+ipart] =                             p1* deltap ;
+            //                            Z                                
+            pos = particles.position(2, ivect+ipart+istart) * dz_inv_;     
+            cell = round(pos);                                             
+            cell_shift = cell-kpo-k_domain_begin;                          
+            delta  = pos - (double)cell;                                   
+            delta2 = delta*delta;                                          
+            deltam =  0.5 * (delta2-delta+0.25);                           
+            deltap =  0.5 * (delta2+delta+0.25);                           
+	    delta2 = 0.75 - delta2;                                        
+            m1 = (cell_shift == -1);                                       
+            c0 = (cell_shift ==  0);                                       
+            p1 = (cell_shift ==  1);                                       
+            DSz [          ipart] = m1 * deltam                            ;
+            DSz [  vecSize+ipart] = c0 * deltam + m1 * delta2              ;
+            DSz [2*vecSize+ipart] = p1 * deltam + c0 * delta2 + m1* deltap ;
+            DSz [3*vecSize+ipart] =               p1 * delta2 + c0* deltap ;
+            DSz [4*vecSize+ipart] =                             p1* deltap ;
+
+
+            charge_weight[ipart] = (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
+        }
+
+        #pragma omp simd
+        for (int ipart=0 ; ipart<np_computed; ipart++ ){
+            for (unsigned int i=0 ; i<5 ; i++) {
+                iloc += b_dim[1]*b_dim[2];       
+                for (unsigned int j=0 ; j<5 ; j++) {
+                    int index( ( i*25 + j*5 )*vecSize+ipart );
+                    for (unsigned int k=0 ; k<5 ; k++) {
+                        bJx [ index+k*vecSize ] +=  charge_weight[ipart] * DSx[i]*DSy[j]*DSz[k];
+                    }
+                }
+            }//i
+
+
+        } // END ipart (compute coeffs)
+
+    }
+    //int iloc0 = ipom2*b_dim[1]*b_dim[2]+jpom2*b_dim[2]+kpom2;
+
+    iloc = iloc0;
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
-            jloc = j+jpo;
+            #pragma omp simd
             for (unsigned int k=0 ; k<5 ; k++) {
-                kloc = k+kpo;
-                linindex = iloc*b_dim[2]*b_dim[1]+jloc*b_dim[2]+kloc;
-                rho[linindex] += charge_weight * Sx1[i]*Sy1[j]*Sz1[k];
+                double tmpRho = 0.;
+                int ilocal = ((i)*25+j*5+k)*vecSize;
+                #pragma unroll(8)
+                for (int ipart=0 ; ipart<8; ipart++ ){
+                    tmpRho +=  bJx[ilocal+ipart];
+                }
+                rho [iloc + (j)*(b_dim[2]) + k] +=  tmpRho;
             }
         }
-    }//i
-
+        iloc += b_dim[1]*(b_dim[2]);
+    }
+    
 } // END Project local current densities at dag timestep.
 
 
@@ -1002,11 +1486,6 @@ void Projector3D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles
         double* b_Jy  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(ibin*clrw*(dim1+1)*dim2) : &(*EMfields->Jy_ )(ibin*clrw*(dim1+1)*dim2) ;
         double* b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(ibin*clrw*dim1*(dim2+1)) : &(*EMfields->Jz_ )(ibin*clrw*dim1*(dim2+1)) ;
         double* b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw* dim1   *dim2) : &(*EMfields->rho_)(ibin*clrw* dim1   *dim2) ;
-        for (int ipart=istart ; ipart<iend; ipart++ ) {
-            //Do not use cells sorting for now : f(ipart) for now, f(istart) laterfor now,
-            //(*iold)[ipart       ] = round( particles.position(0, ipart)* dx_inv_ - dt*particles.momentum(0, ipart)*(*invgf)[ipart] * dx_inv_ ) - i_domain_begin ;
-            //(*iold)[ipart+nparts] = round( particles.position(1, ipart)* dy_inv_ - dt*particles.momentum(1, ipart)*(*invgf)[ipart] * dy_inv_ ) - j_domain_begin ;
-            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, iold, &(*delta)[ipart]);
-        }
+        (*this)(b_Jx , b_Jy , b_Jz , b_rho, particles,  istart, iend, invgf, b_dim, iold, &(*delta)[0]);
     }
 }
