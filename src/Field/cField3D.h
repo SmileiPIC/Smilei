@@ -3,10 +3,12 @@
 
 #include <cmath>
 #include <complex>
-
 #include <vector>
 
 #include "Field.h"
+#include "Patch.h"
+#include "Params.h"
+#include "SmileiMPI.h"
 
 //! class cField3D used to defined a 3d vector of Complex
 class cField3D : public Field
@@ -77,6 +79,9 @@ public:
         return data_1D[i];
     };
     void dump(std::vector<unsigned int> dims) {};
+    
+    void put( Field* outField, Params &params, SmileiMPI* smpi, Patch* thisPatch, Patch* outPatch  ) override;
+    void get( Field*  inField, Params &params, SmileiMPI* smpi, Patch*   inPatch, Patch* thisPatch ) override;
 
 private:
     //! this will present the data as a 2d matrix
