@@ -118,16 +118,18 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     // Make the list of fields
     ElectroMagn* EMfields = vecPatches(0)->EMfields;
     vector<string> fields;
-    fields.push_back(EMfields->Ex_ ->name);
-    fields.push_back(EMfields->Ey_ ->name);
-    fields.push_back(EMfields->Ez_ ->name);
-    fields.push_back(EMfields->Bx_m->name);
-    fields.push_back(EMfields->By_m->name);
-    fields.push_back(EMfields->Bz_m->name);
-    fields.push_back(EMfields->Jx_ ->name);
-    fields.push_back(EMfields->Jy_ ->name);
-    fields.push_back(EMfields->Jz_ ->name);
-    fields.push_back(EMfields->rho_->name);
+    if (params.geometry != "3drz") {
+        fields.push_back(EMfields->Ex_ ->name);
+        fields.push_back(EMfields->Ey_ ->name);
+        fields.push_back(EMfields->Ez_ ->name);
+        fields.push_back(EMfields->Bx_m->name);
+        fields.push_back(EMfields->By_m->name);
+        fields.push_back(EMfields->Bz_m->name);
+        fields.push_back(EMfields->Jx_ ->name);
+        fields.push_back(EMfields->Jy_ ->name);
+        fields.push_back(EMfields->Jz_ ->name);
+        fields.push_back(EMfields->rho_->name);
+    }
 
     // 1 - Prepare the booleans that tell which scalars are necessary to compute
     // -------------------------------------------------------------------------
@@ -228,7 +230,8 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     }
 
     // Scalars related to field's electromagnetic energy
-    nfield = 6;
+    //nfield = 6;
+    nfield = (params.geometry == "3drz") ? 0 : 6;
     fieldUelm.resize(nfield, NULL);
     for( unsigned int ifield=0; ifield<nfield; ifield++ )
         fieldUelm[ifield] = newScalar_SUM( "Uelm_"+fields[ifield] );
@@ -277,6 +280,7 @@ bool DiagnosticScalar::prepare( int timestep )
 
 void DiagnosticScalar::run( Patch* patch, int timestep, SimWindow* simWindow )
 {
+
     // Must keep track of Poynting flux even without diag
     patch->EMfields->computePoynting();
 
