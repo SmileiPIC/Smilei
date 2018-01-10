@@ -18,9 +18,7 @@ Main(
     solve_poisson = False,
     cell_length = [l0/resx,l0/resx],
     grid_length  = Lsim,
-    
     number_of_patches = [ 1, 1 ],
-    
     timestep = t0/rest,
     simulation_time = Tsim,
      
