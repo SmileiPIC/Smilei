@@ -105,9 +105,9 @@ print("")
 print(" Checking of the particle binning diagnostics")
 
 minimal_iteration = 5000
-maximal_iteration = 6500
+maximal_iteration = 6300
 period = 100
-number_of_files = (maximal_iteration - minimal_iteration)/period
+number_of_files = int((maximal_iteration - minimal_iteration)/period) + 1
 
 chi_max = np.zeros([number_of_files,len(radiation_list)])
 chi_ave = np.zeros([number_of_files,len(radiation_list)])
@@ -135,33 +135,37 @@ for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration,pe
             chi_max[itimestep,i] = chi_values[k]
 
 
-print(" -------------------------------------------------------")
+print(" ---------------------------------------------------------|")
 print(" Maximal quantum parameter")
 line = "                  |"
 for k,model in enumerate(radiation_list):
     line += " {0:<7} |".format(radiation_list[k])
 print(line)
-print(" -------------------------------------------------------")
+print(" ---------------------------------------------------------|")
 # Loop over the timesteps
-for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration,period)):
+for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+period,period)):
     line = " Iteration {0:5d}  |".format(timestep)
     for k,model in enumerate(radiation_list):
         line += " {0:.5f} |".format(chi_max[itimestep,k])
     print(line)
 
-print(" -------------------------------------------------------")
+print(" ---------------------------------------------------------|")
 print(" Average quantum parameter")
 line = "                  |"
 for k,model in enumerate(radiation_list):
     line += " {0:<7} |".format(radiation_list[k])
 print(line)
-print(" -------------------------------------------------------")
+print(" ---------------------------------------------------------|")
 # Loop over the timesteps
-for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration,period)):
+for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+period,period)):
     line = " Iteration {0:5d}  |".format(timestep)
     for k,model in enumerate(radiation_list):
         line += " {0:.5f} |".format(chi_ave[itimestep,k])
     print(line)
-    # Validation with 10% error
     for k,model in enumerate(radiation_list):
-        Validate("Average quantum parameter for the {} model at iteration {}".format(model,timestep),chi_ave[itimestep,k],chi_ave[itimestep,k]*0.1)
+        # if 0, absolute error of 0.01
+        if (chi_ave[itimestep,k] == 0):
+            Validate("Average quantum parameter for the {} model at iteration {}".format(model,timestep),chi_ave[itimestep,k],0.01)
+        # else validation with relative 150% error
+        else:
+            Validate("Average quantum parameter for the {} model at iteration {}".format(model,timestep),chi_ave[itimestep,k],chi_ave[itimestep,k]*1.)
