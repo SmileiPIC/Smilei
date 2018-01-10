@@ -10,8 +10,9 @@
 # is computed so that the initial quantum parameter is equal to 0.1
 #
 # Validation:
-# - Niel stochastic radiation loss
 # - Corrected Landau-Lifshitz radiation loss
+# - Niel stochastic radiation loss
+# - Monte-Carlo model
 # - Species scalar diagnostics
 # - External fields
 # - Particle binning diagnostics for the quantum parameter

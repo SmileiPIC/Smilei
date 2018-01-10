@@ -10,27 +10,36 @@
 # profile of wavelength \lambda.
 #
 # Validation:
+# - classical Landau-Lifshitz radiation model
+# - corrected Landau-Lifshitz radiation model
 # - Monte-Carlo radiation model
-# - Landau-Lifshitz radiation model
 # - Niel stochastic radiation model
 # ______________________________________________________________________________
 
 import os, re, numpy as np, h5py
 import happi
 
+# Useful functions
+
+def index_of_last_nonzero(lst):
+    for i, value in enumerate(reversed(lst)):
+        if value != 0:
+            return len(lst)-i-1
+    return -1
+
+
 S = happi.Open(["./restart*"], verbose=False)
 
-
-
 # List of relativistic pushers
-radiation_list = ["cont","disc","Niel"]
+radiation_list = ["LL","CLL","Niel","MC"]
+thresholds = [0.3,0.05,0.05,0.07]
 
 ukin_dict = {}
 urad_dict = {}
 
 # We load successively the particle track associated
 # to each radiation algorithm
-for radiation in radiation_list:
+for i,radiation in enumerate(radiation_list):
 
   # Read scalar diagnostics
   ScalarUkinDiag = S.Scalar("Ukin_electron_"+radiation).get()
@@ -47,10 +56,10 @@ for radiation in radiation_list:
   print ' Maximum radiated energy: ', urad.max()
 
   # Validation of the kinetic energy
-  Validate("Kinetic energy evolution: ", ukin/ukin[0], 0.5e-1 )
+  Validate("Kinetic energy evolution: ", ukin/ukin[0], thresholds[i] )
 
   # Validation of the radiated energy
-  Validate("Radiated energy evolution: " , urad/ukin[0], 0.5e-1 )
+  Validate("Radiated energy evolution: " , urad/ukin[0], thresholds[i] )
 
   # Validation of the total energy
   Validate("Total energy error (max - min)/uref: " ,
@@ -60,27 +69,99 @@ for radiation in radiation_list:
   urad_dict[radiation] = urad
 
 # ______________________________________________________________________________
-# Comparison continuous and discontinuous methods
+# Comparison CLL and Niel methods
 
-urad_rel_err_MC = abs(urad_dict["disc"] - urad_dict["cont"]) / urad_dict["cont"].max()
-ukin_rel_err_MC = abs(ukin_dict["disc"] - ukin_dict["cont"]) / ukin_dict["cont"][0]
-
-urad_rel_err_Niel = abs(urad_dict["Niel"] - urad_dict["cont"]) / urad_dict["cont"].max()
-ukin_rel_err_Niel = abs(ukin_dict["Niel"] - ukin_dict["cont"]) / ukin_dict["cont"][0]
-
-print ' Comparison Landau-Lifshitz/Monte-Carlo radiation model'
-print ' Maximum relative error kinetic energy',ukin_rel_err_MC.max()
-print ' Maximum relative error radiative energy',urad_rel_err_MC.max()
+urad_rel_err_Niel = abs(urad_dict["Niel"] - urad_dict["CLL"]) / urad_dict["CLL"].max()
+ukin_rel_err_Niel = abs(ukin_dict["Niel"] - ukin_dict["CLL"]) / ukin_dict["CLL"][0]
 
 print
 print ' Comparison Landau-Lifshitz/Niel radiation model'
 print ' Maximum relative error kinetic energy',ukin_rel_err_Niel.max()
 print ' Maximum relative error radiative energy',urad_rel_err_Niel.max()
 
+# Validation difference between Landau-Lifshitz and Niel methods
+Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err_Niel.max(), 0.03 )
+Validate("Relative error on the radiative energy / urad max " , urad_rel_err_Niel.max(), 0.03 )
+
+# ______________________________________________________________________________
+# Comparison CLL and MC methods
+
+urad_rel_err_MC = abs(urad_dict["MC"] - urad_dict["CLL"]) / urad_dict["CLL"].max()
+ukin_rel_err_MC = abs(ukin_dict["MC"] - ukin_dict["CLL"]) / ukin_dict["CLL"][0]
+
+print ''
+print ' Comparison Landau-Lifshitz/Monte-Carlo radiation model'
+print ' Maximum relative error kinetic energy',ukin_rel_err_MC.max()
+print ' Maximum relative error radiative energy',urad_rel_err_MC.max()
+
 # Validation difference between Landau-Lifshitz and Monte-Carlo methods
 Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err_MC.max(), 0.03 )
 Validate("Relative error on the radiative energy / urad max " , urad_rel_err_MC.max(), 0.03 )
 
-# Validation difference between Landau-Lifshitz and Niel methods
-Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err_Niel.max(), 0.03 )
-Validate("Relative error on the radiative energy / urad max " , urad_rel_err_Niel.max(), 0.03 )
+# ______________________________________________________________________________
+# Checking of the particle binning
+
+print("")
+print(" Checking of the particle binning diagnostics")
+
+minimal_iteration = 5000
+maximal_iteration = 6500
+period = 100
+number_of_files = (maximal_iteration - minimal_iteration)/period
+
+chi_max = np.zeros([number_of_files,len(radiation_list)])
+chi_ave = np.zeros([number_of_files,len(radiation_list)])
+
+# Loop over the timesteps
+for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration,period)):
+
+    # Loop over the species/radiation models
+    for i,radiation in enumerate(radiation_list):
+        # Weight
+        weight_diag = S.ParticleBinning(diagNumber=i,timesteps=timestep).get()
+        weight = np.array(weight_diag["data"][0])
+        # Weight x chi
+        weight_chi_diag = S.ParticleBinning(diagNumber=i+len(radiation_list),timesteps=timestep).get()
+        weight_chi = np.array(weight_chi_diag["data"][0])
+        # Chi distribution
+        chi_distribution = S.ParticleBinning(diagNumber=i+2*len(radiation_list),timesteps=timestep).get()
+        weight_values = np.array(chi_distribution["data"][0])
+        chi_values = np.array(chi_distribution["chi"])
+        # Average chi value
+        total_weight = np.sum(weight_values)
+        if (total_weight > 0):
+            chi_ave[itimestep,i] = np.sum (chi_values * weight_values) / np.sum(weight_values)
+            k = index_of_last_nonzero(weight_values)
+            chi_max[itimestep,i] = chi_values[k]
+
+
+print(" -------------------------------------------------------")
+print(" Maximal quantum parameter")
+line = "                  |"
+for k,model in enumerate(radiation_list):
+    line += " {0:<7} |".format(radiation_list[k])
+print(line)
+print(" -------------------------------------------------------")
+# Loop over the timesteps
+for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration,period)):
+    line = " Iteration {0:5d}  |".format(timestep)
+    for k,model in enumerate(radiation_list):
+        line += " {0:.5f} |".format(chi_max[itimestep,k])
+    print(line)
+
+print(" -------------------------------------------------------")
+print(" Average quantum parameter")
+line = "                  |"
+for k,model in enumerate(radiation_list):
+    line += " {0:<7} |".format(radiation_list[k])
+print(line)
+print(" -------------------------------------------------------")
+# Loop over the timesteps
+for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration,period)):
+    line = " Iteration {0:5d}  |".format(timestep)
+    for k,model in enumerate(radiation_list):
+        line += " {0:.5f} |".format(chi_ave[itimestep,k])
+    print(line)
+    # Validation with 10% error
+    for k,model in enumerate(radiation_list):
+        Validate("Average quantum parameter for the {} model at iteration {}".format(model,timestep),chi_ave[itimestep,k],chi_ave[itimestep,k]*0.1)
