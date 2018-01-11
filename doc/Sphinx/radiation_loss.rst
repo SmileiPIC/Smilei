@@ -715,7 +715,7 @@ the Monte-Carlo radiation process.
 | Synchrotron 2D Haswell (Jureca)     | 10s        | 11s      | 12s          | 14s      | 15s                 |
 | :math:`\chi=0.05`,  :math:`B=100`   |            |          |              |          |                     |
 +-------------------------------------+------------+----------+--------------+----------+---------------------+
-| Synchrotron 2D Haswell (Jureca)     | 19s        | 20s      | 21s          | 23s      | 31s                 |
+| Synchrotron 2D Haswell (Jureca)     | 10s        | 11s      | 12s          | 14s      | 22s                 |
 | :math:`\chi=0.5`,  :math:`B=100`    |            |          |              |          |                     |
 +-------------------------------------+------------+----------+--------------+----------+---------------------+
 | Synchrotron 2D KNL (Frioul)         | 21s        | 23s      | 23s          | 73s      | 47s                 |

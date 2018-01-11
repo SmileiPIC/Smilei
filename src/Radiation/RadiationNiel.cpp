@@ -271,7 +271,6 @@ void RadiationNiel::operator() (
               diffusion[ipart] = sqrt(factor_cla_rad_power*gamma[ipart]*temp)*random_numbers[ipart];
             }
         }
-
     }
     // Using Ridgers
     else if (h_computation_method == "ridgers")
@@ -285,9 +284,9 @@ void RadiationNiel::operator() (
             if (chipa[ipart] > chipa_radiation_threshold)
             {
 
-              temp = RadiationTables.get_h_Niel_from_fit_Ridgers(chipa[ipart]);
+                temp = RadiationTables.get_h_Niel_from_fit_Ridgers(chipa[ipart]);
 
-              diffusion[ipart] = sqrt(factor_cla_rad_power*gamma[ipart]*temp)*random_numbers[ipart];
+                diffusion[ipart] = sqrt(factor_cla_rad_power*gamma[ipart]*temp)*random_numbers[ipart];
             }
         }
     }

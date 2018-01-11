@@ -1336,6 +1336,7 @@ tables.
   * "fit10":  A polynomial fit of order 10 is used. No table is required.
     The precision if better than the fit of order 5 with a maximal relative error of 0.0002.
     The fit is valid for quantum parameters :math:`\chi` between 1e-3 and 10.
+  * "ridgers": The fit of Ridgers given in Ridgers et al., ArXiv 1708.04511 (2017)
 
   The use of tabulated values is best for accuracy but not for performance.
   Table access prevent total vectorization.
