@@ -206,7 +206,7 @@ public:
             newEMfields->antennas.push_back(antenna);
         }
 
-        newEMfields->finishInitialization(vecSpecies.size(), patch);
+        //newEMfields->finishInitialization(vecSpecies.size(), patch);
 
         return newEMfields;
     }

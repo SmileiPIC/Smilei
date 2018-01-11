@@ -167,11 +167,11 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
         // Compatibility with python 2.7
         // Some class functions (for SmileiSingleton) may not be static.
         // In that case, we look for the __func__ attribute.
-        PyObject * func = PyObject_GetAttrString(py_profile, "__func__");
-        if( func ) {
-            Py_DECREF(py_profile);
-            py_profile = func;
-        }
+//        PyObject * func = PyObject_GetAttrString(py_profile, "__func__");
+//        if( func ) {
+//            Py_DECREF(py_profile);
+//            py_profile = func;
+//        }
         
         // Verify that the profile has the right number of arguments
         PyObject* inspect=PyImport_ImportModule("inspect");

@@ -337,13 +337,8 @@ Patch::~Patch() {
     
     if (EMfields !=NULL) delete EMfields;
 
-    delete partWalls;
-    delete Proj;
-    delete Interp;
-
     if (envelope)
         delete envelope;
-    delete EMfields;
 
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();

@@ -148,8 +148,10 @@ void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
     allFields.push_back(Jy_ );
     allFields.push_back(Jz_ );
     allFields.push_back(rho_);
-    allFields.push_back(Env_Ar_);
-    allFields.push_back(Env_Ai_);
+    if ( Env_Ar_ ) {
+        allFields.push_back(Env_Ar_);
+        allFields.push_back(Env_Ai_);
+    }
 
     for (int ispec=0; ispec<nspecies; ispec++) {
         allFields.push_back(Jx_s[ispec] );
