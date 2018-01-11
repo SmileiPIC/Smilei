@@ -220,7 +220,7 @@ void RadiationNiel::operator() (
 
     // Computation of the diffusion coefficients
     // Using the table (non-vectorized)
-    if (h_computation_method=="table")
+    if (h_computation_method == "table")
     {
         // #pragma omp simd
         for (ipart=0 ; ipart < nbparticles; ipart++ )
@@ -239,7 +239,7 @@ void RadiationNiel::operator() (
         }
     }
     // Using the fit at order 5 (vectorized)
-    else if (h_computation_method=="fit5")
+    else if (h_computation_method == "fit5")
     {
         #pragma omp simd private(temp)
         for (ipart=0 ; ipart < nbparticles; ipart++ )
@@ -256,7 +256,7 @@ void RadiationNiel::operator() (
         }
     }
     // Using the fit at order 10 (vectorized)
-    else if (h_computation_method=="fit10")
+    else if (h_computation_method == "fit5")
     {
         #pragma omp simd private(temp)
         for (ipart=0 ; ipart < nbparticles; ipart++ )
@@ -267,6 +267,25 @@ void RadiationNiel::operator() (
             {
 
               temp = RadiationTables.get_h_Niel_from_fit_order10(chipa[ipart]);
+
+              diffusion[ipart] = sqrt(factor_cla_rad_power*gamma[ipart]*temp)*random_numbers[ipart];
+            }
+        }
+
+    }
+    // Using Ridgers
+    else if (h_computation_method == "ridgers")
+    {
+
+        #pragma omp simd private(temp)
+        for (ipart=0 ; ipart < nbparticles; ipart++ )
+        {
+
+            // Below chipa = chipa_radiation_threshold, radiation losses are negligible
+            if (chipa[ipart] > chipa_radiation_threshold)
+            {
+
+              temp = RadiationTables.get_h_Niel_from_fit_Ridgers(chipa[ipart]);
 
               diffusion[ipart] = sqrt(factor_cla_rad_power*gamma[ipart]*temp)*random_numbers[ipart];
             }

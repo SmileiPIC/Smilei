@@ -121,9 +121,9 @@ public:
             {
                 ERROR("For species `" << species_name
                                       << " radiation_model must be 'none',"
-                                      << " 'Landau-Lifshitz',"
-                                      << " 'corrected-Landau-Lifshitz',"
-                                      << " 'Niel' or 'Monte-Carlo'");
+                                      << " 'Landau-Lifshitz' ('ll'),"
+                                      << " 'corrected-Landau-Lifshitz' ('cll'),"
+                                      << " 'Niel' ('niel') or 'Monte-Carlo' ('mc')");
             }
 
             thisSpecies->radiation_model = radiation_model;
