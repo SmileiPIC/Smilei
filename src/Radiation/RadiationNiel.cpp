@@ -256,7 +256,7 @@ void RadiationNiel::operator() (
         }
     }
     // Using the fit at order 10 (vectorized)
-    else if (h_computation_method == "fit5")
+    else if (h_computation_method == "fit10")
     {
         #pragma omp simd private(temp)
         for (ipart=0 ; ipart < nbparticles; ipart++ )

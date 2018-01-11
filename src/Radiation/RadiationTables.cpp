@@ -179,7 +179,17 @@ void RadiationTables::initParams(Params& params)
     }
     if (params.hasNielRadiation)
     {
-        MESSAGE( "        Niel h function computation method: " << h_computation_method)
+        if (h_computation_method == "table" ||
+            h_computation_method == "fit5"  ||
+            h_computation_method == "fit10" ||
+            h_computation_method == "ridgers")
+        {
+            MESSAGE( "        Niel h function computation method: " << h_computation_method)
+        }
+        else
+        {
+            ERROR(" The parameter `h_computation_method` must be `table`, `fit5`, `fit10` or `ridgers`.")
+        }
     }
 
     MESSAGE("")
