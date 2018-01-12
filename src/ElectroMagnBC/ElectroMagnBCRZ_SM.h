@@ -9,7 +9,7 @@
 #include "ElectroMagnBC.h"
 #include "ElectroMagn3DRZ.h"
 #include "cField2D.h"
-
+#include "dcomplex.h"
 
 class Params;
 class ElectroMagn;
@@ -78,7 +78,7 @@ private:
     double Delta_SM_Xmin;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Epsilon_SM_Xmin;
+    std::complex<double> Epsilon_SM_Xmin;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmax)
     double Alpha_SM_Xmax;
@@ -93,7 +93,7 @@ private:
     double Delta_SM_Xmax;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Epsilon_SM_Xmax;	
+    std::complex<double> Epsilon_SM_Xmax;	
 	//! Number of modes
 	unsigned int Nmode;
     

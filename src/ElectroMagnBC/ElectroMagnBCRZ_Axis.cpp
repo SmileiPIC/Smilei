@@ -12,7 +12,7 @@
 #include "Tools.h"
 #include <complex>
 #include "dcomplex.h"
-#include "SolverRZ.h"
+
 using namespace std;
 
 ElectroMagnBCRZ_Axis::ElectroMagnBCRZ_Axis( Params &params, Patch* patch, unsigned int _min_max )
@@ -37,9 +37,15 @@ ElectroMagnBCRZ_Axis::ElectroMagnBCRZ_Axis( Params &params, Patch* patch, unsign
     dr       = params.cell_length[1];
     dt_ov_dr = dt/dr;
     dr_ov_dt = 1.0/dt_ov_dr;
+	//Number of modes
+	Nmode= params.Nmode;
     
-    if (min_max == 2 && patch->isYmin() ) {
-    }
+   // if (min_max == 2 && patch->isYmin() ) {
+        // BCs in the y-border min
+   //     Bl_val.resize(nl_p,0.); // primal in the x-direction
+   //     Br_val.resize(nl_d,0.); // dual in the x-direction
+   //     Bt_val.resize(nl_d,0.); // dual in the x-direction
+   //}
     
     #ifdef _TODO_RZ
     #endif
@@ -77,76 +83,91 @@ void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch*
 	cField2D* JlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jl_[imode];
     cField2D* JrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jr_[imode];
     cField2D* JtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jt_[imode];
-
+	
+	MESSAGE(min_max);
+	MESSAGE(Nmode);
+	MESSAGE(patch->isYmin());
 	if (min_max == 2 && patch->isYmin()){
+		MESSAGE("G");
 		if (imode==0){
 			//MF_Solver_Yee
 			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*BrRZ)(i,0)=0;
 			}
+			MESSAGE("GG");
 			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*BtRZ)(i,0)= -(*BtRZ)(i,1);
 			}
+			MESSAGE("GGG");
 			for (unsigned int i=0 ; i<nl_p ; i++) {
-				(*BlRZ)(i,0)+= -(*BlRZ)(i,1)+(*BlRZ_old)(i,1)-4*dt_ov_dr*(*EtRZ)(i,1);
+				(*BlRZ)(i,0)+= -(*BlRZ)(i,1);
+				//(*BlRZ)(i,0)+= -(*BlRZ)(i,1)+(*BlRZ_old)(i,1)-4*dt_ov_dr*(*EtRZ)(i,1);
 			}
+			MESSAGE("GGGG");
 			//MA_SolverRZ_norm
 			for (unsigned int i=0 ; i<nl_p ; i++) {
 				(*EtRZ)(i,0)=0;
 			}
+			MESSAGE("GGGGG");
 			for (unsigned int i=0 ; i<nl_p ; i++) {
 				(*ErRZ)(i,0)= -(*ErRZ)(i,1);
 			}
+			MESSAGE("GGGGGG");
 			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*ElRZ)(i,0)+= 4*dt_ov_dr*(*BtRZ)(i,1)-dt*(*JlRZ)(i,0);
 			}
+			MESSAGE("GGGGGGG");
+		MESSAGE("MODE0");
 		}
 		else if (imode==1){
 			//MF
-			for (unsigned int i=0 ; i<nl_d ; i++) {
+			for (unsigned int i=0 ; i<nl_p ; i++) {
 				(*BlRZ)(i,0)= -(*BlRZ)(i,1);
 			}
-			for (unsigned int i=0 ; i<nl_d ; i++) {
-				(*BrRZ)(i,0)+= (*BrRZ)(i,1)+ Icpx*dt_ov_dr*(*ElRZ)(1,i)
-				+			dt_ov_dl*((*EtRZ)(i,0)-(*EtRZ)(i+1,0));
-			}
 			for (unsigned int i=0 ; i<nl_p ; i++) {
-				(*BtRZ)(i,0)+= -dt_ov_dl*((*ErRZ)(i+1,0)-(*ErRZ)(i,0)+(*ErRZ)(i+1,1)-(*ErRZ)(i,1))
-				+				2*dt_ov_dr*(*ElRZ)(i+1,1) - (*BtRZ_old)(i,1)+ (*BtRZ)(i,1);
+				(*EtRZ)(i,0)= (*EtRZ)(i,1);
+			}
+			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
+				(*BrRZ)(i,0)+= (*BrRZ)(i,1)+ Icpx*dt_ov_dr*(*ElRZ)(1,i)
+				+			dt_ov_dl*((*EtRZ)(i,0)-(*EtRZ)(i-1,0));
+			}
+			for (unsigned int i=0 ; i<nl_d ; i++) {
+				//(*BtRZ)(i,0)+= -dt_ov_dl*((*ErRZ)(i+1,0)-(*ErRZ)(i,0)+(*ErRZ)(i+1,1)-(*ErRZ)(i,1))
+				//+				2*dt_ov_dr*(*ElRZ)(i+1,1) - (*BtRZ_old)(i,1)+ (*BtRZ)(i,1);
+				(*BtRZ)(i,0)= -2*Icpx*(*BrRZ)(i,0)-(*BtRZ)(i,1);
 			}	
-			//MA
 			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*ElRZ)(i,0)= 0;
 			}
 			for (unsigned int i=0 ; i<nl_p ; i++) {
-				(*ErRZ)(i,0)= (*ErRZ)(i,1);
+				(*ErRZ)(i,0)= -(*ErRZ)(i,1);
 			}
-			for (unsigned int i=0 ; i<nl_d ; i++) {
-				(*EtRZ)(i,0)= (*EtRZ)(i,1);
-			}	
+
+			MESSAGE("MODE1");	
 
 		}
 		else {
 			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*BlRZ)(i,0)= -(*BlRZ)(i,1);
 			}
-			for (unsigned int i=0 ; i<nl_d ; i++) {
+			for (unsigned int i=0 ; i<nl_p ; i++) {
 				(*BrRZ)(i,0)= 0;
 			}
-			for (unsigned int i=0 ; i<nl_p ; i++) {
+			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*BtRZ)(i,0)= - (*BtRZ)(i,1);
 			}	
 			//MA
-			for (unsigned int i=0 ; i<nl_d ; i++) {
+			for (unsigned int i=0 ; i<nl_p ; i++) {
 				(*ElRZ)(i,0)= 0;
 			}
-			for (unsigned int i=0 ; i<nl_p ; i++) {
+			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*ErRZ)(i,0)= -(*ErRZ)(i,1);
 			}
-			for (unsigned int i=0 ; i<nl_d ; i++) {
+			for (unsigned int i=0 ; i<nl_p ; i++) {
 				(*EtRZ)(i,0)= 0;
 			}
 		}
 	}    
 	}
+	MESSAGE("Axis");
 }

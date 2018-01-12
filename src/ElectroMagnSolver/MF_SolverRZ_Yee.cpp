@@ -44,13 +44,14 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
     //        (*BlRZ)(nl_d,j) -= dt_ov_dy * ( (*EtRZ)(nl_d,j) - (*EtRZ)(nl_d,j-1) );
     //    }
     // Magnetic field Bx^(p,d)
-    for (unsigned int i=0 ; i<nl_d;  i++) {
+    for (unsigned int i=0 ; i<nl_p;  i++) {
         #pragma omp simd
         for (unsigned int j=1 ; j<nr_d-1 ; j++) {
             (*BlRZ)(i,j) += - dt/((j_glob+j-0.5)*dr) * ( (j)*(*EtRZ)(i,j) - j*(*EtRZ)(i,j-1) )
              -             Icpx*dt*imode/((j_glob+j-0.5)*dr)*(*ErRZ)(i,j);
         }
-            }
+    }
+	MESSAGE("Bl");
         
         // Magnetic field Br^(d,p)
     for (unsigned int i=1 ; i<nl_d-1 ; i++) {
@@ -59,8 +60,8 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
             (*BrRZ)(i,j) += dt_ov_dl * ( (*EtRZ)(i,j) - (*EtRZ)(i-1,j) )
              +              Icpx*dt*imode/((j_glob+j)*dr)*(*ElRZ)(i,j) ;
         }
-        }
-        
+    }
+    MESSAGE("Br");
         // Magnetic field Bt^(d,d)
     for (unsigned int i=1 ; i<nl_d-1 ; i++) {
         #pragma omp simd
@@ -69,7 +70,7 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
             -               dt_ov_dl * ( (*ErRZ)(i,j) - (*ErRZ)(i-1,j) );
         }
     }
-	
+	MESSAGE("Bt");
 
     
     }// end parallel

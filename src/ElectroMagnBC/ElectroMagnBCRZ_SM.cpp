@@ -39,7 +39,9 @@ ElectroMagnBCRZ_SM::ElectroMagnBCRZ_SM( Params &params, Patch* patch, unsigned i
     dt_ov_dr = dt/dr;
     dr_ov_dt = 1.0/dt_ov_dr;
     
-    
+    //Number of modes
+	Nmode= params.Nmode;
+
     if (min_max == 0 && patch->isXmin() ) {
         // BCs at the x-border min
         Bl_val.resize(nr_d,0.); // dual in the y-direction
@@ -73,6 +75,7 @@ ElectroMagnBCRZ_SM::ElectroMagnBCRZ_SM( Params &params, Patch* patch, unsigned i
     // -----------------------------------------------------
 
     #ifdef _TODO_RZ
+	#endif
     // Xmin boundary
     double theta  = 0.0*conv_deg2rad; //0.0;
     double factor = 1.0 / (1.0 + dt_ov_dl);
@@ -91,7 +94,7 @@ ElectroMagnBCRZ_SM::ElectroMagnBCRZ_SM( Params &params, Patch* patch, unsigned i
     Epsilon_SM_Xmax  = -Icpx / (1.0 + dt_ov_dl)  * factor;
     
 
-    #endif
+    
 }
 
 
@@ -201,9 +204,11 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_[imode];
 
 		int     j_glob = (static_cast<ElectroMagn3DRZ*>(EMfields))->j_glob_;
-	 
+		MESSAGE(min_max);	 
+		MESSAGE(imode);	 
+		MESSAGE(Nmode);	 
 		if (min_max == 0 && patch->isXmin() ) {
-		    
+		MESSAGE("XMIN");		    
 		    // for Br^(d,p)
 		    vector<double> yp(1);
 		    yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dr;
@@ -224,7 +229,7 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		        +              Delta_SM_Xmin   *( (*BlRZ)(i,j+1)- (*BlRZ)(i,j));
 		        
 		    }//j  ---end compute Br
-		    
+		    MESSAGE(nr_p);
 		    
 		    // for Bt^(d,d)
 		    vector<double> yd(1);
@@ -246,10 +251,10 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 				+               Epsilon_SM_Xmin *imode/((j_glob+j-0.5)*dr)*(*BlRZ)(i,j+1) ;
 		        
 		    }//j  ---end compute Bt
-		    
+		    MESSAGE(nr_d);
 		}
 		else if (min_max == 1 && patch->isXmax() ) {
-		    
+		    MESSAGE("XMax");
 		    // for Br^(d,p)
 		    vector<double> yp(1);
 		    yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dr;
@@ -271,7 +276,7 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		        
 		    }//j  ---end compute Br
 		    
-		    
+		    MESSAGE("Br");
 		    // for Bt^(d,d)
 		    vector<double> yd(1);
 		    yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dr;
@@ -292,10 +297,12 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 
 		        
 		    }//j  ---end compute Bt
+			MESSAGE("Bt");
 		}
 		else {
 		    ERROR( "No Silver Muller along the axis" );
 		}
 
 	}
+	MESSAGE("SM");
 }

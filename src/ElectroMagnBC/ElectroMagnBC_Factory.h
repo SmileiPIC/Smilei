@@ -27,7 +27,7 @@ public:
 
         // periodic (=NULL) boundary conditions
         emBoundCond.resize(2*params.nDim_field, NULL);
-        
+        MESSAGE(params.geometry);
         // -----------------
         // For 1Dcartesian Geometry
         // -----------------
@@ -134,14 +134,17 @@ public:
         // For theta mode Geometry
         // -----------------
         else if ( params.geometry == "3drz" ) {
-
+			
             for (unsigned int ii=0;ii<2;ii++) {
 
                 // X DIRECTION
                 // silver-muller (injecting/absorbing bcs)
+				MESSAGE(params.EM_BCs[0][ii]);
                 if ( params.EM_BCs[0][ii] == "silver-muller" ) {
                     emBoundCond[ii] = new ElectroMagnBCRZ_SM(params, patch, ii);
+					
                 }
+				
                 else if ( params.EM_BCs[0][ii] != "periodic" ) {
                     ERROR( "Unknown EM x-boundary condition `" << params.EM_BCs[0][ii] << "`");
                 }
@@ -150,13 +153,16 @@ public:
             // R DIRECTION
             emBoundCond[2] = new ElectroMagnBCRZ_Axis(params, patch, 2);
             // silver-muller bcs (injecting/absorbin)
+			MESSAGE("bc AXIS");
             if ( params.EM_BCs[1][1] == "Buneman" ) {
                 emBoundCond[3] = new ElectroMagnBCRZ_BM(params, patch, 3);
             }
+			
             // else: error
             else  {
                 ERROR( "Unknown EM y-boundary condition `" << params.EM_BCs[1][1] << "`");
             }
+			MESSAGE( params.EM_BCs[1][1]);
             
         }//3drz       
 

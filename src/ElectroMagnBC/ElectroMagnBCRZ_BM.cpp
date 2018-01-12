@@ -37,7 +37,8 @@ ElectroMagnBCRZ_BM::ElectroMagnBCRZ_BM( Params &params, Patch* patch, unsigned i
     dr       = params.cell_length[1];
     dt_ov_dr = dt/dr;
     dr_ov_dt = 1.0/dt_ov_dr;
-    
+    //Number of modes
+	Nmode=params.Nmode;
     if (min_max == 0 && patch->isXmin() ) {
         // BCs at the x-border min
         Bl_val.resize(nr_d,0.); // dual in the y-direction
@@ -71,16 +72,16 @@ ElectroMagnBCRZ_BM::ElectroMagnBCRZ_BM( Params &params, Patch* patch, unsigned i
     // -----------------------------------------------------
 
     #ifdef _TODO_RZ
-    
+    #endif
     // Rmax boundary
-    theta  = M_PI;
-	phi    =  0.0;
+    double theta  = M_PI;
+	double phi    =  0.0;
 	CB_BM  = cos(theta)*cos(phi)/(1.0 + cos(theta)*cos(phi));
 	CE_BM  = 1.0 - CB_BM;
     Alpha_BM_Rmax    = (1. - dt_ov_dr)/(1. + dt_ov_dr);
     Beta_BM_Rmax     = dt/(1.+ dt_ov_dr);
     Gamma_BM_Rmax    =  dt_ov_dl/(1. + dt_ov_dr);
-    #endif
+    
 }
 
 
@@ -188,9 +189,9 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		cField2D* BlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_[imode];
 		cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_[imode];
 		cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_[imode];
-		cField2D* BtRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_[imode]; 
-		cField2D* BlRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_[imode];
-		cField2D* BrRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_[imode];
+		cField2D* BtRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_m[imode]; 
+		cField2D* BlRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_m[imode];
+		cField2D* BrRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_m[imode];
 		int     j_glob = (static_cast<ElectroMagn3DRZ*>(EMfields))->j_glob_;
 
 		if (min_max == 3 && patch->isYmax() ) {
@@ -208,22 +209,23 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		        -                   2.*CE_BM*dt/((j_glob+j-0.5)*dr)*(*EtRZ)(i,j);
 		    }//i  ---end Bl
 		    
-		    
+		    MESSAGE("Bl BM");
 		    // for Bt^(d,d)
-		    for (unsigned int i=0 ; i<nl_d ; j++) {
+			
+		    for (unsigned int i=1 ; i<nl_d-1 ; i++) {
 		        /*(*Bt2D)(i,nr_d-1) = Alpha_SM_N * (*El2D)(i,nr_p-1)
 		         +                   Beta_SM_N  * (*Bt2D)(i,nr_d-2);*/
 		        (*BtRZ)(i,j+1) = (*BtRZ_old)(i,j)- Alpha_BM_Rmax * ((*BtRZ)(i,j) - (*BtRZ_old)(i,j+1))
 		        -                   Icpx*imode*CB_BM*Beta_BM_Rmax/((j_glob+j-0.5)*dr)  *((*BrRZ)(i,j) - (*BrRZ_old)(i,j) )
-		        -                   CE_BM*Gamma_BM_Rmax*((*ErRZ)(i+1,j+1)+(*ErRZ)(i+1,j)-(*ErRZ)(i,j) -(*ErRZ)(i,j-1) )
-				-                   CB_BM* Beta_BM_Rmax/((j_glob+j-0.5)*dr +(j_glob+j+0.5)*dr)*((*BtRZ)(i,j+1) + (*BtRZ_old)(i,j+1) +(*BtRZ)(i,j) + (*BtRZ_old)(i,j)) ;
+		        -                   CE_BM*Gamma_BM_Rmax*((*ErRZ)(i,j)+(*ErRZ)(i,j-1)-(*ErRZ)(i-1,j) -(*ErRZ)(i-1,j-1) )
+				-                   CB_BM* Beta_BM_Rmax/((j_glob+j-0.5)*dr +(j_glob+j+0.5)*dr)*((*BtRZ)(i,j+1) + (*BtRZ_old)(i,j+1) 				+					(*BtRZ)(i,j) + (*BtRZ_old)(i,j)) ;
 		    }//i  ---end Bt
-		    
+		    MESSAGE("Bt BM");
 		    
 		}
-
 		else  {
 		    ERROR( "No Buneman along the axis" );
 		}
-	}
+	}	
+	MESSAGE("BM");
 }
