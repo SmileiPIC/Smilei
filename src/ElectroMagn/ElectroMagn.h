@@ -176,7 +176,7 @@ public:
     //! Method used to initialize the total charge currents and densities
     virtual void restartRhoJ();
     //! Method used to initialize the total charge currents and densities of species
-    void restartRhoJs();
+    virtual void restartRhoJs();
     
     //! Method used to sum all species densities and currents to compute the total charge density and currents
     virtual void computeTotalRhoJ() = 0;
@@ -236,7 +236,7 @@ public:
     std::vector<double> poynting_inst[2];
     
     //! Compute local square norm of charge denisty is not null
-    inline double computeRhoNorm2() {
+    virtual double computeRhoNorm2() {
         return rho_->norm2(istart, bufsize);
     }
 

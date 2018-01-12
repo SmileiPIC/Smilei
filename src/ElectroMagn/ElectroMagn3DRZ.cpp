@@ -304,6 +304,23 @@ void ElectroMagn3DRZ::restartRhoJ()
     }
 }
 
+void ElectroMagn3DRZ::restartRhoJs()
+{
+    for (unsigned int ispec=0 ; ispec < n_species ; ispec++) {
+        if( Jx_s [ispec] ) Jx_s [ispec]->put_to(0.);
+        if( Jy_s [ispec] ) Jy_s [ispec]->put_to(0.);
+        if( Jz_s [ispec] ) Jz_s [ispec]->put_to(0.);
+        if( rho_s[ispec] ) rho_s[ispec]->put_to(0.);
+    }
+    
+    for ( int imode=0 ; imode<nmodes ; imode++ ) {
+        Jl_[imode] ->put_to(0.);
+        Jr_ [imode]->put_to(0.);
+        Jt_ [imode]->put_to(0.);
+        rho_RZ_[imode]->put_to(0.);
+    }
+}
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Begin of Solve Poisson methods
