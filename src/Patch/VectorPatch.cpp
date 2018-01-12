@@ -347,12 +347,12 @@ void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime,
     //     SyncVectorPatch::exchangeJ( (*this) );
     //     SyncVectorPatch::finalizeexchangeJ( (*this) );
     // }
-
-    #pragma omp for schedule(static)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-        // Computes A in all points
-        (*this)(ipatch)->envelope->compute(  (*this)(ipatch)->EMfields );
-        
+    if ((*this)(0)->envelope!=NULL) {
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+            // Computes A in all points
+            (*this)(ipatch)->envelope->compute(  (*this)(ipatch)->EMfields );
+        }
     }
 
     // //Synchronize B fields between patches.

@@ -134,6 +134,8 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
     int n_envlaser = PyTools::nComponents("LaserEnvelope");
     if ( n_envlaser ==1 ) // for the moment it works only with one envelope
         envelope = EnvelopeFactory::create(params, this, EMfields);
+    else 
+        envelope = NULL;
 
     // initialize the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::create(params, domain_decomposition, vecSpecies, this);
@@ -168,6 +170,8 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
     int n_envlaser = PyTools::nComponents("LaserEnvelope");
     if ( n_envlaser ==1 ) // for the moment it works only with one envelope
         envelope = EnvelopeFactory::clone(patch->envelope, this,EMfields);
+    else 
+        envelope = NULL;
 
     // interpolation operator (virtual)
     Interp     = InterpolatorFactory::create(params, this);
@@ -337,7 +341,7 @@ Patch::~Patch() {
     
     if (EMfields !=NULL) delete EMfields;
 
-    if (envelope)
+    if (envelope != NULL)
         delete envelope;
 
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
