@@ -23,8 +23,8 @@ Main(
     simulation_time = Tsim,
      
     EM_boundary_conditions = [
-        ["silver-muller"],
-        ["Buneman"],
+        ["silver-muller","silver-muller"],
+        ["Buneman","Buneman"],
     ],
     
     random_seed = smilei_mpi_rank
