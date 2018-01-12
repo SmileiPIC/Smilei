@@ -34,6 +34,7 @@ public:
     std::vector<cField2D*> rho_RZ_;
 
     void restartRhoJ() override;
+    void restartRhoJs() override;
 
     void initPoisson(Patch *patch);
     double compute_r();

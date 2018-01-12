@@ -586,6 +586,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     val_index minloc, maxloc;
 
     nfield = fields.size();
+    #ifdef _DISABLE
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
 
         if( necessary_fieldMinMax[ifield] ) {
@@ -637,6 +638,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             }
         }
     }
+    #endif
 
     // ------------------------
     // POYNTING-related scalars
