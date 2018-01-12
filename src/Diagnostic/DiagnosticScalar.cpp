@@ -528,15 +528,18 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
                 iFieldGlobalSize[i] = field->dims_[i];
             }
 
+
             // loop on all (none-ghost) cells & add-up the squared-field to the energy density
-            for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
-                for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
-                    for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
-                        unsigned int ii = k+ (j + i*iFieldGlobalSize[1]) *iFieldGlobalSize[2];
-                        Utot_crtField += (*field)(ii) * (*field)(ii);
-                    }
-                }
-            }
+            //for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
+            //    for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
+            //        for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
+            //            unsigned int ii = k+ (j + i*iFieldGlobalSize[1]) *iFieldGlobalSize[2];
+            //            Utot_crtField += (*field)(ii) * (*field)(ii);
+            //        }
+            //    }
+            //}
+            Utot_crtField += field->norm2( EMfields->istart, EMfields->bufsize );
+                
             // Utot = Dx^N/2 * Field^2
             Utot_crtField *= 0.5*cell_volume;
 
