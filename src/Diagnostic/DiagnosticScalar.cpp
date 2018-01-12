@@ -490,12 +490,26 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
 
     vector<Field*> fields;
 
-    fields.push_back(EMfields->Ex_);
-    fields.push_back(EMfields->Ey_);
-    fields.push_back(EMfields->Ez_);
-    fields.push_back(EMfields->Bx_m);
-    fields.push_back(EMfields->By_m);
-    fields.push_back(EMfields->Bz_m);
+    if ((!dynamic_cast<ElectroMagn3DRZ*>(patch->EMfields))) {
+        fields.push_back(EMfields->Ex_);
+        fields.push_back(EMfields->Ey_);
+        fields.push_back(EMfields->Ez_);
+        fields.push_back(EMfields->Bx_m);
+        fields.push_back(EMfields->By_m);
+        fields.push_back(EMfields->Bz_m);
+    }
+    else {
+        ElectroMagn3DRZ* emfields = static_cast<ElectroMagn3DRZ*>(patch->EMfields);
+        unsigned int nmodes = emfields->El_.size(); 
+        for (unsigned int imode=0 ; imode < nmodes ; imode++) {
+            fields.push_back(emfields->El_[imode]);
+            fields.push_back(emfields->Er_[imode]);
+            fields.push_back(emfields->Et_[imode]);
+            fields.push_back(emfields->Bl_m[imode]);
+            fields.push_back(emfields->Br_m[imode]);
+            fields.push_back(emfields->Bt_m[imode]);
+        }
+    }
 
     double Uelm_=0.0; // total electromagnetic energy in the fields
 
