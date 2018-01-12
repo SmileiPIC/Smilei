@@ -130,6 +130,9 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
     // initialize vector of Species (virtual)
     vecSpecies = SpeciesFactory::createVector(params, this);
 
+    // initialize the electromagnetic fields (virtual)
+    EMfields   = ElectroMagnFactory::create(params, domain_decomposition, vecSpecies, this);
+    
     // initialize the envelope if used
     int n_envlaser = PyTools::nComponents("LaserEnvelope");
     if ( n_envlaser ==1 ) // for the moment it works only with one envelope
@@ -137,9 +140,6 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
     else 
         envelope = NULL;
 
-    // initialize the electromagnetic fields (virtual)
-    EMfields   = ElectroMagnFactory::create(params, domain_decomposition, vecSpecies, this);
-    
     // interpolation operator (virtual)
     Interp     = InterpolatorFactory::create(params, this); // + patchId -> idx_domain_begin (now = ref smpi)
     // projection operator (virtual)
