@@ -236,7 +236,7 @@ public:
     std::vector<double> poynting_inst[2];
     
     //! Compute local square norm of charge denisty is not null
-    inline double computeRhoNorm2() {
+    virtual double computeRhoNorm2() {
         return rho_->norm2(istart, bufsize);
     }
 
