@@ -118,6 +118,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     // Make the list of fields
     ElectroMagn* EMfields = vecPatches(0)->EMfields;
     vector<string> fields;
+    int  nmodes(0);
     if (params.geometry != "3drz") {
         fields.push_back(EMfields->Ex_ ->name);
         fields.push_back(EMfields->Ey_ ->name);
@@ -129,6 +130,23 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
         fields.push_back(EMfields->Jy_ ->name);
         fields.push_back(EMfields->Jz_ ->name);
         fields.push_back(EMfields->rho_->name);
+    }
+    else {
+        ElectroMagn3DRZ* emfields = static_cast<ElectroMagn3DRZ*>(EMfields);
+        nmodes = emfields->El_.size();
+        for (unsigned int imode=0 ; imode < nmodes ; imode++) {
+            fields.push_back( "Uelm_"+emfields->El_[imode] ->name );
+            fields.push_back( "Uelm_"+emfields->Er_[imode] ->name );
+            fields.push_back( "Uelm_"+emfields->Et_[imode] ->name );
+            fields.push_back( "Uelm_"+emfields->Bl_m[imode]->name );
+            fields.push_back( "Uelm_"+emfields->Br_m[imode]->name );
+            fields.push_back( "Uelm_"+emfields->Bt_m[imode]->name );
+            fields.push_back(emfields->Jl_[imode]->name);
+            fields.push_back(emfields->Jr_[imode]->name);
+            fields.push_back(emfields->Jt_[imode]->name);
+            fields.push_back(emfields->rho_RZ_[imode]->name);
+        }
+        
     }
 
     // 1 - Prepare the booleans that tell which scalars are necessary to compute
@@ -231,7 +249,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
 
     // Scalars related to field's electromagnetic energy
     //nfield = 6;
-    nfield = (params.geometry == "3drz") ? 0 : 6;
+    nfield = (params.geometry == "3drz") ? nmodes * 6 : 6;
     fieldUelm.resize(nfield, NULL);
     for( unsigned int ifield=0; ifield<nfield; ifield++ )
         fieldUelm[ifield] = newScalar_SUM( "Uelm_"+fields[ifield] );
