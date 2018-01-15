@@ -145,4 +145,20 @@ void PusherRRLL::operator() (Particles &particles, SmileiMPI* smpi, int istart, 
         particles.chi(ipart)=0.5;
         //DEBUG(5, "\t END "<< particles.position(0, ipart) );
     }
+    int* cell_keys;
+    particles.cell_keys.resize(nparts);
+    cell_keys = &( particles.cell_keys[0]);
+
+    double* position[3];
+    for ( int i = 0 ; i<nDim_ ; i++ )
+        position[i] =  &( particles.position(i,0) );
+    #pragma omp simd
+    for (int ipart=0 ; ipart<nparts; ipart++ ) {
+
+        for ( int i = 0 ; i<nDim_ ; i++ ){ 
+            cell_keys[ipart] *= nspace[i];
+            cell_keys[ipart] += round( (position[i][ipart]-min_loc_vec[i]) * dx_inv_[i] );
+        }
+        
+    }
 }

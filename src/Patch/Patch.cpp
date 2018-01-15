@@ -423,8 +423,11 @@ void Patch::CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, 
             // Send particles
             if (is_a_MPI_neighbor(iDim, iNeighbor)) {
                 // If MPI comm, first copy particles in the sendbuffer
-                for (int iPart=0 ; iPart<n_part_send ; iPart++)
+                for (int iPart=0 ; iPart<n_part_send ; iPart++) {
                     cuParticles.cp_particle(vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor][iPart], vecSpecies[ispec]->MPIbuff.partSend[iDim][iNeighbor]);
+                    vecSpecies[ispec]->MPIbuff.partSend[iDim][iNeighbor].position_old(0,iPart) = 0.;
+                    vecSpecies[ispec]->MPIbuff.partSend[iDim][iNeighbor].position_old(1,iPart) = 0.;
+                }
                 // Then send particles
                 int tag = buildtag( hindex, iDim+1, iNeighbor+3 );
                 vecSpecies[ispec]->typePartSend[(iDim*2)+iNeighbor] = smpi->createMPIparticles( &(vecSpecies[ispec]->MPIbuff.partSend[iDim][iNeighbor]) );

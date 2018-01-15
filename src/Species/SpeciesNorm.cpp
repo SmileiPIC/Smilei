@@ -13,7 +13,7 @@ using namespace std;
 // Creator for SpeciesNorm
 // ---------------------------------------------------------------------------------------------------------------------
 SpeciesNorm::SpeciesNorm( Params& params, Patch* patch )
-  : Species( params, patch )
+  : SpeciesV( params, patch )
 {
     DEBUG("Species is being created as norm");
 }
