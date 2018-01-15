@@ -121,8 +121,8 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
     // t: time coordinate --> x/c for the envelope initialization
 
     position[0]           = cell_length[0]*((double)(patch->getCellStartingGlobalIndex(0))+(A3D->isDual(0)?-0.5:0.));
-    t                     = position[0];
-    t_previous_timestep   = position[0]-timestep;
+    t                     = position[0];          // x-ct     , t=0
+    t_previous_timestep   = position[0]+timestep; // x-c(t-dt), t=0
     double pos1 = cell_length[1]*((double)(patch->getCellStartingGlobalIndex(1))+(A3D->isDual(1)?-0.5:0.));
     double pos2 = cell_length[2]*((double)(patch->getCellStartingGlobalIndex(2))+(A3D->isDual(2)?-0.5:0.));
     // UNSIGNED INT LEADS TO PB IN PERIODIC BCs
@@ -135,11 +135,12 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
                 (*A03D)(i,j,k) += profile_->complexValueAt(position,t_previous_timestep);
                 (*Env_Ar3D)(i,j,k)=std::abs((*A3D)(i,j,k));
                 position[2] += cell_length[2];
-		MESSAGE(i<<" "<<j<<" "<<k);
             }
             position[1] += cell_length[1];
         }
         position[0] += cell_length[0];
+	t                     = position[0];
+        t_previous_timestep   = position[0]+timestep;
     }
 }
 
@@ -153,8 +154,8 @@ LaserEnvelope3D::~LaserEnvelope3D()
 void LaserEnvelope3D::compute(ElectroMagn* EMfields)
 {
     //// solves envelope equation in lab frame:
-    //full_laplacian(a)+2ik0*(da/dz+(1/c)*da/dt)-d^2a/dt^2*(1/c^2)=kp^2 n/n0 a/gamma
-    // where kp^2 n/n0 a/gamma is gathered in charge deposition
+    //full_laplacian(a)+2ik0*(da/dz+(1/c)*da/dt)-d^2a/dt^2*(1/c^2)=kp^2 n/n0 a/gamma_ponderomotive
+    // where kp^2 n/n0 a/gamma_ponderomotive is gathered in charge deposition
     
     //// auxiliary quantities
     //! laser wavenumber, i.e. omega0/c
@@ -193,9 +194,9 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
                 //(*A3D)(i,j,k) = (*A3D)(i,j,k);
                 (*A3Dnew)(i,j,k) = 0.; // subtract here source term from plasma
                 // A3Dnew = laplacian - source term
-                (*A3Dnew)(i,j,k) += ((*A3D)(i-1,j,k)-2.*(*A3D)(i,j,k)+(*A3D)(i+1,j,k))*one_ov_dx_sq; // x part
-                (*A3Dnew)(i,j,k) += ((*A3D)(i,j-1,k)-2.*(*A3D)(i,j,k)+(*A3D)(i,j+1,k))*one_ov_dy_sq; // y part
-                (*A3Dnew)(i,j,k) += ((*A3D)(i,j,k-1)-2.*(*A3D)(i,j,k)+(*A3D)(i,j,k+1))*one_ov_dz_sq; // z part
+                (*A3Dnew)(i,j,k) += ((*A3D)(i-1,j  ,k  )-2.*(*A3D)(i,j,k)+(*A3D)(i+1,j  ,k  ))*one_ov_dx_sq; // x part
+                (*A3Dnew)(i,j,k) += ((*A3D)(i  ,j-1,k  )-2.*(*A3D)(i,j,k)+(*A3D)(i  ,j+1,k  ))*one_ov_dy_sq; // y part
+                (*A3Dnew)(i,j,k) += ((*A3D)(i  ,j  ,k-1)-2.*(*A3D)(i,j,k)+(*A3D)(i  ,j  ,k+1))*one_ov_dz_sq; // z part
                 // A3Dnew = A3Dnew+2ik0*dA/dx
                 (*A3Dnew)(i,j,k) += 2.*i1*k0*((*A3D)(i+1,j,k)-(*A3D)(i-1,j,k))*one_ov_2dx;
                 // A3Dnew = A3Dnew*dt^2
