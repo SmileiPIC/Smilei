@@ -164,7 +164,6 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
             }
         }
     }
-	MESSAGE("F1");
     if (itime%params.every_clean_particles_overhead==0) {
         #pragma omp master
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
@@ -182,15 +181,12 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
 	
         // else finalize is done just after exchange
         //     for now ; communication must be completed par mode (tag management)
-		MESSAGE("F2");
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
             // Applies boundary conditions on B
             (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow); 
-			MESSAGE("F3");
             // Computes B at time n using B and B_m.
             (*this)(ipatch)->EMfields->centerMagneticFields();
-			MESSAGE("F4");
         }
     }
 
@@ -274,7 +270,6 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         SyncVectorPatch::exchangeJ( (*this) );
         SyncVectorPatch::finalizeexchangeJ( (*this) );
     }
-	MESSAGE("s1");
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
         // Saving magnetic fields (to compute centered fields used in the particle pusher)
@@ -287,12 +282,9 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         //for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*(*this)(ipatch)->EMfields->MaxwellFaradaySolver_)((*this)(ipatch)->EMfields);
     }
-	MESSAGE("s2");
     //Synchronize B fields between patches.
     timers.maxwell.update( params.printNow( itime ) );
-	MESSAGE("s3");
     timers.syncField.restart();
-	MESSAGE("s4");
     if ( params.geometry != "3drz" ) {
         SyncVectorPatch::exchangeB( (*this) );
     }
@@ -302,10 +294,8 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
             SyncVectorPatch::finalizeexchangeB( (*this), imode ); // disable async, because of tags which is the same for all modes
         }
     }
-	MESSAGE("s5");
 
     timers.syncField.update(  params.printNow( itime ) );
-	MESSAGE("s6");
 } // END solveMaxwell
 
 

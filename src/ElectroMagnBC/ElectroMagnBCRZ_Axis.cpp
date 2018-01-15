@@ -84,40 +84,30 @@ void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch*
     cField2D* JrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jr_[imode];
     cField2D* JtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jt_[imode];
 	
-	MESSAGE(min_max);
-	MESSAGE(Nmode);
-	MESSAGE(patch->isYmin());
+
 	if (min_max == 2 && patch->isYmin()){
-		MESSAGE("G");
 		if (imode==0){
 			//MF_Solver_Yee
 			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*BrRZ)(i,0)=0;
 			}
-			MESSAGE("GG");
 			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*BtRZ)(i,0)= -(*BtRZ)(i,1);
 			}
-			MESSAGE("GGG");
 			for (unsigned int i=0 ; i<nl_p ; i++) {
 				(*BlRZ)(i,0)+= -(*BlRZ)(i,1);
 				//(*BlRZ)(i,0)+= -(*BlRZ)(i,1)+(*BlRZ_old)(i,1)-4*dt_ov_dr*(*EtRZ)(i,1);
 			}
-			MESSAGE("GGGG");
 			//MA_SolverRZ_norm
 			for (unsigned int i=0 ; i<nl_p ; i++) {
 				(*EtRZ)(i,0)=0;
 			}
-			MESSAGE("GGGGG");
 			for (unsigned int i=0 ; i<nl_p ; i++) {
 				(*ErRZ)(i,0)= -(*ErRZ)(i,1);
 			}
-			MESSAGE("GGGGGG");
 			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*ElRZ)(i,0)+= 4*dt_ov_dr*(*BtRZ)(i,1)-dt*(*JlRZ)(i,0);
 			}
-			MESSAGE("GGGGGGG");
-		MESSAGE("MODE0");
 		}
 		else if (imode==1){
 			//MF
@@ -143,7 +133,7 @@ void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch*
 				(*ErRZ)(i,0)= -(*ErRZ)(i,1);
 			}
 
-			MESSAGE("MODE1");	
+		
 
 		}
 		else {
@@ -169,5 +159,5 @@ void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch*
 		}
 	}    
 	}
-	MESSAGE("Axis");
+
 }

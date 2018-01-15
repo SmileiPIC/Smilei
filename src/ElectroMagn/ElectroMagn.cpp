@@ -39,12 +39,8 @@ nrj_new_fields (  0.               )
     for (unsigned int i=0; i<3; i++) {
         DEBUG("____________________ OVERSIZE: " <<i << " " << oversize[i]);
     }
-    MESSAGE("init electromag quqntities");
-    initElectroMagnQuantities();
-	MESSAGE(" after init electromag quqntities");
-    
+    initElectroMagnQuantities();    
     emBoundCond = ElectroMagnBC_Factory::create(params, patch);
-    MESSAGE("em bound create");
     MaxwellAmpereSolver_  = SolverFactory::createMA(params);
     MaxwellFaradaySolver_ = SolverFactory::createMF(params);
     
@@ -258,35 +254,26 @@ void ElectroMagn::updateGridSize(Params &params, Patch* patch)
 
 
 void ElectroMagn::boundaryConditions(int itime, double time_dual, Patch* patch, Params &params, SimWindow* simWindow)
-{	MESSAGE("HELLO0")
+{	
     // Compute EM Bcs
     if ( ! (simWindow && simWindow->isMoving(time_dual)) ) {
-		MESSAGE("moving or no");
         if (emBoundCond[0]!=NULL) { // <=> if !periodic
-		MESSAGE("EM ou nn");
             emBoundCond[0]->apply(this, time_dual, patch);
-			MESSAGE("FACE1");
             emBoundCond[1]->apply(this, time_dual, patch);
-			MESSAGE("face2");
         }
     }
-	MESSAGE("HELLO1")
     if (emBoundCond.size()>2) {
         if (emBoundCond[2]!=NULL) {// <=> if !periodic
             emBoundCond[2]->apply(this, time_dual, patch);
-			MESSAGE("face3");
             emBoundCond[3]->apply(this, time_dual, patch);
-			MESSAGE("face4");
         }
     }
-	MESSAGE("HELLO2")
     if (emBoundCond.size()>4) {
         if (emBoundCond[4]!=NULL) {// <=> if !periodic
             emBoundCond[4]->apply(this, time_dual, patch);
             emBoundCond[5]->apply(this, time_dual, patch);
         }
     }
-	MESSAGE("HELLO3")
 }
 
 

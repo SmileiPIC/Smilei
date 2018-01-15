@@ -209,7 +209,6 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		        -                   2.*CE_BM*dt/((j_glob+j-0.5)*dr)*(*EtRZ)(i,j);
 		    }//i  ---end Bl
 		    
-		    MESSAGE("Bl BM");
 		    // for Bt^(d,d)
 			
 		    for (unsigned int i=1 ; i<nl_d-1 ; i++) {
@@ -220,12 +219,10 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		        -                   CE_BM*Gamma_BM_Rmax*((*ErRZ)(i,j)+(*ErRZ)(i,j-1)-(*ErRZ)(i-1,j) -(*ErRZ)(i-1,j-1) )
 				-                   CB_BM* Beta_BM_Rmax/((j_glob+j-0.5)*dr +(j_glob+j+0.5)*dr)*((*BtRZ)(i,j+1) + (*BtRZ_old)(i,j+1) 				+					(*BtRZ)(i,j) + (*BtRZ_old)(i,j)) ;
 		    }//i  ---end Bt
-		    MESSAGE("Bt BM");
 		    
 		}
 		else  {
 		    ERROR( "No Buneman along the axis" );
 		}
 	}	
-	MESSAGE("BM");
 }

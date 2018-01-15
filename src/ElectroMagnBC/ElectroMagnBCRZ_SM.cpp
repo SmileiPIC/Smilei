@@ -203,12 +203,8 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_[imode];
 		cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_[imode];
 
-		int     j_glob = (static_cast<ElectroMagn3DRZ*>(EMfields))->j_glob_;
-		MESSAGE(min_max);	 
-		MESSAGE(imode);	 
-		MESSAGE(Nmode);	 
-		if (min_max == 0 && patch->isXmin() ) {
-		MESSAGE("XMIN");		    
+		int     j_glob = (static_cast<ElectroMagn3DRZ*>(EMfields))->j_glob_;	 
+		if (min_max == 0 && patch->isXmin() ) {		    
 		    // for Br^(d,p)
 		    vector<double> yp(1);
 		    yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dr;
@@ -229,7 +225,6 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		        +              Delta_SM_Xmin   *( (*BlRZ)(i,j+1)- (*BlRZ)(i,j));
 		        
 		    }//j  ---end compute Br
-		    MESSAGE(nr_p);
 		    
 		    // for Bt^(d,d)
 		    vector<double> yd(1);
@@ -251,10 +246,8 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 				+               Epsilon_SM_Xmin *imode/((j_glob+j-0.5)*dr)*(*BlRZ)(i,j+1) ;
 		        
 		    }//j  ---end compute Bt
-		    MESSAGE(nr_d);
 		}
 		else if (min_max == 1 && patch->isXmax() ) {
-		    MESSAGE("XMax");
 		    // for Br^(d,p)
 		    vector<double> yp(1);
 		    yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dr;
@@ -276,7 +269,6 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		        
 		    }//j  ---end compute Br
 		    
-		    MESSAGE("Br");
 		    // for Bt^(d,d)
 		    vector<double> yd(1);
 		    yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dr;
@@ -297,12 +289,10 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 
 		        
 		    }//j  ---end compute Bt
-			MESSAGE("Bt");
 		}
 		else {
 		    ERROR( "No Silver Muller along the axis" );
 		}
 
 	}
-	MESSAGE("SM");
 }
