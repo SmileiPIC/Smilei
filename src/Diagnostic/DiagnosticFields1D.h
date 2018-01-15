@@ -19,6 +19,8 @@ public:
     void getField( Patch* patch, unsigned int ) override;
     
     void writeField(hid_t, int) override;
+private:
+    unsigned int MPI_start_in_file;
 };
 
 #endif

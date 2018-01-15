@@ -397,6 +397,7 @@ class DiagFields(SmileiComponent):
     every = None
     fields = []
     time_average = 1
+    subset = None
     flush_every = 1
 
 class DiagTrackParticles(SmileiComponent):

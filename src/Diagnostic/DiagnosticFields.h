@@ -27,7 +27,16 @@ public :
     virtual bool needsRhoJs(int itime) override;
     
     bool hasField(std::string field_name, std::vector<std::string> fieldsToDump);
-
+    
+    void findSubsetIntersection(unsigned int subset_start,
+                                unsigned int subset_stop,
+                                unsigned int subset_step,
+                                unsigned int zone_begin,
+                                unsigned int zone_end,
+                                unsigned int &istart_in_zone,
+                                unsigned int &istart_in_file,
+                                unsigned int &nsteps          );
+    
     //! Get memory footprint of current diagnostic
     int getMemFootPrint() override {
         return 0;
@@ -51,6 +60,9 @@ protected :
     
     //! Inverse of the time average
     double time_average_inv;
+    
+    //! Subset of the grid requested
+    std::vector<unsigned int> subset_start, subset_stop, subset_step;
     
     //! Property list for collective dataset write, set for // IO.
     hid_t write_plist;

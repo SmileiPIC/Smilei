@@ -16,19 +16,22 @@ DiagnosticFields1D::DiagnosticFields1D( Params &params, SmileiMPI* smpi, VectorP
     patch_offset_in_grid[0] = params.oversize[0];
     
     // Calculate the patch size
-    patch_size.resize(1);
-    patch_size[0] = params.n_space[0]+1;
-    total_patch_size = patch_size[0];
+    total_patch_size = params.n_space[0];
     
-    // define space in file
-    hsize_t global_size[1];
-
+    // define space in file and in memory
+    hsize_t file_size[1];
     // All patch write n_space elements except, patch 0 which write n_space+1
-    global_size[0] = tot_number_of_patches * (total_patch_size-1) + 1;
-
-    filespace = H5Screate_simple(1, global_size, NULL);
-    memspace  = H5Screate_simple(1, global_size, NULL ); // redefined later
-
+    unsigned int global_size = tot_number_of_patches * total_patch_size + 1;
+    // Take subset into account
+    unsigned int istart, istart_in_file, nsteps;
+    findSubsetIntersection(
+        subset_start[0], subset_stop[0], subset_step[0],
+        0, global_size,
+        istart, istart_in_file, nsteps
+    );
+    file_size[0] = nsteps;
+    filespace = H5Screate_simple(1, file_size, NULL);
+    memspace  = H5Screate_simple(1, file_size, NULL);
 }
 
 DiagnosticFields1D::~DiagnosticFields1D()
@@ -38,29 +41,40 @@ DiagnosticFields1D::~DiagnosticFields1D()
 void DiagnosticFields1D::setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches )
 {
     // Calculate the total size of the array in this proc
-    unsigned int total_vecPatches_size = (total_patch_size-1) * vecPatches.size();
+    unsigned int total_vecPatches_size = total_patch_size * vecPatches.size();
     // One more cell on the left
     if (smpi->isMaster()) total_vecPatches_size++;
     
-    // Resize the data (must contain data[0] even if not used for all process, so +1)
-    data.resize(total_vecPatches_size+1);
+    // Calculate the intersection between the local grid and the subset
+    unsigned int MPI_begin = total_patch_size * refHindex;
+    if (!smpi->isMaster()) MPI_begin++;
+    unsigned int MPI_end = MPI_begin + total_vecPatches_size;
+    unsigned int istart_in_MPI, nsteps;
+    findSubsetIntersection(
+        subset_start[0], subset_stop[0], subset_step[0],
+        MPI_begin, MPI_end,
+        istart_in_MPI, MPI_start_in_file, nsteps
+    );
     
-    // Define offset and size for HDF5 file
-    hsize_t offset[1], block[1], count[1];
-    offset[0] = (total_patch_size-1) * refHindex;
-    // non master patch/process write 1 point less, so start 1 point later
-    if (!smpi->isMaster()) offset[0]++;
-
-    block[0] = total_vecPatches_size;
-    count[0] = 1;
-    // Select portion of the file where this MPI will write to
-    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, NULL, count, block);
-    
-    // define space in memory
-    offset[0] = 0;
-    // if not patch/process 0, data[0] not used (see in getField, iout++)
-    if (!smpi->isMaster()) offset[0]++;
-    H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, NULL, count, block);
+    if( nsteps > 0 ) {
+        data.resize(nsteps);
+        
+        // Define offset and size for HDF5 file
+        hsize_t offset[1], block[1], count[1];
+        offset[0] = MPI_start_in_file;
+        block[0] = nsteps;
+        count[0] = 1;
+        // Select portion of the file where this MPI will write to
+        H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, NULL, count, block);
+        
+        // define space in memory
+        offset[0] = 0;
+        H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, NULL, count, block);
+    } else {
+        data.resize(0);
+        H5Sselect_none(filespace);
+        H5Sselect_none(memspace );
+    }
 }
 
 
@@ -74,20 +88,38 @@ void DiagnosticFields1D::getField( Patch* patch, unsigned int ifield )
     } else {
         field = static_cast<Field1D*>(patch->EMfields->allFields[fields_indexes[ifield]]);
     }
-    // Copy field to the "data" buffer
-    unsigned int ix = patch_offset_in_grid[0];
-    unsigned int ix_max = ix + patch_size[0];
-
-    // if not patch 0, then offset = offset+1
-    if (patch->hindex!=0) ix++;
-
-    unsigned int iout = (total_patch_size-1) * (patch->Hindex()-refHindex);
-    // patch 0 really write total_patch_size
-    if (patch->hindex!=0) iout++; 
-
+    
+    // Calculate the intersection between the patch grid and the subset
+    unsigned int patch_begin = total_patch_size * patch->Hindex();
+    unsigned int patch_end   = patch_begin + total_patch_size + 1;
+    unsigned int ix, iout, nsteps;
+    if( patch->Hindex() != 0 ) patch_begin++;
+    findSubsetIntersection(
+        subset_start[0], subset_stop[0], subset_step[0],
+        patch_begin, patch_end,
+        ix, iout, nsteps
+    );
+    ix += patch_offset_in_grid[0];
+    iout -= MPI_start_in_file;
+    unsigned int ix_max = ix + nsteps * subset_step[0];
+    
+    ostringstream s("");
+    int rk;
+    MPI_Comm_rank( MPI_COMM_WORLD, &rk );
+    for( int ip=0; ip<rk; ip++) s<<"        ";
+    
+    cout << s.str() << " -- " << patch->Hindex() << " " << ix << " " << ix_max << endl;
+    
+    // Copy this patch field into buffer
     while( ix < ix_max ) {
+        //ostringstream t("");
+        //t << s.str() << patch->Hindex() << " " << ix << " " << iout << " " << data.size() << endl;
+        //cout << t.str();
+        if( iout >= data.size() ) {
+            cout << s.str() << " // " << iout-1 << " " << data.size()<<" "<<patch_begin<<" "<<patch_end<<endl;
+        }
         data[iout] = (*field)(ix) * time_average_inv;
-        ix++;
+        ix += subset_step[0];
         iout++;
     }
     

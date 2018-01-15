@@ -65,6 +65,51 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
         }
     }
     
+    // Extract subset info
+    PyObject* subset = PyTools::extract_py("subset", "DiagFields", ndiag);
+    // Make a vector of all subsets
+    vector<PyObject*> subsets;
+    if( subset == Py_None ) {
+        subsets.resize(params.nDim_field, Py_None);
+    } else if( ! PySequence_Check(subset) ) {
+        subsets.push_back( subset );
+    } else {
+        Py_ssize_t ns = PySequence_Length(subset);
+        for( Py_ssize_t is=0; is<ns; is++ )
+            subsets.push_back( PySequence_Fast_GET_ITEM(subset, is) );
+    }
+    // Verify the number of subsets
+    unsigned int nsubset = subsets.size();
+    if( nsubset != params.nDim_field ) {
+        ERROR("Diagnostic Fields #"<<ndiag<<" `subset` containing "<<nsubset<<" axes whereas simulation dimension is "<<params.nDim_field);
+    }
+    // Check each subset is a slice, and save the slice boundaries
+    for( unsigned int isubset=0; isubset<nsubset; isubset++ ) {
+        unsigned int n;
+        if( subsets[isubset] == Py_None ) {
+            subset_start.push_back( 0 );
+            subset_stop .push_back( params.n_space_global[isubset]+2 );
+            subset_step .push_back( 1  );
+        } else if( PyTools::convert(subsets[isubset], n) ) {
+            subset_start.push_back( n );
+            subset_stop .push_back( n + 1 );
+            subset_step .push_back( 1 );
+        } else if( PySlice_Check(subsets[isubset]) ) {
+            Py_ssize_t start, stop, step, slicelength;
+            if( PySlice_GetIndicesEx(subsets[isubset], params.n_space_global[isubset]+1, &start, &stop, &step, &slicelength) < 0) {
+                PyTools::checkPyError();
+                ERROR("Diagnostic Fields #"<<ndiag<<" `subset` axis #"<<isubset<<" not understood");
+            }
+            subset_start.push_back( start );
+            subset_stop .push_back( stop  );
+            subset_step .push_back( step  );
+            if( slicelength < 1 )
+                ERROR("Diagnostic Fields #"<<ndiag<<" `subset` axis #"<<isubset<<" is an empty selection");
+        } else {
+            ERROR("Diagnostic Fields #"<<ndiag<<" `subset` axis #"<<isubset<<" must be an integer or a slice");
+        }
+    }
+    
     // Some output
     ostringstream p("");
     p << "(time average = " << time_average << ")";
@@ -313,5 +358,48 @@ uint64_t DiagnosticFields::getDiskFootPrint(int istart, int istop, Patch* patch)
     footprint += ndumps * nfields * (uint64_t)(total_patch_size * tot_number_of_patches * 8);
     
     return footprint;
+}
+
+// Calculates the intersection between a subset (aka slice in python) and a contiguous zone
+// of the PIC grid. The zone can be a patch or a MPI region.
+void DiagnosticFields::findSubsetIntersection(
+    unsigned int subset_start,
+    unsigned int subset_stop,
+    unsigned int subset_step,
+    unsigned int zone_begin,
+    unsigned int zone_end,
+    unsigned int & istart_in_zone, // index since the zone start that is its first intersection with subset
+    unsigned int & istart_in_file, // index of this first intersection in the file (or equivalently in subset)
+    unsigned int & nsteps // Number of intersecting elements
+) {
+    unsigned int start, stop;
+    // If the zone begins before the subset
+    if( zone_begin <= subset_start ) {
+        istart_in_zone = subset_start - zone_begin;
+        istart_in_file = 0;
+        if( zone_end <= subset_start) {
+            nsteps = 0;
+        } else {
+            stop = min(zone_end, subset_stop);
+            if( stop <= subset_start) stop = subset_start + 1;
+            nsteps = (stop - subset_start - 1) / subset_step + 1;
+        }
+    } else {
+        if( zone_begin >= subset_stop ) {
+            istart_in_zone = 0;
+            istart_in_file = 0;
+            nsteps = 0;
+        } else {
+            istart_in_file = (zone_begin - subset_start - 1) / subset_step + 1;
+            start = subset_start + istart_in_file * subset_step;
+            istart_in_zone = start - zone_begin;
+            stop = min(zone_end, subset_stop);
+            if( stop <= start) {
+                nsteps = 0;
+            } else {
+                nsteps = (stop - start - 1) / subset_step + 1;
+            }
+        }
+    }
 }
 
