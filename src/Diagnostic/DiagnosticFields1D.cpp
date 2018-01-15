@@ -102,22 +102,9 @@ void DiagnosticFields1D::getField( Patch* patch, unsigned int ifield )
     ix += patch_offset_in_grid[0];
     iout -= MPI_start_in_file;
     unsigned int ix_max = ix + nsteps * subset_step[0];
-    
-    ostringstream s("");
-    int rk;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rk );
-    for( int ip=0; ip<rk; ip++) s<<"        ";
-    
-    cout << s.str() << " -- " << patch->Hindex() << " " << ix << " " << ix_max << endl;
-    
+
     // Copy this patch field into buffer
     while( ix < ix_max ) {
-        //ostringstream t("");
-        //t << s.str() << patch->Hindex() << " " << ix << " " << iout << " " << data.size() << endl;
-        //cout << t.str();
-        if( iout >= data.size() ) {
-            cout << s.str() << " // " << iout-1 << " " << data.size()<<" "<<patch_begin<<" "<<patch_end<<endl;
-        }
         data[iout] = (*field)(ix) * time_average_inv;
         ix += subset_step[0];
         iout++;
