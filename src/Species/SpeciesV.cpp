@@ -34,6 +34,8 @@
 #include "Field3D.h"
 #include "Tools.h"
 
+#include "DiagnosticTrack.h"
+
 using namespace std;
 
 
@@ -548,4 +550,50 @@ void SpeciesV::compute_part_cell_keys(Params &params)
     for (ip=0; ip < npart ; ip++)
         species_loc_bmax[(*particles).cell_keys[ip]] ++ ;
 
+}
+
+
+void SpeciesV::importParticles( Params& params, Patch* patch, Particles& source_particles, vector<Diagnostic*>& localDiags )
+{
+    unsigned int npart = source_particles.size(), ibin, ii, nbin=bmin.size();
+    double inv_cell_length = 1./ params.cell_length[0];
+
+    // If this species is tracked, set the particle IDs
+    if( particles->tracked )
+        dynamic_cast<DiagnosticTrack*>(localDiags[tracking_diagnostic])->setIDs( source_particles );
+
+    unsigned int length[3];
+    length[0]=0;
+    length[1]=params.n_space[1]+1;
+    length[2]=params.n_space[2]+1;
+
+    int IX;
+    double X;
+
+    // Move particles
+    for( unsigned int i=0; i<npart; i++ ) {
+        
+        ibin = 0;
+        for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
+            X = source_particles.position(ipos,i)-min_loc_vec[ipos];
+            IX = round(X * dx_inv_[ipos] );
+            ibin = ibin * length[ipos] + IX;
+        }
+
+        // Copy particle to the correct bin
+        source_particles.cp_particle(i, *particles, bmax[ibin] );
+      
+        // Update the bin counts
+        bmax[ibin]++;
+        for (ii=ibin+1; ii<nbin; ii++) {
+            bmin[ii]++;
+            bmax[ii]++;
+        }
+
+        particles->cell_keys.insert( particles->cell_keys.begin() + bmin[ibin] + species_loc_bmax[ibin], ibin);
+        species_loc_bmax[ibin] ++ ;
+        
+    }
+
+    source_particles.clear();
 }
