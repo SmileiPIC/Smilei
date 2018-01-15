@@ -449,6 +449,10 @@ private:
 #endif
 
 //! Children classes, for various manners to fill the histogram
+class Histogram_void : public Histogram {
+    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+    };
+};
 class Histogram_density : public Histogram {
     void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
         unsigned int npart = array.size();

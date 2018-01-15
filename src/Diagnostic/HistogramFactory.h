@@ -27,8 +27,12 @@ public:
         deposited_quantityName << errorPrefix << ": parameter `deposited_quantity`";
         std::string deposited_quantityPrefix = deposited_quantityName.str();
         
+        // Special case when no deposited_quantity needed
+        if( deposited_quantity_object == NULL ) {
+            histogram = new Histogram_void();
+
         // By default, deposited_quantity=None, but should not
-        if( deposited_quantity_object == Py_None ) {
+        } else if( deposited_quantity_object == Py_None ) {
             ERROR(deposited_quantityPrefix << " required");
             
         // If string, then ok

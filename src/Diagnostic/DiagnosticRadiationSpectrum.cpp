@@ -1,7 +1,7 @@
 #include "PyTools.h"
 #include <iomanip>
 
-#include "DiagnosticParticleBinning.h"
+#include "DiagnosticRadiationSpectrum.h"
 #include "HistogramFactory.h"
 
 
@@ -9,45 +9,102 @@ using namespace std;
 
 
 // Constructor
-DiagnosticParticleBinning::DiagnosticParticleBinning( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
+DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
 {
     fileId_ = 0;
     
-    int n_diag_particles = diagId;
+    int n_diag_rad_spectrum = diagId;
     
     ostringstream name("");
-    name << "Diagnotic Particles #" << n_diag_particles;
+    name << "Diagnotic Radiation Spectrum #" << n_diag_rad_spectrum;
     string errorPrefix = name.str();
-    
-    // get parameter "deposited_quantity" that determines the quantity to sum in the output array
-    PyObject* deposited_quantity_object = PyTools::extract_py("deposited_quantity", "DiagParticleBinning", n_diag_particles);
-    PyTools::checkPyError();
     
     // get parameter "every" which describes a timestep selection
     timeSelection = new TimeSelection(
-        PyTools::extract_py("every", "DiagParticleBinning", n_diag_particles),
+        PyTools::extract_py("every", "DiagRadiationSpectrum", n_diag_rad_spectrum),
         name.str()
     );
     
     // get parameter "flush_every" which describes a timestep selection for flushing the file
     flush_timeSelection = new TimeSelection(
-        PyTools::extract_py("flush_every", "DiagParticleBinning", n_diag_particles),
+        PyTools::extract_py("flush_every", "DiagRadiationSpectrum", n_diag_rad_spectrum),
         name.str()
     );
     
     // get parameter "time_average" that determines the number of timestep to average the outputs
     time_average = 1;
-    PyTools::extract("time_average",time_average,"DiagParticleBinning",n_diag_particles);
+    PyTools::extract("time_average",time_average,"DiagRadiationSpectrum",n_diag_rad_spectrum);
     if ( time_average < 1 ) time_average=1;
     if ( time_average > timeSelection->smallestInterval() )
         ERROR(errorPrefix << ": `time_average` is incompatible with `every`");
     
     // get parameter "species" that determines the species to use (can be a list of species)
     vector<string> species_names;
-    if (!PyTools::extract("species",species_names,"DiagParticleBinning",n_diag_particles))
+    if (!PyTools::extract("species",species_names,"DiagRadiationSpectrum",n_diag_rad_spectrum))
         ERROR(errorPrefix << ": parameter `species` required");
     // verify that the species exist, remove duplicates and sort by number
     species = params.FindSpecies(patch->vecSpecies, species_names);
+    
+    
+    // start reading the "photon energy axis"
+    // --------------------------------------
+    PyObject* photon_energy_axis = PyTools::extract_py("photon_energy_axis", "DiagRadiationSpectrum", n_diag_rad_spectrum);
+    // Axis must be a list
+    if (!PyTuple_Check(photon_energy_axis) && !PyList_Check(photon_energy_axis))
+        ERROR(errorPrefix << ": photon_energy_axis must be a list");
+    PyObject* seq = PySequence_Fast(photon_energy_axis, "expected a sequence");
+    
+    // Axis must have 3 elements or more
+    unsigned int lenAxisArgs=PySequence_Size(seq);
+    if (lenAxisArgs<3)
+        ERROR(errorPrefix << ": photon_energy_axis must contain at least 3 arguments (contains only " << lenAxisArgs << ")");
+    
+    // Try to extract 1st element: axis min
+    if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 0), photon_energy_min)) {
+        ERROR(errorPrefix << ", photon_energy_axis: 1st item must be a double (minimum photon energy)");
+    }
+    
+    // Try to extract 2nd element: axis max
+    if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 1), photon_energy_max)) {
+        ERROR(errorPrefix << ", photon_energy_axis: 2nd item must be a double (maximum photon energy)");
+    }
+    
+    // Try to extract 3rd element: axis nbins
+    if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 2), photon_energy_nbins)) {
+        ERROR(errorPrefix << ", photon_energy_axis: 3rd item must be an int (number of bins)");
+    }
+    
+    // Check for  other keywords such as "logscale" and "edge_inclusive"
+    photon_energy_logscale = false;
+    photon_energy_edge_inclusive = false;
+    for(unsigned int i=3; i<lenAxisArgs; i++) {
+        std::string my_str("");
+        PyTools::convert(PySequence_Fast_GET_ITEM(seq, i),my_str);
+        if(my_str=="logscale" ||  my_str=="log_scale" || my_str=="log")
+            photon_energy_logscale = true;
+        else if(my_str=="edges" ||  my_str=="edge" ||  my_str=="edge_inclusive" ||  my_str=="edges_inclusive")
+            photon_energy_edge_inclusive = true;
+        else
+            ERROR(errorPrefix << ": keyword `" << my_str << "` not understood");
+    }
+    
+    // construct the list of photon_energies
+    photon_energies.resize(photon_energy_nbins);
+    double emin=photon_energy_min, emax=photon_energy_max;
+    if(photon_energy_logscale) {
+        emin = log10(emin);
+        emax = log10(emax);
+    }
+    double spacing = (emax-emin)/photon_energy_nbins;
+    for (unsigned int i=0; i<photon_energy_nbins; i++) {
+        photon_energies[i] = emin + (i+0.5)*spacing;
+        if(photon_energy_logscale) photon_energies[i] = pow(10.,photon_energies[i]);
+    }
+
+    
+    // here ends the reading of "photon energy axis"
+    // ---------------------------------------------
+    
     
     // Temporarily set the spatial min and max to the simulation box size
     spatial_min.resize( params.nDim_particle, 0. );
@@ -56,7 +113,7 @@ DiagnosticParticleBinning::DiagnosticParticleBinning( Params &params, SmileiMPI*
     // get parameter "axes" that adds axes to the diagnostic
     // Each axis should contain several items:
     //      requested quantity, min value, max value ,number of bins, log (optional), edge_inclusive (optional)
-    vector<PyObject*> pyAxes=PyTools::extract_pyVec("axes","DiagParticleBinning",n_diag_particles);
+    vector<PyObject*> pyAxes=PyTools::extract_pyVec("axes","DiagRadiationSpectrum",n_diag_rad_spectrum);
     
     // Create the Histogram object based on the extracted parameters above
     vector<string> excluded_axes(0);
@@ -64,7 +121,7 @@ DiagnosticParticleBinning::DiagnosticParticleBinning( Params &params, SmileiMPI*
     excluded_axes.push_back( "b" );
     excluded_axes.push_back( "theta" );
     excluded_axes.push_back( "phi" );
-    histogram = HistogramFactory::create(params, deposited_quantity_object, pyAxes, species, patch, excluded_axes, errorPrefix);
+    histogram = HistogramFactory::create(params, NULL, pyAxes, species, patch, excluded_axes, errorPrefix);
     
     // Get info on the spatial extent
     for( unsigned int i=0; i<histogram->axes.size(); i++ ) {
@@ -81,7 +138,7 @@ DiagnosticParticleBinning::DiagnosticParticleBinning( Params &params, SmileiMPI*
     }
     
     // Calculate the size of the output array
-    uint64_t total_size = 1;
+    uint64_t total_size = photon_energy_nbins;
     for( unsigned int i=0; i<histogram->axes.size(); i++ )
         total_size *= histogram->axes[i]->nbins;
     if( total_size > 4294967296 ) // 2^32
@@ -95,7 +152,12 @@ DiagnosticParticleBinning::DiagnosticParticleBinning( Params &params, SmileiMPI*
         mystream << species_names[0];
         for(unsigned int i=1; i<species_names.size(); i++)
             mystream << "," << species_names[i];
-        MESSAGE(1,"Created ParticleBinning diagnostic #" << n_diag_particles << ": species " << mystream.str());
+        MESSAGE(1,"Created RadiationSpectrum diagnostic #" << n_diag_rad_spectrum << ": species " << mystream.str());
+        mystream.str("");
+        mystream << "Photon energy from " << photon_energy_min << " to " << photon_energy_max << " in " << photon_energy_nbins << " steps";
+        if( photon_energy_logscale       ) mystream << " [LOGSCALE] ";
+        if( photon_energy_edge_inclusive ) mystream << " [EDGE INCLUSIVE]";
+        MESSAGE(2,mystream.str());
         for(unsigned int i=0; i<histogram->axes.size(); i++) {
             HistogramAxis * axis = histogram->axes[i];
             mystream.str("");
@@ -107,22 +169,22 @@ DiagnosticParticleBinning::DiagnosticParticleBinning( Params &params, SmileiMPI*
         
         // init HDF files (by master, only if it doesn't yet exist)
         mystream.str(""); // clear
-        mystream << "ParticleBinning" << n_diag_particles << ".h5";
+        mystream << "RadiationSpectrum" << n_diag_rad_spectrum << ".h5";
         filename = mystream.str();
     }
 
-} // END DiagnosticParticleBinning::DiagnosticParticleBinning
+} // END DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum
 
 
-DiagnosticParticleBinning::~DiagnosticParticleBinning()
+DiagnosticRadiationSpectrum::~DiagnosticRadiationSpectrum()
 {
     delete timeSelection;
     delete flush_timeSelection;
-} // END DiagnosticParticleBinning::~DiagnosticParticleBinning
+} // END DiagnosticRadiationSpectrum::~DiagnosticRadiationSpectrum
 
 
 // Called only by patch master of process master
-void DiagnosticParticleBinning::openFile( Params& params, SmileiMPI* smpi, bool newfile )
+void DiagnosticRadiationSpectrum::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
     if (!smpi->isMaster()) return;
     
@@ -132,7 +194,6 @@ void DiagnosticParticleBinning::openFile( Params& params, SmileiMPI* smpi, bool 
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         // write all parameters as HDF5 attributes
         H5::attr(fileId_, "Version", string(__VERSION));
-        H5::attr(fileId_, "deposited_quantity" , histogram->deposited_quantity);
         H5::attr(fileId_, "time_average"  , time_average);
         // write all species
         ostringstream mystream("");
@@ -140,6 +201,15 @@ void DiagnosticParticleBinning::openFile( Params& params, SmileiMPI* smpi, bool 
         for (unsigned int i=0 ; i < species.size() ; i++)
             mystream << species[i] << " ";
         H5::attr(fileId_, "species", mystream.str());
+        // write photon_energy_axis
+        mystream.str(""); // clear
+        mystream << "photon_energy_axis";
+        string str1 = mystream.str();
+        mystream.str(""); // clear
+        mystream << photon_energy_min << " " << photon_energy_max << " "
+        << photon_energy_nbins << " " << photon_energy_logscale << " " << photon_energy_edge_inclusive;
+        string str2 = mystream.str();
+        H5::attr(fileId_, str1, str2);
         // write each axis
         for (unsigned int iaxis=0 ; iaxis < histogram->axes.size() ; iaxis++) {
             mystream.str(""); // clear
@@ -164,7 +234,7 @@ void DiagnosticParticleBinning::openFile( Params& params, SmileiMPI* smpi, bool 
 }
 
 
-void DiagnosticParticleBinning::closeFile()
+void DiagnosticRadiationSpectrum::closeFile()
 {
     if (fileId_!=0) {
         H5Fclose(fileId_);
@@ -174,7 +244,7 @@ void DiagnosticParticleBinning::closeFile()
 } // END closeFile
 
 
-bool DiagnosticParticleBinning::prepare( int timestep )
+bool DiagnosticRadiationSpectrum::prepare( int timestep )
 {
     // Get the previous timestep of the time selection
     int previousTime = timeSelection->previousTime(timestep);
@@ -195,7 +265,7 @@ bool DiagnosticParticleBinning::prepare( int timestep )
 
 
 // run one particle binning diagnostic
-void DiagnosticParticleBinning::run( Patch* patch, int timestep, SimWindow* simWindow )
+void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* simWindow )
 {
 
     vector<int> int_buffer;
@@ -227,8 +297,32 @@ void DiagnosticParticleBinning::run( Patch* patch, int timestep, SimWindow* simW
         fill(int_buffer.begin(), int_buffer.end(), 0);
         
         histogram->digitize  ( s, double_buffer, int_buffer, simWindow );
-        histogram->valuate   ( s, double_buffer, int_buffer );
-        histogram->distribute( double_buffer, int_buffer, data_sum );
+
+        //histogram->distribute( double_buffer, int_buffer, data_sum );
+        int ind;
+        
+        // Sum the data into the data_sum
+        // ------------------------------
+        double two_third = 0.666666666666666666;
+        double gamma, chi, xi, zeta, nu, cst;
+        for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
+            ind = int_buffer[ipart];
+            if (ind<0) continue; // skip discarded particles
+            ind *= photon_energy_nbins;
+            for (unsigned int i=0; i<photon_energy_nbins; i++) {
+                // all computations here!
+                chi   = s->particles->chi(ipart);
+                gamma = sqrt( 1. + pow(s->particles->momentum(ipart,0),2) + pow(s->particles->momentum(ipart,1),2) + pow(s->particles->momentum(ipart,2),2) );
+                xi   = photon_energies[i] / gamma;
+                if ( (xi<1.)&&(chi>1.e-5) ) {
+                    zeta = xi / (1.-xi);
+                    nu   = two_third * zeta/chi;
+                    cst  = xi*zeta;
+                    #pragma omp atomic
+                    data_sum[ind+i] += s->particles->weight(ipart) * sqrt(nu)*exp(-nu);
+                }
+            }
+        }
         
     }
 
@@ -237,7 +331,7 @@ void DiagnosticParticleBinning::run( Patch* patch, int timestep, SimWindow* simW
 
 // Now the data_sum has been filled
 // if needed now, store result to hdf file
-void DiagnosticParticleBinning::write(int timestep, SmileiMPI* smpi)
+void DiagnosticRadiationSpectrum::write(int timestep, SmileiMPI* smpi)
 {
     if ( !smpi->isMaster() ) return;
     
@@ -284,14 +378,14 @@ void DiagnosticParticleBinning::write(int timestep, SmileiMPI* smpi)
 
 
 //! Clear the array
-void DiagnosticParticleBinning::clear() {
+void DiagnosticRadiationSpectrum::clear() {
     data_sum.resize(0);
     vector<double>().swap( data_sum );
 }
 
 
 // SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
-uint64_t DiagnosticParticleBinning::getDiskFootPrint(int istart, int istop, Patch* patch)
+uint64_t DiagnosticRadiationSpectrum::getDiskFootPrint(int istart, int istop, Patch* patch)
 {
     uint64_t footprint = 0;
     

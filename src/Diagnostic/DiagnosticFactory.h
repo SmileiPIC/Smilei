@@ -5,6 +5,7 @@
 
 #include "DiagnosticParticleBinning.h"
 #include "DiagnosticScreen.h"
+#include "DiagnosticRadiationSpectrum.h"
 #include "DiagnosticProbes.h"
 #include "DiagnosticScalar.h"
 #include "DiagnosticTrack.h"
@@ -53,6 +54,10 @@ public:
         
         for (unsigned int n_diag_screen = 0; n_diag_screen < PyTools::nComponents("DiagScreen"); n_diag_screen++) {
             vecDiagnostics.push_back( new DiagnosticScreen(params, smpi, vecPatches(0), n_diag_screen) );
+        }
+
+        for (unsigned int n_diag_rad_spectrum = 0; n_diag_rad_spectrum < PyTools::nComponents("DiagRadiationSpectrum"); n_diag_rad_spectrum++) {
+            vecDiagnostics.push_back( new DiagnosticRadiationSpectrum(params, smpi, vecPatches(0), n_diag_rad_spectrum) );
         }
         
         return vecDiagnostics;

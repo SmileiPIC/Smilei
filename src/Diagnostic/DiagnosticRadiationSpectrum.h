@@ -1,21 +1,21 @@
-#ifndef DIAGNOSTICPARTICLEBINNING_H
-#define DIAGNOSTICPARTICLEBINNING_H
+#ifndef DIAGNOSTICRADIATIONSPECTRUM_H
+#define DIAGNOSTICRADIATIONSPECTRUM_H
 
 #include "Diagnostic.h"
 
 #include "Histogram.h"
 
-class DiagnosticParticleBinning : public Diagnostic {
+class DiagnosticRadiationSpectrum : public Diagnostic {
     friend class SmileiMPI;
 
 public :
     
     //! Default constructor
-    DiagnosticParticleBinning( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+    DiagnosticRadiationSpectrum( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
     //! Cloning constructor
-    DiagnosticParticleBinning( DiagnosticParticleBinning* );
+    DiagnosticRadiationSpectrum( DiagnosticRadiationSpectrum* );
     //! Default destructor
-    ~DiagnosticParticleBinning() override;
+    ~DiagnosticRadiationSpectrum() override;
     
     void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
     
@@ -59,6 +59,23 @@ private :
     
     //! Minimum and maximum spatial coordinates that are useful for this diag
     std::vector<double> spatial_min, spatial_max;
+    
+    //! Minimum photon energy for radiation spectrum
+    double photon_energy_min;
+    
+    //! Maximum photon energy for radiation spectrum
+    double photon_energy_max;
+
+    //! Number of energy bins for radiation spectrum    
+    int photon_energy_nbins;
+    
+    //! is logscale used for the photon energy axis
+    bool photon_energy_logscale;
+    
+    //! are edges inclusive for the photon energy axis
+    bool photon_energy_edge_inclusive;
+    
+    std::vector<double> photon_energies;
 };
 
 #endif
