@@ -42,6 +42,12 @@ public :
     uint64_t getDiskFootPrint(int istart, int istop, Patch* patch) override;
     
 private :
+    
+    //! constant 2/3
+    double two_third;
+    
+    //! normalization factor for the emitted power spectrum
+    double factor;
 
     //! number of timesteps during which outputs are averaged
     int time_average;
@@ -75,7 +81,9 @@ private :
     //! are edges inclusive for the photon energy axis
     bool photon_energy_edge_inclusive;
     
+    //! axis containing the values of the binned photon_energies
     std::vector<double> photon_energies;
+    
 };
 
 #endif

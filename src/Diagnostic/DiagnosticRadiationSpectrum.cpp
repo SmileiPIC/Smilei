@@ -15,6 +15,12 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, Smilei
     
     int n_diag_rad_spectrum = diagId;
     
+    // useful parameters
+    two_third = 0.666666666666666666;
+    double squared_fine_structure_constant = 5.325135447834466e-5;
+    double normalized_classical_electron_time = 9.399637140638142e-24*params.reference_angular_frequency_SI;
+    factor = two_third*params.cell_volume*squared_fine_structure_constant/normalized_classical_electron_time;
+    
     ostringstream name("");
     name << "Diagnotic Radiation Spectrum #" << n_diag_rad_spectrum;
     string errorPrefix = name.str();
@@ -301,7 +307,7 @@ void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* si
         // Sum the data into the data_sum
         // ------------------------------
         int ind;
-        double two_third = 0.666666666666666666;
+
         double gamma, chi, xi, zeta, nu, cst;
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             ind = int_buffer[ipart];
@@ -317,7 +323,7 @@ void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* si
                     nu   = two_third * zeta/chi;
                     cst  = xi*zeta;
                     #pragma omp atomic
-                    data_sum[ind+i] += s->particles->weight(ipart) * sqrt(nu)*exp(-nu);
+                    data_sum[ind+i] += factor*s->particles->weight(ipart) * sqrt(nu)*exp(-nu);
                 }
             }
         }
