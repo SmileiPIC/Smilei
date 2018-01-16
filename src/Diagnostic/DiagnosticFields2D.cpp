@@ -27,7 +27,6 @@ DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI* smpi, VectorP
     patch_size.resize(2);
     patch_size[0] = params.n_space[0];
     patch_size[1] = params.n_space[1];
-    total_patch_size = patch_size[0] * patch_size[1];
     
     // define space in file and in memory for the first (1D) write
     // We assign, for each patch, the maximum buffer size necessary to fit the subset
@@ -172,29 +171,25 @@ void DiagnosticFields2D::getField( Patch* patch, unsigned int ifield )
     for( unsigned int i=0; i<2; i++) {
         patch_begin[i] = patch->Pcoordinates[i] * patch_size[i];
         patch_end  [i] = patch_begin[i] + patch_size[i] + 1;
-        if( patch_begin[i] != 0 ) patch_begin[i]++;
+        if( patch->Pcoordinates[i] != 0 ) patch_begin[i]++;
         findSubsetIntersection(
             subset_start[i], subset_stop[i], subset_step[i],
             patch_begin[i], patch_end[i],
             istart_in_patch[i], istart_in_file[i], nsteps[i]
         );
         istart_in_patch[i] += patch_offset_in_grid[i];
+        if( patch->Pcoordinates[i] == 0 ) istart_in_patch[i]--;
     }
     
     // Copy field to the "data" buffer
-    unsigned int ix = istart_in_patch[0];
-    unsigned int ix_max = ix + subset_step[0]*nsteps[0];
-    unsigned int iy;
+    unsigned int ix_max = istart_in_patch[0] + subset_step[0]*nsteps[0];
     unsigned int iy_max = istart_in_patch[1] + subset_step[1]*nsteps[1];
     unsigned int iout = one_patch_buffer_size * (patch->Hindex()-refHindex);
-    while( ix < ix_max ) {
-        iy = istart_in_patch[1];
-        while( iy < iy_max ) {
+    for( unsigned int ix = istart_in_patch[0]; ix < ix_max; ix += subset_step[0] ) {
+        for( unsigned int iy = istart_in_patch[1]; iy < iy_max; iy += subset_step[1] ) {
             data[iout] = (*field)(ix, iy) * time_average_inv;
             iout++;
-            iy += subset_step[1];
         }
-        ix += subset_step[0];
     }
     
     if( time_average>1 ) field->put_to(0.0);

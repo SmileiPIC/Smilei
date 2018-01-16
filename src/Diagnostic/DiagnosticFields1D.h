@@ -20,7 +20,7 @@ public:
     
     void writeField(hid_t, int) override;
 private:
-    unsigned int MPI_start_in_file;
+    unsigned int MPI_start_in_file, total_patch_size;
 };
 
 #endif

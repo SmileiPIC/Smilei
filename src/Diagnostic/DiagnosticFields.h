@@ -71,8 +71,6 @@ protected :
     std::vector<unsigned int> patch_offset_in_grid;
     //! Number of cells in each direction
     std::vector<unsigned int> patch_size;
-    //! Number of cells in a patch
-    unsigned int total_patch_size;
     //! Buffer for the output of a field
     std::vector<double> data;
     
@@ -94,6 +92,7 @@ protected :
     htri_t status;
     
     //! Tools for re-reading and re-writing the file in a folded pattern
+    unsigned int one_patch_buffer_size;
     hid_t filespace_reread, filespace_firstwrite, memspace_reread, memspace_firstwrite;
     std::vector<double> data_reread, data_rewrite;
     
