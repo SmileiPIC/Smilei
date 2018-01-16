@@ -297,12 +297,10 @@ void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* si
         fill(int_buffer.begin(), int_buffer.end(), 0);
         
         histogram->digitize  ( s, double_buffer, int_buffer, simWindow );
-
-        //histogram->distribute( double_buffer, int_buffer, data_sum );
-        int ind;
         
         // Sum the data into the data_sum
         // ------------------------------
+        int ind;
         double two_third = 0.666666666666666666;
         double gamma, chi, xi, zeta, nu, cst;
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {

@@ -373,6 +373,15 @@ class DiagParticleBinning(SmileiComponent):
     every = None
     flush_every = 1
 
+class DiagRadiationSpectrum(SmileiComponent):
+    """Radiation Spectrum diagnostic"""
+    time_average = 1
+    species = None
+    photon_energy_axis = None
+    axes = []
+    every = None
+    flush_every = 1
+
 class DiagScreen(SmileiComponent):
     """Screen diagnostic"""
     shape = None
