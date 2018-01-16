@@ -182,6 +182,18 @@ class RadiationTables
         }
 
         // -----------------------------------------------------------------------------
+        //! Return the value of the function h(chipa) of Niel et al.
+        //! using the numerical fit of Ridgers in
+        //! Ridgers et al., ArXiv 1708.04511 (2017)
+        //! \param chipa particle quantum parameter
+        // -----------------------------------------------------------------------------
+        double inline get_h_Niel_from_fit_Ridgers(double chipa)
+        {
+            return pow(chipa,3)*1.9846415503393384*pow(1. +
+                (1. + 4.528*chipa)*log(1.+12.29*chipa) + 4.632*pow(chipa,2),-7./6.);
+        }
+
+        // -----------------------------------------------------------------------------
         //! Return the classical power factor factor_cla_rad_power.
         // -----------------------------------------------------------------------------
         double inline get_factor_cla_rad_power()

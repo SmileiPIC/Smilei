@@ -350,7 +350,7 @@ given by Eq. :eq:`LLFrictionForceApprox`
 has been implemented in :program:`Smilei`
 using a simple explicit scheme.
 The model is accessible in the species configuration under the name
-``Landau-Lifshitz``.
+``Landau-Lifshitz`` or ``ll``.
 
 For the corrected version, we use a fit of the function
 :math:`g(\chi)` given by
@@ -363,7 +363,7 @@ For the corrected version, we use a fit of the function
 
 This fit enables to keep the vectorization of the particle loop.
 The corrected model is accessible in the species configuration under the name
-``corrected-Landau-Lifshitz``.
+``corrected-Landau-Lifshitz`` or ``cll``.
 
 Fokker-Planck stochastic model of Niel *et al*.
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -387,8 +387,26 @@ given in :ref:`RadiationReaction <RadiationReaction>`.
 Polynomial fits of this integral can be obtained in log-log
 or log10-log10 domain. However, high accuracy requires high-order polynomials
 (order 20 for an accuracy around :math:`10^{-10}` for instance).
-In :program:`Smilei`, an order 5 and 10 polynomial fits are implemented.
+In :program:`Smilei`, an order 5 (see Eq. :eq:`fit5`) and 10 polynomial fits are implemented.
 They are valid for quantum parameters :math:`\chi` between :math:`10^{-3}` and 10.
+
+.. math::
+  :label: fit5
+
+  h_{o5}(\chi) = \exp{ \left(1.399937206900322 \times 10^{-4}  \log(\chi)^5 \\
+  + 3.123718241260330 \times 10^{-3}  \log{(\chi)}^4 \\
+  + 1.096559086628964 \times 10^{-2}  \log(\chi)^3 \\
+  -1.733977278199592 \times 10^{-1}  \log(\chi)^2 \\
+  + 1.492675770100125  \log(\chi) \\
+  -2.748991631516466 \right) }
+
+An additional fit from [Ridgers2017]_ has been implemented and the formula
+is given in Eq. :eq:`h_fit_ridgers`.
+
+.. math::
+  :label: h_fit_ridgers
+
+  h_{Ridgers}(\chi) = \chi^3  \frac{165}{48 \sqrt{3}} \left(1. + (1. + 4.528 \chi) \log(1.+12.29 \chi) + 4.632 \chi^2 \right)^{-7/6}
 
 The stochastic diffusive model is accessible in the species configuration
 under the name ``Niel``.
@@ -422,7 +440,7 @@ The parameters such as the :math:`\chi` range and the discretization can be
 given in :ref:`RadiationReaction <RadiationReaction>`.
 
 The Monte-Carlo model is accessible in the species configuration
-under the name ``Monte-Carlo``.
+under the name ``Monte-Carlo`` or ``mc``.
 
 ----
 
@@ -715,7 +733,7 @@ the Monte-Carlo radiation process.
 | Synchrotron 2D Haswell (Jureca)     | 10s        | 11s      | 12s          | 14s      | 15s                 |
 | :math:`\chi=0.05`,  :math:`B=100`   |            |          |              |          |                     |
 +-------------------------------------+------------+----------+--------------+----------+---------------------+
-| Synchrotron 2D Haswell (Jureca)     | 19s        | 20s      | 21s          | 23s      | 31s                 |
+| Synchrotron 2D Haswell (Jureca)     | 10s        | 11s      | 12s          | 14s      | 22s                 |
 | :math:`\chi=0.5`,  :math:`B=100`    |            |          |              |          |                     |
 +-------------------------------------+------------+----------+--------------+----------+---------------------+
 | Synchrotron 2D KNL (Frioul)         | 21s        | 23s      | 23s          | 73s      | 47s                 |
@@ -802,3 +820,5 @@ References
 .. [Ritus1985] `Ritus V. (1985), Journal of Soviet Laser Research, 6, 497, ISSN 0270-2010 <https://doi.org/10.1007/BF01120220>`_
 
 .. [Timokhin2010] `Timokhin A. N. (2010), Monthly Notices of the Royal Astronomical Society, 408 (4), 2092, ISSN 1365-2966 <https://doi.org/10.1111/j.1365-2966.2010.17286.x>`_
+
+.. [Ridgers2017] `Ridgers, C. P., Blackburn, T. G., Del Sorbo, D., Bradley, L. E., Slade-Lowther, C., Baird, C. D., ... & Thomas, A. G. R. (2017), Journal of Plasma Physics, 83(5) <https://doi.org/10.1017/S0022377817000642>`_
