@@ -19,7 +19,6 @@ DiagnosticFields1D::DiagnosticFields1D( Params &params, SmileiMPI* smpi, VectorP
     total_patch_size = params.n_space[0];
     
     // define space in file and in memory
-    hsize_t file_size[1];
     // All patch write n_space elements except, patch 0 which write n_space+1
     unsigned int global_size = tot_number_of_patches * total_patch_size + 1;
     // Take subset into account
@@ -29,9 +28,9 @@ DiagnosticFields1D::DiagnosticFields1D( Params &params, SmileiMPI* smpi, VectorP
         0, global_size,
         istart, istart_in_file, nsteps
     );
-    file_size[0] = nsteps;
-    filespace = H5Screate_simple(1, file_size, NULL);
-    memspace  = H5Screate_simple(1, file_size, NULL);
+    hsize_t file_size = nsteps;
+    filespace = H5Screate_simple(1, &file_size, NULL);
+    memspace  = H5Screate_simple(1, &file_size, NULL);
 }
 
 DiagnosticFields1D::~DiagnosticFields1D()
