@@ -602,10 +602,10 @@ Each species has to be defined in a ``Species`` block::
   and you define :py:data:`radiation_photon_species`.
 
   * ``"none"``: no radiation
-  * ``"Landau-Lifshitz"``: Landau-Lifshitz model approximated for high energies
-  * ``"corrected-Landau-Lifshitz"``: with quantum correction
+  * ``"Landau-Lifshitz"`` (or ``ll``): Landau-Lifshitz model approximated for high energies
+  * ``"corrected-Landau-Lifshitz"`` (or ``cll``): with quantum correction
   * ``""Niel"``: a `stochastic radiation model <https://arxiv.org/abs/1707.02618>`_ based on the work of Niel `et al.`.
-  * ``"Monte-Carlo"``: Monte-Carlo radiation model. This model can be configured to generate macro-photons with :py:data:`radiation_photon_species`.
+  * ``"Monte-Carlo"`` (or ``mc``): Monte-Carlo radiation model. This model can be configured to generate macro-photons with :py:data:`radiation_photon_species`.
 
   :red:`This parameter cannot be assigned to photons (mass=0).`
 
@@ -1336,6 +1336,7 @@ tables.
   * "fit10":  A polynomial fit of order 10 is used. No table is required.
     The precision if better than the fit of order 5 with a maximal relative error of 0.0002.
     The fit is valid for quantum parameters :math:`\chi` between 1e-3 and 10.
+  * "ridgers": The fit of Ridgers given in Ridgers et al., ArXiv 1708.04511 (2017)
 
   The use of tabulated values is best for accuracy but not for performance.
   Table access prevent total vectorization.

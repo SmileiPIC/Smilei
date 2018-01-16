@@ -176,23 +176,6 @@ void SyncVectorPatch::exchangeB( Params& params, VectorPatch& vecPatches )
 
 }
 
-void SyncVectorPatch::exchangeJ( Params& params, VectorPatch& vecPatches )
-{
-
-    SyncVectorPatch::exchange( vecPatches.listJx_, vecPatches );
-    SyncVectorPatch::exchange( vecPatches.listJy_, vecPatches );
-    SyncVectorPatch::exchange( vecPatches.listJz_, vecPatches );
-}
-
-void SyncVectorPatch::finalizeexchangeJ( Params& params, VectorPatch& vecPatches )
-{
-
-    SyncVectorPatch::finalizeexchange( vecPatches.listJx_, vecPatches );
-    SyncVectorPatch::finalizeexchange( vecPatches.listJy_, vecPatches );
-    SyncVectorPatch::finalizeexchange( vecPatches.listJz_, vecPatches );
-}
-
-
 void SyncVectorPatch::finalizeexchangeB( Params& params, VectorPatch& vecPatches )
 {
     if (vecPatches.listBx_[0]->dims_.size()==1) {
@@ -212,6 +195,23 @@ void SyncVectorPatch::finalizeexchangeB( Params& params, VectorPatch& vecPatches
         }
     }
 
+}
+
+
+void SyncVectorPatch::exchangeJ( Params& params, VectorPatch& vecPatches )
+{
+
+    SyncVectorPatch::exchange( vecPatches.listJx_, vecPatches );
+    SyncVectorPatch::exchange( vecPatches.listJy_, vecPatches );
+    SyncVectorPatch::exchange( vecPatches.listJz_, vecPatches );
+}
+
+void SyncVectorPatch::finalizeexchangeJ( Params& params, VectorPatch& vecPatches )
+{
+
+    SyncVectorPatch::finalizeexchange( vecPatches.listJx_, vecPatches );
+    SyncVectorPatch::finalizeexchange( vecPatches.listJy_, vecPatches );
+    SyncVectorPatch::finalizeexchange( vecPatches.listJz_, vecPatches );
 }
 
 
