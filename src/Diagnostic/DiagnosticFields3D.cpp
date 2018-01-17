@@ -122,10 +122,14 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, VectorP
         block2 [i] = rewrite_size[i];
     }
     filespace = H5Screate_simple(3, final_array_size, NULL);
-    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset2, NULL, count2, block2);
+    if( rewrite_size[0]==0 || rewrite_size[1]==0 || rewrite_size[2]==0 ) {
+        H5Sselect_none(filespace);
+    } else {
+        H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset2, NULL, count2, block2);
+    }
     // Define space in memory for re-writing
     memspace = H5Screate_simple(3, block2, NULL);
-    data_rewrite.resize( block2[0]*block2[1]*block2[2] );
+    data_rewrite.resize( rewrite_size[0]*rewrite_size[1]*rewrite_size[2] );
     
     tmp_dset_id=0;
 }
