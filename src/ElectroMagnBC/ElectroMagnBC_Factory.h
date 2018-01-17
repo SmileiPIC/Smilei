@@ -168,7 +168,7 @@ public:
             emBoundCond[2] = new ElectroMagnBCRZ_Axis(params, patch, 2);
             // silver-muller bcs (injecting/absorbin)
 			MESSAGE("bc AXIS");
-            if ( params.EM_BCs[1][1] == "Buneman" ) {
+            if ( params.EM_BCs[1][1] == "buneman" ) {
                 emBoundCond[3] = new ElectroMagnBCRZ_BM(params, patch, 3);
             }
 			

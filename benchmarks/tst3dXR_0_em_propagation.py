@@ -24,7 +24,7 @@ Main(
      
     EM_boundary_conditions = [
         ["silver-muller","silver-muller"],
-        ["Buneman","Buneman"],
+        ["buneman","buneman"],
     ],
     
     random_seed = smilei_mpi_rank
