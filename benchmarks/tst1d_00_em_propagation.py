@@ -47,7 +47,7 @@ from numpy import s_
 DiagFields(
     every = int(rest/2.0),
     fields = ['Ex','Ey','Ez','By_m','Bz_m'],
-    subset = s_[4:100:3]
+    subgrid = s_[4:100:3]
 )
 
 DiagProbe(

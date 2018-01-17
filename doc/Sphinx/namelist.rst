@@ -1642,7 +1642,7 @@ This is done by including a block ``DiagFields``::
       every = 10,
       time_average = 2,
       fields = ["Ex", "Ey", "Ez"],
-      #subset = None
+      #subgrid = None
   )
 
 .. py:data:: every
@@ -1701,11 +1701,11 @@ This is done by including a block ``DiagFields``::
   | | Rho_abc      | |  Density of species "abc"                           |
   +----------------+-------------------------------------------------------+
 
-.. py:data:: subset
+.. py:data:: subgrid
 
   :default: ``None`` *(the whole grid is used)*
 
-  A list of slices indicating a subset of the simulation grid to be written by this
+  A list of slices indicating a portion of the simulation grid to be written by this
   diagnostic. This list must have as many elements as the simulation dimension.
   For example, in a 3D simulation, the list has 3 elements. Each element can be:
   
@@ -1716,17 +1716,17 @@ This is done by including a block ``DiagFields``::
   
   This can be easily implemented using the
   `numpy.s_ expression <https://docs.scipy.org/doc/numpy/reference/generated/numpy.s_.html>`_.
-  For instance, in a 3D simulation, the following subset selects only every other element
+  For instance, in a 3D simulation, the following subgrid selects only every other element
   in each dimension::
     
     from numpy import s_
     DiagFields( #...
-    	subset = s_[::2, ::2, ::2]
+    	subgrid = s_[::2, ::2, ::2]
     )
   
   while this one selects cell indices included in a contiguous parallelepiped::
     
-    	subset = s_[100:300, 300:500, 300:600]
+    	subgrid = s_[100:300, 300:500, 300:600]
   
 
 

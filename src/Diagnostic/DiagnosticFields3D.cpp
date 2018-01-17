@@ -31,11 +31,11 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, VectorP
     patch_size[2] = params.n_space[2];
     
     // define space in file and in memory for the first (1D) write
-    // We assign, for each patch, the maximum buffer size necessary to fit the subset
+    // We assign, for each patch, the maximum buffer size necessary to fit the subgrid
     unsigned int istart_in_patch[3], istart_in_file[3], nsteps[3];
     for( unsigned int i=0; i<3; i++) {
-        findSubsetIntersection(
-            subset_start[i], subset_stop[i], subset_step[i],
+        findSubgridIntersection(
+            subgrid_start[i], subgrid_stop[i], subgrid_step[i],
             0, patch_size[i]+1,
             istart_in_patch[i], istart_in_file[i], nsteps[i]
         );
@@ -104,17 +104,17 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, VectorP
     count2 [0] = 1;
     count2 [1] = 1;
     count2 [2] = 1;
-    // Take subset into account
+    // Take subgrid into account
     unsigned int istart[3];
     for( unsigned int i=0; i<3; i++) {
-        findSubsetIntersection(
-            subset_start[i], subset_stop[i], subset_step[i],
+        findSubgridIntersection(
+            subgrid_start[i], subgrid_stop[i], subgrid_step[i],
             0, final_array_size[i],
             istart[i], rewrite_start_in_file[i], rewrite_size[i]
         );
         final_array_size[i] = rewrite_size[i];
-        findSubsetIntersection(
-            subset_start[i], subset_stop[i], subset_step[i],
+        findSubgridIntersection(
+            subgrid_start[i], subgrid_stop[i], subgrid_step[i],
             offset2[i], offset2[i] + block2[i],
             istart[i], rewrite_start_in_file[i], rewrite_size[i]
         );
@@ -181,14 +181,14 @@ void DiagnosticFields3D::getField( Patch* patch, unsigned int ifield )
         field = static_cast<Field3D*>(patch->EMfields->allFields[fields_indexes[ifield]]);
     }
     
-    // Find the intersection between this patch and the subset
+    // Find the intersection between this patch and the subgrid
     unsigned int istart_in_patch[3], istart_in_file[3], nsteps[3], patch_begin[3], patch_end[3];
     for( unsigned int i=0; i<3; i++) {
         patch_begin[i] = patch->Pcoordinates[i] * patch_size[i];
         patch_end  [i] = patch_begin[i] + patch_size[i] + 1;
         if( patch->Pcoordinates[i] != 0 ) patch_begin[i]++;
-        findSubsetIntersection(
-            subset_start[i], subset_stop[i], subset_step[i],
+        findSubgridIntersection(
+            subgrid_start[i], subgrid_stop[i], subgrid_step[i],
             patch_begin[i], patch_end[i],
             istart_in_patch[i], istart_in_file[i], nsteps[i]
         );
@@ -197,13 +197,13 @@ void DiagnosticFields3D::getField( Patch* patch, unsigned int ifield )
     }
     
     // Copy field to the "data" buffer
-    unsigned int ix_max = istart_in_patch[0] + subset_step[0]*nsteps[0];
-    unsigned int iy_max = istart_in_patch[1] + subset_step[1]*nsteps[1];
-    unsigned int iz_max = istart_in_patch[2] + subset_step[2]*nsteps[2];
+    unsigned int ix_max = istart_in_patch[0] + subgrid_step[0]*nsteps[0];
+    unsigned int iy_max = istart_in_patch[1] + subgrid_step[1]*nsteps[1];
+    unsigned int iz_max = istart_in_patch[2] + subgrid_step[2]*nsteps[2];
     unsigned int iout = one_patch_buffer_size * (patch->Hindex()-refHindex);
-    for( unsigned int ix = istart_in_patch[0]; ix < ix_max; ix += subset_step[0] ) {
-        for( unsigned int iy = istart_in_patch[1]; iy < iy_max; iy += subset_step[1] ) {
-            for( unsigned int iz = istart_in_patch[2]; iz < iz_max; iz += subset_step[2] ) {
+    for( unsigned int ix = istart_in_patch[0]; ix < ix_max; ix += subgrid_step[0] ) {
+        for( unsigned int iy = istart_in_patch[1]; iy < iy_max; iy += subgrid_step[1] ) {
+            for( unsigned int iz = istart_in_patch[2]; iz < iz_max; iz += subgrid_step[2] ) {
                 data[iout] = (*field)(ix, iy, iz) * time_average_inv;
                 iout++;
             }
@@ -232,8 +232,8 @@ void DiagnosticFields3D::writeField( hid_t dset_id, int itime ) {
             patch_begin[i] = rewrite_patch[h][i] * patch_size[i];
             patch_end  [i] = patch_begin[i] + patch_size[i] + 1;
             if( patch_begin[i] != 0 ) patch_begin[i]++;
-            findSubsetIntersection(
-                subset_start[i], subset_stop[i], subset_step[i],
+            findSubgridIntersection(
+                subgrid_start[i], subgrid_stop[i], subgrid_step[i],
                 patch_begin[i], patch_end[i],
                 istart_in_patch[i], istart_in_file[i], nsteps[i]
             );
