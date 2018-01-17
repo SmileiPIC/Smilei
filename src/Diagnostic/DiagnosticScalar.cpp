@@ -744,6 +744,7 @@ uint64_t DiagnosticScalar::getDiskFootPrint(int istart, int istop, Patch* patch)
         }
     }
     // 4 - Scalars related to fields min and max
+    #ifdef _RZ__TODO
     for( unsigned int i=0; i<2; i++ ) {
         string minmax = (i==0) ? "Min" : "Max";
         for( unsigned int j=0; j<2; j++ ) {
@@ -760,6 +761,7 @@ uint64_t DiagnosticScalar::getDiskFootPrint(int istart, int istop, Patch* patch)
             scalars.push_back( Tools::merge(patch->EMfields->rho_->name, minmax, cell) );
         }
     }
+    #endif
     // 5 - Scalars related to the Poynting flux
     unsigned int k = 0;
     string poy_name;
