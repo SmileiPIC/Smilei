@@ -39,7 +39,7 @@ class SmileiComponentType(type):
         self.current += 1
         return self._list[self.current - 1]
     __next__ = next #python3
-    
+
     # Function to return one given instance, for example DiagParticleBinning[0]
     # Special case: species can also be indexed by their name: Species["ion1"]
     def __getitem__(self, key):
@@ -151,7 +151,12 @@ class SmileiSingleton(SmileiComponent):
 
     # Constructor for all SmileiSingletons
     def __init__(self, **kwargs):
-        self._fillObjectAndAddToList(type(self), type(self), **kwargs)
+        cls = type(self)
+        self._fillObjectAndAddToList(cls, cls, **kwargs)
+        # Change all methods to static
+        for k,v in cls.__dict__.items():
+            if k[0]!='_' and hasattr(v,"__get__"):
+                setattr(cls, k, staticmethod(v))
 
 class ParticleData(object):
     """Container for particle data at run-time (for exposing particles in numpy)"""
@@ -176,6 +181,12 @@ class Main(SmileiSingleton):
     Nmode = 2
     timestep_over_CFL = None
 
+    # PXR tuning
+    global_factor = []
+    norder = []
+    is_spectral = False
+    is_pxr = False
+
     # Poisson tuning
     solve_poisson = True
     poisson_max_iteration = 50000
@@ -185,20 +196,21 @@ class Main(SmileiSingleton):
     maxwell_solver = 'Yee'
     EM_boundary_conditions = [["periodic"]]
     time_fields_frozen = 0.
-    
+
     # Default Misc
     reference_angular_frequency_SI = 0.
     print_every = None
     random_seed = None
+    print_expected_disk_usage = True
 
     def __init__(self, **kwargs):
         # Load all arguments to Main()
         super(Main, self).__init__(**kwargs)
-        
+
         # Deprecation error for the "geometry" argument
         if Main.geometry in ["1d3v", "2d3v", "3d3v"]:
             raise Exception("Deprecated geometry = \""+Main.geometry+"\". Use \""+Main.geometry[0]+"Dcartesian\" instead")
-        
+
         # Initialize timestep if not defined based on timestep_over_CFL
         if Main.timestep is None:
             if Main.timestep_over_CFL is None:
@@ -231,22 +243,29 @@ class Main(SmileiSingleton):
                 # None recognized solver
                 else:
                     raise Exception("timestep: maxwell_solver not implemented "+Main.maxwell_solver)
-                
-        #initialize grid_length if not defined based on number_of_cells and cell_length
-        if len(Main.grid_length) is 0:
-            if len(Main.number_of_cells) is 0:
-                raise Exception("grid_length and number_of_cells not defined")
-            elif len(Main.number_of_cells) != len(Main.cell_length):
-                raise Exception("grid_length and number_of_cells not defined")
-            else :
-                Main.grid_length = [a*b for a,b in zip(Main.number_of_cells, Main.cell_length)]
 
-        #initialize simulation_time if not defined based on number_of_timesteps and timestep
-        if Main.simulation_time is None:
-            if Main.number_of_timesteps is None:
-                raise Exception("simulation_time and number_of_timesteps not defined")
-            else:
-                Main.simulation_time = Main.number_of_timesteps * Main.timestep
+        # Initialize grid_length if not defined based on number_of_cells and cell_length
+        if (    len(Main.grid_length + Main.number_of_cells) == 0
+             or len(Main.grid_length + Main.cell_length) == 0
+             or len(Main.number_of_cells + Main.cell_length) == 0
+             or len(Main.number_of_cells) * len(Main.grid_length) * len(Main.cell_length) != 0
+           ):
+                raise Exception("Main: you must define two (and only two) between grid_length, number_of_cells and cell_length")
+
+        if len(Main.grid_length) == 0:
+            Main.grid_length = [a*b for a,b in zip(Main.number_of_cells, Main.cell_length)]
+
+        if len(Main.cell_length) == 0:
+            Main.cell_length = [a/b for a,b in zip(Main.grid_length, Main.number_of_cells)]
+
+        if len(Main.number_of_cells) == 0:
+            Main.number_of_cells = [int(round(float(a)/float(b))) for a,b in zip(Main.grid_length, Main.cell_length)]
+            old_grid_length = Main.grid_length
+            Main.grid_length = [a*b for a,b in zip(Main.number_of_cells, Main.cell_length)]
+            if smilei_mpi_rank == 0:
+                different = [abs((a-b)/(a+b))>1e-10 for a,b in zip(Main.grid_length, old_grid_length)]
+                if any(different):
+                    print("\t[Python WARNING] Main.grid_length="+str(Main.grid_length)+" (was "+str(old_grid_length)+")")
 
 class LoadBalancing(SmileiSingleton):
     """Load balancing parameters"""
@@ -266,7 +285,7 @@ class MovingWindow(SmileiSingleton):
 
 class Checkpoints(SmileiSingleton):
     """Checkpoints parameters"""
-    
+
     restart_dir = None
     restart_number = None
     dump_step = 0
@@ -387,6 +406,12 @@ class DiagTrackParticles(SmileiComponent):
     every = 0
     flush_every = 1
     filter = None
+    attributes = ["x", "y", "z", "px", "py", "pz"]
+
+class DiagPerformances(SmileiSingleton):
+    """Performances diagnostic"""
+    every = 0
+    flush_every = 1
 
 # external fields
 class ExternalField(SmileiComponent):
@@ -413,13 +438,14 @@ class PartWall(SmileiComponent):
 # Radiation reaction configuration (continuous and MC algorithms)
 class RadiationReaction(SmileiComponent):
     """
-    Fine-tuning of synchrotron-like radiation loss
+    Fine-tuning of synchrotron-like radiation reaction
     (classical continuous, quantum correction, stochastics and MC algorithms)
     """
     # Table h parameters
     h_chipa_min = 1e-3
     h_chipa_max = 1e1
     h_dim = 128
+    h_computation_method = "table"
     # Table integfochi parameters
     integfochi_chipa_min = 1e-3
     integfochi_chipa_max = 1e1
@@ -477,4 +503,3 @@ class DumpRestart(object):
 class ExtField(object):
     def __init__(self, *args, **kwargs):
         raise Exception("Deprecated `ExtField()` must be replaced by `ExternalField()`")
-

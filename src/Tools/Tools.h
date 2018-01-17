@@ -26,6 +26,7 @@
 #include <cstdlib>
 
 #include <iostream>
+#include <sstream>
 
 #include <fstream>
 
@@ -103,16 +104,26 @@ if (__i==__rk) {std::cout << "Proc [" << __i << "] " <<__txt << std::endl;} MPI_
 #endif // __DEBUG
 
 class Tools {
- public:
-  static void printMemFootPrint(std::string tag);
-  
-  //! Converts a number of Bytes in a readable string in KiB, MiB, GiB or TiB
-  static std::string printBytes(uint64_t nbytes);
-  
-  //! This function returns true/flase whether the file exists or not
-  //! \param file file name to test
-  static bool file_exists(const std::string & filename) ;
-
+public:
+    static void printMemFootPrint(std::string tag);
+    
+    //! Converts a number of Bytes in a readable string in KiB, MiB, GiB or TiB
+    static std::string printBytes(uint64_t nbytes);
+    
+    //! This function returns true/flase whether the file exists or not
+    //! \param file file name to test
+    static bool file_exists(const std::string & filename) ;
+    
+    static std::string xyz;
+    
+    //! Concatenate several strings
+    template<class T1, class T2, class T3=std::string, class T4=std::string>
+    static std::string merge(T1 s1, T2 s2, T3 s3="", T4 s4="")
+    {
+        std::ostringstream tot("");
+        tot << s1 << s2 << s3 << s4;
+        return tot.str();
+    };
 };
 
 

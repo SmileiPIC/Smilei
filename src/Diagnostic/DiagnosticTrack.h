@@ -24,7 +24,7 @@ public :
     
     bool prepare( int itime ) override;
     
-    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow ) override;
+    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow, Timers & timers ) override;
     
     //! Get memory footprint of current diagnostic
     int getMemFootPrint() override {
@@ -66,15 +66,6 @@ private :
     //! Number of spatial dimensions
     unsigned int nDim_particle;
     
-    //! Number of patches in each direction
-    std::vector<unsigned int> number_of_patches;
-    
-    //! Number of cells per patch
-    int ncells_perpatch;
-    
-    //! Size of a patch in each direction
-    std::vector<double> patch_dimensions;
-    
     //! Current particle partition among the patches own by current MPI
     std::vector<unsigned int> patch_start;
     
@@ -93,6 +84,24 @@ private :
     std::vector<short> data_short;
     //! Buffer for the output of uint64 array
     std::vector<uint64_t> data_uint64;
+    
+    //! Approximate total number of particles
+    double npart_total;
+    
+    //! Booleans to determine which attributes to write out
+    std::vector<bool> write_position;
+    std::vector<bool> write_momentum;
+    bool write_charge;
+    bool write_weight;
+    bool write_chi   ;
+    std::vector<bool> write_E;
+    std::vector<bool> write_B;
+    bool interpolate;
+    bool write_any_position;
+    bool write_any_momentum;
+    bool write_any_E;
+    bool write_any_B;
+
 };
 
 #endif

@@ -34,7 +34,8 @@ def _smilei_check():
     """Do checks over the script"""
     # Verify classes were not overriden
     for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
-            "DiagProbe","DiagParticleBinning", "DiagScalar","DiagFields","ExternalField",
+            "DiagProbe","DiagParticleBinning", "DiagScalar","DiagFields",
+            "DiagTrackParticles","DiagPerformances","ExternalField",
             "SmileiSingleton","Main","Checkpoints","LoadBalancing","MovingWindow",
             "RadiationReaction", "ParticleData", "MultiphotonBreitWheeler"]:
         CheckClass = globals()[CheckClassName]
@@ -124,7 +125,7 @@ def _keep_python_running():
         if d.filter is not None:
             return True
     # Verify the particle binning having a function for deposited_quantity or axis type
-    for d in DiagParticleBinning:
+    for d in DiagParticleBinning._list + DiagScreen._list:
         if type(d.deposited_quantity) is not str:
             return True
         for ax in d.axes:

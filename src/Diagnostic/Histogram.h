@@ -37,7 +37,7 @@ public:
 
     double coeff;
 
-    //! List of coefficients (a,b,c) for a "composite" type of the form "ax+by+cz"
+    //! List of coefficients for some axes types
     std::vector<double> coefficients;
 };
 
@@ -407,17 +407,6 @@ class HistogramAxis_chi : public HistogramAxis {
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             if( index[ipart]<0 ) continue;
             array[ipart] = s->particles->Chi[ipart];
-        }
-    };
-};
-class HistogramAxis_composite : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
-        unsigned int idim, ndim = coefficients.size();
-        for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-            if( index[ipart]<0 ) continue;
-            array[ipart] = 0.;
-            for (idim = 0 ; idim < ndim ; idim++)
-                array[ipart] += coefficients[idim] * s->particles->Position[idim][ipart];
         }
     };
 };

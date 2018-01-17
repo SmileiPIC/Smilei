@@ -22,6 +22,7 @@ public:
     Timer particles ;
     Timer maxwell   ;
     Timer diags     ;
+    Timer diagsNEW  ;
     Timer densities ;
     Timer collisions;
     Timer movWindow ;

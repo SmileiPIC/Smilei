@@ -17,9 +17,9 @@ ElectroMagnBC1D_SM::ElectroMagnBC1D_SM( Params &params, Patch* patch, unsigned i
 : ElectroMagnBC( params, patch, _min_max )
 {
     // number of nodes of the primal-grid
-    nx_p = params.n_space[0]+1 + 2*params.oversize[0];
+    nx_p = params.n_space[0]*params.global_factor[0]+1 + 2*params.oversize[0];
     // number of nodes of the dual-grid
-    nx_d = params.n_space[0]+2 + 2*params.oversize[0];
+    nx_d = params.n_space[0]*params.global_factor[0]+2 + 2*params.oversize[0];
     
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step
     dx       = params.cell_length[0];

@@ -1,5 +1,5 @@
 from ._Utils import *
-from ._Diagnostics import Scalar, Field, Probe, ParticleBinning, Screen, TrackParticles
+from ._Diagnostics import Scalar, Field, Probe, ParticleBinning, Performances, Screen, TrackParticles
 
 
 class ScalarFactory(object):
@@ -109,25 +109,29 @@ class FieldFactory(object):
 				tmpDiag = Field.Field(simulation, diagNumber)
 				# Get a list of fields
 				fields = tmpDiag.getFields()
-				# Get a list of timesteps
-				timesteps = tmpDiag.getAvailableTimesteps()
+#				# Get a list of timesteps
+#				timesteps = tmpDiag.getAvailableTimesteps()
+#				# Create fields shortcuts
+#				for field in fields:
+#					child = FieldFactory(simulation, diagNumber, field, availableTimesteps=timesteps)
+#					setattr(self, field, child)
 				# Create fields shortcuts
 				for field in fields:
-					child = FieldFactory(simulation, diagNumber, field, availableTimesteps=timesteps)
+					child = FieldFactory(simulation, diagNumber, field)
 					setattr(self, field, child)
 				
 			else:
 				# the field is saved for generating the object in __call__
 				self._additionalArgs += (field, )
 				
-				# If not a specific timestep, build a list of timesteps shortcuts
-				if timestep is None:
-					for timestep in availableTimesteps:
-						setattr(self, 't%0.10i'%timestep, FieldFactory(simulation, diagNumber, field, timestep))
-				
-				else:
-					# the timestep is saved for generating the object in __call__
-					self._additionalArgs += (timestep, )
+#				# If not a specific timestep, build a list of timesteps shortcuts
+#				if timestep is None:
+#					for timestep in availableTimesteps:
+#						setattr(self, 't%0.10i'%timestep, FieldFactory(simulation, diagNumber, field, timestep))
+#				
+#				else:
+#					# the timestep is saved for generating the object in __call__
+#					self._additionalArgs += (timestep, )
 	
 	def __call__(self, *args, **kwargs):
 		return Field.Field(self._simulation, *(self._additionalArgs+args), **kwargs)
@@ -194,24 +198,27 @@ class ProbeFactory(object):
 				tmpDiag = Probe.Probe(simulation, probeNumber)
 				# Get a list of fields
 				fields = tmpDiag.getFields()
-				# Get a list of timesteps
-				timesteps = tmpDiag.getAvailableTimesteps()
+#				# Get a list of timesteps
+#				timesteps = tmpDiag.getAvailableTimesteps()
+#				# Create fields shortcuts
+#				for field in fields:
+#					setattr(self, field, ProbeFactory(simulation, probeNumber, field, availableTimesteps=timesteps))
 				# Create fields shortcuts
 				for field in fields:
-					setattr(self, field, ProbeFactory(simulation, probeNumber, field, availableTimesteps=timesteps))
+					setattr(self, field, ProbeFactory(simulation, probeNumber, field))
 			
 			else:
 				# the field is saved for generating the object in __call__
 				self._additionalArgs += (field, )
 				
-				# If not a specific timestep, build a list of timesteps shortcuts
-				if timestep is None:
-					for timestep in availableTimesteps:
-						setattr(self, 't%0.10i'%timestep, ProbeFactory(simulation, probeNumber, field, timestep))
-				
-				else:
-					# the timestep is saved for generating the object in __call__
-					self._additionalArgs += (timestep, )
+#				# If not a specific timestep, build a list of timesteps shortcuts
+#				if timestep is None:
+#					for timestep in availableTimesteps:
+#						setattr(self, 't%0.10i'%timestep, ProbeFactory(simulation, probeNumber, field, timestep))
+#				
+#				else:
+#					# the timestep is saved for generating the object in __call__
+#					self._additionalArgs += (timestep, )
 	
 	def __call__(self, *args, **kwargs):
 		return Probe.Probe(self._simulation, *(self._additionalArgs+args), **kwargs)
@@ -286,6 +293,66 @@ class ParticleBinningFactory(object):
 	
 	def __call__(self, *args, **kwargs):
 		return ParticleBinning.ParticleBinning(self._simulation, *(self._additionalArgs+args), **kwargs)
+
+
+
+class PerformancesFactory(object):
+	"""Import and analyze a Performances diagnostic from a Smilei simulation
+	
+	Parameters:
+	-----------
+	raw : a string
+		(incompatible with `map` or `histogram`)
+		The name of a quantity, or an operation between them (see quantities below).
+		The requested quantity is obtained for each process.
+	map : a string
+		(incompatible with `raw` or `histogram`)
+		The name of a quantity, or an operation between them (see quantities below).
+		The requested quantity is obtained vs. space coordinates.
+	histogram : ["quantity", min, max, nsteps]
+		(incompatible with `raw` or `map`)
+		Makes a histogram of the requested quantity between min an max, with nsteps bins.
+		The quantity may be an operation between the quantities listed further below.
+	timesteps : int or [int, int] (optional)
+		If omitted, all timesteps are used.
+		If one number  given, the nearest timestep available is used.
+		If two numbers given, all the timesteps in between are used.
+	units : A units specification such as ["m","second"]
+	data_log : bool (default: False)
+		If True, then log10 is applied to the output array before plotting.
+	
+	Available "quantities":
+	-----------------------
+	hindex                     : the starting index of each proc in the hilbert curve
+	number_of_cells            : the number of cells in each proc
+	number_of_particles        : the number of particles in each proc (except frozen ones)
+	number_of_frozen_particles : the number of frozen particles in each proc
+	total_load                 : the `load` of each proc (number of particles and cells with cell_load coefficient)
+	timer_global               : global simulation time (only available for proc 0)
+	timer_particles            : time spent computing particles by each proc
+	timer_maxwell              : time spent solving maxwell by each proc
+	timer_densities            : time spent projecting densities by each proc
+	timer_collisions           : time spent computing collisions by each proc
+	timer_movWindow            : time spent handling the moving window by each proc
+	timer_loadBal              : time spent balancing the load by each proc
+	timer_syncPart             : time spent synchronzing particles by each proc
+	timer_syncField            : time spent synchronzing fields by each proc
+	timer_syncDens             : time spent synchronzing densities by each proc
+	timer_total                : the sum of all timers above (except timer_global)
+	
+	Usage:
+	------
+		S = happi.Open("path/to/simulation") # Load the simulation
+		part = S.Performances(...)           # Load the particle binning diagnostic
+		part.get()                           # Obtain the data
+	"""
+	
+	def __init__(self, simulation):
+		self._simulation = simulation
+		self._additionalArgs = tuple()
+	
+	def __call__(self, *args, **kwargs):
+		return Performances.Performances(self._simulation, *(self._additionalArgs+args), **kwargs)
 
 
 
@@ -546,6 +613,8 @@ class SmileiSimulation(object):
 			self.Probe = ProbeFactory(self)
 			if self._verbose: print("Scanning for ParticleBinning diagnostics")
 			self.ParticleBinning = ParticleBinningFactory(self)
+			if self._verbose: print("Scanning for Performances diagnostics")
+			self.Performances = PerformancesFactory(self)
 			if self._verbose: print("Scanning for Screen diagnostics")
 			self.Screen = ScreenFactory(self)
 			if self._verbose: print("Scanning for Tracked particle diagnostics")

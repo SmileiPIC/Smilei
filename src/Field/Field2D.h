@@ -7,6 +7,10 @@
 
 #include "Field.h"
 
+class Params;
+class SmileiMPI;
+class Patch;
+
 //! class Field2D used to defined a 2d vector
 class Field2D : public Field
 {
@@ -80,8 +84,9 @@ public:
     //double** data_;
     
     virtual double norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]);
+    void put( Field* outField, Params &params, SmileiMPI* smpi, Patch* thisPatch, Patch* outPatch  ) override;
+    void get( Field*  inField, Params &params, SmileiMPI* smpi, Patch*   inPatch, Patch* thisPatch ) override;
 
-private:
     //!\todo{Comment what are these stuffs (MG for JD)}
     //double *data_2D;
     //! this will present the data as a 2d matrix

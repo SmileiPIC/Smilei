@@ -10,6 +10,11 @@
 #include "Projector3D4Order.h"
 #include "ProjectorRZ2Order.h"
 
+#ifdef _VECTO
+#include "Projector2D2OrderV.h"
+#include "Projector3D2OrderV.h"
+#endif
+
 #include "Params.h"
 #include "Patch.h" 
 
@@ -32,7 +37,12 @@ public:
         // 2Dcartesian simulation
         // ---------------
         else if ( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == (unsigned int)2 ) ) {
-            Proj = new Projector2D2Order(params, patch);
+            if (!params.vecto)
+                Proj = new Projector2D2Order(params, patch);
+#ifdef _VECTO
+            else
+                Proj = new Projector2D2OrderV(params, patch);
+#endif
         }
         else if ( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == (unsigned int)4 ) ) {
             Proj = new Projector2D4Order(params, patch);
@@ -41,7 +51,12 @@ public:
         // 3Dcartesian simulation
         // ---------------
         else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == (unsigned int)2 ) ) {
-            Proj = new Projector3D2Order(params, patch);
+            if (!params.vecto)
+                Proj = new Projector3D2Order(params, patch);
+#ifdef _VECTO
+            else
+                Proj = new Projector3D2OrderV(params, patch);
+#endif
         }
         else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == (unsigned int)4 ) ) {
             Proj = new Projector3D4Order(params, patch);

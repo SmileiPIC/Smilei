@@ -12,7 +12,7 @@ class ElectroMagn3D : public ElectroMagn
 {
 public:
     //! Constructor for ElectroMagn3D
-    ElectroMagn3D(Params &params, std::vector<Species*>& vecSpecies, Patch* patch);
+    ElectroMagn3D(Params &params, DomainDecomposition* domain_decomposition, std::vector<Species*>& vecSpecies, Patch* patch);
     ElectroMagn3D( ElectroMagn3D* emFields, Params &params, Patch* patch );
 
     //! Destructor for ElectroMagn3D
@@ -40,7 +40,7 @@ public:
 //    void solveMaxwellAmpere();
 
     //! Method used to save the Magnetic fields (used to center them)
-    void saveMagneticFields();
+    void saveMagneticFields(bool);
 
     //! Method used to center the Magnetic fields (used to push the particles)
     void centerMagneticFields();
@@ -113,9 +113,7 @@ public:
     void applyExternalField(Field*, Profile*, Patch*);
     
     void initAntennas(Patch* patch);
-        
-private:
-    
+
     //! from smpi is ymax
     const bool isYmin;
     
@@ -127,6 +125,9 @@ private:
     
     //! from smpi is zmin
     const bool isZmin;
+        
+private:
+    
     
     //! Initialize quantities needed in the creators of ElectroMagn3D
     void initElectroMagn3DQuantities(Params &params, Patch* patch);

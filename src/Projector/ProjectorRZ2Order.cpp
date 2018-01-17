@@ -123,8 +123,11 @@ void ProjectorRZ2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &
 } // END Project global current densities (ionize)
 
 //Wrapper for projection
-void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, std::vector<unsigned int> &b_dim, int ispec)
+void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec)
 {
+    if (is_spectral)
+        ERROR("Not implemented");
+
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
     std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);

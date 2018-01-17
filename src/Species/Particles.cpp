@@ -47,6 +47,7 @@ void Particles::initialize(unsigned int nParticles, unsigned int nDim)
     }
 
     resize(nParticles, nDim);
+    cell_keys.resize(nParticles);
 
     if ( double_prop.empty() ) { // do this just once
 
@@ -200,6 +201,20 @@ void Particles::clear()
     for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ )
         uint64_prop[iprop]->clear();
 }
+
+
+void Particles::cp_particle(unsigned int ipart )
+{
+    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ )
+        double_prop[iprop]->push_back( (*double_prop[iprop])[ipart] );
+
+    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ )
+        short_prop[iprop]->push_back( (*short_prop[iprop])[ipart] );
+
+    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ )
+        uint64_prop[iprop]->push_back( (*uint64_prop[iprop])[ipart] );
+}
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Copy particle iPart at the end of dest_parts
@@ -362,6 +377,92 @@ void Particles::swap_part(unsigned int part1, unsigned int part2)
     for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ )
         std::swap( (*uint64_prop[iprop])[part1], (*uint64_prop[iprop])[part2] );
 }
+
+
+void Particles::swap_part3(unsigned int part1, unsigned int part2, unsigned int part3)
+{
+    // 1 ==> 2 ==> 3 ==> 1
+    double temp;
+    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
+        temp = (*double_prop[iprop])[part1];
+        (*double_prop[iprop])[part1] = (*double_prop[iprop])[part3];
+        (*double_prop[iprop])[part3] = (*double_prop[iprop])[part2];
+        (*double_prop[iprop])[part2] = temp;
+    }
+
+    short stemp;
+    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
+        stemp = (*short_prop[iprop])[part1];
+        (*short_prop[iprop])[part1] = (*short_prop[iprop])[part3];
+        (*short_prop[iprop])[part3] = (*short_prop[iprop])[part2];
+        (*short_prop[iprop])[part2] = stemp;
+    }
+
+    unsigned int uitemp;
+    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
+        uitemp = (*short_prop[iprop])[part1];
+        (*uint64_prop[iprop])[part1] = (*uint64_prop[iprop])[part3];
+        (*uint64_prop[iprop])[part3] = (*uint64_prop[iprop])[part2];
+        (*uint64_prop[iprop])[part2] = uitemp;
+    }
+
+}
+
+
+void Particles::swap_part4(unsigned int part1, unsigned int part2, unsigned int part3, unsigned int part4)
+{
+    double temp;
+    // 1 ==> 2 ==> 3 ==> 4 ==> 1
+    for ( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
+        temp = (*double_prop[iprop])[part1];
+        (*double_prop[iprop])[part1] = (*double_prop[iprop])[part4];
+        (*double_prop[iprop])[part4] = (*double_prop[iprop])[part3];
+        (*double_prop[iprop])[part3] = (*double_prop[iprop])[part2];
+        (*double_prop[iprop])[part2] = temp;
+    }
+
+    short stemp;
+    for ( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
+        stemp = (*short_prop[iprop])[part1];
+        (*short_prop[iprop])[part1] = (*short_prop[iprop])[part4];
+        (*short_prop[iprop])[part4] = (*short_prop[iprop])[part3];
+        (*short_prop[iprop])[part3] = (*short_prop[iprop])[part2];
+        (*short_prop[iprop])[part2] = stemp;
+    }
+
+    unsigned int uitemp;
+    for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
+        uitemp = (*short_prop[iprop])[part1];
+        (*uint64_prop[iprop])[part1] = (*uint64_prop[iprop])[part4];
+        (*uint64_prop[iprop])[part4] = (*uint64_prop[iprop])[part3];
+        (*uint64_prop[iprop])[part3] = (*uint64_prop[iprop])[part2];
+        (*uint64_prop[iprop])[part2] = uitemp;
+    }
+
+}
+
+
+void Particles::swap_parts(std::vector<unsigned int> parts)
+{
+    // parts[0] ==> parts[1] ==> parts[2] ==> parts[parts.size()-1] ==> parts[0]
+
+    cp_particle(parts.back());
+    translate_parts(parts);
+    overwrite_part(size()-1,parts[0]);
+    erase_particle(size()-1);
+
+}
+
+
+void Particles::translate_parts(std::vector<unsigned int> parts)
+{
+    // parts[0] ==> parts[1] ==> parts[2] ==> parts[parts.size()-1] 
+
+    for (int icycle = parts.size()-2; icycle >=0; icycle--)
+        overwrite_part (parts[icycle], parts[icycle+1]);
+
+}
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Move particle part1 into part2 memory location, erasing part2.
