@@ -9,6 +9,12 @@ S = happi.Open(["./restart*"], verbose=False)
 Ey = S.Field.Field0.Ey(average={"z":S.namelist.Main.grid_length[2]*0.3}, timesteps=240).getData()[0]
 Validate("Ey field at iteration 240", Ey, 0.01)
 
+# SUBSET OF FIELD DIAG
+Ey  = S.Field.Field0.Ey(timesteps=240).getData()[0]
+Ey1 = S.Field.Field1.Ey(timesteps=240).getData()[0]
+subset = S.namelist.DiagFields[1].subset
+Validate("Field subset works", (Ey1==Ey[subset]).all())
+
 # 0-D PROBE IN 3D
 Ey = S.Probe.Probe0.Ey().getData()
 Validate("0-D probe Ey vs time", Ey, 0.01)

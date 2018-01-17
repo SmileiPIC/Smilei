@@ -20,9 +20,9 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, VectorP
     
     // Calculate the offset in the local grid
     patch_offset_in_grid.resize(3);
-    patch_offset_in_grid[0] = params.oversize[0];
-    patch_offset_in_grid[1] = params.oversize[1];
-    patch_offset_in_grid[2] = params.oversize[2];
+    patch_offset_in_grid[0] = params.oversize[0]+1;
+    patch_offset_in_grid[1] = params.oversize[1]+1;
+    patch_offset_in_grid[2] = params.oversize[2]+1;
     
     // Calculate the patch size
     patch_size.resize(3);

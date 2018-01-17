@@ -13,6 +13,11 @@ Validate("List of timesteps in Field0", timesteps )
 Ez = S.Field.Field0("Ez", timesteps=timesteps[-1]).getData()[0]
 Validate("Last Ez profile in Field0", Ez, 1e-7 )
 
+# SUBSET OF FIELD DIAG
+Ez1 = S.Field.Field1("Ez", timesteps=timesteps[-1]).getData()[0]
+subset = S.namelist.DiagFields[1].subset
+Validate("Field subset works", (Ez1==Ez[subset]).all())
+
 # 0-D PROBE
 Ez = S.Probe(0,"Ez").getData()
 Validate("Ez vs time in Probe0", Ez, 1e-7 )

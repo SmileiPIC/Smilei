@@ -13,7 +13,7 @@ DiagnosticFields1D::DiagnosticFields1D( Params &params, SmileiMPI* smpi, VectorP
 {
     // Calculate the offset in the local grid
     patch_offset_in_grid.resize(1);
-    patch_offset_in_grid[0] = params.oversize[0];
+    patch_offset_in_grid[0] = params.oversize[0]+1;
     
     // Calculate the patch size
     total_patch_size = params.n_space[0];
@@ -100,9 +100,10 @@ void DiagnosticFields1D::getField( Patch* patch, unsigned int ifield )
         ix, iout, nsteps
     );
     ix += patch_offset_in_grid[0];
+    if( patch->Hindex() == 0 ) ix--;
     iout -= MPI_start_in_file;
     unsigned int ix_max = ix + nsteps * subset_step[0];
-
+    
     // Copy this patch field into buffer
     while( ix < ix_max ) {
         data[iout] = (*field)(ix) * time_average_inv;
