@@ -132,7 +132,7 @@ class Field(Diagnostic):
 		self._offset  = fields[0].attrs['gridGlobalOffset']
 		self._spacing = fields[0].attrs['gridSpacing']
 		for iaxis in range(self._naxes):
-			centers = self._np.linspace(self._offset[iaxis], (self._initialShape[iaxis]-1)*self._spacing[iaxis], self._initialShape[iaxis])
+			centers = self._np.linspace(self._offset[iaxis], self._offset[iaxis]+(self._initialShape[iaxis]-1)*self._spacing[iaxis], self._initialShape[iaxis])
 			label = "xyz"[iaxis]
 			axisunits = "L_r"
 			
