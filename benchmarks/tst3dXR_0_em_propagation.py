@@ -7,9 +7,9 @@ import math
 l0 = 2.0*math.pi        # laser wavelength
 t0 = l0                 # optical cycle
 Lsim = [20.,50.]  # length of the simulation
-Tsim = 50.*t0           # duration of the simulation
+Tsim = 1.*t0           # duration of the simulation
 resx = 28.              # nb of cells in on laser wavelength
-rest = 40.              # time of timestep in one optical cycle 
+rest = 10#40.              # time of timestep in one optical cycle 
 
 Main(
     geometry = "3drz",
@@ -20,7 +20,7 @@ Main(
     grid_length  = Lsim,
     number_of_patches = [ 1, 1 ],
     timestep = t0/rest,
-    simulation_time = Tsim,
+    simulation_time = 100*t0/rest,
      
     EM_boundary_conditions = [
         ["silver-muller","silver-muller"],
@@ -44,10 +44,10 @@ globalEvery = int(1)
 
 #DiagScalar(every=globalEvery)
 
-#DiagFields(
-#    every = globalEvery,
-#    fields = ['Ex','Er','Et']
-#)
+DiagFields(
+    every = 100,
+    fields = ['Ex_mode_1','Er_mode_1','Et_mode_1','Bx_mode_0','Br_mode_0','Bt_mode_0']
+)
 
 #DiagProbe(
 #    every = 100,

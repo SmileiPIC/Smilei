@@ -74,7 +74,7 @@ ElectroMagnBCRZ_BM::ElectroMagnBCRZ_BM( Params &params, Patch* patch, unsigned i
     #ifdef _TODO_RZ
     #endif
     // Rmax boundary
-    double theta  = M_PI;
+    double theta  = 0.0;
 	double phi    =  0.0;
 	CB_BM  = cos(theta)*cos(phi)/(1.0 + cos(theta)*cos(phi));
 	CE_BM  = 1.0 - CB_BM;
@@ -205,8 +205,8 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		         +                    Epsilon_SM_N * (*Br2D)(i,nr_p-1);*/
 		        (*BlRZ)(i,j+1) = (*BlRZ_old)(i,j) - Alpha_BM_Rmax   * ((*BlRZ)(i,j)-(*BlRZ_old)(i,j+1))
 		        -                   Gamma_BM_Rmax*CB_BM    *( (*BrRZ)(i+1,j) + (*BrRZ_old)(i+1,j) - (*BrRZ)(i,j) - (*BrRZ_old)(i,j))
-		        -                   Beta_BM_Rmax*Icpx*imode*CE_BM/((j_glob+j-0.5)*dr) *( (*ErRZ)(i,j+1)+(*ErRZ)(i,j))
-		        -                   2.*CE_BM*dt/((j_glob+j-0.5)*dr)*(*EtRZ)(i,j);
+		        -                   Beta_BM_Rmax*Icpx*imode*CE_BM/((j_glob+j+0.5)*dr) *( (*ErRZ)(i,j+1)+(*ErRZ)(i,j))
+		        -                   2.*CE_BM*dt/((j_glob+j+0.5)*dr)*(*EtRZ)(i,j);
 		    }//i  ---end Bl
 		    
 		    // for Bt^(d,d)
