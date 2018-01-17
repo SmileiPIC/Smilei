@@ -38,6 +38,7 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
     cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Br_[imode];
     cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Bt_[imode];
     int     j_glob = (static_cast<ElectroMagn3DRZ*>(fields))->j_glob_;
+	bool isYmin = (static_cast<ElectroMagn3DRZ*>(fields))->isYmin;
 
     //    #pragma omp simd
     //    for (unsigned int j=0 ; j<ny_d-1 ; j++) {
@@ -47,15 +48,15 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
     for (unsigned int i=0 ; i<nl_p;  i++) {
         #pragma omp simd
         for (unsigned int j=1 ; j<nr_d-1 ; j++) {
-            (*BlRZ)(i,j) += - dt/((j_glob+j-0.5)*dr) * ( (j)*(*EtRZ)(i,j) - j*(*EtRZ)(i,j-1) )
-             -             Icpx*dt*imode/((j_glob+j-0.5)*dr)*(*ErRZ)(i,j);
+            (*BlRZ)(i,j) += - dt/((j_glob+j+0.5)*dr) * ( (j+1)*(*EtRZ)(i,j) - j*(*EtRZ)(i,j-1) )
+             -             Icpx*dt*imode/((j_glob+j+0.5)*dr)*(*ErRZ)(i,j);
         }
     }
         
         // Magnetic field Br^(d,p)
     for (unsigned int i=1 ; i<nl_d-1 ; i++) {
         #pragma omp simd
-        for (unsigned int j=0 ; j<nr_p ; j++) {
+        for (unsigned int j=isYmin*3 ; j<nr_p ; j++) {
             (*BrRZ)(i,j) += dt_ov_dl * ( (*EtRZ)(i,j) - (*EtRZ)(i-1,j) )
              +              Icpx*dt*imode/((j_glob+j)*dr)*(*ElRZ)(i,j) ;
         }

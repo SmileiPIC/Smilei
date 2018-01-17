@@ -129,7 +129,6 @@ public:
         return norm2;
     }
 
-private:
     
     //! from smpi is ymax
     const bool isYmin;
