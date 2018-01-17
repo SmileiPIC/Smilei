@@ -1641,7 +1641,8 @@ This is done by including a block ``DiagFields``::
   DiagFields(
       every = 10,
       time_average = 2,
-      fields = ["Ex", "Ey", "Ez"]
+      fields = ["Ex", "Ey", "Ez"],
+      #subset = None
   )
 
 .. py:data:: every
@@ -1671,37 +1672,62 @@ This is done by including a block ``DiagFields``::
   :default: ``[]`` *(all fields are written)*
 
   List of the field names that are saved. By default, they all are.
+  The full list of fields that are saved by this diagnostic:
+  
+  .. rst-class:: nowrap
+  
+  +----------------+-------------------------------------------------------+
+  | | Bx           | |                                                     |
+  | | By           | | Components of the magnetic field                    |
+  | | Bz           | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Bx_m         | |                                                     |
+  | | By_m         | | Components of the magnetic field (time-centered)    |
+  | | Bz_m         | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Ex           | |                                                     |
+  | | Ey           | | Components of the electric field                    |
+  | | Ez           | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Jx           | |                                                     |
+  | | Jy           | | Components of the total current                     |
+  | | Jz           | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Jx_abc       | |                                                     |
+  | | Jy_abc       | | Components of the current due to species "abc"      |
+  | | Jz_abc       | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Rho          | |  Total density                                      |
+  | | Rho_abc      | |  Density of species "abc"                           |
+  +----------------+-------------------------------------------------------+
 
+.. py:data:: subset
 
-The full list of fields that are saved by this diagnostic:
+  :default: ``None`` *(the whole grid is used)*
 
-
-.. rst-class:: nowrap
-
-+----------------+-------------------------------------------------------+
-| | Bx           | |                                                     |
-| | By           | | Components of the magnetic field                    |
-| | Bz           | |                                                     |
-+----------------+-------------------------------------------------------+
-| | Bx_m         | |                                                     |
-| | By_m         | | Components of the magnetic field (time-centered)    |
-| | Bz_m         | |                                                     |
-+----------------+-------------------------------------------------------+
-| | Ex           | |                                                     |
-| | Ey           | | Components of the electric field                    |
-| | Ez           | |                                                     |
-+----------------+-------------------------------------------------------+
-| | Jx           | |                                                     |
-| | Jy           | | Components of the total current                     |
-| | Jz           | |                                                     |
-+----------------+-------------------------------------------------------+
-| | Jx_abc       | |                                                     |
-| | Jy_abc       | | Components of the current due to species "abc"      |
-| | Jz_abc       | |                                                     |
-+----------------+-------------------------------------------------------+
-| | Rho          | |  Total density                                      |
-| | Rho_abc      | |  Density of species "abc"                           |
-+----------------+-------------------------------------------------------+
+  A list of slices indicating a subset of the simulation grid to be written by this
+  diagnostic. This list must have as many elements as the simulation dimension.
+  For example, in a 3D simulation, the list has 3 elements. Each element can be:
+  
+  * ``None``, to select the whole grid along that dimension
+  * an integer, to select only the corresponding cell index along that dimension
+  * a *python* `slice object <https://docs.python.org/3/library/functions.html#slice>`_
+    to select regularly-spaced cell indices along that dimension.
+  
+  This can be easily implemented using the
+  `numpy.s_ expression <https://docs.scipy.org/doc/numpy/reference/generated/numpy.s_.html>`_.
+  For instance, in a 3D simulation, the following subset selects only every other element
+  in each dimension::
+    
+    from numpy import s_
+    DiagFields( #...
+    	subset = s_[::2, ::2, ::2]
+    )
+  
+  while this one selects cell indices included in a contiguous parallelepiped::
+    
+    	subset = s_[100:300, 300:500, 300:600]
+  
 
 
 ----
