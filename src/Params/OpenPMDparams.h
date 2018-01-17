@@ -66,7 +66,7 @@ public:
     void writeParticlesAttributes( hid_t );
     
     //! Write the attributes for a field in the meshesPath
-    void writeFieldAttributes( hid_t );
+    void writeFieldAttributes( hid_t, std::vector<unsigned int> subset_start={}, std::vector<unsigned int> subset_step={});
     
     //! Write the attributes for the particlesPath
     void writeSpeciesAttributes( hid_t );

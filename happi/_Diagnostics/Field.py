@@ -129,8 +129,10 @@ class Field(Diagnostic):
 		self._finalShape = self._np.copy(self._initialShape)
 		self._averages = [False]*self._ndim
 		self._selection = [self._np.s_[:]]*self._ndim
+		self._offset  = fields[0].attrs['gridGlobalOffset']
+		self._spacing = fields[0].attrs['gridSpacing']
 		for iaxis in range(self._naxes):
-			centers = self._np.linspace(0., (self._initialShape[iaxis]-1)*self._cell_length[iaxis], self._initialShape[iaxis])
+			centers = self._np.linspace(self._offset[iaxis], (self._initialShape[iaxis]-1)*self._spacing[iaxis], self._initialShape[iaxis])
 			label = "xyz"[iaxis]
 			axisunits = "L_r"
 			
@@ -187,7 +189,15 @@ class Field(Diagnostic):
 	
 	# Method to print info on included fields
 	def _info(self):
-		return "Field diagnostic "+self._title
+		s = "Field diagnostic #"+str(self.diagNumber)+": "+self._title
+		tavg = self.namelist.DiagFields[self.diagNumber].time_average
+		if tavg > 1:
+			s += "\n\tTime_average: " + str(tavg) + " timesteps"
+		if any(self._offset > 0.):
+			s += "\n\tGrid offset: " + ", ".join([str(a) for a in self._offset])
+		if any(self._spacing != self._cell_length):
+			s += "\n\tGrid spacing: " + ", ".join([str(a) for a in self._spacing])
+		return s
 	
 	# get all available field diagnostics
 	def getDiags(self):

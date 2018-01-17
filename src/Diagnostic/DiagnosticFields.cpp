@@ -312,7 +312,7 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime,
             writeField(dset_id, itime);
             
             // Attributes for openPMD
-            openPMD->writeFieldAttributes( dset_id );
+            openPMD->writeFieldAttributes( dset_id, subset_start, subset_step );
             openPMD->writeRecordAttributes( dset_id, field_type[ifield] );
             openPMD->writeFieldRecordAttributes( dset_id );
             openPMD->writeComponentAttributes( dset_id, field_type[ifield] );

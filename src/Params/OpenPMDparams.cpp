@@ -157,14 +157,26 @@ void OpenPMDparams::writeMeshesAttributes( hid_t location )
     H5::attr( location, "fieldSmoothingParameters", "");
 }
 
-void OpenPMDparams::writeFieldAttributes( hid_t location )
+void OpenPMDparams::writeFieldAttributes( hid_t location, vector<unsigned int> subset_start, vector<unsigned int> subset_step )
 {
     H5::attr( location, "geometry", "cartesian");
     H5::attr( location, "dataOrder", "C");
     H5::attr( location, "axisLabels", axisLabels);
-    H5::attr( location, "gridSpacing", gridSpacing);
-    H5::attr( location, "gridGlobalOffset", gridGlobalOffset);
-    H5::attr( location, "gridOffset", gridOffset);
+    if( subset_start.size() == 0 ) {
+        H5::attr( location, "gridSpacing"     , gridSpacing      );
+        H5::attr( location, "gridGlobalOffset", gridGlobalOffset );
+    } else {
+        unsigned int ndim = subset_start.size();
+        vector<double> subsetSpacing( ndim );
+        vector<double> subsetOffset ( ndim );
+        for( unsigned int i=0; i<ndim; i++ ) {
+            subsetSpacing[i] = gridSpacing [i] * subset_step [i];
+            subsetOffset [i] = gridSpacing [i] * subset_start[i];
+        }
+        H5::attr( location, "gridSpacing"     , subsetSpacing );
+        H5::attr( location, "gridGlobalOffset", subsetOffset  );
+    }
+    //H5::attr( location, "gridOffset", gridOffset);
     H5::attr( location, "gridUnitSI", unitSI[SMILEI_UNIT_POSITION]);      
 }
 
