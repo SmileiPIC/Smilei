@@ -3,6 +3,7 @@
 
 #include "DiagnosticRadiationSpectrum.h"
 #include "HistogramFactory.h"
+#include "RadiationTables.h"
 
 
 using namespace std;
@@ -19,7 +20,8 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, Smilei
     two_third = 0.666666666666666666;
     double squared_fine_structure_constant = 5.325135447834466e-5;
     double normalized_classical_electron_time = 9.399637140638142e-24*params.reference_angular_frequency_SI;
-    factor = two_third*params.cell_volume*squared_fine_structure_constant/normalized_classical_electron_time;
+    factor  = two_third*params.cell_volume*squared_fine_structure_constant/normalized_classical_electron_time;
+    factor *= 0.2756644477108960; //sqrt(3.)/2./M_PI;
     
     ostringstream name("");
     name << "Diagnotic Radiation Spectrum #" << n_diag_rad_spectrum;
@@ -102,7 +104,7 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, Smilei
         emax = log10(emax);
     }
     double spacing = (emax-emin)/photon_energy_nbins;
-    for (unsigned int i=0; i<photon_energy_nbins; i++) {
+    for ( int i=0; i<photon_energy_nbins; i++) {
         photon_energies[i] = emin + (i+0.5)*spacing;
         if(photon_energy_logscale) photon_energies[i] = pow(10.,photon_energies[i]);
     }
@@ -308,22 +310,28 @@ void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* si
         // ------------------------------
         int ind;
 
-        double gamma, chi, xi, zeta, nu, cst;
+        double gamma_inv, chi, xi, zeta, nu, cst, two_third_ov_chi, increment0, increment;
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             ind = int_buffer[ipart];
             if (ind<0) continue; // skip discarded particles
             ind *= photon_energy_nbins;
-            for (unsigned int i=0; i<photon_energy_nbins; i++) {
-                // all computations here!
-                chi   = s->particles->chi(ipart);
-                gamma = sqrt( 1. + pow(s->particles->momentum(ipart,0),2) + pow(s->particles->momentum(ipart,1),2) + pow(s->particles->momentum(ipart,2),2) );
-                xi   = photon_energies[i] / gamma;
+
+            gamma_inv = 1./sqrt( 1. + pow(s->particles->momentum(0,ipart),2) + pow(s->particles->momentum(1,ipart),2) + pow(s->particles->momentum(2,ipart),2) );
+            chi              = s->particles->chi(ipart);
+            two_third_ov_chi = two_third/chi;
+            
+            increment0 = factor*gamma_inv * s->particles->weight(ipart);
+            
+            for (int i=0; i<photon_energy_nbins; i++) {
+
+                xi   = photon_energies[i] * gamma_inv;
                 if ( (xi<1.)&&(chi>1.e-5) ) {
-                    zeta = xi / (1.-xi);
-                    nu   = two_third * zeta/chi;
+                    zeta = xi/ (1.-xi);
+                    nu   = two_third_ov_chi * zeta;
                     cst  = xi*zeta;
+                    increment = increment0 * xi * ( RadiationTables::compute_f1_nu(nu) + cst*RadiationTables::compute_f2_nu(nu) );
                     #pragma omp atomic
-                    data_sum[ind+i] += factor*s->particles->weight(ipart) * sqrt(nu)*exp(-nu);
+                    data_sum[ind+i] += increment;
                 }
             }
         }
@@ -357,9 +365,10 @@ void DiagnosticRadiationSpectrum::write(int timestep, SmileiMPI* smpi)
     // write the array if it does not exist already
     if (! H5Lexists( fileId_, mystream.str().c_str(), H5P_DEFAULT ) ) {
         // Prepare array dimensions
-        unsigned int naxes = histogram->axes.size();
+        unsigned int naxes = histogram->axes.size() + 1;
         hsize_t dims[naxes];
-        for( unsigned int iaxis=0; iaxis<naxes; iaxis++) dims[iaxis] = histogram->axes[iaxis]->nbins;
+        for( unsigned int iaxis=0; iaxis<naxes-1; iaxis++) dims[iaxis] = histogram->axes[iaxis]->nbins;
+        dims[naxes-1] = photon_energy_nbins;
         // Create file space
         hid_t sid = H5Screate_simple(naxes, &dims[0], NULL);
         hid_t pid = H5Pcreate(H5P_DATASET_CREATE);

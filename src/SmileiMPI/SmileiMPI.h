@@ -22,6 +22,7 @@ class Diagnostic;
 class DiagnosticScalar;
 class DiagnosticParticleBinning;
 class DiagnosticScreen;
+class DiagnosticRadiationSpectrum;
 
 #define SMILEI_COMM_DUMP_TIME 1312
 
@@ -90,13 +91,15 @@ public:
     // --------------
 
     // Wrapper of MPI synchronization of all computing diags
-    void computeGlobalDiags(Diagnostic*                diag, int timestep);
+    void computeGlobalDiags(Diagnostic*                  diag, int timestep);
     // MPI synchronization of scalars diags
-    void computeGlobalDiags(DiagnosticScalar*          diag, int timestep);
+    void computeGlobalDiags(DiagnosticScalar*            diag, int timestep);
     // MPI synchronization of diags particles
-    void computeGlobalDiags(DiagnosticParticleBinning* diag, int timestep);
+    void computeGlobalDiags(DiagnosticParticleBinning*   diag, int timestep);
     // MPI synchronization of screen diags
-    void computeGlobalDiags(DiagnosticScreen*          diag, int timestep);
+    void computeGlobalDiags(DiagnosticScreen*            diag, int timestep);
+    // MPI synchronization of radiation spectrum diags
+    void computeGlobalDiags(DiagnosticRadiationSpectrum* diag, int timestep);
     
     // MPI basic methods
     // -----------------
