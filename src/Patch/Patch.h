@@ -17,7 +17,6 @@ class DomainDecomposition;
 class Collisions;
 class Diagnostic;
 class SimWindow;
-class LaserEnvelope;
 
 //! Class Patch :
 //!   - data container
@@ -62,9 +61,6 @@ public:
     std::vector<Species*> vecSpecies;
     //! Electromagnetic fields and densities (E, B, J, rho) of the current Patch
     ElectroMagn* EMfields;
-    //! Laser envelope
-    LaserEnvelope* envelope;
-
 
     //! Optional internal boundary condifion on Particles
     PartWalls * partWalls;

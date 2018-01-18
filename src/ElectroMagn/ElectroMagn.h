@@ -19,6 +19,7 @@ class SimWindow;
 class Patch;
 class Solver;
 class DomainDecomposition;
+class LaserEnvelope;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -133,6 +134,8 @@ public:
     Field* rho_pxr;
     Field* rhoold_pxr;
 
+    //! Laser envelope
+    LaserEnvelope* envelope;
     
     //! Envelope, real part
     Field* Env_Ar_;

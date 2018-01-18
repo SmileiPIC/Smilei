@@ -33,7 +33,6 @@
 #include "ProjectorFactory.h"
 #include "DiagnosticFactory.h"
 #include "CollisionsFactory.h"
-#include "EnvelopeFactory.h"
 
 using namespace std;
 
@@ -133,13 +132,6 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
     // initialize the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::create(params, domain_decomposition, vecSpecies, this);
     
-    // initialize the envelope if used
-    int n_envlaser = PyTools::nComponents("LaserEnvelope");
-    if ( n_envlaser ==1 ) // for the moment it works only with one envelope
-        envelope = EnvelopeFactory::create(params, this, EMfields);
-    else 
-        envelope = NULL;
-
     // interpolation operator (virtual)
     Interp     = InterpolatorFactory::create(params, this); // + patchId -> idx_domain_begin (now = ref smpi)
     // projection operator (virtual)
@@ -166,12 +158,6 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
 
     // clone the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::clone(patch->EMfields, params, vecSpecies, this);
-    // initialize the envelope if used
-    int n_envlaser = PyTools::nComponents("LaserEnvelope");
-    if ( n_envlaser ==1 ) // for the moment it works only with one envelope
-        envelope = EnvelopeFactory::clone(patch->envelope, this,EMfields);
-    else 
-        envelope = NULL;
 
     // interpolation operator (virtual)
     Interp     = InterpolatorFactory::create(params, this);
@@ -340,9 +326,6 @@ Patch::~Patch() {
     if (Interp   !=NULL) delete Interp;
     
     if (EMfields !=NULL) delete EMfields;
-
-    if (envelope != NULL)
-        delete envelope;
 
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();

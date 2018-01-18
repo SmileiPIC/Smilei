@@ -52,7 +52,9 @@ nrj_new_fields (  0.               )
     
     MaxwellAmpereSolver_  = SolverFactory::createMA(params);
     MaxwellFaradaySolver_ = SolverFactory::createMF(params);
-    
+
+    envelope = NULL;
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -78,6 +80,8 @@ nrj_new_fields ( 0. )
     
     MaxwellAmpereSolver_  = SolverFactory::createMA(params);
     MaxwellFaradaySolver_ = SolverFactory::createMF(params);
+
+    envelope = NULL;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -213,6 +217,9 @@ ElectroMagn::~ElectroMagn()
     delete MaxwellAmpereSolver_;
     delete MaxwellFaradaySolver_;
     
+    if (envelope != NULL)
+        delete envelope;
+
     //antenna cleanup
     for (vector<Antenna>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
         delete antenna->field;

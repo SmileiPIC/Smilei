@@ -7,6 +7,7 @@
 #include "ElectroMagn2D.h"
 #include "ElectroMagn3D.h"
 #include "ElectroMagnBC.h"
+#include "EnvelopeFactory.h"
 
 #include "Patch.h"
 #include "Params.h"
@@ -32,6 +33,13 @@ public:
         }
         
         EMfields->finishInitialization(vecSpecies.size(), patch);
+
+
+        // initialize the envelope if used
+        int n_envlaser = PyTools::nComponents("LaserEnvelope");
+        if ( n_envlaser ==1 ) // for the moment it works only with one envelope
+            EMfields->envelope = EnvelopeFactory::create(params, patch, EMfields);
+        
         
         // -----------------
         // Lasers properties
@@ -148,6 +156,10 @@ public:
         }
         
         newEMfields->finishInitialization(vecSpecies.size(), patch);
+
+        // initialize the envelope if used
+        if ( EMfields->envelope != NULL )
+            newEMfields->envelope = EnvelopeFactory::clone(EMfields->envelope, patch, EMfields);
         
         // -----------------
         // Clone time-average fields

@@ -322,11 +322,11 @@ void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime,
     //     SyncVectorPatch::exchangeJ( (*this) );
     //     SyncVectorPatch::finalizeexchangeJ( (*this) );
     // }
-    if ((*this)(0)->envelope!=NULL) {
+    if ((*this)(0)->EMfields->envelope!=NULL) {
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
             // Computes A in all points
-            (*this)(ipatch)->envelope->compute(  (*this)(ipatch)->EMfields );
+            (*this)(ipatch)->EMfields->envelope->compute(  (*this)(ipatch)->EMfields );
         }
     }
 
