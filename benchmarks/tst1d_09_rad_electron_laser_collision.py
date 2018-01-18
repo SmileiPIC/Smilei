@@ -22,6 +22,7 @@
 # Importation
 
 import math
+import datetime
 
 # ----------------------------------------------------------------------------------------
 # User-defined parameters
@@ -54,10 +55,11 @@ gamma = 1000./0.511                     # Electron bunch initial energy
 v = math.sqrt(1 - 1./gamma**2)          # electron bunch initial velocity
 
 pusher = "vay"                         # type of pusher
-radiation_list = ["Monte-Carlo",
-                  "corrected-Landau-Lifshitz",
-                  "Niel"]                             # List of radiation models
-species_name_list = ["disc","cont","Niel"]            # Name of the species
+radiation_list = ["Landau-Lifshitz","corrected-Landau-Lifshitz","Niel","Monte-Carlo"] # List of radiation models
+species_name_list = ["LL","CLL","Niel","MC"]            # Name of the species
+
+datetime = datetime.datetime.now()
+random_seed = datetime.microsecond
 
 # ----------------------------------------------------------------------------------------
 # User-defined functions
@@ -89,7 +91,7 @@ Main(
 
     reference_angular_frequency_SI = wr,
 
-    random_seed = 0
+    random_seed = random_seed
 
 )
 
@@ -116,9 +118,9 @@ for i,radiation in enumerate(radiation_list):
 
     Species(
         name = "electron_" + species_name_list[i],
-        position_initialization = "centered",
+        position_initialization = "regular",
         momentum_initialization = "cold",
-        particles_per_cell = 16,
+        particles_per_cell = 32,
         c_part_max = 1.0,
         mass = 1.0,
         charge = -1.0,
@@ -142,14 +144,52 @@ RadiationReaction(
 )
 
 # ----------------------------------------------------------------------------------------
-# Diagnostics
+# Scalar Diagnostics
 
 DiagScalar(
-    every = 100,
-    vars=['Ukin_electron_disc',
-          'Ukin_electron_cont',
-          'Ukin_electron_Niel',
-          'Urad_electron_disc',
-          'Urad_electron_cont',
-          'Urad_electron_Niel']
+    every = 100
 )
+
+# ----------------------------------------------------------------------------------------
+# Particle Binning
+
+# Loop to create all the species particle binning diagnostics
+# One species per radiation implementations
+for i,radiation in enumerate(radiation_list):
+
+    # Weight spatial-distribution
+    DiagParticleBinning(
+        deposited_quantity = "weight",
+        every = 500,
+        time_average = 1,
+        species = ["electron_" + species_name_list[i]],
+        axes = [
+            ["x", 0., Lx, 1000],
+        ]
+    )
+
+
+for i,radiation in enumerate(radiation_list):
+    # Weight x chi spatial-distribution
+    DiagParticleBinning(
+        deposited_quantity = "weight_chi",
+        every = 500,
+        time_average = 1,
+        species = ["electron_" + species_name_list[i]],
+        axes = [
+            ["x", 0., Lx, 1000],
+        ]
+    )
+
+
+for i,radiation in enumerate(radiation_list):
+    # Chi-distribution
+    DiagParticleBinning(
+        deposited_quantity = "weight",
+        every = [5000,6500,100],
+        time_average = 1,
+        species = ["electron_" + species_name_list[i]],
+        axes = [
+            ["chi", 1e-3, 1., 1000,"logscale"],
+        ]
+    )

@@ -10,8 +10,9 @@
 # is computed so that the initial quantum parameter is equal to 0.1
 #
 # Validation:
-# - Niel stochastic radiation loss
 # - Corrected Landau-Lifshitz radiation loss
+# - Niel stochastic radiation loss
+# - Monte-Carlo model
 # - Species scalar diagnostics
 # - External fields
 # - Particle binning diagnostics for the quantum parameter
@@ -57,10 +58,8 @@ dt *= dt_factor                                   # timestep used for the simula
 Tsim = 5000*dt/dt_factor                          # duration of the simulation
 
 pusher = "vay"                                    # type of pusher
-radiation_list = ["Niel",
-                  "corrected-Landau-Lifshitz"]    # List of radiation models for species
-species_name_list = ["Niel",
-                     "Landau_Lifshitz"]           # List of names for species
+radiation_list = ["corrected-Landau-Lifshitz","Niel","Monte-Carlo"]    # List of radiation models for species
+species_name_list = ["CLL","Niel","MC"]           # List of names for species
 
 datetime = datetime.datetime.now()
 random_seed = datetime.microsecond
@@ -142,11 +141,7 @@ RadiationReaction(
 # ----------------------------------------------------------------------------------------
 # Scalar diagnostics
 DiagScalar(
-    every = 100,
-    vars=['Ukin_electron_Niel',
-          'Ukin_electron_Landau_Lifshitz',
-          'Urad_electron_Niel',
-          'Urad_electron_Landau_Lifshitz']
+    every = 100
 )
 
 # ----------------------------------------------------------------------------------------

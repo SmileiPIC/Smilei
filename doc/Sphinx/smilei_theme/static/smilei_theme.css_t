@@ -127,7 +127,7 @@ div.sphinxsidebarwrapper {
 }
 
 div.logo {
-    padding-right: 3vw;
+    padding-right: 2em;
     margin: 0;
     text-align: left;
     height:{{ theme_head_height }}em;
@@ -495,6 +495,7 @@ table.docutils.citation, table.docutils.citation td, table.docutils.citation th 
 	padding:0;
     text-align: center;
     z-index: 10;
+    font-family: {{ theme_head_font_family }};
 }
 
 div.headercolor {
@@ -607,7 +608,7 @@ div.header > * {
 
 .menuButton {
     cursor:pointer;
-    padding: 0 2vw;
+    padding: 0 2em;
     line-height: {{ theme_head_height }}em;
     height: 100%;
 }

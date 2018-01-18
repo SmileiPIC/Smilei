@@ -138,10 +138,6 @@ void VectorPatch::dynamics(Params& params,
     }
     timers.particles.update( params.printNow( itime ) );
 
-//    timers.syncField.restart();
-//    SyncVectorPatch::finalizeexchangeB( (*this) );
-//    timers.syncField.update(  params.printNow( itime ) );
-
     timers.syncPart.restart();
     for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
         if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
@@ -189,28 +185,7 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
     }
     timers.syncPart.update( params.printNow( itime ) );
 
-    #ifndef _PICSAR
-    if ( (!params.is_spectral) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
-        timers.syncField.restart();
-        SyncVectorPatch::finalizeexchangeB( params, (*this) );
-        timers.syncField.update(  params.printNow( itime ) );
-
-        #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-            // Applies boundary conditions on B
-            (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
-            // Computes B at time n using B and B_m.
-            (*this)(ipatch)->EMfields->centerMagneticFields();
-            // Applies boundary conditions on EnvelopeBC
-            if ((*this)(ipatch)->envelope != NULL )
-              {
-              (*this)(ipatch)->envelope->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
-              }
-        }
-    }
-    #endif
-
-} // END dynamics
+} // END finalize_and_sort_parts
 
 
 void VectorPatch::computeCharge()
@@ -363,6 +338,28 @@ void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime,
     // timers.syncField.update(  params.printNow( itime ) );
 
 } // END solveEnvelope
+
+void VectorPatch::finalize_sync_and_bc_fields(Params& params, SmileiMPI* smpi, SimWindow* simWindow,
+                           double time_dual, Timers &timers, int itime)
+{
+    #ifndef _PICSAR
+    if ( (!params.is_spectral) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
+        timers.syncField.restart();
+        SyncVectorPatch::finalizeexchangeB( params, (*this) );
+        timers.syncField.update(  params.printNow( itime ) );
+
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+            // Applies boundary conditions on B
+            (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
+            // Computes B at time n using B and B_m.
+            (*this)(ipatch)->EMfields->centerMagneticFields();
+        }
+    }
+    #endif
+
+} // END finalize_sync_and_bc_fields
+
 
 void VectorPatch::initExternals(Params& params)
 {

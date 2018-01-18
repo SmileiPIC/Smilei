@@ -103,7 +103,7 @@
             {%- set _ = menu_start.next() %}
         
         <div class="menu" id="menu_{{ menu_here }}"{% if menu_start.current == this_menu[0] %} style="font-weight:bold"{% endif %}>
-            <div class="menuButton" onclick="toggleMenu('menu_{{ menu_here }}')" onmousedown="event.preventDefault()">
+            <div class="menuButton" onmouseenter="thisMenuOnly('menu_{{ menu_here }}')" onclick="toggleMenu('menu_{{ menu_here }}')" onmousedown="event.preventDefault()">
                 <span>{{ menu_title.next() }}</span>
             </div>
             <div class="off">
@@ -333,6 +333,14 @@
             menu.active = false;
         }
         
+        function thisMenuOnly(menu_id) {
+            var menu = document.getElementById(menu_id);
+            for( var i=0; i<menus.length; i++ )
+                if( i!=menu_id )
+                    menuOff( menus[i] );
+            menuOn( menu );
+        }
+        
         function toggleMenu(menu_id) {
             var menu = document.getElementById(menu_id);
             if( menu.active ) {
@@ -363,6 +371,7 @@
             for( var i=0; i<menus.length; i++ )
                 menus[i].style.zIndex = "0";
         }
+        
         
         var documentDiv = document.getElementsByClassName("document")[0];
         documentDiv.addEventListener('click', function (event) {
