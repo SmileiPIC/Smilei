@@ -8,6 +8,7 @@
 #include "ElectroMagnBC2D_SM.h"
 #include "ElectroMagnBC2D_refl.h"
 #include "ElectroMagnBC3D_SM.h"
+#include "ElectroMagnBC3D_refl.h"
 #include "ElectroMagnBC3D_BM.h"
 
 #include "Params.h"
@@ -101,6 +102,10 @@ public:
                 if ( params.EM_BCs[0][ii] == "silver-muller" ) {
                     emBoundCond[ii] = new ElectroMagnBC3D_SM(params, patch, ii);
                 }
+                // reflective bcs
+                else if ( params.EM_BCs[0][ii] == "reflective" ) {
+                    emBoundCond[ii] = new ElectroMagnBC3D_refl(params, patch, ii);
+                }
                 // Buneman bcs (absorbing)
                 else if ( params.EM_BCs[0][ii] == "buneman" ) {
                     emBoundCond[ii] = new ElectroMagnBC3D_BM(params, patch, ii);
@@ -115,6 +120,10 @@ public:
                 if ( params.EM_BCs[1][ii] == "silver-muller" ) {
                     emBoundCond[ii+2] = new ElectroMagnBC3D_SM(params, patch, ii+2);
                 }
+                // reflective bcs
+                else if ( params.EM_BCs[1][ii] == "reflective" ) {
+                    emBoundCond[ii+2] = new ElectroMagnBC3D_refl(params, patch, ii+2);
+                }
                 // Buneman bcs (absorbing)
                 else if ( params.EM_BCs[1][ii] == "buneman" ) {
                     emBoundCond[ii+2] = new ElectroMagnBC3D_BM(params, patch, ii+2);
@@ -128,6 +137,10 @@ public:
                 // silver-muller bcs (injecting/absorbing)
                 if ( params.EM_BCs[2][ii] == "silver-muller" ) {
                     emBoundCond[ii+4] = new ElectroMagnBC3D_SM(params, patch, ii+4);
+                }
+                // reflective bcs
+                else if ( params.EM_BCs[2][ii] == "reflective" ) {
+                    emBoundCond[ii+4] = new ElectroMagnBC3D_refl(params, patch, ii+4);
                 }
                 // Buneman bcs (absorbing)
                 else if ( params.EM_BCs[2][ii] == "buneman" ) {
