@@ -1,5 +1,5 @@
 from ._Utils import *
-from ._Diagnostics import Scalar, Field, Probe, ParticleBinning, Performances, Screen, TrackParticles
+from ._Diagnostics import Scalar, Field, Probe, ParticleBinning, RadiationSpectrum, Performances, Screen, TrackParticles
 
 
 class ScalarFactory(object):
@@ -293,6 +293,76 @@ class ParticleBinningFactory(object):
 	
 	def __call__(self, *args, **kwargs):
 		return ParticleBinning.ParticleBinning(self._simulation, *(self._additionalArgs+args), **kwargs)
+
+
+class RadiationSpectrumFactory(object):
+	"""Import and analyze a RadiationSpectrum diagnostic from a Smilei simulation
+	
+	Parameters:
+	-----------
+	diagNumber : int (optional)
+		Index of an available RadiationSpectrum diagnostic.
+		To get a list of available diags, simply omit this argument.
+	timesteps : int or [int, int] (optional)
+		If omitted, all timesteps are used.
+		If one number  given, the nearest timestep available is used.
+		If two numbers given, all the timesteps in between are used.
+	subset: a python dictionary of the form { axis:range, ... } (optional)
+		`axis` may be "x", "y", "z", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
+		`range` must be a list of 1 to 3 floats such as [start, stop, step]
+		WARNING: THE VALUE OF `step` IS A NUMBER OF BINS.
+		Only the data within the chosen axes' selections is extracted.
+		Example: subset = {"y":[10, 80, 4]}
+	sum : a python dictionary of the form { axis:range, ... } (optional)
+		`axis` may be "x", "y", "z", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
+		`range` may be "all", a float, or [float, float].
+		For instance, sum={"x":"all", "y":[2,3]}.
+		The sum of all values within the bounds is computed.
+	units : A units specification such as ["m","second"]
+	data_log : bool (default: False)
+		If True, then log10 is applied to the output array before plotting.
+	
+	Usage:
+	------
+		S = happi.Open("path/to/simulation") # Load the simulation
+		part = S.RadiationSpectrum(...)      # Load the particle binning diagnostic
+		part.get()                           # Obtain the data
+	"""
+	
+	def __init__(self, simulation, diagNumber=None, timestep=None):
+		self._simulation = simulation
+		self._additionalArgs = tuple()
+	
+		# If not a specific diag (root level), build a list of diag shortcuts
+		if diagNumber is None:
+			# Create a temporary, empty radiation spectrum diagnostic
+			tmpDiag = RadiationSpectrum.RadiationSpectrum(simulation)
+			# Get a list of diags
+			diags = tmpDiag.getDiags()
+			# Create diags shortcuts
+			for diag in diags:
+				setattr(self, 'Diag'+str(diag), RadiationSpectrumFactory(simulation, diag))
+		
+		else:
+			# the diag is saved for generating the object in __call__
+			self._additionalArgs += (diagNumber, )
+			
+			## If not a specific timestep, build a list of timesteps shortcuts
+			#if timestep is None:
+			#	# Create a temporary, empty radiation spectrum diagnostic
+			#	tmpDiag = RadiationSpectrum.RadiationSpectrum(simulation, diagNumber)
+			#	# Get a list of timesteps
+			#	timesteps = tmpDiag.getAvailableTimesteps()
+			#	# Create timesteps shortcuts
+			#	for timestep in timesteps:
+			#		setattr(self, 't%0.10i'%timestep, RadiationSpectrumFactory(simulation, diagNumber, timestep))
+			#
+			#else:
+			#	# the timestep is saved for generating the object in __call__
+			#	self._additionalArgs += (timestep, )
+	
+	def __call__(self, *args, **kwargs):
+		return RadiationSpectrum.RadiationSpectrum(self._simulation, *(self._additionalArgs+args), **kwargs)
 
 
 
@@ -613,6 +683,8 @@ class SmileiSimulation(object):
 			self.Probe = ProbeFactory(self)
 			if self._verbose: print("Scanning for ParticleBinning diagnostics")
 			self.ParticleBinning = ParticleBinningFactory(self)
+			if self._verbose: print("Scanning for RadiationSpectrum diagnostics")
+			self.RadiationSpectrum = RadiationSpectrumFactory(self)
 			if self._verbose: print("Scanning for Performances diagnostics")
 			self.Performances = PerformancesFactory(self)
 			if self._verbose: print("Scanning for Screen diagnostics")
