@@ -292,12 +292,10 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         vector<double> pos(2);
         
         // for By^(d,p,d)
-        pos[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy;
         for (unsigned int j=0 ; j<ny_p ; j++) {
-            pos[0] += dy;
-            pos[1] = patch->getDomainLocalMin(2) - (0.5 + EMfields->oversize[2])*dz;
+            pos[0] = patch->getDomainLocalMin(1) + (j - EMfields->oversize[1])*dy;
             for (unsigned int k=0 ; k<nz_d ; k++) {
-                pos[1] += dz;
+                pos[1] = patch->getDomainLocalMin(2) + (k -0.5 - EMfields->oversize[2])*dz;
                 // Lasers
                 double byW = 0.;
                 for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
@@ -314,12 +312,10 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         }//j  ---end compute By
         
         // for Bz^(d,d,p)
-        pos[0] = patch->getDomainLocalMin(1) - (0.5 + EMfields->oversize[1])*dy;
         for (unsigned int j=0 ; j<ny_d ; j++) {
-            pos[0] += dy;
-            pos[1] = patch->getDomainLocalMin(2) - EMfields->oversize[2]*dz;
+            pos[0] = patch->getDomainLocalMin(1) + (j - 0.5 - EMfields->oversize[1])*dy;
             for (unsigned int k=0 ; k<nz_p ; k++) {
-                pos[1] += dz;
+                pos[1] = patch->getDomainLocalMin(2) + (k - EMfields->oversize[2])*dz;
                 // Lasers
                 double bzW = 0.;
                 for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
@@ -349,12 +345,10 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         vector<double> pos(2);
         
         // for By^(d,p,d)
-        pos[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy;
         for (unsigned int j=0 ; j<ny_p ; j++) {
-            pos[0] += dy;
-            pos[1] = patch->getDomainLocalMin(2) - (0.5 + EMfields->oversize[2])*dz;
+            pos[0] = patch->getDomainLocalMin(1) + (j - EMfields->oversize[1])*dy;
             for (unsigned int k=0 ; k<nz_d ; k++) {
-                pos[1] += dz;
+                pos[1] = patch->getDomainLocalMin(2) + (k - 0.5 - EMfields->oversize[2])*dz;
                 // Lasers
                 double byE = 0.;
                 for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
@@ -372,12 +366,10 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         }//j  ---end compute By
         
         // for Bz^(d,d,p)
-        pos[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dy;
         for (unsigned int j=0 ; j<ny_d ; j++) {
-            pos[1] = patch->getDomainLocalMin(2) - EMfields->oversize[2]*dz;
-            pos[0] += dy;
+            pos[0] = patch->getDomainLocalMin(1) + (j - 0.5 - EMfields->oversize[1])*dy;
             for (unsigned int k=0 ; k<nz_p ; k++) {
-                pos[1] += dz;
+                pos[1] = patch->getDomainLocalMin(2) + (k - EMfields->oversize[2])*dz;
                 // Lasers
                 double bzE = 0.;
                 for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
