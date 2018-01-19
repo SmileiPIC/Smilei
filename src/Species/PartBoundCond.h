@@ -66,7 +66,7 @@ public:
                 keep_part = (*bc_xmax)( particles, ipart, 0, 2.*x_max, species,nrj_iPart );
             }
         }
-//<<<<<<< HEAD
+
         if (!isRZ) {
             // iDim = 1
             if (nDim_particle >= 2) {
@@ -104,11 +104,6 @@ public:
         // iDim = 1 & 2
         else {
             if ( particles.distance2_to_axis(ipart) <  y_min ) {
-//=======
-//        if (nDim_particle >= 2) {
-//
-//            if ( particles.position(1, ipart) <  y_min ) {
-//>>>>>>> develop
                 if (bc_ymin==NULL) keep_part = 0;
                 else {
                     keep_part *= (*bc_ymin)( particles, ipart, -1, 2.*y_min, species,nrj_iPart );
