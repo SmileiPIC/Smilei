@@ -31,9 +31,6 @@ public:
 private:
     
     
-    //! Conversion factor from degree to radian
-    double conv_deg2rad;
-    
     //! Number of nodes on the primal grid in the x-direction
     unsigned int nx_p;
     
