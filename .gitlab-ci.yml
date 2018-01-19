@@ -8,6 +8,7 @@ compile:
     - develop
     - couplage_picsar_smilei
     - Niel_performance
+    - develop_fred
 
   script:
     # Force workdir cleaning in case of retried
@@ -34,6 +35,7 @@ makerun1D:
     - develop
     - couplage_picsar_smilei
     - Niel_performance
+    - develop_fred
 
   script:
     # Move in test dir
@@ -47,6 +49,7 @@ makerun2D:
     - develop
     - couplage_picsar_smilei
     - Niel_performance
+    - develop_fred
 
   script:
     # Move in test dir
@@ -60,6 +63,7 @@ makerun3D:
     - develop
     - couplage_picsar_smilei
     - Niel_performance
+    - develop_fred
 
   script:
     # Move in test dir
@@ -73,6 +77,8 @@ makerunCollisions:
     - develop
     - couplage_picsar_smilei
     - Niel_performance
+    - develop_fred
+    
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
