@@ -194,6 +194,7 @@ class Main(SmileiSingleton):
     # Default fields
     maxwell_solver = 'Yee'
     EM_boundary_conditions = [["periodic"]]
+    EM_boundary_conditions_theta = [[0.,math.pi]]
     time_fields_frozen = 0.
 
     # Default Misc

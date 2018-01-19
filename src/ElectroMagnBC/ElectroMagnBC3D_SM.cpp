@@ -17,9 +17,6 @@ using namespace std;
 ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned int _min_max )
 : ElectroMagnBC( params, patch, _min_max )
 {
-    // conversion factor from degree to radian
-    conv_deg2rad = M_PI/180.0;
-    
     // number of nodes of the primal and dual grid in the x-direction
     nx_p = params.n_space[0]*params.global_factor[0]+1+2*params.oversize[0];
     nx_d = nx_p+1;
@@ -113,7 +110,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     //! \todo (MG) Check optimal angle for Silver-Muller BCs
     
     // Xmin boundary
-    double theta  = 0.0*conv_deg2rad; //0.0;
+    double theta  = params.EM_BCs_theta[0][0];
     double factor = 1.0 / (cos(theta) + dt_ov_dx);
     Alpha_SM_W    = 2.0                     * factor;
     Beta_SM_W     = - (cos(theta)-dt_ov_dx) * factor;
@@ -124,7 +121,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     Eta_SM_W      =   dt_ov_dz              * factor;
     
     // Xmax boundary
-    theta         = M_PI;
+    theta  = params.EM_BCs_theta[0][1];
     factor        = 1.0 / (cos(theta) - dt_ov_dx);
     Alpha_SM_E    = 2.0                      * factor;
     Beta_SM_E     = - (cos(theta)+dt_ov_dx)  * factor;
@@ -135,7 +132,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     Eta_SM_E      =   dt_ov_dz              * factor;
     
     // Ymin boundary
-    theta  = 0.0;
+    theta  = params.EM_BCs_theta[1][0];
     factor = 1.0 / (cos(theta) + dt_ov_dy );
     Alpha_SM_S    = 2.0                     * factor;
     Beta_SM_S     = - (cos(theta)-dt_ov_dy) * factor;
@@ -145,7 +142,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     Eta_SM_S      =   dt_ov_dx              * factor;
     
     // Ymax boundary
-    theta  = M_PI;
+    theta  = params.EM_BCs_theta[1][1];
     factor = 1.0 / (cos(theta) - dt_ov_dy);
     Alpha_SM_N    = 2.0                     * factor;
     Beta_SM_N     = - (cos(theta)+dt_ov_dy) * factor;
@@ -155,7 +152,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     Eta_SM_N      =   dt_ov_dx              * factor;
     
     // Zmin boundary
-    theta  = 0.0;
+    theta  = params.EM_BCs_theta[2][0];
     factor = 1.0 / (cos(theta) + dt_ov_dz);
     Alpha_SM_B    = 2.0                     * factor;
     Beta_SM_B     = - (cos(theta)-dt_ov_dz) * factor;
@@ -165,7 +162,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     Eta_SM_B      =   dt_ov_dy              * factor;
     
     // Zmax boundary
-    theta         = M_PI;
+    theta  = params.EM_BCs_theta[2][1];
     factor        = 1.0 / (cos(theta) - dt_ov_dz);
     Alpha_SM_T    = 2.0                      * factor;
     Beta_SM_T     = - (cos(theta)+dt_ov_dz)  * factor;

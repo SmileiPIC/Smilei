@@ -290,9 +290,29 @@ namelist("")
     }
 
     for (unsigned int iDim = 0 ; iDim < nDim_field; iDim++){
-        if (EM_BCs[iDim][0] == "buneman" || EM_BCs[iDim][1] == "buneman")
+        if (EM_BCs[iDim][0] == "buneman" || EM_BCs[iDim][1] == "buneman"){
             full_B_exchange = true;
+            open_boundaries = true;
+        }
+        if (EM_BCs[iDim][0] == "silver-muller" || EM_BCs[iDim][1] == "silver-muller"){
+            open_boundaries = true;
+        }
     }
+
+    PyTools::extract("EM_boundary_conditions_theta", EM_BCs_theta, "Main");
+    //Complete with zeros if not defined
+    if( EM_BCs_theta.size() == 1 ) {
+        while( EM_BCs_theta.size() < nDim_field ) EM_BCs_theta.push_back(EM_BCs_theta[0]  );
+    } else if( EM_BCs_theta.size() != nDim_field ) {
+        ERROR("EM_boundary_conditions_theta must be the same size as the number of dimensions");
+    }
+    for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
+        if( EM_BCs_theta[iDim].size() == 1 ) // if just one theta is specified, then take the same theta for both sides of the dimension.
+            EM_BCs_theta[iDim].push_back( EM_BCs_theta[iDim][0] );
+        else if ( EM_BCs[iDim].size() > 2 )
+            ERROR("Too many EM_boundary_conditions_theta along dimension "<<"xyz"[iDim] );
+    }
+
     // -----------------------------------
     // MAXWELL SOLVERS & FILTERING OPTIONS
     // -----------------------------------
@@ -665,6 +685,8 @@ void Params::print_init()
         MESSAGE(1,"dimension " << i << " - (Spatial resolution, Grid length) : (" << res_space[i] << ", " << grid_length[i] << ")");
         MESSAGE(1,"            - (Number of cells,    Cell length)  : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
         MESSAGE(1,"            - Electromagnetic boundary conditions: " << "(" << EM_BCs[i][0] << ", " << EM_BCs[i][1] << ")");
+        if (open_boundaries)
+            MESSAGE(1,"            - Electromagnetic boundary conditions theta: " << "(" << EM_BCs_theta[i][0] << ", " << EM_BCs_theta[i][1] << ")");
     }
 
     if( currentFilter_passes > 0 )
