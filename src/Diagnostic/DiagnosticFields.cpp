@@ -96,7 +96,11 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
             subgrid_step .push_back( 1 );
         } else if( PySlice_Check(subgrids[isubgrid]) ) {
             Py_ssize_t start, stop, step, slicelength;
+#if PY_MAJOR_VERSION == 2
+            if( PySlice_GetIndicesEx((PySliceObject *)subgrids[isubgrid], params.n_space_global[isubgrid]+1, &start, &stop, &step, &slicelength) < 0) {
+#else
             if( PySlice_GetIndicesEx(subgrids[isubgrid], params.n_space_global[isubgrid]+1, &start, &stop, &step, &slicelength) < 0) {
+#endif
                 PyTools::checkPyError();
                 ERROR("Diagnostic Fields #"<<ndiag<<" `subgrid` axis #"<<isubgrid<<" not understood");
             }
