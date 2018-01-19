@@ -573,7 +573,7 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         // for Bx^(p,d,d)
         for (unsigned int i=patch->isXmin() ; i<nx_p ; i++) {
-            for (unsigned int k=0 ; k<nz_d ; k++) {
+            for (unsigned int k=patch->isYmin() ; k<nz_d-patch->isYmax() ; k++) {
                 
                 (*Bx3D)(i,ny_d-1,k) = -Alpha_SM_N * (*Ez3D)(i,ny_p-1,k)
                 +                    Beta_SM_N  *( (*Bx3D)(i,ny_d-2,k) -(*Bx_val)(i,k))
@@ -586,7 +586,7 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         // for Bz^(d,d,p)
         for (unsigned int i=patch->isXmin() ; i<nx_d ; i++) {
-            for (unsigned int k=0 ; k<nz_p ; k++) {
+            for (unsigned int k=patch->isYmin() ; k<nz_p-patch->isYmax() ; k++) {
                 
                 (*Bz3D)(i,ny_d-1,k) = Alpha_SM_N   * (*Ex3D)(i,ny_p-1,k)
                 +                   Beta_SM_N    *( (*Bz3D)(i,ny_d-2,k) -(*Bz_val)(i,k))
@@ -662,7 +662,7 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         // for Bx^(p,d,d)
         for (unsigned int i=patch->isXmin() ; i<nx_p ; i++) {
-            for (unsigned int j=patch->isYmin() ; j<ny_d ; j++) {
+            for (unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++) {
                 
                 (*Bx3D)(i,j,0) = Alpha_SM_B   * (*Ey3D)(i,j,0)
                 +              Beta_SM_B    *( (*Bx3D)(i,j,1)-(*Bx_val)(i,j))
@@ -674,7 +674,7 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         // for By^(d,p,d)
         for (unsigned int i=patch->isXmin() ; i<nx_d ; i++) {
-            for (unsigned int j=patch->isYmin() ; j<ny_p ; j++) {
+            for (unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++) {
                 
                 (*By3D)(i,j,0) = - Alpha_SM_B   * (*Ex3D)(i,j,0)
                 +              Beta_SM_B    *( (*By3D)(i,j,1)-(*By_val)(i,j))
@@ -752,7 +752,7 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         // for Bx^(p,d,d)
         for (unsigned int i=patch->isXmin() ; i<nx_p ; i++) {
-            for (unsigned int j=0 ; j<ny_d ; j++) {
+            for (unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++) {
                 
                 (*Bx3D)(i,j,nz_d-1) = Alpha_SM_T   * (*Ey3D)(i,j,nz_p-1)
                 +                   Beta_SM_T    *( (*Bx3D)(i,j,nz_d-2) -(*Bx_val)(i,j))
@@ -766,7 +766,7 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         // for By^(d,p,d)
         for (unsigned int i=patch->isXmin() ; i<nx_d ; i++) {
-            for (unsigned int j=0 ; j<ny_p ; j++) {
+            for (unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++) {
                 
                 (*By3D)(i,j,nz_d-1) = -Alpha_SM_T * (*Ex3D)(i,j,nz_p-1)
                 +                    Beta_SM_T  *( (*By3D)(i,j,nz_d-2) -(*By_val)(i,j))
@@ -915,5 +915,31 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
                 }
             } //End Ymin /Zmax edge
         } //End series of Ymin edges
+
+        if (patch->isYmax()){ 
+            unsigned int j = ny_p - 1;
+            if (patch->isZmin()){  //Ymax/Zmin
+                // edge 14 : Bz[i,ny_p,0] + beta(+y)By[i,ny_p-1,0] = S(+y)
+                // edge 19 : By[i,ny_p-1,0] + beta(-z)Bz[i,ny_p,0] = S(-z)
+                double one_ov_dbeta = 1./(1. - EMfields->beta_edge[14]*EMfields->beta_edge[19]);
+                for (unsigned int i=patch->isXmin() ; i<nx_d-patch->isXmax() ; i++) {  
+                    (*Bz3D)(i,j+1,0  ) = ( EMfields->S_edge[14][i] - EMfields->beta_edge[14]* EMfields->S_edge[19][i]) * one_ov_dbeta ;
+                    (*By3D)(i,j,0  )   =   EMfields->S_edge[19][i] - EMfields->beta_edge[19]*(*Bz3D)(i,j+1,0  ) ;
+                }
+            }//End Ymax /Zmin edge
+
+            if (patch->isZmax()){ 
+                // Ymax/Zmax
+                //edge 15 : Bz[i,ny_p,nz_p-1] + beta(+y)By[i,ny_p-1,nz_p]   = S(+y)
+                //edge 23 : By[i,ny_p-1,nz_p]   + beta(+z)Bz[i,ny_p,nz_p-1] = S(+z)
+                one_ov_dbeta = 1./(1. - EMfields->beta_edge[15]*EMfields->beta_edge[23]);
+                for (unsigned int i=patch->isXmin() ; i<nx_d-patch->isXmax() ; i++) {  
+                    (*Bz3D)(i,j+1,nz_p-1  ) = ( EMfields->S_edge[15][i] - EMfields->beta_edge[15]* EMfields->S_edge[23][i]) * one_ov_dbeta ;
+                    (*By3D)(i,j,nz_p  ) =   EMfields->S_edge[23][i] - EMfields->beta_edge[23]*(*Bz3D)(i,j+1,nz_p-1  ) ;
+
+                }
+            } //End Ymax /Zmax edge
+        } //End series of Ymax edges
+
     }
 }
