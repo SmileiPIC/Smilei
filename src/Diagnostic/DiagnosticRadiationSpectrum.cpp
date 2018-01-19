@@ -16,12 +16,16 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, Smilei
     
     int n_diag_rad_spectrum = diagId;
     
-    // useful parameters
-    two_third = 0.666666666666666666;
+    // Check that reference_angular_frequency_SI is correctly defined
+    if (params.reference_angular_frequency_SI<=0.) ERROR("DiagnosticRadiationSpectrum requires 'reference_angular_frequency_SI' to be defined.");
+    
+    // Normalization parameters
+    two_third = 2./3.;
     double squared_fine_structure_constant = 5.325135447834466e-5;
     double normalized_classical_electron_time = 9.399637140638142e-24*params.reference_angular_frequency_SI;
-    factor  = two_third*params.cell_volume*squared_fine_structure_constant/normalized_classical_electron_time;
+    factor  = two_third*squared_fine_structure_constant/normalized_classical_electron_time;//*MG*params.timestep;
     factor *= 0.2756644477108960; //sqrt(3.)/2./M_PI;
+    
     
     ostringstream name("");
     name << "Diagnotic Radiation Spectrum #" << n_diag_rad_spectrum;
@@ -98,6 +102,7 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, Smilei
     
     // construct the list of photon_energies
     photon_energies.resize(photon_energy_nbins);
+    delta_energies.resize(photon_energy_nbins);
     double emin=photon_energy_min, emax=photon_energy_max;
     if(photon_energy_logscale) {
         emin = log10(emin);
@@ -106,7 +111,12 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, Smilei
     double spacing = (emax-emin)/photon_energy_nbins;
     for ( int i=0; i<photon_energy_nbins; i++) {
         photon_energies[i] = emin + (i+0.5)*spacing;
-        if(photon_energy_logscale) photon_energies[i] = pow(10.,photon_energies[i]);
+        if(photon_energy_logscale) {
+            photon_energies[i] = pow(10.,photon_energies[i]);
+            delta_energies[i]  = pow(10.,emin+i*spacing)*(pow(10.,spacing)-1.);
+        } else {
+            delta_energies[i]  = spacing;
+        }
     }
 
     
@@ -320,7 +330,7 @@ void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* si
             chi              = s->particles->chi(ipart);
             two_third_ov_chi = two_third/chi;
             
-            increment0 = factor*gamma_inv * s->particles->weight(ipart);
+            increment0 = gamma_inv * s->particles->weight(ipart);
             
             for (int i=0; i<photon_energy_nbins; i++) {
 
@@ -329,7 +339,8 @@ void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* si
                     zeta = xi/ (1.-xi);
                     nu   = two_third_ov_chi * zeta;
                     cst  = xi*zeta;
-                    increment = increment0 * xi * ( RadiationTables::compute_f1_nu(nu) + cst*RadiationTables::compute_f2_nu(nu) );
+                    increment = increment0 * delta_energies[i]
+                    *           xi * ( RadiationTables::compute_f1_nu(nu) + cst*RadiationTables::compute_f2_nu(nu) );
                     #pragma omp atomic
                     data_sum[ind+i] += increment;
                 }
@@ -350,12 +361,13 @@ void DiagnosticRadiationSpectrum::write(int timestep, SmileiMPI* smpi)
     if (timestep - timeSelection->previousTime() != time_average-1) return;
     
     double coeff;
+    coeff = factor;
     // if time_average, then we need to divide by the number of timesteps
     if (time_average > 1) {
-        coeff = 1./((double)time_average);
-        for (unsigned int i=0; i<output_size; i++)
-            data_sum[i] *= coeff;
+        coeff /= ((double)time_average);
     }
+    for (unsigned int i=0; i<output_size; i++)
+        data_sum[i] *= coeff;
     
     // make name of the array
     ostringstream mystream("");

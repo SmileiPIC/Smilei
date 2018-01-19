@@ -84,6 +84,9 @@ private :
     //! axis containing the values of the binned photon_energies
     std::vector<double> photon_energies;
     
+    //! axis containing the values of the delta on the binned photon_energies
+    std::vector<double> delta_energies;
+    
 };
 
 #endif
