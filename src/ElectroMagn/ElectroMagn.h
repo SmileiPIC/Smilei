@@ -22,6 +22,13 @@ class DomainDecomposition;
 class LaserEnvelope;
 
 
+inline std::string LowerCase(std::string in){
+    std::string out=in;
+    std::transform(out.begin(), out.end(), out.begin(), ::tolower);
+    return out;
+}
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each ExtField
 // ---------------------------------------------------------------------------------------------------------------------
@@ -59,7 +66,7 @@ public:
     ElectroMagn( ElectroMagn* emFields, Params &params, Patch* patch );
     void initElectroMagnQuantities();
     //! Extra initialization. Used in ElectroMagnFactory
-    void finishInitialization(int nspecies, Patch* patch);
+    virtual void finishInitialization(int nspecies, Patch* patch);
     
     //! Destructor for Electromagn
     virtual ~ElectroMagn();
@@ -194,13 +201,10 @@ public:
     //! Constructor for Electromagn
     ElectroMagn( Params &params, Patch* patch );
     
-    //! Method used to dump data contained in ElectroMagn
-    void dump();
-    
     //! Method used to initialize the total charge currents and densities
-    void restartRhoJ();
+    virtual void restartRhoJ();
     //! Method used to initialize the total charge currents and densities of species
-    void restartRhoJs();
+    virtual void restartRhoJs();
     
     //! Method used to sum all species densities and currents to compute the total charge density and currents
     virtual void computeTotalRhoJ() = 0;
@@ -260,7 +264,7 @@ public:
     std::vector<double> poynting_inst[2];
     
     //! Compute local square norm of charge denisty is not null
-    inline double computeRhoNorm2() {
+    virtual double computeRhoNorm2() {
         return rho_->norm2(istart, bufsize);
     }
 
@@ -281,7 +285,7 @@ public:
     std::vector<ExtField> extFields;
     
     //! Method used to impose external fields (apply to all Fields)
-    void applyExternalFields(Patch*);
+    virtual void applyExternalFields(Patch*);
     
     //! Method used to impose external fields (apply to a given Field)
     virtual void applyExternalField(Field*, Profile*, Patch*) = 0 ;

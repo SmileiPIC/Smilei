@@ -104,16 +104,22 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
 
 }
 
-
 void SyncVectorPatch::sumRhoJ(Params& params, VectorPatch& vecPatches, Timers &timers, int itime)
 {
     SyncVectorPatch::new_sum( vecPatches.densities , vecPatches, timers, itime );
-    if( (vecPatches.diag_flag) || (params.is_spectral) )SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, itime );
+    if( (vecPatches.diag_flag) || (params.is_spectral) ) SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, itime );
+}
+
+void SyncVectorPatch::sumRhoJ(Params& params, VectorPatch& vecPatches, int imode, Timers &timers, int itime)
+{
+    SyncVectorPatch::sum( vecPatches.listJl_[imode], vecPatches, timers, itime  );
+    SyncVectorPatch::sum( vecPatches.listJr_[imode], vecPatches, timers, itime  );
+    SyncVectorPatch::sum( vecPatches.listJt_[imode], vecPatches, timers, itime  );
+    if( (vecPatches.diag_flag) || (params.is_spectral) ) SyncVectorPatch::sum( vecPatches.listrho_RZ_[imode], vecPatches, timers, itime );
 }
 
 void SyncVectorPatch::sumRhoJs(Params& params, VectorPatch& vecPatches, int ispec , Timers &timers, int itime)
 {
-
     if(vecPatches.listJxs_ .size()>0) SyncVectorPatch::sum( vecPatches.listJxs_ , vecPatches, timers, itime  );
     if(vecPatches.listJys_ .size()>0) SyncVectorPatch::sum( vecPatches.listJys_ , vecPatches, timers, itime  );
     if(vecPatches.listJzs_ .size()>0) SyncVectorPatch::sum( vecPatches.listJzs_ , vecPatches, timers, itime  );
@@ -213,6 +219,24 @@ void SyncVectorPatch::finalizeexchangeJ( Params& params, VectorPatch& vecPatches
     SyncVectorPatch::finalizeexchange( vecPatches.listJy_, vecPatches );
     SyncVectorPatch::finalizeexchange( vecPatches.listJz_, vecPatches );
 }
+
+
+void SyncVectorPatch::exchangeB( Params& params, VectorPatch& vecPatches, int imode )
+{
+
+    SyncVectorPatch::exchange( vecPatches.listBl_[imode], vecPatches );
+    SyncVectorPatch::exchange( vecPatches.listBr_[imode], vecPatches );
+    SyncVectorPatch::exchange( vecPatches.listBt_[imode], vecPatches );
+}
+
+void SyncVectorPatch::finalizeexchangeB( Params& params, VectorPatch& vecPatches, int imode  )
+{
+
+    SyncVectorPatch::finalizeexchange( vecPatches.listBl_[imode], vecPatches );
+    SyncVectorPatch::finalizeexchange( vecPatches.listBr_[imode], vecPatches );
+    SyncVectorPatch::finalizeexchange( vecPatches.listBt_[imode], vecPatches );
+}
+
 
 
 void SyncVectorPatch::new_sum( std::vector<Field*>& fields, VectorPatch& vecPatches, Timers &timers, int itime )

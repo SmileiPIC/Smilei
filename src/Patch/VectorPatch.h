@@ -204,6 +204,18 @@ public :
     std::vector<Field*> listBy_;
     std::vector<Field*> listBz_;
 
+    std::vector<std::vector< Field *>> listJl_;
+    std::vector<std::vector< Field *>> listJr_;
+    std::vector<std::vector< Field *>> listJt_;
+    std::vector<std::vector< Field *>> listrho_RZ_;
+    std::vector<std::vector< Field *>> listEl_;
+    std::vector<std::vector< Field *>> listEr_;
+    std::vector<std::vector< Field *>> listEt_;
+    std::vector<std::vector< Field *>> listBl_;
+    std::vector<std::vector< Field *>> listBr_;
+    std::vector<std::vector< Field *>> listBt_;
+
+    
     //! True if any antennas
     unsigned int nAntennas;
 

@@ -1032,26 +1032,39 @@ void Species::count_sort_part(Params &params)
 
 int Species::createParticles(vector<unsigned int> n_space_to_create, Params& params, Patch *patch, int new_bin_idx)
 {
+    // n_space_to_create_generalized = n_space_to_create, + copy of 2nd direction data among 3rd direction
+    // same for local Species::cell_length[2]
+    vector<unsigned int> n_space_to_create_generalized( n_space_to_create );    
+    if ( params.geometry == "3drz") {
+        n_space_to_create_generalized[2]  = n_space_to_create[1];
+        cell_length[2] = cell_length[1];
+    }
+    
     unsigned int nPart, i,j,k, idim;
-    vector<Field*> xyz(nDim_field);
+    vector<Field*> xyz(nDim_particle);
 
     // Create particles in a space starting at cell_position
     vector<double> cell_position(3,0);
     vector<double> cell_index(3,0);
     for (unsigned int idim=0 ; idim<nDim_field ; idim++) {
-        if (params.cell_length[idim]!=0) {
-            cell_position[idim] = patch->getDomainLocalMin(idim);
-            cell_index   [idim] = (double) patch->getCellStartingGlobalIndex(idim);
-            xyz[idim] = new Field3D(n_space_to_create);
-        }
+        //if (params.cell_length[idim]!=0) { // Useless, nDim_field defined for (params.cell_length[idim>=nDim_field]==0)
+        cell_position[idim] = patch->getDomainLocalMin(idim);
+        cell_index   [idim] = (double) patch->getCellStartingGlobalIndex(idim);
+        xyz[idim] = new Field3D(n_space_to_create_generalized);
+        //}
     }
-
+    if ( params.geometry == "3drz") {
+        cell_position[2] = cell_position[1];
+        cell_index   [2] = cell_index   [1];
+        xyz[2] = new Field3D(n_space_to_create_generalized);
+    }
+    
     // Create the x,y,z maps where profiles will be evaluated
     vector<double> ijk(3);
-    for (ijk[0]=0; ijk[0]<n_space_to_create[0]; ijk[0]++)
-        for (ijk[1]=0; ijk[1]<n_space_to_create[1]; ijk[1]++)
-            for (ijk[2]=0; ijk[2]<n_space_to_create[2]; ijk[2]++)
-                for (idim=0 ; idim<nDim_field ; idim++)
+    for (ijk[0]=0; ijk[0]<n_space_to_create_generalized[0]; ijk[0]++)
+        for (ijk[1]=0; ijk[1]<n_space_to_create_generalized[1]; ijk[1]++)
+            for (ijk[2]=0; ijk[2]<n_space_to_create_generalized[2]; ijk[2]++)
+                for (idim=0 ; idim<nDim_particle ; idim++)
                     (*xyz[idim])(ijk[0],ijk[1],ijk[2]) = cell_position[idim] + (ijk[idim]+0.5)*cell_length[idim];
 
     // ---------------------------------------------------------
@@ -1059,22 +1072,22 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     // ---------------------------------------------------------
 
     // field containing the charge distribution (always 3d)
-    Field3D charge(n_space_to_create);
+    Field3D charge(n_space_to_create_generalized);
     max_charge = 0.;
 
     // field containing the number of particles in each cell
-    Field3D n_part_in_cell(n_space_to_create);
+    Field3D n_part_in_cell(n_space_to_create_generalized);
 
     // field containing the density distribution (always 3d)
-    Field3D density(n_space_to_create);
+    Field3D density(n_space_to_create_generalized);
 
     // field containing the temperature distribution along all 3 momentum coordinates (always 3d * 3)
     Field3D temperature[3];
     // field containing the temperature distribution along all 3 momentum coordinates (always 3d * 3)
     Field3D velocity[3];
     for (unsigned int i=0; i<3; i++) {
-        velocity[i].allocateDims(n_space_to_create);
-        temperature[i].allocateDims(n_space_to_create);
+        velocity[i].allocateDims(n_space_to_create_generalized);
+        temperature[i].allocateDims(n_space_to_create_generalized);
     }
 
     // Evaluate profiles
@@ -1088,15 +1101,15 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
         temperatureProfile[m]->valuesAt(xyz, temperature[m]);
         velocityProfile[m]   ->valuesAt(xyz, velocity   [m]);
     }
-    for (unsigned int idim=0 ; idim<nDim_field ; idim++)
+    for (unsigned int idim=0 ; idim<nDim_particle ; idim++)
         delete xyz[idim];
 
     // Do some adjustments on the profiles
     unsigned int npart_effective = 0;
     double remainder, nppc;
-    for (i=0; i<n_space_to_create[0]; i++) {
-        for (j=0; j<n_space_to_create[1]; j++) {
-            for (k=0; k<n_space_to_create[2]; k++) {
+    for (i=0; i<n_space_to_create_generalized[0]; i++) {
+        for (j=0; j<n_space_to_create_generalized[1]; j++) {
+            for (k=0; k<n_space_to_create_generalized[2]; k++) {
 
                 // Obtain the number of particles per cell
                 nppc = n_part_in_cell(i,j,k);
@@ -1165,10 +1178,10 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     //bmax[bin] point to end of bin (= bmin[bin+1])
     //if bmax = bmin, bin is empty of particle.
 
-    for (i=0; i<n_space_to_create[0]; i++) {
+    for (i=0; i<n_space_to_create_generalized[0]; i++) {
         if (i%clrw == 0) bmin[new_bin_idx+i/clrw] = iPart;
-        for (j=0; j<n_space_to_create[1]; j++) {
-            for (k=0; k<n_space_to_create[2]; k++) {
+        for (j=0; j<n_space_to_create_generalized[1]; j++) {
+            for (k=0; k<n_space_to_create_generalized[2]; k++) {
                 // initialize particles in meshes where the density is non-zero
                 if (density(i,j,k)>0) {
 

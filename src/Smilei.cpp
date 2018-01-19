@@ -190,7 +190,6 @@ int main (int argc, char* argv[])
         // Apply antennas
         // --------------
         vecPatches.applyAntennas(0.5 * params.timestep);
-
         // Init electric field (Ex/1D, + Ey/2D)
         if (!vecPatches.isRhoNull(&smpi) && params.solve_poisson == true) {
             TITLE("Solving Poisson at time t = 0");

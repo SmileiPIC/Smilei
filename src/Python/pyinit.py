@@ -178,6 +178,7 @@ class Main(SmileiSingleton):
     clrw = -1
     every_clean_particles_overhead = 100
     timestep = None
+    Nmode = 2
     timestep_over_CFL = None
 
     # PXR tuning

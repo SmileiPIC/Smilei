@@ -8,6 +8,7 @@
 #include "Projector2D4Order.h"
 #include "Projector3D2Order.h"
 #include "Projector3D4Order.h"
+#include "ProjectorRZ2Order.h"
 
 #ifdef _VECTO
 #include "Projector2D2OrderV.h"
@@ -59,6 +60,12 @@ public:
         }
         else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == (unsigned int)4 ) ) {
             Proj = new Projector3D4Order(params, patch);
+        }
+        // ---------------
+        // 3dRZ simulation
+        // ---------------
+        else if ( params.geometry == "3drz" ) {
+            Proj = new ProjectorRZ2Order(params, patch);
         }
         else {
             ERROR( "Unknwon parameters : " << params.geometry << ", Order : " << params.interpolation_order );

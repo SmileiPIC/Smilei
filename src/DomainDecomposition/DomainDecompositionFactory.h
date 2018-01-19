@@ -12,7 +12,7 @@ public:
 
         if ( ( params.geometry == "1Dcartesian" ) )
             domain_decomposition = new HilbertDomainDecomposition1D( params );
-        else if ( ( params.geometry == "2Dcartesian" ) ) 
+        else if ( ( params.geometry == "2Dcartesian" ) ||( params.geometry == "3drz" ) ) 
             domain_decomposition = new HilbertDomainDecomposition2D( params );
         else if ( ( params.geometry == "3Dcartesian" ) ) 
             domain_decomposition = new HilbertDomainDecomposition3D( params );
@@ -27,7 +27,7 @@ public:
 
         if ( ( params.geometry == "1Dcartesian" ) )
             domain_decomposition = new CartesianDomainDecomposition1D( params );
-        else if ( ( params.geometry == "2Dcartesian" ) ) 
+        else if ( ( params.geometry == "2Dcartesian" ) ||( params.geometry == "3drz" ) ) 
             domain_decomposition = new CartesianDomainDecomposition2D( params );
         else if ( ( params.geometry == "3Dcartesian" ) ) 
             domain_decomposition = new CartesianDomainDecomposition3D( params );

@@ -45,11 +45,8 @@ nrj_new_fields (  0.               )
     for (unsigned int i=0; i<3; i++) {
         DEBUG("____________________ OVERSIZE: " <<i << " " << oversize[i]);
     }
-    
-    initElectroMagnQuantities();
-    
+    initElectroMagnQuantities();    
     emBoundCond = ElectroMagnBC_Factory::create(params, patch);
-    
     MaxwellAmpereSolver_  = SolverFactory::createMA(params);
     MaxwellFaradaySolver_ = SolverFactory::createMF(params);
 
@@ -277,7 +274,7 @@ void ElectroMagn::updateGridSize(Params &params, Patch* patch)
 
 
 void ElectroMagn::boundaryConditions(int itime, double time_dual, Patch* patch, Params &params, SimWindow* simWindow)
-{
+{	
     // Compute EM Bcs
     if ( ! (simWindow && simWindow->isMoving(time_dual)) ) {
         if (emBoundCond[0]!=NULL) { // <=> if !periodic
@@ -297,35 +294,6 @@ void ElectroMagn::boundaryConditions(int itime, double time_dual, Patch* patch, 
             emBoundCond[5]->apply(this, time_dual, patch);
         }
     }
-
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Method used to create a dump of the data contained in ElectroMagn
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn::dump()
-{
-    //!\todo Check for none-cartesian grid & for generic grid (neither all dual or all primal) (MG & JD)
-    
-    vector<unsigned int> dimPrim;
-    dimPrim.resize(1);
-    dimPrim[0] = n_space[0]+2*oversize[0]+1;
-    vector<unsigned int> dimDual;
-    dimDual.resize(1);
-    dimDual[0] = n_space[0]+2*oversize[0]+2;
-    
-    // dump of the electromagnetic fields
-    Ex_->dump(dimDual);
-    Ey_->dump(dimPrim);
-    Ez_->dump(dimPrim);
-    Bx_->dump(dimPrim);
-    By_->dump(dimDual);
-    Bz_->dump(dimDual);
-    // dump of the total charge density & currents
-    rho_->dump(dimPrim);
-    Jx_->dump(dimDual);
-    Jy_->dump(dimPrim);
-    Jz_->dump(dimPrim);
 }
 
 

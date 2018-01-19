@@ -6,6 +6,7 @@
 #include "ElectroMagn1D.h"
 #include "ElectroMagn2D.h"
 #include "ElectroMagn3D.h"
+#include "ElectroMagn3DRZ.h"
 #include "ElectroMagnBC.h"
 #include "EnvelopeFactory.h"
 
@@ -27,6 +28,9 @@ public:
         }
         else if ( params.geometry == "3Dcartesian" ) {
             EMfields = new ElectroMagn3D(params, domain_decomposition, vecSpecies, patch);
+        }
+        else if ( params.geometry == "3drz" ) {
+            EMfields = new ElectroMagn3DRZ(params, domain_decomposition, vecSpecies, patch);
         }
         else {
             ERROR( "Unknown geometry : " << params.geometry << "!" );

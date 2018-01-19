@@ -9,6 +9,7 @@
 #include "Interpolator2D4Order.h"
 #include "Interpolator3D2Order.h"
 #include "Interpolator3D4Order.h"
+#include "InterpolatorRZ2Order.h"
 
 #ifdef _VECTO
 #include "Interpolator2D2OrderV.h"
@@ -61,6 +62,13 @@ public:
         else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == 4 ) ) {
             Interp = new Interpolator3D4Order(params, patch);
         }
+        // ---------------
+        // 3dRZ simulation
+        // ---------------
+        else if ( params.geometry == "3drz" ) {
+            Interp = new InterpolatorRZ2Order(params, patch);
+        }
+
         else {
             ERROR( "Unknwon parameters : " << params.geometry << ", Order : " << params.interpolation_order );
         }

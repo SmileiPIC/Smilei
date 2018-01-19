@@ -53,8 +53,6 @@ public:
         allocateDims(mainDim, isPrimal);
     };
     
-    //! Method used to dump the data contained in a Field2D
-    void dump(std::vector<unsigned int> dims);
     virtual void shift_x(unsigned int delta);
     
     //! Overloading of the () operator allowing to set a new value for the (i,j) element of a Field2D
