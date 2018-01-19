@@ -23,15 +23,18 @@ as long as they correspond to several :ref:`restarts <Checkpoints>` of the same 
   * ``results_path``: path or list of paths to the directory-ies
     where the results of the simulation-s are stored. It can also contain wildcards,
     such as ``*`` and ``?`` in order to include several simulations at once.
-
-  * ``show``: if True, figures will actually plot on screen. If False, make sure that
-    you have not loaded another simulation or the matplotlib package. You may need to
-    restart python.
   
   * ``reference_angular_frequency_SI``: overrides the value of the simulation parameter
     :py:data:`reference_angular_frequency_SI`, in order to re-scale units.
   
-  * ``verbose``: if True, more information is displayed while post-processing.
+  * ``show``: if ``False``, figures will not plot on screen. Make sure that
+    you have not loaded another simulation or the matplotlib package. You may need to
+    restart python.
+  
+  * ``verbose``: if ``False``, less information is printed while post-processing.
+  
+  * ``scan``: if ``False``, HDF5 output files are not scanned initially.
+
 
 **Returns:** An object containing various methods to extract and manipulate the simulation
   outputs, as described below.
