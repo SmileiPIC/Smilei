@@ -345,8 +345,9 @@ void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime,
         }
     }
 
-    // SyncVectorPatch::exchangeA( params, (*this) );
-    // SyncVectorPatch::finalizeexchangeA( params, (*this) );
+    SyncVectorPatch::exchangeA( params, (*this) );
+    SyncVectorPatch::finalizeexchangeA( params, (*this) );
+
     // //Synchronize B fields between patches.
     // timers.maxwell.update( params.printNow( itime ) );
     // 
