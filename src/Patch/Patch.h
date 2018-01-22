@@ -123,6 +123,8 @@ public:
     virtual void initExchange( Field* field, int iDim ) = 0;
     //! init comm / exchange complex fields in direction iDim only
     virtual void initExchangeComplex( Field* field, int iDim ) = 0;
+    //! finalize comm / exchange fields
+    virtual void finalizeExchange( Field* field, int iDim ) = 0;
     //! finalize comm / exchange complex fields in direction iDim only
     virtual void finalizeExchangeComplex( Field* field, int iDim ) = 0;
 

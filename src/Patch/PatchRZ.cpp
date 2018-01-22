@@ -314,6 +314,11 @@ void PatchRZ::initExchange( Field* field )
     } // END for iDim
 } // END initExchange( Field* field )
 
+void PatchRZ::initExchangeComplex( Field* field )
+{
+    ERROR("Circ geometry initExchangeComplex not implemented");
+} // END initExchangeComplex( Field* field )
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Initialize current patch exhange Fields communications through MPI  (includes loop / nDim_fields_)
@@ -342,6 +347,11 @@ void PatchRZ::finalizeExchange( Field* field )
     } // END for iDim
 
 } // END finalizeExchange( Field* field )
+
+void PatchRZ::finalizeExchangeComplex( Field* field )
+{
+    ERROR("Circ geometry finalizeExchangeComplex not implemented");
+} // END finalizeExchangeComplex( Field* field )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -403,6 +413,10 @@ void PatchRZ::initExchange( Field* field, int iDim )
 
 } // END initExchange( Field* field, int iDim )
 
+void PatchRZ::initExchangeComplex( Field* field, int iDim )
+{
+    ERROR("Circ geometry initExchangeComplex not implemented");
+} // END initExchangeComplex( Field* field )
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Initialize current patch exhange Fields communications through MPI for direction iDim
@@ -428,6 +442,10 @@ void PatchRZ::finalizeExchange( Field* field, int iDim )
 
 } // END finalizeExchange( Field* field, int iDim )
 
+void PatchRZ::finalizeExchangeComplex( Field* field, int iDim )
+{
+    ERROR("Circ geometry finalizeExchangeComplex not implemented");
+} // END finalizeExchangeComplex( Field* field )
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Create MPI_Datatypes used in initSumField and initExchange

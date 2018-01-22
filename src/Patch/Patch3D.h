@@ -3,6 +3,7 @@
 
 #include "Patch.h"
 #include "Field3D.h"
+#include "cField3D.h"
 
 class SimWindow;
 
