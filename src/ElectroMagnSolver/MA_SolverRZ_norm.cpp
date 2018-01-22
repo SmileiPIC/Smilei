@@ -44,11 +44,11 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
             (*ElRZ)(i,j) += -dt*(*JlRZ)(i,j)
                 +                 dt/((j_glob+j)*dr)* ((j+0.5)*(*BtRZ)(i,j+1) - (j-0.5)*(*BtRZ)(i,j) )
                 +                 Icpx*dt*(double)imode/((j_glob+j)*dr)*(*BrRZ)(i,j);
-				//if ((*ElRZ)(i,j)!= 0)
-				//{MESSAGE("ElRZ");				
-				//MESSAGE(i);	
-				//MESSAGE(j);
-				//MESSAGE((*ElRZ)(i,j));}
+				if ((*ElRZ)(i,j)!= 0.)
+				{MESSAGE("ElRZ");				
+				MESSAGE(i);	
+				MESSAGE(j);
+				MESSAGE((*ElRZ)(i,j));}
                 }
 		
     }
@@ -60,11 +60,11 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
             (*ErRZ)(i,j) += -dt*(*JrRZ)(i,j)
                 -                  dt_ov_dl * ( (*BtRZ)(i+1,j) - (*BtRZ)(i,j) )
                 -                  Icpx*dt*(double)imode/((j_glob+j+0.5)*dr)* (*BlRZ)(i,j);
-				//if ((*ErRZ)(i,j)!= 0){
-				//MESSAGE("ErRZ");				
-				//MESSAGE(i);
-				//MESSAGE(j);	
-				//MESSAGE((*ErRZ)(i,j));}
+				if ((*ErRZ)(i,j)!= 0.){
+				MESSAGE("ErRZ");				
+				MESSAGE(i);
+				MESSAGE(j);	
+				MESSAGE((*ErRZ)(i,j));}
         }
 		
     }
@@ -76,11 +76,11 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
             (*EtRZ)(i,j) += -dt*(*JtRZ)(i,j)
                 +                  dt_ov_dl * ( (*BrRZ)(i+1,j) - (*BrRZ)(i,j) )
                 -                  dt_ov_dr * ( (*BlRZ)(i,j+1) - (*BlRZ)(i,j) );        
-				//if ((*EtRZ)(i,j)!= 0){
-				//MESSAGE("EtRZ ");
-				//MESSAGE(i);
-				//MESSAGE(j);	
-				//MESSAGE((*EtRZ)(i,j));}		
+				if ((*EtRZ)(i,j)!= 0.){
+				MESSAGE("EtRZ ");
+				MESSAGE(i);
+				MESSAGE(j);	
+				MESSAGE((*EtRZ)(i,j));}		
 		}
     }
 	//MESSAGE("EtRZ");
