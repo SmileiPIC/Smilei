@@ -19,6 +19,7 @@
 
 #include "RadiationTables.h"
 #include "Radiation.h"
+#include "RadiationTools.h"
 #include "userFunctions.h"
 
 #include <cstring>

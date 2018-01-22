@@ -229,9 +229,6 @@ void RadiationNiel::operator() (
             // Below chipa = chipa_radiation_threshold, radiation losses are negligible
             if (chipa[ipart] > chipa_radiation_threshold)
             {
-
-              //h = RadiationTables.get_h_Niel_from_fit_order10(chipa[ipart]);
-              //h = RadiationTables.get_h_Niel_from_fit_order5(chipa[ipart]);
               temp = RadiationTables.get_h_Niel_from_table(chipa[ipart]);
 
               diffusion[ipart] = sqrt(factor_cla_rad_power*gamma[ipart]*temp)*random_numbers[ipart];
@@ -249,7 +246,7 @@ void RadiationNiel::operator() (
             if (chipa[ipart] > chipa_radiation_threshold)
             {
 
-              temp = RadiationTables.get_h_Niel_from_fit_order5(chipa[ipart]);
+              temp = RadiationTools::get_h_Niel_from_fit_order5(chipa[ipart]);
 
               diffusion[ipart] = sqrt(factor_cla_rad_power*gamma[ipart]*temp)*random_numbers[ipart];
             }
@@ -266,7 +263,7 @@ void RadiationNiel::operator() (
             if (chipa[ipart] > chipa_radiation_threshold)
             {
 
-              temp = RadiationTables.get_h_Niel_from_fit_order10(chipa[ipart]);
+              temp = RadiationTools::get_h_Niel_from_fit_order10(chipa[ipart]);
 
               diffusion[ipart] = sqrt(factor_cla_rad_power*gamma[ipart]*temp)*random_numbers[ipart];
             }
@@ -284,7 +281,7 @@ void RadiationNiel::operator() (
             if (chipa[ipart] > chipa_radiation_threshold)
             {
 
-                temp = RadiationTables.get_h_Niel_from_fit_Ridgers(chipa[ipart]);
+                temp = RadiationTools::get_h_Niel_from_fit_Ridgers(chipa[ipart]);
 
                 diffusion[ipart] = sqrt(factor_cla_rad_power*gamma[ipart]*temp)*random_numbers[ipart];
             }
