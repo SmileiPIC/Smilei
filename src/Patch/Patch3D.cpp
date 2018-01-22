@@ -388,6 +388,30 @@ void Patch3D::finalizeExchange( Field* field )
 
 } // END finalizeExchange( Field* field )
 
+void Patch3D::finalizeExchangeComplex( Field* field )
+{
+    Field3D* f3D =  static_cast<cField3D*>(field);
+
+    int patch_ndims_(3);
+    MPI_Status sstat    [patch_ndims_][2];
+    MPI_Status rstat    [patch_ndims_][2];
+
+    // Loop over dimField
+    for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
+
+        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+            if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+                MPI_Wait( &(f3D->MPIbuff.srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
+            }
+             if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
+               MPI_Wait( &(f3D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
+            }
+        }
+
+    } // END for iDim
+
+} // END finalizeExchangeComplex( Field* field )
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Initialize current patch exhange Fields communications through MPI for direction iDim
@@ -474,6 +498,26 @@ void Patch3D::finalizeExchange( Field* field, int iDim )
     }
 
 } // END finalizeExchange( Field* field, int iDim )
+
+void Patch3D::finalizeExchangeComplex( Field* field, int iDim )
+{
+    int patch_ndims_(3);
+
+    Field3D* f3D =  static_cast<cField3D*>(field);
+
+    MPI_Status sstat    [patch_ndims_][2];
+    MPI_Status rstat    [patch_ndims_][2];
+
+    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+        if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+            MPI_Wait( &(f3D->MPIbuff.srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
+        }
+        if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
+            MPI_Wait( &(f3D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
+        }
+    }
+
+} // END finalizeExchangeComplex( Field* field, int iDim )
 
 
 // ---------------------------------------------------------------------------------------------------------------------

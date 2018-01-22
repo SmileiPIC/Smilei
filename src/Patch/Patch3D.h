@@ -37,10 +37,14 @@ public:
     void initExchange( Field* field ) override final;
     //! finalize comm / exchange fields
     void finalizeExchange( Field* field ) override final;
+    //! finalize comm / exchange complex fields
+    void finalizeExchangeComplex( Field* field ) override final;
     //! init comm / exchange fields in direction iDim only
     void initExchange( Field* field, int iDim ) override final;
     //! finalize comm / exchange fields in direction iDim only
     void finalizeExchange( Field* field, int iDim ) override final;
+    //! finalize comm / exchange complex fields in direction iDim only
+    void finalizeExchangeComplex( Field* field, int iDim ) override final;
 
     // Create MPI_Datatype to exchange fields
     void createType( Params& params ) override final;
