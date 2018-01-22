@@ -422,7 +422,7 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
     else if (min_max==1 && patch->isXmax() ) {
         
         // for By^(d,p,d)
-        for (unsigned int j=patch->isYmin() ; j<ny_p ; j++) {
+        for (unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++) {
             pos[0] = patch->getDomainLocalMin(1) + (j - EMfields->oversize[1])*dy;
             for (unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++) {
                 pos[1] = patch->getDomainLocalMin(2) + (k - 0.5 - EMfields->oversize[2])*dz;
@@ -443,7 +443,7 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         }//j  ---end compute By
         
         // for Bz^(d,d,p)
-        for (unsigned int j=patch->isYmin() ; j<ny_d ; j++) {
+        for (unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++) {
             pos[0] = patch->getDomainLocalMin(1) + (j - 0.5 - EMfields->oversize[1])*dy;
             for (unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++) {
                 pos[1] = patch->getDomainLocalMin(2) + (k - EMfields->oversize[2])*dz;
@@ -461,6 +461,29 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
                 +                    (*Bz_val)(j,k);
             }//k  ---end compute Bz
         }//j  ---end compute Bz
+
+        if (patch->isYmax()){ // Xmax/Ymax
+            // By[nx_p,ny_p-1,k] + beta(+x)Bx[nx_p-1,ny_p,k] = S(+x)
+            EMfields->beta_edge[5] = - Delta_SM_E;
+            EMfields->S_edge[5].resize(nz_d);
+            unsigned int j = ny_p - 1 ;
+            pos[0] = patch->getDomainLocalMin(1) + (j - EMfields->oversize[1])*dy;
+            for (unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++) {
+                pos[1] = patch->getDomainLocalMin(2) + (k - 0.5 - EMfields->oversize[2])*dz;
+                // Lasers
+                double byE = 0.;
+                for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
+                    byE += vecLaser[ilaser]->getAmplitude0(pos, time_dual, j, k);
+                }
+
+                EMfields->S_edge[5][k] = Alpha_SM_E   * (*Ez3D)(nx_p-1,j,k)
+                +                   Beta_SM_E    *( (*By3D)(nx_d-2,j,k) -(*By_val)(j,k))
+                +                   Gamma_SM_E   * byE
+                +                   Delta_SM_E   *(                       -(*Bx_val)(j+1,k))// Check x-index
+                +                   Epsilon_SM_E *( (*Bx3D)(nx_p-1,j,k) -(*Bx_val)(j,k))
+                +                   (*By_val)(j,k);
+            }
+        }
 
         if (patch->isYmin()){ // Xmax/Ymin
             // By[nx_p,0,k] + beta(+x)Bx[nx_p-1,0,k] = S(+x)
@@ -535,7 +558,7 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
     else if (min_max==2 && patch->isYmin() ) {
         
         // for Bx^(p,d,d)
-        for (unsigned int i=patch->isXmin() ; i<nx_p ; i++) {
+        for (unsigned int i=patch->isXmin() ; i<nx_p-patch->isXmax() ; i++) {
             for (unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++) {  
                 (*Bx3D)(i,0,k) = - Alpha_SM_S   * (*Ez3D)(i,0,k)
                 +              Beta_SM_S    *( (*Bx3D)(i,1,k)-(*Bx_val)(i,k))
@@ -546,7 +569,7 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         }//i  ---end compute Bx
         
         // for Bz^(d,d,p)
-        for (unsigned int i=patch->isXmin() ; i<nx_d ; i++) {
+        for (unsigned int i=patch->isXmin() ; i<nx_d-patch->isXmax() ; i++) {
             for (unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++) {  
                 (*Bz3D)(i,0,k) = Alpha_SM_S   * (*Ex3D)(i,0,k)
                 +              Beta_SM_S    *( (*Bz3D)(i,1,k)-(*Bz_val)(i,k))
@@ -707,7 +730,7 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
     else if (min_max==4 && patch->isZmin() ) {
         
         // for Bx^(p,d,d)
-        for (unsigned int i=patch->isXmin() ; i<nx_p ; i++) {
+        for (unsigned int i=patch->isXmin() ; i<nx_p-patch->isXmax() ; i++) {
             for (unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++) {
                 
                 (*Bx3D)(i,j,0) = Alpha_SM_B   * (*Ey3D)(i,j,0)
@@ -719,7 +742,7 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         }//i  ---end compute Bx
         
         // for By^(d,p,d)
-        for (unsigned int i=patch->isXmin() ; i<nx_d ; i++) {
+        for (unsigned int i=patch->isXmin() ; i<nx_d-patch->isXmax() ; i++) {
             for (unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++) {
                 
                 (*By3D)(i,j,0) = - Alpha_SM_B   * (*Ex3D)(i,j,0)
