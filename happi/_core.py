@@ -4,7 +4,7 @@ from ._Diagnostics import Scalar, Field, Probe, ParticleBinning, RadiationSpectr
 
 class ScalarFactory(object):
 	"""Import and analyze a scalar diagnostic from a Smilei simulation
-	
+
 	Parameters:
 	-----------
 	scalar : string (optional)
@@ -17,20 +17,22 @@ class ScalarFactory(object):
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
-	
+
 	Usage:
 	------
 		S = happi.Open("path/to/simulation") # Load the simulation
 		scalar = S.Scalar(...)               # Load the scalar diagnostic
 		scalar.get()                         # Obtain the data
 	"""
-	
+
 	def __init__(self, simulation, scalar=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
-		
+		if not simulation._scan: return
+
 		# If not a specific scalar (root level), build a list of scalar shortcuts
 		if scalar is None:
+			if simulation._verbose: print("Scanning for Scalar diagnostics")
 			# Create a temporary, empty scalar diagnostic
 			tmpDiag = Scalar.Scalar(simulation)
 			# Get a list of scalars
@@ -38,18 +40,18 @@ class ScalarFactory(object):
 			# Create scalars shortcuts
 			for scalar in scalars:
 				setattr(self, scalar, ScalarFactory(simulation, scalar))
-		
+
 		else:
 			# the scalar is saved for generating the object in __call__
 			self._additionalArgs += (scalar, )
-	
+
 	def __call__(self, *args, **kwargs):
 		return Scalar.Scalar(self._simulation, *(self._additionalArgs+args), **kwargs)
 
 
 class FieldFactory(object):
 	"""Import and analyze a Field diagnostic from a Smilei simulation
-	
+
 	Parameters:
 	-----------
 	field : string (optional)
@@ -74,21 +76,23 @@ class FieldFactory(object):
 	units : a units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
-	
+
 	Usage:
 	------
 		S = happi.Open("path/to/simulation") # Load the simulation
 		field = S.Field(...)                 # Load the field diagnostic
 		field.get()                          # Obtain the data
 	"""
-	
+
 	def __init__(self, simulation, diagNumber=None, field=None, timestep=None, availableTimesteps=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
 		self._children = []
-		
+		if not simulation._scan: return
+
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
+			if simulation._verbose: print("Scanning for Field diagnostics")
 			# Create a temporary, empty field diagnostic
 			tmpDiag = Field.Field(simulation)
 			# Get a list of diag
@@ -98,11 +102,11 @@ class FieldFactory(object):
 				child = FieldFactory(simulation, diag)
 				setattr(self, "Field"+str(diag), child)
 				self._children += [child]
-		
+
 		else:
 			# the diag is saved for generating the object in __call__
 			self._additionalArgs += (diagNumber, )
-			
+
 			# If not a specific field, build a list of field shortcuts
 			if field is None:
 				# Create a temporary, empty field diagnostic
@@ -119,27 +123,27 @@ class FieldFactory(object):
 				for field in fields:
 					child = FieldFactory(simulation, diagNumber, field)
 					setattr(self, field, child)
-				
+
 			else:
 				# the field is saved for generating the object in __call__
 				self._additionalArgs += (field, )
-				
+
 #				# If not a specific timestep, build a list of timesteps shortcuts
 #				if timestep is None:
 #					for timestep in availableTimesteps:
 #						setattr(self, 't%0.10i'%timestep, FieldFactory(simulation, diagNumber, field, timestep))
-#				
+#
 #				else:
 #					# the timestep is saved for generating the object in __call__
 #					self._additionalArgs += (timestep, )
-	
+
 	def __call__(self, *args, **kwargs):
 		return Field.Field(self._simulation, *(self._additionalArgs+args), **kwargs)
 
 
 class ProbeFactory(object):
 	"""Import and analyze a probe diagnostic from a Smilei simulation
-	
+
 	Parameters:
 	-----------
 	probeNumber : int (optional)
@@ -166,32 +170,34 @@ class ProbeFactory(object):
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
-	
+
 	Usage:
 	------
 		S = happi.Open("path/to/simulation") # Load the simulation
 		probe = S.Probe(...)                 # Load the probe diagnostic
 		probe.get()                          # Obtain the data
 	"""
-	
+
 	def __init__(self, simulation, probeNumber=None, field=None, timestep=None, availableTimesteps=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
-		
+		if not simulation._scan: return
+
 		# If not a specific probe, build a list of probe shortcuts
 		if probeNumber is None:
+			if simulation._verbose: print("Scanning for Probe diagnostics")
 			# Create a temporary, empty probe diagnostic
 			tmpDiag = Probe.Probe(simulation)
 			# Get a list of probes
-			probes = tmpDiag.getProbes()
+			probes = tmpDiag._probes
 			# Create probe shortcuts
 			for probe in probes:
 				setattr(self, 'Probe'+str(probe), ProbeFactory(simulation, probe))
-		
+
 		else:
 			# the probe is saved for generating the object in __call__
 			self._additionalArgs += (probeNumber,)
-			
+
 			# If not a specific field, build a list of field shortcuts
 			if field is None:
 				# Create a temporary, empty probe diagnostic
@@ -206,20 +212,20 @@ class ProbeFactory(object):
 				# Create fields shortcuts
 				for field in fields:
 					setattr(self, field, ProbeFactory(simulation, probeNumber, field))
-			
+
 			else:
 				# the field is saved for generating the object in __call__
 				self._additionalArgs += (field, )
-				
+
 #				# If not a specific timestep, build a list of timesteps shortcuts
 #				if timestep is None:
 #					for timestep in availableTimesteps:
 #						setattr(self, 't%0.10i'%timestep, ProbeFactory(simulation, probeNumber, field, timestep))
-#				
+#
 #				else:
 #					# the timestep is saved for generating the object in __call__
 #					self._additionalArgs += (timestep, )
-	
+
 	def __call__(self, *args, **kwargs):
 		return Probe.Probe(self._simulation, *(self._additionalArgs+args), **kwargs)
 
@@ -227,7 +233,7 @@ class ProbeFactory(object):
 
 class ParticleBinningFactory(object):
 	"""Import and analyze a ParticleBinning diagnostic from a Smilei simulation
-	
+
 	Parameters:
 	-----------
 	diagNumber : int (optional)
@@ -251,20 +257,22 @@ class ParticleBinningFactory(object):
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
-	
+
 	Usage:
 	------
 		S = happi.Open("path/to/simulation") # Load the simulation
 		part = S.ParticleBinning(...)        # Load the particle binning diagnostic
 		part.get()                           # Obtain the data
 	"""
-	
+
 	def __init__(self, simulation, diagNumber=None, timestep=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
-	
+		if not simulation._scan: return
+
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
+			if simulation._verbose: print("Scanning for ParticleBinning diagnostics")
 			# Create a temporary, empty particle binning diagnostic
 			tmpDiag = ParticleBinning.ParticleBinning(simulation)
 			# Get a list of diags
@@ -272,11 +280,11 @@ class ParticleBinningFactory(object):
 			# Create diags shortcuts
 			for diag in diags:
 				setattr(self, 'Diag'+str(diag), ParticleBinningFactory(simulation, diag))
-		
+
 		else:
 			# the diag is saved for generating the object in __call__
 			self._additionalArgs += (diagNumber, )
-			
+
 			## If not a specific timestep, build a list of timesteps shortcuts
 			#if timestep is None:
 			#	# Create a temporary, empty particle binning diagnostic
@@ -290,14 +298,14 @@ class ParticleBinningFactory(object):
 			#else:
 			#	# the timestep is saved for generating the object in __call__
 			#	self._additionalArgs += (timestep, )
-	
+
 	def __call__(self, *args, **kwargs):
 		return ParticleBinning.ParticleBinning(self._simulation, *(self._additionalArgs+args), **kwargs)
 
 
 class RadiationSpectrumFactory(object):
 	"""Import and analyze a RadiationSpectrum diagnostic from a Smilei simulation
-	
+
 	Parameters:
 	-----------
 	diagNumber : int (optional)
@@ -321,18 +329,18 @@ class RadiationSpectrumFactory(object):
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
-	
+
 	Usage:
 	------
 		S = happi.Open("path/to/simulation") # Load the simulation
 		part = S.RadiationSpectrum(...)      # Load the particle binning diagnostic
 		part.get()                           # Obtain the data
 	"""
-	
+
 	def __init__(self, simulation, diagNumber=None, timestep=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
-	
+
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
 			# Create a temporary, empty radiation spectrum diagnostic
@@ -342,11 +350,11 @@ class RadiationSpectrumFactory(object):
 			# Create diags shortcuts
 			for diag in diags:
 				setattr(self, 'Diag'+str(diag), RadiationSpectrumFactory(simulation, diag))
-		
+
 		else:
 			# the diag is saved for generating the object in __call__
 			self._additionalArgs += (diagNumber, )
-			
+
 			## If not a specific timestep, build a list of timesteps shortcuts
 			#if timestep is None:
 			#	# Create a temporary, empty radiation spectrum diagnostic
@@ -360,7 +368,7 @@ class RadiationSpectrumFactory(object):
 			#else:
 			#	# the timestep is saved for generating the object in __call__
 			#	self._additionalArgs += (timestep, )
-	
+
 	def __call__(self, *args, **kwargs):
 		return RadiationSpectrum.RadiationSpectrum(self._simulation, *(self._additionalArgs+args), **kwargs)
 
@@ -368,7 +376,7 @@ class RadiationSpectrumFactory(object):
 
 class PerformancesFactory(object):
 	"""Import and analyze a Performances diagnostic from a Smilei simulation
-	
+
 	Parameters:
 	-----------
 	raw : a string
@@ -390,7 +398,7 @@ class PerformancesFactory(object):
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
-	
+
 	Available "quantities":
 	-----------------------
 	hindex                     : the starting index of each proc in the hilbert curve
@@ -409,18 +417,18 @@ class PerformancesFactory(object):
 	timer_syncField            : time spent synchronzing fields by each proc
 	timer_syncDens             : time spent synchronzing densities by each proc
 	timer_total                : the sum of all timers above (except timer_global)
-	
+
 	Usage:
 	------
 		S = happi.Open("path/to/simulation") # Load the simulation
 		part = S.Performances(...)           # Load the particle binning diagnostic
 		part.get()                           # Obtain the data
 	"""
-	
+
 	def __init__(self, simulation):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
-	
+
 	def __call__(self, *args, **kwargs):
 		return Performances.Performances(self._simulation, *(self._additionalArgs+args), **kwargs)
 
@@ -428,7 +436,7 @@ class PerformancesFactory(object):
 
 class ScreenFactory(object):
 	"""Import and analyze a screen diagnostic from a Smilei simulation
-	
+
 	Parameters:
 	-----------
 	diagNumber : int (optional)
@@ -452,20 +460,22 @@ class ScreenFactory(object):
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
-	
+
 	Usage:
 	------
 		S = happi.Open("path/to/simulation") # Load the simulation
 		screen = S.Screen(...)               # Load the Screen diagnostic
 		screen.get()                         # Obtain the data
 	"""
-	
+
 	def __init__(self, simulation, diagNumber=None, timestep=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
-		
+		if not simulation._scan: return
+
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
+			if simulation._verbose: print("Scanning for Screen diagnostics")
 			# Create a temporary, empty Screen diagnostic
 			tmpDiag = Screen.Screen(simulation)
 			# Get a list of diags
@@ -473,11 +483,11 @@ class ScreenFactory(object):
 			# Create diags shortcuts
 			for diag in diags:
 				setattr(self, 'Screen'+str(diag), ScreenFactory(simulation, diag))
-		
+
 		else:
 			# the diag is saved for generating the object in __call__
 			self._additionalArgs += (diagNumber, )
-			
+
 			## If not a specific timestep, build a list of timesteps shortcuts
 			#if timestep is None:
 			#	# Create a temporary, empty Screen diagnostic
@@ -491,7 +501,7 @@ class ScreenFactory(object):
 			#else:
 			#	# the timestep is saved for generating the object in __call__
 			#	self._additionalArgs += (timestep, )
-	
+
 	def __call__(self, *args, **kwargs):
 		return Screen.Screen(self._simulation, *(self._additionalArgs+args), **kwargs)
 
@@ -499,7 +509,7 @@ class ScreenFactory(object):
 
 class TrackParticlesFactory(object):
 	"""Import and analyze tracked particles from a Smilei simulation
-	
+
 	Parameters:
 	-----------
 	species : string (optional)
@@ -531,21 +541,23 @@ class TrackParticlesFactory(object):
 		Example: axes = ["x","px"] correspond to phase-space trajectories.
 	skipAnimation: bool (default: False)
 		When True, the plot() will directly show the full trajectory.
-	
+
 	Usage:
 	------
 		S = happi.Open("path/to/simulation") # Load the simulation
 		track = S.TrackParticles(...)        # Load the tracked-particle diagnostic
 		track.get()                          # Obtain the data
 	"""
-	
+
 	def __init__(self, simulation, species=None, timestep=None):
 		self._simulation = simulation
 		self._additionalKwargs = dict()
 		self._children = []
-		
+		if not simulation._scan: return
+
 		# If not a specific species (root level), build a list of species shortcuts
 		if species is None:
+			if simulation._verbose: print("Scanning for Tracked particle diagnostics")
 			# Create a temporary, empty tracked-particle diagnostic
 			tmpDiag = TrackParticles.TrackParticles(simulation)
 			# Get a list of species
@@ -555,15 +567,15 @@ class TrackParticlesFactory(object):
 				child = TrackParticlesFactory(simulation, spec)
 				setattr(self, spec, child)
 				self._children += [child]
-		
+
 		else:
 			# the species is saved for generating the object in __call__
 			self._additionalKwargs.update( {"species":species} )
-			
+
 			# For now, the following block is de-activated
 			# It is not possible to have pre-loaded timesteps because the file ordering
 			# would take place, and it takes a long time
-			
+
 			## If not a specific timestep, build a list of timesteps shortcuts
 			#if timestep is None:
 			#	# Create a temporary, empty tracked-particle diagnostic
@@ -577,7 +589,7 @@ class TrackParticlesFactory(object):
 			#else:
 			#	# the timestep is saved for generating the object in __call__
 			#	self._additionalKwargs.update( {"timesteps":timestep} )
-	
+
 	def __call__(self, *args, **kwargs):
 		kwargs.update(self._additionalKwargs)
 		return TrackParticles.TrackParticles(self._simulation, *args, **kwargs)
@@ -587,27 +599,30 @@ class TrackParticlesFactory(object):
 
 def Open(*args, **kwargs):
 	""" Import a Smilei simulation
-	
+
 	Parameters:
 	-----------
 	results_path : string or list of strings (default '.').
 		Directory containing simulation results, or list of directories.
 		Omit this argument if you are already in the results directory.
-	
-	show : bool (default True)
-		Can be set to False to prevent figures to actually appear on screen.
-	
+
 	reference_angular_frequency_SI : float (default None)
 		Sets or change the value of reference_angular_frequency_SI, which may
 		be defined in the block Main() of any Smilei namelist.
-	
+
+	show : bool (default True)
+		Can be set to False to prevent figures to actually appear on screen.
+
 	verbose : bool (default True)
 		If False, no warnings or information are printed.
-	
+
+	scan : bool (default True)
+		If False, the HDF5 output files are not initially scanned.
+
 	Returns:
 	--------
 	A SmileiSimulation object, i.e. a container that holds information about a simulation.
-	
+
 	Attributes of the returned object:
 	----------------------------------
 	namelist :
@@ -622,14 +637,14 @@ def Open(*args, **kwargs):
 		A method to access the `DiagParticleBinning` diagnostic.
 	TrackParticles :
 		A method to access the tracked particles diagnostic.
-		
+
 	"""
 	return SmileiSimulation(*args, **kwargs)
 
 
 class SmileiSimulation(object):
 	"""Object for handling the outputs of a Smilei simulation
-	
+
 	Attributes:
 	-----------
 	namelist :
@@ -644,10 +659,10 @@ class SmileiSimulation(object):
 		A method to access the `DiagParticleBinning` diagnostic.
 	TrackParticles :
 		A method to access the tracked particles diagnostic.
-		
+
 	"""
-	
-	def __init__(self, results_path=".", show=True, reference_angular_frequency_SI=None, verbose=True):
+
+	def __init__(self, results_path=".", reference_angular_frequency_SI=None, show=True, verbose=True, scan=True):
 		self.valid = False
 		# Import packages
 		import h5py
@@ -669,30 +684,26 @@ class SmileiSimulation(object):
 		self._mtime = 0
 		self._verbose = verbose
 		self._reference_angular_frequency_SI = reference_angular_frequency_SI
-		
+		self._scan = scan
+
 		# Load the simulation (verify the path, get the namelist)
 		self.reload()
-		
+
 		# Load diagnostics factories
 		if self.valid:
-			if self._verbose: print("Scanning for Scalar diagnostics")
 			self.Scalar = ScalarFactory(self)
-			if self._verbose: print("Scanning for Field diagnostics")
 			self.Field = FieldFactory(self)
-			if self._verbose: print("Scanning for Probe diagnostics")
 			self.Probe = ProbeFactory(self)
-			if self._verbose: print("Scanning for ParticleBinning diagnostics")
 			self.ParticleBinning = ParticleBinningFactory(self)
+
 			if self._verbose: print("Scanning for RadiationSpectrum diagnostics")
 			self.RadiationSpectrum = RadiationSpectrumFactory(self)
 			if self._verbose: print("Scanning for Performances diagnostics")
 			self.Performances = PerformancesFactory(self)
-			if self._verbose: print("Scanning for Screen diagnostics")
 			self.Screen = ScreenFactory(self)
-			if self._verbose: print("Scanning for Tracked particle diagnostics")
 			self.TrackParticles = TrackParticlesFactory(self)
-	
-	
+
+
 	def _openNamelist(self, path):
 		# Fetch the python namelist
 		namespace={}
@@ -702,7 +713,7 @@ class SmileiSimulation(object):
 		for key, value in namespace.items(): # transfer all variables to this object
 			if key[0]=="_": continue # skip builtins
 			setattr(namelist, key, value)
-		
+
 		# Get some info on the simulation
 		try:
 			# get number of dimensions
@@ -731,11 +742,11 @@ class SmileiSimulation(object):
 		except:
 			reference_angular_frequency_SI = None
 		return namelist, ndim, cell_length, ncels, timestep, reference_angular_frequency_SI
-	
+
 	def reload(self):
 		"""Reloads the simulation, if it has been updated"""
 		self.valid = False
-		
+
 		# Obtain the path(s) to the simulation(s) results
 		if type(self._results_path) is not list:
 			self._results_path = [self._results_path]
@@ -752,11 +763,11 @@ class SmileiSimulation(object):
 				print("WARNING: `"+path+"` does not point to any valid Smilei simulation path")
 			allPaths.extend( validPaths )
 		self._results_path = allPaths
-		
+
 		if len(self._results_path)==0:
 			print("No valid paths to Smilei simulation results have been provided")
 			return
-		
+
 		# Check the last modification date and get paths which are newer
 		lastmodif = 0
 		newPaths = []
@@ -764,7 +775,7 @@ class SmileiSimulation(object):
 			thismtime = self._os.path.getmtime(path+self._os.sep+"/smilei.py")
 			if thismtime > self._mtime: newPaths.append(path)
 			lastmodif = max(lastmodif, thismtime)
-		
+
 		# Reload if necessary
 		if lastmodif > self._mtime:
 			# Get the previous simulation parameters
@@ -784,10 +795,10 @@ class SmileiSimulation(object):
 			if self._reference_angular_frequency_SI is None:
 				self._reference_angular_frequency_SI = reference_angular_frequency_SI
 			self.namelist = args[0]
-		
+
 		self._mtime = lastmodif
 		self.valid = True
-	
+
 	def __repr__(self):
 		if not self.valid:
 			return "Invalid Smilei simulation"
@@ -795,4 +806,3 @@ class SmileiSimulation(object):
 			files = [self._glob(path+self._os.sep+"smilei.py")[0] for path in self._results_path]
 			files = "\n\t".join(files)
 			return "Smilei simulation with input file(s) located at:\n\t"+files
-
