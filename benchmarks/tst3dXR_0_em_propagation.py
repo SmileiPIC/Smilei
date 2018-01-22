@@ -30,20 +30,20 @@ Main(
     random_seed = smilei_mpi_rank
 )
 
-#LaserGaussian2D(
-#    a0              = 1.,
-#    omega           = 1.,
-#    focus           = [Lsim[0], Lsim[1]/2.],
-#    waist           = 8.,
-#    time_envelope   = tgaussian()
-#)
 LaserGaussian2D(
-    box_side         = "xmax",
-    a0              = 2.,
-    focus           = [0.,0.],
-    waist           = 26.16,
-    time_envelope   = tgaussian(center=2**0.5*laser_fwhm, fwhm=laser_fwhm)
+    a0              = 1.,
+    omega           = 1.,
+    focus           = [Lsim[0], Lsim[1]/2.],
+    waist           = 8.,
+    time_envelope   = tgaussian()
 )
+#LaserGaussian2D(
+#    box_side         = "xmin",
+#    a0              = 2.,
+#    focus           = [0., 0.],
+#    waist           = 26.16,
+#    time_envelope   = tgaussian(center=2**0.5*laser_fwhm, fwhm=laser_fwhm)
+#)
 
 globalEvery = int(1)
 

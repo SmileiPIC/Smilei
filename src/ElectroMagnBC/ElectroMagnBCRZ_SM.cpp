@@ -219,8 +219,8 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		        	for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
 		            	byW += vecLaser[ilaser]->getAmplitude0(yp, time_dual, j, 0)
 							+Icpx*vecLaser[ilaser]->getAmplitude1(yp, time_dual, j, 0);
-						MESSAGE("byW");
-						MESSAGE(byW);
+						//MESSAGE("byW");
+						//MESSAGE(byW);
 		        	}
 				}
 
@@ -246,8 +246,8 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		        	for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
 		            	bzW += vecLaser[ilaser]->getAmplitude1(yd, time_dual, j, 0)
 							-Icpx*vecLaser[ilaser]->getAmplitude0(yd, time_dual, j, 0);
-						MESSAGE("bzW");
-						MESSAGE(bzW);
+						//MESSAGE("bzW");
+						//MESSAGE(bzW);
 		        	}
 				}
 		        //x=Xmin
@@ -275,8 +275,8 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		        	for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
 		            	byE += vecLaser[ilaser]->getAmplitude0(yp, time_dual, j, 0)
 							+Icpx*vecLaser[ilaser]->getAmplitude1(yp, time_dual, j, 0);
-						MESSAGE("byE");
-						MESSAGE(byE);
+						//MESSAGE("byE");
+						//MESSAGE(byE);
 		        	}
 				}
 				unsigned int i= nl_d-1;
@@ -302,8 +302,8 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		        	for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
 		            	bzE += vecLaser[ilaser]->getAmplitude1(yd, time_dual, j, 0)
 							-Icpx*vecLaser[ilaser]->getAmplitude0(yd, time_dual, j, 0);
-						MESSAGE("bzE");
-						MESSAGE(bzE);		        	
+						//MESSAGE("bzE");
+						//MESSAGE(bzE);		        	
 					}
 				}
 		        
