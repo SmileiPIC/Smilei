@@ -1,0 +1,8 @@
+     Particles	 : Min time =  1.519e-03	 - 	Avg time =  1.519e-03	 - 	Max time =  1.519e-03	 - 	SD time =  0.000e+00
+       Maxwell	 : Min time =  1.575e-02	 - 	Avg time =  1.575e-02	 - 	Max time =  1.575e-02	 - 	SD time =  0.000e+00
+   Diagnostics	 : Min time =  1.788e-05	 - 	Avg time =  1.788e-05	 - 	Max time =  1.788e-05	 - 	SD time =  0.000e+00
+    Collisions	 : Min time =  6.914e-06	 - 	Avg time =  6.914e-06	 - 	Max time =  6.914e-06	 - 	SD time =  0.000e+00
+    Mov window	 : Min time =  5.960e-06	 - 	Avg time =  5.960e-06	 - 	Max time =  5.960e-06	 - 	SD time =  0.000e+00
+Sync Particles	 : Min time =  2.241e-05	 - 	Avg time =  2.241e-05	 - 	Max time =  2.241e-05	 - 	SD time =  0.000e+00
+   Sync Fields	 : Min time =  1.259e-04	 - 	Avg time =  1.259e-04	 - 	Max time =  1.259e-04	 - 	SD time =  0.000e+00
+Sync Densities	 : Min time =  2.470e-04	 - 	Avg time =  2.470e-04	 - 	Max time =  2.470e-04	 - 	SD time =  0.000e+00
