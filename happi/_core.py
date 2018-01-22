@@ -698,6 +698,7 @@ class SmileiSimulation(object):
 
 			if self._verbose: print("Scanning for RadiationSpectrum diagnostics")
 			self.RadiationSpectrum = RadiationSpectrumFactory(self)
+
 			if self._verbose: print("Scanning for Performances diagnostics")
 			self.Performances = PerformancesFactory(self)
 			self.Screen = ScreenFactory(self)

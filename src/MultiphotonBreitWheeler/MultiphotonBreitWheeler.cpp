@@ -248,9 +248,11 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
                     for ( int i = 0 ; i<nDim_ ; i++ )
                         particles.position_old(i,ipart) = position[i][ipart];
 #endif
+
+                    /* Incompatible with the current configuration
                     for ( int i = 0 ; i<nDim_ ; i++ )
                         position[i][ipart]     += event_time*momentum[i][ipart]/(*gamma)[ipart];
-
+                    */
 
                     // Generation of the pairs
                    MultiphotonBreitWheeler::pair_emission(ipart,
@@ -298,7 +300,7 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
     double * chi = new double[2];  // temporary quantum parameters
     double   inv_chiph_gammaph;    // (gamma_ph - 2) / chi
     double   p;
-    double   inv_gamma;
+    //double   inv_gamma;
 
     inv_chiph_gammaph = (gammaph-2.)/particles.chi(ipart);
 
@@ -322,7 +324,7 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
         // Final size
         nparticles = new_pair[k].size();
 
-        // For all new electrons...
+        // For all new particles, we update the momentum
         for (int idNew=nparticles-mBW_pair_creation_sampling[k]; idNew<nparticles; idNew++)
         {
 
@@ -334,12 +336,17 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
             }
 
             // gamma
-            inv_gamma = 1./sqrt(1.+p*p);
+            // Only useful for position update
+            // inv_gamma = 1./sqrt(1.+p*p);
 
             // Positions
-            for (i=0; i<nDim_; i++) {
+            // Incompatible with the current configuration
+            /*for (i=0; i<nDim_; i++) {
                 new_pair[k].position(i,idNew)=particles.position(i,ipart)
                + new_pair[k].momentum(i,idNew)*remaining_dt*inv_gamma;
+            }*/
+            for (i=0; i<nDim_; i++) {
+                new_pair[k].position(i,idNew)=particles.position(i,ipart);
             }
 
             // Old positions
