@@ -204,6 +204,9 @@ public :
     std::vector<Field*> listBy_;
     std::vector<Field*> listBz_;
 
+    std::vector<Field*> listA_;
+    std::vector<Field*> listA0_;
+
     std::vector<std::vector< Field *>> listJl_;
     std::vector<std::vector< Field *>> listJr_;
     std::vector<std::vector< Field *>> listJt_;

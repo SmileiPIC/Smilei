@@ -1018,6 +1018,11 @@ void VectorPatch::update_field_list()
     listBx_.resize( size() ) ;
     listBy_.resize( size() ) ;
     listBz_.resize( size() ) ;
+    
+    if (patches_[0]->EMfields->envelope != NULL){
+      listA_.resize ( size() ) ;
+      listA0_.resize( size() ) ;
+                                                      }
 
     for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
         listJx_[ipatch] = patches_[ipatch]->EMfields->Jx_ ;
@@ -1030,6 +1035,10 @@ void VectorPatch::update_field_list()
         listBx_[ipatch] = patches_[ipatch]->EMfields->Bx_ ;
         listBy_[ipatch] = patches_[ipatch]->EMfields->By_ ;
         listBz_[ipatch] = patches_[ipatch]->EMfields->Bz_ ;
+        if (patches_[ipatch]->EMfields->envelope != NULL){
+          listA_[ipatch]  = patches_[ipatch]->EMfields->envelope->A_ ;
+          listA0_[ipatch] = patches_[ipatch]->EMfields->envelope->A0_ ;
+                                                        }
     }
 
 
