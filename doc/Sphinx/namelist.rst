@@ -1671,37 +1671,56 @@ This is done by including a block ``DiagFields``::
   :default: ``[]`` *(all fields are written)*
 
   List of the field names that are saved. By default, they all are.
-
-
-The full list of fields that are saved by this diagnostic:
-
-
-.. rst-class:: nowrap
-
-+----------------+-------------------------------------------------------+
-| | Bx           | |                                                     |
-| | By           | | Components of the magnetic field                    |
-| | Bz           | |                                                     |
-+----------------+-------------------------------------------------------+
-| | Bx_m         | |                                                     |
-| | By_m         | | Components of the magnetic field (time-centered)    |
-| | Bz_m         | |                                                     |
-+----------------+-------------------------------------------------------+
-| | Ex           | |                                                     |
-| | Ey           | | Components of the electric field                    |
-| | Ez           | |                                                     |
-+----------------+-------------------------------------------------------+
-| | Jx           | |                                                     |
-| | Jy           | | Components of the total current                     |
-| | Jz           | |                                                     |
-+----------------+-------------------------------------------------------+
-| | Jx_abc       | |                                                     |
-| | Jy_abc       | | Components of the current due to species "abc"      |
-| | Jz_abc       | |                                                     |
-+----------------+-------------------------------------------------------+
-| | Rho          | |  Total density                                      |
-| | Rho_abc      | |  Density of species "abc"                           |
-+----------------+-------------------------------------------------------+
+  
+  The full list of fields that are saved by this diagnostic:
+  
+  .. rst-class:: nowrap
+  
+  +----------------+-------------------------------------------------------+
+  | | Bx           | |                                                     |
+  | | By           | | Components of the magnetic field                    |
+  | | Bz           | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Bx_m         | |                                                     |
+  | | By_m         | | Components of the magnetic field (time-centered)    |
+  | | Bz_m         | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Ex           | |                                                     |
+  | | Ey           | | Components of the electric field                    |
+  | | Ez           | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Jx           | |                                                     |
+  | | Jy           | | Components of the total current                     |
+  | | Jz           | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Jx_abc       | |                                                     |
+  | | Jy_abc       | | Components of the current due to species "abc"      |
+  | | Jz_abc       | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Rho          | |  Total density                                      |
+  | | Rho_abc      | |  Density of species "abc"                           |
+  +----------------+-------------------------------------------------------+
+  
+  In the case of spectral cylindrical geometry (``3drz``), the ``x``, ``y`` and ``z``
+  indices are replaced by ``x``, ``r`` and ``t`` (theta). In addition,
+  the angular Fourier modes are denoted by the suffix ``_mode_i`` where ``i``
+  is the mode number. In summary, the list of fields reads as follows.
+  
+  .. rst-class:: nowrap
+  
+  +------------------------------+-----------------------------------------+
+  | | Bx_mode_0, Bx_mode_1, etc. | |                                       |
+  | | Br_mode_0, Br_mode_1, etc. | | Components of the magnetic field      |
+  | | Bt_mode_0, Bt_mode_1, etc. | |                                       |
+  +------------------------------+-----------------------------------------+
+  | | Ex_mode_0, Ex_mode_1, etc. | |                                       |
+  | | Er_mode_0, Er_mode_1, etc. | | Components of the electric field      |
+  | | Et_mode_0, Et_mode_1, etc. | |                                       |
+  +------------------------------+-----------------------------------------+
+  |  The same notation works for Jx, Jr, Jt, and Rho                       |
+  +------------------------------+-----------------------------------------+
+  
+  
 
 
 ----
