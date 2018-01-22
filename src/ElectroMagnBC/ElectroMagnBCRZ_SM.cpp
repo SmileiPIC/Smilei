@@ -206,7 +206,7 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 
 		int     j_glob = (static_cast<ElectroMagn3DRZ*>(EMfields))->j_glob_;	 
 		if (min_max == 0 && patch->isXmin() ) {
-			MESSAGE("Xmin");		    
+			//MESSAGE("Xmin");		    
 		    // for Br^(d,p)
 		    vector<double> yp(1);
 		    yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dr;
@@ -260,7 +260,7 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		    }//j  ---end compute Bt
 		}
 		else if (min_max == 1 && patch->isXmax() ) {
-			MESSAGE("Xmax");
+			//MESSAGE("Xmax");
 		    // for Br^(d,p)
 		    vector<double> yp(1);
 		    yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dr;

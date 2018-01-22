@@ -57,8 +57,8 @@ class Field(Diagnostic):
 			for f in ["Ex","Er","Et","Bx","Br","Bt","Jx","Jr","Jt","Rho"]:
 				imode = 0
 				while f+"_mode_"+str(imode) in all_fields:
-					self._fields[f] = imode
 					imode += 1
+					self._fields[f] = imode
 		
 		# If no field selected, print available fields and leave
 		if field is None:
@@ -137,18 +137,21 @@ class Field(Diagnostic):
 		
 		# Get the shape of fields
 		fields = [f for f in self._h5items[0].values() if f]
+		self._raw_shape = fields[0].shape
 		self._initialShape = fields[0].shape
 		for fd in fields:
 			self._initialShape = self._np.min((self._initialShape, fd.shape), axis=0)
-		axis_start = [0.]*3
-		axis_stop  = (self._initialShape-0.5)*self._cell_length
-		axis_step  = self._cell_length
+		self._offset    = fields[0].attrs['gridGlobalOffset']
+		self._spacing   = fields[0].attrs['gridSpacing']
+		axis_start = self._offset
+		axis_stop  = self._offset + (self._initialShape-0.5)*self._spacing
+		axis_step  = self._spacing
 		if self.cylindrical:
 			if self._mode_theta:
 				self._initialShape[1] /= 2
-				axis_stop = (self._initialShape-0.5)*self._cell_length
+				axis_stop = self._offset + (self._initialShape-0.5)*self._spacing
 			else:
-				self._initialShape = [int((s[1]-s[0])/s[2])+1 for s in self._build3d]
+				self._initialShape = [int(self._np.ceil( (s[1]-s[0])/float(s[2]) )) for s in self._build3d]
 				axis_start = self._build3d[:,0]
 				axis_stop  = self._build3d[:,1]
 				axis_step  = self._build3d[:,2]
@@ -177,8 +180,8 @@ class Field(Diagnostic):
 		self._naxes = len(self._initialShape)
 		self._subsetinfo = {}
 		self._finalShape = self._np.copy(self._initialShape)
-		self._averages = [False]*self._ndim
-		self._selection = [self._np.s_[:]]*self._ndim
+		self._averages = [False]*self._naxes
+		self._selection = [self._np.s_[:]]*self._naxes
 		axis_name = "xr" if self.cylindrical and self._mode_theta else "xyz"
 		for iaxis in range(self._naxes):
 			centers = self._np.arange(axis_start[iaxis], axis_stop[iaxis], axis_step[iaxis])
@@ -238,6 +241,30 @@ class Field(Diagnostic):
 				self._complex_selection_imag[1] = self._selection[1]*2 + 1
 			self._complex_selection_real = tuple(self._complex_selection_real)
 			self._complex_selection_imag = tuple(self._complex_selection_imag)
+			
+			# In the case of "build3d", prepare some data for the 3D construction
+			if not self._mode_theta:
+				# Calculate the raw data positions
+				self._raw_positions = (
+					self._np.arange(self._offset[0], self._offset[0] + (self._raw_shape[0]  -0.5)*self._spacing[0], self._spacing[0] ),
+					self._np.arange(self._offset[1], self._offset[1] + (self._raw_shape[1]/2-0.5)*self._spacing[1], self._spacing[1] ),
+				)
+				# Calculate the positions of points in the final box
+				x = self._np.arange(*self._build3d[0])
+				y = self._np.arange(*self._build3d[1])
+				z = self._np.arange(*self._build3d[2])
+				if len(x)==0 or len(y)==0 or len(z)==0:
+					self._error = "Error: The array shape to be constructed seems to be empty"
+					return
+				y2, z2 = self._np.meshgrid(y,z)
+				r2 = self._np.sqrt(y2**2 + z2**2)
+				self._theta = self._np.arctan2(z2, y2)
+				del y2, z2
+				r3 = self._np.tile(r2, (len(x), 1, 1))
+				self._theta = self._np.tile(self._theta, (len(x), 1, 1))[self._selection]
+				x3 = self._np.rollaxis(self._np.tile(x,(len(y),len(z),1)),2)
+				self._xr = self._np.stack((x3, r3), axis=-1)
+				del x3, r3, r2
 		
 		# Build units
 		units = {}
@@ -331,7 +358,6 @@ class Field(Diagnostic):
 		index = self._data[t]
 		C = {}
 		h5item = self._h5items[index]
-		self._finalShape
 		for field in self._fieldname: # for each field in operation
 			nmode = self._fields[field]
 			F = self._np.zeros(self._finalShape)
@@ -365,46 +391,36 @@ class Field(Diagnostic):
 		# log scale if requested
 		if self._data_log: A = self._np.log10(A)
 		return A
-		
+	
 	# Method to obtain the data only
 	# Specific to cylindrical geometry, to reconstruct a 3d box
 	def _build3d_getDataAtTime(self, t):
+		from scipy.interpolate import RegularGridInterpolator
 		if not self._validate(): return
 		# Verify that the timestep is valid
 		if t not in self._timesteps:
 			print("Timestep "+str(t)+" not found in this diagnostic")
 			return []
-		# Calculate the positions of points in the box
-		x = self._np.arange(*self._build3d[0])
-		y = self._np.arange(*self._build3d[1])
-		z = self._np.arange(*self._build3d[2])
-		yy, zz = self._np.meshgrid(x,y)
-		r = self._np.sqrt(yy**2 + zz**2)
-		theta = self._np.atan2(zz, yy)
 		
 		# Get arrays from requested field
 		index = self._data[t]
 		C = {}
 		h5item = self._h5items[index]
-		self._finalShape
 		for field in self._fieldname: # for each field in operation
 			nmode = self._fields[field]
 			F = self._np.zeros(self._finalShape)
 			f = field + "_mode_"
 			for imode in range(nmode):
-				B_real = self._np.empty(self._finalShape)
-				B_imag = self._np.empty(self._finalShape)
+				B = self._np.empty(self._raw_shape)
 				try:
-					h5item[f+str(imode)].read_direct(B_real, source_sel=self._complex_selection_real)
-					h5item[f+str(imode)].read_direct(B_imag, source_sel=self._complex_selection_imag)
+					h5item[f+str(imode)].read_direct(B)
 				except:
-					B_real = self._np.squeeze(B_real)
-					B_imag = self._np.squeeze(B_imag)
-					h5item[f+str(imode)].read_direct(B_real, source_sel=self._complex_selection_real)
-					h5item[f+str(imode)].read_direct(B_imag, source_sel=self._complex_selection_imag)
-					B_real = self._np.reshape(B_real, self._finalShape)
-					B_imag = self._np.reshape(B_imag, self._finalShape)
-				F += (2.*self._np.cos(imode*self._theta)) * B_real + (2.*self._np.sin(imode*self._theta)) * B_imag
+					B = self._np.squeeze(B)
+					h5item[f+str(imode)].read_direct(B)
+					B = self._np.reshape(B, self._raw_shape)
+				B_real = RegularGridInterpolator(self._raw_positions, B[:,0::2], bounds_error=False, fill_value=0.)(self._xr)
+				B_imag = RegularGridInterpolator(self._raw_positions, B[:,1::2], bounds_error=False, fill_value=0.)(self._xr)
+				F += (2.*self._np.cos(imode*self._theta)) * B_real[self._selection] + (2.*self._np.sin(imode*self._theta)) * B_imag[self._selection]
 				
 			C.update({ field:F })
 		
