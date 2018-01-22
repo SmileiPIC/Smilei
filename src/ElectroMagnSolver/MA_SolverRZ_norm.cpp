@@ -43,7 +43,7 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
         for (unsigned int j=isYmin*3 ; j<nr_p ; j++) {
             (*ElRZ)(i,j) += -dt*(*JlRZ)(i,j)
                 +                 dt/((j_glob+j)*dr)* ((j+0.5)*(*BtRZ)(i,j+1) - (j-0.5)*(*BtRZ)(i,j) )
-                +                 Icpx*dt*imode/((j_glob+j)*dr)*(*BrRZ)(i,j);
+                +                 Icpx*dt*(double)imode/((j_glob+j)*dr)*(*BrRZ)(i,j);
 				//if ((*ElRZ)(i,j)!= 0)
 				//{MESSAGE("ElRZ");				
 				//MESSAGE(i);	
@@ -59,7 +59,7 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
         for (unsigned int j=0 ; j<nr_d ; j++) {
             (*ErRZ)(i,j) += -dt*(*JrRZ)(i,j)
                 -                  dt_ov_dl * ( (*BtRZ)(i+1,j) - (*BtRZ)(i,j) )
-                -                  Icpx*dt*imode/((j_glob+j+0.5)*dr)* (*BlRZ)(i,j);
+                -                  Icpx*dt*(double)imode/((j_glob+j+0.5)*dr)* (*BlRZ)(i,j);
 				//if ((*ErRZ)(i,j)!= 0){
 				//MESSAGE("ErRZ");				
 				//MESSAGE(i);

@@ -125,7 +125,7 @@ void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch*
 			for (unsigned int i=0 ; i<nl_d ; i++) {
 				//(*BtRZ)(i,0)+= -dt_ov_dl*((*ErRZ)(i+1,0)-(*ErRZ)(i,0)+(*ErRZ)(i+1,1)-(*ErRZ)(i,1))
 				//+				2*dt_ov_dr*(*ElRZ)(i+1,1) - (*BtRZ_old)(i,1)+ (*BtRZ)(i,1);
-				(*BtRZ)(i,j)= -2*Icpx*(*BrRZ)(i,j)-(*BtRZ)(i,j+1);
+				(*BtRZ)(i,j)= -2.*Icpx*(*BrRZ)(i,j)-(*BtRZ)(i,j+1);
 			}	
 			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*ElRZ)(i,j)= 0;

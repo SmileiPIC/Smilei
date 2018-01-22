@@ -255,7 +255,7 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		        (*BtRZ)(i,j) = -Alpha_SM_Xmin * (*ErRZ)(i,j+1)
 		        +               Beta_SM_Xmin  *( (*BtRZ)(i+1,j+1))
 		        +               Gamma_SM_Xmin * bzW
-				+               Epsilon_SM_Xmin *imode/((j_glob+j+0.5)*dr)*(*BlRZ)(i,j+1) ;
+				+               Epsilon_SM_Xmin *(double)imode/((j_glob+j+0.5)*dr)*(*BlRZ)(i,j+1) ;
 		        
 		    }//j  ---end compute Bt
 		}
@@ -310,7 +310,7 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		        (*BtRZ)(i,j) = Alpha_SM_Xmax * (*ErRZ)(i-1,j)
 		         +                    Beta_SM_Xmax  * (*BtRZ)(i-1,j)
 		         +                    Gamma_SM_Xmax * bzE
-				 +					  Epsilon_SM_Xmax * imode /((j_glob+j+0.5)*dr)* (*BlRZ)(i-1,j)	;
+				 +					  Epsilon_SM_Xmax * (double)imode /((j_glob+j+0.5)*dr)* (*BlRZ)(i-1,j)	;
 
 		        
 		    }//j  ---end compute Bt

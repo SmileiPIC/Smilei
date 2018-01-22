@@ -6,6 +6,8 @@ class Field(Diagnostic):
 	
 	def _init(self, diagNumber=None, field=None, timesteps=None, subset=None, average=None, data_log=False, **kwargs):
 		
+		self.cylindrical = self.namelist.Main.geometry == "3drz"
+		
 		# Search available diags
 		diags = self.getDiags()
 		
@@ -46,6 +48,17 @@ class Field(Diagnostic):
 		if "tmp" in self._h5items: del self._h5items["tmp"]
 		# Converted to ordered list
 		self._h5items = sorted(self._h5items.values(), key=lambda x:int(x.name[6:]))
+		
+		# Case of a cylindrical geometry
+		# Build the list of fields that can be reconstructed
+		if self.cylindrical:
+			all_fields = list(self._fields)
+			self._fields = {}
+			for f in ["Ex","Er","Et","Bx","Br","Bt","Jx","Jr","Jt","Rho"]:
+				imode = 0
+				while f+"_mode_"+str(imode) in all_fields:
+					self._fields[f] = imode
+					imode += 1
 		
 		# If no field selected, print available fields and leave
 		if field is None:
@@ -97,11 +110,48 @@ class Field(Diagnostic):
 		# Put data_log as object's variable
 		self._data_log = data_log
 		
+		# Case of a cylindrical geometry
+		# Check whether "theta" or "build3d" option is chosen
+		if self.cylindrical:
+			self._theta   = kwargs.pop("theta"  , None)
+			self._build3d = kwargs.pop("build3d", None)
+			if (self._theta is None) == (self._build3d is None):
+				self._error = "In cylindrical geometry, one (and only one) option `theta` or `build3d` is required"
+				return
+			self._mode_theta = self._theta != None
+			if self._mode_theta:
+				try:
+					self._theta = float(self._theta)
+				except:
+					self._error = "Option `theta` must be a number"
+					return
+				self._getDataAtTime = self._theta_getDataAtTime
+			else:
+				try:
+					self._build3d = self._np.array(self._build3d)
+					if self._build3d.shape != (3,3): raise
+				except:
+					self._error = "Option `build3d` must be a list of three lists"
+					return
+				self._getDataAtTime = self._build3d_getDataAtTime
+		
 		# Get the shape of fields
 		fields = [f for f in self._h5items[0].values() if f]
 		self._initialShape = fields[0].shape
 		for fd in fields:
 			self._initialShape = self._np.min((self._initialShape, fd.shape), axis=0)
+		axis_start = [0.]*3
+		axis_stop  = (self._initialShape-0.5)*self._cell_length
+		axis_step  = self._cell_length
+		if self.cylindrical:
+			if self._mode_theta:
+				self._initialShape[1] /= 2
+				axis_stop = (self._initialShape-0.5)*self._cell_length
+			else:
+				self._initialShape = [int((s[1]-s[0])/s[2])+1 for s in self._build3d]
+				axis_start = self._build3d[:,0]
+				axis_stop  = self._build3d[:,1]
+				axis_step  = self._build3d[:,2]
 		
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
@@ -124,14 +174,15 @@ class Field(Diagnostic):
 		
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
-		self._naxes = self._ndim
+		self._naxes = len(self._initialShape)
 		self._subsetinfo = {}
 		self._finalShape = self._np.copy(self._initialShape)
 		self._averages = [False]*self._ndim
 		self._selection = [self._np.s_[:]]*self._ndim
+		axis_name = "xr" if self.cylindrical and self._mode_theta else "xyz"
 		for iaxis in range(self._naxes):
-			centers = self._np.linspace(0., (self._initialShape[iaxis]-1)*self._cell_length[iaxis], self._initialShape[iaxis])
-			label = "xyz"[iaxis]
+			centers = self._np.arange(axis_start[iaxis], axis_stop[iaxis], axis_step[iaxis])
+			label = axis_name[iaxis]
 			axisunits = "L_r"
 			
 			# If averaging over this axis
@@ -166,6 +217,27 @@ class Field(Diagnostic):
 					self._log      .append(False)
 		
 		self._selection = tuple(self._selection)
+		
+		# Special selection in cylindrical geometry due to complex numbers
+		if self.cylindrical:
+			self._complex_selection_real = list(self._selection)
+			self._complex_selection_imag = list(self._selection)
+			if type(self._selection[1]) is slice:
+				self._complex_selection_real[1] = slice(
+					None if self._selection[1].start is None else self._selection[1].start*2,
+					None if self._selection[1].stop  is None else self._selection[1].stop *2,
+					(self._selection[1].step  or 1)*2
+				)
+				self._complex_selection_imag[1] = slice(
+					(self._selection[1].start or 0)*2 + 1,
+					None if self._selection[1].stop is None else self._selection[1].stop*2 + 1,
+					(self._selection[1].step  or 1)*2
+				)
+			else:
+				self._complex_selection_real[1] = self._selection[1]*2
+				self._complex_selection_imag[1] = self._selection[1]*2 + 1
+			self._complex_selection_real = tuple(self._complex_selection_real)
+			self._complex_selection_imag = tuple(self._complex_selection_imag)
 		
 		# Build units
 		units = {}
@@ -245,4 +317,106 @@ class Field(Diagnostic):
 		# log scale if requested
 		if self._data_log: A = self._np.log10(A)
 		return A
-
+	
+	# Method to obtain the data only
+	# Specific to cylindrical geometry, to reconstruct the plane at some theta
+	def _theta_getDataAtTime(self, t):
+		if not self._validate(): return
+		# Verify that the timestep is valid
+		if t not in self._timesteps:
+			print("Timestep "+str(t)+" not found in this diagnostic")
+			return []
+		# Get arrays from requested field
+		# get data
+		index = self._data[t]
+		C = {}
+		h5item = self._h5items[index]
+		self._finalShape
+		for field in self._fieldname: # for each field in operation
+			nmode = self._fields[field]
+			F = self._np.zeros(self._finalShape)
+			f = field + "_mode_"
+			for imode in range(nmode):
+				B_real = self._np.empty(self._finalShape)
+				B_imag = self._np.empty(self._finalShape)
+				try:
+					h5item[f+str(imode)].read_direct(B_real, source_sel=self._complex_selection_real)
+					h5item[f+str(imode)].read_direct(B_imag, source_sel=self._complex_selection_imag)
+				except:
+					B_real = self._np.squeeze(B_real)
+					B_imag = self._np.squeeze(B_imag)
+					h5item[f+str(imode)].read_direct(B_real, source_sel=self._complex_selection_real)
+					h5item[f+str(imode)].read_direct(B_imag, source_sel=self._complex_selection_imag)
+					B_real = self._np.reshape(B_real, self._finalShape)
+					B_imag = self._np.reshape(B_imag, self._finalShape)
+				F += (2.*self._np.cos(imode*self._theta)) * B_real + (2.*self._np.sin(imode*self._theta)) * B_imag
+				
+			C.update({ field:F })
+		
+		# Calculate the operation
+		A = eval(self._operation)
+		# Apply the averaging
+		A = self._np.reshape(A,self._finalShape)
+		for iaxis in range(self._naxes):
+			if self._averages[iaxis]:
+				A = self._np.mean(A, axis=iaxis, keepdims=True)
+		# remove averaged axes
+		A = self._np.squeeze(A)
+		# log scale if requested
+		if self._data_log: A = self._np.log10(A)
+		return A
+		
+	# Method to obtain the data only
+	# Specific to cylindrical geometry, to reconstruct a 3d box
+	def _build3d_getDataAtTime(self, t):
+		if not self._validate(): return
+		# Verify that the timestep is valid
+		if t not in self._timesteps:
+			print("Timestep "+str(t)+" not found in this diagnostic")
+			return []
+		# Calculate the positions of points in the box
+		x = self._np.arange(*self._build3d[0])
+		y = self._np.arange(*self._build3d[1])
+		z = self._np.arange(*self._build3d[2])
+		yy, zz = self._np.meshgrid(x,y)
+		r = self._np.sqrt(yy**2 + zz**2)
+		theta = self._np.atan2(zz, yy)
+		
+		# Get arrays from requested field
+		index = self._data[t]
+		C = {}
+		h5item = self._h5items[index]
+		self._finalShape
+		for field in self._fieldname: # for each field in operation
+			nmode = self._fields[field]
+			F = self._np.zeros(self._finalShape)
+			f = field + "_mode_"
+			for imode in range(nmode):
+				B_real = self._np.empty(self._finalShape)
+				B_imag = self._np.empty(self._finalShape)
+				try:
+					h5item[f+str(imode)].read_direct(B_real, source_sel=self._complex_selection_real)
+					h5item[f+str(imode)].read_direct(B_imag, source_sel=self._complex_selection_imag)
+				except:
+					B_real = self._np.squeeze(B_real)
+					B_imag = self._np.squeeze(B_imag)
+					h5item[f+str(imode)].read_direct(B_real, source_sel=self._complex_selection_real)
+					h5item[f+str(imode)].read_direct(B_imag, source_sel=self._complex_selection_imag)
+					B_real = self._np.reshape(B_real, self._finalShape)
+					B_imag = self._np.reshape(B_imag, self._finalShape)
+				F += (2.*self._np.cos(imode*self._theta)) * B_real + (2.*self._np.sin(imode*self._theta)) * B_imag
+				
+			C.update({ field:F })
+		
+		# Calculate the operation
+		A = eval(self._operation)
+		# Apply the averaging
+		A = self._np.reshape(A,self._finalShape)
+		for iaxis in range(self._naxes):
+			if self._averages[iaxis]:
+				A = self._np.mean(A, axis=iaxis, keepdims=True)
+		# remove averaged axes
+		A = self._np.squeeze(A)
+		# log scale if requested
+		if self._data_log: A = self._np.log10(A)
+		return A
