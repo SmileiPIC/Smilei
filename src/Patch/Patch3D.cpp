@@ -390,7 +390,7 @@ void Patch3D::finalizeExchange( Field* field )
 
 void Patch3D::finalizeExchangeComplex( Field* field )
 {
-    Field3D* f3D =  static_cast<cField3D*>(field);
+    cField3D* f3D =  static_cast<cField3D*>(field);
 
     int patch_ndims_(3);
     MPI_Status sstat    [patch_ndims_][2];
@@ -503,7 +503,7 @@ void Patch3D::finalizeExchangeComplex( Field* field, int iDim )
 {
     int patch_ndims_(3);
 
-    Field3D* f3D =  static_cast<cField3D*>(field);
+    cField3D* f3D =  static_cast<cField3D*>(field);
 
     MPI_Status sstat    [patch_ndims_][2];
     MPI_Status rstat    [patch_ndims_][2];
