@@ -1,12 +1,14 @@
-
+#include "PyTools.h"
 #include "DiagnosticScalar.h"
 #include "VectorPatch.h"
+#include "Tools.h"
 
 #include <iomanip>
 #include <algorithm>
 #include <limits>
 
 using namespace std;
+
 
 DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch = NULL ):
 latest_timestep(-1)
@@ -170,11 +172,11 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         if (! vecPatches(0)->vecSpecies[ispec]->particles->is_test) {
             species_name = vecPatches(0)->vecSpecies[ispec]->name;
-            necessary_species[ispec] = necessary_Ukin || allowedKey("Dens_"+species_name)
-                                                      || allowedKey("Ntot_"+species_name)
-                                                      || allowedKey("Zavg_"+species_name)
-                                                      || allowedKey("Ukin_"+species_name)
-                                                      || allowedKey("Urad_"+species_name)
+            necessary_species[ispec] = necessary_Ukin || allowedKey(Tools::merge("Dens_",species_name))
+                                                      || allowedKey(Tools::merge("Ntot_",species_name))
+                                                      || allowedKey(Tools::merge("Zavg_",species_name))
+                                                      || allowedKey(Tools::merge("Ukin_",species_name))
+                                                      || allowedKey(Tools::merge("Urad_",species_name))
                                                       || allowedKey("UmBWpairs");
         }
     }
@@ -182,13 +184,17 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     unsigned int nfield = 6;
     necessary_fieldUelm.resize(nfield, false);
     for( unsigned int ifield=0; ifield<nfield; ifield++ )
-        necessary_fieldUelm[ifield] = necessary_Uelm || allowedKey("Uelm_"+fields[ifield]);
+        necessary_fieldUelm[ifield] = necessary_Uelm || allowedKey(Tools::merge("Uelm_",fields[ifield]));
     // Fields min/max
     nfield = fields.size();
     necessary_fieldMinMax.resize(nfield, false);
     necessary_fieldMinMax_any = false;
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
-        necessary_fieldMinMax[ifield] = allowedKey( fields[ifield]+"Min" ) || allowedKey( fields[ifield]+"MinCell" ) || allowedKey( fields[ifield]+"Max" ) || allowedKey( fields[ifield]+"MaxCell" );
+        necessary_fieldMinMax[ifield] =
+            allowedKey( Tools::merge(fields[ifield], "Min"    ) )
+         || allowedKey( Tools::merge(fields[ifield], "MinCell") )
+         || allowedKey( Tools::merge(fields[ifield], "Max"    ) )
+         || allowedKey( Tools::merge(fields[ifield], "MaxCell") );
         if( necessary_fieldMinMax[ifield] ) necessary_fieldMinMax_any = true;
     }
     // Poynting flux
@@ -198,10 +204,10 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     unsigned int k = 0;
     for (unsigned int j=0; j<2;j++) {
         for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {
-            if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
-            else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
-            else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
-            //poy_name = string("Poy") + "XYZ"[i] + (j==0?"min":"max");
+            //if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
+            //else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
+            //else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
+            poy_name = Tools::merge("Poy", Tools::xyz[i], j==0?"min":"max");
             necessary_poy[k] = necessary_Uelm_BC || allowedKey(poy_name) || allowedKey(poy_name+"Inst");
             k++;
         }
@@ -239,11 +245,11 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         if (! vecPatches(0)->vecSpecies[ispec]->particles->is_test) {
             species_name = vecPatches(0)->vecSpecies[ispec]->name;
-            sDens[ispec] = newScalar_SUM( "Dens_"+species_name );
-            sNtot[ispec] = newScalar_SUM( "Ntot_"+species_name );
-            sZavg[ispec] = newScalar_SUM( "Zavg_"+species_name );
-            sUkin[ispec] = newScalar_SUM( "Ukin_"+species_name );
-            sUrad[ispec] = newScalar_SUM( "Urad_"+species_name );
+            sDens[ispec] = newScalar_SUM( Tools::merge("Dens_", species_name) );
+            sNtot[ispec] = newScalar_SUM( Tools::merge("Ntot_", species_name) );
+            sZavg[ispec] = newScalar_SUM( Tools::merge("Zavg_", species_name) );
+            sUkin[ispec] = newScalar_SUM( Tools::merge("Ukin_", species_name) );
+            sUrad[ispec] = newScalar_SUM( Tools::merge("Urad_", species_name) );
         }
     }
 
@@ -252,7 +258,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     nfield = (params.geometry == "3drz") ? nmodes * 6 : 6;
     fieldUelm.resize(nfield, NULL);
     for( unsigned int ifield=0; ifield<nfield; ifield++ )
-        fieldUelm[ifield] = newScalar_SUM( "Uelm_"+fields[ifield] );
+        fieldUelm[ifield] = newScalar_SUM( Tools::merge("Uelm_", fields[ifield]) );
 
     // Scalars related to fields min and max
     nfield = fields.size();
@@ -260,8 +266,8 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     fieldMax.resize(nfield, NULL);
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
         if( necessary_fieldMinMax[ifield] ) {
-            fieldMin[ifield] = newScalar_MINLOC( fields[ifield]+"Min" );
-            fieldMax[ifield] = newScalar_MAXLOC( fields[ifield]+"Max" );
+            fieldMin[ifield] = newScalar_MINLOC( Tools::merge(fields[ifield], "Min") );
+            fieldMax[ifield] = newScalar_MAXLOC( Tools::merge(fields[ifield], "Max") );
         }
     }
 
@@ -271,12 +277,12 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     k = 0;
     for (unsigned int j=0; j<2;j++) {
         for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {
-            if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
-            else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
-            else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
-            //poy_name = string("Poy") + "XYZ"[i] + (j==0?"min":"max");
-            poy    [k] = newScalar_SUM( poy_name        );
-            poyInst[k] = newScalar_SUM( poy_name+"Inst" );
+            //if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
+            //else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
+            //else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
+            poy_name = Tools::merge("Poy", Tools::xyz[i], j==0?"min":"max");
+            poy    [k] = newScalar_SUM(       poy_name          );
+            poyInst[k] = newScalar_SUM( Tools::merge(poy_name, "Inst") );
             k++;
         }
     }
@@ -709,64 +715,64 @@ uint64_t DiagnosticScalar::getDiskFootPrint(int istart, int istop, Patch* patch)
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         if (! patch->vecSpecies[ispec]->particles->is_test) {
             string species_name = patch->vecSpecies[ispec]->name;
-            scalars.push_back( "Dens_"+species_name );
-            scalars.push_back( "Ntot_"+species_name );
-            scalars.push_back( "Zavg_"+species_name );
-            scalars.push_back( "Ukin_"+species_name );
-            scalars.push_back( "Urad_"+species_name );
+            scalars.push_back( Tools::merge("Dens_", species_name) );
+            scalars.push_back( Tools::merge("Ntot_", species_name) );
+            scalars.push_back( Tools::merge("Zavg_", species_name) );
+            scalars.push_back( Tools::merge("Ukin_", species_name) );
+            scalars.push_back( Tools::merge("Urad_", species_name) );
         }
     }
     // 3 - Field scalars
     if (!dynamic_cast<ElectroMagn3DRZ*>(patch->EMfields)) {
-        scalars.push_back( "Uelm_"+patch->EMfields->Ex_ ->name );
-        scalars.push_back( "Uelm_"+patch->EMfields->Ey_ ->name );
-        scalars.push_back( "Uelm_"+patch->EMfields->Ez_ ->name );
-        scalars.push_back( "Uelm_"+patch->EMfields->Bx_m->name );
-        scalars.push_back( "Uelm_"+patch->EMfields->By_m->name );
-        scalars.push_back( "Uelm_"+patch->EMfields->Bz_m->name );
+        scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Ex_ ->name ) );
+        scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Ey_ ->name ) );
+        scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Ez_ ->name ) );
+        scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Bx_m->name ) );
+        scalars.push_back( Tools::merge("Uelm_", patch->EMfields->By_m->name ) );
+        scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Bz_m->name ) );
     }
     else {
         ElectroMagn3DRZ* emfields = static_cast<ElectroMagn3DRZ*>(patch->EMfields);
         unsigned int nmodes = emfields->El_.size();
         for (unsigned int imode=0 ; imode < nmodes ; imode++) {
-            scalars.push_back( "Uelm_"+emfields->El_[imode] ->name );
-            scalars.push_back( "Uelm_"+emfields->Er_[imode] ->name );
-            scalars.push_back( "Uelm_"+emfields->Et_[imode] ->name );
-            scalars.push_back( "Uelm_"+emfields->Bl_m[imode]->name );
-            scalars.push_back( "Uelm_"+emfields->Br_m[imode]->name );
-            scalars.push_back( "Uelm_"+emfields->Bt_m[imode]->name );
+            scalars.push_back( Tools::merge("Uelm_", emfields->El_[imode] ->name ) );
+            scalars.push_back( Tools::merge("Uelm_", emfields->Er_[imode] ->name ) );
+            scalars.push_back( Tools::merge("Uelm_", emfields->Et_[imode] ->name ) );
+            scalars.push_back( Tools::merge("Uelm_", emfields->Bl_m[imode]->name ) );
+            scalars.push_back( Tools::merge("Uelm_", emfields->Br_m[imode]->name ) );
+            scalars.push_back( Tools::merge("Uelm_", emfields->Bt_m[imode]->name ) );
         }
     }
-#ifdef _DISABLE
     // 4 - Scalars related to fields min and max
+    #ifdef _RZ__TODO
     for( unsigned int i=0; i<2; i++ ) {
         string minmax = (i==0) ? "Min" : "Max";
         for( unsigned int j=0; j<2; j++ ) {
             string cell = (j==0) ? "" : "Cell";
-            scalars.push_back( patch->EMfields->Ex_ ->name + minmax + cell);
-            scalars.push_back( patch->EMfields->Ey_ ->name + minmax + cell);
-            scalars.push_back( patch->EMfields->Ez_ ->name + minmax + cell);
-            scalars.push_back( patch->EMfields->Bx_m->name + minmax + cell);
-            scalars.push_back( patch->EMfields->By_m->name + minmax + cell);
-            scalars.push_back( patch->EMfields->Bz_m->name + minmax + cell);
-            scalars.push_back( patch->EMfields->Jx_ ->name + minmax + cell);
-            scalars.push_back( patch->EMfields->Jy_ ->name + minmax + cell);
-            scalars.push_back( patch->EMfields->Jz_ ->name + minmax + cell);
-            scalars.push_back( patch->EMfields->rho_->name + minmax + cell);
+            scalars.push_back( Tools::merge(patch->EMfields->Ex_ ->name, minmax, cell) );
+            scalars.push_back( Tools::merge(patch->EMfields->Ey_ ->name, minmax, cell) );
+            scalars.push_back( Tools::merge(patch->EMfields->Ez_ ->name, minmax, cell) );
+            scalars.push_back( Tools::merge(patch->EMfields->Bx_m->name, minmax, cell) );
+            scalars.push_back( Tools::merge(patch->EMfields->By_m->name, minmax, cell) );
+            scalars.push_back( Tools::merge(patch->EMfields->Bz_m->name, minmax, cell) );
+            scalars.push_back( Tools::merge(patch->EMfields->Jx_ ->name, minmax, cell) );
+            scalars.push_back( Tools::merge(patch->EMfields->Jy_ ->name, minmax, cell) );
+            scalars.push_back( Tools::merge(patch->EMfields->Jz_ ->name, minmax, cell) );
+            scalars.push_back( Tools::merge(patch->EMfields->rho_->name, minmax, cell) );
         }
     }
-#endif
+    #endif
     // 5 - Scalars related to the Poynting flux
     unsigned int k = 0;
     string poy_name;
     for (unsigned int j=0; j<2;j++) {
         for (unsigned int i=0; i<patch->EMfields->poynting[j].size();i++) {
-            if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
-            else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
-            else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
-            //poy_name = string("Poy") + "XYZ"[i] + (j==0?"min":"max");
-            scalars.push_back( poy_name        );
-            scalars.push_back( poy_name+"Inst" );
+            //if     (i==0) poy_name = (j==0?"PoyXmin":"PoyXmax");
+            //else if(i==1) poy_name = (j==0?"PoyYmin":"PoyYmax");
+            //else if(i==2) poy_name = (j==0?"PoyZmin":"PoyZmax");
+            poy_name = Tools::merge("Poy", Tools::xyz[i], j==0?"min":"max");
+            scalars.push_back(       poy_name          );
+            scalars.push_back( Tools::merge(poy_name, "Inst") );
             k++;
         }
     }

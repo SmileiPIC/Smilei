@@ -5,6 +5,7 @@
 #include <iostream>
 #include <iomanip>
 
+#include "DomainDecompositionFactory.h"
 #include "Hilbert_functions.h"
 #include "PatchesFactory.h"
 #include "Species.h"
@@ -16,22 +17,39 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // PatchRZ constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-PatchRZ::PatchRZ(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
-  : Patch( params, smpi, ipatch, n_moved)
+PatchRZ::PatchRZ(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved)
+  : Patch( params, smpi, domain_decomposition, ipatch, n_moved)
 {
-    initStep2(params);
-    initStep3(params, smpi, n_moved);
-    finishCreation(params, smpi);
+    if (dynamic_cast<HilbertDomainDecomposition*>( domain_decomposition )) {
+        initStep2(params, domain_decomposition);
+        initStep3(params, smpi, n_moved);
+        finishCreation(params, smpi, domain_decomposition);
+    }
+    else { // Cartesian
+        // See void Patch::set( VectorPatch& vecPatch )
+        
+        for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+            for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
+                ntype_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+                ntype_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+                ntype_[2][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+                ntypeSum_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+                ntypeSum_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            }
+        }
+
+    }
+
 } // End PatchRZ::PatchRZ
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 // PatchRZ cloning constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-PatchRZ::PatchRZ(PatchRZ* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
-  : Patch( patch, params, smpi, ipatch, n_moved, with_particles)
+PatchRZ::PatchRZ(PatchRZ* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
+  : Patch( patch, params, smpi, domain_decomposition, ipatch, n_moved, with_particles)
 {
-    initStep2(params);
+    initStep2(params, domain_decomposition);
     initStep3(params, smpi, n_moved);
     finishCloning(patch, params, smpi, with_particles);
 } // End PatchRZ::PatchRZ
@@ -41,38 +59,36 @@ PatchRZ::PatchRZ(PatchRZ* patch, Params& params, SmileiMPI* smpi, unsigned int i
 // PatchRZ second initializer :
 //   - Pcoordinates, neighbor_ resized in Patch constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-void PatchRZ::initStep2(Params& params)
+void PatchRZ::initStep2(Params& params, DomainDecomposition* domain_decomposition)
 {
-    int xcall, ycall;
-    
-    // define patch coordinates
     Pcoordinates.resize(2);
-    generalhilbertindexinv(params.mi[0], params.mi[1], &Pcoordinates[0], &Pcoordinates[1], hindex);
-#ifdef _DEBUG
-    cout << "\tPatch coords : ";
-    for (int iDim=0; iDim<2;iDim++)
-        cout << "\t" << Pcoordinates[iDim] << " ";
-    cout << endl;
-#endif
+    Pcoordinates = domain_decomposition->getDomainCoordinates( hindex );
     
+    std::vector<int> xcall( 2, 0 );
 
     // 1st direction
-    xcall = Pcoordinates[0]-1;
-    ycall = Pcoordinates[1];
-    if (params.EM_BCs[0][0]=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
-    neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-    xcall = Pcoordinates[0]+1;
-    if (params.EM_BCs[0][0]=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
-    neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
+    xcall[0] = Pcoordinates[0]-1;
+    xcall[1] = Pcoordinates[1];
+    if (params.EM_BCs[0][0]=="periodic" && xcall[0] < 0)
+        xcall[0] += domain_decomposition->ndomain_[0];
+    neighbor_[0][0] = domain_decomposition->getDomainId( xcall );
 
-    // 2st direction
-    xcall = Pcoordinates[0];
-    ycall = Pcoordinates[1]-1;
-    if (params.EM_BCs[1][0]=="periodic" && ycall < 0) ycall += (1<<params.mi[1]);
-    neighbor_[1][0] =  generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-    ycall = Pcoordinates[1]+1;
-    if (params.EM_BCs[1][0]=="periodic" && ycall >= (1<<params.mi[1])) ycall -= (1<<params.mi[1]);
-    neighbor_[1][1] =  generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
+    xcall[0] = Pcoordinates[0]+1;
+    if (params.EM_BCs[0][0]=="periodic" && xcall[0] >= domain_decomposition->ndomain_[0])
+        xcall[0] -= domain_decomposition->ndomain_[0];
+    neighbor_[0][1] = domain_decomposition->getDomainId( xcall );
+    
+    // 2nd direction
+    xcall[0] = Pcoordinates[0];
+    xcall[1] = Pcoordinates[1]-1;
+    if (params.EM_BCs[1][0]=="periodic" && xcall[1] < 0)
+        xcall[1] += domain_decomposition->ndomain_[1];
+    neighbor_[1][0] = domain_decomposition->getDomainId( xcall );
+
+    xcall[1] = Pcoordinates[1]+1;
+    if (params.EM_BCs[1][0]=="periodic" && xcall[1] >= domain_decomposition->ndomain_[1])
+        xcall[1] -=  domain_decomposition->ndomain_[1];
+    neighbor_[1][1] = domain_decomposition->getDomainId( xcall );
 
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
         for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
@@ -423,6 +439,56 @@ void PatchRZ::createType( Params& params )
 
     int nx0 = params.n_space[0] + 1 + 2*params.oversize[0];
     int ny0 = params.n_space[1] + 1 + 2*params.oversize[1];
+    
+    // MPI_Datatype ntype_[nDim][primDual][primDual]
+    int nx, ny;
+    int nx_sum, ny_sum;
+    
+    for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+        nx = nx0 + ix_isPrim;
+        for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
+            ny = ny0 + iy_isPrim;
+            
+            // Standard Type
+            ntype_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            MPI_Type_contiguous(2*params.oversize[0]*ny, 
+                                MPI_DOUBLE, &(ntype_[0][ix_isPrim][iy_isPrim]));
+            MPI_Type_commit( &(ntype_[0][ix_isPrim][iy_isPrim]) );
+
+            ntype_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            MPI_Type_vector(2*nx, params.oversize[1], ny, 
+                            MPI_DOUBLE, &(ntype_[1][ix_isPrim][iy_isPrim]));
+            MPI_Type_commit( &(ntype_[1][ix_isPrim][iy_isPrim]) );
+
+
+            nx_sum = 1 + 2*params.oversize[0] + ix_isPrim;
+            ny_sum = 1 + 2*params.oversize[1] + iy_isPrim;
+
+            ntypeSum_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            MPI_Type_contiguous(2*nx_sum*ny, 
+                                MPI_DOUBLE, &(ntypeSum_[0][ix_isPrim][iy_isPrim]));
+            MPI_Type_commit( &(ntypeSum_[0][ix_isPrim][iy_isPrim]) );
+            
+            ntypeSum_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            MPI_Type_vector(2*nx, ny_sum, ny, 
+                            MPI_DOUBLE, &(ntypeSum_[1][ix_isPrim][iy_isPrim]));
+            MPI_Type_commit( &(ntypeSum_[1][ix_isPrim][iy_isPrim]) );
+
+        }
+    }
+    
+} //END createType
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Create MPI_Datatypes used in initSumField and initExchange
+// ---------------------------------------------------------------------------------------------------------------------
+void PatchRZ::createType2( Params& params )
+{
+    if (ntype_[0][0][0] != MPI_DATATYPE_NULL)
+        return;
+
+    int nx0 = params.n_space[0]*params.global_factor[0] + 1 + 2*params.oversize[0];
+    int ny0 = params.n_space[1]*params.global_factor[1] + 1 + 2*params.oversize[1];
     
     // MPI_Datatype ntype_[nDim][primDual][primDual]
     int nx, ny;

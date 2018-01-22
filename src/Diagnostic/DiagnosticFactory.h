@@ -8,6 +8,7 @@
 #include "DiagnosticProbes.h"
 #include "DiagnosticScalar.h"
 #include "DiagnosticTrack.h"
+#include "DiagnosticPerformances.h"
 
 #include "DiagnosticFields1D.h"
 #include "DiagnosticFields2D.h"
@@ -63,7 +64,6 @@ public:
     
     
     
-    
     static std::vector<Diagnostic*> createLocalDiagnostics(Params& params, SmileiMPI* smpi, VectorPatch &vecPatches, OpenPMDparams& openPMD) {
         std::vector<Diagnostic*> vecDiagnostics;
         
@@ -77,6 +77,10 @@ public:
         
         for (unsigned int n_diag_track = 0; n_diag_track < PyTools::nComponents("DiagTrackParticles"); n_diag_track++) {
             vecDiagnostics.push_back( new DiagnosticTrack(params, smpi, vecPatches, n_diag_track, vecDiagnostics.size(), openPMD) );
+        }
+        
+        if( PyTools::nComponents("DiagPerformances") > 0 ) {
+            vecDiagnostics.push_back( new DiagnosticPerformances(params, smpi) );
         }
         
         return vecDiagnostics;

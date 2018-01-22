@@ -31,10 +31,77 @@ Interpolator1D4Order::Interpolator1D4Order(Params &params, Patch *patch) : Inter
 // ---------------------------------------------------------------------------------------------------------------------
 // 2nd Order Interpolation of the fields at a the particle position (3 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
-void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc)
+void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc)
 {
     
     // Variable declaration
+    double xjn, xjmxi2, xjmxi3, xjmxi4;
+    
+    // Static cast of the electromagnetic fields
+    Field1D* Ex1D     = static_cast<Field1D*>(EMfields->Ex_);
+    Field1D* Ey1D     = static_cast<Field1D*>(EMfields->Ey_);
+    Field1D* Ez1D     = static_cast<Field1D*>(EMfields->Ez_);
+    Field1D* Bx1D_m   = static_cast<Field1D*>(EMfields->Bx_m);
+    Field1D* By1D_m   = static_cast<Field1D*>(EMfields->By_m);
+    Field1D* Bz1D_m   = static_cast<Field1D*>(EMfields->Bz_m);
+    
+    
+    // Particle position (in units of the spatial-step)
+    xjn    = particles.position(0, ipart)*dx_inv_;
+    
+    // --------------------------------------------------------
+    // Interpolate the fields from the Dual grid : Ex, By, Bz
+    // --------------------------------------------------------
+    id_      = round(xjn+0.5);  // index of the central point
+    xjmxi  = xjn -(double)id_+0.5;  // normalized distance to the central node
+    xjmxi2 = xjmxi*xjmxi;     // square of the normalized distance to the central node
+    xjmxi3 = xjmxi2*xjmxi;    // cube of the normalized distance to the central node
+    xjmxi4 = xjmxi3*xjmxi;    // 4th power of the normalized distance to the central node
+    
+    // coefficients for the 4th order interpolation on 5 nodes
+    coeffd_[0] = dble_1_ov_384   - dble_1_ov_48  * xjmxi  + dble_1_ov_16 * xjmxi2 - dble_1_ov_12 * xjmxi3 + dble_1_ov_24 * xjmxi4;
+    coeffd_[1] = dble_19_ov_96   - dble_11_ov_24 * xjmxi  + dble_1_ov_4 * xjmxi2  + dble_1_ov_6  * xjmxi3 - dble_1_ov_6  * xjmxi4;
+    coeffd_[2] = dble_115_ov_192 - dble_5_ov_8   * xjmxi2 + dble_1_ov_4 * xjmxi4;
+    coeffd_[3] = dble_19_ov_96   + dble_11_ov_24 * xjmxi  + dble_1_ov_4 * xjmxi2  - dble_1_ov_6  * xjmxi3 - dble_1_ov_6  * xjmxi4;
+    coeffd_[4] = dble_1_ov_384   + dble_1_ov_48  * xjmxi  + dble_1_ov_16 * xjmxi2 + dble_1_ov_12 * xjmxi3 + dble_1_ov_24 * xjmxi4;
+    
+    id_ -= index_domain_begin;
+    
+    *(ELoc+0*nparts) = compute(coeffd_, Ex1D,   id_);  
+    *(BLoc+1*nparts) = compute(coeffd_, By1D_m, id_);  
+    *(BLoc+2*nparts) = compute(coeffd_, Bz1D_m, id_);  
+    
+    // --------------------------------------------------------
+    // Interpolate the fields from the Primal grid : Ey, Ez, Bx
+    // --------------------------------------------------------
+    ip_      = round(xjn);      // index of the central point
+    xjmxi  = xjn -(double)ip_;  // normalized distance to the central node
+    xjmxi2 = xjmxi*xjmxi;     // square of the normalized distance to the central node
+    xjmxi3 = xjmxi2*xjmxi;    // cube of the normalized distance to the central node
+    xjmxi4 = xjmxi3*xjmxi;    // 4th power of the normalized distance to the central node
+    
+    // coefficients for the 4th order interpolation on 5 nodes
+    coeffp_[0] = dble_1_ov_384   - dble_1_ov_48  * xjmxi  + dble_1_ov_16 * xjmxi2 - dble_1_ov_12 * xjmxi3 + dble_1_ov_24 * xjmxi4;
+    coeffp_[1] = dble_19_ov_96   - dble_11_ov_24 * xjmxi  + dble_1_ov_4 * xjmxi2  + dble_1_ov_6  * xjmxi3 - dble_1_ov_6  * xjmxi4;
+    coeffp_[2] = dble_115_ov_192 - dble_5_ov_8   * xjmxi2 + dble_1_ov_4 * xjmxi4;
+    coeffp_[3] = dble_19_ov_96   + dble_11_ov_24 * xjmxi  + dble_1_ov_4 * xjmxi2  - dble_1_ov_6  * xjmxi3 - dble_1_ov_6  * xjmxi4;
+    coeffp_[4] = dble_1_ov_384   + dble_1_ov_48  * xjmxi  + dble_1_ov_16 * xjmxi2 + dble_1_ov_12 * xjmxi3 + dble_1_ov_24 * xjmxi4;
+    
+    ip_ -= index_domain_begin;
+    
+    *(ELoc+1*nparts) = compute(coeffp_, Ey1D,   ip_);  
+    *(ELoc+2*nparts) = compute(coeffp_, Ez1D,   ip_);  
+    *(BLoc+0*nparts) = compute(coeffp_, Bx1D_m, ip_);
+
+
+
+}//END Interpolator1D4Order
+
+void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc){
+    
+    // Interpolate E, B
+    // Compute coefficient for ipart position    (*this)(EMfields, particles, ipart, ELoc, BLoc);
+   // Variable declaration
     double xjn, xjmxi2, xjmxi3, xjmxi4;
     
     // Static cast of the electromagnetic fields
@@ -92,16 +159,6 @@ void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     (*ELoc).y = compute(coeffp_, Ey1D,   ip_);  
     (*ELoc).z = compute(coeffp_, Ez1D,   ip_);  
     (*BLoc).x = compute(coeffp_, Bx1D_m, ip_);
-
-
-
-}//END Interpolator1D4Order
-
-void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc){
-    
-    // Interpolate E, B
-    // Compute coefficient for ipart position    (*this)(EMfields, particles, ipart, ELoc, BLoc);
-    (*this)(EMfields, particles, ipart, ELoc, BLoc);
     
     // Static cast of the electromagnetic fields
     Field1D* Jx1D     = static_cast<Field1D*>(EMfields->Jx_);
@@ -122,21 +179,44 @@ void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     (*JLoc).x = compute(coeffd_, Jx1D,  id_);  
     
 }
-void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
+void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread)
 {
-    std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
-    std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
+    std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
+    std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
     
     //Loop on bin particles
-    for (int ipart=istart ; ipart<iend; ipart++ ) {
+    int npart_tot = particles.size();
+    for (int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
-        (*this)(EMfields, particles, ipart, &(*Epart)[ipart], &(*Bpart)[ipart]);
+        (*this)(EMfields, particles, ipart, npart_tot, &(*Epart)[ipart], &(*Bpart)[ipart]);
         //Buffering of iol and delta
         (*iold)[ipart] = ip_;
         (*delta)[ipart] = xjmxi;
     }
 
 }
+
+
+// Interpolator specific to tracked particles. A selection of particles may be provided
+void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
+{
+    if( selection ) {
+        
+        int nsel_tot = selection->size();
+        for (int isel=0 ; isel<nsel_tot; isel++ ) {
+            (*this)(EMfields, particles, (*selection)[isel], offset, buffer+isel, buffer+isel+3*offset);
+        }
+        
+    } else {
+        
+        int npart_tot = particles.size();
+        for (int ipart=0 ; ipart<npart_tot; ipart++ ) {
+            (*this)(EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset);
+        }
+        
+    }
+}
+
 

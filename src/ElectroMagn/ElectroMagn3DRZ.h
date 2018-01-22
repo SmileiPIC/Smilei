@@ -13,7 +13,7 @@ class ElectroMagn3DRZ : public ElectroMagn
 {
 public:
     //! Constructor for ElectroMagn3DRZ
-    ElectroMagn3DRZ(Params &params, std::vector<Species*>& vecSpecies, Patch* patch);
+    ElectroMagn3DRZ(Params &params, DomainDecomposition* domain_decomposition, std::vector<Species*>& vecSpecies, Patch* patch);
     ElectroMagn3DRZ( ElectroMagn3DRZ* emFields, Params &params, Patch* patch );
 
     //! Destructor for ElectroMagn3DRZ
@@ -58,7 +58,7 @@ public:
     const unsigned int nmodes = 2;
 
     //! Method used to save the Magnetic fields (used to center them)
-    void saveMagneticFields();
+    void saveMagneticFields(bool);
 
     //! Method used to center the Magnetic fields (used to push the particles)
     void centerMagneticFields();

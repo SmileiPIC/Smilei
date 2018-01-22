@@ -470,7 +470,7 @@ public:
     // Set a python variable to itime so that it can be accessed at run-time
     inline static void setIteration( int itime ) {
         PyObject* Main = PyObject_GetAttrString(PyImport_AddModule("__main__"),"Main");
-        PyObject* iteration = PyInt_FromLong(itime);
+        PyObject* iteration = PyLong_FromLong(itime);
         PyObject_SetAttrString(Main, "iteration", iteration);
         Py_DECREF(iteration);
         Py_DECREF(Main);
@@ -487,7 +487,7 @@ public:
         try {
             code = PyObject_GetAttrString( obj, "__code__" );
             argcount = PyObject_GetAttrString( code, "co_argcount" );
-            n_arg = PyInt_AsLong( argcount );
+            n_arg = PyLong_AsLong( argcount );
             Py_DECREF(argcount);
             argcount = NULL;
             Py_DECREF(code);

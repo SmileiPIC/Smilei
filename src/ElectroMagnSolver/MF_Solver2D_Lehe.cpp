@@ -51,9 +51,11 @@ void MF_Solver2D_Lehe::operator() ( ElectroMagn* fields )
                           + beta_xy * ( (*Ez2D)(i,j+1)-(*Ez2D)(i-1,j+1) + (*Ez2D)(i,j-1)-(*Ez2D)(i-1,j-1) )
                           + delta_x * ( (*Ez2D)(i+1,j) - (*Ez2D)(i-2,j)));
         }
+    }
     
     
     // Magnetic field Bz^(d,d)
+    for (unsigned int i=2 ; i<nx_d-2 ; i++) {
         for (unsigned int j=1 ; j<ny_d-1 ; j++) {
             (*Bz2D)(i,j) += dt_ov_dy * (  alpha_y * ((*Ex2D)(i,j)-(*Ex2D)(i,j-1))
                           + beta_yx * ( (*Ex2D)(i+1,j)-(*Ex2D)(i+1,j-1) + (*Ex2D)(i-1,j)-(*Ex2D)(i-1,j-1))  )

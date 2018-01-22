@@ -9,6 +9,7 @@
 #include "Patch.h"
 #include "Field3D.h"
 #include "VectorPatch.h"
+#include "DomainDecomposition.h"
 #include "Hilbert_functions.h"
 
 using namespace std;
@@ -71,18 +72,19 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, VectorP
     rewrite_xmin=numeric_limits<int>::max();
     rewrite_ymin=numeric_limits<int>::max();
     rewrite_zmin=numeric_limits<int>::max();
-    unsigned int rewrite_xmax=0, rewrite_ymax=0, rewrite_zmax=0, x, y, z;
+    unsigned int rewrite_xmax=0, rewrite_ymax=0, rewrite_zmax=0;
     for( unsigned int h=0; h<rewrite_npatch; h++) {
-        generalhilbertindexinv(params.mi[0],  params.mi[1],  params.mi[2], &x, &y, &z, first_patch_of_this_proc+h);
-        if(x<rewrite_xmin) rewrite_xmin=x;
-        if(x>rewrite_xmax) rewrite_xmax=x;
-        if(y<rewrite_ymin) rewrite_ymin=y;
-        if(y>rewrite_ymax) rewrite_ymax=y;
-        if(z<rewrite_zmin) rewrite_zmin=z;
-        if(z>rewrite_zmax) rewrite_zmax=z;
-        rewrite_patches_x[h] = x;
-        rewrite_patches_y[h] = y;
-        rewrite_patches_z[h] = z;
+        std::vector<unsigned int> xcall( 3, 0 );
+        xcall = vecPatches.domain_decomposition_->getDomainCoordinates( first_patch_of_this_proc+h );
+        if(xcall[0]<rewrite_xmin) rewrite_xmin=xcall[0];
+        if(xcall[0]>rewrite_xmax) rewrite_xmax=xcall[0];
+        if(xcall[1]<rewrite_ymin) rewrite_ymin=xcall[1];
+        if(xcall[1]>rewrite_ymax) rewrite_ymax=xcall[1];
+        if(xcall[2]<rewrite_zmin) rewrite_zmin=xcall[2];
+        if(xcall[2]>rewrite_zmax) rewrite_zmax=xcall[2];
+        rewrite_patches_x[h] = xcall[0];
+        rewrite_patches_y[h] = xcall[1];
+        rewrite_patches_z[h] = xcall[2];
     }
     rewrite_npatchx = rewrite_xmax - rewrite_xmin + 1;
     rewrite_npatchy = rewrite_ymax - rewrite_ymin + 1;

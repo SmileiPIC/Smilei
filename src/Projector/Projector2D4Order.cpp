@@ -58,6 +58,7 @@ Projector2D4Order::~Projector2D4Order()
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
 {
+    int nparts = particles.size();
 
     // -------------------------------------
     // Variable declaration & initialization
@@ -91,7 +92,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     // --------------------------------------------------------
     
     // locate the particle on the primal grid at former time-step & calculate coeff. S0
-    delta = *deltaold;
+    delta = deltaold[0*nparts];
     delta2 = delta*delta;
     delta3 = delta2*delta;
     delta4 = delta3*delta;
@@ -102,7 +103,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     Sx0[4] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
     Sx0[5] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
     
-    delta = *(deltaold+1);
+    delta = deltaold[1*nparts];
     delta2 = delta*delta;
     delta3 = delta2*delta;
     delta4 = delta3*delta;
@@ -117,7 +118,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position(0, ipart) * dx_inv_;
     int ip = round(xpn);
-    int ipo = *iold;
+    int ipo = iold[0*nparts];
     int ip_m_ipo = ip-ipo-i_domain_begin;
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
@@ -132,7 +133,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     
     ypn = particles.position(1, ipart) * dy_inv_;
     int jp = round(ypn);
-    int jpo = *(iold+1);
+    int jpo = iold[1*nparts];
     int jp_m_jpo = jp-jpo-j_domain_begin;
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
@@ -204,6 +205,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
 {
+    int nparts = particles.size();
 
     // -------------------------------------
     // Variable declaration & initialization
@@ -237,7 +239,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     // --------------------------------------------------------
     
     // locate the particle on the primal grid at former time-step & calculate coeff. S0
-    delta = *deltaold;
+    delta = deltaold[0*nparts];
     delta2 = delta*delta;
     delta3 = delta2*delta;
     delta4 = delta3*delta;
@@ -248,7 +250,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     Sx0[4] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
     Sx0[5] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
     
-    delta = *(deltaold+1);
+    delta = deltaold[1*nparts];
     delta2 = delta*delta;
     delta3 = delta2*delta;
     delta4 = delta3*delta;
@@ -263,7 +265,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position(0, ipart) * dx_inv_;
     int ip = round(xpn);
-    int ipo = *iold;
+    int ipo = iold[0*nparts];
     int ip_m_ipo = ip-ipo-i_domain_begin;
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
@@ -278,7 +280,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     
     ypn = particles.position(1, ipart) * dy_inv_;
     int jp = round(ypn);
-    int jpo = *(iold+1);
+    int jpo = iold[1*nparts];
     int jp_m_jpo = jp-jpo-j_domain_begin;
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
@@ -431,7 +433,7 @@ void  Projector2D4Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, std::vector<unsigned int> &b_dim, int ispec)
+void Projector2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec)
 {
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
@@ -441,12 +443,21 @@ void Projector2D4Order::operator() (ElectroMagn* EMfields, Particles &particles,
     
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if (!diag_flag){ 
-        double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw*dim1);
-        double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1));
-        double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw*dim1);
-        for (int ipart=istart ; ipart<iend; ipart++ )
-            (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
-            
+        if (!is_spectral) {
+            double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw*dim1);
+            double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1));
+            double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw*dim1);
+            for (int ipart=istart ; ipart<iend; ipart++ )
+                (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart]);            
+        }
+        else {
+            double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw* dim1   );
+            double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1));
+            double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw* dim1   );
+            double* b_rho=  &(*EMfields->rho_)(ibin*clrw* dim1   );
+            for ( int ipart=istart ; ipart<iend; ipart++ )
+                (*this)(b_Jx , b_Jy , b_Jz , b_rho , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart]);
+        }
     // Otherwise, the projection may apply to the species-specific arrays
     } else {
         double* b_Jx  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(ibin*clrw* dim1   ) : &(*EMfields->Jx_ )(ibin*clrw* dim1   ) ;
@@ -454,6 +465,6 @@ void Projector2D4Order::operator() (ElectroMagn* EMfields, Particles &particles,
         double* b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(ibin*clrw* dim1   ) : &(*EMfields->Jz_ )(ibin*clrw* dim1   ) ;
         double* b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw* dim1   ) : &(*EMfields->rho_)(ibin*clrw* dim1   ) ;
         for (int ipart=istart ; ipart<iend; ipart++ )
-            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
+            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart]);
     }
 }

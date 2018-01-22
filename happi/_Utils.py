@@ -50,7 +50,7 @@ def openNamelist(namelist):
 	
 	Example:
 		namelist = happi.openNamelist("path/no/my/namelist.py")
-		print namelist.Main.timestep
+		print( namelist.Main.timestep)
 	"""
 	
 	from . import happi_directory
@@ -150,6 +150,7 @@ class Options(object):
 			self.colorbar["pad"] = 0.15
 		return kwargs
 
+PintWarningIssued = False
 
 class Units(object):
 	""" Units()
@@ -185,9 +186,11 @@ class Units(object):
 			from pint import UnitRegistry
 			self.UnitRegistry = UnitRegistry
 		except:
-			if self.verbose:
+			global PintWarningIssued
+			if self.verbose and not PintWarningIssued:
 				print("WARNING: you do not have the *pint* package, so you cannot modify units.")
 				print("       : The results will stay in code units.")
+				PintWarningIssued = True
 			return
 	
 	def _divide(self,units1, units2):
@@ -209,11 +212,12 @@ class Units(object):
 					try   : return self._divide(knownUnits,units)
 					except: pass
 			try:
+				if knownUnits=="1": knownUnits=""
 				val = self.ureg(knownUnits)
 				return 1., u"{0.units:P}".format(val)
 			except:
 				if self.verbose:
-					print("WARNING: units unknown")
+					print("WARNING: units unknown: "+str(knownUnits))
 				return 1., ""
 		return 1., ""
 	
@@ -475,7 +479,7 @@ def multiPlot(*Diags, **kwargs):
 	if option_xmax: xmax = max([xmax]+option_xmax)
 	if option_ymin: ymin = min([ymin]+option_ymin)
 	if option_ymax: ymax = max([ymax]+option_ymax)
-	print xmin, xmax
+	
 	# Static plot
 	if sameAxes and Diags[0].dim==0:
 		for Diag in Diags:

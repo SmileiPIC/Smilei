@@ -1,6 +1,8 @@
-#include "TimeSelection.h"
 #include "PyTools.h"
+#include "TimeSelection.h"
 #include <math.h>
+#include <sstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -99,7 +101,7 @@ TimeSelection::TimeSelection()
 {
     start   = std::numeric_limits<double>::max();
     end     = std::numeric_limits<double>::max();
-    period  = 1.;
+    period  = 0.;
     repeat  = 1;
     spacing = 1.;
     groupWidth   = 0.;
@@ -218,4 +220,47 @@ int TimeSelection::howManyTimesBefore(int timestep)
     return nt;
 }
 
-
+//! Obtain some information about the time selection
+std::string TimeSelection::info()
+{
+    ostringstream t("");
+    if( period == 0. ) {
+        t << "never";
+    } else {
+        if( round(period) == period ) {
+            t << "every " <<  (int) period << " iterations";
+        } else {
+            t << "every " << fixed << setprecision(1) << period << " iterations";
+        }
+        
+        if( repeat > 1 ) {
+            t << " (" << repeat << " repeats each";
+            if( spacing > 1. ) {
+                if( round(spacing) == spacing ) {
+                    t << ", spaced by " <<  (int) spacing;
+                } else {
+                    t << ", spaced by " << fixed << setprecision(1) << spacing;
+                }
+            }
+            t << ")";
+        }
+        
+        if( start > 0. ) {
+            if( round(start) == start ) {
+                t << " from " <<  (int) start;
+            } else {
+                t << " from " << fixed << setprecision(1) << start;
+            }
+        }
+        
+        if( end < std::numeric_limits<double>::max() ) {
+            if( round(end) == end ) {
+                t << " until " <<  (int) end;
+            } else {
+                t << " until " << fixed << setprecision(1) << end;
+            }
+        }
+    }
+    
+    return t.str();
+}

@@ -57,6 +57,9 @@ public:
     //! Tell whether this is an empty selection (no timesteps)
     inline bool isEmpty() { return period>0. ? false : true; };
     
+    //! Obtain some information about the time selection
+    std::string info();
+    
 private:
     //! Starting timestep
     double start;

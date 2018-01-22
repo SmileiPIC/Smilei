@@ -21,8 +21,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn3DRZ
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn3DRZ::ElectroMagn3DRZ(Params &params, vector<Species*>& vecSpecies, Patch* patch) : 
-  ElectroMagn(params, vecSpecies, patch),
+ElectroMagn3DRZ::ElectroMagn3DRZ(Params &params, DomainDecomposition* domain_decomposition, vector<Species*>& vecSpecies, Patch* patch) : 
+  ElectroMagn(params, domain_decomposition, vecSpecies, patch),
 isYmin(patch->isYmin()),
 isYmax(patch->isYmax())
 {    
@@ -473,8 +473,10 @@ void ElectroMagn3DRZ::centeringE( std::vector<double> E_Add )
 // ---------------------------------------------------------------------------------------------------------------------
 // Save the former Magnetic-Fields (used to center them)
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn3DRZ::saveMagneticFields()
+void ElectroMagn3DRZ::saveMagneticFields(bool is_spectral)
 {
+    if (is_spectral)
+        ERROR("Not implemented");
     for ( int imode=0 ; imode<nmodes ; imode++ ) {
         // Static cast of the fields
         cField2D* Bx3DRZ    = static_cast<cField2D*>(Bl_[imode]);

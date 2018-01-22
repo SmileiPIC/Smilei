@@ -14,6 +14,11 @@
 #include "MF_Solver2D_GrassiSpL.h"
 #include "MF_Solver2D_Cowan.h"
 #include "MF_Solver2D_Lehe.h"
+#include "MF_Solver3D_Lehe.h"
+
+#include "PXR_Solver2D_GPSTD.h"
+#include "PXR_Solver3D_FDTD.h"
+#include "PXR_Solver3D_GPSTD.h"
 
 #include "Params.h"
 
@@ -31,13 +36,28 @@ public:
         if ( params.geometry == "1Dcartesian" ) {
             solver = new MA_Solver1D_norm(params);
         } else if ( params.geometry == "2Dcartesian" ) {
-            if (params.Friedman_filter) {
-                solver = new MA_Solver2D_Friedman(params);
-            } else {
-                solver = new MA_Solver2D_norm(params);
+            if ( params.is_pxr == false ) {
+                if (params.is_spectral)
+                    WARNING( "PS solveur are not available without Picsar" );
+                if (params.Friedman_filter) {
+                    solver = new MA_Solver2D_Friedman(params);
+                } else {
+                    solver = new MA_Solver2D_norm(params);
+                }
             }
+            else if ( params.is_spectral == true )
+                solver = new PXR_Solver2D_GPSTD(params);
+            
         } else if ( params.geometry == "3Dcartesian" ) {
-            solver = new MA_Solver3D_norm(params);
+            if ( params.is_pxr == false ) {
+                if (params.is_spectral)
+                    WARNING( "PS solveur are not available without Picsar" );
+                solver = new MA_Solver3D_norm(params);
+            }
+            else if ( ( params.is_pxr == true ) && ( params.is_spectral == false ) )
+                solver = new PXR_Solver3D_FDTD(params);
+            else if ( ( params.is_pxr == true ) && ( params.is_spectral == true ) )
+                solver = new PXR_Solver3D_GPSTD(params);                
         } else if ( params.geometry == "3drz" ) {
             solver = new MA_SolverRZ_norm(params);
         }
@@ -61,22 +81,34 @@ public:
                 solver = new MF_Solver1D_Yee(params);
             }
         } else if ( params.geometry == "2Dcartesian" ) {
-            if (params.maxwell_sol == "Yee") {
-                solver = new MF_Solver2D_Yee(params);
-            } else if (params.maxwell_sol == "Grassi") {
-                solver = new MF_Solver2D_Grassi(params);
-            } else if (params.maxwell_sol == "GrassiSpL") {
-                solver = new MF_Solver2D_GrassiSpL(params);
-            } else if (params.maxwell_sol == "Cowan") {
-                solver = new MF_Solver2D_Cowan(params);
-            } else if(params.maxwell_sol == "Lehe" ){
-                solver = new MF_Solver2D_Lehe(params);
+            if ( params.is_pxr == false ) {
+
+                if (params.maxwell_sol == "Yee") {
+                    solver = new MF_Solver2D_Yee(params);
+                } else if (params.maxwell_sol == "Grassi") {
+                    solver = new MF_Solver2D_Grassi(params);
+                } else if (params.maxwell_sol == "GrassiSpL") {
+                    solver = new MF_Solver2D_GrassiSpL(params);
+                } else if (params.maxwell_sol == "Cowan") {
+                    solver = new MF_Solver2D_Cowan(params);
+                } else if(params.maxwell_sol == "Lehe" ){
+                    solver = new MF_Solver2D_Lehe(params);
+                }
             }
-            
+            else if ( params.is_spectral == true )
+                solver = new NullSolver(params);
+
         } else if ( params.geometry == "3Dcartesian" ) {
-            if (params.maxwell_sol == "Yee") {
-                solver = new MF_Solver3D_Yee(params);
+            if ( params.is_pxr == false ) {
+                if (params.maxwell_sol == "Yee") {
+                    solver = new MF_Solver3D_Yee(params);
+                }
+                else if(params.maxwell_sol == "Lehe" ){
+                    solver = new MF_Solver3D_Lehe(params);
+                }
             }
+            else
+                solver = new NullSolver(params);
         }else if ( params.geometry == "3drz" ) {
             if (params.maxwell_sol == "Yee") {
                 solver = new MF_SolverRZ_Yee(params);

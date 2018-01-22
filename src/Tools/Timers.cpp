@@ -19,7 +19,8 @@ Timers::Timers( SmileiMPI * smpi ) :
     loadBal   ("Load balancing" ), // Load balancing
     syncPart  ("Sync Particles"), // Call exchangeParticles (MPI & Patch sync)
     syncField ("Sync Fields"   ), // Call sumRhoJ(s), exchangeB (MPI & Patch sync)
-    syncDens  ("Sync Densities")  // If necessary the following timers can be reintroduced
+    syncDens  ("Sync Densities"),  // If necessary the following timers can be reintroduced
+    diagsNEW  ("DiagnosticsNEW" ) // Diags.runAllDiags + MPI & Patch sync
 {
     timers.resize(0);
     timers.push_back( &global     );
@@ -33,9 +34,18 @@ Timers::Timers( SmileiMPI * smpi ) :
     timers.push_back( &syncPart   );
     timers.push_back( &syncField  );
     timers.push_back( &syncDens   );
-    
+    timers.push_back( &diagsNEW   );
+   
     for( unsigned int i=0; i<timers.size(); i++)
         timers[i]->init(smpi);
+
+    if (smpi->getRank()==0) {
+        remove ("profil.txt");
+        ofstream fout;
+        fout.open ("profil.txt");
+        fout.close();
+    }
+    
 }
 
 Timers::~Timers()
@@ -75,8 +85,9 @@ std::vector<Timer*> Timers::consolidate(SmileiMPI * smpi)
     int sz = smpi->getSize(), rk = smpi->getRank();
     
     ofstream fout;
-    if (rk==0) fout.open ("profil.txt");
-    
+    if (rk==0) fout.open ("profil.txt", ofstream::out | ofstream::app );
+    fout << endl << endl << "--- Timestep = " << (timers[1]->register_timers.size()-1) << " x Main.print_every = " <<  " ---" << endl;
+
     // timers[0] is the global PIC loop timer, naturally synchronized
     for ( unsigned int itimer = 1 ; itimer < timers.size() ; itimer++ ) {
         int nrecords(0);
