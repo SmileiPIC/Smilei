@@ -117,6 +117,8 @@ public:
     std::vector< std::vector<std::string> > EM_BCs;
     //! Theta parameter for some kinds of ElectroMagnetic boundary conditions
     std::vector< std::vector<double> > EM_BCs_theta;
+    //! Phi parameter for some kinds of ElectroMagnetic boundary conditions
+    std::vector< std::vector<double> > EM_BCs_phi;
     //! Are open boundaries used ?
     bool open_boundaries;
     

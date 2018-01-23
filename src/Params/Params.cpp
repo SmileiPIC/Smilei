@@ -313,6 +313,20 @@ namelist("")
             ERROR("Too many EM_boundary_conditions_theta along dimension "<<"xyz"[iDim] );
     }
 
+    PyTools::extract("EM_boundary_conditions_phi", EM_BCs_phi, "Main");
+    //Complete with zeros if not defined
+    if( EM_BCs_phi.size() == 1 ) {
+        while( EM_BCs_phi.size() < nDim_field ) EM_BCs_phi.push_back(EM_BCs_phi[0]  );
+    } else if( EM_BCs_phi.size() != nDim_field ) {
+        ERROR("EM_boundary_conditions_phi must be the same size as the number of dimensions");
+    }
+    for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
+        if( EM_BCs_phi[iDim].size() == 1 ) // if just one phi is specified, then take the same phi for both sides of the dimension.
+            EM_BCs_phi[iDim].push_back( EM_BCs_phi[iDim][0] );
+        else if ( EM_BCs[iDim].size() > 2 )
+            ERROR("Too many EM_boundary_conditions_phi along dimension "<<"xyz"[iDim] );
+    }
+
     // -----------------------------------
     // MAXWELL SOLVERS & FILTERING OPTIONS
     // -----------------------------------
