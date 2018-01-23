@@ -85,11 +85,12 @@ class RadiationTools {
             if (nu<0.1)      return 2.149528241483088*pow(nu,-0.6666666666666667) - 1.813799364234217;
             else if (nu>10)  return 1.253314137315500*pow(nu,-0.5)*exp(-nu);
             else {
-                return exp(-1.042081355552157e-02 * pow(log(nu),5)
-                           -5.349995695960174e-02 * pow(log(nu),4)
-                           -1.570476212230771e-01 * pow(log(nu),3)
-                           -4.575331390887448e-01 * pow(log(nu),2)
-                           -1.687909081004528e+00 * pow(log(nu),1)
+                double lognu = log(nu);
+                return exp(-1.042081355552157e-02 * pow(lognu,5)
+                           -5.349995695960174e-02 * pow(lognu,4)
+                           -1.570476212230771e-01 * pow(lognu,3)
+                           -4.575331390887448e-01 * pow(lognu,2)
+                           -1.687909081004528e+00 * pow(lognu,1)
                            -4.341018460806052e-01) ;
             }
         }
@@ -103,11 +104,12 @@ class RadiationTools {
             if (nu<0.05)     return 1.074764120720013*pow(nu,-0.6666666666666667);
             else if (nu>10)  return 1.253314137315500*pow(nu,-0.5)*exp(-nu);
             else {
-                return exp(-7.694562217592761e-03 * pow(log(nu),5)
-                           -5.412029310872778e-02 * pow(log(nu),4)
-                           -1.782660550734939e-01 * pow(log(nu),3)
-                           -4.589601096726573e-01 * pow(log(nu),2)
-                           -1.539212709860801e+00 * pow(log(nu),1)
+                double lognu = log(nu);
+                return exp(-7.694562217592761e-03 * pow(lognu,5)
+                           -5.412029310872778e-02 * pow(lognu,4)
+                           -1.782660550734939e-01 * pow(lognu,3)
+                           -4.589601096726573e-01 * pow(lognu,2)
+                           -1.539212709860801e+00 * pow(lognu,1)
                            -7.121012104149862e-01) ;
             }
         }
