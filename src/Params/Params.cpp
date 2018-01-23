@@ -701,6 +701,7 @@ void Params::print_init()
         MESSAGE(1,"            - Electromagnetic boundary conditions: " << "(" << EM_BCs[i][0] << ", " << EM_BCs[i][1] << ")");
         if (open_boundaries)
             MESSAGE(1,"            - Electromagnetic boundary conditions theta: " << "(" << EM_BCs_theta[i][0] << ", " << EM_BCs_theta[i][1] << ")");
+            MESSAGE(1,"            - Electromagnetic boundary conditions phi: " << "(" << EM_BCs_phi[i][0] << ", " << EM_BCs_phi[i][1] << ")");
     }
 
     if( currentFilter_passes > 0 )
