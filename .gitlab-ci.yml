@@ -6,7 +6,7 @@ compile:
   stage: compile
   only:
     - develop
-    - couplage_picsar_smilei
+    - addingXmax
     - Niel_performance
 
   script:
@@ -32,7 +32,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - couplage_picsar_smilei
+    - addingXmax
     - Niel_performance
 
   script:
@@ -45,7 +45,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - couplage_picsar_smilei
+    - addingXmax
     - Niel_performance
 
   script:
@@ -58,7 +58,7 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    - couplage_picsar_smilei
+    - addingXmax
     - Niel_performance
 
   script:
@@ -71,7 +71,7 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - couplage_picsar_smilei
+    - addingXmax
     - Niel_performance
     
   script:
