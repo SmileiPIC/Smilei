@@ -89,19 +89,20 @@ class RadiationTools {
             else if (nu>10)  return 1.253314137315500*pow(nu,-0.5)*exp(-nu);
             else {
                 double lognu = log(nu);
-                double f = -4.341018460806052e-01 - 1.687909081004528e+00 * lognu;
-                lognu *= lognu;
-                f -= 4.575331390887448e-01 * lognu;
-
-                lognu *= lognu;
-                f -= 1.570476212230771e-01 * lognu;
-
-                lognu *= lognu;
-                f -= 5.349995695960174e-02 * lognu;
-
-                lognu *= lognu;
-                f -= 1.042081355552157e-02 * lognu;
-
+                double lognu_power_n = lognu;
+                double f = -4.341018460806052e-01 - 1.687909081004528e+00 * lognu_power_n;
+                lognu_power_n *= lognu;
+                f -= 4.575331390887448e-01 * lognu_power_n; // n=2
+                
+                lognu_power_n *= lognu;
+                f -= 1.570476212230771e-01 * lognu_power_n; // n=3
+                
+                lognu_power_n *= lognu;
+                f -= 5.349995695960174e-02 * lognu_power_n; // n=4
+                
+                lognu_power_n *= lognu;
+                f -= 1.042081355552157e-02 * lognu_power_n; // n=5
+                
                 return exp(f);
 
                 /*return exp(-1.042081355552157e-02 * pow(lognu,5)
@@ -123,19 +124,20 @@ class RadiationTools {
             else if (nu>10)  return 1.253314137315500*pow(nu,-0.5)*exp(-nu);
             else {
                 double lognu = log(nu);
-                double f = 7.121012104149862e-01 - 1.539212709860801e+00 * lognu;
-                lognu *= lognu;
-                f -= 4.589601096726573e-01 * lognu;
-
-                lognu *= lognu;
-                f -= 1.782660550734939e-01 * lognu;
-
-                lognu *= lognu;
-                f -= 5.412029310872778e-02 * lognu;
-
-                lognu *= lognu;
-                f -= 7.694562217592761e-03 * lognu;
-
+                double lognu_power_n = lognu;
+                double f = -7.121012104149862e-01 - 1.539212709860801e+00 * lognu_power_n;
+                lognu_power_n *= lognu;
+                f -= 4.589601096726573e-01 * lognu_power_n; //n=2
+                
+                lognu_power_n *= lognu;
+                f -= 1.782660550734939e-01 * lognu_power_n; //n=3
+                
+                lognu_power_n *= lognu;
+                f -= 5.412029310872778e-02 * lognu_power_n; //n=4
+                
+                lognu_power_n *= lognu;
+                f -= 7.694562217592761e-03 * lognu_power_n; //n=5
+                
                 return exp(f);
 
                 /*return exp(-7.694562217592761e-03 * pow(lognu,5)
