@@ -580,40 +580,28 @@ void Params::compute()
 
     // grid/cell-related parameters
     // ----------------------------
-    n_space.resize(3);
-    cell_length.resize(3);
-    cell_volume=1.0;
-    if (nDim_field==res_space.size() && nDim_field==grid_length.size()) {
-
-        // compute number of cells & normalized lengths
-        for (unsigned int i=0; i<nDim_field; i++) {
-            n_space[i]         = round(grid_length[i]/cell_length[i]);
-
-            double entered_grid_length = grid_length[i];
-            grid_length[i]      = (double)(n_space[i])*cell_length[i]; // ensure that nspace = grid_length/cell_length
-            if (grid_length[i]!=entered_grid_length)
-                WARNING("grid_length[" << i << "] has been redefined from " << entered_grid_length << " to " << grid_length[i] << " to match n x cell_length (" << scientific << setprecision(4) << grid_length[i]-entered_grid_length <<")");
-            cell_volume   *= cell_length[i];
-        }
-        // create a 3d equivalent of n_space & cell_length
-        for (unsigned int i=nDim_field; i<3; i++) {
-            n_space[i]=1;
-            cell_length[i]=0.0;
-        }
-
-    } else {
-        ERROR("Problem with the definition of nDim_field");
-    }
-
-    //!\todo (MG to JD) Are these 2 lines really necessary ? It seems to me it has just been done before
     n_space.resize(3, 1);
-    cell_length.resize(3, 0.);            //! \todo{3 but not real size !!! Pbs in Species::Species}
-    n_space_global.resize(3, 1);        //! \todo{3 but not real size !!! Pbs in Species::Species}
+    cell_length.resize(3);
+    n_space_global.resize(3, 1);  //! \todo{3 but not real size !!! Pbs in Species::Species}
     oversize.resize(3, 0);
     patch_dimensions.resize(3, 0.);
-
-    //n_space_global.resize(nDim_field, 0);
+    cell_volume=1.0;
     n_cell_per_patch = 1;
+    
+    // compute number of cells & normalized lengths
+    for (unsigned int i=0; i<nDim_field; i++) {
+        n_space[i] = round(grid_length[i]/cell_length[i]);
+        double entered_grid_length = grid_length[i];
+        grid_length[i] = (double)(n_space[i])*cell_length[i]; // ensure that nspace = grid_length/cell_length
+        if (grid_length[i]!=entered_grid_length)
+            WARNING("grid_length[" << i << "] has been redefined from " << entered_grid_length << " to " << grid_length[i] << " to match n x cell_length (" << scientific << setprecision(4) << grid_length[i]-entered_grid_length <<")");
+        cell_volume *= cell_length[i];
+    }
+    // create a 3d equivalent of n_space & cell_length
+    for (unsigned int i=nDim_field; i<3; i++) {
+        cell_length[i]=0.0;
+    }
+    
     for (unsigned int i=0; i<nDim_field; i++){
         oversize[i]  = max(interpolation_order,(unsigned int)(norder[i]/2+1)) + (exchange_particles_each-1);;
         n_space_global[i] = n_space[i];
@@ -623,7 +611,7 @@ void Params::compute()
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
     }
-
+    
     // Set clrw if not set by the user
     if ( clrw == -1 ) {
 
