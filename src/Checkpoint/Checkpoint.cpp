@@ -35,11 +35,11 @@ Checkpoint::Checkpoint( Params& params, SmileiMPI* smpi ) :
 dump_number(0),
 this_run_start_step(0),
 exit_asap(false),
-time_reference(MPI_Wtime()),
-time_dump_step(0),
 dump_step(0),
 dump_minutes(0.0),
 exit_after_dump(true),
+time_reference(MPI_Wtime()),
+time_dump_step(0),
 keep_n_dumps(2),
 keep_n_dumps_max(10000),
 dump_deflate(0),
@@ -201,20 +201,32 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     
     H5::vect( fid, "patch_count", smpi->patch_count );
     
-    H5::attr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
-    H5::attr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
-    H5::attr(fid, "latest_timestep",   static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->latest_timestep  );
+    // Write diags scalar data
+    DiagnosticScalar* scalars = static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0]);
+    H5::attr(fid, "Energy_time_zero",  scalars->Energy_time_zero );
+    H5::attr(fid, "EnergyUsedForNorm", scalars->EnergyUsedForNorm);
+    H5::attr(fid, "latest_timestep",   scalars->latest_timestep  );
+    if( smpi->isMaster() ) {
+        unsigned int k=0;
+        for (unsigned int j=0; j<2; j++) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+            for (unsigned int i=0; i<params.nDim_field; i++) { //axis 0=x, 1=y, 2=z
+                if( scalars->necessary_poy[k] ) {
+                    string poy_name = Tools::merge( "Poy", Tools::xyz[i], j==0?"min":"max" );
+                    H5::attr(fid, poy_name, (double)*(scalars->poy[k]));
+                    k++;
+                }
+            }
+        }
+    }
     
     // Write the diags screen data
     ostringstream diagName("");
-    string attr;
     if( smpi->isMaster() ) {
         for( unsigned int idiag=0; idiag<vecPatches.globalDiags.size(); idiag++ ) {
             if( DiagnosticScreen* screen = dynamic_cast<DiagnosticScreen*>(vecPatches.globalDiags[idiag]) ) {
                 diagName.str("");
                 diagName << "DiagScreen" << screen->screen_id;
-                attr = diagName.str();
-                H5::attr(fid, attr, screen->data_sum);
+                H5::vect(fid, diagName.str(), screen->data_sum);
             }
         }
     }
@@ -225,7 +237,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
         // Open a group
         ostringstream patch_name("");
         patch_name << setfill('0') << setw(6) << vecPatches(ipatch)->Hindex();
-        string patchName="patch-"+patch_name.str();
+        string patchName=Tools::merge("patch-", patch_name.str());
         hid_t patch_gid = H5::group(fid, patchName.c_str());
         
         dumpPatch( vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, patch_gid );
@@ -299,7 +311,7 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
                 ElectroMagnBC1D_SM* embc = static_cast<ElectroMagnBC1D_SM*>(EMfields->emBoundCond[bcId]);
                 ostringstream name("");
                 name << setfill('0') << setw(2) << bcId;
-                string groupName="EM_boundary-species-"+name.str();
+                string groupName=Tools::merge("EM_boundary-species-",name.str());
                 hid_t gid = H5::group(patch_gid, groupName);
                 H5::attr(gid, "By_val",embc->By_val );
                 H5::attr(gid, "Bz_val",embc->Bz_val );
@@ -309,7 +321,7 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
                 ElectroMagnBC2D_SM* embc = static_cast<ElectroMagnBC2D_SM*>(EMfields->emBoundCond[bcId]);
                 ostringstream name("");
                 name << setfill('0') << setw(2) << bcId;
-                string groupName="EM_boundary-species-"+name.str();
+                string groupName=Tools::merge("EM_boundary-species-",name.str());
                 hid_t gid = H5::group(patch_gid, groupName);
                 H5::vect(gid, "Bx_val", embc->Bx_val );
                 H5::vect(gid, "By_val", embc->By_val );
@@ -320,7 +332,7 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
                 ElectroMagnBC3D_SM* embc = static_cast<ElectroMagnBC3D_SM*>(EMfields->emBoundCond[bcId]);
                 ostringstream name("");
                 name << setfill('0') << setw(2) << bcId;
-                string groupName="EM_boundary-species-"+name.str();
+                string groupName=Tools::merge("EM_boundary-species-",name.str());
 
                 hid_t gid = H5::group(patch_gid, groupName);
 
@@ -339,7 +351,7 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
         ostringstream name("");
         name << setfill('0') << setw(2) << ispec;
-        string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->name;
+        string groupName=Tools::merge("species-",name.str(),"-",vecSpecies[ispec]->name);
         hid_t gid = H5::group(patch_gid, groupName);
         
         H5::attr(gid, "partCapacity", vecSpecies[ispec]->particles->capacity());
@@ -413,9 +425,21 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
     hid_t fid = H5Fopen( restart_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
     if (fid < 0) ERROR(restart_file << " is not a valid HDF5 file");    
     
-    H5::getAttr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
-    H5::getAttr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
-    H5::getAttr(fid, "latest_timestep",   static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->latest_timestep  );
+    // Write diags scalar data
+    DiagnosticScalar* scalars = static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0]);
+    H5::getAttr(fid, "Energy_time_zero",  scalars->Energy_time_zero );
+    H5::getAttr(fid, "EnergyUsedForNorm", scalars->EnergyUsedForNorm);
+    H5::getAttr(fid, "latest_timestep",   scalars->latest_timestep  );
+    if( smpi->isMaster() ) {
+        unsigned int k=0;
+        for (unsigned int j=0; j<2; j++) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+            for (unsigned int i=0; i<params.nDim_field; i++) { //axis 0=x, 1=y, 2=z
+                string poy_name = Tools::merge( "Poy", Tools::xyz[i], j==0?"min":"max" );
+                if(H5Aexists(fid, poy_name.c_str())>0) H5::getAttr(fid, poy_name, vecPatches(0)->EMfields->poynting[j][i]);
+                k++;
+            }
+        }
+    }
     
     // Read the diags screen data
     ostringstream diagName("");
@@ -424,8 +448,12 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
             if( DiagnosticScreen* screen = dynamic_cast<DiagnosticScreen*>(vecPatches.globalDiags[idiag]) ) {
                 diagName.str("");
                 diagName << "DiagScreen" << screen->screen_id;
-                int attr_size=H5::getAttrSize(fid, diagName.str());
-                if (attr_size == (int) screen->data_sum.size()) {
+                int target_size = screen->data_sum.size();
+                int vect_size = H5::getVectSize(fid, diagName.str());
+                int attr_size = H5::getAttrSize(fid, diagName.str());
+                if( vect_size == target_size ) {
+                    H5::getVect(fid, diagName.str(), screen->data_sum);
+                } else if( attr_size == target_size ) {
                     H5::getAttr(fid, diagName.str(), screen->data_sum);
                 } else {
                     WARNING("Restart: DiagScreen[" << screen->screen_id << "] size mismatch. Previous data discarded");
@@ -439,7 +467,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
         
         ostringstream patch_name("");
         patch_name << setfill('0') << setw(6) << vecPatches(ipatch)->Hindex();
-        string patchName="patch-"+patch_name.str();
+        string patchName=Tools::merge("patch-",patch_name.str());
         hid_t patch_gid = H5Gopen(fid, patchName.c_str(),H5P_DEFAULT);
         
         restartPatch( vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, params, patch_gid );
@@ -520,7 +548,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
                 ElectroMagnBC1D_SM* embc = static_cast<ElectroMagnBC1D_SM*>(EMfields->emBoundCond[bcId]);
                 ostringstream name("");
                 name << setfill('0') << setw(2) << bcId;
-                string groupName="EM_boundary-species-"+name.str();
+                string groupName=Tools::merge("EM_boundary-species-",name.str());
                 hid_t gid = H5Gopen(patch_gid, groupName.c_str(),H5P_DEFAULT);
                 H5::getAttr(gid, "By_val", embc->By_val );
                 H5::getAttr(gid, "Bz_val", embc->Bz_val );
@@ -531,7 +559,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
                 ElectroMagnBC2D_SM* embc = static_cast<ElectroMagnBC2D_SM*>(EMfields->emBoundCond[bcId]);
                 ostringstream name("");
                 name << setfill('0') << setw(2) << bcId;
-                string groupName="EM_boundary-species-"+name.str();
+                string groupName=Tools::merge("EM_boundary-species-",name.str());
                 hid_t gid = H5Gopen(patch_gid, groupName.c_str(),H5P_DEFAULT);
                 H5::getVect(gid, "Bx_val", embc->Bx_val );
                 H5::getVect(gid, "By_val", embc->By_val );
@@ -542,7 +570,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
                 ElectroMagnBC3D_SM* embc = static_cast<ElectroMagnBC3D_SM*>(EMfields->emBoundCond[bcId]);
                 ostringstream name("");
                 name << setfill('0') << setw(2) << bcId;
-                string groupName="EM_boundary-species-"+name.str();
+                string groupName=Tools::merge("EM_boundary-species-",name.str());
                 hid_t gid = H5Gopen(patch_gid, groupName.c_str(),H5P_DEFAULT);
     
                 if (embc->Bx_val) restartFieldsPerProc(gid, embc->Bx_val );
@@ -564,7 +592,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
         ostringstream name("");
         name << setfill('0') << setw(2) << ispec;
-        string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->name;
+        string groupName=Tools::merge("species-",name.str(),"-",vecSpecies[ispec]->name);
         hid_t gid = H5Gopen(patch_gid, groupName.c_str(),H5P_DEFAULT);
         
         unsigned int partCapacity=0;

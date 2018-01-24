@@ -71,9 +71,6 @@ for i in range(npoints):
 		boundary_conditions = [
 			["periodic", "periodic"],
 		],
-		boundary_conditions = [
-			["periodic", "periodic"],
-		],
 		c_part_max = 10.
 	)
 	
@@ -88,9 +85,6 @@ for i in range(npoints):
 		mean_velocity = [0., 0., 0.],
 		temperature = [T]*3,
 		time_frozen = 100000000.0,
-		boundary_conditions = [
-			["periodic", "periodic"],
-		],
 		boundary_conditions = [
 			["periodic", "periodic"],
 		],

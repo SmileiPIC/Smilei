@@ -17,18 +17,7 @@ def _mkdir(role, path):
     elif not os.path.isdir(path):
         raise Exception("ERROR in the namelist: "+role+" "+path+" exists but is not a directory")
 
-def _smilei_check():
-    """Do checks over the script"""
-    # Verify classes were not overriden
-    for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
-            "DiagProbe","DiagParticleBinning", "DiagScalar","DiagFields","ExternalField",
-            "SmileiSingleton","Main","Checkpoints","LoadBalancing","MovingWindow",
-            "RadiationReaction", "ParticleData", "MultiphotonBreitWheeler"]:
-        CheckClass = globals()[CheckClassName]
-        try:
-            if not CheckClass._verify: raise Exception("")
-        except:
-            raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
+def _prepare_checkpoint_dir():
     # Checkpoint: prepare dir tree
     if smilei_mpi_rank == 0 and (Checkpoints.dump_step>0 or Checkpoints.dump_minutes>0.):
         checkpoint_dir = "." + os.sep + "checkpoints" + os.sep
@@ -40,6 +29,20 @@ def _smilei_check():
                 _mkdir("checkpoint", group_dir)
         else:
             _mkdir("checkpoint", checkpoint_dir)
+
+def _smilei_check():
+    """Do checks over the script"""
+    # Verify classes were not overriden
+    for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
+            "DiagProbe","DiagParticleBinning", "DiagScalar","DiagFields",
+            "DiagTrackParticles","DiagPerformances","ExternalField",
+            "SmileiSingleton","Main","Checkpoints","LoadBalancing","MovingWindow",
+            "RadiationReaction", "ParticleData", "MultiphotonBreitWheeler"]:
+        CheckClass = globals()[CheckClassName]
+        try:
+            if not CheckClass._verify: raise Exception("")
+        except:
+            raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
     
     # Checkpoint: Verify the restart_dir and find possible restart file for each rank
     if len(Checkpoints)==1:
@@ -104,8 +107,12 @@ def _smilei_check():
 # if it returns false, the code will call a Py_Finalize();
 def _keep_python_running():
     # Verify all temporal profiles, and all profiles that depend on the moving window or on the load balancing
-    profiles = [las.time_envelope for las in Laser]
-    profiles += [las.chirp_profile for las in Laser]
+    profiles = []
+    for las in Laser:
+        profiles += [las.time_envelope]
+        profiles += [las.chirp_profile]
+        if type(las.space_time_profile) is list:
+            profiles += las.space_time_profile
     profiles += [ant.time_profile for ant in Antenna]
     if len(MovingWindow)>0 or len(LoadBalancing)>0:
         for s in Species:
@@ -118,7 +125,7 @@ def _keep_python_running():
         if d.filter is not None:
             return True
     # Verify the particle binning having a function for deposited_quantity or axis type
-    for d in DiagParticleBinning:
+    for d in DiagParticleBinning._list + DiagScreen._list:
         if type(d.deposited_quantity) is not str:
             return True
         for ax in d.axes:

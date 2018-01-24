@@ -8,16 +8,17 @@
 //#include <string>
 
 #include "Collisions.h"
-#include "Hilbert_functions.h"
+#include "DomainDecompositionFactory.h"
 #include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
+#include "PeekAtSpecies.h"
 #include "SimWindow.h"
 #include "SolverFactory.h"
 #include "DiagnosticFactory.h"
 
 #include "SyncVectorPatch.h"
-
+#include "interface.h"
 #include "Timers.h"
 
 using namespace std;
@@ -25,12 +26,22 @@ using namespace std;
 
 VectorPatch::VectorPatch()
 {
+    domain_decomposition_ = NULL ;
+}
+
+
+VectorPatch::VectorPatch( Params& params )
+{
+    domain_decomposition_ = DomainDecompositionFactory::create( params );
 }
 
 
 VectorPatch::~VectorPatch()
 {
+    //if ( domain_decomposition_ != NULL )
+    //    delete domain_decomposition_;
 }
+
 
 void VectorPatch::close(SmileiMPI * smpiData)
 {
@@ -126,10 +137,6 @@ void VectorPatch::dynamics(Params& params,
     }
     timers.particles.update( params.printNow( itime ) );
 
-//    timers.syncField.restart();
-//    SyncVectorPatch::finalizeexchangeB( (*this) );
-//    timers.syncField.update(  params.printNow( itime ) );
-
     timers.syncPart.restart();
     for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
         if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
@@ -177,21 +184,7 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
     }
     timers.syncPart.update( params.printNow( itime ) );
 
-    if ( (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
-        timers.syncField.restart();
-        SyncVectorPatch::finalizeexchangeB( (*this) );
-        timers.syncField.update(  params.printNow( itime ) );
-
-        #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-            // Applies boundary conditions on B
-            (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
-            // Computes B at time n using B and B_m.
-            (*this)(ipatch)->EMfields->centerMagneticFields();
-        }
-    }
-
-} // END dynamics
+} // END finalize_and_sort_parts
 
 
 void VectorPatch::computeCharge()
@@ -232,13 +225,13 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
     timers.densities.update();
 
     timers.syncDens.restart();
-    SyncVectorPatch::sumRhoJ( (*this), timers, itime ); // MPI
+    SyncVectorPatch::sumRhoJ( params, (*this), timers, itime ); // MPI
 
     if(diag_flag){
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
             if( ! (*this)(0)->vecSpecies[ispec]->particles->is_test ) {
                 update_field_list(ispec);
-                SyncVectorPatch::sumRhoJs( (*this), ispec, timers, itime ); // MPI
+                SyncVectorPatch::sumRhoJs( params, (*this), ispec, timers, itime ); // MPI
             }
         }
     }
@@ -260,15 +253,17 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
             // Current spatial filtering
             (*this)(ipatch)->EMfields->binomialCurrentFilter();
         }
-        SyncVectorPatch::exchangeJ( (*this) );
-        SyncVectorPatch::finalizeexchangeJ( (*this) );
+        SyncVectorPatch::exchangeJ( params, (*this) );
+        SyncVectorPatch::finalizeexchangeJ( params, (*this) );
     }
 
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-        // Saving magnetic fields (to compute centered fields used in the particle pusher)
-        // Stores B at time n in B_m.
-        (*this)(ipatch)->EMfields->saveMagneticFields();
+        if (!params.is_spectral) {
+            // Saving magnetic fields (to compute centered fields used in the particle pusher)
+            // Stores B at time n in B_m.
+            (*this)(ipatch)->EMfields->saveMagneticFields(params.is_spectral);
+        }
         // Computes Ex_, Ey_, Ez_ on all points.
         // E is already synchronized because J has been synchronized before.
         (*(*this)(ipatch)->EMfields->MaxwellAmpereSolver_)((*this)(ipatch)->EMfields);
@@ -281,10 +276,59 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
     timers.maxwell.update( params.printNow( itime ) );
 
     timers.syncField.restart();
-    SyncVectorPatch::exchangeB( (*this) );
+    if (params.is_spectral)
+        SyncVectorPatch::exchangeE( params, (*this) );
+    SyncVectorPatch::exchangeB( params, (*this) );
     timers.syncField.update(  params.printNow( itime ) );
 
+    #ifdef _PICSAR
+    //if ( (params.is_spectral) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
+    if (                           (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
+        timers.syncField.restart();
+        if (params.is_spectral)
+            SyncVectorPatch::finalizeexchangeE( params, (*this) );
+        SyncVectorPatch::finalizeexchangeB( params, (*this) );
+        timers.syncField.update(  params.printNow( itime ) );
+
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+            // Applies boundary conditions on B
+            (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
+            // Computes B at time n using B and B_m.
+            if (!params.is_spectral)
+                (*this)(ipatch)->EMfields->centerMagneticFields();
+            else
+                (*this)(ipatch)->EMfields->saveMagneticFields(params.is_spectral);
+        }
+        if (params.is_spectral)
+            save_old_rho( params );
+    }
+    #endif
+
+
 } // END solveMaxwell
+
+
+void VectorPatch::finalize_sync_and_bc_fields(Params& params, SmileiMPI* smpi, SimWindow* simWindow,
+                           double time_dual, Timers &timers, int itime)
+{
+    #ifndef _PICSAR
+    if ( (!params.is_spectral) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
+        timers.syncField.restart();
+        SyncVectorPatch::finalizeexchangeB( params, (*this) );
+        timers.syncField.update(  params.printNow( itime ) );
+
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+            // Applies boundary conditions on B
+            (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
+            // Computes B at time n using B and B_m.
+            (*this)(ipatch)->EMfields->centerMagneticFields();
+        }
+    }
+    #endif
+
+} // END finalize_sync_and_bc_fields
 
 
 void VectorPatch::initExternals(Params& params)
@@ -292,7 +336,7 @@ void VectorPatch::initExternals(Params& params)
     // Init all lasers
     for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
         // check if patch is on the border
-        int iBC;
+        int iBC(-1);
         if     ( (*this)(ipatch)->isXmin() ) {
             iBC = 0;
         }
@@ -301,7 +345,9 @@ void VectorPatch::initExternals(Params& params)
         }
         else continue;
         // If patch is on border, then fill the fields arrays
-        unsigned int nlaser = (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser.size();
+        unsigned int nlaser = 0;
+        if ( (iBC!=-1) && ( (*this)(ipatch)->EMfields->emBoundCond[iBC] != NULL ) )
+            nlaser = (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser.size();
         for (unsigned int ilaser = 0; ilaser < nlaser; ilaser++)
              (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser[ilaser]->initFields(params, (*this)(ipatch));
     }
@@ -322,7 +368,7 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
         if( smpi->isMaster() )
             globalDiags[idiag]->openFile( params, smpi, true );
     }
-
+    
     // Local diags : fields, probes, tracks
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
         localDiags[idiag]->init(params, smpi, *this);
@@ -336,7 +382,7 @@ void VectorPatch::closeAllDiags(SmileiMPI* smpi)
     if ( smpi->isMaster() )
         for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++)
             globalDiags[idiag]->closeFile();
-
+    
     // All MPI close local diags
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
         localDiags[idiag]->closeFile();
@@ -349,7 +395,7 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
     if ( smpi->isMaster() )
         for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++)
             globalDiags[idiag]->openFile( params, smpi, false );
-
+    
     // All MPI open local diags
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
         localDiags[idiag]->openFile( params, smpi, false );
@@ -383,7 +429,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itim
             globalDiags[idiag]->write( itime , smpi );
         }
     }
-
+    
     // Local diags : fields, probes, tracks
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
         #pragma omp single
@@ -391,9 +437,9 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itim
         #pragma omp barrier
         // All MPI run their stuff and write out
         if( localDiags[idiag]->theTimeIsNow )
-            localDiags[idiag]->run( smpi, *this, itime, simWindow );
+            localDiags[idiag]->run( smpi, *this, itime, simWindow, timers );
     }
-
+    
     // Manage the "diag_flag" parameter, which indicates whether Rho and Js were used
     if( diag_flag ) {
         #pragma omp barrier
@@ -540,8 +586,8 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
         (*this)(ipatch)->EMfields->initE( (*this)(ipatch) );
 
-    SyncVectorPatch::exchangeE( *this );
-    SyncVectorPatch::finalizeexchangeE( *this );
+    SyncVectorPatch::exchangeE( params, *this );
+    SyncVectorPatch::finalizeexchangeE( params, *this );
 
     // Centering of the electrostatic fields
     // -------------------------------------
@@ -569,18 +615,21 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         double Ey_XmaxYmin = 0.0;
 
         //The YmaxXmin patch has Patch coordinates X=0, Y=2^m1-1= number_of_patches[1]-1.
-        //Its hindex is
-        int patch_YmaxXmin = generalhilbertindex(params.mi[0], params.mi[1], 0,  params.number_of_patches[1]-1);
+        std::vector<int> xcall( 2, 0 );
+        xcall[0] = 0;
+        xcall[1] = params.number_of_patches[1]-1;
+        int patch_YmaxXmin = domain_decomposition_->getDomainId( xcall );
         //The MPI rank owning it is
         int rank_XminYmax = smpi->hrank(patch_YmaxXmin);
         //The YminXmax patch has Patch coordinates X=2^m0-1= number_of_patches[0]-1, Y=0.
         //Its hindex is
-        int patch_YminXmax = generalhilbertindex(params.mi[0], params.mi[1], params.number_of_patches[0]-1, 0);
+        xcall[0] = params.number_of_patches[0]-1;
+        xcall[1] = 0;
+        int patch_YminXmax = domain_decomposition_->getDomainId( xcall );
         //The MPI rank owning it is
         int rank_XmaxYmin = smpi->hrank(patch_YminXmax);
 
 
-        //cout << params.mi[0] << " " << params.mi[1] << " " << params.number_of_patches[0] << " " << params.number_of_patches[1] << endl;
         //cout << patch_YmaxXmin << " " << rank_XminYmax << " " << patch_YminXmax << " " << rank_XmaxYmin << endl;
 
         if ( smpi->getRank() == rank_XminYmax ) {
@@ -774,7 +823,7 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
         // density profile is initializes as if t = 0 !
         // Species will be cleared when, nbr of particles will be known
         // Creation of a new patch, ready to receive its content from MPI neighbours.
-        Patch* newPatch = PatchesFactory::clone(existing_patch, params, smpi, recv_patch_id_[ipatch], n_moved, false );
+        Patch* newPatch = PatchesFactory::clone(existing_patch, params, smpi, domain_decomposition_, recv_patch_id_[ipatch], n_moved, false );
         newPatch->finalizeMPIenvironment(params);
         //Store pointers to newly created patch in recv_patches_.
         recv_patches_.push_back( newPatch );
@@ -1258,3 +1307,119 @@ void VectorPatch::check_memory_consumption(SmileiMPI* smpi)
     // Read value in /proc/pid/status
     //Tools::printMemFootPrint( "End Initialization" );
 }
+
+
+void VectorPatch::save_old_rho(Params &params)
+{
+        int n=0;
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+        n =  (*this)(ipatch)->EMfields->rhoold_->dims_[0]*(*this)(ipatch)->EMfields->rhoold_->dims_[1];//*(*this)(ipatch)->EMfields->rhoold_->dims_[2];
+        if(params.nDim_field ==3) n*=(*this)(ipatch)->EMfields->rhoold_->dims_[2];
+                std::memcpy((*this)(ipatch)->EMfields->rhoold_->data_,(*this)(ipatch)->EMfields->rho_->data_,sizeof(double)*n);
+        }
+}
+        
+
+
+// Print information on the memory consumption
+void VectorPatch::check_expected_disk_usage( SmileiMPI* smpi, Params& params, Checkpoint& checkpoint)
+{
+    if( smpi->isMaster() ){
+        
+        MESSAGE(1, "WARNING: disk usage by non-uniform particles maybe strongly underestimated," );
+        MESSAGE(1, "   especially when particles are created at runtime (ionization, pair generation, etc.)" );
+        MESSAGE(1, "" );
+        
+        // Find the initial and final timesteps for this simulation
+        int istart = 0, istop = params.n_time;
+        // If restarting simulation define the starting point
+        if( params.restart ) {
+            istart = checkpoint.this_run_start_step+1;
+        }
+        // If leaving the simulation after dump, define the stopping point
+        if( checkpoint.dump_step > 0 && checkpoint.exit_after_dump ) {
+            int ncheckpoint = (istart/(int)checkpoint.dump_step) + 1;
+            int nextdumptime = ncheckpoint * (int)checkpoint.dump_step;
+            if( nextdumptime < istop ) istop = nextdumptime;
+        }
+        
+        MESSAGE(1, "Expected disk usage for diagnostics:" );
+        // Calculate the footprint from local then global diagnostics
+        uint64_t diagnostics_footprint = 0;
+        for (unsigned int idiags=0 ; idiags<localDiags.size() ; idiags++) {
+            uint64_t footprint = localDiags[idiags]->getDiskFootPrint(istart, istop, patches_[0]);
+            diagnostics_footprint += footprint;
+            MESSAGE(2, "File " << localDiags[idiags]->filename << ": " << Tools::printBytes(footprint));
+        }
+        for (unsigned int idiags=0 ; idiags<globalDiags.size() ; idiags++) {
+            uint64_t footprint = globalDiags[idiags]->getDiskFootPrint(istart, istop, patches_[0]);
+            diagnostics_footprint += footprint;
+            MESSAGE(2, "File " << globalDiags[idiags]->filename << ": " << Tools::printBytes(footprint));
+        }
+        MESSAGE(1, "Total disk usage for diagnostics: " << Tools::printBytes(diagnostics_footprint) );
+        MESSAGE(1, "" );
+        
+        // If checkpoints to be written, estimate their size
+        if( checkpoint.dump_step > 0 || checkpoint.dump_minutes > 0 ) {
+            MESSAGE(1, "Expected disk usage for each checkpoint:");
+            
+            // - Contribution from the grid
+            ElectroMagn* EM = patches_[0]->EMfields;
+            //     * Calculate first the number of grid points in total
+            uint64_t n_grid_points = 1;
+            for (unsigned int i=0; i<params.nDim_field; i++)
+                n_grid_points *= (params.n_space[i] + 2*params.oversize[i]+1);
+            n_grid_points *= params.tot_number_of_patches;
+            //     * Now calculate the total number of fields
+            unsigned int n_fields = 9
+              + EM->Exfilter.size() + EM->Eyfilter.size() + EM->Ezfilter.size()
+              + EM->Bxfilter.size() + EM->Byfilter.size() + EM->Bzfilter.size();
+            for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++ )
+                n_fields += EM->allFields_avg[idiag].size();
+            //     * Conclude the total field disk footprint
+            uint64_t checkpoint_fields_footprint = n_grid_points * (uint64_t)(n_fields * sizeof(double));
+            MESSAGE(2, "For fields: " << Tools::printBytes(checkpoint_fields_footprint));
+            
+            // - Contribution from particles
+            uint64_t checkpoint_particles_footprint = 0;
+            for (unsigned int ispec=0 ; ispec<patches_[0]->vecSpecies.size() ; ispec++) {
+                Species *s = patches_[0]->vecSpecies[ispec];
+                Particles *p = s->particles;
+            //     * Calculate the size of particles' individual parameters
+                uint64_t one_particle_size = 0;
+                one_particle_size += (p->Position.size() + p->Momentum.size() + 1) * sizeof(double);
+                one_particle_size += 1 * sizeof(short);
+                if (p->tracked)
+                    one_particle_size += 1 * sizeof(uint64_t);
+            //     * Calculate an approximate number of particles
+                PeekAtSpecies peek(params, ispec);
+                uint64_t number_of_particles = peek.totalNumberofParticles();
+            //     * Calculate the size of the bmin and bmax arrays
+                uint64_t b_size = (s->bmin.size() + s->bmax.size()) * params.tot_number_of_patches * sizeof(int);
+            //     * Conclude the disk footprint of this species
+                checkpoint_particles_footprint += one_particle_size*number_of_particles + b_size;
+            }
+            MESSAGE(2, "For particles: " << Tools::printBytes(checkpoint_particles_footprint));
+            
+            // - Contribution from diagnostics
+            uint64_t checkpoint_diags_footprint = 0;
+            //     * Averaged field diagnostics
+            n_fields = 0;
+            for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++ )
+                n_fields += EM->allFields_avg[idiag].size();
+            checkpoint_diags_footprint += n_grid_points * (uint64_t)(n_fields * sizeof(double));
+            //     * Screen diagnostics
+            for( unsigned int idiag=0; idiag<globalDiags.size(); idiag++ )
+                if( DiagnosticScreen* screen = dynamic_cast<DiagnosticScreen*>(globalDiags[idiag]) )
+                    checkpoint_diags_footprint += screen->data_sum.size() * sizeof(double);
+            MESSAGE(2, "For diagnostics: " << Tools::printBytes(checkpoint_diags_footprint));
+            
+            uint64_t checkpoint_footprint = checkpoint_fields_footprint + checkpoint_particles_footprint + checkpoint_diags_footprint;
+            MESSAGE(1, "Total disk usage for one checkpoint: " << Tools::printBytes(checkpoint_footprint) );
+        }
+        
+    }
+}
+
+

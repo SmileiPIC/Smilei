@@ -22,7 +22,7 @@ public :
     
     bool prepare( int timestep ) override;
     
-    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep, SimWindow* simWindow ) override;
+    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep, SimWindow* simWindow, Timers & timers ) override;
     
     void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;    
     
@@ -40,6 +40,9 @@ public :
             + 10*sizeof(double)
         );
     }
+    
+    //! Get disk footprint of current diagnostic
+    uint64_t getDiskFootPrint(int istart, int istop, Patch* patch) override;
 
 private :
     

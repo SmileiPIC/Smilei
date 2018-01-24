@@ -1,4 +1,4 @@
-from happi import *
+import happi
 import math as m
 import numpy as np
 import matplotlib as mpl
@@ -15,7 +15,7 @@ mpl.rcParams['xtick.minor.size'] = 5
 mpl.rcParams['ytick.minor.size'] = 5
 
 
-S  = Smilei('/Users/mica/RESULTS/SMILEI/thermalPlasmaPxDrift/')
+S  = happi.Open('/Users/mica/RESULTS/SMILEI/thermalPlasmaPxDrift/')
 T  = S.namelist.Te
 mu = 1./T
 print mu

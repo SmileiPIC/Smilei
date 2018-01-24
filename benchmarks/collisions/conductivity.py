@@ -1,5 +1,5 @@
 
-from happi import *
+import happi
 execfile("resparis.py")
 import numpy as np
 import matplotlib.pyplot as plt
@@ -22,7 +22,7 @@ density = []
 
 for path in ["conductivity1","conductivity2","conductivity3"]:
 
-	sim = Smilei(path)
+	sim = happi.Open(path)
 
 	ncases = 0
 	while sim.namelist.DiagParticleBinning[ncases].deposited_quantity == "weight_charge_vx":
@@ -32,7 +32,7 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 	coulomb_log          = np.double(sim.namelist.Collisions[0].coulomb_log)
 	dt                   = np.double(sim.namelist.Main.timestep)/(2*np.pi)
 	
-	times = sim.ParticleBinning(diagNumber=0).getAvailableTimesteps()
+	times = np.double(sim.ParticleBinning(diagNumber=0).getAvailableTimesteps())
 	
 	vx_mean = np.zeros((ncases,len(times)))
 	

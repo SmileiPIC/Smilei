@@ -84,11 +84,6 @@ class RadiationTables
         //! \param chipa particle quantum parameter
         double get_h_Niel_from_table(double chipa);
 
-        //! Return the value of the function h(chipa) of Niel et al.
-        //! from a numerical fit
-        //! \param chipa particle quantum parameter
-        double get_h_Niel_from_fit(double chipa);
-
         //! Return the stochastic diffusive component of the pusher
         //! of Niel et al.
         //! \param gamma particle Lorentz factor
@@ -141,6 +136,71 @@ class RadiationTables
             return pow(1. + 4.8*(1.+chipa)*log(1. + 1.7*chipa)
                           + 2.44*chipa*chipa,-2./3.);
         };
+
+        std::string inline get_h_computation_method()
+        {
+            return this->h_computation_method;
+        }
+
+        // -----------------------------------------------------------------------------
+        //! Return the value of the function h(chipa) of Niel et al.
+        //! from a polynomial numerical fit at order 10
+        //! Valid between chipa in 1E-3 and 1E1
+        //! \param chipa particle quantum parameter
+        // -----------------------------------------------------------------------------
+        double inline get_h_Niel_from_fit_order10(double chipa)
+        {
+            // Max relative error ~2E-4
+            return exp(-3.231764974833856e-08 * pow(log(chipa),10)
+                -7.574417415366786e-07 * pow(log(chipa),9)
+                -5.437005218419013e-06 * pow(log(chipa),8)
+                -4.359062260446135e-06 * pow(log(chipa),7)
+                + 5.417842511821415e-05 * pow(log(chipa),6)
+                -1.263905701127627e-04 * pow(log(chipa),5)
+                + 9.899812622393002e-04 * pow(log(chipa),4)
+                + 1.076648497464146e-02 * pow(log(chipa),3)
+                -1.624860613422593e-01 * pow(log(chipa),2)
+                + 1.496340836237785e+00 * log(chipa)
+                -2.756744141581370e+00);
+        }
+
+        // -----------------------------------------------------------------------------
+        //! Return the value of the function h(chipa) of Niel et al.
+        //! from a polynomial numerical fit at order 5
+        //! Valid between chipa in 1E-3 and 1E1
+        //! \param chipa particle quantum parameter
+        // -----------------------------------------------------------------------------
+        double inline get_h_Niel_from_fit_order5(double chipa)
+        {
+            // Max relative error ~0.02
+            return exp(1.399937206900322e-04 * pow(log(chipa),5)
+            + 3.123718241260330e-03 * pow(log(chipa),4)
+            + 1.096559086628964e-02 * pow(log(chipa),3)
+            -1.733977278199592e-01 * pow(log(chipa),2)
+            + 1.492675770100125e+00 * log(chipa)
+            -2.748991631516466e+00 );
+        }
+
+        // -----------------------------------------------------------------------------
+        //! Return the value of the function h(chipa) of Niel et al.
+        //! using the numerical fit of Ridgers in
+        //! Ridgers et al., ArXiv 1708.04511 (2017)
+        //! \param chipa particle quantum parameter
+        // -----------------------------------------------------------------------------
+        double inline get_h_Niel_from_fit_Ridgers(double chipa)
+        {
+            return pow(chipa,3)*1.9846415503393384*pow(1. +
+                (1. + 4.528*chipa)*log(1.+12.29*chipa) + 4.632*pow(chipa,2),-7./6.);
+        }
+
+        // -----------------------------------------------------------------------------
+        //! Return the classical power factor factor_cla_rad_power.
+        // -----------------------------------------------------------------------------
+        double inline get_factor_cla_rad_power()
+        {
+          return factor_cla_rad_power;
+        }
+
 
         // ---------------------------------------------------------------------
         // TABLE COMPUTATION
@@ -262,6 +322,9 @@ class RadiationTables
 
         //! This variable is true if the table is computed, false if read
         bool h_computed;
+
+        //! Method to be used to get the h values (table, fit5, fit10)
+        std::string h_computation_method;
 
         // ---------------------------------------------
         // Table integfochi

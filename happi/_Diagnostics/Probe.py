@@ -7,17 +7,11 @@ class Probe(Diagnostic):
 	def _init(self, probeNumber=None, field=None, timesteps=None, subset=None, average=None, data_log=False, **kwargs):
 		
 		self._h5probe = []
-		self._times = []
-		
-		# Get the available probes
-		for path in self._results_path:
-			files = self._glob(path+self._os.sep+"Probes*.h5")
-			probes = [self._re.findall(r"Probes([0-9]+)[.]h5$",file)[0] for file in files]
-			try   : self._probes = [p for p in probes if p in self._probes]
-			except: self._probes = probes
+		self._alltimesteps = []
 		
 		# If no probeNumber, print available probes
 		if probeNumber is None:
+			self._probes = self.getProbes()
 			if len(self._probes)>0:
 				self._error += "Printing available probes:\n"
 				self._error += "--------------------------\n"
@@ -57,8 +51,8 @@ class Probe(Diagnostic):
 			for key, val in file.items():
 				try   : self._dataForTime[int(key)] = val
 				except: break
-		self._times = self._np.double(sorted(self._dataForTime.keys()))
-		if self._times.size == 0:
+		self._alltimesteps = self._np.double(sorted(self._dataForTime.keys()))
+		if self._alltimesteps.size == 0:
 			self._error = "No timesteps found"
 			return
 		
@@ -71,7 +65,7 @@ class Probe(Diagnostic):
 		if field is None:
 			self._error += "Printing available fields for probe #"+str(probeNumber)+":\n"
 			self._error += "----------------------------------------\n"
-			self._error += ", ".join(fields)+"\n"
+			self._error += str(", ".join(fields))+"\n"
 			return
 		
 		# 1 - verifications, initialization
@@ -114,16 +108,16 @@ class Probe(Diagnostic):
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
 		# If timesteps is None, then keep all timesteps otherwise, select timesteps
-		self.times = self._times
+		self._timesteps = self._alltimesteps
 		if timesteps is not None:
 			try:
-				self.times = self._selectTimesteps(timesteps, self.times)
+				self._timesteps = self._selectTimesteps(timesteps, self._timesteps)
 			except:
 				self._error = "Argument `timesteps` must be one or two non-negative integers"
 				return
 		
 		# Need at least one timestep
-		if self.times.size < 1:
+		if self._timesteps.size < 1:
 			self._error = "Timesteps not found"
 			return
 		
@@ -192,26 +186,43 @@ class Probe(Diagnostic):
 		# Special case in 2D: we have to prepare for pcolormesh instead of imshow
 		elif len(self._centers) == 2:
 			p1 = self._centers[0] # locations of grid points along first dimension
-			d = self._np.diff(p1, axis=0) # separation between the points
-			p1 = self._np.vstack((p1, p1[-1,:])) # add last edges at the end of box
-			p1[1:-1] -= d/2 # move points by one half
+			d = (p1[1,:] - p1[0,:])/2. # half separation between the points
+			p1[0,:] += d
+			p1 = self._np.vstack((p1, p1[-1,:]+d)) # add last edges at the end of box
+			offset = p1[0,:]
+			p1 = self._np.apply_along_axis(lambda x: x-offset, 1, p1) # move points
 			p2 = self._centers[1] # locations of grid points along second dimension
-			d = self._np.diff(p2, axis=0) # separation between the points
-			p2 = self._np.vstack((p2, p2[-1,:])) # add last edges at the end of box
-			p2[1:-1] -= d/2 # move points by one half
+			d = (p2[1,:] - p2[0,:])/2. # half separation between the points
+			p2[0,:] += d
+			p2 = self._np.vstack((p2, p2[-1,:]+d)) # add last edges at the end of box
+			offset = p2[0,:]
+			p2 = self._np.apply_along_axis(lambda x: x-offset, 1, p2) # move points
+			# Trick in a 3D simulation (the probe has to be projected)
+			if self._ndim==3:
+				# unit vectors in the two dimensions + perpendicular
+				u1 = p[0] / self._np.linalg.norm(p[0])
+				u2 = p[1] / self._np.linalg.norm(p[1])
+				# Distances along first direction
+				p1[:,0] = self._np.dot(p1, u1)
+				p1[:,1:] = 0.
+				# Distances along second direction
+				p2x = self._np.dot(p2, u1)
+				p2[:,1] = self._np.dot(p2, u2)
+				p2[:,0] = p2x
+				p2[:,2:] = 0.
 			# Now p1 and p2 contain edges grid points along the 2 dimensions
 			# We have to convert into X and Y 2D arrays (similar to meshgrid)
 			X = self._np.zeros((p1.shape[0], p2.shape[0]))
 			Y = self._np.zeros((p1.shape[0], p2.shape[0]))
 			for i in range(p2.shape[0]):
-				X[:,i] = p1[:,0] + p2[i,0]-p2[0,0]
-				Y[:,i] = p1[:,1] + p2[i,1]-p2[0,1]
+				X[:,i] = p1[:,0] + (p2[i,0]-p2[0,0])
+				Y[:,i] = p1[:,1] + (p2[i,1]-p2[0,1])
 			X = self._np.maximum( X, 0.)
 			X = self._np.minimum( X, self._ncels[0]*self._cell_length[0])
 			Y = self._np.maximum( Y, 0.)
 			Y = self._np.minimum( Y, self._ncels[1]*self._cell_length[1])
 			self._edges = [X, Y]
-			self._label = ["x", "y"]
+			self._label = ["axis1", ""]
 			self._units = [axisunits, axisunits]
 		
 		# Prepare the reordering of the points for patches disorder
@@ -261,8 +272,6 @@ class Probe(Diagnostic):
 			self._title  = self._title .replace("#"+str(n), titles    [n])
 			self._vunits = self._vunits.replace("#"+str(n), fieldunits[n])
 		
-		self._buffer = self._np.zeros((self.numpoints,), dtype="double")
-		
 		# Set the directory in case of exporting
 		self._exportPrefix = "Probe"+str(probeNumber)+"_"+"".join(self._fieldname)
 		self._exportDir = self._setExportDir(self._exportPrefix)
@@ -279,7 +288,7 @@ class Probe(Diagnostic):
 	# Method to print info previously obtained with getInfo
 	def _info(self, info=None):
 		if info is None: info = self._getMyInfo()
-		printedInfo = "Probe #"+str(info["probeNumber"])+": "+str(info["dimension"])+"-dimensional,"+" with fields "+str(info["fields"])+"\n"
+		printedInfo = "Probe #"+str(info["probeNumber"])+": "+str(info["dimension"])+"-dimensional,"+" with fields "+bytes.decode(info["fields"])+"\n"
 		i = 0
 		while "p"+str(i) in info:
 			printedInfo += "p"+str(i)+" = "+" ".join(info["p"+str(i)].astype(str).tolist())+"\n"
@@ -310,25 +319,32 @@ class Probe(Diagnostic):
 	
 	# get all available probes
 	def getProbes(self):
-		return self._probes
+		for path in self._results_path:
+			files = self._glob(path+self._os.sep+"Probes*.h5")
+			probes = [self._re.findall(r"Probes([0-9]+)[.]h5$",file)[0] for file in files]
+			try   :
+				allprobes = [p for p in probes if p in allprobes]
+			except:
+				allprobes = probes
+		return allprobes
 	
 	# get all available fields
 	def getFields(self):
 		for file in self._h5probe:
-			fields_here = str(file.attrs["fields"]).split(",")
+			fields_here = bytes.decode(file.attrs["fields"]).split(",")
 			try   : fields = [f for f in fields_here if f in fields]
 			except: fields = fields_here
 		return fields
 	
 	# get all available timesteps
 	def getAvailableTimesteps(self):
-		return self._times
+		return self._alltimesteps
 	
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):
 		if not self._validate(): return
 		# Verify that the timestep is valid
-		if t not in self.times:
+		if t not in self._timesteps:
 			print("Timestep "+t+" not found in this diagnostic")
 			return []
 		# Get arrays from requested field
@@ -336,8 +352,9 @@ class Probe(Diagnostic):
 		C = {}
 		op = self.operation
 		for n in reversed(self._fieldn): # for each field in operation
-			self._dataForTime[t].read_direct(self._buffer, source_sel=self._np.s_[n,:])
-			C.update({ n:self._buffer })
+			buffer = self._np.empty((self.numpoints,), dtype="double")
+			self._dataForTime[t].read_direct(buffer, source_sel=self._np.s_[n,:])
+			C.update({ n:buffer })
 			op = op.replace("#"+str(n), "C["+str(n)+"]")
 		# Calculate the operation
 		A = eval(op)

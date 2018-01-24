@@ -1,11 +1,11 @@
-from happi import *
+import happi
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import erf as erf
 
 for path in ["beam_relaxation7","beam_relaxation8","beam_relaxation9"]:
 
-	sim = Smilei(path)
+	sim = happi.Open(path)
 	mass_ion             = np.double(sim.namelist.Species["ion1"].mass)
 	charge_ion           = np.double(sim.namelist.Species["ion1"].charge)
 	density_ion          = np.double(sim.namelist.Species["ion1"].charge_density)

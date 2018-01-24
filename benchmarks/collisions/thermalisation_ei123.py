@@ -1,12 +1,12 @@
 
-from happi import *
+import happi
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import erf as erf
 
 for path in ["thermalisation_ei1","thermalisation_ei2","thermalisation_ei3"]:
 
-	sim = Smilei(path)
+	sim = happi.Open(path)
 	mass_ion             = np.double(sim.namelist.Species["ion1"].mass)
 	charge_ion           = np.double(sim.namelist.Species["ion1"].charge)
 	density_ion          = np.double(sim.namelist.Species["ion1"].charge_density)/charge_ion
@@ -21,7 +21,7 @@ for path in ["thermalisation_ei1","thermalisation_ei2","thermalisation_ei3"]:
 	c = 3e8
 	coeff = (2.*np.pi/wavelength)**2*re_*c / 8.
 	
-	times = sim.ParticleBinning(diagNumber=0).getAvailableTimesteps()
+	times = np.double(sim.ParticleBinning(diagNumber=0).getAvailableTimesteps())
 	
 	electrons0 = sim.ParticleBinning(0, sum={"x":"all"}).get()
 	evx = electrons0["vx"]

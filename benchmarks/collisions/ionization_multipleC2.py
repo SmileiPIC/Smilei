@@ -53,9 +53,6 @@ Species(
 	boundary_conditions = [
 		["periodic", "periodic"],
 	],
-	boundary_conditions = [
-		["periodic", "periodic"],
-	],
 	c_part_max = 10.
 )
 
@@ -70,9 +67,6 @@ Species(
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.00000000001]*3,
 	time_frozen = 100000000.0,
-	boundary_conditions = [
-		["periodic", "periodic"],
-	],
 	boundary_conditions = [
 		["periodic", "periodic"],
 	],

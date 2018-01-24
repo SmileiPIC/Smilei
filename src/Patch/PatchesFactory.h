@@ -5,37 +5,42 @@
 #include "Patch1D.h"
 #include "Patch2D.h"
 #include "Patch3D.h"
+#include "DomainDecomposition.h"
 
 #include "Tools.h"
+
+#ifdef _VECTO
+#include "SpeciesV.h"
+#endif
 
 class PatchesFactory {
 public:
 
     // Create one patch from scratch
-    static Patch* create(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved=0) {
+    static Patch* create(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved=0) {
         if (params.geometry == "1Dcartesian")
-            return new Patch1D(params, smpi, ipatch, n_moved);
+            return new Patch1D(params, smpi, domain_decomposition, ipatch, n_moved);
         else if (params.geometry == "2Dcartesian") 
-            return new Patch2D(params, smpi, ipatch, n_moved);
+            return new Patch2D(params, smpi, domain_decomposition, ipatch, n_moved);
         else if (params.geometry == "3Dcartesian") 
-            return new Patch3D(params, smpi, ipatch, n_moved);
+            return new Patch3D(params, smpi, domain_decomposition, ipatch, n_moved);
         return nullptr;
     }
 
     // Clone one patch (avoid reading again the namelist)
-    static Patch* clone(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved=0, bool with_particles = true) {
+    static Patch* clone(Patch* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved=0, bool with_particles = true) {
         if (params.geometry == "1Dcartesian")
-            return new Patch1D(static_cast<Patch1D*>(patch), params, smpi, ipatch, n_moved, with_particles);
+            return new Patch1D(static_cast<Patch1D*>(patch), params, smpi, domain_decomposition, ipatch, n_moved, with_particles);
         else if (params.geometry == "2Dcartesian")
-            return new Patch2D(static_cast<Patch2D*>(patch), params, smpi, ipatch, n_moved, with_particles);
+            return new Patch2D(static_cast<Patch2D*>(patch), params, smpi, domain_decomposition, ipatch, n_moved, with_particles);
         else if (params.geometry == "3Dcartesian")
-            return new Patch3D(static_cast<Patch3D*>(patch), params, smpi, ipatch, n_moved, with_particles);
+            return new Patch3D(static_cast<Patch3D*>(patch), params, smpi, domain_decomposition, ipatch, n_moved, with_particles);
         return nullptr;
     }
 
     // Create a vector of patches
     static VectorPatch createVector(Params& params, SmileiMPI* smpi, OpenPMDparams& openPMD, unsigned int itime, unsigned int n_moved=0) {
-        VectorPatch vecPatches;
+        VectorPatch vecPatches( params );
 
         vecPatches.diag_flag = (params.restart? false : true);
         vecPatches.lastIterationPatchesMoved = itime;
@@ -54,7 +59,8 @@ public:
         
         // Create patches (create patch#0 then clone it)
         vecPatches.resize(npatches);
-        vecPatches.patches_[0] = create(params, smpi, firstpatch, n_moved);
+        vecPatches.patches_[0] = create(params, smpi, vecPatches.domain_decomposition_, firstpatch, n_moved);
+        
         TITLE("Initializing Patches");
         MESSAGE(1,"First patch created");
         
@@ -65,8 +71,23 @@ public:
                 MESSAGE(2,"Approximately "<<percent<<"% of patches created");
                 percent += 10;
             }
-            vecPatches.patches_[ipatch] = clone(vecPatches(0), params, smpi, firstpatch + ipatch, n_moved);
+            vecPatches.patches_[ipatch] = clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, firstpatch + ipatch, n_moved);
         }
+
+#ifdef _VECTO
+        if (params.vecto) {
+            //Need to sort because particles are not well sorted at creation
+            for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
+                for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
+                    if ( dynamic_cast<SpeciesV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec]) )
+                        dynamic_cast<SpeciesV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
+                    vecPatches.patches_[ipatch]->vecSpecies[ispec]->sort_part(params);
+                }
+            }
+        }
+#endif
+
+
         MESSAGE(1,"All patches created");
 
         vecPatches.set_refHindex();

@@ -12,7 +12,7 @@ class ElectroMagn2D : public ElectroMagn
 {
 public:
     //! Constructor for ElectroMagn2D
-    ElectroMagn2D(Params &params, std::vector<Species*>& vecSpecies, Patch* patch);
+    ElectroMagn2D(Params &params, DomainDecomposition* domain_decomposition, std::vector<Species*>& vecSpecies, Patch* patch);
     ElectroMagn2D( ElectroMagn2D* emFields, Params &params, Patch* patch );
 
     //! Destructor for ElectroMagn2D
@@ -47,7 +47,7 @@ public:
 //    void solveMaxwellAmpere();
     
     //! Method used to save the Magnetic fields (used to center them)
-    void saveMagneticFields();
+    void saveMagneticFields(bool);
     
     //! Method used to center the Magnetic fields (used to push the particles)
     void centerMagneticFields();
@@ -105,14 +105,15 @@ public:
     void applyExternalField(Field*, Profile*, Patch*);
     
     void initAntennas(Patch* patch);
-    
-private:
-    
-    //! from smpi is ymax
+
+     //! from smpi is ymax
     const bool isYmin;
     
     //! from smpi is ymin
     const bool isYmax;
+   
+private:
+    
     
     //! Initialize quantities needed in the creators of ElectroMagn2D
     void initElectroMagn2DQuantities(Params &params, Patch* patch);

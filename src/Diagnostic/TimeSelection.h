@@ -48,11 +48,17 @@ public:
     //! Get the smallest interval between two selected timesteps
     inline int smallestInterval() { return SmallestInterval; };
     
+    //! Get the number of occurrences before the given timestep
+    int howManyTimesBefore(int timestep);
+    
     //! Tell whether the timestep is between start and end
     inline bool inProgress(int timestep) { return timestep>=start && timestep<=end; };
     
     //! Tell whether this is an empty selection (no timesteps)
     inline bool isEmpty() { return period>0. ? false : true; };
+    
+    //! Obtain some information about the time selection
+    std::string info();
     
 private:
     //! Starting timestep

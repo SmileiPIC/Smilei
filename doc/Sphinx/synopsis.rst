@@ -20,7 +20,7 @@ Intel Skylake (SKL) & Knigths Landing (KNL).
 
 In Smilei, Maxwell’s equations are solved on the so-called Yee-mesh with centered
 electric and magnetic fields using the finite-difference time-domain (FDTD)
-method or related methods. Moreover, charge deposition is computed following
+method or related methods. Pseudo-Spectral Analytical Time Domain can also be used as well. Moreover, charge deposition is computed following
 a charge-conservation scheme.
 
 A multi-purpose code, Smilei is applied to a wide range of physics-related studies:

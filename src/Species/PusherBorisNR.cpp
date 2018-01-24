@@ -22,8 +22,16 @@ PusherBorisNR::~PusherBorisNR()
 
 void PusherBorisNR::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
 {
-    std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
-    std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
+    std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
+    std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
+
+    int nparts = particles.size();
+    double* Ex = &( (*Epart)[0*nparts] );
+    double* Ey = &( (*Epart)[1*nparts] );
+    double* Ez = &( (*Epart)[2*nparts] );
+    double* Bx = &( (*Bpart)[0*nparts] );
+    double* By = &( (*Bpart)[1*nparts] );
+    double* Bz = &( (*Bpart)[2*nparts] );
 
     double charge_over_mass_ ;
     double umx, umy, umz;
@@ -39,16 +47,16 @@ void PusherBorisNR::operator() (Particles &particles, SmileiMPI* smpi, int istar
         alpha = charge_over_mass_*dts2;
 
         // uminus = v + q/m * dt/2 * E
-        umx = particles.momentum(0, ipart) * one_over_mass_ + alpha * (*Epart)[ipart].x;
-        umy = particles.momentum(1, ipart) * one_over_mass_ + alpha * (*Epart)[ipart].y;
-        umz = particles.momentum(2, ipart) * one_over_mass_ + alpha * (*Epart)[ipart].z;
+        umx = particles.momentum(0, ipart) * one_over_mass_ + alpha * (*(Ex+ipart));
+        umy = particles.momentum(1, ipart) * one_over_mass_ + alpha * (*(Ey+ipart));
+        umz = particles.momentum(2, ipart) * one_over_mass_ + alpha * (*(Ez+ipart));
 
 
         // Rotation in the magnetic field
 
-        Tx    = alpha * (*Bpart)[ipart].x;
-        Ty    = alpha * (*Bpart)[ipart].y;
-        Tz    = alpha * (*Bpart)[ipart].z;
+        Tx    = alpha * (*(Bx+ipart));
+        Ty    = alpha * (*(By+ipart));
+        Tz    = alpha * (*(Bz+ipart));
 
         T2 = Tx*Tx + Ty*Ty + Tz*Tz;
 
@@ -62,9 +70,9 @@ void PusherBorisNR::operator() (Particles &particles, SmileiMPI* smpi, int istar
         upz = umz + umx*Sy - umy*Sx;
 
 
-        particles.momentum(0, ipart) = mass_ * (upx + alpha*(*Epart)[ipart].x);
-        particles.momentum(1, ipart) = mass_ * (upy + alpha*(*Epart)[ipart].y);
-        particles.momentum(2, ipart) = mass_ * (upz + alpha*(*Epart)[ipart].z);
+        particles.momentum(0, ipart) = mass_ * (upx + alpha*(*(Ex+ipart)));
+        particles.momentum(1, ipart) = mass_ * (upy + alpha*(*(Ey+ipart)));
+        particles.momentum(2, ipart) = mass_ * (upz + alpha*(*(Ez+ipart)));
 
         // Move the particle
         for ( int i = 0 ; i<nDim_ ; i++ )

@@ -44,7 +44,7 @@ class Scalar(Diagnostic):
 		
 		# Already get the data from the file
 		# Loop file line by line
-		self._times = []
+		self._alltimesteps = []
 		self._values = []
 		times_values = {}
 		for path in self._results_path:
@@ -60,26 +60,26 @@ class Scalar(Diagnostic):
 				for line in f:
 					line = str(line.strip()).split()
 					times_values[ int( self._np.round(float(line[0]) / float(self.timestep)) ) ] = float(line[scalarindex])
-		self._times  = self._np.array(sorted(times_values.keys()))
-		self._values = self._np.array([times_values[k] for k in self._times])
-		self.times = self._np.copy(self._times)
+		self._alltimesteps  = self._np.array(sorted(times_values.keys()))
+		self._values = self._np.array([times_values[k] for k in self._alltimesteps])
+		self._timesteps = self._np.copy(self._alltimesteps)
 		
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
 		# fill the "_data" dictionary with the index to each time
 		self._data = {}
-		for i,t in enumerate(self.times):
+		for i,t in enumerate(self._timesteps):
 			self._data.update({ t : i })
 		# If timesteps is None, then keep all timesteps otherwise, select timesteps
 		if timesteps is not None:
 			try:
-				self.times = self._selectTimesteps(timesteps, self.times)
+				self._timesteps = self._selectTimesteps(timesteps, self._timesteps)
 			except:
 				self._error += "Argument `timesteps` must be one or two non-negative integers"
 				return
 		
 		# Need at least one timestep
-		if self.times.size < 1:
+		if self._timesteps.size < 1:
 			self._error += "Timesteps not found"
 			return
 		
@@ -131,13 +131,13 @@ class Scalar(Diagnostic):
 	
 	# get all available timesteps
 	def getAvailableTimesteps(self):
-		return self._times
+		return self._alltimesteps
 	
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):
 		if not self._validate(): return
 		# Verify that the timestep is valid
-		if t not in self.times:
+		if t not in self._timesteps:
 			print("Timestep "+str(t)+" not found in this diagnostic")
 			return []
 		# Get value at selected time

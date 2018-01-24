@@ -20,7 +20,7 @@ Main(
     time_fields_frozen = 100000000000.,
 
     cell_length = [1*L0],
-    grid_length = [20*L0],
+    grid_length = [40*L0],
 
     EM_boundary_conditions = [ ["periodic"] ],
 
@@ -37,11 +37,13 @@ ExternalField(
 	profile = 0.001
 )
 
+nppc = 1000
+
 Species(
 	name = "copper1",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
-	particles_per_cell = 1000,
+	particles_per_cell = nppc,
 	mass = 115845.,      # =  mass of Cu atom
 	charge = 4.4,
 	charge_density = constant(330.),
@@ -56,7 +58,7 @@ Species(
 	name = "electron1",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
-	particles_per_cell= 10000,
+	particles_per_cell= nppc * 10,
 	mass = 1.0,
 	charge = -1.0,
 	charge_density = constant(330.),
@@ -72,7 +74,7 @@ Species(
 	name = "copper2",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
-	particles_per_cell = 1000,
+	particles_per_cell = nppc,
 	mass = 115845.,      # =  mass of Cu atom
 	charge = 4.4,
 	charge_density = constant(333.),
@@ -87,7 +89,7 @@ Species(
 	name = "electron2",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
-	particles_per_cell= 10000,
+	particles_per_cell= nppc * 10,
 	mass = 1.0,
 	charge = -1.0,
 	charge_density = constant(333.),
@@ -103,7 +105,7 @@ Species(
 	name = "copper3",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
-	particles_per_cell = 1000,
+	particles_per_cell = nppc,
 	mass = 115845,      # =  mass of Cu atom
 	charge = 5.,
 	charge_density = constant(368.),
@@ -118,7 +120,7 @@ Species(
 	name = "electron3",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
-	particles_per_cell= 10000,
+	particles_per_cell= nppc * 10,
 	mass = 1.0,
 	charge = -1.0,
 	charge_density = constant(368.),
@@ -167,7 +169,7 @@ DiagParticleBinning(
 	time_average = 1,
 	species = ["electron1"],
 	axes = [
-		 ["x",  0, 20*L0, 1]
+		 ["x",  0, Main.grid_length[0], 1]
 	]
 )
 DiagParticleBinning(
@@ -176,7 +178,7 @@ DiagParticleBinning(
 	time_average = 1,
 	species = ["electron2"],
 	axes = [
-		 ["x",  0, 20*L0, 1]
+		 ["x",  0, Main.grid_length[0], 1]
 	]
 )
 DiagParticleBinning(
@@ -185,7 +187,7 @@ DiagParticleBinning(
 	time_average = 1,
 	species = ["electron3"],
 	axes = [
-		 ["x",  0, 20*L0, 1]
+		 ["x",  0, Main.grid_length[0], 1]
 	]
 )
 
@@ -195,7 +197,7 @@ DiagParticleBinning(
 	time_average = 1,
 	species = ["electron1"],
 	axes = [
-		 ["x",  0, 20*L0, 1]
+		 ["x",  0, Main.grid_length[0], 1]
 	]
 )
 DiagParticleBinning(
@@ -204,7 +206,7 @@ DiagParticleBinning(
 	time_average = 1,
 	species = ["electron2"],
 	axes = [
-		 ["x",  0, 20*L0, 1]
+		 ["x",  0, Main.grid_length[0], 1]
 	]
 )
 DiagParticleBinning(
@@ -213,6 +215,6 @@ DiagParticleBinning(
 	time_average = 1,
 	species = ["electron3"],
 	axes = [
-		 ["x",  0, 20*L0, 1]
+		 ["x",  0, Main.grid_length[0], 1]
 	]
 )

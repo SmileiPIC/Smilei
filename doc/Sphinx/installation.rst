@@ -6,15 +6,14 @@ Before installing :program:`Smilei`, you need to install a few dependencies:
 * A C++11 compiler, optionally implementing openMP
 * MPI libraries supporting ``MPI_THREAD_MULTIPLE``
 * HDF5 libraries compatible with your versions of C++ and MPI
-* Python 2.7 (with header files)
-* ``make``
+* Python 2.7 or Python 3 (with header files)
 
 Optional dependencies are:
 
 * Git
-* Doxygen
 * Python modules: sphinx, h5py, numpy, matplotlib, pylab, pint
 * ffmpeg
+* the `Picsar <http://picsar.net>`_ library
 
 On a large cluster, refer to the administrator to install these requirements.
 If you want to install :program:`Smilei` on your personal computer, refer to the following sections.
@@ -41,9 +40,9 @@ that you can install following `these instructions <https://www.macports.org/ins
      
    .. code-block:: bash
 
-     sudo port install openmpi-gcc5 +threads
-     sudo port select --set mpi openmpi-gcc5-fortran
-     sudo port install hdf5 +openmpi+gcc5+threads
+     sudo port install openmpi-gcc7 +threads
+     sudo port select --set mpi openmpi-gcc7-fortran
+     sudo port install hdf5-18 +openmpi+gcc7+threads
      
 #. Edit your ``.bash_profile`` hidden file located in your home folder:
    
@@ -56,9 +55,7 @@ that you can install following `these instructions <https://www.macports.org/ins
    .. code-block:: bash
 
      export SMILEICXX=mpicxx
-     export HDF5_ROOT_DIR=/opt/local
-     
-   Depending on your system, you might need to use ``mpic++`` instead of ``mpicxx``.
+     export HDF5_ROOT_DIR=/opt/local/hdf5-18/lib/
 
 #. Python should be already installed by default, but in case you need
    a specific version, run:
@@ -79,7 +76,6 @@ that you can install following `these instructions <https://www.macports.org/ins
      sudo port install py27-h5py    # mandatory for opening any HDF5 file
      sudo port install py27-pint    # only for auto unit conversion
      sudo port install py27-sphinx  # only for building the doc
-     sudo port install doxygen      # only for building the reference C++ doc
 
 
 Via HomeBrew
@@ -122,54 +118,130 @@ This installation procedure has been tested on OS X 10.12
 
 Install dependencies on Linux
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    
-A manual installation is required :
+
+Fedora
+""""""
+
+.. code-block:: bash
+
+  dnf install -y gcc-c++ hdf5-openmpi hdf5-openmpi-devel openmpi-devel git which findutils python python-devel
+  dnf install -y h5py ipython python2-pint sphinx python2-matplotlib
+
+
+
+Debian (Ubuntu, Mint etc...)
+""""""""""""""""""""""""""""
+Since the system ``openmpi`` is not compiled with ``--enable-mpi-thread-multiple``, a manual installation is required :
 
 1. Choose a path whet to install dependencies by setting the environment variable ``INSTALL_DIR``. e.g. :
 
   .. code-block:: bash
 
-  	$ export INSTALL_DIR=/usr/local
+    export INSTALL_DIR=/usr/local
 
 
-2. Download `OpenMPI <https://www.open-mpi.org/software/ompi>`_
-
-  .. code-block:: bash
-  
-    $ taz zxvf openmpi-1.10.2.tar.gz # the number version might vary
-    $ cd openmpi-1.10.2
-    $ ./configure --prefix=${INSTALL_DIR}/openmpi --enable-mpi-thread-multiple --enable-mpirun-prefix-by-default
-    $ make
-    $ make install
-    $ export PATH=${INSTALL_DIR}/openmpi/bin:${PATH}
-    $ export LD_LIBRARY_PATH=${INSTALL_DIR}/openmpi/lib:${LD_LIBRARY_PATH}
-
-
-3. Download `HDF5 <https://support.hdfgroup.org/HDF5>`_ 
-	
-	the version number might change (here 1.8.16):
+2. Download `OpenMPI <https://www.open-mpi.org/software/ompi>`_ and install.
+   You may choose any ``${INSTALL_DIR}``.
 
   .. code-block:: bash
   
-    $ tar zxvf hdf5-1.8.16.tar.gz # the number version might vary
-    $ cd hdf5-1.8.16
-    $ ./configure --prefix=${INSTALL_DIR}/hdf5 --enable-parallel --with-pic --enable-linux-lfs --enable-shared --enable-production=yes --disable-sharedlib-rpath --enable-static CC=mpicc FC=mpif90
-    $ make
-    $ make install
-    $ export PATH=${INSTALL_DIR}/hdf5/bin:${PATH}
-    $ export LD_LIBRARY_PATH ${INSTALL_DIR}/hdf5/lib:${LD_LIBRARY_PATH}
-    $ # set HDF5 variable used in SMILEI makefile
-    $ export HDF5_ROOT_DIR=${INSTALL_DIR}/hdf5
-
-
-4. It might be wise to put the ``export`` lines above in a shell rc script (e.g. ``~/.bash_profile``) :
+    tar zxvf openmpi-1.10.2.tar.gz
+    cd openmpi-1.10.2
+    ./configure --prefix=${INSTALL_DIR}/openmpi --enable-mpi-thread-multiple --enable-mpirun-prefix-by-default
+    make
+    make install
+  
+  Set environment variables in your `~/.bashrc` or `~/.bash_profile` file.
 
   .. code-block:: bash
-	
-    INSTALL_DIR=/usr/local
-    export HDF5_ROOT_DIR=${INSTALL_DIR}/hdf5
+  
     export PATH=${INSTALL_DIR}/openmpi/bin:${PATH}
-    export LD_LIBRARY_PATH=${INSTALL_DIR}/openmpi/lib:${INSTALL_DIR}/hdf5/lib:${LD_LIBRARY_PATH}
+    export LD_LIBRARY_PATH=${INSTALL_DIR}/openmpi/lib:${LD_LIBRARY_PATH}
+
+
+3. Download `HDF5 <https://support.hdfgroup.org/HDF5>`_ and install
+
+  .. code-block:: bash
+  
+    tar zxvf hdf5-1.8.16.tar.gz
+    cd hdf5-1.8.16
+    ./configure --prefix=${INSTALL_DIR}/hdf5 --enable-parallel --with-pic --enable-linux-lfs --enable-shared --enable-production=yes --disable-sharedlib-rpath --enable-static CC=mpicc FC=mpif90
+    make
+    make install
+    
+  Set environment variables in your `~/.bashrc` or `~/.bash_profile` file.
+
+  .. code-block:: bash
+  
+    export PATH=${INSTALL_DIR}/hdf5/bin:${PATH}
+    export LD_LIBRARY_PATH=${INSTALL_DIR}/hdf5/lib:${LD_LIBRARY_PATH}
+    export HDF5_ROOT_DIR=${INSTALL_DIR}/hdf5
+
+
+----
+
+
+The optional Picsar library
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A Pseudo-Spectral Analytical Time Domain solver (PSATD) for Maxwell equations
+is available for use in Smilei via the `Picsar <http://picsar.net>`_ library.
+The PSATD solver is an FFT-based high-order Maxwell solver.
+Picsar uses the `FFTW <http://www.fftw.org>`_ library.
+
+Install FFTW
+""""""""""""
+
+Download and install the `latest version <http://www.fftw.org/>`_ of FFTW
+
+.. code-block:: bash
+
+  tar zxvf fftw-3.3.7.tar.gz
+  cd fftw-3.3.7
+  configure --prefix INSTALL_DIR --enable-shared --enable-threads --with-openmp --enable-mpi
+  make 
+  make install
+
+Set a few environment variables, typically in your `~/.bashrc` or `~/.bash_profile` file.
+
+.. code-block:: bash
+
+  export FFTW_LIB_DIR=${INSTALL_DIR}/lib
+  export FFTW_INC_DIR=${INSTALL_DIR}/include
+  export LD_LIBRARY_PATH=${INSTALL_DIR}/lib:${LD_LIBRARY_PATH} 
+
+
+Install PICSAR as a library
+"""""""""""""""""""""""""""
+
+1. Download the `latest version of Picsar <git@bitbucket.org:berkeleylab/picsar.git>`_
+
+  .. code-block:: bash  
+
+    git clone git@bitbucket.org:berkeleylab/picsar.git
+    cd picsar/
+
+2. Set library flags to compile picsar as a library
+
+  .. code-block:: bash  
+
+    sed -i 's/MODE=prod/MODE=library/g' Makefile 
+    sed -i 's/COMP=gnu/COMP=intel/g' Makefile # - if using intel compiler
+
+3. Link fftw to picsar (you may have to modify the following according to your machine)
+
+  .. code-block:: bash  
+
+    sed -i  's/FFTW3_LIB=\/usr\/lib\/x86_64-linux-gnu/FFTW3_LIB=$(FFTW_LIB_DIR)/g' Makefile
+    sed -i  's/FFTW3_INCLUDE=\/usr\/include/FFTW3_INCLUDE=$(FFTW_INC_DIR)/g' Makefile
+
+4. Install picsar as a library
+
+  .. code-block:: bash  
+
+    make lib
+    export LIBPXR=$PWD/lib
+    export LD_LIBRARY_PATH=${LIBPXR}:${LD_LIBRARY_PATH}
 
 
 ----
@@ -184,8 +256,8 @@ If you have successfully installed these dependencies on other platforms, please
 
 .. _compile:
 
-Download and compile
-^^^^^^^^^^^^^^^^^^^^
+Download and compile Smilei
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 #. Download the latest :program:`Smilei` tarball :ref:`here <latestVersion>`.
 
@@ -217,6 +289,7 @@ Several ``make`` options are available:
   make print-XXX               # Prints the value of makefile variable XXX
   make env                     # Prints the values of all makefile variables
   make help                    # Gets some help on compilation
+  sed -i 's/PICSAR=FALSE/PICSAR=TRUE/g' makefile; make -j4 #To enable calls for PSATD solver from picsar 
 
 
 Each machine may require a specific configuration (environment variables, modules, etc.).
@@ -239,19 +312,14 @@ with developpers so that it can be included in the next release of :program:`Smi
 Compile the documentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-There are two types of documentation:
-
-#. `Doxygen`, only useful for developers
-#. `Sphinx`, for users: the one you are currently reading
-
-They can be compiled with the following commands:
+If you have installed the python module ``sphinx``, you can compile the documentation
+(which you are currently reading) with:
 
 .. code-block:: bash
 
-   make doc     # Compiles all the documentation
-   make doxygen # Compiles only the `doxygen` doc
-   make sphinx  # Compiles only the `sphinx` doc
+   make doc
 
+This creates a local *html* website accessible in your ``build/html/`` folder.
 
 ----
 
@@ -277,7 +345,7 @@ There are several ways to load this module in python.
   
   The module will directly be accessible from *python*::
     
-    from happi import Smilei
+    >>> import happi
 
 2. Alternative: Execute the ``Diagnostics.py`` script from python 
   
@@ -287,5 +355,5 @@ There are several ways to load this module in python.
   
   You may add the following command in your own python script::
   
-    execfile("/path/to/Smilei/scripts/Diagnostics.py")
+    >>> execfile("/path/to/Smilei/scripts/Diagnostics.py")
 

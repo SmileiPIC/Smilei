@@ -1,11 +1,11 @@
-from happi import *
+import happi
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import erf as erf
 
 path = "temperature_isotropization1"
 
-sim = Smilei(path)
+sim = happi.Open(path)
 density_electron     = np.double(sim.namelist.Species["electron1"].charge_density)
 coulomb_log          = np.double(sim.namelist.Collisions[0].coulomb_log)
 dt                   = np.double(sim.namelist.Main.timestep)/(2*np.pi)
@@ -15,7 +15,7 @@ wavelength = 1e-6 # meters
 c = 3e8
 coeff = (2.*np.pi/wavelength)**2*re_*c / (2.*np.sqrt(np.pi))
 
-times = sim.ParticleBinning(diagNumber=0).getAvailableTimesteps()
+times = np.double(sim.ParticleBinning(diagNumber=0).getAvailableTimesteps())
 electrons0 = sim.ParticleBinning(0, sum={"x":"all"}).get()
 vx = electrons0["vx"]
 electrons1 = sim.ParticleBinning(1, sum={"x":"all"}).get()

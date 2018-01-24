@@ -85,8 +85,8 @@ class Screen(Diagnostic):
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
 		# Get available timesteps
-		self.times = {}
-		self._times = {}
+		self._timesteps = {}
+		self._alltimesteps = {}
 		self._indexOfTime  = {}
 		self._h5items = {}
 		for d in self._diags:
@@ -97,31 +97,31 @@ class Screen(Diagnostic):
 				items.update( dict(f) )
 			items = sorted(items.items())
 			self._h5items[d] = [it[1] for it in items]
-			self.times[d] = self._np.array([ int(it[0].strip("timestep")) for it in items ])
-			self._times[d] = self._np.copy(self.times[d])
+			self._timesteps[d] = self._np.array([ int(it[0].strip("timestep")) for it in items ])
+			self._alltimesteps[d] = self._np.copy(self._timesteps[d])
 			# fill the "_indexOfTime" dictionary with indices to the data arrays
 			self._indexOfTime.update({ d:{} })
-			for i,t in enumerate(self.times[d]):
+			for i,t in enumerate(self._timesteps[d]):
 				self._indexOfTime[d].update({ t : i })
 			# If timesteps is None, then keep all timesteps, otherwise, select timesteps
 			if timesteps is not None:
 				try:
-					self.times[d] = self._selectTimesteps(timesteps, self.times[d])
+					self._timesteps[d] = self._selectTimesteps(timesteps, self._timesteps[d])
 				except:
 					self._error = "Argument 'timesteps' must be one or two non-negative integers"
 					return
 			# Verify that timesteps are the same for all diagnostics
-			if (self.times[d] != self.times[self._diags[0]]).any() :
+			if (self._timesteps[d] != self._timesteps[self._diags[0]]).any() :
 				self._error = "All screens in operation '"+self.operation+"' must have the same timesteps."\
-					+" Screen #"+str(d)+" has "+str(len(self.times[d]))+ " timesteps and #"\
-					+str(self._diags[0])+" has "+str(len(self.times[self._diags[0]]))+ " timesteps"
+					+" Screen #"+str(d)+" has "+str(len(self._timesteps[d]))+ " timesteps and #"\
+					+str(self._diags[0])+" has "+str(len(self._timesteps[self._diags[0]]))+ " timesteps"
 				return
 		# Now we need to keep only one array of timesteps because they should be all the same
-		self.times  = self.times [self._diags[0]]
-		self._times = self._times[self._diags[0]]
+		self._timesteps  = self._timesteps [self._diags[0]]
+		self._alltimesteps = self._alltimesteps[self._diags[0]]
 		
 		# Need at least one timestep
-		if self.times.size < 1:
+		if self._timesteps.size < 1:
 			self._error = "Timesteps not found"
 			return
 		
@@ -137,6 +137,7 @@ class Screen(Diagnostic):
 		self._sums = [False]*self._naxes
 		self._selection = [self._np.s_[:]]*self._naxes
 		hasComposite = False
+		uniform = True
 		
 		for iaxis in range(self._naxes):
 			axis = self._axes[iaxis]
@@ -176,11 +177,6 @@ class Screen(Diagnostic):
 				axis_units = "rad"
 				overall_min = "-3.141592653589793"
 				overall_max = " 3.141592653589793"
-			elif axistype[:9] == "composite":
-				axis_units = "L_r"
-				hasComposite = True
-				axistype = axistype[10:]
-				axis["type"] = axistype
 			elif axistype in ["px","py","pz","p"]:
 				axis_units = "P_r"
 			elif axistype in ["vx","vy","vz","v"]:
@@ -227,6 +223,12 @@ class Screen(Diagnostic):
 							= self._selectSubset(subset[axistype], centers, axistype, axis_units, "subset")
 					except:
 						return
+					# If selection is not a slice (meaning only one element) then axis removed from plot
+					if type(self._selection[iaxis]) is not slice and axistype in ["x","y","z","moving_x"]:
+						first_edge = edges[self._selection[iaxis]]
+						last_edge  = edges[self._selection[iaxis]+1]
+						coeff /= last_edge - first_edge
+					
 				# If subset has more than 1 point (or no subset), use this axis in the plot
 				if type(self._selection[iaxis]) is slice:
 					self._type   .append(axistype)
@@ -236,10 +238,13 @@ class Screen(Diagnostic):
 					self._label  .append(axistype)
 					self._units  .append(axis_units)
 					if axistype == "theta" and self._ndim==3:
+						uniform = False
 						plot_diff.append(self._np.diff(self._np.cos(edges))[self._selection[iaxis]])
 					else:
 						plot_diff.append(self._np.diff(edges)[self._selection[iaxis]])
 					self._finalShape[iaxis] = len(self._centers[-1])
+					if axis["log"]:
+						uniform = False
 		
 		self._selection = tuple(self._selection)
 		
@@ -289,13 +294,18 @@ class Screen(Diagnostic):
 		
 		# Calculate the array that represents the bins sizes in order to get units right.
 		# This array will be the same size as the plotted array
-		if len(plot_diff)==0:
+		if uniform:
 			self._bsize = 1.
-		elif len(plot_diff)==1:
-			self._bsize = plot_diff[0]
+			for d in plot_diff:
+				self._bsize *= d[0]
 		else:
-			self._bsize = self._np.prod( self._np.array( self._np.meshgrid( *plot_diff ) ), axis=0)
-			self._bsize = self._bsize.transpose([1,0]+range(2,len(plot_diff)))
+			if len(plot_diff)==0:
+				self._bsize = 1.
+			elif len(plot_diff)==1:
+				self._bsize = plot_diff[0]
+			else:
+				self._bsize = self._np.prod( self._np.array( self._np.meshgrid( *plot_diff ) ), axis=0)
+				self._bsize = self._bsize.transpose([1,0]+list(range(2,len(plot_diff))))
 		self._bsize = cell_volume / self._bsize
 		if not hasComposite: self._bsize *= coeff
 		self._bsize = self._np.squeeze(self._bsize)
@@ -399,7 +409,7 @@ class Screen(Diagnostic):
 	def getAvailableTimesteps(self, diagNumber=None):
 		# if argument "diagNumber" not provided, return the times calculated in __init__
 		if diagNumber is None:
-			return self._times
+			return self._alltimesteps
 		# Otherwise, get the timesteps specifically available for the single requested diagnostic
 		else:
 			times = set()

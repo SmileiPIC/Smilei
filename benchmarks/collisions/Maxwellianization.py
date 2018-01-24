@@ -1,5 +1,5 @@
 
-from happi import *
+import happi
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import erf as erf
@@ -7,10 +7,9 @@ plt.ion()
 
 path = "Maxwellianization1"
 
-sim = Smilei(path)
-coulomb_log          = np.double(sim.namelist.Collisions[0].coulomb_log)
-dt                   = np.double(sim.namelist.Main.timestep)/(2*np.pi)
-
+sim = happi.Open(path)
+coulomb_log = np.double(sim.namelist.Collisions[0].coulomb_log)
+dt          = np.double(sim.namelist.Main.timestep)/(2*np.pi)
 
 re_ = 2.8179403267e-15 # meters
 wavelength = 1e-6 # meters

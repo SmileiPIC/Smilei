@@ -42,6 +42,9 @@ public :
         return size;
     };
     
+    //! Get disk footprint of current diagnostic
+    uint64_t getDiskFootPrint(int istart, int istop, Patch* patch) override;
+    
     //! vector for saving the output array
     std::vector<double> data_sum;
     
@@ -56,7 +59,7 @@ private :
     //! Histogram object
     Histogram * histogram;
     
-    int output_size;
+    unsigned int output_size;
     
     std::string screen_shape;
     //! Relates to the shape of the screen (plane=0, sphere=1)

@@ -14,4 +14,4 @@ if not os.path.isfile(module_dir+'happi'+s+'__init__.py'):
 else:
 	import sys
 	sys.path.insert(0, module_dir)
-	from happi import *
+	import happi

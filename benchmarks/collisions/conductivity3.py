@@ -20,7 +20,7 @@ Main(
     time_fields_frozen = 100000000000.,
 
     cell_length = [1*L0],
-    grid_length = [20*L0],
+    grid_length = [40*L0],
 
     EM_boundary_conditions = [ ["periodic"] ],
 
@@ -38,12 +38,13 @@ ExternalField(
 	profile = 0.001
 )
 
+nppc = 50000
 
 Species(
 	name = "copper1",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
-	particles_per_cell = 50000,
+	particles_per_cell = nppc,
 	mass = 115845.,      # =  mass of Cu atom
 	charge = 17.,
 	charge_density = constant(1268.),
@@ -58,7 +59,7 @@ Species(
 	name = "electron1",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
-	particles_per_cell= 100000,
+	particles_per_cell= nppc,
 	mass = 1.0,
 	charge = -1.0,
 	charge_density = constant(1268.),
@@ -74,7 +75,7 @@ Species(
 	name = "copper2",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
-	particles_per_cell = 50000,
+	particles_per_cell = nppc,
 	mass = 115845.,      # =  mass of Cu atom
 	charge = 25.,
 	charge_density = constant(1869.),
@@ -89,7 +90,7 @@ Species(
 	name = "electron2",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
-	particles_per_cell= 100000,
+	particles_per_cell= nppc,
 	mass = 1.0,
 	charge = -1.0,
 	charge_density = constant(1869.),
@@ -132,7 +133,7 @@ DiagParticleBinning(
 	time_average = 4,
 	species = ["electron1"],
 	axes = [
-		 ["x",  0, 20*L0, 1]
+		 ["x",  0, Main.grid_length[0], 1]
 	]
 )
 DiagParticleBinning(
@@ -141,7 +142,7 @@ DiagParticleBinning(
 	time_average = 4,
 	species = ["electron2"],
 	axes = [
-		 ["x",  0, 20*L0, 1]
+		 ["x",  0, Main.grid_length[0], 1]
 	]
 )
 
@@ -152,7 +153,7 @@ DiagParticleBinning(
 	time_average = 4,
 	species = ["electron1"],
 	axes = [
-		 ["x",  0, 20*L0, 1]
+		 ["x",  0, Main.grid_length[0], 1]
 	]
 )
 DiagParticleBinning(
@@ -161,7 +162,7 @@ DiagParticleBinning(
 	time_average = 4,
 	species = ["electron2"],
 	axes = [
-		 ["x",  0, 20*L0, 1]
+		 ["x",  0, Main.grid_length[0], 1]
 	]
 )
 

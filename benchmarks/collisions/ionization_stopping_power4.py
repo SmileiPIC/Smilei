@@ -19,7 +19,7 @@ Main(
 
     time_fields_frozen = 100000000000.,
 
-    cell_length = [400.*L0],
+    cell_length = [200.*L0],
     grid_length = [8000.*L0],
 
     EM_boundary_conditions = [ ["periodic"] ],
@@ -53,9 +53,6 @@ Species(
 	boundary_conditions = [
 		["periodic", "periodic"],
 	],
-	boundary_conditions = [
-		["periodic", "periodic"],
-	],
 	c_part_max = 10.
 )
 
@@ -70,9 +67,6 @@ Species(
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.00000000001]*3,
 	time_frozen = 100000000.0,
-	boundary_conditions = [
-		["periodic", "periodic"],
-	],
 	boundary_conditions = [
 		["periodic", "periodic"],
 	],

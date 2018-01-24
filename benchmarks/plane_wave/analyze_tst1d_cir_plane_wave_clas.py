@@ -6,7 +6,7 @@
 # Non-relativistic (classical) regime
 # _____________________________________________________
 
-from happi import *
+import happi
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib as mpl
@@ -28,7 +28,7 @@ mpl.rcParams['figure.facecolor'] = 'white'
 # ________________________________________________
 # Open results
 
-res = Smilei("./tst1d_cir_plane_wave_clas",verbose=False)
+res = happi.Open("./tst1d_cir_plane_wave_clas",verbose=False)
 
 # ________________________________________________
 # Parameters

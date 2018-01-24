@@ -2,13 +2,13 @@ from .._Utils import *
 
 class Diagnostic(object):
 	"""Mother class for all Diagnostics.
-	To create a diagnostic, refer to the doc of the Smilei class.
-	Once a Smilei object is created, you may get help on its diagnostics.
+	To create a diagnostic, refer to the doc of the SmileiSimulation class.
+	Once such object is created, you may get help on its diagnostics.
 	
 	Example:
-		S = Smilei("path/to/simulation") # Load a simulation
-		help( S )                        # General help on the simulation's diagnostics
-		help( S.Field )                  # Help on loading a Field diagnostic
+		S = happi.Open("path/to/simulation") # Load a simulation
+		help( S )                            # General help on the simulation's diagnostics
+		help( S.Field )                      # Help on loading a Field diagnostic
 	"""
 	
 	def __init__(self, simulation, *args, **kwargs):
@@ -24,30 +24,31 @@ class Diagnostic(object):
 		self._data_log = False
 		self._error = ""
 		
-		# The 'simulation' is a Smilei object. It is passed as an instance attribute
-		self.Smilei = simulation
+		# The 'simulation' is a SmileiSimulation object. It is passed as an instance attribute
+		self.simulation = simulation
 		
 		# Transfer the simulation's packages to the diagnostic
-		self._h5py = self.Smilei._h5py
-		self._np   = self.Smilei._np
-		self._os   = self.Smilei._os
-		self._glob = self.Smilei._glob
-		self._re   = self.Smilei._re
-		self._plt  = self.Smilei._plt
+		self._h5py    = self.simulation._h5py
+		self._np      = self.simulation._np
+		self._os      = self.simulation._os
+		self._glob    = self.simulation._glob
+		self._re      = self.simulation._re
+		self._plt     = self.simulation._plt
+		self._verbose = self.simulation._verbose
 		
 		# Reload the simulation, in case it has been updated
-		self.Smilei.reload()
-		if not self.Smilei.valid:
+		self.simulation.reload()
+		if not self.simulation.valid:
 			self._error = "Invalid Smilei simulation"
 			return
 		
 		# Copy some parameters from the simulation
-		self._results_path = self.Smilei._results_path
-		self.namelist      = self.Smilei.namelist
-		self._ndim         = self.Smilei._ndim
-		self._cell_length  = self.Smilei._cell_length
-		self._ncels        = self.Smilei._ncels
-		self.timestep      = self.Smilei._timestep
+		self._results_path = self.simulation._results_path
+		self.namelist      = self.simulation.namelist
+		self._ndim         = self.simulation._ndim
+		self._cell_length  = self.simulation._cell_length
+		self._ncels        = self.simulation._ncels
+		self.timestep      = self.simulation._timestep
 		
 		# Make the Options object
 		self.options = Options()
@@ -55,8 +56,8 @@ class Diagnostic(object):
 		
 		# Make or retrieve the Units object
 		self.units = kwargs.pop("units", [""])
-		if type(self.units) in [list, tuple]: self.units = Units(*self.units , verbose = self.Smilei._verbose)
-		if type(self.units) is dict         : self.units = Units(verbose = self.Smilei._verbose, **self.units)
+		if type(self.units) in [list, tuple]: self.units = Units(*self.units , verbose = self._verbose)
+		if type(self.units) is dict         : self.units = Units(verbose = self._verbose, **self.units)
 		if type(self.units) is not Units:
 			self._error = "Could not understand the 'units' argument"
 			return
@@ -83,7 +84,7 @@ class Diagnostic(object):
 			yunits = None
 			if self.dim > 0: xunits = self._units[0]
 			if self.dim > 1: yunits = self._units[1]
-			self.units.prepare(self.Smilei._reference_angular_frequency_SI, xunits, yunits, self._vunits)
+			self.units.prepare(self.simulation._reference_angular_frequency_SI, xunits, yunits, self._vunits)
 	
 	# When no action is performed on the object, this is what appears
 	def __repr__(self):
@@ -93,11 +94,11 @@ class Diagnostic(object):
 	# Method to verify everything was ok during initialization
 	def _validate(self):
 		try:
-			self.Smilei.valid
+			self.simulation.valid
 		except:
 			print("No valid Smilei simulation selected")
 			return False
-		if not self.Smilei.valid or not self.valid:
+		if not self.simulation.valid or not self.valid:
 			print("Diagnostic is invalid")
 			return False
 		return True
@@ -106,6 +107,16 @@ class Diagnostic(object):
 	def set(self, **kwargs):
 		self.options.set(**kwargs)
 		return self
+	
+	# Method to set optional plotting arguments, but also checks all are known
+	def _setAndCheck(self, **kwargs):
+		kwargs = self.options.set(**kwargs)
+		if len(kwargs)>0:
+			unknown_kwargs = ", ".join(kwargs.keys())
+			print("Error: The following arguments are unknown: "+unknown_kwargs)
+			return False
+		else:
+			return True
 	
 	# Method to obtain the plot limits
 	def limits(self):
@@ -116,7 +127,7 @@ class Diagnostic(object):
 		A list of [min, max] for each axis.
 		"""
 		l = []
-		factor = [self.xfactor, self.yfactor]
+		factor = [self._xfactor, self._yfactor]
 		for i in range(self.dim):
 			l.append([min(self._centers[i])*factor[i], max(self._centers[i])*factor[i]])
 		return l
@@ -125,7 +136,7 @@ class Diagnostic(object):
 	def info(self):
 		if not self._validate():
 			print(self._error)
-		elif self.Smilei._verbose:
+		elif self._verbose:
 			print(self._info())
 	
 	# Method to get only the arrays of data
@@ -138,45 +149,78 @@ class Diagnostic(object):
 		
 		Returns:
 		--------
-		An array copy of the diagnostic data.
+		A list of arrays: each array corresponding to the diagnostic data at a given
+		timestep.
 		"""
 		if not self._validate(): return
 		self._prepare1() # prepare the vfactor
 		data = []
 		
 		if timestep is None:
-			for t in self.times:
+			for t in self._timesteps:
 				data.append( self._vfactor*self._getDataAtTime(t) )
-		elif timestep not in self.times:
+		elif timestep not in self._timesteps:
 			print("ERROR: timestep "+str(timestep)+" not available")
 		else:
 			data.append( self._vfactor*self._getDataAtTime(timestep) )
 		
 		return data
 	
+	def getTimesteps(self):
+		"""Obtains the list of timesteps selected in this diagnostic"""
+		return self._timesteps
+	
+	def getTimes(self):
+		"""
+		Obtains the list of times selected in this diagnostic.
+		By default, times are in the code's units, but are converted to the diagnostic's
+		units defined by the `units` argument, if provided.
+		"""
+		return self.units.tcoeff * self.timestep * self._np.array(self._timesteps)
+	
+	def getAxis(self, axis):
+		"""
+		Obtains the list of positions of the diagnostic data along the requested axis.
+		By default, axis positions are in the code's units, but are converted to 
+		the diagnostic's units defined by the `units` argument, if provided.
+		
+		Parameters:
+		-----------
+		axis: str
+			The name of the requested axis.
+		
+		Returns:
+		--------
+		A list of positions along the requested axis.
+		(If the requested axis is not available, returns an empty list.)
+		
+		Example: if `x` is an available axis, `Diag.getAxis("x")` returns a list
+		of the positions of the diagnostic data along x.
+		"""
+		try: axis_index = self._type.index(axis)
+		except: return []
+		factor = 1.
+		if axis_index == 1: factor = (self.options.xfactor or 1.) * self.units.xcoeff
+		if axis_index == 2: factor = (self.options.yfactor or 1.) * self.units.ycoeff
+		return factor * self._np.array(self._centers[axis_index])
+	
 	# Method to obtain the data and the axes
 	def get(self, timestep=None):
 		"""Obtains the data from the diagnostic and some additional information.
 		
-		Parameters:
-		-----------
-		timestep: int (default: None, which means all available timesteps)
-		
-		Returns:
-		--------
-		A dictionnary with several values, being various information on the diagnostic.
-		One of the values is an array copy of the diagnostic data.
+		!!! Deprecated !!!
+		Use functions `getData`, `getTimesteps`, `getTimes` and `getAxis` instead.
 		"""
 		if not self._validate(): return
 		# obtain the data arrays
 		data = self.getData(timestep=timestep)
 		# format the results into a dictionary
-		result = {"data":data, "times":self.times}
+		result = {"data":data, "times":self._timesteps}
 		for i in range(len(self._type)):
 			result.update({ self._type[i]:self._centers[i] })
 		return result
 	
-	def _make_axes(self, axes, **kwargs):
+	def _make_axes(self, axes):
 		if axes is None:
 			fig = self._plt.figure(**self.options.figure0)
 			fig.set(**self.options.figure1)
@@ -214,19 +258,19 @@ class Diagnostic(object):
 		
 		Example:
 		--------
-			S = Smilei("path/to/my/results")
+			S = happi.Open("path/to/my/results")
 			S.ParticleBinning(1).plot(vmin=0, vmax=1e14)
 		"""
 		if not self._validate(): return
 		if not self._prepare(): return
-		self.set(**kwargs)
+		if not self._setAndCheck(**kwargs): return
 		self.info()
-		ax = self._make_axes(axes, **kwargs)
+		ax = self._make_axes(axes)
 		fig = ax.figure
 		
 		if timestep is None:
-			timestep = self.times[-1]
-		elif timestep not in self.times:
+			timestep = self._timesteps[-1]
+		elif timestep not in self._timesteps:
 			print("ERROR: timestep "+str(timestep)+" not available")
 			return
 		
@@ -260,17 +304,17 @@ class Diagnostic(object):
 		
 		Example:
 		--------
-			S = Smilei("path/to/my/results")
+			S = happi.Open("path/to/my/results")
 			S.ParticleBinning(1).streak(vmin=0, vmax=1e14)
 		"""
 		if not self._validate(): return
 		if not self._prepare(): return
-		self.set(**kwargs)
+		if not self._setAndCheck(**kwargs): return
 		self.info()
-		ax = self._make_axes(axes, **kwargs)
+		ax = self._make_axes(axes)
 		fig = ax.figure
 		
-		if len(self.times) < 2:
+		if len(self._timesteps) < 2:
 			print("ERROR: a streak plot requires at least 2 times")
 			return
 		if not hasattr(self,"_getDataAtTime"):
@@ -279,20 +323,20 @@ class Diagnostic(object):
 		if self.dim != 1:
 			print("ERROR: Diagnostic must be 1-D for a streak plot")
 			return
-		if not (self._np.diff(self.times)==self.times[1]-self.times[0]).all():
+		if not (self._np.diff(self._timesteps)==self._timesteps[1]-self._timesteps[0]).all():
 			print("WARNING: times are not evenly spaced. Time-scale not plotted")
 			ylabel = "Unevenly-spaced times"
 		else:
 			ylabel = "Timesteps"
 		# Loop times and accumulate data
 		A = []
-		for time in self.times: A.append(self._getDataAtTime(time))
+		for time in self._timesteps: A.append(self._getDataAtTime(time))
 		A = self._np.double(A)
 		# Plot
 		ax.cla()
 		xmin = self._xfactor*self._centers[0][0]
 		xmax = self._xfactor*self._centers[0][-1]
-		extent = [xmin, xmax, self.times[0], self.times[-1]]
+		extent = [xmin, xmax, self._timesteps[0], self._timesteps[-1]]
 		if self._log[0]: extent[0:2] = [self._np.log10(xmin), self._np.log10(xmax)]
 		im = ax.imshow(self._np.flipud(A), vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
 		ax.set_xlabel(self._xlabel)
@@ -344,16 +388,16 @@ class Diagnostic(object):
 		
 		Example:
 		--------
-			S = Smilei("path/to/my/results")
+			S = happi.Open("path/to/my/results")
 			S.ParticleBinning(1).animate(vmin=0, vmax=1e14)
 			
 			This takes the particle binning diagnostic #1 and plots the resulting array in figure 1 from 0 to 3e14.
 		"""
 		if not self._validate(): return
 		if not self._prepare(): return
-		self.set(**kwargs)
+		if not self._setAndCheck(**kwargs): return
 		self.info()
-		ax = self._make_axes(axes, **kwargs)
+		ax = self._make_axes(axes)
 		fig = ax.figure
 		
 		# Movie requested ?
@@ -361,8 +405,8 @@ class Diagnostic(object):
 		# Save to file requested ?
 		save = SaveAs(saveAs, fig, self._plt)
 		# Loop times for animation
-		for time in self.times:
-			if self.Smilei._verbose: print("timestep "+str(time))
+		for time in self._timesteps:
+			if self._verbose: print("timestep "+str(time))
 			# plot
 			ax.cla()
 			if self._animateOnAxes(ax, time) is None: return
@@ -517,8 +561,8 @@ class Diagnostic(object):
 	def _prepare3(self):
 		# prepare temporary data if zero-d plot
 		if self.dim == 0 and self._tmpdata is None:
-			self._tmpdata = self._np.zeros(self.times.size)
-			for i, t in enumerate(self.times):
+			self._tmpdata = self._np.zeros(self._timesteps.size)
+			for i, t in enumerate(self._timesteps):
 				self._tmpdata[i] = self._getDataAtTime(t)
 		# prepare the colormap if 2d plot
 		if self.dim == 2 and self.options.transparent:
@@ -532,7 +576,7 @@ class Diagnostic(object):
 				new_cmap.set_over (color="white", alpha="0")
 			self.options.image["cmap"] = new_cmap
 		return True
-			
+		
 	def _prepare4(self): pass
 	
 	# Method to set limits to a plot
@@ -544,11 +588,11 @@ class Diagnostic(object):
 	
 	# Methods to plot the data when axes are made
 	def _animateOnAxes_0D(self, ax, t, cax_id=0):
-		times = self.times[self.times<=t]
-		A     = self._tmpdata[self.times<=t]
+		times = self._timesteps[self._timesteps<=t]
+		A     = self._tmpdata[self._timesteps<=t]
 		im, = ax.plot(self._tfactor*times, self._vfactor*A, **self.options.plot)
 		ax.set_xlabel(self._tlabel)
-		self._setLimits(ax, xmax=self._tfactor*self.times[-1], ymin=self.options.vmin, ymax=self.options.vmax)
+		self._setLimits(ax, xmax=self._tfactor*self._timesteps[-1], ymin=self.options.vmin, ymax=self.options.vmax)
 		self._setSomeOptions(ax, t)
 		return im
 	def _animateOnAxes_1D(self, ax, t, cax_id=0):
@@ -578,8 +622,9 @@ class Diagnostic(object):
 	
 	# Special case: 2D plot
 	# This is overloaded by class "Probe" because it requires to replace imshow
+	# Also overloaded by class "Performances" to add a line plot
 	def _animateOnAxes_2D_(self, ax, A):
-		im = ax.imshow( self._np.flipud(A.transpose()),
+		im = ax.imshow( self._np.rot90(A),
 			vmin = self.options.vmin, vmax = self.options.vmax, extent=self._extent, **self.options.image)
 		return im
 	
@@ -593,12 +638,12 @@ class Diagnostic(object):
 		try:
 			if len(self.options.xtick)>0: ax.ticklabel_format(axis="x",**self.options.xtick)
 		except:
-			if self.Smilei._verbose: print("Cannot format x ticks (typically happens with log-scale)")
+			if self._verbose: print("Cannot format x ticks (typically happens with log-scale)")
 			self.xtickkwargs = []
 		try:
 			if len(self.options.ytick)>0: ax.ticklabel_format(axis="y",**self.options.ytick)
 		except:
-			if self.Smilei._verbose: print("Cannot format y ticks (typically happens with log-scale)")
+			if self._verbose: print("Cannot format y ticks (typically happens with log-scale)")
 			self.xtickkwargs = []
 	
 	# Define and output directory in case of exporting
@@ -612,10 +657,6 @@ class Diagnostic(object):
 	
 	def _mkdir(self, dir):
 		if not self._os.path.exists(dir): self._os.makedirs(dir)
-	
-	# Convert to XDMF format for ParaView (do nothing in the mother class)
-	def toXDMF(self):
-		pass
 	
 	# Convert data to VTK format
 	def toVTK(self, numberOfPieces=1):
@@ -632,27 +673,27 @@ class Diagnostic(object):
 		extent = []
 		for i in range(self.dim): extent += [0,self._shape[i]-1]
 		origin = [0.] * self.dim
-		ntimes = len(self.times)
+		ntimes = len(self._timesteps)
 		
 		vtk = VTKfile()
 		
 		# If 2D data, then do a streak plot
 		if self.dim == 2:
-			dt = self.times[1]-self.times[0]
+			dt = self._timesteps[1]-self._timesteps[0]
 			
 			# Get the data
 			data = self._np.zeros(list(self._shape)+[ntimes])
 			for itime in range(ntimes):
-				data[:,:,itime] = self._getDataAtTime(self.times[itime])
+				data[:,:,itime] = self._getDataAtTime(self._timesteps[itime])
 			arr = vtk.Array(self._np.ascontiguousarray(data.flatten(order='F'), dtype='float32'), self._title)
 			
 			# If all timesteps are regularly spaced
-			if (self._np.diff(self.times)==dt).all():
+			if (self._np.diff(self._timesteps)==dt).all():
 				spacings += [dt]
 				extent += [0, ntimes-1]
-				origin += [self.times[0]]
+				origin += [self._timesteps[0]]
 				vtk.WriteImage(arr, origin, extent, spacings, fileprefix+".pvti", numberOfPieces)
-				if self.Smilei._verbose: print("Successfully exported regular streak plot to VTK, folder='"+self._exportDir)
+				if self._verbose: print("Successfully exported regular streak plot to VTK, folder='"+self._exportDir)
 			
 			# If timesteps are irregular, make an irregular grid
 			else:
@@ -660,17 +701,17 @@ class Diagnostic(object):
 					(self._shape[0], self._shape[1], ntimes),
 					vtk.Array(self._centers[0].astype('float32'), "x"),
 					vtk.Array(self._centers[1].astype('float32'), "y"),
-					vtk.Array(self.times      .astype('float32'), "t"),
+					vtk.Array(self._timesteps  .astype('float32'), "t"),
 					arr,
 					fileprefix+".vtk"
 				)
-				if self.Smilei._verbose: print("Successfully exported irregular streak plot to VTK, folder='"+self._exportDir)
+				if self._verbose: print("Successfully exported irregular streak plot to VTK, folder='"+self._exportDir)
 		
 		# If 3D data, then do a 3D plot
 		elif self.dim == 3:
 			for itime in range(ntimes):
-				data = self._np.ascontiguousarray(self._getDataAtTime(self.times[itime]).flatten(order='F'), dtype='float32')
+				data = self._np.ascontiguousarray(self._getDataAtTime(self._timesteps[itime]).flatten(order='F'), dtype='float32')
 				arr = vtk.Array(data, self._title)
 				vtk.WriteImage(arr, origin, extent, spacings, fileprefix+"_"+str(itime)+".pvti", numberOfPieces)
-			if self.Smilei._verbose: print("Successfully exported 3D plot to VTK, folder='"+self._exportDir)
+			if self._verbose: print("Successfully exported 3D plot to VTK, folder='"+self._exportDir)
 

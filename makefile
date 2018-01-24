@@ -9,13 +9,13 @@
 SMILEICXX ?= mpicxx
 HDF5_ROOT_DIR ?= 
 BUILD_DIR ?= build
-PYTHONCONFIG := python scripts/CompileTools/python-config.py
+PYTHONEXE ?= python
+
+PYTHONCONFIG := $(PYTHONEXE) scripts/CompileTools/python-config.py
 
 #-----------------------------------------------------
 # Git information
-DESCRIBE:=$(shell git describe 2>/dev/null || cat .version || echo '??')
-BRANCH:=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
-VERSION="$(DESCRIBE)$(BRANCH)"
+VERSION:=$(shell $(PYTHONEXE) scripts/CompileTools/get-version.py )
 
 #-----------------------------------------------------
 # Directories and files
@@ -23,7 +23,7 @@ DIRS := $(shell find src -type d)
 SRCS := $(shell find src/* -name \*.cpp)
 OBJS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.o))
 DEPS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.d))
-SITEDIR = $(shell python -c 'import site; site._script()' --user-site)
+SITEDIR = $(shell $(PYTHONEXE) -c 'import site; site._script()' --user-site)
 
 #-----------------------------------------------------
 # Flags 
@@ -35,7 +35,7 @@ CXXFLAGS += -std=c++11 -Wall
 # HDF5 library
 ifneq ($(strip $(HDF5_ROOT_DIR)),)
 CXXFLAGS += -I${HDF5_ROOT_DIR}/include 
-LDFLAGS += -L${HDF5_ROOT_DIR}/lib 
+LDFLAGS := -L${HDF5_ROOT_DIR}/lib $(LDFLAGS)
 endif
 LDFLAGS += -lhdf5 
 # Include subdirs
@@ -51,6 +51,21 @@ LDFLAGS += $(PY_LDFLAGS)
 ifneq ($(strip $(PYTHONHOME)),)
     LDFLAGS += -L$(PYTHONHOME)/lib
 endif 
+
+
+PICSAR=FALSE
+ifeq ($(PICSAR),TRUE)
+        # New environment variable
+	FFTW3_LIB ?= $(FFTW_LIB_DIR)
+	LIBPXR ?= picsar/lib
+	# Set Picsar link environment
+	CXXFLAGS += -D_PICSAR
+	LDFLAGS += -L$(LIBPXR) -lpxr
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_threads
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3
+	LDFLAGS += -lgfortran
+endif
 
 # Manage options in the "config" parameter
 ifneq (,$(findstring debug,$(config)))
@@ -68,13 +83,13 @@ else ifneq (,$(findstring scalasca,$(config)))
     CXXFLAGS += -g  -O3
     SMILEICXX = scalasca -instrument $(SMILEICXX)
 
-# With Intel Advisor
+# With Intel Advisor / Vtune
 else ifneq (,$(findstring advisor,$(config)))
-    CXXFLAGS += -g -O3 -qopt-report5
+    CXXFLAGS += -g -O3 -debug inline-debug-info -shared-intel -parallel-source-info=2
 
 # Optimization report
 else ifneq (,$(findstring opt-report,$(config)))
-    CXXFLAGS += -qopt-report5
+    CXXFLAGS += -O3 -qopt-report5
 
 # Default configuration
 else
@@ -88,7 +103,10 @@ ifeq (,$(findstring noopenmp,$(config)))
     OPENMP_FLAG += -D_OMP
     LDFLAGS += $(OPENMP_FLAG)
     CXXFLAGS += $(OPENMP_FLAG)
+else
+    LDFLAGS += -mt_mpi
 endif
+
 
 #-----------------------------------------------------
 # check whether to use a machine specific definitions
@@ -119,27 +137,23 @@ clean:
 
 distclean: clean uninstall_happi
 	$(Q) rm -f $(EXEC) $(EXEC)_test
-# Deprecated rules
-obsolete:
-	@echo "[WARNING] Please consider using make config=\"$(MAKECMDGOALS)\""
-
-debug: obsolete
-	make config=debug
-
-scalasca: obsolete
-	make config=scalasca
+	
 
 # Create python header files
 $(BUILD_DIR)/%.pyh: %.py
 	@echo "Creating binary char for $<"
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-	$(Q) python scripts/CompileTools/hexdump.py "$<" "$@"
+	$(Q) $(PYTHONEXE) scripts/CompileTools/hexdump.py "$<" "$@"
 
 # Calculate dependencies
 $(BUILD_DIR)/%.d: %.cpp
 	@echo "Checking dependencies for $<"
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
 	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
+
+$(BUILD_DIR)/src/Diagnostic/DiagnosticScalar.o : src/Diagnostic/DiagnosticScalar.cpp
+	@echo "SPECIAL COMPILATION FOR $<"
+	$(Q) $(SMILEICXX) $(CXXFLAGS) -O2 -c $< -o $@
 
 # Compile cpps
 $(BUILD_DIR)/%.o : %.cpp
@@ -164,8 +178,8 @@ $(EXEC)_test : $(OBJS:Smilei.o=Smilei_test.o)
 	$(Q) cp $(BUILD_DIR)/$@ $@
 
 # Avoid to check dependencies and to create .pyh if not necessary
+FILTER_RULES=clean distclean help env debug doc tar happi uninstall_happi
 ifeq ($(filter-out $(wildcard print-*),$(MAKECMDGOALS)),) 
-    FILTER_RULES=clean distclean help env obsolete debug scalasca doc doxygen sphinx tar install_python uninstall_python happi uninstall_happi
     ifeq ($(filter $(FILTER_RULES),$(MAKECMDGOALS)),) 
         # Let's try to make the next lines clear: we include $(DEPS) and pygenerator
         -include $(DEPS) pygenerator
@@ -175,14 +189,12 @@ ifeq ($(filter-out $(wildcard print-*),$(MAKECMDGOALS)),)
 endif
 
 # these are not file-related rules
-.PHONY: pygenerator happi $(FILTER_RULES)
+.PHONY: pygenerator $(FILTER_RULES)
 
 #-----------------------------------------------------
 # Doc rules
 
-doc: sphinx doxygen
-
-sphinx:
+doc:
 	$(Q) if type "sphinx-build" >/dev/null 2>&1; then\
 		make -C doc/Sphinx BUILDDIR=../../$(BUILD_DIR) html;\
 		echo "Sphinx documentation in $(BUILD_DIR)/html/index.html";\
@@ -190,11 +202,8 @@ sphinx:
 		echo "Cannot build Sphinx doc because Sphinx is not installed";\
 	fi
 	
-doxygen:
-	$(Q) if type "doxygen" >/dev/null 2>&1; then\
-		mkdir -p doc/html/Doxygen; (echo "PROJECT_NUMBER=${VERSION}\nOUTPUT_DIRECTORY=doc/html/Doxygen"; cat doc/Doxygen/smilei.dox) | doxygen - ;\
-		echo "Compiling doxygen documentation in doc/html/Doxygen/html";\
-	fi	
+#-----------------------------------------------------
+# Archive in tgz file
 
 tar:
 	@echo "Creating archive $(EXEC)-$(VERSION).tgz"
@@ -208,12 +217,6 @@ tar:
 # Python module rules
 
 # Install the python module in the user python path
-install_python:
-	@echo "This command is not available anymore. Use 'make happi' instead."
-
-uninstall_python:
-	@echo "This command is not available anymore. Use 'make uninstall_happi' instead."
-
 happi:
 	@echo "Installing $(SITEDIR)/smilei.pth"
 	$(Q) mkdir -p "$(SITEDIR)"
@@ -229,13 +232,13 @@ uninstall_happi:
 print-% :
 	$(info $* : $($*)) @true
 
-env: print-SMILEICXX print-MPIVERSION print-VERSION print-OPENMP_FLAG print-HDF5_ROOT_DIR print-SITEDIR print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS
+env: print-SMILEICXX print-PYTHONEXE print-MPIVERSION print-VERSION print-OPENMP_FLAG print-HDF5_ROOT_DIR print-SITEDIR print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS	
 
 
 #-----------------------------------------------------
 # help
 
-help: 
+help:
 	@echo 'TO BUILD SMILEI:'
 	@echo '----------------'
 	@echo 'Usage:'
@@ -245,10 +248,10 @@ help:
 	@echo
 	@echo 'Config options:'
 	@echo '  make config="[ verbose ] [ debug ] [ scalasca ] [ noopenmp ]"'
-	@echo '    verbose    : to print compile command lines'
-	@echo '    debug      : to compile in debug mode (code runs really slow)'
-	@echo '    scalasca   : to compile using scalasca'
-	@echo '    noopenmp   : to compile without openmp'
+	@echo '    verbose              : to print compile command lines'
+	@echo '    debug                : to compile in debug mode (code runs really slow)'
+	@echo '    scalasca             : to compile using scalasca'
+	@echo '    noopenmp             : to compile without openmp'
 	@echo
 	@echo 'Examples:'
 	@echo '  make config=verbose'
@@ -256,13 +259,12 @@ help:
 	@echo '  make config="debug noopenmp"'
 	@echo
 	@echo 'Machine options:'
-	@echo '  make machine=XXX : include machine file in scripts/CompileTools/machine/XXX'
+	@echo '  make machine=XXX      : include machine file in scripts/CompileTools/machine/XXX'
+	@echo '  make machine=XXX help : print help for machine'
 	@echo
 	@echo 'OTHER PURPOSES:'
 	@echo '---------------'
-	@echo '  make doc              : builds all the documentation'
-	@echo '  make sphinx           : builds the `sphinx` documentation only (for users)'
-	@echo '  make doxygen          : builds the `doxygen` documentation only (for developers)'
+	@echo '  make doc              : builds the documentation'
 	@echo '  make tar              : creates an archive of the sources'
 	@echo '  make clean            : cleans the build directory'
 	@echo "  make happi            : install Smilei's python module"
@@ -271,11 +273,16 @@ help:
 	@echo '  make print-XXX        : print internal makefile variable XXX'
 	@echo ''
 	@echo 'Environment variables :'
-	@echo '  SMILEICXX     : mpi c++ compiler'
-	@echo '  HDF5_ROOT_DIR : HDF5 dir'
-	@echo '  BUILD_DIR     : directory used to store build files [$(BUILD_DIR)]'
-	@echo '  OPENMP_FLAG   : flag to use openmp [$(OPENMP_FLAG)]'
+	@echo '  SMILEICXX             : mpi c++ compiler [$(SMILEICXX)]'
+	@echo '  HDF5_ROOT_DIR         : HDF5 dir [$(HDF5_ROOT_DIR)]'
+	@echo '  BUILD_DIR             : directory used to store build files [$(BUILD_DIR)]'
+	@echo '  OPENMP_FLAG           : openmp flag [$(OPENMP_FLAG)]'
+	@echo '  PYTHONEXE             : python executable [$(PYTHONEXE)]'	
+	@echo '  FFTW3_LIB             : FFTW3 libraries directory [$(FFTW3_LIB)]'
+	@echo '  LIB PXR               : Picsar library directory [$(LIBPXR)]'
 	@echo 
 	@echo 'http://www.maisondelasimulation.fr/smilei'
 	@echo 'https://github.com/SmileiPIC/Smilei'
+	@echo
+	@if [ -f  scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine); fi
 

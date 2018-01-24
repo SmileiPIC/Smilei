@@ -13,6 +13,7 @@
 class Params;
 class Species;
 class VectorPatch;
+class DomainDecomposition;
 
 class ElectroMagn;
 class ProbeParticles;
@@ -47,10 +48,11 @@ public:
 
     //! Initialize  MPI (per process) environment
     //! \param params Parameters
-    virtual void init( Params& params );
+    virtual void init( Params& params, DomainDecomposition* domain_decomposition );
     
     // Initialize the patch_count vector. Patches are distributed in order to balance the load between MPI processes.
-    virtual void init_patch_count( Params& params );
+    virtual void init_patch_count( Params& params, DomainDecomposition* domain_decomposition );
+    
     // Recompute the patch_count vector. Browse patches and redistribute them in order to balance the load between MPI processes.
     void recompute_patch_count( Params& params, VectorPatch& vecpatches, double time_dual );
      // Returns the rank of the MPI process currently owning patch h.
@@ -131,10 +133,10 @@ public:
     // Global buffers for vectorization of Species::dynamics
     // -----------------------------------------------------
 
-    //! value of the Efield
-    std::vector<std::vector<LocalFields>> dynamics_Epart;
+    //! value of the Efield 
+    std::vector<std::vector<double>> dynamics_Epart;
     //! value of the Bfield
-    std::vector<std::vector<LocalFields>> dynamics_Bpart;
+    std::vector<std::vector<double>> dynamics_Bpart;
     //! gamma factor
     std::vector<std::vector<double>> dynamics_invgf;
     //! iold_pos
@@ -144,8 +146,8 @@ public:
 
     // Resize buffers for a given number of particles
     inline void dynamics_resize(int ithread, int ndim_part, int npart ){
-        dynamics_Epart[ithread].resize(npart);
-        dynamics_Bpart[ithread].resize(npart);
+        dynamics_Epart[ithread].resize(3*npart);
+        dynamics_Bpart[ithread].resize(3*npart);
         dynamics_invgf[ithread].resize(npart);
         dynamics_iold[ithread].resize(ndim_part*npart);
         dynamics_deltaold[ithread].resize(ndim_part*npart);

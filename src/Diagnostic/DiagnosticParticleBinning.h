@@ -38,6 +38,9 @@ public :
         return size;
     };
     
+    //! Get disk footprint of current diagnostic
+    uint64_t getDiskFootPrint(int istart, int istop, Patch* patch) override;
+    
 private :
 
     //! number of timesteps during which outputs are averaged
@@ -52,7 +55,7 @@ private :
     //! Histogram object
     Histogram * histogram;
     
-    int output_size;
+    unsigned int output_size;
     
     //! Minimum and maximum spatial coordinates that are useful for this diag
     std::vector<double> spatial_min, spatial_max;

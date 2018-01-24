@@ -4,15 +4,25 @@
 <head>
 	<meta charset="UTF-8"/>
 	<title>Smilei's documentation</title>
-	<link rel="shortcut icon" href="smileiLogo/smileiIcon.ico"/>
+	<link rel="shortcut icon" href="logo/smileiIcon.ico"/>
 	<style type="text/css">
 	<!--
+		@font-face {
+			font-family: "BPreplay";
+			src: url("Sphinx/smilei_theme/static/BPreplay.otf");
+			font-weight: normal;
+			font-style: normal;
+		}
+		@font-face {
+			font-family: "BPreplay";
+			src: url("Sphinx/smilei_theme/static/BPreplayBold.otf");
+			font-weight: bold;
+			font-style: normal;
+		}
 		html, body {
 			margin:0;
-			padding:0;
-			height:100%;
-			width:100%;
-			font-family:sans-serif;
+			padding:1em 0 0 0;
+			font-family:"BPreplay";
 		}
 		body {
 			background:#fff;
@@ -23,6 +33,8 @@
 		}
 		h1, h2, h3 {
 			color:#0672ba;
+			margin-top:0;
+			margin-bottom: 0.3em;
 		}
 		div.container {
 			width:100%;
@@ -36,6 +48,7 @@
 			background-color:#eee;
 			border:0.2em #0672ba solid;
 			vertical-align: top;
+			border-radius: 1em;
 		}
 		
 		a:active, a:link, a:visited {
@@ -62,8 +75,8 @@
 <body>
 	
 	<h1>
-		<img src="smileiLogo/smileiLogo-horizontal2.svg" width="180pt" style="vertical-align:middle"/>
-		<span style="vertical-align:bottom">&nbsp;&nbsp;documentation</span>
+		<img src="logo/smileiLogo.svg" width="180pt" style="vertical-align:middle"/>
+		<span style="vertical-align:middle">documentation</span>
 	</h1>
 	
 	<div class="container">
@@ -79,14 +92,12 @@
 			<div style="position:relative;width:350pt;margin:0 auto">
 				<ol>
 					<li>Get <a href="http://www.sphinx-doc.org/en/stable/install.html">Sphinx</a></li>
-					<li>Get <a href="http://www.stack.nl/~dimitri/doxygen/download.html">Doxygen</a></li>
 					<li>In the Smilei directory, run the command <span class="command">make doc</span></li>
-					<li>Click on the links below</li>
+					<li>Click on the link below</li>
 				</ol>
 			</div>
 				
 			<h3><a href="../build/html/index.html">Sphinx documentation (for users)</a></h3>
-			<h3><a href="html/Doxygen/html/index.html">Doxygen documentation (for developers)</a></h3>
 		</div>
 	</div>
 	

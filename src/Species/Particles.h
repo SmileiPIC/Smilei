@@ -64,6 +64,9 @@ public:
 
     //! Copy particle iPart at the end of dest_parts
     void cp_particle(unsigned int iPart, Particles &dest_parts );
+    
+    void cp_particle(unsigned int iPart );
+
 
     //! Insert nPart particles starting at ipart to dest_id in dest_parts
     void cp_particles(unsigned int iPart, unsigned int nPart, Particles &dest_parts, int dest_id );
@@ -85,6 +88,10 @@ public:
 
     //! Exchange particles part1 & part2 memory location
     void swap_part(unsigned int part1,unsigned int part2);
+    void swap_parts(std::vector<unsigned int> parts);
+    void translate_parts(std::vector<unsigned int> parts);
+    void swap_part3(unsigned int part1,unsigned int part2,unsigned int part3);
+    void swap_part4(unsigned int part1,unsigned int part2,unsigned int part3,unsigned int part4);
 
     //! Exchange particles part1 & part2 memory location
     void swap_part(unsigned int part1,unsigned int part2, unsigned int N);
@@ -220,7 +227,10 @@ public:
     //! Incremental optical depth for
     //! the Monte-Carlo process
     std::vector<double> Tau;
-
+    
+    //! cell_keys of the particle
+    std::vector<int> cell_keys;
+    
     // TEST PARTICLE PARAMETERS
     bool is_test;
     
@@ -308,7 +318,7 @@ public:
 
     Particle operator()(unsigned int iPart);
 
-    //! Methods to obtain the any property, given its index in the arrays double_prop, uint64_prop, or short_prop
+    //! Methods to obtain any property, given its index in the arrays double_prop, uint64_prop, or short_prop
     void getProperty(unsigned int iprop, std::vector<uint64_t>* &prop) {
         prop = uint64_prop[iprop];
     }
