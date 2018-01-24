@@ -200,7 +200,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   | **Syntax 3:** ``[[bc_Xmin, bc_Xmax], ...]``,  different on each boundary.
 
   ``"silver-muller"`` is an open boundary condition. The incident wave vector :math:`k_i` on each face is defined by angles :math:`\theta` and :math:`\phi`.
-  If :math:`x_1,x_2,x_3` is a circular permutation of :math:`x,y,z` and :math:`x_1` is the direction normal to the considered face, :math:`\theta` is the :math:`\hat{x_1x_2}` angle and :math:`\phi` is the :math:`\hat{x_1x_2}` angle.
+  If :math:`x_1,x_2,x_3` is a circular permutation of :math:`x,y,z` and :math:`x_1` is the direction normal to the considered face, :math:`\theta` is the :math:`\hat{x_1x_2}` angle and :math:`\phi` is the :math:`\hat{x_1x_3}` angle.
   Note that the ``"silver-muller"`` can be used as a laser injecting boundary condition on faces Xmin and Xmax. In that case, :math:`k_i` defines the wave vector
   of the incident laser. Note also that the optimal wave absorption on a given face will be along :math:`k_{abs} = -k_i`. 
   
