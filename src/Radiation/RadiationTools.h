@@ -45,12 +45,15 @@ class RadiationTools {
         // -----------------------------------------------------------------------------
         static double inline get_h_Niel_from_fit_order5(double chipa)
         {
+
+            double logchipa = log(chipa);
+
             // Max relative error ~0.02
-            return exp(1.399937206900322e-04 * pow(log(chipa),5)
-                       + 3.123718241260330e-03 * pow(log(chipa),4)
-                       + 1.096559086628964e-02 * pow(log(chipa),3)
-                       -1.733977278199592e-01 * pow(log(chipa),2)
-                       + 1.492675770100125e+00 * log(chipa)
+            return exp(1.399937206900322e-04 * pow(logchipa,5)
+                       + 3.123718241260330e-03 * pow(logchipa,4)
+                       + 1.096559086628964e-02 * pow(logchipa,3)
+                       -1.733977278199592e-01 * pow(logchipa,2)
+                       + 1.492675770100125e+00 * logchipa
                        -2.748991631516466e+00 );
         }
 
@@ -86,12 +89,27 @@ class RadiationTools {
             else if (nu>10)  return 1.253314137315500*pow(nu,-0.5)*exp(-nu);
             else {
                 double lognu = log(nu);
-                return exp(-1.042081355552157e-02 * pow(lognu,5)
+                double f = -4.341018460806052e-01 - 1.687909081004528e+00 * lognu;
+                lognu *= lognu;
+                f -= 4.575331390887448e-01 * lognu;
+
+                lognu *= lognu;
+                f -= 1.570476212230771e-01 * lognu;
+
+                lognu *= lognu;
+                f -= 5.349995695960174e-02 * lognu;
+
+                lognu *= lognu;
+                f -= 1.042081355552157e-02 * lognu;
+
+                return exp(f);
+
+                /*return exp(-1.042081355552157e-02 * pow(lognu,5)
                            -5.349995695960174e-02 * pow(lognu,4)
                            -1.570476212230771e-01 * pow(lognu,3)
                            -4.575331390887448e-01 * pow(lognu,2)
-                           -1.687909081004528e+00 * pow(lognu,1)
-                           -4.341018460806052e-01) ;
+                           -1.687909081004528e+00 * lognu
+                           -4.341018460806052e-01) ;*/
             }
         }
 
@@ -105,12 +123,27 @@ class RadiationTools {
             else if (nu>10)  return 1.253314137315500*pow(nu,-0.5)*exp(-nu);
             else {
                 double lognu = log(nu);
-                return exp(-7.694562217592761e-03 * pow(lognu,5)
+                double f = 7.121012104149862e-01 - 1.539212709860801e+00 * lognu;
+                lognu *= lognu;
+                f -= 4.589601096726573e-01 * lognu;
+
+                lognu *= lognu;
+                f -= 1.782660550734939e-01 * lognu;
+
+                lognu *= lognu;
+                f -= 5.412029310872778e-02 * lognu;
+
+                lognu *= lognu;
+                f -= 7.694562217592761e-03 * lognu;
+
+                return exp(f);
+
+                /*return exp(-7.694562217592761e-03 * pow(lognu,5)
                            -5.412029310872778e-02 * pow(lognu,4)
                            -1.782660550734939e-01 * pow(lognu,3)
                            -4.589601096726573e-01 * pow(lognu,2)
                            -1.539212709860801e+00 * pow(lognu,1)
-                           -7.121012104149862e-01) ;
+                           -7.121012104149862e-01) ;*/
             }
         }
 
