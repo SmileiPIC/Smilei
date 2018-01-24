@@ -5,7 +5,7 @@
 
 #include <vector>
 #include "Tools.h"
-#include "ElectroMagnBC.h"
+#include "ElectroMagnBC2D.h"
 #include "ElectroMagn2D.h"
 #include "Field2D.h"
 
@@ -14,7 +14,7 @@ class Params;
 class ElectroMagn;
 class Field;
 
-class ElectroMagnBC2D_SM : public ElectroMagnBC {
+class ElectroMagnBC2D_SM : public ElectroMagnBC2D {
 public:
     
     ElectroMagnBC2D_SM( Params &params, Patch* patch, unsigned int _min_max );
@@ -30,36 +30,6 @@ public:
     
 private:
     
-    
-    //! Number of nodes on the primal grid in the x-direction
-    unsigned int nx_p;
-    
-    //! Number of nodes on the dual grid in the x-direction
-    unsigned int nx_d;
-    
-    //! Number of nodes on the primal grid in the y-direction
-    unsigned int ny_p;
-    
-    //! Number of nodes on the dual grid in the y-direction
-    unsigned int ny_d;
-    
-    //! Spatial step dx for 2D3V cartesian simulations
-    double dx;
-    
-    //! Spatial step dy for 2D3V cartesian simulations
-    double dy;
-    
-    //! Ratio of the time-step by the spatial-step dt/dx for 2D3V cartesian simulations
-    double dt_ov_dx;
-    
-    //! Ratio of the time-step by the spatial-step dt/dy for 2D3V cartesian simulations
-    double dt_ov_dy;
-    
-    //! Ratio of the spatial-step by the time-step dx/dt for 2D3V cartesian simulations
-    double dx_ov_dt;
-    
-    //! Ratio of the spatial-step by the time-step dy/dt for 2D3V cartesian simulations
-    double dy_ov_dt;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Alpha_SM_W;

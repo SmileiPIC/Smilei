@@ -15,26 +15,8 @@
 using namespace std;
 
 ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch* patch, unsigned int _min_max )
-: ElectroMagnBC( params, patch, _min_max )
+: ElectroMagnBC2D( params, patch, _min_max )
 {
-    // number of nodes of the primal and dual grid in the x-direction
-    nx_p = params.n_space[0]*params.global_factor[0]+1+2*params.oversize[0];
-    nx_d = nx_p+1;
-    // number of nodes of the primal and dual grid in the y-direction
-    ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
-    ny_d = ny_p+1;
-    
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the x-direction)
-    dx       = params.cell_length[0];
-    dt_ov_dx = dt/dx;
-    dx_ov_dt = 1.0/dt_ov_dx;
-    
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the y-direction)
-    dy       = params.cell_length[1];
-    dt_ov_dy = dt/dy;
-    dy_ov_dt = 1.0/dt_ov_dy;
-    
-    
     if (min_max == 0 && patch->isXmin() ) {
         // BCs at the x-border min
         Bx_val.resize(ny_d,0.); // dual in the y-direction
