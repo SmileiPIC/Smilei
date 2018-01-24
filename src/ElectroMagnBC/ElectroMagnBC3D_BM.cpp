@@ -15,35 +15,10 @@
 using namespace std;
 
 ElectroMagnBC3D_BM::ElectroMagnBC3D_BM( Params &params, Patch* patch, unsigned int _min_max )
-: ElectroMagnBC( params, patch, _min_max )
+: ElectroMagnBC3D( params, patch, _min_max )
 {
     // conversion factor from degree to radian
     conv_deg2rad = M_PI/180.0;
-    
-    // number of nodes of the primal and dual grid in the x-direction
-    nx_p = params.n_space[0]+1+2*params.oversize[0];
-    nx_d = nx_p+1;
-    // number of nodes of the primal and dual grid in the y-direction
-    ny_p = params.n_space[1]+1+2*params.oversize[1];
-    ny_d = ny_p+1;
-    // number of nodes of the primal and dual grid in the z-direction
-    nz_p = params.n_space[2]+1+2*params.oversize[2];
-    nz_d = nz_p+1;
-    
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the x-direction)
-    dx       = params.cell_length[0];
-    dt_ov_dx = dt/dx;
-    dx_ov_dt = 1.0/dt_ov_dx;
-    
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the y-direction)
-    dy       = params.cell_length[1];
-    dt_ov_dy = dt/dy;
-    dy_ov_dt = 1.0/dt_ov_dy;
-    
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the z-direction)
-    dz       = params.cell_length[2];
-    dt_ov_dz = dt/dz;
-    dz_ov_dt = 1.0/dt_ov_dz;
     
     
     std::vector<unsigned int> dims(2,0);
