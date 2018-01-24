@@ -327,23 +327,33 @@ void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* si
             if (ind<0) continue; // skip discarded particles
             ind *= photon_energy_nbins;
 
-            gamma_inv = 1./sqrt( 1. + pow(s->particles->momentum(0,ipart),2) + pow(s->particles->momentum(1,ipart),2) + pow(s->particles->momentum(2,ipart),2) );
-            chi              = s->particles->chi(ipart);
-            two_third_ov_chi = two_third/chi;
+            // Get the quantum parameter
+            chi = s->particles->chi(ipart);
 
-            increment0 = gamma_inv * s->particles->weight(ipart);
+            // Update the spectrum only if the quantum parameter is sufficiently high
+            if (chi > 1e-5)
+            {
 
-            for (int i=0; i<photon_energy_nbins; i++) {
+                gamma_inv = 1./sqrt( 1. + pow(s->particles->momentum(0,ipart),2)
+                                        + pow(s->particles->momentum(1,ipart),2)
+                                        + pow(s->particles->momentum(2,ipart),2) );
 
-                xi   = photon_energies[i] * gamma_inv;
-                if ( (xi<1.)&&(chi>1.e-5) ) {
-                    zeta = xi/ (1.-xi);
-                    nu   = two_third_ov_chi * zeta;
-                    cst  = xi*zeta;
-                    increment = increment0 * delta_energies[i]
-                    *           xi * ( RadiationTools::compute_f1_nu(nu) + cst*RadiationTools::compute_f2_nu(nu) );
-                    #pragma omp atomic
-                    data_sum[ind+i] += increment;
+                two_third_ov_chi = two_third/chi;
+
+                increment0 = gamma_inv * s->particles->weight(ipart);
+
+                for (int i=0; i<photon_energy_nbins; i++) {
+
+                    xi   = photon_energies[i] * gamma_inv;
+                    if ( xi<1.) {
+                        zeta = xi/ (1.-xi);
+                        nu   = two_third_ov_chi * zeta;
+                        cst  = xi*zeta;
+                        increment = increment0 * delta_energies[i]
+                        *           xi * ( RadiationTools::compute_f1_nu(nu) + cst*RadiationTools::compute_f2_nu(nu) );
+                        #pragma omp atomic
+                        data_sum[ind+i] += increment;
+                    }
                 }
             }
         }

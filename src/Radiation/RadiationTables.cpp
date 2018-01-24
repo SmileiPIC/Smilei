@@ -93,7 +93,7 @@ void RadiationTables::initParams(Params& params)
             PyTools::extract("h_chipa_min", h_chipa_min, "RadiationReaction");
             PyTools::extract("h_chipa_max", h_chipa_max, "RadiationReaction");
             PyTools::extract("h_dim", h_dim, "RadiationReaction");
-            PyTools::extract("h_computation_method", h_computation_method, "RadiationReaction");
+            PyTools::extract("h_computation_method", this->h_computation_method, "RadiationReaction");
 
             h_log10_chipa_min = log10(h_chipa_min);
         }
@@ -184,7 +184,7 @@ void RadiationTables::initParams(Params& params)
             h_computation_method == "fit10" ||
             h_computation_method == "ridgers")
         {
-            MESSAGE( "        Niel h function computation method: " << h_computation_method)
+            MESSAGE( "        Niel h function computation method: " << this->h_computation_method)
         }
         else
         {
