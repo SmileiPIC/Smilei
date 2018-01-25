@@ -362,8 +362,9 @@ void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* si
                 {
                     iphoton_energy_max = int((gamma - emin)/spacing);
                 }
-                // iphoton_energy_max can not be greater than photon_energy_nbins
+                //iphoton_energy_max can not be greater than photon_energy_nbins
                 iphoton_energy_max = min(iphoton_energy_max,photon_energy_nbins);
+
 
                 // Loop on bins
                 for (int i=0; i<iphoton_energy_max; i++) {

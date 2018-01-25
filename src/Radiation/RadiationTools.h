@@ -172,22 +172,29 @@ class RadiationTools {
                 double lognu = log(nu);
                 double lognu_power_n = lognu;
 
-                f1 = - 4.364684279797524e-01 - cst * 7.121012104149862e-01;
-                f1 -= (1.670543589881836e+00 + cst * 1.539212709860801e+00) * lognu_power_n; //n=1
+                f1 = - 4.364684279797524e-01;
+                f2 = - 7.121012104149862e-01;
+                f1 -= 1.670543589881836e+00 * lognu_power_n; //n=1
+                f2 -= 1.539212709860801e+00 * lognu_power_n; //n=1
 
                 lognu_power_n *= lognu;
-                f1 -= (4.533108925728350e-01 + cst * 4.589601096726573e-01) * lognu_power_n; //n=2
+                f1 -= 4.533108925728350e-01 * lognu_power_n; //n=2
+                f2 -= 4.589601096726573e-01 * lognu_power_n; //n=2
 
                 lognu_power_n *= lognu;
-                f1 -= (1.723519212869859e-01 + cst * 1.782660550734939e-01) * lognu_power_n; //n=3
+                f1 -= 1.723519212869859e-01 * lognu_power_n; //n=3
+                f2 -= 1.782660550734939e-01 * lognu_power_n; //n=3
 
                 lognu_power_n *= lognu;
-                f1 -= (5.431864123685266e-02 + cst * 5.412029310872778e-02) * lognu_power_n; //n=4
+                f1 -= 5.431864123685266e-02 * lognu_power_n; //n=4
+                f2 -= 5.412029310872778e-02 * lognu_power_n; //n=4
 
                 lognu_power_n *= lognu;
-                f1 -= (7.892740572869308e-03 + cst * 7.694562217592761e-03) * lognu_power_n; //n=5
+                f1 -= 7.892740572869308e-03 * lognu_power_n; //n=5
+                f2 -= 7.694562217592761e-03 * lognu_power_n; //n=5
+                
 
-                return exp(f1);
+                return exp(f1)+cst*exp(f2);
             }
         }
 
