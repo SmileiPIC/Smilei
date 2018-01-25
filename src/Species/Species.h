@@ -371,7 +371,7 @@ public:
     int  createParticles(std::vector<unsigned int> n_space_to_create, Params& params, Patch * patch, int new_bin_idx);
     
     //! Method to import particles in this species while conserving the sorting among bins
-    void importParticles( Params&, Patch*, Particles&, std::vector<Diagnostic*>& );
+    virtual void importParticles( Params&, Patch*, Particles&, std::vector<Diagnostic*>& );
     
     //! Moving window boundary conditions managment
     void disableXmax();

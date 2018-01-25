@@ -15,6 +15,7 @@
 #include "SpeciesNorm.h"
 
 #include "SpeciesV.h"
+#include "SpeciesNormV.h"
 
 #include "PusherFactory.h"
 #include "IonizationFactory.h"
@@ -77,8 +78,8 @@ public:
                  // Species with nonrelativistic Boris pusher == 'borisnr'
                  // Species with J.L. Vay pusher if == "vay"
                  // Species with Higuary Cary pusher if == "higueracary"
-                if ( (params.vecto) && (pusher == "boris") )
-                    thisSpecies = new SpeciesV(params, patch);
+                if ( (params.vecto) )
+                    thisSpecies = new SpeciesNormV(params, patch);
                 else
                     thisSpecies = new SpeciesNorm(params, patch);
             } else {
@@ -134,9 +135,9 @@ public:
         // Photon species
         else if (mass == 0)
         {
-            if ( (params.vecto) && (pusher == "boris") )
-                thisSpecies = new SpeciesV(params, patch);
-            else
+            if ( (params.vecto) )
+                thisSpecies = new SpeciesNormV(params, patch);
+            else 
                 thisSpecies = new SpeciesNorm(params, patch);
             // Photon can not radiate
             thisSpecies->radiation_model = "none";
@@ -463,13 +464,9 @@ public:
         // Create new species object
         Species * newSpecies = NULL;
 
-        if ( (params.vecto) && (species->pusher == "boris") )
-            newSpecies = new SpeciesV(params, patch);
-        else if (species->pusher =="norm"
-        || species->pusher =="boris"
-        || species->pusher =="higueracary"
-        || species->pusher =="vay"
-        || species->pusher =="borisnr")
+        if ( (params.vecto) )
+            newSpecies = new SpeciesNormV(params, patch);
+        else
         {
             // Boris, Vay or Higuera-Cary
             newSpecies = new SpeciesNorm(params, patch);

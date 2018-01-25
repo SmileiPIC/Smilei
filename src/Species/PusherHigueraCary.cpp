@@ -132,4 +132,21 @@ void PusherHigueraCary::operator() (Particles &particles, SmileiMPI* smpi, int i
             position[i][ipart]     += dt*momentum[i][ipart]*(*invgf)[ipart];
 
     }
+
+    if (vecto) {
+        int* cell_keys;
+        particles.cell_keys.resize(iend-istart);
+        cell_keys = &( particles.cell_keys[0]);
+    
+        #pragma omp simd
+        for (int ipart=istart ; ipart<iend; ipart++ ) {
+    
+            for ( int i = 0 ; i<nDim_ ; i++ ){ 
+                cell_keys[ipart] *= nspace[i];
+                cell_keys[ipart] += round( (position[i][ipart]-min_loc_vec[i]) * dx_inv_[i] );
+            }
+        
+        }
+    }
+
 }
