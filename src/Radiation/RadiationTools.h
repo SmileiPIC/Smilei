@@ -93,16 +93,16 @@ class RadiationTools {
                 double f = -4.341018460806052e-01 - 1.687909081004528e+00 * lognu_power_n;
                 lognu_power_n *= lognu;
                 f -= 4.575331390887448e-01 * lognu_power_n; // n=2
-                
+
                 lognu_power_n *= lognu;
                 f -= 1.570476212230771e-01 * lognu_power_n; // n=3
-                
+
                 lognu_power_n *= lognu;
                 f -= 5.349995695960174e-02 * lognu_power_n; // n=4
-                
+
                 lognu_power_n *= lognu;
                 f -= 1.042081355552157e-02 * lognu_power_n; // n=5
-                
+
                 return exp(f);
 
                 /*return exp(-1.042081355552157e-02 * pow(lognu,5)
@@ -128,16 +128,16 @@ class RadiationTools {
                 double f = -7.121012104149862e-01 - 1.539212709860801e+00 * lognu_power_n;
                 lognu_power_n *= lognu;
                 f -= 4.589601096726573e-01 * lognu_power_n; //n=2
-                
+
                 lognu_power_n *= lognu;
                 f -= 1.782660550734939e-01 * lognu_power_n; //n=3
-                
+
                 lognu_power_n *= lognu;
                 f -= 5.412029310872778e-02 * lognu_power_n; //n=4
-                
+
                 lognu_power_n *= lognu;
                 f -= 7.694562217592761e-03 * lognu_power_n; //n=5
-                
+
                 return exp(f);
 
                 /*return exp(-7.694562217592761e-03 * pow(lognu,5)
@@ -146,6 +146,48 @@ class RadiationTools {
                            -4.589601096726573e-01 * pow(lognu,2)
                            -1.539212709860801e+00 * pow(lognu,1)
                            -7.121012104149862e-01) ;*/
+            }
+        }
+
+        // -----------------------------------------------------------------------------
+        //! Return f1(nu) + cst * f2(nu)
+        //! = Int_nu^\infty K_{5/3}(y) dy + cst * BesselK_{2/3}(nu)
+        //! used in computed synchrotron power spectrum
+        // -----------------------------------------------------------------------------
+        static double inline compute_bessel_parts_radiated_power(double nu, double cst)
+        {
+            double f1, f2;
+            if (nu<0.05)
+            {
+                f2 = 1.074764120720013*pow(nu,-0.6666666666666667);
+                f1 = 2*f2 - 1.813799364234217;
+                return f1 + cst*f2;
+            }
+            else if (nu>10)
+            {
+                return (1.+cst)*1.253314137315500*pow(nu,-0.5)*exp(-nu);
+            }
+            else
+            {
+                double lognu = log(nu);
+                double lognu_power_n = lognu;
+
+                f1 = - 4.364684279797524e-01 - cst * 7.121012104149862e-01;
+                f1 -= (1.670543589881836e+00 + cst * 1.539212709860801e+00) * lognu_power_n; //n=1
+
+                lognu_power_n *= lognu;
+                f1 -= (4.533108925728350e-01 + cst * 4.589601096726573e-01) * lognu_power_n; //n=2
+
+                lognu_power_n *= lognu;
+                f1 -= (1.723519212869859e-01 + cst * 1.782660550734939e-01) * lognu_power_n; //n=3
+
+                lognu_power_n *= lognu;
+                f1 -= (5.431864123685266e-02 + cst * 5.412029310872778e-02) * lognu_power_n; //n=4
+
+                lognu_power_n *= lognu;
+                f1 -= (7.892740572869308e-03 + cst * 7.694562217592761e-03) * lognu_power_n; //n=5
+
+                return exp(f1);
             }
         }
 

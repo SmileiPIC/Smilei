@@ -350,7 +350,8 @@ void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* si
                         nu   = two_third_ov_chi * zeta;
                         cst  = xi*zeta;
                         increment = increment0 * delta_energies[i]
-                        *           xi * ( RadiationTools::compute_f1_nu(nu) + cst*RadiationTools::compute_f2_nu(nu) );
+                        //*           xi * ( RadiationTools::compute_f1_nu(nu) + cst*RadiationTools::compute_f2_nu(nu) );
+                        *             xi * RadiationTools::compute_bessel_parts_radiated_power(nu,cst);
                         #pragma omp atomic
                         data_sum[ind+i] += increment;
                     }
