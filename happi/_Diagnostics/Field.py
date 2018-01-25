@@ -383,15 +383,19 @@ class Field(Diagnostic):
 				B_imag = self._np.empty(self._finalShape)
 				try:
 					h5item[f+str(imode)].read_direct(B_real, source_sel=self._complex_selection_real)
-					h5item[f+str(imode)].read_direct(B_imag, source_sel=self._complex_selection_imag)
+					if imode > 0:
+						h5item[f+str(imode)].read_direct(B_imag, source_sel=self._complex_selection_imag)
 				except:
 					B_real = self._np.squeeze(B_real)
-					B_imag = self._np.squeeze(B_imag)
 					h5item[f+str(imode)].read_direct(B_real, source_sel=self._complex_selection_real)
-					h5item[f+str(imode)].read_direct(B_imag, source_sel=self._complex_selection_imag)
 					B_real = self._np.reshape(B_real, self._finalShape)
-					B_imag = self._np.reshape(B_imag, self._finalShape)
-				F += (factor*self._np.cos(imode*self._theta)) * B_real + (factor*self._np.sin(imode*self._theta)) * B_imag
+					if imode > 0:
+						B_imag = self._np.squeeze(B_imag)
+						h5item[f+str(imode)].read_direct(B_imag, source_sel=self._complex_selection_imag)
+						B_imag = self._np.reshape(B_imag, self._finalShape)
+				F += (factor*self._np.cos(imode*self._theta)) * B_real
+				if imode > 0:
+					F += (factor*self._np.sin(imode*self._theta)) * B_imag
 				
 			C.update({ field:F })
 		
@@ -438,9 +442,10 @@ class Field(Diagnostic):
 					h5item[f+str(imode)].read_direct(B)
 					B = self._np.reshape(B, self._raw_shape)
 				B_real = RegularGridInterpolator(self._raw_positions, B[:,0::2], bounds_error=False, fill_value=0.)(self._xr)
-				B_imag = RegularGridInterpolator(self._raw_positions, B[:,1::2], bounds_error=False, fill_value=0.)(self._xr)
-				F += self._np.cos(imode*self._theta) * B_real[self._selection] + self._np.sin(imode*self._theta) * B_imag[self._selection]
-				F *= factor
+				F += factor * self._np.cos(imode*self._theta) * B_real[self._selection]
+				if imode > 0.:
+					B_imag = RegularGridInterpolator(self._raw_positions, B[:,1::2], bounds_error=False, fill_value=0.)(self._xr)
+					F += factor * self._np.sin(imode*self._theta) * B_imag[self._selection]
 				
 			C.update({ field:F })
 		
