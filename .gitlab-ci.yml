@@ -73,6 +73,7 @@ makerunCollisions:
     - develop
     - couplage_picsar_smilei
     - Niel_performance
+    
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
