@@ -354,22 +354,16 @@ void SpeciesV::computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projecto
 // ---------------------------------------------------------------------------------------------------------------------
 void SpeciesV::sort_part(Params &params)
 {
-    unsigned int ip, ip0, npart, ixy, ncell, token;
-    int ii, ip_dest;
-    int IX;
-    double X;
-    unsigned int m, length[3];
+    unsigned int ip0, npart, ixy, ncell;
+    int ip_dest, cell_target;
+    unsigned int length[3];
     vector<int> indices, buf_cell_keys[3][2];
     std::vector<unsigned int> cycle;
-    unsigned int ip_src, icell;
+    unsigned int ip_src;
 
     //split cell into smaller sub_cells for refined sorting
     ncell = (params.n_space[0]+1);
     for ( unsigned int i=1; i < params.nDim_field; i++) ncell *= (params.n_space[i]+1);
-
-    //particles is a pointer pointing either particles_sorted[0] or [1].
-    //token determines which one is currently pointed at and point at the other.
-    token = (particles == &particles_sorted[0]);
 
     indices.resize(ncell);
     npart = (*particles).size(); //Number of particles before exchange
@@ -385,17 +379,15 @@ void SpeciesV::sort_part(Params &params)
         for (unsigned int ineighbor=0 ; ineighbor < 2 ; ineighbor++){
             buf_cell_keys[idim][ineighbor].resize( MPIbuff.part_index_recv_sz[idim][ineighbor]);
             #pragma omp simd 
-            for (ip=0; ip < MPIbuff.part_index_recv_sz[idim][ineighbor]; ip++){
+            for (unsigned int ip=0; ip < MPIbuff.part_index_recv_sz[idim][ineighbor]; ip++){
                 for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
-                    X = MPIbuff.partRecv[idim][ineighbor].position(ipos,ip)-min_loc_vec[ipos];
-                    IX = round(X * dx_inv_[ipos] );
+                    double X = MPIbuff.partRecv[idim][ineighbor].position(ipos,ip)-min_loc_vec[ipos];
+                    int IX = round(X * dx_inv_[ipos] );
                     buf_cell_keys[idim][ineighbor][ip] = buf_cell_keys[idim][ineighbor][ip] * length[ipos] + IX;
                 }
-
-
             }
             //Can we vectorize this reduction ?
-            for (ip=0; ip < MPIbuff.part_index_recv_sz[idim][ineighbor]; ip++){
+            for (unsigned int ip=0; ip < MPIbuff.part_index_recv_sz[idim][ineighbor]; ip++){
                 species_loc_bmax[buf_cell_keys[idim][ineighbor][ip]] ++;
             }
         }
@@ -405,144 +397,105 @@ void SpeciesV::sort_part(Params &params)
     // second loop convert the count array in cumulative sum
     indices[0]=0;
     bmin[0]=0;
-    ii = 0;
     for (unsigned int ic=1; ic < ncell; ic++)
         {
             indices[ic] = indices[ic-1] + species_loc_bmax[ic-1];
             bmin[ic] = indices[ic];
-            //ii += abs(bmin[ic]-bmax[ic-1]);//Measure movement with respect to previous time step
             bmax[ic-1]= indices[ic];
         }
     bmax[ncell-1] = bmax[ncell-2] + species_loc_bmax.back() ; //New total number of particles is stored as last element of bmax
-    //bmax[0] = bmax.back();           //For legacy, total number of particle is also stored in bmax[0], assuming a single cluster per patch. 
 
+    //Now proceed to the cycle sort
 
+    if (MPIbuff.partRecv[0][0].size() == 0) MPIbuff.partRecv[0][0].initialize(0, *particles); //Is this correct ?
 
-    //if ( ii > 0.8*npart ) { //Full copy on a new buffer 
-    if ( ii < -1 ) { //Full copy on a new buffer 
-        particles_sorted[token].initialize( bmax.back(), *particles );
-        // Copy particles in the new particle buffer (former version of the count sort)
-        ip0 = 0;
-        addPartInExchList(npart);//In order to stop loop at npart
-        // last loop puts the particles and update the count array
-        for (unsigned int j=0; j < indexes_of_particles_to_exchange.size(); j++){
-            for (ip=ip0; ip < indexes_of_particles_to_exchange[j] ; ip++){
-                ixy = (*particles).cell_keys[ip];
-                (*particles).overwrite_part(ip, particles_sorted[token] , indices[ixy]);
-                indices[ixy]++;
-            }
-            ip0 = indexes_of_particles_to_exchange[j] + 1;
-        }
-        indexes_of_particles_to_exchange.pop_back();
-        for (unsigned int idim=0; idim < nDim_particle ; idim++){
-            for (unsigned int ineighbor=0 ; ineighbor < 2 ; ineighbor++){
-                for (ip=0; ip < MPIbuff.part_index_recv_sz[idim][ineighbor]; ip++){
-                    ixy = buf_cell_keys[idim][ineighbor][ip];
-                    MPIbuff.partRecv[idim][ineighbor].overwrite_part(ip, particles_sorted[token] , indices[ixy]);
-                    indices[ixy] ++;
-                }
-            }
-        }
-        //Point towards the newly created and sorted vector.
-        particles = &particles_sorted[token] ;
-
-
-    } else { //Copy all particles in the real particles array (ip < bmax) then performs a compact in place sort.
-                    if (MPIbuff.partRecv[0][0].size() == 0) MPIbuff.partRecv[0][0].initialize(0, *particles); //Is this correct ?
-
-                    // Resize the particle vector 
-                    if (bmax.back() > npart){
-                        (*particles).resize(bmax.back(), nDim_particle);
-                        (*particles).cell_keys.resize(bmax.back(),-1); // Merge this in particles.resize(..) ?
-                        for (unsigned int ipart = npart; ipart < bmax.back(); ipart ++) addPartInExchList(ipart);
-                    }
-
-                    //Generates indices at which particles must be copied
-                    for (unsigned int iicell=0; iicell < ncell; iicell ++)
-                        indices[iicell] = bmin[iicell];
-
-                    //for (unsigned int idim=0; idim < nDim_particle ; idim++){
-                    //    for (unsigned int ineighbor=0 ; ineighbor < 2 ; ineighbor++){
-                    //        for (ip=0; ip < MPIbuff.part_index_recv_sz[idim][ineighbor]; ip++){
-                    //            cycle.resize(1);
-                    //            cell_target = buf_cell_keys[idim][ineighbor][ip];
-                    //            ip_dest = indices[cell_target]; 
-                    //            while ( (*particles).cell_keys[ip_dest] == cell_target ) ip_dest++;
-                    //            indices[cell_target] = ip_dest + 1 ;
-                    //            cycle[0] = ip_dest;
-                    //            cell_target = (*particles).cell_keys[ip_dest];
-                    //            //As long as the particle is not erased, we can build up the cycle.
-                    //            while (cell_target != -1){
-                    //                ip_dest = indices[cell_target]; 
-                    //                while ( (*particles).cell_keys[ip_dest] == cell_target ) ip_dest++;
-                    //                indices[cell_target] = ip_dest + 1 ;
-                    //                cycle.push_back(ip_dest);
-                    //                cell_target = (*particles).cell_keys[ip_dest];
-                    //            }
-                    //            //Last target_cell is -1, the particle must be erased:
-                    //            (*particles).translate_parts(cycle);
-                    //            //Eventually copy particle from the MPI buffer into the particle vector.
-                    //            MPIbuff.partRecv[idim][ineighbor].overwrite_part(ip, *particles , cycle[0]);
-                    //        }
-                    //    }
-                    //}
-
-
-                    //Copy all particles from MPI buffers back to the writable particles (marked by the index to exchange)
-                    ip0 =0;
-                    indexes_of_particles_to_exchange.push_back(bmax.back());//While loop stopper
-                    for (unsigned int idim=0; idim < nDim_particle ; idim++){
-                        for (unsigned int ineighbor=0 ; ineighbor < 2 ; ineighbor++){
-                            for (ip=0; ip < MPIbuff.part_index_recv_sz[idim][ineighbor]; ip++){
-                                MPIbuff.partRecv[idim][ineighbor].overwrite_part(ip, *particles , indexes_of_particles_to_exchange[ip0]);
-                                (*particles).cell_keys[indexes_of_particles_to_exchange[ip0]] = buf_cell_keys[idim][ineighbor][ip];
-                                ip0++;
-                            }
-                        }
-                    }
-                    //Copy valid particles siting over bmax.back() back into the real particles array (happens when more particles are lost than received)
-                    unsigned int real_part = bmax.back();
-                    while (indexes_of_particles_to_exchange[ip0] < bmax.back()) { //This index is increasing. If at some point it is > bmax it means that all the other will be too.
-                        while ((*particles).cell_keys[real_part] == -1) real_part++;
-                        (*particles).overwrite_part(real_part, indexes_of_particles_to_exchange[ip0]);
-                        (*particles).cell_keys[indexes_of_particles_to_exchange[ip0]] = (*particles).cell_keys[real_part];
-                        real_part ++;
-                        ip0++;
-                    }
-
-                    // Resize the particle vector 
-                    if (bmax.back() < npart){
-                        (*particles).resize(bmax.back(), nDim_particle);
-                        (*particles).cell_keys.resize(bmax.back()); // Merge this in particles.resize(..) ?
-                    }
-
-
-                    icell = 0;//Stores the current number of the cell
-                    //Loop over all cells
-                    for (icell = 0 ; icell < ncell; icell++){
-                        for (ip=indices[icell]; ip < bmax[icell] ; ip++){
-                            //update value of current cell 'icell' if necessary 
-                            //if particle changes cell, build a cycle of exchange as long as possible. Treats all particles
-                            if ((*particles).cell_keys[ip] != icell ){
-                                cycle.resize(1);
-                                cycle[0] = ip;
-                                ip_src = ip;
-                                //While the destination particle is not going out of the patch or back to the initial cell, keep building the cycle.
-                                while ( (*particles).cell_keys[ip_src] != icell) {
-                                   //Scan the next cell destination
-                                    ip_dest = indices[(*particles).cell_keys[ip_src]];
-                                    while ( (*particles).cell_keys[ip_dest] == (*particles).cell_keys[ip_src] ) ip_dest++;
-                                    //In the destination cell, if a particle is going out of this cell, add it to the cycle.
-                                    indices[(*particles).cell_keys[ip_src]] = ip_dest + 1 ;
-                                    cycle.push_back(ip_dest);
-                                    ip_src = ip_dest; //Destination becomes source for the next iteration
-                                }
-                                    //swap parts
-                                    (*particles).swap_parts(cycle);
-                            }
-                        }
-                    } //end loop on cells
+    // Resize the particle vector 
+    if (bmax.back() > npart){
+        (*particles).resize(bmax.back(), nDim_particle);
+        (*particles).cell_keys.resize(bmax.back(),-1); // Merge this in particles.resize(..) ?
+        for (unsigned int ipart = npart; ipart < bmax.back(); ipart ++) addPartInExchList(ipart);
     }
+
+    //Generates indices at which particles must be copied 
+    for (unsigned int iicell=0; iicell < ncell; iicell ++)
+        indices[iicell] = bmin[iicell];
+
+    //Copy all particles from MPI buffers back to the writable particles via cycle sort pass.
+    for (unsigned int idim=0; idim < nDim_particle ; idim++){
+        for (unsigned int ineighbor=0 ; ineighbor < 2 ; ineighbor++){
+            for (unsigned int ip=0; ip < MPIbuff.part_index_recv_sz[idim][ineighbor]; ip++){
+                cycle.resize(1);
+                cell_target = buf_cell_keys[idim][ineighbor][ip];
+                ip_dest = indices[cell_target]; 
+                while ( (*particles).cell_keys[ip_dest] == cell_target ) ip_dest++;
+                indices[cell_target] = ip_dest + 1 ;
+                cycle[0] = ip_dest;
+                cell_target = (*particles).cell_keys[ip_dest];
+                //As long as the particle is not erased, we can build up the cycle.
+                while (cell_target != -1){
+                    ip_dest = indices[cell_target]; 
+                    while ( (*particles).cell_keys[ip_dest] == cell_target ) ip_dest++;
+                    indices[cell_target] = ip_dest + 1 ;
+                    cycle.push_back(ip_dest);
+                    cell_target = (*particles).cell_keys[ip_dest];
+                }
+                //Last target_cell is -1, the particle must be erased:
+                (*particles).translate_parts(cycle);
+                //Eventually copy particle from the MPI buffer into the particle vector.
+                MPIbuff.partRecv[idim][ineighbor].overwrite_part(ip, *particles , cycle[0]);
+            }
+        }
+    }
+
+    //Copy valid particles siting over bmax.back() back into the real particles array (happens when more particles are lost than received)
+    for (unsigned int ip=bmax.back(); ip < npart; ip++){
+        cell_target = (*particles).cell_keys[ip];
+        if(cell_target == -1) continue;
+        cycle.resize(0);
+        cycle.push_back(ip);
+        //As long as the particle is not erased, we can build up the cycle.
+        while (cell_target != -1){
+            ip_dest = indices[cell_target]; 
+            while ( (*particles).cell_keys[ip_dest] == cell_target ) ip_dest++;
+            indices[cell_target] = ip_dest + 1 ;
+            cycle.push_back(ip_dest);
+            cell_target = (*particles).cell_keys[ip_dest];
+        }
+        //Last target_cell is -1, the particle must be erased:
+        (*particles).translate_parts(cycle);
+    }
+
+    // Resize the particle vector 
+    if (bmax.back() < npart){
+        (*particles).resize(bmax.back(), nDim_particle);
+        (*particles).cell_keys.resize(bmax.back()); // Merge this in particles.resize(..) ?
+    }
+
+
+    //Loop over all cells
+    for (unsigned int icell = 0 ; icell < ncell; icell++){
+        for (unsigned int ip=indices[icell]; ip < bmax[icell] ; ip++){
+            //update value of current cell 'icell' if necessary 
+            //if particle changes cell, build a cycle of exchange as long as possible. Treats all particles
+            if ((*particles).cell_keys[ip] != icell ){
+                cycle.resize(1);
+                cycle[0] = ip;
+                ip_src = ip;
+                //While the destination particle is not going out of the patch or back to the initial cell, keep building the cycle.
+                while ( (*particles).cell_keys[ip_src] != icell) {
+                   //Scan the next cell destination
+                    ip_dest = indices[(*particles).cell_keys[ip_src]];
+                    while ( (*particles).cell_keys[ip_dest] == (*particles).cell_keys[ip_src] ) ip_dest++;
+                    //In the destination cell, if a particle is going out of this cell, add it to the cycle.
+                    indices[(*particles).cell_keys[ip_src]] = ip_dest + 1 ;
+                    cycle.push_back(ip_dest);
+                    ip_src = ip_dest; //Destination becomes source for the next iteration
+                }
+                    //swap parts
+                    (*particles).swap_parts(cycle);
+            }
+        }
+    } //end loop on cells
 
 }
 
