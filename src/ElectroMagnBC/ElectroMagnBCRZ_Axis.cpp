@@ -96,7 +96,7 @@ void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch*
 				(*BtRZ)(i,j)= -(*BtRZ)(i,j+1);
 			}
 			for (unsigned int i=0 ; i<nl_p ; i++) {
-				(*BlRZ)(i,j)+= -(*BlRZ)(i,j+1);
+				(*BlRZ)(i,j)= -(*BlRZ)(i,j+1);
 				//(*BlRZ)(i,0)+= -(*BlRZ)(i,1)+(*BlRZ_old)(i,1)-4*dt_ov_dr*(*EtRZ)(i,1);
 			}
 			//MA_SolverRZ_norm
