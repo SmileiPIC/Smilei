@@ -410,7 +410,7 @@ void SpeciesV::sort_part(Params &params)
         {
             indices[ic] = indices[ic-1] + species_loc_bmax[ic-1];
             bmin[ic] = indices[ic];
-            ii += abs(bmin[ic]-bmax[ic-1]);//Measure movement with respect to previous time step
+            //ii += abs(bmin[ic]-bmax[ic-1]);//Measure movement with respect to previous time step
             bmax[ic-1]= indices[ic];
         }
     bmax[ncell-1] = bmax[ncell-2] + species_loc_bmax.back() ; //New total number of particles is stored as last element of bmax
@@ -418,7 +418,8 @@ void SpeciesV::sort_part(Params &params)
 
 
 
-    if ( ii > 0.8*npart ) { //Full copy on a new buffer 
+    //if ( ii > 0.8*npart ) { //Full copy on a new buffer 
+    if ( ii < -1 ) { //Full copy on a new buffer 
         particles_sorted[token].initialize( bmax.back(), *particles );
         // Copy particles in the new particle buffer (former version of the count sort)
         ip0 = 0;
@@ -456,6 +457,37 @@ void SpeciesV::sort_part(Params &params)
                         for (unsigned int ipart = npart; ipart < bmax.back(); ipart ++) addPartInExchList(ipart);
                     }
 
+                    //Generates indices at which particles must be copied
+                    for (unsigned int iicell=0; iicell < ncell; iicell ++)
+                        indices[iicell] = bmin[iicell];
+
+                    //for (unsigned int idim=0; idim < nDim_particle ; idim++){
+                    //    for (unsigned int ineighbor=0 ; ineighbor < 2 ; ineighbor++){
+                    //        for (ip=0; ip < MPIbuff.part_index_recv_sz[idim][ineighbor]; ip++){
+                    //            cycle.resize(1);
+                    //            cell_target = buf_cell_keys[idim][ineighbor][ip];
+                    //            ip_dest = indices[cell_target]; 
+                    //            while ( (*particles).cell_keys[ip_dest] == cell_target ) ip_dest++;
+                    //            indices[cell_target] = ip_dest + 1 ;
+                    //            cycle[0] = ip_dest;
+                    //            cell_target = (*particles).cell_keys[ip_dest];
+                    //            //As long as the particle is not erased, we can build up the cycle.
+                    //            while (cell_target != -1){
+                    //                ip_dest = indices[cell_target]; 
+                    //                while ( (*particles).cell_keys[ip_dest] == cell_target ) ip_dest++;
+                    //                indices[cell_target] = ip_dest + 1 ;
+                    //                cycle.push_back(ip_dest);
+                    //                cell_target = (*particles).cell_keys[ip_dest];
+                    //            }
+                    //            //Last target_cell is -1, the particle must be erased:
+                    //            (*particles).translate_parts(cycle);
+                    //            //Eventually copy particle from the MPI buffer into the particle vector.
+                    //            MPIbuff.partRecv[idim][ineighbor].overwrite_part(ip, *particles , cycle[0]);
+                    //        }
+                    //    }
+                    //}
+
+
                     //Copy all particles from MPI buffers back to the writable particles (marked by the index to exchange)
                     ip0 =0;
                     indexes_of_particles_to_exchange.push_back(bmax.back());//While loop stopper
@@ -484,9 +516,6 @@ void SpeciesV::sort_part(Params &params)
                         (*particles).cell_keys.resize(bmax.back()); // Merge this in particles.resize(..) ?
                     }
 
-                    //Generates indices at which particles must be copied
-                    for (unsigned int iicell=0; iicell < ncell; iicell ++)
-                        indices[iicell] = bmin[iicell];
 
                     icell = 0;//Stores the current number of the cell
                     //Loop over all cells
@@ -510,10 +539,6 @@ void SpeciesV::sort_part(Params &params)
                                 }
                                     //swap parts
                                     (*particles).swap_parts(cycle);
-                                    //Must also swap the cell_keys to mark particles as treated
-                                    for (unsigned int ipart = cycle.size()-1; ipart > 0; ipart--) (*particles).cell_keys[cycle[ipart]] = (*particles).cell_keys[cycle[ipart-1]];
-                                    (*particles).cell_keys[ip] = icell;
-
                             }
                         }
                     } //end loop on cells
