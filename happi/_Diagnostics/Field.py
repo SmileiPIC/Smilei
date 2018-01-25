@@ -113,27 +113,40 @@ class Field(Diagnostic):
 		# Case of a cylindrical geometry
 		# Check whether "theta" or "build3d" option is chosen
 		if self.cylindrical:
-			self._theta   = kwargs.pop("theta"  , None)
-			self._build3d = kwargs.pop("build3d", None)
-			if (self._theta is None) == (self._build3d is None):
+			theta   = kwargs.pop("theta"  , None)
+			build3d = kwargs.pop("build3d", None)
+			modes   = kwargs.pop("modes"  , None)
+			if (theta is None) == (build3d is None):
 				self._error = "In cylindrical geometry, one (and only one) option `theta` or `build3d` is required"
 				return
-			self._mode_theta = self._theta != None
-			if self._mode_theta:
+			if theta is not None:
 				try:
-					self._theta = float(self._theta)
+					self._theta = float(theta)
 				except:
 					self._error = "Option `theta` must be a number"
 					return
 				self._getDataAtTime = self._theta_getDataAtTime
 			else:
 				try:
-					self._build3d = self._np.array(self._build3d)
-					if self._build3d.shape != (3,3): raise
+					build3d = self._np.array(build3d)
+					if build3d.shape != (3,3): raise
 				except:
 					self._error = "Option `build3d` must be a list of three lists"
 					return
 				self._getDataAtTime = self._build3d_getDataAtTime
+			# Test whether "modes" is an int or an iterable on ints
+			if modes is None:
+				max_nmode = max([self._fields[f] for f in self._fieldname])
+				self._modes = range(max_nmode)
+			else:
+				try:
+					self._modes = [int(modes)]
+				except:
+					try:
+						self._modes = [int(imode) for imode in modes]
+					except:
+						self._error = "Option `modes` must be a number or an iterable on numbers"
+						return
 		
 		# Get the shape of fields
 		fields = [f for f in self._h5items[0].values() if f]
@@ -147,14 +160,14 @@ class Field(Diagnostic):
 		axis_stop  = self._offset + (self._initialShape-0.5)*self._spacing
 		axis_step  = self._spacing
 		if self.cylindrical:
-			if self._mode_theta:
+			if build3d:
+				self._initialShape = [int(self._np.ceil( (s[1]-s[0])/float(s[2]) )) for s in build3d]
+				axis_start = build3d[:,0]
+				axis_stop  = build3d[:,1]
+				axis_step  = build3d[:,2]
+			else:
 				self._initialShape[1] /= 2
 				axis_stop = self._offset + (self._initialShape-0.5)*self._spacing
-			else:
-				self._initialShape = [int(self._np.ceil( (s[1]-s[0])/float(s[2]) )) for s in self._build3d]
-				axis_start = self._build3d[:,0]
-				axis_stop  = self._build3d[:,1]
-				axis_step  = self._build3d[:,2]
 		
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
@@ -182,7 +195,7 @@ class Field(Diagnostic):
 		self._finalShape = self._np.copy(self._initialShape)
 		self._averages = [False]*self._naxes
 		self._selection = [self._np.s_[:]]*self._naxes
-		axis_name = "xr" if self.cylindrical and self._mode_theta else "xyz"
+		axis_name = "xyz" if not self.cylindrical or not build3d else "xr"
 		for iaxis in range(self._naxes):
 			centers = self._np.arange(axis_start[iaxis], axis_stop[iaxis], axis_step[iaxis])
 			label = axis_name[iaxis]
@@ -243,16 +256,16 @@ class Field(Diagnostic):
 			self._complex_selection_imag = tuple(self._complex_selection_imag)
 			
 			# In the case of "build3d", prepare some data for the 3D construction
-			if not self._mode_theta:
+			if build3d:
 				# Calculate the raw data positions
 				self._raw_positions = (
 					self._np.arange(self._offset[0], self._offset[0] + (self._raw_shape[0]  -0.5)*self._spacing[0], self._spacing[0] ),
 					self._np.arange(self._offset[1], self._offset[1] + (self._raw_shape[1]/2-0.5)*self._spacing[1], self._spacing[1] ),
 				)
 				# Calculate the positions of points in the final box
-				x = self._np.arange(*self._build3d[0])
-				y = self._np.arange(*self._build3d[1])
-				z = self._np.arange(*self._build3d[2])
+				x = self._np.arange(*build3d[0])
+				y = self._np.arange(*build3d[1])
+				z = self._np.arange(*build3d[2])
 				if len(x)==0 or len(y)==0 or len(z)==0:
 					self._error = "Error: The array shape to be constructed seems to be empty"
 					return
@@ -362,7 +375,10 @@ class Field(Diagnostic):
 			nmode = self._fields[field]
 			F = self._np.zeros(self._finalShape)
 			f = field + "_mode_"
-			for imode in range(nmode):
+			for imode in self._modes:
+				if imode >= nmode: continue
+				factor = 2.
+				if imode == 0: factor = 1.
 				B_real = self._np.empty(self._finalShape)
 				B_imag = self._np.empty(self._finalShape)
 				try:
@@ -375,7 +391,7 @@ class Field(Diagnostic):
 					h5item[f+str(imode)].read_direct(B_imag, source_sel=self._complex_selection_imag)
 					B_real = self._np.reshape(B_real, self._finalShape)
 					B_imag = self._np.reshape(B_imag, self._finalShape)
-				F += (2.*self._np.cos(imode*self._theta)) * B_real + (2.*self._np.sin(imode*self._theta)) * B_imag
+				F += (factor*self._np.cos(imode*self._theta)) * B_real + (factor*self._np.sin(imode*self._theta)) * B_imag
 				
 			C.update({ field:F })
 		
@@ -410,7 +426,10 @@ class Field(Diagnostic):
 			nmode = self._fields[field]
 			F = self._np.zeros(self._finalShape)
 			f = field + "_mode_"
-			for imode in range(nmode):
+			for imode in self._modes:
+				if imode >= nmode: continue
+				factor = 2.
+				if imode == 0: factor = 1.
 				B = self._np.empty(self._raw_shape)
 				try:
 					h5item[f+str(imode)].read_direct(B)
@@ -420,7 +439,8 @@ class Field(Diagnostic):
 					B = self._np.reshape(B, self._raw_shape)
 				B_real = RegularGridInterpolator(self._raw_positions, B[:,0::2], bounds_error=False, fill_value=0.)(self._xr)
 				B_imag = RegularGridInterpolator(self._raw_positions, B[:,1::2], bounds_error=False, fill_value=0.)(self._xr)
-				F += (2.*self._np.cos(imode*self._theta)) * B_real[self._selection] + (2.*self._np.sin(imode*self._theta)) * B_imag[self._selection]
+				F += self._np.cos(imode*self._theta) * B_real[self._selection] + self._np.sin(imode*self._theta) * B_imag[self._selection]
+				F *= factor
 				
 			C.update({ field:F })
 		
