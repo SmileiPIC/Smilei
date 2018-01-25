@@ -109,7 +109,7 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, Smilei
         emin = log10(emin);
         emax = log10(emax);
     }
-    double spacing = (emax-emin)/photon_energy_nbins;
+    spacing = (emax-emin)/photon_energy_nbins;
     for ( int i=0; i<photon_energy_nbins; i++) {
         photon_energies[i] = emin + (i+0.5)*spacing;
         if(photon_energy_logscale) {
@@ -321,7 +321,16 @@ void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* si
         // ------------------------------
         int ind;
 
-        double gamma_inv, chi, xi, zeta, nu, cst, two_third_ov_chi, increment0, increment;
+        double gamma_inv, gamma, chi, xi, zeta, nu, cst;
+        double two_third_ov_chi, increment0, increment;
+        int iphoton_energy_max;
+
+        double emin=photon_energy_min, emax=photon_energy_max;
+        if (photon_energy_logscale) {
+            emin = log10(emin);
+            emax = log10(emax);
+        }
+
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
             ind = int_buffer[ipart];
             if (ind<0) continue; // skip discarded particles
@@ -334,27 +343,42 @@ void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* si
             if (chi > 1e-5)
             {
 
-                gamma_inv = 1./sqrt( 1. + pow(s->particles->momentum(0,ipart),2)
+                // Emitting particle energy (maximum of the spectrum)
+                gamma = sqrt( 1. + pow(s->particles->momentum(0,ipart),2)
                                         + pow(s->particles->momentum(1,ipart),2)
                                         + pow(s->particles->momentum(2,ipart),2) );
+                gamma_inv = 1./gamma;
 
                 two_third_ov_chi = two_third/chi;
 
                 increment0 = gamma_inv * s->particles->weight(ipart);
 
-                for (int i=0; i<photon_energy_nbins; i++) {
+                // Comput the maximum iteration of the loop on bins
+                if (photon_energy_logscale)
+                {
+                    iphoton_energy_max = int((log10(gamma) - emin)/spacing);
+                }
+                else
+                {
+                    iphoton_energy_max = int((gamma - emin)/spacing);
+                }
+                // iphoton_energy_max can not be greater than photon_energy_nbins
+                iphoton_energy_max = min(iphoton_energy_max,photon_energy_nbins);
+
+                // Loop on bins
+                for (int i=0; i<iphoton_energy_max; i++) {
 
                     xi   = photon_energies[i] * gamma_inv;
-                    if ( xi<1.) {
-                        zeta = xi/ (1.-xi);
-                        nu   = two_third_ov_chi * zeta;
-                        cst  = xi*zeta;
-                        increment = increment0 * delta_energies[i]
-                        //*           xi * ( RadiationTools::compute_f1_nu(nu) + cst*RadiationTools::compute_f2_nu(nu) );
-                        *             xi * RadiationTools::compute_bessel_parts_radiated_power(nu,cst);
-                        #pragma omp atomic
-                        data_sum[ind+i] += increment;
-                    }
+                    //if ( xi<1.) {
+                    zeta = xi/ (1.-xi);
+                    nu   = two_third_ov_chi * zeta;
+                    cst  = xi*zeta;
+                    increment = increment0 * delta_energies[i]
+                    //*           xi * ( RadiationTools::compute_f1_nu(nu) + cst*RadiationTools::compute_f2_nu(nu) );
+                    *             xi * RadiationTools::compute_bessel_parts_radiated_power(nu,cst);
+                    #pragma omp atomic
+                    data_sum[ind+i] += increment;
+                    //}
                 }
             }
         }
