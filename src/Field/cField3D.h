@@ -57,7 +57,7 @@ public:
     //! Overloading of the () operator allowing to set a new value for the (i,j,k) element of a cField3D
     inline std::complex<double>& operator () (unsigned int i, unsigned int j, unsigned int k) {
         DEBUGEXEC(if (i>=dims_[0] || j>=dims_[1] || k>=dims_[2]) ERROR(name << "Out of limits ("<< i << "," << j << "," << k <<")  > (" << dims_[0] << "," << dims_[1] << "," << dims_[2] << ")" ));
-        DEBUGEXEC(if (!std::isfinite(real(data_3D[i][j][k]))+imag(data_3D[i][j][k])) ERROR(name << " Not finite "<< i << "," << j << " = " << data_3D[i][j][k] ));
+        DEBUGEXEC(if (!std::isfinite(real(data_3D[i][j][k])+imag(data_3D[i][j][k]))) ERROR(name << " Not finite "<< i << "," << j << " = " << data_3D[i][j][k] ));
         return data_3D[i][j][k];
     };
     
@@ -65,7 +65,7 @@ public:
     //! Overloading of the () operator allowing to get the value of the (i,j,k) element of a cField3D
     inline std::complex<double> operator () (unsigned int i, unsigned int j, unsigned int k) const {
         DEBUGEXEC(if (i>=dims_[0] || j>=dims_[1] || k>=dims_[2]) ERROR(name << "Out of limits "<< i << " " << j << " " << k));
-        DEBUGEXEC(if (!std::isfinite(real(data_3D[i][j][k]))+imag(data_3D[i][j][k])) ERROR(name << " Not finite "<< i << "," << j << "," << k << " = " << data_3D[i][j][k] ));
+        DEBUGEXEC(if (!std::isfinite(real(data_3D[i][j][k])+imag(data_3D[i][j][k]))) ERROR(name << " Not finite "<< i << "," << j << "," << k << " = " << data_3D[i][j][k] ));
         return data_3D[i][j][k];
     };
 

@@ -147,8 +147,6 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
 
 LaserEnvelope3D::~LaserEnvelope3D()
 {
-    delete A_;
-    delete A0_;
 }
 
 void LaserEnvelope3D::compute(ElectroMagn* EMfields)
