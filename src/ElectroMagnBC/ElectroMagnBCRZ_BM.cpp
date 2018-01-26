@@ -199,7 +199,7 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		    
 		    // for Bl^(p,d)
 			unsigned int j= nr_d-2;
-		    for (unsigned int i=isXmin ; i<nl_p-isXmax; ; i++) {
+		    for (unsigned int i=isXmin ; i<nl_p-isXmax; i++) {
 		        /*(*Bl2D)(i,nr_d-1) = -Alpha_SM_N   * (*Et2D)(i,nr_p-1)
 		         +                    Beta_SM_N    * (*Bl2D)(i,nr_d-2)
 		         +                    Delta_SM_N   * (*Br2D)(i+1,nr_p-1)
