@@ -359,7 +359,7 @@ void SpeciesV::sort_part(Params &params)
     unsigned int ip0, npart, ixy, ncell;
     int ip_dest, cell_target;
     unsigned int length[3];
-    vector<int> indices, buf_cell_keys[3][2];
+    vector<int> buf_cell_keys[3][2];
     std::vector<unsigned int> cycle;
     unsigned int ip_src;
 
@@ -367,7 +367,6 @@ void SpeciesV::sort_part(Params &params)
     ncell = (params.n_space[0]+1);
     for ( unsigned int i=1; i < params.nDim_field; i++) ncell *= (params.n_space[i]+1);
 
-    indices.resize(ncell);
     npart = (*particles).size(); //Number of particles before exchange
 
     length[0]=0;
@@ -397,13 +396,11 @@ void SpeciesV::sort_part(Params &params)
 
 
     // second loop convert the count array in cumulative sum
-    indices[0]=0;
     bmin[0]=0;
     for (unsigned int ic=1; ic < ncell; ic++)
         {
-            indices[ic] = indices[ic-1] + species_loc_bmax[ic-1];
-            bmin[ic] = indices[ic];
-            bmax[ic-1]= indices[ic];
+            bmin[ic] = bmin[ic-1] + species_loc_bmax[ic-1];
+            bmax[ic-1]= bmin[ic];
         }
     bmax[ncell-1] = bmax[ncell-2] + species_loc_bmax.back() ; //New total number of particles is stored as last element of bmax
 
@@ -418,26 +415,22 @@ void SpeciesV::sort_part(Params &params)
         for (unsigned int ipart = npart; ipart < bmax.back(); ipart ++) addPartInExchList(ipart);
     }
 
-    //Generates indices at which particles must be copied 
-    for (unsigned int iicell=0; iicell < ncell; iicell ++)
-        indices[iicell] = bmin[iicell];
-
     //Copy all particles from MPI buffers back to the writable particles via cycle sort pass.
     for (unsigned int idim=0; idim < nDim_particle ; idim++){
         for (unsigned int ineighbor=0 ; ineighbor < 2 ; ineighbor++){
             for (unsigned int ip=0; ip < MPIbuff.part_index_recv_sz[idim][ineighbor]; ip++){
                 cycle.resize(1);
                 cell_target = buf_cell_keys[idim][ineighbor][ip];
-                ip_dest = indices[cell_target]; 
+                ip_dest = bmin[cell_target]; 
                 while ( (*particles).cell_keys[ip_dest] == cell_target ) ip_dest++;
-                indices[cell_target] = ip_dest + 1 ;
+                bmin[cell_target] = ip_dest + 1 ;
                 cycle[0] = ip_dest;
                 cell_target = (*particles).cell_keys[ip_dest];
                 //As long as the particle is not erased, we can build up the cycle.
                 while (cell_target != -1){
-                    ip_dest = indices[cell_target]; 
+                    ip_dest = bmin[cell_target]; 
                     while ( (*particles).cell_keys[ip_dest] == cell_target ) ip_dest++;
-                    indices[cell_target] = ip_dest + 1 ;
+                    bmin[cell_target] = ip_dest + 1 ;
                     cycle.push_back(ip_dest);
                     cell_target = (*particles).cell_keys[ip_dest];
                 }
@@ -457,9 +450,9 @@ void SpeciesV::sort_part(Params &params)
         cycle.push_back(ip);
         //As long as the particle is not erased, we can build up the cycle.
         while (cell_target != -1){
-            ip_dest = indices[cell_target]; 
+            ip_dest = bmin[cell_target]; 
             while ( (*particles).cell_keys[ip_dest] == cell_target ) ip_dest++;
-            indices[cell_target] = ip_dest + 1 ;
+            bmin[cell_target] = ip_dest + 1 ;
             cycle.push_back(ip_dest);
             cell_target = (*particles).cell_keys[ip_dest];
         }
@@ -476,7 +469,7 @@ void SpeciesV::sort_part(Params &params)
 
     //Loop over all cells
     for (unsigned int icell = 0 ; icell < ncell; icell++){
-        for (unsigned int ip=indices[icell]; ip < bmax[icell] ; ip++){
+        for (unsigned int ip=bmin[icell]; ip < bmax[icell] ; ip++){
             //update value of current cell 'icell' if necessary 
             //if particle changes cell, build a cycle of exchange as long as possible. Treats all particles
             if ((*particles).cell_keys[ip] != icell ){
@@ -486,10 +479,10 @@ void SpeciesV::sort_part(Params &params)
                 //While the destination particle is not going out of the patch or back to the initial cell, keep building the cycle.
                 while ( (*particles).cell_keys[ip_src] != icell) {
                    //Scan the next cell destination
-                    ip_dest = indices[(*particles).cell_keys[ip_src]];
+                    ip_dest = bmin[(*particles).cell_keys[ip_src]];
                     while ( (*particles).cell_keys[ip_dest] == (*particles).cell_keys[ip_src] ) ip_dest++;
                     //In the destination cell, if a particle is going out of this cell, add it to the cycle.
-                    indices[(*particles).cell_keys[ip_src]] = ip_dest + 1 ;
+                    bmin[(*particles).cell_keys[ip_src]] = ip_dest + 1 ;
                     cycle.push_back(ip_dest);
                     ip_src = ip_dest; //Destination becomes source for the next iteration
                 }
@@ -498,6 +491,10 @@ void SpeciesV::sort_part(Params &params)
             }
         }
     } //end loop on cells
+    // Restore bmin initial value
+    bmin[0]=0;
+    for (unsigned int ic=1; ic < ncell; ic++)
+        bmin[ic] = bmax[ic-1];
 
 }
 
