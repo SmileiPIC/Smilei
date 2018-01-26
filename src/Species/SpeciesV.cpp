@@ -356,7 +356,7 @@ void SpeciesV::computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projecto
 // ---------------------------------------------------------------------------------------------------------------------
 void SpeciesV::sort_part(Params &params)
 {
-    unsigned int ip0, npart, ixy, ncell;
+    unsigned int npart, ncell;
     int ip_dest, cell_target;
     unsigned int length[3];
     vector<int> buf_cell_keys[3][2];
