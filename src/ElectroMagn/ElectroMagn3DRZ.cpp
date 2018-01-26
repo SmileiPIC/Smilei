@@ -514,6 +514,7 @@ Field * ElectroMagn3DRZ::createField(string fieldname)
     else if(fieldname.substr(0,3)=="Rho") return new cField2D(dimPrim, fieldname );
     
     ERROR("Cannot create field "<<fieldname);
+    return NULL;
 }
 
 
