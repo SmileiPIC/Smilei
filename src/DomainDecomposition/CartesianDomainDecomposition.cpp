@@ -25,7 +25,8 @@ unsigned int CartesianDomainDecomposition1D::getDomainId( std::vector<int> Coord
 {
     if ( Coordinates[0] < 0 )
         return MPI_PROC_NULL;
-    else if ( Coordinates[0] >= ndomain_[0] )
+    else if ( Coordinates[0] >= (int)ndomain_[0] )
+
         return MPI_PROC_NULL;
     else
         return Coordinates[0];
@@ -59,11 +60,11 @@ unsigned int CartesianDomainDecomposition2D::getDomainId( std::vector<int> Coord
 {
     if ( Coordinates[0] < 0 )
         return MPI_PROC_NULL;
-    else if ( Coordinates[0] >= ndomain_[0] )
+    else if ( Coordinates[0] >= (int)ndomain_[0] )
         return MPI_PROC_NULL;
     else if ( Coordinates[1] < 0 )
         return MPI_PROC_NULL;
-    else if ( Coordinates[1] >= ndomain_[1] )
+    else if ( Coordinates[1] >= (int)ndomain_[1] )
         return MPI_PROC_NULL;
     else
         return Coordinates[0]*ndomain_[1]+Coordinates[1];
@@ -98,15 +99,15 @@ unsigned int CartesianDomainDecomposition3D::getDomainId( std::vector<int> Coord
 {
     if ( Coordinates[0] < 0 )
         return MPI_PROC_NULL;
-    else if ( Coordinates[0] >= ndomain_[0] )
+    else if ( Coordinates[0] >= (int)ndomain_[0] )
         return MPI_PROC_NULL;
     else if ( Coordinates[1] < 0 )
         return MPI_PROC_NULL;
-    else if ( Coordinates[1] >= ndomain_[1] )
+    else if ( Coordinates[1] >= (int)ndomain_[1] )
         return MPI_PROC_NULL;
     else if ( Coordinates[2] < 0 )
         return MPI_PROC_NULL;
-    else if ( Coordinates[2] >= ndomain_[2] )
+    else if ( Coordinates[2] >= (int)ndomain_[2] )
         return MPI_PROC_NULL;
     else
         return Coordinates[0]*ndomain_[1]*ndomain_[2]+Coordinates[1]*ndomain_[2]+Coordinates[2];
