@@ -30,11 +30,8 @@ public:
     
 private:
     
-    //! Conversion factor from degree to radian
-    double conv_deg2rad;
-    
     //! Constants used for the Buneman boundary conditions depending on theta and phi.
-    double cb, ce;
+    double cb[3][2], ce[3][2];
 
     //! Constant used for the Buneman boundary conditions (Xmin)
     double Alpha_BM_x;
