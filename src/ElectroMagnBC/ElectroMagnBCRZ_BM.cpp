@@ -193,12 +193,13 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		cField2D* BlRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_m[imode];
 		cField2D* BrRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_m[imode];
 		int     j_glob = (static_cast<ElectroMagn3DRZ*>(EMfields))->j_glob_;
-
+		bool isXmin = (static_cast<ElectroMagn3DRZ*>(EMfields))->isXmin;
+		bool isXmax = (static_cast<ElectroMagn3DRZ*>(EMfields))->isXmax;
 		if (min_max == 3 && patch->isYmax() ) {
 		    
 		    // for Bl^(p,d)
 			unsigned int j= nr_d-2;
-		    for (unsigned int i=0 ; i<nl_p ; i++) {
+		    for (unsigned int i=isXmin ; i<nl_p-isXmax; ; i++) {
 		        /*(*Bl2D)(i,nr_d-1) = -Alpha_SM_N   * (*Et2D)(i,nr_p-1)
 		         +                    Beta_SM_N    * (*Bl2D)(i,nr_d-2)
 		         +                    Delta_SM_N   * (*Br2D)(i+1,nr_p-1)

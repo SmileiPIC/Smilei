@@ -83,54 +83,55 @@ void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch*
 	cField2D* JlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jl_[imode];
     cField2D* JrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jr_[imode];
     cField2D* JtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jt_[imode];
-	
+	bool isXmin = (static_cast<ElectroMagn3DRZ*>(EMfields))->isXmin;
+	bool isXmax = (static_cast<ElectroMagn3DRZ*>(EMfields))->isXmax;
 
 	if (min_max == 2 && patch->isYmin()){
 		unsigned int j=2;
 		if (imode==0){
 			//MF_Solver_Yee
-			for (unsigned int i=0 ; i<nl_d ; i++) {
+			for (unsigned int i=isXmin ; i<nl_d-isXmax ; i++) {
 				(*BrRZ)(i,j)=0;
 			}
-			for (unsigned int i=0 ; i<nl_d ; i++) {
+			for (unsigned int i=isXmin ; i<nl_d-isXmax ; i++) {
 				(*BtRZ)(i,j)= -(*BtRZ)(i,j+1);
 			}
-			for (unsigned int i=0 ; i<nl_p ; i++) {
+			for (unsigned int i=isXmin ; i<nl_p-isXmax ; i++) {
 				(*BlRZ)(i,j)= -(*BlRZ)(i,j+1);
 				//(*BlRZ)(i,0)+= -(*BlRZ)(i,1)+(*BlRZ_old)(i,1)-4*dt_ov_dr*(*EtRZ)(i,1);
 			}
 			//MA_SolverRZ_norm
-			for (unsigned int i=0 ; i<nl_p ; i++) {
+			for (unsigned int i=isXmin ; i<nl_p-isXmax  ; i++) {
 				(*EtRZ)(i,j)=0;
 			}
-			for (unsigned int i=0 ; i<nl_p ; i++) {
+			for (unsigned int i=isXmin ; i<nl_p-isXmax  ; i++) {
 				(*ErRZ)(i,j)= -(*ErRZ)(i,j+1);
 			}
-			for (unsigned int i=0 ; i<nl_d ; i++) {
+			for (unsigned int i=isXmin ; i<nl_d-isXmax ; i++) {
 				(*ElRZ)(i,j)+= 4*dt_ov_dr*(*BtRZ)(i,j+1)-dt*(*JlRZ)(i,j);
 			}
 		}
 		else if (imode==1){
 			//MF
-			for (unsigned int i=0 ; i<nl_p ; i++) {
+			for (unsigned int i=isXmin ; i<nl_p-isXmax  ; i++) {
 				(*BlRZ)(i,j)= -(*BlRZ)(i,j+1);
 			}
-			for (unsigned int i=0 ; i<nl_p ; i++) {
+			for (unsigned int i=isXmin ; i<nl_p-isXmax  ; i++) {
 				(*EtRZ)(i,j)= (*EtRZ)(i,j+1);
 			}
 			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
 				(*BrRZ)(i,j)+=  Icpx*dt_ov_dr*(*ElRZ)(i,j+1)
 				+			dt_ov_dl*((*EtRZ)(i,j)-(*EtRZ)(i-1,j));
 			}
-			for (unsigned int i=0 ; i<nl_d ; i++) {
+			for (unsigned int i=isXmin ; i<nl_d-isXmax ; i++) {
 				//(*BtRZ)(i,0)+= -dt_ov_dl*((*ErRZ)(i+1,0)-(*ErRZ)(i,0)+(*ErRZ)(i+1,1)-(*ErRZ)(i,1))
 				//+				2*dt_ov_dr*(*ElRZ)(i+1,1) - (*BtRZ_old)(i,1)+ (*BtRZ)(i,1);
 				(*BtRZ)(i,j)= -2.*Icpx*(*BrRZ)(i,j)-(*BtRZ)(i,j+1);
 			}	
-			for (unsigned int i=0 ; i<nl_d ; i++) {
+			for (unsigned int i=isXmin ; i<nl_d-isXmax  ; i++) {
 				(*ElRZ)(i,j)= 0;
 			}
-			for (unsigned int i=0 ; i<nl_p ; i++) {
+			for (unsigned int i=isXmin ; i<nl_p-isXmax  ; i++) {
 				(*ErRZ)(i,j)= -(*ErRZ)(i,j+1);
 			}
 
@@ -138,23 +139,23 @@ void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch*
 
 		}
 		else {
-			for (unsigned int i=0 ; i<nl_d ; i++) {
+			for (unsigned int  i=isXmin ; i<nl_d-isXmax ; i++) {
 				(*BlRZ)(i,j)= -(*BlRZ)(i,j+1);
 			}
-			for (unsigned int i=0 ; i<nl_p ; i++) {
+			for (unsigned int i=isXmin ; i<nl_p-isXmax; i++) {
 				(*BrRZ)(i,j)= 0;
 			}
-			for (unsigned int i=0 ; i<nl_d ; i++) {
+			for (unsigned int  i=isXmin ; i<nl_d-isXmax ; i++) {
 				(*BtRZ)(i,j)= - (*BtRZ)(i,j+1);
 			}	
 			//MA
-			for (unsigned int i=0 ; i<nl_p ; i++) {
+			for (unsigned int  i=isXmin ; i<nl_p-isXmax; i++) {
 				(*ElRZ)(i,j)= 0;
 			}
-			for (unsigned int i=0 ; i<nl_d ; i++) {
+			for (unsigned int  i=isXmin ; i<nl_d-isXmax; i++) {
 				(*ErRZ)(i,j)= -(*ErRZ)(i,j+1);
 			}
-			for (unsigned int i=0 ; i<nl_p ; i++) {
+			for (unsigned int i=isXmin ; i<nl_p-isXmax; i++) {
 				(*EtRZ)(i,j)= 0;
 			}
 		}

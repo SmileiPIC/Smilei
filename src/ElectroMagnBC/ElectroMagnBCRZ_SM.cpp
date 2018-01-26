@@ -204,6 +204,7 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_[imode];
 		cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_[imode];
 		bool isYmin = (static_cast<ElectroMagn3DRZ*>(EMfields))->isYmin;
+		bool isYmax = (static_cast<ElectroMagn3DRZ*>(EMfields))->isYmax;
 		int     j_glob = (static_cast<ElectroMagn3DRZ*>(EMfields))->j_glob_;	
  
 		if (min_max == 0 && patch->isXmin() ) {
@@ -211,7 +212,7 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		    // for Br^(d,p)
 		    vector<double> yp(1);
 		    yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dr;
-		    for (unsigned int j=0 ; j<nr_p ; j++) {
+		    for (unsigned int j=3*isYmin ; j<nr_p-isYmax ; j++) {
 		        
 		        std::complex<double> byW = 0.;
 		        yp[0] += dr;
@@ -237,7 +238,7 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		    // for Bt^(d,d)
 		    vector<double> yd(1);
 		    yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dr;
-		    for (unsigned int j=3*isYmin ; j<nr_d ; j++) {
+		    for (unsigned int j=3*isYmin ; j<nr_d-isYmax ; j++) {
 		        
 		        std::complex<double> bzW = 0.;
 		        yd[0] += dr;
@@ -265,7 +266,7 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		    // for Br^(d,p)
 		    vector<double> yp(1);
 		    yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dr;
-		    for (unsigned int j=0 ; j<nr_p ; j++) {
+		    for (unsigned int j=3*isYmin ; j<nr_p-isYmax ; j++) {
 		        
 		        std::complex<double> byE = 0.;
 		        yp[0] += dr;
@@ -292,7 +293,7 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		    // for Bt^(d,d)
 		    vector<double> yd(1);
 		    yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dr;
-		    for (unsigned int j=3*isYmin ; j<nr_d ; j++) {
+		    for (unsigned int j=3*isYmin ; j<nr_d-isYmax ; j++) {
 		        
 		        std::complex<double> bzE = 0.;
 		        yd[0] += dr;
