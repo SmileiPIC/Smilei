@@ -131,6 +131,13 @@ def _keep_python_running():
         for ax in d.axes:
             if type(ax[0]) is not str:
                 return True
+    # Verify the radiation spectrum having a function for deposited_quantity or axis type
+    for d in DiagRadiationSpectrum._list + DiagScreen._list:
+        if type(d.photon_energy_axis[0]) is not str:
+            return True
+        for ax in d.axes:
+            if type(ax[0]) is not str:
+                return True
     return False
 
 # Prevent creating new components (by mistake)
