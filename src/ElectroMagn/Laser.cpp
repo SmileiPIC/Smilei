@@ -264,7 +264,7 @@ void LaserProfileSeparable::initFields(Params& params, Patch* patch)
         (*space_envelope)(0,0) = spaceProfile->valueAt(pos);
         (*phase         )(0,0) = phaseProfile->valueAt(pos);
         
-    } else if( params.geometry=="2Dcartesian" ) {
+    } else if( params.geometry=="2Dcartesian" || params.geometry=="3drz") {
         
         unsigned int ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
         unsigned int ny_d = ny_p+1;

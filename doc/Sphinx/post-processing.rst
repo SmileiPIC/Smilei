@@ -138,6 +138,21 @@ Open a Field diagnostic
      | Example: ``average = {"x":[4,5]}`` will average for :math:`x` within [4,5].
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
+  In the case of a spectral cylindrical geometry (``3drz``), additional argument are
+  available. You must choose one of ``theta`` or ``build3d``, defined below, in order
+  to construct fields from their complex angular Fourier modes. In addition, the ``modes``
+  argument is optional.
+  
+  * ``theta``: An angle (in radians)
+     | Calculates the field in a plane passing through the :math:`r=0` axis
+     | and making an angle ``theta`` with the :math:`xz` plane.
+  * ``build3d``: A list of three *ranges*
+     | Calculates the field interpolated in a 3D :math:`xyz` grid.
+     | Each *range* is a list ``[start, stop, step]`` indicating the beginning,
+     | the end and the step of this grid.
+  * ``modes``: An integer or a list of integers
+     | Only these modes numbers will be used in the calculation
+  
 **Example**::
 
   S = happi.Open("path/to/my/results")

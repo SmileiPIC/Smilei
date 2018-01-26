@@ -7,10 +7,10 @@ import math
 l0 = 2.0*math.pi        # laser wavelength
 t0 = l0                 # optical cycle
 Lsim = [20.,50.]  # length of the simulation
-Tsim = 1.*t0           # duration of the simulation
+Tsim = 10.*t0           # duration of the simulation
 resx = 28.              # nb of cells in on laser wavelength
-rest = 10#40.              # time of timestep in one optical cycle 
-
+rest = 60.              # time of timestep in one optical cycle 
+laser_fwhm = 19.80
 Main(
     geometry = "3drz",
     Nmode = 2,
@@ -20,7 +20,7 @@ Main(
     grid_length  = Lsim,
     number_of_patches = [ 1, 1 ],
     timestep = t0/rest,
-    simulation_time = 100*t0/rest,
+    simulation_time = Tsim,
      
     EM_boundary_conditions = [
         ["silver-muller","silver-muller"],
@@ -33,11 +33,17 @@ Main(
 LaserGaussian2D(
     a0              = 1.,
     omega           = 1.,
-    focus           = [Lsim[0], Lsim[1]/2.],
+    focus           = [Lsim[0], 0.],
     waist           = 8.,
     time_envelope   = tgaussian()
 )
-
+#LaserGaussian2D(
+#    box_side         = "xmin",
+#    a0              = 2.,
+#    focus           = [0., 0.],
+#    waist           = 26.16,
+#    time_envelope   = tgaussian(center=2**0.5*laser_fwhm, fwhm=laser_fwhm)
+#)
 
 globalEvery = int(1)
 
@@ -45,8 +51,8 @@ globalEvery = int(1)
 #DiagScalar(every=globalEvery)
 
 DiagFields(
-    every = 100,
-    fields = ['Ex_mode_1','Er_mode_1','Et_mode_1','Bx_mode_0','Br_mode_0','Bt_mode_0']
+    every = 10,
+    fields = []
 )
 
 #DiagProbe(
