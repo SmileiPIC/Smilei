@@ -27,7 +27,16 @@ public :
     virtual bool needsRhoJs(int itime) override;
     
     bool hasField(std::string field_name, std::vector<std::string> fieldsToDump);
-
+    
+    void findSubgridIntersection(unsigned int subgrid_start,
+                                 unsigned int subgrid_stop,
+                                 unsigned int subgrid_step,
+                                 unsigned int zone_begin,
+                                 unsigned int zone_end,
+                                 unsigned int &istart_in_zone,
+                                 unsigned int &istart_in_file,
+                                 unsigned int &nsteps          );
+    
     //! Get memory footprint of current diagnostic
     int getMemFootPrint() override {
         return 0;
@@ -52,6 +61,9 @@ protected :
     //! Inverse of the time average
     double time_average_inv;
     
+    //! Subgrid requested
+    std::vector<unsigned int> subgrid_start, subgrid_stop, subgrid_step;
+    
     //! Property list for collective dataset write, set for // IO.
     hid_t write_plist;
     
@@ -59,8 +71,6 @@ protected :
     std::vector<unsigned int> patch_offset_in_grid;
     //! Number of cells in each direction
     std::vector<unsigned int> patch_size;
-    //! Number of cells in a patch
-    unsigned int total_patch_size;
     //! Buffer for the output of a field
     std::vector<double> data;
     
@@ -82,6 +92,7 @@ protected :
     htri_t status;
     
     //! Tools for re-reading and re-writing the file in a folded pattern
+    unsigned int one_patch_buffer_size;
     hid_t filespace_reread, filespace_firstwrite, memspace_reread, memspace_firstwrite;
     std::vector<double> data_reread, data_rewrite;
     

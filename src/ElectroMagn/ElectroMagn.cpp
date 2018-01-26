@@ -14,6 +14,7 @@
 #include "Profile.h"
 #include "SolverFactory.h"
 #include "DomainDecompositionFactory.h"
+#include "LaserEnvelope.h"
 
 using namespace std;
 
@@ -37,7 +38,7 @@ nrj_new_fields (  0.               )
     if ( dynamic_cast<HilbertDomainDecomposition*>( domain_decomposition ) )
         n_space = params.n_space;
     else {
-        for ( int i = 0 ; i < nDim_field ; i++ ) 
+        for ( unsigned int i = 0 ; i < nDim_field ; i++ ) 
             n_space[i] = params.n_space[i] * params.global_factor[i];
     }
     

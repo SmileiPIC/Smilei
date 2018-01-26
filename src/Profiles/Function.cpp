@@ -1,6 +1,6 @@
-#include <cmath>
 #include "Function.h"
 #include <complex>
+#include <cmath>
 
 using namespace std;
 

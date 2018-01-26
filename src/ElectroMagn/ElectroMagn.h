@@ -342,7 +342,8 @@ public:
     bool isXmax;
 
     //! Corners coefficient for BC
-    std::vector<std::vector<double>> alpha_edge, beta_edge, S_edge;
+    std::vector<double> beta_edge;
+    std::vector<std::vector<double>> S_edge;
 
 protected :
     

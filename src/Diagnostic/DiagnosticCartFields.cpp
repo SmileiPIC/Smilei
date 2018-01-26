@@ -90,7 +90,7 @@ DiagnosticCartFields::DiagnosticCartFields( Params &params, SmileiMPI* smpi, Vec
     
     // Copy the total number of patches
     tot_number_of_patches = params.tot_number_of_patches;
-    for ( int i = 0 ; i < params.nDim_field ; i++ )
+    for ( unsigned int i = 0 ; i < params.nDim_field ; i++ )
         tot_number_of_patches /= params.global_factor[i];
 
     // Prepare the property list for HDF5 output
@@ -240,7 +240,7 @@ void DiagnosticCartFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int it
     // Do not output diag if this iteration has already been written or if problem with file
     if( status != 0 ) return;
     
-    unsigned int nPatches( vecPatches.size() );
+    //unsigned int nPatches( vecPatches.size() );
     
     // For each field, combine all patches and write out
     for( unsigned int ifield=0; ifield < fields_indexes.size(); ifield++ ) {

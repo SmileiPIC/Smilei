@@ -115,6 +115,10 @@ public:
 
     //! Boundary conditions for ElectroMagnetic Fields
     std::vector< std::vector<std::string> > EM_BCs;
+    //! Theta parameter for some kinds of ElectroMagnetic boundary conditions
+    std::vector< std::vector<double> > EM_BCs_theta;
+    //! Are open boundaries used ?
+    bool open_boundaries;
     
     //! Boundary conditions for Envelope Field
     std::vector< std::vector<std::string> > Env_BCs;

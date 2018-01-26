@@ -239,7 +239,7 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
     if ( fabs( (double)(int)nppp_root - nppp_root ) > 0. ) 
         ERROR( "Bad choice of decomposition" );
 
-    for (unsigned int i = 0 ; i<nDim_fields_ ; i++) {
+    for (int i = 0 ; i<nDim_fields_ ; i++) {
         
         for ( unsigned int ipatch = 0 ; ipatch < vecPatch.size() ; ipatch++  ) {
             if ( vecPatch(ipatch)->min_local[i] <= min_local[i] ) {
@@ -272,7 +272,7 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
     //cart_updateMPIenv(smpi);
 
     MPI_me_ = vecPatch(0)->MPI_me_;
-    for (unsigned int i = 0 ; i<nDim_fields_ ; i++) {
+    for ( int i = 0 ; i<nDim_fields_ ; i++) {
         if ((MPI_neighbor_[i][0]==MPI_me_) && (params.EM_BCs[i][0]!="periodic"))
             MPI_neighbor_[i][0] = MPI_PROC_NULL;
         if ((MPI_neighbor_[i][1]==MPI_me_) && (params.EM_BCs[i][0]!="periodic"))
@@ -618,20 +618,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
 
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
 
-    std::vector<int>* indexes_of_particles_to_exchange = &vecSpecies[ispec]->indexes_of_particles_to_exchange;
-
-    std::vector<int>* cubmin = &vecSpecies[ispec]->bmin;
-    std::vector<int>* cubmax = &vecSpecies[ispec]->bmax;
-
-    int nmove,lmove,ii; // local, OK
-    int shift[(*cubmax).size()+1];//how much we need to shift each bin in order to leave room for the new particle
-    double dbin;
-
-    dbin = params.cell_length[0]*params.clrw; //width of a bin.
-    for (unsigned int j=0; j<(*cubmax).size()+1 ;j++){
-        shift[j]=0;
-    }
-    int n_part_send, n_part_recv, n_particles;
+    int n_part_send, n_part_recv;
 
     /********************************************************************************/
     // Wait for end of communications over Particles

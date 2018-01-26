@@ -51,11 +51,11 @@ void ProjectorRZ2Order::operator() (complex<double>* Jx, complex<double>* Jy, co
     // -------------------------------------
     
     // (x,y,z) components of the current density for the macro-particle
+    #ifdef _TODO_RZ
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double crx_p = charge_weight*dx_ov_dt;
     double cry_p = charge_weight*dy_ov_dt;
 
-    #ifdef _TODO_RZ
     #endif
     
 } // END Project local current densities (Jx, Jy, Jz, sort)
@@ -72,11 +72,11 @@ void ProjectorRZ2Order::operator() (complex<double>* Jx, complex<double>* Jy, co
     // -------------------------------------
     
     // (x,y,z) components of the current density for the macro-particle
+    #ifdef _TODO_RZ
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double crx_p = charge_weight*dx_ov_dt;
     double cry_p = charge_weight*dy_ov_dt;
 
-    #ifdef _TODO_RZ
     #endif
 
 } // END Project local densities (Jx, Jy, Jz, rho, sort)
@@ -93,11 +93,11 @@ void ProjectorRZ2Order::operator() (double* rho, Particles &particles, unsigned 
     // Variable declaration & initialization
     // -------------------------------------
 
+    #ifdef _TODO_RZ
     int iloc,jloc;
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
 
-    #ifdef _TODO_RZ
     #endif
 
 } // END Project local current densities (Frozen species)
@@ -107,6 +107,7 @@ void ProjectorRZ2Order::operator() (double* rho, Particles &particles, unsigned 
 // ---------------------------------------------------------------------------------------------------------------------
 void ProjectorRZ2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion)
 {
+    #ifdef _TODO_RZ
     cField2D* Jx3D  = static_cast<cField2D*>(Jx);
     cField2D* Jy3D  = static_cast<cField2D*>(Jy);
     cField2D* Jz3D  = static_cast<cField2D*>(Jz);
@@ -116,7 +117,6 @@ void ProjectorRZ2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &
     double Jy_ion = Jion.y * particles.weight(ipart);
     double Jz_ion = Jion.z * particles.weight(ipart);
     
-    #ifdef _TODO_RZ
     #endif
 
 

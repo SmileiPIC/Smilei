@@ -157,7 +157,6 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
     //xmin/ymin - xmin/ymax - xmin/zmin - xmin/zmax - xmax/ymin - xmax/ymax - xmax/zmin - xmax/zmax 
     //ymin/xmin - ymin/xmax - ymin/zmin - ymin/zmax - ymax/xmin - ymax/xmax - ymax/zmin - ymax/zmax 
     //zmin/xmin - zmin/xmax - zmin/ymin - zmin/ymax - zmaz/xmin - zmaz/xmax - zmax/ymin - zmax/ymax 
-    alpha_edge.resize(24);
     beta_edge.resize(24);
     S_edge.resize(24);
 

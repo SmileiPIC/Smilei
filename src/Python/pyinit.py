@@ -195,6 +195,7 @@ class Main(SmileiSingleton):
     # Default fields
     maxwell_solver = 'Yee'
     EM_boundary_conditions = [["periodic"]]
+    EM_boundary_conditions_theta = [[0.,math.pi]]
     Envelope_boundary_conditions = [["reflective"]]
     time_fields_frozen = 0.
     ponderomotive_force = False
@@ -409,6 +410,7 @@ class DiagFields(SmileiComponent):
     every = None
     fields = []
     time_average = 1
+    subgrid = None
     flush_every = 1
 
 class DiagTrackParticles(SmileiComponent):

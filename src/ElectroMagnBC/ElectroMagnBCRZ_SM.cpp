@@ -77,7 +77,7 @@ ElectroMagnBCRZ_SM::ElectroMagnBCRZ_SM( Params &params, Patch* patch, unsigned i
     #ifdef _TODO_RZ
 	#endif
     // Xmin boundary
-    double theta  = 0.0*conv_deg2rad; //0.0;
+    //double theta  = 0.0*conv_deg2rad; //0.0;
     double factor = 1.0 / (1.0 + dt_ov_dl);
     Alpha_SM_Xmin    = 2.0                     * factor;
     Beta_SM_Xmin     = - (1-dt_ov_dl) * factor;
@@ -85,7 +85,7 @@ ElectroMagnBCRZ_SM::ElectroMagnBCRZ_SM( Params &params, Patch* patch, unsigned i
     Delta_SM_Xmin    = - dt_ov_dr * factor;
     Epsilon_SM_Xmin  = -Icpx / (1.0 + dt_ov_dl);
     // Xmax boundary
-    theta         = M_PI;
+    //theta         = M_PI;
     factor        = 1.0 / (1.0 + dt_ov_dl);
     Alpha_SM_Xmax    = 2.0                      * factor;
     Beta_SM_Xmax     = - (1.0 -dt_ov_dl)  * factor;
@@ -196,7 +196,7 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
     // Loop on imode 
     for (unsigned int imode=0 ; imode<Nmode ; imode++) {
 		// Static cast of the fields
-		cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->El_[imode];
+		//cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->El_[imode];
 		cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Er_[imode];
 		cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Et_[imode];
 		cField2D* BlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_[imode];
