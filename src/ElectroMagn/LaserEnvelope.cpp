@@ -182,8 +182,8 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
     cField3D* A3Dnew;
     A3Dnew  = new cField3D( A_->dims_  );
     // find e_idx in all species
-    int e_idx = 0;
-    Field3D* rho_e = static_cast<Field3D*>(EMfields->rho_s[e_idx]);
+    //int e_idx = 0;
+    //Field3D* rho_e = static_cast<Field3D*>(EMfields->rho_s[e_idx]);
 
     //// explicit solver 
     for (unsigned int i=1 ; i <A_->dims_[0]-1; i++){
