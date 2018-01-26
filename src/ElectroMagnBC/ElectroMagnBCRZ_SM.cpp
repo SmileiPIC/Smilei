@@ -84,7 +84,7 @@ ElectroMagnBCRZ_SM::ElectroMagnBCRZ_SM( Params &params, Patch* patch, unsigned i
     Beta_SM_Xmin     = - (1-dt_ov_dl) * factor;
     Gamma_SM_Xmin    = 4.0         * factor;
     Delta_SM_Xmin    = - dt_ov_dr * factor;
-    Epsilon_SM_Xmin  = -Icpx / (1.0 + dt_ov_dl);
+    Epsilon_SM_Xmin  = -Icpx * factor ;
     // Xmax boundary
     theta         = M_PI;
     factor        = 1.0 / (1.0 + dt_ov_dl);
@@ -92,7 +92,7 @@ ElectroMagnBCRZ_SM::ElectroMagnBCRZ_SM( Params &params, Patch* patch, unsigned i
     Beta_SM_Xmax     = - (1.0 -dt_ov_dl)  * factor;
     Gamma_SM_Xmax    = 4.0         * factor;
     Delta_SM_Xmax    = - dt_ov_dr  * factor;
-    Epsilon_SM_Xmax  = -Icpx / (1.0 + dt_ov_dl)  * factor;
+    Epsilon_SM_Xmax  = -Icpx * factor;
     
 
     
@@ -203,8 +203,9 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		cField2D* BlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_[imode];
 		cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_[imode];
 		cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_[imode];
-
-		int     j_glob = (static_cast<ElectroMagn3DRZ*>(EMfields))->j_glob_;	 
+		bool isYmin = (static_cast<ElectroMagn3DRZ*>(EMfields))->isYmin;
+		int     j_glob = (static_cast<ElectroMagn3DRZ*>(EMfields))->j_glob_;	
+ 
 		if (min_max == 0 && patch->isXmin() ) {
 			//MESSAGE("Xmin");		    
 		    // for Br^(d,p)
@@ -236,7 +237,7 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		    // for Bt^(d,d)
 		    vector<double> yd(1);
 		    yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dr;
-		    for (unsigned int j=0 ; j<nr_d ; j++) {
+		    for (unsigned int j=3*isYmin ; j<nr_d ; j++) {
 		        
 		        std::complex<double> bzW = 0.;
 		        yd[0] += dr;
@@ -252,10 +253,10 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 				}
 		        //x=Xmin
 				unsigned int i=0;
-		        (*BtRZ)(i,j) = -Alpha_SM_Xmin * (*ErRZ)(i,j+1)
-		        +               Beta_SM_Xmin  *( (*BtRZ)(i+1,j+1))
+		        (*BtRZ)(i,j) = -Alpha_SM_Xmin * (*ErRZ)(i,j)
+		        +               Beta_SM_Xmin  *( (*BtRZ)(i+1,j))
 		        +               Gamma_SM_Xmin * bzW
-				+               Epsilon_SM_Xmin *(double)imode/((j_glob+j+0.5)*dr)*(*BlRZ)(i,j+1) ;
+				+               Epsilon_SM_Xmin *(double)imode/((j_glob+j-0.5)*dr)*(*BlRZ)(i,j) ;
 		        
 		    }//j  ---end compute Bt
 		}
@@ -291,7 +292,7 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		    // for Bt^(d,d)
 		    vector<double> yd(1);
 		    yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dr;
-		    for (unsigned int j=0 ; j<nr_d ; j++) {
+		    for (unsigned int j=3*isYmin ; j<nr_d ; j++) {
 		        
 		        std::complex<double> bzE = 0.;
 		        yd[0] += dr;
@@ -310,7 +311,7 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		        (*BtRZ)(i,j) = Alpha_SM_Xmax * (*ErRZ)(i-1,j)
 		         +                    Beta_SM_Xmax  * (*BtRZ)(i-1,j)
 		         +                    Gamma_SM_Xmax * bzE
-				 +					  Epsilon_SM_Xmax * (double)imode /((j_glob+j+0.5)*dr)* (*BlRZ)(i-1,j)	;
+				 +					  Epsilon_SM_Xmax * (double)imode /((j_glob+j-0.5)*dr)* (*BlRZ)(i-1,j)	;
 
 		        
 		    }//j  ---end compute Bt
