@@ -17,43 +17,43 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 
 // with no input argument
-cField2D::cField2D() : Field()
+cField2D::cField2D() : cField()
 {
-    data_1D=NULL;
+    cdata_=NULL;
 }
 
 // with the dimensions as input argument
-cField2D::cField2D(vector<unsigned int> dims) : Field(dims)
+cField2D::cField2D(vector<unsigned int> dims) : cField(dims)
 {
-    data_1D=NULL;
+    cdata_=NULL;
     allocateDims(dims);
 }
 
 // with the dimensions and output (dump) file name as input argument
-cField2D::cField2D(vector<unsigned int> dims, string name) : Field(dims, name)
+cField2D::cField2D(vector<unsigned int> dims, string name) : cField(dims, name)
 {
-    data_1D=NULL;
+    cdata_=NULL;
     allocateDims(dims);
 }
 
 // with the dimensions as input argument
-cField2D::cField2D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) : Field(dims, mainDim, isPrimal)
+cField2D::cField2D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) : cField(dims, mainDim, isPrimal)
 {
-    data_1D=NULL;
+    cdata_=NULL;
     allocateDims(dims, mainDim, isPrimal);
 }
 
 // with the dimensions and output (dump) file name as input argument
-cField2D::cField2D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name) : Field(dims, mainDim, isPrimal, name)
+cField2D::cField2D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name) : cField(dims, mainDim, isPrimal, name)
 {
-    data_1D=NULL;
+    cdata_=NULL;
     allocateDims(dims, mainDim, isPrimal);
 }
 
 // without allocating
-cField2D::cField2D(string name, vector<unsigned int> dims) : Field(dims, name)
+cField2D::cField2D(string name, vector<unsigned int> dims) : cField(dims, name)
 {
-    data_1D=NULL;
+    cdata_=NULL;
     dims_=dims;
 }
 
@@ -65,8 +65,8 @@ cField2D::cField2D(string name, vector<unsigned int> dims) : Field(dims, name)
 cField2D::~cField2D()
 {
 
-    if (data_1D!=NULL) {
-        delete [] data_1D;
+    if (cdata_!=NULL) {
+        delete [] cdata_;
         delete [] data_2D;
     }
 }
@@ -79,16 +79,16 @@ void cField2D::allocateDims()
 {
     //! \todo{Comment on what you are doing here (MG for JD)}
     if (dims_.size()!=2) ERROR("Alloc error must be 2 : " << dims_.size());
-    if (data_1D!=NULL) delete [] data_1D;
+    if (cdata_!=NULL) delete [] cdata_;
 
     isDual_.resize( dims_.size(), 0 );
 
-    data_1D = new complex<double>[dims_[0]*dims_[1]];
+    cdata_ = new complex<double>[dims_[0]*dims_[1]];
     //! \todo{check row major order!!! (JD)}
 
     data_2D= new complex<double>*[dims_[0]];
     for (unsigned int i=0; i<dims_[0]; i++) {
-        data_2D[i] = data_1D + i*dims_[1];
+        data_2D[i] = cdata_ + i*dims_[1];
         for (unsigned int j=0; j<dims_[1]; j++) data_2D[i][j] = 0.0;
     }
 
@@ -98,8 +98,8 @@ void cField2D::allocateDims()
 
 void cField2D::deallocateDims()
 {
-    delete [] data_1D;
-    data_1D = NULL;
+    delete [] cdata_;
+    cdata_ = NULL;
     delete [] data_2D;
     data_2D = NULL;
         
@@ -120,7 +120,7 @@ void cField2D::allocateDims(unsigned int mainDim, bool isPrimal )
 {
     //! \todo{Comment on what you are doing here (MG for JD)}
     if (dims_.size()!=2) ERROR("Alloc error must be 2 : " << dims_.size());
-    if (data_1D) delete [] data_1D;
+    if (cdata_) delete [] cdata_;
     
     // isPrimal define if mainDim is Primal or Dual
     isDual_.resize( dims_.size(), 0 );
@@ -134,12 +134,12 @@ void cField2D::allocateDims(unsigned int mainDim, bool isPrimal )
     for ( unsigned int j=0 ; j<dims_.size() ; j++ )
         dims_[j] += isDual_[j];
     
-    data_1D = new complex<double>[dims_[0]*dims_[1]];
+    cdata_ = new complex<double>[dims_[0]*dims_[1]];
     //! \todo{check row major order!!! (JD)}
     
     data_2D= new complex<double>*[dims_[0]];
     for (unsigned int i=0; i<dims_[0]; i++)  {
-        data_2D[i] = data_1D + i*dims_[1];
+        data_2D[i] = cdata_ + i*dims_[1];
         for (unsigned int j=0; j<dims_[1]; j++) data_2D[i][j] = 0.0;
     }
     
@@ -216,5 +216,5 @@ void cField2D::get( Field* inField, Params &params, SmileiMPI* smpi, Patch* inPa
             //( *out2D )( i, j ) = in2D->hindex;
         }
     }    
-   
+    
 }

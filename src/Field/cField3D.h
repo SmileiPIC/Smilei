@@ -5,13 +5,13 @@
 #include <complex>
 #include <vector>
 
-#include "Field.h"
+#include "cField.h"
 #include "Patch.h"
 #include "Params.h"
 #include "SmileiMPI.h"
 
 //! class cField3D used to defined a 3d vector of Complex
-class cField3D : public Field
+class cField3D : public cField
 {
 
 public:
@@ -75,8 +75,8 @@ public:
     inline std::complex<double>& operator () (unsigned int i)
     {
         DEBUGEXEC(if (i>=globalDims_) ERROR(name << " Out of limits "<< i << " < " <<dims_[0] ));
-        DEBUGEXEC(if (!std::isfinite(real(data_1D[i])+imag(data_1D[i]))) ERROR(name << " Not finite "<< i << " = " << data_1D[i]));
-        return data_1D[i];
+        DEBUGEXEC(if (!std::isfinite(real(cdata_[i])+imag(cdata_[i]))) ERROR(name << " Not finite "<< i << " = " << cdata_[i]));
+        return cdata_[i];
     };
     void dump(std::vector<unsigned int> dims) {};
     
@@ -86,7 +86,6 @@ public:
 private:
     //! this will present the data as a 2d matrix
     std::complex<double> ***data_3D;
-    std::complex<double> *data_1D;
 };
 
 #endif

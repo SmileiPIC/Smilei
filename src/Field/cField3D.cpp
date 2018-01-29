@@ -13,43 +13,43 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 
 // with no input argument
-cField3D::cField3D() : Field()
+cField3D::cField3D() : cField()
 {
-    data_1D=NULL;
+    cdata_=NULL;
 }
 
 // with the dimensions as input argument
-cField3D::cField3D(vector<unsigned int> dims) : Field(dims)
+cField3D::cField3D(vector<unsigned int> dims) : cField(dims)
 {
-    data_1D=NULL;
+    cdata_=NULL;
     allocateDims(dims);
 }
 
 // with the dimensions and output (dump) file name as input argument
-cField3D::cField3D(vector<unsigned int> dims, string name) : Field(dims, name)
+cField3D::cField3D(vector<unsigned int> dims, string name) : cField(dims, name)
 {
-    data_1D=NULL;
+    cdata_=NULL;
     allocateDims(dims);
 }
 
 // with the dimensions as input argument
-cField3D::cField3D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) : Field(dims, mainDim, isPrimal)
+cField3D::cField3D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) : cField(dims, mainDim, isPrimal)
 {
-    data_1D=NULL;
+    cdata_=NULL;
     allocateDims(dims, mainDim, isPrimal);
 }
 
 // with the dimensions and output (dump) file name as input argument
-cField3D::cField3D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name) : Field(dims, mainDim, isPrimal, name)
+cField3D::cField3D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name) : cField(dims, mainDim, isPrimal, name)
 {
-    data_1D=NULL;
+    cdata_=NULL;
     allocateDims(dims, mainDim, isPrimal);
 }
 
 // without allocating
-cField3D::cField3D(string name, vector<unsigned int> dims) : Field(dims, name)
+cField3D::cField3D(string name, vector<unsigned int> dims) : cField(dims, name)
 {
-    data_1D=NULL;
+    cdata_=NULL;
     dims_=dims;
 }
 
@@ -61,8 +61,8 @@ cField3D::cField3D(string name, vector<unsigned int> dims) : Field(dims, name)
 cField3D::~cField3D()
 {
 
-    if (data_1D!=NULL) {
-        delete [] data_1D;
+    if (cdata_!=NULL) {
+        delete [] cdata_;
         delete [] data_3D;
     }
 }
@@ -75,11 +75,11 @@ void cField3D::allocateDims()
 {
     //! \todo{Comment on what you are doing here (MG for JD)}
     if (dims_.size()!=3) ERROR("Alloc error must be 3 : " << dims_.size());
-    if (data_1D!=NULL) delete [] data_1D;
+    if (cdata_!=NULL) delete [] cdata_;
 
     isDual_.resize( dims_.size(), 0 );
 
-    data_1D = new complex<double>[dims_[0]*dims_[1]*dims_[2]];
+    cdata_ = new complex<double>[dims_[0]*dims_[1]*dims_[2]];
     //! \todo{check row major order!!! (JD)}
 
     data_3D= new complex<double>**[dims_[0]];
@@ -87,7 +87,7 @@ void cField3D::allocateDims()
         data_3D[i]= new complex<double>*[dims_[1]];
         for (unsigned int j=0; j<dims_[1]; j++)
         {
-            data_3D[i][j] = data_1D + i*dims_[1]*dims_[2] + j*dims_[2];
+            data_3D[i][j] = cdata_ + i*dims_[1]*dims_[2] + j*dims_[2];
             for (unsigned int k=0; k<dims_[2]; k++) data_3D[i][j][k] = 0.0;
         }
     }
@@ -97,8 +97,8 @@ void cField3D::allocateDims()
 
 void cField3D::deallocateDims()
 {
-    delete [] data_1D;
-    data_1D = NULL;
+    delete [] cdata_;
+    cdata_ = NULL;
     delete [] data_3D;
     data_3D = NULL;
         
@@ -120,7 +120,7 @@ void cField3D::allocateDims(unsigned int mainDim, bool isPrimal )
 {
     //! \todo{Comment on what you are doing here (MG for JD)}
     if (dims_.size()!=3) ERROR("Alloc error must be 3 : " << dims_.size());
-    if (data_1D) delete [] data_1D;
+    if (cdata_) delete [] cdata_;
     
     // isPrimal define if mainDim is Primal or Dual
     isDual_.resize( dims_.size(), 0 );
@@ -134,7 +134,7 @@ void cField3D::allocateDims(unsigned int mainDim, bool isPrimal )
     for ( unsigned int j=0 ; j<dims_.size() ; j++ )
         dims_[j] += isDual_[j];
     
-    data_1D = new complex<double>[dims_[0]*dims_[1]*dims_[2]];
+    cdata_ = new complex<double>[dims_[0]*dims_[1]*dims_[2]];
     //! \todo{check row major order!!! (JD)}
     
     data_3D= new complex<double>**[dims_[0]];
@@ -142,7 +142,7 @@ void cField3D::allocateDims(unsigned int mainDim, bool isPrimal )
                 data_3D[i]= new complex<double>*[dims_[1]];
         for (unsigned int j=0; j<dims_[1]; j++)
         {
-            data_3D[i][j] = data_1D + i*dims_[1]*dims_[2] + j*dims_[2];
+            data_3D[i][j] = cdata_ + i*dims_[1]*dims_[2] + j*dims_[2];
             for (unsigned int k=0; k<dims_[2]; k++) data_3D[i][j][k] = 0.0;
         }
 
