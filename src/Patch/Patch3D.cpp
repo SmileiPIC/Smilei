@@ -730,6 +730,22 @@ void Patch3D::createType( Params& params )
                                 MPI_DOUBLE, &(ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim]));
                 MPI_Type_commit( &(ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
             
+                //// Complex Type V0
+                //ntype_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                //MPI_Type_contiguous(params.oversize[0]*ny*nz, 
+                //                    MPI_CXX_DOUBLE_COMPLEX, &(ntype_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim]));
+                //MPI_Type_commit( &(ntype_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
+                //
+                //ntype_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                //MPI_Type_vector(nx, params.oversize[1]*nz, ny*nz, 
+                //                MPI_CXX_DOUBLE_COMPLEX, &(ntype_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim]));
+                //MPI_Type_commit( &(ntype_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );
+                //
+                //ntype_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                //MPI_Type_vector(nx*ny, params.oversize[2], nz, 
+                //                MPI_CXX_DOUBLE_COMPLEX, &(ntype_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim]));
+                //MPI_Type_commit( &(ntype_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
+
                 // Complex Type
                 ntype_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
                 MPI_Type_contiguous(2*params.oversize[0]*ny*nz, 
@@ -737,12 +753,12 @@ void Patch3D::createType( Params& params )
                 MPI_Type_commit( &(ntype_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
 
                 ntype_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
-                MPI_Type_vector(2*nx, params.oversize[1]*nz, ny*nz, 
+                MPI_Type_vector(nx, params.oversize[1]*2*nz, ny*2*nz, 
                                 MPI_DOUBLE, &(ntype_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim]));
                 MPI_Type_commit( &(ntype_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );
 
                 ntype_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
-                MPI_Type_vector(2*nx*ny, params.oversize[2], nz, 
+                MPI_Type_vector(nx*ny, 2*params.oversize[2], 2*nz, 
                                 MPI_DOUBLE, &(ntype_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim]));
                 MPI_Type_commit( &(ntype_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
 
@@ -768,19 +784,8 @@ void Patch3D::createType( Params& params )
 
                 // Complex sum
                 ntypeSum_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
-                MPI_Type_contiguous(2*nx_sum*ny*nz, 
-                                    MPI_DOUBLE, &(ntypeSum_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim]));
-                MPI_Type_commit( &(ntypeSum_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
-            
                 ntypeSum_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
-                MPI_Type_vector(2*nx, ny_sum*nz, ny*nz, 
-                                MPI_DOUBLE, &(ntypeSum_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim]));
-                MPI_Type_commit( &(ntypeSum_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );
-
                 ntypeSum_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
-                MPI_Type_vector(2*nx*ny, nz_sum, nz, 
-                                MPI_DOUBLE, &(ntypeSum_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim]));
-                MPI_Type_commit( &(ntypeSum_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
             
             }
         }
