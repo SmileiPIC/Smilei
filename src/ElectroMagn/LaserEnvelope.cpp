@@ -65,7 +65,11 @@ cell_length    ( envelope->cell_length ), timestep( envelope->timestep), EnvBoun
 
 LaserEnvelope::~LaserEnvelope()
 {
-    delete profile_;
+    // Pb wih clones, know problem
+    //if (profile_ != NULL) {
+    //    delete profile_;
+    //    profile_ = NULL;
+    //}
 
     delete A0_;
     delete A_;
