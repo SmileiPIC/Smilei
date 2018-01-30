@@ -264,6 +264,11 @@ void PatchRZ::reallyfinalizeSumField( Field* field, int iDim )
 // ---------------------------------------------------------------------------------------------------------------------
 void PatchRZ::initExchange( Field* field )
 {
+    ERROR("Circ geometry initExchange not implemented");
+} // END initExchange( Field* field )
+
+void PatchRZ::initExchangeComplex( Field* field )
+{
     cout << "On ne passe jamais ici !!!!" << endl;
 
     if (field->MPIbuff.srequest.size()==0)
@@ -312,11 +317,6 @@ void PatchRZ::initExchange( Field* field )
         } // END for iNeighbor
 
     } // END for iDim
-} // END initExchange( Field* field )
-
-void PatchRZ::initExchangeComplex( Field* field )
-{
-    ERROR("Circ geometry initExchangeComplex not implemented");
 } // END initExchangeComplex( Field* field )
 
 
@@ -325,6 +325,11 @@ void PatchRZ::initExchangeComplex( Field* field )
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
 void PatchRZ::finalizeExchange( Field* field )
+{
+    ERROR("Circ geometry finalizeExchange not implemented");
+} // END finalizeExchange( Field* field )
+
+void PatchRZ::finalizeExchangeComplex( Field* field )
 {
     cField2D* f3D =  static_cast<cField2D*>(field);
 
@@ -346,11 +351,6 @@ void PatchRZ::finalizeExchange( Field* field )
 
     } // END for iDim
 
-} // END finalizeExchange( Field* field )
-
-void PatchRZ::finalizeExchangeComplex( Field* field )
-{
-    ERROR("Circ geometry finalizeExchangeComplex not implemented");
 } // END finalizeExchangeComplex( Field* field )
 
 
@@ -359,6 +359,12 @@ void PatchRZ::finalizeExchangeComplex( Field* field )
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
 void PatchRZ::initExchange( Field* field, int iDim )
+{
+    ERROR("Circ geometry initExchange not implemented");
+
+} // END initExchange( Field* field, int iDim )
+
+void PatchRZ::initExchangeComplex( Field* field, int iDim )
 {
     if (field->MPIbuff.srequest.size()==0){
         field->MPIbuff.allocate(2);
@@ -410,12 +416,6 @@ void PatchRZ::initExchange( Field* field, int iDim )
 
     } // END for iNeighbor
 
-
-} // END initExchange( Field* field, int iDim )
-
-void PatchRZ::initExchangeComplex( Field* field, int iDim )
-{
-    ERROR("Circ geometry initExchangeComplex not implemented");
 } // END initExchangeComplex( Field* field )
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -423,6 +423,11 @@ void PatchRZ::initExchangeComplex( Field* field, int iDim )
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
 void PatchRZ::finalizeExchange( Field* field, int iDim )
+{
+    ERROR("Circ geometry finalizeExchange not implemented");
+} // END finalizeExchange( Field* field, int iDim )
+
+void PatchRZ::finalizeExchangeComplex( Field* field, int iDim )
 {
     int patch_ndims_(2);
 
@@ -440,11 +445,6 @@ void PatchRZ::finalizeExchange( Field* field, int iDim )
         }
     }
 
-} // END finalizeExchange( Field* field, int iDim )
-
-void PatchRZ::finalizeExchangeComplex( Field* field, int iDim )
-{
-    ERROR("Circ geometry finalizeExchangeComplex not implemented");
 } // END finalizeExchangeComplex( Field* field )
 
 // ---------------------------------------------------------------------------------------------------------------------

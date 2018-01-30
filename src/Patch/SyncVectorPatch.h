@@ -30,7 +30,8 @@ public :
     static void exchangeB( Params& params, VectorPatch& vecPatches, int imode );
     static void finalizeexchangeB( Params& params, VectorPatch& vecPatches, int imode );
 
-    static void sum      ( std::vector<Field*> fields, VectorPatch& vecPatches, Timers &timers, int itime );
+    static void sum       ( std::vector<Field*> fields, VectorPatch& vecPatches, Timers &timers, int itime );
+    static void sumComplex( std::vector<Field*> fields, VectorPatch& vecPatches, Timers &timers, int itime );
     static void new_sum      ( std::vector<Field*>& fields, VectorPatch& vecPatches, Timers &timers, int itime );
     static void exchange ( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void finalizeexchange( std::vector<Field*> fields, VectorPatch& vecPatches );
