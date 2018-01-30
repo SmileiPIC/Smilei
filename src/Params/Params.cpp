@@ -511,6 +511,10 @@ namelist("")
         {
            this->hasNielRadiation = true;
         }
+        else if (radiation_model=="diagradiationspectrum")
+        {
+            this->hasDiagRadiationSpectrum = true;
+        }
     }
 
     // -------------------------------------------------------

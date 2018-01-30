@@ -221,7 +221,9 @@ public:
     //! Tells whether there is a species with the stochastic radiation loss
     //! of Niel et al.
     bool hasNielRadiation;
-
+    //! Tells whether there is w/out radiation reaction but for which a RadiationSpectrum diag is called
+    bool hasDiagRadiationSpectrum;
+    
     //! Tells whether there is a species with multiphoton Breit-Wheeler
     bool hasMultiphotonBreitWheeler;
 

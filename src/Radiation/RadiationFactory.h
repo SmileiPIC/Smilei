@@ -13,6 +13,7 @@
 #include "RadiationMonteCarlo.h"
 #include "RadiationCorrLandauLifshitz.h"
 #include "RadiationLandauLifshitz.h"
+#include "RadiationDiagRadiationSpectrum.h"
 #include "RadiationNiel.h"
 
 #include "Params.h"
@@ -54,6 +55,12 @@ public:
         else if ( species->radiation_model == "ll" )
         {
             Radiate = new RadiationLandauLifshitz( params, species );
+        }
+        // Radiation is only a diagnostic (DiagRadiationSpectrum can be called for this species): only compute
+        // the electron quantum parameter
+        else if ( species->radiation_model == "diagradiationspectrum" )
+        {
+            Radiate = new RadiationDiagRadiationSpectrum( params, species );
         }
         else if ( species->radiation_model != "none" )
         {
