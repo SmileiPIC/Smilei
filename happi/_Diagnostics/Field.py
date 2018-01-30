@@ -193,22 +193,14 @@ class Field(Diagnostic):
 		self._naxes = len(self._initialShape)
 		self._subsetinfo = {}
 		self._finalShape = self._np.copy(self._initialShape)
-<<<<<<< HEAD
-		self._averages = [False]*self._ndim
-		self._selection = [self._np.s_[:]]*self._ndim
-		self._offset  = fields[0].attrs['gridGlobalOffset']
-		self._spacing = fields[0].attrs['gridSpacing']
-		for iaxis in range(self._naxes):
-			centers = self._np.linspace(self._offset[iaxis], self._offset[iaxis]+(self._initialShape[iaxis]-1)*self._spacing[iaxis], self._initialShape[iaxis])
-			label = "xyz"[iaxis]
-=======
 		self._averages = [False]*self._naxes
 		self._selection = [self._np.s_[:]]*self._naxes
+		self._offset  = fields[0].attrs['gridGlobalOffset']
+		self._spacing = fields[0].attrs['gridSpacing']
 		axis_name = "xyz" if not self.cylindrical or not build3d else "xr"
 		for iaxis in range(self._naxes):
 			centers = self._np.arange(axis_start[iaxis], axis_stop[iaxis], axis_step[iaxis])
 			label = axis_name[iaxis]
->>>>>>> 3DRZ_datastruct
 			axisunits = "L_r"
 			
 			# If averaging over this axis
