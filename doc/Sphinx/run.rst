@@ -138,7 +138,7 @@ checks by compiling it with
     make config=debug
 
 Compiling the whole code with this command will make it very slow to run. 
-But to check only a particular file for errors, first compile the code with `make`, then
+But to check only a particular file for errors, first compile the code with ``make``, then
 modify the file, and recompile in debug mode.
 
 In debug mode, these C++ macros are activated:
@@ -152,8 +152,10 @@ In debug mode, these C++ macros are activated:
 Known issues
 ^^^^^^^^^^^^
 
-* When running with ``openmpi 2.1``, it appears that the so called ``vader`` protocol interferes with :program:`Smilei`'s
-  memory management and comunications. We therefore recommend to disable this protocol when running ``mpirun`` as follows:
+* OpenMPI ``2.*`` often causes unstable behavior in Smilei.
+  For instance, with ``openmpi 2.1``, the `vader` protocol seems to interfere with Smilei's
+  memory management and comunications. We therefore recommend to disable this
+  protocol when running ``mpirun``, as follows:
 
   .. code-block:: bash
   

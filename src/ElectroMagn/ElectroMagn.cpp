@@ -13,6 +13,7 @@
 #include "Patch.h"
 #include "Profile.h"
 #include "SolverFactory.h"
+#include "DomainDecompositionFactory.h"
 
 using namespace std;
 
@@ -20,7 +21,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn::ElectroMagn(Params &params, vector<Species*>& vecSpecies, Patch* patch) :
+ElectroMagn::ElectroMagn(Params &params, DomainDecomposition* domain_decomposition, vector<Species*>& vecSpecies, Patch* patch) :
 timestep       ( params.timestep   ),
 cell_length    ( params.cell_length),
 n_species      ( vecSpecies.size() ),
@@ -33,7 +34,12 @@ isXmax(patch->isXmax()),
 nrj_mw_lost    (  0.               ),
 nrj_new_fields (  0.               )
 {
-    
+    if ( dynamic_cast<HilbertDomainDecomposition*>( domain_decomposition ) )
+        n_space = params.n_space;
+    else {
+        for ( unsigned int i = 0 ; i < nDim_field ; i++ ) 
+            n_space[i] = params.n_space[i] * params.global_factor[i];
+    }
     
     // take useful things from params
     for (unsigned int i=0; i<3; i++) {
@@ -155,19 +161,20 @@ void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn::~ElectroMagn()
 {
-    delete Ex_;
-    delete Ey_;
-    delete Ez_;
-    delete Bx_;
-    delete By_;
-    delete Bz_;
-    delete Bx_m;
-    delete By_m;
-    delete Bz_m;
-    delete Jx_;
-    delete Jy_;
-    delete Jz_;
-    delete rho_;
+
+   if(Ex_ != NULL) delete Ex_;
+   if(Ey_ != NULL) delete Ey_;
+   if(Ez_ != NULL) delete Ez_;
+   if(Bx_ != NULL) delete Bx_;
+   if(By_ != NULL) delete By_;
+   if(Bz_ != NULL) delete Bz_;
+//   if(Bx_m != NULL) delete Bx_m;
+//   if(By_m != NULL) delete By_m;
+//   if(Bz_m != NULL) delete Bz_m;
+   if(Jx_ != NULL) delete Jx_;
+   if(Jy_ != NULL) delete Jy_;
+   if(Jz_ != NULL) delete Jz_;
+   if(rho_ != NULL) delete rho_;
     
     for( unsigned int idiag=0; idiag<allFields_avg.size(); idiag++ )
         for( unsigned int ifield=0; ifield<allFields_avg[idiag].size(); ifield++ )

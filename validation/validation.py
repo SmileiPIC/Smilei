@@ -420,14 +420,8 @@ else:
 	COMPILE_COMMAND = 'make -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
 	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
-
-        # OpenMPI
-        if "openmpi" in MPI_DISTRIBUTION:
-            RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; mpirun -mca btl tcp,sm,self -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
-        # OpenMPI
-        else:
-    	    RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
-        RUN = RUN_OTHER
+	RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
+	RUN = RUN_OTHER
 
 # CLEAN
 # If the workdir does not contains a smilei bin, or it contains one older than the the smilei bin in directory smilei, force the compilation in order to generate the compilation_output
@@ -501,7 +495,7 @@ class CompareToReference(object):
 		except:
 			print( "Unable to find the reference data for "+bench_name)
 			sys.exit(1)
-	
+
 	def __call__(self, data_name, data, precision=None):
 		# verify the name is in the reference
 		if data_name not in self.data.keys():
@@ -701,9 +695,9 @@ for BENCH in SMILEI_BENCH_LIST :
 		# Copy of the databases
 		# For the cases that need a database
 		if BENCH in [
-				"tst2d_8_synchrotron_chi1.py",
-				"tst2d_9_synchrotron_chi0.1.py",
-				"tst1d_9_rad_electron_laser_collision.py",
+				"tst2d_08_synchrotron_chi1.py",
+				"tst2d_09_synchrotron_chi0.1.py",
+				"tst1d_09_rad_electron_laser_collision.py",
 				"tst1d_10_pair_electron_laser_collision.py",
 				"tst2d_10_multiphoton_Breit_Wheeler.py"
 			]:
@@ -780,7 +774,7 @@ for BENCH in SMILEI_BENCH_LIST :
 	# CLEAN WORKDIRS, GOES HERE ONLY IF SUCCEED
 	os.chdir(WORKDIR_BASE)
 	shutil.rmtree( WORKDIR_BASE+s+'wd_'+os.path.basename(os.path.splitext(BENCH)[0]), True )
-	
+
 	if VERBOSE: print( "")
 
 print( "Everything passed")

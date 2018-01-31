@@ -67,8 +67,8 @@ oversize(params.oversize),
 cell_length(params.cell_length),
 min_loc_vec(patch->getDomainLocalMin()),
 tracking_diagnostic(10000),
-partBoundCond(NULL),
 nDim_particle(params.nDim_particle),
+partBoundCond(NULL),
 min_loc(patch->getDomainLocalMin(0))
 
 {
@@ -612,7 +612,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
              // Project currents if not a Test species and charges as well if a diag is needed.
              // Do not project if a photon
              if ((!particles->is_test) && (mass > 0))
-                 (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, b_dim, ispec );
+                 (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, params.is_spectral, b_dim, ispec );
 
         }// ibin
 
@@ -757,7 +757,7 @@ void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector
 void Species::sort_part(Params& params)
 {
     int ndim = params.nDim_field;
-    int idim, check;
+    int idim;
     //cleanup_sent_particles(ispec, indexes_of_particles_to_exchange);
 
     //We have stored in indexes_of_particles_to_exchange the list of all particles that needs to be removed.
@@ -1187,8 +1187,9 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                             indexes[2]=k*cell_length[2]+cell_position[2];
                         }
                     }
-
-                    initPosition(nPart, iPart, indexes);
+                    if (position_initialization_on_species==false){
+                        initPosition(nPart, iPart, indexes);
+                    }
                     initMomentum(nPart,iPart, temp, vel);
                     initWeight(nPart, iPart, density(i,j,k));
                     initCharge(nPart, iPart, charge(i,j,k));

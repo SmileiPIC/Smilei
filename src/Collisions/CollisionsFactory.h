@@ -183,6 +183,10 @@ public:
         for (unsigned int n_collisions = 0; n_collisions < numcollisions; n_collisions++) {
             vecCollisions.push_back( create(params, patch, vecSpecies, n_collisions, debye_length_required) );
         }
+        for (unsigned int n_collisions = 0; n_collisions < numcollisions; n_collisions++) {
+            if ( vecCollisions[ n_collisions ]->Ionization ) 
+                vecCollisions[ n_collisions ]->Ionization->assignDatabase(  vecCollisions[ n_collisions ]->Ionization->dataBaseIndex );
+        }        
         
         // pass the variable "debye_length_required" into the Collision class
         Collisions::debye_length_required = debye_length_required;

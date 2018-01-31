@@ -5,7 +5,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include "Hilbert_functions.h"
+#include "DomainDecompositionFactory.h"
 #include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
@@ -16,21 +16,34 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Patch1D constructor
 // ---------------------------------------------------------------------------------------------------------------------
-Patch1D::Patch1D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
-  : Patch( params, smpi, ipatch, n_moved)
+Patch1D::Patch1D(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved)
+    : Patch( params, smpi, domain_decomposition, ipatch, n_moved)
 {
-    initStep2(params);
-    initStep3(params, smpi, n_moved);
-    finishCreation(params, smpi);
+    if (dynamic_cast<HilbertDomainDecomposition*>( domain_decomposition )) {
+        initStep2(params, domain_decomposition);
+        initStep3(params, smpi, n_moved);
+        finishCreation(params, smpi, domain_decomposition);
+    }
+    else { // Cartesian
+        // See void Patch::set( VectorPatch& vecPatch )        
+
+        for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+            ntype_[0][ix_isPrim] = MPI_DATATYPE_NULL;
+            ntype_[1][ix_isPrim] = MPI_DATATYPE_NULL;
+            ntypeSum_[0][ix_isPrim] = MPI_DATATYPE_NULL;
+        }
+
+    }
+
 } // End Patch1D::Patch1D
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Patch1D cloning constructor
 // ---------------------------------------------------------------------------------------------------------------------
-Patch1D::Patch1D(Patch1D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
-    : Patch( patch, params, smpi, ipatch, n_moved, with_particles )
+Patch1D::Patch1D(Patch1D* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
+    : Patch( patch, params, smpi, domain_decomposition, ipatch, n_moved, with_particles )
 {
-    initStep2(params);
+    initStep2(params, domain_decomposition);
     initStep3(params, smpi, n_moved);
     finishCloning(patch, params, smpi, with_particles);
 } // End Patch1D::Patch1D
@@ -40,20 +53,21 @@ Patch1D::Patch1D(Patch1D* patch, Params& params, SmileiMPI* smpi, unsigned int i
 // Patch1D second initializer :
 //   - Pcoordinates, neighbor_ resized in Patch constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch1D::initStep2(Params& params)
+void Patch1D::initStep2(Params& params, DomainDecomposition* domain_decomposition)
 {
-    int xcall, ycall;
+    std::vector<int> xcall( 1, 0 );
     
     Pcoordinates[0] = hindex;
     
     // 1st direction
-    xcall = Pcoordinates[0]-1;
-    ycall = Pcoordinates[1];
-    if (params.EM_BCs[0][0]=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
-    neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-    xcall = Pcoordinates[0]+1;
-    if (params.EM_BCs[0][0]=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
-    neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
+    xcall[0] = Pcoordinates[0]-1;
+    if (params.EM_BCs[0][0]=="periodic" && xcall[0] < 0)
+        xcall[0] += domain_decomposition->ndomain_[0];
+    neighbor_[0][0] = domain_decomposition->getDomainId( xcall );
+    xcall[0] = Pcoordinates[0]+1;
+    if (params.EM_BCs[0][0]=="periodic" && xcall[0] >= (int)domain_decomposition->ndomain_[0])
+        xcall[0] -= domain_decomposition->ndomain_[0];
+    neighbor_[0][1] = domain_decomposition->getDomainId( xcall );
     
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
         ntype_[0][ix_isPrim] = MPI_DATATYPE_NULL;
@@ -331,6 +345,43 @@ void Patch1D::finalizeExchange( Field* field, int iDim )
 // ---------------------------------------------------------------------------------------------------------------------
 // Create MPI_Datatypes used in initSumField and initExchange
 // ---------------------------------------------------------------------------------------------------------------------
+void Patch1D::createType2( Params& params ) {
+    if (ntype_[0][0] != MPI_DATATYPE_NULL)
+        return;
+
+    unsigned int clrw = params.clrw;
+    
+    // MPI_Datatype ntype_[nDim][primDual]
+    int ny = oversize[0];
+    int nline;
+
+    for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+
+        // Standard Type
+        ntype_[0][ix_isPrim] = MPI_DATATYPE_NULL;
+        MPI_Type_contiguous(ny, MPI_DOUBLE, &(ntype_[0][ix_isPrim]));    //line
+        MPI_Type_commit( &(ntype_[0][ix_isPrim]) );
+
+        ntype_[1][ix_isPrim] = MPI_DATATYPE_NULL;
+        MPI_Type_contiguous(clrw, MPI_DOUBLE, &(ntype_[1][ix_isPrim]));   //clrw lines
+        MPI_Type_commit( &(ntype_[1][ix_isPrim]) );
+
+        ntypeSum_[0][ix_isPrim] = MPI_DATATYPE_NULL;
+
+        MPI_Datatype tmpType = MPI_DATATYPE_NULL;
+        MPI_Type_contiguous(1, MPI_DOUBLE, &(tmpType));    //line
+        MPI_Type_commit( &(tmpType) );
+
+
+        nline = 1 + 2*params.oversize[0] + ix_isPrim;
+        MPI_Type_contiguous(nline, tmpType, &(ntypeSum_[0][ix_isPrim]));    //line
+        MPI_Type_commit( &(ntypeSum_[0][ix_isPrim]) );
+
+        MPI_Type_free( &tmpType );
+            
+    }
+}
+
 void Patch1D::createType( Params& params )
 {
     if (ntype_[0][0] != MPI_DATATYPE_NULL)

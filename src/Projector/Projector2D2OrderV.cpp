@@ -569,7 +569,7 @@ void Projector2D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int scell, int clrw, bool diag_flag, std::vector<unsigned int> &b_dim, int ispec)
+void Projector2D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int scell, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec)
 {
     if ( istart == iend ) return; //Don't treat empty cells.
 

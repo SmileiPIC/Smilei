@@ -23,15 +23,18 @@ as long as they correspond to several :ref:`restarts <Checkpoints>` of the same 
   * ``results_path``: path or list of paths to the directory-ies
     where the results of the simulation-s are stored. It can also contain wildcards,
     such as ``*`` and ``?`` in order to include several simulations at once.
-
-  * ``show``: if True, figures will actually plot on screen. If False, make sure that
-    you have not loaded another simulation or the matplotlib package. You may need to
-    restart python.
   
   * ``reference_angular_frequency_SI``: overrides the value of the simulation parameter
     :py:data:`reference_angular_frequency_SI`, in order to re-scale units.
   
-  * ``verbose``: if True, more information is displayed while post-processing.
+  * ``show``: if ``False``, figures will not plot on screen. Make sure that
+    you have not loaded another simulation or the matplotlib package. You may need to
+    restart python.
+  
+  * ``verbose``: if ``False``, less information is printed while post-processing.
+  
+  * ``scan``: if ``False``, HDF5 output files are not scanned initially.
+
 
 **Returns:** An object containing various methods to extract and manipulate the simulation
   outputs, as described below.
@@ -236,9 +239,8 @@ Open a TrackParticles diagnostic
      | If omitted, a list of available tracked-particle species is printed.
   * ``select``: Instructions for selecting particles among those available.
     A detailed explanation is provided below
-  * ``axes``: A list of axes for plotting the trajectories.
-     | Each axis is ``"x"``, ``"y"``, ``"z"``, ``"px"``, ``"py"``, ``"pz"``, ``"chi"`` (the quantum parameter), ``"q"`` (the charge) or ``"w"`` (the statistical weight).
-     | ``"chi"`` available only if the particle radiates.
+  * ``axes``: A list of axes for plotting the trajectories or obtaining particle data.
+     | Each axis is one of the :py:data:`attributes` defined in the namelist.
      | **Example:** ``axes = ["x"]`` corresponds to :math:`x` versus time.
      | **Example:** ``axes = ["x","y"]`` correspond to 2-D trajectories.
      | **Example:** ``axes = ["x","px"]`` correspond to phase-space trajectories.
@@ -290,7 +292,7 @@ and only one mode between those three.
   * ``raw`` : The name of a quantity, or an operation between them (see quantities below).
     The requested quantity is listed for each process.
   * ``map`` : The name of a quantity, or an operation between them (see quantities below).
-    The requested quantity is mapped vs. space coordinates.
+    The requested quantity is mapped vs. space coordinates (1D and 2D only).
   * ``histogram`` : the list ``["quantity", min, max, nsteps]``.
     Makes a histogram of the requested quantity between ``min`` an ``max``, with ``nsteps`` bins.
     The ``"quantity"`` may be an operation between the quantities listed further below.
@@ -313,8 +315,13 @@ and only one mode between those three.
   * ``timer_syncPart``             : time spent synchronzing particles by each proc
   * ``timer_syncField``            : time spent synchronzing fields by each proc
   * ``timer_syncDens``             : time spent synchronzing densities by each proc
+  * ``timer_diags``                : time spent by each proc calculating and writing diagnostics
   * ``timer_total``                : the sum of all timers above (except timer_global)
 
+  **WARNING**: The timers ``loadBal`` and ``diags`` span parts of the code where *global*
+  communications take place. This means they will include time spent doing no calculations,
+  waiting for  other processes. The timers ``syncPart``, ``syncField`` and ``syncDens``
+  contain *proc-to-proc* communications, which also represents some waiting time.
 
 **Example**::
 
@@ -371,7 +378,7 @@ proportional to the macro-particle statistical weights, as stated by their
 :py:data:`deposited_quantity` argument. These weights :ref:`are defined as <Weights>`
 the species density divided by the number of macro-particles of this species in the
 cell where the particle is born. Consequently, weights are in units of the number
-density :math:`N_r` (see :doc:`Units`), and the sum of all macro-particle weights in
+density :math:`N_r` (see :doc:`units`), and the sum of all macro-particle weights in
 one cell corresponds to the local species density.
 
 However, the ``DiagParticleBinning`` and ``DiagScreen`` diagnostics do not necessarily
@@ -404,7 +411,11 @@ has to be divided by the number of cells *relevant* to each bin.
   
     * If the axis is included in a ``subset`` or a ``sum``: do nothing.
     * Otherwise, divide by the length of each bin.
-  
+
+As a final note, remember that the :py:data:`axes` of a diagnostic may be a *python function*.
+In this case, if the function represents some spatial axis, then happi cannot know how to
+apply the correction. The user has to figure it out.
+
 
 ----
 

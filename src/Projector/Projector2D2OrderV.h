@@ -21,7 +21,7 @@ void operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsig
     void operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion) override final;
 
     //!Wrapper
-    void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int icell, int clrw, bool diag_flag, std::vector<unsigned int> &b_dim, int ispec) override final;
+    void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int icell, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec) override final;
 
 private:
     double one_third;

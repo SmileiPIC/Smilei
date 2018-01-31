@@ -271,7 +271,7 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
         // Do not project if a photon
         if ((!particles->is_test) && (mass > 0))
             for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
-                (*Proj)(EMfields, *particles, smpi, bmin[scell], bmax[scell], ithread, scell, clrw, diag_flag, b_dim, ispec );
+                (*Proj)(EMfields, *particles, smpi, bmin[scell], bmax[scell], ithread, scell, clrw, diag_flag, params.is_spectral, b_dim, ispec );
 
 
         for (unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)

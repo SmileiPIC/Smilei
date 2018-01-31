@@ -25,10 +25,13 @@
 #include "SmileiMPI_test.h"
 #include "Params.h"
 #include "PatchesFactory.h"
+#include "SyncVectorPatch.h"
 #include "Checkpoint.h"
 #include "Solver.h"
 #include "SimWindow.h"
 #include "Diagnostic.h"
+#include "Domain.h"
+#include "SyncCartesianPatch.h"
 #include "Timers.h"
 #include "RadiationTables.h"
 #include "MultiphotonBreitWheelerTables.h"
@@ -66,11 +69,15 @@ int main (int argc, char* argv[])
     TITLE("Reading the simulation parameters");
     Params params(&smpi,vector<string>(argv + 1, argv + argc));
     OpenPMDparams openPMD(params);
+    
+    // Need to move it here because of domain decomposition need in smpi->init(_patch_count)
+    //     abstraction of Hilbert curve
+    VectorPatch vecPatches( params );
 
     // Initialize MPI environment with simulation parameters
     TITLE("Initializing MPI");
-    smpi.init(params);
-
+    smpi.init(params, vecPatches.domain_decomposition_);
+    
     // Create timers
     Timers timers(&smpi);
 
@@ -114,7 +121,6 @@ int main (int argc, char* argv[])
     // Initialize patches (including particles and fields)
     // ---------------------------------------------------
     TITLE("Initializing particles & fields");
-    VectorPatch vecPatches;
 
     if( smpi.test_mode ) {
         execute_test_mode( vecPatches, &smpi, simWindow, params, checkpoint, openPMD );
@@ -211,6 +217,21 @@ int main (int argc, char* argv[])
 
     timers.reboot();
 
+
+    Domain domain( params ); 
+    unsigned int global_factor(1);
+    #ifdef _PICSAR
+    for ( unsigned int iDim = 0 ; iDim < params.nDim_field ; iDim++ )
+        global_factor *= params.global_factor[iDim];
+    // Force temporary usage of double grids, even if global_factor = 1
+    //    especially to compare solvers
+    //if (global_factor!=1) {
+        domain.build( params, &smpi, vecPatches, openPMD );
+    //}
+    #endif
+
+    timers.global.reboot();
+    
     // ------------------------------------------------------------------------
     // Check memory consumption & expected disk usage
     // ------------------------------------------------------------------------
@@ -237,7 +258,7 @@ int main (int argc, char* argv[])
     TITLE("Time-Loop started: number of time-steps n_time = " << params.n_time);
     if ( smpi.isMaster() ) params.print_timestep_headers();
 
-    #pragma omp parallel shared (time_dual,smpi,params, vecPatches, simWindow, checkpoint)
+    #pragma omp parallel shared (time_dual,smpi,params, vecPatches, domain, simWindow, checkpoint)
     {
         
         unsigned int itime=checkpoint.this_run_start_step+1;
@@ -256,11 +277,9 @@ int main (int argc, char* argv[])
             // (1) interpolate the fields at the particle position
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
-            
             vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
                                 MultiphotonBreitWheelerTables,
                                 time_dual, timers, itime);
-            
             
             // Sum densities
             vecPatches.sumDensities(params, time_dual, timers, itime, simWindow );
@@ -269,13 +288,33 @@ int main (int argc, char* argv[])
             vecPatches.applyAntennas(time_dual);
             
             // solve Maxwell's equations
-            if( time_dual > params.time_fields_frozen )
-                vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
-            
+            #ifndef _PICSAR
+            // Force temporary usage of double grids, even if global_factor = 1
+            //    especially to compare solvers           
+            //if ( global_factor==1 )
+            {
+                if( time_dual > params.time_fields_frozen ) {
+                    vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
+                }
+            }
+            #else
+            // Force temporary usage of double grids, even if global_factor = 1
+            //    especially to compare solvers           
+            //if ( global_factor!=1 )
+            {
+                if( time_dual > params.time_fields_frozen ) {
+                    SyncCartesianPatch::patchedToCartesian( vecPatches, domain, params, &smpi, timers, itime );
+                    domain.solveMaxwell( params, simWindow, itime, time_dual, timers );
+                    SyncCartesianPatch::cartesianToPatches( domain, vecPatches, params, &smpi, timers, itime );
+                }
+            }
+            #endif
+
             vecPatches.finalize_and_sort_parts(params, &smpi, simWindow, RadiationTables,
                                                MultiphotonBreitWheelerTables,
                                                time_dual, timers, itime);
-            
+            vecPatches.finalize_sync_and_bc_fields(params, &smpi, simWindow, time_dual, timers, itime);
+
             // call the various diagnostics
             vecPatches.runAllDiags(params, &smpi, itime, timers, simWindow);
             
@@ -341,6 +380,8 @@ int main (int argc, char* argv[])
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
+    if (global_factor!=1) 
+        domain.clean();
     vecPatches.close( &smpi );
     smpi.barrier(); // Don't know why but sync needed by HDF5 Phasespace managment
     delete simWindow;
