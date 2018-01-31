@@ -118,18 +118,35 @@ void SmileiMPI::init( Params& params, DomainDecomposition* domain_decomposition 
     // Initialize buffers for particles push vectorization
     //     - 1 thread push particles for a unique patch at a given time
     //     - so 1 buffer per thread
+
+    int n_envlaser = PyTools::nComponents("LaserEnvelope");
+
 #ifdef _OPENMP
     dynamics_Epart.resize(omp_get_max_threads());
     dynamics_Bpart.resize(omp_get_max_threads());
     dynamics_invgf.resize(omp_get_max_threads());
     dynamics_iold.resize(omp_get_max_threads());
     dynamics_deltaold.resize(omp_get_max_threads());
+
+    if ( n_envlaser > 0 ) {
+        dynamics_GradPHI.resize(omp_get_max_threads());
+        dynamics_GradPHIold.resize(omp_get_max_threads());
+        dynamics_PHI.resize(omp_get_max_threads());
+        dynamics_PHIold.resize(omp_get_max_threads());
+    }
 #else
     dynamics_Epart.resize(1);
     dynamics_Bpart.resize(1);
     dynamics_invgf.resize(1);
     dynamics_iold.resize(1);
     dynamics_deltaold.resize(1);
+
+    if ( n_envlaser > 0 ) {
+        dynamics_GradPHI.resize(1);
+        dynamics_GradPHIold.resize(1);
+        dynamics_PHI.resize(1);
+        dynamics_PHIold.resize(1);
+    }
 #endif
 
     // Set periodicity of the simulated problem
