@@ -156,7 +156,7 @@ class SmileiSingleton(SmileiComponent):
         # Change all methods to static
         for k,v in cls.__dict__.items():
             if k[0]!='_' and hasattr(v,"__get__"):
-                setattr(cls, k, staticmethod(v))
+               setattr(cls, k, staticmethod(v))
 
 class ParticleData(object):
     """Container for particle data at run-time (for exposing particles in numpy)"""
@@ -178,6 +178,7 @@ class Main(SmileiSingleton):
     clrw = -1
     every_clean_particles_overhead = 100
     timestep = None
+    Nmode = 2
     timestep_over_CFL = None
 
     # PXR tuning
@@ -195,7 +196,9 @@ class Main(SmileiSingleton):
     maxwell_solver = 'Yee'
     EM_boundary_conditions = [["periodic"]]
     EM_boundary_conditions_theta = [[0.,math.pi]]
+    Envelope_boundary_conditions = [["reflective"]]
     time_fields_frozen = 0.
+    ponderomotive_force = False
 
     # Default Misc
     reference_angular_frequency_SI = 0.
@@ -347,6 +350,15 @@ class Laser(SmileiComponent):
     space_envelope = [1., 0.]
     phase = [0., 0.]
     space_time_profile = None
+
+class LaserEnvelope(SmileiSingleton):
+    """Laser Envelope parameters"""
+    omega = 1.
+    #time_envelope = 1.
+    #space_envelope = [1., 0.]
+    envelope_solver = "explicit"
+    envelope_profile = 0.
+
 
 class Collisions(SmileiComponent):
     """Collisions parameters"""

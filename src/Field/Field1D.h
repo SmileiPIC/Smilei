@@ -54,9 +54,6 @@ public:
         allocateDims(mainDim, isPrimal);
     };
     
-    //! Method used to dump the data contained in a Field1D
-    void dump(std::vector<unsigned int> dims);
-    
     //! Method to shift field in space
     void shift_x(unsigned int delta);
     

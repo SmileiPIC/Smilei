@@ -129,6 +129,11 @@ public:
     inline double& position( unsigned int idim, unsigned int ipart )       {
         return Position[idim][ipart];
     }
+    
+    //! Method used to get the Particle position
+    inline double distance2_to_axis( unsigned int ipart ) const {
+        return Position[1][ipart] * Position[1][ipart] + Position[2][ipart] * Position[2][ipart];
+    }
 
     //! Method used to get the Particle position
     inline double  position_old( unsigned int idim, unsigned int ipart ) const {

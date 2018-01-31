@@ -120,6 +120,12 @@ public:
     //! Are open boundaries used ?
     bool open_boundaries;
     
+    //! Boundary conditions for Envelope Field
+    std::vector< std::vector<std::string> > Env_BCs;
+
+    //! Define if the ponderomotive force is computed (default = false)
+    bool ponderomotive_force;
+    
     //Poisson solver
     //! Do we solve poisson
     bool solve_poisson;
@@ -157,6 +163,8 @@ public:
 
     //! dt for the simulation
     double timestep;
+	//! Number of modes
+	unsigned int Nmode;
 
     //! max value for dt (due to usual FDTD CFL condition: should be moved to ElectroMagn solver (MG))
     double dtCFL;

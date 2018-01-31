@@ -235,7 +235,7 @@ void LaserProfileSeparable::createFields(Params& params, Patch* patch)
     dim[0] = 1;
     dim[1] = 1;
     
-    if( params.geometry!="1Dcartesian" && params.geometry!="2Dcartesian" && params.geometry!="3Dcartesian" )
+    if( params.geometry!="1Dcartesian" && params.geometry!="2Dcartesian" && params.geometry!="3Dcartesian" && params.geometry!="3drz")
         ERROR("Unknown geometry in laser");
     
     if( params.geometry!="1Dcartesian" ) {
@@ -243,7 +243,7 @@ void LaserProfileSeparable::createFields(Params& params, Patch* patch)
         unsigned int ny_d = ny_p+1;
         dim[0] = primal ? ny_p : ny_d;
         
-        if( params.geometry!="2Dcartesian" ) {
+        if( params.geometry=="3Dcartesian" ) {
             unsigned int nz_p = params.n_space[2]*params.global_factor[2]+1+2*params.oversize[2];
             unsigned int nz_d = nz_p+1;
             dim[1] = primal ? nz_d : nz_p;
@@ -264,7 +264,7 @@ void LaserProfileSeparable::initFields(Params& params, Patch* patch)
         (*space_envelope)(0,0) = spaceProfile->valueAt(pos);
         (*phase         )(0,0) = phaseProfile->valueAt(pos);
         
-    } else if( params.geometry=="2Dcartesian" ) {
+    } else if( params.geometry=="2Dcartesian" || params.geometry=="3drz") {
         
         unsigned int ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
         unsigned int ny_d = ny_p+1;

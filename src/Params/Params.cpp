@@ -111,7 +111,6 @@ namelist("")
     string command = "import signal\nsignal.signal(signal.SIGINT, signal.SIG_DFL)";
     if( !PyRun_SimpleString(command.c_str()) ) PyTools::checkPyError();
 
-
     PyObject* Py_main = PyImport_AddModule("__main__");
     PyObject* globals = PyModule_GetDict(Py_main);
 
@@ -131,6 +130,7 @@ namelist("")
 
     // here we add the larget int, important to get a valid seed for randomization
     PyModule_AddIntConstant(Py_main, "smilei_rand_max", RAND_MAX);
+
 
     // Running the namelists
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
@@ -158,6 +158,7 @@ namelist("")
         runScript(strNamelist,(*it), globals);
     }
     // Running pycontrol.py
+
     runScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py", globals);
 
     smpi->barrier();
@@ -259,8 +260,9 @@ namelist("")
     for (unsigned int i=0;i<nDim_field;i++){
         res_space[i] = 1.0/cell_length[i];
     }
-
-
+    // Number of modes
+    PyTools::extract("Nmode", Nmode, "Main");
+    
     // simulation duration & length
     PyTools::extract("simulation_time", simulation_time, "Main");
 
@@ -288,6 +290,31 @@ namelist("")
         else if ( (EM_BCs[iDim][0] != EM_BCs[iDim][1]) &&  (EM_BCs[iDim][0] == "periodic" || EM_BCs[iDim][1] == "periodic") )
             ERROR("EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
     }
+    
+    //! Boundary conditions for Envelope Field
+    if( !PyTools::extract("Envelope_boundary_conditions", Env_BCs, "Main")  )
+        ERROR("Electromagnetic boundary conditions (Envelope_boundary_conditions) not defined" );
+
+    if( Env_BCs.size() == 0 ) {
+        ERROR("Envelope_boundary_conditions cannot be empty");
+    } else if( Env_BCs.size() == 1 ) {
+        while( Env_BCs.size() < nDim_field ) Env_BCs.push_back( Env_BCs[0] );
+    } else if( Env_BCs.size() != nDim_field ) {
+        ERROR("Envelope_boundary_conditions must be the same size as the number of dimensions");
+    }
+
+    for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
+        if( Env_BCs[iDim].size() == 1 ) // if just one type is specified, then take the same bc type in a given dimension
+            Env_BCs[iDim].push_back( Env_BCs[iDim][0] );
+    //    else if ( (Env_BCs[iDim][0] != Env_BCs[iDim][1]) &&  (Env_BCs[iDim][0] == "periodic" || Env_BCs[iDim][1] == "periodic") )
+    //        ERROR("Envelope_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
+    }
+
+    //! Ponderomotive force
+    //PyTools::extract("ponderomotive_force", ponderomotive_force, "Main");
+    //if ( ponderomotive_force && ( geometry != "3Dcartesian" ) )
+    //    ERROR( "Ponderomotive force only available in 3D3V" );
+
 
     for (unsigned int iDim = 0 ; iDim < nDim_field; iDim++){
         if (EM_BCs[iDim][0] == "buneman" || EM_BCs[iDim][1] == "buneman"){
@@ -420,7 +447,6 @@ namelist("")
     //nordery=norder[1];
     //norderz=norder[2];
 
-
     if( PyTools::nComponents("LoadBalancing")>0 ) {
         // get parameter "every" which describes a timestep selection
         load_balancing_time_selection = new TimeSelection(
@@ -432,7 +458,9 @@ namelist("")
     } else {
         load_balancing_time_selection = new TimeSelection();
     }
+
     has_load_balancing = (smpi->getSize()>1)  && (! load_balancing_time_selection->isEmpty());
+
 
     //mi.resize(nDim_field, 0);
     mi.resize(3, 0);

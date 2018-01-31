@@ -1672,6 +1672,10 @@ This is done by including a block ``DiagFields``::
   :default: ``[]`` *(all fields are written)*
 
   List of the field names that are saved. By default, they all are.
+<<<<<<< HEAD
+=======
+  
+>>>>>>> 3DRZ_datastruct
   The full list of fields that are saved by this diagnostic:
   
   .. rst-class:: nowrap
@@ -1700,6 +1704,7 @@ This is done by including a block ``DiagFields``::
   | | Rho          | |  Total density                                      |
   | | Rho_abc      | |  Density of species "abc"                           |
   +----------------+-------------------------------------------------------+
+<<<<<<< HEAD
 
 .. py:data:: subgrid
 
@@ -1727,6 +1732,28 @@ This is done by including a block ``DiagFields``::
   while this one selects cell indices included in a contiguous parallelepiped::
     
     	subgrid = s_[100:300, 300:500, 300:600]
+=======
+  
+  In the case of spectral cylindrical geometry (``3drz``), the ``x``, ``y`` and ``z``
+  indices are replaced by ``x``, ``r`` and ``t`` (theta). In addition,
+  the angular Fourier modes are denoted by the suffix ``_mode_i`` where ``i``
+  is the mode number. In summary, the list of fields reads as follows.
+  
+  .. rst-class:: nowrap
+  
+  +------------------------------+-----------------------------------------+
+  | | Bx_mode_0, Bx_mode_1, etc. | |                                       |
+  | | Br_mode_0, Br_mode_1, etc. | | Components of the magnetic field      |
+  | | Bt_mode_0, Bt_mode_1, etc. | |                                       |
+  +------------------------------+-----------------------------------------+
+  | | Ex_mode_0, Ex_mode_1, etc. | |                                       |
+  | | Er_mode_0, Er_mode_1, etc. | | Components of the electric field      |
+  | | Et_mode_0, Et_mode_1, etc. | |                                       |
+  +------------------------------+-----------------------------------------+
+  |  The same notation works for Jx, Jr, Jt, and Rho                       |
+  +------------------------------+-----------------------------------------+
+  
+>>>>>>> 3DRZ_datastruct
   
 
 
