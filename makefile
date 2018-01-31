@@ -66,7 +66,7 @@ ifeq ($(PICSAR),TRUE)
 	LDFLAGS += -L$(FFTW3_LIB) -lfftw3
 	LDFLAGS += -lgfortran
 endif
-CXXFLAGS += -D_VECTO
+#CXXFLAGS += -D_VECTO
 
 # Manage options in the "config" parameter
 ifneq (,$(findstring debug,$(config)))
