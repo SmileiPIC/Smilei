@@ -90,72 +90,110 @@ void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch*
 		unsigned int j=2;
 		if (imode==0){
 			//MF_Solver_Yee
-			for (unsigned int i=isXmin ; i<nl_d-isXmax ; i++) {
+			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*BrRZ)(i,j)=0;
 			}
-			for (unsigned int i=isXmin ; i<nl_d-isXmax ; i++) {
+			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*BtRZ)(i,j)= -(*BtRZ)(i,j+1);
 			}
-			for (unsigned int i=isXmin ; i<nl_p-isXmax ; i++) {
+			for (unsigned int i=0 ; i<nl_p ; i++) {
 				(*BlRZ)(i,j)= -(*BlRZ)(i,j+1);
 				//(*BlRZ)(i,0)+= -(*BlRZ)(i,1)+(*BlRZ_old)(i,1)-4*dt_ov_dr*(*EtRZ)(i,1);
 			}
 			//MA_SolverRZ_norm
-			for (unsigned int i=isXmin ; i<nl_p-isXmax  ; i++) {
+			for (unsigned int i=0 ; i<nl_p  ; i++) {
 				(*EtRZ)(i,j)=0;
 			}
-			for (unsigned int i=isXmin ; i<nl_p-isXmax  ; i++) {
+			for (unsigned int i=0 ; i<nl_p  ; i++) {
 				(*ErRZ)(i,j)= -(*ErRZ)(i,j+1);
 			}
-			for (unsigned int i=isXmin ; i<nl_d-isXmax ; i++) {
+			for (unsigned int i=0 ; i<nl_d ; i++) {
 				(*ElRZ)(i,j)+= 4*dt_ov_dr*(*BtRZ)(i,j+1)-dt*(*JlRZ)(i,j);
 			}
 		}
 		else if (imode==1){
 			//MF
-			for (unsigned int i=isXmin ; i<nl_p-isXmax  ; i++) {
+			for (unsigned int i=0 ; i<nl_p  ; i++) {
 				(*BlRZ)(i,j)= -(*BlRZ)(i,j+1);
+                if (std::abs((*BlRZ)(i,j))>1.){
+                MESSAGE("BlRZA");                
+                MESSAGE(i);
+                MESSAGE(j);    
+                MESSAGE((*BlRZ)(i,j));
+                }
 			}
-			for (unsigned int i=isXmin ; i<nl_p-isXmax  ; i++) {
-				(*EtRZ)(i,j)= (*EtRZ)(i,j+1);
+			for (unsigned int i=0 ; i<nl_p  ; i++) {
+				//(*EtRZ)(i,j)= (*EtRZ)(i,j+1);
+				(*EtRZ)(i,j)= -1./3*(4.*Icpx*(*ErRZ)(i,j+1)+(*EtRZ)(i,j+1));
+                if (std::abs((*EtRZ)(i,j))>1.){
+                MESSAGE("EtRZA");                
+                MESSAGE(i);
+                MESSAGE(j);    
+                MESSAGE((*EtRZ)(i,j));
+                }
 			}
 			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
 				(*BrRZ)(i,j)+=  Icpx*dt_ov_dr*(*ElRZ)(i,j+1)
 				+			dt_ov_dl*((*EtRZ)(i,j)-(*EtRZ)(i-1,j));
+                if (std::abs((*BrRZ)(i,j))>1.){
+                MESSAGE("BrRZA");                
+                MESSAGE(i);
+                MESSAGE(j);    
+                MESSAGE((*BrRZ)(i,j));
+                }
 			}
-			for (unsigned int i=isXmin ; i<nl_d-isXmax ; i++) {
+			for (unsigned int i=0 ; i<nl_d ; i++) {
 				//(*BtRZ)(i,0)+= -dt_ov_dl*((*ErRZ)(i+1,0)-(*ErRZ)(i,0)+(*ErRZ)(i+1,1)-(*ErRZ)(i,1))
 				//+				2*dt_ov_dr*(*ElRZ)(i+1,1) - (*BtRZ_old)(i,1)+ (*BtRZ)(i,1);
 				(*BtRZ)(i,j)= -2.*Icpx*(*BrRZ)(i,j)-(*BtRZ)(i,j+1);
+                if (std::abs((*BtRZ)(i,j))>1.){
+                MESSAGE("BtRZA");                
+                MESSAGE(i);
+                MESSAGE(j);    
+                MESSAGE((*BtRZ)(i,j));
+                }
 			}	
-			for (unsigned int i=isXmin ; i<nl_d-isXmax  ; i++) {
+			for (unsigned int i=0 ; i<nl_d  ; i++) {
 				(*ElRZ)(i,j)= 0;
+                if (std::abs((*ElRZ)(i,j))>1.){
+                MESSAGE("ElRZA");                
+                MESSAGE(i);
+                MESSAGE(j);    
+                MESSAGE((*ElRZ)(i,j));
+                }
 			}
-			for (unsigned int i=isXmin ; i<nl_p-isXmax  ; i++) {
-				(*ErRZ)(i,j)= -(*ErRZ)(i,j+1);
+			for (unsigned int i=0 ; i<nl_p ; i++) {
+				//(*ErRZ)(i,j)= -(*ErRZ)(i,j+1);
+				(*ErRZ)(i,j)=2*Icpx*(*EtRZ)(i,j)-(*ErRZ)(i,j+1);
+                if (std::abs((*ErRZ)(i,j))>1.){
+                MESSAGE("ErRZA");                
+                MESSAGE(i);
+                MESSAGE(j);    
+                MESSAGE((*ErRZ)(i,j));
+                }
 			}
 
 		
 
 		}
 		else {
-			for (unsigned int  i=isXmin ; i<nl_d-isXmax ; i++) {
+			for (unsigned int  i=0 ; i<nl_d; i++) {
 				(*BlRZ)(i,j)= -(*BlRZ)(i,j+1);
 			}
-			for (unsigned int i=isXmin ; i<nl_p-isXmax; i++) {
+			for (unsigned int i=0 ; i<nl_p; i++) {
 				(*BrRZ)(i,j)= 0;
 			}
-			for (unsigned int  i=isXmin ; i<nl_d-isXmax ; i++) {
+			for (unsigned int  i=0 ; i<nl_d ; i++) {
 				(*BtRZ)(i,j)= - (*BtRZ)(i,j+1);
 			}	
 			//MA
-			for (unsigned int  i=isXmin ; i<nl_p-isXmax; i++) {
+			for (unsigned int  i=0 ; i<nl_p; i++) {
 				(*ElRZ)(i,j)= 0;
 			}
-			for (unsigned int  i=isXmin ; i<nl_d-isXmax; i++) {
+			for (unsigned int  i=0 ; i<nl_d; i++) {
 				(*ErRZ)(i,j)= -(*ErRZ)(i,j+1);
 			}
-			for (unsigned int i=isXmin ; i<nl_p-isXmax; i++) {
+			for (unsigned int i=0 ; i<nl_p; i++) {
 				(*EtRZ)(i,j)= 0;
 			}
 		}

@@ -47,9 +47,16 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
     // Magnetic field Bx^(p,d)
     for (unsigned int i=0 ; i<nl_p;  i++) {
         #pragma omp simd
-        for (unsigned int j=1 ; j<nr_d-1 ; j++) {
+        for (unsigned int j=isYmin*3 ; j<nr_d-1 ; j++) {
             (*BlRZ)(i,j) += - dt/((j_glob+j+0.5)*dr) * ( (double)(j+1)*(*EtRZ)(i,j) - (double)j*(*EtRZ)(i,j-1) )
-             -             Icpx*dt*(double)imode/((j_glob+j+0.5)*dr)*(*ErRZ)(i,j);
+             -Icpx*dt*(double)imode/((j_glob+j+0.5)*dr)*(*ErRZ)(i,j);
+			 if (std::abs((*BlRZ)(i,j))>1.){
+                MESSAGE("BlRZMF");                
+                MESSAGE(i);
+                MESSAGE(j);    
+                MESSAGE((*BlRZ)(i,j));
+                }
+
         }
     }
         
@@ -58,15 +65,28 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
         #pragma omp simd
         for (unsigned int j=isYmin*3 ; j<nr_p ; j++) {
             (*BrRZ)(i,j) += dt_ov_dl * ( (*EtRZ)(i,j) - (*EtRZ)(i-1,j) )
-             +              Icpx*dt*(double)imode/((double)(j_glob+j)*dr)*(*ElRZ)(i,j) ;
+             +Icpx*dt*(double)imode/((double)(j_glob+j)*dr)*(*ElRZ)(i,j) ;
+			 if (std::abs((*BrRZ)(i,j))>1.){
+                MESSAGE("BrRZMF");                
+                MESSAGE(i);
+                MESSAGE(j);    
+                MESSAGE((*BrRZ)(i,j));
+                }
+
         }
     }
         // Magnetic field Bt^(d,d)
     for (unsigned int i=1 ; i<nl_d-1 ; i++) {
         #pragma omp simd
-        for (unsigned int j=1 ; j<nr_d-1 ; j++) {
+        for (unsigned int j=isYmin*3 ; j<nr_d-1 ; j++) {
             (*BtRZ)(i,j) += dt_ov_dr * ( (*ElRZ)(i,j) - (*ElRZ)(i,j-1) )
-            -               dt_ov_dl * ( (*ErRZ)(i,j) - (*ErRZ)(i-1,j) );
+            -dt_ov_dl * ( (*ErRZ)(i,j) - (*ErRZ)(i-1,j) );
+		    if (std::abs((*BtRZ)(i,j))>1.){
+                MESSAGE("BtRZMF");                
+                MESSAGE(i);
+                MESSAGE(j);    
+                MESSAGE((*BtRZ)(i,j));
+                }
         }
     }
 
