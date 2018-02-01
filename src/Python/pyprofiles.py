@@ -84,11 +84,11 @@ def gaussian(max,
         if xlength is None: xlength = Main.grid_length[0]-xvacuum
         if xfwhm   is None: xfwhm   = (Main.grid_length[0]-xvacuum)/3.
         if xcenter is None: xcenter = xvacuum + (Main.grid_length[0]-xvacuum)/2.
-    if len(Main.grid_length)>1: 
+    if len(Main.grid_length)>1:
         if ylength is None: ylength = Main.grid_length[1]-yvacuum
         if yfwhm   is None: yfwhm   = (Main.grid_length[1]-yvacuum)/3.
         if ycenter is None: ycenter = yvacuum + (Main.grid_length[1]-yvacuum)/2.
-    if len(Main.grid_length)>2: 
+    if len(Main.grid_length)>2:
         if zlength is None: zlength = Main.grid_length[2]-zvacuum
         if zfwhm   is None: zfwhm   = (Main.grid_length[2]-zvacuum)/3.
         if zcenter is None: zcenter = zvacuum + (Main.grid_length[2]-zvacuum)/2.
@@ -173,11 +173,11 @@ def cosine(base,
     global Main
     if len(Main)==0:
         raise Exception("cosine profile has been defined before `Main()`")
-    
+
     if len(Main.grid_length)>0 and xlength is None: xlength = Main.grid_length[0]-xvacuum
     if len(Main.grid_length)>1 and ylength is None: ylength = Main.grid_length[1]-yvacuum
     if len(Main.grid_length)>2 and zlength is None: zlength = Main.grid_length[2]-zvacuum
-    
+
     def cos(base, amplitude, vacuum, length, phi, number):
         def f(position):
             #vacuum region
@@ -570,7 +570,7 @@ def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
             Z = invZr * (-focus[0]*sycz + (y-focus[1])*sysz + (z-focus[2])*cy )
             return alpha * X*(1.+0.5*(Y**2+Z**2)/(1.+X**2)) - math.atan(X)
         phaseZero += phase(focus[1]-sz/cz*focus[0], focus[2]+sy/cy/cz*focus[0])
-        
+
     # Create Laser
     Laser(
         box_side        = box_side,
@@ -581,6 +581,50 @@ def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         phase          = [ lambda y,z:phase(y,z)-phaseZero+dephasing, lambda y,z:phase(y,z)-phaseZero ],
     )
 
+def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelope=tconstant(),
+        envelope_solver = "explicit"):
+    import math
+    import cmath
+    c_vacuum = 1. #299792458
+
+    Zr = omega * waist**2/2.
+    def w(x):
+        w  = math.sqrt(1./(1.+   ( (x-focus[0])/Zr  )**2 ) )
+        return w
+    def coeff(x):
+        coeff = omega * (x-focus[0]) * w(x)**2 / (2.*Zr**2)
+        return coeff
+    def spatial_amplitude(x,y,z):
+        invWaist2 = (w(x)/waist)**2
+        return w(x) * math.exp( -invWaist2*(  (y-focus[1])**2 + (z-focus[2])**2 )  )
+    def phase(x,y,z):
+        return coeff(x) * ( (y-focus[1])**2 + (z-focus[2])**2 )
+
+    def space_time_envelope(x,y,z,t):
+        return a0*spatial_amplitude(x,y,z)*time_envelope(t)*cmath.exp(1j*phase(x,y,z))
+
+    # Create Laser Envelope
+    LaserEnvelope(
+        omega               = omega,
+        envelope_profile    = space_time_envelope,
+        envelope_solver     = "explicit",
+    )
+
+
+
+    # # Space envelope
+    # invWaist2 = 1./2./(waist/2.)**2
+    # def spatial(y,z):
+    #     return math.exp( -invWaist2*((y-focus[1])**2 + (z-focus[2])**2 )  )
+    # # Space envelope times temporal envelope
+    # def space_time_envelope(x,y,z):
+    #     return spatial(y,z)*time_envelope(x/c_vacuum)
+    # # Create Laser Envelope
+    # LaserEnvelope(
+    #     omega               = omega,
+    #     envelope_profile    = lambda x,y,z:a0*space_time_envelope(x,y,z),
+    #     envelope_solver     = "explicit",
+    # )
 
 """
 -----------------------------------------------------------------------

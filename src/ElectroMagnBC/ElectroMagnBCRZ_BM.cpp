@@ -183,7 +183,7 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
     for (unsigned int imode=0 ; imode<Nmode ; imode++) {
 
 		// Static cast of the fields
-		cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->El_[imode];
+                //cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->El_[imode];
 		cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Er_[imode];
 		cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Et_[imode];
 		cField2D* BlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_[imode];

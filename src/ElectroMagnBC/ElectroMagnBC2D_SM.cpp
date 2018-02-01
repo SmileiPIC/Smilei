@@ -17,9 +17,6 @@ using namespace std;
 ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch* patch, unsigned int _min_max )
 : ElectroMagnBC( params, patch, _min_max )
 {
-    // conversion factor from degree to radian
-    conv_deg2rad = M_PI/180.0;
-    
     // number of nodes of the primal and dual grid in the x-direction
     nx_p = params.n_space[0]*params.global_factor[0]+1+2*params.oversize[0];
     nx_d = nx_p+1;
@@ -73,7 +70,7 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch* patch, unsigned i
     //! \todo (MG) Check optimal angle for Silver-Muller BCs
     
     // Xmin boundary
-    double theta  = 0.0*conv_deg2rad; //0.0;
+    double theta  = params.EM_BCs_theta[0][0];
     double factor = 1.0 / (cos(theta) + dt_ov_dx);
     Alpha_SM_W    = 2.0                     * factor;
     Beta_SM_W     = - (cos(theta)-dt_ov_dx) * factor;
@@ -82,7 +79,7 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch* patch, unsigned i
     Epsilon_SM_W  = - (sin(theta)-dt_ov_dy) * factor;
     
     // Xmax boundary
-    theta         = M_PI;
+    theta  = params.EM_BCs_theta[0][1];
     factor        = 1.0 / (cos(theta) - dt_ov_dx);
     Alpha_SM_E    = 2.0                      * factor;
     Beta_SM_E     = - (cos(theta)+dt_ov_dx)  * factor;
@@ -91,7 +88,7 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch* patch, unsigned i
     Epsilon_SM_E  = - (sin(theta)-dt_ov_dy)  * factor;
     
     // Ymin boundary
-    theta  = 0.0;
+    theta  = params.EM_BCs_theta[1][0];
     factor = 1.0 / (cos(theta) + dt_ov_dy );
     Alpha_SM_S    = 2.0                     * factor;
     Beta_SM_S     = - (cos(theta)-dt_ov_dy) * factor;
@@ -99,7 +96,7 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch* patch, unsigned i
     Epsilon_SM_S  = - (sin(theta)-dt_ov_dx) * factor;
     
     // Ymax boundary
-    theta  = M_PI;
+    theta  = params.EM_BCs_theta[1][1];
     factor = 1.0 / (cos(theta) - dt_ov_dy);
     Alpha_SM_N    = 2.0                     * factor;
     Beta_SM_N     = - (cos(theta)+dt_ov_dy) * factor;

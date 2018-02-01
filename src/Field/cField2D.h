@@ -6,10 +6,10 @@
 
 #include <vector>
 
-#include "Field.h"
+#include "cField.h"
 
 //! class cField2D used to defined a 2d vector of Complex
-class cField2D : public Field
+class cField2D : public cField
 {
 
 public:
@@ -73,16 +73,16 @@ public:
     inline std::complex<double>& operator () (unsigned int i)
     {
         DEBUGEXEC(if (i>=globalDims_) ERROR(name << " Out of limits "<< i << " < " <<dims_[0] ));
-        DEBUGEXEC(if (!std::isfinite(real(data_1D[i])+imag(data_1D[i]))) ERROR(name << " Not finite "<< i << " = " << data_1D[i]));
-        return data_1D[i];
+        DEBUGEXEC(if (!std::isfinite(real(cdata_[i])+imag(cdata_[i]))) ERROR(name << " Not finite "<< i << " = " << cdata_[i]));
+        return cdata_[i];
     };
 
     //! method used to put all entry of a field at a given value val
     void put_to(double val) override
     {
-        if (data_1D)
+        if (cdata_)
             for (unsigned int i=0; i<globalDims_; i++) {
-                data_1D[i] = val;
+                cdata_[i] = val;
             }
     }
     void copyFrom(Field *from_field) {
@@ -99,7 +99,6 @@ public:
 private:
     //! this will present the data as a 2d matrix
     std::complex<double> **data_2D;
-    std::complex<double> *data_1D;
 };
 
 #endif

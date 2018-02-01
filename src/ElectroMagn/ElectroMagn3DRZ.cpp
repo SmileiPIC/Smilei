@@ -164,7 +164,7 @@ void ElectroMagn3DRZ::initElectroMagn3DRZQuantities(Params &params, Patch* patch
     Jt_.resize(nmodes);
     rho_RZ_.resize(nmodes);
     
-    for ( int imode=0 ; imode<nmodes ; imode++ ) {
+    for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
         ostringstream mode_id("");
         mode_id << "_mode_" << imode;
 
@@ -243,7 +243,7 @@ void ElectroMagn3DRZ::initElectroMagn3DRZQuantities(Params &params, Patch* patch
 void ElectroMagn3DRZ::finishInitialization(int nspecies, Patch* patch)
 {
     // Fill allfields
-    for ( int imode=0 ; imode<nmodes ; imode++ ) {
+    for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
         allFields.push_back( El_[imode] );
         allFields.push_back( Er_[imode] );
         allFields.push_back( Et_[imode] );
@@ -259,7 +259,7 @@ void ElectroMagn3DRZ::finishInitialization(int nspecies, Patch* patch)
         allFields.push_back( rho_RZ_[imode] );
     }
 
-    for (int ispec=0; ispec<nspecies*nmodes; ispec++) {
+    for (int ispec=0; ispec<nspecies*(int)nmodes; ispec++) {
         allFields.push_back(Jx_s[ispec] );
         allFields.push_back(Jy_s[ispec] );
         allFields.push_back(Jz_s[ispec] );
@@ -274,7 +274,7 @@ void ElectroMagn3DRZ::finishInitialization(int nspecies, Patch* patch)
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn3DRZ::~ElectroMagn3DRZ()
 {
-    for ( int imode=0 ; imode<nmodes ; imode++ ) {
+    for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
         delete El_[imode];
         delete Er_[imode];
         delete Et_[imode];
@@ -296,7 +296,7 @@ ElectroMagn3DRZ::~ElectroMagn3DRZ()
 
 void ElectroMagn3DRZ::restartRhoJ()
 {
-    for ( int imode=0 ; imode<nmodes ; imode++ ) {
+    for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
         Jl_[imode] ->put_to(0.);
         Jr_[imode] ->put_to(0.);
         Jt_[imode] ->put_to(0.);
@@ -313,7 +313,7 @@ void ElectroMagn3DRZ::restartRhoJs()
         if( rho_s[ispec] ) rho_s[ispec]->put_to(0.);
     }
     
-    for ( int imode=0 ; imode<nmodes ; imode++ ) {
+    for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
         Jl_[imode] ->put_to(0.);
         Jr_ [imode]->put_to(0.);
         Jt_ [imode]->put_to(0.);
@@ -477,7 +477,7 @@ void ElectroMagn3DRZ::saveMagneticFields(bool is_spectral)
 {
     if (is_spectral)
         ERROR("Not implemented");
-    for ( int imode=0 ; imode<nmodes ; imode++ ) {
+    for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
         // Static cast of the fields
         cField2D* Bx3DRZ    = static_cast<cField2D*>(Bl_[imode]);
         cField2D* Br3DRZ    = static_cast<cField2D*>(Br_[imode]);
@@ -514,6 +514,7 @@ Field * ElectroMagn3DRZ::createField(string fieldname)
     else if(fieldname.substr(0,3)=="Rho") return new cField2D(dimPrim, fieldname );
     
     ERROR("Cannot create field "<<fieldname);
+    return NULL;
 }
 
 
@@ -522,7 +523,7 @@ Field * ElectroMagn3DRZ::createField(string fieldname)
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3DRZ::centerMagneticFields()
 {
-    for ( int imode=0 ; imode<nmodes ; imode++ ) {
+    for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
 
         // Static cast of the fields
         cField2D* Bx3DRZ    = static_cast<cField2D*>(Bl_[imode]);
@@ -573,7 +574,7 @@ void ElectroMagn3DRZ::binomialCurrentFilter()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3DRZ::computeTotalRhoJ()
 {
-    for ( int imode=0 ; imode<nmodes ; imode++ ) {
+    for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
 
         // static cast of the total currents and densities
         cField2D* Jx3DRZ    = static_cast<cField2D*>(Jl_[imode]);
@@ -625,12 +626,12 @@ void ElectroMagn3DRZ::computeTotalRhoJ()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3DRZ::computePoynting() {
 
-    cField2D* Ex2D     = static_cast<cField2D*>(Ex_);
-    cField2D* Ey2D     = static_cast<cField2D*>(Ey_);
-    cField2D* Ez2D     = static_cast<cField2D*>(Ez_);
-    cField2D* Bx2D_m   = static_cast<cField2D*>(Bx_m);
-    cField2D* By2D_m   = static_cast<cField2D*>(By_m);
-    cField2D* Bz2D_m   = static_cast<cField2D*>(Bz_m);
+    //cField2D* Ex2D     = static_cast<cField2D*>(Ex_);
+    //cField2D* Ey2D     = static_cast<cField2D*>(Ey_);
+    //cField2D* Ez2D     = static_cast<cField2D*>(Ez_);
+    //cField2D* Bx2D_m   = static_cast<cField2D*>(Bx_m);
+    //cField2D* By2D_m   = static_cast<cField2D*>(By_m);
+    //cField2D* Bz2D_m   = static_cast<cField2D*>(Bz_m);
 
     //if (isXmin) {
     //    unsigned int iEy=istart[0][Ey2D->isDual(0)];

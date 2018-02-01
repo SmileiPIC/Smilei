@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <complex>
 #include "SmileiMPI.h"
 #include "Tools.h"
 #include "PyTools.h"
@@ -30,6 +31,10 @@ public:
     //! Get the value of the profile at some location (spatio-temporal)
     inline double valueAt(std::vector<double> coordinates, double time) {
         return function->valueAt(coordinates, time);
+    };
+    //! Get the complex value of the profile at some location (spatio-temporal)
+    inline std::complex<double> complexValueAt(std::vector<double> coordinates, double time) {
+        return function->complexValueAt(coordinates, time);
     };
     
     //! Get the value of the profile at several locations (spatial)

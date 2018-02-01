@@ -16,6 +16,7 @@
 #include "SimWindow.h"
 #include "SolverFactory.h"
 #include "DiagnosticFactory.h"
+#include "LaserEnvelope.h"
 
 #include "SyncVectorPatch.h"
 #include "interface.h"
@@ -323,6 +324,38 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 
 } // END solveMaxwell
 
+void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers)
+{
+    // timers.maxwell.restart();
+
+    // for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_passes ; ipassfilter++){
+    //     #pragma omp for schedule(static)
+    //     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+    //         // Current spatial filtering
+    //         (*this)(ipatch)->EMfields->binomialCurrentFilter();
+    //     }
+    //     SyncVectorPatch::exchangeJ( (*this) );
+    //     SyncVectorPatch::finalizeexchangeJ( (*this) );
+    // }
+    if ((*this)(0)->EMfields->envelope!=NULL) {
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+            // Computes A in all points
+            (*this)(ipatch)->EMfields->envelope->compute(  (*this)(ipatch)->EMfields );
+        }
+        SyncVectorPatch::exchangeA( params, (*this) );
+        SyncVectorPatch::finalizeexchangeA( params, (*this) );
+    }
+
+
+    // //Synchronize B fields between patches.
+    // timers.maxwell.update( params.printNow( itime ) );
+    // 
+    // timers.syncField.restart();
+    // SyncVectorPatch::exchangeB( (*this) );
+    // timers.syncField.update(  params.printNow( itime ) );
+
+} // END solveEnvelope
 
 void VectorPatch::finalize_sync_and_bc_fields(Params& params, SmileiMPI* smpi, SimWindow* simWindow,
                            double time_dual, Timers &timers, int itime)
@@ -988,6 +1021,11 @@ void VectorPatch::update_field_list()
     listBx_.resize( size() ) ;
     listBy_.resize( size() ) ;
     listBz_.resize( size() ) ;
+    
+    if (patches_[0]->EMfields->envelope != NULL){
+      listA_.resize ( size() ) ;
+      listA0_.resize( size() ) ;
+                                                      }
 
     for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
         listJx_[ipatch] = patches_[ipatch]->EMfields->Jx_ ;
@@ -1000,6 +1038,10 @@ void VectorPatch::update_field_list()
         listBx_[ipatch] = patches_[ipatch]->EMfields->Bx_ ;
         listBy_[ipatch] = patches_[ipatch]->EMfields->By_ ;
         listBz_[ipatch] = patches_[ipatch]->EMfields->Bz_ ;
+        if (patches_[ipatch]->EMfields->envelope != NULL){
+          listA_[ipatch]  = patches_[ipatch]->EMfields->envelope->A_ ;
+          listA0_[ipatch] = patches_[ipatch]->EMfields->envelope->A0_ ;
+                                                        }
     }
 
 

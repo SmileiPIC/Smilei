@@ -67,8 +67,8 @@ oversize(params.oversize),
 cell_length(params.cell_length),
 min_loc_vec(patch->getDomainLocalMin()),
 tracking_diagnostic(10000),
-partBoundCond(NULL),
 nDim_particle(params.nDim_particle),
+partBoundCond(NULL),
 min_loc(patch->getDomainLocalMin(0))
 
 {
@@ -757,7 +757,7 @@ void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector
 void Species::sort_part(Params& params)
 {
     int ndim = params.nDim_field;
-    int idim, check;
+    int idim;
     //cleanup_sent_particles(ispec, indexes_of_particles_to_exchange);
 
     //We have stored in indexes_of_particles_to_exchange the list of all particles that needs to be removed.

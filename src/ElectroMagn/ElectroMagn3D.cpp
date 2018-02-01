@@ -144,6 +144,8 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
     Bx_m = new Field3D(dimPrim, 0, true,  "Bx_m");
     By_m = new Field3D(dimPrim, 1, true,  "By_m");
     Bz_m = new Field3D(dimPrim, 2, true,  "Bz_m");
+    Env_Ar_=new Field3D(dimPrim, 0, false, "Env_Ar");
+    Env_Ai_=new Field3D(dimPrim, 0, false, "Env_Ai");
     
     // Total charge currents and densities
     Jx_   = new Field3D(dimPrim, 0, false, "Jx");
@@ -155,7 +157,6 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
     //xmin/ymin - xmin/ymax - xmin/zmin - xmin/zmax - xmax/ymin - xmax/ymax - xmax/zmin - xmax/zmax 
     //ymin/xmin - ymin/xmax - ymin/zmin - ymin/zmax - ymax/xmin - ymax/xmax - ymax/zmin - ymax/zmax 
     //zmin/xmin - zmin/xmax - zmin/ymin - zmin/ymax - zmaz/xmin - zmaz/xmax - zmax/ymin - zmax/ymax 
-    alpha_edge.resize(24);
     beta_edge.resize(24);
     S_edge.resize(24);
 
@@ -626,6 +627,8 @@ Field * ElectroMagn3D::createField(string fieldname)
     else if(fieldname.substr(0,2)=="Jy" ) return new Field3D(dimPrim, 1, false, fieldname);
     else if(fieldname.substr(0,2)=="Jz" ) return new Field3D(dimPrim, 2, false, fieldname);
     else if(fieldname.substr(0,3)=="Rho") return new Field3D(dimPrim, fieldname );
+    else if(fieldname.substr(0,2)=="Env_Ar" ) return new Field3D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,2)=="Env_Ai" ) return new Field3D(dimPrim, 0, false, fieldname);
     
     ERROR("Cannot create field "<<fieldname);
     return NULL;

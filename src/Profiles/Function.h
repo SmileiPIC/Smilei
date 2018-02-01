@@ -4,6 +4,7 @@
 #include "PyTools.h"
 #include <vector>
 #include <string>
+#include <complex>
 
 class Function
 {
@@ -28,6 +29,11 @@ public:
     
     //! Gets the value of a N-D function from both a vector and a double. The double is the last argument.
     virtual double valueAt(std::vector<double>, double ) {
+        return 0.; // virtual => will be redefined
+    };
+
+  //! Gets the complex value of a N-D function from both a vector and a double. The double is the last argument.
+    virtual std::complex<double> complexValueAt(std::vector<double>, double ) {
         return 0.; // virtual => will be redefined
     };
 
@@ -94,6 +100,17 @@ public:
     Function_Python4D(PyObject *pp) : py_profile(pp) {};
     Function_Python4D(Function_Python4D *f) : py_profile(f->py_profile) {};
     double valueAt(std::vector<double>, double); // space + time
+    std::complex<double> complexValueAt(std::vector<double>, double); // space + time
+private:
+    PyObject *py_profile;
+};
+
+class Function_Python4D_Complex : public Function
+{
+public:
+    Function_Python4D_Complex(PyObject *pp) : py_profile(pp) {};
+    Function_Python4D_Complex(Function_Python4D_Complex *f) : py_profile(f->py_profile) {};
+    std::complex<double> valueAtComplex(std::vector<double>, double); // space + time
 private:
     PyObject *py_profile;
 };

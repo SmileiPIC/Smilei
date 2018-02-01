@@ -111,7 +111,6 @@ namelist("")
     string command = "import signal\nsignal.signal(signal.SIGINT, signal.SIG_DFL)";
     if( !PyRun_SimpleString(command.c_str()) ) PyTools::checkPyError();
 
-
     PyObject* Py_main = PyImport_AddModule("__main__");
     PyObject* globals = PyModule_GetDict(Py_main);
 
@@ -131,6 +130,7 @@ namelist("")
 
     // here we add the larget int, important to get a valid seed for randomization
     PyModule_AddIntConstant(Py_main, "smilei_rand_max", RAND_MAX);
+
 
     // Running the namelists
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
@@ -158,6 +158,7 @@ namelist("")
         runScript(strNamelist,(*it), globals);
     }
     // Running pycontrol.py
+
     runScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py", globals);
 
     smpi->barrier();
@@ -289,11 +290,56 @@ namelist("")
         else if ( (EM_BCs[iDim][0] != EM_BCs[iDim][1]) &&  (EM_BCs[iDim][0] == "periodic" || EM_BCs[iDim][1] == "periodic") )
             ERROR("EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
     }
+    
+    //! Boundary conditions for Envelope Field
+    if( !PyTools::extract("Envelope_boundary_conditions", Env_BCs, "Main")  )
+        ERROR("Electromagnetic boundary conditions (Envelope_boundary_conditions) not defined" );
+
+    if( Env_BCs.size() == 0 ) {
+        ERROR("Envelope_boundary_conditions cannot be empty");
+    } else if( Env_BCs.size() == 1 ) {
+        while( Env_BCs.size() < nDim_field ) Env_BCs.push_back( Env_BCs[0] );
+    } else if( Env_BCs.size() != nDim_field ) {
+        ERROR("Envelope_boundary_conditions must be the same size as the number of dimensions");
+    }
+
+    for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
+        if( Env_BCs[iDim].size() == 1 ) // if just one type is specified, then take the same bc type in a given dimension
+            Env_BCs[iDim].push_back( Env_BCs[iDim][0] );
+    //    else if ( (Env_BCs[iDim][0] != Env_BCs[iDim][1]) &&  (Env_BCs[iDim][0] == "periodic" || Env_BCs[iDim][1] == "periodic") )
+    //        ERROR("Envelope_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
+    }
+
+    //! Ponderomotive force
+    //PyTools::extract("ponderomotive_force", ponderomotive_force, "Main");
+    //if ( ponderomotive_force && ( geometry != "3Dcartesian" ) )
+    //    ERROR( "Ponderomotive force only available in 3D3V" );
+
 
     for (unsigned int iDim = 0 ; iDim < nDim_field; iDim++){
-        if (EM_BCs[iDim][0] == "buneman" || EM_BCs[iDim][1] == "buneman")
+        if (EM_BCs[iDim][0] == "buneman" || EM_BCs[iDim][1] == "buneman"){
             full_B_exchange = true;
+            open_boundaries = true;
+        }
+        if (EM_BCs[iDim][0] == "silver-muller" || EM_BCs[iDim][1] == "silver-muller"){
+            open_boundaries = true;
+        }
     }
+
+    PyTools::extract("EM_boundary_conditions_theta", EM_BCs_theta, "Main");
+    //Complete with zeros if not defined
+    if( EM_BCs_theta.size() == 1 ) {
+        while( EM_BCs_theta.size() < nDim_field ) EM_BCs_theta.push_back(EM_BCs_theta[0]  );
+    } else if( EM_BCs_theta.size() != nDim_field ) {
+        ERROR("EM_boundary_conditions_theta must be the same size as the number of dimensions");
+    }
+    for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
+        if( EM_BCs_theta[iDim].size() == 1 ) // if just one theta is specified, then take the same theta for both sides of the dimension.
+            EM_BCs_theta[iDim].push_back( EM_BCs_theta[iDim][0] );
+        else if ( EM_BCs[iDim].size() > 2 )
+            ERROR("Too many EM_boundary_conditions_theta along dimension "<<"xyz"[iDim] );
+    }
+
     // -----------------------------------
     // MAXWELL SOLVERS & FILTERING OPTIONS
     // -----------------------------------
@@ -401,7 +447,6 @@ namelist("")
     //nordery=norder[1];
     //norderz=norder[2];
 
-
     if( PyTools::nComponents("LoadBalancing")>0 ) {
         // get parameter "every" which describes a timestep selection
         load_balancing_time_selection = new TimeSelection(
@@ -413,7 +458,9 @@ namelist("")
     } else {
         load_balancing_time_selection = new TimeSelection();
     }
+
     has_load_balancing = (smpi->getSize()>1)  && (! load_balancing_time_selection->isEmpty());
+
 
     //mi.resize(nDim_field, 0);
     mi.resize(3, 0);
@@ -547,40 +594,28 @@ void Params::compute()
 
     // grid/cell-related parameters
     // ----------------------------
-    n_space.resize(3);
-    cell_length.resize(3);
-    cell_volume=1.0;
-    if (nDim_field==res_space.size() && nDim_field==grid_length.size()) {
-
-        // compute number of cells & normalized lengths
-        for (unsigned int i=0; i<nDim_field; i++) {
-            n_space[i]         = round(grid_length[i]/cell_length[i]);
-
-            double entered_grid_length = grid_length[i];
-            grid_length[i]      = (double)(n_space[i])*cell_length[i]; // ensure that nspace = grid_length/cell_length
-            if (grid_length[i]!=entered_grid_length)
-                WARNING("grid_length[" << i << "] has been redefined from " << entered_grid_length << " to " << grid_length[i] << " to match n x cell_length (" << scientific << setprecision(4) << grid_length[i]-entered_grid_length <<")");
-            cell_volume   *= cell_length[i];
-        }
-        // create a 3d equivalent of n_space & cell_length
-        for (unsigned int i=nDim_field; i<3; i++) {
-            n_space[i]=1;
-            cell_length[i]=0.0;
-        }
-
-    } else {
-        ERROR("Problem with the definition of nDim_field");
-    }
-
-    //!\todo (MG to JD) Are these 2 lines really necessary ? It seems to me it has just been done before
     n_space.resize(3, 1);
-    cell_length.resize(3, 0.);            //! \todo{3 but not real size !!! Pbs in Species::Species}
-    n_space_global.resize(3, 1);        //! \todo{3 but not real size !!! Pbs in Species::Species}
+    cell_length.resize(3);
+    n_space_global.resize(3, 1);  //! \todo{3 but not real size !!! Pbs in Species::Species}
     oversize.resize(3, 0);
     patch_dimensions.resize(3, 0.);
-
-    //n_space_global.resize(nDim_field, 0);
+    cell_volume=1.0;
     n_cell_per_patch = 1;
+    
+    // compute number of cells & normalized lengths
+    for (unsigned int i=0; i<nDim_field; i++) {
+        n_space[i] = round(grid_length[i]/cell_length[i]);
+        double entered_grid_length = grid_length[i];
+        grid_length[i] = (double)(n_space[i])*cell_length[i]; // ensure that nspace = grid_length/cell_length
+        if (grid_length[i]!=entered_grid_length)
+            WARNING("grid_length[" << i << "] has been redefined from " << entered_grid_length << " to " << grid_length[i] << " to match n x cell_length (" << scientific << setprecision(4) << grid_length[i]-entered_grid_length <<")");
+        cell_volume *= cell_length[i];
+    }
+    // create a 3d equivalent of n_space & cell_length
+    for (unsigned int i=nDim_field; i<3; i++) {
+        cell_length[i]=0.0;
+    }
+    
     for (unsigned int i=0; i<nDim_field; i++){
         oversize[i]  = max(interpolation_order,(unsigned int)(norder[i]/2+1)) + (exchange_particles_each-1);;
         n_space_global[i] = n_space[i];
@@ -590,7 +625,7 @@ void Params::compute()
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
     }
-
+    
     // Set clrw if not set by the user
     if ( clrw == -1 ) {
 
@@ -666,6 +701,8 @@ void Params::print_init()
         MESSAGE(1,"dimension " << i << " - (Spatial resolution, Grid length) : (" << res_space[i] << ", " << grid_length[i] << ")");
         MESSAGE(1,"            - (Number of cells,    Cell length)  : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
         MESSAGE(1,"            - Electromagnetic boundary conditions: " << "(" << EM_BCs[i][0] << ", " << EM_BCs[i][1] << ")");
+        if (open_boundaries)
+            MESSAGE(1,"            - Electromagnetic boundary conditions theta: " << "(" << EM_BCs_theta[i][0] << ", " << EM_BCs_theta[i][1] << ")");
     }
 
     if( currentFilter_passes > 0 )

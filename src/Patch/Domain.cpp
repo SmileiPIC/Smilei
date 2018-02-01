@@ -103,3 +103,9 @@ void Domain::solveMaxwell( Params& params, SimWindow* simWindow, int itime, doub
 
 }
 
+void Domain::solveEnvelope( Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers )
+{
+    vecPatch_.solveEnvelope( params, simWindow, itime, time_dual, timers );
+
+}
+

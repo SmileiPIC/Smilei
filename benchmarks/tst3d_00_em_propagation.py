@@ -45,6 +45,12 @@ DiagFields(
     every = globalEvery,
     fields = ['Ex','Ey','Ez']
 )
+from numpy import s_
+DiagFields(
+    every = globalEvery,
+    fields = ['Ex','Ey','Ez'],
+    subgrid = s_[4:100:3, 5:400:10, 6:300:80]
+)
 
 DiagProbe(
     every = 10,

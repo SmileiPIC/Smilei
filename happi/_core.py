@@ -28,9 +28,11 @@ class ScalarFactory(object):
 	def __init__(self, simulation, scalar=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
+		if not simulation._scan: return
 		
 		# If not a specific scalar (root level), build a list of scalar shortcuts
 		if scalar is None:
+			if simulation._verbose: print("Scanning for Scalar diagnostics")
 			# Create a temporary, empty scalar diagnostic
 			tmpDiag = Scalar.Scalar(simulation)
 			# Get a list of scalars
@@ -86,9 +88,11 @@ class FieldFactory(object):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
 		self._children = []
+		if not simulation._scan: return
 		
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
+			if simulation._verbose: print("Scanning for Field diagnostics")
 			# Create a temporary, empty field diagnostic
 			tmpDiag = Field.Field(simulation)
 			# Get a list of diag
@@ -177,13 +181,15 @@ class ProbeFactory(object):
 	def __init__(self, simulation, probeNumber=None, field=None, timestep=None, availableTimesteps=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
+		if not simulation._scan: return
 		
 		# If not a specific probe, build a list of probe shortcuts
 		if probeNumber is None:
+			if simulation._verbose: print("Scanning for Probe diagnostics")
 			# Create a temporary, empty probe diagnostic
 			tmpDiag = Probe.Probe(simulation)
 			# Get a list of probes
-			probes = tmpDiag.getProbes()
+			probes = tmpDiag._probes
 			# Create probe shortcuts
 			for probe in probes:
 				setattr(self, 'Probe'+str(probe), ProbeFactory(simulation, probe))
@@ -262,9 +268,11 @@ class ParticleBinningFactory(object):
 	def __init__(self, simulation, diagNumber=None, timestep=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
+		if not simulation._scan: return
 	
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
+			if simulation._verbose: print("Scanning for ParticleBinning diagnostics")
 			# Create a temporary, empty particle binning diagnostic
 			tmpDiag = ParticleBinning.ParticleBinning(simulation)
 			# Get a list of diags
@@ -350,7 +358,7 @@ class PerformancesFactory(object):
 	def __init__(self, simulation):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
-	
+		
 	def __call__(self, *args, **kwargs):
 		return Performances.Performances(self._simulation, *(self._additionalArgs+args), **kwargs)
 
@@ -393,9 +401,11 @@ class ScreenFactory(object):
 	def __init__(self, simulation, diagNumber=None, timestep=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
+		if not simulation._scan: return
 		
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
+			if simulation._verbose: print("Scanning for Screen diagnostics")
 			# Create a temporary, empty Screen diagnostic
 			tmpDiag = Screen.Screen(simulation)
 			# Get a list of diags
@@ -473,9 +483,11 @@ class TrackParticlesFactory(object):
 		self._simulation = simulation
 		self._additionalKwargs = dict()
 		self._children = []
+		if not simulation._scan: return
 		
 		# If not a specific species (root level), build a list of species shortcuts
 		if species is None:
+			if simulation._verbose: print("Scanning for Tracked particle diagnostics")
 			# Create a temporary, empty tracked-particle diagnostic
 			tmpDiag = TrackParticles.TrackParticles(simulation)
 			# Get a list of species
@@ -524,15 +536,18 @@ def Open(*args, **kwargs):
 		Directory containing simulation results, or list of directories.
 		Omit this argument if you are already in the results directory.
 	
-	show : bool (default True)
-		Can be set to False to prevent figures to actually appear on screen.
-	
 	reference_angular_frequency_SI : float (default None)
 		Sets or change the value of reference_angular_frequency_SI, which may
 		be defined in the block Main() of any Smilei namelist.
 	
+	show : bool (default True)
+		Can be set to False to prevent figures to actually appear on screen.
+	
 	verbose : bool (default True)
 		If False, no warnings or information are printed.
+	
+	scan : bool (default True)
+		If False, the HDF5 output files are not initially scanned.
 	
 	Returns:
 	--------
@@ -577,7 +592,7 @@ class SmileiSimulation(object):
 		
 	"""
 	
-	def __init__(self, results_path=".", show=True, reference_angular_frequency_SI=None, verbose=True):
+	def __init__(self, results_path=".", reference_angular_frequency_SI=None, show=True, verbose=True, scan=True):
 		self.valid = False
 		# Import packages
 		import h5py
@@ -599,25 +614,19 @@ class SmileiSimulation(object):
 		self._mtime = 0
 		self._verbose = verbose
 		self._reference_angular_frequency_SI = reference_angular_frequency_SI
+		self._scan = scan
 		
 		# Load the simulation (verify the path, get the namelist)
 		self.reload()
 		
 		# Load diagnostics factories
 		if self.valid:
-			if self._verbose: print("Scanning for Scalar diagnostics")
 			self.Scalar = ScalarFactory(self)
-			if self._verbose: print("Scanning for Field diagnostics")
 			self.Field = FieldFactory(self)
-			if self._verbose: print("Scanning for Probe diagnostics")
 			self.Probe = ProbeFactory(self)
-			if self._verbose: print("Scanning for ParticleBinning diagnostics")
 			self.ParticleBinning = ParticleBinningFactory(self)
-			if self._verbose: print("Scanning for Performances diagnostics")
 			self.Performances = PerformancesFactory(self)
-			if self._verbose: print("Scanning for Screen diagnostics")
 			self.Screen = ScreenFactory(self)
-			if self._verbose: print("Scanning for Tracked particle diagnostics")
 			self.TrackParticles = TrackParticlesFactory(self)
 	
 	
