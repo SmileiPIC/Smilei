@@ -20,7 +20,7 @@ Main(
     grid_length  = Lsim,
     number_of_patches = [ 1, 1 ],
     timestep = t0/rest,
-    simulation_time = 10*t0/rest ,
+    simulation_time = 50*t0/rest ,
      
     EM_boundary_conditions = [
         ["silver-muller","silver-muller"],
@@ -34,7 +34,7 @@ LaserGaussian2D(
     a0              = 1.,
     omega           = 1.,
     focus           = [Lsim[0]/2., 0.],
-    waist           = 25.,
+    waist           = 8.,
     #time_envelope   = tconstant()
 )
 #LaserGaussian2D(
@@ -51,7 +51,7 @@ globalEvery = int(1)
 #DiagScalar(every=globalEvery)
 
 DiagFields(
-    every = 3,
+    every = 1,
     fields = []
 )
 

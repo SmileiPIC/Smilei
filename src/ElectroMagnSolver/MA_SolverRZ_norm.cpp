@@ -39,7 +39,7 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
     bool isYmin = (static_cast<ElectroMagn3DRZ*>(fields))->isYmin;
 	bool isXmin = (static_cast<ElectroMagn3DRZ*>(fields))->isXmin;
     // Electric field Elr^(d,p)
-    for (unsigned int i=isXmin ; i<nl_d ; i++) {
+    for (unsigned int i=0 ; i<nl_d ; i++) {
         for (unsigned int j=isYmin*3 ; j<nr_p ; j++) {
             (*ElRZ)(i,j) += -dt*(*JlRZ)(i,j)
                 +                 dt/((j_glob+j)*dr)* ((j+0.5)*(*BtRZ)(i,j+1) - (j-0.5)*(*BtRZ)(i,j) )
@@ -56,7 +56,7 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
     //MESSAGE("ElRZ");
     //MESSAGE((*ElRZ)(int(nl_d/2),int(nr_p/2)));
     // Electric field Er^(p,d)
-    for (unsigned int i=isXmin ; i<nl_p ; i++) {
+    for (unsigned int i=0 ; i<nl_p ; i++) {
         for (unsigned int j=isYmin*3 ; j<nr_d ; j++) {
             (*ErRZ)(i,j) += -dt*(*JrRZ)(i,j)
                 -                  dt_ov_dl * ( (*BtRZ)(i+1,j) - (*BtRZ)(i,j) )
@@ -72,7 +72,7 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
     //MESSAGE("ErRZ");
     //MESSAGE((*ErRZ)(int(nl_p/2),int(nr_d/2)));
     // Electric field Et^(p,p)
-    for (unsigned int i=isXmin ;  i<nl_p ; i++) {
+    for (unsigned int i=0 ;  i<nl_p ; i++) {
         for (unsigned int j=isYmin*3 ; j<nr_p ; j++) {
             (*EtRZ)(i,j) += -dt*(*JtRZ)(i,j)
                 +                  dt_ov_dl * ( (*BrRZ)(i+1,j) - (*BrRZ)(i,j) )

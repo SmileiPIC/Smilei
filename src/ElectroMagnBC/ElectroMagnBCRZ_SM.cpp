@@ -234,7 +234,7 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 				unsigned int i=0;
 		        (*BrRZ)(i,j) = Alpha_SM_Xmin   * (*EtRZ)(i,j)
 		        +              Beta_SM_Xmin    * (*BrRZ)(i+1,j)
-		        +              Gamma_SM_Xmin   * byW
+		        +              Gamma_SM_Xmin   * byW;
 		        +              Delta_SM_Xmin   *( (*BlRZ)(i,j+1)- (*BlRZ)(i,j));
 		        if (std::abs((*BrRZ)(i,j))>1.){
                 MESSAGE("BrRZSM");                
