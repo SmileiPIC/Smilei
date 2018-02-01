@@ -400,6 +400,9 @@ namelist("")
     for (unsigned int i=0; i<nDim_field; i++) {
         res_space2 += res_space[i]*res_space[i];
     }
+    if (geometry == "3drz") {
+        res_space2 += ((Nmode-1)*(Nmode-1)-1)*res_space[1]*res_space[1];	    
+    }
     dtCFL=1.0/sqrt(res_space2);
     if ( timestep>dtCFL ) {
         WARNING("CFL problem: timestep=" << timestep << " should be smaller than " << dtCFL);
