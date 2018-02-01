@@ -37,8 +37,11 @@ ElectroMagnBCRZ_Axis::ElectroMagnBCRZ_Axis( Params &params, Patch* patch, unsign
     dr       = params.cell_length[1];
     dt_ov_dr = dt/dr;
     dr_ov_dt = 1.0/dt_ov_dr;
-	//Number of modes
-	Nmode= params.Nmode;
+
+    //Number of modes
+    Nmode= params.Nmode;
+    //Oversize R
+    oversize_R = params.oversize[1];
     
    // if (min_max == 2 && patch->isYmin() ) {
         // BCs in the y-border min
@@ -87,7 +90,7 @@ void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch*
 	bool isXmax = (static_cast<ElectroMagn3DRZ*>(EMfields))->isXmax;
 
 	if (min_max == 2 && patch->isYmin()){
-		unsigned int j=2;
+		unsigned int j=oversize_R;  //Axis boundary conditions are applied directly on axis (j=oversize_R for primal) and not on ghost cells.
 		if (imode==0){
 			//MF_Solver_Yee
 			for (unsigned int i=0 ; i<nl_d ; i++) {
@@ -164,7 +167,7 @@ void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch*
 			}
 			for (unsigned int i=0 ; i<nl_p ; i++) {
 				//(*ErRZ)(i,j)= -(*ErRZ)(i,j+1);
-				(*ErRZ)(i,j)=2*Icpx*(*EtRZ)(i,j)-(*ErRZ)(i,j+1);
+				(*ErRZ)(i,j)=2.*Icpx*(*EtRZ)(i,j)-(*ErRZ)(i,j+1);
                 if (std::abs((*ErRZ)(i,j))>1.){
                 MESSAGE("ErRZA");                
                 MESSAGE(i);
