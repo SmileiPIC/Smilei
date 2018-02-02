@@ -125,6 +125,9 @@ public:
 
     //! Define if the ponderomotive force is computed (default = false)
     bool ponderomotive_force;
+
+    //! Define if laser envelope model is used (default = false)
+    bool Laser_Envelope_model;
     
     //Poisson solver
     //! Do we solve poisson

@@ -199,6 +199,7 @@ class Main(SmileiSingleton):
     Envelope_boundary_conditions = [["reflective"]]
     time_fields_frozen = 0.
     ponderomotive_force = False
+    Laser_Envelope_model = False
 
     # Default Misc
     reference_angular_frequency_SI = 0.

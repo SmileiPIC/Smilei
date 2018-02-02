@@ -610,22 +610,6 @@ def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelop
         envelope_solver     = "explicit",
     )
 
-
-
-    # # Space envelope
-    # invWaist2 = 1./2./(waist/2.)**2
-    # def spatial(y,z):
-    #     return math.exp( -invWaist2*((y-focus[1])**2 + (z-focus[2])**2 )  )
-    # # Space envelope times temporal envelope
-    # def space_time_envelope(x,y,z):
-    #     return spatial(y,z)*time_envelope(x/c_vacuum)
-    # # Create Laser Envelope
-    # LaserEnvelope(
-    #     omega               = omega,
-    #     envelope_profile    = lambda x,y,z:a0*space_time_envelope(x,y,z),
-    #     envelope_solver     = "explicit",
-    # )
-
 """
 -----------------------------------------------------------------------
     BEGINNING OF THE USER NAMELIST

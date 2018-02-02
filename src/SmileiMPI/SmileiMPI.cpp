@@ -740,6 +740,12 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
     isend( EM->By_m, to, mpi_tag+tag, requests[tag]); tag++;
     isend( EM->Bz_m, to, mpi_tag+tag, requests[tag]); tag++;
 
+    //if laser envelope is present, send it
+    if (EM->envelope!=NULL){
+        isend( EM->envelope->A_, to, mpi_tag+tag, requests[tag]); tag++;
+        isend( EM->envelope->A0_, to, mpi_tag+tag, requests[tag]); tag++;
+                           }
+
     for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {
         for( unsigned int ifield=0; ifield<EM->allFields_avg[idiag].size(); ifield++) {
             isend( EM->allFields_avg[idiag][ifield], to, mpi_tag+tag, requests[tag]); tag++;
@@ -810,6 +816,11 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
     recv( EM->Bx_m, from, tag ); tag++;
     recv( EM->By_m, from, tag ); tag++;
     recv( EM->Bz_m, from, tag ); tag++;
+
+    if (EM->envelope!=NULL){
+        recv( EM->envelope->A_ , from, tag ); tag++;
+        recv( EM->envelope->A0_, from, tag ); tag++;
+                           }
 
     for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {
         for( unsigned int ifield=0; ifield<EM->allFields_avg[idiag].size(); ifield++) {

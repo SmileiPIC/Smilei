@@ -24,6 +24,8 @@ cell_length    ( params.cell_length) ,timestep( params.timestep)
     if (!PyTools::extract_pyProfile("envelope_profile",profile,"LaserEnvelope"))
         MESSAGE("No envelope profile set !");
     profile_ = new Profile(profile, params.nDim_field+1, "envelope");
+  
+    params.Laser_Envelope_model = true;
 
     int ienvlaser = 0;
     ostringstream name("");
