@@ -131,16 +131,19 @@ Fedora
 
 Debian (Ubuntu, Mint etc...)
 """"""""""""""""""""""""""""
+
+1. Install ``python2-dev`` and ``pyhton-numpy``
+
 Since the system ``openmpi`` is not compiled with ``--enable-mpi-thread-multiple``, a manual installation is required :
 
-1. Choose a path whet to install dependencies by setting the environment variable ``INSTALL_DIR``. e.g. :
+2. Choose a path whet to install dependencies by setting the environment variable ``INSTALL_DIR``. e.g. :
 
   .. code-block:: bash
 
     export INSTALL_DIR=/usr/local
 
 
-2. Download `OpenMPI <https://www.open-mpi.org/software/ompi>`_ and install.
+3. Download `OpenMPI <https://www.open-mpi.org/software/ompi>`_ and install.
    You may choose any ``${INSTALL_DIR}``.
 
   .. code-block:: bash
@@ -159,7 +162,7 @@ Since the system ``openmpi`` is not compiled with ``--enable-mpi-thread-multiple
     export LD_LIBRARY_PATH=${INSTALL_DIR}/openmpi/lib:${LD_LIBRARY_PATH}
 
 
-3. Download `HDF5 <https://support.hdfgroup.org/HDF5>`_ and install
+4. Download `HDF5 <https://support.hdfgroup.org/HDF5>`_ and install
 
   .. code-block:: bash
   
