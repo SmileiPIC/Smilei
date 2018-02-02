@@ -132,7 +132,11 @@ Fedora
 Debian (Ubuntu, Mint etc...)
 """"""""""""""""""""""""""""
 
-1. Install ``python2-dev`` and ``pyhton-numpy``
+1. Install these packages
+
+  .. code-block:: bash
+  
+    sudo apt-get install python-h5py ipython python-pint python-sphinx python-matplotlib python2-dev  pyhton-numpy
 
 Since the system ``openmpi`` is not compiled with ``--enable-mpi-thread-multiple``, a manual installation is required :
 
