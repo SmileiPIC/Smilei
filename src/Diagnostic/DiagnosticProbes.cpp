@@ -532,7 +532,11 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         LocalFields Jloc_fields;
         double Rloc_fields;
 
-        int ithread = omp_get_thread_num();
+        int ithread = 0;
+        #ifdef _OPENMP
+        ithread = omp_get_thread_num();
+        #endif
+        smpi->dynamics_resize(ithread, nDim_particle, npart);
 
         for (unsigned int ipart=0; ipart<npart; ipart++) { 
             int iparticle(ipart); // Compatibility 

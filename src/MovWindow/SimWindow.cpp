@@ -260,8 +260,15 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                 //If new particles are required
                 if (patch_to_be_created[ithread][j] != nPatches){
                     mypatch = vecPatches.patches_[patch_to_be_created[ithread][j]];
-                    for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++)
+                    for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++) {
                         mypatch->vecSpecies[ispec]->createParticles(params.n_space, params, mypatch, 0 );
+                        if (params.vecto) {
+                            if ( dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec]) )
+                                dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
+                            mypatch->vecSpecies[ispec]->sort_part(params);
+
+                        }
+                    }
                     // We define the IDs of the new particles
                     for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ )
                         if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) )
