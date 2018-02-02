@@ -215,6 +215,6 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
 
 } // END Interpolator2D2OrderV
 
-void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc)
+void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
 {
 }

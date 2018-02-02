@@ -529,24 +529,29 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         unsigned int iPart_MPI = offset_in_MPI[ipatch];
         unsigned int npart = vecPatches(ipatch)->probes[probe_n]->particles.size();
         
-        LocalFields Eloc_fields, Bloc_fields, Jloc_fields;
+        LocalFields Jloc_fields;
         double Rloc_fields;
-        
-        for (unsigned int ipart=0; ipart<npart; ipart++) {             
+
+        int ithread = omp_get_thread_num();
+
+        for (unsigned int ipart=0; ipart<npart; ipart++) { 
+            int iparticle(ipart); // Compatibility 
+            int false_idx(0);     // Use in classical interp for now, not for probes
+            //     virtual void operator()  (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc) override = 0;
             (*(vecPatches(ipatch)->Interp)) (
                 vecPatches(ipatch)->EMfields,
-                vecPatches(ipatch)->probes[probe_n]->particles,
-                ipart,
-                &Eloc_fields, &Bloc_fields, &Jloc_fields, &Rloc_fields
+                vecPatches(ipatch)->probes[probe_n]->particles, smpi, 
+                &iparticle, &false_idx, ithread,
+                &Jloc_fields, &Rloc_fields
             );
-            
+
             //! here we fill the probe data!!!
-            (*probesArray)(fieldlocation[0],iPart_MPI)=Eloc_fields.x;
-            (*probesArray)(fieldlocation[1],iPart_MPI)=Eloc_fields.y;
-            (*probesArray)(fieldlocation[2],iPart_MPI)=Eloc_fields.z;
-            (*probesArray)(fieldlocation[3],iPart_MPI)=Bloc_fields.x;
-            (*probesArray)(fieldlocation[4],iPart_MPI)=Bloc_fields.y;
-            (*probesArray)(fieldlocation[5],iPart_MPI)=Bloc_fields.z;
+            (*probesArray)(fieldlocation[0],iPart_MPI)=smpi->dynamics_Epart[ithread][ipart+0*npart];
+            (*probesArray)(fieldlocation[1],iPart_MPI)=smpi->dynamics_Epart[ithread][ipart+1*npart];
+            (*probesArray)(fieldlocation[2],iPart_MPI)=smpi->dynamics_Epart[ithread][ipart+2*npart];
+            (*probesArray)(fieldlocation[3],iPart_MPI)=smpi->dynamics_Bpart[ithread][ipart+0*npart];
+            (*probesArray)(fieldlocation[4],iPart_MPI)=smpi->dynamics_Bpart[ithread][ipart+1*npart];
+            (*probesArray)(fieldlocation[5],iPart_MPI)=smpi->dynamics_Bpart[ithread][ipart+2*npart];
             (*probesArray)(fieldlocation[6],iPart_MPI)=Jloc_fields.x;
             (*probesArray)(fieldlocation[7],iPart_MPI)=Jloc_fields.y;
             (*probesArray)(fieldlocation[8],iPart_MPI)=Jloc_fields.z;          

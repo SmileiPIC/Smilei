@@ -127,34 +127,11 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
         for (int ipart=0 ; ipart<np_computed; ipart++ ){
 
             double* coeffyp = &(coeff[1][0][1][ipart]);
-            //double coeffyp0 = *(coeffyp-32);
-            //double coeffyp1 = *(coeffyp);
-            //double coeffyp2 = *(coeffyp+32);
-            
             double* coeffyd = &(coeff[1][1][1][ipart]);
-            double coeffyd0 = *(coeffyd-32);
-            double coeffyd1 = *(coeffyd);
-            double coeffyd2 = *(coeffyd+32);
-
             double* coeffxd = &(coeff[0][1][1][ipart]);
-            //double coeffxd0 = *(coeffxd-32);
-            //double coeffxd1 = *(coeffxd);
-            //double coeffxd2 = *(coeffxd+32);
-
             double* coeffxp = &(coeff[0][0][1][ipart]);
-            double coeffxp0 = *(coeffxp-32);
-            double coeffxp1 = *(coeffxp);
-            double coeffxp2 = *(coeffxp+32);
-
             double* coeffzp = &(coeff[2][0][1][ipart]);
-            //double coeffzp0 = *(coeffzp-32);
-            //double coeffzp1 = *(coeffzp);
-            //double coeffzp2 = *(coeffzp+32);
-
             double* coeffzd = &(coeff[2][1][1][ipart]);
-            double coeffzd0 = *(coeffzd-32);
-            double coeffzd1 = *(coeffzd);
-            double coeffzd2 = *(coeffzd+32);
 
             //Ex(dual, primal, primal)
             double interp_res = 0.;
@@ -241,6 +218,6 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
 
 } // END Interpolator3D2OrderV
 
-void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc)
+void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
 {
 }
