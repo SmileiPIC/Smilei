@@ -15,6 +15,7 @@
 #include "SpeciesNorm.h"
 
 #ifdef _VECTO
+#include "SpeciesNormV.h"
 #include "SpeciesV.h"
 #endif
 
@@ -91,11 +92,11 @@ public:
                  // Species with nonrelativistic Boris pusher == 'borisnr'
                  // Species with J.L. Vay pusher if == "vay"
                  // Species with Higuary Cary pusher if == "higueracary"
-                if ( (!params.vecto) || (pusher != "boris") )
+                if ( (!params.vecto) )
                     thisSpecies = new SpeciesNorm(params, patch);
 #ifdef _VECTO
                 else
-                    thisSpecies = new SpeciesV(params, patch);
+                    thisSpecies = new SpeciesNormV(params, patch);
 #endif
             } else {
                 ERROR("For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary'");
@@ -168,7 +169,12 @@ public:
         // Photon species
         else if (mass == 0)
         {
-            thisSpecies = new SpeciesNorm(params, patch);
+            if ( (!params.vecto) )
+                thisSpecies = new SpeciesNorm(params, patch);
+#ifdef _VECTO
+            else 
+                thisSpecies = new SpeciesNormV(params, patch);
+#endif
             // Photon can not radiate
             thisSpecies->radiation_model = "none";
             thisSpecies-> pusher = "norm";
@@ -496,20 +502,13 @@ public:
         // Create new species object
         Species * newSpecies = NULL;
 
-        if (species->pusher =="norm"
-        || species->pusher =="boris"
-        || species->pusher =="higueracary"
-        || species->pusher =="vay"
-        || species->pusher =="borisnr")
-        {
-            // Boris, Vay or Higuera-Cary
-            if ( (!params.vecto) || (species->pusher != "boris") )
-                newSpecies = new SpeciesNorm(params, patch);
+        // Boris, Vay or Higuera-Cary
+        if ( (!params.vecto) )
+            newSpecies = new SpeciesNorm(params, patch);
 #ifdef _VECTO
-            else
-                newSpecies = new SpeciesV(params, patch);
+        else
+            newSpecies = new SpeciesNormV(params, patch);
 #endif
-        }
 
         // Copy members
         newSpecies->name                                     = species->name;

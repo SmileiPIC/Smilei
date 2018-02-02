@@ -32,6 +32,7 @@ protected:
     std::vector<double> min_loc_vec;
     double dx_inv_[3];
     unsigned int nspace[3];
+    bool vecto;
 };//END class
 
 #endif

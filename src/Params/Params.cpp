@@ -471,8 +471,12 @@ namelist("")
             while ((number_of_patches[2] >> mi[2]) >1) mi[2]++ ;
     }
 
+    // Activation of the vectorized subroutines
     vecto = false;
-
+    PyTools::extract("vecto", vecto, "Main");
+    if (vecto)
+        MESSAGE( "Apply vectorization" );
+    
     // Read the "print_every" parameter
     print_every = (int)(simulation_time/timestep)/10;
     PyTools::extract("print_every", print_every, "Main");

@@ -343,6 +343,7 @@ void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime,
             // Computes A in all points
             (*this)(ipatch)->EMfields->envelope->compute(  (*this)(ipatch)->EMfields );
         }
+
         SyncVectorPatch::exchangeA( params, (*this) );
         SyncVectorPatch::finalizeexchangeA( params, (*this) );
     }
