@@ -742,8 +742,8 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
 
     //if laser envelope is present, send it
     if (EM->envelope!=NULL){
-        isend( EM->envelope->A_, to, mpi_tag+tag, requests[tag]); tag++;
-        isend( EM->envelope->A0_, to, mpi_tag+tag, requests[tag]); tag++;
+        isendComplex( EM->envelope->A_, to, mpi_tag+tag, requests[tag]); tag++;
+        isendComplex( EM->envelope->A0_, to, mpi_tag+tag, requests[tag]); tag++;
                            }
 
     for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {
@@ -818,8 +818,8 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
     recv( EM->Bz_m, from, tag ); tag++;
 
     if (EM->envelope!=NULL){
-        recv( EM->envelope->A_ , from, tag ); tag++;
-        recv( EM->envelope->A0_, from, tag ); tag++;
+        recvComplex( EM->envelope->A_ , from, tag ); tag++;
+        recvComplex( EM->envelope->A0_, from, tag ); tag++;
                            }
 
     for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {
@@ -888,11 +888,24 @@ void SmileiMPI::isend(Field* field, int to, int hindex, MPI_Request& request)
 
 } // End isend ( Field )
 
+void SmileiMPI::isendComplex(Field* field, int to, int hindex, MPI_Request& request)
+{
+    MPI_Isend( &((*field)(0)),field->globalDims_, MPI_CXX_DOUBLE_COMPLEX, to, hindex, MPI_COMM_WORLD, &request );
+
+} // End isendComplex ( Field )
+
 
 void SmileiMPI::recv(Field* field, int from, int hindex)
 {
     MPI_Status status;
     MPI_Recv( &((*field)(0)),field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &status );
+
+} // End recv ( Field )
+
+void SmileiMPI::recvComplex(Field* field, int from, int hindex)
+{
+    MPI_Status status;
+    MPI_Recv( &((*field)(0)),field->globalDims_, MPI_CXX_DOUBLE_COMPLEX, from, hindex, MPI_COMM_WORLD, &status );
 
 } // End recv ( Field )
 

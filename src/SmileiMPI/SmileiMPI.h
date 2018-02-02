@@ -81,8 +81,10 @@ public:
     void isend(ElectroMagn* fields, int to  , int maxtag, std::vector<MPI_Request>& requests, int mpi_tag);
     void recv (ElectroMagn* fields, int from, int hindex);
     void isend(Field* field, int to  , int hindex, MPI_Request& request);
-    
+    void isendComplex(Field* field, int to  , int hindex, MPI_Request& request);
     void recv (Field* field, int from, int hindex);
+    void recvComplex (Field* field, int from, int hindex);
+    
     void isend( ProbeParticles* probe, int to  , int hindex, unsigned int );
     void recv ( ProbeParticles* probe, int from, int hindex, unsigned int );
 
