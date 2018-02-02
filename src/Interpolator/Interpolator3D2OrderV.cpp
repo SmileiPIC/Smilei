@@ -123,334 +123,117 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
             }
         }
 
-        #ifdef _OLD
-        Epart[0][ipart] = compute( &(coeff[0][1][1]), &(coeff[1][0][1]), &(coeff[2][0][1]), Ex3D, idxO[0]+dual[0][ipart]+1, idxO[1]+1, idxO[2]+1);
-        Epart[1][ipart] = compute( &(coeff[0][0][1]), &(coeff[1][1][1]), &(coeff[2][0][1]), Ey3D, idxO[0]+1, idxO[1]+dual[1][ipart]+1, idxO[2]+1);
-        Epart[2][ipart] = compute( &(coeff[0][0][1]), &(coeff[1][0][1]), &(coeff[2][1][1]), Ez3D, idxO[0]+1, idxO[1]+1, idxO[2]+dual[2][ipart]+1);
-        Bpart[0][ipart] = compute( &(coeff[0][0][1]), &(coeff[1][1][1]), &(coeff[2][1][1]), Bx3D, idxO[0]+1, idxO[1]+dual[1][ipart]+1, idxO[2]+dual[2][ipart]+1);
-        Bpart[1][ipart] = compute( &(coeff[0][1][1]), &(coeff[1][0][1]), &(coeff[2][1][1]), By3D, idxO[0]+dual[0][ipart]+1, idxO[1]+1, idxO[2]+dual[2][ipart]+1);
-        Bpart[2][ipart] = compute( &(coeff[0][1][1]), &(coeff[1][1][1]), &(coeff[2][0][1]), Bz3D, idxO[0]+dual[0][ipart]+1, idxO[1]+dual[1][ipart]+1, idxO[2]+1);
-        #endif
-
         #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ){
 
+            double* coeffyp = &(coeff[1][0][1][ipart]);
+            //double coeffyp0 = *(coeffyp-32);
+            //double coeffyp1 = *(coeffyp);
+            //double coeffyp2 = *(coeffyp+32);
+            
+            double* coeffyd = &(coeff[1][1][1][ipart]);
+            double coeffyd0 = *(coeffyd-32);
+            double coeffyd1 = *(coeffyd);
+            double coeffyd2 = *(coeffyd+32);
+
+            double* coeffxd = &(coeff[0][1][1][ipart]);
+            //double coeffxd0 = *(coeffxd-32);
+            //double coeffxd1 = *(coeffxd);
+            //double coeffxd2 = *(coeffxd+32);
+
+            double* coeffxp = &(coeff[0][0][1][ipart]);
+            double coeffxp0 = *(coeffxp-32);
+            double coeffxp1 = *(coeffxp);
+            double coeffxp2 = *(coeffxp+32);
+
+            double* coeffzp = &(coeff[2][0][1][ipart]);
+            //double coeffzp0 = *(coeffzp-32);
+            //double coeffzp1 = *(coeffzp);
+            //double coeffzp2 = *(coeffzp+32);
+
+            double* coeffzd = &(coeff[2][1][1][ipart]);
+            double coeffzd0 = *(coeffzd-32);
+            double coeffzd1 = *(coeffzd);
+            double coeffzd2 = *(coeffzd+32);
+
             //Ex(dual, primal, primal)
-            E  =   coeff[1][0][0][ipart] * coeff[2][0][0][ipart] * Egrid[0][idxO[0]][idxO[1]]  [idxO[2]];
-            E  +=  coeff[1][0][1][ipart] * coeff[2][0][0][ipart] * Egrid[0][idxO[0]][idxO[1]+1][idxO[2]];
-            E  +=  coeff[1][0][2][ipart] * coeff[2][0][0][ipart] * Egrid[0][idxO[0]][idxO[1]+2][idxO[2]];
-            Epart[0][ipart+ivect+istart[0]] =   (1-dual[0][ipart])*coeff[0][1][0][ipart] * E ; 
-            E  =   coeff[1][0][0][ipart] * coeff[2][0][0][ipart] * Egrid[0][idxO[0]+1][idxO[1]]  [idxO[2]];
-            E  +=  coeff[1][0][1][ipart] * coeff[2][0][0][ipart] * Egrid[0][idxO[0]+1][idxO[1]+1][idxO[2]];
-            E  +=  coeff[1][0][2][ipart] * coeff[2][0][0][ipart] * Egrid[0][idxO[0]+1][idxO[1]+2][idxO[2]];
-            Epart[0][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][1][ipart] + dual[0][ipart]*coeff[0][1][0][ipart] ) * E ;   
-            E  =   coeff[1][0][0][ipart] * coeff[2][0][0][ipart] * Egrid[0][idxO[0]+2][idxO[1]]  [idxO[2]];
-            E  +=  coeff[1][0][1][ipart] * coeff[2][0][0][ipart] * Egrid[0][idxO[0]+2][idxO[1]+1][idxO[2]];
-            E  +=  coeff[1][0][2][ipart] * coeff[2][0][0][ipart] * Egrid[0][idxO[0]+2][idxO[1]+2][idxO[2]];
-            Epart[0][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][2][ipart] + dual[0][ipart]*coeff[0][1][1][ipart] ) * E ;   
-            E  =   coeff[1][0][0][ipart] * coeff[2][0][0][ipart] * Egrid[0][idxO[0]+3][idxO[1]]  [idxO[2]];
-            E  +=  coeff[1][0][1][ipart] * coeff[2][0][0][ipart] * Egrid[0][idxO[0]+3][idxO[1]+1][idxO[2]];
-            E  +=  coeff[1][0][2][ipart] * coeff[2][0][0][ipart] * Egrid[0][idxO[0]+3][idxO[1]+2][idxO[2]];
-            Epart[0][ipart+ivect+istart[0]] +=   dual[0][ipart]*coeff[0][1][2][ipart] * E ;   
-
-            E  =   coeff[1][0][0][ipart] * coeff[2][0][1][ipart] * Egrid[0][idxO[0]][idxO[1]]  [idxO[2]+1];
-            E  +=  coeff[1][0][1][ipart] * coeff[2][0][1][ipart] * Egrid[0][idxO[0]][idxO[1]+1][idxO[2]+1];
-            E  +=  coeff[1][0][2][ipart] * coeff[2][0][1][ipart] * Egrid[0][idxO[0]][idxO[1]+2][idxO[2]+1];
-            Epart[0][ipart+ivect+istart[0]] +=   (1-dual[0][ipart])*coeff[0][1][0][ipart] * E ; 
-            E  =   coeff[1][0][0][ipart] * coeff[2][0][1][ipart] * Egrid[0][idxO[0]+1][idxO[1]]  [idxO[2]+1];
-            E  +=  coeff[1][0][1][ipart] * coeff[2][0][1][ipart] * Egrid[0][idxO[0]+1][idxO[1]+1][idxO[2]+1];
-            E  +=  coeff[1][0][2][ipart] * coeff[2][0][1][ipart] * Egrid[0][idxO[0]+1][idxO[1]+2][idxO[2]+1];
-            Epart[0][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][1][ipart] + dual[0][ipart]*coeff[0][1][0][ipart] ) * E ;   
-            E  =   coeff[1][0][0][ipart] * coeff[2][0][1][ipart] * Egrid[0][idxO[0]+2][idxO[1]]  [idxO[2]+1];
-            E  +=  coeff[1][0][1][ipart] * coeff[2][0][1][ipart] * Egrid[0][idxO[0]+2][idxO[1]+1][idxO[2]+1];
-            E  +=  coeff[1][0][2][ipart] * coeff[2][0][1][ipart] * Egrid[0][idxO[0]+2][idxO[1]+2][idxO[2]+1];
-            Epart[0][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][2][ipart] + dual[0][ipart]*coeff[0][1][1][ipart] ) * E ;   
-            E  =   coeff[1][0][0][ipart] * coeff[2][0][1][ipart] * Egrid[0][idxO[0]+3][idxO[1]]  [idxO[2]+1];
-            E  +=  coeff[1][0][1][ipart] * coeff[2][0][1][ipart] * Egrid[0][idxO[0]+3][idxO[1]+1][idxO[2]+1];
-            E  +=  coeff[1][0][2][ipart] * coeff[2][0][1][ipart] * Egrid[0][idxO[0]+3][idxO[1]+2][idxO[2]+1];
-            Epart[0][ipart+ivect+istart[0]] +=   dual[0][ipart]*coeff[0][1][2][ipart] * E ;   
-
-            E  =   coeff[1][0][0][ipart] * coeff[2][0][2][ipart] * Egrid[0][idxO[0]][idxO[1]]  [idxO[2]+2];
-            E  +=  coeff[1][0][1][ipart] * coeff[2][0][2][ipart] * Egrid[0][idxO[0]][idxO[1]+1][idxO[2]+2];
-            E  +=  coeff[1][0][2][ipart] * coeff[2][0][2][ipart] * Egrid[0][idxO[0]][idxO[1]+2][idxO[2]+2];
-            Epart[0][ipart+ivect+istart[0]] +=   (1-dual[0][ipart])*coeff[0][1][0][ipart] * E ; 
-            E  =   coeff[1][0][0][ipart] * coeff[2][0][2][ipart] * Egrid[0][idxO[0]+1][idxO[1]]  [idxO[2]+2];
-            E  +=  coeff[1][0][1][ipart] * coeff[2][0][2][ipart] * Egrid[0][idxO[0]+1][idxO[1]+1][idxO[2]+2];
-            E  +=  coeff[1][0][2][ipart] * coeff[2][0][2][ipart] * Egrid[0][idxO[0]+1][idxO[1]+2][idxO[2]+2];
-            Epart[0][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][1][ipart] + dual[0][ipart]*coeff[0][1][0][ipart] ) * E ;   
-            E  =   coeff[1][0][0][ipart] * coeff[2][0][2][ipart] * Egrid[0][idxO[0]+2][idxO[1]]  [idxO[2]+2];
-            E  +=  coeff[1][0][1][ipart] * coeff[2][0][2][ipart] * Egrid[0][idxO[0]+2][idxO[1]+1][idxO[2]+2];
-            E  +=  coeff[1][0][2][ipart] * coeff[2][0][2][ipart] * Egrid[0][idxO[0]+2][idxO[1]+2][idxO[2]+2];
-            Epart[0][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][2][ipart] + dual[0][ipart]*coeff[0][1][1][ipart] ) * E ;   
-            E  =   coeff[1][0][0][ipart] * coeff[2][0][2][ipart] * Egrid[0][idxO[0]+3][idxO[1]]  [idxO[2]+2];
-            E  +=  coeff[1][0][1][ipart] * coeff[2][0][2][ipart] * Egrid[0][idxO[0]+3][idxO[1]+1][idxO[2]+2];
-            E  +=  coeff[1][0][2][ipart] * coeff[2][0][2][ipart] * Egrid[0][idxO[0]+3][idxO[1]+2][idxO[2]+2];
-            Epart[0][ipart+ivect+istart[0]] +=   dual[0][ipart]*coeff[0][1][2][ipart] * E ;   
+            double interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    for (int kloc=-1 ; kloc<2 ; kloc++) {
+                        interp_res += *(coeffxd+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) *
+                            ( (1-dual[0][ipart])*(*Ex3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc) + dual[0][ipart]*(*Ex3D)(idxO[0]+2+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc ) );
+                    }
+                }
+            }
+            Epart[0][ipart+ivect+istart[0]] = interp_res;
 
 
             //Ey(primal, dual, primal)
-            E =   coeff[1][1][0][ipart] * coeff[2][0][0][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]][idxO[1]  ][idxO[2]]  + dual[1][ipart]*Egrid[1][idxO[0]][idxO[1]+1][idxO[2]] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][0][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]][idxO[1]+1][idxO[2]]  + dual[1][ipart]*Egrid[1][idxO[0]][idxO[1]+2][idxO[2]] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][0][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]][idxO[1]+2][idxO[2]]  + dual[1][ipart]*Egrid[1][idxO[0]][idxO[1]+3][idxO[2]] ) ;
-            Epart[1][ipart+ivect+istart[0]] =   coeff[0][0][0][ipart] * E;
-            E =   coeff[1][1][0][ipart] * coeff[2][0][0][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]+1][idxO[1]  ][idxO[2]]  + dual[1][ipart]*Egrid[1][idxO[0]+1][idxO[1]+1][idxO[2]] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][0][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]+1][idxO[1]+1][idxO[2]]  + dual[1][ipart]*Egrid[1][idxO[0]+1][idxO[1]+2][idxO[2]] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][0][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]+1][idxO[1]+2][idxO[2]]  + dual[1][ipart]*Egrid[1][idxO[0]+1][idxO[1]+3][idxO[2]] ) ;
-            Epart[1][ipart+ivect+istart[0]] +=   coeff[0][0][1][ipart] * E;
-            E =   coeff[1][1][0][ipart] * coeff[2][0][0][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]+2][idxO[1]  ][idxO[2]]  + dual[1][ipart]*Egrid[1][idxO[0]+2][idxO[1]+1][idxO[2]] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][0][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]+2][idxO[1]+1][idxO[2]]  + dual[1][ipart]*Egrid[1][idxO[0]+2][idxO[1]+2][idxO[2]] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][0][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]+2][idxO[1]+2][idxO[2]]  + dual[1][ipart]*Egrid[1][idxO[0]+2][idxO[1]+3][idxO[2]] ) ;
-            Epart[1][ipart+ivect+istart[0]] +=   coeff[0][0][2][ipart] * E;
-
-            E =   coeff[1][1][0][ipart] * coeff[2][0][1][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]][idxO[1]  ][idxO[2]+1]  + dual[1][ipart]*Egrid[1][idxO[0]][idxO[1]+1][idxO[2]+1] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][1][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]][idxO[1]+1][idxO[2]+1]  + dual[1][ipart]*Egrid[1][idxO[0]][idxO[1]+2][idxO[2]+1] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][1][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]][idxO[1]+2][idxO[2]+1]  + dual[1][ipart]*Egrid[1][idxO[0]][idxO[1]+3][idxO[2]+1] ) ;
-            Epart[1][ipart+ivect+istart[0]] +=   coeff[0][0][0][ipart] * E;
-            E =   coeff[1][1][0][ipart] * coeff[2][0][1][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]+1][idxO[1]  ][idxO[2]+1]  + dual[1][ipart]*Egrid[1][idxO[0]+1][idxO[1]+1][idxO[2]+1] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][1][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]+1][idxO[1]+1][idxO[2]+1]  + dual[1][ipart]*Egrid[1][idxO[0]+1][idxO[1]+2][idxO[2]+1] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][1][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]+1][idxO[1]+2][idxO[2]+1]  + dual[1][ipart]*Egrid[1][idxO[0]+1][idxO[1]+3][idxO[2]+1] ) ;
-            Epart[1][ipart+ivect+istart[0]] +=   coeff[0][0][1][ipart] * E;
-            E =   coeff[1][1][0][ipart] * coeff[2][0][1][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]+2][idxO[1]  ][idxO[2]+1]  + dual[1][ipart]*Egrid[1][idxO[0]+2][idxO[1]+1][idxO[2]+1] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][1][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]+2][idxO[1]+1][idxO[2]+1]  + dual[1][ipart]*Egrid[1][idxO[0]+2][idxO[1]+2][idxO[2]+1] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][1][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]+2][idxO[1]+2][idxO[2]+1]  + dual[1][ipart]*Egrid[1][idxO[0]+2][idxO[1]+3][idxO[2]+1] ) ;
-            Epart[1][ipart+ivect+istart[0]] +=   coeff[0][0][2][ipart] * E;
-
-            E =   coeff[1][1][0][ipart] * coeff[2][0][2][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]][idxO[1]  ][idxO[2]+1]  + dual[1][ipart]*Egrid[1][idxO[0]][idxO[1]+1][idxO[2]+2] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][2][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]][idxO[1]+1][idxO[2]+1]  + dual[1][ipart]*Egrid[1][idxO[0]][idxO[1]+2][idxO[2]+2] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][2][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]][idxO[1]+2][idxO[2]+1]  + dual[1][ipart]*Egrid[1][idxO[0]][idxO[1]+3][idxO[2]+2] ) ;
-            Epart[1][ipart+ivect+istart[0]] +=   coeff[0][0][0][ipart] * E;
-            E =   coeff[1][1][0][ipart] * coeff[2][0][2][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]+1][idxO[1]  ][idxO[2]+1]  + dual[1][ipart]*Egrid[1][idxO[0]+1][idxO[1]+1][idxO[2]+2] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][2][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]+1][idxO[1]+1][idxO[2]+1]  + dual[1][ipart]*Egrid[1][idxO[0]+1][idxO[1]+2][idxO[2]+2] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][2][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]+1][idxO[1]+2][idxO[2]+1]  + dual[1][ipart]*Egrid[1][idxO[0]+1][idxO[1]+3][idxO[2]+2] ) ;
-            Epart[1][ipart+ivect+istart[0]] +=   coeff[0][0][1][ipart] * E;
-            E =   coeff[1][1][0][ipart] * coeff[2][0][2][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]+2][idxO[1]  ][idxO[2]+1]  + dual[1][ipart]*Egrid[1][idxO[0]+2][idxO[1]+1][idxO[2]+2] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][2][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]+2][idxO[1]+1][idxO[2]+1]  + dual[1][ipart]*Egrid[1][idxO[0]+2][idxO[1]+2][idxO[2]+2] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][2][ipart] * ( (1-dual[1][ipart])*Egrid[1][idxO[0]+2][idxO[1]+2][idxO[2]+1]  + dual[1][ipart]*Egrid[1][idxO[0]+2][idxO[1]+3][idxO[2]+2] ) ;
-            Epart[1][ipart+ivect+istart[0]] +=   coeff[0][0][2][ipart] * E;
-
+            interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    for (int kloc=-1 ; kloc<2 ; kloc++) {
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) *
+                            ( (1-dual[1][ipart])*(*Ey3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc) + dual[1][ipart]*(*Ey3D)(idxO[0]+1+iloc,idxO[1]+2+jloc,idxO[2]+1+kloc ) );
+                    }
+                }
+            }
+            Epart[1][ipart+ivect+istart[0]] = interp_res;
 
 
             //Ez(primal, primal, dual)
-            E =  coeff[1][0][0][ipart] * coeff[2][1][0][ipart] * ( (1-dual[2][ipart])*Egrid[2][idxO[0]][idxO[1]  ][idxO[2]] + dual[2][ipart]*Egrid[2][idxO[0]][idxO[1]  ][idxO[2]+1] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][0][ipart] *( (1-dual[2][ipart])*Egrid[2][idxO[0]][idxO[1]+1][idxO[2]] + dual[2][ipart]*Egrid[2][idxO[0]][idxO[1]+1][idxO[2]+1] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][0][ipart] *( (1-dual[2][ipart])*Egrid[2][idxO[0]][idxO[1]+2][idxO[2]] + dual[2][ipart]*Egrid[2][idxO[0]][idxO[1]+2][idxO[2]+1] ); 
-            Epart[2][ipart+ivect+istart[0]] =   coeff[0][0][0][ipart] * E;
-            E =  coeff[1][0][0][ipart] * coeff[2][1][0][ipart] * ( (1-dual[2][ipart])*Egrid[2][idxO[0]+1][idxO[1]  ][idxO[2]] + dual[2][ipart]*Egrid[2][idxO[0]+1][idxO[1]  ][idxO[2]+1] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][0][ipart] *( (1-dual[2][ipart])*Egrid[2][idxO[0]+1][idxO[1]+1][idxO[2]] + dual[2][ipart]*Egrid[2][idxO[0]+1][idxO[1]+1][idxO[2]+1] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][0][ipart] *( (1-dual[2][ipart])*Egrid[2][idxO[0]+1][idxO[1]+2][idxO[2]] + dual[2][ipart]*Egrid[2][idxO[0]+1][idxO[1]+2][idxO[2]+1] );
-            Epart[2][ipart+ivect+istart[0]] +=   coeff[0][0][1][ipart] * E;
-            E =  coeff[1][0][0][ipart] * coeff[2][1][0][ipart] * ( (1-dual[2][ipart])*Egrid[2][idxO[0]+2][idxO[1]  ][idxO[2]] + dual[2][ipart]*Egrid[2][idxO[0]+2][idxO[1]  ][idxO[2]+1] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][0][ipart] *( (1-dual[2][ipart])*Egrid[2][idxO[0]+2][idxO[1]+1][idxO[2]] + dual[2][ipart]*Egrid[2][idxO[0]+2][idxO[1]+1][idxO[2]+1] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][0][ipart] *( (1-dual[2][ipart])*Egrid[2][idxO[0]+2][idxO[1]+2][idxO[2]] + dual[2][ipart]*Egrid[2][idxO[0]+2][idxO[1]+2][idxO[2]+1] );
-            Epart[2][ipart+ivect+istart[0]] +=   coeff[0][0][2][ipart] * E;
+            interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    for (int kloc=-1 ; kloc<2 ; kloc++) {
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) *
+                            ( (1-dual[2][ipart])*(*Ez3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc) + dual[2][ipart]*(*Ez3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+2+kloc ) );
+                    }
+                }
+            }
+            Epart[2][ipart+ivect+istart[0]] = interp_res;
 
-            E =  coeff[1][0][0][ipart] * coeff[2][1][1][ipart] * ( (1-dual[2][ipart])*Egrid[2][idxO[0]][idxO[1]  ][idxO[2]+1] + dual[2][ipart]*Egrid[2][idxO[0]][idxO[1]  ][idxO[2]+2] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][1][ipart] *( (1-dual[2][ipart])*Egrid[2][idxO[0]][idxO[1]+1][idxO[2]+1] + dual[2][ipart]*Egrid[2][idxO[0]][idxO[1]+1][idxO[2]+2] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][1][ipart] *( (1-dual[2][ipart])*Egrid[2][idxO[0]][idxO[1]+2][idxO[2]+1] + dual[2][ipart]*Egrid[2][idxO[0]][idxO[1]+2][idxO[2]+2] ); 
-            Epart[2][ipart+ivect+istart[0]] +=   coeff[0][0][0][ipart] * E;
-            E =  coeff[1][0][0][ipart] * coeff[2][1][1][ipart] * ( (1-dual[2][ipart])*Egrid[2][idxO[0]+1][idxO[1]  ][idxO[2]+1] + dual[2][ipart]*Egrid[2][idxO[0]+1][idxO[1]  ][idxO[2]+2] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][1][ipart] *( (1-dual[2][ipart])*Egrid[2][idxO[0]+1][idxO[1]+1][idxO[2]+1] + dual[2][ipart]*Egrid[2][idxO[0]+1][idxO[1]+1][idxO[2]+2] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][1][ipart] *( (1-dual[2][ipart])*Egrid[2][idxO[0]+1][idxO[1]+2][idxO[2]+1] + dual[2][ipart]*Egrid[2][idxO[0]+1][idxO[1]+2][idxO[2]+2] );
-            Epart[2][ipart+ivect+istart[0]] +=   coeff[0][0][1][ipart] * E;
-            E =  coeff[1][0][0][ipart] * coeff[2][1][1][ipart] * ( (1-dual[2][ipart])*Egrid[2][idxO[0]+2][idxO[1]  ][idxO[2]+1] + dual[2][ipart]*Egrid[2][idxO[0]+2][idxO[1]  ][idxO[2]+2] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][1][ipart] *( (1-dual[2][ipart])*Egrid[2][idxO[0]+2][idxO[1]+1][idxO[2]+1] + dual[2][ipart]*Egrid[2][idxO[0]+2][idxO[1]+1][idxO[2]+2] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][1][ipart] *( (1-dual[2][ipart])*Egrid[2][idxO[0]+2][idxO[1]+2][idxO[2]+1] + dual[2][ipart]*Egrid[2][idxO[0]+2][idxO[1]+2][idxO[2]+2] );
-            Epart[2][ipart+ivect+istart[0]] +=   coeff[0][0][2][ipart] * E;
-
-            E =  coeff[1][0][0][ipart] * coeff[2][1][2][ipart] * ( (1-dual[2][ipart])*Egrid[2][idxO[0]][idxO[1]  ][idxO[2]+2] + dual[2][ipart]*Egrid[2][idxO[0]][idxO[1]  ][idxO[2]+3] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][2][ipart] *( (1-dual[2][ipart])*Egrid[2][idxO[0]][idxO[1]+1][idxO[2]+2] + dual[2][ipart]*Egrid[2][idxO[0]][idxO[1]+1][idxO[2]+3] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][2][ipart] *( (1-dual[2][ipart])*Egrid[2][idxO[0]][idxO[1]+2][idxO[2]+2] + dual[2][ipart]*Egrid[2][idxO[0]][idxO[1]+2][idxO[2]+3] ); 
-            Epart[2][ipart+ivect+istart[0]] +=   coeff[0][0][0][ipart] * E;
-            E =  coeff[1][0][0][ipart] * coeff[2][1][2][ipart] * ( (1-dual[2][ipart])*Egrid[2][idxO[0]+1][idxO[1]  ][idxO[2]+2] + dual[2][ipart]*Egrid[2][idxO[0]+1][idxO[1]  ][idxO[2]+3] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][2][ipart] *( (1-dual[2][ipart])*Egrid[2][idxO[0]+1][idxO[1]+1][idxO[2]+2] + dual[2][ipart]*Egrid[2][idxO[0]+1][idxO[1]+1][idxO[2]+3] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][2][ipart] *( (1-dual[2][ipart])*Egrid[2][idxO[0]+1][idxO[1]+2][idxO[2]+2] + dual[2][ipart]*Egrid[2][idxO[0]+1][idxO[1]+2][idxO[2]+3] );
-            Epart[2][ipart+ivect+istart[0]] +=   coeff[0][0][1][ipart] * E;
-            E =  coeff[1][0][0][ipart] * coeff[2][1][2][ipart] * ( (1-dual[2][ipart])*Egrid[2][idxO[0]+2][idxO[1]  ][idxO[2]+2] + dual[2][ipart]*Egrid[2][idxO[0]+2][idxO[1]  ][idxO[2]+3] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][2][ipart] *( (1-dual[2][ipart])*Egrid[2][idxO[0]+2][idxO[1]+1][idxO[2]+2] + dual[2][ipart]*Egrid[2][idxO[0]+2][idxO[1]+1][idxO[2]+3] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][2][ipart] *( (1-dual[2][ipart])*Egrid[2][idxO[0]+2][idxO[1]+2][idxO[2]+2] + dual[2][ipart]*Egrid[2][idxO[0]+2][idxO[1]+2][idxO[2]+3] );
-            Epart[2][ipart+ivect+istart[0]] +=   coeff[0][0][2][ipart] * E;
 
             //Bx(primal, dual , dual )
-            E =   coeff[1][1][0][ipart] * coeff[2][1][0][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]  ][idxO[2]]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+1][idxO[2]] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][1][0][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]+1][idxO[2]]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+2][idxO[2]] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][1][0][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]+2][idxO[2]]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+3][idxO[2]] ) ;
-            Bpart[0][ipart+ivect+istart[0]] =   coeff[0][0][0][ipart] * E;
-            E =   coeff[1][1][0][ipart] * coeff[2][1][0][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]  ][idxO[2]]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+1][idxO[2]] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][1][0][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]+1][idxO[2]]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+2][idxO[2]] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][1][0][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]+2][idxO[2]]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+3][idxO[2]] ) ;
-            Bpart[0][ipart+ivect+istart[0]] +=   coeff[0][0][1][ipart] * E ;
-            E =   coeff[1][1][0][ipart] * coeff[2][1][0][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]  ][idxO[2]]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+1][idxO[2]] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][1][0][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]+1][idxO[2]]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+2][idxO[2]] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][1][0][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]+2][idxO[2]]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+3][idxO[2]] ) ;
-            Bpart[0][ipart+ivect+istart[0]] +=   coeff[0][0][2][ipart] * E ;
-            E =   coeff[1][1][0][ipart] * coeff[2][1][0][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]  ][idxO[2]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+1][idxO[2]+1] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][1][0][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]+1][idxO[2]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+2][idxO[2]+1] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][1][0][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]+2][idxO[2]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+3][idxO[2]+1] ) ;
-            Bpart[0][ipart+ivect+istart[0]] +=   coeff[0][0][0][ipart] * E;
-            E =   coeff[1][1][0][ipart] * coeff[2][1][0][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]  ][idxO[2]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+1][idxO[2]+1] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][1][0][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]+1][idxO[2]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+2][idxO[2]+1] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][1][0][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]+2][idxO[2]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+3][idxO[2]+1] ) ;
-            Bpart[0][ipart+ivect+istart[0]] +=   coeff[0][0][1][ipart] * E ;
-            E =   coeff[1][1][0][ipart] * coeff[2][1][0][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]  ][idxO[2]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+1][idxO[2]+1] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][1][0][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]+1][idxO[2]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+2][idxO[2]+1] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][1][0][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]+2][idxO[2]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+3][idxO[2]+1] ) ;
-            Bpart[0][ipart+ivect+istart[0]] +=   coeff[0][0][2][ipart] * E ;
-
-            E =   coeff[1][1][0][ipart] * coeff[2][1][1][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]  ][idxO[2]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+1][idxO[2]+1] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][1][1][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]+1][idxO[2]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+2][idxO[2]+1] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][1][1][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]+2][idxO[2]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+3][idxO[2]+1] ) ;
-            Bpart[0][ipart+ivect+istart[0]] +=   coeff[0][0][0][ipart] * E;
-            E =   coeff[1][1][0][ipart] * coeff[2][1][1][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]  ][idxO[2]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+1][idxO[2]+1] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][1][1][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]+1][idxO[2]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+2][idxO[2]+1] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][1][1][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]+2][idxO[2]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+3][idxO[2]+1] ) ;
-            Bpart[0][ipart+ivect+istart[0]] +=   coeff[0][0][1][ipart] * E ;
-            E =   coeff[1][1][0][ipart] * coeff[2][1][1][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]  ][idxO[2]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+1][idxO[2]+1] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][1][1][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]+1][idxO[2]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+2][idxO[2]+1] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][1][1][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]+2][idxO[2]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+3][idxO[2]+1] ) ;
-            Bpart[0][ipart+ivect+istart[0]] +=   coeff[0][0][2][ipart] * E ;
-            E =   coeff[1][1][0][ipart] * coeff[2][1][1][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]  ][idxO[2]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+1][idxO[2]+2] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][1][1][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]+1][idxO[2]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+2][idxO[2]+2] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][1][1][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]+2][idxO[2]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+3][idxO[2]+2] ) ;
-            Bpart[0][ipart+ivect+istart[0]] +=   coeff[0][0][0][ipart] * E;
-            E =   coeff[1][1][0][ipart] * coeff[2][1][1][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]  ][idxO[2]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+1][idxO[2]+2] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][1][1][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]+1][idxO[2]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+2][idxO[2]+2] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][1][1][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]+2][idxO[2]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+3][idxO[2]+2] ) ;
-            Bpart[0][ipart+ivect+istart[0]] +=   coeff[0][0][1][ipart] * E ;
-            E =   coeff[1][1][0][ipart] * coeff[2][1][1][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]  ][idxO[2]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+1][idxO[2]+2] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][1][1][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]+1][idxO[2]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+2][idxO[2]+2] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][1][1][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]+2][idxO[2]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+3][idxO[2]+2] ) ;
-            Bpart[0][ipart+ivect+istart[0]] +=   coeff[0][0][2][ipart] * E ;
-
-            E =   coeff[1][1][0][ipart] * coeff[2][1][2][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]  ][idxO[2]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+1][idxO[2]+2] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][1][2][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]+1][idxO[2]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+2][idxO[2]+2] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][1][2][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]+2][idxO[2]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+3][idxO[2]+2] ) ;
-            Bpart[0][ipart+ivect+istart[0]] +=   coeff[0][0][0][ipart] * E;
-            E =   coeff[1][1][0][ipart] * coeff[2][1][2][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]  ][idxO[2]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+1][idxO[2]+2] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][1][2][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]+1][idxO[2]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+2][idxO[2]+2] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][1][2][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]+2][idxO[2]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+3][idxO[2]+2] ) ;
-            Bpart[0][ipart+ivect+istart[0]] +=   coeff[0][0][1][ipart] * E ;
-            E =   coeff[1][1][0][ipart] * coeff[2][1][2][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]  ][idxO[2]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+1][idxO[2]+2] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][1][2][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]+1][idxO[2]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+2][idxO[2]+2] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][1][2][ipart] * (1-dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]+2][idxO[2]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+3][idxO[2]+2] ) ;
-            Bpart[0][ipart+ivect+istart[0]] +=   coeff[0][0][2][ipart] * E ;
-            E =   coeff[1][1][0][ipart] * coeff[2][1][2][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]  ][idxO[2]+3]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+1][idxO[2]+3] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][1][2][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]+1][idxO[2]+3]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+2][idxO[2]+3] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][1][2][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]+2][idxO[2]+3]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+3][idxO[2]+3] ) ;
-            Bpart[0][ipart+ivect+istart[0]] +=   coeff[0][0][0][ipart] * E;
-            E =   coeff[1][1][0][ipart] * coeff[2][1][2][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]  ][idxO[2]+3]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+1][idxO[2]+3] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][1][2][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]+1][idxO[2]+3]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+2][idxO[2]+3] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][1][2][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]+2][idxO[2]+3]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+3][idxO[2]+3] ) ;
-            Bpart[0][ipart+ivect+istart[0]] +=   coeff[0][0][1][ipart] * E ;
-            E =   coeff[1][1][0][ipart] * coeff[2][1][2][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]  ][idxO[2]+3]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+1][idxO[2]+3] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][1][2][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]+1][idxO[2]+3]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+2][idxO[2]+3] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][1][2][ipart] * (dual[2][ipart]) * ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]+2][idxO[2]+3]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+3][idxO[2]+3] ) ;
-            Bpart[0][ipart+ivect+istart[0]] +=   coeff[0][0][2][ipart] * E ;
-
+            interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    for (int kloc=-1 ; kloc<2 ; kloc++) {
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) * 
+                            ( (1-dual[2][ipart]) * ( (1-dual[1][ipart])*(*Bx3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc) + dual[1][ipart]*(*Bx3D)(idxO[0]+1+iloc,idxO[1]+2+jloc,idxO[2]+1+kloc ) )
+                            +    dual[2][ipart]  * ( (1-dual[1][ipart])*(*Bx3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+2+kloc) + dual[1][ipart]*(*Bx3D)(idxO[0]+1+iloc,idxO[1]+2+jloc,idxO[2]+2+kloc ) ) );
+                    }
+                }
+            }
+            Bpart[0][ipart+ivect+istart[0]] = interp_res;
 
             //By(dual, primal, dual )
-            E =  coeff[1][0][0][ipart]  * coeff[2][1][0][ipart] * ( (1-dual[2][ipart]) * Bgrid[1][idxO[0]][idxO[1]+0][idxO[2]] + dual[2][ipart] * Bgrid[1][idxO[0]][idxO[1]+0][idxO[2]+1] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][0][ipart] * ( (1-dual[2][ipart]) * Bgrid[1][idxO[0]][idxO[1]+1][idxO[2]] + dual[2][ipart] * Bgrid[1][idxO[0]][idxO[1]+1][idxO[2]+1] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][0][ipart] * ( (1-dual[2][ipart]) * Bgrid[1][idxO[0]][idxO[1]+2][idxO[2]] + dual[2][ipart] * Bgrid[1][idxO[0]][idxO[1]+2][idxO[2]+1] );
-            Bpart[1][ipart+ivect+istart[0]] =   (1-dual[0][ipart])*coeff[0][1][0][ipart] * E;
-            E =  coeff[1][0][0][ipart]  * coeff[2][1][0][ipart] * ( (1-dual[2][ipart]) * Bgrid[1][idxO[0]+1][idxO[1]+0][idxO[2]] + dual[2][ipart] * Bgrid[1][idxO[0]+1][idxO[1]+0][idxO[2]+1] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][0][ipart] * ( (1-dual[2][ipart]) * Bgrid[1][idxO[0]+1][idxO[1]+1][idxO[2]] + dual[2][ipart] * Bgrid[1][idxO[0]+1][idxO[1]+1][idxO[2]+1] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][0][ipart] * ( (1-dual[2][ipart]) * Bgrid[1][idxO[0]+1][idxO[1]+2][idxO[2]] + dual[2][ipart] * Bgrid[1][idxO[0]+1][idxO[1]+2][idxO[2]+1] );
-            Bpart[1][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][1][ipart] + dual[0][ipart]*coeff[0][1][0][ipart] ) * E ;   
-            E =  coeff[1][0][0][ipart]  * coeff[2][1][0][ipart] * ( (1-dual[2][ipart]) *  Bgrid[1][idxO[0]+2][idxO[1]+0][idxO[2]] + dual[2][ipart] * Bgrid[1][idxO[0]+2][idxO[1]+0][idxO[2]+1] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][0][ipart] * ( (1-dual[2][ipart]) *  Bgrid[1][idxO[0]+2][idxO[1]+1][idxO[2]] + dual[2][ipart] * Bgrid[1][idxO[0]+2][idxO[1]+1][idxO[2]+1] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][0][ipart] * ( (1-dual[2][ipart]) *  Bgrid[1][idxO[0]+2][idxO[1]+2][idxO[2]] + dual[2][ipart] * Bgrid[1][idxO[0]+2][idxO[1]+2][idxO[2]+1] );
-            Bpart[1][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][2][ipart] + dual[0][ipart]*coeff[0][1][1][ipart] ) * E ;   
-            E =  coeff[1][0][0][ipart]  * coeff[2][1][0][ipart] * ( (1-dual[2][ipart]) *  Bgrid[1][idxO[0]+3][idxO[1]+0][idxO[2]] + dual[2][ipart] * Bgrid[1][idxO[0]+3][idxO[1]+0][idxO[2]+1] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][0][ipart] * ( (1-dual[2][ipart]) *  Bgrid[1][idxO[0]+3][idxO[1]+1][idxO[2]] + dual[2][ipart] * Bgrid[1][idxO[0]+3][idxO[1]+1][idxO[2]+1] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][0][ipart] * ( (1-dual[2][ipart]) *  Bgrid[1][idxO[0]+3][idxO[1]+2][idxO[2]] + dual[2][ipart] * Bgrid[1][idxO[0]+3][idxO[1]+2][idxO[2]+1] );
-            Bpart[1][ipart+ivect+istart[0]] +=  dual[0][ipart]*coeff[0][1][2][ipart]  * E ;   
-
-            E =  coeff[1][0][0][ipart]  * coeff[2][1][1][ipart] * ( (1-dual[2][ipart]) * Bgrid[1][idxO[0]][idxO[1]+0][idxO[2]+1] + dual[2][ipart] * Bgrid[1][idxO[0]][idxO[1]+0][idxO[2]+2] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][1][ipart] * ( (1-dual[2][ipart]) * Bgrid[1][idxO[0]][idxO[1]+1][idxO[2]+1] + dual[2][ipart] * Bgrid[1][idxO[0]][idxO[1]+1][idxO[2]+2] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][1][ipart] * ( (1-dual[2][ipart]) * Bgrid[1][idxO[0]][idxO[1]+2][idxO[2]+1] + dual[2][ipart] * Bgrid[1][idxO[0]][idxO[1]+2][idxO[2]+2] );
-            Bpart[1][ipart+ivect+istart[0]] +=   (1-dual[0][ipart])*coeff[0][1][0][ipart] * E;
-            E =  coeff[1][0][0][ipart]  * coeff[2][1][1][ipart] * ( (1-dual[2][ipart]) * Bgrid[1][idxO[0]+1][idxO[1]+0][idxO[2]+1] + dual[2][ipart] * Bgrid[1][idxO[0]+1][idxO[1]+0][idxO[2]+2] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][1][ipart] * ( (1-dual[2][ipart]) * Bgrid[1][idxO[0]+1][idxO[1]+1][idxO[2]+1] + dual[2][ipart] * Bgrid[1][idxO[0]+1][idxO[1]+1][idxO[2]+2] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][1][ipart] * ( (1-dual[2][ipart]) * Bgrid[1][idxO[0]+1][idxO[1]+2][idxO[2]+1] + dual[2][ipart] * Bgrid[1][idxO[0]+1][idxO[1]+2][idxO[2]+2] );
-            Bpart[1][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][1][ipart] + dual[0][ipart]*coeff[0][1][0][ipart] ) * E ;   
-            E =  coeff[1][0][0][ipart]  * coeff[2][1][1][ipart] * ( (1-dual[2][ipart]) *  Bgrid[1][idxO[0]+2][idxO[1]+0][idxO[2]+1] + dual[2][ipart] * Bgrid[1][idxO[0]+2][idxO[1]+0][idxO[2]+2] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][1][ipart] * ( (1-dual[2][ipart]) *  Bgrid[1][idxO[0]+2][idxO[1]+1][idxO[2]+1] + dual[2][ipart] * Bgrid[1][idxO[0]+2][idxO[1]+1][idxO[2]+2] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][1][ipart] * ( (1-dual[2][ipart]) *  Bgrid[1][idxO[0]+2][idxO[1]+2][idxO[2]+1] + dual[2][ipart] * Bgrid[1][idxO[0]+2][idxO[1]+2][idxO[2]+2] );
-            Bpart[1][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][2][ipart] + dual[0][ipart]*coeff[0][1][1][ipart] ) * E ;   
-            E =  coeff[1][0][0][ipart]  * coeff[2][1][1][ipart] * ( (1-dual[2][ipart]) *  Bgrid[1][idxO[0]+3][idxO[1]+0][idxO[2]+1] + dual[2][ipart] * Bgrid[1][idxO[0]+3][idxO[1]+0][idxO[2]+2] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][1][ipart] * ( (1-dual[2][ipart]) *  Bgrid[1][idxO[0]+3][idxO[1]+1][idxO[2]+1] + dual[2][ipart] * Bgrid[1][idxO[0]+3][idxO[1]+1][idxO[2]+2] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][1][ipart] * ( (1-dual[2][ipart]) *  Bgrid[1][idxO[0]+3][idxO[1]+2][idxO[2]+1] + dual[2][ipart] * Bgrid[1][idxO[0]+3][idxO[1]+2][idxO[2]+2] );
-            Bpart[1][ipart+ivect+istart[0]] +=  dual[0][ipart]*coeff[0][1][2][ipart]  * E ;   
-
-            E =  coeff[1][0][0][ipart]  * coeff[2][1][2][ipart] * ( (1-dual[2][ipart]) * Bgrid[1][idxO[0]][idxO[1]+0][idxO[2]+2] + dual[2][ipart] * Bgrid[1][idxO[0]][idxO[1]+0][idxO[2]+3] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][2][ipart] * ( (1-dual[2][ipart]) * Bgrid[1][idxO[0]][idxO[1]+1][idxO[2]+2] + dual[2][ipart] * Bgrid[1][idxO[0]][idxO[1]+1][idxO[2]+3] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][2][ipart] * ( (1-dual[2][ipart]) * Bgrid[1][idxO[0]][idxO[1]+2][idxO[2]+2] + dual[2][ipart] * Bgrid[1][idxO[0]][idxO[1]+2][idxO[2]+3] );
-            Bpart[1][ipart+ivect+istart[0]] +=   (1-dual[0][ipart])*coeff[0][1][0][ipart] * E;
-            E =  coeff[1][0][0][ipart]  * coeff[2][1][2][ipart] * ( (1-dual[2][ipart]) * Bgrid[1][idxO[0]+1][idxO[1]+0][idxO[2]+2] + dual[2][ipart] * Bgrid[1][idxO[0]+1][idxO[1]+0][idxO[2]+3] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][2][ipart] * ( (1-dual[2][ipart]) * Bgrid[1][idxO[0]+1][idxO[1]+1][idxO[2]+2] + dual[2][ipart] * Bgrid[1][idxO[0]+1][idxO[1]+1][idxO[2]+3] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][2][ipart] * ( (1-dual[2][ipart]) * Bgrid[1][idxO[0]+1][idxO[1]+2][idxO[2]+2] + dual[2][ipart] * Bgrid[1][idxO[0]+1][idxO[1]+2][idxO[2]+3] );
-            Bpart[1][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][1][ipart] + dual[0][ipart]*coeff[0][1][0][ipart] ) * E ;   
-            E =  coeff[1][0][0][ipart]  * coeff[2][1][2][ipart] * ( (1-dual[2][ipart]) *  Bgrid[1][idxO[0]+2][idxO[1]+0][idxO[2]+2] + dual[2][ipart] * Bgrid[1][idxO[0]+2][idxO[1]+0][idxO[2]+3] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][2][ipart] * ( (1-dual[2][ipart]) *  Bgrid[1][idxO[0]+2][idxO[1]+1][idxO[2]+2] + dual[2][ipart] * Bgrid[1][idxO[0]+2][idxO[1]+1][idxO[2]+3] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][2][ipart] * ( (1-dual[2][ipart]) *  Bgrid[1][idxO[0]+2][idxO[1]+2][idxO[2]+2] + dual[2][ipart] * Bgrid[1][idxO[0]+2][idxO[1]+2][idxO[2]+3] );
-            Bpart[1][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][2][ipart] + dual[0][ipart]*coeff[0][1][1][ipart] ) * E ;   
-            E =  coeff[1][0][0][ipart]  * coeff[2][1][2][ipart] * ( (1-dual[2][ipart]) *  Bgrid[1][idxO[0]+3][idxO[1]+0][idxO[2]+2] + dual[2][ipart] * Bgrid[1][idxO[0]+3][idxO[1]+0][idxO[2]+3] );
-            E +=  coeff[1][0][1][ipart] * coeff[2][1][2][ipart] * ( (1-dual[2][ipart]) *  Bgrid[1][idxO[0]+3][idxO[1]+1][idxO[2]+2] + dual[2][ipart] * Bgrid[1][idxO[0]+3][idxO[1]+1][idxO[2]+3] );
-            E +=  coeff[1][0][2][ipart] * coeff[2][1][2][ipart] * ( (1-dual[2][ipart]) *  Bgrid[1][idxO[0]+3][idxO[1]+2][idxO[2]+2] + dual[2][ipart] * Bgrid[1][idxO[0]+3][idxO[1]+2][idxO[2]+3] );
-            Bpart[1][ipart+ivect+istart[0]] +=  dual[0][ipart]*coeff[0][1][2][ipart]  * E ;   
-
+            interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    for (int kloc=-1 ; kloc<2 ; kloc++) {
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) * 
+                            ( (1-dual[2][ipart]) * ( (1-dual[0][ipart])*(*By3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc) + dual[0][ipart]*(*By3D)(idxO[0]+2+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc ) )
+                            +    dual[2][ipart]  * ( (1-dual[0][ipart])*(*By3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+2+kloc) + dual[0][ipart]*(*By3D)(idxO[0]+2+iloc,idxO[1]+1+jloc,idxO[2]+2+kloc ) ) );
+                    }
+                }
+            }
+            Bpart[1][ipart+ivect+istart[0]] = interp_res;
 
             //Bz(dual, dual, prim )
-            E =  coeff[1][1][0][ipart]  * coeff[2][0][0][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]][idxO[1]  ][idxO[2]] + dual[1][ipart]*Bgrid[2][idxO[0]][idxO[1]+1][idxO[2]] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][0][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]][idxO[1]+1][idxO[2]] + dual[1][ipart]*Bgrid[2][idxO[0]][idxO[1]+2][idxO[2]] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][0][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]][idxO[1]+2][idxO[2]] + dual[1][ipart]*Bgrid[2][idxO[0]][idxO[1]+3][idxO[2]] ) ;
-            Bpart[2][ipart+ivect+istart[0]] =   (1-dual[0][ipart])*coeff[0][1][0][ipart] * E;
-            E =  coeff[1][1][0][ipart]  * coeff[2][0][0][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+1][idxO[1]+0][idxO[2]] + dual[1][ipart]*Bgrid[2][idxO[0]+1][idxO[1]+1][idxO[2]] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][0][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+1][idxO[1]+1][idxO[2]] + dual[1][ipart]*Bgrid[2][idxO[0]+1][idxO[1]+2][idxO[2]] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][0][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+1][idxO[1]+2][idxO[2]] + dual[1][ipart]*Bgrid[2][idxO[0]+1][idxO[1]+3][idxO[2]] ) ;
-            Bpart[2][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][1][ipart] + dual[0][ipart]*coeff[0][1][0][ipart] ) * E ;   
-            E =  coeff[1][1][0][ipart]  * coeff[2][0][0][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+2][idxO[1]  ][idxO[2]] + dual[1][ipart]*Bgrid[2][idxO[0]+2][idxO[1]+1][idxO[2]] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][0][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+2][idxO[1]+1][idxO[2]] + dual[1][ipart]*Bgrid[2][idxO[0]+2][idxO[1]+2][idxO[2]] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][0][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+2][idxO[1]+2][idxO[2]] + dual[1][ipart]*Bgrid[2][idxO[0]+2][idxO[1]+3][idxO[2]] ) ;
-            Bpart[2][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][2][ipart] + dual[0][ipart]*coeff[0][1][1][ipart] ) * E ;   
-            E =  coeff[1][1][0][ipart]  * coeff[2][0][0][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+3][idxO[1]  ][idxO[2]] + dual[1][ipart]*Bgrid[2][idxO[0]+3][idxO[1]+1][idxO[2]] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][0][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+3][idxO[1]+1][idxO[2]] + dual[1][ipart]*Bgrid[2][idxO[0]+3][idxO[1]+2][idxO[2]] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][0][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+3][idxO[1]+2][idxO[2]] + dual[1][ipart]*Bgrid[2][idxO[0]+3][idxO[1]+3][idxO[2]] ) ;
-            Bpart[2][ipart+ivect+istart[0]] +=  dual[0][ipart]*coeff[0][1][2][ipart]  * E ;   
+            interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    for (int kloc=-1 ; kloc<2 ; kloc++) {
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) * 
+                            ( (1-dual[1][ipart]) * ( (1-dual[0][ipart])*(*Bz3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc) + dual[0][ipart]*(*Bz3D)(idxO[0]+2+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc ) )
+                            +    dual[1][ipart]  * ( (1-dual[0][ipart])*(*Bz3D)(idxO[0]+1+iloc,idxO[1]+2+jloc,idxO[2]+1+kloc) + dual[0][ipart]*(*Bz3D)(idxO[0]+2+iloc,idxO[1]+2+jloc,idxO[2]+1+kloc ) ) );
+                    }
+                }
+            }
+            Bpart[2][ipart+ivect+istart[0]] = interp_res;
 
-            E =  coeff[1][1][0][ipart]  * coeff[2][0][1][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]][idxO[1]  ][idxO[2]+1] + dual[1][ipart]*Bgrid[2][idxO[0]][idxO[1]+1][idxO[2]+1] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][1][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]][idxO[1]+1][idxO[2]+1] + dual[1][ipart]*Bgrid[2][idxO[0]][idxO[1]+2][idxO[2]+1] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][1][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]][idxO[1]+2][idxO[2]+1] + dual[1][ipart]*Bgrid[2][idxO[0]][idxO[1]+3][idxO[2]+1] ) ;
-            Bpart[2][ipart+ivect+istart[0]] +=   (1-dual[0][ipart])*coeff[0][1][0][ipart] * E;
-            E =  coeff[1][1][0][ipart]  * coeff[2][0][1][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+1][idxO[1]+0][idxO[2]+1] + dual[1][ipart]*Bgrid[2][idxO[0]+1][idxO[1]+1][idxO[2]+1] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][1][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+1][idxO[1]+1][idxO[2]+1] + dual[1][ipart]*Bgrid[2][idxO[0]+1][idxO[1]+2][idxO[2]+1] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][1][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+1][idxO[1]+2][idxO[2]+1] + dual[1][ipart]*Bgrid[2][idxO[0]+1][idxO[1]+3][idxO[2]+1] ) ;
-            Bpart[2][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][1][ipart] + dual[0][ipart]*coeff[0][1][0][ipart] ) * E ;   
-            E =  coeff[1][1][0][ipart]  * coeff[2][0][1][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+2][idxO[1]  ][idxO[2]+1] + dual[1][ipart]*Bgrid[2][idxO[0]+2][idxO[1]+1][idxO[2]+1] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][1][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+2][idxO[1]+1][idxO[2]+1] + dual[1][ipart]*Bgrid[2][idxO[0]+2][idxO[1]+2][idxO[2]+1] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][1][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+2][idxO[1]+2][idxO[2]+1] + dual[1][ipart]*Bgrid[2][idxO[0]+2][idxO[1]+3][idxO[2]+1] ) ;
-            Bpart[2][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][2][ipart] + dual[0][ipart]*coeff[0][1][1][ipart] ) * E ;   
-            E =  coeff[1][1][0][ipart]  * coeff[2][0][1][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+3][idxO[1]  ][idxO[2]+1] + dual[1][ipart]*Bgrid[2][idxO[0]+3][idxO[1]+1][idxO[2]+1] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][1][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+3][idxO[1]+1][idxO[2]+1] + dual[1][ipart]*Bgrid[2][idxO[0]+3][idxO[1]+2][idxO[2]+1] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][1][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+3][idxO[1]+2][idxO[2]+1] + dual[1][ipart]*Bgrid[2][idxO[0]+3][idxO[1]+3][idxO[2]+1] ) ;
-            Bpart[2][ipart+ivect+istart[0]] +=  dual[0][ipart]*coeff[0][1][2][ipart]  * E ;   
-
-            E =  coeff[1][1][0][ipart]  * coeff[2][0][2][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]][idxO[1]  ][idxO[2]+2] + dual[1][ipart]*Bgrid[2][idxO[0]][idxO[1]+1][idxO[2]+2] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][2][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]][idxO[1]+1][idxO[2]+2] + dual[1][ipart]*Bgrid[2][idxO[0]][idxO[1]+2][idxO[2]+2] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][2][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]][idxO[1]+2][idxO[2]+2] + dual[1][ipart]*Bgrid[2][idxO[0]][idxO[1]+3][idxO[2]+2] ) ;
-            Bpart[2][ipart+ivect+istart[0]] +=   (1-dual[0][ipart])*coeff[0][1][0][ipart] * E;
-            E =  coeff[1][1][0][ipart]  * coeff[2][0][2][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+1][idxO[1]+0][idxO[2]+2] + dual[1][ipart]*Bgrid[2][idxO[0]+1][idxO[1]+1][idxO[2]+2] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][2][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+1][idxO[1]+1][idxO[2]+2] + dual[1][ipart]*Bgrid[2][idxO[0]+1][idxO[1]+2][idxO[2]+2] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][2][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+1][idxO[1]+2][idxO[2]+2] + dual[1][ipart]*Bgrid[2][idxO[0]+1][idxO[1]+3][idxO[2]+2] ) ;
-            Bpart[2][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][1][ipart] + dual[0][ipart]*coeff[0][1][0][ipart] ) * E ;   
-            E =  coeff[1][1][0][ipart]  * coeff[2][0][2][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+2][idxO[1]  ][idxO[2]+2] + dual[1][ipart]*Bgrid[2][idxO[0]+2][idxO[1]+1][idxO[2]+2] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][2][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+2][idxO[1]+1][idxO[2]+2] + dual[1][ipart]*Bgrid[2][idxO[0]+2][idxO[1]+2][idxO[2]+2] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][2][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+2][idxO[1]+2][idxO[2]+2] + dual[1][ipart]*Bgrid[2][idxO[0]+2][idxO[1]+3][idxO[2]+2] ) ;
-            Bpart[2][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][2][ipart] + dual[0][ipart]*coeff[0][1][1][ipart] ) * E ;   
-            E =  coeff[1][1][0][ipart]  * coeff[2][0][2][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+3][idxO[1]  ][idxO[2]+2] + dual[1][ipart]*Bgrid[2][idxO[0]+3][idxO[1]+1][idxO[2]+2] ) ;
-            E +=  coeff[1][1][1][ipart] * coeff[2][0][2][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+3][idxO[1]+1][idxO[2]+2] + dual[1][ipart]*Bgrid[2][idxO[0]+3][idxO[1]+2][idxO[2]+2] ) ;
-            E +=  coeff[1][1][2][ipart] * coeff[2][0][2][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+3][idxO[1]+2][idxO[2]+2] + dual[1][ipart]*Bgrid[2][idxO[0]+3][idxO[1]+3][idxO[2]+2] ) ;
-            Bpart[2][ipart+ivect+istart[0]] +=  dual[0][ipart]*coeff[0][1][2][ipart]  * E ;   
         }
 
     }
