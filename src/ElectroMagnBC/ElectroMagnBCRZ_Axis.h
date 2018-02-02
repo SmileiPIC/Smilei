@@ -60,9 +60,12 @@ private:
     
     //! Ratio of the spatial-step by the time-step dy/dt for 2D3V cartesian simulations
     double dl_ov_dt;
-	//! Number of modes 
-	unsigned int Nmode;
+
+    //! Number of modes 
+    unsigned int Nmode;
     
+    //! Oversize along the radial direction
+    unsigned int oversize_R;
     
 };
 
