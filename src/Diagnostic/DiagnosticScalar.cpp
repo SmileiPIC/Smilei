@@ -120,7 +120,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     // Make the list of fields
     ElectroMagn* EMfields = vecPatches(0)->EMfields;
     vector<string> fields;
-    int  nmodes(0);
+    unsigned int  nmodes(0);
     if (params.geometry != "3drz") {
         fields.push_back(EMfields->Ex_ ->name);
         fields.push_back(EMfields->Ey_ ->name);
@@ -586,13 +586,13 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     fields.push_back(EMfields->Jz_);
     fields.push_back(EMfields->rho_);
 
+    #ifdef _DISABLE
     double fieldval;
     unsigned int i_min, j_min, k_min;
     unsigned int i_max, j_max, k_max;
     val_index minloc, maxloc;
 
     nfield = fields.size();
-    #ifdef _DISABLE
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
 
         if( necessary_fieldMinMax[ifield] ) {

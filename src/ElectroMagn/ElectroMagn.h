@@ -19,6 +19,7 @@ class SimWindow;
 class Patch;
 class Solver;
 class DomainDecomposition;
+class LaserEnvelope;
 
 
 inline std::string LowerCase(std::string in){
@@ -140,6 +141,14 @@ public:
     Field* rho_pxr;
     Field* rhoold_pxr;
 
+    //! Laser envelope
+    LaserEnvelope* envelope;
+    
+    //! Envelope, real part
+    Field* Env_Ar_;
+    
+    //! Envelope, imaginary part
+    Field* Env_Ai_;
     
     //! Vector of electric fields used when a filter is applied
     std::vector<Field*> Exfilter;
@@ -333,7 +342,8 @@ public:
     bool isXmax;
 
     //! Corners coefficient for BC
-    std::vector<std::vector<double>> alpha_edge, beta_edge, S_edge;
+    std::vector<double> beta_edge;
+    std::vector<std::vector<double>> S_edge;
 
 protected :
     

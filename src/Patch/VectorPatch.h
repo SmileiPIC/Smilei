@@ -117,6 +117,9 @@ public :
     //! For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
     void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual,
                       Timers & timers);
+
+    //! For all patch, update envelope field A (envelope equation, boundary contitions, exchange A)
+    void solveEnvelope(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers);
     
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
     void runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itime, Timers & timers, SimWindow* simWindow);
@@ -200,6 +203,9 @@ public :
     std::vector<Field*> listBx_;
     std::vector<Field*> listBy_;
     std::vector<Field*> listBz_;
+
+    std::vector<Field*> listA_;
+    std::vector<Field*> listA0_;
 
     std::vector<std::vector< Field *>> listJl_;
     std::vector<std::vector< Field *>> listJr_;

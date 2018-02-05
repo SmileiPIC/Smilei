@@ -26,12 +26,12 @@ DiagnosticFieldsRZ::DiagnosticFieldsRZ( Params &params, SmileiMPI* smpi, VectorP
     patch_size.resize(2);
     patch_size[0] = params.n_space[0] + 1;
     patch_size[1] = params.n_space[1] + 1;
-    total_patch_size = patch_size[0] * patch_size[1];
+    one_patch_buffer_size = patch_size[0] * patch_size[1];
     
     
     // define space in file
     hsize_t global_size[1];
-    global_size[0] = tot_number_of_patches * total_patch_size;
+    global_size[0] = tot_number_of_patches * one_patch_buffer_size;
     hsize_t iglobal_size[1];
     iglobal_size[0] = 2 * global_size[0];
     filespace_firstwrite = H5Screate_simple(1, iglobal_size, NULL);
@@ -56,8 +56,8 @@ DiagnosticFieldsRZ::DiagnosticFieldsRZ( Params &params, SmileiMPI* smpi, VectorP
     }
     // Define space in file for re-reading
     filespace_reread = H5Screate_simple(1, iglobal_size, NULL);
-    offset[0] = total_patch_size * first_patch_of_this_proc;
-    block [0] = total_patch_size * npatch_local;
+    offset[0] = one_patch_buffer_size * first_patch_of_this_proc;
+    block [0] = one_patch_buffer_size * npatch_local;
     ioffset[0] = 2 * offset[0];
     iblock [0] = 2 * block [0];
     count [0] = 1;
@@ -116,14 +116,14 @@ DiagnosticFieldsRZ::~DiagnosticFieldsRZ()
 void DiagnosticFieldsRZ::setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches )
 {
     // Calculate the total size of the array in this proc
-    unsigned int total_vecPatches_size = total_patch_size * vecPatches.size();
+    unsigned int total_vecPatches_size = one_patch_buffer_size * vecPatches.size();
     
     // Resize the data
     idata.resize(total_vecPatches_size);
     
     // Define offset and size for HDF5 file
     hsize_t offset[1], block[1], count[1];
-    offset[0] = total_patch_size * refHindex;
+    offset[0] = one_patch_buffer_size * refHindex;
     block [0] = total_vecPatches_size;
     count [0] = 1;
     hsize_t ioffset[1], iblock[1];
@@ -164,7 +164,7 @@ void DiagnosticFieldsRZ::getField( Patch* patch, unsigned int ifield )
     unsigned int ix_max = ix + patch_size[0];
     unsigned int iy;
     unsigned int iy_max = patch_offset_in_grid[1] + patch_size[1];
-    unsigned int iout = total_patch_size * (patch->Hindex()-refHindex);
+    unsigned int iout = one_patch_buffer_size * (patch->Hindex()-refHindex);
     while( ix < ix_max ) {
         iy = patch_offset_in_grid[1];
         while( iy < iy_max ) {
@@ -176,7 +176,7 @@ void DiagnosticFieldsRZ::getField( Patch* patch, unsigned int ifield )
     }
 //    unsigned int ix_max = patch_offset_in_grid[0] + patch_size[0];
 //    unsigned int iy= patch_offset_in_grid[1];
-//    double * data_pt = &(data[total_patch_size * (patch->Hindex()-refHindex)]);
+//    double * data_pt = &(data[one_patch_buffer_size * (patch->Hindex()-refHindex)]);
 //    for (unsigned int ix = patch_offset_in_grid[0]; ix < ix_max; ix++){
 //        memcpy( data_pt, &((*field)(ix, iy)), patch_size[1]*sizeof(double));
 //        data_pt += patch_size[1];

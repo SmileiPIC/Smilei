@@ -21,17 +21,22 @@ public :
     static void finalizeexchangeE( Params& params, VectorPatch& vecPatches );
     static void exchangeB( Params& params, VectorPatch& vecPatches );
     static void exchangeJ( Params& params, VectorPatch& vecPatches );
+    static void exchangeA( Params& params, VectorPatch& vecPatches );
     static void finalizeexchangeJ( Params& params, VectorPatch& vecPatches );
+    static void finalizeexchangeA( Params& params, VectorPatch& vecPatches );
     static void finalizeexchangeB( Params& params, VectorPatch& vecPatches );
 
     static void sumRhoJ  ( Params& params, VectorPatch& vecPatches, int imode, Timers &timers, int itime );
     static void exchangeB( Params& params, VectorPatch& vecPatches, int imode );
     static void finalizeexchangeB( Params& params, VectorPatch& vecPatches, int imode );
 
-    static void sum      ( std::vector<Field*> fields, VectorPatch& vecPatches, Timers &timers, int itime );
+    static void sum       ( std::vector<Field*> fields, VectorPatch& vecPatches, Timers &timers, int itime );
+    static void sumComplex( std::vector<Field*> fields, VectorPatch& vecPatches, Timers &timers, int itime );
     static void new_sum      ( std::vector<Field*>& fields, VectorPatch& vecPatches, Timers &timers, int itime );
     static void exchange ( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void finalizeexchange( std::vector<Field*> fields, VectorPatch& vecPatches );
+    static void exchangeComplex ( std::vector<Field*> fields, VectorPatch& vecPatches );
+    static void finalizeexchangeComplex( std::vector<Field*> fields, VectorPatch& vecPatches );
 
     static void exchange_per_direction ( std::vector<Field*> fields, VectorPatch& vecPatches );
 

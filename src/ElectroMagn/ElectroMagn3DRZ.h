@@ -124,7 +124,7 @@ public:
     //! Compute local square norm of charge denisty is not null
     double computeRhoNorm2() override {
         double norm2(0);
-        for (int imode = 0 ; imode<nmodes ; imode++ ) 
+        for (unsigned int imode = 0 ; imode<nmodes ; imode++ ) 
             rho_RZ_[imode]->norm2(istart, bufsize);
         return norm2;
     }

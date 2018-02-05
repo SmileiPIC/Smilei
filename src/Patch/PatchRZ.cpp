@@ -74,7 +74,7 @@ void PatchRZ::initStep2(Params& params, DomainDecomposition* domain_decompositio
     neighbor_[0][0] = domain_decomposition->getDomainId( xcall );
 
     xcall[0] = Pcoordinates[0]+1;
-    if (params.EM_BCs[0][0]=="periodic" && xcall[0] >= domain_decomposition->ndomain_[0])
+    if (params.EM_BCs[0][0]=="periodic" && xcall[0] >= (int)domain_decomposition->ndomain_[0])
         xcall[0] -= domain_decomposition->ndomain_[0];
     neighbor_[0][1] = domain_decomposition->getDomainId( xcall );
     
@@ -86,7 +86,7 @@ void PatchRZ::initStep2(Params& params, DomainDecomposition* domain_decompositio
     neighbor_[1][0] = domain_decomposition->getDomainId( xcall );
 
     xcall[1] = Pcoordinates[1]+1;
-    if (params.EM_BCs[1][0]=="periodic" && xcall[1] >= domain_decomposition->ndomain_[1])
+    if (params.EM_BCs[1][0]=="periodic" && xcall[1] >= (int)domain_decomposition->ndomain_[1])
         xcall[1] -=  domain_decomposition->ndomain_[1];
     neighbor_[1][1] = domain_decomposition->getDomainId( xcall );
 
@@ -264,6 +264,11 @@ void PatchRZ::reallyfinalizeSumField( Field* field, int iDim )
 // ---------------------------------------------------------------------------------------------------------------------
 void PatchRZ::initExchange( Field* field )
 {
+    ERROR("Circ geometry initExchange not implemented");
+} // END initExchange( Field* field )
+
+void PatchRZ::initExchangeComplex( Field* field )
+{
     cout << "On ne passe jamais ici !!!!" << endl;
 
     if (field->MPIbuff.srequest.size()==0)
@@ -312,7 +317,7 @@ void PatchRZ::initExchange( Field* field )
         } // END for iNeighbor
 
     } // END for iDim
-} // END initExchange( Field* field )
+} // END initExchangeComplex( Field* field )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -320,6 +325,11 @@ void PatchRZ::initExchange( Field* field )
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
 void PatchRZ::finalizeExchange( Field* field )
+{
+    ERROR("Circ geometry finalizeExchange not implemented");
+} // END finalizeExchange( Field* field )
+
+void PatchRZ::finalizeExchangeComplex( Field* field )
 {
     cField2D* f3D =  static_cast<cField2D*>(field);
 
@@ -341,7 +351,7 @@ void PatchRZ::finalizeExchange( Field* field )
 
     } // END for iDim
 
-} // END finalizeExchange( Field* field )
+} // END finalizeExchangeComplex( Field* field )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -349,6 +359,12 @@ void PatchRZ::finalizeExchange( Field* field )
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
 void PatchRZ::initExchange( Field* field, int iDim )
+{
+    ERROR("Circ geometry initExchange not implemented");
+
+} // END initExchange( Field* field, int iDim )
+
+void PatchRZ::initExchangeComplex( Field* field, int iDim )
 {
     if (field->MPIbuff.srequest.size()==0){
         field->MPIbuff.allocate(2);
@@ -400,15 +416,18 @@ void PatchRZ::initExchange( Field* field, int iDim )
 
     } // END for iNeighbor
 
-
-} // END initExchange( Field* field, int iDim )
-
+} // END initExchangeComplex( Field* field )
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Initialize current patch exhange Fields communications through MPI for direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
 void PatchRZ::finalizeExchange( Field* field, int iDim )
+{
+    ERROR("Circ geometry finalizeExchange not implemented");
+} // END finalizeExchange( Field* field, int iDim )
+
+void PatchRZ::finalizeExchangeComplex( Field* field, int iDim )
 {
     int patch_ndims_(2);
 
@@ -426,8 +445,7 @@ void PatchRZ::finalizeExchange( Field* field, int iDim )
         }
     }
 
-} // END finalizeExchange( Field* field, int iDim )
-
+} // END finalizeExchangeComplex( Field* field )
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Create MPI_Datatypes used in initSumField and initExchange
@@ -456,7 +474,7 @@ void PatchRZ::createType( Params& params )
             MPI_Type_commit( &(ntype_[0][ix_isPrim][iy_isPrim]) );
 
             ntype_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_vector(2*nx, params.oversize[1], ny, 
+            MPI_Type_vector(nx, 2*params.oversize[1], 2*ny, 
                             MPI_DOUBLE, &(ntype_[1][ix_isPrim][iy_isPrim]));
             MPI_Type_commit( &(ntype_[1][ix_isPrim][iy_isPrim]) );
 
@@ -470,7 +488,7 @@ void PatchRZ::createType( Params& params )
             MPI_Type_commit( &(ntypeSum_[0][ix_isPrim][iy_isPrim]) );
             
             ntypeSum_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_vector(2*nx, ny_sum, ny, 
+            MPI_Type_vector(nx, 2*ny_sum, 2*ny, 
                             MPI_DOUBLE, &(ntypeSum_[1][ix_isPrim][iy_isPrim]));
             MPI_Type_commit( &(ntypeSum_[1][ix_isPrim][iy_isPrim]) );
 

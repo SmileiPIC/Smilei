@@ -65,7 +65,7 @@ void Patch1D::initStep2(Params& params, DomainDecomposition* domain_decompositio
         xcall[0] += domain_decomposition->ndomain_[0];
     neighbor_[0][0] = domain_decomposition->getDomainId( xcall );
     xcall[0] = Pcoordinates[0]+1;
-    if (params.EM_BCs[0][0]=="periodic" && xcall[0] >= domain_decomposition->ndomain_[0])
+    if (params.EM_BCs[0][0]=="periodic" && xcall[0] >= (int)domain_decomposition->ndomain_[0])
         xcall[0] -= domain_decomposition->ndomain_[0];
     neighbor_[0][1] = domain_decomposition->getDomainId( xcall );
     
@@ -241,6 +241,11 @@ void Patch1D::initExchange( Field* field )
 
 } // END initExchange( Field* field )
 
+void Patch1D::initExchangeComplex( Field* field )
+{
+    ERROR("1D initExchangeComplex not implemented");
+} // END initExchangeComplex( Field* field )
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Initialize current patch exhange Fields communications through MPI  (includes loop / nDim_fields_)
@@ -268,6 +273,11 @@ void Patch1D::finalizeExchange( Field* field )
     } // END for iDim
 
 } // END finalizeExchange( Field* field )
+
+void Patch1D::finalizeExchangeComplex( Field* field )
+{
+  ERROR("1D finalizeExchangeComplex not implemented");
+} // END finalizeExchangeComplex( Field* field )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -318,6 +328,11 @@ void Patch1D::initExchange( Field* field, int iDim )
 
 } // END initExchange( Field* field, int iDim )
 
+void Patch1D::initExchangeComplex( Field* field, int iDim )
+{
+  ERROR("1D initExchangeComplex not implemented");
+} // END initExchangeComplex( Field* field, int iDim )
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Initialize current patch exhange Fields communications through MPI for direction iDim
@@ -340,6 +355,11 @@ void Patch1D::finalizeExchange( Field* field, int iDim )
     }
 
 } // END finalizeExchange( Field* field, int iDim )
+
+void Patch1D::finalizeExchangeComplex( Field* field, int iDim )
+{
+    ERROR("1D finalizeExchangeComplex not implemented");
+} // END finalizeExchangeComplex( Field* field, int iDim )
 
 
 // ---------------------------------------------------------------------------------------------------------------------

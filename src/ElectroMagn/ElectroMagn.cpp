@@ -14,6 +14,7 @@
 #include "Profile.h"
 #include "SolverFactory.h"
 #include "DomainDecompositionFactory.h"
+#include "LaserEnvelope.h"
 
 using namespace std;
 
@@ -37,7 +38,7 @@ nrj_new_fields (  0.               )
     if ( dynamic_cast<HilbertDomainDecomposition*>( domain_decomposition ) )
         n_space = params.n_space;
     else {
-        for ( int i = 0 ; i < nDim_field ; i++ ) 
+        for ( unsigned int i = 0 ; i < nDim_field ; i++ ) 
             n_space[i] = params.n_space[i] * params.global_factor[i];
     }
     
@@ -49,7 +50,9 @@ nrj_new_fields (  0.               )
     emBoundCond = ElectroMagnBC_Factory::create(params, patch);
     MaxwellAmpereSolver_  = SolverFactory::createMA(params);
     MaxwellFaradaySolver_ = SolverFactory::createMF(params);
-    
+
+    envelope = NULL;
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -75,6 +78,8 @@ nrj_new_fields ( 0. )
     
     MaxwellAmpereSolver_  = SolverFactory::createMA(params);
     MaxwellFaradaySolver_ = SolverFactory::createMF(params);
+
+    envelope = NULL;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -103,6 +108,8 @@ void ElectroMagn::initElectroMagnQuantities()
     Jy_=NULL;
     Jz_=NULL;
     rho_=NULL;
+    Env_Ar_=NULL;
+    Env_Ai_=NULL;
     
     
     // Species charge currents and density
@@ -143,6 +150,10 @@ void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
     allFields.push_back(Jy_ );
     allFields.push_back(Jz_ );
     allFields.push_back(rho_);
+    if ( Env_Ar_ ) {
+        allFields.push_back(Env_Ar_);
+        allFields.push_back(Env_Ai_);
+    }
 
     for (int ispec=0; ispec<nspecies; ispec++) {
         allFields.push_back(Jx_s[ispec] );
@@ -204,6 +215,9 @@ ElectroMagn::~ElectroMagn()
     delete MaxwellAmpereSolver_;
     delete MaxwellFaradaySolver_;
     
+    if (envelope != NULL)
+        delete envelope;
+
     //antenna cleanup
     for (vector<Antenna>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
         delete antenna->field;

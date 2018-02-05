@@ -1641,7 +1641,8 @@ This is done by including a block ``DiagFields``::
   DiagFields(
       every = 10,
       time_average = 2,
-      fields = ["Ex", "Ey", "Ez"]
+      fields = ["Ex", "Ey", "Ez"],
+      #subgrid = None
   )
 
 .. py:data:: every
@@ -1671,7 +1672,10 @@ This is done by including a block ``DiagFields``::
   :default: ``[]`` *(all fields are written)*
 
   List of the field names that are saved. By default, they all are.
+<<<<<<< HEAD
+=======
   
+>>>>>>> 3DRZ_datastruct
   The full list of fields that are saved by this diagnostic:
   
   .. rst-class:: nowrap
@@ -1700,6 +1704,35 @@ This is done by including a block ``DiagFields``::
   | | Rho          | |  Total density                                      |
   | | Rho_abc      | |  Density of species "abc"                           |
   +----------------+-------------------------------------------------------+
+<<<<<<< HEAD
+
+.. py:data:: subgrid
+
+  :default: ``None`` *(the whole grid is used)*
+
+  A list of slices indicating a portion of the simulation grid to be written by this
+  diagnostic. This list must have as many elements as the simulation dimension.
+  For example, in a 3D simulation, the list has 3 elements. Each element can be:
+  
+  * ``None``, to select the whole grid along that dimension
+  * an integer, to select only the corresponding cell index along that dimension
+  * a *python* `slice object <https://docs.python.org/3/library/functions.html#slice>`_
+    to select regularly-spaced cell indices along that dimension.
+  
+  This can be easily implemented using the
+  `numpy.s_ expression <https://docs.scipy.org/doc/numpy/reference/generated/numpy.s_.html>`_.
+  For instance, in a 3D simulation, the following subgrid selects only every other element
+  in each dimension::
+    
+    from numpy import s_
+    DiagFields( #...
+    	subgrid = s_[::2, ::2, ::2]
+    )
+  
+  while this one selects cell indices included in a contiguous parallelepiped::
+    
+    	subgrid = s_[100:300, 300:500, 300:600]
+=======
   
   In the case of spectral cylindrical geometry (``3drz``), the ``x``, ``y`` and ``z``
   indices are replaced by ``x``, ``r`` and ``t`` (theta). In addition,
@@ -1720,6 +1753,7 @@ This is done by including a block ``DiagFields``::
   |  The same notation works for Jx, Jr, Jt, and Rho                       |
   +------------------------------+-----------------------------------------+
   
+>>>>>>> 3DRZ_datastruct
   
 
 

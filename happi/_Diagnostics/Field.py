@@ -195,6 +195,8 @@ class Field(Diagnostic):
 		self._finalShape = self._np.copy(self._initialShape)
 		self._averages = [False]*self._naxes
 		self._selection = [self._np.s_[:]]*self._naxes
+		self._offset  = fields[0].attrs['gridGlobalOffset']
+		self._spacing = fields[0].attrs['gridSpacing']
 		axis_name = "xyz" if not self.cylindrical or not build3d else "xr"
 		for iaxis in range(self._naxes):
 			centers = self._np.arange(axis_start[iaxis], axis_stop[iaxis], axis_step[iaxis])
@@ -299,7 +301,15 @@ class Field(Diagnostic):
 	
 	# Method to print info on included fields
 	def _info(self):
-		return "Field diagnostic "+self._title
+		s = "Field diagnostic #"+str(self.diagNumber)+": "+self._title
+		tavg = self.namelist.DiagFields[self.diagNumber].time_average
+		if tavg > 1:
+			s += "\n\tTime_average: " + str(tavg) + " timesteps"
+		if any(self._offset > 0.):
+			s += "\n\tGrid offset: " + ", ".join([str(a) for a in self._offset])
+		if any(self._spacing != self._cell_length):
+			s += "\n\tGrid spacing: " + ", ".join([str(a) for a in self._spacing])
+		return s
 	
 	# get all available field diagnostics
 	def getDiags(self):

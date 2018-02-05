@@ -22,7 +22,6 @@ public:
     Timer particles ;
     Timer maxwell   ;
     Timer diags     ;
-    Timer diagsNEW  ;
     Timer densities ;
     Timer collisions;
     Timer movWindow ;
@@ -30,6 +29,7 @@ public:
     Timer syncPart  ;
     Timer syncField ;
     Timer syncDens  ;
+    Timer diagsNEW  ;
 
     void profile(SmileiMPI * smpi);
     std::vector<Timer*> consolidate(SmileiMPI * smpi);
