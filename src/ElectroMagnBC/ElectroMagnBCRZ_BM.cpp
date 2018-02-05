@@ -210,10 +210,10 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		        -                   2.*CE_BM*dt/((j_glob+j+1.5)*dr)*(*EtRZ)(i,j);
                 if (std::abs((*BlRZ)(i,j))>1.)
                 {
-                MESSAGE("BlRZBM");                
-                MESSAGE(i);    
-                MESSAGE(j);
-                MESSAGE((*BlRZ)(i,j));
+                	MESSAGE("BlRZBM");                
+                	MESSAGE(i);    
+                	MESSAGE(j);
+                	MESSAGE((*BlRZ)(i,j));
                 }
 		    }//i  ---end Bl
 		    
@@ -228,10 +228,10 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 				-                   CB_BM* Beta_BM_Rmax/((j_glob+j+1.5)*dr +(j_glob+j+0.5)*dr)*((*BtRZ)(i,j+1) + (*BtRZ_old)(i,j+1) 				+					(*BtRZ)(i,j) + (*BtRZ_old)(i,j)) ;
                 if (std::abs((*BtRZ)(i,j))>1.)
                 {
-                MESSAGE("BtRZBM");                
-                MESSAGE(i);    
-                MESSAGE(j);
-                MESSAGE((*BtRZ)(i,j));
+                	MESSAGE("BtRZBM");                
+                	MESSAGE(i);    
+                	MESSAGE(j);
+                	MESSAGE((*BtRZ)(i,j));
                 }
 		    }//i  ---end Bt
 		    

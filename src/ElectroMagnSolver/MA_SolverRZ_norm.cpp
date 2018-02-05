@@ -42,10 +42,10 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
     for (unsigned int i=0 ; i<nl_d ; i++) {
         for (unsigned int j=isYmin*3 ; j<nr_p ; j++) {
             (*ElRZ)(i,j) += -dt*(*JlRZ)(i,j)
-                +                 dt/((j_glob+j)*dr)* ((j+0.5)*(*BtRZ)(i,j+1) - (j-0.5)*(*BtRZ)(i,j) )
+                +                 dt/((j_glob+j)*dr)*((j+0.5)*(*BtRZ)(i,j+1) - (j-0.5)*(*BtRZ)(i,j) )
                 +                 Icpx*dt*(double)imode/((j_glob+j)*dr)*(*BrRZ)(i,j);
-                if (std::abs((*ElRZ)(i,j))>1.)
-                {
+             if (std::abs((*ElRZ)(i,j))>1.)
+             {
                 MESSAGE("ElRZMA");                
                 MESSAGE(i);    
                 MESSAGE(j);
@@ -61,10 +61,10 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
             (*ErRZ)(i,j) += -dt*(*JrRZ)(i,j)
                 -                  dt_ov_dl * ( (*BtRZ)(i+1,j) - (*BtRZ)(i,j) )
                 -                  Icpx*dt*(double)imode/((j_glob+j+0.5)*dr)* (*BlRZ)(i,j);
-                if (std::abs((*ErRZ)(i,j))>1.){
+             if (std::abs((*ErRZ)(i,j))>1.){
                 MESSAGE("ErRZMA");                
                 MESSAGE(i);
-                MESSAGE(j);    
+               	MESSAGE(j);    
                 MESSAGE((*ErRZ)(i,j));
                 }
         }
@@ -77,12 +77,12 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
             (*EtRZ)(i,j) += -dt*(*JtRZ)(i,j)
                 +                  dt_ov_dl * ( (*BrRZ)(i+1,j) - (*BrRZ)(i,j) )
                 -                  dt_ov_dr * ( (*BlRZ)(i,j+1) - (*BlRZ)(i,j) );        
-                if (std::abs((*EtRZ)(i,j))>1.){
+             if (std::abs((*EtRZ)(i,j))>1.){
                 MESSAGE("EtRZMA ");
                 MESSAGE(i);
                 MESSAGE(j);    
                 MESSAGE((*EtRZ)(i,j));
-                }        
+             }        
         }
     }
     //MESSAGE("EtRZ");

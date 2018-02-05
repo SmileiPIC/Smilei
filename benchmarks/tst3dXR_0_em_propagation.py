@@ -20,7 +20,7 @@ Main(
     grid_length  = Lsim,
     number_of_patches = [ 1, 1 ],
     timestep = t0/rest,
-    simulation_time = 50*t0/rest ,
+    simulation_time = 300*t0/rest ,
      
     EM_boundary_conditions = [
         ["silver-muller","silver-muller"],
@@ -35,7 +35,7 @@ LaserGaussian2D(
     omega           = 1.,
     focus           = [Lsim[0]/2., 0.],
     waist           = 8.,
-    #time_envelope   = tconstant()
+    time_envelope   = tgaussian(center=2**0.5*laser_fwhm, fwhm=laser_fwhm)
 )
 #LaserGaussian2D(
 #    box_side         = "xmin",
