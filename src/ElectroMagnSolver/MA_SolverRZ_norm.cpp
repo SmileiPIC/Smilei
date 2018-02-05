@@ -1,6 +1,5 @@
 
 #include "MA_SolverRZ_norm.h"
-
 #include "ElectroMagn3DRZ.h"
 #include "cField2D.h"
 #include <complex>
@@ -61,6 +60,7 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
             (*ErRZ)(i,j) += -dt*(*JrRZ)(i,j)
                 -                  dt_ov_dl * ( (*BtRZ)(i+1,j) - (*BtRZ)(i,j) )
                 -                  Icpx*dt*(double)imode/((j_glob+j+0.5)*dr)* (*BlRZ)(i,j);
+
              if (std::abs((*ErRZ)(i,j))>1.){
                 MESSAGE("ErRZMA");                
                 MESSAGE(i);
@@ -87,7 +87,65 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
     }
     //MESSAGE("EtRZ");
     //MESSAGE((*EtRZ)(int(nl_p/2),int(nr_p/2)));
-
+	if (isYmin){
+		unsigned int j=2;
+		if (imode==0){
+			//MA_SolverRZ_norm
+			for (unsigned int i=0 ; i<nl_p  ; i++) {
+				(*EtRZ)(i,j)=0;
+			}
+			for (unsigned int i=0 ; i<nl_p  ; i++) {
+				(*ErRZ)(i,j)= -(*ErRZ)(i,j+1);
+			}
+			for (unsigned int i=0 ; i<nl_d ; i++) {
+				(*ElRZ)(i,j)+= 4.*dt_ov_dr*(*BtRZ)(i,j+1)-dt*(*JlRZ)(i,j);
+			}
+		}
+		else if (imode==1){
+			//MF
+			for (unsigned int i=0 ; i<nl_d  ; i++) {
+				(*ElRZ)(i,j)= 0;
+                if (std::abs((*ElRZ)(i,j))>1.){
+                MESSAGE("ElRZA");                
+                MESSAGE(i);
+                MESSAGE(j);    
+                MESSAGE((*ElRZ)(i,j));
+                }
+			}
+			for (unsigned int i=0 ; i<nl_p  ; i++) {
+				//(*EtRZ)(i,j)= (*EtRZ)(i,j+1);
+				(*EtRZ)(i,j)= -1./3*(4.*Icpx*(*ErRZ)(i,j+1)+(*EtRZ)(i,j+1));
+                if (std::abs((*EtRZ)(i,j))>1.){
+                MESSAGE("EtRZA");                
+                MESSAGE(i);
+                MESSAGE(j);    
+                MESSAGE((*EtRZ)(i,j));
+                }
+			}
+			for (unsigned int i=0 ; i<nl_p ; i++) {
+				//(*ErRZ)(i,j)= -(*ErRZ)(i,j+1);
+				(*ErRZ)(i,j)=2.*Icpx*(*EtRZ)(i,j)-(*ErRZ)(i,j+1);
+                if (std::abs((*ErRZ)(i,j))>1.){
+                MESSAGE("ErRZA");                
+                MESSAGE(i);
+                MESSAGE(j);    
+                MESSAGE((*ErRZ)(i,j));
+                }
+			}
+		}
+		else {	
+			//MA
+			for (unsigned int  i=0 ; i<nl_d; i++) {
+				(*ElRZ)(i,j)= 0;
+			}
+			for (unsigned int  i=0 ; i<nl_p; i++) {
+				(*ErRZ)(i,j)= -(*ErRZ)(i,j+1);
+			}
+			for (unsigned int i=0 ; i<nl_p; i++) {
+				(*EtRZ)(i,j)= 0;
+			}
+		}
+	} 
     }
 }
 
