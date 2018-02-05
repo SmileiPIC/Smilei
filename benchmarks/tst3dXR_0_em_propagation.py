@@ -20,7 +20,7 @@ Main(
     grid_length  = Lsim,
     number_of_patches = [ 1, 1 ],
     timestep = t0/rest,
-    simulation_time = 300*t0/rest ,
+    simulation_time = 1000*t0/rest ,
      
     EM_boundary_conditions = [
         ["silver-muller","silver-muller"],
