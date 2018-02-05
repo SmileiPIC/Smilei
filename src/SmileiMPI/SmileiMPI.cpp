@@ -890,7 +890,7 @@ void SmileiMPI::isend(Field* field, int to, int hindex, MPI_Request& request)
 
 void SmileiMPI::isendComplex(Field* field, int to, int hindex, MPI_Request& request)
 {
-    MPI_Isend( &((*field)(0)),field->globalDims_, MPI_CXX_DOUBLE_COMPLEX, to, hindex, MPI_COMM_WORLD, &request );
+    MPI_Isend( &((*field)(0)),field->globalDims_, MPI_DOUBLE_COMPLEX, to, hindex, MPI_COMM_WORLD, &request );
 
 } // End isendComplex ( Field )
 
@@ -905,7 +905,7 @@ void SmileiMPI::recv(Field* field, int from, int hindex)
 void SmileiMPI::recvComplex(Field* field, int from, int hindex)
 {
     MPI_Status status;
-    MPI_Recv( &((*field)(0)),field->globalDims_, MPI_CXX_DOUBLE_COMPLEX, from, hindex, MPI_COMM_WORLD, &status );
+    MPI_Recv( &((*field)(0)),field->globalDims_, MPI_DOUBLE_COMPLEX, from, hindex, MPI_COMM_WORLD, &status );
 
 } // End recv ( Field )
 
