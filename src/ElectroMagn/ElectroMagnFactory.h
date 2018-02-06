@@ -163,7 +163,7 @@ public:
 
         // initialize the envelope if used
         if ( EMfields->envelope != NULL )
-            newEMfields->envelope = EnvelopeFactory::clone(EMfields->envelope, patch, EMfields);
+            newEMfields->envelope = EnvelopeFactory::clone(EMfields->envelope, patch, EMfields, params);
         
         // -----------------
         // Clone time-average fields

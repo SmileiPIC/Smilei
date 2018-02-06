@@ -57,11 +57,12 @@ cell_length    ( params.cell_length) ,timestep( params.timestep)
     EnvBoundCond = EnvelopeBC_Factory::create(params, patch);
 }
 
-
-LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields ) :
-cell_length    ( envelope->cell_length ), timestep( envelope->timestep), EnvBoundCond (envelope->EnvBoundCond)
+// Cloning constructor
+LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields, Params& params ) :
+cell_length    ( envelope->cell_length ), timestep( envelope->timestep)
 {
-    profile_ = envelope->profile_;  
+    profile_ = envelope->profile_;
+    EnvBoundCond = EnvelopeBC_Factory::create(params, patch);  
 }
 
 
@@ -83,7 +84,7 @@ LaserEnvelope::~LaserEnvelope()
 
 
 LaserEnvelope3D::LaserEnvelope3D( Params& params, Patch* patch, ElectroMagn* EMfields )
-    : LaserEnvelope(params, patch, EMfields)
+    : LaserEnvelope(params, patch, EMfields )
 {
     std::vector<unsigned int>  dimPrim( params.nDim_field );
     // Dimension of the primal and dual grids
@@ -102,8 +103,8 @@ LaserEnvelope3D::LaserEnvelope3D( Params& params, Patch* patch, ElectroMagn* EMf
 }
 
 
-LaserEnvelope3D::LaserEnvelope3D( LaserEnvelope *envelope, Patch* patch,ElectroMagn* EMfields )
-    : LaserEnvelope(envelope,patch,EMfields)
+LaserEnvelope3D::LaserEnvelope3D( LaserEnvelope *envelope, Patch* patch,ElectroMagn* EMfields, Params& params )
+    : LaserEnvelope(envelope,patch,EMfields,params)
 {
     A_  = new cField3D( envelope->A_->dims_  );
     A0_ = new cField3D( envelope->A0_->dims_ );
