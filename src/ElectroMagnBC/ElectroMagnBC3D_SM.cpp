@@ -83,52 +83,89 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     // -----------------------------------------------------
     
     //! \todo (MG) Check optimal angle for Silver-Muller BCs
+    double theta;
+    double phi  ;
+    double pyKx, pyKy, pyKz;
+    double kx, ky, kz;
+    double Knorm;
+    double omega = 1. ;
+    //kx = w cos(theta) cos(phi)
+    //ky = w sin(theta) 
+    //kz = w cos(theta) sin(phi)
     
     // Xmin boundary
-    double theta  = params.EM_BCs_theta[0][0];
-    double phi  = params.EM_BCs_phi[0][0];
-    double factor = 1.0 / (cos(theta)*cos(phi) + dt_ov_dx);
+    pyKx = 1.;
+    pyKy = 0.;
+    pyKz = 0.;
+    Knorm = sqrt(pyKx*pyKx + pyKy*pyKy + pyKz*pyKz) ;
+    kx = omega*pyKx/Knorm;
+    ky = omega*pyKy/Knorm;
+    kz = omega*pyKz/Knorm;
+
+    double factor = 1.0 / (kx + dt_ov_dx);
     Alpha_SM_W    = 2.0                     * factor;
-    Beta_SM_W     = - (cos(theta)*cos(phi)-dt_ov_dx) * factor;
-    Gamma_SM_W    = 4.0 * cos(theta)*cos(phi)        * factor;
-    Delta_SM_W    = - (sin(theta)+dt_ov_dy) * factor;
-    Epsilon_SM_W  = - (sin(theta)-dt_ov_dy) * factor;
-    Zeta_SM_W     = - (cos(theta)*sin(phi) + dt_ov_dz) * factor;
-    Eta_SM_W      = - (cos(theta)*sin(phi) - dt_ov_dz) * factor;
+    Beta_SM_W     = - (kx-dt_ov_dx) * factor;
+    Gamma_SM_W    = 4.0 * kx        * factor;
+    Delta_SM_W    = - (ky + dt_ov_dy) * factor;
+    Epsilon_SM_W  = - (ky - dt_ov_dy) * factor;
+    Zeta_SM_W     = - (kz + dt_ov_dz) * factor;
+    Eta_SM_W      = - (kz - dt_ov_dz) * factor;
     
     // Xmax boundary
-    theta  = params.EM_BCs_theta[0][1];
-    phi  = params.EM_BCs_phi[0][1];
-    factor        = 1.0 / (cos(theta)*cos(phi) - dt_ov_dx);
+    pyKx = -1.;
+    pyKy = 0.;
+    pyKz = 0.;
+    Knorm = sqrt(pyKx*pyKx + pyKy*pyKy + pyKz*pyKz) ;
+    kx = omega*pyKx/Knorm;
+    ky = omega*pyKy/Knorm;
+    kx = omega*pyKz/Knorm;
+
+    factor        = 1.0 / (kx - dt_ov_dx);
     Alpha_SM_E    = 2.0                      * factor;
-    Beta_SM_E     = - (cos(theta)*cos(phi)+dt_ov_dx)  * factor;
-    Gamma_SM_E    = 4.0 * cos(theta)*cos(phi)         * factor;
-    Delta_SM_E    = - (sin(theta)+dt_ov_dy)  * factor;
-    Epsilon_SM_E  = - (sin(theta)-dt_ov_dy)  * factor;
-    Zeta_SM_E     = - (cos(theta)*sin(phi) + dt_ov_dz) * factor;
-    Eta_SM_E      = - (cos(theta)*sin(phi) - dt_ov_dz) * factor;
+    Beta_SM_E     = - ( kx+dt_ov_dx)  * factor;
+    Gamma_SM_E    = 4.0 * kx         * factor;
+    Delta_SM_E    = - (ky + dt_ov_dy)  * factor;
+    Epsilon_SM_E  = - (ky - dt_ov_dy)  * factor;
+    Zeta_SM_E     = - (kz + dt_ov_dz) * factor;
+    Eta_SM_E      = - (kz - dt_ov_dz) * factor;
     
     // Ymin boundary
-    theta  = params.EM_BCs_theta[1][0];
-    phi  = params.EM_BCs_phi[1][0];
-    factor = 1.0 / (cos(theta)*cos(phi) + dt_ov_dy );
+    //ky = w cos(theta) cos(phi)
+    //kz = w sin(theta) 
+    //kx = w cos(theta) sin(phi)
+    pyKx = -1.;
+    pyKy = 0.;
+    pyKz = 0.;
+    Knorm = sqrt(pyKx*pyKx + pyKy*pyKy + pyKz*pyKz) ;
+    kx = omega*pyKx/Knorm;
+    ky = omega*pyKy/Knorm;
+    kz = omega*pyKz/Knorm;
+    factor = 1.0 / (ky + dt_ov_dy );
     Alpha_SM_S    = 2.0                     * factor;
-    Beta_SM_S     = - (cos(theta)*cos(phi)-dt_ov_dy) * factor;
-    Delta_SM_S    = - (sin(theta)+dt_ov_dz) * factor;
-    Epsilon_SM_S  = - (sin(theta)-dt_ov_dz) * factor;
-    Zeta_SM_S     = - (cos(theta)*sin(phi) + dt_ov_dx) * factor;
-    Eta_SM_S      = - (cos(theta)*sin(phi) - dt_ov_dx) * factor;
+    Beta_SM_S     = - (ky - dt_ov_dy) * factor;
+    Delta_SM_S    = - (kz + dt_ov_dz) * factor;
+    Epsilon_SM_S  = - (kz - dt_ov_dz) * factor;
+    //Zeta_SM_S     = - (cos(theta)*sin(phi) + dt_ov_dx) * factor;
+    Zeta_SM_S     = - (kx + dt_ov_dx) * factor;
+    //Eta_SM_S      = - (cos(theta)*sin(phi) - dt_ov_dx) * factor;
+    Eta_SM_S      = - (kx - dt_ov_dx) * factor;
     
     // Ymax boundary
-    theta  = params.EM_BCs_theta[1][1];
-    phi  = params.EM_BCs_phi[1][1];
-    factor = 1.0 / (cos(theta)*cos(phi) - dt_ov_dy);
+    pyKx = -1.;
+    pyKy = 0.;
+    pyKz = 0.;
+    Knorm = sqrt(pyKx*pyKx + pyKy*pyKy + pyKz*pyKz) ;
+    kx = omega*pyKx/Knorm;
+    ky = omega*pyKy/Knorm;
+    kz = omega*pyKz/Knorm;
+
+    factor = 1.0 / (ky - dt_ov_dy);
     Alpha_SM_N    = 2.0                     * factor;
-    Beta_SM_N     = - (cos(theta)*cos(phi)+dt_ov_dy) * factor;
-    Delta_SM_N    = - (sin(theta)+dt_ov_dz) * factor;
-    Epsilon_SM_N  = - (sin(theta)-dt_ov_dz) * factor;
-    Zeta_SM_N     = - (cos(theta)*sin(phi) + dt_ov_dx) * factor;
-    Eta_SM_N      = - (cos(theta)*sin(phi) - dt_ov_dx) * factor;
+    Beta_SM_N     = - (ky + dt_ov_dy) * factor;
+    Delta_SM_N    = - (kz + dt_ov_dz) * factor;
+    Epsilon_SM_N  = - (kz - dt_ov_dz) * factor;
+    Zeta_SM_N     = - (kx + dt_ov_dx) * factor;
+    Eta_SM_N      = - (kx - dt_ov_dx) * factor;
     
     // Zmin boundary
     theta  = params.EM_BCs_theta[2][0];
