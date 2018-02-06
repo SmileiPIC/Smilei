@@ -707,6 +707,8 @@ uint64_t DiagnosticScalar::getDiskFootPrint(int istart, int istop, Patch* patch)
     // Calculate the number of dumps between istart and istop
     uint64_t ndumps = timeSelection->howManyTimesBefore(istop) - timeSelection->howManyTimesBefore(istart);
     
+    if( ndumps == 0 ) return 0;
+    
     // Calculate the number of scalars
     // 1 - general scalars
     vector<string> scalars = {"Ubal_norm", "Ubal", "Utot", "Uexp", "Ukin", "Urad", "UmBWpairs", "Uelm", "Ukin_bnd", "Ukin_out_mvw", "Ukin_inj_mvw", "Uelm_bnd", "Uelm_out_mvw", "Uelm_inj_mvw"};
