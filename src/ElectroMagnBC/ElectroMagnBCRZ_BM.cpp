@@ -206,8 +206,8 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		         +                    Epsilon_SM_N * (*Br2D)(i,nr_p-1);*/
 		        (*BlRZ)(i,j+1) = (*BlRZ_old)(i,j) - Alpha_BM_Rmax   * ((*BlRZ)(i,j)-(*BlRZ_old)(i,j+1))
 		        -                   Gamma_BM_Rmax*CB_BM    *( (*BrRZ)(i+1,j) + (*BrRZ_old)(i+1,j) - (*BrRZ)(i,j) - (*BrRZ_old)(i,j))
-		        -                   Beta_BM_Rmax*Icpx*(double)imode*CE_BM/((j_glob+j+1.5)*dr) *( (*ErRZ)(i,j+1)+(*ErRZ)(i,j))
-		        -                   2.*CE_BM*dt/((j_glob+j+1.5)*dr)*(*EtRZ)(i,j);
+		        -                   Beta_BM_Rmax*Icpx*(double)imode*CE_BM/((j_glob+j+0.5)*dr) *( (*ErRZ)(i,j+1)+(*ErRZ)(i,j))
+		        -                   2.*CE_BM*dt/((j_glob+j+0.5)*dr)*(*EtRZ)(i,j);
                 if (std::abs((*BlRZ)(i,j))>1.)
                 {
                 	MESSAGE("BlRZBM");                
@@ -223,9 +223,9 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		        /*(*Bt2D)(i,nr_d-1) = Alpha_SM_N * (*El2D)(i,nr_p-1)
 		         +                   Beta_SM_N  * (*Bt2D)(i,nr_d-2);*/
 		        (*BtRZ)(i,j+1) = (*BtRZ_old)(i,j)- Alpha_BM_Rmax * ((*BtRZ)(i,j) - (*BtRZ_old)(i,j+1))
-		        -                   Icpx*(double)imode*CB_BM*Beta_BM_Rmax/((j_glob+j+1.5)*dr)  *((*BrRZ)(i,j) - (*BrRZ_old)(i,j) )
+		        -                   Icpx*(double)imode*CB_BM*Beta_BM_Rmax/((j_glob+j+0.5)*dr)  *((*BrRZ)(i,j) - (*BrRZ_old)(i,j) )
 		        -                   CE_BM*Gamma_BM_Rmax*((*ErRZ)(i,j+1)+(*ErRZ)(i,j)-(*ErRZ)(i-1,j) -(*ErRZ)(i-1,j+1) )
-				-                   CB_BM* Beta_BM_Rmax/((j_glob+j+1.5)*dr +(j_glob+j+0.5)*dr)*((*BtRZ)(i,j+1) + (*BtRZ_old)(i,j+1) 				+					(*BtRZ)(i,j) + (*BtRZ_old)(i,j)) ;
+				-                   CB_BM* Beta_BM_Rmax/((j_glob+j+0.5)*dr +(j_glob+j-0.5)*dr)*((*BtRZ)(i,j+1) + (*BtRZ_old)(i,j+1) 				+					(*BtRZ)(i,j) + (*BtRZ_old)(i,j)) ;
                 if (std::abs((*BtRZ)(i,j))>1.)
                 {
                 	MESSAGE("BtRZBM");                

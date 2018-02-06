@@ -212,7 +212,7 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		    // for Br^(d,p)
 		    vector<double> yp(1);
 		    //yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dr;
-		    for (unsigned int j=3*isYmin ; j<nr_p ; j++) {
+		    for (unsigned int j=2*isYmin ; j<nr_p ; j++) {
 		        
 		        std::complex<double> byW = 0.;
 		        //yp[0] += dr;
@@ -323,7 +323,7 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		    // for Bt^(d,d)
 		    vector<double> yd(1);
 		    //yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dr;
-		    for (unsigned int j=3*isYmin ; j<nr_d ; j++) {
+		    for (unsigned int j=2*isYmin ; j<nr_d ; j++) {
 		        
 		        std::complex<double> bzE = 0.;
 		        //yd[0] += dr;

@@ -67,7 +67,8 @@ void ElectroMagnBCRZ_Axis::disableExternalFields()
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
-{
+{	return;
+	MESSAGE("IN OR OUT")
     // Loop on imode 
     for (unsigned int imode=0 ; imode< Nmode ; imode++){
 
