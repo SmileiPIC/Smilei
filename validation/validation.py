@@ -82,7 +82,7 @@ try:
 	execfile
 except:
 	def execfile(file):
-		exec(compile(open(file).read(), file, 'exec'))
+		exec(compile(open(file).read(), file, 'exec'), globals())
 
 # SMILEI PATH VARIABLES
 if "SMILEI_ROOT" in os.environ :
