@@ -1261,6 +1261,12 @@ void VectorPatch::update_field_list()
             }
         }
     }
+    if (patches_[0]->EMfields->envelope != NULL){
+        for ( unsigned int ifields = 0 ; ifields < listA_.size() ; ifields++ ) {
+            listA_ [ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
+            listA0_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
+        }
+    }
 }
 
 
