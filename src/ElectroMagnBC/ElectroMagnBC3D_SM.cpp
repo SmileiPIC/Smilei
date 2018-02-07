@@ -116,7 +116,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     Knorm = sqrt(pyKx*pyKx + pyKy*pyKy + pyKz*pyKz) ;
     kx = omega*pyKx/Knorm;
     ky = omega*pyKy/Knorm;
-    kx = omega*pyKz/Knorm;
+    kz = omega*pyKz/Knorm;
 
     factor        = 1.0 / (kx - dt_ov_dx);
     Alpha_SM_E    = 2.0                      * factor;
@@ -135,6 +135,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     kx = omega*pyKx/Knorm;
     ky = omega*pyKy/Knorm;
     kz = omega*pyKz/Knorm;
+
     factor = 1.0 / (  ky + dt_ov_dy );
     Alpha_SM_S    = 2.0                     * factor;
     Beta_SM_S     = - ( ky - dt_ov_dy) * factor;
@@ -151,6 +152,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     kx = omega*pyKx/Knorm;
     ky = omega*pyKy/Knorm;
     kz = omega*pyKz/Knorm;
+
     factor = 1.0 / ( ky - dt_ov_dy);
     Alpha_SM_N    = 2.0                     * factor;
     Beta_SM_N     = - ( ky + dt_ov_dy) * factor;
@@ -167,6 +169,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     kx = omega*pyKx/Knorm;
     ky = omega*pyKy/Knorm;
     kz = omega*pyKz/Knorm;
+
     factor = 1.0 / ( kz + dt_ov_dz);
     Alpha_SM_B    = 2.0                     * factor;
     Beta_SM_B     = - ( kz - dt_ov_dz) * factor;
@@ -183,6 +186,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     kx = omega*pyKx/Knorm;
     ky = omega*pyKy/Knorm;
     kz = omega*pyKz/Knorm;
+
     factor        = 1.0 / ( kz - dt_ov_dz);
     Alpha_SM_T    = 2.0                      * factor;
     Beta_SM_T     = - ( kz + dt_ov_dz)  * factor;
