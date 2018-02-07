@@ -49,41 +49,65 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch* patch, unsigned i
     // Parameters for the Silver-Mueller boundary conditions
     // -----------------------------------------------------
     
+    double pyKx, pyKy, pyKz;
+    double kx, ky, kz;
+    double Knorm;
+    double omega = 1. ;
     //! \todo (MG) Check optimal angle for Silver-Muller BCs
     
     // Xmin boundary
-    double theta  = params.EM_BCs_theta[0][0];
-    double factor = 1.0 / (cos(theta) + dt_ov_dx);
+    pyKx = params.EM_BCs_k[0][0];
+    pyKy = params.EM_BCs_k[0][1];
+    Knorm = sqrt(pyKx*pyKx + pyKy*pyKy ) ;
+    kx = omega*pyKx/Knorm;
+    ky = omega*pyKy/Knorm;
+
+    double factor = 1.0 / ( kx + dt_ov_dx);
     Alpha_SM_W    = 2.0                     * factor;
-    Beta_SM_W     = - (cos(theta)-dt_ov_dx) * factor;
-    Gamma_SM_W    = 4.0 * cos(theta)        * factor;
-    Delta_SM_W    = - (sin(theta)+dt_ov_dy) * factor;
-    Epsilon_SM_W  = - (sin(theta)-dt_ov_dy) * factor;
+    Beta_SM_W     = - ( kx - dt_ov_dx) * factor;
+    Gamma_SM_W    = 4.0 * kx        * factor;
+    Delta_SM_W    = - ( ky + dt_ov_dy) * factor;
+    Epsilon_SM_W  = - ( ky - dt_ov_dy) * factor;
     
     // Xmax boundary
-    theta  = params.EM_BCs_theta[0][1];
-    factor        = 1.0 / (cos(theta) - dt_ov_dx);
+    pyKx = params.EM_BCs_k[1][0];
+    pyKy = params.EM_BCs_k[1][1];
+    Knorm = sqrt(pyKx*pyKx + pyKy*pyKy ) ;
+    kx = omega*pyKx/Knorm;
+    ky = omega*pyKy/Knorm;
+
+    factor        = 1.0 / ( kx - dt_ov_dx);
     Alpha_SM_E    = 2.0                      * factor;
-    Beta_SM_E     = - (cos(theta)+dt_ov_dx)  * factor;
-    Gamma_SM_E    = 4.0 * cos(theta)         * factor;
-    Delta_SM_E    = - (sin(theta)+dt_ov_dy)  * factor;
-    Epsilon_SM_E  = - (sin(theta)-dt_ov_dy)  * factor;
+    Beta_SM_E     = - ( kx + dt_ov_dx)  * factor;
+    Gamma_SM_E    = 4.0 * kx         * factor;
+    Delta_SM_E    = - ( ky + dt_ov_dy)  * factor;
+    Epsilon_SM_E  = - ( ky - dt_ov_dy)  * factor;
     
     // Ymin boundary
-    theta  = params.EM_BCs_theta[1][0];
-    factor = 1.0 / (cos(theta) + dt_ov_dy );
+    pyKx = params.EM_BCs_k[2][0];
+    pyKy = params.EM_BCs_k[2][1];
+    Knorm = sqrt(pyKx*pyKx + pyKy*pyKy ) ;
+    kx = omega*pyKx/Knorm;
+    ky = omega*pyKy/Knorm;
+
+    factor = 1.0 / ( kx + dt_ov_dy );
     Alpha_SM_S    = 2.0                     * factor;
-    Beta_SM_S     = - (cos(theta)-dt_ov_dy) * factor;
-    Delta_SM_S    = - (sin(theta)+dt_ov_dx) * factor;
-    Epsilon_SM_S  = - (sin(theta)-dt_ov_dx) * factor;
+    Beta_SM_S     = - ( kx - dt_ov_dy) * factor;
+    Delta_SM_S    = - ( ky + dt_ov_dx) * factor;
+    Epsilon_SM_S  = - ( ky - dt_ov_dx) * factor;
     
     // Ymax boundary
-    theta  = params.EM_BCs_theta[1][1];
-    factor = 1.0 / (cos(theta) - dt_ov_dy);
+    pyKx = params.EM_BCs_k[3][0];
+    pyKy = params.EM_BCs_k[3][1];
+    Knorm = sqrt(pyKx*pyKx + pyKy*pyKy ) ;
+    kx = omega*pyKx/Knorm;
+    ky = omega*pyKy/Knorm;
+
+    factor = 1.0 / ( kx - dt_ov_dy);
     Alpha_SM_N    = 2.0                     * factor;
-    Beta_SM_N     = - (cos(theta)+dt_ov_dy) * factor;
-    Delta_SM_N    = - (sin(theta)+dt_ov_dx) * factor;
-    Epsilon_SM_N  = - (sin(theta)-dt_ov_dx) * factor;
+    Beta_SM_N     = - ( kx + dt_ov_dy) * factor;
+    Delta_SM_N    = - ( ky + dt_ov_dx) * factor;
+    Epsilon_SM_N  = - ( ky - dt_ov_dx) * factor;
 
 
     if (params.is_pxr)

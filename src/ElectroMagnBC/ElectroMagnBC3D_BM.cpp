@@ -86,9 +86,8 @@ ElectroMagnBC3D_BM::ElectroMagnBC3D_BM( Params &params, Patch* patch, unsigned i
     
      for (unsigned int idim=0; idim <3; idim++){
          for (unsigned int minmax=0; minmax <2; minmax++){
-             double theta  = params.EM_BCs_theta[idim][minmax];
-             double phi  = params.EM_BCs_phi[idim][minmax];
-             cb[idim][minmax] =  cos(theta) * cos(phi) / (1.0 + cos(theta)*cos(phi));
+             double kn  = params.EM_BCs_k[idim*2 + minmax][idim];
+             cb[idim][minmax] =  kn / (1.0 + kn );
              ce[idim][minmax] =  1. - cb[idim][minmax] ;
          }
      }
