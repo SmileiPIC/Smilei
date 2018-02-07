@@ -627,8 +627,8 @@ Field * ElectroMagn3D::createField(string fieldname)
     else if(fieldname.substr(0,2)=="Jy" ) return new Field3D(dimPrim, 1, false, fieldname);
     else if(fieldname.substr(0,2)=="Jz" ) return new Field3D(dimPrim, 2, false, fieldname);
     else if(fieldname.substr(0,3)=="Rho") return new Field3D(dimPrim, fieldname );
-    else if(fieldname.substr(0,2)=="Env_Ar" ) return new Field3D(dimPrim, 0, false, fieldname);
-    else if(fieldname.substr(0,2)=="Env_Ai" ) return new Field3D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,6)=="Env_Ar" ) return new Field3D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,6)=="Env_Ai" ) return new Field3D(dimPrim, 0, false, fieldname);
     
     ERROR("Cannot create field "<<fieldname);
     return NULL;
