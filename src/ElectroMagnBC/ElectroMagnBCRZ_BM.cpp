@@ -207,7 +207,7 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		        (*BlRZ)(i,j+1) = (*BlRZ_old)(i,j) - Alpha_BM_Rmax   * ((*BlRZ)(i,j)-(*BlRZ_old)(i,j+1))
 		        -                   Gamma_BM_Rmax*CB_BM    *( (*BrRZ)(i+1,j) + (*BrRZ_old)(i+1,j) - (*BrRZ)(i,j) - (*BrRZ_old)(i,j))
 		        -                   Beta_BM_Rmax*Icpx*(double)imode*CE_BM/((j_glob+j)*dr) *( (*ErRZ)(i,j+1)+(*ErRZ)(i,j))
-		        -                   2.*CE_BM*dt/((j_glob+j)*dr)*(*EtRZ)(i,j);
+		        -                   2.*CE_BM*Beta_BM_Rmax/((j_glob+j)*dr)*(*EtRZ)(i,j);
                 if (std::abs((*BlRZ)(i,j))>1.)
                 {
                 	MESSAGE("BlRZBM");                
@@ -219,13 +219,13 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		    
 		    // for Bt^(d,d)
 			
-		    for (unsigned int i=1 ; i<nl_d-2 ; i++) {
+		    for (unsigned int i=0 ; i<nl_d-2 ; i++) {
 		        /*(*Bt2D)(i,nr_d-1) = Alpha_SM_N * (*El2D)(i,nr_p-1)
 		         +                   Beta_SM_N  * (*Bt2D)(i,nr_d-2);*/
-		        (*BtRZ)(i,j+1) = (*BtRZ_old)(i,j)- Alpha_BM_Rmax * ((*BtRZ)(i,j) - (*BtRZ_old)(i,j+1))
-		        -                   Icpx*(double)imode*CB_BM*Beta_BM_Rmax/((j_glob+j)*dr)  *((*BrRZ)(i,j) - (*BrRZ_old)(i,j) )
-		        -                   CE_BM*Gamma_BM_Rmax*((*ErRZ)(i,j+1)+(*ErRZ)(i,j)-(*ErRZ)(i-1,j+1) -(*ErRZ)(i-1,j) )
-				-                   0.5*CB_BM* Beta_BM_Rmax*(((*BtRZ)(i,j+1) + (*BtRZ_old)(i,j+1))/((j+j_glob+0.5)*dr) 				+					((*BtRZ)(i,j) + (*BtRZ_old)(i,j)/(j+j_glob-0.5)*dr)) ;
+		        (*BtRZ)(i+1,j+1) = (*BtRZ_old)(i+1,j)- Alpha_BM_Rmax * ((*BtRZ)(i+1,j) - (*BtRZ_old)(i+1,j+1))
+		        -                   Icpx*(double)imode*CB_BM*Beta_BM_Rmax/((j_glob+j)*dr)  *((*BrRZ)(i+1,j) - (*BrRZ_old)(i+1,j) )
+		        -                   CE_BM*Gamma_BM_Rmax*((*ErRZ)(i+1,j+1)+(*ErRZ)(i+1,j)-(*ErRZ)(i,j+1) -(*ErRZ)(i,j) )
+				-                   0.5*CB_BM* Beta_BM_Rmax*(((*BtRZ)(i+1,j+1) + (*BtRZ_old)(i+1,j+1))/((j+j_glob+0.5)*dr) 				                      + ((*BtRZ)(i+1,j) + (*BtRZ_old)(i+1,j)/(j+j_glob-0.5)*dr)) ;
                 if (std::abs((*BtRZ)(i,j))>1.)
                 {
                 	MESSAGE("BtRZBM");                
