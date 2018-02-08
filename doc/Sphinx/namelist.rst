@@ -199,25 +199,16 @@ The block ``Main`` is **mandatory** and has the following syntax::
   | **Syntax 2:** ``[[bc_X], [bc_Y], ...]``, different depending on x, y or z.
   | **Syntax 3:** ``[[bc_Xmin, bc_Xmax], ...]``,  different on each boundary.
 
-  ``"silver-muller"`` is an open boundary condition. The incident wave vector :math:`k_i` on each face is defined by angles :math:`\theta` and :math:`\phi`.
-  If :math:`x_1,x_2,x_3` is a circular permutation of :math:`x,y,z` and :math:`x_1` is the direction normal to the considered face, :math:`\theta` is the :math:`\hat{x_1x_2}` angle and :math:`\phi` is the :math:`\hat{x_1x_3}` angle.
-  Note that the ``"silver-muller"`` can be used as a laser injecting boundary condition on faces Xmin and Xmax. In that case, :math:`k_i` defines the wave vector
-  of the incident laser. Note also that the optimal wave absorption on a given face will be along :math:`k_{abs} = -k_i`. 
-  
+  ``"silver-muller"`` is an open boundary condition. The incident wave vector :math:`k_i` on each face is defined by ``"EM_boundary_conditions_k"``.
+  When using ``"silver-muller"`` as an injecting boundary, make sure math:`k_i` is aligned with the wave you are injecting.
+  When using ``"silver-muller"`` as an absorbing boundary, the optimal wave absorption on a given face will be along :math:`k_{abs}` the specular ref  lection of :math:`k_i` on face `i`. 
 
-.. py:data:: EM_boundary_conditions_beta
+.. py:data:: EM_boundary_conditions_k
 
   :type: list of lists of floats
-  :default: ``[[0, math.pi]]``
+  :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]``
 
-  Beta is given in rad. Its syntax is similar to the electromagnetic boundaries.
-
-.. py:data:: EM_boundary_conditions_phi
-
-  :type: list of lists of floats
-  :default: ``[[0, 0]]``
-
-  Phi is given in rad. Its syntax is similar to the electromagnetic boundaries.
+  `k` is the incident wave vector for each faces sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax defined by its coordinates in the `xyz` referential. Refer to the corresponding boundary for a definition of `k`. By default `k` is normal to each face. If a single set of coordinates is given, the same `k` is used for all faces.
 
 .. py:data:: time_fields_frozen
 
