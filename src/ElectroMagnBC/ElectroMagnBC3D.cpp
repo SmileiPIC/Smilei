@@ -282,7 +282,6 @@ void ElectroMagnBC3D::applyBConEdges( ElectroMagn* EMfields, Patch* patch )
                    //(*By3D)(i,j,0  )   = (EMfields->S_edge[14][i] + EMfields->S_edge[19][i])/2./(1+EMfields->beta_edge[14]); 
                    (*Bz3D)(i,j+1,0  ) = 0.;
                    (*By3D)(i,j,0  )   = 0.; 
-                   if (EMfields->S_edge[14][i] != 0. || EMfields->S_edge[19][i] != 0.) std::cout << "warning source is non zero " << std::endl;
                }
            }
        }//End Ymax /Zmin edge
