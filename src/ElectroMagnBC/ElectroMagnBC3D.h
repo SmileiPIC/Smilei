@@ -18,6 +18,10 @@ public:
     
     void applyBConEdges( ElectroMagn* EMfields, Patch* patch );
 
+    //! Coefficients to handle edges
+    std::vector<double> beta_edge;
+    std::vector<std::vector<double>> S_edge;
+
 protected:
     
     //! Number of nodes on the primal grid in the x-direction
@@ -64,6 +68,8 @@ protected:
     
     //! Ratio of the spatial-step by the time-step dz/dt for 3D3V cartesian simulations
     double dz_ov_dt;
+
+
 
 };
 
