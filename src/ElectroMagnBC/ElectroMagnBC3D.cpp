@@ -308,9 +308,4 @@ void ElectroMagnBC3D::applyBConEdges( ElectroMagn* EMfields, Patch* patch )
            }
        } //End Ymax /Zmax edge
    } //End series of Ymax edges
-
-
-   for (unsigned int i=0; i< 24; i++)
-       if (EMfields->beta_edge[i] == -1.) std::cout << "warning beta " << i << std::endl;
-
 }
