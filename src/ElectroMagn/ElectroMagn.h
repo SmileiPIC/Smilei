@@ -328,6 +328,10 @@ public:
     //! from smpi is xmax
     bool isXmax;
 
+    //! Corners coefficient for BC
+    std::vector<double> beta_edge;
+    std::vector<std::vector<double>> S_edge;
+
 protected :
     
     
