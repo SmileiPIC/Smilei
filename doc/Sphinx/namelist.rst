@@ -208,7 +208,11 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :type: list of lists of floats
   :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]``
 
-  `k` is the incident wave vector for each faces sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax defined by its coordinates in the `xyz` referential. Refer to the corresponding boundary for a definition of `k`. By default `k` is normal to each face. If a single set of coordinates is given, the same `k` is used for all faces.
+  `k` is the incident wave vector for each faces sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax defined by its coordinates in the `xyz` frame.  
+  The number of coordinates is equal to the dimension of the simulation. The number of k must be equal to 1 or to the number of faces which is twice the dimension of the simulation.
+
+  | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
+  | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
 
 .. py:data:: time_fields_frozen
 

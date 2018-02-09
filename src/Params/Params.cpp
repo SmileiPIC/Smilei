@@ -558,8 +558,7 @@ void Params::compute()
     simulation_time = (double)(n_time) * timestep;
     if (simulation_time!=entered_simulation_time)
         WARNING("simulation_time has been redefined from " << entered_simulation_time
-        << " to " << simulation_time << " to match nxtimestep ("
-        << scientific << setprecision(4) << simulation_time - entered_simulation_time<< ")" );
+        << " to " << simulation_time << " to match timestep.");
 
 
     // grid/cell-related parameters
