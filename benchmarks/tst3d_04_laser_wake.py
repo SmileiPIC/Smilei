@@ -25,6 +25,7 @@ Main(
     clrw = nx/npatch_x,
     
     EM_boundary_conditions = [ ["silver-muller"] ],
+    EM_boundary_conditions_k = [ [1., 0., 0.] ],
     
     solve_poisson = False,
     print_every = 100,
