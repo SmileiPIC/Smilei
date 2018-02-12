@@ -297,7 +297,8 @@ public:
         PyTools::extract("ponderomotive_dynamics",thisSpecies->ponderomotive_dynamics ,"Species",ispec);
         if ( thisSpecies->ponderomotive_dynamics && ( params.geometry != "3Dcartesian" ) )
             ERROR( "Ponderomotive/Envelope model only available in 3D3V" );
-        if ( thisSpecies->ponderomotive_dynamics && !( params.Laser_Envelope_model) ){
+        int n_envlaser = PyTools::nComponents("LaserEnvelope");
+        if ( thisSpecies->ponderomotive_dynamics && ( n_envlaser < 1 ) ){
             MESSAGE( "No Laser Envelope is specified - Standard PIC dynamics will be used for all species" );
             thisSpecies->ponderomotive_dynamics = false;
         }
