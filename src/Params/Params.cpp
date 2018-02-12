@@ -310,11 +310,6 @@ namelist("")
     //        ERROR("Envelope_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
     }
 
-    //! Ponderomotive force
-    //PyTools::extract("ponderomotive_force", ponderomotive_force, "Main");
-    //if ( ponderomotive_force && ( geometry != "3Dcartesian" ) )
-    //    ERROR( "Ponderomotive force only available in 3D3V" );
-
 
     for (unsigned int iDim = 0 ; iDim < nDim_field; iDim++){
         if (EM_BCs[iDim][0] == "buneman" || EM_BCs[iDim][1] == "buneman"){

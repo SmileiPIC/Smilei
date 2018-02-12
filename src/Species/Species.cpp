@@ -506,7 +506,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
             // Interpolate the fields at the particle position
             (*Interp)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
-
+            
             // Ionization
             if (Ionize)
                 (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);

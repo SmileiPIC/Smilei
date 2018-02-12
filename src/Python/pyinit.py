@@ -198,7 +198,6 @@ class Main(SmileiSingleton):
     EM_boundary_conditions_theta = [[0.,math.pi]]
     Envelope_boundary_conditions = [["reflective"]]
     time_fields_frozen = 0.
-    ponderomotive_force = False
     Laser_Envelope_model = False
 
     # Default Misc
@@ -341,6 +340,7 @@ class Species(SmileiComponent):
     ionization_electrons = None
     atomic_number = None
     is_test = False
+    ponderomotive_dynamics = False
 
 class Laser(SmileiComponent):
     """Laser parameters"""

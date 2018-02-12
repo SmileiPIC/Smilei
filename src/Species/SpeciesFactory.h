@@ -294,6 +294,22 @@ public:
               thisSpecies->position_initialization_on_species=true;
         }
 
+        PyTools::extract("ponderomotive_dynamics",thisSpecies->ponderomotive_dynamics ,"Species",ispec);
+        if ( thisSpecies->ponderomotive_dynamics && ( params.geometry != "3Dcartesian" ) )
+            ERROR( "Ponderomotive/Envelope model only available in 3D3V" );
+        if ( thisSpecies->ponderomotive_dynamics && !( params.Laser_Envelope_model) ){
+            MESSAGE( "No Laser Envelope is specified - Standard PIC dynamics will be used for all species" );
+            thisSpecies->ponderomotive_dynamics = false;
+        }
+
+        if (thisSpecies->position_initialization.empty()) {
+            ERROR("For species '" << species_name << "' empty position_initialization");
+        } else if ( (thisSpecies->position_initialization!="regular"  )
+                  &&(thisSpecies->position_initialization!="random"   )
+                  &&(thisSpecies->position_initialization!="centered" )) {
+              thisSpecies->position_initialization_on_species=true;
+        }
+
         PyTools::extract("momentum_initialization",thisSpecies->momentum_initialization ,"Species",ispec);
         if ( (thisSpecies->momentum_initialization=="mj") || (thisSpecies->momentum_initialization=="maxj") ) {
             thisSpecies->momentum_initialization="maxwell-juettner";
