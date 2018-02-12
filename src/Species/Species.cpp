@@ -506,7 +506,8 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
             // Interpolate the fields at the particle position
             (*Interp)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
-            
+            // If ponderomotive_dynamics==true interpolate envelope
+
             // Ionization
             if (Ionize)
                 (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
@@ -557,6 +558,15 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                                  *particles,ibin, bmin.size(), &bmin[0], &bmax[0]);
 
             }
+
+            // If ponderomotive_dynamics==true{
+            // - project species susceptibility, exchange susceptibility
+            // - momentum advance 
+            // - solve envelope equation, exchange envelope values
+            // - time interpolation of envelope, exchange (?)
+            // - position advance}
+            // Else:{
+            // - continue as for Standard PIC loop, with the Particle pusher ...}
 
             // Push the particles and the photons
             (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
