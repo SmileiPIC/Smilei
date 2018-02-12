@@ -1,16 +1,16 @@
-dx = 0.69 #0.125
-dtrans = 11.1 #2.
-dt = 0.5
+dx = 0.69 
+dtrans = 11.1 
+dt = 0.45
 #nx = 896
 nx = 1000
 ntrans = 80
 Lx = nx * dx
 Ltrans = ntrans*dtrans
 #npatch_x = 128
-npatch_x=1
-laser_fwhm = 70.7 #19.80
-center_laser = 2*laser_fwhm #3**0.5*laser_fwhm # here is the same as wais position of laser but in principle they can differ
-
+npatch_x=8
+laser_fwhm = 70.7 
+center_laser = 2*laser_fwhm # here is the same as waist position of laser but in principle they can differ
+time_start_moving_window = Lx/2.
 
 
 Main(
@@ -19,13 +19,12 @@ Main(
     interpolation_order = 2,
 
     timestep = dt,
-    simulation_time = int(1*Lx/dt)*dt,
+    simulation_time = 7*Lx,
 
     cell_length  = [dx, dtrans, dtrans],
     grid_length = [ Lx,  Ltrans, Ltrans],
 
-    #number_of_patches = [npatch_x, 4, 4],
-    number_of_patches = [1,1,1],
+    number_of_patches = [npatch_x,4,4],
     clrw = nx/npatch_x,
 
     EM_boundary_conditions = [ ["silver-muller"] ],
@@ -39,10 +38,10 @@ Main(
     random_seed = smilei_mpi_rank
 )
 
-#MovingWindow(
-#    time_start = Main.grid_length[0],
-#    velocity_x = 0.9997
-#)
+MovingWindow(
+    time_start = time_start_moving_window,
+    velocity_x = 1.0
+)
 
 LoadBalancing(
     initial_balance = False,
@@ -88,30 +87,30 @@ Checkpoints(
 list_fields = ['Ex','Ey','Rho','Jx','Env_Ar']
 
 DiagFields(
-    every = 20,
+    every = 200,
         fields = list_fields
 )
 
-DiagProbe(
-        every = 10,
-        origin = [0., Main.grid_length[1]/2., Main.grid_length[2]/2.],
-        corners = [
-            [Main.grid_length[0], Main.grid_length[1]/2., Main.grid_length[2]/2.]
-        ],
-        number = [nx],
-        fields = ['Ex','Ey','Rho','Jx']
-)
+#DiagProbe(
+#        every = 10,
+#        origin = [0., Main.grid_length[1]/2., Main.grid_length[2]/2.],
+#        corners = [
+#            [Main.grid_length[0], Main.grid_length[1]/2., Main.grid_length[2]/2.]
+#        ],
+#        number = [nx],
+#        fields = ['Ex','Ey','Rho','Jx']
+#)
 
-DiagProbe(
-        every = 10,
-        origin = [0., Main.grid_length[1]/4., Main.grid_length[2]/2.],
-        corners = [
-            [Main.grid_length[0], Main.grid_length[1]/4., Main.grid_length[2]/2.],
-            [0., 3*Main.grid_length[1]/4., Main.grid_length[2]/2.],
-        ],
-        number = [nx, ntrans],
-        fields = ['Ex','Ey','Rho','Jx']
-)
+#DiagProbe(
+#        every = 10,
+#        origin = [0., Main.grid_length[1]/4., Main.grid_length[2]/2.],
+#        corners = [
+#            [Main.grid_length[0], Main.grid_length[1]/4., Main.grid_length[2]/2.],
+#            [0., 3*Main.grid_length[1]/4., Main.grid_length[2]/2.],
+#        ],
+#        number = [nx, ntrans],
+#        fields = ['Ex','Ey','Rho','Jx']
+#)
 
 #DiagScalar(every = 10, vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMin', 'RhoMinCell'])
 
