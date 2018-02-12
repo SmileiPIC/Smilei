@@ -71,7 +71,7 @@ This script may run anywhere: you can define a SMILEI_ROOT environment variable
 # IMPORTS
 import sys, os, re, glob, time, math
 import shutil, getopt, inspect, socket, pickle
-from subprocess import check_call,CalledProcessError,call
+from subprocess import call, check_call, check_output, CalledProcessError
 import happi
 import numpy as np
 s = os.sep
@@ -112,7 +112,6 @@ import happi
 POINCARE = "poincare"
 JOLLYJUMPER = "llrlsi-gw"
 HOSTNAME = socket.gethostname()
-MPI_DISTRIBUTION = "default"
 
 # DIR VARIABLES
 WORKDIR = ""
@@ -136,8 +135,8 @@ def usage():
 try:
 	options, remainder = getopt.getopt(
 		sys.argv[1:],
-		'o:m:b:r:gshvcd:',
-		['OMP=', 'MPI=', 'BENCH=', 'COMPILE_ONLY=', 'GENERATE=', 'HELP=', 'VERBOSE=', 'RESTARTS=','MPI_DISTRIBUTION='])
+		'o:m:b:r:gshvc',
+		['OMP=', 'MPI=', 'BENCH=', 'COMPILE_ONLY=', 'GENERATE=', 'HELP=', 'VERBOSE=', 'RESTARTS='])
 except getopt.GetoptError as err:
 	usage()
 	sys.exit(4)
@@ -152,8 +151,6 @@ for opt, arg in options:
 		MPI = int(arg)
 	elif opt in ('-b', '--BENCH'):
 		BENCH = arg
-	elif opt in ('-d', '--MPI_DISTRIBUTION'):
-		MPI_DISTRIBUTION = arg
 	elif opt in ('-c', '--COMPILEONLY'):
 		COMPILE_ONLY=True
 	elif opt in ('-h', '--HELP'):
@@ -180,13 +177,6 @@ for opt, arg in options:
 		print( "     DEFAULT : 0 (meaning no restarts, only one simulation)")
 		print( "-c")
 		print( "     Compilation only")
-		print( "-d")
-		print( "     -d <mpi_distribution>")
-		print( "      <mpi_distribution> is the name of the MPI distribution used for compilation and execution:")
-		print( "      - default: mpirun -np")
-		print( "      - openmpi: mpirun -mca btl tcp,sm,self -np")
-		print( "      It enables to tune execution parameters.")
-		print( "     DEFAULT : default")
 		print( "-v")
 		print( "     Verbose mode")
 		sys.exit(0)
@@ -417,10 +407,22 @@ elif POINCARE in HOSTNAME :
 	RUN = RUN_POINCARE
 # Local computers
 else:
+	# Determine the correct MPI command
+	mpi_version = str(check_output("mpirun --version", shell=True))
+	if re.search("Open MPI", mpi_version, re.I):
+		v = re.search("\d\d?\.\d\d?\.\d\d?", mpi_version).group() # Full version number
+		v = int(v.split(".")[0]) # Major version number
+		if v > 1:
+			MPIRUN = "mpirun --oversubscribe -np "
+		else:
+			MPIRUN = "mpirun -mca btl tcp,sm,self -np "
+	else:
+		MPIRUN = "mpirun -np "
+	
 	COMPILE_COMMAND = 'make -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
 	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
-	RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
+	RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+MPIRUN+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
 	RUN = RUN_OTHER
 
 # CLEAN
