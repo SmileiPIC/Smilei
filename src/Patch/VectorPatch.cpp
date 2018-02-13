@@ -1557,4 +1557,30 @@ void VectorPatch::check_expected_disk_usage( SmileiMPI* smpi, Params& params, Ch
     }
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
+// ---------------------------------------------------------------------------------------------------------------------
+void VectorPatch::ponderomotive_momentum_advance(Params& params,
+                           SmileiMPI* smpi,
+                           SimWindow* simWindow,
+                           double time_dual, Timers &timers, int itime)
+{
 
+    #pragma omp single
+    diag_flag = needsRhoJsNow(itime);
+
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
+                species(ipatch, ispec)->ponderomotive_momentum_update(time_dual, ispec,
+                                                 emfields(ipatch), interp(ipatch),
+                                                 params, diag_flag,
+                                                 (*this)(ipatch), smpi,
+                                                 localDiags);
+
+            } // end if condition on species
+        } // end loop on species
+    } // end loop on patches
+  
+} // END ponderomotive_momentum_advance
