@@ -280,6 +280,18 @@ int main (int argc, char* argv[])
                                 MultiphotonBreitWheelerTables,
                                 time_dual, timers, itime);
             
+            // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
+            if (params.Laser_Envelope_model){
+                //    vecPatches.deposit_susceptibility, comm susceptibility
+                //    momentum advance
+                //    solve envelope equation and comm envelope
+                vecPatches.solveEnvelope( params, simWindow, itime, time_dual, timers );
+                //    interp updated envelope
+                //    position advance
+                //    project current density for Maxwell Eqs
+             }
+
+
             // Sum densities
             vecPatches.sumDensities(params, time_dual, timers, itime, simWindow );
             

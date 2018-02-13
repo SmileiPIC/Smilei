@@ -559,15 +559,6 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
             }
 
-            // If ponderomotive_dynamics==true{
-            // - project species susceptibility, exchange susceptibility
-            // - momentum advance 
-            // - solve envelope equation, exchange envelope values
-            // - time interpolation of envelope, exchange (?)
-            // - position advance}
-            // Else:{
-            // - continue as for Standard PIC loop, with the Particle pusher ...}
-
             // Push the particles and the photons
             (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
             //particles->test_move( bmin[ibin], bmax[ibin], params );
