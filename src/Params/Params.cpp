@@ -291,25 +291,29 @@ namelist("")
             ERROR("EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
     }
     
-    //! Boundary conditions for Envelope Field
-    if( !PyTools::extract("Envelope_boundary_conditions", Env_BCs, "Main")  )
-        ERROR("Electromagnetic boundary conditions (Envelope_boundary_conditions) not defined" );
 
-    if( Env_BCs.size() == 0 ) {
-        ERROR("Envelope_boundary_conditions cannot be empty");
-    } else if( Env_BCs.size() == 1 ) {
-        while( Env_BCs.size() < nDim_field ) Env_BCs.push_back( Env_BCs[0] );
-    } else if( Env_BCs.size() != nDim_field ) {
-        ERROR("Envelope_boundary_conditions must be the same size as the number of dimensions");
+    int n_envlaser = PyTools::nComponents("LaserEnvelope");
+    if ( n_envlaser >=1 ){
+        Laser_Envelope_model = true;
+        //! Boundary conditions for Envelope Field
+        if( !PyTools::extract("Envelope_boundary_conditions", Env_BCs, "Main")  )
+            ERROR("Envelope_boundary_conditions not defined" );
+
+        if( Env_BCs.size() == 0 ) {
+            ERROR("Envelope_boundary_conditions cannot be empty");
+        } else if( Env_BCs.size() == 1 ) {
+            while( Env_BCs.size() < nDim_field ) Env_BCs.push_back( Env_BCs[0] );
+        } else if( Env_BCs.size() != nDim_field ) {
+            ERROR("Envelope_boundary_conditions must be the same size as the number of dimensions");
+         }
+
+        for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
+            if( Env_BCs[iDim].size() == 1 ) // if just one type is specified, then take the same bc type in a given dimension
+                 Env_BCs[iDim].push_back( Env_BCs[iDim][0] );
+        //    else if ( (Env_BCs[iDim][0] != Env_BCs[iDim][1]) &&  (Env_BCs[iDim][0] == "periodic" || Env_BCs[iDim][1] == "periodic") )
+        //        ERROR("Envelope_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
+        }
     }
-
-    for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
-        if( Env_BCs[iDim].size() == 1 ) // if just one type is specified, then take the same bc type in a given dimension
-            Env_BCs[iDim].push_back( Env_BCs[iDim][0] );
-    //    else if ( (Env_BCs[iDim][0] != Env_BCs[iDim][1]) &&  (Env_BCs[iDim][0] == "periodic" || Env_BCs[iDim][1] == "periodic") )
-    //        ERROR("Envelope_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
-    }
-
 
     for (unsigned int iDim = 0 ; iDim < nDim_field; iDim++){
         if (EM_BCs[iDim][0] == "buneman" || EM_BCs[iDim][1] == "buneman"){
