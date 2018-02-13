@@ -265,7 +265,14 @@ public:
                           RadiationTables &RadiationTables,
                           MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                           std::vector<Diagnostic*>& localDiags);
-    
+
+    //! Method calculating the Particle updated momentum (interpolation, momentum pusher, only particles interacting with envelope)
+    virtual void ponderomotive_momentum_update(double time_dual, unsigned int ispec,
+                           ElectroMagn* EMfields, Interpolator* Interp,
+                           Params &params, bool diag_flag,
+                           Patch* patch, SmileiMPI* smpi,
+                           std::vector<Diagnostic*>& localDiags);
+
     //! Method performing the importation of new particles
     virtual void dynamics_import_particles(double time, unsigned int ispec,
                         Params &params,

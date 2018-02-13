@@ -282,13 +282,12 @@ int main (int argc, char* argv[])
             
             // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
             if (params.Laser_Envelope_model){
-                //    vecPatches.deposit_susceptibility, comm susceptibility
-                //    momentum advance
-                //    solve envelope equation and comm envelope
-                vecPatches.solveEnvelope( params, simWindow, itime, time_dual, timers );
+                //    vecPatches.susceptibility, (including comm susceptibility)         // project source term for envelope equation
+                //    vecPatches.ponderomotive_momentum_advance                          // momentum advance for particles interacting with envelope
+                vecPatches.solveEnvelope( params, simWindow, itime, time_dual, timers ); // solve envelope equation and comm envelope
                 //    interp updated envelope
-                //    position advance
-                //    project current density for Maxwell Eqs
+                //    vecPatches.ponderomotive_position_advance  (comm particles)        // position advance for particles interacting with envelope
+                //    vecPatches.ponderomotive_part_current                              // project current density for Maxwell Eqs from particles interacting with envelope
              }
 
 
