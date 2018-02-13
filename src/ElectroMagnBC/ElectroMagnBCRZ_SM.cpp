@@ -356,9 +356,5 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		        
 		    }//j  ---end compute Bt
 		}
-		else {
-		    ERROR( "No Silver Muller along the axis" );
-		}
-
 	}
 }
