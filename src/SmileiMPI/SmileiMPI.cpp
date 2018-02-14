@@ -118,18 +118,35 @@ void SmileiMPI::init( Params& params, DomainDecomposition* domain_decomposition 
     // Initialize buffers for particles push vectorization
     //     - 1 thread push particles for a unique patch at a given time
     //     - so 1 buffer per thread
+
+    int n_envlaser = PyTools::nComponents("LaserEnvelope");
+
 #ifdef _OPENMP
     dynamics_Epart.resize(omp_get_max_threads());
     dynamics_Bpart.resize(omp_get_max_threads());
     dynamics_invgf.resize(omp_get_max_threads());
     dynamics_iold.resize(omp_get_max_threads());
     dynamics_deltaold.resize(omp_get_max_threads());
+
+    if ( n_envlaser > 0 ) {
+        dynamics_GradPHI.resize(omp_get_max_threads());
+        dynamics_GradPHIold.resize(omp_get_max_threads());
+        dynamics_PHI.resize(omp_get_max_threads());
+        dynamics_PHIold.resize(omp_get_max_threads());
+    }
 #else
     dynamics_Epart.resize(1);
     dynamics_Bpart.resize(1);
     dynamics_invgf.resize(1);
     dynamics_iold.resize(1);
     dynamics_deltaold.resize(1);
+
+    if ( n_envlaser > 0 ) {
+        dynamics_GradPHI.resize(1);
+        dynamics_GradPHIold.resize(1);
+        dynamics_PHI.resize(1);
+        dynamics_PHIold.resize(1);
+    }
 #endif
 
     // Set periodicity of the simulated problem
@@ -731,6 +748,12 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
     isend( EM->By_m, to, mpi_tag+tag, requests[tag]); tag++;
     isend( EM->Bz_m, to, mpi_tag+tag, requests[tag]); tag++;
 
+    //if laser envelope is present, send it
+    if (EM->envelope!=NULL){
+        isendComplex( EM->envelope->A_, to, mpi_tag+tag, requests[tag]); tag++;
+        isendComplex( EM->envelope->A0_, to, mpi_tag+tag, requests[tag]); tag++;
+                           }
+
     for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {
         for( unsigned int ifield=0; ifield<EM->allFields_avg[idiag].size(); ifield++) {
             isend( EM->allFields_avg[idiag][ifield], to, mpi_tag+tag, requests[tag]); tag++;
@@ -885,6 +908,11 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
     recv( EM->By_m, from, tag ); tag++;
     recv( EM->Bz_m, from, tag ); tag++;
 
+    if (EM->envelope!=NULL){
+        recvComplex( EM->envelope->A_ , from, tag ); tag++;
+        recvComplex( EM->envelope->A0_, from, tag ); tag++;
+                           }
+
     for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {
         for( unsigned int ifield=0; ifield<EM->allFields_avg[idiag].size(); ifield++) {
             recv( EM->allFields_avg[idiag][ifield], from, tag); tag++;
@@ -1024,11 +1052,26 @@ void SmileiMPI::isend(Field* field, int to, int hindex, MPI_Request& request)
 
 } // End isend ( Field )
 
+void SmileiMPI::isendComplex(Field* field, int to, int hindex, MPI_Request& request)
+{
+    cField* cf = static_cast<cField*>(field);
+    MPI_Isend( &((*cf)(0)),field->globalDims_, MPI_DOUBLE_COMPLEX, to, hindex, MPI_COMM_WORLD, &request );
+
+} // End isendComplex ( Field )
+
 
 void SmileiMPI::recv(Field* field, int from, int hindex)
 {
     MPI_Status status;
     MPI_Recv( &((*field)(0)),field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &status );
+
+} // End recv ( Field )
+
+void SmileiMPI::recvComplex(Field* field, int from, int hindex)
+{
+    MPI_Status status;
+    cField* cf = static_cast<cField*>(field);
+    MPI_Recv( &((*cf)(0)),field->globalDims_, MPI_DOUBLE_COMPLEX, from, hindex, MPI_COMM_WORLD, &status );
 
 } // End recv ( Field )
 

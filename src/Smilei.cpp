@@ -244,7 +244,7 @@ int main (int argc, char* argv[])
     // check here if we can close the python interpreter
     // ------------------------------------------------------------------------
     TITLE("Cleaning up python runtime environement");
-    params.cleanup(&smpi);
+    //params.cleanup(&smpi);
 
 /*tommaso
     // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)
@@ -280,6 +280,21 @@ int main (int argc, char* argv[])
                                 MultiphotonBreitWheelerTables,
                                 time_dual, timers, itime);
             
+            // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
+            if (params.Laser_Envelope_model){
+                //    vecPatches.susceptibility, (including comm susceptibility)         // project source term for envelope equation
+
+                vecPatches.ponderomotive_momentum_advance(params, &smpi, simWindow, 
+                                                          time_dual, timers, itime);     // momentum advance for particles interacting with envelope 
+                         
+                vecPatches.solveEnvelope( params, simWindow, itime, time_dual, timers ); // solve envelope equation and comm envelope
+
+                //    interp updated envelope
+                //    vecPatches.ponderomotive_position_advance  (comm particles)        // position advance for particles interacting with envelope
+                //    vecPatches.ponderomotive_part_current                              // project current density for Maxwell Eqs from particles interacting with envelope
+             }
+
+
             // Sum densities
             vecPatches.sumDensities(params, time_dual, timers, itime, simWindow );
             

@@ -343,6 +343,7 @@ void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime,
             // Computes A in all points
             (*this)(ipatch)->EMfields->envelope->compute(  (*this)(ipatch)->EMfields );
         }
+
         SyncVectorPatch::exchangeA( params, (*this) );
         SyncVectorPatch::finalizeexchangeA( params, (*this) );
     }
@@ -1260,6 +1261,12 @@ void VectorPatch::update_field_list()
             }
         }
     }
+    if (patches_[0]->EMfields->envelope != NULL){
+        for ( unsigned int ifields = 0 ; ifields < listA_.size() ; ifields++ ) {
+            listA_ [ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
+            listA0_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
+        }
+    }
 }
 
 
@@ -1550,4 +1557,31 @@ void VectorPatch::check_expected_disk_usage( SmileiMPI* smpi, Params& params, Ch
     }
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// For all patch, update momentum for particles interacting with envelope
+// ---------------------------------------------------------------------------------------------------------------------
+void VectorPatch::ponderomotive_momentum_advance(Params& params,
+                           SmileiMPI* smpi,
+                           SimWindow* simWindow,
+                           double time_dual, Timers &timers, int itime)
+{
 
+    #pragma omp single
+    diag_flag = needsRhoJsNow(itime);
+    
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
+                if (species(ipatch, ispec)->ponderomotive_dynamics){
+                species(ipatch, ispec)->ponderomotive_momentum_update(time_dual, ispec,
+                                                 emfields(ipatch), interp(ipatch),
+                                                 params, diag_flag,
+                                                 (*this)(ipatch), smpi,
+                                                 localDiags);
+                                                                    } // end condition on ponderomotive dynamics
+            } // end diagnostic or projection if condition on species
+        } // end loop on species
+    } // end loop on patches
+  
+} // END ponderomotive_momentum_advance

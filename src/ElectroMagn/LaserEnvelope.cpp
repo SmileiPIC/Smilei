@@ -24,42 +24,41 @@ cell_length    ( params.cell_length) ,timestep( params.timestep)
     if (!PyTools::extract_pyProfile("envelope_profile",profile,"LaserEnvelope"))
         MESSAGE("No envelope profile set !");
     profile_ = new Profile(profile, params.nDim_field+1, "envelope");
-
+    
+    // params.Laser_Envelope_model = true;
+    
     int ienvlaser = 0;
     ostringstream name("");
     name << "Laser Envelope " << endl;
     ostringstream info("");
-
-    bool  envelope_solver_read;
+    
     // Read laser envelope parameters
-    envelope_solver_read          = false; // default value
     std:: string envelope_solver  = "explicit"; // default value
-    envelope_solver_read          = PyTools::extract("envelope_solver",envelope_solver,"LaserEnvelope");
-
-    bool omega;
+    bool envelope_solver_read          = PyTools::extract("envelope_solver",envelope_solver,"LaserEnvelope");
+    
     double omega_value(0);
-
-    omega      = PyTools::extract("omega",omega_value,"LaserEnvelope");
-
+    PyTools::extract("omega",omega_value,"LaserEnvelope");
+    
     info << "\t Laser Envelope parameters: "<< endl;
     // omega
     info << "\t\t\tomega              : " << omega_value << endl;
     // envelope solver
     info << "\t\t\tenvelope solver    : " << envelope_solver << endl;
-  
+    
     // Display info
     if( patch->isMaster() ) {
         MESSAGE( info.str() );
-      }
-      
+    }
+    
     EnvBoundCond = EnvelopeBC_Factory::create(params, patch);
 }
 
-
-LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields ) :
-cell_length    ( envelope->cell_length ), timestep( envelope->timestep), EnvBoundCond (envelope->EnvBoundCond)
+// Cloning constructor
+LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields, Params& params ) :
+cell_length    ( envelope->cell_length ), timestep( envelope->timestep)
 {
-    profile_ = envelope->profile_;  
+    profile_ = envelope->profile_;
+    EnvBoundCond = EnvelopeBC_Factory::create(params, patch);  
 }
 
 
@@ -71,9 +70,9 @@ LaserEnvelope::~LaserEnvelope()
     //    profile_ = NULL;
     //}
 
-    delete A0_;
-    delete A_;
-  
+    if( A0_ ) delete A0_;
+    if( A_  ) delete A_;
+    
     int nBC = EnvBoundCond.size();
     for ( int i=0 ; i<nBC ;i++ )
         if (EnvBoundCond[i]!=NULL) delete EnvBoundCond[i];
@@ -81,7 +80,7 @@ LaserEnvelope::~LaserEnvelope()
 
 
 LaserEnvelope3D::LaserEnvelope3D( Params& params, Patch* patch, ElectroMagn* EMfields )
-    : LaserEnvelope(params, patch, EMfields)
+    : LaserEnvelope(params, patch, EMfields )
 {
     std::vector<unsigned int>  dimPrim( params.nDim_field );
     // Dimension of the primal and dual grids
@@ -100,8 +99,8 @@ LaserEnvelope3D::LaserEnvelope3D( Params& params, Patch* patch, ElectroMagn* EMf
 }
 
 
-LaserEnvelope3D::LaserEnvelope3D( LaserEnvelope *envelope, Patch* patch,ElectroMagn* EMfields )
-    : LaserEnvelope(envelope,patch,EMfields)
+LaserEnvelope3D::LaserEnvelope3D( LaserEnvelope *envelope, Patch* patch,ElectroMagn* EMfields, Params& params )
+    : LaserEnvelope(envelope,patch,EMfields,params)
 {
     A_  = new cField3D( envelope->A_->dims_  );
     A0_ = new cField3D( envelope->A0_->dims_ );
@@ -123,7 +122,7 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
     // position_time[1]: y coordinate
     // position_time[2]: z coordinate
     // t: time coordinate --> x/c for the envelope initialization
-
+    
     position[0]           = cell_length[0]*((double)(patch->getCellStartingGlobalIndex(0))+(A3D->isDual(0)?-0.5:0.));
     t                     = position[0];          // x-ct     , t=0
     t_previous_timestep   = position[0]+timestep; // x-c(t-dt), t=0
@@ -143,7 +142,7 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
             position[1] += cell_length[1];
         }
         position[0] += cell_length[0];
-	t                     = position[0];
+        t                     = position[0];
         t_previous_timestep   = position[0]+timestep;
     }
 }

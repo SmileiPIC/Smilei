@@ -304,9 +304,9 @@ public:
     std::vector< std::vector<uint64_t>*> uint64_prop;
 
 
-    //bool test_move( int iPartStart, int iPartEnd, Params& params );
-
 #ifdef __DEBUG
+    bool test_move( int iPartStart, int iPartEnd, Params& params );
+
     inline double dist2( unsigned int iPart ) {
         double dist(0.);
         for ( unsigned int iDim = 0 ; iDim < Position.size() ; iDim++ ) {

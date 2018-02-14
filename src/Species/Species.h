@@ -133,7 +133,8 @@ public:
     bool position_initialization_on_species;
     //! Index of the species where position initialization is made
     int position_initialization_on_species_index;
-
+    //! Boolean to know if species follows ponderomotive loop (laser modeled with envelope)
+    bool ponderomotive_dynamics;
     //! Pointer to the species where field-ionized electrons go
     Species *electron_species;
     //! Index of the species where field-ionized electrons go
@@ -264,7 +265,14 @@ public:
                           RadiationTables &RadiationTables,
                           MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                           std::vector<Diagnostic*>& localDiags);
-    
+
+    //! Method calculating the Particle updated momentum (interpolation, momentum pusher, only particles interacting with envelope)
+    virtual void ponderomotive_momentum_update(double time_dual, unsigned int ispec,
+                           ElectroMagn* EMfields, Interpolator* Interp,
+                           Params &params, bool diag_flag,
+                           Patch* patch, SmileiMPI* smpi,
+                           std::vector<Diagnostic*>& localDiags);
+
     //! Method performing the importation of new particles
     virtual void dynamics_import_particles(double time, unsigned int ispec,
                         Params &params,
@@ -376,7 +384,7 @@ public:
     int  createParticles(std::vector<unsigned int> n_space_to_create, Params& params, Patch * patch, int new_bin_idx);
     
     //! Method to import particles in this species while conserving the sorting among bins
-    void importParticles( Params&, Patch*, Particles&, std::vector<Diagnostic*>& );
+    virtual void importParticles( Params&, Patch*, Particles&, std::vector<Diagnostic*>& );
     
     //! Moving window boundary conditions managment
     void disableXmax();

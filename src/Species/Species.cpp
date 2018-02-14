@@ -506,7 +506,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
             // Interpolate the fields at the particle position
             (*Interp)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
-
+            
             // Ionization
             if (Ionize)
                 (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
@@ -1397,6 +1397,46 @@ vector<double> Species::maxwellJuttner(unsigned int npoints, double temperature)
 
     return energies;
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// For all particles of the species reacting to laser envelope
+//   - interpolate the fields at the particle position
+//   - calculate the new momentum
+// ---------------------------------------------------------------------------------------------------------------------
+void Species::ponderomotive_momentum_update(double time_dual, unsigned int ispec,
+                       ElectroMagn* EMfields, Interpolator* Interp,
+                       Params &params, bool diag_flag,
+                       Patch* patch, SmileiMPI* smpi,
+                       vector<Diagnostic*>& localDiags){
+
+    int ithread;
+    #ifdef _OPENMP
+        ithread = omp_get_thread_num();
+    #else
+        ithread = 0;
+    #endif
+
+    //unsigned int iPart;
+    // -------------------------------
+    // calculate the particle updated momentum
+    // -------------------------------
+    if (time_dual>time_frozen) { // moving particle
+
+        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+
+        for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
+
+            // Interpolate the fields at the particle position
+            (*Interp)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
+        
+            // Push only the particle momenta
+            (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
+            //particles->test_move( bmin[ibin], bmax[ibin], params );
+                                                                   }
+                                 }
+    else { // immobile particle      
+         }//END if time vs. time_frozen    
+} // End ponderomotive_momentum_update
 
 // Array used in the Maxwell-Juttner sampling
 const double Species::lnInvF[1000] = {

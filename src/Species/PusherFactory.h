@@ -11,6 +11,7 @@
 
 #include "Pusher.h"
 #include "PusherBoris.h"
+#include "PusherPonderomotiveBoris.h"
 #include "PusherVay.h"
 #include "PusherBorisNR.h"
 #include "PusherRRLL.h"
@@ -19,6 +20,7 @@
 
 #ifdef _VECTO
 #include "PusherBorisV.h"
+#include "PusherPonderomotiveBorisV.h"
 #endif
 
 #include "Params.h"
@@ -51,6 +53,15 @@ public:
 #ifdef _VECTO
                 else
                     Push = new PusherBorisV( params, species );
+#endif
+            }
+            else if ( species->pusher == "ponderomotiveboris" )
+            {
+                if (!params.vecto)
+                    Push = new PusherPonderomotiveBoris( params, species );
+#ifdef _VECTO
+                else
+                    Push = new PusherPonderomotiveBorisV( params, species );
 #endif
             }
             else if ( species->pusher == "borisnr" )

@@ -198,7 +198,7 @@ class Main(SmileiSingleton):
     EM_boundary_conditions_theta = [[0.,math.pi]]
     Envelope_boundary_conditions = [["reflective"]]
     time_fields_frozen = 0.
-    ponderomotive_force = False
+    Laser_Envelope_model = False
 
     # Default Misc
     reference_angular_frequency_SI = 0.
@@ -206,6 +206,9 @@ class Main(SmileiSingleton):
     random_seed = None
     print_expected_disk_usage = True
 
+    # Vectorization flag
+    vecto = False
+    
     def __init__(self, **kwargs):
         # Load all arguments to Main()
         super(Main, self).__init__(**kwargs)
@@ -337,6 +340,7 @@ class Species(SmileiComponent):
     ionization_electrons = None
     atomic_number = None
     is_test = False
+    ponderomotive_dynamics = False
 
 class Laser(SmileiComponent):
     """Laser parameters"""

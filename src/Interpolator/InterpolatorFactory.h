@@ -14,6 +14,7 @@
 #ifdef _VECTO
 #include "Interpolator2D2OrderV.h"
 #include "Interpolator3D2OrderV.h"
+#include "Interpolator3D2Order_envV.h"
 #endif
 
 #include "Params.h"
@@ -56,7 +57,7 @@ public:
                 Interp = new Interpolator3D2Order(params, patch);
 #ifdef _VECTO
             else
-                Interp = new Interpolator3D2OrderV(params, patch);
+                Interp = new Interpolator3D2Order_envV(params, patch);
 #endif
         }
         else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == 4 ) ) {

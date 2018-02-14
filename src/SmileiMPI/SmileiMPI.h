@@ -83,8 +83,10 @@ public:
     void recv (ElectroMagn* fields, int from, int hindex);
     void recv (ElectroMagn* fields, int from, int hindex, unsigned int nmodes);
     void isend(Field* field, int to  , int hindex, MPI_Request& request);
-    
+    void isendComplex(Field* field, int to  , int hindex, MPI_Request& request);
     void recv (Field* field, int from, int hindex);
+    void recvComplex (Field* field, int from, int hindex);
+    
     void isend( ProbeParticles* probe, int to  , int hindex, unsigned int );
     void recv ( ProbeParticles* probe, int from, int hindex, unsigned int );
 
@@ -146,6 +148,14 @@ public:
     //! delta_old_pos
     std::vector<std::vector<double>> dynamics_deltaold;
 
+    //! value of the grad(AA*) at itime and itime-1
+    std::vector<std::vector<double>> dynamics_GradPHI;
+    std::vector<std::vector<double>> dynamics_GradPHIold;
+    //! value of the AA* at itime and itime-1
+    std::vector<std::vector<double>> dynamics_PHI;
+    std::vector<std::vector<double>> dynamics_PHIold;
+
+
     // Resize buffers for a given number of particles
     inline void dynamics_resize(int ithread, int ndim_part, int npart ){
         dynamics_Epart[ithread].resize(3*npart);
@@ -153,6 +163,13 @@ public:
         dynamics_invgf[ithread].resize(npart);
         dynamics_iold[ithread].resize(ndim_part*npart);
         dynamics_deltaold[ithread].resize(ndim_part*npart);
+
+        if ( dynamics_GradPHI.size() > 0 ) {
+            dynamics_GradPHI[ithread].resize(3*npart);
+            dynamics_GradPHIold[ithread].resize(3*npart);
+            dynamics_PHI[ithread].resize(npart);
+            dynamics_PHIold[ithread].resize(npart);
+        }
     }
 
 

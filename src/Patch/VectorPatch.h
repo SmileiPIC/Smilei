@@ -110,6 +110,11 @@ public :
 
     void computeCharge();
 
+    //! For all patches, advance momentum of particles interacting with envelope
+    void ponderomotive_momentum_advance(Params& params,
+                                 SmileiMPI* smpi,
+                                 SimWindow* simWindow,
+                                 double time_dual, Timers &timers, int itime);
 
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
     void sumDensities(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow );
