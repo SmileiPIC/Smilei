@@ -968,15 +968,17 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag, unsigned int nmodes)
 {
     ElectroMagn3DRZ* EMRZ = static_cast<ElectroMagn3DRZ*>(EM);
     for (unsigned int imode =0; imode < nmodes; imode++){
-        recvComplex( EMRZ->Ex_ , from, tag ); tag++;
-        recvComplex( EMRZ->Ey_ , from, tag ); tag++;
-        recvComplex( EMRZ->Ez_ , from, tag ); tag++;
-        recvComplex( EMRZ->Bx_ , from, tag ); tag++;
-        recvComplex( EMRZ->By_ , from, tag ); tag++;
-        recvComplex( EMRZ->Bz_ , from, tag ); tag++;
-        recvComplex( EMRZ->Bx_m, from, tag ); tag++;
-        recvComplex( EMRZ->By_m, from, tag ); tag++;
-        recvComplex( EMRZ->Bz_m, from, tag ); tag++;
+        cout << " recv El " << imode << endl;
+        recvComplex( EMRZ->El_[imode] , from, tag ); tag++;
+        cout << " recv Er " << imode << endl;
+        recvComplex( EMRZ->Er_[imode] , from, tag ); tag++;
+        recvComplex( EMRZ->Et_[imode] , from, tag ); tag++;
+        recvComplex( EMRZ->Bl_[imode] , from, tag ); tag++;
+        recvComplex( EMRZ->Br_[imode] , from, tag ); tag++;
+        recvComplex( EMRZ->Bt_[imode] , from, tag ); tag++;
+        recvComplex( EMRZ->Bl_m[imode], from, tag ); tag++;
+        recvComplex( EMRZ->Br_m[imode], from, tag ); tag++;
+        recvComplex( EMRZ->Bt_m[imode], from, tag ); tag++;
     }
 
     for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {
