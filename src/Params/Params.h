@@ -166,8 +166,9 @@ public:
 
     //! dt for the simulation
     double timestep;
-	//! Number of modes
-	unsigned int Nmode;
+
+    //! Number of modes
+    unsigned int nmodes;
 
     //! max value for dt (due to usual FDTD CFL condition: should be moved to ElectroMagn solver (MG))
     double dtCFL;

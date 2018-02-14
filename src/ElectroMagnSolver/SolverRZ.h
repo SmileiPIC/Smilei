@@ -16,7 +16,7 @@ public:
 	nl_d = params.n_space[0]+2+2*params.oversize[0];
 	nr_p = params.n_space[1]+1+2*params.oversize[1];
 	nr_d = params.n_space[1]+2+2*params.oversize[1];
-	Nmode= params.Nmode;
+	Nmode= params.nmodes;
     dt = params.timestep;
 	dr = params.cell_length[1];
 	dt_ov_dl = params.timestep / params.cell_length[0];

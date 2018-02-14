@@ -819,6 +819,7 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
     for (unsigned int imode =0; imode < nmodes; imode++){
         cout << " isend El " << imode << endl;
         isendComplex( EMRZ->El_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
+        cout << " isend Er " << imode << endl;
         isendComplex( EMRZ->Er_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
         isendComplex( EMRZ->Et_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
         isendComplex( EMRZ->Bl_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
@@ -834,17 +835,21 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
             isend( EM->allFields_avg[idiag][ifield], to, mpi_tag+tag, requests[tag]); tag++;
         }
     }
+    cout << " isend EM step 1 " << endl;
 
     for (unsigned int antennaId=0 ; antennaId<EM->antennas.size() ; antennaId++) {
         isend( EM->antennas[antennaId].field, to, mpi_tag+tag, requests[tag] ); tag++;
     }
+    cout << " isend EM step 2 " << endl;
 
     for (unsigned int bcId=0 ; bcId<EM->emBoundCond.size() ; bcId++ ) {
+        cout << " bcId " << bcId <<  EM->emBoundCond[bcId]->vecLaser.size() << endl;
         if(! EM->emBoundCond[bcId]) continue;
 
         for (unsigned int laserId=0 ; laserId < EM->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
 
             Laser * laser = EM->emBoundCond[bcId]->vecLaser[laserId];
+            cout << " sending laser " << laserId << endl;
             if( !(laser->spacetime[0]) && !(laser->spacetime[1]) ){
                 LaserProfileSeparable* profile;
                 profile = static_cast<LaserProfileSeparable*> ( laser->profiles[0] );
@@ -855,6 +860,7 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
                 isend( profile->space_envelope, to , mpi_tag+tag, requests[tag] ); tag++;
                 isend( profile->phase, to, mpi_tag+tag, requests[tag]); tag++;
             }
+            cout << " sent laser " << laserId << endl;
         }
 
          if ( EM->extFields.size()>0 ) {
@@ -885,6 +891,7 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
          }
 
     }
+    cout << " isend EM step 3 " << endl;
 } // End isend ( ElectroMagn LRT )
 
 

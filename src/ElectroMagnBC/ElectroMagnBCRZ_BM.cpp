@@ -38,7 +38,7 @@ ElectroMagnBCRZ_BM::ElectroMagnBCRZ_BM( Params &params, Patch* patch, unsigned i
     dt_ov_dr = dt/dr;
     dr_ov_dt = 1.0/dt_ov_dr;
     //Number of modes
-	Nmode=params.Nmode;
+    Nmode=params.nmodes;
     if (min_max == 0 && patch->isXmin() ) {
         // BCs at the x-border min
         Bl_val.resize(nr_d,0.); // dual in the y-direction

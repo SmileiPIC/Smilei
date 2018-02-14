@@ -13,7 +13,7 @@ rest = 60.              # time of timestep in one optical cycle
 laser_fwhm = 19.80
 Main(
     geometry = "3drz",
-    Nmode = 2,
+    nmodes = 2,
     interpolation_order = 2 ,
     solve_poisson = False,
     cell_length = [l0/resx,20/resx],

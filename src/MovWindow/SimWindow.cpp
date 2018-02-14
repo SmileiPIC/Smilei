@@ -315,6 +315,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 
         delete  mypatch;
     }
+    cout << " delete patches completed " << endl;
 
     // SUM energy_field_lost, energy_part_lost and poynting / All threads
     #pragma omp critical
@@ -327,6 +328,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             for (unsigned int i=0 ; i< params.nDim_field ; i++) //axis 0=x, 1=y, 2=z
                 vecPatches(0)->EMfields->poynting[j][i] += poynting[j][i];
     }
+    cout << " sum energy completed " << endl;
 
 
 

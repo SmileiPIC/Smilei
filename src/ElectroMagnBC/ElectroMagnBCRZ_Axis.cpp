@@ -38,7 +38,7 @@ ElectroMagnBCRZ_Axis::ElectroMagnBCRZ_Axis( Params &params, Patch* patch, unsign
     dt_ov_dr = dt/dr;
     dr_ov_dt = 1.0/dt_ov_dr;
 	//Number of modes
-	Nmode= params.Nmode;
+	Nmode= params.nmodes;
     
    // if (min_max == 2 && patch->isYmin() ) {
         // BCs in the y-border min

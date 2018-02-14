@@ -41,7 +41,7 @@ ElectroMagnBCRZ_SM::ElectroMagnBCRZ_SM( Params &params, Patch* patch, unsigned i
     dr_ov_dt = 1.0/dt_ov_dr;
     
     //Number of modes
-	Nmode= params.Nmode;
+    Nmode= params.nmodes;
 
     if (min_max == 0 && patch->isXmin() ) {
         // BCs at the x-border min

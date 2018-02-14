@@ -180,6 +180,8 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
 
 void Patch::finalizeMPIenvironment(Params& params) {
     int nb_comms(9); // E, B, B_m : min number of comms
+    if (params.geometry == "3drz")
+        nb_comms += 9*(params.nmodes - 1);
     // if envelope is present, add A,A0 to comms
     if (params.Laser_Envelope_model){  
         nb_comms += 2;
