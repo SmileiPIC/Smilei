@@ -133,6 +133,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             //... I might have to MPI send myself to the left...
             if (mypatch->MPI_neighbor_[0][0] != MPI_PROC_NULL){
                 send_patches_.push_back(mypatch); // Stores pointers to patches to be sent later
+                cout << "send to MPI " << vecPatches_old[ipatch]->MPI_neighbor_[0][0] << " patch index " << (vecPatches_old[ipatch]->neighbor_[0][0]) << " nmessage " << nmessage << endl;
                 smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0] , (vecPatches_old[ipatch]->neighbor_[0][0]) * nmessage, params );
             }
         } else { //In case my left neighbor belongs to me:
@@ -183,6 +184,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         vecPatches.patches_[patch_to_be_created[my_thread][j]] = mypatch ;
         //Receive Patch if necessary
         if (mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL){
+            cout << "recv from MPI " << mypatch->MPI_neighbor_[0][1] << " patch index " << mypatch->hindex << " nmessage " << nmessage << endl;
             smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], (mypatch->hindex)*nmessage, params );
             patch_to_be_created[my_thread][j] = nPatches ; //Mark no needs of particles
         }
@@ -292,7 +294,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         vecPatches.lastIterationPatchesMoved = itime;
     }
 
-    cout << " update field list completed. delete size = " << delete_patches_.size() << endl;
+    //cout << " update field list completed. delete size = " << delete_patches_.size() << endl;
+    cout << " update field list completed. del size = " << delete_patches_.size() << endl;
 
     std::vector<double> poynting[2];
     poynting[0].resize(params.nDim_field,0.0);
@@ -302,11 +305,11 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     for (unsigned int j=0; j < delete_patches_.size(); j++){
         mypatch = delete_patches_[j];
 
-        if (mypatch->isXmin()) {
-            energy_field_lost += mypatch->EMfields->computeNRJ();
-            for ( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ )
-                energy_part_lost[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
-        }
+        //if (mypatch->isXmin()) {
+        //    energy_field_lost += mypatch->EMfields->computeNRJ();
+        //    for ( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ )
+        //        energy_part_lost[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
+        //}
 
         for (unsigned int j=0; j<2;j++) //directions (xmin/xmax, ymin/ymax, zmin/zmax)
             for (unsigned int i=0 ; i<params.nDim_field ; i++){ //axis 0=x, 1=y, 2=z
