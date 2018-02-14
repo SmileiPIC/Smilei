@@ -8,6 +8,7 @@
 #include "Interpolator2D2Order.h"
 #include "Interpolator2D4Order.h"
 #include "Interpolator3D2Order.h"
+#include "Interpolator3D2Order_env.h"
 #include "Interpolator3D4Order.h"
 #include "InterpolatorRZ2Order.h"
 
@@ -52,12 +53,18 @@ public:
         // ---------------
         // 3Dcartesian simulation
         // ---------------
-        else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
-            if (!params.vecto)
-                Interp = new Interpolator3D2Order(params, patch);
+         else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
+            if (!params.vecto){
+                if (!params.Laser_Envelope_model)
+                     {Interp = new Interpolator3D2Order(params, patch);    }
+                else {Interp = new Interpolator3D2Order_env(params, patch);}  // end if for envelope model
+                              } // end if condition for not vectorized version
 #ifdef _VECTO
-            else
-                Interp = new Interpolator3D2Order_envV(params, patch);
+            else              {
+                if (!params.Laser_Envelope_model)
+                     {Interp = new Interpolator3D2OrderV(params, patch);   }
+                else {Interp = new Interpolator3D2Order_envV(params, patch);} // end if for envelope model
+                              } // end if condition for vectorized version
 #endif
         }
         else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == 4 ) ) {
