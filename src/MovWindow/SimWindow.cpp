@@ -292,7 +292,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         vecPatches.lastIterationPatchesMoved = itime;
     }
 
-    cout << " update field list completed " << endl;
+    cout << " update field list completed. delete size = " << delete_patches_.size() << endl;
 
     std::vector<double> poynting[2];
     poynting[0].resize(params.nDim_field,0.0);
@@ -309,8 +309,10 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         }
 
         for (unsigned int j=0; j<2;j++) //directions (xmin/xmax, ymin/ymax, zmin/zmax)
-            for (unsigned int i=0 ; i<params.nDim_field ; i++) //axis 0=x, 1=y, 2=z
+            for (unsigned int i=0 ; i<params.nDim_field ; i++){ //axis 0=x, 1=y, 2=z
+                cout << " poynting i j " << i << " " << j << endl;
                 poynting[j][i] += mypatch->EMfields->poynting[j][i];
+            }
 
 
         delete  mypatch;
