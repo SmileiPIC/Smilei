@@ -290,8 +290,7 @@ namelist("")
         else if ( (EM_BCs[iDim][0] != EM_BCs[iDim][1]) &&  (EM_BCs[iDim][0] == "periodic" || EM_BCs[iDim][1] == "periodic") )
             ERROR("EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
     }
-    
-
+        
     int n_envlaser = PyTools::nComponents("LaserEnvelope");
     if ( n_envlaser >=1 ){
         Laser_Envelope_model = true;

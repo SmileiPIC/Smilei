@@ -27,7 +27,6 @@ cell_length    ( params.cell_length) ,timestep( params.timestep)
     
     // params.Laser_Envelope_model = true;
     
-    int ienvlaser = 0;
     ostringstream name("");
     name << "Laser Envelope " << endl;
     ostringstream info("");
@@ -141,7 +140,7 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
             }
             position[1] += cell_length[1];
         }
-        position[0] += cell_length[0];
+        position[0]          += cell_length[0];
         t                     = position[0];
         t_previous_timestep   = position[0]+timestep;
     }
@@ -155,7 +154,7 @@ LaserEnvelope3D::~LaserEnvelope3D()
 void LaserEnvelope3D::compute(ElectroMagn* EMfields)
 {
     //// solves envelope equation in lab frame:
-    //full_laplacian(a)+2ik0*(da/dz+(1/c)*da/dt)-d^2a/dt^2*(1/c^2)=kp^2 n/n0 a/gamma_ponderomotive
+    //full_laplacian(A)+2ik0*(dA/dz+(1/c)*dA/dt)-d^2A/dt^2*(1/c^2)=kp^2 n/n0 A/gamma_ponderomotive
     // where kp^2 n/n0 a/gamma_ponderomotive is gathered in charge deposition
     
     //// auxiliary quantities
