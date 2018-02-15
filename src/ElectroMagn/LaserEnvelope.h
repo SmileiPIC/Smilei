@@ -28,6 +28,16 @@ public:
     
     Field* A_;
     Field* A0_;
+
+    Field* Phi_;
+    Field* GradPhix_;
+    Field* GradPhiy_;
+    Field* GradPhiz_;
+    Field* Phiold_;
+    Field* GradPhixold_;
+    Field* GradPhiyold_;
+    Field* GradPhizold_;
+
     //! Vector of boundary-condition per side for the envelope field
     std::vector<EnvelopeBC*> EnvBoundCond;
     //EnvBoundCond = EnvelopeBC_Factory::create(params, patch);

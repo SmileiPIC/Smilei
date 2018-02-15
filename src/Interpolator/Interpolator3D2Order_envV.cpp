@@ -84,11 +84,11 @@ void Interpolator3D2Order_envV::operator() (ElectroMagn* EMfields, Particles &pa
 
     if (EMfields->envelope!=NULL) {
         for (unsigned int k=0; k<3;k++) {   
-            gradPHI   [k]= &(smpi->dynamics_GradPHI   [ithread][k*nparts]);
-            gradPHIold[k]= &(smpi->dynamics_GradPHIold[ithread][k*nparts]);
+            gradPHI   [k]= &(smpi->dynamics_GradPHIpart   [ithread][k*nparts]);
+            gradPHIold[k]= &(smpi->dynamics_GradPHIoldpart[ithread][k*nparts]);
         }
-        PHI    = &(smpi->dynamics_PHI[ithread][0]);
-        PHIold = &(smpi->dynamics_PHIold[ithread][0]);
+        PHI    = &(smpi->dynamics_PHIpart[ithread][0]);
+        PHIold = &(smpi->dynamics_PHIoldpart[ithread][0]);
 
         //AA    = static_cast<Field3D*>(EMfields->envelope->AA_);
         //AAold = static_cast<Field3D*>(EMfields->envelope->AA_old);

@@ -6,6 +6,7 @@
 #include "ElectroMagn.h"
 #include "Field3D.h"
 #include "Particles.h"
+#include "LaserEnvelope.h"
 
 using namespace std;
 
@@ -25,7 +26,7 @@ Interpolator3D2Order_env::Interpolator3D2Order_env(Params &params, Patch *patch)
 // ---------------------------------------------------------------------------------------------------------------------
 // 2nd Order Interpolation of the fields at a the particle position (3 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
-void Interpolator3D2Order_env::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc)
+void Interpolator3D2Order_env::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc, double* PHILoc, double* GradPHILoc)
 {
     // Static cast of the electromagnetic fields
     Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
@@ -34,6 +35,10 @@ void Interpolator3D2Order_env::operator() (ElectroMagn* EMfields, Particles &par
     Field3D* Bx3D = static_cast<Field3D*>(EMfields->Bx_m);
     Field3D* By3D = static_cast<Field3D*>(EMfields->By_m);
     Field3D* Bz3D = static_cast<Field3D*>(EMfields->Bz_m);
+    Field3D* Phi3D = static_cast<Field3D*>(EMfields->envelope->Phi_);
+    Field3D* GradPhix3D = static_cast<Field3D*>(EMfields->envelope->GradPhix_);
+    Field3D* GradPhiy3D = static_cast<Field3D*>(EMfields->envelope->GradPhiy_);
+    Field3D* GradPhiz3D = static_cast<Field3D*>(EMfields->envelope->GradPhiz_);
 
 
     // Normalized particle position
@@ -129,6 +134,26 @@ void Interpolator3D2Order_env::operator() (ElectroMagn* EMfields, Particles &par
     // Interpolation of Bz^(d,d,p)
     // -------------------------
     *(BLoc+2*nparts) = compute( &coeffxd_[1], &coeffyd_[1], &coeffzp_[1], Bz3D, id_, jd_, kp_);
+
+    // -------------------------
+    // Interpolation of Phi^(p,p,p)
+    // -------------------------
+    *(PHILoc+0*nparts) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], Phi3D, ip_, jp_, kp_);
+
+    // -------------------------
+    // Interpolation of GradPhix^(p,p,p)
+    // -------------------------
+    *(GradPHILoc+0*nparts) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], GradPhix3D, ip_, jp_, kp_);
+
+    // -------------------------
+    // Interpolation of GradPhiy^(p,p,p)
+    // -------------------------
+    *(GradPHILoc+1*nparts) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], GradPhiy3D, ip_, jp_, kp_);
+   
+    // -------------------------
+    // Interpolation of GradPhiz^(p,p,p)
+    // -------------------------
+    *(GradPHILoc+2*nparts) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], GradPhiz3D, ip_, jp_, kp_);
 
 } // END Interpolator3D2Order
 
@@ -271,16 +296,21 @@ void Interpolator3D2Order_env::operator() (ElectroMagn* EMfields, Particles &par
 
 void Interpolator3D2Order_env::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread)
 {
-    std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
-    std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
-    std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
-    std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
+    std::vector<double> *Epart          = &(smpi->dynamics_Epart[ithread]);
+    std::vector<double> *Bpart          = &(smpi->dynamics_Bpart[ithread]);
+    std::vector<double> *PHIpart        = &(smpi->dynamics_PHIpart[ithread]);
+    //std::vector<double> *PHIoldpart     = &(smpi->dynamics_PHIoldpart[ithread]);
+    std::vector<double> *GradPHIpart    = &(smpi->dynamics_GradPHIpart[ithread]);
+    //std::vector<double> *GradPHIoldpart = &(smpi->dynamics_GradPHIoldpart[ithread]);
+
+    std::vector<int> *iold              = &(smpi->dynamics_iold[ithread]);
+    std::vector<double> *delta          = &(smpi->dynamics_deltaold[ithread]);
 
     //Loop on bin particles
     int nparts( particles.size() );
     for (int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
-        (*this)(EMfields, particles, ipart, nparts, &(*Epart)[ipart], &(*Bpart)[ipart]);
+        (*this)(EMfields, particles, ipart, nparts, &(*Epart)[ipart], &(*Bpart)[ipart], &(*PHIpart)[ipart], &(*GradPHIpart)[ipart]);
         //Buffering of iol and delta
         (*iold)[ipart+0*nparts]  = ip_;
         (*iold)[ipart+1*nparts]  = jp_;
@@ -297,19 +327,19 @@ void Interpolator3D2Order_env::operator() (ElectroMagn* EMfields, Particles &par
 void Interpolator3D2Order_env::operator() (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
 {
     if( selection ) {
-        
+
         int nsel_tot = selection->size();
         for (int isel=0 ; isel<nsel_tot; isel++ ) {
             (*this)(EMfields, particles, (*selection)[isel], offset, buffer+isel, buffer+isel+3*offset);
         }
-        
+
     } else {
-        
+
         int npart_tot = particles.size();
         for (int ipart=0 ; ipart<npart_tot; ipart++ ) {
             (*this)(EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset);
         }
-        
+
     }
 }
 
