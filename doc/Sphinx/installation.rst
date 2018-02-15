@@ -93,7 +93,6 @@ This installation procedure has been tested on OS X 10.12
 
    .. code-block:: bash
 
-     brew tap homebrew/science
      brew install gcc
      brew install openmpi --with-mpi-thread-multiple
      brew install hdf5 --with-mpi     
