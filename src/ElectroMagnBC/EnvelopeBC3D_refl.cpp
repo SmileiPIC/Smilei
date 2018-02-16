@@ -42,7 +42,8 @@ void EnvelopeBC3D_refl::apply(LaserEnvelope* envelope, double time_dual, Patch* 
 {
   
     // Static cast of the field    
-    cField3D* A3D = static_cast<cField3D*>(envelope->A_);
+    cField3D* A3D   = static_cast<cField3D*>(envelope->A_);
+    Field3D*  Phi3D = static_cast<cField3D*>(envelope->Phi_);
   
     // APPLICATION OF BCs OVER THE FULL GHOST CELL REGION
   
@@ -53,7 +54,8 @@ void EnvelopeBC3D_refl::apply(LaserEnvelope* envelope, double time_dual, Patch* 
         for (unsigned int i=oversize_; i>0; i--) {
             for (unsigned int j=0 ; j<ny_p ; j++) {
                 for (unsigned int k=0 ; k<nz_p ; k++) {
-                  (*A3D)(i-1,j,k) = (*A3D)(i,j,k);
+                  (*A3D)  (i-1,j,k) = (*A3D)  (i,j,k);
+                  (*Phi3D)(i-1,j,k) = (*Phi3D)(i,j,k);
                 }//k
             }//j
         }//i
@@ -66,7 +68,8 @@ void EnvelopeBC3D_refl::apply(LaserEnvelope* envelope, double time_dual, Patch* 
         for (unsigned int i=nx_p-oversize_; i<nx_p; i++) {
             for (unsigned int j=0 ; j<ny_p ; j++) {
                 for (unsigned int k=0 ; k<nz_p ; k++) {
-                  (*A3D)(i,j,k) = (*A3D)(i-1,j,k);
+                  (*A3D)  (i,j,k) = (*A3D)  (i-1,j,k);
+                  (*Phi3D)(i,j,k) = (*Phi3D)(i-1,j,k);
                 }//k
             }//j
         }//i
@@ -79,7 +82,8 @@ void EnvelopeBC3D_refl::apply(LaserEnvelope* envelope, double time_dual, Patch* 
         for (unsigned int i=0; i<nx_p; i++) {
             for (unsigned int j=oversize_ ; j>0 ; j--) {
                 for (unsigned int k=0; k<nz_p; k++) {
-                  (*A3D)(i,j-1,k) = (*A3D)(i,j,k);
+                  (*A3D)  (i,j-1,k) = (*A3D)  (i,j,k);
+                  (*Phi3D)(i,j-1,k) = (*Phi3D)(i,j,k);
                 }//k
             }//j
         }//i
@@ -92,7 +96,8 @@ void EnvelopeBC3D_refl::apply(LaserEnvelope* envelope, double time_dual, Patch* 
         for (unsigned int i=0; i<nx_p; i++) {
             for (unsigned int j=ny_p-oversize_; j<ny_p ; j++) {
                 for (unsigned int k=0; k<nz_p; k++) {
-                  (*A3D)(i,j,k) = (*A3D)(i,j-1,k);
+                  (*A3D)  (i,j,k) = (*A3D)  (i,j-1,k);
+                  (*Phi3D)(i,j,k) = (*Phi3D)(i,j-1,k);
                 }//k
             }//j
         }//i
@@ -105,7 +110,8 @@ void EnvelopeBC3D_refl::apply(LaserEnvelope* envelope, double time_dual, Patch* 
         for (unsigned int i=0; i<nx_p; i++) {
             for (unsigned int j=0; j<ny_p; j++) {
                 for (unsigned int k=oversize_; k>0; k--){
-                  (*A3D)(i,j,k-1) = (*A3D)(i,j,k);
+                  (*A3D)  (i,j,k-1) = (*A3D)  (i,j,k);
+                  (*Phi3D)(i,j,k-1) = (*Phi3D)(i,j,k);
                 }//k
             }//j
         }//i
@@ -118,7 +124,8 @@ void EnvelopeBC3D_refl::apply(LaserEnvelope* envelope, double time_dual, Patch* 
         for (unsigned int i=0; i<nx_p; i++) {
             for (unsigned int j=0; j<ny_p; j++) {
                 for (unsigned int k=nz_p-oversize_; k<nz_p; k++) {
-                  (*A3D)(i,j,k) = (*A3D)(i,j,k-1);
+                  (*A3D)  (i,j,k) = (*A3D)  (i,j,k-1);
+                  (*Phi3D)(i,j,k) = (*Phi3D)(i,j,k-1);
                 }//z
             }//j
         }//i

@@ -166,6 +166,14 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
     vector<double> position(3,0);
     double t;
     double t_previous_timestep;
+
+    //! 1/(2dx), where dx is the spatial step dx for 3D3V cartesian simulations
+    double one_ov_2dx=1./2./cell_length[0];
+    //! 1/(2dy), where dy is the spatial step dy for 3D3V cartesian simulations
+    double one_ov_2dy=1./2./cell_length[1];
+    //! 1/(2dz), where dz is the spatial step dz for 3D3V cartesian simulations
+    double one_ov_2dz=1./2./cell_length[2];
+
     // position_time[0]: x coordinate
     // position_time[1]: y coordinate
     // position_time[2]: z coordinate
@@ -204,14 +212,14 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
         for (unsigned int j=1 ; j<A_->dims_[1]-1 ; j++) { // y loop
             for (unsigned int k=1 ; k<A_->dims_[2]-1 ; k++) { // z loop
                 // gradient in x direction
-                (*GradPhix3D)   (i,j,k) = ( (*Phi3D)   (i+1,j  ,k  )-(*Phi3D)   (i-1,j  ,k  ) ) / 2. / cell_length[0];
-                (*GradPhixold3D)(i,j,k) = ( (*Phiold3D)(i+1,j  ,k  )-(*Phiold3D)(i-1,j  ,k  ) ) / 2. / cell_length[0];
+                (*GradPhix3D)   (i,j,k) = ( (*Phi3D)   (i+1,j  ,k  )-(*Phi3D)   (i-1,j  ,k  ) ) * one_ov_2dx;
+                (*GradPhixold3D)(i,j,k) = ( (*Phiold3D)(i+1,j  ,k  )-(*Phiold3D)(i-1,j  ,k  ) ) * one_ov_2dx;
                 // gradient in y direction
-                (*GradPhiy3D)   (i,j,k) = ( (*Phi3D)   (i  ,j+1,k  )-(*Phi3D)   (i  ,j-1,k  ) ) / 2. / cell_length[1];
-                (*GradPhiyold3D)(i,j,k) = ( (*Phiold3D)(i  ,j+1,k  )-(*Phiold3D)(i  ,j-1,k  ) ) / 2. / cell_length[1];
+                (*GradPhiy3D)   (i,j,k) = ( (*Phi3D)   (i  ,j+1,k  )-(*Phi3D)   (i  ,j-1,k  ) ) * one_ov_2dy;
+                (*GradPhiyold3D)(i,j,k) = ( (*Phiold3D)(i  ,j+1,k  )-(*Phiold3D)(i  ,j-1,k  ) ) * one_ov_2dy;
                 // gradient in z direction
-                (*GradPhiz3D)   (i,j,k) = ( (*Phi3D)   (i  ,j  ,k+1)-(*Phi3D)   (i  ,j  ,k-1) ) / 2. / cell_length[2];
-                (*GradPhizold3D)(i,j,k) = ( (*Phiold3D)(i  ,j  ,k+1)-(*Phiold3D)(i  ,j  ,k-1) ) / 2. / cell_length[2];    
+                (*GradPhiz3D)   (i,j,k) = ( (*Phi3D)   (i  ,j  ,k+1)-(*Phi3D)   (i  ,j  ,k-1) ) * one_ov_2dz;
+                (*GradPhizold3D)(i,j,k) = ( (*Phiold3D)(i  ,j  ,k+1)-(*Phiold3D)(i  ,j  ,k-1) ) * one_ov_2dz; 
             }  // end z loop
         } // end y loop
     } // end x loop
@@ -252,8 +260,8 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
     double one_ov_2dz=1./2./cell_length[2];
 
     //->rho_e- ???;
-    cField3D* A3D = static_cast<cField3D*>(A_);   // the envelope at timestep n
-    cField3D* A03D = static_cast<cField3D*>(A0_); // the envelope at timestep n-1
+    cField3D* A3D     = static_cast<cField3D*>(A_);   // the envelope at timestep n
+    cField3D* A03D    = static_cast<cField3D*>(A0_); // the envelope at timestep n-1
     Field3D* Env_Ar3D = static_cast<Field3D*>(EMfields->Env_Ar_); // field for temporary diagnostic
     // Field3D* Env_Ai3D = static_cast<Field3D*>(EMfields->Env_Ai_); // field for temporary diagnostic
 
