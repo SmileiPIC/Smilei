@@ -27,6 +27,8 @@ class InterpolatorFactory {
 public:
     static Interpolator* create(Params& params, Patch *patch) {
         Interpolator* Interp = NULL;
+        Interpolator* Interp_envelope = NULL;
+
         // ---------------
         // 1Dcartesian simulation
         // ---------------
@@ -57,13 +59,15 @@ public:
             if (!params.vecto){
                 if (!params.Laser_Envelope_model)
                      {Interp = new Interpolator3D2Order(params, patch);    }
-                else {Interp = new Interpolator3D2Order_env(params, patch);}  // end if for envelope model
+                else {Interp = new Interpolator3D2Order(params, patch);
+                      Interp_envelope = new Interpolator3D2Order_env(params, patch);}  // end if for envelope model
                               } // end if condition for not vectorized version
 #ifdef _VECTO
             else              {
                 if (!params.Laser_Envelope_model)
                      {Interp = new Interpolator3D2OrderV(params, patch);   }
-                else {Interp = new Interpolator3D2Order_envV(params, patch);} // end if for envelope model
+                else {Interp = new Interpolator3D2OrderV(params, patch);
+                      Interp_envelope = new Interpolator3D2Order_envV(params, patch);} // end if for envelope model
                               } // end if condition for vectorized version
 #endif
         }
