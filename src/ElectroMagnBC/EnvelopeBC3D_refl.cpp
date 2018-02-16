@@ -43,7 +43,7 @@ void EnvelopeBC3D_refl::apply(LaserEnvelope* envelope, double time_dual, Patch* 
   
     // Static cast of the field    
     cField3D* A3D   = static_cast<cField3D*>(envelope->A_);
-    Field3D*  Phi3D = static_cast<cField3D*>(envelope->Phi_);
+    Field3D*  Phi3D = static_cast<Field3D*>(envelope->Phi_);
   
     // APPLICATION OF BCs OVER THE FULL GHOST CELL REGION
   
