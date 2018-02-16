@@ -125,25 +125,29 @@ void VectorPatch::dynamics(Params& params,
         (*this)(ipatch)->EMfields->restartRhoJ();
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
-                species(ipatch, ispec)->dynamics(time_dual, ispec,
-                                                 emfields(ipatch), interp(ipatch), proj(ipatch),
-                                                 params, diag_flag, partwalls(ipatch),
-                                                 (*this)(ipatch), smpi,
-                                                 RadiationTables,
-                                                 MultiphotonBreitWheelerTables,
-                                                 localDiags);
-            }
-        }
+                if (!(*this)(ipatch)->vecSpecies[ispec]->ponderomotive_dynamics){
+                    species(ipatch, ispec)->dynamics(time_dual, ispec,
+                                                     emfields(ipatch), interp(ipatch), proj(ipatch),
+                                                     params, diag_flag, partwalls(ipatch),
+                                                     (*this)(ipatch), smpi,
+                                                     RadiationTables,
+                                                     MultiphotonBreitWheelerTables,
+                                                     localDiags);
+                } // end if condition on envelope dynamics
+            } // end if condition on species
+        } // end loop on species
+    } // end loop on patches
 
-    }
     timers.particles.update( params.printNow( itime ) );
 
     timers.syncPart.restart();
     for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
-        if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-            SyncVectorPatch::exchangeParticles((*this), ispec, params, smpi, timers, itime ); // Included sort_part
-        }
-    }
+        if (!(*this)(0)->vecSpecies[ispec]->ponderomotive_dynamics){
+            if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
+                SyncVectorPatch::exchangeParticles((*this), ispec, params, smpi, timers, itime ); // Included sort_part
+            } // end condition on species
+        } // end condition on envelope dynamics
+    } // end loop on species
     timers.syncPart.update( params.printNow( itime ) );
 
 } // END dynamics
