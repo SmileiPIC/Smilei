@@ -36,7 +36,7 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, VectorP
     for( unsigned int i=0; i<3; i++) {
         findSubgridIntersection(
             subgrid_start[i], subgrid_stop[i], subgrid_step[i],
-            0, patch_size[i]+1,
+            subgrid_start[i], subgrid_start[i]+patch_size[i]+1,
             istart_in_patch[i], istart_in_file[i], nsteps[i]
         );
     }
