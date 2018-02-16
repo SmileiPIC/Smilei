@@ -72,7 +72,10 @@ public:
 #endif
         }
         else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == 4 ) ) {
-            Interp = new Interpolator3D4Order(params, patch);
+            if (!params.Laser_Envelope_model)
+                 {Interp = new Interpolator3D4Order(params, patch);}
+            else {Interp = new Interpolator3D4Order(params, patch);
+                  Interp_envelope = new Interpolator3D2Order_env(params, patch);} // end if for envelope model
         }
         // ---------------
         // 3dRZ simulation
