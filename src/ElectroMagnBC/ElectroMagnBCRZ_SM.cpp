@@ -216,22 +216,22 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		        
 		        std::complex<double> byW = 0.;
 		        //yp[0] += dr;
-				yp[0] = patch->getDomainLocalMin(1) -( EMfields->oversize[1]-j)*dr;
+			yp[0] = patch->getDomainLocalMin(1) +( j - EMfields->oversize[1])*dr;
 		        if (imode==1){
 		        // Lasers
 		        	for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-		            	byW += vecLaser[ilaser]->getAmplitude0(yp, time_dual, j, 0)
-							+Icpx*vecLaser[ilaser]->getAmplitude1(yp, time_dual, j, 0);
+		            	byW +=          vecLaser[ilaser]->getAmplitude0(yp, time_dual, 1+2*j, 0)
+				       + Icpx * vecLaser[ilaser]->getAmplitude1(yp, time_dual, 1+2*j, 0);
 						//if (std::abs(byW)>1.0){						
 						//MESSAGE("byW");
 						//MESSAGE(byW);
 						//MESSAGE("j");
 						//MESSAGE(j);}
 		        	}
-				}
+                        }
 
 		        //x= Xmin
-				unsigned int i=0;
+			unsigned int i=0;
 		        (*BrRZ)(i,j) = Alpha_SM_Xmin   * (*EtRZ)(i,j)
 		        +              Beta_SM_Xmin    * (*BrRZ)(i+1,j)
 		        +              Gamma_SM_Xmin   * byW;
@@ -246,27 +246,24 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		    
 		    // for Bt^(d,d)
 		    vector<double> yd(1);
-		    //yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dr;
-			//MESSAGE(yd[0]);
 		    for (unsigned int j=2*isYmin ; j<nr_d ; j++) {
 		        
 		        std::complex<double> bzW = 0.;
-		        //yd[0] += dr;
-		        yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1]-j)*dr;
-				if (imode==1){
+		        yd[0] = patch->getDomainLocalMin(1) + ( j - 0.5 - EMfields->oversize[1] )*dr;
+			if (imode==1){
 		        // Lasers
 		        	for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-		            	bzW += vecLaser[ilaser]->getAmplitude1(yd, time_dual, j, 0)
-							-Icpx*vecLaser[ilaser]->getAmplitude0(yd, time_dual, j, 0);
+		            	bzW +=          vecLaser[ilaser]->getAmplitude1(yd, time_dual, 2*j, 0)
+				       - Icpx * vecLaser[ilaser]->getAmplitude0(yd, time_dual, 2*j, 0);
 						//if (std::abs(bzW)>1.0){						
 						//	MESSAGE("bzW");
 						//	MESSAGE(bzW);
 						//	MESSAGE("j");
 						//	MESSAGE(j);}
 		        	}
-				}
+			}
 		        //x=Xmin
-				unsigned int i=0;
+			unsigned int i=0;
 		        (*BtRZ)(i,j) = -Alpha_SM_Xmin * (*ErRZ)(i,j)
 		        +               Beta_SM_Xmin  *( (*BtRZ)(i+1,j))
 		        +               Gamma_SM_Xmin * bzW
@@ -287,26 +284,24 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 			//MESSAGE("Xmax");
 		    // for Br^(d,p)
 		    vector<double> yp(1);
-		    //yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dr;
 		    for (unsigned int j=2*isYmin ; j<nr_p ; j++) {
 		        
 		        std::complex<double> byE = 0.;
-		        //yp[0] += dr;
-		        yp[0] = patch->getDomainLocalMin(1) -( EMfields->oversize[1]-j)*dr;
+		        yp[0] = patch->getDomainLocalMin(1) + ( j - EMfields->oversize[1] )*dr;
 		        // Lasers
-				if (imode==1){
+			if (imode==1){
 		        // Lasers
-		        	for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-		            	byE += vecLaser[ilaser]->getAmplitude0(yp, time_dual, j, 0)
-							+Icpx*vecLaser[ilaser]->getAmplitude1(yp, time_dual, j, 0);
+		            for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
+		            	byE +=          vecLaser[ilaser]->getAmplitude0(yp, time_dual, 1+2*j, 0)
+				       + Icpx * vecLaser[ilaser]->getAmplitude1(yp, time_dual, 1+2*j, 0);
 						//if (std::abs(byE)>1.0){						
 						//MESSAGE("byE");
 						//MESSAGE(byE);
 						//MESSAGE("j");
 						//MESSAGE(j);}
-		        	}
-				}
-				unsigned int i= nl_d-1;
+		            }
+			}
+			unsigned int i= nl_d-1;
 		        (*BrRZ)(i,j) = - Alpha_SM_Xmax   * (*EtRZ)(i-1,j)
 		         +                   Beta_SM_Xmax    * (*BrRZ)(i-1,j)
 		         +                   Gamma_SM_Xmax   * byE
@@ -322,27 +317,24 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		    
 		    // for Bt^(d,d)
 		    vector<double> yd(1);
-		    //yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dr;
 		    for (unsigned int j=2*isYmin ; j<nr_d ; j++) {
 		        
 		        std::complex<double> bzE = 0.;
-		        //yd[0] += dr;
-				yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1]-j)*dr;
-		        unsigned int i= nl_d-1;
+			yd[0] = patch->getDomainLocalMin(1) + ( j - 0.5  - EMfields->oversize[1])*dr;
 		        // Lasers
-				if (imode==1){
+			if (imode==1){
 		        // Lasers
 		        	for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-		            	bzE += vecLaser[ilaser]->getAmplitude1(yd, time_dual, j, 0)
-							-Icpx*vecLaser[ilaser]->getAmplitude0(yd, time_dual, j, 0);
+		            	    bzE +=         vecLaser[ilaser]->getAmplitude1(yd, time_dual, 2*j, 0)
+					   -Icpx * vecLaser[ilaser]->getAmplitude0(yd, time_dual, 2*j, 0);
 						//if (std::abs(bzE)>1.0){						
 						//MESSAGE("bzE");
 						//MESSAGE(bzE);
 						//MESSAGE("j");
 						//MESSAGE(j);}	        	
-					}
 				}
-		        
+			}
+		        unsigned int i= nl_d-1;
 		        (*BtRZ)(i,j) = Alpha_SM_Xmax * (*ErRZ)(i-1,j)
 		         +                    Beta_SM_Xmax  * (*BtRZ)(i-1,j)
 		         +                    Gamma_SM_Xmax * bzE
