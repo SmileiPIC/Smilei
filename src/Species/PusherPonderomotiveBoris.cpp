@@ -39,6 +39,7 @@ void PusherPonderomotiveBoris::operator() (Particles &particles, SmileiMPI* smpi
     double pxsm, pysm, pzsm;
     double local_invgf;
     double inv_gamma0,inv_gamma_ponderomotive;
+    double charge_over_mass_sq;
 
     double* momentum[3];
     for ( int i = 0 ; i<3 ; i++ )
@@ -61,13 +62,14 @@ void PusherPonderomotiveBoris::operator() (Particles &particles, SmileiMPI* smpi
     #pragma omp simd
     for (int ipart=istart ; ipart<iend; ipart++ ) {
 
-        charge_over_mass_dts2 = (double)(charge[ipart])*one_over_mass_*dts2;
+        charge_over_mass_dts2    = (double)(charge[ipart])*one_over_mass_*dts2;
         // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
         charge_sq_over_mass_dts4 = (double)(charge[ipart])*(double)(charge[ipart])*one_over_mass_*dts4;         
-
+        // (charge over mass)^2
+        charge_over_mass_sq      = (double)(charge[ipart])*one_over_mass_*(charge[ipart])*one_over_mass_;
 
         // compute initial ponderomotive gamma (more precisely, its inverse) 
-        inv_gamma0 = 1./sqrt( 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + *(Phi+ipart) );
+        inv_gamma0 = 1./sqrt( 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + *(Phi+ipart)*charge_over_mass_sq );
 
         // electric field + ponderomotive force for ponderomotive gamma advance
         pxsm = charge_over_mass_dts2*(*(Ex+ipart)) - charge_sq_over_mass_dts4*(*(GradPhix+ipart)) * inv_gamma0 ;
@@ -76,7 +78,6 @@ void PusherPonderomotiveBoris::operator() (Particles &particles, SmileiMPI* smpi
 
         // update of gamma ponderomotive (more precisely, the inverse)
         inv_gamma_ponderomotive = 1./( 1./inv_gamma0 + (pxsm*momentum[0][ipart]+pysm*momentum[1][ipart]+pzsm*momentum[2][ipart])/2. );
-        //inv_gamma_ponderomotive = 1./( 1./inv_gamma0 + (pxsm+pysm+pzsm)/2. );
 
         // init Half-acceleration in the electric field and ponderomotive force 
         pxsm = charge_over_mass_dts2*(*(Ex+ipart)) - charge_sq_over_mass_dts4*(*(GradPhix+ipart)) * inv_gamma_ponderomotive ;

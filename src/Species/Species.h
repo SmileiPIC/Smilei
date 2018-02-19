@@ -226,9 +226,11 @@ public:
     //! Boundary condition for the Particles of the considered Species
     PartBoundCond* partBoundCond;
     
-    //! Particles pusher (change momentum & change position)
+    //! Particles pusher (change momentum & change position, only momentum in case envelope model is used)
     Pusher* Push;
     
+    //! Particles position pusher (change change position)
+    Pusher* Push_ponderomotive_position = NULL;
     
     // -----------------------------------------------------------------------------
     //  5. Methods
@@ -268,7 +270,7 @@ public:
 
     //! Method calculating the Particle updated momentum (interpolation, momentum pusher, only particles interacting with envelope)
     virtual void ponderomotive_momentum_update(double time_dual, unsigned int ispec,
-                           ElectroMagn* EMfields, Interpolator* Interp,
+                           ElectroMagn* EMfields, Interpolator* Interp_envelope,
                            Params &params, bool diag_flag,
                            Patch* patch, SmileiMPI* smpi,
                            std::vector<Diagnostic*>& localDiags);
