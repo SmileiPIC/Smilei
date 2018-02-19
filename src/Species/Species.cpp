@@ -137,6 +137,9 @@ void Species::initOperators(Params& params, Patch* patch)
 {
     // assign the correct Pusher to Push
     Push = PusherFactory::create(params, this);
+    if (this->ponderomotive_dynamics){
+        Push_ponderomotive_position = PusherFactory::create_ponderomotive_position_updater(params, this);
+    }
 
     // Assign the Ionization model (if needed) to Ionize
     //  Needs to be placed after createParticles() because requires the knowledge of max_charge
