@@ -1585,7 +1585,7 @@ void VectorPatch::ponderomotive_momentum_advance(Params& params,
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 if (species(ipatch, ispec)->ponderomotive_dynamics){
                 species(ipatch, ispec)->ponderomotive_momentum_update(time_dual, ispec,
-                                                 emfields(ipatch), interp(ipatch),
+                                                 emfields(ipatch), interp_envelope(ipatch),
                                                  params, diag_flag,
                                                  (*this)(ipatch), smpi,
                                                  localDiags);

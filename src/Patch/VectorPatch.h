@@ -276,6 +276,10 @@ public :
         return (*this)(ipatch)->Interp;
     }
 
+    inline Interpolator* interp_envelope(int ipatch){
+        return (*this)(ipatch)->Interp_envelope;
+    }
+
     inline Projector* proj(int ipatch){
         return (*this)(ipatch)->Proj;
     }

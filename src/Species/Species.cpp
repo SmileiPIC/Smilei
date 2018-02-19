@@ -1404,7 +1404,7 @@ vector<double> Species::maxwellJuttner(unsigned int npoints, double temperature)
 //   - calculate the new momentum
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::ponderomotive_momentum_update(double time_dual, unsigned int ispec,
-                       ElectroMagn* EMfields, Interpolator* Interp,
+                       ElectroMagn* EMfields, Interpolator* Interp_envelope,
                        Params &params, bool diag_flag,
                        Patch* patch, SmileiMPI* smpi,
                        vector<Diagnostic*>& localDiags){
@@ -1427,7 +1427,7 @@ void Species::ponderomotive_momentum_update(double time_dual, unsigned int ispec
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
             // Interpolate the fields at the particle position
-            (*Interp)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
+            (*Interp_envelope)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
         
             // Push only the particle momenta
             (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
