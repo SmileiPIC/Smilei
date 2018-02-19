@@ -115,6 +115,11 @@ public :
                                  SmileiMPI* smpi,
                                  SimWindow* simWindow,
                                  double time_dual, Timers &timers, int itime);
+    //! For all patches, advance position of particles interacting with envelope, comm particles
+    void ponderomotive_position_advance(Params& params,
+                                 SmileiMPI* smpi,
+                                 SimWindow* simWindow,
+                                 double time_dual, Timers &timers, int itime);
 
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
     void sumDensities(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow );

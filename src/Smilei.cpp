@@ -293,7 +293,8 @@ int main (int argc, char* argv[])
                 vecPatches.solveEnvelope( params, simWindow, itime, time_dual, timers ); // solve envelope equation and comm envelope
 
                 //    interp updated envelope for position advance
-                //    vecPatches.ponderomotive_position_advance  (comm particles)        // position advance for particles interacting with envelope
+                vecPatches.ponderomotive_position_advance(params, &smpi, simWindow, 
+                                                          time_dual, timers, itime);        // position advance for particles interacting with envelope, comm particles
                 //    vecPatches.ponderomotive_part_current                              // project current density for Maxwell Eqs from particles interacting with envelope
              }
 
