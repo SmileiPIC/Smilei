@@ -31,7 +31,7 @@ void PusherPonderomotiveBoris::operator() (Particles &particles, SmileiMPI* smpi
 
 
     //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
-
+    double one_over_2 = 1./2.;
     double charge_over_mass_dts2,charge_sq_over_mass_dts4;
     double umx, umy, umz, upx, upy, upz;
     double alpha, inv_det_T, Tx, Ty, Tz, Tx2, Ty2, Tz2;
@@ -71,18 +71,18 @@ void PusherPonderomotiveBoris::operator() (Particles &particles, SmileiMPI* smpi
         // compute initial ponderomotive gamma (more precisely, its inverse) 
         inv_gamma0 = 1./sqrt( 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + *(Phi+ipart)*charge_over_mass_sq );
 
-        // electric field + ponderomotive force for ponderomotive gamma advance
-        pxsm = charge_over_mass_dts2*(*(Ex+ipart)) - charge_sq_over_mass_dts4*(*(GradPhix+ipart)) * inv_gamma0 ;
-        pysm = charge_over_mass_dts2*(*(Ey+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiy+ipart)) * inv_gamma0 ;
-        pzsm = charge_over_mass_dts2*(*(Ez+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiz+ipart)) * inv_gamma0 ;
+        // ( electric field + ponderomotive force for ponderomotive gamma advance ) scalar multiplied by momentum
+        pxsm = inv_gamma0 * (charge_over_mass_dts2*(*(Ex+ipart)) - charge_sq_over_mass_dts4*(*(GradPhix+ipart)) * inv_gamma0 ) * momentum[0][ipart];
+        pysm = inv_gamma0 * (charge_over_mass_dts2*(*(Ey+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiy+ipart)) * inv_gamma0 ) * momentum[1][ipart];
+        pzsm = inv_gamma0 * (charge_over_mass_dts2*(*(Ez+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiz+ipart)) * inv_gamma0 ) * momentum[2][ipart];
 
         // update of gamma ponderomotive (more precisely, the inverse)
-        inv_gamma_ponderomotive = 1./( 1./inv_gamma0 + (pxsm*momentum[0][ipart]+pysm*momentum[1][ipart]+pzsm*momentum[2][ipart])/2. );
+        inv_gamma_ponderomotive = 1./( 1./inv_gamma0 + (pxsm+pysm+pzsm)*one_over_2 );
 
         // init Half-acceleration in the electric field and ponderomotive force 
-        pxsm = charge_over_mass_dts2*(*(Ex+ipart)) - charge_sq_over_mass_dts4*(*(GradPhix+ipart)) * inv_gamma_ponderomotive ;
-        pysm = charge_over_mass_dts2*(*(Ey+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiy+ipart)) * inv_gamma_ponderomotive ;
-        pzsm = charge_over_mass_dts2*(*(Ez+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiz+ipart)) * inv_gamma_ponderomotive ;
+        pxsm = charge_over_mass_dts2 * (*(Ex+ipart)) - charge_sq_over_mass_dts4 * (*(GradPhix+ipart)) * inv_gamma_ponderomotive ;
+        pysm = charge_over_mass_dts2 * (*(Ey+ipart)) - charge_sq_over_mass_dts4 * (*(GradPhiy+ipart)) * inv_gamma_ponderomotive ;
+        pzsm = charge_over_mass_dts2 * (*(Ez+ipart)) - charge_sq_over_mass_dts4 * (*(GradPhiz+ipart)) * inv_gamma_ponderomotive ;
 
         umx = momentum[0][ipart] + pxsm;
         umy = momentum[1][ipart] + pysm;
