@@ -64,6 +64,13 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     Bgrid[1] = (static_cast<Field2D*>(EMfields->By_m))->data_2D;
     Bgrid[2] = (static_cast<Field2D*>(EMfields->Bz_m))->data_2D;
 
+    Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
+    Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
+    Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
+    Field2D* Bx2D = static_cast<Field2D*>(EMfields->Bx_m);
+    Field2D* By2D = static_cast<Field2D*>(EMfields->By_m);
+    Field2D* Bz2D = static_cast<Field2D*>(EMfields->Bz_m);
+
     double coeff[2][2][3][32]; 
     int dual[2][32]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
 
@@ -114,103 +121,74 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
 
         #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ){
-           //Ex(dual, primal)
-            E  =   coeff[1][0][0][ipart]* Egrid[0][idxO[0]][idxO[1]];
-            E  +=  coeff[1][0][1][ipart]* Egrid[0][idxO[0]][idxO[1]+1];
-            E  +=  coeff[1][0][2][ipart]* Egrid[0][idxO[0]][idxO[1]+2];
-            Epart[0][ipart+ivect+istart[0]] =   (1-dual[0][ipart])*coeff[0][1][0][ipart]* E ;   
-            E  =   coeff[1][0][0][ipart]* Egrid[0][idxO[0]+1][idxO[1]];
-            E  +=  coeff[1][0][1][ipart]* Egrid[0][idxO[0]+1][idxO[1]+1];
-            E  +=  coeff[1][0][2][ipart]* Egrid[0][idxO[0]+1][idxO[1]+2];
-            Epart[0][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][1][ipart]+ dual[0][ipart]*coeff[0][1][0][ipart]) * E ;   
-            E  =   coeff[1][0][0][ipart]* Egrid[0][idxO[0]+2][idxO[1]];
-            E  +=  coeff[1][0][1][ipart]* Egrid[0][idxO[0]+2][idxO[1]+1];
-            E  +=  coeff[1][0][2][ipart]* Egrid[0][idxO[0]+2][idxO[1]+2];
-            Epart[0][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][2][ipart]+ dual[0][ipart]*coeff[0][1][1][ipart]) * E ;   
-            E  =   coeff[1][0][0][ipart]* Egrid[0][idxO[0]+3][idxO[1]];
-            E  +=  coeff[1][0][1][ipart]* Egrid[0][idxO[0]+3][idxO[1]+1];
-            E  +=  coeff[1][0][2][ipart]* Egrid[0][idxO[0]+3][idxO[1]+2];
-            Epart[0][ipart+ivect+istart[0]] +=   dual[0][ipart]*coeff[0][1][2][ipart]* E ;   
 
+            double* coeffyp = &(coeff[1][0][1][ipart]);
+            double* coeffyd = &(coeff[1][1][1][ipart]);
+            double* coeffxd = &(coeff[0][1][1][ipart]);
+            double* coeffxp = &(coeff[0][0][1][ipart]);
+
+            //Ex(dual, primal)
+            double interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    interp_res += *(coeffxd+iloc*32) * *(coeffyp+jloc*32) * 
+                        ( (1-dual[0][ipart])*(*Ex2D)(idxO[0]+1+iloc,idxO[1]+1+jloc) + dual[0][ipart]*(*Ex2D)(idxO[0]+2+iloc,idxO[1]+1+jloc ) );
+                }
+            }
+            Epart[0][ipart+ivect+istart[0]] = interp_res;
 
             //Ey(primal, dual)
-            E =   coeff[1][1][0][ipart]* ( (1-dual[1][ipart])*Egrid[1][idxO[0]][idxO[1]  ]  + dual[1][ipart]*Egrid[1][idxO[0]][idxO[1]+1] ) ;
-            E +=  coeff[1][1][1][ipart]* ( (1-dual[1][ipart])*Egrid[1][idxO[0]][idxO[1]+1]  + dual[1][ipart]*Egrid[1][idxO[0]][idxO[1]+2] ) ;
-            E +=  coeff[1][1][2][ipart]* ( (1-dual[1][ipart])*Egrid[1][idxO[0]][idxO[1]+2]  + dual[1][ipart]*Egrid[1][idxO[0]][idxO[1]+3] ) ;
-            Epart[1][ipart+ivect+istart[0]] =   coeff[0][0][0][ipart]* E;
-            E =   coeff[1][1][0][ipart]* ( (1-dual[1][ipart])*Egrid[1][idxO[0]+1][idxO[1]  ]  + dual[1][ipart]*Egrid[1][idxO[0]+1][idxO[1]+1] ) ;
-            E +=  coeff[1][1][1][ipart]* ( (1-dual[1][ipart])*Egrid[1][idxO[0]+1][idxO[1]+1]  + dual[1][ipart]*Egrid[1][idxO[0]+1][idxO[1]+2] ) ;
-            E +=  coeff[1][1][2][ipart]* ( (1-dual[1][ipart])*Egrid[1][idxO[0]+1][idxO[1]+2]  + dual[1][ipart]*Egrid[1][idxO[0]+1][idxO[1]+3] ) ;
-            Epart[1][ipart+ivect+istart[0]] +=   coeff[0][0][1][ipart]* E;
-            E =   coeff[1][1][0][ipart]* ( (1-dual[1][ipart])*Egrid[1][idxO[0]+2][idxO[1]  ]  + dual[1][ipart]*Egrid[1][idxO[0]+2][idxO[1]+1] ) ;
-            E +=  coeff[1][1][1][ipart]* ( (1-dual[1][ipart])*Egrid[1][idxO[0]+2][idxO[1]+1]  + dual[1][ipart]*Egrid[1][idxO[0]+2][idxO[1]+2] ) ;
-            E +=  coeff[1][1][2][ipart]* ( (1-dual[1][ipart])*Egrid[1][idxO[0]+2][idxO[1]+2]  + dual[1][ipart]*Egrid[1][idxO[0]+2][idxO[1]+3] ) ;
-            Epart[1][ipart+ivect+istart[0]] +=   coeff[0][0][2][ipart]* E;
-
+            interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) *
+                        ( (1-dual[1][ipart])*(*Ey2D)(idxO[0]+1+iloc,idxO[1]+1+jloc) + dual[1][ipart]*(*Ey2D)(idxO[0]+1+iloc,idxO[1]+2+jloc ) );
+                }
+            }
+            Epart[1][ipart+ivect+istart[0]] = interp_res;
+ 
+ 
             //Ez(primal, primal)
-            E =  coeff[1][0][0][ipart]* Egrid[2][idxO[0]][idxO[1]];
-            E +=  coeff[1][0][1][ipart]* Egrid[2][idxO[0]][idxO[1]+1];
-            E +=  coeff[1][0][2][ipart]* Egrid[2][idxO[0]][idxO[1]+2];
-            Epart[2][ipart+ivect+istart[0]] =   coeff[0][0][0][ipart]* E;
-            E =  coeff[1][0][0][ipart]* Egrid[2][idxO[0]+1][idxO[1]];
-            E +=  coeff[1][0][1][ipart]* Egrid[2][idxO[0]+1][idxO[1]+1];
-            E +=  coeff[1][0][2][ipart]* Egrid[2][idxO[0]+1][idxO[1]+2];
-            Epart[2][ipart+ivect+istart[0]] +=   coeff[0][0][1][ipart]* E;
-            E =  coeff[1][0][0][ipart]* Egrid[2][idxO[0]+2][idxO[1]];
-            E +=  coeff[1][0][1][ipart]* Egrid[2][idxO[0]+2][idxO[1]+1];
-            E +=  coeff[1][0][2][ipart]* Egrid[2][idxO[0]+2][idxO[1]+2];
-            Epart[2][ipart+ivect+istart[0]] +=   coeff[0][0][2][ipart]* E;
+            interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * (*Ez2D)(idxO[0]+1+iloc,idxO[1]+1+jloc);
+                }
+            }
+            Epart[2][ipart+ivect+istart[0]] = interp_res;
 
-            //Bx(primal, dual  )
-            E =   coeff[1][1][0][ipart]* ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]  ]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+1] ) ;
-            E +=  coeff[1][1][1][ipart]* ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+2] ) ;
-            E +=  coeff[1][1][2][ipart]* ( (1-dual[1][ipart])*Bgrid[0][idxO[0]][idxO[1]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]][idxO[1]+3] ) ;
-            Bpart[0][ipart+ivect+istart[0]] =   coeff[0][0][0][ipart]* E;
-            E =   coeff[1][1][0][ipart]* ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]  ]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+1] ) ;
-            E +=  coeff[1][1][1][ipart]* ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+2] ) ;
-            E +=  coeff[1][1][2][ipart]* ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+1][idxO[1]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]+1][idxO[1]+3] ) ;
-            Bpart[0][ipart+ivect+istart[0]] +=   coeff[0][0][1][ipart]* E ;
-            E =   coeff[1][1][0][ipart]* ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]  ]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+1] ) ;
-            E +=  coeff[1][1][1][ipart]* ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]+1]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+2] ) ;
-            E +=  coeff[1][1][2][ipart]* ( (1-dual[1][ipart])*Bgrid[0][idxO[0]+2][idxO[1]+2]  + dual[1][ipart]*Bgrid[0][idxO[0]+2][idxO[1]+3] ) ;
-            Bpart[0][ipart+ivect+istart[0]] +=   coeff[0][0][2][ipart]* E ;
+            //Bx(primal, dual)
+            interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) *
+                        ( ( (1-dual[1][ipart])*(*Bx2D)(idxO[0]+1+iloc,idxO[1]+1+jloc) + dual[1][ipart]*(*Bx2D)(idxO[0]+1+iloc,idxO[1]+2+jloc ) ) );
+                }
+            }
+            Bpart[0][ipart+ivect+istart[0]] = interp_res;
 
             //By(dual, primal )
-            E =  coeff[1][0][0][ipart] * Bgrid[1][idxO[0]][idxO[1]+0];
-            E +=  coeff[1][0][1][ipart]* Bgrid[1][idxO[0]][idxO[1]+1];
-            E +=  coeff[1][0][2][ipart]* Bgrid[1][idxO[0]][idxO[1]+2];
-            Bpart[1][ipart+ivect+istart[0]] =   (1-dual[0][ipart])*coeff[0][1][0][ipart]* E;
-            E =  coeff[1][0][0][ipart] * Bgrid[1][idxO[0]+1][idxO[1]+0];
-            E +=  coeff[1][0][1][ipart]* Bgrid[1][idxO[0]+1][idxO[1]+1];
-            E +=  coeff[1][0][2][ipart]* Bgrid[1][idxO[0]+1][idxO[1]+2];
-            Bpart[1][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][1][ipart]+ dual[0][ipart]*coeff[0][1][0][ipart]) * E ;   
-            E =  coeff[1][0][0][ipart] * Bgrid[1][idxO[0]+2][idxO[1]+0];
-            E +=  coeff[1][0][1][ipart]* Bgrid[1][idxO[0]+2][idxO[1]+1];
-            E +=  coeff[1][0][2][ipart]* Bgrid[1][idxO[0]+2][idxO[1]+2];
-            Bpart[1][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][2][ipart]+ dual[0][ipart]*coeff[0][1][1][ipart]) * E ;   
-            E =  coeff[1][0][0][ipart] * Bgrid[1][idxO[0]+3][idxO[1]+0];
-            E +=  coeff[1][0][1][ipart]* Bgrid[1][idxO[0]+3][idxO[1]+1];
-            E +=  coeff[1][0][2][ipart]* Bgrid[1][idxO[0]+3][idxO[1]+2];
-            Bpart[1][ipart+ivect+istart[0]] +=  dual[0][ipart]*coeff[0][1][2][ipart] * E ;   
+            interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    interp_res += *(coeffxd+iloc*32) * *(coeffyp+jloc*32) *
+                        ( ( (1-dual[0][ipart])*(*By2D)(idxO[0]+1+iloc,idxO[1]+1+jloc) + dual[0][ipart]*(*By2D)(idxO[0]+2+iloc,idxO[1]+1+jloc ) ) );
+                }
+            }
+            Bpart[1][ipart+ivect+istart[0]] = interp_res;
 
-            //Bz(dual, dual )
-            E =  coeff[1][1][0][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]][idxO[1]  ] + dual[1][ipart]*Bgrid[2][idxO[0]][idxO[1]+1] ) ;
-            E +=  coeff[1][1][1][ipart]* ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]][idxO[1]+1] + dual[1][ipart]*Bgrid[2][idxO[0]][idxO[1]+2] ) ;
-            E +=  coeff[1][1][2][ipart]* ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]][idxO[1]+2] + dual[1][ipart]*Bgrid[2][idxO[0]][idxO[1]+3] ) ;
-            Bpart[2][ipart+ivect+istart[0]] =   (1-dual[0][ipart])*coeff[0][1][0][ipart]* E;
-            E =  coeff[1][1][0][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+1][idxO[1]+0] + dual[1][ipart]*Bgrid[2][idxO[0]+1][idxO[1]+1] ) ;
-            E +=  coeff[1][1][1][ipart]* ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+1][idxO[1]+1] + dual[1][ipart]*Bgrid[2][idxO[0]+1][idxO[1]+2] ) ;
-            E +=  coeff[1][1][2][ipart]* ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+1][idxO[1]+2] + dual[1][ipart]*Bgrid[2][idxO[0]+1][idxO[1]+3] ) ;
-            Bpart[2][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][1][ipart]+ dual[0][ipart]*coeff[0][1][0][ipart]) * E ;   
-            E =  coeff[1][1][0][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+2][idxO[1]  ] + dual[1][ipart]*Bgrid[2][idxO[0]+2][idxO[1]+1] ) ;
-            E +=  coeff[1][1][1][ipart]* ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+2][idxO[1]+1] + dual[1][ipart]*Bgrid[2][idxO[0]+2][idxO[1]+2] ) ;
-            E +=  coeff[1][1][2][ipart]* ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+2][idxO[1]+2] + dual[1][ipart]*Bgrid[2][idxO[0]+2][idxO[1]+3] ) ;
-            Bpart[2][ipart+ivect+istart[0]] +=  ( (1-dual[0][ipart])*coeff[0][1][2][ipart]+ dual[0][ipart]*coeff[0][1][1][ipart]) * E ;   
-            E =  coeff[1][1][0][ipart] * ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+3][idxO[1]  ] + dual[1][ipart]*Bgrid[2][idxO[0]+3][idxO[1]+1] ) ;
-            E +=  coeff[1][1][1][ipart]* ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+3][idxO[1]+1] + dual[1][ipart]*Bgrid[2][idxO[0]+3][idxO[1]+2] ) ;
-            E +=  coeff[1][1][2][ipart]* ( (1-dual[1][ipart]) * Bgrid[2][idxO[0]+3][idxO[1]+2] + dual[1][ipart]*Bgrid[2][idxO[0]+3][idxO[1]+3] ) ;
-            Bpart[2][ipart+ivect+istart[0]] +=  dual[0][ipart]*coeff[0][1][2][ipart] * E ;   
-        }
+            //Bz(dual, dual)
+            interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    interp_res += *(coeffxd+iloc*32) * *(coeffyd+jloc*32) *
+                        ( (1-dual[1][ipart]) * ( (1-dual[0][ipart])*(*Bz2D)(idxO[0]+1+iloc,idxO[1]+1+jloc) + dual[0][ipart]*(*Bz2D)(idxO[0]+2+iloc,idxO[1]+1+jloc ) )
+                          +    dual[1][ipart]  * ( (1-dual[0][ipart])*(*Bz2D)(idxO[0]+1+iloc,idxO[1]+2+jloc) + dual[0][ipart]*(*Bz2D)(idxO[0]+2+iloc,idxO[1]+2+jloc ) ) );
+                }
+            }
+            Bpart[2][ipart+ivect+istart[0]] = interp_res;
+
+       }
     }
 
 } // END Interpolator2D2OrderV

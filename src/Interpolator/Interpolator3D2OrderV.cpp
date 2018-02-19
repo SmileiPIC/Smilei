@@ -72,9 +72,9 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
     Field3D* Ey3D = static_cast<Field3D*>(EMfields->Ey_);
     Field3D* Ez3D = static_cast<Field3D*>(EMfields->Ez_);
-    Field3D* Bx3D = static_cast<Field3D*>(EMfields->Bx_);
-    Field3D* By3D = static_cast<Field3D*>(EMfields->By_);
-    Field3D* Bz3D = static_cast<Field3D*>(EMfields->Bz_);
+    Field3D* Bx3D = static_cast<Field3D*>(EMfields->Bx_m);
+    Field3D* By3D = static_cast<Field3D*>(EMfields->By_m);
+    Field3D* Bz3D = static_cast<Field3D*>(EMfields->Bz_m);
 
     double coeff[3][2][3][32]; 
     int dual[3][32]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
