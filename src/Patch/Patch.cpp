@@ -133,7 +133,12 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
     EMfields   = ElectroMagnFactory::create(params, domain_decomposition, vecSpecies, this);
     
     // interpolation operator (virtual)
-    Interp     = InterpolatorFactory::create(params, this); // + patchId -> idx_domain_begin (now = ref smpi)
+    Interp           = InterpolatorFactory::create(params, this); // + patchId -> idx_domain_begin (now = ref smpi)
+
+    // Create ad hoc interpolators for envelope
+    if (params.Laser_Envelope_model){
+        Interp_envelope  = InterpolatorFactory::create_env_interpolator(params, this);} // + patchId -> idx_domain_begin (now = ref smpi) 
+
     // projection operator (virtual)
     Proj       = ProjectorFactory::create(params, this);    // + patchId -> idx_domain_begin (now = ref smpi)
 
@@ -161,6 +166,10 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
 
     // interpolation operator (virtual)
     Interp     = InterpolatorFactory::create(params, this);
+    // Create ad hoc interpolators for envelope
+    if (params.Laser_Envelope_model){
+    Interp_envelope  = InterpolatorFactory::create_env_interpolator(params, this);} 
+
     // projection operator (virtual)
     Proj       = ProjectorFactory::create(params, this);
 

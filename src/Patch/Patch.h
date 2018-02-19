@@ -69,6 +69,9 @@ public:
 
     //! Interpolator (used to push particles and for probes)
     Interpolator* Interp;
+    //! Interpolator ad hoc for envelope 
+    Interpolator* Interp_envelope;
+
     //! Projector
     Projector* Proj;
 
