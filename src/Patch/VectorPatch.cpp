@@ -1620,4 +1620,18 @@ void VectorPatch::ponderomotive_position_advance(Params& params,
         } // end loop on species
     } // end loop on patches
   
-} // END ponderomotive_momentum_advance
+    timers.particles.update( params.printNow( itime ) );
+
+    timers.syncPart.restart();
+    for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
+        if ((*this)(0)->vecSpecies[ispec]->ponderomotive_dynamics){
+            if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
+                SyncVectorPatch::exchangeParticles((*this), ispec, params, smpi, timers, itime ); // Included sort_part
+            } // end condition on species
+        } // end condition on envelope dynamics
+    } // end loop on species
+    timers.syncPart.update( params.printNow( itime ) );
+
+
+
+} // END ponderomotive_position_advance
