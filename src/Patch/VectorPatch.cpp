@@ -1612,7 +1612,7 @@ void VectorPatch::ponderomotive_position_advance(Params& params,
                 if (species(ipatch, ispec)->ponderomotive_dynamics){
                 species(ipatch, ispec)->ponderomotive_position_update(time_dual, ispec,
                                                  emfields(ipatch), interp_envelope(ipatch),
-                                                 params, diag_flag,
+                                                 params, diag_flag, partwalls(ipatch),
                                                  (*this)(ipatch), smpi,
                                                  localDiags);
                                                                     } // end condition on ponderomotive dynamics

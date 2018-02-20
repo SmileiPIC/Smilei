@@ -1449,7 +1449,7 @@ void Species::ponderomotive_momentum_update(double time_dual, unsigned int ispec
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::ponderomotive_position_update(double time_dual, unsigned int ispec,
                        ElectroMagn* EMfields, Interpolator* Interp_envelope,
-                       Params &params, bool diag_flag,
+                       Params &params, bool diag_flag, PartWalls* partWalls,
                        Patch* patch, SmileiMPI* smpi,
                        vector<Diagnostic*>& localDiags){
 
@@ -1459,6 +1459,15 @@ void Species::ponderomotive_position_update(double time_dual, unsigned int ispec
     #else
         ithread = 0;
     #endif
+
+    unsigned int iPart;
+
+    // Reset list of particles to exchange - WARNING Should it be reset?
+    clearExchList();
+
+    int tid(0);
+    double ener_iPart(0.);
+    std::vector<double> nrj_lost_per_thd(1, 0.);
     
     // -------------------------------
     // calculate the particle updated position
@@ -1475,10 +1484,83 @@ void Species::ponderomotive_position_update(double time_dual, unsigned int ispec
             // Push only the particle momenta
             (*Push_ponderomotive_position)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
             //particles->test_move( bmin[ibin], bmax[ibin], params );
+
+            // Apply wall and boundary conditions
+            if (mass>0)
+            {
+                for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+                    for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                        double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                        if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
+                            nrj_lost_per_thd[tid] += mass * ener_iPart;
+                        }
+                    }
+                }
+
+                // Boundary Condition may be physical or due to domain decomposition
+                // apply returns 0 if iPart is not in the local domain anymore
+                //        if omp, create a list per thread
+                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                    if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                        addPartInExchList( iPart );
+                        nrj_lost_per_thd[tid] += mass * ener_iPart;
+                    }
+                 }
+
+            } else if (mass==0) { 
+                  ERROR("Particles with zero mass cannot interact with envelope");
+                // for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+                //     for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                //         double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                //         if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
+                //                 nrj_lost_per_thd[tid] += ener_iPart;
+                //         }
+                //     }
+                // }
+                // 
+                // // Boundary Condition may be physical or due to domain decomposition
+                // // apply returns 0 if iPart is not in the local domain anymore
+                // //        if omp, create a list per thread
+                // for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                //     if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                //         addPartInExchList( iPart );
+                //         nrj_lost_per_thd[tid] += ener_iPart;
+                //     }
+                //  }
+
+            } // end mass = 0? condition
+
+            //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
+
+             // Project currents if not a Test species and charges as well if a diag is needed.
+             // Do not project if a photon
+             // if ((!particles->is_test) && (mass > 0))
+             //     (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, params.is_spectral, b_dim, ispec );
+
             } // end ibin loop
 
+         for (unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
+             nrj_bc_lost += nrj_lost_per_thd[tid];
+
          } // end case of moving particle
-    else { // immobile particle      
+    else { // immobile particle    
+
+            if ( diag_flag &&(!particles->is_test)){
+                double* b_rho=nullptr;
+                for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
+                    // only 3D is implemented actually
+                    if (nDim_field==2)
+                        b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1) : &(*EMfields->rho_)(ibin*clrw*f_dim1) ;
+                    if (nDim_field==3)  
+                        b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1*f_dim2) : &(*EMfields->rho_)(ibin*clrw*f_dim1*f_dim2) ;
+                    else if (nDim_field==1)
+                        b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw) : &(*EMfields->rho_)(ibin*clrw) ;
+                    // for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                    //     (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
+                    // } //End loop on particles
+                }//End loop on bins
+            } // end condition on diag and not particle test
+  
          }//END if time vs. time_frozen    
 } // End ponderomotive_position_update
 
