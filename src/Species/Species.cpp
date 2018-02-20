@@ -1453,32 +1453,33 @@ void Species::ponderomotive_position_update(double time_dual, unsigned int ispec
                        Patch* patch, SmileiMPI* smpi,
                        vector<Diagnostic*>& localDiags){
 
-    // int ithread;
-    // #ifdef _OPENMP
-    //     ithread = omp_get_thread_num();
-    // #else
-    //     ithread = 0;
-    // #endif
-    // 
-    // // -------------------------------
-    // // calculate the particle updated momentum
-    // // -------------------------------
-    // if (time_dual>time_frozen) { // moving particle
-    // 
-    //     smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
-    // 
-    //     for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
-    // 
-    //         // Interpolate the ponderomotive potential and its gradient at the particle position, from present and previous timestep
-    //         (*Interp_envelope)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
-    // 
-    //         // Push only the particle momenta
-    //         (*Push_ponderomotive_position)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
-    //         //particles->test_move( bmin[ibin], bmax[ibin], params );
-    //                                                                }
-    //                              }
-    // else { // immobile particle      
-    //      }//END if time vs. time_frozen    
+    int ithread;
+    #ifdef _OPENMP
+        ithread = omp_get_thread_num();
+    #else
+        ithread = 0;
+    #endif
+    
+    // -------------------------------
+    // calculate the particle updated position
+    // -------------------------------
+    if (time_dual>time_frozen) { // moving particle
+    
+        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+    
+        for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
+    
+            // Interpolate the ponderomotive potential and its gradient at the particle position, from present and previous timestep
+            //(*Interp_envelope)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
+    
+            // Push only the particle momenta
+            (*Push_ponderomotive_position)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
+            //particles->test_move( bmin[ibin], bmax[ibin], params );
+            } // end ibin loop
+
+         } // end case of moving particle
+    else { // immobile particle      
+         }//END if time vs. time_frozen    
 } // End ponderomotive_position_update
 
 // Array used in the Maxwell-Juttner sampling
