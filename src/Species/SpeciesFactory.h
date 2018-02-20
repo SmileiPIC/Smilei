@@ -277,15 +277,23 @@ public:
             }
         }
 
-        PyTools::extract("position_initialization",thisSpecies->position_initialization ,"Species",ispec);
-        thisSpecies->position_initialization_on_species=false;
-        thisSpecies->position_initialization_on_species_index=-1;
-        if (thisSpecies->position_initialization.empty()) {
-            ERROR("For species '" << species_name << "' empty position_initialization");
-        } else if ( (thisSpecies->position_initialization!="regular"  )
-                  &&(thisSpecies->position_initialization!="random"   )
-                  &&(thisSpecies->position_initialization!="centered" )) {
-              thisSpecies->position_initialization_on_species=true;
+        //PyTools::extract("position_initialization",thisSpecies->position_initialization ,"Species",ispec);
+        PyObject *py_pos_init = PyTools::extract_py("position_initialization", "Species",ispec);
+        if ( PyTools::convert(py_pos_init, thisSpecies->position_initialization) ){
+            thisSpecies->position_initialization_on_species=false;
+            thisSpecies->position_initialization_on_species_index=-1;
+            if (thisSpecies->position_initialization.empty()) {
+                ERROR("For species '" << species_name << "' empty position_initialization");
+            } else if ( (thisSpecies->position_initialization!="regular"  )
+                      &&(thisSpecies->position_initialization!="random"   )
+                      &&(thisSpecies->position_initialization!="centered" )) {
+                  thisSpecies->position_initialization_on_species=true;
+            }
+        } else {
+            std::cout << "init pos is not a string " << std::endl;
+            PyArrayObject *py_arr_pos_init = PyArray_FromAny(py_pos_init, NPY_DOUBLE,NPY_ARRAY_C_CONTIGUOUS);
+            double* arr = (double*) PyArray_GETPTR1( py_arr_pos_init , 0);
+            std::cout << "init pos is an array " << arr[0] << " " << arr[1] << std::endl;
         }
 
         PyTools::extract("momentum_initialization",thisSpecies->momentum_initialization ,"Species",ispec);
