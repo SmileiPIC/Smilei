@@ -199,7 +199,7 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		if (min_max == 3 && patch->isYmax() ) {
 		    
 		    // for Bl^(p,d)
-			unsigned int j= nr_d-2;
+	            unsigned int j= nr_d-2;
 		    for (unsigned int i=isXmin ; i<nl_p-1; i++) {
 		        /*(*Bl2D)(i,nr_d-1) = -Alpha_SM_N   * (*Et2D)(i,nr_p-1)
 		         +                    Beta_SM_N    * (*Bl2D)(i,nr_d-2)
@@ -209,36 +209,34 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		        -                   Gamma_Br_Rmax*CB_BM    *( (*BrRZ)(i+1,j) + (*BrRZ_old)(i+1,j) - (*BrRZ)(i,j) - (*BrRZ_old)(i,j))
 		        -                   Beta_Br_Rmax*Icpx*(double)imode*CE_BM/((j_glob+j)*dr) *( (*ErRZ)(i,j+1)+(*ErRZ)(i,j))
 		        -                   2.*CE_BM*Beta_Br_Rmax/((j_glob+j)*dr)*(*EtRZ)(i,j);
-                if (std::abs((*BlRZ)(i,j))>1.)
-                {
-                	MESSAGE("BlRZBM");                
-                	MESSAGE(i);    
-                	MESSAGE(j);
-                	MESSAGE((*BlRZ)(i,j));
-                }
+                        if (std::abs((*BlRZ)(i,j))>1.){
+                            MESSAGE("BlRZBM");                
+                            MESSAGE(i);    
+                            MESSAGE(j);
+                            MESSAGE((*BlRZ)(i,j));
+                        }
 		    }//i  ---end Bl
 		    
 		    // for Bt^(d,d)
-			double factor_Bt= 1+dt_ov_dr+0.5*CB_BM*dt/((j+j_glob)*dr);
-			double Alpha_Bt_Rmax= (1-dt_ov_dr+0.5*CB_BM*dt/((j+j_glob)*dr))/factor_Bt;
-			double Beta_Bt_Rmax= (1-dt_ov_dr-0.5*CB_BM*dt/((j+j_glob)*dr))/factor_Bt;
-			double Gamma_Bt_Rmax= (1+dt_ov_dr-0.5*CB_BM*dt/((j+j_glob)*dr))/factor_Bt;
-			double Epsilon_Bt_Rmax= dt_ov_dr/factor_Bt;
-			double Delta_Bt_Rmax= dt_ov_dl/factor_Bt;
-		    for (unsigned int i=0 ; i<nl_p-1 ; i++) {
-		        /*(*Bt2D)(i,nr_d-1) = Alpha_SM_N * (*El2D)(i,nr_p-1)
-		         +                   Beta_SM_N  * (*Bt2D)(i,nr_d-2);*/
-		        (*BtRZ)(i+1,j+1) = - Alpha_Bt_Rmax * (*BtRZ)(i+1,j) + Beta_Bt_Rmax* (*BtRZ_old)(i+1,j+1)
-				+					Gamma_Bt_Rmax * (*BtRZ_old)(i+1,j)
-		        -                   Icpx*(double)imode*CB_BM*Epsilon_Bt_Rmax/((j_glob+j))  *((*BrRZ)(i+1,j) - (*BrRZ_old)(i+1,j) )
-		        -                   CE_BM*Delta_Bt_Rmax*((*ErRZ)(i+1,j+1)+(*ErRZ)(i+1,j)-(*ErRZ)(i,j+1) -(*ErRZ)(i,j) ) ;
-                if (std::abs((*BtRZ)(i,j))>1.)
-                {
-                	MESSAGE("BtRZBM");                
-                	MESSAGE(i);    
-                	MESSAGE(j);
-                	MESSAGE((*BtRZ)(i,j));
-                }
+		        double one_ov_rlocal = (j_glob+j)*dr;
+			double factor_Bt= 1./(1+dt_ov_dr+0.5*CB_BM*dt*one_ov_rlocal);
+			double Alpha_Bt_Rmax= -1 + dt_ov_dr - 0.5*CB_BM*dt*one_ov_rlocal*factor_Bt;
+			double Beta_Bt_Rmax =  1 - dt_ov_dr - 0.5*CB_BM*dt*one_ov_rlocal*factor_Bt;
+			double Gamma_Bt_Rmax=  1 + dt_ov_dr - 0.5*CB_BM*dt*one_ov_rlocal*factor_Bt;
+			double Epsilon_Bt_Rmax= dt * one_ov_rlocal * factor_Bt;
+			double Delta_Bt_Rmax= dt_ov_dl*factor_Bt;
+		    for (unsigned int i=1 ; i<nl_p ; i++) { //Undefined in i=0 and i=nl_p
+		        (*BtRZ)(i,j+1) =   Alpha_Bt_Rmax * (*BtRZ)(i,j) 
+                                           + Beta_Bt_Rmax  * (*BtRZ_old)(i,j+1)
+				           + Gamma_Bt_Rmax * (*BtRZ_old)(i,j)
+		                           - Icpx * (double)imode * CB_BM * Epsilon_Bt_Rmax  * ((*BrRZ)(i,j) - (*BrRZ_old)(i,j) )
+		                           - CE_BM * Delta_Bt_Rmax * ((*ErRZ)(i,j+1)+(*ErRZ)(i,j)-(*ErRZ)(i-1,j+1) -(*ErRZ)(i-1,j) ) ;
+                        if (std::abs((*BtRZ)(i,j))>1.){
+                        	MESSAGE("BtRZBM");                
+                        	MESSAGE(i);    
+                        	MESSAGE(j);
+                        	MESSAGE((*BtRZ)(i,j));
+                        }
 		    }//i  ---end Bt
 		    
 		}
