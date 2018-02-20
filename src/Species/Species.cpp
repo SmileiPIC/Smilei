@@ -1419,6 +1419,7 @@ void Species::ponderomotive_momentum_update(double time_dual, unsigned int ispec
         ithread = 0;
     #endif
 
+    //unsigned int iPart;
     // -------------------------------
     // calculate the particle updated momentum
     // -------------------------------
@@ -1478,7 +1479,7 @@ void Species::ponderomotive_position_update(double time_dual, unsigned int ispec
     //                              }
     // else { // immobile particle      
     //      }//END if time vs. time_frozen    
-} // End ponderomotive_momentum_update
+} // End ponderomotive_position_update
 
 // Array used in the Maxwell-Juttner sampling
 const double Species::lnInvF[1000] = {
