@@ -218,15 +218,15 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		    }//i  ---end Bl
 		    
 		    // for Bt^(d,d)
-		        double one_ov_rlocal = (j_glob+j)*dr;
+		        double one_ov_rlocal = 1./((j_glob+j)*dr);
 			double factor_Bt= 1./(1+dt_ov_dr+0.5*CB_BM*dt*one_ov_rlocal);
-			double Alpha_Bt_Rmax= -1 + dt_ov_dr - 0.5*CB_BM*dt*one_ov_rlocal*factor_Bt;
-			double Beta_Bt_Rmax =  1 - dt_ov_dr - 0.5*CB_BM*dt*one_ov_rlocal*factor_Bt;
-			double Gamma_Bt_Rmax=  1 + dt_ov_dr - 0.5*CB_BM*dt*one_ov_rlocal*factor_Bt;
+			double Alpha_Bt_Rmax= ( -1 + dt_ov_dr - 0.5*CB_BM*dt*one_ov_rlocal) * factor_Bt;
+			double Beta_Bt_Rmax = (  1 - dt_ov_dr - 0.5*CB_BM*dt*one_ov_rlocal) * factor_Bt;
+			double Gamma_Bt_Rmax= (  1 + dt_ov_dr - 0.5*CB_BM*dt*one_ov_rlocal) * factor_Bt;
 			double Epsilon_Bt_Rmax= dt * one_ov_rlocal * factor_Bt;
 			double Delta_Bt_Rmax= dt_ov_dl*factor_Bt;
 		    for (unsigned int i=1 ; i<nl_p ; i++) { //Undefined in i=0 and i=nl_p
-		        (*BtRZ)(i,j+1) =   Alpha_Bt_Rmax * (*BtRZ)(i,j) 
+		        (*BtRZ)(i,j+1) =     Alpha_Bt_Rmax * (*BtRZ)(i,j) 
                                            + Beta_Bt_Rmax  * (*BtRZ_old)(i,j+1)
 				           + Gamma_Bt_Rmax * (*BtRZ_old)(i,j)
 		                           - Icpx * (double)imode * CB_BM * Epsilon_Bt_Rmax  * ((*BrRZ)(i,j) - (*BrRZ_old)(i,j) )
