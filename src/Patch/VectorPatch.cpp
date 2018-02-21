@@ -330,17 +330,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 
 void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers)
 {
-    // timers.maxwell.restart();
-
-    // for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_passes ; ipassfilter++){
-    //     #pragma omp for schedule(static)
-    //     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-    //         // Current spatial filtering
-    //         (*this)(ipatch)->EMfields->binomialCurrentFilter();
-    //     }
-    //     SyncVectorPatch::exchangeJ( (*this) );
-    //     SyncVectorPatch::finalizeexchangeJ( (*this) );
-    // }
+    
     if ((*this)(0)->EMfields->envelope!=NULL) {
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
@@ -357,14 +347,6 @@ void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime,
             (*this)(ipatch)->EMfields->envelope->compute_Phi_gradients(  (*this)(ipatch)->EMfields );
         }
     }
-
-
-    // //Synchronize B fields between patches.
-    // timers.maxwell.update( params.printNow( itime ) );
-    // 
-    // timers.syncField.restart();
-    // SyncVectorPatch::exchangeB( (*this) );
-    // timers.syncField.update(  params.printNow( itime ) );
 
 } // END solveEnvelope
 
@@ -1594,7 +1576,7 @@ void VectorPatch::ponderomotive_update_susceptibilty_and_momentum(Params& params
         } // end loop on species
     } // end loop on patches
   
-} // END ponderomotive_momentum_advance
+} // END ponderomotive_update_susceptibilty_and_momentum
 
 void VectorPatch::ponderomotive_update_position_and_currents(Params& params,
                            SmileiMPI* smpi,
@@ -1634,4 +1616,4 @@ void VectorPatch::ponderomotive_update_position_and_currents(Params& params,
 
 
 
-} // END ponderomotive_position_advance
+} // END ponderomotive_update_position_and_currents

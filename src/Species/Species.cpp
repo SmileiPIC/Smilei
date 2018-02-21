@@ -1432,6 +1432,10 @@ void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, 
 
             // Interpolate the fields at the particle position
             (*Interp_envelope)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
+
+            // Project susceptibility, the source term of envelope equation
+            //if ((!particles->is_test) && (mass > 0))
+            //    (*Proj_susceptibility)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, params.is_spectral, b_dim, ispec );
         
             // Push only the particle momenta
             (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
