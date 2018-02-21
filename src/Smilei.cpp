@@ -285,6 +285,8 @@ int main (int argc, char* argv[])
                 // interpolate envelope for susceptibility deposition, project susceptibility for envelope equation, momentum advance
                 vecPatches.ponderomotive_update_susceptibilty_and_momentum(params, &smpi, simWindow, time_dual, timers, itime);    
 
+                // comm and synch susceptibility
+
                 // solve envelope equation and comm envelope         
                 vecPatches.solveEnvelope( params, simWindow, itime, time_dual, timers ); 
 
