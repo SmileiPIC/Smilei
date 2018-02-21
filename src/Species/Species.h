@@ -277,7 +277,7 @@ public:
 
     //! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)
     virtual void ponderomotive_position_update(double time_dual, unsigned int ispec,
-                           ElectroMagn* EMfields, Interpolator* Interp_envelope,
+                           ElectroMagn* EMfields, Interpolator* Interp_envelope, Projector* Proj,
                            Params &params, bool diag_flag, PartWalls* partWalls,
                            Patch* patch, SmileiMPI* smpi,
                            std::vector<Diagnostic*>& localDiags);

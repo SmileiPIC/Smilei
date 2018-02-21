@@ -1611,7 +1611,7 @@ void VectorPatch::ponderomotive_position_advance(Params& params,
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 if (species(ipatch, ispec)->ponderomotive_dynamics){
                 species(ipatch, ispec)->ponderomotive_position_update(time_dual, ispec,
-                                                 emfields(ipatch), interp_envelope(ipatch),
+                                                 emfields(ipatch), interp_envelope(ipatch), proj(ipatch),
                                                  params, diag_flag, partwalls(ipatch),
                                                  (*this)(ipatch), smpi,
                                                  localDiags);

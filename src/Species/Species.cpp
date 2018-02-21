@@ -1448,7 +1448,7 @@ void Species::ponderomotive_momentum_update(double time_dual, unsigned int ispec
 //   - exchange particles?
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::ponderomotive_position_update(double time_dual, unsigned int ispec,
-                       ElectroMagn* EMfields, Interpolator* Interp_envelope,
+                       ElectroMagn* EMfields, Interpolator* Interp_envelope, Projector* Proj,
                        Params &params, bool diag_flag, PartWalls* partWalls,
                        Patch* patch, SmileiMPI* smpi,
                        vector<Diagnostic*>& localDiags){
@@ -1532,10 +1532,10 @@ void Species::ponderomotive_position_update(double time_dual, unsigned int ispec
 
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
 
-             // Project currents if not a Test species and charges as well if a diag is needed.
-             // Do not project if a photon
-             // if ((!particles->is_test) && (mass > 0))
-             //     (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, params.is_spectral, b_dim, ispec );
+             Project currents if not a Test species and charges as well if a diag is needed.
+             Do not project if a photon
+             if ((!particles->is_test) && (mass > 0))
+                 (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, params.is_spectral, b_dim, ispec );
 
             } // end ibin loop
 
@@ -1555,9 +1555,9 @@ void Species::ponderomotive_position_update(double time_dual, unsigned int ispec
                         b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1*f_dim2) : &(*EMfields->rho_)(ibin*clrw*f_dim1*f_dim2) ;
                     else if (nDim_field==1)
                         b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw) : &(*EMfields->rho_)(ibin*clrw) ;
-                    // for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                    //     (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
-                    // } //End loop on particles
+                    for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                        (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
+                    } //End loop on particles
                 }//End loop on bins
             } // end condition on diag and not particle test
   
