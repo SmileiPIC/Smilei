@@ -87,11 +87,13 @@ public:
             if (pusher == "boris"
              || pusher == "borisnr"
              || pusher == "vay"
-             || pusher == "higueracary") {
+             || pusher == "higueracary"
+             || pusher == "ponderomotive_boris") {
                  // Species with relativistic Boris pusher if  =='boris'
                  // Species with nonrelativistic Boris pusher == 'borisnr'
                  // Species with J.L. Vay pusher if == "vay"
                  // Species with Higuary Cary pusher if == "higueracary"
+                 // Species with relativistic Boris pusher interacting with laser envelope if == "ponderomotive_boris"
                 if ( (!params.vecto) )
                     thisSpecies = new SpeciesNorm(params, patch);
 #ifdef _VECTO
@@ -99,7 +101,7 @@ public:
                     thisSpecies = new SpeciesNormV(params, patch);
 #endif
             } else {
-                ERROR("For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary'");
+                ERROR("For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary', 'ponderomotive_boris'");
             }
             thisSpecies->pusher = pusher;
 
