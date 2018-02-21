@@ -1446,7 +1446,7 @@ void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, 
             int nparts( particles->size() );
             for (int ipart=*istart ; ipart<*iend; ipart++ ) { //Loop on bin particles
                 //Interpolation on current particle
-                (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->operator()(EMfields, *particles, ipart, nparts, &(*Epart)[ipart], &(*Bpart)[ipart], &(*PHIpart)[ipart], &(*GradPHIpart)[ipart]);
+                (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->interpolate_em_fields_and_envelope(EMfields, *particles, ipart, nparts, &(*Epart)[ipart], &(*Bpart)[ipart], &(*PHIpart)[ipart], &(*GradPHIpart)[ipart]);
                 //Buffering of iol and delta
                 (*iold)[ipart+0*nparts]  = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->ip_;
                 (*iold)[ipart+1*nparts]  = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->jp_;
