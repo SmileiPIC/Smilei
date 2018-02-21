@@ -1532,8 +1532,8 @@ void Species::ponderomotive_position_update(double time_dual, unsigned int ispec
 
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
 
-             Project currents if not a Test species and charges as well if a diag is needed.
-             Do not project if a photon
+             // Project currents if not a Test species and charges as well if a diag is needed.
+             // Do not project if a photon
              if ((!particles->is_test) && (mass > 0))
                  (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, params.is_spectral, b_dim, ispec );
 
