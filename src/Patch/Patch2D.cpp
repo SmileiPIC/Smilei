@@ -73,7 +73,7 @@ void Patch2D::initStep2(Params& params, DomainDecomposition* domain_decompositio
     neighbor_[0][0] = domain_decomposition->getDomainId( xcall );
 
     xcall[0] = Pcoordinates[0]+1;
-    if (params.EM_BCs[0][0]=="periodic" && xcall[0] >= domain_decomposition->ndomain_[0])
+    if (params.EM_BCs[0][0]=="periodic" && xcall[0] >= (int)domain_decomposition->ndomain_[0])
         xcall[0] -= domain_decomposition->ndomain_[0];
     neighbor_[0][1] = domain_decomposition->getDomainId( xcall );
     
@@ -85,7 +85,7 @@ void Patch2D::initStep2(Params& params, DomainDecomposition* domain_decompositio
     neighbor_[1][0] = domain_decomposition->getDomainId( xcall );
 
     xcall[1] = Pcoordinates[1]+1;
-    if (params.EM_BCs[1][0]=="periodic" && xcall[1] >= domain_decomposition->ndomain_[1])
+    if (params.EM_BCs[1][0]=="periodic" && xcall[1] >= (int)domain_decomposition->ndomain_[1])
         xcall[1] -=  domain_decomposition->ndomain_[1];
     neighbor_[1][1] = domain_decomposition->getDomainId( xcall );
 

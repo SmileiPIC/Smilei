@@ -16,7 +16,9 @@ PXR_Solver3D_GPSTD::~PXR_Solver3D_GPSTD()
 
 void PXR_Solver3D_GPSTD::coupling( Params &params, ElectroMagn* EMfields )
 {
+#ifdef _PICSAR
     int cdim=3;
+
     int n0,n1,n2;
     int ov0,ov1,ov2;
     // unable to convert unsigned int to an iso_c_binding supported type 
@@ -46,7 +48,6 @@ void PXR_Solver3D_GPSTD::coupling( Params &params, ElectroMagn* EMfields )
     Field3D* rhoold3D_pxr = static_cast<Field3D*>( EMfields->rhoold_pxr);
 
     //call of extern init routine (defined in picsar)
-#ifdef _PICSAR
     picsar::init_params_picsar(&n0,&n1,&n2,
                        &params.cell_length[0],&params.cell_length[1],&params.cell_length[2],&params.timestep,
                        &ov0,&ov1,&ov2,
