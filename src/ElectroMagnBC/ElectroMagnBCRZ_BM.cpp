@@ -18,9 +18,6 @@ using namespace std;
 ElectroMagnBCRZ_BM::ElectroMagnBCRZ_BM( Params &params, Patch* patch, unsigned int _min_max )
 : ElectroMagnBC( params, patch, _min_max )
 {
-    // conversion factor from degree to radian
-    conv_deg2rad = M_PI/180.0;
-    
     // number of nodes of the primal and dual grid in the x-direction
     nl_p = params.n_space[0]+1+2*params.oversize[0];
     nl_d = nl_p+1;
@@ -64,24 +61,31 @@ ElectroMagnBCRZ_BM::ElectroMagnBCRZ_BM( Params &params, Patch* patch, unsigned i
         Bt_val.resize(nl_d,0.);
     }
     
-    
-    
-    
     // -----------------------------------------------------
-    // Parameters for the Silver-Mueller boundary conditions
+    // Parameters for the Buneman boundary conditions
     // -----------------------------------------------------
 
-    #ifdef _TODO_RZ
-    #endif
     // Rmax boundary
-    double theta  = 0.0;
-	double phi    =  0.0;
-	CB_BM  = cos(theta)*cos(phi)/(1.0 + cos(theta)*cos(phi));
-	CE_BM  = 1.0 - CB_BM;
-    
+    double phi    =  0.45 * M_PI;
+    double one_ov_rlocal = 1./params.grid_length[1]; // BM conditions on rmax are written at the last primal r position.
+    CB_BM  = cos(phi)/(1.0 + cos(phi)); // Theta is always taken equal to zero. 
+    CE_BM  = 1.0 - CB_BM;
+
+    //Coeffs for Bl
+    double factor= 1./(1. + dt_ov_dr);
+    Alpha_Bl_Rmax    = (1. - dt_ov_dr)*factor;
+    Beta_Bl_Rmax     = CE_BM * dt * one_ov_rlocal * factor;
+    Gamma_Bl_Rmax    = CB_BM * dt_ov_dl*factor;
+
+    //Coeffs for Bt
+    factor          = 1. / (  1 + dt_ov_dr + 0.5*CB_BM*dt*one_ov_rlocal);
+    Alpha_Bt_Rmax   =      ( -1 + dt_ov_dr - 0.5*CB_BM*dt*one_ov_rlocal) * factor;
+    Beta_Bt_Rmax    =      (  1 - dt_ov_dr - 0.5*CB_BM*dt*one_ov_rlocal) * factor;
+    Gamma_Bt_Rmax   =      (  1 + dt_ov_dr - 0.5*CB_BM*dt*one_ov_rlocal) * factor;
+    Epsilon_Bt_Rmax = dt * one_ov_rlocal * factor;
+    Delta_Bt_Rmax   = dt_ov_dl*factor;
+
 }
-
-
 
 void ElectroMagnBCRZ_BM::save_fields(Field* my_field, Patch* patch) {
     cField2D* field2D=static_cast<cField2D*>(my_field);
@@ -180,7 +184,6 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
     for (unsigned int imode=0 ; imode<Nmode ; imode++) {
 
 		// Static cast of the fields
-                //cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->El_[imode];
 		cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Er_[imode];
 		cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Et_[imode];
 		cField2D* BlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_[imode];
@@ -189,51 +192,26 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		cField2D* BtRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_m[imode]; 
 		cField2D* BlRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_m[imode];
 		cField2D* BrRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_m[imode];
-		int     j_glob = (static_cast<ElectroMagn3DRZ*>(EMfields))->j_glob_;
-		bool isXmin = (static_cast<ElectroMagn3DRZ*>(EMfields))->isXmin;
-		bool isXmax = (static_cast<ElectroMagn3DRZ*>(EMfields))->isXmax;
+
 		if (min_max == 3 && patch->isYmax() ) {
 		    
 	            unsigned int j= nr_d-2;
-		    double one_ov_rlocal = 1./((j_glob+j)*dr);
 		    // for Bl^(p,d)
-	            double factor_Bl= 1./(1. + dt_ov_dr);
-                    Alpha_Bl_Rmax    = (1. - dt_ov_dr)*factor_Bl;
-                    Beta_Bl_Rmax     = CE_BM * dt * one_ov_rlocal * factor_Bl;
-                    Gamma_Bl_Rmax    = CB_BM * dt_ov_dl*factor_Bl;
 		    for (unsigned int i=1 ; i<nl_p-1; i++) {
-		         (*BlRZ)(i,j+1) =   (*BlRZ_old)(i,j) 
-                                          - Alpha_Bl_Rmax   * ((*BlRZ)(i,j)-(*BlRZ_old)(i,j+1))
-		                          - Gamma_Bl_Rmax * ( (*BrRZ)(i+1,j) + (*BrRZ_old)(i+1,j) - (*BrRZ)(i,j) - (*BrRZ_old)(i,j))
-		                          -      Beta_Bl_Rmax * Icpx * (double)imode * ( (*ErRZ)(i,j+1)+(*ErRZ)(i,j))
+		         (*BlRZ)(i,j+1) =                         (*BlRZ_old)(i,j) 
+                                          -      Alpha_Bl_Rmax * ((*BlRZ)(i,j) - (*BlRZ_old)(i,j+1))
+		                          -      Gamma_Bl_Rmax * ((*BrRZ)(i+1,j) + (*BrRZ_old)(i+1,j) - (*BrRZ)(i,j) - (*BrRZ_old)(i,j))
+		                          -      Beta_Bl_Rmax * Icpx * (double)imode * ((*ErRZ)(i,j+1) + (*ErRZ)(i,j))
 		                          - 2. * Beta_Bl_Rmax * (*EtRZ)(i,j);
-                        if (std::abs((*BlRZ)(i,j))>1.){
-                            MESSAGE("BlRZBM");                
-                            MESSAGE(i);    
-                            MESSAGE(j);
-                            MESSAGE((*BlRZ)(i,j));
-                        }
 		    }//i  ---end Bl
 		    
 		    // for Bt^(d,d)
-			double factor_Bt= 1./(1+dt_ov_dr+0.5*CB_BM*dt*one_ov_rlocal);
-			double Alpha_Bt_Rmax= ( -1 + dt_ov_dr - 0.5*CB_BM*dt*one_ov_rlocal) * factor_Bt;
-			double Beta_Bt_Rmax = (  1 - dt_ov_dr - 0.5*CB_BM*dt*one_ov_rlocal) * factor_Bt;
-			double Gamma_Bt_Rmax= (  1 + dt_ov_dr - 0.5*CB_BM*dt*one_ov_rlocal) * factor_Bt;
-			double Epsilon_Bt_Rmax= dt * one_ov_rlocal * factor_Bt;
-			double Delta_Bt_Rmax= dt_ov_dl*factor_Bt;
 		    for (unsigned int i=1 ; i<nl_p ; i++) { //Undefined in i=0 and i=nl_p
 		        (*BtRZ)(i,j+1) =     Alpha_Bt_Rmax * (*BtRZ)(i,j) 
                                            + Beta_Bt_Rmax  * (*BtRZ_old)(i,j+1)
 				           + Gamma_Bt_Rmax * (*BtRZ_old)(i,j)
 		                           - Icpx * (double)imode * CB_BM * Epsilon_Bt_Rmax  * ((*BrRZ)(i,j) - (*BrRZ_old)(i,j) )
 		                           - CE_BM * Delta_Bt_Rmax * ((*ErRZ)(i,j+1)+(*ErRZ)(i,j)-(*ErRZ)(i-1,j+1) -(*ErRZ)(i-1,j) ) ;
-                        if (std::abs((*BtRZ)(i,j))>1.){
-                        	MESSAGE("BtRZBM");                
-                        	MESSAGE(i);    
-                        	MESSAGE(j);
-                        	MESSAGE((*BtRZ)(i,j));
-                        }
 		    }//i  ---end Bt
 		    
 		}
