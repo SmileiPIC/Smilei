@@ -282,6 +282,7 @@ public:
         if ( PyTools::convert(py_pos_init, thisSpecies->position_initialization) ){
             thisSpecies->position_initialization_on_species=false;
             thisSpecies->position_initialization_on_species_index=-1;
+            thisSpecies->position_initialization_array = NULL;
             if (thisSpecies->position_initialization.empty()) {
                 ERROR("For species '" << species_name << "' empty position_initialization");
             } else if ( (thisSpecies->position_initialization!="regular"  )
@@ -289,11 +290,21 @@ public:
                       &&(thisSpecies->position_initialization!="centered" )) {
                   thisSpecies->position_initialization_on_species=true;
             }
+        } else if (PyArray_Check(py_pos_init)){ 
+            //Initialize position from this array
+            std::cout << "init pos from array " << std::endl;
+            thisSpecies->position_initialization_on_species=false;
+            thisSpecies->position_initialization_on_species_index=-1;
+            thisSpecies->position_initialization_array = (double*) PyArray_GETPTR1( (PyArrayObject*)py_pos_init , 0);
+            std::cout << "init pos is an array " <<  thisSpecies->position_initialization_array[0] << " " <<  thisSpecies->position_initialization_array[4] << std::endl;
+            int ndim_local = PyArray_NDIM((PyArrayObject*)py_pos_init) ;
+            std::cout << "array dim is " << ndim_local << std::endl ;
+            int *shape =  (int*)PyArray_SHAPE((PyArrayObject*)py_pos_init);
+            for (unsigned int i=0; i < ndim_local; i++) std::cout << "shape " <<i << " = "<< shape[i] << std::endl ;
+            int size = (int)PyArray_Size(py_pos_init);
+            std::cout << "array size = " << size << std::endl;
         } else {
-            std::cout << "init pos is not a string " << std::endl;
-            PyArrayObject *py_arr_pos_init = PyArray_FromAny(py_pos_init, NPY_DOUBLE,NPY_ARRAY_C_CONTIGUOUS);
-            double* arr = (double*) PyArray_GETPTR1( py_arr_pos_init , 0);
-            std::cout << "init pos is an array " << arr[0] << " " << arr[1] << std::endl;
+            ERROR("For species '" << species_name << "' non valid position_initialization. It must be either a string or a numpy array.");
         }
 
         PyTools::extract("momentum_initialization",thisSpecies->momentum_initialization ,"Species",ispec);
