@@ -67,13 +67,13 @@ private:
    
     
     //! Constant used for the Buneman boundary conditions (+R)
-    double Alpha_Br_Rmax;
+    double Alpha_Bl_Rmax;
     
     //! Constant used for the Buneman boundary conditions (+R)
-    double Beta_Br_Rmax;
+    double Beta_Bl_Rmax;
     
     //! Constant used for the Buneman boundary conditions (+R)
-    double Gamma_Br_Rmax;
+    double Gamma_Bl_Rmax;
     //! Constant used for the Buneman boundary conditions (+R)
     double CB_BM;
     //! Constant used for the Buneman boundary conditions (+R)

@@ -76,12 +76,8 @@ ElectroMagnBCRZ_BM::ElectroMagnBCRZ_BM( Params &params, Patch* patch, unsigned i
     // Rmax boundary
     double theta  = 0.0;
 	double phi    =  0.0;
-	double factor_Br= (1. + dt_ov_dr);
 	CB_BM  = cos(theta)*cos(phi)/(1.0 + cos(theta)*cos(phi));
 	CE_BM  = 1.0 - CB_BM;
-    Alpha_Br_Rmax    = (1. - dt_ov_dr)/factor_Br;
-    Beta_Br_Rmax     = dt/factor_Br;
-    Gamma_Br_Rmax    =  dt_ov_dl/factor_Br;
     
 }
 
@@ -198,17 +194,19 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		bool isXmax = (static_cast<ElectroMagn3DRZ*>(EMfields))->isXmax;
 		if (min_max == 3 && patch->isYmax() ) {
 		    
-		    // for Bl^(p,d)
 	            unsigned int j= nr_d-2;
-		    for (unsigned int i=isXmin ; i<nl_p-1; i++) {
-		        /*(*Bl2D)(i,nr_d-1) = -Alpha_SM_N   * (*Et2D)(i,nr_p-1)
-		         +                    Beta_SM_N    * (*Bl2D)(i,nr_d-2)
-		         +                    Delta_SM_N   * (*Br2D)(i+1,nr_p-1)
-		         +                    Epsilon_SM_N * (*Br2D)(i,nr_p-1);*/
-		         (*BlRZ)(i,j+1) = (*BlRZ_old)(i,j) - Alpha_Br_Rmax   * ((*BlRZ)(i,j)-(*BlRZ_old)(i,j+1))
-		        -                   Gamma_Br_Rmax*CB_BM    *( (*BrRZ)(i+1,j) + (*BrRZ_old)(i+1,j) - (*BrRZ)(i,j) - (*BrRZ_old)(i,j))
-		        -                   Beta_Br_Rmax*Icpx*(double)imode*CE_BM/((j_glob+j)*dr) *( (*ErRZ)(i,j+1)+(*ErRZ)(i,j))
-		        -                   2.*CE_BM*Beta_Br_Rmax/((j_glob+j)*dr)*(*EtRZ)(i,j);
+		    double one_ov_rlocal = 1./((j_glob+j)*dr);
+		    // for Bl^(p,d)
+	            double factor_Bl= 1./(1. + dt_ov_dr);
+                    Alpha_Bl_Rmax    = (1. - dt_ov_dr)*factor_Bl;
+                    Beta_Bl_Rmax     = CE_BM * dt * one_ov_rlocal * factor_Bl;
+                    Gamma_Bl_Rmax    = CB_BM * dt_ov_dl*factor_Bl;
+		    for (unsigned int i=1 ; i<nl_p-1; i++) {
+		         (*BlRZ)(i,j+1) =   (*BlRZ_old)(i,j) 
+                                          - Alpha_Bl_Rmax   * ((*BlRZ)(i,j)-(*BlRZ_old)(i,j+1))
+		                          - Gamma_Bl_Rmax * ( (*BrRZ)(i+1,j) + (*BrRZ_old)(i+1,j) - (*BrRZ)(i,j) - (*BrRZ_old)(i,j))
+		                          -      Beta_Bl_Rmax * Icpx * (double)imode * ( (*ErRZ)(i,j+1)+(*ErRZ)(i,j))
+		                          - 2. * Beta_Bl_Rmax * (*EtRZ)(i,j);
                         if (std::abs((*BlRZ)(i,j))>1.){
                             MESSAGE("BlRZBM");                
                             MESSAGE(i);    
@@ -218,7 +216,6 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		    }//i  ---end Bl
 		    
 		    // for Bt^(d,d)
-		        double one_ov_rlocal = 1./((j_glob+j)*dr);
 			double factor_Bt= 1./(1+dt_ov_dr+0.5*CB_BM*dt*one_ov_rlocal);
 			double Alpha_Bt_Rmax= ( -1 + dt_ov_dr - 0.5*CB_BM*dt*one_ov_rlocal) * factor_Bt;
 			double Beta_Bt_Rmax = (  1 - dt_ov_dr - 0.5*CB_BM*dt*one_ov_rlocal) * factor_Bt;
