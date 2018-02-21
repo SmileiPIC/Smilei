@@ -1404,9 +1404,10 @@ vector<double> Species::maxwellJuttner(unsigned int npoints, double temperature)
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species reacting to laser envelope
 //   - interpolate the fields at the particle position
+//   - deposit susceptibility
 //   - calculate the new momentum
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::ponderomotive_momentum_update(double time_dual, unsigned int ispec,
+void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, unsigned int ispec,
                        ElectroMagn* EMfields, Interpolator* Interp_envelope,
                        Params &params, bool diag_flag,
                        Patch* patch, SmileiMPI* smpi,
@@ -1445,9 +1446,10 @@ void Species::ponderomotive_momentum_update(double time_dual, unsigned int ispec
 // For all particles of the species reacting to laser envelope
 //   - interpolate the ponderomotive potential and its gradient at the particle position, for present and previous timestep
 //   - calculate the new particle position
-//   - exchange particles?
+//   - particles BC
+//   - project charge and current density
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::ponderomotive_position_update(double time_dual, unsigned int ispec,
+void Species::ponderomotive_update_position_and_currents(double time_dual, unsigned int ispec,
                        ElectroMagn* EMfields, Interpolator* Interp_envelope, Projector* Proj,
                        Params &params, bool diag_flag, PartWalls* partWalls,
                        Patch* patch, SmileiMPI* smpi,

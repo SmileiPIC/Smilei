@@ -269,14 +269,15 @@ public:
                           std::vector<Diagnostic*>& localDiags);
 
     //! Method calculating the Particle updated momentum (interpolation, momentum pusher, only particles interacting with envelope)
-    virtual void ponderomotive_momentum_update(double time_dual, unsigned int ispec,
+    virtual void ponderomotive_update_susceptibilty_and_momentum(double time_dual, unsigned int ispec,
                            ElectroMagn* EMfields, Interpolator* Interp_envelope,
                            Params &params, bool diag_flag,
                            Patch* patch, SmileiMPI* smpi,
                            std::vector<Diagnostic*>& localDiags);
 
     //! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)
-    virtual void ponderomotive_position_update(double time_dual, unsigned int ispec,
+    // and projecting charge density and thus current density (through Esirkepov method) for Maxwell's Equations
+    virtual void ponderomotive_update_position_and_currents(double time_dual, unsigned int ispec,
                            ElectroMagn* EMfields, Interpolator* Interp_envelope, Projector* Proj,
                            Params &params, bool diag_flag, PartWalls* partWalls,
                            Patch* patch, SmileiMPI* smpi,

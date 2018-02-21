@@ -1570,7 +1570,7 @@ void VectorPatch::check_expected_disk_usage( SmileiMPI* smpi, Params& params, Ch
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, update momentum for particles interacting with envelope
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::ponderomotive_momentum_advance(Params& params,
+void VectorPatch::ponderomotive_update_susceptibilty_and_momentum(Params& params,
                            SmileiMPI* smpi,
                            SimWindow* simWindow,
                            double time_dual, Timers &timers, int itime)
@@ -1584,7 +1584,7 @@ void VectorPatch::ponderomotive_momentum_advance(Params& params,
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 if (species(ipatch, ispec)->ponderomotive_dynamics){
-                species(ipatch, ispec)->ponderomotive_momentum_update(time_dual, ispec,
+                species(ipatch, ispec)->ponderomotive_update_susceptibilty_and_momentum(time_dual, ispec,
                                                  emfields(ipatch), interp_envelope(ipatch),
                                                  params, diag_flag,
                                                  (*this)(ipatch), smpi,
@@ -1596,7 +1596,7 @@ void VectorPatch::ponderomotive_momentum_advance(Params& params,
   
 } // END ponderomotive_momentum_advance
 
-void VectorPatch::ponderomotive_position_advance(Params& params,
+void VectorPatch::ponderomotive_update_position_and_currents(Params& params,
                            SmileiMPI* smpi,
                            SimWindow* simWindow,
                            double time_dual, Timers &timers, int itime)
@@ -1610,7 +1610,7 @@ void VectorPatch::ponderomotive_position_advance(Params& params,
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 if (species(ipatch, ispec)->ponderomotive_dynamics){
-                species(ipatch, ispec)->ponderomotive_position_update(time_dual, ispec,
+                species(ipatch, ispec)->ponderomotive_update_position_and_currents(time_dual, ispec,
                                                  emfields(ipatch), interp_envelope(ipatch), proj(ipatch),
                                                  params, diag_flag, partwalls(ipatch),
                                                  (*this)(ipatch), smpi,

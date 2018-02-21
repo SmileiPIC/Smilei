@@ -282,20 +282,14 @@ int main (int argc, char* argv[])
             
             // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
             if (params.Laser_Envelope_model){
+                // interpolate envelope for susceptibility deposition, project susceptibility for envelope equation, momentum advance
+                vecPatches.ponderomotive_update_susceptibilty_and_momentum(params, &smpi, simWindow, time_dual, timers, itime);    
 
-                // interpolate envelope for susceptibility deposition, momentum advance
+                // solve envelope equation and comm envelope         
+                vecPatches.solveEnvelope( params, simWindow, itime, time_dual, timers ); 
 
-                //    vecPatches.susceptibility, (including comm susceptibility)         // project source term for envelope equation
-
-                vecPatches.ponderomotive_momentum_advance(params, &smpi, simWindow, 
-                                                          time_dual, timers, itime);     // momentum advance for particles interacting with envelope 
-                         
-                vecPatches.solveEnvelope( params, simWindow, itime, time_dual, timers ); // solve envelope equation and comm envelope
-
-                //    interp updated envelope for position advance
-                vecPatches.ponderomotive_position_advance(params, &smpi, simWindow, 
-                                                          time_dual, timers, itime);        // position advance for particles interacting with envelope, comm particles
-                //    vecPatches.ponderomotive_part_current                              // project current density for Maxwell Eqs from particles interacting with envelope
+                // interp updated envelope for position advance, update positions and currents for Maxwell's equations
+                vecPatches.ponderomotive_update_position_and_currents(params, &smpi, simWindow, time_dual, timers, itime);        
              }
 
 
