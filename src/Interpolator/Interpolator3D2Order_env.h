@@ -37,13 +37,16 @@ public:
 	return interp_res;
     };  
 
-private:
     // Last prim index computed
     int ip_, jp_, kp_;
-    // Last dual index computed
+       // Last dual index computed
     int id_, jd_, kd_;
+
     // Last delta computed
     double deltax, deltay, deltaz;
+
+private:
+
     // Interpolation coefficient on Prim grid
     double coeffxp_[3], coeffyp_[3], coeffzp_[3];
     // Interpolation coefficient on Dual grid

@@ -1431,16 +1431,39 @@ void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, 
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
             // Interpolate the fields at the particle position
-            (*Interp_envelope)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
+            //(*Interp_envelope)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
 
+            int *istart = &(bmin[ibin]);
+            int *iend   = &(bmax[ibin]);
+            std::vector<double> *Epart          = &(smpi->dynamics_Epart[ithread]);
+            std::vector<double> *Bpart          = &(smpi->dynamics_Bpart[ithread]);
+            std::vector<double> *PHIpart        = &(smpi->dynamics_PHIpart[ithread]);
+            std::vector<double> *GradPHIpart    = &(smpi->dynamics_GradPHIpart[ithread]);
+          
+            std::vector<int> *iold              = &(smpi->dynamics_iold[ithread]);
+            std::vector<double> *delta          = &(smpi->dynamics_deltaold[ithread]);
+
+            int nparts( particles->size() );
+            for (int ipart=*istart ; ipart<*iend; ipart++ ) { //Loop on bin particles
+                //Interpolation on current particle
+                (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->operator()(EMfields, *particles, ipart, nparts, &(*Epart)[ipart], &(*Bpart)[ipart], &(*PHIpart)[ipart], &(*GradPHIpart)[ipart]);
+                //Buffering of iol and delta
+                (*iold)[ipart+0*nparts]  = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->ip_;
+                (*iold)[ipart+1*nparts]  = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->jp_;
+                (*iold)[ipart+2*nparts]  = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->kp_;
+                (*delta)[ipart+0*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltax;
+                (*delta)[ipart+1*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltay;
+                (*delta)[ipart+2*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltaz;
+            } // end loop on particles
+             
             // Project susceptibility, the source term of envelope equation
             //if ((!particles->is_test) && (mass > 0))
             //    (*Proj_susceptibility)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, params.is_spectral, b_dim, ispec );
-        
+            
             // Push only the particle momenta
             (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
             //particles->test_move( bmin[ibin], bmax[ibin], params );
-                                                                   }
+                                                                   } // end loop on ibin
                                  }
     else { // immobile particle      
          }//END if time vs. time_frozen    
