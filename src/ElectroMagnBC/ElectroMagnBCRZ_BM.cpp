@@ -180,43 +180,42 @@ void ElectroMagnBCRZ_BM::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
+
+    //This condition can only be applied to Rmax
+
     // Loop on imode 
     for (unsigned int imode=0 ; imode<Nmode ; imode++) {
 
-		// Static cast of the fields
-		cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Er_[imode];
-		cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Et_[imode];
-		cField2D* BlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_[imode];
-		cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_[imode];
-		cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_[imode];
-		cField2D* BtRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_m[imode]; 
-		cField2D* BlRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_m[imode];
-		cField2D* BrRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_m[imode];
+	// Static cast of the fields
+	cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Er_[imode];
+	cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Et_[imode];
+	cField2D* BlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_[imode];
+	cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_[imode];
+	cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_[imode];
+	cField2D* BtRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_m[imode]; 
+	cField2D* BlRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_m[imode];
+	cField2D* BrRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_m[imode];
 
-		if (min_max == 3 && patch->isYmax() ) {
-		    
-	            unsigned int j= nr_d-2;
-		    // for Bl^(p,d)
-		    for (unsigned int i=1 ; i<nl_p-1; i++) {
-		         (*BlRZ)(i,j+1) =                         (*BlRZ_old)(i,j) 
-                                          -      Alpha_Bl_Rmax * ((*BlRZ)(i,j) - (*BlRZ_old)(i,j+1))
-		                          -      Gamma_Bl_Rmax * ((*BrRZ)(i+1,j) + (*BrRZ_old)(i+1,j) - (*BrRZ)(i,j) - (*BrRZ_old)(i,j))
-		                          -      Beta_Bl_Rmax * Icpx * (double)imode * ((*ErRZ)(i,j+1) + (*ErRZ)(i,j))
-		                          - 2. * Beta_Bl_Rmax * (*EtRZ)(i,j);
-		    }//i  ---end Bl
-		    
-		    // for Bt^(d,d)
-		    for (unsigned int i=1 ; i<nl_p ; i++) { //Undefined in i=0 and i=nl_p
-		        (*BtRZ)(i,j+1) =     Alpha_Bt_Rmax * (*BtRZ)(i,j) 
-                                           + Beta_Bt_Rmax  * (*BtRZ_old)(i,j+1)
-				           + Gamma_Bt_Rmax * (*BtRZ_old)(i,j)
-		                           - Icpx * (double)imode * CB_BM * Epsilon_Bt_Rmax  * ((*BrRZ)(i,j) - (*BrRZ_old)(i,j) )
-		                           - CE_BM * Delta_Bt_Rmax * ((*ErRZ)(i,j+1)+(*ErRZ)(i,j)-(*ErRZ)(i-1,j+1) -(*ErRZ)(i-1,j) ) ;
-		    }//i  ---end Bt
-		    
-		}
-		else  {
-		    ERROR( "No Buneman along the axis" );
-		}
-	}	
+	if (min_max == 3 && patch->isYmax() ) {
+	    
+	    unsigned int j= nr_d-2;
+	    // for Bl^(p,d)
+	    for (unsigned int i=1 ; i<nl_p-1; i++) {
+	         (*BlRZ)(i,j+1) =                         (*BlRZ_old)(i,j) 
+                                  -      Alpha_Bl_Rmax * ((*BlRZ)(i,j) - (*BlRZ_old)(i,j+1))
+	                          -      Gamma_Bl_Rmax * ((*BrRZ)(i+1,j) + (*BrRZ_old)(i+1,j) - (*BrRZ)(i,j) - (*BrRZ_old)(i,j))
+	                          -      Beta_Bl_Rmax * Icpx * (double)imode * ((*ErRZ)(i,j+1) + (*ErRZ)(i,j))
+	                          - 2. * Beta_Bl_Rmax * (*EtRZ)(i,j);
+	    }//i  ---end Bl
+	    
+	    // for Bt^(d,d)
+	    for (unsigned int i=1 ; i<nl_p ; i++) { //Undefined in i=0 and i=nl_p
+	        (*BtRZ)(i,j+1) =     Alpha_Bt_Rmax * (*BtRZ)(i,j) 
+                                   + Beta_Bt_Rmax  * (*BtRZ_old)(i,j+1)
+			           + Gamma_Bt_Rmax * (*BtRZ_old)(i,j)
+	                           - Icpx * (double)imode * CB_BM * Epsilon_Bt_Rmax  * ((*BrRZ)(i,j) - (*BrRZ_old)(i,j) )
+	                           - CE_BM * Delta_Bt_Rmax * ((*ErRZ)(i,j+1)+(*ErRZ)(i,j)-(*ErRZ)(i-1,j+1) -(*ErRZ)(i-1,j) ) ;
+	    }//i  ---end Bt
+        }
+    }	
 }
