@@ -115,7 +115,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     #pragma omp for schedule(static)
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
          mypatch = vecPatches_old[ipatch];
-         cout << "ipatch " << ipatch << endl;
         //If my right neighbor does not belong to me store it as a patch to
         // be created later.
         if (mypatch->MPI_neighbor_[0][1] != mypatch->MPI_me_){
@@ -128,16 +127,13 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 
         //If my left neighbor does not belong to me ...
         if (mypatch->MPI_neighbor_[0][0] != mypatch->MPI_me_) {
-            cout << "ipatch is deleted and maybe sent " << ipatch << endl;
             delete_patches_.push_back(mypatch); // Stores pointers to patches to be deleted later
             //... I might have to MPI send myself to the left...
             if (mypatch->MPI_neighbor_[0][0] != MPI_PROC_NULL){
                 send_patches_.push_back(mypatch); // Stores pointers to patches to be sent later
-                cout << "send to MPI " << vecPatches_old[ipatch]->MPI_neighbor_[0][0] << " patch index " << (vecPatches_old[ipatch]->neighbor_[0][0]) << " nmessage " << nmessage << endl;
                 smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0] , (vecPatches_old[ipatch]->neighbor_[0][0]) * nmessage, params );
             }
         } else { //In case my left neighbor belongs to me:
-            cout << "ipatch belongs to me " << ipatch << endl;
             // I become my left neighbor.
             //Update hindex and coordinates.
 
@@ -151,7 +147,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             //stores indices in tmp buffers so that original values can be read by other patches.
             mypatch->tmp_neighbor_[0][0] = vecPatches_old[mypatch->hindex - h0 ]->neighbor_[0][0];
             mypatch->tmp_MPI_neighbor_[0][0] = vecPatches_old[mypatch->hindex - h0 ]->MPI_neighbor_[0][0];
-            cout << "ndim " <<  params.nDim_particle << " " <<  params.nDim_field << endl;
             for (unsigned int idim = 1; idim < params.nDim_field ; idim++){
                 mypatch->tmp_neighbor_[idim][0] = vecPatches_old[mypatch->hindex - h0 ]->neighbor_[idim][0];
                 mypatch->tmp_neighbor_[idim][1] = vecPatches_old[mypatch->hindex - h0 ]->neighbor_[idim][1];
@@ -171,9 +166,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     //Creation of new Patches
     for (unsigned int j = 0; j < patch_to_be_created[my_thread].size();  j++){
         //create patch without particle.
-        cout << "clone patch " << j << endl;
         mypatch = PatchesFactory::clone(vecPatches(0),params, smpi, vecPatches.domain_decomposition_, h0 + patch_to_be_created[my_thread][j], n_moved, false );
-        cout << "done clone patch " << j << endl;
 
         // Do not receive Xmin condition
         if ( mypatch->isXmin() && mypatch->EMfields->emBoundCond[0] )
@@ -184,7 +177,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         vecPatches.patches_[patch_to_be_created[my_thread][j]] = mypatch ;
         //Receive Patch if necessary
         if (mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL){
-            cout << "recv from MPI " << mypatch->MPI_neighbor_[0][1] << " patch index " << mypatch->hindex << " nmessage " << nmessage << endl;
             smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], (mypatch->hindex)*nmessage, params );
             patch_to_be_created[my_thread][j] = nPatches ; //Mark no needs of particles
         }
@@ -210,8 +202,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             smpi->waitall( vecPatches_old[ipatch] );
         }
     }
-
-    cout << " waitall 1 completed " << endl;
 
     //Update the correct neighbor values
     for (unsigned int j=0; j < update_patches_.size(); j++){
@@ -254,14 +244,10 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         }
     }
 
-
-    cout << " patches updated " << endl;
-
     //Wait for sends to be completed
     for (unsigned int j=0; j < send_patches_.size(); j++){
             smpi->waitall( send_patches_[j] );
     }
-    cout << " waitall 2 completed " << endl;
 
     #pragma omp barrier
 
@@ -294,9 +280,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         vecPatches.lastIterationPatchesMoved = itime;
     }
 
-    //cout << " update field list completed. delete size = " << delete_patches_.size() << endl;
-    cout << " update field list completed. del size = " << delete_patches_.size() << endl;
-
     std::vector<double> poynting[2];
     poynting[0].resize(params.nDim_field,0.0);
     poynting[1].resize(params.nDim_field,0.0);
@@ -311,16 +294,14 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         //        energy_part_lost[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
         //}
 
-        for (unsigned int j=0; j<2;j++) //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+        for (unsigned int jp=0; jp<2;jp++) //directions (xmin/xmax, ymin/ymax, zmin/zmax)
             for (unsigned int i=0 ; i<params.nDim_field ; i++){ //axis 0=x, 1=y, 2=z
-                cout << " poynting i j " << i << " " << j << endl;
-                poynting[j][i] += mypatch->EMfields->poynting[j][i];
+                poynting[jp][i] += mypatch->EMfields->poynting[jp][i];
             }
 
 
         delete  mypatch;
     }
-    cout << " delete patches completed " << endl;
 
     // SUM energy_field_lost, energy_part_lost and poynting / All threads
     #pragma omp critical
@@ -333,7 +314,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             for (unsigned int i=0 ; i< params.nDim_field ; i++) //axis 0=x, 1=y, 2=z
                 vecPatches(0)->EMfields->poynting[j][i] += poynting[j][i];
     }
-    cout << " sum energy completed " << endl;
 
 
 

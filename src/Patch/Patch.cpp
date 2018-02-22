@@ -182,12 +182,10 @@ void Patch::finalizeMPIenvironment(Params& params) {
     int nb_comms(9); // E, B, B_m : min number of comms
     if (params.geometry == "3drz")
         nb_comms += 9*(params.nmodes - 1);
-    cout << "resizing requests_ to after geo " << nb_comms << endl;
     // if envelope is present, add A,A0 to comms
     if (params.Laser_Envelope_model){  
         nb_comms += 2;
     }
-    cout << "resizing requests_ to after env " << nb_comms << endl;
     // add comms for species
     nb_comms += 2*vecSpecies.size();
 
@@ -212,14 +210,12 @@ void Patch::finalizeMPIenvironment(Params& params) {
     }
     nb_comms += EMfields->antennas.size();
 
-    cout << "resizing requests_ to after diag " << nb_comms << endl;
     for (unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
         if(EMfields->emBoundCond[bcId]) {
             for (unsigned int laserId=0 ; laserId < EMfields->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
                 nb_comms += 4;
             }
         }
-        cout << "resizing requests_ to after bcId " << bcId << " " << nb_comms << endl;
         if ( EMfields->extFields.size()>0 ) {
             if (dynamic_cast<ElectroMagnBC1D_SM*>(EMfields->emBoundCond[bcId]) )
                 nb_comms += 4;
@@ -229,7 +225,6 @@ void Patch::finalizeMPIenvironment(Params& params) {
                 nb_comms += 18;
         }
     }
-    cout << "resizing requests_ to " << nb_comms << endl;
     requests_.resize( nb_comms, MPI_REQUEST_NULL );
 
 }
@@ -278,9 +273,6 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
     }
     radius = sqrt(radius);
 
-    //cout << hindex << " " << Pcoordinates[0] << " " << Pcoordinates[1] << endl;
-    //cout << "X = " << Pcoordinates[0]  << " " << min_local[0] << " " << max_local[0] << " - Y = " << Pcoordinates[1] << " " << min_local[1] << " " << max_local[1] << endl;
-    
     //cart_updateMPIenv(smpi);
 
     MPI_me_ = vecPatch(0)->MPI_me_;
