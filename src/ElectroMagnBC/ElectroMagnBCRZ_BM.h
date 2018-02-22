@@ -30,7 +30,7 @@ public:
     std::vector< std::complex<double> > Bl_val,  Br_val,  Bt_val;
     
 private:
-    
+
     
     //! Conversion factor from degree to radian
     double conv_deg2rad;
