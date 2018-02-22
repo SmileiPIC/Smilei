@@ -1507,10 +1507,33 @@ void Species::ponderomotive_update_position_and_currents(double time_dual, unsig
     
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
     
-            // Interpolate the ponderomotive potential and its gradient at the particle position, from present and previous timestep
+            // Interpolate the ponderomotive potential and its gradient at the particle position, present and previous timestep
             //(*Interp_envelope)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
-    
-            // Push only the particle momenta
+            int *istart = &(bmin[ibin]);
+            int *iend   = &(bmax[ibin]);
+            
+            std::vector<double> *PHIpart        = &(smpi->dynamics_PHIpart[ithread]);
+            std::vector<double> *GradPHIpart    = &(smpi->dynamics_GradPHIpart[ithread]);
+            std::vector<double> *PHIoldpart     = &(smpi->dynamics_PHIoldpart[ithread]);
+            std::vector<double> *GradPHIoldpart = &(smpi->dynamics_GradPHIoldpart[ithread]);
+          
+            std::vector<int> *iold              = &(smpi->dynamics_iold[ithread]);
+            std::vector<double> *delta          = &(smpi->dynamics_deltaold[ithread]);
+
+            int nparts( particles->size() );
+            for (int ipart=*istart ; ipart<*iend; ipart++ ) { //Loop on bin particles
+                //Interpolation on current particle
+                (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->interpolate_envelope_and_old_envelope(EMfields, *particles, ipart, nparts, &(*PHIpart)[ipart], &(*GradPHIpart)[ipart],&(*PHIoldpart)[ipart], &(*GradPHIoldpart)[ipart]);
+                //Buffering of iol and delta
+                (*iold)[ipart+0*nparts]  = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->ip_;
+                (*iold)[ipart+1*nparts]  = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->jp_;
+                (*iold)[ipart+2*nparts]  = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->kp_;
+                (*delta)[ipart+0*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltax;
+                (*delta)[ipart+1*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltay;
+                (*delta)[ipart+2*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltaz;
+            } // end loop on particles
+
+            // Push only the particle position
             (*Push_ponderomotive_position)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
             //particles->test_move( bmin[ibin], bmax[ibin], params );
 
