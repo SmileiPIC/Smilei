@@ -28,9 +28,9 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
     cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(fields))->El_[imode];
     cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Er_[imode];
     cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Et_[imode];
-    cField2D* BlRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Bl_m[imode];
-    cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Br_m[imode];
-    cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Bt_m[imode];
+    cField2D* BlRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Bl_[imode];
+    cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Br_[imode];
+    cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Bt_[imode];
     cField2D* JlRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Jl_[imode];
     cField2D* JrRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Jr_[imode];
     cField2D* JtRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Jt_[imode];
