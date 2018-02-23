@@ -291,7 +291,7 @@ int main (int argc, char* argv[])
                 vecPatches.solveEnvelope( params, simWindow, itime, time_dual, timers ); 
 
                 // interp updated envelope for position advance, update positions and currents for Maxwell's equations
-                vecPatches.ponderomotive_update_position_and_currents(params, &smpi, simWindow, time_dual, timers, itime);        
+                vecPatches.ponderomotive_update_position_and_currents(params, &smpi, simWindow, time_dual, timers, itime);      
              }
 
 

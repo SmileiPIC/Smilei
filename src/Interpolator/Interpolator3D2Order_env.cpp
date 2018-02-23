@@ -150,7 +150,7 @@ void Interpolator3D2Order_env::interpolate_em_fields_and_envelope(ElectroMagn* E
     // Interpolation of GradPhiy^(p,p,p)
     // -------------------------
     *(GradPHILoc+1*nparts) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], GradPhiy3D, ip_, jp_, kp_);
-   
+    
     // -------------------------
     // Interpolation of GradPhiz^(p,p,p)
     // -------------------------

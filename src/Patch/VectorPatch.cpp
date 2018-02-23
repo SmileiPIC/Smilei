@@ -149,7 +149,6 @@ void VectorPatch::dynamics(Params& params,
         } // end condition on envelope dynamics
     } // end loop on species
     timers.syncPart.update( params.printNow( itime ) );
-
 } // END dynamics
 
 
@@ -1557,7 +1556,7 @@ void VectorPatch::ponderomotive_update_susceptibilty_and_momentum(Params& params
                            SimWindow* simWindow,
                            double time_dual, Timers &timers, int itime)
 {
-
+    
     #pragma omp single
     diag_flag = needsRhoJsNow(itime);
     
@@ -1575,7 +1574,7 @@ void VectorPatch::ponderomotive_update_susceptibilty_and_momentum(Params& params
             } // end diagnostic or projection if condition on species
         } // end loop on species
     } // end loop on patches
-  
+ 
 } // END ponderomotive_update_susceptibilty_and_momentum
 
 void VectorPatch::ponderomotive_update_position_and_currents(Params& params,

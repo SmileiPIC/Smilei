@@ -506,7 +506,6 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
-
             // Interpolate the fields at the particle position
             (*Interp)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
             
@@ -1432,9 +1431,10 @@ void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, 
 
             // Interpolate the fields at the particle position
             //(*Interp_envelope)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
-
-            int *istart = &(bmin[ibin]);
-            int *iend   = &(bmax[ibin]);
+            
+            int istart = (bmin[ibin]);
+            int iend   = (bmax[ibin]);
+         
             std::vector<double> *Epart          = &(smpi->dynamics_Epart[ithread]);
             std::vector<double> *Bpart          = &(smpi->dynamics_Bpart[ithread]);
             std::vector<double> *PHIpart        = &(smpi->dynamics_PHIpart[ithread]);
@@ -1444,9 +1444,9 @@ void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, 
             std::vector<double> *delta          = &(smpi->dynamics_deltaold[ithread]);
 
             int nparts( particles->size() );
-            for (int ipart=*istart ; ipart<*iend; ipart++ ) { //Loop on bin particles
+            for (int ipart=istart ; ipart<iend; ipart++ ) {//Loop on bin particles
                 //Interpolation on current particle
-                (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->interpolate_em_fields_and_envelope(EMfields, *particles, ipart, nparts, &(*Epart)[ipart], &(*Bpart)[ipart], &(*PHIpart)[ipart], &(*GradPHIpart)[ipart]);
+                (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->interpolate_em_fields_and_envelope(EMfields, *particles, ipart, nparts, &(*Epart)[ipart], &(*Bpart)[ipart], &(*PHIpart)[ipart], &(*GradPHIpart)[ipart]); 
                 //Buffering of iol and delta
                 (*iold)[ipart+0*nparts]  = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->ip_;
                 (*iold)[ipart+1*nparts]  = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->jp_;
@@ -1509,8 +1509,8 @@ void Species::ponderomotive_update_position_and_currents(double time_dual, unsig
     
             // Interpolate the ponderomotive potential and its gradient at the particle position, present and previous timestep
             //(*Interp_envelope)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
-            int *istart = &(bmin[ibin]);
-            int *iend   = &(bmax[ibin]);
+            int istart = (bmin[ibin]);
+            int iend   = (bmax[ibin]);
             
             std::vector<double> *PHIpart        = &(smpi->dynamics_PHIpart[ithread]);
             std::vector<double> *GradPHIpart    = &(smpi->dynamics_GradPHIpart[ithread]);
@@ -1521,7 +1521,7 @@ void Species::ponderomotive_update_position_and_currents(double time_dual, unsig
             std::vector<double> *delta          = &(smpi->dynamics_deltaold[ithread]);
 
             int nparts( particles->size() );
-            for (int ipart=*istart ; ipart<*iend; ipart++ ) { //Loop on bin particles
+            for (int ipart=istart ; ipart<iend; ipart++ ) { //Loop on bin particles
                 //Interpolation on current particle
                 (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->interpolate_envelope_and_old_envelope(EMfields, *particles, ipart, nparts, &(*PHIpart)[ipart], &(*GradPHIpart)[ipart],&(*PHIoldpart)[ipart], &(*GradPHIoldpart)[ipart]);
                 //Buffering of iol and delta

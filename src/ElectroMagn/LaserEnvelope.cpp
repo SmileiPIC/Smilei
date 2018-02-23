@@ -260,7 +260,7 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
 
     Field3D* Phi3D         = static_cast<Field3D*>(Phi_);     //Phi=|A|^2 is the laser envelope intensity
     Field3D* Phiold3D      = static_cast<Field3D*>(Phiold_); 
-
+    
     //! 1/(2dx), where dx is the spatial step dx for 3D3V cartesian simulations
     double one_ov_2dx=1./2./cell_length[0];
 

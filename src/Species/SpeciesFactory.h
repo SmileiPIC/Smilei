@@ -567,6 +567,8 @@ public:
         newSpecies->temperatureProfile[2]                    = new Profile(species->temperatureProfile[2]);
         newSpecies->max_charge                               = species->max_charge;
         newSpecies->tracking_diagnostic                      = species->tracking_diagnostic;
+        newSpecies->ponderomotive_dynamics                   = species->ponderomotive_dynamics;
+
         if (newSpecies->mass==0) {
             newSpecies->multiphoton_Breit_Wheeler[0]         = species->multiphoton_Breit_Wheeler[0];
             newSpecies->multiphoton_Breit_Wheeler[1]         = species->multiphoton_Breit_Wheeler[1];
