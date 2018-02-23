@@ -199,6 +199,17 @@ int main (int argc, char* argv[])
         vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
                             MultiphotonBreitWheelerTables, time_dual, timers, 0);
 
+        // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
+        if (params.Laser_Envelope_model){
+            // interpolate envelope for susceptibility deposition, project susceptibility for envelope equation, momentum advance
+            vecPatches.ponderomotive_update_susceptibilty_and_momentum(params, &smpi, simWindow, time_dual, timers, 0);    
+          
+            // comm and synch susceptibility
+
+            // interp updated envelope for position advance, update positions and currents for Maxwell's equations
+            vecPatches.ponderomotive_update_position_and_currents(params, &smpi, simWindow, time_dual, timers, 0);        
+                                        }
+
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
 
         vecPatches.finalize_and_sort_parts(params, &smpi, simWindow,
@@ -300,12 +311,6 @@ int main (int argc, char* argv[])
             
             // apply currents from antennas
             vecPatches.applyAntennas(time_dual);
-
-            // solve envelope equation
-            //int n_envlaser = PyTools::nComponents("LaserEnvelope");
-            //if ( n_envlaser ==1 ) // for the moment it works only with one envelope
-            vecPatches.solveEnvelope( params, simWindow, itime, time_dual, timers );
-
             
             // solve Maxwell's equations
             #ifndef _PICSAR
