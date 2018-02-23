@@ -220,3 +220,4 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		}
 	}	
 }
+

@@ -276,7 +276,6 @@ void SmileiMPI::init_patch_count( Params& params, DomainDecomposition* domain_de
                 Lcur += local_load; //Add grid contribution to the load.
                 Ncur++; // Try to assign current patch to rank r.
 
-                //if (isMaster()) cout <<"h= " << hindex << " Tcur = " << Tcur << " Lcur = " << Lcur <<" Ncur = " << Ncur <<" r= " << r << endl;
                 if (r < (unsigned int)smilei_sz-1){
 
                     if ( Lcur > Tcur || smilei_sz-r >= Npatches-hindex){ //Load target is exceeded or we have as many patches as procs left.
@@ -348,7 +347,6 @@ void SmileiMPI::init_patch_count( Params& params, DomainDecomposition* domain_de
 void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, double time_dual )
 {
 
-    //cout << "Start recompute" << endl;
     unsigned int ncells_perpatch, j;
     int Ncur;
     double Tload,Tload_loc,Tcur, cells_load, target, Tscan;
@@ -593,7 +591,6 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
     if ( params.geometry != "3drz" ) {
         isend( patch->EMfields, to, maxtag, patch->requests_,tag);
     } else {
-        cout << "sending with maxtag = " << maxtag << " tag = " << tag << endl;
         isend( patch->EMfields, to, maxtag, patch->requests_,tag, static_cast<ElectroMagn3DRZ*>(patch->EMfields)->El_.size());
     }
 
@@ -603,7 +600,6 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
 void SmileiMPI::waitall(Patch* patch)
 {
 
-    cout << "waiting all. request size = " << patch->requests_.size() << endl;
     for (unsigned int ireq=0; ireq<patch->requests_.size() ; ireq++ ){
         MPI_Status status;
         if (patch->requests_[ireq] != MPI_REQUEST_NULL)
@@ -640,7 +636,6 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
         patch->vecSpecies[ispec]->bmin[0]=0;
         //Prepare patch for receiving particles
         nbrOfPartsRecv = patch->vecSpecies[ispec]->bmax.back();
-        //cout << smilei_rk << " recv " << nbrOfPartsRecv << endl;
         patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params.nDim_particle );
         //Receive particles
         if ( nbrOfPartsRecv > 0 ) {
@@ -682,7 +677,6 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     if ( params.geometry != "3drz" ) {
         recv( patch->EMfields, from, maxtag );
     } else {
-        cout << "recv with maxtag = " << maxtag << endl;
         recv( patch->EMfields, from, maxtag, static_cast<ElectroMagn3DRZ*>(patch->EMfields)->El_.size() );
     }
 
@@ -815,23 +809,14 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
 
     ElectroMagn3DRZ* EMRZ = static_cast<ElectroMagn3DRZ*>(EM);
     for (unsigned int imode =0; imode < nmodes; imode++){
-        cout << " isend El " << imode << "  " << tag <<endl;
         isendComplex( EMRZ->El_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
-        cout << " isend Er " << imode << "  " << tag <<endl;
         isendComplex( EMRZ->Er_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
-        cout << " isend Et " << imode << "  " << tag <<endl;
         isendComplex( EMRZ->Et_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
-        cout << " isend Bl " << imode << "  " << tag <<endl;
         isendComplex( EMRZ->Bl_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
-        cout << " isend Br " << imode << "  " << tag <<endl;
         isendComplex( EMRZ->Br_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
-        cout << " isend Bt " << imode << "  " << tag <<endl;
         isendComplex( EMRZ->Bt_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
-        cout << " isend Bl " << imode << "  " << tag <<endl;
         isendComplex( EMRZ->Bl_m[imode], to, mpi_tag+tag, requests[tag]); tag++;
-        cout << " isend Br " << imode << "  " << tag <<endl;
         isendComplex( EMRZ->Br_m[imode], to, mpi_tag+tag, requests[tag]); tag++;
-        cout << " isend Bt " << imode << "  " << tag <<endl;
         isendComplex( EMRZ->Bt_m[imode], to, mpi_tag+tag, requests[tag]); tag++;
     }
 
@@ -840,21 +825,17 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
             isend( EM->allFields_avg[idiag][ifield], to, mpi_tag+tag, requests[tag]); tag++;
         }
     }
-    cout << " isend EM step 1 " << endl;
 
     for (unsigned int antennaId=0 ; antennaId<EM->antennas.size() ; antennaId++) {
         isend( EM->antennas[antennaId].field, to, mpi_tag+tag, requests[tag] ); tag++;
     }
-    cout << " isend EM step 2 " << endl;
 
     for (unsigned int bcId=0 ; bcId<EM->emBoundCond.size() ; bcId++ ) {
-        cout << " bcId " << bcId <<  EM->emBoundCond[bcId]->vecLaser.size() << endl;
         if(! EM->emBoundCond[bcId]) continue;
 
         for (unsigned int laserId=0 ; laserId < EM->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
 
             Laser * laser = EM->emBoundCond[bcId]->vecLaser[laserId];
-            cout << " sending laser " << laserId << endl;
             if( !(laser->spacetime[0]) && !(laser->spacetime[1]) ){
                 LaserProfileSeparable* profile;
                 profile = static_cast<LaserProfileSeparable*> ( laser->profiles[0] );
@@ -865,7 +846,6 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
                 isend( profile->space_envelope, to , mpi_tag+tag, requests[tag] ); tag++;
                 isend( profile->phase, to, mpi_tag+tag, requests[tag]); tag++;
             }
-            cout << " sent laser " << laserId << endl;
         }
 
          if ( EM->extFields.size()>0 ) {
@@ -896,7 +876,6 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
          }
 
     }
-    cout << " isend EM step 3 " << endl;
 } // End isend ( ElectroMagn LRT )
 
 
@@ -980,23 +959,14 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag, unsigned int nmodes)
 {
     ElectroMagn3DRZ* EMRZ = static_cast<ElectroMagn3DRZ*>(EM);
     for (unsigned int imode =0; imode < nmodes; imode++){
-        cout << " recv El " << imode << "  " << tag << endl;
         recvComplex( EMRZ->El_[imode] , from, tag ); tag++;
-        cout << " recv Er " << imode << "  " << tag <<endl;
         recvComplex( EMRZ->Er_[imode] , from, tag ); tag++;
-        cout << " recv Et " << imode << "  " << tag <<endl;
         recvComplex( EMRZ->Et_[imode] , from, tag ); tag++;
-        cout << " recv Bl " << imode << "  " << tag <<endl;
         recvComplex( EMRZ->Bl_[imode] , from, tag ); tag++;
-        cout << " recv Br " << imode << "  " << tag <<endl;
         recvComplex( EMRZ->Br_[imode] , from, tag ); tag++;
-        cout << " recv Bt " << imode << "  " << tag <<endl;
         recvComplex( EMRZ->Bt_[imode] , from, tag ); tag++;
-        cout << " recv Bl " << imode << "  " << tag <<endl;
         recvComplex( EMRZ->Bl_m[imode], from, tag ); tag++;
-        cout << " recv Br " << imode << "  " << tag <<endl;
         recvComplex( EMRZ->Br_m[imode], from, tag ); tag++;
-        cout << " recv Bt " << imode << "  " << tag <<endl;
         recvComplex( EMRZ->Bt_m[imode], from, tag ); tag++;
     }
 
