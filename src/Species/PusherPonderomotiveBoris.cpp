@@ -39,7 +39,7 @@ void PusherPonderomotiveBoris::operator() (Particles &particles, SmileiMPI* smpi
     double pxsm, pysm, pzsm;
     double local_invgf;
     double inv_gamma0,inv_gamma_ponderomotive;
-    double charge_over_mass_sq;
+    double charge_sq_over_mass_sq;
 
     double* momentum[3];
     for ( int i = 0 ; i<3 ; i++ )
@@ -66,10 +66,10 @@ void PusherPonderomotiveBoris::operator() (Particles &particles, SmileiMPI* smpi
         // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
         charge_sq_over_mass_dts4 = (double)(charge[ipart])*(double)(charge[ipart])*one_over_mass_*dts4;         
         // (charge over mass)^2
-        charge_over_mass_sq      = (double)(charge[ipart])*one_over_mass_*(charge[ipart])*one_over_mass_;
+        charge_sq_over_mass_sq      = (double)(charge[ipart])*one_over_mass_*(charge[ipart])*one_over_mass_;
 
         // compute initial ponderomotive gamma (more precisely, its inverse) 
-        inv_gamma0 = 1./sqrt( 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + *(Phi+ipart)*charge_over_mass_sq );
+        inv_gamma0 = 1./sqrt( 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + *(Phi+ipart)*charge_sq_over_mass_sq );
         
         // ( electric field + ponderomotive force for ponderomotive gamma advance ) scalar multiplied by momentum
         pxsm = inv_gamma0 * (charge_over_mass_dts2*(*(Ex+ipart)) - charge_sq_over_mass_dts4*(*(GradPhix+ipart)) * inv_gamma0 ) * momentum[0][ipart];

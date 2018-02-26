@@ -166,6 +166,7 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
     vector<double> position(3,0);
     double t;
     double t_previous_timestep;
+    double one_over_2 = 1./2.;    
 
     //! 1/(2dx), where dx is the spatial step dx for 3D3V cartesian simulations
     double one_ov_2dx=1./2./cell_length[0];
@@ -195,8 +196,8 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
 
                 (*Env_Ar3D)(i,j,k)= std::abs((*A3D)(i,j,k));
 
-                (*Phi3D)(i,j,k)   = std::abs((*A3D) (i,j,k)) * std::abs((*A3D) (i,j,k));
-                (*Phiold3D)(i,j,k)= std::abs((*A03D)(i,j,k)) * std::abs((*A03D)(i,j,k));
+                (*Phi3D)(i,j,k)   = std::abs((*A3D) (i,j,k)) * std::abs((*A3D) (i,j,k)) * one_over_2;
+                (*Phiold3D)(i,j,k)= std::abs((*A03D)(i,j,k)) * std::abs((*A03D)(i,j,k)) * one_over_2;
 
                 position[2] += cell_length[2];
             }  // end z loop
@@ -239,30 +240,32 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
     
     //// auxiliary quantities
     //! laser wavenumber, i.e. omega0/c
-    double k0=1.;
+    double              k0 = 1.;
     //! laser wavenumber times the temporal step, i.e. omega0/c * dt
-    double k0_dt=1.*timestep;
+    double           k0_dt = 1.*timestep;
     //! 1/dt^2, where dt is the temporal step
-    double dt_sq = timestep*timestep; 
+    double           dt_sq = timestep*timestep; 
     // imaginary unit
-    complex<double> i1=std::complex<double>(0., 1);
+    complex<double>     i1 = std::complex<double>(0., 1);
   
     //! 1/dx^2, 1/dy^2, 1/dz^2, where dx,dy,dz are the spatial step dx for 3D3V cartesian simulations
-    double one_ov_dx_sq=1./cell_length[0]/cell_length[0];
-    double one_ov_dy_sq=1./cell_length[1]/cell_length[1];
-    double one_ov_dz_sq=1./cell_length[2]/cell_length[2];
+    double one_ov_dx_sq    = 1./cell_length[0]/cell_length[0];
+    double one_ov_dy_sq    = 1./cell_length[1]/cell_length[1];
+    double one_ov_dz_sq    = 1./cell_length[2]/cell_length[2];
 
-    //->rho_e- ???;
-    cField3D* A3D     = static_cast<cField3D*>(A_);   // the envelope at timestep n
-    cField3D* A03D    = static_cast<cField3D*>(A0_); // the envelope at timestep n-1
-    Field3D* Env_Ar3D = static_cast<Field3D*>(EMfields->Env_Ar_); // field for temporary diagnostic
+    
+    cField3D* A3D          = static_cast<cField3D*>(A_);   // the envelope at timestep n
+    cField3D* A03D         = static_cast<cField3D*>(A0_); // the envelope at timestep n-1
+    Field3D* Env_Ar3D      = static_cast<Field3D*>(EMfields->Env_Ar_); // field for temporary diagnostic
     // Field3D* Env_Ai3D = static_cast<Field3D*>(EMfields->Env_Ai_); // field for temporary diagnostic
 
     Field3D* Phi3D         = static_cast<Field3D*>(Phi_);     //Phi=|A|^2 is the laser envelope intensity
     Field3D* Phiold3D      = static_cast<Field3D*>(Phiold_); 
     
+    double one_over_2      = 1./2.;   
+
     //! 1/(2dx), where dx is the spatial step dx for 3D3V cartesian simulations
-    double one_ov_2dx=1./2./cell_length[0];
+    double one_ov_2dx      = 1./2./cell_length[0];
 
     // temporary variable for updated envelope
     cField3D* A3Dnew;
@@ -286,9 +289,9 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
                 (*A3Dnew)(i,j,k) += 2.*(*A3D)(i,j,k)-(1.+i1*k0_dt)*(*A03D)(i,j,k);
                 // A3Dnew = A3Dnew * (1+ik0dct)/(1+k0^2c^2dt^2)
                 (*A3Dnew)(i,j,k)  = (*A3Dnew)(i,j,k)*(1.+i1*k0_dt)/(1.+k0_dt*k0_dt);
-
-                (*Phi3D)   (i,j,k)= std::abs((*A3Dnew) (i,j,k)) * std::abs((*A3Dnew) (i,j,k));
-                (*Phiold3D)(i,j,k)= std::abs((*A3D)    (i,j,k)) * std::abs((*A3D)    (i,j,k));
+                // compute ponderomotive potential, |A|^2/2
+                (*Phi3D)   (i,j,k)= std::abs((*A3Dnew) (i,j,k)) * std::abs((*A3Dnew) (i,j,k)) * one_over_2;
+                (*Phiold3D)(i,j,k)= std::abs((*A3D)    (i,j,k)) * std::abs((*A3D)    (i,j,k)) * one_over_2;
 
             } // end z loop
         } // end y loop
