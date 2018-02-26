@@ -339,7 +339,7 @@ void LaserEnvelope::boundaryConditions(int itime, double time_dual, Patch* patch
 
 void LaserEnvelope3D::compute_Phi_gradients(ElectroMagn* EMfields){
 
-    // computes gradients of Phi=|A|^2, the laser envelope intensity
+    // computes gradients of Phi=|A|^2/2, the ponderomotive potential
 
     Field3D* GradPhix3D    = static_cast<Field3D*>(GradPhix_);
     Field3D* GradPhixold3D = static_cast<Field3D*>(GradPhixold_); 
@@ -350,7 +350,7 @@ void LaserEnvelope3D::compute_Phi_gradients(ElectroMagn* EMfields){
     Field3D* GradPhiz3D    = static_cast<Field3D*>(GradPhiz_);
     Field3D* GradPhizold3D = static_cast<Field3D*>(GradPhizold_); 
 
-    Field3D* Phi3D         = static_cast<Field3D*>(Phi_);     //Phi=|A|^2 is the laser envelope intensity
+    Field3D* Phi3D         = static_cast<Field3D*>(Phi_);     //Phi=|A|^2/2 is the ponderomotive potential
     Field3D* Phiold3D      = static_cast<Field3D*>(Phiold_); 
 
     //! 1/(2dx), where dx is the spatial step dx for 3D3V cartesian simulations

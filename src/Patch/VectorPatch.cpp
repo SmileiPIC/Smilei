@@ -342,7 +342,7 @@ void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime,
         SyncVectorPatch::finalizeexchangeA( params, (*this) );
 
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-            // Computes gradients of Phi=|A|^2 in all points
+            // Computes gradients of Phi=|A|^2/2 in all points
             (*this)(ipatch)->EMfields->envelope->compute_Phi_gradients(  (*this)(ipatch)->EMfields );
         }
     }
