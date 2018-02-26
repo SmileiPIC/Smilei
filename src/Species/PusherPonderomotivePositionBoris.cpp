@@ -76,7 +76,7 @@ void PusherPonderomotivePositionBoris::operator() (Particles &particles, SmileiM
         pzsm = charge_sq_over_mass_dts4 * ( *(GradPhiz+ipart) + *(GradPhioldz+ipart) ) * one_over_2 * inv_gamma0 ;
     
         // update of gamma ponderomotive (more precisely, the inverse)
-        inv_gamma_ponderomotive = 1./( 1./inv_gamma0 + (pxsm*momentum[0][ipart]+pysm*momentum[1][ipart]+pzsm*momentum[2][ipart])/2.*inv_gamma0 );
+        inv_gamma_ponderomotive = 1./( 1./inv_gamma0 + (pxsm*momentum[0][ipart]+pysm*momentum[1][ipart]+pzsm*momentum[2][ipart])*inv_gamma0 );
   
         // Move the particle
 #ifdef  __DEBUG
