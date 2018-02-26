@@ -302,7 +302,7 @@ void LaserProfileSeparable::initFields(Params& params, Patch* patch)
         // Assign profile
         vector<double> pos(1);
         for (unsigned int j=0 ; j<dim[0] ; j++) {
-            pos[0] = patch->getDomainLocalMin(1) + ( j - 0.5 - params.oversize[1])*dr*0.5; // Increment half cells
+            pos[0] = patch->getDomainLocalMin(1) + ( j*0.5 - 0.5 - params.oversize[1])*dr ; // Increment half cells
             (*space_envelope)(j,0) = spaceProfile->valueAt(pos);
             (*phase         )(j,0) = phaseProfile->valueAt(pos);
         }
