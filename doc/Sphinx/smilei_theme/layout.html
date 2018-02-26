@@ -267,6 +267,7 @@
     
     <script type="text/javascript">
         
+        var nav = document.getElementById("nav");
         var nav_list = document.getElementById("nav_list");
         var nav_button = document.getElementById("nav_button");
         var smallScreenMenu = document.getElementById("smallScreenMenu");
@@ -296,6 +297,7 @@
         function navOff() {
             nav_list.style.display = "none";
             nav_button.className = "";
+            nav.style.overflowY = "visible";
         }
         
         function toggleNav() {
@@ -304,6 +306,7 @@
             if( nav_list.style.display != "inline-block" ) {
                 nav_list.style.display = "inline-block";
                 nav_button.className = "pushed";
+                nav.style.overflowY = "auto";
             } else {
                 navOff();
             }

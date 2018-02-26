@@ -548,11 +548,11 @@ div.header > * {
     top:0;
 	text-align: left;
     white-space: nowrap;
-    overflow-y: auto;
     max-height:100%;
     min-height:{{ theme_head_height }}em;
     min-width :6em;
-	padding: {{ theme_head_height }}em 12px {{ theme_head_height }}em  5px;
+	padding: {{ theme_head_height }}em 12px 0 5px;
+	box-sizing: border-box;
 }
 #nav_button {
     position:absolute;
