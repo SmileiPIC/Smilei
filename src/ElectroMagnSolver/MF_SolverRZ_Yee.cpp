@@ -38,8 +38,10 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
     cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Br_[imode];
     cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Bt_[imode];
     int     j_glob = (static_cast<ElectroMagn3DRZ*>(fields))->j_glob_;
-	bool isYmin = (static_cast<ElectroMagn3DRZ*>(fields))->isYmin;
-	bool isXmin = (static_cast<ElectroMagn3DRZ*>(fields))->isXmin;
+    bool isYmin = (static_cast<ElectroMagn3DRZ*>(fields))->isYmin;
+    bool isXmin = (static_cast<ElectroMagn3DRZ*>(fields))->isXmin;
+    bool isYmax = (static_cast<ElectroMagn3DRZ*>(fields))->isYmax;
+    bool isXmax = (static_cast<ElectroMagn3DRZ*>(fields))->isXmax;
     //    #pragma omp simd
     //    for (unsigned int j=0 ; j<ny_d-1 ; j++) {
     //        (*BlRZ)(nl_d,j) -= dt_ov_dy * ( (*EtRZ)(nl_d,j) - (*EtRZ)(nl_d,j-1) );
@@ -48,8 +50,8 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
     for (unsigned int i=0 ; i<nl_p;  i++) {
         #pragma omp simd
         for (unsigned int j=isYmin*3 ; j<nr_d-1 ; j++) {
-            (*BlRZ)(i,j) += - dt/((j_glob+j-0.5)*dr) * ( (double)(j+j_glob)*(*EtRZ)(i,j) - (double)(j+j_glob-1.)*(*EtRZ)(i,j-1) )
-             -Icpx*dt*(double)imode/((j_glob+j-0.5)*dr)*(*ErRZ)(i,j);
+            (*BlRZ)(i,j) += - dt/((j_glob+j)*dr) * ( (double)(j+j_glob+0.5)*(*EtRZ)(i,j) - (double)(j+j_glob-0.5)*(*EtRZ)(i,j-1) )
+             -Icpx*dt*(double)imode/((j_glob+j)*dr)*(*ErRZ)(i,j);
 			 if (std::abs((*BlRZ)(i,j))>1.){
                 MESSAGE("BlRZMF");                
                 MESSAGE(i);
@@ -63,7 +65,7 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
         // Magnetic field Br^(d,p)
     for (unsigned int i=1 ; i<nl_d-1 ; i++) {
         #pragma omp simd
-        for (unsigned int j=isYmin*3 ; j<nr_p ; j++) {
+        for (unsigned int j=isYmin*3 ; j<nr_p-1 ; j++) {
             (*BrRZ)(i,j) += dt_ov_dl * ( (*EtRZ)(i,j) - (*EtRZ)(i-1,j) )
              +Icpx*dt*(double)imode/((double)(j_glob+j)*dr)*(*ElRZ)(i,j) ;
 			 if (std::abs((*BrRZ)(i,j))>1.){

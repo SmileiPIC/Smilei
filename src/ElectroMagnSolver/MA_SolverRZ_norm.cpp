@@ -24,7 +24,7 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
         
     //int imode = 0;
      
-    // Static-cast of the fields
+    // Static-cast of the fields_SolverRZ_norm.cpp
     cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(fields))->El_[imode];
     cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Er_[imode];
     cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Et_[imode];
@@ -36,7 +36,10 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
     cField2D* JtRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Jt_[imode];
     int j_glob    = (static_cast<ElectroMagn3DRZ*>(fields))->j_glob_;
     bool isYmin = (static_cast<ElectroMagn3DRZ*>(fields))->isYmin;
-	bool isXmin = (static_cast<ElectroMagn3DRZ*>(fields))->isXmin;
+    bool isXmin = (static_cast<ElectroMagn3DRZ*>(fields))->isXmin;
+    bool isXmax = (static_cast<ElectroMagn3DRZ*>(fields))->isXmax;
+    bool isYmax = (static_cast<ElectroMagn3DRZ*>(fields))->isYmax;
+
     // Electric field Elr^(d,p)
     for (unsigned int i=0 ; i<nl_d ; i++) {
         for (unsigned int j=isYmin*3 ; j<nr_p ; j++) {
@@ -59,7 +62,7 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
         for (unsigned int j=isYmin*3 ; j<nr_d ; j++) {
             (*ErRZ)(i,j) += -dt*(*JrRZ)(i,j)
                 -                  dt_ov_dl * ( (*BtRZ)(i+1,j) - (*BtRZ)(i,j) )
-                -                  Icpx*dt*(double)imode/((j_glob+j-0.5)*dr)* (*BlRZ)(i,j);
+                -                  Icpx*dt*(double)imode/((j_glob+j)*dr)* (*BlRZ)(i,j);
 
              if (std::abs((*ErRZ)(i,j))>1.){
                 MESSAGE("ErRZMA");                
