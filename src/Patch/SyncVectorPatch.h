@@ -22,9 +22,12 @@ public :
     static void exchangeB( Params& params, VectorPatch& vecPatches );
     static void exchangeJ( Params& params, VectorPatch& vecPatches );
     static void exchangeA( Params& params, VectorPatch& vecPatches );
+    static void exchangeGradPhi( Params& params, VectorPatch& vecPatches );
+    static void finalizeexchangeB( Params& params, VectorPatch& vecPatches );
     static void finalizeexchangeJ( Params& params, VectorPatch& vecPatches );
     static void finalizeexchangeA( Params& params, VectorPatch& vecPatches );
-    static void finalizeexchangeB( Params& params, VectorPatch& vecPatches );
+    static void finalizeexchangeGradPhi( Params& params, VectorPatch& vecPatches );
+    
 
     static void sumRhoJ  ( Params& params, VectorPatch& vecPatches, int imode, Timers &timers, int itime );
     static void exchangeB( Params& params, VectorPatch& vecPatches, int imode );

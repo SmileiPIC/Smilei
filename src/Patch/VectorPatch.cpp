@@ -337,14 +337,19 @@ void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime,
             (*this)(ipatch)->EMfields->envelope->compute(  (*this)(ipatch)->EMfields );
             (*this)(ipatch)->EMfields->envelope->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
         }
-
+        
+        // Exchange envelope
         SyncVectorPatch::exchangeA( params, (*this) );
         SyncVectorPatch::finalizeexchangeA( params, (*this) );
 
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
             // Computes gradients of Phi=|A|^2/2 in all points
-            (*this)(ipatch)->EMfields->envelope->compute_Phi_gradients(  (*this)(ipatch)->EMfields );
+            (*this)(ipatch)->EMfields->envelope->compute_Phi_and_gradient_Phi(  (*this)(ipatch)->EMfields );
         }
+     
+        // Exchange GradPhi
+        SyncVectorPatch::exchangeGradPhi( params, (*this) );
+        SyncVectorPatch::finalizeexchangeGradPhi( params, (*this) );
     }
 
 } // END solveEnvelope
@@ -1017,6 +1022,9 @@ void VectorPatch::update_field_list()
     if (patches_[0]->EMfields->envelope != NULL){
       listA_.resize ( size() ) ;
       listA0_.resize( size() ) ;
+      listGradPhix_.resize( size() ) ;
+      listGradPhiy_.resize( size() ) ;
+      listGradPhiz_.resize( size() ) ;
                                                       }
 
     for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
@@ -1033,6 +1041,9 @@ void VectorPatch::update_field_list()
         if (patches_[ipatch]->EMfields->envelope != NULL){
           listA_[ipatch]  = patches_[ipatch]->EMfields->envelope->A_ ;
           listA0_[ipatch] = patches_[ipatch]->EMfields->envelope->A0_ ;
+          listGradPhix_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhix_ ;
+          listGradPhiy_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhiy_ ;
+          listGradPhiz_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhiz_ ;
                                                         }
     }
 
@@ -1256,6 +1267,9 @@ void VectorPatch::update_field_list()
         for ( unsigned int ifields = 0 ; ifields < listA_.size() ; ifields++ ) {
             listA_ [ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
             listA0_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
+            listGradPhix_[ifields]->MPIbuff.defineTags( patches_[ifields], 10 ) ;
+            listGradPhiy_[ifields]->MPIbuff.defineTags( patches_[ifields], 11 ) ;
+            listGradPhiz_[ifields]->MPIbuff.defineTags( patches_[ifields], 12 ) ;
         }
     }
 }
