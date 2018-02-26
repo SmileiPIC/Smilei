@@ -313,7 +313,7 @@ void ElectroMagn3D::compute_Ap(Patch* patch)
     double one_ov_dx_sq       = 1.0/(dx*dx);
     double one_ov_dy_sq       = 1.0/(dy*dy);
     double one_ov_dz_sq       = 1.0/(dz*dz);
-    double three_ov_dx3Dy3Dz2 = 3.0*(1.0/(dx*dx)+1.0/(dy*dy)+1.0/(dz*dz));
+    double three_ov_dx3Dy3Dz2 = 2.0*(1.0/(dx*dx)+1.0/(dy*dy)+1.0/(dz*dz));
     
     // vector product Ap = A*p
     for (unsigned int i=1; i<nx_p-1; i++) {
