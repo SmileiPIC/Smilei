@@ -299,7 +299,6 @@ public:
 
             PyArrayObject *np_ret = reinterpret_cast<PyArrayObject*>(py_pos_init);
             thisSpecies->position_initialization_array = (double*) PyArray_GETPTR1( np_ret , 0);
-            std::cout << "init pos is an array " <<  thisSpecies->position_initialization_array[6] << " " <<  thisSpecies->position_initialization_array[11] << std::endl;
             //Check dimensions
             int ndim_local = PyArray_NDIM(np_ret) ;//Ok
             if (ndim_local != 2) ERROR("Provide a 2-dimensionnal array in order to init particle position from a numpy array.")
@@ -545,7 +544,7 @@ public:
                 newSpecies = new SpeciesV(params, patch);
 #endif
         }
-
+         std::cout << "start copying member in species clone" << std::endl;
         // Copy members
         newSpecies->name                                     = species->name;
         newSpecies->pusher                                   = species->pusher;
@@ -574,7 +573,8 @@ public:
         newSpecies->ionization_model                         = species->ionization_model;
         newSpecies->densityProfileType                       = species->densityProfileType;
         newSpecies->densityProfile                           = new Profile(species->densityProfile);
-        newSpecies->ppcProfile                               = new Profile(species->ppcProfile);
+        if ( newSpecies->position_initialization_array == NULL )
+            newSpecies->ppcProfile                           = new Profile(species->ppcProfile);
         newSpecies->chargeProfile                            = new Profile(species->chargeProfile);
         newSpecies->velocityProfile.resize(3);
         newSpecies->velocityProfile[0]                       = new Profile(species->velocityProfile[0]);
@@ -784,6 +784,7 @@ public:
         retSpecies.resize(0);
 
         for (unsigned int ispec = 0; ispec < vecSpecies.size(); ispec++) {
+            std::cout << "cloning species from speciesfactory.h " << std::endl;
             Species* newSpecies = SpeciesFactory::clone(vecSpecies[ispec], params, patch, with_particles);
             retSpecies.push_back( newSpecies );
         }

@@ -1034,7 +1034,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
 {
     unsigned int nPart, i,j,k, idim;
     vector<Field*> xyz(nDim_field);
-
+    cout << "creating particles of patch " << patch->hindex << endl;
     // Create particles in a space starting at cell_position
     vector<double> cell_position(3,0);
     vector<double> cell_index(3,0);
@@ -1095,12 +1095,10 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     double *position[nDim_particle];
     std::vector<int> my_particles_indices;
     if ( position_initialization_array != NULL ){
-        cout << "not NULL pointer" << endl;
         for (unsigned int idim = 0; idim < nDim_particle; idim++) position[idim] = &(position_initialization_array[idim*n_numpy_particles]);
         //Idea to speed up selection, provides xmin, xmax of the bunch and check if there is an intersection with the patch instead of going through all particles for all patches.
         for (unsigned int ip = 0; ip < n_numpy_particles; ip++){
             //If the particle belongs to this patch
-            cout << position[0][ip] << "  "<< position[1][ip]  << "  "<< position[2][ip] << " " << patch->hindex << endl; 
             if (                              position[0][ip] >= patch->getDomainLocalMin(0) && position[0][ip] < patch->getDomainLocalMax(0)
                  && ( nDim_particle < 2  || ( position[1][ip] >= patch->getDomainLocalMin(1) && position[1][ip] < patch->getDomainLocalMax(1)) )
                  && ( nDim_particle < 3  || ( position[2][ip] >= patch->getDomainLocalMin(2) && position[2][ip] < patch->getDomainLocalMax(2)) ) ){
@@ -1168,7 +1166,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     // }
 
     unsigned int n_existing_particles = particles->size();
-    cout << " existing size = " << n_existing_particles << " npart_effective = " << npart_effective << endl ;
     particles->initialize(n_existing_particles+npart_effective, nDim_particle);
 
     // Initialization of the particles properties
@@ -1230,7 +1227,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             unsigned int i =  (unsigned int)(particles->position(0,ip) - cell_position[0])/cell_length[0];
             unsigned int j =  (unsigned int)(particles->position(1,ip) - cell_position[1])/cell_length[1];
             unsigned int k =  (unsigned int)(particles->position(2,ip) - cell_position[2])/cell_length[2];
-            cout << "ijk = " << i << " " << j << " " << k << endl;
             vel[0]  = velocity[0](i,j,k);
             vel[1]  = velocity[1](i,j,k);
             vel[2]  = velocity[2](i,j,k);
@@ -1241,13 +1237,10 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
         }
     }
 
-    cout << " initialized " << npart_effective << " particles." << endl;
 
     delete [] indexes;
     delete [] temp;
     delete [] vel;
-
-    cout << " done delete " << endl;
 
     // Recalculate former position using the particle velocity
     // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
