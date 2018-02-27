@@ -278,7 +278,6 @@ public:
             }
         }
 
-        //PyTools::extract("position_initialization",thisSpecies->position_initialization ,"Species",ispec);
         PyObject *py_pos_init = PyTools::extract_py("position_initialization", "Species",ispec);
         if ( PyTools::convert(py_pos_init, thisSpecies->position_initialization) ){
             thisSpecies->position_initialization_on_species=false;
@@ -300,17 +299,20 @@ public:
             PyArrayObject *np_ret = reinterpret_cast<PyArrayObject*>(py_pos_init);
             thisSpecies->position_initialization_array = (double*) PyArray_GETPTR1( np_ret , 0);
             std::cout << "init pos is an array " <<  thisSpecies->position_initialization_array[6] << " " <<  thisSpecies->position_initialization_array[11] << std::endl;
+            //Check dimensions
             int ndim_local = PyArray_NDIM(np_ret) ;//Ok
             if (ndim_local != 2) ERROR("Provide a 2-dimensionnal array in order to init particle position from a numpy array.")
-            int shape[2];
-            shape[0] =  PyArray_SHAPE(np_ret)[0];// ok
-            if (shape[0] != params.nDim_particle)
+
+            //Check number of coordinates provided
+            ndim_local =  PyArray_SHAPE(np_ret)[0];// ok
+            if (ndim_local != params.nDim_particle)
                 ERROR("You must provide an array with as many columns as particle dimensions")
-            shape[1] =  PyArray_SHAPE(np_ret)[1];//  ok
-            std::cout << " Initializing " << shape[1] << " particles from array." << std::endl;
-            for (unsigned int i=0; i < ndim_local; i++) std::cout << "shape " <<i << " = "<< shape[i] << std::endl ;
-            int size = (int)PyArray_Size(py_pos_init); // Ok
-            std::cout << "array size = " << size << std::endl;
+            
+            //Get number of particles
+            thisSpecies->n_numpy_particles =  PyArray_SHAPE(np_ret)[1];//  ok
+            std::cout << " Initializing " << thisSpecies->n_numpy_particles << " particles from array." << std::endl;
+            //int size = (int)PyArray_Size(py_pos_init); // Ok
+            //std::cout << "array size = " << size << std::endl;
         } else {
             ERROR("For species '" << species_name << "' non valid position_initialization. It must be either a string or a numpy array.");
         }
@@ -457,9 +459,13 @@ public:
         thisSpecies->densityProfile = new Profile(profile1, params.nDim_particle, Tools::merge(thisSpecies->densityProfileType,"_density ",species_name), true);
 
         // Number of particles per cell
-        if( !PyTools::extract_pyProfile("particles_per_cell", profile1, "Species", ispec))
-            ERROR("For species '" << species_name << "', particles_per_cell not found or not understood");
-        thisSpecies->ppcProfile = new Profile(profile1, params.nDim_particle, Tools::merge("particles_per_cell ",species_name), true);
+        if (thisSpecies->position_initialization_array == NULL){
+           if( !PyTools::extract_pyProfile("particles_per_cell", profile1, "Species", ispec))
+               ERROR("For species '" << species_name << "', particles_per_cell not found or not understood");
+           thisSpecies->ppcProfile = new Profile(profile1, params.nDim_particle, Tools::merge("particles_per_cell ",species_name), true);
+        } else {
+            MESSAGE("Species " << species_name << ": number of particles per cell is disregarded. This species is initialized from a numpy array."); 
+        }
 
         // Charge
         if( !PyTools::extract_pyProfile("charge", profile1, "Species", ispec))
@@ -502,6 +508,7 @@ public:
         if (!params.restart) {
             // does a loop over all cells in the simulation
             // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
+            std::cout << "Starting particle screation " << std::endl;
             thisSpecies->createParticles(params.n_space, params, patch, 0 );
 
         }
