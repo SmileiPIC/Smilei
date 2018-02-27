@@ -1234,6 +1234,9 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             temp[1] = temperature[1](i,j,k);
             temp[2] = temperature[2](i,j,k);
             initMomentum(1,ip, temp, vel);
+            //dummy values for the moment for weights and charges
+            initWeight(1, ip, 1.);
+            initCharge(1, ip, -1.);
         }
     }
 
