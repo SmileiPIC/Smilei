@@ -135,9 +135,11 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
     // interpolation operator (virtual)
     Interp           = InterpolatorFactory::create(params, this); // + patchId -> idx_domain_begin (now = ref smpi)
 
-    // Create ad hoc interpolators for envelope
+    // Create ad hoc interpolators and projectors for envelope
     if (params.Laser_Envelope_model){
-        Interp_envelope  = InterpolatorFactory::create_env_interpolator(params, this);} // + patchId -> idx_domain_begin (now = ref smpi) 
+        Interp_envelope      = InterpolatorFactory::create_env_interpolator(params, this);
+        Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, this); 
+                                     } // + patchId -> idx_domain_begin (now = ref smpi) 
 
     // projection operator (virtual)
     Proj       = ProjectorFactory::create(params, this);    // + patchId -> idx_domain_begin (now = ref smpi)

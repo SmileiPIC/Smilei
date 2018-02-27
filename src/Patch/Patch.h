@@ -74,6 +74,8 @@ public:
 
     //! Projector
     Projector* Proj;
+    //! Projector ad hoc for Proj_susceptibility
+    Projector* Proj_susceptibility = NULL;
 
     //! "fake" particles for the probe diagnostics
     std::vector<ProbeParticles*> probes;
