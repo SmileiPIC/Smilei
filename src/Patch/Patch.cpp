@@ -122,7 +122,6 @@ void Patch::initStep3( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
 
 void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition ) {
     // initialize vector of Species (virtual)
-    cout << "create vector from finish creation in Patch.cpp " << endl;
     vecSpecies = SpeciesFactory::createVector(params, this);
 
     // initialize the electromagnetic fields (virtual)
@@ -150,7 +149,6 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
 
 void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool with_particles = true ) {
     // clone vector of Species (virtual)
-    std::cout << "cloning species vector from patch.cpp " << std::endl;
     vecSpecies = SpeciesFactory::cloneVector(patch->vecSpecies, params, this, with_particles);
 
     // clone the electromagnetic fields (virtual)

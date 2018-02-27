@@ -52,6 +52,10 @@ time_frozen(0),
 radiating(false),
 multiphoton_Breit_Wheeler(2,""),
 ionization_model("none"),
+ppcProfile(NULL),
+position_initialization_array(NULL),
+position_initialization_on_species(false),
+position_initialization_on_species_index(-1),
 velocityProfile(3,NULL),
 temperatureProfile(3,NULL),
 max_charge(0.),
@@ -69,6 +73,7 @@ min_loc_vec(patch->getDomainLocalMin()),
 tracking_diagnostic(10000),
 nDim_particle(params.nDim_particle),
 partBoundCond(NULL),
+n_numpy_particles(0),
 min_loc(patch->getDomainLocalMin(0))
 
 {
@@ -1034,7 +1039,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
 {
     unsigned int nPart, i,j,k, idim;
     vector<Field*> xyz(nDim_field);
-    cout << "creating particles of patch " << patch->hindex << endl;
     // Create particles in a space starting at cell_position
     vector<double> cell_position(3,0);
     vector<double> cell_index(3,0);
@@ -1103,7 +1107,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                  && ( nDim_particle < 2  || ( position[1][ip] >= patch->getDomainLocalMin(1) && position[1][ip] < patch->getDomainLocalMax(1)) )
                  && ( nDim_particle < 3  || ( position[2][ip] >= patch->getDomainLocalMin(2) && position[2][ip] < patch->getDomainLocalMax(2)) ) ){
                 my_particles_indices.push_back(ip);
-                cout << " pushed back ip = " << ip << " patch index = " << patch->hindex << endl; 
             }
         }
         npart_effective = my_particles_indices.size();
@@ -1217,7 +1220,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             }//j
             if (i%clrw == clrw -1) bmax[new_bin_idx+i/clrw] = iPart;
         }//i
-    } else if ( n_existing_particles == 0  ) {  //Do not recreate particles from numpy array again after initialization
+    } else if ( n_existing_particles == 0  ) {  //Do not recreate particles from numpy array again after initialization. Is this condition enough ?
         //Initializing particles from numpy array
         for (unsigned int ip = 0; ip < npart_effective ; ip++){
             unsigned int p = my_particles_indices[ip];
@@ -1238,6 +1241,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             initWeight(1, ip, 1.);
             initCharge(1, ip, -1.);
         }
+        // Here particles should be sorted !!
     }
 
 
@@ -1272,7 +1276,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
 
     if (particles->tracked)
         particles->resetIds();
-    cout << " returning " << endl;
 
     return npart_effective;
 

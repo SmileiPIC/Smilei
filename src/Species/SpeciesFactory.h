@@ -280,10 +280,6 @@ public:
 
         PyObject *py_pos_init = PyTools::extract_py("position_initialization", "Species",ispec);
         if ( PyTools::convert(py_pos_init, thisSpecies->position_initialization) ){
-            thisSpecies->position_initialization_on_species=false;
-            thisSpecies->position_initialization_on_species_index=-1;
-            thisSpecies->position_initialization_array = NULL;
-            thisSpecies->n_numpy_particles =  0;
             if (thisSpecies->position_initialization.empty()) {
                 ERROR("For species '" << species_name << "' empty position_initialization");
             } else if ( (thisSpecies->position_initialization!="regular"  )
@@ -293,9 +289,6 @@ public:
             }
         } else if (PyArray_Check(py_pos_init)){ 
             //Initialize position from this array
-            std::cout << "init pos from array " << std::endl;
-            thisSpecies->position_initialization_on_species=false;
-            thisSpecies->position_initialization_on_species_index=-1;
 
             PyArrayObject *np_ret = reinterpret_cast<PyArrayObject*>(py_pos_init);
             thisSpecies->position_initialization_array = (double*) PyArray_GETPTR1( np_ret , 0);
@@ -310,7 +303,7 @@ public:
             
             //Get number of particles
             thisSpecies->n_numpy_particles =  PyArray_SHAPE(np_ret)[1];//  ok
-            std::cout << " Initializing " << thisSpecies->n_numpy_particles << " particles from array." << std::endl;
+            MESSAGE("Initializing species " << species_name << " from a numpy array.");
             //int size = (int)PyArray_Size(py_pos_init); // Ok
             //std::cout << "array size = " << size << std::endl;
         } else {
@@ -508,7 +501,6 @@ public:
         if (!params.restart) {
             // does a loop over all cells in the simulation
             // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
-            std::cout << "Starting particle screation " << std::endl;
             thisSpecies->createParticles(params.n_space, params, patch, 0 );
 
         }
@@ -544,7 +536,6 @@ public:
                 newSpecies = new SpeciesV(params, patch);
 #endif
         }
-         std::cout << "start copying member in species clone" << std::endl;
         // Copy members
         newSpecies->name                                     = species->name;
         newSpecies->pusher                                   = species->pusher;
@@ -573,8 +564,11 @@ public:
         newSpecies->ionization_model                         = species->ionization_model;
         newSpecies->densityProfileType                       = species->densityProfileType;
         newSpecies->densityProfile                           = new Profile(species->densityProfile);
-        if ( newSpecies->position_initialization_array == NULL )
+        if ( species->ppcProfile ) {
             newSpecies->ppcProfile                           = new Profile(species->ppcProfile);
+        //} else {
+        //    newSpecies->ppcProfile                           = NULL;
+        }
         newSpecies->chargeProfile                            = new Profile(species->chargeProfile);
         newSpecies->velocityProfile.resize(3);
         newSpecies->velocityProfile[0]                       = new Profile(species->velocityProfile[0]);
@@ -784,7 +778,6 @@ public:
         retSpecies.resize(0);
 
         for (unsigned int ispec = 0; ispec < vecSpecies.size(); ispec++) {
-            std::cout << "cloning species from speciesfactory.h " << std::endl;
             Species* newSpecies = SpeciesFactory::clone(vecSpecies[ispec], params, patch, with_particles);
             retSpecies.push_back( newSpecies );
         }
