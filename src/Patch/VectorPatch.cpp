@@ -1267,9 +1267,9 @@ void VectorPatch::update_field_list()
         for ( unsigned int ifields = 0 ; ifields < listA_.size() ; ifields++ ) {
             listA_ [ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
             listA0_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
-            listGradPhix_[ifields]->MPIbuff.defineTags( patches_[ifields], 10 ) ;
-            listGradPhiy_[ifields]->MPIbuff.defineTags( patches_[ifields], 11 ) ;
-            listGradPhiz_[ifields]->MPIbuff.defineTags( patches_[ifields], 12 ) ;
+            listGradPhix_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
+            listGradPhiy_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
+            listGradPhiz_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
         }
     }
 }
