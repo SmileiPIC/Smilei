@@ -18,12 +18,9 @@ using namespace std;
 Projector3D2Order_susceptibility::Projector3D2Order_susceptibility (Params& params, Patch* patch) : Projector3D(params, patch)
 {
     dx_inv_   = 1.0/params.cell_length[0];
-    dx_ov_dt  = params.cell_length[0] / params.timestep;
     dy_inv_   = 1.0/params.cell_length[1];
-    dy_ov_dt  = params.cell_length[1] / params.timestep;
     dz_inv_   = 1.0/params.cell_length[2];
-    dz_ov_dt  = params.cell_length[2] / params.timestep;
-    
+  
     one_third = 1.0/3.0;
 
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
@@ -723,7 +720,76 @@ void Projector3D2Order_susceptibility::operator() (ElectroMagn* EMfields, Partic
 }
 
 // Projector for susceptibility used as source term in envelope equation
-void project_susceptibility(double* Chi_envelope, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim){
+void Projector3D2Order_susceptibility::project_susceptibility(double* Chi_envelope, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim)
+{
+    //Warning : this function is used for frozen species only. It is assumed that position = position_old !!!
 
+    // -------------------------------------
+    // Variable declaration & initialization
+    // -------------------------------------
 
+    int iloc,jloc;
+ 
+    double inv_gamma_ponderomotive = 1.;
+
+    // (x,y,z) components of the current density for the macro-particle
+    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart)*inv_gamma_ponderomotive;
+
+    // variable declaration
+    double xpn, ypn, zpn;
+    double delta, delta2;
+    double Sx1[5], Sy1[5], Sz1[5]; // arrays used for the Esirkepov projection method
+
+// Initialize all current-related arrays to zero
+    for (unsigned int i=0; i<5; i++) {
+        Sx1[i] = 0.;
+        Sy1[i] = 0.;
+        Sz1[i] = 0.;
+    }
+
+    // --------------------------------------------------------
+    // Locate particles & Calculate Esirkepov coef. S, DS and W
+    // --------------------------------------------------------
+
+    // locate the particle on the primal grid at current time-step & calculate coeff. S1
+    xpn = particles.position(0, ipart) * dx_inv_;
+    int ip = round(xpn);
+    delta  = xpn - (double)ip;
+    delta2 = delta*delta;
+    Sx1[1] = 0.5 * (delta2-delta+0.25);
+    Sx1[2] = 0.75-delta2;
+    Sx1[3] = 0.5 * (delta2+delta+0.25);
+
+    ypn = particles.position(1, ipart) * dy_inv_;
+    int jp = round(ypn);
+    delta  = ypn - (double)jp;
+    delta2 = delta*delta;
+    Sy1[1] = 0.5 * (delta2-delta+0.25);
+    Sy1[2] = 0.75-delta2;
+    Sy1[3] = 0.5 * (delta2+delta+0.25);
+
+    zpn = particles.position(2, ipart) * dz_inv_;
+    int kp = round(zpn);
+    delta  = zpn - (double)kp;
+    delta2 = delta*delta;
+    Sz1[1] = 0.5 * (delta2-delta+0.25);
+    Sz1[2] = 0.75-delta2;
+    Sz1[3] = 0.5 * (delta2+delta+0.25);
+
+    // ---------------------------
+    // Calculate the total charge
+    // ---------------------------
+    ip -= i_domain_begin + bin +2;
+    jp -= j_domain_begin + 2;
+    kp -= k_domain_begin + 2;
+
+    for (unsigned int i=0 ; i<5 ; i++) {
+        iloc = (i+ip)*b_dim[2]*b_dim[1];
+        for (unsigned int j=0 ; j<5 ; j++) {
+            jloc = (jp+j)*b_dim[2];
+            for (unsigned int k=0 ; k<5 ; k++) {
+                Chi_envelope[iloc+jloc+kp+k] += charge_weight * Sx1[i]*Sy1[j]*Sz1[k];
+            }
+        }
+    }//i
 }
