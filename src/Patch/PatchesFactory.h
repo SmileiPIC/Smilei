@@ -71,6 +71,7 @@ public:
                 MESSAGE(2,"Approximately "<<percent<<"% of patches created");
                 percent += 10;
             }
+            std::cout << "cloning patch " << ipatch << std::endl;
             vecPatches.patches_[ipatch] = clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, firstpatch + ipatch, n_moved);
         }
 

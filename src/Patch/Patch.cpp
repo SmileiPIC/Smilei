@@ -122,6 +122,7 @@ void Patch::initStep3( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
 
 void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition ) {
     // initialize vector of Species (virtual)
+    cout << "create vector from finish creation in Patch.cpp " << endl;
     vecSpecies = SpeciesFactory::createVector(params, this);
 
     // initialize the electromagnetic fields (virtual)

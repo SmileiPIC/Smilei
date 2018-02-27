@@ -1220,19 +1220,34 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             }//j
             if (i%clrw == clrw -1) bmax[new_bin_idx+i/clrw] = iPart;
         }//i
-    } else if ( n_existing_particles == 0 ) {  //Do not recreate particles from numpy array again after initialization
+    } else if ( n_existing_particles == 0  ) {  //Do not recreate particles from numpy array again after initialization
         //Initializing particles from numpy array
         for (unsigned int ip = 0; ip < npart_effective ; ip++){
             unsigned int p = my_particles_indices[ip];
             for(unsigned int idim=0; idim<nDim_particle; idim++)
-                particles->position(idim,p) = position[idim][p] ;
+                particles->position(idim,ip) = position[idim][p] ;
+            //If momentum is not initialized by a numpy array
+            unsigned int i =  (unsigned int)(particles->position(0,ip) - cell_position[0])/cell_length[0];
+            unsigned int j =  (unsigned int)(particles->position(1,ip) - cell_position[1])/cell_length[1];
+            unsigned int k =  (unsigned int)(particles->position(2,ip) - cell_position[2])/cell_length[2];
+            cout << "ijk = " << i << " " << j << " " << k << endl;
+            vel[0]  = velocity[0](i,j,k);
+            vel[1]  = velocity[1](i,j,k);
+            vel[2]  = velocity[2](i,j,k);
+            temp[0] = temperature[0](i,j,k);
+            temp[1] = temperature[1](i,j,k);
+            temp[2] = temperature[2](i,j,k);
+            initMomentum(1,ip, temp, vel);
         }
     }
 
+    cout << " initialized " << npart_effective << " particles." << endl;
 
     delete [] indexes;
     delete [] temp;
     delete [] vel;
+
+    cout << " done delete " << endl;
 
     // Recalculate former position using the particle velocity
     // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
@@ -1261,6 +1276,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
 
     if (particles->tracked)
         particles->resetIds();
+    cout << " returning " << endl;
 
     return npart_effective;
 

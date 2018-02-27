@@ -283,6 +283,7 @@ public:
             thisSpecies->position_initialization_on_species=false;
             thisSpecies->position_initialization_on_species_index=-1;
             thisSpecies->position_initialization_array = NULL;
+            thisSpecies->n_numpy_particles =  0;
             if (thisSpecies->position_initialization.empty()) {
                 ERROR("For species '" << species_name << "' empty position_initialization");
             } else if ( (thisSpecies->position_initialization!="regular"  )
@@ -557,6 +558,8 @@ public:
         newSpecies->position_initialization_on_species       = species->position_initialization_on_species;
         newSpecies->position_initialization_on_species_index = species->position_initialization_on_species_index;
         newSpecies->position_initialization                  = species->position_initialization;
+        newSpecies->position_initialization_array            = species->position_initialization_array;
+        newSpecies->n_numpy_particles                        = species->n_numpy_particles            ;
         newSpecies->momentum_initialization                  = species->momentum_initialization;
         newSpecies->c_part_max                               = species->c_part_max;
         newSpecies->mass                                     = species->mass;
