@@ -721,3 +721,9 @@ void Projector3D2Order_susceptibility::operator() (ElectroMagn* EMfields, Partic
     // }
 
 }
+
+// Projector for susceptibility used as source term in envelope equation
+void project_susceptibility(double* Chi_envelope, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim){
+
+
+}
