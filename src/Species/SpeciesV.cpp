@@ -382,7 +382,7 @@ void SpeciesV::sort_part(Params &params)
             #pragma omp simd 
             for (unsigned int ip=0; ip < MPIbuff.part_index_recv_sz[idim][ineighbor]; ip++){
                 for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
-                    double X = MPIbuff.partRecv[idim][ineighbor].position(ipos,ip)-min_loc_vec[ipos];
+                    double X = MPIbuff.partRecv[idim][ineighbor].position(ipos,ip)-min_loc_vec[ipos]+0.00000000000001;
                     int IX = round(X * dx_inv_[ipos] );
                     buf_cell_keys[idim][ineighbor][ip] = buf_cell_keys[idim][ineighbor][ip] * length[ipos] + IX;
                 }
@@ -517,7 +517,7 @@ void SpeciesV::compute_part_cell_keys(Params &params)
     for (ip=0; ip < npart ; ip++){
     // Counts the # of particles in each cell (or sub_cell) and store it in sbmax.
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
-            X = (*particles).position(ipos,ip)-min_loc_vec[ipos];
+            X = (*particles).position(ipos,ip)-min_loc_vec[ipos]+0.00000000000001;
             IX = round(X * dx_inv_[ipos] );
             (*particles).cell_keys[ip] = (*particles).cell_keys[ip] * length[ipos] + IX;
         }
@@ -550,7 +550,7 @@ void SpeciesV::importParticles( Params& params, Patch* patch, Particles& source_
         
         ibin = 0;
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
-            X = source_particles.position(ipos,i)-min_loc_vec[ipos];
+            X = source_particles.position(ipos,i)-min_loc_vec[ipos]+0.00000000000001;
             IX = round(X * dx_inv_[ipos] );
             ibin = ibin * length[ipos] + IX;
         }
