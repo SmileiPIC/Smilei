@@ -1091,13 +1091,26 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
         delete xyz[idim];
 
     // Do some adjustments on the profiles
-    unsigned int npart_effective ;
+    unsigned int npart_effective = 0 ;
+    double *position[nDim_particle];
+    std::vector<int> my_particles_indices;
     if ( position_initialization_array != NULL ){
         cout << "not NULL pointer" << endl;
-        npart_effective = n_numpy_particles ;
+        for (unsigned int idim = 0; idim < nDim_particle; idim++) position[idim] = &(position_initialization_array[idim*n_numpy_particles]);
+        //Idea to speed up selection, provides xmin, xmax of the bunch and check if there is an intersection with the patch instead of going through all particles for all patches.
+        for (unsigned int ip = 0; ip < n_numpy_particles; ip++){
+            //If the particle belongs to this patch
+            cout << position[0][ip] << "  "<< position[1][ip]  << "  "<< position[2][ip] << " " << patch->hindex << endl; 
+            if (                              position[0][ip] >= patch->getDomainLocalMin(0) && position[0][ip] < patch->getDomainLocalMax(0)
+                 && ( nDim_particle < 2  || ( position[1][ip] >= patch->getDomainLocalMin(1) && position[1][ip] < patch->getDomainLocalMax(1)) )
+                 && ( nDim_particle < 3  || ( position[2][ip] >= patch->getDomainLocalMin(2) && position[2][ip] < patch->getDomainLocalMax(2)) ) ){
+                my_particles_indices.push_back(ip);
+                cout << " pushed back ip = " << ip << " patch index = " << patch->hindex << endl; 
+            }
+        }
+        npart_effective = my_particles_indices.size();
     } else {
         ppcProfile    ->valuesAt(xyz, n_part_in_cell);
-        npart_effective = 0;
         double remainder, nppc;
         for (i=0; i<n_space_to_create[0]; i++) {
             for (j=0; j<n_space_to_create[1]; j++) {
@@ -1207,12 +1220,12 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             }//j
             if (i%clrw == clrw -1) bmax[new_bin_idx+i/clrw] = iPart;
         }//i
-    } else {
+    } else if ( n_existing_particles == 0 ) {  //Do not recreate particles from numpy array again after initialization
         //Initializing particles from numpy array
-        double *position[nDim_particle];
-        for (unsigned int idim = 0; idim < nDim_particle; idim++) position[idim] = &(position_initialization_array[idim*n_numpy_particles]);
-        for (unsigned int ip = 0; ip < n_numpy_particles; ip++){
-            cout << " y = " << position[1][ip] << endl; 
+        for (unsigned int ip = 0; ip < npart_effective ; ip++){
+            unsigned int p = my_particles_indices[ip];
+            for(unsigned int idim=0; idim<nDim_particle; idim++)
+                particles->position(idim,p) = position[idim][p] ;
         }
     }
 
