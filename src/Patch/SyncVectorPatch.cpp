@@ -233,8 +233,11 @@ void SyncVectorPatch::exchangeGradPhi( Params& params, VectorPatch& vecPatches )
 {
     // current Gradient value
     SyncVectorPatch::exchange( vecPatches.listGradPhix_, vecPatches );
+    SyncVectorPatch::finalizeexchange( vecPatches.listGradPhix_, vecPatches );
     SyncVectorPatch::exchange( vecPatches.listGradPhiy_, vecPatches );
+    SyncVectorPatch::finalizeexchange( vecPatches.listGradPhiy_, vecPatches );
     SyncVectorPatch::exchange( vecPatches.listGradPhiz_, vecPatches );    
+    SyncVectorPatch::finalizeexchange( vecPatches.listGradPhiz_, vecPatches ); 
 }
 
 void SyncVectorPatch::finalizeexchangeA( Params& params, VectorPatch& vecPatches )
@@ -248,9 +251,9 @@ void SyncVectorPatch::finalizeexchangeA( Params& params, VectorPatch& vecPatches
 void SyncVectorPatch::finalizeexchangeGradPhi( Params& params, VectorPatch& vecPatches )
 {
     // current Gradient value
-    SyncVectorPatch::finalizeexchange( vecPatches.listGradPhix_, vecPatches );
-    SyncVectorPatch::finalizeexchange( vecPatches.listGradPhiy_, vecPatches );
-    SyncVectorPatch::finalizeexchange( vecPatches.listGradPhiz_, vecPatches ); 
+//    SyncVectorPatch::finalizeexchange( vecPatches.listGradPhix_, vecPatches );
+//    SyncVectorPatch::finalizeexchange( vecPatches.listGradPhiy_, vecPatches );
+//    SyncVectorPatch::finalizeexchange( vecPatches.listGradPhiz_, vecPatches ); 
 }
 
 void SyncVectorPatch::exchangeB( Params& params, VectorPatch& vecPatches, int imode )
