@@ -209,7 +209,7 @@ int main (int argc, char* argv[])
 
             // interp updated envelope for position advance, update positions and currents for Maxwell's equations
             vecPatches.ponderomotive_update_position_and_currents(params, &smpi, simWindow, time_dual, timers, 0);        
-                                        }
+                                        } // end condition if Laser Envelope Model is used 
 
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
 
@@ -305,8 +305,7 @@ int main (int argc, char* argv[])
 
                 // interp updated envelope for position advance, update positions and currents for Maxwell's equations
                 vecPatches.ponderomotive_update_position_and_currents(params, &smpi, simWindow, time_dual, timers, itime);      
-             }
-
+                                            } // end condition if Laser Envelope Model is used 
 
             // Sum densities
             vecPatches.sumDensities(params, time_dual, timers, itime, simWindow );

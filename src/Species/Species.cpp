@@ -1420,7 +1420,7 @@ void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, 
         ithread = 0;
     #endif
 
-    //unsigned int iPart;
+    
     // -------------------------------
     // calculate the particle updated momentum
     // -------------------------------
@@ -1428,10 +1428,7 @@ void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, 
 
         smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
 
-        for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
-
-            // Interpolate the fields at the particle position
-            //(*Interp_envelope)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
+        for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) { // loop on ibin
             
             int istart = (bmin[ibin]);
             int iend   = (bmax[ibin]);
@@ -1455,7 +1452,7 @@ void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, 
                 (*delta)[ipart+0*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltax;
                 (*delta)[ipart+1*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltay;
                 (*delta)[ipart+2*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltaz;
-            } // end loop on particles
+            } // end loop on bin particles
                 
             // Project susceptibility, the source term of envelope equation
             if ((!particles->is_test) && (mass > 0)){
@@ -1468,11 +1465,11 @@ void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, 
                                                     }
             // Push only the particle momenta
             (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
-            //particles->test_move( bmin[ibin], bmax[ibin], params );
+          
                                                                    } // end loop on ibin
                                  }
     else { // immobile particle      
-         }//END if time vs. time_frozen    
+         } //END if time vs. time_frozen    
 } // End ponderomotive_momentum_update
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1514,7 +1511,6 @@ void Species::ponderomotive_update_position_and_currents(double time_dual, unsig
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
     
             // Interpolate the ponderomotive potential and its gradient at the particle position, present and previous timestep
-            //(*Interp_envelope)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
             int istart = (bmin[ibin]);
             int iend   = (bmax[ibin]);
             
@@ -1541,7 +1537,6 @@ void Species::ponderomotive_update_position_and_currents(double time_dual, unsig
 
             // Push only the particle position
             (*Push_ponderomotive_position)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
-            //particles->test_move( bmin[ibin], bmax[ibin], params );
 
             // Apply wall and boundary conditions
             if (mass>0)
