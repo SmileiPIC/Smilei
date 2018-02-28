@@ -110,6 +110,12 @@ void SyncVectorPatch::sumRhoJ(Params& params, VectorPatch& vecPatches, Timers &t
     if( (vecPatches.diag_flag) || (params.is_spectral) ) SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, itime );
 }
 
+void SyncVectorPatch::sumEnvChi(Params& params, VectorPatch& vecPatches, Timers &timers, int itime)
+{
+    SyncVectorPatch::new_sum( vecPatches.densities , vecPatches, timers, itime );
+    if( (vecPatches.diag_flag) || (params.is_spectral) ) SyncVectorPatch::sum( vecPatches.listEnv_Chi_, vecPatches, timers, itime );
+}
+
 void SyncVectorPatch::sumRhoJ(Params& params, VectorPatch& vecPatches, int imode, Timers &timers, int itime)
 {
     SyncVectorPatch::sumComplex( vecPatches.listJl_[imode], vecPatches, timers, itime  );

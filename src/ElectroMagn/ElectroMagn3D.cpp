@@ -36,7 +36,14 @@ isZmin(patch->isZmin())
         Jy_s[ispec]  = new Field3D(Tools::merge("Jy_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
         Jz_s[ispec]  = new Field3D(Tools::merge("Jz_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
         rho_s[ispec] = new Field3D(Tools::merge("Rho_",vecSpecies[ispec]->name).c_str(), dimPrim);
+
+        if (params.Laser_Envelope_model){
+            Env_Chi_s[ispec] = new Field3D(Tools::merge("Env_Chi_",vecSpecies[ispec]->name).c_str(), dimPrim);
+                                        } 
+
     }
+
+    
     
 }//END constructor Electromagn3D
 
@@ -52,7 +59,7 @@ isZmin(patch->isZmin())
     initElectroMagn3DQuantities(params, patch);
     
     // Charge currents currents and density for each species
-    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+    for (unsigned int ispec=0; ispec<n_species; ispec++) { // end loop on ispec
         if ( emFields->Jx_s[ispec] != NULL ) {
             if ( emFields->Jx_s[ispec]->data_ != NULL )
                 Jx_s[ispec]  = new Field3D(dimPrim, 0, false, emFields->Jx_s[ispec]->name);
@@ -77,7 +84,17 @@ isZmin(patch->isZmin())
             else
                 rho_s[ispec]  = new Field3D(emFields->rho_s[ispec]->name, dimPrim);
         }
-    }
+
+        if (params.Laser_Envelope_model){
+            if ( emFields->Env_Chi_s[ispec]->data_ != NULL )
+                Env_Chi_s[ispec] = new Field3D(dimPrim, emFields->Env_Chi_s[ispec]->name );
+            else
+                Env_Chi_s[ispec]  = new Field3D(emFields->Env_Chi_s[ispec]->name, dimPrim);
+        }
+
+
+
+    } // loop on ispec
 
 
 }
@@ -147,12 +164,14 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
     Env_Ar_=new Field3D(dimPrim, 0, false, "Env_Ar");
     Env_Ai_=new Field3D(dimPrim, 0, false, "Env_Ai");
     Env_A_abs_=new Field3D(dimPrim, 0, false, "Env_A_abs");
+    Env_Chi_=new Field3D(dimPrim, 0, false, "Env_Chi");
     
     // Total charge currents and densities
     Jx_   = new Field3D(dimPrim, 0, false, "Jx");
     Jy_   = new Field3D(dimPrim, 1, false, "Jy");
     Jz_   = new Field3D(dimPrim, 2, false, "Jz");
     rho_  = new Field3D(dimPrim, "Rho" );
+
   
     //Edge coeffs are organized as follow and do not account for corner points
     //xmin/ymin - xmin/ymax - xmin/zmin - xmin/zmax - xmax/ymin - xmax/ymax - xmax/zmin - xmax/zmax 
@@ -630,7 +649,8 @@ Field * ElectroMagn3D::createField(string fieldname)
     else if(fieldname.substr(0,3)=="Rho") return new Field3D(dimPrim, fieldname );
     else if(fieldname.substr(0,6)=="Env_Ar" ) return new Field3D(dimPrim, 0, false, fieldname);
     else if(fieldname.substr(0,6)=="Env_Ai" ) return new Field3D(dimPrim, 0, false, fieldname);
-    else if(fieldname.substr(0,6)=="Env_A_abs" ) return new Field3D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,9)=="Env_A_abs" ) return new Field3D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,7)=="Env_Chi" ) return new Field3D(dimPrim, 0, false, fieldname);
     
     ERROR("Cannot create field "<<fieldname);
     return NULL;

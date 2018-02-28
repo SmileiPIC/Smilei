@@ -218,7 +218,9 @@ public :
     std::vector<Field*> listA0_;
     std::vector<Field*> listGradPhix_;
     std::vector<Field*> listGradPhiy_;
-    std::vector<Field*> listGradPhiz_;    
+    std::vector<Field*> listGradPhiz_;  
+    std::vector<Field*> listEnv_Chi_;    
+    std::vector<Field*> listEnv_Chis_;    
 
     std::vector<std::vector< Field *>> listJl_;
     std::vector<std::vector< Field *>> listJr_;

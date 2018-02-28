@@ -1460,9 +1460,10 @@ void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, 
             // Project susceptibility, the source term of envelope equation
             if ((!particles->is_test) && (mass > 0)){
                 double* b_Chi_envelope=nullptr;
-                //if (nDim_field==3) { 
-                //b_Chi_envelope = &(*EMfields->rho_)(ibin*clrw*f_dim1*f_dim2) ;
-                //                   }
+                if (nDim_field==3) { 
+                    b_Chi_envelope = &(*EMfields->rho_)(ibin*clrw*f_dim1*f_dim2) ;
+                                   } 
+                else {ERROR("Envelope model not yet implemented in this geometry");}
                 (static_cast<Projector3D2Order_susceptibility*>(Proj_susceptibility))->project_susceptibility(b_Chi_envelope, *particles, ibin, b_dim, smpi, ithread, bmin[ibin], bmax[ibin], mass );                                                    
                                                     }
             // Push only the particle momenta

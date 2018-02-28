@@ -152,6 +152,9 @@ public:
 
     //! Envelope, absolute value
     Field* Env_A_abs_;
+
+    //! Chi field (i.e. susceptibility) for envelope equation 
+    Field* Env_Chi_;
     
     //! Vector of electric fields used when a filter is applied
     std::vector<Field*> Exfilter;
@@ -176,6 +179,9 @@ public:
     std::vector<Field*> Jy_s;
     std::vector<Field*> Jz_s;
     std::vector<Field*> rho_s;
+
+    // vector of susceptibility for each species
+    std::vector<Field*> Env_Chi_s;
     
     //! Creates a new field with the right characteristics, depending on the name
     virtual Field * createField(std::string fieldname) = 0;
@@ -208,6 +214,12 @@ public:
     virtual void restartRhoJ();
     //! Method used to initialize the total charge currents and densities of species
     virtual void restartRhoJs();
+
+    //! Method used to initialize the total susceptibility
+    virtual void restartEnvChi();
+    //! Method used to initialize the total susceptibility of species
+    virtual void restartEnvChis();
+
     
     //! Method used to sum all species densities and currents to compute the total charge density and currents
     virtual void computeTotalRhoJ() = 0;

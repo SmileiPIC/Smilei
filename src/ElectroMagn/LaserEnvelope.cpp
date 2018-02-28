@@ -255,8 +255,9 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
   
     cField3D* A3D          = static_cast<cField3D*>(A_);               // the envelope at timestep n
     cField3D* A03D         = static_cast<cField3D*>(A0_);              // the envelope at timestep n-1
+    Field3D* Env_Chi3D      = static_cast<Field3D*>(EMfields->Env_Chi_); // source term of envelope equation
     Field3D* Env_Aabs3D      = static_cast<Field3D*>(EMfields->Env_A_abs_); // field for temporary diagnostic
-
+    
     // Field3D* Env_Ai3D = static_cast<Field3D*>(EMfields->Env_Ai_); // field for temporary diagnostic
 
     //! 1/(2dx), where dx is the spatial step dx for 3D3V cartesian simulations
@@ -271,7 +272,7 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
         for (unsigned int j=1 ; j < A_->dims_[1]-1 ; j++){ // y loop
             for (unsigned int k=1 ; k < A_->dims_[2]-1; k++){ // z loop
                 //(*A3D)(i,j,k) = (*A3D)(i,j,k);
-                (*A3Dnew)(i,j,k) = 0.; // subtract here source term Chi from plasma
+                (*A3Dnew)(i,j,k) -= (*Env_Chi3D)(i,j,k)*(*A3D)(i,j,k); // subtract here source term Chi*A from plasma
                 // A3Dnew = laplacian - source term
                 (*A3Dnew)(i,j,k) += ((*A3D)(i-1,j  ,k  )-2.*(*A3D)(i,j,k)+(*A3D)(i+1,j  ,k  ))*one_ov_dx_sq; // x part
                 (*A3Dnew)(i,j,k) += ((*A3D)(i  ,j-1,k  )-2.*(*A3D)(i,j,k)+(*A3D)(i  ,j+1,k  ))*one_ov_dy_sq; // y part

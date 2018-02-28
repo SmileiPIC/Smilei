@@ -93,6 +93,18 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
                 (*this)(ipatch)->EMfields->rho_s[ifield]=NULL;
             }
         }
+
+        if (params.Laser_Envelope_model){
+            for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Env_Chi_s.size(); ifield++) {
+                if( (*this)(ipatch)->EMfields->Env_Chi_s[ifield]->data_ == NULL ){
+                    delete (*this)(ipatch)->EMfields->Env_Chi_s[ifield];
+                    (*this)(ipatch)->EMfields->Env_Chi_s[ifield]=NULL;
+                }
+            }
+        }
+
+
+
     }
 }
 
@@ -1025,6 +1037,7 @@ void VectorPatch::update_field_list()
       listGradPhix_.resize( size() ) ;
       listGradPhiy_.resize( size() ) ;
       listGradPhiz_.resize( size() ) ;
+      listEnv_Chi_.resize( size() ) ;
                                                       }
 
     for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
@@ -1044,6 +1057,7 @@ void VectorPatch::update_field_list()
           listGradPhix_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhix_ ;
           listGradPhiy_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhiy_ ;
           listGradPhiz_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhiz_ ;
+          listEnv_Chi_[ipatch] = patches_[ipatch]->EMfields->Env_Chi_ ;
                                                         }
     }
 
