@@ -29,7 +29,7 @@ SITEDIR = $(shell $(PYTHONEXE) -c 'import site; site._script()' --user-site)
 # Flags 
 
 # Smilei version
-CXXFLAGS += -D__VERSION=\"$(VERSION)\"
+CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D_VECTO
 # C++ version
 CXXFLAGS += -std=c++11 -Wall 
 # HDF5 library
