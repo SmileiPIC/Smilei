@@ -896,6 +896,27 @@ void ElectroMagn3D::computeTotalRhoJ()
 //END computeTotalRhoJ
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Compute the total susceptibility from species susceptibility
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn3D::computeTotalEnvChi()
+{
+    // static cast of the total susceptibility
+    Field3D* Env_Chi3D   = static_cast<Field3D*>(Env_Chi_);
+    
+    // -----------------------------------
+    // Species susceptibility
+    // -----------------------------------
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+        if( Env_Chi_s[ispec] ) {
+            Field3D* Env_Chi3D_s  = static_cast<Field3D*>(Env_Chi_s[ispec]);
+            for (unsigned int i=0 ; i<nx_p ; i++)
+                for (unsigned int j=0 ; j<ny_p ; j++)
+                    for (unsigned int k=0 ; k<nz_p ; k++)
+                        (*Env_Chi3D)(i,j,k) += (*Env_Chi3D_s)(i,j,k);
+        }
+    }//END loop on species ispec
+} //END computeTotalEnvChi
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute electromagnetic energy flows vectors on the border of the simulation box

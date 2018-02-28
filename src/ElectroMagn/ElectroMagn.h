@@ -223,6 +223,9 @@ public:
     
     //! Method used to sum all species densities and currents to compute the total charge density and currents
     virtual void computeTotalRhoJ() = 0;
+
+    //! Method used to sum all species susceptibility to compute the total susceptibility
+    virtual void computeTotalEnvChi() = 0;
     
     virtual void initPoisson(Patch *patch) = 0;
     virtual double compute_r() = 0;

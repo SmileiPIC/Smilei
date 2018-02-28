@@ -246,6 +246,13 @@ void SyncVectorPatch::exchangeGradPhi( Params& params, VectorPatch& vecPatches )
     SyncVectorPatch::finalizeexchange( vecPatches.listGradPhiz_, vecPatches ); 
 }
 
+void SyncVectorPatch::exchangeEnvChi( Params& params, VectorPatch& vecPatches )
+{
+    SyncVectorPatch::exchange( vecPatches.listEnv_Chi_, vecPatches );
+    SyncVectorPatch::finalizeexchange( vecPatches.listEnv_Chi_, vecPatches );
+}
+
+
 void SyncVectorPatch::finalizeexchangeA( Params& params, VectorPatch& vecPatches )
 {
 //    // current envelope value

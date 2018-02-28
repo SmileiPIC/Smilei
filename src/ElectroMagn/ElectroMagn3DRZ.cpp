@@ -620,6 +620,12 @@ void ElectroMagn3DRZ::computeTotalRhoJ()
     
 } //END computeTotalRhoJ
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Compute the total susceptibility from species susceptibility
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn3DRZ::computeTotalEnvChi()
+{ } //END computeTotalEnvChi
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute electromagnetic energy flows vectors on the border of the simulation box

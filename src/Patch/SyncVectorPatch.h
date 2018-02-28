@@ -25,6 +25,7 @@ public :
     static void exchangeJ( Params& params, VectorPatch& vecPatches );
     static void exchangeA( Params& params, VectorPatch& vecPatches );
     static void exchangeGradPhi( Params& params, VectorPatch& vecPatches );
+    static void exchangeEnvChi( Params& params, VectorPatch& vecPatches );
     static void finalizeexchangeB( Params& params, VectorPatch& vecPatches );
     static void finalizeexchangeJ( Params& params, VectorPatch& vecPatches );
     static void finalizeexchangeA( Params& params, VectorPatch& vecPatches );

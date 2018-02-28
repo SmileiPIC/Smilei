@@ -271,7 +271,6 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
     for (unsigned int i=1 ; i <A_->dims_[0]-1; i++){ // x loop
         for (unsigned int j=1 ; j < A_->dims_[1]-1 ; j++){ // y loop
             for (unsigned int k=1 ; k < A_->dims_[2]-1; k++){ // z loop
-                //(*A3D)(i,j,k) = (*A3D)(i,j,k);
                 (*A3Dnew)(i,j,k) -= (*Env_Chi3D)(i,j,k)*(*A3D)(i,j,k); // subtract here source term Chi*A from plasma
                 // A3Dnew = laplacian - source term
                 (*A3Dnew)(i,j,k) += ((*A3D)(i-1,j  ,k  )-2.*(*A3D)(i,j,k)+(*A3D)(i+1,j  ,k  ))*one_ov_dx_sq; // x part

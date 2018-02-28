@@ -264,6 +264,55 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
 
 
 // ---------------------------------------------------------------------------------------------------------------------
+// For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
+// ---------------------------------------------------------------------------------------------------------------------
+void VectorPatch::sumSusceptibility(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow )
+{
+    bool some_particles_are_moving = false;
+    unsigned int n_species( (*this)(0)->vecSpecies.size() );
+    for ( unsigned int ispec=0 ; ispec < n_species ; ispec++ ) {
+        if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) )
+            some_particles_are_moving = true;
+    }
+    if ( !some_particles_are_moving  && !diag_flag )
+        return;
+
+    timers.densities.restart();
+    if  (diag_flag){
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+             // Per species in global, Attention if output -> Sync / per species fields
+            (*this)(ipatch)->EMfields->computeTotalEnvChi();
+        }
+    }
+    timers.densities.update();
+
+
+    timers.syncDens.restart();
+    if ( params.geometry == "3Dcartesian" ) {
+        SyncVectorPatch::sumEnvChi( params, (*this), timers, itime ); // MPI
+    }
+    else { ERROR("Envelope model not yet implemented in this geometry");
+        // for (unsigned int imode = 0 ; imode < static_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields)->Jl_.size() ; imode++  ) {
+        //     SyncVectorPatch::sumRhoJ( params, (*this), imode, timers, itime );
+        // }
+    }
+
+    if(diag_flag){
+        for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
+            if( ! (*this)(0)->vecSpecies[ispec]->particles->is_test ) {
+                update_field_list(ispec);
+                SyncVectorPatch::sumRhoJs( params, (*this), ispec, timers, itime ); // MPI
+            }
+        }
+    }
+    timers.syncDens.update( params.printNow( itime ) );
+
+} // End sumSusceptibility
+
+
+
+// ---------------------------------------------------------------------------------------------------------------------
 // For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers)
@@ -341,15 +390,19 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 
 void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers)
 {
-    
+     
     if ((*this)(0)->EMfields->envelope!=NULL) {
+
+        // Exchange susceptibility
+        SyncVectorPatch::exchangeEnvChi( params, (*this) );
+
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
             // Computes A in all points
             (*this)(ipatch)->EMfields->envelope->compute(  (*this)(ipatch)->EMfields );
             (*this)(ipatch)->EMfields->envelope->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
         }
-        
+      
         // Exchange envelope
         SyncVectorPatch::exchangeA( params, (*this) );
         SyncVectorPatch::finalizeexchangeA( params, (*this) );
@@ -1284,6 +1337,7 @@ void VectorPatch::update_field_list()
             listGradPhix_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
             listGradPhiy_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
             listGradPhiz_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
+            listEnv_Chi_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
         }
     }
 }
@@ -1307,6 +1361,12 @@ void VectorPatch::update_field_list(int ispec)
         if(patches_[0]->EMfields->rho_s[ispec]) listrhos_.resize( size() ) ;
         else
             listrhos_.clear();
+
+        if (patches_[0]->EMfields->envelope != NULL){
+             if(patches_[0]->EMfields->Env_Chi_s[ispec]) listEnv_Chis_.resize( size() ) ;
+             else
+                 listEnv_Chis_.clear();
+                                                    }
     }
 
     #pragma omp for schedule(static)
@@ -1327,6 +1387,16 @@ void VectorPatch::update_field_list(int ispec)
             listrhos_[ipatch] = patches_[ipatch]->EMfields->rho_s[ispec];
             listrhos_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
         }
+
+        if (patches_[0]->EMfields->envelope != NULL){
+             if(patches_[ipatch]->EMfields->Env_Chi_s[ispec]) {
+                 listEnv_Chis_[ipatch] = patches_[ipatch]->EMfields->Env_Chi_s[ispec];
+                 listEnv_Chis_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+             }
+                                                    }
+
+
+
     }
 
 
