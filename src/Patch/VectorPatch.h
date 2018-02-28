@@ -292,6 +292,10 @@ public :
         return (*this)(ipatch)->Proj;
     }
 
+    inline Projector* proj_susceptibility(int ipatch){
+        return (*this)(ipatch)->Proj_susceptibility;
+    }
+
     inline PartWalls* partwalls(int ipatch){
         return (*this)(ipatch)->partWalls;
     }

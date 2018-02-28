@@ -22,6 +22,7 @@
 #include "ElectroMagn.h"
 #include "Interpolator.h"
 #include "InterpolatorFactory.h"
+#include "ProjectorFactory.h"
 #include "Profile.h"
 
 #include "Projector.h"
@@ -1407,7 +1408,7 @@ vector<double> Species::maxwellJuttner(unsigned int npoints, double temperature)
 //   - calculate the new momentum
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, unsigned int ispec,
-                       ElectroMagn* EMfields, Interpolator* Interp_envelope,
+                       ElectroMagn* EMfields, Interpolator* Interp_envelope, Projector* Proj_susceptibility,
                        Params &params, bool diag_flag,
                        Patch* patch, SmileiMPI* smpi,
                        vector<Diagnostic*>& localDiags){
@@ -1455,11 +1456,15 @@ void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, 
                 (*delta)[ipart+1*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltay;
                 (*delta)[ipart+2*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltaz;
             } // end loop on particles
-             
+                
             // Project susceptibility, the source term of envelope equation
-            //if ((!particles->is_test) && (mass > 0))
-            //    (*Proj_susceptibility)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, params.is_spectral, b_dim, ispec );
-            
+            if ((!particles->is_test) && (mass > 0)){
+                double* b_Chi_envelope=nullptr;
+                //if (nDim_field==3) { 
+                //b_Chi_envelope = &(*EMfields->rho_)(ibin*clrw*f_dim1*f_dim2) ;
+                //                   }
+                (static_cast<Projector3D2Order_susceptibility*>(Proj_susceptibility))->project_susceptibility(b_Chi_envelope, *particles, ibin, b_dim, smpi, ithread, bmin[ibin], bmax[ibin], mass );                                                    
+                                                    }
             // Push only the particle momenta
             (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
             //particles->test_move( bmin[ibin], bmax[ibin], params );
