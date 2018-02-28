@@ -680,7 +680,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
                 for (unsigned int j=0 ; j<5 ; j++) {
                     int index( ( i*25 + j*5 )*vecSize+ipart );
                     for (unsigned int k=0 ; k<5 ; k++) {
-                        bJx [ index+k*vecSize ] +=  charge_weight[ipart] * DSx[i]*DSy[j]*DSz[k];
+                        bJx [ index+k*vecSize ] +=  charge_weight[ipart] * DSx[i*vecSize+ipart]*DSy[j*vecSize+ipart]*DSz[k*vecSize+ipart];
                     }
                 }
             }//i
