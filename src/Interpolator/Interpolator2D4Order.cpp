@@ -40,7 +40,7 @@ Interpolator2D4Order::Interpolator2D4Order(Params &params, Patch *patch) : Inter
 // ---------------------------------------------------------------------------------------------------------------------
 // 2nd Order Interpolation of the fields at a the particle position (3 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
-void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, double* ELoc, double* BLoc)
+void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc)
 {
     // Static cast of the electromagnetic fields
     Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
@@ -105,9 +105,7 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     coeffyp_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
     coeffyp_[3] = dble_19_ov_96   + dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
     coeffyp_[4] = dble_1_ov_384   + dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-
-    int nparts( particles.size() );    
-
+    
     //!\todo CHECK if this is correct for both primal & dual grids !!!
     // First index for summation
     ip_ = ip_ - i_domain_begin;
@@ -302,7 +300,7 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     int nparts( particles.size() );
     for (int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
-        (*this)(EMfields, particles, ipart, &(*Epart)[ipart], &(*Bpart)[ipart]);
+        (*this)(EMfields, particles, ipart, nparts, &(*Epart)[ipart], &(*Bpart)[ipart]);
         //Buffering of iol and delta
         (*iold)[ipart+0*nparts]  = ip_;
         (*iold)[ipart+1*nparts]  = jp_;
@@ -311,3 +309,24 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     }
 
 }
+
+// Interpolator specific to tracked particles. A selection of particles may be provided
+void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
+{
+    if( selection ) {
+        
+        int nsel_tot = selection->size();
+        for (int isel=0 ; isel<nsel_tot; isel++ ) {
+            (*this)(EMfields, particles, (*selection)[isel], offset, buffer+isel, buffer+isel+3*offset);
+        }
+        
+    } else {
+        
+        int npart_tot = particles.size();
+        for (int ipart=0 ; ipart<npart_tot; ipart++ ) {
+            (*this)(EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset);
+        }
+        
+    }
+}
+

@@ -93,6 +93,7 @@ void RadiationTables::initParams(Params& params)
             PyTools::extract("h_chipa_min", h_chipa_min, "RadiationReaction");
             PyTools::extract("h_chipa_max", h_chipa_max, "RadiationReaction");
             PyTools::extract("h_dim", h_dim, "RadiationReaction");
+            PyTools::extract("h_computation_method", h_computation_method, "RadiationReaction");
 
             h_log10_chipa_min = log10(h_chipa_min);
         }
@@ -155,7 +156,7 @@ void RadiationTables::initParams(Params& params)
         // Computation of the factor for the classical radiated power
         factor_cla_rad_power = 2.*params.fine_struct_cst/(3.*norm_lambda_compton);
 
-        MESSAGE( "        Factor classical raidated power: " << factor_cla_rad_power)
+        MESSAGE( "        Factor classical radiated power: " << factor_cla_rad_power)
 
     }
 
@@ -175,6 +176,20 @@ void RadiationTables::initParams(Params& params)
         params.hasNielRadiation)
     {
         MESSAGE( "        Table path: " << table_path);
+    }
+    if (params.hasNielRadiation)
+    {
+        if (h_computation_method == "table" ||
+            h_computation_method == "fit5"  ||
+            h_computation_method == "fit10" ||
+            h_computation_method == "ridgers")
+        {
+            MESSAGE( "        Niel h function computation method: " << h_computation_method)
+        }
+        else
+        {
+            ERROR(" The parameter `h_computation_method` must be `table`, `fit5`, `fit10` or `ridgers`.")
+        }
     }
 
     MESSAGE("")
@@ -719,7 +734,8 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
 void RadiationTables::compute_tables(Params& params, SmileiMPI *smpi)
 {
     // These tables are loaded only if if one species has Monte-Carlo Compton radiation
-    if (params.hasNielRadiation)
+    // And if the h values are not computed from a numerical fit
+    if (params.hasNielRadiation && this->h_computation_method == "table")
     {
         RadiationTables::compute_h_table(smpi);
     }
@@ -1509,31 +1525,6 @@ double RadiationTables::get_h_Niel_from_table(double chipa)
 
     // Linear interpolation
     return h_table[ichipa]*(1.-d) + h_table[ichipa+1]*(d);
-}
-
-// -----------------------------------------------------------------------------
-//! Return the value of the function h(chipa) of Niel et al.
-//! from a numerical fit
-//! \param chipa particle quantum parameter
-// -----------------------------------------------------------------------------
-double RadiationTables::get_h_Niel_from_fit(double chipa)
-{
-    double h;
-
-    // Max relative error ~2E-4
-    h = exp(-3.231764974833856e-08 * pow(log(chipa),10)
-        -7.574417415366786e-07 * pow(log(chipa),9)
-        -5.437005218419013e-06 * pow(log(chipa),8)
-        -4.359062260446135e-06 * pow(log(chipa),7)
-        + 5.417842511821415e-05 * pow(log(chipa),6)
-        -1.263905701127627e-04 * pow(log(chipa),5)
-        + 9.899812622393002e-04 * pow(log(chipa),4)
-        + 1.076648497464146e-02 * pow(log(chipa),3)
-        -1.624860613422593e-01 * pow(log(chipa),2)
-        + 1.496340836237785e+00 * log(chipa)
-        -2.756744141581370e+00);
-
-    return h;
 }
 
 // -----------------------------------------------------------------------------

@@ -2,6 +2,9 @@
 #include "SimWindow.h"
 #include "Params.h"
 #include "Species.h"
+#ifdef _VECTO
+#include "SpeciesV.h"
+#endif
 #include "ElectroMagn.h"
 #include "Interpolator.h"
 #include "Projector.h"
@@ -167,7 +170,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     //Creation of new Patches
     for (unsigned int j = 0; j < patch_to_be_created[my_thread].size();  j++){
         //create patch without particle.
-        mypatch = PatchesFactory::clone(vecPatches(0),params, smpi, h0 + patch_to_be_created[my_thread][j], n_moved, false );
+        mypatch = PatchesFactory::clone(vecPatches(0),params, smpi, vecPatches.domain_decomposition_, h0 + patch_to_be_created[my_thread][j], n_moved, false );
 
         // Do not receive Xmin condition
         if ( mypatch->isXmin() && mypatch->EMfields->emBoundCond[0] )
@@ -262,12 +265,13 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                     mypatch = vecPatches.patches_[patch_to_be_created[ithread][j]];
                     for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++) {
                         mypatch->vecSpecies[ispec]->createParticles(params.n_space, params, mypatch, 0 );
+#ifdef _VECTO
                         if (params.vecto) {
                             if ( dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec]) )
                                 dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
                             mypatch->vecSpecies[ispec]->sort_part(params);
-
                         }
+#endif
                     }
                     // We define the IDs of the new particles
                     for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ )
@@ -302,9 +306,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                 energy_part_lost[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
         }
 
-        for (unsigned int j=0; j<2;j++) //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+        for (unsigned int jp=0; jp<2;jp++) //directions (xmin/xmax, ymin/ymax, zmin/zmax)
             for (unsigned int i=0 ; i<params.nDim_field ; i++) //axis 0=x, 1=y, 2=z
-                poynting[j][i] += mypatch->EMfields->poynting[j][i];
+                poynting[jp][i] += mypatch->EMfields->poynting[jp][i];
 
 
         delete  mypatch;

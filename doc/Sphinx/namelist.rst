@@ -152,21 +152,21 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 
 .. py:data:: clrw
- 
+
   :default: set to minimize the memory footprint of the particles pusher, especially interpolation and projection processes
- 
-  Advanced users. Integer specifying the cluster width along X direction in number of cells. 
-  The "cluster" is a sub-patch structure in which particles are sorted for cache improvement. 
-  clrw must divide the number of cells in one patch (in dimension X). 
+
+  Advanced users. Integer specifying the cluster width along X direction in number of cells.
+  The "cluster" is a sub-patch structure in which particles are sorted for cache improvement.
+  clrw must divide the number of cells in one patch (in dimension X).
   The finest sorting is achieved with clrw=1 and no sorting with clrw equal to the full size of a patch along dimension X.
-  The cluster size in dimension Y and Z is always the full extent of the patch. 
+  The cluster size in dimension Y and Z is always the full extent of the patch.
 
 .. py:data:: maxwell_solver
 
   :default: 'Yee'
 
   The solver for Maxwell's equations. Only ``"Yee"`` is available for all geometries at the moment. ``"Cowan"``, ``"Grassi"`` and ``"Lehe"``
-  are available for 2DCartesian and ``"Lehe"`` is available for 3DCartesian. Lehe solver is described in this `paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_  
+  are available for 2DCartesian and ``"Lehe"`` is available for 3DCartesian. Lehe solver is described in this `paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_
 
 .. py:data:: solve_poisson
 
@@ -246,7 +246,7 @@ Load Balancing
 ^^^^^^^^^^^^^^
 
 Load balancing (explained :ref:`here <LoadBalancingExplanation>`) consists in exchanging
-patches (domains of the simulation box) between MPI processes to reduce the 
+patches (domains of the simulation box) between MPI processes to reduce the
 computational load imbalance.
 The block ``LoadBalancing`` is optional. If you do not define it, load balancing will
 occur every 150 iterations.
@@ -280,7 +280,7 @@ occur every 150 iterations.
 
   Computational load of a single grid cell considered by the dynamic load balancing algorithm.
   This load is normalized to the load of a single particle.
- 
+
 .. py:data:: frozen_particle_load
 
   :default: 0.1
@@ -437,6 +437,23 @@ Each species has to be defined in a ``Species`` block::
    * ``"random"`` for randomly distributed
    * ``"centered"`` for centered in each cell
 
+   You can also decide to initialize species particles on another species particles ("targeted species"). In this case, replace one of the previous option by the name of the "targeted" species. For example, you want initialize position "electron" on randomly distributed "ion" ::
+
+    Species(
+        name = "ion",
+        position_initialization = "random",
+        ...
+    )
+
+    Species(
+        name = "electron",
+        position_initialization = "ion",
+        ...
+    )
+
+  :red:`Warning` Target species have to be initialize with "random","centered" or "regular"
+
+  :red:`Warning` The number of first species particles have to be the same of the second species particles
 
 .. py:data:: momentum_initialization
 
@@ -585,10 +602,10 @@ Each species has to be defined in a ``Species`` block::
   and you define :py:data:`radiation_photon_species`.
 
   * ``"none"``: no radiation
-  * ``"Landau-Lifshitz"``: Landau-Lifshitz model approximated for high energies
-  * ``"corrected-Landau-Lifshitz"``: with quantum correction
+  * ``"Landau-Lifshitz"`` (or ``ll``): Landau-Lifshitz model approximated for high energies
+  * ``"corrected-Landau-Lifshitz"`` (or ``cll``): with quantum correction
   * ``""Niel"``: a `stochastic radiation model <https://arxiv.org/abs/1707.02618>`_ based on the work of Niel `et al.`.
-  * ``"Monte-Carlo"``: Monte-Carlo radiation model. This model can be configured to generate macro-photons with :py:data:`radiation_photon_species`.
+  * ``"Monte-Carlo"`` (or ``mc``): Monte-Carlo radiation model. This model can be configured to generate macro-photons with :py:data:`radiation_photon_species`.
 
   :red:`This parameter cannot be assigned to photons (mass=0).`
 
@@ -1265,6 +1282,7 @@ tables.
      h_chipa_min = 1E-3,
      h_chipa_max = 1E1,
      h_dim = 128,
+     h_computation_method = "table",
 
      # Parameter to generate the table integfochi used by the Monte-Carlo model
      integfochi_chipa_min = 1e-4,
@@ -1304,11 +1322,31 @@ tables.
 
   Dimension of the table *h* of Niel `et al`.
 
+.. py:data:: h_computation_method
+
+  :default: "table"
+
+  Method to compute the value of the table *h* of Niel `et al` during the emission process.
+  The possible values are:
+
+  * "table": the *h* function is tabulated. The table is computed at initialization or read from an external file.
+  * "fit5": A polynomial fit of order 5 is used. No table is required.
+    The maximal relative error to the reference data is of maximum of 0.02.
+    The fit is valid for quantum parameters :math:`\chi` between 1e-3 and 10.
+  * "fit10":  A polynomial fit of order 10 is used. No table is required.
+    The precision if better than the fit of order 5 with a maximal relative error of 0.0002.
+    The fit is valid for quantum parameters :math:`\chi` between 1e-3 and 10.
+  * "ridgers": The fit of Ridgers given in Ridgers et al., ArXiv 1708.04511 (2017)
+
+  The use of tabulated values is best for accuracy but not for performance.
+  Table access prevent total vectorization.
+  Fits are vectorizable.
+
 .. py:data:: integfochi_chipa_min
 
   :default: 1e-3
 
-  Minimum value of the quantum parameter :math:`\chi` for the table containing
+  Minimum value of the quantum parameter c for the table containing
   the integration of :math:`F/\chi`.
 
 .. py:data:: integfochi_chipa_max
@@ -1603,7 +1641,8 @@ This is done by including a block ``DiagFields``::
   DiagFields(
       every = 10,
       time_average = 2,
-      fields = ["Ex", "Ey", "Ez"]
+      fields = ["Ex", "Ey", "Ez"],
+      #subgrid = None
   )
 
 .. py:data:: every
@@ -1633,37 +1672,62 @@ This is done by including a block ``DiagFields``::
   :default: ``[]`` *(all fields are written)*
 
   List of the field names that are saved. By default, they all are.
+  The full list of fields that are saved by this diagnostic:
+  
+  .. rst-class:: nowrap
+  
+  +----------------+-------------------------------------------------------+
+  | | Bx           | |                                                     |
+  | | By           | | Components of the magnetic field                    |
+  | | Bz           | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Bx_m         | |                                                     |
+  | | By_m         | | Components of the magnetic field (time-centered)    |
+  | | Bz_m         | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Ex           | |                                                     |
+  | | Ey           | | Components of the electric field                    |
+  | | Ez           | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Jx           | |                                                     |
+  | | Jy           | | Components of the total current                     |
+  | | Jz           | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Jx_abc       | |                                                     |
+  | | Jy_abc       | | Components of the current due to species "abc"      |
+  | | Jz_abc       | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Rho          | |  Total density                                      |
+  | | Rho_abc      | |  Density of species "abc"                           |
+  +----------------+-------------------------------------------------------+
 
+.. py:data:: subgrid
 
-The full list of fields that are saved by this diagnostic:
+  :default: ``None`` *(the whole grid is used)*
 
-
-.. rst-class:: nowrap
-
-+----------------+-------------------------------------------------------+
-| | Bx           | |                                                     |
-| | By           | | Components of the magnetic field                    |
-| | Bz           | |                                                     |
-+----------------+-------------------------------------------------------+
-| | Bx_m         | |                                                     |
-| | By_m         | | Components of the magnetic field (time-centered)    |
-| | Bz_m         | |                                                     |
-+----------------+-------------------------------------------------------+
-| | Ex           | |                                                     |
-| | Ey           | | Components of the electric field                    |
-| | Ez           | |                                                     |
-+----------------+-------------------------------------------------------+
-| | Jx           | |                                                     |
-| | Jy           | | Components of the total current                     |
-| | Jz           | |                                                     |
-+----------------+-------------------------------------------------------+
-| | Jx_abc       | |                                                     |
-| | Jy_abc       | | Components of the current due to species "abc"      |
-| | Jz_abc       | |                                                     |
-+----------------+-------------------------------------------------------+
-| | Rho          | |  Total density                                      |
-| | Rho_abc      | |  Density of species "abc"                           |
-+----------------+-------------------------------------------------------+
+  A list of slices indicating a portion of the simulation grid to be written by this
+  diagnostic. This list must have as many elements as the simulation dimension.
+  For example, in a 3D simulation, the list has 3 elements. Each element can be:
+  
+  * ``None``, to select the whole grid along that dimension
+  * an integer, to select only the corresponding cell index along that dimension
+  * a *python* `slice object <https://docs.python.org/3/library/functions.html#slice>`_
+    to select regularly-spaced cell indices along that dimension.
+  
+  This can be easily implemented using the
+  `numpy.s_ expression <https://docs.scipy.org/doc/numpy/reference/generated/numpy.s_.html>`_.
+  For instance, in a 3D simulation, the following subgrid selects only every other element
+  in each dimension::
+    
+    from numpy import s_
+    DiagFields( #...
+    	subgrid = s_[::2, ::2, ::2]
+    )
+  
+  while this one selects cell indices included in a contiguous parallelepiped::
+    
+    	subgrid = s_[100:300, 300:500, 300:600]
+  
 
 
 ----
@@ -1842,15 +1906,15 @@ for instance::
     containing the data of all particles in one patch. The function must return a *numpy*
     array of the same shape, containing the desired deposition of each particle. For example,
     defining the following function::
-      
+
       def stuff(particles):
           return particles.weight * particles.px
-    
+
     passed as ``deposited_quantity=stuff``, the diagnostic will sum the weights
     :math:`\times\; p_x`.
-    
+
     You may also pass directly an implicit (*lambda*) function using::
-    
+
       deposited_quantity = lambda p: p.weight * p.px
 
 
@@ -1886,11 +1950,11 @@ for instance::
 
   A list of "axes" that define the grid.
   There may be as many axes as wanted (there may be zero axes).
-  
+
   Syntax of one axis: ``[type, min, max, nsteps, "logscale", "edge_inclusive"]``
-  
+
   * ``type`` is one of:
-  
+
     * ``"x"``, ``"y"``, ``"z"``: spatial coordinates (``"moving_x"`` with a :ref:`moving window<movingWindow>`)
     * ``"px"``, ``"py"``, ``"pz"``, ``"p"``: momenta
     * ``"vx"``, ``"vy"``, ``"vz"``, ``"v"``: velocities
@@ -1898,13 +1962,13 @@ for instance::
     * ``"chi"``: quantum parameter
     * ``"charge"``: the particles' electric charge
     * or a *python function* with the same syntax as the ``deposited_quantity``.
-      Namely, this function must accept one argument only, for instance ``particles``, 
+      Namely, this function must accept one argument only, for instance ``particles``,
       which holds the attributes ``x``, ``y``, ``z``, ``px``, ``py``, ``pz``, ``charge``,
       ``weight`` and ``id``. Each of these attributes is a *numpy* array containing the
       data of all particles in one patch. The function must return a *numpy* array of
       the same shape, containing the desired quantity of each particle that will decide
       its location in the histogram binning.
-      
+
   * The axis is discretized for ``type`` from ``min`` to ``max`` in ``nsteps`` bins.
   * The optional keyword ``logscale`` sets the axis scale to logarithmic instead of linear.
   * The optional keyword ``edge_inclusive`` includes the particles outside the range
@@ -2093,7 +2157,7 @@ for instance::
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A *particle tracking diagnostic* records the macro-particle positions and momenta at various timesteps.
-Typically, this is used for plotting trajectories.
+Typically, this is used for plotting trajectories. 
 
 You can add a tracking diagnostic by including a block ``DiagTrackParticles()`` in the namelist,
 for instance::
@@ -2103,6 +2167,7 @@ for instance::
       every = 10,
   #    flush_every = 100,
   #    filter = my_filter,
+  #    attributes = ["x", "px", "py", "Ex", "Ey", "Bz"]
   )
 
 .. py:data:: species
@@ -2147,15 +2212,25 @@ for instance::
     def my_filter(particles):
         return (particles.px>-1.)*(particles.px<1.) + (particles.pz>3.)
 
-.. Note:: The ``id`` attribute contains the particles identification number.
-  This number is set to 0 at the beginning of the simulation. Only after particles have
-  passed the filter, they acquire a positive ``id``.
+.. Note:: The ``id`` attribute contains the :doc:`particles identification number<ids>`.
+  This number is set to 0 at the beginning of the simulation. **Only after particles have
+  passed the filter**, they acquire a positive ``id``.
 
 .. Note:: For advanced filtration, Smilei provides the quantity ``Main.iteration``,
   accessible within the ``filter`` function. Its value is always equal to the current
   iteration number of the PIC loop. The current time of the simulation is thus
   ``Main.iteration * Main.timestep``.
 
+.. py:data:: attributes
+
+  :default: ``["x","y","z","px","py","pz"]``
+
+  A list of strings indicating the particle attributes to be written in the output.
+  The attributes may be the particles' spatial coordinates (``"x"``, ``"y"``, ``"z"``),
+  their momenta (``"px"``, ``"py"``, ``"pz"``), their electrical charge (``"q"``),
+  their statistical weight (``"w"``), their quantum parameter
+  (``"chi"``, only for species with radiation losses) or the fields interpolated
+  at their  positions (``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``).
 
 ----
 

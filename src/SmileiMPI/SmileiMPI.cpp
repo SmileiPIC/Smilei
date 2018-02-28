@@ -20,6 +20,7 @@
 #include "PeekAtSpecies.h"
 #include "Hilbert_functions.h"
 #include "VectorPatch.h"
+#include "DomainDecomposition.h"
 
 #include "Diagnostic.h"
 #include "DiagnosticScalar.h"
@@ -103,7 +104,7 @@ void SmileiMPI::bcast( int& val )
 // ---------------------------------------------------------------------------------------------------------------------
 // Initialize MPI (per process) environment
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI::init( Params& params )
+void SmileiMPI::init( Params& params, DomainDecomposition* domain_decomposition )
 {
     // Initialize patch environment
     patch_count.resize(smilei_sz, 0);
@@ -112,7 +113,7 @@ void SmileiMPI::init( Params& params )
 
     if (smilei_rk == 0)remove( "patch_load.txt" ) ;
     // Initialize patch distribution
-    if (!params.restart) init_patch_count(params);
+    if (!params.restart) init_patch_count(params, domain_decomposition);
 
     // Initialize buffers for particles push vectorization
     //     - 1 thread push particles for a unique patch at a given time
@@ -146,7 +147,7 @@ void SmileiMPI::init( Params& params )
 // ---------------------------------------------------------------------------------------------------------------------
 //  Initialize patch distribution
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI::init_patch_count( Params& params)
+void SmileiMPI::init_patch_count( Params& params, DomainDecomposition* domain_decomposition )
 {
 
 //#ifndef _NOTBALANCED
@@ -161,7 +162,8 @@ void SmileiMPI::init_patch_count( Params& params)
 //    }
 //#endif
 
-    unsigned int Npatches, r, Ncur, Pcoordinates[3], tot_ncells_perpatch;
+    std::vector<unsigned int> Pcoordinates( 3, 0 );
+    unsigned int Npatches, r, Ncur, tot_ncells_perpatch;
     double Tload,Tcur, Lcur, total_load=0, local_load, above_target, below_target;
 
     unsigned int tot_species_number = PyTools::nComponents("Species");
@@ -189,7 +191,7 @@ void SmileiMPI::init_patch_count( Params& params)
         Npatches_local++;
         FirstPatch_local = Npatches_local * smilei_rk;
     } else {
-        FirstPatch_local = Npatches_local * smilei_rk + remainder;
+       FirstPatch_local = Npatches_local * smilei_rk + remainder;
     }
 //    // Test
 //    int tot, loc=Npatches_local;
@@ -211,7 +213,7 @@ void SmileiMPI::init_patch_count( Params& params)
         for(unsigned int ipatch=0; ipatch<Npatches_local; ipatch++){
             // Get patch coordinates
             unsigned int hindex = FirstPatch_local + ipatch;
-            generalhilbertindexinv(params.mi[0], params.mi[1], params.mi[2], &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
+            Pcoordinates = domain_decomposition->getDomainCoordinates( hindex );
             for (unsigned int i=0 ; i<params.nDim_field ; i++) {
                 x_cell[i] = (Pcoordinates[i]+0.5)*params.patch_dimensions[i];
             }
@@ -245,6 +247,7 @@ void SmileiMPI::init_patch_count( Params& params)
     Ncur = 0; // Number of patches assigned to current rank r.
     Lcur = 0.; //Load assigned to current rank r.
 
+    int res_distributed (0);
     // MPI master loops patches and figures the best arrangement
     if( smilei_rk==0 ) {
         int rk = 0;
@@ -271,6 +274,17 @@ void SmileiMPI::init_patch_count( Params& params)
                             Ncur = 0;
                             //Lcur = 0.;
                         }
+                        res_distributed += patch_count[r];
+                        if ( Npatches - res_distributed <= smilei_sz-1-(r+1) ) {
+                            // look for the last rank with more than one patch
+                            int lrwmtop = r;
+                            while (patch_count[lrwmtop]<=1)
+                                lrwmtop--;
+                            patch_count[lrwmtop]--;
+                            res_distributed--;
+                            Ncur++;
+                        }
+
                         r++; //Move on to the next rank.
                         //Tcur = Tload * capabilities[r];  //Target load for current rank r.
                         Tcur += Tload * capabilities[r];  //Target load for current rank r.

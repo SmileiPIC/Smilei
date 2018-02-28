@@ -16,16 +16,16 @@
 
 class ElectroMagnFactory {
 public:
-    static ElectroMagn* create(Params& params, std::vector<Species*>& vecSpecies,  Patch* patch) {
+    static ElectroMagn* create(Params& params, DomainDecomposition* domain_decomposition, std::vector<Species*>& vecSpecies,  Patch* patch) {
         ElectroMagn* EMfields = NULL;
         if ( params.geometry == "1Dcartesian" ) {
-            EMfields = new ElectroMagn1D(params, vecSpecies, patch);
+            EMfields = new ElectroMagn1D(params, domain_decomposition, vecSpecies, patch);
         }
         else if ( params.geometry == "2Dcartesian" ) {
-            EMfields = new ElectroMagn2D(params, vecSpecies, patch);
+            EMfields = new ElectroMagn2D(params, domain_decomposition, vecSpecies, patch);
         }
         else if ( params.geometry == "3Dcartesian" ) {
-            EMfields = new ElectroMagn3D(params, vecSpecies, patch);
+            EMfields = new ElectroMagn3D(params, domain_decomposition, vecSpecies, patch);
         }
         else {
             ERROR( "Unknown geometry : " << params.geometry << "!" );
