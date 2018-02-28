@@ -146,6 +146,7 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
     Bz_m = new Field3D(dimPrim, 2, true,  "Bz_m");
     Env_Ar_=new Field3D(dimPrim, 0, false, "Env_Ar");
     Env_Ai_=new Field3D(dimPrim, 0, false, "Env_Ai");
+    Env_A_abs_=new Field3D(dimPrim, 0, false, "Env_A_abs");
     
     // Total charge currents and densities
     Jx_   = new Field3D(dimPrim, 0, false, "Jx");
@@ -629,6 +630,7 @@ Field * ElectroMagn3D::createField(string fieldname)
     else if(fieldname.substr(0,3)=="Rho") return new Field3D(dimPrim, fieldname );
     else if(fieldname.substr(0,6)=="Env_Ar" ) return new Field3D(dimPrim, 0, false, fieldname);
     else if(fieldname.substr(0,6)=="Env_Ai" ) return new Field3D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,6)=="Env_A_abs" ) return new Field3D(dimPrim, 0, false, fieldname);
     
     ERROR("Cannot create field "<<fieldname);
     return NULL;

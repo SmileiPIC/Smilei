@@ -148,7 +148,7 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
 {
     cField3D* A3D          = static_cast<cField3D*>(A_);
     cField3D* A03D         = static_cast<cField3D*>(A0_);
-    Field3D* Env_Ar3D      = static_cast<Field3D*>(EMfields->Env_Ar_);
+    Field3D* Env_Aabs3D      = static_cast<Field3D*>(EMfields->Env_A_abs_);
     //Field3D* Env_Ai3D      = static_cast<Field3D*>(EMfields->Env_Ai_);
 
     Field3D* Phi3D         = static_cast<Field3D*>(Phi_);
@@ -194,7 +194,7 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
                 (*A3D)(i,j,k)  += profile_->complexValueAt(position,t);
                 (*A03D)(i,j,k) += profile_->complexValueAt(position,t_previous_timestep);
 
-                (*Env_Ar3D)(i,j,k)= std::abs((*A3D)(i,j,k));
+                (*Env_Aabs3D)(i,j,k)= std::abs((*A3D)(i,j,k));
 
                 (*Phi3D)(i,j,k)   = std::abs((*A3D) (i,j,k)) * std::abs((*A3D) (i,j,k)) * one_over_2;
                 (*Phiold3D)(i,j,k)= std::abs((*A03D)(i,j,k)) * std::abs((*A03D)(i,j,k)) * one_over_2;
@@ -255,7 +255,7 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
   
     cField3D* A3D          = static_cast<cField3D*>(A_);               // the envelope at timestep n
     cField3D* A03D         = static_cast<cField3D*>(A0_);              // the envelope at timestep n-1
-    Field3D* Env_Ar3D      = static_cast<Field3D*>(EMfields->Env_Ar_); // field for temporary diagnostic
+    Field3D* Env_Aabs3D      = static_cast<Field3D*>(EMfields->Env_A_abs_); // field for temporary diagnostic
 
     // Field3D* Env_Ai3D = static_cast<Field3D*>(EMfields->Env_Ai_); // field for temporary diagnostic
 
@@ -294,7 +294,7 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
              // final back-substitution
              (*A03D)(i,j,k) = (*A3D)(i,j,k);
              (*A3D)(i,j,k)  = (*A3Dnew)(i,j,k); 
-             (*Env_Ar3D)(i,j,k) =std::abs((*A3D)(i,j,k));
+             (*Env_Aabs3D)(i,j,k) =std::abs((*A3D)(i,j,k));
             } // end z loop
         } // end y loop
     } // end x loop

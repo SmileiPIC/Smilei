@@ -110,6 +110,7 @@ void ElectroMagn::initElectroMagnQuantities()
     rho_=NULL;
     Env_Ar_=NULL;
     Env_Ai_=NULL;
+    Env_A_abs_=NULL;
     
     
     // Species charge currents and density
@@ -153,6 +154,7 @@ void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
     if ( Env_Ar_ ) {
         allFields.push_back(Env_Ar_);
         allFields.push_back(Env_Ai_);
+        allFields.push_back(Env_A_abs_);
     }
 
     for (int ispec=0; ispec<nspecies; ispec++) {

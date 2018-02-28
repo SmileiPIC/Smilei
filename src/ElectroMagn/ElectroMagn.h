@@ -149,6 +149,9 @@ public:
     
     //! Envelope, imaginary part
     Field* Env_Ai_;
+
+    //! Envelope, absolute value
+    Field* Env_A_abs_;
     
     //! Vector of electric fields used when a filter is applied
     std::vector<Field*> Exfilter;
