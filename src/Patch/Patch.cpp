@@ -191,6 +191,8 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
 
 void Patch::finalizeMPIenvironment(Params& params) {
     int nb_comms(9); // E, B, B_m : min number of comms
+    if (params.geometry == "3drz")
+        nb_comms += 9*(params.nmodes - 1);
     // if envelope is present, add A,A0 to comms
     if (params.Laser_Envelope_model){  
         nb_comms += 2;
@@ -282,9 +284,6 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
     }
     radius = sqrt(radius);
 
-    //cout << hindex << " " << Pcoordinates[0] << " " << Pcoordinates[1] << endl;
-    //cout << "X = " << Pcoordinates[0]  << " " << min_local[0] << " " << max_local[0] << " - Y = " << Pcoordinates[1] << " " << min_local[1] << " " << max_local[1] << endl;
-    
     //cart_updateMPIenv(smpi);
 
     MPI_me_ = vecPatch(0)->MPI_me_;

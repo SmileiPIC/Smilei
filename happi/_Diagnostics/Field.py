@@ -387,7 +387,7 @@ class Field(Diagnostic):
 			f = field + "_mode_"
 			for imode in self._modes:
 				if imode >= nmode: continue
-				factor = 2.
+				factor = 1.
 				if imode == 0: factor = 1.
 				B_real = self._np.empty(self._finalShape)
 				B_imag = self._np.empty(self._finalShape)

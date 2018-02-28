@@ -120,7 +120,7 @@ void PatchRZ::reallyinitSumField( Field* field, int iDim )
 void PatchRZ::initSumField( Field* field, int iDim )
 {
     if (field->MPIbuff.ibuf[0][0].size()==0) {
-        field->MPIbuff.allocate(2, field, oversize);
+        field->MPIbuff.iallocate(2, field, oversize);
 
         int tagp(0);
         if (field->name == "Jx") tagp = 1;

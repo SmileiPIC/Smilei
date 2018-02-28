@@ -55,7 +55,8 @@ public:
     //! Overloading of the () operator allowing to set a new value for the (i,j) element of a cField2D
     inline std::complex<double>& operator () (unsigned int i,unsigned int j) {
         DEBUGEXEC(if (i>=dims_[0] || j>=dims_[1]) ERROR(name << "Out of limits ("<< i << "," << j << ")  > (" <<dims_[0] << "," <<dims_[1] << ")" ));
-        DEBUGEXEC(if (!std::isfinite(real(data_2D[i][j]))+imag(data_2D[i][j])) ERROR(name << " Not finite "<< i << "," << j << " = " << data_2D[i][j] ));
+        //DEBUGEXEC(if ( !std::isfinite( real(data_2D[i][j])+imag(data_2D[i][j]) ) ) ERROR(name << " Not finite "<< i << "," << j << " = " << data_2D[i][j] ));
+        DEBUGEXEC(if (std::abs(data_2D[i][j]) > 1.2) ERROR(name << " Greater than 1.2 "<< i << "," << j << " = " << data_2D[i][j] ));
         return data_2D[i][j];
     };
     
@@ -63,7 +64,8 @@ public:
     //! Overloading of the () operator allowing to get the value of the (i,j) element of a cField2D
     inline std::complex<double> operator () (unsigned int i,unsigned int j) const {
         DEBUGEXEC(if (i>=dims_[0] || j>=dims_[1]) ERROR(name << "Out of limits "<< i << " " << j));
-        DEBUGEXEC(if (!std::isfinite(real(data_2D[i][j]))+imag(data_2D[i][j])) ERROR(name << " Not finite "<< i << "," << j << " = " << data_2D[i][j] ));
+        //DEBUGEXEC(if (!std::isfinite(real(data_2D[i][j])+imag(data_2D[i][j]))) ERROR(name << " Not finite "<< i << "," << j << " = " << data_2D[i][j] ));
+        DEBUGEXEC(if (std::abs(data_2D[i][j]) > 1.2) ERROR(name << " Greater than 1.2 "<< i << "," << j << " = " << data_2D[i][j] ));
         return data_2D[i][j];
     };
 
