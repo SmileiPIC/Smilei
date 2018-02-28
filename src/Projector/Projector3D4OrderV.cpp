@@ -1553,7 +1553,7 @@ void Projector3D4OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D4OrderV::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int scell, int clrw, bool diag_flag, std::vector<unsigned int> &b_dim, int ispec)
+void Projector3D4OrderV::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int scell, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec)
 {
     if ( istart == iend ) return; //Don't treat empty cells.
 
@@ -1573,11 +1573,15 @@ void Projector3D4OrderV::operator() (ElectroMagn* EMfields, Particles &particles
     
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if (!diag_flag){ 
-        double* b_Jx =  &(*EMfields->Jx_ )(0);
-        double* b_Jy =  &(*EMfields->Jy_ )(0);
-        double* b_Jz =  &(*EMfields->Jz_ )(0);
-        (*this)(b_Jx , b_Jy , b_Jz , particles,  istart, iend, invgf, b_dim, iold, &(*delta)[0]);
-            
+        if (!is_spectral) {
+            double* b_Jx =  &(*EMfields->Jx_ )(0);
+            double* b_Jy =  &(*EMfields->Jy_ )(0);
+            double* b_Jz =  &(*EMfields->Jz_ )(0);
+            (*this)(b_Jx , b_Jy , b_Jz , particles,  istart, iend, invgf, b_dim, iold, &(*delta)[0]);
+        }
+        else 
+            ERROR("TO DO with rho");
+        
     // Otherwise, the projection may apply to the species-specific arrays
     } else {
         double* b_Jx  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(0) : &(*EMfields->Jx_ )(0) ;

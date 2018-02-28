@@ -18,6 +18,7 @@ class ElectroMagnBC;
 class SimWindow;
 class Patch;
 class Solver;
+class DomainDecomposition;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -53,7 +54,7 @@ class ElectroMagn
 
 public:
     //! Constructor for Electromagn
-    ElectroMagn( Params &params, std::vector<Species*>& vecSpecies, Patch* patch );
+    ElectroMagn( Params &params, DomainDecomposition* domain_decomposition, std::vector<Species*>& vecSpecies, Patch* patch );
     ElectroMagn( ElectroMagn* emFields, Params &params, Patch* patch );
     void initElectroMagnQuantities();
     //! Extra initialization. Used in ElectroMagnFactory
@@ -118,6 +119,20 @@ public:
     
     //! Total charge density
     Field* rho_;
+    Field* rhoold_;
+    //PXR quantities:
+    Field* Ex_pxr;
+    Field* Ey_pxr;
+    Field* Ez_pxr;
+    Field* Bx_pxr;
+    Field* By_pxr;
+    Field* Bz_pxr;
+    Field* Jx_pxr;
+    Field* Jy_pxr;
+    Field* Jz_pxr;
+    Field* rho_pxr;
+    Field* rhoold_pxr;
+
     
     //! Vector of electric fields used when a filter is applied
     std::vector<Field*> Exfilter;
@@ -153,7 +168,7 @@ public:
     const double cell_volume;
     
     //! n_space (from params) always 3D
-    const std::vector<unsigned int> n_space;
+    std::vector<unsigned int> n_space;
     
     //! Index of starting elements in arrays without duplicated borders
     //! By constuction 1 element is shared in primal field, 2 in dual
@@ -213,7 +228,7 @@ public:
     Solver* MaxwellAmpereSolver_;
     //! Maxwell Faraday Solver
     Solver* MaxwellFaradaySolver_;
-    virtual void saveMagneticFields() = 0;
+    virtual void saveMagneticFields(bool) = 0;
     virtual void centerMagneticFields() = 0;
     virtual void binomialCurrentFilter() = 0;
     
@@ -313,6 +328,10 @@ public:
     //! from smpi is xmax
     bool isXmax;
 
+    //! Corners coefficient for BC
+    std::vector<double> beta_edge;
+    std::vector<std::vector<double>> S_edge;
+
 protected :
     
     
@@ -323,6 +342,7 @@ private:
     
     //! Accumulate nrj added with new fields
     double nrj_new_fields;
+
     
 };
 

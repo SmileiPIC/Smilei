@@ -17,17 +17,14 @@ using namespace std;
 ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned int _min_max )
 : ElectroMagnBC( params, patch, _min_max )
 {
-    // conversion factor from degree to radian
-    conv_deg2rad = M_PI/180.0;
-    
     // number of nodes of the primal and dual grid in the x-direction
-    nx_p = params.n_space[0]+1+2*params.oversize[0];
+    nx_p = params.n_space[0]*params.global_factor[0]+1+2*params.oversize[0];
     nx_d = nx_p+1;
     // number of nodes of the primal and dual grid in the y-direction
-    ny_p = params.n_space[1]+1+2*params.oversize[1];
+    ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
     ny_d = ny_p+1;
     // number of nodes of the primal and dual grid in the z-direction
-    nz_p = params.n_space[2]+1+2*params.oversize[2];
+    nz_p = params.n_space[2]*params.global_factor[2]+1+2*params.oversize[2];
     nz_d = nz_p+1;
     
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the x-direction)
@@ -113,7 +110,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     //! \todo (MG) Check optimal angle for Silver-Muller BCs
     
     // Xmin boundary
-    double theta  = 0.0*conv_deg2rad; //0.0;
+    double theta  = params.EM_BCs_theta[0][0];
     double factor = 1.0 / (cos(theta) + dt_ov_dx);
     Alpha_SM_W    = 2.0                     * factor;
     Beta_SM_W     = - (cos(theta)-dt_ov_dx) * factor;
@@ -124,7 +121,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     Eta_SM_W      =   dt_ov_dz              * factor;
     
     // Xmax boundary
-    theta         = M_PI;
+    theta  = params.EM_BCs_theta[0][1];
     factor        = 1.0 / (cos(theta) - dt_ov_dx);
     Alpha_SM_E    = 2.0                      * factor;
     Beta_SM_E     = - (cos(theta)+dt_ov_dx)  * factor;
@@ -135,7 +132,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     Eta_SM_E      =   dt_ov_dz              * factor;
     
     // Ymin boundary
-    theta  = 0.0;
+    theta  = params.EM_BCs_theta[1][0];
     factor = 1.0 / (cos(theta) + dt_ov_dy );
     Alpha_SM_S    = 2.0                     * factor;
     Beta_SM_S     = - (cos(theta)-dt_ov_dy) * factor;
@@ -145,7 +142,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     Eta_SM_S      =   dt_ov_dx              * factor;
     
     // Ymax boundary
-    theta  = M_PI;
+    theta  = params.EM_BCs_theta[1][1];
     factor = 1.0 / (cos(theta) - dt_ov_dy);
     Alpha_SM_N    = 2.0                     * factor;
     Beta_SM_N     = - (cos(theta)+dt_ov_dy) * factor;
@@ -155,7 +152,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     Eta_SM_N      =   dt_ov_dx              * factor;
     
     // Zmin boundary
-    theta  = 0.0;
+    theta  = params.EM_BCs_theta[2][0];
     factor = 1.0 / (cos(theta) + dt_ov_dz);
     Alpha_SM_B    = 2.0                     * factor;
     Beta_SM_B     = - (cos(theta)-dt_ov_dz) * factor;
@@ -165,7 +162,7 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     Eta_SM_B      =   dt_ov_dy              * factor;
     
     // Zmax boundary
-    theta         = M_PI;
+    theta  = params.EM_BCs_theta[2][1];
     factor        = 1.0 / (cos(theta) - dt_ov_dz);
     Alpha_SM_T    = 2.0                      * factor;
     Beta_SM_T     = - (cos(theta)+dt_ov_dz)  * factor;
@@ -279,25 +276,23 @@ void ElectroMagnBC3D_SM::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
+
+    // Static cast of the fields
+   Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
+   Field3D* Ey3D = static_cast<Field3D*>(EMfields->Ey_);
+   Field3D* Ez3D = static_cast<Field3D*>(EMfields->Ez_);
+   Field3D* Bx3D = static_cast<Field3D*>(EMfields->Bx_);
+   Field3D* By3D = static_cast<Field3D*>(EMfields->By_);
+   Field3D* Bz3D = static_cast<Field3D*>(EMfields->Bz_);
+   vector<double> pos(2);
+
     if ( min_max==0 && patch->isXmin() ) {
         
-        // Static cast of the fields
-        //Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
-        Field3D* Ey3D = static_cast<Field3D*>(EMfields->Ey_);
-        Field3D* Ez3D = static_cast<Field3D*>(EMfields->Ez_);
-        Field3D* Bx3D = static_cast<Field3D*>(EMfields->Bx_);
-        Field3D* By3D = static_cast<Field3D*>(EMfields->By_);
-        Field3D* Bz3D = static_cast<Field3D*>(EMfields->Bz_);
-        
-        vector<double> pos(2);
-        
         // for By^(d,p,d)
-        pos[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy;
         for (unsigned int j=0 ; j<ny_p ; j++) {
-            pos[0] += dy;
-            pos[1] = patch->getDomainLocalMin(2) - (0.5 + EMfields->oversize[2])*dz;
+            pos[0] = patch->getDomainLocalMin(1) + (j - EMfields->oversize[1])*dy;
             for (unsigned int k=0 ; k<nz_d ; k++) {
-                pos[1] += dz;
+                pos[1] = patch->getDomainLocalMin(2) + (k -0.5 - EMfields->oversize[2])*dz;
                 // Lasers
                 double byW = 0.;
                 for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
@@ -314,12 +309,10 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         }//j  ---end compute By
         
         // for Bz^(d,d,p)
-        pos[0] = patch->getDomainLocalMin(1) - (0.5 + EMfields->oversize[1])*dy;
         for (unsigned int j=0 ; j<ny_d ; j++) {
-            pos[0] += dy;
-            pos[1] = patch->getDomainLocalMin(2) - EMfields->oversize[2]*dz;
+            pos[0] = patch->getDomainLocalMin(1) + (j - 0.5 - EMfields->oversize[1])*dy;
             for (unsigned int k=0 ; k<nz_p ; k++) {
-                pos[1] += dz;
+                pos[1] = patch->getDomainLocalMin(2) + (k - EMfields->oversize[2])*dz;
                 // Lasers
                 double bzW = 0.;
                 for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
@@ -338,23 +331,11 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
     }
     else if (min_max==1 && patch->isXmax() ) {
         
-        // Static cast of the fields
-        //Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
-        Field3D* Ey3D = static_cast<Field3D*>(EMfields->Ey_);
-        Field3D* Ez3D = static_cast<Field3D*>(EMfields->Ez_);
-        Field3D* Bx3D = static_cast<Field3D*>(EMfields->Bx_);
-        Field3D* By3D = static_cast<Field3D*>(EMfields->By_);
-        Field3D* Bz3D = static_cast<Field3D*>(EMfields->Bz_);
-        
-        vector<double> pos(2);
-        
         // for By^(d,p,d)
-        pos[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy;
         for (unsigned int j=0 ; j<ny_p ; j++) {
-            pos[0] += dy;
-            pos[1] = patch->getDomainLocalMin(2) - (0.5 + EMfields->oversize[2])*dz;
+            pos[0] = patch->getDomainLocalMin(1) + (j - EMfields->oversize[1])*dy;
             for (unsigned int k=0 ; k<nz_d ; k++) {
-                pos[1] += dz;
+                pos[1] = patch->getDomainLocalMin(2) + (k - 0.5 - EMfields->oversize[2])*dz;
                 // Lasers
                 double byE = 0.;
                 for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
@@ -372,12 +353,10 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         }//j  ---end compute By
         
         // for Bz^(d,d,p)
-        pos[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dy;
         for (unsigned int j=0 ; j<ny_d ; j++) {
-            pos[1] = patch->getDomainLocalMin(2) - EMfields->oversize[2]*dz;
-            pos[0] += dy;
+            pos[0] = patch->getDomainLocalMin(1) + (j - 0.5 - EMfields->oversize[1])*dy;
             for (unsigned int k=0 ; k<nz_p ; k++) {
-                pos[1] += dz;
+                pos[1] = patch->getDomainLocalMin(2) + (k - EMfields->oversize[2])*dz;
                 // Lasers
                 double bzE = 0.;
                 for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
@@ -394,14 +373,6 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         }//j  ---end compute Bz
     }
     else if (min_max==2 && patch->isYmin() ) {
-        
-        // Static cast of the fields
-        Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
-        //Field3D* Ey3D = static_cast<Field3D*>(EMfields->Ey_);
-        Field3D* Ez3D = static_cast<Field3D*>(EMfields->Ez_);
-        Field3D* Bx3D = static_cast<Field3D*>(EMfields->Bx_);
-        Field3D* By3D = static_cast<Field3D*>(EMfields->By_);
-        Field3D* Bz3D = static_cast<Field3D*>(EMfields->Bz_);
         
         // for Bx^(p,d,d)
         for (unsigned int i=0 ; i<nx_p ; i++) {
@@ -427,14 +398,6 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
     }
     else if (min_max==3 && patch->isYmax() ) {
-        
-        // Static cast of the fields
-        Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
-        //Field3D* Ey3D = static_cast<Field3D*>(EMfields->Ey_);
-        Field3D* Ez3D = static_cast<Field3D*>(EMfields->Ez_);
-        Field3D* Bx3D = static_cast<Field3D*>(EMfields->Bx_);
-        Field3D* By3D = static_cast<Field3D*>(EMfields->By_);
-        Field3D* Bz3D = static_cast<Field3D*>(EMfields->Bz_);
         
         // for Bx^(p,d,d)
         for (unsigned int i=0 ; i<nx_p ; i++) {
@@ -464,14 +427,6 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
     }
     else if (min_max==4 && patch->isZmin() ) {
         
-        // Static cast of the fields
-        Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
-        Field3D* Ey3D = static_cast<Field3D*>(EMfields->Ey_);
-        //Field3D* Ez3D = static_cast<Field3D*>(EMfields->Ez_);
-        Field3D* Bx3D = static_cast<Field3D*>(EMfields->Bx_);
-        Field3D* By3D = static_cast<Field3D*>(EMfields->By_);
-        Field3D* Bz3D = static_cast<Field3D*>(EMfields->Bz_);
-        
         // for Bx^(p,d,d)
         for (unsigned int i=0 ; i<nx_p ; i++) {
             for (unsigned int j=0 ; j<ny_d ; j++) {
@@ -499,14 +454,6 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
     }
     else if (min_max==5 && patch->isZmax() ) {
-        
-        // Static cast of the fields
-        Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
-        Field3D* Ey3D = static_cast<Field3D*>(EMfields->Ey_);
-        //Field3D* Ez3D = static_cast<Field3D*>(EMfields->Ez_);
-        Field3D* Bx3D = static_cast<Field3D*>(EMfields->Bx_);
-        Field3D* By3D = static_cast<Field3D*>(EMfields->By_);
-        Field3D* Bz3D = static_cast<Field3D*>(EMfields->Bz_);
         
         // for Bx^(p,d,d)
         for (unsigned int i=0 ; i<nx_p ; i++) {

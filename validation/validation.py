@@ -71,7 +71,7 @@ This script may run anywhere: you can define a SMILEI_ROOT environment variable
 # IMPORTS
 import sys, os, re, glob, time, math
 import shutil, getopt, inspect, socket, pickle
-from subprocess import check_call,CalledProcessError,call
+from subprocess import call, check_call, check_output, CalledProcessError
 import happi
 import numpy as np
 s = os.sep
@@ -82,7 +82,7 @@ try:
 	execfile
 except:
 	def execfile(file):
-		exec(compile(open(file).read(), file, 'exec'))
+		exec(compile(open(file).read(), file, 'exec'), globals())
 
 # SMILEI PATH VARIABLES
 if "SMILEI_ROOT" in os.environ :
@@ -112,7 +112,6 @@ import happi
 POINCARE = "poincare"
 JOLLYJUMPER = "llrlsi-gw"
 HOSTNAME = socket.gethostname()
-MPI_DISTRIBUTION = "default"
 
 # DIR VARIABLES
 WORKDIR = ""
@@ -136,8 +135,8 @@ def usage():
 try:
 	options, remainder = getopt.getopt(
 		sys.argv[1:],
-		'o:m:b:r:gshvcd:',
-		['OMP=', 'MPI=', 'BENCH=', 'COMPILE_ONLY=', 'GENERATE=', 'HELP=', 'VERBOSE=', 'RESTARTS=','MPI_DISTRIBUTION='])
+		'o:m:b:r:gshvc',
+		['OMP=', 'MPI=', 'BENCH=', 'COMPILE_ONLY=', 'GENERATE=', 'HELP=', 'VERBOSE=', 'RESTARTS='])
 except getopt.GetoptError as err:
 	usage()
 	sys.exit(4)
@@ -152,8 +151,6 @@ for opt, arg in options:
 		MPI = int(arg)
 	elif opt in ('-b', '--BENCH'):
 		BENCH = arg
-	elif opt in ('-d', '--MPI_DISTRIBUTION'):
-		MPI_DISTRIBUTION = arg
 	elif opt in ('-c', '--COMPILEONLY'):
 		COMPILE_ONLY=True
 	elif opt in ('-h', '--HELP'):
@@ -180,13 +177,6 @@ for opt, arg in options:
 		print( "     DEFAULT : 0 (meaning no restarts, only one simulation)")
 		print( "-c")
 		print( "     Compilation only")
-		print( "-d")
-		print( "     -d <mpi_distribution>")
-		print( "      <mpi_distribution> is the name of the MPI distribution used for compilation and execution:")
-		print( "      - default: mpirun -np")
-		print( "      - openmpi: mpirun -mca btl tcp,sm,self -np")
-		print( "      It enables to tune execution parameters.")
-		print( "     DEFAULT : default")
 		print( "-v")
 		print( "     Verbose mode")
 		sys.exit(0)
@@ -417,17 +407,23 @@ elif POINCARE in HOSTNAME :
 	RUN = RUN_POINCARE
 # Local computers
 else:
+	# Determine the correct MPI command
+	mpi_version = str(check_output("mpirun --version", shell=True))
+	if re.search("Open MPI", mpi_version, re.I):
+		v = re.search("\d\d?\.\d\d?\.\d\d?", mpi_version).group() # Full version number
+		v = int(v.split(".")[0]) # Major version number
+		if v > 1:
+			MPIRUN = "mpirun --oversubscribe -np "
+		else:
+			MPIRUN = "mpirun -mca btl tcp,sm,self -np "
+	else:
+		MPIRUN = "mpirun -np "
+	
 	COMPILE_COMMAND = 'make -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
 	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
-
-        # OpenMPI
-        if "openmpi" in MPI_DISTRIBUTION:
-            RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; mpirun -mca btl tcp,sm,self -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
-        # OpenMPI
-        else:
-    	    RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
-        RUN = RUN_OTHER
+	RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+MPIRUN+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
+	RUN = RUN_OTHER
 
 # CLEAN
 # If the workdir does not contains a smilei bin, or it contains one older than the the smilei bin in directory smilei, force the compilation in order to generate the compilation_output
@@ -501,7 +497,7 @@ class CompareToReference(object):
 		except:
 			print( "Unable to find the reference data for "+bench_name)
 			sys.exit(1)
-	
+
 	def __call__(self, data_name, data, precision=None):
 		# verify the name is in the reference
 		if data_name not in self.data.keys():
@@ -701,9 +697,9 @@ for BENCH in SMILEI_BENCH_LIST :
 		# Copy of the databases
 		# For the cases that need a database
 		if BENCH in [
-				"tst2d_8_synchrotron_chi1.py",
-				"tst2d_9_synchrotron_chi0.1.py",
-				"tst1d_9_rad_electron_laser_collision.py",
+				"tst2d_08_synchrotron_chi1.py",
+				"tst2d_09_synchrotron_chi0.1.py",
+				"tst1d_09_rad_electron_laser_collision.py",
 				"tst1d_10_pair_electron_laser_collision.py",
 				"tst2d_10_multiphoton_Breit_Wheeler.py"
 			]:
@@ -780,7 +776,7 @@ for BENCH in SMILEI_BENCH_LIST :
 	# CLEAN WORKDIRS, GOES HERE ONLY IF SUCCEED
 	os.chdir(WORKDIR_BASE)
 	shutil.rmtree( WORKDIR_BASE+s+'wd_'+os.path.basename(os.path.splitext(BENCH)[0]), True )
-	
+
 	if VERBOSE: print( "")
 
 print( "Everything passed")

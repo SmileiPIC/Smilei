@@ -1,5 +1,5 @@
-#include <cmath>
 #include "Function.h"
+#include <cmath>
 
 using namespace std;
 
