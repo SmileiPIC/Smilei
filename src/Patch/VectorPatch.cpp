@@ -1667,7 +1667,7 @@ void VectorPatch::ponderomotive_update_susceptibilty_and_momentum(Params& params
                                                  emfields(ipatch), interp_envelope(ipatch),proj_susceptibility(ipatch),
                                                  params, diag_flag,
                                                  (*this)(ipatch), smpi,
-                                                 localDiags);
+                                                 localDiags); 
                                                                     } // end condition on ponderomotive dynamics
             } // end diagnostic or projection if condition on species
         } // end loop on species

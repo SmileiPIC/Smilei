@@ -63,7 +63,7 @@ Checkpoints(
     exit_after_dump = False,
 )
 
-list_fields = ['Ex','Ey','Rho','Jx','Env_Ar']
+list_fields = ['Ex','Ey','Rho','Jx','Env_A_abs']
 
 DiagFields(
     every = 200,
