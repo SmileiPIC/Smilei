@@ -205,6 +205,7 @@ int main (int argc, char* argv[])
             vecPatches.ponderomotive_update_susceptibilty_and_momentum(params, &smpi, simWindow, time_dual, timers, 0);    
           
             // comm and synch susceptibility
+            vecPatches.sumSusceptibility(params, time_dual, timers, 0, simWindow );
 
             // interp updated envelope for position advance, update positions and currents for Maxwell's equations
             vecPatches.ponderomotive_update_position_and_currents(params, &smpi, simWindow, time_dual, timers, 0);        
