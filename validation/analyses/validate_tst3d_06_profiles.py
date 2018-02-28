@@ -44,7 +44,7 @@ for name, profile in S.namelist.profiles.items():
 # Verify external fields
 Lz = S.namelist.Main.grid_length[2]
 #for field in ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
-for field in ["Bx", "By", "Bz"]:
+for field in ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
 	F = S.Field.Field0(field, timesteps=0, subset={"z":Lz/2.}).getData()[0][::10,::10]
 	Validate(field+" field", F, 0.01)
 

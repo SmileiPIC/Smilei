@@ -132,15 +132,15 @@ public:
             {
                 MESSAGE(2,"> Radiating species with the classical Landau-Lifshitz radiating model");
             }
-            else if (radiation_model != "cll")
+            else if (radiation_model == "cll")
             {
                 MESSAGE(2,"> Radiating species with the quantum corrected Landau-Lifshitz radiating model");
             }
-            else if (radiation_model != "niel")
+            else if (radiation_model == "niel")
             {
                 MESSAGE(2,"> Radiating species with the stochastic model of Niel et al.");
             }
-            else if (radiation_model != "mc")
+            else if (radiation_model == "mc")
             {
                 MESSAGE(2,"> Radiating species with the stochastic Monte-Carlo model");
             }
