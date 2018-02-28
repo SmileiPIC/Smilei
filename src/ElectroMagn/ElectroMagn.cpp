@@ -108,8 +108,10 @@ void ElectroMagn::initElectroMagnQuantities()
     Jy_=NULL;
     Jz_=NULL;
     rho_=NULL;
-    Env_Ar_=NULL;
-    Env_Ai_=NULL;
+    Env_Ar_   =NULL;
+    Env_Ai_   =NULL;
+    Env_A_abs_=NULL;
+    Env_Chi_  =NULL;
     
     
     // Species charge currents and density
@@ -117,11 +119,14 @@ void ElectroMagn::initElectroMagnQuantities()
     Jy_s.resize(n_species);
     Jz_s.resize(n_species);
     rho_s.resize(n_species);
+
+    Env_Chi_s.resize(n_species);
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
         Jx_s[ispec]  = NULL;
         Jy_s[ispec]  = NULL;
         Jz_s[ispec]  = NULL;
         rho_s[ispec] = NULL;
+        Env_Chi_s[ispec] = NULL;
     }
     
     for (unsigned int i=0; i<3; i++) {
@@ -153,6 +158,8 @@ void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
     if ( Env_Ar_ ) {
         allFields.push_back(Env_Ar_);
         allFields.push_back(Env_Ai_);
+        allFields.push_back(Env_A_abs_);
+        allFields.push_back(Env_Chi_);
     }
 
     for (int ispec=0; ispec<nspecies; ispec++) {
@@ -160,6 +167,7 @@ void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
         allFields.push_back(Jy_s[ispec] );
         allFields.push_back(Jz_s[ispec] );
         allFields.push_back(rho_s[ispec]);
+        if ( Env_Ar_ ) {allFields.push_back(Env_Chi_s[ispec]);}
     }
     
 }
@@ -183,6 +191,8 @@ ElectroMagn::~ElectroMagn()
    if(Jy_ != NULL) delete Jy_;
    if(Jz_ != NULL) delete Jz_;
    if(rho_ != NULL) delete rho_;
+ 
+   if(Env_Chi_ != NULL) delete Env_Chi_;
     
     for( unsigned int idiag=0; idiag<allFields_avg.size(); idiag++ )
         for( unsigned int ifield=0; ifield<allFields_avg[idiag].size(); ifield++ )
@@ -193,6 +203,7 @@ ElectroMagn::~ElectroMagn()
         if( Jy_s [ispec] ) delete Jy_s [ispec];
         if( Jz_s [ispec] ) delete Jz_s [ispec];
         if( rho_s[ispec] ) delete rho_s[ispec];
+        if( Env_Chi_s[ispec] ) delete Env_Chi_s[ispec];
     }
     
     for (unsigned int i=0; i<Exfilter.size(); i++)
@@ -311,6 +322,12 @@ void ElectroMagn::restartRhoJ()
     rho_->put_to(0.);
 }
 
+void ElectroMagn::restartEnvChi()
+{
+    Env_Chi_->put_to(0.);
+}
+
+
 void ElectroMagn::restartRhoJs()
 {
     for (unsigned int ispec=0 ; ispec < n_species ; ispec++) {
@@ -324,6 +341,14 @@ void ElectroMagn::restartRhoJs()
     Jy_ ->put_to(0.);
     Jz_ ->put_to(0.);
     rho_->put_to(0.);
+}
+
+void ElectroMagn::restartEnvChis()
+{
+    for (unsigned int ispec=0 ; ispec < n_species ; ispec++) {
+        if( Env_Chi_s [ispec] ) Env_Chi_s [ispec]->put_to(0.);
+    }  
+    Env_Chi_->put_to(0.);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

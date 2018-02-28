@@ -37,8 +37,11 @@ ElectroMagnBCRZ_Axis::ElectroMagnBCRZ_Axis( Params &params, Patch* patch, unsign
     dr       = params.cell_length[1];
     dt_ov_dr = dt/dr;
     dr_ov_dt = 1.0/dt_ov_dr;
-	//Number of modes
-	Nmode= params.Nmode;
+
+    //Number of modes
+    Nmode= params.Nmode;
+    //Oversize R
+    oversize_R = params.oversize[1];
     
    // if (min_max == 2 && patch->isYmin() ) {
         // BCs in the y-border min
@@ -81,12 +84,13 @@ void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch*
 	//cField2D* BlRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_m[imode];
     //cField2D* BtRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_m[imode]; 
 	cField2D* JlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jl_[imode];
-    //cField2D* JrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jr_[imode];
-    //cField2D* JtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jt_[imode];
-	
+    cField2D* JrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jr_[imode];
+    cField2D* JtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jt_[imode];
+	bool isXmin = (static_cast<ElectroMagn3DRZ*>(EMfields))->isXmin;
+	bool isXmax = (static_cast<ElectroMagn3DRZ*>(EMfields))->isXmax;
 
 	if (min_max == 2 && patch->isYmin()){
-		unsigned int j=2;
+		unsigned int j=oversize_R;  //Axis boundary conditions are applied directly on axis (j=oversize_R for primal) and not on ghost cells.
 		if (imode==0){
 			//MF_Solver_Yee
 			for (unsigned int i=0 ; i<nl_d ; i++) {
@@ -100,10 +104,10 @@ void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch*
 				//(*BlRZ)(i,0)+= -(*BlRZ)(i,1)+(*BlRZ_old)(i,1)-4*dt_ov_dr*(*EtRZ)(i,1);
 			}
 			//MA_SolverRZ_norm
-			for (unsigned int i=0 ; i<nl_p ; i++) {
+			for (unsigned int i=0 ; i<nl_p  ; i++) {
 				(*EtRZ)(i,j)=0;
 			}
-			for (unsigned int i=0 ; i<nl_p ; i++) {
+			for (unsigned int i=0 ; i<nl_p  ; i++) {
 				(*ErRZ)(i,j)= -(*ErRZ)(i,j+1);
 			}
 			for (unsigned int i=0 ; i<nl_d ; i++) {
@@ -112,49 +116,87 @@ void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch*
 		}
 		else if (imode==1){
 			//MF
-			for (unsigned int i=0 ; i<nl_p ; i++) {
+			for (unsigned int i=0 ; i<nl_p  ; i++) {
 				(*BlRZ)(i,j)= -(*BlRZ)(i,j+1);
+                if (std::abs((*BlRZ)(i,j))>1.){
+                MESSAGE("BlRZA");                
+                MESSAGE(i);
+                MESSAGE(j);    
+                MESSAGE((*BlRZ)(i,j));
+                }
 			}
-			for (unsigned int i=0 ; i<nl_p ; i++) {
-				(*EtRZ)(i,j)= (*EtRZ)(i,j+1);
+			for (unsigned int i=0 ; i<nl_p  ; i++) {
+				//(*EtRZ)(i,j)= (*EtRZ)(i,j+1);
+				(*EtRZ)(i,j)= -1./3*(4.*Icpx*(*ErRZ)(i,j+1)+(*EtRZ)(i,j+1));
+                if (std::abs((*EtRZ)(i,j))>1.){
+                MESSAGE("EtRZA");                
+                MESSAGE(i);
+                MESSAGE(j);    
+                MESSAGE((*EtRZ)(i,j));
+                }
 			}
 			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
 				(*BrRZ)(i,j)+=  Icpx*dt_ov_dr*(*ElRZ)(i,j+1)
 				+			dt_ov_dl*((*EtRZ)(i,j)-(*EtRZ)(i-1,j));
+                if (std::abs((*BrRZ)(i,j))>1.){
+                MESSAGE("BrRZA");                
+                MESSAGE(i);
+                MESSAGE(j);    
+                MESSAGE((*BrRZ)(i,j));
+                }
 			}
 			for (unsigned int i=0 ; i<nl_d ; i++) {
 				//(*BtRZ)(i,0)+= -dt_ov_dl*((*ErRZ)(i+1,0)-(*ErRZ)(i,0)+(*ErRZ)(i+1,1)-(*ErRZ)(i,1))
 				//+				2*dt_ov_dr*(*ElRZ)(i+1,1) - (*BtRZ_old)(i,1)+ (*BtRZ)(i,1);
 				(*BtRZ)(i,j)= -2.*Icpx*(*BrRZ)(i,j)-(*BtRZ)(i,j+1);
+                if (std::abs((*BtRZ)(i,j))>1.){
+                MESSAGE("BtRZA");                
+                MESSAGE(i);
+                MESSAGE(j);    
+                MESSAGE((*BtRZ)(i,j));
+                }
 			}	
-			for (unsigned int i=0 ; i<nl_d ; i++) {
+			for (unsigned int i=0 ; i<nl_d  ; i++) {
 				(*ElRZ)(i,j)= 0;
+                if (std::abs((*ElRZ)(i,j))>1.){
+                MESSAGE("ElRZA");                
+                MESSAGE(i);
+                MESSAGE(j);    
+                MESSAGE((*ElRZ)(i,j));
+                }
 			}
 			for (unsigned int i=0 ; i<nl_p ; i++) {
-				(*ErRZ)(i,j)= -(*ErRZ)(i,j+1);
+				//(*ErRZ)(i,j)= -(*ErRZ)(i,j+1);
+				(*ErRZ)(i,j)=2.*Icpx*(*EtRZ)(i,j)-(*ErRZ)(i,j+1);
+                if (std::abs((*ErRZ)(i,j))>1.){
+                MESSAGE("ErRZA");                
+                MESSAGE(i);
+                MESSAGE(j);    
+                MESSAGE((*ErRZ)(i,j));
+                }
 			}
 
 		
 
 		}
 		else {
-			for (unsigned int i=0 ; i<nl_d ; i++) {
+			for (unsigned int  i=0 ; i<nl_d; i++) {
 				(*BlRZ)(i,j)= -(*BlRZ)(i,j+1);
 			}
-			for (unsigned int i=0 ; i<nl_p ; i++) {
+			for (unsigned int i=0 ; i<nl_p; i++) {
 				(*BrRZ)(i,j)= 0;
 			}
-			for (unsigned int i=0 ; i<nl_d ; i++) {
+			for (unsigned int  i=0 ; i<nl_d ; i++) {
 				(*BtRZ)(i,j)= - (*BtRZ)(i,j+1);
 			}	
 			//MA
-			for (unsigned int i=0 ; i<nl_p ; i++) {
+			for (unsigned int  i=0 ; i<nl_p; i++) {
 				(*ElRZ)(i,j)= 0;
 			}
-			for (unsigned int i=0 ; i<nl_d ; i++) {
+			for (unsigned int  i=0 ; i<nl_d; i++) {
 				(*ErRZ)(i,j)= -(*ErRZ)(i,j+1);
 			}
-			for (unsigned int i=0 ; i<nl_p ; i++) {
+			for (unsigned int i=0 ; i<nl_p; i++) {
 				(*EtRZ)(i,j)= 0;
 			}
 		}

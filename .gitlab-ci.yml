@@ -6,8 +6,7 @@ compile:
   stage: compile
   only:
     - develop
-    - couplage_picsar_smilei
-    - Niel_performance
+    #- complex_vecto
 
   script:
     # Force workdir cleaning in case of retried
@@ -32,8 +31,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - couplage_picsar_smilei
-    - Niel_performance
+    #- complex_vecto
 
   script:
     # Move in test dir
@@ -45,8 +43,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - couplage_picsar_smilei
-    - Niel_performance
+    #- complex_vecto
 
   script:
     # Move in test dir
@@ -58,8 +55,7 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    - couplage_picsar_smilei
-    - Niel_performance
+    #- complex_vecto
 
   script:
     # Move in test dir
@@ -71,8 +67,7 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - couplage_picsar_smilei
-    - Niel_performance
+    #- complex_vecto
     
   script:
     # Move in test dir

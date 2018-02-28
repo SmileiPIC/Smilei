@@ -93,6 +93,18 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
                 (*this)(ipatch)->EMfields->rho_s[ifield]=NULL;
             }
         }
+
+        if (params.Laser_Envelope_model){
+            for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Env_Chi_s.size(); ifield++) {
+                if( (*this)(ipatch)->EMfields->Env_Chi_s[ifield]->data_ == NULL ){
+                    delete (*this)(ipatch)->EMfields->Env_Chi_s[ifield];
+                    (*this)(ipatch)->EMfields->Env_Chi_s[ifield]=NULL;
+                }
+            }
+        }
+
+
+
     }
 }
 
@@ -125,27 +137,30 @@ void VectorPatch::dynamics(Params& params,
         (*this)(ipatch)->EMfields->restartRhoJ();
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
-                species(ipatch, ispec)->dynamics(time_dual, ispec,
-                                                 emfields(ipatch), interp(ipatch), proj(ipatch),
-                                                 params, diag_flag, partwalls(ipatch),
-                                                 (*this)(ipatch), smpi,
-                                                 RadiationTables,
-                                                 MultiphotonBreitWheelerTables,
-                                                 localDiags);
-            }
-        }
+                if (!(*this)(ipatch)->vecSpecies[ispec]->ponderomotive_dynamics){
+                    species(ipatch, ispec)->dynamics(time_dual, ispec,
+                                                     emfields(ipatch), interp(ipatch), proj(ipatch),
+                                                     params, diag_flag, partwalls(ipatch),
+                                                     (*this)(ipatch), smpi,
+                                                     RadiationTables,
+                                                     MultiphotonBreitWheelerTables,
+                                                     localDiags);
+                } // end if condition on envelope dynamics
+            } // end if condition on species
+        } // end loop on species
+    } // end loop on patches
 
-    }
     timers.particles.update( params.printNow( itime ) );
 
     timers.syncPart.restart();
     for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
-        if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-            SyncVectorPatch::exchangeParticles((*this), ispec, params, smpi, timers, itime ); // Included sort_part
-        }
-    }
+        if (!(*this)(0)->vecSpecies[ispec]->ponderomotive_dynamics){
+            if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
+                SyncVectorPatch::exchangeParticles((*this), ispec, params, smpi, timers, itime ); // Included sort_part
+            } // end condition on species
+        } // end condition on envelope dynamics
+    } // end loop on species
     timers.syncPart.update( params.printNow( itime ) );
-
 } // END dynamics
 
 
@@ -249,6 +264,55 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
 
 
 // ---------------------------------------------------------------------------------------------------------------------
+// For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
+// ---------------------------------------------------------------------------------------------------------------------
+void VectorPatch::sumSusceptibility(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow )
+{
+    bool some_particles_are_moving = false;
+    unsigned int n_species( (*this)(0)->vecSpecies.size() );
+    for ( unsigned int ispec=0 ; ispec < n_species ; ispec++ ) {
+        if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) )
+            some_particles_are_moving = true;
+    }
+    if ( !some_particles_are_moving  && !diag_flag )
+        return;
+
+    timers.densities.restart();
+    if  (diag_flag){
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+             // Per species in global, Attention if output -> Sync / per species fields
+            (*this)(ipatch)->EMfields->computeTotalEnvChi();
+        }
+    }
+    timers.densities.update();
+
+
+    timers.syncDens.restart();
+    if ( params.geometry == "3Dcartesian" ) {
+        SyncVectorPatch::sumEnvChi( params, (*this), timers, itime ); // MPI
+    }
+    else { ERROR("Envelope model not yet implemented in this geometry");
+        // for (unsigned int imode = 0 ; imode < static_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields)->Jl_.size() ; imode++  ) {
+        //     SyncVectorPatch::sumRhoJ( params, (*this), imode, timers, itime );
+        // }
+    }
+
+    if(diag_flag){
+        for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
+            if( ! (*this)(0)->vecSpecies[ispec]->particles->is_test ) {
+                update_field_list(ispec);
+                SyncVectorPatch::sumRhoJs( params, (*this), ispec, timers, itime ); // MPI
+            }
+        }
+    }
+    timers.syncDens.update( params.printNow( itime ) );
+
+} // End sumSusceptibility
+
+
+
+// ---------------------------------------------------------------------------------------------------------------------
 // For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers)
@@ -326,34 +390,32 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 
 void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers)
 {
-    // timers.maxwell.restart();
-
-    // for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_passes ; ipassfilter++){
-    //     #pragma omp for schedule(static)
-    //     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-    //         // Current spatial filtering
-    //         (*this)(ipatch)->EMfields->binomialCurrentFilter();
-    //     }
-    //     SyncVectorPatch::exchangeJ( (*this) );
-    //     SyncVectorPatch::finalizeexchangeJ( (*this) );
-    // }
+     
     if ((*this)(0)->EMfields->envelope!=NULL) {
+
+        // Exchange susceptibility
+        SyncVectorPatch::exchangeEnvChi( params, (*this) );
+
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
             // Computes A in all points
             (*this)(ipatch)->EMfields->envelope->compute(  (*this)(ipatch)->EMfields );
+            (*this)(ipatch)->EMfields->envelope->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
         }
+      
+        // Exchange envelope
         SyncVectorPatch::exchangeA( params, (*this) );
         SyncVectorPatch::finalizeexchangeA( params, (*this) );
+
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+            // Computes gradients of Phi=|A|^2/2 in all points
+            (*this)(ipatch)->EMfields->envelope->compute_Phi_and_gradient_Phi(  (*this)(ipatch)->EMfields );
+        }
+     
+        // Exchange GradPhi
+        SyncVectorPatch::exchangeGradPhi( params, (*this) );
+        SyncVectorPatch::finalizeexchangeGradPhi( params, (*this) );
     }
-
-
-    // //Synchronize B fields between patches.
-    // timers.maxwell.update( params.printNow( itime ) );
-    // 
-    // timers.syncField.restart();
-    // SyncVectorPatch::exchangeB( (*this) );
-    // timers.syncField.update(  params.printNow( itime ) );
 
 } // END solveEnvelope
 
@@ -1025,6 +1087,10 @@ void VectorPatch::update_field_list()
     if (patches_[0]->EMfields->envelope != NULL){
       listA_.resize ( size() ) ;
       listA0_.resize( size() ) ;
+      listGradPhix_.resize( size() ) ;
+      listGradPhiy_.resize( size() ) ;
+      listGradPhiz_.resize( size() ) ;
+      listEnv_Chi_.resize( size() ) ;
                                                       }
 
     for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
@@ -1041,6 +1107,10 @@ void VectorPatch::update_field_list()
         if (patches_[ipatch]->EMfields->envelope != NULL){
           listA_[ipatch]  = patches_[ipatch]->EMfields->envelope->A_ ;
           listA0_[ipatch] = patches_[ipatch]->EMfields->envelope->A0_ ;
+          listGradPhix_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhix_ ;
+          listGradPhiy_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhiy_ ;
+          listGradPhiz_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhiz_ ;
+          listEnv_Chi_[ipatch] = patches_[ipatch]->EMfields->Env_Chi_ ;
                                                         }
     }
 
@@ -1260,6 +1330,16 @@ void VectorPatch::update_field_list()
             }
         }
     }
+    if (patches_[0]->EMfields->envelope != NULL){
+        for ( unsigned int ifields = 0 ; ifields < listA_.size() ; ifields++ ) {
+            listA_ [ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
+            listA0_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
+            listGradPhix_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
+            listGradPhiy_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
+            listGradPhiz_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
+            listEnv_Chi_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
+        }
+    }
 }
 
 
@@ -1281,6 +1361,12 @@ void VectorPatch::update_field_list(int ispec)
         if(patches_[0]->EMfields->rho_s[ispec]) listrhos_.resize( size() ) ;
         else
             listrhos_.clear();
+
+        if (patches_[0]->EMfields->envelope != NULL){
+             if(patches_[0]->EMfields->Env_Chi_s[ispec]) listEnv_Chis_.resize( size() ) ;
+             else
+                 listEnv_Chis_.clear();
+                                                    }
     }
 
     #pragma omp for schedule(static)
@@ -1301,6 +1387,16 @@ void VectorPatch::update_field_list(int ispec)
             listrhos_[ipatch] = patches_[ipatch]->EMfields->rho_s[ispec];
             listrhos_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
         }
+
+        if (patches_[0]->EMfields->envelope != NULL){
+             if(patches_[ipatch]->EMfields->Env_Chi_s[ispec]) {
+                 listEnv_Chis_[ipatch] = patches_[ipatch]->EMfields->Env_Chi_s[ispec];
+                 listEnv_Chis_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+             }
+                                                    }
+
+
+
     }
 
 
@@ -1550,4 +1646,71 @@ void VectorPatch::check_expected_disk_usage( SmileiMPI* smpi, Params& params, Ch
     }
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// For all patch, update momentum for particles interacting with envelope
+// ---------------------------------------------------------------------------------------------------------------------
+void VectorPatch::ponderomotive_update_susceptibilty_and_momentum(Params& params,
+                           SmileiMPI* smpi,
+                           SimWindow* simWindow,
+                           double time_dual, Timers &timers, int itime)
+{
+    
+    #pragma omp single
+    diag_flag = needsRhoJsNow(itime);
+    
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
+                if (species(ipatch, ispec)->ponderomotive_dynamics){
+                species(ipatch, ispec)->ponderomotive_update_susceptibilty_and_momentum(time_dual, ispec,
+                                                 emfields(ipatch), interp_envelope(ipatch),proj_susceptibility(ipatch),
+                                                 params, diag_flag,
+                                                 (*this)(ipatch), smpi,
+                                                 localDiags);
+                                                                    } // end condition on ponderomotive dynamics
+            } // end diagnostic or projection if condition on species
+        } // end loop on species
+    } // end loop on patches
+ 
+} // END ponderomotive_update_susceptibilty_and_momentum
 
+void VectorPatch::ponderomotive_update_position_and_currents(Params& params,
+                           SmileiMPI* smpi,
+                           SimWindow* simWindow,
+                           double time_dual, Timers &timers, int itime)
+{
+
+    #pragma omp single
+    diag_flag = needsRhoJsNow(itime);
+    
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
+                if (species(ipatch, ispec)->ponderomotive_dynamics){
+                species(ipatch, ispec)->ponderomotive_update_position_and_currents(time_dual, ispec,
+                                                 emfields(ipatch), interp_envelope(ipatch), proj(ipatch),
+                                                 params, diag_flag, partwalls(ipatch),
+                                                 (*this)(ipatch), smpi,
+                                                 localDiags);
+                                                                    } // end condition on ponderomotive dynamics
+            } // end diagnostic or projection if condition on species
+        } // end loop on species
+    } // end loop on patches
+  
+    timers.particles.update( params.printNow( itime ) );
+
+    timers.syncPart.restart();
+    for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
+        if ((*this)(0)->vecSpecies[ispec]->ponderomotive_dynamics){
+            if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
+                SyncVectorPatch::exchangeParticles((*this), ispec, params, smpi, timers, itime ); // Included sort_part
+            } // end condition on species
+        } // end condition on envelope dynamics
+    } // end loop on species
+    timers.syncPart.update( params.printNow( itime ) );
+
+
+
+} // END ponderomotive_update_position_and_currents

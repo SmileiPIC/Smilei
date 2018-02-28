@@ -3,7 +3,8 @@
 #include "Species.h"
 
 Pusher::Pusher(Params& params, Species *species) :
-    min_loc_vec(species->min_loc_vec) 
+    min_loc_vec(species->min_loc_vec),
+    vecto( params.vecto )
 {
     for (unsigned int ipos=0; ipos < params.nDim_particle ; ipos++) 
         dx_inv_[ipos] = species->dx_inv_[ipos];
@@ -23,6 +24,7 @@ Pusher::Pusher(Params& params, Species *species) :
     }
     dt             = params.timestep;
     dts2           = params.timestep/2.;
+    dts4           = params.timestep/4.;
 
     nDim_          = params.nDim_particle;
 

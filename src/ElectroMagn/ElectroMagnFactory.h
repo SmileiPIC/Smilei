@@ -37,8 +37,7 @@ public:
         }
         
         EMfields->finishInitialization(vecSpecies.size(), patch);
-
-
+        
         // initialize the envelope if used
         int n_envlaser = PyTools::nComponents("LaserEnvelope");
         if ( n_envlaser ==1 ) // for the moment it works only with one envelope
@@ -163,7 +162,7 @@ public:
 
         // initialize the envelope if used
         if ( EMfields->envelope != NULL )
-            newEMfields->envelope = EnvelopeFactory::clone(EMfields->envelope, patch, EMfields);
+            newEMfields->envelope = EnvelopeFactory::clone(EMfields->envelope, patch, newEMfields, params);
         
         // -----------------
         // Clone time-average fields

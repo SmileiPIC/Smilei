@@ -22,7 +22,7 @@ public:
     virtual void operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread) = 0;
 
 protected:
-    double dt, dts2;
+    double dt, dts2, dts4;
     //! \todo Move mass_ in Particles_
     // mass_ relative to Species but used in the particle pusher
     double mass_;
@@ -32,6 +32,7 @@ protected:
     std::vector<double> min_loc_vec;
     double dx_inv_[3];
     unsigned int nspace[3];
+    bool vecto;
 };//END class
 
 #endif

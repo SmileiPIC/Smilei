@@ -15,6 +15,7 @@
 #include "SpeciesNorm.h"
 
 #ifdef _VECTO
+#include "SpeciesNormV.h"
 #include "SpeciesV.h"
 #endif
 
@@ -86,19 +87,21 @@ public:
             if (pusher == "boris"
              || pusher == "borisnr"
              || pusher == "vay"
-             || pusher == "higueracary") {
+             || pusher == "higueracary"
+             || pusher == "ponderomotive_boris") {
                  // Species with relativistic Boris pusher if  =='boris'
                  // Species with nonrelativistic Boris pusher == 'borisnr'
                  // Species with J.L. Vay pusher if == "vay"
                  // Species with Higuary Cary pusher if == "higueracary"
-                if ( (!params.vecto) || (pusher != "boris") )
+                 // Species with relativistic Boris pusher interacting with laser envelope if == "ponderomotive_boris"
+                if ( (!params.vecto) )
                     thisSpecies = new SpeciesNorm(params, patch);
 #ifdef _VECTO
                 else
-                    thisSpecies = new SpeciesV(params, patch);
+                    thisSpecies = new SpeciesNormV(params, patch);
 #endif
             } else {
-                ERROR("For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary'");
+                ERROR("For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary', 'ponderomotive_boris'");
             }
             thisSpecies->pusher = pusher;
 
@@ -168,7 +171,12 @@ public:
         // Photon species
         else if (mass == 0)
         {
-            thisSpecies = new SpeciesNorm(params, patch);
+            if ( (!params.vecto) )
+                thisSpecies = new SpeciesNorm(params, patch);
+#ifdef _VECTO
+            else 
+                thisSpecies = new SpeciesNormV(params, patch);
+#endif
             // Photon can not radiate
             thisSpecies->radiation_model = "none";
             thisSpecies-> pusher = "norm";
@@ -280,6 +288,23 @@ public:
         PyTools::extract("position_initialization",thisSpecies->position_initialization ,"Species",ispec);
         thisSpecies->position_initialization_on_species=false;
         thisSpecies->position_initialization_on_species_index=-1;
+        if (thisSpecies->position_initialization.empty()) {
+            ERROR("For species '" << species_name << "' empty position_initialization");
+        } else if ( (thisSpecies->position_initialization!="regular"  )
+                  &&(thisSpecies->position_initialization!="random"   )
+                  &&(thisSpecies->position_initialization!="centered" )) {
+              thisSpecies->position_initialization_on_species=true;
+        }
+
+        PyTools::extract("ponderomotive_dynamics",thisSpecies->ponderomotive_dynamics ,"Species",ispec);
+        if ( thisSpecies->ponderomotive_dynamics && ( params.geometry != "3Dcartesian" ) )
+            ERROR( "Ponderomotive/Envelope model only available in 3D3V" );
+        int n_envlaser = PyTools::nComponents("LaserEnvelope");
+        if ( thisSpecies->ponderomotive_dynamics && ( n_envlaser < 1 ) ){
+            MESSAGE( "No Laser Envelope is specified - Standard PIC dynamics will be used for all species" );
+            thisSpecies->ponderomotive_dynamics = false;
+        }
+
         if (thisSpecies->position_initialization.empty()) {
             ERROR("For species '" << species_name << "' empty position_initialization");
         } else if ( (thisSpecies->position_initialization!="regular"  )
@@ -496,20 +521,13 @@ public:
         // Create new species object
         Species * newSpecies = NULL;
 
-        if (species->pusher =="norm"
-        || species->pusher =="boris"
-        || species->pusher =="higueracary"
-        || species->pusher =="vay"
-        || species->pusher =="borisnr")
-        {
-            // Boris, Vay or Higuera-Cary
-            if ( (!params.vecto) || (species->pusher != "boris") )
-                newSpecies = new SpeciesNorm(params, patch);
+        // Boris, Vay or Higuera-Cary
+        if ( (!params.vecto) )
+            newSpecies = new SpeciesNorm(params, patch);
 #ifdef _VECTO
-            else
-                newSpecies = new SpeciesV(params, patch);
+        else
+            newSpecies = new SpeciesNormV(params, patch);
 #endif
-        }
 
         // Copy members
         newSpecies->name                                     = species->name;
@@ -549,6 +567,8 @@ public:
         newSpecies->temperatureProfile[2]                    = new Profile(species->temperatureProfile[2]);
         newSpecies->max_charge                               = species->max_charge;
         newSpecies->tracking_diagnostic                      = species->tracking_diagnostic;
+        newSpecies->ponderomotive_dynamics                   = species->ponderomotive_dynamics;
+
         if (newSpecies->mass==0) {
             newSpecies->multiphoton_Breit_Wheeler[0]         = species->multiphoton_Breit_Wheeler[0];
             newSpecies->multiphoton_Breit_Wheeler[1]         = species->multiphoton_Breit_Wheeler[1];

@@ -3,4 +3,4 @@
 # export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0
 
 LDFLAGS += -lgpfs -lz -L/gpfslocal/pub/python/anaconda/Anaconda-2.1.0/lib
-CXXFLAGS += -xAVX
+CXXFLAGS += -ip -ipo -xAVX

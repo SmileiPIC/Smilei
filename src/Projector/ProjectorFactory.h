@@ -7,6 +7,7 @@
 #include "Projector2D2Order.h"
 #include "Projector2D4Order.h"
 #include "Projector3D2Order.h"
+#include "Projector3D2Order_susceptibility.h"
 #include "Projector3D4Order.h"
 #include "ProjectorRZ2Order.h"
 
@@ -72,6 +73,56 @@ public:
         }
 
         return Proj;
+    }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+// Projector for susceptibility, the source term of envelope equation
+
+
+static Projector* create_susceptibility_projector(Params& params, Patch* patch) {
+      Projector* Proj_susceptibility = NULL;
+
+      // ---------------
+      // 1Dcartesian simulation
+      // ---------------
+      if (  params.geometry == "1Dcartesian" ) {
+          ERROR( "Projector for susceptibility not yet implemented for this geometry" );
+      }
+      
+      // ---------------
+      // 2Dcartesian simulation
+      // ---------------
+      else if ( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == (unsigned int)2 ) ) {
+          ERROR( "Projector for susceptibility not yet implemented for this geometry" );
+      }
+      
+      // ---------------
+      // 3Dcartesian simulation
+      // ---------------
+      else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == (unsigned int)2 ) ) {
+          if (!params.vecto)
+              Proj_susceptibility = new Projector3D2Order_susceptibility(params, patch);
+#ifdef _VECTO
+          else
+              ERROR( "Projector for susceptibility not yet implemented for this geometry in vectorized version" );
+#endif
+      }
+      else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == (unsigned int)4 ) ) {
+          MESSAGE("Warning: order 2 will be used to project susceptibility");
+          Proj_susceptibility = new Projector3D2Order_susceptibility(params, patch);
+      }
+      // ---------------
+      // 3dRZ simulation
+      // ---------------
+      else if ( params.geometry == "3drz" ) {
+          ERROR( "Projector for susceptibility not yet implemented for this geometry" );
+      }
+      else {
+          ERROR( "Unknwon parameters : " << params.geometry << ", Order : " << params.interpolation_order );
+      }
+
+      return Proj_susceptibility;
     }
 
 };

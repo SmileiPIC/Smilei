@@ -110,9 +110,22 @@ public :
 
     void computeCharge();
 
+    //! For all patches, deposit susceptibility, then advance momentum of particles interacting with envelope
+    void ponderomotive_update_susceptibilty_and_momentum(Params& params,
+                                 SmileiMPI* smpi,
+                                 SimWindow* simWindow,
+                                 double time_dual, Timers &timers, int itime);
+    //! For all patches, advance position of particles interacting with envelope, comm particles, project charge and current density
+    void ponderomotive_update_position_and_currents(Params& params,
+                                 SmileiMPI* smpi,
+                                 SimWindow* simWindow,
+                                 double time_dual, Timers &timers, int itime);
 
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
     void sumDensities(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow );
+  
+    //! For all patch, sum susceptibility on ghost cells (sum per species if needed, sync per patch and MPI sync)
+    void sumSusceptibility(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow );
 
     //! For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
     void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual,
@@ -206,6 +219,11 @@ public :
 
     std::vector<Field*> listA_;
     std::vector<Field*> listA0_;
+    std::vector<Field*> listGradPhix_;
+    std::vector<Field*> listGradPhiy_;
+    std::vector<Field*> listGradPhiz_;  
+    std::vector<Field*> listEnv_Chi_;    
+    std::vector<Field*> listEnv_Chis_;    
 
     std::vector<std::vector< Field *>> listJl_;
     std::vector<std::vector< Field *>> listJr_;
@@ -271,8 +289,16 @@ public :
         return (*this)(ipatch)->Interp;
     }
 
+    inline Interpolator* interp_envelope(int ipatch){
+        return (*this)(ipatch)->Interp_envelope;
+    }
+
     inline Projector* proj(int ipatch){
         return (*this)(ipatch)->Proj;
+    }
+
+    inline Projector* proj_susceptibility(int ipatch){
+        return (*this)(ipatch)->Proj_susceptibility;
     }
 
     inline PartWalls* partwalls(int ipatch){

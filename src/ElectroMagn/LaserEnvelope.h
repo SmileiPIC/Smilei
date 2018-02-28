@@ -16,18 +16,30 @@ class SimWindow;
 // Class for envelope
 class LaserEnvelope {
 public:
-    LaserEnvelope( Params& params, Patch* patch, ElectroMagn* EMfields );
-    LaserEnvelope( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields );
+    LaserEnvelope( Params& params, Patch* patch, ElectroMagn* EMfields ); // Main constructor
+    LaserEnvelope( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields, Params& params ); // Cloning constructor
     virtual void initEnvelope( Patch* patch , ElectroMagn* EMfields) = 0;
     virtual ~LaserEnvelope();
     virtual void compute(ElectroMagn* EMfields) = 0;
+    virtual void compute_Phi_and_gradient_Phi(ElectroMagn* EMfields) = 0;
     void boundaryConditions(int itime, double time_dual, Patch* patch, Params &params, SimWindow* simWindow);
+    
     Profile *profile_;
     const std::vector<double> cell_length;
     const double timestep;
     
     Field* A_;
     Field* A0_;
+
+    Field* Phi_;
+    Field* GradPhix_;
+    Field* GradPhiy_;
+    Field* GradPhiz_;
+    Field* Phiold_;
+    Field* GradPhixold_;
+    Field* GradPhiyold_;
+    Field* GradPhizold_;
+
     //! Vector of boundary-condition per side for the envelope field
     std::vector<EnvelopeBC*> EnvBoundCond;
     //EnvBoundCond = EnvelopeBC_Factory::create(params, patch);
@@ -38,10 +50,11 @@ public:
 class LaserEnvelope3D : public LaserEnvelope {
 public:
     LaserEnvelope3D( Params& params, Patch* patch, ElectroMagn* EMfields );
-    LaserEnvelope3D( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields );
+    LaserEnvelope3D( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields, Params& params );
     void initEnvelope( Patch* patch,ElectroMagn* EMfields ) override final;
     ~LaserEnvelope3D();
      void compute(ElectroMagn* EMfields) override final;
+     void compute_Phi_and_gradient_Phi(ElectroMagn* EMfields) override final;
 };
 
 #endif
