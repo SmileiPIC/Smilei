@@ -1454,16 +1454,19 @@ void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, 
                 (*delta)[ipart+2*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltaz;
             } // end loop on bin particles
                 
-            // Project susceptibility, the source term of envelope equation
-            if ((!particles->is_test) && (mass > 0)){
-                double* b_Chi_envelope=nullptr; 
-                if (nDim_field==3) {  
-                    b_Chi_envelope = &(*EMfields->rho_)(ibin*clrw*f_dim1*f_dim2) ; 
-                                   } 
-                else {ERROR("Envelope model not yet implemented in this geometry");}
 
-                (static_cast<Projector3D2Order_susceptibility*>(Proj_susceptibility))->project_susceptibility(b_Chi_envelope, *particles, ibin, b_dim, smpi, ithread, bmin[ibin], bmax[ibin], mass );                                                    
-                                                     }
+            // Project susceptibility, the source term of envelope equation
+            double* b_Chi_envelope=nullptr;
+            if (nDim_field==3)
+                b_Chi_envelope =  &(*EMfields->Env_Chi_)(ibin*clrw*f_dim1*f_dim2) ;
+            else {ERROR("Envelope model not yet implemented in this geometry");}
+
+            for (unsigned int iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                (static_cast<Projector3D2Order_susceptibility*>(Proj_susceptibility))->project_susceptibility(b_Chi_envelope, *particles, iPart, ibin, b_dim, smpi, ithread, mass );                                              
+                                                                                  } //End loop on particles
+           
+          
+                                                     
             // Push only the particle momenta
             (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
           

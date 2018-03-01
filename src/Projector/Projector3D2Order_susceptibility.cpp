@@ -737,33 +737,33 @@ void Projector3D2Order_susceptibility::operator() (ElectroMagn* EMfields, Partic
 
 
 // Projector for susceptibility used as source term in envelope equation
-void Projector3D2Order_susceptibility::project_susceptibility(double* Chi_envelope, Particles &particles, unsigned int bin, std::vector<unsigned int> &b_dim, SmileiMPI* smpi, int ithread,int istart, int iend, double species_mass)
+                                                     
+void Projector3D2Order_susceptibility::project_susceptibility(double* Chi_envelope, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim, SmileiMPI* smpi, int ithread, double species_mass)
 {
-    std::vector<double> *Epart       = &(smpi->dynamics_Epart[ithread]);
-    std::vector<double> *Phipart     = &(smpi->dynamics_PHIpart[ithread]);
-    std::vector<double> *GradPhipart = &(smpi->dynamics_GradPHIpart[ithread]);
+        std::vector<double> *Epart       = &(smpi->dynamics_Epart[ithread]);
+        std::vector<double> *Phipart     = &(smpi->dynamics_PHIpart[ithread]);
+        std::vector<double> *GradPhipart = &(smpi->dynamics_GradPHIpart[ithread]);
 
-    int iloc,jloc;
- 
-    double momentum[3];
+        int iloc,jloc;
+     
+        double momentum[3];
+        
+        double inv_gamma_ponderomotive,inv_gamma0;
+        double charge_over_mass_dts2,charge_sq_over_mass_dts4,charge_sq_over_mass_sq;
+        double pxsm, pysm, pzsm;
+        double one_over_mass=1./species_mass;
+
+        int nparts = particles.size();
+        double* Ex       = &( (*Epart)[0*nparts] );
+        double* Ey       = &( (*Epart)[1*nparts] );
+        double* Ez       = &( (*Epart)[2*nparts] );
+        double* Phi      = &( (*Phipart)[0*nparts] );
+        double* GradPhix = &( (*GradPhipart)[0*nparts] );
+        double* GradPhiy = &( (*GradPhipart)[1*nparts] );
+        double* GradPhiz = &( (*GradPhipart)[2*nparts] );
+
     
-    double inv_gamma_ponderomotive,inv_gamma0;
-    double charge_over_mass_dts2,charge_sq_over_mass_dts4,charge_sq_over_mass_sq;
-    double pxsm, pysm, pzsm;
-    double one_over_mass=1./species_mass;
-
-    int nparts = particles.size();
-    double* Ex       = &( (*Epart)[0*nparts] );
-    double* Ey       = &( (*Epart)[1*nparts] );
-    double* Ez       = &( (*Epart)[2*nparts] );
-    double* Phi      = &( (*Phipart)[0*nparts] );
-    double* GradPhix = &( (*GradPhipart)[0*nparts] );
-    double* GradPhiy = &( (*GradPhipart)[1*nparts] );
-    double* GradPhiz = &( (*GradPhipart)[2*nparts] );
-
-    #pragma omp simd
-    for (int ipart=istart; ipart<iend; ipart++){  // loop on ipart
-        // IMPORTANT find mass value
+    
         charge_over_mass_dts2    = particles.charge(ipart)*dts2*one_over_mass;
         // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
         charge_sq_over_mass_dts4 = particles.charge(ipart)*dts4*one_over_mass;      
@@ -786,7 +786,7 @@ void Projector3D2Order_susceptibility::project_susceptibility(double* Chi_envelo
 
         // (x,y,z) components of the current density for the macro-particle
         // IMPORTANT DIVIDE BY MASS
-        double charge_weight = (double)(particles.charge(ipart))*one_over_mass*particles.weight(ipart)*inv_gamma_ponderomotive; 
+        double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);//*inv_gamma_ponderomotive*one_over_mass; 
 
         // variable declaration
         double xpn, ypn, zpn;
@@ -844,8 +844,8 @@ void Projector3D2Order_susceptibility::project_susceptibility(double* Chi_envelo
                     Chi_envelope[iloc+jloc+kp+k] += charge_weight * Sx1[i]*Sy1[j]*Sz1[k];
                 } // end k loop
             } // end j loop
-        }// end i loop
+        } // end i loop
 
-    } // end loop on ipart
+
 
 }
