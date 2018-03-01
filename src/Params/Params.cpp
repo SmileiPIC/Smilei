@@ -391,9 +391,9 @@ namelist("")
     if ( !PyTools::extract("number_of_patches", number_of_patches, "Main") ) {
         ERROR("The parameter `number_of_patches` must be defined as a list of integers");
     }
-    for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ )
-        if( (number_of_patches[iDim] & (number_of_patches[iDim]-1)) != 0)
-            ERROR("Number of patches in each direction must be a power of 2");
+    //for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ )
+    //    if( (number_of_patches[iDim] & (number_of_patches[iDim]-1)) != 0)
+    //        ERROR("Number of patches in each direction must be a power of 2");
 
     tot_number_of_patches = 1;
     for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ )

@@ -32,7 +32,7 @@ VectorPatch::VectorPatch()
 
 VectorPatch::VectorPatch( Params& params )
 {
-    domain_decomposition_ = DomainDecompositionFactory::create( params );
+    domain_decomposition_ = DomainDecompositionFactory::createNew( params );
 }
 
 
