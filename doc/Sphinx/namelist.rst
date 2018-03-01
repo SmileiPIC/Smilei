@@ -330,7 +330,7 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
 Current filtering
 ^^^^^^^^^^^^^^^^^
 
-The present version of :program:`Smilei` provides one method for current filtering,
+The present version of :program:`Smilei` provides a :ref:`multi-pass binomial filter <multipassBinomialFilter>` on the current densities,
 which parameters are controlled in the following block::
 
   CurrentFilter(
