@@ -54,6 +54,8 @@ private :
     
     //! Dimension of particle coordinates
     unsigned int nDim_particle;
+    //! Dimension of field coordinates
+    unsigned int nDim_field;
     
     //! Number of points in each dimension
     std::vector<unsigned int> vecNumber; 

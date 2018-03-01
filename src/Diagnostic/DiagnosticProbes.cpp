@@ -72,6 +72,7 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
 {
     probe_n = n_probe;
     nDim_particle = params.nDim_particle;
+    nDim_field = params.nDim_field;
     fileId_ = 0;
     hasRhoJs = false;
     last_iteration_points_calculated = 0;
@@ -332,7 +333,7 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         
         // The first step is to reduce the area of the probe to search in this patch
-        for( k=0; k<nDim_particle; k++ ) {
+        for( k=0; k<nDim_field; k++ ) {
             mins[k] = numeric_limits<double>::max();
             maxs[k] = numeric_limits<double>::lowest();
             patchMin[k] = ( vecPatches(ipatch)->Pcoordinates[k]   )*patch_size[k];
