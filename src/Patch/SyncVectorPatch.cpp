@@ -110,6 +110,12 @@ void SyncVectorPatch::sumRhoJ(Params& params, VectorPatch& vecPatches, Timers &t
     if( (vecPatches.diag_flag) || (params.is_spectral) ) SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, itime );
 }
 
+void SyncVectorPatch::sumEnvChi(Params& params, VectorPatch& vecPatches, Timers &timers, int itime)
+{
+    SyncVectorPatch::new_sum( vecPatches.densities , vecPatches, timers, itime );
+    if( (vecPatches.diag_flag) || (params.is_spectral) ) SyncVectorPatch::sum( vecPatches.listEnv_Chi_, vecPatches, timers, itime );
+}
+
 void SyncVectorPatch::sumRhoJ(Params& params, VectorPatch& vecPatches, int imode, Timers &timers, int itime)
 {
     SyncVectorPatch::sumComplex( vecPatches.listJl_[imode], vecPatches, timers, itime  );
@@ -214,7 +220,6 @@ void SyncVectorPatch::exchangeJ( Params& params, VectorPatch& vecPatches )
 
 void SyncVectorPatch::finalizeexchangeJ( Params& params, VectorPatch& vecPatches )
 {
-
     SyncVectorPatch::finalizeexchange( vecPatches.listJx_, vecPatches );
     SyncVectorPatch::finalizeexchange( vecPatches.listJy_, vecPatches );
     SyncVectorPatch::finalizeexchange( vecPatches.listJz_, vecPatches );
@@ -230,12 +235,38 @@ void SyncVectorPatch::exchangeA( Params& params, VectorPatch& vecPatches )
     SyncVectorPatch::finalizeexchangeComplex( vecPatches.listA0_, vecPatches );
 }
 
+void SyncVectorPatch::exchangeGradPhi( Params& params, VectorPatch& vecPatches )
+{
+    // current Gradient value
+    SyncVectorPatch::exchange( vecPatches.listGradPhix_, vecPatches );
+    SyncVectorPatch::finalizeexchange( vecPatches.listGradPhix_, vecPatches );
+    SyncVectorPatch::exchange( vecPatches.listGradPhiy_, vecPatches );
+    SyncVectorPatch::finalizeexchange( vecPatches.listGradPhiy_, vecPatches );
+    SyncVectorPatch::exchange( vecPatches.listGradPhiz_, vecPatches );    
+    SyncVectorPatch::finalizeexchange( vecPatches.listGradPhiz_, vecPatches ); 
+}
+
+void SyncVectorPatch::exchangeEnvChi( Params& params, VectorPatch& vecPatches )
+{
+    SyncVectorPatch::exchange( vecPatches.listEnv_Chi_, vecPatches );
+    SyncVectorPatch::finalizeexchange( vecPatches.listEnv_Chi_, vecPatches );
+}
+
+
 void SyncVectorPatch::finalizeexchangeA( Params& params, VectorPatch& vecPatches )
 {
 //    // current envelope value
 //    SyncVectorPatch::finalizeexchangeComplex( vecPatches.listA_, vecPatches );
 //    // current envelope value
 //    SyncVectorPatch::finalizeexchangeComplex( vecPatches.listA0_, vecPatches );
+}
+
+void SyncVectorPatch::finalizeexchangeGradPhi( Params& params, VectorPatch& vecPatches )
+{
+    // current Gradient value
+//    SyncVectorPatch::finalizeexchange( vecPatches.listGradPhix_, vecPatches );
+//    SyncVectorPatch::finalizeexchange( vecPatches.listGradPhiy_, vecPatches );
+//    SyncVectorPatch::finalizeexchange( vecPatches.listGradPhiz_, vecPatches ); 
 }
 
 void SyncVectorPatch::exchangeB( Params& params, VectorPatch& vecPatches, int imode )

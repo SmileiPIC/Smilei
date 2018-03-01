@@ -717,6 +717,11 @@ void ElectroMagn2D::computeTotalRhoJ()
 //END computeTotalRhoJ
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Compute the total susceptibility from species susceptibility
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn2D::computeTotalEnvChi()
+{} //END computeTotalEnvChi
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute electromagnetic energy flows vectors on the border of the simulation box

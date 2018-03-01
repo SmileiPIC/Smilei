@@ -54,20 +54,14 @@ public:
         // 3Dcartesian simulation
         // ---------------
          else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
-            if (!params.vecto){
-                if (!params.Laser_Envelope_model)
-                     {Interp = new Interpolator3D2Order(params, patch);    }
-                else {Interp = new Interpolator3D2Order_env(params, patch);}  // end if for envelope model
-                              } // end if condition for not vectorized version
+            if (!params.vecto)
+                Interp = new Interpolator3D2Order(params, patch);
 #ifdef _VECTO
-            else              {
-                if (!params.Laser_Envelope_model)
-                     {Interp = new Interpolator3D2OrderV(params, patch);   }
-                else {Interp = new Interpolator3D2Order_envV(params, patch);} // end if for envelope model
-                              } // end if condition for vectorized version
+            else
+                Interp = new Interpolator3D2OrderV(params, patch);                    
 #endif
         }
-        else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == 4 ) ) {
+        else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == 4 ) ){
             Interp = new Interpolator3D4Order(params, patch);
         }
         // ---------------
@@ -82,7 +76,61 @@ public:
         }
 
         return Interp;
+    } // end InterpolatorFactory::create
+
+
+static Interpolator* create_env_interpolator(Params& params, Patch *patch) {
+    Interpolator* Interp_envelope = NULL;
+    // ---------------
+    // 1Dcartesian simulation
+    // ---------------
+    if ( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
+        ERROR("Envelope not yet implemented in 1Dcartesian geometry");
     }
+    else if ( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == 4 ) ) {
+        ERROR("Envelope not yet implemented in 1Dcartesian geometry");
+    }
+    // ---------------
+    // 2Dcartesian simulation
+    // ---------------
+    else if ( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
+        if (!params.vecto){
+            ERROR("Envelope not yet implemented in 2Dcartesian geometry");}
+#ifdef _VECTO
+        else{
+            ERROR("Envelope not yet implemented in 2Dcartesian geometry");}
+#endif
+    }
+    else if ( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == 4 ) ) {
+        ERROR("Envelope not yet implemented in 2Dcartesian geometry");
+    }
+    // ---------------
+    // 3Dcartesian simulation
+    // ---------------
+     else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
+        if (!params.vecto)  
+            Interp_envelope = new Interpolator3D2Order_env(params, patch);                   
+#ifdef _VECTO
+        else
+            Interp_envelope = new Interpolator3D2Order_envV(params, patch); 
+#endif
+    }
+    else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == 4 ) ) {
+        ERROR("Envelope interpolator not yet implemented for order 4");
+        //Interp_envelope = new Interpolator3D2Order_env(params, patch);} // end if for envelope model
+    }
+    // ---------------
+    // 3dRZ simulation
+    // ---------------
+    else if ( params.geometry == "3drz" ) {
+        ERROR("Envelope interpolator not yet implemented for quasi-cylindrical geometry");
+    }
+    else {
+        ERROR( "Unknwon parameters : " << params.geometry << ", Order : " << params.interpolation_order );
+    }
+
+    return Interp_envelope;
+    } // end InterpolatorFactory::create_env_interpolator
 
 };
 

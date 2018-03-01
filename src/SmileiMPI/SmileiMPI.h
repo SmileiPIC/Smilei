@@ -149,11 +149,11 @@ public:
     std::vector<std::vector<double>> dynamics_deltaold;
 
     //! value of the grad(AA*) at itime and itime-1
-    std::vector<std::vector<double>> dynamics_GradPHI;
-    std::vector<std::vector<double>> dynamics_GradPHIold;
+    std::vector<std::vector<double>> dynamics_GradPHIpart;
+    std::vector<std::vector<double>> dynamics_GradPHIoldpart;
     //! value of the AA* at itime and itime-1
-    std::vector<std::vector<double>> dynamics_PHI;
-    std::vector<std::vector<double>> dynamics_PHIold;
+    std::vector<std::vector<double>> dynamics_PHIpart;
+    std::vector<std::vector<double>> dynamics_PHIoldpart;
 
 
     // Resize buffers for a given number of particles
@@ -164,11 +164,11 @@ public:
         dynamics_iold[ithread].resize(ndim_part*npart);
         dynamics_deltaold[ithread].resize(ndim_part*npart);
 
-        if ( dynamics_GradPHI.size() > 0 ) {
-            dynamics_GradPHI[ithread].resize(3*npart);
-            dynamics_GradPHIold[ithread].resize(3*npart);
-            dynamics_PHI[ithread].resize(npart);
-            dynamics_PHIold[ithread].resize(npart);
+        if ( dynamics_GradPHIpart.size() > 0 ) {
+            dynamics_GradPHIpart[ithread].resize(3*npart);
+            dynamics_GradPHIoldpart[ithread].resize(3*npart);
+            dynamics_PHIpart[ithread].resize(npart);
+            dynamics_PHIoldpart[ithread].resize(npart);
         }
     }
 

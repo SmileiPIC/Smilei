@@ -129,10 +129,10 @@ void SmileiMPI::init( Params& params, DomainDecomposition* domain_decomposition 
     dynamics_deltaold.resize(omp_get_max_threads());
 
     if ( n_envlaser > 0 ) {
-        dynamics_GradPHI.resize(omp_get_max_threads());
-        dynamics_GradPHIold.resize(omp_get_max_threads());
-        dynamics_PHI.resize(omp_get_max_threads());
-        dynamics_PHIold.resize(omp_get_max_threads());
+        dynamics_GradPHIpart.resize(omp_get_max_threads());
+        dynamics_GradPHIoldpart.resize(omp_get_max_threads());
+        dynamics_PHIpart.resize(omp_get_max_threads());
+        dynamics_PHIoldpart.resize(omp_get_max_threads());
     }
 #else
     dynamics_Epart.resize(1);

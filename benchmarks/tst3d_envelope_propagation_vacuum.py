@@ -1,12 +1,11 @@
+############################# Laser envelope propagation in vacuum
 dx = 0.69 
 dtrans = 11.1 
 dt = 0.45
-#nx = 896
 nx = 1000
 ntrans = 80
 Lx = nx * dx
 Ltrans = ntrans*dtrans
-#npatch_x = 128
 npatch_x=8
 laser_fwhm = 70.7 
 center_laser = 2*laser_fwhm # here is the same as waist position of laser but in principle they can differ
@@ -49,26 +48,6 @@ LoadBalancing(
     cell_load = 1.,
     frozen_particle_load = 0.1
 )
-
-#Species(
-#    name = "electron",
-#    position_initialization = "regular",
-#    momentum_initialization = "cold",
-#    particles_per_cell = 8,
-#    c_part_max = 1.0,
-#    mass = 1.0,
-#    charge = -1.0,
-#    charge_density = 0.000494,
-#    mean_velocity = [0.0, 0.0, 0.0],
-#    temperature = [0.0],
-#    pusher = "boris",
-#    time_frozen = 0.0,
-#    boundary_conditions = [
-#       ["remove", "remove"],
-#       ["remove", "remove"],
-#       ["remove", "remove"],
-#    ],
-#)
 
 LaserEnvelopeGaussian3D(
     a0              = 6.,

@@ -69,8 +69,13 @@ public:
 
     //! Interpolator (used to push particles and for probes)
     Interpolator* Interp;
+    //! Interpolator ad hoc for envelope 
+    Interpolator* Interp_envelope = NULL;
+
     //! Projector
     Projector* Proj;
+    //! Projector ad hoc for Proj_susceptibility
+    Projector* Proj_susceptibility = NULL;
 
     //! "fake" particles for the probe diagnostics
     std::vector<ProbeParticles*> probes;
