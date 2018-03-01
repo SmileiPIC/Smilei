@@ -79,9 +79,9 @@ void Projector3D4OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
     int ipo = iold[0];
     int jpo = iold[1];
     int kpo = iold[2];
-    int ipom2 = ipo-2;
-    int jpom2 = jpo-2;
-    int kpom2 = kpo-2;
+    int ipom2 = ipo-3;
+    int jpom2 = jpo-3;
+    int kpom2 = kpo-3;
 
     int vecSize = 8;
     int bsize = 7*7*7*vecSize;
@@ -924,9 +924,9 @@ void Projector3D4OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
     int ipo = iold[0];
     int jpo = iold[1];
     int kpo = iold[2];
-    int ipom2 = ipo-2;
-    int jpom2 = jpo-2;
-    int kpom2 = kpo-2;
+    int ipom2 = ipo-3;
+    int jpom2 = jpo-3;
+    int kpom2 = kpo-3;
 
     int vecSize = 8;
     int bsize = 7*7*7*vecSize;
