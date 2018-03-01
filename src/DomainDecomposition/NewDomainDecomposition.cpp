@@ -110,7 +110,7 @@ unsigned int NewDomainDecomposition3D::getDomainId( std::vector<int> Coordinates
     else if ( Coordinates[2] >= (int)ndomain_[2] )
         return MPI_PROC_NULL;
     else
-        return ( Coordinates[0]*ndomain_[1]*ndomain_[2] + Coordinates[1]*ndomain_[2] + Coordinates[0] );
+        return ( Coordinates[0]*ndomain_[1]*ndomain_[2] + Coordinates[1]*ndomain_[2] + Coordinates[2] );
 
 }
 
