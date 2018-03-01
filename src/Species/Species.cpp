@@ -1618,7 +1618,7 @@ void Species::ponderomotive_update_position_and_currents(double time_dual, unsig
                 }//End loop on bins
             } // end condition on diag and not particle test
   
-         }//END if time vs. time_frozen    
+         }//END if time vs. time_frozen  
 } // End ponderomotive_position_update
 
 // Array used in the Maxwell-Juttner sampling
