@@ -94,11 +94,11 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
             }
         }
 
-        if (params.Laser_Envelope_model){
+        if (params.Laser_Envelope_model){   
             for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Env_Chi_s.size(); ifield++) {
                 if( (*this)(ipatch)->EMfields->Env_Chi_s[ifield]->data_ == NULL ){
-                    delete (*this)(ipatch)->EMfields->Env_Chi_s[ifield];
-                    (*this)(ipatch)->EMfields->Env_Chi_s[ifield]=NULL;
+                        delete (*this)(ipatch)->EMfields->Env_Chi_s[ifield];
+                        (*this)(ipatch)->EMfields->Env_Chi_s[ifield]=NULL;
                 }
             }
         }

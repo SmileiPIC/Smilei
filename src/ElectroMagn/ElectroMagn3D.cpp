@@ -86,7 +86,7 @@ isZmin(patch->isZmin())
         }
 
         if (params.Laser_Envelope_model){
-            if ( emFields->Env_Chi_s[ispec]->data_ != NULL ){
+            if ( emFields->Env_Chi_s[ispec] != NULL ){
                 if ( emFields->Env_Chi_s[ispec]->data_ != NULL )
                     Env_Chi_s[ispec] = new Field3D(dimPrim, emFields->Env_Chi_s[ispec]->name );
                 else
