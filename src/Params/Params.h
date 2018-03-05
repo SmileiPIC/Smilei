@@ -195,6 +195,8 @@ public:
     unsigned int tot_number_of_patches;
     //! Number of patches per direction
     std::vector<unsigned int> number_of_patches;
+    //! Domain decomposition
+    std::string patch_decomposition;
 
     //! Time selection for load balancing
     TimeSelection * load_balancing_time_selection;
