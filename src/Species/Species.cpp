@@ -53,6 +53,7 @@ radiating(false),
 multiphoton_Breit_Wheeler(2,""),
 ionization_model("none"),
 ppcProfile(NULL),
+chargeProfile(NULL),
 position_initialization_array(NULL),
 position_initialization_on_species(false),
 position_initialization_on_species_index(-1),
@@ -898,14 +899,6 @@ void Species::sort_part(Params& params)
     }
 
 
-
-
-
-
-
-
-
-
     //The width of one bin is cell_length[0] * clrw.
 
     int p1,p2,bmin_init;
@@ -1082,11 +1075,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     }
 
     // Evaluate profiles
-    densityProfile->valuesAt(xyz, density       );
-    if (this->mass > 0)
-    {
-        chargeProfile ->valuesAt(xyz, charge        );
-    }
     for (unsigned int m=0; m<3; m++) {
         temperatureProfile[m]->valuesAt(xyz, temperature[m]);
         velocityProfile[m]   ->valuesAt(xyz, velocity   [m]);
@@ -1096,10 +1084,11 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
 
     // Do some adjustments on the profiles
     unsigned int npart_effective = 0 ;
-    double *position[nDim_particle];
+    double *position[nDim_particle], *weight_arr;
     std::vector<int> my_particles_indices;
     if ( position_initialization_array != NULL ){
         for (unsigned int idim = 0; idim < nDim_particle; idim++) position[idim] = &(position_initialization_array[idim*n_numpy_particles]);
+                                                                  weight_arr     = &(position_initialization_array[nDim_particle*n_numpy_particles]);
         //Idea to speed up selection, provides xmin, xmax of the bunch and check if there is an intersection with the patch instead of going through all particles for all patches.
         for (unsigned int ip = 0; ip < n_numpy_particles; ip++){
             //If the particle belongs to this patch
@@ -1111,6 +1100,11 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
         }
         npart_effective = my_particles_indices.size();
     } else {
+        densityProfile->valuesAt(xyz, density       );
+        if (this->mass > 0)
+        {
+            chargeProfile ->valuesAt(xyz, charge        );
+        }
         ppcProfile    ->valuesAt(xyz, n_part_in_cell);
         double remainder, nppc;
         for (i=0; i<n_space_to_create[0]; i++) {
@@ -1267,8 +1261,9 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             temp[2] = temperature[2](i,j,k);
             initMomentum(1,ip, temp, vel);
             //dummy values for the moment for weights and charges
-            initWeight(1, ip, 1.);
+            //initWeight(1, ip, 1.);
             initCharge(1, ip, -1.);
+            particles->weight(ip) = weight_arr[ippy] ;
             indices[ibin]++;
         }
         for (unsigned int ipart = 0; ipart < npart_effective ; ipart++){
