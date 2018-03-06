@@ -24,6 +24,7 @@ before_install:
 script:
  - make doc
  - mv build/html .
+ - touch html/.nojekyll
  - find html
  - mkdir -p build/_downloads
  - for v in `git tag | grep '^v'`; do  git archive -o build/_downloads/smilei-${v}.tar.gz $v; done
