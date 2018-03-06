@@ -1,7 +1,5 @@
 os: linux
 
-install: make get-deps
-
 language: cpp
 
 sudo: required
@@ -23,10 +21,11 @@ script:
   - mkdir -p doc/build/_downloads
   - for v in `git tag | grep '^v'`; do  git archive -o doc/build/_downloads/smilei-${v}.tar.gz $v; done
 
+install:
+
 after_success:
   - travis-sphinx deploy
     
-
 
 #script:
 #  - make doc
@@ -36,7 +35,6 @@ after_success:
 #  - git push origin --delete gh-pages;
 #  - git branch -d gh-pages;
 #  - git subtree push --prefix doc/build/ origin gh-pages;#    
-#install:
 #
 #deploy:
 #  provider: pages
