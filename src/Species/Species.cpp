@@ -1221,11 +1221,40 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             if (i%clrw == clrw -1) bmax[new_bin_idx+i/clrw] = iPart;
         }//i
     } else if ( n_existing_particles == 0  ) {  //Do not recreate particles from numpy array again after initialization. Is this condition enough ?
-        //Initializing particles from numpy array
-        for (unsigned int ip = 0; ip < npart_effective ; ip++){
-            unsigned int p = my_particles_indices[ip];
+        //Initializing particles from numpy array and based on a count sort to comply with initial sorting.
+        int nbins = bmin.size();
+        int indices[nbins];
+        double one_ov_dbin = 1. / (cell_length[0] * clrw) ;
+
+        for (unsigned int i=0; i < nbins ; i++) indices[i] = 0 ;
+        
+        ///Compute proper indices for particle susing a count sort
+        for (unsigned int ipart = 0; ipart < npart_effective ; ipart++){
+                unsigned int ip = my_particles_indices[ipart];
+                double x = position[0][ip]-min_loc ;
+                int ix = int(x * one_ov_dbin) ;
+                indices[ix] ++;
+        }
+        unsigned int tot=0;
+        for (unsigned int ibin=0; ibin < nbins; ibin++){
+                unsigned int oc = indices[ibin];
+                indices[ibin] = tot;
+                tot += oc;
+        }
+        for (unsigned int i=0; i < nbins ; i++) bmin[i] = indices[i] ;
+        for (unsigned int i=0; i < nbins-1 ; i++) bmax[i] = bmin[i] ;
+        bmax[nbins-1] = npart_effective ;
+
+        //Now initialize particles at thier proper indices
+        for (unsigned int ipart = 0; ipart < npart_effective ; ipart++){
+            unsigned int ippy = my_particles_indices[ipart];//Indice of the particle in the python array.
+            double x = position[0][ippy]-min_loc ;
+            unsigned int ibin = int(x * one_ov_dbin) ;
+            int ip = indices[ibin] ; //Indice of the position of the particle in the particles array.
+            
+            
             for(unsigned int idim=0; idim<nDim_particle; idim++)
-                particles->position(idim,ip) = position[idim][p] ;
+                particles->position(idim,ip) = position[idim][ippy] ;
             //If momentum is not initialized by a numpy array
             unsigned int i =  (unsigned int)(particles->position(0,ip) - cell_position[0])/cell_length[0];
             unsigned int j =  (unsigned int)(particles->position(1,ip) - cell_position[1])/cell_length[1];
@@ -1240,8 +1269,11 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             //dummy values for the moment for weights and charges
             initWeight(1, ip, 1.);
             initCharge(1, ip, -1.);
+            indices[ibin]++;
         }
-        // Here particles should be sorted !!
+        for (unsigned int ipart = 0; ipart < npart_effective ; ipart++){
+            cout << "ipart " << ipart << " x = " << particles->position(0,ipart) << " ibin = " <<  int( (particles->position(0,ipart)-min_loc) * one_ov_dbin) <<  " charge = " << particles->charge(ipart) << " weight = " <<  particles->weight(ipart) << endl;
+        }
     }
 
 
