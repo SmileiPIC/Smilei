@@ -344,7 +344,7 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
 Current filtering
 ^^^^^^^^^^^^^^^^^
 
-The present version of :program:`Smilei` provides one method for current filtering,
+The present version of :program:`Smilei` provides a :ref:`multi-pass binomial filter <multipassBinomialFilter>` on the current densities,
 which parameters are controlled in the following block::
 
   CurrentFilter(
@@ -372,7 +372,8 @@ which parameters are controlled in the following block::
 Field filtering
 ^^^^^^^^^^^^^^^^^
 
-The present version of :program:`Smilei` provides one method for field filtering,
+The present version of :program:`Smilei` provides a method for field filtering
+(at the moment, only the :ref:`Friedman electric field time-filter <EfieldFilter>` is available)
 which parameters are controlled in the following block::
 
   FieldFilter(
@@ -2171,7 +2172,7 @@ for instance::
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A *particle tracking diagnostic* records the macro-particle positions and momenta at various timesteps.
-Typically, this is used for plotting trajectories.
+Typically, this is used for plotting trajectories. 
 
 You can add a tracking diagnostic by including a block ``DiagTrackParticles()`` in the namelist,
 for instance::
@@ -2226,9 +2227,9 @@ for instance::
     def my_filter(particles):
         return (particles.px>-1.)*(particles.px<1.) + (particles.pz>3.)
 
-.. Note:: The ``id`` attribute contains the particles identification number.
-  This number is set to 0 at the beginning of the simulation. Only after particles have
-  passed the filter, they acquire a positive ``id``.
+.. Note:: The ``id`` attribute contains the :doc:`particles identification number<ids>`.
+  This number is set to 0 at the beginning of the simulation. **Only after particles have
+  passed the filter**, they acquire a positive ``id``.
 
 .. Note:: For advanced filtration, Smilei provides the quantity ``Main.iteration``,
   accessible within the ``filter`` function. Its value is always equal to the current
