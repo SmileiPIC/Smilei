@@ -9,12 +9,10 @@ git:
 
 before_install:
   - git fetch -t
-  - pip install Sphinx travis-sphinx alabaster pint
-  - export PATH=$HOME/.local/bin:$PATH
+  - pip install Sphinx alabaster
 
 script:
  - make doc
- - mv build/html .
  - touch build/html/.nojekyll
  - mkdir -p build/html/_downloads
  - for v in `git tag | grep '^v'`; do  git archive -o build/html/_downloads/smilei-${v}.tar.gz $v; done
