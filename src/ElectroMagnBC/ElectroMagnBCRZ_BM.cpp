@@ -203,7 +203,7 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 	    for (unsigned int i=0 ; i<nl_p-1; i++) {
 	         (*BlRZ)(i,j+1) =                         (*BlRZ_old)(i,j) 
                                   -      Alpha_Bl_Rmax * ((*BlRZ)(i,j) - (*BlRZ_old)(i,j+1))
-	                          -      Gamma_Bl_Rmax * ((*BrRZ)(i+1,j) + (*BrRZ_old)(i+1,j) - (*BrRZ)(i,j) - (*BrRZ_old)(i,j))
+	                          +      Gamma_Bl_Rmax * ((*BrRZ)(i+1,j) + (*BrRZ_old)(i+1,j) - (*BrRZ)(i,j) - (*BrRZ_old)(i,j))
 	                          -      Beta_Bl_Rmax * Icpx * (double)imode * ((*ErRZ)(i,j+1) + (*ErRZ)(i,j))
 	                          - 2. * Beta_Bl_Rmax * (*EtRZ)(i,j);
             if (std::abs((*BlRZ)(i,j+1))>1.){
