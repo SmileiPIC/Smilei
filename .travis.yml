@@ -1,15 +1,11 @@
-os: linux
-
 language: python
-
-install:
 
 git:
   depth: 9999999
 
-before_install:
-  - git fetch -t
-  - pip install Sphinx alabaster
+install:
+ - git fetch -t
+ - pip install Sphinx
 
 script:
  - make doc
