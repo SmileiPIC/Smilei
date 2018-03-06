@@ -20,8 +20,9 @@ before_install:
 
 script:
   - make doc
-  - mkdir -p doc/build/_downloads
-  - for v in `git tag | grep '^v'`; do  git archive -o doc/build/_downloads/smilei-${v}.tar.gz $v; done
+  - find .
+#  - mkdir -p doc/build/_downloads
+#  - for v in `git tag | grep '^v'`; do  git archive -o doc/build/_downloads/smilei-${v}.tar.gz $v; done
     
 install:
 
