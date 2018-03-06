@@ -12,22 +12,12 @@ before_install:
   - pip install Sphinx travis-sphinx alabaster pint
   - export PATH=$HOME/.local/bin:$PATH
 
-#script:
-#  - travis-sphinx build -n -s doc/Sphinx
-#  - mkdir -p doc/build/_downloads
-#  - for v in `git tag | grep '^v'`; do  git archive -o doc/build/_downloads/smilei-${v}.tar.gz $v; done
-#
-#after_success:
-#  - travis-sphinx deploy
-#    
-
 script:
  - make doc
  - mv build/html .
  - touch html/.nojekyll
- - find html
- - mkdir -p build/_downloads
- - for v in `git tag | grep '^v'`; do  git archive -o build/_downloads/smilei-${v}.tar.gz $v; done
+ - mkdir -p html/_downloads
+ - for v in `git tag | grep '^v'`; do  git archive -o html/_downloads/smilei-${v}.tar.gz $v; done
 
 deploy:
  provider: pages
