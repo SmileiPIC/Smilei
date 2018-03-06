@@ -299,18 +299,16 @@ namelist("")
         }
     }
 
-    PyTools::extract("EM_boundary_conditions_theta", EM_BCs_theta, "Main");
+    PyTools::extract("EM_boundary_conditions_k", EM_BCs_k, "Main");
     //Complete with zeros if not defined
-    if( EM_BCs_theta.size() == 1 ) {
-        while( EM_BCs_theta.size() < nDim_field ) EM_BCs_theta.push_back(EM_BCs_theta[0]  );
-    } else if( EM_BCs_theta.size() != nDim_field ) {
-        ERROR("EM_boundary_conditions_theta must be the same size as the number of dimensions");
+    if( EM_BCs_k.size() == 1 ) {
+        while( EM_BCs_k.size() < nDim_field*2 ) EM_BCs_k.push_back(EM_BCs_k[0]  );
+    } else if( EM_BCs_k.size() < nDim_field*2 ) {
+        ERROR("EM_boundary_conditions_k must be the same size as the number of faces.");
     }
-    for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
-        if( EM_BCs_theta[iDim].size() == 1 ) // if just one theta is specified, then take the same theta for both sides of the dimension.
-            EM_BCs_theta[iDim].push_back( EM_BCs_theta[iDim][0] );
-        else if ( EM_BCs[iDim].size() > 2 )
-            ERROR("Too many EM_boundary_conditions_theta along dimension "<<"xyz"[iDim] );
+    for( unsigned int iDim=0; iDim<nDim_field*2; iDim++ ) {
+        if ( EM_BCs_k[iDim].size() < nDim_field )
+            ERROR("EM_boundary_conditions_k must have at least nDim_field (" << nDim_field << ") elements along dimension "<<"xyz"[iDim] );
     }
 
     // -----------------------------------
@@ -560,8 +558,7 @@ void Params::compute()
     simulation_time = (double)(n_time) * timestep;
     if (simulation_time!=entered_simulation_time)
         WARNING("simulation_time has been redefined from " << entered_simulation_time
-        << " to " << simulation_time << " to match nxtimestep ("
-        << scientific << setprecision(4) << simulation_time - entered_simulation_time<< ")" );
+        << " to " << simulation_time << " to match timestep.");
 
 
     // grid/cell-related parameters
@@ -674,7 +671,8 @@ void Params::print_init()
         MESSAGE(1,"            - (Number of cells,    Cell length)  : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
         MESSAGE(1,"            - Electromagnetic boundary conditions: " << "(" << EM_BCs[i][0] << ", " << EM_BCs[i][1] << ")");
         if (open_boundaries)
-            MESSAGE(1,"            - Electromagnetic boundary conditions theta: " << "(" << EM_BCs_theta[i][0] << ", " << EM_BCs_theta[i][1] << ")");
+            cout << setprecision(2);
+            cout << "                     - Electromagnetic boundary conditions k    : " << "( [" << EM_BCs_k[2*i][0] << ", " << EM_BCs_k[2*i][1] << ", " << EM_BCs_k[2*i][2]<< "] , [" << EM_BCs_k[2*i+1][0]<< ", " << EM_BCs_k[2*i+1][1]<< ", " << EM_BCs_k[2*i+1][2] << "] )" << endl;
     }
 
     if( currentFilter_passes > 0 )

@@ -15,33 +15,8 @@
 using namespace std;
 
 ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned int _min_max )
-: ElectroMagnBC( params, patch, _min_max )
-{
-    // number of nodes of the primal and dual grid in the x-direction
-    nx_p = params.n_space[0]*params.global_factor[0]+1+2*params.oversize[0];
-    nx_d = nx_p+1;
-    // number of nodes of the primal and dual grid in the y-direction
-    ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
-    ny_d = ny_p+1;
-    // number of nodes of the primal and dual grid in the z-direction
-    nz_p = params.n_space[2]*params.global_factor[2]+1+2*params.oversize[2];
-    nz_d = nz_p+1;
-    
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the x-direction)
-    dx       = params.cell_length[0];
-    dt_ov_dx = dt/dx;
-    dx_ov_dt = 1.0/dt_ov_dx;
-    
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the y-direction)
-    dy       = params.cell_length[1];
-    dt_ov_dy = dt/dy;
-    dy_ov_dt = 1.0/dt_ov_dy;
-    
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the z-direction)
-    dz       = params.cell_length[2];
-    dt_ov_dz = dt/dz;
-    dz_ov_dt = 1.0/dt_ov_dz;
-    
+: ElectroMagnBC3D( params, patch, _min_max )
+{    
     
     std::vector<unsigned int> dims(2,0);
     
@@ -108,68 +83,117 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     // -----------------------------------------------------
     
     //! \todo (MG) Check optimal angle for Silver-Muller BCs
+    double pyKx, pyKy, pyKz;
+    double kx, ky, kz;
+    double Knorm;
+    double omega = 1. ;
+    //kx = w cos(theta) cos(phi)
+    //ky = w sin(theta) 
+    //kz = w cos(theta) sin(phi)
     
     // Xmin boundary
-    double theta  = params.EM_BCs_theta[0][0];
-    double factor = 1.0 / (cos(theta) + dt_ov_dx);
+    pyKx = params.EM_BCs_k[0][0];
+    pyKy = params.EM_BCs_k[0][1];
+    pyKz = params.EM_BCs_k[0][2];
+    Knorm = sqrt(pyKx*pyKx + pyKy*pyKy + pyKz*pyKz) ;
+    kx = omega*pyKx/Knorm;
+    ky = omega*pyKy/Knorm;
+    kz = omega*pyKz/Knorm;
+
+    double factor = 1.0 / (kx + dt_ov_dx);
     Alpha_SM_W    = 2.0                     * factor;
-    Beta_SM_W     = - (cos(theta)-dt_ov_dx) * factor;
-    Gamma_SM_W    = 4.0 * cos(theta)        * factor;
-    Delta_SM_W    = - (sin(theta)+dt_ov_dy) * factor;
-    Epsilon_SM_W  = - (sin(theta)-dt_ov_dy) * factor;
-    Zeta_SM_W     = - dt_ov_dz              * factor;
-    Eta_SM_W      =   dt_ov_dz              * factor;
+    Beta_SM_W     = - (kx-dt_ov_dx) * factor;
+    Gamma_SM_W    = 4.0 * kx        * factor;
+    Delta_SM_W    = - (ky + dt_ov_dy) * factor;
+    Epsilon_SM_W  = - (ky - dt_ov_dy) * factor;
+    Zeta_SM_W     = - (kz + dt_ov_dz) * factor;
+    Eta_SM_W      = - (kz - dt_ov_dz) * factor;
     
     // Xmax boundary
-    theta  = params.EM_BCs_theta[0][1];
-    factor        = 1.0 / (cos(theta) - dt_ov_dx);
+    pyKx = params.EM_BCs_k[1][0];
+    pyKy = params.EM_BCs_k[1][1];
+    pyKz = params.EM_BCs_k[1][2];
+    Knorm = sqrt(pyKx*pyKx + pyKy*pyKy + pyKz*pyKz) ;
+    kx = omega*pyKx/Knorm;
+    ky = omega*pyKy/Knorm;
+    kz = omega*pyKz/Knorm;
+
+    factor        = 1.0 / (kx - dt_ov_dx);
     Alpha_SM_E    = 2.0                      * factor;
-    Beta_SM_E     = - (cos(theta)+dt_ov_dx)  * factor;
-    Gamma_SM_E    = 4.0 * cos(theta)         * factor;
-    Delta_SM_E    = - (sin(theta)+dt_ov_dy)  * factor;
-    Epsilon_SM_E  = - (sin(theta)-dt_ov_dy)  * factor;
-    Zeta_SM_E     = - dt_ov_dz              * factor;
-    Eta_SM_E      =   dt_ov_dz              * factor;
+    Beta_SM_E     = - ( kx+dt_ov_dx)  * factor;
+    Gamma_SM_E    = 4.0 * kx         * factor;
+    Delta_SM_E    = - (ky + dt_ov_dy)  * factor;
+    Epsilon_SM_E  = - (ky - dt_ov_dy)  * factor;
+    Zeta_SM_E     = - (kz + dt_ov_dz) * factor;
+    Eta_SM_E      = - (kz - dt_ov_dz) * factor;
     
     // Ymin boundary
-    theta  = params.EM_BCs_theta[1][0];
-    factor = 1.0 / (cos(theta) + dt_ov_dy );
+    pyKx = params.EM_BCs_k[2][0];
+    pyKy = params.EM_BCs_k[2][1];
+    pyKz = params.EM_BCs_k[2][2];
+    Knorm = sqrt(pyKx*pyKx + pyKy*pyKy + pyKz*pyKz) ;
+    kx = omega*pyKx/Knorm;
+    ky = omega*pyKy/Knorm;
+    kz = omega*pyKz/Knorm;
+
+    factor = 1.0 / (  ky + dt_ov_dy );
     Alpha_SM_S    = 2.0                     * factor;
-    Beta_SM_S     = - (cos(theta)-dt_ov_dy) * factor;
-    Delta_SM_S    = - (sin(theta)+dt_ov_dz) * factor;
-    Epsilon_SM_S  = - (sin(theta)-dt_ov_dz) * factor;
-    Zeta_SM_S     = - dt_ov_dx              * factor;
-    Eta_SM_S      =   dt_ov_dx              * factor;
+    Beta_SM_S     = - ( ky - dt_ov_dy) * factor;
+    Delta_SM_S    = - ( kz + dt_ov_dz) * factor;
+    Epsilon_SM_S  = - ( kz -dt_ov_dz) * factor;
+    Zeta_SM_S     = - ( kx + dt_ov_dx) * factor;
+    Eta_SM_S      = - ( kx - dt_ov_dx) * factor;
     
     // Ymax boundary
-    theta  = params.EM_BCs_theta[1][1];
-    factor = 1.0 / (cos(theta) - dt_ov_dy);
+    pyKx = params.EM_BCs_k[3][0];
+    pyKy = params.EM_BCs_k[3][1];
+    pyKz = params.EM_BCs_k[3][2];
+    Knorm = sqrt(pyKx*pyKx + pyKy*pyKy + pyKz*pyKz) ;
+    kx = omega*pyKx/Knorm;
+    ky = omega*pyKy/Knorm;
+    kz = omega*pyKz/Knorm;
+
+    factor = 1.0 / ( ky - dt_ov_dy);
     Alpha_SM_N    = 2.0                     * factor;
-    Beta_SM_N     = - (cos(theta)+dt_ov_dy) * factor;
-    Delta_SM_N    = - (sin(theta)+dt_ov_dz) * factor;
-    Epsilon_SM_N  = - (sin(theta)-dt_ov_dz) * factor;
-    Zeta_SM_N     = - dt_ov_dx              * factor;
-    Eta_SM_N      =   dt_ov_dx              * factor;
+    Beta_SM_N     = - ( ky + dt_ov_dy) * factor;
+    Delta_SM_N    = - ( kz + dt_ov_dz) * factor;
+    Epsilon_SM_N  = - ( kz - dt_ov_dz) * factor;
+    Zeta_SM_N     = - ( kx + dt_ov_dx) * factor;
+    Eta_SM_N      = - ( kx - dt_ov_dx) * factor;
     
     // Zmin boundary
-    theta  = params.EM_BCs_theta[2][0];
-    factor = 1.0 / (cos(theta) + dt_ov_dz);
+    pyKx = params.EM_BCs_k[4][0];
+    pyKy = params.EM_BCs_k[4][1];
+    pyKz = params.EM_BCs_k[4][2];
+    Knorm = sqrt(pyKx*pyKx + pyKy*pyKy + pyKz*pyKz) ;
+    kx = omega*pyKx/Knorm;
+    ky = omega*pyKy/Knorm;
+    kz = omega*pyKz/Knorm;
+
+    factor = 1.0 / ( kz + dt_ov_dz);
     Alpha_SM_B    = 2.0                     * factor;
-    Beta_SM_B     = - (cos(theta)-dt_ov_dz) * factor;
-    Delta_SM_B    = - (sin(theta)+dt_ov_dx) * factor;
-    Epsilon_SM_B  = - (sin(theta)-dt_ov_dx) * factor;
-    Zeta_SM_B     = - dt_ov_dy              * factor;
-    Eta_SM_B      =   dt_ov_dy              * factor;
+    Beta_SM_B     = - ( kz - dt_ov_dz) * factor;
+    Delta_SM_B    = - ( kx + dt_ov_dx) * factor;
+    Epsilon_SM_B  = - ( kx - dt_ov_dx) * factor;
+    Zeta_SM_B     = - ( ky + dt_ov_dy) * factor;
+    Eta_SM_B      = - ( ky - dt_ov_dy) * factor;
     
     // Zmax boundary
-    theta  = params.EM_BCs_theta[2][1];
-    factor        = 1.0 / (cos(theta) - dt_ov_dz);
+    pyKx = params.EM_BCs_k[5][0];
+    pyKy = params.EM_BCs_k[5][1];
+    pyKz = params.EM_BCs_k[5][2];
+    Knorm = sqrt(pyKx*pyKx + pyKy*pyKy + pyKz*pyKz) ;
+    kx = omega*pyKx/Knorm;
+    ky = omega*pyKy/Knorm;
+    kz = omega*pyKz/Knorm;
+
+    factor        = 1.0 / ( kz - dt_ov_dz);
     Alpha_SM_T    = 2.0                      * factor;
-    Beta_SM_T     = - (cos(theta)+dt_ov_dz)  * factor;
-    Delta_SM_T    = - (sin(theta)+dt_ov_dx)  * factor;
-    Epsilon_SM_T  = - (sin(theta)-dt_ov_dx)  * factor;
-    Zeta_SM_T     = - dt_ov_dy              * factor;
-    Eta_SM_T      =   dt_ov_dy              * factor;
+    Beta_SM_T     = - ( kz + dt_ov_dz)  * factor;
+    Delta_SM_T    = - ( kx + dt_ov_dx)  * factor;
+    Epsilon_SM_T  = - ( kx - dt_ov_dx)  * factor;
+    Zeta_SM_T     = - ( ky + dt_ov_dy) * factor;
+    Eta_SM_T      = - ( ky - dt_ov_dy) * factor;
     
 }
 
@@ -289,9 +313,9 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
     if ( min_max==0 && patch->isXmin() ) {
         
         // for By^(d,p,d)
-        for (unsigned int j=0 ; j<ny_p ; j++) {
+        for (unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++) {
             pos[0] = patch->getDomainLocalMin(1) + (j - EMfields->oversize[1])*dy;
-            for (unsigned int k=0 ; k<nz_d ; k++) {
+            for (unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++) {
                 pos[1] = patch->getDomainLocalMin(2) + (k -0.5 - EMfields->oversize[2])*dz;
                 // Lasers
                 double byW = 0.;
@@ -309,9 +333,9 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         }//j  ---end compute By
         
         // for Bz^(d,d,p)
-        for (unsigned int j=0 ; j<ny_d ; j++) {
+         for (unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++) {
             pos[0] = patch->getDomainLocalMin(1) + (j - 0.5 - EMfields->oversize[1])*dy;
-            for (unsigned int k=0 ; k<nz_p ; k++) {
+            for (unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++) {
                 pos[1] = patch->getDomainLocalMin(2) + (k - EMfields->oversize[2])*dz;
                 // Lasers
                 double bzW = 0.;
@@ -332,9 +356,9 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
     else if (min_max==1 && patch->isXmax() ) {
         
         // for By^(d,p,d)
-        for (unsigned int j=0 ; j<ny_p ; j++) {
+        for (unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++) {
             pos[0] = patch->getDomainLocalMin(1) + (j - EMfields->oversize[1])*dy;
-            for (unsigned int k=0 ; k<nz_d ; k++) {
+            for (unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++) {
                 pos[1] = patch->getDomainLocalMin(2) + (k - 0.5 - EMfields->oversize[2])*dz;
                 // Lasers
                 double byE = 0.;
@@ -353,9 +377,9 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         }//j  ---end compute By
         
         // for Bz^(d,d,p)
-        for (unsigned int j=0 ; j<ny_d ; j++) {
+        for (unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax(); j++) {
             pos[0] = patch->getDomainLocalMin(1) + (j - 0.5 - EMfields->oversize[1])*dy;
-            for (unsigned int k=0 ; k<nz_p ; k++) {
+            for (unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++) {
                 pos[1] = patch->getDomainLocalMin(2) + (k - EMfields->oversize[2])*dz;
                 // Lasers
                 double bzE = 0.;
@@ -375,8 +399,8 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
     else if (min_max==2 && patch->isYmin() ) {
         
         // for Bx^(p,d,d)
-        for (unsigned int i=0 ; i<nx_p ; i++) {
-            for (unsigned int k=0 ; k<nz_d ; k++) {
+        for (unsigned int i=patch->isXmin() ; i<nx_p-patch->isXmax() ; i++) {
+            for (unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++) {  
                 (*Bx3D)(i,0,k) = - Alpha_SM_S   * (*Ez3D)(i,0,k)
                 +              Beta_SM_S    *( (*Bx3D)(i,1,k)-(*Bx_val)(i,k))
                 +              Zeta_SM_S   *( (*By3D)(i+1,0,k)-(*By_val)(i+1,k) )
@@ -386,22 +410,21 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         }//i  ---end compute Bx
         
         // for Bz^(d,d,p)
-        for (unsigned int i=0 ; i<nx_d ; i++) {
-            for (unsigned int k=0 ; k<nz_p ; k++) {
+        for (unsigned int i=patch->isXmin() ; i<nx_d-patch->isXmax() ; i++) {
+            for (unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++) {  
                 (*Bz3D)(i,0,k) = Alpha_SM_S   * (*Ex3D)(i,0,k)
                 +              Beta_SM_S    *( (*Bz3D)(i,1,k)-(*Bz_val)(i,k))
                 +              Delta_SM_S   *( (*By3D)(i,0,k+1)-(*By_val)(i,k+1) )
                 +              Epsilon_SM_S *( (*By3D)(i,0,k)-(*By_val)(i,k) )
                 +              (*Bz_val)(i,k);
             }// k  ---end compute Bz
-        }//i  ---end compute Bz
-        
+        }//i  ---end compute Bz       }
     }
     else if (min_max==3 && patch->isYmax() ) {
         
         // for Bx^(p,d,d)
-        for (unsigned int i=0 ; i<nx_p ; i++) {
-            for (unsigned int k=0 ; k<nz_d ; k++) {
+        for (unsigned int i=patch->isXmin() ; i<nx_p-patch->isXmax() ; i++) {
+            for (unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++) {
                 
                 (*Bx3D)(i,ny_d-1,k) = -Alpha_SM_N * (*Ez3D)(i,ny_p-1,k)
                 +                    Beta_SM_N  *( (*Bx3D)(i,ny_d-2,k) -(*Bx_val)(i,k))
@@ -413,8 +436,8 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         }//j  ---end compute Bz
         
         // for Bz^(d,d,p)
-        for (unsigned int i=0 ; i<nx_d ; i++) {
-            for (unsigned int k=0 ; k<nz_p ; k++) {
+        for (unsigned int i=patch->isXmin() ; i<nx_d-patch->isXmax() ; i++) {
+            for (unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++) {
                 
                 (*Bz3D)(i,ny_d-1,k) = Alpha_SM_N   * (*Ex3D)(i,ny_p-1,k)
                 +                   Beta_SM_N    *( (*Bz3D)(i,ny_d-2,k) -(*Bz_val)(i,k))
@@ -428,8 +451,8 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
     else if (min_max==4 && patch->isZmin() ) {
         
         // for Bx^(p,d,d)
-        for (unsigned int i=0 ; i<nx_p ; i++) {
-            for (unsigned int j=0 ; j<ny_d ; j++) {
+        for (unsigned int i=patch->isXmin() ; i<nx_p-patch->isXmax() ; i++) {
+            for (unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++) {
                 
                 (*Bx3D)(i,j,0) = Alpha_SM_B   * (*Ey3D)(i,j,0)
                 +              Beta_SM_B    *( (*Bx3D)(i,j,1)-(*Bx_val)(i,j))
@@ -440,8 +463,8 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         }//i  ---end compute Bx
         
         // for By^(d,p,d)
-        for (unsigned int i=0 ; i<nx_d ; i++) {
-            for (unsigned int j=0 ; j<ny_p ; j++) {
+        for (unsigned int i=patch->isXmin() ; i<nx_d-patch->isXmax() ; i++) {
+            for (unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++) {
                 
                 (*By3D)(i,j,0) = - Alpha_SM_B   * (*Ex3D)(i,j,0)
                 +              Beta_SM_B    *( (*By3D)(i,j,1)-(*By_val)(i,j))
@@ -456,8 +479,8 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
     else if (min_max==5 && patch->isZmax() ) {
         
         // for Bx^(p,d,d)
-        for (unsigned int i=0 ; i<nx_p ; i++) {
-            for (unsigned int j=0 ; j<ny_d ; j++) {
+        for (unsigned int i=patch->isXmin() ; i<nx_p-patch->isXmax() ; i++) {
+            for (unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++) {
                 
                 (*Bx3D)(i,j,nz_d-1) = Alpha_SM_T   * (*Ey3D)(i,j,nz_p-1)
                 +                   Beta_SM_T    *( (*Bx3D)(i,j,nz_d-2) -(*Bx_val)(i,j))
@@ -470,8 +493,8 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         
         // for By^(d,p,d)
-        for (unsigned int i=0 ; i<nx_d ; i++) {
-            for (unsigned int j=0 ; j<ny_p ; j++) {
+        for (unsigned int i=patch->isXmin() ; i<nx_d-patch->isXmax() ; i++) {
+            for (unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++) {
                 
                 (*By3D)(i,j,nz_d-1) = -Alpha_SM_T * (*Ex3D)(i,j,nz_p-1)
                 +                    Beta_SM_T  *( (*By3D)(i,j,nz_d-2) -(*By_val)(i,j))
@@ -481,6 +504,6 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
                 
             }//j  ---end compute By
         }//i  ---end compute By
-        
+
     }
 }
