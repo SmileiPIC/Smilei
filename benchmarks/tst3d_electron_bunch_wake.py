@@ -11,10 +11,10 @@ Lx = nx * dx
 Ltrans = ntrans*dtrans
 npatch_x = 128
 bunch_sigma_x = 25.
-bunch_sigma_r = 15. 
+bunch_sigma_r = 10. 
 center_bunch = 3*bunch_sigma_x
 n0 = 0.0017
-alpha = 0.1
+alpha = 1.
 gamma= 200. # relativistic lorentz factor
 beta = math.sqrt(1.-1/gamma**2)
 relative_energy_spread = 0.01
@@ -25,10 +25,10 @@ norm_emittance_m = 1.e-6 # transverse normalized emittance
 def nbunch_(x,y,z):
         
 	profile_x = math.exp(-(x-center_bunch)**2/2./bunch_sigma_x**2)
-	profile_r = math.exp(-(y**2+z**2)/2./bunch_sigma_r**2)
+	profile_r = math.exp(-((y-Main.grid_length[1]/2.)**2+(z-Main.grid_length[2]/2.)**2)/2./bunch_sigma_r**2)
         profile = alpha*n0*profile_x*profile_r
 	
-	if ( (  (x-center_bunch)**2/(5.*bunch_sigma_x)**2 + (y**2+z**2)/(5.*bunch_sigma_r)**2 ) < 1. ):
+	if ( (  (x-center_bunch)**2/(5.*bunch_sigma_x)**2 + ((y-Main.grid_length[1]/2.)**2+(z-Main.grid_length[2]/2.)**2)/(5.*bunch_sigma_r)**2 ) < 1. ):
 		return profile
 	else:
 		return 0.
@@ -58,7 +58,7 @@ Main(
 
 MovingWindow(
     time_start = Main.grid_length[0]/2.,
-    velocity_x = 0.9997
+    velocity_x = beta
 )
 
 LoadBalancing(
