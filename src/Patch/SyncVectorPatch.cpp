@@ -29,19 +29,19 @@ void SyncVectorPatch::exchangeParticles(VectorPatch& vecPatches, int ispec, Para
             vecPatches(ipatch)->initCommParticles(smpi, ispec, params, iDim, &vecPatches);
         }
 
-//        #pragma omp for schedule(runtime)
-//        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-//            vecPatches(ipatch)->CommParticles(smpi, ispec, params, iDim, &vecPatches);
-//        }
-//        #pragma omp for schedule(runtime)
-//        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-//            vecPatches(ipatch)->finalizeCommParticles(smpi, ispec, params, iDim, &vecPatches);
-//        }
+        //#pragma omp for schedule(runtime)
+        //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        //    vecPatches(ipatch)->CommParticles(smpi, ispec, params, iDim, &vecPatches);
+        //}
+        //#pragma omp for schedule(runtime)
+        //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        //    vecPatches(ipatch)->finalizeCommParticles(smpi, ispec, params, iDim, &vecPatches);
+        //}
     }
 
-//    #pragma omp for schedule(runtime)
-//    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-//        vecPatches(ipatch)->vecSpecies[ispec]->sort_part();
+    //#pragma omp for schedule(runtime)
+    //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+    //    vecPatches(ipatch)->vecSpecies[ispec]->sort_part();
 }
 
 
@@ -73,9 +73,9 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
         }
     }
 
-//    #pragma omp for schedule(runtime)
-//    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-//        vecPatches(ipatch)->injectParticles(smpi, ispec, params, params.nDim_particle-1, &vecPatches); // wait
+    //#pragma omp for schedule(runtime)
+    //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+    //    vecPatches(ipatch)->injectParticles(smpi, ispec, params, params.nDim_particle-1, &vecPatches); // wait
 
 
     /*
@@ -118,20 +118,25 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
 
 void SyncVectorPatch::sumRhoJ(Params& params, VectorPatch& vecPatches, Timers &timers, int itime)
 {
+    // Sum Jx, Jy and Jz
     SyncVectorPatch::sum_all_components( vecPatches.densities , vecPatches, timers, itime );
+    // Sum rho
     if( (vecPatches.diag_flag) || (params.is_spectral) )SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, itime );
 }
 
 void SyncVectorPatch::sumRhoJs(Params& params, VectorPatch& vecPatches, int ispec , Timers &timers, int itime)
 {
-
+    // Sum Jx_s(ispec), Jy_s(ispec) and Jz_s(ispec)
     if(vecPatches.listJxs_ .size()>0) SyncVectorPatch::sum( vecPatches.listJxs_ , vecPatches, timers, itime  );
     if(vecPatches.listJys_ .size()>0) SyncVectorPatch::sum( vecPatches.listJys_ , vecPatches, timers, itime  );
     if(vecPatches.listJzs_ .size()>0) SyncVectorPatch::sum( vecPatches.listJzs_ , vecPatches, timers, itime  );
+    // Sum rho_s(ispec)
     if(vecPatches.listrhos_.size()>0) SyncVectorPatch::sum( vecPatches.listrhos_, vecPatches, timers, itime  );
 }
 
 
+// fields : contains a single field component for all patches of vecPatches
+// timers and itime were here introduced for debugging
 void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches, Timers &timers, int itime )
 {
     unsigned int nx_, ny_, nz_, h0, oversize[3], n_space[3], gsp[3];
@@ -160,11 +165,11 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches, 
         vecPatches(ipatch)->initSumField( fields[ifield], 0 );
     }
 
-//    #pragma omp for schedule(static)
-//    for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++) {
-//        unsigned int ipatch = ifield%nPatches;
-//        vecPatches(ipatch)->testSumField( fields[ifield], 0 );
-//    }
+    //#pragma omp for schedule(static)
+    //for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++) {
+    //    unsigned int ipatch = ifield%nPatches;
+    //    vecPatches(ipatch)->testSumField( fields[ifield], 0 );
+    //}
 
     // iDim = 0, local
     for (unsigned int icomp=0 ; icomp<nComp ; icomp++) {
@@ -212,11 +217,11 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches, 
             vecPatches(ipatch)->initSumField( fields[ifield], 1 );
         }
 
-//        #pragma omp for schedule(static)
-//        for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++) {
-//            unsigned int ipatch = ifield%nPatches;
-//            vecPatches(ipatch)->testSumField( fields[ifield], 1 );
-//        }
+        //#pragma omp for schedule(static)
+        //for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++) {
+        //    unsigned int ipatch = ifield%nPatches;
+        //    vecPatches(ipatch)->testSumField( fields[ifield], 1 );
+        //}
 
         // iDim = 1, local
         for (unsigned int icomp=0 ; icomp<nComp ; icomp++) {
@@ -316,6 +321,15 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches, 
 }
 
 
+// The idea is to minimize the number of implicit barriers and maximize the workload between barriers
+// fields : contains all (Jx then Jy then Jz) components of a field for all patches of vecPatches
+//     - fields is not directly used in the exchange process, just to find local neighbor's field
+//     - sums are operated on sublists, members of vecPatches, which contains :
+//         - densitiesMPIx   : fields which have MPI   neighbor along X
+//         - densitiesLocalx : fields which have local neighbor along X (a same field can be adressed by both)
+//         - ... for Y and Z
+//     - These fields are identified with lists of index MPIxIdx and LocalxIdx (... for Y and Z)
+// timers and itime were here introduced for debugging
 void SyncVectorPatch::sum_all_components( std::vector<Field*>& fields, VectorPatch& vecPatches, Timers &timers, int itime )
 {
     unsigned int h0, oversize[3], n_space[3];
