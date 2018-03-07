@@ -606,7 +606,7 @@ class TrackParticles(Diagnostic):
 				if timestep is None:
 					data[axis] = self._rawData[axis]
 				else:
-					data[axis] = self._rawData[axis][indexOfRequestedTime, :]
+					data[axis] = self._rawData[axis][indexOfRequestedTime]
 				if axis not in ["Id", "q"]: data[axis] *= self._vfactor
 		else:
 			for t in ts:

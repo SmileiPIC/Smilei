@@ -8,7 +8,6 @@ compile:
     - develop
     - dev_issue226
     - Niel_performance
-    - fix_track
 
   script:
     # Force workdir cleaning in case of retried
@@ -35,7 +34,6 @@ makerun1D:
     - develop
     - dev_issue226
     - Niel_performance
-    - fix_track
 
   script:
     # Move in test dir
@@ -49,7 +47,6 @@ makerun2D:
     - develop
     - dev_issue226
     - Niel_performance
-    - fix_track
 
   script:
     # Move in test dir
@@ -63,7 +60,6 @@ makerun3D:
     - develop
     - dev_issue226
     - Niel_performance
-    - fix_track
 
   script:
     # Move in test dir
@@ -77,7 +73,6 @@ makerunCollisions:
     - develop
     - dev_issue226
     - Niel_performance
-    - fix_track
     
   script:
     # Move in test dir

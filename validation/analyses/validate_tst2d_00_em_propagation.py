@@ -35,3 +35,9 @@ with h5py.File("./restart000/Fields0.h5") as f:
 Validate("Value of the timestep" , dt, 1e-6)
 Validate("Value of the grid step", dx, 1e-6)
 Validate("Patch size", patchSize)
+
+# COMPARE THE FIELDS OF TRACKED PARTICLES
+attributes = ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]
+data = S.TrackParticles.eon(axes=attributes, select="any(t==0, Id==100)").getData()
+for f in attributes:
+	Validate("Field "+f+" of tracked electrons", data[f].flatten(), 1e-4)
