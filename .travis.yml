@@ -14,13 +14,14 @@ script:
  - for v in `git tag | grep '^v'`; do  git archive -o build/html/_downloads/smilei-${v}.tar.gz $v; done
 
 deploy:
- provider: pages
- skip-cleanup: true
- github-token: $GH_TOKEN
- keep-history: true
- local-dir: build/html
- on:
-   branch: master
+ - provider: pages
+   skip-cleanup: true
+   github-token: $GH_TOKEN
+   keep-history: true
+   local-dir: build/html
+   on:
+     branch: master
 
-
+ - provider: script
+   script: curl -X POST "https://registry.hub.docker.com/u/iltommi/docker-smilei/trigger/${DOCKER_HUB_TOKEN}/"
 
