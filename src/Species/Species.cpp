@@ -54,6 +54,8 @@ multiphoton_Breit_Wheeler(2,""),
 ionization_model("none"),
 ppcProfile(NULL),
 chargeProfile(NULL),
+densityProfile(NULL),
+densityProfileType("none"),
 position_initialization_array(NULL),
 position_initialization_on_species(false),
 position_initialization_on_species_index(-1),
@@ -1086,6 +1088,10 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     unsigned int npart_effective = 0 ;
     double *position[nDim_particle], *weight_arr;
     std::vector<int> my_particles_indices;
+
+    if (this->mass > 0)
+        chargeProfile ->valuesAt(xyz, charge        );
+
     if ( position_initialization_array != NULL ){
         for (unsigned int idim = 0; idim < nDim_particle; idim++) position[idim] = &(position_initialization_array[idim*n_numpy_particles]);
                                                                   weight_arr     = &(position_initialization_array[nDim_particle*n_numpy_particles]);
@@ -1101,10 +1107,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
         npart_effective = my_particles_indices.size();
     } else {
         densityProfile->valuesAt(xyz, density       );
-        if (this->mass > 0)
-        {
-            chargeProfile ->valuesAt(xyz, charge        );
-        }
         ppcProfile    ->valuesAt(xyz, n_part_in_cell);
         double remainder, nppc;
         for (i=0; i<n_space_to_create[0]; i++) {
@@ -1250,9 +1252,9 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             for(unsigned int idim=0; idim<nDim_particle; idim++)
                 particles->position(idim,ip) = position[idim][ippy] ;
             //If momentum is not initialized by a numpy array
-            unsigned int i =  (unsigned int)(particles->position(0,ip) - cell_position[0])/cell_length[0];
-            unsigned int j =  (unsigned int)(particles->position(1,ip) - cell_position[1])/cell_length[1];
-            unsigned int k =  (unsigned int)(particles->position(2,ip) - cell_position[2])/cell_length[2];
+            unsigned int i =  (unsigned int)( (particles->position(0,ip) - min_loc_vec[0])/cell_length[0] );
+            unsigned int j =  (unsigned int)( (particles->position(1,ip) - min_loc_vec[1])/cell_length[1] );
+            unsigned int k =  (unsigned int)( (particles->position(2,ip) - min_loc_vec[2])/cell_length[2] );
             vel[0]  = velocity[0](i,j,k);
             vel[1]  = velocity[1](i,j,k);
             vel[2]  = velocity[2](i,j,k);
@@ -1260,11 +1262,10 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             temp[1] = temperature[1](i,j,k);
             temp[2] = temperature[2](i,j,k);
             initMomentum(1,ip, temp, vel);
-            //dummy values for the moment for weights and charges
-            //initWeight(1, ip, 1.);
-            initCharge(1, ip, -1.);
             particles->weight(ip) = weight_arr[ippy] ;
+            initCharge(1, ip, charge(i,j,k));
             indices[ibin]++;
+            cout << "ip " << ip << " x = " << particles->position(0,ip) << " ibin = " <<  int( (particles->position(0,ip)-min_loc) * one_ov_dbin) <<  " charge = " << particles->charge(ip) << " weight = " <<  particles->weight(ip) << " ijk " << i << " " << j << " " << k << " min_loc " << min_loc << " min_loc_vec0 " << min_loc_vec[0] << " dx = " << cell_length[0] << endl;
         }
         for (unsigned int ipart = 0; ipart < npart_effective ; ipart++){
             cout << "ipart " << ipart << " x = " << particles->position(0,ipart) << " ibin = " <<  int( (particles->position(0,ipart)-min_loc) * one_ov_dbin) <<  " charge = " << particles->charge(ipart) << " weight = " <<  particles->weight(ipart) << endl;

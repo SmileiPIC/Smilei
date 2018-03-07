@@ -429,41 +429,44 @@ public:
         // Density
         bool ok1, ok2;
         PyObject *profile1, *profile2, *profile3;
-        // Matter particles
-        if (thisSpecies->mass > 0)
-        {
-            ok1 = PyTools::extract_pyProfile("number_density", profile1, "Species", ispec);
-            ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", ispec);
-            if(  ok1 &&  ok2 ) ERROR("For species '" << species_name << "', cannot define both `number_density ` and `charge_density`.");
-            if( !ok1 && !ok2 ) ERROR("For species '" << species_name << "', must define `number_density ` or `charge_density`.");
-            if( ok1 ) thisSpecies->densityProfileType = "nb";
-            if( ok2 ) thisSpecies->densityProfileType = "charge";
-        }
-        // Photons
-        else if (thisSpecies->mass == 0)
-        {
-            ok1 = PyTools::extract_pyProfile("number_density", profile1, "Species", ispec);
-            ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", ispec);
-            if( ok2 ) ERROR("For photon species '" << species_name << "', charge_density has no meaning.");
-            if( !ok1) ERROR("For photon species '" << species_name << "', must define `number_density`.");
-            thisSpecies->densityProfileType = "nb";
-        }
 
-        thisSpecies->densityProfile = new Profile(profile1, params.nDim_particle, Tools::merge(thisSpecies->densityProfileType,"_density ",species_name), true);
 
         if (thisSpecies->position_initialization_array == NULL){
+            //These quantities are disregarded if positioning of the species is directly specified by the user 
+            // Matter particles
+            if (thisSpecies->mass > 0)
+            {
+                ok1 = PyTools::extract_pyProfile("number_density", profile1, "Species", ispec);
+                ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", ispec);
+                if(  ok1 &&  ok2 ) ERROR("For species '" << species_name << "', cannot define both `number_density ` and `charge_density`.");
+                if( !ok1 && !ok2 ) ERROR("For species '" << species_name << "', must define `number_density ` or `charge_density`.");
+                if( ok1 ) thisSpecies->densityProfileType = "nb";
+                if( ok2 ) thisSpecies->densityProfileType = "charge";
+            }
+            // Photons
+            else if (thisSpecies->mass == 0)
+            {
+                ok1 = PyTools::extract_pyProfile("number_density", profile1, "Species", ispec);
+                ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", ispec);
+                if( ok2 ) ERROR("For photon species '" << species_name << "', charge_density has no meaning.");
+                if( !ok1) ERROR("For photon species '" << species_name << "', must define `number_density`.");
+                thisSpecies->densityProfileType = "nb";
+            }
+
+            thisSpecies->densityProfile = new Profile(profile1, params.nDim_particle, Tools::merge(thisSpecies->densityProfileType,"_density ",species_name), true);
+
            // Number of particles per cell
            if( !PyTools::extract_pyProfile("particles_per_cell", profile1, "Species", ispec))
                ERROR("For species '" << species_name << "', particles_per_cell not found or not understood");
            thisSpecies->ppcProfile = new Profile(profile1, params.nDim_particle, Tools::merge("particles_per_cell ",species_name), true);
-            // Charge
-            if( !PyTools::extract_pyProfile("charge", profile1, "Species", ispec))
-                ERROR("For species '" << species_name << "', charge not found or not understood");
-            thisSpecies->chargeProfile = new Profile(profile1, params.nDim_particle, Tools::merge("charge ",species_name), true);
         } else {
             MESSAGE("Species " << species_name << ": number of particles per cell, charge and number densities are disregarded. This species is initialized from a numpy array."); 
         }
 
+        // Charge
+        if( !PyTools::extract_pyProfile("charge", profile1, "Species", ispec))
+            ERROR("For species '" << species_name << "', charge not found or not understood");
+        thisSpecies->chargeProfile = new Profile(profile1, params.nDim_particle, Tools::merge("charge ",species_name), true);
 
         // Mean velocity
         PyTools::extract3Profiles("mean_velocity", ispec, profile1, profile2, profile3);
@@ -563,11 +566,11 @@ public:
         newSpecies->atomic_number                            = species->atomic_number;
         newSpecies->ionization_model                         = species->ionization_model;
         newSpecies->densityProfileType                       = species->densityProfileType;
-        newSpecies->densityProfile                           = new Profile(species->densityProfile);
+        if ( species->densityProfile ) 
+            newSpecies->densityProfile                       = new Profile(species->densityProfile);
         if ( species->ppcProfile ) 
             newSpecies->ppcProfile                           = new Profile(species->ppcProfile);
-        if ( species->chargeProfile ) 
-            newSpecies->chargeProfile                        = new Profile(species->chargeProfile);
+        newSpecies->chargeProfile                            = new Profile(species->chargeProfile);
         newSpecies->velocityProfile.resize(3);
         newSpecies->velocityProfile[0]                       = new Profile(species->velocityProfile[0]);
         newSpecies->velocityProfile[1]                       = new Profile(species->velocityProfile[1]);
