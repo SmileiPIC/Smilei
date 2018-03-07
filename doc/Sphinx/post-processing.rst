@@ -246,7 +246,8 @@ Open a TrackParticles diagnostic
      | **Example:** ``axes = ["x","px"]`` correspond to phase-space trajectories.
   * ``sort``: If ``False``, the particles are not sorted by ID. This can save significant
     time, but prevents plotting, exporting to VTK, and the ``select`` argument. Only
-    ``getData()`` is available in this mode.
+    ``getData()`` is available in this mode. Read :doc:`this <ids>` for more information
+    on particle IDs.
   * ``length``: The length of each plotted trajectory, in number of timesteps.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 

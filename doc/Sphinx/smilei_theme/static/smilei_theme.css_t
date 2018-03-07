@@ -905,7 +905,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Smaller admonition box */
 div.admonition {
 	padding:7px !important;
-	margin:0px 30px !important;
+	margin:2px 30px !important;
 	background-color: {{ theme_main_color_pale }};
 	border: 1px solid {{ theme_main_color_bold }};
 	overflow: hidden;
