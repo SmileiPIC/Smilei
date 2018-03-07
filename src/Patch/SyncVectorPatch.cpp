@@ -543,6 +543,9 @@ void SyncVectorPatch::sum_all_components( std::vector<Field*>& fields, VectorPat
 
 void SyncVectorPatch::exchangeE( Params& params, VectorPatch& vecPatches )
 {
+    // full_B_exchange is true if (Buneman BC, Lehe or spectral solvers)
+    // E is exchange if spectral solver and/or at the end of initialisation of non-neutral plasma
+
     if (!params.full_B_exchange) {
         SyncVectorPatch::exchange_along_all_directions( vecPatches.listEx_, vecPatches );
         SyncVectorPatch::exchange_along_all_directions( vecPatches.listEy_, vecPatches );
@@ -557,40 +560,57 @@ void SyncVectorPatch::exchangeE( Params& params, VectorPatch& vecPatches )
 
 void SyncVectorPatch::finalizeexchangeE( Params& params, VectorPatch& vecPatches )
 {
+    // full_B_exchange is true if (Buneman BC, Lehe or spectral solvers)
+    // E is exchange if spectral solver and/or at the end of initialisation of non-neutral plasma
 
     if (!params.full_B_exchange) {
         SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listEx_, vecPatches );
         SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listEy_, vecPatches );
         SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listEz_, vecPatches );
     }
+    //else 
+    //    done in exchange_synchronized_per_direction
 }
 
 void SyncVectorPatch::exchangeB( Params& params, VectorPatch& vecPatches )
 {
+    // full_B_exchange is true if (Buneman BC, Lehe or spectral solvers)
 
     if (vecPatches.listBx_[0]->dims_.size()==1) {
+        // Exchange Bs0 : By_ and Bz_ (dual in X)
         SyncVectorPatch::exchange_all_components_along_X( vecPatches.Bs0, vecPatches );
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==2 ) {
         if (!params.full_B_exchange) {
+            // Exchange Bs0 : By_ and Bz_ (dual in X)
             SyncVectorPatch::exchange_all_components_along_X( vecPatches.Bs0, vecPatches );
+            // Exchange Bs1 : Bx_ and Bz_ (dual in Y)
             SyncVectorPatch::exchange_all_components_along_Y( vecPatches.Bs1, vecPatches );
         }
         else {
+            // Exchange Bx_ in Y then X
             SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listBx_, vecPatches );
+            // Exchange By_ in Y then X
             SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listBy_, vecPatches );
+            // Exchange Bz_ in Y then X
             SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listBz_, vecPatches );
         }
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==3 ) {
         if (!params.full_B_exchange) {
+            // Exchange Bs0 : By_ and Bz_ (dual in X)
             SyncVectorPatch::exchange_all_components_along_X( vecPatches.Bs0, vecPatches );
+            // Exchange Bs1 : Bx_ and Bz_ (dual in Y)
             SyncVectorPatch::exchange_all_components_along_Y( vecPatches.Bs1, vecPatches );
+            // Exchange Bs2 : Bx_ and By_ (dual in Z)
             SyncVectorPatch::exchange_all_components_along_Z( vecPatches.Bs2, vecPatches );
         }
         else {
+            // Exchange Bx_ in Z, Y then X
             SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listBx_, vecPatches );
+            // Exchange By_ in Z, Y then X
             SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listBy_, vecPatches );
+            // Exchange Bz_ in Z, Y then X
             SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listBz_, vecPatches );
         }
     }
@@ -599,21 +619,33 @@ void SyncVectorPatch::exchangeB( Params& params, VectorPatch& vecPatches )
 
 void SyncVectorPatch::finalizeexchangeB( Params& params, VectorPatch& vecPatches )
 {
+    // full_B_exchange is true if (Buneman BC, Lehe or spectral solvers)
+
     if (vecPatches.listBx_[0]->dims_.size()==1) {
+        // Finalize exchange Bs0 : By_ and Bz_ (dual in X)
         SyncVectorPatch::finalize_exchange_all_components_along_X( vecPatches.Bs0, vecPatches );
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==2 ) {
         if ( !params.full_B_exchange) {
+            // Finalize exchange Bs0 : By_ and Bz_ (dual in X)
             SyncVectorPatch::finalize_exchange_all_components_along_X( vecPatches.Bs0, vecPatches );
+            // Finalize exchange Bs1 : Bx_ and Bz_ (dual in Y)
             SyncVectorPatch::finalize_exchange_all_components_along_Y( vecPatches.Bs1, vecPatches );
         }
+        //else 
+        //    done in exchange_synchronized_per_direction
     }
     else if ( vecPatches.listBx_[0]->dims_.size()==3 ) {
         if ( !params.full_B_exchange) {
+            // Finalize exchange Bs0 : By_ and Bz_ (dual in X)
             SyncVectorPatch::finalize_exchange_all_components_along_X( vecPatches.Bs0, vecPatches );
+            // Finalize exchange Bs1 : Bx_ and Bz_ (dual in Y)
             SyncVectorPatch::finalize_exchange_all_components_along_Y( vecPatches.Bs1, vecPatches );
+            // Finalize exchange Bs2 : Bx_ and By_ (dual in Z)
             SyncVectorPatch::finalize_exchange_all_components_along_Z( vecPatches.Bs2, vecPatches );
         }
+        //else 
+        //    done in exchange_synchronized_per_direction
     }
 
 }
@@ -635,6 +667,8 @@ void SyncVectorPatch::finalizeexchangeJ( Params& params, VectorPatch& vecPatches
 }
 
 
+// fields : contains a single field component (X, Y or Z) for all patches of vecPatches
+// timers and itime were here introduced for debugging
 void SyncVectorPatch::exchange_along_all_directions( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
     for ( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
@@ -710,6 +744,17 @@ void SyncVectorPatch::exchange_along_all_directions( std::vector<Field*> fields,
 
 }
 
+// MPI_Wait for all communications initialised in exchange_along_all_directions
+void SyncVectorPatch::finalize_exchange_along_all_directions( std::vector<Field*> fields, VectorPatch& vecPatches )
+{
+    for ( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
+            vecPatches(ipatch)->finalizeExchange( fields[ipatch], iDim );
+    } // End for iDim
+
+}
+
 
 //Proceed to the synchronization of field including corner ghost cells.
 //This is done by exchanging one dimension at a time
@@ -737,40 +782,40 @@ void SyncVectorPatch::exchange_synchronized_per_direction( std::vector<Field*> f
 
     if (fields[0]->dims_.size()>2) {
 
-// Dimension 2
-    #pragma omp for schedule(static)
-    for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
-        vecPatches(ipatch)->initExchange( fields[ipatch], 2 );
+        // Dimension 2
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
+            vecPatches(ipatch)->initExchange( fields[ipatch], 2 );
 
-    #pragma omp for schedule(static)
-    for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
-        vecPatches(ipatch)->finalizeExchange( fields[ipatch], 2 );
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
+            vecPatches(ipatch)->finalizeExchange( fields[ipatch], 2 );
 
-    #pragma omp for schedule(static) private(pt1,pt2)
-    for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
+        #pragma omp for schedule(static) private(pt1,pt2)
+        for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
 
-        gsp[2] = ( oversize[2] + 1 + fields[0]->isDual_[2] ); //Ghost size primal
-        if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[2][0]){
-            pt1 = &(*fields[vecPatches(ipatch)->neighbor_[2][0]-h0])(n_space[2]);
-            pt2 = &(*fields[ipatch])(0);
-            //for (unsigned int in = oversize[0] ; in < nx_-oversize[0]; in ++){
-            for (unsigned int in = 0 ; in < nx_ ; in ++){
-                unsigned int i = in * ny_*nz_;
-                //for (unsigned int jn = oversize[1] ; jn < ny_-oversize[1] ; jn ++){
-                for (unsigned int jn = 0 ; jn < ny_ ; jn ++){
-                    unsigned int j = jn *nz_;
-                    for (unsigned int k = 0 ; k < oversize[2] ; k++ ){
-                        pt2[i+j+k] = pt1[i+j+k] ;
-                        pt1[i+j+k+gsp[2]] = pt2[i+j+k+gsp[2]] ;
+            gsp[2] = ( oversize[2] + 1 + fields[0]->isDual_[2] ); //Ghost size primal
+            if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[2][0]){
+                pt1 = &(*fields[vecPatches(ipatch)->neighbor_[2][0]-h0])(n_space[2]);
+                pt2 = &(*fields[ipatch])(0);
+                //for (unsigned int in = oversize[0] ; in < nx_-oversize[0]; in ++){
+                for (unsigned int in = 0 ; in < nx_ ; in ++){
+                    unsigned int i = in * ny_*nz_;
+                    //for (unsigned int jn = oversize[1] ; jn < ny_-oversize[1] ; jn ++){
+                    for (unsigned int jn = 0 ; jn < ny_ ; jn ++){
+                        unsigned int j = jn *nz_;
+                        for (unsigned int k = 0 ; k < oversize[2] ; k++ ){
+                            pt2[i+j+k] = pt1[i+j+k] ;
+                            pt1[i+j+k+gsp[2]] = pt2[i+j+k+gsp[2]] ;
+                        }
                     }
                 }
-            }
-        }// End if ( MPI_me_ == MPI_neighbor_[2][0] )
+            }// End if ( MPI_me_ == MPI_neighbor_[2][0] )
 
-    } // End for( ipatch )
+        } // End for( ipatch )
     }
 
-// Dimension 1
+    // Dimension 1
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
         vecPatches(ipatch)->initExchange( fields[ipatch], 1 );
@@ -799,7 +844,7 @@ void SyncVectorPatch::exchange_synchronized_per_direction( std::vector<Field*> f
 
     } // End for( ipatch )
 
-// Dimension 0
+    // Dimension 0
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
         vecPatches(ipatch)->initExchange( fields[ipatch], 0 );
@@ -827,18 +872,13 @@ void SyncVectorPatch::exchange_synchronized_per_direction( std::vector<Field*> f
 }
 
 
-void SyncVectorPatch::finalize_exchange_along_all_directions( std::vector<Field*> fields, VectorPatch& vecPatches )
-{
-    for ( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
-        #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
-            vecPatches(ipatch)->finalizeExchange( fields[ipatch], iDim );
-    } // End for iDim
-
-}
-
-
-
+// The idea is to minimize the number of implicit barriers and maximize the workload between barriers
+// fields : contains components of B which required exchange in X (By and Bz)
+//     - fields is not directly used in the exchange process, just to find local neighbor's field
+//     - sexchanges are operated on sublists, members of vecPatches, which contains :
+//         - B_MPIx   : fields which have MPI   neighbor along X
+//         - B_Localx : fields which have local neighbor along X (a same field can be adressed by both)
+//     - These fields are identified with lists of index MPIxIdx and LocalxIdx
 void SyncVectorPatch::exchange_all_components_along_X( std::vector<Field*>& fields, VectorPatch& vecPatches )
 {
     unsigned int nMPIx = vecPatches.MPIxIdx.size();
@@ -892,6 +932,7 @@ void SyncVectorPatch::exchange_all_components_along_X( std::vector<Field*>& fiel
 
 }
 
+// MPI_Wait for all communications initialised in exchange_all_components_along_X
 void SyncVectorPatch::finalize_exchange_all_components_along_X( std::vector<Field*>& fields, VectorPatch& vecPatches )
 {
     unsigned int nMPIx = vecPatches.MPIxIdx.size();
@@ -903,6 +944,14 @@ void SyncVectorPatch::finalize_exchange_all_components_along_X( std::vector<Fiel
     }
 }
 
+
+// The idea is to minimize the number of implicit barriers and maximize the workload between barriers
+// fields : contains components of B which required exchange in Y (Bx and Bz)
+//     - fields is not directly used in the exchange process, just to find local neighbor's field
+//     - sexchanges are operated on sublists, members of vecPatches, which contains :
+//         - B_MPIy   : fields which have MPI   neighbor along Y
+//         - B_Localy : fields which have local neighbor along Y (a same field can be adressed by both)
+//     - These fields are identified with lists of index MPIyIdx and LocalyIdx
 void SyncVectorPatch::exchange_all_components_along_Y( std::vector<Field*>& fields, VectorPatch& vecPatches )
 {
     unsigned int nMPIy = vecPatches.MPIyIdx.size();
@@ -958,6 +1007,7 @@ void SyncVectorPatch::exchange_all_components_along_Y( std::vector<Field*>& fiel
 }
 
 
+// MPI_Wait for all communications initialised in exchange_all_components_along_Y
 void SyncVectorPatch::finalize_exchange_all_components_along_Y( std::vector<Field*>& fields, VectorPatch& vecPatches )
 {
     unsigned int nMPIy = vecPatches.MPIyIdx.size();
@@ -971,6 +1021,14 @@ void SyncVectorPatch::finalize_exchange_all_components_along_Y( std::vector<Fiel
 
 }
 
+
+// The idea is to minimize the number of implicit barriers and maximize the workload between barriers
+// fields : contains components of B which required exchange in Z (Bx and By)
+//     - fields is not directly used in the exchange process, just to find local neighbor's field
+//     - sexchanges are operated on sublists, members of vecPatches, which contains :
+//         - B_MPIz   : fields which have MPI   neighbor along Z
+//         - B_Localz : fields which have local neighbor along Z (a same field can be adressed by both)
+//     - These fields are identified with lists of index MPIzIdx and LocalzIdx
 void SyncVectorPatch::exchange_all_components_along_Z( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
     unsigned int nMPIz = vecPatches.MPIzIdx.size();
@@ -1024,6 +1082,7 @@ void SyncVectorPatch::exchange_all_components_along_Z( std::vector<Field*> field
     }
 }
 
+// MPI_Wait for all communications initialised in exchange_all_components_along_Z
 void SyncVectorPatch::finalize_exchange_all_components_along_Z( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
     unsigned int nMPIz = vecPatches.MPIzIdx.size();
