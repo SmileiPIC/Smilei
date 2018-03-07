@@ -88,6 +88,9 @@ private :
     //! Approximate total number of particles
     double npart_total;
     
+    //! Number of particles shared among patches in this proc
+    uint32_t nParticles_local;
+    
     //! Booleans to determine which attributes to write out
     std::vector<bool> write_position;
     std::vector<bool> write_momentum;

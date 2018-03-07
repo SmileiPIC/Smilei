@@ -56,6 +56,7 @@ class TrackParticles(Diagnostic):
 			             "Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
 				if prop in f:
 					self._h5items[prop] = f[prop]
+			self.available_properties = list(self._h5items.keys())
 			# Memorize the locations of timesteps in the files
 			for it, t in enumerate(f["Times"]):
 				self._locationForTime[t] = it
@@ -74,6 +75,13 @@ class TrackParticles(Diagnostic):
 					self._timesteps += [int(t)]
 			self._timesteps = self._np.array(self._timesteps)
 			self._alltimesteps = self._np.copy(self._timesteps)
+			properties = {"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
+			              "momentum/x":"px", "momentum/y":"py", "momentum/z":"pz",
+			              "charge":"q", "weight":"w", "chi":"chi",
+			              "E/x":"Ex", "E/y":"Ey", "E/z":"Ez",
+			              "B/x":"Bx", "B/y":"By", "B/z":"Bz"}
+			T0 = next(f["data"].itervalues())["particles/"+self.species]
+			self.available_properties = [v for k,v in properties.items() if k in T0]
 		
 		# Get available times in the hdf5 file
 		if self._timesteps.size == 0:
@@ -250,54 +258,57 @@ class TrackParticles(Diagnostic):
 		if len(axes)>0:
 			self.axes = axes
 			for axis in axes:
-				if axis not in self._h5items.keys():
+				if axis not in self.available_properties:
 					self._error += "Error: Argument 'axes' has item '"+str(axis)+"' unknown.\n"
-					self._error += "       Available axes are: "+(", ".join(sorted(self._h5items.keys())))
+					self._error += "       Available axes are: "+(", ".join(sorted(self.available_properties)))
 					return
 		# otherwise use default
 		else:
-			self.axes = list(self._h5items.keys())
+			self.axes = self.available_properties
+		
 		# Then figure out axis units
-		self._type = self.axes
-		for axis in self.axes:
-			axisunits = ""
-			if axis == "Id":
-				self._centers.append( [0, self._h5items[axis][0,-1]] )
-			elif axis in ["x" , "y" , "z" ]:
-				axisunits = "L_r"
-				self._centers.append( [0., self.namelist.Main.grid_length[{"x":0,"y":1,"z":2}[axis]]] )
-			elif axis in ["px", "py", "pz"]:
-				axisunits = "P_r"
-				self._centers.append( [-1., 1.] )
-			elif axis == "w":
-				axisunits = "N_r"
-				self._centers.append( [0., 1.] )
-			elif axis == "q":
-				axisunits = "Q_r"
-				self._centers.append( [-10., 10.] )
-			elif axis == "chi":
-				axisunits = "1"
-				self._centers.append( [0., 2.] )
-			elif axis[0] == "E":
-				axisunits = "E_r"
-				self._centers.append( [-1., 1.] )
-			elif axis[0] == "B":
-				axisunits = "B_r"
-				self._centers.append( [-1., 1.] )
-			self._log.append( False )
-			self._label.append( axis )
-			self._units.append( axisunits )
-		self._title = "Track particles '"+species+"'"
-		self._shape = [0]*len(self.axes)
+		if self._sort:
+			self._type = self.axes
+			for axis in self.axes:
+				axisunits = ""
+				if axis == "Id":
+					self._centers.append( [0, 281474976710655] )
+				elif axis in ["x" , "y" , "z" ]:
+					axisunits = "L_r"
+					self._centers.append( [0., self.namelist.Main.grid_length[{"x":0,"y":1,"z":2}[axis]]] )
+				elif axis in ["px", "py", "pz"]:
+					axisunits = "P_r"
+					self._centers.append( [-1., 1.] )
+				elif axis == "w":
+					axisunits = "N_r"
+					self._centers.append( [0., 1.] )
+				elif axis == "q":
+					axisunits = "Q_r"
+					self._centers.append( [-10., 10.] )
+				elif axis == "chi":
+					axisunits = "1"
+					self._centers.append( [0., 2.] )
+				elif axis[0] == "E":
+					axisunits = "E_r"
+					self._centers.append( [-1., 1.] )
+				elif axis[0] == "B":
+					axisunits = "B_r"
+					self._centers.append( [-1., 1.] )
+				self._log.append( False )
+				self._label.append( axis )
+				self._units.append( axisunits )
+			self._title = "Track particles '"+species+"'"
+			self._shape = [0]*len(self.axes)
+		
 		# Hack to work with 1 axis
 		if len(axes)==1: self._vunits = self._units[0]
 		else: self._vunits = ""
 		
-		self._rawData = None
-		
 		# Set the directory in case of exporting
 		self._exportPrefix = "TrackParticles_"+self.species+"_"+"".join(self.axes)
 		self._exportDir = self._setExportDir(self._exportPrefix)
+		
+		self._rawData = None
 		
 		# Finish constructor
 		self.length = length or self._timesteps[-1]
