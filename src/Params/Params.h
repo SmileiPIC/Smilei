@@ -123,6 +123,8 @@ public:
     //Poisson solver
     //! Do we solve poisson
     bool solve_poisson;
+    //! Do we solve "relativistic poisson problem" for relativistic species
+    bool solve_relativistic_poisson;
     //! Maxium number of poisson iteration
     unsigned int poisson_max_iteration;
     //! Maxium poisson error tolerated
