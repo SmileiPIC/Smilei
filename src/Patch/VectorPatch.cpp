@@ -750,6 +750,274 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 } // END solvePoisson
 
 
+void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
+{
+    // Assumption: one or more species move in vacuum with mean lorentz gamma factor gamma_mean in the x direction, 
+    // with low energy spread.
+    // The electromagnetic fields of this species can be initialized solving a Poisson-like problem (here informally 
+    // referred to as "relativistic Poisson problem") and then performing a Lorentz back-transformation to find the 
+    // electromagnetic fields of the species in the lab frame.
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
+    // In case of non-monoenergetic relativistic distribution (NOT IMPLEMENTED AT THE MOMENT), the linearity of Maxwell's equations can be exploited:
+    // divide the species in quasi-monoenergetic bins with gamma_i and repeat the same procedure for described above 
+    // for all bins. Finally, in the laboratory frame sum all the fields of the various energy-bin ensembles of particles.
+    
+    // All the parameters for the Poisson problem (e.g. maximum iteration) are the same used in the namelist
+    // for the traditional Poisson problem
+
+    Timer ptimer("global");
+    ptimer.init(smpi);
+    ptimer.restart();
+
+
+    unsigned int iteration_max = params.poisson_max_iteration;
+    double           error_max = params.poisson_max_error;
+    unsigned int iteration=0;
+
+    // Init & Store internal data (phi, r, p, Ap) per patch
+    double rnew_dot_rnew_local(0.);
+    double rnew_dot_rnew(0.);
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+        (*this)(ipatch)->EMfields->initPoisson( (*this)(ipatch) );
+        rnew_dot_rnew_local += (*this)(ipatch)->EMfields->compute_r();
+    }
+    MPI_Allreduce(&rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+    std::vector<Field*> Ex_;
+    std::vector<Field*> Ap_;
+
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+        Ex_.push_back( (*this)(ipatch)->EMfields->Ex_ );
+        Ap_.push_back( (*this)(ipatch)->EMfields->Ap_ );
+    }
+
+    unsigned int nx_p2_global = (params.n_space_global[0]+1);
+    if ( Ex_[0]->dims_.size()>1 ) {
+        nx_p2_global *= (params.n_space_global[1]+1);
+        if ( Ex_[0]->dims_.size()>2 ) {
+            nx_p2_global *= (params.n_space_global[2]+1);
+        }
+    }
+
+    // compute control parameter
+    double ctrl = rnew_dot_rnew / (double)(nx_p2_global);
+
+    // ---------------------------------------------------------
+    // Starting iterative loop for the conjugate gradient method
+    // ---------------------------------------------------------
+    if (smpi->isMaster()) DEBUG("Starting iterative loop for CG method");
+    while ( (ctrl > error_max) && (iteration<iteration_max) ) {
+        iteration++;
+        if (smpi->isMaster()) DEBUG("iteration " << iteration << " started with control parameter ctrl = " << ctrl*1.e14 << " x 1e-14");
+
+        // scalar product of the residual
+        double r_dot_r = rnew_dot_rnew;
+
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+            (*this)(ipatch)->EMfields->compute_Ap( (*this)(ipatch) );
+
+        // Exchange Ap_ (intra & extra MPI)
+        SyncVectorPatch::exchange( Ap_, *this );
+        SyncVectorPatch::finalizeexchange( Ap_, *this );
+
+       // scalar product p.Ap
+        double p_dot_Ap       = 0.0;
+        double p_dot_Ap_local = 0.0;
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            p_dot_Ap_local += (*this)(ipatch)->EMfields->compute_pAp();
+        }
+        MPI_Allreduce(&p_dot_Ap_local, &p_dot_Ap, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+
+        // compute new potential and residual
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            (*this)(ipatch)->EMfields->update_pand_r( r_dot_r, p_dot_Ap );
+        }
+
+        // compute new residual norm
+        rnew_dot_rnew       = 0.0;
+        rnew_dot_rnew_local = 0.0;
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            rnew_dot_rnew_local += (*this)(ipatch)->EMfields->compute_r();
+        }
+        MPI_Allreduce(&rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        if (smpi->isMaster()) DEBUG("new residual norm: rnew_dot_rnew = " << rnew_dot_rnew);
+
+        // compute new directio
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            (*this)(ipatch)->EMfields->update_p( rnew_dot_rnew, r_dot_r );
+        }
+
+        // compute control parameter
+        ctrl = rnew_dot_rnew / (double)(nx_p2_global);
+        if (smpi->isMaster()) DEBUG("iteration " << iteration << " done, exiting with control parameter ctrl = " << ctrl);
+
+    }//End of the iterative loop
+
+
+    // --------------------------------
+    // Status of the solver convergence
+    // --------------------------------
+    if (iteration_max>0 && iteration == iteration_max) {
+        if (smpi->isMaster())
+            WARNING("Poisson solver did not converge: reached maximum iteration number: " << iteration
+                    << ", relative err is ctrl = " << 1.0e14*ctrl << " x 1e-14");
+    }
+    else {
+        if (smpi->isMaster())
+            MESSAGE(1,"Poisson solver converged at iteration: " << iteration
+                    << ", relative err is ctrl = " << 1.0e14*ctrl << " x 1e-14");
+    }
+
+    // ------------------------------------------
+    // Compute the electrostatic fields Ex and Ey
+    // ------------------------------------------
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+        (*this)(ipatch)->EMfields->initE( (*this)(ipatch) );
+
+    SyncVectorPatch::exchangeE( params, *this );
+    SyncVectorPatch::finalizeexchangeE( params, *this );
+
+    // Centering of the electrostatic fields
+    // -------------------------------------
+    vector<double> E_Add(Ex_[0]->dims_.size(),0.);
+    if ( Ex_[0]->dims_.size()==3 ) {
+        double Ex_avg_local(0.), Ex_avg(0.), Ey_avg_local(0.), Ey_avg(0.), Ez_avg_local(0.), Ez_avg(0.);
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            Ex_avg_local += (*this)(ipatch)->EMfields->computeExSum();
+            Ey_avg_local += (*this)(ipatch)->EMfields->computeEySum();
+            Ez_avg_local += (*this)(ipatch)->EMfields->computeEzSum();
+        }
+
+        MPI_Allreduce(&Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        MPI_Allreduce(&Ey_avg_local, &Ey_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        MPI_Allreduce(&Ez_avg_local, &Ez_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+        E_Add[0] = -Ex_avg/((params.n_space[0]+2)*(params.n_space[1]+1)*(params.n_space[2]+1));
+        E_Add[1] = -Ey_avg/((params.n_space[0]+1)*(params.n_space[1]+2)*(params.n_space[2]+1));;
+        E_Add[2] = -Ez_avg/((params.n_space[0]+1)*(params.n_space[1]+1)*(params.n_space[2]+2));;
+    }
+    else if ( Ex_[0]->dims_.size()==2 ) {
+        double Ex_XminYmax = 0.0;
+        double Ey_XminYmax = 0.0;
+        double Ex_XmaxYmin = 0.0;
+        double Ey_XmaxYmin = 0.0;
+
+        //The YmaxXmin patch has Patch coordinates X=0, Y=2^m1-1= number_of_patches[1]-1.
+        std::vector<int> xcall( 2, 0 );
+        xcall[0] = 0;
+        xcall[1] = params.number_of_patches[1]-1;
+        int patch_YmaxXmin = domain_decomposition_->getDomainId( xcall );
+        //The MPI rank owning it is
+        int rank_XminYmax = smpi->hrank(patch_YmaxXmin);
+        //The YminXmax patch has Patch coordinates X=2^m0-1= number_of_patches[0]-1, Y=0.
+        //Its hindex is
+        xcall[0] = params.number_of_patches[0]-1;
+        xcall[1] = 0;
+        int patch_YminXmax = domain_decomposition_->getDomainId( xcall );
+        //The MPI rank owning it is
+        int rank_XmaxYmin = smpi->hrank(patch_YminXmax);
+
+
+        //cout << patch_YmaxXmin << " " << rank_XminYmax << " " << patch_YminXmax << " " << rank_XmaxYmin << endl;
+
+        if ( smpi->getRank() == rank_XminYmax ) {
+            Ex_XminYmax = (*this)(patch_YmaxXmin-((*this).refHindex_))->EMfields->getEx_XminYmax();
+            Ey_XminYmax = (*this)(patch_YmaxXmin-((*this).refHindex_))->EMfields->getEy_XminYmax();
+        }
+
+        // Xmax-Ymin corner
+        if ( smpi->getRank() == rank_XmaxYmin ) {
+            Ex_XmaxYmin = (*this)(patch_YminXmax-((*this).refHindex_))->EMfields->getEx_XmaxYmin();
+            Ey_XmaxYmin = (*this)(patch_YminXmax-((*this).refHindex_))->EMfields->getEy_XmaxYmin();
+        }
+
+        MPI_Bcast(&Ex_XminYmax, 1, MPI_DOUBLE, rank_XminYmax, MPI_COMM_WORLD);
+        MPI_Bcast(&Ey_XminYmax, 1, MPI_DOUBLE, rank_XminYmax, MPI_COMM_WORLD);
+
+        MPI_Bcast(&Ex_XmaxYmin, 1, MPI_DOUBLE, rank_XmaxYmin, MPI_COMM_WORLD);
+        MPI_Bcast(&Ey_XmaxYmin, 1, MPI_DOUBLE, rank_XmaxYmin, MPI_COMM_WORLD);
+
+        //This correction is always done, independantly of the periodicity. Is this correct ?
+        E_Add[0] = -0.5*(Ex_XminYmax+Ex_XmaxYmin);
+        E_Add[1] = -0.5*(Ey_XminYmax+Ey_XmaxYmin);
+
+#ifdef _3D_LIKE_CENTERING
+        double Ex_avg_local(0.), Ex_avg(0.), Ey_avg_local(0.), Ey_avg(0.);
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            Ex_avg_local += (*this)(ipatch)->EMfields->computeExSum();
+            Ey_avg_local += (*this)(ipatch)->EMfields->computeEySum();
+        }
+
+        MPI_Allreduce(&Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        MPI_Allreduce(&Ey_avg_local, &Ey_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+        E_Add[0] = -Ex_avg/((params.n_space[0]+2)*(params.n_space[1]+1));
+        E_Add[1] = -Ey_avg/((params.n_space[0]+1)*(params.n_space[1]+2));;
+#endif
+
+    }
+    else if( Ex_[0]->dims_.size()==1 ) {
+        double Ex_Xmin = 0.0;
+        double Ex_Xmax = 0.0;
+
+        unsigned int rankXmin = 0;
+        if ( smpi->getRank() == 0 ) {
+            //Ex_Xmin = (*Ex1D)(index_bc_min[0]);
+            Ex_Xmin = (*this)( (0)-((*this).refHindex_))->EMfields->getEx_Xmin();
+        }
+        MPI_Bcast(&Ex_Xmin, 1, MPI_DOUBLE, rankXmin, MPI_COMM_WORLD);
+
+        unsigned int rankXmax = smpi->getSize()-1;
+        if ( smpi->getRank() == smpi->getSize()-1 ) {
+            //Ex_Xmax = (*Ex1D)(index_bc_max[0]);
+            Ex_Xmax = (*this)( (params.number_of_patches[0]-1)-((*this).refHindex_))->EMfields->getEx_Xmax();
+        }
+        MPI_Bcast(&Ex_Xmax, 1, MPI_DOUBLE, rankXmax, MPI_COMM_WORLD);
+        E_Add[0] = -0.5*(Ex_Xmin+Ex_Xmax);
+
+#ifdef _3D_LIKE_CENTERING
+        double Ex_avg_local(0.), Ex_avg(0.);
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            Ex_avg_local += (*this)(ipatch)->EMfields->computeExSum();
+        }
+
+        MPI_Allreduce(&Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+        E_Add[0] = -Ex_avg/((params.n_space[0]+2));
+#endif
+
+    }
+
+    // Centering electrostatic fields
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+        (*this)(ipatch)->EMfields->centeringE( E_Add );
+
+
+    // Compute error on the Poisson equation
+    double deltaPoisson_max = 0.0;
+    int i_deltaPoisson_max  = -1;
+
+#ifdef _A_FINALISER
+    for (unsigned int i=0; i<nx_p; i++) {
+        double deltaPoisson = abs( ((*Ex1D)(i+1)-(*Ex1D)(i))/dx - (*rho1D)(i) );
+        if (deltaPoisson > deltaPoisson_max) {
+            deltaPoisson_max   = deltaPoisson;
+            i_deltaPoisson_max = i;
+        }
+    }
+#endif
+
+    //!\todo Reduce to find global max
+    if (smpi->isMaster())
+        MESSAGE(1,"Poisson equation solved. Maximum err = " << deltaPoisson_max << " at i= " << i_deltaPoisson_max);
+
+    ptimer.update();
+    MESSAGE("Time in Poisson : " << ptimer.getTime() );
+
+} // END solveRelativisticPoisson
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------
 // ----------------------------------------------    BALANCING METHODS    ----------------------------------------------
