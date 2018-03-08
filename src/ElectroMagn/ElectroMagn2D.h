@@ -24,6 +24,7 @@ public:
     void initPoisson(Patch *patch);
     double compute_r();
     void compute_Ap(Patch *patch);
+    void compute_Ap_relativistic_Poisson(Patch* patch, double gamma_mean);
     //Access to Ap
     double compute_pAp();
     void update_pand_r(double r_dot_r, double p_dot_Ap);

@@ -358,7 +358,71 @@ void ElectroMagn2D::compute_Ap(Patch* patch)
             -                   two_ov_dx2dy2*(*p_)(nx_p-1,ny_p-1);
     }
         
-} // compute_pAp
+} // compute_Ap
+
+void ElectroMagn2D::compute_Ap_relativistic_Poisson(Patch* patch, double gamma_mean)
+{
+    // gamma_mean is the average Lorentz factor of the species whose fields will be computed
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
+
+    double one_ov_dx_sq_ov_gamma_sq       = 1.0/(dx*dx)/(gamma_mean*gamma_mean);
+    double one_ov_dy_sq                   = 1.0/(dy*dy);
+    double two_ov_dxgam2dy2               = 2.0*(1.0/(dx*dx)/(gamma_mean*gamma_mean)+1.0/(dy*dy));
+    
+    // vector product Ap = A*p
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            (*Ap_)(i,j) = one_ov_dx_sq_ov_gamma_sq*((*p_)(i-1,j)+(*p_)(i+1,j))
+                + one_ov_dy_sq*((*p_)(i,j-1)+(*p_)(i,j+1))
+                - two_ov_dxgam2dy2*(*p_)(i,j);
+        }//j
+    }//i
+        
+        
+    // Xmin BC
+    if ( patch->isXmin() ) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            //Ap_(0,j)      = one_ov_dx_sq*(pXmin[j]+p_(1,j))
+            (*Ap_)(0,j)      = one_ov_dx_sq_ov_gamma_sq*((*p_)(1,j))
+                +              one_ov_dy_sq*((*p_)(0,j-1)+(*p_)(0,j+1))
+                -              two_ov_dxgam2dy2*(*p_)(0,j);
+        }
+        // at corners
+        //Ap_(0,0)           = one_ov_dx_sq*(pXmin[0]+p_(1,0))               // Xmin/Ymin
+        //    +                   one_ov_dy_sq*(pYmin[0]+p_(0,1))
+        (*Ap_)(0,0)           = one_ov_dx_sq_ov_gamma_sq*((*p_)(1,0))               // Xmin/Ymin
+            +                   one_ov_dy_sq*((*p_)(0,1))
+            -                   two_ov_dxgam2dy2*(*p_)(0,0);
+        //Ap_(0,ny_p-1)      = one_ov_dx_sq*(pXmin[ny_p-1]+p_(1,ny_p-1))     // Xmin/Ymax
+        //    +                   one_ov_dy_sq*(p_(0,ny_p-2)+pYmax[0])
+        (*Ap_)(0,ny_p-1)      = one_ov_dx_sq_ov_gamma_sq*((*p_)(1,ny_p-1))     // Xmin/Ymax
+            +                   one_ov_dy_sq*((*p_)(0,ny_p-2))
+            -                   two_ov_dxgam2dy2*(*p_)(0,ny_p-1);
+    }
+        
+    // Xmax BC
+    if ( patch->isXmax() ) {
+            
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            //Ap_(nx_p-1,j) = one_ov_dx_sq*(p_(nx_p-2,j)+pXmax[j])
+            (*Ap_)(nx_p-1,j) = one_ov_dx_sq_ov_gamma_sq*((*p_)(nx_p-2,j))
+                +              one_ov_dy_sq*((*p_)(nx_p-1,j-1)+(*p_)(nx_p-1,j+1))
+                -              two_ov_dxgam2dy2*(*p_)(nx_p-1,j);
+        }
+        // at corners
+        //Ap_(nx_p-1,0)      = one_ov_dx_sq*(p_(nx_p-2,0)+pXmax[0])                 // Xmax/Ymin
+        //    +                   one_ov_dy_sq*(pYmin[nx_p-1]+p_(nx_p-1,1))
+        (*Ap_)(nx_p-1,0)      = one_ov_dx_sq_ov_gamma_sq*((*p_)(nx_p-2,0))                 // Xmax/Ymin
+            +                   one_ov_dy_sq*((*p_)(nx_p-1,1))
+            -                   two_ov_dxgam2dy2*(*p_)(nx_p-1,0);
+        //Ap_(nx_p-1,ny_p-1) = one_ov_dx_sq*(p_(nx_p-2,ny_p-1)+pXmax[ny_p-1])       // Xmax/Ymax
+        //    +                   one_ov_dy_sq*(p_(nx_p-1,ny_p-2)+pYmax[nx_p-1])
+        (*Ap_)(nx_p-1,ny_p-1) = one_ov_dx_sq_ov_gamma_sq*((*p_)(nx_p-2,ny_p-1))       // Xmax/Ymax
+            +                   one_ov_dy_sq*((*p_)(nx_p-1,ny_p-2))
+            -                   two_ov_dxgam2dy2*(*p_)(nx_p-1,ny_p-1);
+    }
+        
+} // compute_Ap_relativistic_Poisson
 
 double ElectroMagn2D::compute_pAp()
 {
