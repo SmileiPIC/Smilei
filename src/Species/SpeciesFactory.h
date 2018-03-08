@@ -50,14 +50,6 @@ public:
         if (!PyTools::extract("pusher", pusher ,"Species",ispec) )
             if ( patch->isMaster() ) WARNING("For species '" << species_name << "', pusher not defined: assumed = 'boris'.");
 
-        // Extract if the species is relativistic and needs ad hoc fields initialization
-        bool relativistic_field_initialization = false;
-        if (!PyTools::extract("relativistic_field_initialization", relativistic_field_initialization ,"Species",ispec) )
-        {
-            if ( patch->isMaster() )
-                WARNING("For species '" << species_name << "', relativistic_field_initialization not defined: assumed = 'false'.");
-        }
-
         // Extract type of species radiation from namelist
         std::string radiation_model = "none"; // default value
         if (!PyTools::extract("radiation_model", radiation_model ,"Species",ispec) )
@@ -407,6 +399,17 @@ public:
                 }
             }
         }
+
+        // Extract if the species is relativistic and needs ad hoc fields initialization
+        bool relativistic_field_initialization = false;
+        if (!PyTools::extract("relativistic_field_initialization", relativistic_field_initialization ,"Species",ispec) )
+            {
+            if ( patch->isMaster() )
+            WARNING("For species '" << species_name << "', relativistic_field_initialization not defined: assumed = 'false'.");
+            }
+        thisSpecies->relativistic_field_initialization = relativistic_field_initialization;    
+
+
 
         // Species geometry
         // ----------------
