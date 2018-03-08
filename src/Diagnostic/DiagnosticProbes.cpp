@@ -323,7 +323,7 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
     nPart_MPI = 0;
     offset_in_MPI .resize( vecPatches.size() );
     offset_in_file.resize( vecPatches.size() );
-    unsigned int numCorners = 1<<nDim_field; // number of patch corners
+    unsigned int numCorners = 1<<nDim_particle; // number of patch corners
     unsigned int ntot, IP, ipart_local, i, k, iDim;
     bool is_in_domain;
     vector<double> point(nDim_particle), mins(nDim_particle), maxs(nDim_particle);  //warning, works only if nDim_particle >= nDim_field
@@ -341,14 +341,14 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
                 patchMax[0] = ( vecPatches(ipatch)->Pcoordinates[0]+1 )*patch_size[0];
             for( k=1; k<3; k++ ) {
                 mins[k] = numeric_limits<double>::max();
-                maxs[k] = numeric_limits<double>::lowest();
-                patchMin[k] = 0. ;
-                patchMax[k] = ( vecPatches(ipatch)->Pcoordinates[1]+1 )*patch_size[1];
+                maxs[k] = -mins[k];
+                patchMin[k] = -( vecPatches(ipatch)->Pcoordinates[1]+1 )*patch_size[1];
+                patchMax[k] =  ( vecPatches(ipatch)->Pcoordinates[1]+1 )*patch_size[1];
             }
         } else {
-            for( k=0; k<nDim_field; k++ ) {
+            for( k=0; k<nDim_particle; k++ ) {
                 mins[k] = numeric_limits<double>::max();
-                maxs[k] = numeric_limits<double>::lowest();
+                maxs[k] =  numeric_limits<double>::lowest();
                 patchMin[k] = ( vecPatches(ipatch)->Pcoordinates[k]   )*patch_size[k];
                 patchMax[k] = ( vecPatches(ipatch)->Pcoordinates[k]+1 )*patch_size[k];
             }
@@ -356,12 +356,12 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
         // loop patch corners
         for( i=0; i<numCorners; i++ ) {
             // Get coordinates of the current corner in terms of x,y,...
-            for( k=0; k<nDim_field; k++ )                          // dim field or particle ??
+            for( k=0; k<nDim_particle; k++ )                          
                 point[k] = ( (((i>>k)&1)==0) ? patchMin[k] : patchMax[k] ) - origin[k];
             // Get position of the current corner in the probe's coordinate system
             point = matrixTimesVector( axesInverse, point );
             // Store mins and maxs
-            for( k=0; k<nDim_field; k++ ) {
+            for( k=0; k<nDim_particle; k++ ) {
                 if( point[k]<mins[k] ) mins[k]=point[k];
                 if( point[k]>maxs[k] ) maxs[k]=point[k];
             }
@@ -369,7 +369,7 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
         // Loop directions to figure out the range of useful indices
 
         for( i=0; i<dimProbe; i++ ) {
-            if( mins[i]<0. ) mins[i]=0.;
+            if( mins[i]<0. ) mins[i]=0.;   // Why ?
             if( mins[i]>1. ) mins[i]=1.;
             minI[i] = ((unsigned int) floor(mins[i]*((double)(vecNumber[i]-1))));
             if( maxs[i]<0. ) maxs[i]=0.;
