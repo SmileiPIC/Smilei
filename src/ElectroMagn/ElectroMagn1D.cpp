@@ -248,6 +248,21 @@ void ElectroMagn1D::compute_Ap(Patch *patch)
     
 } // compute_Ap
 
+void ElectroMagn1D::compute_Ap_relativistic_Poisson(Patch* patch, double gamma_mean)
+{
+    double one_ov_dx_sq_ov_gamma_sq       = 1.0/(dx*dx)/(gamma_mean*gamma_mean);
+    double two_ov_dxgam2                  = 2.0*( 1.0/(dx*dx)/(gamma_mean*gamma_mean) );
+
+    // vector product Ap = A*p
+    for (unsigned int i=1 ; i<dimPrim[0]-1 ; i++)
+        (*Ap_)(i) = one_ov_dx_sq_ov_gamma_sq * ( (*p_)(i-1) + (*p_)(i+1) ) - two_ov_dxgam2 *(*p_)(i)   ;
+        
+    // apply BC on Ap
+    if (patch->isXmin()) (*Ap_)(0)      = one_ov_dx_sq_ov_gamma_sq * ( (*p_)(1) )     - two_ov_dxgam2 * (*p_)(0);
+    if (patch->isXmax()) (*Ap_)(nx_p-1) = one_ov_dx_sq_ov_gamma_sq * ( (*p_)(nx_p-2) )- two_ov_dxgam2 * (*p_)(nx_p-1); 
+    
+} // compute_Ap_relativistic_Poisson
+
 double ElectroMagn1D::compute_pAp()
 {
     double p_dot_Ap_local = 0.0;
