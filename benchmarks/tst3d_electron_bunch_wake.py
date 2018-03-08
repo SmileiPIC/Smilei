@@ -51,13 +51,16 @@ Main(
     EM_boundary_conditions = [ ["silver-muller"] ],
 
     solve_poisson = False,
+    
+    solve_relativistic_poisson = True,
+    
     print_every = 100,
 
     random_seed = smilei_mpi_rank
 )
 
 MovingWindow(
-    time_start = Main.grid_length[0]/2.,
+    time_start = Main.grid_length[0]/2.-center_bunch,
     velocity_x = beta
 )
 
@@ -76,7 +79,7 @@ Species(
     c_part_max = 1.0,
     mass = 1.0,
     charge = -1.0,
-    charge_density = polygonal(xpoints=[center_bunch+50.,center_bunch+800.,200.*bunch_sigma_x,225.*bunch_sigma_x],xvalues=[0.,n0,n0,0.]),
+    charge_density = polygonal(xpoints=[center_bunch+50.,center_bunch+100.,200.*bunch_sigma_x,225.*bunch_sigma_x],xvalues=[0.,n0,n0,0.]),
     mean_velocity = [0.0, 0.0, 0.0],
     temperature = [0.,0.,0.],
     pusher = "boris",
@@ -93,6 +96,7 @@ Species(
     name = "bunch_electrons",
     position_initialization = "regular",
     momentum_initialization = "maxwell-juettner",
+    relativistic_field_initialization = True,
     particles_per_cell = 1,
     c_part_max = 1.0,
     mass = 1.0,
@@ -119,7 +123,7 @@ Checkpoints(
 list_fields = ['Ex','Ey','Rho','Jx']
 
 DiagFields(
-    every = 1,
+    every = 20,
         fields = list_fields
 )
 
@@ -156,4 +160,3 @@ DiagProbe(
 #       ]
 #)
                                                                                                                                                                  
-
