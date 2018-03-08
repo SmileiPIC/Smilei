@@ -771,7 +771,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
 
     // IMPORTANT: for the moment it is fixed, but it must be computed from the beam distribution 
     // TO IMPLEMENT on a later commit
-    double gamma_mean = 200. 
+    double gamma_mean = 200.; 
 
     unsigned int iteration_max = params.poisson_max_iteration;
     double           error_max = params.poisson_max_error;
@@ -876,10 +876,16 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
     // Compute the electromagnetic fields E and B
     // ------------------------------------------
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+        {
         (*this)(ipatch)->EMfields->initE_relativistic_Poisson( (*this)(ipatch), gamma_mean );
+        (*this)(ipatch)->EMfields->initB_relativistic_Poisson( (*this)(ipatch), gamma_mean );
+        } // end loop on patches
+        
 
     SyncVectorPatch::exchangeE( params, *this );
     SyncVectorPatch::finalizeexchangeE( params, *this );
+    SyncVectorPatch::exchangeB( params, *this );
+    SyncVectorPatch::finalizeexchangeB( params, *this );
 
     // Centering of the electromagnetic fields
     // -------------------------------------
@@ -1013,10 +1019,10 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
 
     //!\todo Reduce to find global max
     if (smpi->isMaster())
-        MESSAGE(1,"Poisson equation solved. Maximum err = " << deltaPoisson_max << " at i= " << i_deltaPoisson_max);
+        MESSAGE(1,"Relativistic Poisson equation solved. Maximum err = " << deltaPoisson_max << " at i= " << i_deltaPoisson_max);
 
     ptimer.update();
-    MESSAGE("Time in Poisson : " << ptimer.getTime() );
+    MESSAGE("Time in Relativistic Poisson : " << ptimer.getTime() );
 
 } // END solveRelativisticPoisson
 

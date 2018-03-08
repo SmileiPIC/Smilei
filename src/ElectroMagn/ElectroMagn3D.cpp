@@ -590,59 +590,57 @@ void ElectroMagn3D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
     Field3D* Ex3D  = static_cast<Field3D*>(Ex_);
     Field3D* Ey3D  = static_cast<Field3D*>(Ey_);
     Field3D* Ez3D  = static_cast<Field3D*>(Ez_);
-    Field3D* rho3D = static_cast<Field3D*>(rho_);
 
     // ------------------------------------------
-    // Compute the fields Ex and Ey
+    // Compute the fields Ex, Ey and Ez
     // ------------------------------------------
+  
+    // centered finite differences for derivatives
+
     // Ex
-    DEBUG("Computing Ex from scalar potential");
-    for (unsigned int i=1; i<nx_d-1; i++) {
+    DEBUG("Computing Ex from scalar potential, relativistic Poisson problem");
+    for (unsigned int i=1; i<nx_d-2; i++) {
         for (unsigned int j=0; j<ny_p; j++) {
             for (unsigned int k=0; k<nz_p; k++) {
-                (*Ex3D)(i,j,k) = ((*phi_)(i-1,j,k)-(*phi_)(i,j,k))/dx/gamma_mean/gamma_mean;
+                (*Ex3D)(i,j,k) = ((*phi_)(i-1,j,k)-(*phi_)(i+1,j,k))/2./dx/gamma_mean/gamma_mean;
             }
         }
     }
     // Ey
-    DEBUG("Computing Ey from scalar potential");
+    DEBUG("Computing Ey from scalar potential, relativistic Poisson problem");
     for (unsigned int i=0; i<nx_p; i++) {
-        for (unsigned int j=1; j<ny_d-1; j++) {
+        for (unsigned int j=1; j<ny_p-2; j++) {
             for (unsigned int k=0; k<nz_p; k++) {
-                (*Ey3D)(i,j,k) = ((*phi_)(i,j-1,k)-(*phi_)(i,j,k))/dy;
+                (*Ey3D)(i,j,k) = ((*phi_)(i,j-1,k)-(*phi_)(i,j+1,k))/2./dy;
             }
         }
     }
-    DEBUG("Computing Ez from scalar potential");
+    DEBUG("Computing Ez from scalar potential, relativistic Poisson problem");
     for (unsigned int i=0; i<nx_p; i++) {
         for (unsigned int j=0; j<ny_p; j++) {
             for (unsigned int k=1; k<nz_d-1; k++) {
-                (*Ez3D)(i,j,k) = ((*phi_)(i,j,k-1)-(*phi_)(i,j,k))/dz;
+                (*Ez3D)(i,j,k) = ((*phi_)(i,j,k-1)-(*phi_)(i,j,k+1))/2./dz;
             }
         }
     }
 
-    // Apply BC on Ex and Ey
+    // Apply BC on Ex, Ey and Ez, Dirichlet
     // ---------------------
     // Ex / Xmin
     if (patch->isXmin()) {
-        DEBUG("Computing Xmin BC on Ex");
+        DEBUG("Computing Xmin BC on Ex, relativistic Poisson problem");
         for (unsigned int j=0; j<ny_p; j++) {
             for (unsigned int k=0; k<nz_p; k++) {
-                (*Ex3D)(0,j,k) = (*Ex3D)(1,j,k) - dx*(*rho3D)(0,j,k)
-                    + ((*Ey3D)(0,j+1,k)-(*Ey3D)(0,j,k))*dx/dy
-                    + ((*Ez3D)(0,j,k+1)-(*Ez3D)(0,j,k))*dx/dz;
+                (*Ex3D)(0,j,k) = 0.;
             }
         }
     }
     // Ex / Xmax
     if (patch->isXmax()) {
-        DEBUG("Computing Xmax BC on Ex");
+        DEBUG("Computing Xmax BC on Ex, relativistic Poisson problem");
         for (unsigned int j=0; j<ny_p; j++) {
             for (unsigned int k=0; k<nz_p; k++) {
-                (*Ex3D)(nx_d-1,j,k) = (*Ex3D)(nx_d-2,j,k) + dx*(*rho3D)(nx_p-1,j,k)
-                    - ((*Ey3D)(nx_p-1,j+1,k)-(*Ey3D)(nx_p-1,j,k))*dx/dy 
-                    - ((*Ey3D)(nx_p-1,j,k+1)-(*Ez3D)(nx_p-1,j,k))*dx/dz;
+                (*Ex3D)(nx_d-1,j,k) = 0.;
             }
         }
     }
@@ -653,6 +651,46 @@ void ElectroMagn3D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
     delete Ap_;
 
 } // initE_relativistic_Poisson
+
+void ElectroMagn3D::initB_relativistic_Poisson(Patch *patch, double gamma_mean)
+{
+    // gamma_mean is the average Lorentz factor of the species whose fields will be computed
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
+
+    Field3D* Ey3D  = static_cast<Field3D*>(Ey_);
+    Field3D* Ez3D  = static_cast<Field3D*>(Ez_);
+
+    // Bx is zero everywhere
+    Field3D* By3D  = static_cast<Field3D*>(By_);
+    Field3D* Bz3D  = static_cast<Field3D*>(Bz_);
+  
+    double beta_mean = sqrt(1.-1/gamma_mean/gamma_mean);
+
+    // ------------------------------------------
+    // Compute the fields Ex and Ey
+    // ------------------------------------------
+    // By
+    DEBUG("Computing By from scalar potential, relativistic Poisson problem");
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+            for (unsigned int k=0; k<nz_p; k++) {
+                (*By3D)(i,j,k) = -beta_mean*(*Ez3D)(i,j,k);
+            }
+        }
+    }
+    // Bz
+    DEBUG("Computing Bz from scalar potential, relativistic Poisson problem");
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+            for (unsigned int k=0; k<nz_p; k++) {
+                (*Bz3D)(i,j,k) = beta_mean*(*Ey3D)(i,j,k);
+            }
+        }
+    }
+
+  
+
+} // initB_relativistic_Poisson
 
 
 void ElectroMagn3D::centeringE( std::vector<double> E_Add )

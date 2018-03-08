@@ -468,14 +468,14 @@ void ElectroMagn2D::initE(Patch *patch)
     // ------------------------------------------
     
     // Ex
-    DEBUG("Computing Ex from scalar potential");
+    DEBUG("Computing Ex from scalar potential, relativistic Poisson problem");
     for (unsigned int i=1; i<nx_d-1; i++) {
         for (unsigned int j=0; j<ny_p; j++) {
             (*Ex2D)(i,j) = ((*phi_)(i-1,j)-(*phi_)(i,j))/dx;
         }
     }
     // Ey
-    DEBUG("Computing Ey from scalar potential");
+    DEBUG("Computing Ey from scalar potential, relativistic Poisson problem");
     for (unsigned int i=0; i<nx_p; i++) {
         for (unsigned int j=1; j<ny_d-1; j++) {
             (*Ey2D)(i,j) = ((*phi_)(i,j-1)-(*phi_)(i,j))/dy;
@@ -486,14 +486,14 @@ void ElectroMagn2D::initE(Patch *patch)
     // ---------------------
     // Ex / Xmin
     if (patch->isXmin()) {
-        DEBUG("Computing Xmin BC on Ex");
+        DEBUG("Computing Xmin BC on Ex, relativistic Poisson problem");
         for (unsigned int j=0; j<ny_p; j++) {
             (*Ex2D)(0,j) = (*Ex2D)(1,j) + ((*Ey2D)(0,j+1)-(*Ey2D)(0,j))*dx/dy  - dx*(*rho2D)(0,j);
         }
     }
     // Ex / Xmax
     if (patch->isXmax()) {
-        DEBUG("Computing Xmax BC on Ex");
+        DEBUG("Computing Xmax BC on Ex, relativistic Poisson problem");
         for (unsigned int j=0; j<ny_p; j++) {
             (*Ex2D)(nx_d-1,j) = (*Ex2D)(nx_d-2,j) - ((*Ey2D)(nx_p-1,j+1)-(*Ey2D)(nx_p-1,j))*dx/dy + dx*(*rho2D)(nx_p-1,j);
         }
@@ -513,41 +513,42 @@ void ElectroMagn2D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
 
     Field2D* Ex2D  = static_cast<Field2D*>(Ex_);
     Field2D* Ey2D  = static_cast<Field2D*>(Ey_);
-    Field2D* rho2D = static_cast<Field2D*>(rho_);
 
     // ------------------------------------------
     // Compute the fields Ex and Ey
     // ------------------------------------------
     
+    // centered finite differences for derivatives
+
     // Ex
-    DEBUG("Computing Ex from scalar potential");
-    for (unsigned int i=1; i<nx_d-1; i++) {
+    DEBUG("Computing Ex from scalar potential, relativistic Poisson problem");
+    for (unsigned int i=1; i<nx_p-2; i++) {
         for (unsigned int j=0; j<ny_p; j++) {
-            (*Ex2D)(i,j) = ((*phi_)(i-1,j)-(*phi_)(i,j))/dx/gamma_mean/gamma_mean;
+            (*Ex2D)(i,j) = ((*phi_)(i-1,j)-(*phi_)(i+1,j))/2./dx/gamma_mean/gamma_mean;
         }
     }
     // Ey
-    DEBUG("Computing Ey from scalar potential");
+    DEBUG("Computing Ey from scalar potential, relativistic Poisson problem");
     for (unsigned int i=0; i<nx_p; i++) {
-        for (unsigned int j=1; j<ny_d-1; j++) {
-            (*Ey2D)(i,j) = ((*phi_)(i,j-1)-(*phi_)(i,j))/dy;
+        for (unsigned int j=1; j<ny_p-2; j++) {
+            (*Ey2D)(i,j) = ((*phi_)(i,j-1)-(*phi_)(i,j+1))/2./dy;
         }
     }
 
-    // Apply BC on Ex and Ey
+    // Apply BC on Ex and Ey, Dirichlet
     // ---------------------
     // Ex / Xmin
     if (patch->isXmin()) {
-        DEBUG("Computing Xmin BC on Ex");
+        DEBUG("Computing Xmin BC on Ex, relativistic Poisson problem");
         for (unsigned int j=0; j<ny_p; j++) {
-            (*Ex2D)(0,j) = (*Ex2D)(1,j) + ((*Ey2D)(0,j+1)-(*Ey2D)(0,j))*dx/dy  - dx*(*rho2D)(0,j);
+            (*Ex2D)(0,j) = 0.;
         }
     }
     // Ex / Xmax
     if (patch->isXmax()) {
-        DEBUG("Computing Xmax BC on Ex");
+        DEBUG("Computing Xmax BC on Ex, relativistic Poisson problem");
         for (unsigned int j=0; j<ny_p; j++) {
-            (*Ex2D)(nx_d-1,j) = (*Ex2D)(nx_d-2,j) - ((*Ey2D)(nx_p-1,j+1)-(*Ey2D)(nx_p-1,j))*dx/dy + dx*(*rho2D)(nx_p-1,j);
+            (*Ex2D)(nx_d-1,j) = 0.;
         }
     }
 
@@ -555,6 +556,31 @@ void ElectroMagn2D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
     delete r_;
     delete p_;
     delete Ap_;
+
+} // initE_relativistic_Poisson
+
+void ElectroMagn2D::initB_relativistic_Poisson(Patch *patch, double gamma_mean)
+{
+    // gamma_mean is the average Lorentz factor of the species whose fields will be computed
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
+
+    Field2D* Ey2D  = static_cast<Field2D*>(Ey_);
+    Field2D* Bz2D  = static_cast<Field2D*>(Bz_);
+    // Bx is zero everywhere
+
+    // ------------------------------------------
+    // Compute the fields By and Bz
+    // ------------------------------------------
+    
+    double beta_mean = sqrt(1.-1/gamma_mean/gamma_mean);
+    // Bz
+    DEBUG("Computing Bz from scalar potential, relativistic Poisson problem");
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+            (*Bz2D)(i,j) = beta_mean*(*Ey2D)(i,j);
+        }
+    }
+
 
 } // initE_relativistic_Poisson
 

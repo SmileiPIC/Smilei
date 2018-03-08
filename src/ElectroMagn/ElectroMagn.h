@@ -199,11 +199,14 @@ public:
     virtual void initPoisson(Patch *patch) = 0;
     virtual double compute_r() = 0;
     virtual void compute_Ap(Patch *patch) = 0;
+    virtual void compute_Ap_relativistic_Poisson(Patch *patch, double gamma_mean) = 0;
     //Access to Ap
     virtual double compute_pAp() = 0;
     virtual void update_pand_r(double r_dot_r, double p_dot_Ap) = 0;
     virtual void update_p(double rnew_dot_rnew, double r_dot_r) = 0;
     virtual void initE(Patch *patch) = 0;
+    virtual void initE_relativistic_Poisson(Patch *patch, double gamma_mean) = 0;
+    virtual void initB_relativistic_Poisson(Patch *patch, double gamma_mean) = 0;
     virtual void centeringE( std::vector<double> E_Add ) = 0;
     
     virtual double getEx_Xmin() = 0; // 2D !!!
