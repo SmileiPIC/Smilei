@@ -218,12 +218,13 @@ void ElectroMagn1D::initPoisson(Patch *patch)
     p_   = new Field1D(dimPrim);    // direction vector
     Ap_  = new Field1D(dimPrim);    // A*p vector
     
-    double       dx_sq          = dx*dx;
+    // double       dx_sq          = dx*dx;
     
     // phi: scalar potential, r: residual and p: direction
     for (unsigned int i=0 ; i<dimPrim[0] ; i++) {
         (*phi_)(i)   = 0.0;
-        (*r_)(i)     = -dx_sq * (*rho1D)(i);
+        //(*r_)(i)     = -dx_sq * (*rho1D)(i);
+        (*r_)(i)     = - (*rho1D)(i);
         (*p_)(i)     = (*r_)(i);
     }
 } // initPoisson
@@ -238,18 +239,26 @@ double ElectroMagn1D::compute_r()
 
 void ElectroMagn1D::compute_Ap(Patch *patch)
 {
+    
+    double one_ov_dx_sq       = 1.0/(dx*dx);
+    double two_ov_dx2         = 2.0*( 1.0/(dx*dx));
+  
     // vector product Ap = A*p
     for (unsigned int i=1 ; i<dimPrim[0]-1 ; i++)
-        (*Ap_)(i) = (*p_)(i-1) - 2.0*(*p_)(i) + (*p_)(i+1);
+        (*Ap_)(i) = one_ov_dx_sq * ((*p_)(i-1) + (*p_)(i+1))  - two_ov_dx2*(*p_)(i)   ;
         
     // apply BC on Ap
-    if (patch->isXmin()) (*Ap_)(0)      = (*p_)(1)      - 2.0*(*p_)(0);
-    if (patch->isXmax()) (*Ap_)(nx_p-1) = (*p_)(nx_p-2) - 2.0*(*p_)(nx_p-1); 
+    if (patch->isXmin()) (*Ap_)(0)      = one_ov_dx_sq * ((*p_)(1))      - two_ov_dxgam2*(*p_)(0);
+    if (patch->isXmax()) (*Ap_)(nx_p-1) = one_ov_dx_sq * ((*p_)(nx_p-2)) - two_ov_dxgam2*(*p_)(nx_p-1); 
     
 } // compute_Ap
 
 void ElectroMagn1D::compute_Ap_relativistic_Poisson(Patch* patch, double gamma_mean)
 {
+
+    // gamma_mean is the average Lorentz factor of the species whose fields will be computed
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
+
     double one_ov_dx_sq_ov_gamma_sq       = 1.0/(dx*dx)/(gamma_mean*gamma_mean);
     double two_ov_dxgam2                  = 2.0*( 1.0/(dx*dx)/(gamma_mean*gamma_mean) );
 

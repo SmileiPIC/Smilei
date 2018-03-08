@@ -391,6 +391,10 @@ void ElectroMagn3D::compute_Ap(Patch* patch)
 
 void ElectroMagn3D::compute_Ap_relativistic_Poisson(Patch* patch, double gamma_mean)
 {
+
+    // gamma_mean is the average Lorentz factor of the species whose fields will be computed
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
+
     double one_ov_dx_sq_ov_gamma_sq       = 1.0/(dx*dx)/(gamma_mean*gamma_mean);
     double one_ov_dy_sq                   = 1.0/(dy*dy);
     double one_ov_dz_sq                   = 1.0/(dz*dz);
