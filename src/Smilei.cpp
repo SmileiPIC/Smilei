@@ -179,7 +179,7 @@ int main (int argc, char* argv[])
                 //vecPatches.solveRelativisticPoisson( params, &smpi );
                                              }
             // Reset rho and J and return to initialization
-            // vecPatches.restartRhoJ();
+            // vecPatches.resetRhoJ();
         }
         
         

@@ -199,6 +199,13 @@ void VectorPatch::computeCharge()
 
 } // END computeRho
 
+void VectorPatch::resetRhoJ()
+{
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        (*this)(ipatch)->EMfields->restartRhoJ();
+    }
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
