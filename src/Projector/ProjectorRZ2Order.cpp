@@ -111,9 +111,9 @@ void ProjectorRZ2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &
     cField2D* Jt3D  = static_cast<cField2D*>(Jt);
     
     // weighted currents
-    double Jl_ion = Jion.l * particles.weight(ipart);
-    double Jr_ion = Jion.r * particles.weight(ipart);
-    double Jt_ion = Jion.t * particles.weight(ipart);
+    double Jx_ion = Jion.x * particles.weight(ipart);
+    double Jy_ion = Jion.y * particles.weight(ipart);
+    double Jz_ion = Jion.z * particles.weight(ipart);
     
 
 
