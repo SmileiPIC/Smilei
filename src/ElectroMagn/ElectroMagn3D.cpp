@@ -387,7 +387,88 @@ void ElectroMagn3D::compute_Ap(Patch* patch)
             -                   two_ov_dx2dy2dz2*(*p_)(nx_p-1,ny_p-1,nz_p-1);
     }
         
-} // compute_pAp
+} // compute_Ap
+
+void ElectroMagn3D::compute_Ap_relativistic_Poisson(Patch* patch, double gamma_mean)
+{
+    double one_ov_dx_sq_ov_gamma_sq       = 1.0/(dx*dx)/(gamma_mean*gamma_mean);
+    double one_ov_dy_sq                   = 1.0/(dy*dy);
+    double one_ov_dz_sq                   = 1.0/(dz*dz);
+    double two_ov_dxgam2dy2dz2            = 2.0*(1.0/(dx*dx)/(gamma_mean*gamma_mean)+1.0/(dy*dy)+1.0/(dz*dz));
+    
+    // vector product Ap = A*p
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+                (*Ap_)(i,j,k) = one_ov_dx_sq_ov_gamma_sq*((*p_)(i-1,j,k)+(*p_)(i+1,j,k))
+                    + one_ov_dy_sq*((*p_)(i,j-1,k)+(*p_)(i,j+1,k))
+                    + one_ov_dz_sq*((*p_)(i,j,k-1)+(*p_)(i,j,k+1))
+                    - two_ov_dxgam2dy2dz2*(*p_)(i,j,k);
+            }//k
+        }//j
+    }//i
+        
+        
+    // Xmin BC
+    if ( patch->isXmin() ) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+                (*Ap_)(0,j,k)      = one_ov_dx_sq_ov_gamma_sq*((*p_)(1,j,k))
+                    +              one_ov_dy_sq*((*p_)(0,j-1,k)+(*p_)(0,j+1,k))
+                    +              one_ov_dz_sq*((*p_)(0,j,k-1)+(*p_)(0,j,k+1))
+                    -              two_ov_dxgam2dy2dz2*(*p_)(0,j,k);
+            }
+        }
+        // at corners
+        (*Ap_)(0,0,0)           = one_ov_dx_sq_ov_gamma_sq*((*p_)(1,0,0))         // Xmin/Ymin/Zmin
+            +                   one_ov_dy_sq*((*p_)(0,1,0))
+            +                   one_ov_dz_sq*((*p_)(0,0,1))
+            -                   two_ov_dxgam2dy2dz2*(*p_)(0,0,0);
+        (*Ap_)(0,ny_p-1,0)      = one_ov_dx_sq_ov_gamma_sq*((*p_)(1,ny_p-1,0))     // Xmin/Ymax/Zmin
+            +                   one_ov_dy_sq*((*p_)(0,ny_p-2,0))
+            +                   one_ov_dz_sq*((*p_)(0,ny_p-1,1))
+            -                   two_ov_dxgam2dy2dz2*(*p_)(0,ny_p-1,0);
+        (*Ap_)(0,0,nz_p-1)      = one_ov_dx_sq_ov_gamma_sq*((*p_)(1,0,nz_p-1))          // Xmin/Ymin/Zmin
+            +                   one_ov_dy_sq*((*p_)(0,1,nz_p-1))
+            +                   one_ov_dz_sq*((*p_)(0,0,nz_p-2))
+            -                   two_ov_dxgam2dy2dz2*(*p_)(0,0,nz_p-1);
+        (*Ap_)(0,ny_p-1,nz_p-1) = one_ov_dx_sq_ov_gamma_sq*((*p_)(1,ny_p-1,nz_p-1))     // Xmin/Ymax/Zmin
+            +                   one_ov_dy_sq*((*p_)(0,ny_p-2,nz_p-1))
+            +                   one_ov_dz_sq*((*p_)(0,ny_p-1,nz_p-2))
+            -                   two_ov_dxgam2dy2dz2*(*p_)(0,ny_p-1,nz_p-1);
+    }
+        
+    // Xmax BC
+    if ( patch->isXmax() ) {
+            
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            for (unsigned int k=1; k<nz_p-1; k++) {
+                (*Ap_)(nx_p-1,j,k) = one_ov_dx_sq_ov_gamma_sq*((*p_)(nx_p-2,j,k))
+                    +              one_ov_dy_sq*((*p_)(nx_p-1,j-1,k)+(*p_)(nx_p-1,j+1,k))
+                    +              one_ov_dz_sq*((*p_)(nx_p-1,j,k-1)+(*p_)(nx_p-1,j,k+1))
+                    -              two_ov_dxgam2dy2dz2*(*p_)(nx_p-1,j,k);
+            }
+        }
+        // at corners
+        (*Ap_)(nx_p-1,0,0)      = one_ov_dx_sq_ov_gamma_sq*((*p_)(nx_p-2,0,0))            // Xmax/Ymin/Zmin
+            +                   one_ov_dy_sq*((*p_)(nx_p-1,1,0))
+            +                   one_ov_dz_sq*((*p_)(nx_p-1,0,1))
+            -                   two_ov_dxgam2dy2dz2*(*p_)(nx_p-1,0,0);
+        (*Ap_)(nx_p-1,ny_p-1,0) = one_ov_dx_sq_ov_gamma_sq*((*p_)(nx_p-2,ny_p-1,0))       // Xmax/Ymax/Zmin
+            +                   one_ov_dy_sq*((*p_)(nx_p-1,ny_p-2,0))
+            +                   one_ov_dz_sq*((*p_)(nx_p-1,ny_p-1,1))
+            -                   two_ov_dxgam2dy2dz2*(*p_)(nx_p-1,ny_p-1,0);
+        (*Ap_)(nx_p-1,0,nz_p-1)      = one_ov_dx_sq_ov_gamma_sq*((*p_)(nx_p-2,0,0))             // Xmax/Ymin/Zmax
+            +                   one_ov_dy_sq*((*p_)(nx_p-1,1,nz_p-1))
+            +                   one_ov_dz_sq*((*p_)(nx_p-1,0,nz_p-2))
+            -                   two_ov_dxgam2dy2dz2*(*p_)(nx_p-1,0,nz_p-1);
+        (*Ap_)(nx_p-1,ny_p-1,nz_p-1) = one_ov_dx_sq_ov_gamma_sq*((*p_)(nx_p-2,ny_p-1,nz_p-1))       // Xmax/Ymax/Zmax
+            +                   one_ov_dy_sq*((*p_)(nx_p-1,ny_p-2,nz_p-1))
+            +                   one_ov_dz_sq*((*p_)(nx_p-1,ny_p-1,nz_p-2))
+            -                   two_ov_dxgam2dy2dz2*(*p_)(nx_p-1,ny_p-1,nz_p-1);
+    }
+        
+} // compute_Ap_relativistic_Poisson
 
 double ElectroMagn3D::compute_pAp()
 {
