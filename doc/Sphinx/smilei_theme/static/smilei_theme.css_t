@@ -548,11 +548,11 @@ div.header > * {
     top:0;
 	text-align: left;
     white-space: nowrap;
-    overflow-y: auto;
     max-height:100%;
     min-height:{{ theme_head_height }}em;
     min-width :6em;
-	padding: {{ theme_head_height }}em 12px {{ theme_head_height }}em  5px;
+	padding: {{ theme_head_height }}em 12px 0 5px;
+	box-sizing: border-box;
 }
 #nav_button {
     position:absolute;
@@ -905,7 +905,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Smaller admonition box */
 div.admonition {
 	padding:7px !important;
-	margin:0px 30px !important;
+	margin:2px 30px !important;
 	background-color: {{ theme_main_color_pale }};
 	border: 1px solid {{ theme_main_color_bold }};
 	overflow: hidden;

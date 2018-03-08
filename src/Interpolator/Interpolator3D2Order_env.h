@@ -16,7 +16,13 @@ public:
     Interpolator3D2Order_env(Params&, Patch*);
     ~Interpolator3D2Order_env() override final {};
 
-    inline void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc);
+    inline void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc) {};
+    //inline void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc, double* PHILoc, double* GradPHILoc);
+    //inline void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* PHILoc, double* GradPHILoc, double* PHIoldLoc, double* GradPHIoldLoc, bool prevent_error_overloading);
+
+    void interpolate_em_fields_and_envelope(ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc, double* PHILoc, double* GradPHILoc);
+    void interpolate_envelope_and_old_envelope(ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* PHILoc, double* GradPHILoc, double* PHIoldLoc, double* GradPHIoldLoc);
+
     void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread) override final ;
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc) override final ;
     void operator() (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, std::vector<unsigned int> * selection) override final;
@@ -34,13 +40,16 @@ public:
 	return interp_res;
     };  
 
-private:
     // Last prim index computed
     int ip_, jp_, kp_;
-    // Last dual index computed
+       // Last dual index computed
     int id_, jd_, kd_;
+
     // Last delta computed
     double deltax, deltay, deltaz;
+
+private:
+
     // Interpolation coefficient on Prim grid
     double coeffxp_[3], coeffyp_[3], coeffzp_[3];
     // Interpolation coefficient on Dual grid

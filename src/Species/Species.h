@@ -226,9 +226,11 @@ public:
     //! Boundary condition for the Particles of the considered Species
     PartBoundCond* partBoundCond;
     
-    //! Particles pusher (change momentum & change position)
+    //! Particles pusher (change momentum & change position, only momentum in case envelope model is used)
     Pusher* Push;
     
+    //! Particles position pusher (change change position)
+    Pusher* Push_ponderomotive_position = NULL;
     
     // -----------------------------------------------------------------------------
     //  5. Methods
@@ -267,9 +269,17 @@ public:
                           std::vector<Diagnostic*>& localDiags);
 
     //! Method calculating the Particle updated momentum (interpolation, momentum pusher, only particles interacting with envelope)
-    virtual void ponderomotive_momentum_update(double time_dual, unsigned int ispec,
-                           ElectroMagn* EMfields, Interpolator* Interp,
+    virtual void ponderomotive_update_susceptibilty_and_momentum(double time_dual, unsigned int ispec,
+                           ElectroMagn* EMfields, Interpolator* Interp_envelope, Projector* Proj_susceptibility,
                            Params &params, bool diag_flag,
+                           Patch* patch, SmileiMPI* smpi,
+                           std::vector<Diagnostic*>& localDiags);
+
+    //! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)
+    // and projecting charge density and thus current density (through Esirkepov method) for Maxwell's Equations
+    virtual void ponderomotive_update_position_and_currents(double time_dual, unsigned int ispec,
+                           ElectroMagn* EMfields, Interpolator* Interp_envelope, Projector* Proj,
+                           Params &params, bool diag_flag, PartWalls* partWalls,
                            Patch* patch, SmileiMPI* smpi,
                            std::vector<Diagnostic*>& localDiags);
 
