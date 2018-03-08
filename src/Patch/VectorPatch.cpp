@@ -769,6 +769,9 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
     ptimer.init(smpi);
     ptimer.restart();
 
+    // IMPORTANT: for the moment it is fixed, but it must be computed from the beam distribution 
+    // TO IMPLEMENT on a later commit
+    double gamma_mean = 200. 
 
     unsigned int iteration_max = params.poisson_max_iteration;
     double           error_max = params.poisson_max_error;
@@ -814,7 +817,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
         double r_dot_r = rnew_dot_rnew;
 
         for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-            (*this)(ipatch)->EMfields->compute_Ap( (*this)(ipatch) );
+            (*this)(ipatch)->EMfields->compute_Ap_relativistic_Poisson( (*this)(ipatch), gamma_mean );
 
         // Exchange Ap_ (intra & extra MPI)
         SyncVectorPatch::exchange( Ap_, *this );
@@ -860,25 +863,25 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
     // --------------------------------
     if (iteration_max>0 && iteration == iteration_max) {
         if (smpi->isMaster())
-            WARNING("Poisson solver did not converge: reached maximum iteration number: " << iteration
+            WARNING("Relativistic Poisson solver did not converge: reached maximum iteration number: " << iteration
                     << ", relative err is ctrl = " << 1.0e14*ctrl << " x 1e-14");
     }
     else {
         if (smpi->isMaster())
-            MESSAGE(1,"Poisson solver converged at iteration: " << iteration
+            MESSAGE(1,"Relativistic Poisson solver converged at iteration: " << iteration
                     << ", relative err is ctrl = " << 1.0e14*ctrl << " x 1e-14");
     }
 
     // ------------------------------------------
-    // Compute the electrostatic fields Ex and Ey
+    // Compute the electromagnetic fields E and B
     // ------------------------------------------
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-        (*this)(ipatch)->EMfields->initE( (*this)(ipatch) );
+        (*this)(ipatch)->EMfields->initE_relativistic_Poisson( (*this)(ipatch), gamma_mean );
 
     SyncVectorPatch::exchangeE( params, *this );
     SyncVectorPatch::finalizeexchangeE( params, *this );
 
-    // Centering of the electrostatic fields
+    // Centering of the electromagnetic fields
     // -------------------------------------
     vector<double> E_Add(Ex_[0]->dims_.size(),0.);
     if ( Ex_[0]->dims_.size()==3 ) {

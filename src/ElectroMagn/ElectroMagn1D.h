@@ -30,6 +30,7 @@ public:
     void update_pand_r(double r_dot_r, double p_dot_Ap);
     void update_p(double rnew_dot_rnew, double r_dot_r);
     void initE(Patch *patch);
+    void initE_relativistic_Poisson(Patch *patch); 
     void centeringE( std::vector<double> E_Add );
     
     double getEx_Xmin() { return (*Ex_)(index_bc_min[0]);}//(*Ex_)     (0); }

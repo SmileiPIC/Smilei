@@ -582,6 +582,78 @@ void ElectroMagn3D::initE(Patch *patch)
 
 } // initE
 
+void ElectroMagn3D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
+{
+    // gamma_mean is the average Lorentz factor of the species whose fields will be computed
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
+
+    Field3D* Ex3D  = static_cast<Field3D*>(Ex_);
+    Field3D* Ey3D  = static_cast<Field3D*>(Ey_);
+    Field3D* Ez3D  = static_cast<Field3D*>(Ez_);
+    Field3D* rho3D = static_cast<Field3D*>(rho_);
+
+    // ------------------------------------------
+    // Compute the fields Ex and Ey
+    // ------------------------------------------
+    // Ex
+    DEBUG("Computing Ex from scalar potential");
+    for (unsigned int i=1; i<nx_d-1; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+            for (unsigned int k=0; k<nz_p; k++) {
+                (*Ex3D)(i,j,k) = ((*phi_)(i-1,j,k)-(*phi_)(i,j,k))/dx/gamma_mean/gamma_mean;
+            }
+        }
+    }
+    // Ey
+    DEBUG("Computing Ey from scalar potential");
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=1; j<ny_d-1; j++) {
+            for (unsigned int k=0; k<nz_p; k++) {
+                (*Ey3D)(i,j,k) = ((*phi_)(i,j-1,k)-(*phi_)(i,j,k))/dy;
+            }
+        }
+    }
+    DEBUG("Computing Ez from scalar potential");
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+            for (unsigned int k=1; k<nz_d-1; k++) {
+                (*Ez3D)(i,j,k) = ((*phi_)(i,j,k-1)-(*phi_)(i,j,k))/dz;
+            }
+        }
+    }
+
+    // Apply BC on Ex and Ey
+    // ---------------------
+    // Ex / Xmin
+    if (patch->isXmin()) {
+        DEBUG("Computing Xmin BC on Ex");
+        for (unsigned int j=0; j<ny_p; j++) {
+            for (unsigned int k=0; k<nz_p; k++) {
+                (*Ex3D)(0,j,k) = (*Ex3D)(1,j,k) - dx*(*rho3D)(0,j,k)
+                    + ((*Ey3D)(0,j+1,k)-(*Ey3D)(0,j,k))*dx/dy
+                    + ((*Ez3D)(0,j,k+1)-(*Ez3D)(0,j,k))*dx/dz;
+            }
+        }
+    }
+    // Ex / Xmax
+    if (patch->isXmax()) {
+        DEBUG("Computing Xmax BC on Ex");
+        for (unsigned int j=0; j<ny_p; j++) {
+            for (unsigned int k=0; k<nz_p; k++) {
+                (*Ex3D)(nx_d-1,j,k) = (*Ex3D)(nx_d-2,j,k) + dx*(*rho3D)(nx_p-1,j,k)
+                    - ((*Ey3D)(nx_p-1,j+1,k)-(*Ey3D)(nx_p-1,j,k))*dx/dy 
+                    - ((*Ey3D)(nx_p-1,j,k+1)-(*Ez3D)(nx_p-1,j,k))*dx/dz;
+            }
+        }
+    }
+
+    delete phi_;
+    delete r_;
+    delete p_;
+    delete Ap_;
+
+} // initE_relativistic_Poisson
+
 
 void ElectroMagn3D::centeringE( std::vector<double> E_Add )
 {

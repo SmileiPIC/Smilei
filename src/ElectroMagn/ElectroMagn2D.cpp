@@ -506,6 +506,58 @@ void ElectroMagn2D::initE(Patch *patch)
 
 } // initE
 
+void ElectroMagn2D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
+{
+    // gamma_mean is the average Lorentz factor of the species whose fields will be computed
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
+
+    Field2D* Ex2D  = static_cast<Field2D*>(Ex_);
+    Field2D* Ey2D  = static_cast<Field2D*>(Ey_);
+    Field2D* rho2D = static_cast<Field2D*>(rho_);
+
+    // ------------------------------------------
+    // Compute the fields Ex and Ey
+    // ------------------------------------------
+    
+    // Ex
+    DEBUG("Computing Ex from scalar potential");
+    for (unsigned int i=1; i<nx_d-1; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+            (*Ex2D)(i,j) = ((*phi_)(i-1,j)-(*phi_)(i,j))/dx/gamma_mean/gamma_mean;
+        }
+    }
+    // Ey
+    DEBUG("Computing Ey from scalar potential");
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=1; j<ny_d-1; j++) {
+            (*Ey2D)(i,j) = ((*phi_)(i,j-1)-(*phi_)(i,j))/dy;
+        }
+    }
+
+    // Apply BC on Ex and Ey
+    // ---------------------
+    // Ex / Xmin
+    if (patch->isXmin()) {
+        DEBUG("Computing Xmin BC on Ex");
+        for (unsigned int j=0; j<ny_p; j++) {
+            (*Ex2D)(0,j) = (*Ex2D)(1,j) + ((*Ey2D)(0,j+1)-(*Ey2D)(0,j))*dx/dy  - dx*(*rho2D)(0,j);
+        }
+    }
+    // Ex / Xmax
+    if (patch->isXmax()) {
+        DEBUG("Computing Xmax BC on Ex");
+        for (unsigned int j=0; j<ny_p; j++) {
+            (*Ex2D)(nx_d-1,j) = (*Ex2D)(nx_d-2,j) - ((*Ey2D)(nx_p-1,j+1)-(*Ey2D)(nx_p-1,j))*dx/dy + dx*(*rho2D)(nx_p-1,j);
+        }
+    }
+
+    delete phi_;
+    delete r_;
+    delete p_;
+    delete Ap_;
+
+} // initE_relativistic_Poisson
+
 
 void ElectroMagn2D::centeringE( std::vector<double> E_Add )
 {
