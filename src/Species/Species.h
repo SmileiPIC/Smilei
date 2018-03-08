@@ -88,6 +88,9 @@ public:
     
     //! logical true if particles radiate
     bool radiating;
+
+    //! logical true if particles are relativistic and require proper electromagnetic field initialization
+    bool relativistic_field_initialization;
     
     //! electron and positron Species for the multiphoton Breit-Wheeler
     std::vector<std::string> multiphoton_Breit_Wheeler;

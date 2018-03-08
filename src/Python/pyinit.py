@@ -341,6 +341,7 @@ class Species(SmileiComponent):
     ionization_electrons = None
     atomic_number = None
     is_test = False
+    relativistic_field_initialization = False
 
 class Laser(SmileiComponent):
     """Laser parameters"""

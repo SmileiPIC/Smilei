@@ -50,6 +50,13 @@ public:
         if (!PyTools::extract("pusher", pusher ,"Species",ispec) )
             if ( patch->isMaster() ) WARNING("For species '" << species_name << "', pusher not defined: assumed = 'boris'.");
 
+        // Extract if the species is relativistic and needs ad hoc fields initialization
+        bool relativistic_field_initialization = false;
+        if (!PyTools::extract("relativistic_field_initialization", relativistic_field_initialization ,"Species",ispec) )
+        {
+            if ( patch->isMaster() )
+                WARNING("For species '" << species_name << "', relativistic_field_initialization not defined: assumed = 'false'.");
+        }
 
         // Extract type of species radiation from namelist
         std::string radiation_model = "none"; // default value
@@ -528,6 +535,7 @@ public:
         newSpecies->mass                                     = species->mass;
         newSpecies->time_frozen                              = species->time_frozen;
         newSpecies->radiating                                = species->radiating;
+        newSpecies->relativistic_field_initialization        = species->relativistic_field_initialization;
         newSpecies->boundary_conditions                      = species->boundary_conditions;
         newSpecies->thermal_boundary_temperature             = species->thermal_boundary_temperature;
         newSpecies->thermal_boundary_velocity                = species->thermal_boundary_velocity;

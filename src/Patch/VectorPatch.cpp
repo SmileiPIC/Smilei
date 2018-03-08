@@ -199,6 +199,20 @@ void VectorPatch::computeCharge()
 
 } // END computeRho
 
+void VectorPatch::computeChargeRelativisticSpecies()
+{
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        (*this)(ipatch)->EMfields->restartRhoJ();
+        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+            if (species(ipatch, ispec)->relativistic_field_initialization){
+                    species(ipatch, ispec)->computeCharge(ispec, emfields(ipatch), proj(ipatch) );
+                                                                          }
+        }
+    }
+
+} // END computeRho
+
 void VectorPatch::resetRhoJ()
 {
     #pragma omp for schedule(runtime)

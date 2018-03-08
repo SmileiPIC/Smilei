@@ -168,22 +168,19 @@ int main (int argc, char* argv[])
         // -------------------------------------
 
         
-        // Solve "Relativistic Poisson" problem (including good centering of fields)
-        
+        // Solve "Relativistic Poisson" problem (including proper centering of fields)
         if (params.solve_relativistic_poisson == true) {
             // Compute rho only for species needing relativistic field Initialization
-            // vecPatches.computeChargeRelativisticSpecies();
+            vecPatches.computeChargeRelativisticSpecies();
 
             if (!vecPatches.isRhoNull(&smpi)){
                 TITLE("Initializing relativistic species fields at time t = 0");
                 //vecPatches.solveRelativisticPoisson( params, &smpi );
                                              }
             // Reset rho and J and return to initialization
-            // vecPatches.resetRhoJ();
+            vecPatches.resetRhoJ();
         }
         
-        
-
         vecPatches.computeCharge();
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
 

@@ -109,6 +109,9 @@ public :
                   double time_dual, Timers &timers, int itime);
 
     void computeCharge();
+ 
+    // compute rho only given by relativistic species which require initialization of the relativistic fields
+    void computeChargeRelativisticSpecies(); 
 
     void resetRhoJ();
 
