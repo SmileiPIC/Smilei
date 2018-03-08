@@ -172,7 +172,9 @@ int main (int argc, char* argv[])
         if (params.solve_relativistic_poisson == true) {
             // Compute rho only for species needing relativistic field Initialization
             vecPatches.computeChargeRelativisticSpecies();
-
+            vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
+            
+            // Initialize the fields for these species
             if (!vecPatches.isRhoNull(&smpi)){
                 TITLE("Initializing relativistic species fields at time t = 0");
                 //vecPatches.solveRelativisticPoisson( params, &smpi );
