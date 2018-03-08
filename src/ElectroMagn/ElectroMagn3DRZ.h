@@ -32,7 +32,10 @@ public:
     std::vector<cField2D*> Jr_;
     std::vector<cField2D*> Jt_;
     std::vector<cField2D*> rho_RZ_;
-
+    //define a vector of vectors
+    //std::vector<cField2D*> Jl_s;
+    //std::vector<cField2D*> Jr_s;
+    //std::vector<cField2D*> Jt_s;
     void restartRhoJ() override;
     void restartRhoJs() override;
 
