@@ -15,6 +15,8 @@
 #include "Timers.h"
 #include "SyncCartesianPatch.h"
 
+using namespace std;
+
 Domain::Domain( Params &params ) :
     vecPatch_( params ),
     decomposition_(NULL),
@@ -105,7 +107,88 @@ void Domain::clean()
 
 void Domain::solveMaxwell( Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers )
 {
+    MPI_Barrier( MPI_COMM_WORLD );
+    MESSAGE( "in domain solvemaxwell" );
     vecPatch_.solveMaxwell( params, simWindow, itime, time_dual, timers );
 
 }
 
+
+void Domain::identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatches)
+{
+    for ( int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++ ) {
+        
+        bool patch_is_in( true );
+        for ( int iDim = 0 ; iDim < patch_->getDomainLocalMin().size() ; iDim++ ) {
+            double center = ( vecPatches(ipatch)->getDomainLocalMin(iDim) + vecPatches(ipatch)->getDomainLocalMax(iDim) ) /2.;
+            if ( ( center < patch_->getDomainLocalMin(iDim) ) || ( center > patch_->getDomainLocalMax(iDim) ) )
+                patch_is_in = false;
+        }
+        if (!patch_is_in)
+            additional_patches_.push_back( vecPatches(ipatch)->hindex );
+    }
+    
+    //cout << smpi->getRank() << " - additional : ";
+    //for (int i = 0 ; i < additional_patches_.size() ; i++)
+    //    cout << additional_patches_[i] << " " ;
+    //cout << endl;
+
+}
+
+
+void Domain::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, Params& params)
+{
+    //missing_patches_.push_back()
+
+    // Loop on theroritical patches
+
+    std::vector<int> patch_min_coord(patch_->getDomainLocalMin().size());
+    std::vector<int> patch_max_coord(patch_->getDomainLocalMin().size());
+    int npatch_domain(1);
+    for ( int iDim = 0 ; iDim < patch_->getDomainLocalMin().size() ; iDim++ ) {
+        patch_min_coord[iDim] = (int)( patch_->getDomainLocalMin(iDim) / params.cell_length[iDim] / (double)params.n_space[iDim] );
+        patch_max_coord[iDim] = (int)( patch_->getDomainLocalMax(iDim) / params.cell_length[iDim] / (double)params.n_space[iDim] ) - 1;
+        npatch_domain *= params.n_space_domain[iDim] / params.n_space[iDim];
+    }
+    //cout << patch_min_coord[0] << " " << patch_min_coord[1] << endl;
+    //cout << patch_max_coord[0] << " " << patch_max_coord[1] << endl;
+
+    int patch_min_id = vecPatches.domain_decomposition_->getDomainId( patch_min_coord );
+    int patch_max_id = vecPatches.domain_decomposition_->getDomainId( patch_max_coord );
+    //cout << patch_min_id << " " << patch_max_id << "\t npatche theoritical : " << npatch_domain << endl; 
+
+    int hmin = min (patch_min_id,patch_max_id); 
+    int hmax = max (patch_min_id,patch_max_id); 
+    for ( int ix = patch_min_coord[0] ; ix <= patch_max_coord[0] ; ix++ ) {
+        for ( int iy = patch_min_coord[1] ; iy <= patch_max_coord[1] ; iy++ ) {
+            std::vector<int> coords(patch_->getDomainLocalMin().size());
+            coords[0] = ix;
+            coords[1] = iy;
+            int hindex = vecPatches.domain_decomposition_->getDomainId( coords );
+            if (hindex < hmin)
+                 hmin = hindex;
+            if (hindex > hmax)
+                hmax = hindex;
+
+        }
+    }
+
+    for ( int idx = hmin ; idx <=hmax ; idx++ ) {
+        if ( (idx < vecPatches(0)->hindex) || (idx > vecPatches(vecPatches.size()-1)->hindex) )
+            missing_patches_.push_back( idx );
+        else
+            local_patches_.push_back( idx );
+    }
+
+    //cout << "Theoritical : " << hmin << " " << hmax << endl;
+    //cout << smpi->getRank() << " - missing : " ;
+    //for (int i = 0 ; i < missing_patches_.size() ; i++)
+    //    cout << missing_patches_[i] << " " ;
+    //cout << endl;
+
+    //cout << smpi->getRank() << " - local : " ;
+    //for (int i = 0 ; i < local_patches_.size() ; i++)
+    //    cout << local_patches_[i] << " " ;
+    //cout << endl;
+
+}

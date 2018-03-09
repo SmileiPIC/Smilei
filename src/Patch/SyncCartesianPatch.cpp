@@ -12,7 +12,20 @@ using namespace std;
 
 void SyncCartesianPatch::patchedToCartesian( VectorPatch& vecPatches, Domain& domain, Params &params, SmileiMPI* smpi, Timers &timers, int itime )
 {
-    for ( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
+    // Loop / local patches
+    //     put()
+
+    // Loop / missing patches (identify where are the missing patches)
+    //     domain.recv()
+
+    // Loop / additionnal patches (identify where goes the additionnal patches)
+    //     patch().send()
+
+    //cout << smpi->getRank() << " - "; 
+    //for ( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
+    for ( unsigned int i=0 ; i<domain.local_patches_.size() ; i++ ) {
+        unsigned int ipatch = domain.local_patches_[i]-vecPatches.refHindex_;
+        //cout << ipatch << " ";
         //vecPatches(ipatch)->EMfields->Ex_->put( domain.patch_->EMfields->Ex_, params, smpi, vecPatches(ipatch), domain.patch_ );
         //vecPatches(ipatch)->EMfields->Ey_->put( domain.patch_->EMfields->Ey_, params, smpi, vecPatches(ipatch), domain.patch_ );
         //vecPatches(ipatch)->EMfields->Ez_->put( domain.patch_->EMfields->Ez_, params, smpi, vecPatches(ipatch), domain.patch_ );
@@ -32,13 +45,16 @@ void SyncCartesianPatch::patchedToCartesian( VectorPatch& vecPatches, Domain& do
 	}
 
     }
+    //cout << endl;
 
 }
 
 
 void SyncCartesianPatch::cartesianToPatches( Domain& domain, VectorPatch& vecPatches, Params &params, SmileiMPI* smpi, Timers &timers, int itime )
 {
-    for ( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
+    //for ( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
+    for ( unsigned int i=0 ; i<domain.local_patches_.size() ; i++ ) {
+        unsigned int ipatch = domain.local_patches_[i]-vecPatches.refHindex_;
 
         vecPatches(ipatch)->EMfields->Ex_->get( domain.patch_->EMfields->Ex_, params, smpi, domain.patch_, vecPatches(ipatch) );
         vecPatches(ipatch)->EMfields->Ey_->get( domain.patch_->EMfields->Ey_, params, smpi, domain.patch_, vecPatches(ipatch) );

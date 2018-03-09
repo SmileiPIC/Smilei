@@ -255,6 +255,18 @@ int main (int argc, char* argv[])
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------
 
+
+    smpi.patch_count[0] = 10; // +2
+    smpi.patch_count[1] = 27; // +5 -2
+    smpi.patch_count[2] = 21; // +2 -5
+    smpi.patch_count[3] = 6;  //    -2
+    //vecPatches.load_balance( params, time_dual, &smpi, simWindow, 0 );
+    vecPatches.createPatches(params, &smpi, simWindow);
+    vecPatches.exchangePatches(&smpi, params);
+    vecPatches.lastIterationPatchesMoved = 0;
+    MPI_Barrier( MPI_COMM_WORLD );
+
+
     TITLE("Time-Loop started: number of time-steps n_time = " << params.n_time);
     if ( smpi.isMaster() ) params.print_timestep_headers();
 
@@ -301,13 +313,23 @@ int main (int argc, char* argv[])
             // Force temporary usage of double grids, even if global_factor = 1
             //    especially to compare solvers           
             //if ( global_factor!=1 )
+            MPI_Barrier( MPI_COMM_WORLD );
+            MESSAGE("Before domain");
             {
                 if( time_dual > params.time_fields_frozen ) {
+                    domain.identify_additional_patches( &smpi, vecPatches );
+                    domain.identify_missing_patches( &smpi, vecPatches, params );
+                    MPI_Barrier( MPI_COMM_WORLD );
+                    MESSAGE("Before to global");
                     SyncCartesianPatch::patchedToCartesian( vecPatches, domain, params, &smpi, timers, itime );
+                    MPI_Barrier( MPI_COMM_WORLD );
+                    MESSAGE("Before Maxwell");
                     domain.solveMaxwell( params, simWindow, itime, time_dual, timers );
+                    MESSAGE("Before to patchs");
                     SyncCartesianPatch::cartesianToPatches( domain, vecPatches, params, &smpi, timers, itime );
                 }
             }
+            MESSAGE("After domain");
             //#endif
 
             vecPatches.finalize_and_sort_parts(params, &smpi, simWindow, RadiationTables,

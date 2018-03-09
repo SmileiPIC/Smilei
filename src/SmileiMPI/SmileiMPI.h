@@ -165,6 +165,11 @@ public:
     
     bool test_mode;
     
+    //! For patch decomposition
+    //Number of patches owned by each mpi process.
+    std::vector<int>  patch_count, capabilities;
+    int Tcapabilities; //Default = smilei_sz (1 per MPI rank)
+
 protected:
     //! Global MPI Communicator
     MPI_Comm SMILEI_COMM_WORLD;
@@ -180,10 +185,6 @@ protected:
     // Should move in Params : last parameters of this type in this class
     int* periods_;
 
-    //! For patch decomposition
-    //Number of patches owned by each mpi process.
-    std::vector<int>  patch_count, capabilities;
-    int Tcapabilities; //Default = smilei_sz (1 per MPI rank)
 };
 
 

@@ -25,6 +25,15 @@ public:
     Patch* patch_;
     Diagnostic* diag_; 
    
+
+    void identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatches);
+    std::vector<int> additional_patches_;
+    std::vector<int> local_patches_;
+    void identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, Params& params);
+    std::vector<int> missing_patches_;
+
+
+
 };
 
 #endif

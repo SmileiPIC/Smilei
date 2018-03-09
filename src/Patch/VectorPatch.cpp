@@ -247,16 +247,18 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 {
     timers.maxwell.restart();
 
-    for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_passes ; ipassfilter++){
-        #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-            // Current spatial filtering
-            (*this)(ipatch)->EMfields->binomialCurrentFilter();
-        }
-        SyncVectorPatch::exchangeJ( params, (*this) );
-        SyncVectorPatch::finalizeexchangeJ( params, (*this) );
-    }
+    //for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_passes ; ipassfilter++){
+    //    #pragma omp for schedule(static)
+    //    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+    //        // Current spatial filtering
+    //        (*this)(ipatch)->EMfields->binomialCurrentFilter();
+    //    }
+    //    SyncVectorPatch::exchangeJ( params, (*this) );
+    //    SyncVectorPatch::finalizeexchangeJ( params, (*this) );
+    //}
 
+    MPI_Barrier( MPI_COMM_WORLD );
+    MESSAGE( "Before Local maxwell" );
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
         if (!params.is_spectral) {
@@ -271,6 +273,8 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         //for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*(*this)(ipatch)->EMfields->MaxwellFaradaySolver_)((*this)(ipatch)->EMfields);
     }
+    MPI_Barrier( MPI_COMM_WORLD );
+    MESSAGE( "Local maxwell done" );
 
     //Synchronize B fields between patches.
     timers.maxwell.update( params.printNow( itime ) );
@@ -280,6 +284,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         SyncVectorPatch::exchangeE( params, (*this) );
     SyncVectorPatch::exchangeB( params, (*this) );
     timers.syncField.update(  params.printNow( itime ) );
+    MESSAGE( "Send maxwell done" );
 
     //#ifdef _PICSAR
     //if ( (params.is_spectral) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
@@ -290,6 +295,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 
         SyncVectorPatch::finalizeexchangeB( params, (*this) );
         timers.syncField.update(  params.printNow( itime ) );
+        MESSAGE( "Recv maxwell done" );
 
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
@@ -301,6 +307,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
             else
                 (*this)(ipatch)->EMfields->saveMagneticFields(params.is_spectral);
         }
+        MESSAGE( "BC maxwell done" );
         if (params.is_spectral)
             save_old_rho( params );
     }
